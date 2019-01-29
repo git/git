@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2019, #04; Mon, 28)
-X-master-at: 16a465bc018d09e9d7bbbdc5f40a7fb99c21f8ef
-X-next-at: aa96b0ce6b0fa4fa4cc6870f1a3aff3878967bfa
+Subject: What's cooking in git.git (Jan 2019, #05; Tue, 29)
+X-master-at: b5101f929789889c2e536d915698f58d5c5c6b7a
+X-next-at: fbb209baf1b5c34e4ec52fb4a5a73b00cfbecec1
 
-What's cooking in git.git (Jan 2019, #04; Mon, 28)
+What's cooking in git.git (Jan 2019, #05; Tue, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -19,6 +19,290 @@ of the repositories listed at
 
 --------------------------------------------------
 [New Topics]
+
+* ds/commit-graph-format-v2 (2019-01-29) 8 commits
+ - SQUASH : misnamed variables and style fix
+ - commit-graph: test verifying a corrupt v2 header
+ - commit-graph: implement file format version 2
+ - commit-graph: add --version=<n> option
+ - commit-graph: create new version flags
+ - commit-graph: collapse parameters into flags
+ - commit-graph: return with errors during write
+ - Merge branch 'bc/sha-256' into ds/commit-graph-format-v2
+ (this branch uses ab/commit-graph-write-optim and ab/commit-graph-write-progress.)
+
+ Introduce version 2 of the commit-graph format to correct
+ deficiency in the initial version.
+
+
+* ds/coverage-prove (2019-01-29) 1 commit
+ - Makefile: add coverage-prove target
+
+ A new target "coverage-prove" to run the coverage test under
+ "prove" has been added.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* md/list-objects-filter-by-depth (2019-01-15) 4 commits
+ + tree:<depth>: skip some trees even when collecting omits
+ + list-objects-filter: teach tree:# how to handle >0
+ + Merge branch 'nd/the-index' into md/list-objects-filter-by-depth
+ + Merge branch 'sb/more-repo-in-api' into md/list-objects-filter-by-depth
+ (this branch is used by js/filter-options-should-use-plain-int; uses sb/more-repo-in-api; is tangled with jt/get-reference-with-commit-graph.)
+
+ The objects-filter machinery learned "tree:<depth>" to filter
+ objects up to a given depth; earlier it only supported depth=0,
+ i.e. usable to create a commit-only lazy clone.
+
+ Will merge to 'next'.
+
+
+* bc/sha-256 (2018-11-14) 12 commits
+  (merged to 'next' on 2019-01-18 at 3f161d31bb)
+ + hash: add an SHA-256 implementation using OpenSSL
+ + sha256: add an SHA-256 implementation using libgcrypt
+ + Add a base implementation of SHA-256 support
+ + commit-graph: convert to using the_hash_algo
+ + t/helper: add a test helper to compute hash speed
+ + sha1-file: add a constant for hash block size
+ + t: make the sha1 test-tool helper generic
+ + t: add basic tests for our SHA-1 implementation
+ + cache: make hashcmp and hasheq work with larger hashes
+ + hex: introduce functions to print arbitrary hashes
+ + sha1-file: provide functions to look up hash algorithms
+ + sha1-file: rename algorithm to "sha1"
+ (this branch is used by ds/commit-graph-format-v2.)
+
+ Add sha-256 hash and plug it through the code to allow building Git
+ with the "NewHash".
+
+
+* bc/tree-walk-oid (2019-01-15) 5 commits
+  (merged to 'next' on 2019-01-18 at 60c38b9e4a)
+ + cache: make oidcpy always copy GIT_MAX_RAWSZ bytes
+ + tree-walk: store object_id in a separate member
+ + match-trees: use hashcpy to splice trees
+ + match-trees: compute buffer offset correctly when splicing
+ + tree-walk: copy object ID before use
+
+ The code to walk tree objects has been taught that we may be
+ working with object names that are not computed with SHA-1.
+
+
+* cc/fetch-error-message-fix (2019-01-14) 1 commit
+  (merged to 'next' on 2019-01-14 at 81078f86c0)
+ + fetch: fix extensions.partialclone name in error message
+
+ Error message fix.
+
+
+* cc/partial-clone-doc-typofix (2019-01-14) 1 commit
+  (merged to 'next' on 2019-01-14 at 0395de767e)
+ + partial-clone: add missing 'is' in doc
+
+ Doc fix.
+
+
+* it/log-format-source (2019-01-11) 1 commit
+  (merged to 'next' on 2019-01-18 at d660044e93)
+ + log: add %S option (like --source) to log --format
+
+ Custom userformat "log --format" learned %S atom that stands for
+ the tip the traversal reached the commit from, i.e. --source.
+
+
+* ja/doc-build-l10n (2019-01-07) 1 commit
+  (merged to 'next' on 2019-01-18 at 5dbe5ad3d7)
+ + Documentation/Makefile add optional targets for l10n
+
+ Prepare Documentation/Makefile so that manpage localization can
+ reuse it by overriding and tweaking the list of build products.
+
+
+* jk/proto-v2-hidden-refs-fix (2019-01-10) 1 commit
+  (merged to 'next' on 2019-01-18 at 875dbbc71f)
+ + upload-pack: support hidden refs with protocol v2
+
+ The v2 upload-pack protocol implementation failed to honor
+ hidden-ref configuration, which has been corrected.
+ An earlier attempt reverted out of 'next'.
+
+
+* jk/remote-insteadof-cleanup (2019-01-11) 1 commit
+  (merged to 'next' on 2019-01-18 at 112c93eef3)
+ + remote: check config validity before creating rewrite struct
+
+ Code clean-up.
+
+
+* jk/save-getenv-result (2019-01-11) 6 commits
+  (merged to 'next' on 2019-01-18 at 429c77402a)
+ + builtin_diff(): read $GIT_DIFF_OPTS closer to use
+ + merge-recursive: copy $GITHEAD strings
+ + init: make a copy of $GIT_DIR string
+ + config: make a copy of $GIT_CONFIG string
+ + commit: copy saved getenv() result
+ + get_super_prefix(): copy getenv() result
+
+ There were many places the code relied on the string returned from
+ getenv() to be non-volatile, which is not true, that have been
+ corrected.
+
+
+* js/add-e-clear-patch-before-stating (2019-01-15) 1 commit
+  (merged to 'next' on 2019-01-18 at 9ea7fc4b49)
+ + add --edit: truncate the patch file
+
+ "git add -e" got confused when the change it wants to let the user
+ edit is smaller than the previous change that was left over in a
+ temporary file.
+
+
+* js/rebase-i-redo-exec (2018-12-11) 3 commits
+  (merged to 'next' on 2019-01-18 at 71be3fedb7)
+ + rebase: introduce a shortcut for --reschedule-failed-exec
+ + rebase: add a config option to default to --reschedule-failed-exec
+ + rebase: introduce --reschedule-failed-exec
+
+ "git rebase -i" learned to re-execute a command given with 'exec'
+ to run after it failed the last time.
+
+
+* jt/fetch-pack-v2 (2019-01-10) 1 commit
+  (merged to 'next' on 2019-01-18 at 75ceb55ff8)
+ + fetch-pack: support protocol version 2
+
+ "git fetch-pack" now can talk the version 2 protocol.
+
+
+* jt/upload-pack-deepen-relative-proto-v2 (2019-01-10) 2 commits
+  (merged to 'next' on 2019-01-18 at 1483ad21db)
+ + upload-pack: teach deepen-relative in protocol v2
+ + fetch-pack: do not take shallow lock unnecessarily
+
+ "git fetch --deepen=<more>" has been corrected to work over v2
+ protocol.
+
+
+* kg/external-diff-save-env (2019-01-11) 1 commit
+  (merged to 'next' on 2019-01-14 at 8281bbd48b)
+ + diff: ensure correct lifetime of external_diff_cmd
+
+ The code to drive GIT_EXTERNAL_DIFF command relied on the string
+ returned from getenv() to be non-volatile, which is not true, that
+ has been corrected.
+
+
+* ms/http-no-more-failonerror (2019-01-10) 5 commits
+  (merged to 'next' on 2019-01-18 at 8938d70b6d)
+ + test: test GIT_CURL_VERBOSE=1 shows an error
+ + remote-curl: unset CURLOPT_FAILONERROR
+ + remote-curl: define struct for CURLOPT_WRITEFUNCTION
+ + http: enable keep_error for HTTP requests
+ + http: support file handles for HTTP_KEEP_ERROR
+
+ Debugging help for http transport.
+
+
+* os/rebase-runs-post-checkout-hook (2019-01-02) 2 commits
+  (merged to 'next' on 2019-01-18 at a03d536318)
+ + rebase: run post-checkout hook on checkout
+ + t5403: simplify by using a single repository
+
+ "git rebase" internally runs "checkout" to switch between branches,
+ and the command used to call the post-checkout hook, but the
+ reimplementation stopped doing so, which is getting fixed.
+
+
+* pw/diff-color-moved-ws-fix (2019-01-10) 9 commits
+  (merged to 'next' on 2019-01-18 at e19713c82f)
+ + diff --color-moved-ws: handle blank lines
+ + diff --color-moved-ws: modify allow-indentation-change
+ + diff --color-moved-ws: optimize allow-indentation-change
+ + diff --color-moved=zebra: be stricter with color alternation
+ + diff --color-moved-ws: fix false positives
+ + diff --color-moved-ws: demonstrate false positives
+ + diff: allow --no-color-moved-ws
+ + Use "whitespace" consistently
+ + diff: document --no-color-moved
+
+ "git diff --color-moved-ws" updates.
+
+
+* sb/submodule-recursive-fetch-gets-the-tip (2018-12-09) 9 commits
+  (merged to 'next' on 2019-01-18 at 79a2809fbc)
+ + fetch: ensure submodule objects fetched
+ + submodule.c: fetch in submodules git directory instead of in worktree
+ + submodule: migrate get_next_submodule to use repository structs
+ + repository: repo_submodule_init to take a submodule struct
+ + submodule: store OIDs in changed_submodule_names
+ + submodule.c: tighten scope of changed_submodule_names struct
+ + submodule.c: sort changed_submodule_names before searching it
+ + submodule.c: fix indentation
+ + sha1-array: provide oid_array_filter
+
+ "git fetch --recurse-submodules" may not fetch the necessary commit
+ that is bound to the superproject, which is getting corrected.
+
+--------------------------------------------------
+[Cooking]
+
+* js/filter-options-should-use-plain-int (2019-01-15) 1 commit
+  (merged to 'next' on 2019-01-18 at 6714547e6d)
+ + filter-options: expand scaled numbers
+ (this branch uses md/list-objects-filter-by-depth and sb/more-repo-in-api; is tangled with jt/get-reference-with-commit-graph.)
+
+ Update the protocol message specification to allow only the limited
+ use of scaled quantities.  This is ensure potential compatibility
+ issues will not go out of hand.
+
+ Will merge to 'master'.
+
+
+* jt/get-reference-with-commit-graph (2018-12-28) 1 commit
+  (merged to 'next' on 2019-01-18 at bfc4eb9411)
+ + revision: use commit graph in get_reference()
+ (this branch uses sb/more-repo-in-api; is tangled with js/filter-options-should-use-plain-int and md/list-objects-filter-by-depth.)
+
+ Micro-optimize the code that prepares commit objects to be walked
+ by "git rev-list" when the commit-graph is available.
+
+ Will merge to 'master'.
+
+
+* sb/more-repo-in-api (2018-12-28) 23 commits
+ + t/helper/test-repository: celebrate independence from the_repository
+ + path.h: make REPO_GIT_PATH_FUNC repository agnostic
+ + commit: prepare free_commit_buffer and release_commit_memory for any repo
+ + commit-graph: convert remaining functions to handle any repo
+ + submodule: don't add submodule as odb for push
+ + submodule: use submodule repos for object lookup
+ + pretty: prepare format_commit_message to handle arbitrary repositories
+ + commit: prepare logmsg_reencode to handle arbitrary repositories
+ + commit: prepare repo_unuse_commit_buffer to handle any repo
+ + commit: prepare get_commit_buffer to handle any repo
+ + commit-reach: prepare in_merge_bases[_many] to handle any repo
+ + commit-reach: prepare get_merge_bases to handle any repo
+ + commit-reach.c: allow get_merge_bases_many_0 to handle any repo
+ + commit-reach.c: allow remove_redundant to handle any repo
+ + commit-reach.c: allow merge_bases_many to handle any repo
+ + commit-reach.c: allow paint_down_to_common to handle any repo
+ + commit: allow parse_commit* to handle any repo
+ + object: parse_object to honor its repository argument
+ + object-store: prepare has_{sha1, object}_file to handle any repo
+ + object-store: prepare read_object_file to deal with any repo
+ + object-store: allow read_object_file_extended to read from any repo
+ + packfile: allow has_packed_and_bad to handle arbitrary repositories
+ + sha1_file: allow read_object to read objects in arbitrary repositories
+ (this branch is used by js/filter-options-should-use-plain-int, jt/get-reference-with-commit-graph and md/list-objects-filter-by-depth.)
+
+ The in-core repository instances are passed through more codepaths.
+
+ Will merge to 'master'.
+
 
 * br/commit-tree-fully-spelled-gpg-sign-option (2019-01-22) 2 commits
  - commit-tree: add missing --gpg-sign flag
@@ -40,31 +324,34 @@ of the repositories listed at
 
 
 * jk/attr-macro-fix (2019-01-22) 1 commit
- - attr: do not mark queried macros as unset
+  (merged to 'next' on 2019-01-29 at 740df172e1)
+ + attr: do not mark queried macros as unset
 
  Asking "git check-attr" about a macro (e.g. "binary") on a specific
  path did not work correctly, even though "git check-attr -a" listed
  such a macro correctly.  This has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/test-git-installed (2019-01-22) 1 commit
- - tests: explicitly use `test-tool.exe` on Windows
+  (merged to 'next' on 2019-01-29 at bab6eabb20)
+ + tests: explicitly use `test-tool.exe` on Windows
 
  Test fix for Windows.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ph/pack-objects-mutex-fix (2019-01-28) 2 commits
- - pack-objects: merge read_lock and lock in packing_data struct
- - pack-objects: move read mutex to packing_data struct
+  (merged to 'next' on 2019-01-29 at 7c886f6c33)
+ + pack-objects: merge read_lock and lock in packing_data struct
+ + pack-objects: move read mutex to packing_data struct
 
  "git pack-objects" incorrectly used uninitialized mutex, which has
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/submodule-abort-update-upon-config-failure (2019-01-18) 1 commit
@@ -91,28 +378,30 @@ of the repositories listed at
  UTF-16 with BOM in little endian byte order, which cannot be directly
  generated by using iconv.
 
- Will merge to 'next'.
+ Hold.
+ cf. <20190129072228.dcyyjpcgqk7c44j4@tb-raspi4>
 
 
 * ja/doc-style-fix (2019-01-23) 1 commit
- - doc: tidy asciidoc style
+  (merged to 'next' on 2019-01-29 at 5b520a6fd3)
+ + doc: tidy asciidoc style
 
  Doc typo/stylo fixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * az/instaweb-py3-http-server (2019-01-28) 1 commit
- - git-instaweb: add Python builtin http.server support
+  (merged to 'next' on 2019-01-29 at 82f06b6774)
+ + git-instaweb: add Python builtin http.server support
 
  "git instaweb" learned to drive http.server that comes with
  "batteries included" Python installation (both Python2 & 3).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jh/trace2 (2019-01-27) 15 commits
- - trace2: fix hdr-check warnings
+* jh/trace2 (2019-01-28) 14 commits
  - trace2: t/helper/test-trace2, t0210.sh, t0211.sh, t0212.sh
  - trace2:data: add subverb for rebase
  - trace2:data: add subverb to reset command
@@ -128,23 +417,25 @@ of the repositories listed at
  - trace2: create new combined trace facility
  - trace2: Documentation/technical/api-trace2.txt
 
- Expecting a reroll.
- cf. <e1bd52e3-1ac5-b08c-d1f6-a7fa63ebf0cf@jeffhostetler.com>
+ A more structured way to obtain execution trace has been added.
+
+ Ready?
 
 
 * jk/diff-cc-stat-fixes (2019-01-24) 6 commits
- - combine-diff: treat --dirstat like --stat
- - combine-diff: treat --summary like --stat
- - combine-diff: treat --shortstat like --stat
- - combine-diff: factor out stat-format mask
- - diff: clear emitted_symbols flag after use
- - t4006: resurrect commented-out tests
+  (merged to 'next' on 2019-01-29 at 8bd04f1749)
+ + combine-diff: treat --dirstat like --stat
+ + combine-diff: treat --summary like --stat
+ + combine-diff: treat --shortstat like --stat
+ + combine-diff: factor out stat-format mask
+ + diff: clear emitted_symbols flag after use
+ + t4006: resurrect commented-out tests
 
  "git diff --color-moved --cc --stat -p" did not work well due to
  funny interaction between a bug in color-moved and the rest, which
  has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/unused-parameter-cleanup (2019-01-24) 8 commits
@@ -159,48 +450,53 @@ of the repositories listed at
 
  Code cleanup.
 
-
-* nd/fetch-compact-update (2019-01-27) 1 commit
- - fetch: prefer suffix substitution in compact fetch.output
-
- "git fetch" output cleanup.
-
  Will merge to 'next'.
 
 
+* nd/fetch-compact-update (2019-01-27) 1 commit
+  (merged to 'next' on 2019-01-29 at b78e8841b0)
+ + fetch: prefer suffix substitution in compact fetch.output
+
+ "git fetch" output cleanup.
+
+ Will merge to 'master'.
+
+
 * sg/object-as-type-commit-graph-fix (2019-01-27) 1 commit
- - object_as_type: initialize commit-graph-related fields of 'struct commit'
+  (merged to 'next' on 2019-01-29 at cc714a044a)
+ + object_as_type: initialize commit-graph-related fields of 'struct commit'
 
  The commit-graph facility did not work when in-core objects that
  are promoted from unknown type to commit (e.g. a commit that is
  accessed via a tag that refers to it) were involved, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/strbuf-addbuf-cocci (2019-01-27) 1 commit
- - strbuf.cocci: suggest strbuf_addbuf() to add one strbuf to an other
+  (merged to 'next' on 2019-01-29 at a9f7279d38)
+ + strbuf.cocci: suggest strbuf_addbuf() to add one strbuf to an other
 
  Cocci rule update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sx/evolve (2019-01-27) 8 commits
- - evolve: add the 'git change list' command
- - evolve: implement the 'git change' command
- - evolve: add support for writing metacommits
- - evolve: add the change-table structure
- - evolve: add support for parsing metacommits
- - ref-filter: add the metas namespace to ref-filter
- - sha1-array: implement oid_array_readonly_contains()
- - technical doc: add a design doc for the evolve command
+ . evolve: add the 'git change list' command
+ . evolve: implement the 'git change' command
+ . evolve: add support for writing metacommits
+ . evolve: add the change-table structure
+ . evolve: add support for parsing metacommits
+ . ref-filter: add the metas namespace to ref-filter
+ . sha1-array: implement oid_array_readonly_contains()
+ . technical doc: add a design doc for the evolve command
 
- The beginning of "hg evolve" mimickery.
+ The beginning of "hg evolve" mimicry.
 
 
-* jk/autocrlf-overrides-eol-doc (2019-01-28) 2 commits
+* jk/autocrlf-overrides-eol-doc (2019-01-29) 2 commits
  - docs/config: clarify "text property" in core.eol
  - doc/gitattributes: clarify "autocrlf overrides eol"
 
@@ -210,17 +506,18 @@ of the repositories listed at
 
 
 * pw/no-editor-in-rebase-i-implicit (2019-01-28) 1 commit
- - implicit interactive rebase: don't run sequence editor
+  (merged to 'next' on 2019-01-29 at 9d06993725)
+ + implicit interactive rebase: don't run sequence editor
 
  When GIT_SEQUENCE_EDITOR is set, the command was incorrectly
  started when modes of "git rebase" that implicitly uses the
  machinery for the interactive rebase are run, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* pw/rebase-x-sanity-check (2019-01-28) 1 commit
+* pw/rebase-x-sanity-check (2019-01-29) 1 commit
  - rebase -x: sanity check command
 
  "git rebase -x $cmd" did not reject multi-line command, even though
@@ -229,95 +526,101 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Cooking]
 
 * ab/commit-graph-write-optim (2019-01-22) 1 commit
- - commit-graph write: use pack order when finding commits
+  (merged to 'next' on 2019-01-29 at 17c894dfec)
+ + commit-graph write: use pack order when finding commits
  (this branch is used by ab/commit-graph-write-progress and ds/commit-graph-format-v2.)
 
  The codepath to write out commit-graph has been optimized by
  following the usual pattern of visiting objects in in-pack order.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ab/commit-graph-write-progress (2019-01-23) 9 commits
- - commit-graph write: emit a percentage for all progress
- - commit-graph write: add itermediate progress
- - commit-graph write: remove empty line for readability
- - commit-graph write: add more descriptive progress output
- - commit-graph write: show progress for object search
- - commit-graph write: more descriptive "writing out" output
- - commit-graph write: add "Writing out" progress output
- - commit-graph: don't call write_graph_chunk_extra_edges() unnecessarily
- - commit-graph: rename "large edges" to "extra edges"
+  (merged to 'next' on 2019-01-29 at e086b1cba6)
+ + commit-graph write: emit a percentage for all progress
+ + commit-graph write: add itermediate progress
+ + commit-graph write: remove empty line for readability
+ + commit-graph write: add more descriptive progress output
+ + commit-graph write: show progress for object search
+ + commit-graph write: more descriptive "writing out" output
+ + commit-graph write: add "Writing out" progress output
+ + commit-graph: don't call write_graph_chunk_extra_edges() unnecessarily
+ + commit-graph: rename "large edges" to "extra edges"
  (this branch is used by ds/commit-graph-format-v2; uses ab/commit-graph-write-optim.)
 
  The codepath to show progress meter while writing out commit-graph
  file has been improved.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * cc/test-ref-store-typofix (2019-01-17) 1 commit
- - helper/test-ref-store: fix "new-sha1" vs "old-sha1" typo
+  (merged to 'next' on 2019-01-29 at 0cd264f864)
+ + helper/test-ref-store: fix "new-sha1" vs "old-sha1" typo
 
- An obvious typo in an assersion error message has been fixed.
+ An obvious typo in an assertion error message has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/add-ignore-errors-bit-assignment-fix (2019-01-17) 1 commit
- - add: use separate ADD_CACHE_RENORMALIZE flag
+  (merged to 'next' on 2019-01-29 at a4ac7ccd4f)
+ + add: use separate ADD_CACHE_RENORMALIZE flag
 
  "git add --ignore-errors" did not work as advertised and instead
  worked as an unintended synonym for "git add --renormalize", which
  has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/mingw-unc-path-w-backslashes (2019-01-18) 2 commits
- - mingw: special-case arguments to `sh`
- - mingw (t5580): document bug when cloning from backslashed UNC paths
+  (merged to 'next' on 2019-01-29 at 3adc177c1e)
+ + mingw: special-case arguments to `sh`
+ + mingw (t5580): document bug when cloning from backslashed UNC paths
 
  In Git for Windows, "git clone \\server\share\path" etc. that uses
  UNC paths from command line had bad interaction with its shell
  emulation.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/t6042-timing-fix (2019-01-17) 1 commit
- - t6042: work around speed optimization on Windows
+  (merged to 'next' on 2019-01-29 at 9543c96249)
+ + t6042: work around speed optimization on Windows
 
  Test update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jt/namespaced-ls-refs-fix (2019-01-18) 1 commit
- - ls-refs: filter refs using namespace-stripped name
+  (merged to 'next' on 2019-01-29 at 049530f499)
+ + ls-refs: filter refs using namespace-stripped name
 
  Fix namespace support in protocol v2.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bp/checkout-new-branch-optim (2019-01-23) 2 commits
- - checkout: fix regression in checkout -b on intitial checkout
- - checkout: add test demonstrating regression with checkout -b on initial commit
+  (merged to 'next' on 2019-01-29 at 89d690634d)
+ + checkout: fix regression in checkout -b on intitial checkout
+ + checkout: add test demonstrating regression with checkout -b on initial commit
 
  "git checkout -b <new> [HEAD]" to create a new branch from the
  current commit and check it out ought to be a no-op in the index
  and the working tree in normal cases, but there are corner cases
- that does require updates to the index and the working tree.
- Running it immediately after "git clone --no-checkout" is one of
- these cases that an earlier optimization kicked in incorrectly,
- which has been fixed.
+ that do require updates to the index and the working tree.  Running
+ it immediately after "git clone --no-checkout" is one of these
+ cases that an earlier optimization kicked in incorrectly, which has
+ been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * br/blame-ignore (2019-01-18) 3 commits
@@ -328,15 +631,18 @@ of the repositories listed at
  "git blame" learned to "ignore" commits in the history, whose
  effects (as well as their presence) get ignored.
 
+ Is this ready for 'next'?
+
 
 * js/abspath-part-inside-repo (2019-01-18) 1 commit
- - abspath_part_inside_repo: respect core.ignoreCase
+  (merged to 'next' on 2019-01-29 at ac642158ec)
+ + abspath_part_inside_repo: respect core.ignoreCase
 
- On a case-insensntive filesystem, we failed to compare the part of
+ On a case-insensitive filesystem, we failed to compare the part of
  the path that is above the worktree directory in an absolute
  pathname, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/diff-parseopt (2019-01-27) 14 commits
@@ -360,6 +666,9 @@ of the repositories listed at
  handcrafted option parser.  This is being rewritten to use the
  parse-options API.
 
+ Will merge to 'next'.
+ Looking good.
+
 
 * sc/pack-redundant (2019-01-14) 5 commits
  - pack-redundant: consistent sort method
@@ -372,56 +681,6 @@ of the repositories listed at
  repository with many packfiles.
 
  Comments?
-
-
-* pw/diff-color-moved-ws-fix (2019-01-10) 9 commits
-  (merged to 'next' on 2019-01-18 at e19713c82f)
- + diff --color-moved-ws: handle blank lines
- + diff --color-moved-ws: modify allow-indentation-change
- + diff --color-moved-ws: optimize allow-indentation-change
- + diff --color-moved=zebra: be stricter with color alternation
- + diff --color-moved-ws: fix false positives
- + diff --color-moved-ws: demonstrate false positives
- + diff: allow --no-color-moved-ws
- + Use "whitespace" consistently
- + diff: document --no-color-moved
-
- "git diff --color-moved-ws" updates.
-
- Will merge to 'master'.
-
-
-* it/log-format-source (2019-01-11) 1 commit
-  (merged to 'next' on 2019-01-18 at d660044e93)
- + log: add %S option (like --source) to log --format
-
- Custom userformat "log --format" learned %S atom that stands for
- the tip the traversal reached the commit from, i.e. --source.
-
- Will merge to 'master'.
-
-
-* js/filter-options-should-use-plain-int (2019-01-15) 1 commit
-  (merged to 'next' on 2019-01-18 at 6714547e6d)
- + filter-options: expand scaled numbers
- (this branch uses md/list-objects-filter-by-depth and sb/more-repo-in-api; is tangled with jt/get-reference-with-commit-graph.)
-
- Update the protocol message specification to allow only the limited
- use of scaled quantities.  This is ensure potential compatibility
- issues will not go out of hand.
-
- Will merge to 'master'.
-
-
-* jt/upload-pack-deepen-relative-proto-v2 (2019-01-10) 2 commits
-  (merged to 'next' on 2019-01-18 at 1483ad21db)
- + upload-pack: teach deepen-relative in protocol v2
- + fetch-pack: do not take shallow lock unnecessarily
-
- "git fetch --deepen=<more>" has been corrected to work over v2
- protocol.
-
- Will merge to 'master'.
 
 
 * nd/config-move-to (2019-01-14) 7 commits
@@ -449,90 +708,39 @@ of the repositories listed at
 
 
 * sg/obstack-cast-function-type-fix (2019-01-17) 1 commit
- - compat/obstack: fix -Wcast-function-type warnings
+  (merged to 'next' on 2019-01-29 at 568cafa7f4)
+ + compat/obstack: fix -Wcast-function-type warnings
 
  The compat/obstack code had casts that -Wcast-function-type
  compilation option found questionable.
-
- Will merge to 'next'.
-
-
-* cc/fetch-error-message-fix (2019-01-14) 1 commit
-  (merged to 'next' on 2019-01-14 at 81078f86c0)
- + fetch: fix extensions.partialclone name in error message
-
- Error message fix.
-
- Will merge to 'master'.
-
-
-* cc/parial-clone-doc-typofix (2019-01-14) 1 commit
-  (merged to 'next' on 2019-01-14 at 0395de767e)
- + partial-clone: add missing 'is' in doc
-
- Doc fix.
-
- Will merge to 'master'.
-
-
-* jk/remote-insteadof-cleanup (2019-01-11) 1 commit
-  (merged to 'next' on 2019-01-18 at 112c93eef3)
- + remote: check config validity before creating rewrite struct
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/save-getenv-result (2019-01-11) 6 commits
-  (merged to 'next' on 2019-01-18 at 429c77402a)
- + builtin_diff(): read $GIT_DIFF_OPTS closer to use
- + merge-recursive: copy $GITHEAD strings
- + init: make a copy of $GIT_DIR string
- + config: make a copy of $GIT_CONFIG string
- + commit: copy saved getenv() result
- + get_super_prefix(): copy getenv() result
-
- There were many places the code relied on the string returned from
- getenv() to be non-volatile, which is not true, that have been
- corrected.
 
  Will merge to 'master'.
 
 
 * jt/fetch-v2-sideband (2019-01-17) 5 commits
- - tests: define GIT_TEST_SIDEBAND_ALL
- - {fetch,upload}-pack: sideband v2 fetch response
- - sideband: reverse its dependency on pkt-line
- - pkt-line: introduce struct packet_writer
- - Merge branch 'ms/packet-err-check' into jt/fetch-v2-sideband
+  (merged to 'next' on 2019-01-29 at c8c6f11f77)
+ + tests: define GIT_TEST_SIDEBAND_ALL
+ + {fetch,upload}-pack: sideband v2 fetch response
+ + sideband: reverse its dependency on pkt-line
+ + pkt-line: introduce struct packet_writer
+ + Merge branch 'ms/packet-err-check' into jt/fetch-v2-sideband
  (this branch uses ms/packet-err-check.)
 
  "git fetch" and "git upload-pack" learned to send all exchange over
  the sideband channel while talking the v2 protocol.
 
- Will merge to 'next'.
-
-
-* kg/external-diff-save-env (2019-01-11) 1 commit
-  (merged to 'next' on 2019-01-14 at 8281bbd48b)
- + diff: ensure correct lifetime of external_diff_cmd
-
- The code to drive GIT_EXTERNAL_DIFF command relied on the string
- returned from getenv() to be non-volatile, which is not true, that
- has been corrected.
-
  Will merge to 'master'.
 
 
 * ld/git-p4-shelve-update-fix (2019-01-18) 2 commits
- - git-p4: handle update of moved/copied files when updating a shelve
- - git-p4: add failing test for shelved CL update involving move/copy
+  (merged to 'next' on 2019-01-29 at 02e8752ec8)
+ + git-p4: handle update of moved/copied files when updating a shelve
+ + git-p4: add failing test for shelved CL update involving move/copy
 
  "git p4" failed to update a shelved change when there were moved
  files, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ma/clear-repository-format (2019-01-23) 2 commits
@@ -561,42 +769,7 @@ of the repositories listed at
  The assumption to work on the single "in-core index" instance has
  been reduced from the library-ish part of the codebase.
 
- This obviously has fallouts with a few topics in flight, but
- otherwise it seemed to be in good enough shape.
-
-
-* bc/tree-walk-oid (2019-01-15) 5 commits
-  (merged to 'next' on 2019-01-18 at 60c38b9e4a)
- + cache: make oidcpy always copy GIT_MAX_RAWSZ bytes
- + tree-walk: store object_id in a separate member
- + match-trees: use hashcpy to splice trees
- + match-trees: compute buffer offset correctly when splicing
- + tree-walk: copy object ID before use
-
- The code to walk tree objects has been taught that we may be
- working with object names that are not computed with SHA-1.
-
- Will merge to 'master'.
-
-
-* js/add-e-clear-patch-before-stating (2019-01-15) 1 commit
-  (merged to 'next' on 2019-01-18 at 9ea7fc4b49)
- + add --edit: truncate the patch file
-
- "git add -e" got confused when the change it wants to let the user
- edit is smaller than the previous change that was left over in a
- temporary file.
-
- Will merge to 'master'.
-
-
-* jt/fetch-pack-v2 (2019-01-10) 1 commit
-  (merged to 'next' on 2019-01-18 at 75ceb55ff8)
- + fetch-pack: support protocol version 2
-
- "git fetch-pack" now can talk the version 2 protocol.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * jp/author-committer-config (2019-01-02) 2 commits
@@ -609,6 +782,7 @@ of the repositories listed at
 
  Expecting a reroll.
  cf. <xmqq1s5uk6qh.fsf@gitster-ct.c.googlers.com>
+ cf. <20190128233022.GA29068@whubbs1.gaikai.biz>
 
 
 * js/rebase-am (2019-01-18) 4 commits
@@ -621,44 +795,18 @@ of the repositories listed at
  backend, the built-in version of "git rebase" learned to drive the
  "am" backend directly.
 
- Waiting for a review response.
- Looked almost ready.
+ Will merge to 'next'.
 
 
 * ms/packet-err-check (2019-01-02) 2 commits
- - pack-protocol.txt: accept error packets in any context
- - Use packet_reader instead of packet_read_line
+ + pack-protocol.txt: accept error packets in any context
+ + Use packet_reader instead of packet_read_line
  (this branch is used by jt/fetch-v2-sideband.)
 
  Error checking of data sent over the pack-protocol has been
  revamped so that error packets are always diagnosed properly.
 
  Will merge to 'next'.
-
-
-* os/rebase-runs-post-checkout-hook (2019-01-02) 2 commits
-  (merged to 'next' on 2019-01-18 at a03d536318)
- + rebase: run post-checkout hook on checkout
- + t5403: simplify by using a single repository
-
- "git rebase" internally runs "checkout" to switch between branches,
- and the command used to call the post-checkout hook, but the
- reimplementation stopped doing so, which is getting fixed.
-
- Will merge to 'master'.
-
-
-* ms/http-no-more-failonerror (2019-01-10) 5 commits
-  (merged to 'next' on 2019-01-18 at 8938d70b6d)
- + test: test GIT_CURL_VERBOSE=1 shows an error
- + remote-curl: unset CURLOPT_FAILONERROR
- + remote-curl: define struct for CURLOPT_WRITEFUNCTION
- + http: enable keep_error for HTTP requests
- + http: support file handles for HTTP_KEEP_ERROR
-
- Debugging help for http transport.
-
- Will merge to 'master'.
 
 
 * tt/bisect-in-c (2019-01-02) 7 commits
@@ -672,17 +820,7 @@ of the repositories listed at
 
  More code in "git bisect" has been rewritten in C.
 
- Comments?
-
-
-* ja/doc-build-l10n (2019-01-07) 1 commit
-  (merged to 'next' on 2019-01-18 at 5dbe5ad3d7)
- + Documentation/Makefile add optional targets for l10n
-
- Prepare Documentation/Makefile so that manpage localization can
- reuse it by overriding and tweaking the list of build products.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * jk/loose-object-cache-oid (2019-01-08) 11 commits
@@ -703,7 +841,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* lt/date-human (2019-01-22) 5 commits
+* lt/date-human (2019-01-29) 5 commits
  - Add `human` date format tests.
  - Add `human` format to test-tool
  - Add 'human' date format documentation
@@ -713,7 +851,7 @@ of the repositories listed at
  A new date format "--date=human" that morphs its output depending
  on how far the time is from the current time has been introduced.
  "--date=auto" can be used to use this new format when the output is
- goint to the pager or to the terminal and otherwise the default
+ going to the pager or to the terminal and otherwise the default
  format.
 
  Will merge to 'next'.
@@ -752,32 +890,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* js/rebase-i-redo-exec (2018-12-11) 3 commits
-  (merged to 'next' on 2019-01-18 at 71be3fedb7)
- + rebase: introduce a shortcut for --reschedule-failed-exec
- + rebase: add a config option to default to --reschedule-failed-exec
- + rebase: introduce --reschedule-failed-exec
-
- "git rebase -i" learned to re-execute a command given with 'exec'
- to run after it failed the last time.
-
- Will merge to 'master'.
-
-
-* md/list-objects-filter-by-depth (2019-01-15) 4 commits
- + tree:<depth>: skip some trees even when collecting omits
- + list-objects-filter: teach tree:# how to handle >0
- + Merge branch 'nd/the-index' into md/list-objects-filter-by-depth
- + Merge branch 'sb/more-repo-in-api' into md/list-objects-filter-by-depth
- (this branch is used by js/filter-options-should-use-plain-int; uses sb/more-repo-in-api; is tangled with jt/get-reference-with-commit-graph.)
-
- The objects-filter machinery learned "tree:<depth>" to filter
- objects up to a given depth; earlier it only supported depth=0,
- i.e. usable to create a commit-only lazy clone.
-
- Will merge to 'next'.
-
-
 * tg/checkout-no-overlay (2019-01-08) 8 commits
   (merged to 'next' on 2019-01-18 at 1e2a79ba5c)
  + checkout: introduce checkout.overlayMode config
@@ -797,35 +909,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/proto-v2-hidden-refs-fix (2019-01-10) 1 commit
-  (merged to 'next' on 2019-01-18 at 875dbbc71f)
- + upload-pack: support hidden refs with protocol v2
-
- The v2 upload-pack protocol implementation failed to honor
- hidden-ref configuration, which has been corrected.
-
- Will merge to 'master'.
- An earlier attempt reverted out of 'next'.
-
-
 * js/commit-graph-chunk-table-fix (2019-01-15) 3 commits
- - Makefile: correct example fuzz build
- - commit-graph: fix buffer read-overflow
- - commit-graph, fuzz: add fuzzer for commit-graph
+  (merged to 'next' on 2019-01-29 at 65ea01d4f2)
+ + Makefile: correct example fuzz build
+ + commit-graph: fix buffer read-overflow
+ + commit-graph, fuzz: add fuzzer for commit-graph
 
  The codepath to read from the commit-graph file attempted to read
  past the end of it when the file's table-of-contents was corrupt.
-
- Will merge to 'next'.
-
-
-* jt/get-reference-with-commit-graph (2018-12-28) 1 commit
-  (merged to 'next' on 2019-01-18 at bfc4eb9411)
- + revision: use commit graph in get_reference()
- (this branch uses sb/more-repo-in-api; is tangled with js/filter-options-should-use-plain-int and md/list-objects-filter-by-depth.)
-
- Micro-optimize the code that prepares commit objects to be walked
- by "git rev-list" when the commit-graph is available.
 
  Will merge to 'master'.
 
@@ -843,8 +934,10 @@ of the repositories listed at
  out just like the list of updated paths and other information to
  help the user explain the merge better.
 
+ Comments?
 
-* aw/pretty-trailers (2018-12-09) 7 commits
+
+* aw/pretty-trailers (2019-01-29) 7 commits
  - pretty: add support for separator option in %(trailers)
  - strbuf: separate callback for strbuf_expand:ing literals
  - pretty: add support for "valueonly" option in %(trailers)
@@ -857,7 +950,7 @@ of the repositories listed at
  optionally pick trailers selectively by keyword, show only values,
  etc.
 
- How's the doneness of this one?
+ Comments?
 
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
@@ -883,8 +976,7 @@ of the repositories listed at
  "git rebase --merge" as been reimplemented by reusing the internal
  machinery used for "git rebase -i".
 
- On hold.
- cf. <CABPp-BFckuONYcGGkCY3BuPypRULmhsk_OFHyYA2E4jM66BfeQ@mail.gmail.com>
+ Will merge to 'next'.
 
 
 * dl/remote-save-to-push (2018-12-11) 1 commit
@@ -904,6 +996,8 @@ of the repositories listed at
  used can be negotiated between the parties, by the initiator
  listing the protocol versions it is willing to talk, and the other
  side choosing from one of them.
+
+ Is this ready for 'next'?
 
 
 * js/smart-http-detect-remote-error (2019-01-07) 3 commits
@@ -930,64 +1024,11 @@ of the repositories listed at
  The second one is of dubious value.  Needs sign-off.
 
 
-* sb/more-repo-in-api (2018-12-28) 23 commits
- + t/helper/test-repository: celebrate independence from the_repository
- + path.h: make REPO_GIT_PATH_FUNC repository agnostic
- + commit: prepare free_commit_buffer and release_commit_memory for any repo
- + commit-graph: convert remaining functions to handle any repo
- + submodule: don't add submodule as odb for push
- + submodule: use submodule repos for object lookup
- + pretty: prepare format_commit_message to handle arbitrary repositories
- + commit: prepare logmsg_reencode to handle arbitrary repositories
- + commit: prepare repo_unuse_commit_buffer to handle any repo
- + commit: prepare get_commit_buffer to handle any repo
- + commit-reach: prepare in_merge_bases[_many] to handle any repo
- + commit-reach: prepare get_merge_bases to handle any repo
- + commit-reach.c: allow get_merge_bases_many_0 to handle any repo
- + commit-reach.c: allow remove_redundant to handle any repo
- + commit-reach.c: allow merge_bases_many to handle any repo
- + commit-reach.c: allow paint_down_to_common to handle any repo
- + commit: allow parse_commit* to handle any repo
- + object: parse_object to honor its repository argument
- + object-store: prepare has_{sha1, object}_file to handle any repo
- + object-store: prepare read_object_file to deal with any repo
- + object-store: allow read_object_file_extended to read from any repo
- + packfile: allow has_packed_and_bad to handle arbitrary repositories
- + sha1_file: allow read_object to read objects in arbitrary repositories
- (this branch is used by js/filter-options-should-use-plain-int, jt/get-reference-with-commit-graph and md/list-objects-filter-by-depth.)
-
- The in-core repository instances are passed through more codepaths.
-
- Will merge to 'next'.
-
-
-* bc/sha-256 (2018-11-14) 12 commits
-  (merged to 'next' on 2019-01-18 at 3f161d31bb)
- + hash: add an SHA-256 implementation using OpenSSL
- + sha256: add an SHA-256 implementation using libgcrypt
- + Add a base implementation of SHA-256 support
- + commit-graph: convert to using the_hash_algo
- + t/helper: add a test helper to compute hash speed
- + sha1-file: add a constant for hash block size
- + t: make the sha1 test-tool helper generic
- + t: add basic tests for our SHA-1 implementation
- + cache: make hashcmp and hasheq work with larger hashes
- + hex: introduce functions to print arbitrary hashes
- + sha1-file: provide functions to look up hash algorithms
- + sha1-file: rename algorithm to "sha1"
- (this branch is used by ds/commit-graph-format-v2.)
-
- Add sha-256 hash and plug it through the code to allow building Git
- with the "NewHash".
-
- Will merge to 'master'.
-
-
-* js/vsts-ci (2019-01-28) 21 commits
+* js/vsts-ci (2019-01-29) 21 commits
  - ci: parallelize testing on Windows
  - ci: speed up Windows phase
  - tests: optionally skip bin-wrappers/
- - t0061: fix with --with-dashes and RUNTIME_PREFIX
+ - t0061: workaround issues with --with-dashes and RUNTIME_PREFIX
  - tests: add t/helper/ to the PATH with --with-dashes
  - mingw: try to work around issues with the test cleanup
  - tests: include detailed trace logs with --write-junit-xml upon failure
@@ -1027,10 +1068,8 @@ of the repositories listed at
  updated to use "size_t".
 
 
-* ag/sequencer-reduce-rewriting-todo (2019-01-14) 18 commits
- - rebase-interactive.h: fix hdr-check warnings
- - sequencer: mark file local symbols as static
- - rebase-interactive: move transform_todo_file() to rebase--interactive.c
+* ag/sequencer-reduce-rewriting-todo (2019-01-29) 16 commits
+ - rebase--interactive: move transform_todo_file() to rebase--interactive.c
  - sequencer: use edit_todo_list() in complete_action()
  - rebase-interactive: rewrite edit_todo_list() to handle the initial edit
  - rebase-interactive: append_todo_help() changes
@@ -1054,26 +1093,7 @@ of the repositories listed at
  around in-core to avoid rewriting the same file over and over
  unnecessarily.
 
- May need a further update, including squashing the tip commit to a
- releavant place.
-
-
-* sb/submodule-recursive-fetch-gets-the-tip (2018-12-09) 9 commits
-  (merged to 'next' on 2019-01-18 at 79a2809fbc)
- + fetch: ensure submodule objects fetched
- + submodule.c: fetch in submodules git directory instead of in worktree
- + submodule: migrate get_next_submodule to use repository structs
- + repository: repo_submodule_init to take a submodule struct
- + submodule: store OIDs in changed_submodule_names
- + submodule.c: tighten scope of changed_submodule_names struct
- + submodule.c: sort changed_submodule_names before searching it
- + submodule.c: fix indentation
- + sha1-array: provide oid_array_filter
-
- "git fetch --recurse-submodules" may not fetch the necessary commit
- that is bound to the superproject, which is getting corrected.
-
- Will merge to 'master'.
+ Comments?
 
 
 * js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
