@@ -114,7 +114,7 @@ their "<name>.pack" and "<name>.idx" files.
   that it has, either because the local repository has that object in one of
   its promisor packfiles, or because another promisor object refers to it.
 +
-When Git encounters a missing object, Git can see if it a promisor object
+When Git encounters a missing object, Git can see if it is a promisor object
 and handle it appropriately.  If not, Git can report a corruption.
 +
 This means that there is no need for the client to explicitly maintain an
