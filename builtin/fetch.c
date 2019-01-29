@@ -1478,7 +1478,8 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	 */
 	if (strcmp(remote->name, repository_format_partial_clone)) {
 		if (filter_options.choice)
-			die(_("--filter can only be used with the remote configured in core.partialClone"));
+			die(_("--filter can only be used with the remote "
+			      "configured in extensions.partialclone"));
 		return;
 	}
 
@@ -1646,7 +1647,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		result = fetch_one(remote, argc, argv, prune_tags_ok);
 	} else {
 		if (filter_options.choice)
-			die(_("--filter can only be used with the remote configured in core.partialClone"));
+			die(_("--filter can only be used with the remote "
+			      "configured in extensions.partialclone"));
 		/* TODO should this also die if we have a previous partial-clone? */
 		result = fetch_multiple(&list);
 	}
