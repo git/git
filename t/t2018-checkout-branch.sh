@@ -198,4 +198,13 @@ test_expect_success 'checkout -B to the current branch works' '
 	test_dirty_mergeable
 '
 
+test_expect_success 'checkout -b after clone --no-checkout does a checkout of HEAD' '
+	git init src &&
+	test_commit -C src a &&
+	rev="$(git -C src rev-parse HEAD)" &&
+	git clone --no-checkout src dest &&
+	git -C dest checkout "$rev" -b branch &&
+	test_path_is_file dest/a.t
+'
+
 test_done

@@ -640,6 +640,14 @@ static int skip_merge_working_tree(const struct checkout_opts *opts,
 	 * Remaining variables are not checkout options but used to track state
 	 */
 
+	 /*
+	  * Do the merge if this is the initial checkout. We cannot use
+	  * is_cache_unborn() here because the index hasn't been loaded yet
+	  * so cache_nr and timestamp.sec are always zero.
+	  */
+	if (!file_exists(get_index_file()))
+		return 0;
+
 	return 1;
 }
 
