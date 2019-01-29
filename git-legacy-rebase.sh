@@ -176,8 +176,8 @@ run_interactive () {
 
 run_specific_rebase () {
 	if [ "$interactive_rebase" = implied ]; then
-		GIT_EDITOR=:
-		export GIT_EDITOR
+		GIT_SEQUENCE_EDITOR=:
+		export GIT_SEQUENCE_EDITOR
 		autosquash=
 	fi
 
