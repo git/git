@@ -793,6 +793,19 @@ static void set_reflog_action(struct rebase_options *options)
 	strbuf_release(&buf);
 }
 
+static int check_exec_cmd(const char *cmd)
+{
+	if (strchr(cmd, '\n'))
+		return error(_("exec commands cannot contain newlines"));
+
+	/* Does the command consist purely of whitespace? */
+	if (!cmd[strspn(cmd, " \t\r\f\v")])
+		return error(_("empty exec command"));
+
+	return 0;
+}
+
+
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options = {
@@ -1129,6 +1142,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				die("Invalid whitespace option: '%s'", p);
 		}
 	}
+
+	for (i = 0; i < exec.nr; i++)
+		if (check_exec_cmd(exec.items[i].string))
+			exit(1);
 
 	if (!(options.flags & REBASE_NO_QUIET))
 		argv_array_push(&options.git_am_opts, "-q");
