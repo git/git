@@ -1802,8 +1802,8 @@ test_expect_success 'only move detection ignores white spaces' '
 	<BOLD;MAGENTA>-a long line to exceed per-line minimum<RESET>
 	<BOLD;MAGENTA>-another long line to exceed per-line minimum<RESET>
 	<RED>-original file<RESET>
-	<BOLD;YELLOW>+<RESET>Q<BOLD;YELLOW>a long line to exceed per-line minimum<RESET>
-	<BOLD;YELLOW>+<RESET>Q<BOLD;YELLOW>another long line to exceed per-line minimum<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>a long line to exceed per-line minimum<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>another long line to exceed per-line minimum<RESET>
 	<GREEN>+<RESET><GREEN>new file<RESET>
 	EOF
 	test_cmp expected actual
@@ -1827,6 +1827,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 	QQQthat has similar lines
 	QQQto previous blocks, but with different indent
 	QQQYetQAnotherQoutlierQ
+	QLine with internal w h i t e s p a c e change
 	EOF
 
 	git add text.txt &&
@@ -1847,6 +1848,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 	QQthat has similar lines
 	QQto previous blocks, but with different indent
 	QQYetQAnotherQoutlier
+	QLine with internal whitespace change
 	EOF
 
 	git diff --color --color-moved --color-moved-ws=allow-indentation-change >actual.raw &&
@@ -1856,7 +1858,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 		<BOLD>diff --git a/text.txt b/text.txt<RESET>
 		<BOLD>--- a/text.txt<RESET>
 		<BOLD>+++ b/text.txt<RESET>
-		<CYAN>@@ -1,14 +1,14 @@<RESET>
+		<CYAN>@@ -1,15 +1,15 @@<RESET>
 		<BOLD;MAGENTA>-QIndented<RESET>
 		<BOLD;MAGENTA>-QText across<RESET>
 		<BOLD;MAGENTA>-Qsome lines<RESET>
@@ -1871,6 +1873,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 		<BOLD;MAGENTA>-QQQthat has similar lines<RESET>
 		<BOLD;MAGENTA>-QQQto previous blocks, but with different indent<RESET>
 		<RED>-QQQYetQAnotherQoutlierQ<RESET>
+		<RED>-QLine with internal w h i t e s p a c e change<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Indented<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Text across<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>some lines<RESET>
@@ -1885,6 +1888,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>that has similar lines<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>to previous blocks, but with different indent<RESET>
 		<GREEN>+<RESET>QQ<GREEN>YetQAnotherQoutlier<RESET>
+		<GREEN>+<RESET>Q<GREEN>Line with internal whitespace change<RESET>
 	EOF
 
 	test_cmp expected actual
@@ -1913,6 +1917,95 @@ test_expect_success 'compare whitespace delta incompatible with other space opti
 		--color-moved-ws=allow-indentation-change,ignore-all-space \
 		2>err &&
 	test_i18ngrep allow-indentation-change err
+'
+
+EMPTY=''
+test_expect_success 'compare mixed whitespace delta across moved blocks' '
+
+	git reset --hard &&
+	tr Q_ "\t " <<-EOF >text.txt &&
+	${EMPTY}
+	____too short without
+	${EMPTY}
+	___being grouped across blank line
+	${EMPTY}
+	context
+	lines
+	to
+	anchor
+	____Indented text to
+	_Q____be further indented by four spaces across
+	____Qseveral lines
+	QQ____These two lines have had their
+	____indentation reduced by four spaces
+	Qdifferent indentation change
+	____too short
+	EOF
+
+	git add text.txt &&
+	git commit -m "add text.txt" &&
+
+	tr Q_ "\t " <<-EOF >text.txt &&
+	context
+	lines
+	to
+	anchor
+	QIndented text to
+	QQbe further indented by four spaces across
+	Q____several lines
+	${EMPTY}
+	QQtoo short without
+	${EMPTY}
+	Q_______being grouped across blank line
+	${EMPTY}
+	Q_QThese two lines have had their
+	indentation reduced by four spaces
+	QQdifferent indentation change
+	__Qtoo short
+	EOF
+
+	git -c color.diff.whitespace="normal red" \
+		-c core.whitespace=space-before-tab \
+		diff --color --color-moved --ws-error-highlight=all \
+		--color-moved-ws=allow-indentation-change >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/text.txt b/text.txt<RESET>
+	<BOLD>--- a/text.txt<RESET>
+	<BOLD>+++ b/text.txt<RESET>
+	<CYAN>@@ -1,16 +1,16 @@<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    too short without<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>   being grouped across blank line<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	 <RESET>context<RESET>
+	 <RESET>lines<RESET>
+	 <RESET>to<RESET>
+	 <RESET>anchor<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    Indented text to<RESET>
+	<BOLD;MAGENTA>-<RESET><BRED> <RESET>	<BOLD;MAGENTA>    be further indented by four spaces across<RESET>
+	<BOLD;MAGENTA>-<RESET><BRED>    <RESET>	<BOLD;MAGENTA>several lines<RESET>
+	<BOLD;BLUE>-<RESET>		<BOLD;BLUE>    These two lines have had their<RESET>
+	<BOLD;BLUE>-<RESET><BOLD;BLUE>    indentation reduced by four spaces<RESET>
+	<BOLD;MAGENTA>-<RESET>	<BOLD;MAGENTA>different indentation change<RESET>
+	<RED>-<RESET><RED>    too short<RESET>
+	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>Indented text to<RESET>
+	<BOLD;CYAN>+<RESET>		<BOLD;CYAN>be further indented by four spaces across<RESET>
+	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>    several lines<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;YELLOW>+<RESET>		<BOLD;YELLOW>too short without<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;YELLOW>+<RESET>	<BOLD;YELLOW>       being grouped across blank line<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;CYAN>+<RESET>	<BRED> <RESET>	<BOLD;CYAN>These two lines have had their<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>indentation reduced by four spaces<RESET>
+	<BOLD;YELLOW>+<RESET>		<BOLD;YELLOW>different indentation change<RESET>
+	<GREEN>+<RESET><BRED>  <RESET>	<GREEN>too short<RESET>
+	EOF
+
+	test_cmp expected actual
 '
 
 test_done
