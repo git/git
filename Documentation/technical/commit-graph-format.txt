@@ -76,7 +76,7 @@ CHUNK DATA:
       of the ith commit. Stores value 0x7000000 if no parent in that
       position. If there are more than two parents, the second value
       has its most-significant bit on and the other bits store an array
-      position into the Large Edge List chunk.
+      position into the Extra Edge List chunk.
     * The next 8 bytes store the generation number of the commit and
       the commit time in seconds since EPOCH. The generation number
       uses the higher 30 bits of the first 4 bytes, while the commit
@@ -84,7 +84,7 @@ CHUNK DATA:
       2 bits of the lowest byte, storing the 33rd and 34th bit of the
       commit time.
 
-  Large Edge List (ID: {'E', 'D', 'G', 'E'}) [Optional]
+  Extra Edge List (ID: {'E', 'D', 'G', 'E'}) [Optional]
       This list of 4-byte values store the second through nth parents for
       all octopus merges. The second parent value in the commit data stores
       an array position within this list along with the most-significant bit
