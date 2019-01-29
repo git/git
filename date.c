@@ -115,6 +115,19 @@ static int local_tzoffset(timestamp_t time)
 	return local_time_tzoffset((time_t)time, &tm);
 }
 
+static void get_time(struct timeval *now)
+{
+	const char *x;
+
+	x = getenv("GIT_TEST_DATE_NOW");
+	if (x) {
+		now->tv_sec = atoi(x);
+		now->tv_usec = 0;
+	}
+	else
+		gettimeofday(now, NULL);
+}
+
 void show_date_relative(timestamp_t time, int tz,
 			       const struct timeval *now,
 			       struct strbuf *timebuf)
@@ -228,7 +241,7 @@ static void show_date_normal(struct strbuf *buf, timestamp_t time, struct tm *tm
 	/* Show "today" times as just relative times */
 	if (hide.wday) {
 		struct timeval now;
-		gettimeofday(&now, NULL);
+		get_time(&now);
 		show_date_relative(time, tz, &now, buf);
 		return;
 	}
@@ -284,7 +297,7 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 	if (mode->type == DATE_HUMAN) {
 		struct timeval now;
 
-		gettimeofday(&now, NULL);
+		get_time(&now);
 
 		/* Fill in the data for "current time" in human_tz and human_tm */
 		human_tz = local_time_tzoffset(now.tv_sec, &human_tm);
@@ -303,7 +316,7 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 		struct timeval now;
 
 		strbuf_reset(&timebuf);
-		gettimeofday(&now, NULL);
+		get_time(&now);
 		show_date_relative(time, tz, &now, &timebuf);
 		return timebuf.buf;
 	}
@@ -1290,7 +1303,7 @@ timestamp_t approxidate_careful(const char *date, int *error_ret)
 		return timestamp;
 	}
 
-	gettimeofday(&tv, NULL);
+	get_time(&tv);
 	return approxidate_str(date, &tv, error_ret);
 }
 

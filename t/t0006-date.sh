@@ -4,10 +4,10 @@ test_description='test date parsing and printing'
 . ./test-lib.sh
 
 # arbitrary reference time: 2009-08-30 19:20:00
-TEST_DATE_NOW=1251660000; export TEST_DATE_NOW
+GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 
 check_relative() {
-	t=$(($TEST_DATE_NOW - $1))
+	t=$(($GIT_TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
 	test-tool date relative $t >actual &&
