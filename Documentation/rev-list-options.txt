@@ -270,13 +270,13 @@ depending on a few rules:
 +
 --
 1. If the starting point is specified as `ref@{Nth}`, show the index
-format.
+   format.
 +
 2. If the starting point was specified as `ref@{now}`, show the
-timestamp format.
+   timestamp format.
 +
 3. If neither was used, but `--date` was given on the command line, show
-the timestamp in the format requested by `--date`.
+   the timestamp in the format requested by `--date`.
 +
 4. Otherwise, show the index format.
 --

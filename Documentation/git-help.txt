@@ -118,9 +118,9 @@ format is chosen. The following values are currently supported:
 
 * "man": use the 'man' program as usual,
 * "woman": use 'emacsclient' to launch the "woman" mode in emacs
-(this only works starting with emacsclient versions 22),
+  (this only works starting with emacsclient versions 22),
 * "konqueror": use 'kfmclient' to open the man page in a new konqueror
-tab (see 'Note about konqueror' below).
+  tab (see 'Note about konqueror' below).
 
 Values for other tools can be used if there is a corresponding
 `man.<tool>.cmd` configuration entry (see below).

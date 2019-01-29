@@ -132,9 +132,9 @@ $ git diff HEAD       <3>
 +
 <1> Changes in the working tree not yet staged for the next commit.
 <2> Changes between the index and your last commit; what you
-would be committing if you run "git commit" without "-a" option.
+    would be committing if you run "git commit" without "-a" option.
 <3> Changes in the working tree since your last commit; what you
-would be committing if you run "git commit -a"
+    would be committing if you run "git commit -a"
 
 Comparing with arbitrary commits::
 +
@@ -145,10 +145,10 @@ $ git diff HEAD^ HEAD      <3>
 ------------
 +
 <1> Instead of using the tip of the current branch, compare with the
-tip of "test" branch.
+    tip of "test" branch.
 <2> Instead of comparing with the tip of "test" branch, compare with
-the tip of the current branch, but limit the comparison to the
-file "test".
+    the tip of the current branch, but limit the comparison to the
+    file "test".
 <3> Compare the version before the last commit and the last commit.
 
 Comparing branches::
@@ -162,7 +162,7 @@ $ git diff topic...master  <3>
 <1> Changes between the tips of the topic and the master branches.
 <2> Same as above.
 <3> Changes that occurred on the master branch since when the topic
-branch was started off it.
+    branch was started off it.
 
 Limiting the diff output::
 +
@@ -173,9 +173,9 @@ $ git diff arch/i386 include/asm-i386   <3>
 ------------
 +
 <1> Show only modification, rename, and copy, but not addition
-or deletion.
+    or deletion.
 <2> Show only names and the nature of change, but not actual
-diff output.
+    diff output.
 <3> Limit diff output to named subtrees.
 
 Munging the diff output::
@@ -186,7 +186,7 @@ $ git diff -R                          <2>
 ------------
 +
 <1> Spend extra cycles to find renames, copies and complete
-rewrites (very expensive).
+    rewrites (very expensive).
 <2> Output diff in reverse.
 
 SEE ALSO
