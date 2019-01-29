@@ -124,7 +124,9 @@ text file is normalized, its line endings are converted to LF in the
 repository.  To control what line ending style is used in the working
 directory, use the `eol` attribute for a single file and the
 `core.eol` configuration variable for all text files.
-Note that `core.autocrlf` overrides `core.eol`
+Note that setting `core.autocrlf` to `true` or `input` overrides
+`core.eol` (see the definitions of those options in
+linkgit:git-config[1]).
 
 Set::
 
