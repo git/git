@@ -296,7 +296,7 @@ void resolve_tree_islands(struct repository *r,
 			if (S_ISGITLINK(entry.mode))
 				continue;
 
-			obj = lookup_object(r, entry.oid->hash);
+			obj = lookup_object(r, entry.oid.hash);
 			if (!obj)
 				continue;
 

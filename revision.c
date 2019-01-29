@@ -67,10 +67,10 @@ static void mark_tree_contents_uninteresting(struct repository *r,
 	while (tree_entry(&desc, &entry)) {
 		switch (object_type(entry.mode)) {
 		case OBJ_TREE:
-			mark_tree_uninteresting(r, lookup_tree(r, entry.oid));
+			mark_tree_uninteresting(r, lookup_tree(r, &entry.oid));
 			break;
 		case OBJ_BLOB:
-			mark_blob_uninteresting(lookup_blob(r, entry.oid));
+			mark_blob_uninteresting(lookup_blob(r, &entry.oid));
 			break;
 		default:
 			/* Subproject commit - not in this repository */

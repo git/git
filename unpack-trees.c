@@ -679,7 +679,7 @@ static int switch_cache_bottom(struct traverse_info *info)
 
 static inline int are_same_oid(struct name_entry *name_j, struct name_entry *name_k)
 {
-	return name_j->oid && name_k->oid && oideq(name_j->oid, name_k->oid);
+	return !is_null_oid(&name_j->oid) && !is_null_oid(&name_k->oid) && oideq(&name_j->oid, &name_k->oid);
 }
 
 static int all_trees_same_as_cache_tree(int n, unsigned long dirmask,
@@ -857,7 +857,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 		else {
 			const struct object_id *oid = NULL;
 			if (dirmask & 1)
-				oid = names[i].oid;
+				oid = &names[i].oid;
 			buf[nr_buf++] = fill_tree_descriptor(t + i, oid);
 		}
 	}
@@ -981,7 +981,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	ce->ce_mode = create_ce_mode(n->mode);
 	ce->ce_flags = create_ce_flags(stage);
 	ce->ce_namelen = len;
-	oidcpy(&ce->oid, n->oid);
+	oidcpy(&ce->oid, &n->oid);
 	make_traverse_path(ce->name, info, n);
 
 	return ce;
