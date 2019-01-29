@@ -225,10 +225,16 @@ endif::git-rev-list[]
 			  linkgit:git-interpret-trailers[1]. The
 			  `trailers` string may be followed by a colon
 			  and zero or more comma-separated options:
-** 'only': omit non-trailer lines from the trailer block.
-** 'unfold': make it behave as if interpret-trailer's `--unfold`
-   option was given. E.g., `%(trailers:only,unfold)` unfolds and
-   shows all trailer lines.
+** 'only[=val]': select whether non-trailer lines from the trailer
+   block should be included. The `only` keyword may optionally be
+   followed by an equal sign and one of `true`, `on`, `yes` to omit or
+   `false`, `off`, `no` to show the non-trailer lines. If option is
+   given without value it is enabled. If given multiple times the last
+   value is used.
+** 'unfold[=val]': make it behave as if interpret-trailer's `--unfold`
+   option was given. In same way as to for `only` it can be followed
+   by an equal sign and explicit value. E.g.,
+   `%(trailers:only,unfold=true)` unfolds and shows all trailer lines.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will

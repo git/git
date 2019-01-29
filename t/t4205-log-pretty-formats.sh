@@ -578,6 +578,24 @@ test_expect_success '%(trailers:only) shows only "key: value" trailers' '
 	test_cmp expect actual
 '
 
+test_expect_success '%(trailers:only=yes) shows only "key: value" trailers' '
+	git log --no-walk --pretty=format:"%(trailers:only=yes)" >actual &&
+	grep -v patch.description <trailers >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only=no) shows all trailers' '
+	git log --no-walk --pretty=format:"%(trailers:only=no)" >actual &&
+	cat trailers >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only=no,only=true) shows only "key: value" trailers' '
+	git log --no-walk --pretty=format:"%(trailers:only=yes)" >actual &&
+	grep -v patch.description <trailers >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success '%(trailers:unfold) unfolds trailers' '
 	git log --no-walk --pretty="%(trailers:unfold)" >actual &&
 	{
