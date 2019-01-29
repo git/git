@@ -126,4 +126,22 @@ check_approxidate '6AM, June 7, 2009' '2009-06-07 06:00:00'
 check_approxidate '2008-12-01' '2008-12-01 19:20:00'
 check_approxidate '2009-12-01' '2009-12-01 19:20:00'
 
+check_date_format_human() {
+	t=$(($GIT_TEST_DATE_NOW - $1))
+	echo "$t -> $2" >expect
+	test_expect_success "human date $t" '
+		test-tool date human $t >actual &&
+		test_i18ncmp expect actual
+'
+}
+
+check_date_format_human 18000 "5 hours ago" # 5 hours ago
+check_date_format_human 432000 "Tue Aug 25 19:20" # 5 days ago
+check_date_format_human 1728000 "Mon Aug 10 19:20" # 3 weeks ago
+check_date_format_human 13000000 "Thu Apr 2 08:13" # 5 months ago
+check_date_format_human 31449600 "Aug 31 2008" # 12 months ago
+check_date_format_human 37500000 "Jun 22 2008" # 1 year, 2 months ago
+check_date_format_human 55188000 "Dec 1 2007" # 1 year, 9 months ago
+check_date_format_human 630000000 "Sep 13 1989" # 20 years ago
+
 test_done
