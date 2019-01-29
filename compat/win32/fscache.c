@@ -24,7 +24,13 @@ struct fscache {
 	unsigned int opendir_requests;
 	unsigned int fscache_requests;
 	unsigned int fscache_misses;
-	WCHAR buffer[64 * 1024];
+	/*
+	 * 32k wide characters translates to 64kB, which is the maximum that
+	 * Windows 8.1 and earlier can handle. On network drives, not only
+	 * the client's Windows version matters, but also the server's,
+	 * therefore we need to keep this to 64kB.
+	 */
+	WCHAR buffer[32 * 1024];
 };
 static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 
