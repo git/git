@@ -1321,6 +1321,14 @@ static const char *path_path(void *obj)
 	return path->path;
 }
 
+/*
+ * Diff stat formats which we always compute solely against the first parent.
+ */
+#define STAT_FORMAT_MASK (DIFF_FORMAT_NUMSTAT \
+			  | DIFF_FORMAT_SHORTSTAT \
+			  | DIFF_FORMAT_SUMMARY \
+			  | DIFF_FORMAT_DIRSTAT \
+			  | DIFF_FORMAT_DIFFSTAT)
 
 /* find set of paths that every parent touches */
 static struct combine_diff_path *find_paths_generic(const struct object_id *oid,
@@ -1342,8 +1350,7 @@ static struct combine_diff_path *find_paths_generic(const struct object_id *oid,
 		 * show stat against the first parent even when doing
 		 * combined diff.
 		 */
-		int stat_opt = (output_format &
-				(DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIFFSTAT));
+		int stat_opt = output_format & STAT_FORMAT_MASK;
 		if (i == 0 && stat_opt)
 			opt->output_format = stat_opt;
 		else
@@ -1470,8 +1477,7 @@ void diff_tree_combined(const struct object_id *oid,
 		 * show stat against the first parent even
 		 * when doing combined diff.
 		 */
-		stat_opt = (opt->output_format &
-				(DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIFFSTAT));
+		stat_opt = opt->output_format & STAT_FORMAT_MASK;
 		if (stat_opt) {
 			diffopts.output_format = stat_opt;
 
@@ -1515,8 +1521,7 @@ void diff_tree_combined(const struct object_id *oid,
 				show_raw_diff(p, num_parent, rev);
 			needsep = 1;
 		}
-		else if (opt->output_format &
-			 (DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIFFSTAT))
+		else if (opt->output_format & STAT_FORMAT_MASK)
 			needsep = 1;
 		else if (opt->output_format & DIFF_FORMAT_CALLBACK)
 			handle_combined_callback(opt, paths, num_parent, num_paths);

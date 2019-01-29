@@ -5962,8 +5962,10 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 
 		for (i = 0; i < esm.nr; i++)
 			free((void *)esm.buf[i].line);
+		esm.nr = 0;
+
+		o->emitted_symbols = NULL;
 	}
-	esm.nr = 0;
 }
 
 void diff_flush(struct diff_options *options)

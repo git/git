@@ -98,6 +98,12 @@ test_expect_success setup '
 	git commit -m "update mode" &&
 	git checkout -f master &&
 
+	# Same merge as master, but with parents reversed. Hide it in a
+	# pseudo-ref to avoid impacting tests with --all.
+	commit=$(echo reverse |
+		 git commit-tree -p master^2 -p master^1 master^{tree}) &&
+	git update-ref REVERSE $commit &&
+
 	git config diff.renames false &&
 
 	git show-branch
@@ -239,6 +245,8 @@ diff-tree --cc --stat --summary master
 # stat summary should show the diffstat and summary with the first parent
 diff-tree -c --stat --summary side
 diff-tree --cc --stat --summary side
+diff-tree --cc --shortstat master
+diff-tree --cc --summary REVERSE
 # improved by Timo's patch
 diff-tree --cc --patch-with-stat master
 # improved by Timo's patch
@@ -350,6 +358,7 @@ diff --line-prefix=abc master master^ side
 diff --dirstat master~1 master~2
 diff --dirstat initial rearrange
 diff --dirstat-by-file initial rearrange
+diff --dirstat --cc master~1 master
 # No-index --abbrev and --no-abbrev
 diff --raw initial
 :noellipses diff --raw initial
