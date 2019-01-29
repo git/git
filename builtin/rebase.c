@@ -104,6 +104,7 @@ struct rebase_options {
 	int rebase_merges, rebase_cousins;
 	char *strategy, *strategy_opts;
 	struct strbuf git_format_patch_opt;
+	int reschedule_failed_exec;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -415,6 +416,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 			argv_array_push(&child.args, opts->gpg_sign_opt);
 		if (opts->signoff)
 			argv_array_push(&child.args, "--signoff");
+		if (opts->reschedule_failed_exec)
+			argv_array_push(&child.args, "--reschedule-failed-exec");
 
 		status = run_command(&child);
 		goto finished_rebase;
@@ -674,6 +677,11 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 
+	if (!strcmp(var, "rebase.reschedulefailedexec")) {
+		opts->reschedule_failed_exec = git_config_bool(var, value);
+		return 0;
+	}
+
 	return git_default_config(var, value, data);
 }
 
@@ -743,6 +751,23 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 	opts->type = REBASE_INTERACTIVE;
 	opts->flags |= REBASE_INTERACTIVE_EXPLICIT;
 
+	return 0;
+}
+
+struct opt_y {
+	struct string_list *list;
+	struct rebase_options *options;
+};
+
+static int parse_opt_y(const struct option *opt, const char *arg, int unset)
+{
+	struct opt_y *o = opt->value;
+
+	if (unset || !arg)
+		return -1;
+
+	o->options->reschedule_failed_exec = 1;
+	string_list_append(o->list, arg);
 	return 0;
 }
 
@@ -826,6 +851,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
 	struct object_id squash_onto;
 	char *squash_onto_name = NULL;
+	struct opt_y opt_y = { .list = &exec, .options = &options };
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -903,6 +929,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
 				N_("add exec lines after each commit of the "
 				   "editable list")),
+		{ OPTION_CALLBACK, 'y', NULL, &opt_y, N_("<cmd>"),
+			N_("same as --reschedule-failed-exec -x <cmd>"),
+			PARSE_OPT_NONEG, parse_opt_y },
 		OPT_BOOL(0, "allow-empty-message",
 			 &options.allow_empty_message,
 			 N_("allow rebasing commits with empty messages")),
@@ -920,6 +949,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				   "strategy")),
 		OPT_BOOL(0, "root", &options.root,
 			 N_("rebase all reachable commits up to the root(s)")),
+		OPT_BOOL(0, "reschedule-failed-exec",
+			 &options.reschedule_failed_exec,
+			 N_("automatically re-schedule any `exec` that fails")),
 		OPT_END(),
 	};
 	int i;
@@ -1216,6 +1248,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
+	if (options.reschedule_failed_exec && !is_interactive(&options))
+		die(_("--reschedule-failed-exec requires an interactive rebase"));
+
 	if (options.git_am_opts.argc) {
 		/* all am options except -q are compatible only with --am */
 		for (i = options.git_am_opts.argc - 1; i >= 0; i--)
@@ -1241,7 +1276,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.flags |= REBASE_FORCE;
 	}
 
-	if (options.type == REBASE_PRESERVE_MERGES)
+	if (options.type == REBASE_PRESERVE_MERGES) {
 		/*
 		 * Note: incompatibility with --signoff handled in signoff block above
 		 * Note: incompatibility with --interactive is just a strong warning;
@@ -1250,6 +1285,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.rebase_merges)
 			die(_("error: cannot combine '--preserve-merges' with "
 			      "'--rebase-merges'"));
+
+		if (options.reschedule_failed_exec)
+			die(_("error: cannot combine '--preserve-merges' with "
+			      "'--reschedule-failed-exec'"));
+	}
 
 	if (options.rebase_merges) {
 		if (strategy_options.nr)
