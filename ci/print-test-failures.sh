@@ -41,6 +41,11 @@ do
 		case "$CI_TYPE" in
 		travis)
 			;;
+		azure-pipelines)
+			mkdir -p failed-test-artifacts
+			mv "$trash_dir" failed-test-artifacts
+			continue
+			;;
 		*)
 			echo "Unhandled CI type: $CI_TYPE" >&2
 			exit 1
