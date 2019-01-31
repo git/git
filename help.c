@@ -85,7 +85,8 @@ static void print_command_list(const struct cmdname_help *cmds,
 		if (cmds[i].category & mask) {
 			size_t len = strlen(cmds[i].name);
 			printf("   %s   ", cmds[i].name);
-			mput_char(' ', longest > len ? longest - len : 1);
+			if (longest > len)
+				mput_char(' ', longest - len);
 			puts(_(cmds[i].help));
 		}
 	}
