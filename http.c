@@ -1996,12 +1996,12 @@ static int http_request_reauth(const char *url,
 		strbuf_reset(result);
 		break;
 	case HTTP_REQUEST_FILE:
-		if (fflush(result)) {
+		if (fflush((FILE *)result)) {
 			error_errno("unable to flush a file");
 			return HTTP_START_FAILED;
 		}
-		rewind(result);
-		if (ftruncate(fileno(result), 0) < 0) {
+		rewind((FILE *)result);
+		if (ftruncate(fileno((FILE *)result), 0) < 0) {
 			error_errno("unable to truncate a file");
 			return HTTP_START_FAILED;
 		}
