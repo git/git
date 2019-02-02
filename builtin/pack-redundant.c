@@ -545,7 +545,6 @@ static void scan_alt_odb_packs(void)
 							alt->all_objects);
 			local = local->next;
 		}
-		llist_sorted_difference_inplace(all_objects, alt->all_objects);
 		alt = alt->next;
 	}
 }
