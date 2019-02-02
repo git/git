@@ -102,7 +102,7 @@ static int builtin_diff_blobs(struct rev_info *revs,
 			      int argc, const char **argv,
 			      struct object_array_entry **blob)
 {
-	unsigned mode = canon_mode(S_IFREG | 0644);
+	const unsigned mode = canon_mode(S_IFREG | 0644);
 
 	if (argc > 1)
 		usage(builtin_diff_usage);
