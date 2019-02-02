@@ -34,7 +34,7 @@ linux-clang|linux-gcc)
 	popd
 	;;
 osx-clang|osx-gcc)
-	brew update --quiet
+	brew update >/dev/null
 	# Uncomment this if you want to run perf tests:
 	# brew install gnu-time
 	brew install git-lfs gettext
