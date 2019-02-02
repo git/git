@@ -254,6 +254,11 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
 	const unsigned int hashsz = the_hash_algo->rawsz;
 
+	if (!p1->unique_objects)
+		p1->unique_objects = llist_copy(p1->all_objects);
+	if (!p2->unique_objects)
+		p2->unique_objects = llist_copy(p2->all_objects);
+
 	p1_base = p1->pack->index_data;
 	p2_base = p2->pack->index_data;
 	p1_base += 256 * 4 + ((p1->pack->index_version < 2) ? 4 : 8);
@@ -536,7 +541,7 @@ static void scan_alt_odb_packs(void)
 	while (alt) {
 		local = local_packs;
 		while (local) {
-			llist_sorted_difference_inplace(local->unique_objects,
+			llist_sorted_difference_inplace(local->all_objects,
 							alt->all_objects);
 			local = local->next;
 		}
@@ -567,8 +572,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 		llist_insert_back(l.all_objects, (const struct object_id *)(base + off));
 		off += step;
 	}
-	/* this list will be pruned in cmp_two_packs later */
-	l.unique_objects = llist_copy(l.all_objects);
+	l.unique_objects = NULL;
 	if (p->pack_local)
 		return pack_list_insert(&local_packs, &l);
 	else
@@ -646,7 +650,6 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 
 	load_all_objects();
 
-	cmp_local_packs();
 	if (alt_odb)
 		scan_alt_odb_packs();
 
@@ -663,9 +666,11 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 	llist_sorted_difference_inplace(all_objects, ignore);
 	pl = local_packs;
 	while (pl) {
-		llist_sorted_difference_inplace(pl->unique_objects, ignore);
+		llist_sorted_difference_inplace(pl->all_objects, ignore);
 		pl = pl->next;
 	}
+
+	cmp_local_packs();
 
 	minimize(&min);
 
