@@ -270,7 +270,7 @@ void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt, va_list ap)
 	memmove(sb->buf + pos + len, sb->buf + pos, sb->len - pos);
 	/* vsnprintf() will append a NUL, overwriting one of our characters */
 	save = sb->buf[pos + len];
-	len2 = vsnprintf(sb->buf + pos, sb->alloc - sb->len, fmt, ap);
+	len2 = vsnprintf(sb->buf + pos, len + 1, fmt, ap);
 	sb->buf[pos + len] = save;
 	if (len2 != len)
 		BUG("your vsnprintf is broken (returns inconsistent lengths)");
