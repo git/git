@@ -12197,7 +12197,7 @@ msgstr "Unerwartete Prüfsumme für %s (Festplattenfehler?)"
 #, c-format
 msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
-msgstr[0] "Paket hat %d unaufgelöste Unterschied"
+msgstr[0] "Paket hat %d unaufgelösten Unterschied"
 msgstr[1] "Paket hat %d unaufgelöste Unterschiede"
 
 #: builtin/index-pack.c:1283
