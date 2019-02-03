@@ -17940,7 +17940,7 @@ msgstr "keine Tag-Beschreibung?"
 #: builtin/tag.c:274
 #, c-format
 msgid "The tag message has been left in %s\n"
-msgstr "Die Tag-Beschreibung wurde gelassen in %s\n"
+msgstr "Die Tag-Beschreibung wurde in %s gelassen\n"
 
 #: builtin/tag.c:385
 msgid "list tag names"
