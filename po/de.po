@@ -4870,7 +4870,7 @@ msgstr "losgelöster HEAD"
 
 #: sequencer.c:1256
 msgid " (root-commit)"
-msgstr " (Basis-Commit)"
+msgstr " (Root-Commit)"
 
 #: sequencer.c:1277
 msgid "could not parse HEAD"
