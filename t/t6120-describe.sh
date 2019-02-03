@@ -144,6 +144,12 @@ test_expect_success 'rename tag Q back to A' '
 test_expect_success 'pack tag refs' 'git pack-refs'
 check_describe A-* HEAD
 
+test_expect_success 'describe works from outside repo using --git-dir' '
+	git clone --bare "$TRASH_DIRECTORY" "$TRASH_DIRECTORY/bare" &&
+	git --git-dir "$TRASH_DIRECTORY/bare" describe >out &&
+	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+$" out
+'
+
 check_describe "A-*[0-9a-f]" --dirty
 
 test_expect_success 'describe --dirty with --work-tree' '
