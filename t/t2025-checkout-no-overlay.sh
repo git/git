@@ -44,14 +44,4 @@ test_expect_success '--no-overlay --theirs with D/F conflict deletes file' '
 	test_path_is_missing file1
 '
 
-test_expect_success 'checkout with checkout.overlayMode=false deletes files not in <tree-ish>' '
-	>file &&
-	mkdir dir &&
-	>dir/file1 &&
-	git add file dir/file1 &&
-	git -c checkout.overlayMode=false checkout HEAD -- file &&
-	test_path_is_missing file &&
-	test_path_is_file dir/file1
-'
-
 test_done
