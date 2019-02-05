@@ -4,6 +4,11 @@
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
+static const char utf16_be_bom[] = {'\xFE', '\xFF'};
+static const char utf16_le_bom[] = {'\xFF', '\xFE'};
+static const char utf32_be_bom[] = {'\0', '\0', '\xFE', '\xFF'};
+static const char utf32_le_bom[] = {'\xFF', '\xFE', '\0', '\0'};
+
 struct interval {
 	ucs_char_t first;
 	ucs_char_t last;
@@ -470,16 +475,17 @@ int utf8_fprintf(FILE *stream, const char *format, ...)
 #else
 	typedef char * iconv_ibp;
 #endif
-char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, size_t *outsz_p)
+char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
+			    size_t bom_len, size_t *outsz_p)
 {
 	size_t outsz, outalloc;
 	char *out, *outpos;
 	iconv_ibp cp;
 
 	outsz = insz;
-	outalloc = st_add(outsz, 1); /* for terminating NUL */
+	outalloc = st_add(outsz, 1 + bom_len); /* for terminating NUL */
 	out = xmalloc(outalloc);
-	outpos = out;
+	outpos = out + bom_len;
 	cp = (iconv_ibp)in;
 
 	while (1) {
@@ -540,9 +546,29 @@ char *reencode_string_len(const char *in, size_t insz,
 {
 	iconv_t conv;
 	char *out;
+	const char *bom_str = NULL;
+	size_t bom_len = 0;
 
 	if (!in_encoding)
 		return NULL;
+
+	/* UTF-16LE-BOM is the same as UTF-16 for reading */
+	if (same_utf_encoding("UTF-16LE-BOM", in_encoding))
+		in_encoding = "UTF-16";
+
+	/*
+	 * For writing, UTF-16 iconv typically creates "UTF-16BE-BOM"
+	 * Some users under Windows want the little endian version
+	 */
+	if (same_utf_encoding("UTF-16LE-BOM", out_encoding)) {
+		bom_str = utf16_le_bom;
+		bom_len = sizeof(utf16_le_bom);
+		out_encoding = "UTF-16LE";
+	} else if (same_utf_encoding("UTF-16BE-BOM", out_encoding)) {
+		bom_str = utf16_be_bom;
+		bom_len = sizeof(utf16_be_bom);
+		out_encoding = "UTF-16BE";
+	}
 
 	conv = iconv_open(out_encoding, in_encoding);
 	if (conv == (iconv_t) -1) {
@@ -553,9 +579,10 @@ char *reencode_string_len(const char *in, size_t insz,
 		if (conv == (iconv_t) -1)
 			return NULL;
 	}
-
-	out = reencode_string_iconv(in, insz, conv, outsz);
+	out = reencode_string_iconv(in, insz, conv, bom_len, outsz);
 	iconv_close(conv);
+	if (out && bom_str && bom_len)
+		memcpy(out, bom_str, bom_len);
 	return out;
 }
 #endif
@@ -565,11 +592,6 @@ static int has_bom_prefix(const char *data, size_t len,
 {
 	return data && bom && (len >= bom_len) && !memcmp(data, bom, bom_len);
 }
-
-static const char utf16_be_bom[] = {'\xFE', '\xFF'};
-static const char utf16_le_bom[] = {'\xFF', '\xFE'};
-static const char utf32_be_bom[] = {'\0', '\0', '\xFE', '\xFF'};
-static const char utf32_le_bom[] = {'\xFF', '\xFE', '\0', '\0'};
 
 int has_prohibited_utf_bom(const char *enc, const char *data, size_t len)
 {
