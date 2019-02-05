@@ -8,6 +8,7 @@
 #include "config.h"
 #include "progress.h"
 #include "thread-utils.h"
+#include "repository.h"
 
 /*
  * Mostly randomly chosen maximum thread counts: we
@@ -146,12 +147,12 @@ void preload_index(struct index_state *index,
 	trace_performance_leave("preload index");
 }
 
-int read_index_preload(struct index_state *index,
-		       const struct pathspec *pathspec,
-		       unsigned int refresh_flags)
+int repo_read_index_preload(struct repository *repo,
+			    const struct pathspec *pathspec,
+			    unsigned int refresh_flags)
 {
-	int retval = read_index(index);
+	int retval = repo_read_index(repo);
 
-	preload_index(index, pathspec, refresh_flags);
+	preload_index(repo->index, pathspec, refresh_flags);
 	return retval;
 }

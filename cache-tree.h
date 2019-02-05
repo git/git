@@ -51,7 +51,7 @@ void prime_cache_tree(struct repository *, struct index_state *, struct tree *);
 
 int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
 
-#ifndef NO_THE_INDEX_COMPATIBILITY_MACROS
+#ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
 static inline int write_cache_as_tree(struct object_id *oid, int flags, const char *prefix)
 {
 	return write_index_as_tree(oid, &the_index, get_index_file(), flags, prefix);

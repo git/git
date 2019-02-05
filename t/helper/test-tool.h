@@ -1,6 +1,7 @@
 #ifndef TEST_TOOL_H
 #define TEST_TOOL_H
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "git-compat-util.h"
 
 int cmd__chmtime(int argc, const char **argv);

@@ -37,7 +37,7 @@ int try_merge_command(struct repository *r,
 	argv_array_clear(&args);
 
 	discard_index(r->index);
-	if (read_index(r->index) < 0)
+	if (repo_read_index(r) < 0)
 		die(_("failed to read the cache"));
 	resolve_undo_clear_index(r->index);
 
@@ -58,7 +58,7 @@ int checkout_fast_forward(struct repository *r,
 
 	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
 
-	if (hold_locked_index(&lock_file, LOCK_REPORT_ON_ERROR) < 0)
+	if (repo_hold_locked_index(r, &lock_file, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
 	memset(&trees, 0, sizeof(trees));

@@ -5,6 +5,7 @@
  * Based on git-commit.sh by Junio C Hamano and Linus Torvalds
  */
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "lockfile.h"
@@ -1368,7 +1369,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (status_format != STATUS_FORMAT_PORCELAIN &&
 	    status_format != STATUS_FORMAT_PORCELAIN_V2)
 		progress_flag = REFRESH_PROGRESS;
-	read_index(&the_index);
+	repo_read_index(the_repository);
 	refresh_index(&the_index,
 		      REFRESH_QUIET|REFRESH_UNMERGED|progress_flag,
 		      &s.pathspec, NULL, NULL);
@@ -1397,7 +1398,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	wt_status_collect(&s);
 
 	if (0 <= fd)
-		update_index_if_able(&the_index, &index_lock);
+		repo_update_index_if_able(the_repository, &index_lock);
 
 	if (s.relative_paths)
 		s.prefix = prefix;
@@ -1675,7 +1676,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
 	run_commit_hook(use_editor, get_index_file(), "post-commit", NULL);
 	if (amend && !no_post_rewrite) {
-		commit_post_rewrite(current_head, &oid);
+		commit_post_rewrite(the_repository, current_head, &oid);
 	}
 	if (!quiet) {
 		unsigned int flags = 0;

@@ -5,7 +5,6 @@
  *
  * Copyright (C) 2008 Linus Torvalds
  */
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "thread-utils.h"
 

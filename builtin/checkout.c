@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "config.h"
 #include "checkout.h"
@@ -350,7 +351,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return run_add_interactive(revision, "--patch=checkout",
 					   &opts->pathspec);
 
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 	if (read_cache_preload(&opts->pathspec) < 0)
 		return error(_("index file corrupt"));
 
@@ -749,7 +750,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 * a pain; plumb in an option to set
 			 * o.renormalize?
 			 */
-			init_merge_options(&o);
+			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
 			work = write_tree_from_memory(&o);
 
