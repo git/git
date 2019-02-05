@@ -190,9 +190,6 @@ static void find_short_packed_object(struct disambiguate_state *ds)
 		unique_in_pack(p, ds);
 }
 
-#define SHORT_NAME_NOT_FOUND (-1)
-#define SHORT_NAME_AMBIGUOUS (-2)
-
 static int finish_object_disambiguation(struct disambiguate_state *ds,
 					struct object_id *oid)
 {
@@ -200,7 +197,7 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 		return SHORT_NAME_AMBIGUOUS;
 
 	if (!ds->candidate_exists)
-		return SHORT_NAME_NOT_FOUND;
+		return MISSING_OBJECT;
 
 	if (!ds->candidate_checked)
 		/*
@@ -414,8 +411,9 @@ static int sort_ambiguous(const void *a, const void *b)
 	return a_type_sort > b_type_sort ? 1 : -1;
 }
 
-static int get_short_oid(const char *name, int len, struct object_id *oid,
-			  unsigned flags)
+static enum get_oid_result get_short_oid(const char *name, int len,
+					 struct object_id *oid,
+					 unsigned flags)
 {
 	int status;
 	struct disambiguate_state ds;
@@ -733,7 +731,7 @@ static inline int push_mark(const char *string, int len)
 	return at_mark(string, len, suffix, ARRAY_SIZE(suffix));
 }
 
-static int get_oid_1(const char *name, int len, struct object_id *oid, unsigned lookup_flags);
+static enum get_oid_result get_oid_1(const char *name, int len, struct object_id *oid, unsigned lookup_flags);
 static int interpret_nth_prior_checkout(const char *name, int namelen, struct strbuf *buf);
 
 static int get_oid_basic(const char *str, int len, struct object_id *oid,
@@ -883,11 +881,12 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 	return 0;
 }
 
-static int get_parent(const char *name, int len,
-		      struct object_id *result, int idx)
+static enum get_oid_result get_parent(const char *name, int len,
+				      struct object_id *result, int idx)
 {
 	struct object_id oid;
-	int ret = get_oid_1(name, len, &oid, GET_OID_COMMITTISH);
+	enum get_oid_result ret = get_oid_1(name, len, &oid,
+					    GET_OID_COMMITTISH);
 	struct commit *commit;
 	struct commit_list *p;
 
@@ -895,24 +894,25 @@ static int get_parent(const char *name, int len,
 		return ret;
 	commit = lookup_commit_reference(the_repository, &oid);
 	if (parse_commit(commit))
-		return -1;
+		return MISSING_OBJECT;
 	if (!idx) {
 		oidcpy(result, &commit->object.oid);
-		return 0;
+		return FOUND;
 	}
 	p = commit->parents;
 	while (p) {
 		if (!--idx) {
 			oidcpy(result, &p->item->object.oid);
-			return 0;
+			return FOUND;
 		}
 		p = p->next;
 	}
-	return -1;
+	return MISSING_OBJECT;
 }
 
-static int get_nth_ancestor(const char *name, int len,
-			    struct object_id *result, int generation)
+static enum get_oid_result get_nth_ancestor(const char *name, int len,
+					    struct object_id *result,
+					    int generation)
 {
 	struct object_id oid;
 	struct commit *commit;
@@ -923,15 +923,15 @@ static int get_nth_ancestor(const char *name, int len,
 		return ret;
 	commit = lookup_commit_reference(the_repository, &oid);
 	if (!commit)
-		return -1;
+		return MISSING_OBJECT;
 
 	while (generation--) {
 		if (parse_commit(commit) || !commit->parents)
-			return -1;
+			return MISSING_OBJECT;
 		commit = commit->parents->item;
 	}
 	oidcpy(result, &commit->object.oid);
-	return 0;
+	return FOUND;
 }
 
 struct object *peel_to_type(const char *name, int namelen,
@@ -1077,7 +1077,9 @@ static int get_describe_name(const char *name, int len, struct object_id *oid)
 	return -1;
 }
 
-static int get_oid_1(const char *name, int len, struct object_id *oid, unsigned lookup_flags)
+static enum get_oid_result get_oid_1(const char *name, int len,
+				     struct object_id *oid,
+				     unsigned lookup_flags)
 {
 	int ret, has_suffix;
 	const char *cp;
@@ -1111,16 +1113,16 @@ static int get_oid_1(const char *name, int len, struct object_id *oid, unsigned 
 
 	ret = peel_onion(name, len, oid, lookup_flags);
 	if (!ret)
-		return 0;
+		return FOUND;
 
 	ret = get_oid_basic(name, len, oid, lookup_flags);
 	if (!ret)
-		return 0;
+		return FOUND;
 
 	/* It could be describe output that is "SOMETHING-gXXXX" */
 	ret = get_describe_name(name, len, oid);
 	if (!ret)
-		return 0;
+		return FOUND;
 
 	return get_short_oid(name, len, oid, lookup_flags);
 }
@@ -1664,11 +1666,11 @@ static char *resolve_relative_path(const char *rel)
 			   rel);
 }
 
-static int get_oid_with_context_1(const char *name,
-				  unsigned flags,
-				  const char *prefix,
-				  struct object_id *oid,
-				  struct object_context *oc)
+static enum get_oid_result get_oid_with_context_1(const char *name,
+						  unsigned flags,
+						  const char *prefix,
+						  struct object_id *oid,
+						  struct object_context *oc)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
