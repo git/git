@@ -140,9 +140,9 @@ dangling <type> <object>::
 	The <type> object <object>, is present in the database but never
 	'directly' used. A dangling commit could be a root node.
 
-sha1 mismatch <object>::
-	The database has an object who's sha1 doesn't match the
-	database value.
+hash mismatch <object>::
+	The database has an object whose hash doesn't match the
+	object database value.
 	This indicates a serious data integrity problem.
 
 Environment Variables
