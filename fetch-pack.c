@@ -1514,6 +1514,7 @@ static void update_shallow(struct fetch_pack_args *args,
 			rollback_lock_file(&shallow_lock);
 		} else
 			commit_lock_file(&shallow_lock);
+		alternate_shallow_file = NULL;
 		return;
 	}
 
@@ -1537,6 +1538,7 @@ static void update_shallow(struct fetch_pack_args *args,
 						&alternate_shallow_file,
 						&extra);
 			commit_lock_file(&shallow_lock);
+			alternate_shallow_file = NULL;
 		}
 		oid_array_clear(&extra);
 		return;
@@ -1576,6 +1578,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		commit_lock_file(&shallow_lock);
 		oid_array_clear(&extra);
 		oid_array_clear(&ref);
+		alternate_shallow_file = NULL;
 		return;
 	}
 
