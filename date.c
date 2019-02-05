@@ -107,9 +107,9 @@ static int local_tzoffset(timestamp_t time)
 	return offset * eastwest;
 }
 
-void show_date_relative(timestamp_t time, int tz,
-			       const struct timeval *now,
-			       struct strbuf *timebuf)
+void show_date_relative(timestamp_t time,
+			const struct timeval *now,
+			struct strbuf *timebuf)
 {
 	timestamp_t diff;
 	if (now->tv_sec < time) {
@@ -216,7 +216,7 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 
 		strbuf_reset(&timebuf);
 		gettimeofday(&now, NULL);
-		show_date_relative(time, tz, &now, &timebuf);
+		show_date_relative(time, &now, &timebuf);
 		return timebuf.buf;
 	}
 

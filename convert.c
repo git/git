@@ -91,7 +91,7 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
  * The same heuristics as diff.c::mmfile_is_binary()
  * We treat files with bare CR as binary
  */
-static int convert_is_binary(unsigned long size, const struct text_stat *stats)
+static int convert_is_binary(const struct text_stat *stats)
 {
 	if (stats->lonecr)
 		return 1;
@@ -109,7 +109,7 @@ static unsigned int gather_convert_stats(const char *data, unsigned long size)
 	if (!data || !size)
 		return 0;
 	gather_stats(data, size, &stats);
-	if (convert_is_binary(size, &stats))
+	if (convert_is_binary(&stats))
 		ret |= CONVERT_STAT_BITS_BIN;
 	if (stats.crlf)
 		ret |= CONVERT_STAT_BITS_TXT_CRLF;
@@ -244,7 +244,7 @@ static int has_crlf_in_index(const struct index_state *istate, const char *path)
 	return has_crlf;
 }
 
-static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
+static int will_convert_lf_to_crlf(struct text_stat *stats,
 				   enum crlf_action crlf_action)
 {
 	if (output_eol(crlf_action) != EOL_CRLF)
@@ -259,7 +259,7 @@ static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
 		if (stats->lonecr || stats->crlf)
 			return 0;
 
-		if (convert_is_binary(len, stats))
+		if (convert_is_binary(stats))
 			return 0;
 	}
 	return 1;
@@ -526,7 +526,7 @@ static int crlf_to_git(const struct index_state *istate,
 	convert_crlf_into_lf = !!stats.crlf;
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
-		if (convert_is_binary(len, &stats))
+		if (convert_is_binary(&stats))
 			return 0;
 		/*
 		 * If the file in the index has any CR in it, do not
@@ -548,7 +548,7 @@ static int crlf_to_git(const struct index_state *istate,
 			new_stats.crlf = 0;
 		}
 		/* simulate "git checkout" */
-		if (will_convert_lf_to_crlf(len, &new_stats, crlf_action)) {
+		if (will_convert_lf_to_crlf(&new_stats, crlf_action)) {
 			new_stats.crlf += new_stats.lonelf;
 			new_stats.lonelf = 0;
 		}
@@ -590,7 +590,7 @@ static int crlf_to_git(const struct index_state *istate,
 	return 1;
 }
 
-static int crlf_to_worktree(const char *path, const char *src, size_t len,
+static int crlf_to_worktree(const char *src, size_t len,
 			    struct strbuf *buf, enum crlf_action crlf_action)
 {
 	char *to_free = NULL;
@@ -600,7 +600,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 		return 0;
 
 	gather_stats(src, len, &stats);
-	if (!will_convert_lf_to_crlf(len, &stats, crlf_action))
+	if (!will_convert_lf_to_crlf(&stats, crlf_action))
 		return 0;
 
 	/* are we "faking" in place editing ? */
@@ -1090,7 +1090,7 @@ static int count_ident(const char *cp, unsigned long size)
 	return cnt;
 }
 
-static int ident_to_git(const char *path, const char *src, size_t len,
+static int ident_to_git(const char *src, size_t len,
 			struct strbuf *buf, int ident)
 {
 	char *dst, *dollar;
@@ -1134,7 +1134,7 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static int ident_to_worktree(const char *path, const char *src, size_t len,
+static int ident_to_worktree(const char *src, size_t len,
 			     struct strbuf *buf, int ident)
 {
 	struct object_id oid;
@@ -1415,7 +1415,7 @@ int convert_to_git(const struct index_state *istate,
 			len = dst->len;
 		}
 	}
-	return ret | ident_to_git(path, src, len, dst, ca.ident);
+	return ret | ident_to_git(src, len, dst, ca.ident);
 }
 
 void convert_to_git_filter_fd(const struct index_state *istate,
@@ -1433,7 +1433,7 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 
 	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
 	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
-	ident_to_git(path, dst->buf, dst->len, dst, ca.ident);
+	ident_to_git(dst->buf, dst->len, dst, ca.ident);
 }
 
 static int convert_to_working_tree_internal(const struct index_state *istate,
@@ -1446,7 +1446,7 @@ static int convert_to_working_tree_internal(const struct index_state *istate,
 
 	convert_attrs(istate, &ca, path);
 
-	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
+	ret |= ident_to_worktree(src, len, dst, ca.ident);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -1457,7 +1457,7 @@ static int convert_to_working_tree_internal(const struct index_state *istate,
 	 * support smudge).  The filters might expect CRLFs.
 	 */
 	if ((ca.drv && (ca.drv->smudge || ca.drv->process)) || !normalizing) {
-		ret |= crlf_to_worktree(path, src, len, dst, ca.crlf_action);
+		ret |= crlf_to_worktree(src, len, dst, ca.crlf_action);
 		if (ret) {
 			src = dst->buf;
 			len = dst->len;

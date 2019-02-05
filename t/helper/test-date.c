@@ -16,7 +16,7 @@ static void show_relative_dates(const char **argv, struct timeval *now)
 
 	for (; *argv; argv++) {
 		time_t t = atoi(*argv);
-		show_date_relative(t, 0, now, &buf);
+		show_date_relative(t, now, &buf);
 		printf("%s -> %s\n", *argv, buf.buf);
 	}
 	strbuf_release(&buf);
