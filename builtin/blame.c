@@ -925,6 +925,10 @@ parse_done:
 		 */
 		blame_date_width = utf8_strwidth(_("4 years, 11 months ago")) + 1; /* add the null */
 		break;
+	case DATE_HUMAN:
+		/* If the year is shown, no time is shown */
+		blame_date_width = sizeof("Thu Oct 19 16:00");
+		break;
 	case DATE_NORMAL:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
 		break;
