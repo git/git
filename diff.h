@@ -9,16 +9,17 @@
 #include "object.h"
 #include "oidset.h"
 
-struct rev_info;
+struct combine_diff_path;
+struct commit;
+struct diff_filespec;
 struct diff_options;
 struct diff_queue_struct;
-struct strbuf;
-struct diff_filespec;
-struct userdiff_driver;
 struct oid_array;
-struct commit;
-struct combine_diff_path;
+struct option;
 struct repository;
+struct rev_info;
+struct strbuf;
+struct userdiff_driver;
 
 typedef int (*pathchange_fn_t)(struct diff_options *options,
 		 struct combine_diff_path *path);
@@ -64,39 +65,39 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 
 #define DIFF_FLAGS_INIT { 0 }
 struct diff_flags {
-	unsigned recursive:1;
-	unsigned tree_in_recursive:1;
-	unsigned binary:1;
-	unsigned text:1;
-	unsigned full_index:1;
-	unsigned silent_on_remove:1;
-	unsigned find_copies_harder:1;
-	unsigned follow_renames:1;
-	unsigned rename_empty:1;
-	unsigned has_changes:1;
-	unsigned quick:1;
-	unsigned no_index:1;
-	unsigned allow_external:1;
-	unsigned exit_with_status:1;
-	unsigned reverse_diff:1;
-	unsigned check_failed:1;
-	unsigned relative_name:1;
-	unsigned ignore_submodules:1;
-	unsigned dirstat_cumulative:1;
-	unsigned dirstat_by_file:1;
-	unsigned allow_textconv:1;
-	unsigned textconv_set_via_cmdline:1;
-	unsigned diff_from_contents:1;
-	unsigned dirty_submodules:1;
-	unsigned ignore_untracked_in_submodules:1;
-	unsigned ignore_dirty_submodules:1;
-	unsigned override_submodule_config:1;
-	unsigned dirstat_by_line:1;
-	unsigned funccontext:1;
-	unsigned default_follow_renames:1;
-	unsigned stat_with_summary:1;
-	unsigned suppress_diff_headers:1;
-	unsigned dual_color_diffed_diffs:1;
+	unsigned recursive;
+	unsigned tree_in_recursive;
+	unsigned binary;
+	unsigned text;
+	unsigned full_index;
+	unsigned silent_on_remove;
+	unsigned find_copies_harder;
+	unsigned follow_renames;
+	unsigned rename_empty;
+	unsigned has_changes;
+	unsigned quick;
+	unsigned no_index;
+	unsigned allow_external;
+	unsigned exit_with_status;
+	unsigned reverse_diff;
+	unsigned check_failed;
+	unsigned relative_name;
+	unsigned ignore_submodules;
+	unsigned dirstat_cumulative;
+	unsigned dirstat_by_file;
+	unsigned allow_textconv;
+	unsigned textconv_set_via_cmdline;
+	unsigned diff_from_contents;
+	unsigned dirty_submodules;
+	unsigned ignore_untracked_in_submodules;
+	unsigned ignore_dirty_submodules;
+	unsigned override_submodule_config;
+	unsigned dirstat_by_line;
+	unsigned funccontext;
+	unsigned default_follow_renames;
+	unsigned stat_with_summary;
+	unsigned suppress_diff_headers;
+	unsigned dual_color_diffed_diffs;
 };
 
 static inline void diff_flags_or(struct diff_flags *a,
@@ -229,6 +230,7 @@ struct diff_options {
 	unsigned color_moved_ws_handling;
 
 	struct repository *repo;
+	struct option *parseopts;
 };
 
 void diff_emit_submodule_del(struct diff_options *o, const char *line);
