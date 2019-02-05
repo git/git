@@ -59,6 +59,9 @@ UI, Workflows & Features
  * Custom userformat "log --format" learned %S atom that stands for
    the tip the traversal reached the commit from, i.e. --source.
 
+ * "git instaweb" learned to drive http.server that comes with
+   "batteries included" Python installation (both Python2 & 3).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -100,6 +103,26 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to walk tree objects has been taught that we may be
    working with object names that are not computed with SHA-1.
+
+ * The in-core repository instances are passed through more codepaths.
+
+ * Update the protocol message specification to allow only the limited
+   use of scaled quantities.  This is ensure potential compatibility
+   issues will not go out of hand.
+
+ * Micro-optimize the code that prepares commit objects to be walked
+   by "git rev-list" when the commit-graph is available.
+
+ * "git fetch" and "git upload-pack" learned to send all exchange over
+   the sideband channel while talking the v2 protocol.
+
+ * The codepath to write out commit-graph has been optimized by
+   following the usual pattern of visiting objects in in-pack order.
+
+ * The codepath to show progress meter while writing out commit-graph
+   file has been improved.
+
+ * Cocci rules have been updated to encourage use of strbuf_addbuf().
 
 
 Fixes since v2.20
@@ -221,6 +244,71 @@ Fixes since v2.20
    temporary file.
    (merge fa6f225e01 js/add-e-clear-patch-before-stating later to maint).
 
+ * "git p4" failed to update a shelved change when there were moved
+   files, which has been corrected.
+   (merge 7a10946ab9 ld/git-p4-shelve-update-fix later to maint).
+
+ * The codepath to read from the commit-graph file attempted to read
+   past the end of it when the file's table-of-contents was corrupt.
+
+ * The compat/obstack code had casts that -Wcast-function-type
+   compilation option found questionable.
+   (merge 764473d257 sg/obstack-cast-function-type-fix later to maint).
+
+ * An obvious typo in an assertion error message has been fixed.
+   (merge 3c27e2e059 cc/test-ref-store-typofix later to maint).
+
+ * In Git for Windows, "git clone \\server\share\path" etc. that uses
+   UNC paths from command line had bad interaction with its shell
+   emulation.
+
+ * "git add --ignore-errors" did not work as advertised and instead
+   worked as an unintended synonym for "git add --renormalize", which
+   has been fixed.
+   (merge 9e5da3d055 jk/add-ignore-errors-bit-assignment-fix later to maint).
+
+ * On a case-insensitive filesystem, we failed to compare the part of
+   the path that is above the worktree directory in an absolute
+   pathname, which has been corrected.
+
+ * Asking "git check-attr" about a macro (e.g. "binary") on a specific
+   path did not work correctly, even though "git check-attr -a" listed
+   such a macro correctly.  This has been corrected.
+   (merge 7b95849be4 jk/attr-macro-fix later to maint).
+
+ * "git pack-objects" incorrectly used uninitialized mutex, which has
+   been corrected.
+   (merge edb673cf10 ph/pack-objects-mutex-fix later to maint).
+
+ * "git checkout -b <new> [HEAD]" to create a new branch from the
+   current commit and check it out ought to be a no-op in the index
+   and the working tree in normal cases, but there are corner cases
+   that do require updates to the index and the working tree.  Running
+   it immediately after "git clone --no-checkout" is one of these
+   cases that an earlier optimization kicked in incorrectly, which has
+   been fixed.
+   (merge 8424bfd45b bp/checkout-new-branch-optim later to maint).
+
+ * "git diff --color-moved --cc --stat -p" did not work well due to
+   funny interaction between a bug in color-moved and the rest, which
+   has been fixed.
+   (merge dac03b5518 jk/diff-cc-stat-fixes later to maint).
+
+ * When GIT_SEQUENCE_EDITOR is set, the command was incorrectly
+   started when modes of "git rebase" that implicitly uses the
+   machinery for the interactive rebase are run, which has been
+   corrected.
+   (merge 891d4a0313 pw/no-editor-in-rebase-i-implicit later to maint).
+
+ * The commit-graph facility did not work when in-core objects that
+   are promoted from unknown type to commit (e.g. a commit that is
+   accessed via a tag that refers to it) were involved, which has been
+   corrected.
+   (merge 4468d4435c sg/object-as-type-commit-graph-fix later to maint).
+
+ * "git fetch" output cleanup.
+   (merge dc40b24df4 nd/fetch-compact-update later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 89ba9a79ae hb/t0061-dot-in-path-fix later to maint).
    (merge d173e799ea sb/diff-color-moved-config-option-fixup later to maint).
@@ -240,3 +328,5 @@ Fixes since v2.20
    (merge 1747125e2c cc/parial-clone-doc-typofix later to maint).
    (merge e01378753d cc/fetch-error-message-fix later to maint).
    (merge 54e8c11215 jk/remote-insteadof-cleanup later to maint).
+   (merge d609615f48 js/test-git-installed later to maint).
+   (merge ba170517be ja/doc-style-fix later to maint).
