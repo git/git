@@ -850,8 +850,11 @@ cmd_summary() {
 			;;
 		esac
 
-		sha1_abbr_src=$(echo $sha1_src | cut -c1-7)
-		sha1_abbr_dst=$(echo $sha1_dst | cut -c1-7)
+		sha1_abbr_src=$(GIT_DIR="$name/.git" git rev-parse --short $sha1_src 2>/dev/null ||
+			echo $sha1_src | cut -c1-7)
+		sha1_abbr_dst=$(GIT_DIR="$name/.git" git rev-parse --short $sha1_dst 2>/dev/null ||
+			echo $sha1_dst | cut -c1-7)
+
 		if test $status = T
 		then
 			blob="$(gettext "blob")"
