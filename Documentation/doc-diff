@@ -39,8 +39,7 @@ do
 	shift
 done
 
-cd_to_toplevel
-tmp=Documentation/tmp-doc-diff
+tmp="$(git rev-parse --show-toplevel)/Documentation/tmp-doc-diff" || exit 1
 
 if test -n "$clean"
 then
@@ -109,7 +108,7 @@ render_tree () {
 		make -j$parallel -C "$tmp/worktree" \
 			GIT_VERSION=omitted \
 			SOURCE_DATE_EPOCH=0 \
-			DESTDIR="$PWD/$tmp/installed/$1+" \
+			DESTDIR="$tmp/installed/$1+" \
 			install-man &&
 		mv "$tmp/installed/$1+" "$tmp/installed/$1"
 	fi &&
