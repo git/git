@@ -366,9 +366,10 @@ GRAPH_OCTOPUS_DATA_OFFSET=$(($GRAPH_COMMIT_DATA_OFFSET + \
 GRAPH_BYTE_OCTOPUS=$(($GRAPH_OCTOPUS_DATA_OFFSET + 4))
 GRAPH_BYTE_FOOTER=$(($GRAPH_OCTOPUS_DATA_OFFSET + 4 * $NUM_OCTOPUS_EDGES))
 
-# usage: corrupt_graph_and_verify <position> <data> <string>
+# usage: corrupt_graph_and_verify <position> <data> <string> [<zero_pos>]
 # Manipulates the commit-graph file at the position
-# by inserting the data, then runs 'git commit-graph verify'
+# by inserting the data, optionally zeroing the file
+# starting at <zero_pos>, then runs 'git commit-graph verify'
 # and places the output in the file 'err'. Test 'err' for
 # the given string.
 corrupt_graph_and_verify() {
@@ -376,11 +377,15 @@ corrupt_graph_and_verify() {
 	data="${2:-\0}"
 	grepstr=$3
 	cd "$TRASH_DIRECTORY/full" &&
+	orig_size=$(wc -c < $objdir/info/commit-graph) &&
+	zero_pos=${4:-${orig_size}} &&
 	test_when_finished mv commit-graph-backup $objdir/info/commit-graph &&
 	cp $objdir/info/commit-graph commit-graph-backup &&
 	printf "$data" | dd of="$objdir/info/commit-graph" bs=1 seek="$pos" conv=notrunc &&
+	dd of="$objdir/info/commit-graph" bs=1 seek="$zero_pos" count=0 &&
+	dd if=/dev/zero of="$objdir/info/commit-graph" bs=1 seek="$zero_pos" count=$(($orig_size - $zero_pos)) &&
 	test_must_fail git commit-graph verify 2>test_err &&
-	grep -v "^+" test_err >err
+	grep -v "^+" test_err >err &&
 	test_i18ngrep "$grepstr" err
 }
 
@@ -482,6 +487,11 @@ test_expect_success 'detect incorrect parent for octopus merge' '
 test_expect_success 'detect invalid checksum hash' '
 	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
 		"incorrect checksum"
+'
+
+test_expect_success 'detect incorrect chunk count' '
+	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\377" \
+		"chunk lookup table entry missing" $GRAPH_CHUNK_LOOKUP_OFFSET
 '
 
 test_expect_success 'git fsck (checks commit-graph)' '
