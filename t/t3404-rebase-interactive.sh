@@ -156,6 +156,11 @@ test_expect_success 'rebase -i with exec of inexistent command' '
 	! grep "Maybe git-rebase is broken" actual
 '
 
+test_expect_success 'implicit interactive rebase does not invoke sequence editor' '
+	test_when_finished "git rebase --abort ||:" &&
+	GIT_SEQUENCE_EDITOR="echo bad >" git rebase -x"echo one" @^
+'
+
 test_expect_success 'no changes are a nop' '
 	git checkout branch2 &&
 	set_fake_editor &&

@@ -355,7 +355,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 		argv_array_pushf(&child.env_array, "GIT_CHERRY_PICK_HELP=%s",
 				 resolvemsg);
 		if (!(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
-			argv_array_push(&child.env_array, "GIT_EDITOR=:");
+			argv_array_push(&child.env_array,
+					"GIT_SEQUENCE_EDITOR=:");
 			opts->autosquash = 0;
 		}
 
@@ -478,7 +479,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 	if (is_interactive(opts) &&
 	    !(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
 		strbuf_addstr(&script_snippet,
-			      "GIT_EDITOR=:; export GIT_EDITOR; ");
+			      "GIT_SEQUENCE_EDITOR=:; export GIT_SEQUENCE_EDITOR; ");
 		opts->autosquash = 0;
 	}
 
