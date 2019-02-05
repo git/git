@@ -213,7 +213,20 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 {
 	struct object *object;
 
-	object = parse_object(revs->repo, oid);
+	/*
+	 * If the repository has commit graphs, repo_parse_commit() avoids
+	 * reading the object buffer, so use it whenever possible.
+	 */
+	if (oid_object_info(revs->repo, oid, NULL) == OBJ_COMMIT) {
+		struct commit *c = lookup_commit(revs->repo, oid);
+		if (!repo_parse_commit(revs->repo, c))
+			object = (struct object *) c;
+		else
+			object = NULL;
+	} else {
+		object = parse_object(revs->repo, oid);
+	}
+
 	if (!object) {
 		if (revs->ignore_missing)
 			return object;
