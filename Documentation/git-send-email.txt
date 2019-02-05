@@ -33,7 +33,7 @@ This is what linkgit:git-format-patch[1] generates.  Most headers and MIME
 formatting are ignored.
 
 2. The original format used by Greg Kroah-Hartman's 'send_lots_of_email.pl'
-script
+   script
 +
 This format expects the first line of the file to contain the "Cc:" value
 and the "Subject:" of the message as the second line.

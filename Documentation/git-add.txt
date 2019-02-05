@@ -58,9 +58,9 @@ OPTIONS
 	specifying `dir` will record not just a file `dir/file1`
 	modified in the working tree, a file `dir/file2` added to
 	the working tree, but also a file `dir/file3` removed from
-	the working tree.  Note that older versions of Git used
+	the working tree). Note that older versions of Git used
 	to ignore removed files; use `--no-all` option if you want
-	to add modified or new files but ignore removed	ones.
+	to add modified or new files but ignore removed ones.
 +
 For more details about the <pathspec> syntax, see the 'pathspec' entry
 in linkgit:gitglossary[7].
@@ -124,7 +124,7 @@ subdirectories).
 --no-ignore-removal::
 	Update the index not only where the working tree has a file
 	matching <pathspec> but also where the index already has an
-	entry.	This adds, modifies, and removes index entries to
+	entry. This adds, modifies, and removes index entries to
 	match the working tree.
 +
 If no <pathspec> is given when `-A` option is used, all
@@ -206,7 +206,7 @@ EXAMPLES
 --------
 
 * Adds content from all `*.txt` files under `Documentation` directory
-and its subdirectories:
+  and its subdirectories:
 +
 ------------
 $ git add Documentation/\*.txt
