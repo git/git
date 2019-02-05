@@ -548,7 +548,7 @@ cmd_update()
 	do
 		die_if_unmatched "$quickabort" "$sha1"
 
-		git submodule--helper ensure-core-worktree "$sm_path"
+		git submodule--helper ensure-core-worktree "$sm_path" || exit 1
 
 		update_module=$(git submodule--helper update-module-mode $just_cloned "$sm_path" $update)
 
