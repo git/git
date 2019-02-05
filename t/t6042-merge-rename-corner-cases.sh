@@ -1175,7 +1175,7 @@ test_expect_success 'setup nested conflicts from rename/rename(2to1)' '
 
 		# Handle the left side
 		git checkout L &&
-		git mv one three &&
+		git rm one two &&
 		mv -f file_v2 three &&
 		mv -f file_v5 two &&
 		git add two three &&
@@ -1183,7 +1183,7 @@ test_expect_success 'setup nested conflicts from rename/rename(2to1)' '
 
 		# Handle the right side
 		git checkout R &&
-		git mv two three &&
+		git rm one two &&
 		mv -f file_v3 one &&
 		mv -f file_v6 three &&
 		git add one three &&
