@@ -2000,6 +2000,15 @@ static void am_skip(struct am_state *state)
 	if (clean_index(&head, &head))
 		die(_("failed to clean index"));
 
+	if (state->rebasing) {
+		FILE *fp = xfopen(am_path(state, "rewritten"), "a");
+
+		assert(!is_null_oid(&state->orig_commit));
+		fprintf(fp, "%s ", oid_to_hex(&state->orig_commit));
+		fprintf(fp, "%s\n", oid_to_hex(&head));
+		fclose(fp);
+	}
+
 	am_next(state);
 	am_load(state);
 	am_run(state, 0);

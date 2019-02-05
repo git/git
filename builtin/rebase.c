@@ -123,7 +123,7 @@ static void imply_interactive(struct rebase_options *opts, const char *option)
 	case REBASE_PRESERVE_MERGES:
 		break;
 	case REBASE_MERGE:
-		/* we silently *upgrade* --merge to --interactive if needed */
+		/* we now implement --merge via --interactive */
 	default:
 		opts->type = REBASE_INTERACTIVE; /* implied */
 		break;
@@ -186,10 +186,7 @@ static int read_basic_state(struct rebase_options *opts)
 	if (get_oid(buf.buf, &opts->orig_head))
 		return error(_("invalid orig-head: '%s'"), buf.buf);
 
-	strbuf_reset(&buf);
-	if (read_one(state_dir_path("quiet", opts), &buf))
-		return -1;
-	if (buf.len)
+	if (file_exists(state_dir_path("quiet", opts)))
 		opts->flags &= ~REBASE_NO_QUIET;
 	else
 		opts->flags |= REBASE_NO_QUIET;
@@ -487,10 +484,6 @@ static int run_specific_rebase(struct rebase_options *opts)
 	case REBASE_AM:
 		backend = "git-rebase--am";
 		backend_func = "git_rebase__am";
-		break;
-	case REBASE_MERGE:
-		backend = "git-rebase--merge";
-		backend_func = "git_rebase__merge";
 		break;
 	case REBASE_PRESERVE_MERGES:
 		backend = "git-rebase--preserve-merges";
@@ -1233,6 +1226,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	if (options.type == REBASE_MERGE)
+		imply_interactive(&options, "--merge");
+
 	if (options.root && !options.onto_name)
 		imply_interactive(&options, "--root without --onto");
 
@@ -1265,14 +1261,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				break;
 
 		if (is_interactive(&options) && i >= 0)
-			die(_("error: cannot combine interactive options "
-			      "(--interactive, --exec, --rebase-merges, "
-			      "--preserve-merges, --keep-empty, --root + "
-			      "--onto) with am options (%s)"), buf.buf);
-		if (options.type == REBASE_MERGE && i >= 0)
-			die(_("error: cannot combine merge options (--merge, "
-			      "--strategy, --strategy-option) with am options "
-			      "(%s)"), buf.buf);
+			die(_("cannot combine am options with either "
+			      "interactive or merge options"));
 	}
 
 	if (options.signoff) {
@@ -1290,7 +1280,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		 *       git-rebase.txt caveats with "unless you know what you are doing"
 		 */
 		if (options.rebase_merges)
-			die(_("error: cannot combine '--preserve-merges' with "
+			die(_("cannot combine '--preserve-merges' with "
 			      "'--rebase-merges'"));
 
 		if (options.reschedule_failed_exec)
@@ -1300,10 +1290,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.rebase_merges) {
 		if (strategy_options.nr)
-			die(_("error: cannot combine '--rebase-merges' with "
+			die(_("cannot combine '--rebase-merges' with "
 			      "'--strategy-option'"));
 		if (options.strategy)
-			die(_("error: cannot combine '--rebase-merges' with "
+			die(_("cannot combine '--rebase-merges' with "
 			      "'--strategy'"));
 	}
 

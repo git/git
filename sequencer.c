@@ -150,6 +150,7 @@ static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
 static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
 static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
+static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
 static GIT_PATH_FUNC(rebase_path_signoff, "rebase-merge/signoff")
 static GIT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
 static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
@@ -157,7 +158,6 @@ static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
 static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
-static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
 static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedule-failed-exec")
 
 static int git_sequencer_config(const char *k, const char *v, void *cb)
@@ -2390,6 +2390,9 @@ static int read_populate_opts(struct replay_opts *opts)
 		if (file_exists(rebase_path_verbose()))
 			opts->verbose = 1;
 
+		if (file_exists(rebase_path_quiet()))
+			opts->quiet = 1;
+
 		if (file_exists(rebase_path_signoff())) {
 			opts->allow_ff = 0;
 			opts->signoff = 1;
@@ -2460,9 +2463,6 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 
 	if (quiet)
 		write_file(rebase_path_quiet(), "%s\n", quiet);
-	else
-		write_file(rebase_path_quiet(), "\n");
-
 	if (opts->verbose)
 		write_file(rebase_path_verbose(), "%s", "");
 	if (opts->strategy)
@@ -3555,10 +3555,11 @@ static int pick_commits(struct repository *r,
 					fprintf(f, "%d\n", todo_list->done_nr);
 					fclose(f);
 				}
-				fprintf(stderr, "Rebasing (%d/%d)%s",
-					todo_list->done_nr,
-					todo_list->total_nr,
-					opts->verbose ? "\n" : "\r");
+				if (!opts->quiet)
+					fprintf(stderr, "Rebasing (%d/%d)%s",
+						todo_list->done_nr,
+						todo_list->total_nr,
+						opts->verbose ? "\n" : "\r");
 			}
 			unlink(rebase_path_message());
 			unlink(rebase_path_author_script());
@@ -3792,8 +3793,10 @@ cleanup_head_ref:
 		}
 		apply_autostash(opts);
 
-		fprintf(stderr, "Successfully rebased and updated %s.\n",
-			head_ref.buf);
+		if (!opts->quiet)
+			fprintf(stderr,
+				"Successfully rebased and updated %s.\n",
+				head_ref.buf);
 
 		strbuf_release(&buf);
 		strbuf_release(&head_ref);
