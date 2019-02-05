@@ -27,6 +27,7 @@
 #include "commit-reach.h"
 #include "commit-graph.h"
 #include "prio-queue.h"
+#include "hashmap.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -97,6 +98,148 @@ void mark_tree_uninteresting(struct repository *r, struct tree *tree)
 		return;
 	obj->flags |= UNINTERESTING;
 	mark_tree_contents_uninteresting(r, tree);
+}
+
+struct path_and_oids_entry {
+	struct hashmap_entry ent;
+	char *path;
+	struct oidset trees;
+};
+
+static int path_and_oids_cmp(const void *hashmap_cmp_fn_data,
+			     const struct path_and_oids_entry *e1,
+			     const struct path_and_oids_entry *e2,
+			     const void *keydata)
+{
+	return strcmp(e1->path, e2->path);
+}
+
+static void paths_and_oids_init(struct hashmap *map)
+{
+	hashmap_init(map, (hashmap_cmp_fn) path_and_oids_cmp, NULL, 0);
+}
+
+static void paths_and_oids_clear(struct hashmap *map)
+{
+	struct hashmap_iter iter;
+	struct path_and_oids_entry *entry;
+	hashmap_iter_init(map, &iter);
+
+	while ((entry = (struct path_and_oids_entry *)hashmap_iter_next(&iter))) {
+		oidset_clear(&entry->trees);
+		free(entry->path);
+	}
+
+	hashmap_free(map, 1);
+}
+
+static void paths_and_oids_insert(struct hashmap *map,
+				  const char *path,
+				  const struct object_id *oid)
+{
+	int hash = strhash(path);
+	struct path_and_oids_entry key;
+	struct path_and_oids_entry *entry;
+
+	hashmap_entry_init(&key, hash);
+
+	/* use a shallow copy for the lookup */
+	key.path = (char *)path;
+	oidset_init(&key.trees, 0);
+
+	if (!(entry = (struct path_and_oids_entry *)hashmap_get(map, &key, NULL))) {
+		entry = xcalloc(1, sizeof(struct path_and_oids_entry));
+		hashmap_entry_init(entry, hash);
+		entry->path = xstrdup(key.path);
+		oidset_init(&entry->trees, 16);
+		hashmap_put(map, entry);
+	}
+
+	oidset_insert(&entry->trees, oid);
+}
+
+static void add_children_by_path(struct repository *r,
+				 struct tree *tree,
+				 struct hashmap *map)
+{
+	struct tree_desc desc;
+	struct name_entry entry;
+
+	if (!tree)
+		return;
+
+	if (parse_tree_gently(tree, 1) < 0)
+		return;
+
+	init_tree_desc(&desc, tree->buffer, tree->size);
+	while (tree_entry(&desc, &entry)) {
+		switch (object_type(entry.mode)) {
+		case OBJ_TREE:
+			paths_and_oids_insert(map, entry.path, &entry.oid);
+
+			if (tree->object.flags & UNINTERESTING) {
+				struct tree *child = lookup_tree(r, &entry.oid);
+				if (child)
+					child->object.flags |= UNINTERESTING;
+			}
+			break;
+		case OBJ_BLOB:
+			if (tree->object.flags & UNINTERESTING) {
+				struct blob *child = lookup_blob(r, &entry.oid);
+				if (child)
+					child->object.flags |= UNINTERESTING;
+			}
+			break;
+		default:
+			/* Subproject commit - not in this repository */
+			break;
+		}
+	}
+
+	free_tree_buffer(tree);
+}
+
+void mark_trees_uninteresting_sparse(struct repository *r,
+				     struct oidset *trees)
+{
+	unsigned has_interesting = 0, has_uninteresting = 0;
+	struct hashmap map;
+	struct hashmap_iter map_iter;
+	struct path_and_oids_entry *entry;
+	struct object_id *oid;
+	struct oidset_iter iter;
+
+	oidset_iter_init(trees, &iter);
+	while ((!has_interesting || !has_uninteresting) &&
+	       (oid = oidset_iter_next(&iter))) {
+		struct tree *tree = lookup_tree(r, oid);
+
+		if (!tree)
+			continue;
+
+		if (tree->object.flags & UNINTERESTING)
+			has_uninteresting = 1;
+		else
+			has_interesting = 1;
+	}
+
+	/* Do not walk unless we have both types of trees. */
+	if (!has_uninteresting || !has_interesting)
+		return;
+
+	paths_and_oids_init(&map);
+
+	oidset_iter_init(trees, &iter);
+	while ((oid = oidset_iter_next(&iter))) {
+		struct tree *tree = lookup_tree(r, oid);
+		add_children_by_path(r, tree, &map);
+	}
+
+	hashmap_iter_init(&map, &map_iter);
+	while ((entry = hashmap_iter_next(&map_iter)))
+		mark_trees_uninteresting_sparse(r, &entry->trees);
+
+	paths_and_oids_clear(&map);
 }
 
 struct commit_stack {

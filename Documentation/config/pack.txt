@@ -105,6 +105,15 @@ pack.useBitmaps::
 	true. You should not generally need to turn this off unless
 	you are debugging pack bitmaps.
 
+pack.useSparse::
+	When true, git will default to using the '--sparse' option in
+	'git pack-objects' when the '--revs' option is present. This
+	algorithm only walks trees that appear in paths that introduce new
+	objects. This can have significant performance benefits when
+	computing a pack to send a small change. However, it is possible
+	that extra objects are added to the pack-file if the included
+	commits contain certain types of direct renames.
+
 pack.writeBitmaps (deprecated)::
 	This is a deprecated synonym for `repack.writeBitmaps`.
 
