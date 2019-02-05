@@ -165,7 +165,7 @@ extern void report_linked_checkout_garbage(void);
 	const char *git_path_##var(struct repository *r) \
 	{ \
 		if (!r->cached_paths.var) \
-			r->cached_paths.var = git_pathdup(filename); \
+			r->cached_paths.var = repo_git_path(r, filename); \
 		return r->cached_paths.var; \
 	}
 
