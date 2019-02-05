@@ -150,9 +150,7 @@ void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 					     1U << OE_SIZE_BITS);
 	pdata->oe_delta_size_limit = git_env_ulong("GIT_TEST_OE_DELTA_SIZE",
 						   1UL << OE_DELTA_SIZE_BITS);
-#ifndef NO_PTHREADS
-	pthread_mutex_init(&pdata->lock, NULL);
-#endif
+	init_recursive_mutex(&pdata->odb_lock);
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,
