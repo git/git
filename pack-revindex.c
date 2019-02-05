@@ -119,7 +119,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
  */
 static void create_pack_revindex(struct packed_git *p)
 {
-	unsigned num_ent = p->num_objects;
+	const unsigned num_ent = p->num_objects;
 	unsigned i;
 	const char *index = p->index_data;
 	const unsigned hashsz = the_hash_algo->rawsz;
@@ -132,7 +132,7 @@ static void create_pack_revindex(struct packed_git *p)
 			(uint32_t *)(index + 8 + p->num_objects * (hashsz + 4));
 		const uint32_t *off_64 = off_32 + p->num_objects;
 		for (i = 0; i < num_ent; i++) {
-			uint32_t off = ntohl(*off_32++);
+			const uint32_t off = ntohl(*off_32++);
 			if (!(off & 0x80000000)) {
 				p->revindex[i].offset = off;
 			} else {
@@ -143,7 +143,7 @@ static void create_pack_revindex(struct packed_git *p)
 		}
 	} else {
 		for (i = 0; i < num_ent; i++) {
-			uint32_t hl = *((uint32_t *)(index + (hashsz + 4) * i));
+			const uint32_t hl = *((uint32_t *)(index + (hashsz + 4) * i));
 			p->revindex[i].offset = ntohl(hl);
 			p->revindex[i].nr = i;
 		}
@@ -168,10 +168,10 @@ int find_revindex_position(struct packed_git *p, off_t ofs)
 {
 	int lo = 0;
 	int hi = p->num_objects + 1;
-	struct revindex_entry *revindex = p->revindex;
+	const struct revindex_entry *revindex = p->revindex;
 
 	do {
-		unsigned mi = lo + (hi - lo) / 2;
+		const unsigned mi = lo + (hi - lo) / 2;
 		if (revindex[mi].offset == ofs) {
 			return mi;
 		} else if (ofs < revindex[mi].offset)
