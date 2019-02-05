@@ -14,7 +14,7 @@ test_expect_success 'test capability advertisement' '
 	0000
 	EOF
 
-	git serve --advertise-capabilities >out &&
+	GIT_TEST_SIDEBAND_ALL=0 git serve --advertise-capabilities >out &&
 	test-tool pkt-line unpack <out >actual &&
 	test_cmp expect actual
 '

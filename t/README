@@ -374,6 +374,11 @@ GIT_TEST_MULTI_PACK_INDEX=<boolean>, when true, forces the multi-pack-
 index to be written after every 'git repack' command, and overrides the
 'core.multiPackIndex' setting to true.
 
+GIT_TEST_SIDEBAND_ALL=<boolean>, when true, overrides the
+'uploadpack.allowSidebandAll' setting to true, and when false, forces
+fetch-pack to not request sideband-all (even if the server advertises
+sideband-all).
+
 Naming Tests
 ------------
 
