@@ -1165,6 +1165,7 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 static struct transport *prepare_transport(struct remote *remote, int deepen)
 {
 	struct transport *transport;
+
 	transport = transport_get(remote, NULL);
 	transport_set_verbosity(transport, verbosity, progress);
 	transport->family = family;
@@ -1184,9 +1185,13 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 	if (update_shallow)
 		set_option(transport, TRANS_OPT_UPDATE_SHALLOW, "yes");
 	if (filter_options.choice) {
+		struct strbuf expanded_filter_spec = STRBUF_INIT;
+		expand_list_objects_filter_spec(&filter_options,
+						&expanded_filter_spec);
 		set_option(transport, TRANS_OPT_LIST_OBJECTS_FILTER,
-			   filter_options.filter_spec);
+			   expanded_filter_spec.buf);
 		set_option(transport, TRANS_OPT_FROM_PROMISOR, "1");
+		strbuf_release(&expanded_filter_spec);
 	}
 	if (negotiation_tip.nr) {
 		if (transport->smart_options)

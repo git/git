@@ -283,7 +283,7 @@ test_expect_success 'verify tree:0 includes trees in "filtered" output' '
 
 # Make sure tree:0 does not iterate through any trees.
 
-test_expect_success 'filter a GIANT tree through tree:0' '
+test_expect_success 'verify skipping tree iteration when not collecting omits' '
 	GIT_TRACE=1 git -C r3 rev-list \
 		--objects --filter=tree:0 HEAD 2>filter_trace &&
 	grep "Skipping contents of tree [.][.][.]" filter_trace >actual &&
@@ -292,6 +292,126 @@ test_expect_success 'filter a GIANT tree through tree:0' '
 
 	# Make sure no other trees were considered besides the root.
 	! grep "Skipping contents of tree [^.]" filter_trace
+'
+
+# Test tree:# filters.
+
+expect_has () {
+	commit=$1 &&
+	name=$2 &&
+
+	hash=$(git -C r3 rev-parse $commit:$name) &&
+	grep "^$hash $name$" actual
+}
+
+test_expect_success 'verify tree:1 includes root trees' '
+	git -C r3 rev-list --objects --filter=tree:1 HEAD >actual &&
+
+	# We should get two root directories and two commits.
+	expect_has HEAD "" &&
+	expect_has HEAD~1 ""  &&
+	test_line_count = 4 actual
+'
+
+test_expect_success 'verify tree:2 includes root trees and immediate children' '
+	git -C r3 rev-list --objects --filter=tree:2 HEAD >actual &&
+
+	expect_has HEAD "" &&
+	expect_has HEAD~1 "" &&
+	expect_has HEAD dir1 &&
+	expect_has HEAD pattern &&
+	expect_has HEAD sparse1 &&
+	expect_has HEAD sparse2 &&
+
+	# There are also 2 commit objects
+	test_line_count = 8 actual
+'
+
+test_expect_success 'verify tree:3 includes everything expected' '
+	git -C r3 rev-list --objects --filter=tree:3 HEAD >actual &&
+
+	expect_has HEAD "" &&
+	expect_has HEAD~1 "" &&
+	expect_has HEAD dir1 &&
+	expect_has HEAD dir1/sparse1 &&
+	expect_has HEAD dir1/sparse2 &&
+	expect_has HEAD pattern &&
+	expect_has HEAD sparse1 &&
+	expect_has HEAD sparse2 &&
+
+	# There are also 2 commit objects
+	test_line_count = 10 actual
+'
+
+# Test provisional omit collection logic with a repo that has objects appearing
+# at multiple depths - first deeper than the filter's threshold, then shallow.
+
+test_expect_success 'setup r4' '
+	git init r4 &&
+
+	echo foo > r4/foo &&
+	mkdir r4/subdir &&
+	echo bar > r4/subdir/bar &&
+
+	mkdir r4/filt &&
+	cp -r r4/foo r4/subdir r4/filt &&
+
+	git -C r4 add foo subdir filt &&
+	git -C r4 commit -m "commit msg"
+'
+
+expect_has_with_different_name () {
+	repo=$1 &&
+	name=$2 &&
+
+	hash=$(git -C $repo rev-parse HEAD:$name) &&
+	! grep "^$hash $name$" actual &&
+	grep "^$hash " actual &&
+	! grep "~$hash" actual
+}
+
+test_expect_success 'test tree:# filter provisional omit for blob and tree' '
+	git -C r4 rev-list --objects --filter-print-omitted --filter=tree:2 \
+		HEAD >actual &&
+	expect_has_with_different_name r4 filt/foo &&
+	expect_has_with_different_name r4 filt/subdir
+'
+
+test_expect_success 'verify skipping tree iteration when collecting omits' '
+	GIT_TRACE=1 git -C r4 rev-list --filter-print-omitted \
+		--objects --filter=tree:0 HEAD 2>filter_trace &&
+	grep "^Skipping contents of tree " filter_trace >actual &&
+
+	echo "Skipping contents of tree subdir/..." >expect &&
+	test_cmp expect actual
+'
+
+# Test tree:<depth> where a tree is iterated to twice - once where a subentry is
+# too deep to be included, and again where the blob inside it is shallow enough
+# to be included. This makes sure we don't use LOFR_MARK_SEEN incorrectly (we
+# can't use it because a tree can be iterated over again at a lower depth).
+
+test_expect_success 'tree:<depth> where we iterate over tree at two levels' '
+	git init r5 &&
+
+	mkdir -p r5/a/subdir/b &&
+	echo foo > r5/a/subdir/b/foo &&
+
+	mkdir -p r5/subdir/b &&
+	echo foo > r5/subdir/b/foo &&
+
+	git -C r5 add a subdir &&
+	git -C r5 commit -m "commit msg" &&
+
+	git -C r5 rev-list --objects --filter=tree:4 HEAD >actual &&
+	expect_has_with_different_name r5 a/subdir/b/foo
+'
+
+test_expect_success 'tree:<depth> which filters out blob but given as arg' '
+	blob_hash=$(git -C r4 rev-parse HEAD:subdir/bar) &&
+
+	git -C r4 rev-list --objects --filter=tree:1 HEAD $blob_hash >actual &&
+	grep ^$blob_hash actual
 '
 
 # Delete some loose objects and use rev-list, but WITHOUT any filtering.
@@ -322,6 +442,23 @@ test_expect_success 'rev-list W/O --missing fails' '
 
 test_expect_success 'rev-list W/ missing=allow-any' '
 	git -C r1 rev-list --quiet --missing=allow-any --objects HEAD
+'
+
+# Test expansion of filter specs.
+
+test_expect_success 'expand blob limit in protocol' '
+	git -C r2 config --local uploadpack.allowfilter 1 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 clone \
+		--filter=blob:limit=1k "file://$(pwd)/r2" limit &&
+	! grep "blob:limit=1k" trace &&
+	grep "blob:limit=1024" trace
+'
+
+test_expect_success 'expand tree depth limit in protocol' '
+	GIT_TRACE_PACKET="$(pwd)/tree_trace" git -c protocol.version=2 clone \
+		--filter=tree:0k "file://$(pwd)/r2" tree &&
+	! grep "tree:0k" tree_trace &&
+	grep "tree:0" tree_trace
 '
 
 test_done

@@ -329,9 +329,14 @@ static int find_common(struct fetch_negotiator *negotiator,
 			packet_buf_write(&req_buf, "deepen-not %s", s->string);
 		}
 	}
-	if (server_supports_filtering && args->filter_options.choice)
+	if (server_supports_filtering && args->filter_options.choice) {
+		struct strbuf expanded_filter_spec = STRBUF_INIT;
+		expand_list_objects_filter_spec(&args->filter_options,
+						&expanded_filter_spec);
 		packet_buf_write(&req_buf, "filter %s",
-				 args->filter_options.filter_spec);
+				 expanded_filter_spec.buf);
+		strbuf_release(&expanded_filter_spec);
+	}
 	packet_buf_flush(&req_buf);
 	state_len = req_buf.len;
 
@@ -1122,9 +1127,13 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	/* Add filter */
 	if (server_supports_feature("fetch", "filter", 0) &&
 	    args->filter_options.choice) {
+		struct strbuf expanded_filter_spec = STRBUF_INIT;
 		print_verbose(args, _("Server supports filter"));
+		expand_list_objects_filter_spec(&args->filter_options,
+						&expanded_filter_spec);
 		packet_buf_write(&req_buf, "filter %s",
-				 args->filter_options.filter_spec);
+				 expanded_filter_spec.buf);
+		strbuf_release(&expanded_filter_spec);
 	} else if (args->filter_options.choice) {
 		warning("filtering not recognized by server, ignoring");
 	}

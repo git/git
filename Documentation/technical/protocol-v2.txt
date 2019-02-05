@@ -296,7 +296,13 @@ included in the client's request:
 	Request that various objects from the packfile be omitted
 	using one of several filtering techniques. These are intended
 	for use with partial clone and partial fetch operations. See
-	`rev-list` for possible "filter-spec" values.
+	`rev-list` for possible "filter-spec" values. When communicating
+	with other processes, senders SHOULD translate scaled integers
+	(e.g. "1k") into a fully-expanded form (e.g. "1024") to aid
+	interoperability with older receivers that may not understand
+	newly-invented scaling suffixes. However, receivers SHOULD
+	accept the following suffixes: 'k', 'm', and 'g' for 1024,
+	1048576, and 1073741824, respectively.
 
 If the 'ref-in-want' feature is advertised, the following argument can
 be included in the client's request as well as the potential addition of

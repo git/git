@@ -18,8 +18,9 @@
  * See Documentation/rev-list-options.txt for allowed values for <arg>.
  *
  * Capture the given arg as the "filter_spec".  This can be forwarded to
- * subordinate commands when necessary.  We also "intern" the arg for
- * the convenience of the current command.
+ * subordinate commands when necessary (although it's better to pass it through
+ * expand_list_objects_filter_spec() first).  We also "intern" the arg for the
+ * convenience of the current command.
  */
 static int gently_parse_list_objects_filter(
 	struct list_objects_filter_options *filter_options,
@@ -50,16 +51,15 @@ static int gently_parse_list_objects_filter(
 		}
 
 	} else if (skip_prefix(arg, "tree:", &v0)) {
-		unsigned long depth;
-		if (!git_parse_ulong(v0, &depth) || depth != 0) {
+		if (!git_parse_ulong(v0, &filter_options->tree_exclude_depth)) {
 			if (errbuf) {
 				strbuf_addstr(
 					errbuf,
-					_("only 'tree:0' is supported"));
+					_("expected 'tree:<depth>'"));
 			}
 			return 1;
 		}
-		filter_options->choice = LOFC_TREE_NONE;
+		filter_options->choice = LOFC_TREE_DEPTH;
 		return 0;
 
 	} else if (skip_prefix(arg, "sparse:oid=", &v0)) {
@@ -110,6 +110,21 @@ int opt_parse_list_objects_filter(const struct option *opt,
 	}
 
 	return parse_list_objects_filter(filter_options, arg);
+}
+
+void expand_list_objects_filter_spec(
+	const struct list_objects_filter_options *filter,
+	struct strbuf *expanded_spec)
+{
+	strbuf_init(expanded_spec, strlen(filter->filter_spec));
+	if (filter->choice == LOFC_BLOB_LIMIT)
+		strbuf_addf(expanded_spec, "blob:limit=%lu",
+			    filter->blob_limit_value);
+	else if (filter->choice == LOFC_TREE_DEPTH)
+		strbuf_addf(expanded_spec, "tree:%lu",
+			    filter->tree_exclude_depth);
+	else
+		strbuf_addstr(expanded_spec, filter->filter_spec);
 }
 
 void list_objects_filter_release(
