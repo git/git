@@ -40,6 +40,11 @@ osx-clang|osx-gcc)
 	brew install git-lfs gettext
 	brew link --force gettext
 	brew install caskroom/cask/perforce
+	case "$jobname" in
+	osx-gcc)
+		brew link gcc@8
+		;;
+	esac
 	;;
 StaticAnalysis)
 	sudo apt-get -q update
