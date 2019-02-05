@@ -3,15 +3,16 @@
 # Perform sanity checks on documentation and build it.
 #
 
-. ${0%/*}/lib-travisci.sh
+. ${0%/*}/lib.sh
 
+test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
 gem install asciidoctor
 
 make check-builtins
 make check-docs
 
 # Build docs with AsciiDoc
-make --jobs=2 doc > >(tee stdout.log) 2> >(tee stderr.log >&2)
+make doc > >(tee stdout.log) 2> >(tee stderr.log >&2)
 ! test -s stderr.log
 test -s Documentation/git.html
 test -s Documentation/git.xml
@@ -23,7 +24,7 @@ check_unignored_build_artifacts
 
 # Build docs with AsciiDoctor
 make clean
-make --jobs=2 USE_ASCIIDOCTOR=1 doc > >(tee stdout.log) 2> >(tee stderr.log >&2)
+make USE_ASCIIDOCTOR=1 doc > >(tee stdout.log) 2> >(tee stderr.log >&2)
 sed '/^GIT_VERSION = / d' stderr.log
 ! test -s stderr.log
 test -s Documentation/git.html
