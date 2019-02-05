@@ -536,7 +536,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	RC = windres -O coff
 	NATIVE_CRLF = YesPlease
 	X = .exe
-	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	htmldir = doc/git/html/
 	prefix =
