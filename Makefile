@@ -568,7 +568,11 @@ SPATCH = spatch
 
 export TCL_PATH TCLTK_PATH
 
-SPARSE_FLAGS =
+# user customisation variable for 'sparse' target
+SPARSE_FLAGS ?=
+# internal/platform customisation variable for 'sparse'
+SP_EXTRA_FLAGS =
+
 SPATCH_FLAGS = --all-includes --patch .
 
 
@@ -2347,10 +2351,10 @@ gettext.sp gettext.s gettext.o: GIT-PREFIX
 gettext.sp gettext.s gettext.o: EXTRA_CPPFLAGS = \
 	-DGIT_LOCALE_PATH='"$(localedir_relative_SQ)"'
 
-http-push.sp http.sp http-walker.sp remote-curl.sp imap-send.sp: SPARSE_FLAGS += \
+http-push.sp http.sp http-walker.sp remote-curl.sp imap-send.sp: SP_EXTRA_FLAGS += \
 	-DCURL_DISABLE_TYPECHECK
 
-pack-revindex.sp: SPARSE_FLAGS += -Wno-memcpy-max-count
+pack-revindex.sp: SP_EXTRA_FLAGS += -Wno-memcpy-max-count
 
 ifdef NO_EXPAT
 http-walker.sp http-walker.s http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
@@ -2364,7 +2368,7 @@ endif
 ifdef USE_NED_ALLOCATOR
 compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 	-DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR
-compat/nedmalloc/nedmalloc.sp: SPARSE_FLAGS += -Wno-non-pointer-null
+compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
 git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
@@ -2688,7 +2692,7 @@ SP_OBJ = $(patsubst %.o,%.sp,$(C_OBJ))
 
 $(SP_OBJ): %.sp: %.c GIT-CFLAGS FORCE
 	$(QUIET_SP)cgcc -no-compile $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) \
-		$(SPARSE_FLAGS) $<
+		$(SPARSE_FLAGS) $(SP_EXTRA_FLAGS) $<
 
 .PHONY: sparse $(SP_OBJ)
 sparse: $(SP_OBJ)
