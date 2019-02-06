@@ -374,7 +374,7 @@ static void check_smart_http(struct discovery *d, const char *service,
 		d->len = reader.src_len;
 		d->proto_git = 1;
 
-	} else if (starts_with(reader.line, "version 2")) {
+	} else if (!strcmp(reader.line, "version 2")) {
 		/*
 		 * v2 smart http; do not consume version packet, which will
 		 * be handled elsewhere.
