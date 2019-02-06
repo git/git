@@ -392,15 +392,15 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	if (opts->count_checkout_paths) {
 		if (opts->source_tree)
-			fprintf_ln(stderr, Q_("Checked out %d path out of %s",
-					      "Checked out %d paths out of %s",
+			fprintf_ln(stderr, Q_("Updated %d path from %s",
+					      "Updated %d paths from %s",
 					      nr_checkouts),
 				   nr_checkouts,
 				   find_unique_abbrev(&opts->source_tree->object.oid,
 						      DEFAULT_ABBREV));
 		else
-			fprintf_ln(stderr, Q_("Checked out %d path out of the index",
-					      "Checked out %d paths out of the index",
+			fprintf_ln(stderr, Q_("Updated %d path from the index",
+					      "Updated %d paths from the index",
 					      nr_checkouts),
 				   nr_checkouts);
 	}
