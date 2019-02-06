@@ -1272,6 +1272,8 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file,
 					NULL);
 		args->deepen = 1;
+	} else {
+		alternate_shallow_file = NULL;
 	}
 }
 
