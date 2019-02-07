@@ -185,4 +185,4 @@ GIT_TEST_GETTEXT_POISON)
 	;;
 esac
 
-export MAKEFLAGS="CC=${CC:-cc}"
+export MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
