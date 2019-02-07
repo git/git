@@ -3,6 +3,7 @@
 
 static const char *usage_msg = "\n"
 "  test-tool date relative [time_t]...\n"
+"  test-tool date human [time_t]...\n"
 "  test-tool date show:<format> [time_t]...\n"
 "  test-tool date parse [date]...\n"
 "  test-tool date approxidate [date]...\n"
@@ -20,6 +21,14 @@ static void show_relative_dates(const char **argv, struct timeval *now)
 		printf("%s -> %s\n", *argv, buf.buf);
 	}
 	strbuf_release(&buf);
+}
+
+static void show_human_dates(const char **argv)
+{
+	for (; *argv; argv++) {
+		time_t t = atoi(*argv);
+		printf("%s -> %s\n", *argv, show_date(t, 0, DATE_MODE(HUMAN)));
+	}
 }
 
 static void show_dates(const char **argv, const char *format)
@@ -87,7 +96,7 @@ int cmd__date(int argc, const char **argv)
 	struct timeval now;
 	const char *x;
 
-	x = getenv("TEST_DATE_NOW");
+	x = getenv("GIT_TEST_DATE_NOW");
 	if (x) {
 		now.tv_sec = atoi(x);
 		now.tv_usec = 0;
@@ -100,6 +109,8 @@ int cmd__date(int argc, const char **argv)
 		usage(usage_msg);
 	if (!strcmp(*argv, "relative"))
 		show_relative_dates(argv+1, &now);
+	else if (!strcmp(*argv, "human"))
+		show_human_dates(argv+1);
 	else if (skip_prefix(*argv, "show:", &x))
 		show_dates(argv+1, x);
 	else if (!strcmp(*argv, "parse"))
