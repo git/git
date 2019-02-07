@@ -64,7 +64,7 @@ EOF
 
 test_expect_success 'rename & unmerged setup' '
 	git rm -f -r . &&
-	cat "$TEST_DIRECTORY/README" >ONE &&
+	cat "$TEST_DIRECTORY/lib-diff/README" >ONE &&
 	git add ONE &&
 	test_tick &&
 	git commit -m "One commit with ONE" &&

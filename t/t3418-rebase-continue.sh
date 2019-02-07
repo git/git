@@ -63,7 +63,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	EOF
 	chmod +x test-bin/git-merge-funny &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		test_must_fail git rebase -s funny -Xopt main topic
 	) &&
 	test -f funny.was.run &&
@@ -71,7 +71,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		git rebase --continue
 	) &&
 	test -f funny.was.run
@@ -95,7 +95,7 @@ test_expect_success 'rebase -i --continue handles merge strategy and options' '
 	EOF
 	chmod +x test-bin/git-merge-funny &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		test_must_fail git rebase -i -s funny -Xopt -Xfoo main topic
 	) &&
 	test -f funny.was.run &&
@@ -103,7 +103,7 @@ test_expect_success 'rebase -i --continue handles merge strategy and options' '
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		git rebase --continue
 	) &&
 	test -f funny.was.run

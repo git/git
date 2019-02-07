@@ -8,7 +8,7 @@ test_description='git reset should cull empty subdirs'
 
 test_expect_success 'creating initial files' '
      mkdir path0 &&
-     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
+     cp "$TEST_DIRECTORY"/lib-diff/COPYING path0/COPYING &&
      git add path0/COPYING &&
      git commit -m add -a
 '
@@ -16,10 +16,10 @@ test_expect_success 'creating initial files' '
 test_expect_success 'creating second files' '
      mkdir path1 &&
      mkdir path1/path2 &&
-     cp "$TEST_DIRECTORY"/../COPYING path1/path2/COPYING &&
-     cp "$TEST_DIRECTORY"/../COPYING path1/COPYING &&
-     cp "$TEST_DIRECTORY"/../COPYING COPYING &&
-     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING-TOO &&
+     cp "$TEST_DIRECTORY"/lib-diff/COPYING path1/path2/COPYING &&
+     cp "$TEST_DIRECTORY"/lib-diff/COPYING path1/COPYING &&
+     cp "$TEST_DIRECTORY"/lib-diff/COPYING COPYING &&
+     cp "$TEST_DIRECTORY"/lib-diff/COPYING path0/COPYING-TOO &&
      git add path1/path2/COPYING &&
      git add path1/COPYING &&
      git add COPYING &&

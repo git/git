@@ -129,12 +129,7 @@ invalid_variable_name='${foo.bar}'
 
 actual="$TRASH_DIRECTORY/actual"
 
-if test_have_prereq MINGW
-then
-	ROOT="$(pwd -W)"
-else
-	ROOT="$(pwd)"
-fi
+ROOT="$(pwd)"
 
 test_expect_success 'setup for __git_find_repo_path/__gitdir tests' '
 	mkdir -p subdir/subsubdir &&
