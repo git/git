@@ -27,6 +27,13 @@ they run `git merge`. To make it easier to adjust such scripts to the
 updated behaviour, the environment variable `GIT_MERGE_AUTOEDIT` can be
 set to `no` at the beginning of them.
 
+--cleanup=<mode>::
+	This option determines how the merge message will be cleaned up
+	before commiting or being passed on. See linkgit:git-commit[1] for more
+	details. In addition, if the '<mode>' is given a value of `scissors`,
+	scissors will be prepended to MERGE_MSG before being passed on in the case
+	of a merge conflict.
+
 --ff::
 	When the merge resolves as a fast-forward, only update the branch
 	pointer, without creating a merge commit.  This is the default
