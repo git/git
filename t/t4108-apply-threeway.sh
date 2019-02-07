@@ -273,11 +273,11 @@ test_expect_success 'apply with --3way --cached and conflicts' '
 
 test_expect_success 'apply binary file patch' '
 	git reset --hard main &&
-	cp "$TEST_DIRECTORY/test-binary-1.png" bin.png &&
+	cp "$TEST_DIRECTORY/lib-diff/test-binary-1.png" bin.png &&
 	git add bin.png &&
 	git commit -m "add binary file" &&
 
-	cp "$TEST_DIRECTORY/test-binary-2.png" bin.png &&
+	cp "$TEST_DIRECTORY/lib-diff/test-binary-2.png" bin.png &&
 
 	git diff --binary >bin.diff &&
 	git reset --hard &&
@@ -288,11 +288,11 @@ test_expect_success 'apply binary file patch' '
 
 test_expect_success 'apply binary file patch with 3way' '
 	git reset --hard main &&
-	cp "$TEST_DIRECTORY/test-binary-1.png" bin.png &&
+	cp "$TEST_DIRECTORY/lib-diff/test-binary-1.png" bin.png &&
 	git add bin.png &&
 	git commit -m "add binary file" &&
 
-	cp "$TEST_DIRECTORY/test-binary-2.png" bin.png &&
+	cp "$TEST_DIRECTORY/lib-diff/test-binary-2.png" bin.png &&
 
 	git diff --binary >bin.diff &&
 	git reset --hard &&
@@ -303,11 +303,11 @@ test_expect_success 'apply binary file patch with 3way' '
 
 test_expect_success 'apply full-index patch with 3way' '
 	git reset --hard main &&
-	cp "$TEST_DIRECTORY/test-binary-1.png" bin.png &&
+	cp "$TEST_DIRECTORY/lib-diff/test-binary-1.png" bin.png &&
 	git add bin.png &&
 	git commit -m "add binary file" &&
 
-	cp "$TEST_DIRECTORY/test-binary-2.png" bin.png &&
+	cp "$TEST_DIRECTORY/lib-diff/test-binary-2.png" bin.png &&
 
 	git diff --full-index >bin.diff &&
 	git reset --hard &&
