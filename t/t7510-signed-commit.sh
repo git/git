@@ -49,15 +49,28 @@ test_expect_success GPG 'create signed commits' '
 	git tag eighth-signed-alt &&
 
 	# commit.gpgsign is still on but this must not be signed
-	git tag ninth-unsigned $(echo 9 | git commit-tree HEAD^{tree}) &&
+	echo 9 | git commit-tree HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag ninth-unsigned $(cat oid) &&
 	# explicit -S of course must sign.
-	git tag tenth-signed $(echo 9 | git commit-tree -S HEAD^{tree})
+	echo 10 | git commit-tree -S HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag tenth-signed $(cat oid) &&
+
+	# --gpg-sign[=<key-id>] must sign.
+	echo 11 | git commit-tree --gpg-sign HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag eleventh-signed $(cat oid) &&
+	echo 12 | git commit-tree --gpg-sign=B7227189 HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag twelfth-signed-alt $(cat oid)
 '
 
 test_expect_success GPG 'verify and show signatures' '
 	(
 		for commit in initial second merge fourth-signed \
-			fifth-signed sixth-signed seventh-signed tenth-signed
+			fifth-signed sixth-signed seventh-signed tenth-signed \
+			eleventh-signed
 		do
 			git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
@@ -78,7 +91,7 @@ test_expect_success GPG 'verify and show signatures' '
 		done
 	) &&
 	(
-		for commit in eighth-signed-alt
+		for commit in eighth-signed-alt twelfth-signed-alt
 		do
 			git show --pretty=short --show-signature $commit >actual &&
 			grep "Good signature from" actual &&
