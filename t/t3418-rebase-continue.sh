@@ -83,7 +83,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 
 	rm -f actual &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		test_must_fail git rebase -s funny -X"option=arg with space" \
 				-Xop\"tion\\ -X"new${LF}line " main topic
 	) &&
@@ -92,7 +92,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		git rebase --continue
 	) &&
 	test_cmp expect actual
