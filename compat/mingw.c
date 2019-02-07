@@ -13,6 +13,7 @@
 #include <sspi.h>
 #include "win32/fscache.h"
 #include "../attr.h"
+#include "../string-list.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -1569,6 +1570,65 @@ static char *lookup_prog(const char *dir, int dirlen, const char *cmd,
 	return NULL;
 }
 
+static char *path_lookup(const char *cmd, int exe_only);
+
+static char *is_busybox_applet(const char *cmd)
+{
+	static struct string_list applets = STRING_LIST_INIT_DUP;
+	static char *busybox_path;
+	static int busybox_path_initialized;
+
+	/* Avoid infinite loop */
+	if (!strncasecmp(cmd, "busybox", 7) &&
+	    (!cmd[7] || !strcasecmp(cmd + 7, ".exe")))
+		return NULL;
+
+	if (!busybox_path_initialized) {
+		busybox_path = path_lookup("busybox.exe", 1);
+		busybox_path_initialized = 1;
+	}
+
+	/* Assume that sh is compiled in... */
+	if (!busybox_path || !strcasecmp(cmd, "sh"))
+		return xstrdup_or_null(busybox_path);
+
+	if (!applets.nr) {
+		struct child_process cp = CHILD_PROCESS_INIT;
+		struct strbuf buf = STRBUF_INIT;
+		char *p;
+
+		strvec_pushl(&cp.args, busybox_path, "--help", NULL);
+
+		if (capture_command(&cp, &buf, 2048)) {
+			string_list_append(&applets, "");
+			return NULL;
+		}
+
+		/* parse output */
+		p = strstr(buf.buf, "Currently defined functions:\n");
+		if (!p) {
+			warning("Could not parse output of busybox --help");
+			string_list_append(&applets, "");
+			return NULL;
+		}
+		p = strchrnul(p, '\n');
+		for (;;) {
+			size_t len;
+
+			p += strspn(p, "\n\t ,");
+			len = strcspn(p, "\n\t ,");
+			if (!len)
+				break;
+			p[len] = '\0';
+			string_list_insert(&applets, p);
+			p = p + len + 1;
+		}
+	}
+
+	return string_list_has_string(&applets, cmd) ?
+		xstrdup(busybox_path) : NULL;
+}
+
 /*
  * Determines the absolute path of cmd using the split path in path.
  * If cmd contains a slash or backslash, no lookup is performed.
@@ -1596,6 +1656,9 @@ static char *path_lookup(const char *cmd, int exe_only)
 			break;
 		path = sep + 1;
 	}
+
+	if (!prog && !isexe)
+		prog = is_busybox_applet(cmd);
 
 	return prog;
 }
@@ -1796,8 +1859,8 @@ static int is_msys2_sh(const char *cmd)
 }
 
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaenv,
-			      const char *dir,
-			      int prepend_cmd, int fhin, int fhout, int fherr)
+			      const char *dir, const char *prepend_cmd,
+			      int fhin, int fhout, int fherr)
 {
 	static int restrict_handle_inheritance = -1;
 	STARTUPINFOEXW si;
@@ -1888,9 +1951,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	/* concatenate argv, quoting args as we go */
 	strbuf_init(&args, 0);
 	if (prepend_cmd) {
-		char *quoted = (char *)quote_arg(cmd);
+		char *quoted = (char *)quote_arg(prepend_cmd);
 		strbuf_addstr(&args, quoted);
-		if (quoted != cmd)
+		if (quoted != prepend_cmd)
 			free(quoted);
 	}
 	for (; *argv; argv++) {
@@ -2049,7 +2112,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	return (pid_t)pi.dwProcessId;
 }
 
-static pid_t mingw_spawnv(const char *cmd, const char **argv, int prepend_cmd)
+static pid_t mingw_spawnv(const char *cmd, const char **argv,
+			  const char *prepend_cmd)
 {
 	return mingw_spawnve_fd(cmd, argv, NULL, NULL, prepend_cmd, 0, 1, 2);
 }
@@ -2077,14 +2141,14 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **deltaenv,
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve_fd(iprog, argv, deltaenv, dir, 1,
+				pid = mingw_spawnve_fd(iprog, argv, deltaenv, dir, interpr,
 						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve_fd(prog, argv, deltaenv, dir, 0,
+			pid = mingw_spawnve_fd(prog, argv, deltaenv, dir, NULL,
 					       fhin, fhout, fherr);
 		free(prog);
 	}
@@ -2112,7 +2176,7 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 		argv2[0] = (char *)cmd;	/* full path to the script file */
 		COPY_ARRAY(&argv2[1], &argv[1], argc);
 		exec_id = trace2_exec(prog, argv2);
-		pid = mingw_spawnv(prog, argv2, 1);
+		pid = mingw_spawnv(prog, argv2, interpr);
 		if (pid >= 0) {
 			int status;
 			if (waitpid(pid, &status, 0) < 0)
@@ -2136,7 +2200,7 @@ int mingw_execv(const char *cmd, char *const *argv)
 		int exec_id;
 
 		exec_id = trace2_exec(cmd, (const char **)argv);
-		pid = mingw_spawnv(cmd, (const char **)argv, 0);
+		pid = mingw_spawnv(cmd, (const char **)argv, NULL);
 		if (pid < 0) {
 			trace2_exec_result(exec_id, -1);
 			return -1;

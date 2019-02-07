@@ -35,7 +35,7 @@ test_expect_success 'setup helper scripts' '
 	test -z "$pass" || echo password=$pass
 	EOF
 
-	PATH="$PWD:$PATH"
+	PATH="$PWD$PATH_SEP$PATH"
 '
 
 test_expect_success 'credential_fill invokes helper' '
