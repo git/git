@@ -119,7 +119,7 @@ The placeholders are:
 	    the `auto` settings of the former if we are going to a
 	    terminal). `%C(auto,...)` is accepted as a historical
 	    synonym for the default (e.g., `%C(auto,red)`). Specifying
-	    `%C(always,...) will show the colors even when color is
+	    `%C(always,...)` will show the colors even when color is
 	    not otherwise enabled (though consider just using
 	    `--color=always` to enable color for the whole output,
 	    including this format and anything else git might color).
