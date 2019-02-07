@@ -462,12 +462,6 @@ without an explicit `--interactive`.
 +
 See also INCOMPATIBLE OPTIONS below.
 
--y <cmd>::
-	This is the same as passing `--reschedule-failed-exec` before
-	`-x <cmd>`, i.e. it appends the specified `exec` command and
-	turns on the mode where failed `exec` commands are automatically
-	rescheduled.
-
 --root::
 	Rebase all commits reachable from <branch>, instead of
 	limiting them with an <upstream>.  This allows you to rebase

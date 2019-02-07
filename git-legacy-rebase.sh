@@ -26,7 +26,6 @@ f,force-rebase!    cherry-pick all commits, even if unchanged
 m,merge!           use merging strategies to rebase
 i,interactive!     let the user edit the list of commits to rebase
 x,exec=!           add exec lines after each commit of the editable list
-y=!                same as --reschedule-failed-exec -x
 k,keep-empty	   preserve empty commits during rebase
 allow-empty-message allow rebasing commits with empty messages
 stat!              display a diffstat of what changed upstream
@@ -259,11 +258,6 @@ do
 		;;
 	--exec=*)
 		cmd="${cmd}exec ${1#--exec=}${LF}"
-		test -z "$interactive_rebase" && interactive_rebase=implied
-		;;
-	-y*)
-		reschedule_failed_exec=--reschedule-failed-exec
-		cmd="${cmd}exec ${1#-y}${LF}"
 		test -z "$interactive_rebase" && interactive_rebase=implied
 		;;
 	--interactive)
