@@ -12,8 +12,14 @@ then
 	test_done
 fi
 
+if test_have_prereq MINGW
+then
+	skip_all='skipping remote-svn tests for lack of POSIX'
+	test_done
+fi
+
 # Override svnrdump with our simulator
-PATH="$HOME:$PATH"
+PATH="$HOME$PATH_SEP$PATH"
 export PATH PYTHON_PATH GIT_BUILD_DIR
 
 write_script "$HOME/svnrdump" <<\EOF
