@@ -582,10 +582,10 @@ int get_tree_entry(const struct object_id *tree_oid, const char *name, struct ob
  * with the sha1 of the found object, and *mode will hold the mode of
  * the object.
  *
- * See the code for enum follow_symlink_result for a description of
+ * See the code for enum get_oid_result for a description of
  * the return values.
  */
-enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode)
+enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode)
 {
 	int retval = MISSING_OBJECT;
 	struct dir_state *parents = NULL;
