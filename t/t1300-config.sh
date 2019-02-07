@@ -1710,7 +1710,7 @@ test_expect_success '--show-origin getting a single key' '
 	test_cmp expect output
 '
 
-test_expect_success 'set up custom config file' '
+test_expect_success !MINGW 'set up custom config file' '
 	CUSTOM_CONFIG_FILE="file\" (dq) and spaces.conf" &&
 	cat >"$CUSTOM_CONFIG_FILE" <<-\EOF
 		[user]
@@ -1726,7 +1726,7 @@ test_expect_success !MINGW '--show-origin escape special file name characters' '
 	test_cmp expect output
 '
 
-test_expect_success '--show-origin stdin' '
+test_expect_success !MINGW '--show-origin stdin' '
 	cat >expect <<-\EOF &&
 		standard input:	user.custom=true
 	EOF
