@@ -738,6 +738,62 @@ else
 		NO_CURL = YesPlease
 	endif
 endif
+ifeq (i686,$(uname_M))
+	MINGW_PREFIX := mingw32
+endif
+ifeq (x86_64,$(uname_M))
+	MINGW_PREFIX := mingw64
+endif
+
+	DESTDIR_WINDOWS = $(shell cygpath -aw '$(DESTDIR_SQ)')
+	DESTDIR_MIXED = $(shell cygpath -am '$(DESTDIR_SQ)')
+install-mingit-test-artifacts:
+	install -m755 -d '$(DESTDIR_SQ)/usr/bin'
+	printf '%s\n%s\n' >'$(DESTDIR_SQ)/usr/bin/perl' \
+		"#!/mingw64/bin/busybox sh" \
+		"exec \"$(shell cygpath -am /usr/bin/perl.exe)\" \"\$$@\""
+
+	install -m755 -d '$(DESTDIR_SQ)'
+	printf '%s%s\n%s\n%s\n%s\n%s\n' >'$(DESTDIR_SQ)/init.bat' \
+		"PATH=$(DESTDIR_WINDOWS)\\$(MINGW_PREFIX)\\bin;" \
+		"C:\\WINDOWS;C:\\WINDOWS\\system32" \
+		"@set GIT_TEST_INSTALLED=$(DESTDIR_MIXED)/$(MINGW_PREFIX)/bin" \
+		"@`echo "$(DESTDIR_WINDOWS)" | sed 's/:.*/:/'`" \
+		"@cd `echo "$(DESTDIR_WINDOWS)" | sed 's/^.://'`\\test-git\\t" \
+		"@echo Now, run 'helper\\test-run-command testsuite'"
+
+	install -m755 -d '$(DESTDIR_SQ)/test-git'
+	sed 's/^\(NO_PERL\|NO_PYTHON\)=.*/\1=YesPlease/' \
+		<GIT-BUILD-OPTIONS >'$(DESTDIR_SQ)/test-git/GIT-BUILD-OPTIONS'
+
+	install -m755 -d '$(DESTDIR_SQ)/test-git/t/helper'
+	install -m755 $(TEST_PROGRAMS) '$(DESTDIR_SQ)/test-git/t/helper'
+	(cd t && $(TAR) cf - t[0-9][0-9][0-9][0-9] lib-diff) | \
+	(cd '$(DESTDIR_SQ)/test-git/t' && $(TAR) xf -)
+	install -m755 t/t556x_common t/*.sh '$(DESTDIR_SQ)/test-git/t'
+
+	install -m755 -d '$(DESTDIR_SQ)/test-git/templates'
+	(cd templates && $(TAR) cf - blt) | \
+	(cd '$(DESTDIR_SQ)/test-git/templates' && $(TAR) xf -)
+
+	# po/build/locale for t0200
+	install -m755 -d '$(DESTDIR_SQ)/test-git/po/build/locale'
+	(cd po/build/locale && $(TAR) cf - .) | \
+	(cd '$(DESTDIR_SQ)/test-git/po/build/locale' && $(TAR) xf -)
+
+	# git-daemon.exe for t5802, git-http-backend.exe for t5560
+	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
+	install -m755 git-daemon.exe git-http-backend.exe \
+		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
+
+	# git-upload-archive (dashed) for t5000
+	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
+	install -m755 git-upload-archive.exe '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
+
+	# git-difftool--helper for t7800
+	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
+	install -m755 git-difftool--helper \
+		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
 endif
 ifeq ($(uname_S),QNX)
 	COMPAT_CFLAGS += -DSA_RESTART=0
