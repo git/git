@@ -1332,7 +1332,7 @@ test_expect_success 'stash -- <subdir> works with binary files' '
 	git reset &&
 	>subdir/untracked &&
 	>subdir/tracked &&
-	cp "$TEST_DIRECTORY"/test-binary-1.png subdir/tracked-binary &&
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-1.png subdir/tracked-binary &&
 	git add subdir/tracked* &&
 	git stash -- subdir/ &&
 	test_path_is_missing subdir/tracked &&
