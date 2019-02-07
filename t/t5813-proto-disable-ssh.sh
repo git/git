@@ -16,8 +16,23 @@ test_expect_success 'setup repository to clone' '
 '
 
 test_proto "host:path" ssh "remote:repo.git"
-test_proto "ssh://" ssh "ssh://remote$PWD/remote/repo.git"
-test_proto "git+ssh://" ssh "git+ssh://remote$PWD/remote/repo.git"
+
+hostdir="$PWD"
+if test_have_prereq MINGW && test "/${PWD#/}" != "$PWD"
+then
+	case "$PWD" in
+	[A-Za-z]:/*)
+		hostdir="${PWD#?:}"
+		;;
+	*)
+		skip_all="Unhandled PWD '$PWD'; skipping rest"
+		test_done
+		;;
+	esac
+fi
+
+test_proto "ssh://" ssh "ssh://remote$hostdir/remote/repo.git"
+test_proto "git+ssh://" ssh "git+ssh://remote$hostdir/remote/repo.git"
 
 # Don't even bother setting up a "-remote" directory, as ssh would generally
 # complain about the bogus option rather than completing our request. Our
