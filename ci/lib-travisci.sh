@@ -99,12 +99,14 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
 export GIT_TEST_OPTS="--verbose-log -x --immediate"
 export GIT_TEST_CLONE_2GB=YesPlease
-if [ "$jobname" = linux-gcc ]; then
-	export CC=gcc-8
-fi
 
 case "$jobname" in
 linux-clang|linux-gcc)
+	if [ "$jobname" = linux-gcc ]
+	then
+		export CC=gcc-8
+	fi
+
 	export GIT_TEST_HTTPD=YesPlease
 
 	# The Linux build installs the defined dependency versions below.
@@ -118,6 +120,11 @@ linux-clang|linux-gcc)
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
 osx-clang|osx-gcc)
+	if [ "$jobname" = osx-gcc ]
+	then
+		export CC=gcc-8
+	fi
+
 	# t9810 occasionally fails on Travis CI OS X
 	# t9816 occasionally fails with "TAP out of sequence errors" on
 	# Travis CI OS X
@@ -127,3 +134,5 @@ GIT_TEST_GETTEXT_POISON)
 	export GIT_TEST_GETTEXT_POISON=YesPlease
 	;;
 esac
+
+export MAKEFLAGS="CC=${CC:-cc}"
