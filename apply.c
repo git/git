@@ -467,7 +467,6 @@ static char *squash_slash(char *name)
 
 static char *find_name_gnu(struct apply_state *state,
 			   const char *line,
-			   const char *def,
 			   int p_value)
 {
 	struct strbuf name = STRBUF_INIT;
@@ -714,7 +713,7 @@ static char *find_name(struct apply_state *state,
 		       int terminate)
 {
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, def, p_value);
+		char *name = find_name_gnu(state, line, p_value);
 		if (name)
 			return name;
 	}
@@ -731,7 +730,7 @@ static char *find_name_traditional(struct apply_state *state,
 	size_t date_len;
 
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, def, p_value);
+		char *name = find_name_gnu(state, line, p_value);
 		if (name)
 			return name;
 	}

@@ -424,8 +424,8 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 	return ref_count;
 }
 
-int create_bundle(struct repository *r, struct bundle_header *header,
-		  const char *path, int argc, const char **argv)
+int create_bundle(struct repository *r, const char *path,
+		  int argc, const char **argv)
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;

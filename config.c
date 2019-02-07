@@ -2565,7 +2565,6 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
  * entry (which all are to be removed).
  */
 static void maybe_remove_section(struct config_store_data *store,
-				 const char *contents,
 				 size_t *begin_offset, size_t *end_offset,
 				 int *seen_ptr)
 {
@@ -2850,7 +2849,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 				replace_end = store.parsed[j].end;
 				copy_end = store.parsed[j].begin;
 				if (!value)
-					maybe_remove_section(&store, contents,
+					maybe_remove_section(&store,
 							     &copy_end,
 							     &replace_end, &i);
 				/*
