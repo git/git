@@ -744,7 +744,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	if (ignore_case) {
 		adjust_dirname_case(istate, ce->name);
 	}
-	if (!(flags & HASH_RENORMALIZE)) {
+	if (!(flags & ADD_CACHE_RENORMALIZE)) {
 		alias = index_file_exists(istate, ce->name,
 					  ce_namelen(ce), ignore_case);
 		if (alias &&
