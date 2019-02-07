@@ -29,6 +29,7 @@ test_tool_sources = [
   'test-hash.c',
   'test-hashmap.c',
   'test-hexdump.c',
+  'test-iconv.c',
   'test-json-writer.c',
   'test-lazy-init-name-hash.c',
   'test-match-trees.c',
