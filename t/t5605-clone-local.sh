@@ -8,6 +8,21 @@ repo_is_hardlinked() {
 	test_line_count = 0 output
 }
 
+if test_have_prereq MINGW,BUSYBOX
+then
+	# BusyBox' `find` does not support `-links`. Besides, BusyBox-w32's
+	# lstat() does not report hard links, just like Git's mingw_lstat()
+	# (from where BusyBox-w32 got its initial implementation).
+	repo_is_hardlinked() {
+		for f in $(find "$1/objects" -type f)
+		do
+			"$SYSTEMROOT"/system32/fsutil.exe \
+				hardlink list $f >links &&
+			test_line_count -gt 1 links || return 1
+		done
+	}
+fi
+
 test_expect_success 'preparing origin repository' '
 	: >file && git add . && git commit -m1 &&
 	git clone --bare . a.git &&
