@@ -259,7 +259,7 @@ static void fscache_clear(void)
 /*
  * Checks if the cache is enabled for the given path.
  */
-static inline int fscache_enabled(const char *path)
+int fscache_enabled(const char *path)
 {
 	return enabled > 0 && !is_absolute_path(path);
 }
@@ -428,6 +428,18 @@ int fscache_enable(int enable)
 	}
 	trace_printf_key(&trace_fscache, "fscache: enable(%d)\n", enable);
 	return result;
+}
+
+/*
+ * Flush cached stats result when fscache is enabled.
+ */
+void fscache_flush(void)
+{
+	if (enabled) {
+		EnterCriticalSection(&mutex);
+		fscache_clear();
+		LeaveCriticalSection(&mutex);
+	}
 }
 
 /*
