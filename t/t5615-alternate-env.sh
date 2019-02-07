@@ -38,7 +38,7 @@ test_expect_success 'access alternate via absolute path' '
 '
 
 test_expect_success 'access multiple alternates' '
-	check_obj "$PWD/one.git/objects:$PWD/two.git/objects" <<-EOF
+	check_obj "$PWD/one.git/objects$PATH_SEP$PWD/two.git/objects" <<-EOF
 	$one blob
 	$two blob
 	EOF
@@ -74,7 +74,7 @@ test_expect_success 'access alternate via relative path (subdir)' '
 quoted='"one.git\057objects"'
 unquoted='two.git/objects'
 test_expect_success 'mix of quoted and unquoted alternates' '
-	check_obj "$quoted:$unquoted" <<-EOF
+	check_obj "$quoted$PATH_SEP$unquoted" <<-EOF
 	$one blob
 	$two blob
 	EOF
