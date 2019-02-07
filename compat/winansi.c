@@ -7,6 +7,7 @@
 #include <wingdi.h>
 #include <winreg.h>
 #include "win32.h"
+#include "win32/lazyload.h"
 
 static int fd_is_interactive[3] = { 0, 0, 0 };
 #define FD_CONSOLE 0x1
@@ -41,26 +42,21 @@ typedef struct _CONSOLE_FONT_INFOEX {
 #endif
 #endif
 
-typedef BOOL (WINAPI *PGETCURRENTCONSOLEFONTEX)(HANDLE, BOOL,
-		PCONSOLE_FONT_INFOEX);
-
 static void warn_if_raster_font(void)
 {
 	DWORD fontFamily = 0;
-	PGETCURRENTCONSOLEFONTEX pGetCurrentConsoleFontEx;
+	DECLARE_PROC_ADDR(kernel32.dll, BOOL, GetCurrentConsoleFontEx,
+			HANDLE, BOOL, PCONSOLE_FONT_INFOEX);
 
 	/* don't bother if output was ascii only */
 	if (!non_ascii_used)
 		return;
 
 	/* GetCurrentConsoleFontEx is available since Vista */
-	pGetCurrentConsoleFontEx = (PGETCURRENTCONSOLEFONTEX) GetProcAddress(
-			GetModuleHandle("kernel32.dll"),
-			"GetCurrentConsoleFontEx");
-	if (pGetCurrentConsoleFontEx) {
+	if (INIT_PROC_ADDR(GetCurrentConsoleFontEx)) {
 		CONSOLE_FONT_INFOEX cfi;
 		cfi.cbSize = sizeof(cfi);
-		if (pGetCurrentConsoleFontEx(console, 0, &cfi))
+		if (GetCurrentConsoleFontEx(console, 0, &cfi))
 			fontFamily = cfi.FontFamily;
 	} else {
 		/* pre-Vista: check default console font in registry */
@@ -664,10 +660,20 @@ void winansi_init(void)
  */
 HANDLE winansi_get_osfhandle(int fd)
 {
+	HANDLE ret;
+
 	if (fd == 1 && (fd_is_interactive[1] & FD_SWAPPED))
 		return hconsole1;
 	if (fd == 2 && (fd_is_interactive[2] & FD_SWAPPED))
 		return hconsole2;
 
-	return (HANDLE)_get_osfhandle(fd);
+	ret = (HANDLE)_get_osfhandle(fd);
+
+	/*
+	 * There are obviously circumstances under which _get_osfhandle()
+	 * returns (HANDLE)-2. This is not documented anywhere, but that is so
+	 * clearly an invalid handle value that we can just work around this
+	 * and return the correct value for invalid handles.
+	 */
+	return ret == (HANDLE)-2 ? INVALID_HANDLE_VALUE : ret;
 }
