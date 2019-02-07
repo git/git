@@ -292,17 +292,30 @@ create_virtual_base() {
 # Platform specific tweaks to work around some commands
 case $(uname -s) in
 *MINGW*)
-	# Windows has its own (incompatible) sort and find
-	sort () {
-		/usr/bin/sort "$@"
-	}
-	find () {
-		/usr/bin/find "$@"
-	}
-	# git sees Windows-style pwd
-	pwd () {
-		builtin pwd -W
-	}
+	if test -x /usr/bin/sort
+	then
+		# Windows has its own (incompatible) sort; override
+		sort () {
+			/usr/bin/sort "$@"
+		}
+	fi
+	if test -x /usr/bin/find
+	then
+		# Windows has its own (incompatible) find; override
+		find () {
+			/usr/bin/find "$@"
+		}
+	fi
+	# On Windows, Git wants Windows paths. But /usr/bin/pwd spits out
+	# Unix-style paths. At least in Bash, we have a builtin pwd that
+	# understands the -W option to force "mixed" paths, i.e. with drive
+	# prefix but still with forward slashes. Let's use that, if available.
+	if type builtin >/dev/null 2>&1
+	then
+		pwd () {
+			builtin pwd -W
+		}
+	fi
 	is_absolute_path () {
 		case "$1" in
 		[/\\]* | [A-Za-z]:*)
