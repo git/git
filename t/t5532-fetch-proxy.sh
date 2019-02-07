@@ -27,7 +27,7 @@ test_expect_success 'setup proxy script' '
 
 	write_script proxy <<-\EOF
 	echo >&2 "proxying for $*"
-	cmd=$(./proxy-get-cmd)
+	cmd=$("$PERL_PATH" ./proxy-get-cmd)
 	echo >&2 "Running $cmd"
 	exec $cmd
 	EOF
