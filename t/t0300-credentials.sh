@@ -45,7 +45,7 @@ test_expect_success 'setup helper scripts' '
 	test -z "$pexpiry" || echo password_expiry_utc=$pexpiry
 	EOF
 
-	PATH="$PWD:$PATH"
+	PATH="$PWD$PATH_SEP$PATH"
 '
 
 test_expect_success 'credential_fill invokes helper' '
