@@ -126,7 +126,8 @@ int update_head_with_reflog(const struct commit *old_head,
 			    const struct object_id *new_head,
 			    const char *action, const struct strbuf *msg,
 			    struct strbuf *err);
-void commit_post_rewrite(const struct commit *current_head,
+void commit_post_rewrite(struct repository *r,
+			 const struct commit *current_head,
 			 const struct object_id *new_head);
 
 int prepare_branch_to_be_rebased(struct replay_opts *opts, const char *commit);

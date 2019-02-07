@@ -4020,7 +4020,7 @@ static int read_apply_cache(struct apply_state *state)
 		return read_index_from(state->repo->index, state->index_file,
 				       get_git_dir());
 	else
-		return read_index(state->repo->index);
+		return repo_read_index(state->repo);
 }
 
 /* This function tries to read the object name from the current index */
@@ -4713,7 +4713,8 @@ static int apply_patch(struct apply_state *state,
 						  state->index_file,
 						  LOCK_DIE_ON_ERROR);
 		else
-			hold_locked_index(&state->lock_file, LOCK_DIE_ON_ERROR);
+			repo_hold_locked_index(state->repo, &state->lock_file,
+					       LOCK_DIE_ON_ERROR);
 	}
 
 	if (state->check_index && read_apply_cache(state) < 0) {

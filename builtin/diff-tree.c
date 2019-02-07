@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "diff.h"
@@ -165,7 +166,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 
 		if (opt->diffopt.detect_rename) {
 			if (!the_index.cache)
-				read_index(&the_index);
+				repo_read_index(the_repository);
 			opt->diffopt.setup |= DIFF_SETUP_USE_SIZE_CACHE;
 		}
 		while (fgets(line, sizeof(line), stdin)) {

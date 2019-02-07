@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "lockfile.h"
@@ -634,7 +635,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				      NULL, NULL, NULL);
 			fd = hold_locked_index(&index_lock, 0);
 			if (0 <= fd)
-				update_index_if_able(&the_index, &index_lock);
+				repo_update_index_if_able(the_repository, &index_lock);
 
 			repo_init_revisions(the_repository, &revs, prefix);
 			argv_array_pushv(&args, diff_index_args);
