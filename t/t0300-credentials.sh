@@ -80,7 +80,7 @@ test_expect_success 'setup helper scripts' '
 	printf "username=\\007latrix Lestrange\\n"
 	EOF
 
-	PATH="$PWD:$PATH"
+	PATH="$PWD$PATH_SEP$PATH"
 '
 
 test_expect_success 'credential_fill invokes helper' '
