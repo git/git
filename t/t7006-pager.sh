@@ -54,7 +54,7 @@ test_expect_success !MINGW,TTY 'LESS and LV envvars set by git-sh-setup' '
 		sane_unset LESS LV &&
 		PAGER="env >pager-env.out; wc" &&
 		export PAGER &&
-		PATH="$(git --exec-path):$PATH" &&
+		PATH="$(git --exec-path)$PATH_SEP$PATH" &&
 		export PATH &&
 		test_terminal sh -c ". git-sh-setup && git_pager"
 	) &&
@@ -388,7 +388,7 @@ test_default_pager() {
 		EOF
 		chmod +x \$less &&
 		(
-			PATH=.:\$PATH &&
+			PATH=.$PATH_SEP\$PATH &&
 			export PATH &&
 			$full_command
 		) &&
