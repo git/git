@@ -331,9 +331,63 @@ static int get_protocol_http_header(enum protocol_version version,
 	return 0;
 }
 
+static void check_smart_http(struct discovery *d, const char *service,
+			     struct strbuf *type)
+{
+	const char *p;
+	struct packet_reader reader;
+
+	/*
+	 * If we don't see x-$service-advertisement, then it's not smart-http.
+	 * But once we do, we commit to it and assume any other protocol
+	 * violations are hard errors.
+	 */
+	if (!skip_prefix(type->buf, "application/x-", &p) ||
+	    !skip_prefix(p, service, &p) ||
+	    strcmp(p, "-advertisement"))
+		return;
+
+	packet_reader_init(&reader, -1, d->buf, d->len,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
+	if (packet_reader_read(&reader) != PACKET_READ_NORMAL)
+		die("invalid server response; expected service, got flush packet");
+
+	if (skip_prefix(reader.line, "# service=", &p) && !strcmp(p, service)) {
+		/*
+		 * The header can include additional metadata lines, up
+		 * until a packet flush marker.  Ignore these now, but
+		 * in the future we might start to scan them.
+		 */
+		for (;;) {
+			packet_reader_read(&reader);
+			if (reader.pktlen <= 0) {
+				break;
+			}
+		}
+
+		/*
+		 * v0 smart http; callers expect us to soak up the
+		 * service and header packets
+		 */
+		d->buf = reader.src_buffer;
+		d->len = reader.src_len;
+		d->proto_git = 1;
+
+	} else if (!strcmp(reader.line, "version 2")) {
+		/*
+		 * v2 smart http; do not consume version packet, which will
+		 * be handled elsewhere.
+		 */
+		d->proto_git = 1;
+
+	} else {
+		die("invalid server response; got '%s'", reader.line);
+	}
+}
+
 static struct discovery *discover_refs(const char *service, int for_push)
 {
-	struct strbuf exp = STRBUF_INIT;
 	struct strbuf type = STRBUF_INIT;
 	struct strbuf charset = STRBUF_INIT;
 	struct strbuf buffer = STRBUF_INIT;
@@ -405,47 +459,8 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	last->buf_alloc = strbuf_detach(&buffer, &last->len);
 	last->buf = last->buf_alloc;
 
-	strbuf_addf(&exp, "application/x-%s-advertisement", service);
-	if (maybe_smart &&
-	    (5 <= last->len && last->buf[4] == '#') &&
-	    !strbuf_cmp(&exp, &type)) {
-		struct packet_reader reader;
-		packet_reader_init(&reader, -1, last->buf, last->len,
-				   PACKET_READ_CHOMP_NEWLINE |
-				   PACKET_READ_DIE_ON_ERR_PACKET);
-
-		/*
-		 * smart HTTP response; validate that the service
-		 * pkt-line matches our request.
-		 */
-		if (packet_reader_read(&reader) != PACKET_READ_NORMAL)
-			die("invalid server response; expected service, got flush packet");
-
-		strbuf_reset(&exp);
-		strbuf_addf(&exp, "# service=%s", service);
-		if (strcmp(reader.line, exp.buf))
-			die("invalid server response; got '%s'", reader.line);
-		strbuf_release(&exp);
-
-		/* The header can include additional metadata lines, up
-		 * until a packet flush marker.  Ignore these now, but
-		 * in the future we might start to scan them.
-		 */
-		for (;;) {
-			packet_reader_read(&reader);
-			if (reader.pktlen <= 0) {
-				break;
-			}
-		}
-
-		last->buf = reader.src_buffer;
-		last->len = reader.src_len;
-
-		last->proto_git = 1;
-	} else if (maybe_smart &&
-		   last->len > 5 && starts_with(last->buf + 4, "version 2")) {
-		last->proto_git = 1;
-	}
+	if (maybe_smart)
+		check_smart_http(last, service, &type);
 
 	if (last->proto_git)
 		last->refs = parse_git_refs(last, for_push);
@@ -453,7 +468,6 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		last->refs = parse_info_refs(last);
 
 	strbuf_release(&refs_url);
-	strbuf_release(&exp);
 	strbuf_release(&type);
 	strbuf_release(&charset);
 	strbuf_release(&effective_url);
