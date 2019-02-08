@@ -67,7 +67,7 @@ test_expect_success 'post-checkout is triggered on rebase with fast-forward' '
 test_expect_success 'post-checkout hook is triggered by clone' '
 	mkdir -p templates/hooks &&
 	write_script templates/hooks/post-checkout <<-\EOF &&
-	echo "$@" >$GIT_DIR/post-checkout.args
+	echo "$@" >"$GIT_DIR/post-checkout.args"
 	EOF
 	git clone --template=templates . clone3 &&
 	test -f clone3/.git/post-checkout.args
