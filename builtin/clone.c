@@ -886,6 +886,19 @@ static int dir_exists(const char *path)
 	return !stat(path, &sb);
 }
 
+/**
+ * Read config variables.
+ */
+static int git_pull_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "submodule.recurse")) {
+		option_recurse_submodules.nr = git_config_bool(var, value) ?
+			1 : option_recurse_submodules.nr;
+		return 0;
+	}
+	return git_default_config(var, value, cb);
+}
+
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int is_bundle = 0, is_local;
@@ -1062,7 +1075,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	write_config(&option_config);
 
-	git_config(git_default_config, NULL);
+	git_config(git_pull_config, NULL);
 
 	if (option_bare) {
 		if (option_mirror)
