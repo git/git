@@ -142,6 +142,15 @@ test_expect_success 'reading submodules config from the working tree with "submo
 	)
 '
 
+test_expect_success 'unsetting submodules config from the working tree with "submodule--helper config --unset"' '
+	(cd super &&
+		git submodule--helper config --unset submodule.submodule.url &&
+		git submodule--helper config submodule.submodule.url >actual &&
+		test_must_be_empty actual
+	)
+'
+
+
 test_expect_success 'writing submodules config with "submodule--helper config"' '
 	(cd super &&
 		echo "new_url" >expect &&
