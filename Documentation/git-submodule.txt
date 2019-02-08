@@ -14,6 +14,7 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] deinit [-f|--force] (--all|[--] <path>...)
 'git submodule' [--quiet] update [<options>] [--] [<path>...]
+'git submodule' [--quiet] set-branch [<options>] [--] <path>
 'git submodule' [--quiet] summary [<options>] [--] [<path>...]
 'git submodule' [--quiet] foreach [--recursive] <command>
 'git submodule' [--quiet] sync [--recursive] [--] [<path>...]
@@ -168,6 +169,12 @@ submodule with the `--init` option.
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
 --
+set-branch ((-d|--default)|(-b|--branch <branch>)) [--] <path>::
+	Sets the default remote tracking branch for the submodule. The
+	`--branch` option allows the remote branch to be specified. The
+	`--default` option removes the submodule.<name>.branch configuration
+	key, which causes the tracking branch to default to 'master'.
+
 summary [--cached|--files] [(-n|--summary-limit) <n>] [commit] [--] [<path>...]::
 	Show commit summary between the given commit (defaults to HEAD) and
 	working tree/index. For a submodule in question, a series of commits
