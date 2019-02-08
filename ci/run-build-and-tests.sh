@@ -11,7 +11,7 @@ windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
 esac
 
 make
-make test
+make -C t t5570-git-daemon.sh GIT_TEST_OPTS="$GIT_TEST_OPTS --stress=50"
 if test "$jobname" = "linux-gcc"
 then
 	export GIT_TEST_SPLIT_INDEX=yes
