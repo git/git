@@ -960,6 +960,13 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	the parents have only two variants and the merge result picks
 	one of them without modification.
 
+--combined-all-paths::
+	This flag causes combined diffs (used for merge commits) to
+	list the name of the file from all parents.  It thus only has
+	effect when -c or --cc are specified, and is likely only
+	useful if filename changes are detected (i.e. when either
+	rename or copy detection have been requested).
+
 -m::
 	This flag makes the merge commits show the full diff like
 	regular commits; for each merge parent, a separate log entry

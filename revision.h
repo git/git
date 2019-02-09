@@ -172,6 +172,7 @@ struct rev_info {
 			verbose_header:1,
 			ignore_merges:1,
 			combine_merges:1,
+			combined_all_paths:1,
 			dense_combined_merges:1,
 			always_show_header:1;
 
