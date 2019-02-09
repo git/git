@@ -941,23 +941,6 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 	return 0;
 }
 
-struct opt_y {
-	struct string_list *list;
-	struct rebase_options *options;
-};
-
-static int parse_opt_y(const struct option *opt, const char *arg, int unset)
-{
-	struct opt_y *o = opt->value;
-
-	if (unset || !arg)
-		return -1;
-
-	o->options->reschedule_failed_exec = 1;
-	string_list_append(o->list, arg);
-	return 0;
-}
-
 static void NORETURN error_on_missing_default_upstream(void)
 {
 	struct branch *current_branch = branch_get(NULL);
@@ -1051,7 +1034,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
 	struct object_id squash_onto;
 	char *squash_onto_name = NULL;
-	struct opt_y opt_y = { .list = &exec, .options = &options };
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -1129,9 +1111,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
 				N_("add exec lines after each commit of the "
 				   "editable list")),
-		{ OPTION_CALLBACK, 'y', NULL, &opt_y, N_("<cmd>"),
-			N_("same as --reschedule-failed-exec -x <cmd>"),
-			PARSE_OPT_NONEG, parse_opt_y },
 		OPT_BOOL(0, "allow-empty-message",
 			 &options.allow_empty_message,
 			 N_("allow rebasing commits with empty messages")),
