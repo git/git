@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "test-tool.h"
+#include "trace2.h"
 
 struct test_cmd {
 	const char *name;
@@ -50,6 +51,7 @@ static struct test_cmd cmds[] = {
 	{ "submodule-config", cmd__submodule_config },
 	{ "submodule-nested-repo-config", cmd__submodule_nested_repo_config },
 	{ "subprocess", cmd__subprocess },
+	{ "trace2", cmd__trace2 },
 	{ "urlmatch-normalization", cmd__urlmatch_normalization },
 	{ "xml-encode", cmd__xml_encode },
 	{ "wildmatch", cmd__wildmatch },
@@ -81,6 +83,8 @@ int cmd_main(int argc, const char **argv)
 		if (!strcmp(cmds[i].name, argv[1])) {
 			argv++;
 			argc--;
+			trace2_cmd_name(cmds[i].name);
+			trace2_cmd_list_config();
 			return cmds[i].fn(argc, argv);
 		}
 	}

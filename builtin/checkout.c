@@ -325,6 +325,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 	struct lock_file lock_file = LOCK_INIT;
 	int nr_checkouts = 0, nr_unmerged = 0;
 
+	trace2_cmd_mode(opts->patch_mode ? "patch" : "path");
+
 	if (opts->track != BRANCH_TRACK_UNSPECIFIED)
 		die(_("'%s' cannot be used with updating paths"), "--track");
 
@@ -1014,6 +1016,9 @@ static int switch_branches(const struct checkout_opts *opts,
 	void *path_to_free;
 	struct object_id rev;
 	int flag, writeout_error = 0;
+
+	trace2_cmd_mode("branch");
+
 	memset(&old_branch_info, 0, sizeof(old_branch_info));
 	old_branch_info.path = path_to_free = resolve_refdup("HEAD", 0, &rev, &flag);
 	if (old_branch_info.path)
@@ -1250,6 +1255,8 @@ static int switch_unborn_to_new_branch(const struct checkout_opts *opts)
 {
 	int status;
 	struct strbuf branch_ref = STRBUF_INIT;
+
+	trace2_cmd_mode("unborn");
 
 	if (!opts->new_branch)
 		die(_("You are on a branch yet to be born"));
