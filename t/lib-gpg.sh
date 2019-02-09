@@ -63,8 +63,7 @@ then
 		cut -d" " -f4 |
 		tr -d '\n' >"${GNUPGHOME}/trustlist.txt" &&
 
-		echo " S relax" >> ${GNUPGHOME}/trustlist.txt &&
-		(gpgconf --kill gpg-agent >/dev/null 2>&1 || : ) &&
+		echo " S relax" >>"${GNUPGHOME}/trustlist.txt" &&
 		echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
 			-u committer@example.com -o /dev/null --sign - 2>&1 &&
 		test_set_prereq GPGSM
