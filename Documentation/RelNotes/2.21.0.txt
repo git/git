@@ -35,7 +35,8 @@ UI, Workflows & Features
  * "git checkout [<tree-ish>] path..." learned to report the number of
    paths that have been checked out of the index or the tree-ish,
    which gives it the same degree of noisy-ness as the case in which
-   the command checks out a branch.
+   the command checks out a branch.  "git checkout -m <pathspec>" to
+   undo conflict resolution gives a similar message.
 
  * "git quiltimport" learned "--keep-non-patch" option.
 
@@ -173,6 +174,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * Use of the sparse tool got easier to customize from the command
    line to help developers.
+
+ * A new target "coverage-prove" to run the coverage test under
+   "prove" has been added.
+
+ * A flakey "p4" test has been removed.
 
 
 Fixes since v2.20
@@ -403,6 +409,9 @@ Fixes since v2.20
    repository information correctly, leading to an access of freed
    piece of memory.
 
+ * Some errors from the other side coming over smart HTTP transport
+   were not noticed, which has been corrected.
+
  * Code cleanup, docfix, build fix, etc.
    (merge 89ba9a79ae hb/t0061-dot-in-path-fix later to maint).
    (merge d173e799ea sb/diff-color-moved-config-option-fixup later to maint).
@@ -427,3 +436,6 @@ Fixes since v2.20
    (merge 86fb1c4e77 km/init-doc-typofix later to maint).
    (merge 5cfd4a9d10 nd/commit-doc later to maint).
    (merge 9fce19a431 ab/diff-tree-doc-fix later to maint).
+   (merge 2e285e7803 tz/gpg-test-fix later to maint).
+   (merge 5427de960b kl/pretty-doc-markup-fix later to maint).
+   (merge 3815f64b0d js/mingw-host-cpu later to maint).
