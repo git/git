@@ -261,7 +261,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	struct commit *head;
 	int errs = 0;
 	struct lock_file lock_file = LOCK_INIT;
-	int nr_checkouts = 0;
+	int nr_checkouts = 0, nr_unmerged = 0;
 
 	if (opts->track != BRANCH_TRACK_UNSPECIFIED)
 		die(_("'%s' cannot be used with updating paths"), "--track");
@@ -386,23 +386,28 @@ static int checkout_paths(const struct checkout_opts *opts,
 						       &state, &nr_checkouts);
 			else if (opts->merge)
 				errs |= checkout_merged(pos, &state,
-							&nr_checkouts);
+							&nr_unmerged);
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
 	errs |= finish_delayed_checkout(&state, &nr_checkouts);
 
 	if (opts->count_checkout_paths) {
+		if (nr_unmerged)
+			fprintf_ln(stderr, Q_("Recreated %d merge conflict",
+					      "Recreated %d merge conflicts",
+					      nr_unmerged),
+				   nr_unmerged);
 		if (opts->source_tree)
-			fprintf_ln(stderr, Q_("Checked out %d path out of %s",
-					      "Checked out %d paths out of %s",
+			fprintf_ln(stderr, Q_("Updated %d path from %s",
+					      "Updated %d paths from %s",
 					      nr_checkouts),
 				   nr_checkouts,
 				   find_unique_abbrev(&opts->source_tree->object.oid,
 						      DEFAULT_ABBREV));
-		else
-			fprintf_ln(stderr, Q_("Checked out %d path out of the index",
-					      "Checked out %d paths out of the index",
+		else if (!nr_unmerged || nr_checkouts)
+			fprintf_ln(stderr, Q_("Updated %d path from the index",
+					      "Updated %d paths from the index",
 					      nr_checkouts),
 				   nr_checkouts);
 	}
