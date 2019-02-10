@@ -791,7 +791,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 int add_file_to_index(struct index_state *istate, const char *path, int flags)
 {
 	struct stat st;
-	if (lstat(path, &st))
+	if (lstat(path, &st) && !(flags & ADD_CACHE_IGNORE_ERRORS))
 		die_errno(_("unable to stat '%s'"), path);
 	return add_to_index(istate, path, &st, flags);
 }
