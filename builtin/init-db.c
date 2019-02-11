@@ -86,7 +86,7 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 			if (strbuf_readlink(&lnk, template_path->buf,
 					    st_template.st_size) < 0)
 				die_errno(_("cannot readlink '%s'"), template_path->buf);
-			if (symlink(lnk.buf, path->buf))
+			if (create_symlink(NULL, lnk.buf, path->buf))
 				die_errno(_("cannot symlink '%s' '%s'"),
 					  lnk.buf, path->buf);
 			strbuf_release(&lnk);
@@ -308,7 +308,7 @@ static int create_default_files(const char *template_path,
 		path = git_path_buf(&buf, "tXXXXXX");
 		if (!close(xmkstemp(path)) &&
 		    !unlink(path) &&
-		    !symlink("testing", path) &&
+		    !create_symlink(NULL, "testing", path) &&
 		    !lstat(path, &st1) &&
 		    S_ISLNK(st1.st_mode))
 			unlink(path); /* good */
