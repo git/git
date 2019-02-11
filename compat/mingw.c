@@ -2980,7 +2980,7 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
-int symlink(const char *target, const char *link)
+int mingw_create_symlink(struct index_state *index UNUSED, const char *target, const char *link)
 {
 	wchar_t wtarget[MAX_PATH], wlink[MAX_PATH];
 	int len;
