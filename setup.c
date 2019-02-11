@@ -2359,7 +2359,7 @@ static void copy_templates_1(struct repository *repo,
 			if (strbuf_readlink(&lnk, template_path->buf,
 					    st_template.st_size) < 0)
 				die_errno(_("cannot readlink '%s'"), template_path->buf);
-			if (symlink(lnk.buf, path->buf))
+			if (create_symlink(NULL, lnk.buf, path->buf))
 				die_errno(_("cannot symlink '%s' '%s'"),
 					  lnk.buf, path->buf);
 			strbuf_release(&lnk);
@@ -2645,7 +2645,7 @@ static int create_default_files(struct repository *repo,
 		repo_git_path_replace(repo, &path, "tXXXXXX");
 		if (!close(xmkstemp(path.buf)) &&
 		    !unlink(path.buf) &&
-		    !symlink("testing", path.buf) &&
+		    !create_symlink(NULL, "testing", path.buf) &&
 		    !lstat(path.buf, &st1) &&
 		    S_ISLNK(st1.st_mode))
 			unlink(path.buf); /* good */
