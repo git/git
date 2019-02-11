@@ -519,7 +519,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 				}
 				add_path(&wtdir, wtdir_len, dst_path);
 				if (symlinks) {
-					if (symlink(wtdir.buf, rdir.buf)) {
+					if (create_symlink(lstate.istate, wtdir.buf, rdir.buf)) {
 						ret = error_errno("could not symlink '%s' to '%s'", wtdir.buf, rdir.buf);
 						goto finish;
 					}
