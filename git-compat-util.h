@@ -405,6 +405,15 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define find_last_dir_sep git_find_last_dir_sep
 #endif
 
+#ifndef create_symlink
+struct index_state;
+static inline int git_create_symlink(struct index_state *index, const char *target, const char *link)
+{
+	return symlink(target, link);
+}
+#define create_symlink git_create_symlink
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
 #endif
