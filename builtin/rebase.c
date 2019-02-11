@@ -1434,7 +1434,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	if (options.reschedule_failed_exec && !is_interactive(&options))
-		die(_("--reschedule-failed-exec requires an interactive rebase"));
+		die(_("%s requires an interactive rebase"), "--reschedule-failed-exec");
 
 	if (options.git_am_opts.argc) {
 		/* all am options except -q are compatible only with --am */

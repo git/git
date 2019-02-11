@@ -1480,7 +1480,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	if (strcmp(remote->name, repository_format_partial_clone)) {
 		if (filter_options.choice)
 			die(_("--filter can only be used with the remote "
-			      "configured in extensions.partialclone"));
+			      "configured in extensions.partialClone"));
 		return;
 	}
 
