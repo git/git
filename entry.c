@@ -305,7 +305,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 		if (!has_symlinks || to_tempfile)
 			goto write_file_entry;
 
-		ret = symlink(new_blob, path);
+		ret = create_symlink(state->istate, new_blob, path);
 		free(new_blob);
 		if (ret)
 			return error_errno("unable to create symlink %s", path);
