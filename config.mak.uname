@@ -491,6 +491,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	OLD_ICONV = UnfortunatelyYes
 	NO_REGEX = NeedsStartEnd
 	NO_PTHREADS = UnfortunatelyYes
+	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 
 	# Not detected (nor checked for) by './configure'.
 	# We don't have SA_RESTART on NonStop, unfortunalety.

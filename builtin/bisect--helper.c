@@ -173,7 +173,7 @@ static int bisect_reset(const char *commit)
 			argv_array_clear(&argv);
 			return error(_("could not check out original"
 				       " HEAD '%s'. Try 'git bisect"
-				       "reset <commit>'."), branch.buf);
+				       " reset <commit>'."), branch.buf);
 		}
 		argv_array_clear(&argv);
 	}
@@ -646,7 +646,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_BOOL(0, "no-log", &nolog,
-			 N_("no log for BISECT_WRITE ")),
+			 N_("no log for BISECT_WRITE")),
 		OPT_END()
 	};
 	struct bisect_terms terms = { .term_good = NULL, .term_bad = NULL };
