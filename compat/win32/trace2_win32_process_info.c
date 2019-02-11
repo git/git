@@ -3,6 +3,8 @@
 #include <Psapi.h>
 #include <tlHelp32.h>
 
+#define NR_PIDS_LIMIT 42
+
 /*
  * Find the process data for the given PID in the given snapshot
  * and update the PROCESSENTRY32 data.
@@ -21,12 +23,16 @@ static int find_pid(DWORD pid, HANDLE hSnapshot, PROCESSENTRY32 *pe32)
 }
 
 /*
- * Accumulate JSON array:
+ * Accumulate JSON array of our parent processes:
  *     [
  *         exe-name-parent,
  *         exe-name-grand-parent,
  *         ...
  *     ]
+ *
+ * We artificially limit this to NR_PIDS_LIMIT to quickly guard against cycles
+ * in the parent PIDs without a lot of fuss and because we just want some
+ * context and don't need an absolute answer.
  *
  * Note: we only report the filename of the process executable; the
  *       only way to get its full pathname is to use OpenProcess()
@@ -38,16 +44,28 @@ static void get_processes(struct json_writer *jw, HANDLE hSnapshot)
 {
 	PROCESSENTRY32 pe32;
 	DWORD pid;
+	DWORD pid_list[NR_PIDS_LIMIT];
+	int k, nr_pids = 0;
 
 	pid = GetCurrentProcessId();
-
-	/* We only want parent processes, so skip self. */
-	if (!find_pid(pid, hSnapshot, &pe32))
-		return;
-	pid = pe32.th32ParentProcessID;
-
 	while (find_pid(pid, hSnapshot, &pe32)) {
-		jw_array_string(jw, pe32.szExeFile);
+		/* Only report parents. Omit self from the JSON output. */
+		if (nr_pids)
+			jw_array_string(jw, pe32.szExeFile);
+
+		/* Check for cycle in snapshot. (Yes, it happened.) */
+		for (k = 0; k < nr_pids; k++)
+			if (pid == pid_list[k]) {
+				jw_array_string(jw, "(cycle)");
+				return;
+			}
+
+		if (nr_pids == NR_PIDS_LIMIT) {
+			jw_array_string(jw, "(truncated)");
+			return;
+		}
+
+		pid_list[nr_pids++] = pid;
 
 		pid = pe32.th32ParentProcessID;
 	}
