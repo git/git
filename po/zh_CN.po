@@ -1051,7 +1051,7 @@ msgstr "%.*s 不是一个有效的属性名"
 #: attr.c:368
 #, c-format
 msgid "%s not allowed: %s:%d"
-msgstr "%s 不被允许：%s:%d"
+msgstr "不允许 %s ：%s:%d"
 
 #: attr.c:408
 msgid ""
@@ -1582,7 +1582,7 @@ msgstr "正在打包对象中查找提交图的提交"
 
 #: commit-graph.c:943
 msgid "Counting distinct commits in commit graph"
-msgstr "在提交图中计算不同的提交"
+msgstr "正在计算提交图中不同的提交"
 
 #: commit-graph.c:956
 #, c-format
@@ -1591,7 +1591,7 @@ msgstr "提交图格式不能写入 %d 个提交"
 
 #: commit-graph.c:965
 msgid "Finding extra edges in commit graph"
-msgstr "在提交图中查找额外的边"
+msgstr "正在查找提交图中额外的边"
 
 #: commit-graph.c:989
 msgid "too many commits to write graph"
@@ -1606,8 +1606,8 @@ msgstr "不能为 %s 创建先导目录"
 #, c-format
 msgid "Writing out commit graph in %d pass"
 msgid_plural "Writing out commit graph in %d passes"
-msgstr[0] "用 %d 步写出提交图"
-msgstr[1] "用 %d 步写出提交图"
+msgstr[0] "正在用 %d 步写出提交图"
+msgstr[1] "正在用 %d 步写出提交图"
 
 #: commit-graph.c:1109
 msgid "the commit-graph file has incorrect checksum and is likely corrupt"
@@ -1615,7 +1615,7 @@ msgstr "提交图文件的校验码错误，可能已经损坏"
 
 #: commit-graph.c:1153
 msgid "Verifying commits in commit graph"
-msgstr "校验提交图中的提交"
+msgstr "正在校验提交图中的提交"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
@@ -3626,7 +3626,7 @@ msgstr "偏移量越过了 %s 的包索引的结尾（被截断的索引？）"
 #: parse-options.c:35
 #, c-format
 msgid "%s requires a value"
-msgstr "'%s' 需要一个值"
+msgstr "%s 需要一个值"
 
 #: parse-options.c:69
 #, c-format
@@ -3641,7 +3641,7 @@ msgstr "%s：和其它的不兼容"
 #: parse-options.c:88 parse-options.c:92 parse-options.c:260
 #, c-format
 msgid "%s takes no value"
-msgstr "%s 无取值"
+msgstr "%s 不取值"
 
 #: parse-options.c:90
 #, c-format
@@ -3661,7 +3661,7 @@ msgstr "%s 期望一个非负整数和一个可选的 k/m/g 后缀"
 #: parse-options.c:322
 #, c-format
 msgid "ambiguous option: %s (could be --%s%s or --%s%s)"
-msgstr "模棱两可的选项：%s（可以是 --%s%s 或 --%s%s）"
+msgstr "有歧义的选项：%s（可以是 --%s%s 或 --%s%s）"
 
 #: parse-options.c:356 parse-options.c:364
 #, c-format
@@ -4674,7 +4674,7 @@ msgstr "%s 无法被解析为分支"
 #: remote.c:1102
 #, c-format
 msgid "unable to delete '%s': remote ref does not exist"
-msgstr "无法删除 '%s'：远程分支不存在"
+msgstr "无法删除 '%s'：远程引用不存在"
 
 #: remote.c:1114
 #, c-format
@@ -4731,7 +4731,7 @@ msgstr "无法解析 'simple' 推送至一个单独的目标"
 #: remote.c:1840
 #, c-format
 msgid "couldn't find remote ref %s"
-msgstr "无法发现远程引用 %s"
+msgstr "无法找到远程引用 %s"
 
 #: remote.c:1853
 #, c-format
@@ -8336,7 +8336,7 @@ msgstr "未识别的选项：'%s'"
 #: builtin/bisect--helper.c:479
 #, c-format
 msgid "'%s' does not appear to be a valid revision"
-msgstr "'%s' 看起来不像是一个有效的版本"
+msgstr "'%s' 看起来不是一个有效的版本"
 
 #: builtin/bisect--helper.c:511
 msgid "bad HEAD - I need a HEAD"
@@ -8409,7 +8409,7 @@ msgstr "--write-terms 需要两个参数"
 
 #: builtin/bisect--helper.c:670
 msgid "--bisect-clean-state requires no arguments"
-msgstr "--bisect-clean-state 不需要参数"
+msgstr "--bisect-clean-state 不带参数"
 
 #: builtin/bisect--helper.c:677
 msgid "--bisect-reset requires either no argument or a commit"
@@ -15945,11 +15945,11 @@ msgstr ""
 
 #: builtin/rebase.c:1475
 msgid "cannot combine '--rebase-merges' with '--strategy-option'"
-msgstr "错误：不能将 '--rebase-merges' 和 '--strategy-option' 组合一起"
+msgstr "不能将 '--rebase-merges' 和 '--strategy-option' 组合一起"
 
 #: builtin/rebase.c:1478
 msgid "cannot combine '--rebase-merges' with '--strategy'"
-msgstr "错误：不能将 '--rebase-merges' 和 '--strategy' 组合一起"
+msgstr "不能将 '--rebase-merges' 和 '--strategy' 组合一起"
 
 #: builtin/rebase.c:1502
 #, c-format
