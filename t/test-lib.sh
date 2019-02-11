@@ -144,7 +144,7 @@ do
 	--stress=*)
 		stress=${opt#--*=}
 		case "$stress" in
-		*[^0-9]*|0*|"")
+		*[!0-9]*|0*|"")
 			echo "error: --stress=<N> requires the number of jobs to run" >&2
 			exit 1
 			;;
@@ -155,7 +155,7 @@ do
 	--stress-limit=*)
 		stress_limit=${opt#--*=}
 		case "$stress_limit" in
-		*[^0-9]*|0*|"")
+		*[!0-9]*|0*|"")
 			echo "error: --stress-limit=<N> requires the number of repetitions" >&2
 			exit 1
 			;;

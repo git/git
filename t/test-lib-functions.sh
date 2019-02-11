@@ -1289,7 +1289,7 @@ test_set_port () {
 			port=$(($port + 10000))
 		fi
 		;;
-	*[^0-9]*|0*)
+	*[!0-9]*|0*)
 		error >&7 "invalid port number: $port"
 		;;
 	*)
