@@ -83,8 +83,6 @@ int check_todo_list(void);
 int skip_unnecessary_picks(void);
 int rearrange_squash(void);
 
-extern const char sign_off_header[];
-
 void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
 void append_conflicts_hint(struct strbuf *msgbuf);
 int message_is_empty(const struct strbuf *sb,
