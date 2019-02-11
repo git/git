@@ -1114,7 +1114,7 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 
 			if (!strcmp(srvc->auth_method, "CRAM-MD5")) {
 				if (!CAP(AUTH_CRAM_MD5)) {
-					fprintf(stderr, "You specified"
+					fprintf(stderr, "You specified "
 						"CRAM-MD5 as authentication method, "
 						"but %s doesn't support it.\n", srvc->host);
 					goto bail;
