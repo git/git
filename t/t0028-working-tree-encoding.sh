@@ -22,12 +22,12 @@ test_expect_success 'setup test files' '
 	# BOM tests
 	printf "\0a\0b\0c"                         >nobom.utf16be.raw &&
 	printf "a\0b\0c\0"                         >nobom.utf16le.raw &&
-	printf "\376\777\0a\0b\0c"                 >bebom.utf16be.raw &&
-	printf "\777\376a\0b\0c\0"                 >lebom.utf16le.raw &&
+	printf "\376\377\0a\0b\0c"                 >bebom.utf16be.raw &&
+	printf "\377\376a\0b\0c\0"                 >lebom.utf16le.raw &&
 	printf "\0\0\0a\0\0\0b\0\0\0c"             >nobom.utf32be.raw &&
 	printf "a\0\0\0b\0\0\0c\0\0\0"             >nobom.utf32le.raw &&
-	printf "\0\0\376\777\0\0\0a\0\0\0b\0\0\0c" >bebom.utf32be.raw &&
-	printf "\777\376\0\0a\0\0\0b\0\0\0c\0\0\0" >lebom.utf32le.raw &&
+	printf "\0\0\376\377\0\0\0a\0\0\0b\0\0\0c" >bebom.utf32be.raw &&
+	printf "\377\376\0\0a\0\0\0b\0\0\0c\0\0\0" >lebom.utf32le.raw &&
 
 	# Add only UTF-16 file, we will add the UTF-32 file later
 	cp test.utf16.raw test.utf16 &&
