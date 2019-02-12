@@ -317,8 +317,7 @@ static void find_non_local_tags(const struct ref *refs,
 			    !has_object_file_with_flags(&ref->old_oid,
 							OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, ref->old_oid.hash) &&
-			    !has_sha1_file_with_flags(item->oid.hash,
-						      OBJECT_INFO_QUICK) &&
+			    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, item->oid.hash))
 				oidclr(&item->oid);
 			item = NULL;
@@ -332,7 +331,7 @@ static void find_non_local_tags(const struct ref *refs,
 		 * fetch.
 		 */
 		if (item &&
-		    !has_sha1_file_with_flags(item->oid.hash, OBJECT_INFO_QUICK) &&
+		    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 		    !will_fetch(head, item->oid.hash))
 			oidclr(&item->oid);
 
@@ -353,7 +352,7 @@ static void find_non_local_tags(const struct ref *refs,
 	 * checked to see if it needs fetching.
 	 */
 	if (item &&
-	    !has_sha1_file_with_flags(item->oid.hash, OBJECT_INFO_QUICK) &&
+	    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 	    !will_fetch(head, item->oid.hash))
 		oidclr(&item->oid);
 
@@ -1481,7 +1480,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	if (strcmp(remote->name, repository_format_partial_clone)) {
 		if (filter_options.choice)
 			die(_("--filter can only be used with the remote "
-			      "configured in extensions.partialclone"));
+			      "configured in extensions.partialClone"));
 		return;
 	}
 

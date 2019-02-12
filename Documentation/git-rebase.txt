@@ -462,12 +462,6 @@ without an explicit `--interactive`.
 +
 See also INCOMPATIBLE OPTIONS below.
 
--y <cmd>::
-	This is the same as passing `--reschedule-failed-exec` before
-	`-x <cmd>`, i.e. it appends the specified `exec` command and
-	turns on the mode where failed `exec` commands are automatically
-	rescheduled.
-
 --root::
 	Rebase all commits reachable from <branch>, instead of
 	limiting them with an <upstream>.  This allows you to rebase
@@ -515,15 +509,7 @@ See also INCOMPATIBLE OPTIONS below.
 INCOMPATIBLE OPTIONS
 --------------------
 
-git-rebase has many flags that are incompatible with each other,
-predominantly due to the fact that it has three different underlying
-implementations:
-
- * one based on linkgit:git-am[1] (the default)
- * one based on git-merge-recursive (merge backend)
- * one based on linkgit:git-cherry-pick[1] (interactive backend)
-
-Flags only understood by the am backend:
+The following options:
 
  * --committer-date-is-author-date
  * --ignore-date
@@ -531,15 +517,12 @@ Flags only understood by the am backend:
  * --ignore-whitespace
  * -C
 
-Flags understood by both merge and interactive backends:
+are incompatible with the following options:
 
  * --merge
  * --strategy
  * --strategy-option
  * --allow-empty-message
-
-Flags only understood by the interactive backend:
-
  * --[no-]autosquash
  * --rebase-merges
  * --preserve-merges
@@ -550,7 +533,7 @@ Flags only understood by the interactive backend:
  * --edit-todo
  * --root when used in combination with --onto
 
-Other incompatible flag pairs:
+In addition, the following pairs of options are incompatible:
 
  * --preserve-merges and --interactive
  * --preserve-merges and --signoff

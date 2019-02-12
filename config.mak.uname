@@ -490,6 +490,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	OLD_ICONV = UnfortunatelyYes
 	NO_REGEX = NeedsStartEnd
 	NO_PTHREADS = UnfortunatelyYes
+	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 
 	# Not detected (nor checked for) by './configure'.
 	# We don't have SA_RESTART on NonStop, unfortunalety.
@@ -555,7 +556,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	RC = windres -O coff
 	NATIVE_CRLF = YesPlease
 	X = .exe
-	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	htmldir = doc/git/html/
 	prefix =

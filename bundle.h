@@ -18,8 +18,8 @@ struct bundle_header {
 
 int is_bundle(const char *path, int quiet);
 int read_bundle_header(const char *path, struct bundle_header *header);
-int create_bundle(struct repository *r, struct bundle_header *header,
-		  const char *path, int argc, const char **argv);
+int create_bundle(struct repository *r, const char *path,
+		  int argc, const char **argv);
 int verify_bundle(struct repository *r, struct bundle_header *header, int verbose);
 #define BUNDLE_VERBOSE 1
 int unbundle(struct repository *r, struct bundle_header *header,

@@ -925,6 +925,10 @@ parse_done:
 		 */
 		blame_date_width = utf8_strwidth(_("4 years, 11 months ago")) + 1; /* add the null */
 		break;
+	case DATE_HUMAN:
+		/* If the year is shown, no time is shown */
+		blame_date_width = sizeof("Thu Oct 19 16:00");
+		break;
 	case DATE_NORMAL:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
 		break;
@@ -1007,7 +1011,8 @@ parse_done:
 		long bottom, top;
 		if (parse_range_arg(range_list.items[range_i].string,
 				    nth_line_cb, &sb, lno, anchor,
-				    &bottom, &top, sb.path, &the_index))
+				    &bottom, &top, sb.path,
+				    the_repository->index))
 			usage(blame_usage);
 		if ((!lno && (top || bottom)) || lno < bottom)
 			die(Q_("file %s has only %lu line",

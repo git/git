@@ -561,7 +561,7 @@ static int find_conflict(struct repository *r, struct string_list *conflict)
 {
 	int i;
 
-	if (read_index(r->index) < 0)
+	if (repo_read_index(r) < 0)
 		return error(_("index file corrupt"));
 
 	for (i = 0; i < r->index->cache_nr;) {
@@ -595,7 +595,7 @@ int rerere_remaining(struct repository *r, struct string_list *merge_rr)
 
 	if (setup_rerere(r, merge_rr, RERERE_READONLY))
 		return 0;
-	if (read_index(r->index) < 0)
+	if (repo_read_index(r) < 0)
 		return error(_("index file corrupt"));
 
 	for (i = 0; i < r->index->cache_nr;) {
@@ -705,7 +705,7 @@ static void update_paths(struct repository *r, struct string_list *update)
 	struct lock_file index_lock = LOCK_INIT;
 	int i;
 
-	hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(r, &index_lock, LOCK_DIE_ON_ERROR);
 
 	for (i = 0; i < update->nr; i++) {
 		struct string_list_item *item = &update->items[i];
@@ -1107,7 +1107,7 @@ int rerere_forget(struct repository *r, struct pathspec *pathspec)
 	struct string_list conflict = STRING_LIST_INIT_DUP;
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 
-	if (read_index(r->index) < 0)
+	if (repo_read_index(r) < 0)
 		return error(_("index file corrupt"));
 
 	fd = setup_rerere(r, &merge_rr, RERERE_NOAUTOUPDATE);

@@ -27,7 +27,7 @@ void strbuf_utf8_replace(struct strbuf *sb, int pos, int width,
 
 #ifndef NO_ICONV
 char *reencode_string_iconv(const char *in, size_t insz,
-			    iconv_t conv, size_t *outsz);
+			    iconv_t conv, size_t bom_len, size_t *outsz);
 char *reencode_string_len(const char *in, size_t insz,
 			  const char *out_encoding,
 			  const char *in_encoding,

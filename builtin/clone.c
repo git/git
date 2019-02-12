@@ -8,6 +8,7 @@
  * Clone a repository into a different directory that does not yet exist.
  */
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"

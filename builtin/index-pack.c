@@ -772,7 +772,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 	if (startup_info->have_repository) {
 		read_lock();
 		collision_test_needed =
-			has_sha1_file_with_flags(oid->hash, OBJECT_INFO_QUICK);
+			has_object_file_with_flags(oid, OBJECT_INFO_QUICK);
 		read_unlock();
 	}
 

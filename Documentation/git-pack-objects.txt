@@ -14,7 +14,7 @@ SYNOPSIS
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
 	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
 	[--stdout [--filter=<filter-spec>] | base-name]
-	[--shallow] [--keep-true-parents] < object-list
+	[--shallow] [--keep-true-parents] [--sparse] < object-list
 
 
 DESCRIPTION
@@ -195,6 +195,15 @@ depth is 4095.
 	and defaults to -1,  the zlib default,  if neither is set.
 	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
+
+--sparse::
+	Use the "sparse" algorithm to determine which objects to include in
+	the pack, when combined with the "--revs" option. This algorithm
+	only walks trees that appear in paths that introduce new objects.
+	This can have significant performance benefits when computing
+	a pack to send a small change. However, it is possible that extra
+	objects are added to the pack-file if the included commits contain
+	certain types of direct renames.
 
 --thin::
 	Create a "thin" pack by omitting the common objects between a

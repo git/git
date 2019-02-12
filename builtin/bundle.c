@@ -56,8 +56,7 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 		}
 		if (!startup_info->have_repository)
 			die(_("Need a repository to create a bundle."));
-		return !!create_bundle(the_repository, &header,
-				       bundle_file, argc, argv);
+		return !!create_bundle(the_repository, bundle_file, argc, argv);
 	} else if (!strcmp(cmd, "unbundle")) {
 		if (!startup_info->have_repository)
 			die(_("Need a repository to unbundle."));

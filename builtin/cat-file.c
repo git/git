@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
@@ -73,7 +74,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	if (unknown_type)
 		flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
-	if (get_oid_with_context(obj_name, GET_OID_RECORD_PATH,
+	if (get_oid_with_context(the_repository, obj_name,
+				 GET_OID_RECORD_PATH,
 				 &oid, &obj_context))
 		die("Not a valid object name %s", obj_name);
 
@@ -209,14 +211,14 @@ struct expand_data {
 
 	/*
 	 * After a mark_query run, this object_info is set up to be
-	 * passed to sha1_object_info_extended. It will point to the data
+	 * passed to oid_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
 	 */
 	struct object_info info;
 
 	/*
 	 * This flag will be true if the requested batch format and options
-	 * don't require us to call sha1_object_info, which can then be
+	 * don't require us to call oid_object_info, which can then be
 	 * optimized out.
 	 */
 	unsigned skip_object_info : 1;
@@ -380,13 +382,17 @@ static void batch_one_object(const char *obj_name,
 {
 	struct object_context ctx;
 	int flags = opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0;
-	enum follow_symlinks_result result;
+	enum get_oid_result result;
 
-	result = get_oid_with_context(obj_name, flags, &data->oid, &ctx);
+	result = get_oid_with_context(the_repository, obj_name,
+				      flags, &data->oid, &ctx);
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
 			printf("%s missing\n", obj_name);
+			break;
+		case SHORT_NAME_AMBIGUOUS:
+			printf("%s ambiguous\n", obj_name);
 			break;
 		case DANGLING_SYMLINK:
 			printf("dangling %"PRIuMAX"\n%s\n",
@@ -490,7 +496,7 @@ static int batch_objects(struct batch_options *opt)
 
 	/*
 	 * Expand once with our special mark_query flag, which will prime the
-	 * object_info to be handed to sha1_object_info_extended for each
+	 * object_info to be handed to oid_object_info_extended for each
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));

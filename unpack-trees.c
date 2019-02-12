@@ -1,4 +1,3 @@
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "argv-array.h"
 #include "repository.h"

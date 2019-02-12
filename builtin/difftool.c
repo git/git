@@ -11,6 +11,7 @@
  *
  * Copyright (C) 2016 Johannes Schindelin
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"

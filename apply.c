@@ -467,7 +467,6 @@ static char *squash_slash(char *name)
 
 static char *find_name_gnu(struct apply_state *state,
 			   const char *line,
-			   const char *def,
 			   int p_value)
 {
 	struct strbuf name = STRBUF_INIT;
@@ -714,7 +713,7 @@ static char *find_name(struct apply_state *state,
 		       int terminate)
 {
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, def, p_value);
+		char *name = find_name_gnu(state, line, p_value);
 		if (name)
 			return name;
 	}
@@ -731,7 +730,7 @@ static char *find_name_traditional(struct apply_state *state,
 	size_t date_len;
 
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, def, p_value);
+		char *name = find_name_gnu(state, line, p_value);
 		if (name)
 			return name;
 	}
@@ -3183,7 +3182,7 @@ static int apply_binary(struct apply_state *state,
 		return 0; /* deletion patch */
 	}
 
-	if (has_sha1_file(oid.hash)) {
+	if (has_object_file(&oid)) {
 		/* We already have the postimage */
 		enum object_type type;
 		unsigned long size;
@@ -4020,7 +4019,7 @@ static int read_apply_cache(struct apply_state *state)
 		return read_index_from(state->repo->index, state->index_file,
 				       get_git_dir());
 	else
-		return read_index(state->repo->index);
+		return repo_read_index(state->repo);
 }
 
 /* This function tries to read the object name from the current index */
@@ -4713,7 +4712,8 @@ static int apply_patch(struct apply_state *state,
 						  state->index_file,
 						  LOCK_DIE_ON_ERROR);
 		else
-			hold_locked_index(&state->lock_file, LOCK_DIE_ON_ERROR);
+			repo_hold_locked_index(state->repo, &state->lock_file,
+					       LOCK_DIE_ON_ERROR);
 	}
 
 	if (state->check_index && read_apply_cache(state) < 0) {

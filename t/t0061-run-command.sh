@@ -166,7 +166,8 @@ test_trace () {
 	expect="$1"
 	shift
 	GIT_TRACE=1 test-tool run-command "$@" run-command true 2>&1 >/dev/null | \
-		sed -e 's/.* run_command: //' -e '/trace: .*/d' >actual &&
+		sed -e 's/.* run_command: //' -e '/trace: .*/d' \
+			-e '/RUNTIME_PREFIX requested/d' >actual &&
 	echo "$expect true" >expect &&
 	test_cmp expect actual
 }

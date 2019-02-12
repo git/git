@@ -388,4 +388,14 @@ test_expect_success C_LOCALE_OUTPUT 'ambiguous commits are printed by type first
 	done
 '
 
+test_expect_success 'cat-file --batch and --batch-check show ambiguous' '
+	echo "0000 ambiguous" >expect &&
+	echo 0000 | git cat-file --batch-check >actual 2>err &&
+	test_cmp expect actual &&
+	test_i18ngrep hint: err &&
+	echo 0000 | git cat-file --batch >actual 2>err &&
+	test_cmp expect actual &&
+	test_i18ngrep hint: err
+'
+
 test_done

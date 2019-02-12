@@ -150,6 +150,7 @@ static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
 static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
 static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
+static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
 static GIT_PATH_FUNC(rebase_path_signoff, "rebase-merge/signoff")
 static GIT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
 static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
@@ -157,7 +158,6 @@ static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
 static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
-static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
 static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedule-failed-exec")
 
 static int git_sequencer_config(const char *k, const char *v, void *cb)
@@ -447,9 +447,9 @@ static struct tree *empty_tree(struct repository *r)
 	return lookup_tree(r, the_hash_algo->empty_tree);
 }
 
-static int error_dirty_index(struct index_state *istate, struct replay_opts *opts)
+static int error_dirty_index(struct repository *repo, struct replay_opts *opts)
 {
-	if (read_index_unmerged(istate))
+	if (repo_read_index_unmerged(repo))
 		return error_resolve_conflict(_(action_name(opts)));
 
 	error(_("your local changes would be overwritten by %s."),
@@ -484,7 +484,7 @@ static int fast_forward_to(struct repository *r,
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 
-	read_index(r->index);
+	repo_read_index(r);
 	if (checkout_fast_forward(r, from, to, 1))
 		return -1; /* the callee should have complained already */
 
@@ -541,12 +541,12 @@ static int do_recursive_merge(struct repository *r,
 	char **xopt;
 	struct lock_file index_lock = LOCK_INIT;
 
-	if (hold_locked_index(&index_lock, LOCK_REPORT_ON_ERROR) < 0)
+	if (repo_hold_locked_index(r, &index_lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
-	read_index(r->index);
+	repo_read_index(r);
 
-	init_merge_options(&o);
+	init_merge_options(&o, r);
 	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";
 	o.branch2 = next ? next_label : "(empty tree)";
@@ -1116,7 +1116,8 @@ static int run_rewrite_hook(const struct object_id *oldoid,
 	return finish_command(&proc);
 }
 
-void commit_post_rewrite(const struct commit *old_head,
+void commit_post_rewrite(struct repository *r,
+			 const struct commit *old_head,
 			 const struct object_id *new_head)
 {
 	struct notes_rewrite_cfg *cfg;
@@ -1125,7 +1126,7 @@ void commit_post_rewrite(const struct commit *old_head,
 	if (cfg) {
 		/* we are amending, so old_head is not NULL */
 		copy_note_for_rewrite(cfg, &old_head->object.oid, new_head);
-		finish_copy_notes_for_rewrite(cfg, "Notes added by 'git commit --amend'");
+		finish_copy_notes_for_rewrite(r, cfg, "Notes added by 'git commit --amend'");
 	}
 	run_rewrite_hook(&old_head->object.oid, new_head);
 }
@@ -1406,7 +1407,7 @@ static int try_to_commit(struct repository *r,
 	}
 
 	if (flags & AMEND_MSG)
-		commit_post_rewrite(current_head, oid);
+		commit_post_rewrite(r, current_head, oid);
 
 out:
 	free_commit_extra_headers(extra);
@@ -1768,7 +1769,7 @@ static int do_pick_commit(struct repository *r,
 			oidcpy(&head, the_hash_algo->empty_tree);
 		if (index_differs_from(r, unborn ? empty_tree_oid_hex() : "HEAD",
 				       NULL, 0))
-			return error_dirty_index(r->index, opts);
+			return error_dirty_index(r, opts);
 	}
 	discard_index(r->index);
 
@@ -1998,8 +1999,8 @@ static int read_and_refresh_cache(struct repository *r,
 				  struct replay_opts *opts)
 {
 	struct lock_file index_lock = LOCK_INIT;
-	int index_fd = hold_locked_index(&index_lock, 0);
-	if (read_index(r->index) < 0) {
+	int index_fd = repo_hold_locked_index(r, &index_lock, 0);
+	if (repo_read_index(r) < 0) {
 		rollback_lock_file(&index_lock);
 		return error(_("git %s: failed to read the index"),
 			_(action_name(opts)));
@@ -2390,6 +2391,9 @@ static int read_populate_opts(struct replay_opts *opts)
 		if (file_exists(rebase_path_verbose()))
 			opts->verbose = 1;
 
+		if (file_exists(rebase_path_quiet()))
+			opts->quiet = 1;
+
 		if (file_exists(rebase_path_signoff())) {
 			opts->allow_ff = 0;
 			opts->signoff = 1;
@@ -2460,9 +2464,6 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 
 	if (quiet)
 		write_file(rebase_path_quiet(), "%s\n", quiet);
-	else
-		write_file(rebase_path_quiet(), "\n");
-
 	if (opts->verbose)
 		write_file(rebase_path_verbose(), "%s", "");
 	if (opts->strategy)
@@ -2865,7 +2866,7 @@ static int do_exec(struct repository *r, const char *command_line)
 					  child_env.argv);
 
 	/* force re-reading of the cache */
-	if (discard_index(r->index) < 0 || read_index(r->index) < 0)
+	if (discard_index(r->index) < 0 || repo_read_index(r) < 0)
 		return error(_("could not read index"));
 
 	dirty = require_clean_work_tree(r, "rebase", NULL, 1, 1);
@@ -2989,7 +2990,7 @@ static int do_reset(struct repository *r,
 	struct unpack_trees_options unpack_tree_opts;
 	int ret = 0;
 
-	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
+	if (repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
 	if (len == 10 && !strncmp("[new root]", name, len)) {
@@ -3034,7 +3035,7 @@ static int do_reset(struct repository *r,
 	unpack_tree_opts.merge = 1;
 	unpack_tree_opts.update = 1;
 
-	if (read_index_unmerged(r->index)) {
+	if (repo_read_index_unmerged(r)) {
 		rollback_lock_file(&lock);
 		strbuf_release(&ref_name);
 		return error_resolve_conflict(_(action_name(opts)));
@@ -3107,7 +3108,7 @@ static int do_merge(struct repository *r,
 	static struct lock_file lock;
 	const char *p;
 
-	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0) {
+	if (repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0) {
 		ret = -1;
 		goto leave_merge;
 	}
@@ -3288,7 +3289,7 @@ static int do_merge(struct repository *r,
 
 		/* force re-reading of the cache */
 		if (!ret && (discard_index(r->index) < 0 ||
-			     read_index(r->index) < 0))
+			     repo_read_index(r) < 0))
 			ret = error(_("could not read index"));
 		goto leave_merge;
 	}
@@ -3310,8 +3311,8 @@ static int do_merge(struct repository *r,
 		commit_list_insert(j->item, &reversed);
 	free_commit_list(bases);
 
-	read_index(r->index);
-	init_merge_options(&o);
+	repo_read_index(r);
+	init_merge_options(&o, r);
 	o.branch1 = "HEAD";
 	o.branch2 = ref_name.buf;
 	o.buffer_output = 2;
@@ -3555,10 +3556,11 @@ static int pick_commits(struct repository *r,
 					fprintf(f, "%d\n", todo_list->done_nr);
 					fclose(f);
 				}
-				fprintf(stderr, "Rebasing (%d/%d)%s",
-					todo_list->done_nr,
-					todo_list->total_nr,
-					opts->verbose ? "\n" : "\r");
+				if (!opts->quiet)
+					fprintf(stderr, "Rebasing (%d/%d)%s",
+						todo_list->done_nr,
+						todo_list->total_nr,
+						opts->verbose ? "\n" : "\r");
 			}
 			unlink(rebase_path_message());
 			unlink(rebase_path_author_script());
@@ -3792,8 +3794,10 @@ cleanup_head_ref:
 		}
 		apply_autostash(opts);
 
-		fprintf(stderr, "Successfully rebased and updated %s.\n",
-			head_ref.buf);
+		if (!opts->quiet)
+			fprintf(stderr,
+				"Successfully rebased and updated %s.\n",
+				head_ref.buf);
 
 		strbuf_release(&buf);
 		strbuf_release(&head_ref);
@@ -3984,7 +3988,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 				goto release_todo_list;
 		}
 		if (index_differs_from(r, "HEAD", NULL, 0)) {
-			res = error_dirty_index(r->index, opts);
+			res = error_dirty_index(r, opts);
 			goto release_todo_list;
 		}
 		todo_list.current++;

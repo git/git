@@ -188,7 +188,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	unsigned mode;
 	struct strbuf msg = STRBUF_INIT;
 
-	read_index(r->index);
+	repo_read_index(r);
 	time(&now);
 	commit = alloc_commit_node(r);
 	commit->object.parsed = 1;
@@ -270,7 +270,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	 * want to run "diff-index --cached".
 	 */
 	discard_index(r->index);
-	read_index(r->index);
+	repo_read_index(r);
 
 	len = strlen(path);
 	if (!mode) {

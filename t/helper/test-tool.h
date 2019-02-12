@@ -1,6 +1,7 @@
 #ifndef TEST_TOOL_H
 #define TEST_TOOL_H
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "git-compat-util.h"
 
 int cmd__chmtime(int argc, const char **argv);
@@ -47,6 +48,7 @@ int cmd__submodule_config(int argc, const char **argv);
 int cmd__submodule_nested_repo_config(int argc, const char **argv);
 int cmd__subprocess(int argc, const char **argv);
 int cmd__urlmatch_normalization(int argc, const char **argv);
+int cmd__xml_encode(int argc, const char **argv);
 int cmd__wildmatch(int argc, const char **argv);
 #ifdef GIT_WINDOWS_NATIVE
 int cmd__windows_named_pipe(int argc, const char **argv);

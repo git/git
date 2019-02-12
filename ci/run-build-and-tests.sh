@@ -3,12 +3,15 @@
 # Build and test Git
 #
 
-. ${0%/*}/lib-travisci.sh
+. ${0%/*}/lib.sh
 
-ln -s "$cache_dir/.prove" t/.prove
+case "$CI_OS_NAME" in
+windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
+*) ln -s "$cache_dir/.prove" t/.prove;;
+esac
 
-make --jobs=2
-make --quiet test
+make
+make test
 if test "$jobname" = "linux-gcc"
 then
 	export GIT_TEST_SPLIT_INDEX=yes
@@ -17,7 +20,7 @@ then
 	export GIT_TEST_OE_DELTA_SIZE=5
 	export GIT_TEST_COMMIT_GRAPH=1
 	export GIT_TEST_MULTI_PACK_INDEX=1
-	make --quiet test
+	make test
 fi
 
 check_unignored_build_artifacts

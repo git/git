@@ -3,7 +3,7 @@
 #include "tree-walk.h"
 #include "object-store.h"
 
-static int score_missing(unsigned mode, const char *path)
+static int score_missing(unsigned mode)
 {
 	int score;
 
@@ -16,7 +16,7 @@ static int score_missing(unsigned mode, const char *path)
 	return score;
 }
 
-static int score_differs(unsigned mode1, unsigned mode2, const char *path)
+static int score_differs(unsigned mode1, unsigned mode2)
 {
 	int score;
 
@@ -29,7 +29,7 @@ static int score_differs(unsigned mode1, unsigned mode2, const char *path)
 	return score;
 }
 
-static int score_matches(unsigned mode1, unsigned mode2, const char *path)
+static int score_matches(unsigned mode1, unsigned mode2)
 {
 	int score;
 
@@ -98,24 +98,22 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
 
 		if (cmp < 0) {
 			/* path1 does not appear in two */
-			score += score_missing(one.entry.mode, one.entry.path);
+			score += score_missing(one.entry.mode);
 			update_tree_entry(&one);
 		} else if (cmp > 0) {
 			/* path2 does not appear in one */
-			score += score_missing(two.entry.mode, two.entry.path);
+			score += score_missing(two.entry.mode);
 			update_tree_entry(&two);
 		} else {
 			/* path appears in both */
 			if (!oideq(&one.entry.oid, &two.entry.oid)) {
 				/* they are different */
 				score += score_differs(one.entry.mode,
-						       two.entry.mode,
-						       one.entry.path);
+						       two.entry.mode);
 			} else {
 				/* same subtree or blob */
 				score += score_matches(one.entry.mode,
-						       two.entry.mode,
-						       one.entry.path);
+						       two.entry.mode);
 			}
 			update_tree_entry(&one);
 			update_tree_entry(&two);

@@ -11,9 +11,12 @@ test_expect_success 'setup test files' '
 
 	text="hallo there!\ncan you read me?" &&
 	echo "*.utf16 text working-tree-encoding=utf-16" >.gitattributes &&
+	echo "*.utf16lebom text working-tree-encoding=UTF-16LE-BOM" >>.gitattributes &&
 	printf "$text" >test.utf8.raw &&
 	printf "$text" | iconv -f UTF-8 -t UTF-16 >test.utf16.raw &&
 	printf "$text" | iconv -f UTF-8 -t UTF-32 >test.utf32.raw &&
+	printf "\377\376"                         >test.utf16lebom.raw &&
+	printf "$text" | iconv -f UTF-8 -t UTF-32LE >>test.utf16lebom.raw &&
 
 	# Line ending tests
 	printf "one\ntwo\nthree\n" >lf.utf8.raw &&
@@ -32,7 +35,8 @@ test_expect_success 'setup test files' '
 	# Add only UTF-16 file, we will add the UTF-32 file later
 	cp test.utf16.raw test.utf16 &&
 	cp test.utf32.raw test.utf32 &&
-	git add .gitattributes test.utf16 &&
+	cp test.utf16lebom.raw test.utf16lebom &&
+	git add .gitattributes test.utf16 test.utf16lebom &&
 	git commit -m initial
 '
 
@@ -49,6 +53,12 @@ test_expect_success 're-encode to UTF-16 on checkout' '
 	rm test.utf16 &&
 	git checkout test.utf16 &&
 	test_cmp_bin test.utf16.raw test.utf16
+'
+
+test_expect_success 're-encode to UTF-16-LE-BOM on checkout' '
+	rm test.utf16lebom &&
+	git checkout test.utf16lebom &&
+	test_cmp_bin test.utf16lebom.raw test.utf16lebom
 '
 
 test_expect_success 'check $GIT_DIR/info/attributes support' '

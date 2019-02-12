@@ -154,11 +154,13 @@ void raw_object_store_clear(struct raw_object_store *o);
 
 /*
  * Put in `buf` the name of the file in the local object database that
- * would be used to store a loose object with the specified sha1.
+ * would be used to store a loose object with the specified oid.
  */
-const char *loose_object_path(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
+const char *loose_object_path(struct repository *r, struct strbuf *buf,
+			      const struct object_id *oid);
 
-void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
+void *map_loose_object(struct repository *r, const struct object_id *oid,
+		       unsigned long *size);
 
 extern void *read_object_file_extended(struct repository *r,
 				       const struct object_id *oid,
@@ -206,6 +208,7 @@ int read_loose_object(const char *path,
 		      unsigned long *size,
 		      void **contents);
 
+next
 /*
  * Convenience for sha1_object_info_extended() with a NULL struct
  * object_info. OBJECT_INFO_SKIP_CACHED is automatically set; pass
@@ -218,6 +221,11 @@ static inline int repo_has_sha1_file(struct repository *r,
 {
 	return repo_has_sha1_file_with_flags(r, sha1, 0);
 }
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define has_sha1_file_with_flags(sha1, flags) repo_has_sha1_file_with_flags(the_repository, sha1, flags)
+#define has_sha1_file(sha1) repo_has_sha1_file(the_repository, sha1)
+#endif
+master
 
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define has_sha1_file_with_flags(sha1, flags) repo_has_sha1_file_with_flags(the_repository, sha1, flags)

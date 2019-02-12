@@ -36,7 +36,7 @@ while (<>) {
 	}
 
 	/\bcp\s+-a/ and err 'cp -a is not portable';
-	/\bsed\s+-i/ and err 'sed -i is not portable';
+	/\bsed\s+-[^efn]\s+/ and err 'sed option not portable (use only -n, -e, -f)';
 	/\becho\s+-[neE]/ and err 'echo with option is not portable (use printf)';
 	/^\s*declare\s+/ and err 'arrays/declare not portable';
 	/^\s*[^#]\s*which\s/ and err 'which is not portable (use type)';

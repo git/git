@@ -84,6 +84,7 @@ static unsigned long pack_size_limit;
 static int depth = 50;
 static int delta_search_threads;
 static int pack_to_stdout;
+static int sparse;
 static int thin;
 static int num_preferred_base;
 static struct progress *progress_state;
@@ -970,7 +971,7 @@ static int no_try_delta(const char *path)
 
 	if (!check)
 		check = attr_check_initl("delta", NULL);
-	git_check_attr(&the_index, path, check);
+	git_check_attr(the_repository->index, path, check);
 	if (ATTR_FALSE(check->items[0].value))
 		return 1;
 	return 0;
@@ -1642,7 +1643,7 @@ static void check_object(struct object_entry *entry)
 
 		/*
 		 * No choice but to fall back to the recursive delta walk
-		 * with sha1_object_info() to find about the object type
+		 * with oid_object_info() to find about the object type
 		 * at this point...
 		 */
 		give_up:
@@ -1718,7 +1719,7 @@ static void drop_reused_delta(struct object_entry *entry)
 	if (packed_object_info(the_repository, IN_PACK(entry), entry->in_pack_offset, &oi) < 0) {
 		/*
 		 * We failed to get the info from this pack for some reason;
-		 * fall back to sha1_object_info, which may find another copy.
+		 * fall back to oid_object_info, which may find another copy.
 		 * And if that fails, the error will be recorded in oe_type(entry)
 		 * and dealt with in prepare_pack().
 		 */
@@ -1901,10 +1902,10 @@ static int type_size_sort(const void *_a, const void *_b)
 {
 	const struct object_entry *a = *(struct object_entry **)_a;
 	const struct object_entry *b = *(struct object_entry **)_b;
-	enum object_type a_type = oe_type(a);
-	enum object_type b_type = oe_type(b);
-	unsigned long a_size = SIZE(a);
-	unsigned long b_size = SIZE(b);
+	const enum object_type a_type = oe_type(a);
+	const enum object_type b_type = oe_type(b);
+	const unsigned long a_size = SIZE(a);
+	const unsigned long b_size = SIZE(b);
 
 	if (a_type > b_type)
 		return -1;
@@ -1919,7 +1920,7 @@ static int type_size_sort(const void *_a, const void *_b)
 	if (a->preferred_base < b->preferred_base)
 		return 1;
 	if (use_delta_islands) {
-		int island_cmp = island_delta_cmp(&a->idx.oid, &b->idx.oid);
+		const int island_cmp = island_delta_cmp(&a->idx.oid, &b->idx.oid);
 		if (island_cmp)
 			return island_cmp;
 	}
@@ -2166,7 +2167,7 @@ static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
 	struct object_entry *child = DELTA_CHILD(me);
 	unsigned int m = n;
 	while (child) {
-		unsigned int c = check_delta_limit(child, n + 1);
+		const unsigned int c = check_delta_limit(child, n + 1);
 		if (m < c)
 			m = c;
 		child = DELTA_SIBLING(child);
@@ -2221,7 +2222,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 		while (window_memory_limit &&
 		       mem_usage > window_memory_limit &&
 		       count > 1) {
-			uint32_t tail = (idx + window - count) % window;
+			const uint32_t tail = (idx + window - count) % window;
 			mem_usage -= free_unpacked(array + tail);
 			count--;
 		}
@@ -2703,6 +2704,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		use_bitmap_index_default = git_config_bool(k, v);
 		return 0;
 	}
+	if (!strcmp(k, "pack.usesparse")) {
+		sparse = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(k, "pack.threads")) {
 		delta_search_threads = git_config_int(k, v);
 		if (delta_search_threads < 0)
@@ -3130,7 +3135,7 @@ static void get_object_list(int ac, const char **av)
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
-	mark_edges_uninteresting(&revs, show_edge);
+	mark_edges_uninteresting(&revs, show_edge, sparse);
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
@@ -3287,6 +3292,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "unpack-unreachable", NULL, N_("time"),
 		  N_("unpack unreachable objects newer than <time>"),
 		  PARSE_OPT_OPTARG, option_parse_unpack_unreachable },
+		OPT_BOOL(0, "sparse", &sparse,
+			 N_("use the sparse reachability algorithm")),
 		OPT_BOOL(0, "thin", &thin,
 			 N_("create thin packs")),
 		OPT_BOOL(0, "shallow", &shallow,
@@ -3319,6 +3326,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	read_replace_refs = 0;
 
+	sparse = git_env_bool("GIT_TEST_PACK_SPARSE", 0);
 	reset_pack_idx_option(&pack_idx_opts);
 	git_config(git_pack_config, NULL);
 
