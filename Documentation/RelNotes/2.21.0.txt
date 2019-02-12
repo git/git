@@ -26,7 +26,7 @@ UI, Workflows & Features
    the fast-export side has been made.
 
  * "git push $there $src:$dst" rejects when $dst is not a fully
-   qualified refname and not clear what the end user meant.  The
+   qualified refname and it is not clear what the end user meant.  The
    codepath has been taught to give a clearer error message, and also
    guess where the push should go by taking the type of the pushed
    object into account (e.g. a tag object would want to go under
@@ -88,7 +88,7 @@ Performance, Internal Implementation, Development Support etc.
    (non-)existence of loose objects.
 
  * More codepaths have become aware of working with in-core repository
-   instance other than the default "the_repository".
+   instances other than the default "the_repository".
 
  * The "strncat()" function is now among the banned functions.
 
@@ -125,13 +125,13 @@ Performance, Internal Implementation, Development Support etc.
  * The in-core repository instances are passed through more codepaths.
 
  * Update the protocol message specification to allow only the limited
-   use of scaled quantities.  This is ensure potential compatibility
-   issues will not go out of hand.
+   use of scaled quantities.  This is to ensure potential compatibility
+   issues will not get out of hand.
 
  * Micro-optimize the code that prepares commit objects to be walked
    by "git rev-list" when the commit-graph is available.
 
- * "git fetch" and "git upload-pack" learned to send all exchange over
+ * "git fetch" and "git upload-pack" learned to send all exchanges over
    the sideband channel while talking the v2 protocol.
 
  * The codepath to write out commit-graph has been optimized by
