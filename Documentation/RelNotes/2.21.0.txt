@@ -77,9 +77,9 @@ UI, Workflows & Features
 
  * A new date format "--date=human" that morphs its output depending
    on how far the time is from the current time has been introduced.
-   "--date=auto" can be used to use this new format when the output is
-   going to the pager or to the terminal and otherwise the default
-   format.
+   "--date=auto:human" can be used to use this new format (or any
+   existing format) when the output is going to the pager or to the
+   terminal, and otherwise the default format.
 
 
 Performance, Internal Implementation, Development Support etc.
