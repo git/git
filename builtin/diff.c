@@ -337,9 +337,6 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		       "--no-index" : "[--no-index]");
 
 	}
-	if (no_index)
-		/* If this is a no-index diff, just run it and exit there. */
-		diff_no_index(the_repository, &rev, argc, argv);
 
 	/* Otherwise, we are doing the usual "git" diff */
 	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
@@ -358,6 +355,10 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 * and not at all in diff-cached.
 	 */
 	rev.diffopt.ita_invisible_in_index = 1;
+
+	if (no_index)
+		/* If this is a no-index diff, just run it and exit there. */
+		diff_no_index(&rev, argc, argv);
 
 	if (nongit)
 		die(_("Not a git repository"));
