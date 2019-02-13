@@ -535,7 +535,6 @@ Flags only understood by the interactive backend:
  * --interactive
  * --exec
  * --keep-empty
- * --autosquash
  * --edit-todo
  * --root when used in combination with --onto
 
