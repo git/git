@@ -932,6 +932,15 @@ library for your script to use.
    test_oid_init or test_oid_cache.  Providing an unknown key is an
    error.
 
+ - yes [<string>]
+
+   This is often seen in modern UNIX but some platforms lack it, so
+   the test harness overrides the platform implementation with a
+   more limited one.  Use this only when feeding a handful lines of
+   output to the downstream---unlike the real version, it generates
+   only up to 99 lines.
+
+
 Prerequisites
 -------------
 
