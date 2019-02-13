@@ -576,9 +576,11 @@ else
 		prefix = /usr/
 		ifeq (MINGW32,$(MSYSTEM))
 			prefix = /mingw32
+			HOST_CPU = i686
 		endif
 		ifeq (MINGW64,$(MSYSTEM))
 			prefix = /mingw64
+			HOST_CPU = x86_64
 		else
 			COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
 			BASIC_LDFLAGS += -Wl,--large-address-aware
