@@ -529,7 +529,6 @@ are incompatible with the following options:
  * --interactive
  * --exec
  * --keep-empty
- * --autosquash
  * --edit-todo
  * --root when used in combination with --onto
 
