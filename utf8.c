@@ -559,6 +559,10 @@ char *reencode_string_len(const char *in, size_t insz,
 	/*
 	 * For writing, UTF-16 iconv typically creates "UTF-16BE-BOM"
 	 * Some users under Windows want the little endian version
+	 *
+	 * We handle UTF-16 and UTF-32 ourselves only if the platform does not
+	 * provide a BOM (which we require), since we want to match the behavior
+	 * of the system tools and libc as much as possible.
 	 */
 	if (same_utf_encoding("UTF-16LE-BOM", out_encoding)) {
 		bom_str = utf16_le_bom;
@@ -568,6 +572,16 @@ char *reencode_string_len(const char *in, size_t insz,
 		bom_str = utf16_be_bom;
 		bom_len = sizeof(utf16_be_bom);
 		out_encoding = "UTF-16BE";
+#ifdef ICONV_OMITS_BOM
+	} else if (same_utf_encoding("UTF-16", out_encoding)) {
+		bom_str = utf16_be_bom;
+		bom_len = sizeof(utf16_be_bom);
+		out_encoding = "UTF-16BE";
+	} else if (same_utf_encoding("UTF-32", out_encoding)) {
+		bom_str = utf32_be_bom;
+		bom_len = sizeof(utf32_be_bom);
+		out_encoding = "UTF-32BE";
+#endif
 	}
 
 	conv = iconv_open(out_encoding, in_encoding);
