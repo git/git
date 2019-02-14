@@ -516,7 +516,6 @@ struct rpc_state {
 	int in;
 	int out;
 	int any_written;
-	struct strbuf result;
 	unsigned gzip_request : 1;
 	unsigned initial_buffer : 1;
 };
@@ -828,7 +827,8 @@ retry:
 }
 
 static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
-		       const char **client_argv, const struct strbuf *preamble)
+		       const char **client_argv, const struct strbuf *preamble,
+		       struct strbuf *rpc_result)
 {
 	const char *svc = rpc->service_name;
 	struct strbuf buf = STRBUF_INIT;
@@ -849,7 +849,6 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 	rpc->buf = xmalloc(rpc->alloc);
 	rpc->in = client.in;
 	rpc->out = client.out;
-	strbuf_init(&rpc->result, 0);
 
 	strbuf_addf(&buf, "%s%s", url.buf, svc);
 	rpc->service_url = strbuf_detach(&buf, NULL);
@@ -877,7 +876,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 	close(client.in);
 	client.in = -1;
 	if (!err) {
-		strbuf_read(&rpc->result, client.out, 0);
+		strbuf_read(rpc_result, client.out, 0);
 	} else {
 		char buf[4096];
 		for (;;)
@@ -930,6 +929,7 @@ static int fetch_git(struct discovery *heads,
 	struct strbuf preamble = STRBUF_INIT;
 	int i, err;
 	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strbuf rpc_result = STRBUF_INIT;
 
 	argv_array_pushl(&args, "fetch-pack", "--stateless-rpc",
 			 "--stdin", "--lock-pack", NULL);
@@ -977,10 +977,10 @@ static int fetch_git(struct discovery *heads,
 	rpc.service_name = "git-upload-pack",
 	rpc.gzip_request = 1;
 
-	err = rpc_service(&rpc, heads, args.argv, &preamble);
-	if (rpc.result.len)
-		write_or_die(1, rpc.result.buf, rpc.result.len);
-	strbuf_release(&rpc.result);
+	err = rpc_service(&rpc, heads, args.argv, &preamble, &rpc_result);
+	if (rpc_result.len)
+		write_or_die(1, rpc_result.buf, rpc_result.len);
+	strbuf_release(&rpc_result);
 	strbuf_release(&preamble);
 	argv_array_clear(&args);
 	return err;
@@ -1075,6 +1075,7 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 	struct argv_array args;
 	struct string_list_item *cas_option;
 	struct strbuf preamble = STRBUF_INIT;
+	struct strbuf rpc_result = STRBUF_INIT;
 
 	argv_array_init(&args);
 	argv_array_pushl(&args, "send-pack", "--stateless-rpc", "--helper-status",
@@ -1108,10 +1109,10 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-receive-pack",
 
-	err = rpc_service(&rpc, heads, args.argv, &preamble);
-	if (rpc.result.len)
-		write_or_die(1, rpc.result.buf, rpc.result.len);
-	strbuf_release(&rpc.result);
+	err = rpc_service(&rpc, heads, args.argv, &preamble, &rpc_result);
+	if (rpc_result.len)
+		write_or_die(1, rpc_result.buf, rpc_result.len);
+	strbuf_release(&rpc_result);
 	strbuf_release(&preamble);
 	argv_array_clear(&args);
 	return err;
