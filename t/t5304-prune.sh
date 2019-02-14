@@ -274,6 +274,18 @@ test_expect_success 'prune .git/shallow' '
 	test_path_is_missing .git/shallow
 '
 
+test_expect_success 'prune .git/shallow when there are no loose objects' '
+	SHA1=$(echo hi|git commit-tree HEAD^{tree}) &&
+	echo $SHA1 >.git/shallow &&
+	git update-ref refs/heads/shallow-tip $SHA1 &&
+	git repack -ad &&
+	# verify assumption that all loose objects are gone
+	git count-objects | grep ^0 &&
+	git prune &&
+	echo $SHA1 >expect &&
+	test_cmp expect .git/shallow
+'
+
 test_expect_success 'prune: handle alternate object database' '
 	test_create_repo A &&
 	git -C A commit --allow-empty -m "initial commit" &&
