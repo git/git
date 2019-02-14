@@ -2287,7 +2287,7 @@ const char *diff_line_prefix(struct diff_options *opt)
 	return msgbuf->buf;
 }
 
-static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, unsigned long len)
+static unsigned long sane_truncate_line(char *line, unsigned long len)
 {
 	const char *cp;
 	unsigned long allot;
@@ -2351,7 +2351,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '@') {
 		if (ecbdata->diff_words)
 			diff_words_flush(ecbdata);
-		len = sane_truncate_line(ecbdata, line, len);
+		len = sane_truncate_line(line, len);
 		find_lno(line, ecbdata);
 		emit_hunk_header(ecbdata, line, len);
 		return;
