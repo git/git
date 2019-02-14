@@ -505,7 +505,6 @@ static void output_refs(struct ref *refs)
 
 struct rpc_state {
 	const char *service_name;
-	struct strbuf *stdin_preamble;
 	char *service_url;
 	char *hdr_content_type;
 	char *hdr_accept;
@@ -829,11 +828,10 @@ retry:
 }
 
 static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
-		       const char **client_argv)
+		       const char **client_argv, const struct strbuf *preamble)
 {
 	const char *svc = rpc->service_name;
 	struct strbuf buf = STRBUF_INIT;
-	struct strbuf *preamble = rpc->stdin_preamble;
 	struct child_process client = CHILD_PROCESS_INIT;
 	int err = 0;
 
@@ -843,8 +841,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 	client.argv = client_argv;
 	if (start_command(&client))
 		exit(1);
-	if (preamble)
-		write_or_die(client.in, preamble->buf, preamble->len);
+	write_or_die(client.in, preamble->buf, preamble->len);
 	if (heads)
 		write_or_die(client.in, heads->buf, heads->len);
 
@@ -978,10 +975,9 @@ static int fetch_git(struct discovery *heads,
 
 	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-upload-pack",
-	rpc.stdin_preamble = &preamble;
 	rpc.gzip_request = 1;
 
-	err = rpc_service(&rpc, heads, args.argv);
+	err = rpc_service(&rpc, heads, args.argv, &preamble);
 	if (rpc.result.len)
 		write_or_die(1, rpc.result.buf, rpc.result.len);
 	strbuf_release(&rpc.result);
@@ -1111,9 +1107,8 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 
 	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-receive-pack",
-	rpc.stdin_preamble = &preamble;
 
-	err = rpc_service(&rpc, heads, args.argv);
+	err = rpc_service(&rpc, heads, args.argv, &preamble);
 	if (rpc.result.len)
 		write_or_die(1, rpc.result.buf, rpc.result.len);
 	strbuf_release(&rpc.result);
