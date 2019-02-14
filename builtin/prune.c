@@ -49,13 +49,12 @@ static void perform_reachability_traversal(struct rev_info *revs)
 static int is_object_reachable(const struct object_id *oid,
 			       struct rev_info *revs)
 {
+	struct object *obj;
+
 	perform_reachability_traversal(revs);
 
-	/*
-	 * Do we know about this object?
-	 * It must have been reachable
-	 */
-	return !!lookup_object(the_repository, oid->hash);
+	obj = lookup_object(the_repository, oid->hash);
+	return obj && (obj->flags & SEEN);
 }
 
 static int prune_object(const struct object_id *oid, const char *fullpath,
