@@ -549,8 +549,6 @@ commit started empty (had no changes relative to its parent to
 start with) or ended empty (all changes were already applied
 upstream in other commits).
 
-The merge backend does the same.
-
 The interactive backend drops commits by default that
 started empty and halts if it hits a commit that ended up empty.
 The `--keep-empty` option exists for the interactive backend to allow
