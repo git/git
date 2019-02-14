@@ -614,7 +614,7 @@ test_expect_success 'delete fails cleanly if packed-refs file is locked' '
 	test_when_finished "rm -f .git/packed-refs.lock" &&
 	test_must_fail git update-ref -d $prefix/foo >out 2>err &&
 	git for-each-ref $prefix >actual &&
-	test_i18ngrep "Unable to create $Q.*packed-refs.lock$Q: File exists" err &&
+	test_i18ngrep "Unable to create $Q.*packed-refs.lock$Q: " err &&
 	test_cmp unchanged actual
 '
 
