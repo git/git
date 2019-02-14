@@ -1613,8 +1613,7 @@ static int new_blank_line_at_eof(struct emit_callback *ecbdata, const char *line
 	return ws_blank_line(line, len, ecbdata->ws_rule);
 }
 
-static void emit_add_line(const char *reset,
-			  struct emit_callback *ecbdata,
+static void emit_add_line(struct emit_callback *ecbdata,
 			  const char *line, int len)
 {
 	unsigned flags = WSEH_NEW | ecbdata->ws_rule;
@@ -1624,16 +1623,14 @@ static void emit_add_line(const char *reset,
 	emit_diff_symbol(ecbdata->opt, DIFF_SYMBOL_PLUS, line, len, flags);
 }
 
-static void emit_del_line(const char *reset,
-			  struct emit_callback *ecbdata,
+static void emit_del_line(struct emit_callback *ecbdata,
 			  const char *line, int len)
 {
 	unsigned flags = WSEH_OLD | ecbdata->ws_rule;
 	emit_diff_symbol(ecbdata->opt, DIFF_SYMBOL_MINUS, line, len, flags);
 }
 
-static void emit_context_line(const char *reset,
-			      struct emit_callback *ecbdata,
+static void emit_context_line(struct emit_callback *ecbdata,
 			      const char *line, int len)
 {
 	unsigned flags = WSEH_CONTEXT | ecbdata->ws_rule;
@@ -1742,7 +1739,6 @@ static void emit_rewrite_lines(struct emit_callback *ecb,
 			       int prefix, const char *data, int size)
 {
 	const char *endp = NULL;
-	const char *reset = diff_get_color(ecb->color_diff, DIFF_RESET);
 
 	while (0 < size) {
 		int len;
@@ -1751,10 +1747,10 @@ static void emit_rewrite_lines(struct emit_callback *ecb,
 		len = endp ? (endp - data + 1) : size;
 		if (prefix != '+') {
 			ecb->lno_in_preimage++;
-			emit_del_line(reset, ecb, data, len);
+			emit_del_line(ecb, data, len);
 		} else {
 			ecb->lno_in_postimage++;
-			emit_add_line(reset, ecb, data, len);
+			emit_add_line(ecb, data, len);
 		}
 		size -= len;
 		data += len;
@@ -2325,7 +2321,6 @@ static void find_lno(const char *line, struct emit_callback *ecbdata)
 static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
 	struct emit_callback *ecbdata = priv;
-	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 	struct diff_options *o = ecbdata->opt;
 
 	o->found_changes = 1;
@@ -2392,16 +2387,16 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	switch (line[0]) {
 	case '+':
 		ecbdata->lno_in_postimage++;
-		emit_add_line(reset, ecbdata, line + 1, len - 1);
+		emit_add_line(ecbdata, line + 1, len - 1);
 		break;
 	case '-':
 		ecbdata->lno_in_preimage++;
-		emit_del_line(reset, ecbdata, line + 1, len - 1);
+		emit_del_line(ecbdata, line + 1, len - 1);
 		break;
 	case ' ':
 		ecbdata->lno_in_postimage++;
 		ecbdata->lno_in_preimage++;
-		emit_context_line(reset, ecbdata, line + 1, len - 1);
+		emit_context_line(ecbdata, line + 1, len - 1);
 		break;
 	default:
 		/* incomplete line at the end */
