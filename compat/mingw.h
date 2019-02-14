@@ -6,25 +6,6 @@ typedef _sigset_t sigset_t;
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#ifdef __MINGW64_VERSION_MAJOR
-/*
- * In Git for Windows, we cannot rely on `uname -m` to report the correct
- * architecture: /usr/bin/uname.exe will report the architecture with which the
- * current MSYS2 runtime was built, not the architecture for which we are
- * currently compiling (both 32-bit and 64-bit `git.exe` is built in the 64-bit
- * Git for Windows SDK).
- */
-#undef GIT_HOST_CPU
-/* This was figured out by looking at `cpp -dM </dev/null`'s output */
-#if defined(__x86_64__)
-#define GIT_HOST_CPU "x86_64"
-#elif defined(__i686__)
-#define GIT_HOST_CPU "i686"
-#else
-#error "Unknown architecture"
-#endif
-#endif
-
 /* MinGW-w64 reports to have flockfile, but it does not actually have it. */
 #ifdef __MINGW64_VERSION_MAJOR
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
