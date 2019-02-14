@@ -107,8 +107,6 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		    unsigned autosquash);
 int rearrange_squash(struct repository *r);
 
-extern const char sign_off_header[];
-
 /*
  * Append a signoff to the commit message in "msgbuf". The ignore_footer
  * parameter specifies the number of bytes at the end of msgbuf that should
