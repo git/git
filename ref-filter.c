@@ -913,7 +913,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct expand_
 }
 
 /* See grab_values */
-static void grab_tag_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
+static void grab_tag_values(struct atom_value *val, int deref, struct object *obj)
 {
 	int i;
 	struct tag *tag = (struct tag *) obj;
@@ -935,7 +935,7 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 }
 
 /* See grab_values */
-static void grab_commit_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
+static void grab_commit_values(struct atom_value *val, int deref, struct object *obj)
 {
 	int i;
 	struct commit *commit = (struct commit *) obj;
@@ -1269,12 +1269,12 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, v
 {
 	switch (obj->type) {
 	case OBJ_TAG:
-		grab_tag_values(val, deref, obj, buf, sz);
+		grab_tag_values(val, deref, obj);
 		grab_sub_body_contents(val, deref, obj, buf, sz);
 		grab_person("tagger", val, deref, obj, buf, sz);
 		break;
 	case OBJ_COMMIT:
-		grab_commit_values(val, deref, obj, buf, sz);
+		grab_commit_values(val, deref, obj);
 		grab_sub_body_contents(val, deref, obj, buf, sz);
 		grab_person("author", val, deref, obj, buf, sz);
 		grab_person("committer", val, deref, obj, buf, sz);
