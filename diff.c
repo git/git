@@ -6224,7 +6224,7 @@ static int diffnamecmp(const void *a_, const void *b_)
 	return strcmp(name_a, name_b);
 }
 
-void diffcore_fix_diff_index(struct diff_options *options)
+void diffcore_fix_diff_index(void)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	QSORT(q->queue, q->nr, diffnamecmp);
