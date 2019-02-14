@@ -1402,8 +1402,7 @@ static int merge_mode_and_contents(struct merge_options *o,
 
 static int handle_rename_via_dir(struct merge_options *o,
 				 struct diff_filepair *pair,
-				 const char *rename_branch,
-				 const char *other_branch)
+				 const char *rename_branch)
 {
 	/*
 	 * Handle file adds that need to be renamed due to directory rename
@@ -2213,8 +2212,7 @@ static void handle_directory_level_conflicts(struct merge_options *o,
 	remove_hashmap_entries(dir_re_merge, &remove_from_merge);
 }
 
-static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs,
-					     struct tree *tree)
+static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 {
 	struct hashmap *dir_renames;
 	struct hashmap_iter iter;
@@ -2460,8 +2458,7 @@ static void apply_directory_rename_modifications(struct merge_options *o,
 						 struct tree *o_tree,
 						 struct tree *a_tree,
 						 struct tree *b_tree,
-						 struct string_list *entries,
-						 int *clean)
+						 struct string_list *entries)
 {
 	struct string_list_item *item;
 	int stage = (tree == a_tree ? 2 : 3);
@@ -2632,8 +2629,7 @@ static struct string_list *get_renames(struct merge_options *o,
 			apply_directory_rename_modifications(o, pair, new_path,
 							     re, tree, o_tree,
 							     a_tree, b_tree,
-							     entries,
-							     clean_merge);
+							     entries);
 	}
 
 	hashmap_iter_init(&collisions, &iter);
@@ -2944,8 +2940,8 @@ static int detect_and_process_renames(struct merge_options *o,
 	merge_pairs = get_diffpairs(o, common, merge);
 
 	if (o->detect_directory_renames) {
-		dir_re_head = get_directory_renames(head_pairs, head);
-		dir_re_merge = get_directory_renames(merge_pairs, merge);
+		dir_re_head = get_directory_renames(head_pairs);
+		dir_re_merge = get_directory_renames(merge_pairs);
 
 		handle_directory_level_conflicts(o,
 						 dir_re_head, head,
@@ -3268,8 +3264,7 @@ static int process_entry(struct merge_options *o,
 			clean_merge = 1;
 			if (handle_rename_via_dir(o,
 						  conflict_info->pair1,
-						  conflict_info->branch1,
-						  conflict_info->branch2))
+						  conflict_info->branch1))
 				clean_merge = -1;
 			break;
 		case RENAME_ADD:
