@@ -892,6 +892,7 @@ test_expect_success 'get --expiry-date' '
 	1510348087
 	0
 	EOF
+	: "work around heredoc parsing bug fixed in dash 0.5.7 (in ec2c84d)" &&
 	{
 		echo "$rel_out $(git config --expiry-date date.valid1)"
 		git config --expiry-date date.valid2 &&
