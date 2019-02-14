@@ -4178,7 +4178,6 @@ static void run_external_diff(const char *pgm,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
 			      const char *xfrm_msg,
-			      int complete_rewrite,
 			      struct diff_options *o)
 {
 	struct argv_array argv = ARGV_ARRAY_INIT;
@@ -4336,8 +4335,7 @@ static void run_diff_cmd(const char *pgm,
 	}
 
 	if (pgm) {
-		run_external_diff(pgm, name, other, one, two, xfrm_msg,
-				  complete_rewrite, o);
+		run_external_diff(pgm, name, other, one, two, xfrm_msg, o);
 		return;
 	}
 	if (one && two)
