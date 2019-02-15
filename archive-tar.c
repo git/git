@@ -17,6 +17,8 @@ static unsigned long offset;
 
 static int tar_umask = 002;
 
+static gzFile gzip;
+
 static int write_tar_filter_archive(const struct archiver *ar,
 				    struct archiver_args *args);
 
@@ -38,11 +40,21 @@ static int write_tar_filter_archive(const struct archiver *ar,
 #define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
+/* writes out the whole block, or dies if fails */
+static void write_block_or_die(const char *block) {
+	if (gzip) {
+		if (gzwrite(gzip, block, (unsigned) BLOCKSIZE) != BLOCKSIZE)
+			die(_("gzwrite failed"));
+	} else {
+		write_or_die(1, block, BLOCKSIZE);
+	}
+}
+
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
 {
 	if (offset == BLOCKSIZE) {
-		write_or_die(1, block, BLOCKSIZE);
+		write_block_or_die(block);
 		offset = 0;
 	}
 }
@@ -66,7 +78,7 @@ static void do_write_blocked(const void *data, unsigned long size)
 		write_if_needed();
 	}
 	while (size >= BLOCKSIZE) {
-		write_or_die(1, buf, BLOCKSIZE);
+		write_block_or_die(buf);
 		size -= BLOCKSIZE;
 		buf += BLOCKSIZE;
 	}
@@ -101,10 +113,10 @@ static void write_trailer(void)
 {
 	int tail = BLOCKSIZE - offset;
 	memset(block + offset, 0, tail);
-	write_or_die(1, block, BLOCKSIZE);
+	write_block_or_die(block);
 	if (tail < 2 * RECORDSIZE) {
 		memset(block, 0, offset);
-		write_or_die(1, block, BLOCKSIZE);
+		write_block_or_die(block);
 	}
 }
 
