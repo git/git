@@ -26,7 +26,7 @@ UI, Workflows & Features
    the fast-export side has been made.
 
  * "git push $there $src:$dst" rejects when $dst is not a fully
-   qualified refname and not clear what the end user meant.  The
+   qualified refname and it is not clear what the end user meant.  The
    codepath has been taught to give a clearer error message, and also
    guess where the push should go by taking the type of the pushed
    object into account (e.g. a tag object would want to go under
@@ -77,9 +77,9 @@ UI, Workflows & Features
 
  * A new date format "--date=human" that morphs its output depending
    on how far the time is from the current time has been introduced.
-   "--date=auto" can be used to use this new format when the output is
-   going to the pager or to the terminal and otherwise the default
-   format.
+   "--date=auto:human" can be used to use this new format (or any
+   existing format) when the output is going to the pager or to the
+   terminal, and otherwise the default format.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -88,7 +88,7 @@ Performance, Internal Implementation, Development Support etc.
    (non-)existence of loose objects.
 
  * More codepaths have become aware of working with in-core repository
-   instance other than the default "the_repository".
+   instances other than the default "the_repository".
 
  * The "strncat()" function is now among the banned functions.
 
@@ -125,13 +125,13 @@ Performance, Internal Implementation, Development Support etc.
  * The in-core repository instances are passed through more codepaths.
 
  * Update the protocol message specification to allow only the limited
-   use of scaled quantities.  This is ensure potential compatibility
-   issues will not go out of hand.
+   use of scaled quantities.  This is to ensure potential compatibility
+   issues will not get out of hand.
 
  * Micro-optimize the code that prepares commit objects to be walked
    by "git rev-list" when the commit-graph is available.
 
- * "git fetch" and "git upload-pack" learned to send all exchange over
+ * "git fetch" and "git upload-pack" learned to send all exchanges over
    the sideband channel while talking the v2 protocol.
 
  * The codepath to write out commit-graph has been optimized by
@@ -179,6 +179,13 @@ Performance, Internal Implementation, Development Support etc.
    "prove" has been added.
 
  * A flakey "p4" test has been removed.
+
+ * The code and tests assume that the system supplied iconv() would
+   always use BOM in its output when asked to encode to UTF-16 (or
+   UTF-32), but apparently some implementations output big-endian
+   without BOM.  A compile-time knob has been added to help such
+   systems (e.g. NonStop) to add BOM to the output to increase
+   portability.
 
 
 Fixes since v2.20
@@ -439,3 +446,6 @@ Fixes since v2.20
    (merge 2e285e7803 tz/gpg-test-fix later to maint).
    (merge 5427de960b kl/pretty-doc-markup-fix later to maint).
    (merge 3815f64b0d js/mingw-host-cpu later to maint).
+   (merge 5fe81438b5 rj/sequencer-sign-off-header-static later to maint).
+   (merge 18a4f6be6b nd/fileno-may-be-macro later to maint).
+   (merge 99e9ab54ab kd/t0028-octal-del-is-377-not-777 later to maint).

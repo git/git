@@ -149,8 +149,19 @@ do
 	--stress=*)
 		stress=${opt#--*=}
 		case "$stress" in
-		*[^0-9]*|0*|"")
+		*[!0-9]*|0*|"")
 			echo "error: --stress=<N> requires the number of jobs to run" >&2
+			exit 1
+			;;
+		*)	# Good.
+			;;
+		esac
+		;;
+	--stress-limit=*)
+		stress_limit=${opt#--*=}
+		case "$stress_limit" in
+		*[!0-9]*|0*|"")
+			echo "error: --stress-limit=<N> requires the number of repetitions" >&2
 			exit 1
 			;;
 		*)	# Good.
@@ -242,8 +253,10 @@ then
 				exit 1
 			' TERM INT
 
-			cnt=0
-			while ! test -e "$stressfail"
+			cnt=1
+			while ! test -e "$stressfail" &&
+			      { test -z "$stress_limit" ||
+				test $cnt -le $stress_limit ; }
 			do
 				$TEST_SHELL_PATH "$0" "$@" >"$TEST_RESULTS_BASE.stress-$job_nr.out" 2>&1 &
 				test_pid=$!
@@ -266,6 +279,7 @@ then
 
 	if test -f "$stressfail"
 	then
+		stress_exit=1
 		echo "Log(s) of failed test run(s):"
 		for failed_job_nr in $(sort -n "$stressfail")
 		do

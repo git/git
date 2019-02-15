@@ -529,7 +529,6 @@ are incompatible with the following options:
  * --interactive
  * --exec
  * --keep-empty
- * --autosquash
  * --edit-todo
  * --root when used in combination with --onto
 
@@ -553,8 +552,6 @@ The am backend drops any "empty" commits, regardless of whether the
 commit started empty (had no changes relative to its parent to
 start with) or ended empty (all changes were already applied
 upstream in other commits).
-
-The merge backend does the same.
 
 The interactive backend drops commits by default that
 started empty and halts if it hits a commit that ended up empty.

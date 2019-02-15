@@ -116,6 +116,19 @@ remove_cr () {
 	tr '\015' Q | sed -e 's/Q$//'
 }
 
+# Generate an output of $1 bytes of all zeroes (NULs, not ASCII zeroes).
+# If $1 is 'infinity', output forever or until the receiving pipe stops reading,
+# whichever comes first.
+generate_zero_bytes () {
+	perl -e 'if ($ARGV[0] == "infinity") {
+		while (-1) {
+			print "\0"
+		}
+	} else {
+		print "\0" x $ARGV[0]
+	}' "$@"
+}
+
 # In some bourne shell implementations, the "unset" builtin returns
 # nonzero status when a variable to be unset was not set in the first
 # place.
@@ -1289,7 +1302,7 @@ test_set_port () {
 			port=$(($port + 10000))
 		fi
 		;;
-	*[^0-9]*|0*)
+	*[!0-9]*|0*)
 		error >&7 "invalid port number: $port"
 		;;
 	*)

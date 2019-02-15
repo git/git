@@ -1820,9 +1820,11 @@ void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 			       prefix, &oid, &oc);
 }
 
-int get_oid_with_context(struct repository *repo, const char *str,
-			 unsigned flags, struct object_id *oid,
-			 struct object_context *oc)
+enum get_oid_result get_oid_with_context(struct repository *repo,
+					 const char *str,
+					 unsigned flags,
+					 struct object_id *oid,
+					 struct object_context *oc)
 {
 	if (flags & GET_OID_FOLLOW_SYMLINKS && flags & GET_OID_ONLY_TO_DIE)
 		BUG("incompatible flags for get_sha1_with_context");

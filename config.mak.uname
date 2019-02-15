@@ -221,6 +221,7 @@ ifeq ($(uname_S),FreeBSD)
 	HAVE_BSD_KERN_PROC_SYSCTL = YesPlease
 	PAGER_ENV = LESS=FRX LV=-c MORE=FRX
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
+	FILENO_IS_A_MACRO = UnfortunatelyYes
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
@@ -234,6 +235,7 @@ ifeq ($(uname_S),OpenBSD)
 	HAVE_BSD_KERN_PROC_SYSCTL = YesPlease
 	PROCFS_EXECUTABLE_PATH = /proc/curproc/file
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
+	FILENO_IS_A_MACRO = UnfortunatelyYes
 endif
 ifeq ($(uname_S),MirBSD)
 	NO_STRCASESTR = YesPlease
@@ -490,6 +492,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	OLD_ICONV = UnfortunatelyYes
 	NO_REGEX = NeedsStartEnd
 	NO_PTHREADS = UnfortunatelyYes
+	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 
 	# Not detected (nor checked for) by './configure'.
 	# We don't have SA_RESTART on NonStop, unfortunalety.
@@ -507,9 +510,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	# RFE 10-120912-4693 submitted to HP NonStop development.
 	NO_SETITIMER = UnfortunatelyYes
 	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
-	SHELL_PATH = /usr/local/bin/bash
-	# as of H06.25/J06.14, we might better use this
-	#SHELL_PATH = /usr/coreutils/bin/bash
+	SHELL_PATH = /usr/coreutils/bin/bash
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	pathsep = ;
@@ -571,9 +572,11 @@ else
 		prefix = /usr/
 		ifeq (MINGW32,$(MSYSTEM))
 			prefix = /mingw32
+			HOST_CPU = i686
 		endif
 		ifeq (MINGW64,$(MSYSTEM))
 			prefix = /mingw64
+			HOST_CPU = x86_64
 		else
 			COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
 			BASIC_LDFLAGS += -Wl,--large-address-aware
