@@ -9,6 +9,7 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
+'git submodule' [--quiet] [--cached]
 'git submodule' [--quiet] add [<options>] [--] <repository> [<path>]
 'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
@@ -28,6 +29,9 @@ For more information about submodules, see linkgit:gitsubmodules[7].
 
 COMMANDS
 --------
+With no arguments, shows the status of existing submodules.  Several
+subcommands are available to perform operations on the submodules.
+
 add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--depth <depth>] [--] <repository> [<path>]::
 	Add the given repository as a submodule at the given path
 	to the changeset to be committed next to the current
