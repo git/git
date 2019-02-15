@@ -150,7 +150,7 @@ test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
 		GIT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=POST \
 		CONTENT_LENGTH="$NOT_FIT_IN_SSIZE" \
-		git http-backend </dev/zero >/dev/null 2>err &&
+		git http-backend </dev/null >/dev/null 2>err &&
 	grep "fatal:.*CONTENT_LENGTH" err
 '
 
