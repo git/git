@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-02-09 20:54+0800\n"
+"POT-Creation-Date: 2019-02-15 10:09+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7690,7 +7690,8 @@ msgstr ""
 
 #: builtin/bisect--helper.c:174
 #, c-format
-msgid "could not check out original HEAD '%s'. Try 'git bisectreset <commit>'."
+msgid ""
+"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
 msgstr ""
 
 #: builtin/bisect--helper.c:215
@@ -7831,7 +7832,7 @@ msgid "update BISECT_HEAD instead of checking out the current commit"
 msgstr ""
 
 #: builtin/bisect--helper.c:649
-msgid "no log for BISECT_WRITE "
+msgid "no log for BISECT_WRITE"
 msgstr ""
 
 #: builtin/bisect--helper.c:666
@@ -10934,10 +10935,10 @@ msgstr ""
 msgid "Could not fetch %s"
 msgstr ""
 
-#: builtin/fetch.c:1482 builtin/fetch.c:1651
+#: builtin/fetch.c:1482
 msgid ""
 "--filter can only be used with the remote configured in extensions."
-"partialclone"
+"partialClone"
 msgstr ""
 
 #: builtin/fetch.c:1506
@@ -10981,6 +10982,12 @@ msgstr ""
 
 #: builtin/fetch.c:1635
 msgid "Fetching a group and specifying refspecs does not make sense"
+msgstr ""
+
+#: builtin/fetch.c:1651
+msgid ""
+"--filter can only be used with the remote configured in extensions."
+"partialclone"
 msgstr ""
 
 #: builtin/fmt-merge-msg.c:18
@@ -14814,7 +14821,7 @@ msgstr ""
 msgid "git rebase --continue | --abort | --skip | --edit-todo"
 msgstr ""
 
-#: builtin/rebase.c:121
+#: builtin/rebase.c:121 builtin/rebase.c:1437
 #, c-format
 msgid "%s requires an interactive rebase"
 msgstr ""
@@ -15086,10 +15093,6 @@ msgstr ""
 
 #: builtin/rebase.c:1397
 msgid "--strategy requires --merge or --interactive"
-msgstr ""
-
-#: builtin/rebase.c:1437
-msgid "--reschedule-failed-exec requires an interactive rebase"
 msgstr ""
 
 #: builtin/rebase.c:1446
