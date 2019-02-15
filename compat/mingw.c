@@ -1641,7 +1641,7 @@ int mingw_kill(pid_t pid, int sig)
  */
 char *mingw_getenv(const char *name)
 {
-#define GETENV_MAX_RETAIN 30
+#define GETENV_MAX_RETAIN 64
 	static char *values[GETENV_MAX_RETAIN];
 	static int value_counter;
 	int len_key, len_value;
