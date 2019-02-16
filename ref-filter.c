@@ -485,6 +485,10 @@ static struct {
 	{ "if", SOURCE_NONE, FIELD_STR, if_atom_parser },
 	{ "then", SOURCE_NONE },
 	{ "else", SOURCE_NONE },
+	/*
+	 * Please update $__git_ref_fieldlist in git-completion.bash
+	 * when you add new atoms
+	 */
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }

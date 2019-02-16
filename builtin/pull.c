@@ -56,6 +56,10 @@ static enum rebase_type parse_config_rebase(const char *key, const char *value,
 		return REBASE_MERGES;
 	else if (!strcmp(value, "interactive") || !strcmp(value, "i"))
 		return REBASE_INTERACTIVE;
+	/*
+	 * Please update _git_config() in git-completion.bash when you
+	 * add new rebase modes.
+	 */
 
 	if (fatal)
 		die(_("Invalid value for %s: %s"), key, value);

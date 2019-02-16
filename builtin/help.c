@@ -70,6 +70,10 @@ static enum help_format parse_help_format(const char *format)
 		return HELP_FORMAT_INFO;
 	if (!strcmp(format, "web") || !strcmp(format, "html"))
 		return HELP_FORMAT_WEB;
+	/*
+	 * Please update _git_config() in git-completion.bash when you
+	 * add new help formats.
+	 */
 	die(_("unrecognized help format '%s'"), format);
 }
 

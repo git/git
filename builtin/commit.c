@@ -1038,6 +1038,10 @@ static void handle_untracked_files_arg(struct wt_status *s)
 		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 	else if (!strcmp(untracked_files_arg, "all"))
 		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
+	/*
+	 * Please update $__git_untracked_file_modes in
+	 * git-completion.bash when you add new options
+	 */
 	else
 		die(_("Invalid untracked files mode '%s'"), untracked_files_arg);
 }
@@ -1179,6 +1183,10 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	else if (!strcmp(cleanup_arg, "scissors"))
 		cleanup_mode = use_editor ? COMMIT_MSG_CLEANUP_SCISSORS :
 					    COMMIT_MSG_CLEANUP_SPACE;
+	/*
+	 * Please update _git_commit() in git-completion.bash when you
+	 * add new options.
+	 */
 	else
 		die(_("Invalid cleanup mode %s"), cleanup_arg);
 

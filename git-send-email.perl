@@ -465,6 +465,8 @@ $smtp_encryption = '' unless (defined $smtp_encryption);
 my(%suppress_cc);
 if (@suppress_cc) {
 	foreach my $entry (@suppress_cc) {
+		# Please update $__git_send_email_suppresscc_options
+		# in git-completion.bash when you add new options.
 		die sprintf(__("Unknown --suppress-cc field: '%s'\n"), $entry)
 			unless $entry =~ /^(?:all|cccmd|cc|author|self|sob|body|bodycc|misc-by)$/;
 		$suppress_cc{$entry} = 1;
@@ -494,6 +496,8 @@ my $confirm_unconfigured = !defined $confirm;
 if ($confirm_unconfigured) {
 	$confirm = scalar %suppress_cc ? 'compose' : 'auto';
 };
+# Please update $__git_send_email_confirm_options in
+# git-completion.bash when you add new options.
 die sprintf(__("Unknown --confirm setting: '%s'\n"), $confirm)
 	unless $confirm =~ /^(?:auto|cc|compose|always|never)/;
 
@@ -587,6 +591,8 @@ my %parse_alias = (
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];
 		}}}
+	# Please update _git_config() in git-completion.bash when you
+	# add new MUAs.
 );
 
 if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {

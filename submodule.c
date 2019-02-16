@@ -432,6 +432,10 @@ void handle_ignore_submodules_arg(struct diff_options *diffopt,
 		diffopt->flags.ignore_dirty_submodules = 1;
 	else if (strcmp(arg, "none"))
 		die("bad --ignore-submodules argument: %s", arg);
+	/*
+	 * Please update _git_status() in git-completion.bash when you
+	 * add new options
+	 */
 }
 
 static int prepare_submodule_summary(struct rev_info *rev, const char *path,

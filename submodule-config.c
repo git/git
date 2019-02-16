@@ -281,7 +281,10 @@ static int parse_fetch_recurse(const char *opt, const char *arg,
 	default:
 		if (!strcmp(arg, "on-demand"))
 			return RECURSE_SUBMODULES_ON_DEMAND;
-
+		/*
+		 * Please update $__git_fetch_recurse_submodules in
+		 * git-completion.bash when you add new options.
+		 */
 		if (die_on_error)
 			die("bad %s argument: %s", opt, arg);
 		else
@@ -362,6 +365,10 @@ static int parse_push_recurse(const char *opt, const char *arg,
 			return RECURSE_SUBMODULES_CHECK;
 		else if (!strcmp(arg, "only"))
 			return RECURSE_SUBMODULES_ONLY;
+		/*
+		 * Please update $__git_push_recurse_submodules in
+		 * git-completion.bash when you add new modes.
+		 */
 		else if (die_on_error)
 			die("bad %s argument: %s", opt, arg);
 		else
