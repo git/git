@@ -41,7 +41,8 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 	if (!skip_prefix(end, " comment=", &comment))
 		return 1;
 	len -= comment - content;
-	if (len != GIT_SHA1_HEXSZ + 1)
+	if (len < 1 || !(len % 2) ||
+	    hash_algo_by_length((len - 1) / 2) == GIT_HASH_UNKNOWN)
 		return 1;
 
 	if (write_in_full(1, comment, len) < 0)
