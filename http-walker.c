@@ -434,7 +434,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 
 	if (walker->get_verbosely) {
 		fprintf(stderr, "Getting pack %s\n",
-			sha1_to_hex(target->sha1));
+			sha1_to_hex(target->hash));
 		fprintf(stderr, " which contains %s\n",
 			sha1_to_hex(sha1));
 	}
