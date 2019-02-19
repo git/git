@@ -2079,19 +2079,19 @@ int http_fetch_ref(const char *base, struct ref *ref)
 }
 
 /* Helpers for fetching packs */
-static char *fetch_pack_index(unsigned char *sha1, const char *base_url)
+static char *fetch_pack_index(unsigned char *hash, const char *base_url)
 {
 	char *url, *tmp;
 	struct strbuf buf = STRBUF_INIT;
 
 	if (http_is_verbose)
-		fprintf(stderr, "Getting index for pack %s\n", sha1_to_hex(sha1));
+		fprintf(stderr, "Getting index for pack %s\n", hash_to_hex(hash));
 
 	end_url_with_slash(&buf, base_url);
-	strbuf_addf(&buf, "objects/pack/pack-%s.idx", sha1_to_hex(sha1));
+	strbuf_addf(&buf, "objects/pack/pack-%s.idx", hash_to_hex(hash));
 	url = strbuf_detach(&buf, NULL);
 
-	strbuf_addf(&buf, "%s.temp", sha1_pack_index_name(sha1));
+	strbuf_addf(&buf, "%s.temp", sha1_pack_index_name(hash));
 	tmp = strbuf_detach(&buf, NULL);
 
 	if (http_get_file(url, tmp, NULL) != HTTP_OK) {
@@ -2262,7 +2262,7 @@ struct http_pack_request *new_http_pack_request(
 
 	end_url_with_slash(&buf, base_url);
 	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
-		sha1_to_hex(target->hash));
+		hash_to_hex(target->hash));
 	preq->url = strbuf_detach(&buf, NULL);
 
 	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(target->hash));
@@ -2289,7 +2289,7 @@ struct http_pack_request *new_http_pack_request(
 		if (http_is_verbose)
 			fprintf(stderr,
 				"Resuming fetch of pack %s at byte %"PRIuMAX"\n",
-				sha1_to_hex(target->hash),
+				hash_to_hex(target->hash),
 				(uintmax_t)prev_posn);
 		http_opt_request_remainder(preq->slot->curl, prev_posn);
 	}
