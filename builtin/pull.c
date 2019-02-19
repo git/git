@@ -369,9 +369,10 @@ static void get_merge_heads(struct oid_array *merge_heads)
 
 	fp = xfopen(filename, "r");
 	while (strbuf_getline_lf(&sb, fp) != EOF) {
-		if (get_oid_hex(sb.buf, &oid))
-			continue;  /* invalid line: does not start with SHA1 */
-		if (starts_with(sb.buf + GIT_SHA1_HEXSZ, "\tnot-for-merge\t"))
+		const char *p;
+		if (parse_oid_hex(sb.buf, &oid, &p))
+			continue;  /* invalid line: does not start with object ID */
+		if (starts_with(p, "\tnot-for-merge\t"))
 			continue;  /* ref is not-for-merge */
 		oid_array_append(merge_heads, &oid);
 	}
@@ -760,7 +761,7 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 	cp.no_stderr = 1;
 	cp.git_cmd = 1;
 
-	ret = capture_command(&cp, &sb, GIT_SHA1_HEXSZ);
+	ret = capture_command(&cp, &sb, GIT_MAX_HEXSZ);
 	if (ret)
 		goto cleanup;
 
@@ -805,7 +806,7 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 }
 
 /**
- * Given the current HEAD SHA1, the merge head returned from git-fetch and the
+ * Given the current HEAD oid, the merge head returned from git-fetch and the
  * fork point calculated by get_rebase_fork_point(), runs git-rebase with the
  * appropriate arguments and returns its exit status.
  */
