@@ -249,7 +249,7 @@ static struct ref *parse_info_refs(struct discovery *heads)
 		if (data[i] == '\t')
 			mid = &data[i];
 		if (data[i] == '\n') {
-			if (mid - start != 40)
+			if (mid - start != the_hash_algo->hexsz)
 				die("%sinfo/refs not valid: is this a git repository?",
 				    url.buf);
 			data[i] = 0;
@@ -1107,12 +1107,13 @@ static void parse_fetch(struct strbuf *buf)
 			const char *name;
 			struct ref *ref;
 			struct object_id old_oid;
+			const char *q;
 
-			if (get_oid_hex(p, &old_oid))
+			if (parse_oid_hex(p, &old_oid, &q))
 				die("protocol error: expected sha/ref, got %s'", p);
-			if (p[GIT_SHA1_HEXSZ] == ' ')
-				name = p + GIT_SHA1_HEXSZ + 1;
-			else if (!p[GIT_SHA1_HEXSZ])
+			if (*q == ' ')
+				name = q + 1;
+			else if (!*q)
 				name = "";
 			else
 				die("protocol error: expected sha/ref, got %s'", p);
