@@ -59,7 +59,7 @@ void free_bitmap_index(struct bitmap_index *);
  * queried to see if a particular object was reachable from any of the
  * objects flagged as UNINTERESTING.
  */
-int bitmap_has_sha1_in_uninteresting(struct bitmap_index *, const unsigned char *sha1);
+int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_id *oid);
 
 void bitmap_writer_show_progress(int show);
 void bitmap_writer_set_checksum(unsigned char *sha1);
