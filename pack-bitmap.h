@@ -14,7 +14,7 @@ struct bitmap_disk_header {
 	uint16_t version;
 	uint16_t options;
 	uint32_t entry_count;
-	unsigned char checksum[20];
+	unsigned char checksum[GIT_MAX_RAWSZ];
 };
 
 static const char BITMAP_IDX_SIGNATURE[] = {'B', 'I', 'T', 'M'};
