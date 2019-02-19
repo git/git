@@ -455,18 +455,34 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	filter.use_shell = 1;
 	filter.in = -1;
 
-	if (start_command(&filter) < 0)
-		die_errno(_("unable to start '%s' filter"), cmd.buf);
-	close(1);
-	if (dup2(filter.in, 1) < 0)
-		die_errno(_("unable to redirect descriptor"));
-	close(filter.in);
+	if (!strcmp("gzip -cn", ar->data)) {
+		char outmode[4] = "wb\0";
+
+		if (args->compression_level >= 0 && args->compression_level <= 9)
+			outmode[2] = '0' + args->compression_level;
+
+		gzip = gzdopen(fileno(stdout), outmode);
+		if (!gzip)
+			die(_("Could not gzdopen stdout"));
+	} else {
+		if (start_command(&filter) < 0)
+			die_errno(_("unable to start '%s' filter"), cmd.buf);
+		close(1);
+		if (dup2(filter.in, 1) < 0)
+			die_errno(_("unable to redirect descriptor"));
+		close(filter.in);
+	}
 
 	r = write_tar_archive(ar, args);
 
-	close(1);
-	if (finish_command(&filter) != 0)
-		die(_("'%s' filter reported error"), cmd.buf);
+	if (gzip) {
+		if (gzclose(gzip) != Z_OK)
+			die(_("gzclose failed"));
+	} else {
+		close(1);
+		if (finish_command(&filter) != 0)
+			die(_("'%s' filter reported error"), cmd.buf);
+	}
 
 	strbuf_release(&cmd);
 	return r;
