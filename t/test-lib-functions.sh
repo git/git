@@ -120,13 +120,7 @@ remove_cr () {
 # If $1 is 'infinity', output forever or until the receiving pipe stops reading,
 # whichever comes first.
 generate_zero_bytes () {
-	perl -e 'if ($ARGV[0] == "infinity") {
-		while (-1) {
-			print "\0"
-		}
-	} else {
-		print "\0" x $ARGV[0]
-	}' "$@"
+	test-tool genzeros "$@"
 }
 
 # In some bourne shell implementations, the "unset" builtin returns
