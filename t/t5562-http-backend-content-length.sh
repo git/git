@@ -143,14 +143,14 @@ test_expect_success GZIP 'push gzipped empty' '
 
 test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
 	NOT_FIT_IN_SSIZE=$(ssize_b100dots) &&
-	generate_zero_bytes infinity  | env \
+	env \
 		CONTENT_TYPE=application/x-git-upload-pack-request \
 		QUERY_STRING=/repo.git/git-upload-pack \
 		PATH_TRANSLATED="$PWD"/.git/git-upload-pack \
 		GIT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=POST \
 		CONTENT_LENGTH="$NOT_FIT_IN_SSIZE" \
-		git http-backend >/dev/null 2>err &&
+		git http-backend </dev/null >/dev/null 2>err &&
 	grep "fatal:.*CONTENT_LENGTH" err
 '
 
