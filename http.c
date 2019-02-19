@@ -2337,8 +2337,8 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 		freq->stream.next_out = expn;
 		freq->stream.avail_out = sizeof(expn);
 		freq->zret = git_inflate(&freq->stream, Z_SYNC_FLUSH);
-		git_SHA1_Update(&freq->c, expn,
-				sizeof(expn) - freq->stream.avail_out);
+		the_hash_algo->update_fn(&freq->c, expn,
+					 sizeof(expn) - freq->stream.avail_out);
 	} while (freq->stream.avail_in && freq->zret == Z_OK);
 	return size;
 }
@@ -2396,7 +2396,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 
 	git_inflate_init(&freq->stream);
 
-	git_SHA1_Init(&freq->c);
+	the_hash_algo->init_fn(&freq->c);
 
 	freq->url = get_remote_object_url(base_url, hex, 0);
 
@@ -2431,7 +2431,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	if (prev_read == -1) {
 		memset(&freq->stream, 0, sizeof(freq->stream));
 		git_inflate_init(&freq->stream);
-		git_SHA1_Init(&freq->c);
+		the_hash_algo->init_fn(&freq->c);
 		if (prev_posn>0) {
 			prev_posn = 0;
 			lseek(freq->localfile, 0, SEEK_SET);
@@ -2502,7 +2502,7 @@ int finish_http_object_request(struct http_object_request *freq)
 	}
 
 	git_inflate_end(&freq->stream);
-	git_SHA1_Final(freq->real_oid.hash, &freq->c);
+	the_hash_algo->final_fn(freq->real_oid.hash, &freq->c);
 	if (freq->zret != Z_STREAM_END) {
 		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
