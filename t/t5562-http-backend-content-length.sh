@@ -8,12 +8,12 @@ test_lazy_prereq GZIP 'gzip --version'
 verify_http_result() {
 	# some fatal errors still produce status 200
 	# so check if there is the error message
-	if grep 'fatal:' act.err
+	if grep 'fatal:' act.err.$test_count
 	then
 		return 1
 	fi
 
-	if ! grep "Status" act.out >act
+	if ! grep "Status" act.out.$test_count >act
 	then
 		printf "Status: 200 OK\r\n" >act
 	fi
@@ -33,7 +33,7 @@ test_http_env() {
 		REQUEST_METHOD=POST \
 		"$PERL_PATH" \
 		"$TEST_DIRECTORY"/t5562/invoke-with-content-length.pl \
-		    "$request_body" git http-backend >act.out 2>act.err
+		    "$request_body" git http-backend >act.out.$test_count 2>act.err.$test_count
 }
 
 ssize_b100dots() {
@@ -161,7 +161,7 @@ test_expect_success 'empty CONTENT_LENGTH' '
 		GIT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=GET \
 		CONTENT_LENGTH="" \
-		git http-backend <empty_body >act.out 2>act.err &&
+		git http-backend <empty_body >act.out.$test_count 2>act.err.$test_count &&
 	verify_http_result "200 OK"
 '
 
