@@ -16,18 +16,6 @@
  *      table overhead.
  */
 
-static inline unsigned int oid_hash(struct object_id oid)
-{
-	return sha1hash(oid.hash);
-}
-
-static inline int oid_equal(struct object_id a, struct object_id b)
-{
-	return oideq(&a, &b);
-}
-
-KHASH_INIT(oid, struct object_id, int, 0, oid_hash, oid_equal)
-
 /**
  * A single oidset; should be zero-initialized (or use OIDSET_INIT).
  */
