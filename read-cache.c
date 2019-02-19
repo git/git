@@ -1640,39 +1640,24 @@ struct ondisk_cache_entry {
 	uint32_t uid;
 	uint32_t gid;
 	uint32_t size;
-	unsigned char sha1[20];
-	uint16_t flags;
-	char name[FLEX_ARRAY]; /* more */
-};
-
-/*
- * This struct is used when CE_EXTENDED bit is 1
- * The struct must match ondisk_cache_entry exactly from
- * ctime till flags
- */
-struct ondisk_cache_entry_extended {
-	struct cache_time ctime;
-	struct cache_time mtime;
-	uint32_t dev;
-	uint32_t ino;
-	uint32_t mode;
-	uint32_t uid;
-	uint32_t gid;
-	uint32_t size;
-	unsigned char sha1[20];
-	uint16_t flags;
-	uint16_t flags2;
-	char name[FLEX_ARRAY]; /* more */
+	/*
+	 * unsigned char hash[hashsz];
+	 * uint16_t flags;
+	 * if (flags & CE_EXTENDED)
+	 *	uint16_t flags2;
+	 */
+	unsigned char data[GIT_MAX_RAWSZ + 2 * sizeof(uint16_t)];
+	char name[FLEX_ARRAY];
 };
 
 /* These are only used for v3 or lower */
 #define align_padding_size(size, len) ((size + (len) + 8) & ~7) - (size + len)
-#define align_flex_name(STRUCT,len) ((offsetof(struct STRUCT,name) + (len) + 8) & ~7)
+#define align_flex_name(STRUCT,len) ((offsetof(struct STRUCT,data) + (len) + 8) & ~7)
 #define ondisk_cache_entry_size(len) align_flex_name(ondisk_cache_entry,len)
-#define ondisk_cache_entry_extended_size(len) align_flex_name(ondisk_cache_entry_extended,len)
-#define ondisk_ce_size(ce) (((ce)->ce_flags & CE_EXTENDED) ? \
-			    ondisk_cache_entry_extended_size(ce_namelen(ce)) : \
-			    ondisk_cache_entry_size(ce_namelen(ce)))
+#define ondisk_data_size(flags, len) (the_hash_algo->rawsz + \
+				     ((flags & CE_EXTENDED) ? 2 : 1) * sizeof(uint16_t) + len)
+#define ondisk_data_size_max(len) (ondisk_data_size(CE_EXTENDED, len))
+#define ondisk_ce_size(ce) (ondisk_cache_entry_size(ondisk_data_size((ce)->ce_flags, ce_namelen(ce))))
 
 /* Allow fsck to force verification of the index checksum. */
 int verify_index_checksum;
@@ -1746,6 +1731,8 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 	struct cache_entry *ce;
 	size_t len;
 	const char *name;
+	const unsigned hashsz = the_hash_algo->rawsz;
+	const uint16_t *flagsp = (const uint16_t *)(ondisk->data + hashsz);
 	unsigned int flags;
 	size_t copy_len = 0;
 	/*
@@ -1758,22 +1745,20 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 	int expand_name_field = version == 4;
 
 	/* On-disk flags are just 16 bits */
-	flags = get_be16(&ondisk->flags);
+	flags = get_be16(flagsp);
 	len = flags & CE_NAMEMASK;
 
 	if (flags & CE_EXTENDED) {
-		struct ondisk_cache_entry_extended *ondisk2;
 		int extended_flags;
-		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
-		extended_flags = get_be16(&ondisk2->flags2) << 16;
+		extended_flags = get_be16(flagsp + 1) << 16;
 		/* We do not yet understand any bit out of CE_EXTENDED_FLAGS */
 		if (extended_flags & ~CE_EXTENDED_FLAGS)
 			die(_("unknown index entry format 0x%08x"), extended_flags);
 		flags |= extended_flags;
-		name = ondisk2->name;
+		name = (const char *)(flagsp + 2);
 	}
 	else
-		name = ondisk->name;
+		name = (const char *)(flagsp + 1);
 
 	if (expand_name_field) {
 		const unsigned char *cp = (const unsigned char *)name;
@@ -1812,7 +1797,9 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 	ce->ce_flags = flags & ~CE_NAMEMASK;
 	ce->ce_namelen = len;
 	ce->index = 0;
-	hashcpy(ce->oid.hash, ondisk->sha1);
+	hashcpy(ce->oid.hash, ondisk->data);
+	memcpy(ce->name, name, len);
+	ce->name[len] = '\0';
 
 	if (expand_name_field) {
 		if (copy_len)
@@ -2556,6 +2543,8 @@ static void copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 				       struct cache_entry *ce)
 {
 	short flags;
+	const unsigned hashsz = the_hash_algo->rawsz;
+	uint16_t *flagsp = (uint16_t *)(ondisk->data + hashsz);
 
 	ondisk->ctime.sec = htonl(ce->ce_stat_data.sd_ctime.sec);
 	ondisk->mtime.sec = htonl(ce->ce_stat_data.sd_mtime.sec);
@@ -2567,15 +2556,13 @@ static void copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 	ondisk->uid  = htonl(ce->ce_stat_data.sd_uid);
 	ondisk->gid  = htonl(ce->ce_stat_data.sd_gid);
 	ondisk->size = htonl(ce->ce_stat_data.sd_size);
-	hashcpy(ondisk->sha1, ce->oid.hash);
+	hashcpy(ondisk->data, ce->oid.hash);
 
 	flags = ce->ce_flags & ~CE_NAMEMASK;
 	flags |= (ce_namelen(ce) >= CE_NAMEMASK ? CE_NAMEMASK : ce_namelen(ce));
-	ondisk->flags = htons(flags);
+	flagsp[0] = htons(flags);
 	if (ce->ce_flags & CE_EXTENDED) {
-		struct ondisk_cache_entry_extended *ondisk2;
-		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
-		ondisk2->flags2 = htons((ce->ce_flags & CE_EXTENDED_FLAGS) >> 16);
+		flagsp[1] = htons((ce->ce_flags & CE_EXTENDED_FLAGS) >> 16);
 	}
 }
 
@@ -2594,10 +2581,7 @@ static int ce_write_entry(git_hash_ctx *c, int fd, struct cache_entry *ce,
 		stripped_name = 1;
 	}
 
-	if (ce->ce_flags & CE_EXTENDED)
-		size = offsetof(struct ondisk_cache_entry_extended, name);
-	else
-		size = offsetof(struct ondisk_cache_entry, name);
+	size = offsetof(struct ondisk_cache_entry,data) + ondisk_data_size(ce->ce_flags, 0);
 
 	if (!previous_name) {
 		int len = ce_namelen(ce);
@@ -2755,7 +2739,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	struct cache_entry **cache = istate->cache;
 	int entries = istate->cache_nr;
 	struct stat st;
-	struct ondisk_cache_entry_extended ondisk;
+	struct ondisk_cache_entry ondisk;
 	struct strbuf previous_name_buf = STRBUF_INIT, *previous_name;
 	int drop_cache_tree = istate->drop_cache_tree;
 	off_t offset;
