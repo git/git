@@ -11,7 +11,7 @@ struct archiver_args {
 	const char *base;
 	size_t baselen;
 	struct tree *tree;
-	const unsigned char *commit_sha1;
+	const struct object_id *commit_oid;
 	const struct commit *commit;
 	timestamp_t time;
 	struct pathspec pathspec;
