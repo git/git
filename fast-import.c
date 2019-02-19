@@ -2955,7 +2955,7 @@ static struct object_entry *parse_treeish_dataref(const char **p)
 	return e;
 }
 
-static void print_ls(int mode, const unsigned char *sha1, const char *path)
+static void print_ls(int mode, const unsigned char *hash, const char *path)
 {
 	static struct strbuf line = STRBUF_INIT;
 
@@ -2975,7 +2975,7 @@ static void print_ls(int mode, const unsigned char *sha1, const char *path)
 		/* mode SP type SP object_name TAB path LF */
 		strbuf_reset(&line);
 		strbuf_addf(&line, "%06o %s %s\t",
-				mode & ~NO_DELTA, type, sha1_to_hex(sha1));
+				mode & ~NO_DELTA, type, hash_to_hex(hash));
 		quote_c_style(path, &line, NULL, 0);
 		strbuf_addch(&line, '\n');
 	}
