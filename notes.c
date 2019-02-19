@@ -532,19 +532,19 @@ static unsigned char determine_fanout(struct int_node *tree, unsigned char n,
 /* hex oid + '/' between each pair of hex digits + NUL */
 #define FANOUT_PATH_MAX GIT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS_MAX + 1
 
-static void construct_path_with_fanout(const unsigned char *sha1,
+static void construct_path_with_fanout(const unsigned char *hash,
 		unsigned char fanout, char *path)
 {
 	unsigned int i = 0, j = 0;
-	const char *hex_sha1 = sha1_to_hex(sha1);
+	const char *hex_hash = hash_to_hex(hash);
 	assert(fanout < the_hash_algo->rawsz);
 	while (fanout) {
-		path[i++] = hex_sha1[j++];
-		path[i++] = hex_sha1[j++];
+		path[i++] = hex_hash[j++];
+		path[i++] = hex_hash[j++];
 		path[i++] = '/';
 		fanout--;
 	}
-	xsnprintf(path + i, FANOUT_PATH_MAX - i, "%s", hex_sha1 + j);
+	xsnprintf(path + i, FANOUT_PATH_MAX - i, "%s", hex_hash + j);
 }
 
 static int for_each_note_helper(struct notes_tree *t, struct int_node *tree,
@@ -1167,7 +1167,7 @@ void prune_notes(struct notes_tree *t, int flags)
 
 	while (l) {
 		if (flags & NOTES_PRUNE_VERBOSE)
-			printf("%s\n", sha1_to_hex(l->sha1));
+			printf("%s\n", hash_to_hex(l->sha1));
 		if (!(flags & NOTES_PRUNE_DRYRUN))
 			remove_note(t, l->sha1);
 		l = l->next;
