@@ -17692,7 +17692,7 @@ msgstr "Без извеждане на информация при инициа�
 
 #: builtin/submodule--helper.c:711
 msgid "git submodule--helper init [<path>]"
-msgstr "git submodule--helper name [ПЪТ]"
+msgstr "git submodule--helper init [ПЪТ]"
 
 #: builtin/submodule--helper.c:783 builtin/submodule--helper.c:909
 #, c-format
