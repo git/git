@@ -3303,14 +3303,14 @@ int cmd_main(int argc, const char **argv)
 		const char *v;
 		if (!strcmp("blob", command_buf.buf))
 			parse_new_blob();
-		else if (skip_prefix(command_buf.buf, "ls ", &v))
-			parse_ls(v, NULL);
 		else if (skip_prefix(command_buf.buf, "commit ", &v))
 			parse_new_commit(v);
 		else if (skip_prefix(command_buf.buf, "tag ", &v))
 			parse_new_tag(v);
 		else if (skip_prefix(command_buf.buf, "reset ", &v))
 			parse_reset_branch(v);
+		else if (skip_prefix(command_buf.buf, "ls ", &v))
+			parse_ls(v, NULL);
 		else if (!strcmp("checkpoint", command_buf.buf))
 			parse_checkpoint();
 		else if (!strcmp("done", command_buf.buf))
