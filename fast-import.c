@@ -1748,8 +1748,6 @@ static int read_next_command(void)
 	}
 
 	for (;;) {
-		const char *p;
-
 		if (unread_command_buf) {
 			unread_command_buf = 0;
 		} else {
@@ -1781,10 +1779,6 @@ static int read_next_command(void)
 			rc->next = cmd_hist.prev;
 			rc->prev->next = rc;
 			cmd_tail = rc;
-		}
-		if (skip_prefix(command_buf.buf, "get-mark ", &p)) {
-			parse_get_mark(p);
-			continue;
 		}
 		if (command_buf.buf[0] == '#')
 			continue;
@@ -3318,6 +3312,8 @@ int cmd_main(int argc, const char **argv)
 			parse_ls(v, NULL);
 		else if (skip_prefix(command_buf.buf, "cat-blob ", &v))
 			parse_cat_blob(v);
+		else if (skip_prefix(command_buf.buf, "get-mark ", &v))
+			parse_get_mark(v);
 		else if (!strcmp("checkpoint", command_buf.buf))
 			parse_checkpoint();
 		else if (!strcmp("done", command_buf.buf))

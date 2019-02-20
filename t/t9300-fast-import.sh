@@ -3276,11 +3276,11 @@ cat >>W-input <<-W_INPUT_END
 	LFsget-mark :1
 	W_INPUT_END
 
-test_expect_failure !MINGW 'W: get-mark & empty orphan commit with no newlines' '
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with no newlines' '
 	sed -e s/LFs// W-input | tr L "\n" | git fast-import
 '
 
-test_expect_failure !MINGW 'W: get-mark & empty orphan commit with one newline' '
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with one newline' '
 	sed -e s/LFs/L/ W-input | tr L "\n" | git fast-import
 '
 

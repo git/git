@@ -971,10 +971,6 @@ might want to refer to in their commit messages.
 	'get-mark' SP ':' <idnum> LF
 ....
 
-This command can be used anywhere in the stream that comments are
-accepted.  In particular, the `get-mark` command can be used in the
-middle of a commit but not in the middle of a `data` command.
-
 See ``Responses To Commands'' below for details about how to read
 this output safely.
 
