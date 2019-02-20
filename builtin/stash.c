@@ -404,7 +404,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	if (refresh_cache(REFRESH_QUIET))
 		return -1;
 
-	if (write_cache_as_tree(&c_tree, 0, NULL) || reset_tree(&c_tree, 0, 0))
+	if (write_cache_as_tree(&c_tree, 0, NULL))
 		return error(_("cannot apply a stash in the middle of a merge"));
 
 	if (index) {
