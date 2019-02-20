@@ -1001,9 +1001,10 @@ Output uses the same format as `git cat-file --batch`:
 	<contents> LF
 ====
 
-This command can be used anywhere in the stream that comments are
-accepted.  In particular, the `cat-blob` command can be used in the
-middle of a commit but not in the middle of a `data` command.
+This command can be used where a `filemodify` directive can appear,
+allowing it to be used in the middle of a commit.  For a `filemodify`
+using an inline directive, it can also appear right before the `data`
+directive.
 
 See ``Responses To Commands'' below for details about how to read
 this output safely.

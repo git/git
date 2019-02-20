@@ -1786,10 +1786,6 @@ static int read_next_command(void)
 			parse_get_mark(p);
 			continue;
 		}
-		if (skip_prefix(command_buf.buf, "cat-blob ", &p)) {
-			parse_cat_blob(p);
-			continue;
-		}
 		if (command_buf.buf[0] == '#')
 			continue;
 		return 0;
@@ -2254,8 +2250,15 @@ static void file_change_m(const char *p, struct branch *b)
 			strbuf_addstr(&uq, p);
 			p = uq.buf;
 		}
-		read_next_command();
-		parse_and_store_blob(&last_blob, &oid, 0);
+		while (read_next_command() != EOF) {
+			const char *v;
+			if (skip_prefix(command_buf.buf, "cat-blob ", &v))
+				parse_cat_blob(v);
+			else {
+				parse_and_store_blob(&last_blob, &oid, 0);
+				break;
+			}
+		}
 	} else {
 		enum object_type expected = S_ISDIR(mode) ?
 						OBJ_TREE: OBJ_BLOB;
@@ -2627,6 +2630,8 @@ static void parse_new_commit(const char *arg)
 			file_change_deleteall(b);
 		else if (skip_prefix(command_buf.buf, "ls ", &v))
 			parse_ls(v, b);
+		else if (skip_prefix(command_buf.buf, "cat-blob ", &v))
+			parse_cat_blob(v);
 		else {
 			unread_command_buf = 1;
 			break;
@@ -3311,6 +3316,8 @@ int cmd_main(int argc, const char **argv)
 			parse_reset_branch(v);
 		else if (skip_prefix(command_buf.buf, "ls ", &v))
 			parse_ls(v, NULL);
+		else if (skip_prefix(command_buf.buf, "cat-blob ", &v))
+			parse_cat_blob(v);
 		else if (!strcmp("checkpoint", command_buf.buf))
 			parse_checkpoint();
 		else if (!strcmp("done", command_buf.buf))
