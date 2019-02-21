@@ -4960,6 +4960,18 @@ static enum parse_opt_result diff_opt_output(struct parse_opt_ctx_t *ctx,
 	return 0;
 }
 
+static int diff_opt_relative(const struct option *opt,
+			     const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	options->flags.relative_name = 1;
+	if (arg)
+		options->prefix = arg;
+	return 0;
+}
+
 static int diff_opt_unified(const struct option *opt,
 			    const char *arg, int unset)
 {
@@ -5094,6 +5106,10 @@ static void prep_parse_options(struct diff_options *options)
 			 N_("use empty blobs as rename source")),
 
 		OPT_GROUP(N_("Diff other options")),
+		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
+			       N_("when run from subdir, exclude changes outside and show relative paths"),
+			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
+			       diff_opt_relative),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5125,15 +5141,8 @@ int diff_opt_parse(struct diff_options *options,
 	if (ac)
 		return ac;
 
-	/* renames options */
-	if (skip_to_optional_arg_default(arg, "--relative", &arg, NULL)) {
-		options->flags.relative_name = 1;
-		if (arg)
-			options->prefix = arg;
-	}
-
 	/* xdiff options */
-	else if (!strcmp(arg, "--minimal"))
+	if (!strcmp(arg, "--minimal"))
 		DIFF_XDL_SET(options, NEED_MINIMAL);
 	else if (!strcmp(arg, "--no-minimal"))
 		DIFF_XDL_CLR(options, NEED_MINIMAL);
