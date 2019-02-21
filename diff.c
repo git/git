@@ -4841,6 +4841,21 @@ static int parse_objfind_opt(struct diff_options *opt, const char *arg)
 	return 1;
 }
 
+static int diff_opt_compact_summary(const struct option *opt,
+				    const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+	if (unset) {
+		options->flags.stat_with_summary = 0;
+	} else {
+		options->flags.stat_with_summary = 1;
+		options->output_format |= DIFF_FORMAT_DIFFSTAT;
+	}
+	return 0;
+}
+
 static int diff_opt_dirstat(const struct option *opt,
 			    const char *arg, int unset)
 {
@@ -4947,6 +4962,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "stat-count", options, N_("<count>"),
 			       N_("generate diffstat with limited lines"),
 			       PARSE_OPT_NONEG, diff_opt_stat),
+		OPT_CALLBACK_F(0, "compact-summary", options, NULL,
+			       N_("generate compact summary in diffstat"),
+			       PARSE_OPT_NOARG, diff_opt_compact_summary),
 		OPT_END()
 	};
 
@@ -4975,12 +4993,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* Output format options */
-	if (!strcmp(arg, "--compact-summary")) {
-		 options->flags.stat_with_summary = 1;
-		 options->output_format |= DIFF_FORMAT_DIFFSTAT;
-	} else if (!strcmp(arg, "--no-compact-summary"))
-		 options->flags.stat_with_summary = 0;
-	else if (skip_prefix(arg, "--output-indicator-new=", &arg))
+	if (skip_prefix(arg, "--output-indicator-new=", &arg))
 		options->output_indicators[OUTPUT_INDICATOR_NEW] = arg[0];
 	else if (skip_prefix(arg, "--output-indicator-old=", &arg))
 		options->output_indicators[OUTPUT_INDICATOR_OLD] = arg[0];
