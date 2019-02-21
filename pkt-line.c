@@ -117,7 +117,7 @@ void packet_buf_delim(struct strbuf *buf)
 	strbuf_add(buf, "0001", 4);
 }
 
-static void set_packet_header(char *buf, const int size)
+void set_packet_header(char *buf, const int size)
 {
 	static char hexchar[] = "0123456789abcdef";
 

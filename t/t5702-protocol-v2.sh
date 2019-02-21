@@ -542,7 +542,38 @@ test_expect_success 'clone with http:// using protocol v2' '
 	# Client requested to use protocol v2
 	grep "Git-Protocol: version=2" log &&
 	# Server responded using protocol v2
-	grep "git< version 2" log
+	grep "git< version 2" log &&
+	# Verify that the chunked encoding sending codepath is NOT exercised
+	! grep "Send header: Transfer-Encoding: chunked" log
+'
+
+test_expect_success 'clone big repository with http:// using protocol v2' '
+	test_when_finished "rm -f log" &&
+
+	git init "$HTTPD_DOCUMENT_ROOT_PATH/big" &&
+	# Ensure that the list of wants is greater than http.postbuffer below
+	for i in $(test_seq 1 1500)
+	do
+		# do not use here-doc, because it requires a process
+		# per loop iteration
+		echo "commit refs/heads/too-many-refs-$i" &&
+		echo "committer git <git@example.com> $i +0000" &&
+		echo "data 0" &&
+		echo "M 644 inline bla.txt" &&
+		echo "data 4" &&
+		echo "bla"
+	done | git -C "$HTTPD_DOCUMENT_ROOT_PATH/big" fast-import &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" GIT_TRACE_CURL="$(pwd)/log" git \
+		-c protocol.version=2 -c http.postbuffer=65536 \
+		clone "$HTTPD_URL/smart/big" big_child &&
+
+	# Client requested to use protocol v2
+	grep "Git-Protocol: version=2" log &&
+	# Server responded using protocol v2
+	grep "git< version 2" log &&
+	# Verify that the chunked encoding sending codepath is exercised
+	grep "Send header: Transfer-Encoding: chunked" log
 '
 
 test_expect_success 'fetch with http:// using protocol v2' '
