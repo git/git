@@ -41,6 +41,16 @@ ifndef::git-format-patch[]
 	Implies `-p`.
 endif::git-format-patch[]
 
+--output=<file>::
+	Output to a specific file instead of stdout.
+
+--output-indicator-new=<char>::
+--output-indicator-old=<char>::
+--output-indicator-context=<char>::
+	Specify the character used to indicate new, old or context
+	lines in the generated patch. Normally they are '+', '-' and
+	' ' respectively.
+
 ifndef::git-format-patch[]
 --raw::
 ifndef::git-log[]
