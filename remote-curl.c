@@ -518,6 +518,21 @@ struct rpc_state {
 	int any_written;
 	unsigned gzip_request : 1;
 	unsigned initial_buffer : 1;
+
+	/*
+	 * Whenever a pkt-line is read into buf, append the 4 characters
+	 * denoting its length before appending the payload.
+	 */
+	unsigned write_line_lengths : 1;
+
+	/*
+	 * Used by rpc_out; initialize to 0. This is true if a flush has been
+	 * read, but the corresponding line length (if write_line_lengths is
+	 * true) and EOF have not been sent to libcurl. Since each flush marks
+	 * the end of a request, each flush must be completely sent before any
+	 * further reading occurs.
+	 */
+	unsigned flush_read_but_not_sent : 1;
 };
 
 /*
@@ -525,17 +540,54 @@ struct rpc_state {
  * rpc->buf and rpc->len if there is enough space. Returns 1 if there was
  * enough space, 0 otherwise.
  *
- * Writes the number of bytes appended into appended.
+ * If rpc->write_line_lengths is true, appends the line length as a 4-byte
+ * hexadecimal string before appending the result described above.
+ *
+ * Writes the total number of bytes appended into appended.
  */
-static int rpc_read_from_out(struct rpc_state *rpc, size_t *appended) {
-	size_t left = rpc->alloc - rpc->len;
-	char *buf = rpc->buf + rpc->len;
+static int rpc_read_from_out(struct rpc_state *rpc, int options,
+			     size_t *appended,
+			     enum packet_read_status *status) {
+	size_t left;
+	char *buf;
+	int pktlen_raw;
+
+	if (rpc->write_line_lengths) {
+		left = rpc->alloc - rpc->len - 4;
+		buf = rpc->buf + rpc->len + 4;
+	} else {
+		left = rpc->alloc - rpc->len;
+		buf = rpc->buf + rpc->len;
+	}
 
 	if (left < LARGE_PACKET_MAX)
 		return 0;
 
-	*appended = packet_read(rpc->out, NULL, NULL, buf, left, 0);
-	rpc->len += *appended;
+	*status = packet_read_with_status(rpc->out, NULL, NULL, buf,
+			left, &pktlen_raw, options);
+	if (*status != PACKET_READ_EOF) {
+		*appended = pktlen_raw + (rpc->write_line_lengths ? 4 : 0);
+		rpc->len += *appended;
+	}
+
+	if (rpc->write_line_lengths) {
+		switch (*status) {
+		case PACKET_READ_EOF:
+			if (!(options & PACKET_READ_GENTLE_ON_EOF))
+				die("shouldn't have EOF when not gentle on EOF");
+			break;
+		case PACKET_READ_NORMAL:
+			set_packet_header(buf - 4, *appended);
+			break;
+		case PACKET_READ_DELIM:
+			memcpy(buf - 4, "0001", 4);
+			break;
+		case PACKET_READ_FLUSH:
+			memcpy(buf - 4, "0000", 4);
+			break;
+		}
+	}
+
 	return 1;
 }
 
@@ -545,15 +597,40 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 	size_t max = eltsize * nmemb;
 	struct rpc_state *rpc = buffer_;
 	size_t avail = rpc->len - rpc->pos;
+	enum packet_read_status status;
 
 	if (!avail) {
 		rpc->initial_buffer = 0;
 		rpc->len = 0;
-		if (!rpc_read_from_out(rpc, &avail))
-			BUG("The entire rpc->buf should be larger than LARGE_PACKET_DATA_MAX");
-		if (!avail)
-			return 0;
 		rpc->pos = 0;
+		if (!rpc->flush_read_but_not_sent) {
+			if (!rpc_read_from_out(rpc, 0, &avail, &status))
+				BUG("The entire rpc->buf should be larger than LARGE_PACKET_MAX");
+			if (status == PACKET_READ_FLUSH)
+				rpc->flush_read_but_not_sent = 1;
+		}
+		/*
+		 * If flush_read_but_not_sent is true, we have already read one
+		 * full request but have not fully sent it + EOF, which is why
+		 * we need to refrain from reading.
+		 */
+	}
+	if (rpc->flush_read_but_not_sent) {
+		if (!avail) {
+			/*
+			 * The line length either does not need to be sent at
+			 * all or has already been completely sent. Now we can
+			 * return 0, indicating EOF, meaning that the flush has
+			 * been fully sent.
+			 */
+			rpc->flush_read_but_not_sent = 0;
+			return 0;
+		}
+		/*
+		 * If avail is non-zerp, the line length for the flush still
+		 * hasn't been fully sent. Proceed with sending the line
+		 * length.
+		 */
 	}
 
 	if (max < avail)
@@ -698,13 +775,14 @@ static int post_rpc(struct rpc_state *rpc)
 	 */
 	while (1) {
 		size_t n;
+		enum packet_read_status status;
 
-		if (!rpc_read_from_out(rpc, &n)) {
+		if (!rpc_read_from_out(rpc, 0, &n, &status)) {
 			large_request = 1;
 			use_gzip = 0;
 			break;
 		}
-		if (!n)
+		if (status == PACKET_READ_FLUSH)
 			break;
 	}
 
@@ -1179,165 +1257,11 @@ static void parse_push(struct strbuf *buf)
 	free(specs);
 }
 
-/*
- * Used to represent the state of a connection to an HTTP server when
- * communicating using git's wire-protocol version 2.
- */
-struct proxy_state {
-	char *service_name;
-	char *service_url;
-	struct curl_slist *headers;
-	struct strbuf request_buffer;
-	int in;
-	int out;
-	struct packet_reader reader;
-	size_t pos;
-	int seen_flush;
-};
-
-static void proxy_state_init(struct proxy_state *p, const char *service_name,
-			     enum protocol_version version)
-{
-	struct strbuf buf = STRBUF_INIT;
-
-	memset(p, 0, sizeof(*p));
-	p->service_name = xstrdup(service_name);
-
-	p->in = 0;
-	p->out = 1;
-	strbuf_init(&p->request_buffer, 0);
-
-	strbuf_addf(&buf, "%s%s", url.buf, p->service_name);
-	p->service_url = strbuf_detach(&buf, NULL);
-
-	p->headers = http_copy_default_headers();
-
-	strbuf_addf(&buf, "Content-Type: application/x-%s-request", p->service_name);
-	p->headers = curl_slist_append(p->headers, buf.buf);
-	strbuf_reset(&buf);
-
-	strbuf_addf(&buf, "Accept: application/x-%s-result", p->service_name);
-	p->headers = curl_slist_append(p->headers, buf.buf);
-	strbuf_reset(&buf);
-
-	p->headers = curl_slist_append(p->headers, "Transfer-Encoding: chunked");
-
-	/* Add the Git-Protocol header */
-	if (get_protocol_http_header(version, &buf))
-		p->headers = curl_slist_append(p->headers, buf.buf);
-
-	packet_reader_init(&p->reader, p->in, NULL, 0,
-			   PACKET_READ_GENTLE_ON_EOF |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
-
-	strbuf_release(&buf);
-}
-
-static void proxy_state_clear(struct proxy_state *p)
-{
-	free(p->service_name);
-	free(p->service_url);
-	curl_slist_free_all(p->headers);
-	strbuf_release(&p->request_buffer);
-}
-
-/*
- * CURLOPT_READFUNCTION callback function.
- * Attempts to copy over a single packet-line at a time into the
- * curl provided buffer.
- */
-static size_t proxy_in(char *buffer, size_t eltsize,
-		       size_t nmemb, void *userdata)
-{
-	size_t max;
-	struct proxy_state *p = userdata;
-	size_t avail = p->request_buffer.len - p->pos;
-
-
-	if (eltsize != 1)
-		BUG("curl read callback called with size = %"PRIuMAX" != 1",
-		    (uintmax_t)eltsize);
-	max = nmemb;
-
-	if (!avail) {
-		if (p->seen_flush) {
-			p->seen_flush = 0;
-			return 0;
-		}
-
-		strbuf_reset(&p->request_buffer);
-		switch (packet_reader_read(&p->reader)) {
-		case PACKET_READ_EOF:
-			die("unexpected EOF when reading from parent process");
-		case PACKET_READ_NORMAL:
-			packet_buf_write_len(&p->request_buffer, p->reader.line,
-					     p->reader.pktlen);
-			break;
-		case PACKET_READ_DELIM:
-			packet_buf_delim(&p->request_buffer);
-			break;
-		case PACKET_READ_FLUSH:
-			packet_buf_flush(&p->request_buffer);
-			p->seen_flush = 1;
-			break;
-		}
-		p->pos = 0;
-		avail = p->request_buffer.len;
-	}
-
-	if (max < avail)
-		avail = max;
-	memcpy(buffer, p->request_buffer.buf + p->pos, avail);
-	p->pos += avail;
-	return avail;
-}
-
-static size_t proxy_out(char *buffer, size_t eltsize,
-			size_t nmemb, void *userdata)
-{
-	size_t size;
-	struct proxy_state *p = userdata;
-
-	if (eltsize != 1)
-		BUG("curl read callback called with size = %"PRIuMAX" != 1",
-		    (uintmax_t)eltsize);
-	size = nmemb;
-
-	write_or_die(p->out, buffer, size);
-	return size;
-}
-
-/* Issues a request to the HTTP server configured in `p` */
-static int proxy_request(struct proxy_state *p)
-{
-	struct active_request_slot *slot;
-
-	slot = get_active_slot();
-
-	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "");
-	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
-	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
-	curl_easy_setopt(slot->curl, CURLOPT_URL, p->service_url);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, p->headers);
-
-	/* Setup function to read request from client */
-	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, proxy_in);
-	curl_easy_setopt(slot->curl, CURLOPT_READDATA, p);
-
-	/* Setup function to write server response to client */
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, proxy_out);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEDATA, p);
-
-	if (run_slot(slot, NULL) != HTTP_OK)
-		return -1;
-
-	return 0;
-}
-
 static int stateless_connect(const char *service_name)
 {
 	struct discovery *discover;
-	struct proxy_state p;
+	struct rpc_state rpc;
+	struct strbuf buf = STRBUF_INIT;
 
 	/*
 	 * Run the info/refs request and see if the server supports protocol
@@ -1357,23 +1281,58 @@ static int stateless_connect(const char *service_name)
 		fflush(stdout);
 	}
 
-	proxy_state_init(&p, service_name, discover->version);
+	rpc.service_name = service_name;
+	rpc.service_url = xstrfmt("%s%s", url.buf, rpc.service_name);
+	rpc.hdr_content_type = xstrfmt("Content-Type: application/x-%s-request", rpc.service_name);
+	rpc.hdr_accept = xstrfmt("Accept: application/x-%s-result", rpc.service_name);
+	if (get_protocol_http_header(discover->version, &buf)) {
+		rpc.protocol_header = strbuf_detach(&buf, NULL);
+	} else {
+		rpc.protocol_header = NULL;
+		strbuf_release(&buf);
+	}
+	rpc.buf = xmalloc(http_post_buffer);
+	rpc.alloc = http_post_buffer;
+	rpc.len = 0;
+	rpc.pos = 0;
+	rpc.in = 1;
+	rpc.out = 0;
+	rpc.any_written = 0;
+	rpc.gzip_request = 1;
+	rpc.initial_buffer = 0;
+	rpc.write_line_lengths = 1;
+	rpc.flush_read_but_not_sent = 0;
 
 	/*
 	 * Dump the capability listing that we got from the server earlier
 	 * during the info/refs request.
 	 */
-	write_or_die(p.out, discover->buf, discover->len);
+	write_or_die(rpc.in, discover->buf, discover->len);
 
-	/* Peek the next packet line.  Until we see EOF keep sending POSTs */
-	while (packet_reader_peek(&p.reader) != PACKET_READ_EOF) {
-		if (proxy_request(&p)) {
+	/* Until we see EOF keep sending POSTs */
+	while (1) {
+		size_t avail;
+		enum packet_read_status status;
+
+		if (!rpc_read_from_out(&rpc, PACKET_READ_GENTLE_ON_EOF, &avail,
+				       &status))
+			BUG("The entire rpc->buf should be larger than LARGE_PACKET_MAX");
+		if (status == PACKET_READ_EOF)
+			break;
+		if (post_rpc(&rpc))
 			/* We would have an err here */
 			break;
-		}
+		/* Reset the buffer for next request */
+		rpc.len = 0;
 	}
 
-	proxy_state_clear(&p);
+	free(rpc.service_url);
+	free(rpc.hdr_content_type);
+	free(rpc.hdr_accept);
+	free(rpc.protocol_header);
+	free(rpc.buf);
+	strbuf_release(&buf);
+
 	return 0;
 }
 
