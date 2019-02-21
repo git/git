@@ -520,6 +520,25 @@ struct rpc_state {
 	unsigned initial_buffer : 1;
 };
 
+/*
+ * Appends the result of reading from rpc->out to the string represented by
+ * rpc->buf and rpc->len if there is enough space. Returns 1 if there was
+ * enough space, 0 otherwise.
+ *
+ * Writes the number of bytes appended into appended.
+ */
+static int rpc_read_from_out(struct rpc_state *rpc, size_t *appended) {
+	size_t left = rpc->alloc - rpc->len;
+	char *buf = rpc->buf + rpc->len;
+
+	if (left < LARGE_PACKET_MAX)
+		return 0;
+
+	*appended = packet_read(rpc->out, NULL, NULL, buf, left, 0);
+	rpc->len += *appended;
+	return 1;
+}
+
 static size_t rpc_out(void *ptr, size_t eltsize,
 		size_t nmemb, void *buffer_)
 {
@@ -529,11 +548,12 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 
 	if (!avail) {
 		rpc->initial_buffer = 0;
-		avail = packet_read(rpc->out, NULL, NULL, rpc->buf, rpc->alloc, 0);
+		rpc->len = 0;
+		if (!rpc_read_from_out(rpc, &avail))
+			BUG("The entire rpc->buf should be larger than LARGE_PACKET_DATA_MAX");
 		if (!avail)
 			return 0;
 		rpc->pos = 0;
-		rpc->len = avail;
 	}
 
 	if (max < avail)
@@ -677,20 +697,15 @@ static int post_rpc(struct rpc_state *rpc)
 	 * chunked encoding mess.
 	 */
 	while (1) {
-		size_t left = rpc->alloc - rpc->len;
-		char *buf = rpc->buf + rpc->len;
-		int n;
+		size_t n;
 
-		if (left < LARGE_PACKET_MAX) {
+		if (!rpc_read_from_out(rpc, &n)) {
 			large_request = 1;
 			use_gzip = 0;
 			break;
 		}
-
-		n = packet_read(rpc->out, NULL, NULL, buf, left, 0);
 		if (!n)
 			break;
-		rpc->len += n;
 	}
 
 	if (large_request) {
