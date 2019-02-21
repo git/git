@@ -5109,6 +5109,21 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_BIT(0, "minimal", &options->xdl_opts,
 			N_("produce the smallest possible diff"),
 			XDF_NEED_MINIMAL),
+		OPT_BIT_F('w', "ignore-all-space", &options->xdl_opts,
+			  N_("ignore whitespace when comparing lines"),
+			  XDF_IGNORE_WHITESPACE, PARSE_OPT_NONEG),
+		OPT_BIT_F('b', "ignore-space-change", &options->xdl_opts,
+			  N_("ignore changes in amount of whitespace"),
+			  XDF_IGNORE_WHITESPACE_CHANGE, PARSE_OPT_NONEG),
+		OPT_BIT_F(0, "ignore-space-at-eol", &options->xdl_opts,
+			  N_("ignore changes in whitespace at EOL"),
+			  XDF_IGNORE_WHITESPACE_AT_EOL, PARSE_OPT_NONEG),
+		OPT_BIT_F(0, "ignore-cr-at-eol", &options->xdl_opts,
+			  N_("ignore carrier-return at the end of line"),
+			  XDF_IGNORE_CR_AT_EOL, PARSE_OPT_NONEG),
+		OPT_BIT_F(0, "ignore-blank-lines", &options->xdl_opts,
+			  N_("ignore changes whose lines are all blank"),
+			  XDF_IGNORE_BLANK_LINES, PARSE_OPT_NONEG),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5147,17 +5162,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* xdiff options */
-	if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
-		DIFF_XDL_SET(options, IGNORE_WHITESPACE);
-	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
-		DIFF_XDL_SET(options, IGNORE_WHITESPACE_CHANGE);
-	else if (!strcmp(arg, "--ignore-space-at-eol"))
-		DIFF_XDL_SET(options, IGNORE_WHITESPACE_AT_EOL);
-	else if (!strcmp(arg, "--ignore-cr-at-eol"))
-		DIFF_XDL_SET(options, IGNORE_CR_AT_EOL);
-	else if (!strcmp(arg, "--ignore-blank-lines"))
-		DIFF_XDL_SET(options, IGNORE_BLANK_LINES);
-	else if (!strcmp(arg, "--indent-heuristic"))
+	if (!strcmp(arg, "--indent-heuristic"))
 		DIFF_XDL_SET(options, INDENT_HEURISTIC);
 	else if (!strcmp(arg, "--no-indent-heuristic"))
 		DIFF_XDL_CLR(options, INDENT_HEURISTIC);
