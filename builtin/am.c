@@ -453,7 +453,6 @@ static int run_post_rewrite_hook(const struct am_state *state)
 
 	cp.in = xopen(am_path(state, "rewritten"), O_RDONLY);
 	cp.stdout_to_stderr = 1;
-	cp.trace2_hook_name = "post-rewrite";
 
 	ret = run_command(&cp);
 
