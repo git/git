@@ -572,13 +572,15 @@ TCLTK_PATH = wish
 XGETTEXT = xgettext
 MSGFMT = msgfmt
 CURL_CONFIG = curl-config
-PTHREAD_LIBS = -lpthread
 PTHREAD_CFLAGS =
 GCOV = gcov
 STRIP = strip
 SPATCH = spatch
 
 export TCL_PATH TCLTK_PATH
+
+# Set our default LIBS variables
+PTHREAD_LIBS = -lpthread
 
 # user customisation variable for 'sparse' target
 SPARSE_FLAGS ?=
