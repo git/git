@@ -10,6 +10,12 @@ struct child_process {
 	struct argv_array args;
 	struct argv_array env_array;
 	pid_t pid;
+
+	int trace2_child_id;
+	uint64_t trace2_child_us_start;
+	const char *trace2_child_class;
+	const char *trace2_hook_name;
+
 	/*
 	 * Using .in, .out, .err:
 	 * - Specify 0 for no redirections (child inherits stdin, stdout,
@@ -73,12 +79,14 @@ extern int run_hook_ve(const char *const *env, const char *name, va_list args);
 #define RUN_USING_SHELL 16
 #define RUN_CLEAN_ON_EXIT 32
 int run_command_v_opt(const char **argv, int opt);
-
+int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class);
 /*
  * env (the environment) is to be formatted like environ: "VAR=VALUE".
  * To unset an environment variable use just "VAR".
  */
 int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env);
+int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
+				 const char *const *env, const char *tr2_class);
 
 /**
  * Execute the given command, sending "in" to its stdin, and capturing its
@@ -220,5 +228,8 @@ int run_processes_parallel(int n,
 			   start_failure_fn,
 			   task_finished_fn,
 			   void *pp_cb);
+int run_processes_parallel_tr2(int n, get_next_task_fn, start_failure_fn,
+			       task_finished_fn, void *pp_cb,
+			       const char *tr2_category, const char *tr2_label);
 
 #endif
