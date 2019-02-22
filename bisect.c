@@ -901,8 +901,8 @@ static void show_diff_tree(struct repository *r,
 	};
 	struct rev_info opt;
 
-	repo_init_revisions(r, &opt, prefix);
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	repo_init_revisions(r, &opt, prefix);
 
 	setup_revisions(ARRAY_SIZE(argv) - 1, argv, &opt, NULL);
 	log_tree_commit(&opt, commit);
