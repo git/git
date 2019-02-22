@@ -512,7 +512,6 @@ CFLAGS = -g -O2 -Wall
 LDFLAGS =
 ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
-STRIP ?= strip
 
 # Create as necessary, replace existing, make ranlib unneeded.
 ARFLAGS = rcs
@@ -576,6 +575,7 @@ CURL_CONFIG = curl-config
 PTHREAD_LIBS = -lpthread
 PTHREAD_CFLAGS =
 GCOV = gcov
+STRIP = strip
 SPATCH = spatch
 
 export TCL_PATH TCLTK_PATH
