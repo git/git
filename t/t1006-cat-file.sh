@@ -20,6 +20,19 @@ maybe_remove_timestamp () {
     fi
 }
 
+test_atom () {
+    name=$1
+    sha1=$2
+    atoms=$3
+    expected=$4
+
+    test_expect_success "$name" '
+	echo "$expected" >expect &&
+	echo $sha1 | git cat-file --batch-check="$atoms" >actual &&
+	test_cmp expect actual
+    '
+}
+
 run_tests () {
     type=$1
     sha1=$2
@@ -119,6 +132,13 @@ $content"
 	maybe_remove_timestamp "$(cat actual.full)" $no_ts >actual &&
 	test_cmp expect actual
     '
+
+    for atom in refname parent body trailers upstream push symref flag
+    do
+	test_atom "Check %($atom) gives empty output" "$sha1" "%($atom)" ""
+    done
+
+    test_atom "Check %(HEAD) gives only one space as output" "$sha1" '%(HEAD)' ' '
 }
 
 hello_content="Hello World"
@@ -140,6 +160,12 @@ test_expect_success '--batch-check without %(rest) considers whole line' '
 	test_cmp expect actual
 '
 
+shortname=`echo $hello_sha1 | sed 's/^.\{0\}\(.\{7\}\).*/\1/'`
+test_atom 'Check format option %(objectname:short) works' "$hello_sha1" '%(objectname:short)' "$shortname"
+
+test_atom 'Check format option %(align) is not broken' \
+    "$hello_sha1" "%(align:8)%(objecttype)%(end)%(objectname)" "blob    $hello_sha1"
+
 test_oid_init
 
 tree_sha1=$(git write-tree)
@@ -159,6 +185,17 @@ $commit_message"
 
 run_tests 'commit' $commit_sha1 $commit_size "$commit_content" "$commit_content" 1
 
+test_atom "Check format option %(if) is not broken" "$commit_sha1" \
+    "%(if)%(author)%(then)%(objectname)%(end)" "$commit_sha1"
+test_atom "Check %(tree) works for commit" "$commit_sha1" "%(tree)" "$tree_sha1"
+test_atom "Check %(numparent) works for commit" "$commit_sha1" "%(numparent)" "0"
+test_atom "Check %(authorname) works for commit" "$commit_sha1" "%(authorname)" "$GIT_AUTHOR_NAME"
+test_atom "Check %(authoremail) works for commit" "$commit_sha1" "%(authoremail)" "<$GIT_AUTHOR_EMAIL>"
+test_atom "Check %(committername) works for commit" "$commit_sha1" "%(committername)" "$GIT_COMMITTER_NAME"
+test_atom "Check %(committeremail) works for commit" "$commit_sha1" "%(committeremail)" "<$GIT_COMMITTER_EMAIL>"
+test_atom "Check %(subject) works for commit" "$commit_sha1" "%(subject)" "$commit_message"
+test_atom "Check %(contents) works for commit" "$commit_sha1" "%(contents)" "$commit_message"
+
 tag_header_without_timestamp="object $hello_sha1
 type blob
 tag hellotag
@@ -172,6 +209,17 @@ tag_sha1=$(echo_without_newline "$tag_content" | git mktag)
 tag_size=$(strlen "$tag_content")
 
 run_tests 'tag' $tag_sha1 $tag_size "$tag_content" "$tag_content" 1
+
+test_atom "Check %(object) works for tag" "$tag_sha1" "%(object)" "$hello_sha1"
+test_atom "Check %(type) works for tag" "$tag_sha1" "%(type)" "blob"
+test_atom "Check %(tag) works for tag" "$tag_sha1" "%(tag)" "hellotag"
+test_atom "Check %(taggername) works for tag" "$tag_sha1" "%(taggername)" "$GIT_COMMITTER_NAME"
+test_atom "Check %(taggeremail) works for tag" "$tag_sha1" "%(taggeremail)" "<$GIT_COMMITTER_EMAIL>"
+test_atom "Check %(subject) works for tag" "$tag_sha1" "%(subject)" "$tag_description"
+test_atom "Check %(contents) works for tag" "$tag_sha1" "%(contents)" "$tag_description"
+
+test_atom "Check %(color) gives no additional output" "$sha1" \
+    "%(objectname) %(color:green) %(objecttype)" "$sha1  $type"
 
 test_expect_success \
     "Reach a blob from a tag pointing to it" \
