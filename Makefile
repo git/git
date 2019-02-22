@@ -506,13 +506,6 @@ GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
-# CFLAGS and LDFLAGS are for the users to override from the command line.
-CFLAGS = -g -O2 -Wall
-LDFLAGS =
-ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
-ALL_LDFLAGS = $(LDFLAGS)
-ARFLAGS = rcs
-
 # Set our default configuration.
 #
 # Among the variables below, these:
@@ -572,7 +565,6 @@ TCLTK_PATH = wish
 XGETTEXT = xgettext
 MSGFMT = msgfmt
 CURL_CONFIG = curl-config
-PTHREAD_CFLAGS =
 GCOV = gcov
 STRIP = strip
 SPATCH = spatch
@@ -581,16 +573,6 @@ export TCL_PATH TCLTK_PATH
 
 # Set our default LIBS variables
 PTHREAD_LIBS = -lpthread
-
-# user customisation variable for 'sparse' target
-SPARSE_FLAGS ?=
-# internal/platform customisation variable for 'sparse'
-SP_EXTRA_FLAGS =
-
-SPATCH_FLAGS = --all-includes --patch .
-
-BASIC_CFLAGS = -I.
-BASIC_LDFLAGS =
 
 # Guard against environment variables
 BUILTIN_OBJS =
@@ -1160,6 +1142,25 @@ ifeq ($(wildcard sha1collisiondetection/lib/sha1.h),sha1collisiondetection/lib/s
 DC_SHA1_SUBMODULE = auto
 endif
 
+# Set CFLAGS, LDFLAGS and other *FLAGS variables. These might be
+# tweaked by config.* below as well as the command-line, both of
+# which'll override these defaults.
+CFLAGS = -g -O2 -Wall
+LDFLAGS =
+BASIC_CFLAGS = -I.
+BASIC_LDFLAGS =
+
+# library flags
+ARFLAGS = rcs
+PTHREAD_CFLAGS =
+
+# For the 'sparse' target
+SPARSE_FLAGS ?=
+SP_EXTRA_FLAGS =
+
+# For the 'coccicheck' target
+SPATCH_FLAGS = --all-includes --patch .
+
 include config.mak.uname
 -include config.mak.autogen
 -include config.mak
@@ -1167,6 +1168,9 @@ include config.mak.uname
 ifdef DEVELOPER
 include config.mak.dev
 endif
+
+ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
+ALL_LDFLAGS = $(LDFLAGS)
 
 comma := ,
 empty :=
