@@ -1,6 +1,10 @@
 Git Protocol Capabilities
 =========================
 
+NOTE: this document describes capabilities for versions 0 and 1 of the pack
+protocol. For version 2, please refer to the link:protocol-v2.html[protocol-v2]
+doc.
+
 Servers SHOULD support all capabilities defined in this document.
 
 On the very first line of the initial server response of either
@@ -171,6 +175,20 @@ are typically of the form "package/version" (e.g., "git/1.8.3.1"). The
 agent strings are purely informative for statistics and debugging
 purposes, and MUST NOT be used to programmatically assume the presence
 or absence of particular features.
+
+symref
+------
+
+This parameterized capability is used to inform the receiver which symbolic ref
+points to which ref; for example, "symref=HEAD:refs/heads/master" tells the
+receiver that HEAD points to master. This capability can be repeated to
+represent multiple symrefs.
+
+Servers SHOULD include this capability for the HEAD symref if it is one of the
+refs being sent.
+
+Clients MAY use the parameters from this capability to select the proper initial
+branch when cloning a repository.
 
 shallow
 -------
