@@ -1385,6 +1385,13 @@ int cmd_main(int argc, const char **argv)
 	string_list_init(&options.deepen_not, 1);
 	string_list_init(&options.push_options, 1);
 
+	/*
+	 * Just report "remote-curl" here (folding all the various aliases
+	 * ("git-remote-http", "git-remote-https", and etc.) here since they
+	 * are all just copies of the same actual executable.
+	 */
+	trace2_cmd_name("remote-curl");
+
 	remote = remote_get(argv[1]);
 
 	if (argc > 2) {
