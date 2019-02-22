@@ -897,11 +897,11 @@ static void show_diff_tree(struct repository *r,
 			   struct commit *commit)
 {
 	const char *argv[] = {
-		"diff-tree", "--pretty", "--no-abbrev", "--raw", NULL
+		"diff-tree", "--pretty", "--stat", "--summary", "--cc", NULL
 	};
 	struct rev_info opt;
 
-	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	git_config(git_diff_ui_config, NULL);
 	repo_init_revisions(r, &opt, prefix);
 
 	setup_revisions(ARRAY_SIZE(argv) - 1, argv, &opt, NULL);
