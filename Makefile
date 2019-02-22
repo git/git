@@ -507,15 +507,14 @@ GIT-VERSION-FILE: FORCE
 -include GIT-VERSION-FILE
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
-
 CFLAGS = -g -O2 -Wall
 LDFLAGS =
 ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
-
-# Create as necessary, replace existing, make ranlib unneeded.
 ARFLAGS = rcs
 
+# Set our default configuration.
+#
 # Among the variables below, these:
 #   gitexecdir
 #   template_dir
@@ -560,6 +559,7 @@ perllibdir_relative = $(patsubst $(prefix)/%,%,$(perllibdir))
 
 export prefix bindir sharedir sysconfdir gitwebdir perllibdir localedir
 
+# Set our default programs
 CC = cc
 AR = ar
 RM = rm -f
@@ -586,10 +586,6 @@ SPARSE_FLAGS ?=
 SP_EXTRA_FLAGS =
 
 SPATCH_FLAGS = --all-includes --patch .
-
-
-
-### --- END CONFIGURATION SECTION ---
 
 BASIC_CFLAGS = -I.
 BASIC_LDFLAGS =
