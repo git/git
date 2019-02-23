@@ -841,7 +841,8 @@ VCSSVN_LIB = vcs-svn/lib.a
 
 GENERATED_H += command-list.h
 
-LIB_H = $(shell $(FIND) . \
+LIB_H := $(shell git ls-files '*.h' ':!t/' ':!Documentation/' 2>/dev/null || \
+	$(FIND) . \
 	-name .git -prune -o \
 	-name t -prune -o \
 	-name Documentation -prune -o \
@@ -2363,7 +2364,7 @@ else
 # should _not_ be included here, since they are necessary even when
 # building an object for the first time.
 
-$(OBJECTS): $(LIB_H)
+$(OBJECTS): $(LIB_H) $(GENERATED_H)
 endif
 
 exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
