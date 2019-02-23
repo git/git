@@ -146,7 +146,7 @@ check_describe A-* HEAD
 test_expect_success 'describe works from outside repo using --git-dir' '
 	git clone --bare "$TRASH_DIRECTORY" "$TRASH_DIRECTORY/bare" &&
 	git --git-dir "$TRASH_DIRECTORY/bare" describe >out &&
-	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+$" out
+	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+$" out
 '
 
 check_describe "A-*[0-9a-f]" --dirty
@@ -156,7 +156,7 @@ test_expect_success 'describe --dirty with --work-tree' '
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
 	) &&
-	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+$" out
+	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+$" out
 '
 
 test_expect_success 'set-up dirty work tree' '
@@ -170,7 +170,7 @@ test_expect_success 'describe --dirty with --work-tree (dirty)' '
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
 	) &&
-	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+-dirty$" out
+	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+-dirty$" out
 '
 
 check_describe "A-*[0-9a-f].mod" --dirty=.mod
@@ -180,7 +180,7 @@ test_expect_success 'describe --dirty=.mod with --work-tree (dirty)' '
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty=.mod >"$TRASH_DIRECTORY/out"
 	) &&
-	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+.mod$" out
+	grep -E "^A-[1-9][0-9]?-g[0-9a-f]+.mod$" out
 '
 
 test_expect_success 'describe --dirty HEAD' '
