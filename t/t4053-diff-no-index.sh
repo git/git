@@ -137,4 +137,12 @@ test_expect_success 'diff --no-index from repo subdir with absolute paths' '
 	test_cmp expect actual
 '
 
+test_expect_success 'diff --no-index allows external diff' '
+	test_expect_code 1 \
+		env GIT_EXTERNAL_DIFF="echo external ;:" \
+		git diff --no-index non/git/a non/git/b >actual &&
+	echo external >expect &&
+	test_cmp expect actual
+'
+
 test_done
