@@ -16,6 +16,10 @@ Leader:		Ralf Thielow <ralf.thielow@gmail.com>
 Members:	Matthias Rüster <matthias.ruester@gmail.com>
 		Phillip Szelat <phillip.szelat@gmail.com>
 
+Language:	el (Greek)
+Repository:	https://github.com/vyruss/git-po-el
+Leader:		Jimmy Angelakos <vyruss@hellug.gr>
+
 Language:	es (Spanish)
 Repository:	https://github.com/ChrisADR/git-po
 Leader:		Christopher Díaz <christopher.diaz.riv@gmail.com>
@@ -29,9 +33,8 @@ Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
 Language:	it (Italian)
-Repository:	https://github.com/quizzlo/git-po-it/
-Leader:		Marco Paolone <marcopaolone AT gmail.com>
-Members:	Stefano Lattarini <stefano.lattarini AT gmail.com>
+Repository:	https://github.com/AlessandroMenti/git-po
+Leader:		Alessandro Menti <alessandro.menti@alessandromenti.it>
 
 Language:	ko (Korean)
 Repository:	https://github.com/git-l10n-ko/git-l10n-ko/
