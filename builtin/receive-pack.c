@@ -1202,17 +1202,12 @@ static void run_update_post_hook(struct command *commands)
 	}
 }
 
-static void check_aliased_update(struct command *cmd, struct string_list *list)
+static void check_aliased_update_internal(struct command *cmd,
+					  struct string_list *list,
+					  const char *dst_name, int flag)
 {
-	struct strbuf buf = STRBUF_INIT;
-	const char *dst_name;
 	struct string_list_item *item;
 	struct command *dst_cmd;
-	int flag;
-
-	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
-	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flag);
-	strbuf_release(&buf);
 
 	if (!(flag & REF_ISSYMREF))
 		return;
@@ -1249,6 +1244,18 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 
 	cmd->error_string = dst_cmd->error_string =
 		"inconsistent aliased update";
+}
+
+static void check_aliased_update(struct command *cmd, struct string_list *list)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *dst_name;
+	int flag;
+
+	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
+	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flag);
+	check_aliased_update_internal(cmd, list, dst_name, flag);
+	strbuf_release(&buf);
 }
 
 static void check_aliased_updates(struct command *commands)
