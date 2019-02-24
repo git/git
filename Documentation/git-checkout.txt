@@ -299,7 +299,7 @@ Note that this option uses the no overlay mode by default (see also
 +
 You can use the `"@{-N}"` syntax to refer to the N-th last
 branch/commit checked out using "git checkout" operation. You may
-also specify `-` which is synonymous to `"@{-1}`.
+also specify `-` which is synonymous to `"@{-1}"`.
 +
 As a special case, you may use `"A...B"` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
