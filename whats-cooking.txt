@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2019, #03; Wed, 13)
-X-master-at: 8989e1950a845ceeb186d490321a4f917ca4de47
-X-next-at: 12f185b1dd353fa64489f4c47ca0d58b4aa858f8
+Subject: What's cooking in git.git (Feb 2019, #04; Sun, 24)
+X-master-at: 8104ec994ea3849a968b4667d072fedd1e688642
+X-next-at: f09ad664505d66643a151851aa987add29db1009
 
-What's cooking in git.git (Feb 2019, #03; Wed, 13)
+What's cooking in git.git (Feb 2019, #04; Sun, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,15 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first release candidate for the upcoming Git 2.21 has been
-tagged and pushed out.
+Git 2.21 has been tagged and pushed out.
+
+I'll be offline for a week, and will reopen the tree for the next
+cycle in Asia/Tokyo timezone after that.  Some topics marked as
+"Will cook in 'next'" will be merged to 'master' then.  This also is
+a good week to nominate the topics that are already in 'next' but
+should be kicked back to 'pu' to allow them to be replaced with a
+better iteration, instead of piling ugly "oops, that was wrong"
+fixes on top.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,131 +30,243 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/utf16-portability-fix (2019-02-11) 1 commit
-  (merged to 'next' on 2019-02-11 at a33208b3)
- + utf8: handle systems that don't write BOM for UTF-16
+* ab/bsd-fixes (2019-02-21) 2 commits
+  (merged to 'next' on 2019-02-21 at 28d0017056)
+ + commit-graph tests: fix cryptic unportable "dd" invocation
+ + tests: fix unportable "\?" and "\+" regex syntax
 
- The code and tests assume that the system supplied iconv() would
- always use BOM in its output when asked to encode to UTF-16 (or
- UTF-32), but apparently some implementations output big-endian
- without BOM.  A compile-time knob has been added to help such
- systems (e.g. NonStop) to add BOM to the output to increase
- portability.
+ Test portability fix.
 
 
-* ds/coverage-prove (2019-01-29) 1 commit
-  (merged to 'next' on 2019-02-06 at 0fc57228ec)
- + Makefile: add coverage-prove target
+* ab/workaround-dash-bug-in-test (2019-02-13) 1 commit
+  (merged to 'next' on 2019-02-13 at c90e329c70)
+ + tests: avoid syntax triggering old dash bug
 
- A new target "coverage-prove" to run the coverage test under
- "prove" has been added.
-
-
-* js/fuzz-commit-graph-update (2019-02-07) 2 commits
-  (merged to 'next' on 2019-02-07 at 689019b0ca)
- + object: fix leak of shallow_stat
- + fuzz-commit-graph: initialize repo object
-
- Update to the fuzzer.
+ Test portability fix.
 
 
-* js/mingw-host-cpu (2019-02-07) 1 commit
-  (merged to 'next' on 2019-02-07 at cbd8634816)
- + mingw: fix CPU reporting in `git version --build-options`
+* js/test-tool-gen-nuls (2019-02-19) 2 commits
+  (merged to 'next' on 2019-02-19 at 489765a538)
+ + tests: teach the test-tool to generate NUL bytes and use it
+ + Revert "t5562: replace /dev/zero with a pipe from generate_zero_bytes"
+ (this branch is tangled with mk/t5562-no-input-to-too-large-an-input-test.)
 
- Windows update.
-
-
-* js/rebase-i-redo-exec-fix (2019-02-06) 1 commit
-  (merged to 'next' on 2019-02-06 at 9f99bee768)
- + Revert "rebase: introduce a shortcut for --reschedule-failed-exec"
-
- For "rebase -i --reschedule-failed-exec", we do not want the "-y"
- shortcut after all.
+ Part 3 of the test update, to rewrite "generate stream of NULs" in C.
 
 
-* js/smart-http-detect-remote-error (2019-02-06) 3 commits
-  (merged to 'next' on 2019-02-06 at ec1a6f67c1)
- + t5551: test server-side ERR packet
- + remote-curl: tighten "version 2" check for smart-http
- + remote-curl: refactor smart-http discovery
+* mk/t5562-do-not-reuse-output-files (2019-02-19) 1 commit
+  (merged to 'next' on 2019-02-19 at 2978db23ef)
+ + t5562: do not reuse output files
 
- Some errors from the other side coming over smart HTTP transport
- were not noticed, which has been corrected.
+ Part 1 of the t5562 breakage fix.
 
 
-* kd/t0028-octal-del-is-377-not-777 (2019-02-11) 1 commit
-  (merged to 'next' on 2019-02-11 at 1e1ee7e15d)
- + t0028: fix wrong octal values for BOM in setup
+* mk/t5562-no-input-to-too-large-an-input-test (2019-02-19) 2 commits
+  (merged to 'next' on 2019-02-19 at 1134c39218)
+ + t5562: do not depend on /dev/zero
+ + Revert "t5562: replace /dev/zero with a pipe from generate_zero_bytes"
+ (this branch is tangled with js/test-tool-gen-nuls.)
 
- Test fix.
-
-
-* kl/pretty-doc-markup-fix (2019-02-07) 1 commit
-  (merged to 'next' on 2019-02-07 at c01e44520b)
- + doc: prevent overflowing <code> tag in rendered HTML
-
- Doc update.
+ Part 2 of the fix to t5562 regression, to avoid feeding
+ http-backend from a pipe.
 
 
-* ld/git-p4-remove-flakey-test (2019-02-06) 1 commit
-  (merged to 'next' on 2019-02-06 at 0100bce8b6)
- + git-p4: remove ticket expiry test
+* yn/checkout-doc-fix (2019-02-23) 1 commit
+  (merged to 'next' on 2019-02-23 at d72a40f470)
+ + checkout doc: fix an unmatched double-quote pair
 
- A flakey "p4" test has been removed.
-
-
-* nd/checkout-noisy-unmerge (2019-02-06) 2 commits
-  (merged to 'next' on 2019-02-06 at 7fe9bd5b4e)
- + checkout: count and print -m paths separately
- + checkout: update count-checkouts messages
-
- "git checkout [<tree-ish>] <pathspec>" started reporting the number
- of paths that have got updated recently, but the same messages were
- given when "git checkout -m <pathspec>" to unresolve conflicts that
- have just been resolved.  The message now reports these unresolved
- paths separately from the paths that are checked out from the index.
-
-
-* os/rebase-runs-post-checkout-hook (2019-02-08) 1 commit
-  (merged to 'next' on 2019-02-08 at da96987286)
- + t5403: correct bash ambiguous redirect error in subtest 8 by quoting $GIT_DIR
-
- Test fix.
-
-
-* rj/sequencer-sign-off-header-static (2019-02-11) 1 commit
- + sequencer: make sign_off_header a file local symbol
-
- Code clean-up.
-
-
-* sg/ci-parallel-build (2019-02-07) 2 commits
-  (merged to 'next' on 2019-02-07 at 8cffe5a338)
- + ci: clear and mark MAKEFLAGS exported just once
- + ci: make sure we build Git parallel
-
- Build update.
-
-
-* sg/stress-test (2019-02-11) 2 commits
-  (merged to 'next' on 2019-02-11 at 1a5d4a249d)
- + test-lib: fix non-portable pattern bracket expressions
-  (merged to 'next' on 2019-02-08 at c45c47bd7c)
- + test-lib: make '--stress' more bisect-friendly
-
- Test improvement.
-
-
-* tz/gpg-test-fix (2019-02-08) 2 commits
-  (merged to 'next' on 2019-02-08 at 72d7fc8099)
- + t/lib-gpg: drop redundant killing of gpg-agent
- + t/lib-gpg: quote path to ${GNUPGHOME}/trustlist.txt
-
- Test fix.
+ Doc fix.
 
 --------------------------------------------------
 [New Topics]
+
+* bp/post-index-change-hook (2019-02-15) 1 commit
+  (merged to 'next' on 2019-02-23 at 70cc07cebe)
+ + read-cache: add post-index-change hook
+
+ A new hook "post-index-change" is called when the on-disk index
+ file changes, which can help e.g. a virtualized working tree
+ implementation.
+
+ Will cook in 'next'.
+
+
+* dl/doc-submodule-wo-subcommand (2019-02-15) 1 commit
+  (merged to 'next' on 2019-02-23 at 2f1c1428f1)
+ + submodule: document default behavior
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* jk/diff-no-index-initialize (2019-02-24) 1 commit
+  (merged to 'next' on 2019-02-24 at f37a814eb0)
+ + diff: reuse diff setup for --no-index case
+
+ "git diff --no-index" may still want to access Git goodies like
+ --ext-diff and --textconv, but so far these have been ignored,
+ which has been corrected.
+
+ Will cook in 'next'.
+
+
+* jk/prune-optim (2019-02-14) 4 commits
+  (merged to 'next' on 2019-02-23 at 7d03afc1c2)
+ + t5304: rename "sha1" variables to "oid"
+ + prune: check SEEN flag for reachability
+ + prune: use bitmaps for reachability traversal
+ + prune: lazily perform reachability traversal
+
+ "git prune" has been taught to take advantage of reachability
+ bitmap when able.
+
+ Will cook in 'next'.
+
+
+* jk/unused-params (2019-02-14) 10 commits
+  (merged to 'next' on 2019-02-23 at 9b715907a1)
+ + ref-filter: drop unused "sz" parameters
+ + ref-filter: drop unused "obj" parameters
+ + ref-filter: drop unused buf/sz pairs
+ + files-backend: drop refs parameter from split_symref_update()
+ + pack-objects: drop unused parameter from oe_map_new_pack()
+ + merge-recursive: drop several unused parameters
+ + diff: drop complete_rewrite parameter from run_external_diff()
+ + diff: drop unused emit data parameter from sane_truncate_line()
+ + diff: drop unused color reset parameters
+ + diff: drop options parameter from diffcore_fix_diff_index()
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* jt/http-auth-proto-v2-fix (2019-02-22) 5 commits
+  (merged to 'next' on 2019-02-23 at ea87895fa7)
+ + remote-curl: use post_rpc() for protocol v2 also
+ + remote-curl: refactor reading into rpc_state's buf
+ + remote-curl: reduce scope of rpc_state.result
+ + remote-curl: reduce scope of rpc_state.stdin_preamble
+ + remote-curl: reduce scope of rpc_state.argv
+
+ Unify RPC code for smart http in protocol v0/v1 and v2, which fixes
+ a bug in the latter (lack of authentication retry) and generally
+ improves the code base.
+
+ Will cook in 'next'.
+
+
+* en/merge-options-doc (2019-02-21) 1 commit
+  (merged to 'next' on 2019-02-23 at 2eb5263dab)
+ + merge-options.txt: correct wording of --no-commit option
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* ab/receive-pack-use-after-free-fix (2019-02-20) 1 commit
+  (merged to 'next' on 2019-02-23 at 3f41dfe375)
+ + receive-pack: fix use-after-free bug
+
+ Memfix.
+
+ Will cook in 'next'.
+
+
+* nd/diff-parseopt-2 (2019-02-21) 21 commits
+  (merged to 'next' on 2019-02-23 at 6f11d0af54)
+ + diff-parseopt: convert --ignore-some-changes
+ + diff-parseopt: convert --[no-]minimal
+ + diff-parseopt: convert --relative
+ + diff-parseopt: convert --no-renames|--[no--rename-empty
+ + diff-parseopt: convert --find-copies-harder
+ + diff-parseopt: convert -C|--find-copies
+ + diff-parseopt: convert -D|--irreversible-delete
+ + diff-parseopt: convert -M|--find-renames
+ + diff-parseopt: convert -B|--break-rewrites
+ + diff-parseopt: convert --output-*
+ + diff-parseopt: convert --[no-]compact-summary
+ + diff-parseopt: convert --stat*
+ + diff-parseopt: convert -s|--no-patch
+ + diff-parseopt: convert --name-status
+ + diff-parseopt: convert --name-only
+ + diff-parseopt: convert --patch-with-stat
+ + diff-parseopt: convert --summary
+ + diff-parseopt: convert --check
+ + diff-parseopt: convert --dirstat and friends
+ + diff-parseopt: convert --numstat and --shortstat
+ + diff-parseopt: convert --patch-with-raw
+ (this branch uses nd/diff-parseopt.)
+
+ Second batch to teach the diff machinery to use the parse-options
+ API.
+
+ Will cook in 'next'.
+
+
+* jc/format-patch-error-check (2019-02-22) 3 commits
+ - format-patch: --no-clobber refrains from overwriting output files
+ - format-patch: notice failure to open cover letter for writing
+ - builtin/log: downcase the beginning of error messages
+
+
+* nd/completion-more-parameters (2019-02-20) 1 commit
+  (merged to 'next' on 2019-02-23 at 23133710f7)
+ + completion: add more parameter value completion
+
+ The command line completion (in contrib/) has been taught to
+ complete more subcommand parameters.
+
+ Will cook in 'next'.
+
+
+* nd/no-more-check-racy (2019-02-22) 1 commit
+  (merged to 'next' on 2019-02-23 at eda76b8f46)
+ + Delete check-racy.c
+
+ Unused code removal.
+
+ Will cook in 'next'.
+
+
+* rd/doc-hook-used-in-sample (2019-02-21) 1 commit
+  (merged to 'next' on 2019-02-23 at e521400a66)
+ + mention use of "hooks.allownonascii" in "man githooks"
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* ab/makefile-help-devs-more (2019-02-24) 6 commits
+ - Makefile: allow for combining DEVELOPER=1 and CFLAGS="..."
+ - Makefile: move the setting of *FLAGS closer to "include"
+ - Makefile: Move *_LIBS assignment into its own section
+ - Makefile: add/remove comments at top and tweak whitespace
+ - Makefile: move "strip" assignment down from flags
+ - Makefile: remove an out-of-date comment
+
+ CFLAGS now can be tweked when invoking Make while using
+ DEVELOPER=YesPlease; this did not work well before.
+
+
+* jt/fetch-cdn-offload (2019-02-24) 8 commits
+ - SQUASH???
+ - upload-pack: send part of packfile response as uri
+ - upload-pack: refactor reading of pack-objects out
+ - Documentation: add Packfile URIs design doc
+ - Documentation: order protocol v2 sections
+ - http-fetch: support fetching packfiles by URL
+ - http: improve documentation of http_pack_request
+ - http: use --stdin and --keep when downloading pack
+
+ WIP for allowing a response to "git fetch" to instruct the bulk of
+ the pack contents to be instead taken from elsewhere (aka CDN).
+
+--------------------------------------------------
+[Cooking]
 
 * dl/submodule-set-branch (2019-02-08) 3 commits
  - submodule: teach set-branch subcommand
@@ -188,17 +307,12 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* ab/workaround-dash-bug-in-test (2019-02-13) 1 commit
-  (merged to 'next' on 2019-02-13 at c90e329c70)
- + tests: avoid syntax triggering old dash bug
-
-
-* js/doc-symref-in-proto-v1 (2019-02-13) 1 commit
-  (merged to 'next' on 2019-02-13 at 63b673d2a6)
+* js/doc-symref-in-proto-v1 (2019-02-21) 1 commit
+  (merged to 'next' on 2019-02-21 at c7ca3bb974)
  + protocol-capabilities.txt: document symref
 
---------------------------------------------------
-[Cooking]
+ Will cook in 'next'.
+
 
 * dl/complete-submodule-absorbgitdirs (2019-02-06) 1 commit
   (merged to 'next' on 2019-02-06 at c4e0cd535a)
@@ -210,8 +324,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jt/test-protocol-version (2019-02-06) 9 commits
- - remote-curl: in v2, fill credentials if needed
+* jt/test-protocol-version (2019-02-06) 8 commits
  - t5552: compensate for v2 filtering ref adv.
  - tests: fix protocol version for overspecifications
  - t5700: only run with protocol version 1
@@ -262,11 +375,11 @@ of the repositories listed at
  Introduce version 2 of the commit-graph format to correct
  deficiency in the initial version.
 
+ Needs update before merging to 'next'.
 
-* jh/trace2 (2019-02-11) 16 commits
-  (merged to 'next' on 2019-02-11 at 25fb2164ff)
- + fixup! trace2: collect Windows-specific process information
-  (merged to 'next' on 2019-02-08 at 0253db7fff)
+
+* jh/trace2 (2019-02-22) 15 commits
+  (merged to 'next' on 2019-02-22 at 4c84c621fe)
  + trace2: add for_each macros to clang-format
  + trace2: t/helper/test-trace2, t0210.sh, t0211.sh, t0212.sh
  + trace2:data: add subverb for rebase
@@ -288,14 +401,14 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* sx/evolve (2019-01-27) 8 commits
- . evolve: add the 'git change list' command
- . evolve: implement the 'git change' command
+* sx/evolve (2019-02-15) 8 commits
+ . evolve: add the git change list command
+ . evolve: implement the git change command
  . evolve: add support for writing metacommits
  . evolve: add the change-table structure
  . evolve: add support for parsing metacommits
  . ref-filter: add the metas namespace to ref-filter
- . sha1-array: implement oid_array_readonly_contains()
+ . sha1-array: implement oid_array_readonly_contains
  . technical doc: add a design doc for the evolve command
 
  The beginning of "hg evolve" mimicry.
@@ -311,6 +424,8 @@ of the repositories listed at
 
  "git blame" learned to "ignore" commits in the history, whose
  effects (as well as their presence) get ignored.
+
+ Needs update before merging to 'next'.
 
 
 * nd/diff-parseopt (2019-01-27) 14 commits
@@ -329,13 +444,14 @@ of the repositories listed at
  + parse-options: disable option abbreviation with PARSE_OPT_KEEP_UNKNOWN
  + parse-options: add one-shot mode
  + parse-options.h: remove extern on function prototypes
+ (this branch is used by nd/diff-parseopt-2.)
 
  The diff machinery, one of the oldest parts of the system, which
  long predates the parse-options API, uses fairly long and complex
  handcrafted option parser.  This is being rewritten to use the
  parse-options API.
 
- Will cook in 'next', waiting for the remainder.
+ Will cook in 'next'.
  Looking good.
 
 
@@ -551,7 +667,7 @@ of the repositories listed at
  around in-core to avoid rewriting the same file over and over
  unnecessarily.
 
- Still being worked on.
+ Was still being worked on, but seems to have stalled.
  cf. <c5e3c1cc-12fa-ddf6-7008-ae47659ddc19@gmail.com>
  cf. <97f77aca-bd19-f763-349a-de40c4b94161@talktalk.net>
 
