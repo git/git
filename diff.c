@@ -179,6 +179,10 @@ static int parse_submodule_params(struct diff_options *options, const char *valu
 		options->submodule_format = DIFF_SUBMODULE_SHORT;
 	else if (!strcmp(value, "diff"))
 		options->submodule_format = DIFF_SUBMODULE_INLINE_DIFF;
+	/*
+	 * Please update $__git_diff_submodule_formats in
+	 * git-completion.bash when you add new formats.
+	 */
 	else
 		return -1;
 	return 0;
@@ -205,6 +209,10 @@ long parse_algorithm_value(const char *value)
 		return XDF_PATIENCE_DIFF;
 	else if (!strcasecmp(value, "histogram"))
 		return XDF_HISTOGRAM_DIFF;
+	/*
+	 * Please update $__git_diff_algorithms in git-completion.bash
+	 * when you add new algorithms.
+	 */
 	return -1;
 }
 

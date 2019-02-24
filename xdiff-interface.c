@@ -306,6 +306,10 @@ int git_xmerge_config(const char *var, const char *value, void *cb)
 			git_xmerge_style = XDL_MERGE_DIFF3;
 		else if (!strcmp(value, "merge"))
 			git_xmerge_style = 0;
+		/*
+		 * Please update _git_checkout() in
+		 * git-completion.bash when you add new merge config
+		 */
 		else
 			die("unknown style '%s' given for '%s'",
 			    value, var);
