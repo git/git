@@ -370,7 +370,7 @@ int git_config_rename(const char *var, const char *value);
 #define DIFF_PICKAXE_IGNORE_CASE	32
 
 void diffcore_std(struct diff_options *);
-void diffcore_fix_diff_index(struct diff_options *);
+void diffcore_fix_diff_index(void);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
