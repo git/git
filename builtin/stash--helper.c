@@ -881,18 +881,17 @@ static int get_untracked_files(struct pathspec ps, int include_untracked,
 }
 
 /*
- * The return value of `check_changes()` can be:
+ * The return value of `check_changes_tracked_files()` can be:
  *
  * < 0 if there was an error
  * = 0 if there are no changes.
  * > 0 if there are changes.
  */
-static int check_changes(struct pathspec ps, int include_untracked)
+static int check_changes_tracked_files(struct pathspec ps)
 {
 	int result;
 	struct rev_info rev;
 	struct object_id dummy;
-	struct strbuf out = STRBUF_INIT;
 
 	/* No initial commit. */
 	if (get_oid("HEAD", &dummy))
@@ -920,14 +919,25 @@ static int check_changes(struct pathspec ps, int include_untracked)
 	if (diff_result_code(&rev.diffopt, result))
 		return 1;
 
-	if (include_untracked && get_untracked_files(ps, include_untracked,
-						     &out)) {
-		strbuf_release(&out);
-		return 1;
-	}
-
-	strbuf_release(&out);
 	return 0;
+}
+
+/*
+ * The function will fill `untracked_files` with the names of untracked files
+ * It will return 1 if there were any changes and 0 if there were not.
+ */
+static int check_changes(struct pathspec ps, int include_untracked,
+			 struct strbuf *untracked_files)
+{
+	int ret = 0;
+	if (check_changes_tracked_files(ps))
+		ret = 1;
+
+	if (include_untracked && get_untracked_files(ps, include_untracked,
+						     untracked_files))
+		ret = 1;
+
+	return ret;
 }
 
 static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
@@ -1139,7 +1149,7 @@ static int do_create_stash(struct pathspec ps, struct strbuf *stash_msg_buf,
 		head_commit = lookup_commit(the_repository, &info->b_commit);
 	}
 
-	if (!check_changes(ps, include_untracked)) {
+	if (!check_changes(ps, include_untracked, &untracked_files)) {
 		ret = 1;
 		goto done;
 	}
@@ -1164,8 +1174,7 @@ static int do_create_stash(struct pathspec ps, struct strbuf *stash_msg_buf,
 		goto done;
 	}
 
-	if (include_untracked && get_untracked_files(ps, include_untracked,
-						     &untracked_files)) {
+	if (include_untracked) {
 		if (save_untracked_files(info, &msg, untracked_files)) {
 			if (!quiet)
 				fprintf_ln(stderr, _("Cannot save "
@@ -1250,6 +1259,9 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 			     0);
 
 	memset(&ps, 0, sizeof(ps));
+	if (!check_changes_tracked_files(ps))
+		return 0;
+
 	strbuf_addstr(&stash_msg_buf, stash_msg);
 	ret = do_create_stash(ps, &stash_msg_buf, include_untracked, 0, &info,
 			      NULL, 0);
@@ -1257,12 +1269,7 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 		printf_ln("%s", oid_to_hex(&info.w_commit));
 
 	strbuf_release(&stash_msg_buf);
-
-	/*
-	 * ret can be 1 if there were no changes. In this case, we should
-	 * not error out.
-	 */
-	return ret < 0;
+	return ret;
 }
 
 static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
@@ -1272,6 +1279,7 @@ static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
 	struct stash_info info;
 	struct strbuf patch = STRBUF_INIT;
 	struct strbuf stash_msg_buf = STRBUF_INIT;
+	struct strbuf untracked_files = STRBUF_INIT;
 
 	if (patch_mode && keep_index == -1)
 		keep_index = 1;
@@ -1306,7 +1314,7 @@ static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
 		goto done;
 	}
 
-	if (!check_changes(ps, include_untracked)) {
+	if (!check_changes(ps, include_untracked, &untracked_files)) {
 		if (!quiet)
 			printf_ln(_("No local changes to save"));
 		goto done;
