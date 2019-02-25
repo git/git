@@ -14,6 +14,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "diffcore.h"
+#include "exec-cmd.h"
 
 #define INCLUDE_ALL_FILES 2
 
@@ -1512,6 +1513,26 @@ static int save_stash(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static int use_builtin_stash(void)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct strbuf out = STRBUF_INIT;
+	int ret;
+
+	argv_array_pushl(&cp.args,
+			 "config", "--bool", "stash.usebuiltin", NULL);
+	cp.git_cmd = 1;
+	if (capture_command(&cp, &out, 6)) {
+		strbuf_release(&out);
+		return 1;
+	}
+
+	strbuf_trim(&out);
+	ret = !strcmp("true", out.buf);
+	strbuf_release(&out);
+	return ret;
+}
+
 int cmd_stash(int argc, const char **argv, const char *prefix)
 {
 	int i = -1;
@@ -1522,6 +1543,20 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_END()
 	};
+
+	if (!use_builtin_stash()) {
+		const char *path = mkpath("%s/git-legacy-stash",
+					  git_exec_path());
+
+		if (sane_execvp(path, (char **)argv) < 0)
+			die_errno(_("could not exec %s"), path);
+		else
+			BUG("sane_execvp() returned???");
+	}
+
+	prefix = setup_git_directory();
+	trace_repo_setup(prefix);
+	setup_work_tree();
 
 	git_config(git_diff_basic_config, NULL);
 
