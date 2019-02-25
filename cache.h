@@ -1518,6 +1518,11 @@ extern const char *git_sequence_editor(void);
 extern const char *git_pager(int stdout_is_tty);
 extern int is_terminal_dumb(void);
 extern int git_ident_config(const char *, const char *, void *);
+/*
+ * Prepare an ident to fall back on if the user didn't configure it.
+ * Must be called before any other function from the ident API.
+ */
+void prepare_fallback_ident(const char *name, const char *email);
 extern void reset_ident_date(void);
 
 struct ident_split {
