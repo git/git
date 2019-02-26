@@ -2573,28 +2573,32 @@ enum symlink_type {
 	SYMLINK_TYPE_DIRECTORY,
 };
 
-static enum symlink_type check_symlink_attr(const char *link)
+static enum symlink_type check_symlink_attr(struct index_state *index, const char *link)
 {
 	static struct attr_check *check;
 	const char *value;
 
+	if (!index)
+		return SYMLINK_TYPE_UNSPECIFIED;
+
 	if (!check)
 		check = attr_check_initl("symlink", NULL);
 
-	git_check_attr(the_repository->index, link, check);
+	git_check_attr(index, link, check);
 
 	value = check->items[0].value;
-	if (value == NULL)
-		;
-	else if (!strcmp(value, "file"))
+	if (ATTR_UNSET(value))
+		return SYMLINK_TYPE_UNSPECIFIED;
+	if (!strcmp(value, "file"))
 		return SYMLINK_TYPE_FILE;
-	else if (!strcmp(value, "dir"))
+	if (!strcmp(value, "dir") || !strcmp(value, "directory"))
 		return SYMLINK_TYPE_DIRECTORY;
 
+	warning(_("ignoring invalid symlink type '%s' for '%s'"), value, link);
 	return SYMLINK_TYPE_UNSPECIFIED;
 }
 
-int symlink(const char *target, const char *link)
+int mingw_create_symlink(struct index_state *index, const char *target, const char *link)
 {
 	wchar_t wtarget[MAX_LONG_PATH], wlink[MAX_LONG_PATH];
 	int len;
@@ -2614,7 +2618,7 @@ int symlink(const char *target, const char *link)
 		if (wtarget[len] == '/')
 			wtarget[len] = '\\';
 
-	switch (check_symlink_attr(link)) {
+	switch (check_symlink_attr(index, link)) {
 	case SYMLINK_TYPE_UNSPECIFIED:
 		/* Create a phantom symlink: it is initially created as a file
 		 * symlink, but may change to a directory symlink later if/when
