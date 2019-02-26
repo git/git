@@ -4500,8 +4500,8 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
  * Add commands after pick and (series of) squash/fixup commands
  * in the todo list.
  */
-static void todo_list_add_exec_commands(struct todo_list *todo_list,
-					struct string_list *commands)
+void todo_list_add_exec_commands(struct todo_list *todo_list,
+				 struct string_list *commands)
 {
 	struct strbuf *buf = &todo_list->buf;
 	size_t base_offset = buf->len;
@@ -4565,30 +4565,6 @@ static void todo_list_add_exec_commands(struct todo_list *todo_list,
 	todo_list->items = items;
 	todo_list->nr = nr;
 	todo_list->alloc = alloc;
-}
-
-int sequencer_add_exec_commands(struct repository *r,
-				struct string_list *commands)
-{
-	const char *todo_file = rebase_path_todo();
-	struct todo_list todo_list = TODO_LIST_INIT;
-	int res;
-
-	if (strbuf_read_file(&todo_list.buf, todo_file, 0) < 0)
-		return error_errno(_("could not read '%s'."), todo_file);
-
-	if (todo_list_parse_insn_buffer(r, todo_list.buf.buf, &todo_list)) {
-		todo_list_release(&todo_list);
-		return error(_("unusable todo list: '%s'"), todo_file);
-	}
-
-	todo_list_add_exec_commands(&todo_list, commands);
-	res = todo_list_write_to_file(r, &todo_list, todo_file, NULL, NULL, -1, 0);
-	todo_list_release(&todo_list);
-
-	if (res)
-		return error_errno(_("could not write '%s'."), todo_file);
-	return 0;
 }
 
 static void todo_list_to_strbuf(struct repository *r, struct todo_list *todo_list,
