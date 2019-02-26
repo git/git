@@ -143,7 +143,6 @@ int sequencer_remove_state(struct replay_opts *opts);
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			  const char **argv, unsigned flags);
 
-int transform_todo_file(struct repository *r, unsigned flags);
 void todo_list_add_exec_commands(struct todo_list *todo_list,
 				 struct string_list *commands);
 int check_todo_list_from_file(struct repository *r);
