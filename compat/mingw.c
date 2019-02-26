@@ -1946,13 +1946,19 @@ struct passwd *getpwuid(int uid)
 	static unsigned initialized;
 	static char user_name[100];
 	static struct passwd *p;
+	wchar_t buf[100];
 	DWORD len;
 
 	if (initialized)
 		return p;
 
-	len = sizeof(user_name);
-	if (!GetUserName(user_name, &len)) {
+	len = sizeof(buf);
+	if (!GetUserNameW(buf, &len)) {
+		initialized = 1;
+		return NULL;
+	}
+
+	if (xwcstoutf(user_name, buf, sizeof(user_name)) < 0) {
 		initialized = 1;
 		return NULL;
 	}
