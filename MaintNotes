@@ -112,13 +112,12 @@ leaking out before we're ready to make public announcements.
 
 * Repositories and documentation.
 
-My public git.git repositories are at:
+My public git.git repositories are (mirrored) at:
 
   git://git.kernel.org/pub/scm/git/git.git/
   https://kernel.googlesource.com/pub/scm/git/git
   git://repo.or.cz/alt-git.git/
   https://github.com/git/git/
-  git://git.sourceforge.jp/gitroot/git-core/git.git/
   git://git-core.git.sourceforge.net/gitroot/git-core/git-core/
 
 This one shows not just the main integration branches, but also
