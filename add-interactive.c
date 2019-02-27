@@ -5,6 +5,7 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "refs.h"
+#include "prefix-map.h"
 
 struct add_i_state {
 	struct repository *r;
@@ -46,18 +47,32 @@ static int init_add_i_state(struct repository *r, struct add_i_state *s)
 	return 0;
 }
 
-struct item {
-	const char *name;
-};
+static ssize_t find_unique(const char *string,
+			   struct prefix_item **list, size_t nr)
+{
+	ssize_t found = -1, i;
+
+	for (i = 0; i < nr; i++) {
+		struct prefix_item *item = list[i];
+		if (!starts_with(item->name, string))
+			continue;
+		if (found >= 0)
+			return -1;
+		found = i;
+	}
+
+	return found;
+}
 
 struct list_options {
 	int columns;
 	const char *header;
-	void (*print_item)(int i, struct item *item, void *print_item_data);
+	void (*print_item)(int i, struct prefix_item *item,
+			   void *print_item_data);
 	void *print_item_data;
 };
 
-static void list(struct item **list, size_t nr,
+static void list(struct prefix_item **list, size_t nr,
 		 struct add_i_state *s, struct list_options *opts)
 {
 	int i, last_lf = 0;
@@ -100,12 +115,14 @@ struct list_and_choose_options {
  * If an error occurred, returns `LIST_AND_CHOOSE_ERROR`. Upon EOF,
  * `LIST_AND_CHOOSE_QUIT` is returned.
  */
-static ssize_t list_and_choose(struct item **items, size_t nr,
+static ssize_t list_and_choose(struct prefix_item **items, size_t nr,
 			       struct add_i_state *s,
 			       struct list_and_choose_options *opts)
 {
 	struct strbuf input = STRBUF_INIT;
 	ssize_t res = LIST_AND_CHOOSE_ERROR;
+
+	find_unique_prefixes(items, nr, 1, 4);
 
 	for (;;) {
 		char *p, *endp;
@@ -146,6 +163,9 @@ static ssize_t list_and_choose(struct item **items, size_t nr,
 			}
 
 			p[sep] = '\0';
+			if (index < 0)
+				index = find_unique(p, items, nr);
+
 			if (index < 0 || index >= nr)
 				printf(_("Huh (%s)?\n"), p);
 			else {
@@ -171,7 +191,7 @@ struct adddel {
 
 struct file_list {
 	struct file_item {
-		struct item item;
+		struct prefix_item item;
 		struct adddel index, worktree;
 	} **file;
 	size_t nr, alloc;
@@ -337,12 +357,29 @@ static void populate_wi_changes(struct strbuf *buf,
 		strbuf_addstr(buf, no_changes);
 }
 
+/* filters out prefixes which have special meaning to list_and_choose() */
+static int is_valid_prefix(const char *prefix, size_t prefix_len)
+{
+	return prefix_len && prefix &&
+		/*
+		 * We expect `prefix` to be NUL terminated, therefore this
+		 * `strcspn()` call is okay, even if it might do much more
+		 * work than strictly necessary.
+		 */
+		strcspn(prefix, " \t\r\n,") >= prefix_len &&	/* separators */
+		*prefix != '-' &&				/* deselection */
+		!isdigit(*prefix) &&				/* selection */
+		(prefix_len != 1 ||
+		 (*prefix != '*' &&				/* "all" wildcard */
+		  *prefix != '?'));				/* prompt help */
+}
+
 struct print_file_item_data {
 	const char *modified_fmt;
 	struct strbuf buf, index, worktree;
 };
 
-static void print_file_item(int i, struct item *item,
+static void print_file_item(int i, struct prefix_item *item,
 			    void *print_file_item_data)
 {
 	struct file_item *c = (struct file_item *)item;
@@ -369,20 +406,26 @@ static int run_status(struct add_i_state *s, const struct pathspec *ps,
 		return -1;
 
 	if (files->nr)
-		list((struct item **)files->file, files->nr, s, opts);
+		list((struct prefix_item **)files->file, files->nr, s, opts);
 	putchar('\n');
 
 	return 0;
 }
 
-static void print_command_item(int i, struct item *item,
+static void print_command_item(int i, struct prefix_item *item,
 			       void *print_command_item_data)
 {
-	printf(" %2d: %s", i + 1, item->name);
+	if (!item->prefix_length ||
+	    !is_valid_prefix(item->name, item->prefix_length))
+		printf(" %2d: %s", i + 1, item->name);
+	else
+		printf(" %3d: [%.*s]%s", i + 1,
+		       (int)item->prefix_length, item->name,
+		       item->name + item->prefix_length);
 }
 
 struct command_item {
-	struct item item;
+	struct prefix_item item;
 	int (*command)(struct add_i_state *s, const struct pathspec *ps,
 		       struct file_list *files, struct list_options *opts);
 };
@@ -424,7 +467,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		res = -1;
 
 	for (;;) {
-		i = list_and_choose((struct item **)commands,
+		i = list_and_choose((struct prefix_item **)commands,
 				    ARRAY_SIZE(commands), &s, &main_loop_opts);
 		if (i == LIST_AND_CHOOSE_QUIT)
 			printf(_("Bye.\n"));
