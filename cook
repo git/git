@@ -579,8 +579,8 @@ sub tweak_willdo {
 	$desc =~ s/\n<<\n.*//s;
 	if ($desc =~ /^  \(merged to 'next'/m) {
 		$text =~ s/^ Will merge to 'next'\.$/ $mergetomaster/m;
-		$text =~ s/^ Will merge to and then cook in 'next'\.$/ Will cook in 'next'./m;
-		$text =~ s/^ Will merge to 'next' and then to 'master'\.$/ $mergetomaster/m;
+		$text =~ s/^ Will merge to and (then )?cook in 'next'\.$/ Will cook in 'next'./m;
+		$text =~ s/^ Will merge to 'next' and (then )?to 'master'\.$/ Will merge to 'master'./m;
 	}
 	$td->{'text'} = $text;
 }
@@ -706,9 +706,10 @@ sub wildo_flush_topic {
 }
 
 sub wildo_match {
+	# NEEDSWORK: unify with Reintegrate::annotate_merge
 	if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
 	    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
-	    /^Can wait in / || /^Still / ||
+	    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ ||
 	    /^Needs? / || /^Expecting / || /^May want to /) {
 		return 1;
 	}
