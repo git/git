@@ -17834,7 +17834,7 @@ msgstr "Kann keinen '%s'-Reset durchführen, während ein Merge im Gange ist."
 
 #: builtin/reset.c:293
 msgid "be quiet, only report errors"
-msgstr "weniger Ausgaben, meldet nur Fehler"
+msgstr "weniger Ausgaben, nur Fehler melden"
 
 #: builtin/reset.c:295
 msgid "reset HEAD and index"
