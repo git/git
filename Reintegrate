@@ -32,12 +32,13 @@ done
 annotate_merge () {
 	test -f Meta/whats-cooking.txt || return 0
 
+	# NEEDSWORK: unify with cook::wildo_match
 	perl -e '
 		sub wildo_match {
 			s/^\s*//;
 			if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
 			    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
-			    /^Can wait in / || /^Still / || /^Stuck / ||
+			    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ ||
 			    /^Needs? / || /^Expecting / || /^May want to /) {
 				return 1;
 			}
