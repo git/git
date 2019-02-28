@@ -59,7 +59,7 @@ test_expect_success 'rebase against master' '
 	git rebase master
 '
 
-test_expect_failure 'rebase sets ORIG_HEAD to pre-rebase state' '
+test_expect_success 'rebase sets ORIG_HEAD to pre-rebase state' '
 	git checkout -b orig-head topic &&
 	pre="$(git rev-parse --verify HEAD)" &&
 	git rebase master &&
