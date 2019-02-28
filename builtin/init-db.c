@@ -96,7 +96,7 @@ static void copy_templates(const char *template_dir)
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf template_path = STRBUF_INIT;
 	size_t template_len;
-	struct repository_format template_format;
+	struct repository_format template_format = REPOSITORY_FORMAT_INIT;
 	struct strbuf err = STRBUF_INIT;
 	DIR *dir;
 	char *to_free = NULL;
@@ -148,6 +148,7 @@ free_return:
 	free(to_free);
 	strbuf_release(&path);
 	strbuf_release(&template_path);
+	clear_repository_format(&template_format);
 }
 
 static int git_init_db_config(const char *k, const char *v, void *cb)

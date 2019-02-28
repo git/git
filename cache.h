@@ -961,6 +961,10 @@ extern char *repository_format_partial_clone;
 extern const char *core_partial_clone_filter_default;
 extern int repository_format_worktree_config;
 
+/*
+ * You _have_ to initialize a `struct repository_format` using
+ * `= REPOSITORY_FORMAT_INIT` before calling `read_repository_format()`.
+ */
 struct repository_format {
 	int version;
 	int precious_objects;
@@ -973,12 +977,33 @@ struct repository_format {
 };
 
 /*
+ * Always use this to initialize a `struct repository_format`
+ * to a well-defined, default state before calling
+ * `read_repository()`.
+ */
+#define REPOSITORY_FORMAT_INIT \
+{ \
+	.version = -1, \
+	.is_bare = -1, \
+	.hash_algo = GIT_HASH_SHA1, \
+	.unknown_extensions = STRING_LIST_INIT_DUP, \
+}
+
+/*
  * Read the repository format characteristics from the config file "path" into
- * "format" struct. Returns the numeric version. On error, -1 is returned,
- * format->version is set to -1, and all other fields in the struct are
- * undefined.
+ * "format" struct. Returns the numeric version. On error, or if no version is
+ * found in the configuration, -1 is returned, format->version is set to -1,
+ * and all other fields in the struct are set to the default configuration
+ * (REPOSITORY_FORMAT_INIT). Always initialize the struct using
+ * REPOSITORY_FORMAT_INIT before calling this function.
  */
 int read_repository_format(struct repository_format *format, const char *path);
+
+/*
+ * Free the memory held onto by `format`, but not the struct itself.
+ * (No need to use this after `read_repository_format()` fails.)
+ */
+void clear_repository_format(struct repository_format *format);
 
 /*
  * Verify that the repository described by repository_format is something we
