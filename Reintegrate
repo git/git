@@ -177,8 +177,17 @@ no)
 			else
 				rm -f contrib/coccinelle/*.patch
 				Meta/Make -j8 coccicheck
-				cat contrib/coccinelle/*.patch | git apply --index ||
-				exit
+				if grep coccicheck-pending Makefile >/dev/null
+				then
+					Meta/Make -j8 coccicheck-pending
+				fi
+				cat contrib/coccinelle/*.patch >cocci.patch
+				if ! test -s cocci.patch
+				then
+					exit 0
+				fi
+				git apply --index -3 cocci.patch || exit
+				rm cocci.patch
 				git diff --quiet HEAD && continue
 			fi
 			git commit -m "$cocci_mark" || exit
