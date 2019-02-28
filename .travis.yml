@@ -21,16 +21,6 @@ matrix:
       compiler:
       addons:
       before_install:
-    - env: jobname=Windows
-      os: linux
-      compiler:
-      addons:
-      before_install:
-      script:
-        - >
-          test "$TRAVIS_REPO_SLUG" != "git/git" ||
-          ci/run-windows-build.sh $TRAVIS_BRANCH $(git rev-parse HEAD)
-      after_failure:
     - env: jobname=Linux32
       os: linux
       compiler:
