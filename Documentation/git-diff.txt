@@ -77,8 +77,16 @@ two blob objects, or changes between two files on disk.
 
 Just in case you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
-in the last two forms that use ".." notations, can be any
-<tree>.
+in the last form, that use the "\..." notation, can be any
+<tree>. For instance, if you want to make diffs against an empty
+tree, you can create a tag pointing to the empty tree:
+
+'git tag' empty 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+
+And use it for the 'git diff', for instance, to check a working tree
+for whitespaces:
+
+'git diff' --check empty
 
 For a more complete list of ways to spell <commit>, see
 "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
