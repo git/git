@@ -472,4 +472,22 @@ test_expect_success 'writing split index with null sha1 does not write cache tre
 	test_line_count = 0 cache-tree.out
 '
 
+test_expect_success 'do not refresh null base index' '
+	test_create_repo merge &&
+	(
+		cd merge &&
+		test_commit initial &&
+		git checkout -b side-branch &&
+		test_commit extra &&
+		git checkout master &&
+		git update-index --split-index &&
+		test_commit more &&
+		# must not write a new shareindex, or we wont catch the problem
+		git -c splitIndex.maxPercentChange=100 merge --no-edit side-branch 2>err &&
+		# i.e. do not expect warnings like
+		# could not freshen shared index .../shareindex.00000...
+		test_must_be_empty err
+	)
+'
+
 test_done

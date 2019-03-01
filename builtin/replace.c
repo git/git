@@ -82,6 +82,10 @@ static int list_replace_refs(const char *pattern, const char *format)
 		data.format = REPLACE_FORMAT_MEDIUM;
 	else if (!strcmp(format, "long"))
 		data.format = REPLACE_FORMAT_LONG;
+	/*
+	 * Please update _git_replace() in git-completion.bash when
+	 * you add new format
+	 */
 	else
 		return error(_("invalid replace format '%s'\n"
 			       "valid formats are 'short', 'medium' and 'long'"),

@@ -162,7 +162,7 @@ void merge_base_index(struct index_state *istate)
 	ewah_each_bit(si->replace_bitmap, replace_entry, istate);
 	ewah_each_bit(si->delete_bitmap, mark_entry_for_delete, istate);
 	if (si->nr_deletions)
-		remove_marked_cache_entries(istate);
+		remove_marked_cache_entries(istate, 0);
 
 	for (i = si->nr_replacements; i < si->saved_cache_nr; i++) {
 		if (!ce_namelen(si->saved_cache[i]))
@@ -440,24 +440,26 @@ void add_split_index(struct index_state *istate)
 void remove_split_index(struct index_state *istate)
 {
 	if (istate->split_index) {
-		/*
-		 * When removing the split index, we need to move
-		 * ownership of the mem_pool associated with the
-		 * base index to the main index. There may be cache entries
-		 * allocated from the base's memory pool that are shared with
-		 * the_index.cache[].
-		 */
-		mem_pool_combine(istate->ce_mem_pool, istate->split_index->base->ce_mem_pool);
+		if (istate->split_index->base) {
+			/*
+			 * When removing the split index, we need to move
+			 * ownership of the mem_pool associated with the
+			 * base index to the main index. There may be cache entries
+			 * allocated from the base's memory pool that are shared with
+			 * the_index.cache[].
+			 */
+			mem_pool_combine(istate->ce_mem_pool,
+					 istate->split_index->base->ce_mem_pool);
 
-		/*
-		 * The split index no longer owns the mem_pool backing
-		 * its cache array. As we are discarding this index,
-		 * mark the index as having no cache entries, so it
-		 * will not attempt to clean up the cache entries or
-		 * validate them.
-		 */
-		if (istate->split_index->base)
+			/*
+			 * The split index no longer owns the mem_pool backing
+			 * its cache array. As we are discarding this index,
+			 * mark the index as having no cache entries, so it
+			 * will not attempt to clean up the cache entries or
+			 * validate them.
+			 */
 			istate->split_index->base->cache_nr = 0;
+		}
 
 		/*
 		 * We can discard the split index because its

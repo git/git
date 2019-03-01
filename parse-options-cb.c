@@ -170,9 +170,12 @@ int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
  * "-h" output even if it's not being handled directly by
  * parse_options().
  */
-int parse_opt_unknown_cb(const struct option *opt, const char *arg, int unset)
+enum parse_opt_result parse_opt_unknown_cb(struct parse_opt_ctx_t *ctx,
+					   const struct option *opt,
+					   const char *arg, int unset)
 {
-	return -2;
+	BUG_ON_OPT_ARG(arg);
+	return PARSE_OPT_UNKNOWN;
 }
 
 /**

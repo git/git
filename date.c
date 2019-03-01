@@ -921,6 +921,10 @@ static enum date_mode_type parse_date_type(const char *format, const char **end)
 		return DATE_UNIX;
 	if (skip_prefix(format, "format", end))
 		return DATE_STRFTIME;
+	/*
+	 * Please update $__git_log_date_formats in
+	 * git-completion.bash when you add new formats.
+	 */
 
 	die("unknown date format %s", format);
 }

@@ -119,8 +119,7 @@ static void prepare_in_pack_by_idx(struct packing_data *pdata)
  * this fall back code, just stay simple and fall back to using
  * in_pack[] array.
  */
-void oe_map_new_pack(struct packing_data *pack,
-		     struct packed_git *p)
+void oe_map_new_pack(struct packing_data *pack)
 {
 	uint32_t i;
 

@@ -84,6 +84,10 @@ static int parse_decoration_style(const char *value)
 		return DECORATE_SHORT_REFS;
 	else if (!strcmp(value, "auto"))
 		return auto_decoration_style();
+	/*
+	 * Please update _git_log() in git-completion.bash when you
+	 * add new decoration styles.
+	 */
 	return -1;
 }
 
@@ -1228,6 +1232,10 @@ static int thread_callback(const struct option *opt, const char *arg, int unset)
 		*thread = THREAD_SHALLOW;
 	else if (!strcmp(arg, "deep"))
 		*thread = THREAD_DEEP;
+	/*
+	 * Please update _git_formatpatch() in git-completion.bash
+	 * when you add new options.
+	 */
 	else
 		return 1;
 	return 0;

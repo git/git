@@ -853,6 +853,11 @@ __git_compute_merge_strategies ()
 	__git_merge_strategies=$(__git_list_merge_strategies)
 }
 
+__git_merge_strategy_options="ours theirs subtree subtree= patience
+	histogram diff-algorithm= ignore-space-change ignore-all-space
+	ignore-space-at-eol renormalize no-renormalize no-renames
+	find-renames find-renames= rename-threshold="
+
 __git_complete_revlist_file ()
 {
 	local dequoted_word pfx ls ref cur_="$cur"
@@ -996,10 +1001,19 @@ __git_complete_strategy ()
 	-s|--strategy)
 		__gitcomp "$__git_merge_strategies"
 		return 0
+		;;
+	-X)
+		__gitcomp "$__git_merge_strategy_options"
+		return 0
+		;;
 	esac
 	case "$cur" in
 	--strategy=*)
 		__gitcomp "$__git_merge_strategies" "" "${cur##--strategy=}"
+		return 0
+		;;
+	--strategy-option=*)
+		__gitcomp "$__git_merge_strategy_options" "" "${cur##--strategy-option=}"
 		return 0
 		;;
 	esac
@@ -1163,6 +1177,7 @@ __git_count_arguments ()
 }
 
 __git_whitespacelist="nowarn warn error error-all fix"
+__git_patchformat="mbox stgit stgit-series hg mboxrd"
 __git_am_inprogress_options="--skip --continue --resolved --abort --quit --show-current-patch"
 
 _git_am ()
@@ -1175,6 +1190,10 @@ _git_am ()
 	case "$cur" in
 	--whitespace=*)
 		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
+		return
+		;;
+	--patch-format=*)
+		__gitcomp "$__git_patchformat" "" "${cur##--patch-format=}"
 		return
 		;;
 	--*)
@@ -1200,6 +1219,10 @@ _git_apply ()
 _git_add ()
 {
 	case "$cur" in
+	--chmod=*)
+		__gitcomp "+x -x" "" "${cur##--chmod=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin add
 		return
@@ -1259,6 +1282,8 @@ _git_bisect ()
 		;;
 	esac
 }
+
+__git_ref_fieldlist="refname objecttype objectsize objectname upstream push HEAD symref"
 
 _git_branch ()
 {
@@ -1343,6 +1368,9 @@ _git_cherry_pick ()
 		__gitcomp "$__git_cherry_pick_inprogress_options"
 		return
 	fi
+
+	__git_complete_strategy && return
+
 	case "$cur" in
 	--*)
 		__gitcomp_builtin cherry-pick "" \
@@ -1504,6 +1532,10 @@ _git_fetch ()
 	case "$cur" in
 	--recurse-submodules=*)
 		__gitcomp "$__git_fetch_recurse_submodules" "" "${cur##--recurse-submodules=}"
+		return
+		;;
+	--filter=*)
+		__gitcomp "blob:none blob:limit= sparse:oid= sparse:path=" "" "${cur##--filter=}"
 		return
 		;;
 	--*)
@@ -1702,8 +1734,8 @@ __git_log_shortlog_options="
 	--all-match --invert-grep
 "
 
-__git_log_pretty_formats="oneline short medium full fuller email raw format:"
-__git_log_date_formats="relative iso8601 rfc2822 short local default raw"
+__git_log_pretty_formats="oneline short medium full fuller email raw format: mboxrd"
+__git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default raw unix format:"
 
 _git_log ()
 {
@@ -2221,7 +2253,7 @@ _git_config ()
 		return
 		;;
 	diff.submodule)
-		__gitcomp "log short"
+		__gitcomp "$__git_diff_submodule_formats"
 		return
 		;;
 	help.format)
@@ -2388,6 +2420,10 @@ _git_remote ()
 _git_replace ()
 {
 	case "$cur" in
+	--format=*)
+		__gitcomp "short medium long" "" "${cur##--format=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin replace
 		return
@@ -2429,6 +2465,7 @@ _git_revert ()
 		__gitcomp "$__git_revert_inprogress_options"
 		return
 	fi
+	__git_complete_strategy && return
 	case "$cur" in
 	--*)
 		__gitcomp_builtin revert "" \
@@ -2573,7 +2610,7 @@ _git_submodule ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="add status init deinit update summary foreach sync"
+	local subcommands="add status init deinit update summary foreach sync absorbgitdirs"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		case "$cur" in
