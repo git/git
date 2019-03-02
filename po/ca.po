@@ -1,7 +1,7 @@
 # Catalan translations for Git.
 # This file is distributed under the same license as the Git package.
 # Alex Henrie <alexhenrie24@gmail.com>, 2014-2016.
-# Jordi Mas i Hernàndez <jmas@softcatala.org>, 2016-2018
+# Jordi Mas i Hernàndez <jmas@softcatala.org>, 2016-2019
 #
 # Terminologia i criteris utilitzats
 #
@@ -3284,7 +3284,7 @@ msgid "Adding %s"
 msgstr "S'està afegint %s"
 
 #: merge-recursive.c:3300
-#y, c-format
+#, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
 "  %s"
@@ -6758,7 +6758,7 @@ msgstr ""
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
 msgstr ""
-"  (useu \"git %s <fitxer>...\" per a incloure-ho en el qual es cometrà)"
+"  (useu \"git %s <fitxer>...\" per a incloure-ho en el que es cometrà)"
 
 #: wt-status.c:256
 msgid "both deleted:"
