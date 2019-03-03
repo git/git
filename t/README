@@ -214,7 +214,7 @@ appropriately before running "make".
 --stress-limit=<N>::
 	When combined with --stress run the test script repeatedly
 	this many times in each of the parallel jobs or until one of
-	them fails, whichever comes first.
+	them fails, whichever comes first. Implies `--stress`.
 
 You can also set the GIT_TEST_INSTALLED environment variable to
 the bindir of an existing git installation to test that installation.
