@@ -147,10 +147,16 @@ do
 	--stress)
 		stress=t ;;
 	--stress=*)
+		echo "error: --stress does not accept an argument: '$opt'" >&2
+		echo "did you mean --stress-jobs=${opt#*=} or --stress-limit=${opt#*=}?" >&2
+		exit 1
+		;;
+	--stress-jobs=*)
+		stress=t;
 		stress=${opt#--*=}
 		case "$stress" in
 		*[!0-9]*|0*|"")
-			echo "error: --stress=<N> requires the number of jobs to run" >&2
+			echo "error: --stress-jobs=<N> requires the number of jobs to run" >&2
 			exit 1
 			;;
 		*)	# Good.

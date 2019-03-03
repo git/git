@@ -196,11 +196,10 @@ appropriately before running "make".
 	variable to "1" or "0", respectively.
 
 --stress::
---stress=<N>::
 	Run the test script repeatedly in multiple parallel jobs until
 	one of them fails.  Useful for reproducing rare failures in
 	flaky tests.  The number of parallel jobs is, in order of
-	precedence: <N>, or the value of the GIT_TEST_STRESS_LOAD
+	precedence: the value of the GIT_TEST_STRESS_LOAD
 	environment variable, or twice the number of available
 	processors (as shown by the 'getconf' utility),	or 8.
 	Implies `--verbose -x --immediate` to get the most information
@@ -210,6 +209,9 @@ appropriately before running "make".
 	terminal.  The names of the trash directories get a
 	'.stress-<nr>' suffix, and the trash directory of the failed
 	test job is renamed to end with a '.stress-failed' suffix.
+
+--stress-jobs=<N>::
+	Override the number of parallel jobs. Implies `--stress`.
 
 --stress-limit=<N>::
 	When combined with --stress run the test script repeatedly
