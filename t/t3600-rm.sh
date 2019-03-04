@@ -8,91 +8,92 @@ test_description='Test of the various options to git rm.'
 . ./test-lib.sh
 
 # Setup some files to be removed, some with funny characters
-test_expect_success \
-    'Initialize test directory' \
-    "touch -- foo bar baz 'space embedded' -q &&
-     git add -- foo bar baz 'space embedded' -q &&
-     git commit -m 'add normal files'"
+test_expect_success 'Initialize test directory' '
+	touch -- foo bar baz "space embedded" -q &&
+	git add -- foo bar baz "space embedded" -q &&
+	git commit -m "add normal files"
+'
 
-if test_have_prereq !FUNNYNAMES; then
+if test_have_prereq !FUNNYNAMES
+then
 	say 'Your filesystem does not allow tabs in filenames.'
 fi
 
-test_expect_success FUNNYNAMES 'add files with funny names' "
-     touch -- 'tab	embedded' 'newline
-embedded' &&
-     git add -- 'tab	embedded' 'newline
-embedded' &&
-     git commit -m 'add files with tabs and newlines'
-"
-
-test_expect_success \
-    'Pre-check that foo exists and is in index before git rm foo' \
-    '[ -f foo ] && git ls-files --error-unmatch foo'
-
-test_expect_success \
-    'Test that git rm foo succeeds' \
-    'git rm --cached foo'
-
-test_expect_success \
-    'Test that git rm --cached foo succeeds if the index matches the file' \
-    'echo content >foo &&
-     git add foo &&
-     git rm --cached foo'
-
-test_expect_success \
-    'Test that git rm --cached foo succeeds if the index matches the file' \
-    'echo content >foo &&
-     git add foo &&
-     git commit -m foo &&
-     echo "other content" >foo &&
-     git rm --cached foo'
-
-test_expect_success \
-    'Test that git rm --cached foo fails if the index matches neither the file nor HEAD' '
-     echo content >foo &&
-     git add foo &&
-     git commit -m foo --allow-empty &&
-     echo "other content" >foo &&
-     git add foo &&
-     echo "yet another content" >foo &&
-     test_must_fail git rm --cached foo
+test_expect_success FUNNYNAMES 'add files with funny names' '
+	touch -- "tab	embedded" "newline${LF}embedded" &&
+	git add -- "tab	embedded" "newline${LF}embedded" &&
+	git commit -m "add files with tabs and newlines"
 '
 
-test_expect_success \
-    'Test that git rm --cached -f foo works in case where --cached only did not' \
-    'echo content >foo &&
-     git add foo &&
-     git commit -m foo --allow-empty &&
-     echo "other content" >foo &&
-     git add foo &&
-     echo "yet another content" >foo &&
-     git rm --cached -f foo'
+test_expect_success 'Pre-check that foo exists and is in index before git rm foo' '
+	test -f foo &&
+	git ls-files --error-unmatch foo
+'
 
-test_expect_success \
-    'Post-check that foo exists but is not in index after git rm foo' \
-    '[ -f foo ] && test_must_fail git ls-files --error-unmatch foo'
+test_expect_success 'Test that git rm foo succeeds' '
+	git rm --cached foo
+'
 
-test_expect_success \
-    'Pre-check that bar exists and is in index before "git rm bar"' \
-    '[ -f bar ] && git ls-files --error-unmatch bar'
+test_expect_success 'Test that git rm --cached foo succeeds if the index matches the file' '
+	echo content >foo &&
+	git add foo &&
+	git rm --cached foo
+'
 
-test_expect_success \
-    'Test that "git rm bar" succeeds' \
-    'git rm bar'
+test_expect_success 'Test that git rm --cached foo succeeds if the index matches the file' '
+	echo content >foo &&
+	git add foo &&
+	git commit -m foo &&
+	echo "other content" >foo &&
+	git rm --cached foo
+'
 
-test_expect_success \
-    'Post-check that bar does not exist and is not in index after "git rm -f bar"' \
-    '! [ -f bar ] && test_must_fail git ls-files --error-unmatch bar'
+test_expect_success 'Test that git rm --cached foo fails if the index matches neither the file nor HEAD' '
+	echo content >foo &&
+	git add foo &&
+	git commit -m foo --allow-empty &&
+	echo "other content" >foo &&
+	git add foo &&
+	echo "yet another content" >foo &&
+	test_must_fail git rm --cached foo
+'
 
-test_expect_success \
-    'Test that "git rm -- -q" succeeds (remove a file that looks like an option)' \
-    'git rm -- -q'
+test_expect_success 'Test that git rm --cached -f foo works in case where --cached only did not' '
+	echo content >foo &&
+	git add foo &&
+	git commit -m foo --allow-empty &&
+	echo "other content" >foo &&
+	git add foo &&
+	echo "yet another content" >foo &&
+	git rm --cached -f foo
+'
 
-test_expect_success FUNNYNAMES \
-    "Test that \"git rm -f\" succeeds with embedded space, tab, or newline characters." \
-    "git rm -f 'space embedded' 'tab	embedded' 'newline
-embedded'"
+test_expect_success 'Post-check that foo exists but is not in index after git rm foo' '
+	test -f foo &&
+	test_must_fail git ls-files --error-unmatch foo
+'
+
+test_expect_success 'Pre-check that bar exists and is in index before "git rm bar"' '
+	test -f bar &&
+	git ls-files --error-unmatch bar
+'
+
+test_expect_success 'Test that "git rm bar" succeeds' '
+	git rm bar
+'
+
+test_expect_success 'Post-check that bar does not exist and is not in index after "git rm -f bar"' '
+	! test -f bar &&
+	test_must_fail git ls-files --error-unmatch bar
+'
+
+test_expect_success 'Test that "git rm -- -q" succeeds (remove a file that looks like an option)' '
+	git rm -- -q
+'
+
+test_expect_success FUNNYNAMES 'Test that "git rm -f" succeeds with embedded space, tab, or newline characters.' '
+	git rm -f "space embedded" "tab	embedded" "newline${LF}embedded"
+'
 
 test_expect_success SANITY 'Test that "git rm -f" fails if its rm fails' '
 	test_when_finished "chmod 775 ." &&
@@ -100,9 +101,9 @@ test_expect_success SANITY 'Test that "git rm -f" fails if its rm fails' '
 	test_must_fail git rm -f baz
 '
 
-test_expect_success \
-    'When the rm in "git rm -f" fails, it should not remove the file from the index' \
-    'git ls-files --error-unmatch baz'
+test_expect_success 'When the rm in "git rm -f" fails, it should not remove the file from the index' '
+	git ls-files --error-unmatch baz
+'
 
 test_expect_success 'Remove nonexistent file with --ignore-unmatch' '
 	git rm --ignore-unmatch nonexistent
@@ -217,23 +218,25 @@ test_expect_success 'Remove nonexistent file returns nonzero exit status' '
 
 test_expect_success 'Call "rm" from outside the work tree' '
 	mkdir repo &&
-	(cd repo &&
-	 git init &&
-	 echo something >somefile &&
-	 git add somefile &&
-	 git commit -m "add a file" &&
-	 (cd .. &&
-	  git --git-dir=repo/.git --work-tree=repo rm somefile) &&
-	test_must_fail git ls-files --error-unmatch somefile)
+	(
+		cd repo &&
+		git init &&
+		echo something >somefile &&
+		git add somefile &&
+		git commit -m "add a file" &&
+		(
+			cd .. &&
+			git --git-dir=repo/.git --work-tree=repo rm somefile
+		) &&
+		test_must_fail git ls-files --error-unmatch somefile
+	)
 '
 
 test_expect_success 'refresh index before checking if it is up-to-date' '
-
 	git reset --hard &&
 	test-tool chmtime -86400 frotz/nitfol &&
 	git rm frotz/nitfol &&
 	test ! -f frotz/nitfol
-
 '
 
 test_expect_success 'choking "git rm" should not let it die with cruft' '
@@ -242,8 +245,8 @@ test_expect_success 'choking "git rm" should not let it die with cruft' '
 	i=0 &&
 	while test $i -lt 12000
 	do
-	    echo "100644 1234567890123456789012345678901234567890 0	some-file-$i"
-	    i=$(( $i + 1 ))
+		echo "100644 1234567890123456789012345678901234567890 0	some-file-$i"
+		i=$(( $i + 1 ))
 	done | git update-index --index-info &&
 	git rm -n "some-file-*" | : &&
 	test_path_is_missing .git/index.lock
@@ -545,7 +548,8 @@ test_expect_success 'rm of a conflicted populated submodule with a .git director
 	git checkout conflict1 &&
 	git reset --hard &&
 	git submodule update &&
-	(cd submod &&
+	(
+		cd submod &&
 		rm .git &&
 		cp -R ../.git/modules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
@@ -579,7 +583,8 @@ test_expect_success 'rm of a populated submodule with a .git directory migrates 
 	git checkout -f master &&
 	git reset --hard &&
 	git submodule update &&
-	(cd submod &&
+	(
+		cd submod &&
 		rm .git &&
 		cp -R ../.git/modules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree &&
@@ -600,7 +605,8 @@ EOF
 test_expect_success 'setup subsubmodule' '
 	git reset --hard &&
 	git submodule update &&
-	(cd submod &&
+	(
+		cd submod &&
 		git update-index --add --cacheinfo 160000 $(git rev-parse HEAD) subsubmod &&
 		git config -f .gitmodules submodule.sub.url ../. &&
 		git config -f .gitmodules submodule.sub.path subsubmod &&
@@ -667,7 +673,8 @@ test_expect_success 'rm of a populated nested submodule with nested untracked fi
 test_expect_success "rm absorbs submodule's nested .git directory" '
 	git reset --hard &&
 	git submodule update --recursive &&
-	(cd submod/subsubmod &&
+	(
+		cd submod/subsubmod &&
 		rm .git &&
 		mv ../../.git/modules/sub/modules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
