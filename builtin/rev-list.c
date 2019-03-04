@@ -237,7 +237,7 @@ static inline void finish_object__ma(struct object *obj)
 static int finish_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-	if (!has_object_file(&obj->oid)) {
+	if (oid_object_info_extended(the_repository, &obj->oid, NULL, 0) < 0) {
 		finish_object__ma(obj);
 		return 1;
 	}
