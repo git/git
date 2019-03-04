@@ -81,7 +81,7 @@ in the last form, that use the "\..." notation, can be any
 <tree>. For instance, if you want to make diffs against an empty
 tree, you can create a tag pointing to the empty tree:
 
-'git tag' empty 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+'git tag' empty $('git hash-object' -t tree /dev/null)
 
 And use it for the 'git diff', for instance, to check a working tree
 for whitespaces:
