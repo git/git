@@ -593,6 +593,15 @@ test_dir_is_empty () {
 	fi
 }
 
+# Check if the file exists and has a size greater than zero
+test_file_not_empty () {
+	if ! test -s "$1"
+	then
+		echo "'$1' is not a non-empty file."
+		false
+	fi
+}
+
 test_path_is_missing () {
 	if test -e "$1"
 	then
