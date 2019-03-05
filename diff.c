@@ -5092,6 +5092,18 @@ static int diff_opt_word_diff(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_word_diff_regex(const struct option *opt,
+				    const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	if (options->word_diff == DIFF_WORDS_NONE)
+		options->word_diff = DIFF_WORDS_PLAIN;
+	options->word_regex = arg;
+	return 0;
+}
+
 static void prep_parse_options(struct diff_options *options)
 {
 	struct option parseopts[] = {
@@ -5257,6 +5269,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "word-diff", options, N_("<mode>"),
 			       N_("show word diff, using <mode> to delimit changed words"),
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG, diff_opt_word_diff),
+		OPT_CALLBACK_F(0, "word-diff-regex", options, N_("<regex>"),
+			       N_("use <regex> to decide what a word is"),
+			       PARSE_OPT_NONEG, diff_opt_word_diff_regex),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5319,12 +5334,6 @@ int diff_opt_parse(struct diff_options *options,
 	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
-	}
-	else if ((argcount = parse_long_opt("word-diff-regex", av, &optarg))) {
-		if (options->word_diff == DIFF_WORDS_NONE)
-			options->word_diff = DIFF_WORDS_PLAIN;
-		options->word_regex = optarg;
-		return argcount;
 	}
 	else if (!strcmp(arg, "--exit-code"))
 		options->flags.exit_with_status = 1;
