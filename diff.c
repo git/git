@@ -5062,6 +5062,21 @@ static int diff_opt_relative(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_textconv(const struct option *opt,
+			     const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+	if (unset) {
+		options->flags.allow_textconv = 0;
+	} else {
+		options->flags.allow_textconv = 1;
+		options->flags.textconv_set_via_cmdline = 1;
+	}
+	return 0;
+}
+
 static int diff_opt_unified(const struct option *opt,
 			    const char *arg, int unset)
 {
@@ -5303,6 +5318,9 @@ static void prep_parse_options(struct diff_options *options)
 			 N_("disable all output of the program")),
 		OPT_BOOL(0, "ext-diff", &options->flags.allow_external,
 			 N_("allow an external diff helper to be executed")),
+		OPT_CALLBACK_F(0, "textconv", options, NULL,
+			       N_("run external text conversion filters when comparing binary files"),
+			       PARSE_OPT_NOARG, diff_opt_textconv),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5352,12 +5370,7 @@ int diff_opt_parse(struct diff_options *options,
 		if (cm & COLOR_MOVED_WS_ERROR)
 			return -1;
 		options->color_moved_ws_handling = cm;
-	} else if (!strcmp(arg, "--textconv")) {
-		options->flags.allow_textconv = 1;
-		options->flags.textconv_set_via_cmdline = 1;
-	} else if (!strcmp(arg, "--no-textconv"))
-		options->flags.allow_textconv = 0;
-	else if (skip_to_optional_arg_default(arg, "--ignore-submodules", &arg, "all")) {
+	} else if (skip_to_optional_arg_default(arg, "--ignore-submodules", &arg, "all")) {
 		options->flags.override_submodule_config = 1;
 		handle_ignore_submodules_arg(options, arg);
 	} else if (skip_to_optional_arg_default(arg, "--submodule", &arg, "log"))
