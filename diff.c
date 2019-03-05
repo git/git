@@ -5151,6 +5151,9 @@ static void prep_parse_options(struct diff_options *options)
 			       N_("generate diff using the \"patience diff\" algorithm"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			       diff_opt_patience),
+		OPT_BITOP(0, "histogram", &options->xdl_opts,
+			  N_("generate diff using the \"histogram diff\" algorithm"),
+			  XDF_HISTOGRAM_DIFF, XDF_DIFF_ALGORITHM_MASK),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5189,9 +5192,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* xdiff options */
-	if (!strcmp(arg, "--histogram"))
-		options->xdl_opts = DIFF_WITH_ALG(options, HISTOGRAM_DIFF);
-	else if ((argcount = parse_long_opt("diff-algorithm", av, &optarg))) {
+	if ((argcount = parse_long_opt("diff-algorithm", av, &optarg))) {
 		long value = parse_algorithm_value(optarg);
 		if (value < 0)
 			return error("option diff-algorithm accepts \"myers\", "
