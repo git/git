@@ -4986,6 +4986,21 @@ static int diff_opt_find_renames(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_follow(const struct option *opt,
+			   const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+	if (unset) {
+		options->flags.follow_renames = 0;
+		options->flags.default_follow_renames = 0;
+	} else {
+		options->flags.follow_renames = 1;
+	}
+	return 0;
+}
+
 static enum parse_opt_result diff_opt_output(struct parse_opt_ctx_t *ctx,
 					     const struct option *opt,
 					     const char *arg, int unset)
@@ -5172,6 +5187,9 @@ static void prep_parse_options(struct diff_options *options)
 			      0, PARSE_OPT_NONEG),
 		OPT_BOOL(0, "rename-empty", &options->flags.rename_empty,
 			 N_("use empty blobs as rename source")),
+		OPT_CALLBACK_F(0, "follow", options, NULL,
+			       N_("continue listing the history of a file beyond renames"),
+			       PARSE_OPT_NOARG, diff_opt_follow),
 
 		OPT_GROUP(N_("Diff algorithm options")),
 		OPT_BIT(0, "minimal", &options->xdl_opts,
@@ -5250,12 +5268,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* flags options */
-	if (!strcmp(arg, "--follow"))
-		options->flags.follow_renames = 1;
-	else if (!strcmp(arg, "--no-follow")) {
-		options->flags.follow_renames = 0;
-		options->flags.default_follow_renames = 0;
-	} else if (skip_to_optional_arg_default(arg, "--color", &arg, "always")) {
+	if (skip_to_optional_arg_default(arg, "--color", &arg, "always")) {
 		int value = git_config_colorbool(NULL, arg);
 		if (value < 0)
 			return error("option `color' expects \"always\", \"auto\", or \"never\"");
