@@ -4852,6 +4852,18 @@ static int diff_opt_anchored(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_binary(const struct option *opt,
+			   const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
+	enable_patch_output(&options->output_format);
+	options->flags.binary = 1;
+	return 0;
+}
+
 static int diff_opt_break_rewrites(const struct option *opt,
 				   const char *arg, int unset)
 {
@@ -5116,6 +5128,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "compact-summary", options, NULL,
 			       N_("generate compact summary in diffstat"),
 			       PARSE_OPT_NOARG, diff_opt_compact_summary),
+		OPT_CALLBACK_F(0, "binary", options, NULL,
+			       N_("output a binary diff that can be applied"),
+			       PARSE_OPT_NONEG | PARSE_OPT_NOARG, diff_opt_binary),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5229,11 +5244,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* flags options */
-	if (!strcmp(arg, "--binary")) {
-		enable_patch_output(&options->output_format);
-		options->flags.binary = 1;
-	}
-	else if (!strcmp(arg, "--full-index"))
+	if (!strcmp(arg, "--full-index"))
 		options->flags.full_index = 1;
 	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text"))
 		options->flags.text = 1;
