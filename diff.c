@@ -4891,6 +4891,24 @@ static int diff_opt_compact_summary(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_diff_algorithm(const struct option *opt,
+				   const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+	long value = parse_algorithm_value(arg);
+
+	BUG_ON_OPT_NEG(unset);
+	if (value < 0)
+		return error(_("option diff-algorithm accepts \"myers\", "
+			       "\"minimal\", \"patience\" and \"histogram\""));
+
+	/* clear out previous settings */
+	DIFF_XDL_CLR(options, NEED_MINIMAL);
+	options->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
+	options->xdl_opts |= value;
+	return 0;
+}
+
 static int diff_opt_dirstat(const struct option *opt,
 			    const char *arg, int unset)
 {
@@ -5154,6 +5172,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_BITOP(0, "histogram", &options->xdl_opts,
 			  N_("generate diff using the \"histogram diff\" algorithm"),
 			  XDF_HISTOGRAM_DIFF, XDF_DIFF_ALGORITHM_MASK),
+		OPT_CALLBACK_F(0, "diff-algorithm", options, N_("<algorithm>"),
+			       N_("choose a diff algorithm"),
+			       PARSE_OPT_NONEG, diff_opt_diff_algorithm),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5192,17 +5213,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* xdiff options */
-	if ((argcount = parse_long_opt("diff-algorithm", av, &optarg))) {
-		long value = parse_algorithm_value(optarg);
-		if (value < 0)
-			return error("option diff-algorithm accepts \"myers\", "
-				     "\"minimal\", \"patience\" and \"histogram\"");
-		/* clear out previous settings */
-		DIFF_XDL_CLR(options, NEED_MINIMAL);
-		options->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
-		options->xdl_opts |= value;
-		return argcount;
-	} else if (skip_prefix(arg, "--anchored=", &arg)) {
+	if (skip_prefix(arg, "--anchored=", &arg)) {
 		options->xdl_opts = DIFF_WITH_ALG(options, PATIENCE_DIFF);
 		ALLOC_GROW(options->anchors, options->anchors_nr + 1,
 			   options->anchors_alloc);
