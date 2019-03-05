@@ -346,6 +346,7 @@ struct collection_status {
 
 	const char *reference;
 
+	unsigned skip_unseen:1;
 	struct string_list *files;
 	struct hashmap file_map;
 };
@@ -373,6 +374,9 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 		entry = hashmap_get_entry_from_hash(&s->file_map, hash, name,
 						    struct pathname_entry, ent);
 		if (!entry) {
+			if (s->skip_unseen)
+				continue;
+
 			add_file_item(s->files, name);
 
 			entry = xcalloc(sizeof(*entry), 1);
@@ -394,13 +398,22 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 	free_diffstat_info(&stat);
 }
 
-static int get_modified_files(struct repository *r, struct string_list *files,
+enum modified_files_filter {
+	NO_FILTER = 0,
+	WORKTREE_ONLY = 1,
+	INDEX_ONLY = 2,
+};
+
+static int get_modified_files(struct repository *r,
+			      enum modified_files_filter filter,
+			      struct string_list *files,
 			      const struct pathspec *ps)
 {
 	struct object_id head_oid;
 	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
 					     &head_oid, NULL);
 	struct collection_status s = { FROM_WORKTREE };
+	int i;
 
 	if (discard_index(r->index) < 0 ||
 	    repo_read_index_preload(r, ps, 0) < 0)
@@ -410,9 +423,15 @@ static int get_modified_files(struct repository *r, struct string_list *files,
 	s.files = files;
 	hashmap_init(&s.file_map, pathname_entry_cmp, NULL, 0);
 
-	for (s.phase = FROM_WORKTREE; s.phase <= FROM_INDEX; s.phase++) {
+	for (i = 0; i < 2; i++) {
 		struct rev_info rev;
 		struct setup_revision_opt opt = { 0 };
+
+		if (filter == INDEX_ONLY)
+			s.phase = i ? FROM_WORKTREE : FROM_INDEX;
+		else
+			s.phase = i ? FROM_INDEX : FROM_WORKTREE;
+		s.skip_unseen = filter && i;
 
 		opt.def = is_initial ?
 			empty_tree_oid_hex() : oid_to_hex(&head_oid);
@@ -497,7 +516,7 @@ static void print_file_item(int i, struct string_list_item *item,
 static int run_status(struct add_i_state *s, const struct pathspec *ps,
 		      struct string_list *files, struct list_options *opts)
 {
-	if (get_modified_files(s->r, files, ps) < 0)
+	if (get_modified_files(s->r, NO_FILTER, files, ps) < 0)
 		return -1;
 
 	list(s, files, opts);
