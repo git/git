@@ -69,6 +69,10 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	exist). This will detect corruption in commits and trees, but
 	not do any semantic checks (e.g., for format errors). Corruption
 	in blob objects will not be detected at all.
++
+Unreachable tags, commits, and trees will also be accessed to find the
+tips of dangling segments of history. Use `--no-dangling` if you don't
+care about this output and want to speed it up further.
 
 --strict::
 	Enable more strict checking, namely to catch a file mode
