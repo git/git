@@ -268,6 +268,7 @@ struct collection_status {
 
 	const char *reference;
 
+	unsigned skip_unseen:1;
 	struct file_list *list;
 	struct hashmap file_map;
 };
@@ -296,6 +297,8 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 		entry = hashmap_get_from_hash(&s->file_map, hash, name);
 		if (entry)
 			file_index = entry->index;
+		else if (s->skip_unseen)
+			continue;
 		else {
 			FLEX_ALLOC_STR(entry, pathname, name);
 			hashmap_entry_init(entry, hash);
@@ -315,13 +318,22 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 	}
 }
 
-static int get_modified_files(struct repository *r, struct file_list *list,
+enum modified_files_filter {
+	NO_FILTER = 0,
+	WORKTREE_ONLY = 1,
+	INDEX_ONLY = 2,
+};
+
+static int get_modified_files(struct repository *r,
+			      enum modified_files_filter filter,
+			      struct file_list *list,
 			      const struct pathspec *ps)
 {
 	struct object_id head_oid;
 	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
 					     &head_oid, NULL);
 	struct collection_status s = { FROM_WORKTREE };
+	int i;
 
 	if (repo_read_index_preload(r, ps, 0) < 0)
 		return error(_("could not read index"));
@@ -329,9 +341,15 @@ static int get_modified_files(struct repository *r, struct file_list *list,
 	s.list = list;
 	hashmap_init(&s.file_map, pathname_entry_cmp, NULL, 0);
 
-	for (s.phase = FROM_WORKTREE; s.phase <= FROM_INDEX; s.phase++) {
+	for (i = 0; i < 2; i++) {
 		struct rev_info rev;
 		struct setup_revision_opt opt = { 0 };
+
+		if (filter == INDEX_ONLY)
+			s.phase = i ? FROM_WORKTREE : FROM_INDEX;
+		else
+			s.phase = i ? FROM_INDEX : FROM_WORKTREE;
+		s.skip_unseen = filter && i;
 
 		opt.def = is_initial ?
 			empty_tree_oid_hex() : oid_to_hex(&head_oid);
@@ -418,7 +436,7 @@ static int run_status(struct add_i_state *s, const struct pathspec *ps,
 {
 	reset_file_list(files);
 
-	if (get_modified_files(s->r, files, ps) < 0)
+	if (get_modified_files(s->r, 0, files, ps) < 0)
 		return -1;
 
 	if (files->nr)
