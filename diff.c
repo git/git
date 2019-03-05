@@ -5299,6 +5299,8 @@ static void prep_parse_options(struct diff_options *options)
 			 N_("swap two inputs, reverse the diff")),
 		OPT_BOOL(0, "exit-code", &options->flags.exit_with_status,
 			 N_("exit with 1 if there were differences, 0 otherwise")),
+		OPT_BOOL(0, "quiet", &options->flags.quick,
+			 N_("disable all output of the program")),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5348,9 +5350,7 @@ int diff_opt_parse(struct diff_options *options,
 		if (cm & COLOR_MOVED_WS_ERROR)
 			return -1;
 		options->color_moved_ws_handling = cm;
-	} else if (!strcmp(arg, "--quiet"))
-		options->flags.quick = 1;
-	else if (!strcmp(arg, "--ext-diff"))
+	} else if (!strcmp(arg, "--ext-diff"))
 		options->flags.allow_external = 1;
 	else if (!strcmp(arg, "--no-ext-diff"))
 		options->flags.allow_external = 0;
