@@ -4839,6 +4839,19 @@ static int parse_objfind_opt(struct diff_options *opt, const char *arg)
 	return 1;
 }
 
+static int diff_opt_anchored(const struct option *opt,
+			     const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	options->xdl_opts = DIFF_WITH_ALG(options, PATIENCE_DIFF);
+	ALLOC_GROW(options->anchors, options->anchors_nr + 1,
+		   options->anchors_alloc);
+	options->anchors[options->anchors_nr++] = xstrdup(arg);
+	return 0;
+}
+
 static int diff_opt_break_rewrites(const struct option *opt,
 				   const char *arg, int unset)
 {
@@ -5175,6 +5188,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "diff-algorithm", options, N_("<algorithm>"),
 			       N_("choose a diff algorithm"),
 			       PARSE_OPT_NONEG, diff_opt_diff_algorithm),
+		OPT_CALLBACK_F(0, "anchored", options, N_("<text>"),
+			       N_("generate diff using the \"anchored diff\" algorithm"),
+			       PARSE_OPT_NONEG, diff_opt_anchored),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5212,16 +5228,8 @@ int diff_opt_parse(struct diff_options *options,
 	if (ac)
 		return ac;
 
-	/* xdiff options */
-	if (skip_prefix(arg, "--anchored=", &arg)) {
-		options->xdl_opts = DIFF_WITH_ALG(options, PATIENCE_DIFF);
-		ALLOC_GROW(options->anchors, options->anchors_nr + 1,
-			   options->anchors_alloc);
-		options->anchors[options->anchors_nr++] = xstrdup(arg);
-	}
-
 	/* flags options */
-	else if (!strcmp(arg, "--binary")) {
+	if (!strcmp(arg, "--binary")) {
 		enable_patch_output(&options->output_format);
 		options->flags.binary = 1;
 	}
