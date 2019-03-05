@@ -5214,6 +5214,8 @@ static void prep_parse_options(struct diff_options *options)
 			       N_("when run from subdir, exclude changes outside and show relative paths"),
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
 			       diff_opt_relative),
+		OPT_BOOL('a', "text", &options->flags.text,
+			 N_("treat all files as text")),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5246,9 +5248,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* flags options */
-	if (!strcmp(arg, "-a") || !strcmp(arg, "--text"))
-		options->flags.text = 1;
-	else if (!strcmp(arg, "-R"))
+	if (!strcmp(arg, "-R"))
 		options->flags.reverse_diff = 1;
 	else if (!strcmp(arg, "--follow"))
 		options->flags.follow_renames = 1;
