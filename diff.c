@@ -5148,6 +5148,8 @@ static void prep_parse_options(struct diff_options *options)
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG, diff_opt_binary),
 		OPT_BOOL(0, "full-index", &options->flags.full_index,
 			 N_("show full pre- and post-image object names on the \"index\" lines")),
+		OPT_COLOR_FLAG(0, "color", &options->use_color,
+			       N_("show colored diff")),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5268,15 +5270,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* flags options */
-	if (skip_to_optional_arg_default(arg, "--color", &arg, "always")) {
-		int value = git_config_colorbool(NULL, arg);
-		if (value < 0)
-			return error("option `color' expects \"always\", \"auto\", or \"never\"");
-		options->use_color = value;
-	}
-	else if (!strcmp(arg, "--no-color"))
-		options->use_color = 0;
-	else if (!strcmp(arg, "--color-moved")) {
+	if (!strcmp(arg, "--color-moved")) {
 		if (diff_color_moved_default)
 			options->color_moved = diff_color_moved_default;
 		if (options->color_moved == COLOR_MOVED_NO)
