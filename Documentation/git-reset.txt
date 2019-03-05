@@ -428,8 +428,8 @@ working index HEAD target         working index HEAD
 
 `reset --merge` is meant to be used when resetting out of a conflicted
 merge. Any mergy operation guarantees that the working tree file that is
-involved in the merge does not have local change wrt the index before
-it starts, and that it writes the result out to the working tree. So if
+involved in the merge does not have a local change with respect to the index
+before it starts, and that it writes the result out to the working tree. So if
 we see some difference between the index and the target and also
 between the index and the working tree, then it means that we are not
 resetting out from a state that a mergy operation left after failing
