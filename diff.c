@@ -5216,6 +5216,8 @@ static void prep_parse_options(struct diff_options *options)
 			       diff_opt_relative),
 		OPT_BOOL('a', "text", &options->flags.text,
 			 N_("treat all files as text")),
+		OPT_BOOL('R', NULL, &options->flags.reverse_diff,
+			 N_("swap two inputs, reverse the diff")),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5248,9 +5250,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* flags options */
-	if (!strcmp(arg, "-R"))
-		options->flags.reverse_diff = 1;
-	else if (!strcmp(arg, "--follow"))
+	if (!strcmp(arg, "--follow"))
 		options->flags.follow_renames = 1;
 	else if (!strcmp(arg, "--no-follow")) {
 		options->flags.follow_renames = 0;
