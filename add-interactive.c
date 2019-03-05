@@ -6,6 +6,7 @@
 #include "revision.h"
 #include "refs.h"
 #include "prefix-map.h"
+#include "lockfile.h"
 
 struct add_i_state {
 	struct repository *r;
@@ -459,8 +460,8 @@ static int is_valid_prefix(const char *prefix, size_t prefix_len)
 }
 
 struct print_file_item_data {
-	const char *modified_fmt;
-	struct strbuf buf, index, worktree;
+	const char *modified_fmt, *color, *reset;
+	struct strbuf buf, name, index, worktree;
 };
 
 static void print_file_item(int i, int selected, struct prefix_item *item,
@@ -468,21 +469,34 @@ static void print_file_item(int i, int selected, struct prefix_item *item,
 {
 	struct file_item *c = (struct file_item *)item;
 	struct print_file_item_data *d = print_file_item_data;
+	const char *highlighted = NULL;
 
 	strbuf_reset(&d->index);
 	strbuf_reset(&d->worktree);
 	strbuf_reset(&d->buf);
 
+	/* Format the item with the prefix highlighted. */
+	if (item->prefix_length > 0 &&
+	    is_valid_prefix(item->name, item->prefix_length)) {
+		strbuf_reset(&d->name);
+		strbuf_addf(&d->name, "%s%.*s%s%s", d->color,
+			    (int)item->prefix_length, item->name, d->reset,
+			    item->name + item->prefix_length);
+		highlighted = d->name.buf;
+	}
+
 	populate_wi_changes(&d->worktree, &c->worktree, _("nothing"));
 	populate_wi_changes(&d->index, &c->index, _("unchanged"));
 	strbuf_addf(&d->buf, d->modified_fmt,
-		    d->index.buf, d->worktree.buf, item->name);
+		    d->index.buf, d->worktree.buf,
+		    highlighted ? highlighted : item->name);
 
 	printf("%c%2d: %s", selected ? '*' : ' ', i + 1, d->buf.buf);
 }
 
 static int run_status(struct add_i_state *s, const struct pathspec *ps,
-		      struct file_list *files, struct list_options *opts)
+		      struct file_list *files,
+		      struct list_and_choose_options *opts)
 {
 	reset_file_list(files);
 
@@ -491,14 +505,72 @@ static int run_status(struct add_i_state *s, const struct pathspec *ps,
 
 	if (files->nr)
 		list((struct prefix_item **)files->file, NULL, files->nr,
-		     s, opts);
+		     s, &opts->list_opts);
 	putchar('\n');
 
 	return 0;
 }
 
+static int run_update(struct add_i_state *s, const struct pathspec *ps,
+		      struct file_list *files,
+		      struct list_and_choose_options *opts)
+{
+	int res = 0, fd, *selected = NULL;
+	size_t count, i;
+	struct lock_file index_lock;
+
+	reset_file_list(files);
+
+	if (get_modified_files(s->r, WORKTREE_ONLY, files, ps) < 0)
+		return -1;
+
+	if (!files->nr) {
+		putchar('\n');
+		return 0;
+	}
+
+	opts->prompt = N_("Update");
+	CALLOC_ARRAY(selected, files->nr);
+
+	count = list_and_choose((struct prefix_item **)files->file,
+				selected, files->nr, s, opts);
+	if (count <= 0) {
+		putchar('\n');
+		free(selected);
+		return 0;
+	}
+
+	fd = repo_hold_locked_index(s->r, &index_lock, LOCK_REPORT_ON_ERROR);
+	if (fd < 0) {
+		putchar('\n');
+		free(selected);
+		return -1;
+	}
+
+	for (i = 0; i < files->nr; i++) {
+		const char *name = files->file[i]->item.name;
+		if (selected[i] &&
+		    add_file_to_index(s->r->index, name, 0) < 0) {
+			res = error(_("could not stage '%s'"), name);
+			break;
+		}
+	}
+
+	if (!res && write_locked_index(s->r->index, &index_lock, COMMIT_LOCK) < 0)
+		res = error(_("could not write index"));
+
+	if (!res)
+		printf(Q_("updated %d path\n",
+			  "updated %d paths\n", count), (int)count);
+
+	putchar('\n');
+	free(selected);
+	return res;
+}
+
 static int run_help(struct add_i_state *s, const struct pathspec *ps,
-		    struct file_list *files, struct list_options *opts)
+		    struct file_list *files,
+		    struct list_and_choose_options *opts)
 {
 	const char *help_color = s->help_color;
 
@@ -516,6 +588,27 @@ static int run_help(struct add_i_state *s, const struct pathspec *ps,
 			 _("add contents of untracked files to the staged set of changes"));
 
 	return 0;
+}
+
+static void choose_prompt_help(struct add_i_state *s)
+{
+	const char *help_color = s->help_color;
+	color_fprintf_ln(stdout, help_color, "%s",
+			 _("Prompt help:"));
+	color_fprintf_ln(stdout, help_color, "1          - %s",
+			 _("select a single item"));
+	color_fprintf_ln(stdout, help_color, "3-5        - %s",
+			 _("select a range of items"));
+	color_fprintf_ln(stdout, help_color, "2-3,6-9    - %s",
+			 _("select multiple ranges"));
+	color_fprintf_ln(stdout, help_color, "foo        - %s",
+			 _("select item based on unique prefix"));
+	color_fprintf_ln(stdout, help_color, "-...       - %s",
+			 _("unselect specified items"));
+	color_fprintf_ln(stdout, help_color, "*          - %s",
+			 _("choose all items"));
+	color_fprintf_ln(stdout, help_color, "           - %s",
+			 _("(empty) finish selecting"));
 }
 
 struct print_command_item_data {
@@ -539,7 +632,8 @@ static void print_command_item(int i, int selected, struct prefix_item *item,
 struct command_item {
 	struct prefix_item item;
 	int (*command)(struct add_i_state *s, const struct pathspec *ps,
-		       struct file_list *files, struct list_options *opts);
+		       struct file_list *files,
+		       struct list_and_choose_options *opts);
 };
 
 static void command_prompt_help(struct add_i_state *s)
@@ -564,17 +658,20 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	};
 	struct command_item
 		status = { { "status" }, run_status },
+		update = { { "update" }, run_update },
 		help = { { "help" }, run_help };
 	struct command_item *commands[] = {
-		&status,
+		&status, &update,
 		&help
 	};
 
 	struct print_file_item_data print_file_item_data = {
-		"%12s %12s %s", STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
+		"%12s %12s %s", NULL, NULL,
+		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
 	};
-	struct list_options opts = {
-		0, NULL, print_file_item, &print_file_item_data
+	struct list_and_choose_options opts = {
+		{ 0, NULL, print_file_item, &print_file_item_data },
+		NULL, 0, choose_prompt_help
 	};
 	struct strbuf header = STRBUF_INIT;
 	struct file_list files = { NULL };
@@ -595,11 +692,13 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		data.color = "[";
 		data.reset = "]";
 	}
+	print_file_item_data.color = data.color;
+	print_file_item_data.reset = data.reset;
 
 	strbuf_addstr(&header, "      ");
 	strbuf_addf(&header, print_file_item_data.modified_fmt,
 		    _("staged"), _("unstaged"), _("path"));
-	opts.header = header.buf;
+	opts.list_opts.header = header.buf;
 
 	repo_refresh_and_write_index(r, REFRESH_QUIET, 1);
 	if (run_status(&s, ps, &files, &opts) < 0)
@@ -619,6 +718,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 
 	release_file_list(&files);
 	strbuf_release(&print_file_item_data.buf);
+	strbuf_release(&print_file_item_data.name);
 	strbuf_release(&print_file_item_data.index);
 	strbuf_release(&print_file_item_data.worktree);
 	strbuf_release(&header);
