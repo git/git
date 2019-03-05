@@ -5131,6 +5131,8 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "binary", options, NULL,
 			       N_("output a binary diff that can be applied"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG, diff_opt_binary),
+		OPT_BOOL(0, "full-index", &options->flags.full_index,
+			 N_("show full pre- and post-image object names on the \"index\" lines")),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5244,9 +5246,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* flags options */
-	if (!strcmp(arg, "--full-index"))
-		options->flags.full_index = 1;
-	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text"))
+	if (!strcmp(arg, "-a") || !strcmp(arg, "--text"))
 		options->flags.text = 1;
 	else if (!strcmp(arg, "-R"))
 		options->flags.reverse_diff = 1;
