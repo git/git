@@ -4793,8 +4793,6 @@ static int skip_unnecessary_picks(struct repository *r, struct object_id *output
 	return 0;
 }
 
-static int todo_list_rearrange_squash(struct todo_list *todo_list);
-
 int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
 		    const char *onto, const char *orig_head, struct string_list *commands,
@@ -4906,7 +4904,7 @@ define_commit_slab(commit_todo_item, struct todo_item *);
  * message will have to be retrieved from the commit (as the oneline in the
  * script cannot be trusted) in order to normalize the autosquash arrangement.
  */
-static int todo_list_rearrange_squash(struct todo_list *todo_list)
+int todo_list_rearrange_squash(struct todo_list *todo_list)
 {
 	struct hashmap subject2item;
 	int rearranged = 0, *next, *tail, i, nr = 0, alloc = 0;
@@ -5042,29 +5040,5 @@ static int todo_list_rearrange_squash(struct todo_list *todo_list)
 
 	clear_commit_todo_item(&commit_todo);
 
-	return 0;
-}
-
-int rearrange_squash_in_todo_file(struct repository *r)
-{
-	const char *todo_file = rebase_path_todo();
-	struct todo_list todo_list = TODO_LIST_INIT;
-	int res = 0;
-
-	if (strbuf_read_file_or_whine(&todo_list.buf, todo_file) < 0)
-		return -1;
-	if (todo_list_parse_insn_buffer(r, todo_list.buf.buf, &todo_list) < 0) {
-		todo_list_release(&todo_list);
-		return -1;
-	}
-
-	res = todo_list_rearrange_squash(&todo_list);
-	if (!res)
-		res = todo_list_write_to_file(r, &todo_list, todo_file, NULL, NULL, -1, 0);
-
-	todo_list_release(&todo_list);
-
-	if (res)
-		return error_errno(_("could not write '%s'."), todo_file);
 	return 0;
 }
