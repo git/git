@@ -5066,6 +5066,32 @@ static int diff_opt_unified(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_word_diff(const struct option *opt,
+			      const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	if (arg) {
+		if (!strcmp(arg, "plain"))
+			options->word_diff = DIFF_WORDS_PLAIN;
+		else if (!strcmp(arg, "color")) {
+			options->use_color = 1;
+			options->word_diff = DIFF_WORDS_COLOR;
+		}
+		else if (!strcmp(arg, "porcelain"))
+			options->word_diff = DIFF_WORDS_PORCELAIN;
+		else if (!strcmp(arg, "none"))
+			options->word_diff = DIFF_WORDS_NONE;
+		else
+			return error(_("bad --word-diff argument: %s"), arg);
+	} else {
+		if (options->word_diff == DIFF_WORDS_NONE)
+			options->word_diff = DIFF_WORDS_PLAIN;
+	}
+	return 0;
+}
+
 static void prep_parse_options(struct diff_options *options)
 {
 	struct option parseopts[] = {
@@ -5228,6 +5254,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "anchored", options, N_("<text>"),
 			       N_("generate diff using the \"anchored diff\" algorithm"),
 			       PARSE_OPT_NONEG, diff_opt_anchored),
+		OPT_CALLBACK_F(0, "word-diff", options, N_("<mode>"),
+			       N_("show word diff, using <mode> to delimit changed words"),
+			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG, diff_opt_word_diff),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5290,24 +5319,6 @@ int diff_opt_parse(struct diff_options *options,
 	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
-	}
-	else if (!strcmp(arg, "--word-diff")) {
-		if (options->word_diff == DIFF_WORDS_NONE)
-			options->word_diff = DIFF_WORDS_PLAIN;
-	}
-	else if (skip_prefix(arg, "--word-diff=", &arg)) {
-		if (!strcmp(arg, "plain"))
-			options->word_diff = DIFF_WORDS_PLAIN;
-		else if (!strcmp(arg, "color")) {
-			options->use_color = 1;
-			options->word_diff = DIFF_WORDS_COLOR;
-		}
-		else if (!strcmp(arg, "porcelain"))
-			options->word_diff = DIFF_WORDS_PORCELAIN;
-		else if (!strcmp(arg, "none"))
-			options->word_diff = DIFF_WORDS_NONE;
-		else
-			die("bad --word-diff argument: %s", arg);
 	}
 	else if ((argcount = parse_long_opt("word-diff-regex", av, &optarg))) {
 		if (options->word_diff == DIFF_WORDS_NONE)
