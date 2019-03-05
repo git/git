@@ -240,7 +240,9 @@ Valid `<type>`'s include:
 	output.  The optional `default` parameter is used instead, if
 	there is no color configured for `name`.
 +
-`--type=color [--default=<default>]` is preferred over `--get-color`.
+`--type=color [--default=<default>]` is preferred over `--get-color`
+(but note that `--get-color` will omit the trailing newline printed by
+`--type=color`).
 
 -e::
 --edit::
