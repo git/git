@@ -5124,6 +5124,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_BIT_F(0, "ignore-blank-lines", &options->xdl_opts,
 			  N_("ignore changes whose lines are all blank"),
 			  XDF_IGNORE_BLANK_LINES, PARSE_OPT_NONEG),
+		OPT_BIT(0, "indent-heuristic", &options->xdl_opts,
+			N_("heuristic to shift diff hunk boundaries for easy reading"),
+			XDF_INDENT_HEURISTIC),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5162,11 +5165,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* xdiff options */
-	if (!strcmp(arg, "--indent-heuristic"))
-		DIFF_XDL_SET(options, INDENT_HEURISTIC);
-	else if (!strcmp(arg, "--no-indent-heuristic"))
-		DIFF_XDL_CLR(options, INDENT_HEURISTIC);
-	else if (!strcmp(arg, "--patience")) {
+	if (!strcmp(arg, "--patience")) {
 		int i;
 		options->xdl_opts = DIFF_WITH_ALG(options, PATIENCE_DIFF);
 		/*
