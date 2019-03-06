@@ -1096,6 +1096,12 @@ test_expect_success 'stash -- <subdir> works with binary files' '
 	test_path_is_file subdir/untracked
 '
 
+test_expect_success 'stash with user.name and user.email set works' '
+	test_config user.name "A U Thor" &&
+	test_config user.email "a.u@thor" &&
+	git stash
+'
+
 test_expect_success 'stash works when user.name and user.email are not set' '
 	git reset &&
 	>1 &&
