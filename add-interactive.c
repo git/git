@@ -7,6 +7,7 @@
 #include "refs.h"
 #include "string-list.h"
 #include "lockfile.h"
+#include "dir.h"
 
 struct add_i_state {
 	struct repository *r;
@@ -550,6 +551,7 @@ static int is_valid_prefix(const char *prefix, size_t prefix_len)
 struct print_file_item_data {
 	const char *modified_fmt, *color, *reset;
 	struct strbuf buf, name, index, worktree;
+	unsigned only_names:1;
 };
 
 static void print_file_item(int i, int selected, struct string_list_item *item,
@@ -571,6 +573,12 @@ static void print_file_item(int i, int selected, struct string_list_item *item,
 			    (int)c->prefix_length, item->string, d->reset,
 			    item->string + c->prefix_length);
 		highlighted = d->name.buf;
+	}
+
+	if (d->only_names) {
+		printf("%c%2d: %s", selected ? '*' : ' ', i + 1,
+		       highlighted ? highlighted : item->string);
+		return;
 	}
 
 	render_adddel(&d->worktree, &c->worktree, _("nothing"));
@@ -752,6 +760,88 @@ finish_revert:
 	return res;
 }
 
+static int get_untracked_files(struct repository *r,
+			       struct prefix_item_list *files,
+			       const struct pathspec *ps)
+{
+	struct dir_struct dir = { 0 };
+	size_t i;
+	struct strbuf buf = STRBUF_INIT;
+
+	if (repo_read_index(r) < 0)
+		return error(_("could not read index"));
+
+	prefix_item_list_clear(files);
+	setup_standard_excludes(&dir);
+	add_pattern_list(&dir, EXC_CMDL, "--exclude option");
+	fill_directory(&dir, r->index, ps);
+
+	for (i = 0; i < dir.nr; i++) {
+		struct dir_entry *ent = dir.entries[i];
+
+		if (index_name_is_other(r->index, ent->name, ent->len)) {
+			strbuf_reset(&buf);
+			strbuf_add(&buf, ent->name, ent->len);
+			add_file_item(&files->items, buf.buf);
+		}
+	}
+
+	strbuf_release(&buf);
+	return 0;
+}
+
+static int run_add_untracked(struct add_i_state *s, const struct pathspec *ps,
+		      struct prefix_item_list *files,
+		      struct list_and_choose_options *opts)
+{
+	struct print_file_item_data *d = opts->list_opts.print_item_data;
+	int res = 0, fd;
+	size_t count, i;
+	struct lock_file index_lock;
+
+	if (get_untracked_files(s->r, files, ps) < 0)
+		return -1;
+
+	if (!files->items.nr) {
+		printf(_("No untracked files.\n"));
+		goto finish_add_untracked;
+	}
+
+	opts->prompt = N_("Add untracked");
+	d->only_names = 1;
+	count = list_and_choose(s, files, opts);
+	d->only_names = 0;
+	if (count <= 0)
+		goto finish_add_untracked;
+
+	fd = repo_hold_locked_index(s->r, &index_lock, LOCK_REPORT_ON_ERROR);
+	if (fd < 0) {
+		res = -1;
+		goto finish_add_untracked;
+	}
+
+	for (i = 0; i < files->items.nr; i++) {
+		const char *name = files->items.items[i].string;
+		if (files->selected[i] &&
+		    add_file_to_index(s->r->index, name, 0) < 0) {
+			res = error(_("could not stage '%s'"), name);
+			break;
+		}
+	}
+
+	if (!res &&
+	    write_locked_index(s->r->index, &index_lock, COMMIT_LOCK) < 0)
+		res = error(_("could not write index"));
+
+	if (!res)
+		printf(Q_("added %d path\n",
+			  "added %d paths\n", count), (int)count);
+
+finish_add_untracked:
+	putchar('\n');
+	return res;
+}
+
 static int run_help(struct add_i_state *s, const struct pathspec *unused_ps,
 		    struct prefix_item_list *unused_files,
 		    struct list_and_choose_options *opts)
@@ -848,6 +938,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		{ "status", run_status },
 		{ "update", run_update },
 		{ "revert", run_revert },
+		{ "add untracked", run_add_untracked },
 		{ "help", run_help },
 	};
 	struct prefix_item_list commands = PREFIX_ITEM_LIST_INIT;
