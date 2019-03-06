@@ -73,7 +73,7 @@ diff.external::
 	environment variable.  The command is called with parameters
 	as described under "git Diffs" in linkgit:git[1].  Note: if
 	you want to use an external diff program only on a subset of
-	your files, you	might want to use linkgit:gitattributes[5] instead.
+	your files, you might want to use linkgit:gitattributes[5] instead.
 
 diff.ignoreSubmodules::
 	Sets the default value of --ignore-submodules. Note that this

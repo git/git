@@ -536,7 +536,7 @@ $omit_owner::
 
 $per_request_config::
 	If this is set to code reference, it will be run once for each request.
-	You can	set parts of configuration that change per session this way.
+	You can set parts of configuration that change per session this way.
 	For example, one might use the following code in a gitweb configuration
 	file
 +

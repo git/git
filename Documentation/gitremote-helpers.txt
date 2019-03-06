@@ -468,7 +468,7 @@ set by Git if the remote helper has the 'option' capability.
 
 'option dry-run' {'true'|'false'}:
 	If true, pretend the operation completed successfully,
-	but don't actually change any repository data.	For most
+	but don't actually change any repository data.  For most
 	helpers this only applies to the 'push', if supported.
 
 'option servpath <c-style-quoted-path>'::

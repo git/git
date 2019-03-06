@@ -743,7 +743,7 @@ explicitly-given commit or tree.
 
 --filter-print-omitted::
 	Only useful with `--filter=`; prints a list of the objects omitted
-	by the filter.	Object IDs are prefixed with a ``~'' character.
+	by the filter.  Object IDs are prefixed with a ``~'' character.
 
 --missing=<missing-action>::
 	A debug option to help with future "partial clone" development.

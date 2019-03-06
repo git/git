@@ -18,7 +18,7 @@ A `gitattributes` file is a simple text file that gives
 
 Each line in `gitattributes` file is of form:
 
-	pattern	attr1 attr2 ...
+	pattern attr1 attr2 ...
 
 That is, a pattern followed by an attributes list,
 separated by whitespaces. Leading and trailing whitespaces are
