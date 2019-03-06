@@ -507,9 +507,7 @@ int git_ident_config(const char *var, const char *value, void *data)
 
 static void set_env_if(const char *key, const char *value, int *given, int bit)
 {
-	if (*given & bit)
-		BUG("%s was checked before prepare_fallback got called", key);
-	if (getenv(key))
+	if ((*given & bit) || getenv(key))
 		return; /* nothing to do */
 	setenv(key, value, 0);
 	*given |= bit;
