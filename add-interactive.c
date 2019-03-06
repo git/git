@@ -644,6 +644,114 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 	return res;
 }
 
+static void revert_from_diff(struct diff_queue_struct *q,
+			     struct diff_options *opt, void *data)
+{
+	int i, add_flags = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filespec *one = q->queue[i]->one;
+		struct cache_entry *ce;
+
+		if (!(one->mode && !is_null_oid(&one->oid))) {
+			remove_file_from_index(opt->repo->index, one->path);
+			printf(_("note: %s is untracked now.\n"), one->path);
+		} else {
+			ce = make_cache_entry(opt->repo->index, one->mode,
+					      &one->oid, one->path, 0, 0);
+			if (!ce)
+				die(_("make_cache_entry failed for path '%s'"),
+				    one->path);
+			add_index_entry(opt->repo->index, ce, add_flags);
+		}
+	}
+}
+
+static int run_revert(struct add_i_state *s, const struct pathspec *ps,
+		      struct prefix_item_list *files,
+		      struct list_and_choose_options *opts)
+{
+	int res = 0, fd;
+	size_t count, i, j;
+
+	struct object_id oid;
+	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &oid,
+					     NULL);
+	struct lock_file index_lock;
+	const char **paths;
+	struct tree *tree;
+	struct diff_options diffopt = { NULL };
+
+	if (get_modified_files(s->r, INDEX_ONLY, files, ps) < 0)
+		return -1;
+
+	if (!files->items.nr) {
+		putchar('\n');
+		return 0;
+	}
+
+	opts->prompt = N_("Revert");
+	count = list_and_choose(s, files, opts);
+	if (count <= 0)
+		goto finish_revert;
+
+	fd = repo_hold_locked_index(s->r, &index_lock, LOCK_REPORT_ON_ERROR);
+	if (fd < 0) {
+		res = -1;
+		goto finish_revert;
+	}
+
+	if (is_initial)
+		oidcpy(&oid, s->r->hash_algo->empty_tree);
+	else {
+		tree = parse_tree_indirect(&oid);
+		if (!tree) {
+			res = error(_("Could not parse HEAD^{tree}"));
+			goto finish_revert;
+		}
+		oidcpy(&oid, &tree->object.oid);
+	}
+
+	ALLOC_ARRAY(paths, count + 1);
+	for (i = j = 0; i < files->items.nr; i++)
+		if (files->selected[i])
+			paths[j++] = files->items.items[i].string;
+	paths[j] = NULL;
+
+	parse_pathspec(&diffopt.pathspec, 0,
+		       PATHSPEC_PREFER_FULL | PATHSPEC_LITERAL_PATH,
+		       NULL, paths);
+
+	diffopt.output_format = DIFF_FORMAT_CALLBACK;
+	diffopt.format_callback = revert_from_diff;
+	diffopt.flags.override_submodule_config = 1;
+	diffopt.repo = s->r;
+
+	if (do_diff_cache(&oid, &diffopt))
+		res = -1;
+	else {
+		diffcore_std(&diffopt);
+		diff_flush(&diffopt);
+	}
+	free(paths);
+	clear_pathspec(&diffopt.pathspec);
+
+	if (!res && write_locked_index(s->r->index, &index_lock,
+				       COMMIT_LOCK) < 0)
+		res = -1;
+	else
+		res = repo_refresh_and_write_index(s->r, REFRESH_QUIET, 0, 1,
+						   NULL, NULL, NULL);
+
+	if (!res)
+		printf(Q_("reverted %d path\n",
+			  "reverted %d paths\n", count), (int)count);
+
+finish_revert:
+	putchar('\n');
+	return res;
+}
+
 static int run_help(struct add_i_state *s, const struct pathspec *unused_ps,
 		    struct prefix_item_list *unused_files,
 		    struct list_and_choose_options *opts)
@@ -739,6 +847,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	} command_list[] = {
 		{ "status", run_status },
 		{ "update", run_update },
+		{ "revert", run_revert },
 		{ "help", run_help },
 	};
 	struct prefix_item_list commands = PREFIX_ITEM_LIST_INIT;
