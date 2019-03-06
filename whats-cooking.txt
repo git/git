@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2019, #04; Sun, 24)
-X-master-at: 8104ec994ea3849a968b4667d072fedd1e688642
-X-next-at: f09ad664505d66643a151851aa987add29db1009
+Subject: What's cooking in git.git (Mar 2019, #01; Wed, 6)
+X-master-at: 36eb1cb9cfe327583128a4b0abdf9516c2ca815b
+X-next-at: 471c308f928be87428876934301e2b25cb242d19
 
-What's cooking in git.git (Feb 2019, #04; Sun, 24)
+What's cooking in git.git (Mar 2019, #01; Wed, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,15 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.21 has been tagged and pushed out.
-
-I'll be offline for a week, and will reopen the tree for the next
-cycle in Asia/Tokyo timezone after that.  Some topics marked as
-"Will cook in 'next'" will be merged to 'master' then.  This also is
-a good week to nominate the topics that are already in 'next' but
-should be kicked back to 'pu' to allow them to be replaced with a
-better iteration, instead of piling ugly "oops, that was wrong"
-fixes on top.
+The maintenance track will be updated to preprare for 2.21.1 soonish,
+to address breakages with certain versions of msgfmt in 2.21.0; the
+tip of 'next' will also be updated at around the same time.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -28,57 +22,248 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ab/bsd-fixes (2019-02-21) 2 commits
-  (merged to 'next' on 2019-02-21 at 28d0017056)
- + commit-graph tests: fix cryptic unportable "dd" invocation
- + tests: fix unportable "\?" and "\+" regex syntax
+* jk/bisect-final-output (2019-03-01) 3 commits
+ - bisect: make diff-tree output prettier
+ - bisect: fix internal diff-tree config loading
+ - bisect: use string arguments to feed internal diff-tree
 
- Test portability fix.
+ The final report from "git bisect" used to show the suspected
+ culprit using a raw "diff-tree", with which there is no output for
+ a merge commit.  This has been updated to use a more modern and
+ human readable output that still is concise enough.
 
-
-* ab/workaround-dash-bug-in-test (2019-02-13) 1 commit
-  (merged to 'next' on 2019-02-13 at c90e329c70)
- + tests: avoid syntax triggering old dash bug
-
- Test portability fix.
+ Will merge to 'next'.
 
 
-* js/test-tool-gen-nuls (2019-02-19) 2 commits
-  (merged to 'next' on 2019-02-19 at 489765a538)
- + tests: teach the test-tool to generate NUL bytes and use it
- + Revert "t5562: replace /dev/zero with a pipe from generate_zero_bytes"
- (this branch is tangled with mk/t5562-no-input-to-too-large-an-input-test.)
+* jk/fsck-doc (2019-03-05) 2 commits
+ - fsck: always compute USED flags for unreachable objects
+ - doc/fsck: clarify --connectivity-only behavior
 
- Part 3 of the test update, to rewrite "generate stream of NULs" in C.
+ "git fsck --connectivity-only" omits computation necessary to sift
+ the objects that are not reachable from any of the refs into
+ unreachable and dangling.  This is now documented, and also the
+ computation is done in order to show the dangling objects when
+ requested (which is done by default, but can be overridden with
+ the "--no-dangling" option).
 
-
-* mk/t5562-do-not-reuse-output-files (2019-02-19) 1 commit
-  (merged to 'next' on 2019-02-19 at 2978db23ef)
- + t5562: do not reuse output files
-
- Part 1 of the t5562 breakage fix.
+ Will merge to 'next'.
 
 
-* mk/t5562-no-input-to-too-large-an-input-test (2019-02-19) 2 commits
-  (merged to 'next' on 2019-02-19 at 1134c39218)
- + t5562: do not depend on /dev/zero
- + Revert "t5562: replace /dev/zero with a pipe from generate_zero_bytes"
- (this branch is tangled with js/test-tool-gen-nuls.)
+* jk/no-sigpipe-during-network-transport (2019-03-05) 2 commits
+ - fetch: ignore SIGPIPE during network operation
+ - fetch: avoid calling write_or_die()
 
- Part 2 of the fix to t5562 regression, to avoid feeding
- http-backend from a pipe.
+ On platforms where "git fetch" is killed with SIGPIPE (e.g. OSX),
+ the upload-pack that runs on the other end that hangs up after
+ detecting an error could cause "git fetch" to die with a signal,
+ which led to a flakey test.  "git fetch" now ignores SIGPIPE during
+ the network portion of its operation (this is not a problem as we
+ check the return status from our write(2)s).
+
+ Will merge to 'next'.
 
 
-* yn/checkout-doc-fix (2019-02-23) 1 commit
-  (merged to 'next' on 2019-02-23 at d72a40f470)
- + checkout doc: fix an unmatched double-quote pair
+* jk/virtual-objects-do-exist (2019-03-05) 1 commit
+ - rev-list: allow cached objects in existence check
 
- Doc fix.
+ A recent update broke "is this object available to us?" check for
+ well-known objects like an empty tree (which should yield "yes",
+ even when there is no on-disk object for an empty tree), which has
+ been corrected.
+
+ Will merge to 'next'.
+
+
+* js/anonymize-remote-curl-diag (2019-03-06) 2 commits
+ - remote-curl: mark all error messages for translation
+ - curl: anonymize URLs in error messages and warnings
+
+ remote-http transport did not anonymize URLs reported in its error
+ messages at places.
+
+ Will merge to 'next' the bottom one.
+ The i18n of die() messages conflicts with topics in flight, so will
+ be dealt with separately when the tree is more quiescent.
+
+
+* js/find-lib-h-with-ls-files-when-possible (2019-03-05) 1 commit
+ - Makefile: use `git ls-files` to list header files, if possible
+
+ The Makefile uses 'find' utility to enumerate all the *.h header
+ files, which is expensive on platforms with slow filesystems; it
+ now optionally uses "ls-files" if working within a repository,
+ which is a trick similar to how all sources are enumerated to run
+ ETAGS on.
+
+ Will merge to 'next'.
+
+
+* js/rebase-orig-head-fix (2019-03-04) 4 commits
+ - built-in rebase: set ORIG_HEAD just once, before the rebase
+ - built-in rebase: demonstrate that ORIG_HEAD is not set correctly
+ - built-in rebase: use the correct reflog when switching branches
+ - built-in rebase: no need to check out `onto` twice
+
+ "gir rebase" that was reimplemented in C did not set ORIG_HEAD
+ correctly, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* js/rebase-recreate-merge (2019-03-01) 1 commit
+ - rebase docs: fix "gitlink" typo
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* js/stress-test-ui-tweak (2019-03-04) 2 commits
+ - tests: introduce --stress-jobs=<N>
+ - tests: let --stress-limit=<N> imply --stress
+
+ Dev support.
+
+ Will merge to 'next'.
+
+
+* js/untravis-windows (2019-03-01) 1 commit
+ - travis: remove the hack to build the Windows job on Azure Pipelines
+
+ Dev support.
+
+ Will merge to 'next'.
+
+
+* ma/asciidoctor-fixes (2019-03-01) 3 commits
+ - asciidoctor-extensions: fix spurious space after linkgit
+ - Documentation/Makefile: add missing dependency on asciidoctor-extensions
+ - Documentation/Makefile: add missing xsl dependencies for manpages
+
+ Build fix around use of asciidoctor instead of asciidoc
+
+ Will merge to 'next'.
+
+
+* nd/worktree-name-sanitization (2019-03-01) 1 commit
+ - worktree add: sanitize worktree names
+
+ Need to pick up a newer version.
+
+
+* ra/t3600-test-path-funcs (2019-03-04) 3 commits
+ - t3600: use helpers to replace test -d/f/e/s <path>
+ - t3600: restructure code according to contemporary guidelines
+ - test functions: add function `test_file_not_empty`
+
+ A GSoC micro.
+
+ Need to pick up a newer version.
+
+
+* rd/gc-prune-doc-fix (2019-03-03) 1 commit
+ - docs/git-gc: fix typo "--prune=all" to "--prune=now"
+
+ Doxfix.
+
+ Will merge to 'next'.
+
+
+* dl/reset-doc-no-wrt-abbrev (2019-03-06) 1 commit
+ - git-reset.txt: clarify documentation
+
+
+* ja/dir-rename-doc-markup-fix (2019-03-06) 1 commit
+ - Doc: fix misleading asciidoc formating
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* ds/midx-expire-repack (2019-01-27) 10 commits
+ - midx: add test that 'expire' respects .keep files
+ - multi-pack-index: test expire while adding packs
+ - midx: implement midx_repack()
+ - multi-pack-index: prepare 'repack' subcommand
+ - multi-pack-index: implement 'expire' subcommand
+ - midx: refactor permutation logic and pack sorting
+ - midx: simplify computation of pack name lengths
+ - multi-pack-index: prepare for 'expire' subcommand
+ - Docs: rearrange subcommands for multi-pack-index
+ - repack: refactor pack deletion for future use
+
+ "git multi-pack-index expire/repack" are new subcommands that
+ consult midx file and are used to drop unused pack files and
+ coalesce small pack files that are still in use.
+
+ Comments?
+
+
+* jt/test-protocol-version (2019-02-06) 8 commits
+ - t5552: compensate for v2 filtering ref adv.
+ - tests: fix protocol version for overspecifications
+ - t5700: only run with protocol version 1
+ - t5512: compensate for v0 only sending HEAD symrefs
+ - t5503: fix overspecification of trace expectation
+ - tests: always test fetch of unreachable with v0
+ - tests: define GIT_TEST_PROTOCOL_VERSION
+ - Merge branch 'js/protocol-advertise-multi' into jt/test-protocol-version
+ (this branch uses js/protocol-advertise-multi.)
+
+ Help developers by making it easier to run most of the tests under
+ different versions of over-the-wire protocols.
+
+ Blocked by js/protocol-advertise-multi
+
+
+* js/protocol-advertise-multi (2018-12-28) 1 commit
+ - protocol: advertise multiple supported versions
+ (this branch is used by jt/test-protocol-version.)
+
+ The transport layer has been updated so that the protocol version
+ used can be negotiated between the parties, by the initiator
+ listing the protocol versions it is willing to talk, and the other
+ side choosing from one of them.
+
+ Expecting a reroll.
+ cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+
+* dl/remote-save-to-push (2018-12-11) 1 commit
+ - remote: add --save-to-push option to git remote set-url
+
+ "git remote set-url" learned a new option that moves existing value
+ of the URL field to pushURL field of the remote before replacing
+ the URL field with a new value.
+
+ Anybody who wants to champion this topic?
+ I am personally not yet quite convinced if this is worth pursuing.
+
+
+* nb/branch-show-other-worktrees-head (2019-02-01) 3 commits
+ - branch: add an extra verbose output displaying worktree path for refs checked out in a linked worktree
+ - branch: mark and color a branch differently if it is checked out in a linked worktree
+ - ref-filter: add worktreepath atom
+
+ "git branch --list" learned to show branches that are checked out
+ in other worktrees connected to the same repository prefixed with
+ '+', similar to the way the currently checked out branch is shown
+ with '*' in front.
+
+ The top one probably deserves retitling.
+ The second one is of dubious value.
+
+--------------------------------------------------
+[Cooking]
 
 * bp/post-index-change-hook (2019-02-15) 1 commit
   (merged to 'next' on 2019-02-23 at 70cc07cebe)
@@ -97,7 +282,20 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
+
+
+* jc/format-patch-error-check (2019-02-22) 3 commits
+ - format-patch: --no-clobber refrains from overwriting output files
+ - format-patch: notice failure to open cover letter for writing
+ - builtin/log: downcase the beginning of error messages
+
+ "git format-patch" used overwrite an existing patch/cover-letter
+ file.  A new "--no-clobber" option stops it.
+
+ Will merge to 'next' after dropping the tip commit.
+ I think the bottom two were indenendently good changes; the top one
+ was met with "Meh" by reviewer(s), and I tend to agree.
 
 
 * jk/diff-no-index-initialize (2019-02-24) 1 commit
@@ -108,7 +306,7 @@ of the repositories listed at
  --ext-diff and --textconv, but so far these have been ignored,
  which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/prune-optim (2019-02-14) 4 commits
@@ -121,7 +319,7 @@ of the repositories listed at
  "git prune" has been taught to take advantage of reachability
  bitmap when able.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/unused-params (2019-02-14) 10 commits
@@ -139,11 +337,11 @@ of the repositories listed at
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* jt/http-auth-proto-v2-fix (2019-02-22) 5 commits
-  (merged to 'next' on 2019-02-23 at ea87895fa7)
+* jt/http-auth-proto-v2-fix (2019-03-03) 5 commits
+  (merged to 'next' on 2019-03-03 at d0fdc53f3a)
  + remote-curl: use post_rpc() for protocol v2 also
  + remote-curl: refactor reading into rpc_state's buf
  + remote-curl: reduce scope of rpc_state.result
@@ -154,7 +352,7 @@ of the repositories listed at
  a bug in the latter (lack of authentication retry) and generally
  improves the code base.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * en/merge-options-doc (2019-02-21) 1 commit
@@ -163,7 +361,7 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/receive-pack-use-after-free-fix (2019-02-20) 1 commit
@@ -172,7 +370,7 @@ of the repositories listed at
 
  Memfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/diff-parseopt-2 (2019-02-21) 21 commits
@@ -203,13 +401,7 @@ of the repositories listed at
  Second batch to teach the diff machinery to use the parse-options
  API.
 
- Will cook in 'next'.
-
-
-* jc/format-patch-error-check (2019-02-22) 3 commits
- - format-patch: --no-clobber refrains from overwriting output files
- - format-patch: notice failure to open cover letter for writing
- - builtin/log: downcase the beginning of error messages
+ Will merge to 'master'.
 
 
 * nd/completion-more-parameters (2019-02-20) 1 commit
@@ -219,7 +411,7 @@ of the repositories listed at
  The command line completion (in contrib/) has been taught to
  complete more subcommand parameters.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/no-more-check-racy (2019-02-22) 1 commit
@@ -228,7 +420,7 @@ of the repositories listed at
 
  Unused code removal.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * rd/doc-hook-used-in-sample (2019-02-21) 1 commit
@@ -251,8 +443,11 @@ of the repositories listed at
  CFLAGS now can be tweked when invoking Make while using
  DEVELOPER=YesPlease; this did not work well before.
 
+ Will merge to 'next'.
 
-* jt/fetch-cdn-offload (2019-02-24) 8 commits
+
+* jt/fetch-cdn-offload (2019-03-01) 9 commits
+ - fixup! upload-pack: refactor reading of pack-objects out
  - SQUASH???
  - upload-pack: send part of packfile response as uri
  - upload-pack: refactor reading of pack-objects out
@@ -265,8 +460,6 @@ of the repositories listed at
  WIP for allowing a response to "git fetch" to instruct the bulk of
  the pack contents to be instead taken from elsewhere (aka CDN).
 
---------------------------------------------------
-[Cooking]
 
 * dl/submodule-set-branch (2019-02-08) 3 commits
  - submodule: teach set-branch subcommand
@@ -285,7 +478,7 @@ of the repositories listed at
 
  Test doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/split-index-null-base-fix (2019-02-13) 1 commit
@@ -294,7 +487,7 @@ of the repositories listed at
 
  Split-index fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * rj/prune-packed-excess-args (2019-02-11) 1 commit
@@ -304,14 +497,16 @@ of the repositories listed at
  "git prune-packed" did not notice and complain against excess
  arguments given from the command line, which now it does.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/doc-symref-in-proto-v1 (2019-02-21) 1 commit
   (merged to 'next' on 2019-02-21 at c7ca3bb974)
  + protocol-capabilities.txt: document symref
 
- Will cook in 'next'.
+ Doc update.
+
+ Will merge to 'master'.
 
 
 * dl/complete-submodule-absorbgitdirs (2019-02-06) 1 commit
@@ -321,24 +516,7 @@ of the repositories listed at
  Command-line completion (in contrib/) learned to tab-complete the
  "git submodule absorbgitdirs" subcommand.
 
- Will cook in 'next'.
-
-
-* jt/test-protocol-version (2019-02-06) 8 commits
- - t5552: compensate for v2 filtering ref adv.
- - tests: fix protocol version for overspecifications
- - t5700: only run with protocol version 1
- - t5512: compensate for v0 only sending HEAD symrefs
- - t5503: fix overspecification of trace expectation
- - tests: always test fetch of unreachable with v0
- - tests: define GIT_TEST_PROTOCOL_VERSION
- - Merge branch 'js/protocol-advertise-multi' into jt/test-protocol-version
- (this branch uses js/protocol-advertise-multi.)
-
- Help developers by making it easier to run most of the tests under
- different versions of over-the-wire protocols.
-
- Blocked by js/protocol-advertise-multi
+ Will merge to 'master'.
 
 
 * dm/some-stdio-functions-are-macro-on-freebsd (2019-02-01) 1 commit
@@ -359,7 +537,7 @@ of the repositories listed at
  merge involved renames.  A new option adds the paths in the
  original trees to the output.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ds/commit-graph-format-v2 (2019-01-29) 8 commits
@@ -398,7 +576,7 @@ of the repositories listed at
 
  A more structured way to obtain execution trace has been added.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sx/evolve (2019-02-15) 8 commits
@@ -451,8 +629,7 @@ of the repositories listed at
  handcrafted option parser.  This is being rewritten to use the
  parse-options API.
 
- Will cook in 'next'.
- Looking good.
+ Will merge to 'master'.
 
 
 * sc/pack-redundant (2019-02-04) 6 commits
@@ -467,7 +644,7 @@ of the repositories listed at
  Update the implementation of pack-redundant for performance in a
  repository with many packfiles.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/config-move-to (2019-01-14) 7 commits
@@ -482,14 +659,14 @@ of the repositories listed at
  Needs review.
 
 
-* ma/clear-repository-format (2019-01-23) 2 commits
+* ma/clear-repository-format (2019-03-01) 2 commits
  - setup: fix memory leaks with `struct repository_format`
  - setup: free old value before setting `work_tree`
 
  The setup code has been cleaned up to avoid leaks around the
  repository_format structure.
 
- cf. <20190124001450.GR423984@genre.crustytoothpaste.net>
+ Will merge to 'next'.
 
 
 * wh/author-committer-ident-config (2019-02-04) 1 commit
@@ -500,26 +677,7 @@ of the repositories listed at
  have been introduced to override user.{name,email} in more specific
  cases.
 
- Will cook in 'next'.
-
-
-* ds/midx-expire-repack (2019-01-27) 10 commits
- - midx: add test that 'expire' respects .keep files
- - multi-pack-index: test expire while adding packs
- - midx: implement midx_repack()
- - multi-pack-index: prepare 'repack' subcommand
- - multi-pack-index: implement 'expire' subcommand
- - midx: refactor permutation logic and pack sorting
- - midx: simplify computation of pack name lengths
- - multi-pack-index: prepare for 'expire' subcommand
- - Docs: rearrange subcommands for multi-pack-index
- - repack: refactor pack deletion for future use
-
- "git multi-pack-index expire/repack" are new subcommands that
- consult midx file and are used to drop unused pack files and
- coalesce small pack files that are still in use.
-
- Comments?
+ Will merge to 'master'.
 
 
 * tg/checkout-no-overlay (2019-02-04) 9 commits
@@ -558,7 +716,7 @@ of the repositories listed at
  out just like the list of updated paths and other information to
  help the user explain the merge better.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * aw/pretty-trailers (2019-01-29) 7 commits
@@ -575,7 +733,7 @@ of the repositories listed at
  optionally pick trailers selectively by keyword, show only values,
  etc.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
@@ -588,58 +746,13 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* dl/remote-save-to-push (2018-12-11) 1 commit
- - remote: add --save-to-push option to git remote set-url
-
- "git remote set-url" learned a new option that moves existing value
- of the URL field to pushURL field of the remote before replacing
- the URL field with a new value.
-
- I am personally not yet quite convinced if this is worth pursuing.
-
-
-* js/protocol-advertise-multi (2018-12-28) 1 commit
- - protocol: advertise multiple supported versions
- (this branch is used by jt/test-protocol-version.)
-
- The transport layer has been updated so that the protocol version
- used can be negotiated between the parties, by the initiator
- listing the protocol versions it is willing to talk, and the other
- side choosing from one of them.
-
- Expecting a reroll.
- cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
-
-
-* nb/branch-show-other-worktrees-head (2019-02-01) 3 commits
- - branch: add an extra verbose output displaying worktree path for refs checked out in a linked worktree
- - branch: mark and color a branch differently if it is checked out in a linked worktree
- - ref-filter: add worktreepath atom
-
- "git branch --list" learned to show branches that are checked out
- in other worktrees connected to the same repository prefixed with
- '+', similar to the way the currently checked out branch is shown
- with '*' in front.
-
- The top one probably deserves retitling.
- The second one is of dubious value.
-
-
 * du/branch-show-current (2018-10-26) 1 commit
   (merged to 'next' on 2019-02-08 at e662ed4aee)
  + branch: introduce --show-current display option
 
  "git branch" learned a new subcommand "--show-current".
 
- Will cook in 'next'.
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
+ Will merge to 'master'.
 
 
 * ag/sequencer-reduce-rewriting-todo (2019-01-29) 16 commits
@@ -667,9 +780,7 @@ of the repositories listed at
  around in-core to avoid rewriting the same file over and over
  unnecessarily.
 
- Was still being worked on, but seems to have stalled.
- cf. <c5e3c1cc-12fa-ddf6-7008-ae47659ddc19@gmail.com>
- cf. <97f77aca-bd19-f763-349a-de40c4b94161@talktalk.net>
+ Need to pick up a newer version.
 
 
 * js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
@@ -682,9 +793,7 @@ of the repositories listed at
  cf. <e5b2900a-0558-d3bf-8ea1-d526b078bbc2@talktalk.net>
 
 
-* ps/stash-in-c (2019-02-04) 29 commits
- - strbuf_vinsertf: provide the correct buffer size to vsnprintf
- - stash: fix segmentation fault when files were added with intent
+* ps/stash-in-c (2019-03-01) 28 commits
  - tests: add a special setup where stash.useBuiltin is off
  - stash: optionally use the scripted version again
  - stash: add back the original, scripted `git stash`
@@ -705,6 +814,7 @@ of the repositories listed at
  - stash: mention options in `show` synopsis
  - stash: add tests for `git stash show` config
  - stash: rename test cases to be more descriptive
+ - t3903: add test for --intent-to-add file
  - t3903: modernize style
  - stash: improve option parsing test coverage
  - ident: add the ability to provide a "fallback identity"
@@ -715,8 +825,7 @@ of the repositories listed at
 
  "git stash" rewritten in C.
 
- Still with known breakages.
- cf. <20190208113059.GV10587@szeder.dev>
+ Will merge to 'next'.
 
 
 * pw/add-p-select (2018-07-26) 4 commits
