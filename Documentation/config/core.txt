@@ -414,7 +414,7 @@ Common unit suffixes of 'k', 'm', or 'g' are supported.
 core.excludesFile::
 	Specifies the pathname to the file that contains patterns to
 	describe paths that are not meant to be tracked, in addition
-	to '.gitignore' (per-directory) and '.git/info/exclude'.
+	to `.gitignore` (per-directory) and `.git/info/exclude`.
 	Defaults to `$XDG_CONFIG_HOME/git/ignore`.
 	If `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/git/ignore`
 	is used instead. See linkgit:gitignore[5].
@@ -429,8 +429,8 @@ core.askPass::
 	command-line argument and write the password on its STDOUT.
 
 core.attributesFile::
-	In addition to '.gitattributes' (per-directory) and
-	'.git/info/attributes', Git looks into this file for attributes
+	In addition to `.gitattributes` (per-directory) and
+	`.git/info/attributes`, Git looks into this file for attributes
 	(see linkgit:gitattributes[5]). Path expansions are made the same
 	way as for `core.excludesFile`. Its default value is
 	`$XDG_CONFIG_HOME/git/attributes`. If `$XDG_CONFIG_HOME` is either not
@@ -438,10 +438,10 @@ core.attributesFile::
 
 core.hooksPath::
 	By default Git will look for your hooks in the
-	'$GIT_DIR/hooks' directory. Set this to different path,
-	e.g. '/etc/git/hooks', and Git will try to find your hooks in
-	that directory, e.g. '/etc/git/hooks/pre-receive' instead of
-	in '$GIT_DIR/hooks/pre-receive'.
+	`$GIT_DIR/hooks` directory. Set this to different path,
+	e.g. `/etc/git/hooks`, and Git will try to find your hooks in
+	that directory, e.g. `/etc/git/hooks/pre-receive` instead of
+	in `$GIT_DIR/hooks/pre-receive`.
 +
 The path can be either absolute or relative. A relative path is
 taken as relative to the directory where the hooks are run (see

@@ -189,7 +189,7 @@ to other tags will be rewritten to point to the underlying commit.
 	rewriting.  When applying a tree filter, the command needs to
 	temporarily check out the tree to some directory, which may consume
 	considerable space in case of large projects.  By default it
-	does this in the '.git-rewrite/' directory but you can override
+	does this in the `.git-rewrite/` directory but you can override
 	that choice by this parameter.
 
 -f::

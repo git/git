@@ -38,7 +38,7 @@ This may be either an absolute URL, or (if it begins with ./
 or ../), the location relative to the superproject's default remote
 repository (Please note that to specify a repository 'foo.git'
 which is located right next to a superproject 'bar.git', you'll
-have to use '../foo.git' instead of './foo.git' - as one might expect
+have to use `../foo.git` instead of `./foo.git` - as one might expect
 when following the rules for relative URLs - because the evaluation
 of relative URLs in Git is identical to that of relative directories).
 +

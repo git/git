@@ -50,11 +50,11 @@ following order:
  * built-in values (some set during build stage),
 
  * common system-wide configuration file (defaults to
-   '/etc/gitweb-common.conf'),
+   `/etc/gitweb-common.conf`),
 
  * either per-instance configuration file (defaults to 'gitweb_config.perl'
    in the same directory as the installed gitweb), or if it does not exists
-   then fallback system-wide configuration file (defaults to '/etc/gitweb.conf').
+   then fallback system-wide configuration file (defaults to `/etc/gitweb.conf`).
 
 Values obtained in later configuration files override values obtained earlier
 in the above sequence.
@@ -82,7 +82,7 @@ You can include other configuration file using read_config_file()
 subroutine.  For example, one might want to put gitweb configuration
 related to access control for viewing repositories via Gitolite (one
 of Git repository management tools) in a separate file, e.g. in
-'/etc/gitweb-gitolite.conf'.  To include it, put
+`/etc/gitweb-gitolite.conf`.  To include it, put
 
 --------------------------------------------------
 read_config_file("/etc/gitweb-gitolite.conf");
@@ -142,7 +142,7 @@ and its path_info based equivalent
 http://git.example.com/gitweb.cgi/foo/bar.git
 ------------------------------------------------
 +
-will map to the path '/srv/git/foo/bar.git' on the filesystem.
+will map to the path `/srv/git/foo/bar.git` on the filesystem.
 
 $projects_list::
 	Name of a plain text file listing projects, or a name of directory
@@ -234,9 +234,9 @@ $GIT::
 
 $mimetypes_file::
 	File to use for (filename extension based) guessing of MIME types before
-	trying '/etc/mime.types'.  *NOTE* that this path, if relative, is taken
+	trying `/etc/mime.types`.  *NOTE* that this path, if relative, is taken
 	as relative to the current Git repository, not to CGI script.  If unset,
-	only '/etc/mime.types' is used (if present on filesystem).  If no mimetypes
+	only `/etc/mime.types` is used (if present on filesystem).  If no mimetypes
 	file is found, mimetype guessing based on extension of file is disabled.
 	Unset by default.
 
@@ -297,8 +297,8 @@ relative to base URI of gitweb.
 +
 This list should contain the URI of gitweb's standard stylesheet.  The default
 URI of gitweb stylesheet can be set at build time using the `GITWEB_CSS`
-makefile variable.  Its default value is 'static/gitweb.css'
-(or 'static/gitweb.min.css' if the `CSSMIN` variable is defined,
+makefile variable.  Its default value is `static/gitweb.css`
+(or `static/gitweb.min.css` if the `CSSMIN` variable is defined,
 i.e. if CSS minifier is used during build).
 +
 *Note*: there is also a legacy `$stylesheet` configuration variable, which was
@@ -311,7 +311,7 @@ $logo::
 	is displayed in the top right corner of each gitweb page and used as
 	a logo for the Atom feed.  Relative to the base URI of gitweb (as a path).
 	Can be adjusted when building gitweb using `GITWEB_LOGO` variable
-	By default set to 'static/git-logo.png'.
+	By default set to `static/git-logo.png`.
 
 $favicon::
 	Points to the location where you put 'git-favicon.png' on your web
@@ -320,7 +320,7 @@ $favicon::
 	may display them in the browser's URL bar and next to the site name in
 	bookmarks.  Relative to the base URI of gitweb.  Can be adjusted at
 	build time using `GITWEB_FAVICON` variable.
-	By default set to 'static/git-favicon.png'.
+	By default set to `static/git-favicon.png`.
 
 $javascript::
 	Points to the location where you put 'gitweb.js' on your web server,
@@ -328,7 +328,7 @@ $javascript::
 	Relative to the base URI of gitweb.  Can be set at build time using
 	the `GITWEB_JS` build-time configuration variable.
 +
-The default value is either 'static/gitweb.js', or 'static/gitweb.min.js' if
+The default value is either `static/gitweb.js`, or `static/gitweb.min.js` if
 the `JSMIN` build variable was defined, i.e. if JavaScript minifier was used
 at build time.  *Note* that this single file is generated from multiple
 individual JavaScript "modules".
@@ -444,7 +444,7 @@ $default_blob_plain_mimetype::
 	doesn't result in some other type; by default "text/plain".
 	Gitweb guesses mimetype of a file to display based on extension
 	of its filename, using `$mimetypes_file` (if set and file exists)
-	and '/etc/mime.types' files (see *mime.types*(5) manpage; only
+	and `/etc/mime.types` files (see *mime.types*(5) manpage; only
 	filename extension rules are supported by gitweb).
 
 $default_text_plain_charset::
@@ -486,7 +486,7 @@ affects how "summary" pages look like, or load limiting).
 	(for example one for `git://` protocol, and one for `http://`
 	protocol).
 +
-Note that per repository configuration can be set in '$GIT_DIR/cloneurl'
+Note that per repository configuration can be set in `$GIT_DIR/cloneurl`
 file, or as values of multi-value `gitweb.url` configuration variable in
 project config.  Per-repository configuration takes precedence over value
 composed from `@git_base_url_list` elements and project name.
@@ -520,7 +520,7 @@ $maxload::
 	If the server load exceeds this value then gitweb will return
 	"503 Service Unavailable" error.  The server load is taken to be 0
 	if gitweb cannot determine its value.  Currently it works only on Linux,
-	where it uses '/proc/loadavg'; the load there is the number of active
+	where it uses `/proc/loadavg`; the load there is the number of active
 	tasks on the system -- processes that are actually running -- averaged
 	over the last minute.
 +
@@ -739,7 +739,7 @@ Currently available providers are *"gravatar"* and *"picon"*.
 Only one provider at a time can be selected ('default' is one element list).
 If an unknown provider is specified, the feature is disabled.
 *Note* that some providers might require extra Perl packages to be
-installed; see 'gitweb/INSTALL' for more details.
+installed; see `gitweb/INSTALL` for more details.
 +
 This feature can be configured on a per-repository basis via
 repository's `gitweb.avatar` configuration variable.
