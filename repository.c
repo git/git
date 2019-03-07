@@ -126,6 +126,8 @@ out:
 void repo_set_worktree(struct repository *repo, const char *path)
 {
 	repo->worktree = real_pathdup(path, 1);
+
+	trace2_def_repo(repo);
 }
 
 static int read_and_verify_repository_format(struct repository_format *format,
