@@ -531,7 +531,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 		exit(128);
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "c/", cached ? "i/" : "w/");
-	diffcore_fix_diff_index(&revs->diffopt);
+	diffcore_fix_diff_index();
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	trace_performance_leave("diff-index");
