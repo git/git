@@ -193,15 +193,6 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	for command-line options).
 
 
-CONFIGURATION
--------------
-
-The optional configuration variable `core.excludesFile` indicates a path to a
-file containing patterns of file names to exclude from git-add, similar to
-$GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
-those in info/exclude.  See linkgit:gitignore[5].
-
-
 EXAMPLES
 --------
 
