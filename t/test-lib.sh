@@ -1327,7 +1327,11 @@ then
 	fi
 fi
 
-# Provide an implementation of the 'yes' utility
+# Provide an implementation of the 'yes' utility; the upper bound
+# limit is there to help Windows that cannot stop this loop from
+# wasting cycles when the downstream stops reading, so do not be
+# tempted to turn it into an infinite loop. cf. 6129c930 ("test-lib:
+# limit the output of the yes utility", 2016-02-02)
 yes () {
 	if test $# = 0
 	then
