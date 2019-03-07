@@ -85,4 +85,78 @@ test_expect_success REBASE_P \
 	test_must_fail git rebase -p master
 '
 
+test_expect_success 'author.name overrides user.name' '
+	test_config user.name user &&
+	test_config user.email user@example.com &&
+	test_config author.name author &&
+	test_commit author-name-override-user &&
+	echo author user@example.com > expected-author &&
+	echo user user@example.com > expected-committer &&
+	git log --format="%an %ae" -1 > actual-author &&
+	git log --format="%cn %ce" -1 > actual-committer &&
+	test_cmp expected-author actual-author &&
+	test_cmp expected-committer actual-committer
+'
+
+test_expect_success 'author.email overrides user.email' '
+	test_config user.name user &&
+	test_config user.email user@example.com &&
+	test_config author.email author@example.com &&
+	test_commit author-email-override-user &&
+	echo user author@example.com > expected-author &&
+	echo user user@example.com > expected-committer &&
+	git log --format="%an %ae" -1 > actual-author &&
+	git log --format="%cn %ce" -1 > actual-committer &&
+	test_cmp expected-author actual-author &&
+	test_cmp expected-committer actual-committer
+'
+
+test_expect_success 'committer.name overrides user.name' '
+	test_config user.name user &&
+	test_config user.email user@example.com &&
+	test_config committer.name committer &&
+	test_commit committer-name-override-user &&
+	echo user user@example.com > expected-author &&
+	echo committer user@example.com > expected-committer &&
+	git log --format="%an %ae" -1 > actual-author &&
+	git log --format="%cn %ce" -1 > actual-committer &&
+	test_cmp expected-author actual-author &&
+	test_cmp expected-committer actual-committer
+'
+
+test_expect_success 'committer.email overrides user.email' '
+	test_config user.name user &&
+	test_config user.email user@example.com &&
+	test_config committer.email committer@example.com &&
+	test_commit committer-email-override-user &&
+	echo user user@example.com > expected-author &&
+	echo user committer@example.com > expected-committer &&
+	git log --format="%an %ae" -1 > actual-author &&
+	git log --format="%cn %ce" -1 > actual-committer &&
+	test_cmp expected-author actual-author &&
+	test_cmp expected-committer actual-committer
+'
+
+test_expect_success 'author and committer environment variables override config settings' '
+	test_config user.name user &&
+	test_config user.email user@example.com &&
+	test_config author.name author &&
+	test_config author.email author@example.com &&
+	test_config committer.name committer &&
+	test_config committer.email committer@example.com &&
+	GIT_AUTHOR_NAME=env_author && export GIT_AUTHOR_NAME &&
+	GIT_AUTHOR_EMAIL=env_author@example.com && export GIT_AUTHOR_EMAIL &&
+	GIT_COMMITTER_NAME=env_commit && export GIT_COMMITTER_NAME &&
+	GIT_COMMITTER_EMAIL=env_commit@example.com && export GIT_COMMITTER_EMAIL &&
+	test_commit env-override-conf &&
+	echo env_author env_author@example.com > expected-author &&
+	echo env_commit env_commit@example.com > expected-committer &&
+	git log --format="%an %ae" -1 > actual-author &&
+	git log --format="%cn %ce" -1 > actual-committer &&
+	sane_unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL &&
+	sane_unset GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL &&
+	test_cmp expected-author actual-author &&
+	test_cmp expected-committer actual-committer
+'
+
 test_done

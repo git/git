@@ -1579,6 +1579,7 @@ static void do_commit(const struct am_state *state)
 	}
 
 	author = fmt_ident(state->author_name, state->author_email,
+		WANT_AUTHOR_IDENT,
 			state->ignore_date ? NULL : state->author_date,
 			IDENT_STRICT);
 
