@@ -75,12 +75,12 @@ static ssize_t find_unique(const char *string,
 struct list_options {
 	int columns;
 	const char *header;
-	void (*print_item)(int i, struct prefix_item *item,
+	void (*print_item)(int i, int selected, struct prefix_item *item,
 			   void *print_item_data);
 	void *print_item_data;
 };
 
-static void list(struct prefix_item **list, size_t nr,
+static void list(struct prefix_item **list, int *selected, size_t nr,
 		 struct add_i_state *s, struct list_options *opts)
 {
 	int i, last_lf = 0;
@@ -93,7 +93,8 @@ static void list(struct prefix_item **list, size_t nr,
 				 "%s", opts->header);
 
 	for (i = 0; i < nr; i++) {
-		opts->print_item(i, list[i], opts->print_item_data);
+		opts->print_item(i, selected ? selected[i] : 0, list[i],
+				 opts->print_item_data);
 
 		if ((opts->columns) && ((i + 1) % (opts->columns))) {
 			putchar('\t');
@@ -112,6 +113,10 @@ struct list_and_choose_options {
 	struct list_options list_opts;
 
 	const char *prompt;
+	enum {
+		SINGLETON = (1<<0),
+		IMMEDIATE = (1<<1),
+	} flags;
 	void (*print_help)(struct add_i_state *s);
 };
 
@@ -119,17 +124,27 @@ struct list_and_choose_options {
 #define LIST_AND_CHOOSE_QUIT  (-2)
 
 /*
- * Returns the selected index.
+ * Returns the selected index in singleton mode, the number of selected items
+ * otherwise.
  *
  * If an error occurred, returns `LIST_AND_CHOOSE_ERROR`. Upon EOF,
  * `LIST_AND_CHOOSE_QUIT` is returned.
  */
-static ssize_t list_and_choose(struct prefix_item **items, size_t nr,
-			       struct add_i_state *s,
+static ssize_t list_and_choose(struct prefix_item **items, int *selected,
+			       size_t nr, struct add_i_state *s,
 			       struct list_and_choose_options *opts)
 {
+	int singleton = opts->flags & SINGLETON;
+	int immediate = opts->flags & IMMEDIATE;
+
 	struct strbuf input = STRBUF_INIT;
-	ssize_t res = LIST_AND_CHOOSE_ERROR;
+	ssize_t res = singleton ? LIST_AND_CHOOSE_ERROR : 0;
+
+	if (!selected && !singleton)
+		BUG("need a selected array in non-singleton mode");
+
+	if (singleton && !immediate)
+		BUG("singleton requires immediate");
 
 	find_unique_prefixes(items, nr, 1, 4);
 
@@ -138,15 +153,16 @@ static ssize_t list_and_choose(struct prefix_item **items, size_t nr,
 
 		strbuf_reset(&input);
 
-		list(items, nr, s, &opts->list_opts);
+		list(items, selected, nr, s, &opts->list_opts);
 
 		color_fprintf(stdout, s->prompt_color, "%s", opts->prompt);
-		fputs("> ", stdout);
+		fputs(singleton ? "> " : ">> ", stdout);
 		fflush(stdout);
 
 		if (strbuf_getline(&input, stdin) == EOF) {
 			putchar('\n');
-			res = LIST_AND_CHOOSE_QUIT;
+			if (immediate)
+				res = LIST_AND_CHOOSE_QUIT;
 			break;
 		}
 		strbuf_trim(&input);
@@ -162,7 +178,9 @@ static ssize_t list_and_choose(struct prefix_item **items, size_t nr,
 		p = input.buf;
 		for (;;) {
 			size_t sep = strcspn(p, " \t\r\n,");
-			ssize_t index = -1;
+			int choose = 1;
+			/* `from` is inclusive, `to` is exclusive */
+			ssize_t from = -1, to = -1;
 
 			if (!sep) {
 				if (!*p)
@@ -171,28 +189,60 @@ static ssize_t list_and_choose(struct prefix_item **items, size_t nr,
 				continue;
 			}
 
-			if (isdigit(*p)) {
-				index = strtoul(p, &endp, 10) - 1;
-				if (endp != p + sep)
-					index = -1;
+			/* Input that begins with '-'; unchoose */
+			if (*p == '-') {
+				choose = 0;
+				p++;
+				sep--;
+			}
+
+			if (sep == 1 && *p == '*') {
+				from = 0;
+				to = nr;
+			} else if (isdigit(*p)) {
+				/* A range can be specified like 5-7 or 5-. */
+				from = strtoul(p, &endp, 10) - 1;
+				if (endp == p + sep)
+					to = from + 1;
+				else if (*endp == '-') {
+					to = strtoul(++endp, &endp, 10);
+					/* extra characters after the range? */
+					if (endp != p + sep)
+						from = -1;
+				}
 			}
 
 			p[sep] = '\0';
-			if (index < 0)
-				index = find_unique(p, items, nr);
+			if (from < 0) {
+				from = find_unique(p, items, nr);
+				if (from >= 0)
+					to = from + 1;
+			}
 
-			if (index < 0 || index >= nr)
+			if (from < 0 || from >= nr ||
+			    (singleton && from + 1 != to)) {
 				color_fprintf_ln(stdout, s->error_color,
 						 _("Huh (%s)?"), p);
-			else {
-				res = index;
+				break;
+			} else if (singleton) {
+				res = from;
 				break;
 			}
+
+			if (to > nr)
+				to = nr;
+
+			for (; from < to; from++)
+				if (selected[from] != choose) {
+					selected[from] = choose;
+					res += choose ? +1 : -1;
+				}
 
 			p += sep + 1;
 		}
 
-		if (res != LIST_AND_CHOOSE_ERROR)
+		if ((immediate && res != LIST_AND_CHOOSE_ERROR) ||
+		    !strcmp(input.buf, "*"))
 			break;
 	}
 
@@ -413,7 +463,7 @@ struct print_file_item_data {
 	struct strbuf buf, index, worktree;
 };
 
-static void print_file_item(int i, struct prefix_item *item,
+static void print_file_item(int i, int selected, struct prefix_item *item,
 			    void *print_file_item_data)
 {
 	struct file_item *c = (struct file_item *)item;
@@ -428,7 +478,7 @@ static void print_file_item(int i, struct prefix_item *item,
 	strbuf_addf(&d->buf, d->modified_fmt,
 		    d->index.buf, d->worktree.buf, item->name);
 
-	printf(" %2d: %s", i + 1, d->buf.buf);
+	printf("%c%2d: %s", selected ? '*' : ' ', i + 1, d->buf.buf);
 }
 
 static int run_status(struct add_i_state *s, const struct pathspec *ps,
@@ -440,7 +490,8 @@ static int run_status(struct add_i_state *s, const struct pathspec *ps,
 		return -1;
 
 	if (files->nr)
-		list((struct prefix_item **)files->file, files->nr, s, opts);
+		list((struct prefix_item **)files->file, NULL, files->nr,
+		     s, opts);
 	putchar('\n');
 
 	return 0;
@@ -471,7 +522,7 @@ struct print_command_item_data {
 	const char *color, *reset;
 };
 
-static void print_command_item(int i, struct prefix_item *item,
+static void print_command_item(int i, int selected, struct prefix_item *item,
 			       void *print_command_item_data)
 {
 	struct print_command_item_data *d = print_command_item_data;
@@ -509,7 +560,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	struct print_command_item_data data;
 	struct list_and_choose_options main_loop_opts = {
 		{ 4, N_("*** Commands ***"), print_command_item, &data },
-		N_("What now"), command_prompt_help
+		N_("What now"), SINGLETON | IMMEDIATE, command_prompt_help
 	};
 	struct command_item
 		status = { { "status" }, run_status },
@@ -555,7 +606,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		res = -1;
 
 	for (;;) {
-		i = list_and_choose((struct prefix_item **)commands,
+		i = list_and_choose((struct prefix_item **)commands, NULL,
 				    ARRAY_SIZE(commands), &s, &main_loop_opts);
 		if (i == LIST_AND_CHOOSE_QUIT)
 			printf(_("Bye.\n"));
