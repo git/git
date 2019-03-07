@@ -279,7 +279,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 	find_unique_prefixes(items);
 
 	for (;;) {
-		char *p, *endp;
+		char *p;
 
 		strbuf_reset(&input);
 
@@ -330,6 +330,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 				from = 0;
 				to = items->items.nr;
 			} else if (isdigit(*p)) {
+				char *endp;
 				/* A range can be specified like 5-7 or 5-. */
 				from = strtoul(p, &endp, 10) - 1;
 				if (endp == p + sep)
