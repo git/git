@@ -99,6 +99,10 @@ All the `git commit` hooks are invoked with the environment
 variable `GIT_EDITOR=:` if the command will not bring up an editor
 to modify the commit message.
 
+The default 'pre-commit' hook, when enabled--and with the
+`hooks.allownonascii` config option unset or set to false--prevents
+the use of non-ASCII filenames.
+
 prepare-commit-msg
 ~~~~~~~~~~~~~~~~~~
 
