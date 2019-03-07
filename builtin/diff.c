@@ -338,20 +338,22 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		       "--no-index" : "[--no-index]");
 
 	}
-	if (no_index)
-		/* If this is a no-index diff, just run it and exit there. */
-		diff_no_index(the_repository, &rev, argc, argv);
 
-	/* Otherwise, we are doing the usual "git" diff */
-	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
-
-	/* Scale to real terminal size and respect statGraphWidth config */
+	/* Set up defaults that will apply to both no-index and regular diffs. */
 	rev.diffopt.stat_width = -1;
 	rev.diffopt.stat_graph_width = -1;
-
-	/* Default to let external and textconv be used */
 	rev.diffopt.flags.allow_external = 1;
 	rev.diffopt.flags.allow_textconv = 1;
+
+	/* If this is a no-index diff, just run it and exit there. */
+	if (no_index)
+		diff_no_index(&rev, argc, argv);
+
+	/*
+	 * Otherwise, we are doing the usual "git" diff; set up any
+	 * further defaults that apply to regular diffs.
+	 */
+	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
 
 	/*
 	 * Default to intent-to-add entries invisible in the
