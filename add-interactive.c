@@ -51,6 +51,7 @@ struct item {
 };
 
 struct list_options {
+	int columns;
 	const char *header;
 	void (*print_item)(int i, struct item *item, void *print_item_data);
 	void *print_item_data;
@@ -59,7 +60,7 @@ struct list_options {
 static void list(struct item **list, size_t nr,
 		 struct add_i_state *s, struct list_options *opts)
 {
-	int i;
+	int i, last_lf = 0;
 
 	if (!nr)
 		return;
@@ -70,8 +71,97 @@ static void list(struct item **list, size_t nr,
 
 	for (i = 0; i < nr; i++) {
 		opts->print_item(i, list[i], opts->print_item_data);
-		putchar('\n');
+
+		if ((opts->columns) && ((i + 1) % (opts->columns))) {
+			putchar('\t');
+			last_lf = 0;
+		}
+		else {
+			putchar('\n');
+			last_lf = 1;
+		}
 	}
+
+	if (!last_lf)
+		putchar('\n');
+}
+struct list_and_choose_options {
+	struct list_options list_opts;
+
+	const char *prompt;
+};
+
+#define LIST_AND_CHOOSE_ERROR (-1)
+#define LIST_AND_CHOOSE_QUIT  (-2)
+
+/*
+ * Returns the selected index.
+ *
+ * If an error occurred, returns `LIST_AND_CHOOSE_ERROR`. Upon EOF,
+ * `LIST_AND_CHOOSE_QUIT` is returned.
+ */
+static ssize_t list_and_choose(struct item **items, size_t nr,
+			       struct add_i_state *s,
+			       struct list_and_choose_options *opts)
+{
+	struct strbuf input = STRBUF_INIT;
+	ssize_t res = LIST_AND_CHOOSE_ERROR;
+
+	for (;;) {
+		char *p, *endp;
+
+		strbuf_reset(&input);
+
+		list(items, nr, s, &opts->list_opts);
+
+		printf("%s%s", opts->prompt, "> ");
+		fflush(stdout);
+
+		if (strbuf_getline(&input, stdin) == EOF) {
+			putchar('\n');
+			res = LIST_AND_CHOOSE_QUIT;
+			break;
+		}
+		strbuf_trim(&input);
+
+		if (!input.len)
+			break;
+
+		p = input.buf;
+		for (;;) {
+			size_t sep = strcspn(p, " \t\r\n,");
+			ssize_t index = -1;
+
+			if (!sep) {
+				if (!*p)
+					break;
+				p++;
+				continue;
+			}
+
+			if (isdigit(*p)) {
+				index = strtoul(p, &endp, 10) - 1;
+				if (endp != p + sep)
+					index = -1;
+			}
+
+			p[sep] = '\0';
+			if (index < 0 || index >= nr)
+				printf(_("Huh (%s)?\n"), p);
+			else {
+				res = index;
+				break;
+			}
+
+			p += sep + 1;
+		}
+
+		if (res != LIST_AND_CHOOSE_ERROR)
+			break;
+	}
+
+	strbuf_release(&input);
+	return res;
 }
 
 struct adddel {
@@ -285,17 +375,40 @@ static int run_status(struct add_i_state *s, const struct pathspec *ps,
 	return 0;
 }
 
+static void print_command_item(int i, struct item *item,
+			       void *print_command_item_data)
+{
+	printf(" %2d: %s", i + 1, item->name);
+}
+
+struct command_item {
+	struct item item;
+	int (*command)(struct add_i_state *s, const struct pathspec *ps,
+		       struct file_list *files, struct list_options *opts);
+};
+
 int run_add_i(struct repository *r, const struct pathspec *ps)
 {
 	struct add_i_state s = { NULL };
+	struct list_and_choose_options main_loop_opts = {
+		{ 4, N_("*** Commands ***"), print_command_item, NULL },
+		N_("What now")
+	};
+	struct command_item
+		status = { { "status" }, run_status };
+	struct command_item *commands[] = {
+		&status
+	};
+
 	struct print_file_item_data print_file_item_data = {
 		"%12s %12s %s", STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
 	};
 	struct list_options opts = {
-		NULL, print_file_item, &print_file_item_data
+		0, NULL, print_file_item, &print_file_item_data
 	};
 	struct strbuf header = STRBUF_INIT;
 	struct file_list files = { NULL };
+	ssize_t i;
 	int res = 0;
 
 	if (init_add_i_state(r, &s))
@@ -309,6 +422,18 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	repo_refresh_and_write_index(r, REFRESH_QUIET, 1);
 	if (run_status(&s, ps, &files, &opts) < 0)
 		res = -1;
+
+	for (;;) {
+		i = list_and_choose((struct item **)commands,
+				    ARRAY_SIZE(commands), &s, &main_loop_opts);
+		if (i == LIST_AND_CHOOSE_QUIT)
+			printf(_("Bye.\n"));
+			res = 0;
+			break;
+		}
+		if (i != LIST_AND_CHOOSE_ERROR)
+			res = commands[i]->command(&s, ps, &files, &opts);
+	}
 
 	release_file_list(&files);
 	strbuf_release(&print_file_item_data.buf);
