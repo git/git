@@ -832,7 +832,7 @@ static void add_pathspecs(struct argv_array *args,
 	int i;
 
 	for (i = 0; i < ps.nr; i++)
-		argv_array_push(args, ps.items[i].match);
+		argv_array_push(args, ps.items[i].original);
 }
 
 /*
@@ -1468,7 +1468,8 @@ static int push_stash(int argc, const char **argv, const char *prefix)
 				     git_stash_push_usage,
 				     0);
 
-	parse_pathspec(&ps, 0, PATHSPEC_PREFER_FULL, prefix, argv);
+	parse_pathspec(&ps, 0, PATHSPEC_PREFER_FULL | PATHSPEC_PREFIX_ORIGIN,
+		       prefix, argv);
 	return do_push_stash(ps, stash_msg, quiet, keep_index, patch_mode,
 			     include_untracked);
 }
