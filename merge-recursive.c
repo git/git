@@ -3759,6 +3759,10 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 			return -1;
 		o->merge_detect_rename = 1;
 	}
+	/*
+	 * Please update $__git_merge_strategy_options in
+	 * git-completion.bash when you add new options
+	 */
 	else
 		return -1;
 	return 0;

@@ -56,6 +56,10 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 		state->ws_error_action = correct_ws_error;
 		return 0;
 	}
+	/*
+	 * Please update $__git_whitespacelist in git-completion.bash
+	 * when you add new options.
+	 */
 	return error(_("unrecognized whitespace option '%s'"), option);
 }
 

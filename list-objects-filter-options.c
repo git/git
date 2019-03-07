@@ -82,6 +82,10 @@ static int gently_parse_list_objects_filter(
 		filter_options->sparse_path_value = strdup(v0);
 		return 0;
 	}
+	/*
+	 * Please update _git_fetch() in git-completion.bash when you
+	 * add new filters
+	 */
 
 	if (errbuf)
 		strbuf_addf(errbuf, "invalid filter-spec '%s'", arg);
