@@ -2151,6 +2151,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->diff = 1;
 		revs->dense_combined_merges = 0;
 		revs->combine_merges = 1;
+	} else if (!strcmp(arg, "--combined-all-paths")) {
+		revs->diff = 1;
+		revs->combined_all_paths = 1;
 	} else if (!strcmp(arg, "--cc")) {
 		revs->diff = 1;
 		revs->dense_combined_merges = 1;
@@ -2647,6 +2650,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 	if (revs->combine_merges)
 		revs->ignore_merges = 0;
+	if (revs->combined_all_paths && !revs->combine_merges)
+		die("--combined-all-paths makes no sense without -c or --cc");
+
 	revs->diffopt.abbrev = revs->abbrev;
 
 	if (revs->line_level_traverse) {
