@@ -214,13 +214,13 @@ static void files_ref_path(struct files_ref_store *refs,
 }
 
 /*
- * Manually add refs/bisect and refs/worktree, which, being
+ * Manually add refs/bisect, refs/rewritten and refs/worktree, which, being
  * per-worktree, might not appear in the directory listing for
  * refs/ in the main repo.
  */
 static void add_per_worktree_entries_to_dir(struct ref_dir *dir, const char *dirname)
 {
-	const char *prefixes[] = { "refs/bisect/", "refs/worktree/" };
+	const char *prefixes[] = { "refs/bisect/", "refs/worktree/", "refs/rewritten/" };
 	int ip;
 
 	if (strcmp(dirname, "refs/"))
