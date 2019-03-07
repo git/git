@@ -202,6 +202,17 @@ const char *optname(const struct option *opt, int flags);
 		BUG("option callback does not expect an argument"); \
 } while (0)
 
+/*
+ * Similar to the assertions above, but checks that "arg" is always non-NULL.
+ * This assertion also implies BUG_ON_OPT_NEG(), letting you declare both
+ * assertions in a single line.
+ */
+#define BUG_ON_OPT_NEG_NOARG(unset, arg) do { \
+	BUG_ON_OPT_NEG(unset); \
+	if(!(arg)) \
+		BUG("option callback expects an argument"); \
+} while(0)
+
 /*----- incremental advanced APIs -----*/
 
 enum {
