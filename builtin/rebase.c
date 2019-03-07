@@ -369,6 +369,7 @@ static void add_var(struct strbuf *buf, const char *name, const char *value)
 #define RESET_HEAD_HARD (1<<1)
 #define RESET_HEAD_RUN_POST_CHECKOUT_HOOK (1<<2)
 #define RESET_HEAD_REFS_ONLY (1<<3)
+#define RESET_ORIG_HEAD (1<<4)
 
 static int reset_head(struct object_id *oid, const char *action,
 		      const char *switch_to_branch, unsigned flags,
@@ -378,6 +379,7 @@ static int reset_head(struct object_id *oid, const char *action,
 	unsigned reset_hard = flags & RESET_HEAD_HARD;
 	unsigned run_hook = flags & RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
 	unsigned refs_only = flags & RESET_HEAD_REFS_ONLY;
+	unsigned update_orig_head = flags & RESET_ORIG_HEAD;
 	struct object_id head_oid;
 	struct tree_desc desc[2] = { { NULL }, { NULL } };
 	struct lock_file lock = LOCK_INIT;
@@ -454,18 +456,21 @@ reset_head_refs:
 	strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : "rebase");
 	prefix_len = msg.len;
 
-	if (!get_oid("ORIG_HEAD", &oid_old_orig))
-		old_orig = &oid_old_orig;
-	if (!get_oid("HEAD", &oid_orig)) {
-		orig = &oid_orig;
-		if (!reflog_orig_head) {
-			strbuf_addstr(&msg, "updating ORIG_HEAD");
-			reflog_orig_head = msg.buf;
-		}
-		update_ref(reflog_orig_head, "ORIG_HEAD", orig, old_orig, 0,
-			   UPDATE_REFS_MSG_ON_ERR);
-	} else if (old_orig)
-		delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
+	if (update_orig_head) {
+		if (!get_oid("ORIG_HEAD", &oid_old_orig))
+			old_orig = &oid_old_orig;
+		if (!get_oid("HEAD", &oid_orig)) {
+			orig = &oid_orig;
+			if (!reflog_orig_head) {
+				strbuf_addstr(&msg, "updating ORIG_HEAD");
+				reflog_orig_head = msg.buf;
+			}
+			update_ref(reflog_orig_head, "ORIG_HEAD", orig,
+				   old_orig, 0, UPDATE_REFS_MSG_ON_ERR);
+		} else if (old_orig)
+			delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
+	}
+
 	if (!reflog_head) {
 		strbuf_setlen(&msg, prefix_len);
 		strbuf_addstr(&msg, "updating HEAD");
@@ -476,7 +481,7 @@ reset_head_refs:
 				 detach_head ? REF_NO_DEREF : 0,
 				 UPDATE_REFS_MSG_ON_ERR);
 	else {
-		ret = update_ref(reflog_orig_head, switch_to_branch, oid,
+		ret = update_ref(reflog_head, switch_to_branch, oid,
 				 NULL, 0, UPDATE_REFS_MSG_ON_ERR);
 		if (!ret)
 			ret = create_symref("HEAD", switch_to_branch,
@@ -1760,8 +1765,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	strbuf_addf(&msg, "%s: checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
 	if (reset_head(&options.onto->object.oid, "checkout", NULL,
-		       RESET_HEAD_DETACH | RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
-		       NULL, msg.buf))
+		       RESET_HEAD_DETACH | RESET_HEAD_RUN_POST_CHECKOUT_HOOK |
+		       RESET_ORIG_HEAD, NULL, msg.buf))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
@@ -1776,8 +1781,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&msg, "rebase finished: %s onto %s",
 			options.head_name ? options.head_name : "detached HEAD",
 			oid_to_hex(&options.onto->object.oid));
-		reset_head(NULL, "Fast-forwarded", options.head_name, 0,
-			   "HEAD", msg.buf);
+		reset_head(NULL, "Fast-forwarded", options.head_name,
+			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf);
 		strbuf_release(&msg);
 		ret = !!finish_rebase(&options);
 		goto cleanup;
