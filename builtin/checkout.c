@@ -46,6 +46,7 @@ struct checkout_opts {
 	int ignore_other_worktrees;
 	int show_progress;
 	int count_checkout_paths;
+	int overlay_mode;
 	/*
 	 * If new checkout options are added, skip_merge_working_tree
 	 * should be updated accordingly.
@@ -135,7 +136,8 @@ static int skip_same_name(const struct cache_entry *ce, int pos)
 	return pos;
 }
 
-static int check_stage(int stage, const struct cache_entry *ce, int pos)
+static int check_stage(int stage, const struct cache_entry *ce, int pos,
+		       int overlay_mode)
 {
 	while (pos < active_nr &&
 	       !strcmp(active_cache[pos]->name, ce->name)) {
@@ -143,6 +145,8 @@ static int check_stage(int stage, const struct cache_entry *ce, int pos)
 			return 0;
 		pos++;
 	}
+	if (!overlay_mode)
+		return 0;
 	if (stage == 2)
 		return error(_("path '%s' does not have our version"), ce->name);
 	else
@@ -168,7 +172,8 @@ static int check_stages(unsigned stages, const struct cache_entry *ce, int pos)
 }
 
 static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
-			  const struct checkout *state, int *nr_checkouts)
+			  const struct checkout *state, int *nr_checkouts,
+			  int overlay_mode)
 {
 	while (pos < active_nr &&
 	       !strcmp(active_cache[pos]->name, ce->name)) {
@@ -176,6 +181,10 @@ static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
 			return checkout_entry(active_cache[pos], state,
 					      NULL, nr_checkouts);
 		pos++;
+	}
+	if (!overlay_mode) {
+		unlink_entry(ce);
+		return 0;
 	}
 	if (stage == 2)
 		return error(_("path '%s' does not have our version"), ce->name);
@@ -251,6 +260,59 @@ static int checkout_merged(int pos, const struct checkout *state, int *nr_checko
 	return status;
 }
 
+static void mark_ce_for_checkout_overlay(struct cache_entry *ce,
+					 char *ps_matched,
+					 const struct checkout_opts *opts)
+{
+	ce->ce_flags &= ~CE_MATCHED;
+	if (!opts->ignore_skipworktree && ce_skip_worktree(ce))
+		return;
+	if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
+		/*
+		 * "git checkout tree-ish -- path", but this entry
+		 * is in the original index but is not in tree-ish
+		 * or does not match the pathspec; it will not be
+		 * checked out to the working tree.  We will not do
+		 * anything to this entry at all.
+		 */
+		return;
+	/*
+	 * Either this entry came from the tree-ish we are
+	 * checking the paths out of, or we are checking out
+	 * of the index.
+	 *
+	 * If it comes from the tree-ish, we already know it
+	 * matches the pathspec and could just stamp
+	 * CE_MATCHED to it from update_some(). But we still
+	 * need ps_matched and read_tree_recursive (and
+	 * eventually tree_entry_interesting) cannot fill
+	 * ps_matched yet. Once it can, we can avoid calling
+	 * match_pathspec() for _all_ entries when
+	 * opts->source_tree != NULL.
+	 */
+	if (ce_path_match(&the_index, ce, &opts->pathspec, ps_matched))
+		ce->ce_flags |= CE_MATCHED;
+}
+
+static void mark_ce_for_checkout_no_overlay(struct cache_entry *ce,
+					    char *ps_matched,
+					    const struct checkout_opts *opts)
+{
+	ce->ce_flags &= ~CE_MATCHED;
+	if (!opts->ignore_skipworktree && ce_skip_worktree(ce))
+		return;
+	if (ce_path_match(&the_index, ce, &opts->pathspec, ps_matched)) {
+		ce->ce_flags |= CE_MATCHED;
+		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
+			/*
+			 * In overlay mode, but the path is not in
+			 * tree-ish, which means we should remove it
+			 * from the index and the working tree.
+			 */
+			ce->ce_flags |= CE_REMOVE | CE_WT_REMOVE;
+	}
+}
+
 static int checkout_paths(const struct checkout_opts *opts,
 			  const char *revision)
 {
@@ -302,37 +364,15 @@ static int checkout_paths(const struct checkout_opts *opts,
 	 * Make sure all pathspecs participated in locating the paths
 	 * to be checked out.
 	 */
-	for (pos = 0; pos < active_nr; pos++) {
-		struct cache_entry *ce = active_cache[pos];
-		ce->ce_flags &= ~CE_MATCHED;
-		if (!opts->ignore_skipworktree && ce_skip_worktree(ce))
-			continue;
-		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
-			/*
-			 * "git checkout tree-ish -- path", but this entry
-			 * is in the original index; it will not be checked
-			 * out to the working tree and it does not matter
-			 * if pathspec matched this entry.  We will not do
-			 * anything to this entry at all.
-			 */
-			continue;
-		/*
-		 * Either this entry came from the tree-ish we are
-		 * checking the paths out of, or we are checking out
-		 * of the index.
-		 *
-		 * If it comes from the tree-ish, we already know it
-		 * matches the pathspec and could just stamp
-		 * CE_MATCHED to it from update_some(). But we still
-		 * need ps_matched and read_tree_recursive (and
-		 * eventually tree_entry_interesting) cannot fill
-		 * ps_matched yet. Once it can, we can avoid calling
-		 * match_pathspec() for _all_ entries when
-		 * opts->source_tree != NULL.
-		 */
-		if (ce_path_match(&the_index, ce, &opts->pathspec, ps_matched))
-			ce->ce_flags |= CE_MATCHED;
-	}
+	for (pos = 0; pos < active_nr; pos++)
+		if (opts->overlay_mode)
+			mark_ce_for_checkout_overlay(active_cache[pos],
+						     ps_matched,
+						     opts);
+		else
+			mark_ce_for_checkout_no_overlay(active_cache[pos],
+							ps_matched,
+							opts);
 
 	if (report_path_error(ps_matched, &opts->pathspec, opts->prefix)) {
 		free(ps_matched);
@@ -353,7 +393,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 			if (opts->force) {
 				warning(_("path '%s' is unmerged"), ce->name);
 			} else if (opts->writeout_stage) {
-				errs |= check_stage(opts->writeout_stage, ce, pos);
+				errs |= check_stage(opts->writeout_stage, ce, pos, opts->overlay_mode);
 			} else if (opts->merge) {
 				errs |= check_stages((1<<2) | (1<<3), ce, pos);
 			} else {
@@ -383,13 +423,16 @@ static int checkout_paths(const struct checkout_opts *opts,
 			if (opts->writeout_stage)
 				errs |= checkout_stage(opts->writeout_stage,
 						       ce, pos,
-						       &state, &nr_checkouts);
+						       &state,
+						       &nr_checkouts, opts->overlay_mode);
 			else if (opts->merge)
 				errs |= checkout_merged(pos, &state,
 							&nr_unmerged);
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
+	remove_marked_cache_entries(&the_index, 1);
+	remove_scheduled_dirs();
 	errs |= finish_delayed_checkout(&state, &nr_checkouts);
 
 	if (opts->count_checkout_paths) {
@@ -569,6 +612,11 @@ static int skip_merge_working_tree(const struct checkout_opts *opts,
 
 	/*
 	 * opts->show_progress only impacts output so doesn't require a merge
+	 */
+
+	/*
+	 * opts->overlay_mode cannot be used with switching branches so is
+	 * not tested here
 	 */
 
 	/*
@@ -1224,6 +1272,10 @@ static int checkout_branch(struct checkout_opts *opts,
 		die(_("'%s' cannot be used with switching branches"),
 		    "--patch");
 
+	if (!opts->overlay_mode)
+		die(_("'%s' cannot be used with switching branches"),
+		    "--no-overlay");
+
 	if (opts->writeout_stage)
 		die(_("'%s' cannot be used with switching branches"),
 		    "--ours/--theirs");
@@ -1312,6 +1364,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			    "checkout", "control recursive updating of submodules",
 			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater },
 		OPT_BOOL(0, "progress", &opts.show_progress, N_("force progress reporting")),
+		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode (default)")),
 		OPT_END(),
 	};
 
@@ -1320,6 +1373,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	opts.overwrite_ignore = 1;
 	opts.prefix = prefix;
 	opts.show_progress = -1;
+	opts.overlay_mode = -1;
 
 	git_config(git_checkout_config, &opts);
 
@@ -1343,6 +1397,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	if ((!!opts.new_branch + !!opts.new_branch_force + !!opts.new_orphan_branch) > 1)
 		die(_("-b, -B and --orphan are mutually exclusive"));
+
+	if (opts.overlay_mode == 1 && opts.patch_mode)
+		die(_("-p and --overlay are mutually exclusive"));
 
 	/*
 	 * From here on, new_branch will contain the branch to be checked out,

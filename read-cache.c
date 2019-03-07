@@ -588,13 +588,19 @@ int remove_index_entry_at(struct index_state *istate, int pos)
  * CE_REMOVE is set in ce_flags.  This is much more effective than
  * calling remove_index_entry_at() for each entry to be removed.
  */
-void remove_marked_cache_entries(struct index_state *istate)
+void remove_marked_cache_entries(struct index_state *istate, int invalidate)
 {
 	struct cache_entry **ce_array = istate->cache;
 	unsigned int i, j;
 
 	for (i = j = 0; i < istate->cache_nr; i++) {
 		if (ce_array[i]->ce_flags & CE_REMOVE) {
+			if (invalidate) {
+				cache_tree_invalidate_path(istate,
+							   ce_array[i]->name);
+				untracked_cache_remove_from_index(istate,
+								  ce_array[i]->name);
+			}
 			remove_name_hash(istate, ce_array[i]);
 			save_or_free_index_entry(istate, ce_array[i]);
 		}

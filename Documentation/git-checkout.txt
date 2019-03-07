@@ -260,6 +260,9 @@ the conflicted merge in the specified paths.
 This means that you can use `git checkout -p` to selectively discard
 edits from your current working tree. See the ``Interactive Mode''
 section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
++
+Note that this option uses the no overlay mode by default (see also
+`--[no-]overlay`), and currently doesn't support overlay mode.
 
 --ignore-other-worktrees::
 	`git checkout` refuses when the wanted ref is already checked
@@ -279,6 +282,13 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 --no-guess::
 	Do not attempt to create a branch if a remote tracking branch
 	of the same name exists.
+
+--[no-]overlay::
+	In the default overlay mode, `git checkout` never
+	removes files from the index or the working tree.  When
+	specifying `--no-overlay`, files that appear in the index and
+	working tree, but not in <tree-ish> are removed, to make them
+	match <tree-ish> exactly.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
