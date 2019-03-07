@@ -1,0 +1,79 @@
+Git 2.22 Release Notes
+======================
+
+Updates since v2.21
+-------------------
+
+UI, Workflows & Features
+
+ * "git checkout --no-overlay" can be used to trigger a new mode of
+   checking out paths out of the tree-ish, that allows paths that
+   match the pathspec that are in the current index and working tree
+   and are not in the tree-ish.
+
+ * The %(trailers) formatter in "git log --format=..."  now allows to
+   optionally pick trailers selectively by keyword, show only values,
+   etc.
+
+ * Four new configuration variables {author,committer}.{name,email}
+   have been introduced to override user.{name,email} in more specific
+   cases.
+
+ * Command-line completion (in contrib/) learned to tab-complete the
+   "git submodule absorbgitdirs" subcommand.
+
+ * "git branch" learned a new subcommand "--show-current".
+
+ * Output from "diff --cc" did not show the original paths when the
+   merge involved renames.  A new option adds the paths in the
+   original trees to the output.
+
+ * The command line completion (in contrib/) has been taught to
+   complete more subcommand parameters.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The diff machinery, one of the oldest parts of the system, which
+   long predates the parse-options API, uses fairly long and complex
+   handcrafted option parser.  This is being rewritten to use the
+   parse-options API.
+
+ * The implementation of pack-redundant has been updated for
+   performance in a repository with many packfiles.
+
+ * A more structured way to obtain execution trace has been added.
+
+ * "git prune" has been taught to take advantage of reachability
+   bitmap when able.
+
+
+Fixes since v2.21
+-----------------
+
+ * "git prune-packed" did not notice and complain against excess
+   arguments given from the command line, which now it does.
+   (merge 9b0bd87ed2 rj/prune-packed-excess-args later to maint).
+
+ * Split-index fix.
+   (merge 6e37c8ed3c nd/split-index-null-base-fix later to maint).
+
+ * "git diff --no-index" may still want to access Git goodies like
+   --ext-diff and --textconv, but so far these have been ignored,
+   which has been corrected.
+   (merge 287ab28bfa jk/diff-no-index-initialize later to maint).
+
+ * Unify RPC code for smart http in protocol v0/v1 and v2, which fixes
+   a bug in the latter (lack of authentication retry) and generally
+   improves the code base.
+   (merge a97d00799a jt/http-auth-proto-v2-fix later to maint).
+
+ * Code cleanup, docfix, build fix, etc.
+   (merge 11f470aee7 jc/test-yes-doc later to maint).
+   (merge 90503a240b js/doc-symref-in-proto-v1 later to maint).
+   (merge 5c326d1252 jk/unused-params later to maint).
+   (merge 68cabbfda3 dl/doc-submodule-wo-subcommand later to maint).
+   (merge 9903623761 ab/receive-pack-use-after-free-fix later to maint).
+   (merge 1ede45e44b en/merge-options-doc later to maint).
+   (merge 3e14dd2c8e rd/doc-hook-used-in-sample later to maint).
+   (merge c271dc28fd nd/no-more-check-racy later to maint).
