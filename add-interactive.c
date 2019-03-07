@@ -985,10 +985,11 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		add_untracked = { { "add untracked" }, run_add_untracked },
 		patch = { { "patch" }, run_patch },
 		diff = { { "diff" }, run_diff },
+		quit = { { "quit" }, NULL },
 		help = { { "help" }, run_help };
 	struct command_item *commands[] = {
 		&status, &update, &revert, &add_untracked,
-		&patch, &diff, &help
+		&patch, &diff, &quit, &help
 	};
 
 	struct print_file_item_data print_file_item_data = {
@@ -1033,7 +1034,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	for (;;) {
 		i = list_and_choose((struct prefix_item **)commands, NULL,
 				    ARRAY_SIZE(commands), &s, &main_loop_opts);
-		if (i < -1) {
+		if (i < -1 || (i >= 0 && !commands[i]->command)) {
 			printf(_("Bye.\n"));
 			res = 0;
 			break;
