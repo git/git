@@ -220,22 +220,22 @@ static void files_ref_path(struct files_ref_store *refs,
  */
 static void add_per_worktree_entries_to_dir(struct ref_dir *dir, const char *dirname)
 {
-	int pos;
+	const char *prefixes[] = { "refs/bisect/", "refs/worktree/" };
+	int ip;
 
 	if (strcmp(dirname, "refs/"))
 		return;
 
-	pos = search_ref_dir(dir, "refs/bisect/", 12);
-	if (pos < 0) {
-		struct ref_entry *child_entry =
-			create_dir_entry(dir->cache, "refs/bisect/", 12, 1);
-		add_entry_to_dir(dir, child_entry);
-	}
+	for (ip = 0; ip < ARRAY_SIZE(prefixes); ip++) {
+		const char *prefix = prefixes[ip];
+		int prefix_len = strlen(prefix);
+		struct ref_entry *child_entry;
+		int pos;
 
-	pos = search_ref_dir(dir, "refs/worktree/", 11);
-	if (pos < 0) {
-		struct ref_entry *child_entry =
-			create_dir_entry(dir->cache, "refs/worktree/", 11, 1);
+		pos = search_ref_dir(dir, prefix, prefix_len);
+		if (pos >= 0)
+			continue;
+		child_entry = create_dir_entry(dir->cache, prefix, prefix_len, 1);
 		add_entry_to_dir(dir, child_entry);
 	}
 }
