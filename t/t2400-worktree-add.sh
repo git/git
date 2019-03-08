@@ -570,4 +570,9 @@ test_expect_success '"add" an existing locked but missing worktree' '
 	git worktree add --force --force --detach gnoo
 '
 
+test_expect_success FUNNYNAMES 'sanitize generated worktree name' '
+	git worktree add --detach ".  weird*..?.lock.lock" &&
+	test -d .git/worktrees/---weird-.-
+'
+
 test_done
