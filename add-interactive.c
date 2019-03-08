@@ -918,6 +918,47 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 	return res;
 }
 
+static int run_diff(struct add_i_state *s, const struct pathspec *ps,
+		    struct prefix_item_list *files,
+		    struct list_and_choose_options *opts)
+{
+	int res = 0;
+	ssize_t count, i;
+
+	struct object_id oid;
+	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &oid,
+					     NULL);
+	if (get_modified_files(s->r, INDEX_ONLY, files, ps, NULL, NULL) < 0)
+		return -1;
+
+	if (!files->items.nr) {
+		putchar('\n');
+		return 0;
+	}
+
+	opts->prompt = N_("Review diff");
+	opts->flags = IMMEDIATE;
+	count = list_and_choose(s, files, opts);
+	opts->flags = 0;
+	if (count >= 0) {
+		struct argv_array args = ARGV_ARRAY_INIT;
+
+		argv_array_pushl(&args, "git", "diff", "-p", "--cached",
+				 oid_to_hex(!is_initial ? &oid :
+					    s->r->hash_algo->empty_tree),
+				 "--", NULL);
+		for (i = 0; i < files->items.nr; i++)
+			if (files->selected[i])
+				argv_array_push(&args,
+						files->items.items[i].string);
+		res = run_command_v_opt(args.argv, 0);
+		argv_array_clear(&args);
+	}
+
+	putchar('\n');
+	return res;
+}
+
 static int run_help(struct add_i_state *s, const struct pathspec *unused_ps,
 		    struct prefix_item_list *unused_files,
 		    struct list_and_choose_options *opts)
@@ -1016,6 +1057,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		{ "revert", run_revert },
 		{ "add untracked", run_add_untracked },
 		{ "patch", run_patch },
+		{ "diff", run_diff },
 		{ "help", run_help },
 	};
 	struct prefix_item_list commands = PREFIX_ITEM_LIST_INIT;
