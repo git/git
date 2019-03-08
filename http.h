@@ -202,14 +202,31 @@ extern int http_get_info_packs(const char *base_url,
 	struct packed_git **packs_head);
 
 struct http_pack_request {
+	/*
+	 * Initialized by new_http_pack_request().
+	 */
 	char *url;
 	struct packed_git *target;
+	struct active_request_slot *slot;
+
+	/*
+	 * After calling new_http_pack_request(), point lst to the head of the
+	 * pack list that target is in. finish_http_pack_request() will remove
+	 * target from lst and call install_packed_git() on target.
+	 */
 	struct packed_git **lst;
+
+	/*
+	 * State managed by functions in http.c.
+	 */
 	FILE *packfile;
 	struct strbuf tmpfile;
-	struct active_request_slot *slot;
 };
 
+/*
+ * target must be an element in a pack list obtained from
+ * http_get_info_packs().
+ */
 extern struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url);
 extern int finish_http_pack_request(struct http_pack_request *preq);
