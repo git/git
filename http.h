@@ -210,11 +210,20 @@ struct http_pack_request {
 	struct active_request_slot *slot;
 
 	/*
-	 * After calling new_http_pack_request(), point lst to the head of the
+	 * After calling new_http_pack_request(), if fetching a pack that
+	 * http_get_info_packs() told us about, point lst to the head of the
 	 * pack list that target is in. finish_http_pack_request() will remove
 	 * target from lst and call install_packed_git() on target.
 	 */
 	struct packed_git **lst;
+
+	/*
+	 * If this is true, finish_http_pack_request() will pass "--keep" to
+	 * index-pack, resulting in the creation of a keep file, and will not
+	 * suppress its stdout (that is, the "keep\t<hash>\n" line will be
+	 * printed to stdout).
+	 */
+	unsigned generate_keep : 1;
 
 	/*
 	 * State managed by functions in http.c.
@@ -224,8 +233,12 @@ struct http_pack_request {
 };
 
 /*
- * target must be an element in a pack list obtained from
- * http_get_info_packs().
+ * If fetching a pack that http_get_info_packs() told us about, set target to
+ * an element in a pack list obtained from http_get_info_packs(). The actual
+ * URL fetched will be base_url followed by a suffix with the hash of the pack.
+ *
+ * Otherwise, set target to NULL. The actual URL fetched will be base_url
+ * itself.
  */
 extern struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url);

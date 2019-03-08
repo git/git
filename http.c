@@ -2208,15 +2208,18 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	int tmpfile_fd;
 	int ret = 0;
 
-	close_pack_index(p);
+	if (p)
+		close_pack_index(p);
 
 	fclose(preq->packfile);
 	preq->packfile = NULL;
 
-	lst = preq->lst;
-	while (*lst != p)
-		lst = &((*lst)->next);
-	*lst = (*lst)->next;
+	if (p) {
+		lst = preq->lst;
+		while (*lst != p)
+			lst = &((*lst)->next);
+		*lst = (*lst)->next;
+	}
 
 	tmpfile_fd = xopen(preq->tmpfile.buf, O_RDONLY);
 
@@ -2224,14 +2227,21 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	argv_array_push(&ip.args, "--stdin");
 	ip.git_cmd = 1;
 	ip.in = tmpfile_fd;
-	ip.no_stdout = 1;
+	if (preq->generate_keep) {
+		argv_array_pushf(&ip.args, "--keep=git %"PRIuMAX,
+				 (uintmax_t)getpid());
+		ip.out = 0;
+	} else {
+		ip.no_stdout = 1;
+	}
 
 	if (run_command(&ip)) {
 		ret = -1;
 		goto cleanup;
 	}
 
-	install_packed_git(the_repository, p);
+	if (p)
+		install_packed_git(the_repository, p);
 cleanup:
 	close(tmpfile_fd);
 	unlink(preq->tmpfile.buf);
@@ -2249,12 +2259,24 @@ struct http_pack_request *new_http_pack_request(
 	strbuf_init(&preq->tmpfile, 0);
 	preq->target = target;
 
-	end_url_with_slash(&buf, base_url);
-	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
-		sha1_to_hex(target->sha1));
-	preq->url = strbuf_detach(&buf, NULL);
+	if (target) {
+		end_url_with_slash(&buf, base_url);
+		strbuf_addf(&buf, "objects/pack/pack-%s.pack",
+			sha1_to_hex(target->sha1));
+		preq->url = strbuf_detach(&buf, NULL);
+	} else {
+		preq->url = xstrdup(base_url);
+	}
 
-	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(target->sha1));
+	if (target) {
+		strbuf_addf(&preq->tmpfile, "%s.temp",
+			    sha1_pack_name(target->sha1));
+	} else {
+		strbuf_addf(&preq->tmpfile, "%s/pack/pack-", get_object_directory());
+		strbuf_addstr_urlencode(&preq->tmpfile, base_url, 1);
+		strbuf_addstr(&preq->tmpfile, ".temp");
+	}
+
 	preq->packfile = fopen(preq->tmpfile.buf, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
@@ -2278,7 +2300,8 @@ struct http_pack_request *new_http_pack_request(
 		if (http_is_verbose)
 			fprintf(stderr,
 				"Resuming fetch of pack %s at byte %"PRIuMAX"\n",
-				sha1_to_hex(target->sha1), (uintmax_t)prev_posn);
+				target ? sha1_to_hex(target->sha1) : base_url,
+				(uintmax_t)prev_posn);
 		http_opt_request_remainder(preq->slot->curl, prev_posn);
 	}
 
