@@ -626,7 +626,7 @@ ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	NO_GETTEXT = YesPlease
 	COMPAT_CLFAGS += -D__USE_MINGW_ACCESS
 else
-	ifeq ($(shell expr "$(uname_R)" : '2\.'),2)
+	ifneq ($(shell expr "$(uname_R)" : '1\.'),2)
 		# MSys2
 		prefix = /usr/
 		# Enable DEP
