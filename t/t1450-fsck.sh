@@ -740,7 +740,7 @@ test_expect_success 'fsck detects truncated loose object' '
 # for each of type, we have one version which is referenced by another object
 # (and so while unreachable, not dangling), and another variant which really is
 # dangling.
-test_expect_success 'fsck notices dangling objects' '
+test_expect_success 'create dangling-object repository' '
 	git init dangling &&
 	(
 		cd dangling &&
@@ -751,13 +751,28 @@ test_expect_success 'fsck notices dangling objects' '
 		commit=$(git commit-tree $tree) &&
 		dcommit=$(git commit-tree -p $commit $tree) &&
 
-		cat >expect <<-EOF &&
+		cat >expect <<-EOF
 		dangling blob $dblob
 		dangling commit $dcommit
 		dangling tree $dtree
 		EOF
+	)
+'
 
+test_expect_success 'fsck notices dangling objects' '
+	(
+		cd dangling &&
 		git fsck >actual &&
+		# the output order is non-deterministic, as it comes from a hash
+		sort <actual >actual.sorted &&
+		test_i18ncmp expect actual.sorted
+	)
+'
+
+test_expect_success 'fsck --connectivity-only notices dangling objects' '
+	(
+		cd dangling &&
+		git fsck --connectivity-only >actual &&
 		# the output order is non-deterministic, as it comes from a hash
 		sort <actual >actual.sorted &&
 		test_i18ncmp expect actual.sorted
