@@ -779,7 +779,8 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 		return -1;
 	}
 
-	if (get_oid_with_context(argv[0], quiet ? GET_OID_QUIETLY : 0, &obj,
+	if (get_oid_with_context(the_repository,
+				 argv[0], quiet ? GET_OID_QUIETLY : 0, &obj,
 				 &dummy)) {
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot update %s with %s"),
