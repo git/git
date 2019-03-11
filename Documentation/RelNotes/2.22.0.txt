@@ -68,6 +68,23 @@ Fixes since v2.21
    improves the code base.
    (merge a97d00799a jt/http-auth-proto-v2-fix later to maint).
 
+ * The include file compat/bswap.h has been updated so that it is safe
+   to (accidentally) include it more than once.
+   (merge 33aa579a55 jk/guard-bswap-header later to maint).
+
+ * The set of header files used by "make hdr-check" unconditionally
+   included sha256/gcrypt.h, even when it is not used, causing the
+   make target to fail.  We now skip it when GCRYPT_SHA256 is not in
+   use.
+   (merge f23aa18e7f rj/hdr-check-gcrypt-fix later to maint).
+
+ * The Makefile uses 'find' utility to enumerate all the *.h header
+   files, which is expensive on platforms with slow filesystems; it
+   now optionally uses "ls-files" if working within a repository,
+   which is a trick similar to how all sources are enumerated to run
+   ETAGS on.
+   (merge 92b88eba9f js/find-lib-h-with-ls-files-when-possible later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
    (merge 90503a240b js/doc-symref-in-proto-v1 later to maint).
@@ -77,3 +94,8 @@ Fixes since v2.21
    (merge 1ede45e44b en/merge-options-doc later to maint).
    (merge 3e14dd2c8e rd/doc-hook-used-in-sample later to maint).
    (merge c271dc28fd nd/no-more-check-racy later to maint).
+   (merge e6e15194a8 yb/utf-16le-bom-spellfix later to maint).
+   (merge bb101aaf0c rd/attr.c-comment-typofix later to maint).
+   (merge 716a5af812 rd/gc-prune-doc-fix later to maint).
+   (merge 50b206371d js/untravis-windows later to maint).
+   (merge dbf47215e3 js/rebase-recreate-merge later to maint).
