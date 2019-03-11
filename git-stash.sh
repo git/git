@@ -399,6 +399,11 @@ have_stash () {
 	git rev-parse --verify --quiet $ref_stash >/dev/null
 }
 
+list_stash () {
+	have_stash || return 0
+	git log --format="%gd: %gs" -g --first-parent -m "$@" $ref_stash --
+}
+
 show_stash () {
 	ALLOW_UNKNOWN_FLAGS=t
 	assert_stash_like "$@"
@@ -586,7 +591,7 @@ test -n "$seen_non_option" || set "push" "$@"
 case "$1" in
 list)
 	shift
-	git stash--helper list "$@"
+	list_stash "$@"
 	;;
 show)
 	shift
