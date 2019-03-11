@@ -1,41 +1,41 @@
 ifeq ($(filter no-error,$(DEVOPTS)),)
-CFLAGS += -Werror
+DEVELOPER_CFLAGS += -Werror
 endif
 ifneq ($(filter pedantic,$(DEVOPTS)),)
-CFLAGS += -pedantic
+DEVELOPER_CFLAGS += -pedantic
 # don't warn for each N_ use
-CFLAGS += -DUSE_PARENS_AROUND_GETTEXT_N=0
+DEVELOPER_CFLAGS += -DUSE_PARENS_AROUND_GETTEXT_N=0
 endif
-CFLAGS += -Wall
-CFLAGS += -Wdeclaration-after-statement
-CFLAGS += -Wformat-security
-CFLAGS += -Wno-format-zero-length
-CFLAGS += -Wold-style-definition
-CFLAGS += -Woverflow
-CFLAGS += -Wpointer-arith
-CFLAGS += -Wstrict-prototypes
-CFLAGS += -Wunused
-CFLAGS += -Wvla
+DEVELOPER_CFLAGS += -Wall
+DEVELOPER_CFLAGS += -Wdeclaration-after-statement
+DEVELOPER_CFLAGS += -Wformat-security
+DEVELOPER_CFLAGS += -Wno-format-zero-length
+DEVELOPER_CFLAGS += -Wold-style-definition
+DEVELOPER_CFLAGS += -Woverflow
+DEVELOPER_CFLAGS += -Wpointer-arith
+DEVELOPER_CFLAGS += -Wstrict-prototypes
+DEVELOPER_CFLAGS += -Wunused
+DEVELOPER_CFLAGS += -Wvla
 
 ifndef COMPILER_FEATURES
 COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
 endif
 
 ifneq ($(filter clang4,$(COMPILER_FEATURES)),)
-CFLAGS += -Wtautological-constant-out-of-range-compare
+DEVELOPER_CFLAGS += -Wtautological-constant-out-of-range-compare
 endif
 
 ifneq ($(or $(filter gcc6,$(COMPILER_FEATURES)),$(filter clang4,$(COMPILER_FEATURES))),)
-CFLAGS += -Wextra
+DEVELOPER_CFLAGS += -Wextra
 # if a function is public, there should be a prototype and the right
 # header file should be included. If not, it should be static.
-CFLAGS += -Wmissing-prototypes
+DEVELOPER_CFLAGS += -Wmissing-prototypes
 ifeq ($(filter extra-all,$(DEVOPTS)),)
 # These are disabled because we have these all over the place.
-CFLAGS += -Wno-empty-body
-CFLAGS += -Wno-missing-field-initializers
-CFLAGS += -Wno-sign-compare
-CFLAGS += -Wno-unused-parameter
+DEVELOPER_CFLAGS += -Wno-empty-body
+DEVELOPER_CFLAGS += -Wno-missing-field-initializers
+DEVELOPER_CFLAGS += -Wno-sign-compare
+DEVELOPER_CFLAGS += -Wno-unused-parameter
 endif
 endif
 
@@ -43,6 +43,6 @@ endif
 # not worth fixing since newer compilers correctly stop complaining
 ifneq ($(filter gcc4,$(COMPILER_FEATURES)),)
 ifeq ($(filter gcc5,$(COMPILER_FEATURES)),)
-CFLAGS += -Wno-uninitialized
+DEVELOPER_CFLAGS += -Wno-uninitialized
 endif
 endif
