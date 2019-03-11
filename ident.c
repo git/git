@@ -585,6 +585,26 @@ int git_ident_config(const char *var, const char *value, void *data)
 	return set_ident(var, value);
 }
 
+static void set_env_if(const char *key, const char *value, int *given, int bit)
+{
+	if ((*given & bit) || getenv(key))
+		return; /* nothing to do */
+	setenv(key, value, 0);
+	*given |= bit;
+}
+
+void prepare_fallback_ident(const char *name, const char *email)
+{
+	set_env_if("GIT_AUTHOR_NAME", name,
+		   &author_ident_explicitly_given, IDENT_NAME_GIVEN);
+	set_env_if("GIT_AUTHOR_EMAIL", email,
+		   &author_ident_explicitly_given, IDENT_MAIL_GIVEN);
+	set_env_if("GIT_COMMITTER_NAME", name,
+		   &committer_ident_explicitly_given, IDENT_NAME_GIVEN);
+	set_env_if("GIT_COMMITTER_EMAIL", email,
+		   &committer_ident_explicitly_given, IDENT_MAIL_GIVEN);
+}
+
 static int buf_cmp(const char *a_begin, const char *a_end,
 		   const char *b_begin, const char *b_end)
 {
