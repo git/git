@@ -442,7 +442,7 @@ clear)
 	;;
 create)
 	shift
-	git stash--helper create --message "$*"
+	create_stash -m "$*" && echo "$w_commit"
 	;;
 store)
 	shift
