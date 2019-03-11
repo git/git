@@ -1520,10 +1520,7 @@ static int use_builtin_stash(void)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf out = STRBUF_INIT;
-	int ret, env = git_env_bool("GIT_TEST_STASH_USE_BUILTIN", -1);
-
-	if (env != -1)
-		return env;
+	int ret;
 
 	argv_array_pushl(&cp.args,
 			 "config", "--bool", "stash.usebuiltin", NULL);
