@@ -444,7 +444,7 @@ int submodule_uses_worktrees(const char *path)
 	DIR *dir;
 	struct dirent *d;
 	int ret = 0;
-	struct repository_format format;
+	struct repository_format format = REPOSITORY_FORMAT_INIT;
 
 	submodule_gitdir = git_pathdup_submodule(path, "%s", "");
 	if (!submodule_gitdir)
@@ -462,8 +462,10 @@ int submodule_uses_worktrees(const char *path)
 	read_repository_format(&format, sb.buf);
 	if (format.version != 0) {
 		strbuf_release(&sb);
+		clear_repository_format(&format);
 		return 1;
 	}
+	clear_repository_format(&format);
 
 	/* Replace config by worktrees. */
 	strbuf_setlen(&sb, sb.len - strlen("config"));
