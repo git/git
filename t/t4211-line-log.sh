@@ -122,4 +122,14 @@ test_expect_success '-s shows only line-log commits' '
 	test_cmp expect actual
 '
 
+test_expect_success '-p shows the default patch output' '
+	git log -L1,24:b.c >expect &&
+	git log -L1,24:b.c -p >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--raw is forbidden' '
+	test_must_fail git log -L1,24:b.c --raw
+'
+
 test_done
