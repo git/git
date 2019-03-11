@@ -670,7 +670,7 @@ apply)
 	;;
 clear)
 	shift
-	git stash--helper clear "$@"
+	clear_stash "$@"
 	;;
 create)
 	shift
@@ -682,7 +682,7 @@ store)
 	;;
 drop)
 	shift
-	git stash--helper drop "$@"
+	drop_stash "$@"
 	;;
 pop)
 	shift
