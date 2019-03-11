@@ -431,14 +431,14 @@ fail_return:
  * Like info/exclude and .gitignore, the attribute information can
  * come from many places.
  *
- * (1) .gitattribute file of the same directory;
- * (2) .gitattribute file of the parent directory if (1) does not have
+ * (1) .gitattributes file of the same directory;
+ * (2) .gitattributes file of the parent directory if (1) does not have
  *      any match; this goes recursively upwards, just like .gitignore.
  * (3) $GIT_DIR/info/attributes, which overrides both of the above.
  *
  * In the same file, later entries override the earlier match, so in the
  * global list, we would have entries from info/attributes the earliest
- * (reading the file from top to bottom), .gitattribute of the root
+ * (reading the file from top to bottom), .gitattributes of the root
  * directory (again, reading the file from top to bottom) down to the
  * current directory, and then scan the list backwards to find the first match.
  * This is exactly the same as what is_excluded() does in dir.c to deal with
@@ -899,7 +899,7 @@ static void prepare_attr_stack(const struct index_state *istate,
 	 * set of attribute definitions, followed by the contents
 	 * of $(prefix)/etc/gitattributes and a file specified by
 	 * core.attributesfile.  Then, contents from
-	 * .gitattribute files from directories closer to the
+	 * .gitattributes files from directories closer to the
 	 * root to the ones in deeper directories are pushed
 	 * to the stack.  Finally, at the very top of the stack
 	 * we always keep the contents of $GIT_DIR/info/attributes.
