@@ -615,6 +615,20 @@ drop_stash () {
 	clear_stash
 }
 
+apply_to_branch () {
+	test -n "$1" || die "$(gettext "No branch name specified")"
+	branch=$1
+	shift 1
+
+	set -- --index "$@"
+	assert_stash_like "$@"
+
+	git checkout -b $branch $REV^ &&
+	apply_stash "$@" && {
+		test -z "$IS_STASH_REF" || drop_stash "$@"
+	}
+}
+
 test "$1" = "-p" && set "push" "$@"
 
 PARSE_CACHE='--not-parsed'
@@ -676,8 +690,7 @@ pop)
 	;;
 branch)
 	shift
-	cd "$START_DIR"
-	git stash--helper branch "$@"
+	apply_to_branch "$@"
 	;;
 *)
 	case $# in
