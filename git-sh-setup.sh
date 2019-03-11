@@ -101,7 +101,6 @@ $LONG_USAGE")"
 	case "$1" in
 		-h)
 		echo "$LONG_USAGE"
-		case "$0" in *git-legacy-stash) exit 129;; esac
 		exit
 	esac
 fi
