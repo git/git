@@ -4,5 +4,6 @@
 struct repository;
 struct pathspec;
 int run_add_i(struct repository *r, const struct pathspec *ps);
+int run_add_p(struct repository *r, const struct pathspec *ps);
 
 #endif
