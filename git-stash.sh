@@ -429,8 +429,7 @@ save)
 	;;
 push)
 	shift
-	cd "$START_DIR"
-	git stash--helper push "$@"
+	push_stash "$@"
 	;;
 apply)
 	shift
@@ -466,8 +465,7 @@ branch)
 *)
 	case $# in
 	0)
-		cd "$START_DIR"
-		git stash--helper push &&
+		push_stash &&
 		say "$(gettext "(To restore them type \"git stash apply\")")"
 		;;
 	*)
