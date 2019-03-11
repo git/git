@@ -63,7 +63,7 @@ static unsigned char refname_disposition[256] = {
  * not legal.  It is legal if it is something reasonable to have under
  * ".git/refs/"; We do not like it if:
  *
- * - any path component of it begins with ".", or
+ * - it begins with ".", or
  * - it has double dots "..", or
  * - it has ASCII control characters, or
  * - it has ":", "?", "[", "\", "^", "~", SP, or TAB anywhere, or
@@ -71,13 +71,17 @@ static unsigned char refname_disposition[256] = {
  * - it ends with a "/", or
  * - it ends with ".lock", or
  * - it contains a "@{" portion
+ *
+ * When sanitized is not NULL, instead of rejecting the input refname
+ * as an error, try to come up with a usable replacement for the input
+ * refname in it.
  */
 static int check_refname_component(const char *refname, int *flags,
 				   struct strbuf *sanitized)
 {
 	const char *cp;
 	char last = '\0';
-	size_t component_start;
+	size_t component_start = 0; /* garbage - not a reasonable initial value */
 
 	if (sanitized)
 		component_start = sanitized->len;
@@ -95,7 +99,8 @@ static int check_refname_component(const char *refname, int *flags,
 		case 2:
 			if (last == '.') { /* Refname contains "..". */
 				if (sanitized)
-					sanitized->len--; /* collapse ".." to single "." */
+					/* collapse ".." to single "." */
+					strbuf_setlen(sanitized, sanitized->len - 1);
 				else
 					return -1;
 			}
