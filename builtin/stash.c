@@ -99,7 +99,6 @@ static struct strbuf stash_index_path = STRBUF_INIT;
  * i_tree is set to the index tree
  * u_tree is set to the untracked files tree
  */
-
 struct stash_info {
 	struct object_id w_commit;
 	struct object_id b_commit;
@@ -320,11 +319,7 @@ static void add_diff_to_buf(struct diff_queue_struct *q,
 	for (i = 0; i < q->nr; i++) {
 		strbuf_addstr(data, q->queue[i]->one->path);
 
-		/*
-		 * The reason we add "0" at the end of this strbuf
-		 * is because we will pass the output further to
-		 * "git update-index -z ...".
-		 */
+		/* NUL-terminate: will be fed to update-index -z */
 		strbuf_addch(data, '\0');
 	}
 }
@@ -579,9 +574,9 @@ static int do_drop_stash(const char *prefix, struct stash_info *info, int quiet)
 static void assert_stash_ref(struct stash_info *info)
 {
 	if (!info->is_stash_ref) {
-		free_stash_info(info);
 		error(_("'%s' is not a stash reference"), info->revision.buf);
-		exit(128);
+		free_stash_info(info);
+		exit(1);
 	}
 }
 
@@ -837,7 +832,7 @@ static void add_pathspecs(struct argv_array *args,
 	int i;
 
 	for (i = 0; i < ps.nr; i++)
-		argv_array_push(args, ps.items[i].match);
+		argv_array_push(args, ps.items[i].original);
 }
 
 /*
@@ -869,7 +864,7 @@ static int get_untracked_files(struct pathspec ps, int include_untracked,
 			found++;
 			strbuf_addstr(untracked_files, ent->name);
 			/* NUL-terminate: will be fed to update-index -z */
-			strbuf_addch(untracked_files, 0);
+			strbuf_addch(untracked_files, '\0');
 		}
 		free(ent);
 	}
@@ -888,7 +883,6 @@ static int get_untracked_files(struct pathspec ps, int include_untracked,
  * = 0 if there are no changes.
  * > 0 if there are changes.
  */
-
 static int check_changes_tracked_files(struct pathspec ps)
 {
 	int result;
@@ -928,7 +922,6 @@ static int check_changes_tracked_files(struct pathspec ps)
  * The function will fill `untracked_files` with the names of untracked files
  * It will return 1 if there were any changes and 0 if there were not.
  */
-
 static int check_changes(struct pathspec ps, int include_untracked,
 			 struct strbuf *untracked_files)
 {
@@ -1238,7 +1231,9 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 	if (!check_changes_tracked_files(ps))
 		return 0;
 
-	if (!(ret = do_create_stash(ps, &stash_msg_buf, 0, 0, &info, NULL, 0)))
+	ret = do_create_stash(ps, &stash_msg_buf, 0, 0, &info,
+			      NULL, 0);
+	if (!ret)
 		printf_ln("%s", oid_to_hex(&info.w_commit));
 
 	strbuf_release(&stash_msg_buf);
@@ -1429,8 +1424,6 @@ static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
 		if (keep_index < 1) {
 			struct child_process cp = CHILD_PROCESS_INIT;
 
-			discard_cache();
-
 			cp.git_cmd = 1;
 			argv_array_pushl(&cp.args, "reset", "-q", "--", NULL);
 			add_pathspecs(&cp.args, ps);
@@ -1475,7 +1468,8 @@ static int push_stash(int argc, const char **argv, const char *prefix)
 				     git_stash_push_usage,
 				     0);
 
-	parse_pathspec(&ps, 0, PATHSPEC_PREFER_FULL, prefix, argv);
+	parse_pathspec(&ps, 0, PATHSPEC_PREFER_FULL | PATHSPEC_PREFIX_ORIGIN,
+		       prefix, argv);
 	return do_push_stash(ps, stash_msg, quiet, keep_index, patch_mode,
 			     include_untracked);
 }
