@@ -826,11 +826,11 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 }
 
 static void add_pathspecs(struct argv_array *args,
-			  struct pathspec ps) {
+			  const struct pathspec *ps) {
 	int i;
 
-	for (i = 0; i < ps.nr; i++)
-		argv_array_push(args, ps.items[i].original);
+	for (i = 0; i < ps->nr; i++)
+		argv_array_push(args, ps->items[i].original);
 }
 
 /*
@@ -840,7 +840,7 @@ static void add_pathspecs(struct argv_array *args,
  * = 0 if there are not any untracked files
  * > 0 if there are untracked files
  */
-static int get_untracked_files(struct pathspec ps, int include_untracked,
+static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 			       struct strbuf *untracked_files)
 {
 	int i;
@@ -853,12 +853,12 @@ static int get_untracked_files(struct pathspec ps, int include_untracked,
 	if (include_untracked != INCLUDE_ALL_FILES)
 		setup_standard_excludes(&dir);
 
-	seen = xcalloc(ps.nr, 1);
+	seen = xcalloc(ps->nr, 1);
 
-	max_len = fill_directory(&dir, the_repository->index, &ps);
+	max_len = fill_directory(&dir, the_repository->index, ps);
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
-		if (dir_path_match(&the_index, ent, &ps, max_len, seen)) {
+		if (dir_path_match(&the_index, ent, ps, max_len, seen)) {
 			found++;
 			strbuf_addstr(untracked_files, ent->name);
 			/* NUL-terminate: will be fed to update-index -z */
@@ -881,11 +881,12 @@ static int get_untracked_files(struct pathspec ps, int include_untracked,
  * = 0 if there are no changes.
  * > 0 if there are changes.
  */
-static int check_changes_tracked_files(struct pathspec ps)
+static int check_changes_tracked_files(const struct pathspec *ps)
 {
 	int result;
 	struct rev_info rev;
 	struct object_id dummy;
+	int ret = 0;
 
 	/* No initial commit. */
 	if (get_oid("HEAD", &dummy))
@@ -895,7 +896,7 @@ static int check_changes_tracked_files(struct pathspec ps)
 		return -1;
 
 	init_revisions(&rev, NULL);
-	rev.prune_data = ps;
+	copy_pathspec(&rev.prune_data, ps);
 
 	rev.diffopt.flags.quick = 1;
 	rev.diffopt.flags.ignore_submodules = 1;
@@ -905,22 +906,28 @@ static int check_changes_tracked_files(struct pathspec ps)
 	diff_setup_done(&rev.diffopt);
 
 	result = run_diff_index(&rev, 1);
-	if (diff_result_code(&rev.diffopt, result))
-		return 1;
+	if (diff_result_code(&rev.diffopt, result)) {
+		ret = 1;
+		goto done;
+	}
 
 	object_array_clear(&rev.pending);
 	result = run_diff_files(&rev, 0);
-	if (diff_result_code(&rev.diffopt, result))
-		return 1;
+	if (diff_result_code(&rev.diffopt, result)) {
+		ret = 1;
+		goto done;
+	}
 
-	return 0;
+done:
+	clear_pathspec(&rev.prune_data);
+	return ret;
 }
 
 /*
  * The function will fill `untracked_files` with the names of untracked files
  * It will return 1 if there were any changes and 0 if there were not.
  */
-static int check_changes(struct pathspec ps, int include_untracked,
+static int check_changes(const struct pathspec *ps, int include_untracked,
 			 struct strbuf *untracked_files)
 {
 	int ret = 0;
@@ -974,7 +981,7 @@ done:
 	return ret;
 }
 
-static int stash_patch(struct stash_info *info, struct pathspec ps,
+static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 		       struct strbuf *out_patch, int quiet)
 {
 	int ret = 0;
@@ -1033,7 +1040,7 @@ done:
 	return ret;
 }
 
-static int stash_working_tree(struct stash_info *info, struct pathspec ps)
+static int stash_working_tree(struct stash_info *info, const struct pathspec *ps)
 {
 	int ret = 0;
 	struct rev_info rev;
@@ -1042,6 +1049,7 @@ static int stash_working_tree(struct stash_info *info, struct pathspec ps)
 	struct index_state istate = { NULL };
 
 	init_revisions(&rev, NULL);
+	copy_pathspec(&rev.prune_data, ps);
 
 	set_alternate_index_output(stash_index_path.buf);
 	if (reset_tree(&info->i_tree, 0, 0)) {
@@ -1050,7 +1058,6 @@ static int stash_working_tree(struct stash_info *info, struct pathspec ps)
 	}
 	set_alternate_index_output(NULL);
 
-	rev.prune_data = ps;
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = add_diff_to_buf;
 	rev.diffopt.format_callback_data = &diff_output;
@@ -1089,12 +1096,13 @@ done:
 	discard_index(&istate);
 	UNLEAK(rev);
 	object_array_clear(&rev.pending);
+	clear_pathspec(&rev.prune_data);
 	strbuf_release(&diff_output);
 	remove_path(stash_index_path.buf);
 	return ret;
 }
 
-static int do_create_stash(struct pathspec ps, struct strbuf *stash_msg_buf,
+static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_buf,
 			   int include_untracked, int patch_mode,
 			   struct stash_info *info, struct strbuf *patch,
 			   int quiet)
@@ -1226,10 +1234,10 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 	strbuf_join_argv(&stash_msg_buf, argc - 1, ++argv, ' ');
 
 	memset(&ps, 0, sizeof(ps));
-	if (!check_changes_tracked_files(ps))
+	if (!check_changes_tracked_files(&ps))
 		return 0;
 
-	ret = do_create_stash(ps, &stash_msg_buf, 0, 0, &info,
+	ret = do_create_stash(&ps, &stash_msg_buf, 0, 0, &info,
 			      NULL, 0);
 	if (!ret)
 		printf_ln("%s", oid_to_hex(&info.w_commit));
@@ -1238,7 +1246,7 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
+static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int quiet,
 			 int keep_index, int patch_mode, int include_untracked)
 {
 	int ret = 0;
@@ -1258,15 +1266,15 @@ static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
 	}
 
 	read_cache_preload(NULL);
-	if (!include_untracked && ps.nr) {
+	if (!include_untracked && ps->nr) {
 		int i;
-		char *ps_matched = xcalloc(ps.nr, 1);
+		char *ps_matched = xcalloc(ps->nr, 1);
 
 		for (i = 0; i < active_nr; i++)
-			ce_path_match(&the_index, active_cache[i], &ps,
+			ce_path_match(&the_index, active_cache[i], ps,
 				      ps_matched);
 
-		if (report_path_error(ps_matched, &ps, NULL)) {
+		if (report_path_error(ps_matched, ps, NULL)) {
 			fprintf_ln(stderr, _("Did you forget to 'git add'?"));
 			ret = -1;
 			free(ps_matched);
@@ -1313,7 +1321,7 @@ static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
 			  stash_msg_buf.buf);
 
 	if (!patch_mode) {
-		if (include_untracked && !ps.nr) {
+		if (include_untracked && !ps->nr) {
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
@@ -1327,7 +1335,7 @@ static int do_push_stash(struct pathspec ps, const char *stash_msg, int quiet,
 			}
 		}
 		discard_cache();
-		if (ps.nr) {
+		if (ps->nr) {
 			struct child_process cp_add = CHILD_PROCESS_INIT;
 			struct child_process cp_diff = CHILD_PROCESS_INIT;
 			struct child_process cp_apply = CHILD_PROCESS_INIT;
@@ -1468,7 +1476,7 @@ static int push_stash(int argc, const char **argv, const char *prefix)
 
 	parse_pathspec(&ps, 0, PATHSPEC_PREFER_FULL | PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
-	return do_push_stash(ps, stash_msg, quiet, keep_index, patch_mode,
+	return do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
 			     include_untracked);
 }
 
@@ -1505,7 +1513,7 @@ static int save_stash(int argc, const char **argv, const char *prefix)
 		stash_msg = strbuf_join_argv(&stash_msg_buf, argc, argv, ' ');
 
 	memset(&ps, 0, sizeof(ps));
-	ret = do_push_stash(ps, stash_msg, quiet, keep_index,
+	ret = do_push_stash(&ps, stash_msg, quiet, keep_index,
 			    patch_mode, include_untracked);
 
 	strbuf_release(&stash_msg_buf);
