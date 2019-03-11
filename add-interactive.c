@@ -9,6 +9,8 @@
 #include "lockfile.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "argv-array.h"
+#include "run-command.h"
 
 struct add_i_state {
 	struct repository *r;
@@ -255,7 +257,7 @@ static ssize_t list_and_choose(struct prefix_item **items, int *selected,
 
 struct adddel {
 	uintmax_t add, del;
-	unsigned seen:1, binary:1;
+	unsigned seen:1, unmerged:1, binary:1;
 };
 
 struct file_list {
@@ -322,6 +324,7 @@ struct collection_status {
 	const char *reference;
 
 	unsigned skip_unseen:1;
+	size_t unmerged_count, binary_count;
 	struct file_list *list;
 	struct hashmap file_map;
 };
@@ -345,12 +348,14 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 		struct pathname_entry *entry;
 		size_t file_index;
 		struct file_item *file;
-		struct adddel *adddel;
+		struct adddel *adddel, *other_adddel;
 
 		entry = hashmap_get_from_hash(&s->file_map, hash, name);
-		if (entry)
+		if (entry) {
+			if (entry->index == (size_t)-1)
+				continue;
 			file_index = entry->index;
-		else if (s->skip_unseen)
+		} else if (s->skip_unseen)
 			continue;
 		else {
 			FLEX_ALLOC_STR(entry, pathname, name);
@@ -363,11 +368,20 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 		file = s->list->file[file_index];
 
 		adddel = s->phase == FROM_INDEX ? &file->index : &file->worktree;
+		other_adddel = s->phase == FROM_INDEX ? &file->worktree : &file->index;
 		adddel->seen = 1;
 		adddel->add = stat.files[i]->added;
 		adddel->del = stat.files[i]->deleted;
-		if (stat.files[i]->is_binary)
+		if (stat.files[i]->is_binary) {
+			if (!other_adddel->binary)
+				s->binary_count++;
 			adddel->binary = 1;
+		}
+		if (stat.files[i]->is_unmerged) {
+			if (!other_adddel->unmerged)
+				s->unmerged_count++;
+			adddel->unmerged = 1;
+		}
 	}
 }
 
@@ -379,6 +393,8 @@ enum modified_files_filter {
 
 static int get_modified_files(struct repository *r,
 			      enum modified_files_filter filter,
+			      size_t *unmerged_count,
+			      size_t *binary_count,
 			      struct file_list *list,
 			      const struct pathspec *ps)
 {
@@ -425,6 +441,10 @@ static int get_modified_files(struct repository *r,
 		}
 	}
 	hashmap_free(&s.file_map, 1);
+	if (unmerged_count)
+		*unmerged_count = s.unmerged_count;
+	if (binary_count)
+		*binary_count = s.binary_count;
 
 	/* While the diffs are ordered already, we ran *two* diffs... */
 	QSORT(list->file, list->nr, file_item_cmp);
@@ -509,7 +529,7 @@ static int run_status(struct add_i_state *s, const struct pathspec *ps,
 {
 	reset_file_list(files);
 
-	if (get_modified_files(s->r, 0, files, ps) < 0)
+	if (get_modified_files(s->r, 0, NULL, NULL, files, ps) < 0)
 		return -1;
 
 	if (files->nr)
@@ -530,7 +550,7 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 
 	reset_file_list(files);
 
-	if (get_modified_files(s->r, WORKTREE_ONLY, files, ps) < 0)
+	if (get_modified_files(s->r, WORKTREE_ONLY, NULL, NULL, files, ps) < 0)
 		return -1;
 
 	if (!files->nr) {
@@ -616,7 +636,7 @@ static int run_revert(struct add_i_state *s, const struct pathspec *ps,
 	struct diff_options diffopt = { NULL };
 
 	reset_file_list(files);
-	if (get_modified_files(s->r, INDEX_ONLY, files, ps) < 0)
+	if (get_modified_files(s->r, INDEX_ONLY, NULL, NULL, files, ps) < 0)
 		return -1;
 
 	if (!files->nr) {
@@ -774,6 +794,64 @@ finish_add_untracked:
 	return res;
 }
 
+static int run_patch(struct add_i_state *s, const struct pathspec *ps,
+		     struct file_list *files,
+		     struct list_and_choose_options *opts)
+{
+	struct prefix_item **items = (struct prefix_item **)files->file;
+	int res = 0, *selected = NULL;
+	ssize_t count, i, j;
+	size_t unmerged_count = 0, binary_count = 0;
+
+	reset_file_list(files);
+	if (get_modified_files(s->r, WORKTREE_ONLY, &unmerged_count,
+			       &binary_count, files, ps) < 0)
+		return -1;
+
+	if (unmerged_count || binary_count) {
+		for (i = j = 0; i < files->nr; i++)
+			if (files->file[i]->index.binary ||
+			    files->file[i]->worktree.binary)
+				free(items[i]);
+			else if (files->file[i]->index.unmerged ||
+				 files->file[i]->worktree.unmerged) {
+				color_fprintf_ln(stderr, s->error_color,
+						 _("ignoring unmerged: %s"),
+						 files->file[i]->item.name);
+				free(items[i]);
+			} else
+				items[j++] = items[i];
+		files->nr = j;
+	}
+
+	if (!files->nr) {
+		if (binary_count)
+			fprintf(stderr, _("Only binary files changed.\n"));
+		else
+			fprintf(stderr, _("No changes.\n"));
+		return 0;
+	}
+
+	opts->prompt = N_("Patch update");
+	CALLOC_ARRAY(selected, files->nr);
+
+	count = list_and_choose(items, selected, files->nr, s, opts);
+	if (count >= 0) {
+		struct argv_array args = ARGV_ARRAY_INIT;
+
+		argv_array_pushl(&args, "git", "add--interactive", "--patch",
+				 "--", NULL);
+		for (i = 0; i < files->nr; i++)
+			if (selected[i])
+				argv_array_push(&args, items[i]->name);
+		res = run_command_v_opt(args.argv, 0);
+		argv_array_clear(&args);
+	}
+
+	free(selected);
+	return res;
+}
+
 static int run_help(struct add_i_state *s, const struct pathspec *ps,
 		    struct file_list *files,
 		    struct list_and_choose_options *opts)
@@ -867,10 +945,11 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		update = { { "update" }, run_update },
 		revert = { { "revert" }, run_revert },
 		add_untracked = { { "add untracked" }, run_add_untracked },
+		patch = { { "patch" }, run_patch },
 		help = { { "help" }, run_help };
 	struct command_item *commands[] = {
 		&status, &update, &revert, &add_untracked,
-		&help
+		&patch, &help
 	};
 
 	struct print_file_item_data print_file_item_data = {
