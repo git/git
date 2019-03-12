@@ -56,6 +56,10 @@ int init_add_i_state(struct repository *r, struct add_i_state *s)
 	strlcpy(s->file_new_color,
 		diff_get_color(s->use_color, DIFF_FILE_NEW), COLOR_MAXLEN);
 
+	free(s->interactive_diff_filter);
+	if (git_config_get_string("interactive.difffilter",
+				  &s->interactive_diff_filter))
+		s->interactive_diff_filter = NULL;
 
 	return 0;
 }
