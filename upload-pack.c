@@ -179,7 +179,7 @@ static void create_pack_file(const struct object_array *have_obj,
 			     const struct string_list *uri_protocols)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
-	struct output_state output_state = {0};
+	struct output_state output_state = { { 0 } };
 	char progress[128];
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
