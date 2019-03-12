@@ -11,10 +11,25 @@ SHELL_PATH ?= $(SHELL)
 TEST_SHELL_PATH ?= $(SHELL_PATH)
 PERL_PATH ?= /usr/bin/perl
 TAR ?= $(TAR)
+AWK ?= $(AWK)
+SED ?= $(SED)
+GREP ?= $(GREP)
 RM ?= rm -f
 PROVE ?= prove
 DEFAULT_TEST_TARGET ?= test
 TEST_LINT ?= test-lint
+
+# Fix Solaris tools. GNU tools located at /usr/gnu/bin.
+# Posix tools located at /usr/xpg4/bin.
+ifneq ($(wildcard /usr/gnu/bin/grep),)
+  GREP := /usr/gnu/bin/grep
+endif
+ifneq ($(wildcard /usr/gnu/bin/sed),)
+  SED := /usr/gnu/bin/sed
+endif
+ifneq ($(wildcard /usr/gnu/bin/awk),)
+  SED := /usr/gnu/bin/awk
+endif
 
 ifdef TEST_OUTPUT_DIRECTORY
 TEST_RESULTS_DIRECTORY = $(TEST_OUTPUT_DIRECTORY)/test-results
@@ -35,7 +50,7 @@ T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
 TGITWEB = $(sort $(wildcard t95[0-9][0-9]-*.sh))
 THELPERS = $(sort $(filter-out $(T),$(wildcard *.sh)))
 CHAINLINTTESTS = $(sort $(patsubst chainlint/%.test,%,$(wildcard chainlint/*.test)))
-CHAINLINT = sed -f chainlint.sed
+CHAINLINT = $(SED) -f chainlint.sed
 
 all: $(DEFAULT_TEST_TARGET)
 
@@ -44,8 +59,8 @@ test: pre-clean check-chainlint $(TEST_LINT)
 
 failed:
 	@failed=$$(cd '$(TEST_RESULTS_DIRECTORY_SQ)' && \
-		grep -l '^failed [1-9]' *.counts | \
-		sed -n 's/\.counts$$/.sh/p') && \
+		$(GREP) -l '^failed [1-9]' *.counts | \
+		$(SED) -n 's/\.counts$$/.sh/p') && \
 	test -z "$$failed" || $(MAKE) $$failed
 
 prove: pre-clean check-chainlint $(TEST_LINT)
@@ -73,7 +88,7 @@ check-chainlint:
 	err=0 && \
 	for i in $(CHAINLINTTESTS); do \
 		$(CHAINLINT) <chainlint/$$i.test | \
-		sed -e '/^# LINT: /d' >'$(CHAINLINTTMP_SQ)'/$$i.actual && \
+		$(SED) -e '/^# LINT: /d' >'$(CHAINLINTTMP_SQ)'/$$i.actual && \
 		diff -u chainlint/$$i.expect '$(CHAINLINTTMP_SQ)'/$$i.actual || err=1; \
 	done && exit $$err
 
@@ -81,7 +96,7 @@ test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \
 	test-lint-filenames
 
 test-lint-duplicates:
-	@dups=`echo $(T) | tr ' ' '\n' | sed 's/-.*//' | sort | uniq -d` && \
+	@dups=`echo $(T) | tr ' ' '\n' | $(SED) 's/-.*//' | sort | uniq -d` && \
 		test -z "$$dups" || { \
 		echo >&2 "duplicate test numbers:" $$dups; exit 1; }
 
@@ -97,7 +112,7 @@ test-lint-filenames:
 	@# We do *not* pass a glob to ls-files but use grep instead, to catch
 	@# non-ASCII characters (which are quoted within double-quotes)
 	@bad="$$(git -c core.quotepath=true ls-files 2>/dev/null | \
-			grep '["*:<>?\\|]')"; \
+			$(GREP) '["*:<>?\\|]')"; \
 		test -z "$$bad" || { \
 		echo >&2 "non-portable file name(s): $$bad"; exit 1; }
 
