@@ -15,6 +15,8 @@ struct add_i_state {
 	char context_color[COLOR_MAXLEN];
 	char file_old_color[COLOR_MAXLEN];
 	char file_new_color[COLOR_MAXLEN];
+
+	char *interactive_diff_filter;
 };
 
 int init_add_i_state(struct repository *r, struct add_i_state *s);
@@ -27,6 +29,7 @@ enum color_add_i {
 	COLOR_RESET,
 };
 const char *get_add_i_color(enum color_add_i ix);
+const char *get_interactive_diff_filter(void);
 
 struct repository;
 struct pathspec;
