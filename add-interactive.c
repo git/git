@@ -838,14 +838,17 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 	count = list_and_choose(items, selected, files->nr, s, opts);
 	if (count >= 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
+		struct pathspec ps_selected = { 0 };
 
-		argv_array_pushl(&args, "git", "add--interactive", "--patch",
-				 "--", NULL);
 		for (i = 0; i < files->nr; i++)
 			if (selected[i])
 				argv_array_push(&args, items[i]->name);
-		res = run_command_v_opt(args.argv, 0);
+		parse_pathspec(&ps_selected,
+			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
+			       PATHSPEC_LITERAL_PATH, "", args.argv);
+		res = run_add_p(s->r, &ps_selected);
 		argv_array_clear(&args);
+		clear_pathspec(&ps_selected);
 	}
 
 	free(selected);
