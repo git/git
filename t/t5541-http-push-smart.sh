@@ -373,5 +373,4 @@ test_expect_success 'colorize errors/hints' '
 	test_i18ngrep ! "^hint: " decoded
 '
 
-stop_httpd
 test_done

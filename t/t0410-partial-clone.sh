@@ -518,6 +518,4 @@ test_expect_success 'fetching of missing objects from an HTTP server' '
 	git verify-pack --verbose "$IDX" | grep "$HASH"
 '
 
-stop_httpd
-
 test_done

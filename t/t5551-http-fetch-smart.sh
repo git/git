@@ -434,5 +434,4 @@ test_expect_success 'server-side error detected' '
 	grep "server-side error" actual
 '
 
-stop_httpd
 test_done

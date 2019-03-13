@@ -176,6 +176,4 @@ test_expect_failure 'push to password-protected repository (no user in URL)' '
 	test_cmp expect actual
 '
 
-stop_httpd
-
 test_done

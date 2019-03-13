@@ -978,6 +978,4 @@ test_expect_success '--negotiation-tip limits "have" lines sent with HTTP protoc
 	check_negotiation_tip
 '
 
-stop_httpd
-
 test_done
