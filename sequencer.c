@@ -2137,7 +2137,8 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	item->arg_len = (int)(eol - item->arg);
 
 	if (status < 0)
-		return -1;
+		return error(_("could not parse '%.*s'"),
+			     (int)(end_of_object_name - bol), bol);
 
 	item->commit = lookup_commit_reference(r, &commit_oid);
 	return !item->commit;
