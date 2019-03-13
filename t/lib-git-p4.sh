@@ -74,7 +74,6 @@ cleanup () {
 		kill -9 $(cat "$pidfile") 2>/dev/null && exit 255
 	fi
 }
-trap cleanup EXIT
 
 # git p4 submit generates a temp file, which will
 # not get cleaned up if the submission fails.  Don't
@@ -82,7 +81,16 @@ trap cleanup EXIT
 TMPDIR="$TRASH_DIRECTORY"
 export TMPDIR
 
+registered_stop_p4d_atexit_handler=
 start_p4d () {
+	# One of the test scripts stops and then re-starts p4d.
+	# Don't register and then run the same atexit handlers several times.
+	if test -z "$registered_stop_p4d_atexit_handler"
+	then
+		test_atexit 'kill_p4d; cleanup'
+		registered_stop_p4d_atexit_handler=AlreadyDone
+	fi
+
 	mkdir -p "$db" "$cli" "$git" &&
 	rm -f "$pidfile" &&
 	(
