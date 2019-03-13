@@ -620,6 +620,10 @@ test_external_has_tap=0
 
 die () {
 	code=$?
+	# This is responsible for running the atexit commands even when a
+	# test script run with '--immediate' fails, or when the user hits
+	# ctrl-C, i.e. when 'test_done' is not invoked at all.
+	test_atexit_handler || code=$?
 	if test -n "$GIT_EXIT_OK"
 	then
 		exit $code
@@ -1045,8 +1049,27 @@ write_junit_xml_testcase () {
 	junit_have_testcase=t
 }
 
+test_atexit_cleanup=:
+test_atexit_handler () {
+	# In a succeeding test script 'test_atexit_handler' is invoked
+	# twice: first from 'test_done', then from 'die' in the trap on
+	# EXIT.
+	# This condition and resetting 'test_atexit_cleanup' below makes
+	# sure that the registered cleanup commands are run only once.
+	test : != "$test_atexit_cleanup" || return 0
+
+	setup_malloc_check
+	test_eval_ "$test_atexit_cleanup"
+	test_atexit_cleanup=:
+	teardown_malloc_check
+}
+
 test_done () {
 	GIT_EXIT_OK=t
+
+	# Run the atexit commands _before_ the trash directory is
+	# removed, so the commands can access pidfiles and socket files.
+	test_atexit_handler
 
 	if test -n "$write_junit_xml" && test -n "$junit_xml_path"
 	then
