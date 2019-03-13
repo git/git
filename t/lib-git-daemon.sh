@@ -31,6 +31,7 @@ fi
 test_set_port LIB_GIT_DAEMON_PORT
 
 GIT_DAEMON_PID=
+GIT_DAEMON_PIDFILE="$PWD"/daemon.pid
 GIT_DAEMON_DOCUMENT_ROOT_PATH="$PWD"/repo
 GIT_DAEMON_HOST_PORT=127.0.0.1:$LIB_GIT_DAEMON_PORT
 GIT_DAEMON_URL=git://$GIT_DAEMON_HOST_PORT
@@ -49,7 +50,7 @@ start_git_daemon() {
 	mkfifo git_daemon_output
 	${LIB_GIT_DAEMON_COMMAND:-git daemon} \
 		--listen=127.0.0.1 --port="$LIB_GIT_DAEMON_PORT" \
-		--reuseaddr --verbose \
+		--reuseaddr --verbose --pid-file="$GIT_DAEMON_PIDFILE" \
 		--base-path="$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
 		"$@" "$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
 		>&3 2>git_daemon_output &
@@ -88,8 +89,9 @@ stop_git_daemon() {
 	then
 		error "git daemon exited with status: $ret"
 	fi
+	kill "$(cat "$GIT_DAEMON_PIDFILE")" 2>/dev/null
 	GIT_DAEMON_PID=
-	rm -f git_daemon_output
+	rm -f git_daemon_output "$GIT_DAEMON_PIDFILE"
 }
 
 # A stripped-down version of a netcat client, that connects to a "host:port"
