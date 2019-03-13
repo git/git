@@ -2308,6 +2308,15 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 		opts->no_commit = git_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.edit"))
 		opts->edit = git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.allow-empty"))
+		opts->allow_empty =
+			git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.allow-empty-message"))
+		opts->allow_empty_message =
+			git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.keep-redundant-commits"))
+		opts->keep_redundant_commits =
+			git_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.signoff"))
 		opts->signoff = git_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.record-origin"))
@@ -2706,6 +2715,15 @@ static int save_opts(struct replay_opts *opts)
 	if (opts->edit)
 		res |= git_config_set_in_file_gently(opts_file,
 					"options.edit", "true");
+	if (opts->allow_empty)
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.allow-empty", "true");
+	if (opts->allow_empty_message)
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.allow-empty-message", "true");
+	if (opts->keep_redundant_commits)
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.keep-redundant-commits", "true");
 	if (opts->signoff)
 		res |= git_config_set_in_file_gently(opts_file,
 					"options.signoff", "true");

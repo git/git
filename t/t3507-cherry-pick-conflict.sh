@@ -410,7 +410,7 @@ test_expect_success 'cherry-pick preserves sparse-checkout' '
 	test_i18ngrep ! "Changes not staged for commit:" actual
 '
 
-test_expect_failure 'cherry-pick --continue remembers --keep-redundant-commits' '
+test_expect_success 'cherry-pick --continue remembers --keep-redundant-commits' '
 	test_when_finished "git cherry-pick --abort || :" &&
 	pristine_detach initial &&
 	test_must_fail git cherry-pick --keep-redundant-commits picked redundant &&
@@ -419,7 +419,7 @@ test_expect_failure 'cherry-pick --continue remembers --keep-redundant-commits' 
 	git cherry-pick --continue
 '
 
-test_expect_failure 'cherry-pick --continue remembers --allow-empty and --allow-empty-message' '
+test_expect_success 'cherry-pick --continue remembers --allow-empty and --allow-empty-message' '
 	test_when_finished "git cherry-pick --abort || :" &&
 	pristine_detach initial &&
 	test_must_fail git cherry-pick --allow-empty --allow-empty-message \
