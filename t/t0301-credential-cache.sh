@@ -10,7 +10,7 @@ test -z "$NO_UNIX_SOCKETS" || {
 }
 
 # don't leave a stale daemon running
-trap 'code=$?; git credential-cache exit; (exit $code); die' EXIT
+test_atexit 'git credential-cache exit'
 
 # test that the daemon works with no special setup
 helper_test cache
@@ -107,10 +107,5 @@ test_expect_success SYMLINKS 'use user socket if user directory is a symlink to 
 '
 
 helper_test_timeout cache --timeout=1
-
-# we can't rely on our "trap" above working after test_done,
-# as test_done will delete the trash directory containing
-# our socket, leaving us with no way to access the daemon.
-git credential-cache exit
 
 test_done
