@@ -631,7 +631,10 @@ die () {
 
 GIT_EXIT_OK=
 trap 'die' EXIT
-trap 'exit $?' INT TERM HUP
+# Disable '-x' tracing, because with some shells, notably dash, it
+# prevents running the cleanup commands when a test script run with
+# '--verbose-log -x' is interrupted.
+trap '{ code=$?; set +x; } 2>/dev/null; exit $code' INT TERM HUP
 
 # The user-facing functions are loaded from a separate file so that
 # test_perf subshells can have them too
