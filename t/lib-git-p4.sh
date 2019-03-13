@@ -44,15 +44,6 @@ native_path () {
 	echo "$path"
 }
 
-# On Solaris the 'date +%s' function is not supported and therefore we
-# need this replacement.
-# Attention: This function is not safe again against time offset updates
-# at runtime (e.g. via NTP). The 'clock_gettime(CLOCK_MONOTONIC)'
-# function could fix that but it is not in Python until 3.3.
-time_in_seconds () {
-	(cd / && "$PYTHON_PATH" -c 'import time; print(int(time.time()))')
-}
-
 test_set_port P4DPORT
 
 P4PORT=localhost:$P4DPORT
@@ -105,15 +96,16 @@ start_p4d () {
 	# will be caught with the "kill -0" check below.
 	i=${P4D_START_PATIENCE:-300}
 
-	timeout=$(($(time_in_seconds) + $P4D_TIMEOUT))
+	nr_tries_left=$P4D_TIMEOUT
 	while true
 	do
-		if test $(time_in_seconds) -gt $timeout
+		if test $nr_tries_left -eq 0
 		then
 			kill -9 $p4d_pid
 			exit 1
 		fi
 		sleep 1
+		nr_tries_left=$(($nr_tries_left - 1))
 	done &
 	watchdog_pid=$!
 
@@ -167,10 +159,11 @@ p4_add_job () {
 }
 
 retry_until_success () {
-	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
-	until "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
+	nr_tries_left=$RETRY_TIMEOUT
+	until "$@" 2>/dev/null || test $nr_tries_left -eq 0
 	do
 		sleep 1
+		nr_tries_left=$(($nr_tries_left - 1))
 	done
 }
 
