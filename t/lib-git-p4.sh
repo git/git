@@ -106,7 +106,7 @@ start_p4d () {
 		fi
 		sleep 1
 		nr_tries_left=$(($nr_tries_left - 1))
-	done &
+	done 2>/dev/null 4>&2 &
 	watchdog_pid=$!
 
 	ready=
