@@ -67,12 +67,8 @@ cli="$TRASH_DIRECTORY/cli"
 git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
 
-# Sometimes "prove" seems to hang on exit because p4d is still running
-cleanup () {
-	if test -f "$pidfile"
-	then
-		kill -9 $(cat "$pidfile") 2>/dev/null && exit 255
-	fi
+stop_p4d_and_watchdog () {
+	kill -9 $p4d_pid $watchdog_pid
 }
 
 # git p4 submit generates a temp file, which will
@@ -87,7 +83,7 @@ start_p4d () {
 	# Don't register and then run the same atexit handlers several times.
 	if test -z "$registered_stop_p4d_atexit_handler"
 	then
-		test_atexit 'kill_p4d; cleanup'
+		test_atexit 'stop_p4d_and_watchdog'
 		registered_stop_p4d_atexit_handler=AlreadyDone
 	fi
 
@@ -100,6 +96,7 @@ start_p4d () {
 			echo $! >"$pidfile"
 		}
 	) &&
+	p4d_pid=$(cat "$pidfile")
 
 	# This gives p4d a long time to start up, as it can be
 	# quite slow depending on the machine.  Set this environment
@@ -107,14 +104,13 @@ start_p4d () {
 	# an automated test setup.  If the p4d process dies, that
 	# will be caught with the "kill -0" check below.
 	i=${P4D_START_PATIENCE:-300}
-	pid=$(cat "$pidfile")
 
 	timeout=$(($(time_in_seconds) + $P4D_TIMEOUT))
 	while true
 	do
 		if test $(time_in_seconds) -gt $timeout
 		then
-			kill -9 $pid
+			kill -9 $p4d_pid
 			exit 1
 		fi
 		sleep 1
@@ -131,7 +127,7 @@ start_p4d () {
 			break
 		fi
 		# fail if p4d died
-		kill -0 $pid 2>/dev/null || break
+		kill -0 $p4d_pid 2>/dev/null || break
 		echo waiting for p4d to start
 		sleep 1
 		i=$(( $i - 1 ))
@@ -178,22 +174,10 @@ retry_until_success () {
 	done
 }
 
-retry_until_fail () {
-	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
-	until ! "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
-	do
-		sleep 1
-	done
-}
-
-kill_p4d () {
-	pid=$(cat "$pidfile")
-	retry_until_fail kill $pid
-	retry_until_fail kill -9 $pid
-	# complain if it would not die
-	test_must_fail kill $pid >/dev/null 2>&1 &&
-	rm -rf "$db" "$cli" "$pidfile" &&
-	retry_until_fail kill -9 $watchdog_pid
+stop_and_cleanup_p4d () {
+	kill -9 $p4d_pid $watchdog_pid
+	wait $p4d_pid
+	rm -rf "$db" "$cli" "$pidfile"
 }
 
 cleanup_git () {
