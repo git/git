@@ -191,7 +191,7 @@ test_expect_success 'tag that cannot be exported' '
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		!(p4 labels | grep GIT_TAG_ON_A_BRANCH)
+		! p4 labels | grep GIT_TAG_ON_A_BRANCH
 	)
 '
 
