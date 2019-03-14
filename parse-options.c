@@ -261,6 +261,8 @@ again:
 					     optname(options, flags));
 			if (*rest)
 				continue;
+			if (options->value)
+				*(int *)options->value = options->defval;
 			p->out[p->cpidx++] = arg - 2;
 			return 0;
 		}
