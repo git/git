@@ -33,6 +33,7 @@ struct add_p_state {
 		struct hunk head;
 		struct hunk *hunk;
 		size_t hunk_nr, hunk_alloc;
+		unsigned deleted:1;
 	} *file_diff;
 	size_t file_diff_nr;
 };
@@ -180,6 +181,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	pend = p + plain->len;
 	while (p != pend) {
 		char *eol = memchr(p, '\n', pend - p);
+		const char *deleted = NULL;
+
 		if (!eol)
 			eol = pend;
 
@@ -196,7 +199,11 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		} else if (p == plain->buf)
 			BUG("diff starts with unexpected line:\n"
 			    "%.*s\n", (int)(eol - p), p);
-		else if (starts_with(p, "@@ ")) {
+		else if (file_diff->deleted)
+			; /* keep the rest of the file in a single "hunk" */
+		else if (starts_with(p, "@@ ") ||
+			 (hunk == &file_diff->head &&
+			  skip_prefix(p, "deleted file", &deleted))) {
 			file_diff->hunk_nr++;
 			ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr,
 				   file_diff->hunk_alloc);
@@ -207,7 +214,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			if (colored)
 				hunk->colored_start = colored_p - colored->buf;
 
-			if (parse_hunk_header(s, hunk) < 0)
+			if (deleted)
+				file_diff->deleted = 1;
+			else if (parse_hunk_header(s, hunk) < 0)
 				return -1;
 		}
 
