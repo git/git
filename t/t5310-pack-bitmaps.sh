@@ -269,7 +269,7 @@ test_expect_success JGIT 'we can read jgit bitmaps' '
 	git clone --bare . compat-jgit.git &&
 	(
 		cd compat-jgit.git &&
-		rm -f .git/objects/pack/*.bitmap &&
+		rm -f objects/pack/*.bitmap &&
 		jgit gc &&
 		git rev-list --test-bitmap HEAD
 	)
