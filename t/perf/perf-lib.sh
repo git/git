@@ -17,36 +17,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/ .
 
-# do the --tee work early; it otherwise confuses our careful
-# GIT_BUILD_DIR mangling
-case "$GIT_TEST_TEE_STARTED, $* " in
-done,*)
-	# do not redirect again
-	;;
-*' --tee '*|*' --va'*)
-	mkdir -p test-results
-	BASE=test-results/$(basename "$0" .sh)
-	(GIT_TEST_TEE_STARTED=done ${SHELL-sh} "$0" "$@" 2>&1;
-	 echo $? > $BASE.exit) | tee $BASE.out
-	test "$(cat $BASE.exit)" = 0
-	exit
-	;;
-esac
-
+# These variables must be set before the inclusion of test-lib.sh below,
+# because it will change our working directory.
 TEST_DIRECTORY=$(pwd)/..
 TEST_OUTPUT_DIRECTORY=$(pwd)
-if test -z "$GIT_TEST_INSTALLED"; then
-	perf_results_prefix=
-else
-	perf_results_prefix=$(printf "%s" "${GIT_TEST_INSTALLED%/bin-wrappers}" | tr -c "[a-zA-Z0-9]" "[_*]")"."
-	# make the tested dir absolute
-	GIT_TEST_INSTALLED=$(cd "$GIT_TEST_INSTALLED" && pwd)
-fi
+ABSOLUTE_GIT_TEST_INSTALLED=$(
+	test -n "$GIT_TEST_INSTALLED" && cd "$GIT_TEST_INSTALLED" && pwd)
 
 TEST_NO_CREATE_REPO=t
 TEST_NO_MALLOC_CHECK=t
 
 . ../test-lib.sh
+
+if test -z "$GIT_TEST_INSTALLED"; then
+	perf_results_prefix=
+else
+	perf_results_prefix=$(printf "%s" "${GIT_TEST_INSTALLED%/bin-wrappers}" | tr -c "[a-zA-Z0-9]" "[_*]")"."
+	GIT_TEST_INSTALLED=$ABSOLUTE_GIT_TEST_INSTALLED
+fi
 
 # Variables from test-lib that are normally internal to the tests; we
 # need to export them for test_perf subshells
