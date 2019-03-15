@@ -250,6 +250,16 @@ test_expect_success 'gc.reflogexpire=false' '
 
 '
 
+test_expect_success 'git reflog expire unknown reference' '
+	test_config gc.reflogexpire never &&
+	test_config gc.reflogexpireunreachable never &&
+
+	test_must_fail git reflog expire master@{123} 2>stderr &&
+	test_i18ngrep "points nowhere" stderr &&
+	test_must_fail git reflog expire does-not-exist 2>stderr &&
+	test_i18ngrep "points nowhere" stderr
+'
+
 test_expect_success 'checkout should not delete log for packed ref' '
 	test $(git reflog master | wc -l) = 4 &&
 	git branch foo &&
