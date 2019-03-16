@@ -657,14 +657,14 @@ can be rejected.
 An example client/server communication might look like this:
 
 ----
-   S: 007c74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/local\0report-status delete-refs ofs-delta\n
+   S: 006274730d410fcb6603ace96f1dc55ea6196122532d refs/heads/local\0report-status delete-refs ofs-delta\n
    S: 003e7d1665144a3a975c05f1f43902ddaf084e784dbe refs/heads/debug\n
    S: 003f74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/master\n
-   S: 003f74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/team\n
+   S: 003d74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/team\n
    S: 0000
 
-   C: 003e7d1665144a3a975c05f1f43902ddaf084e784dbe 74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/debug\n
-   C: 003e74730d410fcb6603ace96f1dc55ea6196122532d 5a3f6be755bbb7deae50065988cbfa1ffa9ab68a refs/heads/master\n
+   C: 00677d1665144a3a975c05f1f43902ddaf084e784dbe 74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/debug\n
+   C: 006874730d410fcb6603ace96f1dc55ea6196122532d 5a3f6be755bbb7deae50065988cbfa1ffa9ab68a refs/heads/master\n
    C: 0000
    C: [PACKDATA]
 
