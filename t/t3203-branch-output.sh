@@ -136,11 +136,13 @@ test_expect_success 'git branch `--show-current` works properly with worktrees' 
 	branch-two
 	EOF
 	git checkout branch-one &&
-	git worktree add worktree branch-two &&
+	git worktree add worktree_dir branch-two &&
 	{
 		git branch --show-current &&
-		git -C worktree branch --show-current
+		git -C worktree_dir branch --show-current
 	} >actual &&
+	rm -r worktree_dir &&
+	git worktree prune &&
 	test_cmp expect actual
 '
 
@@ -282,6 +284,24 @@ test_expect_success 'git branch --format option' '
 	EOF
 	git branch --format="Refname is %(refname)" >actual &&
 	test_i18ncmp expect actual
+'
+
+test_expect_success 'worktree colors correct' '
+	cat >expect <<-EOF &&
+	* <GREEN>(HEAD detached from fromtag)<RESET>
+	  ambiguous<RESET>
+	  branch-one<RESET>
+	+ <CYAN>branch-two<RESET>
+	  master<RESET>
+	  ref-to-branch<RESET> -> branch-one
+	  ref-to-remote<RESET> -> origin/branch-one
+	EOF
+	git worktree add worktree_dir branch-two &&
+	git branch --color >actual.raw &&
+	rm -r worktree_dir &&
+	git worktree prune &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success "set up color tests" '
