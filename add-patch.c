@@ -28,7 +28,7 @@ struct hunk_header {
 };
 
 struct hunk {
-	size_t start, end, colored_start, colored_end;
+	size_t start, end, colored_start, colored_end, splittable_into;
 	enum { UNDECIDED_HUNK = 0, SKIP_HUNK, USE_HUNK } use;
 	struct hunk_header header;
 };
@@ -152,7 +152,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	struct argv_array args = ARGV_ARRAY_INIT;
 	struct strbuf *plain = &s->plain, *colored = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	char *p, *pend, *colored_p = NULL, *colored_pend = NULL;
+	char *p, *pend, *colored_p = NULL, *colored_pend = NULL, marker = '\0';
 	size_t file_diff_alloc = 0, i, color_arg_index;
 	struct file_diff *file_diff = NULL;
 	struct hunk *hunk = NULL;
@@ -222,6 +222,13 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		else if (starts_with(p, "@@ ") ||
 			 (hunk == &file_diff->head &&
 			  skip_prefix(p, "deleted file", &deleted))) {
+			if (marker == '-' || marker == '+')
+				/*
+				 * Should not happen; previous hunk did not end
+				 * in a context line? Handle it anyway.
+				 */
+				hunk->splittable_into++;
+
 			file_diff->hunk_nr++;
 			ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr,
 				   file_diff->hunk_alloc);
@@ -236,6 +243,12 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				file_diff->deleted = 1;
 			else if (parse_hunk_header(s, hunk) < 0)
 				return -1;
+
+			/*
+			 * Start counting into how many hunks this one can be
+			 * split
+			 */
+			marker = *p;
 		} else if (hunk == &file_diff->head &&
 			   ((skip_prefix(p, "old mode ", &mode_change) ||
 			     skip_prefix(p, "new mode ", &mode_change)) &&
@@ -260,6 +273,11 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			    (int)(eol - (plain->buf + file_diff->head.start)),
 			    plain->buf + file_diff->head.start);
 
+		if ((marker == '-' || marker == '+') && *p == ' ')
+			hunk->splittable_into++;
+		if (marker && *p != '\\')
+			marker = *p;
+
 		p = eol == pend ? pend : eol + 1;
 		hunk->end = p - plain->buf;
 
@@ -282,7 +300,28 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		}
 	}
 
+	if (marker == '-' || marker == '+')
+		/*
+		 * Last hunk ended in non-context line (i.e. it appended lines
+		 * to the file, so there are no trailing context lines).
+		 */
+		hunk->splittable_into++;
+
 	return 0;
+}
+
+static size_t find_next_line(struct strbuf *sb, size_t offset)
+{
+	char *eol;
+
+	if (offset >= sb->len)
+		BUG("looking for next line beyond buffer (%d >= %d)\n%s",
+		    (int)offset, (int)sb->len, sb->buf);
+
+	eol = memchr(sb->buf + offset, '\n', sb->len - offset);
+	if (!eol)
+		return sb->len;
+	return eol - sb->buf + 1;
 }
 
 static void render_hunk(struct add_p_state *s, struct hunk *hunk,
@@ -383,6 +422,161 @@ static void reassemble_patch(struct add_p_state *s,
 	}
 }
 
+static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
+		       size_t hunk_index)
+{
+	int colored = !!s->colored.len, first = 1;
+	struct hunk *hunk = file_diff->hunk + hunk_index;
+	size_t splittable_into;
+	size_t end, colored_end, current, colored_current = 0, context_line_count;
+	struct hunk_header remaining, *header;
+	char marker, ch;
+
+	if (hunk_index >= file_diff->hunk_nr)
+		BUG("invalid hunk index: %d (must be >= 0 and < %d)",
+		    (int)hunk_index, (int)file_diff->hunk_nr);
+
+	if (hunk->splittable_into < 2)
+		return 0;
+	splittable_into = hunk->splittable_into;
+
+	end = hunk->end;
+	colored_end = hunk->colored_end;
+
+	remaining = hunk->header;
+
+	file_diff->hunk_nr += splittable_into - 1;
+	ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr, file_diff->hunk_alloc);
+	if (hunk_index + splittable_into < file_diff->hunk_nr)
+		memmove(file_diff->hunk + hunk_index + splittable_into,
+			file_diff->hunk + hunk_index + 1,
+			(file_diff->hunk_nr - hunk_index - splittable_into)
+			* sizeof(*hunk));
+	hunk = file_diff->hunk + hunk_index;
+	hunk->splittable_into = 1;
+	memset(hunk + 1, 0, (splittable_into - 1) * sizeof(*hunk));
+
+	header = &hunk->header;
+	header->old_count = header->new_count = 0;
+
+	current = hunk->start;
+	if (colored)
+		colored_current = hunk->colored_start;
+	marker = '\0';
+	context_line_count = 0;
+
+	while (splittable_into > 1) {
+		ch = s->plain.buf[current];
+
+		if (!ch)
+			BUG("buffer overrun while splitting hunks");
+
+		/*
+		 * Is this the first context line after a chain of +/- lines?
+		 * Then record the start of the next split hunk.
+		 */
+		if ((marker == '-' || marker == '+') && ch == ' ') {
+			first = 0;
+			hunk[1].start = current;
+			if (colored)
+				hunk[1].colored_start = colored_current;
+			context_line_count = 0;
+		}
+
+		/*
+		 * Was the previous line a +/- one? Alternatively, is this the
+		 * first line (and not a +/- one)?
+		 *
+		 * Then just increment the appropriate counter and continue
+		 * with the next line.
+		 *
+		 * Otherwise this is the first of a chain of +/- lines.
+		 * neither the first of a chain of context lines?
+		 */
+		if (marker != ' ' || (ch != '-' && ch != '+')) {
+next_hunk_line:
+			/* Comment lines are attached to the previous line */
+			if (ch == '\\')
+				ch = marker ? marker : ' ';
+
+			/* current hunk not done yet */
+			if (ch == ' ')
+				context_line_count++;
+			else if (ch == '-')
+				header->old_count++;
+			else if (ch == '+')
+				header->new_count++;
+			else
+				BUG("unhandled diff marker: '%c'", ch);
+			marker = ch;
+			current = find_next_line(&s->plain, current);
+			if (colored)
+				colored_current =
+					find_next_line(&s->colored,
+						       colored_current);
+			continue;
+		}
+
+		if (first) {
+			if (header->old_count || header->new_count)
+				BUG("counts are off: %d/%d",
+				    (int)header->old_count,
+				    (int)header->new_count);
+
+			header->old_count = context_line_count;
+			header->new_count = context_line_count;
+			context_line_count = 0;
+			first = 0;
+			goto next_hunk_line;
+		}
+
+		remaining.old_offset += header->old_count;
+		remaining.old_count -= header->old_count;
+		remaining.new_offset += header->new_count;
+		remaining.new_count -= header->new_count;
+
+		/* initialize next hunk header's offsets */
+		hunk[1].header.old_offset =
+			header->old_offset + header->old_count;
+		hunk[1].header.new_offset =
+			header->new_offset + header->new_count;
+
+		/* add one split hunk */
+		header->old_count += context_line_count;
+		header->new_count += context_line_count;
+
+		hunk->end = current;
+		if (colored)
+			hunk->colored_end = colored_current;
+
+		hunk++;
+		hunk->splittable_into = 1;
+		hunk->use = hunk[-1].use;
+		header = &hunk->header;
+
+		header->old_count = header->new_count = context_line_count;
+		context_line_count = 0;
+
+		splittable_into--;
+		marker = ch;
+	}
+
+	/* last hunk simply gets the rest */
+	if (header->old_offset != remaining.old_offset)
+		BUG("miscounted old_offset: %lu != %lu",
+		    header->old_offset, remaining.old_offset);
+	if (header->new_offset != remaining.new_offset)
+		BUG("miscounted new_offset: %lu != %lu",
+		    header->new_offset, remaining.new_offset);
+	header->old_count = remaining.old_count;
+	header->new_count = remaining.new_count;
+	hunk->end = end;
+	if (colored)
+		hunk->colored_end = colored_end;
+
+	return 0;
+}
+
 static const char help_patch_text[] =
 N_("y - stage this hunk\n"
    "n - do not stage this hunk\n"
@@ -392,6 +586,7 @@ N_("y - stage this hunk\n"
    "J - leave this hunk undecided, see next hunk\n"
    "k - leave this hunk undecided, see previous undecided hunk\n"
    "K - leave this hunk undecided, see previous hunk\n"
+   "s - split the current hunk into smaller hunks\n"
    "? - print help\n");
 
 static int patch_update_file(struct add_p_state *s,
@@ -448,6 +643,8 @@ static int patch_update_file(struct add_p_state *s,
 			strbuf_addstr(&s->buf, ",j");
 		if (hunk_index + 1 < file_diff->hunk_nr)
 			strbuf_addstr(&s->buf, ",J");
+		if (hunk->splittable_into > 1)
+			strbuf_addstr(&s->buf, ",s");
 
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
@@ -512,6 +709,15 @@ soft_increment:
 				hunk_index = undecided_next;
 			else
 				err(s, _("No next hunk"));
+		} else if (s->answer.buf[0] == 's') {
+			size_t splittable_into = hunk->splittable_into;
+			if (splittable_into < 2)
+				err(s, _("Sorry, cannot split this hunk"));
+			else if (!split_hunk(s, file_diff,
+					     hunk - file_diff->hunk))
+				color_fprintf_ln(stdout, s->s.header_color,
+						 _("Split into %d hunks."),
+						 (int)splittable_into);
 		} else
 			color_fprintf(stdout, s->s.help_color,
 				      _(help_patch_text));
