@@ -442,6 +442,18 @@ test_expect_failure 'split hunk "add -p (no, yes, edit)"' '
 	! grep "^+31" actual
 '
 
+test_expect_success 'split hunk with incomplete line at end' '
+	git reset --hard &&
+	printf "missing LF" >>test &&
+	git add test &&
+	test_write_lines before 10 20 30 40 50 60 70 >test &&
+	git grep --cached missing &&
+	test_write_lines s n y q | git add -p &&
+	test_must_fail git grep --cached missing &&
+	git grep before &&
+	test_must_fail git grep --cached before
+'
+
 test_expect_failure 'edit, adding lines to the first hunk' '
 	test_write_lines 10 11 20 30 40 50 51 60 >test &&
 	git reset &&
