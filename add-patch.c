@@ -34,6 +34,18 @@ struct add_p_state {
 	size_t hunk_nr, hunk_alloc;
 };
 
+static void err(struct add_p_state *s, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	fputs(s->s.error_color, stderr);
+	vfprintf(stderr, fmt, args);
+	fputs(s->s.reset_color, stderr);
+	fputc('\n', stderr);
+	va_end(args);
+}
+
 static void setup_child_process(struct child_process *cp,
 				struct add_p_state *s, ...)
 {
@@ -364,17 +376,27 @@ soft_increment:
 				if (hunk->use == UNDECIDED_HUNK)
 					hunk->use = SKIP_HUNK;
 			}
-		} else if (hunk_index && s->answer.buf[0] == 'K')
-			hunk_index--;
-		else if (hunk_index + 1 < s->hunk_nr &&
-			 s->answer.buf[0] == 'J')
-			hunk_index++;
-		else if (undecided_previous >= 0 &&
-			 s->answer.buf[0] == 'k')
-			hunk_index = undecided_previous;
-		else if (undecided_next >= 0 && s->answer.buf[0] == 'j')
-			hunk_index = undecided_next;
-		else
+		} else if (s->answer.buf[0] == 'K') {
+			if (hunk_index)
+				hunk_index--;
+			else
+				err(s, _("No previous hunk"));
+		} else if (s->answer.buf[0] == 'J') {
+			if (hunk_index + 1 < s->hunk_nr)
+				hunk_index++;
+			else
+				err(s, _("No next hunk"));
+		} else if (s->answer.buf[0] == 'k') {
+			if (undecided_previous >= 0)
+				hunk_index = undecided_previous;
+			else
+				err(s, _("No previous hunk"));
+		} else if (s->answer.buf[0] == 'j') {
+			if (undecided_next >= 0)
+				hunk_index = undecided_next;
+			else
+				err(s, _("No next hunk"));
+		} else
 			color_fprintf(stdout, s->s.help_color,
 				      _(help_patch_text));
 	}
