@@ -79,6 +79,9 @@ then
 	ln -s "$dots/config.mak" "$tmp/worktree/config.mak"
 fi
 
+from_dir=$from_oid &&
+to_dir=$to_oid &&
+
 # generate_render_makefile <srcdir> <dstdir>
 generate_render_makefile () {
 	find "$1" -type f |
@@ -94,7 +97,7 @@ generate_render_makefile () {
 	done
 }
 
-# render_tree <committish_oid>
+# render_tree <committish_oid> <directory_name>
 render_tree () {
 	# Skip install-man entirely if we already have an installed directory.
 	# We can't rely on make here, since "install-man" unconditionally
@@ -102,28 +105,31 @@ render_tree () {
 	# we then can't rely on during the render step). We use "mv" to make
 	# sure we don't get confused by a previous run that failed partway
 	# through.
-	if ! test -d "$tmp/installed/$1"
+	oid=$1 &&
+	dname=$2 &&
+	if ! test -d "$tmp/installed/$dname"
 	then
-		git -C "$tmp/worktree" checkout --detach "$1" &&
+		git -C "$tmp/worktree" checkout --detach "$oid" &&
 		make -j$parallel -C "$tmp/worktree" \
 			GIT_VERSION=omitted \
 			SOURCE_DATE_EPOCH=0 \
-			DESTDIR="$tmp/installed/$1+" \
+			DESTDIR="$tmp/installed/$dname+" \
 			install-man &&
-		mv "$tmp/installed/$1+" "$tmp/installed/$1"
+		mv "$tmp/installed/$dname+" "$tmp/installed/$dname"
 	fi &&
 
 	# As with "installed" above, we skip the render if it's already been
 	# done.  So using make here is primarily just about running in
 	# parallel.
-	if ! test -d "$tmp/rendered/$1"
+	if ! test -d "$tmp/rendered/$dname"
 	then
-		generate_render_makefile "$tmp/installed/$1" "$tmp/rendered/$1+" |
+		generate_render_makefile "$tmp/installed/$dname" \
+			"$tmp/rendered/$dname+" |
 		make -j$parallel -f - &&
-		mv "$tmp/rendered/$1+" "$tmp/rendered/$1"
+		mv "$tmp/rendered/$dname+" "$tmp/rendered/$dname"
 	fi
 }
 
-render_tree $from_oid &&
-render_tree $to_oid &&
-git -C $tmp/rendered diff --no-index "$@" $from_oid $to_oid
+render_tree $from_oid $from_dir &&
+render_tree $to_oid $to_dir &&
+git -C $tmp/rendered diff --no-index "$@" $from_dir $to_dir
