@@ -46,29 +46,6 @@ enum rebase_type {
 	REBASE_PRESERVE_MERGES
 };
 
-static int use_builtin_rebase(void)
-{
-	struct child_process cp = CHILD_PROCESS_INIT;
-	struct strbuf out = STRBUF_INIT;
-	int ret, env = git_env_bool("GIT_TEST_REBASE_USE_BUILTIN", -1);
-
-	if (env != -1)
-		return env;
-
-	argv_array_pushl(&cp.args,
-			 "config", "--bool", "rebase.usebuiltin", NULL);
-	cp.git_cmd = 1;
-	if (capture_command(&cp, &out, 6)) {
-		strbuf_release(&out);
-		return 1;
-	}
-
-	strbuf_trim(&out);
-	ret = !strcmp("true", out.buf);
-	strbuf_release(&out);
-	return ret;
-}
-
 struct rebase_options {
 	enum rebase_type type;
 	const char *state_dir;
@@ -106,6 +83,7 @@ struct rebase_options {
 	char *strategy, *strategy_opts;
 	struct strbuf git_format_patch_opt;
 	int reschedule_failed_exec;
+	int use_legacy_rebase;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -869,6 +847,11 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 
+	if (!strcmp(var, "rebase.usebuiltin")) {
+		opts->use_legacy_rebase = !git_config_bool(var, value);
+		return 0;
+	}
+
 	return git_default_config(var, value, data);
 }
 
@@ -1143,22 +1126,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	};
 	int i;
 
-	/*
-	 * NEEDSWORK: Once the builtin rebase has been tested enough
-	 * and git-legacy-rebase.sh is retired to contrib/, this preamble
-	 * can be removed.
-	 */
-
-	if (!use_builtin_rebase()) {
-		const char *path = mkpath("%s/git-legacy-rebase",
-					  git_exec_path());
-
-		if (sane_execvp(path, (char **)argv) < 0)
-			die_errno(_("could not exec %s"), path);
-		else
-			BUG("sane_execvp() returned???");
-	}
-
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
@@ -1168,6 +1135,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	setup_work_tree();
 
 	git_config(rebase_config, &options);
+
+	if (options.use_legacy_rebase ||
+	    !git_env_bool("GIT_TEST_REBASE_USE_BUILTIN", -1))
+		warning(_("the rebase.useBuiltin support has been removed!\n"
+			  "See its entry in 'git help config' for details."));
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "%s/applying", apply_dir());

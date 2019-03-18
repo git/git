@@ -1,16 +1,9 @@
 rebase.useBuiltin::
-	Set to `false` to use the legacy shellscript implementation of
-	linkgit:git-rebase[1]. Is `true` by default, which means use
-	the built-in rewrite of it in C.
-+
-The C rewrite is first included with Git version 2.20. This option
-serves an an escape hatch to re-enable the legacy version in case any
-bugs are found in the rewrite. This option and the shellscript version
-of linkgit:git-rebase[1] will be removed in some future release.
-+
-If you find some reason to set this option to `false` other than
-one-off testing you should report the behavior difference as a bug in
-git.
+	Unused configuration variable. Used in Git versions 2.20 and
+	2.21 as an escape hatch to enable the legacy shellscript
+	implementation of rebase. Now the built-in rewrite of it in C
+	is always used. Setting this will emit a warning, to alert any
+	remaining users that setting this now does nothing.
 
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
