@@ -396,6 +396,48 @@ static void render_diff_header(struct add_p_state *s,
 	}
 }
 
+/* Coalesce hunks again that were split */
+static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
+		       size_t *hunk_index, struct hunk *temp)
+{
+	size_t i = *hunk_index;
+	struct hunk *hunk = file_diff->hunk + i;
+	struct hunk_header *header = &temp->header, *next;
+
+	if (hunk->use != USE_HUNK)
+		return 0;
+
+	memcpy(temp, hunk, sizeof(*temp));
+	/* We simply skip the colored part (if any) when merging hunks */
+	temp->colored_start = temp->colored_end = 0;
+
+	for (; i + 1 < file_diff->hunk_nr; i++) {
+		hunk++;
+		next = &hunk->header;
+
+		if (hunk->use != USE_HUNK ||
+		    header->new_offset >= next->new_offset ||
+		    header->new_offset + header->new_count < next->new_offset ||
+		    temp->start >= hunk->start ||
+		    temp->end < hunk->start)
+			break;
+
+		temp->end = hunk->end;
+		temp->colored_end = hunk->colored_end;
+
+		header->old_count = next->old_offset + next->old_count
+			- header->old_offset;
+		header->new_count = next->new_offset + next->new_count
+			- header->new_offset;
+	}
+
+	if (i == *hunk_index)
+		return 0;
+
+	*hunk_index = i;
+	return 1;
+}
+
 static void reassemble_patch(struct add_p_state *s,
 			     struct file_diff *file_diff, struct strbuf *out)
 {
@@ -406,12 +448,19 @@ static void reassemble_patch(struct add_p_state *s,
 	render_diff_header(s, file_diff, 0, out);
 
 	for (i = file_diff->mode_change; i < file_diff->hunk_nr; i++) {
+		struct hunk temp = { 0 };
+
 		hunk = file_diff->hunk + i;
 		if (hunk->use != USE_HUNK)
 			delta += hunk->header.old_count
 				- hunk->header.new_count;
-		else
+		else {
+			/* merge overlapping hunks into a temporary hunk */
+			if (merge_hunks(s, file_diff, &i, &temp))
+				hunk = &temp;
+
 			render_hunk(s, hunk, delta, 0, out);
+		}
 	}
 }
 
