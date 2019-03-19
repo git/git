@@ -403,6 +403,55 @@ static void render_diff_header(struct add_p_state *s,
 	}
 }
 
+/* Coalesce hunks again that were split */
+static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
+		       size_t *hunk_index, struct hunk *merged)
+{
+	size_t i = *hunk_index;
+	struct hunk *hunk = file_diff->hunk + i;
+	/* `header` corresponds to the merged hunk */
+	struct hunk_header *header = &merged->header, *next;
+
+	if (hunk->use != USE_HUNK)
+		return 0;
+
+	*merged = *hunk;
+	/* We simply skip the colored part (if any) when merging hunks */
+	merged->colored_start = merged->colored_end = 0;
+
+	for (; i + 1 < file_diff->hunk_nr; i++) {
+		hunk++;
+		next = &hunk->header;
+
+		/*
+		 * Stop merging hunks when:
+		 *
+		 * - the hunk is not selected for use, or
+		 * - the hunk does not overlap with the already-merged hunk(s)
+		 */
+		if (hunk->use != USE_HUNK ||
+		    header->new_offset >= next->new_offset ||
+		    header->new_offset + header->new_count < next->new_offset ||
+		    merged->start >= hunk->start ||
+		    merged->end < hunk->start)
+			break;
+
+		merged->end = hunk->end;
+		merged->colored_end = hunk->colored_end;
+
+		header->old_count = next->old_offset + next->old_count
+			- header->old_offset;
+		header->new_count = next->new_offset + next->new_count
+			- header->new_offset;
+	}
+
+	if (i == *hunk_index)
+		return 0;
+
+	*hunk_index = i;
+	return 1;
+}
+
 static void reassemble_patch(struct add_p_state *s,
 			     struct file_diff *file_diff, struct strbuf *out)
 {
@@ -413,12 +462,19 @@ static void reassemble_patch(struct add_p_state *s,
 	render_diff_header(s, file_diff, 0, out);
 
 	for (i = file_diff->mode_change; i < file_diff->hunk_nr; i++) {
+		struct hunk merged = { 0 };
+
 		hunk = file_diff->hunk + i;
 		if (hunk->use != USE_HUNK)
 			delta += hunk->header.old_count
 				- hunk->header.new_count;
-		else
+		else {
+			/* merge overlapping hunks into a temporary hunk */
+			if (merge_hunks(s, file_diff, &i, &merged))
+				hunk = &merged;
+
 			render_hunk(s, hunk, delta, 0, out);
+		}
 	}
 }
 
