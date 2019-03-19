@@ -46,6 +46,12 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 	init_color(r, s, "reset", s->reset_color, GIT_COLOR_RESET);
 	init_color(r, s, "fraginfo", s->fraginfo_color,
 		   diff_get_color(s->use_color, DIFF_FRAGINFO));
+	init_color(r, s, "context", s->context_color,
+		diff_get_color(s->use_color, DIFF_CONTEXT));
+	init_color(r, s, "old", s->file_old_color,
+		diff_get_color(s->use_color, DIFF_FILE_OLD));
+	init_color(r, s, "new", s->file_new_color,
+		diff_get_color(s->use_color, DIFF_FILE_NEW));
 }
 
 /*
