@@ -242,6 +242,8 @@ should result in deletion of the path).
 +
 When checking out paths from the index, this option lets you recreate
 the conflicted merge in the specified paths.
++
+When switching branches with `--merge`, staged changes may be lost.
 
 --conflict=<style>::
 	The same as --merge option above, but changes the way the
