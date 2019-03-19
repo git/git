@@ -171,7 +171,7 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 	struct argv_array make_script_args = ARGV_ARRAY_INIT;
 	struct todo_list todo_list = TODO_LIST_INIT;
 
-	if (prepare_branch_to_be_rebased(opts, switch_to))
+	if (prepare_branch_to_be_rebased(the_repository, opts, switch_to))
 		return -1;
 
 	if (get_revision_ranges(upstream, onto, &head_hash,
