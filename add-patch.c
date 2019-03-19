@@ -29,6 +29,7 @@ struct hunk_header {
 
 struct hunk {
 	size_t start, end, colored_start, colored_end, splittable_into;
+	ssize_t delta;
 	enum { UNDECIDED_HUNK = 0, SKIP_HUNK, USE_HUNK } use;
 	struct hunk_header header;
 };
@@ -398,13 +399,13 @@ static void render_diff_header(struct add_p_state *s,
 
 /* Coalesce hunks again that were split */
 static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
-		       size_t *hunk_index, struct hunk *temp)
+		       size_t *hunk_index, int use_all, struct hunk *temp)
 {
-	size_t i = *hunk_index;
+	size_t i = *hunk_index, delta;
 	struct hunk *hunk = file_diff->hunk + i;
 	struct hunk_header *header = &temp->header, *next;
 
-	if (hunk->use != USE_HUNK)
+	if (!use_all && hunk->use != USE_HUNK)
 		return 0;
 
 	memcpy(temp, hunk, sizeof(*temp));
@@ -415,20 +416,94 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 		hunk++;
 		next = &hunk->header;
 
-		if (hunk->use != USE_HUNK ||
-		    header->new_offset >= next->new_offset ||
-		    header->new_offset + header->new_count < next->new_offset ||
-		    temp->start >= hunk->start ||
-		    temp->end < hunk->start)
+		if ((!use_all && hunk->use != USE_HUNK) ||
+		    header->new_offset >= next->new_offset + temp->delta ||
+		    header->new_offset + header->new_count
+		    < next->new_offset + temp->delta)
 			break;
 
-		temp->end = hunk->end;
-		temp->colored_end = hunk->colored_end;
+		if (temp->start < hunk->start && temp->end > hunk->start) {
+			temp->end = hunk->end;
+			temp->colored_end = hunk->colored_end;
+			delta = 0;
+		} else {
+			const char *plain = s->plain.buf;
+			size_t  overlapping_line_count = header->new_offset
+				+ header->new_count - temp->delta
+				- next->new_offset;
+			size_t overlap_end = hunk->start;
+			size_t overlap_start = overlap_end;
+			size_t overlap_next, len, i;
+
+			/*
+			 * One of the hunks was edited; let's ensure that at
+			 * least the last context line of the first hunk
+			 * overlaps with the corresponding line of the second
+			 * hunk, and then merge.
+			 */
+
+			for (i = 0; i < overlapping_line_count; i++) {
+				overlap_next = find_next_line(&s->plain,
+							      overlap_end);
+
+				if (overlap_next > hunk->end)
+					BUG("failed to find %d context lines "
+					    "in:\n%.*s",
+					    (int)overlapping_line_count,
+					    (int)(hunk->end - hunk->start),
+					    plain + hunk->start);
+
+				if (plain[overlap_end] != ' ')
+					return error(_("expected context line "
+						       "#%d in\n%.*s"),
+						     (int)(i + 1),
+						     (int)(hunk->end
+							   - hunk->start),
+						     plain + hunk->start);
+
+				overlap_start = overlap_end;
+				overlap_end = overlap_next;
+			}
+			len = overlap_end - overlap_start;
+
+			if (len > temp->end - temp->start ||
+			    memcmp(plain + temp->end - len,
+				   plain + overlap_start, len))
+				return error(_("hunks do not overlap:\n%.*s\n"
+					       "\tdoes not end with:\n%.*s"),
+					     (int)(temp->end - temp->start),
+					     plain + temp->start,
+					     (int)len, plain + overlap_start);
+
+			/*
+			 * Since the start-end ranges are not adjacent, we
+			 * cannot simply take the union of the ranges. To
+			 * address that, we temporarily append the union of the
+			 * lines to the `plain` strbuf.
+			 */
+			if (temp->end != s->plain.len) {
+				size_t start = s->plain.len;
+
+				strbuf_add(&s->plain, plain + temp->start,
+					   temp->end - temp->start);
+				plain = s->plain.buf;
+				temp->start = start;
+				temp->end = s->plain.len;
+			}
+
+			strbuf_add(&s->plain,
+				   plain + overlap_end,
+				   hunk->end - overlap_end);
+			temp->end = s->plain.len;
+			temp->splittable_into += hunk->splittable_into;
+			delta = temp->delta;
+			temp->delta += hunk->delta;
+		}
 
 		header->old_count = next->old_offset + next->old_count
 			- header->old_offset;
-		header->new_count = next->new_offset + next->new_count
-			- header->new_offset;
+		header->new_count = next->new_offset + delta
+			+ next->new_count - header->new_offset;
 	}
 
 	if (i == *hunk_index)
@@ -439,10 +514,11 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 }
 
 static void reassemble_patch(struct add_p_state *s,
-			     struct file_diff *file_diff, struct strbuf *out)
+			     struct file_diff *file_diff, int use_all,
+			     struct strbuf *out)
 {
 	struct hunk *hunk;
-	size_t i;
+	size_t save_len = s->plain.len, i;
 	ssize_t delta = 0;
 
 	render_diff_header(s, file_diff, 0, out);
@@ -451,15 +527,24 @@ static void reassemble_patch(struct add_p_state *s,
 		struct hunk temp = { 0 };
 
 		hunk = file_diff->hunk + i;
-		if (hunk->use != USE_HUNK)
+		if (!use_all && hunk->use != USE_HUNK)
 			delta += hunk->header.old_count
 				- hunk->header.new_count;
 		else {
 			/* merge overlapping hunks into a temporary hunk */
-			if (merge_hunks(s, file_diff, &i, &temp))
+			if (merge_hunks(s, file_diff, &i, use_all, &temp))
 				hunk = &temp;
 
 			render_hunk(s, hunk, delta, 0, out);
+
+			/*
+			 * In case `merge_hunks()` used `plain` as a scratch
+			 * pad (this happens when an edited hunk had to be
+			 * coalesced with another hunk).
+			 */
+			strbuf_setlen(&s->plain, save_len);
+
+			delta += hunk->delta;
 		}
 	}
 }
@@ -597,6 +682,227 @@ next_hunk_line:
 	return 0;
 }
 
+static void recolor_hunk(struct add_p_state *s, struct hunk *hunk)
+{
+	const char *plain = s->plain.buf;
+	size_t current, eol, next;
+
+	if (!s->colored.len)
+		return;
+
+	hunk->colored_start = s->colored.len;
+	for (current = hunk->start; current < hunk->end; ) {
+		for (eol = current; eol < hunk->end; eol++)
+			if (plain[eol] == '\n')
+				break;
+		next = eol + (eol < hunk->end);
+		if (eol > current && plain[eol - 1] == '\r')
+			eol--;
+
+		strbuf_addstr(&s->colored,
+			      plain[current] == '-' ?
+			      s->s.file_old_color :
+			      plain[current] == '+' ?
+			      s->s.file_new_color :
+			      s->s.context_color);
+		strbuf_add(&s->colored, plain + current, eol - current);
+		strbuf_addstr(&s->colored, GIT_COLOR_RESET);
+		if (next > eol)
+			strbuf_add(&s->colored, plain + eol, next - eol);
+		current = next;
+	}
+	hunk->colored_end = s->colored.len;
+}
+
+static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
+{
+	char *path = xstrdup(git_path("addp-hunk-edit.diff"));
+	int fd = xopen(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	struct strbuf buf = STRBUF_INIT;
+	size_t i, j;
+	int res, copy;
+
+	if (fd < 0) {
+		res = error_errno(_("could not open '%s' for writing"), path);
+		goto edit_hunk_manually_finish;
+	}
+
+	strbuf_commented_addf(&buf, _("Manual hunk edit mode -- see bottom for "
+				      "a quick guide.\n"));
+	render_hunk(s, hunk, 0, 0, &buf);
+	strbuf_commented_addf(&buf,
+			      _("---\n"
+				"To remove '%c' lines, make them ' ' lines "
+				"(context).\n"
+				"To remove '%c' lines, delete them.\n"
+				"Lines starting with %c will be removed.\n"),
+			      '-', '+', comment_line_char);
+	strbuf_commented_addf(&buf,
+			      _("If the patch applies cleanly, the edited hunk "
+				"will immediately be\n"
+				"marked for staging.\n"));
+	/*
+	 * TRANSLATORS: 'it' refers to the patch mentioned in the previous
+	 * messages.
+	 */
+	strbuf_commented_addf(&buf,
+			      _("If it does not apply cleanly, you will be "
+				"given an opportunity to\n"
+				"edit again.  If all lines of the hunk are "
+				"removed, then the edit is\n"
+				"aborted and the hunk is left unchanged.\n"));
+	if (write_in_full(fd, buf.buf, buf.len) < 0) {
+		res = error_errno(_("could not write to '%s'"), path);
+		goto edit_hunk_manually_finish;
+	}
+
+	res = close(fd);
+	fd = -1;
+	if (res < 0)
+		goto edit_hunk_manually_finish;
+
+	hunk->start = s->plain.len;
+	if (launch_editor(path, &s->plain, NULL) < 0) {
+		res = error_errno(_("could not edit '%s'"), path);
+		goto edit_hunk_manually_finish;
+	}
+	unlink(path);
+
+	/* strip out commented lines */
+	copy = s->plain.buf[hunk->start] != comment_line_char;
+	for (i = j = hunk->start; i < s->plain.len; ) {
+		if (copy)
+			s->plain.buf[j++] = s->plain.buf[i];
+		if (s->plain.buf[i++] == '\n')
+			copy = s->plain.buf[i] != comment_line_char;
+	}
+
+	if (j == hunk->start)
+		/* User aborted by deleting everything */
+		goto edit_hunk_manually_finish;
+
+	res = 1;
+	strbuf_setlen(&s->plain, j);
+	hunk->end = j;
+	recolor_hunk(s, hunk);
+	if (s->plain.buf[hunk->start] == '@' &&
+	    /* If the hunk header was deleted, simply use the original one. */
+	    parse_hunk_header(s, hunk) < 0)
+		res = -1;
+
+edit_hunk_manually_finish:
+	if (fd >= 0)
+		close(fd);
+	free(path);
+	strbuf_release(&buf);
+
+	return res;
+}
+
+static ssize_t recount_edited_hunk(struct add_p_state *s, struct hunk *hunk,
+				   size_t orig_old_count, size_t orig_new_count)
+{
+	struct hunk_header *header = &hunk->header;
+	size_t i;
+
+	header->old_count = header->new_count = 0;
+	for (i = hunk->start; i < hunk->end; ) {
+		switch (s->plain.buf[i]) {
+		case '-':
+			header->old_count++;
+			break;
+		case '+':
+			header->new_count++;
+			break;
+		case ' ': case '\r': case '\n':
+			header->old_count++;
+			header->new_count++;
+			break;
+		}
+
+		i = find_next_line(&s->plain, i);
+	}
+
+	return orig_old_count - orig_new_count
+		- header->old_count + header->new_count;
+}
+
+static int run_apply_check(struct add_p_state *s,
+			   struct file_diff *file_diff)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	strbuf_reset(&s->buf);
+	reassemble_patch(s, file_diff, 1, &s->buf);
+
+	setup_child_process(&cp, s,
+			    "apply", "--cached", "--check", NULL);
+	if (pipe_command(&cp, s->buf.buf, s->buf.len, NULL, 0, NULL, 0))
+		return error(_("'git apply --cached' failed"));
+
+	return 0;
+}
+
+static int prompt_yesno(struct add_p_state *s, const char *prompt)
+{
+	for (;;) {
+		color_fprintf(stdout, s->s.prompt_color, "%s", _(prompt));
+		fflush(stdout);
+		if (strbuf_getline(&s->answer, stdin) == EOF)
+			return -1;
+		strbuf_trim_trailing_newline(&s->answer);
+		switch (tolower(s->answer.buf[0])) {
+		case 'n': return 0;
+		case 'y': return 1;
+		}
+	}
+}
+
+static int edit_hunk_loop(struct add_p_state *s,
+			  struct file_diff *file_diff, struct hunk *hunk)
+{
+	size_t plain_len = s->plain.len, colored_len = s->colored.len;
+	struct hunk backup;
+
+	memcpy(&backup, hunk, sizeof(backup));
+
+	for (;;) {
+		int res = edit_hunk_manually(s, hunk);
+		if (res == 0) {
+			/* abandonded */
+			memcpy(hunk, &backup, sizeof(backup));
+			return -1;
+		}
+
+		if (res > 0) {
+			hunk->delta +=
+				recount_edited_hunk(s, hunk,
+						    backup.header.old_count,
+						    backup.header.new_count);
+			if (!run_apply_check(s, file_diff))
+				return 0;
+		}
+
+		/* Drop edits (they were appended to s->plain) */
+		strbuf_setlen(&s->plain, plain_len);
+		strbuf_setlen(&s->colored, colored_len);
+		memcpy(hunk, &backup, sizeof(backup));
+
+		/*
+		 * TRANSLATORS: do not translate [y/n]
+		 * The program will only accept that input at this point.
+		 * Consider translating (saying "no" discards!) as
+		 * (saying "n" for "no" discards!) if the translation
+		 * of the word "no" does not start with n.
+		 */
+		res = prompt_yesno(s, _("Your edited hunk does not apply. "
+					"Edit again (saying \"no\" discards!) "
+					"[y/n]? "));
+		if (res < 1)
+			return -1;
+	}
+}
+
 static const char help_patch_text[] =
 N_("y - stage this hunk\n"
    "n - do not stage this hunk\n"
@@ -607,6 +913,7 @@ N_("y - stage this hunk\n"
    "k - leave this hunk undecided, see previous undecided hunk\n"
    "K - leave this hunk undecided, see previous hunk\n"
    "s - split the current hunk into smaller hunks\n"
+   "e - manually edit the current hunk\n"
    "? - print help\n");
 
 static int patch_update_file(struct add_p_state *s,
@@ -665,6 +972,9 @@ static int patch_update_file(struct add_p_state *s,
 			strbuf_addstr(&s->buf, ",J");
 		if (hunk->splittable_into > 1)
 			strbuf_addstr(&s->buf, ",s");
+		if (hunk_index + 1 > file_diff->mode_change &&
+		    !file_diff->deleted)
+			strbuf_addstr(&s->buf, ",e");
 
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
@@ -734,6 +1044,13 @@ soft_increment:
 				color_fprintf_ln(stdout, s->s.header_color,
 						 _("Split into %d hunks."),
 						 (int)splittable_into);
+		} else if (s->answer.buf[0] == 'e') {
+			if (hunk_index + 1 == file_diff->mode_change)
+				err(s, _("Sorry, cannot edit this hunk"));
+			else if (edit_hunk_loop(s, file_diff, hunk) >= 0) {
+				hunk->use = USE_HUNK;
+				goto soft_increment;
+			}
 		} else
 			color_fprintf(stdout, s->s.help_color,
 				      _(help_patch_text));
@@ -747,7 +1064,7 @@ soft_increment:
 	if (i < file_diff->hunk_nr) {
 		/* At least one hunk selected: apply */
 		strbuf_reset(&s->buf);
-		reassemble_patch(s, file_diff, &s->buf);
+		reassemble_patch(s, file_diff, 0, &s->buf);
 
 		setup_child_process(&cp, s, "apply", "--cached", NULL);
 		if (pipe_command(&cp, s->buf.buf, s->buf.len,
