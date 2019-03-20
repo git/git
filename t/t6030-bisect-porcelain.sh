@@ -681,7 +681,7 @@ test_expect_success 'bisect: --no-checkout - target in breakage' '
 	check_same BROKEN_HASH6 BISECT_HEAD &&
 	git bisect bad BISECT_HEAD &&
 	check_same BROKEN_HASH5 BISECT_HEAD &&
-	git bisect good BISECT_HEAD &&
+	test_must_fail git bisect good BISECT_HEAD &&
 	check_same BROKEN_HASH6 bisect/bad &&
 	git bisect reset
 '
@@ -692,7 +692,7 @@ test_expect_success 'bisect: --no-checkout - target after breakage' '
 	check_same BROKEN_HASH6 BISECT_HEAD &&
 	git bisect good BISECT_HEAD &&
 	check_same BROKEN_HASH8 BISECT_HEAD &&
-	git bisect good BISECT_HEAD &&
+	test_must_fail git bisect good BISECT_HEAD &&
 	check_same BROKEN_HASH9 bisect/bad &&
 	git bisect reset
 '
@@ -701,7 +701,7 @@ test_expect_success 'bisect: demonstrate identification of damage boundary' "
 	git bisect reset &&
 	git checkout broken &&
 	git bisect start broken master --no-checkout &&
-	git bisect run \"\$SHELL_PATH\" -c '
+	test_must_fail git bisect run \"\$SHELL_PATH\" -c '
 		GOOD=\$(git for-each-ref \"--format=%(objectname)\" refs/bisect/good-*) &&
 		git rev-list --objects BISECT_HEAD --not \$GOOD >tmp.\$\$ &&
 		git pack-objects --stdout >/dev/null < tmp.\$\$
