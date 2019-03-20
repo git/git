@@ -251,7 +251,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
  * This gives a rough estimate for how many commits we
  * will print out in the list.
  */
-static int estimate_commit_count(struct rev_info *rev, struct commit_list *list)
+static int estimate_commit_count(struct commit_list *list)
 {
 	int n = 0;
 
@@ -289,7 +289,7 @@ static void log_show_early(struct rev_info *revs, struct commit_list *list)
 		switch (simplify_commit(revs, commit)) {
 		case commit_show:
 			if (show_header) {
-				int n = estimate_commit_count(revs, list);
+				int n = estimate_commit_count(list);
 				show_early_header(revs, "incomplete", n);
 				show_header = 0;
 			}
@@ -333,7 +333,7 @@ static void early_output(int signal)
 	show_early_output = log_show_early;
 }
 
-static void setup_early_output(struct rev_info *rev)
+static void setup_early_output(void)
 {
 	struct sigaction sa;
 
@@ -364,7 +364,7 @@ static void setup_early_output(struct rev_info *rev)
 
 static void finish_early_output(struct rev_info *rev)
 {
-	int n = estimate_commit_count(rev, rev->commits);
+	int n = estimate_commit_count(rev->commits);
 	signal(SIGALRM, SIG_IGN);
 	show_early_header(rev, "done", n);
 }
@@ -376,7 +376,7 @@ static int cmd_log_walk(struct rev_info *rev)
 	int saved_dcctc = 0, close_file = rev->diffopt.close_file;
 
 	if (rev->early_output)
-		setup_early_output(rev);
+		setup_early_output();
 
 	if (prepare_revision_walk(rev))
 		die(_("revision walk setup failed"));
