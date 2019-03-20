@@ -127,4 +127,14 @@ test_expect_success 'fetch into corrupted repo with index-pack' '
 	)
 '
 
+test_expect_success 'internal tree objects are not "missing"' '
+	git init missing-empty &&
+	(
+		cd missing-empty &&
+		empty_tree=$(git hash-object -t tree /dev/null) &&
+		commit=$(echo foo | git commit-tree $empty_tree) &&
+		git rev-list --objects $commit
+	)
+'
+
 test_done
