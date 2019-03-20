@@ -31,6 +31,11 @@ UI, Workflows & Features
  * The command line completion (in contrib/) has been taught to
    complete more subcommand parameters.
 
+ * The final report from "git bisect" used to show the suspected
+   culprit using a raw "diff-tree", with which there is no output for
+   a merge commit.  This has been updated to use a more modern and
+   human readable output that still is concise enough.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -46,6 +51,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git prune" has been taught to take advantage of reachability
    bitmap when able.
+
+ * The command line parser of "git commit-tree" has been rewritten to
+   use the parse-options API.
 
 
 Fixes since v2.21
@@ -84,6 +92,47 @@ Fixes since v2.21
    which is a trick similar to how all sources are enumerated to run
    ETAGS on.
    (merge 92b88eba9f js/find-lib-h-with-ls-files-when-possible later to maint).
+
+ * "git rebase" that was reimplemented in C did not set ORIG_HEAD
+   correctly, which has been corrected.
+   (merge cbd29ead92 js/rebase-orig-head-fix later to maint).
+
+ * Dev support.
+   (merge f545737144 js/stress-test-ui-tweak later to maint).
+
+ * CFLAGS now can be tweaked when invoking Make while using
+   DEVELOPER=YesPlease; this did not work well before.
+   (merge 6d5d4b4e93 ab/makefile-help-devs-more later to maint).
+
+ * "git fsck --connectivity-only" omits computation necessary to sift
+   the objects that are not reachable from any of the refs into
+   unreachable and dangling.  This is now enabled when dangling
+   objects are requested (which is done by default, but can be
+   overridden with the "--no-dangling" option).
+   (merge 8d8c2a5aef jk/fsck-doc later to maint).
+
+ * On platforms where "git fetch" is killed with SIGPIPE (e.g. OSX),
+   the upload-pack that runs on the other end that hangs up after
+   detecting an error could cause "git fetch" to die with a signal,
+   which led to a flakey test.  "git fetch" now ignores SIGPIPE during
+   the network portion of its operation (this is not a problem as we
+   check the return status from our write(2)s).
+   (merge 143588949c jk/no-sigpipe-during-network-transport later to maint).
+
+ * A recent update broke "is this object available to us?" check for
+   well-known objects like an empty tree (which should yield "yes",
+   even when there is no on-disk object for an empty tree), which has
+   been corrected.
+   (merge f06ab027ef jk/virtual-objects-do-exist later to maint).
+
+ * The setup code has been cleaned up to avoid leaks around the
+   repository_format structure.
+   (merge e8805af1c3 ma/clear-repository-format later to maint).
+
+ * "git config --type=color ..." is meant to replace "git config --get-color"
+   but there is a slight difference that wasn't documented, which is
+   now fixed.
+   (merge cd8e7593b9 jk/config-type-color-ends-with-lf later to maint).
 
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
