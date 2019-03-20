@@ -760,6 +760,10 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 		free_stash_info(&info);
 		usage_with_options(git_stash_show_usage, options);
 	}
+	if (!rev.diffopt.output_format) {
+		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+		diff_setup_done(&rev.diffopt);
+	}
 
 	rev.diffopt.flags.recursive = 1;
 	setup_diff_pager(&rev.diffopt);
