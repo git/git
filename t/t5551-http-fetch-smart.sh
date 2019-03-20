@@ -43,7 +43,8 @@ test_expect_success 'clone http repository' '
 	< Cache-Control: no-cache, max-age=0, must-revalidate
 	< Content-Type: application/x-git-upload-pack-result
 	EOF
-	GIT_TRACE_CURL=true git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
+	GIT_TRACE_CURL=true GIT_TEST_PROTOCOL_VERSION= \
+		git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
 	sed -e "
@@ -80,12 +81,18 @@ test_expect_success 'clone http repository' '
 		/^< Content-Length: /d
 		/^< Transfer-Encoding: /d
 	" >actual &&
-	sed -e "s/^> Accept-Encoding: .*/> Accept-Encoding: ENCODINGS/" \
-			actual >actual.smudged &&
-	test_cmp exp actual.smudged &&
 
-	grep "Accept-Encoding:.*gzip" actual >actual.gzip &&
-	test_line_count = 2 actual.gzip
+	# NEEDSWORK: If the overspecification of the expected result is reduced, we
+	# might be able to run this test in all protocol versions.
+	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	then
+		sed -e "s/^> Accept-Encoding: .*/> Accept-Encoding: ENCODINGS/" \
+				actual >actual.smudged &&
+		test_cmp exp actual.smudged &&
+
+		grep "Accept-Encoding:.*gzip" actual >actual.gzip &&
+		test_line_count = 2 actual.gzip
+	fi
 '
 
 test_expect_success 'fetch changes via http' '
@@ -103,7 +110,13 @@ test_expect_success 'used upload-pack service' '
 	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
 	EOF
-	check_access_log exp
+
+	# NEEDSWORK: If the overspecification of the expected result is reduced, we
+	# might be able to run this test in all protocol versions.
+	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	then
+		check_access_log exp
+	fi
 '
 
 test_expect_success 'follow redirects (301)' '
@@ -215,8 +228,14 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
 	git ls-remote $HTTPD_URL/smart_cookies/repo.git master &&
-	tail -3 cookies.txt | sort >cookies_tail.txt &&
-	test_cmp expect_cookies.txt cookies_tail.txt
+
+	# NEEDSWORK: If the overspecification of the expected result is reduced, we
+	# might be able to run this test in all protocol versions.
+	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	then
+		tail -3 cookies.txt | sort >cookies_tail.txt &&
+		test_cmp expect_cookies.txt cookies_tail.txt
+	fi
 '
 
 test_expect_success 'transfer.hiderefs works over smart-http' '
@@ -306,7 +325,10 @@ test_expect_success 'test allowreachablesha1inwant with unreachable' '
 
 	git init --bare test_reachable.git &&
 	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
-	test_must_fail git -C test_reachable.git fetch origin "$(git rev-parse HEAD)"
+	# Some protocol versions (e.g. 2) support fetching
+	# unadvertised objects, so restrict this test to v0.
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+		git -C test_reachable.git fetch origin "$(git rev-parse HEAD)"
 '
 
 test_expect_success 'test allowanysha1inwant with unreachable' '
@@ -325,7 +347,10 @@ test_expect_success 'test allowanysha1inwant with unreachable' '
 
 	git init --bare test_reachable.git &&
 	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
-	test_must_fail git -C test_reachable.git fetch origin "$(git rev-parse HEAD)" &&
+	# Some protocol versions (e.g. 2) support fetching
+	# unadvertised objects, so restrict this test to v0.
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+		git -C test_reachable.git fetch origin "$(git rev-parse HEAD)" &&
 
 	git -C "$server" config uploadpack.allowanysha1inwant 1 &&
 	git -C test_reachable.git fetch origin "$(git rev-parse HEAD)"
