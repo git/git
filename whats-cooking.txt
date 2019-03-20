@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2019, #03; Mon, 11)
-X-master-at: e902e9bcae2010bc42648c80ab6adc6c5a16a4a5
-X-next-at: 810b269d1ac4b032a1c9788e5590ee2dd9ccd984
+Subject: What's cooking in git.git (Mar 2019, #04; Wed, 20)
+X-master-at: 0e94f7aa730b108f7907cfab1b2a7fba965de442
+X-next-at: fef4c6d200cf268f44767029c50f1b592040de2e
 
-What's cooking in git.git (Mar 2019, #03; Mon, 11)
+What's cooking in git.git (Mar 2019, #04; Wed, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,153 +12,345 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The tip of 'next' has been rewound, ejecting a few topics that
-deserve a chance for a fresh restart.  I plan to flush most of the
-other topics still in 'next' to 'master' sometime this week.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/guard-bswap-header (2019-03-07) 1 commit
-  (merged to 'next' on 2019-03-07 at 8ba06b29d4)
- + compat/bswap: add include header guards
-
- The include file compat/bswap.h has been updated so that it is safe
- to (accidentally) include it more than once.
-
-
-* js/find-lib-h-with-ls-files-when-possible (2019-03-05) 1 commit
-  (merged to 'next' on 2019-03-07 at 0572e4704c)
- + Makefile: use `git ls-files` to list header files, if possible
-
- The Makefile uses 'find' utility to enumerate all the *.h header
- files, which is expensive on platforms with slow filesystems; it
- now optionally uses "ls-files" if working within a repository,
- which is a trick similar to how all sources are enumerated to run
- ETAGS on.
-
-
-* js/rebase-recreate-merge (2019-03-01) 1 commit
-  (merged to 'next' on 2019-03-07 at da81e64430)
- + rebase docs: fix "gitlink" typo
-
- Docfix.
-
-
-* js/untravis-windows (2019-03-01) 1 commit
-  (merged to 'next' on 2019-03-07 at 54ca7ffeea)
- + travis: remove the hack to build the Windows job on Azure Pipelines
-
- Dev support.
-
-
-* rd/attr.c-comment-typofix (2019-03-07) 1 commit
-  (merged to 'next' on 2019-03-07 at bf8e985dd8)
- + attr.c: ".gitattribute" -> ".gitattributes" (comments)
-
- In-code comment typofix.
-
-
-* rd/gc-prune-doc-fix (2019-03-03) 1 commit
-  (merged to 'next' on 2019-03-07 at fdd4dda2e0)
- + docs/git-gc: fix typo "--prune=all" to "--prune=now"
-
- Docfix.
-
-
-* rj/hdr-check-gcrypt-fix (2019-03-06) 1 commit
-  (merged to 'next' on 2019-03-07 at ef95cd3878)
- + Makefile: fix 'hdr-check' when GCRYPT not installed
-
- The set of header files used by "make hdr-check" unconditionally
- included sha256/gcrypt.h, even when it is not used, causing the
- make target to fail.  We now skip it when GCRYPT_SHA256 is not in
- use.
-
-
-* yb/utf-16le-bom-spellfix (2019-03-07) 1 commit
-  (merged to 'next' on 2019-03-07 at 541d9dca55)
- + gitattributes.txt: fix typo
-
- Doc update.
-
---------------------------------------------------
 [New Topics]
 
-* dl/ignore-docs (2019-03-08) 2 commits
- - docs: move core.excludesFile from git-add to gitignore
- - git-clean.txt: clarify ignore pattern files
+* ms/worktree-add-atomic-mkdir (2019-03-12) 1 commit
+ - worktree: fix worktree add race
+
+ "git worktree add" used to do a "find an available name with stat
+ and then mkdir", which is race-prone.  This has been fixed by using
+ mkdir and reacting to EEXIST in a loop.
+
+ Will merge to 'next'.
+
+
+* tb/stash-in-c-unused-param-fix (2019-03-11) 1 commit
+ - stash: drop unused parameter
+ (this branch uses ps/stash-in-c; is tangled with js/stash-in-c-pathspec-fix and tg/stash-in-c-show-default-to-p-fix.)
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* dl/subtree-limit-to-one-rev (2019-03-12) 1 commit
+ - contrib/subtree: ensure only one rev is provided
+
+ "git subtree" (in contrib/) update.
+
+ Will merge to 'next'.
+
+
+* ar/t4150-remove-cruft (2019-03-13) 1 commit
+ - t4150: remove unused variable
+
+ Test cleanup.
+
+ Will merge to 'next'.
+
+
+* cb/doco-mono (2019-03-13) 2 commits
+ - doc: format pathnames and URLs as monospace.
+ - doc/CodingGuidelines: URLs and paths as monospace
+
+ Clean-up markup in the documentation suite.
+
+ Will merge to 'next'.
+
+
+* cc/multi-promisor (2019-03-14) 12 commits
+ - promisor-remote.h: fix a 'hdr-check' warning
+ - remote: add promisor and partial clone config to the doc
+ - partial-clone: add multiple remotes in the doc
+ - t0410: test fetching from many promisor remotes
+ - builtin/fetch: remove unique promisor remote limitation
+ - promisor-remote: parse remote.*.partialclonefilter
+ - Use promisor_remote_get_direct() and has_promisor_remote()
+ - promisor-remote: use repository_format_partial_clone
+ - promisor-remote: add promisor_remote_reinit()
+ - promisor-remote: implement promisor_remote_get_direct()
+ - Add initial support for many promisor remotes
+ - fetch-object: make functions return an error code
+
+
+* jk/promote-ggg (2019-03-13) 1 commit
+ - point pull requesters to GitGitGadget
+
+ Swap submitGit with GitGitGadget as a way to submit patches based
+ on GitHub PR to us.
+
+ Will merge to 'next'.
+
+
+* jk/sha1dc (2019-03-13) 1 commit
+ - Makefile: fix unaligned loads in sha1dc with UBSan
+
+ Build update for SHA-1 with collision detection.
+
+ Will merge to 'next'.
+
+
+* jt/submodule-fetch-errmsg (2019-03-14) 1 commit
+ - submodule: explain first attempt failure clearly
+
+ Error message update.
+
+ Will merge to 'next'.
+ cf. <20190313175738.252961-1-jonathantanmy@google.com> (v2)
+
+
+* nd/switch-and-restore (2019-03-18) 38 commits
+ - doc: promote "git restore"
+ - completion: support restore
+ - SQUASH??? move -p test to 2071 from 2070
+ - t: add tests for restore
+ - restore: support --patch
+ - restore: default to --source=HEAD when only --index is specified
+ - restore: add --worktree and --index
+ - checkout: factor out worktree checkout code
+ - restore: disable overlay mode by default
+ - restore: make pathspec mandatory
+ - restore: take tree-ish from --source option instead
+ - checkout: split part of it to new command 'restore'
+ - doc: promote "git switch"
+ - completion: support switch
+ - t: add tests for switch
+ - switch: --orphan defaults to empty tree as HEAD
+ - switch: reject if some operation is in progress
+ - switch: no worktree status unless real branch switch happens
+ - switch: implicit dwim, use --no-guess to disable it
+ - switch: add short option for --detach
+ - switch: only allow explicit detached HEAD
+ - switch: reject "do nothing" case
+ - switch: stop accepting pathspec
+ - switch: remove -l
+ - switch: add --discard-changes
+ - switch: better names for -b and -B
+ - checkout: split part of it to new command 'switch'
+ - checkout: split options[] array in three pieces
+ - checkout: move 'confict_style' and 'dwim_..' to checkout_opts
+ - checkout: make "opts" in cmd_checkout() a pointer
+ - checkout: factor out some code in parse_branchname_arg()
+ - checkout: keep most #include sorted
+ - checkout: advice how to get out of detached HEAD mode
+ - t: rename t2014-switch.sh to t2014-checkout-switch.sh
+ - git-checkout.txt: fix monospace typeset
+ - doc: document --overwrite-ignore
+ - git-checkout.txt: fix one syntax line
+ - git-checkout.txt: spell out --no-option
+
+ Two new commands "git switch" and "git restore" are introduced to
+ split "checking out a branch to work on advancing its history" and
+ "checking out paths out of the index and/or a tree-ish to work on
+ advancing the current history" out of the single "git checkout"
+ command.
+
+ cf. <20190317124926.17137-1-pclouds@gmail.com> (switch v4)
+ cf. <20190308101655.9767-1-pclouds@gmail.com> (restore v1)
+
+
+* ab/doc-misc-typofixes (2019-03-18) 1 commit
+ - doc: fix typos in man pages
+
+ Typofixes.
+
+ Will merge to 'next'.
+
+
+* ab/drop-scripted-rebase (2019-03-20) 1 commit
+ - rebase: remove the rebase.useBuiltin setting
+
+ Retire scripted "git rebase" implementation.
+
+ Will merge to 'next'.
+
+
+* ab/gc-reflog (2019-03-18) 8 commits
+ - reflog expire: don't assert the OID when locking refs
+ - gc: handle & check gc.reflogExpire config
+ - reflog tests: assert lack of early exit with expiry="never"
+ - reflog tests: test for the "points nowhere" warning
+ - reflog tests: make use of "test_config" idiom
+ - gc: refactor a "call me once" pattern
+ - gc: convert to using the_hash_algo
+ - gc: remove redundant check for gc_auto_threshold
+
+ Fix various glitches in "git gc" around reflog handling.
+
+ cf. <20190315155959.12390-1-avarab@gmail.com> (v3)
+
+
+* ew/repack-with-bitmaps-by-default (2019-03-18) 3 commits
+ - pack-objects: default to writing bitmap hash-cache
+ - t5310: correctly remove bitmaps for jgit test
+ - repack: enable bitmaps by default on bare repos
+
+ The connectivity bitmaps are created by default in bare
+ repositories now; also the pathname hash-cache is created by
+ default to avoid making crappy deltas when repacking.
+
+ Will merge to 'next'.
+
+
+* jk/perf-lib-tee (2019-03-18) 1 commit
+ - perf-lib.sh: rely on test-lib.sh for --tee handling
+
+ Code cleanup in the test framework.
+
+ Will merge to 'next'.
+
+
+* js/check-docs-exe (2019-03-14) 1 commit
+ - check-docs: fix for setups where executables have an extension
+
+ Dev support update.
+
+ Will merge to 'next'.
+
+
+* js/difftool-no-index (2019-03-18) 3 commits
+ - difftool: allow running outside Git worktrees with --no-index
+ - parse-options: make OPT_ARGUMENT() more useful
+ - difftool: remove obsolete (and misleading) comment
+
+ "git difftool" can now run outside a repository.
+
+ Will merge to 'next'.
+
+
+* js/get-short-oid-drop-cache (2019-03-14) 4 commits
+ - get_oid(): when an object was not found, try harder
+ - sequencer: move stale comment into correct location
+ - sequencer: improve error message when an OID could not be parsed
+ - rebase -i: demonstrate obscure loose object cache bug
+
+ A corner-case object name ambiguity while the sequencer machinery
+ is working (e.g. "rebase -i -x") has been (half) fixed.
+
+ Will merge to 'next'.
+
+
+* ma/doc-diff-doc-vs-doctor-comparison (2019-03-18) 4 commits
+ - doc-diff: add `--cut-header-footer`
+ - doc-diff: support diffing from/to AsciiDoc(tor)
+ - doc-diff: let `render_tree()` take an explicit directory name
+ - Doc: auto-detect changed build flags
+
+ Dev support update to make it easier to compare two formatted
+ results from our documentation.
+
+ Will merge to 'next'.
+ cf. <20190319031412.GC6173@sigill.intra.peff.net>
+
+
+* mh/pack-protocol-doc-fix (2019-03-18) 1 commit
+ - fix pack protocol example client/server communication
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* nd/checkout-f-while-conflicted-fix (2019-03-19) 1 commit
+ - unpack-trees: fix oneway_merge accidentally carry over stage index
+
+ "git checkout -f <branch>" while the index has an unmerged path
+ incorrectly left some paths in an unmerged state, which has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* pw/cherry-pick-continue (2019-03-18) 3 commits
+ - cherry-pick --continue: remember options
+ - cherry-pick: demonstrate option amnesia
+ - sequencer: break some long lines
+
+ "git cherry-pick --options A..B", after giving control back to the
+ user to ask help resolving a conflicted step, did not honor the
+ options it originally received, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* pw/rerere-autoupdate (2019-03-18) 2 commits
+ - merge: tweak --rerere-autoupdate documentation
+ - am/cherry-pick/rebase/revert: document --rerere-autoupdate
+
+ Doc updates.
+
+ Will merge to 'next'.
+
+
+* sg/test-atexit (2019-03-14) 11 commits
+ - t9811-git-p4-label-import: fix pipeline negation
+ - git p4 test: disable '-x' tracing in the p4d watchdog loop
+ - git p4 test: simplify timeout handling
+ - git p4 test: clean up the p4d cleanup functions
+ - git p4 test: use 'test_atexit' to kill p4d and the watchdog process
+ - t0301-credential-cache: use 'test_atexit' to stop the credentials helper
+ - tests: use 'test_atexit' to stop httpd
+ - git-daemon: use 'test_atexit` to stop 'git-daemon'
+ - test-lib: introduce 'test_atexit'
+ - t/lib-git-daemon: make sure to kill the 'git-daemon' process
+ - test-lib: fix interrupt handling with 'dash' and '--verbose-log -x'
+
+ Test framework update to more robustly clean up leftover files and
+ processes after tests are done.
+
+ Will merge to 'next'.
+
+
+* tb/trace2-va-list-fix (2019-03-20) 1 commit
+ - trace2: NULL is not allowed for va_list
+
+ Fix some code that passed a NULL when a va_list was expected.
+
+ Will merge to 'next'.
+
+
+* tg/glossary-overlay (2019-03-18) 1 commit
+ - glossary: add definition for overlay
 
  Doc update.
 
  Will merge to 'next'.
 
 
-* jh/resize-convert-scratch-buffer (2019-03-08) 1 commit
- - convert: avoid malloc of original file size
+* tg/stash-in-c-show-default-to-p-fix (2019-03-20) 1 commit
+ - stash: setup default diff output format if necessary
+ (this branch uses ps/stash-in-c; is tangled with js/stash-in-c-pathspec-fix and tb/stash-in-c-unused-param-fix.)
 
- When the "clean" filter can reduce the size of a huge file in the
- working tree down to a small "token" (a la Git LFS), there is no
- point in allocating a huge scratch area upfront, but the buffer is
- sized based on the original file size.  The convert mechanism now
- allocates very minimum and reallocates as it receives the output
- from the clean filter process.
+ A regression fix.
 
  Will merge to 'next'.
 
 
-* jk/line-log-with-patch (2019-03-11) 2 commits
- - line-log: detect unsupported formats
- - line-log: suppress diff output with "-s"
+* tz/completion (2019-03-18) 4 commits
+ - completion: use __git when calling --list-cmds
+ - completion: fix multiple command removals
+ - t9902: test multiple removals via completion.commands
+ - git: read local config in --list-cmds
 
- "git log -L<from>,<to>:<path>" with "-s" did not suppress the patch
- output as it should.  This has been corrected.
+ The completion helper code now pays attention to repository-local
+ configuration (when available), which allows --list-cmds to honour
+ a repository specific setting of completion.commands, for example.
 
- Will merge to 'next'.
-
-
-* js/rebase-deprecate-preserve-merges (2019-03-08) 1 commit
- - rebase: deprecate --preserve-merges
-
- "git rebase --rebase-merges" replaces its old "--preserve-merges"
- option; the latter is now marked as deprecated.
-
- Will merge to 'next'.
+ Getting there...
+ cf. <20190317181620.26727-1-tmz@pobox.com> (v2)
+ cf. <CACsJy8DiQwmAKMruOAO4roPbiRTvt5TESBTd682hTwkZjcoj2Q@mail.gmail.com>
 
 
-* js/init-db-update-for-mingw (2019-03-08) 1 commit
- - mingw: respect core.hidedotfiles = false in git-init again
+* tz/t4038-bash-redirect-target-workaround (2019-03-18) 1 commit
+ - t4038-diff-combined: quote paths with whitespace
 
- "git init" forgot to read platform-specific repository
- configuration, which made Windows port to ignore settings of
- core.hidedotfiles, for example.
-
- cf. <xmqqva0ujboi.fsf@gitster-ct.c.googlers.com>
-
-
-* js/stash-in-c-pathspec-fix (2019-03-08) 2 commits
- - built-in stash: handle :(glob) pathspecs again
- - legacy stash: fix "rudimentary backport of -q"
- (this branch uses ps/stash-in-c; is tangled with tb/stas-in-c-unused-param-fix.)
-
- Further fixes to "git stash" reimplemented in C.
-
- Will merge to 'next'.
-
-
-* nd/rewritten-ref-is-per-worktree (2019-03-08) 3 commits
- - Make sure refs/rewritten/ is per-worktree
- - files-backend.c: reduce duplication in add_per_worktree_entries_to_dir()
- - files-backend.c: factor out per-worktree code in loose_fill_ref_dir()
-
- "git rebase" uses the refs/rewritten/ hierarchy to store its
- intermediate states, which inherently makes the hierarchy per
- worktree, but it didn't quite work well.
+ Work-around extra warning from bash in our tests.
 
  Will merge to 'next'.
 
@@ -243,9 +435,9 @@ of the repositories listed at
  end-user complaints, but let's see.
 
 
-* nb/branch-show-other-worktrees-head (2019-02-01) 3 commits
- - branch: add an extra verbose output displaying worktree path for refs checked out in a linked worktree
- - branch: mark and color a branch differently if it is checked out in a linked worktree
+* nb/branch-show-other-worktrees-head (2019-03-18) 3 commits
+ - branch: add worktree info on verbose output
+ - branch: update output to include worktree info
  - ref-filter: add worktreepath atom
 
  "git branch --list" learned to show branches that are checked out
@@ -259,6 +451,80 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* dl/ignore-docs (2019-03-08) 2 commits
+ - docs: move core.excludesFile from git-add to gitignore
+ - git-clean.txt: clarify ignore pattern files
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jh/resize-convert-scratch-buffer (2019-03-08) 1 commit
+ - convert: avoid malloc of original file size
+
+ When the "clean" filter can reduce the size of a huge file in the
+ working tree down to a small "token" (a la Git LFS), there is no
+ point in allocating a huge scratch area upfront, but the buffer is
+ sized based on the original file size.  The convert mechanism now
+ allocates very minimum and reallocates as it receives the output
+ from the clean filter process.
+
+ Will merge to 'next'.
+
+
+* jk/line-log-with-patch (2019-03-11) 2 commits
+ - line-log: detect unsupported formats
+ - line-log: suppress diff output with "-s"
+
+ "git log -L<from>,<to>:<path>" with "-s" did not suppress the patch
+ output as it should.  This has been corrected.
+
+ Will merge to 'next'.
+
+
+* js/rebase-deprecate-preserve-merges (2019-03-12) 1 commit
+ - rebase: deprecate --preserve-merges
+
+ "git rebase --rebase-merges" replaces its old "--preserve-merges"
+ option; the latter is now marked as deprecated.
+
+ Will merge to 'next'.
+
+
+* js/init-db-update-for-mingw (2019-03-12) 1 commit
+ - mingw: respect core.hidedotfiles = false in git-init again
+
+ "git init" forgot to read platform-specific repository
+ configuration, which made Windows port to ignore settings of
+ core.hidedotfiles, for example.
+
+ Will merge to 'next'.
+
+
+* js/stash-in-c-pathspec-fix (2019-03-12) 3 commits
+ - stash: pass pathspec as pointer
+ - built-in stash: handle :(glob) pathspecs again
+ - legacy stash: fix "rudimentary backport of -q"
+ (this branch uses ps/stash-in-c; is tangled with tb/stash-in-c-unused-param-fix and tg/stash-in-c-show-default-to-p-fix.)
+
+ Further fixes to "git stash" reimplemented in C.
+
+ Will merge to 'next'.
+
+
+* nd/rewritten-ref-is-per-worktree (2019-03-08) 3 commits
+ - Make sure refs/rewritten/ is per-worktree
+ - files-backend.c: reduce duplication in add_per_worktree_entries_to_dir()
+ - files-backend.c: factor out per-worktree code in loose_fill_ref_dir()
+
+ "git rebase" uses the refs/rewritten/ hierarchy to store its
+ intermediate states, which inherently makes the hierarchy per
+ worktree, but it didn't quite work well.
+
+ Will merge to 'next'.
+
 
 * br/commit-tree-parseopt (2019-03-08) 1 commit
   (merged to 'next' on 2019-03-11 at e1228ef04f)
@@ -292,8 +558,7 @@ of the repositories listed at
  Error messages given from the http transport have been updated so
  that they can be localized.
 
- The i18n of die() messages conflicts with topics in flight, so will
- be dealt with separately when the tree is more quiescent.
+ Will merge to 'next'.
 
 
 * ma/asciidoctor-fixes-more (2019-03-07) 5 commits
@@ -333,6 +598,9 @@ of the repositories listed at
  Third batch to teach the diff machinery to use the parse-options
  API.
 
+ Will merge to 'next'.
+ cf. <20190305123026.7266-1-pclouds@gmail.com>
+
 
 * jt/test-protocol-version (2019-03-07) 8 commits
  - t5552: compensate for v2 filtering ref adv.
@@ -346,6 +614,9 @@ of the repositories listed at
 
  Help developers by making it easier to run most of the tests under
  different versions of over-the-wire protocols.
+
+ Will merge to 'next'.
+ cf. <cover.1551131153.git.jonathantanmy@google.com>
 
 
 * jk/bisect-final-output (2019-03-01) 3 commits
@@ -448,16 +719,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ma/asciidoctor-fixes (2019-03-11) 5 commits
- - asciidoctor-extensions: fix spurious space after linkgit in *.html
- - Documentation/Makefile: add missing dependencies on asciidoctor-extensions
+* ma/asciidoctor-fixes (2019-03-11) 3 commits
  - asciidoctor-extensions: fix spurious space after linkgit
  - Documentation/Makefile: add missing dependency on asciidoctor-extensions
  - Documentation/Makefile: add missing xsl dependencies for manpages
 
  Build fix around use of asciidoctor instead of asciidoc
 
- Ejected out of 'next' to allow a cleaner reroll.
+ Will merge to 'next'.
 
 
 * nd/worktree-name-sanitization (2019-03-11) 2 commits
@@ -477,7 +746,8 @@ of the repositories listed at
 
  A GSoC micro.
 
- I think this is almost there.
+ Will merge to 'next'.
+ cf. <20190304120801.28763-1-rohit.ashiwal265@gmail.com> (v3)
 
 
 * dl/reset-doc-no-wrt-abbrev (2019-03-06) 1 commit
@@ -539,7 +809,8 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jt/fetch-cdn-offload (2019-03-11) 8 commits
+* jt/fetch-cdn-offload (2019-03-12) 9 commits
+ - SQUASH???
  - upload-pack: send part of packfile response as uri
  - fetch-pack: support more than one pack lockfile
  - upload-pack: refactor reading of pack-objects out
@@ -642,15 +913,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dl/merge-cleanup-scissors-fix (2019-03-11) 8 commits
+* dl/merge-cleanup-scissors-fix (2019-03-18) 11 commits
  - cherry-pick/revert: add scissors line on merge conflict
- - sequencer.c: define get_config_from_cleanup
+ - sequencer.c: define describe_cleanup_mode
  - merge: add scissors line on merge conflict
  - merge: cleanup messages like commit
  - sequencer.c: remove duplicate code
+ - parse-options.h: extract common --cleanup option
  - commit: extract cleanup_mode functions to sequencer
+ - t7502: clean up test style
+ - t7604: refactor out Git commands upstream of pipe
  - t3507: cleanup space after redirection operators
- - t7600: clean up 'merge --squash c3 with c7' test
+ - t7600: clean up style
 
  The list of conflicted paths shown in the editor while concluding a
  conflicted merge was shown above the scissors line when the
@@ -658,7 +932,9 @@ of the repositories listed at
  out just like the list of updated paths and other information to
  help the user explain the merge better.
 
- cf. <cover.1552275703.git.liu.denton@gmail.com>
+ Getting there ;-)
+ cf. <cover.1552275703.git.liu.denton@gmail.com> (v7)
+ Expecting v9.
 
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
@@ -698,6 +974,9 @@ of the repositories listed at
  around in-core to avoid rewriting the same file over and over
  unnecessarily.
 
+ Will merge to 'next'.
+ cf. <20190305191805.13561-1-alban.gruin@gmail.com> (v8)
+
 
 * ps/stash-in-c (2019-03-07) 29 commits
   (merged to 'next' on 2019-03-11 at f568e3be72)
@@ -730,7 +1009,7 @@ of the repositories listed at
  + strbuf.c: add `strbuf_join_argv()`
  + sha1-name.c: add `get_oidf()` which acts like `get_oid()`
  + Merge branch 'sd/stash-wo-user-name'
- (this branch is used by js/stash-in-c-pathspec-fix and tb/stas-in-c-unused-param-fix.)
+ (this branch is used by js/stash-in-c-pathspec-fix, tb/stash-in-c-unused-param-fix and tg/stash-in-c-show-default-to-p-fix.)
 
  Originally merged to 'next' on 2019-03-07
 
