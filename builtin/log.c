@@ -490,7 +490,7 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	return cmd_log_walk(&rev);
 }
 
-static void show_tagger(char *buf, int len, struct rev_info *rev)
+static void show_tagger(const char *buf, struct rev_info *rev)
 {
 	struct strbuf out = STRBUF_INIT;
 	struct pretty_print_context pp = {0};
@@ -546,11 +546,11 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 	assert(type == OBJ_TAG);
 	while (offset < size && buf[offset] != '\n') {
 		int new_offset = offset + 1;
+		const char *ident;
 		while (new_offset < size && buf[new_offset++] != '\n')
 			; /* do nothing */
-		if (starts_with(buf + offset, "tagger "))
-			show_tagger(buf + offset + 7,
-				    new_offset - offset - 7, rev);
+		if (skip_prefix(buf + offset, "tagger ", &ident))
+			show_tagger(ident, rev);
 		offset = new_offset;
 	}
 
