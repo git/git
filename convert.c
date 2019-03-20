@@ -731,7 +731,7 @@ static int apply_single_file_filter(const char *path, const char *src, size_t le
 	if (start_async(&async))
 		return 0;	/* error was already reported */
 
-	if (strbuf_read(&nbuf, async.out, len) < 0) {
+	if (strbuf_read(&nbuf, async.out, 0) < 0) {
 		err = error(_("read from external filter '%s' failed"), cmd);
 	}
 	if (close(async.out)) {
