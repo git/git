@@ -115,4 +115,21 @@ test_expect_success 'range_set_union' '
 	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c; done)
 '
 
+test_expect_success '-s shows only line-log commits' '
+	git log --format="commit %s" -L1,24:b.c >expect.raw &&
+	grep ^commit expect.raw >expect &&
+	git log --format="commit %s" -L1,24:b.c -s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-p shows the default patch output' '
+	git log -L1,24:b.c >expect &&
+	git log -L1,24:b.c -p >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--raw is forbidden' '
+	test_must_fail git log -L1,24:b.c --raw
+'
+
 test_done

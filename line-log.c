@@ -1103,10 +1103,12 @@ static int process_all_files(struct line_log_data **range_out,
 
 int line_log_print(struct rev_info *rev, struct commit *commit)
 {
-	struct line_log_data *range = lookup_line_range(rev, commit);
 
 	show_log(rev);
-	dump_diff_hacky(rev, range);
+	if (!(rev->diffopt.output_format & DIFF_FORMAT_NO_OUTPUT)) {
+		struct line_log_data *range = lookup_line_range(rev, commit);
+		dump_diff_hacky(rev, range);
+	}
 	return 1;
 }
 
