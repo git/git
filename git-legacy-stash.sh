@@ -86,17 +86,17 @@ maybe_quiet () {
 		shift
 		if test -n "$GIT_QUIET"
 		then
-			eval "$@" 2>/dev/null
+			"$@" 2>/dev/null
 		else
-			eval "$@"
+			"$@"
 		fi
 		;;
 	*)
 		if test -n "$GIT_QUIET"
 		then
-			eval "$@" >/dev/null 2>&1
+			"$@" >/dev/null 2>&1
 		else
-			eval "$@"
+			"$@"
 		fi
 		;;
 	esac
