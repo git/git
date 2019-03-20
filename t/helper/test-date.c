@@ -55,7 +55,7 @@ static void show_dates(const char **argv, const char *format)
 	}
 }
 
-static void parse_dates(const char **argv, struct timeval *now)
+static void parse_dates(const char **argv)
 {
 	struct strbuf result = STRBUF_INIT;
 
@@ -124,7 +124,7 @@ int cmd__date(int argc, const char **argv)
 	else if (skip_prefix(*argv, "show:", &x))
 		show_dates(argv+1, x);
 	else if (!strcmp(*argv, "parse"))
-		parse_dates(argv+1, &now);
+		parse_dates(argv+1);
 	else if (!strcmp(*argv, "approxidate"))
 		parse_approxidate(argv+1, &now);
 	else if (!strcmp(*argv, "timestamp"))
