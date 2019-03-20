@@ -707,7 +707,6 @@ static int index_pos_by_traverse_info(struct name_entry *names,
  * instead of ODB since we already know what these trees contain.
  */
 static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
-				  struct name_entry *names,
 				  struct traverse_info *info)
 {
 	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
@@ -797,7 +796,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 		 * unprocessed entries before 'pos'.
 		 */
 		bottom = o->cache_bottom;
-		ret = traverse_by_cache_tree(pos, nr_entries, n, names, info);
+		ret = traverse_by_cache_tree(pos, nr_entries, n, info);
 		o->cache_bottom = bottom;
 		return ret;
 	}
