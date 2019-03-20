@@ -1484,6 +1484,12 @@ test_expect_success 'git --help completion' '
 	test_completion "git --help core" "core-tutorial "
 '
 
+test_expect_failure 'completion.commands removes multiple commands' '
+	test_config completion.commands "-cherry -mergetool" &&
+	git --list-cmds=list-mainporcelain,list-complete,config >out &&
+	! grep -E "^(cherry|mergetool)$" out
+'
+
 test_expect_success 'setup for integration tests' '
 	echo content >file1 &&
 	echo more >file2 &&
