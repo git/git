@@ -85,9 +85,9 @@ When `merges`, pass the `--rebase-merges` option to 'git rebase'
 so that the local merge commits are included in the rebase (see
 linkgit:git-rebase[1] for details).
 +
-When preserve, also pass `--preserve-merges` along to 'git rebase'
-so that locally committed merge commits will not be flattened
-by running 'git pull'.
+When `preserve` (deprecated in favor of `merges`), also pass
+`--preserve-merges` along to 'git rebase' so that locally committed merge
+commits will not be flattened by running 'git pull'.
 +
 When the value is `interactive`, the rebase is run in interactive mode.
 +
