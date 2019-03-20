@@ -1185,7 +1185,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	handle_untracked_files_arg(s);
 
 	if (all && argc > 0)
-		die(_("Paths with -a does not make sense."));
+		die(_("paths '%s ...' with -a does not make sense"),
+		    argv[0]);
 
 	if (status_format != STATUS_FORMAT_NONE)
 		dry_run = 1;
