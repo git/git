@@ -1758,7 +1758,6 @@ static void invalidate_ce_path(const struct cache_entry *ce,
  */
 static int verify_clean_submodule(const char *old_sha1,
 				  const struct cache_entry *ce,
-				  enum unpack_trees_error_types error_type,
 				  struct unpack_trees_options *o)
 {
 	if (!submodule_from_ce(ce))
@@ -1769,7 +1768,6 @@ static int verify_clean_submodule(const char *old_sha1,
 }
 
 static int verify_clean_subdirectory(const struct cache_entry *ce,
-				     enum unpack_trees_error_types error_type,
 				     struct unpack_trees_options *o)
 {
 	/*
@@ -1792,7 +1790,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 		if (!sub_head && oideq(&oid, &ce->oid))
 			return 0;
 		return verify_clean_submodule(sub_head ? NULL : oid_to_hex(&oid),
-					      ce, error_type, o);
+					      ce, o);
 	}
 
 	/*
@@ -1888,7 +1886,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 		 * files that are in "foo/" we would lose
 		 * them.
 		 */
-		if (verify_clean_subdirectory(ce, error_type, o) < 0)
+		if (verify_clean_subdirectory(ce, o) < 0)
 			return -1;
 		return 0;
 	}
