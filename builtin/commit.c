@@ -235,7 +235,7 @@ static int commit_index_files(void)
  * and return the paths that match the given pattern in list.
  */
 static int list_paths(struct string_list *list, const char *with_tree,
-		      const char *prefix, const struct pathspec *pattern)
+		      const struct pathspec *pattern)
 {
 	int i, ret;
 	char *m;
@@ -264,7 +264,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 			item->util = item; /* better a valid pointer than a fake one */
 	}
 
-	ret = report_path_error(m, pattern, prefix);
+	ret = report_path_error(m, pattern);
 	free(m);
 	return ret;
 }
@@ -454,7 +454,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 			die(_("cannot do a partial commit during a cherry-pick."));
 	}
 
-	if (list_paths(&partial, !current_head ? NULL : "HEAD", prefix, &pathspec))
+	if (list_paths(&partial, !current_head ? NULL : "HEAD", &pathspec))
 		exit(1);
 
 	discard_cache();

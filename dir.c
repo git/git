@@ -502,8 +502,7 @@ int submodule_path_match(const struct index_state *istate,
 }
 
 int report_path_error(const char *ps_matched,
-		      const struct pathspec *pathspec,
-		      const char *prefix)
+		      const struct pathspec *pathspec)
 {
 	/*
 	 * Make sure all pathspec matched; otherwise it is an error.
