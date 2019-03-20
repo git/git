@@ -528,7 +528,7 @@ static int apply_stash(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int do_drop_stash(const char *prefix, struct stash_info *info, int quiet)
+static int do_drop_stash(struct stash_info *info, int quiet)
 {
 	int ret;
 	struct child_process cp_reflog = CHILD_PROCESS_INIT;
@@ -598,7 +598,7 @@ static int drop_stash(int argc, const char **argv, const char *prefix)
 
 	assert_stash_ref(&info);
 
-	ret = do_drop_stash(prefix, &info, quiet);
+	ret = do_drop_stash(&info, quiet);
 	free_stash_info(&info);
 	return ret;
 }
@@ -627,7 +627,7 @@ static int pop_stash(int argc, const char **argv, const char *prefix)
 		printf_ln(_("The stash entry is kept in case "
 			    "you need it again."));
 	else
-		ret = do_drop_stash(prefix, &info, quiet);
+		ret = do_drop_stash(&info, quiet);
 
 	free_stash_info(&info);
 	return ret;
@@ -664,7 +664,7 @@ static int branch_stash(int argc, const char **argv, const char *prefix)
 	if (!ret)
 		ret = do_apply_stash(prefix, &info, 1, 0);
 	if (!ret && info.is_stash_ref)
-		ret = do_drop_stash(prefix, &info, 0);
+		ret = do_drop_stash(&info, 0);
 
 	free_stash_info(&info);
 
