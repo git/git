@@ -8,6 +8,7 @@
 #include "sha1-lookup.h"
 #include "midx.h"
 #include "progress.h"
+#include "trace2.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -163,6 +164,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 			      m->pack_names[i - 1],
 			      m->pack_names[i]);
 	}
+
+	trace2_data_intmax("midx", the_repository, "load/num_packs", m->num_packs);
+	trace2_data_intmax("midx", the_repository, "load/num_objects", m->num_objects);
 
 	return m;
 
