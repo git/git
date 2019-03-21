@@ -3404,6 +3404,8 @@ set rectmask {
 }
 image create bitmap reficon-H -background black -foreground "#00ff00" \
     -data $rectdata -maskdata $rectmask
+image create bitmap reficon-R -background black -foreground "#ffddaa" \
+    -data $rectdata -maskdata $rectmask
 image create bitmap reficon-o -background black -foreground "#ddddff" \
     -data $rectdata -maskdata $rectmask
 
@@ -10057,6 +10059,7 @@ proc sel_reflist {w x y} {
     set n [lindex $ref 0]
     switch -- [lindex $ref 1] {
 	"H" {selbyid $headids($n)}
+	"R" {selbyid $headids($n)}
 	"T" {selbyid $tagids($n)}
 	"o" {selbyid $otherrefids($n)}
     }
@@ -10086,7 +10089,11 @@ proc refill_reflist {} {
     foreach n [array names headids] {
 	if {[string match $reflistfilter $n]} {
 	    if {[commitinview $headids($n) $curview]} {
-		lappend refs [list $n H]
+		if {[string match "remotes/*" $n]} {
+		    lappend refs [list $n R]
+		} else {
+		    lappend refs [list $n H]
+		}
 	    } else {
 		interestedin $headids($n) {run refill_reflist}
 	    }
