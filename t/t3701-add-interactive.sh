@@ -429,6 +429,20 @@ test_expect_success 'goto hunk' '
 	test_cmp expect actual.trimmed
 '
 
+test_expect_success 'navigate to hunk via regex' '
+	test_when_finished "git reset" &&
+	tr _ " " >expect <<-EOF &&
+	Stage this hunk [y,n,q,a,d,K,g,/,e,?]? @@ -1,2 +1,3 @@
+	_10
+	+15
+	_20
+	Stage this hunk [y,n,q,a,d,j,J,g,/,e,?]?_
+	EOF
+	test_write_lines s y /1,2 | git add -p >actual &&
+	tail -n 5 <actual >actual.trimmed &&
+	test_cmp expect actual.trimmed
+'
+
 test_expect_success 'split hunk "add -p (edit)"' '
 	# Split, say Edit and do nothing.  Then:
 	#
