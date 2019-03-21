@@ -5,14 +5,26 @@
 #include "argv-array.h"
 #include "pathspec.h"
 #include "color.h"
+#include "diff.h"
+
+struct hunk_header {
+	unsigned long old_offset, old_count, new_offset, new_count;
+	/*
+	 * Start/end offsets to the extra text after the second `@@` in the
+	 * hunk header, e.g. the function signature. This is expected to
+	 * include the newline.
+	 */
+	size_t extra_start, extra_end, colored_extra_start, colored_extra_end;
+};
 
 struct hunk {
 	size_t start, end, colored_start, colored_end;
 	enum { UNDECIDED_HUNK = 0, SKIP_HUNK, USE_HUNK } use;
+	struct hunk_header header;
 };
 
 struct add_p_state {
-	struct repository *r;
+	struct add_i_state s;
 	struct strbuf answer, buf;
 
 	/* parsed diff */
@@ -35,7 +47,70 @@ static void setup_child_process(struct child_process *cp,
 
 	cp->git_cmd = 1;
 	argv_array_pushf(&cp->env_array,
-			 INDEX_ENVIRONMENT "=%s", s->r->index_file);
+			 INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
+}
+
+static int parse_range(const char **p,
+		       unsigned long *offset, unsigned long *count)
+{
+	char *pend;
+
+	*offset = strtoul(*p, &pend, 10);
+	if (pend == *p)
+		return -1;
+	if (*pend != ',') {
+		*count = 1;
+		*p = pend;
+		return 0;
+	}
+	*count = strtoul(pend + 1, (char **)p, 10);
+	return *p == pend + 1 ? -1 : 0;
+}
+
+static int parse_hunk_header(struct add_p_state *s, struct hunk *hunk)
+{
+	struct hunk_header *header = &hunk->header;
+	const char *line = s->plain.buf + hunk->start, *p = line;
+	char *eol = memchr(p, '\n', s->plain.len - hunk->start);
+
+	if (!eol)
+		eol = s->plain.buf + s->plain.len;
+
+	if (!skip_prefix(p, "@@ -", &p) ||
+	    parse_range(&p, &header->old_offset, &header->old_count) < 0 ||
+	    !skip_prefix(p, " +", &p) ||
+	    parse_range(&p, &header->new_offset, &header->new_count) < 0 ||
+	    !skip_prefix(p, " @@", &p))
+		return error(_("could not parse hunk header '%.*s'"),
+			     (int)(eol - line), line);
+
+	hunk->start = eol - s->plain.buf + (*eol == '\n');
+	header->extra_start = p - s->plain.buf;
+	header->extra_end = hunk->start;
+
+	if (!s->colored.len) {
+		header->colored_extra_start = header->colored_extra_end = 0;
+		return 0;
+	}
+
+	/* Now find the extra text in the colored diff */
+	line = s->colored.buf + hunk->colored_start;
+	eol = memchr(line, '\n', s->colored.len - hunk->colored_start);
+	if (!eol)
+		eol = s->colored.buf + s->colored.len;
+	p = memmem(line, eol - line, "@@ -", 4);
+	if (!p)
+		return error(_("could not parse colored hunk header '%.*s'"),
+			     (int)(eol - line), line);
+	p = memmem(p + 4, eol - p - 4, " @@", 3);
+	if (!p)
+		return error(_("could not parse colored hunk header '%.*s'"),
+			     (int)(eol - line), line);
+	hunk->colored_start = eol - s->colored.buf + (*eol == '\n');
+	header->colored_extra_start = p + 3 - s->colored.buf;
+	header->colored_extra_end = hunk->colored_start;
+
+	return 0;
 }
 
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
@@ -109,6 +184,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			hunk->start = p - plain->buf;
 			if (colored)
 				hunk->colored_start = colored_p - colored->buf;
+
+			if (parse_hunk_header(s, hunk) < 0)
+				return -1;
 		}
 
 		p = eol == pend ? pend : eol + 1;
@@ -130,8 +208,43 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 }
 
 static void render_hunk(struct add_p_state *s, struct hunk *hunk,
-			int colored, struct strbuf *out)
+			ssize_t delta, int colored, struct strbuf *out)
 {
+	struct hunk_header *header = &hunk->header;
+
+	if (hunk->header.old_offset != 0 || hunk->header.new_offset != 0) {
+		/*
+		 * Generate the hunk header dynamically, except for special
+		 * hunks (such as the diff header).
+		 */
+		const char *p;
+		size_t len;
+		unsigned long old_offset = header->old_offset;
+		unsigned long new_offset = header->new_offset;
+
+		if (!colored) {
+			p = s->plain.buf + header->extra_start;
+			len = header->extra_end - header->extra_start;
+		} else {
+			strbuf_addstr(out, s->s.fraginfo_color);
+			p = s->colored.buf + header->colored_extra_start;
+			len = header->colored_extra_end
+				- header->colored_extra_start;
+		}
+
+		new_offset += delta;
+
+		strbuf_addf(out, "@@ -%lu,%lu +%lu,%lu @@",
+			    old_offset, header->old_count,
+			    new_offset, header->new_count);
+		if (len)
+			strbuf_add(out, p, len);
+		else if (colored)
+			strbuf_addf(out, "%s\n", GIT_COLOR_RESET);
+		else
+			strbuf_addch(out, '\n');
+	}
+
 	if (colored)
 		strbuf_add(out, s->colored.buf + hunk->colored_start,
 			   hunk->colored_end - hunk->colored_start);
@@ -144,13 +257,17 @@ static void reassemble_patch(struct add_p_state *s, struct strbuf *out)
 {
 	struct hunk *hunk;
 	size_t i;
+	ssize_t delta = 0;
 
-	render_hunk(s, &s->head, 0, out);
+	render_hunk(s, &s->head, 0, 0, out);
 
 	for (i = 0; i < s->hunk_nr; i++) {
 		hunk = s->hunk + i;
-		if (hunk->use == USE_HUNK)
-			render_hunk(s, hunk, 0, out);
+		if (hunk->use != USE_HUNK)
+			delta += hunk->header.old_count
+				- hunk->header.new_count;
+		else
+			render_hunk(s, hunk, delta, 0, out);
 	}
 }
 
@@ -178,7 +295,7 @@ static int patch_update_file(struct add_p_state *s)
 		return 0;
 
 	strbuf_reset(&s->buf);
-	render_hunk(s, &s->head, colored, &s->buf);
+	render_hunk(s, &s->head, 0, colored, &s->buf);
 	fputs(s->buf.buf, stdout);
 	for (;;) {
 		if (hunk_index >= s->hunk_nr)
@@ -205,7 +322,7 @@ static int patch_update_file(struct add_p_state *s)
 			break;
 
 		strbuf_reset(&s->buf);
-		render_hunk(s, hunk, colored, &s->buf);
+		render_hunk(s, hunk, 0, colored, &s->buf);
 		fputs(s->buf.buf, stdout);
 
 		strbuf_reset(&s->buf);
@@ -274,13 +391,13 @@ soft_increment:
 		strbuf_reset(&s->buf);
 		reassemble_patch(s, &s->buf);
 
-		discard_index(s->r->index);
+		discard_index(s->s.r->index);
 		setup_child_process(&cp, s, "apply", "--cached", NULL);
 		if (pipe_command(&cp, s->buf.buf, s->buf.len,
 				 NULL, 0, NULL, 0))
 			error(_("'git apply --cached' failed"));
-		if (!repo_read_index(s->r))
-			repo_refresh_and_write_index(s->r, REFRESH_QUIET, 0,
+		if (!repo_read_index(s->s.r))
+			repo_refresh_and_write_index(s->s.r, REFRESH_QUIET, 0,
 						     1, NULL, NULL, NULL);
 	}
 
@@ -290,7 +407,11 @@ soft_increment:
 
 int run_add_p(struct repository *r, const struct pathspec *ps)
 {
-	struct add_p_state s = { r, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT };
+	struct add_p_state s = {
+		{ r }, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
+	};
+
+	init_add_i_state(&s.s, r);
 
 	if (discard_index(r->index) < 0 || repo_read_index(r) < 0 ||
 	    repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
