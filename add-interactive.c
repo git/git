@@ -12,16 +12,6 @@
 #include "argv-array.h"
 #include "run-command.h"
 
-struct add_i_state {
-	struct repository *r;
-	int use_color;
-	char header_color[COLOR_MAXLEN];
-	char help_color[COLOR_MAXLEN];
-	char prompt_color[COLOR_MAXLEN];
-	char error_color[COLOR_MAXLEN];
-	char reset_color[COLOR_MAXLEN];
-};
-
 static void init_color(struct repository *r, struct add_i_state *s,
 		       const char *slot_name, char *dst,
 		       const char *default_color)
@@ -38,7 +28,7 @@ static void init_color(struct repository *r, struct add_i_state *s,
 	free(key);
 }
 
-static int init_add_i_state(struct repository *r, struct add_i_state *s)
+int init_add_i_state(struct repository *r, struct add_i_state *s)
 {
 	const char *value;
 
@@ -56,6 +46,9 @@ static int init_add_i_state(struct repository *r, struct add_i_state *s)
 	init_color(r, s, "prompt", s->prompt_color, GIT_COLOR_BOLD_BLUE);
 	init_color(r, s, "error", s->error_color, GIT_COLOR_BOLD_RED);
 	init_color(r, s, "reset", s->reset_color, GIT_COLOR_RESET);
+
+	strlcpy(s->fraginfo_color,
+		diff_get_color(s->use_color, DIFF_FRAGINFO), COLOR_MAXLEN);
 
 	return 0;
 }
