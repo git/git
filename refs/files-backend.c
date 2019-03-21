@@ -2712,12 +2712,16 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			 * file. But we do need to leave it locked, so
 			 * that somebody else doesn't pack a reference
 			 * that we are trying to delete.
+			 *
+			 * We need to disconnect our transaction from
+			 * backend_data, since the abort (whether successful or
+			 * not) will free it.
 			 */
+			backend_data->packed_transaction = NULL;
 			if (ref_transaction_abort(packed_transaction, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
-			backend_data->packed_transaction = NULL;
 		}
 	}
 
