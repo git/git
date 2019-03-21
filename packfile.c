@@ -309,7 +309,7 @@ void close_pack_windows(struct packed_git *p)
 	}
 }
 
-static int close_pack_fd(struct packed_git *p)
+int close_pack_fd(struct packed_git *p)
 {
 	if (p->pack_fd < 0)
 		return 0;
