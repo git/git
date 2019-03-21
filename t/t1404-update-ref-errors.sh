@@ -618,4 +618,20 @@ test_expect_success 'delete fails cleanly if packed-refs file is locked' '
 	test_cmp unchanged actual
 '
 
+test_expect_success 'delete fails cleanly if packed-refs.new write fails' '
+	# Setup and expectations are similar to the test above.
+	prefix=refs/failed-packed-refs &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	git update-ref $prefix/foo $D &&
+	git for-each-ref $prefix >unchanged &&
+	# This should not happen in practice, but it is an easy way to get a
+	# reliable error (we open with create_tempfile(), which uses O_EXCL).
+	: >.git/packed-refs.new &&
+	test_when_finished "rm -f .git/packed-refs.new" &&
+	test_must_fail git update-ref -d $prefix/foo &&
+	git for-each-ref $prefix >actual &&
+	test_cmp unchanged actual
+'
+
 test_done
