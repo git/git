@@ -223,6 +223,9 @@ test_expect_success 'switch to another branch while carrying a deletion' '
 	test_must_fail git checkout simple 2>errs &&
 	test_i18ngrep overwritten errs &&
 
+	test_must_fail git read-tree --quiet -m -u HEAD simple 2>errs &&
+	test_must_be_empty errs &&
+
 	git checkout --merge simple 2>errs &&
 	test_i18ngrep ! overwritten errs &&
 	git ls-files -u &&
