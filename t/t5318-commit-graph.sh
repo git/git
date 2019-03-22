@@ -75,7 +75,7 @@ graph_read_expect() {
 
 test_expect_success 'write graph' '
 	cd "$TRASH_DIRECTORY/full" &&
-	graph1=$(git commit-graph write) &&
+	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
 	graph_read_expect "3"
 '
