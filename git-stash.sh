@@ -318,7 +318,7 @@ push_stash () {
 	if no_changes "$@"
 	then
 		say "$(gettext "No local changes to save")"
-		exit 0
+		exit 1
 	fi
 
 	git reflog exists $ref_stash ||
