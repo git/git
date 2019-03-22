@@ -12,9 +12,9 @@ enum prompt_mode_type {
 };
 
 static const char *prompt_mode[] = {
-	N_("Stage mode change [y,n,a,d%s,?]? "),
-	N_("Stage deletion [y,n,a,d%s,?]? "),
-	N_("Stage this hunk [y,n,a,d%s,?]? ")
+	N_("Stage mode change [y,n,a,q,d%s,?]? "),
+	N_("Stage deletion [y,n,a,q,d%s,?]? "),
+	N_("Stage this hunk [y,n,a,q,d%s,?]? ")
 };
 
 struct hunk_header {
@@ -954,6 +954,7 @@ static size_t display_hunks(struct add_p_state *s,
 static const char help_patch_text[] =
 N_("y - stage this hunk\n"
    "n - do not stage this hunk\n"
+   "q - quit; do not stage this hunk or any of the remaining ones\n"
    "a - stage this and all the remaining hunks\n"
    "d - do not stage this hunk nor any of the remaining hunks\n"
    "j - leave this hunk undecided, see next undecided hunk\n"
@@ -974,7 +975,7 @@ static int patch_update_file(struct add_p_state *s,
 	struct hunk *hunk;
 	char ch;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	int colored = !!s->colored.len;
+	int colored = !!s->colored.len, quit = 0;
 	enum prompt_mode_type prompt_mode_type;
 
 	if (!file_diff->hunk_nr)
@@ -1061,11 +1062,15 @@ soft_increment:
 				if (hunk->use == UNDECIDED_HUNK)
 					hunk->use = USE_HUNK;
 			}
-		} else if (ch == 'd') {
+		} else if (ch == 'd' || ch == 'q') {
 			for (; hunk_index < file_diff->hunk_nr; hunk_index++) {
 				hunk = file_diff->hunk + hunk_index;
 				if (hunk->use == UNDECIDED_HUNK)
 					hunk->use = SKIP_HUNK;
+			}
+			if (ch == 'q') {
+				quit = 1;
+				break;
 			}
 		} else if (s->answer.buf[0] == 'K') {
 			if (hunk_index)
@@ -1208,7 +1213,7 @@ soft_increment:
 	}
 
 	putchar('\n');
-	return 0;
+	return quit;
 }
 
 int run_add_p(struct repository *r, const struct pathspec *ps)
