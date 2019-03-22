@@ -725,7 +725,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 			struct tree *result;
 			struct tree *work;
+			struct tree *old_tree;
 			struct merge_options o;
+			struct strbuf sb = STRBUF_INIT;
+
 			if (!opts->merge)
 				return 1;
 
@@ -735,6 +738,12 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 			if (!old_branch_info->commit)
 				return 1;
+			old_tree = get_commit_tree(old_branch_info->commit);
+
+			if (repo_index_has_changes(the_repository, old_tree, &sb))
+				die(_("cannot continue with staged changes in "
+				      "the following files:\n%s"), sb.buf);
+			strbuf_release(&sb);
 
 			/* Do more real merge */
 
@@ -772,7 +781,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			ret = merge_trees(&o,
 					  get_commit_tree(new_branch_info->commit),
 					  work,
-					  get_commit_tree(old_branch_info->commit),
+					  old_tree,
 					  &result);
 			if (ret < 0)
 				exit(128);
