@@ -20,17 +20,16 @@ created from prior invocations of 'git add', packing refs, pruning
 reflog, rerere metadata or stale working trees. May also update ancillary
 indexes such as the commit-graph.
 
-Users are encouraged to run this task on a regular basis within
-each repository to maintain good disk space utilization and good
-operating performance.
+When common porcelain operations that create objects are run, they
+will check whether the repository has grown substantially since the
+last maintenance, and if so run `git gc` automatically. See `gc.auto`
+below for how to disable this behavior.
 
-Some git commands may automatically run 'git gc'; see the `--auto` flag
-below for details. If you know what you're doing and all you want is to
-disable this behavior permanently without further considerations, just do:
-
-----------------------
-$ git config --global gc.auto 0
-----------------------
+Running `git gc` manually should only be needed when adding objects to
+a repository without regularly running such porcelain commands, to do
+a one-off repository optimization, or e.g. to clean up a suboptimal
+mass-import. See the "PACKFILE OPTIMIZATION" section in
+linkgit:git-fast-import[1] for more details on the import case.
 
 OPTIONS
 -------
