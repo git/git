@@ -52,14 +52,13 @@ OPTIONS
 +
 If the number of loose objects exceeds the value of the `gc.auto`
 configuration variable, then all loose objects are combined into a
-single pack using `git repack -d -l`.  Setting the value of `gc.auto`
+single pack.  Setting the value of `gc.auto`
 to 0 disables automatic packing of loose objects.
 +
 If the number of packs exceeds the value of `gc.autoPackLimit`,
 then existing packs (except those marked with a `.keep` file
 or over `gc.bigPackThreshold` limit)
-are consolidated into a single pack by using the `-A` option of
-'git repack'.
+are consolidated into a single pack.
 If the amount of memory is estimated not enough for `git repack` to
 run smoothly and `gc.bigPackThreshold` is not set, the largest
 pack will also be excluded (this is the equivalent of running `git gc`
