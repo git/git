@@ -219,7 +219,7 @@ static int add_rejected_path(struct unpack_trees_options *o,
 			     enum unpack_trees_error_types e,
 			     const char *path)
 {
-	if (o->gently)
+	if (o->quiet)
 		return -1;
 
 	if (!o->show_all_errors)
@@ -1042,7 +1042,7 @@ static int unpack_nondirectories(int n, unsigned long mask,
 static int unpack_failed(struct unpack_trees_options *o, const char *message)
 {
 	discard_index(&o->result);
-	if (!o->gently && !o->exiting_early) {
+	if (!o->quiet && !o->exiting_early) {
 		if (message)
 			return error("%s", message);
 		return -1;
@@ -2343,7 +2343,7 @@ int bind_merge(const struct cache_entry * const *src,
 		return error("Cannot do a bind merge of %d trees",
 			     o->merge_size);
 	if (a && old)
-		return o->gently ? -1 :
+		return o->quiet ? -1 :
 			error(ERRORMSG(o, ERROR_BIND_OVERLAP),
 			      super_prefixed(a->name),
 			      super_prefixed(old->name));

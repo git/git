@@ -700,7 +700,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		topts.initial_checkout = is_cache_unborn();
 		topts.update = 1;
 		topts.merge = 1;
-		topts.gently = opts->merge && old_branch_info->commit;
+		topts.quiet = opts->merge && old_branch_info->commit;
 		topts.verbose_update = opts->show_progress;
 		topts.fn = twoway_merge;
 		if (opts->overwrite_ignore) {
