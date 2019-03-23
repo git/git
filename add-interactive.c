@@ -846,7 +846,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 			       PATHSPEC_LITERAL_PATH, "", args.argv);
-		res = run_add_p(s->r, &ps_selected);
+		res = run_add_p(s->r, ADD_P_STAGE, NULL, &ps_selected);
 		argv_array_clear(&args);
 		clear_pathspec(&ps_selected);
 	}
