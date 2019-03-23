@@ -105,7 +105,6 @@ test_expect_success 'revert works (commit)' '
 	grep "unchanged *+3/-0 file" output
 '
 
-
 test_expect_success 'setup expected' '
 	cat >expected <<-\EOF
 	EOF
@@ -273,6 +272,24 @@ test_expect_success FILEMODE 'stage mode and hunk' '
 '
 
 # end of tests disabled when filemode is not usable
+
+test_expect_success 'different prompts for mode change/deleted' '
+	git reset --hard &&
+	>file &&
+	>deleted &&
+	git add --chmod=+x file deleted &&
+	echo changed >file &&
+	rm deleted &&
+	test_write_lines n n n |
+	git -c core.filemode=true add -p >actual &&
+	sed -n "s/^\(Stage .*?\).*/\1/p" actual >actual.filtered &&
+	cat >expect <<-\EOF &&
+	Stage deletion [y,n,q,a,d,?]?
+	Stage mode change [y,n,q,a,d,j,J,g,/,?]?
+	Stage this hunk [y,n,q,a,d,K,g,/,e,?]?
+	EOF
+	test_cmp expect actual.filtered
+'
 
 test_expect_success 'setup again' '
 	git reset --hard &&
