@@ -8228,11 +8228,11 @@ proc parseblobdiffline {ids line} {
 	} else {
 	    $ctext insert end "$line\n" filesep
 	}
-    } elseif {![string compare -length 3 "  >" $line]} {
+    } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  >" $line]} {
 	set $currdiffsubmod ""
 	set line [encoding convertfrom $diffencoding $line]
 	$ctext insert end "$line\n" dresult
-    } elseif {![string compare -length 3 "  <" $line]} {
+    } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  <" $line]} {
 	set $currdiffsubmod ""
 	set line [encoding convertfrom $diffencoding $line]
 	$ctext insert end "$line\n" d0
