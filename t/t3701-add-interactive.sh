@@ -530,7 +530,7 @@ test_expect_success 'diff.algorithm is passed to `git diff-files`' '
 	>file &&
 	git add file &&
 	echo changed >file &&
-	git -c diff.algorithm=bogus add -p 2>err &&
+	test_must_fail git -c diff.algorithm=bogus add -p 2>err &&
 	test_i18ngrep "error: option diff-algorithm accepts " err
 '
 
