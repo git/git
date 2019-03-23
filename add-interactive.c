@@ -61,6 +61,11 @@ int init_add_i_state(struct repository *r, struct add_i_state *s)
 				  &s->interactive_diff_filter))
 		s->interactive_diff_filter = NULL;
 
+	free(s->interactive_diff_algorithm);
+	if (git_config_get_string("diff.algorithm",
+				  &s->interactive_diff_algorithm))
+		s->interactive_diff_algorithm = NULL;
+
 	return 0;
 }
 
