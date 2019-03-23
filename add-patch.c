@@ -106,6 +106,72 @@ static struct patch_mode patch_mode_reset_nothead = {
 			"the file\n"),
 };
 
+static struct patch_mode patch_mode_checkout_index = {
+	.diff = { "diff-files", NULL },
+	.apply = { "-R", NULL },
+	.apply_check = { "-R", NULL },
+	.is_reverse = 1,
+	.prompt_mode = {
+		N_("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for discarding."),
+	.help_patch_text =
+		N_("y - discard this hunk from worktree\n"
+		   "n - do not discard this hunk from worktree\n"
+		   "q - quit; do not discard this hunk or any of the remaining "
+			"ones\n"
+		   "a - discard this hunk and all later hunks in the file\n"
+		   "d - do not discard this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_checkout_head = {
+	.diff = { "diff-index", NULL },
+	.apply_for_checkout = 1,
+	.apply_check = { "-R", NULL },
+	.is_reverse = 1,
+	.prompt_mode = {
+		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for discarding."),
+	.help_patch_text =
+		N_("y - discard this hunk from index and worktree\n"
+		   "n - do not discard this hunk from index and worktree\n"
+		   "q - quit; do not discard this hunk or any of the remaining "
+			"ones\n"
+		   "a - discard this hunk and all later hunks in the file\n"
+		   "d - do not discard this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_checkout_nothead = {
+	.diff = { "diff-index", "-R", NULL },
+	.apply_for_checkout = 1,
+	.apply_check = { NULL },
+	.is_reverse = 0,
+	.prompt_mode = {
+		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for applying."),
+	.help_patch_text =
+		N_("y - apply this hunk to index and worktree\n"
+		   "n - do not apply this hunk to index and worktree\n"
+		   "q - quit; do not apply this hunk or any of the remaining "
+			"ones\n"
+		   "a - apply this hunk and all later hunks in the file\n"
+		   "d - do not apply this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
 struct hunk_header {
 	unsigned long old_offset, old_count, new_offset, new_count;
 	/*
@@ -1007,6 +1073,57 @@ static int edit_hunk_loop(struct add_p_state *s,
 	}
 }
 
+static int apply_for_checkout(struct add_p_state *s, struct strbuf *diff,
+			      int is_reverse)
+{
+	const char *reverse = is_reverse ? "-R" : NULL;
+	struct child_process check_index = CHILD_PROCESS_INIT;
+	struct child_process check_worktree = CHILD_PROCESS_INIT;
+	struct child_process apply_index = CHILD_PROCESS_INIT;
+	struct child_process apply_worktree = CHILD_PROCESS_INIT;
+	int applies_index, applies_worktree;
+
+	setup_child_process(&check_index, s,
+			    "apply", "--cached", "--check", reverse, NULL);
+	applies_index = !pipe_command(&check_index, diff->buf, diff->len,
+				      NULL, 0, NULL, 0);
+
+	setup_child_process(&check_worktree, s,
+			    "apply", "--check", reverse, NULL);
+	applies_worktree = !pipe_command(&check_worktree, diff->buf, diff->len,
+					 NULL, 0, NULL, 0);
+
+	if (applies_worktree && applies_index) {
+		setup_child_process(&apply_index, s,
+				    "apply", "--cached", reverse, NULL);
+		pipe_command(&apply_index, diff->buf, diff->len,
+			     NULL, 0, NULL, 0);
+
+		setup_child_process(&apply_worktree, s,
+				    "apply", reverse, NULL);
+		pipe_command(&apply_worktree, diff->buf, diff->len,
+			     NULL, 0, NULL, 0);
+
+		return 1;
+	}
+
+	if (!applies_index) {
+		err(s, _("The selected hunks do not apply to the index!"));
+		if (prompt_yesno(s, _("Apply them to the worktree "
+					  "anyway? ")) > 0) {
+			setup_child_process(&apply_worktree, s,
+					    "apply", reverse, NULL);
+			return pipe_command(&apply_worktree, diff->buf,
+					    diff->len, NULL, 0, NULL, 0);
+		}
+		err(s, _("Nothing was applied.\n"));
+	} else
+		/* As a last resort, show the diff to the user */
+		fwrite(diff->buf, diff->len, 1, stderr);
+
+	return 0;
+}
+
 #define SUMMARY_HEADER_WIDTH 20
 #define SUMMARY_LINE_WIDTH 80
 static void summarize_hunk(struct add_p_state *s, struct hunk *hunk,
@@ -1327,11 +1444,16 @@ soft_increment:
 		strbuf_reset(&s->buf);
 		reassemble_patch(s, file_diff, 0, &s->buf);
 
-		setup_child_process(&cp, s, "apply", NULL);
-		argv_array_pushv(&cp.args, s->mode->apply);
-		if (pipe_command(&cp, s->buf.buf, s->buf.len,
-				 NULL, 0, NULL, 0))
-			error(_("'git apply' failed"));
+		if (s->mode->apply_for_checkout)
+			apply_for_checkout(s, &s->buf,
+					   s->mode->is_reverse);
+		else {
+			setup_child_process(&cp, s, "apply", NULL);
+			argv_array_pushv(&cp.args, s->mode->apply);
+			if (pipe_command(&cp, s->buf.buf, s->buf.len,
+					 NULL, 0, NULL, 0))
+				error(_("'git apply' failed"));
+		}
 		repo_refresh_and_write_index(s->s.r, REFRESH_QUIET, 0);
 	}
 
@@ -1357,6 +1479,13 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 			s.mode = &patch_mode_reset_head;
 		else
 			s.mode = &patch_mode_reset_nothead;
+	} else if (mode == ADD_P_CHECKOUT) {
+		if (!revision)
+			s.mode = &patch_mode_checkout_index;
+		else if (!strcmp(revision, "HEAD"))
+			s.mode = &patch_mode_checkout_head;
+		else
+			s.mode = &patch_mode_checkout_nothead;
 	} else
 		s.mode = &patch_mode_stage;
 	s.revision = revision;
