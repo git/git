@@ -13,7 +13,7 @@ enum prompt_mode_type {
 
 struct patch_mode {
 	const char *diff[4], *apply[4], *apply_check[4];
-	unsigned is_reverse:1, apply_for_checkout:1;
+	unsigned is_reverse:1, index_only:1, apply_for_checkout:1;
 	const char *prompt_mode[PROMPT_HUNK + 1];
 	const char *edit_hunk_hint, *help_patch_text;
 };
@@ -38,6 +38,74 @@ static struct patch_mode patch_mode_stage = {
 		   "a - stage this hunk and all later hunks in the file\n"
 		   "d - do not stage this hunk or any of the later hunks in "
 			"the file\n")
+};
+
+static struct patch_mode patch_mode_stash = {
+	.diff = { "diff-index", "HEAD", NULL },
+	.apply = { "--cached", NULL },
+	.apply_check = { "--cached", NULL },
+	.is_reverse = 0,
+	.prompt_mode = {
+		N_("Stash mode change [y,n,q,a,d%s,?]? "),
+		N_("Stash deletion [y,n,q,a,d%s,?]? "),
+		N_("Stash this hunk [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for stashing."),
+	.help_patch_text =
+		N_("y - stash this hunk\n"
+		   "n - do not stash this hunk\n"
+		   "q - quit; do not stash this hunk or any of the remaining "
+			"ones\n"
+		   "a - stash this hunk and all later hunks in the file\n"
+		   "d - do not stash this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_reset_head = {
+	.diff = { "diff-index", "--cached", NULL },
+	.apply = { "-R", "--cached", NULL },
+	.apply_check = { "-R", "--cached", NULL },
+	.is_reverse = 1,
+	.index_only = 1,
+	.prompt_mode = {
+		N_("Unstage mode change [y,n,q,a,d%s,?]? "),
+		N_("Unstage deletion [y,n,q,a,d%s,?]? "),
+		N_("Unstage this hunk [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for unstaging."),
+	.help_patch_text =
+		N_("y - unstage this hunk\n"
+		   "n - do not unstage this hunk\n"
+		   "q - quit; do not unstage this hunk or any of the remaining "
+			"ones\n"
+		   "a - unstage this hunk and all later hunks in the file\n"
+		   "d - do not unstage this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_reset_nothead = {
+	.diff = { "diff-index", "-R", "--cached", NULL },
+	.apply = { "--cached", NULL },
+	.apply_check = { "--cached", NULL },
+	.is_reverse = 0,
+	.index_only = 1,
+	.prompt_mode = {
+		N_("Apply mode change to index [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to index [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to index [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for applying."),
+	.help_patch_text =
+		N_("y - apply this hunk to index\n"
+		   "n - do not apply this hunk to index\n"
+		   "q - quit; do not apply this hunk or any of the remaining "
+			"ones\n"
+		   "a - apply this hunk and all later hunks in the file\n"
+		   "d - do not apply this hunk or any of the later hunks in "
+			"the file\n"),
 };
 
 struct hunk_header {
@@ -1314,12 +1382,21 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 
 	init_add_i_state(&s.s, r);
 
-	s.mode = &patch_mode_stage;
+	if (mode == ADD_P_STASH)
+		s.mode = &patch_mode_stash;
+	else if (mode == ADD_P_RESET) {
+		if (!revision || !strcmp(revision, "HEAD"))
+			s.mode = &patch_mode_reset_head;
+		else
+			s.mode = &patch_mode_reset_nothead;
+	} else
+		s.mode = &patch_mode_stage;
 	s.revision = revision;
 
 	if (discard_index(r->index) < 0 || repo_read_index(r) < 0 ||
-	    repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
-					 NULL, NULL, NULL) < 0 ||
+	    (!s.mode->index_only &&
+	     repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
+					  NULL, NULL, NULL) < 0) ||
 	    parse_diff(&s, ps) < 0) {
 		strbuf_release(&s.plain);
 		strbuf_release(&s.colored);
