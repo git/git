@@ -25,6 +25,8 @@ int run_add_i(struct repository *r, const struct pathspec *ps);
 
 enum add_p_mode {
 	ADD_P_ADD,
+	ADD_P_STASH,
+	ADD_P_RESET,
 };
 
 int run_add_p(struct repository *r, enum add_p_mode mode,
