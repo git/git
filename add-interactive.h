@@ -27,6 +27,7 @@ enum add_p_mode {
 	ADD_P_ADD,
 	ADD_P_STASH,
 	ADD_P_RESET,
+	ADD_P_CHECKOUT,
 };
 
 int run_add_p(struct repository *r, enum add_p_mode mode,
