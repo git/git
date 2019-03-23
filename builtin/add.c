@@ -208,9 +208,10 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 			mode = ADD_P_STASH;
 		else if (!strcmp(patch_mode, "--patch=reset"))
 			mode = ADD_P_RESET;
+		else if (!strcmp(patch_mode, "--patch=checkout"))
+			mode = ADD_P_CHECKOUT;
 		else
-			die("'%s' not yet supported in the built-in add -p",
-			    patch_mode);
+			die("'%s' not supported", patch_mode);
 
 		return !!run_add_p(the_repository, mode, revision, pathspec);
 	}
