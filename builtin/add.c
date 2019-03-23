@@ -209,6 +209,8 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 			mode = ADD_P_RESET;
 		else if (!strcmp(patch_mode, "--patch=checkout"))
 			mode = ADD_P_CHECKOUT;
+		else if (!strcmp(patch_mode, "--patch=worktree"))
+			mode = ADD_P_WORKTREE;
 		else
 			die("'%s' not supported", patch_mode);
 
