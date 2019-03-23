@@ -181,6 +181,8 @@ static void refresh(int verbose, const struct pathspec *pathspec)
 	free(seen);
 }
 
+static int add_config(const char *var, const char *value, void *cb);
+
 int run_add_interactive(const char *revision, const char *patch_mode,
 			const struct pathspec *pathspec)
 {
@@ -193,12 +195,18 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 				    &use_builtin_add_i);
 
 	if (use_builtin_add_i == 1) {
+		enum add_p_mode mode;
+
 		if (!patch_mode)
 			return !!run_add_i(the_repository, pathspec);
-		if (strcmp(patch_mode, "--patch"))
+
+		if (!strcmp(patch_mode, "--patch"))
+			mode = ADD_P_STAGE;
+		else
 			die("'%s' not yet supported in the built-in add -p",
 			    patch_mode);
-		return !!run_add_p(the_repository, pathspec);
+
+		return !!run_add_p(the_repository, mode, revision, pathspec);
 	}
 
 	argv_array_push(&argv, "add--interactive");
