@@ -203,6 +203,10 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 
 		if (!strcmp(patch_mode, "--patch"))
 			mode = ADD_P_STAGE;
+		else if (!strcmp(patch_mode, "--patch=stash"))
+			mode = ADD_P_STASH;
+		else if (!strcmp(patch_mode, "--patch=reset"))
+			mode = ADD_P_RESET;
 		else
 			die("'%s' not yet supported in the built-in add -p",
 			    patch_mode);
