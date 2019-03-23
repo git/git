@@ -172,6 +172,50 @@ static struct patch_mode patch_mode_checkout_nothead = {
 			"the file\n"),
 };
 
+static struct patch_mode patch_mode_worktree_head = {
+	.diff = { "diff-index", NULL },
+	.apply = { "-R", NULL },
+	.apply_check = { "-R", NULL },
+	.is_reverse = 1,
+	.prompt_mode = {
+		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for discarding."),
+	.help_patch_text =
+		N_("y - discard this hunk from worktree\n"
+		   "n - do not discard this hunk from worktree\n"
+		   "q - quit; do not discard this hunk or any of the remaining "
+			"ones\n"
+		   "a - discard this hunk and all later hunks in the file\n"
+		   "d - do not discard this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_worktree_nothead = {
+	.diff = { "diff-index", "-R", NULL },
+	.apply = { NULL },
+	.apply_check = { NULL },
+	.is_reverse = 0,
+	.prompt_mode = {
+		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for applying."),
+	.help_patch_text =
+		N_("y - apply this hunk to worktree\n"
+		   "n - do not apply this hunk to worktree\n"
+		   "q - quit; do not apply this hunk or any of the remaining "
+			"ones\n"
+		   "a - apply this hunk and all later hunks in the file\n"
+		   "d - do not apply this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
 struct hunk_header {
 	unsigned long old_offset, old_count, new_offset, new_count;
 	/*
@@ -1492,6 +1536,13 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 			s.mode = &patch_mode_checkout_head;
 		else
 			s.mode = &patch_mode_checkout_nothead;
+	} else if (mode == ADD_P_WORKTREE) {
+		if (!revision)
+			s.mode = &patch_mode_checkout_index;
+		else if (!strcmp(revision, "HEAD"))
+			s.mode = &patch_mode_worktree_head;
+		else
+			s.mode = &patch_mode_worktree_nothead;
 	} else
 		s.mode = &patch_mode_stage;
 	s.revision = revision;
