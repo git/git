@@ -23,6 +23,17 @@ diff_cmp () {
 	test_cmp "$1.filtered" "$2.filtered"
 }
 
+# This function uses a trick to manipulate the interactive add to use color:
+# the `want_color()` function special-cases the situation where a pager was
+# spawned and Git now wants to output colored text: to detect that situation,
+# the environment variable `GIT_PAGER_IN_USE` is set. However, color is
+# suppressed despite that environment variable if the `TERM` variable
+# indicates a dumb terminal, so we set that variable, too.
+
+force_color () {
+	env GIT_PAGER_IN_USE=true TERM=vt100 "$@"
+}
+
 test_expect_success 'setup (initial)' '
 	echo content >file &&
 	git add file &&
@@ -451,35 +462,38 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	diff_cmp expected diff
 '
 
-test_expect_success TTY 'diffs can be colorized' '
+test_expect_success 'diffs can be colorized' '
 	git reset --hard &&
 
 	echo content >test &&
-	printf y | test_terminal git add -p >output 2>&1 &&
+	printf y >y &&
+	force_color git add -p >output 2>&1 <y &&
 
 	# We do not want to depend on the exact coloring scheme
 	# git uses for diffs, so just check that we saw some kind of color.
 	grep "$(printf "\\033")" output
 '
 
-test_expect_success TTY 'diffFilter filters diff' '
+test_expect_success 'diffFilter filters diff' '
 	git reset --hard &&
 
 	echo content >test &&
 	test_config interactive.diffFilter "sed s/^/foo:/" &&
-	printf y | test_terminal git add -p >output 2>&1 &&
+	printf y >y &&
+	force_color git add -p >output 2>&1 <y &&
 
 	# avoid depending on the exact coloring or content of the prompts,
 	# and just make sure we saw our diff prefixed
 	grep foo:.*content output
 '
 
-test_expect_success TTY 'detect bogus diffFilter output' '
+test_expect_success 'detect bogus diffFilter output' '
 	git reset --hard &&
 
 	echo content >test &&
 	test_config interactive.diffFilter "echo too-short" &&
-	printf y | test_must_fail test_terminal git add -p
+	printf y >y &&
+	test_must_fail force_color git add -p <y
 '
 
 test_expect_success 'patch-mode via -i prompts for files' '
@@ -680,7 +694,7 @@ test_expect_success 'show help from add--helper' '
 	<BOLD;BLUE>What now<RESET>>$SP
 	Bye.
 	EOF
-	test_write_lines h | GIT_PAGER_IN_USE=true TERM=vt100 git add -i >actual.colored &&
+	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
 	test_i18ncmp expect actual
 '
