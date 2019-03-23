@@ -40,6 +40,72 @@ static struct patch_mode patch_mode_stage = {
 			"the file\n")
 };
 
+static struct patch_mode patch_mode_stash = {
+	.diff = { "diff-index", "HEAD", NULL },
+	.apply = { "--cached", NULL },
+	.apply_check = { "--cached", NULL },
+	.is_reverse = 0,
+	.prompt_mode = {
+		N_("Stash mode change [y,n,q,a,d%s,?]? "),
+		N_("Stash deletion [y,n,q,a,d%s,?]? "),
+		N_("Stash this hunk [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for stashing."),
+	.help_patch_text =
+		N_("y - stash this hunk\n"
+		   "n - do not stash this hunk\n"
+		   "q - quit; do not stash this hunk or any of the remaining "
+			"ones\n"
+		   "a - stash this hunk and all later hunks in the file\n"
+		   "d - do not stash this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_reset_head = {
+	.diff = { "diff-index", "--cached", NULL },
+	.apply = { "-R", "--cached", NULL },
+	.apply_check = { "-R", "--cached", NULL },
+	.is_reverse = 1,
+	.prompt_mode = {
+		N_("Unstage mode change [y,n,q,a,d%s,?]? "),
+		N_("Unstage deletion [y,n,q,a,d%s,?]? "),
+		N_("Unstage this hunk [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for unstaging."),
+	.help_patch_text =
+		N_("y - unstage this hunk\n"
+		   "n - do not unstage this hunk\n"
+		   "q - quit; do not unstage this hunk or any of the remaining "
+			"ones\n"
+		   "a - unstage this hunk and all later hunks in the file\n"
+		   "d - do not unstage this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_reset_nothead = {
+	.diff = { "diff-index", "-R", "--cached", NULL },
+	.apply = { "--cached", NULL },
+	.apply_check = { "--cached", NULL },
+	.is_reverse = 0,
+	.prompt_mode = {
+		N_("Apply mode change to index [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to index [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to index [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for applying."),
+	.help_patch_text =
+		N_("y - apply this hunk to index\n"
+		   "n - do not apply this hunk to index\n"
+		   "q - quit; do not apply this hunk or any of the remaining "
+			"ones\n"
+		   "a - apply this hunk and all later hunks in the file\n"
+		   "d - do not apply this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
 struct hunk_header {
 	unsigned long old_offset, old_count, new_offset, new_count;
 	/*
@@ -1284,7 +1350,15 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 	if (init_add_i_state(r, &s.s))
 		return error("Could not read `add -i` config");
 
-	s.mode = &patch_mode_stage;
+	if (mode == ADD_P_STASH)
+		s.mode = &patch_mode_stash;
+	else if (mode == ADD_P_RESET) {
+		if (!revision || !strcmp(revision, "HEAD"))
+			s.mode = &patch_mode_reset_head;
+		else
+			s.mode = &patch_mode_reset_nothead;
+	} else
+		s.mode = &patch_mode_stage;
 	s.revision = revision;
 
 	if (repo_refresh_and_write_index(r, REFRESH_QUIET, 0) < 0 ||
