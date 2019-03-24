@@ -4862,6 +4862,20 @@ static int diff_opt_color_moved(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_color_moved_ws(const struct option *opt,
+				   const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+	unsigned cm;
+
+	BUG_ON_OPT_NEG(unset);
+	cm = parse_color_moved_ws(arg);
+	if (cm & COLOR_MOVED_WS_ERROR)
+		return error(_("invalid mode '%s' in --color-moved-ws"), arg);
+	options->color_moved_ws_handling = cm;
+	return 0;
+}
+
 static int diff_opt_color_words(const struct option *opt,
 				const char *arg, int unset)
 {
@@ -5363,6 +5377,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "color-moved", options, N_("<mode>"),
 			       N_("move lines of code are colored differently"),
 			       PARSE_OPT_OPTARG, diff_opt_color_moved),
+		OPT_CALLBACK_F(0, "color-moved-ws", options, N_("<mode>"),
+			       N_("how white spaces are ignored in --color-moved"),
+			       PARSE_OPT_NONEG, diff_opt_color_moved_ws),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
@@ -5430,8 +5447,6 @@ static void prep_parse_options(struct diff_options *options)
 int diff_opt_parse(struct diff_options *options,
 		   const char **av, int ac, const char *prefix)
 {
-	const char *arg = av[0];
-
 	if (!prefix)
 		prefix = "";
 
@@ -5442,21 +5457,7 @@ int diff_opt_parse(struct diff_options *options,
 			   PARSE_OPT_ONE_SHOT |
 			   PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (ac)
-		return ac;
-
-	/* flags options */
-	if (skip_prefix(arg, "--color-moved-ws=", &arg)) {
-		unsigned cm = parse_color_moved_ws(arg);
-		if (cm & COLOR_MOVED_WS_ERROR)
-			return -1;
-		options->color_moved_ws_handling = cm;
-	}
-
-	/* misc options */
-	else
-		return 0;
-	return 1;
+	return ac;
 }
 
 int parse_rename_score(const char **cp_p)
