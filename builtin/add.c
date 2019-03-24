@@ -26,7 +26,8 @@ static const char * const builtin_add_usage[] = {
 	N_("git add [<options>] [--] <pathspec>..."),
 	NULL
 };
-static int patch_interactive, add_interactive, edit_interactive;
+static const char *patch_interactive;
+static int add_interactive, edit_interactive;
 static int take_worktree_changes;
 static int add_renormalize;
 
@@ -229,9 +230,11 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	return status;
 }
 
-int interactive_add(int argc, const char **argv, const char *prefix, int patch)
+int interactive_add(int argc, const char **argv, const char *prefix,
+		    const char *patch_mode)
 {
 	struct pathspec pathspec;
+	char buffer[64];
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
@@ -239,9 +242,13 @@ int interactive_add(int argc, const char **argv, const char *prefix, int patch)
 		       PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
 
-	return run_add_interactive(NULL,
-				   patch ? "--patch" : NULL,
-				   &pathspec);
+	if (patch_mode) {
+		xsnprintf(buffer, sizeof(buffer), "--patch%s%s",
+			  *patch_mode ? "=" : "", patch_mode);
+		patch_mode = buffer;
+	}
+
+	return run_add_interactive(NULL, patch_mode, &pathspec);
 }
 
 static int edit_patch(int argc, const char **argv, const char *prefix)
@@ -319,7 +326,9 @@ static struct option builtin_add_options[] = {
 	OPT__VERBOSE(&verbose, N_("be verbose")),
 	OPT_GROUP(""),
 	OPT_BOOL('i', "interactive", &add_interactive, N_("interactive picking")),
-	OPT_BOOL('p', "patch", &patch_interactive, N_("select hunks interactively")),
+	{ OPTION_STRING, 'p', "patch", &patch_interactive, N_("patch-mode"),
+		N_("select hunks interactively"), PARSE_OPT_OPTARG, NULL,
+		(intptr_t) "" },
 	OPT_BOOL('e', "edit", &edit_interactive, N_("edit current diff and apply")),
 	OPT__FORCE(&ignored_too, N_("allow adding otherwise ignored files"), 0),
 	OPT_BOOL('u', "update", &take_worktree_changes, N_("update tracked files")),
