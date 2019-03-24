@@ -526,17 +526,8 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 		req->localfile = -1;
 	}
 
-	/*
-	 * we turned off CURLOPT_FAILONERROR to avoid losing a
-	 * persistent connection and got CURLE_OK.
-	 */
-	if (req->http_code >= 300 && req->curl_result == CURLE_OK &&
-			(starts_with(req->url, "http://") ||
-			 starts_with(req->url, "https://"))) {
-		req->curl_result = CURLE_HTTP_RETURNED_ERROR;
-		xsnprintf(req->errorstr, sizeof(req->errorstr),
-			  "HTTP request failed");
-	}
+	normalize_curl_result(&req->curl_result, req->http_code,
+			      req->errorstr, sizeof(req->errorstr));
 
 	if (obj_req->state == ABORTED) {
 		ret = error("Request for %s aborted", hex);
