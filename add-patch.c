@@ -956,8 +956,10 @@ N_("y - stage this hunk\n"
    "n - do not stage this hunk\n"
    "q - quit; do not stage this hunk or any of the remaining ones\n"
    "a - stage this and all the remaining hunks\n"
-   "d - do not stage this hunk nor any of the remaining hunks\n"
-   "j - leave this hunk undecided, see next undecided hunk\n"
+   "d - do not stage this hunk nor any of the remaining hunks\n");
+
+static const char help_patch_remainder[] =
+N_("j - leave this hunk undecided, see next undecided hunk\n"
    "J - leave this hunk undecided, see next hunk\n"
    "k - leave this hunk undecided, see previous undecided hunk\n"
    "K - leave this hunk undecided, see previous hunk\n"
@@ -1190,9 +1192,31 @@ soft_increment:
 				hunk->use = USE_HUNK;
 				goto soft_increment;
 			}
-		} else
-			color_fprintf(stdout, s->s.help_color,
+		} else {
+			const char *p = _(help_patch_remainder), *eol = p;
+
+			color_fprintf(stdout, s->s.help_color, "%s",
 				      _(help_patch_text));
+
+			/*
+			 * Show only those lines of the remainder that are
+			 * actually applicable with the current hunk.
+			 */
+			for (; *p; p = eol + (*eol == '\n')) {
+				eol = strchrnul(p, '\n');
+
+				/*
+				 * `s->buf` still contains the part of the
+				 * commands shown in the prompt that are not
+				 * always available.
+				 */
+				if (*p != '?' && !strchr(s->buf.buf, *p))
+					continue;
+
+				color_fprintf_ln(stdout, s->s.help_color,
+						 "%.*s", (int)(eol - p), p);
+			}
+		}
 	}
 
 	/* Any hunk to be used? */
