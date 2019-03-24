@@ -4617,22 +4617,6 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	return 1;
 }
 
-static inline int short_opt(char opt, const char **argv,
-			    const char **optarg)
-{
-	const char *arg = argv[0];
-	if (arg[0] != '-' || arg[1] != opt)
-		return 0;
-	if (arg[2] != '\0') {
-		*optarg = arg + 2;
-		return 1;
-	}
-	if (!argv[1])
-		die("Option '%c' requires a value", opt);
-	*optarg = argv[1];
-	return 2;
-}
-
 int parse_long_opt(const char *opt, const char **argv,
 		   const char **optarg)
 {
@@ -5397,6 +5381,8 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_BIT_F(0, "pickaxe-regex", &options->pickaxe_opts,
 			  N_("treat <string> in -S as extended POSIX regular expression"),
 			  DIFF_PICKAXE_REGEX, PARSE_OPT_NONEG),
+		OPT_FILENAME('O', NULL, &options->orderfile,
+			     N_("control the order in which files appear in the output")),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5449,10 +5435,7 @@ int diff_opt_parse(struct diff_options *options,
 	}
 
 	/* misc options */
-	else if ((argcount = short_opt('O', av, &optarg))) {
-		options->orderfile = prefix_filename(prefix, optarg);
-		return argcount;
-	} else if (skip_prefix(arg, "--find-object=", &arg))
+	else if (skip_prefix(arg, "--find-object=", &arg))
 		return parse_objfind_opt(options, arg);
 	else if ((argcount = parse_long_opt("diff-filter", av, &optarg))) {
 		int offending = parse_diff_filter_opt(optarg, options);
