@@ -1544,7 +1544,8 @@ char *get_remote_object_url(const char *url, const char *hex,
 	return strbuf_detach(&buf, NULL);
 }
 
-static int handle_curl_result(struct slot_results *results)
+void normalize_curl_result(CURLcode *result, long http_code,
+			   char *errorstr, size_t errorlen)
 {
 	/*
 	 * If we see a failing http code with CURLE_OK, we have turned off
@@ -1554,19 +1555,24 @@ static int handle_curl_result(struct slot_results *results)
 	 * Likewise, if we see a redirect (30x code), that means we turned off
 	 * redirect-following, and we should treat the result as an error.
 	 */
-	if (results->curl_result == CURLE_OK &&
-	    results->http_code >= 300) {
-		results->curl_result = CURLE_HTTP_RETURNED_ERROR;
+	if (*result == CURLE_OK && http_code >= 300) {
+		*result = CURLE_HTTP_RETURNED_ERROR;
 		/*
 		 * Normally curl will already have put the "reason phrase"
 		 * from the server into curl_errorstr; unfortunately without
 		 * FAILONERROR it is lost, so we can give only the numeric
 		 * status code.
 		 */
-		xsnprintf(curl_errorstr, sizeof(curl_errorstr),
+		xsnprintf(errorstr, errorlen,
 			  "The requested URL returned error: %ld",
-			  results->http_code);
+			  http_code);
 	}
+}
+
+static int handle_curl_result(struct slot_results *results)
+{
+	normalize_curl_result(&results->curl_result, results->http_code,
+			      curl_errorstr, sizeof(curl_errorstr));
 
 	if (results->curl_result == CURLE_OK) {
 		credential_approve(&http_auth);
