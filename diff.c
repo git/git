@@ -4801,17 +4801,18 @@ static void enable_patch_output(int *fmt)
 	*fmt |= DIFF_FORMAT_PATCH;
 }
 
-static int parse_ws_error_highlight_opt(struct diff_options *opt, const char *arg)
+static int diff_opt_ws_error_highlight(const struct option *option,
+				       const char *arg, int unset)
 {
+	struct diff_options *opt = option->value;
 	int val = parse_ws_error_highlight(arg);
 
-	if (val < 0) {
-		error("unknown value after ws-error-highlight=%.*s",
-		      -1 - val, arg);
-		return 0;
-	}
+	BUG_ON_OPT_NEG(unset);
+	if (val < 0)
+		return error(_("unknown value after ws-error-highlight=%.*s"),
+			     -1 - val, arg);
 	opt->ws_error_highlight = val;
-	return 1;
+	return 0;
 }
 
 static int parse_objfind_opt(struct diff_options *opt, const char *arg)
@@ -5234,6 +5235,9 @@ static void prep_parse_options(struct diff_options *options)
 			 N_("show full pre- and post-image object names on the \"index\" lines")),
 		OPT_COLOR_FLAG(0, "color", &options->use_color,
 			       N_("show colored diff")),
+		OPT_CALLBACK_F(0, "ws-error-highlight", options, N_("<kind>"),
+			       N_("highlight whitespace errors in the 'context', 'old' or 'new' lines in the diff"),
+			       PARSE_OPT_NONEG, diff_opt_ws_error_highlight),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5397,9 +5401,7 @@ int diff_opt_parse(struct diff_options *options,
 		if (cm & COLOR_MOVED_WS_ERROR)
 			return -1;
 		options->color_moved_ws_handling = cm;
-	} else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
-		return parse_ws_error_highlight_opt(options, arg);
-	else if (!strcmp(arg, "--ita-invisible-in-index"))
+	} else if (!strcmp(arg, "--ita-invisible-in-index"))
 		options->ita_invisible_in_index = 1;
 	else if (!strcmp(arg, "--ita-visible-in-index"))
 		options->ita_invisible_in_index = 0;
