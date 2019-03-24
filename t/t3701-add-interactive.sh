@@ -291,6 +291,17 @@ test_expect_success 'different prompts for mode change/deleted' '
 	test_cmp expect actual.filtered
 '
 
+test_expect_success 'correct message when there is nothing to do' '
+	git reset --hard &&
+	git add -p 2>err &&
+	test_i18ngrep "No changes" err &&
+	printf "\\0123" >binary &&
+	git add binary &&
+	printf "\\0abc" >binary &&
+	git add -p 2>err &&
+	test_i18ngrep "Only binary files changed" err
+'
+
 test_expect_success 'setup again' '
 	git reset --hard &&
 	test_chmod +x file &&
