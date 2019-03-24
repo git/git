@@ -355,7 +355,8 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		old_index_env = xstrdup_or_null(getenv(INDEX_ENVIRONMENT));
 		setenv(INDEX_ENVIRONMENT, get_lock_file_path(&index_lock), 1);
 
-		if (interactive_add(argc, argv, prefix, patch_interactive) != 0)
+		if (interactive_add(argc, argv, prefix,
+				    patch_interactive ? "" : NULL) != 0)
 			die(_("interactive add failed"));
 
 		if (old_index_env && *old_index_env)
