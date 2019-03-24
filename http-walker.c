@@ -98,6 +98,11 @@ static void process_object_response(void *callback_data)
 	process_http_object_request(obj_req->req);
 	obj_req->state = COMPLETE;
 
+	normalize_curl_result(&obj_req->req->curl_result,
+			      obj_req->req->http_code,
+			      obj_req->req->errorstr,
+			      sizeof(obj_req->req->errorstr));
+
 	/* Use alternates if necessary */
 	if (missing_target(obj_req->req)) {
 		fetch_alternates(walker, alt->base);
@@ -207,6 +212,9 @@ static void process_alternates_response(void *callback_data)
 	const char null_byte = '\0';
 	char *data;
 	int i = 0;
+
+	normalize_curl_result(&slot->curl_result, slot->http_code,
+			      curl_errorstr, sizeof(curl_errorstr));
 
 	if (alt_req->http_specific) {
 		if (slot->curl_result != CURLE_OK ||
