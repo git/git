@@ -5255,6 +5255,12 @@ static void prep_parse_options(struct diff_options *options)
 			    N_("do not munge pathnames and use NULs as output field terminators in --raw or --numstat"),
 			    0),
 		OPT__ABBREV(&options->abbrev),
+		OPT_STRING_F(0, "src-prefix", &options->a_prefix, N_("<prefix>"),
+			     N_("show the given source prefix instead of \"a/\""),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "dst-prefix", &options->b_prefix, N_("<prefix>"),
+			     N_("show the given source prefix instead of \"b/\""),
+			     PARSE_OPT_NONEG),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5449,18 +5455,10 @@ int diff_opt_parse(struct diff_options *options,
 	}
 
 	/* misc options */
-	else if ((argcount = parse_long_opt("src-prefix", av, &optarg))) {
-		options->a_prefix = optarg;
-		return argcount;
-	}
 	else if ((argcount = parse_long_opt("line-prefix", av, &optarg))) {
 		options->line_prefix = optarg;
 		options->line_prefix_length = strlen(options->line_prefix);
 		graph_setup_line_prefix(options);
-		return argcount;
-	}
-	else if ((argcount = parse_long_opt("dst-prefix", av, &optarg))) {
-		options->b_prefix = optarg;
 		return argcount;
 	}
 	else if (!strcmp(arg, "--no-prefix"))
