@@ -4799,12 +4799,15 @@ static int diff_opt_ws_error_highlight(const struct option *option,
 	return 0;
 }
 
-static int parse_objfind_opt(struct diff_options *opt, const char *arg)
+static int diff_opt_find_object(const struct option *option,
+				const char *arg, int unset)
 {
+	struct diff_options *opt = option->value;
 	struct object_id oid;
 
+	BUG_ON_OPT_NEG(unset);
 	if (get_oid(arg, &oid))
-		return error("unable to resolve '%s'", arg);
+		return error(_("unable to resolve '%s'"), arg);
 
 	if (!opt->objfind)
 		opt->objfind = xcalloc(1, sizeof(*opt->objfind));
@@ -4813,7 +4816,7 @@ static int parse_objfind_opt(struct diff_options *opt, const char *arg)
 	opt->flags.recursive = 1;
 	opt->flags.tree_in_recursive = 1;
 	oidset_insert(opt->objfind, &oid);
-	return 1;
+	return 0;
 }
 
 static int diff_opt_anchored(const struct option *opt,
@@ -5383,6 +5386,9 @@ static void prep_parse_options(struct diff_options *options)
 			  DIFF_PICKAXE_REGEX, PARSE_OPT_NONEG),
 		OPT_FILENAME('O', NULL, &options->orderfile,
 			     N_("control the order in which files appear in the output")),
+		OPT_CALLBACK_F(0, "find-object", options, N_("<object-id>"),
+			       N_("look for differences that change the number of occurrences of the specified object"),
+			       PARSE_OPT_NONEG, diff_opt_find_object),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5435,8 +5441,6 @@ int diff_opt_parse(struct diff_options *options,
 	}
 
 	/* misc options */
-	else if (skip_prefix(arg, "--find-object=", &arg))
-		return parse_objfind_opt(options, arg);
 	else if ((argcount = parse_long_opt("diff-filter", av, &optarg))) {
 		int offending = parse_diff_filter_opt(optarg, options);
 		if (offending)
