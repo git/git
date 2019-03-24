@@ -4868,7 +4868,11 @@ static int diff_opt_color_moved_ws(const struct option *opt,
 	struct diff_options *options = opt->value;
 	unsigned cm;
 
-	BUG_ON_OPT_NEG(unset);
+	if (unset) {
+		options->color_moved_ws_handling = 0;
+		return 0;
+	}
+
 	cm = parse_color_moved_ws(arg);
 	if (cm & COLOR_MOVED_WS_ERROR)
 		return error(_("invalid mode '%s' in --color-moved-ws"), arg);
@@ -5379,7 +5383,7 @@ static void prep_parse_options(struct diff_options *options)
 			       PARSE_OPT_OPTARG, diff_opt_color_moved),
 		OPT_CALLBACK_F(0, "color-moved-ws", options, N_("<mode>"),
 			       N_("how white spaces are ignored in --color-moved"),
-			       PARSE_OPT_NONEG, diff_opt_color_moved_ws),
+			       0, diff_opt_color_moved_ws),
 
 		OPT_GROUP(N_("Diff other options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
