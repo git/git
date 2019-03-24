@@ -5010,6 +5010,18 @@ static int diff_opt_ignore_submodules(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_line_prefix(const struct option *opt,
+				const char *optarg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	options->line_prefix = optarg;
+	options->line_prefix_length = strlen(options->line_prefix);
+	graph_setup_line_prefix(options);
+	return 0;
+}
+
 static enum parse_opt_result diff_opt_output(struct parse_opt_ctx_t *ctx,
 					     const struct option *opt,
 					     const char *arg, int unset)
@@ -5261,6 +5273,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_STRING_F(0, "dst-prefix", &options->b_prefix, N_("<prefix>"),
 			     N_("show the given source prefix instead of \"b/\""),
 			     PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "line-prefix", options, N_("<prefix>"),
+			       N_("prepend an additional prefix to every line of output"),
+			       PARSE_OPT_NONEG, diff_opt_line_prefix),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5418,8 +5433,6 @@ int diff_opt_parse(struct diff_options *options,
 		   const char **av, int ac, const char *prefix)
 {
 	const char *arg = av[0];
-	const char *optarg;
-	int argcount;
 
 	if (!prefix)
 		prefix = "";
@@ -5455,12 +5468,6 @@ int diff_opt_parse(struct diff_options *options,
 	}
 
 	/* misc options */
-	else if ((argcount = parse_long_opt("line-prefix", av, &optarg))) {
-		options->line_prefix = optarg;
-		options->line_prefix_length = strlen(options->line_prefix);
-		graph_setup_line_prefix(options);
-		return argcount;
-	}
 	else if (!strcmp(arg, "--no-prefix"))
 		options->a_prefix = options->b_prefix = "";
 	else if (opt_arg(arg, '\0', "inter-hunk-context",
