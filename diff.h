@@ -233,6 +233,8 @@ struct diff_options {
 	struct option *parseopts;
 };
 
+unsigned diff_filter_bit(char status);
+
 void diff_emit_submodule_del(struct diff_options *o, const char *line);
 void diff_emit_submodule_add(struct diff_options *o, const char *line);
 void diff_emit_submodule_untracked(struct diff_options *o, const char *path);
