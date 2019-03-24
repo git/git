@@ -5238,6 +5238,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F(0, "ws-error-highlight", options, N_("<kind>"),
 			       N_("highlight whitespace errors in the 'context', 'old' or 'new' lines in the diff"),
 			       PARSE_OPT_NONEG, diff_opt_ws_error_highlight),
+		OPT_SET_INT('z', NULL, &options->line_termination,
+			    N_("do not munge pathnames and use NULs as output field terminators in --raw or --numstat"),
+			    0),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5410,8 +5413,6 @@ int diff_opt_parse(struct diff_options *options,
 	}
 
 	/* misc options */
-	else if (!strcmp(arg, "-z"))
-		options->line_termination = 0;
 	else if ((argcount = short_opt('l', av, &optarg))) {
 		options->rename_limit = strtoul(optarg, NULL, 10);
 		return argcount;
