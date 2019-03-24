@@ -5391,6 +5391,12 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F('G', NULL, options, N_("<regex>"),
 			       N_("look for differences that change the number of occurrences of the specified regex"),
 			       0, diff_opt_pickaxe_regex),
+		OPT_BIT_F(0, "pickaxe-all", &options->pickaxe_opts,
+			  N_("show all changes in the changeset with -S or -G"),
+			  DIFF_PICKAXE_ALL, PARSE_OPT_NONEG),
+		OPT_BIT_F(0, "pickaxe-regex", &options->pickaxe_opts,
+			  N_("treat <string> in -S as extended POSIX regular expression"),
+			  DIFF_PICKAXE_REGEX, PARSE_OPT_NONEG),
 		{ OPTION_CALLBACK, 0, "output", options, N_("<file>"),
 		  N_("Output to a specific file"),
 		  PARSE_OPT_NONEG, NULL, 0, diff_opt_output },
@@ -5443,10 +5449,6 @@ int diff_opt_parse(struct diff_options *options,
 	}
 
 	/* misc options */
-	else if (!strcmp(arg, "--pickaxe-all"))
-		options->pickaxe_opts |= DIFF_PICKAXE_ALL;
-	else if (!strcmp(arg, "--pickaxe-regex"))
-		options->pickaxe_opts |= DIFF_PICKAXE_REGEX;
 	else if ((argcount = short_opt('O', av, &optarg))) {
 		options->orderfile = prefix_filename(prefix, optarg);
 		return argcount;
