@@ -377,7 +377,13 @@ corrupt_graph_verify() {
 	test_must_fail git commit-graph verify 2>test_err &&
 	grep -v "^+" test_err >err &&
 	test_i18ngrep "$grepstr" err &&
-	git status --short
+	if test "$2" != "no-copy"
+	then
+		cp $objdir/info/commit-graph commit-graph-pre-write-test
+	fi &&
+	git status --short &&
+	GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD=true git commit-graph write &&
+	git commit-graph verify
 }
 
 # usage: corrupt_graph_and_verify <position> <data> <string> [<zero_pos>]
@@ -403,7 +409,7 @@ corrupt_graph_and_verify() {
 test_expect_success POSIXPERM,SANITY 'detect permission problem' '
 	corrupt_graph_setup &&
 	chmod 000 $objdir/info/commit-graph &&
-	corrupt_graph_verify "Could not open"
+	corrupt_graph_verify "Could not open" "no-copy"
 '
 
 test_expect_success 'detect too small' '
@@ -522,6 +528,7 @@ test_expect_success 'git fsck (checks commit-graph)' '
 	git fsck &&
 	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
 		"incorrect checksum" &&
+	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
 	test_must_fail git fsck
 '
 
