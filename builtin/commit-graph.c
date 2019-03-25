@@ -64,7 +64,7 @@ static int graph_verify(int argc, const char **argv)
 	open_ok = open_commit_graph(graph_name, &fd, &st);
 	if (!open_ok)
 		return 0;
-	graph = load_commit_graph_one_fd_st(graph_name, fd, &st);
+	graph = load_commit_graph_one_fd_st(fd, &st);
 	FREE_AND_NULL(graph_name);
 
 	if (!graph)
@@ -102,7 +102,7 @@ static int graph_read(int argc, const char **argv)
 	if (!open_ok)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
 
-	graph = load_commit_graph_one_fd_st(graph_name, fd, &st);
+	graph = load_commit_graph_one_fd_st(fd, &st);
 	if (!graph)
 		return 1;
 

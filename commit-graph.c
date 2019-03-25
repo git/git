@@ -92,8 +92,7 @@ int open_commit_graph(const char *graph_file, int *fd, struct stat *st)
 	return 1;
 }
 
-struct commit_graph *load_commit_graph_one_fd_st(const char *graph_file,
-						 int fd, struct stat *st)
+struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st)
 {
 	void *graph_map;
 	size_t graph_size;
@@ -103,7 +102,7 @@ struct commit_graph *load_commit_graph_one_fd_st(const char *graph_file,
 
 	if (graph_size < GRAPH_MIN_SIZE) {
 		close(fd);
-		error(_("graph file %s is too small"), graph_file);
+		error(_("commit-graph file is too small"));
 		return NULL;
 	}
 	graph_map = xmmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -284,7 +283,7 @@ static struct commit_graph *load_commit_graph_one(const char *graph_file)
 	if (!open_ok)
 		return NULL;
 
-	return load_commit_graph_one_fd_st(graph_file, fd, &st);
+	return load_commit_graph_one_fd_st(fd, &st);
 }
 
 static void prepare_commit_graph_one(struct repository *r, const char *obj_dir)
