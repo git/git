@@ -1370,7 +1370,7 @@ test_expect_success 'push does not follow tags by default' '
 	test_cmp expect actual
 '
 
-test_expect_success 'push --follow-tag only pushes relevant tags' '
+test_expect_success 'push --follow-tags only pushes relevant tags' '
 	mk_test testrepo heads/master &&
 	rm -fr src dst &&
 	git init src &&
@@ -1384,7 +1384,7 @@ test_expect_success 'push --follow-tag only pushes relevant tags' '
 		git tag -m "future" future &&
 		git checkout master &&
 		git for-each-ref refs/heads/master refs/tags/tag >../expect &&
-		git push --follow-tag ../dst master
+		git push --follow-tags ../dst master
 	) &&
 	(
 		cd dst &&
