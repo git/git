@@ -167,21 +167,21 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 
 	graph_signature = get_be32(data);
 	if (graph_signature != GRAPH_SIGNATURE) {
-		error(_("graph signature %X does not match signature %X"),
+		error(_("commit-graph signature %X does not match signature %X"),
 		      graph_signature, GRAPH_SIGNATURE);
 		return NULL;
 	}
 
 	graph_version = *(unsigned char*)(data + 4);
 	if (graph_version != GRAPH_VERSION) {
-		error(_("graph version %X does not match version %X"),
+		error(_("commit-graph version %X does not match version %X"),
 		      graph_version, GRAPH_VERSION);
 		return NULL;
 	}
 
 	hash_version = *(unsigned char*)(data + 5);
 	if (hash_version != oid_version()) {
-		error(_("hash version %X does not match version %X"),
+		error(_("commit-graph hash version %X does not match version %X"),
 		      hash_version, oid_version());
 		return NULL;
 	}
@@ -204,7 +204,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 
 		if (data + graph_size - chunk_lookup <
 		    GRAPH_CHUNKLOOKUP_WIDTH) {
-			error(_("chunk lookup table entry missing; graph file may be incomplete"));
+			error(_("commit-graph chunk lookup table entry missing; file may be incomplete"));
 			free(graph);
 			return NULL;
 		}
@@ -215,7 +215,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		chunk_lookup += GRAPH_CHUNKLOOKUP_WIDTH;
 
 		if (chunk_offset > graph_size - the_hash_algo->rawsz) {
-			error(_("improper chunk offset %08x%08x"), (uint32_t)(chunk_offset >> 32),
+			error(_("commit-graph improper chunk offset %08x%08x"), (uint32_t)(chunk_offset >> 32),
 			      (uint32_t)chunk_offset);
 			free(graph);
 			return NULL;
@@ -252,7 +252,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		}
 
 		if (chunk_repeated) {
-			error(_("chunk id %08x appears multiple times"), chunk_id);
+			error(_("commit-graph chunk id %08x appears multiple times"), chunk_id);
 			free(graph);
 			return NULL;
 		}
@@ -1162,7 +1162,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
 
 		if (i && oidcmp(&prev_oid, &cur_oid) >= 0)
-			graph_report("commit-graph has incorrect OID order: %s then %s",
+			graph_report(_("commit-graph has incorrect OID order: %s then %s"),
 				     oid_to_hex(&prev_oid),
 				     oid_to_hex(&cur_oid));
 
@@ -1172,14 +1172,14 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 			uint32_t fanout_value = get_be32(g->chunk_oid_fanout + cur_fanout_pos);
 
 			if (i != fanout_value)
-				graph_report("commit-graph has incorrect fanout value: fanout[%d] = %u != %u",
+				graph_report(_("commit-graph has incorrect fanout value: fanout[%d] = %u != %u"),
 					     cur_fanout_pos, fanout_value, i);
 			cur_fanout_pos++;
 		}
 
 		graph_commit = lookup_commit(r, &cur_oid);
 		if (!parse_commit_in_graph_one(r, g, graph_commit))
-			graph_report("failed to parse %s from commit-graph",
+			graph_report(_("failed to parse commit %s from commit-graph"),
 				     oid_to_hex(&cur_oid));
 	}
 
@@ -1187,7 +1187,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		uint32_t fanout_value = get_be32(g->chunk_oid_fanout + cur_fanout_pos);
 
 		if (g->num_commits != fanout_value)
-			graph_report("commit-graph has incorrect fanout value: fanout[%d] = %u != %u",
+			graph_report(_("commit-graph has incorrect fanout value: fanout[%d] = %u != %u"),
 				     cur_fanout_pos, fanout_value, i);
 
 		cur_fanout_pos++;
@@ -1209,14 +1209,14 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		graph_commit = lookup_commit(r, &cur_oid);
 		odb_commit = (struct commit *)create_object(r, cur_oid.hash, alloc_commit_node(r));
 		if (parse_commit_internal(odb_commit, 0, 0)) {
-			graph_report("failed to parse %s from object database",
+			graph_report(_("failed to parse commit %s from object database for commit-graph"),
 				     oid_to_hex(&cur_oid));
 			continue;
 		}
 
 		if (!oideq(&get_commit_tree_in_graph_one(r, g, graph_commit)->object.oid,
 			   get_commit_tree_oid(odb_commit)))
-			graph_report("root tree OID for commit %s in commit-graph is %s != %s",
+			graph_report(_("root tree OID for commit %s in commit-graph is %s != %s"),
 				     oid_to_hex(&cur_oid),
 				     oid_to_hex(get_commit_tree_oid(graph_commit)),
 				     oid_to_hex(get_commit_tree_oid(odb_commit)));
@@ -1226,13 +1226,13 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 
 		while (graph_parents) {
 			if (odb_parents == NULL) {
-				graph_report("commit-graph parent list for commit %s is too long",
+				graph_report(_("commit-graph parent list for commit %s is too long"),
 					     oid_to_hex(&cur_oid));
 				break;
 			}
 
 			if (!oideq(&graph_parents->item->object.oid, &odb_parents->item->object.oid))
-				graph_report("commit-graph parent for %s is %s != %s",
+				graph_report(_("commit-graph parent for %s is %s != %s"),
 					     oid_to_hex(&cur_oid),
 					     oid_to_hex(&graph_parents->item->object.oid),
 					     oid_to_hex(&odb_parents->item->object.oid));
@@ -1245,16 +1245,16 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		}
 
 		if (odb_parents != NULL)
-			graph_report("commit-graph parent list for commit %s terminates early",
+			graph_report(_("commit-graph parent list for commit %s terminates early"),
 				     oid_to_hex(&cur_oid));
 
 		if (!graph_commit->generation) {
 			if (generation_zero == GENERATION_NUMBER_EXISTS)
-				graph_report("commit-graph has generation number zero for commit %s, but non-zero elsewhere",
+				graph_report(_("commit-graph has generation number zero for commit %s, but non-zero elsewhere"),
 					     oid_to_hex(&cur_oid));
 			generation_zero = GENERATION_ZERO_EXISTS;
 		} else if (generation_zero == GENERATION_ZERO_EXISTS)
-			graph_report("commit-graph has non-zero generation number for commit %s, but zero elsewhere",
+			graph_report(_("commit-graph has non-zero generation number for commit %s, but zero elsewhere"),
 				     oid_to_hex(&cur_oid));
 
 		if (generation_zero == GENERATION_ZERO_EXISTS)
@@ -1269,13 +1269,13 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 			max_generation--;
 
 		if (graph_commit->generation != max_generation + 1)
-			graph_report("commit-graph generation for commit %s is %u != %u",
+			graph_report(_("commit-graph generation for commit %s is %u != %u"),
 				     oid_to_hex(&cur_oid),
 				     graph_commit->generation,
 				     max_generation + 1);
 
 		if (graph_commit->date != odb_commit->date)
-			graph_report("commit date for commit %s in commit-graph is %"PRItime" != %"PRItime,
+			graph_report(_("commit date for commit %s in commit-graph is %"PRItime" != %"PRItime),
 				     oid_to_hex(&cur_oid),
 				     graph_commit->date,
 				     odb_commit->date);
