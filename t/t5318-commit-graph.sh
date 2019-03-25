@@ -376,7 +376,8 @@ corrupt_graph_verify() {
 	grepstr=$1
 	test_must_fail git commit-graph verify 2>test_err &&
 	grep -v "^+" test_err >err &&
-	test_i18ngrep "$grepstr" err
+	test_i18ngrep "$grepstr" err &&
+	test_might_fail git status --short
 }
 
 # usage: corrupt_graph_and_verify <position> <data> <string> [<zero_pos>]
