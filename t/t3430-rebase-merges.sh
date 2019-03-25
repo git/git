@@ -271,7 +271,7 @@ test_expect_success 'root commits' '
 	EOF
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
-	git rebase -i --force --root -r &&
+	git rebase -i --force-rebase --root -r &&
 	test "Parsnip" = "$(git show -s --format=%an HEAD^)" &&
 	test $(git rev-parse second-root^0) != $(git rev-parse HEAD^) &&
 	test $(git rev-parse second-root:second-root.t) = \
@@ -364,7 +364,7 @@ test_expect_success 'octopus merges' '
 	test_cmp_rev HEAD $before &&
 
 	test_tick &&
-	git rebase -i --force -r HEAD^^ &&
+	git rebase -i --force-rebase -r HEAD^^ &&
 	test "Hank" = "$(git show -s --format=%an HEAD)" &&
 	test "$before" != $(git rev-parse HEAD) &&
 	test_cmp_graph HEAD^^.. <<-\EOF
