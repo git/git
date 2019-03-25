@@ -1,4 +1,4 @@
-gitremote-helpers(1)
+gitremote-helpers(7)
 ====================
 
 NAME

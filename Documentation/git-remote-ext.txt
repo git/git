@@ -118,7 +118,7 @@ begins with `ext::`.  Examples:
 
 SEE ALSO
 --------
-linkgit:gitremote-helpers[1]
+linkgit:gitremote-helpers[7]
 
 GIT
 ---

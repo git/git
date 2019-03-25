@@ -23,7 +23,7 @@ The best way to learn more is to read the comments and source code in
 
 SEE ALSO
 --------
-linkgit:gitremote-helpers[1]
+linkgit:gitremote-helpers[7]
 
 GIT
 ---
