@@ -62,8 +62,10 @@ static int graph_verify(int argc, const char **argv)
 
 	graph_name = get_commit_graph_filename(opts.obj_dir);
 	open_ok = open_commit_graph(graph_name, &fd, &st);
-	if (!open_ok)
+	if (!open_ok && errno == ENOENT)
 		return 0;
+	if (!open_ok)
+		die_errno(_("Could not open commit-graph '%s'"), graph_name);
 	graph = load_commit_graph_one_fd_st(fd, &st);
 	FREE_AND_NULL(graph_name);
 

@@ -400,6 +400,12 @@ corrupt_graph_and_verify() {
 
 }
 
+test_expect_success POSIXPERM,SANITY 'detect permission problem' '
+	corrupt_graph_setup &&
+	chmod 000 $objdir/info/commit-graph &&
+	corrupt_graph_verify "Could not open"
+'
+
 test_expect_success 'detect too small' '
 	corrupt_graph_setup &&
 	echo "a small graph" >$objdir/info/commit-graph &&
