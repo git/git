@@ -16,6 +16,7 @@ struct add_i_state {
 	char file_old_color[COLOR_MAXLEN];
 	char file_new_color[COLOR_MAXLEN];
 
+	int use_single_key;
 	char *interactive_diff_filter, *interactive_diff_algorithm;
 };
 
