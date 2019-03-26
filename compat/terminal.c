@@ -60,6 +60,11 @@ static int disable_echo(void)
 	return disable_bits(ECHO);
 }
 
+static int enable_non_canonical(void)
+{
+	return disable_bits(ICANON | ECHO);
+}
+
 #elif defined(GIT_WINDOWS_NATIVE)
 
 #define INPUT_PATH "CONIN$"
@@ -151,6 +156,10 @@ static int disable_echo(void)
 	return disable_bits(ENABLE_ECHO_INPUT);
 }
 
+static int enable_non_canonical(void)
+{
+	return disable_bits(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
+}
 
 #endif
 
@@ -198,11 +207,57 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	return buf.buf;
 }
 
+int read_key_without_echo(struct strbuf *buf)
+{
+	static int warning_displayed;
+	int ch;
+
+	if (warning_displayed || enable_non_canonical() < 0) {
+		if (!warning_displayed) {
+			warning("reading single keystrokes not supported on "
+				"this platform; reading line instead");
+			warning_displayed = 1;
+		}
+
+		return strbuf_getline(buf, stdin);
+	}
+
+	strbuf_reset(buf);
+	ch = getchar();
+	if (ch == EOF) {
+		restore_term();
+		return EOF;
+	}
+
+	strbuf_addch(buf, ch);
+	restore_term();
+	return 0;
+}
+
 #else
 
 char *git_terminal_prompt(const char *prompt, int echo)
 {
 	return getpass(prompt);
+}
+
+int read_key_without_echo(struct strbuf *buf)
+{
+	static int warning_displayed;
+	const char *res;
+
+	if (!warning_displayed) {
+		warning("reading single keystrokes not supported on this "
+			"platform; reading line instead");
+		warning_displayed = 1;
+	}
+
+	res = getpass("");
+	strbuf_reset(buf);
+	if (!res)
+		return EOF;
+	strbuf_addstr(buf, res);
+	return 0;
 }
 
 #endif
