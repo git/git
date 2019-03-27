@@ -38,8 +38,8 @@ test_expect_success '"add" using - shorthand' '
 
 test_expect_success '"add" refuses to checkout locked branch' '
 	test_must_fail git worktree add zere master &&
-	! test -d zere &&
-	! test -d .git/worktrees/zere
+	! test_path_is_dir zere &&
+	! test_path_is_dir .git/worktrees/zere
 '
 
 test_expect_success 'checking out paths not complaining about linked checkouts' '
@@ -270,7 +270,7 @@ test_expect_success 'local clone --shared from linked checkout' '
 
 test_expect_success '"add" worktree with --no-checkout' '
 	git worktree add --no-checkout -b swamp swamp &&
-	! test -e swamp/init.t &&
+	! test_path_is_file swamp/init.t &&
 	git -C swamp reset --hard &&
 	test_cmp init.t swamp/init.t
 '
@@ -292,7 +292,7 @@ test_expect_success 'put a worktree under rebase' '
 
 test_expect_success 'add a worktree, checking out a rebased branch' '
 	test_must_fail git worktree add new-rebase under-rebase &&
-	! test -d new-rebase
+	! test_path_is_dir new-rebase
 '
 
 test_expect_success 'checking out a rebased branch from another worktree' '
@@ -329,7 +329,7 @@ test_expect_success 'checkout a branch under bisect' '
 		git bisect good HEAD~2 &&
 		git worktree list | grep "under-bisect.*detached HEAD" &&
 		test_must_fail git worktree add new-bisect under-bisect &&
-		! test -d new-bisect
+		! test_path_is_dir new-bisect
 	)
 '
 
