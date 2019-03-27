@@ -1295,6 +1295,11 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 	}
 }
 
+static int cmp_name_ref(const void *name, const void *ref)
+{
+	return strcmp(name, (*(struct ref **)ref)->name);
+}
+
 static void receive_wanted_refs(struct packet_reader *reader,
 				struct ref **sought, int nr_sought)
 {
@@ -1302,20 +1307,16 @@ static void receive_wanted_refs(struct packet_reader *reader,
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
 		struct object_id oid;
 		const char *end;
-		int i;
+		struct ref **found;
 
 		if (parse_oid_hex(reader->line, &oid, &end) || *end++ != ' ')
 			die(_("expected wanted-ref, got '%s'"), reader->line);
 
-		for (i = 0; i < nr_sought; i++) {
-			if (!strcmp(end, sought[i]->name)) {
-				oidcpy(&sought[i]->old_oid, &oid);
-				break;
-			}
-		}
-
-		if (i == nr_sought)
+		found = bsearch(end, sought, nr_sought, sizeof(*sought),
+				cmp_name_ref);
+		if (!found)
 			die(_("unexpected wanted-ref: '%s'"), reader->line);
+		oidcpy(&(*found)->old_oid, &oid);
 	}
 
 	if (reader->status != PACKET_READ_DELIM)
