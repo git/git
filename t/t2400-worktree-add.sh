@@ -66,7 +66,7 @@ test_expect_success '"add" worktree' '
 test_expect_success '"add" worktree with lock' '
 	git rev-parse HEAD >expect &&
 	git worktree add --detach --lock here-with-lock master &&
-	test -f .git/worktrees/here-with-lock/locked
+	test_path_is_file .git/worktrees/here-with-lock/locked
 '
 
 test_expect_success '"add" worktree from a subdir' '
