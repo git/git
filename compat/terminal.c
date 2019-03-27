@@ -4,6 +4,7 @@
 #include "strbuf.h"
 #include "run-command.h"
 #include "string-list.h"
+#include "argv-array.h"
 
 #if defined(HAVE_DEV_TTY) || defined(GIT_WINDOWS_NATIVE)
 
@@ -161,6 +162,37 @@ static int enable_non_canonical(void)
 	return disable_bits(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
 }
 
+/*
+ * Override `getchar()`, as the default implementation does not use
+ * `ReadFile()`.
+ *
+ * This poses a problem when we want to see whether the standard
+ * input has more characters, as the default of Git for Windows is to start the
+ * Bash in a MinTTY, which uses a named pipe to emulate a pty, in which case
+ * our `poll()` emulation calls `PeekNamedPipe()`, which seems to require
+ * `ReadFile()` to be called first to work properly (it only reports 0
+ * available bytes, otherwise).
+ *
+ * So let's just override `getchar()` with a version backed by `ReadFile()` and
+ * go our merry ways from here.
+ */
+static int mingw_getchar(void)
+{
+	DWORD read = 0;
+	unsigned char ch;
+
+	if (!ReadFile(GetStdHandle(STD_INPUT_HANDLE), &ch, 1, &read, NULL))
+		return EOF;
+
+	if (!read) {
+		error("Unexpected 0 read");
+		return EOF;
+	}
+
+	return ch;
+}
+#define getchar mingw_getchar
+
 #endif
 
 #ifndef FORCE_TEXT
@@ -228,8 +260,31 @@ int read_key_without_echo(struct strbuf *buf)
 		restore_term();
 		return EOF;
 	}
-
 	strbuf_addch(buf, ch);
+
+	if (ch == '\033' /* ESC */) {
+		/*
+		 * We are most likely looking at an Escape sequence. Let's try
+		 * to read more bytes, waiting at most half a second, assuming
+		 * that the sequence is complete if we did not receive any byte
+		 * within that time.
+		 *
+		 * Start by replacing the Escape byte with ^[ */
+		strbuf_splice(buf, buf->len - 1, 1, "^[", 2);
+
+		for (;;) {
+			struct pollfd pfd = { .fd = 0, .events = POLLIN };
+
+			if (poll(&pfd, 1, 500) < 1)
+				break;
+
+			ch = getchar();
+			if (ch == EOF)
+				return 0;
+			strbuf_addch(buf, ch);
+		}
+	}
+
 	restore_term();
 	return 0;
 }
