@@ -275,3 +275,22 @@ int repo_hold_locked_index(struct repository *repo,
 		BUG("the repo hasn't been setup");
 	return hold_lock_file_for_update(lf, repo->index_file, flags);
 }
+
+int repo_refresh_and_write_index(struct repository *r,
+				 unsigned int flags, int gentle)
+{
+	struct lock_file lock_file = LOCK_INIT;
+	int fd;
+
+	if (repo_read_index_preload(r, NULL, 0) < 0)
+		return error(_("could not read index"));
+	fd = repo_hold_locked_index(r, &lock_file, 0);
+	if (!gentle && fd < 0)
+		return error(_("could not lock index for writing"));
+	refresh_index(r->index, flags, NULL, NULL, NULL);
+	if (0 <= fd)
+		repo_update_index_if_able(r, &lock_file);
+	rollback_lock_file(&lock_file);
+
+	return 0;
+}
