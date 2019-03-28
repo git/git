@@ -850,6 +850,7 @@ LIB_H = $(shell $(FIND) . \
 
 LIB_OBJS += abspath.o
 LIB_OBJS += add-interactive.o
+LIB_OBJS += add-patch.o
 LIB_OBJS += advice.o
 LIB_OBJS += alias.o
 LIB_OBJS += alloc.o
