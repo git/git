@@ -6,6 +6,7 @@
 #include "pathspec.h"
 #include "color.h"
 #include "diff.h"
+#include "compat/terminal.h"
 
 enum prompt_mode_type {
 	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_HUNK
@@ -310,6 +311,7 @@ static int is_octal(const char *p, size_t len)
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 {
 	struct argv_array args = ARGV_ARRAY_INIT;
+	const char *diff_algorithm = s->s.interactive_diff_algorithm;
 	struct strbuf *plain = &s->plain, *colored = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *p, *pend, *colored_p = NULL, *colored_pend = NULL, marker = '\0';
@@ -319,6 +321,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	int res;
 
 	argv_array_pushv(&args, s->mode->diff);
+	if (diff_algorithm)
+		argv_array_pushf(&args, "--diff-algorithm=%s", diff_algorithm);
 	if (s->revision) {
 		struct object_id oid;
 		argv_array_push(&args,
@@ -348,6 +352,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 
 	if (want_color_fd(1, -1)) {
 		struct child_process colored_cp = CHILD_PROCESS_INIT;
+		const char *diff_filter = s->s.interactive_diff_filter;
 
 		setup_child_process(&colored_cp, s, NULL);
 		xsnprintf((char *)args.argv[color_arg_index], 8, "--color");
@@ -357,6 +362,24 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		argv_array_clear(&args);
 		if (res)
 			return error(_("could not parse colored diff"));
+
+		if (diff_filter) {
+			struct child_process filter_cp = CHILD_PROCESS_INIT;
+
+			setup_child_process(&filter_cp, s,
+					    diff_filter, NULL);
+			filter_cp.git_cmd = 0;
+			filter_cp.use_shell = 1;
+			strbuf_reset(&s->buf);
+			if (pipe_command(&filter_cp,
+					 colored->buf, colored->len,
+					 &s->buf, colored->len,
+					 NULL, 0) < 0)
+				return error(_("failed to run '%s'"),
+					     diff_filter);
+			strbuf_swap(colored, &s->buf);
+		}
+
 		strbuf_complete_line(colored);
 		colored_p = colored->buf;
 		colored_pend = colored_p + colored->len;
@@ -458,6 +481,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 						   colored_pend - colored_p);
 			if (colored_eol)
 				colored_p = colored_eol + 1;
+			else if (p != pend)
+				/* colored shorter than non-colored? */
+				goto mismatched_output;
 			else
 				colored_p = colored_pend;
 
@@ -478,6 +504,15 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		 * to the file, so there are no trailing context lines).
 		 */
 		hunk->splittable_into++;
+
+	/* non-colored shorter than colored? */
+	if (colored_p != colored_pend) {
+mismatched_output:
+		error(_("mismatched output from interactive.diffFilter"));
+		advise(_("Your filter must maintain a one-to-one correspondence\n"
+			 "between its input and output lines."));
+		return -1;
+	}
 
 	return 0;
 }
@@ -1013,14 +1048,27 @@ static int run_apply_check(struct add_p_state *s,
 	return 0;
 }
 
+static int read_single_character(struct add_p_state *s)
+{
+	if (s->s.use_single_key) {
+		int res = read_key_without_echo(&s->answer);
+		printf("%s\n", res == EOF ? "" : s->answer.buf);
+		return res;
+	}
+
+	if (strbuf_getline(&s->answer, stdin) == EOF)
+		return EOF;
+	strbuf_trim_trailing_newline(&s->answer);
+	return 0;
+}
+
 static int prompt_yesno(struct add_p_state *s, const char *prompt)
 {
 	for (;;) {
 		color_fprintf(stdout, s->s.prompt_color, "%s", _(prompt));
 		fflush(stdout);
-		if (strbuf_getline(&s->answer, stdin) == EOF)
+		if (read_single_character(s) == EOF)
 			return -1;
-		strbuf_trim_trailing_newline(&s->answer);
 		switch (tolower(s->answer.buf[0])) {
 		case 'n': return 0;
 		case 'y': return 1;
@@ -1256,9 +1304,8 @@ static int patch_update_file(struct add_p_state *s,
 			      _(s->mode->prompt_mode[prompt_mode_type]),
 			      s->buf.buf);
 		fflush(stdout);
-		if (strbuf_getline(&s->answer, stdin) == EOF)
+		if (read_single_character(s) == EOF)
 			break;
-		strbuf_trim_trailing_newline(&s->answer);
 
 		if (!s->answer.len)
 			continue;
