@@ -31,6 +31,15 @@ const char *get_add_i_color(enum color_add_i ix);
 struct repository;
 struct pathspec;
 int run_add_i(struct repository *r, const struct pathspec *ps);
-int run_add_p(struct repository *r, const struct pathspec *ps);
+
+enum add_p_mode {
+	ADD_P_STAGE,
+	ADD_P_STASH,
+	ADD_P_RESET,
+	ADD_P_CHECKOUT,
+};
+
+int run_add_p(struct repository *r, enum add_p_mode mode,
+	      const char *revision, const struct pathspec *ps);
 
 #endif
