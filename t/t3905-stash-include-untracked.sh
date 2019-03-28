@@ -283,4 +283,10 @@ test_expect_success 'stash -u -- <non-existant> shows no changes when there are 
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'stash -u with globs' '
+	>untracked.txt &&
+	git stash -u -- ":(glob)**/*.txt" &&
+	test_path_is_missing untracked.txt
+'
+
 test_done
