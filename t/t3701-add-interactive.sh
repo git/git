@@ -413,6 +413,36 @@ test_expect_success 'split hunk setup' '
 	test_write_lines 10 15 20 21 22 23 24 30 40 50 60 >test
 '
 
+test_expect_success 'goto hunk' '
+	test_when_finished "git reset" &&
+	tr _ " " >expect <<-EOF &&
+	(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,?]? + 1:  -1,2 +1,3          +15
+	_ 2:  -2,4 +3,8          +21
+	go to which hunk? @@ -1,2 +1,3 @@
+	_10
+	+15
+	_20
+	(1/2) Stage this hunk [y,n,q,a,d,j,J,g,/,e,?]?_
+	EOF
+	test_write_lines s y g 1 | git add -p >actual &&
+	tail -n 7 <actual >actual.trimmed &&
+	test_cmp expect actual.trimmed
+'
+
+test_expect_success 'navigate to hunk via regex' '
+	test_when_finished "git reset" &&
+	tr _ " " >expect <<-EOF &&
+	(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,?]? @@ -1,2 +1,3 @@
+	_10
+	+15
+	_20
+	(1/2) Stage this hunk [y,n,q,a,d,j,J,g,/,e,?]?_
+	EOF
+	test_write_lines s y /1,2 | git add -p >actual &&
+	tail -n 5 <actual >actual.trimmed &&
+	test_cmp expect actual.trimmed
+'
+
 test_expect_success 'split hunk "add -p (edit)"' '
 	# Split, say Edit and do nothing.  Then:
 	#
@@ -440,6 +470,18 @@ test_expect_failure 'split hunk "add -p (no, yes, edit)"' '
 	test_must_be_empty error &&
 	git diff >actual &&
 	! grep "^+31" actual
+'
+
+test_expect_success 'split hunk with incomplete line at end' '
+	git reset --hard &&
+	printf "missing LF" >>test &&
+	git add test &&
+	test_write_lines before 10 20 30 40 50 60 70 >test &&
+	git grep --cached missing &&
+	test_write_lines s n y q | git add -p &&
+	test_must_fail git grep --cached missing &&
+	git grep before &&
+	test_must_fail git grep --cached before
 '
 
 test_expect_failure 'edit, adding lines to the first hunk' '
