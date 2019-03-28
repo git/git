@@ -189,12 +189,17 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
 
-	if (!patch_mode) {
-		if (use_builtin_add_i < 0)
-			git_config_get_bool("add.interactive.usebuiltin",
-					    &use_builtin_add_i);
-		if (use_builtin_add_i == 1)
+	if (use_builtin_add_i < 0)
+		git_config_get_bool("add.interactive.usebuiltin",
+				    &use_builtin_add_i);
+
+	if (use_builtin_add_i == 1) {
+		if (!patch_mode)
 			return !!run_add_i(the_repository, pathspec);
+		if (strcmp(patch_mode, "--patch"))
+			die("'%s' not yet supported in the built-in add -p",
+			    patch_mode);
+		return !!run_add_p(the_repository, pathspec);
 	}
 
 	argv_array_push(&argv, "add--interactive");
