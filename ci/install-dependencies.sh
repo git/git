@@ -56,7 +56,7 @@ Documentation)
 	sudo apt-get -q -y install asciidoc xmlto
 
 	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
-	gem install asciidoctor
+	gem install --version 1.5.8 asciidoctor
 	;;
 esac
 
