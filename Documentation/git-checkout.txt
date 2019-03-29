@@ -31,21 +31,12 @@ branch.
 	`<branch>`.
 +
 If `<branch>` is not found but there does exist a tracking branch in
-exactly one remote (call it `<remote>`) with a matching name, treat as
-equivalent to
+exactly one remote (call it `<remote>`) with a matching name and
+`--no-guess` is not specified, treat as equivalent to
 +
 ------------
 $ git checkout -b <branch> --track <remote>/<branch>
 ------------
-+
-If the branch exists in multiple remotes and one of them is named by
-the `checkout.defaultRemote` configuration variable, we'll use that
-one for the purposes of disambiguation, even if the `<branch>` isn't
-unique across all remotes. Set it to
-e.g. `checkout.defaultRemote=origin` to always checkout remote
-branches from there if `<branch>` is ambiguous but exists on the
-'origin' remote. See also `checkout.defaultRemote` in
-linkgit:git-config[1].
 +
 You could omit `<branch>`, in which case the command degenerates to
 "check out the current branch", which is a glorified no-op with
@@ -183,6 +174,27 @@ explicitly give a name with `-b` in such a case.
 	Do not set up "upstream" configuration, even if the
 	`branch.autoSetupMerge` configuration variable is true.
 
+--guess::
+--no-guess::
+	If `<branch>` is not found but there does exist a tracking
+	branch in exactly one remote (call it `<remote>`) with a
+	matching name, treat as equivalent to
++
+------------
+$ git checkout -b <branch> --track <remote>/<branch>
+------------
++
+If the branch exists in multiple remotes and one of them is named by
+the `checkout.defaultRemote` configuration variable, we'll use that
+one for the purposes of disambiguation, even if the `<branch>` isn't
+unique across all remotes. Set it to
+e.g. `checkout.defaultRemote=origin` to always checkout remote
+branches from there if `<branch>` is ambiguous but exists on the
+'origin' remote. See also `checkout.defaultRemote` in
+linkgit:git-config[1].
++
+Use `--no-guess` to disable this.
+
 -l::
 	Create the new branch's reflog; see linkgit:git-branch[1] for
 	details.
@@ -286,10 +298,6 @@ Note that this option uses the no overlay mode by default (see also
 	is used, the work trees of submodules will not be updated.
 	Just like linkgit:git-submodule[1], this will detach `HEAD` of the
 	submodule.
-
---no-guess::
-	Do not attempt to create a branch if a remote tracking branch
-	of the same name exists.
 
 --overlay::
 --no-overlay::
