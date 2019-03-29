@@ -24,6 +24,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
+#include "wt-status.h"
 #include "xdiff-interface.h"
 
 static const char * const checkout_usage[] = {
@@ -56,6 +57,7 @@ struct checkout_opts {
 	int accept_pathspec;
 	int switch_branch_doing_nothing_is_ok;
 	int only_merge_on_switching_branches;
+	int can_switch_when_in_progress;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -1202,6 +1204,39 @@ static void die_expecting_a_branch(const struct branch_info *branch_info)
 	die(_("a branch is expected, got '%s'"), branch_info->name);
 }
 
+static void die_if_some_operation_in_progress(void)
+{
+	struct wt_status_state state;
+
+	memset(&state, 0, sizeof(state));
+	wt_status_get_state(the_repository, &state, 0);
+
+	if (state.merge_in_progress)
+		die(_("cannot switch branch while merging\n"
+		      "Consider \"git merge --quit\" "
+		      "or \"git worktree add\"."));
+	if (state.am_in_progress)
+		die(_("cannot switch branch in the middle of an am session\n"
+		      "Consider \"git am --quit\" "
+		      "or \"git worktree add\"."));
+	if (state.rebase_interactive_in_progress || state.rebase_in_progress)
+		die(_("cannot switch branch while rebasing\n"
+		      "Consider \"git rebase --quit\" "
+		      "or \"git worktree add\"."));
+	if (state.cherry_pick_in_progress)
+		die(_("cannot switch branch while cherry-picking\n"
+		      "Consider \"git cherry-pick --quit\" "
+		      "or \"git worktree add\"."));
+	if (state.revert_in_progress)
+		die(_("cannot switch branch while reverting\n"
+		      "Consider \"git revert --quit\" "
+		      "or \"git worktree add\"."));
+	if (state.bisect_in_progress)
+		die(_("cannot switch branch while bisecting\n"
+		      "Consider \"git bisect reset HEAD\" "
+		      "or \"git worktree add\"."));
+}
+
 static int checkout_branch(struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
@@ -1256,6 +1291,9 @@ static int checkout_branch(struct checkout_opts *opts,
 	    new_branch_info->name &&
 	    !new_branch_info->path)
 		die_expecting_a_branch(new_branch_info);
+
+	if (!opts->can_switch_when_in_progress)
+		die_if_some_operation_in_progress();
 
 	if (new_branch_info->path && !opts->force_detach && !opts->new_branch &&
 	    !opts->ignore_other_worktrees) {
@@ -1514,6 +1552,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	opts.only_merge_on_switching_branches = 0;
 	opts.accept_pathspec = 1;
 	opts.implicit_detach = 1;
+	opts.can_switch_when_in_progress = 1;
 
 	options = parse_options_dup(checkout_options);
 	options = add_common_options(&opts, options);
@@ -1549,6 +1588,7 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 	opts.switch_branch_doing_nothing_is_ok = 0;
 	opts.only_merge_on_switching_branches = 1;
 	opts.implicit_detach = 0;
+	opts.can_switch_when_in_progress = 0;
 
 	options = parse_options_dup(switch_options);
 	options = add_common_options(&opts, options);
