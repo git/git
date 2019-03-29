@@ -206,6 +206,12 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 
 	  git checkout -b <new-branch-name>
 
+	Or undo this checkout with:
+
+	  git checkout -
+
+	Turn off this advice by setting config variable advice.detachedHead to false
+
 	HEAD is now at \$commit three
 	EOF
 
@@ -281,6 +287,12 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 	do so (now or later) by using -b with the checkout command again. Example:
 
 	  git checkout -b <new-branch-name>
+
+	Or undo this checkout with:
+
+	  git checkout -
+
+	Turn off this advice by setting config variable advice.detachedHead to false
 
 	HEAD is now at \$commit... three
 	EOF
