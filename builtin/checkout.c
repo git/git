@@ -58,6 +58,7 @@ struct checkout_opts {
 	int switch_branch_doing_nothing_is_ok;
 	int only_merge_on_switching_branches;
 	int can_switch_when_in_progress;
+	int orphan_from_empty_tree;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -568,15 +569,21 @@ static int merge_working_tree(const struct checkout_opts *opts,
 {
 	int ret;
 	struct lock_file lock_file = LOCK_INIT;
+	struct tree *new_tree;
 
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 	if (read_cache_preload(NULL) < 0)
 		return error(_("index file corrupt"));
 
 	resolve_undo_clear();
+	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
+		if (new_branch_info->commit)
+			BUG("'switch --orphan' should never accept a commit as starting point");
+		new_tree = parse_tree_indirect(the_hash_algo->empty_tree);
+	} else
+		new_tree = get_commit_tree(new_branch_info->commit);
 	if (opts->discard_changes) {
-		ret = reset_tree(get_commit_tree(new_branch_info->commit),
-				 opts, 1, writeout_error);
+		ret = reset_tree(new_tree, opts, 1, writeout_error);
 		if (ret)
 			return ret;
 	} else {
@@ -614,7 +621,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 					   &old_branch_info->commit->object.oid :
 					   the_hash_algo->empty_tree);
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
-		tree = parse_tree_indirect(&new_branch_info->commit->object.oid);
+		parse_tree(new_tree);
+		tree = new_tree;
 		init_tree_desc(&trees[1], tree->buffer, tree->size);
 
 		ret = unpack_trees(2, trees, &topts);
@@ -663,7 +671,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			o.verbosity = 0;
 			work = write_tree_from_memory(&o);
 
-			ret = reset_tree(get_commit_tree(new_branch_info->commit),
+			ret = reset_tree(new_tree,
 					 opts, 1,
 					 writeout_error);
 			if (ret)
@@ -672,13 +680,13 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			o.branch1 = new_branch_info->name;
 			o.branch2 = "local";
 			ret = merge_trees(&o,
-					  get_commit_tree(new_branch_info->commit),
+					  new_tree,
 					  work,
 					  get_commit_tree(old_branch_info->commit),
 					  &result);
 			if (ret < 0)
 				exit(128);
-			ret = reset_tree(get_commit_tree(new_branch_info->commit),
+			ret = reset_tree(new_tree,
 					 opts, 0,
 					 writeout_error);
 			strbuf_release(&o.obuf);
@@ -696,7 +704,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
-	if (!opts->discard_changes && !opts->quiet)
+	if (!opts->discard_changes && !opts->quiet && new_branch_info->commit)
 		show_local_changes(&new_branch_info->commit->object, &opts->diff_options);
 
 	return 0;
@@ -897,7 +905,10 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 	add_pending_object(&revs, object, oid_to_hex(&object->oid));
 
 	for_each_ref(add_pending_uninteresting_ref, &revs);
-	add_pending_oid(&revs, "HEAD", &new_commit->object.oid, UNINTERESTING);
+	if (new_commit)
+		add_pending_oid(&revs, "HEAD",
+				&new_commit->object.oid,
+				UNINTERESTING);
 
 	if (prepare_revision_walk(&revs))
 		die(_("internal error in revision walk"));
@@ -931,6 +942,14 @@ static int switch_branches(const struct checkout_opts *opts,
 
 	if (old_branch_info.path)
 		skip_prefix(old_branch_info.path, "refs/heads/", &old_branch_info.name);
+
+	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
+		if (new_branch_info->name)
+			BUG("'switch --orphan' should never accept a commit as starting point");
+		new_branch_info->commit = NULL;
+		new_branch_info->name = "(empty)";
+		do_merge = 1;
+	}
 
 	if (!new_branch_info->name) {
 		new_branch_info->name = "HEAD";
@@ -1268,6 +1287,8 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (opts->new_orphan_branch) {
 		if (opts->track != BRANCH_TRACK_UNSPECIFIED)
 			die(_("'%s' cannot be used with '%s'"), "--orphan", "-t");
+		if (opts->orphan_from_empty_tree && new_branch_info->name)
+			die(_("'%s' cannot take <start-point>"), "--orphan");
 	} else if (opts->force_detach) {
 		if (opts->track != BRANCH_TRACK_UNSPECIFIED)
 			die(_("'%s' cannot be used with '%s'"), "--detach", "-t");
@@ -1553,6 +1574,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	opts.accept_pathspec = 1;
 	opts.implicit_detach = 1;
 	opts.can_switch_when_in_progress = 1;
+	opts.orphan_from_empty_tree = 0;
 
 	options = parse_options_dup(checkout_options);
 	options = add_common_options(&opts, options);
@@ -1589,6 +1611,7 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 	opts.only_merge_on_switching_branches = 1;
 	opts.implicit_detach = 0;
 	opts.can_switch_when_in_progress = 0;
+	opts.orphan_from_empty_tree = 1;
 
 	options = parse_options_dup(switch_options);
 	options = add_common_options(&opts, options);
