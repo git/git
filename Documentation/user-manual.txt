@@ -122,10 +122,10 @@ Tags are expected to always point at the same version of a project,
 while heads are expected to advance as development progresses.
 
 Create a new branch head pointing to one of these versions and check it
-out using linkgit:git-checkout[1]:
+out using linkgit:git-switch[1]:
 
 ------------------------------------------------
-$ git checkout -b new v2.6.13
+$ git switch -c new v2.6.13
 ------------------------------------------------
 
 The working directory then reflects the contents that the project had
@@ -282,10 +282,10 @@ a summary of the commands:
 	this command will fail with a warning.
 `git branch -D <branch>`::
 	delete the branch `<branch>` irrespective of its merged status.
-`git checkout <branch>`::
+`git switch <branch>`::
 	make the current branch `<branch>`, updating the working
 	directory to reflect the version referenced by `<branch>`.
-`git checkout -b <new> <start-point>`::
+`git switch -c <new> <start-point>`::
 	create a new branch `<new>` referencing `<start-point>`, and
 	check it out.
 
@@ -302,22 +302,22 @@ ref: refs/heads/master
 Examining an old version without creating a new branch
 ------------------------------------------------------
 
-The `git checkout` command normally expects a branch head, but will also
-accept an arbitrary commit; for example, you can check out the commit
-referenced by a tag:
+The `git switch` command normally expects a branch head, but will also
+accept an arbitrary commit when invoked with --detach; for example,
+you can check out the commit referenced by a tag:
 
 ------------------------------------------------
-$ git checkout v2.6.17
+$ git switch --detach v2.6.17
 Note: checking out 'v2.6.17'.
 
 You are in 'detached HEAD' state. You can look around, make experimental
 changes and commit them, and you can discard any commits you make in this
-state without impacting any branches by performing another checkout.
+state without impacting any branches by performing another switch.
 
 If you want to create a new branch to retain commits you create, you may
-do so (now or later) by using -b with the checkout command again. Example:
+do so (now or later) by using -c with the switch command again. Example:
 
-  git checkout -b new_branch_name
+  git switch -c new_branch_name
 
 HEAD is now at 427abfa Linux v2.6.17
 ------------------------------------------------
@@ -373,7 +373,7 @@ You might want to build on one of these remote-tracking branches
 on a branch of your own, just as you would for a tag:
 
 ------------------------------------------------
-$ git checkout -b my-todo-copy origin/todo
+$ git switch -c my-todo-copy origin/todo
 ------------------------------------------------
 
 You can also check out `origin/todo` directly to examine it or
@@ -2211,8 +2211,8 @@ $ git branch --track release origin/master
 These can be easily kept up to date using linkgit:git-pull[1].
 
 -------------------------------------------------
-$ git checkout test && git pull
-$ git checkout release && git pull
+$ git switch test && git pull
+$ git switch release && git pull
 -------------------------------------------------
 
 Important note!  If you have any local changes in these branches, then
@@ -2264,7 +2264,7 @@ tested changes
 2) help future bug hunters that use `git bisect` to find problems
 
 -------------------------------------------------
-$ git checkout -b speed-up-spinlocks v2.6.35
+$ git switch -c speed-up-spinlocks v2.6.35
 -------------------------------------------------
 
 Now you apply the patch(es), run some tests, and commit the change(s).  If
@@ -2279,7 +2279,7 @@ When you are happy with the state of this change, you can merge it into the
 "test" branch in preparation to make it public:
 
 -------------------------------------------------
-$ git checkout test && git merge speed-up-spinlocks
+$ git switch test && git merge speed-up-spinlocks
 -------------------------------------------------
 
 It is unlikely that you would have any conflicts here ... but you might if you
@@ -2291,7 +2291,7 @@ see the value of keeping each patch (or patch series) in its own branch.  It
 means that the patches can be moved into the `release` tree in any order.
 
 -------------------------------------------------
-$ git checkout release && git merge speed-up-spinlocks
+$ git switch release && git merge speed-up-spinlocks
 -------------------------------------------------
 
 After a while, you will have a number of branches, and despite the
@@ -2512,7 +2512,7 @@ Suppose that you create a branch `mywork` on a remote-tracking branch
 `origin`, and create some commits on top of it:
 
 -------------------------------------------------
-$ git checkout -b mywork origin
+$ git switch -c mywork origin
 $ vi file.txt
 $ git commit
 $ vi otherfile.txt
@@ -2552,7 +2552,7 @@ commits without any merges, you may instead choose to use
 linkgit:git-rebase[1]:
 
 -------------------------------------------------
-$ git checkout mywork
+$ git switch mywork
 $ git rebase origin
 -------------------------------------------------
 
@@ -3668,13 +3668,13 @@ change within the submodule, and then update the superproject to reference the
 new commit:
 
 -------------------------------------------------
-$ git checkout master
+$ git switch master
 -------------------------------------------------
 
 or
 
 -------------------------------------------------
-$ git checkout -b fix-up
+$ git switch -c fix-up
 -------------------------------------------------
 
 then
@@ -4194,7 +4194,7 @@ start.
 A good place to start is with the contents of the initial commit, with:
 
 ----------------------------------------------------
-$ git checkout e83c5163
+$ git switch --detach e83c5163
 ----------------------------------------------------
 
 The initial revision lays the foundation for almost everything Git has
@@ -4437,10 +4437,10 @@ Managing branches
 -----------------
 
 -----------------------------------------------
-$ git branch	     # list all local branches in this repo
-$ git checkout test  # switch working directory to branch "test"
-$ git branch new     # create branch "new" starting at current HEAD
-$ git branch -d new  # delete branch "new"
+$ git branch			# list all local branches in this repo
+$ git switch test	        # switch working directory to branch "test"
+$ git branch new		# create branch "new" starting at current HEAD
+$ git branch -d new		# delete branch "new"
 -----------------------------------------------
 
 Instead of basing a new branch on current HEAD (the default), use:
@@ -4456,7 +4456,7 @@ $ git branch new test~10 # ten commits before tip of branch "test"
 Create and switch to a new branch at the same time:
 
 -----------------------------------------------
-$ git checkout -b new v2.6.15
+$ git switch -c new v2.6.15
 -----------------------------------------------
 
 Update and examine branches from the repository you cloned from:
@@ -4467,7 +4467,7 @@ $ git branch -r		# list
   origin/master
   origin/next
   ...
-$ git checkout -b masterwork origin/master
+$ git switch -c masterwork origin/master
 -----------------------------------------------
 
 Fetch a branch from a different repository, and give it a new

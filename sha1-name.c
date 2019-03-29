@@ -743,7 +743,7 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 	"because it will be ignored when you just specify 40-hex. These refs\n"
 	"may be created by mistake. For example,\n"
 	"\n"
-	"  git checkout -b $br $(git rev-parse ...)\n"
+	"  git switch -c $br $(git rev-parse ...)\n"
 	"\n"
 	"where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 	"examine these refs and maybe delete them. Turn this message off by\n"

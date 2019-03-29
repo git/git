@@ -48,7 +48,7 @@ The command's second form creates a new branch head named <branchname>
 which points to the current `HEAD`, or <start-point> if given.
 
 Note that this will create the new branch, but it will not switch the
-working tree to it; use "git checkout <newbranch>" to switch to the
+working tree to it; use "git switch <newbranch>" to switch to the
 new branch.
 
 When a local branch is started off a remote-tracking branch, Git sets up the
@@ -198,7 +198,7 @@ This option is only applicable in non-verbose mode.
 +
 This behavior is the default when the start point is a remote-tracking branch.
 Set the branch.autoSetupMerge configuration variable to `false` if you
-want `git checkout` and `git branch` to always behave as if `--no-track`
+want `git switch`, `git checkout` and `git branch` to always behave as if `--no-track`
 were given. Set it to `always` if you want this behavior when the
 start-point is either a local or remote-tracking branch.
 
@@ -297,7 +297,7 @@ Start development from a known tag::
 $ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
 $ cd my2.6
 $ git branch my2.6.14 v2.6.14   <1>
-$ git checkout my2.6.14
+$ git switch my2.6.14
 ------------
 +
 <1> This step and the next one could be combined into a single step with
@@ -322,9 +322,9 @@ $ git branch -D test                                    <2>
 NOTES
 -----
 
-If you are creating a branch that you want to checkout immediately, it is
-easier to use the git checkout command with its `-b` option to create
-a branch and check it out with a single command.
+If you are creating a branch that you want to switch to immediately,
+it is easier to use the "git switch" command with its `-c` option to
+do the same thing with a single command.
 
 The options `--contains`, `--no-contains`, `--merged` and `--no-merged`
 serve four related but different purposes:

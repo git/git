@@ -235,12 +235,12 @@ return to your original branch to make the emergency fix, like this:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
-$ git checkout -b my_wip
+$ git switch -c my_wip
 $ git commit -a -m "WIP"
-$ git checkout master
+$ git switch master
 $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
-$ git checkout my_wip
+$ git switch my_wip
 $ git reset --soft HEAD^
 # ... continue hacking ...
 ----------------------------------------------------------------
@@ -293,7 +293,8 @@ SEE ALSO
 linkgit:git-checkout[1],
 linkgit:git-commit[1],
 linkgit:git-reflog[1],
-linkgit:git-reset[1]
+linkgit:git-reset[1],
+linkgit:git-switch[1]
 
 GIT
 ---

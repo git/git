@@ -149,9 +149,9 @@ See also the `--amend` option to linkgit:git-commit[1].
 Undo a commit, making it a topic branch::
 +
 ------------
-$ git branch topic/wip     <1>
-$ git reset --hard HEAD~3  <2>
-$ git checkout topic/wip   <3>
+$ git branch topic/wip          <1>
+$ git reset --hard HEAD~3       <2>
+$ git switch topic/wip          <3>
 ------------
 +
 <1> You have made some commits, but realize they were premature
@@ -232,13 +232,13 @@ working tree are not in any shape to be committed yet, but you
 need to get to the other branch for a quick bugfix.
 +
 ------------
-$ git checkout feature ;# you were working in "feature" branch and
-$ work work work       ;# got interrupted
+$ git switch feature  ;# you were working in "feature" branch and
+$ work work work      ;# got interrupted
 $ git commit -a -m "snapshot WIP"                 <1>
-$ git checkout master
+$ git switch master
 $ fix fix fix
 $ git commit ;# commit with real log
-$ git checkout feature
+$ git switch feature
 $ git reset --soft HEAD^ ;# go back to WIP state  <2>
 $ git reset                                       <3>
 ------------
@@ -279,18 +279,18 @@ reset it while keeping the changes in your working tree.
 +
 ------------
 $ git tag start
-$ git checkout -b branch1
+$ git switch -c branch1
 $ edit
 $ git commit ...                            <1>
 $ edit
-$ git checkout -b branch2                   <2>
+$ git switch -c branch2                     <2>
 $ git reset --keep start                    <3>
 ------------
 +
 <1> This commits your first edits in `branch1`.
 <2> In the ideal world, you could have realized that the earlier
     commit did not belong to the new topic when you created and switched
-    to `branch2` (i.e. `git checkout -b branch2 start`), but nobody is
+    to `branch2` (i.e. `git switch -c branch2 start`), but nobody is
     perfect.
 <3> But you can use `reset --keep` to remove the unwanted commit after
     you switched to `branch2`.

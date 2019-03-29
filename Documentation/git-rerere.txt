@@ -91,7 +91,7 @@ For such a test, you need to merge master and topic somehow.
 One way to do it is to pull master into the topic branch:
 
 ------------
-	$ git checkout topic
+	$ git switch topic
 	$ git merge master
 
               o---*---o---+ topic
@@ -113,10 +113,10 @@ the upstream might have been advanced since the test merge `+`,
 in which case the final commit graph would look like this:
 
 ------------
-	$ git checkout topic
+	$ git switch topic
 	$ git merge master
 	$ ... work on both topic and master branches
-	$ git checkout master
+	$ git switch master
 	$ git merge topic
 
               o---*---o---+---o---o topic
@@ -136,11 +136,11 @@ merges, you could blow away the test merge, and keep building on
 top of the tip before the test merge:
 
 ------------
-	$ git checkout topic
+	$ git switch topic
 	$ git merge master
 	$ git reset --hard HEAD^ ;# rewind the test merge
 	$ ... work on both topic and master branches
-	$ git checkout master
+	$ git switch master
 	$ git merge topic
 
               o---*---o-------o---o topic
