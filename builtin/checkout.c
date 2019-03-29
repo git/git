@@ -53,6 +53,7 @@ struct checkout_opts {
 	int count_checkout_paths;
 	int overlay_mode;
 	int no_dwim_new_local_branch;
+	int discard_changes;
 
 	/*
 	 * If new checkout options are added, skip_merge_working_tree
@@ -680,7 +681,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		return error(_("index file corrupt"));
 
 	resolve_undo_clear();
-	if (opts->force) {
+	if (opts->discard_changes) {
 		ret = reset_tree(get_commit_tree(new_branch_info->commit),
 				 opts, 1, writeout_error);
 		if (ret)
@@ -802,7 +803,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
-	if (!opts->force && !opts->quiet)
+	if (!opts->discard_changes && !opts->quiet)
 		show_local_changes(&new_branch_info->commit->object, &opts->diff_options);
 
 	return 0;
@@ -1309,6 +1310,9 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (opts->force && opts->merge)
 		die(_("'%s' cannot be used with '%s'"), "-f", "-m");
 
+	if (opts->discard_changes && opts->merge)
+		die(_("'%s' cannot be used with '%s'"), "--discard-changes", "--merge");
+
 	if (opts->force_detach && opts->new_branch)
 		die(_("'%s' cannot be used with '%s'"),
 		    "--detach", "-b/-B/--orphan");
@@ -1445,6 +1449,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		opts->merge = 1; /* implied */
 		git_xmerge_config("merge.conflictstyle", opts->conflict_style, NULL);
 	}
+	if (opts->force)
+		opts->discard_changes = 1;
 
 	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
 		die(_("-b, -B and --orphan are mutually exclusive"));
@@ -1600,6 +1606,8 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 			   N_("create and switch to a new branch")),
 		OPT_STRING('C', "force-create", &opts.new_branch_force, N_("branch"),
 			   N_("create/reset and switch to a branch")),
+		OPT_BOOL(0, "discard-changes", &opts.discard_changes,
+			 N_("throw away local modifications")),
 		OPT_END()
 	};
 	int ret;
