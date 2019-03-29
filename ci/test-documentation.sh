@@ -5,9 +5,6 @@
 
 . ${0%/*}/lib.sh
 
-test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
-gem install asciidoctor
-
 make check-builtins
 make check-docs
 
