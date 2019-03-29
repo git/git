@@ -47,6 +47,7 @@ struct replay_opts {
 
 	char *gpg_sign;
 	enum commit_msg_cleanup_mode default_msg_cleanup;
+	int explicit_cleanup;
 
 	/* Merge strategy */
 	char *strategy;
