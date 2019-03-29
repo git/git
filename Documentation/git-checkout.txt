@@ -271,6 +271,12 @@ Note that this option uses the no overlay mode by default (see also
 	out anyway. In other words, the ref can be held by more than one
 	worktree.
 
+--overwrite-ignore::
+--no-overwrite-ignore::
+	Silently overwrite ignored files when switching branches. This
+	is the default behavior. Use `--no-overwrite-ignore` to abort
+	the operation when the new branch contains ignored files.
+
 --recurse-submodules::
 --no-recurse-submodules::
 	Using --recurse-submodules will update the content of all initialized
