@@ -89,23 +89,26 @@ PATTERN FORMAT
    Put a backslash ("`\`") in front of the first "`!`" for patterns
    that begin with a literal "`!`", for example, "`\!important!.txt`".
 
- - If the pattern ends with a slash, it is removed for the
-   purpose of the following description, but it would only find
-   a match with a directory.  In other words, `foo/` will match a
-   directory `foo` and paths underneath it, but will not match a
+ - If the pattern ends with a slash, it would only find
+   a match with a directory. In other words, `foo/` will match a
+   directory `foo` anywhere, but will not match a
    regular file or a symbolic link `foo` (this is consistent
    with the way how pathspec works in general in Git).
 
- - If the pattern does not contain a slash '/', Git treats it as
-   a shell glob pattern and checks for a match against the
-   pathname relative to the location of the `.gitignore` file
-   (relative to the toplevel of the work tree if not from a
-   `.gitignore` file).
+ - If the pattern contains a slash '/' other then a trailing slash,
+   it is always considered from the root. In other words, `foo/bar`
+   will match `/foo/bar` but not `/bar/foo/bar`.
 
- - Otherwise, Git treats the pattern as a shell glob: "`*`" matches
-   anything except "`/`", "`?`" matches any one character except "`/`"
-   and "`[]`" matches one character in a selected range. See
-   fnmatch(3) and the FNM_PATHNAME flag for a more detailed
+ - If the pattern contains no slash '/' other then a trailing slash,
+   then the pattern will match in all directories. In other words,
+   `foo/` will match `/bar/foo/` and `foo` will match `/bar/foo`.
+
+ - The character "`*`" matches anything except "`/`".
+   For example, "foo/*.json" matches
+   "foo/test.json" but not "foo/bar/test.json".
+   The character "`?`" matches any one character except "`/`".
+   The character "`[]`" matches one character in a selected range.
+   See fnmatch(3) and the FNM_PATHNAME flag for a more detailed
    description.
 
  - A leading slash matches the beginning of the pathname.
