@@ -393,9 +393,11 @@ test_expect_success 'replace ref cleanup' '
 '
 
 test_expect_success '--graft with and without already replaced object' '
-	test $(git log --oneline | wc -l) = 7 &&
+	git log --oneline >log &&
+	test_line_count = 7 log &&
 	git replace --graft $HASH5 &&
-	test $(git log --oneline | wc -l) = 3 &&
+	git log --oneline >log &&
+	test_line_count = 3 log &&
 	commit_has_parents $HASH5 &&
 	test_must_fail git replace --graft $HASH5 $HASH4 $HASH3 &&
 	git replace --force -g $HASH5 $HASH4 $HASH3 &&
