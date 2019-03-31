@@ -477,15 +477,18 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 
 	strbuf_release(&buf);
 
-	if (oideq(&old_oid, &new_oid)) {
+	if (oideq(&commit->object.oid, &new_oid)) {
 		if (gentle) {
-			warning(_("graft for '%s' unnecessary"), oid_to_hex(&old_oid));
+			warning(_("graft for '%s' unnecessary"),
+				oid_to_hex(&commit->object.oid));
 			return 0;
 		}
-		return error(_("new commit is the same as the old one: '%s'"), oid_to_hex(&old_oid));
+		return error(_("new commit is the same as the old one: '%s'"),
+			     oid_to_hex(&commit->object.oid));
 	}
 
-	return replace_object_oid(old_ref, &old_oid, "replacement", &new_oid, force);
+	return replace_object_oid(old_ref, &commit->object.oid,
+				  "replacement", &new_oid, force);
 }
 
 static int convert_graft_file(int force)
