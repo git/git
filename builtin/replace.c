@@ -366,16 +366,19 @@ static int replace_parents(struct strbuf *buf, int argc, const char **argv)
 	/* prepare new parents */
 	for (i = 0; i < argc; i++) {
 		struct object_id oid;
+		struct commit *commit;
+
 		if (get_oid(argv[i], &oid) < 0) {
 			strbuf_release(&new_parents);
 			return error(_("not a valid object name: '%s'"),
 				     argv[i]);
 		}
-		if (!lookup_commit_reference(the_repository, &oid)) {
+		commit = lookup_commit_reference(the_repository, &oid);
+		if (!commit) {
 			strbuf_release(&new_parents);
-			return error(_("could not parse %s"), argv[i]);
+			return error(_("could not parse %s as a commit"), argv[i]);
 		}
-		strbuf_addf(&new_parents, "parent %s\n", oid_to_hex(&oid));
+		strbuf_addf(&new_parents, "parent %s\n", oid_to_hex(&commit->object.oid));
 	}
 
 	/* replace existing parents with new ones */
