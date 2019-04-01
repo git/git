@@ -610,6 +610,98 @@ test_expect_success 'Update a file in git side and submit to P4 using client vie
 	)
 '
 
+test_expect_success 'restart p4d (case folding enabled)' '
+	kill_p4d &&
+	start_p4d -C1
+'
+
+#
+# 1: //depot/main/mf1
+# 2: integrate //depot/main/... -> //depot/branch1/...
+# 3: //depot/main/mf2
+# 4: //depot/BRANCH1/B1f3
+# 5: //depot/branch1/b1f4
+#
+test_expect_success !CASE_INSENSITIVE_FS 'basic p4 branches for case folding' '
+	(
+		cd "$cli" &&
+		mkdir -p main &&
+
+		echo mf1 >main/mf1 &&
+		p4 add main/mf1 &&
+		p4 submit -d "main/mf1" &&
+
+		p4 integrate //depot/main/... //depot/branch1/... &&
+		p4 submit -d "integrate main to branch1" &&
+
+		echo mf2 >main/mf2 &&
+		p4 add main/mf2 &&
+		p4 submit -d "main/mf2" &&
+
+		mkdir BRANCH1 &&
+		echo B1f3 >BRANCH1/B1f3 &&
+		p4 add BRANCH1/B1f3 &&
+		p4 submit -d "BRANCH1/B1f3" &&
+
+		echo b1f4 >branch1/b1f4 &&
+		p4 add branch1/b1f4 &&
+		p4 submit -d "branch1/b1f4"
+	)
+'
+
+# Check that files are properly split across branches when ignorecase is set
+test_expect_failure !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch definition, ignorecase' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList main:branch1 &&
+		git config --type=bool core.ignoreCase true &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
+
+		git log --all --graph --decorate --stat &&
+
+		git reset --hard p4/master &&
+		test_path_is_file mf1 &&
+		test_path_is_file mf2 &&
+		test_path_is_missing B1f3 &&
+		test_path_is_missing b1f4 &&
+
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file mf1 &&
+		test_path_is_missing mf2 &&
+		test_path_is_file B1f3 &&
+		test_path_is_file b1f4
+	)
+'
+
+# Check that files are properly split across branches when ignorecase is set, use-client-spec case
+test_expect_failure !CASE_INSENSITIVE_FS 'git p4 clone with client-spec, branchList branch definition, ignorecase' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList main:branch1 &&
+		git config --type=bool core.ignoreCase true &&
+		git p4 clone --dest=. --use-client-spec --detect-branches //depot@all &&
+
+		git log --all --graph --decorate --stat &&
+
+		git reset --hard p4/master &&
+		test_path_is_file mf1 &&
+		test_path_is_file mf2 &&
+		test_path_is_missing B1f3 &&
+		test_path_is_missing b1f4 &&
+
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file mf1 &&
+		test_path_is_missing mf2 &&
+		test_path_is_file B1f3 &&
+		test_path_is_file b1f4
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
