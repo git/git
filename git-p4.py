@@ -3325,7 +3325,9 @@ class P4Sync(Command, P4UserMap):
             if currentChange < change:
                 earliestCommit = "^%s" % next
             else:
-                latestCommit = "%s" % next
+                if next == latestCommit:
+                    die("Infinite loop while looking in ref %s for change %s. Check your branch mappings" % (ref, change))
+                latestCommit = "%s^@" % next
 
         return ""
 
