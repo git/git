@@ -411,6 +411,46 @@ test_expect_failure 'git p4 clone file subset branch' '
 	)
 '
 
+# Check that excluded files are omitted during import
+test_expect_failure 'git p4 clone complex branches with excluded files' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList branch1:branch2 &&
+		git config --add git-p4.branchList branch1:branch3 &&
+		git config --add git-p4.branchList branch1:branch4 &&
+		git config --add git-p4.branchList branch1:branch5 &&
+		git config --add git-p4.branchList branch1:branch6 &&
+		git p4 clone --dest=. --detect-branches -//depot/branch1/file2 -//depot/branch2/file2 -//depot/branch3/file2 -//depot/branch4/file2 -//depot/branch5/file2 -//depot/branch6/file2 //depot@all &&
+		git log --all --graph --decorate --stat &&
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch2 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3 &&
+		git reset --hard p4/depot/branch3 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3 &&
+		git reset --hard p4/depot/branch4 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch5 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch6 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3
+	)
+'
+
 # From a report in http://stackoverflow.com/questions/11893688
 # where --use-client-spec caused branch prefixes not to be removed;
 # every file in git appeared into a subdirectory of the branch name.
