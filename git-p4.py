@@ -1316,7 +1316,7 @@ class Command:
         self.needsGit = True
         self.verbose = False
 
-    # This is required for the "append" cloneExclude action
+    # This is required for the "append" update_shelve action
     def ensure_value(self, attr, value):
         if not hasattr(self, attr) or getattr(self, attr) is None:
             setattr(self, attr, value)
@@ -2530,6 +2530,11 @@ class View(object):
         die( "Error: %s is not found in client spec path" % depot_path )
         return ""
 
+def cloneExcludeCallback(option, opt_str, value, parser):
+    # prepend "/" because the first "/" was consumed as part of the option itself.
+    # ("-//depot/A/..." becomes "/depot/A/..." after option parsing)
+    parser.values.cloneExclude += ["/" + re.sub(r"\.\.\.$", "", value)]
+
 class P4Sync(Command, P4UserMap):
 
     def __init__(self):
@@ -2553,7 +2558,7 @@ class P4Sync(Command, P4UserMap):
                 optparse.make_option("--use-client-spec", dest="useClientSpec", action='store_true',
                                      help="Only sync files that are included in the Perforce Client Spec"),
                 optparse.make_option("-/", dest="cloneExclude",
-                                     action="append", type="string",
+                                     action="callback", callback=cloneExcludeCallback, type="string",
                                      help="exclude depot path"),
         ]
         self.description = """Imports from Perforce into a git repository.\n
@@ -2619,8 +2624,6 @@ class P4Sync(Command, P4UserMap):
             print("checkpoint finished: " + out)
 
     def extractFilesFromCommit(self, commit, shelved=False, shelved_cl = 0):
-        self.cloneExclude = [re.sub(r"\.\.\.$", "", path)
-                             for path in self.cloneExclude]
         files = []
         fnum = 0
         while "depotFile%s" % fnum in commit:
@@ -3890,7 +3893,6 @@ class P4Clone(P4Sync):
             self.cloneDestination = depotPaths[-1]
             depotPaths = depotPaths[:-1]
 
-        self.cloneExclude = ["/"+p for p in self.cloneExclude]
         for p in depotPaths:
             if not p.startswith("//"):
                 sys.stderr.write('Depot paths must start with "//": %s\n' % p)
