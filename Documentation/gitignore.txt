@@ -103,9 +103,9 @@ PATTERN FORMAT
    then the pattern will match in all directories. In other words,
    `foo/` will match `/bar/foo/` and `foo` will match `/bar/foo`.
 
- - The character "`*`" matches anything except "`/`".
-   For example, "foo/*.json" matches
-   "foo/test.json" but not "foo/bar/test.json".
+ - The character "`*`" matches anything except a non trailing slash "`/`".
+   For example, "foo/*" matches
+   "foo/test.json" and "foo/bar/" but not "foo/bar/test.json".
    The character "`?`" matches any one character except "`/`".
    The character "`[]`" matches one character in a selected range.
    See fnmatch(3) and the FNM_PATHNAME flag for a more detailed
