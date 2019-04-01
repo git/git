@@ -412,7 +412,7 @@ test_expect_failure 'git p4 clone file subset branch' '
 '
 
 # Check that excluded files are omitted during import
-test_expect_failure 'git p4 clone complex branches with excluded files' '
+test_expect_success 'git p4 clone complex branches with excluded files' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
 	(

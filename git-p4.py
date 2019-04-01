@@ -2710,8 +2710,7 @@ class P4Sync(Command, P4UserMap):
         fnum = 0
         while "depotFile%s" % fnum in commit:
             path =  commit["depotFile%s" % fnum]
-            found = [p for p in self.depotPaths
-                     if p4PathStartsWith(path, p)]
+            found = self.isPathWanted(path)
             if not found:
                 fnum = fnum + 1
                 continue
