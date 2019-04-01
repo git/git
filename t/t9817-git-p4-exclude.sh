@@ -53,7 +53,7 @@ test_expect_success 'clone, excluding part of repo' '
 	)
 '
 
-test_expect_failure 'clone, excluding single file, no trailing /' '
+test_expect_success 'clone, excluding single file, no trailing /' '
 	test_when_finished cleanup_git &&
 	git p4 clone -//depot/discard_file --dest="$git" //depot/...@all &&
 	(
@@ -85,7 +85,7 @@ test_expect_success 'clone, then sync with exclude' '
 	)
 '
 
-test_expect_failure 'clone, then sync with exclude, no trailing /' '
+test_expect_success 'clone, then sync with exclude, no trailing /' '
 	test_when_finished cleanup_git &&
 	git p4 clone -//depot/discard/... -//depot/discard_file --dest="$git" //depot/...@all &&
 	(

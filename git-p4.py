@@ -2623,18 +2623,25 @@ class P4Sync(Command, P4UserMap):
         if self.verbose:
             print("checkpoint finished: " + out)
 
+    def isPathWanted(self, path):
+        for p in self.cloneExclude:
+            if p.endswith("/"):
+                if p4PathStartsWith(path, p):
+                    return False
+            # "-//depot/file1" without a trailing "/" should only exclude "file1", but not "file111" or "file1_dir/file2"
+            elif path.lower() == p.lower():
+                return False
+        for p in self.depotPaths:
+            if p4PathStartsWith(path, p):
+                return True
+        return False
+
     def extractFilesFromCommit(self, commit, shelved=False, shelved_cl = 0):
         files = []
         fnum = 0
         while "depotFile%s" % fnum in commit:
             path =  commit["depotFile%s" % fnum]
-
-            if [p for p in self.cloneExclude
-                if p4PathStartsWith(path, p)]:
-                found = False
-            else:
-                found = [p for p in self.depotPaths
-                         if p4PathStartsWith(path, p)]
+            found = self.isPathWanted(path)
             if not found:
                 fnum = fnum + 1
                 continue
