@@ -650,7 +650,7 @@ test_expect_success !CASE_INSENSITIVE_FS 'basic p4 branches for case folding' '
 '
 
 # Check that files are properly split across branches when ignorecase is set
-test_expect_failure !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch definition, ignorecase' '
+test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch definition, ignorecase' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
 	(
@@ -676,7 +676,7 @@ test_expect_failure !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch defini
 '
 
 # Check that files are properly split across branches when ignorecase is set, use-client-spec case
-test_expect_failure !CASE_INSENSITIVE_FS 'git p4 clone with client-spec, branchList branch definition, ignorecase' '
+test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone with client-spec, branchList branch definition, ignorecase' '
 	client_view "//depot/... //client/..." &&
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&

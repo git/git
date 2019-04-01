@@ -2668,7 +2668,7 @@ class P4Sync(Command, P4UserMap):
             path = self.clientSpecDirs.map_in_client(path)
             if self.detectBranches:
                 for b in self.knownBranches:
-                    if path.startswith(b + "/"):
+                    if p4PathStartsWith(path, b + "/"):
                         path = path[len(b)+1:]
 
         elif self.keepRepoPath:
@@ -2723,7 +2723,7 @@ class P4Sync(Command, P4UserMap):
             for branch in self.knownBranches.keys():
                 # add a trailing slash so that a commit into qt/4.2foo
                 # doesn't end up in qt/4.2, e.g.
-                if relPath.startswith(branch + "/"):
+                if p4PathStartsWith(relPath, branch + "/"):
                     if branch not in branches:
                         branches[branch] = []
                     branches[branch].append(file)
