@@ -1561,7 +1561,8 @@ finish:
 	}
 	for (i = 0; i < num_sg; i++) {
 		if (sg_origin[i]) {
-			drop_origin_blob(sg_origin[i]);
+			if (!sg_origin[i]->suspects)
+				drop_origin_blob(sg_origin[i]);
 			blame_origin_decref(sg_origin[i]);
 		}
 	}
