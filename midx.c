@@ -70,7 +70,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	midx_map = xmmap(NULL, midx_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
-	FLEX_ALLOC_MEM(m, object_dir, object_dir, strlen(object_dir));
+	FLEX_ALLOC_STR(m, object_dir, object_dir);
 	m->fd = fd;
 	m->data = midx_map;
 	m->data_len = midx_size;
