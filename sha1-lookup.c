@@ -97,7 +97,7 @@ int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
 			lo = mi + 1;
 		mi = lo + (hi - lo) / 2;
 	} while (lo < hi);
-	return -lo-1;
+	return -1 - lo;
 }
 
 int bsearch_hash(const unsigned char *sha1, const uint32_t *fanout_nbo,
