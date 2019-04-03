@@ -550,7 +550,7 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 typedef struct _OBJECT_NAME_INFORMATION
 {
 	UNICODE_STRING Name;
-	WCHAR NameBuffer[0];
+	WCHAR NameBuffer[FLEX_ARRAY];
 } OBJECT_NAME_INFORMATION, *POBJECT_NAME_INFORMATION;
 
 #define ObjectNameInformation 1
