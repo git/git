@@ -163,7 +163,9 @@ sub run_cmd_pipe {
 	} else {
 		my $fh = undef;
 		open($fh, '-|', @_) or die;
-		return <$fh>;
+		my @out = <$fh>;
+		close $fh || die "Cannot close @_ ($!)";
+		return @out;
 	}
 }
 
@@ -210,7 +212,7 @@ my $status_head = sprintf($status_fmt, __('staged'), __('unstaged'), __('path'))
 	sub get_empty_tree {
 		return $empty_tree if defined $empty_tree;
 
-		$empty_tree = run_cmd_pipe(qw(git hash-object -t tree /dev/null));
+		($empty_tree) = run_cmd_pipe(qw(git hash-object -t tree /dev/null));
 		chomp $empty_tree;
 		return $empty_tree;
 	}
@@ -1103,7 +1105,7 @@ aborted and the hunk is left unchanged.
 EOF2
 	close $fh;
 
-	chomp(my $editor = run_cmd_pipe(qw(git var GIT_EDITOR)));
+	chomp(my ($editor) = run_cmd_pipe(qw(git var GIT_EDITOR)));
 	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
 
 	if ($? != 0) {
