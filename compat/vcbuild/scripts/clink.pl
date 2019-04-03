@@ -55,7 +55,7 @@ while (@ARGV) {
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
 		$arg =~ s/^-L/-LIBPATH:/;
 		push(@lflags, $arg);
-	} elsif ("$arg" =~ /^-R/) {
+	} elsif ("$arg" =~ /^-[Rl]/) {
 		# eat
 	} else {
 		push(@args, $arg);
