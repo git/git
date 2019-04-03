@@ -1,6 +1,5 @@
-resources:
-- repo: self
-  fetchDepth: 1
+variables:
+  Agent.Source.Git.ShallowFetchDepth: 1
 
 jobs:
 - job: windows_build
