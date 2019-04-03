@@ -130,7 +130,7 @@ static int exit_process(HANDLE process, int exit_code)
 			HINSTANCE kernel32 = GetModuleHandleA("kernel32");
 			if (!kernel32)
 				die("BUG: cannot find kernel32");
-			exit_process_address = (LPTHREAD_START_ROUTINE)
+			exit_process_address = (LPTHREAD_START_ROUTINE)(void *)
 				GetProcAddress(kernel32, "ExitProcess");
 			initialized = 1;
 		}
