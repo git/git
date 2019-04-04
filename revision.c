@@ -911,26 +911,11 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		commit->object.flags |= TREESAME;
 }
 
-static void commit_list_insert_by_date_cached(struct commit *p, struct commit_list **head,
-		    struct commit_list *cached_base, struct commit_list **cache)
-{
-	struct commit_list *new_entry;
-
-	if (cached_base && p->date < cached_base->item->date)
-		new_entry = commit_list_insert_by_date(p, &cached_base->next);
-	else
-		new_entry = commit_list_insert_by_date(p, head);
-
-	if (cache && (!*cache || p->date < (*cache)->item->date))
-		*cache = new_entry;
-}
-
 static int process_parents(struct rev_info *revs, struct commit *commit,
-			   struct commit_list **list, struct commit_list **cache_ptr)
+			   struct commit_list **list, struct prio_queue *queue)
 {
 	struct commit_list *parent = commit->parents;
 	unsigned left_flag;
-	struct commit_list *cached_base = cache_ptr ? *cache_ptr : NULL;
 
 	if (commit->object.flags & ADDED)
 		return 0;
@@ -966,7 +951,9 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 				continue;
 			p->object.flags |= SEEN;
 			if (list)
-				commit_list_insert_by_date_cached(p, list, cached_base, cache_ptr);
+				commit_list_insert_by_date(p, list);
+			if (queue)
+				prio_queue_put(queue, p);
 		}
 		return 0;
 	}
@@ -1006,7 +993,9 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= SEEN;
 			if (list)
-				commit_list_insert_by_date_cached(p, list, cached_base, cache_ptr);
+				commit_list_insert_by_date(p, list);
+			if (queue)
+				prio_queue_put(queue, p);
 		}
 		if (revs->first_parent_only)
 			break;
@@ -3335,14 +3324,14 @@ int prepare_revision_walk(struct rev_info *revs)
 	return 0;
 }
 
-static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp)
+static enum rewrite_result rewrite_one_1(struct rev_info *revs,
+					 struct commit **pp,
+					 struct prio_queue *queue)
 {
-	struct commit_list *cache = NULL;
-
 	for (;;) {
 		struct commit *p = *pp;
 		if (!revs->limited)
-			if (process_parents(revs, p, &revs->commits, &cache) < 0)
+			if (process_parents(revs, p, NULL, queue) < 0)
 				return rewrite_one_error;
 		if (p->object.flags & UNINTERESTING)
 			return rewrite_one_ok;
@@ -3354,6 +3343,31 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 			return rewrite_one_ok;
 		*pp = p;
 	}
+}
+
+static void merge_queue_into_list(struct prio_queue *q, struct commit_list **list)
+{
+	while (q->nr) {
+		struct commit *item = prio_queue_peek(q);
+		struct commit_list *p = *list;
+
+		if (p && p->item->date >= item->date)
+			list = &p->next;
+		else {
+			p = commit_list_insert(item, list);
+			list = &p->next; /* skip newly added item */
+			prio_queue_get(q); /* pop item */
+		}
+	}
+}
+
+static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp)
+{
+	struct prio_queue queue = { compare_commits_by_commit_date };
+	enum rewrite_result ret = rewrite_one_1(revs, pp, &queue);
+	merge_queue_into_list(&queue, &revs->commits);
+	clear_prio_queue(&queue);
+	return ret;
 }
 
 int rewrite_parents(struct rev_info *revs, struct commit *commit,
