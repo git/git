@@ -22,10 +22,11 @@
 #include "ref-filter.h"
 
 static const char * const git_tag_usage[] = {
-	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] <tagname> [<head>]"),
+	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
+		"\t\t<tagname> [<head>]"),
 	N_("git tag -d <tagname>..."),
-	N_("git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <object>]"
-		"\n\t\t[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]"),
+	N_("git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <object>]\n"
+		"\t\t[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]"),
 	N_("git tag -v [--format=<format>] <tagname>..."),
 	NULL
 };
@@ -215,7 +216,7 @@ static void create_tag(const struct object_id *object, const char *tag,
 
 	type = oid_object_info(the_repository, object, NULL);
 	if (type <= OBJ_NONE)
-	    die(_("bad object type."));
+		die(_("bad object type."));
 
 	strbuf_addf(&header,
 		    "object %s\n"
