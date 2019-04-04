@@ -32,7 +32,7 @@ static void restore_term(void)
 	term_fd = -1;
 }
 
-static int disable_echo(void)
+static int disable_bits(tcflag_t bits)
 {
 	struct termios t;
 
@@ -43,7 +43,7 @@ static int disable_echo(void)
 	old_term = t;
 	sigchain_push_common(restore_term_on_signal);
 
-	t.c_lflag &= ~ECHO;
+	t.c_lflag &= ~bits;
 	if (!tcsetattr(term_fd, TCSAFLUSH, &t))
 		return 0;
 
@@ -51,6 +51,11 @@ error:
 	close(term_fd);
 	term_fd = -1;
 	return -1;
+}
+
+static int disable_echo(void)
+{
+	return disable_bits(ECHO);
 }
 
 #elif defined(GIT_WINDOWS_NATIVE)
@@ -72,7 +77,7 @@ static void restore_term(void)
 	hconin = INVALID_HANDLE_VALUE;
 }
 
-static int disable_echo(void)
+static int disable_bits(DWORD bits)
 {
 	hconin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
 	    FILE_SHARE_READ, NULL, OPEN_EXISTING,
@@ -82,7 +87,7 @@ static int disable_echo(void)
 
 	GetConsoleMode(hconin, &cmode);
 	sigchain_push_common(restore_term_on_signal);
-	if (!SetConsoleMode(hconin, cmode & (~ENABLE_ECHO_INPUT))) {
+	if (!SetConsoleMode(hconin, cmode & ~bits)) {
 		CloseHandle(hconin);
 		hconin = INVALID_HANDLE_VALUE;
 		return -1;
@@ -90,6 +95,12 @@ static int disable_echo(void)
 
 	return 0;
 }
+
+static int disable_echo(void)
+{
+	return disable_bits(ENABLE_ECHO_INPUT);
+}
+
 
 #endif
 
