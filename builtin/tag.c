@@ -206,7 +206,14 @@ struct create_tag_options {
 	} cleanup_mode;
 };
 
-static void create_tag(const struct object_id *object, const char *tag,
+static const char message_advice_nested_tag[] =
+	N_("You have created a nested tag. The object referred to by your new is\n"
+	   "already a tag. If you meant to tag the object that it points to, use:\n"
+	   "\n"
+	   "\tgit tag -f %s %s^{}");
+
+static void create_tag(const struct object_id *object, const char *object_ref,
+		       const char *tag,
 		       struct strbuf *buf, struct create_tag_options *opt,
 		       struct object_id *prev, struct object_id *result)
 {
@@ -217,6 +224,9 @@ static void create_tag(const struct object_id *object, const char *tag,
 	type = oid_object_info(the_repository, object, NULL);
 	if (type <= OBJ_NONE)
 		die(_("bad object type."));
+
+	if (type == OBJ_TAG && advice_nested_tag)
+		advise(_(message_advice_nested_tag), tag, object_ref);
 
 	strbuf_addf(&header,
 		    "object %s\n"
@@ -551,7 +561,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (create_tag_object) {
 		if (force_sign_annotate && !annotate)
 			opt.sign = 1;
-		create_tag(&object, tag, &buf, &opt, &prev, &object);
+		create_tag(&object, object_ref, tag, &buf, &opt, &prev, &object);
 	}
 
 	transaction = ref_transaction_begin(&err);
