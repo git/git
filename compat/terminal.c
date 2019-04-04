@@ -2,6 +2,8 @@
 #include "compat/terminal.h"
 #include "sigchain.h"
 #include "strbuf.h"
+#include "run-command.h"
+#include "string-list.h"
 
 #if defined(HAVE_DEV_TTY) || defined(GIT_WINDOWS_NATIVE)
 
@@ -64,11 +66,28 @@ static int disable_echo(void)
 #define OUTPUT_PATH "CONOUT$"
 #define FORCE_TEXT "t"
 
+static int use_stty = 1;
+static struct string_list stty_restore = STRING_LIST_INIT_DUP;
 static HANDLE hconin = INVALID_HANDLE_VALUE;
 static DWORD cmode;
 
 static void restore_term(void)
 {
+	if (use_stty) {
+		int i;
+		struct child_process cp = CHILD_PROCESS_INIT;
+
+		if (stty_restore.nr == 0)
+			return;
+
+		argv_array_push(&cp.args, "stty");
+		for (i = 0; i < stty_restore.nr; i++)
+			argv_array_push(&cp.args, stty_restore.items[i].string);
+		run_command(&cp);
+		string_list_clear(&stty_restore, 0);
+		return;
+	}
+
 	if (hconin == INVALID_HANDLE_VALUE)
 		return;
 
@@ -79,6 +98,37 @@ static void restore_term(void)
 
 static int disable_bits(DWORD bits)
 {
+	if (use_stty) {
+		struct child_process cp = CHILD_PROCESS_INIT;
+
+		argv_array_push(&cp.args, "stty");
+
+		if (bits & ENABLE_LINE_INPUT) {
+			string_list_append(&stty_restore, "icanon");
+			argv_array_push(&cp.args, "-icanon");
+		}
+
+		if (bits & ENABLE_ECHO_INPUT) {
+			string_list_append(&stty_restore, "echo");
+			argv_array_push(&cp.args, "-echo");
+		}
+
+		if (bits & ENABLE_PROCESSED_INPUT) {
+			string_list_append(&stty_restore, "-ignbrk");
+			string_list_append(&stty_restore, "intr");
+			string_list_append(&stty_restore, "^c");
+			argv_array_push(&cp.args, "ignbrk");
+			argv_array_push(&cp.args, "intr");
+			argv_array_push(&cp.args, "");
+		}
+
+		if (run_command(&cp) == 0)
+			return 0;
+
+		/* `stty` could not be executed; access the Console directly */
+		use_stty = 0;
+	}
+
 	hconin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
 	    FILE_SHARE_READ, NULL, OPEN_EXISTING,
 	    FILE_ATTRIBUTE_NORMAL, NULL);
