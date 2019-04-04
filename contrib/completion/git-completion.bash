@@ -1501,7 +1501,8 @@ _git_diff ()
 }
 
 __git_mergetools_common="diffuse diffmerge ecmerge emerge kdiff3 meld opendiff
-			tkdiff vimdiff gvimdiff xxdiff araxis p4merge bc codecompare
+			tkdiff vimdiff gvimdiff xxdiff araxis p4merge bc
+			codecompare smerge
 "
 
 _git_difftool ()
