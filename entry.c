@@ -52,7 +52,7 @@ static void create_directories(const char *path, int path_len,
 
 static void remove_subtree(struct strbuf *path)
 {
-	struct dir_iterator *iter = dir_iterator_begin(path);
+	struct dir_iterator *iter = dir_iterator_begin(path->buf);
     int ok;
 	int origlen = path->len;
 
