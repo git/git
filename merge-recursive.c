@@ -3031,9 +3031,10 @@ static int blob_unchanged(struct merge_options *opt,
 			  unsigned a_mode,
 			  int renormalize, const char *path)
 {
-	struct strbuf o = STRBUF_INIT;
-	struct strbuf a = STRBUF_INIT;
+	struct strbuf obuf = STRBUF_INIT;
+	struct strbuf abuf = STRBUF_INIT;
 	int ret = 0; /* assume changed for safety */
+	const struct index_state *idx = opt->repo->index;
 
 	if (a_mode != o_mode)
 		return 0;
@@ -3043,20 +3044,21 @@ static int blob_unchanged(struct merge_options *opt,
 		return 0;
 
 	assert(o_oid && a_oid);
-	if (read_oid_strbuf(opt, o_oid, &o) || read_oid_strbuf(opt, a_oid, &a))
+	if (read_oid_strbuf(opt, o_oid, &obuf) ||
+	    read_oid_strbuf(opt, a_oid, &abuf))
 		goto error_return;
 	/*
 	 * Note: binary | is used so that both renormalizations are
 	 * performed.  Comparison can be skipped if both files are
 	 * unchanged since their sha1s have already been compared.
 	 */
-	if (renormalize_buffer(opt->repo->index, path, o.buf, o.len, &o) |
-	    renormalize_buffer(opt->repo->index, path, a.buf, a.len, &a))
-		ret = (o.len == a.len && !memcmp(o.buf, a.buf, o.len));
+	if (renormalize_buffer(idx, path, obuf.buf, obuf.len, &obuf) |
+	    renormalize_buffer(idx, path, abuf.buf, abuf.len, &abuf))
+		ret = (obuf.len == abuf.len && !memcmp(obuf.buf, abuf.buf, obuf.len));
 
 error_return:
-	strbuf_release(&o);
-	strbuf_release(&a);
+	strbuf_release(&obuf);
+	strbuf_release(&abuf);
 	return ret;
 }
 
