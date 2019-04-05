@@ -3910,7 +3910,7 @@ test_expect_success '12a-check: Moving one directory hierarchy into another' '
 #         To which, I can do no more than shrug my shoulders and say that
 #         even simple rules give weird results when given weird inputs.
 
-test_expect_success '12b-setup: Moving one directory hierarchy into another' '
+test_expect_success '12b-setup: Moving two directory hierarchies into each other' '
 	test_create_repo 12b &&
 	(
 		cd 12b &&
@@ -3940,7 +3940,7 @@ test_expect_success '12b-setup: Moving one directory hierarchy into another' '
 	)
 '
 
-test_expect_success '12b-check: Moving one directory hierarchy into another' '
+test_expect_success '12b-check: Moving two directory hierarchies into each other' '
 	(
 		cd 12b &&
 
