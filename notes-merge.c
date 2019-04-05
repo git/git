@@ -722,7 +722,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 		if (o->verbosity >= 4)
 			printf("Added resolved note for object %s: %s\n",
 				oid_to_hex(&obj_oid), oid_to_hex(&blob_oid));
-		strbuf_setlen(&path, baselen);
+	 	strbuf_setlen(&path, baselen);
 	}
 
 	create_notes_commit(o->repo, partial_tree, partial_commit->parents, msg,
