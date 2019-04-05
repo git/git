@@ -86,13 +86,14 @@ test_expect_success 'write midx with one v1 pack' '
 '
 
 midx_git_two_modes () {
+	git -c core.multiPackIndex=false $1 >expect &&
+	git -c core.multiPackIndex=true $1 >actual &&
 	if [ "$2" = "sorted" ]
 	then
-		git -c core.multiPackIndex=false $1 | sort >expect &&
-		git -c core.multiPackIndex=true $1 | sort >actual
-	else
-		git -c core.multiPackIndex=false $1 >expect &&
-		git -c core.multiPackIndex=true $1 >actual
+		sort <expect >expect.sorted &&
+		mv expect.sorted expect &&
+		sort <actual >actual.sorted &&
+		mv actual.sorted actual
 	fi &&
 	test_cmp expect actual
 }
@@ -104,7 +105,7 @@ compare_results_with_midx () {
 		midx_git_two_modes "log --raw" &&
 		midx_git_two_modes "count-objects --verbose" &&
 		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check" &&
-		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check --unsorted" sorted
+		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check --unordered" sorted
 	'
 }
 
