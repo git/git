@@ -3098,7 +3098,7 @@ static int handle_content_merge(struct merge_options *opt,
 				struct object_id *o_oid, int o_mode,
 				struct object_id *a_oid, int a_mode,
 				struct object_id *b_oid, int b_mode,
-				struct rename_conflict_info *rename_conflict_info)
+				struct rename_conflict_info *ci)
 {
 	const char *reason = _("content");
 	const char *path1 = NULL, *path2 = NULL;
@@ -3118,17 +3118,17 @@ static int handle_content_merge(struct merge_options *opt,
 	oidcpy(&b.oid, b_oid);
 	b.mode = b_mode;
 
-	if (rename_conflict_info) {
-		struct diff_filepair *pair1 = rename_conflict_info->pair1;
+	if (ci) {
+		struct diff_filepair *pair1 = ci->pair1;
 
-		path1 = (opt->branch1 == rename_conflict_info->branch1) ?
+		path1 = (opt->branch1 == ci->branch1) ?
 			pair1->two->path : pair1->one->path;
-		/* If rename_conflict_info->pair2 != NULL, we are in
+		/* If ci->pair2 != NULL, we are in
 		 * RENAME_ONE_FILE_TO_ONE case.  Otherwise, we have a
 		 * normal rename.
 		 */
-		path2 = (rename_conflict_info->pair2 ||
-			 opt->branch2 == rename_conflict_info->branch1) ?
+		path2 = (ci->pair2 ||
+			 opt->branch2 == ci->branch1) ?
 			pair1->two->path : pair1->one->path;
 		one.path = pair1->one->path;
 		a.path = (char *)path1;
@@ -3180,7 +3180,7 @@ static int handle_content_merge(struct merge_options *opt,
 			reason = _("submodule");
 		output(opt, 1, _("CONFLICT (%s): Merge conflict in %s"),
 				reason, path);
-		if (rename_conflict_info && !df_conflict_remains)
+		if (ci && !df_conflict_remains)
 			if (update_stages(opt, path, &one, &a, &b))
 				return -1;
 	}
@@ -3206,7 +3206,7 @@ static int handle_content_merge(struct merge_options *opt,
 			}
 
 		}
-		new_path = unique_path(opt, path, rename_conflict_info->branch1);
+		new_path = unique_path(opt, path, ci->branch1);
 		if (is_dirty) {
 			output(opt, 1, _("Refusing to lose dirty file at %s"),
 			       path);
@@ -3251,8 +3251,8 @@ static int process_entry(struct merge_options *opt,
 
 	entry->processed = 1;
 	if (entry->rename_conflict_info) {
-		struct rename_conflict_info *conflict_info = entry->rename_conflict_info;
-		switch (conflict_info->rename_type) {
+		struct rename_conflict_info *ci = entry->rename_conflict_info;
+		switch (ci->rename_type) {
 		case RENAME_NORMAL:
 		case RENAME_ONE_FILE_TO_ONE:
 			clean_merge = handle_rename_normal(opt,
@@ -3260,13 +3260,11 @@ static int process_entry(struct merge_options *opt,
 							   o_oid, o_mode,
 							   a_oid, a_mode,
 							   b_oid, b_mode,
-							   conflict_info);
+							   ci);
 			break;
 		case RENAME_VIA_DIR:
 			clean_merge = 1;
-			if (handle_rename_via_dir(opt,
-						  conflict_info->pair1,
-						  conflict_info->branch1))
+			if (handle_rename_via_dir(opt, ci->pair1, ci->branch1))
 				clean_merge = -1;
 			break;
 		case RENAME_ADD:
@@ -3276,19 +3274,17 @@ static int process_entry(struct merge_options *opt,
 			 * two-way merged cleanly with the added file, I
 			 * guess it's a clean merge?
 			 */
-			clean_merge = handle_rename_add(opt, conflict_info);
+			clean_merge = handle_rename_add(opt, ci);
 			break;
 		case RENAME_DELETE:
 			clean_merge = 0;
-			if (handle_rename_delete(opt,
-						 conflict_info->pair1,
-						 conflict_info->branch1,
-						 conflict_info->branch2))
+			if (handle_rename_delete(opt, ci->pair1,
+						 ci->branch1, ci->branch2))
 				clean_merge = -1;
 			break;
 		case RENAME_ONE_FILE_TO_TWO:
 			clean_merge = 0;
-			if (handle_rename_rename_1to2(opt, conflict_info))
+			if (handle_rename_rename_1to2(opt, ci))
 				clean_merge = -1;
 			break;
 		case RENAME_TWO_FILES_TO_ONE:
@@ -3298,8 +3294,7 @@ static int process_entry(struct merge_options *opt,
 			 * can then be two-way merged cleanly, I guess it's
 			 * a clean merge?
 			 */
-			clean_merge = handle_rename_rename_2to1(opt,
-								conflict_info);
+			clean_merge = handle_rename_rename_2to1(opt, ci);
 			break;
 		default:
 			entry->processed = 0;
