@@ -131,7 +131,7 @@ static int parse_pack_def(const char *packname, int old_cnt)
 static int read_pack_info_file(const char *infofile)
 {
 	FILE *fp;
-	char line[1000];
+	struct strbuf line = STRBUF_INIT;
 	int old_cnt = 0;
 	int stale = 1;
 
@@ -139,32 +139,30 @@ static int read_pack_info_file(const char *infofile)
 	if (!fp)
 		return 1; /* nonexistent is not an error. */
 
-	while (fgets(line, sizeof(line), fp)) {
+	while (strbuf_getline(&line, fp) != EOF) {
 		const char *arg;
-		int len = strlen(line);
-		if (len && line[len-1] == '\n')
-			line[--len] = 0;
 
-		if (!len)
+		if (!line.len)
 			continue;
 
-		if (skip_prefix(line, "P ", &arg)) {
+		if (skip_prefix(line.buf, "P ", &arg)) {
 			/* P name */
 			if (parse_pack_def(arg, old_cnt++))
 				goto out_stale;
-		} else if (line[0] == 'D') {
+		} else if (line.buf[0] == 'D') {
 			/* we used to emit D but that was misguided. */
 			goto out_stale;
-		} else if (line[0] == 'T') {
+		} else if (line.buf[0] == 'T') {
 			/* we used to emit T but nobody uses it. */
 			goto out_stale;
 		} else {
-			error("unrecognized: %s", line);
+			error("unrecognized: %s", line.buf);
 		}
 	}
 	stale = 0;
 
  out_stale:
+	strbuf_release(&line);
 	fclose(fp);
 	return stale;
 }
