@@ -196,18 +196,6 @@ enum rename_type {
 	RENAME_TWO_FILES_TO_ONE
 };
 
-struct rename_conflict_info {
-	enum rename_type rename_type;
-	struct diff_filepair *pair1;
-	struct diff_filepair *pair2;
-	const char *branch1;
-	const char *branch2;
-	struct stage_data *dst_entry1;
-	struct stage_data *dst_entry2;
-	struct diff_filespec ren1_other;
-	struct diff_filespec ren2_other;
-};
-
 /*
  * Since we want to write the index eventually, we cannot reuse the index
  * for these (temporary) data.
@@ -219,6 +207,45 @@ struct stage_data {
 	} stages[4];
 	struct rename_conflict_info *rename_conflict_info;
 	unsigned processed:1;
+};
+
+struct rename {
+	struct diff_filepair *pair;
+	/*
+	 * Purpose of src_entry and dst_entry:
+	 *
+	 * If 'before' is renamed to 'after' then src_entry will contain
+	 * the versions of 'before' from the merge_base, HEAD, and MERGE in
+	 * stages 1, 2, and 3; dst_entry will contain the respective
+	 * versions of 'after' in corresponding locations.  Thus, we have a
+	 * total of six modes and oids, though some will be null.  (Stage 0
+	 * is ignored; we're interested in handling conflicts.)
+	 *
+	 * Since we don't turn on break-rewrites by default, neither
+	 * src_entry nor dst_entry can have all three of their stages have
+	 * non-null oids, meaning at most four of the six will be non-null.
+	 * Also, since this is a rename, both src_entry and dst_entry will
+	 * have at least one non-null oid, meaning at least two will be
+	 * non-null.  Of the six oids, a typical rename will have three be
+	 * non-null.  Only two implies a rename/delete, and four implies a
+	 * rename/add.
+	 */
+	struct stage_data *src_entry;
+	struct stage_data *dst_entry;
+	unsigned add_turned_into_rename:1;
+	unsigned processed:1;
+};
+
+struct rename_conflict_info {
+	enum rename_type rename_type;
+	struct diff_filepair *pair1;
+	struct diff_filepair *pair2;
+	const char *branch1;
+	const char *branch2;
+	struct stage_data *dst_entry1;
+	struct stage_data *dst_entry2;
+	struct diff_filespec ren1_other;
+	struct diff_filespec ren2_other;
 };
 
 static inline void setup_rename_conflict_info(enum rename_type rename_type,
@@ -644,33 +671,6 @@ static void record_df_conflict_files(struct merge_options *opt,
 	}
 	string_list_clear(&df_sorted_entries, 0);
 }
-
-struct rename {
-	struct diff_filepair *pair;
-	/*
-	 * Purpose of src_entry and dst_entry:
-	 *
-	 * If 'before' is renamed to 'after' then src_entry will contain
-	 * the versions of 'before' from the merge_base, HEAD, and MERGE in
-	 * stages 1, 2, and 3; dst_entry will contain the respective
-	 * versions of 'after' in corresponding locations.  Thus, we have a
-	 * total of six modes and oids, though some will be null.  (Stage 0
-	 * is ignored; we're interested in handling conflicts.)
-	 *
-	 * Since we don't turn on break-rewrites by default, neither
-	 * src_entry nor dst_entry can have all three of their stages have
-	 * non-null oids, meaning at most four of the six will be non-null.
-	 * Also, since this is a rename, both src_entry and dst_entry will
-	 * have at least one non-null oid, meaning at least two will be
-	 * non-null.  Of the six oids, a typical rename will have three be
-	 * non-null.  Only two implies a rename/delete, and four implies a
-	 * rename/add.
-	 */
-	struct stage_data *src_entry;
-	struct stage_data *dst_entry;
-	unsigned add_turned_into_rename:1;
-	unsigned processed:1;
-};
 
 static int update_stages(struct merge_options *opt, const char *path,
 			 const struct diff_filespec *o,
