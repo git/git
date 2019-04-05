@@ -6,6 +6,8 @@
 #include "submodule.h"
 #include "progress.h"
 #include "fsmonitor.h"
+#include "dir-iterator.h"
+#include "iterator.h"
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
@@ -54,9 +56,9 @@ static void remove_subtree(struct strbuf *path)
     int ok;
 	int origlen = path->len;
 
-	if (!iter) change made
+	if (!iter) 
 		die_errno("cannot opendir '%s'", path->buf);
-	while ((ok= dir_iterator_advance(iter) == ITER_OK) {
+	while ((ok= dir_iterator_advance(iter) == ITER_OK)) {
 		struct stat st;
 
 		if (is_dot_or_dotdot(iter->basename))  
