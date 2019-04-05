@@ -104,8 +104,8 @@ compare_results_with_midx () {
 		midx_git_two_modes "rev-list --objects --all" &&
 		midx_git_two_modes "log --raw" &&
 		midx_git_two_modes "count-objects --verbose" &&
-		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check" &&
-		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check --unordered" sorted
+		midx_git_two_modes "cat-file --batch-all-objects --batch-check" &&
+		midx_git_two_modes "cat-file --batch-all-objects --batch-check --unordered" sorted
 	'
 }
 
