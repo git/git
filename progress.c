@@ -78,12 +78,12 @@ static int is_foreground_fd(int fd)
 	return tpgrp < 0 || tpgrp == getpgid(0);
 }
 
-static int display(struct progress *progress, uint64_t n, const char *done)
+static void display(struct progress *progress, uint64_t n, const char *done)
 {
 	const char *eol, *tp;
 
 	if (progress->delay && (!progress_update || --progress->delay))
-		return 0;
+		return;
 
 	progress->last_value = n;
 	tp = (progress->throughput) ? progress->throughput->display.buf : "";
@@ -100,7 +100,6 @@ static int display(struct progress *progress, uint64_t n, const char *done)
 				fflush(stderr);
 			}
 			progress_update = 0;
-			return 1;
 		}
 	} else if (progress_update) {
 		if (is_foreground_fd(fileno(stderr)) || done) {
@@ -109,10 +108,7 @@ static int display(struct progress *progress, uint64_t n, const char *done)
 			fflush(stderr);
 		}
 		progress_update = 0;
-		return 1;
 	}
-
-	return 0;
 }
 
 static void throughput_string(struct strbuf *buf, uint64_t total,
@@ -188,9 +184,10 @@ void display_throughput(struct progress *progress, uint64_t total)
 		display(progress, progress->last_value, NULL);
 }
 
-int display_progress(struct progress *progress, uint64_t n)
+void display_progress(struct progress *progress, uint64_t n)
 {
-	return progress ? display(progress, n, NULL) : 0;
+	if (progress)
+		display(progress, n, NULL);
 }
 
 static struct progress *start_progress_delay(const char *title, uint64_t total,
