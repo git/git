@@ -50,20 +50,20 @@ static void create_directories(const char *path, int path_len,
 
 static void remove_subtree(struct strbuf *path)
 {
-	DIR *dir = opendir(path->buf);
-	struct dirent *de;
+	struct dir_iterator *iter = dir_iterator_begin(path);
+    int ok;
 	int origlen = path->len;
 
-	if (!dir)
+	if (!iter) change made
 		die_errno("cannot opendir '%s'", path->buf);
-	while ((de = readdir(dir)) != NULL) {
+	while ((ok= dir_iterator_advance(iter) == ITER_OK) {
 		struct stat st;
 
-		if (is_dot_or_dotdot(de->d_name))
+		if (is_dot_or_dotdot(iter->basename))  
 			continue;
 
 		strbuf_addch(path, '/');
-		strbuf_addstr(path, de->d_name);
+		strbuf_addstr(path, iter->basename); 
 		if (lstat(path->buf, &st))
 			die_errno("cannot lstat '%s'", path->buf);
 		if (S_ISDIR(st.st_mode))
@@ -72,7 +72,7 @@ static void remove_subtree(struct strbuf *path)
 			die_errno("cannot unlink '%s'", path->buf);
 		strbuf_setlen(path, origlen);
 	}
-	closedir(dir);
+	dir_iterator_abort(iter);
 	if (rmdir(path->buf))
 		die_errno("cannot rmdir '%s'", path->buf);
 }
