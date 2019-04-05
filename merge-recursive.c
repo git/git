@@ -1357,8 +1357,7 @@ static int merge_mode_and_contents(struct merge_options *opt,
 }
 
 static int handle_rename_via_dir(struct merge_options *opt,
-				 struct diff_filepair *pair,
-				 const char *rename_branch)
+				 struct rename_conflict_info *ci)
 {
 	/*
 	 * Handle file adds that need to be renamed due to directory rename
@@ -1366,10 +1365,11 @@ static int handle_rename_via_dir(struct merge_options *opt,
 	 * there is no content merge to do; just move the file into the
 	 * desired final location.
 	 */
-	const struct diff_filespec *dest = pair->two;
+	const struct rename *ren = ci->ren1;
+	const struct diff_filespec *dest = ren->pair->two;
 
 	if (!opt->call_depth && would_lose_untracked(opt, dest->path)) {
-		char *alt_path = unique_path(opt, dest->path, rename_branch);
+		char *alt_path = unique_path(opt, dest->path, ren->branch);
 
 		output(opt, 1, _("Error: Refusing to lose untracked file at %s; "
 			       "writing to %s instead."),
@@ -1383,8 +1383,8 @@ static int handle_rename_via_dir(struct merge_options *opt,
 			return -1;
 		free(alt_path);
 		return update_stages(opt, dest->path, NULL,
-				     rename_branch == opt->branch1 ? dest : NULL,
-				     rename_branch == opt->branch1 ? NULL : dest);
+				     ren->branch == opt->branch1 ? dest : NULL,
+				     ren->branch == opt->branch1 ? NULL : dest);
 	}
 
 	/* Update dest->path both in index and in worktree */
@@ -1476,12 +1476,14 @@ static int handle_change_delete(struct merge_options *opt,
 }
 
 static int handle_rename_delete(struct merge_options *opt,
-				struct diff_filepair *pair,
-				const char *rename_branch,
-				const char *delete_branch)
+				struct rename_conflict_info *ci)
 {
-	const struct diff_filespec *orig = pair->one;
-	const struct diff_filespec *dest = pair->two;
+	const struct rename *ren = ci->ren1;
+	const struct diff_filespec *orig = ren->pair->one;
+	const struct diff_filespec *dest = ren->pair->two;
+	const char *rename_branch = ren->branch;
+	const char *delete_branch = (opt->branch1 == ren->branch ?
+				     opt->branch2 : opt->branch1);
 
 	if (handle_change_delete(opt,
 				 opt->call_depth ? orig->path : dest->path,
@@ -3184,8 +3186,7 @@ static int process_entry(struct merge_options *opt,
 			break;
 		case RENAME_VIA_DIR:
 			clean_merge = 1;
-			if (handle_rename_via_dir(opt, ci->ren1->pair,
-						  ci->ren1->branch))
+			if (handle_rename_via_dir(opt, ci))
 				clean_merge = -1;
 			break;
 		case RENAME_ADD:
@@ -3199,9 +3200,7 @@ static int process_entry(struct merge_options *opt,
 			break;
 		case RENAME_DELETE:
 			clean_merge = 0;
-			if (handle_rename_delete(opt, ci->ren1->pair,
-						 ci->ren1->branch,
-						 ci->ren1->branch == opt->branch1 ? opt->branch2 : opt->branch1))
+			if (handle_rename_delete(opt, ci))
 				clean_merge = -1;
 			break;
 		case RENAME_ONE_FILE_TO_TWO:
