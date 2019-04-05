@@ -696,7 +696,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 
 	strbuf_addch(&path, '/');
 	baselen = path.len;
-	while ((ok=dir_iterator_advance(iter)) != NULL) {
+	while ((ok=dir_iterator_advance(iter)) == ITER_OK) {
 		struct stat st;
 		struct object_id obj_oid, blob_oid;
 
