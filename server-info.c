@@ -112,9 +112,9 @@ static struct pack_info *find_pack_by_name(const char *name)
 /* Returns non-zero when we detect that the info in the
  * old file is useless.
  */
-static int parse_pack_def(const char *line, int old_cnt)
+static int parse_pack_def(const char *packname, int old_cnt)
 {
-	struct pack_info *i = find_pack_by_name(line + 2);
+	struct pack_info *i = find_pack_by_name(packname);
 	if (i) {
 		i->old_num = old_cnt;
 		return 0;
@@ -139,6 +139,7 @@ static int read_pack_info_file(const char *infofile)
 		return 1; /* nonexistent is not an error. */
 
 	while (fgets(line, sizeof(line), fp)) {
+		const char *arg;
 		int len = strlen(line);
 		if (len && line[len-1] == '\n')
 			line[--len] = 0;
@@ -146,17 +147,18 @@ static int read_pack_info_file(const char *infofile)
 		if (!len)
 			continue;
 
-		switch (line[0]) {
-		case 'P': /* P name */
-			if (parse_pack_def(line, old_cnt++))
+		if (skip_prefix(line, "P ", &arg)) {
+			/* P name */
+			if (parse_pack_def(arg, old_cnt++))
 				goto out_stale;
-			break;
-		case 'D': /* we used to emit D but that was misguided. */
-		case 'T': /* we used to emit T but nobody uses it. */
+		} else if (line[0] == 'D') {
+			/* we used to emit D but that was misguided. */
 			goto out_stale;
-		default:
+		} else if (line[0] == 'T') {
+			/* we used to emit T but nobody uses it. */
+			goto out_stale;
+		} else {
 			error("unrecognized: %s", line);
-			break;
 		}
 	}
 	fclose(fp);
