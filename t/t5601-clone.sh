@@ -611,10 +611,6 @@ test_expect_success 'GIT_TRACE_PACKFILE produces a usable pack' '
 	git -C replay.git index-pack -v --stdin <tmp.pack
 '
 
-hex2oct () {
-	perl -ne 'printf "\\%03o", hex for /../g'
-}
-
 test_expect_success 'clone on case-insensitive fs' '
 	git init icasefs &&
 	(
