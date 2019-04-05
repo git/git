@@ -36,6 +36,7 @@ struct progress {
 	unsigned delay;
 	struct throughput *throughput;
 	uint64_t start_ns;
+	struct strbuf counters_sb;
 };
 
 static volatile sig_atomic_t progress_update;
@@ -80,31 +81,39 @@ static int is_foreground_fd(int fd)
 
 static void display(struct progress *progress, uint64_t n, const char *done)
 {
-	const char *eol, *tp;
+	const char *tp;
+	struct strbuf *counters_sb = &progress->counters_sb;
+	int show_update = 0;
 
 	if (progress->delay && (!progress_update || --progress->delay))
 		return;
 
 	progress->last_value = n;
 	tp = (progress->throughput) ? progress->throughput->display.buf : "";
-	eol = done ? done : "   \r";
 	if (progress->total) {
 		unsigned percent = n * 100 / progress->total;
 		if (percent != progress->last_percent || progress_update) {
 			progress->last_percent = percent;
-			if (is_foreground_fd(fileno(stderr)) || done) {
-				fprintf(stderr, "%s: %3u%% (%"PRIuMAX"/%"PRIuMAX")%s%s",
-					progress->title, percent,
-					(uintmax_t)n, (uintmax_t)progress->total,
-					tp, eol);
-				fflush(stderr);
-			}
-			progress_update = 0;
+
+			strbuf_reset(counters_sb);
+			strbuf_addf(counters_sb,
+				    "%3u%% (%"PRIuMAX"/%"PRIuMAX")%s", percent,
+				    (uintmax_t)n, (uintmax_t)progress->total,
+				    tp);
+			show_update = 1;
 		}
 	} else if (progress_update) {
+		strbuf_reset(counters_sb);
+		strbuf_addf(counters_sb, "%"PRIuMAX"%s", (uintmax_t)n, tp);
+		show_update = 1;
+	}
+
+	if (show_update) {
 		if (is_foreground_fd(fileno(stderr)) || done) {
-			fprintf(stderr, "%s: %"PRIuMAX"%s%s",
-				progress->title, (uintmax_t)n, tp, eol);
+			const char *eol = done ? done : "   \r";
+
+			fprintf(stderr, "%s: %s%s", progress->title,
+				counters_sb->buf, eol);
 			fflush(stderr);
 		}
 		progress_update = 0;
@@ -207,6 +216,7 @@ static struct progress *start_progress_delay(const char *title, uint64_t total,
 	progress->delay = delay;
 	progress->throughput = NULL;
 	progress->start_ns = getnanotime();
+	strbuf_init(&progress->counters_sb, 0);
 	set_progress_signal();
 	return progress;
 }
@@ -250,6 +260,7 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
 		free(buf);
 	}
 	clear_progress_signal();
+	strbuf_release(&progress->counters_sb);
 	if (progress->throughput)
 		strbuf_release(&progress->throughput->display);
 	free(progress->throughput);
