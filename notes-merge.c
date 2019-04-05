@@ -734,6 +734,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 	strbuf_release(&path);
 	
 	return 0;
+
 }
 
 int notes_merge_abort(struct notes_merge_options *o)
