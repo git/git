@@ -308,7 +308,8 @@ static int load_pack_bitmap(struct bitmap_index *bitmap_git)
 
 	bitmap_git->bitmaps = kh_init_sha1();
 	bitmap_git->ext_index.positions = kh_init_sha1_pos();
-	load_pack_revindex(bitmap_git->pack);
+	if (load_pack_revindex(bitmap_git->pack))
+		goto failed;
 
 	if (!(bitmap_git->commits = read_bitmap_1(bitmap_git)) ||
 		!(bitmap_git->trees = read_bitmap_1(bitmap_git)) ||
