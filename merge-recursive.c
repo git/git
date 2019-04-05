@@ -1050,7 +1050,7 @@ struct merge_file_info {
 
 static int merge_3way(struct merge_options *opt,
 		      mmbuffer_t *result_buf,
-		      const struct diff_filespec *one,
+		      const struct diff_filespec *o,
 		      const struct diff_filespec *a,
 		      const struct diff_filespec *b,
 		      const char *branch1,
@@ -1084,9 +1084,9 @@ static int merge_3way(struct merge_options *opt,
 	}
 
 	if (strcmp(a->path, b->path) ||
-	    (opt->ancestor != NULL && strcmp(a->path, one->path) != 0)) {
+	    (opt->ancestor != NULL && strcmp(a->path, o->path) != 0)) {
 		base_name = opt->ancestor == NULL ? NULL :
-			mkpathdup("%s:%s", opt->ancestor, one->path);
+			mkpathdup("%s:%s", opt->ancestor, o->path);
 		name1 = mkpathdup("%s:%s", branch1, a->path);
 		name2 = mkpathdup("%s:%s", branch2, b->path);
 	} else {
@@ -1096,7 +1096,7 @@ static int merge_3way(struct merge_options *opt,
 		name2 = mkpathdup("%s", branch2);
 	}
 
-	read_mmblob(&orig, &one->oid);
+	read_mmblob(&orig, &o->oid);
 	read_mmblob(&src1, &a->oid);
 	read_mmblob(&src2, &b->oid);
 
@@ -1295,7 +1295,7 @@ static int merge_submodule(struct merge_options *opt,
 }
 
 static int merge_mode_and_contents(struct merge_options *opt,
-				   const struct diff_filespec *one,
+				   const struct diff_filespec *o,
 				   const struct diff_filespec *a,
 				   const struct diff_filespec *b,
 				   const char *filename,
@@ -1310,7 +1310,7 @@ static int merge_mode_and_contents(struct merge_options *opt,
 		 * side of the conflict markers and the other branch on the
 		 * top.  Fix that.
 		 */
-		return merge_mode_and_contents(opt, one, b, a,
+		return merge_mode_and_contents(opt, o, b, a,
 					       filename,
 					       branch2, branch1,
 					       extra_marker_size, result);
@@ -1329,31 +1329,31 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			oidcpy(&result->oid, &b->oid);
 		}
 	} else {
-		if (!oid_eq(&a->oid, &one->oid) && !oid_eq(&b->oid, &one->oid))
+		if (!oid_eq(&a->oid, &o->oid) && !oid_eq(&b->oid, &o->oid))
 			result->merge = 1;
 
 		/*
 		 * Merge modes
 		 */
-		if (a->mode == b->mode || a->mode == one->mode)
+		if (a->mode == b->mode || a->mode == o->mode)
 			result->mode = b->mode;
 		else {
 			result->mode = a->mode;
-			if (b->mode != one->mode) {
+			if (b->mode != o->mode) {
 				result->clean = 0;
 				result->merge = 1;
 			}
 		}
 
-		if (oid_eq(&a->oid, &b->oid) || oid_eq(&a->oid, &one->oid))
+		if (oid_eq(&a->oid, &b->oid) || oid_eq(&a->oid, &o->oid))
 			oidcpy(&result->oid, &b->oid);
-		else if (oid_eq(&b->oid, &one->oid))
+		else if (oid_eq(&b->oid, &o->oid))
 			oidcpy(&result->oid, &a->oid);
 		else if (S_ISREG(a->mode)) {
 			mmbuffer_t result_buf;
 			int ret = 0, merge_status;
 
-			merge_status = merge_3way(opt, &result_buf, one, a, b,
+			merge_status = merge_3way(opt, &result_buf, o, a, b,
 						  branch1, branch2,
 						  extra_marker_size);
 
@@ -1372,8 +1372,8 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			result->clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
 			result->clean = merge_submodule(opt, &result->oid,
-							one->path,
-							&one->oid,
+							o->path,
+							&o->oid,
 							&a->oid,
 							&b->oid);
 		} else if (S_ISLNK(a->mode)) {
@@ -1750,7 +1750,7 @@ static int handle_rename_rename_1to2(struct merge_options *opt,
 	struct merge_file_info mfi;
 	struct diff_filespec other;
 	struct diff_filespec *add;
-	struct diff_filespec *one = ci->pair1->one;
+	struct diff_filespec *o = ci->pair1->one;
 	struct diff_filespec *a = ci->pair1->two;
 	struct diff_filespec *b = ci->pair2->two;
 	char *path_desc;
@@ -1758,13 +1758,13 @@ static int handle_rename_rename_1to2(struct merge_options *opt,
 	output(opt, 1, _("CONFLICT (rename/rename): "
 	       "Rename \"%s\"->\"%s\" in branch \"%s\" "
 	       "rename \"%s\"->\"%s\" in \"%s\"%s"),
-	       one->path, a->path, ci->branch1,
-	       one->path, b->path, ci->branch2,
+	       o->path, a->path, ci->branch1,
+	       o->path, b->path, ci->branch2,
 	       opt->call_depth ? _(" (left unresolved)") : "");
 
 	path_desc = xstrfmt("%s and %s, both renamed from %s",
-			    a->path, b->path, one->path);
-	if (merge_mode_and_contents(opt, one, a, b, path_desc,
+			    a->path, b->path, o->path);
+	if (merge_mode_and_contents(opt, o, a, b, path_desc,
 				    ci->branch1, ci->branch2,
 				    opt->call_depth * 2, &mfi))
 		return -1;
@@ -1777,7 +1777,7 @@ static int handle_rename_rename_1to2(struct merge_options *opt,
 		 * pathname and then either rename the add-source file to that
 		 * unique path, or use that unique path instead of src here.
 		 */
-		if (update_file(opt, 0, &mfi.oid, mfi.mode, one->path))
+		if (update_file(opt, 0, &mfi.oid, mfi.mode, o->path))
 			return -1;
 
 		/*
@@ -2863,10 +2863,10 @@ static int process_renames(struct merge_options *opt,
 			if (clean_merge < 0)
 				goto cleanup_and_return;
 			if (try_merge) {
-				struct diff_filespec *one, *a, *b;
+				struct diff_filespec *o, *a, *b;
 				src_other.path = (char *)ren1_src;
 
-				one = ren1->pair->one;
+				o = ren1->pair->one;
 				if (a_renames == renames1) {
 					a = ren1->pair->two;
 					b = &src_other;
@@ -2874,7 +2874,7 @@ static int process_renames(struct merge_options *opt,
 					b = ren1->pair->two;
 					a = &src_other;
 				}
-				update_entry(ren1->dst_entry, one, a, b);
+				update_entry(ren1->dst_entry, o, a, b);
 				setup_rename_conflict_info(RENAME_NORMAL,
 							   ren1->pair,
 							   NULL,
