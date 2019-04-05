@@ -13,6 +13,8 @@
 #include "strbuf.h"
 #include "notes-utils.h"
 #include "commit-reach.h"
+#include "dir-iterator.h"
+#include "iterator.h"
 
 struct notes_merge_pair {
 	struct object_id obj, base, local, remote;
@@ -673,8 +675,8 @@ int notes_merge_commit(struct notes_merge_options *o,
 	 * commit message and parents from 'partial_commit'.
 	 * Finally store the new commit object OID into 'result_oid'.
 	 */
-	DIR *dir;
-	struct dirent *e;
+	struct dir_iterator *iter;
+	int ok;
 	struct strbuf path = STRBUF_INIT;
 	const char *buffer = get_commit_buffer(partial_commit, NULL);
 	const char *msg = strstr(buffer, "\n\n");
@@ -689,27 +691,27 @@ int notes_merge_commit(struct notes_merge_options *o,
 		die("partial notes commit has empty message");
 	msg += 2;
 
-	dir = opendir(path.buf);
-	if (!dir)
+	iter = dir_iterator_begin(path.buf);
+	if (!iter)
 		die_errno("could not open %s", path.buf);
 
 	strbuf_addch(&path, '/');
 	baselen = path.len;
-	while ((e = readdir(dir)) != NULL) {
+	while ((ok = dir_iterator_advance(iter) )== ITER_OK) {
 		struct stat st;
 		struct object_id obj_oid, blob_oid;
 
-		if (is_dot_or_dotdot(e->d_name))
+		if (is_dot_or_dotdot(iter->basename))
 			continue;
 
-		if (get_oid_hex(e->d_name, &obj_oid)) {
+		if (get_oid_hex(iter->basename, &obj_oid)) {
 			if (o->verbosity >= 3)
 				printf("Skipping non-SHA1 entry '%s%s'\n",
-					path.buf, e->d_name);
+					path.buf, iter->basename);
 			continue;
 		}
 
-		strbuf_addstr(&path, e->d_name);
+		strbuf_addstr(&path,iter->basename);
 		/* write file as blob, and add to partial_tree */
 		if (stat(path.buf, &st))
 			die_errno("Failed to stat '%s'", path.buf);
@@ -731,7 +733,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 		printf("Finalized notes merge commit: %s\n",
 			oid_to_hex(result_oid));
 	strbuf_release(&path);
-	closedir(dir);
+	
 	return 0;
 }
 
