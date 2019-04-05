@@ -242,8 +242,6 @@ struct rename_conflict_info {
 	struct rename *ren2;
 	const char *branch1;
 	const char *branch2;
-	struct diff_filespec ren1_other;
-	struct diff_filespec ren2_other;
 };
 
 static inline void setup_rename_conflict_info(enum rename_type rename_type,
@@ -251,11 +249,8 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 					      struct rename *ren1,
 					      struct rename *ren2,
 					      const char *branch1,
-					      const char *branch2,
-					      struct stage_data *src_entry1,
-					      struct stage_data *src_entry2)
+					      const char *branch2)
 {
-	int ostage1 = 0, ostage2;
 	struct rename_conflict_info *ci;
 
 	/*
@@ -269,8 +264,7 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 		setup_rename_conflict_info(rename_type,
 					   opt,
 					   ren2,       ren1,
-					   branch2,    branch1,
-					   src_entry2, src_entry1);
+					   branch2,    branch1);
 		return;
 	}
 
@@ -286,28 +280,6 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 
 	if (ren2) {
 		ci->ren2->dst_entry->rename_conflict_info = ci;
-	}
-
-	/*
-	 * For each rename, there could have been
-	 * modifications on the side of history where that
-	 * file was not renamed.
-	 */
-	if (rename_type == RENAME_ADD ||
-	    rename_type == RENAME_TWO_FILES_TO_ONE) {
-		ostage1 = opt->branch1 == branch1 ? 3 : 2;
-
-		ci->ren1_other.path = ren1->pair->one->path;
-		oidcpy(&ci->ren1_other.oid, &src_entry1->stages[ostage1].oid);
-		ci->ren1_other.mode = src_entry1->stages[ostage1].mode;
-	}
-
-	if (rename_type == RENAME_TWO_FILES_TO_ONE) {
-		ostage2 = ostage1 ^ 1;
-
-		ci->ren2_other.path = ren2->pair->one->path;
-		oidcpy(&ci->ren2_other.oid, &src_entry2->stages[ostage2].oid);
-		ci->ren2_other.mode = src_entry2->stages[ostage2].mode;
 	}
 }
 
@@ -1688,6 +1660,7 @@ static int handle_rename_add(struct merge_options *opt,
 	/* a was renamed to c, and a separate c was added. */
 	struct diff_filespec *a = ci->ren1->pair->one;
 	struct diff_filespec *c = ci->ren1->pair->two;
+	struct diff_filespec tmp;
 	char *path = c->path;
 	char *prev_path_desc;
 	struct merge_file_info mfi;
@@ -1699,8 +1672,12 @@ static int handle_rename_add(struct merge_options *opt,
 	       a->path, c->path, ci->branch1,
 	       c->path, ci->branch2);
 
+	filespec_from_entry(&tmp, ci->ren1->src_entry, other_stage);
+	tmp.path = a->path;
+
 	prev_path_desc = xstrfmt("version of %s from %s", path, a->path);
-	if (merge_mode_and_contents(opt, a, c, &ci->ren1_other, prev_path_desc,
+	if (merge_mode_and_contents(opt, a, c, &tmp,
+				    prev_path_desc,
 				    opt->branch1, opt->branch2,
 				    1 + opt->call_depth * 2, &mfi))
 		return -1;
@@ -1850,6 +1827,7 @@ static int handle_rename_rename_2to1(struct merge_options *opt,
 	struct diff_filespec *b = ci->ren2->pair->one;
 	struct diff_filespec *c1 = ci->ren1->pair->two;
 	struct diff_filespec *c2 = ci->ren2->pair->two;
+	struct diff_filespec tmp1, tmp2;
 	char *path = c1->path; /* == c2->path */
 	char *path_side_1_desc;
 	char *path_side_2_desc;
@@ -1862,12 +1840,17 @@ static int handle_rename_rename_2to1(struct merge_options *opt,
 	       a->path, c1->path, ci->branch1,
 	       b->path, c2->path, ci->branch2);
 
+	filespec_from_entry(&tmp1, ci->ren1->src_entry, 3);
+	tmp1.path = a->path;
+	filespec_from_entry(&tmp2, ci->ren2->src_entry, 2);
+	tmp2.path = b->path;
+
 	path_side_1_desc = xstrfmt("version of %s from %s", path, a->path);
 	path_side_2_desc = xstrfmt("version of %s from %s", path, b->path);
-	if (merge_mode_and_contents(opt, a, c1, &ci->ren1_other, path_side_1_desc,
+	if (merge_mode_and_contents(opt, a, c1, &tmp1, path_side_1_desc,
 				    opt->branch1, opt->branch2,
 				    1 + opt->call_depth * 2, &mfi_c1) ||
-	    merge_mode_and_contents(opt, b, &ci->ren2_other, c2, path_side_2_desc,
+	    merge_mode_and_contents(opt, b, &tmp2, c2, path_side_2_desc,
 				    opt->branch1, opt->branch2,
 				    1 + opt->call_depth * 2, &mfi_c2))
 		return -1;
@@ -2728,9 +2711,7 @@ static int process_renames(struct merge_options *opt,
 						   ren1,
 						   ren2,
 						   branch1,
-						   branch2,
-						   NULL,
-						   NULL);
+						   branch2);
 		} else if ((lookup = string_list_lookup(renames2Dst, ren1_dst))) {
 			/* Two different files renamed to the same thing */
 			char *ren2_dst;
@@ -2753,9 +2734,7 @@ static int process_renames(struct merge_options *opt,
 						   ren1,
 						   ren2,
 						   branch1,
-						   branch2,
-						   ren1->src_entry,
-						   ren2->src_entry);
+						   branch2);
 
 		} else {
 			/* Renamed in 1, maybe changed in 2 */
@@ -2794,18 +2773,14 @@ static int process_renames(struct merge_options *opt,
 							   ren1,
 							   NULL,
 							   branch1,
-							   branch2,
-							   NULL,
-							   NULL);
+							   branch2);
 			} else if (oid_eq(&src_other.oid, &null_oid)) {
 				setup_rename_conflict_info(RENAME_DELETE,
 							   opt,
 							   ren1,
 							   NULL,
 							   branch1,
-							   branch2,
-							   NULL,
-							   NULL);
+							   branch2);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
 				   oid_eq(&dst_other.oid, &ren1->pair->two->oid)) {
 				/*
@@ -2836,9 +2811,7 @@ static int process_renames(struct merge_options *opt,
 							   ren1,
 							   NULL,
 							   branch1,
-							   branch2,
-							   ren1->src_entry,
-							   NULL);
+							   branch2);
 			} else
 				try_merge = 1;
 
@@ -2862,8 +2835,6 @@ static int process_renames(struct merge_options *opt,
 							   ren1,
 							   NULL,
 							   branch1,
-							   NULL,
-							   NULL,
 							   NULL);
 			}
 		}
