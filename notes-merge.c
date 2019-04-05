@@ -732,7 +732,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 		printf("Finalized notes merge commit: %s\n",
 			oid_to_hex(result_oid));
 	strbuf_release(&path);
-	dir_iterator_abort(iter);
+	
 	return 0;
 }
 
