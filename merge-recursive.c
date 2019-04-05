@@ -1370,30 +1370,39 @@ static int handle_rename_via_dir(struct merge_options *opt,
 	 */
 	const struct rename *ren = ci->ren1;
 	const struct diff_filespec *dest = ren->pair->two;
+	char *file_path = dest->path;
+	int mark_conflicted = (opt->detect_directory_renames == 1);
+	assert(ren->dir_rename_original_dest);
 
 	if (!opt->call_depth && would_lose_untracked(opt, dest->path)) {
-		char *alt_path = unique_path(opt, dest->path, ren->branch);
-
+		mark_conflicted = 1;
+		file_path = unique_path(opt, dest->path, ren->branch);
 		output(opt, 1, _("Error: Refusing to lose untracked file at %s; "
-			       "writing to %s instead."),
-		       dest->path, alt_path);
-		/*
-		 * Write the file in worktree at alt_path, but not in the
-		 * index.  Instead, write to dest->path for the index but
-		 * only at the higher appropriate stage.
-		 */
-		if (update_file(opt, 0, dest, alt_path))
-			return -1;
-		free(alt_path);
-		return update_stages(opt, dest->path, NULL,
-				     ren->branch == opt->branch1 ? dest : NULL,
-				     ren->branch == opt->branch1 ? NULL : dest);
+				 "writing to %s instead."),
+		       dest->path, file_path);
 	}
 
-	/* Update dest->path both in index and in worktree */
-	if (update_file(opt, 1, dest, dest->path))
-		return -1;
-	return 0;
+	if (mark_conflicted) {
+		/*
+		 * Write the file in worktree at file_path.  In the index,
+		 * only record the file at dest->path in the appropriate
+		 * higher stage.
+		 */
+		if (update_file(opt, 0, dest, file_path))
+			return -1;
+		if (file_path != dest->path)
+			free(file_path);
+		if (update_stages(opt, dest->path, NULL,
+				  ren->branch == opt->branch1 ? dest : NULL,
+				  ren->branch == opt->branch1 ? NULL : dest))
+			return -1;
+		return 0; /* not clean, but conflicted */
+	} else {
+		/* Update dest->path both in index and in worktree */
+		if (update_file(opt, 1, dest, dest->path))
+			return -1;
+		return 1; /* clean */
+	}
 }
 
 static int handle_change_delete(struct merge_options *opt,
@@ -3090,10 +3099,88 @@ static int handle_rename_normal(struct merge_options *opt,
 				const struct diff_filespec *b,
 				struct rename_conflict_info *ci)
 {
-	/* Merge the content and write it out */
+	struct rename *ren = ci->ren1;
 	struct merge_file_info mfi;
-	return handle_content_merge(&mfi, opt, path, was_dirty(opt, path),
-				    o, a, b, ci);
+	int clean;
+	int side = (ren->branch == opt->branch1 ? 2 : 3);
+
+	/* Merge the content and write it out */
+	clean = handle_content_merge(&mfi, opt, path, was_dirty(opt, path),
+				     o, a, b, ci);
+
+	if (clean && opt->detect_directory_renames == 1 &&
+	    ren->dir_rename_original_dest) {
+		if (update_stages(opt, path,
+				  NULL,
+				  side == 2 ? &mfi.blob : NULL,
+				  side == 2 ? NULL : &mfi.blob))
+			return -1;
+		clean = 0; /* not clean, but conflicted */
+	}
+	return clean;
+}
+
+static void dir_rename_warning(const char *msg,
+			       int is_add,
+			       int clean,
+			       struct merge_options *opt,
+			       struct rename *ren)
+{
+	const char *other_branch;
+	other_branch = (ren->branch == opt->branch1 ?
+			opt->branch2 : opt->branch1);
+	if (is_add) {
+		output(opt, clean ? 2 : 1, msg,
+		       ren->pair->one->path, ren->branch,
+		       other_branch, ren->pair->two->path);
+		return;
+	}
+	output(opt, clean ? 2 : 1, msg,
+	       ren->pair->one->path, ren->dir_rename_original_dest, ren->branch,
+	       other_branch, ren->pair->two->path);
+}
+static int warn_about_dir_renamed_entries(struct merge_options *opt,
+					  struct rename *ren)
+{
+	const char *msg;
+	int clean = 1, is_add;
+
+	if (!ren)
+		return clean;
+
+	/* Return early if ren was not affected/created by a directory rename */
+	if (!ren->dir_rename_original_dest)
+		return clean;
+
+	/* Sanity checks */
+	assert(opt->detect_directory_renames > 0);
+	assert(ren->dir_rename_original_type == 'A' ||
+	       ren->dir_rename_original_type == 'R');
+
+	/* Check whether to treat directory renames as a conflict */
+	clean = (opt->detect_directory_renames == 2);
+
+	is_add = (ren->dir_rename_original_type == 'A');
+	if (ren->dir_rename_original_type == 'A' && clean) {
+		msg = _("Path updated: %s added in %s inside a "
+			"directory that was renamed in %s; moving it to %s.");
+	} else if (ren->dir_rename_original_type == 'A' && !clean) {
+		msg = _("CONFLICT (file location): %s added in %s "
+			"inside a directory that was renamed in %s, "
+			"suggesting it should perhaps be moved to %s.");
+	} else if (ren->dir_rename_original_type == 'R' && clean) {
+		msg = _("Path updated: %s renamed to %s in %s, inside a "
+			"directory that was renamed in %s; moving it to %s.");
+	} else if (ren->dir_rename_original_type == 'R' && !clean) {
+		msg = _("CONFLICT (file location): %s renamed to %s in %s, "
+			"inside a directory that was renamed in %s, "
+			"suggesting it should perhaps be moved to %s.");
+	} else {
+		BUG("Impossible dir_rename_original_type/clean combination");
+	}
+	dir_rename_warning(msg, is_add, clean, opt, ren);
+
+	return clean;
 }
 
 /* Per entry merge function */
@@ -3115,6 +3202,10 @@ static int process_entry(struct merge_options *opt,
 	if (entry->rename_conflict_info) {
 		struct rename_conflict_info *ci = entry->rename_conflict_info;
 		struct diff_filespec *temp;
+		int path_clean;
+
+		path_clean = warn_about_dir_renamed_entries(opt, ci->ren1);
+		path_clean &= warn_about_dir_renamed_entries(opt, ci->ren2);
 
 		/*
 		 * For cases with a single rename, {o,a,b}->path have all been
@@ -3135,9 +3226,7 @@ static int process_entry(struct merge_options *opt,
 							   ci);
 			break;
 		case RENAME_VIA_DIR:
-			clean_merge = 1;
-			if (handle_rename_via_dir(opt, ci))
-				clean_merge = -1;
+			clean_merge = handle_rename_via_dir(opt, ci);
 			break;
 		case RENAME_ADD:
 			/*
@@ -3187,6 +3276,8 @@ static int process_entry(struct merge_options *opt,
 			entry->processed = 0;
 			break;
 		}
+		if (path_clean < clean_merge)
+			clean_merge = path_clean;
 	} else if (o_valid && (!a_valid || !b_valid)) {
 		/* Case A: Deleted in one */
 		if ((!a_valid && !b_valid) ||
@@ -3556,6 +3647,15 @@ static void merge_recursive_config(struct merge_options *opt)
 	}
 	if (!git_config_get_string("merge.renames", &value)) {
 		opt->merge_detect_rename = git_config_rename("merge.renames", value);
+		free(value);
+	}
+	if (!git_config_get_string("merge.directoryrenames", &value)) {
+		int boolval = git_parse_maybe_bool(value);
+		if (0 <= boolval) {
+			opt->detect_directory_renames = boolval ? 2 : 0;
+		} else if (!strcasecmp(value, "conflict")) {
+			opt->detect_directory_renames = 1;
+		} /* avoid erroring on values from future versions of git */
 		free(value);
 	}
 	git_config(git_xmerge_config, NULL);
