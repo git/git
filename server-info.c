@@ -93,16 +93,13 @@ static struct pack_info {
 	int new_num;
 } **info;
 static int num_pack;
-static const char *objdir;
-static int objdirlen;
 
 static struct pack_info *find_pack_by_name(const char *name)
 {
 	int i;
 	for (i = 0; i < num_pack; i++) {
 		struct packed_git *p = info[i]->p;
-		/* skip "/pack/" after ".git/objects" */
-		if (!strcmp(p->pack_name + objdirlen + 6, name))
+		if (!strcmp(pack_basename(p), name))
 			return info[i];
 	}
 	return NULL;
@@ -196,9 +193,6 @@ static void init_pack_info(const char *infofile, int force)
 	int stale;
 	int i = 0;
 
-	objdir = get_object_directory();
-	objdirlen = strlen(objdir);
-
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		/* we ignore things on alternate path since they are
 		 * not available to the pullers in general.
@@ -246,7 +240,7 @@ static int write_pack_info_file(FILE *fp)
 {
 	int i;
 	for (i = 0; i < num_pack; i++) {
-		if (fprintf(fp, "P %s\n", info[i]->p->pack_name + objdirlen + 6) < 0)
+		if (fprintf(fp, "P %s\n", pack_basename(info[i]->p)) < 0)
 			return -1;
 	}
 	if (fputc('\n', fp) == EOF)
