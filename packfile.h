@@ -31,6 +31,12 @@ char *sha1_pack_name(const unsigned char *sha1);
  */
 char *sha1_pack_index_name(const unsigned char *sha1);
 
+/*
+ * Return the basename of the packfile, omitting any containing directory
+ * (e.g., "pack-1234abcd[...].pack").
+ */
+const char *pack_basename(struct packed_git *p);
+
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,

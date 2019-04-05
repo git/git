@@ -117,6 +117,20 @@ test_expect_success 'write midx with one v2 pack' '
 
 compare_results_with_midx "one v2 pack"
 
+test_expect_success 'corrupt idx not opened' '
+	idx=$(test-tool read-midx $objdir | grep "\.idx\$") &&
+	mv $objdir/pack/$idx backup-$idx &&
+	test_when_finished "mv backup-\$idx \$objdir/pack/\$idx" &&
+
+	# This is the minimum size for a sha-1 based .idx; this lets
+	# us pass perfunctory tests, but anything that actually opens and reads
+	# the idx file will complain.
+	test_copy_bytes 1064 <backup-$idx >$objdir/pack/$idx &&
+
+	git -c core.multiPackIndex=true rev-list --objects --all 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'add more objects' '
 	for i in $(test_seq 6 10)
 	do

@@ -466,6 +466,16 @@ static unsigned int get_max_fd_limit(void)
 #endif
 }
 
+const char *pack_basename(struct packed_git *p)
+{
+	const char *ret = strrchr(p->pack_name, '/');
+	if (ret)
+		ret = ret + 1; /* skip past slash */
+	else
+		ret = p->pack_name; /* we only have a base */
+	return ret;
+}
+
 /*
  * Do not call this directly as this leaks p->pack_fd on error return;
  * call open_packed_git() instead.
@@ -482,7 +492,7 @@ static int open_packed_git_1(struct packed_git *p)
 
 	if (!p->index_data) {
 		struct multi_pack_index *m;
-		const char *pack_name = strrchr(p->pack_name, '/');
+		const char *pack_name = pack_basename(p);
 
 		for (m = the_repository->objects->multi_pack_index;
 		     m; m = m->next) {
