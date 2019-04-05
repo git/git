@@ -133,6 +133,7 @@ static int read_pack_info_file(const char *infofile)
 	FILE *fp;
 	char line[1000];
 	int old_cnt = 0;
+	int stale = 1;
 
 	fp = fopen_or_warn(infofile, "r");
 	if (!fp)
@@ -161,11 +162,11 @@ static int read_pack_info_file(const char *infofile)
 			error("unrecognized: %s", line);
 		}
 	}
-	fclose(fp);
-	return 0;
+	stale = 0;
+
  out_stale:
 	fclose(fp);
-	return 1;
+	return stale;
 }
 
 static int compare_info(const void *a_, const void *b_)
