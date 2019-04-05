@@ -132,6 +132,7 @@ then
 	MAKEFLAGS="$MAKEFLAGS --jobs=10"
 	test windows_nt != "$CI_OS_NAME" ||
 	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
+	{ setfacl -bR . || :; }
 else
 	echo "Could not identify CI type" >&2
 	exit 1
