@@ -91,7 +91,6 @@ static struct pack_info {
 	struct packed_git *p;
 	int old_num;
 	int new_num;
-	int nr_alloc;
 } **info;
 static int num_pack;
 static const char *objdir;
@@ -213,6 +212,7 @@ static void init_pack_info(const char *infofile, int force)
 	for (i = 0, p = get_all_packs(the_repository); p; p = p->next) {
 		if (!p->pack_local)
 			continue;
+		assert(i < num_pack);
 		info[i] = xcalloc(1, sizeof(struct pack_info));
 		info[i]->p = p;
 		info[i]->old_num = -1;
