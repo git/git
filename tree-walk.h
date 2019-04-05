@@ -16,7 +16,7 @@ struct tree_desc {
 	unsigned int size;
 };
 
-static inline const struct object_id *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
+static inline const struct object_id *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned short *modep)
 {
 	*pathp = desc->entry.path;
 	*modep = desc->entry.mode;
@@ -51,7 +51,7 @@ struct traverse_info;
 typedef int (*traverse_callback_t)(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *);
 int traverse_trees(struct index_state *istate, int n, struct tree_desc *t, struct traverse_info *info);
 
-enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode);
+enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned short *mode);
 
 struct traverse_info {
 	const char *traverse_path;
@@ -66,7 +66,7 @@ struct traverse_info {
 	int show_all_errors;
 };
 
-int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned *);
+int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned short *);
 extern char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n);
 extern void setup_traverse_info(struct traverse_info *info, const char *base);
 

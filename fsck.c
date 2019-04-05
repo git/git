@@ -604,7 +604,7 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 	o_name = NULL;
 
 	while (desc.size) {
-		unsigned mode;
+		unsigned short mode;
 		const char *name;
 		const struct object_id *oid;
 

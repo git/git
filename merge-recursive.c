@@ -214,7 +214,7 @@ struct rename_conflict_info {
  */
 struct stage_data {
 	struct {
-		unsigned mode;
+		unsigned short mode;
 		struct object_id oid;
 	} stages[4];
 	struct rename_conflict_info *rename_conflict_info;
@@ -482,7 +482,7 @@ static void get_files_dirs(struct merge_options *o, struct tree *tree)
 static int get_tree_entry_if_blob(const struct object_id *tree,
 				  const char *path,
 				  struct object_id *hashy,
-				  unsigned int *mode_o)
+				  unsigned short *mode_o)
 {
 	int ret;
 
@@ -1935,7 +1935,7 @@ static struct diff_queue_struct *get_diffpairs(struct merge_options *o,
 static int tree_has_path(struct tree *tree, const char *path)
 {
 	struct object_id hashy;
-	unsigned int mode_o;
+	unsigned short mode_o;
 
 	return !get_tree_entry(&tree->object.oid, path,
 			       &hashy, &mode_o);

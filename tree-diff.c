@@ -181,7 +181,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 	struct tree_desc *t, struct tree_desc *tp,
 	int imin)
 {
-	unsigned mode;
+	unsigned short mode;
 	const char *path;
 	const struct object_id *oid;
 	int pathlen;
