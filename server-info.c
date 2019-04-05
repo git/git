@@ -78,7 +78,7 @@ static int generate_info_refs(FILE *fp)
 	return for_each_ref(add_info_ref, fp);
 }
 
-static int update_info_refs(int force)
+static int update_info_refs(void)
 {
 	char *path = git_pathdup("info/refs");
 	int ret = update_info_file(path, generate_info_refs);
@@ -269,7 +269,7 @@ int update_server_info(int force)
 	 */
 	int errs = 0;
 
-	errs = errs | update_info_refs(force);
+	errs = errs | update_info_refs();
 	errs = errs | update_info_packs(force);
 
 	/* remove leftover rev-cache file if there is any */
