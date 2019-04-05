@@ -2982,7 +2982,8 @@ static int handle_modify_delete(struct merge_options *opt,
 				    _("modify"), _("modified"));
 }
 
-static int handle_content_merge(struct merge_options *opt,
+static int handle_content_merge(struct merge_file_info *mfi,
+				struct merge_options *opt,
 				const char *path,
 				int is_dirty,
 				const struct diff_filespec *o,
@@ -2991,7 +2992,6 @@ static int handle_content_merge(struct merge_options *opt,
 				struct rename_conflict_info *ci)
 {
 	const char *reason = _("content");
-	struct merge_file_info mfi;
 	unsigned df_conflict_remains = 0;
 
 	if (!is_valid(o))
@@ -3004,7 +3004,7 @@ static int handle_content_merge(struct merge_options *opt,
 
 	if (merge_mode_and_contents(opt, o, a, b, path,
 				    opt->branch1, opt->branch2,
-				    opt->call_depth * 2, &mfi))
+				    opt->call_depth * 2, mfi))
 		return -1;
 
 	/*
@@ -3013,13 +3013,13 @@ static int handle_content_merge(struct merge_options *opt,
 	 *   b) The merge matches what was in HEAD (content, mode, pathname)
 	 *   c) The target path is usable (i.e. not involved in D/F conflict)
 	 */
-	if (mfi.clean && was_tracked_and_matches(opt, path, &mfi.blob) &&
+	if (mfi->clean && was_tracked_and_matches(opt, path, &mfi->blob) &&
 	    !df_conflict_remains) {
 		int pos;
 		struct cache_entry *ce;
 
 		output(opt, 3, _("Skipped %s (merged same as existing)"), path);
-		if (add_cacheinfo(opt, &mfi.blob, path,
+		if (add_cacheinfo(opt, &mfi->blob, path,
 				  0, (!opt->call_depth && !is_dirty), 0))
 			return -1;
 		/*
@@ -3035,11 +3035,11 @@ static int handle_content_merge(struct merge_options *opt,
 			ce = opt->repo->index->cache[pos];
 			ce->ce_flags |= CE_SKIP_WORKTREE;
 		}
-		return mfi.clean;
+		return mfi->clean;
 	}
 
-	if (!mfi.clean) {
-		if (S_ISGITLINK(mfi.blob.mode))
+	if (!mfi->clean) {
+		if (S_ISGITLINK(mfi->blob.mode))
 			reason = _("submodule");
 		output(opt, 1, _("CONFLICT (%s): Merge conflict in %s"),
 				reason, path);
@@ -3053,15 +3053,15 @@ static int handle_content_merge(struct merge_options *opt,
 		if (opt->call_depth) {
 			remove_file_from_index(opt->repo->index, path);
 		} else {
-			if (!mfi.clean) {
+			if (!mfi->clean) {
 				if (update_stages(opt, path, o, a, b))
 					return -1;
 			} else {
 				int file_from_stage2 = was_tracked(opt, path);
 
 				if (update_stages(opt, path, NULL,
-						  file_from_stage2 ? &mfi.blob : NULL,
-						  file_from_stage2 ? NULL : &mfi.blob))
+						  file_from_stage2 ? &mfi->blob : NULL,
+						  file_from_stage2 ? NULL : &mfi->blob))
 					return -1;
 			}
 
@@ -3072,15 +3072,15 @@ static int handle_content_merge(struct merge_options *opt,
 			       path);
 		}
 		output(opt, 1, _("Adding as %s instead"), new_path);
-		if (update_file(opt, 0, &mfi.blob, new_path)) {
+		if (update_file(opt, 0, &mfi->blob, new_path)) {
 			free(new_path);
 			return -1;
 		}
 		free(new_path);
-		mfi.clean = 0;
-	} else if (update_file(opt, mfi.clean, &mfi.blob, path))
+		mfi->clean = 0;
+	} else if (update_file(opt, mfi->clean, &mfi->blob, path))
 		return -1;
-	return !is_dirty && mfi.clean;
+	return !is_dirty && mfi->clean;
 }
 
 static int handle_rename_normal(struct merge_options *opt,
@@ -3091,7 +3091,8 @@ static int handle_rename_normal(struct merge_options *opt,
 				struct rename_conflict_info *ci)
 {
 	/* Merge the content and write it out */
-	return handle_content_merge(opt, path, was_dirty(opt, path),
+	struct merge_file_info mfi;
+	return handle_content_merge(&mfi, opt, path, was_dirty(opt, path),
 				    o, a, b, ci);
 }
 
@@ -3256,8 +3257,10 @@ static int process_entry(struct merge_options *opt,
 							    a, b);
 		} else {
 			/* case D: Modified in both, but differently. */
+			struct merge_file_info mfi;
 			int is_dirty = 0; /* unpack_trees would have bailed if dirty */
-			clean_merge = handle_content_merge(opt, path, is_dirty,
+			clean_merge = handle_content_merge(&mfi, opt, path,
+							   is_dirty,
 							   o, a, b, NULL);
 		}
 	} else if (!o_valid && !a_valid && !b_valid) {
