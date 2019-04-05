@@ -207,8 +207,16 @@ struct stage_data {
 };
 
 struct rename {
+	unsigned processed:1;
 	struct diff_filepair *pair;
 	const char *branch; /* branch that the rename occurred on */
+	/*
+	 * If directory rename detection affected this rename, what was its
+	 * original type ('A' or 'R') and it's original destination before
+	 * the directory rename (otherwise, '\0' and NULL for these two vars).
+	 */
+	char dir_rename_original_type;
+	char *dir_rename_original_dest;
 	/*
 	 * Purpose of src_entry and dst_entry:
 	 *
@@ -230,8 +238,6 @@ struct rename {
 	 */
 	struct stage_data *src_entry;
 	struct stage_data *dst_entry;
-	unsigned add_turned_into_rename:1;
-	unsigned processed:1;
 };
 
 struct rename_conflict_info {
@@ -2484,16 +2490,18 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 		       &re->dst_entry->stages[stage].oid,
 		       &re->dst_entry->stages[stage].mode);
 
-	/* Update pair status */
-	if (pair->status == 'A') {
-		/*
-		 * Recording rename information for this add makes it look
-		 * like a rename/delete conflict.  Make sure we can
-		 * correctly handle this as an add that was moved to a new
-		 * directory instead of reporting a rename/delete conflict.
-		 */
-		re->add_turned_into_rename = 1;
-	}
+	/*
+	 * Record the original change status (or 'type' of change).  If it
+	 * was originally an add ('A'), this lets us differentiate later
+	 * between a RENAME_DELETE conflict and RENAME_VIA_DIR (they
+	 * otherwise look the same).  If it was originally a rename ('R'),
+	 * this lets us remember and report accurately about the transitive
+	 * renaming that occurred via the directory rename detection.  Also,
+	 * record the original destination name.
+	 */
+	re->dir_rename_original_type = pair->status;
+	re->dir_rename_original_dest = pair->two->path;
+
 	/*
 	 * We don't actually look at pair->status again, but it seems
 	 * pedagogically correct to adjust it.
@@ -2556,9 +2564,10 @@ static struct string_list *get_renames(struct merge_options *opt,
 
 		re = xmalloc(sizeof(*re));
 		re->processed = 0;
-		re->add_turned_into_rename = 0;
 		re->pair = pair;
 		re->branch = branch;
+		re->dir_rename_original_type = '\0';
+		re->dir_rename_original_dest = NULL;
 		item = string_list_lookup(entries, re->pair->one->path);
 		if (!item)
 			re->src_entry = insert_stage_data(re->pair->one->path,
@@ -2726,7 +2735,7 @@ static int process_renames(struct merge_options *opt,
 			try_merge = 0;
 
 			if (oid_eq(&src_other.oid, &null_oid) &&
-			    ren1->add_turned_into_rename) {
+			    ren1->dir_rename_original_type == 'A') {
 				setup_rename_conflict_info(RENAME_VIA_DIR,
 							   opt, ren1, NULL);
 			} else if (oid_eq(&src_other.oid, &null_oid)) {
