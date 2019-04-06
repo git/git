@@ -106,8 +106,8 @@ test_expect_failure 'stash -p with split hunk' '
 	ccc
 	EOF
 	printf "%s\n" s n y q |
-	test_might_fail git stash -p 2>error &&
-	! test_must_be_empty error &&
+	git stash -p 2>error &&
+	test_must_be_empty error &&
 	grep "added line 1" test &&
 	! grep "added line 2" test
 '
