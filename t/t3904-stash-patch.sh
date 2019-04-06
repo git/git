@@ -89,7 +89,7 @@ test_expect_success 'none of this moved HEAD' '
 	verify_saved_head
 '
 
-test_expect_failure 'stash -p with split hunk' '
+test_expect_success 'stash -p with split hunk' '
 	git reset --hard &&
 	cat >test <<-\EOF &&
 	aaa
