@@ -1592,8 +1592,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				branch_name = options.head_name;
 
 		} else {
-			free(options.head_name);
-			options.head_name = NULL;
+			FREE_AND_NULL(options.head_name);
 			branch_name = "HEAD";
 		}
 		if (get_oid("HEAD", &options.orig_head))
