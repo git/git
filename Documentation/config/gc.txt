@@ -1,7 +1,8 @@
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
-	to 50.
+	to 50, which is the default for the `--depth` option when
+	`--aggressive` isn't in use.
 +
 See the documentation for the `--depth` option in
 linkgit:git-repack[1] for more details.
@@ -9,7 +10,8 @@ linkgit:git-repack[1] for more details.
 gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
-	to 250.
+	to 250, which is a much more aggressive window size than
+	the default `--window` of 10.
 +
 See the documentation for the `--window` option in
 linkgit:git-repack[1] for more details.
