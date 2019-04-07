@@ -53,9 +53,9 @@ will be repacked. After this the number of packs should go below
 gc.autoPackLimit and gc.bigPackThreshold should be respected again.
 +
 If the amount of memory estimated for `git repack` to run smoothly is
-not available and `gc.bigPackThreshold` is not set, the largest
-pack will also be excluded (this is the equivalent of running `git gc`
-with `--keep-base-pack`).
+not available and `gc.bigPackThreshold` is not set, the largest pack
+will also be excluded (this is the equivalent of running `git gc` with
+`--keep-base-pack`).
 
 gc.writeCommitGraph::
 	If true, then gc will rewrite the commit-graph file when
@@ -115,12 +115,11 @@ gc.<pattern>.reflogExpireUnreachable::
 	in the middle, the setting applies only to the refs that
 	match the <pattern>.
 +
-These types of entries are generally created as
-a result of using `git commit --amend` or `git rebase` and are the
-commits prior to the amend or rebase occurring.  Since these changes
-are not part of the current project most users will want to expire
-them sooner, which is why the default is more aggressive than
-`gc.reflogExpire`.
+These types of entries are generally created as a result of using `git
+commit --amend` or `git rebase` and are the commits prior to the amend
+or rebase occurring.  Since these changes are not part of the current
+project most users will want to expire them sooner, which is why the
+default is more aggressive than `gc.reflogExpire`.
 
 gc.rerereResolved::
 	Records of conflicted merge you resolved earlier are
