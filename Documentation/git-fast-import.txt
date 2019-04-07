@@ -1396,6 +1396,13 @@ deltas are suboptimal (see above) then also adding the `-f` option
 to force recomputation of all deltas can significantly reduce the
 final packfile size (30-50% smaller can be quite typical).
 
+Instead of running `git repack` you can also run `git gc
+--aggressive`, which will also optimize other things after an import
+(e.g. pack loose refs). As noted in the "AGGRESSIVE" section in
+linkgit:git-gc[1] the `--aggressive` option will find new deltas with
+the `-f` option to linkgit:git-repack[1]. For the reasons elaborated
+on above using `--aggressive` after a fast-import is one of the few
+cases where it's known to be worthwhile.
 
 MEMORY UTILIZATION
 ------------------
