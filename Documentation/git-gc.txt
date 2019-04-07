@@ -141,8 +141,7 @@ mitigate this problem:
 
 However, these features fall short of a complete solution, so users who
 run commands concurrently have to live with some risk of corruption (which
-seems to be low in practice) unless they turn off automatic garbage
-collection with 'git config gc.auto 0'.
+seems to be low in practice).
 
 HOOKS
 -----
