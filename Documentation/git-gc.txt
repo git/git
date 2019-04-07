@@ -39,8 +39,7 @@ OPTIONS
 	space utilization and performance.  This option will cause
 	'git gc' to more aggressively optimize the repository at the expense
 	of taking much more time.  The effects of this optimization are
-	persistent, so this option only needs to be used occasionally; every
-	few hundred changesets or so.
+	mostly persistent. See the "AGGRESSIVE" section below for details.
 
 --auto::
 	With this option, 'git gc' checks whether any housekeeping is
@@ -77,6 +76,32 @@ be performed as well.
 	All packs except the largest pack and those marked with a
 	`.keep` files are consolidated into a single pack. When this
 	option is used, `gc.bigPackThreshold` is ignored.
+
+AGGRESSIVE
+----------
+
+When the `--aggressive` option is supplied, linkgit:git-repack[1] will
+be invoked with the `-f` flag, which in turn will pass
+`--no-reuse-delta` to linkgit:git-pack-objects[1]. This will throw
+away any existing deltas and re-compute them, at the expense of
+spending much more time on the repacking.
+
+The effects of this are mostly persistent, e.g. when packs and loose
+objects are coalesced into one another pack the existing deltas in
+that pack might get re-used, but there are also various cases where we
+might pick a sub-optimal delta from a newer pack instead.
+
+Furthermore, supplying `--aggressive` will tweak the `--depth` and
+`--window` options passed to linkgit:git-repack[1]. See the
+`gc.aggressiveDepth` and `gc.aggressiveWindow` settings below. By
+using a larger window size we're more likely to find more optimal
+deltas.
+
+It's probably not worth it to use this option on a given repository
+without running tailored performance benchmarks on it. It takes a lot
+more time, and the resulting space/delta optimization may or may not
+be worth it. Not using this at all is the right trade-off for most
+users and their repositories.
 
 CONFIGURATION
 -------------
