@@ -119,8 +119,8 @@ anywhere in your repository. In
 particular, it will keep not only objects referenced by your current set
 of branches and tags, but also objects referenced by the index,
 remote-tracking branches, refs saved by 'git filter-branch' in
-refs/original/, or reflogs (which may reference commits in branches
-that were later amended or rewound).
+refs/original/, reflogs (which may reference commits in branches
+that were later amended or rewound), and anything else in the refs/* namespace.
 If you are expecting some objects to be deleted and they aren't, check
 all of those locations and decide whether it makes sense in your case to
 remove those references.
