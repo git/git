@@ -59,8 +59,8 @@ will also be excluded (this is the equivalent of running `git gc` with
 
 gc.writeCommitGraph::
 	If true, then gc will rewrite the commit-graph file when
-	linkgit:git-gc[1] is run. When using linkgit:git-gc[1]
-	'--auto' the commit-graph will be updated if housekeeping is
+	linkgit:git-gc[1] is run. When using `git gc --auto`
+	the commit-graph will be updated if housekeeping is
 	required. Default is false. See linkgit:git-commit-graph[1]
 	for details.
 
