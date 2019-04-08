@@ -197,6 +197,7 @@
 #include "compat/win32/path-utils.h"
 #include "compat/mingw.h"
 #elif defined(_MSC_VER)
+#include "compat/win32/path-utils.h"
 #include "compat/msvc.h"
 #else
 #include <sys/utsname.h>
