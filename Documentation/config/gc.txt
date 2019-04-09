@@ -19,7 +19,7 @@ gc.autoPackLimit::
 	When there are more than this many packs that are not
 	marked with `*.keep` file in the repository, `git gc
 	--auto` consolidates them into one larger pack.  The
-	default	value is 50.  Setting this to 0 disables it.
+	default value is 50.  Setting this to 0 disables it.
 
 gc.autoDetach::
 	Make `git gc --auto` return immediately and run in background

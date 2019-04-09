@@ -16,5 +16,5 @@ gpg.format::
 gpg.<format>.program::
 	Use this to customize the program used for the signing format you
 	chose. (see `gpg.program` and `gpg.format`) `gpg.program` can still
-	be used as a legacy synonym for	`gpg.openpgp.program`. The default
+	be used as a legacy synonym for `gpg.openpgp.program`. The default
 	value for `gpg.x509.program` is "gpgsm".
