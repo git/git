@@ -296,6 +296,17 @@ test_expect_success '"git add ." in empty repo' '
 	)
 '
 
+test_expect_success 'error on a repository with no commits' '
+	rm -fr empty &&
+	git init empty &&
+	test_must_fail git add empty >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	error: '"'empty/'"' does not have a commit checked out
+	fatal: adding files failed
+	EOF
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'git add --dry-run of existing changed file' "
 	echo new >>track-this &&
 	git add --dry-run track-this >actual 2>&1 &&
