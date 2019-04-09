@@ -136,6 +136,15 @@ static inline int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
+/*
+ * Normalize curl results to handle CURL_FAILONERROR (or lack thereof). Failing
+ * http codes have their "result" converted to CURLE_HTTP_RETURNED_ERROR, and
+ * an appropriate string placed in the errorstr buffer (pass curl_errorstr if
+ * you don't have a custom buffer).
+ */
+void normalize_curl_result(CURLcode *result, long http_code, char *errorstr,
+			   size_t errorlen);
+
 /* Helpers for modifying and creating URLs */
 extern void append_remote_object_url(struct strbuf *buf, const char *url,
 				     const char *hex,
