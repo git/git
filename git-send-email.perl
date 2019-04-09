@@ -231,7 +231,7 @@ my ($validate, $confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
 my ($compose_encoding);
-my $target_xfer_encoding = 'auto';
+my ($target_xfer_encoding);
 
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 
@@ -434,6 +434,8 @@ sub read_config {
 			$smtp_encryption = 'ssl';
 		}
 	}
+
+	$target_xfer_encoding = 'auto' unless (defined $target_xfer_encoding);
 }
 
 # read configuration from [sendemail "$identity"], fall back on [sendemail]
