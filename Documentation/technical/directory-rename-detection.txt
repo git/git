@@ -20,8 +20,8 @@ More interesting possibilities exist, though, such as:
   * one side of history renames x -> z, and the other renames some file to
     x/e, causing the need for the merge to do a transitive rename.
 
-  * one side of history renames x -> z, but also renames all files within
-    x.  For example, x/a -> z/alpha, x/b -> z/bravo, etc.
+  * one side of history renames x -> z, but also renames all files within x.
+    For example, x/a -> z/alpha, x/b -> z/bravo, etc.
 
   * both 'x' and 'y' being merged into a single directory 'z', with a
     directory rename being detected for both x->z and y->z.
