@@ -314,8 +314,8 @@ stored as UTF-8 internally. A client without `working-tree-encoding`
 support will checkout `foo.ps1` as UTF-8 encoded file. This will
 typically cause trouble for the users of this file.
 +
-If a Git client, that does not support the `working-tree-encoding`
-attribute, adds a new file `bar.ps1`, then `bar.ps1` will be
+If a Git client that does not support the `working-tree-encoding`
+attribute adds a new file `bar.ps1`, then `bar.ps1` will be
 stored "as-is" internally (in this example probably as UTF-16).
 A client with `working-tree-encoding` support will interpret the
 internal contents as UTF-8 and try to convert it to UTF-16 on checkout.
