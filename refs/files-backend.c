@@ -215,6 +215,33 @@ static void files_ref_path(struct files_ref_store *refs,
 }
 
 /*
+ * Manually add refs/bisect, refs/rewritten and refs/worktree, which, being
+ * per-worktree, might not appear in the directory listing for
+ * refs/ in the main repo.
+ */
+static void add_per_worktree_entries_to_dir(struct ref_dir *dir, const char *dirname)
+{
+	const char *prefixes[] = { "refs/bisect/", "refs/worktree/", "refs/rewritten/" };
+	int ip;
+
+	if (strcmp(dirname, "refs/"))
+		return;
+
+	for (ip = 0; ip < ARRAY_SIZE(prefixes); ip++) {
+		const char *prefix = prefixes[ip];
+		int prefix_len = strlen(prefix);
+		struct ref_entry *child_entry;
+		int pos;
+
+		pos = search_ref_dir(dir, prefix, prefix_len);
+		if (pos >= 0)
+			continue;
+		child_entry = create_dir_entry(dir->cache, prefix, prefix_len, 1);
+		add_entry_to_dir(dir, child_entry);
+	}
+}
+
+/*
  * Read the loose references from the namespace dirname into dir
  * (without recursing).  dirname must end with '/'.  dir must be the
  * directory entry corresponding to dirname.
@@ -297,28 +324,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	strbuf_release(&path);
 	closedir(d);
 
-	/*
-	 * Manually add refs/bisect and refs/worktree, which, being
-	 * per-worktree, might not appear in the directory listing for
-	 * refs/ in the main repo.
-	 */
-	if (!strcmp(dirname, "refs/")) {
-		int pos = search_ref_dir(dir, "refs/bisect/", 12);
-
-		if (pos < 0) {
-			struct ref_entry *child_entry = create_dir_entry(
-					dir->cache, "refs/bisect/", 12, 1);
-			add_entry_to_dir(dir, child_entry);
-		}
-
-		pos = search_ref_dir(dir, "refs/worktree/", 11);
-
-		if (pos < 0) {
-			struct ref_entry *child_entry = create_dir_entry(
-					dir->cache, "refs/worktree/", 11, 1);
-			add_entry_to_dir(dir, child_entry);
-		}
-	}
+	add_per_worktree_entries_to_dir(dir, dirname);
 }
 
 static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
