@@ -164,7 +164,17 @@ test_expect_success 'clone from auth-only-for-objects repository' '
 
 test_expect_success 'no-op half-auth fetch does not require a password' '
 	set_askpass wrong &&
-	git --git-dir=half-auth fetch &&
+
+	# NEEDSWORK: When using HTTP(S), protocol v0 supports a "half-auth"
+	# configuration with authentication required only when downloading
+	# objects and not refs, by having the HTTP server only require
+	# authentication for the "git-upload-pack" path and not "info/refs".
+	# This is not possible with protocol v2, since both objects and refs
+	# are obtained from the "git-upload-pack" path. A solution to this is
+	# to teach the server and client to be able to inline ls-refs requests
+	# as an Extra Parameter (see pack-protocol.txt), so that "info/refs"
+	# can serve refs, just like it does in protocol v0.
+	GIT_TEST_PROTOCOL_VERSION=0 git --git-dir=half-auth fetch &&
 	expect_askpass none
 '
 
