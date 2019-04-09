@@ -1192,6 +1192,17 @@ If this attribute is not set or has an invalid value, the value of the
 (See linkgit:git-config[1]).
 
 
+Precious files
+~~~~~~~~~~~~~~
+
+`precious`
+^^^^^^^^^^
+
+This attribute is set on files to indicate that their content is
+valuable. Some commands will behave slightly different on precious
+files. linkgit:git-clean[1] may leave precious files alone.
+
+
 USING MACRO ATTRIBUTES
 ----------------------
 
