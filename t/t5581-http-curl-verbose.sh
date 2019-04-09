@@ -23,6 +23,4 @@ test_expect_success 'failure in git-upload-pack is shown' '
 	grep "< HTTP/1.1 500 Intentional Breakage" curl_log
 '
 
-stop_httpd
-
 test_done

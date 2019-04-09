@@ -257,8 +257,6 @@ test_expect_success 'server loses a ref - ref in want' '
 	test_i18ngrep "fatal: remote error: unknown ref refs/heads/raster" err
 '
 
-stop_httpd
-
 REPO="$(pwd)/repo"
 LOCAL_PRISTINE="$(pwd)/local_pristine"
 

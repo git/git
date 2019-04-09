@@ -90,5 +90,4 @@ EOF
 	)
 '
 
-stop_httpd
 test_done

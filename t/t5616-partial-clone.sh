@@ -331,6 +331,4 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
 '
 
-stop_httpd
-
 test_done

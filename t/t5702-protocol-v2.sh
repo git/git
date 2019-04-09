@@ -687,6 +687,4 @@ test_expect_success 'when server does not send "ready", expect FLUSH' '
 	test_i18ngrep "expected no other sections to be sent after no .ready." err
 '
 
-stop_httpd
-
 test_done

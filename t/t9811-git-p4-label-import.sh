@@ -191,7 +191,7 @@ test_expect_success 'tag that cannot be exported' '
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		!(p4 labels | grep GIT_TAG_ON_A_BRANCH)
+		! p4 labels | grep GIT_TAG_ON_A_BRANCH
 	)
 '
 
@@ -257,11 +257,6 @@ test_expect_success 'importing labels with missing revisions' '
 			! git rev-parse TAG_S0
 		)
 	)
-'
-
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done
