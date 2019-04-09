@@ -40,6 +40,18 @@ static struct promisor_remote *promisor_remote_lookup(const char *remote_name,
 	return NULL;
 }
 
+static void promisor_remote_move_to_tail(struct promisor_remote *r,
+					 struct promisor_remote *previous)
+{
+	if (previous)
+		previous->next = r->next;
+	else
+		promisors = r->next ? r->next : r;
+	r->next = NULL;
+	*promisors_tail = r;
+	promisors_tail = &r->next;
+}
+
 static int promisor_remote_config(const char *var, const char *value, void *data)
 {
 	const char *name;
@@ -76,6 +88,17 @@ static void promisor_remote_init(void)
 	initialized = 1;
 
 	git_config(promisor_remote_config, NULL);
+
+	if (repository_format_partial_clone) {
+		struct promisor_remote *o, *previous;
+
+		o = promisor_remote_lookup(repository_format_partial_clone,
+					   &previous);
+		if (o)
+			promisor_remote_move_to_tail(o, previous);
+		else
+			promisor_remote_new(repository_format_partial_clone);
+	}
 }
 
 static void promisor_remote_clear(void)
