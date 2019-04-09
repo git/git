@@ -396,6 +396,7 @@ test_expect_success 'no file status change if no pathspec is given in subdir' '
 '
 
 test_expect_success 'all statuses changed in folder if . is given' '
+	rm -fr empty &&
 	git add --chmod=+x . &&
 	test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
 	git add --chmod=-x . &&
