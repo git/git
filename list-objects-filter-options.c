@@ -6,6 +6,7 @@
 #include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
+#include "promisor-remote.h"
 
 /*
  * Parse value of the argument to the "filter" keyword.
@@ -144,30 +145,31 @@ void partial_clone_register(
 	const char *remote,
 	const struct list_objects_filter_options *filter_options)
 {
-	/*
-	 * Record the name of the partial clone remote in the
-	 * config and in the global variable -- the latter is
-	 * used throughout to indicate that partial clone is
-	 * enabled and to expect missing objects.
-	 */
-	if (repository_format_partial_clone &&
-	    *repository_format_partial_clone &&
-	    strcmp(remote, repository_format_partial_clone))
-		die(_("cannot change partial clone promisor remote"));
+	char *cfg_name;
 
-	git_config_set("core.repositoryformatversion", "1");
-	git_config_set("extensions.partialclone", remote);
+	/* Check if it is already registered */
+	if (!promisor_remote_find(remote)) {
+		git_config_set("core.repositoryformatversion", "1");
 
-	repository_format_partial_clone = xstrdup(remote);
+		/* Add promisor config for the remote */
+		cfg_name = xstrfmt("remote.%s.promisor", remote);
+		git_config_set(cfg_name, "true");
+		free(cfg_name);
+	}
 
 	/*
 	 * Record the initial filter-spec in the config as
 	 * the default for subsequent fetches from this remote.
+	 *
+	 * TODO: record it into remote.<name>.partialclonefilter
 	 */
 	core_partial_clone_filter_default =
 		xstrdup(filter_options->filter_spec);
 	git_config_set("core.partialclonefilter",
 		       core_partial_clone_filter_default);
+
+	/* Make sure the config info are reset */
+	promisor_remote_reinit();
 }
 
 void partial_clone_get_default_filter_spec(
