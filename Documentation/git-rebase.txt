@@ -415,9 +415,9 @@ i.e. commits that would be excluded by linkgit:git-log[1]'s
 the `rebase-cousins` mode is turned on, such commits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
-The `--rebase-merges` mode is similar in spirit to `--preserve-merges`, but
-in contrast to that option works well in interactive rebases: commits can be
-reordered, inserted and dropped at will.
+The `--rebase-merges` mode is similar in spirit to the deprecated
+`--preserve-merges`, but in contrast to that option works well in interactive
+rebases: commits can be reordered, inserted and dropped at will.
 +
 It is currently only possible to recreate the merge commits using the
 `recursive` merge strategy; Different merge strategies can be used only via
@@ -427,9 +427,10 @@ See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
 
 -p::
 --preserve-merges::
-	Recreate merge commits instead of flattening the history by replaying
-	commits a merge commit introduces. Merge conflict resolutions or manual
-	amendments to merge commits are not preserved.
+	[DEPRECATED: use `--rebase-merges` instead] Recreate merge commits
+	instead of flattening the history by replaying commits a merge commit
+	introduces. Merge conflict resolutions or manual amendments to merge
+	commits are not preserved.
 +
 This uses the `--interactive` machinery internally, but combining it
 with the `--interactive` option explicitly is generally not a good
@@ -1020,11 +1021,11 @@ merge cmake
 
 BUGS
 ----
-The todo list presented by `--preserve-merges --interactive` does not
-represent the topology of the revision graph.  Editing commits and
-rewording their commit messages should work fine, but attempts to
-reorder commits tend to produce counterintuitive results. Use
-`--rebase-merges` in such scenarios instead.
+The todo list presented by the deprecated `--preserve-merges --interactive`
+does not represent the topology of the revision graph (use `--rebase-merges`
+instead).  Editing commits and rewording their commit messages should work
+fine, but attempts to reorder commits tend to produce counterintuitive results.
+Use `--rebase-merges` in such scenarios instead.
 
 For example, an attempt to rearrange
 ------------

@@ -1105,8 +1105,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			parse_opt_interactive },
 		OPT_SET_INT('p', "preserve-merges", &options.type,
-			    N_("try to recreate merges instead of ignoring "
-			       "them"), REBASE_PRESERVE_MERGES),
+			    N_("(DEPRECATED) try to recreate merges instead of "
+			       "ignoring them"), REBASE_PRESERVE_MERGES),
 		OPT_BOOL(0, "rerere-autoupdate",
 			 &options.allow_rerere_autoupdate,
 			 N_("allow rerere to update index with resolved "
@@ -1216,6 +1216,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
+
+	if (options.type == REBASE_PRESERVE_MERGES)
+		warning(_("git rebase --preserve-merges is deprecated. "
+			  "Use --rebase-merges instead."));
 
 	if (action != NO_ACTION && !in_progress)
 		die(_("No rebase in progress?"));
