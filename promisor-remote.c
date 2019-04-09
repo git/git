@@ -4,6 +4,13 @@
 #include "config.h"
 #include "transport.h"
 
+static char *repository_format_partial_clone;
+
+void set_repository_format_partial_clone(char *partial_clone)
+{
+	repository_format_partial_clone = xstrdup_or_null(partial_clone);
+}
+
 static int fetch_refs(const char *remote_name, struct ref *ref)
 {
 	struct remote *remote;

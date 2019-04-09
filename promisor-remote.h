@@ -20,4 +20,10 @@ extern struct promisor_remote *promisor_remote_find(const char *remote_name);
 extern int has_promisor_remote(void);
 extern int promisor_remote_get_direct(const struct object_id *oids, int oid_nr);
 
+/*
+ * This should be used only once from setup.c to set the value we got
+ * from the extensions.partialclone config option.
+ */
+extern void set_repository_format_partial_clone(char *partial_clone);
+
 #endif /* PROMISOR_REMOTE_H */
