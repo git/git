@@ -36,6 +36,12 @@ UI, Workflows & Features
    a merge commit.  This has been updated to use a more modern and
    human readable output that still is concise enough.
 
+ * "git rebase --rebase-merges" replaces its old "--preserve-merges"
+   option; the latter is now marked as deprecated.
+
+ * Error message given while cloning with --recurse-submodules has
+   been updated.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -54,6 +60,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The command line parser of "git commit-tree" has been rewritten to
    use the parse-options API.
+
+ * Suggest GitGitGadget instead of submitGit as a way to submit
+   patches based on GitHub PR to us.
 
 
 Fixes since v2.21
@@ -134,6 +143,31 @@ Fixes since v2.21
    now fixed.
    (merge cd8e7593b9 jk/config-type-color-ends-with-lf later to maint).
 
+ * When the "clean" filter can reduce the size of a huge file in the
+   working tree down to a small "token" (a la Git LFS), there is no
+   point in allocating a huge scratch area upfront, but the buffer is
+   sized based on the original file size.  The convert mechanism now
+   allocates very minimum and reallocates as it receives the output
+   from the clean filter process.
+   (merge 02156ab031 jh/resize-convert-scratch-buffer later to maint).
+
+ * "git rebase" uses the refs/rewritten/ hierarchy to store its
+   intermediate states, which inherently makes the hierarchy per
+   worktree, but it didn't quite work well.
+   (merge b9317d55a3 nd/rewritten-ref-is-per-worktree later to maint).
+
+ * "git log -L<from>,<to>:<path>" with "-s" did not suppress the patch
+   output as it should.  This has been corrected.
+   (merge 05314efaea jk/line-log-with-patch later to maint).
+
+ * "git worktree add" used to do a "find an available name with stat
+   and then mkdir", which is race-prone.  This has been fixed by using
+   mkdir and reacting to EEXIST in a loop.
+   (merge 7af01f2367 ms/worktree-add-atomic-mkdir later to maint).
+
+ * Build update for SHA-1 with collision detection.
+   (merge 07a20f569b jk/sha1dc later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
    (merge 90503a240b js/doc-symref-in-proto-v1 later to maint).
@@ -148,3 +182,8 @@ Fixes since v2.21
    (merge 716a5af812 rd/gc-prune-doc-fix later to maint).
    (merge 50b206371d js/untravis-windows later to maint).
    (merge dbf47215e3 js/rebase-recreate-merge later to maint).
+   (merge 56cb2d30f8 dl/reset-doc-no-wrt-abbrev later to maint).
+   (merge 64eca306a2 ja/dir-rename-doc-markup-fix later to maint).
+   (merge af91b0230c dl/ignore-docs later to maint).
+   (merge 59a06e947b ra/t3600-test-path-funcs later to maint).
+   (merge e041d0781b ar/t4150-remove-cruft later to maint).
