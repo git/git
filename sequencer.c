@@ -2137,7 +2137,8 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	item->arg_len = (int)(eol - item->arg);
 
 	if (status < 0)
-		return -1;
+		return error(_("could not parse '%.*s'"),
+			     (int)(end_of_object_name - bol), bol);
 
 	item->commit = lookup_commit_reference(r, &commit_oid);
 	return !item->commit;
@@ -3640,7 +3641,6 @@ static int pick_commits(struct repository *r,
 			res = do_exec(r, item->arg);
 			*end_of_arg = saved;
 
-			/* Reread the todo file if it has changed. */
 			if (res) {
 				if (opts->reschedule_failed_exec)
 					reschedule = 1;
@@ -3648,6 +3648,7 @@ static int pick_commits(struct repository *r,
 				res = error_errno(_("could not stat '%s'"),
 						  get_todo_path(opts));
 			else if (match_stat_data(&todo_list->stat, &st)) {
+				/* Reread the todo file if it has changed. */
 				todo_list_release(todo_list);
 				if (read_populate_todo(r, todo_list, opts))
 					res = -1; /* message was printed */
