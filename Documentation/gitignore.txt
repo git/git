@@ -132,6 +132,14 @@ full pathname may have special meaning:
  - Other consecutive asterisks are considered regular asterisks and
    will match according to the previous rules.
 
+CONFIGURATION
+-------------
+
+The optional configuration variable `core.excludesFile` indicates a path to a
+file containing patterns of file names to exclude, similar to
+`$GIT_DIR/info/exclude`.  Patterns in the exclude file are used in addition to
+those in `$GIT_DIR/info/exclude`.
+
 NOTES
 -----
 
