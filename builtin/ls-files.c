@@ -680,7 +680,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	if (ps_matched) {
 		int bad;
-		bad = report_path_error(ps_matched, &pathspec, prefix);
+		bad = report_path_error(ps_matched, &pathspec);
 		if (bad)
 			fprintf(stderr, "Did you forget to 'git add'?\n");
 

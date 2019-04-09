@@ -1615,9 +1615,8 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 }
 
 struct ref *fetch_pack(struct fetch_pack_args *args,
-		       int fd[], struct child_process *conn,
+		       int fd[],
 		       const struct ref *ref,
-		       const char *dest,
 		       struct ref **sought, int nr_sought,
 		       struct oid_array *shallow,
 		       char **pack_lockfile,

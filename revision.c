@@ -1894,7 +1894,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	return 0;
 }
 
-static void read_pathspec_from_stdin(struct rev_info *revs, struct strbuf *sb,
+static void read_pathspec_from_stdin(struct strbuf *sb,
 				     struct argv_array *prune)
 {
 	while (strbuf_getline(sb, stdin) != EOF)
@@ -1928,7 +1928,7 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 			die("bad revision '%s'", sb.buf);
 	}
 	if (seen_dashdash)
-		read_pathspec_from_stdin(revs, &sb, prune);
+		read_pathspec_from_stdin(&sb, prune);
 
 	strbuf_release(&sb);
 	warn_on_object_refname_ambiguity = save_warning;
@@ -2752,7 +2752,7 @@ static struct merge_simplify_state *locate_simplify_state(struct rev_info *revs,
 	return st;
 }
 
-static int mark_redundant_parents(struct rev_info *revs, struct commit *commit)
+static int mark_redundant_parents(struct commit *commit)
 {
 	struct commit_list *h = reduce_heads(commit->parents);
 	int i = 0, marked = 0;
@@ -2788,7 +2788,7 @@ static int mark_redundant_parents(struct rev_info *revs, struct commit *commit)
 	return marked;
 }
 
-static int mark_treesame_root_parents(struct rev_info *revs, struct commit *commit)
+static int mark_treesame_root_parents(struct commit *commit)
 {
 	struct commit_list *p;
 	int marked = 0;
@@ -2980,8 +2980,8 @@ static struct commit_list **simplify_one(struct rev_info *revs, struct commit *c
 	 * Detect and simplify both cases.
 	 */
 	if (1 < cnt) {
-		int marked = mark_redundant_parents(revs, commit);
-		marked += mark_treesame_root_parents(revs, commit);
+		int marked = mark_redundant_parents(commit);
+		marked += mark_treesame_root_parents(commit);
 		if (marked)
 			marked -= leave_one_treesame_to_parent(revs, commit);
 		if (marked)

@@ -523,8 +523,7 @@ static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
 	}
 }
 
-static int show_gitcomp(struct parse_opt_ctx_t *ctx,
-			const struct option *opts)
+static int show_gitcomp(const struct option *opts)
 {
 	const struct option *original_opts = opts;
 	int nr_noopts = 0;
@@ -603,7 +602,7 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 
 		/* lone --git-completion-helper is asked by git-completion.bash */
 		if (ctx->total == 1 && !strcmp(arg + 1, "-git-completion-helper"))
-			return show_gitcomp(ctx, options);
+			return show_gitcomp(options);
 
 		if (arg[1] != '-') {
 			ctx->opt = arg + 1;

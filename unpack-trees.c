@@ -707,7 +707,6 @@ static int index_pos_by_traverse_info(struct name_entry *names,
  * instead of ODB since we already know what these trees contain.
  */
 static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
-				  struct name_entry *names,
 				  struct traverse_info *info)
 {
 	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
@@ -797,7 +796,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 		 * unprocessed entries before 'pos'.
 		 */
 		bottom = o->cache_bottom;
-		ret = traverse_by_cache_tree(pos, nr_entries, n, names, info);
+		ret = traverse_by_cache_tree(pos, nr_entries, n, info);
 		o->cache_bottom = bottom;
 		return ret;
 	}
@@ -1761,7 +1760,6 @@ static void invalidate_ce_path(const struct cache_entry *ce,
  */
 static int verify_clean_submodule(const char *old_sha1,
 				  const struct cache_entry *ce,
-				  enum unpack_trees_error_types error_type,
 				  struct unpack_trees_options *o)
 {
 	if (!submodule_from_ce(ce))
@@ -1772,7 +1770,6 @@ static int verify_clean_submodule(const char *old_sha1,
 }
 
 static int verify_clean_subdirectory(const struct cache_entry *ce,
-				     enum unpack_trees_error_types error_type,
 				     struct unpack_trees_options *o)
 {
 	/*
@@ -1795,7 +1792,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 		if (!sub_head && oideq(&oid, &ce->oid))
 			return 0;
 		return verify_clean_submodule(sub_head ? NULL : oid_to_hex(&oid),
-					      ce, error_type, o);
+					      ce, o);
 	}
 
 	/*
@@ -1891,7 +1888,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 		 * files that are in "foo/" we would lose
 		 * them.
 		 */
-		if (verify_clean_subdirectory(ce, error_type, o) < 0)
+		if (verify_clean_subdirectory(ce, o) < 0)
 			return -1;
 		return 0;
 	}
