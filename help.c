@@ -375,13 +375,6 @@ void list_cmds_by_config(struct string_list *list)
 {
 	const char *cmd_list;
 
-	/*
-	 * There's no actual repository setup at this point (and even
-	 * if there is, we don't really care; only global config
-	 * matters). If we accidentally set up a repository, it's ok
-	 * too since the caller (git --list-cmds=) should exit shortly
-	 * anyway.
-	 */
 	if (git_config_get_string_const("completion.commands", &cmd_list))
 		return;
 
@@ -393,8 +386,8 @@ void list_cmds_by_config(struct string_list *list)
 		const char *p = strchrnul(cmd_list, ' ');
 
 		strbuf_add(&sb, cmd_list, p - cmd_list);
-		if (*cmd_list == '-')
-			string_list_remove(list, cmd_list + 1, 0);
+		if (sb.buf[0] == '-')
+			string_list_remove(list, sb.buf + 1, 0);
 		else
 			string_list_insert(list, sb.buf);
 		strbuf_release(&sb);
