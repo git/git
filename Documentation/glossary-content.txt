@@ -287,6 +287,15 @@ This commit is referred to as a "merge commit", or sometimes just a
 	origin/name-of-upstream-branch, which you can see using
 	`git branch -r`.
 
+[[def_overlay]]overlay::
+	Only update and add files to the working directory, but don't
+	delete them, similar to how 'cp -R' would update the contents
+	in the destination directory.  This is the default mode in a
+	<<def_checkout,checkout>> when checking out files from the
+	<<def_index,index>> or a <<def_tree-ish,tree-ish>>.  In
+	contrast, no-overlay mode also deletes tracked files not
+	present in the source, similar to 'rsync --delete'.
+
 [[def_pack]]pack::
 	A set of objects which have been compressed into one file (to save space
 	or to transmit them efficiently).
