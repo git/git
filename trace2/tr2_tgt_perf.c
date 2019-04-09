@@ -211,7 +211,7 @@ static void fn_atexit(uint64_t us_elapsed_absolute, int code)
 static void maybe_append_string_va(struct strbuf *buf, const char *fmt,
 				   va_list ap)
 {
-	if (fmt && *fmt && ap) {
+	if (fmt && *fmt) {
 		va_list copy_ap;
 
 		va_copy(copy_ap, ap);

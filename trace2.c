@@ -548,10 +548,14 @@ void trace2_region_enter_printf_va_fl(const char *file, int line,
 }
 
 void trace2_region_enter_fl(const char *file, int line, const char *category,
-			    const char *label, const struct repository *repo)
+			    const char *label, const struct repository *repo, ...)
 {
+	va_list ap;
+	va_start(ap, repo);
 	trace2_region_enter_printf_va_fl(file, line, category, label, repo,
-					 NULL, NULL);
+					 NULL, ap);
+	va_end(ap);
+
 }
 
 void trace2_region_enter_printf_fl(const char *file, int line,
@@ -621,10 +625,13 @@ void trace2_region_leave_printf_va_fl(const char *file, int line,
 }
 
 void trace2_region_leave_fl(const char *file, int line, const char *category,
-			    const char *label, const struct repository *repo)
+			    const char *label, const struct repository *repo, ...)
 {
+	va_list ap;
+	va_start(ap, repo);
 	trace2_region_leave_printf_va_fl(file, line, category, label, repo,
-					 NULL, NULL);
+					 NULL, ap);
+	va_end(ap);
 }
 
 void trace2_region_leave_printf_fl(const char *file, int line,

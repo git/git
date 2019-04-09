@@ -238,7 +238,7 @@ void trace2_def_repo_fl(const char *file, int line, struct repository *repo);
  * on this thread.
  */
 void trace2_region_enter_fl(const char *file, int line, const char *category,
-			    const char *label, const struct repository *repo);
+			    const char *label, const struct repository *repo, ...);
 
 #define trace2_region_enter(category, label, repo) \
 	trace2_region_enter_fl(__FILE__, __LINE__, (category), (label), (repo))
@@ -278,7 +278,7 @@ void trace2_region_enter_printf(const char *category, const char *label,
  * in this nesting level.
  */
 void trace2_region_leave_fl(const char *file, int line, const char *category,
-			    const char *label, const struct repository *repo);
+			    const char *label, const struct repository *repo, ...);
 
 #define trace2_region_leave(category, label, repo) \
 	trace2_region_leave_fl(__FILE__, __LINE__, (category), (label), (repo))
