@@ -30,7 +30,7 @@ test_expect_success 'setup unexpected non-tree entry' '
 	broken_tree="$(git hash-object -w --literally -t tree broken-tree)"
 '
 
-test_expect_failure 'traverse unexpected non-tree entry (lone)' '
+test_expect_success 'traverse unexpected non-tree entry (lone)' '
 	test_must_fail git rev-list --objects $broken_tree
 '
 
@@ -63,7 +63,7 @@ test_expect_success 'setup unexpected non-tree root' '
 		broken-commit)"
 '
 
-test_expect_failure 'traverse unexpected non-tree root (lone)' '
+test_expect_success 'traverse unexpected non-tree root (lone)' '
 	test_must_fail git rev-list --objects $broken_commit
 '
 
