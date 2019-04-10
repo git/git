@@ -374,6 +374,9 @@ static void do_traverse(struct traversal_context *ctx)
 			struct tree *tree = get_commit_tree(commit);
 			tree->object.flags |= NOT_USER_GIVEN;
 			add_pending_tree(ctx->revs, tree);
+		} else if (commit->object.parsed) {
+			die(_("unable to load root tree for commit %s"),
+			      oid_to_hex(&commit->object.oid));
 		}
 		ctx->show_commit(commit, ctx->show_data);
 

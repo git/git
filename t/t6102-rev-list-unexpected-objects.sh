@@ -67,8 +67,10 @@ test_expect_success 'traverse unexpected non-tree root (lone)' '
 	test_must_fail git rev-list --objects $broken_commit
 '
 
-test_expect_failure 'traverse unexpected non-tree root (seen)' '
-	test_must_fail git rev-list --objects $blob $broken_commit
+test_expect_success 'traverse unexpected non-tree root (seen)' '
+	test_must_fail git rev-list --objects $blob $broken_commit \
+		>output 2>&1 &&
+	test_i18ngrep "not a tree" output
 '
 
 test_expect_success 'setup unexpected non-commit tag' '
