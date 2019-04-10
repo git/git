@@ -339,6 +339,84 @@ static int find_line_starts(int **line_starts, const char *buf,
 	return num;
 }
 
+struct fingerprint {
+	struct hashmap map;
+	struct hashmap_entry *entries;
+};
+
+static void get_fingerprint(struct fingerprint *result,
+			    const char *line_begin,
+			    const char *line_end)
+{
+	unsigned int hash;
+	char c0, c1;
+	const char *p;
+	int map_entry_count = line_end - line_begin - 1;
+	struct hashmap_entry *entry = xcalloc(map_entry_count,
+					      sizeof(struct hashmap_entry));
+
+	hashmap_init(&result->map, NULL, NULL, map_entry_count);
+	result->entries = entry;
+	for (p = line_begin; p + 1 < line_end; ++p, ++entry) {
+		c0 = *p;
+		c1 = *(p + 1);
+		/* Ignore whitespace pairs */
+		if (isspace(c0) && isspace(c1))
+			continue;
+		hash = tolower(c0) | (tolower(c1) << 8);
+		hashmap_entry_init(entry, hash);
+		hashmap_put(&result->map, entry);
+	}
+}
+
+static void free_fingerprint(struct fingerprint *f)
+{
+	hashmap_free(&f->map, 0);
+	free(f->entries);
+}
+
+static int fingerprint_similarity(struct fingerprint *a,
+				  struct fingerprint *b)
+{
+	int intersection = 0;
+	struct hashmap_iter iter;
+	struct hashmap_entry *entry;
+
+	hashmap_iter_init(&b->map, &iter);
+
+	while ((entry = hashmap_iter_next(&iter))) {
+		if (hashmap_get(&a->map, entry, NULL))
+			++intersection;
+	}
+	return intersection;
+}
+
+static void get_line_fingerprints(struct fingerprint *fingerprints,
+				  const char *content,
+				  const int *line_starts,
+				  int first_line,
+				  int nr_lines)
+{
+	int i;
+
+	line_starts += first_line;
+	for (i = 0; i < nr_lines; ++i) {
+		const char *linestart = content + line_starts[i];
+		const char *lineend = content + line_starts[i + 1];
+
+		get_fingerprint(fingerprints + i, linestart, lineend);
+	}
+}
+
+static void free_chunk_fingerprints(struct fingerprint *fingerprints,
+				    int nr_fingerprints)
+{
+	int i;
+
+	for (i = 0; i < nr_fingerprints; i++)
+		free_fingerprint(&fingerprints[i]);
+}
+
 static void fill_origin_fingerprints(struct blame_origin *o, mmfile_t *file)
 {
 	int *line_starts;
@@ -347,14 +425,16 @@ static void fill_origin_fingerprints(struct blame_origin *o, mmfile_t *file)
 		return;
 	o->num_lines = find_line_starts(&line_starts, o->file.ptr,
 					o->file.size);
-	/* TODO: Will fill in fingerprints in a future commit */
 	o->fingerprints = xcalloc(sizeof(struct fingerprint), o->num_lines);
+	get_line_fingerprints(o->fingerprints, o->file.ptr, line_starts,
+			      0, o->num_lines);
 	free(line_starts);
 }
 
 static void drop_origin_fingerprints(struct blame_origin *o)
 {
 	if (o->fingerprints) {
+		free_chunk_fingerprints(o->fingerprints, o->num_lines);
 		o->num_lines = 0;
 		FREE_AND_NULL(o->fingerprints);
 	}
@@ -934,27 +1014,69 @@ static int are_lines_adjacent(struct blame_line_tracker *first,
 	       first->s_lno + 1 == second->s_lno;
 }
 
+static void scan_parent_range(struct fingerprint *p_fps,
+			      struct fingerprint *t_fps, int t_idx,
+			      int from, int nr_lines,
+			      int *best_sim_val, int *best_sim_idx)
+{
+	int sim, p_idx;
+
+	for (p_idx = from; p_idx < from + nr_lines; p_idx++) {
+		sim = fingerprint_similarity(&t_fps[t_idx], &p_fps[p_idx]);
+		if (sim < *best_sim_val)
+			continue;
+		/* Break ties with the closest-to-target line number */
+		if (sim == *best_sim_val && *best_sim_idx != -1 &&
+		    abs(*best_sim_idx - t_idx) < abs(p_idx - t_idx))
+			continue;
+		*best_sim_val = sim;
+		*best_sim_idx = p_idx;
+	}
+}
+
 /*
- * This cheap heuristic assigns lines in the chunk to their relative location in
- * the parent's chunk.  Any additional lines are left with the target.
+ * The CHUNK threshold is for how similar we must be within a diff chunk, which
+ * is typically the adjacent '-' and '+' sections in a diff, separated by the
+ * ' ' context.
+ *
+ * We have a greater threshold for similarity for lines in any part of the
+ * parent's file.  If no line in the parent meets the appropriate threshold,
+ * then the blame_entry will stay with the target and be considered
+ * 'unblamable'.
  */
+#define FINGERPRINT_CHUNK_THRESHOLD	1
+#define FINGERPRINT_FILE_THRESHOLD	10
+
 static void guess_line_blames(struct blame_entry *e,
 			      struct blame_origin *parent,
 			      struct blame_origin *target,
 			      int offset, int parent_slno, int parent_len,
 			      struct blame_line_tracker *line_blames)
 {
-	int i, parent_idx;
+	int i, target_idx;
 
 	for (i = 0; i < e->num_lines; i++) {
-		parent_idx = e->s_lno + i + offset;
-		if (parent_slno <= parent_idx &&
-		    parent_idx < parent_slno + parent_len) {
+		int best_val = FINGERPRINT_CHUNK_THRESHOLD;
+		int best_idx = -1;
+
+		target_idx = e->s_lno + i;
+		scan_parent_range(parent->fingerprints,
+				  target->fingerprints, target_idx,
+				  parent_slno, parent_len,
+				  &best_val, &best_idx);
+		if (best_idx == -1) {
+			best_val = FINGERPRINT_FILE_THRESHOLD;
+			scan_parent_range(parent->fingerprints,
+					  target->fingerprints, target_idx,
+					  0, parent->num_lines,
+					  &best_val, &best_idx);
+		}
+		if (best_idx >= 0) {
 			line_blames[i].is_parent = 1;
-			line_blames[i].s_lno = parent_idx;
+			line_blames[i].s_lno = best_idx;
 		} else {
 			line_blames[i].is_parent = 0;
-			line_blames[i].s_lno = e->s_lno + i;
+			line_blames[i].s_lno = target_idx;
 		}
 	}
 }
