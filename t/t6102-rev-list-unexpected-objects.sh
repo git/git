@@ -34,8 +34,9 @@ test_expect_failure 'traverse unexpected non-tree entry (lone)' '
 	test_must_fail git rev-list --objects $broken_tree
 '
 
-test_expect_failure 'traverse unexpected non-tree entry (seen)' '
-	test_must_fail git rev-list --objects $blob $broken_tree
+test_expect_success 'traverse unexpected non-tree entry (seen)' '
+	test_must_fail git rev-list --objects $blob $broken_tree >output 2>&1 &&
+	test_i18ngrep "is not a tree" output
 '
 
 test_expect_success 'setup unexpected non-commit parent' '

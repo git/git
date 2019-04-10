@@ -125,6 +125,11 @@ static void process_tree_contents(struct traversal_context *ctx,
 
 		if (S_ISDIR(entry.mode)) {
 			struct tree *t = lookup_tree(ctx->revs->repo, &entry.oid);
+			if (!t) {
+				die(_("entry '%s' in tree %s has tree mode, "
+				      "but is not a tree"),
+				    entry.path, oid_to_hex(&tree->object.oid));
+			}
 			t->object.flags |= NOT_USER_GIVEN;
 			process_tree(ctx, t, base, entry.path);
 		}
