@@ -480,6 +480,7 @@ void blame_coalesce(struct blame_scoreboard *sb)
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
 		if (ent->suspect == next->suspect &&
 		    ent->s_lno + ent->num_lines == next->s_lno &&
+		    ent->ignored == next->ignored &&
 		    ent->unblamable == next->unblamable) {
 			ent->num_lines += next->num_lines;
 			ent->next = next->next;
@@ -732,6 +733,7 @@ static void split_overlap(struct blame_entry *split,
 	int chunk_end_lno;
 	memset(split, 0, sizeof(struct blame_entry [3]));
 
+	split[0].ignored = split[1].ignored = split[2].ignored = e->ignored;
 	split[0].unblamable = e->unblamable;
 	split[1].unblamable = e->unblamable;
 	split[2].unblamable = e->unblamable;
@@ -856,6 +858,7 @@ static struct blame_entry *split_blame_at(struct blame_entry *e, int len,
 	struct blame_entry *n = xcalloc(1, sizeof(struct blame_entry));
 
 	n->suspect = new_suspect;
+	n->ignored = e->ignored;
 	n->unblamable = e->unblamable;
 	n->lno = e->lno + len;
 	n->s_lno = e->s_lno + len;
@@ -921,6 +924,7 @@ static void ignore_blame_entry(struct blame_entry *e,
 	struct blame_line_tracker *line_blames;
 	int entry_len, nr_lines, i;
 
+	e->ignored = 1;
 	line_blames = xcalloc(sizeof(struct blame_line_tracker),
 			      e->num_lines);
 	guess_line_blames(e, parent, target, offset, parent_slno, parent_len,

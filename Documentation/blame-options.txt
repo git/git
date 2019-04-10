@@ -115,7 +115,11 @@ take effect.
 	change never happened.  Lines that were changed or added by an ignored
 	commit will be blamed on the previous commit that changed that line or
 	nearby lines.  This option may be specified multiple times to ignore
-	more than one revision.
+	more than one revision.  If the `blame.markIgnoredLines` config option
+	is set, then lines that were changed by an ignored commit will be
+	marked with a `*` in the blame output.  If the
+	`blame.maskIgnoredUnblamables` config option is set, then those lines that
+	we could not attribute to another revision are outputted as all zeros.
 
 --ignore-revs-file <file>::
 	Ignore revisions listed in `file`, one unabbreviated object name per line.

@@ -53,6 +53,8 @@ static int show_progress;
 static char repeated_meta_color[COLOR_MAXLEN];
 static int coloring_mode;
 static struct string_list ignore_revs_file_list = STRING_LIST_INIT_NODUP;
+static int mask_ignored_unblamables;
+static int mark_ignored_lines;
 
 static struct date_mode blame_date_mode = { DATE_ISO8601 };
 static size_t blame_date_width;
@@ -347,7 +349,7 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 	char hex[GIT_MAX_HEXSZ + 1];
 
 	oid_to_hex_r(hex, &suspect->commit->object.oid);
-	if (ent->unblamable)
+	if (mask_ignored_unblamables && ent->unblamable)
 		memset(hex, '0', strlen(hex));
 	printf("%s %d %d %d\n",
 	       hex,
@@ -482,7 +484,11 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 			}
 		}
 
-		if (ent->unblamable)
+		if (mark_ignored_lines && ent->ignored) {
+			length--;
+			putchar('*');
+		}
+		if (mask_ignored_unblamables && ent->unblamable)
 			memset(hex, '0', length);
 		printf("%.*s", length, hex);
 		if (opt & OUTPUT_ANNOTATE_COMPAT) {
@@ -708,6 +714,14 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		if (ret)
 			return ret;
 		string_list_insert(&ignore_revs_file_list, str);
+		return 0;
+	}
+	if (!strcmp(var, "blame.maskignoredunblamables")) {
+		mask_ignored_unblamables = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "blame.markignoredlines")) {
+		mark_ignored_lines = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "color.blame.repeatedlines")) {
