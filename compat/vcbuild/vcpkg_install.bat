@@ -53,8 +53,7 @@ REM ================================================================
 	echo Installing third-party libraries...
 	FOR %%i IN (zlib expat libiconv openssl libssh2 curl) DO (
 	    cd %cwd%vcpkg
-	    SET p="packages\%%i_%arch%"
-	    IF NOT EXIST "%p%" CALL :sub__install_one %%i
+	    IF NOT EXIST "packages\%%i_%arch%" CALL :sub__install_one %%i
 	    IF ERRORLEVEL 1 ( EXIT /B 1 )
 	)
 

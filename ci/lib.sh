@@ -116,6 +116,11 @@ then
 	CI_OS_NAME="$(echo "$AGENT_OS" | tr A-Z a-z)"
 	test darwin != "$CI_OS_NAME" || CI_OS_NAME=osx
 	CI_REPO_SLUG="$(expr "$BUILD_REPOSITORY_URI" : '.*/\([^/]*/[^/]*\)$')"
+	if test -n "$MSVC"
+	then
+		CC=compat/vcbuild/scripts/clink.pl
+		jobname=windows-msvc
+	fi
 	CC="${CC:-gcc}"
 
 	# use a subdirectory of the cache dir (because the file share is shared

@@ -451,7 +451,7 @@ endif
 	# Always give "-Zi" to the compiler and "-debug" to linker (even in
 	# release mode) to force a PDB to be generated (like RelWithDebInfo).
 	BASIC_CFLAGS += -Zi
-	BASIC_LDFLAGS += -debug
+	BASIC_LDFLAGS += -debug -Zf
 
 ifdef NO_SAFESEH
 	LDFLAGS += -SAFESEH:NO

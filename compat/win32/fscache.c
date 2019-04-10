@@ -65,8 +65,8 @@ struct fsentry {
 			struct timespec st_atim;
 			struct timespec st_mtim;
 			struct timespec st_ctim;
-		};
-	};
+		} s;
+	} u;
 };
 
 /*
@@ -127,7 +127,7 @@ static struct fsentry *fsentry_alloc(struct fscache *cache, struct fsentry *list
 	/* init the rest of the structure */
 	fsentry_init(fse, list, nm, len);
 	fse->next = NULL;
-	fse->refcnt = 1;
+	fse->u.refcnt = 1;
 	return fse;
 }
 
@@ -139,7 +139,7 @@ inline static void fsentry_addref(struct fsentry *fse)
 	if (fse->list)
 		fse = fse->list;
 
-	InterlockedIncrement(&(fse->refcnt));
+	InterlockedIncrement(&(fse->u.refcnt));
 }
 
 /*
@@ -150,7 +150,7 @@ static void fsentry_release(struct fsentry *fse)
 	if (fse->list)
 		fse = fse->list;
 
-	InterlockedDecrement(&(fse->refcnt));
+	InterlockedDecrement(&(fse->u.refcnt));
 }
 
 static int xwcstoutfn(char *utf, int utflen, const wchar_t *wcs, int wcslen)
@@ -205,11 +205,11 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 
 	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes,
 			fdata->EaSize, buf);
-	fse->st_size = S_ISLNK(fse->st_mode) ? MAX_LONG_PATH :
+	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_LONG_PATH :
 			fdata->EndOfFile.LowPart | (((off_t)fdata->EndOfFile.HighPart) << 32);
-	filetime_to_timespec((FILETIME *)&(fdata->LastAccessTime), &(fse->st_atim));
-	filetime_to_timespec((FILETIME *)&(fdata->LastWriteTime), &(fse->st_mtim));
-	filetime_to_timespec((FILETIME *)&(fdata->CreationTime), &(fse->st_ctim));
+	filetime_to_timespec((FILETIME *)&(fdata->LastAccessTime), &(fse->u.s.st_atim));
+	filetime_to_timespec((FILETIME *)&(fdata->LastWriteTime), &(fse->u.s.st_mtim));
+	filetime_to_timespec((FILETIME *)&(fdata->CreationTime), &(fse->u.s.st_ctim));
 
 	return fse;
 }
@@ -578,10 +578,10 @@ int fscache_lstat(const char *filename, struct stat *st)
 	st->st_rdev = 0;
 	st->st_nlink = 1;
 	st->st_mode = fse->st_mode;
-	st->st_size = fse->st_size;
-	st->st_atim = fse->st_atim;
-	st->st_mtim = fse->st_mtim;
-	st->st_ctim = fse->st_ctim;
+	st->st_size = fse->u.s.st_size;
+	st->st_atim = fse->u.s.st_atim;
+	st->st_mtim = fse->u.s.st_mtim;
+	st->st_ctim = fse->u.s.st_ctim;
 
 	/* don't forget to release fsentry */
 	fsentry_release(fse);
