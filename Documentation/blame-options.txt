@@ -110,5 +110,19 @@ commit. And the default value is 40. If there are more than one
 `-C` options given, the <num> argument of the last `-C` will
 take effect.
 
+--ignore-rev <rev>::
+	Ignore changes made by the revision when assigning blame, as if the
+	change never happened.  Lines that were changed or added by an ignored
+	commit will be blamed on the previous commit that changed that line or
+	nearby lines.  This option may be specified multiple times to ignore
+	more than one revision.
+
+--ignore-revs-file <file>::
+	Ignore revisions listed in `file`, one unabbreviated object name per line.
+	Whitespace and comments beginning with `#` are ignored.  This option may be
+	repeated, and these files will be processed after any files specified with
+	the `blame.ignoreRevsFile` config option.  An empty file name, `""`, will
+	clear the list of revs from previously processed files.
+
 -h::
 	Show help message.
