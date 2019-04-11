@@ -330,17 +330,73 @@ static void mark_ce_for_checkout_no_overlay(struct cache_entry *ce,
 	}
 }
 
+static int checkout_worktree(const struct checkout_opts *opts)
+{
+	struct checkout state = CHECKOUT_INIT;
+	int nr_checkouts = 0, nr_unmerged = 0;
+	int errs = 0;
+	int pos;
+
+	state.force = 1;
+	state.refresh_cache = 1;
+	state.istate = &the_index;
+
+	enable_delayed_checkout(&state);
+	for (pos = 0; pos < active_nr; pos++) {
+		struct cache_entry *ce = active_cache[pos];
+		if (ce->ce_flags & CE_MATCHED) {
+			if (!ce_stage(ce)) {
+				errs |= checkout_entry(ce, &state,
+						       NULL, &nr_checkouts);
+				continue;
+			}
+			if (opts->writeout_stage)
+				errs |= checkout_stage(opts->writeout_stage,
+						       ce, pos,
+						       &state,
+						       &nr_checkouts, opts->overlay_mode);
+			else if (opts->merge)
+				errs |= checkout_merged(pos, &state,
+							&nr_unmerged);
+			pos = skip_same_name(ce, pos) - 1;
+		}
+	}
+	remove_marked_cache_entries(&the_index, 1);
+	remove_scheduled_dirs();
+	errs |= finish_delayed_checkout(&state, &nr_checkouts);
+
+	if (opts->count_checkout_paths) {
+		if (nr_unmerged)
+			fprintf_ln(stderr, Q_("Recreated %d merge conflict",
+					      "Recreated %d merge conflicts",
+					      nr_unmerged),
+				   nr_unmerged);
+		if (opts->source_tree)
+			fprintf_ln(stderr, Q_("Updated %d path from %s",
+					      "Updated %d paths from %s",
+					      nr_checkouts),
+				   nr_checkouts,
+				   find_unique_abbrev(&opts->source_tree->object.oid,
+						      DEFAULT_ABBREV));
+		else if (!nr_unmerged || nr_checkouts)
+			fprintf_ln(stderr, Q_("Updated %d path from the index",
+					      "Updated %d paths from the index",
+					      nr_checkouts),
+				   nr_checkouts);
+	}
+
+	return errs;
+}
+
 static int checkout_paths(const struct checkout_opts *opts,
 			  const char *revision)
 {
 	int pos;
-	struct checkout state = CHECKOUT_INIT;
 	static char *ps_matched;
 	struct object_id rev;
 	struct commit *head;
 	int errs = 0;
 	struct lock_file lock_file = LOCK_INIT;
-	int nr_checkouts = 0, nr_unmerged = 0;
 
 	trace2_cmd_mode(opts->patch_mode ? "patch" : "path");
 
@@ -426,53 +482,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return 1;
 
 	/* Now we are committed to check them out */
-	state.force = 1;
-	state.refresh_cache = 1;
-	state.istate = &the_index;
-
-	enable_delayed_checkout(&state);
-	for (pos = 0; pos < active_nr; pos++) {
-		struct cache_entry *ce = active_cache[pos];
-		if (ce->ce_flags & CE_MATCHED) {
-			if (!ce_stage(ce)) {
-				errs |= checkout_entry(ce, &state,
-						       NULL, &nr_checkouts);
-				continue;
-			}
-			if (opts->writeout_stage)
-				errs |= checkout_stage(opts->writeout_stage,
-						       ce, pos,
-						       &state,
-						       &nr_checkouts, opts->overlay_mode);
-			else if (opts->merge)
-				errs |= checkout_merged(pos, &state,
-							&nr_unmerged);
-			pos = skip_same_name(ce, pos) - 1;
-		}
-	}
-	remove_marked_cache_entries(&the_index, 1);
-	remove_scheduled_dirs();
-	errs |= finish_delayed_checkout(&state, &nr_checkouts);
-
-	if (opts->count_checkout_paths) {
-		if (nr_unmerged)
-			fprintf_ln(stderr, Q_("Recreated %d merge conflict",
-					      "Recreated %d merge conflicts",
-					      nr_unmerged),
-				   nr_unmerged);
-		if (opts->source_tree)
-			fprintf_ln(stderr, Q_("Updated %d path from %s",
-					      "Updated %d paths from %s",
-					      nr_checkouts),
-				   nr_checkouts,
-				   find_unique_abbrev(&opts->source_tree->object.oid,
-						      DEFAULT_ABBREV));
-		else if (!nr_unmerged || nr_checkouts)
-			fprintf_ln(stderr, Q_("Updated %d path from the index",
-					      "Updated %d paths from the index",
-					      nr_checkouts),
-				   nr_checkouts);
-	}
+	errs |= checkout_worktree(opts);
 
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
