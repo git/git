@@ -25,7 +25,8 @@ The `<tree-ish>`/`<commit>` defaults to `HEAD` in all forms.
 	the current branch.)
 +
 This means that `git reset <paths>` is the opposite of `git add
-<paths>`.
+<paths>`. This command is equivalent to
+`git restore [--source=<tree-ish>] --staged <paths>...`.
 +
 After running `git reset <paths>` to update the index entry, you can
 use linkgit:git-checkout[1] to check the contents out of the index to
@@ -86,8 +87,8 @@ but carries forward unmerged index entries.
 	changes, reset is aborted.
 --
 
-If you want to undo a commit other than the latest on a branch,
-linkgit:git-revert[1] is your friend.
+See "Reset, restore and revert" in linkgit:git[1] for the differences
+between the three commands.
 
 
 OPTIONS

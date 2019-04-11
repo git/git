@@ -38,6 +38,11 @@ static const char * const switch_branch_usage[] = {
 	NULL,
 };
 
+static const char * const restore_usage[] = {
+	N_("git restore [<options>] [<branch>] -- <file>..."),
+	NULL,
+};
+
 struct checkout_opts {
 	int patch_mode;
 	int quiet;
@@ -1619,6 +1624,27 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 
 	ret = checkout_main(argc, argv, prefix, &opts,
 			    options, switch_branch_usage);
+	FREE_AND_NULL(options);
+	return ret;
+}
+
+int cmd_restore(int argc, const char **argv, const char *prefix)
+{
+	struct checkout_opts opts;
+	struct option *options = NULL;
+	int ret;
+
+	memset(&opts, 0, sizeof(opts));
+	opts.dwim_new_local_branch = 1;
+	opts.switch_branch_doing_nothing_is_ok = 0;
+	opts.accept_pathspec = 1;
+
+	options = parse_options_dup(options);
+	options = add_common_options(&opts, options);
+	options = add_checkout_path_options(&opts, options);
+
+	ret = checkout_main(argc, argv, prefix, &opts,
+			    options, restore_usage);
 	FREE_AND_NULL(options);
 	return ret;
 }
