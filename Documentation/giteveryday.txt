@@ -51,8 +51,7 @@ following commands.
 
   * linkgit:git-commit[1] to advance the current branch.
 
-  * linkgit:git-reset[1] and linkgit:git-checkout[1] (with
-    pathname parameters) to undo changes.
+  * linkgit:git-restore[1] to undo changes.
 
   * linkgit:git-merge[1] to merge between local branches.
 
@@ -82,7 +81,7 @@ Create a topic branch and develop.::
 ------------
 $ git switch -c alsa-audio <1>
 $ edit/compile/test
-$ git checkout -- curses/ux_audio_oss.c <2>
+$ git restore curses/ux_audio_oss.c <2>
 $ git add curses/ux_audio_alsa.c <3>
 $ edit/compile/test
 $ git diff HEAD <4>

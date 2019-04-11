@@ -110,7 +110,7 @@ $ git status
 On branch master
 Changes to be committed:
 Your branch is up to date with 'origin/master'.
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
 
 	modified:   file1
 	modified:   file2

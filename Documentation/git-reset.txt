@@ -29,9 +29,9 @@ This means that `git reset <paths>` is the opposite of `git add
 `git restore [--source=<tree-ish>] --staged <paths>...`.
 +
 After running `git reset <paths>` to update the index entry, you can
-use linkgit:git-checkout[1] to check the contents out of the index to
-the working tree.
-Alternatively, using linkgit:git-checkout[1] and specifying a commit, you
+use linkgit:git-restore[1] to check the contents out of the index to
+the working tree. Alternatively, using linkgit:git-restore[1]
+and specifying a commit with `--source`, you
 can copy the contents of a path out of a commit to the index and to the
 working tree in one go.
 
