@@ -1408,7 +1408,7 @@ If you get stuck and decide to just give up and throw the whole mess
 away, you can always return to the pre-merge state with
 
 -------------------------------------------------
-$ git reset --hard HEAD
+$ git merge --abort
 -------------------------------------------------
 
 Or, if you've already committed the merge that you want to throw away,
