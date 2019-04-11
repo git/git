@@ -8,7 +8,7 @@ git-rm - Remove files from the working tree and from the index
 SYNOPSIS
 --------
 [verse]
-'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
+'git rm' [-f | --force] [-n] [-r] [--staged] [--ignore-unmatch] [--quiet] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -55,10 +55,11 @@ OPTIONS
 	the list of files, (useful when filenames might be mistaken
 	for command-line options).
 
+--staged::
 --cached::
 	Use this option to unstage and remove paths only from the index.
-	Working tree files, whether modified or not, will be
-	left alone.
+	Working tree files, whether modified or not, will be left
+	alone. `--cached` is synonym for `--staged`.
 
 --ignore-unmatch::
 	Exit with a zero status even if no files matched.

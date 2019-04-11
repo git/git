@@ -71,7 +71,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'status (1)' '
-	test_i18ngrep "use \"git rm --cached <file>\.\.\.\" to unstage" output
+	test_i18ngrep "use \"git rm --staged <file>\.\.\.\" to unstage" output
 '
 
 strip_comments () {

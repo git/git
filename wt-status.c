@@ -187,7 +187,7 @@ static void wt_longstatus_print_unmerged_header(struct wt_status *s)
 					 _("  (use \"git restore --source=%s --staged <file>...\" to unstage)"),
 					 s->reference);
 	} else
-		status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
+		status_printf_ln(s, c, _("  (use \"git rm --staged <file>...\" to unstage)"));
 
 	if (!both_deleted) {
 		if (!del_mod_conflict)
@@ -220,7 +220,7 @@ static void wt_longstatus_print_cached_header(struct wt_status *s)
 					 _("  (use \"git restore --source=%s --staged <file>...\" to unstage)"),
 					 s->reference);
 	} else
-		status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
+		status_printf_ln(s, c, _("  (use \"git rm --staged <file>...\" to unstage)"));
 	status_printf_ln(s, c, "%s", "");
 }
 
