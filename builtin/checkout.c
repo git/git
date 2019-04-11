@@ -68,6 +68,8 @@ struct checkout_opts {
 	int empty_pathspec_ok;
 	int checkout_index;
 	int checkout_worktree;
+	const char *ignore_unmerged_opt;
+	int ignore_unmerged;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -409,8 +411,9 @@ static int checkout_paths(const struct checkout_opts *opts,
 	if (opts->new_branch_log)
 		die(_("'%s' cannot be used with updating paths"), "-l");
 
-	if (opts->force && opts->patch_mode)
-		die(_("'%s' cannot be used with updating paths"), "-f");
+	if (opts->ignore_unmerged && opts->patch_mode)
+		die(_("'%s' cannot be used with updating paths"),
+		    opts->ignore_unmerged_opt);
 
 	if (opts->force_detach)
 		die(_("'%s' cannot be used with updating paths"), "--detach");
@@ -418,8 +421,9 @@ static int checkout_paths(const struct checkout_opts *opts,
 	if (opts->merge && opts->patch_mode)
 		die(_("'%s' cannot be used with %s"), "--merge", "--patch");
 
-	if (opts->force && opts->merge)
-		die(_("'%s' cannot be used with %s"), "-f", "-m");
+	if (opts->ignore_unmerged && opts->merge)
+		die(_("'%s' cannot be used with %s"),
+		    opts->ignore_unmerged_opt, "-m");
 
 	if (opts->new_branch)
 		die(_("Cannot update paths and switch to branch '%s' at the same time."),
@@ -495,8 +499,9 @@ static int checkout_paths(const struct checkout_opts *opts,
 		if (ce->ce_flags & CE_MATCHED) {
 			if (!ce_stage(ce))
 				continue;
-			if (opts->force) {
-				warning(_("path '%s' is unmerged"), ce->name);
+			if (opts->ignore_unmerged) {
+				if (!opts->quiet)
+					warning(_("path '%s' is unmerged"), ce->name);
 			} else if (opts->writeout_stage) {
 				errs |= check_stage(opts->writeout_stage, ce, pos, opts->overlay_mode);
 			} else if (opts->merge) {
@@ -1414,8 +1419,6 @@ static struct option *add_common_options(struct checkout_opts *opts,
 			    "checkout", "control recursive updating of submodules",
 			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater },
 		OPT_BOOL(0, "progress", &opts->show_progress, N_("force progress reporting")),
-		OPT__FORCE(&opts->force, N_("force checkout (throw away local modifications)"),
-			   PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL('m', "merge", &opts->merge, N_("perform a 3-way merge with the new branch")),
 		OPT_STRING(0, "conflict", &opts->conflict_style, N_("style"),
 			   N_("conflict style (merge or diff3)")),
@@ -1433,6 +1436,8 @@ static struct option *add_common_switch_branch_options(
 		OPT_BOOL('d', "detach", &opts->force_detach, N_("detach HEAD at named commit")),
 		OPT_SET_INT('t', "track",  &opts->track, N_("set upstream info for new branch"),
 			BRANCH_TRACK_EXPLICIT),
+		OPT__FORCE(&opts->force, N_("force checkout (throw away local modifications)"),
+			   PARSE_OPT_NOCOMPLETE),
 		OPT_STRING(0, "orphan", &opts->new_orphan_branch, N_("new-branch"), N_("new unparented branch")),
 		OPT_BOOL_F(0, "overwrite-ignore", &opts->overwrite_ignore,
 			   N_("update ignored files (default)"),
@@ -1502,8 +1507,11 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		opts->merge = 1; /* implied */
 		git_xmerge_config("merge.conflictstyle", opts->conflict_style, NULL);
 	}
-	if (opts->force)
+	if (opts->force) {
 		opts->discard_changes = 1;
+		opts->ignore_unmerged_opt = "--force";
+		opts->ignore_unmerged = 1;
+	}
 
 	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
 		die(_("-b, -B and --orphan are mutually exclusive"));
@@ -1750,6 +1758,8 @@ int cmd_restore(int argc, const char **argv, const char *prefix)
 			   N_("restore the index")),
 		OPT_BOOL('W', "worktree", &opts.checkout_worktree,
 			   N_("restore the working tree (default)")),
+		OPT_BOOL(0, "ignore-unmerged", &opts.ignore_unmerged,
+			 N_("ignore unmerged entries")),
 		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode")),
 		OPT_END()
 	};
@@ -1762,6 +1772,7 @@ int cmd_restore(int argc, const char **argv, const char *prefix)
 	opts.overlay_mode = 0;
 	opts.checkout_index = -1;    /* default off */
 	opts.checkout_worktree = -2; /* default on */
+	opts.ignore_unmerged_opt = "--ignore-unmerged";
 
 	options = parse_options_dup(restore_options);
 	options = add_common_options(&opts, options);
