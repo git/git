@@ -6,6 +6,8 @@
 #include "color.h"
 #include "utf8.h"
 
+static int disallow_abbreviated_options;
+
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
@@ -343,6 +345,10 @@ is_abbreviated:
 		}
 		return get_value(p, options, all_opts, flags ^ opt_flags);
 	}
+
+	if (disallow_abbreviated_options && (ambiguous_option || abbrev_option))
+		die("disallowed abbreviated or ambiguous option '%.*s'",
+		    (int)(arg_end - arg), arg);
 
 	if (ambiguous_option) {
 		error(_("ambiguous option: %s "
@@ -707,6 +713,9 @@ int parse_options(int argc, const char **argv, const char *prefix,
 		  int flags)
 {
 	struct parse_opt_ctx_t ctx;
+
+	disallow_abbreviated_options =
+		git_env_bool("GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS", 0);
 
 	parse_options_start(&ctx, argc, argv, prefix, options, flags);
 	switch (parse_options_step(&ctx, options, usagestr)) {

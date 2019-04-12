@@ -203,20 +203,24 @@ file: (not set)
 EOF
 
 test_expect_success 'unambiguously abbreviated option' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --int 2 --boolean --no-bo >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'unambiguously abbreviated option with "="' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --expect="integer: 2" --int=2
 '
 
 test_expect_success 'ambiguously abbreviated option' '
-	test_expect_code 129 test-tool parse-options --strin 123
+	test_expect_code 129 env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool parse-options --strin 123
 '
 
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --expect="string: 123" --st 123
 '
 
@@ -325,6 +329,7 @@ file: (not set)
 EOF
 
 test_expect_success 'negation of OPT_NONEG flags is not ambiguous' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --no-ambig >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
@@ -368,6 +373,13 @@ test_expect_success '--no-verbose sets verbose to 0' '
 
 test_expect_success '--no-verbose resets multiple verbose to 0' '
 	test-tool parse-options --expect="verbose: 0" -v -v -v --no-verbose
+'
+
+test_expect_success 'GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS works' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+		test-tool parse-options --ye &&
+	test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true \
+		test-tool parse-options --ye
 '
 
 test_done
