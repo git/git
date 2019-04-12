@@ -8,11 +8,12 @@
  * published by the Free Software Foundation.
  */
 
-#include "git-compat-util.h"
+#include "cache.h"
 #include "gettext.h"
 #include "progress.h"
 #include "strbuf.h"
 #include "trace.h"
+#include "utf8.h"
 
 #define TP_IDX_MAX      8
 
@@ -37,6 +38,8 @@ struct progress {
 	struct throughput *throughput;
 	uint64_t start_ns;
 	struct strbuf counters_sb;
+	int title_len;
+	int split;
 };
 
 static volatile sig_atomic_t progress_update;
@@ -115,8 +118,24 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 			size_t clear_len = counters_sb->len < last_count_len ?
 					last_count_len - counters_sb->len + 1 :
 					0;
-			fprintf(stderr, "%s: %s%*s", progress->title,
-				counters_sb->buf, (int) clear_len, eol);
+			size_t progress_line_len = progress->title_len +
+						counters_sb->len + 2;
+			int cols = term_columns();
+
+			if (progress->split) {
+				fprintf(stderr, "  %s%*s", counters_sb->buf,
+					(int) clear_len, eol);
+			} else if (!done && cols < progress_line_len) {
+				clear_len = progress->title_len + 1 < cols ?
+					    cols - progress->title_len : 0;
+				fprintf(stderr, "%s:%*s\n  %s%s",
+					progress->title, (int) clear_len, "",
+					counters_sb->buf, eol);
+				progress->split = 1;
+			} else {
+				fprintf(stderr, "%s: %s%*s", progress->title,
+					counters_sb->buf, (int) clear_len, eol);
+			}
 			fflush(stderr);
 		}
 		progress_update = 0;
@@ -220,6 +239,8 @@ static struct progress *start_progress_delay(const char *title, uint64_t total,
 	progress->throughput = NULL;
 	progress->start_ns = getnanotime();
 	strbuf_init(&progress->counters_sb, 0);
+	progress->title_len = utf8_strwidth(title);
+	progress->split = 0;
 	set_progress_signal();
 	return progress;
 }
