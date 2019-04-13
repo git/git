@@ -630,10 +630,7 @@ static void filter_refs(struct fetch_pack_args *args,
 	}
 
 	oidset_clear(&tip_oids);
-	for (ref = unmatched; ref; ref = next) {
-		next = ref->next;
-		free(ref);
-	}
+	free_refs(unmatched);
 
 	*refs = newlist;
 }
