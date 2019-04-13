@@ -1866,7 +1866,7 @@ sub apply_transfer_encoding {
 	$message = MIME::Base64::decode($message)
 		if ($from eq 'base64');
 
-	$to = ($message =~ /.{999,}/) ? 'quoted-printable' : '8bit'
+	$to = ($message =~ /(?:.{999,}|\r)/) ? 'quoted-printable' : '8bit'
 		if $to eq 'auto';
 
 	die __("cannot send message as 7bit")
