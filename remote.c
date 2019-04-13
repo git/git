@@ -820,11 +820,11 @@ struct ref *copy_ref_list(const struct ref *ref)
 	return ret;
 }
 
-static void free_ref(struct ref *ref)
+void free_one_ref(struct ref *ref)
 {
 	if (!ref)
 		return;
-	free_ref(ref->peer_ref);
+	free_one_ref(ref->peer_ref);
 	free(ref->remote_status);
 	free(ref->symref);
 	free(ref);
@@ -835,7 +835,7 @@ void free_refs(struct ref *ref)
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
-		free_ref(ref);
+		free_one_ref(ref);
 		ref = next;
 	}
 }
