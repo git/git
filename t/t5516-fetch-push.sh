@@ -1273,6 +1273,17 @@ test_expect_success 'fetch follows tags by default' '
 	test_cmp expect actual
 '
 
+test_expect_success 'peeled advertisements are not considered ref tips' '
+	mk_empty testrepo &&
+	git -C testrepo commit --allow-empty -m one &&
+	git -C testrepo commit --allow-empty -m two &&
+	git -C testrepo tag -m foo mytag HEAD^ &&
+	oid=$(git -C testrepo rev-parse mytag^{commit}) &&
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+		git fetch testrepo $oid 2>err &&
+	test_i18ngrep "Server does not allow request for unadvertised object" err
+'
+
 test_expect_success 'pushing a specific ref applies remote.$name.push as refmap' '
 	mk_test testrepo heads/master &&
 	rm -fr src dst &&
