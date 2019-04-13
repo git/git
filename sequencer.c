@@ -4259,9 +4259,81 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	return string_entry->string;
 }
 
+void free_sequence_edits(struct sequence_edits *edits)
+{
+	string_list_clear(&edits->drop, 0);
+	string_list_clear(&edits->edit, 0);
+	string_list_clear(&edits->reword, 0);
+	free_commit_list(edits->revs);
+}
+
+/* Find an unmatched oid in the util pointer of our edit refs. If it's found
+   reset util to NULL and return 1. */
+static int consume_oid(const struct object_id *oid,
+		       const struct string_list *refs)
+{
+	int i;
+	for (i = 0; i < refs->nr; i++)
+		if (refs->items[i].util && oideq(oid, refs->items[i].util)) {
+			refs->items[i].util = NULL;
+			return 1;
+		}
+	return 0;
+}
+
+static int check_unused_refs(const struct string_list *refs)
+{
+	int i;
+	for (i = 0; i < refs->nr; i++)
+		if (refs->items[i].util)
+			return error(_("did not find '%s' in todo list"),
+					refs->items[i].string);
+	return 0;
+}
+
+static int check_unused_edits(const struct sequence_edits *edits)
+{
+	return check_unused_refs(&edits->drop) ||
+		check_unused_refs(&edits->edit) ||
+		check_unused_refs(&edits->reword);
+}
+
+static void add_todo_cmd(struct strbuf *buf, enum todo_command cmd,
+			      unsigned flags)
+{
+	if (flags & TODO_LIST_ABBREVIATE_CMDS)
+		strbuf_addch(buf, command_to_char(cmd));
+	else
+		strbuf_addstr(buf, command_to_string(cmd));
+}
+
+static void add_todo_cmd_oid(struct strbuf *buf, enum todo_command cmd,
+			     unsigned flags, const struct object_id *oid)
+{
+	add_todo_cmd(buf, cmd, flags);
+	strbuf_addf(buf, " %s ", oid_to_hex(oid));
+}
+
+static void add_edit_todo_inst(struct strbuf *buf, const struct object_id *oid,
+				const struct sequence_edits *edits,
+				unsigned flags)
+{
+	enum todo_command cmd = TODO_PICK;
+
+	if (consume_oid(oid, &edits->drop))
+		cmd = TODO_DROP;
+	else if (consume_oid(oid, &edits->edit))
+		cmd = TODO_EDIT;
+	else if (consume_oid(oid, &edits->reword))
+		cmd = TODO_REWORD;
+
+	add_todo_cmd_oid(buf, cmd, flags, oid);
+}
+
 static int make_script_with_merges(struct pretty_print_context *pp,
-				   struct rev_info *revs, struct strbuf *out,
-				   unsigned flags)
+				   struct rev_info *revs,
+				   const struct sequence_edits *edits,
+				   struct strbuf *out, unsigned flags)
 {
 	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	int rebase_cousins = flags & TODO_LIST_REBASE_COUSINS;
@@ -4277,8 +4349,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	struct label_state state = { OIDMAP_INIT, { NULL }, STRBUF_INIT };
 
 	int abbr = flags & TODO_LIST_ABBREVIATE_CMDS;
-	const char *cmd_pick = abbr ? "p" : "pick",
-		*cmd_label = abbr ? "l" : "label",
+	const char *cmd_label = abbr ? "l" : "label",
 		*cmd_reset = abbr ? "t" : "reset",
 		*cmd_merge = abbr ? "m" : "merge";
 
@@ -4322,9 +4393,9 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			strbuf_reset(&buf);
 			if (!keep_empty && is_empty)
 				strbuf_addf(&buf, "%c ", comment_line_char);
-			strbuf_addf(&buf, "%s %s %s", cmd_pick,
-				    oid_to_hex(&commit->object.oid),
-				    oneline.buf);
+			add_edit_todo_inst(&buf, &commit->object.oid, edits,
+					   flags);
+			strbuf_addbuf(&buf, &oneline);
 
 			FLEX_ALLOC_STR(entry, string, buf.buf);
 			oidcpy(&entry->entry.oid, &commit->object.oid);
@@ -4481,18 +4552,18 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	hashmap_free(&state.labels, 1);
 	strbuf_release(&state.buf);
 
-	return 0;
+	return check_unused_edits(edits);
 }
 
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
-			  const char **argv, unsigned flags)
+			  const char **argv, const struct sequence_edits *edits,
+			  unsigned flags)
 {
 	char *format = NULL;
 	struct pretty_print_context pp = {0};
 	struct rev_info revs;
 	struct commit *commit;
 	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
-	const char *insn = flags & TODO_LIST_ABBREVIATE_CMDS ? "p" : "pick";
 	int rebase_merges = flags & TODO_LIST_REBASE_MERGES;
 
 	repo_init_revisions(r, &revs, NULL);
@@ -4524,7 +4595,7 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 		return error(_("make_script: error preparing revisions"));
 
 	if (rebase_merges)
-		return make_script_with_merges(&pp, &revs, out, flags);
+		return make_script_with_merges(&pp, &revs, edits, out, flags);
 
 	while ((commit = get_revision(&revs))) {
 		int is_empty  = is_original_commit_empty(commit);
@@ -4533,12 +4604,11 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			continue;
 		if (!keep_empty && is_empty)
 			strbuf_addf(out, "%c ", comment_line_char);
-		strbuf_addf(out, "%s %s ", insn,
-			    oid_to_hex(&commit->object.oid));
+		add_edit_todo_inst(out, &commit->object.oid, edits, flags);
 		pretty_print_commit(&pp, commit, out);
 		strbuf_addch(out, '\n');
 	}
-	return 0;
+	return check_unused_edits(edits);
 }
 
 /*

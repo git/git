@@ -130,6 +130,24 @@ int sequencer_continue(struct repository *repo, struct replay_opts *opts);
 int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
+/*
+ * The string_lists here contain the edit refs from the command-line. Each
+ * string_list_item's util pointer is pointed to the struct object_id * of
+ * the ref's oid by resolve_oids(), and util is set back to NULL when the
+ * ref is consumed during the todo-list generation.  After the todo-list is
+ * generated, any !!util strings were not encountered.
+ */
+struct sequence_edits {
+	struct commit_list *revs;
+	struct string_list drop;
+	struct string_list edit;
+	struct string_list reword;
+};
+#define SEQUENCE_EDITS_INIT { NULL, STRING_LIST_INIT_NODUP, \
+		STRING_LIST_INIT_NODUP, STRING_LIST_INIT_NODUP }
+void free_sequence_edits(struct sequence_edits *edits);
+
+
 #define TODO_LIST_KEEP_EMPTY (1U << 0)
 #define TODO_LIST_SHORTEN_IDS (1U << 1)
 #define TODO_LIST_ABBREVIATE_CMDS (1U << 2)
@@ -143,7 +161,8 @@ int sequencer_remove_state(struct replay_opts *opts);
 #define TODO_LIST_APPEND_TODO_HELP (1U << 5)
 
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
-			  const char **argv, unsigned flags);
+			  const char **argv, const struct sequence_edits *edits,
+			  unsigned flags);
 
 void todo_list_add_exec_commands(struct todo_list *todo_list,
 				 struct string_list *commands);

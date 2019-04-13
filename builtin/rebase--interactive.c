@@ -140,6 +140,34 @@ static int get_revision_ranges(const char *upstream, const char *onto,
 	return 0;
 }
 
+static int resolve_commit_list(const struct string_list *str,
+			       struct commit_list **revs)
+{
+	struct object_id oid;
+	int i;
+	for (i = 0; i < str->nr; i++) {
+		struct commit *r;
+		const char * ref = str->items[i].string;
+		if (get_oid(ref, &oid))
+			return error(_("cannot resolve %s"), ref);
+
+		r = lookup_commit_reference(the_repository, &oid);
+		if (!r)
+			return error(_("%s is not a commit"), ref);
+
+		commit_list_insert(r, revs);
+		str->items[i].util = &(*revs)->item->object.oid;
+	}
+	return 0;
+}
+
+static int resolve_edits_commit_list(struct sequence_edits *edits)
+{
+	return resolve_commit_list(&edits->drop, &edits->revs) ||
+	       resolve_commit_list(&edits->edit, &edits->revs) ||
+	       resolve_commit_list(&edits->reword, &edits->revs);
+}
+
 static int init_basic_state(struct replay_opts *opts, const char *head_name,
 			    const char *onto, const char *orig_head)
 {
@@ -163,6 +191,7 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 				 const char *onto, const char *onto_name,
 				 const char *squash_onto, const char *head_name,
 				 const char *restrict_revision, char *raw_strategies,
+				 struct sequence_edits *edits,
 				 struct string_list *commands, unsigned autosquash)
 {
 	int ret;
@@ -197,7 +226,7 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
 				    make_script_args.argc, make_script_args.argv,
-				    flags);
+				    edits, flags);
 
 	if (ret)
 		error(_("could not generate todo list"));
@@ -233,6 +262,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		*squash_onto = NULL, *upstream = NULL, *head_name = NULL,
 		*switch_to = NULL, *cmd = NULL;
 	struct string_list commands = STRING_LIST_INIT_DUP;
+	struct sequence_edits edits = SEQUENCE_EDITS_INIT;
 	char *raw_strategies = NULL;
 	enum {
 		NONE = 0, CONTINUE, SKIP, EDIT_TODO, SHOW_CURRENT_PATCH,
@@ -272,6 +302,15 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 			   N_("restrict-revision"), N_("restrict revision")),
 		OPT_STRING(0, "squash-onto", &squash_onto, N_("squash-onto"),
 			   N_("squash onto")),
+		OPT_STRING_LIST(0, "drop", &edits.drop, N_("revision"),
+				N_("drop the mentioned ref from the "
+				   "todo list")),
+		OPT_STRING_LIST(0, "edit", &edits.edit, N_("revision"),
+				N_("edit the mentioned ref instead of "
+				   "picking it")),
+		OPT_STRING_LIST(0, "reword", &edits.reword, N_("revision"),
+				N_("reword the mentioned ref instead of "
+				   "picking it")),
 		OPT_STRING(0, "upstream", &upstream, N_("upstream"),
 			   N_("the upstream commit")),
 		OPT_STRING(0, "head-name", &head_name, N_("head-name"), N_("head name")),
@@ -325,6 +364,8 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		string_list_remove_empty_items(&commands, 0);
 	}
 
+	resolve_edits_commit_list(&edits);
+
 	switch (command) {
 	case NONE:
 		if (!onto && !upstream)
@@ -332,7 +373,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 
 		ret = do_interactive_rebase(&opts, flags, switch_to, upstream, onto,
 					    onto_name, squash_onto, head_name, restrict_revision,
-					    raw_strategies, &commands, autosquash);
+					    raw_strategies, &edits, &commands, autosquash);
 		break;
 	case SKIP: {
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
@@ -373,5 +414,6 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	}
 
 	string_list_clear(&commands, 0);
+	free_sequence_edits(&edits);
 	return !!ret;
 }

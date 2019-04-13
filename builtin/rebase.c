@@ -78,6 +78,7 @@ struct rebase_options {
 	char *gpg_sign_opt;
 	int autostash;
 	char *cmd;
+	char *edit_switches;
 	int allow_empty_message;
 	int rebase_merges, rebase_cousins;
 	char *strategy, *strategy_opts;
@@ -694,6 +695,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 					 opts->switch_to);
 		if (opts->cmd)
 			argv_array_pushf(&child.args, "--cmd=%s", opts->cmd);
+		if (opts->edit_switches)
+			argv_array_split(&child.args, opts->edit_switches);
 		if (opts->allow_empty_message)
 			argv_array_push(&child.args, "--allow-empty-message");
 		if (opts->allow_rerere_autoupdate > 0)
@@ -710,6 +713,9 @@ static int run_specific_rebase(struct rebase_options *opts)
 		status = run_command(&child);
 		goto finished_rebase;
 	}
+
+	if (opts->edit_switches)
+		BUG("Unexpected rebase type with switches %d", opts->type);
 
 	if (opts->type == REBASE_AM) {
 		status = run_am(opts);
@@ -988,6 +994,28 @@ static int check_exec_cmd(const char *cmd)
 	return 0;
 }
 
+static void forward_switches(struct rebase_options *options,
+			     const char *sw_name,
+			     struct string_list *values)
+{
+	int i;
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!values->nr)
+		return;
+
+	imply_interactive(options, sw_name);
+
+	if (!!options->edit_switches)
+		strbuf_addf(&buf, "%s ", options->edit_switches);
+
+	for (i = 0; i < values->nr; i++)
+		strbuf_addf(&buf, "%s %s ", sw_name, values->items[i].string);
+	strbuf_rtrim(&buf);
+	options->edit_switches = xstrdup(buf.buf);
+
+	strbuf_release(&buf);
+}
 
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
@@ -1025,6 +1053,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 					      NULL };
 	const char *gpg_sign = NULL;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
+	struct string_list reword = STRING_LIST_INIT_NODUP;
+	struct string_list edit = STRING_LIST_INIT_NODUP;
+	struct string_list drop = STRING_LIST_INIT_NODUP;
 	const char *rebase_merges = NULL;
 	int fork_point = -1;
 	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
@@ -1107,6 +1138,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
 				N_("add exec lines after each commit of the "
 				   "editable list")),
+		OPT_STRING_LIST(0, "drop", &drop, N_("revision"),
+				N_("drop the mentioned ref from the "
+				   "todo list")),
+		OPT_STRING_LIST(0, "edit", &edit, N_("revision"),
+				N_("edit the mentioned ref instead of "
+				   "picking it")),
+		OPT_STRING_LIST(0, "reword", &reword, N_("revision"),
+				N_("reword the mentioned ref instead of "
+				   "picking it")),
 		OPT_BOOL(0, "allow-empty-message",
 			 &options.allow_empty_message,
 			 N_("allow rebasing commits with empty messages")),
@@ -1363,6 +1403,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			strbuf_addf(&buf, "exec %s\n", exec.items[i].string);
 		options.cmd = xstrdup(buf.buf);
 	}
+
+	forward_switches(&options, "--drop", &drop);
+	forward_switches(&options, "--edit", &edit);
+	forward_switches(&options, "--reword", &reword);
 
 	if (rebase_merges) {
 		if (!*rebase_merges)
