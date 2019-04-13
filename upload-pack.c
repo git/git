@@ -592,7 +592,8 @@ error:
 	return 1;
 }
 
-static void check_non_tip(struct object_array *want_obj)
+static void check_non_tip(struct object_array *want_obj,
+			  struct packet_writer *writer)
 {
 	int i;
 
@@ -611,9 +612,13 @@ error:
 	/* Pick one of them (we know there at least is one) */
 	for (i = 0; i < want_obj->nr; i++) {
 		struct object *o = want_obj->objects[i].item;
-		if (!is_our_ref(o))
+		if (!is_our_ref(o)) {
+			packet_writer_error(writer,
+					    "upload-pack: not our ref %s",
+					    oid_to_hex(&o->oid));
 			die("git upload-pack: not our ref %s",
 			    oid_to_hex(&o->oid));
+		}
 	}
 }
 
@@ -936,7 +941,7 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 	 * by another process that handled the initial request.
 	 */
 	if (has_non_tip)
-		check_non_tip(want_obj);
+		check_non_tip(want_obj, &writer);
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;

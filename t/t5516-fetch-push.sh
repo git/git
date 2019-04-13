@@ -1240,7 +1240,8 @@ do
 			test_must_fail git cat-file commit $SHA1_2 &&
 			git fetch ../testrepo/.git $SHA1_2 &&
 			git cat-file commit $SHA1_2 &&
-			test_must_fail git fetch ../testrepo/.git $SHA1_3
+			test_must_fail git fetch ../testrepo/.git $SHA1_3 2>err &&
+			test_i18ngrep "remote error:.*not our ref" err
 		)
 	'
 done
