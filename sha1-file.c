@@ -1370,7 +1370,8 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 
 		/* Check if it is a missing object */
 		if (fetch_if_missing && repository_format_partial_clone &&
-		    !already_retried && r == the_repository) {
+		    !already_retried && r == the_repository &&
+		    !(flags & OBJECT_INFO_FOR_PREFETCH)) {
 			/*
 			 * TODO Investigate having fetch_object() return
 			 * TODO error/success and stopping the music here.
