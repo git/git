@@ -422,6 +422,8 @@ include::config/submodule.txt[]
 
 include::config/tag.txt[]
 
+include::config/trace2.txt[]
+
 include::config/transfer.txt[]
 
 include::config/uploadarchive.txt[]
