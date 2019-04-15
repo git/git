@@ -19,5 +19,6 @@ void tr2_tbuf_local_time(struct tr2_tbuf *tb);
  * Fill buffer with formatted UTC datatime string.
  */
 void tr2_tbuf_utc_datetime_extended(struct tr2_tbuf *tb);
+void tr2_tbuf_utc_datetime(struct tr2_tbuf *tb);
 
 #endif /* TR2_TBUF_H */
