@@ -1,8 +1,7 @@
 #include "cache.h"
 #include "config.h"
-#include "tr2_cfg.h"
-
-#define TR2_ENVVAR_CFG_PARAM "GIT_TR2_CONFIG_PARAMS"
+#include "trace2/tr2_cfg.h"
+#include "trace2/tr2_sysenv.h"
 
 static struct strbuf **tr2_cfg_patterns;
 static int tr2_cfg_count_patterns;
@@ -21,7 +20,7 @@ static int tr2_cfg_load_patterns(void)
 		return tr2_cfg_count_patterns;
 	tr2_cfg_loaded = 1;
 
-	envvar = getenv(TR2_ENVVAR_CFG_PARAM);
+	envvar = tr2_sysenv_get(TR2_SYSENV_CFG_PARAM);
 	if (!envvar || !*envvar)
 		return tr2_cfg_count_patterns;
 

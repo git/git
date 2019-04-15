@@ -6,20 +6,20 @@
 #include "json-writer.h"
 #include "trace2/tr2_dst.h"
 #include "trace2/tr2_sid.h"
+#include "trace2/tr2_sysenv.h"
 #include "trace2/tr2_tbuf.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 
-static struct tr2_dst tr2dst_perf = { "GIT_TR2_PERF", 0, 0, 0 };
+static struct tr2_dst tr2dst_perf = { TR2_SYSENV_PERF, 0, 0, 0 };
 
 /*
- * Set this environment variable to true to omit the "<time> <file>:<line>"
+ * Use TR2_SYSENV_PERF_BRIEF to omit the "<time> <file>:<line>"
  * fields from each line written to the builtin performance target.
  *
  * Unit tests may want to use this to help with testing.
  */
-#define TR2_ENVVAR_PERF_BRIEF "GIT_TR2_PERF_BRIEF"
-static int tr2env_perf_brief;
+static int tr2env_perf_be_brief;
 
 #define TR2FMT_PERF_FL_WIDTH (50)
 #define TR2FMT_PERF_MAX_EVENT_NAME (12)
@@ -36,17 +36,17 @@ static int fn_init(void)
 {
 	int want = tr2_dst_trace_want(&tr2dst_perf);
 	int want_brief;
-	char *brief;
+	const char *brief;
 
 	if (!want)
 		return want;
 
 	strbuf_addchars(&dots, '.', TR2_DOTS_BUFFER_SIZE);
 
-	brief = getenv(TR2_ENVVAR_PERF_BRIEF);
+	brief = tr2_sysenv_get(TR2_SYSENV_PERF_BRIEF);
 	if (brief && *brief &&
 	    ((want_brief = git_parse_maybe_bool(brief)) != -1))
-		tr2env_perf_brief = want_brief;
+		tr2env_perf_be_brief = want_brief;
 
 	return want;
 }
@@ -77,7 +77,7 @@ static void perf_fmt_prepare(const char *event_name,
 
 	strbuf_setlen(buf, 0);
 
-	if (!tr2env_perf_brief) {
+	if (!tr2env_perf_be_brief) {
 		struct tr2_tbuf tb_now;
 
 		tr2_tbuf_local_time(&tb_now);

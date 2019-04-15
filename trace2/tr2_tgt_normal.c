@@ -4,20 +4,20 @@
 #include "quote.h"
 #include "version.h"
 #include "trace2/tr2_dst.h"
+#include "trace2/tr2_sysenv.h"
 #include "trace2/tr2_tbuf.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 
-static struct tr2_dst tr2dst_normal = { "GIT_TR2", 0, 0, 0 };
+static struct tr2_dst tr2dst_normal = { TR2_SYSENV_NORMAL, 0, 0, 0 };
 
 /*
- * Set this environment variable to true to omit the "<time> <file>:<line>"
+ * Use the TR2_SYSENV_NORMAL_BRIEF setting to omit the "<time> <file>:<line>"
  * fields from each line written to the builtin normal target.
  *
  * Unit tests may want to use this to help with testing.
  */
-#define TR2_ENVVAR_NORMAL_BRIEF "GIT_TR2_BRIEF"
-static int tr2env_normal_brief;
+static int tr2env_normal_be_brief;
 
 #define TR2FMT_NORMAL_FL_WIDTH (50)
 
@@ -25,15 +25,15 @@ static int fn_init(void)
 {
 	int want = tr2_dst_trace_want(&tr2dst_normal);
 	int want_brief;
-	char *brief;
+	const char *brief;
 
 	if (!want)
 		return want;
 
-	brief = getenv(TR2_ENVVAR_NORMAL_BRIEF);
+	brief = tr2_sysenv_get(TR2_SYSENV_NORMAL_BRIEF);
 	if (brief && *brief &&
 	    ((want_brief = git_parse_maybe_bool(brief)) != -1))
-		tr2env_normal_brief = want_brief;
+		tr2env_normal_be_brief = want_brief;
 
 	return want;
 }
@@ -47,7 +47,7 @@ static void normal_fmt_prepare(const char *file, int line, struct strbuf *buf)
 {
 	strbuf_setlen(buf, 0);
 
-	if (!tr2env_normal_brief) {
+	if (!tr2env_normal_be_brief) {
 		struct tr2_tbuf tb_now;
 
 		tr2_tbuf_local_time(&tb_now);

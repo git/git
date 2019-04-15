@@ -38,7 +38,8 @@ void trace2_initialize_clock(void);
 
 /*
  * Initialize TRACE2 tracing facility if any of the builtin TRACE2
- * targets are enabled in the environment.  Emits a 'version' event.
+ * targets are enabled in the system config or the environment.
+ * Emits a 'version' event.
  *
  * Cleanup/Termination is handled automatically by a registered
  * atexit() routine.
@@ -125,10 +126,11 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
  * Emit one or more 'def_param' events for "interesting" configuration
  * settings.
  *
- * The environment variable "GIT_TR2_CONFIG_PARAMS" can be set to a
- * list of patterns considered important.  For example:
- *
- *    GIT_TR2_CONFIG_PARAMS="core.*,remote.*.url"
+ * Use the TR2_SYSENV_CFG_PARAM setting to register a comma-separated
+ * list of patterns configured important.  For example:
+ *     git config --system trace2.configParams 'core.*,remote.*.url'
+ * or:
+ *     GIT_TR2_CONFIG_PARAMS=core.*,remote.*.url"
  *
  * Note: this routine does a read-only iteration on the config data
  * (using read_early_config()), so it must not be called until enough

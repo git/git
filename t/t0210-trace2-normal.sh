@@ -3,6 +3,11 @@
 test_description='test trace2 facility (normal target)'
 . ./test-lib.sh
 
+# Turn off any inherited trace2 settings for this test.
+sane_unset GIT_TR2 GIT_TR2_PERF GIT_TR2_EVENT
+sane_unset GIT_TR2_BRIEF
+sane_unset GIT_TR2_CONFIG_PARAMS
+
 # Add t/helper directory to PATH so that we can use a relative
 # path to run nested instances of test-tool.exe (see 004child).
 # This helps with HEREDOC comparisons later.
@@ -14,11 +19,6 @@ PATH="$TTDIR:$PATH" && export PATH
 # Warning: only cover our actual calls to test-tool and/or git.
 # Warning: So you may see extra lines in artifact files when
 # Warning: interactively debugging.
-
-# Turn off any inherited trace2 settings for this test.
-unset GIT_TR2 GIT_TR2_PERF GIT_TR2_EVENT
-unset GIT_TR2_BRIEF
-unset GIT_TR2_CONFIG_PARAMS
 
 V=$(git version | sed -e 's/^git version //') && export V
 
@@ -126,6 +126,45 @@ test_expect_success 'normal stream, error event' '
 		cmd_name trace2 (trace2)
 		error hello world
 		error this is a test
+		exit elapsed:_TIME_ code:0
+		atexit elapsed:_TIME_ code:0
+	EOF
+	test_cmp expect actual
+'
+
+sane_unset GIT_TR2_BRIEF
+
+# Now test without environment variables and get all Trace2 settings
+# from the global config.
+
+test_expect_success 'using global config, normal stream, return code 0' '
+	test_when_finished "rm trace.normal actual expect" &&
+	test_config_global trace2.normalBrief 1 &&
+	test_config_global trace2.normalTarget "$(pwd)/trace.normal" &&
+	test-tool trace2 001return 0 &&
+	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
+	cat >expect <<-EOF &&
+		version $V
+		start _EXE_ trace2 001return 0
+		cmd_name trace2 (trace2)
+		exit elapsed:_TIME_ code:0
+		atexit elapsed:_TIME_ code:0
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'using global config with include' '
+	test_when_finished "rm trace.normal actual expect real.gitconfig" &&
+	test_config_global trace2.normalBrief 1 &&
+	test_config_global trace2.normalTarget "$(pwd)/trace.normal" &&
+	mv "$(pwd)/.gitconfig" "$(pwd)/real.gitconfig" &&
+	test_config_global include.path "$(pwd)/real.gitconfig" &&
+	test-tool trace2 001return 0 &&
+	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <trace.normal >actual &&
+	cat >expect <<-EOF &&
+		version $V
+		start _EXE_ trace2 001return 0
+		cmd_name trace2 (trace2)
 		exit elapsed:_TIME_ code:0
 		atexit elapsed:_TIME_ code:0
 	EOF
