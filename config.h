@@ -55,6 +55,9 @@ typedef int (*config_parser_event_fn_t)(enum config_event_t type,
 
 struct config_options {
 	unsigned int respect_includes : 1;
+	unsigned int ignore_repo : 1;
+	unsigned int ignore_worktree : 1;
+	unsigned int ignore_cmdline : 1;
 	const char *commondir;
 	const char *git_dir;
 	config_parser_event_fn_t event_fn;
@@ -83,6 +86,7 @@ extern int git_config_from_blob_oid(config_fn_t fn, const char *name,
 extern void git_config_push_parameter(const char *text);
 extern int git_config_from_parameters(config_fn_t fn, void *data);
 extern void read_early_config(config_fn_t cb, void *data);
+extern void read_very_early_config(config_fn_t cb, void *data);
 extern void git_config(config_fn_t fn, void *);
 extern int config_with_options(config_fn_t fn, void *,
 			       struct git_config_source *config_source,
