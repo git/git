@@ -94,7 +94,7 @@ static void event_fmt_prepare(const char *event_name, const char *file,
 	 */
 	if (!tr2env_event_be_brief || !strcmp(event_name, "version") ||
 	    !strcmp(event_name, "atexit")) {
-		tr2_tbuf_utc_time(&tb_now);
+		tr2_tbuf_utc_datetime_extended(&tb_now);
 		jw_object_string(jw, "time", tb_now.buf);
 	}
 
