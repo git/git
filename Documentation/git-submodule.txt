@@ -132,7 +132,8 @@ update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--forc
 +
 --
 Update the registered submodules to match what the superproject
-expects by cloning missing submodules and updating the working tree of
+expects by cloning missing submodules, fetching missing submodule commits
+and updating the working tree of
 the submodules. The "updating" can be done in several ways depending
 on command line options and the value of `submodule.<name>.update`
 configuration variable. The command line option takes precedence over
