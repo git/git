@@ -2011,7 +2011,7 @@ int git_configset_get_pathname(struct config_set *cs, const char *key, const cha
 /* Functions use to read configuration from a repository */
 static void repo_read_config(struct repository *repo)
 {
-	struct config_options opts;
+	struct config_options opts = { 0 };
 
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;
