@@ -37,11 +37,11 @@ int main(int argc, const char **argv)
 	sanitize_stdfds();
 	restore_sigpipe_to_default();
 
+	git_resolve_executable_dir(argv[0]);
+
 	trace2_initialize();
 	trace2_cmd_start(argv);
 	trace2_collect_process_info();
-
-	git_resolve_executable_dir(argv[0]);
 
 	git_setup_gettext();
 
