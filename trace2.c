@@ -213,6 +213,8 @@ int trace2_cmd_exit_fl(const char *file, int line, int code)
 	if (!trace2_enabled)
 		return code;
 
+	trace2_collect_process_info(TRACE2_PROCESS_INFO_EXIT);
+
 	tr2main_exit_code = code;
 
 	us_now = getnanotime() / 1000;
