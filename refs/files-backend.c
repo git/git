@@ -2701,18 +2701,32 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 		if (is_packed_transaction_needed(refs->packed_ref_store,
 						 packed_transaction)) {
 			ret = ref_transaction_prepare(packed_transaction, err);
+			/*
+			 * A failure during the prepare step will abort
+			 * itself, but not free. Do that now, and disconnect
+			 * from the files_transaction so it does not try to
+			 * abort us when we hit the cleanup code below.
+			 */
+			if (ret) {
+				ref_transaction_free(packed_transaction);
+				backend_data->packed_transaction = NULL;
+			}
 		} else {
 			/*
 			 * We can skip rewriting the `packed-refs`
 			 * file. But we do need to leave it locked, so
 			 * that somebody else doesn't pack a reference
 			 * that we are trying to delete.
+			 *
+			 * We need to disconnect our transaction from
+			 * backend_data, since the abort (whether successful or
+			 * not) will free it.
 			 */
+			backend_data->packed_transaction = NULL;
 			if (ref_transaction_abort(packed_transaction, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
-			backend_data->packed_transaction = NULL;
 		}
 	}
 
