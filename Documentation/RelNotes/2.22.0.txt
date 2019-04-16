@@ -42,6 +42,10 @@ UI, Workflows & Features
  * Error message given while cloning with --recurse-submodules has
    been updated.
 
+ * The completion helper code now pays attention to repository-local
+   configuration (when available), which allows --list-cmds to honour
+   a repository specific setting of completion.commands, for example.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -63,6 +67,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * Suggest GitGitGadget instead of submitGit as a way to submit
    patches based on GitHub PR to us.
+
+ * The test framework has been updated to help developers by making it
+   easier to run most of the tests under different versions of
+   over-the-wire protocols.
+
+ * Dev support update to make it easier to compare two formatted
+   results from our documentation.
+
+ * The scripted "git rebase" implementation has been retired.
+
+ * "git multi-pack-index verify" did not scale well with the number of
+   packfiles, which is being improved.
 
 
 Fixes since v2.21
@@ -168,6 +184,42 @@ Fixes since v2.21
  * Build update for SHA-1 with collision detection.
    (merge 07a20f569b jk/sha1dc later to maint).
 
+ * Build procedure has been fixed around use of asciidoctor instead of
+   asciidoc.
+   (merge 185f9a0ea0 ma/asciidoctor-fixes later to maint).
+
+ * remote-http transport did not anonymize URLs reported in its error
+   messages at places.
+   (merge c1284b21f2 js/anonymize-remote-curl-diag later to maint).
+
+ * Error messages given from the http transport have been updated so
+   that they can be localized.
+   (merge ed8b4132c8 js/remote-curl-i18n later to maint).
+
+ * "git init" forgot to read platform-specific repository
+   configuration, which made Windows port to ignore settings of
+   core.hidedotfiles, for example.
+
+ * A corner-case object name ambiguity while the sequencer machinery
+   is working (e.g. "rebase -i -x") has been fixed.
+
+ * "git format-patch" used overwrite an existing patch/cover-letter
+   file.  A new "--no-clobber" option stops it.
+   (merge 2fe95f494c jc/format-patch-error-check later to maint).
+
+ * "git checkout -f <branch>" while the index has an unmerged path
+   incorrectly left some paths in an unmerged state, which has been
+   corrected.
+
+ * A corner case bug in the refs API has been corrected.
+   (merge d3322eb28b jk/refs-double-abort later to maint).
+
+ * Unicode update.
+   (merge 584b62c37b bb/unicode-12 later to maint).
+
+ * dumb-http walker has been updated to share more error recovery
+   strategy with the normal codepath.
+
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
    (merge 90503a240b js/doc-symref-in-proto-v1 later to maint).
@@ -187,3 +239,9 @@ Fixes since v2.21
    (merge af91b0230c dl/ignore-docs later to maint).
    (merge 59a06e947b ra/t3600-test-path-funcs later to maint).
    (merge e041d0781b ar/t4150-remove-cruft later to maint).
+   (merge 8d75a1d183 ma/asciidoctor-fixes-more later to maint).
+   (merge 74cc547b0f mh/pack-protocol-doc-fix later to maint).
+   (merge ed31851fa6 ab/doc-misc-typofixes later to maint).
+   (merge a7256debd4 nd/checkout-m-doc-update later to maint).
+   (merge 3a9e1ad78d jt/t5551-protocol-v2-does-not-have-half-auth later to maint).
+   (merge 0b918b75af sg/t5318-cleanup later to maint).
