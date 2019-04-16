@@ -190,7 +190,7 @@ static void fn_atexit(uint64_t us_elapsed_absolute, int code)
 static void maybe_add_string_va(struct json_writer *jw, const char *field_name,
 				const char *fmt, va_list ap)
 {
-	if (fmt && *fmt && ap) {
+	if (fmt && *fmt) {
 		va_list copy_ap;
 		struct strbuf buf = STRBUF_INIT;
 
