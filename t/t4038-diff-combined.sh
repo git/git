@@ -480,18 +480,18 @@ test_expect_success FUNNYNAMES 'setup for --combined-all-paths with funny names'
 	git branch side1d &&
 	git branch side2d &&
 	git checkout side1d &&
-	test_seq 1 10 >$(printf "file\twith\ttabs") &&
+	test_seq 1 10 >"$(printf "file\twith\ttabs")" &&
 	git add file* &&
 	git commit -m with &&
 	git checkout side2d &&
-	test_seq 1 9 >$(printf "i\tam\ttabbed") &&
-	echo ten >>$(printf "i\tam\ttabbed") &&
+	test_seq 1 9 >"$(printf "i\tam\ttabbed")" &&
+	echo ten >>"$(printf "i\tam\ttabbed")" &&
 	git add *tabbed &&
 	git commit -m iam &&
 	git checkout -b funny-names-mergery side1d &&
 	git merge --no-commit side2d &&
 	git rm *tabs &&
-	echo eleven >>$(printf "i\tam\ttabbed") &&
+	echo eleven >>"$(printf "i\tam\ttabbed")" &&
 	git mv "$(printf "i\tam\ttabbed")" "$(printf "fickle\tnaming")" &&
 	git add fickle* &&
 	git commit
