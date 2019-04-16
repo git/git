@@ -126,7 +126,7 @@ See also <<FILES>>.
 
 --local::
 	For writing options: write to the repository `.git/config` file.
-	This is	the default behavior.
+	This is the default behavior.
 +
 For reading options: read only from the repository `.git/config` rather than
 from all available files.

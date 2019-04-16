@@ -10,7 +10,7 @@ diff.autoRefreshIndex::
 
 diff.dirstat::
 	A comma separated list of `--dirstat` parameters specifying the
-	default behavior of the `--dirstat` option to linkgit:git-diff[1]`
+	default behavior of the `--dirstat` option to linkgit:git-diff[1]
 	and friends. The defaults can be overridden on the command line
 	(using `--dirstat=<param1,param2,...>`). The fallback defaults
 	(when not changed by `diff.dirstat`) are `changes,noncumulative,3`.
@@ -73,7 +73,7 @@ diff.external::
 	environment variable.  The command is called with parameters
 	as described under "git Diffs" in linkgit:git[1].  Note: if
 	you want to use an external diff program only on a subset of
-	your files, you	might want to use linkgit:gitattributes[5] instead.
+	your files, you might want to use linkgit:gitattributes[5] instead.
 
 diff.ignoreSubmodules::
 	Sets the default value of --ignore-submodules. Note that this

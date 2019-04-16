@@ -23,9 +23,9 @@ When `fsck.<msg-id>` is set, errors can be switched to warnings and
 vice versa by configuring the `fsck.<msg-id>` setting where the
 `<msg-id>` is the fsck message ID and the value is one of `error`,
 `warn` or `ignore`. For convenience, fsck prefixes the error/warning
-with the message ID, e.g. "missingEmail: invalid author/committer line
-- missing email" means that setting `fsck.missingEmail = ignore` will
-hide that issue.
+with the message ID, e.g. "missingEmail: invalid author/committer
+line - missing email" means that setting `fsck.missingEmail = ignore`
+will hide that issue.
 +
 In general, it is better to enumerate existing objects with problems
 with `fsck.skipList`, instead of listing the kind of breakages these
