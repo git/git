@@ -58,7 +58,7 @@ when you run `git merge`.
 when you run `git cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
-the '$GIT_DIR/refs' directory or from the '$GIT_DIR/packed-refs' file.
+the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
 While the ref name encoding is unspecified, UTF-8 is preferred as
 some output processing may assume ref names in UTF-8.
 
@@ -108,7 +108,7 @@ some output processing may assume ref names in UTF-8.
   `git push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Since our push destination is
   in a remote repository, of course, we report the local tracking branch
-  that corresponds to that branch (i.e., something in 'refs/remotes/').
+  that corresponds to that branch (i.e., something in `refs/remotes/`).
 +
 Here's an example to make it more clear:
 +

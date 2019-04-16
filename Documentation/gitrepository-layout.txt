@@ -84,7 +84,7 @@ objects/info/alternates::
 	to the object database, not to the repository!) in your
 	alternates file, but it will not work if you use absolute
 	paths unless the absolute path in filesystem and web URL
-	is the same. See also 'objects/info/http-alternates'.
+	is the same. See also `objects/info/http-alternates`.
 
 objects/info/http-alternates::
 	This file records URLs to alternate object stores that
