@@ -705,4 +705,14 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 	test_cmp expect actual
 '
 
+test_expect_success 'outside worktree' '
+	echo 1 >1 &&
+	echo 2 >2 &&
+	test_expect_code 1 nongit git \
+		-c diff.tool=echo -c difftool.echo.cmd="echo \$LOCAL \$REMOTE" \
+		difftool --no-prompt --no-index ../1 ../2 >actual &&
+	echo "../1 ../2" >expect &&
+	test_cmp expect actual
+'
+
 test_done
