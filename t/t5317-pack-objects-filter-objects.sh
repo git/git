@@ -25,7 +25,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r1 pack-objects --rev --stdout >all.pack <<-EOF &&
+	git -C r1 pack-objects --revs --stdout >all.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r1 index-pack ../all.pack &&
@@ -39,7 +39,7 @@ test_expect_success 'verify blob count in normal packfile' '
 '
 
 test_expect_success 'verify blob:none packfile has no blobs' '
-	git -C r1 pack-objects --rev --stdout --filter=blob:none >filter.pack <<-EOF &&
+	git -C r1 pack-objects --revs --stdout --filter=blob:none >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r1 index-pack ../filter.pack &&
@@ -74,7 +74,7 @@ test_expect_success 'get an error for missing tree object' '
 	git -C r5 commit -m "foo" &&
 	del=$(git -C r5 rev-parse HEAD^{tree} | sed "s|..|&/|") &&
 	rm r5/.git/objects/$del &&
-	test_must_fail git -C r5 pack-objects --rev --stdout 2>bad_tree <<-EOF &&
+	test_must_fail git -C r5 pack-objects --revs --stdout 2>bad_tree <<-EOF &&
 	HEAD
 	EOF
 	grep "bad tree object" bad_tree
@@ -88,7 +88,7 @@ test_expect_success 'setup for tests of tree:0' '
 '
 
 test_expect_success 'verify tree:0 packfile has no blobs or trees' '
-	git -C r1 pack-objects --rev --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
+	git -C r1 pack-objects --revs --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r1 index-pack ../commitsonly.pack &&
@@ -98,7 +98,7 @@ test_expect_success 'verify tree:0 packfile has no blobs or trees' '
 
 test_expect_success 'grab tree directly when using tree:0' '
 	# We should get the tree specified directly but not its blobs or subtrees.
-	git -C r1 pack-objects --rev --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
+	git -C r1 pack-objects --revs --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
 	HEAD:
 	EOF
 	git -C r1 index-pack ../commitsonly.pack &&
@@ -128,7 +128,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r2 pack-objects --rev --stdout >all.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout >all.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r2 index-pack ../all.pack &&
@@ -142,7 +142,7 @@ test_expect_success 'verify blob count in normal packfile' '
 '
 
 test_expect_success 'verify blob:limit=500 omits all blobs' '
-	git -C r2 pack-objects --rev --stdout --filter=blob:limit=500 >filter.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=500 >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r2 index-pack ../filter.pack &&
@@ -157,7 +157,7 @@ test_expect_success 'verify blob:limit=500 omits all blobs' '
 '
 
 test_expect_success 'verify blob:limit=1000' '
-	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1000 >filter.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1000 >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r2 index-pack ../filter.pack &&
@@ -176,7 +176,7 @@ test_expect_success 'verify blob:limit=1001' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1001 >filter.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1001 >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r2 index-pack ../filter.pack &&
@@ -194,7 +194,7 @@ test_expect_success 'verify blob:limit=10001' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r2 pack-objects --rev --stdout --filter=blob:limit=10001 >filter.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=10001 >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r2 index-pack ../filter.pack &&
@@ -212,7 +212,7 @@ test_expect_success 'verify blob:limit=1k' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r2 index-pack ../filter.pack &&
@@ -230,7 +230,7 @@ test_expect_success 'verify explicitly specifying oversized blob in input' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
 	HEAD
 	$(git -C r2 rev-parse HEAD:large.10000)
 	EOF
@@ -249,7 +249,7 @@ test_expect_success 'verify blob:limit=1m' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1m >filter.pack <<-EOF &&
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1m >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r2 index-pack ../filter.pack &&
@@ -302,7 +302,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r3 pack-objects --rev --stdout >all.pack <<-EOF &&
+	git -C r3 pack-objects --revs --stdout >all.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r3 index-pack ../all.pack &&
@@ -320,7 +320,7 @@ test_expect_success 'verify sparse:path=pattern1' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r3 pack-objects --rev --stdout --filter=sparse:path=../pattern1 >filter.pack <<-EOF &&
+	git -C r3 pack-objects --revs --stdout --filter=sparse:path=../pattern1 >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r3 index-pack ../filter.pack &&
@@ -352,7 +352,7 @@ test_expect_success 'verify sparse:path=pattern2' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r3 pack-objects --rev --stdout --filter=sparse:path=../pattern2 >filter.pack <<-EOF &&
+	git -C r3 pack-objects --revs --stdout --filter=sparse:path=../pattern2 >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r3 index-pack ../filter.pack &&
@@ -404,7 +404,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r4 pack-objects --rev --stdout >all.pack <<-EOF &&
+	git -C r4 pack-objects --revs --stdout >all.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r4 index-pack ../all.pack &&
@@ -423,7 +423,7 @@ test_expect_success 'verify sparse:oid=OID' '
 	sort >expected &&
 
 	oid=$(git -C r4 ls-files -s pattern | awk -f print_2.awk) &&
-	git -C r4 pack-objects --rev --stdout --filter=sparse:oid=$oid >filter.pack <<-EOF &&
+	git -C r4 pack-objects --revs --stdout --filter=sparse:oid=$oid >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r4 index-pack ../filter.pack &&
@@ -441,7 +441,7 @@ test_expect_success 'verify sparse:oid=oid-ish' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	git -C r4 pack-objects --rev --stdout --filter=sparse:oid=master:pattern >filter.pack <<-EOF &&
+	git -C r4 pack-objects --revs --stdout --filter=sparse:oid=master:pattern >filter.pack <<-EOF &&
 	HEAD
 	EOF
 	git -C r4 index-pack ../filter.pack &&
@@ -470,19 +470,19 @@ test_expect_success 'setup r1 - delete loose blobs' '
 '
 
 test_expect_success 'verify pack-objects fails w/ missing objects' '
-	test_must_fail git -C r1 pack-objects --rev --stdout >miss.pack <<-EOF
+	test_must_fail git -C r1 pack-objects --revs --stdout >miss.pack <<-EOF
 	HEAD
 	EOF
 '
 
 test_expect_success 'verify pack-objects fails w/ --missing=error' '
-	test_must_fail git -C r1 pack-objects --rev --stdout --missing=error >miss.pack <<-EOF
+	test_must_fail git -C r1 pack-objects --revs --stdout --missing=error >miss.pack <<-EOF
 	HEAD
 	EOF
 '
 
 test_expect_success 'verify pack-objects w/ --missing=allow-any' '
-	git -C r1 pack-objects --rev --stdout --missing=allow-any >miss.pack <<-EOF
+	git -C r1 pack-objects --revs --stdout --missing=allow-any >miss.pack <<-EOF
 	HEAD
 	EOF
 '
