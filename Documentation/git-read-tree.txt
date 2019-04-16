@@ -128,6 +128,10 @@ OPTIONS
 	Instead of reading tree object(s) into the index, just empty
 	it.
 
+-q::
+--quiet::
+	Quiet, suppress feedback messages.
+
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
 
