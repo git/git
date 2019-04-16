@@ -2275,6 +2275,15 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 		opts->no_commit = git_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.edit"))
 		opts->edit = git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.allow-empty"))
+		opts->allow_empty =
+			git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.allow-empty-message"))
+		opts->allow_empty_message =
+			git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.keep-redundant-commits"))
+		opts->keep_redundant_commits =
+			git_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.signoff"))
 		opts->signoff = git_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.record-origin"))
@@ -2668,36 +2677,54 @@ static int save_opts(struct replay_opts *opts)
 	int res = 0;
 
 	if (opts->no_commit)
-		res |= git_config_set_in_file_gently(opts_file, "options.no-commit", "true");
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.no-commit", "true");
 	if (opts->edit)
-		res |= git_config_set_in_file_gently(opts_file, "options.edit", "true");
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.edit", "true");
+	if (opts->allow_empty)
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.allow-empty", "true");
+	if (opts->allow_empty_message)
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.allow-empty-message", "true");
+	if (opts->keep_redundant_commits)
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.keep-redundant-commits", "true");
 	if (opts->signoff)
-		res |= git_config_set_in_file_gently(opts_file, "options.signoff", "true");
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.signoff", "true");
 	if (opts->record_origin)
-		res |= git_config_set_in_file_gently(opts_file, "options.record-origin", "true");
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.record-origin", "true");
 	if (opts->allow_ff)
-		res |= git_config_set_in_file_gently(opts_file, "options.allow-ff", "true");
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.allow-ff", "true");
 	if (opts->mainline) {
 		struct strbuf buf = STRBUF_INIT;
 		strbuf_addf(&buf, "%d", opts->mainline);
-		res |= git_config_set_in_file_gently(opts_file, "options.mainline", buf.buf);
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.mainline", buf.buf);
 		strbuf_release(&buf);
 	}
 	if (opts->strategy)
-		res |= git_config_set_in_file_gently(opts_file, "options.strategy", opts->strategy);
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.strategy", opts->strategy);
 	if (opts->gpg_sign)
-		res |= git_config_set_in_file_gently(opts_file, "options.gpg-sign", opts->gpg_sign);
+		res |= git_config_set_in_file_gently(opts_file,
+					"options.gpg-sign", opts->gpg_sign);
 	if (opts->xopts) {
 		int i;
 		for (i = 0; i < opts->xopts_nr; i++)
 			res |= git_config_set_multivar_in_file_gently(opts_file,
-							"options.strategy-option",
-							opts->xopts[i], "^$", 0);
+					"options.strategy-option",
+					opts->xopts[i], "^$", 0);
 	}
 	if (opts->allow_rerere_auto)
-		res |= git_config_set_in_file_gently(opts_file, "options.allow-rerere-auto",
-						     opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
-						     "true" : "false");
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.allow-rerere-auto",
+				opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
+				"true" : "false");
 	return res;
 }
 
