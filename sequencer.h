@@ -144,3 +144,4 @@ int read_author_script(const char *path, char **name, char **email, char **date,
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);
 int write_basic_state(struct replay_opts *opts, const char *head_name,
 		      const char *onto, const char *orig_head);
+void sequencer_post_commit_cleanup(struct repository *r);
