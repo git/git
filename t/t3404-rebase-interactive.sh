@@ -149,12 +149,10 @@ test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 
 test_expect_success 'rebase -x with empty command fails' '
 	test_when_finished "git rebase --abort ||:" &&
-	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=true \
-		git rebase -x "" @ 2>actual &&
+	test_must_fail env git rebase -x "" @ 2>actual &&
 	test_write_lines "error: empty exec command" >expected &&
 	test_i18ncmp expected actual &&
-	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=true \
-		git rebase -x " " @ 2>actual &&
+	test_must_fail env git rebase -x " " @ 2>actual &&
 	test_i18ncmp expected actual
 '
 
@@ -162,8 +160,7 @@ LF='
 '
 test_expect_success 'rebase -x with newline in command fails' '
 	test_when_finished "git rebase --abort ||:" &&
-	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=true \
-		git rebase -x "a${LF}b" @ 2>actual &&
+	test_must_fail env git rebase -x "a${LF}b" @ 2>actual &&
 	test_write_lines "error: exec commands cannot contain newlines" \
 			 >expected &&
 	test_i18ncmp expected actual
