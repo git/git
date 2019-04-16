@@ -278,7 +278,8 @@ Header lines start with "#" and are added in response to specific
 command line arguments.  Parsers should ignore headers they
 don't recognize.
 
-### Branch Headers
+Branch Headers
+^^^^^^^^^^^^^^
 
 If `--branch` is given, a series of header lines are printed with
 information about the current branch.
@@ -294,7 +295,8 @@ Line                                     Notes
 ------------------------------------------------------------
 ....
 
-### Changed Tracked Entries
+Changed Tracked Entries
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Following the headers, a series of lines are printed for tracked
 entries.  One of three different line formats may be used to describe
@@ -365,7 +367,8 @@ Field       Meaning
 --------------------------------------------------------
 ....
 
-### Other Items
+Other Items
+^^^^^^^^^^^
 
 Following the tracked entries (and if requested), a series of
 lines will be printed for untracked and then ignored items
@@ -379,7 +382,8 @@ Ignored items have the following format:
 
     ! <path>
 
-### Pathname Format Notes and -z
+Pathname Format Notes and -z
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When the `-z` option is given, pathnames are printed as is and
 without any quoting and lines are terminated with a NUL (ASCII 0x00)
