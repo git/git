@@ -16,6 +16,7 @@
 #include "send-pack.h"
 #include "protocol.h"
 #include "quote.h"
+#include "transport.h"
 
 static struct remote *remote;
 /* always ends with a trailing slash */
@@ -251,7 +252,7 @@ static struct ref *parse_info_refs(struct discovery *heads)
 		if (data[i] == '\n') {
 			if (mid - start != 40)
 				die("%sinfo/refs not valid: is this a git repository?",
-				    url.buf);
+				    transport_anonymize_url(url.buf));
 			data[i] = 0;
 			ref_name = mid + 1;
 			ref = alloc_ref(ref_name);
@@ -442,17 +443,23 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		break;
 	case HTTP_MISSING_TARGET:
 		show_http_message(&type, &charset, &buffer);
-		die("repository '%s' not found", url.buf);
+		die("repository '%s' not found",
+		    transport_anonymize_url(url.buf));
 	case HTTP_NOAUTH:
 		show_http_message(&type, &charset, &buffer);
-		die("Authentication failed for '%s'", url.buf);
+		die("Authentication failed for '%s'",
+		    transport_anonymize_url(url.buf));
 	default:
 		show_http_message(&type, &charset, &buffer);
-		die("unable to access '%s': %s", url.buf, curl_errorstr);
+		die("unable to access '%s': %s",
+		    transport_anonymize_url(url.buf), curl_errorstr);
 	}
 
-	if (options.verbosity && !starts_with(refs_url.buf, url.buf))
-		warning(_("redirecting to %s"), url.buf);
+	if (options.verbosity && !starts_with(refs_url.buf, url.buf)) {
+		char *u = transport_anonymize_url(url.buf);
+		warning(_("redirecting to %s"), u);
+		free(u);
+	}
 
 	last= xcalloc(1, sizeof(*last_discovery));
 	last->service = xstrdup(service);
