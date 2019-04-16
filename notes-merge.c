@@ -29,14 +29,14 @@ void init_notes_merge_options(struct repository *r,
 
 static int path_to_oid(const char *path, struct object_id *oid)
 {
-	char hex_oid[GIT_SHA1_HEXSZ];
+	char hex_oid[GIT_MAX_HEXSZ];
 	int i = 0;
-	while (*path && i < GIT_SHA1_HEXSZ) {
+	while (*path && i < the_hash_algo->hexsz) {
 		if (*path != '/')
 			hex_oid[i++] = *path;
 		path++;
 	}
-	if (*path || i != GIT_SHA1_HEXSZ)
+	if (*path || i != the_hash_algo->hexsz)
 		return -1;
 	return get_oid_hex(hex_oid, oid);
 }

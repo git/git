@@ -65,14 +65,12 @@ static int parse_index_info(char *p, int *mode1, int *mode2,
 	*mode2 = (int)strtol(p + 1, &p, 8);
 	if (*p != ' ')
 		return error("expected ' ', got '%c'", *p);
-	if (get_oid_hex(++p, oid1))
-		return error("expected object ID, got '%s'", p + 1);
-	p += GIT_SHA1_HEXSZ;
+	if (parse_oid_hex(++p, oid1, (const char **)&p))
+		return error("expected object ID, got '%s'", p);
 	if (*p != ' ')
 		return error("expected ' ', got '%c'", *p);
-	if (get_oid_hex(++p, oid2))
-		return error("expected object ID, got '%s'", p + 1);
-	p += GIT_SHA1_HEXSZ;
+	if (parse_oid_hex(++p, oid2, (const char **)&p))
+		return error("expected object ID, got '%s'", p);
 	if (*p != ' ')
 		return error("expected ' ', got '%c'", *p);
 	*status = *++p;

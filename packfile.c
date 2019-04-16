@@ -235,7 +235,7 @@ struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 	struct packed_git *p = alloc_packed_git(alloc);
 
 	memcpy(p->pack_name, path, alloc); /* includes NUL */
-	hashcpy(p->sha1, sha1);
+	hashcpy(p->hash, sha1);
 	if (check_packed_git_idx(idx_path, p)) {
 		free(p);
 		return NULL;
@@ -732,8 +732,8 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	p->pack_local = local;
 	p->mtime = st.st_mtime;
 	if (path_len < the_hash_algo->hexsz ||
-	    get_sha1_hex(path + path_len - the_hash_algo->hexsz, p->sha1))
-		hashclr(p->sha1);
+	    get_sha1_hex(path + path_len - the_hash_algo->hexsz, p->hash))
+		hashclr(p->hash);
 	return p;
 }
 

@@ -486,23 +486,24 @@ static int copy_notes_for_rebase(const struct am_state *state)
 
 	while (!strbuf_getline_lf(&sb, fp)) {
 		struct object_id from_obj, to_obj;
+		const char *p;
 
-		if (sb.len != GIT_SHA1_HEXSZ * 2 + 1) {
+		if (sb.len != the_hash_algo->hexsz * 2 + 1) {
 			ret = error(invalid_line, sb.buf);
 			goto finish;
 		}
 
-		if (get_oid_hex(sb.buf, &from_obj)) {
+		if (parse_oid_hex(sb.buf, &from_obj, &p)) {
 			ret = error(invalid_line, sb.buf);
 			goto finish;
 		}
 
-		if (sb.buf[GIT_SHA1_HEXSZ] != ' ') {
+		if (*p != ' ') {
 			ret = error(invalid_line, sb.buf);
 			goto finish;
 		}
 
-		if (get_oid_hex(sb.buf + GIT_SHA1_HEXSZ + 1, &to_obj)) {
+		if (get_oid_hex(p + 1, &to_obj)) {
 			ret = error(invalid_line, sb.buf);
 			goto finish;
 		}

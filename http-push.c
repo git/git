@@ -145,7 +145,7 @@ struct remote_lock {
 	char *url;
 	char *owner;
 	char *token;
-	char tmpfile_suffix[41];
+	char tmpfile_suffix[GIT_MAX_HEXSZ + 1];
 	time_t start_time;
 	long timeout;
 	int refreshing;
@@ -315,7 +315,8 @@ static void start_fetch_packed(struct transfer_request *request)
 		return;
 	}
 
-	fprintf(stderr,	"Fetching pack %s\n", sha1_to_hex(target->sha1));
+	fprintf(stderr,	"Fetching pack %s\n",
+		hash_to_hex(target->hash));
 	fprintf(stderr, " which contains %s\n", oid_to_hex(&request->obj->oid));
 
 	preq = new_http_pack_request(target, repo->url);
@@ -398,7 +399,7 @@ static void start_put(struct transfer_request *request)
 	request->dest = strbuf_detach(&buf, NULL);
 
 	append_remote_object_url(&buf, repo->url, hex, 0);
-	strbuf_add(&buf, request->lock->tmpfile_suffix, 41);
+	strbuf_add(&buf, request->lock->tmpfile_suffix, the_hash_algo->hexsz + 1);
 	request->url = strbuf_detach(&buf, NULL);
 
 	slot = get_active_slot();
@@ -757,8 +758,8 @@ static void handle_lockprop_ctx(struct xml_ctx *ctx, int tag_closed)
 static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 {
 	struct remote_lock *lock = (struct remote_lock *)ctx->userData;
-	git_SHA_CTX sha_ctx;
-	unsigned char lock_token_sha1[20];
+	git_hash_ctx hash_ctx;
+	unsigned char lock_token_hash[GIT_MAX_RAWSZ];
 
 	if (tag_closed && ctx->cdata) {
 		if (!strcmp(ctx->name, DAV_ACTIVELOCK_OWNER)) {
@@ -770,12 +771,12 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
 			lock->token = xstrdup(ctx->cdata);
 
-			git_SHA1_Init(&sha_ctx);
-			git_SHA1_Update(&sha_ctx, lock->token, strlen(lock->token));
-			git_SHA1_Final(lock_token_sha1, &sha_ctx);
+			the_hash_algo->init_fn(&hash_ctx);
+			the_hash_algo->update_fn(&hash_ctx, lock->token, strlen(lock->token));
+			the_hash_algo->final_fn(lock_token_hash, &hash_ctx);
 
 			lock->tmpfile_suffix[0] = '_';
-			memcpy(lock->tmpfile_suffix + 1, sha1_to_hex(lock_token_sha1), 40);
+			memcpy(lock->tmpfile_suffix + 1, hash_to_hex(lock_token_hash), the_hash_algo->hexsz);
 		}
 	}
 }
@@ -1017,7 +1018,7 @@ static void remote_ls(const char *path, int flags,
 /* extract hex from sharded "xx/x{38}" filename */
 static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
 {
-	if (strlen(path) != GIT_SHA1_HEXSZ + 1)
+	if (strlen(path) != the_hash_algo->hexsz + 1)
 		return -1;
 
 	if (hex_to_bytes(oid->hash, path, 1))
@@ -1025,7 +1026,7 @@ static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
 	path += 2;
 	path++; /* skip '/' */
 
-	return hex_to_bytes(oid->hash + 1, path, GIT_SHA1_RAWSZ - 1);
+	return hex_to_bytes(oid->hash + 1, path, the_hash_algo->rawsz - 1);
 }
 
 static void process_ls_object(struct remote_ls_ctx *ls)
@@ -1373,7 +1374,7 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 	return count;
 }
 
-static int update_remote(unsigned char *sha1, struct remote_lock *lock)
+static int update_remote(const struct object_id *oid, struct remote_lock *lock)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
@@ -1382,7 +1383,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 
 	dav_headers = get_dav_token_headers(lock, DAV_HEADER_IF);
 
-	strbuf_addf(&out_buffer.buf, "%s\n", sha1_to_hex(sha1));
+	strbuf_addf(&out_buffer.buf, "%s\n", oid_to_hex(oid));
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -1947,7 +1948,7 @@ int cmd_main(int argc, const char **argv)
 		run_request_queue();
 
 		/* Update the remote branch if all went well */
-		if (aborted || !update_remote(ref->new_oid.hash, ref_lock))
+		if (aborted || !update_remote(&ref->new_oid, ref_lock))
 			rc = 1;
 
 		if (!rc)

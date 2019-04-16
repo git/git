@@ -994,7 +994,7 @@ static int submodule_needs_pushing(struct repository *r,
 		if (start_command(&cp))
 			die("Could not run 'git rev-list <commits> --not --remotes -n 1' command in submodule %s",
 					path);
-		if (strbuf_read(&buf, cp.out, 41))
+		if (strbuf_read(&buf, cp.out, the_hash_algo->hexsz + 1))
 			needs_pushing = 1;
 		finish_command(&cp);
 		close(cp.out);
