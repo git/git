@@ -17,6 +17,7 @@
 #include "utf8.h"
 #include "worktree.h"
 #include "lockfile.h"
+#include "sequencer.h"
 
 static const char cut_line[] =
 "------------------------ >8 ------------------------\n";
@@ -1369,12 +1370,22 @@ static void show_rebase_in_progress(struct wt_status *s,
 static void show_cherry_pick_in_progress(struct wt_status *s,
 					 const char *color)
 {
-	status_printf_ln(s, color, _("You are currently cherry-picking commit %s."),
-			find_unique_abbrev(&s->state.cherry_pick_head_oid, DEFAULT_ABBREV));
+	if (is_null_oid(&s->state.cherry_pick_head_oid))
+		status_printf_ln(s, color,
+			_("Cherry-pick currently in progress."));
+	else
+		status_printf_ln(s, color,
+			_("You are currently cherry-picking commit %s."),
+			find_unique_abbrev(&s->state.cherry_pick_head_oid,
+					   DEFAULT_ABBREV));
+
 	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
 				_("  (fix conflicts and run \"git cherry-pick --continue\")"));
+		else if (is_null_oid(&s->state.cherry_pick_head_oid))
+			status_printf_ln(s, color,
+				_("  (run \"git cherry-pick --continue\" to continue)"));
 		else
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git cherry-pick --continue\")"));
@@ -1387,12 +1398,21 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 static void show_revert_in_progress(struct wt_status *s,
 				    const char *color)
 {
-	status_printf_ln(s, color, _("You are currently reverting commit %s."),
-			 find_unique_abbrev(&s->state.revert_head_oid, DEFAULT_ABBREV));
+	if (is_null_oid(&s->state.revert_head_oid))
+		status_printf_ln(s, color,
+			_("Revert currently in progress."));
+	else
+		status_printf_ln(s, color,
+			_("You are currently reverting commit %s."),
+			find_unique_abbrev(&s->state.revert_head_oid,
+					   DEFAULT_ABBREV));
 	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
 				_("  (fix conflicts and run \"git revert --continue\")"));
+		else if (is_null_oid(&s->state.revert_head_oid))
+			status_printf_ln(s, color,
+				_("  (run \"git revert --continue\" to continue)"));
 		else
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git revert --continue\")"));
@@ -1563,6 +1583,7 @@ void wt_status_get_state(struct repository *r,
 {
 	struct stat st;
 	struct object_id oid;
+	enum replay_action action;
 
 	if (!stat(git_path_merge_head(r), &st)) {
 		wt_status_check_rebase(NULL, state);
@@ -1580,7 +1601,15 @@ void wt_status_get_state(struct repository *r,
 		state->revert_in_progress = 1;
 		oidcpy(&state->revert_head_oid, &oid);
 	}
-
+	if (!sequencer_get_last_command(r, &action)) {
+		if (action == REPLAY_PICK) {
+			state->cherry_pick_in_progress = 1;
+			oidcpy(&state->cherry_pick_head_oid, &null_oid);
+		} else {
+			state->revert_in_progress = 1;
+			oidcpy(&state->revert_head_oid, &null_oid);
+		}
+	}
 	if (get_detached_from)
 		wt_status_get_detached_from(r, state);
 }

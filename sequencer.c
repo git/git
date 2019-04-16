@@ -2142,6 +2142,41 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	return !item->commit;
 }
 
+int sequencer_get_last_command(struct repository *r, enum replay_action *action)
+{
+	struct todo_item item;
+	char *eol;
+	const char *todo_file;
+	struct strbuf buf = STRBUF_INIT;
+	int ret = -1;
+
+	todo_file = git_path_todo_file();
+	if (strbuf_read_file(&buf, todo_file, 0) < 0) {
+		if (errno == ENOENT)
+			return -1;
+		else
+			return error_errno("unable to open '%s'", todo_file);
+	}
+	eol = strchrnul(buf.buf, '\n');
+	if (buf.buf != eol && eol[-1] == '\r')
+		eol--; /* strip Carriage Return */
+	if (parse_insn_line(r, &item, buf.buf, eol))
+		goto fail;
+	if (item.command == TODO_PICK)
+		*action = REPLAY_PICK;
+	else if (item.command == TODO_REVERT)
+		*action = REPLAY_REVERT;
+	else
+		goto fail;
+
+	ret = 0;
+
+ fail:
+	strbuf_release(&buf);
+
+	return ret;
+}
+
 static int parse_insn_buffer(struct repository *r, char *buf,
 			     struct todo_list *todo_list)
 {
