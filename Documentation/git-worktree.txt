@@ -213,7 +213,7 @@ refs of one working tree from another.
 
 In general, all pseudo refs are per working tree and all refs starting
 with "refs/" are shared. Pseudo refs are ones like HEAD which are
-directly under GIT_DIR instead of inside GIT_DIR/refs. There are one
+directly under GIT_DIR instead of inside GIT_DIR/refs. There is one
 exception to this: refs inside refs/bisect and refs/worktree is not
 shared.
 
