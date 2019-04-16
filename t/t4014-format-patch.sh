@@ -589,6 +589,12 @@ test_expect_success 'excessive subject' '
 	ls patches/0004-This-is-an-excessively-long-subject-line-for-a-messa.patch
 '
 
+test_expect_success 'failure to write cover-letter aborts gracefully' '
+	test_when_finished "rmdir 0000-cover-letter.patch" &&
+	mkdir 0000-cover-letter.patch &&
+	test_must_fail git format-patch --no-renames --cover-letter -1
+'
+
 test_expect_success 'cover-letter inherits diff options' '
 	git mv file foo &&
 	git commit -m foo &&
