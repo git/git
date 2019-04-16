@@ -279,6 +279,7 @@ list_merge_tool_candidates () {
 		fi
 		tools="$tools gvimdiff diffuse diffmerge ecmerge"
 		tools="$tools p4merge araxis bc codecompare"
+		tools="$tools smerge"
 	fi
 	case "${VISUAL:-$EDITOR}" in
 	*vim*)
