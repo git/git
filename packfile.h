@@ -76,6 +76,8 @@ extern int open_pack_index(struct packed_git *);
  */
 extern void close_pack_index(struct packed_git *);
 
+int close_pack_fd(struct packed_git *p);
+
 extern uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 
 extern unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
