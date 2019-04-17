@@ -35,8 +35,8 @@ test_rebase_same_head success --onto B... B
 test_rebase_same_head success --onto master... master
 test_rebase_same_head success --no-fork-point
 test_rebase_same_head success --fork-point master
-test_rebase_same_head failure --fork-point --onto B B
-test_rebase_same_head failure --fork-point --onto B... B
+test_rebase_same_head success --fork-point --onto B B
+test_rebase_same_head success --fork-point --onto B... B
 test_rebase_same_head success --fork-point --onto master... master
 
 test_expect_success 'add work to side' '
@@ -51,8 +51,8 @@ test_rebase_same_head success --onto B... B
 test_rebase_same_head success --onto master... master
 test_rebase_same_head success --no-fork-point
 test_rebase_same_head success --fork-point master
-test_rebase_same_head failure --fork-point --onto B B
-test_rebase_same_head failure --fork-point --onto B... B
+test_rebase_same_head success --fork-point --onto B B
+test_rebase_same_head success --fork-point --onto B... B
 test_rebase_same_head success --fork-point --onto master... master
 
 test_expect_success 'add work to upstream' '
@@ -65,8 +65,8 @@ changes='our and their changes'
 test_rebase_same_head success --onto B B
 test_rebase_same_head success --onto B... B
 test_rebase_same_head success --onto master... master
-test_rebase_same_head failure --fork-point --onto B B
-test_rebase_same_head failure --fork-point --onto B... B
+test_rebase_same_head success --fork-point --onto B B
+test_rebase_same_head success --fork-point --onto B... B
 test_rebase_same_head success --fork-point --onto master... master
 
 test_done

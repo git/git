@@ -896,6 +896,7 @@ static int is_linear_history(struct commit *from, struct commit *to)
 }
 
 static int can_fast_forward(struct commit *onto, struct commit *upstream,
+			    struct commit *restrict_revision,
 			    struct object_id *head_oid, struct object_id *merge_base)
 {
 	struct commit *head = lookup_commit(the_repository, head_oid);
@@ -913,6 +914,9 @@ static int can_fast_forward(struct commit *onto, struct commit *upstream,
 
 	oidcpy(merge_base, &merge_bases->item->object.oid);
 	if (!oideq(merge_base, &onto->object.oid))
+		goto done;
+
+	if (restrict_revision && !oideq(&restrict_revision->object.oid, merge_base))
 		goto done;
 
 	if (!upstream)
@@ -1703,9 +1707,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 * with new commits recreated by replaying their changes. This
 	 * optimization must not be done if this is an interactive rebase.
 	 */
-	if (can_fast_forward(options.onto, options.upstream, &options.orig_head,
-		    &merge_base) &&
-	    !is_interactive(&options) && !options.restrict_revision) {
+	if (can_fast_forward(options.onto, options.upstream, options.restrict_revision,
+		    &options.orig_head, &merge_base) &&
+	    !is_interactive(&options)) {
 		int flag;
 
 		if (!(options.flags & REBASE_FORCE)) {
