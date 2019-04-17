@@ -198,7 +198,7 @@ static int init_basic_state(struct replay_opts *opts, const char *head_name,
 static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 				 const char *switch_to, struct commit *upstream,
 				 struct commit *onto, const char *onto_name,
-				 const char *squash_onto, const char *head_name,
+				 struct object_id *squash_onto, const char *head_name,
 				 struct commit *restrict_revision, char *raw_strategies,
 				 struct string_list *commands, unsigned autosquash)
 {
@@ -226,7 +226,8 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 	}
 
 	if (!upstream && squash_onto)
-		write_file(path_squash_onto(), "%s\n", squash_onto);
+		write_file(path_squash_onto(), "%s\n",
+			   oid_to_hex(squash_onto));
 
 	argv_array_pushl(&make_script_args, "", revisions, NULL);
 	if (restrict_revision)
@@ -267,10 +268,11 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	unsigned flags = 0, keep_empty = 0, rebase_merges = 0, autosquash = 0;
 	int abbreviate_commands = 0, rebase_cousins = -1, ret = 0;
-	const char *onto_name = NULL,
-		*squash_onto = NULL, *head_name = NULL,
-		*switch_to = NULL, *cmd = NULL;
+	const char *onto_name = NULL, *head_name = NULL, *switch_to = NULL,
+		*cmd = NULL;
 	struct commit *onto = NULL, *upstream = NULL, *restrict_revision = NULL;
+	struct object_id squash_onto = null_oid;
+	struct object_id *squash_onto_opt = NULL;
 	struct string_list commands = STRING_LIST_INIT_DUP;
 	char *raw_strategies = NULL;
 	enum {
@@ -311,8 +313,8 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "restrict-revision", &restrict_revision,
 		  N_("restrict-revision"), N_("restrict revision"),
 		  PARSE_OPT_NONEG, parse_opt_commit, 0 },
-		OPT_STRING(0, "squash-onto", &squash_onto, N_("squash-onto"),
-			   N_("squash onto")),
+		{ OPTION_CALLBACK, 0, "squash-onto", &squash_onto, N_("squash-onto"),
+		  N_("squash onto"), PARSE_OPT_NONEG, parse_opt_object_id, 0 },
 		{ OPTION_CALLBACK, 0, "upstream", &upstream, N_("upstream"),
 		  N_("the upstream commit"), PARSE_OPT_NONEG, parse_opt_commit,
 		  0 },
@@ -349,6 +351,9 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 
 	opts.gpg_sign = xstrdup_or_null(opts.gpg_sign);
 
+	if (!is_null_oid(&squash_onto))
+		squash_onto_opt = &squash_onto;
+
 	flags |= keep_empty ? TODO_LIST_KEEP_EMPTY : 0;
 	flags |= abbreviate_commands ? TODO_LIST_ABBREVIATE_CMDS : 0;
 	flags |= rebase_merges ? TODO_LIST_REBASE_MERGES : 0;
@@ -373,7 +378,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 			die(_("a base commit must be provided with --upstream or --onto"));
 
 		ret = do_interactive_rebase(&opts, flags, switch_to, upstream, onto,
-					    onto_name, squash_onto, head_name, restrict_revision,
+					    onto_name, squash_onto_opt, head_name, restrict_revision,
 					    raw_strategies, &commands, autosquash);
 		break;
 	case SKIP: {
