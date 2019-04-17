@@ -182,7 +182,7 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_ALL;
 			opts->explicit_cleanup = 1;
 		} else if (!strcmp(s, "scissors")) {
-			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SPACE;
+			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SCISSORS;
 			opts->explicit_cleanup = 1;
 		} else {
 			warning(_("invalid commit message cleanup mode '%s'"),
@@ -554,9 +554,15 @@ static const char *describe_cleanup_mode(int cleanup_mode)
 }
 
 void append_conflicts_hint(struct index_state *istate,
-			   struct strbuf *msgbuf)
+	struct strbuf *msgbuf, enum commit_msg_cleanup_mode cleanup_mode)
 {
 	int i;
+
+	if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
+		strbuf_addch(msgbuf, '\n');
+		wt_status_append_cut_line(msgbuf);
+		strbuf_addch(msgbuf, comment_line_char);
+	}
 
 	strbuf_addch(msgbuf, '\n');
 	strbuf_commented_addf(msgbuf, "Conflicts:\n");
@@ -625,7 +631,8 @@ static int do_recursive_merge(struct repository *r,
 			_(action_name(opts)));
 
 	if (!clean)
-		append_conflicts_hint(r->index, msgbuf);
+		append_conflicts_hint(r->index, msgbuf,
+				      opts->default_msg_cleanup);
 
 	return !clean;
 }
@@ -944,7 +951,6 @@ static int run_git_commit(struct repository *r,
 			  unsigned int flags)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
-	const char *value;
 
 	if ((flags & CREATE_ROOT_COMMIT) && !(flags & AMEND_MSG)) {
 		struct strbuf msg = STRBUF_INIT, script = STRBUF_INIT;
@@ -1014,7 +1020,7 @@ static int run_git_commit(struct repository *r,
 		argv_array_push(&cmd.args, "-e");
 	else if (!(flags & CLEANUP_MSG) &&
 		 !opts->signoff && !opts->record_origin &&
-		 git_config_get_value("commit.cleanup", &value))
+		 !opts->explicit_cleanup)
 		argv_array_push(&cmd.args, "--cleanup=verbatim");
 
 	if ((flags & ALLOW_EMPTY))

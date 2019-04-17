@@ -116,7 +116,8 @@ int rearrange_squash(struct repository *r);
  */
 void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag);
 
-void append_conflicts_hint(struct index_state *istate, struct strbuf *msgbuf);
+void append_conflicts_hint(struct index_state *istate,
+		struct strbuf *msgbuf, enum commit_msg_cleanup_mode cleanup_mode);
 enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
 	int use_editor);
 
