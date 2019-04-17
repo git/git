@@ -16,16 +16,16 @@ create_merge_msgs() {
 }
 
 test_expect_success 'setup' '
-	echo c0 > c0.c &&
+	echo c0 >c0.c &&
 	git add c0.c &&
 	git commit -m c0 &&
 	git tag c0 &&
-	echo c1 > c1.c &&
+	echo c1 >c1.c &&
 	git add c1.c &&
 	git commit -m c1 &&
 	git tag c1 &&
 	git reset --hard c0 &&
-	echo c2 > c2.c &&
+	echo c2 >c2.c &&
 	git add c2.c &&
 	git commit -m c2 &&
 	git tag c2 &&
@@ -36,14 +36,16 @@ test_expect_success 'setup' '
 test_expect_success 'merge c2 with a custom message' '
 	git reset --hard c1 &&
 	git merge -m "$(cat exp.subject)" c2 &&
-	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
+	git cat-file commit HEAD >raw &&
+	sed -e "1,/^$/d" raw >actual &&
 	test_cmp exp.subject actual
 '
 
 test_expect_success 'merge --log appends to custom message' '
 	git reset --hard c1 &&
 	git merge --log -m "$(cat exp.subject)" c2 &&
-	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
+	git cat-file commit HEAD >raw &&
+	sed -e "1,/^$/d" raw >actual &&
 	test_cmp exp.log actual
 '
 
