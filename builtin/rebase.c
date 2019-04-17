@@ -113,6 +113,8 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	replay.reschedule_failed_exec = opts->reschedule_failed_exec;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
 	replay.strategy = opts->strategy;
+	if (opts->strategy_opts)
+		parse_strategy_opts(&replay, opts->strategy_opts);
 
 	return replay;
 }
@@ -262,44 +264,50 @@ static int init_basic_state(struct replay_opts *opts, const char *head_name,
 	return write_basic_state(opts, head_name, onto, orig_head);
 }
 
-static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
-				 const char *switch_to, struct commit *upstream,
-				 struct commit *onto, const char *onto_name,
-				 struct object_id *squash_onto, const char *head_name,
-				 struct commit *restrict_revision, char *raw_strategies,
-				 struct string_list *commands, unsigned autosquash)
+static void split_exec_commands(const char *cmd, struct string_list *commands)
+{
+	if (cmd && *cmd) {
+		string_list_split(commands, cmd, '\n', -1);
+
+		/* rebase.c adds a new line to cmd after every command,
+		 * so here the last command is always empty */
+		string_list_remove_empty_items(commands, 0);
+	}
+}
+
+static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 {
 	int ret;
 	const char *head_hash = NULL;
 	char *revisions = NULL, *shortrevisions = NULL;
 	struct argv_array make_script_args = ARGV_ARRAY_INIT;
 	struct todo_list todo_list = TODO_LIST_INIT;
+	struct replay_opts replay = get_replay_opts(opts);
+	struct string_list commands = STRING_LIST_INIT_DUP;
 
-	if (prepare_branch_to_be_rebased(the_repository, opts, switch_to))
+	if (prepare_branch_to_be_rebased(the_repository, &replay,
+					 opts->switch_to))
 		return -1;
 
-	if (get_revision_ranges(upstream, onto, &head_hash,
+	if (get_revision_ranges(opts->upstream, opts->onto, &head_hash,
 				&revisions, &shortrevisions))
 		return -1;
 
-	if (raw_strategies)
-		parse_strategy_opts(opts, raw_strategies);
-
-	if (init_basic_state(opts, head_name, onto, head_hash)) {
+	if (init_basic_state(&replay, opts->head_name, opts->onto, head_hash)) {
 		free(revisions);
 		free(shortrevisions);
 
 		return -1;
 	}
 
-	if (!upstream && squash_onto)
+	if (!opts->upstream && opts->squash_onto)
 		write_file(path_squash_onto(), "%s\n",
-			   oid_to_hex(squash_onto));
+			   oid_to_hex(opts->squash_onto));
 
 	argv_array_pushl(&make_script_args, "", revisions, NULL);
-	if (restrict_revision)
+	if (opts->restrict_revision)
 		argv_array_push(&make_script_args,
-				oid_to_hex(&restrict_revision->object.oid));
+				oid_to_hex(&opts->restrict_revision->object.oid));
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
 				    make_script_args.argc, make_script_args.argv,
@@ -313,10 +321,13 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 						&todo_list))
 			BUG("unusable todo list");
 
-		ret = complete_action(the_repository, opts, flags, shortrevisions, onto_name,
-				      onto, head_hash, commands, autosquash, &todo_list);
+		split_exec_commands(opts->cmd, &commands);
+		ret = complete_action(the_repository, &replay, flags,
+			shortrevisions, opts->onto_name, opts->onto, head_hash,
+			&commands, opts->autosquash, &todo_list);
 	}
 
+	string_list_clear(&commands, 0);
 	free(revisions);
 	free(shortrevisions);
 	todo_list_release(&todo_list);
@@ -336,7 +347,6 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	unsigned flags = 0;
 	int abbreviate_commands = 0, ret = 0;
 	struct object_id squash_onto = null_oid;
-	struct string_list commands = STRING_LIST_INIT_DUP;
 	enum {
 		NONE = 0, CONTINUE, SKIP, EDIT_TODO, SHOW_CURRENT_PATCH,
 		SHORTEN_OIDS, EXPAND_OIDS, CHECK_TODO_LIST, REARRANGE_SQUASH, ADD_EXEC
@@ -424,23 +434,12 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		warning(_("--[no-]rebase-cousins has no effect without "
 			  "--rebase-merges"));
 
-	if (opts.cmd && *opts.cmd) {
-		string_list_split(&commands, opts.cmd, '\n', -1);
-
-		/* rebase.c adds a new line to cmd after every command,
-		 * so here the last command is always empty */
-		string_list_remove_empty_items(&commands, 0);
-	}
-
 	switch (command) {
 	case NONE: {
-		struct replay_opts replay_opts = get_replay_opts(&opts);
 		if (!opts.onto && !opts.upstream)
 			die(_("a base commit must be provided with --upstream or --onto"));
 
-		ret = do_interactive_rebase(&replay_opts, flags, opts.switch_to, opts.upstream, opts.onto,
-					    opts.onto_name, opts.squash_onto, opts.head_name, opts.restrict_revision,
-					    opts.strategy_opts, &commands, opts.autosquash);
+		ret = do_interactive_rebase(&opts, flags);
 		break;
 	}
 	case SKIP: {
@@ -477,14 +476,18 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	case REARRANGE_SQUASH:
 		ret = rearrange_squash_in_todo_file();
 		break;
-	case ADD_EXEC:
+	case ADD_EXEC: {
+		struct string_list commands = STRING_LIST_INIT_DUP;
+
+		split_exec_commands(opts.cmd, &commands);
 		ret = add_exec_commands(&commands);
+		string_list_clear(&commands, 0);
 		break;
+	}
 	default:
 		BUG("invalid command '%d'", command);
 	}
 
-	string_list_clear(&commands, 0);
 	return !!ret;
 }
 
