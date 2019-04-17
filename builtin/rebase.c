@@ -1027,14 +1027,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		ACTION_EDIT_TODO,
 		ACTION_SHOW_CURRENT_PATCH,
 	} action = NO_ACTION;
-	static const char *action_names[] = { N_("undefined"),
-					      N_("continue"),
-					      N_("skip"),
-					      N_("abort"),
-					      N_("quit"),
-					      N_("edit_todo"),
-					      N_("show_current_patch"),
-					      NULL };
+	static const char *action_names[] = { "undefined",
+					      "continue",
+					      "skip",
+					      "abort",
+					      "quit",
+					      "edit_todo",
+					      "show_current_patch" };
 	const char *gpg_sign = NULL;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
 	const char *rebase_merges = NULL;
