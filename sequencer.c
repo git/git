@@ -535,6 +535,24 @@ enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
 		die(_("Invalid cleanup mode %s"), cleanup_arg);
 }
 
+/*
+ * NB using int rather than enum cleanup_mode to stop clang's
+ * -Wtautological-constant-out-of-range-compare complaining that the comparison
+ * is always true.
+ */
+static const char *describe_cleanup_mode(int cleanup_mode)
+{
+	static const char *modes[] = { "whitespace",
+				       "verbatim",
+				       "scissors",
+				       "strip" };
+
+	if (cleanup_mode < ARRAY_SIZE(modes))
+		return modes[cleanup_mode];
+
+	BUG("invalid cleanup_mode provided (%d)", cleanup_mode);
+}
+
 void append_conflicts_hint(struct index_state *istate,
 			   struct strbuf *msgbuf)
 {
@@ -2367,7 +2385,10 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 		opts->allow_rerere_auto =
 			git_config_bool_or_int(key, value, &error_flag) ?
 				RERERE_AUTOUPDATE : RERERE_NOAUTOUPDATE;
-	else
+	else if (!strcmp(key, "options.default-msg-cleanup")) {
+		opts->explicit_cleanup = 1;
+		opts->default_msg_cleanup = get_cleanup_mode(value, 1);
+	} else
 		return error(_("invalid key: %s"), key);
 
 	if (!error_flag)
@@ -2771,6 +2792,11 @@ static int save_opts(struct replay_opts *opts)
 		res |= git_config_set_in_file_gently(opts_file, "options.allow-rerere-auto",
 						     opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
 						     "true" : "false");
+
+	if (opts->explicit_cleanup)
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.default-msg-cleanup",
+				describe_cleanup_mode(opts->default_msg_cleanup));
 	return res;
 }
 
