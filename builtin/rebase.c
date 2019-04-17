@@ -245,7 +245,7 @@ static int read_basic_state(struct rebase_options *opts)
 	return 0;
 }
 
-static int write_basic_state(struct rebase_options *opts)
+static int rebase_write_basic_state(struct rebase_options *opts)
 {
 	write_file(state_dir_path("head-name", opts), "%s",
 		   opts->head_name ? opts->head_name : "detached HEAD");
@@ -640,7 +640,7 @@ static int run_am(struct rebase_options *opts)
 	}
 
 	if (is_directory(opts->state_dir))
-		write_basic_state(opts);
+		rebase_write_basic_state(opts);
 
 	return status;
 }
