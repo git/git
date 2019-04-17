@@ -147,27 +147,28 @@ static int edit_todo_file(unsigned flags)
 	return res;
 }
 
-static int get_revision_ranges(const char *upstream, const char *onto,
+static int get_revision_ranges(struct commit *upstream, struct commit *onto,
 			       const char **head_hash,
 			       char **revisions, char **shortrevisions)
 {
-	const char *base_rev = upstream ? upstream : onto, *shorthead;
+	struct commit *base_rev = upstream ? upstream : onto;
+	const char *shorthead;
 	struct object_id orig_head;
 
 	if (get_oid("HEAD", &orig_head))
 		return error(_("no HEAD?"));
 
 	*head_hash = find_unique_abbrev(&orig_head, GIT_MAX_HEXSZ);
-	*revisions = xstrfmt("%s...%s", base_rev, *head_hash);
+	*revisions = xstrfmt("%s...%s", oid_to_hex(&base_rev->object.oid),
+						   *head_hash);
 
 	shorthead = find_unique_abbrev(&orig_head, DEFAULT_ABBREV);
 
 	if (upstream) {
 		const char *shortrev;
-		struct object_id rev_oid;
 
-		get_oid(base_rev, &rev_oid);
-		shortrev = find_unique_abbrev(&rev_oid, DEFAULT_ABBREV);
+		shortrev = find_unique_abbrev(&base_rev->object.oid,
+					      DEFAULT_ABBREV);
 
 		*shortrevisions = xstrfmt("%s..%s", shortrev, shorthead);
 	} else
@@ -177,7 +178,7 @@ static int get_revision_ranges(const char *upstream, const char *onto,
 }
 
 static int init_basic_state(struct replay_opts *opts, const char *head_name,
-			    const char *onto, const char *orig_head)
+			    struct commit *onto, const char *orig_head)
 {
 	FILE *interactive;
 
@@ -195,10 +196,10 @@ static int init_basic_state(struct replay_opts *opts, const char *head_name,
 }
 
 static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
-				 const char *switch_to, const char *upstream,
-				 const char *onto, const char *onto_name,
+				 const char *switch_to, struct commit *upstream,
+				 struct commit *onto, const char *onto_name,
 				 const char *squash_onto, const char *head_name,
-				 const char *restrict_revision, char *raw_strategies,
+				 struct commit *restrict_revision, char *raw_strategies,
 				 struct string_list *commands, unsigned autosquash)
 {
 	int ret;
@@ -229,7 +230,8 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 
 	argv_array_pushl(&make_script_args, "", revisions, NULL);
 	if (restrict_revision)
-		argv_array_push(&make_script_args, restrict_revision);
+		argv_array_push(&make_script_args,
+				oid_to_hex(&restrict_revision->object.oid));
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
 				    make_script_args.argc, make_script_args.argv,
@@ -265,9 +267,10 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	unsigned flags = 0, keep_empty = 0, rebase_merges = 0, autosquash = 0;
 	int abbreviate_commands = 0, rebase_cousins = -1, ret = 0;
-	const char *onto = NULL, *onto_name = NULL, *restrict_revision = NULL,
-		*squash_onto = NULL, *upstream = NULL, *head_name = NULL,
+	const char *onto_name = NULL,
+		*squash_onto = NULL, *head_name = NULL,
 		*switch_to = NULL, *cmd = NULL;
+	struct commit *onto = NULL, *upstream = NULL, *restrict_revision = NULL;
 	struct string_list commands = STRING_LIST_INIT_DUP;
 	char *raw_strategies = NULL;
 	enum {
@@ -303,13 +306,16 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 			N_("rearrange fixup/squash lines"), REARRANGE_SQUASH),
 		OPT_CMDMODE(0, "add-exec-commands", &command,
 			N_("insert exec commands in todo list"), ADD_EXEC),
-		OPT_STRING(0, "onto", &onto, N_("onto"), N_("onto")),
-		OPT_STRING(0, "restrict-revision", &restrict_revision,
-			   N_("restrict-revision"), N_("restrict revision")),
+		{ OPTION_CALLBACK, 0, "onto", &onto, N_("onto"), N_("onto"),
+		  PARSE_OPT_NONEG, parse_opt_commit, 0 },
+		{ OPTION_CALLBACK, 0, "restrict-revision", &restrict_revision,
+		  N_("restrict-revision"), N_("restrict revision"),
+		  PARSE_OPT_NONEG, parse_opt_commit, 0 },
 		OPT_STRING(0, "squash-onto", &squash_onto, N_("squash-onto"),
 			   N_("squash onto")),
-		OPT_STRING(0, "upstream", &upstream, N_("upstream"),
-			   N_("the upstream commit")),
+		{ OPTION_CALLBACK, 0, "upstream", &upstream, N_("upstream"),
+		  N_("the upstream commit"), PARSE_OPT_NONEG, parse_opt_commit,
+		  0 },
 		OPT_STRING(0, "head-name", &head_name, N_("head-name"), N_("head name")),
 		{ OPTION_STRING, 'S', "gpg-sign", &opts.gpg_sign, N_("key-id"),
 			N_("GPG-sign commits"),
