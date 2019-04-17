@@ -206,14 +206,13 @@ static int read_basic_state(struct rebase_options *opts)
 			    &buf))
 			return -1;
 		if (!strcmp(buf.buf, "--rerere-autoupdate"))
-			opts->allow_rerere_autoupdate = 1;
+			opts->allow_rerere_autoupdate = RERERE_AUTOUPDATE;
 		else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
-			opts->allow_rerere_autoupdate = 0;
+			opts->allow_rerere_autoupdate = RERERE_NOAUTOUPDATE;
 		else
 			warning(_("ignoring invalid allow_rerere_autoupdate: "
 				  "'%s'"), buf.buf);
-	} else
-		opts->allow_rerere_autoupdate = -1;
+	}
 
 	if (file_exists(state_dir_path("gpg_sign_opt", opts))) {
 		strbuf_reset(&buf);
@@ -263,10 +262,11 @@ static int rebase_write_basic_state(struct rebase_options *opts)
 	if (opts->strategy_opts)
 		write_file(state_dir_path("strategy_opts", opts), "%s",
 			   opts->strategy_opts);
-	if (opts->allow_rerere_autoupdate >= 0)
+	if (opts->allow_rerere_autoupdate > 0)
 		write_file(state_dir_path("allow_rerere_autoupdate", opts),
 			   "-%s-rerere-autoupdate",
-			   opts->allow_rerere_autoupdate ? "" : "-no");
+			   opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE ?
+				"" : "-no");
 	if (opts->gpg_sign_opt)
 		write_file(state_dir_path("gpg_sign_opt", opts), "%s",
 			   opts->gpg_sign_opt);
@@ -625,9 +625,9 @@ static int run_am(struct rebase_options *opts)
 	argv_array_push(&am.args, "--rebasing");
 	argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
 	argv_array_push(&am.args, "--patch-format=mboxrd");
-	if (opts->allow_rerere_autoupdate > 0)
+	if (opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE)
 		argv_array_push(&am.args, "--rerere-autoupdate");
-	else if (opts->allow_rerere_autoupdate == 0)
+	else if (opts->allow_rerere_autoupdate == RERERE_NOAUTOUPDATE)
 		argv_array_push(&am.args, "--no-rerere-autoupdate");
 	if (opts->gpg_sign_opt)
 		argv_array_push(&am.args, opts->gpg_sign_opt);
@@ -713,9 +713,9 @@ static int run_specific_rebase(struct rebase_options *opts)
 			argv_array_pushf(&child.args, "--cmd=%s", opts->cmd);
 		if (opts->allow_empty_message)
 			argv_array_push(&child.args, "--allow-empty-message");
-		if (opts->allow_rerere_autoupdate > 0)
+		if (opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE)
 			argv_array_push(&child.args, "--rerere-autoupdate");
-		else if (opts->allow_rerere_autoupdate == 0)
+		else if (opts->allow_rerere_autoupdate == RERERE_NOAUTOUPDATE)
 			argv_array_push(&child.args, "--no-rerere-autoupdate");
 		if (opts->gpg_sign_opt)
 			argv_array_push(&child.args, opts->gpg_sign_opt);
@@ -764,9 +764,9 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "action", opts->action ? opts->action : "");
 	add_var(&script_snippet, "signoff", opts->signoff ? "--signoff" : "");
 	add_var(&script_snippet, "allow_rerere_autoupdate",
-		opts->allow_rerere_autoupdate < 0 ? "" :
 		opts->allow_rerere_autoupdate ?
-		"--rerere-autoupdate" : "--no-rerere-autoupdate");
+			opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE ?
+			"--rerere-autoupdate" : "--no-rerere-autoupdate" : "");
 	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
 	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
 	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
@@ -1007,7 +1007,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		.type = REBASE_UNSPECIFIED,
 		.flags = REBASE_NO_QUIET,
 		.git_am_opts = ARGV_ARRAY_INIT,
-		.allow_rerere_autoupdate  = -1,
 		.allow_empty_message = 1,
 		.git_format_patch_opt = STRBUF_INIT,
 	};
@@ -1101,10 +1100,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('p', "preserve-merges", &options.type,
 			    N_("try to recreate merges instead of ignoring "
 			       "them"), REBASE_PRESERVE_MERGES),
-		OPT_BOOL(0, "rerere-autoupdate",
-			 &options.allow_rerere_autoupdate,
-			 N_("allow rerere to update index with resolved "
-			    "conflict")),
+		OPT_RERERE_AUTOUPDATE(&options.allow_rerere_autoupdate),
 		OPT_BOOL('k', "keep-empty", &options.keep_empty,
 			 N_("preserve empty commits during rebase")),
 		OPT_BOOL(0, "autosquash", &options.autosquash,
