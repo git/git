@@ -2451,6 +2451,14 @@ $(VCSSVN_LIB): $(VCSSVN_OBJS)
 
 export DEFAULT_EDITOR DEFAULT_PAGER
 
+Documentation/GIT-EXCLUDED-PROGRAMS: FORCE
+	@EXCLUDED='EXCLUDED_PROGRAMS := $(EXCLUDED_PROGRAMS)'; \
+	    if test x"$$EXCLUDED" != \
+		x"`cat Documentation/GIT-EXCLUDED-PROGRAMS 2>/dev/null`" ; then \
+		echo >&2 "    * new documentation flags"; \
+		echo "$$EXCLUDED" >Documentation/GIT-EXCLUDED-PROGRAMS; \
+            fi
+
 .PHONY: doc man man-perl html info pdf
 doc: man-perl
 	$(MAKE) -C Documentation all
@@ -3030,6 +3038,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
+	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
 ifndef NO_PERL
 	$(MAKE) -C gitweb clean
 	$(RM) -r perl/build/
