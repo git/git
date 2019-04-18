@@ -359,12 +359,13 @@ test_expect_success 'even with handcrafted request, filter does not work if not 
 	0000
 	EOF
 
-	test_must_fail git -C server serve --stateless-rpc <in >/dev/null 2>err &&
+	test_must_fail test-tool -C server serve-v2 --stateless-rpc \
+		<in >/dev/null 2>err &&
 	grep "unexpected line: .filter blob:none." err &&
 
 	# Exercise to ensure that if advertised, filter works
 	git -C server config uploadpack.allowfilter 1 &&
-	git -C server serve --stateless-rpc <in >/dev/null
+	test-tool -C server serve-v2 --stateless-rpc <in >/dev/null
 '
 
 test_expect_success 'default refspec is used to filter ref when fetchcing' '

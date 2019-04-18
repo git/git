@@ -48,15 +48,15 @@ test_expect_success 'setup repository' '
 '
 
 test_expect_success 'config controls ref-in-want advertisement' '
-	git serve --advertise-capabilities >out &&
+	test-tool serve-v2 --advertise-capabilities >out &&
 	! grep -a ref-in-want out &&
 
 	git config uploadpack.allowRefInWant false &&
-	git serve --advertise-capabilities >out &&
+	test-tool serve-v2 --advertise-capabilities >out &&
 	! grep -a ref-in-want out &&
 
 	git config uploadpack.allowRefInWant true &&
-	git serve --advertise-capabilities >out &&
+	test-tool serve-v2 --advertise-capabilities >out &&
 	grep -a ref-in-want out
 '
 
@@ -70,7 +70,7 @@ test_expect_success 'invalid want-ref line' '
 	0000
 	EOF
 
-	test_must_fail git serve --stateless-rpc 2>out <in &&
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>out <in &&
 	grep "unknown ref" out
 '
 
@@ -90,7 +90,7 @@ test_expect_success 'basic want-ref' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -112,7 +112,7 @@ test_expect_success 'multiple want-ref lines' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -133,7 +133,7 @@ test_expect_success 'mix want and want-ref' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -153,7 +153,7 @@ test_expect_success 'want-ref with ref we already have commit for' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 

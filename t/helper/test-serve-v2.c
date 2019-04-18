@@ -1,14 +1,14 @@
+#include "test-tool.h"
 #include "cache.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "serve.h"
 
 static char const * const serve_usage[] = {
-	N_("git serve [<options>]"),
+	N_("test-tool serve-v2 [<options>]"),
 	NULL
 };
 
-int cmd_serve(int argc, const char **argv, const char *prefix)
+int cmd__serve_v2(int argc, const char **argv)
 {
 	struct serve_options opts = SERVE_OPTIONS_INIT;
 
@@ -19,6 +19,7 @@ int cmd_serve(int argc, const char **argv, const char *prefix)
 			 N_("exit immediately after advertising capabilities")),
 		OPT_END()
 	};
+	const char *prefix = setup_git_directory();
 
 	/* ignore all unknown cmdline switches for now */
 	argc = parse_options(argc, argv, prefix, options, serve_usage,
