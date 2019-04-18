@@ -2732,50 +2732,44 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 			struct read_data *rd)
 {
 	struct untracked_cache_dir ud, *untracked;
-	const unsigned char *next, *data = rd->data, *end = rd->end;
+	const unsigned char *data = rd->data, *end = rd->end;
 	const unsigned char *eos;
 	unsigned int value;
 	int i, len;
 
 	memset(&ud, 0, sizeof(ud));
 
-	next = data;
-	value = decode_varint(&next);
-	if (next > end)
+	value = decode_varint(&data);
+	if (data > end)
 		return -1;
 	ud.recurse	   = 1;
 	ud.untracked_alloc = value;
 	ud.untracked_nr	   = value;
 	if (ud.untracked_nr)
 		ALLOC_ARRAY(ud.untracked, ud.untracked_nr);
-	data = next;
 
-	next = data;
-	ud.dirs_alloc = ud.dirs_nr = decode_varint(&next);
-	if (next > end)
+	ud.dirs_alloc = ud.dirs_nr = decode_varint(&data);
+	if (data > end)
 		return -1;
 	ALLOC_ARRAY(ud.dirs, ud.dirs_nr);
-	data = next;
 
 	eos = memchr(data, '\0', end - data);
 	if (!eos || eos == end)
 		return -1;
 	len = eos - data;
-	next = eos + 1;
 
 	*untracked_ = untracked = xmalloc(st_add3(sizeof(*untracked), len, 1));
 	memcpy(untracked, &ud, sizeof(ud));
 	memcpy(untracked->name, data, len + 1);
-	data = next;
+	data = eos + 1;
 
 	for (i = 0; i < untracked->untracked_nr; i++) {
 		eos = memchr(data, '\0', end - data);
 		if (!eos || eos == end)
 			return -1;
 		len = eos - data;
-		next = eos + 1;
 		untracked->untracked[i] = xmemdupz(data, len);
-		data = next;
+		data = eos + 1;
 	}
 
 	rd->ucd[rd->index++] = untracked;
