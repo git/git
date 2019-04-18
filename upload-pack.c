@@ -1064,6 +1064,8 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 		allow_ref_in_want = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
 		allow_sideband_all = git_config_bool(var, value);
+	} else if (!strcmp("core.precomposeunicode", var)) {
+		precomposed_unicode = git_config_bool(var, value);
 	}
 
 	if (current_config_scope() != CONFIG_SCOPE_REPO) {
