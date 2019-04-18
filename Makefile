@@ -3074,7 +3074,7 @@ check-docs::
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-subtree | \
 		git-fsck-objects | git-init-db | \
-		git-remote-* | git-stage | \
+		git-remote-* | git-stage | git-legacy-* | \
 		git-?*--?* ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
