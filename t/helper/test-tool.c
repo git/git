@@ -1,5 +1,11 @@
 #include "git-compat-util.h"
 #include "test-tool.h"
+#include "parse-options.h"
+
+static const char * const test_tool_usage[] = {
+	"test-tool [-C <directory>] <command [<arguments>...]]",
+	NULL
+};
 
 struct test_cmd {
 	const char *name;
@@ -73,10 +79,23 @@ static NORETURN void die_usage(void)
 int cmd_main(int argc, const char **argv)
 {
 	int i;
+	const char *working_directory = NULL;
+	struct option options[] = {
+		OPT_STRING('C', NULL, &working_directory, "directory",
+			   "change the working directory"),
+		OPT_END()
+	};
 
 	BUG_exit_code = 99;
+	argc = parse_options(argc, argv, NULL, options, test_tool_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION |
+			     PARSE_OPT_KEEP_ARGV0);
+
 	if (argc < 2)
 		die_usage();
+
+	if (working_directory && chdir(working_directory) < 0)
+		die("Could not cd to '%s'", working_directory);
 
 	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
 		if (!strcmp(cmds[i].name, argv[1])) {
