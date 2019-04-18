@@ -2735,7 +2735,7 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	const unsigned char *data = rd->data, *end = rd->end;
 	const unsigned char *eos;
 	unsigned int value;
-	int i, len;
+	int i;
 
 	memset(&ud, 0, sizeof(ud));
 
@@ -2756,19 +2756,17 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	eos = memchr(data, '\0', end - data);
 	if (!eos || eos == end)
 		return -1;
-	len = eos - data;
 
-	*untracked_ = untracked = xmalloc(st_add3(sizeof(*untracked), len, 1));
+	*untracked_ = untracked = xmalloc(st_add3(sizeof(*untracked), eos - data, 1));
 	memcpy(untracked, &ud, sizeof(ud));
-	memcpy(untracked->name, data, len + 1);
+	memcpy(untracked->name, data, eos - data + 1);
 	data = eos + 1;
 
 	for (i = 0; i < untracked->untracked_nr; i++) {
 		eos = memchr(data, '\0', end - data);
 		if (!eos || eos == end)
 			return -1;
-		len = eos - data;
-		untracked->untracked[i] = xmemdupz(data, len);
+		untracked->untracked[i] = xmemdupz(data, eos - data);
 		data = eos + 1;
 	}
 
@@ -2776,8 +2774,7 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	rd->data = data;
 
 	for (i = 0; i < untracked->dirs_nr; i++) {
-		len = read_one_dir(untracked->dirs + i, rd);
-		if (len < 0)
+		if (read_one_dir(untracked->dirs + i, rd) < 0)
 			return -1;
 	}
 	return 0;
