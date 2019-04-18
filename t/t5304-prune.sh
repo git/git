@@ -341,4 +341,12 @@ test_expect_success 'prune: handle expire option correctly' '
 	git prune --no-expire
 '
 
+test_expect_success 'trivial prune with bitmaps enabled' '
+	git repack -adb &&
+	blob=$(echo bitmap-unreachable-blob | git hash-object -w --stdin) &&
+	git prune --expire=now &&
+	git cat-file -e HEAD &&
+	test_must_fail git cat-file -e $blob
+'
+
 test_done
