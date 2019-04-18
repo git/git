@@ -164,6 +164,7 @@ static int resolve_commit_list(const struct string_list *str,
 static int resolve_edits_commit_list(struct sequence_edits *edits)
 {
 	return resolve_commit_list(&edits->drop, &edits->revs) ||
+	       resolve_commit_list(&edits->breaks, &edits->revs) ||
 	       resolve_commit_list(&edits->edit, &edits->revs) ||
 	       resolve_commit_list(&edits->reword, &edits->revs);
 }
@@ -302,6 +303,8 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 			   N_("restrict-revision"), N_("restrict revision")),
 		OPT_STRING(0, "squash-onto", &squash_onto, N_("squash-onto"),
 			   N_("squash onto")),
+		OPT_STRING_LIST(0, "break", &edits.breaks, N_("revision"),
+				N_("stop before the mentioned ref")),
 		OPT_STRING_LIST(0, "drop", &edits.drop, N_("revision"),
 				N_("drop the mentioned ref from the "
 				   "todo list")),

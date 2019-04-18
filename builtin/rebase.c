@@ -1053,6 +1053,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 					      NULL };
 	const char *gpg_sign = NULL;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
+	struct string_list breaks = STRING_LIST_INIT_NODUP;
 	struct string_list reword = STRING_LIST_INIT_NODUP;
 	struct string_list edit = STRING_LIST_INIT_NODUP;
 	struct string_list drop = STRING_LIST_INIT_NODUP;
@@ -1138,6 +1139,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
 				N_("add exec lines after each commit of the "
 				   "editable list")),
+		OPT_STRING_LIST(0, "break", &breaks, N_("revision"),
+				N_("stop before the mentioned ref")),
 		OPT_STRING_LIST(0, "drop", &drop, N_("revision"),
 				N_("drop the mentioned ref from the "
 				   "todo list")),
@@ -1404,6 +1407,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.cmd = xstrdup(buf.buf);
 	}
 
+	forward_switches(&options, "--break", &breaks);
 	forward_switches(&options, "--drop", &drop);
 	forward_switches(&options, "--edit", &edit);
 	forward_switches(&options, "--reword", &reword);

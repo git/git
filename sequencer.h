@@ -139,6 +139,7 @@ int sequencer_remove_state(struct replay_opts *opts);
  */
 struct sequence_edits {
 	struct commit_list *revs;
+	struct string_list breaks;
 	struct string_list drop;
 	struct string_list edit;
 	struct string_list reword;
