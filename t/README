@@ -402,6 +402,10 @@ GIT_TEST_SIDEBAND_ALL=<boolean>, when true, overrides the
 fetch-pack to not request sideband-all (even if the server advertises
 sideband-all).
 
+GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=<boolean>, when true (which is
+the default when running tests), errors out when an abbreviated option
+is used.
+
 Naming Tests
 ------------
 

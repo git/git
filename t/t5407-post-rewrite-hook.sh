@@ -131,7 +131,7 @@ test_expect_success 'git rebase -m --skip' '
 test_expect_success 'git rebase with implicit use of interactive backend' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_must_fail git rebase --keep --onto A B &&
+	test_must_fail git rebase --keep-empty --onto A B &&
 	echo C > foo &&
 	git add foo &&
 	git rebase --continue &&
@@ -146,7 +146,7 @@ test_expect_success 'git rebase with implicit use of interactive backend' '
 test_expect_success 'git rebase --skip with implicit use of interactive backend' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_must_fail git rebase --keep --onto A B &&
+	test_must_fail git rebase --keep-empty --onto A B &&
 	test_must_fail git rebase --skip &&
 	echo D > foo &&
 	git add foo &&

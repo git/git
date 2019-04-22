@@ -363,7 +363,7 @@ test_expect_success 'push succeeds if submodule has no remote and is on the firs
 		) &&
 		git add b &&
 		git commit -m "added submodule" &&
-		git push --recurse-submodule=check origin master
+		git push --recurse-submodules=check origin master
 	)
 '
 
