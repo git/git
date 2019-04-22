@@ -3,7 +3,7 @@ git-interpret-trailers(1)
 
 NAME
 ----
-git-interpret-trailers - add or parse structured information in commit messages
+git-interpret-trailers - Add or parse structured information in commit messages
 
 SYNOPSIS
 --------
