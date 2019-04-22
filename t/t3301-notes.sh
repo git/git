@@ -1120,9 +1120,10 @@ test_expect_success 'GIT_NOTES_REWRITE_REF overrides config' '
 	test_config notes.rewriteMode overwrite &&
 	test_config notes.rewriteRef refs/notes/other &&
 	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
-	GIT_NOTES_REWRITE_REF= git notes copy --for-rewrite=foo &&
+	GIT_NOTES_REWRITE_REF=refs/notes/commits \
+		git notes copy --for-rewrite=foo &&
 	git log -1 >actual &&
-	test_cmp expect actual
+	grep "replacement note 3" actual
 '
 
 test_expect_success 'git notes copy diagnoses too many or too few parameters' '
