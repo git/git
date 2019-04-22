@@ -27,6 +27,7 @@
 #include "object-store.h"
 #include "blame.h"
 #include "string-list.h"
+#include "refs.h"
 
 static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
 
@@ -993,6 +994,18 @@ parse_done:
 
 	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
+	if (!revs.pending.nr && is_bare_repository()) {
+		struct commit *head_commit;
+		struct object_id head_oid;
+
+		if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
+					&head_oid, NULL) ||
+		    !(head_commit = lookup_commit_reference_gently(revs.repo,
+							     &head_oid, 1)))
+			die("no such ref: HEAD");
+
+		add_pending_object(&revs, &head_commit->object, "HEAD");
+	}
 
 	init_scoreboard(&sb);
 	sb.revs = &revs;

@@ -68,6 +68,14 @@ test_expect_success 'blame 1 author' '
 	check_count A 2
 '
 
+test_expect_success 'blame in a bare repo without starting commit' '
+	git clone --bare . bare.git &&
+	(
+		cd bare.git &&
+		check_count A 2
+	)
+'
+
 test_expect_success 'blame by tag objects' '
 	git tag -m "test tag" testTag &&
 	git tag -m "test tag #2" testTag2 testTag &&
