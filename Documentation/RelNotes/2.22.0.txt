@@ -46,6 +46,9 @@ UI, Workflows & Features
    configuration (when available), which allows --list-cmds to honour
    a repository specific setting of completion.commands, for example.
 
+ * "git mergetool" learned to offer Sublime Merge (smerge) as one of
+   its backends.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -79,6 +82,17 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git multi-pack-index verify" did not scale well with the number of
    packfiles, which is being improved.
+
+ * "git stash" has been rewritten in C.
+
+ * The "check-docs" Makefile target to support developers has been
+   updated.
+
+ * The tests have been updated not to rely on the abbreviated option
+   names the parse-options API offers, to protect us from an
+   abbreviated form of an option that used to be unique within the
+   command getting non-unique when a new option that share the same
+   prefix is added.
 
 
 Fixes since v2.21
@@ -203,8 +217,8 @@ Fixes since v2.21
  * A corner-case object name ambiguity while the sequencer machinery
    is working (e.g. "rebase -i -x") has been fixed.
 
- * "git format-patch" used overwrite an existing patch/cover-letter
-   file.  A new "--no-clobber" option stops it.
+ * "git format-patch" did not diagnose an error while opening the
+   output file for the cover-letter, which has been corrected.
    (merge 2fe95f494c jc/format-patch-error-check later to maint).
 
  * "git checkout -f <branch>" while the index has an unmerged path
@@ -219,6 +233,12 @@ Fixes since v2.21
 
  * dumb-http walker has been updated to share more error recovery
    strategy with the normal codepath.
+
+ * A buglet in configuration parser has been fixed.
+   (merge 19e7fdaa58 nd/include-if-wildmatch later to maint).
+
+ * The documentation for "git read-tree --reset -u" has been updated.
+   (merge b5a0bd694c nd/read-tree-reset-doc later to maint).
 
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
@@ -245,3 +265,5 @@ Fixes since v2.21
    (merge a7256debd4 nd/checkout-m-doc-update later to maint).
    (merge 3a9e1ad78d jt/t5551-protocol-v2-does-not-have-half-auth later to maint).
    (merge 0b918b75af sg/t5318-cleanup later to maint).
+   (merge 68ed71b53c cb/doco-mono later to maint).
+   (merge a34dca2451 nd/interpret-trailers-docfix later to maint).
