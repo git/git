@@ -131,8 +131,10 @@ int ref_compare_name(const void *, const void *);
 int check_ref_type(const struct ref *ref, int flags);
 
 /*
- * Frees the entire list and peers of elements.
+ * Free a single ref and its peer, or an entire list of refs and their peers,
+ * respectively.
  */
+void free_one_ref(struct ref *ref);
 void free_refs(struct ref *ref);
 
 struct oid_array;
