@@ -3078,7 +3078,7 @@ ALL_COMMANDS += git-gui git-citool
 .PHONY: check-docs
 check-docs::
 	$(MAKE) -C Documentation lint-docs
-	@(for v in $(ALL_COMMANDS); \
+	@(for v in $(patsubst %$X,%,$(ALL_COMMANDS)); \
 	do \
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
@@ -3099,15 +3099,16 @@ check-docs::
 	( \
 		sed -e '1,/^### command list/d' \
 		    -e '/^#/d' \
+		    -e '/guide$$/d' \
 		    -e 's/[ 	].*//' \
 		    -e 's/^/listed /' command-list.txt; \
 		$(MAKE) -C Documentation print-man1 | \
 		grep '\.txt$$' | \
-		sed -e 's|Documentation/|documented |' \
+		sed -e 's|^|documented |' \
 		    -e 's/\.txt//'; \
 	) | while read how cmd; \
 	do \
-		case " $(ALL_COMMANDS) " in \
+		case " $(patsubst %$X,%,$(ALL_COMMANDS)) " in \
 		*" $$cmd "*)	;; \
 		*) echo "removed but $$how: $$cmd" ;; \
 		esac; \

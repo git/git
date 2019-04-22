@@ -1,4 +1,4 @@
-gitremote-helpers(1)
+gitremote-helpers(7)
 ====================
 
 NAME
@@ -512,8 +512,6 @@ linkgit:git-remote[1]
 linkgit:git-remote-ext[1]
 
 linkgit:git-remote-fd[1]
-
-linkgit:git-remote-testgit[1]
 
 linkgit:git-fast-import[1]
 
