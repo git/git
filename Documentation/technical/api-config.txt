@@ -229,7 +229,7 @@ A `config_set` can be used to construct an in-memory cache for
 config-like files that the caller specifies (i.e., files like `.gitmodules`,
 `~/.gitconfig` etc.). For example,
 
----------------------------------------
+----------------------------------------
 struct config_set gm_config;
 git_configset_init(&gm_config);
 int b;

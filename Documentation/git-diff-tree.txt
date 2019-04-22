@@ -118,6 +118,7 @@ include::pretty-options.txt[]
 
 
 include::pretty-formats.txt[]
+
 include::diff-format.txt[]
 
 GIT
