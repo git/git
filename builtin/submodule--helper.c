@@ -566,12 +566,12 @@ static int module_foreach(int argc, const char **argv, const char *prefix)
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper foreach [--quiet] [--recursive] <command>"),
+		N_("git submodule--helper foreach [--quiet] [--recursive] [--] <command>"),
 		NULL
 	};
 
 	argc = parse_options(argc, argv, prefix, module_foreach_options,
-			     git_submodule_helper_usage, PARSE_OPT_KEEP_UNKNOWN);
+			     git_submodule_helper_usage, 0);
 
 	if (module_list_compute(0, NULL, prefix, &pathspec, &list) < 0)
 		return 1;
@@ -709,7 +709,7 @@ static int module_init(int argc, const char **argv, const char *prefix)
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper init [<path>]"),
+		N_("git submodule--helper init [<options>] [<path>]"),
 		NULL
 	};
 
@@ -2096,7 +2096,7 @@ static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper embed-git-dir [<path>...]"),
+		N_("git submodule--helper absorb-git-dirs [<options>] [<path>...]"),
 		NULL
 	};
 

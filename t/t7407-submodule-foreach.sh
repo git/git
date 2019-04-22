@@ -411,4 +411,14 @@ test_expect_success 'multi-argument command passed to foreach is not shell-evalu
 	test_cmp expected actual
 '
 
+test_expect_success 'option-like arguments passed to foreach commands are not lost' '
+	(
+		cd super &&
+		git submodule foreach "echo be --quiet" > ../expected &&
+		git submodule foreach echo be --quiet > ../actual
+	) &&
+	grep -sq -e "--quiet" expected &&
+	test_cmp expected actual
+'
+
 test_done
