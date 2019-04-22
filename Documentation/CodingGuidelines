@@ -580,11 +580,14 @@ Writing Documentation:
  or commands:
 
  Literal examples (e.g. use of command-line options, command names,
- branch names, configuration and environment variables) must be
- typeset in monospace (i.e. wrapped with backticks):
+ branch names, URLs, pathnames (files and directories), configuration and
+ environment variables) must be typeset in monospace (i.e. wrapped with
+ backticks):
    `--pretty=oneline`
    `git rev-list`
    `remote.pushDefault`
+   `http://git.example.com`
+   `.git/config`
    `GIT_DIR`
    `HEAD`
 
