@@ -1242,7 +1242,7 @@ do
 			# Some protocol versions (e.g. 2) support fetching
 			# unadvertised objects, so restrict this test to v0.
 			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
-				git fetepo/.git $SHA1_3 &&
+				git fetch ../testrepo/.git $SHA1_3 &&
 			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
 				git fetch ../testrepo/.git $SHA1_1 &&
 			git --git-dir=../testrepo/.git config uploadpack.allowreachablesha1inwant true &&
