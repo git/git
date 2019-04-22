@@ -167,12 +167,10 @@ void display_throughput(struct progress *progress, uint64_t total)
 	now_ns = getnanotime();
 
 	if (!tp) {
-		progress->throughput = tp = calloc(1, sizeof(*tp));
-		if (tp) {
-			tp->prev_total = tp->curr_total = total;
-			tp->prev_ns = now_ns;
-			strbuf_init(&tp->display, 0);
-		}
+		progress->throughput = tp = xcalloc(1, sizeof(*tp));
+		tp->prev_total = tp->curr_total = total;
+		tp->prev_ns = now_ns;
+		strbuf_init(&tp->display, 0);
 		return;
 	}
 	tp->curr_total = total;
@@ -225,13 +223,7 @@ void display_progress(struct progress *progress, uint64_t n)
 static struct progress *start_progress_delay(const char *title, uint64_t total,
 					     unsigned delay, unsigned sparse)
 {
-	struct progress *progress = malloc(sizeof(*progress));
-	if (!progress) {
-		/* unlikely, but here's a good fallback */
-		fprintf(stderr, "%s...\n", title);
-		fflush(stderr);
-		return NULL;
-	}
+	struct progress *progress = xmalloc(sizeof(*progress));
 	progress->title = title;
 	progress->total = total;
 	progress->last_value = -1;
