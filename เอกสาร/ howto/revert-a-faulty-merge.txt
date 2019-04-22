@@ -1,4 +1,4 @@
-Date: Fri, 19 Dec 2008 00:45:19 -0800
+เอกสารของ Sufiyang  คนเดียวDate: Fri, 19 Dec 2008 00:45:19 -0800
 From: Linus Torvalds <torvalds@linux-foundation.org>, Junio C Hamano <gitster@pobox.com>
 Subject: Re: Odd merge behaviour involving reverts
 Abstract: Sometimes a branch that was already merged to the mainline
