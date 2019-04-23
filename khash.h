@@ -69,11 +69,11 @@ static const double __ac_HASH_UPPER = 0.77;
 		khval_t *vals; \
 	} kh_##name##_t;
 
-#define __KHASH_PROTOTYPES(name, khkey_t, khval_t)	 					\
-	kh_##name##_t *kh_init_##name(void);							\
+#define __KHASH_PROTOTYPES(name, khkey_t, khval_t)	 			\
+	kh_##name##_t *kh_init_##name(void);						\
 	void kh_destroy_##name(kh_##name##_t *h);					\
 	void kh_clear_##name(kh_##name##_t *h);						\
-	khint_t kh_get_##name(const kh_##name##_t *h, khkey_t key); 	\
+	khint_t kh_get_##name(const kh_##name##_t *h, khkey_t key); \
 	int kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets); \
 	khint_t kh_put_##name(kh_##name##_t *h, khkey_t key, int *ret); \
 	void kh_del_##name(kh_##name##_t *h, khint_t x);

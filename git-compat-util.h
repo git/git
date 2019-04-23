@@ -770,13 +770,13 @@ FILE *git_fopen(const char*, const char*);
 #endif
 #define snprintf git_snprintf
 int git_snprintf(char *str, size_t maxsize,
-			const char *format, ...);
+		 const char *format, ...);
 #ifdef vsnprintf
 #undef vsnprintf
 #endif
 #define vsnprintf git_vsnprintf
 int git_vsnprintf(char *str, size_t maxsize,
-			 const char *format, va_list ap);
+		  const char *format, va_list ap);
 #endif
 
 #ifdef __GLIBC_PREREQ

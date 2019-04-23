@@ -104,7 +104,7 @@ void step_active_slots(void);
 #endif
 
 void http_init(struct remote *remote, const char *url,
-		      int proactive_auth);
+	       int proactive_auth);
 void http_cleanup(void);
 struct curl_slist *http_copy_default_headers(void);
 
@@ -147,10 +147,10 @@ void normalize_curl_result(CURLcode *result, long http_code, char *errorstr,
 
 /* Helpers for modifying and creating URLs */
 void append_remote_object_url(struct strbuf *buf, const char *url,
-				     const char *hex,
-				     int only_two_digit_prefix);
+			      const char *hex,
+			      int only_two_digit_prefix);
 char *get_remote_object_url(const char *url, const char *hex,
-				   int only_two_digit_prefix);
+			    int only_two_digit_prefix);
 
 /* Options for http_get_*() */
 struct http_get_options {
@@ -208,7 +208,7 @@ int http_fetch_ref(const char *base, struct ref *ref);
 
 /* Helpers for fetching packs */
 int http_get_info_packs(const char *base_url,
-	struct packed_git **packs_head);
+			struct packed_git **packs_head);
 
 struct http_pack_request {
 	char *url;

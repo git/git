@@ -140,15 +140,15 @@ struct packet_reader;
 struct argv_array;
 struct string_list;
 struct ref **get_remote_heads(struct packet_reader *reader,
-				     struct ref **list, unsigned int flags,
-				     struct oid_array *extra_have,
-				     struct oid_array *shallow_points);
+			      struct ref **list, unsigned int flags,
+			      struct oid_array *extra_have,
+			      struct oid_array *shallow_points);
 
 /* Used for protocol v2 in order to retrieve refs from a remote */
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
-				    struct ref **list, int for_push,
-				    const struct argv_array *ref_prefixes,
-				    const struct string_list *server_options);
+			     struct ref **list, int for_push,
+			     const struct argv_array *ref_prefixes,
+			     const struct string_list *server_options);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 

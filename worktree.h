@@ -48,8 +48,8 @@ const char *get_worktree_git_dir(const struct worktree *wt);
  * "arg". "prefix" must not be NULL.
  */
 struct worktree *find_worktree(struct worktree **list,
-				      const char *prefix,
-				      const char *arg);
+			       const char *prefix,
+			       const char *arg);
 
 /*
  * Return true if the given worktree is the main one.
@@ -69,14 +69,14 @@ const char *worktree_lock_reason(struct worktree *wt);
  * returned if "errmsg" is not NULL.
  */
 int validate_worktree(const struct worktree *wt,
-			     struct strbuf *errmsg,
-			     unsigned flags);
+		      struct strbuf *errmsg,
+		      unsigned flags);
 
 /*
  * Update worktrees/xxx/gitdir with the new path.
  */
 void update_worktree_location(struct worktree *wt,
-				     const char *path_);
+			      const char *path_);
 
 /*
  * Free up the memory for worktree(s)
@@ -89,7 +89,7 @@ void free_worktrees(struct worktree **);
  * or NULL otherwise. The result may be destroyed by the next call.
  */
 const struct worktree *find_shared_symref(const char *symref,
-						 const char *target);
+					  const char *target);
 
 /*
  * Similar to head_ref() for all HEADs _except_ one from the current
@@ -105,7 +105,7 @@ int is_worktree_being_bisected(const struct worktree *wt, const char *target);
  * worktree instead of current one
  */
 const char *worktree_git_path(const struct worktree *wt,
-				     const char *fmt, ...)
+			      const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
 
 /*

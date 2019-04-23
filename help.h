@@ -27,12 +27,12 @@ void list_config_help(int for_human);
 void list_all_main_cmds(struct string_list *list);
 void list_all_other_cmds(struct string_list *list);
 void list_cmds_by_category(struct string_list *list,
-				  const char *category);
+			   const char *category);
 void list_cmds_by_config(struct string_list *list);
 const char *help_unknown_cmd(const char *cmd);
 void load_command_list(const char *prefix,
-			      struct cmdnames *main_cmds,
-			      struct cmdnames *other_cmds);
+		       struct cmdnames *main_cmds,
+		       struct cmdnames *other_cmds);
 void add_cmdname(struct cmdnames *cmds, const char *name, int len);
 /* Here we require that excludes is a sorted list. */
 void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes);

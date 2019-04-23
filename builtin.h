@@ -111,7 +111,7 @@ struct fmt_merge_msg_opts {
 };
 
 int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
-			 struct fmt_merge_msg_opts *);
+		  struct fmt_merge_msg_opts *);
 
 /**
  * If a built-in has DELAY_PAGER_CONFIG set, the built-in should call this early

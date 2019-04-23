@@ -189,7 +189,7 @@ static inline int is_lock_file_locked(struct lock_file *lk)
  * `errno` set by the failing call.
  */
 void unable_to_lock_message(const char *path, int err,
-				   struct strbuf *buf);
+			    struct strbuf *buf);
 
 /*
  * Emit an appropriate error message and `die()` following the failure

@@ -17,7 +17,7 @@ void prepare_replace_object(struct repository *r);
  * lookup_replace_object().  Please do not call it directly.
  */
 const struct object_id *do_lookup_replace_object(struct repository *r,
-							const struct object_id *oid);
+						 const struct object_id *oid);
 
 /*
  * If object sha1 should be replaced, return the replacement object's

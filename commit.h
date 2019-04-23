@@ -179,8 +179,8 @@ struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 
 int has_non_ascii(const char *text);
 const char *logmsg_reencode(const struct commit *commit,
-				   char **commit_encoding,
-				   const char *output_encoding);
+			    char **commit_encoding,
+			    const char *output_encoding);
 const char *repo_logmsg_reencode(struct repository *r,
 				 const struct commit *commit,
 				 char **commit_encoding,
@@ -245,15 +245,15 @@ int unregister_shallow(const struct object_id *oid);
 int for_each_commit_graft(each_commit_graft_fn, void *);
 int is_repository_shallow(struct repository *r);
 struct commit_list *get_shallow_commits(struct object_array *heads,
-		int depth, int shallow_flag, int not_shallow_flag);
+					int depth, int shallow_flag, int not_shallow_flag);
 struct commit_list *get_shallow_commits_by_rev_list(
 		int ac, const char **av, int shallow_flag, int not_shallow_flag);
 void set_alternate_shallow_file(struct repository *r, const char *path, int override);
 int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
-				 const struct oid_array *extra);
+			  const struct oid_array *extra);
 void setup_alternate_shallow(struct lock_file *shallow_lock,
-				    const char **alternate_shallow_file,
-				    const struct oid_array *extra);
+			     const char **alternate_shallow_file,
+			     const struct oid_array *extra);
 const char *setup_temporary_shallow(const struct oid_array *extra);
 void advertise_shallow_grafts(int);
 
@@ -276,8 +276,8 @@ void prepare_shallow_info(struct shallow_info *, struct oid_array *);
 void clear_shallow_info(struct shallow_info *);
 void remove_nonexistent_theirs_shallow(struct shallow_info *);
 void assign_shallow_commits_to_refs(struct shallow_info *info,
-					   uint32_t **used,
-					   int *ref_status);
+				    uint32_t **used,
+				    int *ref_status);
 int delayed_reachability_test(struct shallow_info *si, int c);
 #define PRUNE_SHOW_ONLY 1
 #define PRUNE_QUICK 2
@@ -286,7 +286,7 @@ extern struct trace_key trace_shallow;
 
 int interactive_add(int argc, const char **argv, const char *prefix, int patch);
 int run_add_interactive(const char *revision, const char *patch_mode,
-			       const struct pathspec *pathspec);
+			const struct pathspec *pathspec);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;
@@ -296,19 +296,19 @@ struct commit_extra_header {
 };
 
 void append_merge_tag_headers(struct commit_list *parents,
-				     struct commit_extra_header ***tail);
+			      struct commit_extra_header ***tail);
 
 int commit_tree(const char *msg, size_t msg_len,
-		       const struct object_id *tree,
-		       struct commit_list *parents, struct object_id *ret,
-		       const char *author, const char *sign_commit);
+		const struct object_id *tree,
+		struct commit_list *parents, struct object_id *ret,
+		const char *author, const char *sign_commit);
 
 int commit_tree_extended(const char *msg, size_t msg_len,
-				const struct object_id *tree,
-				struct commit_list *parents,
-				struct object_id *ret, const char *author,
-				const char *sign_commit,
-				struct commit_extra_header *);
+			 const struct object_id *tree,
+			 struct commit_list *parents,
+			 struct object_id *ret, const char *author,
+			 const char *sign_commit,
+			 struct commit_extra_header *);
 
 struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
 
@@ -323,13 +323,13 @@ void free_commit_extra_headers(struct commit_extra_header *extra);
  * responsibility to parse further in this case!
  */
 const char *find_commit_header(const char *msg, const char *key,
-				      size_t *out_len);
+			       size_t *out_len);
 
 /* Find the end of the log message, the right place for a new trailer. */
 size_t ignore_non_trailer(const char *buf, size_t len);
 
 typedef int (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
-				 void *cb_data);
+				void *cb_data);
 
 int for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data);
 
@@ -339,7 +339,7 @@ struct merge_remote_desc {
 };
 struct merge_remote_desc *merge_remote_util(struct commit *);
 void set_merge_remote_desc(struct commit *commit,
-				  const char *name, struct object *obj);
+			   const char *name, struct object *obj);
 
 /*
  * Given "name" from the command line to merge, find the commit object
@@ -349,7 +349,7 @@ void set_merge_remote_desc(struct commit *commit,
 struct commit *get_merge_parent(const char *name);
 
 int parse_signed_commit(const struct commit *commit,
-			       struct strbuf *message, struct strbuf *signature);
+			struct strbuf *message, struct strbuf *signature);
 int remove_signature(struct strbuf *buf);
 
 /*

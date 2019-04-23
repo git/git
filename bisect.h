@@ -12,13 +12,13 @@ struct repository;
  * best commit, as chosen by `find_all`.
  */
 void find_bisection(struct commit_list **list, int *reaches, int *all,
-			   int find_all);
+		    int find_all);
 
 struct commit_list *filter_skipped(struct commit_list *list,
-					  struct commit_list **tried,
-					  int show_all,
-					  int *count,
-					  int *skipped_first);
+				   struct commit_list **tried,
+				   int show_all,
+				   int *count,
+				   int *skipped_first);
 
 #define BISECT_SHOW_ALL		(1<<0)
 #define REV_LIST_QUIET		(1<<1)
@@ -32,8 +32,8 @@ struct rev_list_info {
 };
 
 int bisect_next_all(struct repository *r,
-			   const char *prefix,
-			   int no_checkout);
+		    const char *prefix,
+		    int no_checkout);
 
 int estimate_bisect_steps(int all);
 

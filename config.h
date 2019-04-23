@@ -71,22 +71,22 @@ typedef int (*config_fn_t)(const char *, const char *, void *);
 int git_default_config(const char *, const char *, void *);
 int git_config_from_file(config_fn_t fn, const char *, void *);
 int git_config_from_file_with_options(config_fn_t fn, const char *,
-					     void *,
-					     const struct config_options *);
+				      void *,
+				      const struct config_options *);
 int git_config_from_mem(config_fn_t fn,
-			       const enum config_origin_type,
-			       const char *name,
-			       const char *buf, size_t len,
-			       void *data, const struct config_options *opts);
+			const enum config_origin_type,
+			const char *name,
+			const char *buf, size_t len,
+			void *data, const struct config_options *opts);
 int git_config_from_blob_oid(config_fn_t fn, const char *name,
-				    const struct object_id *oid, void *data);
+			     const struct object_id *oid, void *data);
 void git_config_push_parameter(const char *text);
 int git_config_from_parameters(config_fn_t fn, void *data);
 void read_early_config(config_fn_t cb, void *data);
 void git_config(config_fn_t fn, void *);
 int config_with_options(config_fn_t fn, void *,
-			       struct git_config_source *config_source,
-			       const struct config_options *opts);
+			struct git_config_source *config_source,
+			const struct config_options *opts);
 int git_parse_ssize_t(const char *, ssize_t *);
 int git_parse_ulong(const char *, unsigned long *);
 int git_parse_maybe_bool(const char *);
@@ -160,9 +160,9 @@ int git_config_include(const char *name, const char *value, void *data);
  * there is no subsection at all.
  */
 int parse_config_key(const char *var,
-			    const char *section,
-			    const char **subsection, int *subsection_len,
-			    const char **key);
+		     const char *section,
+		     const char **subsection, int *subsection_len,
+		     const char **key);
 
 struct config_set_element {
 	struct hashmap_entry ent;
@@ -215,25 +215,25 @@ int git_configset_get_pathname(struct config_set *cs, const char *key, const cha
 struct repository;
 void repo_config(struct repository *repo, config_fn_t fn, void *data);
 int repo_config_get_value(struct repository *repo,
-				 const char *key, const char **value);
+			  const char *key, const char **value);
 const struct string_list *repo_config_get_value_multi(struct repository *repo,
-							     const char *key);
+						      const char *key);
 int repo_config_get_string_const(struct repository *repo,
-					const char *key, const char **dest);
+				 const char *key, const char **dest);
 int repo_config_get_string(struct repository *repo,
-				  const char *key, char **dest);
+			   const char *key, char **dest);
 int repo_config_get_int(struct repository *repo,
-			       const char *key, int *dest);
+			const char *key, int *dest);
 int repo_config_get_ulong(struct repository *repo,
-				 const char *key, unsigned long *dest);
+			  const char *key, unsigned long *dest);
 int repo_config_get_bool(struct repository *repo,
-				const char *key, int *dest);
+			 const char *key, int *dest);
 int repo_config_get_bool_or_int(struct repository *repo,
-				       const char *key, int *is_bool, int *dest);
+				const char *key, int *is_bool, int *dest);
 int repo_config_get_maybe_bool(struct repository *repo,
-				      const char *key, int *dest);
+			       const char *key, int *dest);
 int repo_config_get_pathname(struct repository *repo,
-				    const char *key, const char **dest);
+			     const char *key, const char **dest);
 
 int git_config_get_value(const char *key, const char **value);
 const struct string_list *git_config_get_value_multi(const char *key);

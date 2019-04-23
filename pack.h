@@ -93,7 +93,7 @@ char *index_pack_lockfile(int fd);
  */
 #define MAX_PACK_OBJECT_HEADER 10
 int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
-					enum object_type, uintmax_t);
+				 enum object_type, uintmax_t);
 
 #define PH_ERROR_EOF		(-1)
 #define PH_ERROR_PACK_SIGNATURE	(-2)

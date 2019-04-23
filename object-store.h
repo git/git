@@ -163,9 +163,9 @@ void *map_loose_object(struct repository *r, const struct object_id *oid,
 		       unsigned long *size);
 
 void *read_object_file_extended(struct repository *r,
-				       const struct object_id *oid,
-				       enum object_type *type,
-				       unsigned long *size, int lookup_replace);
+				const struct object_id *oid,
+				enum object_type *type,
+				unsigned long *size, int lookup_replace);
 static inline void *repo_read_object_file(struct repository *r,
 					  const struct object_id *oid,
 					  enum object_type *type,
@@ -181,17 +181,17 @@ static inline void *repo_read_object_file(struct repository *r,
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
 int hash_object_file(const void *buf, unsigned long len,
-			    const char *type, struct object_id *oid);
+		     const char *type, struct object_id *oid);
 
 int write_object_file(const void *buf, unsigned long len,
-			     const char *type, struct object_id *oid);
+		      const char *type, struct object_id *oid);
 
 int hash_object_file_literally(const void *buf, unsigned long len,
-				      const char *type, struct object_id *oid,
-				      unsigned flags);
+			       const char *type, struct object_id *oid,
+			       unsigned flags);
 
 int pretend_object_file(void *, unsigned long, enum object_type,
-			       struct object_id *oid);
+			struct object_id *oid);
 
 int force_object_loose(const struct object_id *oid, time_t mtime);
 

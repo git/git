@@ -60,7 +60,7 @@ struct packed_git *get_all_packs(struct repository *r);
 unsigned long approximate_object_count(void);
 
 struct packed_git *find_sha1_pack(const unsigned char *sha1,
-					 struct packed_git *packs);
+				  struct packed_git *packs);
 
 void pack_report(void);
 
@@ -144,8 +144,8 @@ void release_pack_memory(size_t);
 extern int do_check_packed_object_crc;
 
 int packed_object_info(struct repository *r,
-			      struct packed_git *pack,
-			      off_t offset, struct object_info *);
+		       struct packed_git *pack,
+		       off_t offset, struct object_info *);
 
 void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1);
 const struct packed_git *has_packed_and_bad(struct repository *r, const unsigned char *sha1);
@@ -177,6 +177,6 @@ int is_promisor_object(const struct object_id *oid);
  * probably use open_pack_index() or parse_pack_index() instead.
  */
 int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
-		    size_t idx_size, struct packed_git *p);
+	     size_t idx_size, struct packed_git *p);
 
 #endif
