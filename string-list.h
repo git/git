@@ -174,7 +174,7 @@ struct string_list_item *string_list_insert(struct string_list *list, const char
  * Remove the given string from the sorted list.  If the string
  * doesn't exist, the list is not altered.
  */
-extern void string_list_remove(struct string_list *list, const char *string,
+void string_list_remove(struct string_list *list, const char *string,
 			       int free_util);
 
 /**

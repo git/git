@@ -55,7 +55,7 @@ struct child_process {
 #define CHILD_PROCESS_INIT { NULL, ARGV_ARRAY_INIT, ARGV_ARRAY_INIT }
 void child_process_init(struct child_process *);
 void child_process_clear(struct child_process *);
-extern int is_executable(const char *name);
+int is_executable(const char *name);
 
 int start_command(struct child_process *);
 int finish_command(struct child_process *);
@@ -67,10 +67,10 @@ int run_command(struct child_process *);
  * or disabled. Note that this points to static storage that will be
  * overwritten by further calls to find_hook and run_hook_*.
  */
-extern const char *find_hook(const char *name);
+const char *find_hook(const char *name);
 LAST_ARG_MUST_BE_NULL
 extern int run_hook_le(const char *const *env, const char *name, ...);
-extern int run_hook_ve(const char *const *env, const char *name, va_list args);
+int run_hook_ve(const char *const *env, const char *name, va_list args);
 
 #define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */

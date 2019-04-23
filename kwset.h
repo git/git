@@ -37,16 +37,16 @@ typedef struct kwset_t* kwset_t;
    if enough memory cannot be obtained.  The argument if non-NULL
    specifies a table of character translations to be applied to all
    pattern and search text. */
-extern kwset_t kwsalloc(unsigned char const *);
+kwset_t kwsalloc(unsigned char const *);
 
 /* Incrementally extend the keyword set to include the given string.
    Return NULL for success, or an error message.  Remember an index
    number for each keyword included in the set. */
-extern const char *kwsincr(kwset_t, char const *, size_t);
+const char *kwsincr(kwset_t, char const *, size_t);
 
 /* When the keyword set has been completely built, prepare it for
    use.  Return NULL for success, or an error message. */
-extern const char *kwsprep(kwset_t);
+const char *kwsprep(kwset_t);
 
 /* Search through the given buffer for a member of the keyword set.
    Return a pointer to the leftmost longest match found, or NULL if
@@ -54,8 +54,8 @@ extern const char *kwsprep(kwset_t);
    the matching substring in the integer it points to.  Similarly,
    if foundindex is non-NULL, store the index of the particular
    keyword found therein. */
-extern size_t kwsexec(kwset_t, char const *, size_t, struct kwsmatch *);
+size_t kwsexec(kwset_t, char const *, size_t, struct kwsmatch *);
 
 /* Deallocate the given keyword set and all its associated storage. */
-extern void kwsfree(kwset_t);
+void kwsfree(kwset_t);
 

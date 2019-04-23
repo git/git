@@ -162,7 +162,7 @@ const char *loose_object_path(struct repository *r, struct strbuf *buf,
 void *map_loose_object(struct repository *r, const struct object_id *oid,
 		       unsigned long *size);
 
-extern void *read_object_file_extended(struct repository *r,
+void *read_object_file_extended(struct repository *r,
 				       const struct object_id *oid,
 				       enum object_type *type,
 				       unsigned long *size, int lookup_replace);
@@ -180,20 +180,20 @@ static inline void *repo_read_object_file(struct repository *r,
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
-extern int hash_object_file(const void *buf, unsigned long len,
+int hash_object_file(const void *buf, unsigned long len,
 			    const char *type, struct object_id *oid);
 
-extern int write_object_file(const void *buf, unsigned long len,
+int write_object_file(const void *buf, unsigned long len,
 			     const char *type, struct object_id *oid);
 
-extern int hash_object_file_literally(const void *buf, unsigned long len,
+int hash_object_file_literally(const void *buf, unsigned long len,
 				      const char *type, struct object_id *oid,
 				      unsigned flags);
 
-extern int pretend_object_file(void *, unsigned long, enum object_type,
+int pretend_object_file(void *, unsigned long, enum object_type,
 			       struct object_id *oid);
 
-extern int force_object_loose(const struct object_id *oid, time_t mtime);
+int force_object_loose(const struct object_id *oid, time_t mtime);
 
 /*
  * Open the loose object at path, check its hash, and return the contents,
@@ -227,9 +227,9 @@ int repo_has_object_file_with_flags(struct repository *r,
  * with the specified name.  This function does not respect replace
  * references.
  */
-extern int has_loose_object_nonlocal(const struct object_id *);
+int has_loose_object_nonlocal(const struct object_id *);
 
-extern void assert_oid_type(const struct object_id *oid, enum object_type expect);
+void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
 struct object_info {
 	/* Request */

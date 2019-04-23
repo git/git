@@ -143,7 +143,7 @@ extern int strbuf_git_path_submodule(struct strbuf *sb, const char *path,
 				     const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 
-extern void report_linked_checkout_garbage(void);
+void report_linked_checkout_garbage(void);
 
 /*
  * You can define a static memoized git path like:

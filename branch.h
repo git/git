@@ -50,7 +50,7 @@ void create_branch(struct repository *r,
  * Return 1 if the named branch already exists; return 0 otherwise.
  * Fill ref with the full refname for the branch.
  */
-extern int validate_branchname(const char *name, struct strbuf *ref);
+int validate_branchname(const char *name, struct strbuf *ref);
 
 /*
  * Check if a branch 'name' can be created as a new branch; die otherwise.
@@ -58,7 +58,7 @@ extern int validate_branchname(const char *name, struct strbuf *ref);
  * Return 1 if the named branch already exists; return 0 otherwise.
  * Fill ref with the full refname for the branch.
  */
-extern int validate_new_branchname(const char *name, struct strbuf *ref, int force);
+int validate_new_branchname(const char *name, struct strbuf *ref, int force);
 
 /*
  * Remove information about the state of working on the current
@@ -72,26 +72,26 @@ void remove_branch_state(struct repository *r);
  * Returns 0 on success.
  */
 #define BRANCH_CONFIG_VERBOSE 01
-extern int install_branch_config(int flag, const char *local, const char *origin, const char *remote);
+int install_branch_config(int flag, const char *local, const char *origin, const char *remote);
 
 /*
  * Read branch description
  */
-extern int read_branch_desc(struct strbuf *, const char *branch_name);
+int read_branch_desc(struct strbuf *, const char *branch_name);
 
 /*
  * Check if a branch is checked out in the main worktree or any linked
  * worktree and die (with a message describing its checkout location) if
  * it is.
  */
-extern void die_if_checked_out(const char *branch, int ignore_current_worktree);
+void die_if_checked_out(const char *branch, int ignore_current_worktree);
 
 /*
  * Update all per-worktree HEADs pointing at the old ref to point the new ref.
  * This will be used when renaming a branch. Returns 0 if successful, non-zero
  * otherwise.
  */
-extern int replace_each_worktree_head_symref(const char *oldref, const char *newref,
+int replace_each_worktree_head_symref(const char *oldref, const char *newref,
 					     const char *logmsg);
 
 #endif

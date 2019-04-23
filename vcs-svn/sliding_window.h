@@ -13,6 +13,6 @@ struct sliding_view {
 
 #define SLIDING_VIEW_INIT(input, len)	{ (input), 0, 0, (len), STRBUF_INIT }
 
-extern int move_window(struct sliding_view *view, off_t off, size_t width);
+int move_window(struct sliding_view *view, off_t off, size_t width);
 
 #endif
