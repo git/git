@@ -25,9 +25,6 @@
 
 #define GRAPH_DATA_WIDTH (the_hash_algo->rawsz + 16)
 
-#define GRAPH_VERSION_1 0x1
-#define GRAPH_VERSION GRAPH_VERSION_1
-
 #define GRAPH_EXTRA_EDGES_NEEDED 0x80000000
 #define GRAPH_EDGE_LAST_MASK 0x7fffffff
 #define GRAPH_PARENT_NONE 0x70000000
@@ -173,30 +170,35 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 	}
 
 	graph_version = *(unsigned char*)(data + 4);
-	if (graph_version != GRAPH_VERSION) {
+	if (graph_version != 1) {
 		error(_("commit-graph version %X does not match version %X"),
-		      graph_version, GRAPH_VERSION);
-		return NULL;
-	}
-
-	hash_version = *(unsigned char*)(data + 5);
-	if (hash_version != oid_version()) {
-		error(_("commit-graph hash version %X does not match version %X"),
-		      hash_version, oid_version());
+		      graph_version, 1);
 		return NULL;
 	}
 
 	graph = alloc_commit_graph();
 
+	switch (graph_version) {
+	case 1:
+		hash_version = *(unsigned char*)(data + 5);
+		if (hash_version != oid_version()) {
+			error(_("commit-graph hash version %X does not match version %X"),
+			      hash_version, oid_version());
+			return NULL;
+		}
+
+		graph->num_chunks = *(unsigned char*)(data + 6);
+		chunk_lookup = data + 8;
+		break;
+	}
+
 	graph->hash_len = the_hash_algo->rawsz;
-	graph->num_chunks = *(unsigned char*)(data + 6);
 	graph->graph_fd = fd;
 	graph->data = graph_map;
 	graph->data_len = graph_size;
 
 	last_chunk_id = 0;
 	last_chunk_offset = 8;
-	chunk_lookup = data + 8;
 	for (i = 0; i < graph->num_chunks; i++) {
 		uint32_t chunk_id;
 		uint64_t chunk_offset;
@@ -888,9 +890,21 @@ int write_commit_graph(const char *obj_dir,
 	int res = 0;
 	int append = flags & COMMIT_GRAPH_APPEND;
 	int report_progress = flags & COMMIT_GRAPH_PROGRESS;
+	int version = 0;
+	int header_size = 0;
 
 	if (!commit_graph_compatible(the_repository))
 		return 0;
+
+	if (flags & COMMIT_GRAPH_VERSION_1)
+		version = 1;
+	if (!version)
+		version = 1;
+	if (version != 1) {
+		error(_("unsupported commit-graph version %d"),
+		      version);
+		return 1;
+	}
 
 	oids.nr = 0;
 	approx_nr_objects = approximate_object_count();
@@ -1076,10 +1090,16 @@ int write_commit_graph(const char *obj_dir,
 
 	hashwrite_be32(f, GRAPH_SIGNATURE);
 
-	hashwrite_u8(f, GRAPH_VERSION);
-	hashwrite_u8(f, oid_version());
-	hashwrite_u8(f, num_chunks);
-	hashwrite_u8(f, 0); /* unused padding byte */
+	hashwrite_u8(f, version);
+
+	switch (version) {
+	case 1:
+		hashwrite_u8(f, oid_version());
+		hashwrite_u8(f, num_chunks);
+		hashwrite_u8(f, 0); /* unused padding byte */
+		header_size = 8;
+		break;
+	}
 
 	chunk_ids[0] = GRAPH_CHUNKID_OIDFANOUT;
 	chunk_ids[1] = GRAPH_CHUNKID_OIDLOOKUP;
@@ -1090,7 +1110,7 @@ int write_commit_graph(const char *obj_dir,
 		chunk_ids[3] = 0;
 	chunk_ids[4] = 0;
 
-	chunk_offsets[0] = 8 + (num_chunks + 1) * GRAPH_CHUNKLOOKUP_WIDTH;
+	chunk_offsets[0] = header_size + (num_chunks + 1) * GRAPH_CHUNKLOOKUP_WIDTH;
 	chunk_offsets[1] = chunk_offsets[0] + GRAPH_FANOUT_SIZE;
 	chunk_offsets[2] = chunk_offsets[1] + hashsz * commits.nr;
 	chunk_offsets[3] = chunk_offsets[2] + (hashsz + 16) * commits.nr;
