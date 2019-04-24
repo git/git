@@ -527,5 +527,24 @@ test_expect_success 'expire respects .keep files' '
 	)
 '
 
+test_expect_success 'repack --batch-size=0 repacks everything' '
+	(
+		cd dup &&
+		rm .git/objects/pack/*.keep &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 2 idx-list &&
+		git multi-pack-index repack --batch-size=0 &&
+		ls .git/objects/pack/*idx >idx-list &&
+		test_line_count = 3 idx-list &&
+		test-tool read-midx .git/objects | grep idx >midx-list &&
+		test_line_count = 3 midx-list &&
+		git multi-pack-index expire &&
+		ls -al .git/objects/pack/*idx >idx-list &&
+		test_line_count = 1 idx-list &&
+		git multi-pack-index repack --batch-size=0 &&
+		ls -al .git/objects/pack/*idx >new-idx-list &&
+		test_cmp idx-list new-idx-list
+	)
+'
 
 test_done
