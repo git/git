@@ -33,13 +33,13 @@ test_expect_success 'create commits and repack' '
 	git repack
 '
 
-graph_git_two_modes() {
+graph_git_two_modes () {
 	git -c core.commitGraph=true $1 >output
 	git -c core.commitGraph=false $1 >expect
 	test_cmp expect output
 }
 
-graph_git_behavior() {
+graph_git_behavior () {
 	MSG=$1
 	DIR=$2
 	BRANCH=$3
@@ -56,7 +56,7 @@ graph_git_behavior() {
 
 graph_git_behavior 'no graph' full commits/3 commits/1
 
-graph_read_expect() {
+graph_read_expect () {
 	OPTIONAL=""
 	NUM_CHUNKS=3
 	if test ! -z $2
@@ -65,7 +65,8 @@ graph_read_expect() {
 		NUM_CHUNKS=$((3 + $(echo "$2" | wc -w)))
 	fi
 	cat >expect <<- EOF
-	header: 43475048 1 1 $NUM_CHUNKS 0
+	header: 43475048 2 $NUM_CHUNKS 1 0
+	hash algorithm: 73686131
 	num_commits: $1
 	chunks: oid_fanout oid_lookup commit_metadata$OPTIONAL
 	EOF
@@ -320,6 +321,24 @@ test_expect_success 'replace-objects invalidates commit-graph' '
 	)
 '
 
+test_expect_success 'write v1 graph' '
+	git commit-graph write --reachable --version=1 &&
+	git commit-graph verify
+'
+
+graph_git_behavior 'version 1 graph, commit 8 vs merge 2' full commits/8 merge/2
+graph_git_behavior 'version 1 graph, commit 8 vs merge 2' full commits/8 merge/2
+
+test_expect_success 'upgrade from v1 to v2' '
+	git checkout -b new-commit-for-upgrade &&
+	test_commit force-upgrade &&
+	git commit-graph write --reachable --version=2 &&
+	git commit-graph verify
+'
+
+graph_git_behavior 'upgraded graph, commit 8 vs merge 2' full commits/8 merge/2
+graph_git_behavior 'upgraded graph, commit 8 vs merge 2' full commits/8 merge/2
+
 # the verify tests below expect the commit-graph to contain
 # exactly the commits reachable from the commits/8 branch.
 # If the file changes the set of commits in the list, then the
@@ -392,7 +411,7 @@ corrupt_graph_verify() {
 # starting at <zero_pos>, then runs 'git commit-graph verify'
 # and places the output in the file 'err'. Test 'err' for
 # the given string.
-corrupt_graph_and_verify() {
+corrupt_graph_and_verify () {
 	pos=$1
 	data="${2:-\0}"
 	grepstr=$3
@@ -424,10 +443,14 @@ test_expect_success 'detect bad signature' '
 '
 
 test_expect_success 'detect bad version' '
-	corrupt_graph_and_verify $GRAPH_BYTE_VERSION "\02" \
+	corrupt_graph_and_verify $GRAPH_BYTE_VERSION "\03" \
 		"graph version"
 '
 
+test_expect_success 'detect version 2 with version 1 data' '
+	corrupt_graph_and_verify $GRAPH_BYTE_VERSION "\02" \
+		"reachability index version"
+'
 test_expect_success 'detect bad hash version' '
 	corrupt_graph_and_verify $GRAPH_BYTE_HASH "\02" \
 		"hash version"
@@ -530,6 +553,37 @@ test_expect_success 'git fsck (checks commit-graph)' '
 		"incorrect checksum" &&
 	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
 	test_must_fail git fsck
+'
+
+test_expect_success 'rewrite commmit-graph with version 2' '
+	rm -f .git/objects/info/commit-graph &&
+	git commit-graph write --reachable --version=2 &&
+	git commit-graph verify
+'
+
+GRAPH_BYTE_CHUNK_COUNT=5
+GRAPH_BYTE_REACH_INDEX=6
+GRAPH_BYTE_UNUSED=7
+GRAPH_BYTE_HASH=8
+
+test_expect_success 'detect low chunk count (v2)' '
+	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\02" \
+		"missing the .* chunk"
+'
+
+test_expect_success 'detect incorrect reachability index' '
+	corrupt_graph_and_verify $GRAPH_BYTE_REACH_INDEX "\03" \
+		"reachability index version"
+'
+
+test_expect_success 'detect non-zero unused byte' '
+	corrupt_graph_and_verify $GRAPH_BYTE_UNUSED "\01" \
+		"unsupported value"
+'
+
+test_expect_success 'detect bad hash version (v2)' '
+	corrupt_graph_and_verify $GRAPH_BYTE_HASH "\00" \
+		"hash algorithm"
 '
 
 test_expect_success 'setup non-the_repository tests' '

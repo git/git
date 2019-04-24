@@ -152,7 +152,8 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 	uint64_t last_chunk_offset;
 	uint32_t last_chunk_id;
 	uint32_t graph_signature;
-	unsigned char graph_version, hash_version;
+	unsigned char graph_version, hash_version, reach_index_version;
+	uint32_t hash_id;
 
 	if (!graph_map)
 		return NULL;
@@ -170,7 +171,7 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 	}
 
 	graph_version = *(unsigned char*)(data + 4);
-	if (graph_version != 1) {
+	if (!graph_version || graph_version > 2) {
 		error(_("commit-graph version %X does not match version %X"),
 		      graph_version, 1);
 		return NULL;
@@ -189,6 +190,30 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 
 		graph->num_chunks = *(unsigned char*)(data + 6);
 		chunk_lookup = data + 8;
+		break;
+
+	case 2:
+		graph->num_chunks = *(unsigned char *)(data + 5);
+
+		reach_index_version = *(unsigned char *)(data + 6);
+		if (reach_index_version != 1) {
+			error(_("unsupported reachability index version %d"),
+			      reach_index_version);
+			return NULL;
+		}
+
+		if (*(unsigned char*)(data + 7)) {
+			error(_("unsupported value in commit-graph header"));
+			return NULL;
+		}
+
+		hash_id = get_be32(data + 8);
+		if (hash_id != the_hash_algo->format_id) {
+			error(_("commit-graph hash algorithm does not match current algorithm"));
+			return NULL;
+		}
+
+		chunk_lookup = data + 12;
 		break;
 	}
 
@@ -898,9 +923,11 @@ int write_commit_graph(const char *obj_dir,
 
 	if (flags & COMMIT_GRAPH_VERSION_1)
 		version = 1;
+	if (flags & COMMIT_GRAPH_VERSION_2)
+		version = 2;
 	if (!version)
-		version = 1;
-	if (version != 1) {
+		version = 2;
+	if (version <= 0 || version > 2) {
 		error(_("unsupported commit-graph version %d"),
 		      version);
 		return 1;
@@ -1098,6 +1125,14 @@ int write_commit_graph(const char *obj_dir,
 		hashwrite_u8(f, num_chunks);
 		hashwrite_u8(f, 0); /* unused padding byte */
 		header_size = 8;
+		break;
+
+	case 2:
+		hashwrite_u8(f, num_chunks);
+		hashwrite_u8(f, 1); /* reachability index version */
+		hashwrite_u8(f, 0); /* unused padding byte */
+		hashwrite_be32(f, the_hash_algo->format_id);
+		header_size = 12;
 		break;
 	}
 
