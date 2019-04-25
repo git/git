@@ -143,6 +143,7 @@
 /git-request-pull
 /git-rerere
 /git-reset
+/git-restore
 /git-rev-list
 /git-rev-parse
 /git-revert

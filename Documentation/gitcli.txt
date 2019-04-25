@@ -209,6 +209,18 @@ See also http://marc.info/?l=git&m=116563135620359 and
 http://marc.info/?l=git&m=119150393620273 for further
 information.
 
+Some other commands that also work on files in the working tree and/or
+in the index can take `--staged` and/or `--worktree`.
+
+* `--staged` is exactly like `--cached`, which is used to ask a
+  command to only work on the index, not the working tree.
+
+* `--worktree` is the opposite, to ask a command to work on the
+  working tree only, not the index.
+
+* The two options can be specified together to ask a command to work
+  on both the index and the working tree.
+
 GIT
 ---
 Part of the linkgit:git[1] suite
