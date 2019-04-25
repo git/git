@@ -31,13 +31,22 @@ and hash type.
 
 All 4-byte numbers are in network order.
 
+There are two versions available, 1 and 2. These currently differ only in
+the header.
+
 HEADER:
+
+All commit-graph files use the first five bytes for the same purpose.
 
   4-byte signature:
       The signature is: {'C', 'G', 'P', 'H'}
 
   1-byte version number:
-      Currently, the only valid version is 1.
+      Currently, the valid version numbers are 1 and 2.
+
+The remainder of the header changes depending on the version.
+
+Version 1:
 
   1-byte Hash Version (1 = SHA-1)
       We infer the hash length (H) from this value.
@@ -46,6 +55,21 @@ HEADER:
 
   1-byte (reserved for later use)
      Current clients should ignore this value.
+
+Version 2:
+
+  1-byte number (C) of "chunks"
+
+  1-byte reachability index version number:
+      Currently, the only valid number is 1.
+
+  1-byte (reserved for later use)
+      Current clients expect this value to be zero, and will not
+      try to read the commit-graph file if it is non-zero.
+
+  4-byte format identifier for the hash algorithm:
+      If this identifier does not agree with the repository's current
+      hash algorithm, then the client will not read the commit graph.
 
 CHUNK LOOKUP:
 
