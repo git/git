@@ -163,6 +163,11 @@ static struct tree *shift_tree_object(struct repository *repo,
 	return lookup_tree(repo, &shifted);
 }
 
+static inline void set_commit_tree(struct commit *c, struct tree *t)
+{
+	c->maybe_tree = t;
+}
+
 static struct commit *make_virtual_commit(struct repository *repo,
 					  struct tree *tree,
 					  const char *comment)
@@ -170,7 +175,7 @@ static struct commit *make_virtual_commit(struct repository *repo,
 	struct commit *commit = alloc_commit_node(repo);
 
 	set_merge_remote_desc(commit, comment, (struct object *)commit);
-	commit->maybe_tree = tree;
+	set_commit_tree(commit, tree);
 	commit->object.parsed = 1;
 	return commit;
 }
