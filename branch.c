@@ -5,6 +5,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "remote.h"
+#include "sequencer.h"
 #include "commit.h"
 #include "worktree.h"
 
@@ -339,10 +340,7 @@ void create_branch(struct repository *r,
 
 void remove_branch_state(struct repository *r, int verbose)
 {
-	if (!unlink(git_path_cherry_pick_head(r)) && verbose)
-		warning(_("cancelling a cherry picking in progress"));
-	if (!unlink(git_path_revert_head(r)) && verbose)
-		warning(_("cancelling a revert in progress"));
+	sequencer_post_commit_cleanup(r, verbose);
 	if (!unlink(git_path_merge_head(r)) && verbose)
 		warning(_("cancelling a merge in progress"));
 	unlink(git_path_merge_rr(r));
