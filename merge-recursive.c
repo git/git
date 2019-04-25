@@ -1122,7 +1122,7 @@ static int find_first_merges(struct repository *repo,
 	struct commit *commit;
 	int contains_another;
 
-	char merged_revision[42];
+	char merged_revision[GIT_MAX_HEXSZ + 2];
 	const char *rev_args[] = { "rev-list", "--merges", "--ancestry-path",
 				   "--all", merged_revision, NULL };
 	struct rev_info revs;

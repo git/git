@@ -442,9 +442,9 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 
 	if (walker->get_verbosely) {
 		fprintf(stderr, "Getting pack %s\n",
-			sha1_to_hex(target->sha1));
+			hash_to_hex(target->hash));
 		fprintf(stderr, " which contains %s\n",
-			sha1_to_hex(sha1));
+			hash_to_hex(sha1));
 	}
 
 	preq = new_http_pack_request(target, repo->base);
@@ -481,9 +481,9 @@ static void abort_object_request(struct object_request *obj_req)
 	release_object_request(obj_req);
 }
 
-static int fetch_object(struct walker *walker, unsigned char *sha1)
+static int fetch_object(struct walker *walker, unsigned char *hash)
 {
-	char *hex = sha1_to_hex(sha1);
+	char *hex = hash_to_hex(hash);
 	int ret = 0;
 	struct object_request *obj_req = NULL;
 	struct http_object_request *req;
@@ -491,7 +491,7 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 
 	list_for_each(pos, head) {
 		obj_req = list_entry(pos, struct object_request, node);
-		if (hasheq(obj_req->oid.hash, sha1))
+		if (hasheq(obj_req->oid.hash, hash))
 			break;
 	}
 	if (obj_req == NULL)
@@ -556,20 +556,20 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 	return ret;
 }
 
-static int fetch(struct walker *walker, unsigned char *sha1)
+static int fetch(struct walker *walker, unsigned char *hash)
 {
 	struct walker_data *data = walker->data;
 	struct alt_base *altbase = data->alt;
 
-	if (!fetch_object(walker, sha1))
+	if (!fetch_object(walker, hash))
 		return 0;
 	while (altbase) {
-		if (!http_fetch_pack(walker, altbase, sha1))
+		if (!http_fetch_pack(walker, altbase, hash))
 			return 0;
 		fetch_alternates(walker, data->alt->base);
 		altbase = altbase->next;
 	}
-	return error("Unable to find %s under %s", sha1_to_hex(sha1),
+	return error("Unable to find %s under %s", hash_to_hex(hash),
 		     data->alt->base);
 }
 

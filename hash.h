@@ -131,6 +131,8 @@ extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
 int hash_algo_by_name(const char *name);
 /* Identical, except based on the format ID. */
 int hash_algo_by_id(uint32_t format_id);
+/* Identical, except based on the length. */
+int hash_algo_by_length(int len);
 /* Identical, except for a pointer to struct git_hash_algo. */
 static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 {

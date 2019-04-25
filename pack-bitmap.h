@@ -14,7 +14,7 @@ struct bitmap_disk_header {
 	uint16_t version;
 	uint16_t options;
 	uint32_t entry_count;
-	unsigned char checksum[20];
+	unsigned char checksum[GIT_MAX_RAWSZ];
 };
 
 static const char BITMAP_IDX_SIGNATURE[] = {'B', 'I', 'T', 'M'};
@@ -59,7 +59,7 @@ void free_bitmap_index(struct bitmap_index *);
  * queried to see if a particular object was reachable from any of the
  * objects flagged as UNINTERESTING.
  */
-int bitmap_has_sha1_in_uninteresting(struct bitmap_index *, const unsigned char *sha1);
+int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_id *oid);
 
 void bitmap_writer_show_progress(int show);
 void bitmap_writer_set_checksum(unsigned char *sha1);

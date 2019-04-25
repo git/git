@@ -234,7 +234,7 @@ struct http_object_request {
 	long http_code;
 	struct object_id oid;
 	struct object_id real_oid;
-	git_SHA_CTX c;
+	git_hash_ctx c;
 	git_zstream stream;
 	int zret;
 	int rename;
