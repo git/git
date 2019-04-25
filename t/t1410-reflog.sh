@@ -232,25 +232,34 @@ test_expect_success '--expire=never' '
 '
 
 test_expect_success 'gc.reflogexpire=never' '
+	test_config gc.reflogexpire never &&
+	test_config gc.reflogexpireunreachable never &&
 
-	git config gc.reflogexpire never &&
-	git config gc.reflogexpireunreachable never &&
-	git reflog expire --verbose --all &&
+	git reflog expire --verbose --all >output &&
+	test_line_count = 9 output &&
+
 	git reflog refs/heads/master >output &&
 	test_line_count = 4 output
 '
 
 test_expect_success 'gc.reflogexpire=false' '
+	test_config gc.reflogexpire false &&
+	test_config gc.reflogexpireunreachable false &&
 
-	git config gc.reflogexpire false &&
-	git config gc.reflogexpireunreachable false &&
 	git reflog expire --verbose --all &&
 	git reflog refs/heads/master >output &&
-	test_line_count = 4 output &&
+	test_line_count = 4 output
 
-	git config --unset gc.reflogexpire &&
-	git config --unset gc.reflogexpireunreachable
+'
 
+test_expect_success 'git reflog expire unknown reference' '
+	test_config gc.reflogexpire never &&
+	test_config gc.reflogexpireunreachable never &&
+
+	test_must_fail git reflog expire master@{123} 2>stderr &&
+	test_i18ngrep "points nowhere" stderr &&
+	test_must_fail git reflog expire does-not-exist 2>stderr &&
+	test_i18ngrep "points nowhere" stderr
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '
