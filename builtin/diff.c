@@ -321,24 +321,6 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 
 	repo_init_revisions(the_repository, &rev, prefix);
 
-	if (no_index && argc != i + 2) {
-		if (no_index == DIFF_NO_INDEX_IMPLICIT) {
-			/*
-			 * There was no --no-index and there were not two
-			 * paths. It is possible that the user intended
-			 * to do an inside-repository operation.
-			 */
-			fprintf(stderr, "Not a git repository\n");
-			fprintf(stderr,
-				"To compare two paths outside a working tree:\n");
-		}
-		/* Give the usage message for non-repository usage and exit. */
-		usagef("git diff %s <path> <path>",
-		       no_index == DIFF_NO_INDEX_EXPLICIT ?
-		       "--no-index" : "[--no-index]");
-
-	}
-
 	/* Set up defaults that will apply to both no-index and regular diffs. */
 	rev.diffopt.stat_width = -1;
 	rev.diffopt.stat_graph_width = -1;
@@ -347,7 +329,9 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 
 	/* If this is a no-index diff, just run it and exit there. */
 	if (no_index)
-		diff_no_index(&rev, argc, argv);
+		exit(diff_no_index(&rev, no_index == DIFF_NO_INDEX_IMPLICIT,
+				   argc, argv));
+
 
 	/*
 	 * Otherwise, we are doing the usual "git" diff; set up any
