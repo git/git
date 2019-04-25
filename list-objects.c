@@ -125,6 +125,11 @@ static void process_tree_contents(struct traversal_context *ctx,
 
 		if (S_ISDIR(entry.mode)) {
 			struct tree *t = lookup_tree(ctx->revs->repo, &entry.oid);
+			if (!t) {
+				die(_("entry '%s' in tree %s has tree mode, "
+				      "but is not a tree"),
+				    entry.path, oid_to_hex(&tree->object.oid));
+			}
 			t->object.flags |= NOT_USER_GIVEN;
 			process_tree(ctx, t, base, entry.path);
 		}
@@ -133,6 +138,11 @@ static void process_tree_contents(struct traversal_context *ctx,
 					base, entry.path);
 		else {
 			struct blob *b = lookup_blob(ctx->revs->repo, &entry.oid);
+			if (!b) {
+				die(_("entry '%s' in tree %s has blob mode, "
+				      "but is not a blob"),
+				    entry.path, oid_to_hex(&tree->object.oid));
+			}
 			b->object.flags |= NOT_USER_GIVEN;
 			process_blob(ctx, b, base, entry.path);
 		}
@@ -364,6 +374,9 @@ static void do_traverse(struct traversal_context *ctx)
 			struct tree *tree = get_commit_tree(commit);
 			tree->object.flags |= NOT_USER_GIVEN;
 			add_pending_tree(ctx->revs, tree);
+		} else if (commit->object.parsed) {
+			die(_("unable to load root tree for commit %s"),
+			      oid_to_hex(&commit->object.oid));
 		}
 		ctx->show_commit(commit, ctx->show_data);
 

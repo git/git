@@ -256,10 +256,6 @@ test_expect_success 'unparseable tree object' '
 	test_i18ngrep ! "fatal: empty filename in tree entry" out
 '
 
-hex2oct() {
-	perl -ne 'printf "\\%03o", hex for /../g'
-}
-
 test_expect_success 'tree entry with type mismatch' '
 	test_when_finished "remove_object \$blob" &&
 	test_when_finished "remove_object \$tree" &&
