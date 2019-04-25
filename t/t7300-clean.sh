@@ -669,4 +669,44 @@ test_expect_success 'git clean -d skips untracked dirs containing ignored files'
 	test_path_is_missing foo/b/bb
 '
 
+test_expect_success 'git clean -xd --keep-precious leaves precious files alone' '
+	git init precious &&
+	(
+		cd precious &&
+		test_commit one &&
+		cat >.gitignore <<-\EOF &&
+		*.o
+		*.mak
+		EOF
+		cat >.gitattributes <<-\EOF &&
+		*.mak precious
+		.gitattributes precious
+		*.precious precious
+		EOF
+		mkdir sub &&
+		touch one.o sub/two.o one.mak sub/two.mak &&
+		touch one.untracked two.precious sub/also.precious &&
+		git clean -fdx --keep-precious &&
+		test_path_is_missing one.o &&
+		test_path_is_missing sub/two.o &&
+		test_path_is_missing one.untracked &&
+		test_path_is_file .gitattributes &&
+		test_path_is_file one.mak &&
+		test_path_is_file sub/two.mak &&
+		test_path_is_file two.precious &&
+		test_path_is_file sub/also.precious
+	)
+'
+
+test_expect_success 'git clean -xd still deletes them all' '
+	test_path_is_file precious/one.mak &&
+	test_path_is_file precious/sub/two.mak &&
+	test_path_is_file precious/two.precious &&
+	test_path_is_file precious/sub/also.precious &&
+	git -C precious clean -fdx &&
+	test_path_is_missing precious/one.mak &&
+	test_path_is_missing precious/sub/two.mak &&
+	test_path_is_missing precious/two.precious &&
+	test_path_is_missing precious/sub/also.precious
+'
 test_done

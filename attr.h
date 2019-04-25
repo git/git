@@ -82,4 +82,6 @@ void git_attr_set_direction(enum git_attr_direction new_direction);
 
 void attr_start(void);
 
+int is_precious_file(struct index_state *istate, const char *path);
+
 #endif /* ATTR_H */

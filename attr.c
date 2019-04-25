@@ -1157,3 +1157,15 @@ void attr_start(void)
 	pthread_mutex_init(&g_attr_hashmap.mutex, NULL);
 	pthread_mutex_init(&check_vector.mutex, NULL);
 }
+
+int is_precious_file(struct index_state *istate, const char *path)
+{
+	static struct attr_check *check;
+	if (!check)
+		check = attr_check_initl("precious", NULL);
+	if (!check)
+		return 0;
+
+	git_check_attr(istate, path, check);
+	return ATTR_TRUE(check->items[0].value);
+}
