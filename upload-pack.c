@@ -1041,6 +1041,8 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 		allow_filter = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowrefinwant", var)) {
 		allow_ref_in_want = git_config_bool(var, value);
+	} else if (!strcmp("core.precomposeunicode", var)) {
+		precomposed_unicode = git_config_bool(var, value);
 	}
 
 	if (current_config_scope() != CONFIG_SCOPE_REPO) {
