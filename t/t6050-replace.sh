@@ -40,7 +40,8 @@ commit_peeling_shows_parents ()
 	test "$_found" = "$_parent" || return 1
 	_parent_number=$(( $_parent_number + 1 ))
     done &&
-    test_must_fail git rev-parse --verify $_commit^$_parent_number
+    test_must_fail git rev-parse --verify $_commit^$_parent_number 2>err &&
+    test_i18ngrep "Needed a single revision" err
 }
 
 commit_has_parents ()
@@ -393,14 +394,38 @@ test_expect_success 'replace ref cleanup' '
 '
 
 test_expect_success '--graft with and without already replaced object' '
-	test $(git log --oneline | wc -l) = 7 &&
+	git log --oneline >log &&
+	test_line_count = 7 log &&
 	git replace --graft $HASH5 &&
-	test $(git log --oneline | wc -l) = 3 &&
+	git log --oneline >log &&
+	test_line_count = 3 log &&
 	commit_has_parents $HASH5 &&
 	test_must_fail git replace --graft $HASH5 $HASH4 $HASH3 &&
 	git replace --force -g $HASH5 $HASH4 $HASH3 &&
 	commit_has_parents $HASH5 $HASH4 $HASH3 &&
 	git replace -d $HASH5
+'
+
+test_expect_success '--graft using a tag as the new parent' '
+	git tag new_parent $HASH5 &&
+	git replace --graft $HASH7 new_parent &&
+	commit_has_parents $HASH7 $HASH5 &&
+	git replace -d $HASH7 &&
+	git tag -a -m "annotated new parent tag" annotated_new_parent $HASH5 &&
+	git replace --graft $HASH7 annotated_new_parent &&
+	commit_has_parents $HASH7 $HASH5 &&
+	git replace -d $HASH7
+'
+
+test_expect_success '--graft using a tag as the replaced object' '
+	git tag replaced_object $HASH7 &&
+	git replace --graft replaced_object $HASH5 &&
+	commit_has_parents $HASH7 $HASH5 &&
+	git replace -d $HASH7 &&
+	git tag -a -m "annotated replaced object tag" annotated_replaced_object $HASH7 &&
+	git replace --graft annotated_replaced_object $HASH5 &&
+	commit_has_parents $HASH7 $HASH5 &&
+	git replace -d $HASH7
 '
 
 test_expect_success GPG 'set up a signed commit' '
