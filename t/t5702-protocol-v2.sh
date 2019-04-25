@@ -24,7 +24,7 @@ test_expect_success 'list refs with git:// using protocol v2' '
 		ls-remote --symref "$GIT_DAEMON_URL/parent" >actual &&
 
 	# Client requested to use protocol v2
-	grep "git> .*\\\0\\\0version=2\\\0$" log &&
+	grep "git> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "git< version 2" log &&
 
@@ -56,7 +56,7 @@ test_expect_success 'clone with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "clone> .*\\\0\\\0version=2\\\0$" log &&
+	grep "clone> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "clone< version 2" log
 '
@@ -74,7 +74,7 @@ test_expect_success 'fetch with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
+	grep "fetch> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "fetch< version 2" log
 '
@@ -103,7 +103,7 @@ test_expect_success 'pull with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
+	grep "fetch> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "fetch< version 2" log
 '
@@ -659,7 +659,7 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	test_when_finished "rm -f log" &&
 	# Till v2 for push is designed, make sure that if a client has
 	# protocol.version configured to use v2, that the client instead falls
-	# back and uses v0.
+	# back to previous versions.
 
 	test_commit -C http_child three &&
 
@@ -672,10 +672,8 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s client_branch >expect &&
 	test_cmp expect actual &&
 
-	# Client didnt request to use protocol v2
-	! grep "Git-Protocol: version=2" log &&
-	# Server didnt respond using protocol v2
-	! grep "git< version 2" log
+	# Server responded with version 1
+	grep "git< version 1" log
 '
 
 test_expect_success 'when server sends "ready", expect DELIM' '

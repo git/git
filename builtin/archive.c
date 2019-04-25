@@ -8,6 +8,7 @@
 #include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"
+#include "protocol.h"
 #include "sideband.h"
 
 static void create_output_file(const char *output_file)
@@ -94,6 +95,8 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 			N_("path to the remote git-upload-archive command")),
 		OPT_END()
 	};
+
+	register_allowed_protocol_version(protocol_v0);
 
 	argc = parse_options(argc, argv, prefix, local_opts, NULL,
 			     PARSE_OPT_KEEP_ALL);

@@ -346,7 +346,7 @@ expect_ssh () {
 
 test_expect_success 'clone myhost:src uses ssh' '
 	GIT_TEST_PROTOCOL_VERSION=0 git clone myhost:src ssh-clone &&
-	expect_ssh myhost src
+	expect_ssh "-o SendEnv=GIT_PROTOCOL" myhost src
 '
 
 test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
@@ -357,12 +357,12 @@ test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
 
 test_expect_success 'bracketed hostnames are still ssh' '
 	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone &&
-	expect_ssh "-p 123" myhost src
+	expect_ssh "-o SendEnv=GIT_PROTOCOL -p 123" myhost src
 '
 
 test_expect_success 'OpenSSH variant passes -4' '
 	GIT_TEST_PROTOCOL_VERSION=0 git clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
-	expect_ssh "-4 -p 123" myhost src
+	expect_ssh "-o SendEnv=GIT_PROTOCOL -4 -p 123" myhost src
 '
 
 test_expect_success 'variant can be overridden' '
@@ -406,7 +406,7 @@ test_expect_success 'OpenSSH-like uplink is treated as ssh' '
 	GIT_SSH="$TRASH_DIRECTORY/uplink" &&
 	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\"" &&
 	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
-	expect_ssh "-p 123" myhost src
+	expect_ssh "-o SendEnv=GIT_PROTOCOL -p 123" myhost src
 '
 
 test_expect_success 'plink is treated specially (as putty)' '
@@ -445,15 +445,15 @@ test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
 test_expect_success 'GIT_SSH_VARIANT overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
 	GIT_TEST_PROTOCOL_VERSION=0 GIT_SSH_VARIANT=ssh \
-		git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
-	expect_ssh "-p 123" myhost src
+	git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
+	expect_ssh "-o SendEnv=GIT_PROTOCOL -p 123" myhost src
 '
 
 test_expect_success 'ssh.variant overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
 	GIT_TEST_PROTOCOL_VERSION=0 git -c ssh.variant=ssh \
 		clone "[myhost:123]:src" ssh-bracket-clone-variant-2 &&
-	expect_ssh "-p 123" myhost src
+	expect_ssh "-o SendEnv=GIT_PROTOCOL -p 123" myhost src
 '
 
 test_expect_success 'GIT_SSH_VARIANT overrides plink detection to plink' '
@@ -488,7 +488,7 @@ test_clone_url () {
 }
 
 test_expect_success !MINGW,!CYGWIN 'clone c:temp is ssl' '
-	test_clone_url c:temp c temp
+	test_clone_url c:temp "-o SendEnv=GIT_PROTOCOL" c temp
 '
 
 test_expect_success MINGW 'clone c:temp is dos drive' '
@@ -499,7 +499,7 @@ test_expect_success MINGW 'clone c:temp is dos drive' '
 for repo in rep rep/home/project 123
 do
 	test_expect_success "clone host:$repo" '
-		test_clone_url host:$repo host $repo
+		test_clone_url host:$repo "-o SendEnv=GIT_PROTOCOL" host $repo
 	'
 done
 
@@ -507,16 +507,16 @@ done
 for repo in rep rep/home/project 123
 do
 	test_expect_success "clone [::1]:$repo" '
-		test_clone_url [::1]:$repo ::1 "$repo"
+		test_clone_url [::1]:$repo "-o SendEnv=GIT_PROTOCOL" ::1 "$repo"
 	'
 done
 #home directory
 test_expect_success "clone host:/~repo" '
-	test_clone_url host:/~repo host "~repo"
+	test_clone_url host:/~repo "-o SendEnv=GIT_PROTOCOL" host "~repo"
 '
 
 test_expect_success "clone [::1]:/~repo" '
-	test_clone_url [::1]:/~repo ::1 "~repo"
+	test_clone_url [::1]:/~repo "-o SendEnv=GIT_PROTOCOL" ::1 "~repo"
 '
 
 # Corner cases
@@ -532,22 +532,22 @@ done
 for tcol in "" :
 do
 	test_expect_success "clone ssh://host.xz$tcol/home/user/repo" '
-		test_clone_url "ssh://host.xz$tcol/home/user/repo" host.xz /home/user/repo
+		test_clone_url "ssh://host.xz$tcol/home/user/repo" "-o SendEnv=GIT_PROTOCOL" host.xz /home/user/repo
 	'
 	# from home directory
 	test_expect_success "clone ssh://host.xz$tcol/~repo" '
-	test_clone_url "ssh://host.xz$tcol/~repo" host.xz "~repo"
+	test_clone_url "ssh://host.xz$tcol/~repo" "-o SendEnv=GIT_PROTOCOL" host.xz "~repo"
 '
 done
 
 # with port number
 test_expect_success 'clone ssh://host.xz:22/home/user/repo' '
-	test_clone_url "ssh://host.xz:22/home/user/repo" "-p 22 host.xz" "/home/user/repo"
+	test_clone_url "ssh://host.xz:22/home/user/repo" "-o SendEnv=GIT_PROTOCOL -p 22 host.xz" "/home/user/repo"
 '
 
 # from home directory with port number
 test_expect_success 'clone ssh://host.xz:22/~repo' '
-	test_clone_url "ssh://host.xz:22/~repo" "-p 22 host.xz" "~repo"
+	test_clone_url "ssh://host.xz:22/~repo" "-o SendEnv=GIT_PROTOCOL -p 22 host.xz" "~repo"
 '
 
 #IPv6
@@ -555,7 +555,7 @@ for tuah in ::1 [::1] [::1]: user@::1 user@[::1] user@[::1]: [user@::1] [user@::
 do
 	ehost=$(echo $tuah | sed -e "s/1]:/1]/" | tr -d "[]")
 	test_expect_success "clone ssh://$tuah/home/user/repo" "
-	  test_clone_url ssh://$tuah/home/user/repo $ehost /home/user/repo
+	  test_clone_url ssh://$tuah/home/user/repo '-o SendEnv=GIT_PROTOCOL' $ehost /home/user/repo
 	"
 done
 
@@ -564,7 +564,7 @@ for tuah in ::1 [::1] user@::1 user@[::1] [user@::1]
 do
 	euah=$(echo $tuah | tr -d "[]")
 	test_expect_success "clone ssh://$tuah/~repo" "
-	  test_clone_url ssh://$tuah/~repo $euah '~repo'
+	  test_clone_url ssh://$tuah/~repo '-o SendEnv=GIT_PROTOCOL' $euah '~repo'
 	"
 done
 
@@ -573,7 +573,7 @@ for tuah in [::1] user@[::1] [user@::1]
 do
 	euah=$(echo $tuah | tr -d "[]")
 	test_expect_success "clone ssh://$tuah:22/home/user/repo" "
-	  test_clone_url ssh://$tuah:22/home/user/repo '-p 22' $euah /home/user/repo
+	  test_clone_url ssh://$tuah:22/home/user/repo '-o SendEnv=GIT_PROTOCOL -p 22' $euah /home/user/repo
 	"
 done
 
@@ -582,7 +582,7 @@ for tuah in [::1] user@[::1] [user@::1]
 do
 	euah=$(echo $tuah | tr -d "[]")
 	test_expect_success "clone ssh://$tuah:22/~repo" "
-	  test_clone_url ssh://$tuah:22/~repo '-p 22' $euah '~repo'
+	  test_clone_url ssh://$tuah:22/~repo '-o SendEnv=GIT_PROTOCOL -p 22' $euah '~repo'
 	"
 done
 
