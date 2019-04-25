@@ -1524,6 +1524,12 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 	if (opts->checkout_index < 0 || opts->checkout_worktree < 0)
 		BUG("these flags should be non-negative by now");
+	/*
+	 * convenient shortcut: "git restore --staged" equals
+	 * "git restore --staged --source HEAD"
+	 */
+	if (!opts->from_treeish && opts->checkout_index && !opts->checkout_worktree)
+		opts->from_treeish = "HEAD";
 
 	/*
 	 * From here on, new_branch will contain the branch to be checked out,
