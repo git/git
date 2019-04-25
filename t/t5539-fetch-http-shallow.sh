@@ -149,5 +149,4 @@ test_expect_success 'fetching deepen' '
 	)
 '
 
-stop_httpd
 test_done

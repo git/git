@@ -13,7 +13,6 @@
 #
 #	test_expect_success ...
 #
-#	stop_git_daemon
 #	test_done
 
 test_tristate GIT_TEST_GIT_DAEMON
@@ -31,10 +30,12 @@ fi
 test_set_port LIB_GIT_DAEMON_PORT
 
 GIT_DAEMON_PID=
+GIT_DAEMON_PIDFILE="$PWD"/daemon.pid
 GIT_DAEMON_DOCUMENT_ROOT_PATH="$PWD"/repo
 GIT_DAEMON_HOST_PORT=127.0.0.1:$LIB_GIT_DAEMON_PORT
 GIT_DAEMON_URL=git://$GIT_DAEMON_HOST_PORT
 
+registered_stop_git_daemon_atexit_handler=
 start_git_daemon() {
 	if test -n "$GIT_DAEMON_PID"
 	then
@@ -43,13 +44,19 @@ start_git_daemon() {
 
 	mkdir -p "$GIT_DAEMON_DOCUMENT_ROOT_PATH"
 
-	trap 'code=$?; stop_git_daemon; (exit $code); die' EXIT
+	# One of the test scripts stops and then re-starts 'git daemon'.
+	# Don't register and then run the same atexit handlers several times.
+	if test -z "$registered_stop_git_daemon_atexit_handler"
+	then
+		test_atexit 'stop_git_daemon'
+		registered_stop_git_daemon_atexit_handler=AlreadyDone
+	fi
 
 	say >&3 "Starting git daemon ..."
 	mkfifo git_daemon_output
 	${LIB_GIT_DAEMON_COMMAND:-git daemon} \
 		--listen=127.0.0.1 --port="$LIB_GIT_DAEMON_PORT" \
-		--reuseaddr --verbose \
+		--reuseaddr --verbose --pid-file="$GIT_DAEMON_PIDFILE" \
 		--base-path="$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
 		"$@" "$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
 		>&3 2>git_daemon_output &
@@ -65,7 +72,7 @@ start_git_daemon() {
 	then
 		kill "$GIT_DAEMON_PID"
 		wait "$GIT_DAEMON_PID"
-		trap 'die' EXIT
+		unset GIT_DAEMON_PID
 		test_skip_or_die $GIT_TEST_GIT_DAEMON \
 			"git daemon failed to start"
 	fi
@@ -77,8 +84,6 @@ stop_git_daemon() {
 		return
 	fi
 
-	trap 'die' EXIT
-
 	# kill git-daemon child of git
 	say >&3 "Stopping git daemon ..."
 	kill "$GIT_DAEMON_PID"
@@ -88,8 +93,9 @@ stop_git_daemon() {
 	then
 		error "git daemon exited with status: $ret"
 	fi
+	kill "$(cat "$GIT_DAEMON_PIDFILE")" 2>/dev/null
 	GIT_DAEMON_PID=
-	rm -f git_daemon_output
+	rm -f git_daemon_output "$GIT_DAEMON_PIDFILE"
 }
 
 # A stripped-down version of a netcat client, that connects to a "host:port"

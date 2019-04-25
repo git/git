@@ -76,11 +76,6 @@ maybe_start_httpd () {
 		LIB_HTTPD_SVN="$loc"
 		start_httpd
 		;;
-	*)
-		stop_httpd () {
-			: noop
-		}
-		;;
 	esac
 }
 

@@ -424,5 +424,4 @@ test_expect_success 'fetching via http alternates works' '
 	git -c http.followredirects=true clone "$HTTPD_URL/dumb/alt-child.git"
 '
 
-stop_httpd
 test_done

@@ -34,5 +34,4 @@ test_expect_success 'http can be limited to from-user' '
 		clone "$HTTPD_URL/smart-redir-perm/repo.git" redir.git
 '
 
-stop_httpd
 test_done
