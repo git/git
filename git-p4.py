@@ -1316,7 +1316,7 @@ class Command:
         self.needsGit = True
         self.verbose = False
 
-    # This is required for the "append" cloneExclude action
+    # This is required for the "append" update_shelve action
     def ensure_value(self, attr, value):
         if not hasattr(self, attr) or getattr(self, attr) is None:
             setattr(self, attr, value)
@@ -2530,6 +2530,11 @@ class View(object):
         die( "Error: %s is not found in client spec path" % depot_path )
         return ""
 
+def cloneExcludeCallback(option, opt_str, value, parser):
+    # prepend "/" because the first "/" was consumed as part of the option itself.
+    # ("-//depot/A/..." becomes "/depot/A/..." after option parsing)
+    parser.values.cloneExclude += ["/" + re.sub(r"\.\.\.$", "", value)]
+
 class P4Sync(Command, P4UserMap):
 
     def __init__(self):
@@ -2553,7 +2558,7 @@ class P4Sync(Command, P4UserMap):
                 optparse.make_option("--use-client-spec", dest="useClientSpec", action='store_true',
                                      help="Only sync files that are included in the Perforce Client Spec"),
                 optparse.make_option("-/", dest="cloneExclude",
-                                     action="append", type="string",
+                                     action="callback", callback=cloneExcludeCallback, type="string",
                                      help="exclude depot path"),
         ]
         self.description = """Imports from Perforce into a git repository.\n
@@ -2618,20 +2623,25 @@ class P4Sync(Command, P4UserMap):
         if self.verbose:
             print("checkpoint finished: " + out)
 
+    def isPathWanted(self, path):
+        for p in self.cloneExclude:
+            if p.endswith("/"):
+                if p4PathStartsWith(path, p):
+                    return False
+            # "-//depot/file1" without a trailing "/" should only exclude "file1", but not "file111" or "file1_dir/file2"
+            elif path.lower() == p.lower():
+                return False
+        for p in self.depotPaths:
+            if p4PathStartsWith(path, p):
+                return True
+        return False
+
     def extractFilesFromCommit(self, commit, shelved=False, shelved_cl = 0):
-        self.cloneExclude = [re.sub(r"\.\.\.$", "", path)
-                             for path in self.cloneExclude]
         files = []
         fnum = 0
         while "depotFile%s" % fnum in commit:
             path =  commit["depotFile%s" % fnum]
-
-            if [p for p in self.cloneExclude
-                if p4PathStartsWith(path, p)]:
-                found = False
-            else:
-                found = [p for p in self.depotPaths
-                         if p4PathStartsWith(path, p)]
+            found = self.isPathWanted(path)
             if not found:
                 fnum = fnum + 1
                 continue
@@ -2668,7 +2678,7 @@ class P4Sync(Command, P4UserMap):
             path = self.clientSpecDirs.map_in_client(path)
             if self.detectBranches:
                 for b in self.knownBranches:
-                    if path.startswith(b + "/"):
+                    if p4PathStartsWith(path, b + "/"):
                         path = path[len(b)+1:]
 
         elif self.keepRepoPath:
@@ -2700,8 +2710,7 @@ class P4Sync(Command, P4UserMap):
         fnum = 0
         while "depotFile%s" % fnum in commit:
             path =  commit["depotFile%s" % fnum]
-            found = [p for p in self.depotPaths
-                     if p4PathStartsWith(path, p)]
+            found = self.isPathWanted(path)
             if not found:
                 fnum = fnum + 1
                 continue
@@ -2723,7 +2732,7 @@ class P4Sync(Command, P4UserMap):
             for branch in self.knownBranches.keys():
                 # add a trailing slash so that a commit into qt/4.2foo
                 # doesn't end up in qt/4.2, e.g.
-                if relPath.startswith(branch + "/"):
+                if p4PathStartsWith(relPath, branch + "/"):
                     if branch not in branches:
                         branches[branch] = []
                     branches[branch].append(file)
@@ -3325,7 +3334,9 @@ class P4Sync(Command, P4UserMap):
             if currentChange < change:
                 earliestCommit = "^%s" % next
             else:
-                latestCommit = "%s" % next
+                if next == latestCommit:
+                    die("Infinite loop while looking in ref %s for change %s. Check your branch mappings" % (ref, change))
+                latestCommit = "%s^@" % next
 
         return ""
 
@@ -3888,7 +3899,6 @@ class P4Clone(P4Sync):
             self.cloneDestination = depotPaths[-1]
             depotPaths = depotPaths[:-1]
 
-        self.cloneExclude = ["/"+p for p in self.cloneExclude]
         for p in depotPaths:
             if not p.startswith("//"):
                 sys.stderr.write('Depot paths must start with "//": %s\n' % p)
