@@ -20,6 +20,9 @@ SYNOPSIS
 'git config' [<file-option>] --unset-all name [value_regex]
 'git config' [<file-option>] --rename-section old_name new_name
 'git config' [<file-option>] --remove-section name
+'git config' [<file-option>] --move-to name
+'git config' [<file-option>] --move-regexp-to name-regexp
+'git config' [<file-option>] --move-glob-to name-glob
 'git config' [<file-option>] [--show-origin] [-z|--null] [--name-only] -l | --list
 'git config' [<file-option>] --get-color name [default]
 'git config' [<file-option>] --get-colorbool name [stdout-is-tty]
@@ -160,6 +163,15 @@ See also <<FILES>>.
 
 --unset-all::
 	Remove all lines matching the key from config file.
+
+--move-to::
+--move-regexp-to::
+--move-glob-to::
+	Move a config variable (or multiple variables matching the
+	given regular expression or glob pattern) to a new file. Any
+	option about the config file location after `--move-to` or
+	`--move-to-regexp` specifies the move destination. Existing
+	config of the same name remains.
 
 -l::
 --list::

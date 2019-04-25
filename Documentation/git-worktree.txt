@@ -252,13 +252,17 @@ rev-parse --git-path config.worktree`. You can add or update
 configuration in this file with `git config --worktree`. Older Git
 versions will refuse to access repositories with this extension.
 
-Note that in this file, the exception for `core.bare` and `core.worktree`
-is gone. If you have them in $GIT_DIR/config before, you must move
-them to the `config.worktree` of the main working tree. You may also
-take this opportunity to review and move other configuration that you
-do not want to share to all working trees:
+Note that in this file, the exception for `core.bare` and
+`core.worktree` is gone. If you have them in $GIT_DIR/config before,
+you must move them to the `config.worktree` of the main working tree.
 
- - `core.worktree` and `core.bare` should never be shared
+------------
+$ git config --local --move-to --worktree core.bare
+$ git config --local --move-to --worktree core.worktree
+------------
+
+You may also take this opportunity to review and move other
+configuration that you do not want to share to all working trees:
 
  - `core.sparseCheckout` is recommended per working tree, unless you
    are sure you always use sparse checkout for all working trees.

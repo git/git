@@ -132,4 +132,11 @@ void strbuf_worktree_ref(const struct worktree *wt,
 const char *worktree_ref(const struct worktree *wt,
 			 const char *refname);
 
+/*
+ * Return the path to config file that can contain worktree-specific
+ * config (or NULL in unsupported setups). The caller must free the
+ * return value.
+ */
+char *get_worktree_config(struct repository *r);
+
 #endif

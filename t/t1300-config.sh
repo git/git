@@ -1845,4 +1845,58 @@ test_expect_success '--replace-all does not invent newlines' '
 	test_cmp expect .git/config
 '
 
+test_expect_success '--move-to moves keys' '
+	test_when_finished rm -f dest &&
+	git config single.foo bar &&
+	git config multi.foo bar1 &&
+	git config --add multi.foo bar2 &&
+	git config --local --move-to -f dest SINGLE.foo &&
+	! git config single.foo &&
+	test_cmp_config bar -f dest single.foo &&
+	git config --local --move-to -f dest multi.FOO &&
+	! git config multi.foo &&
+	git config -f dest --get-all multi.foo | sort >actual &&
+	cat >expected <<-\EOF &&
+	bar1
+	bar2
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success '--move-regexp-to moves keys' '
+	test_when_finished rm -f dest &&
+	git config single.foo bar &&
+	git config multi.foo bar1 &&
+	git config --add multi.foo bar2 &&
+	git config --local --move-regexp-to -f dest "S.*OO" &&
+	! git config single.foo &&
+	test_cmp_config bar -f dest single.foo &&
+	git config --local --move-regexp-to -f dest ^multi &&
+	! git config multi.foo &&
+	git config -f dest --get-all multi.foo | sort >actual &&
+	cat >expected <<-\EOF &&
+	bar1
+	bar2
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success '--move-glob-to moves keys' '
+	test_when_finished rm -f dest &&
+	git config single.foo bar &&
+	git config multi.foo bar1 &&
+	git config --add multi.foo bar2 &&
+	git config --local --move-glob-to -f dest "SINGLE.*" &&
+	! git config single.foo &&
+	test_cmp_config bar -f dest single.foo &&
+	git config --local --move-glob-to -f dest "m*.foo" &&
+	! git config multi.foo &&
+	git config -f dest --get-all multi.foo | sort >actual &&
+	cat >expected <<-\EOF &&
+	bar1
+	bar2
+	EOF
+	test_cmp expected actual
+'
+
 test_done
