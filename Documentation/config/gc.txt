@@ -1,25 +1,42 @@
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
-	to 50.
+	to 50, which is the default for the `--depth` option when
+	`--aggressive` isn't in use.
++
+See the documentation for the `--depth` option in
+linkgit:git-repack[1] for more details.
 
 gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
-	to 250.
+	to 250, which is a much more aggressive window size than
+	the default `--window` of 10.
++
+See the documentation for the `--window` option in
+linkgit:git-repack[1] for more details.
 
 gc.auto::
 	When there are approximately more than this many loose
 	objects in the repository, `git gc --auto` will pack them.
 	Some Porcelain commands use this command to perform a
 	light-weight garbage collection from time to time.  The
-	default value is 6700.  Setting this to 0 disables it.
+	default value is 6700.
++
+Setting this to 0 disables not only automatic packing based on the
+number of loose objects, but any other heuristic `git gc --auto` will
+otherwise use to determine if there's work to do, such as
+`gc.autoPackLimit`.
 
 gc.autoPackLimit::
 	When there are more than this many packs that are not
 	marked with `*.keep` file in the repository, `git gc
 	--auto` consolidates them into one larger pack.  The
 	default value is 50.  Setting this to 0 disables it.
+	Setting `gc.auto` to 0 will also disable this.
++
+See the `gc.bigPackThreshold` configuration variable below. When in
+use, it'll affect how the auto pack limit works.
 
 gc.autoDetach::
 	Make `git gc --auto` return immediately and run in background
@@ -36,11 +53,16 @@ Note that if the number of kept packs is more than gc.autoPackLimit,
 this configuration variable is ignored, all packs except the base pack
 will be repacked. After this the number of packs should go below
 gc.autoPackLimit and gc.bigPackThreshold should be respected again.
++
+If the amount of memory estimated for `git repack` to run smoothly is
+not available and `gc.bigPackThreshold` is not set, the largest pack
+will also be excluded (this is the equivalent of running `git gc` with
+`--keep-base-pack`).
 
 gc.writeCommitGraph::
 	If true, then gc will rewrite the commit-graph file when
-	linkgit:git-gc[1] is run. When using linkgit:git-gc[1]
-	'--auto' the commit-graph will be updated if housekeeping is
+	linkgit:git-gc[1] is run. When using `git gc --auto`
+	the commit-graph will be updated if housekeeping is
 	required. Default is false. See linkgit:git-commit-graph[1]
 	for details.
 
@@ -94,6 +116,12 @@ gc.<pattern>.reflogExpireUnreachable::
 	With "<pattern>" (e.g. "refs/stash")
 	in the middle, the setting applies only to the refs that
 	match the <pattern>.
++
+These types of entries are generally created as a result of using `git
+commit --amend` or `git rebase` and are the commits prior to the amend
+or rebase occurring.  Since these changes are not part of the current
+project most users will want to expire them sooner, which is why the
+default is more aggressive than `gc.reflogExpire`.
 
 gc.rerereResolved::
 	Records of conflicted merge you resolved earlier are
