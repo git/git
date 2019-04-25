@@ -351,10 +351,10 @@ struct tree *repo_get_commit_tree(struct repository *r,
 	if (commit->maybe_tree || !commit->object.parsed)
 		return commit->maybe_tree;
 
-	if (commit->graph_pos == COMMIT_NOT_FROM_GRAPH)
-		BUG("commit has NULL tree, but was not loaded from commit-graph");
+	if (commit->graph_pos != COMMIT_NOT_FROM_GRAPH)
+		return get_commit_tree_in_graph(r, commit);
 
-	return get_commit_tree_in_graph(r, commit);
+	return NULL;
 }
 
 struct object_id *get_commit_tree_oid(const struct commit *commit)
