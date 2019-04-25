@@ -439,6 +439,9 @@ all::
 #
 # Define FILENO_IS_A_MACRO if fileno() is a macro, not a real function.
 #
+# Define NEED_ACCESS_ROOT_HANDLER if access() under root may success for X_OK
+# even if execution permission isn't granted for any user.
+#
 # Define PAGER_ENV to a SP separated VAR=VAL pairs to define
 # default environment variables to be passed when a pager is spawned, e.g.
 #
@@ -1813,6 +1816,11 @@ endif
 ifdef FILENO_IS_A_MACRO
 	COMPAT_CFLAGS += -DFILENO_IS_A_MACRO
 	COMPAT_OBJS += compat/fileno.o
+endif
+
+ifdef NEED_ACCESS_ROOT_HANDLER
+	COMPAT_CFLAGS += -DNEED_ACCESS_ROOT_HANDLER
+	COMPAT_OBJS += compat/access.o
 endif
 
 ifeq ($(TCLTK_PATH),)

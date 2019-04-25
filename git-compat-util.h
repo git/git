@@ -1236,9 +1236,19 @@ struct tm *git_gmtime_r(const time_t *, struct tm *);
 
 #ifdef FILENO_IS_A_MACRO
 int git_fileno(FILE *stream);
-# ifndef COMPAT_CODE
+# ifndef COMPAT_CODE_FILENO
 #  undef fileno
 #  define fileno(p) git_fileno(p)
+# endif
+#endif
+
+#ifdef NEED_ACCESS_ROOT_HANDLER
+int git_access(const char *path, int mode);
+# ifndef COMPAT_CODE_ACCESS
+#  ifdef access
+#  undef access
+#  endif
+#  define access(path, mode) git_access(path, mode)
 # endif
 #endif
 
