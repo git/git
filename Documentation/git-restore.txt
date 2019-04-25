@@ -28,6 +28,8 @@ commit as the restore source.
 See "Reset, restore and revert" in linkgit:git[1] for the differences
 between the three commands.
 
+THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
+
 OPTIONS
 -------
 -s <tree>::
