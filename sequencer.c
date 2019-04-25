@@ -2494,14 +2494,15 @@ static void write_strategy_opts(struct replay_opts *opts)
 }
 
 int write_basic_state(struct replay_opts *opts, const char *head_name,
-		      const char *onto, const char *orig_head)
+		      struct commit *onto, const char *orig_head)
 {
 	const char *quiet = getenv("GIT_QUIET");
 
 	if (head_name)
 		write_file(rebase_path_head_name(), "%s\n", head_name);
 	if (onto)
-		write_file(rebase_path_onto(), "%s\n", onto);
+		write_file(rebase_path_onto(), "%s\n",
+			   oid_to_hex(&onto->object.oid));
 	if (orig_head)
 		write_file(rebase_path_orig_head(), "%s\n", orig_head);
 
@@ -3517,10 +3518,11 @@ static const char *reflog_message(struct replay_opts *opts,
 	return buf.buf;
 }
 
-static int run_git_checkout(struct replay_opts *opts, const char *commit,
-			    const char *action)
+static int run_git_checkout(struct repository *r, struct replay_opts *opts,
+			    const char *commit, const char *action)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
+	int ret;
 
 	cmd.git_cmd = 1;
 
@@ -3529,26 +3531,32 @@ static int run_git_checkout(struct replay_opts *opts, const char *commit,
 	argv_array_pushf(&cmd.env_array, GIT_REFLOG_ACTION "=%s", action);
 
 	if (opts->verbose)
-		return run_command(&cmd);
+		ret = run_command(&cmd);
 	else
-		return run_command_silent_on_success(&cmd);
+		ret = run_command_silent_on_success(&cmd);
+
+	if (!ret)
+		discard_index(r->index);
+
+	return ret;
 }
 
-int prepare_branch_to_be_rebased(struct replay_opts *opts, const char *commit)
+int prepare_branch_to_be_rebased(struct repository *r, struct replay_opts *opts,
+				 const char *commit)
 {
 	const char *action;
 
 	if (commit && *commit) {
 		action = reflog_message(opts, "start", "checkout %s", commit);
-		if (run_git_checkout(opts, commit, action))
+		if (run_git_checkout(r, opts, commit, action))
 			return error(_("could not checkout %s"), commit);
 	}
 
 	return 0;
 }
 
-static int checkout_onto(struct replay_opts *opts,
-			 const char *onto_name, const char *onto,
+static int checkout_onto(struct repository *r, struct replay_opts *opts,
+			 const char *onto_name, const struct object_id *onto,
 			 const char *orig_head)
 {
 	struct object_id oid;
@@ -3557,7 +3565,7 @@ static int checkout_onto(struct replay_opts *opts,
 	if (get_oid(orig_head, &oid))
 		return error(_("%s: not a valid OID"), orig_head);
 
-	if (run_git_checkout(opts, onto, action)) {
+	if (run_git_checkout(r, opts, oid_to_hex(onto), action)) {
 		apply_autostash(opts);
 		sequencer_remove_state(opts);
 		return error(_("could not detach HEAD"));
@@ -4833,16 +4841,16 @@ static int skip_unnecessary_picks(struct repository *r,
 
 int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
-		    const char *onto, const char *orig_head, struct string_list *commands,
-		    unsigned autosquash, struct todo_list *todo_list)
+		    struct commit *onto, const char *orig_head,
+		    struct string_list *commands, unsigned autosquash,
+		    struct todo_list *todo_list)
 {
 	const char *shortonto, *todo_file = rebase_path_todo();
 	struct todo_list new_todo = TODO_LIST_INIT;
 	struct strbuf *buf = &todo_list->buf;
-	struct object_id oid;
+	struct object_id oid = onto->object.oid;
 	int res;
 
-	get_oid(onto, &oid);
 	shortonto = find_unique_abbrev(&oid, DEFAULT_ABBREV);
 
 	if (buf->len == 0) {
@@ -4885,7 +4893,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	if (todo_list_parse_insn_buffer(r, new_todo.buf.buf, &new_todo) ||
 	    todo_list_check(todo_list, &new_todo)) {
 		fprintf(stderr, _(edit_todo_list_advice));
-		checkout_onto(opts, onto_name, onto, orig_head);
+		checkout_onto(r, opts, onto_name, &onto->object.oid, orig_head);
 		todo_list_release(&new_todo);
 
 		return -1;
@@ -4904,7 +4912,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 
 	todo_list_release(&new_todo);
 
-	if (checkout_onto(opts, onto_name, oid_to_hex(&oid), orig_head))
+	if (checkout_onto(r, opts, onto_name, &oid, orig_head))
 		return -1;
 
 	if (require_clean_work_tree(r, "rebase", "", 1, 1))

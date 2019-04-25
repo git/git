@@ -278,8 +278,12 @@ int parse_opt_abbrev_cb(const struct option *, const char *, int);
 int parse_opt_expiry_date_cb(const struct option *, const char *, int);
 int parse_opt_color_flag_cb(const struct option *, const char *, int);
 int parse_opt_verbosity_cb(const struct option *, const char *, int);
+/* value is struct oid_array* */
 int parse_opt_object_name(const struct option *, const char *, int);
+/* value is struct object_id* */
+int parse_opt_object_id(const struct option *, const char *, int);
 int parse_opt_commits(const struct option *, const char *, int);
+int parse_opt_commit(const struct option *, const char *, int);
 int parse_opt_tertiary(const struct option *, const char *, int);
 int parse_opt_string_list(const struct option *, const char *, int);
 int parse_opt_noop_cb(const struct option *, const char *, int);

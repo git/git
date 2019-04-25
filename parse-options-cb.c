@@ -96,6 +96,23 @@ int parse_opt_commits(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+int parse_opt_commit(const struct option *opt, const char *arg, int unset)
+{
+	struct object_id oid;
+	struct commit *commit;
+	struct commit **target = opt->value;
+
+	if (!arg)
+		return -1;
+	if (get_oid(arg, &oid))
+		return error("malformed object name %s", arg);
+	commit = lookup_commit_reference(the_repository, &oid);
+	if (!commit)
+		return error("no such commit %s", arg);
+	*target = commit;
+	return 0;
+}
+
 int parse_opt_object_name(const struct option *opt, const char *arg, int unset)
 {
 	struct object_id oid;
@@ -109,6 +126,23 @@ int parse_opt_object_name(const struct option *opt, const char *arg, int unset)
 	if (get_oid(arg, &oid))
 		return error(_("malformed object name '%s'"), arg);
 	oid_array_append(opt->value, &oid);
+	return 0;
+}
+
+int parse_opt_object_id(const struct option *opt, const char *arg, int unset)
+{
+	struct object_id oid;
+	struct object_id *target = opt->value;
+
+	if (unset) {
+		*target = null_oid;
+		return 0;
+	}
+	if (!arg)
+		return -1;
+	if (get_oid(arg, &oid))
+		return error(_("malformed object name '%s'"), arg);
+	*target = oid;
 	return 0;
 }
 
