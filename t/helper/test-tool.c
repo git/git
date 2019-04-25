@@ -1,6 +1,12 @@
 #include "git-compat-util.h"
 #include "test-tool.h"
 #include "trace2.h"
+#include "parse-options.h"
+
+static const char * const test_tool_usage[] = {
+	"test-tool [-C <directory>] <command [<arguments>...]]",
+	NULL
+};
 
 struct test_cmd {
 	const char *name;
@@ -43,6 +49,7 @@ static struct test_cmd cmds[] = {
 	{ "revision-walking", cmd__revision_walking },
 	{ "run-command", cmd__run_command },
 	{ "scrap-cache-tree", cmd__scrap_cache_tree },
+	{ "serve-v2", cmd__serve_v2 },
 	{ "sha1", cmd__sha1 },
 	{ "sha1-array", cmd__sha1_array },
 	{ "sha256", cmd__sha256 },
@@ -75,10 +82,23 @@ static NORETURN void die_usage(void)
 int cmd_main(int argc, const char **argv)
 {
 	int i;
+	const char *working_directory = NULL;
+	struct option options[] = {
+		OPT_STRING('C', NULL, &working_directory, "directory",
+			   "change the working directory"),
+		OPT_END()
+	};
 
 	BUG_exit_code = 99;
+	argc = parse_options(argc, argv, NULL, options, test_tool_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION |
+			     PARSE_OPT_KEEP_ARGV0);
+
 	if (argc < 2)
 		die_usage();
+
+	if (working_directory && chdir(working_directory) < 0)
+		die("Could not cd to '%s'", working_directory);
 
 	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
 		if (!strcmp(cmds[i].name, argv[1])) {
