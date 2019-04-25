@@ -171,17 +171,22 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 		if (status)
 			return status;
 
-		if (!strcmp(s, "verbatim"))
+		if (!strcmp(s, "verbatim")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_NONE;
-		else if (!strcmp(s, "whitespace"))
+			opts->explicit_cleanup = 1;
+		} else if (!strcmp(s, "whitespace")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SPACE;
-		else if (!strcmp(s, "strip"))
+			opts->explicit_cleanup = 1;
+		} else if (!strcmp(s, "strip")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_ALL;
-		else if (!strcmp(s, "scissors"))
+			opts->explicit_cleanup = 1;
+		} else if (!strcmp(s, "scissors")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SPACE;
-		else
+			opts->explicit_cleanup = 1;
+		} else {
 			warning(_("invalid commit message cleanup mode '%s'"),
 				  s);
+		}
 
 		free((char *)s);
 		return status;
@@ -1382,8 +1387,13 @@ static int try_to_commit(struct repository *r,
 		msg = &commit_msg;
 	}
 
-	cleanup = (flags & CLEANUP_MSG) ? COMMIT_MSG_CLEANUP_ALL :
-					  opts->default_msg_cleanup;
+	if (flags & CLEANUP_MSG)
+		cleanup = COMMIT_MSG_CLEANUP_ALL;
+	else if ((opts->signoff || opts->record_origin) &&
+		 !opts->explicit_cleanup)
+		cleanup = COMMIT_MSG_CLEANUP_SPACE;
+	else
+		cleanup = opts->default_msg_cleanup;
 
 	if (cleanup != COMMIT_MSG_CLEANUP_NONE)
 		strbuf_stripspace(msg, cleanup == COMMIT_MSG_CLEANUP_ALL);
