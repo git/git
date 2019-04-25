@@ -3,7 +3,6 @@
 use lib '../../perl/build/lib';
 use strict;
 use warnings;
-use JSON;
 use Getopt::Long;
 use Git;
 
@@ -342,7 +341,8 @@ sub print_codespeed_results {
 		}
 	}
 
-	print to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
+	require JSON;
+	print JSON::to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
 }
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";
