@@ -351,20 +351,29 @@ guess_merge_tool () {
 }
 
 get_configured_merge_tool () {
-	# If first argument is true, find the guitool instead
-	if test "$1" = true
-	then
-		gui_prefix=gui
-	fi
+	is_gui="$1"
+	sections="merge"
+	keys="tool"
 
-	# Diff mode first tries diff.(gui)tool and falls back to merge.(gui)tool.
-	# Merge mode only checks merge.(gui)tool
 	if diff_mode
 	then
-		merge_tool=$(git config diff.${gui_prefix}tool || git config merge.${gui_prefix}tool)
-	else
-		merge_tool=$(git config merge.${gui_prefix}tool)
+		sections="diff $sections"
 	fi
+
+	if "$is_gui" = true
+	then
+		keys="guitool $keys"
+	fi
+
+	IFS=' '
+	for key in $keys
+	do
+		for section in $sections
+		do
+			merge_tool=$(git config $section.$key) && break 2
+		done
+	done
+
 	if test -n "$merge_tool" && ! valid_tool "$merge_tool"
 	then
 		echo >&2 "git config option $TOOL_MODE.${gui_prefix}tool set to unknown tool: $merge_tool"
@@ -404,14 +413,17 @@ get_merge_tool_path () {
 }
 
 get_merge_tool () {
+	not_guessed=true
 	# Check if a merge tool has been configured
-	merge_tool=$(get_configured_merge_tool)
+	merge_tool=$(get_configured_merge_tool $GIT_MERGETOOL_GUI)
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"
 	then
 		merge_tool=$(guess_merge_tool) || exit
+		not_guessed=false
 	fi
 	echo "$merge_tool"
+	test "$not_guessed" = true
 }
 
 mergetool_find_win32_cmd () {
