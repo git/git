@@ -296,6 +296,17 @@ test_expect_success '"git add ." in empty repo' '
 	)
 '
 
+test_expect_success 'error on a repository with no commits' '
+	rm -fr empty &&
+	git init empty &&
+	test_must_fail git add empty >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	error: '"'empty/'"' does not have a commit checked out
+	fatal: adding files failed
+	EOF
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'git add --dry-run of existing changed file' "
 	echo new >>track-this &&
 	git add --dry-run track-this >actual 2>&1 &&
@@ -396,6 +407,7 @@ test_expect_success 'no file status change if no pathspec is given in subdir' '
 '
 
 test_expect_success 'all statuses changed in folder if . is given' '
+	rm -fr empty &&
 	git add --chmod=+x . &&
 	test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
 	git add --chmod=-x . &&
