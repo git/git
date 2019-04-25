@@ -454,9 +454,11 @@ static int checkout_paths(const struct checkout_opts *opts,
 			patch_mode = "--patch=checkout";
 		else if (opts->checkout_index && !opts->checkout_worktree)
 			patch_mode = "--patch=reset";
+		else if (!opts->checkout_index && opts->checkout_worktree)
+			patch_mode = "--patch=worktree";
 		else
-			die(_("'%s' with only '%s' is not currently supported"),
-			    "--patch", "--worktree");
+			BUG("either flag must have been set, worktree=%d, index=%d",
+			    opts->checkout_worktree, opts->checkout_index);
 		return run_add_interactive(revision, patch_mode, &opts->pathspec);
 	}
 
