@@ -263,6 +263,10 @@ extern void setup_alternate_shallow(struct lock_file *shallow_lock,
 extern const char *setup_temporary_shallow(const struct oid_array *extra);
 extern void advertise_shallow_grafts(int);
 
+/*
+ * Initialize with prepare_shallow_info() or zero-initialize (equivalent to
+ * prepare_shallow_info with a NULL oid_array).
+ */
 struct shallow_info {
 	struct oid_array *shallow;
 	int *ours, nr_ours;

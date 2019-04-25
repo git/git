@@ -1253,9 +1253,11 @@ static int process_acks(struct fetch_negotiator *negotiator,
 }
 
 static void receive_shallow_info(struct fetch_pack_args *args,
-				 struct packet_reader *reader)
+				 struct packet_reader *reader,
+				 struct oid_array *shallows,
+				 struct shallow_info *si)
 {
-	int line_received = 0;
+	int unshallow_received = 0;
 
 	process_section_header(reader, "shallow-info", 0);
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
@@ -1265,8 +1267,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 		if (skip_prefix(reader->line, "shallow ", &arg)) {
 			if (get_oid_hex(arg, &oid))
 				die(_("invalid shallow line: %s"), reader->line);
-			register_shallow(the_repository, &oid);
-			line_received = 1;
+			oid_array_append(shallows, &oid);
 			continue;
 		}
 		if (skip_prefix(reader->line, "unshallow ", &arg)) {
@@ -1279,7 +1280,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 				die(_("error in object: %s"), reader->line);
 			if (unregister_shallow(&oid))
 				die(_("no shallow found: %s"), reader->line);
-			line_received = 1;
+			unshallow_received = 1;
 			continue;
 		}
 		die(_("expected shallow/unshallow, got %s"), reader->line);
@@ -1289,10 +1290,31 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 	    reader->status != PACKET_READ_DELIM)
 		die(_("error processing shallow info: %d"), reader->status);
 
-	if (line_received) {
+	if (args->deepen || unshallow_received) {
+		/*
+		 * Treat these as shallow lines caused by our depth settings.
+		 * In v0, these lines cannot cause refs to be rejected; do the
+		 * same.
+		 */
+		int i;
+
+		for (i = 0; i < shallows->nr; i++)
+			register_shallow(the_repository, &shallows->oid[i]);
 		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file,
 					NULL);
 		args->deepen = 1;
+	} else if (shallows->nr) {
+		/*
+		 * Treat these as shallow lines caused by the remote being
+		 * shallow. In v0, remote refs that reach these objects are
+		 * rejected (unless --update-shallow is set); do the same.
+		 */
+		prepare_shallow_info(si, shallows);
+		if (si->nr_ours || si->nr_theirs)
+			alternate_shallow_file =
+				setup_temporary_shallow(si->shallow);
+		else
+			alternate_shallow_file = NULL;
 	} else {
 		alternate_shallow_file = NULL;
 	}
@@ -1338,6 +1360,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				    int fd[2],
 				    const struct ref *orig_ref,
 				    struct ref **sought, int nr_sought,
+				    struct oid_array *shallows,
+				    struct shallow_info *si,
 				    char **pack_lockfile)
 {
 	struct ref *ref = copy_ref_list(orig_ref);
@@ -1412,7 +1436,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		case FETCH_GET_PACK:
 			/* Check for shallow-info section */
 			if (process_section_header(&reader, "shallow-info", 1))
-				receive_shallow_info(args, &reader);
+				receive_shallow_info(args, &reader, shallows, si);
 
 			if (process_section_header(&reader, "wanted-refs", 1))
 				receive_wanted_refs(&reader, sought, nr_sought);
@@ -1625,6 +1649,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 {
 	struct ref *ref_cpy;
 	struct shallow_info si;
+	struct oid_array shallows_scratch = OID_ARRAY_INIT;
 
 	fetch_pack_setup();
 	if (nr_sought)
@@ -1648,13 +1673,18 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		packet_flush(fd[1]);
 		die(_("no matching remote head"));
 	}
-	prepare_shallow_info(&si, shallow);
-	if (version == protocol_v2)
+	if (version == protocol_v2) {
+		if (shallow->nr)
+			BUG("Protocol V2 does not provide shallows at this point in the fetch");
+		memset(&si, 0, sizeof(si));
 		ref_cpy = do_fetch_pack_v2(args, fd, ref, sought, nr_sought,
+					   &shallows_scratch, &si,
 					   pack_lockfile);
-	else
+	} else {
+		prepare_shallow_info(&si, shallow);
 		ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought,
 					&si, pack_lockfile);
+	}
 	reprepare_packed_git(the_repository);
 
 	if (!args->cloning && args->deepen) {
@@ -1676,6 +1706,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	update_shallow(args, sought, nr_sought, &si);
 cleanup:
 	clear_shallow_info(&si);
+	oid_array_clear(&shallows_scratch);
 	return ref_cpy;
 }
 
