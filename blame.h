@@ -51,6 +51,8 @@ struct blame_origin {
 	 */
 	struct blame_entry *suspects;
 	mmfile_t file;
+	int num_lines;
+	void *fingerprints;
 	struct object_id blob_oid;
 	unsigned short mode;
 	/* guilty gets set when shipping any suspects to the final
@@ -92,6 +94,8 @@ struct blame_entry {
 	 * scanning the lines over and over.
 	 */
 	unsigned score;
+	int ignored;
+	int unblamable;
 };
 
 /*
@@ -116,6 +120,8 @@ struct blame_scoreboard {
 
 	/* linked list of blames */
 	struct blame_entry *ent;
+
+	struct oidset ignore_list;
 
 	/* look-up a line in the final buffer */
 	int num_lines;
