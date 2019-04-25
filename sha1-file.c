@@ -30,8 +30,8 @@
 #include "mergesort.h"
 #include "quote.h"
 #include "packfile.h"
-#include "fetch-object.h"
 #include "object-store.h"
+#include "promisor-remote.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32
@@ -1377,16 +1377,17 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 		}
 
 		/* Check if it is a missing object */
-		if (fetch_if_missing && repository_format_partial_clone &&
+		if (fetch_if_missing && has_promisor_remote() &&
 		    !already_retried && r == the_repository &&
 		    !(flags & OBJECT_INFO_FOR_PREFETCH)) {
 			/*
-			 * TODO Investigate having fetch_object() return
-			 * TODO error/success and stopping the music here.
-			 * TODO Pass a repository struct through fetch_object,
-			 * such that arbitrary repositories work.
+			 * TODO Investigate checking promisor_remote_get_direct()
+			 * TODO return value and stopping on error here.
+			 * TODO Pass a repository struct through
+			 * promisor_remote_get_direct(), such that arbitrary
+			 * repositories work.
 			 */
-			fetch_objects(repository_format_partial_clone, real, 1);
+			promisor_remote_get_direct(real, 1);
 			already_retried = 1;
 			continue;
 		}
