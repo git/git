@@ -22,21 +22,41 @@ Targets are defined using a VTable allowing easy extension to other
 formats in the future.  This might be used to define a binary format,
 for example.
 
+Trace2 is controlled using `trace2.*` config values in the system and
+global config files and `GIT_TR2*` environment variables.  Trace2 does
+not read from repo local or worktree config files or respect `-c`
+command line config settings.
+
 == Trace2 Targets
 
 Trace2 defines the following set of Trace2 Targets.
 Format details are given in a later section.
 
-`GIT_TR2` (NORMAL)::
+=== The Normal Format Target
 
-	a simple printf format like GIT_TRACE.
-+
+The normal format target is a tradition printf format and similar
+to GIT_TRACE format.  This format is enabled with the `GIT_TR`
+environment variable or the `trace2.normalTarget` system or global
+config setting.
+
+For example
+
 ------------
 $ export GIT_TR2=~/log.normal
 $ git version
 git version 2.20.1.155.g426c96fcdb
 ------------
-+
+
+or
+
+------------
+$ git config --global trace2.normalTarget ~/log.normal
+$ git version
+git version 2.20.1.155.g426c96fcdb
+------------
+
+yields
+
 ------------
 $ cat ~/log.normal
 12:28:42.620009 common-main.c:38                  version 2.20.1.155.g426c96fcdb
@@ -46,81 +66,86 @@ $ cat ~/log.normal
 12:28:42.621250 trace2/tr2_tgt_normal.c:124       atexit elapsed:0.001265 code:0
 ------------
 
-`GIT_TR2_PERF` (PERF)::
+=== The Performance Format Target
 
-	a column-based format to replace GIT_TRACE_PERFORMANCE suitable for
-	development and testing, possibly to complement tools like gprof.
-+
+The performance format target (PERF) is a column-based format to
+replace GIT_TRACE_PERFORMANCE and is suitable for development and
+testing, possibly to complement tools like gprof.  This format is
+enabled with the `GIT_TR2_PERF` environment variable or the
+`trace2.perfTarget` system or global config setting.
+
+For example
+
 ------------
 $ export GIT_TR2_PERF=~/log.perf
 $ git version
 git version 2.20.1.155.g426c96fcdb
 ------------
-+
+
+or
+
+------------
+$ git config --global trace2.perfTarget ~/log.perf
+$ git version
+git version 2.20.1.155.g426c96fcdb
+------------
+
+yields
+
 ------------
 $ cat ~/log.perf
 12:28:42.620675 common-main.c:38                  | d0 | main                     | version      |     |           |           |            | 2.20.1.155.g426c96fcdb
-12:28:42.621001 common-main.c:39                  | d0 | main                     | start        |     |           |           |            | git version
+12:28:42.621001 common-main.c:39                  | d0 | main                     | start        |     |  0.001173 |           |            | git version
 12:28:42.621111 git.c:432                         | d0 | main                     | cmd_name     |     |           |           |            | version (version)
 12:28:42.621225 git.c:662                         | d0 | main                     | exit         |     |  0.001227 |           |            | code:0
 12:28:42.621259 trace2/tr2_tgt_perf.c:211         | d0 | main                     | atexit       |     |  0.001265 |           |            | code:0
 ------------
 
-`GIT_TR2_EVENT` (EVENT)::
+=== The Event Format Target
 
-	a JSON-based format of event data suitable for telemetry analysis.
-+
+The event format target is a JSON-based format of event data suitable
+for telemetry analysis.  This format is enabled with the `GIT_TR2_EVENT`
+environment variable or the `trace2.eventTarget` system or global config
+setting.
+
+For example
+
 ------------
 $ export GIT_TR2_EVENT=~/log.event
 $ git version
 git version 2.20.1.155.g426c96fcdb
 ------------
-+
+
+or
+
+------------
+$ git config --global trace2.eventTarget ~/log.event
+$ git version
+git version 2.20.1.155.g426c96fcdb
+------------
+
+yields
+
 ------------
 $ cat ~/log.event
-{"event":"version","sid":"1547659722619736-11614","thread":"main","time":"2019-01-16 17:28:42.620713","file":"common-main.c","line":38,"evt":"1","exe":"2.20.1.155.g426c96fcdb"}
-{"event":"start","sid":"1547659722619736-11614","thread":"main","time":"2019-01-16 17:28:42.621027","file":"common-main.c","line":39,"argv":["git","version"]}
-{"event":"cmd_name","sid":"1547659722619736-11614","thread":"main","time":"2019-01-16 17:28:42.621122","file":"git.c","line":432,"name":"version","hierarchy":"version"}
-{"event":"exit","sid":"1547659722619736-11614","thread":"main","time":"2019-01-16 17:28:42.621236","file":"git.c","line":662,"t_abs":0.001227,"code":0}
-{"event":"atexit","sid":"1547659722619736-11614","thread":"main","time":"2019-01-16 17:28:42.621268","file":"trace2/tr2_tgt_event.c","line":163,"t_abs":0.001265,"code":0}
+{"event":"version","sid":"sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.620713Z","file":"common-main.c","line":38,"evt":"1","exe":"2.20.1.155.g426c96fcdb"}
+{"event":"start","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621027Z","file":"common-main.c","line":39,"t_abs":0.001173,"argv":["git","version"]}
+{"event":"cmd_name","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621122Z","file":"git.c","line":432,"name":"version","hierarchy":"version"}
+{"event":"exit","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621236Z","file":"git.c","line":662,"t_abs":0.001227,"code":0}
+{"event":"atexit","sid":"20190408T191610.507018Z-H9b68c35f-P000059a8","thread":"main","time":"2019-01-16T17:28:42.621268Z","file":"trace2/tr2_tgt_event.c","line":163,"t_abs":0.001265,"code":0}
 ------------
 
-== Enabling a Target
+=== Enabling a Target
 
-A Trace2 Target is enabled when the corresponding environment variable
-(`GIT_TR2`, `GIT_TR2_PERF`, or `GIT_TR2_EVENT`) is set.  The following
-values are recognized.
+To enable a target, set the corresponding environment variable or
+system or global config value to one of the following:
 
-`0`::
-`false`::
+include::../trace2-target-values.txt[]
 
-	Disables the target.
-
-`1`::
-`true`::
-
-	Enables the target and writes stream to `STDERR`.
-
-`[2-9]`::
-
-	Enables the target and writes to the already opened file descriptor.
-
-`<absolute-pathname>`::
-
-	Enables the target, opens and writes to the file in append mode.
-
-	If the target already exists and is a directory, the traces will be
-	written to files (one per process) underneath the given directory. They
-	will be named according to the last component of the SID (optionally
-	followed by a counter to avoid filename collisions).
-
-`af_unix:[<socket_type>:]<absolute-pathname>`::
-
-	Enables the target, opens and writes to a Unix Domain Socket
-	(on platforms that support them).
-+
-Socket type can be either `stream` or `dgram`.  If the socket type is
-omitted, Git will try both.
+If the target already exists and is a directory, the traces will be
+written to files (one per process) underneath the given directory. They
+will be named according to the last component of the SID (optionally
+followed by a counter to avoid filename collisions).
 
 == Trace2 API
 
@@ -165,17 +190,23 @@ purposes.
 
 These are concerned with the lifetime of the overall git process.
 
+`void trace2_initialize_clock()`::
+
+	Initialize the Trace2 start clock and nothing else.  This should
+	be called at the very top of main() to capture the process start
+	time and reduce startup order dependencies.
+
 `void trace2_initialize()`::
 
 	Determines if any Trace2 Targets should be enabled and
-	initializes the Trace2 facility.  This includes starting the
-	elapsed time clocks and thread local storage (TLS).
+	initializes the Trace2 facility.  This includes setting up the
+	Trace2 thread local storage (TLS).
 +
 This function emits a "version" message containing the version of git
 and the Trace2 protocol.
 +
 This function should be called from `main()` as early as possible in
-the life of the process.
+the life of the process after essential process initialization.
 
 `int trace2_is_enabled()`::
 
@@ -242,15 +273,16 @@ significantly affects program performance or behavior, such as
 	Emits a "def_param" messages for "important" configuration
 	settings.
 +
-The environment variable `GIT_TR2_CONFIG_PARAMS` can be set to a
+The environment variable `GIT_TR2_CONFIG_PARAMS` or the `trace2.configParams`
+config value can be set to a
 list of patterns of important configuration settings, for example:
 `core.*,remote.*.url`.  This function will iterate over all config
 settings and emit a "def_param" message for each match.
 
 `void trace2_cmd_set_config(const char *key, const char *value)`::
 
-	Emits a "def_param" message for a specific configuration
-	setting IFF it matches the `GIT_TR2_CONFIG_PARAMS` pattern.
+	Emits a "def_param" message for a new or updated key/value
+	pair IF `key` is considered important.
 +
 This is used to hook into `git_config_set()` and catch any
 configuration changes and update a value previously reported by
@@ -417,9 +449,6 @@ recursive tree walk.
 
 === NORMAL Format
 
-NORMAL format is enabled when the `GIT_TR2` environment variable is
-set.
-
 Events are written as lines of the form:
 
 ------------
@@ -436,17 +465,14 @@ Events are written as lines of the form:
 Note that this may contain embedded LF or CRLF characters that are
 not escaped, so the event may spill across multiple lines.
 
-If `GIT_TR2_BRIEF` is true, the `time`, `filename`, and `line` fields
-are omitted.
+If `GIT_TR2_BRIEF` or `trace2.normalBrief` is true, the `time`, `filename`,
+and `line` fields are omitted.
 
 This target is intended to be more of a summary (like GIT_TRACE) and
 less detailed than the other targets.  It ignores thread, region, and
 data messages, for example.
 
 === PERF Format
-
-PERF format is enabled when the `GIT_TR2_PERF` environment variable
-is set.
 
 Events are written as lines of the form:
 
@@ -507,8 +533,8 @@ This field is in anticipation of in-proc submodules in the future.
 15:33:33.532712 wt-status.c:2331                  | d0 | main                     | region_leave | r1  |  0.127568 |  0.001504 | status     | label:print
 ------------
 
-If `GIT_TR2_PERF_BRIEF` is true, the `time`, `file`, and `line`
-fields are omitted.
+If `GIT_TR2_PERF_BRIEF` or `trace2.perfBrief` is true, the `time`, `file`,
+and `line` fields are omitted.
 
 ------------
 d0 | main                     | region_leave | r1  |  0.011717 |  0.009122 | index      | label:preload
@@ -518,9 +544,6 @@ The PERF target is intended for interactive performance analysis
 during development and is quite noisy.
 
 === EVENT Format
-
-EVENT format is enabled when the `GIT_TR2_EVENT` environment
-variable is set.
 
 Each event is a JSON-object containing multiple key/value pairs
 written as a single line and followed by a LF.
@@ -539,11 +562,11 @@ The following key/value pairs are common to all events:
 ------------
 {
 	"event":"version",
-	"sid":"1547659722619736-11614",
+	"sid":"20190408T191827.272759Z-H9b68c35f-P00003510",
 	"thread":"main",
-	"time":"2019-01-16 17:28:42.620713",
+	"time":"2019-04-08T19:18:27.282761Z",
 	"file":"common-main.c",
-	"line":38,
+	"line":42,
 	...
 }
 ------------
@@ -575,9 +598,9 @@ The following key/value pairs are common to all events:
 `"repo":<repo-id>`::
 	when present, is the integer repo-id as described previously.
 
-If `GIT_TR2_EVENT_BRIEF` is true, the `file` and `line` fields are omitted
-from all events and the `time` field is only present on the "start" and
-"atexit" events.
+If `GIT_TR2_EVENT_BRIEF` or `trace2.eventBrief` is true, the `file`
+and `line` fields are omitted from all events and the `time` field is
+only present on the "start" and "atexit" events.
 
 ==== Event-Specific Key/Value Pairs
 
@@ -600,6 +623,7 @@ from all events and the `time` field is only present on the "start" and
 {
 	"event":"start",
 	...
+	"t_abs":0.001227, # elapsed time in seconds
 	"argv":["git","version"]
 }
 ------------
@@ -887,7 +911,7 @@ visited.
 The `category` field may be used in a future enhancement to
 do category-based filtering.
 +
-The `GIT_TR2_EVENT_NESTING` environment variable can be used to
+`GIT_TR2_EVENT_NESTING` or `trace2.eventNesting` can be used to
 filter deeply nested regions and data events.  It defaults to "2".
 
 `"region_leave"`::
@@ -1117,7 +1141,7 @@ $ git status
 
 $ cat ~/log.perf
 d0 | main                     | version      |     |           |           |            | 2.20.1.160.g5676107ecd.dirty
-d0 | main                     | start        |     |           |           |            | git status
+d0 | main                     | start        |     |  0.001173 |           |            | git status
 d0 | main                     | def_repo     | r1  |           |           |            | worktree:/Users/jeffhost/work/gfw
 d0 | main                     | cmd_name     |     |           |           |            | status (status)
 ...
@@ -1162,7 +1186,7 @@ $ git status
 ...
 $ cat ~/log.perf
 d0 | main                     | version      |     |           |           |            | 2.20.1.162.gb4ccea44db.dirty
-d0 | main                     | start        |     |           |           |            | git status
+d0 | main                     | start        |     |  0.001173 |           |            | git status
 d0 | main                     | def_repo     | r1  |           |           |            | worktree:/Users/jeffhost/work/gfw
 d0 | main                     | cmd_name     |     |           |           |            | status (status)
 ...
@@ -1218,7 +1242,7 @@ $ git status
 ...
 $ cat ~/log.perf
 d0 | main                     | version      |     |           |           |            | 2.20.1.156.gf9916ae094.dirty
-d0 | main                     | start        |     |           |           |            | git status
+d0 | main                     | start        |     |  0.001173 |           |            | git status
 d0 | main                     | def_repo     | r1  |           |           |            | worktree:/Users/jeffhost/work/gfw
 d0 | main                     | cmd_name     |     |           |           |            | status (status)
 d0 | main                     | region_enter | r1  |  0.001791 |           | index      | label:do_read_index .git/index

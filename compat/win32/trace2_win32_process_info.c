@@ -1,5 +1,6 @@
 #include "../../cache.h"
 #include "../../json-writer.h"
+#include "lazyload.h"
 #include <Psapi.h>
 #include <tlHelp32.h>
 
@@ -137,11 +138,54 @@ static void get_is_being_debugged(void)
 				   "windows/debugger_present", 1);
 }
 
-void trace2_collect_process_info(void)
+/*
+ * Emit JSON data with the peak memory usage of the current process.
+ */
+static void get_peak_memory_info(void)
+{
+	DECLARE_PROC_ADDR(psapi.dll, BOOL, GetProcessMemoryInfo, HANDLE,
+			  PPROCESS_MEMORY_COUNTERS, DWORD);
+
+	if (INIT_PROC_ADDR(GetProcessMemoryInfo)) {
+		PROCESS_MEMORY_COUNTERS pmc;
+
+		if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc,
+					 sizeof(pmc))) {
+			struct json_writer jw = JSON_WRITER_INIT;
+
+			jw_object_begin(&jw, 0);
+
+#define KV(kv) #kv, (intmax_t)pmc.kv
+
+			jw_object_intmax(&jw, KV(PageFaultCount));
+			jw_object_intmax(&jw, KV(PeakWorkingSetSize));
+			jw_object_intmax(&jw, KV(PeakPagefileUsage));
+
+			jw_end(&jw);
+
+			trace2_data_json("process", the_repository,
+					 "windows/memory", &jw);
+			jw_release(&jw);
+		}
+	}
+}
+
+void trace2_collect_process_info(enum trace2_process_info_reason reason)
 {
 	if (!trace2_is_enabled())
 		return;
 
-	get_is_being_debugged();
-	get_ancestry();
+	switch (reason) {
+	case TRACE2_PROCESS_INFO_STARTUP:
+		get_is_being_debugged();
+		get_ancestry();
+		return;
+
+	case TRACE2_PROCESS_INFO_EXIT:
+		get_peak_memory_info();
+		return;
+
+	default:
+		BUG("trace2_collect_process_info: unknown reason '%d'", reason);
+	}
 }

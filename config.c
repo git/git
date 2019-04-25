@@ -1688,14 +1688,15 @@ static int do_git_config_sequence(const struct config_options *opts,
 		ret += git_config_from_file(fn, user_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_REPO;
-	if (repo_config && !access_or_die(repo_config, R_OK, 0))
+	if (!opts->ignore_repo && repo_config &&
+	    !access_or_die(repo_config, R_OK, 0))
 		ret += git_config_from_file(fn, repo_config, data);
 
 	/*
 	 * Note: this should have a new scope, CONFIG_SCOPE_WORKTREE.
 	 * But let's not complicate things before it's actually needed.
 	 */
-	if (repository_format_worktree_config) {
+	if (!opts->ignore_worktree && repository_format_worktree_config) {
 		char *path = git_pathdup("config.worktree");
 		if (!access_or_die(path, R_OK, 0))
 			ret += git_config_from_file(fn, path, data);
@@ -1703,7 +1704,7 @@ static int do_git_config_sequence(const struct config_options *opts,
 	}
 
 	current_parsing_scope = CONFIG_SCOPE_CMDLINE;
-	if (git_config_from_parameters(fn, data) < 0)
+	if (!opts->ignore_cmdline && git_config_from_parameters(fn, data) < 0)
 		die(_("unable to parse command-line config"));
 
 	current_parsing_scope = CONFIG_SCOPE_UNKNOWN;
@@ -1792,6 +1793,22 @@ void read_early_config(config_fn_t cb, void *data)
 
 	strbuf_release(&commondir);
 	strbuf_release(&gitdir);
+}
+
+/*
+ * Read config but only enumerate system and global settings.
+ * Omit any repo-local, worktree-local, or command-line settings.
+ */
+void read_very_early_config(config_fn_t cb, void *data)
+{
+	struct config_options opts = { 0 };
+
+	opts.respect_includes = 1;
+	opts.ignore_repo = 1;
+	opts.ignore_worktree = 1;
+	opts.ignore_cmdline = 1;
+
+	config_with_options(cb, data, NULL, &opts);
 }
 
 static struct config_set_element *configset_find_element(struct config_set *cs, const char *key)
@@ -2011,7 +2028,7 @@ int git_configset_get_pathname(struct config_set *cs, const char *key, const cha
 /* Functions use to read configuration from a repository */
 static void repo_read_config(struct repository *repo)
 {
-	struct config_options opts;
+	struct config_options opts = { 0 };
 
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;

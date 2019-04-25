@@ -31,7 +31,8 @@ struct tr2tls_thread_ctx {
  * In this and all following functions the term "self" refers to the
  * current thread.
  */
-struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name);
+struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name,
+					     uint64_t us_thread_start);
 
 /*
  * Get our TLS data.
@@ -93,5 +94,10 @@ void tr2tls_release(void);
  * Protected increment of an integer.
  */
 int tr2tls_locked_increment(int *p);
+
+/*
+ * Capture the process start time and do nothing else.
+ */
+void tr2tls_start_process_clock(void);
 
 #endif /* TR2_TLS_H */

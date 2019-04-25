@@ -10,6 +10,7 @@
 #include "trace2/tr2_cmd_name.h"
 #include "trace2/tr2_dst.h"
 #include "trace2/tr2_sid.h"
+#include "trace2/tr2_sysenv.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 
@@ -120,6 +121,7 @@ static void tr2main_atexit_handler(void)
 	tr2_sid_release();
 	tr2_cmd_name_release();
 	tr2_cfg_free_patterns();
+	tr2_sysenv_release();
 
 	trace2_enabled = 0;
 }
@@ -142,6 +144,11 @@ static void tr2main_signal_handler(int signo)
 	raise(signo);
 }
 
+void trace2_initialize_clock(void)
+{
+	tr2tls_start_process_clock();
+}
+
 void trace2_initialize_fl(const char *file, int line)
 {
 	struct tr2_tgt *tgt_j;
@@ -149,6 +156,8 @@ void trace2_initialize_fl(const char *file, int line)
 
 	if (trace2_enabled)
 		return;
+
+	tr2_sysenv_load();
 
 	if (!tr2_tgt_want_builtins())
 		return;
@@ -177,13 +186,19 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
 {
 	struct tr2_tgt *tgt_j;
 	int j;
+	uint64_t us_now;
+	uint64_t us_elapsed_absolute;
 
 	if (!trace2_enabled)
 		return;
 
+	us_now = getnanotime() / 1000;
+	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
+
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_start_fl)
-			tgt_j->pfn_start_fl(file, line, argv);
+			tgt_j->pfn_start_fl(file, line, us_elapsed_absolute,
+					    argv);
 }
 
 int trace2_cmd_exit_fl(const char *file, int line, int code)
@@ -197,6 +212,8 @@ int trace2_cmd_exit_fl(const char *file, int line, int code)
 
 	if (!trace2_enabled)
 		return code;
+
+	trace2_collect_process_info(TRACE2_PROCESS_INFO_EXIT);
 
 	tr2main_exit_code = code;
 
@@ -428,7 +445,7 @@ void trace2_thread_start_fl(const char *file, int line, const char *thread_name)
 	us_now = getnanotime() / 1000;
 	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
-	tr2tls_create_self(thread_name);
+	tr2tls_create_self(thread_name, us_now);
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_thread_start_fl)

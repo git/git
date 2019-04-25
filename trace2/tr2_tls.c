@@ -10,16 +10,30 @@
 #define TR2_REGION_NESTING_INITIAL_SIZE (100)
 
 static struct tr2tls_thread_ctx *tr2tls_thread_main;
-static uint64_t tr2tls_us_start_main;
+static uint64_t tr2tls_us_start_process;
 
 static pthread_mutex_t tr2tls_mutex;
 static pthread_key_t tr2tls_key;
 
 static int tr2_next_thread_id; /* modify under lock */
 
-struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name)
+void tr2tls_start_process_clock(void)
 {
-	uint64_t us_now = getnanotime() / 1000;
+	if (tr2tls_us_start_process)
+		return;
+
+	/*
+	 * Keep the absolute start time of the process (i.e. the main
+	 * process) in a fixed variable since other threads need to
+	 * access it.  This allows them to do that without a lock on
+	 * main thread's array data (because of reallocs).
+	 */
+	tr2tls_us_start_process = getnanotime() / 1000;
+}
+
+struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name,
+					     uint64_t us_thread_start)
+{
 	struct tr2tls_thread_ctx *ctx = xcalloc(1, sizeof(*ctx));
 
 	/*
@@ -29,7 +43,7 @@ struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name)
 	 */
 	ctx->alloc = TR2_REGION_NESTING_INITIAL_SIZE;
 	ctx->array_us_start = (uint64_t *)xcalloc(ctx->alloc, sizeof(uint64_t));
-	ctx->array_us_start[ctx->nr_open_regions++] = us_now;
+	ctx->array_us_start[ctx->nr_open_regions++] = us_thread_start;
 
 	ctx->thread_id = tr2tls_locked_increment(&tr2_next_thread_id);
 
@@ -55,7 +69,7 @@ struct tr2tls_thread_ctx *tr2tls_get_self(void)
 	 * here and silently continue.
 	 */
 	if (!ctx)
-		ctx = tr2tls_create_self("unknown");
+		ctx = tr2tls_create_self("unknown", getnanotime() / 1000);
 
 	return ctx;
 }
@@ -124,22 +138,18 @@ uint64_t tr2tls_absolute_elapsed(uint64_t us)
 	if (!tr2tls_thread_main)
 		return 0;
 
-	return us - tr2tls_us_start_main;
+	return us - tr2tls_us_start_process;
 }
 
 void tr2tls_init(void)
 {
+	tr2tls_start_process_clock();
+
 	pthread_key_create(&tr2tls_key, NULL);
 	init_recursive_mutex(&tr2tls_mutex);
 
-	tr2tls_thread_main = tr2tls_create_self("main");
-	/*
-	 * Keep a copy of the absolute start time of the main thread
-	 * in a fixed variable since other threads need to access it.
-	 * This also eliminates the need to lock accesses to the main
-	 * thread's array (because of reallocs).
-	 */
-	tr2tls_us_start_main = tr2tls_thread_main->array_us_start[0];
+	tr2tls_thread_main =
+		tr2tls_create_self("main", tr2tls_us_start_process);
 }
 
 void tr2tls_release(void)
