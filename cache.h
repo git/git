@@ -1333,7 +1333,7 @@ static inline int hex2chr(const char *s)
 #define FALLBACK_DEFAULT_ABBREV 7
 
 struct object_context {
-	unsigned mode;
+	unsigned short mode;
 	/*
 	 * symlink_path is only used by get_tree_entry_follow_symlinks,
 	 * and only for symlinks that point outside the repository.

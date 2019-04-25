@@ -140,7 +140,7 @@ static void match_trees(const struct object_id *hash1,
 	while (one.size) {
 		const char *path;
 		const struct object_id *elem;
-		unsigned mode;
+		unsigned short mode;
 		int score;
 
 		elem = tree_entry_extract(&one, &path, &mode);
@@ -196,7 +196,7 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 	rewrite_here = NULL;
 	while (desc.size) {
 		const char *name;
-		unsigned mode;
+		unsigned short mode;
 
 		tree_entry_extract(&desc, &name, &mode);
 		if (strlen(name) == toplen &&
@@ -285,7 +285,7 @@ void shift_tree(const struct object_id *hash1,
 
 	if (add_score < del_score) {
 		/* We need to pick a subtree of two */
-		unsigned mode;
+		unsigned short mode;
 
 		if (!*del_prefix)
 			return;
@@ -313,7 +313,7 @@ void shift_tree_by(const struct object_id *hash1,
 		   const char *shift_prefix)
 {
 	struct object_id sub1, sub2;
-	unsigned mode1, mode2;
+	unsigned short mode1, mode2;
 	unsigned candidate = 0;
 
 	/* Can hash2 be a tree at shift_prefix in tree hash1? */
