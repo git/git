@@ -337,11 +337,14 @@ void create_branch(struct repository *r,
 	free(real_ref);
 }
 
-void remove_branch_state(struct repository *r)
+void remove_branch_state(struct repository *r, int verbose)
 {
-	unlink(git_path_cherry_pick_head(r));
-	unlink(git_path_revert_head(r));
-	unlink(git_path_merge_head(r));
+	if (!unlink(git_path_cherry_pick_head(r)) && verbose)
+		warning(_("cancelling a cherry picking in progress"));
+	if (!unlink(git_path_revert_head(r)) && verbose)
+		warning(_("cancelling a revert in progress"));
+	if (!unlink(git_path_merge_head(r)) && verbose)
+		warning(_("cancelling a merge in progress"));
 	unlink(git_path_merge_rr(r));
 	unlink(git_path_merge_msg(r));
 	unlink(git_path_merge_mode(r));

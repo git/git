@@ -421,8 +421,8 @@ One way to test if your MUA is set up correctly is:
 * Apply it:
 
     $ git fetch <project> master:test-apply
-    $ git checkout test-apply
-    $ git reset --hard
+    $ git switch test-apply
+    $ git restore --source=HEAD --staged --worktree :/
     $ git am a.patch
 
 If it does not apply correctly, there can be various reasons.

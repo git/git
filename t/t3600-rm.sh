@@ -804,7 +804,7 @@ test_expect_success 'rm file with local modification' '
 	cat >expect <<-\EOF &&
 	error: the following file has local modifications:
 	    foo.txt
-	(use --cached to keep the file, or -f to force removal)
+	(use --staged to keep the file, or -f to force removal)
 	EOF
 	git commit -m "testing rm 3" &&
 	echo content3 >foo.txt &&
@@ -826,7 +826,7 @@ test_expect_success 'rm file with changes in the index' '
 	cat >expect <<-\EOF &&
 	error: the following file has changes staged in the index:
 	    foo.txt
-	(use --cached to keep the file, or -f to force removal)
+	(use --staged to keep the file, or -f to force removal)
 	EOF
 	git reset --hard &&
 	echo content5 >foo.txt &&
@@ -852,7 +852,7 @@ test_expect_success 'rm files with two different errors' '
 	(use -f to force removal)
 	error: the following file has changes staged in the index:
 	    bar1.txt
-	(use --cached to keep the file, or -f to force removal)
+	(use --staged to keep the file, or -f to force removal)
 	EOF
 	echo content >foo1.txt &&
 	git add foo1.txt &&

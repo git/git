@@ -217,7 +217,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 			     "staged in the index:",
 			     "the following files have changes "
 			     "staged in the index:", files_cached.nr),
-			  _("\n(use --cached to keep the file,"
+			  _("\n(use --staged to keep the file,"
 			    " or -f to force removal)"),
 			  &errs);
 	string_list_clear(&files_cached, 0);
@@ -226,7 +226,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 			  Q_("the following file has local modifications:",
 			     "the following files have local modifications:",
 			     files_local.nr),
-			  _("\n(use --cached to keep the file,"
+			  _("\n(use --staged to keep the file,"
 			    " or -f to force removal)"),
 			  &errs);
 	string_list_clear(&files_local, 0);
@@ -240,7 +240,8 @@ static int ignore_unmatch = 0;
 static struct option builtin_rm_options[] = {
 	OPT__DRY_RUN(&show_only, N_("dry run")),
 	OPT__QUIET(&quiet, N_("do not list removed files")),
-	OPT_BOOL( 0 , "cached",         &index_only, N_("only remove from the index")),
+	OPT_BOOL( 0 , "staged",         &index_only, N_("only remove from the index")),
+	OPT_BOOL( 0 , "cached",         &index_only, N_("synonym for --staged")),
 	OPT__FORCE(&force, N_("override the up-to-date check"), PARSE_OPT_NOCOMPLETE),
 	OPT_BOOL('r', NULL,             &recursive,  N_("allow recursive removal")),
 	OPT_BOOL( 0 , "ignore-unmatch", &ignore_unmatch,

@@ -85,7 +85,7 @@ You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
   (use "git rebase --abort" to check out the original branch)
 
 Unmerged paths:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
 
 	both modified:   main.txt
@@ -110,7 +110,7 @@ You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
   (all conflicts fixed: run "git rebase --continue")
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
 
 	modified:   main.txt
 
@@ -148,7 +148,7 @@ You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO
   (use "git rebase --abort" to check out the original branch)
 
 Unmerged paths:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
 
 	both modified:   main.txt
@@ -176,7 +176,7 @@ You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO
   (all conflicts fixed: run "git rebase --continue")
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
 
 	modified:   main.txt
 
@@ -246,7 +246,7 @@ You are currently splitting a commit while rebasing branch '\''split_commit'\'' 
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
+  (use "git restore <file>..." to discard changes in working directory)
 
 	modified:   main.txt
 
@@ -354,7 +354,7 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
+  (use "git restore <file>..." to discard changes in working directory)
 
 	modified:   main.txt
 
@@ -453,7 +453,7 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
+  (use "git restore <file>..." to discard changes in working directory)
 
 	modified:   main.txt
 
@@ -557,7 +557,7 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
+  (use "git restore <file>..." to discard changes in working directory)
 
 	modified:   main.txt
 
@@ -816,7 +816,7 @@ You are currently reverting commit $TO_REVERT.
   (use "git revert --abort" to cancel the revert operation)
 
 Unmerged paths:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
 
 	both modified:   to-revert.txt
@@ -837,7 +837,7 @@ You are currently reverting commit $TO_REVERT.
   (use "git revert --abort" to cancel the revert operation)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+  (use "git restore --staged <file>..." to unstage)
 
 	modified:   to-revert.txt
 
