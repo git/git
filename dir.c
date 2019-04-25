@@ -1466,9 +1466,11 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 			return path_none;
 		}
 		if (!(dir->flags & DIR_NO_GITLINKS)) {
-			struct object_id oid;
-			if (resolve_gitlink_ref(dirname, "HEAD", &oid) == 0)
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addstr(&sb, dirname);
+			if (is_nonbare_repository_dir(&sb))
 				return exclude ? path_excluded : path_untracked;
+			strbuf_release(&sb);
 		}
 		return path_recurse;
 	}

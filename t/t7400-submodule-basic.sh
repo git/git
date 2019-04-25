@@ -46,6 +46,15 @@ test_expect_success 'submodule update aborts on missing gitmodules url' '
 	test_must_fail git submodule init
 '
 
+test_expect_success 'add aborts on repository with no commits' '
+	cat >expect <<-\EOF &&
+	'"'repo-no-commits'"' does not have a commit checked out
+	EOF
+	git init repo-no-commits &&
+	test_must_fail git submodule add ../a ./repo-no-commits 2>actual &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'setup - repository in init subdirectory' '
 	mkdir init &&
 	(
@@ -809,7 +818,7 @@ test_expect_success '../bar/a/b/c works with relative local path - ../foo/bar.gi
 		cp pristine-.git-config .git/config &&
 		cp pristine-.gitmodules .gitmodules &&
 		mkdir -p a/b/c &&
-		(cd a/b/c && git init) &&
+		(cd a/b/c && git init && test_commit msg) &&
 		git config remote.origin.url ../foo/bar.git &&
 		git submodule add ../bar/a/b/c ./a/b/c &&
 		git submodule init &&
