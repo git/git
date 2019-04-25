@@ -223,13 +223,8 @@ test_expect_success 'switch to another branch while carrying a deletion' '
 	test_must_fail git checkout simple 2>errs &&
 	test_i18ngrep overwritten errs &&
 
-	git checkout --merge simple 2>errs &&
-	test_i18ngrep ! overwritten errs &&
-	git ls-files -u &&
-	test_must_fail git cat-file -t :0:two &&
-	test "$(git cat-file -t :1:two)" = blob &&
-	test "$(git cat-file -t :2:two)" = blob &&
-	test_must_fail git cat-file -t :3:two
+	test_must_fail git read-tree --quiet -m -u HEAD simple 2>errs &&
+	test_must_be_empty errs
 '
 
 test_expect_success 'checkout to detach HEAD (with advice declined)' '
