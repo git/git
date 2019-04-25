@@ -1274,9 +1274,9 @@ static int checkout_branch(struct checkout_opts *opts,
 		die(_("'%s' cannot be used with switching branches"),
 		    "--patch");
 
-	if (!opts->overlay_mode)
+	if (opts->overlay_mode != -1)
 		die(_("'%s' cannot be used with switching branches"),
-		    "--no-overlay");
+		    "--[no]-overlay");
 
 	if (opts->writeout_stage)
 		die(_("'%s' cannot be used with switching branches"),
@@ -1399,7 +1399,6 @@ static struct option *add_checkout_path_options(struct checkout_opts *opts,
 		OPT_BOOL('p', "patch", &opts->patch_mode, N_("select hunks interactively")),
 		OPT_BOOL(0, "ignore-skip-worktree-bits", &opts->ignore_skipworktree,
 			 N_("do not limit pathspecs to sparse entries only")),
-		OPT_BOOL(0, "overlay", &opts->overlay_mode, N_("use overlay mode (default)")),
 		OPT_END()
 	};
 	struct option *newopts = parse_options_concat(prevopts, options);
@@ -1419,7 +1418,6 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	opts->overwrite_ignore = 1;
 	opts->prefix = prefix;
 	opts->show_progress = -1;
-	opts->overlay_mode = -1;
 
 	git_config(git_checkout_config, opts);
 
@@ -1593,6 +1591,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('l', NULL, &opts.new_branch_log, N_("create reflog for new branch")),
 		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
 			 N_("second guess 'git checkout <no-such-branch>' (default)")),
+		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode (default)")),
 		OPT_END()
 	};
 	int ret;
@@ -1607,6 +1606,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	opts.can_switch_when_in_progress = 1;
 	opts.orphan_from_empty_tree = 0;
 	opts.empty_pathspec_ok = 1;
+	opts.overlay_mode = -1;
 
 	options = parse_options_dup(checkout_options);
 	options = add_common_options(&opts, options);
@@ -1645,6 +1645,7 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 	opts.implicit_detach = 0;
 	opts.can_switch_when_in_progress = 0;
 	opts.orphan_from_empty_tree = 1;
+	opts.overlay_mode = -1;
 
 	options = parse_options_dup(switch_options);
 	options = add_common_options(&opts, options);
@@ -1663,6 +1664,7 @@ int cmd_restore(int argc, const char **argv, const char *prefix)
 	struct option restore_options[] = {
 		OPT_STRING('s', "source", &opts.from_treeish, "<tree-ish>",
 			   N_("where the checkout from")),
+		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode")),
 		OPT_END()
 	};
 	int ret;
@@ -1671,6 +1673,7 @@ int cmd_restore(int argc, const char **argv, const char *prefix)
 	opts.accept_ref = 0;
 	opts.accept_pathspec = 1;
 	opts.empty_pathspec_ok = 0;
+	opts.overlay_mode = 0;
 
 	options = parse_options_dup(restore_options);
 	options = add_common_options(&opts, options);
