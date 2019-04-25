@@ -498,7 +498,7 @@ static struct commit *check_single_commit(struct rev_info *revs)
 
 static void fill_blob_sha1(struct commit *commit, struct diff_filespec *spec)
 {
-	unsigned mode;
+	unsigned short mode;
 	struct object_id oid;
 
 	if (get_tree_entry(&commit->object.oid, spec->path, &oid, &mode))

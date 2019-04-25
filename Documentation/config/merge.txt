@@ -39,9 +39,22 @@ merge.renameLimit::
 	is turned off.
 
 merge.renames::
-	Whether and how Git detects renames.  If set to "false",
-	rename detection is disabled. If set to "true", basic rename
-	detection is enabled.  Defaults to the value of diff.renames.
+	Whether Git detects renames.  If set to "false", rename detection
+	is disabled. If set to "true", basic rename detection is enabled.
+	Defaults to the value of diff.renames.
+
+merge.directoryRenames::
+	Whether Git detects directory renames, affecting what happens at
+	merge time to new files added to a directory on one side of
+	history when that directory was renamed on the other side of
+	history.  If merge.directoryRenames is set to "false", directory
+	rename detection is disabled, meaning that such new files will be
+	left behind in the old directory.  If set to "true", directory
+	rename detection is enabled, meaning that such new files will be
+	moved into the new directory.  If set to "conflict", a conflict
+	will be reported for such paths.  If merge.renames is false,
+	merge.directoryRenames is ignored and treated as false.  Defaults
+	to "conflict".
 
 merge.renormalize::
 	Tell Git that canonical representation of files in the

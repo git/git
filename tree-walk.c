@@ -500,7 +500,7 @@ struct dir_state {
 	struct object_id oid;
 };
 
-static int find_tree_entry(struct tree_desc *t, const char *name, struct object_id *result, unsigned *mode)
+static int find_tree_entry(struct tree_desc *t, const char *name, struct object_id *result, unsigned short *mode)
 {
 	int namelen = strlen(name);
 	while (t->size) {
@@ -535,7 +535,7 @@ static int find_tree_entry(struct tree_desc *t, const char *name, struct object_
 	return -1;
 }
 
-int get_tree_entry(const struct object_id *tree_oid, const char *name, struct object_id *oid, unsigned *mode)
+int get_tree_entry(const struct object_id *tree_oid, const char *name, struct object_id *oid, unsigned short *mode)
 {
 	int retval;
 	void *tree;
@@ -585,7 +585,7 @@ int get_tree_entry(const struct object_id *tree_oid, const char *name, struct ob
  * See the code for enum get_oid_result for a description of
  * the return values.
  */
-enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode)
+enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned short *mode)
 {
 	int retval = MISSING_OBJECT;
 	struct dir_state *parents = NULL;

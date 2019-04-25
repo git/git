@@ -415,7 +415,7 @@ static void parse_treeish_arg(const char **argv,
 
 	if (prefix) {
 		struct object_id tree_oid;
-		unsigned int mode;
+		unsigned short mode;
 		int err;
 
 		err = get_tree_entry(&tree->object.oid, prefix, &tree_oid,

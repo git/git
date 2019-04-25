@@ -466,7 +466,7 @@ test_expect_success '3a-check-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 
 		git checkout A^0 &&
 
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep ! "Skipped bar/bq" out &&
 		test_must_be_empty err &&
@@ -495,7 +495,7 @@ test_expect_success '3a-check-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 
 		git checkout B^0 &&
 
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive A^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
 
 		test_i18ngrep ! "Skipped bar/bq" out &&
 		test_must_be_empty err &&
@@ -560,7 +560,7 @@ test_expect_success '3b-check-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 
 		git checkout A^0 &&
 
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep ! "Skipped bar/bq" out &&
 		test_must_be_empty err &&
@@ -589,7 +589,7 @@ test_expect_success '3b-check-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 
 		git checkout B^0 &&
 
-		GIT_MERGE_VERBOSITY=3 git merge -s recursive A^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 git -c merge.directoryRenames=true merge -s recursive A^0 >out 2>err &&
 
 		test_i18ngrep ! "Skipped bar/bq" out &&
 		test_must_be_empty err &&
