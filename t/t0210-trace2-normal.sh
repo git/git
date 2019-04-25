@@ -80,6 +80,21 @@ test_expect_success 'normal stream, return code 1' '
 	test_cmp expect actual
 '
 
+test_expect_success 'automatic filename' '
+	test_when_finished "rm -r traces actual expect" &&
+	mkdir traces &&
+	GIT_TR2="$(pwd)/traces" test-tool trace2 001return 0 &&
+	perl "$TEST_DIRECTORY/t0210/scrub_normal.perl" <"$(ls traces/*)" >actual &&
+	cat >expect <<-EOF &&
+		version $V
+		start _EXE_ trace2 001return 0
+		cmd_name trace2 (trace2)
+		exit elapsed:_TIME_ code:0
+		atexit elapsed:_TIME_ code:0
+	EOF
+	test_cmp expect actual
+'
+
 # Verb 002exit
 #
 # Explicit exit(code) from within cmd_<verb> propagates <code>.

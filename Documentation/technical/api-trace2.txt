@@ -109,6 +109,11 @@ values are recognized.
 
 	Enables the target, opens and writes to the file in append mode.
 
+	If the target already exists and is a directory, the traces will be
+	written to files (one per process) underneath the given directory. They
+	will be named according to the last component of the SID (optionally
+	followed by a counter to avoid filename collisions).
+
 `af_unix:[<socket_type>:]<absolute-pathname>`::
 
 	Enables the target, opens and writes to a Unix Domain Socket
