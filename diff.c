@@ -25,6 +25,7 @@
 #include "packfile.h"
 #include "parse-options.h"
 #include "help.h"
+#include "fetch-object.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -6477,8 +6478,41 @@ void diffcore_fix_diff_index(void)
 	QSORT(q->queue, q->nr, diffnamecmp);
 }
 
+static void add_if_missing(struct repository *r,
+			   struct oid_array *to_fetch,
+			   const struct diff_filespec *filespec)
+{
+	if (filespec && filespec->oid_valid &&
+	    oid_object_info_extended(r, &filespec->oid, NULL,
+				     OBJECT_INFO_FOR_PREFETCH))
+		oid_array_append(to_fetch, &filespec->oid);
+}
+
 void diffcore_std(struct diff_options *options)
 {
+	if (options->repo == the_repository &&
+	    repository_format_partial_clone) {
+		/*
+		 * Prefetch the diff pairs that are about to be flushed.
+		 */
+		int i;
+		struct diff_queue_struct *q = &diff_queued_diff;
+		struct oid_array to_fetch = OID_ARRAY_INIT;
+
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			add_if_missing(options->repo, &to_fetch, p->one);
+			add_if_missing(options->repo, &to_fetch, p->two);
+		}
+		if (to_fetch.nr)
+			/*
+			 * NEEDSWORK: Consider deduplicating the OIDs sent.
+			 */
+			fetch_objects(repository_format_partial_clone,
+				      to_fetch.oid, to_fetch.nr);
+		oid_array_clear(&to_fetch);
+	}
+
 	/* NOTE please keep the following in sync with diff_tree_combined() */
 	if (options->skip_stat_unmatch)
 		diffcore_skip_stat_unmatch(options);
