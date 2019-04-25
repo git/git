@@ -49,6 +49,24 @@ UI, Workflows & Features
  * "git mergetool" learned to offer Sublime Merge (smerge) as one of
    its backends.
 
+ * A new hook "post-index-change" is called when the on-disk index
+   file changes, which can help e.g. a virtualized working tree
+   implementation.
+
+ * "git difftool" can now run outside a repository.
+
+ * "git checkout -m <other>" was about carrying the differences
+   between HEAD and the working-tree files forward while checking out
+   another branch, and ignored the differences between HEAD and the
+   index.  The command has been taught to abort when the index and the
+   HEAD are different.
+
+ * A progress indicator has been added to the "index-pack" step, which
+   often makes users wait for completion during "git clone".
+
+ * "git submodule" learns "set-branch" subcommand that allows the
+   submodule.*.branch settings to be modified.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -93,6 +111,24 @@ Performance, Internal Implementation, Development Support etc.
    abbreviated form of an option that used to be unique within the
    command getting non-unique when a new option that share the same
    prefix is added.
+
+ * The scripted version of "git rebase -i" wrote and rewrote the todo
+   list many times during a single step of its operation, and the
+   recent C-rewrite made a faithful conversion of the logic to C.  The
+   implementation has been updated to carry necessary information
+   around in-core to avoid rewriting the same file over and over
+   unnecessarily.
+
+ * Test framework update to more robustly clean up leftover files and
+   processes after tests are done.
+
+ * Conversion from unsigned char[20] to struct object_id continues.
+
+ * While running "git diff" in a lazy clone, we can upfront know which
+   missing blobs we will need, instead of waiting for the on-demand
+   machinery to discover them one by one.  The code learned to aim to
+   achieve better performance by batching the request for these
+   promised blobs.
 
 
 Fixes since v2.21
@@ -240,6 +276,81 @@ Fixes since v2.21
  * The documentation for "git read-tree --reset -u" has been updated.
    (merge b5a0bd694c nd/read-tree-reset-doc later to maint).
 
+ * Code clean-up around a much-less-important-than-it-used-to-be
+   update_server_info() funtion.
+   (merge b3223761c8 jk/server-info-rabbit-hole later to maint).
+
+ * The message given when "git commit -a <paths>" errors out has been
+   updated.
+   (merge 5a1dbd48bc nd/commit-a-with-paths-msg-update later to maint).
+
+ * "git cherry-pick --options A..B", after giving control back to the
+   user to ask help resolving a conflicted step, did not honor the
+   options it originally received, which has been corrected.
+
+ * Various glitches in "git gc" around reflog handling have been fixed.
+
+ * The code to read from commit-graph file has been cleanup with more
+   careful error checking before using data read from it.
+
+ * Performance fix around "git fetch" that grabs many refs.
+   (merge b764300912 jt/fetch-pack-wanted-refs-optim later to maint).
+
+ * Protocol v2 support in "git fetch-pack" of shallow clones has been
+   corrected.
+
+ * Performance fix around "git blame", especially in a linear history
+   (which is the norm we should optimize for).
+   (merge f892014943 dk/blame-keep-origin-blob later to maint).
+
+ * Performance fix for "rev-list --parents -- pathspec".
+   (merge 8320b1dbe7 jk/revision-rewritten-parents-in-prio-queue later to maint).
+
+ * Updating the display with progress message has been cleaned up to
+   deal better with overlong messages.
+   (merge 545dc345eb sg/overlong-progress-fix later to maint).
+
+ * "git blame -- path" in a non-bare repository starts blaming from
+   the working tree, and the same command in a bare repository errors
+   out because there is no working tree by definition.  The command
+   has been taught to instead start blaming from the commit at HEAD,
+   which is more useful.
+   (merge a544fb08f8 sg/blame-in-bare-start-at-head later to maint).
+
+ * An underallocation in the code to read the untracked cache
+   extension has been corrected.
+   (merge 3a7b45a623 js/untracked-cache-allocfix later to maint).
+
+ * The code is updated to check the result of memory allocation before
+   it is used in more places, by using xmalloc and/or xcalloc calls.
+   (merge 999b951b28 jk/xmalloc later to maint).
+
+ * The GETTEXT_POISON test option has been quite broken ever since it
+   was made runtime-tunable, which has been fixed.
+   (merge f88b9cb603 jc/gettext-test-fix later to maint).
+
+ * Test fix on APFS that is incapable of store paths in Latin-1.
+   (merge 3889149619 js/iso8895-test-on-apfs later to maint).
+
+ * "git submodule foreach <command> --quiet" did not pass the option
+   down correctly, which has been corrected.
+   (merge a282f5a906 nd/submodule-foreach-quiet later to maint).
+
+ * "git send-email" has been taught to use quoted-printable when the
+   payload contains carriage-return.  The use of the mechanism is in
+   line with the design originally added the codepath that chooses QP
+   when the payload has overly long lines.
+   (merge 74d76a1701 bc/send-email-qp-cr later to maint).
+
+ * The recently added feature to add addresses that are on
+   anything-by: trailers in 'git send-email' was found to be way too
+   eager and considered nonsense strings as if they can be legitimate
+   beginning of *-by: trailer.  This has been tightened.
+
+ * Build with gettext breaks on recent macOS w/ Homebrew when
+   /usr/local/bin is not on PATH, which has been corrected.
+   (merge 92a1377a2a js/macos-gettext-build later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
    (merge 90503a240b js/doc-symref-in-proto-v1 later to maint).
@@ -267,3 +378,10 @@ Fixes since v2.21
    (merge 0b918b75af sg/t5318-cleanup later to maint).
    (merge 68ed71b53c cb/doco-mono later to maint).
    (merge a34dca2451 nd/interpret-trailers-docfix later to maint).
+   (merge cf7b857a77 en/fast-import-parsing-fix later to maint).
+   (merge fe61ccbc35 po/rerere-doc-fmt later to maint).
+   (merge ffea0248bf po/describe-not-necessarily-7 later to maint).
+   (merge 7cb7283adb tg/ls-files-debug-format-fix later to maint).
+   (merge f64a21bd82 tz/doc-apostrophe-no-longer-needed later to maint).
+   (merge dbe7b41019 js/t3301-unbreak-notes-test later to maint).
+   (merge d8083e4180 km/t3000-retitle later to maint).
