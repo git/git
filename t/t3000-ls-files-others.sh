@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git ls-files test (--others should pick up symlinks).
+test_description='basic tests for ls-files --others
 
 This test runs git ls-files --others with the following on the
 filesystem.
