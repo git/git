@@ -763,9 +763,19 @@ AC_CHECK_LIB([c], [basename],
 GIT_CONF_SUBST([NEEDS_LIBGEN])
 test -n "$NEEDS_LIBGEN" && LIBS="$LIBS -lgen"
 
-AC_CHECK_LIB([c], [gettext],
-[LIBC_CONTAINS_LIBINTL=YesPlease],
-[LIBC_CONTAINS_LIBINTL=])
+AC_DEFUN([LIBINTL_SRC], [
+AC_LANG_PROGRAM([[
+#include <libintl.h>
+]],[[
+char *msg = gettext("test");
+]])])
+
+AC_MSG_CHECKING([if libc contains libintl])
+AC_LINK_IFELSE([LIBINTL_SRC],
+	[AC_MSG_RESULT([yes])
+	LIBC_CONTAINS_LIBINTL=YesPlease],
+	[AC_MSG_RESULT([no])
+	LIBC_CONTAINS_LIBINTL=])
 GIT_CONF_SUBST([LIBC_CONTAINS_LIBINTL])
 
 #
