@@ -65,6 +65,7 @@ struct checkout_opts {
 	int only_merge_on_switching_branches;
 	int can_switch_when_in_progress;
 	int orphan_from_empty_tree;
+	int empty_pathspec_ok;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -1515,6 +1516,10 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			die(_("reference is not a tree: %s"), opts->from_treeish);
 	}
 
+	if (opts->accept_pathspec && !opts->empty_pathspec_ok && !argc &&
+	    !opts->patch_mode)	/* patch mode is special */
+		die(_("you must specify path(s) to restore"));
+
 	if (argc) {
 		parse_pathspec(&opts->pathspec, 0,
 			       opts->patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
@@ -1601,6 +1606,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	opts.implicit_detach = 1;
 	opts.can_switch_when_in_progress = 1;
 	opts.orphan_from_empty_tree = 0;
+	opts.empty_pathspec_ok = 1;
 
 	options = parse_options_dup(checkout_options);
 	options = add_common_options(&opts, options);
@@ -1664,6 +1670,7 @@ int cmd_restore(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 	opts.accept_ref = 0;
 	opts.accept_pathspec = 1;
+	opts.empty_pathspec_ok = 0;
 
 	options = parse_options_dup(restore_options);
 	options = add_common_options(&opts, options);
