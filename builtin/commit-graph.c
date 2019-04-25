@@ -42,6 +42,9 @@ static int graph_verify(int argc, const char **argv)
 {
 	struct commit_graph *graph = NULL;
 	char *graph_name;
+	int open_ok;
+	int fd;
+	struct stat st;
 
 	static struct option builtin_commit_graph_verify_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
@@ -58,11 +61,16 @@ static int graph_verify(int argc, const char **argv)
 		opts.obj_dir = get_object_directory();
 
 	graph_name = get_commit_graph_filename(opts.obj_dir);
-	graph = load_commit_graph_one(graph_name);
+	open_ok = open_commit_graph(graph_name, &fd, &st);
+	if (!open_ok && errno == ENOENT)
+		return 0;
+	if (!open_ok)
+		die_errno(_("Could not open commit-graph '%s'"), graph_name);
+	graph = load_commit_graph_one_fd_st(fd, &st);
 	FREE_AND_NULL(graph_name);
 
 	if (!graph)
-		return 0;
+		return 1;
 
 	UNLEAK(graph);
 	return verify_commit_graph(the_repository, graph);
@@ -72,6 +80,9 @@ static int graph_read(int argc, const char **argv)
 {
 	struct commit_graph *graph = NULL;
 	char *graph_name;
+	int open_ok;
+	int fd;
+	struct stat st;
 
 	static struct option builtin_commit_graph_read_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
@@ -88,10 +99,14 @@ static int graph_read(int argc, const char **argv)
 		opts.obj_dir = get_object_directory();
 
 	graph_name = get_commit_graph_filename(opts.obj_dir);
-	graph = load_commit_graph_one(graph_name);
 
+	open_ok = open_commit_graph(graph_name, &fd, &st);
+	if (!open_ok)
+		die_errno(_("Could not open commit-graph '%s'"), graph_name);
+
+	graph = load_commit_graph_one_fd_st(fd, &st);
 	if (!graph)
-		die("graph file %s does not exist", graph_name);
+		return 1;
 
 	FREE_AND_NULL(graph_name);
 

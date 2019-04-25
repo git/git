@@ -7,10 +7,12 @@
 #include "cache.h"
 
 #define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
+#define GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD "GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD"
 
 struct commit;
 
 char *get_commit_graph_filename(const char *obj_dir);
+int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 
 /*
  * Given a commit struct, try to fill the commit struct info, including:
@@ -52,7 +54,7 @@ struct commit_graph {
 	const unsigned char *chunk_extra_edges;
 };
 
-struct commit_graph *load_commit_graph_one(const char *graph_file);
+struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st);
 
 struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 					size_t graph_size);
