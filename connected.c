@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "object-store.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "connected.h"
@@ -47,6 +48,22 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		strbuf_addstr(&idx_file, ".idx");
 		new_pack = add_packed_git(idx_file.buf, idx_file.len, 1);
 		strbuf_release(&idx_file);
+	}
+
+	if (opt->check_refs_only) {
+		/*
+		 * For partial clones, we don't want to have to do a regular
+		 * connectivity check because we have to enumerate and exclude
+		 * all promisor objects (slow), and then the connectivity check
+		 * itself becomes a no-op because in a partial clone every
+		 * object is a promisor object. Instead, just make sure we
+		 * received the objects pointed to by each wanted ref.
+		 */
+		do {
+			if (!repo_has_object_file(the_repository, &oid))
+				return 1;
+		} while (!fn(cb_data, &oid));
+		return 0;
 	}
 
 	if (opt->shallow_file) {
