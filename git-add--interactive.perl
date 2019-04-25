@@ -1195,10 +1195,10 @@ sub edit_hunk_loop {
 		# delta from the original unedited hunk.
 		$hunk->{OFS_DELTA} and
 				$newhunk->{OFS_DELTA} += $hunk->{OFS_DELTA};
-		if (diff_applies($head,
-				 @{$hunks}[0..$ix-1],
-				 $newhunk,
-				 @{$hunks}[$ix+1..$#{$hunks}])) {
+		my @hunk = @{$hunks};
+		splice (@hunk, $ix, 1, $newhunk);
+		@hunk = coalesce_overlapping_hunks(@hunk);
+		if (diff_applies($head, @hunk)) {
 			$newhunk->{DISPLAY} = [color_diff(@{$newtext})];
 			return $newhunk;
 		}
