@@ -181,7 +181,7 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_ALL;
 			opts->explicit_cleanup = 1;
 		} else if (!strcmp(s, "scissors")) {
-			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SPACE;
+			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SCISSORS;
 			opts->explicit_cleanup = 1;
 		} else {
 			warning(_("invalid commit message cleanup mode '%s'"),
@@ -515,10 +515,53 @@ static int fast_forward_to(struct repository *r,
 	return 0;
 }
 
+enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
+	int use_editor)
+{
+	if (!cleanup_arg || !strcmp(cleanup_arg, "default"))
+		return use_editor ? COMMIT_MSG_CLEANUP_ALL :
+				    COMMIT_MSG_CLEANUP_SPACE;
+	else if (!strcmp(cleanup_arg, "verbatim"))
+		return COMMIT_MSG_CLEANUP_NONE;
+	else if (!strcmp(cleanup_arg, "whitespace"))
+		return COMMIT_MSG_CLEANUP_SPACE;
+	else if (!strcmp(cleanup_arg, "strip"))
+		return COMMIT_MSG_CLEANUP_ALL;
+	else if (!strcmp(cleanup_arg, "scissors"))
+		return use_editor ? COMMIT_MSG_CLEANUP_SCISSORS :
+				    COMMIT_MSG_CLEANUP_SPACE;
+	else
+		die(_("Invalid cleanup mode %s"), cleanup_arg);
+}
+
+/*
+ * NB using int rather than enum cleanup_mode to stop clang's
+ * -Wtautological-constant-out-of-range-compare complaining that the comparison
+ * is always true.
+ */
+static const char *describe_cleanup_mode(int cleanup_mode)
+{
+	static const char *modes[] = { "whitespace",
+				       "verbatim",
+				       "scissors",
+				       "strip" };
+
+	if (cleanup_mode < ARRAY_SIZE(modes))
+		return modes[cleanup_mode];
+
+	BUG("invalid cleanup_mode provided (%d)", cleanup_mode);
+}
+
 void append_conflicts_hint(struct index_state *istate,
-			   struct strbuf *msgbuf)
+	struct strbuf *msgbuf, enum commit_msg_cleanup_mode cleanup_mode)
 {
 	int i;
+
+	if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
+		strbuf_addch(msgbuf, '\n');
+		wt_status_append_cut_line(msgbuf);
+		strbuf_addch(msgbuf, comment_line_char);
+	}
 
 	strbuf_addch(msgbuf, '\n');
 	strbuf_commented_addf(msgbuf, "Conflicts:\n");
@@ -587,7 +630,8 @@ static int do_recursive_merge(struct repository *r,
 			_(action_name(opts)));
 
 	if (!clean)
-		append_conflicts_hint(r->index, msgbuf);
+		append_conflicts_hint(r->index, msgbuf,
+				      opts->default_msg_cleanup);
 
 	return !clean;
 }
@@ -906,7 +950,6 @@ static int run_git_commit(struct repository *r,
 			  unsigned int flags)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
-	const char *value;
 
 	if ((flags & CREATE_ROOT_COMMIT) && !(flags & AMEND_MSG)) {
 		struct strbuf msg = STRBUF_INIT, script = STRBUF_INIT;
@@ -976,7 +1019,7 @@ static int run_git_commit(struct repository *r,
 		argv_array_push(&cmd.args, "-e");
 	else if (!(flags & CLEANUP_MSG) &&
 		 !opts->signoff && !opts->record_origin &&
-		 git_config_get_value("commit.cleanup", &value))
+		 !opts->explicit_cleanup)
 		argv_array_push(&cmd.args, "--cleanup=verbatim");
 
 	if ((flags & ALLOW_EMPTY))
@@ -1015,6 +1058,16 @@ static int rest_is_empty(const struct strbuf *sb, int start)
 	}
 
 	return 1;
+}
+
+void cleanup_message(struct strbuf *msgbuf,
+	enum commit_msg_cleanup_mode cleanup_mode, int verbose)
+{
+	if (verbose || /* Truncate the message just before the diff, if any. */
+	    cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
+		strbuf_setlen(msgbuf, wt_status_locate_end(msgbuf->buf, msgbuf->len));
+	if (cleanup_mode != COMMIT_MSG_CLEANUP_NONE)
+		strbuf_stripspace(msgbuf, cleanup_mode == COMMIT_MSG_CLEANUP_ALL);
 }
 
 /*
@@ -2313,7 +2366,10 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 		opts->allow_rerere_auto =
 			git_config_bool_or_int(key, value, &error_flag) ?
 				RERERE_AUTOUPDATE : RERERE_NOAUTOUPDATE;
-	else
+	else if (!strcmp(key, "options.default-msg-cleanup")) {
+		opts->explicit_cleanup = 1;
+		opts->default_msg_cleanup = get_cleanup_mode(value, 1);
+	} else
 		return error(_("invalid key: %s"), key);
 
 	if (!error_flag)
@@ -2735,6 +2791,11 @@ static int save_opts(struct replay_opts *opts)
 				"options.allow-rerere-auto",
 				opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
 				"true" : "false");
+
+	if (opts->explicit_cleanup)
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.default-msg-cleanup",
+				describe_cleanup_mode(opts->default_msg_cleanup));
 	return res;
 }
 
