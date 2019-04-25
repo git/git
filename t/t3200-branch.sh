@@ -264,6 +264,30 @@ test_expect_success 'git branch --list -d t should fail' '
 	test_must_fail git rev-parse refs/heads/t
 '
 
+test_expect_success 'deleting checked-out branch from repo that is a submodule' '
+	test_when_finished "rm -rf repo1 repo2" &&
+
+	git init repo1 &&
+	git init repo1/sub &&
+	test_commit -C repo1/sub x &&
+	git -C repo1 submodule add ./sub &&
+	git -C repo1 commit -m "adding sub" &&
+
+	git clone --recurse-submodules repo1 repo2 &&
+	git -C repo2/sub checkout -b work &&
+	test_must_fail git -C repo2/sub branch -D work
+'
+
+test_expect_success 'bare main worktree has HEAD at branch deleted by secondary worktree' '
+	test_when_finished "rm -rf nonbare base secondary" &&
+
+	git init nonbare &&
+	test_commit -C nonbare x &&
+	git clone --bare nonbare bare &&
+	git -C bare worktree add --detach ../secondary master &&
+	git -C secondary branch -D master
+'
+
 test_expect_success 'git branch --list -v with --abbrev' '
 	test_when_finished "git branch -D t" &&
 	git branch t &&
