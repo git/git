@@ -17,34 +17,34 @@ extern struct trace_key trace_default_key;
 extern struct trace_key trace_perf_key;
 extern struct trace_key trace_setup_key;
 
-extern void trace_repo_setup(const char *prefix);
-extern int trace_want(struct trace_key *key);
-extern void trace_disable(struct trace_key *key);
-extern uint64_t getnanotime(void);
-extern void trace_command_performance(const char **argv);
-extern void trace_verbatim(struct trace_key *key, const void *buf, unsigned len);
+void trace_repo_setup(const char *prefix);
+int trace_want(struct trace_key *key);
+void trace_disable(struct trace_key *key);
+uint64_t getnanotime(void);
+void trace_command_performance(const char **argv);
+void trace_verbatim(struct trace_key *key, const void *buf, unsigned len);
 uint64_t trace_performance_enter(void);
 
 #ifndef HAVE_VARIADIC_MACROS
 
 __attribute__((format (printf, 1, 2)))
-extern void trace_printf(const char *format, ...);
+void trace_printf(const char *format, ...);
 
 __attribute__((format (printf, 2, 3)))
-extern void trace_printf_key(struct trace_key *key, const char *format, ...);
+void trace_printf_key(struct trace_key *key, const char *format, ...);
 
 __attribute__((format (printf, 2, 3)))
-extern void trace_argv_printf(const char **argv, const char *format, ...);
+void trace_argv_printf(const char **argv, const char *format, ...);
 
-extern void trace_strbuf(struct trace_key *key, const struct strbuf *data);
+void trace_strbuf(struct trace_key *key, const struct strbuf *data);
 
 /* Prints elapsed time (in nanoseconds) if GIT_TRACE_PERFORMANCE is enabled. */
 __attribute__((format (printf, 2, 3)))
-extern void trace_performance(uint64_t nanos, const char *format, ...);
+void trace_performance(uint64_t nanos, const char *format, ...);
 
 /* Prints elapsed time since 'start' if GIT_TRACE_PERFORMANCE is enabled. */
 __attribute__((format (printf, 2, 3)))
-extern void trace_performance_since(uint64_t start, const char *format, ...);
+void trace_performance_since(uint64_t start, const char *format, ...);
 
 __attribute__((format (printf, 1, 2)))
 void trace_performance_leave(const char *format, ...);
@@ -132,19 +132,19 @@ void trace_performance_leave(const char *format, ...);
 
 /* backend functions, use non-*fl macros instead */
 __attribute__((format (printf, 4, 5)))
-extern void trace_printf_key_fl(const char *file, int line, struct trace_key *key,
-				const char *format, ...);
+void trace_printf_key_fl(const char *file, int line, struct trace_key *key,
+			 const char *format, ...);
 __attribute__((format (printf, 4, 5)))
-extern void trace_argv_printf_fl(const char *file, int line, const char **argv,
-				 const char *format, ...);
-extern void trace_strbuf_fl(const char *file, int line, struct trace_key *key,
-			    const struct strbuf *data);
+void trace_argv_printf_fl(const char *file, int line, const char **argv,
+			  const char *format, ...);
+void trace_strbuf_fl(const char *file, int line, struct trace_key *key,
+		     const struct strbuf *data);
 __attribute__((format (printf, 4, 5)))
-extern void trace_performance_fl(const char *file, int line,
-				 uint64_t nanos, const char *fmt, ...);
+void trace_performance_fl(const char *file, int line,
+			  uint64_t nanos, const char *fmt, ...);
 __attribute__((format (printf, 4, 5)))
-extern void trace_performance_leave_fl(const char *file, int line,
-				       uint64_t nanos, const char *fmt, ...);
+void trace_performance_leave_fl(const char *file, int line,
+				uint64_t nanos, const char *fmt, ...);
 static inline int trace_pass_fl(struct trace_key *key)
 {
 	return key->fd || !key->initialized;

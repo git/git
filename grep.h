@@ -186,17 +186,17 @@ struct grep_opt {
 	void *output_priv;
 };
 
-extern void init_grep_defaults(struct repository *);
-extern int grep_config(const char *var, const char *value, void *);
-extern void grep_init(struct grep_opt *, struct repository *repo, const char *prefix);
+void init_grep_defaults(struct repository *);
+int grep_config(const char *var, const char *value, void *);
+void grep_init(struct grep_opt *, struct repository *repo, const char *prefix);
 void grep_commit_pattern_type(enum grep_pattern_type, struct grep_opt *opt);
 
-extern void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);
-extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
-extern void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
-extern void compile_grep_patterns(struct grep_opt *opt);
-extern void free_grep_patterns(struct grep_opt *opt);
-extern int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size);
+void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);
+void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
+void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
+void compile_grep_patterns(struct grep_opt *opt);
+void free_grep_patterns(struct grep_opt *opt);
+int grep_buffer(struct grep_opt *opt, char *buf, unsigned long size);
 
 struct grep_source {
 	char *name;
@@ -226,8 +226,8 @@ void grep_source_load_driver(struct grep_source *gs,
 
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 
-extern struct grep_opt *grep_opt_dup(const struct grep_opt *opt);
-extern int grep_threads_ok(const struct grep_opt *opt);
+struct grep_opt *grep_opt_dup(const struct grep_opt *opt);
+int grep_threads_ok(const struct grep_opt *opt);
 
 /*
  * Mutex used around access to the attributes machinery if

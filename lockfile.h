@@ -159,7 +159,7 @@ struct lock_file {
  * timeout_ms is -1, retry indefinitely. The flags argument and error
  * handling are described above.
  */
-extern int hold_lock_file_for_update_timeout(
+int hold_lock_file_for_update_timeout(
 		struct lock_file *lk, const char *path,
 		int flags, long timeout_ms);
 
@@ -188,8 +188,8 @@ static inline int is_lock_file_locked(struct lock_file *lk)
  * of `hold_lock_file_for_update()` to lock `path`. `err` should be the
  * `errno` set by the failing call.
  */
-extern void unable_to_lock_message(const char *path, int err,
-				   struct strbuf *buf);
+void unable_to_lock_message(const char *path, int err,
+			    struct strbuf *buf);
 
 /*
  * Emit an appropriate error message and `die()` following the failure
@@ -197,7 +197,7 @@ extern void unable_to_lock_message(const char *path, int err,
  * `errno` set by the failing
  * call.
  */
-extern NORETURN void unable_to_lock_die(const char *path, int err);
+NORETURN void unable_to_lock_die(const char *path, int err);
 
 /*
  * Associate a stdio stream with the lockfile (which must still be
@@ -234,7 +234,7 @@ static inline FILE *get_lock_file_fp(struct lock_file *lk)
  * Return the path of the file that is locked by the specified
  * lock_file object. The caller must free the memory.
  */
-extern char *get_locked_file_path(struct lock_file *lk);
+char *get_locked_file_path(struct lock_file *lk);
 
 /*
  * If the lockfile is still open, close it (and the file pointer if it
@@ -282,7 +282,7 @@ static inline int reopen_lock_file(struct lock_file *lk)
  * call `commit_lock_file()` for a `lock_file` object that is not
  * currently locked.
  */
-extern int commit_lock_file(struct lock_file *lk);
+int commit_lock_file(struct lock_file *lk);
 
 /*
  * Like `commit_lock_file()`, but rename the lockfile to the provided

@@ -177,6 +177,6 @@ struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 					long start, long end,
 					struct blame_origin *o);
 
-extern struct blame_origin *get_blame_suspects(struct commit *commit);
+struct blame_origin *get_blame_suspects(struct commit *commit);
 
 #endif /* BLAME_H */

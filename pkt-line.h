@@ -172,9 +172,9 @@ struct packet_reader {
  * Initialize a 'struct packet_reader' object which is an
  * abstraction around the 'packet_read_with_status()' function.
  */
-extern void packet_reader_init(struct packet_reader *reader, int fd,
-			       char *src_buffer, size_t src_len,
-			       int options);
+void packet_reader_init(struct packet_reader *reader, int fd,
+			char *src_buffer, size_t src_len,
+			int options);
 
 /*
  * Perform a packet read and return the status of the read.
@@ -186,7 +186,7 @@ extern void packet_reader_init(struct packet_reader *reader, int fd,
  *		       'line' is set to point at the read line
  * PACKET_READ_FLUSH: 'pktlen' is set to '0' and 'line' is set to NULL
  */
-extern enum packet_read_status packet_reader_read(struct packet_reader *reader);
+enum packet_read_status packet_reader_read(struct packet_reader *reader);
 
 /*
  * Peek the next packet line without consuming it and return the status.
@@ -196,7 +196,7 @@ extern enum packet_read_status packet_reader_read(struct packet_reader *reader);
  * Peeking multiple times without calling 'packet_reader_read()' will return
  * the same result.
  */
-extern enum packet_read_status packet_reader_peek(struct packet_reader *reader);
+enum packet_read_status packet_reader_peek(struct packet_reader *reader);
 
 #define DEFAULT_PACKET_MAX 1000
 #define LARGE_PACKET_MAX 65520

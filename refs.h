@@ -111,7 +111,7 @@ int should_autocreate_reflog(const char *refname);
 
 int is_branch(const char *refname);
 
-extern int refs_init_db(struct strbuf *err);
+int refs_init_db(struct strbuf *err);
 
 /*
  * If refname is a non-symbolic reference that refers to a tag object,
