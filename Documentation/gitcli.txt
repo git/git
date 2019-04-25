@@ -47,8 +47,8 @@ disambiguating `--` at appropriate places.
    things:
 +
 --------------------------------
-$ git checkout -- *.c
-$ git checkout -- \*.c
+$ git restore *.c
+$ git restore \*.c
 --------------------------------
 +
 The former lets your shell expand the fileglob, and you are asking

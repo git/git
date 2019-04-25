@@ -1446,7 +1446,7 @@ mistake, you can return the entire working tree to the last committed
 state with
 
 -------------------------------------------------
-$ git reset --hard HEAD
+$ git restore --staged --worktree :/
 -------------------------------------------------
 
 If you make a commit that you later wish you hadn't, there are two
@@ -1523,12 +1523,10 @@ Checking out an old version of a file
 
 In the process of undoing a previous bad change, you may find it
 useful to check out an older version of a particular file using
-linkgit:git-checkout[1].  We've used `git checkout` before to switch
-branches, but it has quite different behavior if it is given a path
-name: the command
+linkgit:git-restore[1]. The command
 
 -------------------------------------------------
-$ git checkout HEAD^ path/to/file
+$ git restore --source=HEAD^ path/to/file
 -------------------------------------------------
 
 replaces path/to/file by the contents it had in the commit HEAD^, and
@@ -3800,8 +3798,8 @@ use linkgit:git-tag[1] for both.
 The Workflow
 ------------
 
-High-level operations such as linkgit:git-commit[1],
-linkgit:git-checkout[1] and linkgit:git-reset[1] work by moving data
+High-level operations such as linkgit:git-commit[1] and
+linkgit:git-restore[1] work by moving data
 between the working tree, the index, and the object database.  Git
 provides low-level operations which perform each of these steps
 individually.

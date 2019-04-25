@@ -1676,7 +1676,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (commit_index_files())
 		die(_("repository has been updated, but unable to write\n"
 		      "new_index file. Check that disk is not full and quota is\n"
-		      "not exceeded, and then \"git reset HEAD\" to recover."));
+		      "not exceeded, and then \"git restore --staged :/\" to recover."));
 
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH, 0))
 		write_commit_graph_reachable(get_object_directory(), 0, 0);
