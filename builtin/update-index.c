@@ -1082,6 +1082,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	if (entries < 0)
 		die("cache corrupted");
 
+	the_index.updated_skipworktree = 1;
+
 	/*
 	 * Custom copy of parse_options() because we want to handle
 	 * filename arguments as they come.
