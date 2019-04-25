@@ -2153,11 +2153,11 @@ add_pack:
 int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 {
 	struct http_get_options options = {0};
-	int ret = 0, i = 0;
-	char *url, *data;
+	int ret = 0;
+	char *url;
+	const char *data;
 	struct strbuf buf = STRBUF_INIT;
-	unsigned char hash[GIT_MAX_RAWSZ];
-	const unsigned hexsz = the_hash_algo->hexsz;
+	struct object_id oid;
 
 	end_url_with_slash(&buf, base_url);
 	strbuf_addstr(&buf, "objects/info/packs");
@@ -2169,24 +2169,17 @@ int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 		goto cleanup;
 
 	data = buf.buf;
-	while (i < buf.len) {
-		switch (data[i]) {
-		case 'P':
-			i++;
-			if (i + hexsz + 12 <= buf.len &&
-			    starts_with(data + i, " pack-") &&
-			    starts_with(data + i + hexsz + 6, ".pack\n")) {
-				get_sha1_hex(data + i + 6, hash);
-				fetch_and_setup_pack_index(packs_head, hash,
-						      base_url);
-				i += hexsz + 11;
-				break;
-			}
-		default:
-			while (i < buf.len && data[i] != '\n')
-				i++;
+	while (*data) {
+		if (skip_prefix(data, "P pack-", &data) &&
+		    !parse_oid_hex(data, &oid, &data) &&
+		    skip_prefix(data, ".pack", &data) &&
+		    (*data == '\n' || *data == '\0')) {
+			fetch_and_setup_pack_index(packs_head, oid.hash, base_url);
+		} else {
+			data = strchrnul(data, '\n');
 		}
-		i++;
+		if (*data)
+			data++; /* skip past newline */
 	}
 
 cleanup:

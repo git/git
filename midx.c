@@ -311,7 +311,39 @@ int fill_midx_entry(const struct object_id *oid, struct pack_entry *e, struct mu
 	return nth_midxed_pack_entry(m, e, pos);
 }
 
-int midx_contains_pack(struct multi_pack_index *m, const char *idx_name)
+/* Match "foo.idx" against either "foo.pack" _or_ "foo.idx". */
+static int cmp_idx_or_pack_name(const char *idx_or_pack_name,
+				const char *idx_name)
+{
+	/* Skip past any initial matching prefix. */
+	while (*idx_name && *idx_name == *idx_or_pack_name) {
+		idx_name++;
+		idx_or_pack_name++;
+	}
+
+	/*
+	 * If we didn't match completely, we may have matched "pack-1234." and
+	 * be left with "idx" and "pack" respectively, which is also OK. We do
+	 * not have to check for "idx" and "idx", because that would have been
+	 * a complete match (and in that case these strcmps will be false, but
+	 * we'll correctly return 0 from the final strcmp() below.
+	 *
+	 * Technically this matches "fooidx" and "foopack", but we'd never have
+	 * such names in the first place.
+	 */
+	if (!strcmp(idx_name, "idx") && !strcmp(idx_or_pack_name, "pack"))
+		return 0;
+
+	/*
+	 * This not only checks for a complete match, but also orders based on
+	 * the first non-identical character, which means our ordering will
+	 * match a raw strcmp(). That makes it OK to use this to binary search
+	 * a naively-sorted list.
+	 */
+	return strcmp(idx_or_pack_name, idx_name);
+}
+
+int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
 {
 	uint32_t first = 0, last = m->num_packs;
 
@@ -321,7 +353,7 @@ int midx_contains_pack(struct multi_pack_index *m, const char *idx_name)
 		int cmp;
 
 		current = m->pack_names[mid];
-		cmp = strcmp(idx_name, current);
+		cmp = cmp_idx_or_pack_name(idx_or_pack_name, current);
 		if (!cmp)
 			return 1;
 		if (cmp > 0) {

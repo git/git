@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pack-revindex.h"
 #include "object-store.h"
+#include "packfile.h"
 
 /*
  * Pack index for existing packs give us easy access to the offsets into
@@ -158,10 +159,14 @@ static void create_pack_revindex(struct packed_git *p)
 	sort_revindex(p->revindex, num_ent, p->pack_size);
 }
 
-void load_pack_revindex(struct packed_git *p)
+int load_pack_revindex(struct packed_git *p)
 {
-	if (!p->revindex)
+	if (!p->revindex) {
+		if (open_pack_index(p))
+			return -1;
 		create_pack_revindex(p);
+	}
+	return 0;
 }
 
 int find_revindex_position(struct packed_git *p, off_t ofs)
@@ -188,7 +193,9 @@ struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
 {
 	int pos;
 
-	load_pack_revindex(p);
+	if (load_pack_revindex(p))
+		return NULL;
+
 	pos = find_revindex_position(p, ofs);
 
 	if (pos < 0)
