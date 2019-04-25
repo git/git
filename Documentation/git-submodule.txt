@@ -15,6 +15,7 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] deinit [-f|--force] (--all|[--] <path>...)
 'git submodule' [--quiet] update [<options>] [--] [<path>...]
+'git submodule' [--quiet] set-branch [<options>] [--] <path>
 'git submodule' [--quiet] summary [<options>] [--] [<path>...]
 'git submodule' [--quiet] foreach [--recursive] <command>
 'git submodule' [--quiet] sync [--recursive] [--] [<path>...]
@@ -172,6 +173,12 @@ submodule with the `--init` option.
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
 --
+set-branch ((-d|--default)|(-b|--branch <branch>)) [--] <path>::
+	Sets the default remote tracking branch for the submodule. The
+	`--branch` option allows the remote branch to be specified. The
+	`--default` option removes the submodule.<name>.branch configuration
+	key, which causes the tracking branch to default to 'master'.
+
 summary [--cached|--files] [(-n|--summary-limit) <n>] [commit] [--] [<path>...]::
 	Show commit summary between the given commit (defaults to HEAD) and
 	working tree/index. For a submodule in question, a series of commits
@@ -259,13 +266,14 @@ OPTIONS
 	This option is only valid for the deinit command. Unregister all
 	submodules in the working tree.
 
--b::
---branch::
+-b <branch>::
+--branch <branch>::
 	Branch of repository to add as submodule.
 	The name of the branch is recorded as `submodule.<name>.branch` in
 	`.gitmodules` for `update --remote`.  A special value of `.` is used to
 	indicate that the name of the branch in the submodule should be the
-	same name as the current branch in the current repository.
+	same name as the current branch in the current repository.  If the
+	option is not specified, it defaults to 'master'.
 
 -f::
 --force::

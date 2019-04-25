@@ -2147,17 +2147,22 @@ static int check_name(int argc, const char **argv, const char *prefix)
 static int module_config(int argc, const char **argv, const char *prefix)
 {
 	enum {
-		CHECK_WRITEABLE = 1
+		CHECK_WRITEABLE = 1,
+		DO_UNSET = 2
 	} command = 0;
 
 	struct option module_config_options[] = {
 		OPT_CMDMODE(0, "check-writeable", &command,
 			    N_("check if it is safe to write to the .gitmodules file"),
 			    CHECK_WRITEABLE),
+		OPT_CMDMODE(0, "unset", &command,
+			    N_("unset the config in the .gitmodules file"),
+			    DO_UNSET),
 		OPT_END()
 	};
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper config name [value]"),
+		N_("git submodule--helper config <name> [<value>]"),
+		N_("git submodule--helper config --unset <name>"),
 		N_("git submodule--helper config --check-writeable"),
 		NULL
 	};
@@ -2169,15 +2174,17 @@ static int module_config(int argc, const char **argv, const char *prefix)
 		return is_writing_gitmodules_ok() ? 0 : -1;
 
 	/* Equivalent to ACTION_GET in builtin/config.c */
-	if (argc == 2)
+	if (argc == 2 && command != DO_UNSET)
 		return print_config_from_gitmodules(the_repository, argv[1]);
 
 	/* Equivalent to ACTION_SET in builtin/config.c */
-	if (argc == 3) {
+	if (argc == 3 || (argc == 2 && command == DO_UNSET)) {
+		const char *value = (argc == 3) ? argv[2] : NULL;
+
 		if (!is_writing_gitmodules_ok())
 			die(_("please make sure that the .gitmodules file is in the working tree"));
 
-		return config_set_in_gitmodules_file_gently(argv[1], argv[2]);
+		return config_set_in_gitmodules_file_gently(argv[1], value);
 	}
 
 	usage_with_options(git_submodule_helper_usage, module_config_options);
