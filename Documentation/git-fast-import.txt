@@ -422,7 +422,12 @@ However it is recommended that a `filedeleteall` command precede
 all `filemodify`, `filecopy`, `filerename` and `notemodify` commands in
 the same commit, as `filedeleteall` wipes the branch clean (see below).
 
-The `LF` after the command is optional (it used to be required).
+The `LF` after the command is optional (it used to be required).  Note
+that for reasons of backward compatibility, if the commit ends with a
+`data` command (i.e. it has has no `from`, `merge`, `filemodify`,
+`filedelete`, `filecopy`, `filerename`, `filedeleteall` or
+`notemodify` commands) then two `LF` commands may appear at the end of
+the command instead of just one.
 
 `author`
 ^^^^^^^^
@@ -966,10 +971,6 @@ might want to refer to in their commit messages.
 	'get-mark' SP ':' <idnum> LF
 ....
 
-This command can be used anywhere in the stream that comments are
-accepted.  In particular, the `get-mark` command can be used in the
-middle of a commit but not in the middle of a `data` command.
-
 See ``Responses To Commands'' below for details about how to read
 this output safely.
 
@@ -996,9 +997,10 @@ Output uses the same format as `git cat-file --batch`:
 	<contents> LF
 ====
 
-This command can be used anywhere in the stream that comments are
-accepted.  In particular, the `cat-blob` command can be used in the
-middle of a commit but not in the middle of a `data` command.
+This command can be used where a `filemodify` directive can appear,
+allowing it to be used in the middle of a commit.  For a `filemodify`
+using an inline directive, it can also appear right before the `data`
+directive.
 
 See ``Responses To Commands'' below for details about how to read
 this output safely.
@@ -1011,8 +1013,8 @@ printing a blob from the active commit (with `cat-blob`) or copying a
 blob or tree from a previous commit for use in the current one (with
 `filemodify`).
 
-The `ls` command can be used anywhere in the stream that comments are
-accepted, including the middle of a commit.
+The `ls` command can also be used where a `filemodify` directive can
+appear, allowing it to be used in the middle of a commit.
 
 Reading from the active commit::
 	This form can only be used in the middle of a `commit`.

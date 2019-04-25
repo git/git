@@ -3262,4 +3262,41 @@ test_expect_success PIPE 'V: checkpoint updates tags after tag' '
 	background_import_still_running
 '
 
+###
+### series W (get-mark and empty orphan commits)
+###
+
+cat >>W-input <<-W_INPUT_END
+	commit refs/heads/W-branch
+	mark :1
+	author Full Name <user@company.tld> 1000000000 +0100
+	committer Full Name <user@company.tld> 1000000000 +0100
+	data 27
+	Intentionally empty commit
+	LFsget-mark :1
+	W_INPUT_END
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with no newlines' '
+	sed -e s/LFs// W-input | tr L "\n" | git fast-import
+'
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with one newline' '
+	sed -e s/LFs/L/ W-input | tr L "\n" | git fast-import
+'
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with ugly second newline' '
+	# Technically, this should fail as it has too many linefeeds
+	# according to the grammar in fast-import.txt.  But, for whatever
+	# reason, it works.  Since using the correct number of newlines
+	# does not work with older (pre-2.22) versions of git, allow apps
+	# that used this second-newline workaround to keep working by
+	# checking it with this test...
+	sed -e s/LFs/LL/ W-input | tr L "\n" | git fast-import
+'
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous third newline' '
+	# ...but do NOT allow more empty lines than that (see previous test).
+	sed -e s/LFs/LLL/ W-input | tr L "\n" | test_must_fail git fast-import
+'
+
 test_done
