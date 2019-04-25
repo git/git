@@ -376,7 +376,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 							ps_matched,
 							opts);
 
-	if (report_path_error(ps_matched, &opts->pathspec, opts->prefix)) {
+	if (report_path_error(ps_matched, &opts->pathspec)) {
 		free(ps_matched);
 		return 1;
 	}

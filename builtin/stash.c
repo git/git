@@ -1280,7 +1280,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			ce_path_match(&the_index, active_cache[i], ps,
 				      ps_matched);
 
-		if (report_path_error(ps_matched, ps, NULL)) {
+		if (report_path_error(ps_matched, ps)) {
 			fprintf_ln(stderr, _("Did you forget to 'git add'?"));
 			ret = -1;
 			free(ps_matched);

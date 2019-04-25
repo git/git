@@ -348,7 +348,7 @@ static int module_list_compute(int argc, const char **argv,
 			i++;
 	}
 
-	if (ps_matched && report_path_error(ps_matched, pathspec, prefix))
+	if (ps_matched && report_path_error(ps_matched, pathspec))
 		result = -1;
 
 	free(ps_matched);

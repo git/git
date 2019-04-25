@@ -234,7 +234,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		BUG("unknown protocol version");
 	}
 
-	ref = fetch_pack(&args, fd, conn, ref, dest, sought, nr_sought,
+	ref = fetch_pack(&args, fd, ref, sought, nr_sought,
 			 &shallow, pack_lockfile_ptr, version);
 	if (pack_lockfile) {
 		printf("lock %s\n", pack_lockfile);

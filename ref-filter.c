@@ -2337,8 +2337,13 @@ void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *arg)
 
 int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset)
 {
-	if (!arg) /* should --no-sort void the list ? */
-		return -1;
+	/*
+	 * NEEDSWORK: We should probably clear the list in this case, but we've
+	 * already munged the global used_atoms list, which would need to be
+	 * undone.
+	 */
+	BUG_ON_OPT_NEG(unset);
+
 	parse_ref_sorting(opt->value, arg);
 	return 0;
 }

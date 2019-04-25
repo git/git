@@ -314,7 +314,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 	int ret = 0;
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
-	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
 	struct ref *refs_tmp = NULL;
 
@@ -356,16 +355,16 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	switch (data->version) {
 	case protocol_v2:
-		refs = fetch_pack(&args, data->fd, data->conn,
+		refs = fetch_pack(&args, data->fd,
 				  refs_tmp ? refs_tmp : transport->remote_refs,
-				  dest, to_fetch, nr_heads, &data->shallow,
+				  to_fetch, nr_heads, &data->shallow,
 				  &transport->pack_lockfile, data->version);
 		break;
 	case protocol_v1:
 	case protocol_v0:
-		refs = fetch_pack(&args, data->fd, data->conn,
+		refs = fetch_pack(&args, data->fd,
 				  refs_tmp ? refs_tmp : transport->remote_refs,
-				  dest, to_fetch, nr_heads, &data->shallow,
+				  to_fetch, nr_heads, &data->shallow,
 				  &transport->pack_lockfile, data->version);
 		break;
 	case protocol_unknown_version:
@@ -389,7 +388,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	free_refs(refs_tmp);
 	free_refs(refs);
-	free(dest);
 	return ret;
 }
 
