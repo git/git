@@ -433,6 +433,16 @@ static int checkout_paths(const struct checkout_opts *opts,
 		die(_("'%s' must be used when '%s' is not specified"),
 		    "--worktree", "--source");
 
+	if (opts->checkout_index && !opts->checkout_worktree &&
+	    opts->writeout_stage)
+		die(_("'%s' or '%s' cannot be used with %s"),
+		    "--ours", "--theirs", "--staged");
+
+	if (opts->checkout_index && !opts->checkout_worktree &&
+	    opts->merge)
+		die(_("'%s' or '%s' cannot be used with %s"),
+		    "--merge", "--conflict", "--staged");
+
 	if (opts->patch_mode) {
 		const char *patch_mode;
 
