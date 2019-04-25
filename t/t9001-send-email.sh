@@ -481,6 +481,20 @@ test_expect_success $PREREQ 'long lines with auto encoding are quoted-printable'
 	grep "Content-Transfer-Encoding: quoted-printable" msgtxt1
 '
 
+test_expect_success $PREREQ 'carriage returns with auto encoding are quoted-printable' '
+	clean_fake_sendmail &&
+	cp $patches cr.patch &&
+	printf "this is a line\r\n" >>cr.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--transfer-encoding=auto \
+		--no-validate \
+		cr.patch &&
+	grep "Content-Transfer-Encoding: quoted-printable" msgtxt1
+'
+
 for enc in auto quoted-printable base64
 do
 	test_expect_success $PREREQ "--validate passes with encoding $enc" '
