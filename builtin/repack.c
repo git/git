@@ -14,7 +14,7 @@
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
-static int write_bitmaps;
+static int write_bitmaps = -1;
 static int use_delta_islands;
 static char *packdir, *packtmp;
 
@@ -333,6 +333,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	    (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE)))
 		die(_("--keep-unreachable and -A are incompatible"));
 
+	if (write_bitmaps < 0)
+		write_bitmaps = (pack_everything & ALL_INTO_ONE) &&
+				 is_bare_repository();
 	if (pack_kept_objects < 0)
 		pack_kept_objects = write_bitmaps;
 
