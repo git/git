@@ -488,6 +488,16 @@ proc parseviewrevs {view revs} {
     return $ret
 }
 
+# Escapes a list of filter paths to be passed to git log via stdin. Note that
+# paths must not be quoted.
+proc escape_filter_paths {paths} {
+	set escaped [list]
+	foreach path $paths {
+		lappend escaped [string map {\\ \\\\ "\ " "\\\ "} $path]
+	}
+	return $escaped
+}
+
 # Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
     global startmsecs commitidx viewcomplete curview
@@ -540,14 +550,17 @@ proc start_rev_list {view} {
         if {$revs eq {}} {
             return 0
         }
-        set args [concat $vflags($view) $revs]
+        set args $vflags($view)
     } else {
+        set revs {}
         set args $vorigargs($view)
     }
 
     if {[catch {
         set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args "--" $files] r]
+                        --parents --boundary $args --stdin \
+                        "<<[join [concat $revs "--" \
+                                [escape_filter_paths $files]] "\\n"]"] r]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return 0
@@ -689,13 +702,20 @@ proc updatecommits {} {
             set revs $newrevs
             set vposids($view) [lsort -unique [concat $oldpos $vposids($view)]]
         }
-        set args [concat $vflags($view) $revs --not $oldpos]
+        set args $vflags($view)
+        foreach r $oldpos {
+                lappend revs "^$r"
+        }
     } else {
+        set revs {}
         set args $vorigargs($view)
     }
     if {[catch {
         set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args "--" $vfilelimit($view)] r]
+                        --parents --boundary $args --stdin \
+                        "<<[join [concat $revs "--" \
+                                [escape_filter_paths \
+                                        $vfilelimit($view)]] "\\n"]"] r]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return
@@ -10366,10 +10386,16 @@ proc getallcommits {} {
             foreach id $seeds {
                 lappend ids "^$id"
             }
+            lappend ids "--"
         }
     }
     if {$ids ne {}} {
-        set fd [open [concat $cmd $ids] r]
+        if {$ids eq "--all"} {
+            set cmd [concat $cmd "--all"]
+        } else {
+            set cmd [concat $cmd --stdin "<<[join $ids "\\n"]"]
+        }
+        set fd [open $cmd r]
         fconfigure $fd -blocking 0
         incr allcommits
         nowbusy allcommits
