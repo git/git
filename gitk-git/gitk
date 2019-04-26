@@ -569,7 +569,7 @@ proc updatecommits {} {
 	set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
 			--parents --boundary $args --stdin \
 			"<<[join [concat $revs "--" \
-				$vfilelimit($view)] "\\n"]" r]
+				$vfilelimit($view)] "\\n"]"] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
 	return
