@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "config.h"
+#include "diff.h"
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
@@ -52,22 +53,6 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 	*p_before = atoi(q);
 	*p_after = atoi(r);
 	return 1;
-}
-
-static void flush_one_hunk(struct object_id *result, git_SHA_CTX *ctx)
-{
-	unsigned char hash[GIT_MAX_RAWSZ];
-	unsigned short carry = 0;
-	int i;
-
-	git_SHA1_Final(hash, ctx);
-	git_SHA1_Init(ctx);
-	/* 20-byte sum, with carry */
-	for (i = 0; i < GIT_SHA1_RAWSZ; ++i) {
-		carry += result->hash[i] + hash[i];
-		result->hash[i] = carry;
-		carry >>= 8;
-	}
 }
 
 static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
