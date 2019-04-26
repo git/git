@@ -583,7 +583,7 @@ of 'base commit' in topological order before the patches can be applied.
 The 'base commit' is shown as "base-commit: " followed by the 40-hex of
 the commit object name.  A 'prerequisite patch' is shown as
 "prerequisite-patch-id: " followed by the 40-hex 'patch id', which can
-be obtained by passing the patch through the `git patch-id --stable`
+be obtained by passing the patch through the `git patch-id --unstable`
 command.
 
 Imagine that on top of the public commit P, you applied well-known
