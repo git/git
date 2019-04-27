@@ -279,12 +279,18 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
 	return svc;
 }
 
+static void write_to_child(int out, const unsigned char *buf, ssize_t len, const char *prog_name)
+{
+	if (write_in_full(out, buf, len) < 0)
+		die("unable to write to '%s'", prog_name);
+}
+
 /*
  * This is basically strbuf_read(), except that if we
  * hit max_request_buffer we die (we'd rather reject a
  * maliciously large request than chew up infinite memory).
  */
-static ssize_t read_request(int fd, unsigned char **out)
+static ssize_t read_request_eof(int fd, unsigned char **out)
 {
 	size_t len = 0, alloc = 8192;
 	unsigned char *buf = xmalloc(alloc);
@@ -321,13 +327,54 @@ static ssize_t read_request(int fd, unsigned char **out)
 	}
 }
 
-static void inflate_request(const char *prog_name, int out, int buffer_input)
+static ssize_t read_request_fixed_len(int fd, ssize_t req_len, unsigned char **out)
+{
+	unsigned char *buf = NULL;
+	ssize_t cnt = 0;
+
+	if (max_request_buffer < req_len) {
+		die("request was larger than our maximum size (%lu): "
+		    "%" PRIuMAX "; try setting GIT_HTTP_MAX_REQUEST_BUFFER",
+		    max_request_buffer, (uintmax_t)req_len);
+	}
+
+	buf = xmalloc(req_len);
+	cnt = read_in_full(fd, buf, req_len);
+	if (cnt < 0) {
+		free(buf);
+		return -1;
+	}
+	*out = buf;
+	return cnt;
+}
+
+static ssize_t get_content_length(void)
+{
+	ssize_t val = -1;
+	const char *str = getenv("CONTENT_LENGTH");
+
+	if (str && *str && !git_parse_ssize_t(str, &val))
+		die("failed to parse CONTENT_LENGTH: %s", str);
+	return val;
+}
+
+static ssize_t read_request(int fd, unsigned char **out, ssize_t req_len)
+{
+	if (req_len < 0)
+		return read_request_eof(fd, out);
+	else
+		return read_request_fixed_len(fd, req_len, out);
+}
+
+static void inflate_request(const char *prog_name, int out, int buffer_input, ssize_t req_len)
 {
 	git_zstream stream;
 	unsigned char *full_request = NULL;
 	unsigned char in_buf[8192];
 	unsigned char out_buf[8192];
 	unsigned long cnt = 0;
+	int req_len_defined = req_len >= 0;
+	size_t req_remaining_len = req_len;
 
 	memset(&stream, 0, sizeof(stream));
 	git_inflate_init_gzip_only(&stream);
@@ -339,11 +386,18 @@ static void inflate_request(const char *prog_name, int out, int buffer_input)
 			if (full_request)
 				n = 0; /* nothing left to read */
 			else
-				n = read_request(0, &full_request);
+				n = read_request(0, &full_request, req_len);
 			stream.next_in = full_request;
 		} else {
-			n = xread(0, in_buf, sizeof(in_buf));
+			ssize_t buffer_len;
+			if (req_len_defined && req_remaining_len <= sizeof(in_buf))
+				buffer_len = req_remaining_len;
+			else
+				buffer_len = sizeof(in_buf);
+			n = xread(0, in_buf, buffer_len);
 			stream.next_in = in_buf;
+			if (req_len_defined && n > 0)
+				req_remaining_len -= n;
 		}
 
 		if (n <= 0)
@@ -361,9 +415,8 @@ static void inflate_request(const char *prog_name, int out, int buffer_input)
 				die("zlib error inflating request, result %d", ret);
 
 			n = stream.total_out - cnt;
-			if (write_in_full(out, out_buf, n) < 0)
-				die("%s aborted reading request", prog_name);
-			cnt += n;
+			write_to_child(out, out_buf, stream.total_out - cnt, prog_name);
+			cnt = stream.total_out;
 
 			if (ret == Z_STREAM_END)
 				goto done;
@@ -376,16 +429,32 @@ done:
 	free(full_request);
 }
 
-static void copy_request(const char *prog_name, int out)
+static void copy_request(const char *prog_name, int out, ssize_t req_len)
 {
 	unsigned char *buf;
-	ssize_t n = read_request(0, &buf);
+	ssize_t n = read_request(0, &buf, req_len);
 	if (n < 0)
 		die_errno("error reading request body");
-	if (write_in_full(out, buf, n) < 0)
-		die("%s aborted reading request", prog_name);
+	write_to_child(out, buf, n, prog_name);
 	close(out);
 	free(buf);
+}
+
+static void pipe_fixed_length(const char *prog_name, int out, size_t req_len)
+{
+	unsigned char buf[8192];
+	size_t remaining_len = req_len;
+
+	while (remaining_len > 0) {
+		size_t chunk_length = remaining_len > sizeof(buf) ? sizeof(buf) : remaining_len;
+		ssize_t n = xread(0, buf, chunk_length);
+		if (n < 0)
+			die_errno("Reading request failed");
+		write_to_child(out, buf, n, prog_name);
+		remaining_len -= n;
+	}
+
+	close(out);
 }
 
 static void run_service(const char **argv, int buffer_input)
@@ -395,6 +464,7 @@ static void run_service(const char **argv, int buffer_input)
 	const char *host = getenv("REMOTE_ADDR");
 	int gzipped_request = 0;
 	struct child_process cld = CHILD_PROCESS_INIT;
+	ssize_t req_len = get_content_length();
 
 	if (encoding && !strcmp(encoding, "gzip"))
 		gzipped_request = 1;
@@ -413,17 +483,21 @@ static void run_service(const char **argv, int buffer_input)
 				 "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
 
 	cld.argv = argv;
-	if (buffer_input || gzipped_request)
+	if (buffer_input || gzipped_request || req_len >= 0)
 		cld.in = -1;
 	cld.git_cmd = 1;
+	cld.clean_on_exit = 1;
+	cld.wait_after_clean = 1;
 	if (start_command(&cld))
 		exit(1);
 
 	close(1);
 	if (gzipped_request)
-		inflate_request(argv[0], cld.in, buffer_input);
+		inflate_request(argv[0], cld.in, buffer_input, req_len);
 	else if (buffer_input)
-		copy_request(argv[0], cld.in);
+		copy_request(argv[0], cld.in, req_len);
+	else if (req_len >= 0)
+		pipe_fixed_length(argv[0], cld.in, req_len);
 	else
 		close(0);
 
@@ -436,13 +510,13 @@ static int show_text_ref(const char *name, const struct object_id *oid,
 {
 	const char *name_nons = strip_namespace(name);
 	struct strbuf *buf = cb_data;
-	struct object *o = parse_object(oid);
+	struct object *o = parse_object(the_repository, oid);
 	if (!o)
 		return 0;
 
 	strbuf_addf(buf, "%s\t%s\n", oid_to_hex(oid), name_nons);
 	if (o->type == OBJ_TAG) {
-		o = deref_tag(o, name, 0);
+		o = deref_tag(the_repository, o, name, 0);
 		if (!o)
 			return 0;
 		strbuf_addf(buf, "%s\t%s^{}\n", oid_to_hex(&o->oid),
@@ -523,13 +597,13 @@ static void get_info_packs(struct strbuf *hdr, char *arg)
 	size_t cnt = 0;
 
 	select_getanyfile(hdr);
-	for (p = get_packed_git(the_repository); p; p = p->next) {
+	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (p->pack_local)
 			cnt++;
 	}
 
 	strbuf_grow(&buf, cnt * 53 + 2);
-	for (p = get_packed_git(the_repository); p; p = p->next) {
+	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (p->pack_local)
 			strbuf_addf(&buf, "P %s\n", p->pack_name + objdirlen + 6);
 	}
@@ -637,8 +711,11 @@ static struct service_cmd {
 	{"GET", "/objects/info/http-alternates$", get_text_file},
 	{"GET", "/objects/info/packs$", get_info_packs},
 	{"GET", "/objects/[0-9a-f]{2}/[0-9a-f]{38}$", get_loose_object},
+	{"GET", "/objects/[0-9a-f]{2}/[0-9a-f]{62}$", get_loose_object},
 	{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.pack$", get_pack_file},
+	{"GET", "/objects/pack/pack-[0-9a-f]{64}\\.pack$", get_pack_file},
 	{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.idx$", get_idx_file},
+	{"GET", "/objects/pack/pack-[0-9a-f]{64}\\.idx$", get_idx_file},
 
 	{"POST", "/git-upload-pack$", service_rpc},
 	{"POST", "/git-receive-pack$", service_rpc}

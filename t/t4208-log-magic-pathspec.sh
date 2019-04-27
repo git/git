@@ -25,6 +25,32 @@ test_expect_success '"git log :/a -- " should not be ambiguous' '
 	git log :/a --
 '
 
+test_expect_success '"git log :/detached -- " should find a commit only in HEAD' '
+	test_when_finished "git checkout master" &&
+	git checkout --detach &&
+	# Must manually call `test_tick` instead of using `test_commit`,
+	# because the latter additionally creates a tag, which would make
+	# the commit reachable not only via HEAD.
+	test_tick &&
+	git commit --allow-empty -m detached &&
+	test_tick &&
+	git commit --allow-empty -m something-else &&
+	git log :/detached --
+'
+
+test_expect_success '"git log :/detached -- " should not find an orphaned commit' '
+	test_must_fail git log :/detached --
+'
+
+test_expect_success '"git log :/detached -- " should find HEAD only of own worktree' '
+	git worktree add other-tree HEAD &&
+	git -C other-tree checkout --detach &&
+	test_tick &&
+	git -C other-tree commit --allow-empty -m other-detached &&
+	git -C other-tree log :/other-detached -- &&
+	test_must_fail git log :/other-detached --
+'
+
 test_expect_success '"git log -- :/a" should not be ambiguous' '
 	git log -- :/a
 '

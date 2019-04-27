@@ -392,9 +392,7 @@ test_expect_success 'typechanged submodule(blob->submodule)' '
 commit_file sm1 &&
 test_expect_success 'submodule is up to date' '
 	git diff-index -p --submodule=diff HEAD >actual &&
-	cat >expected <<-EOF &&
-	EOF
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked content' '
@@ -408,17 +406,17 @@ test_expect_success 'submodule contains untracked content' '
 
 test_expect_success 'submodule contains untracked content (untracked ignored)' '
 	git diff-index -p --ignore-submodules=untracked --submodule=diff HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked content (dirty ignored)' '
 	git diff-index -p --ignore-submodules=dirty --submodule=diff HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked content (all ignored)' '
 	git diff-index -p --ignore-submodules=all --submodule=diff HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked and modified content' '
@@ -458,13 +456,13 @@ test_expect_success 'submodule contains untracked and modified content (untracke
 test_expect_success 'submodule contains untracked and modified content (dirty ignored)' '
 	echo new > sm1/foo6 &&
 	git diff-index -p --ignore-submodules=dirty --submodule=diff HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked and modified content (all ignored)' '
 	echo new > sm1/foo6 &&
 	git diff-index -p --ignore-submodules --submodule=diff HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains modified content' '
@@ -549,7 +547,7 @@ test_expect_success 'modified submodule contains untracked content (dirty ignore
 
 test_expect_success 'modified submodule contains untracked content (all ignored)' '
 	git diff-index -p --ignore-submodules=all --submodule=diff HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'modified submodule contains untracked and modified content' '
@@ -609,7 +607,7 @@ test_expect_success 'modified submodule contains untracked and modified content 
 test_expect_success 'modified submodule contains untracked and modified content (all ignored)' '
 	echo modification >> sm1/foo6 &&
 	git diff-index -p --ignore-submodules --submodule=diff HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 # NOT OK
@@ -721,7 +719,7 @@ test_expect_success 'given commit' '
 test_expect_success 'setup .git file for sm2' '
 	(cd sm2 &&
 	 REAL="$(pwd)/../.real" &&
-	 mv .git "$REAL"
+	 mv .git "$REAL" &&
 	 echo "gitdir: $REAL" >.git)
 '
 

@@ -6,6 +6,7 @@
 #include "archive.h"
 #include "streaming.h"
 #include "utf8.h"
+#include "object-store.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
 
@@ -263,9 +264,10 @@ static int has_only_ascii(const char *s)
 	}
 }
 
-static int entry_is_binary(const char *path, const void *buffer, size_t size)
+static int entry_is_binary(struct index_state *istate, const char *path,
+			   const void *buffer, size_t size)
 {
-	struct userdiff_driver *driver = userdiff_find_by_path(path);
+	struct userdiff_driver *driver = userdiff_find_by_path(istate, path);
 	if (!driver)
 		driver = userdiff_find_by_name("default");
 	if (driver->binary != -1)
@@ -309,11 +311,11 @@ static int write_zip_entry(struct archiver_args *args,
 		if (is_utf8(path))
 			flags |= ZIP_UTF8;
 		else
-			warning("Path is not valid UTF-8: %s", path);
+			warning(_("path is not valid UTF-8: %s"), path);
 	}
 
 	if (pathlen > 0xffff) {
-		return error("path too long (%d chars, SHA1: %s): %s",
+		return error(_("path too long (%d chars, SHA1: %s): %s"),
 				(int)pathlen, oid_to_hex(oid), path);
 	}
 
@@ -325,7 +327,7 @@ static int write_zip_entry(struct archiver_args *args,
 		compressed_size = 0;
 		buffer = NULL;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
-		enum object_type type = oid_object_info(the_repository, oid,
+		enum object_type type = oid_object_info(args->repo, oid,
 							&size);
 
 		method = 0;
@@ -340,7 +342,7 @@ static int write_zip_entry(struct archiver_args *args,
 		    size > big_file_threshold) {
 			stream = open_istream(oid, &type, &size, NULL);
 			if (!stream)
-				return error("cannot stream blob %s",
+				return error(_("cannot stream blob %s"),
 					     oid_to_hex(oid));
 			flags |= ZIP_STREAM;
 			out = buffer = NULL;
@@ -348,16 +350,17 @@ static int write_zip_entry(struct archiver_args *args,
 			buffer = object_file_to_archive(args, path, oid, mode,
 							&type, &size);
 			if (!buffer)
-				return error("cannot read %s",
+				return error(_("cannot read %s"),
 					     oid_to_hex(oid));
 			crc = crc32(crc, buffer, size);
-			is_binary = entry_is_binary(path_without_prefix,
+			is_binary = entry_is_binary(args->repo->index,
+						    path_without_prefix,
 						    buffer, size);
 			out = buffer;
 		}
 		compressed_size = (method == 0) ? size : 0;
 	} else {
-		return error("unsupported file mode: 0%o (SHA1: %s)", mode,
+		return error(_("unsupported file mode: 0%o (SHA1: %s)"), mode,
 				oid_to_hex(oid));
 	}
 
@@ -427,7 +430,8 @@ static int write_zip_entry(struct archiver_args *args,
 				break;
 			crc = crc32(crc, buf, readlen);
 			if (is_binary == -1)
-				is_binary = entry_is_binary(path_without_prefix,
+				is_binary = entry_is_binary(args->repo->index,
+							    path_without_prefix,
 							    buf, readlen);
 			write_or_die(1, buf, readlen);
 		}
@@ -459,14 +463,15 @@ static int write_zip_entry(struct archiver_args *args,
 				break;
 			crc = crc32(crc, buf, readlen);
 			if (is_binary == -1)
-				is_binary = entry_is_binary(path_without_prefix,
+				is_binary = entry_is_binary(args->repo->index,
+							    path_without_prefix,
 							    buf, readlen);
 
 			zstream.next_in = buf;
 			zstream.avail_in = readlen;
 			result = git_deflate(&zstream, 0);
 			if (result != Z_OK)
-				die("deflate error (%d)", result);
+				die(_("deflate error (%d)"), result);
 			out_len = zstream.next_out - compressed;
 
 			if (out_len > 0) {
@@ -572,7 +577,7 @@ static void write_zip64_trailer(void)
 	write_or_die(1, &locator64, ZIP64_DIR_TRAILER_LOCATOR_SIZE);
 }
 
-static void write_zip_trailer(const unsigned char *sha1)
+static void write_zip_trailer(const struct object_id *oid)
 {
 	struct zip_dir_trailer trailer;
 	int clamped = 0;
@@ -585,14 +590,14 @@ static void write_zip_trailer(const unsigned char *sha1)
 	copy_le16_clamp(trailer.entries, zip_dir_entries, &clamped);
 	copy_le32(trailer.size, zip_dir.len);
 	copy_le32_clamp(trailer.offset, zip_offset, &clamped);
-	copy_le16(trailer.comment_length, sha1 ? GIT_SHA1_HEXSZ : 0);
+	copy_le16(trailer.comment_length, oid ? the_hash_algo->hexsz : 0);
 
 	write_or_die(1, zip_dir.buf, zip_dir.len);
 	if (clamped)
 		write_zip64_trailer();
 	write_or_die(1, &trailer, ZIP_DIR_TRAILER_SIZE);
-	if (sha1)
-		write_or_die(1, sha1_to_hex(sha1), GIT_SHA1_HEXSZ);
+	if (oid)
+		write_or_die(1, oid_to_hex(oid), the_hash_algo->hexsz);
 }
 
 static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
@@ -601,7 +606,7 @@ static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
 	struct tm *t;
 
 	if (date_overflows(*timestamp))
-		die("timestamp too large for this system: %"PRItime,
+		die(_("timestamp too large for this system: %"PRItime),
 		    *timestamp);
 	time = (time_t)*timestamp;
 	t = localtime(&time);
@@ -630,7 +635,7 @@ static int write_zip_archive(const struct archiver *ar,
 
 	err = write_archive_entries(args, write_zip_entry);
 	if (!err)
-		write_zip_trailer(args->commit_sha1);
+		write_zip_trailer(args->commit_oid);
 
 	strbuf_release(&zip_dir);
 

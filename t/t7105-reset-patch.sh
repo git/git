@@ -19,20 +19,20 @@ test_expect_success PERL 'setup' '
 
 test_expect_success PERL 'saying "n" does nothing' '
 	set_and_save_state dir/foo work work &&
-	(echo n; echo n) | git reset -p &&
+	test_write_lines n n | git reset -p &&
 	verify_saved_state dir/foo &&
 	verify_saved_state bar
 '
 
 test_expect_success PERL 'git reset -p' '
-	(echo n; echo y) | git reset -p >output &&
+	test_write_lines n y | git reset -p >output &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar &&
 	test_i18ngrep "Unstage" output
 '
 
 test_expect_success PERL 'git reset -p HEAD^' '
-	(echo n; echo y) | git reset -p HEAD^ >output &&
+	test_write_lines n y | git reset -p HEAD^ >output &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar &&
 	test_i18ngrep "Apply" output
@@ -45,20 +45,20 @@ test_expect_success PERL 'git reset -p HEAD^' '
 
 test_expect_success PERL 'git reset -p dir' '
 	set_state dir/foo work work &&
-	(echo y; echo n) | git reset -p dir &&
+	test_write_lines y n | git reset -p dir &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
 test_expect_success PERL 'git reset -p -- foo (inside dir)' '
 	set_state dir/foo work work &&
-	(echo y; echo n) | (cd dir && git reset -p -- foo) &&
+	test_write_lines y n | (cd dir && git reset -p -- foo) &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
 test_expect_success PERL 'git reset -p HEAD^ -- dir' '
-	(echo y; echo n) | git reset -p HEAD^ -- dir &&
+	test_write_lines y n | git reset -p HEAD^ -- dir &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar
 '

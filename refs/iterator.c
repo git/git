@@ -407,15 +407,15 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 
 struct ref_iterator *current_ref_iter = NULL;
 
-int do_for_each_ref_iterator(struct ref_iterator *iter,
-			     each_ref_fn fn, void *cb_data)
+int do_for_each_repo_ref_iterator(struct repository *r, struct ref_iterator *iter,
+				  each_repo_ref_fn fn, void *cb_data)
 {
 	int retval = 0, ok;
 	struct ref_iterator *old_ref_iter = current_ref_iter;
 
 	current_ref_iter = iter;
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
-		retval = fn(iter->refname, iter->oid, iter->flags, cb_data);
+		retval = fn(r, iter->refname, iter->oid, iter->flags, cb_data);
 		if (retval) {
 			/*
 			 * If ref_iterator_abort() returns ITER_ERROR,

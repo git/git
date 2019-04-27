@@ -114,7 +114,7 @@ PATTERNS("perl",
 	 "|<<|<>|<=>|>>"),
 PATTERNS("php",
 	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
-	 "^[\t ]*(class.*)$",
+	 "^[\t ]*((((final|abstract)[\t ]+)?class|interface|trait).*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
@@ -265,12 +265,14 @@ int userdiff_config(const char *k, const char *v)
 	return 0;
 }
 
-struct userdiff_driver *userdiff_find_by_name(const char *name) {
+struct userdiff_driver *userdiff_find_by_name(const char *name)
+{
 	int len = strlen(name);
 	return userdiff_find_by_namelen(name, len);
 }
 
-struct userdiff_driver *userdiff_find_by_path(const char *path)
+struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
+					      const char *path)
 {
 	static struct attr_check *check;
 
@@ -278,8 +280,7 @@ struct userdiff_driver *userdiff_find_by_path(const char *path)
 		check = attr_check_initl("diff", NULL);
 	if (!path)
 		return NULL;
-	if (git_check_attr(path, check))
-		return NULL;
+	git_check_attr(istate, path, check);
 
 	if (ATTR_TRUE(check->items[0].value))
 		return &driver_true;
@@ -290,7 +291,8 @@ struct userdiff_driver *userdiff_find_by_path(const char *path)
 	return userdiff_find_by_name(check->items[0].value);
 }
 
-struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
+struct userdiff_driver *userdiff_get_textconv(struct repository *r,
+					      struct userdiff_driver *driver)
 {
 	if (!driver->textconv)
 		return NULL;
@@ -300,7 +302,7 @@ struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
 		struct strbuf name = STRBUF_INIT;
 
 		strbuf_addf(&name, "textconv/%s", driver->name);
-		notes_cache_init(c, name.buf, driver->textconv);
+		notes_cache_init(r, c, name.buf, driver->textconv);
 		driver->textconv_cache = c;
 		strbuf_release(&name);
 	}

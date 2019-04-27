@@ -1,14 +1,14 @@
 #include "cache.h"
 #include "oidmap.h"
 
-static int cmpfn(const void *hashmap_cmp_fn_data,
-		 const void *entry, const void *entry_or_key,
-		 const void *keydata)
+static int oidmap_neq(const void *hashmap_cmp_fn_data,
+		      const void *entry, const void *entry_or_key,
+		      const void *keydata)
 {
 	const struct oidmap_entry *entry_ = entry;
 	if (keydata)
-		return oidcmp(&entry_->oid, (const struct object_id *) keydata);
-	return oidcmp(&entry_->oid,
+		return !oideq(&entry_->oid, (const struct object_id *) keydata);
+	return !oideq(&entry_->oid,
 		      &((const struct oidmap_entry *) entry_or_key)->oid);
 }
 
@@ -21,7 +21,7 @@ static int hash(const struct object_id *oid)
 
 void oidmap_init(struct oidmap *map, size_t initial_size)
 {
-	hashmap_init(&map->map, cmpfn, NULL, initial_size);
+	hashmap_init(&map->map, oidmap_neq, NULL, initial_size);
 }
 
 void oidmap_free(struct oidmap *map, int free_entries)

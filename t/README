@@ -154,6 +154,7 @@ appropriately before running "make".
 	As the names depend on the tests' file names, it is safe to
 	run the tests with this option in parallel.
 
+-V::
 --verbose-log::
 	Write verbose output to the same logfile as `--tee`, but do
 	_not_ write it to stdout. Unlike `--tee --verbose`, this option
@@ -168,6 +169,15 @@ appropriately before running "make".
 	the dashed forms of commands.  This option is currently
 	implied by other options like --valgrind and
 	GIT_TEST_INSTALLED.
+
+--no-bin-wrappers::
+	By default, the test suite uses the wrappers in
+	`../bin-wrappers/` to execute `git` and friends. With this option,
+	`../git` and friends are run directly. This is not recommended
+	in general, as the wrappers contain safeguards to ensure that no
+	files from an installed Git are used, but can speed up test runs
+	especially on platforms where running shell scripts is expensive
+	(most notably, Windows).
 
 --root=<directory>::
 	Create "trash" directories used to store all temporary data during
@@ -184,6 +194,29 @@ appropriately before running "make".
 	running the tests themselves. You may also enable or disable
 	this feature by setting the GIT_TEST_CHAIN_LINT environment
 	variable to "1" or "0", respectively.
+
+--stress::
+	Run the test script repeatedly in multiple parallel jobs until
+	one of them fails.  Useful for reproducing rare failures in
+	flaky tests.  The number of parallel jobs is, in order of
+	precedence: the value of the GIT_TEST_STRESS_LOAD
+	environment variable, or twice the number of available
+	processors (as shown by the 'getconf' utility),	or 8.
+	Implies `--verbose -x --immediate` to get the most information
+	about the failure.  Note that the verbose output of each test
+	job is saved to 't/test-results/$TEST_NAME.stress-<nr>.out',
+	and only the output of the failed test job is shown on the
+	terminal.  The names of the trash directories get a
+	'.stress-<nr>' suffix, and the trash directory of the failed
+	test job is renamed to end with a '.stress-failed' suffix.
+
+--stress-jobs=<N>::
+	Override the number of parallel jobs. Implies `--stress`.
+
+--stress-limit=<N>::
+	When combined with --stress run the test script repeatedly
+	this many times in each of the parallel jobs or until one of
+	them fails, whichever comes first. Implies `--stress`.
 
 You can also set the GIT_TEST_INSTALLED environment variable to
 the bindir of an existing git installation to test that installation.
@@ -301,8 +334,17 @@ that cannot be easily covered by a few specific test cases. These
 could be enabled by running the test suite with correct GIT_TEST_
 environment set.
 
+GIT_TEST_GETTEXT_POISON=<non-empty?> turns all strings marked for
+translation into gibberish if non-empty (think "test -n"). Used for
+spotting those tests that need to be marked with a C_LOCALE_OUTPUT
+prerequisite when adding more strings for translation. See "Testing
+marked strings" in po/README for details.
+
 GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
 test suite. Accept any boolean values that are accepted by git-config.
+
+GIT_TEST_PROTOCOL_VERSION=<n>, when set, overrides the
+'protocol.version' setting to n if it is less than n.
 
 GIT_TEST_FULL_IN_PACK_ARRAY=<boolean> exercises the uncommon
 pack-objects code path where there are more than 1024 packs even if
@@ -314,6 +356,55 @@ where we do not cache object size in memory and read it from existing
 packs on demand. This normally only happens when the object size is
 over 2GB. This variable forces the code path on any object larger than
 <n> bytes.
+
+GIT_TEST_OE_DELTA_SIZE=<n> exercises the uncommon pack-objects code
+path where deltas larger than this limit require extra memory
+allocation for bookkeeping.
+
+GIT_TEST_VALIDATE_INDEX_CACHE_ENTRIES=<boolean> checks that cache-tree
+records are valid when the index is written out or after a merge. This
+is mostly to catch missing invalidation. Default is true.
+
+GIT_TEST_COMMIT_GRAPH=<boolean>, when true, forces the commit-graph to
+be written after every 'git commit' command, and overrides the
+'core.commitGraph' setting to true.
+
+GIT_TEST_FSMONITOR=$PWD/t7519/fsmonitor-all exercises the fsmonitor
+code path for utilizing a file system monitor to speed up detecting
+new or changed files.
+
+GIT_TEST_INDEX_VERSION=<n> exercises the index read/write code path
+for the index version specified.  Can be set to any valid version
+(currently 2, 3, or 4).
+
+GIT_TEST_PACK_SPARSE=<boolean> if enabled will default the pack-objects
+builtin to use the sparse object walk. This can still be overridden by
+the --no-sparse command-line argument.
+
+GIT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
+by overriding the minimum number of cache entries required per thread.
+
+GIT_TEST_STASH_USE_BUILTIN=<boolean>, when false, disables the
+built-in version of git-stash. See 'stash.useBuiltin' in
+git-config(1).
+
+GIT_TEST_INDEX_THREADS=<n> enables exercising the multi-threaded loading
+of the index for the whole test suite by bypassing the default number of
+cache entries and thread minimums. Setting this to 1 will make the
+index loading single threaded.
+
+GIT_TEST_MULTI_PACK_INDEX=<boolean>, when true, forces the multi-pack-
+index to be written after every 'git repack' command, and overrides the
+'core.multiPackIndex' setting to true.
+
+GIT_TEST_SIDEBAND_ALL=<boolean>, when true, overrides the
+'uploadpack.allowSidebandAll' setting to true, and when false, forces
+fetch-pack to not request sideband-all (even if the server advertises
+sideband-all).
+
+GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=<boolean>, when true (which is
+the default when running tests), errors out when an abbreviated option
+is used.
 
 Naming Tests
 ------------
@@ -382,20 +473,21 @@ This test harness library does the following things:
  - Creates an empty test directory with an empty .git/objects database
    and chdir(2) into it.  This directory is 't/trash
    directory.$test_name_without_dotsh', with t/ subject to change by
-   the --root option documented above.
+   the --root option documented above, and a '.stress-<N>' suffix
+   appended by the --stress option.
 
  - Defines standard test helper functions for your scripts to
    use.  These functions are designed to make all scripts behave
    consistently when command line arguments --verbose (or -v),
    --debug (or -d), and --immediate (or -i) is given.
 
-Do's, don'ts & things to keep in mind
--------------------------------------
+Do's & don'ts
+-------------
 
 Here are a few examples of things you probably should and shouldn't do
 when writing tests.
 
-Do:
+Here are the "do's:"
 
  - Put all code inside test_expect_success and other assertions.
 
@@ -440,16 +532,21 @@ Do:
    Windows, where the shell (MSYS bash) mangles absolute path names.
    For details, see the commit message of 4114156ae9.
 
-Don't:
+ - Remember that inside the <script> part, the standard output and
+   standard error streams are discarded, and the test harness only
+   reports "ok" or "not ok" to the end user running the tests. Under
+   --verbose, they are shown to help debug the tests.
 
- - exit() within a <script> part.
+And here are the "don'ts:"
+
+ - Don't exit() within a <script> part.
 
    The harness will catch this as a programming error of the test.
    Use test_done instead if you need to stop the tests early (see
    "Skipping tests" below).
 
- - use '! git cmd' when you want to make sure the git command exits
-   with failure in a controlled way by calling "die()".  Instead,
+ - Don't use '! git cmd' when you want to make sure the git command
+   exits with failure in a controlled way by calling "die()".  Instead,
    use 'test_must_fail git cmd'.  This will signal a failure if git
    dies in an unexpected way (e.g. segfault).
 
@@ -457,8 +554,35 @@ Don't:
    platform commands; just use '! cmd'.  We are not in the business
    of verifying that the world given to us sanely works.
 
- - use perl without spelling it as "$PERL_PATH". This is to help our
-   friends on Windows where the platform Perl often adds CR before
+ - Don't feed the output of a git command to a pipe, as in:
+
+     git -C repo ls-files |
+     xargs -n 1 basename |
+     grep foo
+
+   which will discard git's exit code and may mask a crash. In the
+   above example, all exit codes are ignored except grep's.
+
+   Instead, write the output of that command to a temporary
+   file with ">" or assign it to a variable with "x=$(git ...)" rather
+   than pipe it.
+
+ - Don't use command substitution in a way that discards git's exit
+   code. When assigning to a variable, the exit code is not discarded,
+   e.g.:
+
+     x=$(git cat-file -p $sha) &&
+     ...
+
+   is OK because a crash in "git cat-file" will cause the "&&" chain
+   to fail, but:
+
+     test "refs/heads/foo" = "$(git symbolic-ref HEAD)"
+
+   is not OK and a crash in git could go undetected.
+
+ - Don't use perl without spelling it as "$PERL_PATH". This is to help
+   our friends on Windows where the platform Perl often adds CR before
    the end of line, and they bundle Git with a version of Perl that
    does not do so, whose path is specified with $PERL_PATH. Note that we
    provide a "perl" function which uses $PERL_PATH under the hood, so
@@ -466,17 +590,17 @@ Don't:
    (but you do, for example, on a shebang line or in a sub script
    created via "write_script").
 
- - use sh without spelling it as "$SHELL_PATH", when the script can
-   be misinterpreted by broken platform shell (e.g. Solaris).
+ - Don't use sh without spelling it as "$SHELL_PATH", when the script
+   can be misinterpreted by broken platform shell (e.g. Solaris).
 
- - chdir around in tests.  It is not sufficient to chdir to
+ - Don't chdir around in tests.  It is not sufficient to chdir to
    somewhere and then chdir back to the original location later in
    the test, as any intermediate step can fail and abort the test,
    causing the next test to start in an unexpected directory.  Do so
    inside a subshell if necessary.
 
- - save and verify the standard error of compound commands, i.e. group
-   commands, subshells, and shell functions (except test helper
+ - Don't save and verify the standard error of compound commands, i.e.
+   group commands, subshells, and shell functions (except test helper
    functions like 'test_must_fail') like this:
 
      ( cd dir && git cmd ) 2>error &&
@@ -491,7 +615,7 @@ Don't:
      ( cd dir && git cmd 2>../error ) &&
      test_cmp expect error
 
- - Break the TAP output
+ - Don't break the TAP output
 
    The raw output from your test may be interpreted by a TAP harness. TAP
    harnesses will ignore everything they don't know about, but don't step
@@ -510,13 +634,6 @@ Don't:
    (see https://metacpan.org/pod/TAP::Parser::Grammar#TAP-GRAMMAR)
    but the best indication is to just run the tests with prove(1),
    it'll complain if anything is amiss.
-
-Keep in mind:
-
- - Inside the <script> part, the standard output and standard error
-   streams are discarded, and the test harness only reports "ok" or
-   "not ok" to the end user running the tests. Under --verbose, they
-   are shown to help debugging the tests.
 
 
 Skipping tests
@@ -754,6 +871,26 @@ library for your script to use.
 		...
 	'
 
+ - test_atexit <script>
+
+   Prepend <script> to a list of commands to run unconditionally to
+   clean up before the test script exits, e.g. to stop a daemon:
+
+	test_expect_success 'test git daemon' '
+		git daemon &
+		daemon_pid=$! &&
+		test_atexit 'kill $daemon_pid' &&
+		hello world
+	'
+
+   The commands will be executed before the trash directory is removed,
+   i.e. the atexit commands will still be able to access any pidfiles or
+   socket files.
+
+   Note that these commands will be run even when a test script run
+   with '--immediate' fails.  Be careful with your atexit commands to
+   minimize any changes to the failed state.
+
  - test_write_lines <lines>
 
    Write <lines> on standard output, one line per argument.
@@ -801,6 +938,37 @@ library for your script to use.
    Sometimes it is possible to split a test in a part that does not need
    the symbolic link in the file system and a part that does; then only
    the latter part need be protected by a SYMLINKS prerequisite (see below).
+
+ - test_oid_init
+
+   This function loads facts and useful object IDs related to the hash
+   algorithm(s) in use from the files in t/oid-info.
+
+ - test_oid_cache
+
+   This function reads per-hash algorithm information from standard
+   input (usually a heredoc) in the format described in
+   t/oid-info/README.  This is useful for test-specific values, such as
+   object IDs, which must vary based on the hash algorithm.
+
+   Certain fixed values, such as hash sizes and common placeholder
+   object IDs, can be loaded with test_oid_init (described above).
+
+ - test_oid <key>
+
+   This function looks up a value for the hash algorithm in use, based
+   on the key given.  The value must have been loaded using
+   test_oid_init or test_oid_cache.  Providing an unknown key is an
+   error.
+
+ - yes [<string>]
+
+   This is often seen in modern UNIX but some platforms lack it, so
+   the test harness overrides the platform implementation with a
+   more limited one.  Use this only when feeding a handful lines of
+   output to the downstream---unlike the real version, it generates
+   only up to 99 lines.
+
 
 Prerequisites
 -------------

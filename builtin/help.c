@@ -38,7 +38,7 @@ static const char *html_path;
 static int show_all = 0;
 static int show_guides = 0;
 static int show_config;
-static int verbose;
+static int verbose = 1;
 static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;
@@ -70,6 +70,10 @@ static enum help_format parse_help_format(const char *format)
 		return HELP_FORMAT_INFO;
 	if (!strcmp(format, "web") || !strcmp(format, "html"))
 		return HELP_FORMAT_WEB;
+	/*
+	 * Please update _git_config() in git-completion.bash when you
+	 * add new help formats.
+	 */
 	die(_("unrecognized help format '%s'"), format);
 }
 
@@ -415,9 +419,37 @@ static const char *check_git_cmd(const char* cmd)
 
 	alias = alias_lookup(cmd);
 	if (alias) {
-		printf_ln(_("'%s' is aliased to '%s'"), cmd, alias);
-		free(alias);
-		exit(0);
+		const char **argv;
+		int count;
+
+		/*
+		 * handle_builtin() in git.c rewrites "git cmd --help"
+		 * to "git help --exclude-guides cmd", so we can use
+		 * exclude_guides to distinguish "git cmd --help" from
+		 * "git help cmd". In the latter case, or if cmd is an
+		 * alias for a shell command, just print the alias
+		 * definition.
+		 */
+		if (!exclude_guides || alias[0] == '!') {
+			printf_ln(_("'%s' is aliased to '%s'"), cmd, alias);
+			free(alias);
+			exit(0);
+		}
+		/*
+		 * Otherwise, we pretend that the command was "git
+		 * word0 --help". We use split_cmdline() to get the
+		 * first word of the alias, to ensure that we use the
+		 * same rules as when the alias is actually
+		 * used. split_cmdline() modifies alias in-place.
+		 */
+		fprintf_ln(stderr, _("'%s' is aliased to '%s'"), cmd, alias);
+		count = split_cmdline(alias, &argv);
+		if (count < 0)
+			die(_("bad alias.%s string: %s"), cmd,
+			    split_cmdline_strerror(count));
+		free(argv);
+		UNLEAK(alias);
+		return alias;
 	}
 
 	if (exclude_guides)

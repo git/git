@@ -1,5 +1,5 @@
-#ifndef SLIDING_WINDOW_H_
-#define SLIDING_WINDOW_H_
+#ifndef SLIDING_WINDOW_H
+#define SLIDING_WINDOW_H
 
 #include "strbuf.h"
 

@@ -7,6 +7,7 @@
 #include "rerere.h"
 #include "dir.h"
 #include "sequencer.h"
+#include "branch.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -68,7 +69,8 @@ static int option_parse_m(const struct option *opt,
 
 	replay->mainline = strtol(arg, &end, 10);
 	if (*end || replay->mainline <= 0)
-		return opterror(opt, "expects a number greater than zero", 0);
+		return error(_("option `%s' expects a number greater than zero"),
+			     opt->long_name);
 
 	return 0;
 }
@@ -173,7 +175,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	} else {
 		struct setup_revision_opt s_r_opt;
 		opts->revs = xmalloc(sizeof(*opts->revs));
-		init_revisions(opts->revs, NULL);
+		repo_init_revisions(the_repository, opts->revs, NULL);
 		opts->revs->no_walk = REVISION_WALK_NO_WALK_UNSORTED;
 		if (argc < 2)
 			usage_with_options(usage_str, options);
@@ -191,13 +193,17 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	opts->gpg_sign = xstrdup_or_null(opts->gpg_sign);
 	opts->strategy = xstrdup_or_null(opts->strategy);
 
-	if (cmd == 'q')
-		return sequencer_remove_state(opts);
+	if (cmd == 'q') {
+		int ret = sequencer_remove_state(opts);
+		if (!ret)
+			remove_branch_state(the_repository);
+		return ret;
+	}
 	if (cmd == 'c')
-		return sequencer_continue(opts);
+		return sequencer_continue(the_repository, opts);
 	if (cmd == 'a')
-		return sequencer_rollback(opts);
-	return sequencer_pick_revisions(opts);
+		return sequencer_rollback(the_repository, opts);
+	return sequencer_pick_revisions(the_repository, opts);
 }
 
 int cmd_revert(int argc, const char **argv, const char *prefix)

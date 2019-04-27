@@ -940,7 +940,7 @@ test_expect_success 'diff.dirstat=0,lines' '
 test_expect_success '--dirstat=future_param,lines,0 should fail loudly' '
 	test_must_fail git diff --dirstat=future_param,lines,0 HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
-	test_cmp /dev/null actual_diff_dirstat &&
+	test_must_be_empty actual_diff_dirstat &&
 	test_i18ngrep -q "future_param" actual_error &&
 	test_i18ngrep -q "\--dirstat" actual_error
 '
@@ -948,7 +948,7 @@ test_expect_success '--dirstat=future_param,lines,0 should fail loudly' '
 test_expect_success '--dirstat=dummy1,cumulative,2dummy should report both unrecognized parameters' '
 	test_must_fail git diff --dirstat=dummy1,cumulative,2dummy HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
-	test_cmp /dev/null actual_diff_dirstat &&
+	test_must_be_empty actual_diff_dirstat &&
 	test_i18ngrep -q "dummy1" actual_error &&
 	test_i18ngrep -q "2dummy" actual_error &&
 	test_i18ngrep -q "\--dirstat" actual_error

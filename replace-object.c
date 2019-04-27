@@ -6,7 +6,8 @@
 #include "repository.h"
 #include "commit.h"
 
-static int register_replace_ref(const char *refname,
+static int register_replace_ref(struct repository *r,
+				const char *refname,
 				const struct object_id *oid,
 				int flag, void *cb_data)
 {
@@ -17,7 +18,7 @@ static int register_replace_ref(const char *refname,
 
 	if (get_oid_hex(hash, &repl_obj->original.oid)) {
 		free(repl_obj);
-		warning("bad replace ref name: %s", refname);
+		warning(_("bad replace ref name: %s"), refname);
 		return 0;
 	}
 
@@ -25,13 +26,13 @@ static int register_replace_ref(const char *refname,
 	oidcpy(&repl_obj->replacement, oid);
 
 	/* Register new object */
-	if (oidmap_put(the_repository->objects->replace_map, repl_obj))
-		die("duplicate replace ref: %s", refname);
+	if (oidmap_put(r->objects->replace_map, repl_obj))
+		die(_("duplicate replace ref: %s"), refname);
 
 	return 0;
 }
 
-static void prepare_replace_object(struct repository *r)
+void prepare_replace_object(struct repository *r)
 {
 	if (r->objects->replace_map)
 		return;
@@ -51,7 +52,7 @@ static void prepare_replace_object(struct repository *r)
  * replacement object's name (replaced recursively, if necessary).
  * The return value is either oid or a pointer to a
  * permanently-allocated value.  This function always respects replace
- * references, regardless of the value of check_replace_refs.
+ * references, regardless of the value of read_replace_refs.
  */
 const struct object_id *do_lookup_replace_object(struct repository *r,
 						 const struct object_id *oid)
@@ -69,5 +70,5 @@ const struct object_id *do_lookup_replace_object(struct repository *r,
 			return cur;
 		cur = &repl_obj->replacement;
 	}
-	die("replace depth too high for object %s", oid_to_hex(oid));
+	die(_("replace depth too high for object %s"), oid_to_hex(oid));
 }

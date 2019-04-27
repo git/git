@@ -97,9 +97,8 @@ test_expect_success 'no-glob option matches literally (bracket)' '
 '
 
 test_expect_success 'no-glob option disables :(literal)' '
-	: >expect &&
 	git --literal-pathspecs log --format=%s -- ":(literal)foo" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'no-glob environment variable works' '
@@ -130,9 +129,8 @@ test_expect_success '**/ works with :(glob)' '
 '
 
 test_expect_success '**/ does not work with --noglob-pathspecs' '
-	: >expect &&
 	git --noglob-pathspecs log --format=%s -- "**/bar" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success '**/ works with :(glob) and --noglob-pathspecs' '
@@ -154,9 +152,8 @@ test_expect_success '**/ works with --glob-pathspecs' '
 '
 
 test_expect_success '**/ does not work with :(literal) and --glob-pathspecs' '
-	: >expect &&
 	git --glob-pathspecs log --format=%s -- ":(literal)**/bar" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

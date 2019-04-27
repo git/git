@@ -120,6 +120,15 @@ void strbuf_trim_trailing_dir_sep(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
+void strbuf_trim_trailing_newline(struct strbuf *sb)
+{
+	if (sb->len > 0 && sb->buf[sb->len - 1] == '\n') {
+		if (--sb->len > 0 && sb->buf[sb->len - 1] == '\r')
+			--sb->len;
+		sb->buf[sb->len] = '\0';
+	}
+}
+
 void strbuf_ltrim(struct strbuf *sb)
 {
 	char *b = sb->buf;
@@ -134,7 +143,7 @@ void strbuf_ltrim(struct strbuf *sb)
 int strbuf_reencode(struct strbuf *sb, const char *from, const char *to)
 {
 	char *out;
-	int len;
+	size_t len;
 
 	if (same_encoding(from, to))
 		return 0;
@@ -209,7 +218,7 @@ void strbuf_list_free(struct strbuf **sbs)
 
 int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 {
-	int len = a->len < b->len ? a->len: b->len;
+	size_t len = a->len < b->len ? a->len: b->len;
 	int cmp = memcmp(a->buf, b->buf, len);
 	if (cmp)
 		return cmp;
@@ -240,6 +249,42 @@ void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len)
 	strbuf_splice(sb, pos, 0, data, len);
 }
 
+void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt, va_list ap)
+{
+	int len, len2;
+	char save;
+	va_list cp;
+
+	if (pos > sb->len)
+		die("`pos' is too far after the end of the buffer");
+	va_copy(cp, ap);
+	len = vsnprintf(sb->buf + sb->len, 0, fmt, cp);
+	va_end(cp);
+	if (len < 0)
+		BUG("your vsnprintf is broken (returned %d)", len);
+	if (!len)
+		return; /* nothing to do */
+	if (unsigned_add_overflows(sb->len, len))
+		die("you want to use way too much memory");
+	strbuf_grow(sb, len);
+	memmove(sb->buf + pos + len, sb->buf + pos, sb->len - pos);
+	/* vsnprintf() will append a NUL, overwriting one of our characters */
+	save = sb->buf[pos + len];
+	len2 = vsnprintf(sb->buf + pos, len + 1, fmt, ap);
+	sb->buf[pos + len] = save;
+	if (len2 != len)
+		BUG("your vsnprintf is broken (returns inconsistent lengths)");
+	strbuf_setlen(sb, sb->len + len);
+}
+
+void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	strbuf_vinsertf(sb, pos, fmt, ap);
+	va_end(ap);
+}
+
 void strbuf_remove(struct strbuf *sb, size_t pos, size_t len)
 {
 	strbuf_splice(sb, pos, len, "", 0);
@@ -257,6 +302,21 @@ void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2)
 	strbuf_grow(sb, sb2->len);
 	memcpy(sb->buf + sb->len, sb2->buf, sb2->len);
 	strbuf_setlen(sb, sb->len + sb2->len);
+}
+
+const char *strbuf_join_argv(struct strbuf *buf,
+			     int argc, const char **argv, char delim)
+{
+	if (!argc)
+		return buf->buf;
+
+	strbuf_addstr(buf, *argv);
+	while (--argc) {
+		strbuf_addch(buf, delim);
+		strbuf_addstr(buf, *(++argv));
+	}
+
+	return buf->buf;
 }
 
 void strbuf_addchars(struct strbuf *sb, int c, size_t n)
@@ -371,6 +431,27 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 	}
 }
 
+size_t strbuf_expand_literal_cb(struct strbuf *sb,
+				const char *placeholder,
+				void *context)
+{
+	int ch;
+
+	switch (placeholder[0]) {
+	case 'n':		/* newline */
+		strbuf_addch(sb, '\n');
+		return 1;
+	case 'x':
+		/* %x00 == NUL, %x0a == LF, etc. */
+		ch = hex2chr(placeholder + 1);
+		if (ch < 0)
+			return 0;
+		strbuf_addch(sb, ch);
+		return 3;
+	}
+	return 0;
+}
+
 size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 		void *context)
 {
@@ -389,7 +470,7 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 
 void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
 {
-	int i, len = src->len;
+	size_t i, len = src->len;
 
 	for (i = 0; i < len; i++) {
 		if (src->buf[i] == '%')
@@ -469,7 +550,7 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 		hint = 32;
 
 	while (hint < STRBUF_MAXLINK) {
-		int len;
+		ssize_t len;
 
 		strbuf_grow(sb, hint);
 		len = readlink(path, sb->buf, hint);
@@ -734,18 +815,18 @@ void strbuf_humanise_bytes(struct strbuf *buf, off_t bytes)
 {
 	if (bytes > 1 << 30) {
 		strbuf_addf(buf, "%u.%2.2u GiB",
-			    (int)(bytes >> 30),
-			    (int)(bytes & ((1 << 30) - 1)) / 10737419);
+			    (unsigned)(bytes >> 30),
+			    (unsigned)(bytes & ((1 << 30) - 1)) / 10737419);
 	} else if (bytes > 1 << 20) {
-		int x = bytes + 5243;  /* for rounding */
+		unsigned x = bytes + 5243;  /* for rounding */
 		strbuf_addf(buf, "%u.%2.2u MiB",
 			    x >> 20, ((x & ((1 << 20) - 1)) * 100) >> 20);
 	} else if (bytes > 1 << 10) {
-		int x = bytes + 5;  /* for rounding */
+		unsigned x = bytes + 5;  /* for rounding */
 		strbuf_addf(buf, "%u.%2.2u KiB",
 			    x >> 10, ((x & ((1 << 10) - 1)) * 100) >> 10);
 	} else {
-		strbuf_addf(buf, "%u bytes", (int)bytes);
+		strbuf_addf(buf, "%u bytes", (unsigned)bytes);
 	}
 }
 
@@ -921,7 +1002,7 @@ void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
 			      int abbrev_len)
 {
 	int r;
-	strbuf_grow(sb, GIT_SHA1_HEXSZ + 1);
+	strbuf_grow(sb, GIT_MAX_HEXSZ + 1);
 	r = find_unique_abbrev_r(sb->buf + sb->len, oid, abbrev_len);
 	strbuf_setlen(sb, sb->len + r);
 }
@@ -960,7 +1041,7 @@ static size_t cleanup(char *line, size_t len)
  */
 void strbuf_stripspace(struct strbuf *sb, int skip_comments)
 {
-	int empties = 0;
+	size_t empties = 0;
 	size_t i, j, len, newlen;
 	char *eol;
 

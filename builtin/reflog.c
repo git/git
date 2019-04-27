@@ -1,6 +1,8 @@
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
+#include "object-store.h"
+#include "repository.h"
 #include "commit.h"
 #include "refs.h"
 #include "dir.h"
@@ -8,14 +10,19 @@
 #include "diff.h"
 #include "revision.h"
 #include "reachable.h"
+#include "worktree.h"
 
 /* NEEDSWORK: switch to using parse_options */
 static const char reflog_expire_usage[] =
-"git reflog expire [--expire=<time>] [--expire-unreachable=<time>] [--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] [--verbose] [--all] <refs>...";
+N_("git reflog expire [--expire=<time>] "
+   "[--expire-unreachable=<time>] "
+   "[--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] "
+   "[--verbose] [--all] <refs>...");
 static const char reflog_delete_usage[] =
-"git reflog delete [--rewrite] [--updateref] [--dry-run | -n] [--verbose] <refs>...";
+N_("git reflog delete [--rewrite] [--updateref] "
+   "[--dry-run | -n] [--verbose] <refs>...");
 static const char reflog_exists_usage[] =
-"git reflog exists <ref>";
+N_("git reflog exists <ref>");
 
 static timestamp_t default_reflog_expire;
 static timestamp_t default_reflog_expire_unreachable;
@@ -50,6 +57,7 @@ struct collect_reflog_cb {
 	struct collected_reflog **e;
 	int alloc;
 	int nr;
+	struct worktree *wt;
 };
 
 /* Remember to update object flag allocation in object.h */
@@ -64,7 +72,7 @@ static int tree_is_complete(const struct object_id *oid)
 	int complete;
 	struct tree *tree;
 
-	tree = lookup_tree(oid);
+	tree = lookup_tree(the_repository, oid);
 	if (!tree)
 		return 0;
 	if (tree->object.flags & SEEN)
@@ -86,8 +94,8 @@ static int tree_is_complete(const struct object_id *oid)
 	init_tree_desc(&desc, tree->buffer, tree->size);
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
-		if (!has_sha1_file(entry.oid->hash) ||
-		    (S_ISDIR(entry.mode) && !tree_is_complete(entry.oid))) {
+		if (!has_object_file(&entry.oid) ||
+		    (S_ISDIR(entry.mode) && !tree_is_complete(&entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;
 		}
@@ -128,7 +136,7 @@ static int commit_is_complete(struct commit *commit)
 		struct commit_list *parent;
 
 		c = (struct commit *)object_array_pop(&study);
-		if (!c->object.parsed && !parse_object(&c->object.oid))
+		if (!c->object.parsed && !parse_object(the_repository, &c->object.oid))
 			c->object.flags |= INCOMPLETE;
 
 		if (c->object.flags & INCOMPLETE) {
@@ -194,7 +202,7 @@ static int keep_entry(struct commit **it, struct object_id *oid)
 
 	if (is_null_oid(oid))
 		return 1;
-	commit = lookup_commit_reference_gently(oid, 1);
+	commit = lookup_commit_reference_gently(the_repository, oid, 1);
 	if (!commit)
 		return 0;
 
@@ -263,7 +271,8 @@ static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit
 		if (is_null_oid(oid))
 			return 0;
 
-		commit = lookup_commit_reference_gently(oid, 1);
+		commit = lookup_commit_reference_gently(the_repository, oid,
+							1);
 
 		/* Not a commit -- keep it */
 		if (!commit)
@@ -320,11 +329,25 @@ static int push_tip_to_list(const char *refname, const struct object_id *oid,
 	struct commit *tip_commit;
 	if (flags & REF_ISSYMREF)
 		return 0;
-	tip_commit = lookup_commit_reference_gently(oid, 1);
+	tip_commit = lookup_commit_reference_gently(the_repository, oid, 1);
 	if (!tip_commit)
 		return 0;
 	commit_list_insert(tip_commit, list);
 	return 0;
+}
+
+static int is_head(const char *refname)
+{
+	switch (ref_type(refname)) {
+	case REF_TYPE_OTHER_PSEUDOREF:
+	case REF_TYPE_MAIN_PSEUDOREF:
+		if (parse_worktree_ref(refname, NULL, NULL, &refname))
+			BUG("not a worktree ref: %s", refname);
+		break;
+	default:
+		break;
+	}
+	return !strcmp(refname, "HEAD");
 }
 
 static void reflog_expiry_prepare(const char *refname,
@@ -333,11 +356,12 @@ static void reflog_expiry_prepare(const char *refname,
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
 
-	if (!cb->cmd.expire_unreachable || !strcmp(refname, "HEAD")) {
+	if (!cb->cmd.expire_unreachable || is_head(refname)) {
 		cb->tip_commit = NULL;
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
-		cb->tip_commit = lookup_commit_reference_gently(oid, 1);
+		cb->tip_commit = lookup_commit_reference_gently(the_repository,
+								oid, 1);
 		if (!cb->tip_commit)
 			cb->unreachable_expire_kind = UE_ALWAYS;
 		else
@@ -384,8 +408,19 @@ static int collect_reflog(const char *ref, const struct object_id *oid, int unus
 {
 	struct collected_reflog *e;
 	struct collect_reflog_cb *cb = cb_data;
+	struct strbuf newref = STRBUF_INIT;
 
-	FLEX_ALLOC_STR(e, reflog, ref);
+	/*
+	 * Avoid collecting the same shared ref multiple times because
+	 * they are available via all worktrees.
+	 */
+	if (!cb->wt->is_current && ref_type(ref) == REF_TYPE_NORMAL)
+		return 0;
+
+	strbuf_worktree_ref(cb->wt, &newref, ref);
+	FLEX_ALLOC_STR(e, reflog, newref.buf);
+	strbuf_release(&newref);
+
 	oidcpy(&e->oid, oid);
 	ALLOC_GROW(cb->e, cb->nr + 1, cb->alloc);
 	cb->e[cb->nr++] = e;
@@ -508,7 +543,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 {
 	struct expire_reflog_policy_cb cb;
 	timestamp_t now = time(NULL);
-	int i, status, do_all;
+	int i, status, do_all, all_worktrees = 1;
 	int explicit_expiry = 0;
 	unsigned int flags = 0;
 
@@ -545,6 +580,8 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			flags |= EXPIRE_REFLOGS_UPDATE_REF;
 		else if (!strcmp(arg, "--all"))
 			do_all = 1;
+		else if (!strcmp(arg, "--single-worktree"))
+			all_worktrees = 0;
 		else if (!strcmp(arg, "--verbose"))
 			flags |= EXPIRE_REFLOGS_VERBOSE;
 		else if (!strcmp(arg, "--")) {
@@ -552,7 +589,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		else if (arg[0] == '-')
-			usage(reflog_expire_usage);
+			usage(_(reflog_expire_usage));
 		else
 			break;
 	}
@@ -563,9 +600,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	 * from reflog if the repository was pruned with older git.
 	 */
 	if (cb.cmd.stalefix) {
-		init_revisions(&cb.cmd.revs, prefix);
+		repo_init_revisions(the_repository, &cb.cmd.revs, prefix);
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
-			printf("Marking reachable objects...");
+			printf(_("Marking reachable objects..."));
 		mark_reachable_objects(&cb.cmd.revs, 0, 0, NULL);
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			putchar('\n');
@@ -573,10 +610,19 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 
 	if (do_all) {
 		struct collect_reflog_cb collected;
+		struct worktree **worktrees, **p;
 		int i;
 
 		memset(&collected, 0, sizeof(collected));
-		for_each_reflog(collect_reflog, &collected);
+		worktrees = get_worktrees(0);
+		for (p = worktrees; *p; p++) {
+			if (!all_worktrees && !(*p)->is_current)
+				continue;
+			collected.wt = *p;
+			refs_for_each_reflog(get_worktree_ref_store(*p),
+					     collect_reflog, &collected);
+		}
+		free_worktrees(worktrees);
 		for (i = 0; i < collected.nr; i++) {
 			struct collected_reflog *e = collected.e[i];
 			set_reflog_expiry_param(&cb.cmd, explicit_expiry, e->reflog);
@@ -594,7 +640,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		char *ref;
 		struct object_id oid;
 		if (!dwim_log(argv[i], strlen(argv[i]), &oid, &ref)) {
-			status |= error("%s points nowhere!", argv[i]);
+			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
 		}
 		set_reflog_expiry_param(&cb.cmd, explicit_expiry, ref);
@@ -640,13 +686,13 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		else if (arg[0] == '-')
-			usage(reflog_delete_usage);
+			usage(_(reflog_delete_usage));
 		else
 			break;
 	}
 
 	if (argc - i < 1)
-		return error("Nothing to delete?");
+		return error(_("no reflog specified to delete"));
 
 	for ( ; i < argc; i++) {
 		const char *spec = strstr(argv[i], "@{");
@@ -655,12 +701,12 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		int recno;
 
 		if (!spec) {
-			status |= error("Not a reflog: %s", argv[i]);
+			status |= error(_("not a reflog: %s"), argv[i]);
 			continue;
 		}
 
 		if (!dwim_log(argv[i], spec - argv[i], &oid, &ref)) {
-			status |= error("no reflog for '%s'", argv[i]);
+			status |= error(_("no reflog for '%s'"), argv[i]);
 			continue;
 		}
 
@@ -695,7 +741,7 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		else if (arg[0] == '-')
-			usage(reflog_exists_usage);
+			usage(_(reflog_exists_usage));
 		else
 			break;
 	}
@@ -703,10 +749,10 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 	start = i;
 
 	if (argc - start != 1)
-		usage(reflog_exists_usage);
+		usage(_(reflog_exists_usage));
 
 	if (check_refname_format(argv[start], REFNAME_ALLOW_ONELEVEL))
-		die("invalid ref format: %s", argv[start]);
+		die(_("invalid ref format: %s"), argv[start]);
 	return !reflog_exists(argv[start]);
 }
 
@@ -715,12 +761,12 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
  */
 
 static const char reflog_usage[] =
-"git reflog [ show | expire | delete | exists ]";
+N_("git reflog [ show | expire | delete | exists ]");
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
 	if (argc > 1 && !strcmp(argv[1], "-h"))
-		usage(reflog_usage);
+		usage(_(reflog_usage));
 
 	/* With no command, we default to showing it. */
 	if (argc < 2 || *argv[1] == '-')

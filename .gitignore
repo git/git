@@ -1,3 +1,7 @@
+/fuzz-commit-graph
+/fuzz_corpora
+/fuzz-pack-headers
+/fuzz-pack-idx
 /GIT-BUILD-OPTIONS
 /GIT-CFLAGS
 /GIT-LDFLAGS
@@ -78,6 +82,7 @@
 /git-init-db
 /git-interpret-trailers
 /git-instaweb
+/git-legacy-stash
 /git-log
 /git-ls-files
 /git-ls-remote
@@ -99,8 +104,9 @@
 /git-mergetool--lib
 /git-mktag
 /git-mktree
-/git-name-rev
+/git-multi-pack-index
 /git-mv
+/git-name-rev
 /git-notes
 /git-p4
 /git-pack-redundant
@@ -113,12 +119,12 @@
 /git-pull
 /git-push
 /git-quiltimport
+/git-range-diff
 /git-read-tree
 /git-rebase
 /git-rebase--am
-/git-rebase--helper
+/git-rebase--common
 /git-rebase--interactive
-/git-rebase--merge
 /git-rebase--preserve-merges
 /git-receive-pack
 /git-reflog
@@ -207,6 +213,7 @@
 /config.mak.autogen
 /config.mak.append
 /configure
+/.vscode/
 /tags
 /TAGS
 /cscope*
@@ -222,3 +229,4 @@
 *.pdb
 /Debug/
 /Release/
+*.dSYM

@@ -1,7 +1,5 @@
 language: c
 
-sudo: false
-
 cache:
   directories:
     - $HOME/travis-cache
@@ -10,37 +8,19 @@ os:
   - linux
   - osx
 
+osx_image: xcode10.1
+
 compiler:
   - clang
   - gcc
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - language-pack-is
-    - git-svn
-    - apache2
-    - gcc-8
-
 matrix:
   include:
-    - env: jobname=GETTEXT_POISON
+    - env: jobname=GIT_TEST_GETTEXT_POISON
       os: linux
       compiler:
       addons:
       before_install:
-    - env: jobname=Windows
-      os: linux
-      compiler:
-      addons:
-      before_install:
-      script:
-        - >
-          test "$TRAVIS_REPO_SLUG" != "git/git" ||
-          ci/run-windows-build.sh $TRAVIS_BRANCH $(git rev-parse HEAD)
-      after_failure:
     - env: jobname=Linux32
       os: linux
       compiler:
@@ -52,22 +32,11 @@ matrix:
     - env: jobname=StaticAnalysis
       os: linux
       compiler:
-      addons:
-        apt:
-          packages:
-          - coccinelle
-      before_install:
       script: ci/run-static-analysis.sh
       after_failure:
     - env: jobname=Documentation
       os: linux
       compiler:
-      addons:
-        apt:
-          packages:
-          - asciidoc
-          - xmlto
-      before_install:
       script: ci/test-documentation.sh
       after_failure:
 

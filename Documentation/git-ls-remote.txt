@@ -31,7 +31,7 @@ OPTIONS
 	displayed.
 
 --refs::
-	Do not show peeled tags or pseudorefs like HEAD	in the output.
+	Do not show peeled tags or pseudorefs like `HEAD` in the output.
 
 -q::
 --quiet::

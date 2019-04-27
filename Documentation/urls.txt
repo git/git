@@ -62,7 +62,7 @@ may be used:
 
 where <address> may be a path, a server and path, or an arbitrary
 URL-like string recognized by the specific remote helper being
-invoked. See linkgit:gitremote-helpers[1] for details.
+invoked. See linkgit:gitremote-helpers[7] for details.
 
 If there are a large number of similarly-named remote repositories and
 you want to use a different format for them (such that the URLs you

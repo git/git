@@ -176,10 +176,30 @@ void trace_strbuf_fl(const char *file, int line, struct trace_key *key,
 	strbuf_release(&buf);
 }
 
+static uint64_t perf_start_times[10];
+static int perf_indent;
+
+uint64_t trace_performance_enter(void)
+{
+	uint64_t now;
+
+	if (!trace_want(&trace_perf_key))
+		return 0;
+
+	now = getnanotime();
+	perf_start_times[perf_indent] = now;
+	if (perf_indent + 1 < ARRAY_SIZE(perf_start_times))
+		perf_indent++;
+	else
+		BUG("Too deep indentation");
+	return now;
+}
+
 static void trace_performance_vprintf_fl(const char *file, int line,
 					 uint64_t nanos, const char *format,
 					 va_list ap)
 {
+	static const char space[] = "          ";
 	struct strbuf buf = STRBUF_INIT;
 
 	if (!prepare_trace_line(file, line, &trace_perf_key, &buf))
@@ -188,7 +208,10 @@ static void trace_performance_vprintf_fl(const char *file, int line,
 	strbuf_addf(&buf, "performance: %.9f s", (double) nanos / 1000000000);
 
 	if (format && *format) {
-		strbuf_addstr(&buf, ": ");
+		if (perf_indent >= strlen(space))
+			BUG("Too deep indentation");
+
+		strbuf_addf(&buf, ":%.*s ", perf_indent, space);
 		strbuf_vaddf(&buf, format, ap);
 	}
 
@@ -244,6 +267,24 @@ void trace_performance_since(uint64_t start, const char *format, ...)
 	va_end(ap);
 }
 
+void trace_performance_leave(const char *format, ...)
+{
+	va_list ap;
+	uint64_t since;
+
+	if (perf_indent)
+		perf_indent--;
+
+	if (!format) /* Allow callers to leave without tracing anything */
+		return;
+
+	since = perf_start_times[perf_indent];
+	va_start(ap, format);
+	trace_performance_vprintf_fl(NULL, 0, getnanotime() - since,
+				     format, ap);
+	va_end(ap);
+}
+
 #else
 
 void trace_printf_key_fl(const char *file, int line, struct trace_key *key,
@@ -270,6 +311,24 @@ void trace_performance_fl(const char *file, int line, uint64_t nanos,
 	va_list ap;
 	va_start(ap, format);
 	trace_performance_vprintf_fl(file, line, nanos, format, ap);
+	va_end(ap);
+}
+
+void trace_performance_leave_fl(const char *file, int line,
+				uint64_t nanos, const char *format, ...)
+{
+	va_list ap;
+	uint64_t since;
+
+	if (perf_indent)
+		perf_indent--;
+
+	if (!format) /* Allow callers to leave without tracing anything */
+		return;
+
+	since = perf_start_times[perf_indent];
+	va_start(ap, format);
+	trace_performance_vprintf_fl(file, line, nanos - since, format, ap);
 	va_end(ap);
 }
 
@@ -411,13 +470,11 @@ uint64_t getnanotime(void)
 	}
 }
 
-static uint64_t command_start_time;
 static struct strbuf command_line = STRBUF_INIT;
 
 static void print_command_performance_atexit(void)
 {
-	trace_performance_since(command_start_time, "git command:%s",
-				command_line.buf);
+	trace_performance_leave("git command:%s", command_line.buf);
 }
 
 void trace_command_performance(const char **argv)
@@ -425,10 +482,10 @@ void trace_command_performance(const char **argv)
 	if (!trace_want(&trace_perf_key))
 		return;
 
-	if (!command_start_time)
+	if (!command_line.len)
 		atexit(print_command_performance_atexit);
 
 	strbuf_reset(&command_line);
 	sq_quote_argv_pretty(&command_line, argv);
-	command_start_time = getnanotime();
+	trace_performance_enter();
 }

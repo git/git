@@ -6,6 +6,8 @@
 
 # Use tabs whenever we need to fill whitespace that spans at least from one tab
 # stop to the next one.
+#
+# These settings are mirrored in .editorconfig.  Keep them in sync.
 UseTab: Always
 TabWidth: 8
 IndentWidth: 8
@@ -147,7 +149,7 @@ Cpp11BracedListStyle: false
 
 # A list of macros that should be interpreted as foreach loops instead of as
 # function calls.
-ForEachMacros: ['for_each_string_list_item']
+ForEachMacros: ['for_each_string_list_item', 'for_each_wanted_builtin', 'for_each_builtin', 'for_each_ut']
 
 # The maximum number of consecutive empty lines to keep.
 MaxEmptyLinesToKeep: 1

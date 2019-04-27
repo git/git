@@ -1,0 +1,14 @@
+(
+	cd foo &&
+	(
+		echo a &&
+		echo b
+	) >file &&
+
+	cd foo &&
+	(
+# LINT: nested multi-line subshell not presently checked for missing "&&"
+		echo a
+		echo b
+	) >file
+)

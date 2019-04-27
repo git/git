@@ -1,4 +1,6 @@
 #ifndef URL_MATCH_H
+#define URL_MATCH_H
+
 #include "string-list.h"
 
 struct url_info {

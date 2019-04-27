@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
@@ -24,9 +25,8 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 	struct option write_tree_options[] = {
 		OPT_BIT(0, "missing-ok", &flags, N_("allow missing objects"),
 			WRITE_TREE_MISSING_OK),
-		{ OPTION_STRING, 0, "prefix", &prefix, N_("<prefix>/"),
-		  N_("write tree object for a subdirectory <prefix>") ,
-		  PARSE_OPT_LITERAL_ARGHELP },
+		OPT_STRING(0, "prefix", &prefix, N_("<prefix>/"),
+			   N_("write tree object for a subdirectory <prefix>")),
 		{ OPTION_BIT, 0, "ignore-cache-tree", &flags, NULL,
 		  N_("only useful for debugging"),
 		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, NULL,

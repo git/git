@@ -187,9 +187,8 @@ test_expect_failure 'handle existing decomposed filenames' '
 	echo content >"verbatim.$Adiarnfd" &&
 	git -c core.precomposeunicode=false add "verbatim.$Adiarnfd" &&
 	git commit -m "existing decomposed file" &&
-	>expect &&
 	git ls-files --exclude-standard -o "verbatim*" >untracked &&
-	test_cmp expect untracked
+	test_must_be_empty untracked
 '
 
 # Test if the global core.precomposeunicode stops autosensing

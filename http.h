@@ -136,6 +136,15 @@ static inline int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
+/*
+ * Normalize curl results to handle CURL_FAILONERROR (or lack thereof). Failing
+ * http codes have their "result" converted to CURLE_HTTP_RETURNED_ERROR, and
+ * an appropriate string placed in the errorstr buffer (pass curl_errorstr if
+ * you don't have a custom buffer).
+ */
+void normalize_curl_result(CURLcode *result, long http_code, char *errorstr,
+			   size_t errorlen);
+
 /* Helpers for modifying and creating URLs */
 extern void append_remote_object_url(struct strbuf *buf, const char *url,
 				     const char *hex,
@@ -146,7 +155,6 @@ extern char *get_remote_object_url(const char *url, const char *hex,
 /* Options for http_get_*() */
 struct http_get_options {
 	unsigned no_cache:1,
-		 keep_error:1,
 		 initial_request:1;
 
 	/* If non-NULL, returns the content-type of the response. */
@@ -224,9 +232,9 @@ struct http_object_request {
 	CURLcode curl_result;
 	char errorstr[CURL_ERROR_SIZE];
 	long http_code;
-	unsigned char sha1[20];
-	unsigned char real_sha1[20];
-	git_SHA_CTX c;
+	struct object_id oid;
+	struct object_id real_oid;
+	git_hash_ctx c;
 	git_zstream stream;
 	int zret;
 	int rename;
@@ -234,7 +242,7 @@ struct http_object_request {
 };
 
 extern struct http_object_request *new_http_object_request(
-	const char *base_url, unsigned char *sha1);
+	const char *base_url, const struct object_id *oid);
 extern void process_http_object_request(struct http_object_request *freq);
 extern int finish_http_object_request(struct http_object_request *freq);
 extern void abort_http_object_request(struct http_object_request *freq);

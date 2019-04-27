@@ -1,17 +1,15 @@
 #ifndef COMMIT_SLAB_IMPL_H
 #define COMMIT_SLAB_IMPL_H
 
-#define MAYBE_UNUSED __attribute__((__unused__))
+#include "git-compat-util.h"
 
 #define implement_static_commit_slab(slabname, elemtype) \
-	implement_commit_slab(slabname, elemtype, static MAYBE_UNUSED)
+	implement_commit_slab(slabname, elemtype, MAYBE_UNUSED static)
 
 #define implement_shared_commit_slab(slabname, elemtype) \
 	implement_commit_slab(slabname, elemtype, )
 
 #define implement_commit_slab(slabname, elemtype, scope)		\
-									\
-static int stat_ ##slabname## realloc;					\
 									\
 scope void init_ ##slabname## _with_stride(struct slabname *s,		\
 						   unsigned stride)	\
@@ -54,7 +52,6 @@ scope elemtype *slabname## _at_peek(struct slabname *s,			\
 		if (!add_if_missing)					\
 			return NULL;					\
 		REALLOC_ARRAY(s->slab, nth_slab + 1);			\
-		stat_ ##slabname## realloc++;				\
 		for (i = s->slab_count; i <= nth_slab; i++)		\
 			s->slab[i] = NULL;				\
 		s->slab_count = nth_slab + 1;				\

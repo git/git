@@ -57,18 +57,18 @@ test_expect_success 'setup' '
 
 	git checkout -b delete-base branch1 &&
 	mkdir -p a/a &&
-	(echo one; echo two; echo 3; echo 4) >a/a/file.txt &&
+	test_write_lines one two 3 4 >a/a/file.txt &&
 	git add a/a/file.txt &&
 	git commit -m"base file" &&
 	git checkout -b move-to-b delete-base &&
 	mkdir -p b/b &&
 	git mv a/a/file.txt b/b/file.txt &&
-	(echo one; echo two; echo 4) >b/b/file.txt &&
+	test_write_lines one two 4 >b/b/file.txt &&
 	git commit -a -m"move to b" &&
 	git checkout -b move-to-c delete-base &&
 	mkdir -p c/c &&
 	git mv a/a/file.txt c/c/file.txt &&
-	(echo one; echo two; echo 3) >c/c/file.txt &&
+	test_write_lines one two 3 >c/c/file.txt &&
 	git commit -a -m"move to c" &&
 
 	git checkout -b stash1 master &&
@@ -328,9 +328,8 @@ test_expect_success 'mergetool produces no errors when keepBackup is used' '
 	git checkout -b test$test_count move-to-c &&
 	test_config mergetool.keepBackup true &&
 	test_must_fail git merge move-to-b &&
-	: >expect &&
 	echo d | git mergetool a/a/file.txt 2>actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	! test -d a
 '
 
@@ -349,7 +348,7 @@ test_expect_success 'mergetool keeps tempfiles when aborting delete/delete' '
 	git checkout -b test$test_count move-to-c &&
 	test_config mergetool.keepTemporaries true &&
 	test_must_fail git merge move-to-b &&
-	! (echo a; echo n) | git mergetool a/a/file.txt &&
+	! test_write_lines a n | git mergetool a/a/file.txt &&
 	test -d a/a &&
 	cat >expect <<-\EOF &&
 	file_BASE_.txt
@@ -620,8 +619,7 @@ test_expect_success 'file with no base' '
 	git checkout -b test$test_count branch1 &&
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool mybase -- both &&
-	>expected &&
-	test_cmp expected both
+	test_must_be_empty both
 '
 
 test_expect_success 'custom commands override built-ins' '

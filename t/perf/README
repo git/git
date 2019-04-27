@@ -168,3 +168,28 @@ that
   While we have tried to make sure that it can cope with embedded
   whitespace and other special characters, it will not work with
   multi-line data.
+
+Rather than tracking the performance by run-time as `test_perf` does, you
+may also track output size by using `test_size`. The stdout of the
+function should be a single numeric value, which will be captured and
+shown in the aggregated output. For example:
+
+	test_perf 'time foo' '
+		./foo >foo.out
+	'
+
+	test_size 'output size'
+		wc -c <foo.out
+	'
+
+might produce output like:
+
+	Test                origin           HEAD
+	-------------------------------------------------------------
+	1234.1 time foo     0.37(0.79+0.02)  0.26(0.51+0.02) -29.7%
+	1234.2 output size             4.3M             3.6M -14.7%
+
+The item being measured (and its units) is up to the test; the context
+and the test title should make it clear to the user whether bigger or
+smaller numbers are better. Unlike test_perf, the test code will only be
+run once, since output sizes tend to be more deterministic than timings.

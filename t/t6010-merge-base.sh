@@ -245,7 +245,7 @@ test_expect_success 'using reflog to find the fork point' '
 			git commit --allow-empty -m "Derived #$count" &&
 			git rev-parse HEAD >derived$count &&
 			git checkout -B base $E || exit 1
-		done
+		done &&
 
 		for count in 1 2 3
 		do

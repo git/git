@@ -20,6 +20,7 @@
 #include "sigchain.h"
 #include "argv-array.h"
 #include "commit.h"
+#include "commit-graph.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "pack.h"
@@ -40,6 +41,7 @@ static int aggressive_depth = 50;
 static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
+static int gc_write_commit_graph;
 static int detach_auto = 1;
 static timestamp_t gc_log_expire_time;
 static const char *gc_log_expire = "1.day.ago";
@@ -114,6 +116,19 @@ static void process_log_file_on_signal(int signo)
 	raise(signo);
 }
 
+static int gc_config_is_timestamp_never(const char *var)
+{
+	const char *value;
+	timestamp_t expire;
+
+	if (!git_config_get_value(var, &value) && value) {
+		if (parse_expiry_date(value, &expire))
+			die(_("failed to parse '%s' value '%s'"), var, value);
+		return expire == 0;
+	}
+	return 0;
+}
+
 static void gc_config(void)
 {
 	const char *value;
@@ -125,10 +140,15 @@ static void gc_config(void)
 			pack_refs = git_config_bool("gc.packrefs", value);
 	}
 
+	if (gc_config_is_timestamp_never("gc.reflogexpire") &&
+	    gc_config_is_timestamp_never("gc.reflogexpireunreachable"))
+		prune_reflogs = 0;
+
 	git_config_get_int("gc.aggressivewindow", &aggressive_window);
 	git_config_get_int("gc.aggressivedepth", &aggressive_depth);
 	git_config_get_int("gc.auto", &gc_auto_threshold);
 	git_config_get_int("gc.autopacklimit", &gc_auto_pack_limit);
+	git_config_get_bool("gc.writecommitgraph", &gc_write_commit_graph);
 	git_config_get_bool("gc.autodetach", &detach_auto);
 	git_config_get_expiry("gc.pruneexpire", &prune_expire);
 	git_config_get_expiry("gc.worktreepruneexpire", &prune_worktrees_expire);
@@ -153,9 +173,7 @@ static int too_many_loose_objects(void)
 	int auto_threshold;
 	int num_loose = 0;
 	int needed = 0;
-
-	if (gc_auto_threshold <= 0)
-		return 0;
+	const unsigned hexsz_loose = the_hash_algo->hexsz - 2;
 
 	dir = opendir(git_path("objects/17"));
 	if (!dir)
@@ -163,8 +181,8 @@ static int too_many_loose_objects(void)
 
 	auto_threshold = DIV_ROUND_UP(gc_auto_threshold, 256);
 	while ((ent = readdir(dir)) != NULL) {
-		if (strspn(ent->d_name, "0123456789abcdef") != 38 ||
-		    ent->d_name[38] != '\0')
+		if (strspn(ent->d_name, "0123456789abcdef") != hexsz_loose ||
+		    ent->d_name[hexsz_loose] != '\0')
 			continue;
 		if (++num_loose > auto_threshold) {
 			needed = 1;
@@ -180,7 +198,7 @@ static struct packed_git *find_base_packs(struct string_list *packs,
 {
 	struct packed_git *p, *base = NULL;
 
-	for (p = get_packed_git(the_repository); p; p = p->next) {
+	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (!p->pack_local)
 			continue;
 		if (limit) {
@@ -205,7 +223,7 @@ static int too_many_packs(void)
 	if (gc_auto_pack_limit <= 0)
 		return 0;
 
-	for (cnt = 0, p = get_packed_git(the_repository); p; p = p->next) {
+	for (cnt = 0, p = get_all_packs(the_repository); p; p = p->next) {
 		if (!p->pack_local)
 			continue;
 		if (p->pack_keep)
@@ -314,7 +332,7 @@ static void add_repack_all_option(struct string_list *keep_pack)
 
 static void add_repack_incremental_option(void)
 {
-       argv_array_push(&repack, "--no-write-bitmap-index");
+	argv_array_push(&repack, "--no-write-bitmap-index");
 }
 
 static int need_to_gc(void)
@@ -438,10 +456,16 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	return NULL;
 }
 
+/*
+ * Returns 0 if there was no previous error and gc can proceed, 1 if
+ * gc should not proceed due to an error in the last run. Prints a
+ * message and returns -1 if an error occured while reading gc.log
+ */
 static int report_last_gc_error(void)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
+	ssize_t len;
 	struct stat st;
 	char *gc_log_path = git_pathdup("gc.log");
 
@@ -449,39 +473,53 @@ static int report_last_gc_error(void)
 		if (errno == ENOENT)
 			goto done;
 
-		ret = error_errno(_("Can't stat %s"), gc_log_path);
+		ret = error_errno(_("cannot stat '%s'"), gc_log_path);
 		goto done;
 	}
 
 	if (st.st_mtime < gc_log_expire_time)
 		goto done;
 
-	ret = strbuf_read_file(&sb, gc_log_path, 0);
-	if (ret > 0)
-		ret = error(_("The last gc run reported the following. "
+	len = strbuf_read_file(&sb, gc_log_path, 0);
+	if (len < 0)
+		ret = error_errno(_("cannot read '%s'"), gc_log_path);
+	else if (len > 0) {
+		/*
+		 * A previous gc failed.  Report the error, and don't
+		 * bother with an automatic gc run since it is likely
+		 * to fail in the same way.
+		 */
+		warning(_("The last gc run reported the following. "
 			       "Please correct the root cause\n"
 			       "and remove %s.\n"
 			       "Automatic cleanup will not be performed "
 			       "until the file is removed.\n\n"
 			       "%s"),
 			    gc_log_path, sb.buf);
+		ret = 1;
+	}
 	strbuf_release(&sb);
 done:
 	free(gc_log_path);
 	return ret;
 }
 
-static int gc_before_repack(void)
+static void gc_before_repack(void)
 {
+	/*
+	 * We may be called twice, as both the pre- and
+	 * post-daemonized phases will call us, but running these
+	 * commands more than once is pointless and wasteful.
+	 */
+	static int done = 0;
+	if (done++)
+		return;
+
 	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, pack_refs_cmd.argv[0]);
+		die(FAILED_RUN, pack_refs_cmd.argv[0]);
 
 	if (prune_reflogs && run_command_v_opt(reflog.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, reflog.argv[0]);
-
-	pack_refs = 0;
-	prune_reflogs = 0;
-	return 0;
+		die(FAILED_RUN, reflog.argv[0]);
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -562,13 +600,17 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
 		}
 		if (detach_auto) {
-			if (report_last_gc_error())
-				return -1;
+			int ret = report_last_gc_error();
+			if (ret < 0)
+				/* an I/O error occured, already reported */
+				exit(128);
+			if (ret == 1)
+				/* Last gc --auto failed. Skip this one. */
+				return 0;
 
 			if (lock_repo_for_gc(force, &pid))
 				return 0;
-			if (gc_before_repack())
-				return -1;
+			gc_before_repack(); /* dies on failure */
 			delete_tempfile(&pidfile);
 
 			/*
@@ -608,12 +650,12 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		atexit(process_log_file_at_exit);
 	}
 
-	if (gc_before_repack())
-		return -1;
+	gc_before_repack();
 
 	if (!repository_format_precious_objects) {
+		close_all_packs(the_repository->objects);
 		if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
-			return error(FAILED_RUN, repack.argv[0]);
+			die(FAILED_RUN, repack.argv[0]);
 
 		if (prune_expire) {
 			argv_array_push(&prune, prune_expire);
@@ -623,23 +665,29 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 				argv_array_push(&prune,
 						"--exclude-promisor-objects");
 			if (run_command_v_opt(prune.argv, RUN_GIT_CMD))
-				return error(FAILED_RUN, prune.argv[0]);
+				die(FAILED_RUN, prune.argv[0]);
 		}
 	}
 
 	if (prune_worktrees_expire) {
 		argv_array_push(&prune_worktrees, prune_worktrees_expire);
 		if (run_command_v_opt(prune_worktrees.argv, RUN_GIT_CMD))
-			return error(FAILED_RUN, prune_worktrees.argv[0]);
+			die(FAILED_RUN, prune_worktrees.argv[0]);
 	}
 
 	if (run_command_v_opt(rerere.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, rerere.argv[0]);
+		die(FAILED_RUN, rerere.argv[0]);
 
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git(the_repository);
-	if (pack_garbage.nr > 0)
+	if (pack_garbage.nr > 0) {
+		close_all_packs(the_repository->objects);
 		clean_pack_garbage();
+	}
+
+	if (gc_write_commit_graph)
+		write_commit_graph_reachable(get_object_directory(), 0,
+					     !quiet && !daemonized);
 
 	if (auto_gc && too_many_loose_objects())
 		warning(_("There are too many unreachable loose objects; "

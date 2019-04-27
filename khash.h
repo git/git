@@ -26,6 +26,9 @@
 #ifndef __AC_KHASH_H
 #define __AC_KHASH_H
 
+#include "cache.h"
+#include "hashmap.h"
+
 #define AC_VERSION_KHASH_H "0.2.8"
 
 typedef uint32_t khint32_t;
@@ -79,11 +82,16 @@ static const double __ac_HASH_UPPER = 0.77;
 	SCOPE kh_##name##_t *kh_init_##name(void) {							\
 		return (kh_##name##_t*)xcalloc(1, sizeof(kh_##name##_t));		\
 	}																	\
+	SCOPE void kh_release_##name(kh_##name##_t *h)						\
+	{																	\
+		free(h->flags);													\
+		free((void *)h->keys);											\
+		free((void *)h->vals);											\
+	}																	\
 	SCOPE void kh_destroy_##name(kh_##name##_t *h)						\
 	{																	\
 		if (h) {														\
-			free((void *)h->keys); free(h->flags);					\
-			free((void *)h->vals);										\
+			kh_release_##name(h);										\
 			free(h);													\
 		}																\
 	}																	\
@@ -226,7 +234,7 @@ static const double __ac_HASH_UPPER = 0.77;
 	__KHASH_IMPL(name, SCOPE, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal)
 
 #define KHASH_INIT(name, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal) \
-	KHASH_INIT2(name, static inline, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal)
+	KHASH_INIT2(name, MAYBE_UNUSED static inline, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal)
 
 /* Other convenient macros... */
 
@@ -323,5 +331,23 @@ typedef kh_sha1_t khash_sha1;
 
 KHASH_INIT(sha1_pos, const unsigned char *, int, 1, sha1hash, __kh_oid_cmp)
 typedef kh_sha1_pos_t khash_sha1_pos;
+
+static inline unsigned int oid_hash(struct object_id oid)
+{
+	return sha1hash(oid.hash);
+}
+
+static inline int oid_equal(struct object_id a, struct object_id b)
+{
+	return oideq(&a, &b);
+}
+
+KHASH_INIT(oid, struct object_id, int, 0, oid_hash, oid_equal)
+
+KHASH_INIT(oid_map, struct object_id, void *, 1, oid_hash, oid_equal)
+typedef kh_oid_t khash_oid_map;
+
+KHASH_INIT(oid_pos, struct object_id, int, 1, oid_hash, oid_equal)
+typedef kh_oid_pos_t khash_oid_pos;
 
 #endif /* __AC_KHASH_H */

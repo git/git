@@ -50,8 +50,11 @@ pull_to_client () {
 			case "$heads" in *B*)
 			    git update-ref refs/heads/B "$BTIP";;
 			esac &&
-			git symbolic-ref HEAD refs/heads/$(echo $heads \
-				| sed -e "s/^\(.\).*$/\1/") &&
+
+			git symbolic-ref HEAD refs/heads/$(
+				echo $heads |
+				sed -e "s/^\(.\).*$/\1/"
+			) &&
 
 			git fsck --full &&
 
@@ -161,7 +164,7 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'clone shallow object count (part 2)' '
 	sed -e "/^in-pack:/d" -e "/^packs:/d" -e "/^size-pack:/d" \
 	    -e "/: 0$/d" count.shallow > count_output &&
-	! test -s count_output
+	test_must_be_empty count_output
 '
 
 test_expect_success 'fsck in shallow repo' '
@@ -259,7 +262,7 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		git fetch --depth 4 .. A
+		git fetch --depth 4 .. A &&
 		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
@@ -403,7 +406,7 @@ test_expect_success 'fetch creating new shallow root' '
 		git fetch --depth=1 --progress 2>actual &&
 		# This should fetch only the empty commit, no tree or
 		# blob objects
-		grep "remote: Total 1" actual
+		test_i18ngrep "remote: Total 1" actual
 	)
 '
 
@@ -436,14 +439,22 @@ test_expect_success 'setup tests for the --stdin parameter' '
 	) >input.dup
 '
 
-test_expect_success 'fetch refs from cmdline' '
-	(
-		cd client &&
-		git fetch-pack --no-progress .. $(cat ../input)
-	) >output &&
-	cut -d " " -f 2 <output | sort >actual &&
-	test_cmp expect actual
+test_expect_success 'setup fetch refs from cmdline v[12]' '
+	cp -r client client1 &&
+	cp -r client client2
 '
+
+for version in '' 1 2
+do
+	test_expect_success "protocol.version=$version fetch refs from cmdline" "
+		(
+			cd client$version &&
+			GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. \$(cat ../input)
+		) >output &&
+		cut -d ' ' -f 2 <output | sort >actual &&
+		test_cmp expect actual
+	"
+done
 
 test_expect_success 'fetch refs from stdin' '
 	(
@@ -533,19 +544,26 @@ test_expect_success 'test --all wrt tag to non-commits' '
 	# are reachable only via created tag references.
 	blob=$(echo "hello blob" | git hash-object -t blob -w --stdin) &&
 	git tag -a -m "tag -> blob" tag-to-blob $blob &&
- \
+
 	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
 	git tag -a -m "tag -> tree" tag-to-tree $tree &&
- \
+
 	tree2=$(printf "100644 blob $blob\tfile2" | git mktree) &&
 	commit=$(git commit-tree -m "hello commit" $tree) &&
 	git tag -a -m "tag -> commit" tag-to-commit $commit &&
- \
+
 	blob2=$(echo "hello blob2" | git hash-object -t blob -w --stdin) &&
-	tag=$(printf "object $blob2\ntype blob\ntag tag-to-blob2\n\
-tagger author A U Thor <author@example.com> 0 +0000\n\nhello tag" | git mktag) &&
+	tag=$(git mktag <<-EOF
+		object $blob2
+		type blob
+		tag tag-to-blob2
+		tagger author A U Thor <author@example.com> 0 +0000
+
+		hello tag
+	EOF
+	) &&
 	git tag -a -m "tag -> tag" tag-to-tag $tag &&
- \
+
 	# `fetch-pack --all` should succeed fetching all those objects.
 	mkdir fetchall &&
 	(
@@ -618,7 +636,9 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	test_commit -C server 6 &&
 
 	git init client &&
-	test_must_fail git -C client fetch-pack ../server \
+	# Some protocol versions (e.g. 2) support fetching
+	# unadvertised objects, so restrict this test to v0.
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION= git -C client fetch-pack ../server \
 		$(git -C server rev-parse refs/heads/master^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
@@ -807,6 +827,39 @@ test_expect_success 'fetching deepen' '
 	)
 '
 
+test_expect_success 'use ref advertisement to prune "have" lines sent' '
+	rm -rf server client &&
+	git init server &&
+	test_commit -C server both_have_1 &&
+	git -C server tag -d both_have_1 &&
+	test_commit -C server both_have_2 &&
+
+	git clone server client &&
+	test_commit -C server server_has &&
+	test_commit -C client client_has &&
+
+	# In both protocol v0 and v2, ensure that the parent of both_have_2 is
+	# not sent as a "have" line. The client should know that the server has
+	# both_have_2, so it only needs to inform the server that it has
+	# both_have_2, and the server can infer the rest.
+
+	rm -f trace &&
+	cp -r client clientv0 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv0 \
+		fetch origin server_has both_have_2 &&
+	grep "have $(git -C client rev-parse client_has)" trace &&
+	grep "have $(git -C client rev-parse both_have_2)" trace &&
+	! grep "have $(git -C client rev-parse both_have_2^)" trace &&
+
+	rm -f trace &&
+	cp -r client clientv2 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv2 -c protocol.version=2 \
+		fetch origin server_has both_have_2 &&
+	grep "have $(git -C client rev-parse client_has)" trace &&
+	grep "have $(git -C client rev-parse both_have_2)" trace &&
+	! grep "have $(git -C client rev-parse both_have_2^)" trace
+'
+
 test_expect_success 'filtering by size' '
 	rm -rf server client &&
 	test_create_repo server &&
@@ -866,8 +919,5 @@ start_httpd
 test_expect_success 'fetch with --filter=blob:limit=0 and HTTP' '
 	fetch_filter_blob_limit_zero "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"
 '
-
-stop_httpd
-
 
 test_done

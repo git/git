@@ -1,3 +1,5 @@
+#include "cache.h"
+#include "test-tool.h"
 #include "pkt-line.h"
 
 static void pack_line(const char *line)
@@ -48,7 +50,37 @@ static void unpack(void)
 	}
 }
 
-int cmd_main(int argc, const char **argv)
+static void unpack_sideband(void)
+{
+	struct packet_reader reader;
+	packet_reader_init(&reader, 0, NULL, 0,
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_CHOMP_NEWLINE);
+
+	while (packet_reader_read(&reader) != PACKET_READ_EOF) {
+		int band;
+		int fd;
+
+		switch (reader.status) {
+		case PACKET_READ_EOF:
+			break;
+		case PACKET_READ_NORMAL:
+			band = reader.line[0] & 0xff;
+			if (band < 1 || band > 2)
+				die("unexpected side band %d", band);
+			fd = band;
+
+			write_or_die(fd, reader.line + 1, reader.pktlen - 1);
+			break;
+		case PACKET_READ_FLUSH:
+			return;
+		case PACKET_READ_DELIM:
+			break;
+		}
+	}
+}
+
+int cmd__pkt_line(int argc, const char **argv)
 {
 	if (argc < 2)
 		die("too few arguments");
@@ -57,6 +89,8 @@ int cmd_main(int argc, const char **argv)
 		pack(argc - 2, argv + 2);
 	else if (!strcmp(argv[1], "unpack"))
 		unpack();
+	else if (!strcmp(argv[1], "unpack-sideband"))
+		unpack_sideband();
 	else
 		die("invalid argument '%s'", argv[1]);
 

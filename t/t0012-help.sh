@@ -29,9 +29,9 @@ test_expect_success "setup" '
 # to verify
 test_expect_success 'basic help commands' '
 	git help >/dev/null &&
-	git help -a >/dev/null &&
+	git help -a --no-verbose >/dev/null &&
 	git help -g >/dev/null &&
-	git help -av >/dev/null
+	git help -a >/dev/null
 '
 
 test_expect_success "works for commands and guides by default" '

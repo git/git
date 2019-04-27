@@ -11,15 +11,18 @@
  */
 #define MAX_XDIFF_SIZE (1024UL * 1024 * 1023)
 
-typedef void (*xdiff_emit_consume_fn)(void *, char *, unsigned long);
+typedef void (*xdiff_emit_line_fn)(void *, char *, unsigned long);
+typedef void (*xdiff_emit_hunk_fn)(void *data,
+				   long old_begin, long old_nr,
+				   long new_begin, long new_nr,
+				   const char *func, long funclen);
 
 int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);
 int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
-		  xdiff_emit_consume_fn fn, void *consume_callback_data,
+		  xdiff_emit_hunk_fn hunk_fn,
+		  xdiff_emit_line_fn line_fn,
+		  void *consume_callback_data,
 		  xpparam_t const *xpp, xdemitconf_t const *xecfg);
-int parse_hunk_header(char *line, int len,
-		      int *ob, int *on,
-		      int *nb, int *nn);
 int read_mmfile(mmfile_t *ptr, const char *filename);
 void read_mmblob(mmfile_t *ptr, const struct object_id *oid);
 int buffer_is_binary(const char *ptr, unsigned long size);
@@ -28,6 +31,14 @@ extern void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line, int cflag
 extern void xdiff_clear_find_func(xdemitconf_t *xecfg);
 extern int git_xmerge_config(const char *var, const char *value, void *cb);
 extern int git_xmerge_style;
+
+/*
+ * Can be used as a no-op hunk_fn for xdi_diff_outf(), since a NULL
+ * one just sends the hunk line to the line_fn callback).
+ */
+void discard_hunk_line(void *priv,
+		       long ob, long on, long nb, long nn,
+		       const char *func, long funclen);
 
 /*
  * Compare the strings l1 with l2 which are of size s1 and s2 respectively.

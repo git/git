@@ -74,8 +74,7 @@ test_expect_success 'diff-tree pathspec' '
 	tree2=$(git write-tree) &&
 	echo "$tree2" &&
 	git diff-tree -r --name-only $tree $tree2 -- pa path1/a >current &&
-	>expected &&
-	test_cmp expected current
+	test_must_be_empty current
 '
 
 test_expect_success 'diff-tree with wildcard shows dir also matches' '
@@ -111,10 +110,10 @@ test_expect_success 'diff-tree -r with wildcard' '
 test_expect_success 'setup submodules' '
 	test_tick &&
 	git init submod &&
-	( cd submod && test_commit first; ) &&
+	( cd submod && test_commit first ) &&
 	git add submod &&
 	git commit -m first &&
-	( cd submod && test_commit second; ) &&
+	( cd submod && test_commit second ) &&
 	git add submod &&
 	git commit -m second
 '

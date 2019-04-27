@@ -126,7 +126,7 @@ test_expect_success SYMLINKS 'diff symlinks with non-existing targets' '
 	ln -s take\ over brain &&
 	test_must_fail git diff --no-index pinky brain >output 2>output.err &&
 	grep narf output &&
-	! test -s output.err
+	test_must_be_empty output.err
 '
 
 test_expect_success SYMLINKS 'setup symlinks with attributes' '

@@ -1,6 +1,7 @@
 #ifndef WORKTREE_H
 #define WORKTREE_H
 
+#include "cache.h"
 #include "refs.h"
 
 struct strbuf;
@@ -9,12 +10,12 @@ struct worktree {
 	char *path;
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
-	char *lock_reason;	/* internal use */
+	char *lock_reason;	/* private - use worktree_lock_reason */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
 	int is_current;
-	int lock_reason_valid;
+	int lock_reason_valid; /* private */
 };
 
 /* Functions for acting on the information about worktrees. */
@@ -59,7 +60,7 @@ extern int is_main_worktree(const struct worktree *wt);
  * Return the reason string if the given worktree is locked or NULL
  * otherwise.
  */
-extern const char *is_worktree_locked(struct worktree *wt);
+extern const char *worktree_lock_reason(struct worktree *wt);
 
 #define WT_VALIDATE_WORKTREE_MISSING_OK (1 << 0)
 
@@ -106,5 +107,29 @@ int is_worktree_being_bisected(const struct worktree *wt, const char *target);
 extern const char *worktree_git_path(const struct worktree *wt,
 				     const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
+
+/*
+ * Parse a worktree ref (i.e. with prefix main-worktree/ or
+ * worktrees/) and return the position of the worktree's name and
+ * length (or NULL and zero if it's main worktree), and ref.
+ *
+ * All name, name_length and ref arguments could be NULL.
+ */
+int parse_worktree_ref(const char *worktree_ref, const char **name,
+		       int *name_length, const char **ref);
+
+/*
+ * Return a refname suitable for access from the current ref store.
+ */
+void strbuf_worktree_ref(const struct worktree *wt,
+			 struct strbuf *sb,
+			 const char *refname);
+
+/*
+ * Return a refname suitable for access from the current ref
+ * store. The result will be destroyed at the next call.
+ */
+const char *worktree_ref(const struct worktree *wt,
+			 const char *refname);
 
 #endif

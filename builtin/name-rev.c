@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "commit.h"
 #include "tag.h"
@@ -203,7 +204,7 @@ static int tipcmp(const void *a_, const void *b_)
 
 static int name_ref(const char *path, const struct object_id *oid, int flags, void *cb_data)
 {
-	struct object *o = parse_object(oid);
+	struct object *o = parse_object(the_repository, oid);
 	struct name_ref_data *data = cb_data;
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
@@ -261,7 +262,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
 			break; /* broken repository */
-		o = parse_object(&t->tagged->oid);
+		o = parse_object(the_repository, &t->tagged->oid);
 		deref = 1;
 		taggerdate = t->date;
 	}
@@ -360,25 +361,28 @@ static char const * const name_rev_usage[] = {
 static void name_rev_line(char *p, struct name_ref_data *data)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int forty = 0;
+	int counter = 0;
 	char *p_start;
+	const unsigned hexsz = the_hash_algo->hexsz;
+
 	for (p_start = p; *p; p++) {
 #define ishex(x) (isdigit((x)) || ((x) >= 'a' && (x) <= 'f'))
 		if (!ishex(*p))
-			forty = 0;
-		else if (++forty == GIT_SHA1_HEXSZ &&
+			counter = 0;
+		else if (++counter == hexsz &&
 			 !ishex(*(p+1))) {
 			struct object_id oid;
 			const char *name = NULL;
 			char c = *(p+1);
 			int p_len = p - p_start + 1;
 
-			forty = 0;
+			counter = 0;
 
 			*(p+1) = 0;
-			if (!get_oid(p - (GIT_SHA1_HEXSZ - 1), &oid)) {
+			if (!get_oid(p - (hexsz - 1), &oid)) {
 				struct object *o =
-					lookup_object(oid.hash);
+					lookup_object(the_repository,
+						      oid.hash);
 				if (o)
 					name = get_rev_name(o, &buf);
 			}
@@ -388,7 +392,7 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 				continue;
 
 			if (data->name_only)
-				printf("%.*s%s", p_len - GIT_SHA1_HEXSZ, p_start, name);
+				printf("%.*s%s", p_len - hexsz, p_start, name);
 			else
 				printf("%.*s (%s)", p_len, p_start, name);
 			p_start = p + 1;
@@ -451,9 +455,10 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		}
 
 		commit = NULL;
-		object = parse_object(&oid);
+		object = parse_object(the_repository, &oid);
 		if (object) {
-			struct object *peeled = deref_tag(object, *argv, 0);
+			struct object *peeled = deref_tag(the_repository,
+							  object, *argv, 0);
 			if (peeled && peeled->type == OBJ_COMMIT)
 				commit = (struct commit *)peeled;
 		}

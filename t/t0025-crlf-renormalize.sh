@@ -27,4 +27,13 @@ test_expect_success 'renormalize CRLF in repo' '
 	test_cmp expect actual
 '
 
+test_expect_success 'ignore-errors not mistaken for renormalize' '
+	git reset --hard &&
+	echo "*.txt text=auto" >.gitattributes &&
+	git ls-files --eol >expect &&
+	git add --ignore-errors "*.txt" &&
+	git ls-files --eol >actual &&
+	test_cmp expect actual
+'
+
 test_done

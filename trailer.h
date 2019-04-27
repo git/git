@@ -3,6 +3,8 @@
 
 #include "list.h"
 
+struct strbuf;
+
 enum trailer_where {
 	WHERE_DEFAULT,
 	WHERE_END,
@@ -69,6 +71,11 @@ struct process_trailer_options {
 	int only_trailers;
 	int only_input;
 	int unfold;
+	int no_divider;
+	int value_only;
+	const struct strbuf *separator;
+	int (*filter)(const struct strbuf *, void *);
+	void *filter_data;
 };
 
 #define PROCESS_TRAILER_OPTIONS_INIT {0}
@@ -77,7 +84,8 @@ void process_trailers(const char *file,
 		      const struct process_trailer_options *opts,
 		      struct list_head *new_trailer_head);
 
-void trailer_info_get(struct trailer_info *info, const char *str);
+void trailer_info_get(struct trailer_info *info, const char *str,
+		      const struct process_trailer_options *opts);
 
 void trailer_info_release(struct trailer_info *info);
 

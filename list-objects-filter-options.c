@@ -18,8 +18,9 @@
  * See Documentation/rev-list-options.txt for allowed values for <arg>.
  *
  * Capture the given arg as the "filter_spec".  This can be forwarded to
- * subordinate commands when necessary.  We also "intern" the arg for
- * the convenience of the current command.
+ * subordinate commands when necessary (although it's better to pass it through
+ * expand_list_objects_filter_spec() first).  We also "intern" the arg for the
+ * convenience of the current command.
  */
 static int gently_parse_list_objects_filter(
 	struct list_objects_filter_options *filter_options,
@@ -30,7 +31,6 @@ static int gently_parse_list_objects_filter(
 
 	if (filter_options->choice) {
 		if (errbuf) {
-			strbuf_init(errbuf, 0);
 			strbuf_addstr(
 				errbuf,
 				_("multiple filter-specs cannot be combined"));
@@ -50,6 +50,18 @@ static int gently_parse_list_objects_filter(
 			return 0;
 		}
 
+	} else if (skip_prefix(arg, "tree:", &v0)) {
+		if (!git_parse_ulong(v0, &filter_options->tree_exclude_depth)) {
+			if (errbuf) {
+				strbuf_addstr(
+					errbuf,
+					_("expected 'tree:<depth>'"));
+			}
+			return 1;
+		}
+		filter_options->choice = LOFC_TREE_DEPTH;
+		return 0;
+
 	} else if (skip_prefix(arg, "sparse:oid=", &v0)) {
 		struct object_context oc;
 		struct object_id sparse_oid;
@@ -59,7 +71,7 @@ static int gently_parse_list_objects_filter(
 		 * command, but DO NOT complain if we don't have the blob or
 		 * ref locally.
 		 */
-		if (!get_oid_with_context(v0, GET_OID_BLOB,
+		if (!get_oid_with_context(the_repository, v0, GET_OID_BLOB,
 					  &sparse_oid, &oc))
 			filter_options->sparse_oid_value = oiddup(&sparse_oid);
 		filter_options->choice = LOFC_SPARSE_OID;
@@ -70,11 +82,14 @@ static int gently_parse_list_objects_filter(
 		filter_options->sparse_path_value = strdup(v0);
 		return 0;
 	}
+	/*
+	 * Please update _git_fetch() in git-completion.bash when you
+	 * add new filters
+	 */
 
-	if (errbuf) {
-		strbuf_init(errbuf, 0);
+	if (errbuf)
 		strbuf_addf(errbuf, "invalid filter-spec '%s'", arg);
-	}
+
 	memset(filter_options, 0, sizeof(*filter_options));
 	return 1;
 }
@@ -99,6 +114,21 @@ int opt_parse_list_objects_filter(const struct option *opt,
 	}
 
 	return parse_list_objects_filter(filter_options, arg);
+}
+
+void expand_list_objects_filter_spec(
+	const struct list_objects_filter_options *filter,
+	struct strbuf *expanded_spec)
+{
+	strbuf_init(expanded_spec, strlen(filter->filter_spec));
+	if (filter->choice == LOFC_BLOB_LIMIT)
+		strbuf_addf(expanded_spec, "blob:limit=%lu",
+			    filter->blob_limit_value);
+	else if (filter->choice == LOFC_TREE_DEPTH)
+		strbuf_addf(expanded_spec, "tree:%lu",
+			    filter->tree_exclude_depth);
+	else
+		strbuf_addstr(expanded_spec, filter->filter_spec);
 }
 
 void list_objects_filter_release(

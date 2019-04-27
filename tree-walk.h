@@ -1,9 +1,12 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
+#include "cache.h"
+
 struct name_entry {
-	const struct object_id *oid;
+	struct object_id oid;
 	const char *path;
+	int pathlen;
 	unsigned int mode;
 };
 
@@ -17,12 +20,12 @@ static inline const struct object_id *tree_entry_extract(struct tree_desc *desc,
 {
 	*pathp = desc->entry.path;
 	*modep = desc->entry.mode;
-	return desc->entry.oid;
+	return &desc->entry.oid;
 }
 
 static inline int tree_entry_len(const struct name_entry *ne)
 {
-	return (const char *)ne->oid - ne->path - 1;
+	return ne->pathlen;
 }
 
 /*
@@ -46,25 +49,9 @@ void *fill_tree_descriptor(struct tree_desc *desc, const struct object_id *oid);
 
 struct traverse_info;
 typedef int (*traverse_callback_t)(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *);
-int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info);
+int traverse_trees(struct index_state *istate, int n, struct tree_desc *t, struct traverse_info *info);
 
-enum follow_symlinks_result {
-	FOUND = 0, /* This includes out-of-tree links */
-	MISSING_OBJECT = -1, /* The initial symlink is missing */
-	DANGLING_SYMLINK = -2, /*
-				* The initial symlink is there, but
-				* (transitively) points to a missing
-				* in-tree file
-				*/
-	SYMLINK_LOOP = -3,
-	NOT_DIR = -4, /*
-		       * Somewhere along the symlink chain, a path is
-		       * requested which contains a file as a
-		       * non-final element.
-		       */
-};
-
-enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode);
+enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode);
 
 struct traverse_info {
 	const char *traverse_path;
@@ -96,8 +83,9 @@ enum interesting {
 	all_entries_interesting = 2 /* yes, and all subsequent entries will be */
 };
 
-extern enum interesting tree_entry_interesting(const struct name_entry *,
-					       struct strbuf *, int,
-					       const struct pathspec *ps);
+enum interesting tree_entry_interesting(struct index_state *istate,
+					const struct name_entry *,
+					struct strbuf *, int,
+					const struct pathspec *ps);
 
 #endif

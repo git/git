@@ -93,6 +93,7 @@ test_expect_success 'No extra GIT_* on alias scripts' '
 		sed -n \
 			-e "/^GIT_PREFIX=/d" \
 			-e "/^GIT_TEXTDOMAINDIR=/d" \
+			-e "/^GIT_TR2_PARENT/d" \
 			-e "/^GIT_/s/=.*//p" |
 		sort
 	EOF
@@ -167,9 +168,8 @@ test_expect_success 'reinit' '
 	) &&
 	test_i18ngrep "Initialized empty" again/out1 &&
 	test_i18ngrep "Reinitialized existing" again/out2 &&
-	>again/empty &&
-	test_i18ncmp again/empty again/err1 &&
-	test_i18ncmp again/empty again/err2
+	test_must_be_empty again/err1 &&
+	test_must_be_empty again/err2
 '
 
 test_expect_success 'init with --template' '
@@ -320,14 +320,14 @@ test_lazy_prereq GETCWD_IGNORES_PERMS '
 	base=GETCWD_TEST_BASE_DIR &&
 	mkdir -p $base/dir &&
 	chmod 100 $base ||
-	error "bug in test script: cannot prepare $base"
+	BUG "cannot prepare $base"
 
 	(cd $base/dir && /bin/pwd -P)
 	status=$?
 
 	chmod 700 $base &&
 	rm -rf $base ||
-	error "bug in test script: cannot clean $base"
+	BUG "cannot clean $base"
 	return $status
 '
 
@@ -408,7 +408,7 @@ is_hidden () {
 test_expect_success MINGW '.git hidden' '
 	rm -rf newdir &&
 	(
-		unset GIT_DIR GIT_WORK_TREE
+		sane_unset GIT_DIR GIT_WORK_TREE &&
 		mkdir newdir &&
 		cd newdir &&
 		git init &&
@@ -420,7 +420,7 @@ test_expect_success MINGW '.git hidden' '
 test_expect_success MINGW 'bare git dir not hidden' '
 	rm -rf newdir &&
 	(
-		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG &&
 		mkdir newdir &&
 		cd newdir &&
 		git --bare init
@@ -452,6 +452,17 @@ test_expect_success 're-init from a linked worktree' '
 		find .git/worktrees -print | sort >actual &&
 		test_cmp expected actual
 	)
+'
+
+test_expect_success MINGW 'core.hidedotfiles = false' '
+	git config --global core.hidedotfiles false &&
+	rm -rf newdir &&
+	mkdir newdir &&
+	(
+		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG &&
+		git -C newdir init
+	) &&
+	! is_hidden newdir/.git
 '
 
 test_expect_success MINGW 'redirect std handles' '

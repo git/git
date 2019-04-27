@@ -92,8 +92,8 @@ configuration variable, we launch 'kfmclient' to try to open the HTML
 man page on an already opened konqueror in a new tab if possible.
 
 For consistency, we also try such a trick if 'browser.konqueror.path' is
-set to something like 'A_PATH_TO/konqueror'. That means we will try to
-launch 'A_PATH_TO/kfmclient' instead.
+set to something like `A_PATH_TO/konqueror`. That means we will try to
+launch `A_PATH_TO/kfmclient` instead.
 
 If you really want to use 'konqueror', then you can use something like
 the following:

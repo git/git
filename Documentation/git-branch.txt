@@ -9,12 +9,12 @@ SYNOPSIS
 --------
 [verse]
 'git branch' [--color[=<when>] | --no-color] [-r | -a]
-	[--list] [-v [--abbrev=<length> | --no-abbrev]]
+	[--list] [--show-current] [-v [--abbrev=<length> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
 	[(--merged | --no-merged) [<commit>]]
 	[--contains [<commit]] [--no-contains [<commit>]]
 	[--points-at <object>] [--format=<format>] [<pattern>...]
-'git branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
+'git branch' [--track | --no-track] [-f] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
@@ -91,7 +91,6 @@ OPTIONS
 -D::
 	Shortcut for `--delete --force`.
 
--l::
 --create-reflog::
 	Create the branch's reflog.  This activates recording of
 	all changes made to the branch ref, enabling use of date
@@ -155,14 +154,15 @@ This option is only applicable in non-verbose mode.
 --all::
 	List both remote-tracking branches and local branches.
 
+-l::
 --list::
 	List branches.  With optional `<pattern>...`, e.g. `git
 	branch --list 'maint-*'`, list only the branches that match
 	the pattern(s).
-+
-This should not be confused with `git branch -l <branchname>`,
-which creates a branch named `<branchname>` with a reflog.
-See `--create-reflog` above for details.
+
+--show-current::
+	Print the name of the current branch. In detached HEAD state,
+	nothing is printed.
 
 -v::
 -vv::
@@ -267,10 +267,11 @@ start-point is either a local or remote-tracking branch.
 	order of the value. You may use the --sort=<key> option
 	multiple times, in which case the last key becomes the primary
 	key. The keys supported are the same as those in `git
-	for-each-ref`. Sort order defaults to sorting based on the
+	for-each-ref`. Sort order defaults to the value configured for the
+	`branch.sort` variable if exists, or to sorting based on the
 	full refname (including `refs/...` prefix). This lists
 	detached HEAD (if present) first, then local branches and
-	finally remote-tracking branches.
+	finally remote-tracking branches. See linkgit:git-config[1].
 
 
 --points-at <object>::
@@ -300,7 +301,7 @@ $ git checkout my2.6.14
 ------------
 +
 <1> This step and the next one could be combined into a single step with
-"checkout -b my2.6.14 v2.6.14".
+    "checkout -b my2.6.14 v2.6.14".
 
 Delete an unneeded branch::
 +
@@ -312,10 +313,10 @@ $ git branch -D test                                    <2>
 ------------
 +
 <1> Delete the remote-tracking branches "todo", "html" and "man". The next
-'fetch' or 'pull' will create them again unless you configure them not to.
-See linkgit:git-fetch[1].
+    'fetch' or 'pull' will create them again unless you configure them not to.
+    See linkgit:git-fetch[1].
 <2> Delete the "test" branch even if the "master" branch (or whichever branch
-is currently checked out) does not have all commits from the test branch.
+    is currently checked out) does not have all commits from the test branch.
 
 
 NOTES

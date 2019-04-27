@@ -83,6 +83,8 @@ test_atom head push:strip=1 remotes/myfork/master
 test_atom head push:strip=-1 master
 test_atom head objecttype commit
 test_atom head objectsize 171
+test_atom head objectsize:disk 138
+test_atom head deltabase 0000000000000000000000000000000000000000
 test_atom head objectname $(git rev-parse refs/heads/master)
 test_atom head objectname:short $(git rev-parse --short refs/heads/master)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
@@ -124,6 +126,10 @@ test_atom tag upstream ''
 test_atom tag push ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
+test_atom tag objectsize:disk 138
+test_atom tag '*objectsize:disk' 138
+test_atom tag deltabase 0000000000000000000000000000000000000000
+test_atom tag '*deltabase' 0000000000000000000000000000000000000000
 test_atom tag objectname $(git rev-parse refs/tags/testtag)
 test_atom tag objectname:short $(git rev-parse --short refs/tags/testtag)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
@@ -715,6 +721,29 @@ test_expect_success 'basic atom: head contents:trailers' '
 	test_cmp expect actual.clean
 '
 
+test_expect_success 'trailer parsing not fooled by --- line' '
+	git commit --allow-empty -F - <<-\EOF &&
+	this is the subject
+
+	This is the body. The message has a "---" line which would confuse a
+	message+patch parser. But here we know we have only a commit message,
+	so we get it right.
+
+	trailer: wrong
+	---
+	This is more body.
+
+	trailer: right
+	EOF
+
+	{
+		echo "trailer: right" &&
+		echo
+	} >expect &&
+	git for-each-ref --format="%(trailers)" refs/heads/master >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'Add symbolic ref for the following tests' '
 	git symbolic-ref refs/heads/sym refs/heads/master
 '
@@ -793,6 +822,16 @@ test_expect_success ':remotename and :remoteref' '
 			refs/heads/push-simple)" &&
 		test from, = "$actual"
 	)
+'
+
+test_expect_success 'for-each-ref --ignore-case ignores case' '
+	git for-each-ref --format="%(refname)" refs/heads/MASTER >actual &&
+	test_must_be_empty actual &&
+
+	echo refs/heads/master >expect &&
+	git for-each-ref --format="%(refname)" --ignore-case \
+		refs/heads/MASTER >actual &&
+	test_cmp expect actual
 '
 
 test_done

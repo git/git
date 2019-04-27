@@ -1,6 +1,9 @@
 #ifndef BISECT_H
 #define BISECT_H
 
+struct commit_list;
+struct repository;
+
 /*
  * Find bisection. If something is found, `reaches` will be the number of
  * commits that the best commit reaches. `all` will be the count of
@@ -28,7 +31,9 @@ struct rev_list_info {
 	const char *header_prefix;
 };
 
-extern int bisect_next_all(const char *prefix, int no_checkout);
+extern int bisect_next_all(struct repository *r,
+			   const char *prefix,
+			   int no_checkout);
 
 extern int estimate_bisect_steps(int all);
 

@@ -148,7 +148,7 @@ test_expect_success 'preparing second superproject with a nested submodule plus 
 		cd supersuper &&
 		echo "I am super super." >file &&
 		git add file &&
-		git commit -m B-super-super-initial
+		git commit -m B-super-super-initial &&
 		git submodule add "file://$base_dir/super" subwithsub &&
 		git commit -m B-super-super-added &&
 		git submodule update --init --recursive &&

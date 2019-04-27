@@ -2,6 +2,7 @@
 #define SUBMODULE_CONFIG_CACHE_H
 
 #include "cache.h"
+#include "config.h"
 #include "hashmap.h"
 #include "submodule.h"
 #include "strbuf.h"
@@ -47,6 +48,8 @@ const struct submodule *submodule_from_path(struct repository *r,
 					    const struct object_id *commit_or_tree,
 					    const char *path);
 void submodule_free(struct repository *r);
+int print_config_from_gitmodules(struct repository *repo, const char *key);
+int config_set_in_gitmodules_file_gently(const char *key, const char *value);
 
 /*
  * Returns 0 if the name is syntactically acceptable as a submodule "name"
@@ -54,5 +57,16 @@ void submodule_free(struct repository *r);
  * otherwise.
  */
 int check_submodule_name(const char *name);
+
+/*
+ * Note: these helper functions exist solely to maintain backward
+ * compatibility with 'fetch' and 'update_clone' storing configuration in
+ * '.gitmodules'.
+ *
+ * New helpers to retrieve arbitrary configuration from the '.gitmodules' file
+ * should NOT be added.
+ */
+extern void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules);
+extern void update_clone_config_from_gitmodules(int *max_jobs);
 
 #endif /* SUBMODULE_CONFIG_H */

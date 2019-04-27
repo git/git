@@ -229,6 +229,19 @@ test_expect_success 'conditional include, early config reading' '
 	)
 '
 
+test_expect_success 'conditional include with /**/' '
+	REPO=foo/bar/repo &&
+	git init $REPO &&
+	cat >>$REPO/.git/config <<-\EOF &&
+	[includeIf "gitdir:**/foo/**/bar/**"]
+	path=bar7
+	EOF
+	echo "[test]seven=7" >$REPO/.git/bar7 &&
+	echo 7 >expect &&
+	git -C $REPO config test.seven >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success SYMLINKS 'conditional include, set up symlinked $HOME' '
 	mkdir real-home &&
 	ln -s real-home home &&
@@ -310,7 +323,7 @@ test_expect_success 'include cycles are detected' '
 	cycle
 	EOF
 	test_must_fail git config --get-all test.value 2>stderr &&
-	grep "exceeded maximum include depth" stderr
+	test_i18ngrep "exceeded maximum include depth" stderr
 '
 
 test_done

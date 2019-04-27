@@ -380,4 +380,20 @@ test_expect_success 'grep --recurse-submodules should pass the pattern type alon
 	fi
 '
 
+# Recursing down into nested submodules which do not have .gitmodules in their
+# working tree does not work yet. This is because config_from_gitmodules()
+# uses get_oid() and the latter is still not able to get objects from an
+# arbitrary repository (the nested submodule, in this case).
+test_expect_failure 'grep --recurse-submodules with submodules without .gitmodules in the working tree' '
+	test_when_finished "git -C submodule checkout .gitmodules" &&
+	rm submodule/.gitmodules &&
+	git grep --recurse-submodules -e "(.|.)[\d]" >actual &&
+	cat >expect <<-\EOF &&
+	a:(1|2)d(3|4)
+	submodule/a:(1|2)d(3|4)
+	submodule/sub/a:(1|2)d(3|4)
+	EOF
+	test_cmp expect actual
+'
+
 test_done

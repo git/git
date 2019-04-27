@@ -1,8 +1,9 @@
 #include "cache.h"
 #include "tree.h"
 #include "tree-walk.h"
+#include "object-store.h"
 
-static int score_missing(unsigned mode, const char *path)
+static int score_missing(unsigned mode)
 {
 	int score;
 
@@ -15,7 +16,7 @@ static int score_missing(unsigned mode, const char *path)
 	return score;
 }
 
-static int score_differs(unsigned mode1, unsigned mode2, const char *path)
+static int score_differs(unsigned mode1, unsigned mode2)
 {
 	int score;
 
@@ -28,7 +29,7 @@ static int score_differs(unsigned mode1, unsigned mode2, const char *path)
 	return score;
 }
 
-static int score_matches(unsigned mode1, unsigned mode2, const char *path)
+static int score_matches(unsigned mode1, unsigned mode2)
 {
 	int score;
 
@@ -82,34 +83,41 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
 	int score = 0;
 
 	for (;;) {
-		struct name_entry e1, e2;
-		int got_entry_from_one = tree_entry(&one, &e1);
-		int got_entry_from_two = tree_entry(&two, &e2);
 		int cmp;
 
-		if (got_entry_from_one && got_entry_from_two)
-			cmp = base_name_entries_compare(&e1, &e2);
-		else if (got_entry_from_one)
+		if (one.size && two.size)
+			cmp = base_name_entries_compare(&one.entry, &two.entry);
+		else if (one.size)
 			/* two lacks this entry */
 			cmp = -1;
-		else if (got_entry_from_two)
+		else if (two.size)
 			/* two has more entries */
 			cmp = 1;
 		else
 			break;
 
-		if (cmp < 0)
+		if (cmp < 0) {
 			/* path1 does not appear in two */
-			score += score_missing(e1.mode, e1.path);
-		else if (cmp > 0)
+			score += score_missing(one.entry.mode);
+			update_tree_entry(&one);
+		} else if (cmp > 0) {
 			/* path2 does not appear in one */
-			score += score_missing(e2.mode, e2.path);
-		else if (oidcmp(e1.oid, e2.oid))
-			/* they are different */
-			score += score_differs(e1.mode, e2.mode, e1.path);
-		else
-			/* same subtree or blob */
-			score += score_matches(e1.mode, e2.mode, e1.path);
+			score += score_missing(two.entry.mode);
+			update_tree_entry(&two);
+		} else {
+			/* path appears in both */
+			if (!oideq(&one.entry.oid, &two.entry.oid)) {
+				/* they are different */
+				score += score_differs(one.entry.mode,
+						       two.entry.mode);
+			} else {
+				/* same subtree or blob */
+				score += score_matches(one.entry.mode,
+						       two.entry.mode);
+			}
+			update_tree_entry(&one);
+			update_tree_entry(&two);
+		}
 	}
 	free(one_buf);
 	free(two_buf);
@@ -169,7 +177,7 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 	char *buf;
 	unsigned long sz;
 	struct tree_desc desc;
-	struct object_id *rewrite_here;
+	unsigned char *rewrite_here;
 	const struct object_id *rewrite_with;
 	struct object_id subtree;
 	enum object_type type;
@@ -189,15 +197,26 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 	while (desc.size) {
 		const char *name;
 		unsigned mode;
-		const struct object_id *oid;
 
-		oid = tree_entry_extract(&desc, &name, &mode);
+		tree_entry_extract(&desc, &name, &mode);
 		if (strlen(name) == toplen &&
 		    !memcmp(name, prefix, toplen)) {
 			if (!S_ISDIR(mode))
 				die("entry %s in tree %s is not a tree", name,
 				    oid_to_hex(oid1));
-			rewrite_here = (struct object_id *)oid;
+
+			/*
+			 * We cast here for two reasons:
+			 *
+			 *   - to flip the "char *" (for the path) to "unsigned
+			 *     char *" (for the hash stored after it)
+			 *
+			 *   - to discard the "const"; this is OK because we
+			 *     know it points into our non-const "buf"
+			 */
+			rewrite_here = (unsigned char *)(desc.entry.path +
+							 strlen(desc.entry.path) +
+							 1);
 			break;
 		}
 		update_tree_entry(&desc);
@@ -206,14 +225,16 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 		die("entry %.*s not found in tree %s", toplen, prefix,
 		    oid_to_hex(oid1));
 	if (*subpath) {
-		status = splice_tree(rewrite_here, subpath, oid2, &subtree);
+		struct object_id tree_oid;
+		hashcpy(tree_oid.hash, rewrite_here);
+		status = splice_tree(&tree_oid, subpath, oid2, &subtree);
 		if (status)
 			return status;
 		rewrite_with = &subtree;
 	} else {
 		rewrite_with = oid2;
 	}
-	oidcpy(rewrite_here, rewrite_with);
+	hashcpy(rewrite_here, rewrite_with->hash);
 	status = write_object_file(buf, sz, tree_type, result);
 	free(buf);
 	return status;

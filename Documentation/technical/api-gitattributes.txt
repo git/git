@@ -146,7 +146,7 @@ To get the values of all attributes associated with a file:
 
 * Iterate over the `attr_check.items[]` array to examine
   the attribute names and values.  The name of the attribute
-  described by a  `attr_check.items[]` object can be retrieved via
+  described by an `attr_check.items[]` object can be retrieved via
   `git_attr_name(check->items[i].attr)`.  (Please note that no items
   will be returned for unset attributes, so `ATTR_UNSET()` will return
   false for all returned `attr_check.items[]` objects.)

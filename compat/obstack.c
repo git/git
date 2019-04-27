@@ -112,15 +112,15 @@ compat_symbol (libc, _obstack_compat, _obstack, GLIBC_2_0);
 
 # define CALL_CHUNKFUN(h, size) \
   (((h) -> use_extra_arg) \
-   ? (*(h)->chunkfun) ((h)->extra_arg, (size)) \
-   : (*(struct _obstack_chunk *(*) (long)) (h)->chunkfun) ((size)))
+   ? (*(h)->chunkfun.extra) ((h)->extra_arg, (size)) \
+   : (*(h)->chunkfun.plain) ((size)))
 
 # define CALL_FREEFUN(h, old_chunk) \
   do { \
     if ((h) -> use_extra_arg) \
-      (*(h)->freefun) ((h)->extra_arg, (old_chunk)); \
+      (*(h)->freefun.extra) ((h)->extra_arg, (old_chunk)); \
     else \
-      (*(void (*) (void *)) (h)->freefun) ((old_chunk)); \
+      (*(h)->freefun.plain) ((old_chunk)); \
   } while (0)
 
 
@@ -159,8 +159,8 @@ _obstack_begin (struct obstack *h,
       size = 4096 - extra;
     }
 
-  h->chunkfun = (struct _obstack_chunk * (*)(void *, long)) chunkfun;
-  h->freefun = (void (*) (void *, struct _obstack_chunk *)) freefun;
+  h->chunkfun.plain = chunkfun;
+  h->freefun.plain = freefun;
   h->chunk_size = size;
   h->alignment_mask = alignment - 1;
   h->use_extra_arg = 0;
@@ -206,8 +206,9 @@ _obstack_begin_1 (struct obstack *h, int size, int alignment,
       size = 4096 - extra;
     }
 
-  h->chunkfun = (struct _obstack_chunk * (*)(void *,long)) chunkfun;
-  h->freefun = (void (*) (void *, struct _obstack_chunk *)) freefun;
+  h->chunkfun.extra = (struct _obstack_chunk * (*)(void *,long)) chunkfun;
+  h->freefun.extra = (void (*) (void *, struct _obstack_chunk *)) freefun;
+
   h->chunk_size = size;
   h->alignment_mask = alignment - 1;
   h->extra_arg = arg;

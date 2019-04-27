@@ -49,15 +49,28 @@ test_expect_success GPG 'create signed commits' '
 	git tag eighth-signed-alt &&
 
 	# commit.gpgsign is still on but this must not be signed
-	git tag ninth-unsigned $(echo 9 | git commit-tree HEAD^{tree}) &&
+	echo 9 | git commit-tree HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag ninth-unsigned $(cat oid) &&
 	# explicit -S of course must sign.
-	git tag tenth-signed $(echo 9 | git commit-tree -S HEAD^{tree})
+	echo 10 | git commit-tree -S HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag tenth-signed $(cat oid) &&
+
+	# --gpg-sign[=<key-id>] must sign.
+	echo 11 | git commit-tree --gpg-sign HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag eleventh-signed $(cat oid) &&
+	echo 12 | git commit-tree --gpg-sign=B7227189 HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag twelfth-signed-alt $(cat oid)
 '
 
 test_expect_success GPG 'verify and show signatures' '
 	(
 		for commit in initial second merge fourth-signed \
-			fifth-signed sixth-signed seventh-signed tenth-signed
+			fifth-signed sixth-signed seventh-signed tenth-signed \
+			eleventh-signed
 		do
 			git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
@@ -78,7 +91,7 @@ test_expect_success GPG 'verify and show signatures' '
 		done
 	) &&
 	(
-		for commit in eighth-signed-alt
+		for commit in eighth-signed-alt twelfth-signed-alt
 		do
 			git show --pretty=short --show-signature $commit >actual &&
 			grep "Good signature from" actual &&
@@ -175,8 +188,10 @@ test_expect_success GPG 'show good signature with custom format' '
 	G
 	13B6F51ECDDE430D
 	C O Mitter <committer@example.com>
+	73D758744BE721698EC54E8713B6F51ECDDE430D
+	73D758744BE721698EC54E8713B6F51ECDDE430D
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS" sixth-signed >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
 	test_cmp expect actual
 '
 
@@ -185,28 +200,34 @@ test_expect_success GPG 'show bad signature with custom format' '
 	B
 	13B6F51ECDDE430D
 	C O Mitter <committer@example.com>
+
+
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS" $(cat forged1.commit) >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" $(cat forged1.commit) >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show untrusted signature with custom format' '
 	cat >expect <<-\EOF &&
 	U
-	61092E85B7227189
+	65A0EEA02E30CAD7
 	Eris Discordia <discord@example.net>
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
+	D4BE22311AD3131E5EDA29A461092E85B7227189
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS" eighth-signed-alt >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show unknown signature with custom format' '
 	cat >expect <<-\EOF &&
 	E
-	61092E85B7227189
+	65A0EEA02E30CAD7
+
+
 
 	EOF
-	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS" eighth-signed-alt >actual &&
+	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
 	test_cmp expect actual
 '
 
@@ -215,8 +236,10 @@ test_expect_success GPG 'show lack of signature with custom format' '
 	N
 
 
+
+
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS" seventh-unsigned >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" seventh-unsigned >actual &&
 	test_cmp expect actual
 '
 
@@ -225,6 +248,41 @@ test_expect_success GPG 'log.showsignature behaves like --show-signature' '
 	git show initial >actual &&
 	grep "gpg: Signature made" actual &&
 	grep "gpg: Good signature" actual
+'
+
+test_expect_success GPG 'check config gpg.format values' '
+	test_config gpg.format openpgp &&
+	git commit -S --amend -m "success" &&
+	test_config gpg.format OpEnPgP &&
+	test_must_fail git commit -S --amend -m "fail"
+'
+
+test_expect_success GPG 'detect fudged commit with double signature' '
+	sed -e "/gpgsig/,/END PGP/d" forged1 >double-base &&
+	sed -n -e "/gpgsig/,/END PGP/p" forged1 | \
+		sed -e "s/^gpgsig//;s/^ //" | gpg --dearmor >double-sig1.sig &&
+	gpg -o double-sig2.sig -u 29472784 --detach-sign double-base &&
+	cat double-sig1.sig double-sig2.sig | gpg --enarmor >double-combined.asc &&
+	sed -e "s/^\(-.*\)ARMORED FILE/\1SIGNATURE/;1s/^/gpgsig /;2,\$s/^/ /" \
+		double-combined.asc > double-gpgsig &&
+	sed -e "/committer/r double-gpgsig" double-base >double-commit &&
+	git hash-object -w -t commit double-commit >double-commit.commit &&
+	test_must_fail git verify-commit $(cat double-commit.commit) &&
+	git show --pretty=short --show-signature $(cat double-commit.commit) >double-actual &&
+	grep "BAD signature from" double-actual &&
+	grep "Good signature from" double-actual
+'
+
+test_expect_success GPG 'show double signature with custom format' '
+	cat >expect <<-\EOF &&
+	E
+
+
+
+
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" $(cat double-commit.commit) >actual &&
+	test_cmp expect actual
 '
 
 test_done

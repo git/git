@@ -49,8 +49,7 @@ test_expect_success setup '
 	sed -e "s/TS0/$timeGMT/" -e "s/TS1/$epocGMT/" <d >removeGMT.patch &&
 	sed -e "s/TS0/$timeWest/" -e "s/TS1/$epocWest2/" <d >removeWest2.patch &&
 
-	echo something >something &&
-	>empty
+	echo something >something
 '
 
 for patch in *.patch
@@ -81,7 +80,7 @@ do
 			git add file &&
 			git apply --index $patch &&
 			test -f file &&
-			test_cmp empty file
+			test_must_be_empty file
 			;;
 		remove*)
 			# must remove the file

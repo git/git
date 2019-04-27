@@ -1,6 +1,10 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include "cache.h"
+
+struct buffer_slab;
+
 struct parsed_object_pool {
 	struct object **obj_hash;
 	int nr_objs, obj_hash_size;
@@ -12,6 +16,18 @@ struct parsed_object_pool {
 	struct alloc_state *tag_state;
 	struct alloc_state *object_state;
 	unsigned commit_count;
+
+	/* parent substitutions from .git/info/grafts and .git/shallow */
+	struct commit_graft **grafts;
+	int grafts_alloc, grafts_nr;
+
+	int is_shallow;
+	struct stat_validity *shallow_stat;
+	char *alternate_shallow_file;
+
+	int commit_graft_prepared;
+
+	struct buffer_slab *buffer_slab;
 };
 
 struct parsed_object_pool *parsed_object_pool_new(void);
@@ -43,15 +59,16 @@ struct object_array {
 
 /*
  * object flag allocation:
- * revision.h:               0---------10                                26
- * fetch-pack.c:             0----5
+ * revision.h:               0---------10                              25----28
+ * fetch-pack.c:             01
+ * negotiator/default.c:       2--5
  * walker.c:                 0-2
- * upload-pack.c:                4       11----------------19
+ * upload-pack.c:                4       11-----14  16-----19
  * builtin/blame.c:                        12-13
  * bisect.c:                                        16
  * bundle.c:                                        16
  * http-push.c:                                     16-----19
- * commit.c:                                        16-----19
+ * commit-reach.c:                                15-------19
  * sha1-name.c:                                              20
  * list-objects-filter.c:                                      21
  * builtin/fsck.c:           0--3
@@ -61,7 +78,7 @@ struct object_array {
  * builtin/show-branch.c:    0-------------------------------------------26
  * builtin/unpack-objects.c:                                 2021
  */
-#define FLAG_BITS  27
+#define FLAG_BITS  29
 
 /*
  * The object type is stored in 3 bits.
@@ -99,18 +116,18 @@ extern struct object *get_indexed_object(unsigned int);
  * half-initialised objects, the caller is expected to initialize them
  * by calling parse_object() on them.
  */
-struct object *lookup_object(const unsigned char *sha1);
+struct object *lookup_object(struct repository *r, const unsigned char *sha1);
 
 extern void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
 
-void *object_as_type(struct object *obj, enum object_type type, int quiet);
+void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet);
 
 /*
  * Returns the object, having parsed it to find out what it is.
  *
  * Returns NULL if the object is missing or corrupt.
  */
-struct object *parse_object(const struct object_id *oid);
+struct object *parse_object(struct repository *r, const struct object_id *oid);
 
 /*
  * Like parse_object, but will die() instead of returning NULL. If the
@@ -123,7 +140,7 @@ struct object *parse_object_or_die(const struct object_id *oid, const char *name
  * parsing it.  eaten_p indicates if the object has a borrowed copy
  * of buffer and the caller should not free() it.
  */
-struct object *parse_object_buffer(const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
+struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
 
 /** Returns the object, with potentially excess memory allocated. **/
 struct object *lookup_unknown_object(const unsigned  char *sha1);

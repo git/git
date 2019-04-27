@@ -83,8 +83,10 @@ static void print_command_list(const struct cmdname_help *cmds,
 
 	for (i = 0; cmds[i].name; i++) {
 		if (cmds[i].category & mask) {
+			size_t len = strlen(cmds[i].name);
 			printf("   %s   ", cmds[i].name);
-			mput_char(' ', longest - strlen(cmds[i].name));
+			if (longest > len)
+				mput_char(' ', longest - len);
 			puts(_(cmds[i].help));
 		}
 	}
@@ -98,7 +100,8 @@ static int cmd_name_cmp(const void *elem1, const void *elem2)
 	return strcmp(e1->name, e2->name);
 }
 
-static void print_cmd_by_category(const struct category_description *catdesc)
+static void print_cmd_by_category(const struct category_description *catdesc,
+				  int *longest_p)
 {
 	struct cmdname_help *cmds;
 	int longest = 0;
@@ -124,6 +127,8 @@ static void print_cmd_by_category(const struct category_description *catdesc)
 		print_command_list(cmds, mask, longest);
 	}
 	free(cmds);
+	if (longest_p)
+		*longest_p = longest;
 }
 
 void add_cmdname(struct cmdnames *cmds, const char *name, int len)
@@ -307,7 +312,7 @@ void list_commands(unsigned int colopts,
 void list_common_cmds_help(void)
 {
 	puts(_("These are common Git commands used in various situations:"));
-	print_cmd_by_category(common_categories);
+	print_cmd_by_category(common_categories, NULL);
 }
 
 void list_all_main_cmds(struct string_list *list)
@@ -370,13 +375,6 @@ void list_cmds_by_config(struct string_list *list)
 {
 	const char *cmd_list;
 
-	/*
-	 * There's no actual repository setup at this point (and even
-	 * if there is, we don't really care; only global config
-	 * matters). If we accidentally set up a repository, it's ok
-	 * too since the caller (git --list-cmds=) should exit shortly
-	 * anyway.
-	 */
 	if (git_config_get_string_const("completion.commands", &cmd_list))
 		return;
 
@@ -388,8 +386,8 @@ void list_cmds_by_config(struct string_list *list)
 		const char *p = strchrnul(cmd_list, ' ');
 
 		strbuf_add(&sb, cmd_list, p - cmd_list);
-		if (*cmd_list == '-')
-			string_list_remove(list, cmd_list + 1, 0);
+		if (sb.buf[0] == '-')
+			string_list_remove(list, sb.buf + 1, 0);
 		else
 			string_list_insert(list, sb.buf);
 		strbuf_release(&sb);
@@ -405,7 +403,7 @@ void list_common_guides_help(void)
 		{ CAT_guide, N_("The common Git guides are:") },
 		{ 0, NULL }
 	};
-	print_cmd_by_category(catdesc);
+	print_cmd_by_category(catdesc, NULL);
 	putchar('\n');
 }
 
@@ -425,6 +423,7 @@ void list_config_help(int for_human)
 		{ "color.diff", "<slot>", list_config_color_diff_slots },
 		{ "color.grep", "<slot>", list_config_color_grep_slots },
 		{ "color.interactive", "<slot>", list_config_color_interactive_slots },
+		{ "color.remote", "<slot>", list_config_color_sideband_slots },
 		{ "color.status", "<slot>", list_config_color_status_slots },
 		{ "fsck", "<msg-id>", list_config_fsck_msg_ids },
 		{ "receive.fsck", "<msg-id>", list_config_fsck_msg_ids },
@@ -493,9 +492,55 @@ void list_config_help(int for_human)
 	string_list_clear(&keys, 0);
 }
 
+static int get_alias(const char *var, const char *value, void *data)
+{
+	struct string_list *list = data;
+
+	if (skip_prefix(var, "alias.", &var))
+		string_list_append(list, var)->util = xstrdup(value);
+
+	return 0;
+}
+
 void list_all_cmds_help(void)
 {
-	print_cmd_by_category(main_categories);
+	struct string_list others = STRING_LIST_INIT_DUP;
+	struct string_list alias_list = STRING_LIST_INIT_DUP;
+	struct cmdname_help *aliases;
+	int i, longest;
+
+	printf_ln(_("See 'git help <command>' to read about a specific subcommand"));
+	print_cmd_by_category(main_categories, &longest);
+
+	list_all_other_cmds(&others);
+	if (others.nr)
+		printf("\n%s\n", _("External commands"));
+	for (i = 0; i < others.nr; i++)
+		printf("   %s\n", others.items[i].string);
+	string_list_clear(&others, 0);
+
+	git_config(get_alias, &alias_list);
+	string_list_sort(&alias_list);
+
+	for (i = 0; i < alias_list.nr; i++) {
+		size_t len = strlen(alias_list.items[i].string);
+		if (longest < len)
+			longest = len;
+	}
+
+	if (alias_list.nr) {
+		printf("\n%s\n", _("Command aliases"));
+		ALLOC_ARRAY(aliases, alias_list.nr + 1);
+		for (i = 0; i < alias_list.nr; i++) {
+			aliases[i].name = alias_list.items[i].string;
+			aliases[i].help = alias_list.items[i].util;
+			aliases[i].category = 1;
+		}
+		aliases[alias_list.nr].name = NULL;
+		print_command_list(aliases, 1, longest);
+		free(aliases);
+	}
+	string_list_clear(&alias_list, 1);
 }
 
 int is_in_cmdlist(struct cmdnames *c, const char *s)
@@ -693,6 +738,7 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 		else
 			printf("no commit associated with this build\n");
 		printf("sizeof-long: %d\n", (int)sizeof(long));
+		printf("sizeof-size_t: %d\n", (int)sizeof(size_t));
 		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
 	}
 	return 0;

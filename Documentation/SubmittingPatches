@@ -80,7 +80,9 @@ GitHub-Travis CI hints section for details.
 
 Do not forget to update the documentation to describe the updated
 behavior and make sure that the resulting documentation set formats
-well. It is currently a liberal mixture of US and UK English norms for
+well (try the Documentation/doc-diff script).
+
+We currently have a liberal mixture of US and UK English norms for
 spelling and grammar, which is somewhat unfortunate.  A huge patch that
 touches the files all over the place only to correct the inconsistency
 is not welcome, though.  Potential clashes with other changes that can
@@ -298,7 +300,7 @@ smaller project it is a good discipline to follow it.
 
 The sign-off is a simple line at the end of the explanation for
 the patch, which certifies that you wrote it or otherwise have
-the right to pass it on as a open-source patch.  The rules are
+the right to pass it on as an open-source patch.  The rules are
 pretty simple: if you can certify the below D-C-O:
 
 [[dco]]
@@ -370,15 +372,15 @@ such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
 Some parts of the system have dedicated maintainers with their own
 repositories.
 
-- 'git-gui/' comes from git-gui project, maintained by Pat Thoyts:
+- `git-gui/` comes from git-gui project, maintained by Pat Thoyts:
 
 	git://repo.or.cz/git-gui.git
 
-- 'gitk-git/' comes from Paul Mackerras's gitk project:
+- `gitk-git/` comes from Paul Mackerras's gitk project:
 
 	git://ozlabs.org/~paulus/gitk
 
-- 'po/' comes from the localization coordinator, Jiang Xin:
+- `po/` comes from the localization coordinator, Jiang Xin:
 
 	https://github.com/git-l10n/git-po/
 
@@ -403,7 +405,7 @@ don't demand).  +git log -p {litdd} _$area_you_are_modifying_+ would
 help you find out who they are.
 
 . You get comments and suggestions for improvements.  You may
-  even get them in a "on top of your change" patch form.
+  even get them in an "on top of your change" patch form.
 
 . Polish, refine, and re-send to the list and the people who
   spend their time to improve your patch.  Go back to step (2).

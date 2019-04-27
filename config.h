@@ -1,6 +1,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "hashmap.h"
+#include "string-list.h"
+
+struct object_id;
+
 /* git_config_parse_key() returns these negated: */
 #define CONFIG_INVALID_KEY 1
 #define CONFIG_NO_SECTION_OR_NAME 2
@@ -54,6 +59,12 @@ struct config_options {
 	const char *git_dir;
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
+	enum config_error_action {
+		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
+		CONFIG_ERROR_DIE, /* die() on error */
+		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
+		CONFIG_ERROR_SILENT, /* return -1 */
+	} error_action;
 };
 
 typedef int (*config_fn_t)(const char *, const char *, void *);
@@ -62,8 +73,11 @@ extern int git_config_from_file(config_fn_t fn, const char *, void *);
 extern int git_config_from_file_with_options(config_fn_t fn, const char *,
 					     void *,
 					     const struct config_options *);
-extern int git_config_from_mem(config_fn_t fn, const enum config_origin_type,
-					const char *name, const char *buf, size_t len, void *data);
+extern int git_config_from_mem(config_fn_t fn,
+			       const enum config_origin_type,
+			       const char *name,
+			       const char *buf, size_t len,
+			       void *data, const struct config_options *opts);
 extern int git_config_from_blob_oid(config_fn_t fn, const char *name,
 				    const struct object_id *oid, void *data);
 extern void git_config_push_parameter(const char *text);
@@ -73,6 +87,7 @@ extern void git_config(config_fn_t fn, void *);
 extern int config_with_options(config_fn_t fn, void *,
 			       struct git_config_source *config_source,
 			       const struct config_options *opts);
+extern int git_parse_ssize_t(const char *, ssize_t *);
 extern int git_parse_ulong(const char *, unsigned long *);
 extern int git_parse_maybe_bool(const char *);
 extern int git_config_int(const char *, const char *);
@@ -179,9 +194,14 @@ struct config_set {
 
 extern void git_configset_init(struct config_set *cs);
 extern int git_configset_add_file(struct config_set *cs, const char *filename);
-extern int git_configset_get_value(struct config_set *cs, const char *key, const char **value);
 extern const struct string_list *git_configset_get_value_multi(struct config_set *cs, const char *key);
 extern void git_configset_clear(struct config_set *cs);
+
+/*
+ * These functions return 1 if not found, and 0 if found, leaving the found
+ * value in the 'dest' pointer.
+ */
+extern int git_configset_get_value(struct config_set *cs, const char *key, const char **dest);
 extern int git_configset_get_string_const(struct config_set *cs, const char *key, const char **dest);
 extern int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
 extern int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
@@ -215,16 +235,6 @@ extern int repo_config_get_maybe_bool(struct repository *repo,
 extern int repo_config_get_pathname(struct repository *repo,
 				    const char *key, const char **dest);
 
-/*
- * Note: This function exists solely to maintain backward compatibility with
- * 'fetch' and 'update_clone' storing configuration in '.gitmodules' and should
- * NOT be used anywhere else.
- *
- * Runs the provided config function on the '.gitmodules' file found in the
- * working directory.
- */
-extern void config_from_gitmodules(config_fn_t fn, void *data);
-
 extern int git_config_get_value(const char *key, const char **value);
 extern const struct string_list *git_config_get_value_multi(const char *key);
 extern void git_config_clear(void);
@@ -236,6 +246,7 @@ extern int git_config_get_bool(const char *key, int *dest);
 extern int git_config_get_bool_or_int(const char *key, int *is_bool, int *dest);
 extern int git_config_get_maybe_bool(const char *key, int *dest);
 extern int git_config_get_pathname(const char *key, const char **dest);
+extern int git_config_get_index_threads(int *dest);
 extern int git_config_get_untracked_cache(void);
 extern int git_config_get_split_index(void);
 extern int git_config_get_max_percent_split_change(void);

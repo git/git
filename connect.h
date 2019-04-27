@@ -1,6 +1,8 @@
 #ifndef CONNECT_H
 #define CONNECT_H
 
+#include "protocol.h"
+
 #define CONNECT_VERBOSE       (1u << 0)
 #define CONNECT_DIAG_URL      (1u << 1)
 #define CONNECT_IPV4          (1u << 2)

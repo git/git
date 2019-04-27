@@ -203,7 +203,7 @@ Alternatively, you can undo the 'git rebase' with
 CONFIGURATION
 -------------
 
-include::rebase-config.txt[]
+include::config/rebase.txt[]
 
 OPTIONS
 -------
@@ -243,11 +243,15 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 --keep-empty::
 	Keep the commits that do not change anything from its
 	parents in the result.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --allow-empty-message::
 	By default, rebasing commits with an empty message will fail.
 	This option overrides that behavior, allowing commits with empty
 	messages to be rebased.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --skip::
 	Restart the rebasing process by skipping the current patch.
@@ -271,6 +275,8 @@ branch on top of the <upstream> branch.  Because of this, when a merge
 conflict happens, the side reported as 'ours' is the so-far rebased
 series, starting with <upstream>, and 'theirs' is the working branch.  In
 other words, the sides are swapped.
++
+See also INCOMPATIBLE OPTIONS below.
 
 -s <strategy>::
 --strategy=<strategy>::
@@ -280,8 +286,10 @@ other words, the sides are swapped.
 +
 Because 'git rebase' replays each commit from the working branch
 on top of the <upstream> branch using the given strategy, using
-the 'ours' strategy simply discards all patches from the <branch>,
+the 'ours' strategy simply empties all patches from the <branch>,
 which makes little sense.
++
+See also INCOMPATIBLE OPTIONS below.
 
 -X <strategy-option>::
 --strategy-option=<strategy-option>::
@@ -289,6 +297,13 @@ which makes little sense.
 	This implies `--merge` and, if no strategy has been
 	specified, `-s recursive`.  Note the reversal of 'ours' and
 	'theirs' as noted above for the `-m` option.
++
+See also INCOMPATIBLE OPTIONS below.
+
+--rerere-autoupdate::
+--no-rerere-autoupdate::
+	Allow the rerere mechanism to update the index with the
+	result of auto-conflict resolution if possible.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
@@ -324,17 +339,21 @@ which makes little sense.
 	and after each change.  When fewer lines of surrounding
 	context exist they all must match.  By default no context is
 	ever ignored.
-
--f::
---force-rebase::
-	Force a rebase even if the current branch is up to date and
-	the command without `--force` would return without doing anything.
 +
-You may find this (or --no-ff with an interactive rebase) helpful after
-reverting a topic branch merge, as this option recreates the topic branch with
-fresh commits so it can be remerged successfully without needing to "revert
-the reversion" (see the
-link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for details).
+See also INCOMPATIBLE OPTIONS below.
+
+--no-ff::
+--force-rebase::
+-f::
+	Individually replay all rebased commits instead of fast-forwarding
+	over the unchanged ones.  This ensures that the entire history of
+	the rebased branch is composed of new commits.
++
+You may find this helpful after reverting a topic branch merge, as this option
+recreates the topic branch with fresh commits so it can be remerged
+successfully without needing to "revert the reversion" (see the
+link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for
+details).
 
 --fork-point::
 --no-fork-point::
@@ -355,19 +374,22 @@ default is `--no-fork-point`, otherwise the default is `--fork-point`.
 --whitespace=<option>::
 	These flag are passed to the 'git apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
-	Incompatible with the --interactive option.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --committer-date-is-author-date::
 --ignore-date::
 	These flags are passed to 'git am' to easily change the dates
 	of the rebased commits (see linkgit:git-am[1]).
-	Incompatible with the --interactive option.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --signoff::
 	Add a Signed-off-by: trailer to all the rebased commits. Note
 	that if `--interactive` is given then only commits marked to be
-	picked, edited or reworded will have the trailer added. Incompatible
-	with the `--preserve-merges` option.
+	picked, edited or reworded will have the trailer added.
++
+See also INCOMPATIBLE OPTIONS below.
 
 -i::
 --interactive::
@@ -378,6 +400,8 @@ default is `--no-fork-point`, otherwise the default is `--fork-point`.
 The commit list format can be changed by setting the configuration option
 rebase.instructionFormat.  A customized instruction format will automatically
 have the long commit hash prepended to the format.
++
+See also INCOMPATIBLE OPTIONS below.
 
 -r::
 --rebase-merges[=(rebase-cousins|no-rebase-cousins)]::
@@ -391,36 +415,40 @@ have the long commit hash prepended to the format.
 +
 By default, or when `no-rebase-cousins` was specified, commits which do not
 have `<upstream>` as direct ancestor will keep their original branch point,
-i.e. commits that would be excluded by gitlink:git-log[1]'s
+i.e. commits that would be excluded by linkgit:git-log[1]'s
 `--ancestry-path` option will keep their original ancestry by default. If
 the `rebase-cousins` mode is turned on, such commits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
-The `--rebase-merges` mode is similar in spirit to `--preserve-merges`, but
-in contrast to that option works well in interactive rebases: commits can be
-reordered, inserted and dropped at will.
+The `--rebase-merges` mode is similar in spirit to the deprecated
+`--preserve-merges`, but in contrast to that option works well in interactive
+rebases: commits can be reordered, inserted and dropped at will.
 +
 It is currently only possible to recreate the merge commits using the
 `recursive` merge strategy; Different merge strategies can be used only via
 explicit `exec git merge -s <strategy> [...]` commands.
 +
-See also REBASING MERGES below.
+See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
 
 -p::
 --preserve-merges::
-	Recreate merge commits instead of flattening the history by replaying
-	commits a merge commit introduces. Merge conflict resolutions or manual
-	amendments to merge commits are not preserved.
+	[DEPRECATED: use `--rebase-merges` instead] Recreate merge commits
+	instead of flattening the history by replaying commits a merge commit
+	introduces. Merge conflict resolutions or manual amendments to merge
+	commits are not preserved.
 +
 This uses the `--interactive` machinery internally, but combining it
 with the `--interactive` option explicitly is generally not a good
 idea unless you know what you are doing (see BUGS below).
++
+See also INCOMPATIBLE OPTIONS below.
 
 -x <cmd>::
 --exec <cmd>::
 	Append "exec <cmd>" after each line creating a commit in the
 	final history. <cmd> will be interpreted as one or more shell
-	commands.
+	commands. Any command that fails will interrupt the rebase,
+	with exit code 1.
 +
 You may execute several commands by either using one instance of `--exec`
 with several commands:
@@ -437,6 +465,8 @@ squash/fixup series.
 +
 This uses the `--interactive` machinery internally, but it can be run
 without an explicit `--interactive`.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --root::
 	Rebase all commits reachable from <branch>, instead of
@@ -447,6 +477,8 @@ without an explicit `--interactive`.
 	When used together with both --onto and --preserve-merges,
 	'all' root commits will be rewritten to have <newbase> as parent
 	instead.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --autosquash::
 --no-autosquash::
@@ -461,11 +493,11 @@ without an explicit `--interactive`.
 	too.  The recommended way to create fixup/squash commits is by using
 	the `--fixup`/`--squash` options of linkgit:git-commit[1].
 +
-This option is only valid when the `--interactive` option is used.
-+
 If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
 used to override and disable this setting.
++
+See also INCOMPATIBLE OPTIONS below.
 
 --autostash::
 --no-autostash::
@@ -475,17 +507,69 @@ used to override and disable this setting.
 	with care: the final stash application after a successful
 	rebase might result in non-trivial conflicts.
 
---no-ff::
-	With --interactive, cherry-pick all rebased commits instead of
-	fast-forwarding over the unchanged ones.  This ensures that the
-	entire history of the rebased branch is composed of new commits.
-+
-Without --interactive, this is a synonym for --force-rebase.
-+
-You may find this helpful after reverting a topic branch merge, as this option
-recreates the topic branch with fresh commits so it can be remerged
-successfully without needing to "revert the reversion" (see the
-link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for details).
+--reschedule-failed-exec::
+--no-reschedule-failed-exec::
+	Automatically reschedule `exec` commands that failed. This only makes
+	sense in interactive mode (or when an `--exec` option was provided).
+
+INCOMPATIBLE OPTIONS
+--------------------
+
+The following options:
+
+ * --committer-date-is-author-date
+ * --ignore-date
+ * --whitespace
+ * --ignore-whitespace
+ * -C
+
+are incompatible with the following options:
+
+ * --merge
+ * --strategy
+ * --strategy-option
+ * --allow-empty-message
+ * --[no-]autosquash
+ * --rebase-merges
+ * --preserve-merges
+ * --interactive
+ * --exec
+ * --keep-empty
+ * --edit-todo
+ * --root when used in combination with --onto
+
+In addition, the following pairs of options are incompatible:
+
+ * --preserve-merges and --interactive
+ * --preserve-merges and --signoff
+ * --preserve-merges and --rebase-merges
+ * --rebase-merges and --strategy
+ * --rebase-merges and --strategy-option
+
+BEHAVIORAL DIFFERENCES
+-----------------------
+
+There are some subtle differences how the backends behave.
+
+Empty commits
+~~~~~~~~~~~~~
+
+The am backend drops any "empty" commits, regardless of whether the
+commit started empty (had no changes relative to its parent to
+start with) or ended empty (all changes were already applied
+upstream in other commits).
+
+The interactive backend drops commits by default that
+started empty and halts if it hits a commit that ended up empty.
+The `--keep-empty` option exists for the interactive backend to allow
+it to keep commits that started empty.
+
+Directory rename detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Directory rename heuristics are enabled in the merge and interactive
+backends.  Due to the lack of accurate tree information, directory
+rename detection is disabled in the am backend.
 
 include::merge-strategies.txt[]
 
@@ -559,6 +643,9 @@ By replacing the command "pick" with the command "edit", you can tell
 'git rebase' to stop after applying that commit, so that you can edit
 the files and/or the commit message, amend the commit, and continue
 rebasing.
+
+To interrupt the rebase (just like an "edit" command would do, but without
+cherry-picking any commit first), use the "break" command.
 
 If you just want to edit the commit message for a commit, replace the
 command "pick" with the command "reword".
@@ -804,7 +891,7 @@ The ripple effect of a "hard case" recovery is especially bad:
 case" recovery too!
 
 REBASING MERGES
------------------
+---------------
 
 The interactive rebase command was originally designed to handle
 individual patch series. As such, it makes sense to exclude merge
@@ -873,14 +960,14 @@ command fails, it is rescheduled immediately, with a helpful message how
 to proceed.
 
 The `reset` command resets the HEAD, index and worktree to the specified
-revision. It is isimilar to an `exec git reset --hard <label>`, but
+revision. It is similar to an `exec git reset --hard <label>`, but
 refuses to overwrite untracked files. If the `reset` command fails, it is
 rescheduled immediately, with a helpful message how to edit the todo list
 (this typically happens when a `reset` command was inserted into the todo
 list manually and contains a typo).
 
-The `merge` command will merge the specified revision into whatever is
-HEAD at that time. With `-C <original-commit>`, the commit message of
+The `merge` command will merge the specified revision(s) into whatever
+is HEAD at that time. With `-C <original-commit>`, the commit message of
 the specified merge commit will be used. When the `-C` is changed to
 a lower-case `-c`, the message will be opened in an editor after a
 successful merge so that the user can edit the message.
@@ -889,7 +976,8 @@ If a `merge` command fails for any reason other than merge conflicts (i.e.
 when the merge operation did not even start), it is rescheduled immediately.
 
 At this time, the `merge` command will *always* use the `recursive`
-merge strategy, with no way to choose a different one. To work around
+merge strategy for regular merges, and `octopus` for octopus merges,
+with no way to choose a different one. To work around
 this, an `exec` command can be used to call `git merge` explicitly,
 using the fact that the labels are worktree-local refs (the ref
 `refs/rewritten/onto` would correspond to the label `onto`, for example).
@@ -938,11 +1026,11 @@ merge cmake
 
 BUGS
 ----
-The todo list presented by `--preserve-merges --interactive` does not
-represent the topology of the revision graph.  Editing commits and
-rewording their commit messages should work fine, but attempts to
-reorder commits tend to produce counterintuitive results. Use
-`--rebase-merges` in such scenarios instead.
+The todo list presented by the deprecated `--preserve-merges --interactive`
+does not represent the topology of the revision graph (use `--rebase-merges`
+instead).  Editing commits and rewording their commit messages should work
+fine, but attempts to reorder commits tend to produce counterintuitive results.
+Use `--rebase-merges` in such scenarios instead.
 
 For example, an attempt to rearrange
 ------------

@@ -893,8 +893,7 @@ test_expect_success 'do not follow renames for empty files' '
 	git mv empty1 empty2 &&
 	git commit -m rename &&
 	test_must_fail git merge empty-base &&
-	>expect &&
-	test_cmp expect empty2
+	test_must_be_empty empty2
 '
 
 test_done

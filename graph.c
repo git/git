@@ -842,27 +842,55 @@ static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
 }
 
 /*
- * Draw an octopus merge and return the number of characters written.
+ * Draw the horizontal dashes of an octopus merge and return the number of
+ * characters written.
  */
 static int graph_draw_octopus_merge(struct git_graph *graph,
 				    struct strbuf *sb)
 {
 	/*
-	 * Here dashless_commits represents the number of parents
-	 * which don't need to have dashes (because their edges fit
-	 * neatly under the commit).
+	 * Here dashless_parents represents the number of parents which don't
+	 * need to have dashes (the edges labeled "0" and "1").  And
+	 * dashful_parents are the remaining ones.
+	 *
+	 * | *---.
+	 * | |\ \ \
+	 * | | | | |
+	 * x 0 1 2 3
+	 *
 	 */
-	const int dashless_commits = 2;
-	int col_num, i;
-	int num_dashes =
-		((graph->num_parents - dashless_commits) * 2) - 1;
-	for (i = 0; i < num_dashes; i++) {
-		col_num = (i / 2) + dashless_commits + graph->commit_index;
-		strbuf_write_column(sb, &graph->new_columns[col_num], '-');
+	const int dashless_parents = 2;
+	int dashful_parents = graph->num_parents - dashless_parents;
+
+	/*
+	 * Usually, we add one new column for each parent (like the diagram
+	 * above) but sometimes the first parent goes into an existing column,
+	 * like this:
+	 *
+	 * | *---.
+	 * | |\ \ \
+	 * |/ / / /
+	 * x 0 1 2
+	 *
+	 * In which case the number of parents will be one greater than the
+	 * number of added columns.
+	 */
+	int added_cols = (graph->num_new_columns - graph->num_columns);
+	int parent_in_old_cols = graph->num_parents - added_cols;
+
+	/*
+	 * In both cases, commit_index corresponds to the edge labeled "0".
+	 */
+	int first_col = graph->commit_index + dashless_parents
+	    - parent_in_old_cols;
+
+	int i;
+	for (i = 0; i < dashful_parents; i++) {
+		strbuf_write_column(sb, &graph->new_columns[i+first_col], '-');
+		strbuf_write_column(sb, &graph->new_columns[i+first_col],
+				    i == dashful_parents-1 ? '.' : '-');
 	}
-	col_num = (i / 2) + dashless_commits + graph->commit_index;
-	strbuf_write_column(sb, &graph->new_columns[col_num], '.');
-	return num_dashes + 1;
+	return 2 * dashful_parents;
 }
 
 static void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)

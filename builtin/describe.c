@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "lockfile.h"
@@ -13,6 +14,7 @@
 #include "hashmap.h"
 #include "argv-array.h"
 #include "run-command.h"
+#include "object-store.h"
 #include "revision.h"
 #include "list-objects.h"
 #include "commit-slab.h"
@@ -61,7 +63,7 @@ static const char *prio_names[] = {
 	N_("head"), N_("lightweight"), N_("annotated"),
 };
 
-static int commit_name_cmp(const void *unused_cmp_data,
+static int commit_name_neq(const void *unused_cmp_data,
 			   const void *entry,
 			   const void *entry_or_key,
 			   const void *peeled)
@@ -69,7 +71,7 @@ static int commit_name_cmp(const void *unused_cmp_data,
 	const struct commit_name *cn1 = entry;
 	const struct commit_name *cn2 = entry_or_key;
 
-	return oidcmp(&cn1->peeled, peeled ? peeled : &cn2->peeled);
+	return !oideq(&cn1->peeled, peeled ? peeled : &cn2->peeled);
 }
 
 static inline struct commit_name *find_commit_name(const struct object_id *peeled)
@@ -92,13 +94,13 @@ static int replace_name(struct commit_name *e,
 		struct tag *t;
 
 		if (!e->tag) {
-			t = lookup_tag(&e->oid);
+			t = lookup_tag(the_repository, &e->oid);
 			if (!t || parse_tag(t))
 				return 1;
 			e->tag = t;
 		}
 
-		t = lookup_tag(oid);
+		t = lookup_tag(the_repository, oid);
 		if (!t || parse_tag(t))
 			return 0;
 		*tag = t;
@@ -189,7 +191,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 
 	/* Is it annotated? */
 	if (!peel_ref(path, &peeled)) {
-		is_annotated = !!oidcmp(oid, &peeled);
+		is_annotated = !oideq(oid, &peeled);
 	} else {
 		oidcpy(&peeled, oid);
 		is_annotated = 0;
@@ -266,7 +268,7 @@ static unsigned long finish_depth_computation(
 static void append_name(struct commit_name *n, struct strbuf *dst)
 {
 	if (n->prio == 2 && !n->tag) {
-		n->tag = lookup_tag(&n->oid);
+		n->tag = lookup_tag(the_repository, &n->oid);
 		if (!n->tag || parse_tag(n->tag))
 			die(_("annotated tag %s not available"), n->path);
 	}
@@ -302,7 +304,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	unsigned long seen_commits = 0;
 	unsigned int unannotated_cnt = 0;
 
-	cmit = lookup_commit_reference(oid);
+	cmit = lookup_commit_reference(the_repository, oid);
 
 	n = find_commit_name(&cmit->object.oid);
 	if (n && (tags || all || n->prio == 2)) {
@@ -330,7 +332,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		init_commit_names(&commit_names);
 		n = hashmap_iter_first(&names, &iter);
 		for (; n; n = hashmap_iter_next(&iter)) {
-			c = lookup_commit_reference_gently(&n->peeled, 1);
+			c = lookup_commit_reference_gently(the_repository,
+							   &n->peeled, 1);
 			if (c)
 				*commit_names_at(&commit_names, c) = n;
 		}
@@ -467,7 +470,7 @@ static void process_object(struct object *obj, const char *path, void *data)
 {
 	struct process_commit_data *pcd = data;
 
-	if (!oidcmp(&pcd->looking_for, &obj->oid) && !pcd->dst->len) {
+	if (oideq(&pcd->looking_for, &obj->oid) && !pcd->dst->len) {
 		reset_revision_walk();
 		describe_commit(&pcd->current_commit, pcd->dst);
 		strbuf_addf(pcd->dst, ":%s", path);
@@ -486,7 +489,7 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 		"--objects", "--in-commit-order", "--reverse", "HEAD",
 		NULL);
 
-	init_revisions(&revs, NULL);
+	repo_init_revisions(the_repository, &revs, NULL);
 	if (setup_revisions(args.argc, args.argv, &revs, NULL) > 1)
 		BUG("setup_revisions could not handle all args?");
 
@@ -508,7 +511,7 @@ static void describe(const char *arg, int last_one)
 
 	if (get_oid(arg, &oid))
 		die(_("Not a valid object name %s"), arg);
-	cmit = lookup_commit_reference_gently(&oid, 1);
+	cmit = lookup_commit_reference_gently(the_repository, &oid, 1);
 
 	if (cmit)
 		describe_commit(&oid, &sb);
@@ -594,7 +597,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		return cmd_name_rev(args.argc, args.argv, prefix);
 	}
 
-	hashmap_init(&names, commit_name_cmp, NULL, 0);
+	hashmap_init(&names, commit_name_neq, NULL, 0);
 	for_each_rawref(get_name, NULL);
 	if (!hashmap_get_size(&names) && !always)
 		die(_("No names found, cannot describe anything."));
@@ -627,14 +630,15 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			struct argv_array args = ARGV_ARRAY_INIT;
 			int fd, result;
 
-			read_cache_preload(NULL);
+			setup_work_tree();
+			read_cache();
 			refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED,
 				      NULL, NULL, NULL);
 			fd = hold_locked_index(&index_lock, 0);
 			if (0 <= fd)
-				update_index_if_able(&the_index, &index_lock);
+				repo_update_index_if_able(the_repository, &index_lock);
 
-			init_revisions(&revs, prefix);
+			repo_init_revisions(the_repository, &revs, prefix);
 			argv_array_pushv(&args, diff_index_args);
 			if (setup_revisions(args.argc, args.argv, &revs, NULL) != 1)
 				BUG("malformed internal diff-index command line");

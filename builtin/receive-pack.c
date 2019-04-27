@@ -25,7 +25,9 @@
 #include "tmp-objdir.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-store.h"
 #include "protocol.h"
+#include "commit-reach.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -279,8 +281,7 @@ static int show_ref_cb(const char *path_full, const struct object_id *oid,
 	return 0;
 }
 
-static void show_one_alternate_ref(const char *refname,
-				   const struct object_id *oid,
+static void show_one_alternate_ref(const struct object_id *oid,
 				   void *data)
 {
 	struct oidset *seen = data;
@@ -464,7 +465,7 @@ static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
 	unsigned char sha1[GIT_SHA1_RAWSZ];
 
 	strbuf_addf(&buf, "%s:%"PRItime, path, stamp);
-	hmac_sha1(sha1, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));;
+	hmac_sha1(sha1, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
 	strbuf_release(&buf);
 
 	/* RFC 2104 5. HMAC-SHA1-80 */
@@ -629,8 +630,6 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		return;
 
 	if (!already_done) {
-		struct strbuf gpg_output = STRBUF_INIT;
-		struct strbuf gpg_status = STRBUF_INIT;
 		int bogs /* beginning_of_gpg_sig */;
 
 		already_done = 1;
@@ -639,22 +638,11 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 			oidclr(&push_cert_oid);
 
 		memset(&sigcheck, '\0', sizeof(sigcheck));
-		sigcheck.result = 'N';
 
 		bogs = parse_signature(push_cert.buf, push_cert.len);
-		if (verify_signed_buffer(push_cert.buf, bogs,
-					 push_cert.buf + bogs, push_cert.len - bogs,
-					 &gpg_output, &gpg_status) < 0) {
-			; /* error running gpg */
-		} else {
-			sigcheck.payload = push_cert.buf;
-			sigcheck.gpg_output = gpg_output.buf;
-			sigcheck.gpg_status = gpg_status.buf;
-			parse_gpg_output(&sigcheck);
-		}
+		check_signature(push_cert.buf, bogs, push_cert.buf + bogs,
+				push_cert.len - bogs, &sigcheck);
 
-		strbuf_release(&gpg_output);
-		strbuf_release(&gpg_status);
 		nonce_status = check_nonce(push_cert.buf, bogs);
 	}
 	if (!is_null_oid(&push_cert_oid)) {
@@ -706,6 +694,8 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 	proc.argv = argv;
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
+	proc.trace2_hook_name = hook_name;
+
 	if (feed_state->push_options) {
 		int i;
 		for (i = 0; i < feed_state->push_options->nr; i++)
@@ -819,6 +809,7 @@ static int run_update_hook(struct command *cmd)
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
 	proc.argv = argv;
+	proc.trace2_hook_name = "update";
 
 	code = start_command(&proc);
 	if (code)
@@ -905,7 +896,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	 * not lose these new roots..
 	 */
 	for (i = 0; i < extra.nr; i++)
-		register_shallow(&extra.oid[i]);
+		register_shallow(the_repository, &extra.oid[i]);
 
 	si->shallow_ref[cmd->index] = 0;
 	oid_array_clear(&extra);
@@ -1037,6 +1028,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	const char *ret;
 	struct object_id *old_oid = &cmd->old_oid;
 	struct object_id *new_oid = &cmd->new_oid;
+	int do_update_worktree = 0;
 
 	/* only refs/... are allowed */
 	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
@@ -1062,9 +1054,8 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				refuse_unconfigured_deny();
 			return "branch is currently checked out";
 		case DENY_UPDATE_INSTEAD:
-			ret = update_worktree(new_oid->hash);
-			if (ret)
-				return ret;
+			/* pass -- let other checks intervene first */
+			do_update_worktree = 1;
 			break;
 		}
 	}
@@ -1107,8 +1098,8 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		struct object *old_object, *new_object;
 		struct commit *old_commit, *new_commit;
 
-		old_object = parse_object(old_oid);
-		new_object = parse_object(new_oid);
+		old_object = parse_object(the_repository, old_oid);
+		new_object = parse_object(the_repository, new_oid);
 
 		if (!old_object || !new_object ||
 		    old_object->type != OBJ_COMMIT ||
@@ -1129,9 +1120,15 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		return "hook declined";
 	}
 
+	if (do_update_worktree) {
+		ret = update_worktree(new_oid->hash);
+		if (ret)
+			return ret;
+	}
+
 	if (is_null_oid(new_oid)) {
 		struct strbuf err = STRBUF_INIT;
-		if (!parse_object(old_oid)) {
+		if (!parse_object(the_repository, old_oid)) {
 			old_oid = NULL;
 			if (ref_exists(name)) {
 				rp_warning("Allowing deletion of corrupt ref.");
@@ -1196,6 +1193,7 @@ static void run_update_post_hook(struct command *commands)
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
+	proc.trace2_hook_name = "post-update";
 
 	if (!start_command(&proc)) {
 		if (use_sideband)
@@ -1204,17 +1202,12 @@ static void run_update_post_hook(struct command *commands)
 	}
 }
 
-static void check_aliased_update(struct command *cmd, struct string_list *list)
+static void check_aliased_update_internal(struct command *cmd,
+					  struct string_list *list,
+					  const char *dst_name, int flag)
 {
-	struct strbuf buf = STRBUF_INIT;
-	const char *dst_name;
 	struct string_list_item *item;
 	struct command *dst_cmd;
-	int flag;
-
-	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
-	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flag);
-	strbuf_release(&buf);
 
 	if (!(flag & REF_ISSYMREF))
 		return;
@@ -1234,8 +1227,8 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 
 	dst_cmd = (struct command *) item->util;
 
-	if (!oidcmp(&cmd->old_oid, &dst_cmd->old_oid) &&
-	    !oidcmp(&cmd->new_oid, &dst_cmd->new_oid))
+	if (oideq(&cmd->old_oid, &dst_cmd->old_oid) &&
+	    oideq(&cmd->new_oid, &dst_cmd->new_oid))
 		return;
 
 	dst_cmd->skip_update = 1;
@@ -1251,6 +1244,18 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 
 	cmd->error_string = dst_cmd->error_string =
 		"inconsistent aliased update";
+}
+
+static void check_aliased_update(struct command *cmd, struct string_list *list)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *dst_name;
+	int flag;
+
+	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
+	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flag);
+	check_aliased_update_internal(cmd, list, dst_name, flag);
+	strbuf_release(&buf);
 }
 
 static void check_aliased_updates(struct command *commands)
@@ -1575,30 +1580,29 @@ static void queue_commands_from_cert(struct command **tail,
 	}
 }
 
-static struct command *read_head_info(struct oid_array *shallow)
+static struct command *read_head_info(struct packet_reader *reader,
+				      struct oid_array *shallow)
 {
 	struct command *commands = NULL;
 	struct command **p = &commands;
 	for (;;) {
-		char *line;
-		int len, linelen;
+		int linelen;
 
-		line = packet_read_line(0, &len);
-		if (!line)
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
-		if (len > 8 && starts_with(line, "shallow ")) {
+		if (reader->pktlen > 8 && starts_with(reader->line, "shallow ")) {
 			struct object_id oid;
-			if (get_oid_hex(line + 8, &oid))
+			if (get_oid_hex(reader->line + 8, &oid))
 				die("protocol error: expected shallow sha, got '%s'",
-				    line + 8);
+				    reader->line + 8);
 			oid_array_append(shallow, &oid);
 			continue;
 		}
 
-		linelen = strlen(line);
-		if (linelen < len) {
-			const char *feature_list = line + linelen + 1;
+		linelen = strlen(reader->line);
+		if (linelen < reader->pktlen) {
+			const char *feature_list = reader->line + linelen + 1;
 			if (parse_feature_request(feature_list, "report-status"))
 				report_status = 1;
 			if (parse_feature_request(feature_list, "side-band-64k"))
@@ -1613,28 +1617,32 @@ static struct command *read_head_info(struct oid_array *shallow)
 				use_push_options = 1;
 		}
 
-		if (!strcmp(line, "push-cert")) {
+		if (!strcmp(reader->line, "push-cert")) {
 			int true_flush = 0;
-			char certbuf[1024];
+			int saved_options = reader->options;
+			reader->options &= ~PACKET_READ_CHOMP_NEWLINE;
 
 			for (;;) {
-				len = packet_read(0, NULL, NULL,
-						  certbuf, sizeof(certbuf), 0);
-				if (!len) {
+				packet_reader_read(reader);
+				if (reader->status == PACKET_READ_FLUSH) {
 					true_flush = 1;
 					break;
 				}
-				if (!strcmp(certbuf, "push-cert-end\n"))
+				if (reader->status != PACKET_READ_NORMAL) {
+					die("protocol error: got an unexpected packet");
+				}
+				if (!strcmp(reader->line, "push-cert-end\n"))
 					break; /* end of cert */
-				strbuf_addstr(&push_cert, certbuf);
+				strbuf_addstr(&push_cert, reader->line);
 			}
+			reader->options = saved_options;
 
 			if (true_flush)
 				break;
 			continue;
 		}
 
-		p = queue_command(p, line, linelen);
+		p = queue_command(p, reader->line, linelen);
 	}
 
 	if (push_cert.len)
@@ -1643,18 +1651,14 @@ static struct command *read_head_info(struct oid_array *shallow)
 	return commands;
 }
 
-static void read_push_options(struct string_list *options)
+static void read_push_options(struct packet_reader *reader,
+			      struct string_list *options)
 {
 	while (1) {
-		char *line;
-		int len;
-
-		line = packet_read_line(0, &len);
-
-		if (!line)
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
-		string_list_append(options, line);
+		string_list_append(options, reader->line);
 	}
 }
 
@@ -1845,7 +1849,7 @@ static void prepare_shallow_update(struct command *commands,
 	/*
 	 * keep hooks happy by forcing a temporary shallow file via
 	 * env variable because we can't add --shallow-file to every
-	 * command. check_everything_connected() will be done with
+	 * command. check_connected() will be done with
 	 * true .git/shallow though.
 	 */
 	setenv(GIT_SHALLOW_FILE_ENVIRONMENT, alt_shallow_file, 1);
@@ -1930,6 +1934,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	struct oid_array shallow = OID_ARRAY_INIT;
 	struct oid_array ref = OID_ARRAY_INIT;
 	struct shallow_info si;
+	struct packet_reader reader;
 
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("quiet")),
@@ -1992,12 +1997,16 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	if (advertise_refs)
 		return 0;
 
-	if ((commands = read_head_info(&shallow)) != NULL) {
+	packet_reader_init(&reader, 0, NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
+
+	if ((commands = read_head_info(&reader, &shallow)) != NULL) {
 		const char *unpack_status = NULL;
 		struct string_list push_options = STRING_LIST_INIT_DUP;
 
 		if (use_push_options)
-			read_push_options(&push_options);
+			read_push_options(&reader, &push_options);
 		if (!check_cert_push_options(&push_options)) {
 			struct command *cmd;
 			for (cmd = commands; cmd; cmd = cmd->next)

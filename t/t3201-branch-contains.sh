@@ -48,16 +48,14 @@ test_expect_success 'branch --contains master' '
 test_expect_success 'branch --no-contains=master' '
 
 	git branch --no-contains=master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
 test_expect_success 'branch --no-contains master' '
 
 	git branch --no-contains master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -94,8 +92,7 @@ test_expect_success 'branch --contains with pattern implies --list' '
 test_expect_success 'branch --no-contains with pattern implies --list' '
 
 	git branch --no-contains=master master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -123,8 +120,7 @@ test_expect_success 'branch --merged with pattern implies --list' '
 test_expect_success 'side: branch --no-merged' '
 
 	git branch --no-merged >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -152,8 +148,7 @@ test_expect_success 'master: branch --no-merged' '
 test_expect_success 'branch --no-merged with pattern implies --list' '
 
 	git branch --no-merged=master master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 

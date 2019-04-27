@@ -1,6 +1,8 @@
 #ifndef GPG_INTERFACE_H
 #define GPG_INTERFACE_H
 
+struct strbuf;
+
 #define GPG_VERIFY_VERBOSE		1
 #define GPG_VERIFY_RAW			2
 #define GPG_VERIFY_OMIT_STATUS	4
@@ -21,6 +23,8 @@ struct signature_check {
 	char result;
 	char *signer;
 	char *key;
+	char *fingerprint;
+	char *primary_key_fingerprint;
 };
 
 void signature_check_clear(struct signature_check *sigc);
@@ -32,8 +36,6 @@ void signature_check_clear(struct signature_check *sigc);
  * the data when there is no such signature.
  */
 size_t parse_signature(const char *buf, size_t size);
-
-void parse_gpg_output(struct signature_check *);
 
 /*
  * Create a detached signature for the contents of "buffer" and append

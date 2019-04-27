@@ -78,4 +78,11 @@ test_expect_success GPG 'pull commit with bad signature with --no-verify-signatu
 	git pull --ff-only --no-verify-signatures bad 2>pullerror
 '
 
+test_expect_success GPG 'pull unsigned commit into unborn branch' '
+	git init empty-repo &&
+	test_must_fail \
+		git -C empty-repo pull --verify-signatures ..  2>pullerror &&
+	test_i18ngrep "does not have a GPG signature" pullerror
+'
+
 test_done

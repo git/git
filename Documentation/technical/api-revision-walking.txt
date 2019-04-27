@@ -15,9 +15,9 @@ revision list.
 Functions
 ---------
 
-`init_revisions`::
+`repo_init_revisions`::
 
-	Initialize a rev_info structure with default values. The second
+	Initialize a rev_info structure with default values. The third
 	parameter may be NULL or can be prefix path, and then the `.prefix`
 	variable will be set to it. This is typically the first function you
 	want to call when you want to deal with a revision list. After calling

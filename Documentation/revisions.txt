@@ -58,7 +58,7 @@ when you run `git merge`.
 when you run `git cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
-the '$GIT_DIR/refs' directory or from the '$GIT_DIR/packed-refs' file.
+the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
 While the ref name encoding is unspecified, UTF-8 is preferred as
 some output processing may assume ref names in UTF-8.
 
@@ -108,7 +108,7 @@ some output processing may assume ref names in UTF-8.
   `git push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Since our push destination is
   in a remote repository, of course, we report the local tracking branch
-  that corresponds to that branch (i.e., something in 'refs/remotes/').
+  that corresponds to that branch (i.e., something in `refs/remotes/`).
 +
 Here's an example to make it more clear:
 +
@@ -184,7 +184,8 @@ existing tag object.
   A colon, followed by a slash, followed by a text, names
   a commit whose commit message matches the specified regular expression.
   This name returns the youngest matching commit which is
-  reachable from any ref. The regular expression can match any part of the
+  reachable from any ref, including HEAD.
+  The regular expression can match any part of the
   commit message. To match messages starting with a string, one can use
   e.g. ':/^foo'. The special sequence ':/!' is reserved for modifiers to what
   is matched. ':/!-foo' performs a negative match, while ':/!!foo' matches a

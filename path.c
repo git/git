@@ -108,16 +108,21 @@ struct common_dir {
 
 static struct common_dir common_list[] = {
 	{ 0, 1, 0, "branches" },
+	{ 0, 1, 0, "common" },
 	{ 0, 1, 0, "hooks" },
 	{ 0, 1, 0, "info" },
 	{ 0, 0, 1, "info/sparse-checkout" },
 	{ 1, 1, 0, "logs" },
 	{ 1, 1, 1, "logs/HEAD" },
 	{ 0, 1, 1, "logs/refs/bisect" },
+	{ 0, 1, 1, "logs/refs/rewritten" },
+	{ 0, 1, 1, "logs/refs/worktree" },
 	{ 0, 1, 0, "lost-found" },
 	{ 0, 1, 0, "objects" },
 	{ 0, 1, 0, "refs" },
 	{ 0, 1, 1, "refs/bisect" },
+	{ 0, 1, 1, "refs/rewritten" },
+	{ 0, 1, 1, "refs/worktree" },
 	{ 0, 1, 0, "remotes" },
 	{ 0, 1, 0, "worktrees" },
 	{ 0, 1, 0, "rr-cache" },
@@ -383,7 +388,7 @@ static void adjust_git_path(const struct repository *repo,
 		strbuf_splice(buf, 0, buf->len,
 			      repo->index_file, strlen(repo->index_file));
 	else if (dir_prefix(base, "objects"))
-		replace_dir(buf, git_dir_len + 7, repo->objects->objectdir);
+		replace_dir(buf, git_dir_len + 7, repo->objects->odb->path);
 	else if (git_hooks_path && dir_prefix(base, "hooks"))
 		replace_dir(buf, git_dir_len + 5, git_hooks_path);
 	else if (repo->different_commondir)
@@ -1369,7 +1374,7 @@ only_spaces_and_periods:
 			saw_tilde = 1;
 		} else if (i >= 6)
 			return 0;
-		else if (name[i] < 0) {
+		else if (name[i] & 0x80) {
 			/*
 			 * We know our needles contain only ASCII, so we clamp
 			 * here to make the results of tolower() sane.
@@ -1442,12 +1447,12 @@ char *xdg_cache_home(const char *filename)
 	return NULL;
 }
 
-GIT_PATH_FUNC(git_path_cherry_pick_head, "CHERRY_PICK_HEAD")
-GIT_PATH_FUNC(git_path_revert_head, "REVERT_HEAD")
-GIT_PATH_FUNC(git_path_squash_msg, "SQUASH_MSG")
-GIT_PATH_FUNC(git_path_merge_msg, "MERGE_MSG")
-GIT_PATH_FUNC(git_path_merge_rr, "MERGE_RR")
-GIT_PATH_FUNC(git_path_merge_mode, "MERGE_MODE")
-GIT_PATH_FUNC(git_path_merge_head, "MERGE_HEAD")
-GIT_PATH_FUNC(git_path_fetch_head, "FETCH_HEAD")
-GIT_PATH_FUNC(git_path_shallow, "shallow")
+REPO_GIT_PATH_FUNC(cherry_pick_head, "CHERRY_PICK_HEAD")
+REPO_GIT_PATH_FUNC(revert_head, "REVERT_HEAD")
+REPO_GIT_PATH_FUNC(squash_msg, "SQUASH_MSG")
+REPO_GIT_PATH_FUNC(merge_msg, "MERGE_MSG")
+REPO_GIT_PATH_FUNC(merge_rr, "MERGE_RR")
+REPO_GIT_PATH_FUNC(merge_mode, "MERGE_MODE")
+REPO_GIT_PATH_FUNC(merge_head, "MERGE_HEAD")
+REPO_GIT_PATH_FUNC(fetch_head, "FETCH_HEAD")
+REPO_GIT_PATH_FUNC(shallow, "shallow")

@@ -1,5 +1,5 @@
-#ifndef SVNDIFF_H_
-#define SVNDIFF_H_
+#ifndef SVNDIFF_H
+#define SVNDIFF_H
 
 struct line_buffer;
 struct sliding_view;

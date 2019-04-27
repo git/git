@@ -58,8 +58,7 @@ test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
 
 test_expect_success 'propagate uninteresting flag down correctly' '
 	git rev-list --objects ^HEAD^{tree} HEAD^{tree} >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'symleft flag bit is propagated down from tag' '
@@ -91,8 +90,15 @@ test_expect_success 'rev-list can show index objects' '
 	9200b628cf9dc883a85a7abc8d6e6730baee589c two
 	EOF
 	echo only-in-index >only-in-index &&
+	test_when_finished "git reset --hard" &&
 	git add only-in-index &&
 	git rev-list --objects --indexed-objects >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list can negate index objects' '
+	git rev-parse HEAD >expect &&
+	git rev-list -1 --objects HEAD --not --indexed-objects >actual &&
 	test_cmp expect actual
 '
 

@@ -13,8 +13,10 @@ Initial setup:
     -- B --                   (first)
    /       \
  A - C - D - E - H            (master)
-       \       /
-         F - G                (second)
+   \    \       /
+    \    F - G                (second)
+     \
+      Conflicting-G
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -49,7 +51,9 @@ test_expect_success 'setup' '
 	git merge --no-commit G &&
 	test_tick &&
 	git commit -m H &&
-	git tag -m H H
+	git tag -m H H &&
+	git checkout A &&
+	test_commit conflicting-G G.t
 '
 
 test_expect_success 'create completely different structure' '
@@ -72,7 +76,7 @@ test_expect_success 'create completely different structure' '
 	EOF
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
-	git rebase -i -r A &&
+	git rebase -i -r A master &&
 	test_cmp_graph <<-\EOF
 	*   Merge the topic branch '\''onebranch'\''
 	|\
@@ -121,11 +125,11 @@ test_expect_success '`reset` refuses to overwrite untracked files' '
 	: >dont-overwrite-untracked.t &&
 	echo "reset refs/tags/dont-overwrite-untracked" >script-from-scratch &&
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
-	test_must_fail git rebase -r HEAD &&
+	test_must_fail git rebase -ir HEAD &&
 	git rebase --abort
 '
 
-test_expect_success 'failed `merge` writes patch (may be rescheduled, too)' '
+test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b conflicting-merge A &&
 
@@ -141,11 +145,23 @@ test_expect_success 'failed `merge` writes patch (may be rescheduled, too)' '
 
 	: fail because of merge conflict &&
 	rm G.t .git/rebase-merge/patch &&
-	git reset --hard &&
-	test_commit conflicting-G G.t not-G conflicting-G &&
+	git reset --hard conflicting-G &&
 	test_must_fail git rebase --continue &&
 	! grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
 	test_path_is_file .git/rebase-merge/patch
+'
+
+SQ="'"
+test_expect_success 'failed `merge <branch>` does not crash' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git checkout conflicting-G &&
+
+	echo "merge G" >script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	test_tick &&
+	test_must_fail git rebase -ir HEAD &&
+	! grep "^merge G$" .git/rebase-merge/git-rebase-todo &&
+	grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
 '
 
 test_expect_success 'with a branch tip that was cherry-picked already' '
@@ -255,7 +271,7 @@ test_expect_success 'root commits' '
 	EOF
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
-	git rebase -i --force --root -r &&
+	git rebase -i --force-rebase --root -r &&
 	test "Parsnip" = "$(git show -s --format=%an HEAD^)" &&
 	test $(git rev-parse second-root^0) != $(git rev-parse HEAD^) &&
 	test $(git rev-parse second-root:second-root.t) = \
@@ -327,6 +343,73 @@ test_expect_success 'labels that are object IDs are rewritten' '
 	git rebase -i -r A &&
 	grep "^label $third-" .git/ORIGINAL-TODO &&
 	! grep "^label $third$" .git/ORIGINAL-TODO
+'
+
+test_expect_success 'octopus merges' '
+	git checkout -b three &&
+	test_commit before-octopus &&
+	test_commit three &&
+	git checkout -b two HEAD^ &&
+	test_commit two &&
+	git checkout -b one HEAD^ &&
+	test_commit one &&
+	test_tick &&
+	(GIT_AUTHOR_NAME="Hank" GIT_AUTHOR_EMAIL="hank@sea.world" \
+	 git merge -m "Tüntenfüsch" two three) &&
+
+	: fast forward if possible &&
+	before="$(git rev-parse --verify HEAD)" &&
+	test_tick &&
+	git rebase -i -r HEAD^^ &&
+	test_cmp_rev HEAD $before &&
+
+	test_tick &&
+	git rebase -i --force-rebase -r HEAD^^ &&
+	test "Hank" = "$(git show -s --format=%an HEAD)" &&
+	test "$before" != $(git rev-parse HEAD) &&
+	test_cmp_graph HEAD^^.. <<-\EOF
+	*-.   Tüntenfüsch
+	|\ \
+	| | * three
+	| * | two
+	| |/
+	* | one
+	|/
+	o before-octopus
+	EOF
+'
+
+test_expect_success 'with --autosquash and --exec' '
+	git checkout -b with-exec H &&
+	echo Booh >B.t &&
+	test_tick &&
+	git commit --fixup B B.t &&
+	write_script show.sh <<-\EOF &&
+	subject="$(git show -s --format=%s HEAD)"
+	content="$(git diff HEAD^! | tail -n 1)"
+	echo "$subject: $content"
+	EOF
+	test_tick &&
+	git rebase -ir --autosquash --exec ./show.sh A >actual &&
+	grep "B: +Booh" actual &&
+	grep "E: +Booh" actual &&
+	grep "G: +G" actual
+'
+
+test_expect_success '--continue after resolving conflicts after a merge' '
+	git checkout -b already-has-g E &&
+	git cherry-pick E..G &&
+	test_commit H2 &&
+
+	git checkout -b conflicts-in-merge H &&
+	test_commit H2 H2.t conflicts H2-conflict &&
+	test_must_fail git rebase -r already-has-g &&
+	grep conflicts H2.t &&
+	echo resolved >H2.t &&
+	git add -u &&
+	git rebase --continue &&
+	test_must_fail git rev-parse --verify HEAD^2 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_done

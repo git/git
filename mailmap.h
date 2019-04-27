@@ -1,6 +1,8 @@
 #ifndef MAILMAP_H
 #define MAILMAP_H
 
+struct string_list;
+
 int read_mailmap(struct string_list *map, char **repo_abbrev);
 void clear_mailmap(struct string_list *map);
 

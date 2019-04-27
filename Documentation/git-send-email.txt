@@ -33,7 +33,7 @@ This is what linkgit:git-format-patch[1] generates.  Most headers and MIME
 formatting are ignored.
 
 2. The original format used by Greg Kroah-Hartman's 'send_lots_of_email.pl'
-script
+   script
 +
 This format expects the first line of the file to contain the "Cc:" value
 and the "Subject:" of the message as the second line.
@@ -137,15 +137,17 @@ Note that no attempts whatsoever are made to validate the encoding.
 	Specify encoding of compose message. Default is the value of the
 	'sendemail.composeencoding'; if that is unspecified, UTF-8 is assumed.
 
---transfer-encoding=(7bit|8bit|quoted-printable|base64)::
+--transfer-encoding=(7bit|8bit|quoted-printable|base64|auto)::
 	Specify the transfer encoding to be used to send the message over SMTP.
 	7bit will fail upon encountering a non-ASCII message.  quoted-printable
 	can be useful when the repository contains files that contain carriage
 	returns, but makes the raw patch email file (as saved from a MUA) much
 	harder to inspect manually.  base64 is even more fool proof, but also
-	even more opaque.  Default is the value of the `sendemail.transferEncoding`
-	configuration value; if that is unspecified, git will use 8bit and not
-	add a Content-Transfer-Encoding header.
+	even more opaque.  auto will use 8bit when possible, and quoted-printable
+	otherwise.
++
+Default is the value of the `sendemail.transferEncoding` configuration
+value; if that is unspecified, default to `auto`.
 
 --xmailer::
 --no-xmailer::
@@ -188,7 +190,9 @@ $ git send-email --smtp-auth="PLAIN LOGIN GSSAPI" ...
 If at least one of the specified mechanisms matches the ones advertised by the
 SMTP server and if it is supported by the utilized SASL library, the mechanism
 is used for authentication. If neither 'sendemail.smtpAuth' nor `--smtp-auth`
-is specified, all mechanisms supported by the SASL library can be used.
+is specified, all mechanisms supported by the SASL library can be used. The
+special value 'none' maybe specified to completely disable authentication
+independently of `--smtp-user`
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
@@ -201,6 +205,9 @@ or on the command line. If a username has been specified (with
 `--smtp-user` or a `sendemail.smtpUser`), but no password has been
 specified (with `--smtp-pass` or `sendemail.smtpPass`), then
 a password is obtained using 'git-credential'.
+
+--no-smtp-auth::
+	Disable SMTP authentication. Short hand for `--smtp-auth=none`
 
 --smtp-server=<host>::
 	If set, specifies the outgoing SMTP server to use (e.g.
@@ -319,16 +326,19 @@ Automating
 	auto-cc of:
 +
 --
-- 'author' will avoid including the patch author
-- 'self' will avoid including the sender
+- 'author' will avoid including the patch author.
+- 'self' will avoid including the sender.
 - 'cc' will avoid including anyone mentioned in Cc lines in the patch header
   except for self (use 'self' for that).
 - 'bodycc' will avoid including anyone mentioned in Cc lines in the
   patch body (commit message) except for self (use 'self' for that).
 - 'sob' will avoid including anyone mentioned in Signed-off-by lines except
-   for self (use 'self' for that).
+  for self (use 'self' for that).
+- 'misc-by' will avoid including anyone mentioned in Acked-by,
+  Reviewed-by, Tested-by and other "-by" lines in the patch body,
+  except Signed-off-by (use 'sob' for that).
 - 'cccmd' will avoid running the --cc-cmd.
-- 'body' is equivalent to 'sob' + 'bodycc'
+- 'body' is equivalent to 'sob' + 'bodycc' + 'misc-by'.
 - 'all' will suppress all auto cc values.
 --
 +
@@ -398,8 +408,11 @@ have been specified, in which case default to 'compose'.
 +
 --
 		*	Invoke the sendemail-validate hook if present (see linkgit:githooks[5]).
-		*	Warn of patches that contain lines longer than 998 characters; this
-			is due to SMTP limits as described by http://www.ietf.org/rfc/rfc2821.txt.
+		*	Warn of patches that contain lines longer than
+			998 characters unless a suitable transfer encoding
+			('auto', 'base64', or 'quoted-printable') is used;
+			this is due to SMTP limits as described by
+			http://www.ietf.org/rfc/rfc5322.txt.
 --
 +
 Default is the value of `sendemail.validate`; if this is not set,

@@ -12,13 +12,13 @@ expression c;
 
 // These excluded functions must access c->maybe_tree direcly.
 @@
-identifier f !~ "^(get_commit_tree|get_commit_tree_in_graph|load_tree_for_commit)$";
+identifier f !~ "^(get_commit_tree|get_commit_tree_in_graph_one|load_tree_for_commit)$";
 expression c;
 @@
-  f(...) {...
+  f(...) {<...
 - c->maybe_tree
 + get_commit_tree(c)
-  ...}
+  ...>}
 
 @@
 expression c;

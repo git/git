@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "object.h"
 #include "replace-object.h"
+#include "object-store.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
@@ -8,6 +9,7 @@
 #include "alloc.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "commit-graph.h"
 
 unsigned int get_max_object_index(void)
 {
@@ -49,7 +51,7 @@ int type_from_string_gently(const char *str, ssize_t len, int gentle)
 	if (gentle)
 		return -1;
 
-	die("invalid object type \"%s\"", str);
+	die(_("invalid object type \"%s\""), str);
 }
 
 /*
@@ -83,21 +85,20 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
  * Look up the record for the given sha1 in the hash map stored in
  * obj_hash.  Return NULL if it was not found.
  */
-struct object *lookup_object(const unsigned char *sha1)
+struct object *lookup_object(struct repository *r, const unsigned char *sha1)
 {
 	unsigned int i, first;
 	struct object *obj;
 
-	if (!the_repository->parsed_objects->obj_hash)
+	if (!r->parsed_objects->obj_hash)
 		return NULL;
 
-	first = i = hash_obj(sha1,
-			     the_repository->parsed_objects->obj_hash_size);
-	while ((obj = the_repository->parsed_objects->obj_hash[i]) != NULL) {
-		if (!hashcmp(sha1, obj->oid.hash))
+	first = i = hash_obj(sha1, r->parsed_objects->obj_hash_size);
+	while ((obj = r->parsed_objects->obj_hash[i]) != NULL) {
+		if (hasheq(sha1, obj->oid.hash))
 			break;
 		i++;
-		if (i == the_repository->parsed_objects->obj_hash_size)
+		if (i == r->parsed_objects->obj_hash_size)
 			i = 0;
 	}
 	if (obj && i != first) {
@@ -106,8 +107,8 @@ struct object *lookup_object(const unsigned char *sha1)
 		 * that we do not need to walk the hash table the next
 		 * time we look for it.
 		 */
-		SWAP(the_repository->parsed_objects->obj_hash[i],
-		     the_repository->parsed_objects->obj_hash[first]);
+		SWAP(r->parsed_objects->obj_hash[i],
+		     r->parsed_objects->obj_hash[first]);
 	}
 	return obj;
 }
@@ -157,19 +158,20 @@ void *create_object(struct repository *r, const unsigned char *sha1, void *o)
 	return obj;
 }
 
-void *object_as_type(struct object *obj, enum object_type type, int quiet)
+void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet)
 {
 	if (obj->type == type)
 		return obj;
 	else if (obj->type == OBJ_NONE) {
 		if (type == OBJ_COMMIT)
-			((struct commit *)obj)->index = alloc_commit_index(the_repository);
-		obj->type = type;
+			init_commit_node(r, (struct commit *) obj);
+		else
+			obj->type = type;
 		return obj;
 	}
 	else {
 		if (!quiet)
-			error("object %s is a %s, not a %s",
+			error(_("object %s is a %s, not a %s"),
 			      oid_to_hex(&obj->oid),
 			      type_name(obj->type), type_name(type));
 		return NULL;
@@ -178,28 +180,28 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 
 struct object *lookup_unknown_object(const unsigned char *sha1)
 {
-	struct object *obj = lookup_object(sha1);
+	struct object *obj = lookup_object(the_repository, sha1);
 	if (!obj)
 		obj = create_object(the_repository, sha1,
 				    alloc_object_node(the_repository));
 	return obj;
 }
 
-struct object *parse_object_buffer(const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
+struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
 {
 	struct object *obj;
 	*eaten_p = 0;
 
 	obj = NULL;
 	if (type == OBJ_BLOB) {
-		struct blob *blob = lookup_blob(oid);
+		struct blob *blob = lookup_blob(r, oid);
 		if (blob) {
 			if (parse_blob_buffer(blob, buffer, size))
 				return NULL;
 			obj = &blob->object;
 		}
 	} else if (type == OBJ_TREE) {
-		struct tree *tree = lookup_tree(oid);
+		struct tree *tree = lookup_tree(r, oid);
 		if (tree) {
 			obj = &tree->object;
 			if (!tree->buffer)
@@ -211,25 +213,25 @@ struct object *parse_object_buffer(const struct object_id *oid, enum object_type
 			}
 		}
 	} else if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(oid);
+		struct commit *commit = lookup_commit(r, oid);
 		if (commit) {
-			if (parse_commit_buffer(commit, buffer, size, 1))
+			if (parse_commit_buffer(r, commit, buffer, size, 1))
 				return NULL;
-			if (!get_cached_commit_buffer(commit, NULL)) {
-				set_commit_buffer(commit, buffer, size);
+			if (!get_cached_commit_buffer(r, commit, NULL)) {
+				set_commit_buffer(r, commit, buffer, size);
 				*eaten_p = 1;
 			}
 			obj = &commit->object;
 		}
 	} else if (type == OBJ_TAG) {
-		struct tag *tag = lookup_tag(oid);
+		struct tag *tag = lookup_tag(r, oid);
 		if (tag) {
-			if (parse_tag_buffer(tag, buffer, size))
+			if (parse_tag_buffer(r, tag, buffer, size))
 			       return NULL;
 			obj = &tag->object;
 		}
 	} else {
-		warning("object %s has unknown type id %d", oid_to_hex(oid), type);
+		warning(_("object %s has unknown type id %d"), oid_to_hex(oid), type);
 		obj = NULL;
 	}
 	return obj;
@@ -238,46 +240,47 @@ struct object *parse_object_buffer(const struct object_id *oid, enum object_type
 struct object *parse_object_or_die(const struct object_id *oid,
 				   const char *name)
 {
-	struct object *o = parse_object(oid);
+	struct object *o = parse_object(the_repository, oid);
 	if (o)
 		return o;
 
 	die(_("unable to parse object: %s"), name ? name : oid_to_hex(oid));
 }
 
-struct object *parse_object(const struct object_id *oid)
+struct object *parse_object(struct repository *r, const struct object_id *oid)
 {
 	unsigned long size;
 	enum object_type type;
 	int eaten;
-	const struct object_id *repl = lookup_replace_object(the_repository, oid);
+	const struct object_id *repl = lookup_replace_object(r, oid);
 	void *buffer;
 	struct object *obj;
 
-	obj = lookup_object(oid->hash);
+	obj = lookup_object(r, oid->hash);
 	if (obj && obj->parsed)
 		return obj;
 
-	if ((obj && obj->type == OBJ_BLOB && has_object_file(oid)) ||
-	    (!obj && has_object_file(oid) &&
-	     oid_object_info(the_repository, oid, NULL) == OBJ_BLOB)) {
+	if ((obj && obj->type == OBJ_BLOB && repo_has_object_file(r, oid)) ||
+	    (!obj && repo_has_object_file(r, oid) &&
+	     oid_object_info(r, oid, NULL) == OBJ_BLOB)) {
 		if (check_object_signature(repl, NULL, 0, NULL) < 0) {
-			error("sha1 mismatch %s", oid_to_hex(oid));
+			error(_("hash mismatch %s"), oid_to_hex(oid));
 			return NULL;
 		}
-		parse_blob_buffer(lookup_blob(oid), NULL, 0);
-		return lookup_object(oid->hash);
+		parse_blob_buffer(lookup_blob(r, oid), NULL, 0);
+		return lookup_object(r, oid->hash);
 	}
 
-	buffer = read_object_file(oid, &type, &size);
+	buffer = repo_read_object_file(r, oid, &type, &size);
 	if (buffer) {
 		if (check_object_signature(repl, buffer, size, type_name(type)) < 0) {
 			free(buffer);
-			error("sha1 mismatch %s", oid_to_hex(repl));
+			error(_("hash mismatch %s"), oid_to_hex(repl));
 			return NULL;
 		}
 
-		obj = parse_object_buffer(oid, type, size, buffer, &eaten);
+		obj = parse_object_buffer(r, oid, type, size,
+					  buffer, &eaten);
 		if (!eaten)
 			free(buffer);
 		return obj;
@@ -463,6 +466,11 @@ struct parsed_object_pool *parsed_object_pool_new(void)
 	o->tag_state = allocate_alloc_state();
 	o->object_state = allocate_alloc_state();
 
+	o->is_shallow = -1;
+	o->shallow_stat = xcalloc(1, sizeof(*o->shallow_stat));
+
+	o->buffer_slab = allocate_commit_buffer_slab();
+
 	return o;
 }
 
@@ -475,34 +483,38 @@ struct raw_object_store *raw_object_store_new(void)
 	return o;
 }
 
-static void free_alt_odb(struct alternate_object_database *alt)
+static void free_object_directory(struct object_directory *odb)
 {
-	strbuf_release(&alt->scratch);
-	oid_array_clear(&alt->loose_objects_cache);
-	free(alt);
+	free(odb->path);
+	odb_clear_loose_cache(odb);
+	free(odb);
 }
 
-static void free_alt_odbs(struct raw_object_store *o)
+static void free_object_directories(struct raw_object_store *o)
 {
-	while (o->alt_odb_list) {
-		struct alternate_object_database *next;
+	while (o->odb) {
+		struct object_directory *next;
 
-		next = o->alt_odb_list->next;
-		free_alt_odb(o->alt_odb_list);
-		o->alt_odb_list = next;
+		next = o->odb->next;
+		free_object_directory(o->odb);
+		o->odb = next;
 	}
 }
 
 void raw_object_store_clear(struct raw_object_store *o)
 {
-	FREE_AND_NULL(o->objectdir);
 	FREE_AND_NULL(o->alternate_db);
 
 	oidmap_free(o->replace_map, 1);
 	FREE_AND_NULL(o->replace_map);
 
-	free_alt_odbs(o);
-	o->alt_odb_tail = NULL;
+	free_commit_graph(o->commit_graph);
+	o->commit_graph = NULL;
+	o->commit_graph_attempted = 0;
+
+	free_object_directories(o);
+	o->odb_tail = NULL;
+	o->loaded_alternates = 0;
 
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_all_packs(o);
@@ -529,7 +541,7 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 		if (obj->type == OBJ_TREE)
 			free_tree_buffer((struct tree*)obj);
 		else if (obj->type == OBJ_COMMIT)
-			release_commit_memory((struct commit*)obj);
+			release_commit_memory(o, (struct commit*)obj);
 		else if (obj->type == OBJ_TAG)
 			release_tag_memory((struct tag*)obj);
 	}
@@ -537,14 +549,19 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 	FREE_AND_NULL(o->obj_hash);
 	o->obj_hash_size = 0;
 
+	free_commit_buffer_slab(o->buffer_slab);
+	o->buffer_slab = NULL;
+
 	clear_alloc_state(o->blob_state);
 	clear_alloc_state(o->tree_state);
 	clear_alloc_state(o->commit_state);
 	clear_alloc_state(o->tag_state);
 	clear_alloc_state(o->object_state);
+	stat_validity_clear(o->shallow_stat);
 	FREE_AND_NULL(o->blob_state);
 	FREE_AND_NULL(o->tree_state);
 	FREE_AND_NULL(o->commit_state);
 	FREE_AND_NULL(o->tag_state);
 	FREE_AND_NULL(o->object_state);
+	FREE_AND_NULL(o->shallow_stat);
 }

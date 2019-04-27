@@ -107,6 +107,21 @@ test_expect_success 'test that the directory was renamed' '
 	test dir/D = "$(cat diroh/D.t)"
 '
 
+V=$(git rev-parse HEAD)
+
+test_expect_success 'populate --state-branch' '
+	git filter-branch --state-branch state -f --tree-filter "touch file || :" HEAD
+'
+
+W=$(git rev-parse HEAD)
+
+test_expect_success 'using --state-branch to skip already rewritten commits' '
+	test_when_finished git reset --hard $V &&
+	git reset --hard $V &&
+	git filter-branch --state-branch state -f --tree-filter "touch file || :" HEAD &&
+	test_cmp_rev $W HEAD
+'
+
 git tag oldD HEAD~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
 	git branch modD oldD &&

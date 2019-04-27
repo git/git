@@ -332,7 +332,7 @@ test_expect_success 'difftool --extcmd cat arg1' '
 test_expect_success 'difftool --extcmd cat arg2' '
 	echo branch >expect &&
 	git difftool --no-prompt \
-		--extcmd sh\ -c\ \"cat\ \$2\" branch >actual &&
+		--extcmd sh\ -c\ \"cat\ \\\"\$2\\\"\" branch >actual &&
 	test_cmp expect actual
 '
 
@@ -546,7 +546,7 @@ do
 done >actual
 EOF
 
-test_expect_success SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
+test_expect_success SYMLINKS 'difftool --dir-diff --symlinks without unstaged changes' '
 	cat >expect <<-EOF &&
 	file
 	$PWD/file
@@ -555,9 +555,9 @@ test_expect_success SYMLINKS 'difftool --dir-diff --symlink without unstaged cha
 	sub/sub
 	$PWD/sub/sub
 	EOF
-	git difftool --dir-diff --symlink \
+	git difftool --dir-diff --symlinks \
 		--extcmd "./.git/CHECK_SYMLINKS" branch HEAD &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 write_script modify-right-file <<\EOF
@@ -702,6 +702,16 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 
 	git difftool --no-symlinks --dir-diff --extcmd ls >output &&
 	grep -v ^/ output >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'outside worktree' '
+	echo 1 >1 &&
+	echo 2 >2 &&
+	test_expect_code 1 nongit git \
+		-c diff.tool=echo -c difftool.echo.cmd="echo \$LOCAL \$REMOTE" \
+		difftool --no-prompt --no-index ../1 ../2 >actual &&
+	echo "../1 ../2" >expect &&
 	test_cmp expect actual
 '
 

@@ -60,7 +60,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	EOF
 	chmod +x test-bin/git-merge-funny &&
 	(
-		PATH=./test-bin:$PATH
+		PATH=./test-bin:$PATH &&
 		test_must_fail git rebase -s funny -Xopt master topic
 	) &&
 	test -f funny.was.run &&
@@ -68,13 +68,45 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	(
-		PATH=./test-bin:$PATH
+		PATH=./test-bin:$PATH &&
 		git rebase --continue
 	) &&
 	test -f funny.was.run
 '
 
-test_expect_success 'rebase passes merge strategy options correctly' '
+test_expect_success 'rebase -i --continue handles merge strategy and options' '
+	rm -fr .git/rebase-* &&
+	git reset --hard commit-new-file-F2-on-topic-branch &&
+	test_commit "commit-new-file-F3-on-topic-branch-for-dash-i" F3 32 &&
+	test_when_finished "rm -fr test-bin funny.was.run funny.args" &&
+	mkdir test-bin &&
+	cat >test-bin/git-merge-funny <<-EOF &&
+	#!$SHELL_PATH
+	echo "\$@" >>funny.args
+	case "\$1" in --opt) ;; *) exit 2 ;; esac
+	case "\$2" in --foo) ;; *) exit 2 ;; esac
+	case "\$4" in --) ;; *) exit 2 ;; esac
+	shift 2 &&
+	>funny.was.run &&
+	exec git merge-recursive "\$@"
+	EOF
+	chmod +x test-bin/git-merge-funny &&
+	(
+		PATH=./test-bin:$PATH &&
+		test_must_fail git rebase -i -s funny -Xopt -Xfoo master topic
+	) &&
+	test -f funny.was.run &&
+	rm funny.was.run &&
+	echo "Resolved" >F2 &&
+	git add F2 &&
+	(
+		PATH=./test-bin:$PATH &&
+		git rebase --continue
+	) &&
+	test -f funny.was.run
+'
+
+test_expect_success REBASE_P 'rebase passes merge strategy options correctly' '
 	rm -fr .git/rebase-* &&
 	git reset --hard commit-new-file-F3-on-topic-branch &&
 	test_commit theirs-to-merge &&
@@ -128,13 +160,15 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	: The first squash was skipped, therefore: &&
 	git show HEAD >out &&
 	test_i18ngrep "# This is a combination of 2 commits" out &&
+	test_i18ngrep "# This is the commit message #2:" out &&
 
 	(test_set_editor "$PWD/copy-editor.sh" && git rebase --skip) &&
 	git show HEAD >out &&
 	test_i18ngrep ! "# This is a combination" out &&
 
 	: Final squash failed, but there was still a squash &&
-	test_i18ngrep "# This is a combination of 2 commits" .git/copy.txt
+	test_i18ngrep "# This is a combination of 2 commits" .git/copy.txt &&
+	test_i18ngrep "# This is the commit message #2:" .git/copy.txt
 '
 
 test_expect_success 'setup rerere database' '
@@ -143,6 +177,7 @@ test_expect_success 'setup rerere database' '
 	git checkout master &&
 	test_commit "commit-new-file-F3" F3 3 &&
 	test_config rerere.enabled true &&
+	git update-ref refs/heads/topic commit-new-file-F3-on-topic-branch &&
 	test_must_fail git rebase -m master topic &&
 	echo "Resolved" >F2 &&
 	cp F2 expected-F2 &&
@@ -206,6 +241,28 @@ test_rerere_autoupdate
 test_rerere_autoupdate -m
 GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
 test_rerere_autoupdate -i
-test_rerere_autoupdate --preserve-merges
+test_have_prereq !REBASE_P || test_rerere_autoupdate --preserve-merges
+unset GIT_SEQUENCE_EDITOR
+
+test_expect_success 'the todo command "break" works' '
+	rm -f execed &&
+	FAKE_LINES="break b exec_>execed" git rebase -i HEAD &&
+	test_path_is_missing execed &&
+	git rebase --continue &&
+	test_path_is_missing execed &&
+	git rebase --continue &&
+	test_path_is_file execed
+'
+
+test_expect_success '--reschedule-failed-exec' '
+	test_when_finished "git rebase --abort" &&
+	test_must_fail git rebase -x false --reschedule-failed-exec HEAD^ &&
+	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
+	git rebase --abort &&
+	test_must_fail git -c rebase.rescheduleFailedExec=true \
+		rebase -x false HEAD^ 2>err &&
+	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
+	test_i18ngrep "has been rescheduled" err
+'
 
 test_done

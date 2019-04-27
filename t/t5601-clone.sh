@@ -345,7 +345,7 @@ expect_ssh () {
 }
 
 test_expect_success 'clone myhost:src uses ssh' '
-	git clone myhost:src ssh-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone myhost:src ssh-clone &&
 	expect_ssh myhost src
 '
 
@@ -356,12 +356,12 @@ test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
 '
 
 test_expect_success 'bracketed hostnames are still ssh' '
-	git clone "[myhost:123]:src" ssh-bracket-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'OpenSSH variant passes -4' '
-	git clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
 	expect_ssh "-4 -p 123" myhost src
 '
 
@@ -405,7 +405,7 @@ test_expect_success 'OpenSSH-like uplink is treated as ssh' '
 	test_when_finished "rm -f \"\$TRASH_DIRECTORY/uplink\"" &&
 	GIT_SSH="$TRASH_DIRECTORY/uplink" &&
 	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\"" &&
-	git clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
+	GIT_TEST_PROTOCOL_VERSION=0 git clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
 	expect_ssh "-p 123" myhost src
 '
 
@@ -444,14 +444,14 @@ test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
 
 test_expect_success 'GIT_SSH_VARIANT overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	GIT_SSH_VARIANT=ssh \
-	git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
+	GIT_TEST_PROTOCOL_VERSION=0 GIT_SSH_VARIANT=ssh \
+		git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
 	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'ssh.variant overrides plink detection' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
-	git -c ssh.variant=ssh \
+	GIT_TEST_PROTOCOL_VERSION=0 git -c ssh.variant=ssh \
 		clone "[myhost:123]:src" ssh-bracket-clone-variant-2 &&
 	expect_ssh "-p 123" myhost src
 '
@@ -482,12 +482,12 @@ counter=0
 # $3 path
 test_clone_url () {
 	counter=$(($counter + 1))
-	test_might_fail git clone "$1" tmp$counter &&
+	test_might_fail env GIT_TEST_PROTOCOL_VERSION=0 git clone "$1" tmp$counter &&
 	shift &&
 	expect_ssh "$@"
 }
 
-test_expect_success !MINGW 'clone c:temp is ssl' '
+test_expect_success !MINGW,!CYGWIN 'clone c:temp is ssl' '
 	test_clone_url c:temp c temp
 '
 
@@ -618,14 +618,20 @@ hex2oct () {
 test_expect_success 'clone on case-insensitive fs' '
 	git init icasefs &&
 	(
-		cd icasefs
+		cd icasefs &&
 		o=$(git hash-object -w --stdin </dev/null | hex2oct) &&
 		t=$(printf "100644 X\0${o}100644 x\0${o}" |
 			git hash-object -w -t tree --stdin) &&
 		c=$(git commit-tree -m bogus $t) &&
 		git update-ref refs/heads/bogus $c &&
-		git clone -b bogus . bogus
+		git clone -b bogus . bogus 2>warning
 	)
+'
+
+test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
+	grep X icasefs/warning &&
+	grep x icasefs/warning &&
+	test_i18ngrep "the following paths have collided" icasefs/warning
 '
 
 partial_clone () {
@@ -726,7 +732,5 @@ start_httpd
 test_expect_success 'partial clone using HTTP' '
 	partial_clone "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"
 '
-
-stop_httpd
 
 test_done

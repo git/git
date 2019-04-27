@@ -1,4 +1,6 @@
 #include "cache.h"
+#include "object-store.h"
+#include "repository.h"
 #include "object.h"
 #include "blob.h"
 #include "tree.h"
@@ -8,7 +10,6 @@
 #include "fsck.h"
 #include "refs.h"
 #include "utf8.h"
-#include "sha1-array.h"
 #include "decorate.h"
 #include "oidset.h"
 #include "packfile.h"
@@ -62,9 +63,11 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(ZERO_PADDED_DATE, ERROR) \
 	FUNC(GITMODULES_MISSING, ERROR) \
 	FUNC(GITMODULES_BLOB, ERROR) \
-	FUNC(GITMODULES_PARSE, ERROR) \
+	FUNC(GITMODULES_LARGE, ERROR) \
 	FUNC(GITMODULES_NAME, ERROR) \
 	FUNC(GITMODULES_SYMLINK, ERROR) \
+	FUNC(GITMODULES_URL, ERROR) \
+	FUNC(GITMODULES_PATH, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
 	FUNC(EMPTY_NAME, WARN) \
@@ -76,6 +79,7 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(ZERO_PADDED_FILEMODE, WARN) \
 	FUNC(NUL_IN_COMMIT, WARN) \
 	/* infos (reported as warnings, but ignored by default) */ \
+	FUNC(GITMODULES_PARSE, INFO) \
 	FUNC(BAD_TAG_NAME, INFO) \
 	FUNC(MISSING_TAGGER_ENTRY, INFO)
 
@@ -179,40 +183,37 @@ static int fsck_msg_type(enum fsck_msg_id msg_id,
 
 static void init_skiplist(struct fsck_options *options, const char *path)
 {
-	static struct oid_array skiplist = OID_ARRAY_INIT;
-	int sorted, fd;
-	char buffer[GIT_MAX_HEXSZ + 1];
+	FILE *fp;
+	struct strbuf sb = STRBUF_INIT;
 	struct object_id oid;
 
-	if (options->skiplist)
-		sorted = options->skiplist->sorted;
-	else {
-		sorted = 1;
-		options->skiplist = &skiplist;
-	}
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
+	fp = fopen(path, "r");
+	if (!fp)
 		die("Could not open skip list: %s", path);
-	for (;;) {
+	while (!strbuf_getline(&sb, fp)) {
 		const char *p;
-		int result = read_in_full(fd, buffer, sizeof(buffer));
-		if (result < 0)
-			die_errno("Could not read '%s'", path);
-		if (!result)
-			break;
-		if (parse_oid_hex(buffer, &oid, &p) || *p != '\n')
-			die("Invalid SHA-1: %s", buffer);
-		oid_array_append(&skiplist, &oid);
-		if (sorted && skiplist.nr > 1 &&
-				oidcmp(&skiplist.oid[skiplist.nr - 2],
-				       &oid) > 0)
-			sorted = 0;
-	}
-	close(fd);
+		const char *hash;
 
-	if (sorted)
-		skiplist.sorted = 1;
+		/*
+		 * Allow trailing comments, leading whitespace
+		 * (including before commits), and empty or whitespace
+		 * only lines.
+		 */
+		hash = strchr(sb.buf, '#');
+		if (hash)
+			strbuf_setlen(&sb, hash - sb.buf);
+		strbuf_trim(&sb);
+		if (!sb.len)
+			continue;
+
+		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
+			die("Invalid SHA-1: %s", sb.buf);
+		oidset_insert(&options->skiplist, &oid);
+	}
+	if (ferror(fp))
+		die_errno("Could not read '%s'", path);
+	fclose(fp);
+	strbuf_release(&sb);
 }
 
 static int parse_msg_type(const char *str)
@@ -315,6 +316,11 @@ static void append_msg_id(struct strbuf *sb, const char *msg_id)
 	strbuf_addstr(sb, ": ");
 }
 
+static int object_on_skiplist(struct fsck_options *opts, struct object *obj)
+{
+	return opts && obj && oidset_contains(&opts->skiplist, &obj->oid);
+}
+
 __attribute__((format (printf, 4, 5)))
 static int report(struct fsck_options *options, struct object *object,
 	enum fsck_msg_id id, const char *fmt, ...)
@@ -326,8 +332,7 @@ static int report(struct fsck_options *options, struct object *object,
 	if (msg_type == FSCK_IGNORE)
 		return 0;
 
-	if (options->skiplist && object &&
-			oid_array_lookup(options->skiplist, &object->oid) >= 0)
+	if (object_on_skiplist(options, object))
 		return 0;
 
 	if (msg_type == FSCK_FATAL)
@@ -405,14 +410,14 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			continue;
 
 		if (S_ISDIR(entry.mode)) {
-			obj = (struct object *)lookup_tree(entry.oid);
+			obj = (struct object *)lookup_tree(the_repository, &entry.oid);
 			if (name && obj)
 				put_object_name(options, obj, "%s%s/", name,
 					entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
-			obj = (struct object *)lookup_blob(entry.oid);
+			obj = (struct object *)lookup_blob(the_repository, &entry.oid);
 			if (name && obj)
 				put_object_name(options, obj, "%s%s", name,
 					entry.path);
@@ -474,7 +479,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		if (name) {
 			struct object *obj = &parents->item->object;
 
-			if (++counter > 1)
+			if (counter++)
 				put_object_name(options, obj, "%s^%d",
 					name, counter);
 			else if (generation > 0)
@@ -510,7 +515,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 		return -1;
 
 	if (obj->type == OBJ_NONE)
-		parse_object(&obj->oid);
+		parse_object(the_repository, &obj->oid);
 
 	switch (obj->type) {
 	case OBJ_BLOB:
@@ -795,7 +800,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 		buffer = p + 1;
 		parent_line_count++;
 	}
-	graft = lookup_commit_graft(&commit->object.oid);
+	graft = lookup_commit_graft(the_repository, &commit->object.oid);
 	parent_count = commit_list_count(commit->parents);
 	if (graft) {
 		if (graft->nr_parent == -1 && !parent_count)
@@ -983,6 +988,18 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 				    FSCK_MSG_GITMODULES_NAME,
 				    "disallowed submodule name: %s",
 				    name);
+	if (!strcmp(key, "url") && value &&
+	    looks_like_command_line_option(value))
+		data->ret |= report(data->options, data->obj,
+				    FSCK_MSG_GITMODULES_URL,
+				    "disallowed submodule url: %s",
+				    value);
+	if (!strcmp(key, "path") && value &&
+	    looks_like_command_line_option(value))
+		data->ret |= report(data->options, data->obj,
+				    FSCK_MSG_GITMODULES_PATH,
+				    "disallowed submodule path: %s",
+				    value);
 	free(name);
 
 	return 0;
@@ -992,10 +1009,14 @@ static int fsck_blob(struct blob *blob, const char *buf,
 		     unsigned long size, struct fsck_options *options)
 {
 	struct fsck_gitmodules_data data;
+	struct config_options config_opts = { 0 };
 
 	if (!oidset_contains(&gitmodules_found, &blob->object.oid))
 		return 0;
 	oidset_insert(&gitmodules_done, &blob->object.oid);
+
+	if (object_on_skiplist(options, &blob->object))
+		return 0;
 
 	if (!buf) {
 		/*
@@ -1004,15 +1025,16 @@ static int fsck_blob(struct blob *blob, const char *buf,
 		 * that an error.
 		 */
 		return report(options, &blob->object,
-			      FSCK_MSG_GITMODULES_PARSE,
+			      FSCK_MSG_GITMODULES_LARGE,
 			      ".gitmodules too large to parse");
 	}
 
 	data.obj = &blob->object;
 	data.options = options;
 	data.ret = 0;
+	config_opts.error_action = CONFIG_ERROR_SILENT;
 	if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
-				".gitmodules", buf, size, &data))
+				".gitmodules", buf, size, &data, &config_opts))
 		data.ret |= report(options, &blob->object,
 				   FSCK_MSG_GITMODULES_PARSE,
 				   "could not parse gitmodules blob");
@@ -1068,7 +1090,7 @@ int fsck_finish(struct fsck_options *options)
 		if (oidset_contains(&gitmodules_done, oid))
 			continue;
 
-		blob = lookup_blob(oid);
+		blob = lookup_blob(the_repository, oid);
 		if (!blob) {
 			struct object *obj = lookup_unknown_object(oid->hash);
 			ret |= report(options, obj,

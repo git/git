@@ -77,19 +77,14 @@ test_expect_success 'rebase commit with diff in message' '
 '
 
 test_expect_success 'rebase -m commit with empty message' '
-	test_must_fail git rebase -m master empty-message-merge &&
-	git rebase --abort &&
-	git rebase -m --allow-empty-message master empty-message-merge
+	git rebase -m master empty-message-merge
 '
 
 test_expect_success 'rebase -i commit with empty message' '
 	git checkout diff-in-message &&
 	set_fake_editor &&
 	test_must_fail env FAKE_COMMIT_MESSAGE=" " FAKE_LINES="reword 1" \
-		git rebase -i HEAD^ &&
-	git rebase --abort &&
-	FAKE_COMMIT_MESSAGE=" " FAKE_LINES="reword 1" \
-		git rebase -i --allow-empty-message HEAD^
+		git rebase -i HEAD^
 '
 
 test_done

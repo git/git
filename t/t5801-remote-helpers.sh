@@ -96,7 +96,7 @@ test_expect_success 'push new branch with old:new refspec' '
 
 test_expect_success 'push new branch with HEAD:new refspec' '
 	(cd local &&
-	 git checkout new-name
+	 git checkout new-name &&
 	 git push origin HEAD:new-refspec-2
 	) &&
 	compare_refs local HEAD server refs/heads/new-refspec-2
@@ -126,7 +126,7 @@ test_expect_success 'forced push' '
 test_expect_success 'cloning without refspec' '
 	GIT_REMOTE_TESTGIT_REFSPEC="" \
 	git clone "testgit::${PWD}/server" local2 2>error &&
-	grep "This remote helper should implement refspec capability" error &&
+	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
@@ -134,7 +134,7 @@ test_expect_success 'pulling without refspecs' '
 	(cd local2 &&
 	git reset --hard &&
 	GIT_REMOTE_TESTGIT_REFSPEC="" git pull 2>../error) &&
-	grep "This remote helper should implement refspec capability" error &&
+	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
 
@@ -146,7 +146,7 @@ test_expect_success 'pushing without refspecs' '
 	GIT_REMOTE_TESTGIT_REFSPEC="" &&
 	export GIT_REMOTE_TESTGIT_REFSPEC &&
 	test_must_fail git push 2>../error) &&
-	grep "remote-helper doesn.t support push; refspec needed" error
+	test_i18ngrep "remote-helper doesn.t support push; refspec needed" error
 '
 
 test_expect_success 'pulling without marks' '
@@ -246,7 +246,7 @@ test_expect_success 'proper failure checks for fetching' '
 	(cd local &&
 	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git fetch 2>error &&
 	cat error &&
-	grep -q "Error while running fast-import" error
+	test_i18ngrep -q "error while running fast-import" error
 	)
 '
 

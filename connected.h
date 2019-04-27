@@ -1,6 +1,7 @@
 #ifndef CONNECTED_H
 #define CONNECTED_H
 
+struct object_id;
 struct transport;
 
 /*
@@ -38,14 +39,21 @@ struct check_connected_options {
 	 * Insert these variables into the environment of the child process.
 	 */
 	const char **env;
+
+	/*
+	 * If non-zero, check the ancestry chain completely, not stopping at
+	 * any existing ref. This is necessary when deepening existing refs
+	 * during a fetch.
+	 */
+	unsigned is_deepening_fetch : 1;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }
 
 /*
- * Make sure that our object store has all the commits necessary to
- * connect the ancestry chain to some of our existing refs, and all
- * the trees and blobs that these commits use.
+ * Make sure that all given objects and all objects reachable from them
+ * either exist in our object store or (if the repository is a partial
+ * clone) are promised to be available.
  *
  * Return 0 if Ok, non zero otherwise (i.e. some missing objects)
  *

@@ -25,6 +25,11 @@ test_expect_success setup '
 	test_commit base foo b &&
 	test_commit picked foo c &&
 	test_commit --signoff picked-signed foo d &&
+	git checkout -b topic initial &&
+	test_commit redundant-pick foo c redundant &&
+	git commit --allow-empty --allow-empty-message &&
+	git tag empty &&
+	git checkout master &&
 	git config advice.detachedhead false
 
 '
@@ -390,6 +395,38 @@ test_expect_success 'commit --amend -s places the sign-off at the right place' '
 	EOF
 	grep -e "^Conflicts:" -e '^Signed-off-by' <.git/COMMIT_EDITMSG >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick preserves sparse-checkout' '
+	pristine_detach initial &&
+	test_config core.sparseCheckout true &&
+	test_when_finished "
+		echo \"/*\" >.git/info/sparse-checkout
+		git read-tree --reset -u HEAD
+		rm .git/info/sparse-checkout" &&
+	echo /unrelated >.git/info/sparse-checkout &&
+	git read-tree --reset -u HEAD &&
+	test_must_fail git cherry-pick -Xours picked>actual &&
+	test_i18ngrep ! "Changes not staged for commit:" actual
+'
+
+test_expect_success 'cherry-pick --continue remembers --keep-redundant-commits' '
+	test_when_finished "git cherry-pick --abort || :" &&
+	pristine_detach initial &&
+	test_must_fail git cherry-pick --keep-redundant-commits picked redundant &&
+	echo c >foo &&
+	git add foo &&
+	git cherry-pick --continue
+'
+
+test_expect_success 'cherry-pick --continue remembers --allow-empty and --allow-empty-message' '
+	test_when_finished "git cherry-pick --abort || :" &&
+	pristine_detach initial &&
+	test_must_fail git cherry-pick --allow-empty --allow-empty-message \
+				       picked empty &&
+	echo c >foo &&
+	git add foo &&
+	git cherry-pick --continue
 '
 
 test_done

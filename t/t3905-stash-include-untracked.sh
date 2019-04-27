@@ -142,7 +142,7 @@ test_expect_success 'stash save --include-untracked removed files' '
 	rm -f file &&
 	git stash save --include-untracked &&
 	echo 1 > expect &&
-	test_cmp file expect
+	test_cmp expect file
 '
 
 rm -f expect
@@ -281,6 +281,12 @@ test_expect_success 'stash -u -- <non-existant> shows no changes when there are 
 	git stash push -u -- non-existant >actual &&
 	echo "No local changes to save" >expect &&
 	test_i18ncmp expect actual
+'
+
+test_expect_success 'stash -u with globs' '
+	>untracked.txt &&
+	git stash -u -- ":(glob)**/*.txt" &&
+	test_path_is_missing untracked.txt
 '
 
 test_done

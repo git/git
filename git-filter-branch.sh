@@ -372,6 +372,7 @@ while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
 
 	report_progress
+	test -f "$workdir"/../map/$commit && continue
 
 	case "$filter_subdir" in
 	"")

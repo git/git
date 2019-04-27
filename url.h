@@ -1,6 +1,8 @@
 #ifndef URL_H
 #define URL_H
 
+struct strbuf;
+
 extern int is_url(const char *url);
 extern int is_urlschemechar(int first_flag, int ch);
 extern char *url_decode(const char *url);

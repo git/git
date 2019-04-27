@@ -93,21 +93,20 @@ test_expect_success 'another test, without options' '
 	git diff >out &&
 	test_cmp expect out &&
 
-	>expect &&
 	git diff -w >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w -b >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w --ignore-space-at-eol >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w -b --ignore-space-at-eol >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w --ignore-cr-at-eol >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	tr "Q_" "\015 " <<-\EOF >expect &&
 	diff --git a/x b/x
@@ -182,8 +181,7 @@ test_expect_success 'ignore-blank-lines: only new lines' '
 	test_seq 5 | sed "/3/i\\
 " >x &&
 	git diff --ignore-blank-lines >out &&
-	>expect &&
-	test_cmp expect out
+	test_must_be_empty out
 '
 
 test_expect_success 'ignore-blank-lines: only new lines with space' '
@@ -192,8 +190,7 @@ test_expect_success 'ignore-blank-lines: only new lines with space' '
 	test_seq 5 | sed "/3/i\\
  " >x &&
 	git diff -w --ignore-blank-lines >out &&
-	>expect &&
-	test_cmp expect out
+	test_must_be_empty out
 '
 
 test_expect_success 'ignore-blank-lines: after change' '
@@ -779,8 +776,6 @@ test_expect_success 'checkdiff allows new blank lines' '
 	git diff --check
 '
 
-cat <<EOF >expect
-EOF
 test_expect_success 'whitespace-only changes not reported' '
 	git reset --hard &&
 	echo >x "hello world" &&
@@ -788,7 +783,7 @@ test_expect_success 'whitespace-only changes not reported' '
 	git commit -m "hello 1" &&
 	echo >x "hello  world" &&
 	git diff -b >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 cat <<EOF >expect
@@ -1223,7 +1218,7 @@ test_expect_success 'plain moved code, inside file' '
 	test_cmp expected actual
 '
 
-test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
+test_expect_success 'detect blocks of moved code' '
 	git reset --hard &&
 	cat <<-\EOF >lines.txt &&
 		long line 1
@@ -1271,9 +1266,52 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 	test_config color.diff.newMovedDimmed "normal cyan" &&
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
-	git diff HEAD --no-renames --color-moved=dimmed_zebra --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved=blocks --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
+	<BOLD>--- a/lines.txt<RESET>
+	<BOLD>+++ b/lines.txt<RESET>
+	<CYAN>@@ -1,16 +1,16 @@<RESET>
+	<MAGENTA>-long line 1<RESET>
+	<MAGENTA>-long line 2<RESET>
+	<MAGENTA>-long line 3<RESET>
+	 line 4<RESET>
+	 line 5<RESET>
+	 line 6<RESET>
+	 line 7<RESET>
+	 line 8<RESET>
+	 line 9<RESET>
+	<CYAN>+<RESET><CYAN>long line 1<RESET>
+	<CYAN>+<RESET><CYAN>long line 2<RESET>
+	<CYAN>+<RESET><CYAN>long line 3<RESET>
+	<CYAN>+<RESET><CYAN>long line 14<RESET>
+	<CYAN>+<RESET><CYAN>long line 15<RESET>
+	<CYAN>+<RESET><CYAN>long line 16<RESET>
+	 line 10<RESET>
+	 line 11<RESET>
+	 line 12<RESET>
+	 line 13<RESET>
+	<MAGENTA>-long line 14<RESET>
+	<MAGENTA>-long line 15<RESET>
+	<MAGENTA>-long line 16<RESET>
+	EOF
+	test_cmp expected actual
+
+'
+
+test_expect_success 'detect permutations inside moved code -- dimmed-zebra' '
+	# reuse setup from test before!
+	test_config color.diff.oldMoved "magenta" &&
+	test_config color.diff.newMoved "cyan" &&
+	test_config color.diff.oldMovedAlternative "blue" &&
+	test_config color.diff.newMovedAlternative "yellow" &&
+	test_config color.diff.oldMovedDimmed "normal magenta" &&
+	test_config color.diff.newMovedDimmed "normal cyan" &&
+	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
+	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
+	git diff HEAD --no-renames --color-moved=dimmed-zebra --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1315,9 +1353,8 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
 	test_config diff.colorMoved zebra &&
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1395,9 +1432,8 @@ test_expect_success 'move detection ignoring whitespace ' '
 	line 4
 	line 5
 	EOF
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1419,9 +1455,9 @@ test_expect_success 'move detection ignoring whitespace ' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -w --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-ws=ignore-all-space >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1459,9 +1495,8 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	line 5
 	EOF
 
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1483,9 +1518,9 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -b --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-ws=ignore-space-change >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1526,9 +1561,8 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	# avoid cluttering the output with complaints about our eol whitespace
 	test_config core.whitespace -blank-at-eol &&
 
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1550,9 +1584,9 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames --ignore-space-at-eol --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-ws=ignore-space-at-eol >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1597,9 +1631,8 @@ test_expect_success '--color-moved block at end of diff output respects MIN_ALNU
 	irrelevant_line
 	EOF
 
-	git diff HEAD --color-moved=zebra --color --no-renames |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --color-moved=zebra --color --no-renames >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/bar b/bar<RESET>
 	<BOLD>--- a/bar<RESET>
@@ -1636,9 +1669,8 @@ test_expect_success '--color-moved respects MIN_ALNUM_COUNT' '
 	nineteen chars 456789
 	EOF
 
-	git diff HEAD --color-moved=zebra --color --no-renames |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --color-moved=zebra --color --no-renames >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/bar b/bar<RESET>
 	<BOLD>--- a/bar<RESET>
@@ -1679,7 +1711,8 @@ test_expect_success '--color-moved treats adjacent blocks as separate for MIN_AL
 	7charsA
 	EOF
 
-	git diff HEAD --color-moved=zebra --color --no-renames | grep -v "index" | test_decode_color >actual &&
+	git diff HEAD --color-moved=zebra --color --no-renames >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/bar b/bar<RESET>
 	<BOLD>--- a/bar<RESET>
@@ -1722,7 +1755,257 @@ test_expect_success 'move detection with submodules' '
 
 	# nor did we mess with it another way
 	git diff --submodule=diff --color | test_decode_color >expect &&
-	test_cmp expect decoded_actual
+	test_cmp expect decoded_actual &&
+	rm -rf bananas &&
+	git submodule deinit bananas
+'
+
+test_expect_success 'only move detection ignores white spaces' '
+	git reset --hard &&
+	q_to_tab <<-\EOF >text.txt &&
+		a long line to exceed per-line minimum
+		another long line to exceed per-line minimum
+		original file
+	EOF
+	git add text.txt &&
+	git commit -m "add text" &&
+	q_to_tab <<-\EOF >text.txt &&
+		Qa long line to exceed per-line minimum
+		Qanother long line to exceed per-line minimum
+		new file
+	EOF
+
+	# Make sure we get a different diff using -w
+	git diff --color --color-moved -w >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+	q_to_tab <<-\EOF >expected &&
+	<BOLD>diff --git a/text.txt b/text.txt<RESET>
+	<BOLD>--- a/text.txt<RESET>
+	<BOLD>+++ b/text.txt<RESET>
+	<CYAN>@@ -1,3 +1,3 @@<RESET>
+	 Qa long line to exceed per-line minimum<RESET>
+	 Qanother long line to exceed per-line minimum<RESET>
+	<RED>-original file<RESET>
+	<GREEN>+<RESET><GREEN>new file<RESET>
+	EOF
+	test_cmp expected actual &&
+
+	# And now ignoring white space only in the move detection
+	git diff --color --color-moved \
+		--color-moved-ws=ignore-all-space,ignore-space-change,ignore-space-at-eol >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+	q_to_tab <<-\EOF >expected &&
+	<BOLD>diff --git a/text.txt b/text.txt<RESET>
+	<BOLD>--- a/text.txt<RESET>
+	<BOLD>+++ b/text.txt<RESET>
+	<CYAN>@@ -1,3 +1,3 @@<RESET>
+	<BOLD;MAGENTA>-a long line to exceed per-line minimum<RESET>
+	<BOLD;MAGENTA>-another long line to exceed per-line minimum<RESET>
+	<RED>-original file<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>a long line to exceed per-line minimum<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>another long line to exceed per-line minimum<RESET>
+	<GREEN>+<RESET><GREEN>new file<RESET>
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'compare whitespace delta across moved blocks' '
+
+	git reset --hard &&
+	q_to_tab <<-\EOF >text.txt &&
+	QIndented
+	QText across
+	Qsome lines
+	QBut! <- this stands out
+	QAdjusting with
+	QQdifferent starting
+	Qwhite spaces
+	QAnother outlier
+	QQQIndented
+	QQQText across
+	QQQfive lines
+	QQQthat has similar lines
+	QQQto previous blocks, but with different indent
+	QQQYetQAnotherQoutlierQ
+	QLine with internal w h i t e s p a c e change
+	EOF
+
+	git add text.txt &&
+	git commit -m "add text.txt" &&
+
+	q_to_tab <<-\EOF >text.txt &&
+	QQIndented
+	QQText across
+	QQsome lines
+	QQQBut! <- this stands out
+	Adjusting with
+	Qdifferent starting
+	white spaces
+	AnotherQoutlier
+	QQIndented
+	QQText across
+	QQfive lines
+	QQthat has similar lines
+	QQto previous blocks, but with different indent
+	QQYetQAnotherQoutlier
+	QLine with internal whitespace change
+	EOF
+
+	git diff --color --color-moved --color-moved-ws=allow-indentation-change >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+
+	q_to_tab <<-\EOF >expected &&
+		<BOLD>diff --git a/text.txt b/text.txt<RESET>
+		<BOLD>--- a/text.txt<RESET>
+		<BOLD>+++ b/text.txt<RESET>
+		<CYAN>@@ -1,15 +1,15 @@<RESET>
+		<BOLD;MAGENTA>-QIndented<RESET>
+		<BOLD;MAGENTA>-QText across<RESET>
+		<BOLD;MAGENTA>-Qsome lines<RESET>
+		<RED>-QBut! <- this stands out<RESET>
+		<BOLD;MAGENTA>-QAdjusting with<RESET>
+		<BOLD;MAGENTA>-QQdifferent starting<RESET>
+		<BOLD;MAGENTA>-Qwhite spaces<RESET>
+		<RED>-QAnother outlier<RESET>
+		<BOLD;MAGENTA>-QQQIndented<RESET>
+		<BOLD;MAGENTA>-QQQText across<RESET>
+		<BOLD;MAGENTA>-QQQfive lines<RESET>
+		<BOLD;MAGENTA>-QQQthat has similar lines<RESET>
+		<BOLD;MAGENTA>-QQQto previous blocks, but with different indent<RESET>
+		<RED>-QQQYetQAnotherQoutlierQ<RESET>
+		<RED>-QLine with internal w h i t e s p a c e change<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Indented<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Text across<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>some lines<RESET>
+		<GREEN>+<RESET>QQQ<GREEN>But! <- this stands out<RESET>
+		<BOLD;CYAN>+<RESET><BOLD;CYAN>Adjusting with<RESET>
+		<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>different starting<RESET>
+		<BOLD;CYAN>+<RESET><BOLD;CYAN>white spaces<RESET>
+		<GREEN>+<RESET><GREEN>AnotherQoutlier<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Indented<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Text across<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>five lines<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>that has similar lines<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>to previous blocks, but with different indent<RESET>
+		<GREEN>+<RESET>QQ<GREEN>YetQAnotherQoutlier<RESET>
+		<GREEN>+<RESET>Q<GREEN>Line with internal whitespace change<RESET>
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success 'bogus settings in move detection erroring out' '
+	test_must_fail git diff --color-moved=bogus 2>err &&
+	test_i18ngrep "must be one of" err &&
+	test_i18ngrep bogus err &&
+
+	test_must_fail git -c diff.colormoved=bogus diff 2>err &&
+	test_i18ngrep "must be one of" err &&
+	test_i18ngrep "from command-line config" err &&
+
+	test_must_fail git diff --color-moved-ws=bogus 2>err &&
+	test_i18ngrep "possible values" err &&
+	test_i18ngrep bogus err &&
+
+	test_must_fail git -c diff.colormovedws=bogus diff 2>err &&
+	test_i18ngrep "possible values" err &&
+	test_i18ngrep "from command-line config" err
+'
+
+test_expect_success 'compare whitespace delta incompatible with other space options' '
+	test_must_fail git diff \
+		--color-moved-ws=allow-indentation-change,ignore-all-space \
+		2>err &&
+	test_i18ngrep allow-indentation-change err
+'
+
+EMPTY=''
+test_expect_success 'compare mixed whitespace delta across moved blocks' '
+
+	git reset --hard &&
+	tr Q_ "\t " <<-EOF >text.txt &&
+	${EMPTY}
+	____too short without
+	${EMPTY}
+	___being grouped across blank line
+	${EMPTY}
+	context
+	lines
+	to
+	anchor
+	____Indented text to
+	_Q____be further indented by four spaces across
+	____Qseveral lines
+	QQ____These two lines have had their
+	____indentation reduced by four spaces
+	Qdifferent indentation change
+	____too short
+	EOF
+
+	git add text.txt &&
+	git commit -m "add text.txt" &&
+
+	tr Q_ "\t " <<-EOF >text.txt &&
+	context
+	lines
+	to
+	anchor
+	QIndented text to
+	QQbe further indented by four spaces across
+	Q____several lines
+	${EMPTY}
+	QQtoo short without
+	${EMPTY}
+	Q_______being grouped across blank line
+	${EMPTY}
+	Q_QThese two lines have had their
+	indentation reduced by four spaces
+	QQdifferent indentation change
+	__Qtoo short
+	EOF
+
+	git -c color.diff.whitespace="normal red" \
+		-c core.whitespace=space-before-tab \
+		diff --color --color-moved --ws-error-highlight=all \
+		--color-moved-ws=allow-indentation-change >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/text.txt b/text.txt<RESET>
+	<BOLD>--- a/text.txt<RESET>
+	<BOLD>+++ b/text.txt<RESET>
+	<CYAN>@@ -1,16 +1,16 @@<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    too short without<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>   being grouped across blank line<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	 <RESET>context<RESET>
+	 <RESET>lines<RESET>
+	 <RESET>to<RESET>
+	 <RESET>anchor<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    Indented text to<RESET>
+	<BOLD;MAGENTA>-<RESET><BRED> <RESET>	<BOLD;MAGENTA>    be further indented by four spaces across<RESET>
+	<BOLD;MAGENTA>-<RESET><BRED>    <RESET>	<BOLD;MAGENTA>several lines<RESET>
+	<BOLD;BLUE>-<RESET>		<BOLD;BLUE>    These two lines have had their<RESET>
+	<BOLD;BLUE>-<RESET><BOLD;BLUE>    indentation reduced by four spaces<RESET>
+	<BOLD;MAGENTA>-<RESET>	<BOLD;MAGENTA>different indentation change<RESET>
+	<RED>-<RESET><RED>    too short<RESET>
+	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>Indented text to<RESET>
+	<BOLD;CYAN>+<RESET>		<BOLD;CYAN>be further indented by four spaces across<RESET>
+	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>    several lines<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;YELLOW>+<RESET>		<BOLD;YELLOW>too short without<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;YELLOW>+<RESET>	<BOLD;YELLOW>       being grouped across blank line<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;CYAN>+<RESET>	<BRED> <RESET>	<BOLD;CYAN>These two lines have had their<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>indentation reduced by four spaces<RESET>
+	<BOLD;YELLOW>+<RESET>		<BOLD;YELLOW>different indentation change<RESET>
+	<GREEN>+<RESET><BRED>  <RESET>	<GREEN>too short<RESET>
+	EOF
+
+	test_cmp expected actual
 '
 
 test_done

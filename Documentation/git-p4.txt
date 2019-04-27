@@ -71,12 +71,12 @@ $ git p4 clone //depot/path/project
 ------------
 This:
 
-1.   Creates an empty Git repository in a subdirectory called 'project'.
+1. Creates an empty Git repository in a subdirectory called 'project'.
 +
-2.   Imports the full contents of the head revision from the given p4
-depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
+2. Imports the full contents of the head revision from the given p4
+   depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
 +
-3.   Creates a local branch, 'master' from this remote and checks it out.
+3. Creates a local branch, 'master' from this remote and checks it out.
 
 To reproduce the entire p4 history in Git, use the '@all' modifier on
 the depot path:
@@ -174,21 +174,21 @@ $ git p4 submit --update-shelve 1234 --update-shelve 2345
 Unshelve
 ~~~~~~~~
 Unshelving will take a shelved P4 changelist, and produce the equivalent git commit
-in the branch refs/remotes/p4/unshelved/<changelist>.
+in the branch refs/remotes/p4-unshelved/<changelist>.
 
 The git commit is created relative to the current origin revision (HEAD by default).
-If the shelved changelist's parent revisions differ, git-p4 will refuse to unshelve;
-you need to be unshelving onto an equivalent tree.
+A parent commit is created based on the origin, and then the unshelve commit is
+created based on that.
 
 The origin revision can be changed with the "--origin" option.
 
-If the target branch in refs/remotes/p4/unshelved already exists, the old one will
+If the target branch in refs/remotes/p4-unshelved already exists, the old one will
 be renamed.
 
 ----
 $ git p4 sync
 $ git p4 unshelve 12345
-$ git show refs/remotes/p4/unshelved/12345
+$ git show p4-unshelved/12345
 <submit more changes via p4 to the same files>
 $ git p4 unshelve 12345
 <refuses to unshelve until git is in sync with p4 again>
@@ -373,6 +373,14 @@ These options can be used to modify 'git p4 submit' behavior.
     Disable the automatic sync of p4/master from Perforce after commits have
     been submitted. Implies --disable-rebase. Can also be set with
     git-p4.disableP4Sync. Sync with origin/master still goes ahead if possible.
+
+Hook for submit
+~~~~~~~~~~~~~~~
+The `p4-pre-submit` hook is executed if it exists and is executable.
+The hook takes no parameters and nothing from standard input. Exiting with
+non-zero status from this script prevents `git-p4 submit` from launching.
+
+One usage scenario is to run unit tests in the hook.
 
 Rebase options
 ~~~~~~~~~~~~~~

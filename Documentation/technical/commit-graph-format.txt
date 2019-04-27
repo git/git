@@ -18,9 +18,9 @@ metadata, including:
   the graph file.
 
 These positional references are stored as unsigned 32-bit integers
-corresponding to the array position withing the list of commit OIDs. We
-use the most-significant bit for special purposes, so we can store at most
-(1 << 31) - 1 (around 2 billion) commits.
+corresponding to the array position within the list of commit OIDs. Due
+to some special constants we use to track parents, we can store at most
+(1 << 30) + (1 << 29) + (1 << 28) - 1 (around 1.8 billion) commits.
 
 == Commit graph files have the following format:
 
@@ -70,13 +70,13 @@ CHUNK DATA:
   OID Lookup (ID: {'O', 'I', 'D', 'L'}) (N * H bytes)
       The OIDs for all commits in the graph, sorted in ascending order.
 
-  Commit Data (ID: {'C', 'G', 'E', 'T' }) (N * (H + 16) bytes)
+  Commit Data (ID: {'C', 'D', 'A', 'T' }) (N * (H + 16) bytes)
     * The first H bytes are for the OID of the root tree.
     * The next 8 bytes are for the positions of the first two parents
-      of the ith commit. Stores value 0xffffffff if no parent in that
+      of the ith commit. Stores value 0x7000000 if no parent in that
       position. If there are more than two parents, the second value
       has its most-significant bit on and the other bits store an array
-      position into the Large Edge List chunk.
+      position into the Extra Edge List chunk.
     * The next 8 bytes store the generation number of the commit and
       the commit time in seconds since EPOCH. The generation number
       uses the higher 30 bits of the first 4 bytes, while the commit
@@ -84,7 +84,7 @@ CHUNK DATA:
       2 bits of the lowest byte, storing the 33rd and 34th bit of the
       commit time.
 
-  Large Edge List (ID: {'E', 'D', 'G', 'E'}) [Optional]
+  Extra Edge List (ID: {'E', 'D', 'G', 'E'}) [Optional]
       This list of 4-byte values store the second through nth parents for
       all octopus merges. The second parent value in the commit data stores
       an array position within this list along with the most-significant bit

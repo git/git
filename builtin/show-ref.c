@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "refs.h"
+#include "object-store.h"
 #include "object.h"
 #include "tag.h"
 #include "string-list.h"
@@ -22,7 +23,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	const char *hex;
 	struct object_id peeled;
 
-	if (!has_sha1_file(oid->hash))
+	if (!has_object_file(oid))
 		die("git show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
 
@@ -150,6 +151,7 @@ static int hash_callback(const struct option *opt, const char *arg, int unset)
 static int exclude_existing_callback(const struct option *opt, const char *arg,
 				     int unset)
 {
+	BUG_ON_OPT_NEG(unset);
 	exclude_arg = 1;
 	*(const char **)opt->value = arg;
 	return 0;

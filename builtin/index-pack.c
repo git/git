@@ -42,9 +42,7 @@ struct base_data {
 };
 
 struct thread_local {
-#ifndef NO_PTHREADS
 	pthread_t thread;
-#endif
 	struct base_data *base_cache;
 	size_t base_cache_used;
 	int pack_fd;
@@ -97,8 +95,6 @@ static git_hash_ctx input_ctx;
 static uint32_t input_crc32;
 static int input_fd, output_fd;
 static const char *curr_pack;
-
-#ifndef NO_PTHREADS
 
 static struct thread_local *thread_data;
 static int nr_dispatched;
@@ -179,26 +175,6 @@ static void cleanup_thread(void)
 	free(thread_data);
 }
 
-#else
-
-#define read_lock()
-#define read_unlock()
-
-#define counter_lock()
-#define counter_unlock()
-
-#define work_lock()
-#define work_unlock()
-
-#define deepest_delta_lock()
-#define deepest_delta_unlock()
-
-#define type_cas_lock()
-#define type_cas_unlock()
-
-#endif
-
-
 static int mark_link(struct object *obj, int type, void *data, struct fsck_options *options)
 {
 	if (!obj)
@@ -243,8 +219,16 @@ static unsigned check_objects(void)
 	unsigned i, max, foreign_nr = 0;
 
 	max = get_max_object_index();
-	for (i = 0; i < max; i++)
+
+	if (verbose)
+		progress = start_delayed_progress(_("Checking objects"), max);
+
+	for (i = 0; i < max; i++) {
 		foreign_nr += check_object(get_indexed_object(i));
+		display_progress(progress, i + 1);
+	}
+
+	stop_progress(&progress);
 	return foreign_nr;
 }
 
@@ -364,22 +348,20 @@ static NORETURN void bad_object(off_t offset, const char *format, ...)
 
 static inline struct thread_local *get_thread_data(void)
 {
-#ifndef NO_PTHREADS
-	if (threads_active)
-		return pthread_getspecific(key);
-	assert(!threads_active &&
-	       "This should only be reached when all threads are gone");
-#endif
+	if (HAVE_THREADS) {
+		if (threads_active)
+			return pthread_getspecific(key);
+		assert(!threads_active &&
+		       "This should only be reached when all threads are gone");
+	}
 	return &nothread_data;
 }
 
-#ifndef NO_PTHREADS
 static void set_thread_data(struct thread_local *data)
 {
 	if (threads_active)
 		pthread_setspecific(key, data);
 }
-#endif
 
 static struct base_data *alloc_base_data(void)
 {
@@ -450,7 +432,8 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	int hdrlen;
 
 	if (!is_delta_type(type)) {
-		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", type_name(type), size) + 1;
+		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX,
+				   type_name(type),(uintmax_t)size) + 1;
 		the_hash_algo->init_fn(&c);
 		the_hash_algo->update_fn(&c, hdr, hdrlen);
 	} else
@@ -719,9 +702,9 @@ static void find_ref_delta_children(const struct object_id *oid,
 		*last_index = -1;
 		return;
 	}
-	while (first > 0 && !oidcmp(&ref_deltas[first - 1].oid, oid))
+	while (first > 0 && oideq(&ref_deltas[first - 1].oid, oid))
 		--first;
-	while (last < end && !oidcmp(&ref_deltas[last + 1].oid, oid))
+	while (last < end && oideq(&ref_deltas[last + 1].oid, oid))
 		++last;
 	*first_index = first;
 	*last_index = last;
@@ -797,7 +780,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 	if (startup_info->have_repository) {
 		read_lock();
 		collision_test_needed =
-			has_sha1_file_with_flags(oid->hash, OBJECT_INFO_QUICK);
+			has_object_file_with_flags(oid, OBJECT_INFO_QUICK);
 		read_unlock();
 	}
 
@@ -832,7 +815,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 	if (strict || do_fsck_object) {
 		read_lock();
 		if (type == OBJ_BLOB) {
-			struct blob *blob = lookup_blob(oid);
+			struct blob *blob = lookup_blob(the_repository, oid);
 			if (blob)
 				blob->object.flags |= FLAG_CHECKED;
 			else
@@ -851,7 +834,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			 * we do not need to free the memory here, as the
 			 * buf is deleted by the caller.
 			 */
-			obj = parse_object_buffer(oid, type, size, buf,
+			obj = parse_object_buffer(the_repository, oid, type,
+						  size, buf,
 						  &eaten);
 			if (!obj)
 				die(_("invalid %s"), type_name(type));
@@ -1091,7 +1075,6 @@ static void resolve_base(struct object_entry *obj)
 	find_unresolved_deltas(base_obj);
 }
 
-#ifndef NO_PTHREADS
 static void *threaded_second_pass(void *data)
 {
 	set_thread_data(data);
@@ -1115,7 +1098,6 @@ static void *threaded_second_pass(void *data)
 	}
 	return NULL;
 }
-#endif
 
 /*
  * First pass:
@@ -1165,7 +1147,7 @@ static void parse_pack_objects(unsigned char *hash)
 	/* Check pack integrity */
 	flush();
 	the_hash_algo->final_fn(hash, &input_ctx);
-	if (hashcmp(fill(the_hash_algo->rawsz), hash))
+	if (!hasheq(fill(the_hash_algo->rawsz), hash))
 		die(_("pack is corrupted (SHA1 mismatch)"));
 	use(the_hash_algo->rawsz);
 
@@ -1212,7 +1194,6 @@ static void resolve_deltas(void)
 		progress = start_progress(_("Resolving deltas"),
 					  nr_ref_deltas + nr_ofs_deltas);
 
-#ifndef NO_PTHREADS
 	nr_dispatched = 0;
 	if (nr_threads > 1 || getenv("GIT_FORCE_THREADS")) {
 		init_thread();
@@ -1228,7 +1209,6 @@ static void resolve_deltas(void)
 		cleanup_thread();
 		return;
 	}
-#endif
 
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
@@ -1279,7 +1259,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		fixup_pack_header_footer(output_fd, pack_hash,
 					 curr_pack, nr_objects,
 					 read_hash, consumed_bytes-the_hash_algo->rawsz);
-		if (hashcmp(read_hash, tail_hash) != 0)
+		if (!hasheq(read_hash, tail_hash))
 			die(_("Unexpected tail checksum for %s "
 			      "(disk corruption?)"), curr_pack);
 	}
@@ -1530,11 +1510,10 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 		if (nr_threads < 0)
 			die(_("invalid number of threads specified (%d)"),
 			    nr_threads);
-#ifdef NO_PTHREADS
-		if (nr_threads != 1)
+		if (!HAVE_THREADS && nr_threads != 1) {
 			warning(_("no threads support, ignoring %s"), k);
-		nr_threads = 1;
-#endif
+			nr_threads = 1;
+		}
 		return 0;
 	}
 	return git_default_config(k, v, cb);
@@ -1627,10 +1606,10 @@ static void show_pack_info(int stat_only)
 			chain_histogram[obj_stat[i].delta_depth - 1]++;
 		if (stat_only)
 			continue;
-		printf("%s %-6s %lu %lu %"PRIuMAX,
+		printf("%s %-6s %"PRIuMAX" %"PRIuMAX" %"PRIuMAX,
 		       oid_to_hex(&obj->idx.oid),
-		       type_name(obj->real_type), obj->size,
-		       (unsigned long)(obj[1].idx.offset - obj->idx.offset),
+		       type_name(obj->real_type), (uintmax_t)obj->size,
+		       (uintmax_t)(obj[1].idx.offset - obj->idx.offset),
 		       (uintmax_t)obj->idx.offset);
 		if (is_delta_type(obj->type)) {
 			struct object_entry *bobj = &objects[obj_stat[i].base_object_no];
@@ -1679,7 +1658,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(index_pack_usage);
 
-	check_replace_refs = 0;
+	read_replace_refs = 0;
 	fsck_options.walk = mark_link;
 
 	reset_pack_idx_option(&opts);
@@ -1722,12 +1701,10 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				nr_threads = strtoul(arg+10, &end, 0);
 				if (!arg[10] || *end || nr_threads < 0)
 					usage(index_pack_usage);
-#ifdef NO_PTHREADS
-				if (nr_threads != 1)
-					warning(_("no threads support, "
-						  "ignoring %s"), arg);
-				nr_threads = 1;
-#endif
+				if (!HAVE_THREADS && nr_threads != 1) {
+					warning(_("no threads support, ignoring %s"), arg);
+					nr_threads = 1;
+				}
 			} else if (starts_with(arg, "--pack_header=")) {
 				struct pack_header *hdr;
 				char *c;
@@ -1790,14 +1767,12 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (strict)
 		opts.flags |= WRITE_IDX_STRICT;
 
-#ifndef NO_PTHREADS
-	if (!nr_threads) {
+	if (HAVE_THREADS && !nr_threads) {
 		nr_threads = online_cpus();
 		/* An experiment showed that more threads does not mean faster */
 		if (nr_threads > 3)
 			nr_threads = 3;
 	}
-#endif
 
 	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();

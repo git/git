@@ -113,6 +113,12 @@ test_expect_success 'test GIT_NO_REPLACE_OBJECTS env variable' '
      GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 | grep "A U Thor"
 '
 
+test_expect_success 'test core.usereplacerefs config option' '
+	test_config core.usereplacerefs false &&
+	git cat-file commit $HASH2 | grep "author A U Thor" &&
+	git show $HASH2 | grep "A U Thor"
+'
+
 cat >tag.sig <<EOF
 object $HASH2
 type commit
@@ -127,8 +133,8 @@ test_expect_success 'tag replaced commit' '
 
 test_expect_success '"git fsck" works' '
      git fsck master >fsck_master.out &&
-     grep "dangling commit $R" fsck_master.out &&
-     grep "dangling tag $(cat .git/refs/tags/mytag)" fsck_master.out &&
+     test_i18ngrep "dangling commit $R" fsck_master.out &&
+     test_i18ngrep "dangling tag $(cat .git/refs/tags/mytag)" fsck_master.out &&
      test -z "$(git fsck)"
 '
 
@@ -455,7 +461,10 @@ test_expect_success '--convert-graft-file' '
 	printf "%s\n%s %s\n\n# comment\n%s\n" \
 		$(git rev-parse HEAD^^ HEAD^ HEAD^^ HEAD^2) \
 		>.git/info/grafts &&
-	git replace --convert-graft-file &&
+	git status 2>stderr &&
+	test_i18ngrep "hint:.*grafts is deprecated" stderr &&
+	git replace --convert-graft-file 2>stderr &&
+	test_i18ngrep ! "hint:.*grafts is deprecated" stderr &&
 	test_path_is_missing .git/info/grafts &&
 
 	: verify that the history is now "grafted" &&

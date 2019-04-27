@@ -8,7 +8,9 @@
 #include "run-command.h"
 #include "refs.h"
 #include "refspec.h"
+#include "object-store.h"
 #include "argv-array.h"
+#include "commit-reach.h"
 
 static const char * const builtin_remote_usage[] = {
 	N_("git remote [-v | --verbose]"),
@@ -167,7 +169,7 @@ static int add(int argc, const char **argv)
 		OPT_STRING_LIST('t', "track", &track, N_("branch"),
 				N_("branch(es) to track")),
 		OPT_STRING('m', "master", &master, N_("branch"), N_("master branch")),
-		{ OPTION_CALLBACK, 0, "mirror", &mirror, N_("push|fetch"),
+		{ OPTION_CALLBACK, 0, "mirror", &mirror, "(push|fetch)",
 			N_("set up remote as a mirror to push to or fetch from"),
 			PARSE_OPT_OPTARG | PARSE_OPT_COMP_ARG, parse_mirror_opt },
 		OPT_END()
@@ -411,7 +413,7 @@ static int get_push_ref_states(const struct ref *remote_refs,
 
 		if (is_null_oid(&ref->new_oid)) {
 			info->status = PUSH_STATUS_DELETE;
-		} else if (!oidcmp(&ref->old_oid, &ref->new_oid))
+		} else if (oideq(&ref->old_oid, &ref->new_oid))
 			info->status = PUSH_STATUS_UPTODATE;
 		else if (is_null_oid(&ref->old_oid))
 			info->status = PUSH_STATUS_CREATE;
@@ -565,7 +567,7 @@ static int read_remote_branches(const char *refname,
 
 	strbuf_addf(&buf, "refs/remotes/%s/", rename->old_name);
 	if (starts_with(refname, buf.buf)) {
-		item = string_list_append(rename->remote_branches, xstrdup(refname));
+		item = string_list_append(rename->remote_branches, refname);
 		symref = resolve_ref_unsafe(refname, RESOLVE_REF_READING,
 					    NULL, &flag);
 		if (symref && (flag & REF_ISSYMREF))
@@ -611,7 +613,7 @@ static int mv(int argc, const char **argv)
 	struct remote *oldremote, *newremote;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT, buf3 = STRBUF_INIT,
 		old_remote_context = STRBUF_INIT;
-	struct string_list remote_branches = STRING_LIST_INIT_NODUP;
+	struct string_list remote_branches = STRING_LIST_INIT_DUP;
 	struct rename_info rename;
 	int i, refspec_updated = 0;
 
@@ -624,7 +626,7 @@ static int mv(int argc, const char **argv)
 
 	oldremote = remote_get(rename.old_name);
 	if (!remote_is_configured(oldremote, 1))
-		die(_("No such remote: %s"), rename.old_name);
+		die(_("No such remote: '%s'"), rename.old_name);
 
 	if (!strcmp(rename.old_name, rename.new_name) && oldremote->origin != REMOTE_CONFIG)
 		return migrate_file(oldremote);
@@ -733,6 +735,7 @@ static int mv(int argc, const char **argv)
 		if (create_symref(buf.buf, buf2.buf, buf3.buf))
 			die(_("creating '%s' failed"), buf.buf);
 	}
+	string_list_clear(&remote_branches, 1);
 	return 0;
 }
 
@@ -759,7 +762,7 @@ static int rm(int argc, const char **argv)
 
 	remote = remote_get(argv[1]);
 	if (!remote_is_configured(remote, 1))
-		die(_("No such remote: %s"), argv[1]);
+		die(_("No such remote: '%s'"), argv[1]);
 
 	known_remotes.to_delete = remote;
 	for_each_remote(add_known_remote, &known_remotes);
@@ -858,7 +861,7 @@ static int get_remote_ref_states(const char *name,
 
 	states->remote = remote_get(name);
 	if (!states->remote)
-		return error(_("No such remote: %s"), name);
+		return error(_("No such remote: '%s'"), name);
 
 	read_branches();
 

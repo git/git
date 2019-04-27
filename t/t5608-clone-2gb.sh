@@ -23,7 +23,7 @@ test_expect_success CLONE_2GB 'setup' '
 		printf "blob\nmark :$i\ndata $blobsize\n" &&
 		#test-tool genrandom $i $blobsize &&
 		printf "%-${blobsize}s" $i &&
-		echo "M 100644 :$i $i" >> commit
+		echo "M 100644 :$i $i" >> commit &&
 		i=$(($i+1)) ||
 		echo $? > exit-status
 	 done &&

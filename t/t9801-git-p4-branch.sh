@@ -151,7 +151,7 @@ test_expect_success 'import depot, branch detection, branchList branch definitio
 '
 
 test_expect_success 'restart p4d' '
-	kill_p4d &&
+	stop_and_cleanup_p4d &&
 	start_p4d
 '
 
@@ -505,7 +505,7 @@ test_expect_success 'use-client-spec detect-branches skips files in branches' '
 '
 
 test_expect_success 'restart p4d' '
-	kill_p4d &&
+	stop_and_cleanup_p4d &&
 	start_p4d
 '
 
@@ -608,10 +608,6 @@ test_expect_success 'Update a file in git side and submit to P4 using client vie
 		cd branch1 &&
 		grep "client spec" file1
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

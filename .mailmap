@@ -21,25 +21,33 @@ Anders Kaseorg <andersk@MIT.EDU> <andersk@mit.edu>
 Aneesh Kumar K.V <aneesh.kumar@gmail.com>
 Amos Waterland <apw@debian.org> <apw@rossby.metr.ou.edu>
 Amos Waterland <apw@debian.org> <apw@us.ibm.com>
+Ben Peart <benpeart@microsoft.com> <Ben.Peart@microsoft.com>
+Ben Peart <benpeart@microsoft.com> <peartben@gmail.com>
 Ben Walton <bdwalton@gmail.com> <bwalton@artsci.utoronto.ca>
 Benoit Sigoure <tsunanet@gmail.com> <tsuna@lrde.epita.fr>
 Bernt Hansen <bernt@norang.ca> <bernt@alumni.uwaterloo.ca>
 Brandon Casey <drafnel@gmail.com> <casey@nrlssc.navy.mil>
-brian m. carlson <sandals@crustytoothpaste.net> Brian M. Carlson <sandals@crustytoothpaste.ath.cx>
+Brandon Williams <bwilliams.eng@gmail.com> <bmwill@google.com>
+brian m. carlson <sandals@crustytoothpaste.net>
 brian m. carlson <sandals@crustytoothpaste.net> <sandals@crustytoothpaste.ath.cx>
 Bryan Larsen <bryan@larsen.st> <bryan.larsen@gmail.com>
 Bryan Larsen <bryan@larsen.st> <bryanlarsen@yahoo.com>
 Cheng Renquan <crquan@gmail.com>
 Chris Shoemaker <c.shoemaker@cox.net>
 Chris Wright <chrisw@sous-sol.org> <chrisw@osdl.org>
+Christian Ludwig <chrissicool@gmail.com> <chrissicool@googlemail.com>
 Cord Seele <cowose@gmail.com> <cowose@googlemail.com>
 Christian Couder <chriscool@tuxfamily.org> <christian.couder@gmail.com>
 Christian Stimming <stimming@tuhh.de> <chs@ckiste.goetheallee>
+Christopher Díaz Riveros <chrisadr@gentoo.org> Christopher Diaz Riveros
+Clemens Buchacher <drizzd@gmx.net> <drizzd@aon.at>
+Clemens Buchacher <drizzd@gmx.net> <clemens.buchacher@intel.com>
 Csaba Henk <csaba@gluster.com> <csaba@lowlife.hu>
 Dan Johnson <computerdruid@gmail.com>
 Dana L. How <danahow@gmail.com> <how@deathvalley.cswitch.com>
 Dana L. How <danahow@gmail.com> Dana How
 Daniel Barkalow <barkalow@iabervon.org>
+Daniel Knittl-Frank <knittl89@googlemail.com> knittl
 Daniel Trstenjak <daniel.trstenjak@gmail.com> <daniel.trstenjak@online.de>
 Daniel Trstenjak <daniel.trstenjak@gmail.com> <trsten@science-computing.de>
 David Brown <git@davidb.org> <davidb@quicinc.com>
@@ -49,6 +57,7 @@ David Reiss <dreiss@facebook.com> <dreiss@dreiss-vmware.(none)>
 David S. Miller <davem@davemloft.net>
 David Turner <novalis@novalis.org> <dturner@twopensource.com>
 David Turner <novalis@novalis.org> <dturner@twosigma.com>
+Derrick Stolee <dstolee@microsoft.com> <stolee@gmail.com>
 Deskin Miller <deskinm@umich.edu>
 Dirk Süsserott <newsletter@dirk.my1.cc>
 Eric Blake <eblake@redhat.com> <ebb9@byu.net>
@@ -57,6 +66,7 @@ Eric S. Raymond <esr@thyrsus.com>
 Eric Wong <e@80x24.org> <normalperson@yhbt.net>
 Erik Faye-Lund <kusmabite@gmail.com> <kusmabite@googlemail.com>
 Eyvind Bernhardsen <eyvind.bernhardsen@gmail.com> <eyvind-git@orakel.ntnu.no>
+Fangyi Zhou <fangyi.zhou@yuriko.moe> Zhou Fangyi
 Florian Achleitner <florian.achleitner.2.6.31@gmail.com> <florian.achleitner2.6.31@gmail.com>
 Franck Bui-Huu <vagabon.xyz@gmail.com> <fbuihuu@gmail.com>
 Frank Lichtenheld <frank@lichtenheld.de> <djpig@debian.org>
@@ -86,6 +96,8 @@ Jason McMullan <mcmullan@netapp.com>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@EECS.Berkeley.EDU>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@cs.berkeley.edu>
 Jay Soffian <jaysoffian@gmail.com> <jaysoffian+git@gmail.com>
+Jean-Noël Avila <jn.avila@free.fr> Jean-Noel Avila
+Jean-Noël Avila <jn.avila@free.fr> Jean-Noël AVILA
 Jeff King <peff@peff.net> <peff@github.com>
 Jeff Muizelaar <jmuizelaar@mozilla.com> <jeff@infidigm.net>
 Jens Axboe <axboe@kernel.dk> <axboe@suse.de>
@@ -93,6 +105,7 @@ Jens Axboe <axboe@kernel.dk> <jens.axboe@oracle.com>
 Jens Lindström <jl@opera.com> Jens Lindstrom <jl@opera.com>
 Jim Meyering <jim@meyering.net> <meyering@redhat.com>
 Joachim Berdal Haga <cjhaga@fys.uio.no>
+Joachim Jablon <joachim.jablon@people-doc.com> <ewjoachim@gmail.com>
 Johannes Schindelin <Johannes.Schindelin@gmx.de> <johannes.schindelin@gmx.de>
 Johannes Sixt <j6t@kdbg.org> <J.Sixt@eudaptics.com>
 Johannes Sixt <j6t@kdbg.org> <j.sixt@viscovery.net>
@@ -145,12 +158,15 @@ Mark Levedahl <mdl123@verizon.net> <mlevedahl@gmail.com>
 Mark Rada <marada@uwaterloo.ca>
 Martin Langhoff <martin@laptop.org> <martin@catalyst.net.nz>
 Martin von Zweigbergk <martinvonz@gmail.com> <martin.von.zweigbergk@gmail.com>
+Masaya Suzuki <masayasuzuki@google.com> <draftcode@gmail.com>
 Matt Draisey <matt@draisey.ca> <mattdraisey@sympatico.ca>
 Matt Kraai <kraai@ftbfs.org> <matt.kraai@amo.abbott.com>
 Matt McCutchen <matt@mattmccutchen.net> <hashproduct@gmail.com>
 Matthias Kestenholz <matthias@spinlock.ch> <mk@spinlock.ch>
+Matthias Rüster <matthias.ruester@gmail.com> Matthias Ruester
 Matthias Urlichs <matthias@urlichs.de> <smurf@kiste.(none)>
 Matthias Urlichs <matthias@urlichs.de> <smurf@smurf.noris.de>
+Matthieu Moy <git@matthieu-moy.fr> <Matthieu.Moy@imag.fr>
 Michael Coleman <tutufan@gmail.com>
 Michael J Gruber <git@grubix.eu> <michaeljgruber+gmane@fastmail.fm>
 Michael J Gruber <git@grubix.eu> <git@drmicha.warpmail.net>
@@ -174,7 +190,11 @@ Nick Stokoe <nick@noodlefactory.co.uk> Nick Woolley <nick@noodlefactory.co.uk>
 Nick Stokoe <nick@noodlefactory.co.uk> Nick Woolley <nickwoolley@yahoo.co.uk>
 Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nicolas.morey@free.fr>
 Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nmorey@kalray.eu>
+Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nicolas@morey-chaisemartin.com>
+Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <NMoreyChaisemartin@suse.com>
+Nicolas Morey-Chaisemartin <devel-git@morey-chaisemartin.com> <nmoreychaisemartin@suse.com>
 Nicolas Sebrecht <nicolas.s.dev@gmx.fr> <ni.s@laposte.net>
+Orgad Shaneh <orgads@gmail.com> <orgad.shaneh@audiocodes.com>
 Paolo Bonzini <bonzini@gnu.org> <paolo.bonzini@lu.unisi.ch>
 Pascal Obry <pascal@obry.net> <pascal.obry@gmail.com>
 Pascal Obry <pascal@obry.net> <pascal.obry@wanadoo.fr>
@@ -194,6 +214,7 @@ Philipp A. Hartmann <pah@qo.cx> <ph@sorgh.de>
 Philippe Bruhat <book@cpan.org>
 Ralf Thielow <ralf.thielow@gmail.com> <ralf.thielow@googlemail.com>
 Ramsay Jones <ramsay@ramsayjones.plus.com> <ramsay@ramsay1.demon.co.uk>
+Randall S. Becker <randall.becker@nexbridge.ca> <rsbecker@nexbridge.com>
 René Scharfe <l.s.r@web.de> <rene.scharfe@lsrfire.ath.cx>
 René Scharfe <l.s.r@web.de> Rene Scharfe
 Richard Hansen <rhansen@rhansen.org> <hansenr@google.com>
@@ -213,6 +234,8 @@ Sean Estabrooks <seanlkml@sympatico.ca>
 Sebastian Schuberth <sschuberth@gmail.com> <sschuberth@visageimaging.com>
 Seth Falcon <seth@userprimary.net> <sfalcon@fhcrc.org>
 Shawn O. Pearce <spearce@spearce.org>
+Wei Shuyu <wsy@dogben.com> Shuyu Wei
+Sidhant Sharma <tigerkid001@gmail.com> Sidhant Sharma [:tk]
 Simon Hausmann <hausmann@kde.org> <simon@lst.de>
 Simon Hausmann <hausmann@kde.org> <shausman@trolltech.com>
 Stefan Beller <stefanbeller@gmail.com> <stefanbeller@googlemail.com>
@@ -230,6 +253,7 @@ Steven Walter <stevenrwalter@gmail.com> <swalter@lpdev.prtdev.lexmark.com>
 Sven Verdoolaege <skimo@kotnet.org> <Sven.Verdoolaege@cs.kuleuven.ac.be>
 Sven Verdoolaege <skimo@kotnet.org> <skimo@liacs.nl>
 SZEDER Gábor <szeder.dev@gmail.com> <szeder@ira.uka.de>
+Tao Qingyun <taoqy@ls-a.me> <845767657@qq.com>
 Tay Ray Chuan <rctay89@gmail.com>
 Ted Percival <ted@midg3t.net> <ted.percival@quest.com>
 Theodore Ts'o <tytso@mit.edu>
@@ -253,7 +277,8 @@ Uwe Kleine-König <u.kleine-koenig@pengutronix.de> <ukleinek@informatik.uni-frei
 Uwe Kleine-König <u.kleine-koenig@pengutronix.de> <uzeisberger@io.fsforth.de>
 Uwe Kleine-König <u.kleine-koenig@pengutronix.de> <zeisberg@informatik.uni-freiburg.de>
 Ville Skyttä <ville.skytta@iki.fi> <scop@xemacs.org>
-Vitaly "_Vi" Shukela <public_vi@tut.by>
+Vitaly "_Vi" Shukela <vi0oss@gmail.com> <public_vi@tut.by>
+Vitaly "_Vi" Shukela <vi0oss@gmail.com> Vitaly _Vi Shukela
 W. Trevor King <wking@tremily.us> <wking@drexel.edu>
 William Pursell <bill.pursell@gmail.com>
 YONETANI Tomokazu <y0n3t4n1@gmail.com> <qhwt+git@les.ath.cx>

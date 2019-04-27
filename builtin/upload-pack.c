@@ -31,7 +31,7 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 	};
 
 	packet_trace_identity("upload-pack");
-	check_replace_refs = 0;
+	read_replace_refs = 0;
 
 	argc = parse_options(argc, argv, NULL, options, upload_pack_usage, 0);
 

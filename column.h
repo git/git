@@ -36,6 +36,7 @@ static inline int column_active(unsigned int colopts)
 	return (colopts & COL_ENABLE_MASK) == COL_ENABLED;
 }
 
+struct string_list;
 extern void print_columns(const struct string_list *list, unsigned int colopts,
 			  const struct column_options *opts);
 

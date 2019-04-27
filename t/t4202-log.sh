@@ -340,10 +340,9 @@ test_expect_success PCRE 'log -F -E --perl-regexp --grep=<pcre> uses PCRE' '
 '
 
 test_expect_success 'log with grep.patternType configuration' '
-	>expect &&
 	git -c grep.patterntype=fixed \
 	log -1 --pretty=tformat:%s --grep=s.c.nd >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'log with grep.patternType configuration and command line' '
@@ -1556,10 +1555,26 @@ test_expect_success GPG 'setup signed branch' '
 	git commit -S -m signed_commit
 '
 
+test_expect_success GPGSM 'setup signed branch x509' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b signed-x509 master &&
+	echo foo >foo &&
+	git add foo &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git commit -S -m signed_commit
+'
+
 test_expect_success GPG 'log --graph --show-signature' '
 	git log --graph --show-signature -n1 signed >actual &&
 	grep "^| gpg: Signature made" actual &&
 	grep "^| gpg: Good signature" actual
+'
+
+test_expect_success GPGSM 'log --graph --show-signature x509' '
+	git log --graph --show-signature -n1 signed-x509 >actual &&
+	grep "^| gpgsm: Signature made" actual &&
+	grep "^| gpgsm: Good signature" actual
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag' '
@@ -1579,6 +1594,27 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 	grep "^|\\\  merged tag" actual &&
 	grep "^| | gpg: Signature made" actual &&
 	grep "^| | gpg: Good signature" actual
+'
+
+test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git checkout -b plain-x509 master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-x509 master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_x509 &&
+	git checkout plain-x509 &&
+	git merge --no-ff -m msg signed_tag_x509 &&
+	git log --graph --show-signature -n1 plain-x509 >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpgsm: Signature made" actual &&
+	grep "^| | gpgsm: Good signature" actual
 '
 
 test_expect_success GPG '--no-show-signature overrides --show-signature' '
@@ -1625,9 +1661,8 @@ test_expect_success 'log diagnoses bogus HEAD' '
 '
 
 test_expect_success 'log does not default to HEAD when rev input is given' '
-	>expect &&
 	git log --branches=does-not-exist >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'set up --source tests' '
@@ -1666,6 +1701,10 @@ test_expect_success 'log --source paints symmetric ranges' '
 	EOF
 	git log --oneline --source source-a...source-b >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--exclude-promisor-objects does not BUG-crash' '
+	test_must_fail git log --exclude-promisor-objects source-a
 '
 
 test_done

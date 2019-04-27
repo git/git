@@ -6,14 +6,41 @@ test_description='working-tree-encoding conversion via gitattributes'
 
 GIT_TRACE_WORKING_TREE_ENCODING=1 && export GIT_TRACE_WORKING_TREE_ENCODING
 
+test_lazy_prereq NO_UTF16_BOM '
+	test $(printf abc | iconv -f UTF-8 -t UTF-16 | wc -c) = 6
+'
+
+test_lazy_prereq NO_UTF32_BOM '
+	test $(printf abc | iconv -f UTF-8 -t UTF-32 | wc -c) = 12
+'
+
+write_utf16 () {
+	if test_have_prereq NO_UTF16_BOM
+	then
+		printf '\xfe\xff'
+	fi &&
+	iconv -f UTF-8 -t UTF-16
+}
+
+write_utf32 () {
+	if test_have_prereq NO_UTF32_BOM
+	then
+		printf '\x00\x00\xfe\xff'
+	fi &&
+	iconv -f UTF-8 -t UTF-32
+}
+
 test_expect_success 'setup test files' '
 	git config core.eol lf &&
 
 	text="hallo there!\ncan you read me?" &&
 	echo "*.utf16 text working-tree-encoding=utf-16" >.gitattributes &&
+	echo "*.utf16lebom text working-tree-encoding=UTF-16LE-BOM" >>.gitattributes &&
 	printf "$text" >test.utf8.raw &&
-	printf "$text" | iconv -f UTF-8 -t UTF-16 >test.utf16.raw &&
-	printf "$text" | iconv -f UTF-8 -t UTF-32 >test.utf32.raw &&
+	printf "$text" | write_utf16 >test.utf16.raw &&
+	printf "$text" | write_utf32 >test.utf32.raw &&
+	printf "\377\376"                         >test.utf16lebom.raw &&
+	printf "$text" | iconv -f UTF-8 -t UTF-32LE >>test.utf16lebom.raw &&
 
 	# Line ending tests
 	printf "one\ntwo\nthree\n" >lf.utf8.raw &&
@@ -22,17 +49,18 @@ test_expect_success 'setup test files' '
 	# BOM tests
 	printf "\0a\0b\0c"                         >nobom.utf16be.raw &&
 	printf "a\0b\0c\0"                         >nobom.utf16le.raw &&
-	printf "\376\777\0a\0b\0c"                 >bebom.utf16be.raw &&
-	printf "\777\376a\0b\0c\0"                 >lebom.utf16le.raw &&
+	printf "\376\377\0a\0b\0c"                 >bebom.utf16be.raw &&
+	printf "\377\376a\0b\0c\0"                 >lebom.utf16le.raw &&
 	printf "\0\0\0a\0\0\0b\0\0\0c"             >nobom.utf32be.raw &&
 	printf "a\0\0\0b\0\0\0c\0\0\0"             >nobom.utf32le.raw &&
-	printf "\0\0\376\777\0\0\0a\0\0\0b\0\0\0c" >bebom.utf32be.raw &&
-	printf "\777\376\0\0a\0\0\0b\0\0\0c\0\0\0" >lebom.utf32le.raw &&
+	printf "\0\0\376\377\0\0\0a\0\0\0b\0\0\0c" >bebom.utf32be.raw &&
+	printf "\377\376\0\0a\0\0\0b\0\0\0c\0\0\0" >lebom.utf32le.raw &&
 
 	# Add only UTF-16 file, we will add the UTF-32 file later
 	cp test.utf16.raw test.utf16 &&
 	cp test.utf32.raw test.utf32 &&
-	git add .gitattributes test.utf16 &&
+	cp test.utf16lebom.raw test.utf16lebom &&
+	git add .gitattributes test.utf16 test.utf16lebom &&
 	git commit -m initial
 '
 
@@ -49,6 +77,12 @@ test_expect_success 're-encode to UTF-16 on checkout' '
 	rm test.utf16 &&
 	git checkout test.utf16 &&
 	test_cmp_bin test.utf16.raw test.utf16
+'
+
+test_expect_success 're-encode to UTF-16-LE-BOM on checkout' '
+	rm test.utf16lebom &&
+	git checkout test.utf16lebom &&
+	test_cmp_bin test.utf16lebom.raw test.utf16lebom
 '
 
 test_expect_success 'check $GIT_DIR/info/attributes support' '
@@ -114,8 +148,8 @@ do
 		test_when_finished "rm -f crlf.utf${i}.raw lf.utf${i}.raw" &&
 		test_when_finished "git reset --hard HEAD^" &&
 
-		cat lf.utf8.raw | iconv -f UTF-8 -t UTF-${i} >lf.utf${i}.raw &&
-		cat crlf.utf8.raw | iconv -f UTF-8 -t UTF-${i} >crlf.utf${i}.raw &&
+		cat lf.utf8.raw | write_utf${i} >lf.utf${i}.raw &&
+		cat crlf.utf8.raw | write_utf${i} >crlf.utf${i}.raw &&
 		cp crlf.utf${i}.raw eol.utf${i} &&
 
 		cat >expectIndexLF <<-EOF &&
@@ -203,13 +237,17 @@ test_expect_success 'error if encoding garbage is already in Git' '
 	test_i18ngrep "error: BOM is required" err.out
 '
 
-test_expect_success 'check roundtrip encoding' '
+test_lazy_prereq ICONV_SHIFT_JIS '
+	iconv -f UTF-8 -t SHIFT-JIS </dev/null
+'
+
+test_expect_success ICONV_SHIFT_JIS 'check roundtrip encoding' '
 	test_when_finished "rm -f roundtrip.shift roundtrip.utf16" &&
 	test_when_finished "git reset --hard HEAD" &&
 
 	text="hallo there!\nroundtrip test here!" &&
 	printf "$text" | iconv -f UTF-8 -t SHIFT-JIS >roundtrip.shift &&
-	printf "$text" | iconv -f UTF-8 -t UTF-16 >roundtrip.utf16 &&
+	printf "$text" | write_utf16 >roundtrip.utf16 &&
 	echo "*.shift text working-tree-encoding=SHIFT-JIS" >>.gitattributes &&
 
 	# SHIFT-JIS encoded files are round-trip checked by default...

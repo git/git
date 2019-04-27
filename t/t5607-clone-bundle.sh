@@ -71,4 +71,10 @@ test_expect_success 'prerequisites with an empty commit message' '
 	git bundle verify bundle
 '
 
+test_expect_success 'failed bundle creation does not leave cruft' '
+	# This fails because the bundle would be empty.
+	test_must_fail git bundle create fail.bundle master..master &&
+	test_path_is_missing fail.bundle.lock
+'
+
 test_done

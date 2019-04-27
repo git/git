@@ -325,11 +325,10 @@ test_expect_success \
 	test_cmp expect actual
 '
 
->expect
 test_expect_success \
 	'listing tags using v.* should print nothing because none have v.' '
 	git tag -l "v.*" > actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 cat >expect <<EOF
@@ -693,9 +692,8 @@ test_expect_success \
 '
 
 test_expect_success 'The -n 100 invocation means -n --list 100, not -n100' '
-	>expect &&
 	git tag -n 100 >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	git tag -m "A msg" 100 &&
 	echo "100             A msg" >expect &&
@@ -974,9 +972,8 @@ test_expect_success GPG 'verifying a proper tag with --format pass and format ac
 '
 
 test_expect_success GPG 'verifying a forged tag with --format should fail silently' '
-	>expect &&
 	test_must_fail git tag -v --format="tagname : %(tag)" "forged-tag" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 # blank and empty messages for signed tags:
@@ -1354,6 +1351,19 @@ test_expect_success GPG \
 	'test_config gpg.program echo &&
 	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
+# try to sign with bad user.signingkey
+test_expect_success GPGSM \
+	'git tag -s fails if gpgsm is misconfigured (bad key)' \
+	'test_config user.signingkey BobTheMouse &&
+	 test_config gpg.format x509 &&
+	 test_must_fail git tag -s -m tail tag-gpg-failure'
+
+# try to produce invalid signature
+test_expect_success GPGSM \
+	'git tag -s fails if gpgsm is misconfigured (bad signature format)' \
+	'test_config gpg.x509.program echo &&
+	 test_config gpg.format x509 &&
+	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
 # try to verify without gpg:
 
@@ -1382,9 +1392,8 @@ test_expect_success 'message in editor has initial comment: first line' '
 test_expect_success \
 	'message in editor has initial comment: remainder' '
 	# remove commented lines from the remainder -- should be empty
-	>rest.expect &&
 	sed -e 1d -e "/^#/d" <actual >rest.actual &&
-	test_cmp rest.expect rest.actual
+	test_must_be_empty rest.actual
 '
 
 get_tag_header reuse $commit commit $time >expect
@@ -1466,19 +1475,18 @@ test_expect_success 'checking that first commit is in all tags (relative)' "
 
 # All the --contains tests above, but with --no-contains
 test_expect_success 'checking that first commit is not listed in any tag with --no-contains  (hash)' "
-	>expected &&
 	git tag -l --no-contains $hash1 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'checking that first commit is in all tags (tag)' "
 	git tag -l --no-contains v1.0 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'checking that first commit is in all tags (relative)' "
 	git tag -l --no-contains HEAD~2 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 cat > expected <<EOF
@@ -1502,12 +1510,9 @@ test_expect_success 'inverse of the last test, with --no-contains' "
 	test_cmp expected actual
 "
 
-cat > expected <<EOF
-EOF
-
 test_expect_success 'checking that third commit has no tags' "
 	git tag -l --contains $hash3 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 cat > expected <<EOF
@@ -1606,9 +1611,8 @@ test_expect_success 'checking that --contains can be used in non-list mode' '
 '
 
 test_expect_success 'checking that initial commit is in all tags with --no-contains' "
-	>expected &&
 	git tag -l --no-contains $hash1 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 # mixing modes and options:
@@ -1905,7 +1909,6 @@ test_expect_success 'version sort with very long prerelease suffix' '
 '
 
 test_expect_success ULIMIT_STACK_SIZE '--contains and --no-contains work in a deep repo' '
-	>expect &&
 	i=1 &&
 	while test $i -lt 8000
 	do
@@ -1920,7 +1923,7 @@ EOF"
 	git checkout master &&
 	git tag far-far-away HEAD^ &&
 	run_with_limited_stack git tag --contains HEAD >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	run_with_limited_stack git tag --no-contains HEAD >actual &&
 	test_line_count "-gt" 10 actual
 '

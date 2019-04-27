@@ -1,0 +1,15 @@
+(
+	for i in a b c
+	do
+		if false
+		then
+# LINT: missing "&&" on 'echo'
+			echo "err"
+			exit 1
+# LINT: missing "&&" on 'fi'
+		fi
+		foo
+# LINT: missing "&&" on 'done'
+	done
+	bar
+)

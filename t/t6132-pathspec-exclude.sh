@@ -194,4 +194,21 @@ test_expect_success 'multiple exclusions' '
 	test_cmp expect actual
 '
 
+test_expect_success 't_e_i() exclude case #8' '
+	git init case8 &&
+	(
+		cd case8 &&
+		echo file >file1 &&
+		echo file >file2 &&
+		git add file1 file2 &&
+		git commit -m twofiles &&
+		git grep -l file HEAD :^file2 >actual &&
+		echo HEAD:file1 >expected &&
+		test_cmp expected actual &&
+		git grep -l file HEAD :^file1 >actual &&
+		echo HEAD:file2 >expected &&
+		test_cmp expected actual
+	)
+'
+
 test_done

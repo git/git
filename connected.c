@@ -58,8 +58,10 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 	argv_array_push(&rev_list.args, "--stdin");
 	if (repository_format_partial_clone)
 		argv_array_push(&rev_list.args, "--exclude-promisor-objects");
-	argv_array_push(&rev_list.args, "--not");
-	argv_array_push(&rev_list.args, "--all");
+	if (!opt->is_deepening_fetch) {
+		argv_array_push(&rev_list.args, "--not");
+		argv_array_push(&rev_list.args, "--all");
+	}
 	argv_array_push(&rev_list.args, "--quiet");
 	if (opt->progress)
 		argv_array_pushf(&rev_list.args, "--progress=%s",

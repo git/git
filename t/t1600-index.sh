@@ -41,8 +41,7 @@ test_expect_success 'no warning with bogus GIT_INDEX_VERSION and existing index'
 		GIT_INDEX_VERSION=1 &&
 		export GIT_INDEX_VERSION &&
 		git add a 2>actual.err &&
-		>expect.err &&
-		test_i18ncmp expect.err actual.err
+		test_must_be_empty actual.err
 	)
 '
 
