@@ -45,7 +45,11 @@ argument is missing it defaults to `HEAD` (i.e. the tip of the current
 branch).
 
 The command's second form creates a new branch head named <branchname>
-which points to the current `HEAD`, or <start-point> if given.
+which points to the current `HEAD`, or <start-point> if given. As a
+special case, for <start-point>, you may use `"A...B"` as a shortcut for
+the merge base of `A` and `B` if there is exactly one merge base. You
+can leave out at most one of `A` and `B`, in which case it defaults to
+`HEAD`.
 
 Note that this will create the new branch, but it will not switch the
 working tree to it; use "git checkout <newbranch>" to switch to the

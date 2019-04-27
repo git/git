@@ -66,6 +66,13 @@ test_expect_success 'checkout -b to a new branch, set to HEAD' '
 	do_checkout branch2
 '
 
+test_expect_success 'checkout -b to a merge base' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D branch2" &&
+	git checkout -b branch2 branch1...
+'
+
 test_expect_success 'checkout -b to a new branch, set to an explicit ref' '
 	test_when_finished "
 		git checkout branch1 &&
@@ -124,6 +131,12 @@ test_expect_success 'checkout -B to an existing branch resets branch to HEAD' '
 	git checkout branch1 &&
 
 	do_checkout branch2 "" -B
+'
+
+test_expect_success 'checkout -B to a merge base' '
+	git checkout branch1 &&
+
+	git checkout -B branch2 branch1...
 '
 
 test_expect_success 'checkout -B to an existing branch from detached HEAD resets branch to HEAD' '
