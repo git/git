@@ -58,6 +58,7 @@ struct config_options {
 	unsigned int ignore_repo : 1;
 	unsigned int ignore_worktree : 1;
 	unsigned int ignore_cmdline : 1;
+	unsigned int system_gently : 1;
 	const char *commondir;
 	const char *git_dir;
 	config_parser_event_fn_t event_fn;

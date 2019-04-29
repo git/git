@@ -1676,7 +1676,9 @@ static int do_git_config_sequence(const struct config_options *opts,
 		repo_config = NULL;
 
 	current_parsing_scope = CONFIG_SCOPE_SYSTEM;
-	if (git_config_system() && !access_or_die(git_etc_gitconfig(), R_OK, 0))
+	if (git_config_system() && !access_or_die(git_etc_gitconfig(), R_OK,
+						  opts->system_gently ?
+						  ACCESS_EACCES_OK : 0))
 		ret += git_config_from_file(fn, git_etc_gitconfig(),
 					    data);
 
@@ -1807,6 +1809,7 @@ void read_very_early_config(config_fn_t cb, void *data)
 	opts.ignore_repo = 1;
 	opts.ignore_worktree = 1;
 	opts.ignore_cmdline = 1;
+	opts.system_gently = 1;
 
 	config_with_options(cb, data, NULL, &opts);
 }
