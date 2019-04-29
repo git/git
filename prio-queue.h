@@ -37,24 +37,24 @@ struct prio_queue {
 /*
  * Add the "thing" to the queue.
  */
-extern void prio_queue_put(struct prio_queue *, void *thing);
+void prio_queue_put(struct prio_queue *, void *thing);
 
 /*
  * Extract the "thing" that compares the smallest out of the queue,
  * or NULL.  If compare function is NULL, the queue acts as a LIFO
  * stack.
  */
-extern void *prio_queue_get(struct prio_queue *);
+void *prio_queue_get(struct prio_queue *);
 
 /*
  * Gain access to the "thing" that would be returned by
  * prio_queue_get, but do not remove it from the queue.
  */
-extern void *prio_queue_peek(struct prio_queue *);
+void *prio_queue_peek(struct prio_queue *);
 
-extern void clear_prio_queue(struct prio_queue *);
+void clear_prio_queue(struct prio_queue *);
 
 /* Reverse the LIFO elements */
-extern void prio_queue_reverse(struct prio_queue *);
+void prio_queue_reverse(struct prio_queue *);
 
 #endif /* PRIO_QUEUE_H */

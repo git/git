@@ -19,31 +19,31 @@ static inline void mput_char(char c, unsigned int num)
 		putchar(c);
 }
 
-extern void list_common_cmds_help(void);
-extern void list_all_cmds_help(void);
-extern void list_common_guides_help(void);
-extern void list_config_help(int for_human);
+void list_common_cmds_help(void);
+void list_all_cmds_help(void);
+void list_common_guides_help(void);
+void list_config_help(int for_human);
 
-extern void list_all_main_cmds(struct string_list *list);
-extern void list_all_other_cmds(struct string_list *list);
-extern void list_cmds_by_category(struct string_list *list,
+void list_all_main_cmds(struct string_list *list);
+void list_all_other_cmds(struct string_list *list);
+void list_cmds_by_category(struct string_list *list,
 				  const char *category);
-extern void list_cmds_by_config(struct string_list *list);
-extern const char *help_unknown_cmd(const char *cmd);
-extern void load_command_list(const char *prefix,
+void list_cmds_by_config(struct string_list *list);
+const char *help_unknown_cmd(const char *cmd);
+void load_command_list(const char *prefix,
 			      struct cmdnames *main_cmds,
 			      struct cmdnames *other_cmds);
-extern void add_cmdname(struct cmdnames *cmds, const char *name, int len);
+void add_cmdname(struct cmdnames *cmds, const char *name, int len);
 /* Here we require that excludes is a sorted list. */
-extern void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes);
-extern int is_in_cmdlist(struct cmdnames *cmds, const char *name);
-extern void list_commands(unsigned int colopts, struct cmdnames *main_cmds, struct cmdnames *other_cmds);
+void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes);
+int is_in_cmdlist(struct cmdnames *cmds, const char *name);
+void list_commands(unsigned int colopts, struct cmdnames *main_cmds, struct cmdnames *other_cmds);
 
 /*
  * call this to die(), when it is suspected that the user mistyped a
  * ref to the command, to give suggested "correct" refs.
  */
-extern void help_unknown_ref(const char *ref, const char *cmd, const char *error);
+void help_unknown_ref(const char *ref, const char *cmd, const char *error);
 
 static inline void list_config_item(struct string_list *list,
 				    const char *prefix,
