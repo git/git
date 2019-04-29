@@ -157,6 +157,9 @@ static void unique_in_pack(struct packed_git *p,
 	uint32_t num, i, first = 0;
 	const struct object_id *current = NULL;
 
+	if (p->multi_pack_index)
+		return;
+
 	if (open_pack_index(p) || !p->num_objects)
 		return;
 
@@ -588,6 +591,9 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 	uint32_t num, first = 0;
 	struct object_id oid;
 	const struct object_id *mad_oid;
+
+	if (p->multi_pack_index)
+		return;
 
 	if (open_pack_index(p) || !p->num_objects)
 		return;
