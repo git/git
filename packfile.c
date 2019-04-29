@@ -1035,7 +1035,7 @@ struct packed_git *get_all_packs(struct repository *r)
 		for (m = r->objects->multi_pack_index; m; m = m->next) {
 			uint32_t i;
 			for (i = 0; i < m->num_packs; i++) {
-				if (!prepare_midx_pack(m, i)) {
+				if (!prepare_midx_pack(r, m, i)) {
 					m->packs[i]->next = p;
 					p = m->packs[i];
 				}
@@ -1998,7 +1998,7 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 		return 0;
 
 	for (m = r->objects->multi_pack_index; m; m = m->next) {
-		if (fill_midx_entry(oid, e, m))
+		if (fill_midx_entry(r, oid, e, m))
 			return 1;
 	}
 

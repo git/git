@@ -201,7 +201,7 @@ void close_midx(struct multi_pack_index *m)
 	FREE_AND_NULL(m->pack_names);
 }
 
-int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id)
+int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id)
 {
 	struct strbuf pack_name = STRBUF_INIT;
 
@@ -261,7 +261,10 @@ static uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 	return get_be32(m->chunk_object_offsets + pos * MIDX_CHUNK_OFFSET_WIDTH);
 }
 
-static int nth_midxed_pack_entry(struct multi_pack_index *m, struct pack_entry *e, uint32_t pos)
+static int nth_midxed_pack_entry(struct repository *r,
+				 struct multi_pack_index *m,
+				 struct pack_entry *e,
+				 uint32_t pos)
 {
 	uint32_t pack_int_id;
 	struct packed_git *p;
@@ -271,7 +274,7 @@ static int nth_midxed_pack_entry(struct multi_pack_index *m, struct pack_entry *
 
 	pack_int_id = nth_midxed_pack_int_id(m, pos);
 
-	if (prepare_midx_pack(m, pack_int_id))
+	if (prepare_midx_pack(r, m, pack_int_id))
 		die(_("error preparing packfile from multi-pack-index"));
 	p = m->packs[pack_int_id];
 
@@ -301,14 +304,17 @@ static int nth_midxed_pack_entry(struct multi_pack_index *m, struct pack_entry *
 	return 1;
 }
 
-int fill_midx_entry(const struct object_id *oid, struct pack_entry *e, struct multi_pack_index *m)
+int fill_midx_entry(struct repository * r,
+		    const struct object_id *oid,
+		    struct pack_entry *e,
+		    struct multi_pack_index *m)
 {
 	uint32_t pos;
 
 	if (!bsearch_midx(oid, m, &pos))
 		return 0;
 
-	return nth_midxed_pack_entry(m, e, pos);
+	return nth_midxed_pack_entry(r, m, e, pos);
 }
 
 /* Match "foo.idx" against either "foo.pack" _or_ "foo.idx". */
@@ -1020,7 +1026,7 @@ static int compare_pair_pos_vs_id(const void *_a, const void *_b)
 			display_progress(progress, _n); \
 	} while (0)
 
-int verify_midx_file(const char *object_dir)
+int verify_midx_file(struct repository *r, const char *object_dir)
 {
 	struct pair_pos_vs_id *pairs = NULL;
 	uint32_t i;
@@ -1034,7 +1040,7 @@ int verify_midx_file(const char *object_dir)
 	progress = start_progress(_("Looking for referenced packfiles"),
 				  m->num_packs);
 	for (i = 0; i < m->num_packs; i++) {
-		if (prepare_midx_pack(m, i))
+		if (prepare_midx_pack(r, m, i))
 			midx_report("failed to load pack in position %d", i);
 
 		display_progress(progress, i + 1);
@@ -1099,7 +1105,7 @@ int verify_midx_file(const char *object_dir)
 
 		nth_midxed_object_oid(&oid, m, pairs[i].pos);
 
-		if (!fill_midx_entry(&oid, &e, m)) {
+		if (!fill_midx_entry(r, &oid, &e, m)) {
 			midx_report(_("failed to load pack entry for oid[%d] = %s"),
 				    pairs[i].pos, oid_to_hex(&oid));
 			continue;
