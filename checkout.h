@@ -9,7 +9,7 @@
  * exists, NULL otherwise.
  */
 const char *unique_tracking_name(const char *name,
-					struct object_id *oid,
-					int *dwim_remotes_matched);
+				 struct object_id *oid,
+				 int *dwim_remotes_matched);
 
 #endif /* CHECKOUT_H */

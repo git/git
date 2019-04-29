@@ -3,7 +3,7 @@
 
 struct argv_array;
 int has_capability(const struct argv_array *keys, const char *capability,
-			  const char **value);
+		   const char **value);
 
 struct serve_options {
 	unsigned advertise_capabilities;

@@ -36,7 +36,7 @@ int parse_submodule_fetchjobs(const char *var, const char *value);
 int parse_fetch_recurse_submodules_arg(const char *opt, const char *arg);
 struct option;
 int option_fetch_parse_recurse_submodules(const struct option *opt,
-						 const char *arg, int unset);
+					  const char *arg, int unset);
 int parse_update_recurse_submodules_arg(const char *opt, const char *arg);
 int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
 void repo_read_gitmodules(struct repository *repo);

@@ -616,7 +616,7 @@ void setup_work_tree(void);
  * either 0 upon success and non-zero if no repository was found.
  */
 int discover_git_directory(struct strbuf *commondir,
-				  struct strbuf *gitdir);
+			   struct strbuf *gitdir);
 const char *setup_git_directory_gently(int *);
 const char *setup_git_directory(void);
 char *prefix_path(const char *prefix, int len, const char *path);
@@ -636,8 +636,8 @@ char *prefix_filename(const char *prefix, const char *path);
 
 int check_filename(const char *prefix, const char *name);
 void verify_filename(const char *prefix,
-			    const char *name,
-			    int diagnose_misspelt_rev);
+		     const char *name,
+		     int diagnose_misspelt_rev);
 void verify_non_filename(const char *prefix, const char *name);
 int path_inside_repo(const char *prefix, const char *path);
 
@@ -645,7 +645,7 @@ int path_inside_repo(const char *prefix, const char *path);
 #define INIT_DB_EXIST_OK 0x0002
 
 int init_db(const char *git_dir, const char *real_git_dir,
-		   const char *template_dir, unsigned int flags);
+	    const char *template_dir, unsigned int flags);
 
 void sanitize_stdfds(void);
 int daemonize(void);
@@ -673,12 +673,12 @@ int daemonize(void);
 /* Initialize and use the cache information */
 struct lock_file;
 void preload_index(struct index_state *index,
-			  const struct pathspec *pathspec,
-			  unsigned int refresh_flags);
+		   const struct pathspec *pathspec,
+		   unsigned int refresh_flags);
 int do_read_index(struct index_state *istate, const char *path,
-			 int must_exist); /* for testting only! */
+		  int must_exist); /* for testting only! */
 int read_index_from(struct index_state *, const char *path,
-			   const char *gitdir);
+		    const char *gitdir);
 int is_index_unborn(struct index_state *);
 
 /* For use with `write_locked_index()`. */
@@ -718,8 +718,8 @@ int unmerged_index(const struct index_state *);
  * to it.
  */
 int repo_index_has_changes(struct repository *repo,
-				  struct tree *tree,
-				  struct strbuf *sb);
+			   struct tree *tree,
+			   struct strbuf *sb);
 
 int verify_path(const char *path, unsigned mode);
 int strcmp_offset(const char *s1, const char *s2, size_t *first_change);
@@ -797,7 +797,7 @@ void *read_blob_data_from_index(const struct index_state *, const char *, unsign
 /* don't refresh_fsmonitor state or do stat comparison even if CE_FSMONITOR_VALID is true */
 #define CE_MATCH_IGNORE_FSMONITOR 0X20
 int is_racy_timestamp(const struct index_state *istate,
-			     const struct cache_entry *ce);
+		      const struct cache_entry *ce);
 int ie_match_stat(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 int ie_modified(struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 
@@ -821,7 +821,7 @@ void fill_stat_data(struct stat_data *sd, struct stat *st);
  */
 int match_stat_data(const struct stat_data *sd, struct stat *st);
 int match_stat_data_racy(const struct index_state *istate,
-				const struct stat_data *sd, struct stat *st);
+			 const struct stat_data *sd, struct stat *st);
 
 void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
@@ -1386,8 +1386,8 @@ int get_oid_treeish(const char *str, struct object_id *oid);
 int get_oid_blob(const char *str, struct object_id *oid);
 void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
 enum get_oid_result get_oid_with_context(struct repository *repo, const char *str,
-				unsigned flags, struct object_id *oid,
-				struct object_context *oc);
+					 unsigned flags, struct object_id *oid,
+					 struct object_context *oc);
 
 typedef int each_abbrev_fn(const struct object_id *oid, void *);
 int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
@@ -1469,7 +1469,7 @@ int parse_oid_hex(const char *hex, struct object_id *oid, const char **end);
 #define INTERPRET_BRANCH_REMOTE (1<<1)
 #define INTERPRET_BRANCH_HEAD (1<<2)
 int interpret_branch_name(const char *str, int len, struct strbuf *,
-				 unsigned allowed);
+			  unsigned allowed);
 int get_oid_mb(const char *str, struct object_id *oid);
 
 int validate_headref(const char *ref);
@@ -1480,12 +1480,12 @@ int name_compare(const char *name1, size_t len1, const char *name2, size_t len2)
 int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
 void *read_object_with_reference(const struct object_id *oid,
-					const char *required_type,
-					unsigned long *size,
-					struct object_id *oid_ret);
+				 const char *required_type,
+				 unsigned long *size,
+				 struct object_id *oid_ret);
 
 struct object *peel_to_type(const char *name, int namelen,
-				   struct object *o, enum object_type);
+			    struct object *o, enum object_type);
 
 enum date_mode_type {
 	DATE_NORMAL = 0,
@@ -1542,8 +1542,8 @@ enum want_ident {
 const char *git_author_info(int);
 const char *git_committer_info(int);
 const char *fmt_ident(const char *name, const char *email,
-		enum want_ident whose_ident,
-		const char *date_str, int);
+		      enum want_ident whose_ident,
+		      const char *date_str, int);
 const char *fmt_name(enum want_ident);
 const char *ident_default_name(void);
 const char *ident_default_email(void);

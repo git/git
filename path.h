@@ -38,8 +38,8 @@ char *mksnpath(char *buf, size_t n, const char *fmt, ...)
  * append it in the provided buffer `sb`.
  */
 void strbuf_git_common_path(struct strbuf *sb,
-				   const struct repository *repo,
-				   const char *fmt, ...)
+			    const struct repository *repo,
+			    const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 
 /*
@@ -67,7 +67,7 @@ const char *git_common_path(const char *fmt, ...)
  * Return a path into the git directory of repository `repo`.
  */
 char *repo_git_path(const struct repository *repo,
-			   const char *fmt, ...)
+		    const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
 
 /*
@@ -75,8 +75,8 @@ char *repo_git_path(const struct repository *repo,
  * to the provided buffer `sb`.
  */
 void strbuf_repo_git_path(struct strbuf *sb,
-				 const struct repository *repo,
-				 const char *fmt, ...)
+			  const struct repository *repo,
+			  const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 
 /*

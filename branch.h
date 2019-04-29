@@ -92,6 +92,6 @@ void die_if_checked_out(const char *branch, int ignore_current_worktree);
  * otherwise.
  */
 int replace_each_worktree_head_symref(const char *oldref, const char *newref,
-					     const char *logmsg);
+				      const char *logmsg);
 
 #endif

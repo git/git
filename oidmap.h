@@ -47,7 +47,7 @@ void oidmap_free(struct oidmap *map, int free_entries);
  * Returns the oidmap entry for the specified oid, or NULL if not found.
  */
 void *oidmap_get(const struct oidmap *map,
-			const struct object_id *key);
+		 const struct object_id *key);
 
 /*
  * Adds or replaces an oidmap entry.

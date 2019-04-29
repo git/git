@@ -14,10 +14,10 @@ struct repository;
 struct argv_array;
 struct packet_reader;
 int upload_pack_v2(struct repository *r, struct argv_array *keys,
-			  struct packet_reader *request);
+		   struct packet_reader *request);
 
 struct strbuf;
 int upload_pack_advertise(struct repository *r,
-				 struct strbuf *value);
+			  struct strbuf *value);
 
 #endif /* UPLOAD_PACK_H */

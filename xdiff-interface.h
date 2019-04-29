@@ -47,7 +47,7 @@ void discard_hunk_line(void *priv,
  * are treated for the comparision.
  */
 int xdiff_compare_lines(const char *l1, long s1,
-			       const char *l2, long s2, long flags);
+			const char *l2, long s2, long flags);
 
 /*
  * Returns a hash of the string s of length len.

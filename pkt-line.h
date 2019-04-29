@@ -173,8 +173,8 @@ struct packet_reader {
  * abstraction around the 'packet_read_with_status()' function.
  */
 void packet_reader_init(struct packet_reader *reader, int fd,
-			       char *src_buffer, size_t src_len,
-			       int options);
+			char *src_buffer, size_t src_len,
+			int options);
 
 /*
  * Perform a packet read and return the status of the read.

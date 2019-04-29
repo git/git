@@ -29,7 +29,7 @@ struct column_options {
 struct option;
 int parseopt_column_callback(const struct option *, const char *, int);
 int git_column_config(const char *var, const char *value,
-			     const char *command, unsigned int *colopts);
+		      const char *command, unsigned int *colopts);
 int finalize_colopts(unsigned int *colopts, int stdout_is_tty);
 static inline int column_active(unsigned int colopts)
 {
@@ -38,7 +38,7 @@ static inline int column_active(unsigned int colopts)
 
 struct string_list;
 void print_columns(const struct string_list *list, unsigned int colopts,
-			  const struct column_options *opts);
+		   const struct column_options *opts);
 
 int run_column_filter(int colopts, const struct column_options *);
 int stop_column_filter(void);

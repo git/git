@@ -76,8 +76,8 @@ diff_delta(const void *src_buf, unsigned long src_bufsize,
  * returned.  The returned buffer must be freed by the caller.
  */
 void *patch_delta(const void *src_buf, unsigned long src_size,
-			 const void *delta_buf, unsigned long delta_size,
-			 unsigned long *dst_size);
+		  const void *delta_buf, unsigned long delta_size,
+		  unsigned long *dst_size);
 
 /* the smallest possible delta size is 4 bytes */
 #define DELTA_SIZE_MIN	4

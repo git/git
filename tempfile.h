@@ -137,7 +137,7 @@ struct tempfile *register_tempfile(const char *path);
 
 /* See "mks_tempfile functions" above. */
 struct tempfile *mks_tempfile_sm(const char *filename_template,
-					int suffixlen, int mode);
+				 int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_s(const char *filename_template,
@@ -160,7 +160,7 @@ static inline struct tempfile *mks_tempfile(const char *filename_template)
 
 /* See "mks_tempfile functions" above. */
 struct tempfile *mks_tempfile_tsm(const char *filename_template,
-					 int suffixlen, int mode);
+				  int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_ts(const char *filename_template,
