@@ -403,14 +403,17 @@ get_merge_tool_path () {
 }
 
 get_merge_tool () {
+	is_guessed=false
 	# Check if a merge tool has been configured
-	merge_tool=$(get_configured_merge_tool)
+	merge_tool=$(get_configured_merge_tool $GIT_MERGETOOL_GUI)
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"
 	then
 		merge_tool=$(guess_merge_tool) || exit
+		is_guessed=true
 	fi
 	echo "$merge_tool"
+	test "$is_guessed" = false
 }
 
 mergetool_find_win32_cmd () {
