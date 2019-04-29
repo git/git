@@ -80,12 +80,16 @@ show_tool_names () {
 	}
 }
 
-diff_mode() {
+diff_mode () {
 	test "$TOOL_MODE" = diff
 }
 
-merge_mode() {
+merge_mode () {
 	test "$TOOL_MODE" = merge
+}
+
+gui_mode () {
+	test "$GIT_MERGETOOL_GUI" = true
 }
 
 translate_merge_tool_path () {
@@ -350,8 +354,7 @@ guess_merge_tool () {
 }
 
 get_configured_merge_tool () {
-	# If first argument is true, find the guitool instead
-	if test "$1" = true
+	if gui_mode
 	then
 		gui_prefix=gui
 	fi
@@ -405,7 +408,7 @@ get_merge_tool_path () {
 get_merge_tool () {
 	is_guessed=false
 	# Check if a merge tool has been configured
-	merge_tool=$(get_configured_merge_tool $GIT_MERGETOOL_GUI)
+	merge_tool=$(get_configured_merge_tool)
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"
 	then
