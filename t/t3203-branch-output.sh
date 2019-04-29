@@ -328,4 +328,23 @@ test_expect_success '--color overrides auto-color' '
 	test_cmp expect.color actual
 '
 
+test_expect_success 'verbose output lists worktree path' '
+	one=$(git rev-parse --short HEAD) &&
+	two=$(git rev-parse --short master) &&
+	cat >expect <<-EOF &&
+	* (HEAD detached from fromtag) $one one
+	  ambiguous                    $one one
+	  branch-one                   $two two
+	+ branch-two                   $one ($(pwd)/worktree_dir) one
+	  master                       $two two
+	  ref-to-branch                $two two
+	  ref-to-remote                $two two
+	EOF
+	git worktree add worktree_dir branch-two &&
+	git branch -vv >actual &&
+	rm -r worktree_dir &&
+	git worktree prune &&
+	test_i18ncmp expect actual
+'
+
 test_done
