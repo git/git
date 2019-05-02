@@ -164,6 +164,19 @@ test_expect_success 'failed `merge <branch>` does not crash' '
 	grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
 '
 
+test_expect_success 'fast-forward merge -c still rewords' '
+	git checkout -b fast-forward-merge-c H &&
+	(
+		set_fake_editor &&
+		FAKE_COMMIT_MESSAGE=edited \
+			GIT_SEQUENCE_EDITOR="echo merge -c H G >" \
+			git rebase -ir @^
+	) &&
+	echo edited >expected &&
+	git log --pretty=format:%B -1 >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'with a branch tip that was cherry-picked already' '
 	git checkout -b already-upstream master &&
 	base="$(git rev-parse --verify HEAD)" &&
