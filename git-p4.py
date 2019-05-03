@@ -737,7 +737,7 @@ def extractLogMessageFromGitCommit(commit):
 
     ## fixme: title is first line of commit, not 1st paragraph.
     foundTitle = False
-    for log in read_pipe_lines("git cat-file commit %s" % commit):
+    for log in read_pipe_lines(["git", "cat-file", "commit", commit]):
        if not foundTitle:
            if len(log) == 1:
                foundTitle = True
