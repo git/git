@@ -65,7 +65,7 @@ some output processing may assume ref names in UTF-8.
 '@'::
   '@' alone is a shortcut for `HEAD`.
 
-'<refname>@{<date>}', e.g. 'master@\{yesterday\}', 'HEAD@{5 minutes ago}'::
+'[<refname>]@{<date>}', e.g. 'master@\{yesterday\}', 'HEAD@{5 minutes ago}'::
   A ref followed by the suffix '@' with a date specification
   enclosed in a brace
   pair (e.g. '\{yesterday\}', '{1 month 2 weeks 3 days 1 hour 1
@@ -95,7 +95,7 @@ some output processing may assume ref names in UTF-8.
   The construct '@{-<n>}' means the <n>th branch/commit checked out
   before the current one.
 
-'<branchname>@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
+'[<branchname>]@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
   The suffix '@\{upstream\}' to a branchname (short form '<branchname>@\{u\}')
   refers to the branch that the branch specified by branchname is set to build on
   top of (configured with `branch.<name>.remote` and
@@ -103,7 +103,7 @@ some output processing may assume ref names in UTF-8.
   current one. These suffixes are also accepted when spelled in uppercase, and
   they mean the same thing no matter the case.
 
-'<branchname>@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
+'[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
   `git push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Since our push destination is
@@ -131,7 +131,7 @@ from one location and push to another. In a non-triangular workflow,
 This suffix is also accepted when spelled in uppercase, and means the same
 thing no matter the case.
 
-'<rev>{caret}', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
+'<rev>{caret}[<n>]', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.
   '<rev>{caret}'
@@ -301,7 +301,7 @@ The 'r1{caret}@' notation means all parents of 'r1'.
 The 'r1{caret}!' notation includes commit 'r1' but excludes all of its parents.
 By itself, this notation denotes the single commit 'r1'.
 
-The '<rev>{caret}-<n>' notation includes '<rev>' but excludes the <n>th
+The '<rev>{caret}-[<n>]' notation includes '<rev>' but excludes the <n>th
 parent (i.e. a shorthand for '<rev>{caret}<n>..<rev>'), with '<n>' = 1 if
 not given. This is typically useful for merge commits where you
 can just pass '<commit>{caret}-' to get all the commits in the branch
