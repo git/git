@@ -1,5 +1,7 @@
 #include "cache.h"
 #include "add-interactive.h"
+#include "color.h"
+#include "config.h"
 #include "diffcore.h"
 #include "revision.h"
 #include "refs.h"
@@ -7,11 +9,40 @@
 
 struct add_i_state {
 	struct repository *r;
+	int use_color;
+	char header_color[COLOR_MAXLEN];
 };
+
+static void init_color(struct repository *r, struct add_i_state *s,
+		       const char *slot_name, char *dst,
+		       const char *default_color)
+{
+	char *key = xstrfmt("color.interactive.%s", slot_name);
+	const char *value;
+
+	if (!s->use_color)
+		dst[0] = '\0';
+	else if (repo_config_get_value(r, key, &value) ||
+		 color_parse(value, dst))
+		strlcpy(dst, default_color, COLOR_MAXLEN);
+
+	free(key);
+}
 
 static void init_add_i_state(struct add_i_state *s, struct repository *r)
 {
-       s->r = r;
+	const char *value;
+
+	s->r = r;
+
+	if (repo_config_get_value(r, "color.interactive", &value))
+		s->use_color = -1;
+	else
+		s->use_color =
+			git_config_colorbool("color.interactive", value);
+	s->use_color = want_color(s->use_color);
+
+	init_color(r, s, "header", s->header_color, GIT_COLOR_BOLD);
 }
 
 struct list_options {
@@ -20,7 +51,8 @@ struct list_options {
 	void *print_item_data;
 };
 
-static void list(struct string_list *list, struct list_options *opts)
+static void list(struct add_i_state *s, struct string_list *list,
+		 struct list_options *opts)
 {
 	int i;
 
@@ -28,7 +60,8 @@ static void list(struct string_list *list, struct list_options *opts)
 		return;
 
 	if (opts->header)
-		printf("%s\n", opts->header);
+		color_fprintf_ln(stdout, s->header_color,
+				 "%s", opts->header);
 
 	for (i = 0; i < list->nr; i++) {
 		opts->print_item(i, list->items + i, opts->print_item_data);
@@ -213,7 +246,7 @@ static int run_status(struct add_i_state *s, const struct pathspec *ps,
 	if (get_modified_files(s->r, files, ps) < 0)
 		return -1;
 
-	list(files, opts);
+	list(s, files, opts);
 	putchar('\n');
 
 	return 0;
