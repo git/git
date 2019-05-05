@@ -139,7 +139,9 @@ thing no matter the case.
   '<rev>{caret}0' means the commit itself and is used when '<rev>' is the
   object name of a tag object that refers to a commit object.
 
-'<rev>{tilde}<n>', e.g. 'master{tilde}3'::
+'<rev>{tilde}[<n>]', e.g. 'HEAD{tilde}, master{tilde}3'::
+  A suffix '{tilde}' to a revision parameter means the first parent of
+  that commit object.
   A suffix '{tilde}<n>' to a revision parameter means the commit
   object that is the <n>th generation ancestor of the named
   commit object, following only the first parents.  I.e. '<rev>{tilde}3' is
