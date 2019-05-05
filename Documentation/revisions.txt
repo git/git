@@ -159,12 +159,12 @@ thing no matter the case.
   '<rev>{caret}0'
   is a short-hand for '<rev>{caret}\{commit\}'.
 +
-'rev{caret}\{object\}' can be used to make sure 'rev' names an
-object that exists, without requiring 'rev' to be a tag, and
-without dereferencing 'rev'; because a tag is already an object,
+'<rev>{caret}\{object\}' can be used to make sure '<rev>' names an
+object that exists, without requiring '<rev>' to be a tag, and
+without dereferencing '<rev>'; because a tag is already an object,
 it does not have to be dereferenced even once to get to an object.
 +
-'rev{caret}\{tag\}' can be used to ensure that 'rev' identifies an
+'<rev>{caret}\{tag\}' can be used to ensure that '<rev>' identifies an
 existing tag object.
 
 '<rev>{caret}{}', e.g. 'v0.99.8{caret}{}'::
