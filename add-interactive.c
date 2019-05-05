@@ -1,8 +1,50 @@
 #include "cache.h"
 #include "add-interactive.h"
+#include "color.h"
+#include "config.h"
 #include "diffcore.h"
 #include "revision.h"
 #include "refs.h"
+
+struct add_i_state {
+	struct repository *r;
+	int use_color;
+	char header_color[COLOR_MAXLEN];
+};
+
+static void init_color(struct repository *r, struct add_i_state *s,
+		       const char *slot_name, char *dst,
+		       const char *default_color)
+{
+	char *key = xstrfmt("color.interactive.%s", slot_name);
+	const char *value;
+
+	if (!s->use_color)
+		dst[0] = '\0';
+	else if (repo_config_get_value(r, key, &value) ||
+		 color_parse(value, dst))
+		strlcpy(dst, default_color, COLOR_MAXLEN);
+
+	free(key);
+}
+
+static int init_add_i_state(struct repository *r, struct add_i_state *s)
+{
+	const char *value;
+
+	s->r = r;
+
+	if (repo_config_get_value(r, "color.interactive", &value))
+		s->use_color = -1;
+	else
+		s->use_color =
+			git_config_colorbool("color.interactive", value);
+	s->use_color = want_color(s->use_color);
+
+	init_color(r, s, "header", s->header_color, GIT_COLOR_BOLD);
+
+	return 0;
+}
 
 struct item {
 	const char *name;
@@ -14,7 +56,8 @@ struct list_options {
 	void *print_item_data;
 };
 
-static void list(struct item **list, size_t nr, struct list_options *opts)
+static void list(struct item **list, size_t nr,
+		 struct add_i_state *s, struct list_options *opts)
 {
 	int i;
 
@@ -22,7 +65,8 @@ static void list(struct item **list, size_t nr, struct list_options *opts)
 		return;
 
 	if (opts->header)
-		printf("%s\n", opts->header);
+		color_fprintf_ln(stdout, s->header_color,
+				 "%s", opts->header);
 
 	for (i = 0; i < nr; i++) {
 		opts->print_item(i, list[i], opts->print_item_data);
@@ -226,16 +270,16 @@ static void print_file_item(int i, struct item *item,
 	printf(" %2d: %s", i + 1, d->buf.buf);
 }
 
-static int run_status(struct repository *r, const struct pathspec *ps,
+static int run_status(struct add_i_state *s, const struct pathspec *ps,
 		      struct file_list *files, struct list_options *opts)
 {
 	reset_file_list(files);
 
-	if (get_modified_files(r, files, ps) < 0)
+	if (get_modified_files(s->r, files, ps) < 0)
 		return -1;
 
 	if (files->nr)
-		list((struct item **)files->file, files->nr, opts);
+		list((struct item **)files->file, files->nr, s, opts);
 	putchar('\n');
 
 	return 0;
@@ -243,6 +287,7 @@ static int run_status(struct repository *r, const struct pathspec *ps,
 
 int run_add_i(struct repository *r, const struct pathspec *ps)
 {
+	struct add_i_state s = { NULL };
 	struct print_file_item_data print_file_item_data = {
 		"%12s %12s %s", STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
 	};
@@ -253,13 +298,16 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	struct file_list files = { NULL };
 	int res = 0;
 
+	if (init_add_i_state(r, &s))
+		return error("could not parse `add -i` config");
+
 	strbuf_addstr(&header, "      ");
 	strbuf_addf(&header, print_file_item_data.modified_fmt,
 		    _("staged"), _("unstaged"), _("path"));
 	opts.header = header.buf;
 
 	repo_refresh_and_write_index(r, REFRESH_QUIET, 1);
-	if (run_status(r, ps, &files, &opts) < 0)
+	if (run_status(&s, ps, &files, &opts) < 0)
 		res = -1;
 
 	release_file_list(&files);
