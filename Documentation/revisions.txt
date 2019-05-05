@@ -195,19 +195,16 @@ existing tag object.
   Depending on the given text, the shell's word splitting rules might
   require additional quoting.
 
-'<rev>:<path>', e.g. 'HEAD:README', ':README', 'master:./README'::
+'<rev>:<path>', e.g. 'HEAD:README', 'master:./README'::
   A suffix ':' followed by a path names the blob or tree
   at the given path in the tree-ish object named by the part
   before the colon.
-  ':path' (with an empty part before the colon)
-  is a special case of the syntax described next: content
-  recorded in the index at the given path.
   A path starting with './' or '../' is relative to the current working directory.
   The given path will be converted to be relative to the working tree's root directory.
   This is most useful to address a blob or tree from a commit or tree that has
   the same tree structure as the working tree.
 
-':<n>:<path>', e.g. ':0:README', ':README'::
+':[<n>:]<path>', e.g. ':0:README', ':README'::
   A colon, optionally followed by a stage number (0 to 3) and a
   colon, followed by a path, names a blob object in the
   index at the given path. A missing stage number (and the colon
