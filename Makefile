@@ -1174,8 +1174,10 @@ PTHREAD_CFLAGS =
 SPARSE_FLAGS ?=
 SP_EXTRA_FLAGS =
 
-# For the 'coccicheck' target
+# For the 'coccicheck' target; setting SPATCH_BATCH_SIZE higher will
+# usually result in less CPU usage at the cost of higher peak memory.
 SPATCH_FLAGS = --all-includes --patch .
+SPATCH_BATCH_SIZE = 1
 
 include config.mak.uname
 -include config.mak.autogen
@@ -2790,12 +2792,9 @@ endif
 
 %.cocci.patch: %.cocci $(COCCI_SOURCES)
 	@echo '    ' SPATCH $<; \
-	ret=0; \
-	for f in $(COCCI_SOURCES); do \
-		$(SPATCH) --sp-file $< $$f $(SPATCH_FLAGS) || \
-			{ ret=$$?; break; }; \
-	done >$@+ 2>$@.log; \
-	if test $$ret != 0; \
+	if ! echo $(COCCI_SOURCES) | xargs -n $(SPATCH_BATCH_SIZE) \
+		$(SPATCH) --sp-file $< $(SPATCH_FLAGS) \
+		>$@+ 2>$@.log; \
 	then \
 		cat $@.log; \
 		exit 1; \
