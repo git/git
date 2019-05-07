@@ -2803,7 +2803,7 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	next = data + len + 1;
 	if (next > rd->end)
 		return -1;
-	*untracked_ = untracked = xmalloc(st_add(sizeof(*untracked), len));
+	*untracked_ = untracked = xmalloc(st_add3(sizeof(*untracked), len, 1));
 	memcpy(untracked, &ud, sizeof(ud));
 	memcpy(untracked->name, data, len + 1);
 	data = next;
