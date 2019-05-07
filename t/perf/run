@@ -70,6 +70,22 @@ build_git_rev () {
 	) || die "failed to build revision '$mydir'"
 }
 
+set_git_test_installed () {
+	mydir=$1
+
+	mydir_abs=$(cd $mydir && pwd)
+	mydir_abs_wrappers="$mydir_abs_wrappers/bin-wrappers"
+	if test -d "$mydir_abs_wrappers"
+	then
+		GIT_TEST_INSTALLED=$mydir_abs_wrappers
+	else
+		# Older versions of git lacked bin-wrappers;
+		# fallback to the files in the root.
+		GIT_TEST_INSTALLED=$mydir_abs
+	fi
+	export GIT_TEST_INSTALLED
+}
+
 run_dirs_helper () {
 	mydir=${1%/}
 	shift
@@ -79,7 +95,16 @@ run_dirs_helper () {
 	if test $# -gt 0 -a "$1" = --; then
 		shift
 	fi
-	if [ ! -d "$mydir" ]; then
+
+	PERF_RESULTS_PREFIX=
+	if test "$mydir" = "."
+	then
+		unset GIT_TEST_INSTALLED
+	elif test -d "$mydir"
+	then
+		PERF_RESULTS_PREFIX=$(cd $mydir && printf "%s" "$(pwd)" | tr -c "[a-zA-Z0-9]" "_").
+		set_git_test_installed "$mydir"
+	else
 		rev=$(git rev-parse --verify "$mydir" 2>/dev/null) ||
 		die "'$mydir' is neither a directory nor a valid revision"
 		if [ ! -d build/$rev ]; then
@@ -87,20 +112,12 @@ run_dirs_helper () {
 		fi
 		build_git_rev $rev "$mydir"
 		mydir=build/$rev
-	fi
-	if test "$mydir" = .; then
-		unset GIT_TEST_INSTALLED
-	else
-		GIT_PERF_DIR_MYDIR_REL=$mydir
-		GIT_PERF_DIR_MYDIR_ABS=$(cd $mydir && pwd)
-		export GIT_PERF_DIR_MYDIR_REL GIT_PERF_DIR_MYDIR_ABS
 
-		GIT_TEST_INSTALLED="$GIT_PERF_DIR_MYDIR_ABS/bin-wrappers"
-		# Older versions of git lacked bin-wrappers; fallback to the
-		# files in the root.
-		test -d "$GIT_TEST_INSTALLED" || GIT_TEST_INSTALLED=$GIT_PERF_DIR_MYDIR_ABS
-		export GIT_TEST_INSTALLED
+		PERF_RESULTS_PREFIX=build_$rev.
+		set_git_test_installed "$mydir"
 	fi
+	export PERF_RESULTS_PREFIX
+
 	run_one_dir "$@"
 }
 

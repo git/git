@@ -6,6 +6,7 @@ use warnings;
 use JSON;
 use Getopt::Long;
 use Git;
+use Cwd qw(realpath);
 
 sub get_times {
 	my $name = shift;
@@ -103,13 +104,14 @@ while (scalar @ARGV) {
 	if (! -d $arg) {
 		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
 		$dir = "build/".$rev;
+	} elsif ($arg eq '.') {
+		$dir = '.';
 	} else {
-		$arg =~ s{/*$}{};
-		$dir = $arg;
-		$dirabbrevs{$dir} = $dir;
+		$dir = realpath($arg);
+		$dirnames{$dir} = $dir;
 	}
 	push @dirs, $dir;
-	$dirnames{$dir} = $arg;
+	$dirnames{$dir} ||= $arg;
 	my $prefix = $dir;
 	$prefix =~ tr/^a-zA-Z0-9/_/c;
 	$prefixes{$dir} = $prefix . '.';
