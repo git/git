@@ -27,6 +27,17 @@ TEST_NO_MALLOC_CHECK=t
 
 . ../test-lib.sh
 
+if test -n "$GIT_TEST_INSTALLED" -a -z "$PERF_SET_GIT_TEST_INSTALLED"
+then
+	error "Do not use GIT_TEST_INSTALLED with the perf tests.
+
+Instead use:
+
+    ./run <path-to-git> -- <tests>
+
+See t/perf/README for details."
+fi
+
 # Variables from test-lib that are normally internal to the tests; we
 # need to export them for test_perf subshells
 export TEST_DIRECTORY TRASH_DIRECTORY GIT_BUILD_DIR GIT_TEST_CMP

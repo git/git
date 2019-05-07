@@ -84,6 +84,8 @@ set_git_test_installed () {
 		GIT_TEST_INSTALLED=$mydir_abs
 	fi
 	export GIT_TEST_INSTALLED
+	PERF_SET_GIT_TEST_INSTALLED=true
+	export PERF_SET_GIT_TEST_INSTALLED
 }
 
 run_dirs_helper () {
