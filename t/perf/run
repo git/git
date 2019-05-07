@@ -91,10 +91,14 @@ run_dirs_helper () {
 	if test "$mydir" = .; then
 		unset GIT_TEST_INSTALLED
 	else
-		GIT_TEST_INSTALLED="$mydir/bin-wrappers"
+		GIT_PERF_DIR_MYDIR_REL=$mydir
+		GIT_PERF_DIR_MYDIR_ABS=$(cd $mydir && pwd)
+		export GIT_PERF_DIR_MYDIR_REL GIT_PERF_DIR_MYDIR_ABS
+
+		GIT_TEST_INSTALLED="$GIT_PERF_DIR_MYDIR_ABS/bin-wrappers"
 		# Older versions of git lacked bin-wrappers; fallback to the
 		# files in the root.
-		test -d "$GIT_TEST_INSTALLED" || GIT_TEST_INSTALLED=$mydir
+		test -d "$GIT_TEST_INSTALLED" || GIT_TEST_INSTALLED=$GIT_PERF_DIR_MYDIR_ABS
 		export GIT_TEST_INSTALLED
 	fi
 	run_one_dir "$@"

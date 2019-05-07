@@ -32,6 +32,10 @@ TEST_NO_MALLOC_CHECK=t
 if test -z "$GIT_TEST_INSTALLED"; then
 	perf_results_prefix=
 else
+	if test -n "$GIT_PERF_DIR_MYDIR_REL"
+	then
+		GIT_TEST_INSTALLED=$GIT_PERF_DIR_MYDIR_REL
+	fi
 	perf_results_prefix=$(printf "%s" "${GIT_TEST_INSTALLED%/bin-wrappers}" | tr -c "[a-zA-Z0-9]" "[_*]")"."
 	GIT_TEST_INSTALLED=$ABSOLUTE_GIT_TEST_INSTALLED
 fi
