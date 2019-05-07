@@ -129,7 +129,6 @@ static void fsmonitor_refresh_callback(struct index_state *istate, const char *n
 
 void refresh_fsmonitor(struct index_state *istate)
 {
-	static int has_run_once = 0;
 	struct strbuf query_result = STRBUF_INIT;
 	int query_success = 0;
 	size_t bol; /* beginning of line */
@@ -137,9 +136,9 @@ void refresh_fsmonitor(struct index_state *istate)
 	char *buf;
 	int i;
 
-	if (!core_fsmonitor || has_run_once)
+	if (!core_fsmonitor || istate->fsmonitor_has_run_once)
 		return;
-	has_run_once = 1;
+	istate->fsmonitor_has_run_once = 1;
 
 	trace_printf_key(&trace_fsmonitor, "refresh fsmonitor");
 	/*
