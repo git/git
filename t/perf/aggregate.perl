@@ -100,6 +100,7 @@ usage() unless $rc;
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
+	my $prefix = '';
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
 		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
@@ -109,10 +110,11 @@ while (scalar @ARGV) {
 	} else {
 		$dir = realpath($arg);
 		$dirnames{$dir} = $dir;
+		$prefix .= 'bindir';
 	}
 	push @dirs, $dir;
 	$dirnames{$dir} ||= $arg;
-	my $prefix = $dir;
+	$prefix .= $dir;
 	$prefix =~ tr/^a-zA-Z0-9/_/c;
 	$prefixes{$dir} = $prefix . '.';
 	shift @ARGV;

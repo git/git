@@ -102,7 +102,7 @@ run_dirs_helper () {
 		unset GIT_TEST_INSTALLED
 	elif test -d "$mydir"
 	then
-		PERF_RESULTS_PREFIX=$(cd $mydir && printf "%s" "$(pwd)" | tr -c "[a-zA-Z0-9]" "_").
+		PERF_RESULTS_PREFIX=bindir$(cd $mydir && printf "%s" "$(pwd)" | tr -c "[a-zA-Z0-9]" "_").
 		set_git_test_installed "$mydir"
 	else
 		rev=$(git rev-parse --verify "$mydir" 2>/dev/null) ||
