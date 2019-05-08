@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "trace2/tr2_dst.h"
+#include "trace2/tr2_sid.h"
 
 /*
  * If a Trace2 target cannot be opened for writing, we should issue a
@@ -11,6 +12,11 @@
  * Enable the following environment variable to see these warnings.
  */
 #define TR2_ENVVAR_DST_DEBUG "GIT_TR2_DST_DEBUG"
+
+/*
+ * How many attempts we will make at creating an automatically-named trace file.
+ */
+#define MAX_AUTO_ATTEMPTS 10
 
 static int tr2_dst_want_warning(void)
 {
@@ -34,6 +40,55 @@ void tr2_dst_trace_disable(struct tr2_dst *dst)
 	dst->fd = 0;
 	dst->initialized = 1;
 	dst->need_close = 0;
+}
+
+static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
+{
+	int fd;
+	const char *last_slash, *sid = tr2_sid_get();
+	struct strbuf path = STRBUF_INIT;
+	size_t base_path_len;
+	unsigned attempt_count;
+
+	last_slash = strrchr(sid, '/');
+	if (last_slash)
+		sid = last_slash + 1;
+
+	strbuf_addstr(&path, tgt_prefix);
+	if (!is_dir_sep(path.buf[path.len - 1]))
+		strbuf_addch(&path, '/');
+	strbuf_addstr(&path, sid);
+	base_path_len = path.len;
+
+	for (attempt_count = 0; attempt_count < MAX_AUTO_ATTEMPTS; attempt_count++) {
+		if (attempt_count > 0) {
+			strbuf_setlen(&path, base_path_len);
+			strbuf_addf(&path, ".%d", attempt_count);
+		}
+
+		fd = open(path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
+		if (fd != -1)
+			break;
+	}
+
+	if (fd == -1) {
+		if (tr2_dst_want_warning())
+			warning("trace2: could not open '%.*s' for '%s' tracing: %s",
+				(int) base_path_len, path.buf,
+				dst->env_var_name, strerror(errno));
+
+		tr2_dst_trace_disable(dst);
+		strbuf_release(&path);
+		return 0;
+	}
+
+	strbuf_release(&path);
+
+	dst->fd = fd;
+	dst->need_close = 1;
+	dst->initialized = 1;
+
+	return dst->fd;
 }
 
 static int tr2_dst_try_path(struct tr2_dst *dst, const char *tgt_value)
@@ -202,8 +257,12 @@ int tr2_dst_get_trace_fd(struct tr2_dst *dst)
 		return dst->fd;
 	}
 
-	if (is_absolute_path(tgt_value))
-		return tr2_dst_try_path(dst, tgt_value);
+	if (is_absolute_path(tgt_value)) {
+		if (is_directory(tgt_value))
+			return tr2_dst_try_auto_path(dst, tgt_value);
+		else
+			return tr2_dst_try_path(dst, tgt_value);
+	}
 
 #ifndef NO_UNIX_SOCKETS
 	if (starts_with(tgt_value, PREFIX_AF_UNIX))
