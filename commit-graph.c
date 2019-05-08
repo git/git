@@ -397,6 +397,11 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 	item->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
 }
 
+static inline void set_commit_tree(struct commit *c, struct tree *t)
+{
+	c->maybe_tree = t;
+}
+
 static int fill_commit_in_graph(struct repository *r,
 				struct commit *item,
 				struct commit_graph *g, uint32_t pos)
@@ -410,7 +415,7 @@ static int fill_commit_in_graph(struct repository *r,
 	item->object.parsed = 1;
 	item->graph_pos = pos;
 
-	item->maybe_tree = NULL;
+	set_commit_tree(item, NULL);
 
 	date_high = get_be32(commit_data + g->hash_len + 8) & 0x3;
 	date_low = get_be32(commit_data + g->hash_len + 12);
@@ -496,7 +501,7 @@ static struct tree *load_tree_for_commit(struct repository *r,
 					   GRAPH_DATA_WIDTH * (c->graph_pos);
 
 	hashcpy(oid.hash, commit_data);
-	c->maybe_tree = lookup_tree(r, &oid);
+	set_commit_tree(c, lookup_tree(r, &oid));
 
 	return c->maybe_tree;
 }
