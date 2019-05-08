@@ -39,8 +39,8 @@ struct mailinfo {
 	int input_error;
 };
 
-extern void setup_mailinfo(struct mailinfo *);
-extern int mailinfo(struct mailinfo *, const char *msg, const char *patch);
-extern void clear_mailinfo(struct mailinfo *);
+void setup_mailinfo(struct mailinfo *);
+int mailinfo(struct mailinfo *, const char *msg, const char *patch);
+void clear_mailinfo(struct mailinfo *);
 
 #endif /* MAILINFO_H */

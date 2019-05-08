@@ -27,20 +27,20 @@ struct column_options {
 };
 
 struct option;
-extern int parseopt_column_callback(const struct option *, const char *, int);
-extern int git_column_config(const char *var, const char *value,
-			     const char *command, unsigned int *colopts);
-extern int finalize_colopts(unsigned int *colopts, int stdout_is_tty);
+int parseopt_column_callback(const struct option *, const char *, int);
+int git_column_config(const char *var, const char *value,
+		      const char *command, unsigned int *colopts);
+int finalize_colopts(unsigned int *colopts, int stdout_is_tty);
 static inline int column_active(unsigned int colopts)
 {
 	return (colopts & COL_ENABLE_MASK) == COL_ENABLED;
 }
 
 struct string_list;
-extern void print_columns(const struct string_list *list, unsigned int colopts,
-			  const struct column_options *opts);
+void print_columns(const struct string_list *list, unsigned int colopts,
+		   const struct column_options *opts);
 
-extern int run_column_filter(int colopts, const struct column_options *);
-extern int stop_column_filter(void);
+int run_column_filter(int colopts, const struct column_options *);
+int stop_column_filter(void);
 
 #endif

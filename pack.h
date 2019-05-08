@@ -55,7 +55,7 @@ struct pack_idx_option {
 	uint32_t *anomaly;
 };
 
-extern void reset_pack_idx_option(struct pack_idx_option *);
+void reset_pack_idx_option(struct pack_idx_option *);
 
 /*
  * Packed object index header
@@ -79,28 +79,28 @@ struct progress;
 /* Note, the data argument could be NULL if object type is blob */
 typedef int (*verify_fn)(const struct object_id *, enum object_type, unsigned long, void*, int*);
 
-extern const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
-extern int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
-extern int verify_pack_index(struct packed_git *);
-extern int verify_pack(struct repository *, struct packed_git *, verify_fn fn, struct progress *, uint32_t);
-extern off_t write_pack_header(struct hashfile *f, uint32_t);
-extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
-extern char *index_pack_lockfile(int fd);
+const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
+int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
+int verify_pack_index(struct packed_git *);
+int verify_pack(struct repository *, struct packed_git *, verify_fn fn, struct progress *, uint32_t);
+off_t write_pack_header(struct hashfile *f, uint32_t);
+void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
+char *index_pack_lockfile(int fd);
 
 /*
  * The "hdr" output buffer should be at least this big, which will handle sizes
  * up to 2^67.
  */
 #define MAX_PACK_OBJECT_HEADER 10
-extern int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
-					enum object_type, uintmax_t);
+int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
+				 enum object_type, uintmax_t);
 
 #define PH_ERROR_EOF		(-1)
 #define PH_ERROR_PACK_SIGNATURE	(-2)
 #define PH_ERROR_PROTOCOL	(-3)
-extern int read_pack_header(int fd, struct pack_header *);
+int read_pack_header(int fd, struct pack_header *);
 
-extern struct hashfile *create_tmp_packfile(char **pack_tmp_name);
-extern void finish_tmp_packfile(struct strbuf *name_buffer, const char *pack_tmp_name, struct pack_idx_entry **written_list, uint32_t nr_written, struct pack_idx_option *pack_idx_opts, unsigned char sha1[]);
+struct hashfile *create_tmp_packfile(char **pack_tmp_name);
+void finish_tmp_packfile(struct strbuf *name_buffer, const char *pack_tmp_name, struct pack_idx_entry **written_list, uint32_t nr_written, struct pack_idx_option *pack_idx_opts, unsigned char sha1[]);
 
 #endif

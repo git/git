@@ -134,7 +134,7 @@ struct transport {
 #define TRANSPORT_PUSH_OPTIONS			(1<<14)
 #define TRANSPORT_RECURSE_SUBMODULES_ONLY	(1<<15)
 
-extern int transport_summary_width(const struct ref *refs);
+int transport_summary_width(const struct ref *refs);
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
@@ -263,5 +263,5 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 		  int verbose, int porcelain, unsigned int *reject_reasons);
 
 typedef void alternate_ref_fn(const struct object_id *oid, void *);
-extern void for_each_alternate_ref(alternate_ref_fn, void *);
+void for_each_alternate_ref(alternate_ref_fn, void *);
 #endif

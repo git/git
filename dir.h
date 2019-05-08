@@ -202,7 +202,7 @@ struct dir_struct {
 };
 
 /*Count the number of slashes for string s*/
-extern int count_slashes(const char *s);
+int count_slashes(const char *s);
 
 /*
  * The ordering of these constants is significant, with
@@ -213,27 +213,27 @@ extern int count_slashes(const char *s);
 #define MATCHED_RECURSIVELY 1
 #define MATCHED_FNMATCH 2
 #define MATCHED_EXACTLY 3
-extern int simple_length(const char *match);
-extern int no_wildcard(const char *string);
-extern char *common_prefix(const struct pathspec *pathspec);
-extern int match_pathspec(const struct index_state *istate,
-			  const struct pathspec *pathspec,
-			  const char *name, int namelen,
-			  int prefix, char *seen, int is_dir);
-extern int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
-extern int within_depth(const char *name, int namelen, int depth, int max_depth);
+int simple_length(const char *match);
+int no_wildcard(const char *string);
+char *common_prefix(const struct pathspec *pathspec);
+int match_pathspec(const struct index_state *istate,
+		   const struct pathspec *pathspec,
+		   const char *name, int namelen,
+		   int prefix, char *seen, int is_dir);
+int report_path_error(const char *ps_matched, const struct pathspec *pathspec);
+int within_depth(const char *name, int namelen, int depth, int max_depth);
 
-extern int fill_directory(struct dir_struct *dir,
-			  struct index_state *istate,
-			  const struct pathspec *pathspec);
-extern int read_directory(struct dir_struct *, struct index_state *istate,
-			  const char *path, int len,
-			  const struct pathspec *pathspec);
+int fill_directory(struct dir_struct *dir,
+		   struct index_state *istate,
+		   const struct pathspec *pathspec);
+int read_directory(struct dir_struct *, struct index_state *istate,
+		   const char *path, int len,
+		   const struct pathspec *pathspec);
 
-extern int is_excluded_from_list(const char *pathname, int pathlen,
-				 const char *basename, int *dtype,
-				 struct exclude_list *el,
-				 struct index_state *istate);
+int is_excluded_from_list(const char *pathname, int pathlen,
+			  const char *basename, int *dtype,
+			  struct exclude_list *el,
+			  struct index_state *istate);
 struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 				  struct index_state *istate,
 				  const char *pathname, int len);
@@ -242,39 +242,39 @@ struct dir_entry *dir_add_ignored(struct dir_struct *dir,
  * these implement the matching logic for dir.c:excluded_from_list and
  * attr.c:path_matches()
  */
-extern int match_basename(const char *, int,
-			  const char *, int, int, unsigned);
-extern int match_pathname(const char *, int,
-			  const char *, int,
-			  const char *, int, int, unsigned);
+int match_basename(const char *, int,
+		   const char *, int, int, unsigned);
+int match_pathname(const char *, int,
+		   const char *, int,
+		   const char *, int, int, unsigned);
 
-extern struct exclude *last_exclude_matching(struct dir_struct *dir,
-					     struct index_state *istate,
-					     const char *name, int *dtype);
+struct exclude *last_exclude_matching(struct dir_struct *dir,
+				      struct index_state *istate,
+				      const char *name, int *dtype);
 
-extern int is_excluded(struct dir_struct *dir,
-		       struct index_state *istate,
-		       const char *name, int *dtype);
+int is_excluded(struct dir_struct *dir,
+		struct index_state *istate,
+		const char *name, int *dtype);
 
-extern struct exclude_list *add_exclude_list(struct dir_struct *dir,
-					     int group_type, const char *src);
-extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
-					  struct exclude_list *el, struct  index_state *istate);
-extern void add_excludes_from_file(struct dir_struct *, const char *fname);
-extern int add_excludes_from_blob_to_list(struct object_id *oid,
-					  const char *base, int baselen,
-					  struct exclude_list *el);
-extern void parse_exclude_pattern(const char **string, int *patternlen, unsigned *flags, int *nowildcardlen);
-extern void add_exclude(const char *string, const char *base,
-			int baselen, struct exclude_list *el, int srcpos);
-extern void clear_exclude_list(struct exclude_list *el);
-extern void clear_directory(struct dir_struct *dir);
+struct exclude_list *add_exclude_list(struct dir_struct *dir,
+				      int group_type, const char *src);
+int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
+				   struct exclude_list *el, struct  index_state *istate);
+void add_excludes_from_file(struct dir_struct *, const char *fname);
+int add_excludes_from_blob_to_list(struct object_id *oid,
+				   const char *base, int baselen,
+				   struct exclude_list *el);
+void parse_exclude_pattern(const char **string, int *patternlen, unsigned *flags, int *nowildcardlen);
+void add_exclude(const char *string, const char *base,
+		 int baselen, struct exclude_list *el, int srcpos);
+void clear_exclude_list(struct exclude_list *el);
+void clear_directory(struct dir_struct *dir);
 
 int repo_file_exists(struct repository *repo, const char *path);
 int file_exists(const char *);
 
-extern int is_inside_dir(const char *dir);
-extern int dir_inside_of(const char *subdir, const char *dir);
+int is_inside_dir(const char *dir);
+int dir_inside_of(const char *subdir, const char *dir);
 
 static inline int is_dot_or_dotdot(const char *name)
 {
@@ -283,9 +283,9 @@ static inline int is_dot_or_dotdot(const char *name)
 		 (name[1] == '.' && name[2] == '\0')));
 }
 
-extern int is_empty_dir(const char *dir);
+int is_empty_dir(const char *dir);
 
-extern void setup_standard_excludes(struct dir_struct *dir);
+void setup_standard_excludes(struct dir_struct *dir);
 
 
 /* Constants for remove_dir_recursively: */
@@ -313,26 +313,26 @@ extern void setup_standard_excludes(struct dir_struct *dir);
  * This function uses path as temporary scratch space, but restores it
  * before returning.
  */
-extern int remove_dir_recursively(struct strbuf *path, int flag);
+int remove_dir_recursively(struct strbuf *path, int flag);
 
 /* tries to remove the path with empty directories along it, ignores ENOENT */
-extern int remove_path(const char *path);
+int remove_path(const char *path);
 
-extern int fspathcmp(const char *a, const char *b);
-extern int fspathncmp(const char *a, const char *b, size_t count);
+int fspathcmp(const char *a, const char *b);
+int fspathncmp(const char *a, const char *b, size_t count);
 
 /*
  * The prefix part of pattern must not contains wildcards.
  */
 struct pathspec_item;
-extern int git_fnmatch(const struct pathspec_item *item,
-		       const char *pattern, const char *string,
-		       int prefix);
+int git_fnmatch(const struct pathspec_item *item,
+		const char *pattern, const char *string,
+		int prefix);
 
-extern int submodule_path_match(const struct index_state *istate,
-				const struct pathspec *ps,
-				const char *submodule_name,
-				char *seen);
+int submodule_path_match(const struct index_state *istate,
+			 const struct pathspec *ps,
+			 const char *submodule_name,
+			 char *seen);
 
 static inline int ce_path_match(const struct index_state *istate,
 				const struct cache_entry *ce,
@@ -374,10 +374,10 @@ void remove_untracked_cache(struct index_state *istate);
  * When `recurse_into_nested` is set, recurse into any nested submodules,
  * connecting them as well.
  */
-extern void connect_work_tree_and_git_dir(const char *work_tree,
-					  const char *git_dir,
-					  int recurse_into_nested);
-extern void relocate_gitdir(const char *path,
-			    const char *old_git_dir,
-			    const char *new_git_dir);
+void connect_work_tree_and_git_dir(const char *work_tree,
+				   const char *git_dir,
+				   int recurse_into_nested);
+void relocate_gitdir(const char *path,
+		     const char *old_git_dir,
+		     const char *new_git_dir);
 #endif

@@ -3,10 +3,10 @@
 
 typedef const unsigned char *sha1_access_fn(size_t index, void *table);
 
-extern int sha1_pos(const unsigned char *sha1,
-		    void *table,
-		    size_t nr,
-		    sha1_access_fn fn);
+int sha1_pos(const unsigned char *sha1,
+	     void *table,
+	     size_t nr,
+	     sha1_access_fn fn);
 
 /*
  * Searches for sha1 in table, using the given fanout table to determine the
