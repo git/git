@@ -151,7 +151,7 @@ void todo_list_add_exec_commands(struct todo_list *todo_list,
 int check_todo_list_from_file(struct repository *r);
 int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
-		    const char *onto, const char *orig_head, struct string_list *commands,
+		    struct commit *onto, const char *orig_head, struct string_list *commands,
 		    unsigned autosquash, struct todo_list *todo_list);
 int todo_list_rearrange_squash(struct todo_list *todo_list);
 
@@ -183,7 +183,8 @@ void commit_post_rewrite(struct repository *r,
 			 const struct commit *current_head,
 			 const struct object_id *new_head);
 
-int prepare_branch_to_be_rebased(struct replay_opts *opts, const char *commit);
+int prepare_branch_to_be_rebased(struct repository *r, struct replay_opts *opts,
+				 const char *commit);
 
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
@@ -198,4 +199,4 @@ int read_author_script(const char *path, char **name, char **email, char **date,
 
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);
 int write_basic_state(struct replay_opts *opts, const char *head_name,
-		      const char *onto, const char *orig_head);
+		      struct commit *onto, const char *orig_head);
