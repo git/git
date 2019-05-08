@@ -13,35 +13,40 @@ test_expect_success 'repack' '
 	export PACK
 '
 
-test_expect_success 'create target repositories' '
-	for repo in t1 t2 t3 t4 t5 t6
-	do
-		git init --bare $repo
-	done
-'
-
 test_perf 'index-pack 0 threads' '
-	GIT_DIR=t1 git index-pack --threads=1 --stdin < $PACK
+	rm -rf repo.git &&
+	git init --bare repo.git &&
+	GIT_DIR=repo.git git index-pack --threads=1 --stdin < $PACK
 '
 
 test_perf 'index-pack 1 thread ' '
-	GIT_DIR=t2 GIT_FORCE_THREADS=1 git index-pack --threads=1 --stdin < $PACK
+	rm -rf repo.git &&
+	git init --bare repo.git &&
+	GIT_DIR=repo.git GIT_FORCE_THREADS=1 git index-pack --threads=1 --stdin < $PACK
 '
 
 test_perf 'index-pack 2 threads' '
-	GIT_DIR=t3 git index-pack --threads=2 --stdin < $PACK
+	rm -rf repo.git &&
+	git init --bare repo.git &&
+	GIT_DIR=repo.git git index-pack --threads=2 --stdin < $PACK
 '
 
 test_perf 'index-pack 4 threads' '
-	GIT_DIR=t4 git index-pack --threads=4 --stdin < $PACK
+	rm -rf repo.git &&
+	git init --bare repo.git &&
+	GIT_DIR=repo.git git index-pack --threads=4 --stdin < $PACK
 '
 
 test_perf 'index-pack 8 threads' '
-	GIT_DIR=t5 git index-pack --threads=8 --stdin < $PACK
+	rm -rf repo.git &&
+	git init --bare repo.git &&
+	GIT_DIR=repo.git git index-pack --threads=8 --stdin < $PACK
 '
 
 test_perf 'index-pack default number of threads' '
-	GIT_DIR=t6 git index-pack --stdin < $PACK
+	rm -rf repo.git &&
+	git init --bare repo.git &&
+	GIT_DIR=repo.git git index-pack --stdin < $PACK
 '
 
 test_done
