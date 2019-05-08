@@ -42,7 +42,7 @@ test_expect_success 'rebase --interactive: directory rename detected' '
 		git checkout B^0 &&
 
 		set_fake_editor &&
-		FAKE_LINES="1" git rebase --interactive A &&
+		FAKE_LINES="1" git -c merge.directoryRenames=true rebase --interactive A &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&
@@ -58,7 +58,7 @@ test_expect_failure 'rebase (am): directory rename detected' '
 
 		git checkout B^0 &&
 
-		git rebase A &&
+		git -c merge.directoryRenames=true rebase A &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&
@@ -74,7 +74,7 @@ test_expect_success 'rebase --merge: directory rename detected' '
 
 		git checkout B^0 &&
 
-		git rebase --merge A &&
+		git -c merge.directoryRenames=true rebase --merge A &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&
@@ -92,7 +92,7 @@ test_expect_failure 'am: directory rename detected' '
 
 		git format-patch -1 B &&
 
-		git am --3way 0001*.patch &&
+		git -c merge.directoryRenames=true am --3way 0001*.patch &&
 
 		git ls-files -s >out &&
 		test_line_count = 5 out &&

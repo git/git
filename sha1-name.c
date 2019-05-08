@@ -1608,7 +1608,7 @@ static void diagnose_invalid_oid_path(const char *prefix,
 				      int object_name_len)
 {
 	struct object_id oid;
-	unsigned mode;
+	unsigned short mode;
 
 	if (!prefix)
 		prefix = "";
