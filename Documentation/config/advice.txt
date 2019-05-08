@@ -90,4 +90,6 @@ advice.*::
 	waitingForEditor::
 		Print a message to the terminal whenever Git is waiting for
 		editor input from the user.
+	nestedTag::
+		Advice shown if a user attempts to recursively tag a tag object.
 --
