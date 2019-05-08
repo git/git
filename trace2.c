@@ -734,7 +734,7 @@ void trace2_data_json_fl(const char *file, int line, const char *category,
 	us_elapsed_region = tr2tls_region_elasped_self(us_now);
 
 	for_each_wanted_builtin (j, tgt_j)
-		if (tgt_j->pfn_data_fl)
+		if (tgt_j->pfn_data_json_fl)
 			tgt_j->pfn_data_json_fl(file, line, us_elapsed_absolute,
 						us_elapsed_region, category,
 						repo, key, value);
