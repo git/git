@@ -252,6 +252,14 @@ static int connect_setup(struct transport *transport, int for_push)
 	return 0;
 }
 
+static void die_if_server_options(struct transport *transport)
+{
+	if (!transport->server_options || !transport->server_options->nr)
+		return;
+	advise(_("see protocol.version in 'git help config' for more details"));
+	die(_("server options require protocol version 2 or later"));
+}
+
 /*
  * Obtains the protocol version from the transport and writes it to
  * transport->data->version, first connecting if not already connected.
@@ -286,6 +294,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 		break;
 	case protocol_v1:
 	case protocol_v0:
+		die_if_server_options(transport);
 		get_remote_heads(&reader, &refs,
 				 for_push ? REF_NORMAL : 0,
 				 &data->extra_have,
@@ -362,6 +371,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 		break;
 	case protocol_v1:
 	case protocol_v0:
+		die_if_server_options(transport);
 		refs = fetch_pack(&args, data->fd,
 				  refs_tmp ? refs_tmp : transport->remote_refs,
 				  to_fetch, nr_heads, &data->shallow,
