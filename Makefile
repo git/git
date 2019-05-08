@@ -1176,6 +1176,7 @@ SP_EXTRA_FLAGS =
 
 # For the 'coccicheck' target; setting SPATCH_BATCH_SIZE higher will
 # usually result in less CPU usage at the cost of higher peak memory.
+# Setting it to 0 will feed all files in a single spatch invocation.
 SPATCH_FLAGS = --all-includes --patch .
 SPATCH_BATCH_SIZE = 1
 
@@ -2792,7 +2793,12 @@ endif
 
 %.cocci.patch: %.cocci $(COCCI_SOURCES)
 	@echo '    ' SPATCH $<; \
-	if ! echo $(COCCI_SOURCES) | xargs -n $(SPATCH_BATCH_SIZE) \
+	if test $(SPATCH_BATCH_SIZE) = 0; then \
+		limit=; \
+	else \
+		limit='-n $(SPATCH_BATCH_SIZE)'; \
+	fi; \
+	if ! echo $(COCCI_SOURCES) | xargs $$limit \
 		$(SPATCH) --sp-file $< $(SPATCH_FLAGS) \
 		>$@+ 2>$@.log; \
 	then \
