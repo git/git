@@ -1100,10 +1100,10 @@ listed below are allowed:
 	tags = tags/*/project-a:refs/remotes/project-a/tags/*
 ------------------------------------------------------------------------
 
-Keep in mind that the '\*' (asterisk) wildcard of the local ref
-(right of the ':') *must* be the farthest right path component;
+Keep in mind that the `*` (asterisk) wildcard of the local ref
+(right of the `:`) *must* be the farthest right path component;
 however the remote wildcard may be anywhere as long as it's an
-independent path component (surrounded by '/' or EOL).   This
+independent path component (surrounded by `/` or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using 'git config'.
 
