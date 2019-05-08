@@ -67,6 +67,34 @@ UI, Workflows & Features
  * "git submodule" learns "set-branch" subcommand that allows the
    submodule.*.branch settings to be modified.
 
+ * "git merge-recursive" backend recently learned a new heuristics to
+   infer file movement based on how other files in the same directory
+   moved.  As this is inherently less robust heuristics than the one
+   based on the content similarity of the file itself (rather than
+   based on what its neighbours are doing), it sometimes gives an
+   outcome unexpected by the end users.  This has been toned down to
+   leave the renamed paths in higher/conflicted stages in the index so
+   that the user can examine and confirm the result.
+
+ * "git tag" learned to give an advice suggesting it might be a
+   mistake when creating an annotated or signed tag that points at
+   another tag.
+
+ * The "git pack-objects" command learned to report the number of
+   objects it packed via the trace2 mechanism.
+
+ * The list of conflicted paths shown in the editor while concluding a
+   conflicted merge was shown above the scissors line when the
+   clean-up mode is set to "scissors", even though it was commented
+   out just like the list of updated paths and other information to
+   help the user explain the merge better.
+
+ * The trace2 tracing facility learned to auto-generate a filename
+   when told to log to a directory.
+
+ * "git clone" learned a new --server-option option when talking over
+   the protocol version 2.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -347,9 +375,66 @@ Fixes since v2.21
    eager and considered nonsense strings as if they can be legitimate
    beginning of *-by: trailer.  This has been tightened.
 
- * Build with gettext breaks on recent macOS w/ Homebrew when
-   /usr/local/bin is not on PATH, which has been corrected.
+ * Builds with gettext broke on recent macOS w/ Homebrew, which
+   seems to have stopped including from /usr/local/include; this
+   has been corrected.
    (merge 92a1377a2a js/macos-gettext-build later to maint).
+
+ * Running "git add" on a repository created inside the current
+   repository is an explicit indication that the user wants to add it
+   as a submodule, but when the HEAD of the inner repository is on an
+   unborn branch, it cannot be added as a submodule.  Worse, the files
+   in its working tree can be added as if they are a part of the outer
+   repository, which is not what the user wants.  These problems are
+   being addressed.
+   (merge f937bc2f86 km/empty-repo-is-still-a-repo later to maint).
+
+ * "git cherry-pick" run with the "-x" or the "--signoff" option used
+   to (and more importantly, ought to) clean up the commit log message
+   with the --cleanup=space option by default, but this has been
+   broken since late 2017.  This has been fixed.
+
+ * When given a tag that points at a commit-ish, "git replace --graft"
+   failed to peel the tag before writing a replace ref, which did not
+   make sense because the old graft mechanism the feature wants to
+   mimick only allowed to replace one commit object with another.
+   This has been fixed.
+   (merge ee521ec4cb cc/replace-graft-peel-tags later to maint).
+
+ * Code tightening against a "wrong" object appearing where an object
+   of a different type is expected, instead of blindly assuming that
+   the connection between objects are correctly made.
+   (merge 97dd512af7 tb/unexpected later to maint).
+
+ * An earlier update for MinGW and Cygwin accidentally broke MSVC build,
+   which has been fixed.
+   (merge 22c3634c0f ss/msvc-path-utils-fix later to maint).
+
+ * %(push:track) token used in the --format option to "git
+   for-each-ref" and friends was not showing the right branch, which
+   has been fixed.
+   (merge c646d0934e dr/ref-filter-push-track-fix later to maint).
+
+ * "make check-docs", "git help -a", etc. did not account for cases
+   where a particular build may deliberately omit some subcommands,
+   which has been corrected.
+
+ * The logic to tell if a Git repository has a working tree protects
+   "git branch -D" from removing the branch that is currently checked
+   out by mistake.  The implementation of this logic was broken for
+   repositories with unusual name, which unfortunately is the norm for
+   submodules these days.  This has been fixed.
+   (merge f3534c98e4 jt/submodule-repo-is-with-worktree later to maint).
+
+ * AIX shared the same build issues with other BSDs around fileno(fp),
+   which has been corrected.
+   (merge ee662bf5c6 cc/aix-has-fileno-as-a-macro later to maint).
+
+ * The autoconf generated configure script failed to use the right
+   gettext() implementations from -libintl by ignoring useless stub
+   implementations shipped in some C library, which has been
+   corrected.
+   (merge b71e56a683 vk/autoconf-gettext later to maint).
 
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
@@ -385,3 +470,4 @@ Fixes since v2.21
    (merge f64a21bd82 tz/doc-apostrophe-no-longer-needed later to maint).
    (merge dbe7b41019 js/t3301-unbreak-notes-test later to maint).
    (merge d8083e4180 km/t3000-retitle later to maint).
+   (merge 9e4cbccbd7 tz/git-svn-doc-markup-fix later to maint).
