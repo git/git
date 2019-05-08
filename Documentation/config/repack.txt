@@ -24,4 +24,4 @@ repack.writeBitmaps::
 	packs created for clones and fetches, at the cost of some disk
 	space and extra time spent on the initial repack.  This has
 	no effect if multiple packfiles are created.
-	Defaults to false.
+	Defaults to true on bare repos, false otherwise.
