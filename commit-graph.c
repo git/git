@@ -984,6 +984,37 @@ static uint32_t count_distinct_commits(struct write_commit_graph_context *ctx)
 	return count_distinct;
 }
 
+static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
+{
+	uint32_t i;
+	struct commit_list *parent;
+
+	ctx->num_extra_edges = 0;
+	if (ctx->report_progress)
+		ctx->progress = start_delayed_progress(
+			_("Finding extra edges in commit graph"),
+			ctx->oids.nr);
+	for (i = 0; i < ctx->oids.nr; i++) {
+		int num_parents = 0;
+		display_progress(ctx->progress, i + 1);
+		if (i > 0 && oideq(&ctx->oids.list[i - 1], &ctx->oids.list[i]))
+			continue;
+
+		ctx->commits.list[ctx->commits.nr] = lookup_commit(ctx->r, &ctx->oids.list[i]);
+		parse_commit_no_graph(ctx->commits.list[ctx->commits.nr]);
+
+		for (parent = ctx->commits.list[ctx->commits.nr]->parents;
+		     parent; parent = parent->next)
+			num_parents++;
+
+		if (num_parents > 2)
+			ctx->num_extra_edges += num_parents - 1;
+
+		ctx->commits.nr++;
+	}
+	stop_progress(&ctx->progress);
+}
+
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
@@ -997,7 +1028,6 @@ int write_commit_graph(const char *obj_dir,
 	uint32_t chunk_ids[5];
 	uint64_t chunk_offsets[5];
 	int num_chunks;
-	struct commit_list *parent;
 	const unsigned hashsz = the_hash_algo->rawsz;
 	struct strbuf progress_title = STRBUF_INIT;
 	int res = 0;
@@ -1056,30 +1086,7 @@ int write_commit_graph(const char *obj_dir,
 	ctx->commits.alloc = count_distinct;
 	ALLOC_ARRAY(ctx->commits.list, ctx->commits.alloc);
 
-	ctx->num_extra_edges = 0;
-	if (ctx->report_progress)
-		ctx->progress = start_delayed_progress(
-			_("Finding extra edges in commit graph"),
-			ctx->oids.nr);
-	for (i = 0; i < ctx->oids.nr; i++) {
-		int num_parents = 0;
-		display_progress(ctx->progress, i + 1);
-		if (i > 0 && oideq(&ctx->oids.list[i - 1], &ctx->oids.list[i]))
-			continue;
-
-		ctx->commits.list[ctx->commits.nr] = lookup_commit(ctx->r, &ctx->oids.list[i]);
-		parse_commit_no_graph(ctx->commits.list[ctx->commits.nr]);
-
-		for (parent = ctx->commits.list[ctx->commits.nr]->parents;
-		     parent; parent = parent->next)
-			num_parents++;
-
-		if (num_parents > 2)
-			ctx->num_extra_edges += num_parents - 1;
-
-		ctx->commits.nr++;
-	}
-	stop_progress(&ctx->progress);
+	copy_oids_to_commits(ctx);
 
 	if (ctx->commits.nr >= GRAPH_EDGE_LAST_MASK) {
 		error(_("too many commits to write graph"));
