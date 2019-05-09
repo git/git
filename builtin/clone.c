@@ -357,8 +357,7 @@ static void setup_reference(void)
 			     add_one_reference, &required);
 }
 
-static void copy_alternates(struct strbuf *src, struct strbuf *dst,
-			    const char *src_repo)
+static void copy_alternates(struct strbuf *src, const char *src_repo)
 {
 	/*
 	 * Read from the source objects/info/alternates file
@@ -439,7 +438,7 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 
 		/* Files that cannot be copied bit-for-bit... */
 		if (!strcmp(src->buf + src_baselen, "/info/alternates")) {
-			copy_alternates(src, dest, src_repo);
+			copy_alternates(src, src_repo);
 			continue;
 		}
 
