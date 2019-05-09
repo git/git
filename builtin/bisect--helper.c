@@ -570,7 +570,10 @@ static int bisect_start(struct bisect_terms *terms, int no_checkout,
 	write_file(git_path_bisect_start(), "%s\n", start_head.buf);
 
 	if (no_checkout) {
-		get_oid(start_head.buf, &oid);
+		if (get_oid(start_head.buf, &oid) < 0) {
+			retval = error(_("invalid ref: '%s'"), start_head.buf);
+			goto finish;
+		}
 		if (update_ref(NULL, "BISECT_HEAD", &oid, NULL, 0,
 			       UPDATE_REFS_MSG_ON_ERR)) {
 			retval = -1;
