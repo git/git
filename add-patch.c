@@ -218,6 +218,7 @@ static void err(struct add_p_state *s, const char *fmt, ...)
 	vfprintf(stderr, fmt, args);
 	fputs(s->s.reset_color, stderr);
 	fputc('\n', stderr);
+	va_end(args);
 }
 
 static void setup_child_process(struct child_process *cp,
