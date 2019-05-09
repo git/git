@@ -2045,9 +2045,7 @@ static void wt_porcelain_v2_submodule_state(
 /*
  * Fix-up changed entries before we print them.
  */
-static void wt_porcelain_v2_fix_up_changed(
-	struct string_list_item *it,
-	struct wt_status *s)
+static void wt_porcelain_v2_fix_up_changed(struct string_list_item *it)
 {
 	struct wt_status_change_data *d = it->util;
 
@@ -2107,7 +2105,7 @@ static void wt_porcelain_v2_print_changed_entry(
 	char submodule_token[5];
 	char sep_char, eol_char;
 
-	wt_porcelain_v2_fix_up_changed(it, s);
+	wt_porcelain_v2_fix_up_changed(it);
 	wt_porcelain_v2_submodule_state(d, submodule_token);
 
 	key[0] = d->index_status ? d->index_status : '.';
