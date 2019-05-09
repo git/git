@@ -307,6 +307,54 @@ sub signal_handler {
 $SIG{TERM} = \&signal_handler;
 $SIG{INT}  = \&signal_handler;
 
+# Read our sendemail.* config
+sub read_config {
+	my ($prefix) = @_;
+
+	foreach my $setting (keys %config_bool_settings) {
+		my $target = $config_bool_settings{$setting}->[0];
+		$$target = Git::config_bool(@repo, "$prefix.$setting") unless (defined $$target);
+	}
+
+	foreach my $setting (keys %config_path_settings) {
+		my $target = $config_path_settings{$setting};
+		if (ref($target) eq "ARRAY") {
+			unless (@$target) {
+				my @values = Git::config_path(@repo, "$prefix.$setting");
+				@$target = @values if (@values && defined $values[0]);
+			}
+		}
+		else {
+			$$target = Git::config_path(@repo, "$prefix.$setting") unless (defined $$target);
+		}
+	}
+
+	foreach my $setting (keys %config_settings) {
+		my $target = $config_settings{$setting};
+		next if $setting eq "to" and defined $no_to;
+		next if $setting eq "cc" and defined $no_cc;
+		next if $setting eq "bcc" and defined $no_bcc;
+		if (ref($target) eq "ARRAY") {
+			unless (@$target) {
+				my @values = Git::config(@repo, "$prefix.$setting");
+				@$target = @values if (@values && defined $values[0]);
+			}
+		}
+		else {
+			$$target = Git::config(@repo, "$prefix.$setting") unless (defined $$target);
+		}
+	}
+
+	if (!defined $smtp_encryption) {
+		my $enc = Git::config(@repo, "$prefix.smtpencryption");
+		if (defined $enc) {
+			$smtp_encryption = $enc;
+		} elsif (Git::config_bool(@repo, "$prefix.smtpssl")) {
+			$smtp_encryption = 'ssl';
+		}
+	}
+}
+
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
 
@@ -386,55 +434,6 @@ die __("Cannot run git format-patch from outside a repository\n")
 die __("`batch-size` and `relogin` must be specified together " .
 	"(via command-line or configuration option)\n")
 	if defined $relogin_delay and not defined $batch_size;
-
-# Now, let's fill any that aren't set in with defaults:
-
-sub read_config {
-	my ($prefix) = @_;
-
-	foreach my $setting (keys %config_bool_settings) {
-		my $target = $config_bool_settings{$setting}->[0];
-		$$target = Git::config_bool(@repo, "$prefix.$setting") unless (defined $$target);
-	}
-
-	foreach my $setting (keys %config_path_settings) {
-		my $target = $config_path_settings{$setting};
-		if (ref($target) eq "ARRAY") {
-			unless (@$target) {
-				my @values = Git::config_path(@repo, "$prefix.$setting");
-				@$target = @values if (@values && defined $values[0]);
-			}
-		}
-		else {
-			$$target = Git::config_path(@repo, "$prefix.$setting") unless (defined $$target);
-		}
-	}
-
-	foreach my $setting (keys %config_settings) {
-		my $target = $config_settings{$setting};
-		next if $setting eq "to" and defined $no_to;
-		next if $setting eq "cc" and defined $no_cc;
-		next if $setting eq "bcc" and defined $no_bcc;
-		if (ref($target) eq "ARRAY") {
-			unless (@$target) {
-				my @values = Git::config(@repo, "$prefix.$setting");
-				@$target = @values if (@values && defined $values[0]);
-			}
-		}
-		else {
-			$$target = Git::config(@repo, "$prefix.$setting") unless (defined $$target);
-		}
-	}
-
-	if (!defined $smtp_encryption) {
-		my $enc = Git::config(@repo, "$prefix.smtpencryption");
-		if (defined $enc) {
-			$smtp_encryption = $enc;
-		} elsif (Git::config_bool(@repo, "$prefix.smtpssl")) {
-			$smtp_encryption = 'ssl';
-		}
-	}
-}
 
 # read configuration from [sendemail "$identity"], fall back on [sendemail]
 $identity = Git::config(@repo, "sendemail.identity") unless (defined $identity);
