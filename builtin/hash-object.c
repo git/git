@@ -108,7 +108,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	int i;
 	const char *errstr = NULL;
 
-	argc = parse_options(argc, argv, NULL, hash_object_options,
+	argc = parse_options(argc, argv, prefix, hash_object_options,
 			     hash_object_usage, 0);
 
 	if (flags & HASH_WRITE_OBJECT)
