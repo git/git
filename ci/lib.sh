@@ -116,10 +116,12 @@ then
 	CI_OS_NAME="$(echo "$AGENT_OS" | tr A-Z a-z)"
 	test darwin != "$CI_OS_NAME" || CI_OS_NAME=osx
 	CI_REPO_SLUG="$(expr "$BUILD_REPOSITORY_URI" : '.*/\([^/]*/[^/]*\)$')"
+	jobs=10
 	if test -n "$MSVC"
 	then
 		CC=compat/vcbuild/scripts/clink.pl
 		jobname=windows-msvc
+		jobs=4
 	fi
 	CC="${CC:-gcc}"
 
@@ -132,9 +134,9 @@ then
 	}
 
 	BREW_INSTALL_PACKAGES=gcc@8
-	export GIT_PROVE_OPTS="--timer --jobs 10 --state=failed,slow,save"
+	export GIT_PROVE_OPTS="--timer --jobs $jobs --state=failed,slow,save"
 	export GIT_TEST_OPTS="--verbose-log -x --write-junit-xml"
-	MAKEFLAGS="$MAKEFLAGS --jobs=10"
+	MAKEFLAGS="$MAKEFLAGS --jobs=$jobs"
 	test windows_nt != "$CI_OS_NAME" ||
 	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
 else
