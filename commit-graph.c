@@ -963,6 +963,27 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 }
 
+static uint32_t count_distinct_commits(struct write_commit_graph_context *ctx)
+{
+	uint32_t i, count_distinct = 1;
+
+	if (ctx->report_progress)
+		ctx->progress = start_delayed_progress(
+			_("Counting distinct commits in commit graph"),
+			ctx->oids.nr);
+	display_progress(ctx->progress, 0); /* TODO: Measure QSORT() progress */
+	QSORT(ctx->oids.list, ctx->oids.nr, commit_compare);
+
+	for (i = 1; i < ctx->oids.nr; i++) {
+		display_progress(ctx->progress, i + 1);
+		if (!oideq(&ctx->oids.list[i - 1], &ctx->oids.list[i]))
+			count_distinct++;
+	}
+	stop_progress(&ctx->progress);
+
+	return count_distinct;
+}
+
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
@@ -1024,19 +1045,7 @@ int write_commit_graph(const char *obj_dir,
 
 	close_reachable(ctx);
 
-	if (ctx->report_progress)
-		ctx->progress = start_delayed_progress(
-			_("Counting distinct commits in commit graph"),
-			ctx->oids.nr);
-	display_progress(ctx->progress, 0); /* TODO: Measure QSORT() progress */
-	QSORT(ctx->oids.list, ctx->oids.nr, commit_compare);
-	count_distinct = 1;
-	for (i = 1; i < ctx->oids.nr; i++) {
-		display_progress(ctx->progress, i + 1);
-		if (!oideq(&ctx->oids.list[i - 1], &ctx->oids.list[i]))
-			count_distinct++;
-	}
-	stop_progress(&ctx->progress);
+	count_distinct = count_distinct_commits(ctx);
 
 	if (count_distinct >= GRAPH_EDGE_LAST_MASK) {
 		error(_("the commit graph format cannot write %d commits"), count_distinct);
