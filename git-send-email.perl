@@ -169,7 +169,7 @@ my $re_encoded_text = qr/[^? \000-\037\177-\377]+/;
 my $re_encoded_word = qr/=\?($re_token)\?($re_token)\?($re_encoded_text)\?=/;
 
 # Variables we fill in automatically, or via prompting:
-my (@to,$no_to,@initial_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
+my (@to,$no_to,@initial_to,@cc,$no_cc,@initial_cc,@initial_bcc,$no_bcc,@xh,
 	$initial_in_reply_to,$reply_to,$initial_subject,@files,
 	$author,$sender,$smtp_authpass,$annotate,$use_xmailer,$compose,$time);
 
@@ -264,7 +264,7 @@ my %config_settings = (
     "cc" => \@initial_cc,
     "cccmd" => \$cc_cmd,
     "aliasfiletype" => \$aliasfiletype,
-    "bcc" => \@bcclist,
+    "bcc" => \@initial_bcc,
     "suppresscc" => \@suppress_cc,
     "envelopesender" => \$envelope_sender,
     "confirm"   => \$confirm,
@@ -374,7 +374,7 @@ $rc = GetOptions(
 		    "no-to" => \$no_to,
 		    "cc=s" => \@initial_cc,
 		    "no-cc" => \$no_cc,
-		    "bcc=s" => \@bcclist,
+		    "bcc=s" => \@initial_bcc,
 		    "no-bcc" => \$no_bcc,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "no-chain-reply-to" => sub {$chain_reply_to = 0},
@@ -922,7 +922,7 @@ sub expand_one_alias {
 
 @initial_to = process_address_list(@initial_to);
 @initial_cc = process_address_list(@initial_cc);
-@bcclist = process_address_list(@bcclist);
+@initial_bcc = process_address_list(@initial_bcc);
 
 if ($thread && !defined $initial_in_reply_to && $prompting) {
 	$initial_in_reply_to = ask(
@@ -1345,7 +1345,7 @@ sub send_message {
 		    }
 	       @cc);
 	my $to = join (",\n\t", @recipients);
-	@recipients = unique_email_list(@recipients,@cc,@bcclist);
+	@recipients = unique_email_list(@recipients,@cc,@initial_bcc);
 	@recipients = (map { extract_valid_address_or_die($_) } @recipients);
 	my $date = format_2822_time($time++);
 	my $gitversion = '@@GIT_VERSION@@';
