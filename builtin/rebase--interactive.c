@@ -33,7 +33,8 @@ static int get_revision_ranges(const char *upstream, const char *onto,
 		const char *shortrev;
 		struct object_id rev_oid;
 
-		get_oid(base_rev, &rev_oid);
+		if (get_oid(base_rev, &rev_oid) < 0)
+			return error(_("invalid rev '%s'"), base_rev);
 		shortrev = find_unique_abbrev(&rev_oid, DEFAULT_ABBREV);
 
 		*shortrevisions = xstrfmt("%s..%s", shortrev, shorthead);
