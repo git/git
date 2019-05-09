@@ -4883,7 +4883,8 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	struct object_id oid;
 	struct stat st;
 
-	get_oid(onto, &oid);
+	if (get_oid(onto, &oid) < 0)
+		return error(_("invalid rev: '%s'"), onto);
 	shortonto = find_unique_abbrev(&oid, DEFAULT_ABBREV);
 
 	if (!lstat(todo_file, &st) && st.st_size == 0 &&
