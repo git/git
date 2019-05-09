@@ -309,9 +309,8 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 	return list;
 
 Error:
-	errno = (status == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(status);
-	trace_printf_key(&trace_fscache, "fscache: error(%d) unable to query directory contents '%.*s'\n",
-		errno, dir->len, dir->name);
+	trace_printf_key(&trace_fscache, "fscache: status(%ld) unable to query directory contents '%.*s'\n",
+		status, dir->len, dir->name);
 	CloseHandle(h);
 	fsentry_release(list);
 	return NULL;
