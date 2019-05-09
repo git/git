@@ -912,6 +912,44 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 	return 0;
 }
 
+static void fill_oids_from_commit_hex(struct write_commit_graph_context *ctx,
+				      struct string_list *commit_hex)
+{
+	uint32_t i;
+	struct strbuf progress_title = STRBUF_INIT;
+
+	if (ctx->report_progress) {
+		strbuf_addf(&progress_title,
+			    Q_("Finding commits for commit graph from %d ref",
+			       "Finding commits for commit graph from %d refs",
+			       commit_hex->nr),
+			    commit_hex->nr);
+		ctx->progress = start_delayed_progress(
+					progress_title.buf,
+					commit_hex->nr);
+	}
+	for (i = 0; i < commit_hex->nr; i++) {
+		const char *end;
+		struct object_id oid;
+		struct commit *result;
+
+		display_progress(ctx->progress, i + 1);
+		if (commit_hex->items[i].string &&
+		    parse_oid_hex(commit_hex->items[i].string, &oid, &end))
+			continue;
+
+		result = lookup_commit_reference_gently(ctx->r, &oid, 1);
+
+		if (result) {
+			ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
+			oidcpy(&ctx->oids.list[ctx->oids.nr], &(result->object.oid));
+			ctx->oids.nr++;
+		}
+	}
+	stop_progress(&ctx->progress);
+	strbuf_release(&progress_title);
+}
+
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
@@ -965,38 +1003,8 @@ int write_commit_graph(const char *obj_dir,
 			goto cleanup;
 	}
 
-	if (commit_hex) {
-		if (ctx->report_progress) {
-			strbuf_addf(&progress_title,
-				    Q_("Finding commits for commit graph from %d ref",
-				       "Finding commits for commit graph from %d refs",
-				       commit_hex->nr),
-				    commit_hex->nr);
-			ctx->progress = start_delayed_progress(
-						progress_title.buf,
-						commit_hex->nr);
-		}
-		for (i = 0; i < commit_hex->nr; i++) {
-			const char *end;
-			struct object_id oid;
-			struct commit *result;
-
-			display_progress(ctx->progress, i + 1);
-			if (commit_hex->items[i].string &&
-			    parse_oid_hex(commit_hex->items[i].string, &oid, &end))
-				continue;
-
-			result = lookup_commit_reference_gently(ctx->r, &oid, 1);
-
-			if (result) {
-				ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
-				oidcpy(&ctx->oids.list[ctx->oids.nr], &(result->object.oid));
-				ctx->oids.nr++;
-			}
-		}
-		stop_progress(&ctx->progress);
-		strbuf_reset(&progress_title);
-	}
+	if (commit_hex)
+		fill_oids_from_commit_hex(ctx, commit_hex);
 
 	if (!pack_indexes && !commit_hex) {
 		if (ctx->report_progress)
