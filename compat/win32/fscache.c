@@ -454,8 +454,10 @@ int fscache_enable(size_t initial_size)
 	if (!initialized) {
 		if (!dwTlsIndex) {
 			dwTlsIndex = TlsAlloc();
-			if (dwTlsIndex == TLS_OUT_OF_INDEXES)
+			if (dwTlsIndex == TLS_OUT_OF_INDEXES) {
+				LeaveCriticalSection(&fscache_cs);
 				return 0;
+			}
 		}
 
 		/* redirect opendir and lstat to the fscache implementations */
