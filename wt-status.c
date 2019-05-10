@@ -1215,7 +1215,9 @@ static void abbrev_sha1_in_line(struct strbuf *line)
 	int i;
 
 	if (starts_with(line->buf, "exec ") ||
-	    starts_with(line->buf, "x "))
+	    starts_with(line->buf, "x ") ||
+	    starts_with(line->buf, "label ") ||
+	    starts_with(line->buf, "l "))
 		return;
 
 	split = strbuf_split_max(line, ' ', 3);
