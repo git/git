@@ -22,7 +22,8 @@ SYNOPSIS
 		   [--rfc] [--subject-prefix=Subject-Prefix]
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
-		   [--[no-]cover-letter] [--quiet] [--notes[=<ref>]]
+		   [--[no-]cover-letter] [--quiet]
+		   [--no-notes | --notes[=<ref>]]
 		   [--interdiff=<previous>]
 		   [--range-diff=<previous> [--creation-factor=<percent>]]
 		   [--progress]
@@ -263,6 +264,7 @@ material (this may change in the future).
 	for details.
 
 --notes[=<ref>]::
+--no-notes::
 	Append the notes (see linkgit:git-notes[1]) for the commit
 	after the three-dash line.
 +
