@@ -3131,7 +3131,7 @@ static int write_shared_index(struct index_state *istate,
 	trace2_region_enter_printf("index", "shared/do_write_index",
 				   the_repository, "%s", (*temp)->filename.buf);
 	ret = do_write_index(si->base, *temp, 1);
-	trace2_region_enter_printf("index", "shared/do_write_index",
+	trace2_region_leave_printf("index", "shared/do_write_index",
 				   the_repository, "%s", (*temp)->filename.buf);
 
 	if (ret)
