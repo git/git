@@ -174,7 +174,7 @@ test_expect_success 'reinit' '
 test_expect_success 'init with --template' '
 	mkdir template-source &&
 	echo content >template-source/file &&
-	git init --template=../template-source template-custom &&
+	git init --template=template-source template-custom &&
 	test_cmp template-source/file template-custom/.git/file
 '
 
