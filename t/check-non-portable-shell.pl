@@ -27,14 +27,14 @@ for my $i (@ARGV) {
 	close $f;
 }
 
+my $line = '';
 while (<>) {
 	chomp;
+	$line .= $_;
 	# stitch together incomplete lines (those ending with "\")
-	while (s/\\$//) {
-		$_ .= readline;
-		chomp;
-	}
+	next if $line =~ s/\\$//;
 
+	$_ = $line;
 	/\bcp\s+-a/ and err 'cp -a is not portable';
 	/\bsed\s+-[^efn]\s+/ and err 'sed option not portable (use only -n, -e, -f)';
 	/\becho\s+-[neE]/ and err 'echo with option is not portable (use printf)';
@@ -48,6 +48,7 @@ while (<>) {
 	/\bexport\s+[A-Za-z0-9_]*=/ and err '"export FOO=bar" is not portable (use FOO=bar && export FOO)';
 	/^\s*([A-Z0-9_]+=(\w+|(["']).*?\3)\s+)+(\w+)/ and exists($func{$4}) and
 		err '"FOO=bar shell_func" assignment extends beyond "shell_func"';
+	$line = '';
 	# this resets our $. for each file
 	close ARGV if eof;
 }
