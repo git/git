@@ -2569,6 +2569,8 @@ void mingw_startup(void)
 	wchar_t **wenv, **wargv;
 	_startupinfo si;
 
+	trace2_initialize_clock();
+
 	maybe_redirect_std_handles();
 
 	/* get wide char arguments and environment */

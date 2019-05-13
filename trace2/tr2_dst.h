@@ -2,9 +2,10 @@
 #define TR2_DST_H
 
 struct strbuf;
+#include "trace2/tr2_sysenv.h"
 
 struct tr2_dst {
-	const char *const env_var_name;
+	enum tr2_sysenv_variable sysenv_var;
 	int fd;
 	unsigned int initialized : 1;
 	unsigned int need_close : 1;
