@@ -35,40 +35,40 @@ static void init_prefix_map(struct prefix_map *prefix_map,
 static void add_prefix_item(struct prefix_map *prefix_map,
 			    struct prefix_item *item)
 {
-	struct prefix_map_entry *e = xmalloc(sizeof(*e)), *e2;
+	struct prefix_map_entry e = { { NULL } }, *e2;
 	int j;
 
-	e->item = item;
-	e->name = e->item->name;
+	e.item = item;
+	e.name = item->name;
 
-	for (j = prefix_map->min_length; j <= prefix_map->max_length; j++) {
-		if (!isascii(e->name[j])) {
-			free(e);
+	for (j = prefix_map->min_length;
+	     j <= prefix_map->max_length && e.name[j]; j++) {
+		/* Avoid breaking UTF-8 multi-byte sequences */
+		if (!isascii(e.name[j]))
 			break;
-		}
 
-		e->prefix_length = j;
-		hashmap_entry_init(e, memhash(e->name, j));
-		e2 = hashmap_get(&prefix_map->map, e, NULL);
+		e.prefix_length = j;
+		hashmap_entry_init(&e, memhash(e.name, j));
+		e2 = hashmap_get(&prefix_map->map, &e, NULL);
 		if (!e2) {
-			/* prefix is unique so far */
-			e->item->prefix_length = j;
-			hashmap_add(&prefix_map->map, e);
+			/* prefix is unique at this stage */
+			item->prefix_length = j;
+			add_prefix_entry(&prefix_map->map, e.name, j, item);
 			break;
 		}
 
 		if (!e2->item)
 			continue; /* non-unique prefix */
 
-		if (j != e2->item->prefix_length)
-			BUG("unexpected prefix length: %d != %d",
-			    (int)j, (int)e2->item->prefix_length);
+		if (j != e2->item->prefix_length || memcmp(e.name, e2->name, j))
+			BUG("unexpected prefix length: %d != %d (%s != %s)",
+			    j, (int)e2->item->prefix_length, e.name, e2->name);
 
 		/* skip common prefix */
-		for (; j < prefix_map->max_length && e->name[j]; j++) {
-			if (e->item->name[j] != e2->item->name[j])
+		for (; j < prefix_map->max_length && e.name[j]; j++) {
+			if (e.item->name[j] != e2->item->name[j])
 				break;
-			add_prefix_entry(&prefix_map->map, e->name, j + 1,
+			add_prefix_entry(&prefix_map->map, e.name, j + 1,
 					 NULL);
 		}
 
@@ -83,16 +83,14 @@ static void add_prefix_item(struct prefix_map *prefix_map,
 			e2->item->prefix_length = 0;
 		e2->item = NULL;
 
-		if (j < prefix_map->max_length && e->name[j]) {
+		if (j < prefix_map->max_length && e.name[j]) {
 			/* found a unique prefix for the item */
-			e->item->prefix_length = j + 1;
-			add_prefix_entry(&prefix_map->map, e->name, j + 1,
-					 e->item);
-		} else {
+			e.item->prefix_length = j + 1;
+			add_prefix_entry(&prefix_map->map, e.name, j + 1,
+					 e.item);
+		} else
 			/* item has no (short enough) unique prefix */
-			e->item->prefix_length = 0;
-			free(e);
-		}
+			e.item->prefix_length = 0;
 
 		break;
 	}
