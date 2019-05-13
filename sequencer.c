@@ -2168,6 +2168,41 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	return !item->commit;
 }
 
+int sequencer_get_last_command(struct repository *r, enum replay_action *action)
+{
+	struct todo_item item;
+	char *eol;
+	const char *todo_file;
+	struct strbuf buf = STRBUF_INIT;
+	int ret = -1;
+
+	todo_file = git_path_todo_file();
+	if (strbuf_read_file(&buf, todo_file, 0) < 0) {
+		if (errno == ENOENT)
+			return -1;
+		else
+			return error_errno("unable to open '%s'", todo_file);
+	}
+	eol = strchrnul(buf.buf, '\n');
+	if (buf.buf != eol && eol[-1] == '\r')
+		eol--; /* strip Carriage Return */
+	if (parse_insn_line(r, &item, buf.buf, buf.buf, eol))
+		goto fail;
+	if (item.command == TODO_PICK)
+		*action = REPLAY_PICK;
+	else if (item.command == TODO_REVERT)
+		*action = REPLAY_REVERT;
+	else
+		goto fail;
+
+	ret = 0;
+
+ fail:
+	strbuf_release(&buf);
+
+	return ret;
+}
+
 int todo_list_parse_insn_buffer(struct repository *r, char *buf,
 				struct todo_list *todo_list)
 {
@@ -2249,6 +2284,57 @@ static ssize_t strbuf_read_file_or_whine(struct strbuf *sb, const char *path)
 	if (len < 0)
 		return error(_("could not read '%s'."), path);
 	return len;
+}
+
+static int have_finished_the_last_pick(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *eol;
+	const char *todo_path = git_path_todo_file();
+	int ret = 0;
+
+	if (strbuf_read_file(&buf, todo_path, 0) < 0) {
+		if (errno == ENOENT) {
+			return 0;
+		} else {
+			error_errno("unable to open '%s'", todo_path);
+			return 0;
+		}
+	}
+	/* If there is only one line then we are done */
+	eol = strchr(buf.buf, '\n');
+	if (!eol || !eol[1])
+		ret = 1;
+
+	strbuf_release(&buf);
+
+	return ret;
+}
+
+void sequencer_post_commit_cleanup(struct repository *r)
+{
+	struct replay_opts opts = REPLAY_OPTS_INIT;
+	int need_cleanup = 0;
+
+	if (file_exists(git_path_cherry_pick_head(r))) {
+		unlink(git_path_cherry_pick_head(r));
+		opts.action = REPLAY_PICK;
+		need_cleanup = 1;
+	}
+
+	if (file_exists(git_path_revert_head(r))) {
+		unlink(git_path_revert_head(r));
+		opts.action = REPLAY_REVERT;
+		need_cleanup = 1;
+	}
+
+	if (!need_cleanup)
+		return;
+
+	if (!have_finished_the_last_pick())
+		return;
+
+	sequencer_remove_state(&opts);
 }
 
 static int read_populate_todo(struct repository *r,
