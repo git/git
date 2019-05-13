@@ -95,6 +95,10 @@ UI, Workflows & Features
  * "git clone" learned a new --server-option option when talking over
    the protocol version 2.
 
+ * The connectivity bitmaps are created by default in bare
+   repositories now; also the pathname hash-cache is created by
+   default to avoid making crappy deltas when repacking.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -157,6 +161,22 @@ Performance, Internal Implementation, Development Support etc.
    machinery to discover them one by one.  The code learned to aim to
    achieve better performance by batching the request for these
    promised blobs.
+
+ * During an initial "git clone --depth=..." partial clone, it is
+   pointless to spend cycles for a large portion of the connectivity
+   check that enumerates and skips promisor objects (which by
+   definition is all objects fetched from the other side).  This has
+   been optimized out.
+
+ * Mechanically and systematically drop "extern" from function
+   declarlation.
+
+ * The script to aggregate perf result unconditionally depended on
+   libjson-perl even though it did not have to, which has been
+   corrected.
+
+ * The internal implementation of "git rebase -i" has been updated to
+   avoid forking a separate "rebase--interactive" process.
 
 
 Fixes since v2.21
@@ -436,6 +456,24 @@ Fixes since v2.21
    corrected.
    (merge b71e56a683 vk/autoconf-gettext later to maint).
 
+ * Fix index-pack perf test so that the repeated invocations always
+   run in an empty repository, which emulates the initial clone
+   situation better.
+   (merge 775c71e16d jk/p5302-avoid-collision-check-cost later to maint).
+
+ * A "ls-files" that emulates "find" to enumerate files in the working
+   tree resulted in duplicated Makefile rules that caused the build to
+   issue an unnecessary warning during a trial build after merge
+   conflicts are resolved in working tree *.h files but before the
+   resolved results are added to the index.  This has been corrected.
+
+ * "git chery-pick" (and "revert" that shares the same runtime engine)
+   that deals with multiple commits got confused when the final step
+   gets stopped with a conflict and the user concluded the sequence
+   with "git commit".  Attempt to fix it by cleaning up the state
+   files used by these commands in such a situation.
+   (merge 4a72486de9 pw/clean-sequencer-state-upon-final-commit later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
    (merge 90503a240b js/doc-symref-in-proto-v1 later to maint).
@@ -471,3 +509,4 @@ Fixes since v2.21
    (merge dbe7b41019 js/t3301-unbreak-notes-test later to maint).
    (merge d8083e4180 km/t3000-retitle later to maint).
    (merge 9e4cbccbd7 tz/git-svn-doc-markup-fix later to maint).
+   (merge da9ca955a7 jk/ls-files-doc-markup-fix later to maint).
