@@ -207,7 +207,7 @@ struct create_tag_options {
 };
 
 static const char message_advice_nested_tag[] =
-	N_("You have created a nested tag. The object referred to by your new is\n"
+	N_("You have created a nested tag. The object referred to by your new tag is\n"
 	   "already a tag. If you meant to tag the object that it points to, use:\n"
 	   "\n"
 	   "\tgit tag -f %s %s^{}");
