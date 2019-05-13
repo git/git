@@ -7,7 +7,6 @@ test_perf_default_repo
 
 test_expect_success 'create bitmapped server repo' '
 	git config pack.writebitmaps true &&
-	git config pack.writebitmaphashcache true &&
 	git repack -ad
 '
 

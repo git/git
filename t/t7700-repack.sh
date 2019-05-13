@@ -221,5 +221,22 @@ test_expect_success 'repack --keep-pack' '
 	)
 '
 
-test_done
+test_expect_success 'bitmaps are created by default in bare repos' '
+	git clone --bare .git bare.git &&
+	git -C bare.git repack -ad &&
+	bitmap=$(ls bare.git/objects/pack/*.bitmap) &&
+	test_path_is_file "$bitmap"
+'
 
+test_expect_success 'incremental repack does not complain' '
+	git -C bare.git repack -q 2>repack.err &&
+	test_must_be_empty repack.err
+'
+
+test_expect_success 'bitmaps can be disabled on bare repos' '
+	git -c repack.writeBitmaps=false -C bare.git repack -ad &&
+	bitmap=$(ls bare.git/objects/pack/*.bitmap 2>/dev/null || :) &&
+	test -z "$bitmap"
+'
+
+test_done

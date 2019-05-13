@@ -34,8 +34,7 @@ test_expect_success 'setup repo with moderate-sized history' '
 	bitmaptip=$(git rev-parse master) &&
 	blob=$(echo tagged-blob | git hash-object -w --stdin) &&
 	git tag tagged-blob $blob &&
-	git config repack.writebitmaps true &&
-	git config pack.writebitmaphashcache true
+	git config repack.writebitmaps true
 '
 
 test_expect_success 'full repack creates bitmaps' '
@@ -269,7 +268,7 @@ test_expect_success JGIT 'we can read jgit bitmaps' '
 	git clone --bare . compat-jgit.git &&
 	(
 		cd compat-jgit.git &&
-		rm -f .git/objects/pack/*.bitmap &&
+		rm -f objects/pack/*.bitmap &&
 		jgit gc &&
 		git rev-list --test-bitmap HEAD
 	)
