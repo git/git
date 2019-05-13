@@ -138,9 +138,15 @@ struct list_and_choose_options {
 	void (*print_help)(struct add_i_state *s);
 };
 
+#define LIST_AND_CHOOSE_ERROR (-1)
+#define LIST_AND_CHOOSE_QUIT  (-2)
+
 /*
  * Returns the selected index in singleton mode, the number of selected items
  * otherwise.
+ *
+ * If an error occurred, returns `LIST_AND_CHOOSE_ERROR`. Upon EOF,
+ * `LIST_AND_CHOOSE_QUIT` is returned.
  */
 static ssize_t list_and_choose(struct prefix_item **items, int *selected,
 			       size_t nr, struct add_i_state *s,
@@ -150,7 +156,7 @@ static ssize_t list_and_choose(struct prefix_item **items, int *selected,
 	int immediate = opts->flags & IMMEDIATE;
 
 	struct strbuf input = STRBUF_INIT;
-	ssize_t res = singleton ? -1 : 0;
+	ssize_t res = singleton ? LIST_AND_CHOOSE_ERROR : 0;
 
 	if (!selected && !singleton)
 		BUG("need a selected array in non-singleton mode");
@@ -174,7 +180,7 @@ static ssize_t list_and_choose(struct prefix_item **items, int *selected,
 		if (strbuf_getline(&input, stdin) == EOF) {
 			putchar('\n');
 			if (immediate)
-				res = -2;
+				res = LIST_AND_CHOOSE_QUIT;
 			break;
 		}
 		strbuf_trim(&input);
@@ -253,7 +259,8 @@ static ssize_t list_and_choose(struct prefix_item **items, int *selected,
 			p += sep + 1;
 		}
 
-		if ((immediate && res >= 0) || !strcmp(input.buf, "*"))
+		if ((immediate && res != LIST_AND_CHOOSE_ERROR) ||
+		    !strcmp(input.buf, "*"))
 			break;
 	}
 
@@ -1050,12 +1057,13 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	for (;;) {
 		i = list_and_choose((struct prefix_item **)commands, NULL,
 				    ARRAY_SIZE(commands), &s, &main_loop_opts);
-		if (i < -1 || (i >= 0 && !commands[i]->command)) {
+		if (i == LIST_AND_CHOOSE_QUIT ||
+		    (i != LIST_AND_CHOOSE_ERROR && !commands[i]->command)) {
 			printf(_("Bye.\n"));
 			res = 0;
 			break;
 		}
-		if (i >= 0)
+		if (i != LIST_AND_CHOOSE_ERROR)
 			res = commands[i]->command(&s, ps, &files, &opts);
 	}
 
