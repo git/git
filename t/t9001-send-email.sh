@@ -1461,7 +1461,18 @@ test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEnc
 	test -z "$(ls msgtxt*)"
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=8bit' '
+test_expect_success $PREREQ 'sendemail.transferencoding=8bit via config' '
+	clean_fake_sendmail &&
+	git -c sendemail.transferencoding=8bit send-email \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		email-using-8bit \
+		2>errors >out &&
+	sed '1,/^$/d' msgtxt1 >actual &&
+	sed '1,/^$/d' email-using-8bit >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success $PREREQ 'sendemail.transferencoding=8bit via cli' '
 	clean_fake_sendmail &&
 	git send-email \
 		--transfer-encoding=8bit \
