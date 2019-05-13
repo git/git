@@ -119,13 +119,13 @@ struct ref {
 #define REF_HEADS	(1u << 1)
 #define REF_TAGS	(1u << 2)
 
-extern struct ref *find_ref_by_name(const struct ref *list, const char *name);
+struct ref *find_ref_by_name(const struct ref *list, const char *name);
 
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
 void sort_ref_list(struct ref **, int (*cmp)(const void *, const void *));
-extern int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
+int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
 int ref_compare_name(const void *, const void *);
 
 int check_ref_type(const struct ref *ref, int flags);
@@ -141,16 +141,16 @@ struct oid_array;
 struct packet_reader;
 struct argv_array;
 struct string_list;
-extern struct ref **get_remote_heads(struct packet_reader *reader,
-				     struct ref **list, unsigned int flags,
-				     struct oid_array *extra_have,
-				     struct oid_array *shallow_points);
+struct ref **get_remote_heads(struct packet_reader *reader,
+			      struct ref **list, unsigned int flags,
+			      struct oid_array *extra_have,
+			      struct oid_array *shallow_points);
 
 /* Used for protocol v2 in order to retrieve refs from a remote */
-extern struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
-				    struct ref **list, int for_push,
-				    const struct argv_array *ref_prefixes,
-				    const struct string_list *server_options);
+struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
+			     struct ref **list, int for_push,
+			     const struct argv_array *ref_prefixes,
+			     const struct string_list *server_options);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 
@@ -290,9 +290,9 @@ struct push_cas_option {
 	int alloc;
 };
 
-extern int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
+int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
 
-extern int is_empty_cas(const struct push_cas_option *);
+int is_empty_cas(const struct push_cas_option *);
 void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
 
 #endif

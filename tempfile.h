@@ -89,7 +89,7 @@ struct tempfile {
  * a tempfile (whose "fd" member can be used for writing to it), or
  * NULL on error. It is an error if a file already exists at that path.
  */
-extern struct tempfile *create_tempfile(const char *path);
+struct tempfile *create_tempfile(const char *path);
 
 /*
  * Register an existing file as a tempfile, meaning that it will be
@@ -97,7 +97,7 @@ extern struct tempfile *create_tempfile(const char *path);
  * but it can be worked with like any other closed tempfile (for
  * example, it can be opened using reopen_tempfile()).
  */
-extern struct tempfile *register_tempfile(const char *path);
+struct tempfile *register_tempfile(const char *path);
 
 
 /*
@@ -136,8 +136,8 @@ extern struct tempfile *register_tempfile(const char *path);
  */
 
 /* See "mks_tempfile functions" above. */
-extern struct tempfile *mks_tempfile_sm(const char *filename_template,
-					int suffixlen, int mode);
+struct tempfile *mks_tempfile_sm(const char *filename_template,
+				 int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_s(const char *filename_template,
@@ -159,8 +159,8 @@ static inline struct tempfile *mks_tempfile(const char *filename_template)
 }
 
 /* See "mks_tempfile functions" above. */
-extern struct tempfile *mks_tempfile_tsm(const char *filename_template,
-					 int suffixlen, int mode);
+struct tempfile *mks_tempfile_tsm(const char *filename_template,
+				  int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_ts(const char *filename_template,
@@ -182,7 +182,7 @@ static inline struct tempfile *mks_tempfile_t(const char *filename_template)
 }
 
 /* See "mks_tempfile functions" above. */
-extern struct tempfile *xmks_tempfile_m(const char *filename_template, int mode);
+struct tempfile *xmks_tempfile_m(const char *filename_template, int mode);
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *xmks_tempfile(const char *filename_template)
@@ -196,7 +196,7 @@ static inline struct tempfile *xmks_tempfile(const char *filename_template)
  * stream is closed automatically when `close_tempfile_gently()` is called or
  * when the file is deleted or renamed.
  */
-extern FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode);
+FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode);
 
 static inline int is_tempfile_active(struct tempfile *tempfile)
 {
@@ -207,10 +207,10 @@ static inline int is_tempfile_active(struct tempfile *tempfile)
  * Return the path of the lockfile. The return value is a pointer to a
  * field within the lock_file object and should not be freed.
  */
-extern const char *get_tempfile_path(struct tempfile *tempfile);
+const char *get_tempfile_path(struct tempfile *tempfile);
 
-extern int get_tempfile_fd(struct tempfile *tempfile);
-extern FILE *get_tempfile_fp(struct tempfile *tempfile);
+int get_tempfile_fd(struct tempfile *tempfile);
+FILE *get_tempfile_fp(struct tempfile *tempfile);
 
 /*
  * If the temporary file is still open, close it (and the file pointer
@@ -220,7 +220,7 @@ extern FILE *get_tempfile_fp(struct tempfile *tempfile);
  * should eventually be called regardless of whether `close_tempfile_gently()`
  * succeeds.
  */
-extern int close_tempfile_gently(struct tempfile *tempfile);
+int close_tempfile_gently(struct tempfile *tempfile);
 
 /*
  * Re-open a temporary file that has been closed using
@@ -241,7 +241,7 @@ extern int close_tempfile_gently(struct tempfile *tempfile);
  *
  * * `rename_tempfile()` to move the file to its permanent location.
  */
-extern int reopen_tempfile(struct tempfile *tempfile);
+int reopen_tempfile(struct tempfile *tempfile);
 
 /*
  * Close the file descriptor and/or file pointer and remove the
@@ -249,7 +249,7 @@ extern int reopen_tempfile(struct tempfile *tempfile);
  * `delete_tempfile()` for a `tempfile` object that has already been
  * deleted or renamed.
  */
-extern void delete_tempfile(struct tempfile **tempfile_p);
+void delete_tempfile(struct tempfile **tempfile_p);
 
 /*
  * Close the file descriptor and/or file pointer if they are still
@@ -260,6 +260,6 @@ extern void delete_tempfile(struct tempfile **tempfile_p);
  * `rename(2)`. It is a bug to call `rename_tempfile()` for a
  * `tempfile` object that is not currently active.
  */
-extern int rename_tempfile(struct tempfile **tempfile_p, const char *path);
+int rename_tempfile(struct tempfile **tempfile_p, const char *path);
 
 #endif /* TEMPFILE_H */

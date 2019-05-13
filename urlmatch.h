@@ -33,7 +33,7 @@ struct url_info {
 				 * '?...' and '#...' portion; will always be >= 1 */
 };
 
-extern char *url_normalize(const char *, struct url_info *);
+char *url_normalize(const char *, struct url_info *);
 
 struct urlmatch_item {
 	size_t hostmatch_len;
@@ -52,6 +52,6 @@ struct urlmatch_config {
 	int (*cascade_fn)(const char *var, const char *value, void *cb);
 };
 
-extern int urlmatch_config_entry(const char *var, const char *value, void *cb);
+int urlmatch_config_entry(const char *var, const char *value, void *cb);
 
 #endif /* URL_MATCH_H */
