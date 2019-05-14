@@ -722,15 +722,12 @@ install-mingit-test-artifacts:
 	install -m755 git-daemon.exe git-http-backend.exe \
 		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
 
-	# git-remote-testgit for t5801
-	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
-	install -m755 git-remote-testgit \
-		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
-
 	# git-upload-archive (dashed) for t5000
+	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
 	install -m755 git-upload-archive.exe '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
 
 	# git-difftool--helper for t7800
+	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
 	install -m755 git-difftool--helper \
 		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
 endif
