@@ -836,4 +836,10 @@ test_expect_success 'merge suggests matching remote refname' '
 	grep origin/not-local stderr
 '
 
+test_expect_success 'suggested names are not ambiguous' '
+	git update-ref refs/heads/origin/not-local HEAD &&
+	test_must_fail git merge not-local 2>stderr &&
+	grep remotes/origin/not-local stderr
+'
+
 test_done
