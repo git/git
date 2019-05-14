@@ -773,7 +773,7 @@ static int append_similar_ref(const char *refname, const struct object_id *oid,
 static struct string_list guess_refs(const char *ref)
 {
 	struct similar_ref_cb ref_cb;
-	struct string_list similar_refs = STRING_LIST_INIT_NODUP;
+	struct string_list similar_refs = STRING_LIST_INIT_DUP;
 
 	ref_cb.base_ref = ref;
 	ref_cb.similar_refs = &similar_refs;
