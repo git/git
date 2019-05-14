@@ -243,18 +243,14 @@ test_expect_success 'reading nested submodules config' '
 	)
 '
 
-# When this test eventually passes, before turning it into
-# test_expect_success, remember to replace the test_i18ngrep below with
-# a "test_must_be_empty warning" to be sure that the warning is actually
-# removed from the code.
-test_expect_failure 'reading nested submodules config when .gitmodules is not in the working tree' '
+test_expect_success 'reading nested submodules config when .gitmodules is not in the working tree' '
 	test_when_finished "git -C super/submodule checkout .gitmodules" &&
 	(cd super &&
 		echo "./nested_submodule" >expect &&
 		rm submodule/.gitmodules &&
 		test-tool submodule-nested-repo-config \
 			submodule submodule.nested_submodule.url >actual 2>warning &&
-		test_i18ngrep "nested submodules without %s in the working tree are not supported yet" warning &&
+		test_must_be_empty warning &&
 		test_cmp expect actual
 	)
 '
