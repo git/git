@@ -760,6 +760,7 @@ static int finish_rebase(struct rebase_options *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
 	const char *argv_gc_auto[] = { "gc", "--auto", NULL };
+	int ret = 0;
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 	apply_autostash(opts);
@@ -770,10 +771,11 @@ static int finish_rebase(struct rebase_options *opts)
 	 */
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
 	strbuf_addstr(&dir, opts->state_dir);
-	remove_dir_recursively(&dir, 0);
+	if (remove_dir_recursively(&dir, 0))
+		ret = error(_("could not remove '%s'"), opts->state_dir);
 	strbuf_release(&dir);
 
-	return 0;
+	return ret;
 }
 
 static struct commit *peel_committish(const char *name)
@@ -1645,7 +1647,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		remove_branch_state(the_repository);
-		ret = finish_rebase(&options);
+		ret = !!finish_rebase(&options);
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
