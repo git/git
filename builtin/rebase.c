@@ -770,10 +770,18 @@ static int finish_rebase(struct rebase_options *opts)
 	 * user should see them.
 	 */
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
-	strbuf_addstr(&dir, opts->state_dir);
-	if (remove_dir_recursively(&dir, 0))
-		ret = error(_("could not remove '%s'"), opts->state_dir);
-	strbuf_release(&dir);
+	if (opts->type == REBASE_INTERACTIVE) {
+		struct replay_opts replay = REPLAY_OPTS_INIT;
+
+		replay.action = REPLAY_INTERACTIVE_REBASE;
+		ret = sequencer_remove_state(&replay);
+	} else {
+		strbuf_addstr(&dir, opts->state_dir);
+		if (remove_dir_recursively(&dir, 0))
+			ret = error(_("could not remove '%s'"),
+				    opts->state_dir);
+		strbuf_release(&dir);
+	}
 
 	return ret;
 }
@@ -1651,11 +1659,19 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, options.state_dir);
-		ret = !!remove_dir_recursively(&buf, 0);
-		if (ret)
-			die(_("could not remove '%s'"), options.state_dir);
+		if (options.type == REBASE_INTERACTIVE) {
+			struct replay_opts replay = REPLAY_OPTS_INIT;
+
+			replay.action = REPLAY_INTERACTIVE_REBASE;
+			ret = !!sequencer_remove_state(&replay);
+		} else {
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, options.state_dir);
+			ret = !!remove_dir_recursively(&buf, 0);
+			if (ret)
+				error(_("could not remove '%s'"),
+				       options.state_dir);
+		}
 		goto cleanup;
 	}
 	case ACTION_EDIT_TODO:
