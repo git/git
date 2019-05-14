@@ -244,11 +244,25 @@ test_expect_success 'fetch what is specified on CLI even if already promised' '
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
-# Converts bytes into a form suitable for inclusion in a sed command. For
-# example, "printf 'ab\r\n' | hex_unpack" results in '\x61\x62\x0d\x0a'.
-sed_escape () {
-	perl -e '$/ = undef; $input = <>; print unpack("H2" x length($input), $input)' |
-		sed 's/\(..\)/\\x\1/g'
+# Converts bytes into their hexadecimal representation. For example,
+# "printf 'ab\r\n' | hex_unpack" results in '61620d0a'.
+hex_unpack () {
+	perl -e '$/ = undef; $input = <>; print unpack("H2" x length($input), $input)'
+}
+
+# Inserts $1 at the start of the string and every 2 characters thereafter.
+intersperse () {
+	sed 's/\(..\)/'$1'\1/g'
+}
+
+# Create a one-time-sed command to replace the existing packfile with $1.
+replace_packfile () {
+	# The protocol requires that the packfile be sent in sideband 1, hence
+	# the extra \x01 byte at the beginning.
+	printf "1,/packfile/!c %04x\\\\x01%s0000" \
+		"$(($(wc -c <$1) + 5))" \
+		"$(hex_unpack <$1 | intersperse '\\x')" \
+		>"$HTTPD_ROOT_PATH/one-time-sed"
 }
 
 test_expect_success 'upon cloning, check that all refs point to objects' '
@@ -270,10 +284,7 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	# Replace the existing packfile with the crafted one. The protocol
 	# requires that the packfile be sent in sideband 1, hence the extra
 	# \x01 byte at the beginning.
-	printf "1,/packfile/!c %04x\\\\x01%s0000" \
-		"$(($(wc -c <incomplete.pack) + 5))" \
-		"$(sed_escape <incomplete.pack)" \
-		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+	replace_packfile incomplete.pack &&
 
 	# Use protocol v2 because the sed command looks for the "packfile"
 	# section header.
@@ -313,10 +324,7 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	# Replace the existing packfile with the crafted one. The protocol
 	# requires that the packfile be sent in sideband 1, hence the extra
 	# \x01 byte at the beginning.
-	printf "1,/packfile/!c %04x\\\\x01%s0000" \
-		"$(($(wc -c <incomplete.pack) + 5))" \
-		"$(sed_escape <incomplete.pack)" \
-		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+	replace_packfile incomplete.pack &&
 
 	# Use protocol v2 because the sed command looks for the "packfile"
 	# section header.
