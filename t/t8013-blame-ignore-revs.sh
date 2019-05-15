@@ -121,6 +121,77 @@ test_expect_success bad_files_and_revs '
 	test_must_fail git blame file --ignore-revs-file ignore_norev 2>err &&
 	test_i18ngrep "invalid object name: NOREV" err
 	'
+
+# For ignored revs that have added 'unblamable' lines, mark those lines with a
+# '*'
+# 	A--B--X--Y
+# Lines 3 and 4 are from Y and unblamable.  This was set up in
+# ignore_rev_adding_unblamable_lines.
+test_expect_success mark_unblamable_lines '
+	git config --add blame.markUnblamableLines true &&
+
+	git blame --ignore-rev Y file >blame_raw &&
+	echo "*" >expect &&
+
+	sed -n "3p" blame_raw | cut -c1 >actual &&
+	test_cmp expect actual &&
+
+	sed -n "4p" blame_raw | cut -c1 >actual &&
+	test_cmp expect actual
+	'
+
+# Commit Z will touch the first two lines.  Y touched all four.
+# 	A--B--X--Y--Z
+# The blame output when ignoring Z should be:
+# ?Y ... 1)
+# ?Y ... 2)
+# Y  ... 3)
+# Y  ... 4)
+# We're checking only the first character
+test_expect_success mark_ignored_lines '
+	git config --add blame.markIgnoredLines true &&
+
+	test_write_lines line-one-Z line-two-Z y3 y4 >file &&
+	git add file &&
+	test_tick &&
+	git commit -m Z &&
+	git tag Z &&
+
+	git blame --ignore-rev Z file >blame_raw &&
+	echo "?" >expect &&
+
+	sed -n "1p" blame_raw | cut -c1 >actual &&
+	test_cmp expect actual &&
+
+	sed -n "2p" blame_raw | cut -c1 >actual &&
+	test_cmp expect actual &&
+
+	sed -n "3p" blame_raw | cut -c1 >actual &&
+	! test_cmp expect actual &&
+
+	sed -n "4p" blame_raw | cut -c1 >actual &&
+	! test_cmp expect actual
+	'
+
+# For ignored revs that added 'unblamable' lines and more recent commits changed
+# the blamable lines, mark the unblamable lines with a
+# '*'
+# 	A--B--X--Y--Z
+# Lines 3 and 4 are from Y and unblamable, as set up in
+# ignore_rev_adding_unblamable_lines.  Z changed lines 1 and 2.
+test_expect_success mark_unblamable_lines_intermediate '
+	git config --add blame.markUnblamableLines true &&
+
+	git blame --ignore-rev Y file >blame_raw 2>stderr &&
+	echo "*" >expect &&
+
+	sed -n "3p" blame_raw | cut -c1 >actual &&
+	test_cmp expect actual &&
+
+	sed -n "4p" blame_raw | cut -c1 >actual &&
+	test_cmp expect actual
+	'
+
 # The heuristic called by guess_line_blames() tries to find the size of a
 # blame_entry 'e' in the parent's address space.  Those calculations need to
 # check for negative or zero values for when a blame entry is completely outside
