@@ -181,7 +181,7 @@ static int fsck_msg_type(enum fsck_msg_id msg_id,
 	return msg_type;
 }
 
-static void init_skiplist(struct fsck_options *options, const char *path)
+void oidset_parse_file(struct oidset *set, const char *path)
 {
 	FILE *fp;
 	struct strbuf sb = STRBUF_INIT;
@@ -189,26 +189,26 @@ static void init_skiplist(struct fsck_options *options, const char *path)
 
 	fp = fopen(path, "r");
 	if (!fp)
-		die("Could not open skip list: %s", path);
+		die("could not open object name list: %s", path);
 	while (!strbuf_getline(&sb, fp)) {
 		const char *p;
-		const char *hash;
+		const char *name;
 
 		/*
 		 * Allow trailing comments, leading whitespace
 		 * (including before commits), and empty or whitespace
 		 * only lines.
 		 */
-		hash = strchr(sb.buf, '#');
-		if (hash)
-			strbuf_setlen(&sb, hash - sb.buf);
+		name = strchr(sb.buf, '#');
+		if (name)
+			strbuf_setlen(&sb, name - sb.buf);
 		strbuf_trim(&sb);
 		if (!sb.len)
 			continue;
 
 		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
-			die("Invalid SHA-1: %s", sb.buf);
-		oidset_insert(&options->skiplist, &oid);
+			die("invalid object name: %s", sb.buf);
+		oidset_insert(set, &oid);
 	}
 	if (ferror(fp))
 		die_errno("Could not read '%s'", path);
@@ -284,7 +284,7 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 		if (!strcmp(buf, "skiplist")) {
 			if (equal == len)
 				die("skiplist requires a path");
-			init_skiplist(options, buf + equal + 1);
+			oidset_parse_file(&options->skiplist, buf + equal + 1);
 			buf += len + 1;
 			continue;
 		}
