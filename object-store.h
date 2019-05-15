@@ -76,7 +76,8 @@ struct packed_git {
 		 pack_keep_in_core:1,
 		 freshened:1,
 		 do_not_close:1,
-		 pack_promisor:1;
+		 pack_promisor:1,
+		 multi_pack_index:1;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct revindex_entry *revindex;
 	/* something like ".git/objects/pack/xxxxx.pack" */
@@ -127,12 +128,6 @@ struct raw_object_store {
 	struct packed_git *packed_git;
 	/* A most-recently-used ordered version of the packed_git list. */
 	struct list_head packed_git_mru;
-
-	/*
-	 * A linked list containing all packfiles, starting with those
-	 * contained in the multi_pack_index.
-	 */
-	struct packed_git *all_packs;
 
 	/*
 	 * A fast, rough count of the number of objects in the repository.
