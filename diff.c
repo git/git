@@ -5988,6 +5988,22 @@ static int remove_space(char *line, int len)
 	return dst - line;
 }
 
+void flush_one_hunk(struct object_id *result, git_SHA_CTX *ctx)
+{
+	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned short carry = 0;
+	int i;
+
+	git_SHA1_Final(hash, ctx);
+	git_SHA1_Init(ctx);
+	/* 20-byte sum, with carry */
+	for (i = 0; i < GIT_SHA1_RAWSZ; ++i) {
+		carry += result->hash[i] + hash[i];
+		result->hash[i] = carry;
+		carry >>= 8;
+	}
+}
+
 static void patch_id_consume(void *priv, char *line, unsigned long len)
 {
 	struct patch_id_t *data = priv;
@@ -6012,8 +6028,8 @@ static void patch_id_add_mode(git_SHA_CTX *ctx, unsigned mode)
 	git_SHA1_Update(ctx, buf, len);
 }
 
-/* returns 0 upon success, and writes result into sha1 */
-static int diff_get_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only)
+/* returns 0 upon success, and writes result into oid */
+static int diff_get_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only, int stable)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
@@ -6023,6 +6039,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 	git_SHA1_Init(&ctx);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
+	oidclr(oid);
 
 	for (i = 0; i < q->nr; i++) {
 		xpparam_t xpp;
@@ -6098,17 +6115,22 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 				  patch_id_consume, &data, &xpp, &xecfg))
 			return error("unable to generate patch-id diff for %s",
 				     p->one->path);
+
+		if (stable)
+			flush_one_hunk(oid, &ctx);
 	}
 
-	git_SHA1_Final(oid->hash, &ctx);
+	if (!stable)
+		git_SHA1_Final(oid->hash, &ctx);
+
 	return 0;
 }
 
-int diff_flush_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only)
+int diff_flush_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only, int stable)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	int result = diff_get_patch_id(options, oid, diff_header_only);
+	int result = diff_get_patch_id(options, oid, diff_header_only, stable);
 
 	for (i = 0; i < q->nr; i++)
 		diff_free_filepair(q->queue[i]);
