@@ -111,7 +111,7 @@ static int git_read_tree_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
+int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
 {
 	int i, stage = 0;
 	struct object_id oid;
@@ -165,7 +165,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 
 	git_config(git_read_tree_config, NULL);
 
-	argc = parse_options(argc, argv, unused_prefix, read_tree_options,
+	argc = parse_options(argc, argv, cmd_prefix, read_tree_options,
 			     read_tree_usage, 0);
 
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);

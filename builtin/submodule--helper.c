@@ -2107,8 +2107,7 @@ static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 		return 1;
 
 	for (i = 0; i < list.nr; i++)
-		absorb_git_dir_into_superproject(prefix,
-				list.entries[i]->name, flags);
+		absorb_git_dir_into_superproject(list.entries[i]->name, flags);
 
 	return 0;
 }

@@ -1809,8 +1809,7 @@ static const char *unpack_with_sideband(struct shallow_info *si)
 	return ret;
 }
 
-static void prepare_shallow_update(struct command *commands,
-				   struct shallow_info *si)
+static void prepare_shallow_update(struct shallow_info *si)
 {
 	int i, j, k, bitmap_size = DIV_ROUND_UP(si->ref->nr, 32);
 
@@ -1876,7 +1875,7 @@ static void update_shallow_info(struct command *commands,
 	si->ref = ref;
 
 	if (shallow_update) {
-		prepare_shallow_update(commands, si);
+		prepare_shallow_update(si);
 		return;
 	}
 

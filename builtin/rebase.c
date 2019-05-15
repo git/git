@@ -508,7 +508,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	if (argc == 1)
 		usage_with_options(builtin_rebase_interactive_usage, options);
 
-	argc = parse_options(argc, argv, NULL, options,
+	argc = parse_options(argc, argv, prefix, options,
 			builtin_rebase_interactive_usage, PARSE_OPT_KEEP_ARGV0);
 
 	if (!is_null_oid(&squash_onto))

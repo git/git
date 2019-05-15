@@ -2899,7 +2899,7 @@ static int ofscmp(const void *a_, const void *b_)
 		return oidcmp(&a->object->oid, &b->object->oid);
 }
 
-static void add_objects_in_unpacked_packs(struct rev_info *revs)
+static void add_objects_in_unpacked_packs(void)
 {
 	struct packed_git *p;
 	struct in_pack in_pack;
@@ -3011,7 +3011,7 @@ static int loosened_object_can_be_discarded(const struct object_id *oid,
 	return 1;
 }
 
-static void loosen_unused_packed_objects(struct rev_info *revs)
+static void loosen_unused_packed_objects(void)
 {
 	struct packed_git *p;
 	uint32_t i;
@@ -3158,11 +3158,11 @@ static void get_object_list(int ac, const char **av)
 	}
 
 	if (keep_unreachable)
-		add_objects_in_unpacked_packs(&revs);
+		add_objects_in_unpacked_packs();
 	if (pack_loose_unreachable)
 		add_unreachable_loose_objects();
 	if (unpack_unreachable)
-		loosen_unused_packed_objects(&revs);
+		loosen_unused_packed_objects();
 
 	oid_array_clear(&recent_objects);
 }
