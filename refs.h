@@ -463,6 +463,12 @@ int for_each_reflog(each_ref_fn fn, void *cb_data);
  */
 int check_refname_format(const char *refname, int flags);
 
+/*
+ * Apply the rules from check_refname_format, but mutate the result until it
+ * is acceptable, and place the result in "out".
+ */
+void sanitize_refname_component(const char *refname, struct strbuf *out);
+
 const char *prettify_refname(const char *refname);
 
 char *refs_shorten_unambiguous_ref(struct ref_store *refs,
