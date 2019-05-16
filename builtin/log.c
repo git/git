@@ -779,6 +779,8 @@ enum {
 
 static int git_format_config(const char *var, const char *value, void *cb)
 {
+	struct rev_info *rev = cb;
+
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
 			die(_("format.headers without value"));
@@ -862,6 +864,22 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			from = xstrdup(git_committer_info(IDENT_NO_DATE));
 		else
 			from = NULL;
+		return 0;
+	}
+	if (!strcmp(var, "format.notes")) {
+		struct strbuf buf = STRBUF_INIT;
+		int b = git_parse_maybe_bool(value);
+		if (!b)
+			return 0;
+		rev->show_notes = 1;
+		if (b < 0) {
+			strbuf_addstr(&buf, value);
+			expand_notes_ref(&buf);
+			string_list_append(&rev->notes_opt.extra_notes_refs,
+					strbuf_detach(&buf, NULL));
+		} else {
+			rev->notes_opt.use_default_notes = 1;
+		}
 		return 0;
 	}
 
@@ -1617,8 +1635,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	extra_to.strdup_strings = 1;
 	extra_cc.strdup_strings = 1;
 	init_log_defaults();
-	git_config(git_format_config, NULL);
 	repo_init_revisions(the_repository, &rev, prefix);
+	git_config(git_format_config, &rev);
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.expand_tabs_in_log_default = 0;
 	rev.verbose_header = 1;
