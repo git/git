@@ -334,6 +334,15 @@ that cannot be easily covered by a few specific test cases. These
 could be enabled by running the test suite with correct GIT_TEST_
 environment set.
 
+GIT_TEST_FAIL_PREREQS<non-empty?> fails all prerequisites. This is
+useful for discovering issues with the tests where say a later test
+implicitly depends on an optional earlier test.
+
+There's a "FAIL_PREREQS" prerequisite that can be used to test for
+whether this mode is active, and e.g. skip some tests that are hard to
+refactor to deal with it. The "SYMLINKS" prerequisite is currently
+excluded as so much relies on it, but this might change in the future.
+
 GIT_TEST_GETTEXT_POISON=<non-empty?> turns all strings marked for
 translation into gibberish if non-empty (think "test -n"). Used for
 spotting those tests that need to be marked with a C_LOCALE_OUTPUT
