@@ -228,9 +228,12 @@ struct worktree *find_worktree(struct worktree **list,
 		free(to_free);
 		return NULL;
 	}
-	for (; *list; list++)
-		if (!fspathcmp(path, real_path((*list)->path)))
+	for (; *list; list++) {
+		const char *wt_path = real_path_if_valid((*list)->path);
+
+		if (wt_path && !fspathcmp(path, wt_path))
 			break;
+	}
 	free(path);
 	free(to_free);
 	return *list;
