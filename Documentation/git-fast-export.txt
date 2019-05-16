@@ -129,6 +129,13 @@ marks the same across runs.
 	for intermediary filters (e.g. for rewriting commit messages
 	which refer to older commits, or for stripping blobs by id).
 
+--reencode=(yes|no|abort)::
+	Specify how to handle `encoding` header in commit objects.  When
+	asking to 'abort' (which is the default), this program will die
+	when encountering such a commit object.  With 'yes', the commit
+	message will be reencoded into UTF-8.  With 'no', the original
+	encoding will be preserved.
+
 --refspec::
 	Apply the specified refspec to each ref exported. Multiple of them can
 	be specified.
