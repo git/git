@@ -337,7 +337,7 @@ void close_pack(struct packed_git *p)
 	close_pack_index(p);
 }
 
-void close_all_packs(struct raw_object_store *o)
+void close_object_store(struct raw_object_store *o)
 {
 	struct packed_git *p;
 
