@@ -517,7 +517,7 @@ void raw_object_store_clear(struct raw_object_store *o)
 	o->loaded_alternates = 0;
 
 	INIT_LIST_HEAD(&o->packed_git_mru);
-	close_all_packs(o);
+	close_object_store(o);
 	o->packed_git = NULL;
 }
 
