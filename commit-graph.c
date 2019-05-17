@@ -361,10 +361,10 @@ int generation_numbers_enabled(struct repository *r)
 	return !!first_generation;
 }
 
-void close_commit_graph(struct repository *r)
+void close_commit_graph(struct raw_object_store *o)
 {
-	free_commit_graph(r->objects->commit_graph);
-	r->objects->commit_graph = NULL;
+	free_commit_graph(o->commit_graph);
+	o->commit_graph = NULL;
 }
 
 static int bsearch_graph(struct commit_graph *g, struct object_id *oid, uint32_t *pos)
@@ -1110,7 +1110,7 @@ void write_commit_graph(const char *obj_dir,
 	stop_progress(&progress);
 	strbuf_release(&progress_title);
 
-	close_commit_graph(the_repository);
+	close_commit_graph(the_repository->objects);
 	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	commit_lock_file(&lk);
 
