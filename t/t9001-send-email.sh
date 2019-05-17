@@ -1409,22 +1409,10 @@ test_expect_success $PREREQ 'setup expect' '
 	EOF
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=7bit fails on 8bit data' '
-	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 7bit &&
-	test_must_fail git send-email \
-		--transfer-encoding=7bit \
-		--smtp-server="$(pwd)/fake.sendmail" \
-		email-using-8bit \
-		2>errors >out &&
-	grep "cannot send message as 7bit" errors &&
-	test -z "$(ls msgtxt*)"
-'
-
 test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEncoding' '
 	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 8bit &&
-	test_must_fail git send-email \
+	test_must_fail git -c sendemail.transferEncoding=8bit \
+		send-email \
 		--transfer-encoding=7bit \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
@@ -1433,27 +1421,26 @@ test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEnc
 	test -z "$(ls msgtxt*)"
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=8bit via config' '
+test_expect_success $PREREQ 'sendemail.transferEncoding via config' '
 	clean_fake_sendmail &&
-	git -c sendemail.transferencoding=8bit send-email \
+	test_must_fail git -c sendemail.transferEncoding=7bit \
+		send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
-	sed '1,/^$/d' email-using-8bit >expected &&
-	test_cmp expected actual
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=8bit via cli' '
+test_expect_success $PREREQ 'sendemail.transferEncoding via cli' '
 	clean_fake_sendmail &&
-	git send-email \
-		--transfer-encoding=8bit \
+	test_must_fail git send-email \
+		--transfer-encoding=7bit \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
-	sed '1,/^$/d' email-using-8bit >expected &&
-	test_cmp expected actual
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
 '
 
 test_expect_success $PREREQ 'setup expect' '
