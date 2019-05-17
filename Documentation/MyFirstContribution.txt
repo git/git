@@ -1,16 +1,20 @@
 My First Contribution to the Git Project
 ========================================
+:sectanchors:
 
+[[summary]]
 == Summary
 
 This is a tutorial demonstrating the end-to-end workflow of creating a change to
 the Git tree, sending it for review, and making changes based on comments.
 
+[[prerequisites]]
 === Prerequisites
 
 This tutorial assumes you're already fairly familiar with using Git to manage
 source code.  The Git workflow steps will largely remain unexplained.
 
+[[related-reading]]
 === Related Reading
 
 This tutorial aims to summarize the following documents, but the reader may find
@@ -19,8 +23,10 @@ useful additional context:
 - `Documentation/SubmittingPatches`
 - `Documentation/howto/new-command.txt`
 
+[[getting-started]]
 == Getting Started
 
+[[cloning]]
 === Clone the Git Repository
 
 Git is mirrored in a number of locations. Clone the repository from one of them;
@@ -31,6 +37,7 @@ the mirror on GitHub.
 $ git clone https://github.com/git/git git
 ----
 
+[[identify-problem]]
 === Identify Problem to Solve
 
 ////
@@ -44,6 +51,7 @@ of invocation during users' typical daily workflow.
 (We've seen some other effort in this space with the implementation of popular
 commands such as `sl`.)
 
+[[setup-workspace]]
 === Set Up Your Workspace
 
 Let's start by making a development branch to work on our changes. Per
@@ -62,11 +70,13 @@ $ git checkout -b psuh origin/master
 We'll make a number of commits here in order to demonstrate how to send a topic
 with multiple patches up for review simultaneously.
 
+[[code-it-up]]
 == Code It Up!
 
 NOTE: A reference implementation can be found at
 https://github.com/nasamuffin/git/tree/psuh.
 
+[[add-new-command]]
 === Adding a New Command
 
 Lots of the subcommands are written as builtins, which means they are
@@ -195,6 +205,7 @@ For the remainder of the tutorial, the subject line only will be listed for the
 sake of brevity. However, fully-fleshed example commit messages are available
 on the reference implementation linked at the top of this document.
 
+[[implementation]]
 === Implementation
 
 It's probably useful to do at least something besides printing out a string.
@@ -358,6 +369,7 @@ about. Neat! Let's commit that as well.
 $ git commit -sm "psuh: display the top of origin/master"
 ----
 
+[[add-documentation]]
 === Adding Documentation
 
 Awesome! You've got a fantastic new command that you're ready to share with the
@@ -445,6 +457,7 @@ sees that your command has been implemented as well as documented) by running
 
 Go ahead and commit your new documentation change.
 
+[[add-usage]]
 === Adding Usage Text
 
 Try and run `./bin-wrappers/git psuh -h`. Your command should crash at the end.
@@ -501,6 +514,7 @@ your command terminated before anything else interesting happens. Great!
 
 Go ahead and commit this one, too.
 
+[[testing]]
 == Testing
 
 It's important to test your code - even for a little toy command like this one.
@@ -515,11 +529,13 @@ So let's write some tests.
 
 Related reading: `t/README`
 
+[[overview-test-structure]]
 === Overview of Testing Structure
 
 The tests in Git live in `t/` and are named with a 4-digit decimal number using
 the schema shown in the Naming Tests section of `t/README`.
 
+[[write-new-test]]
 === Writing Your Test
 
 Since this a toy command, let's go ahead and name the test with t9999. However,
@@ -568,6 +584,7 @@ You can get an idea of whether you created your new test script successfully
 by running `make -C t test-lint`, which will check for things like test number
 uniqueness, executable bit, and so on.
 
+[[local-test]]
 === Running Locally
 
 Let's try and run locally:
@@ -591,6 +608,7 @@ dependencies. `prove` also makes the output nicer.
 
 Go ahead and commit this change, as well.
 
+[[ready-to-share]]
 == Getting Ready to Share
 
 You may have noticed already that the Git project performs its code reviews via
@@ -613,6 +631,7 @@ Regardless of which method you choose, your engagement with reviewers will be
 the same; the review process will be covered after the sections on GitGitGadget
 and `git send-email`.
 
+[[howto-ggg]]
 == Sending Patches via GitGitGadget
 
 One option for sending patches is to follow a typical pull request workflow and
@@ -623,6 +642,7 @@ mirror of the Git project, and does some magic to turn the PR into a set of
 emails and send them out for you. It also runs the Git continuous integration
 suite for you. It's documented at http://gitgitgadget.github.io.
 
+[[create-fork]]
 === Forking `git/git` on GitHub
 
 Before you can send your patch off to be reviewed using GitGitGadget, you will
@@ -632,6 +652,7 @@ you have a GitHub account.
 Head to the https://github.com/git/git[GitHub mirror] and look for the Fork
 button. Place your fork wherever you deem appropriate and create it.
 
+[[upload-to-fork]]
 === Uploading to Your Own Fork
 
 To upload your branch to your own fork, you'll need to add the new fork as a
@@ -677,6 +698,7 @@ $ git push remotename psuh
 
 Now you should be able to go and check out your newly created branch on GitHub.
 
+[[send-pr-ggg]]
 === Sending a PR to GitGitGadget
 
 In order to have your code tested and formatted for review, you need to start by
@@ -688,6 +710,7 @@ appear with the name of your newly pushed branch.
 Review the PR's title and description, as it's used by GitGitGadget as the cover
 letter for your change. When you're happy, submit your pull request.
 
+[[run-ci-ggg]]
 === Running CI and Getting Ready to Send
 
 If it's your first time using GitGitGadget (which is likely, as you're using
@@ -712,15 +735,18 @@ your patch is accepted into `next`.
 TODO https://github.com/gitgitgadget/gitgitgadget/issues/83
 It'd be nice to be able to verify that the patch looks good before sending it
 to everyone on Git mailing list.
+[[check-work-ggg]]
 === Check Your Work
 ////
 
+[[send-mail-ggg]]
 === Sending Your Patches
 
 Now that your CI is passing and someone has granted you permission to use
 GitGitGadget with the `/allow` command, sending out for review is as simple as
 commenting on your PR with `/submit`.
 
+[[responding-ggg]]
 === Updating With Comments
 
 Skip ahead to <<reviewing,Responding to Reviews>> for information on how to
@@ -742,6 +768,7 @@ of what they're looking at. When the CI is done running, you can comment once
 more with `/submit` - GitGitGadget will automatically add a v2 mark to your
 changes.
 
+[[howto-git-send-email]]
 == Sending Patches with `git send-email`
 
 If you don't want to use GitGitGadget, you can also use Git itself to mail your
@@ -750,6 +777,7 @@ subject line (for example, being able to use the tag [RFC PATCH] in the subject)
 and being able to send a ``dry run'' mail to yourself to ensure it all looks
 good before going out to the list.
 
+[[setup-git-send-email]]
 === Prerequisite: Setting Up `git send-email`
 
 Configuration for `send-email` can vary based on your operating system and email
@@ -761,6 +789,7 @@ determine the right way to configure it to use your SMTP server; again, as this
 configuration can change significantly based on your system and email setup, it
 is out of scope for the context of this tutorial.
 
+[[format-patch]]
 === Preparing Initial Patchset
 
 Sending emails with Git is a two-part process; before you can prepare the emails
@@ -799,6 +828,7 @@ but want reviewers to look at what they have so far. You can add this flag with
 Check and make sure that your patches and cover letter template exist in the
 directory you specified - you're nearly ready to send out your review!
 
+[[cover-letter]]
 === Preparing Email
 
 In addition to an email per patch, the Git community also expects your patches
@@ -862,6 +892,7 @@ The one generated for `psuh` from the sample implementation looks like this:
 Finally, the letter will include the version of Git used to generate the
 patches. You can leave that string alone.
 
+[[sending-git-send-email]]
 === Sending Email
 
 At this point you should have a directory `psuh/` which is filled with your
@@ -886,6 +917,7 @@ press `y` or `a` at these prompts your emails will be sent! Congratulations!
 Awesome, now the community will drop everything and review your changes. (Just
 kidding - be patient!)
 
+[[v2-git-send-email]]
 === Sending v2
 
 Skip ahead to <<reviewing,Responding to Reviews>> for information on how to
@@ -944,6 +976,7 @@ $ git send-email --to=target@example.com
 		 psuh/v2*
 ----
 
+[[single-patch]]
 === Bonus Chapter: One-Patch Changes
 
 In some cases, your very small change may consist of only one patch. When that
@@ -991,6 +1024,7 @@ index 88f126184c..38da593a60 100644
 2.21.0.392.gf8f6787159e-goog
 ----
 
+[[now-what]]
 == My Patch Got Emailed - Now What?
 
 [[reviewing]]
@@ -1034,6 +1068,7 @@ changing history, but since it's local history which you haven't shared with
 anyone, that is okay for now! (Later, it may not make sense to do this; take a
 look at the section below this one for some context.)
 
+[[after-approval]]
 === After Review Approval
 
 The Git project has four integration branches: `pu`, `next`, `master`, and
