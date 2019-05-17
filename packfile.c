@@ -16,6 +16,7 @@
 #include "tree.h"
 #include "object-store.h"
 #include "midx.h"
+#include "commit-graph.h"
 
 char *odb_pack_name(struct strbuf *buf,
 		    const unsigned char *sha1,
@@ -350,6 +351,8 @@ void close_all_packs(struct raw_object_store *o)
 		close_midx(o->multi_pack_index);
 		o->multi_pack_index = NULL;
 	}
+
+	close_commit_graph(o);
 }
 
 /*
