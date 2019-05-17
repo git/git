@@ -273,6 +273,10 @@ must be used for each option.
 Automating
 ~~~~~~~~~~
 
+--no-[to|cc|bcc]::
+	Clears any list of "To:", "Cc:", "Bcc:" addresses previously
+	set via config.
+
 --to-cmd=<command>::
 	Specify a command to execute once per patch file which
 	should generate patch file specific "To:" entries.
