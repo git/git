@@ -1176,7 +1176,7 @@ test_expect_success $PREREQ 'no in-reply-to and no threading' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--no-thread \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	! grep "In-Reply-To: " stdout
 '
 
@@ -1196,7 +1196,7 @@ test_expect_success $PREREQ 'sendemail.to works' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "To: Somebody <somebody@ex.com>" stdout
 '
 
@@ -1206,7 +1206,7 @@ test_expect_success $PREREQ '--no-to overrides sendemail.to' '
 		--from="Example <nobody@example.com>" \
 		--no-to \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "To: nobody@example.com" stdout &&
 	! grep "To: Somebody <somebody@ex.com>" stdout
 '
@@ -1217,7 +1217,7 @@ test_expect_success $PREREQ 'sendemail.cc works' '
 		--dry-run \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "Cc: Somebody <somebody@ex.com>" stdout
 '
 
@@ -1228,7 +1228,7 @@ test_expect_success $PREREQ '--no-cc overrides sendemail.cc' '
 		--no-cc \
 		--cc=bodies@example.com \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "Cc: bodies@example.com" stdout &&
 	! grep "Cc: Somebody <somebody@ex.com>" stdout
 '
@@ -1240,7 +1240,7 @@ test_expect_success $PREREQ 'sendemail.bcc works' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server relay.example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "RCPT TO:<other@ex.com>" stdout
 '
 
@@ -1252,7 +1252,7 @@ test_expect_success $PREREQ '--no-bcc overrides sendemail.bcc' '
 		--bcc=bodies@example.com \
 		--to=nobody@example.com \
 		--smtp-server relay.example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "RCPT TO:<bodies@example.com>" stdout &&
 	! grep "RCPT TO:<other@ex.com>" stdout
 '
