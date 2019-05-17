@@ -741,7 +741,7 @@ static int finish_rebase(struct rebase_options *opts)
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 	apply_autostash(opts);
-	close_all_packs(the_repository->objects);
+	close_object_store(the_repository->objects);
 	/*
 	 * We ignore errors in 'gc --auto', since the
 	 * user should see them.
