@@ -1200,6 +1200,61 @@ test_expect_success $PREREQ 'sendemail.to works' '
 	grep "To: Somebody <somebody@ex.com>" stdout
 '
 
+test_expect_success $PREREQ 'setup sendemail.identity' '
+	git config --replace-all sendemail.to "default@example.com" &&
+	git config --replace-all sendemail.isp.to "isp@example.com" &&
+	git config --replace-all sendemail.cloud.to "cloud@example.com"
+'
+
+test_expect_success $PREREQ 'sendemail.identity: reads the correct identity config' '
+	git -c sendemail.identity=cloud send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: identity overrides sendemail.identity' '
+	git -c sendemail.identity=cloud send-email \
+		--identity=isp \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: isp@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: --no-identity clears previous identity' '
+	git -c sendemail.identity=cloud send-email \
+		--no-identity \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: default@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: bool identity variable existance overrides' '
+	git -c sendemail.identity=cloud \
+		-c sendemail.xmailer=true \
+		-c sendemail.cloud.xmailer=false \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout &&
+	! grep "X-Mailer" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: bool variable fallback' '
+	git -c sendemail.identity=cloud \
+		-c sendemail.xmailer=false \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout &&
+	! grep "X-Mailer" stdout
+'
+
 test_expect_success $PREREQ '--no-to overrides sendemail.to' '
 	git send-email \
 		--dry-run \
@@ -1755,6 +1810,15 @@ test_dump_aliases '--dump-aliases gnus format' \
 
 test_expect_success '--dump-aliases must be used alone' '
 	test_must_fail git send-email --dump-aliases --to=janice@example.com -1 refs/heads/accounting
+'
+
+test_expect_success $PREREQ 'aliases and sendemail.identity' '
+	test_must_fail git \
+		-c sendemail.identity=cloud \
+		-c sendemail.aliasesfile=default-aliases \
+		-c sendemail.cloud.aliasesfile=cloud-aliases \
+		send-email -1 2>stderr &&
+	test_i18ngrep "cloud-aliases" stderr
 '
 
 test_sendmail_aliases () {
