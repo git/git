@@ -267,8 +267,10 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 		last_chunk_offset = chunk_offset;
 	}
 
-	if (verify_commit_graph_lite(graph))
+	if (verify_commit_graph_lite(graph)) {
+		free(graph);
 		return NULL;
+	}
 
 	return graph;
 }
