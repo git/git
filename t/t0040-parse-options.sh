@@ -48,6 +48,12 @@ Standard options
     -q, --quiet           be quiet
     --expect <string>     expected output in the variable dump
 
+Alias
+    -A, --alias-source <string>
+                          get a string
+    -Z, --alias-target <string>
+                          get a string
+
 EOF
 
 test_expect_success 'test help' '
@@ -222,6 +228,17 @@ test_expect_success 'ambiguously abbreviated option' '
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
 	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --expect="string: 123" --st 123
+'
+
+test_expect_success 'Alias options do not contribute to abbreviation' '
+	test-tool parse-options --alias-source 123 >output &&
+	grep "^string: 123" output &&
+	test-tool parse-options --alias-target 123 >output &&
+	grep "^string: 123" output &&
+	test_must_fail test-tool parse-options --alias &&
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool parse-options --alias 123 >output &&
+	grep "^string: 123" output
 '
 
 cat >typo.err <<\EOF

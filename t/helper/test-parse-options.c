@@ -149,6 +149,9 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_CALLBACK(0, "expect", &expect, "string",
 			     "expected output in the variable dump",
 			     collect_expect),
+		OPT_GROUP("Alias"),
+		OPT_STRING('A', "alias-source", &string, "string", "get a string"),
+		OPT_ALIAS('Z', "alias-target", "alias-source"),
 		OPT_END(),
 	};
 	int i;
