@@ -757,6 +757,76 @@ test_expect_success 'format-patch --notes --signoff' '
 	sed "1,/^---$/d" out | grep "test message"
 '
 
+test_expect_success 'format-patch notes output control' '
+	git notes add -m "notes config message" HEAD &&
+	test_when_finished git notes remove HEAD &&
+
+	git format-patch -1 --stdout >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes --notes >out &&
+	grep "notes config message" out &&
+
+	test_config format.notes true &&
+	git format-patch -1 --stdout >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --notes >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes --notes >out &&
+	grep "notes config message" out
+'
+
+test_expect_success 'format-patch with multiple notes refs' '
+	git notes --ref note1 add -m "this is note 1" HEAD &&
+	test_when_finished git notes --ref note1 remove HEAD &&
+	git notes --ref note2 add -m "this is note 2" HEAD &&
+	test_when_finished git notes --ref note2 remove HEAD &&
+
+	git format-patch -1 --stdout >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note1 >out &&
+	grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note2 >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note1 --notes=note2 >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+
+	test_config format.notes note1 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note2 >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes --notes=note2 >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out &&
+
+	git config --add format.notes note2 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out
+'
+
 echo "fatal: --name-only does not make sense" > expect.name-only
 echo "fatal: --name-status does not make sense" > expect.name-status
 echo "fatal: --check does not make sense" > expect.check
