@@ -423,7 +423,7 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 	struct helper_data *data = transport->data;
 	int cat_blob_fd, code;
 	child_process_init(fastimport);
-	fastimport->in = helper->out;
+	fastimport->in = xdup(helper->out);
 	argv_array_push(&fastimport->args, "fast-import");
 	argv_array_push(&fastimport->args, debug ? "--stats" : "--quiet");
 
