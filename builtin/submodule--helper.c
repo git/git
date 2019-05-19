@@ -1301,7 +1301,7 @@ static int add_possible_reference_from_superproject(
 				die(_("submodule '%s' cannot add alternate: %s"),
 				    sas->submodule_name, err.buf);
 			case SUBMODULE_ALTERNATE_ERROR_INFO:
-				fprintf(stderr, _("submodule '%s' cannot add alternate: %s"),
+				fprintf_ln(stderr, _("submodule '%s' cannot add alternate: %s"),
 					sas->submodule_name, err.buf);
 			case SUBMODULE_ALTERNATE_ERROR_IGNORE:
 				; /* nothing */
