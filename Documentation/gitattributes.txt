@@ -833,6 +833,8 @@ patterns are available:
 
 - `ruby` suitable for source code in the Ruby language.
 
+- `rust` suitable for source code in the Rust language.
+
 - `tex` suitable for source code for LaTeX documents.
 
 
