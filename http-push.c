@@ -526,8 +526,8 @@ static void finish_request(struct transfer_request *request)
 	if (request->headers != NULL)
 		curl_slist_free_all(request->headers);
 
-	/* URL is reused for MOVE after PUT */
-	if (request->state != RUN_PUT) {
+	/* URL is reused for MOVE after PUT and used during FETCH */
+	if (request->state != RUN_PUT && request->state != RUN_FETCH_PACKED) {
 		FREE_AND_NULL(request->url);
 	}
 
