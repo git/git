@@ -67,6 +67,7 @@ static int max_jobs = -1;
 static struct string_list option_recurse_submodules = STRING_LIST_INIT_NODUP;
 static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_NODUP;
+static int option_remote_submodules;
 
 static int recurse_submodules_cb(const struct option *opt,
 				 const char *arg, int unset)
@@ -145,6 +146,8 @@ static struct option builtin_clone_options[] = {
 	OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
 			TRANSPORT_FAMILY_IPV6),
 	OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+	OPT_BOOL(0, "remote-submodules", &option_remote_submodules,
+		    N_("any cloned submodules will use their remote-tracking branch")),
 	OPT_END()
 };
 
@@ -793,6 +796,11 @@ static int checkout(int submodule_progress)
 
 		if (option_verbosity < 0)
 			argv_array_push(&args, "--quiet");
+
+		if (option_remote_submodules) {
+			argv_array_push(&args, "--remote");
+			argv_array_push(&args, "--no-fetch");
+		}
 
 		err = run_command_v_opt(args.argv, RUN_GIT_CMD);
 		argv_array_clear(&args);
