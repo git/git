@@ -1522,7 +1522,7 @@ test_lazy_prereq NOT_ROOT '
 '
 
 test_lazy_prereq JGIT '
-	type jgit
+	jgit --version
 '
 
 # SANITY is about "can you correctly predict what the filesystem would
