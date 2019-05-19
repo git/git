@@ -1843,7 +1843,7 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 		if (flags & GET_OID_RECORD_PATH)
 			oc->path = xstrdup(cp);
 
-		if (!repo->index->cache)
+		if (!repo->index || !repo->index->cache)
 			repo_read_index(repo);
 		pos = index_name_pos(repo->index, cp, namelen);
 		if (pos < 0)
