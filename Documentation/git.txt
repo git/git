@@ -660,23 +660,23 @@ of clones and fetches.
 	When a curl trace is enabled (see `GIT_TRACE_CURL` above), do not dump
 	data (that is, only dump info lines and headers).
 
-`GIT_TR2`::
+`GIT_TRACE2`::
 	Enables more detailed trace messages from the "trace2" library.
-	Output from `GIT_TR2` is a simple text-based format for human
+	Output from `GIT_TRACE2` is a simple text-based format for human
 	readability.
 +
-The `GIT_TR2` variables can take many values. Any value available to
-the `GIT_TRACE` variables is also available to `GIT_TR2`. The `GIT_TR2`
+The `GIT_TRACE2` variables can take many values. Any value available to
+the `GIT_TRACE` variables is also available to `GIT_TRACE2`. The `GIT_TRACE2`
 variables can also specify a Unix Domain Socket. See
 link:technical/api-trace2.html[Trace2 documentation] for full details.
 
-`GIT_TR2_EVENT`::
+`GIT_TRACE2_EVENT`::
 	This setting writes a JSON-based format that is suited for machine
 	interpretation. See link:technical/api-trace2.html[Trace2 documentation]
 	for full details.
 
-`GIT_TR2_PERF`::
-	In addition to the text-based messages available in `GIT_TR2`, this
+`GIT_TRACE2_PERF`::
+	In addition to the text-based messages available in `GIT_TRACE2`, this
 	setting writes a column-based format for understanding nesting
 	regions. See link:technical/api-trace2.html[Trace2 documentation]
 	for full details.
