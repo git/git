@@ -1080,7 +1080,7 @@ static int want_object_in_pack(const struct object_id *oid,
 
 	for (m = get_multi_pack_index(the_repository); m; m = m->next) {
 		struct pack_entry e;
-		if (fill_midx_entry(oid, &e, m)) {
+		if (fill_midx_entry(the_repository, oid, &e, m)) {
 			struct packed_git *p = e.p;
 			off_t offset;
 

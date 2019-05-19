@@ -994,8 +994,6 @@ static void prepare_packed_git(struct repository *r)
 	}
 	rearrange_packed_git(r);
 
-	r->objects->all_packs = NULL;
-
 	prepare_packed_git_mru(r);
 	r->objects->packed_git_initialized = 1;
 }
@@ -1026,26 +1024,16 @@ struct multi_pack_index *get_multi_pack_index(struct repository *r)
 
 struct packed_git *get_all_packs(struct repository *r)
 {
+	struct multi_pack_index *m;
+
 	prepare_packed_git(r);
-
-	if (!r->objects->all_packs) {
-		struct packed_git *p = r->objects->packed_git;
-		struct multi_pack_index *m;
-
-		for (m = r->objects->multi_pack_index; m; m = m->next) {
-			uint32_t i;
-			for (i = 0; i < m->num_packs; i++) {
-				if (!prepare_midx_pack(m, i)) {
-					m->packs[i]->next = p;
-					p = m->packs[i];
-				}
-			}
-		}
-
-		r->objects->all_packs = p;
+	for (m = r->objects->multi_pack_index; m; m = m->next) {
+		uint32_t i;
+		for (i = 0; i < m->num_packs; i++)
+			prepare_midx_pack(r, m, i);
 	}
 
-	return r->objects->all_packs;
+	return r->objects->packed_git;
 }
 
 struct list_head *get_packed_git_mru(struct repository *r)
@@ -1998,13 +1986,13 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 		return 0;
 
 	for (m = r->objects->multi_pack_index; m; m = m->next) {
-		if (fill_midx_entry(oid, e, m))
+		if (fill_midx_entry(r, oid, e, m))
 			return 1;
 	}
 
 	list_for_each(pos, &r->objects->packed_git_mru) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
-		if (fill_pack_entry(oid, e, p)) {
+		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
 			list_move(&p->mru, &r->objects->packed_git_mru);
 			return 1;
 		}
