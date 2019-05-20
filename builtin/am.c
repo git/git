@@ -1644,7 +1644,7 @@ static int do_interactive(struct am_state *state)
 		die(_("cannot be interactive without stdin connected to a terminal."));
 
 	for (;;) {
-		const char *reply;
+		char reply[64];
 
 		puts(_("Commit Body is:"));
 		puts("--------------------------");
@@ -1656,7 +1656,9 @@ static int do_interactive(struct am_state *state)
 		 * in your translation. The program will only accept English
 		 * input at this point.
 		 */
-		reply = git_prompt(_("Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "), PROMPT_ECHO);
+		printf(_("Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "));
+		if (!fgets(reply, sizeof(reply), stdin))
+			die("unable to read from stdin; aborting");
 
 		if (*reply == 'y' || *reply == 'Y') {
 			return 0;
