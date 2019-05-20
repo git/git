@@ -1640,9 +1640,6 @@ static int do_interactive(struct am_state *state)
 {
 	assert(state->msg);
 
-	if (!isatty(0))
-		die(_("cannot be interactive without stdin connected to a terminal."));
-
 	for (;;) {
 		char reply[64];
 
@@ -2326,6 +2323,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			else
 				argv_array_push(&paths, mkpath("%s/%s", prefix, argv[i]));
 		}
+
+		if (state.interactive && !paths.argc)
+			die(_("interactive mode requires patches on the command line"));
 
 		am_setup(&state, patch_format, paths.argv, keep_cr);
 
