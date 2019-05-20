@@ -49,7 +49,20 @@ while (@ARGV) {
 	} elsif ("$arg" eq "-lssl") {
 		push(@args, "ssleay32.lib");
 	} elsif ("$arg" eq "-lcurl") {
-		push(@args, "libcurl.lib");
+		my $lib = "";
+		# Newer vcpkg definitions call this libcurl_imp.lib; Do we
+		# need to use that instead?
+		foreach my $flag (@lflags) {
+			if ($flag =~ /^-LIBPATH:(.*)/) {
+				foreach my $l ("libcurl_imp.lib", "libcurl.lib") {
+					if (-f "$1/$l") {
+						$lib = $l;
+						last;
+					}
+				}
+			}
+		}
+		push(@args, $lib);
 	} elsif ("$arg" eq "-lexpat") {
 		push(@args, "expat.lib");
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
