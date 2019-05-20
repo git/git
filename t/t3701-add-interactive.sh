@@ -524,7 +524,8 @@ test_expect_success 'diffs can be colorized' '
 	git reset --hard &&
 
 	echo content >test &&
-	printf y | force_color git add -p >output 2>&1 &&
+	printf y >y &&
+	force_color git add -p >output 2>&1 <y &&
 
 	# We do not want to depend on the exact coloring scheme
 	# git uses for diffs, so just check that we saw some kind of color.
@@ -536,7 +537,8 @@ test_expect_success 'diffFilter filters diff' '
 
 	echo content >test &&
 	test_config interactive.diffFilter "sed s/^/foo:/" &&
-	printf y | force_color git add -p >output 2>&1 &&
+	printf y >y &&
+	force_color git add -p >output 2>&1 <y &&
 
 	# avoid depending on the exact coloring or content of the prompts,
 	# and just make sure we saw our diff prefixed
@@ -548,7 +550,8 @@ test_expect_success 'detect bogus diffFilter output' '
 
 	echo content >test &&
 	test_config interactive.diffFilter "echo too-short" &&
-	printf y | test_must_fail force_color git add -p
+	printf y >y &&
+	test_must_fail force_color git add -p <y
 '
 
 test_expect_success 'diff.algorithm is passed to `git diff-files`' '
