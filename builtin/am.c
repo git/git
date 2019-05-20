@@ -1658,9 +1658,7 @@ static int do_interactive(struct am_state *state)
 		 */
 		reply = git_prompt(_("Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "), PROMPT_ECHO);
 
-		if (!reply) {
-			continue;
-		} else if (*reply == 'y' || *reply == 'Y') {
+		if (*reply == 'y' || *reply == 'Y') {
 			return 0;
 		} else if (*reply == 'a' || *reply == 'A') {
 			state->interactive = 0;
