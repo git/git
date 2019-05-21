@@ -47,7 +47,12 @@ struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_name)
 
 struct tr2tls_thread_ctx *tr2tls_get_self(void)
 {
-	struct tr2tls_thread_ctx *ctx = pthread_getspecific(tr2tls_key);
+	struct tr2tls_thread_ctx *ctx;
+
+	if (!HAVE_THREADS)
+		return tr2tls_thread_main;
+
+	ctx = pthread_getspecific(tr2tls_key);
 
 	/*
 	 * If the thread-proc did not call trace2_thread_start(), we won't
@@ -62,9 +67,10 @@ struct tr2tls_thread_ctx *tr2tls_get_self(void)
 
 int tr2tls_is_main_thread(void)
 {
-	struct tr2tls_thread_ctx *ctx = pthread_getspecific(tr2tls_key);
+	if (!HAVE_THREADS)
+		return 1;
 
-	return ctx == tr2tls_thread_main;
+	return pthread_getspecific(tr2tls_key) == tr2tls_thread_main;
 }
 
 void tr2tls_unset_self(void)
