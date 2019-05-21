@@ -90,6 +90,21 @@ test_expect_success 'add more commits, and write a new base graph' '
 	graph_read_expect 12
 '
 
+test_expect_success 'fork and fail to base a chain on a commit-graph file' '
+	test_when_finished rm -rf fork &&
+	git clone . fork &&
+	(
+		cd fork &&
+		rm .git/objects/info/commit-graph &&
+		echo "$(pwd)/../.git/objects" >.git/objects/info/alternates &&
+		test_commit new-commit &&
+		git commit-graph write --reachable --split &&
+		test_path_is_file $graphdir/commit-graph-chain &&
+		test_line_count = 1 $graphdir/commit-graph-chain &&
+		verify_chain_files_exist $graphdir
+	)
+'
+
 test_expect_success 'add three more commits, write a tip graph' '
 	git reset --hard commits/3 &&
 	git merge merge/1 &&
@@ -131,5 +146,27 @@ test_expect_success 'add one commit, write a merged graph' '
 '
 
 graph_git_behavior 'merged commit-graph: commit 12 vs 6' commits/12 commits/6
+
+test_expect_success 'create fork and chain across alternate' '
+	git clone . fork &&
+	(
+		cd fork &&
+		git config core.commitGraph true &&
+		rm -rf $graphdir &&
+		echo "$(pwd)/../.git/objects" >.git/objects/info/alternates &&
+		test_commit 13 &&
+		git branch commits/13 &&
+		git commit-graph write --reachable --split &&
+		test_path_is_file $graphdir/commit-graph-chain &&
+		test_line_count = 3 $graphdir/commit-graph-chain &&
+		ls $graphdir/graph-*.graph >graph-files &&
+		test_line_count = 1 graph-files &&
+		git -c core.commitGraph=true  rev-list HEAD >expect &&
+		git -c core.commitGraph=false rev-list HEAD >actual &&
+		test_cmp expect actual
+	)
+'
+
+graph_git_behavior 'alternate: commit 13 vs 6' commits/13 commits/6
 
 test_done
