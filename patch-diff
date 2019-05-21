@@ -1,0 +1,192 @@
+From d78ca24f3b9fbc45cb288259147cb1386018d4d7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Noômen=20Ben=20Hassin?= <bnhassin@gmail.com>
+Date: Sun, 20 Jan 2019 19:25:12 +0100
+Subject: [PATCH 1/5] Create Contributing
+
+Added Contribution to Git Work with GitHub
+---
+ contributing | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+ create mode 100644 contributing
+
+diff --git a/contributing b/contributing
+new file mode 100644
+index 0000000000000..64e605a02b71c
+--- /dev/null
++++ b/contributing
+@@ -0,0 +1,19 @@
++## Contributing to Git
++
++Thanks for taking the time to contribute to Git! Please be advised that the
++Git community does not use github.com for their contributions. Instead, we use
++a mailing list (git@vger.kernel.org) for code submissions, code
++reviews, and bug reports.
++
++Nevertheless, you can use [submitGit](http://submitgit.herokuapp.com/) to
++conveniently send your Pull Requests commits to our mailing list.
++
++Please read ["A note from the maintainer"](https://git.kernel.org/pub/scm/git/git.git/plain/MaintNotes?h=todo)
++to learn how the Git project is managed, and how you can work with it.
++In addition, we highly recommend you to read [our submission guidelines](../Documentation/SubmittingPatches).
++
++If you prefer video, then [this talk](https://www.youtube.com/watch?v=Q7i_qQW__q4&feature=youtu.be&t=6m4s)
++might be useful to you as the presenter walks you through the contribution
++process by example.
++
++Your friendly Git community!
+
+From 113a49696cbd28d6a8c25b298b30a795a3641f64 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Noômen=20Ben=20Hassin?= <bnhassin@gmail.com>
+Date: Wed, 23 Jan 2019 20:30:40 +0100
+Subject: [PATCH 2/5] Create SCRIPT
+
+Git Bash Configuration
+---
+ script | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 script
+
+diff --git a/script b/script
+new file mode 100644
+index 0000000000000..2e053e1297e8c
+--- /dev/null
++++ b/script
+@@ -0,0 +1 @@
++git config --global http.Cookiefile "%UserPROFILe%\.gitcookies" powershell -noprofile -nologo -command Write-Output "gerrit.googlesource.com'tFALSE't/'tTRUE't2147483647'to'tgit-bnhassin
+
+From f35050b68442e874112734d9913e8c7319614df3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Noômen=20Ben=20Hassin?= <bnhassin@gmail.com>
+Date: Wed, 23 Jan 2019 23:15:01 +0100
+Subject: [PATCH 3/5] Create Resubmit
+
+Published For Notification Travis-Ci Building
+---
+ resubmit | 79 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 79 insertions(+)
+ create mode 100644 resubmit
+
+diff --git a/resubmit b/resubmit
+new file mode 100644
+index 0000000000000..797698aea6201
+--- /dev/null
++++ b/resubmit
+@@ -0,0 +1,79 @@
++language: c
++
++sudo: Bnhassin
++
++cache:
++  directories:
++    - $HOME/travis-cache
++
++os:
++  - linux
++  - osx
++
++compiler:
++  - clang
++  - gcc
++
++addons:
++  apt:
++    sources:
++    - ubuntu-toolchain-r-test
++    packages:
++    - language-pack-is
++    - git-svn
++    - apache2
++    - gcc-8
++
++matrix:
++  include:
++    - env: jobname=GETTEXT_POISON
++      os: linux
++      compiler:
++      addons:
++      before_install:
++    - env: jobname=Windows
++      os: linux
++      compiler:
++      addons:
++      before_install:
++      script:
++        - >
++          test "$TRAVIS_REPO_SLUG" != "git/git" ||
++          ci/run-windows-build.sh $TRAVIS_BRANCH $(git rev-parse HEAD)
++      after_failure:
++    - env: jobname=Linux32
++      os: linux
++      compiler:
++      addons:
++      services:
++        - docker
++      before_install:
++      script: ci/run-linux32-docker.sh
++    - env: jobname=StaticAnalysis
++      os: linux
++      compiler:
++      addons:
++        apt:
++          packages:
++          - coccinelle
++      before_install:
++      script: ci/run-static-analysis.sh
++      after_failure:
++    - env: jobname=Documentation
++      os: linux
++      compiler:
++      addons:
++        apt:
++          packages:
++          - asciidoc
++          - xmlto
++      before_install:
++      script: ci/test-documentation.sh
++      after_failure:
++
++before_install: ci/install-dependencies.sh
++script: ci/run-build-and-tests.sh
++after_failure: ci/print-test-failures.sh
++
++notifications:
++  email: bnhassin@gmail.com
+
+From a1cf673fbba86f49cd2bc1940e3ed5d9774a38a5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Noômen=20Ben=20Hassin?= <bnhassin@gmail.com>
+Date: Sat, 26 Jan 2019 00:06:38 +0100
+Subject: [PATCH 4/5] Create Directory
+
+Include Paths Directory
+---
+ dir | 2 ++
+ 1 file changed, 2 insertions(+)
+ create mode 100644 dir
+
+diff --git a/dir b/dir
+new file mode 100644
+index 0000000000000..3635759572a6d
+--- /dev/null
++++ b/dir
+@@ -0,0 +1,2 @@
++mkdir ~/bin
++PATH=~/bin:$PATH
+
+From 1121062e6894a0c5cd2d0ab9f72dea9fc9c79963 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Noômen=20Ben=20Hassin?= <bnhassin@gmail.com>
+Date: Sat, 26 Jan 2019 00:37:31 +0100
+Subject: [PATCH 5/5] Create Git Owner
+
+Edit User Managing
+---
+ mng | 2 ++
+ 1 file changed, 2 insertions(+)
+ create mode 100644 mng
+
+diff --git a/mng b/mng
+new file mode 100644
+index 0000000000000..75147546989a3
+--- /dev/null
++++ b/mng
+@@ -0,0 +1,2 @@
++git config --global user.name "Bnhassin"
++git config --global user.email "bnhassin@gmail.com"
