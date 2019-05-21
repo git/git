@@ -436,7 +436,9 @@ static struct commit *handle_commit(struct rev_info *revs,
 			die("unable to parse commit %s", name);
 		if (flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
-			revs->limited = 1;
+
+			if (!revs->topo_order || !generation_numbers_enabled(the_repository))
+				revs->limited = 1;
 		}
 		if (revs->sources) {
 			char **slot = revision_sources_at(revs->sources, commit);
