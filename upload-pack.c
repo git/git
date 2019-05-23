@@ -1032,8 +1032,8 @@ static int find_symref(const char *refname, const struct object_id *oid,
 	symref_target = resolve_ref_unsafe(refname, 0, NULL, &flag);
 	if (!symref_target || (flag & REF_ISSYMREF) == 0)
 		die("'%s' is a symref but it is not?", refname);
-	item = string_list_append(cb_data, refname);
-	item->util = xstrdup(symref_target);
+	item = string_list_append(cb_data, strip_namespace(refname));
+	item->util = xstrdup(strip_namespace(symref_target));
 	return 0;
 }
 
