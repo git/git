@@ -204,7 +204,7 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
 
 	if (S_ISREG(st->st_mode)) {
 		ce_mark_uptodate(ce);
-		mark_fsmonitor_valid(ce);
+		mark_fsmonitor_valid(istate, ce);
 	}
 }
 
@@ -1432,7 +1432,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 			 */
 			if (!S_ISGITLINK(ce->ce_mode)) {
 				ce_mark_uptodate(ce);
-				mark_fsmonitor_valid(ce);
+				mark_fsmonitor_valid(istate, ce);
 			}
 			return ce;
 		}
