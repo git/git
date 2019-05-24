@@ -90,6 +90,8 @@ merge.
 +
 With --no-squash perform the merge and commit the result. This
 option can be used to override --squash.
++
+With --squash, --commit is not allowed, and will fail.
 
 -s <strategy>::
 --strategy=<strategy>::
