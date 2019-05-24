@@ -1337,9 +1337,10 @@ static void write_index_patch(const struct am_state *state)
 	struct rev_info rev_info;
 	FILE *fp;
 
-	if (!get_oid_tree("HEAD", &head))
-		tree = lookup_tree(the_repository, &head);
-	else
+	if (!get_oid("HEAD", &head)) {
+		struct commit *commit = lookup_commit_or_die(&head, "HEAD");
+		tree = get_commit_tree(commit);
+	} else
 		tree = lookup_tree(the_repository,
 				   the_repository->hash_algo->empty_tree);
 
