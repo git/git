@@ -232,7 +232,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 
 		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
-			mark_fsmonitor_valid(ce);
+			mark_fsmonitor_valid(istate, ce);
 			if (!revs->diffopt.flags.find_copies_harder)
 				continue;
 		}

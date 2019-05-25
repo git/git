@@ -280,7 +280,7 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
-	fill_stat_cache_info(ce, st);
+	fill_stat_cache_info(&the_index, ce, st);
 	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
 
 	if (index_path(&the_index, &ce->oid, path, st,
