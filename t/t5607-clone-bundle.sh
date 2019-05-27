@@ -14,6 +14,12 @@ test_expect_success 'setup' '
 	git tag -d third
 '
 
+test_expect_success '"verify" needs a worktree' '
+	git bundle create tip.bundle -1 master &&
+	test_must_fail nongit git bundle verify ../tip.bundle 2>err &&
+	test_i18ngrep "need a repository" err
+'
+
 test_expect_success 'annotated tags can be excluded by rev-list options' '
 	git bundle create bundle --all --since=7.Apr.2005.15:14:00.-0700 &&
 	git ls-remote bundle > output &&
