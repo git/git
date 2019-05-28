@@ -246,4 +246,22 @@ test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
 
 '
 
+test_expect_success 'request-pull quotes regex metacharacters properly' '
+
+	rm -fr downstream.git &&
+	git init --bare downstream.git &&
+	(
+		cd local &&
+		git checkout initial &&
+		git merge --ff-only master &&
+		git tag -mrelease v2.0 &&
+		git push origin refs/tags/v2.0:refs/tags/v2-0 &&
+		test_must_fail git request-pull initial "$downstream_url" tags/v2.0 \
+			2>../err
+	) &&
+	grep "No match for commit .*" err &&
+	grep "Are you sure you pushed" err
+
+'
+
 test_done

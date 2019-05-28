@@ -83,19 +83,18 @@ die "fatal: No commits in common between $base and $head"
 # Otherwise find a random ref that matches $headrev.
 find_matching_ref='
 	my ($head,$headrev) = (@ARGV);
+	my $pattern = qr{/\Q$head\E$};
 	my ($found);
 
 	while (<STDIN>) {
 		chomp;
 		my ($sha1, $ref, $deref) = /^(\S+)\s+([^^]+)(\S*)$/;
-		my ($pattern);
 		next unless ($sha1 eq $headrev);
 
-		$pattern="/$head\$";
 		if ($ref eq $head) {
 			$found = $ref;
 		}
-		if ($ref =~ /$pattern/) {
+		if ($ref =~ $pattern) {
 			$found = $ref;
 		}
 		if ($sha1 eq $head) {
