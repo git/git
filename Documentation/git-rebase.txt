@@ -670,7 +670,8 @@ $ git rebase -i HEAD~5
 
 And move the first patch to the end of the list.
 
-You might want to preserve merges, if you have a history like this:
+You might want to recreate merge commits, e.g. if you have a history
+like this:
 
 ------------------
            X
@@ -684,7 +685,7 @@ Suppose you want to rebase the side branch starting at "A" to "Q". Make
 sure that the current HEAD is "B", and call
 
 -----------------------------
-$ git rebase -i -p --onto Q O
+$ git rebase -i -r --onto Q O
 -----------------------------
 
 Reordering and editing commits usually creates untested intermediate
