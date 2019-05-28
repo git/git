@@ -264,4 +264,39 @@ test_expect_success 'request-pull quotes regex metacharacters properly' '
 
 '
 
+test_expect_success 'pull request with mismatched object' '
+
+	rm -fr downstream.git &&
+	git init --bare downstream.git &&
+	(
+		cd local &&
+		git checkout initial &&
+		git merge --ff-only master &&
+		git push origin HEAD:refs/tags/full &&
+		test_must_fail git request-pull initial "$downstream_url" tags/full \
+			2>../err
+	) &&
+	grep "points to a different object" err &&
+	grep "Are you sure you pushed" err
+
+'
+
+test_expect_success 'pull request with stale object' '
+
+	rm -fr downstream.git &&
+	git init --bare downstream.git &&
+	(
+		cd local &&
+		git checkout initial &&
+		git merge --ff-only master &&
+		git push origin refs/tags/full &&
+		git tag -f -m"Thirty-one days" full &&
+		test_must_fail git request-pull initial "$downstream_url" tags/full \
+			2>../err
+	) &&
+	grep "points to a different object" err &&
+	grep "Are you sure you pushed" err
+
+'
+
 test_done
