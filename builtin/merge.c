@@ -59,7 +59,7 @@ static const char * const builtin_merge_usage[] = {
 };
 
 static int show_diffstat = 1, shortlog_len = -1, squash;
-static int option_commit = 1;
+static int option_commit = -1;
 static int option_edit = -1;
 static int allow_trivial = 1, have_message, verify_signatures;
 static int overwrite_ignore = 1;
@@ -1345,8 +1345,18 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (squash) {
 		if (fast_forward == FF_NO)
 			die(_("You cannot combine --squash with --no-ff."));
+		if (option_commit > 0)
+			die(_("You cannot combine --squash with --commit."));
+		/*
+		 * squash can now silently disable option_commit - this is not
+		 * a problem as it is only overriding the default, not a user
+		 * supplied option.
+		 */
 		option_commit = 0;
 	}
+
+	if (option_commit < 0)
+		option_commit = 1;
 
 	if (!argc) {
 		if (default_to_upstream)
