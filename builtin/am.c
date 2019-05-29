@@ -1339,9 +1339,10 @@ static void write_index_patch(const struct am_state *state)
 	struct rev_info rev_info;
 	FILE *fp;
 
-	if (!get_oid_tree("HEAD", &head))
-		tree = lookup_tree(the_repository, &head);
-	else
+	if (!get_oid("HEAD", &head)) {
+		struct commit *commit = lookup_commit_or_die(&head, "HEAD");
+		tree = get_commit_tree(commit);
+	} else
 		tree = lookup_tree(the_repository,
 				   the_repository->hash_algo->empty_tree);
 
@@ -1643,11 +1644,8 @@ static int do_interactive(struct am_state *state)
 {
 	assert(state->msg);
 
-	if (!isatty(0))
-		die(_("cannot be interactive without stdin connected to a terminal."));
-
 	for (;;) {
-		const char *reply;
+		char reply[64];
 
 		puts(_("Commit Body is:"));
 		puts("--------------------------");
@@ -1659,11 +1657,11 @@ static int do_interactive(struct am_state *state)
 		 * in your translation. The program will only accept English
 		 * input at this point.
 		 */
-		reply = git_prompt(_("Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "), PROMPT_ECHO);
+		printf(_("Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "));
+		if (!fgets(reply, sizeof(reply), stdin))
+			die("unable to read from stdin; aborting");
 
-		if (!reply) {
-			continue;
-		} else if (*reply == 'y' || *reply == 'Y') {
+		if (*reply == 'y' || *reply == 'Y') {
 			return 0;
 		} else if (*reply == 'a' || *reply == 'A') {
 			state->interactive = 0;
@@ -2333,6 +2331,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			else
 				argv_array_push(&paths, mkpath("%s/%s", prefix, argv[i]));
 		}
+
+		if (state.interactive && !paths.argc)
+			die(_("interactive mode requires patches on the command line"));
 
 		am_setup(&state, patch_format, paths.argv, keep_cr);
 
