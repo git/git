@@ -26,7 +26,7 @@ use Getopt::Long;
 
 # The version of the trace2 event target format that we understand.
 # This is reported in the 'version' event in the 'evt' field.
-# It comes from the GIT_TR2_EVENT_VERSION macro in trace2/tr2_tgt_event.c
+# It comes from the GIT_TRACE2_EVENT_VERSION macro in trace2/tr2_tgt_event.c
 my $evt_version = '1';
 
 my $show_children = 1;

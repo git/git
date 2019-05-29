@@ -130,7 +130,7 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
  * list of patterns configured important.  For example:
  *     git config --system trace2.configParams 'core.*,remote.*.url'
  * or:
- *     GIT_TR2_CONFIG_PARAMS=core.*,remote.*.url"
+ *     GIT_TRACE2_CONFIG_PARAMS=core.*,remote.*.url"
  *
  * Note: this routine does a read-only iteration on the config data
  * (using read_early_config()), so it must not be called until enough

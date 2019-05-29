@@ -4,9 +4,9 @@ test_description='test trace2 facility (perf target)'
 . ./test-lib.sh
 
 # Turn off any inherited trace2 settings for this test.
-sane_unset GIT_TR2 GIT_TR2_PERF GIT_TR2_EVENT
-sane_unset GIT_TR2_PERF_BRIEF
-sane_unset GIT_TR2_CONFIG_PARAMS
+sane_unset GIT_TRACE2 GIT_TRACE2_PERF GIT_TRACE2_EVENT
+sane_unset GIT_TRACE2_PERF_BRIEF
+sane_unset GIT_TRACE2_CONFIG_PARAMS
 
 # Add t/helper directory to PATH so that we can use a relative
 # path to run nested instances of test-tool.exe (see 004child).
@@ -27,13 +27,13 @@ V=$(git version | sed -e 's/^git version //') && export V
 # to whatever filtering that target decides to do).
 # Test each target independently.
 #
-# Defer setting GIT_TR2_PERF until the actual command we want to
+# Defer setting GIT_TRACE2_PERF until the actual command we want to
 # test because hidden git and test-tool commands in the test
 # harness can contaminate our output.
 
 # Enable "brief" feature which turns off the prefix:
 #     "<clock> <file>:<line> | <nr_parents> | "
-GIT_TR2_PERF_BRIEF=1 && export GIT_TR2_PERF_BRIEF
+GIT_TRACE2_PERF_BRIEF=1 && export GIT_TRACE2_PERF_BRIEF
 
 # Repeat some of the t0210 tests using the perf target stream instead of
 # the normal stream.
@@ -46,7 +46,7 @@ GIT_TR2_PERF_BRIEF=1 && export GIT_TR2_PERF_BRIEF
 
 test_expect_success 'perf stream, return code 0' '
 	test_when_finished "rm trace.perf actual expect" &&
-	GIT_TR2_PERF="$(pwd)/trace.perf" test-tool trace2 001return 0 &&
+	GIT_TRACE2_PERF="$(pwd)/trace.perf" test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
 	cat >expect <<-EOF &&
 		d0|main|version|||||$V
@@ -60,7 +60,7 @@ test_expect_success 'perf stream, return code 0' '
 
 test_expect_success 'perf stream, return code 1' '
 	test_when_finished "rm trace.perf actual expect" &&
-	test_must_fail env GIT_TR2_PERF="$(pwd)/trace.perf" test-tool trace2 001return 1 &&
+	test_must_fail env GIT_TRACE2_PERF="$(pwd)/trace.perf" test-tool trace2 001return 1 &&
 	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
 	cat >expect <<-EOF &&
 		d0|main|version|||||$V
@@ -78,7 +78,7 @@ test_expect_success 'perf stream, return code 1' '
 
 test_expect_success 'perf stream, error event' '
 	test_when_finished "rm trace.perf actual expect" &&
-	GIT_TR2_PERF="$(pwd)/trace.perf" test-tool trace2 003error "hello world" "this is a test" &&
+	GIT_TRACE2_PERF="$(pwd)/trace.perf" test-tool trace2 003error "hello world" "this is a test" &&
 	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
 	cat >expect <<-EOF &&
 		d0|main|version|||||$V
@@ -124,7 +124,7 @@ test_expect_success 'perf stream, error event' '
 
 test_expect_success 'perf stream, child processes' '
 	test_when_finished "rm trace.perf actual expect" &&
-	GIT_TR2_PERF="$(pwd)/trace.perf" test-tool trace2 004child test-tool trace2 004child test-tool trace2 001return 0 &&
+	GIT_TRACE2_PERF="$(pwd)/trace.perf" test-tool trace2 004child test-tool trace2 004child test-tool trace2 001return 0 &&
 	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <trace.perf >actual &&
 	cat >expect <<-EOF &&
 		d0|main|version|||||$V
@@ -150,7 +150,7 @@ test_expect_success 'perf stream, child processes' '
 	test_cmp expect actual
 '
 
-sane_unset GIT_TR2_PERF_BRIEF
+sane_unset GIT_TRACE2_PERF_BRIEF
 
 # Now test without environment variables and get all Trace2 settings
 # from the global config.
