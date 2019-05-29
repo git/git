@@ -16,6 +16,9 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
 	if (!arg) {
 		v = unset ? 0 : DEFAULT_ABBREV;
 	} else {
+		if (!*arg)
+			return error(_("option `%s' expects a numerical value"),
+				     opt->long_name);
 		v = strtol(arg, (char **)&arg, 10);
 		if (*arg)
 			return error(_("option `%s' expects a numerical value"),
