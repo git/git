@@ -1198,7 +1198,7 @@ static int rebase_config(const char *var, const char *value, void *data)
 		if (git_config_bool(var, value))
 			opts->flags |= REBASE_DIFFSTAT;
 		else
-			opts->flags &= !REBASE_DIFFSTAT;
+			opts->flags &= ~REBASE_DIFFSTAT;
 		return 0;
 	}
 
