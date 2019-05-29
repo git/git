@@ -1115,7 +1115,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	    server_supports_v2("server-option", 1)) {
 		int i;
 		for (i = 0; i < args->server_options->nr; i++)
-			packet_write_fmt(fd_out, "server-option=%s",
+			packet_buf_write(&req_buf, "server-option=%s",
 					 args->server_options->items[i].string);
 	}
 
