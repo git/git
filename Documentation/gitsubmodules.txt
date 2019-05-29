@@ -169,15 +169,15 @@ ACTIVE SUBMODULES
 
 A submodule is considered active,
 
-  a. if `submodule.<name>.active` is set to `true`
+  1. if `submodule.<name>.active` is set to `true`
 +
 or
 
-  b. if the submodule's path matches the pathspec in `submodule.active`
+  2. if the submodule's path matches the pathspec in `submodule.active`
 +
 or
 
-  c. if `submodule.<name>.url` is set.
+  3. if `submodule.<name>.url` is set.
 
 and these are evaluated in this order.
 
@@ -193,11 +193,11 @@ For example:
     url = https://example.org/baz
 
 In the above config only the submodule 'bar' and 'baz' are active,
-'bar' due to (a) and 'baz' due to (c). 'foo' is inactive because
-(a) takes precedence over (c)
+'bar' due to (1) and 'baz' due to (3). 'foo' is inactive because
+(1) takes precedence over (3)
 
-Note that (c) is a historical artefact and will be ignored if the
-(a) and (b) specify that the submodule is not active. In other words,
+Note that (3) is a historical artefact and will be ignored if the
+(1) and (2) specify that the submodule is not active. In other words,
 if we have a `submodule.<name>.active` set to `false` or if the
 submodule's path is excluded in the pathspec in `submodule.active`, the
 url doesn't matter whether it is present or not. This is illustrated in
