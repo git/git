@@ -58,9 +58,11 @@ PATTERNS("java",
 	 "|[-+*/<>%&^|=!]="
 	 "|--|\\+\\+|<<=?|>>>?=?|&&|\\|\\|"),
 PATTERNS("matlab",
-	 /* Octave pattern is mostly the same as matlab, except that '%%%' and
+	 /*
+	  * Octave pattern is mostly the same as matlab, except that '%%%' and
 	  * '##' can also be used to begin code sections, in addition to '%%'
-	  * that is understood by both. */
+	  * that is understood by both.
+	  */
 	 "^[[:space:]]*((classdef|function)[[:space:]].*)$|^(%%%?|##)[[:space:]].*$",
 	 "[a-zA-Z_][a-zA-Z0-9_]*|[-+0-9.e]+|[=~<>]=|\\.[*/\\^']|\\|\\||&&"),
 PATTERNS("objc",
