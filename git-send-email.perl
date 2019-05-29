@@ -182,7 +182,7 @@ my (@to,@cc,@xh,$envelope_sender,
 	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 # Things we either get from config, *or* are overridden on the
 # command-line.
-my ($no_cc, $no_to, $no_bcc);
+my ($no_cc, $no_to, $no_bcc, $no_identity);
 my (@config_to, @getopt_to);
 my (@config_cc, @getopt_cc);
 my (@config_bcc, @getopt_bcc);
@@ -325,44 +325,53 @@ $SIG{INT}  = \&signal_handler;
 
 # Read our sendemail.* config
 sub read_config {
-	my ($prefix) = @_;
+	my ($configured, $prefix) = @_;
 
 	foreach my $setting (keys %config_bool_settings) {
 		my $target = $config_bool_settings{$setting};
 		my $v = Git::config_bool(@repo, "$prefix.$setting");
-		$$target = $v if defined $v;
+		next unless defined $v;
+		next if $configured->{$setting}++;
+		$$target = $v;
 	}
 
 	foreach my $setting (keys %config_path_settings) {
 		my $target = $config_path_settings{$setting};
 		if (ref($target) eq "ARRAY") {
-			unless (@$target) {
-				my @values = Git::config_path(@repo, "$prefix.$setting");
-				@$target = @values if (@values && defined $values[0]);
-			}
+			my @values = Git::config_path(@repo, "$prefix.$setting");
+			next unless @values;
+			next if $configured->{$setting}++;
+			@$target = @values;
 		}
 		else {
 			my $v = Git::config_path(@repo, "$prefix.$setting");
-			$$target = $v if defined $v;
+			next unless defined $v;
+			next if $configured->{$setting}++;
+			$$target = $v;
 		}
 	}
 
 	foreach my $setting (keys %config_settings) {
 		my $target = $config_settings{$setting};
 		if (ref($target) eq "ARRAY") {
-			unless (@$target) {
-				my @values = Git::config(@repo, "$prefix.$setting");
-				@$target = @values if (@values && defined $values[0]);
-			}
+			my @values = Git::config(@repo, "$prefix.$setting");
+			next unless @values;
+			next if $configured->{$setting}++;
+			@$target = @values;
 		}
 		else {
 			my $v = Git::config(@repo, "$prefix.$setting");
-			$$target = $v if defined $v;
+			next unless defined $v;
+			next if $configured->{$setting}++;
+			$$target = $v;
 		}
 	}
 
 	if (!defined $smtp_encryption) {
-		my $enc = Git::config(@repo, "$prefix.smtpencryption");
+		my $setting = "$prefix.smtpencryption";
+		my $enc = Git::config(@repo, $setting);
+		return unless defined $enc;
+		return if $configured->{$setting}++;
 		if (defined $enc) {
 			$smtp_encryption = $enc;
 		} elsif (Git::config_bool(@repo, "$prefix.smtpssl")) {
@@ -371,17 +380,30 @@ sub read_config {
 	}
 }
 
+# sendemail.identity yields to --identity. We must parse this
+# special-case first before the rest of the config is read.
 $identity = Git::config(@repo, "sendemail.identity");
-read_config("sendemail.$identity") if defined $identity;
-read_config("sendemail");
+my $rc = GetOptions(
+	"identity=s" => \$identity,
+	"no-identity" => \$no_identity,
+);
+usage() unless $rc;
+undef $identity if $no_identity;
+
+# Now we know enough to read the config
+{
+    my %configured;
+    read_config(\%configured, "sendemail.$identity") if defined $identity;
+    read_config(\%configured, "sendemail");
+}
 
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
 
 my $help;
 my $git_completion_helper;
-my $rc = GetOptions("h" => \$help,
-                    "dump-aliases" => \$dump_aliases);
+$rc = GetOptions("h" => \$help,
+                 "dump-aliases" => \$dump_aliases);
 usage() unless $rc;
 die __("--dump-aliases incompatible with other options\n")
     if !$help and $dump_aliases and @ARGV;
@@ -411,7 +433,6 @@ $rc = GetOptions(
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
 		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
-		    "identity=s" => \$identity,
 		    "annotate!" => \$annotate,
 		    "no-annotate" => sub {$annotate = 0},
 		    "compose" => \$compose,
