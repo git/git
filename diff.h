@@ -169,7 +169,7 @@ struct diff_options {
 	const char *prefix;
 	int prefix_length;
 	const char *stat_sep;
-	long xdl_opts;
+	int xdl_opts;
 
 	/* see Documentation/diff-options.txt */
 	char **anchors;
