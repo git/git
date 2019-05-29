@@ -157,6 +157,10 @@ test_expect_success 'verify blob:limit=1m' '
 '
 
 # Test sparse:path=<path> filter.
+# !!!!
+# NOTE: sparse:path filter support has been dropped for security reasons,
+# so the tests have been changed to make sure that using it fails.
+# !!!!
 # Use a local file containing a sparse-checkout specification to filter
 # out blobs not required for the corresponding sparse-checkout.  We do not
 # require sparse-checkout to actually be enabled.
@@ -176,37 +180,20 @@ test_expect_success 'setup r3' '
 	echo sparse1 >pattern2
 '
 
-test_expect_success 'verify sparse:path=pattern1 omits top-level files' '
-	git -C r3 ls-files -s sparse1 sparse2 >ls_files_result &&
-	awk -f print_2.awk ls_files_result |
-	sort >expected &&
-
-	git -C r3 rev-list --quiet --objects --filter-print-omitted \
-		--filter=sparse:path=../pattern1 HEAD >revs &&
-	awk -f print_1.awk revs |
-	sed "s/~//" |
-	sort >observed &&
-
-	test_cmp expected observed
+test_expect_success 'verify sparse:path=pattern1 fails' '
+	test_must_fail git -C r3 rev-list --quiet --objects \
+		--filter-print-omitted --filter=sparse:path=../pattern1 HEAD
 '
 
-test_expect_success 'verify sparse:path=pattern2 omits both sparse2 files' '
-	git -C r3 ls-files -s sparse2 dir1/sparse2 >ls_files_result &&
-	awk -f print_2.awk ls_files_result |
-	sort >expected &&
-
-	git -C r3 rev-list --quiet --objects --filter-print-omitted \
-		--filter=sparse:path=../pattern2 HEAD >revs &&
-	awk -f print_1.awk revs |
-	sed "s/~//" |
-	sort >observed &&
-
-	test_cmp expected observed
+test_expect_success 'verify sparse:path=pattern2 fails' '
+	test_must_fail git -C r3 rev-list --quiet --objects \
+		--filter-print-omitted --filter=sparse:path=../pattern2 HEAD
 '
 
 # Test sparse:oid=<oid-ish> filter.
-# Like sparse:path, but we get the sparse-checkout specification from
-# a blob rather than a file on disk.
+# Use a blob containing a sparse-checkout specification to filter
+# out blobs not required for the corresponding sparse-checkout.  We do not
+# require sparse-checkout to actually be enabled.
 
 test_expect_success 'setup r3 part 2' '
 	echo dir1/ >r3/pattern &&

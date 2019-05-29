@@ -478,27 +478,6 @@ static void *filter_sparse_oid__init(
 	return d;
 }
 
-static void *filter_sparse_path__init(
-	struct oidset *omitted,
-	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn)
-{
-	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
-	d->omits = omitted;
-	if (add_excludes_from_file_to_list(filter_options->sparse_path_value,
-					   NULL, 0, &d->el, NULL) < 0)
-		die("could not load filter specification");
-
-	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
-	d->array_frame[d->nr].defval = 0; /* default to include */
-	d->array_frame[d->nr].child_prov_omit = 0;
-
-	*filter_fn = filter_sparse;
-	*filter_free_fn = filter_sparse_free;
-	return d;
-}
-
 typedef void *(*filter_init_fn)(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options,
@@ -514,7 +493,6 @@ static filter_init_fn s_filters[] = {
 	filter_blobs_limit__init,
 	filter_trees_depth__init,
 	filter_sparse_oid__init,
-	filter_sparse_path__init,
 };
 
 void *list_objects_filter__init(
