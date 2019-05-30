@@ -586,3 +586,5 @@ Fixes since v2.21
    (merge 397a46db78 js/t5580-unc-alternate-test later to maint).
    (merge d4907720a2 cm/notes-comment-fix later to maint).
    (merge 9dde06de13 cb/http-push-null-in-message-fix later to maint).
+   (merge 4c785c0edc js/rebase-config-bitfix later to maint).
+   (merge 8e9fe16c87 es/doc-gitsubmodules-markup later to maint).
