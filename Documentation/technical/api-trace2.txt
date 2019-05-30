@@ -23,7 +23,7 @@ formats in the future.  This might be used to define a binary format,
 for example.
 
 Trace2 is controlled using `trace2.*` config values in the system and
-global config files and `GIT_TR2*` environment variables.  Trace2 does
+global config files and `GIT_TRACE2*` environment variables.  Trace2 does
 not read from repo local or worktree config files or respect `-c`
 command line config settings.
 
@@ -42,7 +42,7 @@ config setting.
 For example
 
 ------------
-$ export GIT_TR2=~/log.normal
+$ export GIT_TRACE2=~/log.normal
 $ git version
 git version 2.20.1.155.g426c96fcdb
 ------------
@@ -71,13 +71,13 @@ $ cat ~/log.normal
 The performance format target (PERF) is a column-based format to
 replace GIT_TRACE_PERFORMANCE and is suitable for development and
 testing, possibly to complement tools like gprof.  This format is
-enabled with the `GIT_TR2_PERF` environment variable or the
+enabled with the `GIT_TRACE2_PERF` environment variable or the
 `trace2.perfTarget` system or global config setting.
 
 For example
 
 ------------
-$ export GIT_TR2_PERF=~/log.perf
+$ export GIT_TRACE2_PERF=~/log.perf
 $ git version
 git version 2.20.1.155.g426c96fcdb
 ------------
@@ -104,14 +104,14 @@ $ cat ~/log.perf
 === The Event Format Target
 
 The event format target is a JSON-based format of event data suitable
-for telemetry analysis.  This format is enabled with the `GIT_TR2_EVENT`
+for telemetry analysis.  This format is enabled with the `GIT_TRACE2_EVENT`
 environment variable or the `trace2.eventTarget` system or global config
 setting.
 
 For example
 
 ------------
-$ export GIT_TR2_EVENT=~/log.event
+$ export GIT_TRACE2_EVENT=~/log.event
 $ git version
 git version 2.20.1.155.g426c96fcdb
 ------------
@@ -273,7 +273,7 @@ significantly affects program performance or behavior, such as
 	Emits a "def_param" messages for "important" configuration
 	settings.
 +
-The environment variable `GIT_TR2_CONFIG_PARAMS` or the `trace2.configParams`
+The environment variable `GIT_TRACE2_CONFIG_PARAMS` or the `trace2.configParams`
 config value can be set to a
 list of patterns of important configuration settings, for example:
 `core.*,remote.*.url`.  This function will iterate over all config
@@ -465,7 +465,7 @@ Events are written as lines of the form:
 Note that this may contain embedded LF or CRLF characters that are
 not escaped, so the event may spill across multiple lines.
 
-If `GIT_TR2_BRIEF` or `trace2.normalBrief` is true, the `time`, `filename`,
+If `GIT_TRACE2_BRIEF` or `trace2.normalBrief` is true, the `time`, `filename`,
 and `line` fields are omitted.
 
 This target is intended to be more of a summary (like GIT_TRACE) and
@@ -533,7 +533,7 @@ This field is in anticipation of in-proc submodules in the future.
 15:33:33.532712 wt-status.c:2331                  | d0 | main                     | region_leave | r1  |  0.127568 |  0.001504 | status     | label:print
 ------------
 
-If `GIT_TR2_PERF_BRIEF` or `trace2.perfBrief` is true, the `time`, `file`,
+If `GIT_TRACE2_PERF_BRIEF` or `trace2.perfBrief` is true, the `time`, `file`,
 and `line` fields are omitted.
 
 ------------
@@ -598,7 +598,7 @@ The following key/value pairs are common to all events:
 `"repo":<repo-id>`::
 	when present, is the integer repo-id as described previously.
 
-If `GIT_TR2_EVENT_BRIEF` or `trace2.eventBrief` is true, the `file`
+If `GIT_TRACE2_EVENT_BRIEF` or `trace2.eventBrief` is true, the `file`
 and `line` fields are omitted from all events and the `time` field is
 only present on the "start" and "atexit" events.
 
@@ -911,7 +911,7 @@ visited.
 The `category` field may be used in a future enhancement to
 do category-based filtering.
 +
-`GIT_TR2_EVENT_NESTING` or `trace2.eventNesting` can be used to
+`GIT_TRACE2_EVENT_NESTING` or `trace2.eventNesting` can be used to
 filter deeply nested regions and data events.  It defaults to "2".
 
 `"region_leave"`::
@@ -1039,8 +1039,8 @@ rev-list, and gc.  This example also shows that fetch took
 5.199 seconds and of that 4.932 was in ssh.
 +
 ----------------
-$ export GIT_TR2_BRIEF=1
-$ export GIT_TR2=~/log.normal
+$ export GIT_TRACE2_BRIEF=1
+$ export GIT_TRACE2=~/log.normal
 $ git fetch origin
 ...
 ----------------
@@ -1075,8 +1075,8 @@ its name as "gc", it also reports the hierarchy as "fetch/gc".
 indented for clarity.)
 +
 ----------------
-$ export GIT_TR2_BRIEF=1
-$ export GIT_TR2=~/log.normal
+$ export GIT_TRACE2_BRIEF=1
+$ export GIT_TRACE2=~/log.normal
 $ git fetch origin
 ...
 ----------------
@@ -1134,8 +1134,8 @@ In this example, scanning for untracked files ran from +0.012568 to
 +0.027149 (since the process started) and took 0.014581 seconds.
 +
 ----------------
-$ export GIT_TR2_PERF_BRIEF=1
-$ export GIT_TR2_PERF=~/log.perf
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
 $ git status
 ...
 
@@ -1180,8 +1180,8 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 We can further investigate the time spent scanning for untracked files.
 +
 ----------------
-$ export GIT_TR2_PERF_BRIEF=1
-$ export GIT_TR2_PERF=~/log.perf
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
 $ git status
 ...
 $ cat ~/log.perf
@@ -1236,8 +1236,8 @@ int read_index_from(struct index_state *istate, const char *path,
 This example shows that the index contained 3552 entries.
 +
 ----------------
-$ export GIT_TR2_PERF_BRIEF=1
-$ export GIT_TR2_PERF=~/log.perf
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
 $ git status
 ...
 $ cat ~/log.perf
@@ -1310,8 +1310,8 @@ Data events are tagged with the active thread name.  They are used
 to report the per-thread parameters.
 +
 ----------------
-$ export GIT_TR2_PERF_BRIEF=1
-$ export GIT_TR2_PERF=~/log.perf
+$ export GIT_TRACE2_PERF_BRIEF=1
+$ export GIT_TRACE2_PERF=~/log.perf
 $ git status
 ...
 $ cat ~/log.perf

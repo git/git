@@ -7,7 +7,7 @@
  *
  * Note that this set does not contain any of the transient
  * environment variables used to pass information from parent
- * to child git processes, such "GIT_TR2_PARENT_SID".
+ * to child git processes, such "GIT_TRACE2_PARENT_SID".
  */
 enum tr2_sysenv_variable {
 	TR2_SYSENV_CFG_PARAM = 0,

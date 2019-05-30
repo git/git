@@ -2,7 +2,7 @@
 #include "trace2/tr2_tbuf.h"
 #include "trace2/tr2_sid.h"
 
-#define TR2_ENVVAR_PARENT_SID "GIT_TR2_PARENT_SID"
+#define TR2_ENVVAR_PARENT_SID "GIT_TRACE2_PARENT_SID"
 
 static struct strbuf tr2sid_buf = STRBUF_INIT;
 static int tr2sid_nr_git_parents;

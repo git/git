@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "trace2/tr2_cmd_name.h"
 
-#define TR2_ENVVAR_PARENT_NAME "GIT_TR2_PARENT_NAME"
+#define TR2_ENVVAR_PARENT_NAME "GIT_TRACE2_PARENT_NAME"
 
 static struct strbuf tr2cmdname_hierarchy = STRBUF_INIT;
 

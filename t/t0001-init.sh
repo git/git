@@ -93,7 +93,7 @@ test_expect_success 'No extra GIT_* on alias scripts' '
 		sed -n \
 			-e "/^GIT_PREFIX=/d" \
 			-e "/^GIT_TEXTDOMAINDIR=/d" \
-			-e "/^GIT_TR2_PARENT/d" \
+			-e "/^GIT_TRACE2_PARENT/d" \
 			-e "/^GIT_/s/=.*//p" |
 		sort
 	EOF
