@@ -195,6 +195,9 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 		}
 		if (get_arg(p, opt, flags, &arg))
 			return -1;
+		if (!*arg)
+			return error(_("%s expects a numerical value"),
+				     optname(opt, flags));
 		*(int *)opt->value = strtol(arg, (char **)&s, 10);
 		if (*s)
 			return error(_("%s expects a numerical value"),
