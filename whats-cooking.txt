@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2019, #04; Tue, 28)
-X-master-at: aa25c82427ae70aebf3b8f970f2afd54e9a2a8c6
-X-next-at: 3120a1824446a317099b597aac098c4ec420be6e
+Subject: What's cooking in git.git (May 2019, #05; Thu, 30)
+X-master-at: 874dd410cecbc2953f624ab6ab9fda10d1650870
+X-next-at: f4fbbf30c2866bb423731899b666bc3184d8e162
 
-What's cooking in git.git (May 2019, #04; Tue, 28)
+What's cooking in git.git (May 2019, #05; Thu, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,12 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Quite a few new topics, most of which are fixes with different
-urgency, have been picked up.  Perhaps we'd need an extra -rc for
-this cycle to squash existing regression at the tip of 'master'.
-At this point, the criteria for merging to 'master' is *NOT* "This
-is an obviously correct fix", but is "This is an obviously correct
-fix for a breakage we introduced during this cycle".
+The second round of release candidate has been tagged, after
+slipping for several days to merge a handful of last-minute
+regression fixes.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,247 +22,99 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* ab/hash-object-doc (2019-05-28) 1 commit
- - hash-object doc: stop mentioning git-cvsimport
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* cc/list-objects-filter-wo-sparse-path (2019-05-28) 2 commits
- - SQUASH???
- - list-objects-filter: disable 'sparse:path' filters
-
- Disable "--filter=sparse:path=<path>" that would allow reading from
- paths on the filesystem.
-
- Will merge to 'next'.
-
-
-* ds/object-info-for-prefetch-fix (2019-05-28) 1 commit
- - sha1-file: split OBJECT_INFO_FOR_PREFETCH
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* ds/topo-traversal-using-commit-graph (2019-05-28) 2 commits
- - revision: keep topo-walk free of unintersting commits
- - revision: use generation for A..B --topo-order queries
-
- Prepare use of reachability index in topological walker that works
- on a range (A..B).
-
- Will merge to 'next'.
-
+[Graduated to "master"]
 
 * es/doc-gitsubmodules-markup (2019-05-28) 1 commit
- - gitsubmodules: align html and nroff lists
+  (merged to 'next' on 2019-05-29 at 695bb51514)
+ + gitsubmodules: align html and nroff lists
 
  Doc markup fix.
 
- Will merge to 'next'.
 
+* ja/diff-opt-typofix (2019-05-19) 1 commit
+  (merged to 'next' on 2019-05-19 at fedb594191)
+ + diff: fix mistake in translatable strings
 
-* es/git-debugger-doc (2019-05-28) 1 commit
- - doc: hint about GIT_DEBUGGER in CodingGuidelines
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* es/grep-require-name-when-needed (2019-05-28) 1 commit
- - grep: fail if call could output and name is null
-
- More parameter validation.
-
- Will merge to 'next'.
-
-
-* ew/server-info-remove-crufts (2019-05-28) 1 commit
- - server-info: do not list unlinked packs
-
- "git update-server-info" used to leave stale packfiles in its
- output, which has been corrected.
-
- Will merge to 'next'.
+ Typofix.
 
 
 * jh/trace2 (2019-05-28) 1 commit
- - trace2: fix tracing when NO_PTHREADS is defined
+  (merged to 'next' on 2019-05-29 at 849c4916ac)
+ + trace2: fix tracing when NO_PTHREADS is defined
 
- Will merge to 'next' and then to 'master'.
-
-
-* jk/HEAD-symref-in-xfer-namespaces (2019-05-28) 1 commit
- - upload-pack: strip namespace from symref data
-
- The server side support for "git fetch" used to show incorrect
- value for the HEAD symbolic ref when the namespace feature is in
- use, which has been corrected.
-
- Will merge to 'next'.
-
-
-* jk/am-i-resolved-fix (2019-05-28) 4 commits
- - am: fix --interactive HEAD tree resolution
- - am: drop tty requirement for --interactive
- - am: read interactive input from stdin
- - am: simplify prompt response handling
-
- "git am -i --resolved" segfaulted after trying to see a commit as
- if it were a tree, which has been corrected.
-
- Will merge to 'next'.
-
-
-* js/bisect-helper-check-get-oid-return-value (2019-05-28) 1 commit
- - bisect--helper: verify HEAD could be parsed before continuing
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* js/bundle-verify-require-object-store (2019-05-28) 1 commit
- - bundle verify: error out if called without an object database
-
- "git bundle verify" needs to see if prerequisite objects exist in
- the receiving repository, but the command did not check if we are
- in a repository upfront, which has been corrected.
-
- Will merge to 'next'.
-
-
-* js/fsmonitor-unflake (2019-05-28) 2 commits
- - mark_fsmonitor_valid(): mark the index as changed if needed
- - fill_stat_cache_info(): prepare for an fsmonitor fix
-
- The data collected by fsmonitor was not properly written back to
- the on-disk index file, breaking t7519 tests occasionally, which
- has been corrected.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/rebase-config-bitfix (2019-05-28) 1 commit
- - rebase: replace incorrect logical negation by correct bitwise one
+  (merged to 'next' on 2019-05-29 at 77de6e31b6)
+ + rebase: replace incorrect logical negation by correct bitwise one
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/rebase-deprecate-preserve-merges (2019-05-28) 3 commits
- - rebase docs: recommend `-r` over `-p`
- - docs: say that `--rebase=preserve` is deprecated
- - tests: mark a couple more test cases as requiring `rebase -p`
+  (merged to 'next' on 2019-05-29 at d153fc0d44)
+ + rebase docs: recommend `-r` over `-p`
+ + docs: say that `--rebase=preserve` is deprecated
+ + tests: mark a couple more test cases as requiring `rebase -p`
 
  A bit more leftover clean-up to deprepcate "rebase -p".
 
- Will merge to 'next' and then to 'master'.
-
 
 * jt/clone-server-option (2019-05-28) 1 commit
- - fetch-pack: send server options after command
+  (merged to 'next' on 2019-05-29 at 30eb487077)
+ + fetch-pack: send server options after command
 
  A brown-paper-bag bugfix to a change already in 'master'.
 
- Will merge to 'next' and then to 'master'.
 
-
-* mm/p4-unshelve-windows-fix (2019-05-28) 1 commit
- - p4 unshelve: fix "Not a valid object name HEAD0" on Windows
-
- The command line to invoke a "git cat-file" command from inside
- "git p4" was not properly quoted to protect a caret and running a
- broken command on Windows, which has been corrected.
-
- Will merge to 'next'.
-
-
-* nd/diff-parseopt (2019-05-28) 3 commits
- - parse-options: check empty value in OPT_INTEGER and OPT_ABBREV
- - diff-parseopt: restore -U (no argument) behavior
- - diff-parseopt: correct variable types that are used by parseopt
+* nd/diff-parseopt (2019-05-29) 3 commits
+  (merged to 'next' on 2019-05-29 at f9eedc21e3)
+ + parse-options: check empty value in OPT_INTEGER and OPT_ABBREV
+ + diff-parseopt: restore -U (no argument) behavior
+ + diff-parseopt: correct variable types that are used by parseopt
 
  A brown-paper-bag bugfix to a change already in 'master'.
-
- Will merge to 'next' and then to 'master'.
 
  Reducing the noise of the bottom-most patch may be desirable, although
  the change itself is not wrong per-se.
 
 
-* pb/request-pull-verify-remote-ref (2019-05-28) 2 commits
- - request-pull: warn if the remote object is not the same as the local one
- - request-pull: quote regex metacharacters in local ref
-
- "git request-pull" learned to warn when the ref we ask them to pull
- from in the local repository and in the published repository are
- different.
-
- Will merge to 'next'.
-
-
-* po/git-help-on-git-itself (2019-05-16) 2 commits
- - Doc: git.txt: remove backticks from link and add git-scm.com/docs
- - git.c: show usage for accessing the git(1) help page
-
- "git help git" was hard to discover (well, at least for some
- people).
-
- Will merge to 'next'.
-
-
 * sg/progress-off-by-one-fix (2019-05-28) 1 commit
- - progress: avoid empty line when breaking the progress line
+  (merged to 'next' on 2019-05-29 at 13ea8cc5a5)
+ + progress: avoid empty line when breaking the progress line
 
  A brown-paper-bag bugfix to a change already in 'master'.
 
- Will merge to 'next' and then to 'master'.
-
-
 
 * sg/trace2-rename (2019-05-28) 2 commits
- - trace2: document the supported values of GIT_TRACE2* env variables
- - trace2: rename environment variables to GIT_TRACE2*
+  (merged to 'next' on 2019-05-29 at ae7aa4b417)
+ + trace2: document the supported values of GIT_TRACE2* env variables
+ + trace2: rename environment variables to GIT_TRACE2*
 
  Rename environment variables that are used to control the "trace2"
  mechanism to a more readable name.
 
- Will merge to 'next' and then to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* po/doc-branch (2019-05-29) 1 commit
+ - doc branch: provide examples for listing remote tracking branches
+
+ RFC
 
 
-* sw/git-p4-unshelve-branched-files (2019-05-28) 1 commit
- - git-p4: allow unshelving of branched files
+* bb/unicode-12.1-reiwa (2019-05-29) 1 commit
+  (merged to 'next' on 2019-05-30 at 016465335c)
+ + unicode: update the width tables to Unicode 12.1
+<<
+* bb/unicode-12.1-reiwa (2019-05-29) 1 commit
+ - unicode: update the width tables to Unicode 12.1
+>>
 
- "git p4" update.
+ Update to Unicode 12.1 width table.
 
- Will merge to 'next'.
-
-
-* vv/merge-squash-with-explicit-commit (2019-05-28) 1 commit
- - merge: refuse --commit with --squash
-
- "git merge --squash" is designed to update the working tree and the
- index without creating the commit, and this cannot be countermanded
- by adding the "--commit" option; the command now refuses to work
- when both options are given.
-
-
-* xl/record-partial-clone-origin (2019-05-28) 1 commit
- - clone: respect user supplied origin name when setting up partial clone
-
- When creating a partial clone, the object filtering criteria is
- recorded for the origin of the clone, but this incorrectly used a
- hardcoded name "origin" to name that remote; it has been corrected
- to honor the "--origin <name>" option.
-
- Will merge to 'next'.
+ Will cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -351,6 +200,191 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ab/hash-object-doc (2019-05-28) 1 commit
+ - hash-object doc: stop mentioning git-cvsimport
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* cc/list-objects-filter-wo-sparse-path (2019-05-29) 1 commit
+  (merged to 'next' on 2019-05-30 at 5a294203ad)
+ + list-objects-filter: disable 'sparse:path' filters
+
+ Disable "--filter=sparse:path=<path>" that would allow reading from
+ paths on the filesystem.
+
+ Will cook in 'next'.
+
+
+* ds/object-info-for-prefetch-fix (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at ee0055b276)
+ + sha1-file: split OBJECT_INFO_FOR_PREFETCH
+
+ Code cleanup and futureproof.
+
+ Will cook in 'next'.
+
+
+* ds/topo-traversal-using-commit-graph (2019-05-28) 2 commits
+  (merged to 'next' on 2019-05-30 at 590527995e)
+ + revision: keep topo-walk free of unintersting commits
+ + revision: use generation for A..B --topo-order queries
+
+ Prepare use of reachability index in topological walker that works
+ on a range (A..B).
+
+ Will cook in 'next'.
+
+
+* es/git-debugger-doc (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at 449ba4ae6c)
+ + doc: hint about GIT_DEBUGGER in CodingGuidelines
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* es/grep-require-name-when-needed (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at e1ec57894a)
+ + grep: fail if call could output and name is null
+
+ More parameter validation.
+
+ Will cook in 'next'.
+
+
+* ew/server-info-remove-crufts (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at 655ba18f30)
+ + server-info: do not list unlinked packs
+
+ "git update-server-info" used to leave stale packfiles in its
+ output, which has been corrected.
+
+ Will cook in 'next'.
+
+
+* jk/HEAD-symref-in-xfer-namespaces (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at c2cfe38955)
+ + upload-pack: strip namespace from symref data
+
+ The server side support for "git fetch" used to show incorrect
+ value for the HEAD symbolic ref when the namespace feature is in
+ use, which has been corrected.
+
+ Will cook in 'next'.
+
+
+* jk/am-i-resolved-fix (2019-05-28) 4 commits
+  (merged to 'next' on 2019-05-29 at e711103b1a)
+ + am: fix --interactive HEAD tree resolution
+ + am: drop tty requirement for --interactive
+ + am: read interactive input from stdin
+ + am: simplify prompt response handling
+
+ "git am -i --resolved" segfaulted after trying to see a commit as
+ if it were a tree, which has been corrected.
+
+ Will cook in 'next'.
+
+
+* js/bisect-helper-check-get-oid-return-value (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at 24125b3bc0)
+ + bisect--helper: verify HEAD could be parsed before continuing
+
+ Code cleanup.
+
+ Will cook in 'next'.
+
+
+* js/bundle-verify-require-object-store (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at 747fbbaf11)
+ + bundle verify: error out if called without an object database
+
+ "git bundle verify" needs to see if prerequisite objects exist in
+ the receiving repository, but the command did not check if we are
+ in a repository upfront, which has been corrected.
+
+ Will cook in 'next'.
+
+
+* js/fsmonitor-unflake (2019-05-28) 2 commits
+  (merged to 'next' on 2019-05-30 at 1aa850bc59)
+ + mark_fsmonitor_valid(): mark the index as changed if needed
+ + fill_stat_cache_info(): prepare for an fsmonitor fix
+
+ The data collected by fsmonitor was not properly written back to
+ the on-disk index file, breaking t7519 tests occasionally, which
+ has been corrected.
+
+ Will cook in 'next'.
+
+
+* mm/p4-unshelve-windows-fix (2019-05-28) 1 commit
+ - p4 unshelve: fix "Not a valid object name HEAD0" on Windows
+
+ The command line to invoke a "git cat-file" command from inside
+ "git p4" was not properly quoted to protect a caret and running a
+ broken command on Windows, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* pb/request-pull-verify-remote-ref (2019-05-28) 2 commits
+ - request-pull: warn if the remote object is not the same as the local one
+ - request-pull: quote regex metacharacters in local ref
+
+ "git request-pull" learned to warn when the ref we ask them to pull
+ from in the local repository and in the published repository are
+ different.
+
+ Will merge to 'next'.
+
+
+* po/git-help-on-git-itself (2019-05-16) 2 commits
+ - Doc: git.txt: remove backticks from link and add git-scm.com/docs
+ - git.c: show usage for accessing the git(1) help page
+
+ "git help git" was hard to discover (well, at least for some
+ people).
+
+ Will merge to 'next'.
+
+
+* sw/git-p4-unshelve-branched-files (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-30 at e1985f61fc)
+ + git-p4: allow unshelving of branched files
+
+ "git p4" update.
+
+ Will cook in 'next'.
+
+
+* vv/merge-squash-with-explicit-commit (2019-05-28) 1 commit
+  (merged to 'next' on 2019-05-29 at 209baa3e55)
+ + merge: refuse --commit with --squash
+
+ "git merge --squash" is designed to update the working tree and the
+ index without creating the commit, and this cannot be countermanded
+ by adding the "--commit" option; the command now refuses to work
+ when both options are given.
+
+ Will cook in 'next'.
+
+
+* xl/record-partial-clone-origin (2019-05-29) 1 commit
+ - clone: respect user supplied origin name when setting up partial clone
+
+ When creating a partial clone, the object filtering criteria is
+ recorded for the origin of the clone, but this incorrectly used a
+ hardcoded name "origin" to name that remote; it has been corrected
+ to honor the "--origin <name>" option.
+
+ Will merge to 'next'.
+
+
 * ab/fail-prereqs-in-test (2019-05-14) 1 commit
   (merged to 'next' on 2019-05-16 at d1be55f485)
  + tests: add a special setup where prerequisites fail
@@ -388,15 +422,20 @@ of the repositories listed at
 
 
 * jt/partial-clone-missing-ref-delta-base (2019-05-15) 2 commits
- - index-pack: prefetch missing REF_DELTA bases
- - t5616: refactor packfile replacement
+  (merged to 'next' on 2019-05-29 at 5d7573a151)
+ + index-pack: prefetch missing REF_DELTA bases
+ + t5616: refactor packfile replacement
 
  "git fetch" into a lazy clone forgot to fetch base objects that are
  necessary to complete delta in a thin packfile, which has been
  corrected.
 
+ Will cook in 'next'.
 
-* bl/userdiff-octave (2019-05-19) 1 commit
+
+* bl/userdiff-octave (2019-05-29) 2 commits
+  (merged to 'next' on 2019-05-29 at 6ed07afc89)
+ + userdiff: fix grammar and style issues
   (merged to 'next' on 2019-05-19 at 9ea1180d6c)
  + userdiff: add Octave
 
@@ -453,13 +492,16 @@ of the repositories listed at
 
 
 * ba/clone-remote-submodules (2019-05-28) 1 commit
- - clone: add `--remote-submodules` flag
+  (merged to 'next' on 2019-05-29 at 71972f94c2)
+ + clone: add `--remote-submodules` flag
 
  "git clone --recurse-submodules" learned to set up the submodules
  to ignore commit object names recorded in the superproject gitlink
  and instead use the commits that happen to be at the tip of the
  remote-tracking branches from the get-go, by passing the new
  "--remote-submodules" option.
+
+ Will cook in 'next'.
 
 
 * ds/close-object-store (2019-05-28) 3 commits
@@ -477,16 +519,8 @@ of the repositories listed at
  Waiting on ds/commit-graph-write-refactor to stabilize.
 
 
-* ja/diff-opt-typofix (2019-05-19) 1 commit
-  (merged to 'next' on 2019-05-19 at fedb594191)
- + diff: fix mistake in translatable strings
-
- Typofix.
-
- Will merge to 'master'.
-
-
-* ml/userdiff-rust (2019-05-17) 1 commit
+* ml/userdiff-rust (2019-05-30) 2 commits
+ - userdiff: two simplifications of patterns for rust
   (merged to 'next' on 2019-05-19 at 1266fddce5)
  + userdiff: add built-in pattern for rust
 
@@ -522,11 +556,12 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* ab/send-email-transferencoding-fix (2019-05-19) 7 commits
- - send-email: fix regression in sendemail.identity parsing
- - send-email: document --no-[to|cc|bcc]
- - send-email: fix broken transferEncoding tests
- - send-email: remove cargo-culted multi-patch pattern in tests
+* ab/send-email-transferencoding-fix (2019-05-29) 7 commits
+  (merged to 'next' on 2019-05-29 at c8a99d18c0)
+ + send-email: fix regression in sendemail.identity parsing
+ + send-email: document --no-[to|cc|bcc]
+ + send-email: fix broken transferEncoding tests
+ + send-email: remove cargo-culted multi-patch pattern in tests
   (merged to 'next' on 2019-05-13 at 38c6a1e7e0)
  + send-email: do defaults -> config -> getopt in that order
  + send-email: rename the @bcclist variable for consistency
@@ -539,7 +574,7 @@ of the repositories listed at
  (finally) redoing the order of setting the default, reading the
  configuration and command line options.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * dl/format-patch-notes-config (2019-05-17) 2 commits
@@ -648,7 +683,9 @@ of the repositories listed at
  with '*' in front.
 
 
-* es/first-contrib-tutorial (2019-05-19) 2 commits
+* es/first-contrib-tutorial (2019-05-29) 3 commits
+  (merged to 'next' on 2019-05-30 at 96317960ab)
+ + doc: add some nit fixes to MyFirstContribution
   (merged to 'next' on 2019-05-19 at 9ddfae82bf)
  + documentation: add anchors to MyFirstContribution
  + documentation: add tutorial for first contribution
@@ -657,7 +694,6 @@ of the repositories listed at
  developers.
 
  Will cook in 'next'.
- cf. <20190517190359.21676-1-emilyshaffer@google.com> (v6)
 
 
 * cc/multi-promisor (2019-04-15) 17 commits
