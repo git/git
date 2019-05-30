@@ -277,6 +277,10 @@ test_expect_success 'verify normal and blob:limit packfiles have same commits/tr
 '
 
 # Test sparse:path=<path> filter.
+# !!!!
+# NOTE: sparse:path filter support has been dropped for security reasons,
+# so the tests have been changed to make sure that using it fails.
+# !!!!
 # Use a local file containing a sparse-checkout specification to filter
 # out blobs not required for the corresponding sparse-checkout.  We do not
 # require sparse-checkout to actually be enabled.
@@ -315,73 +319,24 @@ test_expect_success 'verify blob count in normal packfile' '
 	test_cmp expected observed
 '
 
-test_expect_success 'verify sparse:path=pattern1' '
-	git -C r3 ls-files -s dir1/sparse1 dir1/sparse2 >ls_files_result &&
-	awk -f print_2.awk ls_files_result |
-	sort >expected &&
-
-	git -C r3 pack-objects --revs --stdout --filter=sparse:path=../pattern1 >filter.pack <<-EOF &&
+test_expect_success 'verify sparse:path=pattern1 fails' '
+	test_must_fail git -C r3 pack-objects --revs --stdout \
+		--filter=sparse:path=../pattern1 <<-EOF
 	HEAD
 	EOF
-	git -C r3 index-pack ../filter.pack &&
-
-	git -C r3 verify-pack -v ../filter.pack >verify_result &&
-	grep blob verify_result |
-	awk -f print_1.awk |
-	sort >observed &&
-
-	test_cmp expected observed
 '
 
-test_expect_success 'verify normal and sparse:path=pattern1 packfiles have same commits/trees' '
-	git -C r3 verify-pack -v ../all.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
-	awk -f print_1.awk |
-	sort >expected &&
-
-	git -C r3 verify-pack -v ../filter.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
-	awk -f print_1.awk |
-	sort >observed &&
-
-	test_cmp expected observed
-'
-
-test_expect_success 'verify sparse:path=pattern2' '
-	git -C r3 ls-files -s sparse1 dir1/sparse1 >ls_files_result &&
-	awk -f print_2.awk ls_files_result |
-	sort >expected &&
-
-	git -C r3 pack-objects --revs --stdout --filter=sparse:path=../pattern2 >filter.pack <<-EOF &&
+test_expect_success 'verify sparse:path=pattern2 fails' '
+	test_must_fail git -C r3 pack-objects --revs --stdout \
+		--filter=sparse:path=../pattern2 <<-EOF
 	HEAD
 	EOF
-	git -C r3 index-pack ../filter.pack &&
-
-	git -C r3 verify-pack -v ../filter.pack >verify_result &&
-	grep blob verify_result |
-	awk -f print_1.awk |
-	sort >observed &&
-
-	test_cmp expected observed
-'
-
-test_expect_success 'verify normal and sparse:path=pattern2 packfiles have same commits/trees' '
-	git -C r3 verify-pack -v ../all.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
-	awk -f print_1.awk |
-	sort >expected &&
-
-	git -C r3 verify-pack -v ../filter.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
-	awk -f print_1.awk |
-	sort >observed &&
-
-	test_cmp expected observed
 '
 
 # Test sparse:oid=<oid-ish> filter.
-# Like sparse:path, but we get the sparse-checkout specification from
-# a blob rather than a file on disk.
+# Use a blob containing a sparse-checkout specification to filter
+# out blobs not required for the corresponding sparse-checkout.  We do not
+# require sparse-checkout to actually be enabled.
 
 test_expect_success 'setup r4' '
 	git init r4 &&

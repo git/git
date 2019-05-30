@@ -725,9 +725,6 @@ specification contained in the blob (or blob-expression) '<blob-ish>'
 to omit blobs that would not be not required for a sparse checkout on
 the requested refs.
 +
-The form '--filter=sparse:path=<path>' similarly uses a sparse-checkout
-specification contained in <path>.
-+
 The form '--filter=tree:<depth>' omits all blobs and trees whose depth
 from the root tree is >= <depth> (minimum depth if an object is located
 at multiple depths in the commits traversed). <depth>=0 will not include
@@ -737,6 +734,10 @@ tree and blobs which are referenced directly by a commit reachable from
 <commit> or an explicitly-given object. <depth>=2 is like <depth>=1
 while also including trees and blobs one more level removed from an
 explicitly-given commit or tree.
++
+Note that the form '--filter=sparse:path=<path>' that wants to read
+from an arbitrary path on the filesystem has been dropped for security
+reasons.
 
 --no-filter::
 	Turn off any previous `--filter=` argument.
