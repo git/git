@@ -35,6 +35,7 @@ the mirror on GitHub.
 
 ----
 $ git clone https://github.com/git/git git
+$ cd git
 ----
 
 [[identify-problem]]
@@ -164,8 +165,28 @@ $ ./bin-wrappers/git psuh
 
 Check it out! You've got a command! Nice work! Let's commit this.
 
+`git status` reveals modified `Makefile`, `builtin.h`, and `git.c` as well as
+untracked `builtin/psuh.c` and `git-psuh`. First, let's take care of the binary,
+which should be ignored. Open `.gitignore` in your editor, find `/git-push`, and
+add an entry for your new command in alphabetical order:
+
 ----
-$ git add Makefile builtin.h builtin/psuh.c git.c
+...
+/git-prune-packed
+/git-psuh
+/git-pull
+/git-push
+/git-quiltimport
+/git-range-diff
+...
+----
+
+Checking `git status` again should show that `git-psuh` has been removed from
+the untracked list and `.gitignore` has been added to the modified list. Now we
+can stage and commit:
+
+----
+$ git add Makefile builtin.h builtin/psuh.c git.c .gitignore
 $ git commit -s
 ----
 
@@ -211,7 +232,8 @@ on the reference implementation linked at the top of this document.
 It's probably useful to do at least something besides printing out a string.
 Let's start by having a look at everything we get.
 
-Modify your `cmd_psuh` implementation to dump the args you're passed:
+Modify your `cmd_psuh` implementation to dump the args you're passed, keeping
+existing `printf()` calls in place:
 
 ----
 	int i;
@@ -243,7 +265,7 @@ function body:
 
 ...
 
-	git_config(git_default_config, NULL)
+	git_config(git_default_config, NULL);
 	if (git_config_get_string_const("user.name", &cfg_name) > 0)
 		printf(_("No name is found in config\n"));
 	else
@@ -315,6 +337,7 @@ Run it again. Check it out - here's the (verbose) name of your current branch!
 Let's commit this as well.
 
 ----
+$ git add builtin/psuh.c
 $ git commit -sm "psuh: print the current branch"
 ----
 
@@ -366,6 +389,7 @@ see the subject line of the most recent commit in `origin/master` that you know
 about. Neat! Let's commit that as well.
 
 ----
+$ git add builtin/psuh.c
 $ git commit -sm "psuh: display the top of origin/master"
 ----
 
@@ -417,7 +441,6 @@ OPTIONS[[OPTIONS]]
 OUTPUT
 ------
 ...
-
 
 GIT
 ---
