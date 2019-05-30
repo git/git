@@ -128,7 +128,7 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 					(int) clear_len, eol);
 			} else if (!done && cols < progress_line_len) {
 				clear_len = progress->title_len + 1 < cols ?
-					    cols - progress->title_len : 0;
+					    cols - progress->title_len - 1 : 0;
 				fprintf(stderr, "%s:%*s\n  %s%s",
 					progress->title, (int) clear_len, "",
 					counters_sb->buf, eol);
