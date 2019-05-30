@@ -1309,7 +1309,7 @@ class GitLFS(LargeFileSystem):
 
 class Command:
     delete_actions = ( "delete", "move/delete", "purge" )
-    add_actions = ( "add", "move/add" )
+    add_actions = ( "add", "branch", "move/add" )
 
     def __init__(self):
         self.usage = "usage: %prog [options]"
