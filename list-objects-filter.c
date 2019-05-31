@@ -270,13 +270,13 @@ static enum list_objects_filter_result filter_sparse(
 					    filename, &dtype, &filter_data->el,
 					    &the_index);
 		if (val < 0)
-			val = filter_data->array_frame[filter_data->nr].defval;
+			val = filter_data->array_frame[filter_data->nr - 1].defval;
 
 		ALLOC_GROW(filter_data->array_frame, filter_data->nr + 1,
 			   filter_data->alloc);
-		filter_data->nr++;
 		filter_data->array_frame[filter_data->nr].defval = val;
 		filter_data->array_frame[filter_data->nr].child_prov_omit = 0;
+		filter_data->nr++;
 
 		/*
 		 * A directory with this tree OID may appear in multiple
@@ -301,16 +301,15 @@ static enum list_objects_filter_result filter_sparse(
 
 	case LOFS_END_TREE:
 		assert(obj->type == OBJ_TREE);
-		assert(filter_data->nr > 0);
+		assert(filter_data->nr > 1);
 
-		frame = &filter_data->array_frame[filter_data->nr];
-		filter_data->nr--;
+		frame = &filter_data->array_frame[--filter_data->nr];
 
 		/*
 		 * Tell our parent directory if any of our children were
 		 * provisionally omitted.
 		 */
-		filter_data->array_frame[filter_data->nr].child_prov_omit |=
+		filter_data->array_frame[filter_data->nr - 1].child_prov_omit |=
 			frame->child_prov_omit;
 
 		/*
@@ -326,7 +325,7 @@ static enum list_objects_filter_result filter_sparse(
 		assert(obj->type == OBJ_BLOB);
 		assert((obj->flags & SEEN) == 0);
 
-		frame = &filter_data->array_frame[filter_data->nr];
+		frame = &filter_data->array_frame[filter_data->nr - 1];
 
 		dtype = DT_REG;
 		val = is_excluded_from_list(pathname, strlen(pathname),
@@ -367,7 +366,7 @@ static enum list_objects_filter_result filter_sparse(
 static void filter_sparse_free(void *filter_data)
 {
 	struct filter_sparse_data *d = filter_data;
-	/* TODO free contents of 'd' */
+	free(d->array_frame);
 	free(d);
 }
 
@@ -386,6 +385,7 @@ static void *filter_sparse_oid__init(
 	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
 	d->array_frame[d->nr].defval = 0; /* default to include */
 	d->array_frame[d->nr].child_prov_omit = 0;
+	d->nr++;
 
 	*filter_fn = filter_sparse;
 	*filter_free_fn = filter_sparse_free;
@@ -407,6 +407,7 @@ static void *filter_sparse_path__init(
 	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
 	d->array_frame[d->nr].defval = 0; /* default to include */
 	d->array_frame[d->nr].child_prov_omit = 0;
+	d->nr++;
 
 	*filter_fn = filter_sparse;
 	*filter_free_fn = filter_sparse_free;
