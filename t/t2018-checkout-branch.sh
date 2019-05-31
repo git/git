@@ -60,38 +60,47 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'checkout -b to a new branch, set to HEAD' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D branch2" &&
 	do_checkout branch2
 '
 
-test_expect_success 'checkout -b to a new branch, set to an explicit ref' '
-	git checkout branch1 &&
-	git branch -D branch2 &&
+test_expect_success 'checkout -b to a merge base' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D branch2" &&
+	git checkout -b branch2 branch1...
+'
 
+test_expect_success 'checkout -b to a new branch, set to an explicit ref' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D branch2" &&
 	do_checkout branch2 $HEAD1
 '
 
 test_expect_success 'checkout -b to a new branch with unmergeable changes fails' '
-	git checkout branch1 &&
-
-	# clean up from previous test
-	git branch -D branch2 &&
-
 	setup_dirty_unmergeable &&
 	test_must_fail do_checkout branch2 $HEAD1 &&
 	test_dirty_unmergeable
 '
 
 test_expect_success 'checkout -f -b to a new branch with unmergeable changes discards changes' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D branch2" &&
+
 	# still dirty and on branch1
 	do_checkout branch2 $HEAD1 "-f -b" &&
 	test_must_fail test_dirty_unmergeable
 '
 
 test_expect_success 'checkout -b to a new branch preserves mergeable changes' '
-	git checkout branch1 &&
-
-	# clean up from previous test
-	git branch -D branch2 &&
+	test_when_finished "
+		git reset --hard &&
+		git checkout branch1 &&
+		test_might_fail git branch -D branch2" &&
 
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 &&
@@ -99,27 +108,18 @@ test_expect_success 'checkout -b to a new branch preserves mergeable changes' '
 '
 
 test_expect_success 'checkout -f -b to a new branch with mergeable changes discards changes' '
-	# clean up from previous test
-	git reset --hard &&
-
-	git checkout branch1 &&
-
-	# clean up from previous test
-	git branch -D branch2 &&
-
+	test_when_finished git reset --hard HEAD &&
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 "-f -b" &&
 	test_must_fail test_dirty_mergeable
 '
 
 test_expect_success 'checkout -b to an existing branch fails' '
-	git reset --hard HEAD &&
-
+	test_when_finished git reset --hard HEAD &&
 	test_must_fail do_checkout branch2 $HEAD2
 '
 
 test_expect_success 'checkout -b to @{-1} fails with the right branch name' '
-	git reset --hard HEAD &&
 	git checkout branch1 &&
 	git checkout branch2 &&
 	echo  >expect "fatal: A branch named '\''branch1'\'' already exists." &&
@@ -131,6 +131,12 @@ test_expect_success 'checkout -B to an existing branch resets branch to HEAD' '
 	git checkout branch1 &&
 
 	do_checkout branch2 "" -B
+'
+
+test_expect_success 'checkout -B to a merge base' '
+	git checkout branch1 &&
+
+	git checkout -B branch2 branch1...
 '
 
 test_expect_success 'checkout -B to an existing branch from detached HEAD resets branch to HEAD' '
@@ -160,6 +166,7 @@ test_expect_success 'checkout -f -B to an existing branch with unmergeable chang
 '
 
 test_expect_success 'checkout -B to an existing branch preserves mergeable changes' '
+	test_when_finished git reset --hard &&
 	git checkout branch1 &&
 
 	setup_dirty_mergeable &&
@@ -168,9 +175,6 @@ test_expect_success 'checkout -B to an existing branch preserves mergeable chang
 '
 
 test_expect_success 'checkout -f -B to an existing branch with mergeable changes discards changes' '
-	# clean up from previous test
-	git reset --hard &&
-
 	git checkout branch1 &&
 
 	setup_dirty_mergeable &&

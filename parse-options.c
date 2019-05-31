@@ -195,6 +195,9 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 		}
 		if (get_arg(p, opt, flags, &arg))
 			return -1;
+		if (!*arg)
+			return error(_("%s expects a numerical value"),
+				     optname(opt, flags));
 		*(int *)opt->value = strtol(arg, (char **)&s, 10);
 		if (*s)
 			return error(_("%s expects a numerical value"),
@@ -261,6 +264,35 @@ static enum parse_opt_result parse_short_opt(struct parse_opt_ctx_t *p,
 	return PARSE_OPT_UNKNOWN;
 }
 
+static int has_string(const char *it, const char **array)
+{
+	while (*array)
+		if (!strcmp(it, *(array++)))
+			return 1;
+	return 0;
+}
+
+static int is_alias(struct parse_opt_ctx_t *ctx,
+		    const struct option *one_opt,
+		    const struct option *another_opt)
+{
+	const char **group;
+
+	if (!ctx->alias_groups)
+		return 0;
+
+	if (!one_opt->long_name || !another_opt->long_name)
+		return 0;
+
+	for (group = ctx->alias_groups; *group; group += 3) {
+		/* it and other are from the same family? */
+		if (has_string(one_opt->long_name, group) &&
+		    has_string(another_opt->long_name, group))
+			return 1;
+	}
+	return 0;
+}
+
 static enum parse_opt_result parse_long_opt(
 	struct parse_opt_ctx_t *p, const char *arg,
 	const struct option *options)
@@ -298,7 +330,8 @@ again:
 			if (!(p->flags & PARSE_OPT_KEEP_UNKNOWN) &&
 			    !strncmp(long_name, arg, arg_end - arg)) {
 is_abbreviated:
-				if (abbrev_option) {
+				if (abbrev_option &&
+				    !is_alias(p, abbrev_option, options)) {
 					/*
 					 * If this is abbreviated, it is
 					 * ambiguous. So when there is no
@@ -447,6 +480,10 @@ static void parse_options_check(const struct option *opts)
 			if (opts->callback)
 				BUG("OPTION_LOWLEVEL_CALLBACK needs no high level callback");
 			break;
+		case OPTION_ALIAS:
+			BUG("OPT_ALIAS() should not remain at this point. "
+			    "Are you using parse_options_step() directly?\n"
+			    "That case is not supported yet.");
 		default:
 			; /* ok. (usually accepts an argument) */
 		}
@@ -458,11 +495,10 @@ static void parse_options_check(const struct option *opts)
 		exit(128);
 }
 
-void parse_options_start(struct parse_opt_ctx_t *ctx,
-			 int argc, const char **argv, const char *prefix,
-			 const struct option *options, int flags)
+static void parse_options_start_1(struct parse_opt_ctx_t *ctx,
+				  int argc, const char **argv, const char *prefix,
+				  const struct option *options, int flags)
 {
-	memset(ctx, 0, sizeof(*ctx));
 	ctx->argc = argc;
 	ctx->argv = argv;
 	if (!(flags & PARSE_OPT_ONE_SHOT)) {
@@ -482,6 +518,14 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	    (flags & PARSE_OPT_KEEP_ARGV0))
 		BUG("Can't keep argv0 if you don't have it");
 	parse_options_check(options);
+}
+
+void parse_options_start(struct parse_opt_ctx_t *ctx,
+			 int argc, const char **argv, const char *prefix,
+			 const struct option *options, int flags)
+{
+	memset(ctx, 0, sizeof(*ctx));
+	parse_options_start_1(ctx, argc, argv, prefix, options, flags);
 }
 
 static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
@@ -573,6 +617,83 @@ static int show_gitcomp(const struct option *opts)
 	show_negated_gitcomp(original_opts, nr_noopts);
 	fputc('\n', stdout);
 	return PARSE_OPT_COMPLETE;
+}
+
+/*
+ * Scan and may produce a new option[] array, which should be used
+ * instead of the original 'options'.
+ *
+ * Right now this is only used to preprocess and substitue
+ * OPTION_ALIAS.
+ */
+static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
+					 const struct option *options)
+{
+	struct option *newopt;
+	int i, nr, alias;
+	int nr_aliases = 0;
+
+	for (nr = 0; options[nr].type != OPTION_END; nr++) {
+		if (options[nr].type == OPTION_ALIAS)
+			nr_aliases++;
+	}
+
+	if (!nr_aliases)
+		return NULL;
+
+	ALLOC_ARRAY(newopt, nr + 1);
+	COPY_ARRAY(newopt, options, nr + 1);
+
+	/* each alias has two string pointers and NULL */
+	CALLOC_ARRAY(ctx->alias_groups, 3 * (nr_aliases + 1));
+
+	for (alias = 0, i = 0; i < nr; i++) {
+		int short_name;
+		const char *long_name;
+		const char *source;
+		int j;
+
+		if (newopt[i].type != OPTION_ALIAS)
+			continue;
+
+		short_name = newopt[i].short_name;
+		long_name = newopt[i].long_name;
+		source = newopt[i].value;
+
+		if (!long_name)
+			BUG("An alias must have long option name");
+
+		for (j = 0; j < nr; j++) {
+			const char *name = options[j].long_name;
+
+			if (!name || strcmp(name, source))
+				continue;
+
+			if (options[j].type == OPTION_ALIAS)
+				BUG("No please. Nested aliases are not supported.");
+
+			/*
+			 * NEEDSWORK: this is a bit inconsistent because
+			 * usage_with_options() on the original options[] will print
+			 * help string as "alias of %s" but "git cmd -h" will
+			 * print the original help string.
+			 */
+			memcpy(newopt + i, options + j, sizeof(*newopt));
+			newopt[i].short_name = short_name;
+			newopt[i].long_name = long_name;
+			break;
+		}
+
+		if (j == nr)
+			BUG("could not find source option '%s' of alias '%s'",
+			    source, newopt[i].long_name);
+		ctx->alias_groups[alias * 3 + 0] = newopt[i].long_name;
+		ctx->alias_groups[alias * 3 + 1] = options[j].long_name;
+		ctx->alias_groups[alias * 3 + 2] = NULL;
+		alias++;
+	}
+
+	return newopt;
 }
 
 static int usage_with_options_internal(struct parse_opt_ctx_t *,
@@ -714,11 +835,16 @@ int parse_options(int argc, const char **argv, const char *prefix,
 		  int flags)
 {
 	struct parse_opt_ctx_t ctx;
+	struct option *real_options;
 
 	disallow_abbreviated_options =
 		git_env_bool("GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS", 0);
 
-	parse_options_start(&ctx, argc, argv, prefix, options, flags);
+	memset(&ctx, 0, sizeof(ctx));
+	real_options = preprocess_options(&ctx, options);
+	if (real_options)
+		options = real_options;
+	parse_options_start_1(&ctx, argc, argv, prefix, options, flags);
 	switch (parse_options_step(&ctx, options, usagestr)) {
 	case PARSE_OPT_HELP:
 	case PARSE_OPT_ERROR:
@@ -741,6 +867,8 @@ int parse_options(int argc, const char **argv, const char *prefix,
 	}
 
 	precompose_argv(argc, argv);
+	free(real_options);
+	free(ctx.alias_groups);
 	return parse_options_end(&ctx);
 }
 
@@ -834,6 +962,12 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 		else {
 			fputc('\n', outfile);
 			pad = USAGE_OPTS_WIDTH;
+		}
+		if (opts->type == OPTION_ALIAS) {
+			fprintf(outfile, "%*s", pad + USAGE_GAP, "");
+			fprintf_ln(outfile, _("alias of --%s"),
+				   (const char *)opts->value);
+			continue;
 		}
 		fprintf(outfile, "%*s%s\n", pad + USAGE_GAP, "", _(opts->help));
 	}

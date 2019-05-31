@@ -93,7 +93,7 @@
 #define SHA1DC_BIGENDIAN
 
 /* Not under GCC-alike or glibc or *BSD or newlib or <processor whitelist> */
-#elif (defined(_AIX))
+#elif (defined(_AIX) || defined(__hpux))
 
 /*
  * Defines Big Endian on a whitelist of OSs that are known to be Big

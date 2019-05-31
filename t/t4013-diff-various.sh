@@ -338,6 +338,8 @@ format-patch --inline --stdout initial..master^^
 format-patch --stdout --cover-letter -n initial..master^
 
 diff --abbrev initial..side
+diff -U initial..side
+diff -U1 initial..side
 diff -r initial..side
 diff --stat initial..side
 diff -r --stat initial..side

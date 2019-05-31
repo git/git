@@ -21,33 +21,33 @@ struct tr2_sysenv_entry {
  * The strings in this table are constant and must match the published
  * config and environment variable names as described in the documentation.
  *
- * We do not define entries for the GIT_TR2_PARENT_* environment
+ * We do not define entries for the GIT_TRACE2_PARENT_* environment
  * variables because they are transient and used to pass information
  * from parent to child git processes, rather than settings.
  */
 /* clang-format off */
 static struct tr2_sysenv_entry tr2_sysenv_settings[] = {
-	[TR2_SYSENV_CFG_PARAM]     = { "GIT_TR2_CONFIG_PARAMS",
+	[TR2_SYSENV_CFG_PARAM]     = { "GIT_TRACE2_CONFIG_PARAMS",
 				       "trace2.configparams" },
 
-	[TR2_SYSENV_DST_DEBUG]     = { "GIT_TR2_DST_DEBUG",
+	[TR2_SYSENV_DST_DEBUG]     = { "GIT_TRACE2_DST_DEBUG",
 				       "trace2.destinationdebug" },
 
-	[TR2_SYSENV_NORMAL]        = { "GIT_TR2",
+	[TR2_SYSENV_NORMAL]        = { "GIT_TRACE2",
 				       "trace2.normaltarget" },
-	[TR2_SYSENV_NORMAL_BRIEF]  = { "GIT_TR2_BRIEF",
+	[TR2_SYSENV_NORMAL_BRIEF]  = { "GIT_TRACE2_BRIEF",
 				       "trace2.normalbrief" },
 
-	[TR2_SYSENV_EVENT]         = { "GIT_TR2_EVENT",
+	[TR2_SYSENV_EVENT]         = { "GIT_TRACE2_EVENT",
 				       "trace2.eventtarget" },
-	[TR2_SYSENV_EVENT_BRIEF]   = { "GIT_TR2_EVENT_BRIEF",
+	[TR2_SYSENV_EVENT_BRIEF]   = { "GIT_TRACE2_EVENT_BRIEF",
 				       "trace2.eventbrief" },
-	[TR2_SYSENV_EVENT_NESTING] = { "GIT_TR2_EVENT_NESTING",
+	[TR2_SYSENV_EVENT_NESTING] = { "GIT_TRACE2_EVENT_NESTING",
 				       "trace2.eventnesting" },
 
-	[TR2_SYSENV_PERF]          = { "GIT_TR2_PERF",
+	[TR2_SYSENV_PERF]          = { "GIT_TRACE2_PERF",
 				       "trace2.perftarget" },
-	[TR2_SYSENV_PERF_BRIEF]    = { "GIT_TR2_PERF_BRIEF",
+	[TR2_SYSENV_PERF_BRIEF]    = { "GIT_TRACE2_PERF_BRIEF",
 				       "trace2.perfbrief" },
 };
 /* clang-format on */

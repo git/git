@@ -157,6 +157,9 @@ static void unique_in_pack(struct packed_git *p,
 	uint32_t num, i, first = 0;
 	const struct object_id *current = NULL;
 
+	if (p->multi_pack_index)
+		return;
+
 	if (open_pack_index(p) || !p->num_objects)
 		return;
 
@@ -624,6 +627,9 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 	uint32_t num, first = 0;
 	struct object_id oid;
 	const struct object_id *mad_oid;
+
+	if (p->multi_pack_index)
+		return;
 
 	if (open_pack_index(p) || !p->num_objects)
 		return;
@@ -1837,7 +1843,7 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 		if (flags & GET_OID_RECORD_PATH)
 			oc->path = xstrdup(cp);
 
-		if (!repo->index->cache)
+		if (!repo->index || !repo->index->cache)
 			repo_read_index(repo);
 		pos = index_name_pos(repo->index, cp, namelen);
 		if (pos < 0)

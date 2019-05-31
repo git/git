@@ -276,12 +276,10 @@ void init_display_notes(struct display_notes_opt *opt);
 
 /*
  * Append notes for the given 'object_sha1' from all trees set up by
- * init_display_notes() to 'sb'.  The 'flags' are a bitwise
- * combination of
+ * init_display_notes() to 'sb'.
  *
- * - NOTES_SHOW_HEADER: add a 'Notes (refname):' header
- *
- * - NOTES_INDENT: indent the notes by 4 places
+ * If 'raw' is false the note will be indented by 4 places and
+ * a 'Notes (refname):' header added.
  *
  * You *must* call init_display_notes() before using this function.
  */

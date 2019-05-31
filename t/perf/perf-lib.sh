@@ -21,19 +21,21 @@
 # because it will change our working directory.
 TEST_DIRECTORY=$(pwd)/..
 TEST_OUTPUT_DIRECTORY=$(pwd)
-ABSOLUTE_GIT_TEST_INSTALLED=$(
-	test -n "$GIT_TEST_INSTALLED" && cd "$GIT_TEST_INSTALLED" && pwd)
 
 TEST_NO_CREATE_REPO=t
 TEST_NO_MALLOC_CHECK=t
 
 . ../test-lib.sh
 
-if test -z "$GIT_TEST_INSTALLED"; then
-	perf_results_prefix=
-else
-	perf_results_prefix=$(printf "%s" "${GIT_TEST_INSTALLED%/bin-wrappers}" | tr -c "[a-zA-Z0-9]" "[_*]")"."
-	GIT_TEST_INSTALLED=$ABSOLUTE_GIT_TEST_INSTALLED
+if test -n "$GIT_TEST_INSTALLED" -a -z "$PERF_SET_GIT_TEST_INSTALLED"
+then
+	error "Do not use GIT_TEST_INSTALLED with the perf tests.
+
+Instead use:
+
+    ./run <path-to-git> -- <tests>
+
+See t/perf/README for details."
 fi
 
 # Variables from test-lib that are normally internal to the tests; we
@@ -179,7 +181,7 @@ test_wrapper_ () {
 		base=$(basename "$0" .sh)
 		echo "$test_count" >>"$perf_results_dir"/$base.subtests
 		echo "$1" >"$perf_results_dir"/$base.$test_count.descr
-		base="$perf_results_dir"/"$perf_results_prefix$(basename "$0" .sh)"."$test_count"
+		base="$perf_results_dir"/"$PERF_RESULTS_PREFIX$(basename "$0" .sh)"."$test_count"
 		"$test_wrapper_func_" "$@"
 	fi
 

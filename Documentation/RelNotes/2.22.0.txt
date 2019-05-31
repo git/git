@@ -99,6 +99,18 @@ UI, Workflows & Features
    repositories now; also the pathname hash-cache is created by
    default to avoid making crappy deltas when repacking.
 
+ * "git branch new A...B" and "git checkout -b new A...B" have been
+   taught that in their contexts, the notation A...B means "the merge
+   base between these two commits", just like "git checkout A...B"
+   detaches HEAD at that commit.
+
+ * Update "git difftool" and "git mergetool" so that the combinations
+   of {diff,merge}.{tool,guitool} configuration variables serve as
+   fallback settings of each other in a sensible order.
+
+ * The "--dir-diff" mode of "git difftool" is not useful in "--no-index"
+   mode; they are now explicitly marked as mutually incompatible.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -177,6 +189,27 @@ Performance, Internal Implementation, Development Support etc.
 
  * The internal implementation of "git rebase -i" has been updated to
    avoid forking a separate "rebase--interactive" process.
+
+ * Allow DEP and ASLR for Windows build to for security hardening.
+
+ * Performance test framework has been broken and measured the version
+   of Git that happens to be on $PATH, not the specified one to
+   measure, for a while, which has been corrected.
+
+ * Optionally "make coccicheck" can feed multiple source files to
+   spatch, gaining performance while spending more memory.
+
+ * Attempt to use an abbreviated option in "git clone --recurs" is
+   responded by a request to disambiguate between --recursive and
+   --recurse-submodules, which is bad because these two are synonyms.
+   The parse-options API has been extended to define such synonyms
+   more easily and not produce an unnecessary failure.
+
+ * A pair of private functions in http.c that had names similar to
+   fread/fwrite did not return the number of elements, which was found
+   to be confusing.
+
+ * Update collision-detecting SHA-1 code to build properly on HP-UX.
 
 
 Fixes since v2.21
@@ -474,6 +507,41 @@ Fixes since v2.21
    files used by these commands in such a situation.
    (merge 4a72486de9 pw/clean-sequencer-state-upon-final-commit later to maint).
 
+ * On a filesystem like HFS+, the names of the refs stored as filesystem
+   entities may become different from what the end-user expects, just
+   like files in the working tree get "renamed".  Work around the
+   mismatch by paying attention to the core.precomposeUnicode
+   configuration.
+   (merge 8e712ef6fc en/unicode-in-refnames later to maint).
+
+ * The code to generate the multi-pack idx file was not prepared to
+   see too many packfiles and ran out of open file descriptor, which
+   has been corrected.
+
+ * To run tests for Git SVN, our scripts for CI used to install the
+   git-svn package (in the hope that it would bring in the right
+   dependencies).  This has been updated to install the more direct
+   dependency, namely, libsvn-perl.
+   (merge db864306cf sg/ci-libsvn-perl later to maint).
+
+ * "git cvsexportcommit" running on msys did not expect cvsnt showed
+   "cvs status" output with CRLF line endings.
+
+ * The fsmonitor interface got out of sync after the in-core index
+   file gets discarded, which has been corrected.
+   (merge 398a3b0899 js/fsmonitor-refresh-after-discarding-index later to maint).
+
+ * "git status" did not know that the "label" instruction in the
+   todo-list "rebase -i -r" uses should not be shown as a hex object
+   name.
+
+ * A prerequiste check in the test suite to see if a working jgit is
+   available was made more robust.
+   (merge abd0f28983 tz/test-lib-check-working-jgit later to maint).
+
+ * The codepath to parse :<path> that obtains the object name for an
+   indexed object has been made more robust.
+
  * Code cleanup, docfix, build fix, etc.
    (merge 11f470aee7 jc/test-yes-doc later to maint).
    (merge 90503a240b js/doc-symref-in-proto-v1 later to maint).
@@ -510,3 +578,13 @@ Fixes since v2.21
    (merge d8083e4180 km/t3000-retitle later to maint).
    (merge 9e4cbccbd7 tz/git-svn-doc-markup-fix later to maint).
    (merge da9ca955a7 jk/ls-files-doc-markup-fix later to maint).
+   (merge 6804ba3a58 cw/diff-highlight later to maint).
+   (merge 1a8787144d nd/submodule-helper-incomplete-line-fix later to maint).
+   (merge d9ef573837 jk/apache-lsan later to maint).
+   (merge c871fbee2b js/t6500-use-windows-pid-on-mingw later to maint).
+   (merge ce4c7bfc90 bl/t4253-exit-code-from-format-patch later to maint).
+   (merge 397a46db78 js/t5580-unc-alternate-test later to maint).
+   (merge d4907720a2 cm/notes-comment-fix later to maint).
+   (merge 9dde06de13 cb/http-push-null-in-message-fix later to maint).
+   (merge 4c785c0edc js/rebase-config-bitfix later to maint).
+   (merge 8e9fe16c87 es/doc-gitsubmodules-markup later to maint).

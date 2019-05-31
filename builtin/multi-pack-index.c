@@ -46,7 +46,7 @@ int cmd_multi_pack_index(int argc, const char **argv,
 	if (!strcmp(argv[0], "write"))
 		return write_midx_file(opts.object_dir);
 	if (!strcmp(argv[0], "verify"))
-		return verify_midx_file(opts.object_dir);
+		return verify_midx_file(the_repository, opts.object_dir);
 
 	die(_("unrecognized verb: %s"), argv[0]);
 }

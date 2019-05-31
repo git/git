@@ -45,7 +45,7 @@ call the aggregation script to summarize the results:
 
     $ ./p0001-rev-list.sh
     [...]
-    $ GIT_BUILD_DIR=/path/to/other/git ./p0001-rev-list.sh
+    $ ./run /path/to/other/git -- ./p0001-rev-list.sh
     [...]
     $ ./aggregate.perl . /path/to/other/git ./p0001-rev-list.sh
 

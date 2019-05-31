@@ -5211,9 +5211,11 @@ static int diff_opt_unified(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 
-	options->context = strtol(arg, &s, 10);
-	if (*s)
-		return error(_("%s expects a numerical value"), "--unified");
+	if (arg) {
+		options->context = strtol(arg, &s, 10);
+		if (*s)
+			return error(_("%s expects a numerical value"), "--unified");
+	}
 	enable_patch_output(&options->output_format);
 
 	return 0;
@@ -5272,7 +5274,7 @@ static void prep_parse_options(struct diff_options *options)
 			  DIFF_FORMAT_PATCH, DIFF_FORMAT_NO_OUTPUT),
 		OPT_CALLBACK_F('U', "unified", options, N_("<n>"),
 			       N_("generate diffs with <n> lines context"),
-			       PARSE_OPT_NONEG, diff_opt_unified),
+			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG, diff_opt_unified),
 		OPT_BOOL('W', "function-context", &options->flags.funccontext,
 			 N_("generate diffs with <n> lines context")),
 		OPT_BIT_F(0, "raw", &options->output_format,
@@ -5453,13 +5455,13 @@ static void prep_parse_options(struct diff_options *options)
 			       N_("equivalent to --word-diff=color --word-diff-regex=<regex>"),
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG, diff_opt_color_words),
 		OPT_CALLBACK_F(0, "color-moved", options, N_("<mode>"),
-			       N_("move lines of code are colored differently"),
+			       N_("moved lines of code are colored differently"),
 			       PARSE_OPT_OPTARG, diff_opt_color_moved),
 		OPT_CALLBACK_F(0, "color-moved-ws", options, N_("<mode>"),
 			       N_("how white spaces are ignored in --color-moved"),
 			       0, diff_opt_color_moved_ws),
 
-		OPT_GROUP(N_("Diff other options")),
+		OPT_GROUP(N_("Other diff options")),
 		OPT_CALLBACK_F(0, "relative", options, N_("<prefix>"),
 			       N_("when run from subdir, exclude changes outside and show relative paths"),
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
