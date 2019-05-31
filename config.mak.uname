@@ -753,6 +753,7 @@ ifeq ($(uname_S),MINGW)
         ifneq (CLANGARM64,$(MSYSTEM))
 		USE_NED_ALLOCATOR = YesPlease
         endif
+	NO_PYTHON =
         ifeq (/mingw64,$(subst 32,64,$(subst clangarm,mingw,$(prefix))))
 		# Move system config into top-level /etc/
 		ETC_GITCONFIG = ../etc/gitconfig
