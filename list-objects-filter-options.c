@@ -84,7 +84,7 @@ static int gently_parse_list_objects_filter(
 	}
 
 	if (errbuf)
-		strbuf_addf(errbuf, "invalid filter-spec '%s'", arg);
+		strbuf_addf(errbuf, _("invalid filter-spec '%s'"), arg);
 
 	memset(filter_options, 0, sizeof(*filter_options));
 	return 1;
