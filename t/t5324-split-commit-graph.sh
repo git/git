@@ -169,4 +169,51 @@ test_expect_success 'create fork and chain across alternate' '
 
 graph_git_behavior 'alternate: commit 13 vs 6' commits/13 commits/6
 
+test_expect_success 'test merge stragety constants' '
+	git clone . merge-2 &&
+	(
+		cd merge-2 &&
+		git config core.commitGraph true &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		test_commit 14 &&
+		git commit-graph write --reachable --split --size-multiple=2 &&
+		test_line_count = 3 $graphdir/commit-graph-chain
+
+	) &&
+	git clone . merge-10 &&
+	(
+		cd merge-10 &&
+		git config core.commitGraph true &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		test_commit 14 &&
+		git commit-graph write --reachable --split --size-multiple=10 &&
+		test_line_count = 1 $graphdir/commit-graph-chain &&
+		ls $graphdir/graph-*.graph >graph-files &&
+		test_line_count = 1 graph-files
+	) &&
+	git clone . merge-10-expire &&
+	(
+		cd merge-10-expire &&
+		git config core.commitGraph true &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		test_commit 15 &&
+		git commit-graph write --reachable --split --size-multiple=10 --expire-time=1980-01-01 &&
+		test_line_count = 1 $graphdir/commit-graph-chain &&
+		ls $graphdir/graph-*.graph >graph-files &&
+		test_line_count = 3 graph-files
+	) &&
+	git clone --no-hardlinks . max-commits &&
+	(
+		cd max-commits &&
+		git config core.commitGraph true &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		test_commit 16 &&
+		test_commit 17 &&
+		git commit-graph write --reachable --split --max-commits=1 &&
+		test_line_count = 1 $graphdir/commit-graph-chain &&
+		ls $graphdir/graph-*.graph >graph-files &&
+		test_line_count = 1 graph-files
+	)
+'
+
 test_done

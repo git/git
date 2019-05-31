@@ -248,10 +248,11 @@ When writing a set of commits that do not exist in the commit-graph stack of
 height N, we default to creating a new file at level N + 1. We then decide to
 merge with the Nth level if one of two conditions hold:
 
-  1. The expected file size for level N + 1 is at least half the file size for
-     level N.
+  1. `--size-multiple=<X>` is specified or X = 2, and the number of commits in
+     level N is less than X times the number of commits in level N + 1.
 
-  2. Level N + 1 contains more than 64,0000 commits.
+  2. `--max-commits=<C>` is specified with non-zero C and the number of commits
+     in level N + 1 is more than C commits.
 
 This decision cascades down the levels: when we merge a level we create a new
 set of commits that then compares to the next level.

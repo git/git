@@ -75,11 +75,19 @@ int generation_numbers_enabled(struct repository *r);
 #define COMMIT_GRAPH_PROGRESS   (1 << 1)
 #define COMMIT_GRAPH_SPLIT      (1 << 2)
 
-int write_commit_graph_reachable(const char *obj_dir, unsigned int flags);
+struct split_commit_graph_opts {
+	int size_multiple;
+	int max_commits;
+	timestamp_t expire_time;
+};
+
+int write_commit_graph_reachable(const char *obj_dir, unsigned int flags,
+				 const struct split_commit_graph_opts *split_opts);
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
-		       unsigned int flags);
+		       unsigned int flags,
+		       const struct split_commit_graph_opts *split_opts);
 
 int verify_commit_graph(struct repository *r, struct commit_graph *g);
 
