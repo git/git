@@ -739,6 +739,7 @@ ifeq ($(uname_S),MINGW)
 	USE_GETTEXT_SCHEME = fallthrough
 	USE_LIBPCRE = YesPlease
 	USE_NED_ALLOCATOR = YesPlease
+	NO_PYTHON =
         ifeq (/mingw64,$(subst 32,64,$(prefix)))
 		# Move system config into top-level /etc/
 		ETC_GITCONFIG = ../etc/gitconfig
