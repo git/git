@@ -717,6 +717,7 @@ else
 		USE_LIBPCRE = YesPlease
 		NO_CURL =
 		USE_NED_ALLOCATOR = YesPlease
+		NO_PYTHON =
 		ifeq (/mingw64,$(subst 32,64,$(prefix)))
 			# Move system config into top-level /etc/
 			ETC_GITCONFIG = ../etc/gitconfig
