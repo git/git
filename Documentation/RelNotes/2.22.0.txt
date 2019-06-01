@@ -181,7 +181,7 @@ Performance, Internal Implementation, Development Support etc.
    been optimized out.
 
  * Mechanically and systematically drop "extern" from function
-   declarlation.
+   declaration.
 
  * The script to aggregate perf result unconditionally depended on
    libjson-perl even though it did not have to, which has been
@@ -270,7 +270,7 @@ Fixes since v2.21
  * On platforms where "git fetch" is killed with SIGPIPE (e.g. OSX),
    the upload-pack that runs on the other end that hangs up after
    detecting an error could cause "git fetch" to die with a signal,
-   which led to a flakey test.  "git fetch" now ignores SIGPIPE during
+   which led to a flaky test.  "git fetch" now ignores SIGPIPE during
    the network portion of its operation (this is not a problem as we
    check the return status from our write(2)s).
    (merge 143588949c jk/no-sigpipe-during-network-transport later to maint).
@@ -358,7 +358,7 @@ Fixes since v2.21
    (merge b5a0bd694c nd/read-tree-reset-doc later to maint).
 
  * Code clean-up around a much-less-important-than-it-used-to-be
-   update_server_info() funtion.
+   update_server_info() function.
    (merge b3223761c8 jk/server-info-rabbit-hole later to maint).
 
  * The message given when "git commit -a <paths>" errors out has been
@@ -450,7 +450,7 @@ Fixes since v2.21
  * When given a tag that points at a commit-ish, "git replace --graft"
    failed to peel the tag before writing a replace ref, which did not
    make sense because the old graft mechanism the feature wants to
-   mimick only allowed to replace one commit object with another.
+   mimic only allowed to replace one commit object with another.
    This has been fixed.
    (merge ee521ec4cb cc/replace-graft-peel-tags later to maint).
 
@@ -500,7 +500,7 @@ Fixes since v2.21
    conflicts are resolved in working tree *.h files but before the
    resolved results are added to the index.  This has been corrected.
 
- * "git chery-pick" (and "revert" that shares the same runtime engine)
+ * "git cherry-pick" (and "revert" that shares the same runtime engine)
    that deals with multiple commits got confused when the final step
    gets stopped with a conflict and the user concluded the sequence
    with "git commit".  Attempt to fix it by cleaning up the state
@@ -535,7 +535,7 @@ Fixes since v2.21
    todo-list "rebase -i -r" uses should not be shown as a hex object
    name.
 
- * A prerequiste check in the test suite to see if a working jgit is
+ * A prerequisite check in the test suite to see if a working jgit is
    available was made more robust.
    (merge abd0f28983 tz/test-lib-check-working-jgit later to maint).
 
