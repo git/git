@@ -80,8 +80,8 @@
 # promisory гарантиращ, гарант promisory packfile гарантиращ пакет, promisory remote хранилище-гарант
 # delta - разлика, делта, обект-разлика
 # ??
-# peeled tag - проследен етикет - когато етикет сочи към друг етикет, а не подаване и проследяваме подобно на символна връзка
-# nested tag - пак същото - 
+# peeled tag - проследяване на етикет - когато етикет сочи към друг етикет, а не подаване и проследяваме подобно на символна връзка
+# nested tag - непряк етикет
 # strip - премахвам (за компонент при филтриране)
 # unrelated histories - независими истории
 # inexact rename detection търсене на преименувания на обекти съчетани с промени
@@ -153,8 +153,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.22\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-05-14 17:09+0800\n"
-"PO-Revision-Date: 2019-05-29 10:27+0200\n"
+"POT-Creation-Date: 2019-05-31 14:35+0800\n"
+"PO-Revision-Date: 2019-06-02 09:25+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -162,1326 +162,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
-#: commit-graph.c:1170
-#, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
-msgstr ""
-"неправилна подредба на обектите по идентификатор в гра̀фа с подаванията: „%s“ "
-"е преди „%s“, а не трябва"
-
-#: commit-graph.c:1180 commit-graph.c:1195
-#, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
-msgstr ""
-"неправилна стойност за откъс в гра̀фа с подаванията: fanout[%d] = %u, а "
-"трябва да е %u"
-
-#: commit-graph.c:1217
-#, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
-msgstr ""
-"подаване „%s“ в базата от данни към гра̀фа с подаванията не може да се "
-"анализира"
-
-#: commit-graph.c:1224
-#, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
-msgstr ""
-"идентификаторът на обект за кореновото дърво за подаване „%s“ в гра̀фа с "
-"подаванията е „%s“, а трябва да е „%s“"
-
-#: commit-graph.c:1234
-#, c-format
-msgid "commit-graph parent list for commit %s is too long"
-msgstr "списъкът с родители на „%s“ в гра̀фа с подаванията е прекалено дълъг"
-
-#: commit-graph.c:1240
-#, c-format
-msgid "commit-graph parent for %s is %s != %s"
-msgstr "родителят на „%s“ в гра̀фа с подаванията е „%s“, а трябва да е „%s“"
-
-#: commit-graph.c:1253
-#, c-format
-msgid "commit-graph parent list for commit %s terminates early"
-msgstr "списъкът с родители на „%s“ в гра̀фа с подаванията е прекалено къс"
-
-#: commit-graph.c:1258
-#, c-format
-msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
-msgstr ""
-"номерът на поколението на подаване „%s“ в гра̀фа с подаванията е 0, а другаде "
-"не е"
-
-#: commit-graph.c:1262
-#, c-format
-msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
-msgstr ""
-"номерът на поколението на подаване „%s“ в гра̀фа с подаванията не е 0, а "
-"другаде е"
-
-#: commit-graph.c:1277
-#, c-format
-msgid "commit-graph generation for commit %s is %u != %u"
-msgstr ""
-"номерът на поколението на подаване „%s“ в гра̀фа с подаванията е %u, а "
-"другаде е %u"
-
-#: diff-no-index.c:263
-msgid ""
-"Not a git repository. Use --no-index to compare two paths outside a working "
-"tree"
-msgstr ""
-"Не е хранилище на git.  Ползвайте опцията „--no-index“, за да сравните "
-"пътища извън работно дърво"
-
-#: diff.c:4806
-#, c-format
-msgid "unknown change class '%c' in --diff-filter=%s"
-msgstr "непознат вид промяна: „%c“ в „--diff-filter=%s“"
-
-#: diff.c:4830
-#, c-format
-msgid "unknown value after ws-error-highlight=%.*s"
-msgstr "непозната стойност след „ws-error-highlight=%.*s“"
-
-#: diff.c:4894 diff.c:4900
-#, c-format
-msgid "%s expects <n>/<m> form"
-msgstr ""
-"опцията „%s“ изисква стойности за МИНИМАЛЕН_%%_ПРОМЯНА_ЗА_ИЗТОЧНИК_/"
-"МАКСИМАЛЕН_%%_ПРОМЯНА_ЗА_ЗАМЯНА от"
-
-#: diff.c:4992
-msgid ""
-"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
-"\"histogram\""
-msgstr ""
-"опцията приема следните варианти за алгоритъм за разлики: „myers“ (по "
-"Майерс), „minimal“ (минимизиране на разликите), „patience“ (пасианс) и "
-"„histogram“ (хистограмен)"
-
-#: diff.c:5263
-msgid "Diff output format options"
-msgstr "Формат на изхода за разликите"
-
-#: diff.c:5273 diff.c:5387 diff.c:5394
-msgid "<n>"
-msgstr "БРОЙ"
-
-#: diff.c:5279
-msgid "generate the diff in raw format"
-msgstr "файловете с разлики да са в суров формат"
-
-#: diff.c:5295 diff.c:5303
-msgid "<param1,param2>..."
-msgstr "ПАРАМЕТЪР_1, ПАРАМЕТЪР_2, …"
-
-#: diff.c:5296
-msgid ""
-"output the distribution of relative amount of changes for each sub-directory"
-msgstr "извеждане на разпределението на промените за всяка поддиректория"
-
-#: diff.c:5304
-msgid "synonym for --dirstat=files,param1,param2..."
-msgstr "псевдоним на „--dirstat=ФАЙЛОВЕ,ПАРАМЕТЪР_1,ПАРАМЕТЪР_2,…“"
-
-#: diff.c:5308
-msgid "warn if changes introduce conflict markers or whitespace errors"
-msgstr ""
-"предупреждаване, ако промените водят до маркери за конфликт или грешки в "
-"празните знаци"
-
-#: diff.c:5311
-msgid "condensed summary such as creations, renames and mode changes"
-msgstr ""
-"съкратено резюме на създадените, преименуваните и файловете с промяна на "
-"режима на достъп"
-
-#: diff.c:5319
-msgid "<width>[,<name-width>[,<count>]]"
-msgstr "ШИРОЧИНА[,ИМЕ-ШИРОЧИНА[,БРОЙ]]"
-
-#: diff.c:5322 diff.c:5325 diff.c:5328
-msgid "<width>"
-msgstr "ШИРОЧИНА"
-
-#: diff.c:5323
-msgid "generate diffstat with a given width"
-msgstr "статистика с такава ШИРОЧИНА за промените"
-
-#: diff.c:5326
-msgid "generate diffstat with a given name width"
-msgstr "статистика за промените с такава ШИРОЧИНА на имената"
-
-#: diff.c:5329
-msgid "generate diffstat with a given graph width"
-msgstr "статистика за промените с такава ШИРОЧИНА на гра̀фа"
-
-#: diff.c:5331
-msgid "<count>"
-msgstr "БРОЙ"
-
-#: diff.c:5332
-msgid "generate diffstat with limited lines"
-msgstr "ограничаване на БРОя на редовете в статистиката за промените"
-
-#: diff.c:5335
-msgid "generate compact summary in diffstat"
-msgstr "кратко резюме в статистиката за промените"
-
-#: diff.c:5338
-msgid "output a binary diff that can be applied"
-msgstr "извеждане на двоична разлика във вид за прилагане"
-
-#: diff.c:5341
-msgid "show full pre- and post-image object names on the \"index\" lines"
-msgstr ""
-"показване на пълните имена на обекти в редовете за индекса при вариантите "
-"преди и след промяната"
-
-#: diff.c:5343
-msgid "show colored diff"
-msgstr "разлики в цвят"
-
-#: diff.c:5344
-msgid "<kind>"
-msgstr "ВИД"
-
-#: diff.c:5345
-msgid ""
-"highlight whitespace errors in the 'context', 'old' or 'new' lines in the "
-"diff"
-msgstr ""
-"грешките в празните знаци да се указват в редовете за контекста, вариантите "
-"преди и след разликата,"
-
-#: diff.c:5348
-msgid ""
-"do not munge pathnames and use NULs as output field terminators in --raw or "
-"--numstat"
-msgstr ""
-"без преименуване на пътищата.  Да се използват нулеви байтове за разделители "
-"на полета в изхода при ползване на опцията „--raw“ или „--numstat“"
-
-#: diff.c:5352
-msgid "show the given source prefix instead of \"a/\""
-msgstr "префикс вместо „a/“ за източник"
-
-#: diff.c:5355
-msgid "show the given source prefix instead of \"b/\""
-msgstr "префикс вместо „b/“ за цел"
-
-#: diff.c:5358
-msgid "prepend an additional prefix to every line of output"
-msgstr "добавяне на допълнителен префикс за всеки ред на изхода"
-
-#: diff.c:5361
-msgid "do not show any source or destination prefix"
-msgstr "без префикс за източника и целта"
-
-#: diff.c:5368 diff.c:5373 diff.c:5378
-msgid "<char>"
-msgstr "ЗНАК"
-
-#: diff.c:5369
-msgid "specify the character to indicate a new line instead of '+'"
-msgstr "знак вместо „+“ за нов вариант на ред"
-
-#: diff.c:5374
-msgid "specify the character to indicate an old line instead of '-'"
-msgstr "знак вместо „-“ за стар вариант на ред"
-
-#: diff.c:5379
-msgid "specify the character to indicate a context instead of ' '"
-msgstr "знак вместо „ “ за контекст"
-
-#: diff.c:5384
-msgid "break complete rewrite changes into pairs of delete and create"
-msgstr ""
-"заместване на пълните промени с последователност от изтриване и създаване"
-
-#: diff.c:5395
-msgid "detect copies"
-msgstr "засичане на копиранията"
-
-#: diff.c:5399
-msgid "use unmodified files as source to find copies"
-msgstr "търсене на копирано и от непроменените файлове"
-
-#: diff.c:5404
-msgid "use empty blobs as rename source"
-msgstr "празни обекти като източник при преименувания"
-
-#: diff.c:5406
-msgid "continue listing the history of a file beyond renames"
-msgstr ""
-"продължаване на извеждането на историята — без отрязването при преименувания "
-"на файл"
-
-#: diff.c:5409
-msgid ""
-"prevent rename/copy detection if the number of rename/copy targets exceeds "
-"given limit"
-msgstr ""
-"без засичане на преименувания/копирания, ако броят им надвишава тази стойност"
-
-#: diff.c:5413
-msgid "produce the smallest possible diff"
-msgstr "търсене на възможно най-малка разлика"
-
-#: diff.c:5425
-msgid "ignore carrier-return at the end of line"
-msgstr "без промени в знаците за край на ред"
-
-#: diff.c:5428
-msgid "ignore changes whose lines are all blank"
-msgstr "без промени в редовете, които са изцяло от празни знаци"
-
-#: diff.c:5431
-msgid "heuristic to shift diff hunk boundaries for easy reading"
-msgstr ""
-"евристика за преместване на границите на парчетата за улесняване на четенето"
-
-#: diff.c:5434
-msgid "generate diff using the \"patience diff\" algorithm"
-msgstr "разлика чрез алгоритъм за подредба като пасианс"
-
-#: diff.c:5438
-msgid "generate diff using the \"histogram diff\" algorithm"
-msgstr "разлика по хистограмния алгоритъм"
-
-#: diff.c:5440
-msgid "<algorithm>"
-msgstr "АЛГОРИТЪМ"
-
-#: diff.c:5441
-msgid "choose a diff algorithm"
-msgstr "избор на АЛГОРИТЪМа за разлики"
-
-#: diff.c:5444
-msgid "generate diff using the \"anchored diff\" algorithm"
-msgstr "разлика чрез алгоритъма със закотвяне"
-
-#: diff.c:5447
-msgid "show word diff, using <mode> to delimit changed words"
-msgstr ""
-"разлика по думи, като се ползва този РЕЖИМ за отделянето на променените думи"
-
-#: diff.c:5449 diff.c:5452 diff.c:5497
-msgid "<regex>"
-msgstr "РЕГУЛЯРЕН_ИЗРАЗ"
-
-#: diff.c:5450
-msgid "use <regex> to decide what a word is"
-msgstr "РЕГУЛЯРЕН_ИЗРАЗ за разделяне по думи"
-
-#: diff.c:5453
-msgid "equivalent to --word-diff=color --word-diff-regex=<regex>"
-msgstr "псевдоним на „--word-diff=color --word-diff-regex=РЕГУЛЯРЕН_ИЗРАЗ“"
-
-#: diff.c:5456
-msgid "move lines of code are colored differently"
-msgstr "различен цвят за извеждане на преместените редове"
-
-#: diff.c:5459
-msgid "how white spaces are ignored in --color-moved"
-msgstr ""
-"режим за прескачането на празните знаци при задаването на „--color-moved“"
-
-#: diff.c:5464
-msgid "when run from subdir, exclude changes outside and show relative paths"
-msgstr ""
-"при изпълнение от поддиректория да се пренебрегват разликите извън нея и да "
-"се ползват относителни пътища"
-
-#: diff.c:5470
-msgid "swap two inputs, reverse the diff"
-msgstr "размяна на двата входа — обръщане на разликата"
-
-#: diff.c:5472
-msgid "exit with 1 if there were differences, 0 otherwise"
-msgstr ""
-"завършване с код за състояние 1 при наличието на разлики, а в противен "
-"случай — с 0"
-
-#: diff.c:5474
-msgid "disable all output of the program"
-msgstr "без всякакъв изход от програмата"
-
-#: diff.c:5476
-msgid "allow an external diff helper to be executed"
-msgstr "позволяване на изпълнение на външна помощна програма за разлики"
-
-#: diff.c:5478
-msgid "run external text conversion filters when comparing binary files"
-msgstr ""
-"изпълнение на външни програми-филтри при сравнението на двоични файлове"
-
-#: diff.c:5485
-msgid "specify how differences in submodules are shown"
-msgstr "начин за извеждане на промените в подмодулите"
-
-#: diff.c:5492
-msgid "treat 'git add -N' entries as real in the index"
-msgstr "включване в индекса на записите, добавени с „git add -N“"
-
-#: diff.c:5495
-msgid ""
-"look for differences that change the number of occurrences of the specified "
-"string"
-msgstr "търсене на разлики, които променят броя на поява на указаните низове"
-
-#: diff.c:5498
-msgid ""
-"look for differences that change the number of occurrences of the specified "
-"regex"
-msgstr ""
-"търсене на разлики, които променят броя на поява на низовете, които напасват "
-"на регулярния израз"
-
-#: diff.c:5509
-msgid ""
-"look for differences that change the number of occurrences of the specified "
-"object"
-msgstr "търсене на разлики, които променят броя на поява на указания обект"
-
-#: diff.c:5511
-msgid "[(A|C|D|M|R|T|U|X|B)...[*]]"
-msgstr "[(A|C|D|M|R|T|U|X|B)…[*]]"
-
-#: diff.c:5512
-msgid "select files by diff type"
-msgstr "избор на файловете по вид разлика"
-
-#: list-objects.c:129
-#, c-format
-msgid "entry '%s' in tree %s has tree mode, but is not a tree"
-msgstr "обект „%s“ в дървото „%s“ е отбелязан като дърво, но не е"
-
-#: list-objects.c:142
-#, c-format
-msgid "entry '%s' in tree %s has blob mode, but is not a blob"
-msgstr "обект „%s“ в дървото „%s“ е отбелязан като BLOB, но не е"
-
-#: merge-recursive.c:3170
-#, c-format
-msgid ""
-"Path updated: %s added in %s inside a directory that was renamed in %s; "
-"moving it to %s."
-msgstr ""
-"Обновен път: „%s“ е добавен в „%s“ в директория, която е преименувана в "
-"„%s“.  Обектът се мести в „%s“."
-
-#: merge-recursive.c:3173
-#, c-format
-msgid ""
-"CONFLICT (file location): %s added in %s inside a directory that was renamed "
-"in %s, suggesting it should perhaps be moved to %s."
-msgstr ""
-"КОНФЛИКТ (места на файлове): „%s“ е добавен в „%s“ в директория, която е "
-"преименувана в „%s“.  Предложението е да преместите обекта в „%s“."
-
-#: merge-recursive.c:3177
-#, c-format
-msgid ""
-"Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
-"%s; moving it to %s."
-msgstr ""
-"Обновен път: „%s“ е преименуван на „%s“ в „%s“ в директория, която е "
-"преименувана в „%s“.  Обектът се мести в „%s“."
-
-#: merge-recursive.c:3180
-#, c-format
-msgid ""
-"CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
-"was renamed in %s, suggesting it should perhaps be moved to %s."
-msgstr ""
-"КОНФЛИКТ (места на файлове): „%s“ е преименуван на „%s“ в „%s“ в директория, "
-"която е преименувана в „%s“.  Предложението е да преместите обекта в „%s“."
-
-#: midx.c:1034
-msgid "Looking for referenced packfiles"
-msgstr "Търсене на указаните пакетни файлове"
-
-#: midx.c:1053
-msgid "Verifying OID order in MIDX"
-msgstr ""
-"Проверка на подредбата на идентификатори на обекти в MIDX (файл с индекс към "
-"множество пакетни файлове)"
-
-#: revision.c:2683
-msgid "-L does not yet support diff formats besides -p and -s"
-msgstr ""
-"опцията „-L“ поддържа единствено форматирането на разликите според опциите „-"
-"p“ и „-s“"
-
-#: transport.c:260
-msgid "server options require protocol version 2 or later"
-msgstr "опциите на сървъра изискват поне версия 2 на протокола"
-
-#: builtin/checkout.c:744
-#, c-format
-msgid ""
-"cannot continue with staged changes in the following files:\n"
-"%s"
-msgstr ""
-"не може да се продължи с промени в следните файлове, които са добавени в "
-"индекса:\n"
-"%s"
-
-#: builtin/commit-tree.c:18
-msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
-"<file>)...] <tree>"
-msgstr ""
-"git commit-tree [(-p РОДИТЕЛ)…] [-S[ИДЕНТИФИКАТОР]] [(-m СЪОБЩЕНИЕ)…] [(-F "
-"ФАЙЛ)…] ДЪРВО"
-
-#: builtin/difftool.c:730
-msgid "difftool requires worktree or --no-index"
-msgstr "„git-difftool“ изисква работно дърво или опцията „--no-index“"
-
-#: builtin/rebase.c:1498
-msgid ""
-"the rebase.useBuiltin support has been removed!\n"
-"See its entry in 'git help config' for details."
-msgstr ""
-"поддръжката на „rebase.useBuiltin“ е премахната.\n"
-"За повече информация вижте „git help config“."
-
-#: builtin/stash.c:24 builtin/stash.c:47
-msgid "git stash drop [-q|--quiet] [<stash>]"
-msgstr "git stash drop [-q|--quiet] [СКАТАНО]"
-
-#: builtin/stash.c:25
-msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash ( pop | apply ) [--index] [-q|--quiet] [СКАТАНО]"
-
-#: builtin/stash.c:27 builtin/stash.c:67
-msgid "git stash clear"
-msgstr "git stash clear"
-
-#: builtin/stash.c:28 builtin/stash.c:77
-msgid ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
-"          [--] [<pathspec>...]]"
-msgstr ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message СЪОБЩЕНИЕ]\n"
-"          [--] [ПЪТ…]]"
-
-#: builtin/stash.c:31 builtin/stash.c:84
-msgid ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<message>]"
-msgstr ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [СЪОБЩЕНИЕ]"
-
-#: builtin/stash.c:52
-msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash pop [--index] [-q|--quiet] [СКАТАНО]"
-
-#: builtin/stash.c:57
-msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash apply [--index] [-q|--quiet] [СКАТАНО]"
-
-#: builtin/stash.c:72
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message СЪОБЩЕНИЕ] [-q|--quiet] ПОДАВАНЕ"
-
-#: builtin/stash.c:1467 builtin/stash.c:1503
-msgid "stash in patch mode"
-msgstr "скатаване в режим за кръпки"
-
-#: builtin/tag.c:210
-#, c-format
-msgid ""
-"You have created a nested tag. The object referred to by your new is\n"
-"already a tag. If you meant to tag the object that it points to, use:\n"
-"\n"
-"\tgit tag -f %s %s^{}"
-msgstr ""
-"Създали сте непряк етикет — обектът, сочен от новосъздадения етикет,\n"
-"е също етикет.  Ако вместо това искате новият етикет да сочи към това,\n"
-"което се сочи от стария, изпълнете:\n"
-"\n"
-"    git tag -f %s %s^{}"
-
-#: remote-curl.c:584
-msgid "shouldn't have EOF when not gentle on EOF"
-msgstr "получен е EOF, в режим без поддръжка за това"
-
-#: remote-curl.c:664
-msgid "unable to rewind rpc post data - try increasing http.postBuffer"
-msgstr ""
-"данните за POST не могат да се прочетат наново, пробвайте да увеличите "
-"настройката „http.postBuffer“"
-
-#: remote-curl.c:879
-#, c-format
-msgid "cannot deflate request; zlib deflate error %d"
-msgstr ""
-"заявката не може да бъде декомпресирана, грешка от „zlib“ при "
-"декомпресиране: %d"
-
-#: remote-curl.c:883
-#, c-format
-msgid "cannot deflate request; zlib end error %d"
-msgstr ""
-"заявката не може да бъде декомпресирана; грешка от „zlib“ при завършване: %d<"
-
-#: remote-curl.c:1076
-msgid "cannot fetch by sha1 over smart http"
-msgstr "умният вариант на http не може да доставя по SHA1"
-
-#: remote-curl.c:1360
-msgid "remote-curl: usage: git remote-curl <remote> [<url>]"
-msgstr "remote-curl: употреба: git remote-curl ХРАНИЛИЩЕ [АДРЕС]"
-
-#: remote-curl.c:1392
-msgid "remote-curl: error reading command stream from git"
-msgstr "remote-curl: грешка при изчитането на потока команди от git"
-
-#: remote-curl.c:1399
-msgid "remote-curl: fetch attempted without a local repo"
-msgstr "remote-curl: опит за доставяне без локално хранилище"
-
-#: remote-curl.c:1439
-#, c-format
-msgid "remote-curl: unknown command '%s' from git"
-msgstr "remote-curl: непозната команда „%s“ от git"
-
-#: commit-graph.c:105
-msgid "commit-graph file is too small"
-msgstr "файлът с гра̀фа на подаванията е твърде малък"
-
-#: commit-graph.c:170
-#, c-format
-msgid "commit-graph signature %X does not match signature %X"
-msgstr "отпечатъкът на гра̀фа с подаванията %X не съвпада с %X"
-
-#: commit-graph.c:177
-#, c-format
-msgid "commit-graph version %X does not match version %X"
-msgstr "версията на гра̀фа с подаванията %X не съвпада с %X"
-
-#: commit-graph.c:184
-#, c-format
-msgid "commit-graph hash version %X does not match version %X"
-msgstr "версията на контролната сума на гра̀фа с подаванията %X не съвпада с %X"
-
-#: commit-graph.c:207
-msgid "commit-graph chunk lookup table entry missing; file may be incomplete"
-msgstr ""
-"записът в таблицата за откъси липсва, файлът за гра̀фа може да е непълен"
-
-#: commit-graph.c:218
-#, c-format
-msgid "commit-graph improper chunk offset %08x%08x"
-msgstr "неправилно отместване на откъс: %08x%08x"
-
-#: commit-graph.c:255
-#, c-format
-msgid "commit-graph chunk id %08x appears multiple times"
-msgstr "откъсът %08x се явява многократно"
-
-#: commit-graph.c:1187
-#, c-format
-msgid "failed to parse commit %s from commit-graph"
-msgstr "подаване „%s“ в гра̀фа с подаванията не може да се анализира"
-
-#: commit-graph.c:1283
-#, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
-msgstr ""
-"датата на подаване на „%s“ в гра̀фа с подаванията е %<PRIuMAX>, а трябва да е "
-"%<PRIuMAX>"
-
-#: diff-no-index.c:238
-msgid "git diff --no-index [<options>] <path> <path>"
-msgstr "git diff --no-index [ОПЦИЯ…] ПЪТ ПЪТ"
-
-#: diff.c:4684
-#, c-format
-msgid "invalid --stat value: %s"
-msgstr "неправилна стойност за „--stat“: %s"
-
-#: diff.c:4844
-#, c-format
-msgid "unable to resolve '%s'"
-msgstr "„%s“ не може да се открие"
-
-#: diff.c:4912
-#, c-format
-msgid "%s expects a character, got '%s'"
-msgstr "опцията „%s“ изисква знак, а не: „%s“"
-
-#: diff.c:4933
-#, c-format
-msgid "bad --color-moved argument: %s"
-msgstr "неправилен аргумент за „--color-moved“: „%s“"
-
-#: diff.c:4952
-#, c-format
-msgid "invalid mode '%s' in --color-moved-ws"
-msgstr "неправилен режим „%s“ за „ --color-moved-ws“"
-
-#: diff.c:5028 diff.c:5048
-#, c-format
-msgid "invalid argument to %s"
-msgstr "неправилен аргумент към „%s“"
-
-#: diff.c:5186
-#, c-format
-msgid "failed to parse --submodule option parameter: '%s'"
-msgstr "неразпознат параметър към опцията „--submodule“: „%s“"
-
-#: diff.c:5240
-#, c-format
-msgid "bad --word-diff argument: %s"
-msgstr "неправилен аргумент към „--word-diff“: „%s“"
-
-#: diff.c:5265 diff.c:5271
-msgid "generate patch"
-msgstr "създаване на кръпки"
-
-#: diff.c:5274 diff.c:5277
-msgid "generate diffs with <n> lines context"
-msgstr "файловете с разлики да са с контекст с такъв БРОЙ редове"
-
-#: diff.c:5282
-msgid "synonym for '-p --raw'"
-msgstr "псевдоним на „-p --stat“"
-
-#: diff.c:5286
-msgid "synonym for '-p --stat'"
-msgstr "псевдоним на „-p --stat“"
-
-#: diff.c:5290
-msgid "machine friendly --stat"
-msgstr "„--stat“ във формат за четене от програма"
-
-#: diff.c:5293
-msgid "output only the last line of --stat"
-msgstr "извеждане само на последния ред на „--stat“"
-
-#: diff.c:5300
-msgid "synonym for --dirstat=cumulative"
-msgstr "псевдоним на „--dirstat=cumulative“"
-
-#: diff.c:5314
-msgid "show only names of changed files"
-msgstr "извеждане само на имената на променените файлове"
-
-#: diff.c:5317
-msgid "show only names and status of changed files"
-msgstr "извеждане само на имената и статистиката за променените файлове"
-
-#: diff.c:5320
-msgid "generate diffstat"
-msgstr "извеждане на статистика за промените"
-
-#: diff.c:5351 diff.c:5354 diff.c:5357 diff.c:5463
-msgid "<prefix>"
-msgstr "ПРЕФИКС"
-
-#: diff.c:5364
-msgid "show context between diff hunks up to the specified number of lines"
-msgstr ""
-"извеждане на контекст между последователните парчета с разлики от указания "
-"БРОЙ редове"
-
-#: diff.c:5382
-msgid "Diff rename options"
-msgstr "Настройки за разлики с преименуване"
-
-#: diff.c:5383
-msgid "<n>[/<m>]"
-msgstr "МИНИМАЛЕН_%_ПРОМЯНА_ЗА_ИЗТОЧНИК[/МАКСИМАЛEН_%_ПРОМЯНА_ЗА_ЗАМЯНА]"
-
-#: diff.c:5388
-msgid "detect renames"
-msgstr "засичане на преименуванията"
-
-#: diff.c:5392
-msgid "omit the preimage for deletes"
-msgstr "без предварителен вариант при изтриване"
-
-#: diff.c:5401
-msgid "disable rename detection"
-msgstr "без търсене на преименувания"
-
-#: diff.c:5411
-msgid "Diff algorithm options"
-msgstr "Опции към алгоритъма за разлики"
-
-#: diff.c:5416
-msgid "ignore whitespace when comparing lines"
-msgstr "без промени в празните знаци при сравняване на редове"
-
-#: diff.c:5419
-msgid "ignore changes in amount of whitespace"
-msgstr "без промени в празните знаци"
-
-#: diff.c:5422
-msgid "ignore changes in whitespace at EOL"
-msgstr "без промени в празните знаци в края на редовете"
-
-#: diff.c:5443
-msgid "<text>"
-msgstr "ТЕКСТ"
-
-#: diff.c:5446 diff.c:5455 diff.c:5458
-msgid "<mode>"
-msgstr "РЕЖИМ"
-
-#: diff.c:5462
-msgid "Diff other options"
-msgstr "Други опции за разлики"
-
-#: diff.c:5468
-msgid "treat all files as text"
-msgstr "обработка на всички файлове като текстови"
-
-#: diff.c:5480
-msgid "<when>"
-msgstr "КОГА"
-
-#: diff.c:5481
-msgid "ignore changes to submodules in the diff generation"
-msgstr "игнориране на промените в подмодулите при извеждането на разликите"
-
-#: diff.c:5484
-msgid "<format>"
-msgstr "ФОРМАТ"
-
-#: diff.c:5489
-msgid "hide 'git add -N' entries from the index"
-msgstr "без включване в индекса на записите, добавени с „git add -N“"
-
-#: diff.c:5494
-msgid "<string>"
-msgstr "НИЗ"
-
-#: diff.c:5501
-msgid "show all changes in the changeset with -S or -G"
-msgstr "извеждане на всички промени с „-G“/„-S“"
-
-#: diff.c:5504
-msgid "treat <string> in -S as extended POSIX regular expression"
-msgstr "НИЗът към „-S“ да се тълкува като разширен регулярен израз по POSIX"
-
-#: diff.c:5507
-msgid "control the order in which files appear in the output"
-msgstr "управление на подредбата на файловете в изхода"
-
-#: diff.c:5508
-msgid "<object-id>"
-msgstr "ИДЕНТИФИКАТОР_НА_ОБЕКТ"
-
-#: diff.c:5514
-msgid "<file>"
-msgstr "ФАЙЛ"
-
-#: diff.c:5515
-msgid "Output to a specific file"
-msgstr "Изход към указания файл"
-
-#: fetch-pack.c:196
-msgid "unable to write to remote"
-msgstr "невъзможно писане към отдалечено хранилище"
-
-#: fetch-pack.c:1171
-msgid "unable to write request to remote"
-msgstr "невъзможно писане към отдалечено хранилище"
-
-#: list-objects.c:378
-#, c-format
-msgid "unable to load root tree for commit %s"
-msgstr "кореновото дърво за подаване „%s“ не може да се зареди"
-
-#: midx.c:1081
-msgid "Sorting objects by packfile"
-msgstr "Подредба на обектите по пакетни файлове"
-
-#: pkt-line.c:92
-msgid "unable to write flush packet"
-msgstr "пакетът за изчистване на буферите не може да се запише"
-
-#: pkt-line.c:99
-msgid "unable to write delim packet"
-msgstr "разделящият пакет не може да се запише"
-
-#: read-cache.c:723
-#, c-format
-msgid "'%s' does not have a commit checked out"
-msgstr "не е изтеглено подаване в „%s“"
-
-#: sequencer.c:2164
-#, c-format
-msgid "could not parse '%.*s'"
-msgstr "„%.*s“ не може да се анализира"
-
-#: transport.c:259
-msgid "see protocol.version in 'git help config' for more details"
-msgstr ""
-"За повече информация вижте раздела „protocol.version“ в „git help config“"
-
-#: wt-status.c:1392
-msgid "Cherry-pick currently in progress."
-msgstr "В момента се извършва отбиране на подавания."
-
-#: wt-status.c:1405
-msgid "  (run \"git cherry-pick --continue\" to continue)"
-msgstr "  (за да продължите, изпълнете „git cherry-pick --continue“)"
-
-#: wt-status.c:1420
-msgid "Revert currently in progress."
-msgstr "В момента тече отмяна на подаване."
-
-#: wt-status.c:1432
-msgid "  (run \"git revert --continue\" to continue)"
-msgstr "  (за да продължите, изпълнете „git revert --continue“)"
-
-#: builtin/branch.c:452
-msgid "could not resolve HEAD"
-msgstr "подаването, сочено от указателя „HEAD“, не може да се установи"
-
-#: builtin/branch.c:458
-#, c-format
-msgid "HEAD (%s) points outside of refs/heads/"
-msgstr "„HEAD“ (%s) сочи извън директорията „refs/heads“"
-
-#: builtin/branch.c:639
-msgid "show current branch name"
-msgstr "извеждане на името на текущия клон"
-
-#: builtin/checkout.c:751
-#, c-format
-msgid "staged changes in the following files may be lost: %s"
-msgstr "локалните промени в тези файлове ще се презапишат: %s"
-
-#: builtin/checkout.c:1390
-msgid "use overlay mode (default)"
-msgstr "използване на припокриващ режим (стандартно)"
-
-#: builtin/checkout.c:1425
-msgid "-p and --overlay are mutually exclusive"
-msgstr "опциите „-p“ и „--overlay“ са несъвместими"
-
-#: builtin/commit-tree.c:31
-#, c-format
-msgid "duplicate parent %s ignored"
-msgstr "прескачане на повтарящ се родител: „%s“"
-
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:136 builtin/log.c:520
-#, c-format
-msgid "not a valid object name %s"
-msgstr "неправилно име на обект: „%s“"
-
-#: builtin/commit-tree.c:93
-#, c-format
-msgid "git commit-tree: failed to open '%s'"
-msgstr "git commit-tree: „%s“ не може да се отвори"
-
-#: builtin/commit-tree.c:96
-#, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree: „%s“ не може да се прочете"
-
-#: builtin/commit-tree.c:98
-#, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree: „%s“ не може да се затвори"
-
-#: builtin/commit-tree.c:111
-msgid "parent"
-msgstr "родител"
-
-#: builtin/commit-tree.c:112
-msgid "id of a parent commit object"
-msgstr "ИДЕНТИФИКАТОР на обекта за подаването-родител"
-
-#: builtin/commit-tree.c:118
-msgid "read commit log message from file"
-msgstr "изчитане на съобщението за подаване от ФАЙЛ"
-
-#: builtin/commit-tree.c:133
-msgid "must give exactly one tree"
-msgstr "трябва да е точно едно дърво"
-
-#: builtin/commit-tree.c:140
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree: не може да се прочете"
-
-#: builtin/commit.c:1192
-#, c-format
-msgid "paths '%s ...' with -a does not make sense"
-msgstr "опцията „-a“ е несъвместима със задаването на пътища: „%s…“"
-
-#: builtin/commit-graph.c:68 builtin/commit-graph.c:105
-#, c-format
-msgid "Could not open commit-graph '%s'"
-msgstr "Графът с подаванията не може да се отвори: „%s“"
-
-#: builtin/difftool.c:715
-msgid "passed to `diff`"
-msgstr "подава се към „diff“"
-
-#: builtin/gc.c:126
-#, c-format
-msgid "failed to parse '%s' value '%s'"
-msgstr "стойността на „%s“ — „%s“ не може да се анализира"
-
-#: builtin/log.c:544 builtin/log.c:638
-#, c-format
-msgid "could not read object %s"
-msgstr "обектът не може да бъде прочетен: %s"
-
-#: builtin/log.c:663
-#, c-format
-msgid "unknown type: %d"
-msgstr "неизвестен вид: %d"
-
-#: builtin/log.c:901
-#, c-format
-msgid "cannot open patch file %s"
-msgstr "файлът-кръпка „%s“ не може да бъде отворен"
-
-#: builtin/log.c:918
-msgid "need exactly one range"
-msgstr "трябва да зададете точно един диапазон"
-
-#: builtin/log.c:928
-msgid "not a range"
-msgstr "не е диапазон"
-
-#: builtin/log.c:1051
-msgid "cover letter needs email format"
-msgstr "придружаващото писмо трябва да е форматирано като е-писмо"
-
-#: builtin/log.c:1057
-msgid "failed to create cover-letter file"
-msgstr "неуспешно създаване на придружаващо писмо"
-
-#: builtin/log.c:1221
-msgid "two output directories?"
-msgstr "може да укажете максимум една директория за изход"
-
-#: builtin/log.c:1332 builtin/log.c:2076 builtin/log.c:2078 builtin/log.c:2090
-#, c-format
-msgid "unknown commit %s"
-msgstr "непознато подаване: „%s“"
-
-#: builtin/log.c:1347
-msgid "could not find exact merge base"
-msgstr "точната база за сливане не може да бъде открита"
-
-#: builtin/log.c:1351
-msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
-"please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
-msgstr ""
-"следеният клон не може да бъде установен.  Ако искате ръчно да го\n"
-"зададете, използвайте „git branch --set-upstream-to“.\n"
-"Можете ръчно да зададете базово подаване чрез „--base=<base-commit-id>“."
-
-#: builtin/log.c:1371
-msgid "failed to find exact merge base"
-msgstr "точната база при сливане не може да бъде открита"
-
-#: builtin/log.c:1952
-msgid "failed to create output files"
-msgstr "неуспешно създаване на изходни файлове"
-
-#: builtin/merge.c:808
-msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
-"especially if it merges an updated upstream into a topic branch.\n"
-"\n"
-msgstr ""
-"В съобщението при подаване добавете информация за причината за\n"
-"сливането, особено ако сливате обновен отдалечен клон в тематичен клон.\n"
-
-#: builtin/merge.c:813
-msgid "An empty message aborts the commit.\n"
-msgstr "Празно съобщение предотвратява подаването.\n"
-
-#: builtin/merge.c:816
-#, c-format
-msgid ""
-"Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
-msgstr ""
-"Редовете, които започват с „%c“, ще бъдат пропуснати, а празно\n"
-"съобщение преустановява подаването.\n"
-
-#: builtin/read-tree.c:157
-msgid "suppress feedback messages"
-msgstr "без информационни съобщения"
-
-#: builtin/rebase.c:167 builtin/rebase.c:193 builtin/rebase.c:217
-#, c-format
-msgid "could not write '%s'."
-msgstr "„%s“ не може да се запише."
-
-#: builtin/rebase.c:1445
-msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
-msgstr "(остаряло) пресъздаване на сливанията вместо да се прескачат"
-
-#: builtin/rebase.c:1545
-msgid ""
-"git rebase --preserve-merges is deprecated. Use --rebase-merges instead."
-msgstr ""
-"Опцията „--preserve-merges“ е остаряла.  Ползвайте „--rebase-merges“ вместо "
-"нея."
-
-#: builtin/replace.c:383
-#, c-format
-msgid "could not parse %s as a commit"
-msgstr "„%s“ не може да се анализира като подаване"
-
-#: builtin/stash.c:22 builtin/stash.c:37
-msgid "git stash list [<options>]"
-msgstr "git stash list [ОПЦИЯ…]"
-
-#: builtin/stash.c:23 builtin/stash.c:42
-msgid "git stash show [<options>] [<stash>]"
-msgstr "git stash show [ОПЦИЯ…] [СКАТАНО]"
-
-#: builtin/stash.c:26 builtin/stash.c:62
-msgid "git stash branch <branchname> [<stash>]"
-msgstr "git stash branch КЛОН [СКАТАНО]"
-
-#: builtin/stash.c:127
-#, c-format
-msgid "'%s' is not a stash-like commit"
-msgstr "„%s“ не е подаване, приличащо на нещо скатано"
-
-#: builtin/stash.c:147
-#, c-format
-msgid "Too many revisions specified:%s"
-msgstr "Указани са прекалено много версии:%s"
-
-#: builtin/stash.c:175
-#, c-format
-msgid "%s is not a valid reference"
-msgstr "„%s“ е неправилно име за указател"
-
-#: builtin/stash.c:403
-msgid "cannot apply a stash in the middle of a merge"
-msgstr "по време на сливане не може да приложите нещо скатано"
-
-#: builtin/stash.c:414
-#, c-format
-msgid "could not generate diff %s^!."
-msgstr "файлът с разликите „%s^!“ не може да се генерира"
-
-#: builtin/stash.c:421
-msgid "conflicts in index.Try without --index."
-msgstr ""
-"в индекса има конфликти.  Пробвайте да изпълните командата без опцията „--"
-"index“."
-
-#: builtin/stash.c:427
-msgid "could not save index tree"
-msgstr "дървото сочено от индекса не може да бъде запазено"
-
-#: builtin/stash.c:434
-msgid "could not restore untracked files from stash"
-msgstr "неследени файлове не могат да се възстановят от скатаното"
-
-#: builtin/stash.c:448
-#, c-format
-msgid "Merging %s with %s"
-msgstr "Сливане на „%s“ с „%s“"
-
-#: builtin/stash.c:516 builtin/stash.c:615
-msgid "attempt to recreate the index"
-msgstr "опит за повторно създаване на индекса"
-
-#: builtin/stash.c:549
-#, c-format
-msgid "Dropped %s (%s)"
-msgstr "Изтрито: „%s“ (%s)"
-
-#: builtin/stash.c:552
-#, c-format
-msgid "%s: Could not drop stash entry"
-msgstr "Скатаното „%s“ не може да бъде изтрито"
-
-#: builtin/stash.c:577
-#, c-format
-msgid "'%s' is not a stash reference"
-msgstr "„%s“ не е указател към нещо скатано"
-
-#: builtin/stash.c:789 builtin/stash.c:826
-#, c-format
-msgid "Cannot update %s with %s"
-msgstr "Указателят „%s“ не може да бъде обновен да сочи към „%s“"
-
-#: builtin/stash.c:807 builtin/stash.c:1474 builtin/stash.c:1510
-msgid "stash message"
-msgstr "съобщение при скатаване"
-
-#: builtin/stash.c:817
-msgid "\"git stash store\" requires one <commit> argument"
-msgstr "командата „git stash store“ изисква точно един аргумент-ПОДАВАНЕ"
-
-#: builtin/stash.c:1284
-msgid "Did you forget to 'git add'?"
-msgstr "Пробвайте да използвате „git add“"
-
-#: builtin/stash.c:1326
-#, c-format
-msgid "Saved working directory and index state %s"
-msgstr "Състоянието на работната директория и индекса e запазено: „%s“"
-
-#: builtin/stash.c:1465 builtin/stash.c:1501
-msgid "keep index"
-msgstr "запазване на индекса"
-
-#: builtin/stash.c:1468 builtin/stash.c:1504
-msgid "quiet mode"
-msgstr "без извеждане на информация"
-
-#: builtin/stash.c:1470 builtin/stash.c:1506
-msgid "include untracked files in stash"
-msgstr "скатаване и на неследените файлове"
-
-#: builtin/stash.c:1472 builtin/stash.c:1508
-msgid "include ignore files"
-msgstr "скатаване и на игнорираните файлове"
-
-#: builtin/submodule--helper.c:569
-msgid "git submodule--helper foreach [--quiet] [--recursive] [--] <command>"
-msgstr "git submodule--helper foreach [--quiet] [--recursive] [--] КОМАНДА"
-
-#: builtin/submodule--helper.c:712
-msgid "git submodule--helper init [<options>] [<path>]"
-msgstr "git submodule--helper init [ОПЦИЯ…] [ПЪТ]"
-
-#: builtin/submodule--helper.c:2099
-msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
-msgstr "git submodule--helper absorb-git-dirs [ОПЦИЯ…] [ПЪТ…]"
-
-#: builtin/submodule--helper.c:2159
-msgid "unset the config in the .gitmodules file"
-msgstr "изтриване на настройка във файла „.gitmodules“"
-
-#: builtin/submodule--helper.c:2164
-msgid "git submodule--helper config <name> [<value>]"
-msgstr "git submodule--helper config ИМЕ [СТОЙНОСТ]"
-
-#: builtin/submodule--helper.c:2165
-msgid "git submodule--helper config --unset <name>"
-msgstr "git submodule--helper config --unset ИМЕ"
-
-#: builtin/tag.c:25
-msgid ""
-"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
-"\t\t<tagname> [<head>]"
-msgstr ""
-"git tag [-a | -s | -u ИДЕНТИФИКАТОР_НА_КЛЮЧ] [-f] [-m СЪОБЩЕНИЕ | -F ФАЙЛ]\n"
-"        ЕТИКЕТ [ВРЪХ]"
-
-#: t/helper/test-serve-v2.c:7
-msgid "test-tool serve-v2 [<options>]"
-msgstr "test-tool serve-v2 [ОПЦИЯ…]"
-
-#: remote-curl.c:157
-#, c-format
-msgid "invalid quoting in push-option value: '%s'"
-msgstr ""
-"неправилно екраниране или цитиране в стойността към опция за изтласкване: "
-"„%s“"
-
-#: remote-curl.c:254
-#, c-format
-msgid "%sinfo/refs not valid: is this a git repository?"
-msgstr "„%sinfo/refs“ е неизползваемо, проверете дали е хранилище на git"
-
-#: remote-curl.c:355
-msgid "invalid server response; expected service, got flush packet"
-msgstr ""
-"неправилен отговор от сървъра: очакваше се услуга, а бе получен изчистващ "
-"пакет „flush“"
-
-#: remote-curl.c:386
-#, c-format
-msgid "invalid server response; got '%s'"
-msgstr "неправилен отговор от сървъра, бе получено: „%s“"
-
-#: remote-curl.c:446
-#, c-format
-msgid "repository '%s' not found"
-msgstr "хранилището „%s“ липсва"
-
-#: remote-curl.c:450
-#, c-format
-msgid "Authentication failed for '%s'"
-msgstr "Неуспешна идентификация към „%s“"
-
-#: remote-curl.c:454
-#, c-format
-msgid "unable to access '%s': %s"
-msgstr "няма достъп до „%s“: %s"
-
-#: remote-curl.c:724
-#, c-format
-msgid "RPC failed; %s"
-msgstr "Неуспешно отдалечено извикване.  %s"
-
-#: remote-curl.c:764
-msgid "cannot handle pushes this big"
-msgstr "толкова големи изтласквания не може да се изпълнят"
-
-#: remote-curl.c:1014
-msgid "dumb http transport does not support shallow capabilities"
-msgstr "опростеният транспорт по http не поддържа плитки клиенти"
-
-#: remote-curl.c:1028
-msgid "fetch failed."
-msgstr "неуспешно доставяне."
-
-#: remote-curl.c:1120 remote-curl.c:1126
-#, c-format
-msgid "protocol error: expected sha/ref, got %s'"
-msgstr "протоколна грешка: очаква се SHA1 или указател, а бе получено: „%s“"
-
-#: remote-curl.c:1138 remote-curl.c:1252
-#, c-format
-msgid "http transport does not support %s"
-msgstr "транспортът по http не поддържа „%s“"
-
-#: remote-curl.c:1174
-msgid "git-http-push failed"
-msgstr "неуспешно изпълнение на „git-http-push“"
-
-#: command-list.h:113
-msgid "Add or parse structured information in commit messages"
-msgstr ""
-"Добавяне или обработка на структурирана информация в съобщенията при подаване"
-
-#: git-submodule.sh:239
-#, sh-format
-msgid "'$sm_path' does not have a commit checked out"
-msgstr "в „${sm_path}“ не е изтеглено подаване"
-
-#: git-submodule.sh:606
-#, sh-format
-msgid ""
-"Unable to fetch in submodule path '$displaypath'; trying to directly fetch "
-"$sha1:"
-msgstr ""
-"Неуспешно доставяне в пътя към подмодул „${displaypath}“, опит за директно "
-"доставяне на „${sha1}“"
 
 #: advice.c:103
 #, c-format
@@ -2094,7 +774,7 @@ msgid "Unable to write new index file"
 msgstr "Новият индекс не може да бъде записан"
 
 #: apply.c:4963 apply.c:4966 builtin/am.c:2210 builtin/am.c:2213
-#: builtin/clone.c:123 builtin/fetch.c:118 builtin/merge.c:271
+#: builtin/clone.c:120 builtin/fetch.c:118 builtin/merge.c:271
 #: builtin/pull.c:207 builtin/submodule--helper.c:407
 #: builtin/submodule--helper.c:1366 builtin/submodule--helper.c:1369
 #: builtin/submodule--helper.c:1849 builtin/submodule--helper.c:1852
@@ -2293,7 +973,7 @@ msgstr "добавяне на този ПРЕФИКС към всеки път �
 #: builtin/commit-tree.c:117 builtin/config.c:129 builtin/fast-export.c:1091
 #: builtin/fast-export.c:1093 builtin/grep.c:895 builtin/hash-object.c:105
 #: builtin/ls-files.c:560 builtin/ls-files.c:563 builtin/notes.c:412
-#: builtin/notes.c:578 builtin/read-tree.c:123 parse-options.h:176
+#: builtin/notes.c:578 builtin/read-tree.c:123 parse-options.h:177
 msgid "file"
 msgstr "ФАЙЛ"
 
@@ -2325,7 +1005,7 @@ msgstr "добро компресиране"
 msgid "list supported archive formats"
 msgstr "извеждане на списъка с поддържаните формати"
 
-#: archive.c:477 builtin/archive.c:91 builtin/clone.c:113 builtin/clone.c:116
+#: archive.c:477 builtin/archive.c:91 builtin/clone.c:110 builtin/clone.c:113
 #: builtin/submodule--helper.c:1378 builtin/submodule--helper.c:1858
 msgid "repo"
 msgstr "хранилище"
@@ -2334,7 +1014,7 @@ msgstr "хранилище"
 msgid "retrieve the archive from remote repository <repo>"
 msgstr "изтегляне на архива от отдалеченото ХРАНИЛИЩЕ"
 
-#: archive.c:479 builtin/archive.c:93 builtin/difftool.c:713
+#: archive.c:479 builtin/archive.c:93 builtin/difftool.c:707
 #: builtin/notes.c:498
 msgid "command"
 msgstr "команда"
@@ -2877,96 +1557,208 @@ msgstr ""
 "Може да поправите подаването заедно със съобщението или може да\n"
 "зададете ползваното кодиране в настройката „i18n.commitencoding“.\n"
 
-#: commit-graph.c:388
+#: commit-graph.c:105
+msgid "commit-graph file is too small"
+msgstr "файлът с гра̀фа на подаванията е твърде малък"
+
+#: commit-graph.c:170
+#, c-format
+msgid "commit-graph signature %X does not match signature %X"
+msgstr "отпечатъкът на гра̀фа с подаванията %X не съвпада с %X"
+
+#: commit-graph.c:177
+#, c-format
+msgid "commit-graph version %X does not match version %X"
+msgstr "версията на гра̀фа с подаванията %X не съвпада с %X"
+
+#: commit-graph.c:184
+#, c-format
+msgid "commit-graph hash version %X does not match version %X"
+msgstr "версията на контролната сума на гра̀фа с подаванията %X не съвпада с %X"
+
+#: commit-graph.c:207
+msgid "commit-graph chunk lookup table entry missing; file may be incomplete"
+msgstr ""
+"записът в таблицата за откъси липсва, файлът за гра̀фа може да е непълен"
+
+#: commit-graph.c:218
+#, c-format
+msgid "commit-graph improper chunk offset %08x%08x"
+msgstr "неправилно отместване на откъс: %08x%08x"
+
+#: commit-graph.c:255
+#, c-format
+msgid "commit-graph chunk id %08x appears multiple times"
+msgstr "откъсът %08x се явява многократно"
+
+#: commit-graph.c:390
 #, c-format
 msgid "could not find commit %s"
 msgstr "подаването „%s“ не може да бъде открито"
 
-#: commit-graph.c:730 builtin/pack-objects.c:2649
+#: commit-graph.c:732 builtin/pack-objects.c:2649
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "видът на обекта „%s“ не може да бъде определен"
 
-#: commit-graph.c:763
+#: commit-graph.c:765
 msgid "Loading known commits in commit graph"
 msgstr "Зареждане на познатите подавания в гра̀фа с подаванията"
 
-#: commit-graph.c:779
+#: commit-graph.c:781
 msgid "Expanding reachable commits in commit graph"
 msgstr "Разширяване на достижимите подавания в гра̀фа"
 
-#: commit-graph.c:791
+#: commit-graph.c:793
 msgid "Clearing commit marks in commit graph"
 msgstr "Изчистване на отбелязванията на подаванията в гра̀фа с подаванията"
 
-#: commit-graph.c:811
+#: commit-graph.c:813
 msgid "Computing commit graph generation numbers"
 msgstr "Изчисляване на номерата на поколенията в гра̀фа с подаванията"
 
-#: commit-graph.c:928
+#: commit-graph.c:930
 #, c-format
 msgid "Finding commits for commit graph in %d pack"
 msgid_plural "Finding commits for commit graph in %d packs"
 msgstr[0] "Откриване на подаванията в гра̀фа в %d пакетен файл"
 msgstr[1] "Откриване на подаванията в гра̀фа в %d пакетни файла"
 
-#: commit-graph.c:941
+#: commit-graph.c:943
 #, c-format
 msgid "error adding pack %s"
 msgstr "грешка при добавяне на пакетен файл „%s“"
 
-#: commit-graph.c:943
+#: commit-graph.c:945
 #, c-format
 msgid "error opening index for %s"
 msgstr "грешка при отваряне на индекса на „%s“"
 
-#: commit-graph.c:957
+#: commit-graph.c:959
 #, c-format
 msgid "Finding commits for commit graph from %d ref"
 msgid_plural "Finding commits for commit graph from %d refs"
 msgstr[0] "Откриване на подаванията в гра̀фа измежду %d указател"
 msgstr[1] "Откриване на подаванията в гра̀фа измежду %d указатели"
 
-#: commit-graph.c:989
+#: commit-graph.c:991
 msgid "Finding commits for commit graph among packed objects"
 msgstr "Откриване на подаванията в гра̀фа измежду пакетираните обекти"
 
-#: commit-graph.c:1002
+#: commit-graph.c:1004
 msgid "Counting distinct commits in commit graph"
 msgstr "Преброяване на различните подавания в гра̀фа"
 
-#: commit-graph.c:1015
+#: commit-graph.c:1017
 #, c-format
 msgid "the commit graph format cannot write %d commits"
 msgstr "форматът на гра̀фа с подаванията не може да запише %d подавания"
 
-#: commit-graph.c:1024
+#: commit-graph.c:1026
 msgid "Finding extra edges in commit graph"
 msgstr "Откриване на още върхове в гра̀фа с подаванията"
 
-#: commit-graph.c:1048
+#: commit-graph.c:1050
 msgid "too many commits to write graph"
 msgstr "прекалено много подавания за записване на гра̀фа"
 
-#: commit-graph.c:1055 midx.c:805
+#: commit-graph.c:1057 midx.c:819
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "родителските директории на „%s“ не могат да бъдат създадени"
 
-#: commit-graph.c:1095
+#: commit-graph.c:1097
 #, c-format
 msgid "Writing out commit graph in %d pass"
 msgid_plural "Writing out commit graph in %d passes"
 msgstr[0] "Запазване на гра̀фа с подаванията в %d пас"
 msgstr[1] "Запазване на гра̀фа с подаванията в %d паса"
 
-#: commit-graph.c:1160
+#: commit-graph.c:1162
 msgid "the commit-graph file has incorrect checksum and is likely corrupt"
 msgstr "графът с подаванията е с грешна сума за проверка — вероятно е повреден"
 
-#: commit-graph.c:1204
+#: commit-graph.c:1172
+#, c-format
+msgid "commit-graph has incorrect OID order: %s then %s"
+msgstr ""
+"неправилна подредба на обектите по идентификатор в гра̀фа с подаванията: „%s“ "
+"е преди „%s“, а не трябва"
+
+#: commit-graph.c:1182 commit-graph.c:1197
+#, c-format
+msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgstr ""
+"неправилна стойност за откъс в гра̀фа с подаванията: fanout[%d] = %u, а "
+"трябва да е %u"
+
+#: commit-graph.c:1189
+#, c-format
+msgid "failed to parse commit %s from commit-graph"
+msgstr "подаване „%s“ в гра̀фа с подаванията не може да се анализира"
+
+#: commit-graph.c:1206
 msgid "Verifying commits in commit graph"
 msgstr "Проверка на подаванията в гра̀фа"
+
+#: commit-graph.c:1219
+#, c-format
+msgid "failed to parse commit %s from object database for commit-graph"
+msgstr ""
+"подаване „%s“ в базата от данни към гра̀фа с подаванията не може да се "
+"анализира"
+
+#: commit-graph.c:1226
+#, c-format
+msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgstr ""
+"идентификаторът на обект за кореновото дърво за подаване „%s“ в гра̀фа с "
+"подаванията е „%s“, а трябва да е „%s“"
+
+#: commit-graph.c:1236
+#, c-format
+msgid "commit-graph parent list for commit %s is too long"
+msgstr "списъкът с родители на „%s“ в гра̀фа с подаванията е прекалено дълъг"
+
+#: commit-graph.c:1242
+#, c-format
+msgid "commit-graph parent for %s is %s != %s"
+msgstr "родителят на „%s“ в гра̀фа с подаванията е „%s“, а трябва да е „%s“"
+
+#: commit-graph.c:1255
+#, c-format
+msgid "commit-graph parent list for commit %s terminates early"
+msgstr "списъкът с родители на „%s“ в гра̀фа с подаванията е прекалено къс"
+
+#: commit-graph.c:1260
+#, c-format
+msgid ""
+"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
+msgstr ""
+"номерът на поколението на подаване „%s“ в гра̀фа с подаванията е 0, а другаде "
+"не е"
+
+#: commit-graph.c:1264
+#, c-format
+msgid ""
+"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+msgstr ""
+"номерът на поколението на подаване „%s“ в гра̀фа с подаванията не е 0, а "
+"другаде е"
+
+#: commit-graph.c:1279
+#, c-format
+msgid "commit-graph generation for commit %s is %u != %u"
+msgstr ""
+"номерът на поколението на подаване „%s“ в гра̀фа с подаванията е %u, а "
+"другаде е %u"
+
+#: commit-graph.c:1285
+#, c-format
+msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgstr ""
+"датата на подаване на „%s“ в гра̀фа с подаванията е %<PRIuMAX>, а трябва да е "
+"%<PRIuMAX>"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
@@ -3706,6 +2498,18 @@ msgstr "файлът с подредбата на съответствията �
 msgid "Performing inexact rename detection"
 msgstr "Търсене на преименувания на обекти съчетани с промени"
 
+#: diff-no-index.c:238
+msgid "git diff --no-index [<options>] <path> <path>"
+msgstr "git diff --no-index [ОПЦИЯ…] ПЪТ ПЪТ"
+
+#: diff-no-index.c:263
+msgid ""
+"Not a git repository. Use --no-index to compare two paths outside a working "
+"tree"
+msgstr ""
+"Не е хранилище на git.  Ползвайте опцията „--no-index“, за да сравните "
+"пътища извън работно дърво"
+
 #: diff.c:155
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%s'\n"
@@ -3782,8 +2586,13 @@ msgstr "Опциите „-G“, „-S“ и „--find-object“ са несъв
 msgid "--follow requires exactly one pathspec"
 msgstr "Опцията „--follow“ изисква точно един път"
 
-#: diff.c:4689 diff.c:4694 diff.c:4699 diff.c:4704 diff.c:5216
-#: parse-options.c:200
+#: diff.c:4684
+#, c-format
+msgid "invalid --stat value: %s"
+msgstr "неправилна стойност за „--stat“: %s"
+
+#: diff.c:4689 diff.c:4694 diff.c:4699 diff.c:4704 diff.c:5217
+#: parse-options.c:199 parse-options.c:203
 #, c-format
 msgid "%s expects a numerical value"
 msgstr "опцията „%s“ очаква число за аргумент"
@@ -3797,23 +2606,523 @@ msgstr ""
 "Неразпознат параметър към опцията „--dirstat/-X“:\n"
 "%s"
 
-#: diff.c:5268 builtin/log.c:167
+#: diff.c:4806
+#, c-format
+msgid "unknown change class '%c' in --diff-filter=%s"
+msgstr "непознат вид промяна: „%c“ в „--diff-filter=%s“"
+
+#: diff.c:4830
+#, c-format
+msgid "unknown value after ws-error-highlight=%.*s"
+msgstr "непозната стойност след „ws-error-highlight=%.*s“"
+
+#: diff.c:4844
+#, c-format
+msgid "unable to resolve '%s'"
+msgstr "„%s“ не може да се открие"
+
+#: diff.c:4894 diff.c:4900
+#, c-format
+msgid "%s expects <n>/<m> form"
+msgstr ""
+"опцията „%s“ изисква стойности за МИНИМАЛЕН_%%_ПРОМЯНА_ЗА_ИЗТОЧНИК_/"
+"МАКСИМАЛЕН_%%_ПРОМЯНА_ЗА_ЗАМЯНА от"
+
+#: diff.c:4912
+#, c-format
+msgid "%s expects a character, got '%s'"
+msgstr "опцията „%s“ изисква знак, а не: „%s“"
+
+#: diff.c:4933
+#, c-format
+msgid "bad --color-moved argument: %s"
+msgstr "неправилен аргумент за „--color-moved“: „%s“"
+
+#: diff.c:4952
+#, c-format
+msgid "invalid mode '%s' in --color-moved-ws"
+msgstr "неправилен режим „%s“ за „ --color-moved-ws“"
+
+#: diff.c:4992
+msgid ""
+"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
+"\"histogram\""
+msgstr ""
+"опцията приема следните варианти за алгоритъм за разлики: „myers“ (по "
+"Майерс), „minimal“ (минимизиране на разликите), „patience“ (пасианс) и "
+"„histogram“ (хистограмен)"
+
+#: diff.c:5028 diff.c:5048
+#, c-format
+msgid "invalid argument to %s"
+msgstr "неправилен аргумент към „%s“"
+
+#: diff.c:5186
+#, c-format
+msgid "failed to parse --submodule option parameter: '%s'"
+msgstr "неразпознат параметър към опцията „--submodule“: „%s“"
+
+#: diff.c:5242
+#, c-format
+msgid "bad --word-diff argument: %s"
+msgstr "неправилен аргумент към „--word-diff“: „%s“"
+
+#: diff.c:5265
+msgid "Diff output format options"
+msgstr "Формат на изхода за разликите"
+
+#: diff.c:5267 diff.c:5273
+msgid "generate patch"
+msgstr "създаване на кръпки"
+
+#: diff.c:5270 builtin/log.c:167
 msgid "suppress diff output"
 msgstr "без извеждане на разликите"
 
-#: diff.c:6148
+#: diff.c:5275 diff.c:5389 diff.c:5396
+msgid "<n>"
+msgstr "БРОЙ"
+
+#: diff.c:5276 diff.c:5279
+msgid "generate diffs with <n> lines context"
+msgstr "файловете с разлики да са с контекст с такъв БРОЙ редове"
+
+#: diff.c:5281
+msgid "generate the diff in raw format"
+msgstr "файловете с разлики да са в суров формат"
+
+#: diff.c:5284
+msgid "synonym for '-p --raw'"
+msgstr "псевдоним на „-p --stat“"
+
+#: diff.c:5288
+msgid "synonym for '-p --stat'"
+msgstr "псевдоним на „-p --stat“"
+
+#: diff.c:5292
+msgid "machine friendly --stat"
+msgstr "„--stat“ във формат за четене от програма"
+
+#: diff.c:5295
+msgid "output only the last line of --stat"
+msgstr "извеждане само на последния ред на „--stat“"
+
+#: diff.c:5297 diff.c:5305
+msgid "<param1,param2>..."
+msgstr "ПАРАМЕТЪР_1, ПАРАМЕТЪР_2, …"
+
+#: diff.c:5298
+msgid ""
+"output the distribution of relative amount of changes for each sub-directory"
+msgstr "извеждане на разпределението на промените за всяка поддиректория"
+
+#: diff.c:5302
+msgid "synonym for --dirstat=cumulative"
+msgstr "псевдоним на „--dirstat=cumulative“"
+
+#: diff.c:5306
+msgid "synonym for --dirstat=files,param1,param2..."
+msgstr "псевдоним на „--dirstat=ФАЙЛОВЕ,ПАРАМЕТЪР_1,ПАРАМЕТЪР_2,…“"
+
+#: diff.c:5310
+msgid "warn if changes introduce conflict markers or whitespace errors"
+msgstr ""
+"предупреждаване, ако промените водят до маркери за конфликт или грешки в "
+"празните знаци"
+
+#: diff.c:5313
+msgid "condensed summary such as creations, renames and mode changes"
+msgstr ""
+"съкратено резюме на създадените, преименуваните и файловете с промяна на "
+"режима на достъп"
+
+#: diff.c:5316
+msgid "show only names of changed files"
+msgstr "извеждане само на имената на променените файлове"
+
+#: diff.c:5319
+msgid "show only names and status of changed files"
+msgstr "извеждане само на имената и статистиката за променените файлове"
+
+#: diff.c:5321
+msgid "<width>[,<name-width>[,<count>]]"
+msgstr "ШИРОЧИНА[,ИМЕ-ШИРОЧИНА[,БРОЙ]]"
+
+#: diff.c:5322
+msgid "generate diffstat"
+msgstr "извеждане на статистика за промените"
+
+#: diff.c:5324 diff.c:5327 diff.c:5330
+msgid "<width>"
+msgstr "ШИРОЧИНА"
+
+#: diff.c:5325
+msgid "generate diffstat with a given width"
+msgstr "статистика с такава ШИРОЧИНА за промените"
+
+#: diff.c:5328
+msgid "generate diffstat with a given name width"
+msgstr "статистика за промените с такава ШИРОЧИНА на имената"
+
+#: diff.c:5331
+msgid "generate diffstat with a given graph width"
+msgstr "статистика за промените с такава ШИРОЧИНА на гра̀фа"
+
+#: diff.c:5333
+msgid "<count>"
+msgstr "БРОЙ"
+
+#: diff.c:5334
+msgid "generate diffstat with limited lines"
+msgstr "ограничаване на БРОя на редовете в статистиката за промените"
+
+#: diff.c:5337
+msgid "generate compact summary in diffstat"
+msgstr "кратко резюме в статистиката за промените"
+
+#: diff.c:5340
+msgid "output a binary diff that can be applied"
+msgstr "извеждане на двоична разлика във вид за прилагане"
+
+#: diff.c:5343
+msgid "show full pre- and post-image object names on the \"index\" lines"
+msgstr ""
+"показване на пълните имена на обекти в редовете за индекса при вариантите "
+"преди и след промяната"
+
+#: diff.c:5345
+msgid "show colored diff"
+msgstr "разлики в цвят"
+
+#: diff.c:5346
+msgid "<kind>"
+msgstr "ВИД"
+
+#: diff.c:5347
+msgid ""
+"highlight whitespace errors in the 'context', 'old' or 'new' lines in the "
+"diff"
+msgstr ""
+"грешките в празните знаци да се указват в редовете за контекста, вариантите "
+"преди и след разликата,"
+
+#: diff.c:5350
+msgid ""
+"do not munge pathnames and use NULs as output field terminators in --raw or "
+"--numstat"
+msgstr ""
+"без преименуване на пътищата.  Да се използват нулеви байтове за разделители "
+"на полета в изхода при ползване на опцията „--raw“ или „--numstat“"
+
+#: diff.c:5353 diff.c:5356 diff.c:5359 diff.c:5465
+msgid "<prefix>"
+msgstr "ПРЕФИКС"
+
+#: diff.c:5354
+msgid "show the given source prefix instead of \"a/\""
+msgstr "префикс вместо „a/“ за източник"
+
+#: diff.c:5357
+msgid "show the given source prefix instead of \"b/\""
+msgstr "префикс вместо „b/“ за цел"
+
+#: diff.c:5360
+msgid "prepend an additional prefix to every line of output"
+msgstr "добавяне на допълнителен префикс за всеки ред на изхода"
+
+#: diff.c:5363
+msgid "do not show any source or destination prefix"
+msgstr "без префикс за източника и целта"
+
+#: diff.c:5366
+msgid "show context between diff hunks up to the specified number of lines"
+msgstr ""
+"извеждане на контекст между последователните парчета с разлики от указания "
+"БРОЙ редове"
+
+#: diff.c:5370 diff.c:5375 diff.c:5380
+msgid "<char>"
+msgstr "ЗНАК"
+
+#: diff.c:5371
+msgid "specify the character to indicate a new line instead of '+'"
+msgstr "знак вместо „+“ за нов вариант на ред"
+
+#: diff.c:5376
+msgid "specify the character to indicate an old line instead of '-'"
+msgstr "знак вместо „-“ за стар вариант на ред"
+
+#: diff.c:5381
+msgid "specify the character to indicate a context instead of ' '"
+msgstr "знак вместо „ “ за контекст"
+
+#: diff.c:5384
+msgid "Diff rename options"
+msgstr "Настройки за разлики с преименуване"
+
+#: diff.c:5385
+msgid "<n>[/<m>]"
+msgstr "МИНИМАЛЕН_%_ПРОМЯНА_ЗА_ИЗТОЧНИК[/МАКСИМАЛEН_%_ПРОМЯНА_ЗА_ЗАМЯНА]"
+
+#: diff.c:5386
+msgid "break complete rewrite changes into pairs of delete and create"
+msgstr ""
+"заместване на пълните промени с последователност от изтриване и създаване"
+
+#: diff.c:5390
+msgid "detect renames"
+msgstr "засичане на преименуванията"
+
+#: diff.c:5394
+msgid "omit the preimage for deletes"
+msgstr "без предварителен вариант при изтриване"
+
+#: diff.c:5397
+msgid "detect copies"
+msgstr "засичане на копиранията"
+
+#: diff.c:5401
+msgid "use unmodified files as source to find copies"
+msgstr "търсене на копирано и от непроменените файлове"
+
+#: diff.c:5403
+msgid "disable rename detection"
+msgstr "без търсене на преименувания"
+
+#: diff.c:5406
+msgid "use empty blobs as rename source"
+msgstr "празни обекти като източник при преименувания"
+
+#: diff.c:5408
+msgid "continue listing the history of a file beyond renames"
+msgstr ""
+"продължаване на извеждането на историята — без отрязването при преименувания "
+"на файл"
+
+#: diff.c:5411
+msgid ""
+"prevent rename/copy detection if the number of rename/copy targets exceeds "
+"given limit"
+msgstr ""
+"без засичане на преименувания/копирания, ако броят им надвишава тази стойност"
+
+#: diff.c:5413
+msgid "Diff algorithm options"
+msgstr "Опции към алгоритъма за разлики"
+
+#: diff.c:5415
+msgid "produce the smallest possible diff"
+msgstr "търсене на възможно най-малка разлика"
+
+#: diff.c:5418
+msgid "ignore whitespace when comparing lines"
+msgstr "без промени в празните знаци при сравняване на редове"
+
+#: diff.c:5421
+msgid "ignore changes in amount of whitespace"
+msgstr "без промени в празните знаци"
+
+#: diff.c:5424
+msgid "ignore changes in whitespace at EOL"
+msgstr "без промени в празните знаци в края на редовете"
+
+#: diff.c:5427
+msgid "ignore carrier-return at the end of line"
+msgstr "без промени в знаците за край на ред"
+
+#: diff.c:5430
+msgid "ignore changes whose lines are all blank"
+msgstr "без промени в редовете, които са изцяло от празни знаци"
+
+#: diff.c:5433
+msgid "heuristic to shift diff hunk boundaries for easy reading"
+msgstr ""
+"евристика за преместване на границите на парчетата за улесняване на четенето"
+
+#: diff.c:5436
+msgid "generate diff using the \"patience diff\" algorithm"
+msgstr "разлика чрез алгоритъм за подредба като пасианс"
+
+#: diff.c:5440
+msgid "generate diff using the \"histogram diff\" algorithm"
+msgstr "разлика по хистограмния алгоритъм"
+
+#: diff.c:5442
+msgid "<algorithm>"
+msgstr "АЛГОРИТЪМ"
+
+#: diff.c:5443
+msgid "choose a diff algorithm"
+msgstr "избор на АЛГОРИТЪМа за разлики"
+
+#: diff.c:5445
+msgid "<text>"
+msgstr "ТЕКСТ"
+
+#: diff.c:5446
+msgid "generate diff using the \"anchored diff\" algorithm"
+msgstr "разлика чрез алгоритъма със закотвяне"
+
+#: diff.c:5448 diff.c:5457 diff.c:5460
+msgid "<mode>"
+msgstr "РЕЖИМ"
+
+#: diff.c:5449
+msgid "show word diff, using <mode> to delimit changed words"
+msgstr ""
+"разлика по думи, като се ползва този РЕЖИМ за отделянето на променените думи"
+
+#: diff.c:5451 diff.c:5454 diff.c:5499
+msgid "<regex>"
+msgstr "РЕГУЛЯРЕН_ИЗРАЗ"
+
+#: diff.c:5452
+msgid "use <regex> to decide what a word is"
+msgstr "РЕГУЛЯРЕН_ИЗРАЗ за разделяне по думи"
+
+#: diff.c:5455
+msgid "equivalent to --word-diff=color --word-diff-regex=<regex>"
+msgstr "псевдоним на „--word-diff=color --word-diff-regex=РЕГУЛЯРЕН_ИЗРАЗ“"
+
+#: diff.c:5458
+msgid "moved lines of code are colored differently"
+msgstr "различен цвят за извеждане на преместените редове"
+
+#: diff.c:5461
+msgid "how white spaces are ignored in --color-moved"
+msgstr ""
+"режим за прескачането на празните знаци при задаването на „--color-moved“"
+
+#: diff.c:5464
+msgid "Other diff options"
+msgstr "Други опции за разлики"
+
+#: diff.c:5466
+msgid "when run from subdir, exclude changes outside and show relative paths"
+msgstr ""
+"при изпълнение от поддиректория да се пренебрегват разликите извън нея и да "
+"се ползват относителни пътища"
+
+#: diff.c:5470
+msgid "treat all files as text"
+msgstr "обработка на всички файлове като текстови"
+
+#: diff.c:5472
+msgid "swap two inputs, reverse the diff"
+msgstr "размяна на двата входа — обръщане на разликата"
+
+#: diff.c:5474
+msgid "exit with 1 if there were differences, 0 otherwise"
+msgstr ""
+"завършване с код за състояние 1 при наличието на разлики, а в противен "
+"случай — с 0"
+
+#: diff.c:5476
+msgid "disable all output of the program"
+msgstr "без всякакъв изход от програмата"
+
+#: diff.c:5478
+msgid "allow an external diff helper to be executed"
+msgstr "позволяване на изпълнение на външна помощна програма за разлики"
+
+#: diff.c:5480
+msgid "run external text conversion filters when comparing binary files"
+msgstr ""
+"изпълнение на външни програми-филтри при сравнението на двоични файлове"
+
+#: diff.c:5482
+msgid "<when>"
+msgstr "КОГА"
+
+#: diff.c:5483
+msgid "ignore changes to submodules in the diff generation"
+msgstr "игнориране на промените в подмодулите при извеждането на разликите"
+
+#: diff.c:5486
+msgid "<format>"
+msgstr "ФОРМАТ"
+
+#: diff.c:5487
+msgid "specify how differences in submodules are shown"
+msgstr "начин за извеждане на промените в подмодулите"
+
+#: diff.c:5491
+msgid "hide 'git add -N' entries from the index"
+msgstr "без включване в индекса на записите, добавени с „git add -N“"
+
+#: diff.c:5494
+msgid "treat 'git add -N' entries as real in the index"
+msgstr "включване в индекса на записите, добавени с „git add -N“"
+
+#: diff.c:5496
+msgid "<string>"
+msgstr "НИЗ"
+
+#: diff.c:5497
+msgid ""
+"look for differences that change the number of occurrences of the specified "
+"string"
+msgstr "търсене на разлики, които променят броя на поява на указаните низове"
+
+#: diff.c:5500
+msgid ""
+"look for differences that change the number of occurrences of the specified "
+"regex"
+msgstr ""
+"търсене на разлики, които променят броя на поява на низовете, които напасват "
+"на регулярния израз"
+
+#: diff.c:5503
+msgid "show all changes in the changeset with -S or -G"
+msgstr "извеждане на всички промени с „-G“/„-S“"
+
+#: diff.c:5506
+msgid "treat <string> in -S as extended POSIX regular expression"
+msgstr "НИЗът към „-S“ да се тълкува като разширен регулярен израз по POSIX"
+
+#: diff.c:5509
+msgid "control the order in which files appear in the output"
+msgstr "управление на подредбата на файловете в изхода"
+
+#: diff.c:5510
+msgid "<object-id>"
+msgstr "ИДЕНТИФИКАТОР_НА_ОБЕКТ"
+
+#: diff.c:5511
+msgid ""
+"look for differences that change the number of occurrences of the specified "
+"object"
+msgstr "търсене на разлики, които променят броя на поява на указания обект"
+
+#: diff.c:5513
+msgid "[(A|C|D|M|R|T|U|X|B)...[*]]"
+msgstr "[(A|C|D|M|R|T|U|X|B)…[*]]"
+
+#: diff.c:5514
+msgid "select files by diff type"
+msgstr "избор на файловете по вид разлика"
+
+#: diff.c:5516
+msgid "<file>"
+msgstr "ФАЙЛ"
+
+#: diff.c:5517
+msgid "Output to a specific file"
+msgstr "Изход към указания файл"
+
+#: diff.c:6150
 msgid "inexact rename detection was skipped due to too many files."
 msgstr ""
 "търсенето на преименувания на обекти съчетани с промени се прескача поради "
 "многото файлове."
 
-#: diff.c:6151
+#: diff.c:6153
 msgid "only found copies from modified paths due to too many files."
 msgstr ""
 "установени са само точните копия на променените пътища поради многото "
 "файлове."
 
-#: diff.c:6154
+#: diff.c:6156
 #, c-format
 msgid ""
 "you may want to set your %s variable to at least %d and retry the command."
@@ -3908,6 +3217,10 @@ msgstr ""
 #, c-format
 msgid "git fetch-pack: expected ACK/NAK, got '%s'"
 msgstr "git fetch-pack: очаква се „ACK“/„NAK“, а бе получено „%s“"
+
+#: fetch-pack.c:196
+msgid "unable to write to remote"
+msgstr "невъзможно писане към отдалечено хранилище"
 
 #: fetch-pack.c:258
 msgid "--stateless-rpc requires multi_ack_detailed"
@@ -4067,6 +3380,10 @@ msgstr "git fetch-pack: неуспешно доставяне."
 msgid "Server does not support shallow requests"
 msgstr "Сървърът не поддържа плитки заявки"
 
+#: fetch-pack.c:1171
+msgid "unable to write request to remote"
+msgstr "невъзможно писане към отдалечено хранилище"
+
 #: fetch-pack.c:1189
 #, c-format
 msgid "error reading section header '%s'"
@@ -4122,7 +3439,7 @@ msgstr "грешка при обработката на исканите ука�
 msgid "no matching remote head"
 msgstr "не може да бъде открит подходящ връх от отдалеченото хранилище"
 
-#: fetch-pack.c:1699 builtin/clone.c:676
+#: fetch-pack.c:1699 builtin/clone.c:673
 msgid "remote did not send all necessary objects"
 msgstr "отдалеченото хранилище не изпрати всички необходими обекти."
 
@@ -4159,7 +3476,7 @@ msgstr "прескачане на неправилния цвят „%.*s“ в 
 msgid "'%s': unable to read %s"
 msgstr "„%s“: файлът сочен от „%s“ не може да бъде прочетен"
 
-#: grep.c:2130 setup.c:164 builtin/clone.c:414 builtin/diff.c:82
+#: grep.c:2130 setup.c:164 builtin/clone.c:411 builtin/diff.c:82
 #: builtin/rm.c:135
 #, c-format
 msgid "failed to stat '%s'"
@@ -4393,6 +3710,21 @@ msgstr "името съдържа само непозволени знаци: �
 msgid "invalid date format: %s"
 msgstr "неправилен формат на дата: %s"
 
+#: list-objects.c:129
+#, c-format
+msgid "entry '%s' in tree %s has tree mode, but is not a tree"
+msgstr "обект „%s“ в дървото „%s“ е отбелязан като дърво, но не е"
+
+#: list-objects.c:142
+#, c-format
+msgid "entry '%s' in tree %s has blob mode, but is not a blob"
+msgstr "обект „%s“ в дървото „%s“ е отбелязан като BLOB, но не е"
+
+#: list-objects.c:378
+#, c-format
+msgid "unable to load root tree for commit %s"
+msgstr "кореновото дърво за подаване „%s“ не може да се зареди"
+
 #: list-objects-filter-options.c:36
 msgid "multiple filter-specs cannot be combined"
 msgstr "не може да комбинирате множество филтри"
@@ -4434,7 +3766,7 @@ msgid "failed to read the cache"
 msgstr "кешът не може да бъде прочетен"
 
 #: merge.c:107 rerere.c:720 builtin/am.c:1887 builtin/am.c:1921
-#: builtin/checkout.c:461 builtin/checkout.c:811 builtin/clone.c:776
+#: builtin/checkout.c:461 builtin/checkout.c:811 builtin/clone.c:773
 #: builtin/stash.c:264
 msgid "unable to write new index file"
 msgstr "неуспешно записване на новия индекс"
@@ -4779,6 +4111,42 @@ msgstr "КОНФЛИКТ (%s): Конфликт при сливане на „%s
 msgid "Adding as %s instead"
 msgstr "Добавяне като „%s“"
 
+#: merge-recursive.c:3170
+#, c-format
+msgid ""
+"Path updated: %s added in %s inside a directory that was renamed in %s; "
+"moving it to %s."
+msgstr ""
+"Обновен път: „%s“ е добавен в „%s“ в директория, която е преименувана в "
+"„%s“.  Обектът се мести в „%s“."
+
+#: merge-recursive.c:3173
+#, c-format
+msgid ""
+"CONFLICT (file location): %s added in %s inside a directory that was renamed "
+"in %s, suggesting it should perhaps be moved to %s."
+msgstr ""
+"КОНФЛИКТ (места на файлове): „%s“ е добавен в „%s“ в директория, която е "
+"преименувана в „%s“.  Предложението е да преместите обекта в „%s“."
+
+#: merge-recursive.c:3177
+#, c-format
+msgid ""
+"Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
+"%s; moving it to %s."
+msgstr ""
+"Обновен път: „%s“ е преименуван на „%s“ в „%s“ в директория, която е "
+"преименувана в „%s“.  Обектът се мести в „%s“."
+
+#: merge-recursive.c:3180
+#, c-format
+msgid ""
+"CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
+"was renamed in %s, suggesting it should perhaps be moved to %s."
+msgstr ""
+"КОНФЛИКТ (места на файлове): „%s“ е преименуван на „%s“ в „%s“ в директория, "
+"която е преименувана в „%s“.  Предложението е да преместите обекта в „%s“."
+
 #: merge-recursive.c:3294
 #, c-format
 msgid "Removing %s"
@@ -4904,45 +4272,49 @@ msgstr ""
 "неправилна подредба на имената в индекс за множество пакети: „%s“ се появи "
 "преди „%s“"
 
-#: midx.c:209
+#: midx.c:208
 #, c-format
 msgid "bad pack-int-id: %u (%u total packs)"
 msgstr ""
 "неправилен идентификатор на пакет (pack-int-id): %u (от общо %u пакети)"
 
-#: midx.c:250
+#: midx.c:258
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
 msgstr ""
 "индексът за множество пакети съдържа 64-битови отмествания, но размерът на "
 "„off_t“ е недостатъчен"
 
-#: midx.c:275
+#: midx.c:286
 msgid "error preparing packfile from multi-pack-index"
 msgstr ""
 "грешка при създаването на пакетен файл на базата на индекс за множество "
 "пакети"
 
-#: midx.c:443
+#: midx.c:457
 #, c-format
 msgid "failed to add packfile '%s'"
 msgstr "пакетният файл „%s“ не може да бъде добавен"
 
-#: midx.c:449
+#: midx.c:463
 #, c-format
 msgid "failed to open pack-index '%s'"
 msgstr "индексът за пакети „%s“ не може да бъде отворен"
 
-#: midx.c:543
+#: midx.c:557
 #, c-format
 msgid "failed to locate object %d in packfile"
 msgstr "обект %d в пакетния файл липсва"
 
-#: midx.c:979
+#: midx.c:993
 #, c-format
 msgid "failed to clear multi-pack-index at %s"
 msgstr "индексът за множество пакети не може да бъде изчистен при „%s“"
 
-#: midx.c:1049
+#: midx.c:1048
+msgid "Looking for referenced packfiles"
+msgstr "Търсене на указаните пакетни файлове"
+
+#: midx.c:1063
 #, c-format
 msgid ""
 "oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
@@ -4950,27 +4322,37 @@ msgstr ""
 "неправилна подредба на откъси (OID fanout): fanout[%d] = %<PRIx32> > "
 "%<PRIx32> = fanout[%d]"
 
-#: midx.c:1062
+#: midx.c:1067
+msgid "Verifying OID order in MIDX"
+msgstr ""
+"Проверка на подредбата на идентификатори на обекти в MIDX (файл с индекс към "
+"множество пакетни файлове)"
+
+#: midx.c:1076
 #, c-format
 msgid "oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"
 msgstr ""
 "неправилна подредба на откъси (OID lookup): oid[%d] = %s >= %s = oid[%d]"
 
-#: midx.c:1087
+#: midx.c:1095
+msgid "Sorting objects by packfile"
+msgstr "Подредба на обектите по пакетни файлове"
+
+#: midx.c:1101
 msgid "Verifying object offsets"
 msgstr "Проверка на отместването на обекти"
 
-#: midx.c:1103
+#: midx.c:1117
 #, c-format
 msgid "failed to load pack entry for oid[%d] = %s"
 msgstr "записът в пакета за обекта oid[%d] = %s не може да бъде зареден"
 
-#: midx.c:1109
+#: midx.c:1123
 #, c-format
 msgid "failed to load pack-index for packfile %s"
 msgstr "индексът на пакета „%s“ не може да бъде зареден"
 
-#: midx.c:1118
+#: midx.c:1132
 #, c-format
 msgid "incorrect object offset for oid[%d] = %s: %<PRIx64> != %<PRIx64>"
 msgstr "неправилно отместване на обект за oid[%d] = %s: %<PRIx64> != %<PRIx64>"
@@ -5068,14 +4450,14 @@ msgid "offset before end of packfile (broken .idx?)"
 msgstr ""
 "отместване преди края на пакетния файл (възможно е индексът да е повреден)"
 
-#: packfile.c:1880
+#: packfile.c:1868
 #, c-format
 msgid "offset before start of pack index for %s (corrupt index?)"
 msgstr ""
 "отместване преди началото на индекса на пакетния файл „%s“ (възможно е "
 "индексът да е повреден)"
 
-#: packfile.c:1884
+#: packfile.c:1872
 #, c-format
 msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr ""
@@ -5097,7 +4479,7 @@ msgstr "опциите „%s“ и „%s“ са несъвместими"
 msgid "%s : incompatible with something else"
 msgstr "опцията „%s“ е несъвместима с нещо"
 
-#: parse-options.c:92 parse-options.c:96 parse-options.c:287
+#: parse-options.c:92 parse-options.c:96 parse-options.c:319
 #, c-format
 msgid "%s takes no value"
 msgstr "опцията „%s“ не приема аргументи"
@@ -5107,42 +4489,42 @@ msgstr "опцията „%s“ не приема аргументи"
 msgid "%s isn't available"
 msgstr "опцията „%s“ не е налична"
 
-#: parse-options.c:216
+#: parse-options.c:219
 #, c-format
 msgid "%s expects a non-negative integer value with an optional k/m/g suffix"
 msgstr ""
 "„%s“ очаква неотрицателно цяло число, евентуално със суфикс „k“/„m“/„g“"
 
-#: parse-options.c:356
+#: parse-options.c:389
 #, c-format
 msgid "ambiguous option: %s (could be --%s%s or --%s%s)"
 msgstr "нееднозначна опция: „%s“ (може да е „--%s%s“ или „--%s%s“)"
 
-#: parse-options.c:390 parse-options.c:398
+#: parse-options.c:423 parse-options.c:431
 #, c-format
 msgid "did you mean `--%s` (with two dashes ?)"
 msgstr "„--%s“ (с 2 тирета) ли имахте предвид?"
 
-#: parse-options.c:733
+#: parse-options.c:859
 #, c-format
 msgid "unknown option `%s'"
 msgstr "непозната опция: „%s“"
 
-#: parse-options.c:735
+#: parse-options.c:861
 #, c-format
 msgid "unknown switch `%c'"
 msgstr "непознат флаг „%c“"
 
-#: parse-options.c:737
+#: parse-options.c:863
 #, c-format
 msgid "unknown non-ascii option in string: `%s'"
 msgstr "непозната стойност извън „ascii“ в низа: „%s“"
 
-#: parse-options.c:759
+#: parse-options.c:887
 msgid "..."
 msgstr "…"
 
-#: parse-options.c:778
+#: parse-options.c:906
 #, c-format
 msgid "usage: %s"
 msgstr "употреба: %s"
@@ -5150,38 +4532,43 @@ msgstr "употреба: %s"
 #. TRANSLATORS: the colon here should align with the
 #. one in "usage: %s" translation.
 #.
-#: parse-options.c:784
+#: parse-options.c:912
 #, c-format
 msgid "   or: %s"
 msgstr "     или: %s"
 
-#: parse-options.c:787
+#: parse-options.c:915
 #, c-format
 msgid "    %s"
 msgstr "    %s"
 
-#: parse-options.c:826
+#: parse-options.c:954
 msgid "-NUM"
 msgstr "-ЧИСЛО"
 
-#: parse-options-cb.c:21
+#: parse-options.c:968
+#, c-format
+msgid "alias of --%s"
+msgstr "псевдоним на „--%s“"
+
+#: parse-options-cb.c:20 parse-options-cb.c:24
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "опцията „%s“ очаква число за аргумент"
 
-#: parse-options-cb.c:38
+#: parse-options-cb.c:41
 #, c-format
 msgid "malformed expiration date '%s'"
 msgstr "неправилна дата на срок: „%s“"
 
-#: parse-options-cb.c:51
+#: parse-options-cb.c:54
 #, c-format
 msgid "option `%s' expects \"always\", \"auto\", or \"never\""
 msgstr ""
 "опцията „%s“ изисква някоя от стойностите: „always“ (винаги), "
 "„auto“ (автоматично) или „never“ (никога)"
 
-#: parse-options-cb.c:127 parse-options-cb.c:144
+#: parse-options-cb.c:130 parse-options-cb.c:147
 #, c-format
 msgid "malformed object name '%s'"
 msgstr "неправилно име на обект „%s“"
@@ -5264,6 +4651,14 @@ msgstr "%s: магическите пътища не се поддържат о�
 #, c-format
 msgid "pathspec '%s' is beyond a symbolic link"
 msgstr "пътят „%s“ е след символна връзка"
+
+#: pkt-line.c:92
+msgid "unable to write flush packet"
+msgstr "пакетът за изчистване на буферите не може да се запише"
+
+#: pkt-line.c:99
+msgid "unable to write delim packet"
+msgstr "разделящият пакет не може да се запише"
 
 #: pkt-line.c:106
 msgid "flush packet write failed"
@@ -5362,6 +4757,11 @@ msgid "%s: can only add regular files, symbolic links or git-directories"
 msgstr ""
 "%s: може да добавяте само обикновени файлове, символни връзки и директории "
 "на git"
+
+#: read-cache.c:723
+#, c-format
+msgid "'%s' does not have a commit checked out"
+msgstr "не е изтеглено подаване в „%s“"
 
 #: read-cache.c:775
 #, c-format
@@ -5516,32 +4916,32 @@ msgstr "споделеният индекс „%s“ не може да се о�
 msgid "broken index, expect %s in %s, got %s"
 msgstr "грешки в индекса — в „%2$s“ се очаква „%1$s“, а бе получено „%3$s“"
 
-#: read-cache.c:2988 wrapper.c:658 builtin/merge.c:1117
+#: read-cache.c:2989 wrapper.c:658 builtin/merge.c:1117
 #, c-format
 msgid "could not close '%s'"
 msgstr "„%s“ не може да се затвори"
 
-#: read-cache.c:3091 sequencer.c:2354 sequencer.c:3807
+#: read-cache.c:3092 sequencer.c:2354 sequencer.c:3807
 #, c-format
 msgid "could not stat '%s'"
 msgstr "неуспешно изпълнение на „stat“ върху „%s“"
 
-#: read-cache.c:3104
+#: read-cache.c:3105
 #, c-format
 msgid "unable to open git dir: %s"
 msgstr "не може да се отвори директорията на git: %s"
 
-#: read-cache.c:3116
+#: read-cache.c:3117
 #, c-format
 msgid "unable to unlink: %s"
 msgstr "неуспешно изтриване на „%s“"
 
-#: read-cache.c:3141
+#: read-cache.c:3142
 #, c-format
 msgid "cannot fix permission bits on '%s'"
 msgstr "правата за достъп до „%s“ не могат да бъдат поправени"
 
-#: read-cache.c:3290
+#: read-cache.c:3291
 #, c-format
 msgid "%s: cannot drop to stage #0"
 msgstr "%s: не може да се премине към етап №0"
@@ -5807,7 +5207,7 @@ msgstr "Указателите не може да бъдат изтрити: %s"
 msgid "invalid refspec '%s'"
 msgstr "неправилен указател: „%s“"
 
-#: ref-filter.c:39 wt-status.c:1907
+#: ref-filter.c:39 wt-status.c:1909
 msgid "gone"
 msgstr "изтрит"
 
@@ -6462,6 +5862,12 @@ msgstr "Текущият клон „%s“ е без подавания "
 msgid "--first-parent is incompatible with --bisect"
 msgstr "опциите „--first-parent“ и „--bisect“ са несъвместими"
 
+#: revision.c:2683
+msgid "-L does not yet support diff formats besides -p and -s"
+msgstr ""
+"опцията „-L“ поддържа единствено форматирането на разликите според опциите „-"
+"p“ и „-s“"
+
 #: run-command.c:763
 msgid "open /dev/null failed"
 msgstr "неуспешно отваряне на „/dev/null“"
@@ -6944,6 +6350,11 @@ msgstr "„%s“ не приема аргументи: „%s“"
 msgid "missing arguments for %s"
 msgstr "„%s“ изисква аргументи"
 
+#: sequencer.c:2164
+#, c-format
+msgid "could not parse '%.*s'"
+msgstr "„%.*s“ не може да се анализира"
+
 #: sequencer.c:2226
 #, c-format
 msgid "invalid line %d: %.*s"
@@ -7103,7 +6514,7 @@ msgstr "Подаването „%s“… не може да бъде прило�
 msgid "Could not merge %.*s"
 msgstr "Невъзможно сливане на „%.*s“"
 
-#: sequencer.c:2997 sequencer.c:3001 builtin/difftool.c:639
+#: sequencer.c:2997 sequencer.c:3001 builtin/difftool.c:633
 #, c-format
 msgid "could not copy '%s' to '%s'"
 msgstr "„%s“ не може да се копира като „%s“"
@@ -7809,16 +7220,16 @@ msgstr "заглавната част на „%s“ не може да бъде 
 msgid "unable to unpack contents of %s"
 msgstr "съдържанието на „%s“ не може да бъде разпакетирано"
 
-#: sha1-name.c:487
+#: sha1-name.c:490
 #, c-format
 msgid "short SHA1 %s is ambiguous"
 msgstr "късият SHA1 „%s“ не е еднозначен"
 
-#: sha1-name.c:498
+#: sha1-name.c:501
 msgid "The candidates are:"
 msgstr "Възможностите са:"
 
-#: sha1-name.c:794
+#: sha1-name.c:800
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -8048,6 +7459,15 @@ msgstr "пратката на git „%s“ не може да бъде проч�
 #, c-format
 msgid "transport: invalid depth option '%s'"
 msgstr "transport: неправилна опция за дълбочина: %s"
+
+#: transport.c:259
+msgid "see protocol.version in 'git help config' for more details"
+msgstr ""
+"За повече информация вижте раздела „protocol.version“ в „git help config“"
+
+#: transport.c:260
+msgid "server options require protocol version 2 or later"
+msgstr "опциите на сървъра изискват поне версия 2 на протокола"
 
 #: transport.c:625
 msgid "could not parse transport.color.* config"
@@ -8829,200 +8249,216 @@ msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr ""
 "  (използвайте „git am --abort“, за да възстановите първоначалния клон)"
 
-#: wt-status.c:1282
+#: wt-status.c:1284
 msgid "git-rebase-todo is missing."
 msgstr "„git-rebase-todo“ липсва."
 
-#: wt-status.c:1284
+#: wt-status.c:1286
 msgid "No commands done."
 msgstr "Не са изпълнени команди."
 
-#: wt-status.c:1287
+#: wt-status.c:1289
 #, c-format
 msgid "Last command done (%d command done):"
 msgid_plural "Last commands done (%d commands done):"
 msgstr[0] "Последна изпълнена команда (изпълнена е общо %d команда):"
 msgstr[1] "Последна изпълнена команда (изпълнени са общо %d команди):"
 
-#: wt-status.c:1298
+#: wt-status.c:1300
 #, c-format
 msgid "  (see more in file %s)"
 msgstr "  повече информация има във файла „%s“)"
 
-#: wt-status.c:1303
+#: wt-status.c:1305
 msgid "No commands remaining."
 msgstr "Не остават повече команди."
 
-#: wt-status.c:1306
+#: wt-status.c:1308
 #, c-format
 msgid "Next command to do (%d remaining command):"
 msgid_plural "Next commands to do (%d remaining commands):"
 msgstr[0] "Следваща команда за изпълнение (остава още %d команда):"
 msgstr[1] "Следваща команда за изпълнение (остават още %d команди):"
 
-#: wt-status.c:1314
+#: wt-status.c:1316
 msgid "  (use \"git rebase --edit-todo\" to view and edit)"
 msgstr ""
 "  (използвайте „git rebase --edit-todo“, за да разгледате и редактирате)"
 
-#: wt-status.c:1326
+#: wt-status.c:1328
 #, c-format
 msgid "You are currently rebasing branch '%s' on '%s'."
 msgstr "В момента пребазирате клона „%s“ върху „%s“."
 
-#: wt-status.c:1331
+#: wt-status.c:1333
 msgid "You are currently rebasing."
 msgstr "В момента пребазирате."
 
-#: wt-status.c:1344
+#: wt-status.c:1346
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
 msgstr "  (коригирайте конфликтите и използвайте „git rebase --continue“)"
 
-#: wt-status.c:1346
+#: wt-status.c:1348
 msgid "  (use \"git rebase --skip\" to skip this patch)"
 msgstr "  (използвайте „git rebase --skip“, за да пропуснете тази кръпка)"
 
-#: wt-status.c:1348
+#: wt-status.c:1350
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr ""
 "  (използвайте „git rebase --abort“, за да възстановите първоначалния клон)"
 
-#: wt-status.c:1355
+#: wt-status.c:1357
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
 msgstr "  (всички конфликти са коригирани: изпълнете „git rebase --continue“)"
 
-#: wt-status.c:1359
+#: wt-status.c:1361
 #, c-format
 msgid ""
 "You are currently splitting a commit while rebasing branch '%s' on '%s'."
 msgstr "В момента разделяте подаване докато пребазирате клона „%s“ върху „%s“."
 
-#: wt-status.c:1364
+#: wt-status.c:1366
 msgid "You are currently splitting a commit during a rebase."
 msgstr "В момента разделяте подаване докато пребазирате."
 
-#: wt-status.c:1367
+#: wt-status.c:1369
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr ""
 "  (След като работното ви дърво стане чисто, използвайте „git rebase --"
 "continue“)"
 
-#: wt-status.c:1371
+#: wt-status.c:1373
 #, c-format
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "В момента редактирате подаване докато пребазирате клона „%s“ върху „%s“."
 
-#: wt-status.c:1376
+#: wt-status.c:1378
 msgid "You are currently editing a commit during a rebase."
 msgstr "В момента редактирате подаване докато пребазирате."
 
-#: wt-status.c:1379
+#: wt-status.c:1381
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr ""
 "  (използвайте „git commit --amend“, за да редактирате текущото подаване)"
 
-#: wt-status.c:1381
+#: wt-status.c:1383
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
 msgstr ""
 "  (използвайте „git rebase --continue“, след като завършите промените си)"
 
-#: wt-status.c:1395
+#: wt-status.c:1394
+msgid "Cherry-pick currently in progress."
+msgstr "В момента се извършва отбиране на подавания."
+
+#: wt-status.c:1397
 #, c-format
 msgid "You are currently cherry-picking commit %s."
 msgstr "В момента отбирате подаването „%s“."
 
-#: wt-status.c:1402
+#: wt-status.c:1404
 msgid "  (fix conflicts and run \"git cherry-pick --continue\")"
 msgstr "  (коригирайте конфликтите и изпълнете „git cherry-pick --continue“)"
 
-#: wt-status.c:1408
+#: wt-status.c:1407
+msgid "  (run \"git cherry-pick --continue\" to continue)"
+msgstr "  (за да продължите, изпълнете „git cherry-pick --continue“)"
+
+#: wt-status.c:1410
 msgid "  (all conflicts fixed: run \"git cherry-pick --continue\")"
 msgstr ""
 "  (всички конфликти са коригирани, изпълнете „git cherry-pick --continue“)"
 
-#: wt-status.c:1410
+#: wt-status.c:1412
 msgid "  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"
 msgstr ""
 "  (използвайте „git cherry-pick --abort“, за да отмените всички действия с "
 "отбиране)"
 
-#: wt-status.c:1423
+#: wt-status.c:1422
+msgid "Revert currently in progress."
+msgstr "В момента тече отмяна на подаване."
+
+#: wt-status.c:1425
 #, c-format
 msgid "You are currently reverting commit %s."
 msgstr "В момента отменяте подаване „%s“."
 
-#: wt-status.c:1429
+#: wt-status.c:1431
 msgid "  (fix conflicts and run \"git revert --continue\")"
 msgstr "  (коригирайте конфликтите и изпълнете „git revert --continue“)"
 
-#: wt-status.c:1435
+#: wt-status.c:1434
+msgid "  (run \"git revert --continue\" to continue)"
+msgstr "  (за да продължите, изпълнете „git revert --continue“)"
+
+#: wt-status.c:1437
 msgid "  (all conflicts fixed: run \"git revert --continue\")"
 msgstr "  (всички конфликти са коригирани, изпълнете „git revert --continue“)"
 
-#: wt-status.c:1437
+#: wt-status.c:1439
 msgid "  (use \"git revert --abort\" to cancel the revert operation)"
 msgstr ""
 "  (използвайте „git revert --abort“, за да преустановите отмяната на "
 "подаване)"
 
-#: wt-status.c:1447
+#: wt-status.c:1449
 #, c-format
 msgid "You are currently bisecting, started from branch '%s'."
 msgstr "В момента търсите двоично, като сте стартирали от клон „%s“."
 
-#: wt-status.c:1451
+#: wt-status.c:1453
 msgid "You are currently bisecting."
 msgstr "В момента търсите двоично."
 
-#: wt-status.c:1454
+#: wt-status.c:1456
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr ""
 "  (използвайте „git bisect reset“, за да се върнете към първоначалното "
 "състояние и клон)"
 
-#: wt-status.c:1663
+#: wt-status.c:1665
 msgid "On branch "
 msgstr "На клон "
 
-#: wt-status.c:1670
+#: wt-status.c:1672
 msgid "interactive rebase in progress; onto "
 msgstr "извършвате интерактивно пребазиране върху "
 
-#: wt-status.c:1672
+#: wt-status.c:1674
 msgid "rebase in progress; onto "
 msgstr "извършвате пребазиране върху "
 
-#: wt-status.c:1677
+#: wt-status.c:1679
 msgid "HEAD detached at "
 msgstr "Указателят „HEAD“ не е свързан и е при "
 
-#: wt-status.c:1679
+#: wt-status.c:1681
 msgid "HEAD detached from "
 msgstr "Указателят „HEAD“ не е свързан и е отделѐн от "
 
-#: wt-status.c:1682
+#: wt-status.c:1684
 msgid "Not currently on any branch."
 msgstr "Извън всички клони."
 
-#: wt-status.c:1699
+#: wt-status.c:1701
 msgid "Initial commit"
 msgstr "Първоначално подаване"
 
-#: wt-status.c:1700
+#: wt-status.c:1702
 msgid "No commits yet"
 msgstr "Все още липсват подавания"
 
-#: wt-status.c:1714
+#: wt-status.c:1716
 msgid "Untracked files"
 msgstr "Неследени файлове"
 
-#: wt-status.c:1716
+#: wt-status.c:1718
 msgid "Ignored files"
 msgstr "Игнорирани файлове"
 
-#: wt-status.c:1720
+#: wt-status.c:1722
 #, c-format
 msgid ""
 "It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
@@ -9034,32 +8470,32 @@ msgstr ""
 "изпълнението, но не трябва да забравяте ръчно да добавяте новите файлове.\n"
 "За повече подробности погледнете „git status help“."
 
-#: wt-status.c:1726
+#: wt-status.c:1728
 #, c-format
 msgid "Untracked files not listed%s"
 msgstr "Неследените файлове не са изведени%s"
 
-#: wt-status.c:1728
+#: wt-status.c:1730
 msgid " (use -u option to show untracked files)"
 msgstr " (използвайте опцията „-u“, за да изведете неследените файлове)"
 
-#: wt-status.c:1734
+#: wt-status.c:1736
 msgid "No changes"
 msgstr "Няма промени"
 
-#: wt-status.c:1739
+#: wt-status.c:1741
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
 msgstr ""
 "към индекса за подаване не са добавени промени (използвайте „git add“ и/или "
 "„git commit -a“)\n"
 
-#: wt-status.c:1742
+#: wt-status.c:1744
 #, c-format
 msgid "no changes added to commit\n"
 msgstr "към индекса за подаване не са добавени промени\n"
 
-#: wt-status.c:1745
+#: wt-status.c:1747
 #, c-format
 msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
@@ -9068,66 +8504,66 @@ msgstr ""
 "към индекса за подаване не са добавени промени, но има нови файлове "
 "(използвайте „git add“, за да започне тяхното следене)\n"
 
-#: wt-status.c:1748
+#: wt-status.c:1750
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
 msgstr "към индекса за подаване не са добавени промени, но има нови файлове\n"
 
-#: wt-status.c:1751
+#: wt-status.c:1753
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "липсват каквито и да е промени (създайте или копирайте файлове и използвайте "
 "„git add“, за да започне тяхното следене)\n"
 
-#: wt-status.c:1754 wt-status.c:1759
+#: wt-status.c:1756 wt-status.c:1761
 #, c-format
 msgid "nothing to commit\n"
 msgstr "липсват каквито и да е промени\n"
 
-#: wt-status.c:1757
+#: wt-status.c:1759
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
 msgstr ""
 "липсват каквито и да е промени (използвайте опцията „-u“, за да се изведат и "
 "неследените файлове)\n"
 
-#: wt-status.c:1761
+#: wt-status.c:1763
 #, c-format
 msgid "nothing to commit, working tree clean\n"
 msgstr "липсват каквито и да е промени, работното дърво е чисто\n"
 
-#: wt-status.c:1874
+#: wt-status.c:1876
 msgid "No commits yet on "
 msgstr "Все още липсват подавания в "
 
-#: wt-status.c:1878
+#: wt-status.c:1880
 msgid "HEAD (no branch)"
 msgstr "HEAD (извън клон)"
 
-#: wt-status.c:1909
+#: wt-status.c:1911
 msgid "different"
 msgstr "различен"
 
-#: wt-status.c:1911 wt-status.c:1919
+#: wt-status.c:1913 wt-status.c:1921
 msgid "behind "
 msgstr "назад с "
 
-#: wt-status.c:1914 wt-status.c:1917
+#: wt-status.c:1916 wt-status.c:1919
 msgid "ahead "
 msgstr "напред с "
 
 #. TRANSLATORS: the action is e.g. "pull with rebase"
-#: wt-status.c:2441
+#: wt-status.c:2443
 #, c-format
 msgid "cannot %s: You have unstaged changes."
 msgstr "не може да извършите „%s“, защото има промени, които не са в индекса."
 
-#: wt-status.c:2447
+#: wt-status.c:2449
 msgid "additionally, your index contains uncommitted changes."
 msgstr "освен това в индекса има неподадени промени."
 
-#: wt-status.c:2449
+#: wt-status.c:2451
 #, c-format
 msgid "cannot %s: Your index contains uncommitted changes."
 msgstr "не може да извършите „%s“, защото в индекса има неподадени промени."
@@ -9374,7 +8810,7 @@ msgstr "неправилно отместване на часовия пояс"
 msgid "Patch format detection failed."
 msgstr "Форматът на кръпката не може да бъде определен."
 
-#: builtin/am.c:949 builtin/clone.c:412
+#: builtin/am.c:949 builtin/clone.c:409
 #, c-format
 msgid "failed to create directory '%s'"
 msgstr "директорията „%s“ не може да бъде създадена"
@@ -9620,8 +9056,8 @@ msgstr "прекарване през „git-apply“"
 #: builtin/fmt-merge-msg.c:674 builtin/grep.c:879 builtin/merge.c:247
 #: builtin/pull.c:158 builtin/pull.c:217 builtin/rebase.c:1412
 #: builtin/repack.c:317 builtin/repack.c:321 builtin/repack.c:323
-#: builtin/show-branch.c:651 builtin/show-ref.c:171 builtin/tag.c:397
-#: parse-options.h:140 parse-options.h:161 parse-options.h:303
+#: builtin/show-branch.c:651 builtin/show-ref.c:172 builtin/tag.c:397
+#: parse-options.h:141 parse-options.h:162 parse-options.h:311
 msgid "n"
 msgstr "БРОЙ"
 
@@ -10321,6 +9757,15 @@ msgstr "Изтрит клон „%s“ (той сочеше към „%s“).\n"
 msgid "unable to parse format string"
 msgstr "форматиращият низ не може да бъде анализиран: %s"
 
+#: builtin/branch.c:452
+msgid "could not resolve HEAD"
+msgstr "подаването, сочено от указателя „HEAD“, не може да се установи"
+
+#: builtin/branch.c:458
+#, c-format
+msgid "HEAD (%s) points outside of refs/heads/"
+msgstr "„HEAD“ (%s) сочи извън директорията „refs/heads“"
+
 #: builtin/branch.c:473
 #, c-format
 msgid "Branch %s is being rebased at %s"
@@ -10474,6 +9919,10 @@ msgstr "копиране на клон, дори ако има вече клон
 msgid "list branch names"
 msgstr "извеждане на имената на клоните"
 
+#: builtin/branch.c:639
+msgid "show current branch name"
+msgstr "извеждане на името на текущия клон"
+
 #: builtin/branch.c:640
 msgid "create the branch's reflog"
 msgstr "създаване на журнала на указателите на клона"
@@ -10517,7 +9966,7 @@ msgstr "подредбата и филтрирането третират едн
 msgid "format to use for the output"
 msgstr "ФОРМАТ за изхода"
 
-#: builtin/branch.c:676 builtin/clone.c:751
+#: builtin/branch.c:676 builtin/clone.c:748
 msgid "HEAD not found below refs/heads!"
 msgstr "В директорията „refs/heads“ липсва файл „HEAD“"
 
@@ -10922,6 +10371,21 @@ msgstr[1] "Обновени са %d пътя от индекса"
 msgid "you need to resolve your current index first"
 msgstr "първо трябва да коригирате индекса си"
 
+#: builtin/checkout.c:744
+#, c-format
+msgid ""
+"cannot continue with staged changes in the following files:\n"
+"%s"
+msgstr ""
+"не може да се продължи с промени в следните файлове, които са добавени в "
+"индекса:\n"
+"%s"
+
+#: builtin/checkout.c:751
+#, c-format
+msgid "staged changes in the following files may be lost: %s"
+msgstr "локалните промени в тези файлове ще се презапишат: %s"
+
 #: builtin/checkout.c:848
 #, c-format
 msgid "Can not do reflog for '%s': %s\n"
@@ -10931,7 +10395,7 @@ msgstr "Журналът на указателите за „%s“ не може
 msgid "HEAD is now at"
 msgstr "Указателят „HEAD“ в момента сочи към"
 
-#: builtin/checkout.c:894 builtin/clone.c:704
+#: builtin/checkout.c:894 builtin/clone.c:701
 msgid "unable to update HEAD"
 msgstr "Указателят „HEAD“ не може да бъде обновен"
 
@@ -11072,7 +10536,7 @@ msgstr ""
 "За да преминете към клон, подайте указател, който сочи към подаване.  „%s“ "
 "не е такъв"
 
-#: builtin/checkout.c:1356 builtin/checkout.c:1358 builtin/clone.c:121
+#: builtin/checkout.c:1356 builtin/checkout.c:1358 builtin/clone.c:118
 #: builtin/remote.c:169 builtin/remote.c:171 builtin/worktree.c:492
 #: builtin/worktree.c:494
 msgid "branch"
@@ -11126,7 +10590,7 @@ msgstr "извършване на тройно сливане с новия кл
 msgid "update ignored files (default)"
 msgstr "обновяване на игнорираните файлове (стандартно)"
 
-#: builtin/checkout.c:1377 builtin/log.c:1594 parse-options.h:309
+#: builtin/checkout.c:1377 builtin/log.c:1594 parse-options.h:317
 msgid "style"
 msgstr "СТИЛ"
 
@@ -11154,9 +10618,17 @@ msgstr "без проверка дали друго работно дърво д
 msgid "force progress reporting"
 msgstr "извеждане на напредъка"
 
+#: builtin/checkout.c:1390
+msgid "use overlay mode (default)"
+msgstr "използване на припокриващ режим (стандартно)"
+
 #: builtin/checkout.c:1422
 msgid "-b, -B and --orphan are mutually exclusive"
 msgstr "Опциите „-b“, „-B“ и „--orphan“ са несъвместими една с друга"
+
+#: builtin/checkout.c:1425
+msgid "-p and --overlay are mutually exclusive"
+msgstr "опциите „-p“ и „--overlay“ са несъвместими"
 
 #: builtin/checkout.c:1442
 msgid "--track needs a branch name"
@@ -11369,7 +10841,7 @@ msgstr "изтриване на цели директории"
 #: builtin/clean.c:913 builtin/describe.c:546 builtin/describe.c:548
 #: builtin/grep.c:897 builtin/log.c:171 builtin/log.c:173
 #: builtin/ls-files.c:557 builtin/name-rev.c:417 builtin/name-rev.c:419
-#: builtin/show-ref.c:178
+#: builtin/show-ref.c:179
 msgid "pattern"
 msgstr "ШАБЛОН"
 
@@ -11435,131 +10907,131 @@ msgstr "без твърди връзки, файловете винаги да �
 msgid "setup as shared repository"
 msgstr "настройване за споделено хранилище"
 
-#: builtin/clone.c:103 builtin/clone.c:107
+#: builtin/clone.c:104
 msgid "pathspec"
 msgstr "път"
 
-#: builtin/clone.c:103 builtin/clone.c:107
+#: builtin/clone.c:104
 msgid "initialize submodules in the clone"
 msgstr "инициализиране на подмодулите при това клониране"
 
-#: builtin/clone.c:110
+#: builtin/clone.c:107
 msgid "number of submodules cloned in parallel"
 msgstr "брой подмодули, клонирани паралелно"
 
-#: builtin/clone.c:111 builtin/init-db.c:486
+#: builtin/clone.c:108 builtin/init-db.c:486
 msgid "template-directory"
 msgstr "директория с шаблони"
 
-#: builtin/clone.c:112 builtin/init-db.c:487
+#: builtin/clone.c:109 builtin/init-db.c:487
 msgid "directory from which templates will be used"
 msgstr "директория, която съдържа шаблоните, които да се ползват"
 
-#: builtin/clone.c:114 builtin/clone.c:116 builtin/submodule--helper.c:1379
+#: builtin/clone.c:111 builtin/clone.c:113 builtin/submodule--helper.c:1379
 #: builtin/submodule--helper.c:1859
 msgid "reference repository"
 msgstr "еталонно хранилище"
 
-#: builtin/clone.c:118 builtin/submodule--helper.c:1381
+#: builtin/clone.c:115 builtin/submodule--helper.c:1381
 #: builtin/submodule--helper.c:1861
 msgid "use --reference only while cloning"
 msgstr "опцията „--reference“ може да се използва само при клониране"
 
-#: builtin/clone.c:119 builtin/column.c:27 builtin/merge-file.c:46
+#: builtin/clone.c:116 builtin/column.c:27 builtin/merge-file.c:46
 #: builtin/pack-objects.c:3306 builtin/repack.c:329
 msgid "name"
 msgstr "ИМЕ"
 
-#: builtin/clone.c:120
+#: builtin/clone.c:117
 msgid "use <name> instead of 'origin' to track upstream"
 msgstr "използване на това ИМЕ вместо „origin“ при проследяване на клони"
 
-#: builtin/clone.c:122
+#: builtin/clone.c:119
 msgid "checkout <branch> instead of the remote's HEAD"
 msgstr "изтегляне на този КЛОН, а не соченият от отдалечения указател „HEAD“"
 
-#: builtin/clone.c:124
+#: builtin/clone.c:121
 msgid "path to git-upload-pack on the remote"
 msgstr "път към командата „git-upload-pack“ на отдалеченото хранилище"
 
-#: builtin/clone.c:125 builtin/fetch.c:142 builtin/grep.c:836
+#: builtin/clone.c:122 builtin/fetch.c:142 builtin/grep.c:836
 #: builtin/pull.c:225
 msgid "depth"
 msgstr "ДЪЛБОЧИНА"
 
-#: builtin/clone.c:126
+#: builtin/clone.c:123
 msgid "create a shallow clone of that depth"
 msgstr "плитко клониране до тази ДЪЛБОЧИНА"
 
-#: builtin/clone.c:127 builtin/fetch.c:144 builtin/pack-objects.c:3295
+#: builtin/clone.c:124 builtin/fetch.c:144 builtin/pack-objects.c:3295
 msgid "time"
 msgstr "ВРЕМЕ"
 
-#: builtin/clone.c:128
+#: builtin/clone.c:125
 msgid "create a shallow clone since a specific time"
 msgstr "плитко клониране до момент във времето"
 
-#: builtin/clone.c:129 builtin/fetch.c:146 builtin/fetch.c:169
+#: builtin/clone.c:126 builtin/fetch.c:146 builtin/fetch.c:169
 #: builtin/rebase.c:1389
 msgid "revision"
 msgstr "версия"
 
-#: builtin/clone.c:130 builtin/fetch.c:147
+#: builtin/clone.c:127 builtin/fetch.c:147
 msgid "deepen history of shallow clone, excluding rev"
 msgstr "задълбочаване на историята на плитко хранилище до изключващ указател"
 
-#: builtin/clone.c:132
+#: builtin/clone.c:129
 msgid "clone only one branch, HEAD or --branch"
 msgstr ""
 "клониране само на един клон — или сочения от отдалечения „HEAD“, или изрично "
 "зададения с „--branch“"
 
-#: builtin/clone.c:134
+#: builtin/clone.c:131
 msgid "don't clone any tags, and make later fetches not to follow them"
 msgstr ""
 "без клониране на етикети, като последващите доставяния няма да ги следят"
 
-#: builtin/clone.c:136
+#: builtin/clone.c:133
 msgid "any cloned submodules will be shallow"
 msgstr "всички клонирани подмодули ще са плитки"
 
-#: builtin/clone.c:137 builtin/init-db.c:495
+#: builtin/clone.c:134 builtin/init-db.c:495
 msgid "gitdir"
 msgstr "СЛУЖЕБНА_ДИРЕКТОРИЯ"
 
-#: builtin/clone.c:138 builtin/init-db.c:496
+#: builtin/clone.c:135 builtin/init-db.c:496
 msgid "separate git dir from working tree"
 msgstr "отделна СЛУЖЕБНА_ДИРЕКТОРИЯ за git извън работното дърво"
 
-#: builtin/clone.c:139
+#: builtin/clone.c:136
 msgid "key=value"
 msgstr "КЛЮЧ=СТОЙНОСТ"
 
-#: builtin/clone.c:140
+#: builtin/clone.c:137
 msgid "set config inside the new repository"
 msgstr "задаване на настройките на новото хранилище"
 
-#: builtin/clone.c:142 builtin/fetch.c:164 builtin/ls-remote.c:76
+#: builtin/clone.c:139 builtin/fetch.c:164 builtin/ls-remote.c:76
 #: builtin/push.c:585 builtin/send-pack.c:172
 msgid "server-specific"
 msgstr "специфични за сървъра"
 
-#: builtin/clone.c:142 builtin/fetch.c:164 builtin/ls-remote.c:76
+#: builtin/clone.c:139 builtin/fetch.c:164 builtin/ls-remote.c:76
 #: builtin/push.c:585 builtin/send-pack.c:173
 msgid "option to transmit"
 msgstr "опция за пренос"
 
-#: builtin/clone.c:143 builtin/fetch.c:165 builtin/pull.c:238
+#: builtin/clone.c:140 builtin/fetch.c:165 builtin/pull.c:238
 #: builtin/push.c:586
 msgid "use IPv4 addresses only"
 msgstr "само адреси IPv4"
 
-#: builtin/clone.c:145 builtin/fetch.c:167 builtin/pull.c:241
+#: builtin/clone.c:142 builtin/fetch.c:167 builtin/pull.c:241
 #: builtin/push.c:588
 msgid "use IPv6 addresses only"
 msgstr "само адреси IPv6"
 
-#: builtin/clone.c:283
+#: builtin/clone.c:280
 msgid ""
 "No directory name could be guessed.\n"
 "Please specify a directory on the command line"
@@ -11567,48 +11039,48 @@ msgstr ""
 "Името на директорията не може да бъде отгатнато.\n"
 "Задайте директорията изрично на командния ред"
 
-#: builtin/clone.c:336
+#: builtin/clone.c:333
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: не може да се добави алтернативен източник на „%s“: %s\n"
 
-#: builtin/clone.c:408
+#: builtin/clone.c:405
 #, c-format
 msgid "failed to open '%s'"
 msgstr "директорията „%s“ не може да бъде отворена"
 
-#: builtin/clone.c:416
+#: builtin/clone.c:413
 #, c-format
 msgid "%s exists and is not a directory"
 msgstr "„%s“ съществува и не е директория"
 
-#: builtin/clone.c:430
+#: builtin/clone.c:427
 #, c-format
 msgid "failed to stat %s\n"
 msgstr "не може да бъде получена информация чрез „stat“ за „%s“\n"
 
-#: builtin/clone.c:447
+#: builtin/clone.c:444
 #, c-format
 msgid "failed to unlink '%s'"
 msgstr "неуспешно изтриване на „%s“"
 
-#: builtin/clone.c:452
+#: builtin/clone.c:449
 #, c-format
 msgid "failed to create link '%s'"
 msgstr "връзката „%s“ не може да бъде създадена"
 
-#: builtin/clone.c:456
+#: builtin/clone.c:453
 #, c-format
 msgid "failed to copy file to '%s'"
 msgstr "файлът не може да бъде копиран като „%s“"
 
-#: builtin/clone.c:482
+#: builtin/clone.c:479
 #, c-format
 msgid "done.\n"
 msgstr "действието завърши.\n"
 
-#: builtin/clone.c:496
+#: builtin/clone.c:493
 msgid ""
 "Clone succeeded, but checkout failed.\n"
 "You can inspect what was checked out with 'git status'\n"
@@ -11619,99 +11091,99 @@ msgstr ""
 "клон в момента са изтеглени с командата „git status“.  Можете да\n"
 "завършите изтеглянето на клона с командата „git checkout -f HEAD“.\n"
 
-#: builtin/clone.c:573
+#: builtin/clone.c:570
 #, c-format
 msgid "Could not find remote branch %s to clone."
 msgstr ""
 "Клонът „%s“ от отдалеченото хранилище, което клонирате,\n"
 "и който следва да бъде изтеглен, не съществува."
 
-#: builtin/clone.c:692
+#: builtin/clone.c:689
 #, c-format
 msgid "unable to update %s"
 msgstr "обектът „%s“ не може да бъде обновен"
 
-#: builtin/clone.c:742
+#: builtin/clone.c:739
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
 "указателят „HEAD“ от отдалеченото хранилище сочи към нещо,\n"
 "което не съществува.  Не може да се изтегли определен клон.\n"
 
-#: builtin/clone.c:773
+#: builtin/clone.c:770
 msgid "unable to checkout working tree"
 msgstr "работното дърво не може да бъде подготвено"
 
-#: builtin/clone.c:818
+#: builtin/clone.c:815
 msgid "unable to write parameters to config file"
 msgstr "настройките не могат да бъдат записани в конфигурационния файл"
 
-#: builtin/clone.c:881
+#: builtin/clone.c:878
 msgid "cannot repack to clean up"
 msgstr "не може да се извърши пакетиране за изчистване на файловете"
 
-#: builtin/clone.c:883
+#: builtin/clone.c:880
 msgid "cannot unlink temporary alternates file"
 msgstr "временният файл за алтернативни обекти не може да бъде изтрит"
 
-#: builtin/clone.c:923 builtin/receive-pack.c:1952
+#: builtin/clone.c:920 builtin/receive-pack.c:1952
 msgid "Too many arguments."
 msgstr "Прекалено много аргументи."
 
-#: builtin/clone.c:927
+#: builtin/clone.c:924
 msgid "You must specify a repository to clone."
 msgstr "Трябва да укажете кое хранилище искате да клонирате."
 
-#: builtin/clone.c:940
+#: builtin/clone.c:937
 #, c-format
 msgid "--bare and --origin %s options are incompatible."
 msgstr "опциите „--bare“ и „--origin %s“ са несъвместими."
 
-#: builtin/clone.c:943
+#: builtin/clone.c:940
 msgid "--bare and --separate-git-dir are incompatible."
 msgstr "опциите „--bare“ и „--separate-git-dir“ са несъвместими."
 
-#: builtin/clone.c:956
+#: builtin/clone.c:953
 #, c-format
 msgid "repository '%s' does not exist"
 msgstr "не съществува хранилище „%s“"
 
-#: builtin/clone.c:962 builtin/fetch.c:1610
+#: builtin/clone.c:959 builtin/fetch.c:1610
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "дълбочината трябва да е положително цяло число, а не „%s“"
 
-#: builtin/clone.c:972
+#: builtin/clone.c:969
 #, c-format
 msgid "destination path '%s' already exists and is not an empty directory."
 msgstr "целевият път „%s“ съществува и не е празна директория."
 
-#: builtin/clone.c:982
+#: builtin/clone.c:979
 #, c-format
 msgid "working tree '%s' already exists."
 msgstr "в „%s“ вече съществува работно дърво."
 
-#: builtin/clone.c:997 builtin/clone.c:1018 builtin/difftool.c:270
+#: builtin/clone.c:994 builtin/clone.c:1015 builtin/difftool.c:264
 #: builtin/worktree.c:296 builtin/worktree.c:328
 #, c-format
 msgid "could not create leading directories of '%s'"
 msgstr "родителските директории на „%s“ не могат да бъдат създадени"
 
-#: builtin/clone.c:1002
+#: builtin/clone.c:999
 #, c-format
 msgid "could not create work tree dir '%s'"
 msgstr "работното дърво в „%s“ не може да бъде създадено."
 
-#: builtin/clone.c:1022
+#: builtin/clone.c:1019
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
 msgstr "Клониране и създаване на голо хранилище в „%s“…\n"
 
-#: builtin/clone.c:1024
+#: builtin/clone.c:1021
 #, c-format
 msgid "Cloning into '%s'...\n"
 msgstr "Клониране и създаване на хранилище в „%s“…\n"
 
-#: builtin/clone.c:1048
+#: builtin/clone.c:1045
 msgid ""
 "clone --recursive is not compatible with both --reference and --reference-if-"
 "able"
@@ -11719,44 +11191,44 @@ msgstr ""
 "Опцията „--recursive“ е несъвместима с опциите „--reference“ и „--reference-"
 "if-able“"
 
-#: builtin/clone.c:1109
+#: builtin/clone.c:1106
 msgid "--depth is ignored in local clones; use file:// instead."
 msgstr ""
 "При локално клониране опцията „--depth“ се прескача.  Ползвайте схемата "
 "„file://“."
 
-#: builtin/clone.c:1111
+#: builtin/clone.c:1108
 msgid "--shallow-since is ignored in local clones; use file:// instead."
 msgstr ""
 "При локално клониране опцията „--shallow-since“ се прескача.  Ползвайте "
 "схемата „file://“."
 
-#: builtin/clone.c:1113
+#: builtin/clone.c:1110
 msgid "--shallow-exclude is ignored in local clones; use file:// instead."
 msgstr ""
 "При локално клониране опцията „--shallow-exclude“ се прескача.  Ползвайте "
 "схемата „file://“."
 
-#: builtin/clone.c:1115
+#: builtin/clone.c:1112
 msgid "--filter is ignored in local clones; use file:// instead."
 msgstr ""
 "При локално клониране опцията „--filter“ се прескача.  Ползвайте схемата "
 "„file://“."
 
-#: builtin/clone.c:1118
+#: builtin/clone.c:1115
 msgid "source repository is shallow, ignoring --local"
 msgstr "клонираното хранилище е плитко, затова опцията „--local“ се прескача"
 
-#: builtin/clone.c:1123
+#: builtin/clone.c:1120
 msgid "--local is ignored"
 msgstr "опцията „--local“ се прескача"
 
-#: builtin/clone.c:1200 builtin/clone.c:1208
+#: builtin/clone.c:1197 builtin/clone.c:1205
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Отдалеченият клон „%s“ липсва в клонираното хранилище „%s“"
 
-#: builtin/clone.c:1211
+#: builtin/clone.c:1208
 msgid "You appear to have cloned an empty repository."
 msgstr "Изглежда клонирахте празно хранилище."
 
@@ -11792,6 +11264,47 @@ msgstr "Поле в знаци между колоните"
 msgid "--command must be the first argument"
 msgstr "опцията „--command“ трябва да е първият аргумент"
 
+#: builtin/commit-tree.c:18
+msgid ""
+"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"<file>)...] <tree>"
+msgstr ""
+"git commit-tree [(-p РОДИТЕЛ)…] [-S[ИДЕНТИФИКАТОР]] [(-m СЪОБЩЕНИЕ)…] [(-F "
+"ФАЙЛ)…] ДЪРВО"
+
+#: builtin/commit-tree.c:31
+#, c-format
+msgid "duplicate parent %s ignored"
+msgstr "прескачане на повтарящ се родител: „%s“"
+
+#: builtin/commit-tree.c:56 builtin/commit-tree.c:136 builtin/log.c:520
+#, c-format
+msgid "not a valid object name %s"
+msgstr "неправилно име на обект: „%s“"
+
+#: builtin/commit-tree.c:93
+#, c-format
+msgid "git commit-tree: failed to open '%s'"
+msgstr "git commit-tree: „%s“ не може да се отвори"
+
+#: builtin/commit-tree.c:96
+#, c-format
+msgid "git commit-tree: failed to read '%s'"
+msgstr "git commit-tree: „%s“ не може да се прочете"
+
+#: builtin/commit-tree.c:98
+#, c-format
+msgid "git commit-tree: failed to close '%s'"
+msgstr "git commit-tree: „%s“ не може да се затвори"
+
+#: builtin/commit-tree.c:111
+msgid "parent"
+msgstr "родител"
+
+#: builtin/commit-tree.c:112
+msgid "id of a parent commit object"
+msgstr "ИДЕНТИФИКАТОР на обекта за подаването-родител"
+
 #: builtin/commit-tree.c:114 builtin/commit.c:1480 builtin/merge.c:268
 #: builtin/notes.c:409 builtin/notes.c:575 builtin/stash.c:1473
 #: builtin/tag.c:406
@@ -11802,10 +11315,22 @@ msgstr "СЪОБЩЕНИЕ"
 msgid "commit message"
 msgstr "СЪОБЩЕНИЕ при подаване"
 
+#: builtin/commit-tree.c:118
+msgid "read commit log message from file"
+msgstr "изчитане на съобщението за подаване от ФАЙЛ"
+
 #: builtin/commit-tree.c:121 builtin/commit.c:1492 builtin/merge.c:283
 #: builtin/pull.c:193 builtin/revert.c:117
 msgid "GPG sign commit"
 msgstr "подписване на подаването с GPG"
+
+#: builtin/commit-tree.c:133
+msgid "must give exactly one tree"
+msgstr "трябва да е точно едно дърво"
+
+#: builtin/commit-tree.c:140
+msgid "git commit-tree: failed to read"
+msgstr "git commit-tree: не може да се прочете"
 
 #: builtin/commit.c:41
 msgid "git commit [<options>] [--] <pathspec>..."
@@ -12099,6 +11624,11 @@ msgstr ""
 msgid "No paths with --include/--only does not make sense."
 msgstr "Опциите „--include“ и „--only“ изискват аргументи."
 
+#: builtin/commit.c:1192
+#, c-format
+msgid "paths '%s ...' with -a does not make sense"
+msgstr "опцията „-a“ е несъвместима със задаването на пътища: „%s…“"
+
 #: builtin/commit.c:1319 builtin/commit.c:1503
 msgid "show status concisely"
 msgstr "кратка информация за състоянието"
@@ -12134,7 +11664,7 @@ msgstr "разделяне на елементите с нулевия знак 
 
 #: builtin/commit.c:1335 builtin/commit.c:1339 builtin/commit.c:1517
 #: builtin/fast-export.c:1085 builtin/fast-export.c:1088 builtin/rebase.c:1465
-#: parse-options.h:323
+#: parse-options.h:331
 msgid "mode"
 msgstr "РЕЖИМ"
 
@@ -12154,7 +11684,7 @@ msgstr ""
 "„traditional“ (традиционен), „matching“ (напасващи), „no“ (без игнорираните "
 "файлове).  Стандартният РЕЖИМ е: „traditional“."
 
-#: builtin/commit.c:1342 parse-options.h:178
+#: builtin/commit.c:1342 parse-options.h:179
 msgid "when"
 msgstr "КОГА"
 
@@ -12216,7 +11746,7 @@ msgid "override date for commit"
 msgstr "задаване на ДАТА за подаването"
 
 #: builtin/commit.c:1481 builtin/commit.c:1482 builtin/commit.c:1483
-#: builtin/commit.c:1484 parse-options.h:315 ref-filter.h:92
+#: builtin/commit.c:1484 parse-options.h:323 ref-filter.h:92
 msgid "commit"
 msgstr "ПОДАВАНЕ"
 
@@ -12376,6 +11906,11 @@ msgstr "директория"
 #: builtin/commit-graph.c:148 builtin/commit-graph.c:206
 msgid "The object directory to store the graph"
 msgstr "ДИРекторията_с_ОБЕКТИ за запазване на гра̀фа"
+
+#: builtin/commit-graph.c:68 builtin/commit-graph.c:105
+#, c-format
+msgid "Could not open commit-graph '%s'"
+msgstr "Графът с подаванията не може да се отвори: „%s“"
 
 #: builtin/commit-graph.c:150
 msgid "start walk at all refs"
@@ -12922,31 +12457,31 @@ msgstr "зададени са повече от 2 обекта-BLOB: „%s“"
 msgid "unhandled object '%s' given."
 msgstr "зададен е неподдържан обект „%s“."
 
-#: builtin/difftool.c:31
+#: builtin/difftool.c:30
 msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
 msgstr "git difftool [ОПЦИЯ…] [ПОДАВАНЕ [ПОДАВАНЕ]] [[--] ПЪТ…]"
 
-#: builtin/difftool.c:259
+#: builtin/difftool.c:253
 #, c-format
 msgid "failed: %d"
 msgstr "неуспешно действие с изходен код: %d"
 
-#: builtin/difftool.c:301
+#: builtin/difftool.c:295
 #, c-format
 msgid "could not read symlink %s"
 msgstr "символната връзка „%s“ не може да бъде прочетена"
 
-#: builtin/difftool.c:303
+#: builtin/difftool.c:297
 #, c-format
 msgid "could not read symlink file %s"
 msgstr "файлът, сочен от символната връзка „%s“, не може да бъде прочетен"
 
-#: builtin/difftool.c:311
+#: builtin/difftool.c:305
 #, c-format
 msgid "could not read object %s for symlink %s"
 msgstr "обектът „%s“ за символната връзка „%s“ не може да бъде прочетен"
 
-#: builtin/difftool.c:412
+#: builtin/difftool.c:406
 msgid ""
 "combined diff formats('-c' and '--cc') are not supported in\n"
 "directory diff mode('-d' and '--dir-diff')."
@@ -12954,55 +12489,55 @@ msgstr ""
 "комбинираните формати на разликите („-c“ и „--cc“) не се поддържат\n"
 "в режима за разлики върху директории („-d“ и „--dir-diff“)."
 
-#: builtin/difftool.c:632
+#: builtin/difftool.c:626
 #, c-format
 msgid "both files modified: '%s' and '%s'."
 msgstr "и двата файла са променени: „%s“ и „%s“."
 
-#: builtin/difftool.c:634
+#: builtin/difftool.c:628
 msgid "working tree file has been left."
 msgstr "работното дърво е изоставено."
 
-#: builtin/difftool.c:645
+#: builtin/difftool.c:639
 #, c-format
 msgid "temporary files exist in '%s'."
 msgstr "в „%s“ има временни файлове."
 
-#: builtin/difftool.c:646
+#: builtin/difftool.c:640
 msgid "you may want to cleanup or recover these."
 msgstr "възможно е да ги изчистите или възстановите"
 
-#: builtin/difftool.c:695
+#: builtin/difftool.c:689
 msgid "use `diff.guitool` instead of `diff.tool`"
 msgstr "използвайте „diff.guitool“ вместо „diff.tool“"
 
-#: builtin/difftool.c:697
+#: builtin/difftool.c:691
 msgid "perform a full-directory diff"
 msgstr "разлика по директории"
 
-#: builtin/difftool.c:699
+#: builtin/difftool.c:693
 msgid "do not prompt before launching a diff tool"
 msgstr "стартиране на ПРОГРАМАта за разлики без предупреждение"
 
-#: builtin/difftool.c:704
+#: builtin/difftool.c:698
 msgid "use symlinks in dir-diff mode"
 msgstr "следване на символните връзки при разлика по директории"
 
-#: builtin/difftool.c:705
+#: builtin/difftool.c:699
 msgid "tool"
 msgstr "ПРОГРАМА"
 
-#: builtin/difftool.c:706
+#: builtin/difftool.c:700
 msgid "use the specified diff tool"
 msgstr "използване на указаната ПРОГРАМА"
 
-#: builtin/difftool.c:708
+#: builtin/difftool.c:702
 msgid "print a list of diff tools that may be used with `--tool`"
 msgstr ""
 "извеждане на списък с всички ПРОГРАМи, които може да се ползват с опцията „--"
 "tool“"
 
-#: builtin/difftool.c:711
+#: builtin/difftool.c:705
 msgid ""
 "make 'git-difftool' exit when an invoked diff tool returns a non - zero exit "
 "code"
@@ -13010,15 +12545,31 @@ msgstr ""
 "„git-difftool“ да спре работа, когато стартираната ПРОГРАМА завърши с "
 "ненулев код"
 
-#: builtin/difftool.c:714
+#: builtin/difftool.c:708
 msgid "specify a custom command for viewing diffs"
 msgstr "команда за разглеждане на разлики"
 
-#: builtin/difftool.c:744
+#: builtin/difftool.c:709
+msgid "passed to `diff`"
+msgstr "подава се към „diff“"
+
+#: builtin/difftool.c:724
+msgid "difftool requires worktree or --no-index"
+msgstr "„git-difftool“ изисква работно дърво или опцията „--no-index“"
+
+#: builtin/difftool.c:731
+msgid "--dir-diff is incompatible with --no-index"
+msgstr "опциите „--dir-diff“ и „--no-index“ са несъвместими"
+
+#: builtin/difftool.c:734
+msgid "--gui, --tool and --extcmd are mutually exclusive"
+msgstr "опциите „--gui“, „--tool“ и „--extcmd“ са несъвместими една с друга"
+
+#: builtin/difftool.c:742
 msgid "no <tool> given for --tool=<tool>"
 msgstr "не е зададена програма за „--tool=ПРОГРАМА“"
 
-#: builtin/difftool.c:751
+#: builtin/difftool.c:749
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "не е зададена команда за „--extcmd=КОМАНДА“"
 
@@ -13729,6 +13280,11 @@ msgstr "git gc [ОПЦИЯ…]"
 #, c-format
 msgid "Failed to fstat %s: %s"
 msgstr "Неуспешно изпълнение на „fstat“ върху „%s“: %s"
+
+#: builtin/gc.c:126
+#, c-format
+msgid "failed to parse '%s' value '%s'"
+msgstr "стойността на „%s“ — „%s“ не може да се анализира"
 
 #: builtin/gc.c:476 builtin/init-db.c:55
 #, c-format
@@ -14794,6 +14350,16 @@ msgstr "Резултат: %d %s\n"
 msgid "git show %s: bad file"
 msgstr "git show %s: повреден файл"
 
+#: builtin/log.c:544 builtin/log.c:638
+#, c-format
+msgid "could not read object %s"
+msgstr "обектът не може да бъде прочетен: %s"
+
+#: builtin/log.c:663
+#, c-format
+msgid "unknown type: %d"
+msgstr "неизвестен вид: %d"
+
 #: builtin/log.c:784
 msgid "format.headers without value"
 msgstr "не е зададена стойност на „format.headers“"
@@ -14801,6 +14367,27 @@ msgstr "не е зададена стойност на „format.headers“"
 #: builtin/log.c:885
 msgid "name of output directory is too long"
 msgstr "прекалено дълго име на директорията за изходната информация"
+
+#: builtin/log.c:901
+#, c-format
+msgid "cannot open patch file %s"
+msgstr "файлът-кръпка „%s“ не може да бъде отворен"
+
+#: builtin/log.c:918
+msgid "need exactly one range"
+msgstr "трябва да зададете точно един диапазон"
+
+#: builtin/log.c:928
+msgid "not a range"
+msgstr "не е диапазон"
+
+#: builtin/log.c:1051
+msgid "cover letter needs email format"
+msgstr "придружаващото писмо трябва да е форматирано като е-писмо"
+
+#: builtin/log.c:1057
+msgid "failed to create cover-letter file"
+msgstr "неуспешно създаване на придружаващо писмо"
 
 #: builtin/log.c:1136
 #, c-format
@@ -14811,11 +14398,38 @@ msgstr "неправилен формат на заглавната част з�
 msgid "git format-patch [<options>] [<since> | <revision-range>]"
 msgstr "git format-patch [ОПЦИЯ…] [ОТ | ДИАПАЗОН_НА_ВЕРСИИТЕ]"
 
+#: builtin/log.c:1221
+msgid "two output directories?"
+msgstr "може да укажете максимум една директория за изход"
+
+#: builtin/log.c:1332 builtin/log.c:2076 builtin/log.c:2078 builtin/log.c:2090
+#, c-format
+msgid "unknown commit %s"
+msgstr "непознато подаване: „%s“"
+
 #: builtin/log.c:1342 builtin/replace.c:58 builtin/replace.c:207
 #: builtin/replace.c:210
 #, c-format
 msgid "failed to resolve '%s' as a valid ref"
 msgstr "„%s“ не е указател или не сочи към нищо"
+
+#: builtin/log.c:1347
+msgid "could not find exact merge base"
+msgstr "точната база за сливане не може да бъде открита"
+
+#: builtin/log.c:1351
+msgid ""
+"failed to get upstream, if you want to record base commit automatically,\n"
+"please use git branch --set-upstream-to to track a remote branch.\n"
+"Or you could specify base commit by --base=<base-commit-id> manually"
+msgstr ""
+"следеният клон не може да бъде установен.  Ако искате ръчно да го\n"
+"зададете, използвайте „git branch --set-upstream-to“.\n"
+"Можете ръчно да зададете базово подаване чрез „--base=<base-commit-id>“."
+
+#: builtin/log.c:1371
+msgid "failed to find exact merge base"
+msgstr "точната база при сливане не може да бъде открита"
 
 #: builtin/log.c:1382
 msgid "base commit should be the ancestor of revision list"
@@ -15083,6 +14697,10 @@ msgstr "файлът „%s“ с подпис не може да бъде про
 msgid "Generating patches"
 msgstr "Създаване на кръпки"
 
+#: builtin/log.c:1952
+msgid "failed to create output files"
+msgstr "неуспешно създаване на изходни файлове"
+
 #: builtin/log.c:2011
 msgid "git cherry [-v] [<upstream> [<head> [<limit>]]]"
 msgstr "git cherry [-v] [ОТДАЛЕЧЕН_КЛОН [ВРЪХ [ПРЕДЕЛ]]]"
@@ -15233,7 +14851,7 @@ msgstr "само върховете"
 
 #: builtin/ls-remote.c:67
 msgid "do not show peeled tags"
-msgstr "без извеждане на проследените етикети"
+msgstr "без проследяване на непреките етикети"
 
 #: builtin/ls-remote.c:69
 msgid "take url.<base>.insteadOf into account"
@@ -15473,6 +15091,28 @@ msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr ""
 "Сливането няма да бъде подадено.  За завършването му и подаването му "
 "използвайте командата „git commit“.\n"
+
+#: builtin/merge.c:808
+msgid ""
+"Please enter a commit message to explain why this merge is necessary,\n"
+"especially if it merges an updated upstream into a topic branch.\n"
+"\n"
+msgstr ""
+"В съобщението при подаване добавете информация за причината за\n"
+"сливането, особено ако сливате обновен отдалечен клон в тематичен клон.\n"
+
+#: builtin/merge.c:813
+msgid "An empty message aborts the commit.\n"
+msgstr "Празно съобщение предотвратява подаването.\n"
+
+#: builtin/merge.c:816
+#, c-format
+msgid ""
+"Lines starting with '%c' will be ignored, and an empty message aborts\n"
+"the commit.\n"
+msgstr ""
+"Редовете, които започват с „%c“, ще бъдат пропуснати, а празно\n"
+"съобщение преустановява подаването.\n"
 
 #: builtin/merge.c:857
 msgid "Empty commit message."
@@ -16776,15 +16416,15 @@ msgstr ""
 "Общо %<PRIu32> (разлики %<PRIu32>), преизползвани %<PRIu32> (разлики "
 "%<PRIu32>)"
 
-#: builtin/pack-refs.c:7
+#: builtin/pack-refs.c:8
 msgid "git pack-refs [<options>]"
 msgstr "git pack-refs [ОПЦИЯ…]"
 
-#: builtin/pack-refs.c:15
+#: builtin/pack-refs.c:16
 msgid "pack everything"
 msgstr "пакетиране на всичко"
 
-#: builtin/pack-refs.c:16
+#: builtin/pack-refs.c:17
 msgid "prune loose refs (default)"
 msgstr "окастряне на недостижимите указатели (стандартно)"
 
@@ -17420,6 +17060,10 @@ msgstr "без прилагане на филтъра за частично из
 msgid "debug unpack-trees"
 msgstr "изчистване на грешки в командата „unpack-trees“"
 
+#: builtin/read-tree.c:157
+msgid "suppress feedback messages"
+msgstr "без информационни съобщения"
+
 #: builtin/rebase.c:32
 msgid ""
 "git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] [<upstream>] "
@@ -17442,6 +17086,11 @@ msgstr "git rebase --continue | --abort | --skip | --edit-todo"
 #, c-format
 msgid "unusable todo list: '%s'"
 msgstr "неуспешно изтриване на списъка за изпълнение: „%s“"
+
+#: builtin/rebase.c:167 builtin/rebase.c:193 builtin/rebase.c:217
+#, c-format
+msgid "could not write '%s'."
+msgstr "„%s“ не може да се запише."
 
 #: builtin/rebase.c:252
 msgid "no HEAD?"
@@ -17782,6 +17431,10 @@ msgid "let the user edit the list of commits to rebase"
 msgstr ""
 "позволяване на потребителя да редактира списъка с подавания за пребазиране"
 
+#: builtin/rebase.c:1445
+msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
+msgstr "(остаряло) пресъздаване на сливанията вместо да се прескачат"
+
 #: builtin/rebase.c:1449
 msgid "preserve empty commits during rebase"
 msgstr "запазване на празните подавания при пребазиране"
@@ -17832,11 +17485,26 @@ msgstr "аргументът да се подаде на стратегията 
 msgid "rebase all reachable commits up to the root(s)"
 msgstr "пребазиране на всички достижими подавания до началното им подаване"
 
+#: builtin/rebase.c:1498
+msgid ""
+"the rebase.useBuiltin support has been removed!\n"
+"See its entry in 'git help config' for details."
+msgstr ""
+"поддръжката на „rebase.useBuiltin“ е премахната.\n"
+"За повече информация вижте „git help config“."
+
 #: builtin/rebase.c:1504
 msgid "It looks like 'git am' is in progress. Cannot rebase."
 msgstr ""
 "Изглежда, че сега се прилагат кръпки чрез командата „git-am“.  Не може да "
 "пребазирате в момента."
+
+#: builtin/rebase.c:1545
+msgid ""
+"git rebase --preserve-merges is deprecated. Use --rebase-merges instead."
+msgstr ""
+"Опцията „--preserve-merges“ е остаряла.  Ползвайте „--rebase-merges“ вместо "
+"нея."
 
 #: builtin/rebase.c:1549
 msgid "No rebase in progress?"
@@ -18978,6 +18646,11 @@ msgstr "неуспешно редактиране на файла с обект�
 msgid "new object is the same as the old one: '%s'"
 msgstr "новият и старият обект са един и същ: „%s“"
 
+#: builtin/replace.c:383
+#, c-format
+msgid "could not parse %s as a commit"
+msgstr "„%s“ не може да се анализира като подаване"
+
 #: builtin/replace.c:414
 #, c-format
 msgid "bad mergetag in commit '%s'"
@@ -19678,7 +19351,7 @@ msgstr "„%s“ е неправилен указател."
 msgid "cannot find commit %s (%s)"
 msgstr "подаването „%s“ (%s) липсва"
 
-#: builtin/show-ref.c:11
+#: builtin/show-ref.c:12
 msgid ""
 "git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
 "hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
@@ -19686,57 +19359,173 @@ msgstr ""
 "git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
 "hash[=ЧИСЛО]] [--abbrev[=ЧИСЛО]] [--tags] [--heads] [--] [ШАБЛОН…]"
 
-#: builtin/show-ref.c:12
+#: builtin/show-ref.c:13
 msgid "git show-ref --exclude-existing[=<pattern>]"
 msgstr "git show-ref --exclude-existing[=ШАБЛОН]"
 
-#: builtin/show-ref.c:161
+#: builtin/show-ref.c:162
 msgid "only show tags (can be combined with heads)"
 msgstr "извеждане на етикетите (може да се комбинира с върховете)"
 
-#: builtin/show-ref.c:162
+#: builtin/show-ref.c:163
 msgid "only show heads (can be combined with tags)"
 msgstr "извеждане на върховете (може да се комбинира с етикетите)"
 
-#: builtin/show-ref.c:163
+#: builtin/show-ref.c:164
 msgid "stricter reference checking, requires exact ref path"
 msgstr "строга проверка на указателите, изисква се указател с пълен път"
 
-#: builtin/show-ref.c:166 builtin/show-ref.c:168
+#: builtin/show-ref.c:167 builtin/show-ref.c:169
 msgid "show the HEAD reference, even if it would be filtered out"
 msgstr "задължително извеждане и на указателя HEAD"
 
-#: builtin/show-ref.c:170
+#: builtin/show-ref.c:171
 msgid "dereference tags into object IDs"
 msgstr "да се извеждат идентификаторите на обектите-етикети"
 
-#: builtin/show-ref.c:172
+#: builtin/show-ref.c:173
 msgid "only show SHA1 hash using <n> digits"
 msgstr "извеждане само на този БРОЙ цифри от всяка сума по SHA1"
 
-#: builtin/show-ref.c:176
+#: builtin/show-ref.c:177
 msgid "do not print results to stdout (useful with --verify)"
 msgstr ""
 "без извеждане на резултатите на стандартния изход (полезно с опцията „--"
 "verify“)"
 
-#: builtin/show-ref.c:178
+#: builtin/show-ref.c:179
 msgid "show refs from stdin that aren't in local repository"
 msgstr ""
 "извеждане на указателите приети от стандартния вход, които липсват в "
 "локалното хранилище"
 
+#: builtin/stash.c:22 builtin/stash.c:37
+msgid "git stash list [<options>]"
+msgstr "git stash list [ОПЦИЯ…]"
+
+#: builtin/stash.c:23 builtin/stash.c:42
+msgid "git stash show [<options>] [<stash>]"
+msgstr "git stash show [ОПЦИЯ…] [СКАТАНО]"
+
+#: builtin/stash.c:24 builtin/stash.c:47
+msgid "git stash drop [-q|--quiet] [<stash>]"
+msgstr "git stash drop [-q|--quiet] [СКАТАНО]"
+
+#: builtin/stash.c:25
+msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
+msgstr "git stash ( pop | apply ) [--index] [-q|--quiet] [СКАТАНО]"
+
+#: builtin/stash.c:26 builtin/stash.c:62
+msgid "git stash branch <branchname> [<stash>]"
+msgstr "git stash branch КЛОН [СКАТАНО]"
+
+#: builtin/stash.c:27 builtin/stash.c:67
+msgid "git stash clear"
+msgstr "git stash clear"
+
+#: builtin/stash.c:28 builtin/stash.c:77
+msgid ""
+"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+"          [--] [<pathspec>...]]"
+msgstr ""
+"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+"          [-u|--include-untracked] [-a|--all] [-m|--message СЪОБЩЕНИЕ]\n"
+"          [--] [ПЪТ…]]"
+
+#: builtin/stash.c:31 builtin/stash.c:84
+msgid ""
+"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+"          [-u|--include-untracked] [-a|--all] [<message>]"
+msgstr ""
+"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+"          [-u|--include-untracked] [-a|--all] [СЪОБЩЕНИЕ]"
+
+#: builtin/stash.c:52
+msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
+msgstr "git stash pop [--index] [-q|--quiet] [СКАТАНО]"
+
+#: builtin/stash.c:57
+msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
+msgstr "git stash apply [--index] [-q|--quiet] [СКАТАНО]"
+
+#: builtin/stash.c:72
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
+msgstr "git stash store [-m|--message СЪОБЩЕНИЕ] [-q|--quiet] ПОДАВАНЕ"
+
+#: builtin/stash.c:127
+#, c-format
+msgid "'%s' is not a stash-like commit"
+msgstr "„%s“ не е подаване, приличащо на нещо скатано"
+
+#: builtin/stash.c:147
+#, c-format
+msgid "Too many revisions specified:%s"
+msgstr "Указани са прекалено много версии:%s"
+
 #: builtin/stash.c:161 git-legacy-stash.sh:548
 msgid "No stash entries found."
 msgstr "Не е открито нищо скатано."
+
+#: builtin/stash.c:175
+#, c-format
+msgid "%s is not a valid reference"
+msgstr "„%s“ е неправилно име за указател"
 
 #: builtin/stash.c:224 git-legacy-stash.sh:75
 msgid "git stash clear with parameters is unimplemented"
 msgstr "командата „git stash clear“ не поддържа аргументи"
 
+#: builtin/stash.c:403
+msgid "cannot apply a stash in the middle of a merge"
+msgstr "по време на сливане не може да приложите нещо скатано"
+
+#: builtin/stash.c:414
+#, c-format
+msgid "could not generate diff %s^!."
+msgstr "файлът с разликите „%s^!“ не може да се генерира"
+
+#: builtin/stash.c:421
+msgid "conflicts in index.Try without --index."
+msgstr ""
+"в индекса има конфликти.  Пробвайте да изпълните командата без опцията „--"
+"index“."
+
+#: builtin/stash.c:427
+msgid "could not save index tree"
+msgstr "дървото сочено от индекса не може да бъде запазено"
+
+#: builtin/stash.c:434
+msgid "could not restore untracked files from stash"
+msgstr "неследени файлове не могат да се възстановят от скатаното"
+
+#: builtin/stash.c:448
+#, c-format
+msgid "Merging %s with %s"
+msgstr "Сливане на „%s“ с „%s“"
+
 #: builtin/stash.c:458 git-legacy-stash.sh:680
 msgid "Index was not unstashed."
 msgstr "Индексът не е изваден от скатаното."
+
+#: builtin/stash.c:516 builtin/stash.c:615
+msgid "attempt to recreate the index"
+msgstr "опит за повторно създаване на индекса"
+
+#: builtin/stash.c:549
+#, c-format
+msgid "Dropped %s (%s)"
+msgstr "Изтрито: „%s“ (%s)"
+
+#: builtin/stash.c:552
+#, c-format
+msgid "%s: Could not drop stash entry"
+msgstr "Скатаното „%s“ не може да бъде изтрито"
+
+#: builtin/stash.c:577
+#, c-format
+msgid "'%s' is not a stash reference"
+msgstr "„%s“ не е указател към нещо скатано"
 
 #: builtin/stash.c:627 git-legacy-stash.sh:694
 msgid "The stash entry is kept in case you need it again."
@@ -19745,6 +19534,19 @@ msgstr "Скатаното е запазено в случай, че ви пот
 #: builtin/stash.c:650 git-legacy-stash.sh:712
 msgid "No branch name specified"
 msgstr "Не е указано име на клон"
+
+#: builtin/stash.c:789 builtin/stash.c:826
+#, c-format
+msgid "Cannot update %s with %s"
+msgstr "Указателят „%s“ не може да бъде обновен да сочи към „%s“"
+
+#: builtin/stash.c:807 builtin/stash.c:1474 builtin/stash.c:1510
+msgid "stash message"
+msgstr "съобщение при скатаване"
+
+#: builtin/stash.c:817
+msgid "\"git stash store\" requires one <commit> argument"
+msgstr "командата „git stash store“ изисква точно един аргумент-ПОДАВАНЕ"
 
 #: builtin/stash.c:1039 git-legacy-stash.sh:217
 msgid "No changes selected"
@@ -19775,6 +19577,10 @@ msgstr "Състоянието на работното дърво не може 
 msgid "Can't use --patch and --include-untracked or --all at the same time"
 msgstr "Опцията „--patch“ е несъвместима с „--include-untracked“ и „--all“"
 
+#: builtin/stash.c:1284
+msgid "Did you forget to 'git add'?"
+msgstr "Пробвайте да използвате „git add“"
+
 #: builtin/stash.c:1299 git-legacy-stash.sh:345
 msgid "No local changes to save"
 msgstr "Няма никакви локални промени за скатаване"
@@ -19787,9 +19593,34 @@ msgstr "Скатаването не може да стартира"
 msgid "Cannot save the current status"
 msgstr "Текущото състояние не може да бъде запазено"
 
+#: builtin/stash.c:1326
+#, c-format
+msgid "Saved working directory and index state %s"
+msgstr "Състоянието на работната директория и индекса e запазено: „%s“"
+
 #: builtin/stash.c:1430 git-legacy-stash.sh:384
 msgid "Cannot remove worktree changes"
 msgstr "Промените в работното дърво не могат да бъдат занулени"
+
+#: builtin/stash.c:1465 builtin/stash.c:1501
+msgid "keep index"
+msgstr "запазване на индекса"
+
+#: builtin/stash.c:1467 builtin/stash.c:1503
+msgid "stash in patch mode"
+msgstr "скатаване в режим за кръпки"
+
+#: builtin/stash.c:1468 builtin/stash.c:1504
+msgid "quiet mode"
+msgstr "без извеждане на информация"
+
+#: builtin/stash.c:1470 builtin/stash.c:1506
+msgid "include untracked files in stash"
+msgstr "скатаване и на неследените файлове"
+
+#: builtin/stash.c:1472 builtin/stash.c:1508
+msgid "include ignore files"
+msgstr "скатаване и на игнорираните файлове"
 
 #: builtin/stash.c:1568
 #, c-format
@@ -19874,6 +19705,10 @@ msgstr "Без извеждане на изход при въвеждането 
 msgid "Recurse into nested submodules"
 msgstr "Рекурсивно обхождане на подмодулите"
 
+#: builtin/submodule--helper.c:569
+msgid "git submodule--helper foreach [--quiet] [--recursive] [--] <command>"
+msgstr "git submodule--helper foreach [--quiet] [--recursive] [--] КОМАНДА"
+
 #: builtin/submodule--helper.c:596
 #, c-format
 msgid ""
@@ -19907,6 +19742,10 @@ msgstr ""
 #: builtin/submodule--helper.c:707
 msgid "Suppress output for initializing a submodule"
 msgstr "Без извеждане на информация при инициализирането на подмодул"
+
+#: builtin/submodule--helper.c:712
+msgid "git submodule--helper init [<options>] [<path>]"
+msgstr "git submodule--helper init [ОПЦИЯ…] [ПЪТ]"
 
 #: builtin/submodule--helper.c:784 builtin/submodule--helper.c:910
 #, c-format
@@ -20184,9 +20023,25 @@ msgstr "не може да се получи връзка към хранили�
 msgid "recurse into submodules"
 msgstr "рекурсивно обхождане подмодулите"
 
+#: builtin/submodule--helper.c:2099
+msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
+msgstr "git submodule--helper absorb-git-dirs [ОПЦИЯ…] [ПЪТ…]"
+
 #: builtin/submodule--helper.c:2156
 msgid "check if it is safe to write to the .gitmodules file"
 msgstr "проверка дали писането във файла „.gitmodules“ е безопасно"
+
+#: builtin/submodule--helper.c:2159
+msgid "unset the config in the .gitmodules file"
+msgstr "изтриване на настройка във файла „.gitmodules“"
+
+#: builtin/submodule--helper.c:2164
+msgid "git submodule--helper config <name> [<value>]"
+msgstr "git submodule--helper config ИМЕ [СТОЙНОСТ]"
+
+#: builtin/submodule--helper.c:2165
+msgid "git submodule--helper config --unset <name>"
+msgstr "git submodule--helper config --unset ИМЕ"
 
 #: builtin/submodule--helper.c:2166
 msgid "git submodule--helper config --check-writeable"
@@ -20234,6 +20089,14 @@ msgstr "причина"
 #: builtin/symbolic-ref.c:43 builtin/update-ref.c:363
 msgid "reason of the update"
 msgstr "причина за обновяването"
+
+#: builtin/tag.c:25
+msgid ""
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
+"\t\t<tagname> [<head>]"
+msgstr ""
+"git tag [-a | -s | -u ИДЕНТИФИКАТОР_НА_КЛЮЧ] [-f] [-m СЪОБЩЕНИЕ | -F ФАЙЛ]\n"
+"        ЕТИКЕТ [ВРЪХ]"
 
 #: builtin/tag.c:27
 msgid "git tag -d <tagname>..."
@@ -20297,6 +20160,20 @@ msgstr "етикетът не може да бъде подписан"
 #: builtin/tag.c:194
 msgid "unable to write tag file"
 msgstr "файлът за етикета не може да бъде запазен"
+
+#: builtin/tag.c:210
+#, c-format
+msgid ""
+"You have created a nested tag. The object referred to by your new tag is\n"
+"already a tag. If you meant to tag the object that it points to, use:\n"
+"\n"
+"\tgit tag -f %s %s^{}"
+msgstr ""
+"Създали сте непряк етикет — обектът, сочен от новосъздадения етикет,\n"
+"е също етикет.  Ако вместо това искате новият етикет да сочи към това,\n"
+"което се сочи от стария, изпълнете:\n"
+"\n"
+"    git tag -f %s %s^{}"
 
 #: builtin/tag.c:226
 msgid "bad object type."
@@ -21145,6 +21022,10 @@ msgstr "подаването „%s“ не е отбелязано като до
 msgid "too many commits marked reachable"
 msgstr "прекалено много подавания са отбелязани като достижими"
 
+#: t/helper/test-serve-v2.c:7
+msgid "test-tool serve-v2 [<options>]"
+msgstr "test-tool serve-v2 [ОПЦИЯ…]"
+
 #: t/helper/test-serve-v2.c:19
 msgid "exit immediately after advertising capabilities"
 msgstr "изход след първоначалната обява на възможностите"
@@ -21333,10 +21214,123 @@ msgstr ""
 "    ● заявен адрес: %s\n"
 "    ● пренасочване: %s"
 
+#: remote-curl.c:157
+#, c-format
+msgid "invalid quoting in push-option value: '%s'"
+msgstr ""
+"неправилно екраниране или цитиране в стойността към опция за изтласкване: "
+"„%s“"
+
+#: remote-curl.c:254
+#, c-format
+msgid "%sinfo/refs not valid: is this a git repository?"
+msgstr "„%sinfo/refs“ е неизползваемо, проверете дали е хранилище на git"
+
+#: remote-curl.c:355
+msgid "invalid server response; expected service, got flush packet"
+msgstr ""
+"неправилен отговор от сървъра: очакваше се услуга, а бе получен изчистващ "
+"пакет „flush“"
+
+#: remote-curl.c:386
+#, c-format
+msgid "invalid server response; got '%s'"
+msgstr "неправилен отговор от сървъра, бе получено: „%s“"
+
+#: remote-curl.c:446
+#, c-format
+msgid "repository '%s' not found"
+msgstr "хранилището „%s“ липсва"
+
+#: remote-curl.c:450
+#, c-format
+msgid "Authentication failed for '%s'"
+msgstr "Неуспешна идентификация към „%s“"
+
+#: remote-curl.c:454
+#, c-format
+msgid "unable to access '%s': %s"
+msgstr "няма достъп до „%s“: %s"
+
 #: remote-curl.c:460
 #, c-format
 msgid "redirecting to %s"
 msgstr "пренасочване към „%s“"
+
+#: remote-curl.c:584
+msgid "shouldn't have EOF when not gentle on EOF"
+msgstr "получен е EOF, в режим без поддръжка за това"
+
+#: remote-curl.c:664
+msgid "unable to rewind rpc post data - try increasing http.postBuffer"
+msgstr ""
+"данните за POST не могат да се прочетат наново, пробвайте да увеличите "
+"настройката „http.postBuffer“"
+
+#: remote-curl.c:724
+#, c-format
+msgid "RPC failed; %s"
+msgstr "Неуспешно отдалечено извикване.  %s"
+
+#: remote-curl.c:764
+msgid "cannot handle pushes this big"
+msgstr "толкова големи изтласквания не може да се изпълнят"
+
+#: remote-curl.c:879
+#, c-format
+msgid "cannot deflate request; zlib deflate error %d"
+msgstr ""
+"заявката не може да бъде декомпресирана, грешка от „zlib“ при "
+"декомпресиране: %d"
+
+#: remote-curl.c:883
+#, c-format
+msgid "cannot deflate request; zlib end error %d"
+msgstr ""
+"заявката не може да бъде декомпресирана; грешка от „zlib“ при завършване: %d<"
+
+#: remote-curl.c:1014
+msgid "dumb http transport does not support shallow capabilities"
+msgstr "опростеният транспорт по http не поддържа плитки клиенти"
+
+#: remote-curl.c:1028
+msgid "fetch failed."
+msgstr "неуспешно доставяне."
+
+#: remote-curl.c:1076
+msgid "cannot fetch by sha1 over smart http"
+msgstr "умният вариант на http не може да доставя по SHA1"
+
+#: remote-curl.c:1120 remote-curl.c:1126
+#, c-format
+msgid "protocol error: expected sha/ref, got %s'"
+msgstr "протоколна грешка: очаква се SHA1 или указател, а бе получено: „%s“"
+
+#: remote-curl.c:1138 remote-curl.c:1252
+#, c-format
+msgid "http transport does not support %s"
+msgstr "транспортът по http не поддържа „%s“"
+
+#: remote-curl.c:1174
+msgid "git-http-push failed"
+msgstr "неуспешно изпълнение на „git-http-push“"
+
+#: remote-curl.c:1360
+msgid "remote-curl: usage: git remote-curl <remote> [<url>]"
+msgstr "remote-curl: употреба: git remote-curl ХРАНИЛИЩЕ [АДРЕС]"
+
+#: remote-curl.c:1392
+msgid "remote-curl: error reading command stream from git"
+msgstr "remote-curl: грешка при изчитането на потока команди от git"
+
+#: remote-curl.c:1399
+msgid "remote-curl: fetch attempted without a local repo"
+msgstr "remote-curl: опит за доставяне без локално хранилище"
+
+#: remote-curl.c:1439
+#, c-format
+msgid "remote-curl: unknown command '%s' from git"
+msgstr "remote-curl: непозната команда „%s“ от git"
 
 #: list-objects-filter-options.h:63
 msgid "args"
@@ -21346,27 +21340,27 @@ msgstr "АРГУМЕНТИ"
 msgid "object filtering"
 msgstr "филтриране по вид на обекта"
 
-#: parse-options.h:169
+#: parse-options.h:170
 msgid "expiry-date"
 msgstr "период на валидност/запазване"
 
-#: parse-options.h:183
+#: parse-options.h:184
 msgid "no-op (backward compatibility)"
 msgstr "нулева операция (за съвместимост с предишни версии)"
 
-#: parse-options.h:296
+#: parse-options.h:304
 msgid "be more verbose"
 msgstr "повече подробности"
 
-#: parse-options.h:298
+#: parse-options.h:306
 msgid "be more quiet"
 msgstr "по-малко подробности"
 
-#: parse-options.h:304
+#: parse-options.h:312
 msgid "use <n> digits to display SHA-1s"
 msgstr "да се показват такъв БРОЙ цифри от сумите по SHA1"
 
-#: parse-options.h:323
+#: parse-options.h:331
 msgid "how to strip spaces and #comments from message"
 msgstr "кои празни знаци и #коментари да се махат от съобщенията"
 
@@ -21650,6 +21644,11 @@ msgstr "Създаване на празно хранилище на Git или 
 #: command-list.h:112
 msgid "Instantly browse your working repository in gitweb"
 msgstr "Незабавно разглеждане на работното ви хранилище чрез „gitweb“"
+
+#: command-list.h:113
+msgid "Add or parse structured information in commit messages"
+msgstr ""
+"Добавяне или обработка на структурирана информация в съобщенията при подаване"
 
 #: command-list.h:114
 msgid "The Git repository browser"
@@ -22267,6 +22266,11 @@ msgstr "„${sm_path}“ вече съществува в индекса"
 msgid "'$sm_path' already exists in the index and is not a submodule"
 msgstr "„${sm_path}“ вече съществува в индекса и не е подмодул"
 
+#: git-submodule.sh:239
+#, sh-format
+msgid "'$sm_path' does not have a commit checked out"
+msgstr "в „${sm_path}“ не е изтеглено подаване"
+
 #: git-submodule.sh:245
 #, sh-format
 msgid ""
@@ -22350,6 +22354,15 @@ msgid ""
 msgstr ""
 "Текущата версия „${remote_name}/${branch}“ в пътя към подмодул „${sm_path}“ "
 "липсва"
+
+#: git-submodule.sh:606
+#, sh-format
+msgid ""
+"Unable to fetch in submodule path '$displaypath'; trying to directly fetch "
+"$sha1:"
+msgstr ""
+"Неуспешно доставяне в пътя към подмодул „${displaypath}“, опит за директно "
+"доставяне на „${sha1}“"
 
 #: git-submodule.sh:612
 #, sh-format
