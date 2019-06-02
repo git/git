@@ -82,8 +82,11 @@ git send-email --dump-aliases
                                      Pass an empty string to disable certificate
                                      verification.
     --smtp-domain           <str>  * The domain name sent to HELO/EHLO handshake
-    --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms.
+    --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms, or
+                                     "none" to disable authentication.
                                      This setting forces to use one of the listed mechanisms.
+    --no-smtp-auth                   Disable SMTP authentication. Shorthand for
+                                     `--smtp-auth=none`
     --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
 
     --batch-size            <int>  * send max <int> message per connection.
@@ -94,7 +97,7 @@ git send-email --dump-aliases
     --identity              <str>  * Use the sendemail.<id> options.
     --to-cmd                <str>  * Email To: via `<str> \$patch_path`
     --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
-    --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
+    --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, misc-by, all.
     --[no-]cc-cover                * Email Cc: addresses in the cover letter.
     --[no-]to-cover                * Email To: addresses in the cover letter.
     --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
@@ -117,6 +120,11 @@ git send-email --dump-aliases
 
 EOT
 	exit(1);
+}
+
+sub completion_helper {
+    print Git::command('format-patch', '--git-completion-helper');
+    exit(0);
 }
 
 # most mail servers generate the Date: header, but not all...
@@ -311,6 +319,7 @@ $SIG{INT}  = \&signal_handler;
 # needing, first, from the command line:
 
 my $help;
+my $git_completion_helper;
 my $rc = GetOptions("h" => \$help,
                     "dump-aliases" => \$dump_aliases);
 usage() unless $rc;
@@ -341,6 +350,7 @@ $rc = GetOptions(
 		    "smtp-debug:i" => \$debug_net_smtp,
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
+		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
 		    "identity=s" => \$identity,
 		    "annotate!" => \$annotate,
 		    "no-annotate" => sub {$annotate = 0},
@@ -373,9 +383,11 @@ $rc = GetOptions(
 		    "no-xmailer" => sub {$use_xmailer = 0},
 		    "batch-size=i" => \$batch_size,
 		    "relogin-delay=i" => \$relogin_delay,
+		    "git-completion-helper" => \$git_completion_helper,
 	 );
 
 usage() if $help;
+completion_helper() if $git_completion_helper;
 unless ($rc) {
     usage();
 }
@@ -453,14 +465,16 @@ $smtp_encryption = '' unless (defined $smtp_encryption);
 my(%suppress_cc);
 if (@suppress_cc) {
 	foreach my $entry (@suppress_cc) {
+		# Please update $__git_send_email_suppresscc_options
+		# in git-completion.bash when you add new options.
 		die sprintf(__("Unknown --suppress-cc field: '%s'\n"), $entry)
-			unless $entry =~ /^(?:all|cccmd|cc|author|self|sob|body|bodycc)$/;
+			unless $entry =~ /^(?:all|cccmd|cc|author|self|sob|body|bodycc|misc-by)$/;
 		$suppress_cc{$entry} = 1;
 	}
 }
 
 if ($suppress_cc{'all'}) {
-	foreach my $entry (qw (cccmd cc author self sob body bodycc)) {
+	foreach my $entry (qw (cccmd cc author self sob body bodycc misc-by)) {
 		$suppress_cc{$entry} = 1;
 	}
 	delete $suppress_cc{'all'};
@@ -471,7 +485,7 @@ $suppress_cc{'self'} = $suppress_from if defined $suppress_from;
 $suppress_cc{'sob'} = !$signed_off_by_cc if defined $signed_off_by_cc;
 
 if ($suppress_cc{'body'}) {
-	foreach my $entry (qw (sob bodycc)) {
+	foreach my $entry (qw (sob bodycc misc-by)) {
 		$suppress_cc{$entry} = 1;
 	}
 	delete $suppress_cc{'body'};
@@ -482,6 +496,8 @@ my $confirm_unconfigured = !defined $confirm;
 if ($confirm_unconfigured) {
 	$confirm = scalar %suppress_cc ? 'compose' : 'auto';
 };
+# Please update $__git_send_email_confirm_options in
+# git-completion.bash when you add new options.
 die sprintf(__("Unknown --confirm setting: '%s'\n"), $confirm)
 	unless $confirm =~ /^(?:auto|cc|compose|always|never)/;
 
@@ -575,6 +591,8 @@ my %parse_alias = (
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];
 		}}}
+	# Please update _git_config() in git-completion.bash when you
+	# add new MUAs.
 );
 
 if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
@@ -1241,7 +1259,7 @@ sub smtp_host_string {
 # (smtp_user was not specified), and 0 otherwise.
 
 sub smtp_auth_maybe {
-	if (!defined $smtp_authuser || $auth) {
+	if (!defined $smtp_authuser || $auth || (defined $smtp_auth && $smtp_auth eq "none")) {
 		return 1;
 	}
 
@@ -1681,7 +1699,7 @@ sub process_file {
 	# Now parse the message body
 	while(<$fh>) {
 		$message .=  $_;
-		if (/^(Signed-off-by|Cc): (.*)/i) {
+		if (/^([a-z][a-z-]*-by|Cc): (.*)/i) {
 			chomp;
 			my ($what, $c) = ($1, $2);
 			# strip garbage for the address we'll use:
@@ -1691,8 +1709,18 @@ sub process_file {
 			if ($sc eq $sender) {
 				next if ($suppress_cc{'self'});
 			} else {
-				next if $suppress_cc{'sob'} and $what =~ /Signed-off-by/i;
-				next if $suppress_cc{'bodycc'} and $what =~ /Cc/i;
+				if ($what =~ /^Signed-off-by$/i) {
+					next if $suppress_cc{'sob'};
+				} elsif ($what =~ /-by$/i) {
+					next if $suppress_cc{'misc-by'};
+				} elsif ($what =~ /Cc/i) {
+					next if $suppress_cc{'bodycc'};
+				}
+			}
+			if ($c !~ /.+@.+|<.+>/) {
+				printf("(body) Ignoring %s from line '%s'\n",
+					$what, $_) unless $quiet;
+				next;
 			}
 			push @cc, $c;
 			printf(__("(body) Adding cc: %s from line '%s'\n"),
@@ -1834,7 +1862,7 @@ sub apply_transfer_encoding {
 	my $from = shift;
 	my $to = shift;
 
-	return $message if ($from eq $to and $from ne '7bit');
+	return ($message, $to) if ($from eq $to and $from ne '7bit');
 
 	require MIME::QuotedPrint;
 	require MIME::Base64;
@@ -1844,7 +1872,7 @@ sub apply_transfer_encoding {
 	$message = MIME::Base64::decode($message)
 		if ($from eq 'base64');
 
-	$to = ($message =~ /.{999,}/) ? 'quoted-printable' : '8bit'
+	$to = ($message =~ /(?:.{999,}|\r)/) ? 'quoted-printable' : '8bit'
 		if $to eq 'auto';
 
 	die __("cannot send message as 7bit")

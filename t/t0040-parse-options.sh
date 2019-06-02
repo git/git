@@ -23,7 +23,6 @@ usage: test-tool parse-options <options>
     -j <n>                get a integer, too
     -m, --magnitude <n>   get a magnitude
     --set23               set integer to 23
-    -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
     -F, --file <file>     set file to <file>
 
@@ -48,6 +47,12 @@ Standard options
     -n, --dry-run         dry run
     -q, --quiet           be quiet
     --expect <string>     expected output in the variable dump
+
+Alias
+    -A, --alias-source <string>
+                          get a string
+    -Z, --alias-target <string>
+                          get a string
 
 EOF
 
@@ -204,21 +209,36 @@ file: (not set)
 EOF
 
 test_expect_success 'unambiguously abbreviated option' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --int 2 --boolean --no-bo >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'unambiguously abbreviated option with "="' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --expect="integer: 2" --int=2
 '
 
 test_expect_success 'ambiguously abbreviated option' '
-	test_expect_code 129 test-tool parse-options --strin 123
+	test_expect_code 129 env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool parse-options --strin 123
 '
 
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --expect="string: 123" --st 123
+'
+
+test_expect_success 'Alias options do not contribute to abbreviation' '
+	test-tool parse-options --alias-source 123 >output &&
+	grep "^string: 123" output &&
+	test-tool parse-options --alias-target 123 >output &&
+	grep "^string: 123" output &&
+	test_must_fail test-tool parse-options --alias &&
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool parse-options --alias 123 >output &&
+	grep "^string: 123" output
 '
 
 cat >typo.err <<\EOF
@@ -228,7 +248,7 @@ EOF
 test_expect_success 'detect possible typos' '
 	test_must_fail test-tool parse-options -boolean >output 2>output.err &&
 	test_must_be_empty output &&
-	test_cmp typo.err output.err
+	test_i18ncmp typo.err output.err
 '
 
 cat >typo.err <<\EOF
@@ -238,32 +258,11 @@ EOF
 test_expect_success 'detect possible typos' '
 	test_must_fail test-tool parse-options -ambiguous >output 2>output.err &&
 	test_must_be_empty output &&
-	test_cmp typo.err output.err
+	test_i18ncmp typo.err output.err
 '
 
 test_expect_success 'keep some options as arguments' '
 	test-tool parse-options --expect="arg 00: --quux" --quux
-'
-
-cat >expect <<\EOF
-boolean: 0
-integer: 0
-magnitude: 0
-timestamp: 1
-string: (not set)
-abbrev: 7
-verbose: -1
-quiet: 1
-dry run: no
-file: (not set)
-arg 00: foo
-EOF
-
-test_expect_success 'OPT_DATE() works' '
-	test-tool parse-options -t "1970-01-01 00:00:01 +0000" \
-		foo -q >output 2>output.err &&
-	test_must_be_empty output.err &&
-	test_cmp expect output
 '
 
 cat >expect <<\EOF
@@ -347,6 +346,7 @@ file: (not set)
 EOF
 
 test_expect_success 'negation of OPT_NONEG flags is not ambiguous' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --no-ambig >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
@@ -390,6 +390,13 @@ test_expect_success '--no-verbose sets verbose to 0' '
 
 test_expect_success '--no-verbose resets multiple verbose to 0' '
 	test-tool parse-options --expect="verbose: 0" -v -v -v --no-verbose
+'
+
+test_expect_success 'GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS works' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+		test-tool parse-options --ye &&
+	test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true \
+		test-tool parse-options --ye
 '
 
 test_done

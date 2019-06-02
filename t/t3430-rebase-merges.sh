@@ -125,7 +125,7 @@ test_expect_success '`reset` refuses to overwrite untracked files' '
 	: >dont-overwrite-untracked.t &&
 	echo "reset refs/tags/dont-overwrite-untracked" >script-from-scratch &&
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
-	test_must_fail git rebase -r HEAD &&
+	test_must_fail git rebase -ir HEAD &&
 	git rebase --abort
 '
 
@@ -271,7 +271,7 @@ test_expect_success 'root commits' '
 	EOF
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
-	git rebase -i --force --root -r &&
+	git rebase -i --force-rebase --root -r &&
 	test "Parsnip" = "$(git show -s --format=%an HEAD^)" &&
 	test $(git rev-parse second-root^0) != $(git rev-parse HEAD^) &&
 	test $(git rev-parse second-root:second-root.t) = \
@@ -364,7 +364,7 @@ test_expect_success 'octopus merges' '
 	test_cmp_rev HEAD $before &&
 
 	test_tick &&
-	git rebase -i --force -r HEAD^^ &&
+	git rebase -i --force-rebase -r HEAD^^ &&
 	test "Hank" = "$(git show -s --format=%an HEAD)" &&
 	test "$before" != $(git rev-parse HEAD) &&
 	test_cmp_graph HEAD^^.. <<-\EOF
@@ -394,6 +394,22 @@ test_expect_success 'with --autosquash and --exec' '
 	grep "B: +Booh" actual &&
 	grep "E: +Booh" actual &&
 	grep "G: +G" actual
+'
+
+test_expect_success '--continue after resolving conflicts after a merge' '
+	git checkout -b already-has-g E &&
+	git cherry-pick E..G &&
+	test_commit H2 &&
+
+	git checkout -b conflicts-in-merge H &&
+	test_commit H2 H2.t conflicts H2-conflict &&
+	test_must_fail git rebase -r already-has-g &&
+	grep conflicts H2.t &&
+	echo resolved >H2.t &&
+	git add -u &&
+	git rebase --continue &&
+	test_must_fail git rev-parse --verify HEAD^2 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_done

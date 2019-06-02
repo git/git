@@ -34,8 +34,7 @@ test_expect_success 'setup repo with moderate-sized history' '
 	bitmaptip=$(git rev-parse master) &&
 	blob=$(echo tagged-blob | git hash-object -w --stdin) &&
 	git tag tagged-blob $blob &&
-	git config repack.writebitmaps true &&
-	git config pack.writebitmaphashcache true
+	git config repack.writebitmaps true
 '
 
 test_expect_success 'full repack creates bitmaps' '
@@ -191,6 +190,7 @@ test_expect_success 'pack-objects respects --honor-pack-keep (local bitmapped pa
 
 test_expect_success 'pack-objects respects --local (non-local bitmapped pack)' '
 	mv .git/objects/pack/$packbitmap.* alt.git/objects/pack/ &&
+	rm -f .git/objects/pack/multi-pack-index &&
 	test_when_finished "mv alt.git/objects/pack/$packbitmap.* .git/objects/pack/" &&
 	echo HEAD | git pack-objects --local --stdout --revs >3b.pack &&
 	git index-pack 3b.pack &&
@@ -268,7 +268,7 @@ test_expect_success JGIT 'we can read jgit bitmaps' '
 	git clone --bare . compat-jgit.git &&
 	(
 		cd compat-jgit.git &&
-		rm -f .git/objects/pack/*.bitmap &&
+		rm -f objects/pack/*.bitmap &&
 		jgit gc &&
 		git rev-list --test-bitmap HEAD
 	)

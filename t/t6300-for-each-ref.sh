@@ -83,6 +83,8 @@ test_atom head push:strip=1 remotes/myfork/master
 test_atom head push:strip=-1 master
 test_atom head objecttype commit
 test_atom head objectsize 171
+test_atom head objectsize:disk 138
+test_atom head deltabase 0000000000000000000000000000000000000000
 test_atom head objectname $(git rev-parse refs/heads/master)
 test_atom head objectname:short $(git rev-parse --short refs/heads/master)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
@@ -124,6 +126,10 @@ test_atom tag upstream ''
 test_atom tag push ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
+test_atom tag objectsize:disk 138
+test_atom tag '*objectsize:disk' 138
+test_atom tag deltabase 0000000000000000000000000000000000000000
+test_atom tag '*deltabase' 0000000000000000000000000000000000000000
 test_atom tag objectname $(git rev-parse refs/tags/testtag)
 test_atom tag objectname:short $(git rev-parse --short refs/tags/testtag)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
@@ -386,8 +392,15 @@ test_atom head upstream:track '[ahead 1]'
 test_atom head upstream:trackshort '>'
 test_atom head upstream:track,nobracket 'ahead 1'
 test_atom head upstream:nobracket,track 'ahead 1'
-test_atom head push:track '[ahead 1]'
-test_atom head push:trackshort '>'
+
+test_expect_success 'setup for push:track[short]' '
+	test_commit third &&
+	git update-ref refs/remotes/myfork/master master &&
+	git reset master~1
+'
+
+test_atom head push:track '[behind 1]'
+test_atom head push:trackshort '<'
 
 test_expect_success 'Check that :track[short] cannot be used with other atoms' '
 	test_must_fail git for-each-ref --format="%(refname:track)" 2>/dev/null &&
@@ -414,8 +427,10 @@ test_expect_success 'Check for invalid refname format' '
 test_expect_success 'set up color tests' '
 	cat >expected.color <<-EOF &&
 	$(git rev-parse --short refs/heads/master) <GREEN>master<RESET>
+	$(git rev-parse --short refs/remotes/myfork/master) <GREEN>myfork/master<RESET>
 	$(git rev-parse --short refs/remotes/origin/master) <GREEN>origin/master<RESET>
 	$(git rev-parse --short refs/tags/testtag) <GREEN>testtag<RESET>
+	$(git rev-parse --short refs/tags/third) <GREEN>third<RESET>
 	$(git rev-parse --short refs/tags/two) <GREEN>two<RESET>
 	EOF
 	sed "s/<[^>]*>//g" <expected.color >expected.bare &&

@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "lockfile.h"
@@ -44,6 +45,7 @@ static const char * const read_tree_usage[] = {
 static int index_output_cb(const struct option *opt, const char *arg,
 				 int unset)
 {
+	BUG_ON_OPT_NEG(unset);
 	set_alternate_index_output(arg);
 	return 0;
 }
@@ -53,6 +55,8 @@ static int exclude_per_directory_cb(const struct option *opt, const char *arg,
 {
 	struct dir_struct *dir;
 	struct unpack_trees_options *opts;
+
+	BUG_ON_OPT_NEG(unset);
 
 	opts = (struct unpack_trees_options *)opt->value;
 
@@ -150,6 +154,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		{ OPTION_CALLBACK, 0, "recurse-submodules", NULL,
 			    "checkout", "control recursive updating of submodules",
 			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater },
+		OPT__QUIET(&opts.quiet, N_("suppress feedback messages")),
 		OPT_END()
 	};
 
@@ -255,7 +260,9 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	 * what came from the tree.
 	 */
 	if (nr_trees == 1 && !opts.prefix)
-		prime_cache_tree(&the_index, trees[0]);
+		prime_cache_tree(the_repository,
+				 the_repository->index,
+				 trees[0]);
 
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die("unable to write new index file");

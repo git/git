@@ -144,7 +144,7 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 		return 0;
 	item->object.parsed = 1;
 
-	if (size < GIT_SHA1_HEXSZ + 24)
+	if (size < the_hash_algo->hexsz + 24)
 		return -1;
 	if (memcmp("object ", bufptr, 7) || parse_oid_hex(bufptr + 7, &oid, &bufptr) || *bufptr++ != '\n')
 		return -1;

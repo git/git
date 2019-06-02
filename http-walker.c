@@ -58,7 +58,7 @@ static void start_object_request(struct walker *walker,
 	struct active_request_slot *slot;
 	struct http_object_request *req;
 
-	req = new_http_object_request(obj_req->repo->base, obj_req->oid.hash);
+	req = new_http_object_request(obj_req->repo->base, &obj_req->oid);
 	if (req == NULL) {
 		obj_req->state = ABORTED;
 		return;
@@ -98,6 +98,11 @@ static void process_object_response(void *callback_data)
 	process_http_object_request(obj_req->req);
 	obj_req->state = COMPLETE;
 
+	normalize_curl_result(&obj_req->req->curl_result,
+			      obj_req->req->http_code,
+			      obj_req->req->errorstr,
+			      sizeof(obj_req->req->errorstr));
+
 	/* Use alternates if necessary */
 	if (missing_target(obj_req->req)) {
 		fetch_alternates(walker, alt->base);
@@ -131,7 +136,7 @@ static int fill_active_slot(struct walker *walker)
 	list_for_each_safe(pos, tmp, head) {
 		obj_req = list_entry(pos, struct object_request, node);
 		if (obj_req->state == WAITING) {
-			if (has_sha1_file(obj_req->oid.hash))
+			if (has_object_file(&obj_req->oid))
 				obj_req->state = COMPLETE;
 			else {
 				start_object_request(walker, obj_req);
@@ -207,6 +212,9 @@ static void process_alternates_response(void *callback_data)
 	const char null_byte = '\0';
 	char *data;
 	int i = 0;
+
+	normalize_curl_result(&slot->curl_result, slot->http_code,
+			      curl_errorstr, sizeof(curl_errorstr));
 
 	if (alt_req->http_specific) {
 		if (slot->curl_result != CURLE_OK ||
@@ -434,9 +442,9 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 
 	if (walker->get_verbosely) {
 		fprintf(stderr, "Getting pack %s\n",
-			sha1_to_hex(target->sha1));
+			hash_to_hex(target->hash));
 		fprintf(stderr, " which contains %s\n",
-			sha1_to_hex(sha1));
+			hash_to_hex(sha1));
 	}
 
 	preq = new_http_pack_request(target, repo->base);
@@ -473,9 +481,9 @@ static void abort_object_request(struct object_request *obj_req)
 	release_object_request(obj_req);
 }
 
-static int fetch_object(struct walker *walker, unsigned char *sha1)
+static int fetch_object(struct walker *walker, unsigned char *hash)
 {
-	char *hex = sha1_to_hex(sha1);
+	char *hex = hash_to_hex(hash);
 	int ret = 0;
 	struct object_request *obj_req = NULL;
 	struct http_object_request *req;
@@ -483,13 +491,13 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 
 	list_for_each(pos, head) {
 		obj_req = list_entry(pos, struct object_request, node);
-		if (hasheq(obj_req->oid.hash, sha1))
+		if (hasheq(obj_req->oid.hash, hash))
 			break;
 	}
 	if (obj_req == NULL)
 		return error("Couldn't find request for %s in the queue", hex);
 
-	if (has_sha1_file(obj_req->oid.hash)) {
+	if (has_object_file(&obj_req->oid)) {
 		if (obj_req->req != NULL)
 			abort_http_object_request(obj_req->req);
 		abort_object_request(obj_req);
@@ -518,17 +526,8 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 		req->localfile = -1;
 	}
 
-	/*
-	 * we turned off CURLOPT_FAILONERROR to avoid losing a
-	 * persistent connection and got CURLE_OK.
-	 */
-	if (req->http_code >= 300 && req->curl_result == CURLE_OK &&
-			(starts_with(req->url, "http://") ||
-			 starts_with(req->url, "https://"))) {
-		req->curl_result = CURLE_HTTP_RETURNED_ERROR;
-		xsnprintf(req->errorstr, sizeof(req->errorstr),
-			  "HTTP request failed");
-	}
+	normalize_curl_result(&req->curl_result, req->http_code,
+			      req->errorstr, sizeof(req->errorstr));
 
 	if (obj_req->state == ABORTED) {
 		ret = error("Request for %s aborted", hex);
@@ -543,11 +542,11 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 	} else if (req->zret != Z_STREAM_END) {
 		walker->corrupt_object_found++;
 		ret = error("File %s (%s) corrupt", hex, req->url);
-	} else if (!hasheq(obj_req->oid.hash, req->real_sha1)) {
+	} else if (!oideq(&obj_req->oid, &req->real_oid)) {
 		ret = error("File %s has bad hash", hex);
 	} else if (req->rename < 0) {
 		struct strbuf buf = STRBUF_INIT;
-		sha1_file_name(the_repository, &buf, req->sha1);
+		loose_object_path(the_repository, &buf, &req->oid);
 		ret = error("unable to write sha1 filename %s", buf.buf);
 		strbuf_release(&buf);
 	}
@@ -557,20 +556,20 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 	return ret;
 }
 
-static int fetch(struct walker *walker, unsigned char *sha1)
+static int fetch(struct walker *walker, unsigned char *hash)
 {
 	struct walker_data *data = walker->data;
 	struct alt_base *altbase = data->alt;
 
-	if (!fetch_object(walker, sha1))
+	if (!fetch_object(walker, hash))
 		return 0;
 	while (altbase) {
-		if (!http_fetch_pack(walker, altbase, sha1))
+		if (!http_fetch_pack(walker, altbase, hash))
 			return 0;
 		fetch_alternates(walker, data->alt->base);
 		altbase = altbase->next;
 	}
-	return error("Unable to find %s under %s", sha1_to_hex(sha1),
+	return error("Unable to find %s under %s", hash_to_hex(hash),
 		     data->alt->base);
 }
 

@@ -33,6 +33,7 @@ int ref_paranoia = -1;
 int repository_format_precious_objects;
 char *repository_format_partial_clone;
 const char *core_partial_clone_filter_default;
+int repository_format_worktree_config;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
 const char *apply_default_whitespace;
@@ -71,7 +72,6 @@ int core_apply_sparse_checkout;
 int merge_log_config = -1;
 int precomposed_unicode = -1; /* see probe_utf8_pathname_composition() */
 unsigned long pack_size_limit_cfg;
-enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 enum log_refs_config log_all_ref_updates = LOG_REFS_UNSET;
 
 #ifndef PROTECT_HFS_DEFAULT
@@ -107,7 +107,7 @@ char *git_work_tree_cfg;
 
 static char *git_namespace;
 
-static const char *super_prefix;
+static char *super_prefix;
 
 /*
  * Repository-local GIT_* environment variables; see cache.h for details.
@@ -240,7 +240,7 @@ const char *get_super_prefix(void)
 {
 	static int initialized;
 	if (!initialized) {
-		super_prefix = getenv(GIT_SUPER_PREFIX_ENVIRONMENT);
+		super_prefix = xstrdup_or_null(getenv(GIT_SUPER_PREFIX_ENVIRONMENT));
 		initialized = 1;
 	}
 	return super_prefix;
@@ -274,9 +274,9 @@ const char *get_git_work_tree(void)
 
 char *get_object_directory(void)
 {
-	if (!the_repository->objects->objectdir)
+	if (!the_repository->objects->odb)
 		BUG("git environment hasn't been setup");
-	return the_repository->objects->objectdir;
+	return the_repository->objects->odb->path;
 }
 
 int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)

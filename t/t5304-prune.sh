@@ -118,10 +118,10 @@ test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 
 test_expect_success 'prune: prune former HEAD after checking out branch' '
 
-	head_sha1=$(git rev-parse HEAD) &&
+	head_oid=$(git rev-parse HEAD) &&
 	git checkout --quiet master &&
 	git prune -v >prune_actual &&
-	grep "$head_sha1" prune_actual
+	grep "$head_oid" prune_actual
 
 '
 
@@ -265,13 +265,25 @@ EOF
 '
 
 test_expect_success 'prune .git/shallow' '
-	SHA1=$(echo hi|git commit-tree HEAD^{tree}) &&
-	echo $SHA1 >.git/shallow &&
+	oid=$(echo hi|git commit-tree HEAD^{tree}) &&
+	echo $oid >.git/shallow &&
 	git prune --dry-run >out &&
-	grep $SHA1 .git/shallow &&
-	grep $SHA1 out &&
+	grep $oid .git/shallow &&
+	grep $oid out &&
 	git prune &&
 	test_path_is_missing .git/shallow
+'
+
+test_expect_success 'prune .git/shallow when there are no loose objects' '
+	oid=$(echo hi|git commit-tree HEAD^{tree}) &&
+	echo $oid >.git/shallow &&
+	git update-ref refs/heads/shallow-tip $oid &&
+	git repack -ad &&
+	# verify assumption that all loose objects are gone
+	git count-objects | grep ^0 &&
+	git prune &&
+	echo $oid >expect &&
+	test_cmp expect .git/shallow
 '
 
 test_expect_success 'prune: handle alternate object database' '
@@ -314,8 +326,8 @@ test_expect_success 'prune: handle HEAD reflog in multiple worktrees' '
 		git reset --hard HEAD^
 	) &&
 	git prune --expire=now &&
-	SHA1=`git hash-object expected` &&
-	git -C third-worktree show "$SHA1" >actual &&
+	oid=`git hash-object expected` &&
+	git -C third-worktree show "$oid" >actual &&
 	test_cmp expected actual
 '
 
@@ -327,6 +339,14 @@ test_expect_success 'prune: handle expire option correctly' '
 	test_i18ngrep "malformed expiration" error &&
 
 	git prune --no-expire
+'
+
+test_expect_success 'trivial prune with bitmaps enabled' '
+	git repack -adb &&
+	blob=$(echo bitmap-unreachable-blob | git hash-object -w --stdin) &&
+	git prune --expire=now &&
+	git cat-file -e HEAD &&
+	test_must_fail git cat-file -e $blob
 '
 
 test_done

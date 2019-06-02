@@ -46,6 +46,15 @@ and add::
       config multimailhook.mailingList = # Where emails should be sent
       config multimailhook.from = # From address to use
 
+Note that by default, gitolite forbids ``<`` and ``>`` in variable
+values (for security/paranoia reasons, see
+`compensating for UNSAFE_PATT
+<http://gitolite.com/gitolite/git-config/index.html#compensating-for-unsafe95patt>`__
+in gitolite's documentation for explanations and a way to disable
+this). As a consequence, you will not be able to use ``First Last
+<First.Last@example.com>`` as recipient email, but specifying
+``First.Last@example.com`` alone works.
+
 Obviously, you can customize all parameters on a per-repository basis by
 adding these ``config multimailhook.*`` lines in the section
 corresponding to a repository or set of repositories.

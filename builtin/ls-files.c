@@ -5,7 +5,6 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
@@ -113,11 +112,11 @@ static void print_debug(const struct cache_entry *ce)
 	if (debug_mode) {
 		const struct stat_data *sd = &ce->ce_stat_data;
 
-		printf("  ctime: %d:%d\n", sd->sd_ctime.sec, sd->sd_ctime.nsec);
-		printf("  mtime: %d:%d\n", sd->sd_mtime.sec, sd->sd_mtime.nsec);
-		printf("  dev: %d\tino: %d\n", sd->sd_dev, sd->sd_ino);
-		printf("  uid: %d\tgid: %d\n", sd->sd_uid, sd->sd_gid);
-		printf("  size: %d\tflags: %x\n", sd->sd_size, ce->ce_flags);
+		printf("  ctime: %u:%u\n", sd->sd_ctime.sec, sd->sd_ctime.nsec);
+		printf("  mtime: %u:%u\n", sd->sd_mtime.sec, sd->sd_mtime.nsec);
+		printf("  dev: %u\tino: %u\n", sd->sd_dev, sd->sd_ino);
+		printf("  uid: %u\tgid: %u\n", sd->sd_uid, sd->sd_gid);
+		printf("  size: %u\tflags: %x\n", sd->sd_size, ce->ce_flags);
 	}
 }
 
@@ -206,17 +205,19 @@ static void show_files(struct repository *repo, struct dir_struct *dir);
 static void show_submodule(struct repository *superproject,
 			   struct dir_struct *dir, const char *path)
 {
-	struct repository submodule;
+	struct repository subrepo;
+	const struct submodule *sub = submodule_from_path(superproject,
+							  &null_oid, path);
 
-	if (repo_submodule_init(&submodule, superproject, path))
+	if (repo_submodule_init(&subrepo, superproject, sub))
 		return;
 
-	if (repo_read_index(&submodule) < 0)
+	if (repo_read_index(&subrepo) < 0)
 		die("index file corrupt");
 
-	show_files(&submodule, dir);
+	show_files(&subrepo, dir);
 
-	repo_clear(&submodule);
+	repo_clear(&subrepo);
 }
 
 static void show_ce(struct repository *repo, struct dir_struct *dir,
@@ -441,7 +442,7 @@ void overlay_tree_on_index(struct index_state *istate,
 			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
 	} else
 		memset(&pathspec, 0, sizeof(pathspec));
-	if (read_tree(tree, 1, &pathspec, istate))
+	if (read_tree(the_repository, tree, 1, &pathspec, istate))
 		die("unable to read tree entries %s", tree_name);
 
 	for (i = 0; i < istate->cache_nr; i++) {
@@ -475,6 +476,8 @@ static int option_parse_exclude(const struct option *opt,
 {
 	struct string_list *exclude_list = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	exc_given = 1;
 	string_list_append(exclude_list, arg);
 
@@ -486,6 +489,8 @@ static int option_parse_exclude_from(const struct option *opt,
 {
 	struct dir_struct *dir = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	exc_given = 1;
 	add_excludes_from_file(dir, arg);
 
@@ -496,6 +501,9 @@ static int option_parse_exclude_standard(const struct option *opt,
 					 const char *arg, int unset)
 {
 	struct dir_struct *dir = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	exc_given = 1;
 	setup_standard_excludes(dir);
@@ -548,15 +556,16 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			    N_("show resolve-undo information")),
 		{ OPTION_CALLBACK, 'x', "exclude", &exclude_list, N_("pattern"),
 			N_("skip files matching pattern"),
-			0, option_parse_exclude },
+			PARSE_OPT_NONEG, option_parse_exclude },
 		{ OPTION_CALLBACK, 'X', "exclude-from", &dir, N_("file"),
 			N_("exclude patterns are read from <file>"),
-			0, option_parse_exclude_from },
+			PARSE_OPT_NONEG, option_parse_exclude_from },
 		OPT_STRING(0, "exclude-per-directory", &dir.exclude_per_dir, N_("file"),
 			N_("read additional per-directory exclude patterns in <file>")),
 		{ OPTION_CALLBACK, 0, "exclude-standard", &dir, NULL,
 			N_("add the standard git exclusions"),
-			PARSE_OPT_NOARG, option_parse_exclude_standard },
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			option_parse_exclude_standard },
 		OPT_SET_INT_F(0, "full-name", &prefix_len,
 			      N_("make the output relative to the project top directory"),
 			      0, PARSE_OPT_NONEG),
@@ -671,7 +680,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	if (ps_matched) {
 		int bad;
-		bad = report_path_error(ps_matched, &pathspec, prefix);
+		bad = report_path_error(ps_matched, &pathspec);
 		if (bad)
 			fprintf(stderr, "Did you forget to 'git add'?\n");
 

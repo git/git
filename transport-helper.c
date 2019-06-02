@@ -127,6 +127,8 @@ static struct child_process *get_helper(struct transport *transport)
 		argv_array_pushf(&helper->env_array, "%s=%s",
 				 GIT_DIR_ENVIRONMENT, get_git_dir());
 
+	helper->trace2_child_class = helper->args.argv[0]; /* "remote-<name>" */
+
 	code = start_command(helper);
 	if (code < 0 && errno == ENOENT)
 		die(_("unable to find remote helper for '%s'"), data->name);
@@ -573,7 +575,7 @@ static int run_connect(struct transport *transport, struct strbuf *cmdbuf)
 			fprintf(stderr, "Debug: Falling back to dumb "
 				"transport.\n");
 	} else {
-		die(_(_("unknown response to connect: %s")),
+		die(_("unknown response to connect: %s"),
 		    cmdbuf->buf);
 	}
 
@@ -679,10 +681,15 @@ static int fetch(struct transport *transport,
 	if (data->transport_options.update_shallow)
 		set_helper_option(transport, "update-shallow", "true");
 
-	if (data->transport_options.filter_options.choice)
-		set_helper_option(
-			transport, "filter",
-			data->transport_options.filter_options.filter_spec);
+	if (data->transport_options.filter_options.choice) {
+		struct strbuf expanded_filter_spec = STRBUF_INIT;
+		expand_list_objects_filter_spec(
+			&data->transport_options.filter_options,
+			&expanded_filter_spec);
+		set_helper_option(transport, "filter",
+				  expanded_filter_spec.buf);
+		strbuf_release(&expanded_filter_spec);
+	}
 
 	if (data->transport_options.negotiation_tips)
 		warning("Ignoring --negotiation-tip because the protocol does not support it.");
@@ -1026,7 +1033,8 @@ static int push_refs(struct transport *transport,
 }
 
 
-static int has_attribute(const char *attrs, const char *attr) {
+static int has_attribute(const char *attrs, const char *attr)
+{
 	int len;
 	if (!attrs)
 		return 0;
@@ -1225,9 +1233,8 @@ static int udt_do_read(struct unidirectional_transfer *t)
 		return 0;	/* No space for more. */
 
 	transfer_debug("%s is readable", t->src_name);
-	bytes = read(t->src, t->buf + t->bufuse, BUFFERSIZE - t->bufuse);
-	if (bytes < 0 && errno != EWOULDBLOCK && errno != EAGAIN &&
-		errno != EINTR) {
+	bytes = xread(t->src, t->buf + t->bufuse, BUFFERSIZE - t->bufuse);
+	if (bytes < 0) {
 		error_errno(_("read(%s) failed"), t->src_name);
 		return -1;
 	} else if (bytes == 0) {
@@ -1254,7 +1261,7 @@ static int udt_do_write(struct unidirectional_transfer *t)
 
 	transfer_debug("%s is writable", t->dest_name);
 	bytes = xwrite(t->dest, t->buf, t->bufuse);
-	if (bytes < 0 && errno != EWOULDBLOCK) {
+	if (bytes < 0) {
 		error_errno(_("write(%s) failed"), t->dest_name);
 		return -1;
 	} else if (bytes > 0) {

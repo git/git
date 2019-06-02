@@ -11,6 +11,7 @@
  *
  * Copyright (C) 2016 Johannes Schindelin
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
@@ -23,7 +24,6 @@
 #include "object-store.h"
 #include "dir.h"
 
-static char *diff_gui_tool;
 static int trust_exit_code;
 
 static const char *const builtin_difftool_usage[] = {
@@ -33,11 +33,6 @@ static const char *const builtin_difftool_usage[] = {
 
 static int difftool_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "diff.guitool")) {
-		diff_gui_tool = xstrdup(value);
-		return 0;
-	}
-
 	if (!strcmp(var, "difftool.trustexitcode")) {
 		trust_exit_code = git_config_bool(var, value);
 		return 0;
@@ -64,14 +59,12 @@ static int parse_index_info(char *p, int *mode1, int *mode2,
 	*mode2 = (int)strtol(p + 1, &p, 8);
 	if (*p != ' ')
 		return error("expected ' ', got '%c'", *p);
-	if (get_oid_hex(++p, oid1))
-		return error("expected object ID, got '%s'", p + 1);
-	p += GIT_SHA1_HEXSZ;
+	if (parse_oid_hex(++p, oid1, (const char **)&p))
+		return error("expected object ID, got '%s'", p);
 	if (*p != ' ')
 		return error("expected ' ', got '%c'", *p);
-	if (get_oid_hex(++p, oid2))
-		return error("expected object ID, got '%s'", p + 1);
-	p += GIT_SHA1_HEXSZ;
+	if (parse_oid_hex(++p, oid2, (const char **)&p))
+		return error("expected object ID, got '%s'", p);
 	if (*p != ' ')
 		return error("expected ' ', got '%c'", *p);
 	*status = *++p;
@@ -323,7 +316,7 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 	int ret;
 
 	ce = make_transient_cache_entry(mode, oid, path, 0);
-	ret = checkout_entry(ce, state, NULL);
+	ret = checkout_entry(ce, state, NULL, NULL);
 
 	discard_cache_entry(ce);
 	return ret;
@@ -689,7 +682,7 @@ static int run_file_diff(int prompt, const char *prefix,
 int cmd_difftool(int argc, const char **argv, const char *prefix)
 {
 	int use_gui_tool = 0, dir_diff = 0, prompt = -1, symlinks = 0,
-	    tool_help = 0;
+	    tool_help = 0, no_index = 0;
 	static char *difftool_cmd = NULL, *extcmd = NULL;
 	struct option builtin_difftool_options[] = {
 		OPT_BOOL('g', "gui", &use_gui_tool,
@@ -713,6 +706,7 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 			    "tool returns a non - zero exit code")),
 		OPT_STRING('x', "extcmd", &extcmd, N_("command"),
 			   N_("specify a custom command for viewing diffs")),
+		OPT_ARGUMENT("no-index", &no_index, N_("passed to `diff`")),
 		OPT_END()
 	};
 
@@ -726,12 +720,21 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	if (tool_help)
 		return print_tool_help();
 
-	/* NEEDSWORK: once we no longer spawn anything, remove this */
-	setenv(GIT_DIR_ENVIRONMENT, absolute_path(get_git_dir()), 1);
-	setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(get_git_work_tree()), 1);
+	if (!no_index && !startup_info->have_repository)
+		die(_("difftool requires worktree or --no-index"));
 
-	if (use_gui_tool && diff_gui_tool && *diff_gui_tool)
-		setenv("GIT_DIFF_TOOL", diff_gui_tool, 1);
+	if (!no_index){
+		setup_work_tree();
+		setenv(GIT_DIR_ENVIRONMENT, absolute_path(get_git_dir()), 1);
+		setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(get_git_work_tree()), 1);
+	} else if (dir_diff)
+		die(_("--dir-diff is incompatible with --no-index"));
+
+	if (use_gui_tool + !!difftool_cmd + !!extcmd > 1)
+		die(_("--gui, --tool and --extcmd are mutually exclusive"));
+
+	if (use_gui_tool)
+		setenv("GIT_MERGETOOL_GUI", "true", 1);
 	else if (difftool_cmd) {
 		if (*difftool_cmd)
 			setenv("GIT_DIFF_TOOL", difftool_cmd, 1);

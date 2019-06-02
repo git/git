@@ -468,29 +468,32 @@ test_expect_success 'pack-objects in too-many-packs mode' '
 	git fsck
 '
 
-#
-# WARNING!
-#
-# The following test is destructive.  Please keep the next
-# two tests at the end of this file.
-#
+test_expect_success 'setup: fake a SHA1 hash collision' '
+	git init corrupt &&
+	(
+		cd corrupt &&
+		long_a=$(git hash-object -w ../a | sed -e "s!^..!&/!") &&
+		long_b=$(git hash-object -w ../b | sed -e "s!^..!&/!") &&
+		test -f	.git/objects/$long_b &&
+		cp -f	.git/objects/$long_a \
+			.git/objects/$long_b
+	)
+'
 
-test_expect_success \
-    'fake a SHA1 hash collision' \
-    'long_a=$(git hash-object a | sed -e "s!^..!&/!") &&
-     long_b=$(git hash-object b | sed -e "s!^..!&/!") &&
-     test -f	.git/objects/$long_b &&
-     cp -f	.git/objects/$long_a \
-		.git/objects/$long_b'
+test_expect_success 'make sure index-pack detects the SHA1 collision' '
+	(
+		cd corrupt &&
+		test_must_fail git index-pack -o ../bad.idx ../test-3.pack 2>msg &&
+		test_i18ngrep "SHA1 COLLISION FOUND" msg
+	)
+'
 
-test_expect_success \
-    'make sure index-pack detects the SHA1 collision' \
-    'test_must_fail git index-pack -o bad.idx test-3.pack 2>msg &&
-     test_i18ngrep "SHA1 COLLISION FOUND" msg'
-
-test_expect_success \
-    'make sure index-pack detects the SHA1 collision (large blobs)' \
-    'test_must_fail git -c core.bigfilethreshold=1 index-pack -o bad.idx test-3.pack 2>msg &&
-     test_i18ngrep "SHA1 COLLISION FOUND" msg'
+test_expect_success 'make sure index-pack detects the SHA1 collision (large blobs)' '
+	(
+		cd corrupt &&
+		test_must_fail git -c core.bigfilethreshold=1 index-pack -o ../bad.idx ../test-3.pack 2>msg &&
+		test_i18ngrep "SHA1 COLLISION FOUND" msg
+	)
+'
 
 test_done

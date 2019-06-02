@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "lockfile.h"
@@ -596,7 +597,7 @@ static struct cache_entry *read_one_ent(const char *which,
 					struct object_id *ent, const char *path,
 					int namelen, int stage)
 {
-	unsigned mode;
+	unsigned short mode;
 	struct object_id oid;
 	struct cache_entry *ce;
 
@@ -723,7 +724,7 @@ static int do_unresolve(int ac, const char **av,
 }
 
 static int do_reupdate(int ac, const char **av,
-		       const char *prefix, int prefix_length)
+		       const char *prefix)
 {
 	/* Read HEAD and run update-index on paths that are
 	 * merged and already different between index and HEAD.
@@ -782,7 +783,7 @@ struct refresh_params {
 static int refresh(struct refresh_params *o, unsigned int flag)
 {
 	setup_work_tree();
-	read_cache_preload(NULL);
+	read_cache();
 	*o->has_errors |= refresh_cache(o->flags | flag);
 	return 0;
 }
@@ -790,12 +791,16 @@ static int refresh(struct refresh_params *o, unsigned int flag)
 static int refresh_callback(const struct option *opt,
 				const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	return refresh(opt->value, 0);
 }
 
 static int really_refresh_callback(const struct option *opt,
 				const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	return refresh(opt->value, REFRESH_REALLY);
 }
 
@@ -803,6 +808,7 @@ static int chmod_callback(const struct option *opt,
 				const char *arg, int unset)
 {
 	char *flip = opt->value;
+	BUG_ON_OPT_NEG(unset);
 	if ((arg[0] != '-' && arg[0] != '+') || arg[1] != 'x' || arg[2])
 		return error("option 'chmod' expects \"+x\" or \"-x\"");
 	*flip = arg[0];
@@ -812,6 +818,8 @@ static int chmod_callback(const struct option *opt,
 static int resolve_undo_clear_callback(const struct option *opt,
 				const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	resolve_undo_clear();
 	return 0;
 }
@@ -840,12 +848,16 @@ static int parse_new_style_cacheinfo(const char *arg,
 	return 0;
 }
 
-static int cacheinfo_callback(struct parse_opt_ctx_t *ctx,
-				const struct option *opt, int unset)
+static enum parse_opt_result cacheinfo_callback(
+	struct parse_opt_ctx_t *ctx, const struct option *opt,
+	const char *arg, int unset)
 {
 	struct object_id oid;
 	unsigned int mode;
 	const char *path;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	if (!parse_new_style_cacheinfo(ctx->argv[1], &mode, &oid, &path)) {
 		if (add_cacheinfo(mode, &oid, path, 0))
@@ -864,10 +876,14 @@ static int cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 	return 0;
 }
 
-static int stdin_cacheinfo_callback(struct parse_opt_ctx_t *ctx,
-			      const struct option *opt, int unset)
+static enum parse_opt_result stdin_cacheinfo_callback(
+	struct parse_opt_ctx_t *ctx, const struct option *opt,
+	const char *arg, int unset)
 {
 	int *nul_term_line = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	if (ctx->argc != 1)
 		return error("option '%s' must be the last argument", opt->long_name);
@@ -876,10 +892,14 @@ static int stdin_cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 	return 0;
 }
 
-static int stdin_callback(struct parse_opt_ctx_t *ctx,
-				const struct option *opt, int unset)
+static enum parse_opt_result stdin_callback(
+	struct parse_opt_ctx_t *ctx, const struct option *opt,
+	const char *arg, int unset)
 {
 	int *read_from_stdin = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	if (ctx->argc != 1)
 		return error("option '%s' must be the last argument", opt->long_name);
@@ -887,11 +907,15 @@ static int stdin_callback(struct parse_opt_ctx_t *ctx,
 	return 0;
 }
 
-static int unresolve_callback(struct parse_opt_ctx_t *ctx,
-				const struct option *opt, int flags)
+static enum parse_opt_result unresolve_callback(
+	struct parse_opt_ctx_t *ctx, const struct option *opt,
+	const char *arg, int unset)
 {
 	int *has_errors = opt->value;
 	const char *prefix = startup_info->prefix;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	/* consume remaining arguments. */
 	*has_errors = do_unresolve(ctx->argc, ctx->argv,
@@ -904,16 +928,19 @@ static int unresolve_callback(struct parse_opt_ctx_t *ctx,
 	return 0;
 }
 
-static int reupdate_callback(struct parse_opt_ctx_t *ctx,
-				const struct option *opt, int flags)
+static enum parse_opt_result reupdate_callback(
+	struct parse_opt_ctx_t *ctx, const struct option *opt,
+	const char *arg, int unset)
 {
 	int *has_errors = opt->value;
 	const char *prefix = startup_info->prefix;
 
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
+
 	/* consume remaining arguments. */
 	setup_work_tree();
-	*has_errors = do_reupdate(ctx->argc, ctx->argv,
-				prefix, prefix ? strlen(prefix) : 0);
+	*has_errors = do_reupdate(ctx->argc, ctx->argv, prefix);
 	if (*has_errors)
 		active_cache_changed = 0;
 
@@ -968,7 +995,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			N_("add the specified entry to the index"),
 			PARSE_OPT_NOARG | /* disallow --cacheinfo=<mode> form */
 			PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
-			(parse_opt_cb *) cacheinfo_callback},
+			NULL, 0,
+			cacheinfo_callback},
 		{OPTION_CALLBACK, 0, "chmod", &set_executable_bit, "(+|-)x",
 			N_("override the executable bit of the listed files"),
 			PARSE_OPT_NONEG,
@@ -994,19 +1022,19 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		{OPTION_LOWLEVEL_CALLBACK, 0, "stdin", &read_from_stdin, NULL,
 			N_("read list of paths to be updated from standard input"),
 			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			(parse_opt_cb *) stdin_callback},
+			NULL, 0, stdin_callback},
 		{OPTION_LOWLEVEL_CALLBACK, 0, "index-info", &nul_term_line, NULL,
 			N_("add entries from standard input to the index"),
 			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			(parse_opt_cb *) stdin_cacheinfo_callback},
+			NULL, 0, stdin_cacheinfo_callback},
 		{OPTION_LOWLEVEL_CALLBACK, 0, "unresolve", &has_errors, NULL,
 			N_("repopulate stages #2 and #3 for the listed paths"),
 			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			(parse_opt_cb *) unresolve_callback},
+			NULL, 0, unresolve_callback},
 		{OPTION_LOWLEVEL_CALLBACK, 'g', "again", &has_errors, NULL,
 			N_("only update entries that differ from HEAD"),
 			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			(parse_opt_cb *) reupdate_callback},
+			NULL, 0, reupdate_callback},
 		OPT_BIT(0, "ignore-missing", &refresh_args.flags,
 			N_("ignore files missing from worktree"),
 			REFRESH_IGNORE_MISSING),
@@ -1053,6 +1081,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	if (entries < 0)
 		die("cache corrupted");
 
+	the_index.updated_skipworktree = 1;
+
 	/*
 	 * Custom copy of parse_options() because we want to handle
 	 * filename arguments as they come.
@@ -1069,6 +1099,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		case PARSE_OPT_HELP:
 		case PARSE_OPT_ERROR:
 			exit(129);
+		case PARSE_OPT_COMPLETE:
+			exit(0);
 		case PARSE_OPT_NON_OPTION:
 		case PARSE_OPT_DONE:
 		{

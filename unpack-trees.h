@@ -56,7 +56,7 @@ struct unpack_trees_options {
 		     diff_index_cached,
 		     debug_unpack,
 		     skip_sparse_checkout,
-		     gently,
+		     quiet,
 		     exiting_early,
 		     show_all_errors,
 		     dry_run;

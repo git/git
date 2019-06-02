@@ -14,7 +14,7 @@
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
-static int write_bitmaps;
+static int write_bitmaps = -1;
 static int use_delta_islands;
 static char *packdir, *packtmp;
 
@@ -197,7 +197,7 @@ static int write_oid(const struct object_id *oid, struct packed_git *pack,
 
 	if (cmd->in == -1) {
 		if (start_command(cmd))
-			die("Could not start pack-objects to repack promisor objects");
+			die(_("could not start pack-objects to repack promisor objects"));
 	}
 
 	xwrite(cmd->in, oid_to_hex(oid), GIT_SHA1_HEXSZ);
@@ -235,8 +235,8 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 	while (strbuf_getline_lf(&line, out) != EOF) {
 		char *promisor_name;
 		int fd;
-		if (line.len != 40)
-			die("repack: Expecting 40 character sha1 lines only from pack-objects.");
+		if (line.len != the_hash_algo->hexsz)
+			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
 		string_list_append(names, line.buf);
 
 		/*
@@ -247,13 +247,13 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 					  line.buf);
 		fd = open(promisor_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
 		if (fd < 0)
-			die_errno("unable to create '%s'", promisor_name);
+			die_errno(_("unable to create '%s'"), promisor_name);
 		close(fd);
 		free(promisor_name);
 	}
 	fclose(out);
 	if (finish_command(&cmd))
-		die("Could not finish pack-objects to repack promisor objects");
+		die(_("could not finish pack-objects to repack promisor objects"));
 }
 
 #define ALL_INTO_ONE 1
@@ -343,6 +343,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	    (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE)))
 		die(_("--keep-unreachable and -A are incompatible"));
 
+	if (write_bitmaps < 0)
+		write_bitmaps = (pack_everything & ALL_INTO_ONE) &&
+				 is_bare_repository();
 	if (pack_kept_objects < 0)
 		pack_kept_objects = write_bitmaps;
 
@@ -407,8 +410,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
-		if (line.len != 40)
-			die("repack: Expecting 40 character sha1 lines only from pack-objects.");
+		if (line.len != the_hash_algo->hexsz)
+			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
 		string_list_append(&names, line.buf);
 	}
 	fclose(out);
@@ -417,7 +420,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		return ret;
 
 	if (!names.nr && !po_args.quiet)
-		printf("Nothing new to pack.\n");
+		printf_ln(_("Nothing new to pack."));
+
+	close_all_packs(the_repository->objects);
 
 	/*
 	 * Ok we have prepared all new packfiles.
@@ -431,8 +436,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			char *fname, *fname_old;
 
 			if (!midx_cleared) {
-				/* if we move a packfile, it will invalidated the midx */
-				clear_midx_file(get_object_directory());
+				clear_midx_file(the_repository);
 				midx_cleared = 1;
 			}
 
@@ -477,13 +481,13 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		if (rollback_failure.nr) {
 			int i;
 			fprintf(stderr,
-				"WARNING: Some packs in use have been renamed by\n"
-				"WARNING: prefixing old- to their name, in order to\n"
-				"WARNING: replace them with the new version of the\n"
-				"WARNING: file.  But the operation failed, and the\n"
-				"WARNING: attempt to rename them back to their\n"
-				"WARNING: original names also failed.\n"
-				"WARNING: Please rename them in %s manually:\n", packdir);
+				_("WARNING: Some packs in use have been renamed by\n"
+				  "WARNING: prefixing old- to their name, in order to\n"
+				  "WARNING: replace them with the new version of the\n"
+				  "WARNING: file.  But the operation failed, and the\n"
+				  "WARNING: attempt to rename them back to their\n"
+				  "WARNING: original names also failed.\n"
+				  "WARNING: Please rename them in %s manually:\n"), packdir);
 			for (i = 0; i < rollback_failure.nr; i++)
 				fprintf(stderr, "WARNING:   old-%s -> %s\n",
 					rollback_failure.items[i].string,
@@ -535,25 +539,36 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	reprepare_packed_git(the_repository);
 
 	if (delete_redundant) {
+		const int hexsz = the_hash_algo->hexsz;
 		int opts = 0;
 		string_list_sort(&names);
 		for_each_string_list_item(item, &existing_packs) {
 			char *sha1;
 			size_t len = strlen(item->string);
-			if (len < 40)
+			if (len < hexsz)
 				continue;
-			sha1 = item->string + len - 40;
+			sha1 = item->string + len - hexsz;
 			if (!string_list_has_string(&names, sha1))
 				remove_redundant_pack(packdir, item->string);
 		}
 		if (!po_args.quiet && isatty(2))
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);
+
+		if (!keep_unreachable &&
+		    (!(pack_everything & LOOSEN_UNREACHABLE) ||
+		     unpack_unreachable) &&
+		    is_repository_shallow(the_repository))
+			prune_shallow(PRUNE_QUICK);
 	}
 
 	if (!no_update_server_info)
 		update_server_info(0);
 	remove_temporary_files();
+
+	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0))
+		write_midx_file(get_object_directory());
+
 	string_list_clear(&names, 0);
 	string_list_clear(&rollback, 0);
 	string_list_clear(&existing_packs, 0);

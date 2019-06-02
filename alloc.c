@@ -99,18 +99,23 @@ void *alloc_object_node(struct repository *r)
 	return obj;
 }
 
-unsigned int alloc_commit_index(struct repository *r)
+static unsigned int alloc_commit_index(struct repository *r)
 {
 	return r->parsed_objects->commit_count++;
+}
+
+void init_commit_node(struct repository *r, struct commit *c)
+{
+	c->object.type = OBJ_COMMIT;
+	c->index = alloc_commit_index(r);
+	c->graph_pos = COMMIT_NOT_FROM_GRAPH;
+	c->generation = GENERATION_NUMBER_INFINITY;
 }
 
 void *alloc_commit_node(struct repository *r)
 {
 	struct commit *c = alloc_node(r->parsed_objects->commit_state, sizeof(struct commit));
-	c->object.type = OBJ_COMMIT;
-	c->index = alloc_commit_index(r);
-	c->graph_pos = COMMIT_NOT_FROM_GRAPH;
-	c->generation = GENERATION_NUMBER_INFINITY;
+	init_commit_node(r, c);
 	return c;
 }
 

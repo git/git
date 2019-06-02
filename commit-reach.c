@@ -30,7 +30,8 @@ static int queue_has_nonstale(struct prio_queue *queue)
 }
 
 /* all input commits in one and twos[] must have been parsed! */
-static struct commit_list *paint_down_to_common(struct commit *one, int n,
+static struct commit_list *paint_down_to_common(struct repository *r,
+						struct commit *one, int n,
 						struct commit **twos,
 						int min_generation)
 {
@@ -83,7 +84,7 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n,
 			parents = parents->next;
 			if ((p->object.flags & flags) == flags)
 				continue;
-			if (parse_commit(p))
+			if (repo_parse_commit(r, p))
 				return NULL;
 			p->object.flags |= flags;
 			prio_queue_put(&queue, p);
@@ -94,7 +95,9 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n,
 	return result;
 }
 
-static struct commit_list *merge_bases_many(struct commit *one, int n, struct commit **twos)
+static struct commit_list *merge_bases_many(struct repository *r,
+					    struct commit *one, int n,
+					    struct commit **twos)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
@@ -109,14 +112,14 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 			return commit_list_insert(one, &result);
 	}
 
-	if (parse_commit(one))
+	if (repo_parse_commit(r, one))
 		return NULL;
 	for (i = 0; i < n; i++) {
-		if (parse_commit(twos[i]))
+		if (repo_parse_commit(r, twos[i]))
 			return NULL;
 	}
 
-	list = paint_down_to_common(one, n, twos, 0);
+	list = paint_down_to_common(r, one, n, twos, 0);
 
 	while (list) {
 		struct commit *commit = pop_commit(&list);
@@ -153,7 +156,7 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-static int remove_redundant(struct commit **array, int cnt)
+static int remove_redundant(struct repository *r, struct commit **array, int cnt)
 {
 	/*
 	 * Some commit in the array may be an ancestor of
@@ -171,7 +174,7 @@ static int remove_redundant(struct commit **array, int cnt)
 	ALLOC_ARRAY(filled_index, cnt - 1);
 
 	for (i = 0; i < cnt; i++)
-		parse_commit(array[i]);
+		repo_parse_commit(r, array[i]);
 	for (i = 0; i < cnt; i++) {
 		struct commit_list *common;
 		uint32_t min_generation = array[i]->generation;
@@ -187,8 +190,8 @@ static int remove_redundant(struct commit **array, int cnt)
 			if (array[j]->generation < min_generation)
 				min_generation = array[j]->generation;
 		}
-		common = paint_down_to_common(array[i], filled, work,
-					      min_generation);
+		common = paint_down_to_common(r, array[i], filled,
+					      work, min_generation);
 		if (array[i]->object.flags & PARENT2)
 			redundant[i] = 1;
 		for (j = 0; j < filled; j++)
@@ -213,7 +216,8 @@ static int remove_redundant(struct commit **array, int cnt)
 	return filled;
 }
 
-static struct commit_list *get_merge_bases_many_0(struct commit *one,
+static struct commit_list *get_merge_bases_many_0(struct repository *r,
+						  struct commit *one,
 						  int n,
 						  struct commit **twos,
 						  int cleanup)
@@ -223,7 +227,7 @@ static struct commit_list *get_merge_bases_many_0(struct commit *one,
 	struct commit_list *result;
 	int cnt, i;
 
-	result = merge_bases_many(one, n, twos);
+	result = merge_bases_many(r, one, n, twos);
 	for (i = 0; i < n; i++) {
 		if (one == twos[i])
 			return result;
@@ -246,7 +250,7 @@ static struct commit_list *get_merge_bases_many_0(struct commit *one,
 	clear_commit_marks(one, all_flags);
 	clear_commit_marks_many(n, twos, all_flags);
 
-	cnt = remove_redundant(rslt, cnt);
+	cnt = remove_redundant(r, rslt, cnt);
 	result = NULL;
 	for (i = 0; i < cnt; i++)
 		commit_list_insert_by_date(rslt[i], &result);
@@ -254,23 +258,27 @@ static struct commit_list *get_merge_bases_many_0(struct commit *one,
 	return result;
 }
 
-struct commit_list *get_merge_bases_many(struct commit *one,
-					 int n,
-					 struct commit **twos)
+struct commit_list *repo_get_merge_bases_many(struct repository *r,
+					      struct commit *one,
+					      int n,
+					      struct commit **twos)
 {
-	return get_merge_bases_many_0(one, n, twos, 1);
+	return get_merge_bases_many_0(r, one, n, twos, 1);
 }
 
-struct commit_list *get_merge_bases_many_dirty(struct commit *one,
-					       int n,
-					       struct commit **twos)
+struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
+						    struct commit *one,
+						    int n,
+						    struct commit **twos)
 {
-	return get_merge_bases_many_0(one, n, twos, 0);
+	return get_merge_bases_many_0(r, one, n, twos, 0);
 }
 
-struct commit_list *get_merge_bases(struct commit *one, struct commit *two)
+struct commit_list *repo_get_merge_bases(struct repository *r,
+					 struct commit *one,
+					 struct commit *two)
 {
-	return get_merge_bases_many_0(one, 1, &two, 1);
+	return get_merge_bases_many_0(r, one, 1, &two, 1);
 }
 
 /*
@@ -304,16 +312,17 @@ int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
 /*
  * Is "commit" an ancestor of one of the "references"?
  */
-int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit **reference)
+int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
+			     int nr_reference, struct commit **reference)
 {
 	struct commit_list *bases;
 	int ret = 0, i;
 	uint32_t min_generation = GENERATION_NUMBER_INFINITY;
 
-	if (parse_commit(commit))
+	if (repo_parse_commit(r, commit))
 		return ret;
 	for (i = 0; i < nr_reference; i++) {
-		if (parse_commit(reference[i]))
+		if (repo_parse_commit(r, reference[i]))
 			return ret;
 		if (reference[i]->generation < min_generation)
 			min_generation = reference[i]->generation;
@@ -322,7 +331,9 @@ int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit *
 	if (commit->generation > min_generation)
 		return ret;
 
-	bases = paint_down_to_common(commit, nr_reference, reference, commit->generation);
+	bases = paint_down_to_common(r, commit,
+				     nr_reference, reference,
+				     commit->generation);
 	if (commit->object.flags & PARENT2)
 		ret = 1;
 	clear_commit_marks(commit, all_flags);
@@ -334,9 +345,11 @@ int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit *
 /*
  * Is "commit" an ancestor of (i.e. reachable from) the "reference"?
  */
-int in_merge_bases(struct commit *commit, struct commit *reference)
+int repo_in_merge_bases(struct repository *r,
+			struct commit *commit,
+			struct commit *reference)
 {
-	return in_merge_bases_many(commit, 1, &reference);
+	return repo_in_merge_bases_many(r, commit, 1, &reference);
 }
 
 struct commit_list *reduce_heads(struct commit_list *heads)
@@ -365,7 +378,7 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 			p->item->object.flags &= ~STALE;
 		}
 	}
-	num_head = remove_redundant(array, num_head);
+	num_head = remove_redundant(the_repository, array, num_head);
 	for (i = 0; i < num_head; i++)
 		tail = &commit_list_insert(array[i], tail)->next;
 	free(array);
@@ -529,8 +542,8 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 
 static int compare_commits_by_gen(const void *_a, const void *_b)
 {
-	const struct commit *a = (const struct commit *)_a;
-	const struct commit *b = (const struct commit *)_b;
+	const struct commit *a = *(const struct commit * const *)_a;
+	const struct commit *b = *(const struct commit * const *)_b;
 
 	if (a->generation < b->generation)
 		return -1;
@@ -593,8 +606,10 @@ int can_all_from_reach_with_flag(struct object_array *from,
 		while (stack) {
 			struct commit_list *parent;
 
-			if (stack->item->object.flags & with_flag) {
+			if (stack->item->object.flags & (with_flag | RESULT)) {
 				pop_commit(&stack);
+				if (stack)
+					stack->item->object.flags |= RESULT;
 				continue;
 			}
 
@@ -687,4 +702,73 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 
 	object_array_clear(&from_objs);
 	return result;
+}
+
+struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
+					 struct commit **to, int nr_to,
+					 unsigned int reachable_flag)
+{
+	struct commit **item;
+	struct commit *current;
+	struct commit_list *found_commits = NULL;
+	struct commit **to_last = to + nr_to;
+	struct commit **from_last = from + nr_from;
+	uint32_t min_generation = GENERATION_NUMBER_INFINITY;
+	int num_to_find = 0;
+
+	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
+
+	for (item = to; item < to_last; item++) {
+		struct commit *c = *item;
+
+		parse_commit(c);
+		if (c->generation < min_generation)
+			min_generation = c->generation;
+
+		if (!(c->object.flags & PARENT1)) {
+			c->object.flags |= PARENT1;
+			num_to_find++;
+		}
+	}
+
+	for (item = from; item < from_last; item++) {
+		struct commit *c = *item;
+		if (!(c->object.flags & PARENT2)) {
+			c->object.flags |= PARENT2;
+			parse_commit(c);
+
+			prio_queue_put(&queue, *item);
+		}
+	}
+
+	while (num_to_find && (current = prio_queue_get(&queue)) != NULL) {
+		struct commit_list *parents;
+
+		if (current->object.flags & PARENT1) {
+			current->object.flags &= ~PARENT1;
+			current->object.flags |= reachable_flag;
+			commit_list_insert(current, &found_commits);
+			num_to_find--;
+		}
+
+		for (parents = current->parents; parents; parents = parents->next) {
+			struct commit *p = parents->item;
+
+			parse_commit(p);
+
+			if (p->generation < min_generation)
+				continue;
+
+			if (p->object.flags & PARENT2)
+				continue;
+
+			p->object.flags |= PARENT2;
+			prio_queue_put(&queue, p);
+		}
+	}
+
+	clear_commit_marks_many(nr_to, to, PARENT1);
+	clear_commit_marks_many(nr_from, from, PARENT2);
+
+	return found_commits;
 }

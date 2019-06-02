@@ -209,6 +209,8 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
 		return -1;
 	}
 
+	trace2_cmd_path(buf->buf);
+
 	return 0;
 }
 

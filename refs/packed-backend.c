@@ -274,8 +274,8 @@ struct snapshot_record {
 static int cmp_packed_ref_records(const void *v1, const void *v2)
 {
 	const struct snapshot_record *e1 = v1, *e2 = v2;
-	const char *r1 = e1->start + GIT_SHA1_HEXSZ + 1;
-	const char *r2 = e2->start + GIT_SHA1_HEXSZ + 1;
+	const char *r1 = e1->start + the_hash_algo->hexsz + 1;
+	const char *r2 = e2->start + the_hash_algo->hexsz + 1;
 
 	while (1) {
 		if (*r1 == '\n')
@@ -297,7 +297,7 @@ static int cmp_packed_ref_records(const void *v1, const void *v2)
  */
 static int cmp_record_to_refname(const char *rec, const char *refname)
 {
-	const char *r1 = rec + GIT_SHA1_HEXSZ + 1;
+	const char *r1 = rec + the_hash_algo->hexsz + 1;
 	const char *r2 = refname;
 
 	while (1) {
@@ -344,7 +344,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		if (!eol)
 			/* The safety check should prevent this. */
 			BUG("unterminated line found in packed-refs");
-		if (eol - pos < GIT_SHA1_HEXSZ + 2)
+		if (eol - pos < the_hash_algo->hexsz + 2)
 			die_invalid_line(snapshot->refs->path,
 					 pos, eof - pos);
 		eol++;
@@ -456,7 +456,7 @@ static void verify_buffer_safe(struct snapshot *snapshot)
 		return;
 
 	last_line = find_start_of_record(start, eof - 1);
-	if (*(eof - 1) != '\n' || eof - last_line < GIT_SHA1_HEXSZ + 2)
+	if (*(eof - 1) != '\n' || eof - last_line < the_hash_algo->hexsz + 2)
 		die_invalid_line(snapshot->refs->path,
 				 last_line, eof - last_line);
 }
@@ -796,7 +796,7 @@ static int next_record(struct packed_ref_iterator *iter)
 
 	iter->base.flags = REF_ISPACKED;
 
-	if (iter->eof - p < GIT_SHA1_HEXSZ + 2 ||
+	if (iter->eof - p < the_hash_algo->hexsz + 2 ||
 	    parse_oid_hex(p, &iter->oid, &p) ||
 	    !isspace(*p++))
 		die_invalid_line(iter->snapshot->refs->path,
@@ -826,7 +826,7 @@ static int next_record(struct packed_ref_iterator *iter)
 
 	if (iter->pos < iter->eof && *iter->pos == '^') {
 		p = iter->pos + 1;
-		if (iter->eof - p < GIT_SHA1_HEXSZ + 1 ||
+		if (iter->eof - p < the_hash_algo->hexsz + 1 ||
 		    parse_oid_hex(p, &iter->peeled, &p) ||
 		    *p++ != '\n')
 			die_invalid_line(iter->snapshot->refs->path,

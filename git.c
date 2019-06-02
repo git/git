@@ -62,6 +62,13 @@ static int list_cmds(const char *spec)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
 	int i;
+	int nongit;
+
+	/*
+	* Set up the repository so we can pick up any repo-level config (like
+	* completion.commands).
+	*/
+	setup_git_directory_gently(&nongit);
 
 	while (*spec) {
 		const char *sep = strchrnul(spec, ',');
@@ -98,7 +105,8 @@ static int list_cmds(const char *spec)
 	return 0;
 }
 
-static void commit_pager_choice(void) {
+static void commit_pager_choice(void)
+{
 	switch (use_pager) {
 	case 0:
 		setenv("GIT_PAGER", "cat", 1);
@@ -146,16 +154,20 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				git_set_exec_path(cmd + 1);
 			else {
 				puts(git_exec_path());
+				trace2_cmd_name("_query_");
 				exit(0);
 			}
 		} else if (!strcmp(cmd, "--html-path")) {
 			puts(system_path(GIT_HTML_PATH));
+			trace2_cmd_name("_query_");
 			exit(0);
 		} else if (!strcmp(cmd, "--man-path")) {
 			puts(system_path(GIT_MAN_PATH));
+			trace2_cmd_name("_query_");
 			exit(0);
 		} else if (!strcmp(cmd, "--info-path")) {
 			puts(system_path(GIT_INFO_PATH));
+			trace2_cmd_name("_query_");
 			exit(0);
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			use_pager = 1;
@@ -284,6 +296,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			(*argv)++;
 			(*argc)--;
 		} else if (skip_prefix(cmd, "--list-cmds=", &cmd)) {
+			trace2_cmd_name("_query_");
 			if (!strcmp(cmd, "parseopt")) {
 				struct string_list list = STRING_LIST_INIT_DUP;
 				int i;
@@ -331,34 +344,39 @@ static int handle_alias(int *argcp, const char ***argv)
 			commit_pager_choice();
 
 			child.use_shell = 1;
+			child.trace2_child_class = "shell_alias";
 			argv_array_push(&child.args, alias_string + 1);
 			argv_array_pushv(&child.args, (*argv) + 1);
+
+			trace2_cmd_alias(alias_command, child.args.argv);
+			trace2_cmd_list_config();
+			trace2_cmd_name("_run_shell_alias_");
 
 			ret = run_command(&child);
 			if (ret >= 0)   /* normal exit */
 				exit(ret);
 
-			die_errno("while expanding alias '%s': '%s'",
-			    alias_command, alias_string + 1);
+			die_errno(_("while expanding alias '%s': '%s'"),
+				  alias_command, alias_string + 1);
 		}
 		count = split_cmdline(alias_string, &new_argv);
 		if (count < 0)
-			die("Bad alias.%s string: %s", alias_command,
-			    split_cmdline_strerror(count));
+			die(_("bad alias.%s string: %s"), alias_command,
+			    _(split_cmdline_strerror(count)));
 		option_count = handle_options(&new_argv, &count, &envchanged);
 		if (envchanged)
-			die("alias '%s' changes environment variables.\n"
-				 "You can use '!git' in the alias to do this",
-				 alias_command);
+			die(_("alias '%s' changes environment variables.\n"
+			      "You can use '!git' in the alias to do this"),
+			    alias_command);
 		memmove(new_argv - option_count, new_argv,
 				count * sizeof(char *));
 		new_argv -= option_count;
 
 		if (count < 1)
-			die("empty alias for %s", alias_command);
+			die(_("empty alias for %s"), alias_command);
 
 		if (!strcmp(alias_command, new_argv[0]))
-			die("recursive alias: %s", alias_command);
+			die(_("recursive alias: %s"), alias_command);
 
 		trace_argv_printf(new_argv,
 				  "trace: alias expansion: %s =>",
@@ -367,6 +385,9 @@ static int handle_alias(int *argcp, const char ***argv)
 		REALLOC_ARRAY(new_argv, count + *argcp);
 		/* insert after command name */
 		memcpy(new_argv + count, *argv + 1, sizeof(char *) * *argcp);
+
+		trace2_cmd_alias(alias_command, new_argv);
+		trace2_cmd_list_config();
 
 		*argv = new_argv;
 		*argcp += count - 1;
@@ -409,17 +430,19 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 
 	if (!help && get_super_prefix()) {
 		if (!(p->option & SUPPORT_SUPER_PREFIX))
-			die("%s doesn't support --super-prefix", p->cmd);
+			die(_("%s doesn't support --super-prefix"), p->cmd);
 	}
 
 	if (!help && p->option & NEED_WORK_TREE)
 		setup_work_tree();
 
 	trace_argv_printf(argv, "trace: built-in: git");
+	trace2_cmd_name(p->cmd);
+	trace2_cmd_list_config();
 
-	validate_cache_entries(&the_index);
+	validate_cache_entries(the_repository->index);
 	status = p->fn(argc, argv, prefix);
-	validate_cache_entries(&the_index);
+	validate_cache_entries(the_repository->index);
 
 	if (status)
 		return status;
@@ -433,11 +456,11 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 
 	/* Check for ENOSPC and EIO errors.. */
 	if (fflush(stdout))
-		die_errno("write failure on standard output");
+		die_errno(_("write failure on standard output"));
 	if (ferror(stdout))
-		die("unknown write failure on standard output");
+		die(_("unknown write failure on standard output"));
 	if (fclose(stdout))
-		die_errno("close failed on standard output");
+		die_errno(_("close failed on standard output"));
 	return 0;
 }
 
@@ -475,7 +498,7 @@ static struct cmd_struct commands[] = {
 	{ "diff-files", cmd_diff_files, RUN_SETUP | NEED_WORK_TREE | NO_PARSEOPT },
 	{ "diff-index", cmd_diff_index, RUN_SETUP | NO_PARSEOPT },
 	{ "diff-tree", cmd_diff_tree, RUN_SETUP | NO_PARSEOPT },
-	{ "difftool", cmd_difftool, RUN_SETUP | NEED_WORK_TREE },
+	{ "difftool", cmd_difftool, RUN_SETUP_GENTLY },
 	{ "fast-export", cmd_fast_export, RUN_SETUP },
 	{ "fetch", cmd_fetch, RUN_SETUP },
 	{ "fetch-pack", cmd_fetch_pack, RUN_SETUP | NO_PARSEOPT },
@@ -526,7 +549,13 @@ static struct cmd_struct commands[] = {
 	{ "push", cmd_push, RUN_SETUP },
 	{ "range-diff", cmd_range_diff, RUN_SETUP | USE_PAGER },
 	{ "read-tree", cmd_read_tree, RUN_SETUP | SUPPORT_SUPER_PREFIX},
-	{ "rebase--helper", cmd_rebase__helper, RUN_SETUP | NEED_WORK_TREE },
+	/*
+	 * NEEDSWORK: Until the rebase is independent and needs no redirection
+	 * to rebase shell script this is kept as is, then should be changed to
+	 * RUN_SETUP | NEED_WORK_TREE
+	 */
+	{ "rebase", cmd_rebase },
+	{ "rebase--interactive", cmd_rebase__interactive, RUN_SETUP | NEED_WORK_TREE },
 	{ "receive-pack", cmd_receive_pack },
 	{ "reflog", cmd_reflog, RUN_SETUP },
 	{ "remote", cmd_remote, RUN_SETUP },
@@ -541,13 +570,18 @@ static struct cmd_struct commands[] = {
 	{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
 	{ "rm", cmd_rm, RUN_SETUP },
 	{ "send-pack", cmd_send_pack, RUN_SETUP },
-	{ "serve", cmd_serve, RUN_SETUP },
 	{ "shortlog", cmd_shortlog, RUN_SETUP_GENTLY | USE_PAGER },
 	{ "show", cmd_show, RUN_SETUP },
 	{ "show-branch", cmd_show_branch, RUN_SETUP },
 	{ "show-index", cmd_show_index },
 	{ "show-ref", cmd_show_ref, RUN_SETUP },
 	{ "stage", cmd_add, RUN_SETUP | NEED_WORK_TREE },
+	/*
+	 * NEEDSWORK: Until the builtin stash is thoroughly robust and no
+	 * longer needs redirection to the stash shell script this is kept as
+	 * is, then should be changed to RUN_SETUP | NEED_WORK_TREE
+	 */
+	{ "stash", cmd_stash },
 	{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },
 	{ "stripspace", cmd_stripspace },
 	{ "submodule--helper", cmd_submodule__helper, RUN_SETUP | SUPPORT_SUPER_PREFIX | NO_PARSEOPT },
@@ -648,7 +682,7 @@ static void execv_dashed_external(const char **argv)
 	int status;
 
 	if (get_super_prefix())
-		die("%s doesn't support --super-prefix", argv[0]);
+		die(_("%s doesn't support --super-prefix"), argv[0]);
 
 	if (use_pager == -1 && !is_builtin(argv[0]))
 		use_pager = check_pager_config(argv[0]);
@@ -659,7 +693,14 @@ static void execv_dashed_external(const char **argv)
 	cmd.clean_on_exit = 1;
 	cmd.wait_after_clean = 1;
 	cmd.silent_exec_failure = 1;
+	cmd.trace2_child_class = "dashed";
 
+	trace2_cmd_name("_run_dashed_");
+
+	/*
+	 * The code in run_command() logs trace2 child_start/child_exit
+	 * events, so we do not need to report exec/exec_result events here.
+	 */
 	trace_argv_printf(cmd.args.argv, "trace: exec:");
 
 	/*
@@ -669,6 +710,12 @@ static void execv_dashed_external(const char **argv)
 	 * the program.
 	 */
 	status = run_command(&cmd);
+
+	/*
+	 * If the child process ran and we are now going to exit, emit a
+	 * generic string as our trace2 command verb to indicate that we
+	 * launched a dashed command.
+	 */
 	if (status >= 0)
 		exit(status);
 	else if (errno != ENOENT)
@@ -693,6 +740,43 @@ static int run_argv(int *argcp, const char ***argv)
 		 */
 		if (!done_alias)
 			handle_builtin(*argcp, *argv);
+
+#if 0 // TODO In GFW, need to amend a7924b655e940b06cb547c235d6bed9767929673 to include trace2_ and _tr2 lines.
+		else if (get_builtin(**argv)) {
+			struct argv_array args = ARGV_ARRAY_INIT;
+			int i;
+
+			/*
+			 * The current process is committed to launching a
+			 * child process to run the command named in (**argv)
+			 * and exiting.  Log a generic string as the trace2
+			 * command verb to indicate this.  Note that the child
+			 * process will log the actual verb when it runs.
+			 */
+			trace2_cmd_name("_run_git_alias_");
+
+			if (get_super_prefix())
+				die("%s doesn't support --super-prefix", **argv);
+
+			commit_pager_choice();
+
+			argv_array_push(&args, "git");
+			for (i = 0; i < *argcp; i++)
+				argv_array_push(&args, (*argv)[i]);
+
+			trace_argv_printf(args.argv, "trace: exec:");
+
+			/*
+			 * if we fail because the command is not found, it is
+			 * OK to return. Otherwise, we just pass along the status code.
+			 */
+			i = run_command_v_opt_tr2(args.argv, RUN_SILENT_EXEC_FAILURE |
+						  RUN_CLEAN_ON_EXIT, "git_alias");
+			if (i >= 0 || errno != ENOENT)
+				exit(i);
+			die("could not execute builtin %s", **argv);
+		}
+#endif // a7924b655e940b06cb547c235d6bed9767929673
 
 		/* .. then try the external ones */
 		execv_dashed_external(*argv);
@@ -760,7 +844,7 @@ int cmd_main(int argc, const char **argv)
 	if (skip_prefix(cmd, "git-", &cmd)) {
 		argv[0] = cmd;
 		handle_builtin(argc, argv);
-		die("cannot handle %s as a builtin", cmd);
+		die(_("cannot handle %s as a builtin"), cmd);
 	}
 
 	/* Look for flags.. */
@@ -773,7 +857,7 @@ int cmd_main(int argc, const char **argv)
 	} else {
 		/* The user didn't specify a command; give them help */
 		commit_pager_choice();
-		printf("usage: %s\n\n", git_usage_string);
+		printf(_("usage: %s\n\n"), git_usage_string);
 		list_common_cmds_help();
 		printf("\n%s\n", _(git_more_info_string));
 		exit(1);

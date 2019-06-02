@@ -16,7 +16,7 @@ __attribute__((format (printf, 2, 3)))
 int utf8_fprintf(FILE *, const char *, ...);
 
 extern const char utf8_bom[];
-extern int skip_utf8_bom(char **, size_t);
+int skip_utf8_bom(char **, size_t);
 
 void strbuf_add_wrapped_text(struct strbuf *buf,
 		const char *text, int indent, int indent2, int width);
@@ -27,7 +27,7 @@ void strbuf_utf8_replace(struct strbuf *sb, int pos, int width,
 
 #ifndef NO_ICONV
 char *reencode_string_iconv(const char *in, size_t insz,
-			    iconv_t conv, size_t *outsz);
+			    iconv_t conv, size_t bom_len, size_t *outsz);
 char *reencode_string_len(const char *in, size_t insz,
 			  const char *out_encoding,
 			  const char *in_encoding,

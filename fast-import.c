@@ -1,157 +1,3 @@
-/*
-(See Documentation/git-fast-import.txt for maintained documentation.)
-Format of STDIN stream:
-
-  stream ::= cmd*;
-
-  cmd ::= new_blob
-        | new_commit
-        | new_tag
-        | reset_branch
-        | checkpoint
-        | progress
-        ;
-
-  new_blob ::= 'blob' lf
-    mark?
-    file_content;
-  file_content ::= data;
-
-  new_commit ::= 'commit' sp ref_str lf
-    mark?
-    ('author' (sp name)? sp '<' email '>' sp when lf)?
-    'committer' (sp name)? sp '<' email '>' sp when lf
-    commit_msg
-    ('from' sp commit-ish lf)?
-    ('merge' sp commit-ish lf)*
-    (file_change | ls)*
-    lf?;
-  commit_msg ::= data;
-
-  ls ::= 'ls' sp '"' quoted(path) '"' lf;
-
-  file_change ::= file_clr
-    | file_del
-    | file_rnm
-    | file_cpy
-    | file_obm
-    | file_inm;
-  file_clr ::= 'deleteall' lf;
-  file_del ::= 'D' sp path_str lf;
-  file_rnm ::= 'R' sp path_str sp path_str lf;
-  file_cpy ::= 'C' sp path_str sp path_str lf;
-  file_obm ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf;
-  file_inm ::= 'M' sp mode sp 'inline' sp path_str lf
-    data;
-  note_obm ::= 'N' sp (hexsha1 | idnum) sp commit-ish lf;
-  note_inm ::= 'N' sp 'inline' sp commit-ish lf
-    data;
-
-  new_tag ::= 'tag' sp tag_str lf
-    'from' sp commit-ish lf
-    ('tagger' (sp name)? sp '<' email '>' sp when lf)?
-    tag_msg;
-  tag_msg ::= data;
-
-  reset_branch ::= 'reset' sp ref_str lf
-    ('from' sp commit-ish lf)?
-    lf?;
-
-  checkpoint ::= 'checkpoint' lf
-    lf?;
-
-  progress ::= 'progress' sp not_lf* lf
-    lf?;
-
-     # note: the first idnum in a stream should be 1 and subsequent
-     # idnums should not have gaps between values as this will cause
-     # the stream parser to reserve space for the gapped values.  An
-     # idnum can be updated in the future to a new object by issuing
-     # a new mark directive with the old idnum.
-     #
-  mark ::= 'mark' sp idnum lf;
-  data ::= (delimited_data | exact_data)
-    lf?;
-
-    # note: delim may be any string but must not contain lf.
-    # data_line may contain any data but must not be exactly
-    # delim.
-  delimited_data ::= 'data' sp '<<' delim lf
-    (data_line lf)*
-    delim lf;
-
-     # note: declen indicates the length of binary_data in bytes.
-     # declen does not include the lf preceding the binary data.
-     #
-  exact_data ::= 'data' sp declen lf
-    binary_data;
-
-     # note: quoted strings are C-style quoting supporting \c for
-     # common escapes of 'c' (e..g \n, \t, \\, \") or \nnn where nnn
-     # is the signed byte value in octal.  Note that the only
-     # characters which must actually be escaped to protect the
-     # stream formatting is: \, " and LF.  Otherwise these values
-     # are UTF8.
-     #
-  commit-ish  ::= (ref_str | hexsha1 | sha1exp_str | idnum);
-  ref_str     ::= ref;
-  sha1exp_str ::= sha1exp;
-  tag_str     ::= tag;
-  path_str    ::= path    | '"' quoted(path)    '"' ;
-  mode        ::= '100644' | '644'
-                | '100755' | '755'
-                | '120000'
-                ;
-
-  declen ::= # unsigned 32 bit value, ascii base10 notation;
-  bigint ::= # unsigned integer value, ascii base10 notation;
-  binary_data ::= # file content, not interpreted;
-
-  when         ::= raw_when | rfc2822_when;
-  raw_when     ::= ts sp tz;
-  rfc2822_when ::= # Valid RFC 2822 date and time;
-
-  sp ::= # ASCII space character;
-  lf ::= # ASCII newline (LF) character;
-
-     # note: a colon (':') must precede the numerical value assigned to
-     # an idnum.  This is to distinguish it from a ref or tag name as
-     # GIT does not permit ':' in ref or tag strings.
-     #
-  idnum   ::= ':' bigint;
-  path    ::= # GIT style file path, e.g. "a/b/c";
-  ref     ::= # GIT ref name, e.g. "refs/heads/MOZ_GECKO_EXPERIMENT";
-  tag     ::= # GIT tag name, e.g. "FIREFOX_1_5";
-  sha1exp ::= # Any valid GIT SHA1 expression;
-  hexsha1 ::= # SHA1 in hexadecimal format;
-
-     # note: name and email are UTF8 strings, however name must not
-     # contain '<' or lf and email must not contain any of the
-     # following: '<', '>', lf.
-     #
-  name  ::= # valid GIT author/committer name;
-  email ::= # valid GIT author/committer email;
-  ts    ::= # time since the epoch in seconds, ascii base10 notation;
-  tz    ::= # GIT style timezone;
-
-     # note: comments, get-mark, ls-tree, and cat-blob requests may
-     # appear anywhere in the input, except within a data command. Any
-     # form of the data command always escapes the related input from
-     # comment processing.
-     #
-     # In case it is not clear, the '#' that starts the comment
-     # must be the first character on that line (an lf
-     # preceded it).
-     #
-
-  get_mark ::= 'get-mark' sp idnum lf;
-  cat_blob ::= 'cat-blob' sp (hexsha1 | idnum) lf;
-  ls_tree  ::= 'ls' sp (hexsha1 | idnum) sp path_str lf;
-
-  comment ::= '#' not_lf* lf;
-  not_lf  ::= # Any byte that is not ASCII newline (LF);
-*/
-
 #include "builtin.h"
 #include "cache.h"
 #include "repository.h"
@@ -182,6 +28,13 @@ Format of STDIN stream:
  * We abuse the setuid bit on directories to mean "do not delta".
  */
 #define NO_DELTA S_ISUID
+
+/*
+ * The amount of additional space required in order to write an object into the
+ * current pack. This is the hash lengths at the end of the pack, plus the
+ * length of one object ID.
+ */
+#define PACK_SIZE_THRESHOLD (the_hash_algo->rawsz * 3)
 
 struct object_entry {
 	struct pack_idx_entry idx;
@@ -896,7 +749,8 @@ static const char *create_index(void)
 	if (c != last)
 		die("internal consistency error creating the index");
 
-	tmpfile = write_idx_file(NULL, idx, object_count, &pack_idx_opts, pack_data->sha1);
+	tmpfile = write_idx_file(NULL, idx, object_count, &pack_idx_opts,
+				 pack_data->hash);
 	free(idx);
 	return tmpfile;
 }
@@ -907,7 +761,7 @@ static char *keep_pack(const char *curr_index_name)
 	struct strbuf name = STRBUF_INIT;
 	int keep_fd;
 
-	odb_pack_name(&name, pack_data->sha1, "keep");
+	odb_pack_name(&name, pack_data->hash, "keep");
 	keep_fd = odb_pack_keep(name.buf);
 	if (keep_fd < 0)
 		die_errno("cannot create keep file");
@@ -915,11 +769,11 @@ static char *keep_pack(const char *curr_index_name)
 	if (close(keep_fd))
 		die_errno("failed to write keep file");
 
-	odb_pack_name(&name, pack_data->sha1, "pack");
+	odb_pack_name(&name, pack_data->hash, "pack");
 	if (finalize_object_file(pack_data->pack_name, name.buf))
 		die("cannot store pack file");
 
-	odb_pack_name(&name, pack_data->sha1, "idx");
+	odb_pack_name(&name, pack_data->hash, "idx");
 	if (finalize_object_file(curr_index_name, name.buf))
 		die("cannot store index file");
 	free((void *)curr_index_name);
@@ -933,7 +787,7 @@ static void unkeep_all_packs(void)
 
 	for (k = 0; k < pack_id; k++) {
 		struct packed_git *p = all_packs[k];
-		odb_pack_name(&name, p->sha1, "keep");
+		odb_pack_name(&name, p->hash, "keep");
 		unlink_or_warn(name.buf);
 	}
 	strbuf_release(&name);
@@ -975,9 +829,9 @@ static void end_packfile(void)
 
 		close_pack_windows(pack_data);
 		finalize_hashfile(pack_file, cur_pack_oid.hash, 0);
-		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
-				    pack_data->pack_name, object_count,
-				    cur_pack_oid.hash, pack_size);
+		fixup_pack_header_footer(pack_data->pack_fd, pack_data->hash,
+					 pack_data->pack_name, object_count,
+					 cur_pack_oid.hash, pack_size);
 
 		if (object_count <= unpack_limit) {
 			if (!loosen_small_pack(pack_data)) {
@@ -1102,8 +956,9 @@ static int store_object(
 	git_deflate_end(&s);
 
 	/* Determine if we should auto-checkpoint. */
-	if ((max_packsize && (pack_size + 60 + s.total_out) > max_packsize)
-		|| (pack_size + 60 + s.total_out) < pack_size) {
+	if ((max_packsize
+		&& (pack_size + PACK_SIZE_THRESHOLD + s.total_out) > max_packsize)
+		|| (pack_size + PACK_SIZE_THRESHOLD + s.total_out) < pack_size) {
 
 		/* This new object needs to *not* have the current pack_id. */
 		e->pack_id = pack_id + 1;
@@ -1198,8 +1053,9 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	int status = Z_OK;
 
 	/* Determine if we should auto-checkpoint. */
-	if ((max_packsize && (pack_size + 60 + len) > max_packsize)
-		|| (pack_size + 60 + len) < pack_size)
+	if ((max_packsize
+		&& (pack_size + PACK_SIZE_THRESHOLD + len) > max_packsize)
+		|| (pack_size + PACK_SIZE_THRESHOLD + len) < pack_size)
 		cycle_packfile();
 
 	hashfile_checkpoint(pack_file, &checkpoint);
@@ -1394,7 +1250,7 @@ static void load_tree(struct tree_entry *root)
 		c += e->name->str_len + 1;
 		hashcpy(e->versions[0].oid.hash, (unsigned char *)c);
 		hashcpy(e->versions[1].oid.hash, (unsigned char *)c);
-		c += GIT_SHA1_RAWSZ;
+		c += the_hash_algo->rawsz;
 	}
 	free(buf);
 }
@@ -1441,7 +1297,7 @@ static void mktree(struct tree_content *t, int v, struct strbuf *b)
 		strbuf_addf(b, "%o %s%c",
 			(unsigned int)(e->versions[v].mode & ~NO_DELTA),
 			e->name->str_dat, '\0');
-		strbuf_add(b, e->versions[v].oid.hash, GIT_SHA1_RAWSZ);
+		strbuf_add(b, e->versions[v].oid.hash, the_hash_algo->rawsz);
 	}
 }
 
@@ -1902,8 +1758,6 @@ static int read_next_command(void)
 	}
 
 	for (;;) {
-		const char *p;
-
 		if (unread_command_buf) {
 			unread_command_buf = 0;
 		} else {
@@ -1936,14 +1790,6 @@ static int read_next_command(void)
 			rc->prev->next = rc;
 			cmd_tail = rc;
 		}
-		if (skip_prefix(command_buf.buf, "get-mark ", &p)) {
-			parse_get_mark(p);
-			continue;
-		}
-		if (skip_prefix(command_buf.buf, "cat-blob ", &p)) {
-			parse_cat_blob(p);
-			continue;
-		}
 		if (command_buf.buf[0] == '#')
 			continue;
 		return 0;
@@ -1966,6 +1812,13 @@ static void parse_mark(void)
 	}
 	else
 		next_mark = 0;
+}
+
+static void parse_original_identifier(void)
+{
+	const char *v;
+	if (skip_prefix(command_buf.buf, "original-oid ", &v))
+		read_next_command();
 }
 
 static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
@@ -2110,6 +1963,7 @@ static void parse_new_blob(void)
 {
 	read_next_command();
 	parse_mark();
+	parse_original_identifier();
 	parse_and_store_blob(&last_blob, NULL, next_mark);
 }
 
@@ -2192,7 +2046,9 @@ static uintmax_t do_change_note_fanout(
 	unsigned int i, tmp_hex_oid_len, tmp_fullpath_len;
 	uintmax_t num_notes = 0;
 	struct object_id oid;
-	char realpath[60];
+	/* hex oid + '/' between each pair of hex digits + NUL */
+	char realpath[GIT_MAX_HEXSZ + ((GIT_MAX_HEXSZ / 2) - 1) + 1];
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (!root->tree)
 		load_tree(root);
@@ -2212,7 +2068,7 @@ static uintmax_t do_change_note_fanout(
 		 * of 2 chars.
 		 */
 		if (!e->versions[1].mode ||
-		    tmp_hex_oid_len > GIT_SHA1_HEXSZ ||
+		    tmp_hex_oid_len > hexsz ||
 		    e->name->str_len % 2)
 			continue;
 
@@ -2226,7 +2082,7 @@ static uintmax_t do_change_note_fanout(
 		tmp_fullpath_len += e->name->str_len;
 		fullpath[tmp_fullpath_len] = '\0';
 
-		if (tmp_hex_oid_len == GIT_SHA1_HEXSZ && !get_oid_hex(hex_oid, &oid)) {
+		if (tmp_hex_oid_len == hexsz && !get_oid_hex(hex_oid, &oid)) {
 			/* This is a note entry */
 			if (fanout == 0xff) {
 				/* Counting mode, no rename */
@@ -2400,8 +2256,15 @@ static void file_change_m(const char *p, struct branch *b)
 			strbuf_addstr(&uq, p);
 			p = uq.buf;
 		}
-		read_next_command();
-		parse_and_store_blob(&last_blob, &oid, 0);
+		while (read_next_command() != EOF) {
+			const char *v;
+			if (skip_prefix(command_buf.buf, "cat-blob ", &v))
+				parse_cat_blob(v);
+			else {
+				parse_and_store_blob(&last_blob, &oid, 0);
+				break;
+			}
+		}
 	} else {
 		enum object_type expected = S_ISDIR(mode) ?
 						OBJ_TREE: OBJ_BLOB;
@@ -2497,7 +2360,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	struct object_entry *oe;
 	struct branch *s;
 	struct object_id oid, commit_oid;
-	char path[60];
+	char path[GIT_MAX_RAWSZ * 3];
 	uint16_t inline_data = 0;
 	unsigned char new_fanout;
 
@@ -2550,7 +2413,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		char *buf = read_object_with_reference(&commit_oid,
 						       commit_type, &size,
 						       &commit_oid);
-		if (!buf || size < 46)
+		if (!buf || size < the_hash_algo->hexsz + 6)
 			die("Not a valid commit: %s", p);
 		free(buf);
 	} else
@@ -2601,7 +2464,7 @@ static void file_change_deleteall(struct branch *b)
 
 static void parse_from_commit(struct branch *b, char *buf, unsigned long size)
 {
-	if (!buf || size < GIT_SHA1_HEXSZ + 6)
+	if (!buf || size < the_hash_algo->hexsz + 6)
 		die("Not a valid commit: %s", oid_to_hex(&b->oid));
 	if (memcmp("tree ", buf, 5)
 		|| get_oid_hex(buf + 5, &b->branch_tree.versions[1].oid))
@@ -2700,7 +2563,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			char *buf = read_object_with_reference(&n->oid,
 							       commit_type,
 							       &size, &n->oid);
-			if (!buf || size < 46)
+			if (!buf || size < the_hash_algo->hexsz + 6)
 				die("Not a valid commit: %s", from);
 			free(buf);
 		} else
@@ -2733,6 +2596,7 @@ static void parse_new_commit(const char *arg)
 
 	read_next_command();
 	parse_mark();
+	parse_original_identifier();
 	if (skip_prefix(command_buf.buf, "author ", &v)) {
 		author = parse_ident(v);
 		read_next_command();
@@ -2772,6 +2636,8 @@ static void parse_new_commit(const char *arg)
 			file_change_deleteall(b);
 		else if (skip_prefix(command_buf.buf, "ls ", &v))
 			parse_ls(v, b);
+		else if (skip_prefix(command_buf.buf, "cat-blob ", &v))
+			parse_cat_blob(v);
 		else {
 			unread_command_buf = 1;
 			break;
@@ -2865,6 +2731,9 @@ static void parse_new_tag(const char *arg)
 		die("Invalid ref name or SHA1 expression: %s", from);
 	read_next_command();
 
+	/* original-oid ... */
+	parse_original_identifier();
+
 	/* tagger ... */
 	if (skip_prefix(command_buf.buf, "tagger ", &v)) {
 		tagger = parse_ident(v);
@@ -2955,8 +2824,8 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 		die("Object %s is a %s but a blob was expected.",
 		    oid_to_hex(oid), type_name(type));
 	strbuf_reset(&line);
-	strbuf_addf(&line, "%s %s %lu\n", oid_to_hex(oid),
-						type_name(type), size);
+	strbuf_addf(&line, "%s %s %"PRIuMAX"\n", oid_to_hex(oid),
+		    type_name(type), (uintmax_t)size);
 	cat_blob_write(line.buf, line.len);
 	strbuf_release(&line);
 	cat_blob_write(buf, size);
@@ -2983,7 +2852,7 @@ static void parse_get_mark(const char *p)
 		die("Unknown mark: %s", command_buf.buf);
 
 	xsnprintf(output, sizeof(output), "%s\n", oid_to_hex(&oe->idx.oid));
-	cat_blob_write(output, GIT_SHA1_HEXSZ + 1);
+	cat_blob_write(output, the_hash_algo->hexsz + 1);
 }
 
 static void parse_cat_blob(const char *p)
@@ -3013,6 +2882,8 @@ static struct object_entry *dereference(struct object_entry *oe,
 {
 	unsigned long size;
 	char *buf = NULL;
+	const unsigned hexsz = the_hash_algo->hexsz;
+
 	if (!oe) {
 		enum object_type type = oid_object_info(the_repository, oid,
 							NULL);
@@ -3046,12 +2917,12 @@ static struct object_entry *dereference(struct object_entry *oe,
 	/* Peel one layer. */
 	switch (oe->type) {
 	case OBJ_TAG:
-		if (size < GIT_SHA1_HEXSZ + strlen("object ") ||
+		if (size < hexsz + strlen("object ") ||
 		    get_oid_hex(buf + strlen("object "), oid))
 			die("Invalid SHA1 in tag: %s", command_buf.buf);
 		break;
 	case OBJ_COMMIT:
-		if (size < GIT_SHA1_HEXSZ + strlen("tree ") ||
+		if (size < hexsz + strlen("tree ") ||
 		    get_oid_hex(buf + strlen("tree "), oid))
 			die("Invalid SHA1 in commit: %s", command_buf.buf);
 	}
@@ -3083,7 +2954,7 @@ static struct object_entry *parse_treeish_dataref(const char **p)
 	return e;
 }
 
-static void print_ls(int mode, const unsigned char *sha1, const char *path)
+static void print_ls(int mode, const unsigned char *hash, const char *path)
 {
 	static struct strbuf line = STRBUF_INIT;
 
@@ -3103,7 +2974,7 @@ static void print_ls(int mode, const unsigned char *sha1, const char *path)
 		/* mode SP type SP object_name TAB path LF */
 		strbuf_reset(&line);
 		strbuf_addf(&line, "%06o %s %s\t",
-				mode & ~NO_DELTA, type, sha1_to_hex(sha1));
+				mode & ~NO_DELTA, type, hash_to_hex(hash));
 		quote_c_style(path, &line, NULL, 0);
 		strbuf_addch(&line, '\n');
 	}
@@ -3445,14 +3316,18 @@ int cmd_main(int argc, const char **argv)
 		const char *v;
 		if (!strcmp("blob", command_buf.buf))
 			parse_new_blob();
-		else if (skip_prefix(command_buf.buf, "ls ", &v))
-			parse_ls(v, NULL);
 		else if (skip_prefix(command_buf.buf, "commit ", &v))
 			parse_new_commit(v);
 		else if (skip_prefix(command_buf.buf, "tag ", &v))
 			parse_new_tag(v);
 		else if (skip_prefix(command_buf.buf, "reset ", &v))
 			parse_reset_branch(v);
+		else if (skip_prefix(command_buf.buf, "ls ", &v))
+			parse_ls(v, NULL);
+		else if (skip_prefix(command_buf.buf, "cat-blob ", &v))
+			parse_cat_blob(v);
+		else if (skip_prefix(command_buf.buf, "get-mark ", &v))
+			parse_get_mark(v);
 		else if (!strcmp("checkpoint", command_buf.buf))
 			parse_checkpoint();
 		else if (!strcmp("done", command_buf.buf))

@@ -86,13 +86,14 @@ test_expect_success 'write midx with one v1 pack' '
 '
 
 midx_git_two_modes () {
+	git -c core.multiPackIndex=false $1 >expect &&
+	git -c core.multiPackIndex=true $1 >actual &&
 	if [ "$2" = "sorted" ]
 	then
-		git -c core.multiPackIndex=false $1 | sort >expect &&
-		git -c core.multiPackIndex=true $1 | sort >actual
-	else
-		git -c core.multiPackIndex=false $1 >expect &&
-		git -c core.multiPackIndex=true $1 >actual
+		sort <expect >expect.sorted &&
+		mv expect.sorted expect &&
+		sort <actual >actual.sorted &&
+		mv actual.sorted actual
 	fi &&
 	test_cmp expect actual
 }
@@ -103,8 +104,8 @@ compare_results_with_midx () {
 		midx_git_two_modes "rev-list --objects --all" &&
 		midx_git_two_modes "log --raw" &&
 		midx_git_two_modes "count-objects --verbose" &&
-		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check" &&
-		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check --unsorted" sorted
+		midx_git_two_modes "cat-file --batch-all-objects --batch-check" &&
+		midx_git_two_modes "cat-file --batch-all-objects --batch-check --unordered" sorted
 	'
 }
 
@@ -115,6 +116,20 @@ test_expect_success 'write midx with one v2 pack' '
 '
 
 compare_results_with_midx "one v2 pack"
+
+test_expect_success 'corrupt idx not opened' '
+	idx=$(test-tool read-midx $objdir | grep "\.idx\$") &&
+	mv $objdir/pack/$idx backup-$idx &&
+	test_when_finished "mv backup-\$idx \$objdir/pack/\$idx" &&
+
+	# This is the minimum size for a sha-1 based .idx; this lets
+	# us pass perfunctory tests, but anything that actually opens and reads
+	# the idx file will complain.
+	test_copy_bytes 1064 <backup-$idx >$objdir/pack/$idx &&
+
+	git -c core.multiPackIndex=true rev-list --objects --all 2>err &&
+	test_must_be_empty err
+'
 
 test_expect_success 'add more objects' '
 	for i in $(test_seq 6 10)
@@ -271,7 +286,7 @@ test_expect_success 'git-fsck incorrect offset' '
 
 test_expect_success 'repack removes multi-pack-index' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
-	git repack -adf &&
+	GIT_TEST_MULTI_PACK_INDEX=0 git repack -adf &&
 	test_path_is_missing $objdir/pack/multi-pack-index
 '
 

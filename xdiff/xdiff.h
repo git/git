@@ -86,7 +86,11 @@ typedef struct s_xpparam {
 
 typedef struct s_xdemitcb {
 	void *priv;
-	int (*outf)(void *, mmbuffer_t *, int);
+	int (*out_hunk)(void *,
+			long old_begin, long old_nr,
+			long new_begin, long new_nr,
+			const char *func, long funclen);
+	int (*out_line)(void *, mmbuffer_t *, int);
 } xdemitcb_t;
 
 typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long buffer_size, void *priv);
@@ -109,9 +113,9 @@ typedef struct s_bdiffparam {
 } bdiffparam_t;
 
 
-#define xdl_malloc(x) malloc(x)
+#define xdl_malloc(x) xmalloc(x)
 #define xdl_free(ptr) free(ptr)
-#define xdl_realloc(ptr,x) realloc(ptr,x)
+#define xdl_realloc(ptr,x) xrealloc(ptr,x)
 
 void *xdl_mmfile_first(mmfile_t *mmf, long *size);
 long xdl_mmfile_size(mmfile_t *mmf);

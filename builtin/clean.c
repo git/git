@@ -6,6 +6,7 @@
  * Based on git-clean.sh by Pavel Roskin
  */
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
@@ -140,6 +141,7 @@ static void clean_print_color(enum color_clean ix)
 static int exclude_cb(const struct option *opt, const char *arg, int unset)
 {
 	struct string_list *exclude_list = opt->value;
+	BUG_ON_OPT_NEG(unset);
 	string_list_append(exclude_list, arg);
 	return 0;
 }

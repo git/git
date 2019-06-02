@@ -59,6 +59,14 @@ test_expect_success 'rebase against master' '
 	git rebase master
 '
 
+test_expect_success 'rebase sets ORIG_HEAD to pre-rebase state' '
+	git checkout -b orig-head topic &&
+	pre="$(git rev-parse --verify HEAD)" &&
+	git rebase master &&
+	test_cmp_rev "$pre" ORIG_HEAD &&
+	! test_cmp_rev "$pre" HEAD
+'
+
 test_expect_success 'rebase, with <onto> and <upstream> specified as :/quuxery' '
 	test_when_finished "git branch -D torebase" &&
 	git checkout -b torebase my-topic-branch^ &&
@@ -309,6 +317,22 @@ test_expect_success 'rebase--merge.sh and --show-current-patch' '
 		grep "show.*REBASE_HEAD" stderr &&
 		test "$(git rev-parse REBASE_HEAD)" = "$(git rev-parse two)"
 	)
+'
+
+test_expect_success 'rebase -c rebase.useBuiltin=false warning' '
+	expected="rebase.useBuiltin support has been removed" &&
+
+	# Only warn when the legacy rebase is requested...
+	test_must_fail git -c rebase.useBuiltin=false rebase 2>err &&
+	test_i18ngrep "$expected" err &&
+	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=false git rebase 2>err &&
+	test_i18ngrep "$expected" err &&
+
+	# ...not when we would have used the built-in anyway
+	test_must_fail git -c rebase.useBuiltin=true rebase 2>err &&
+	test_must_be_empty err &&
+	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=true git rebase 2>err &&
+	test_must_be_empty err
 '
 
 test_done

@@ -143,6 +143,19 @@ copying detection) are designed to work with diff of two
 Similar to two-line header for traditional 'unified' diff
 format, `/dev/null` is used to signal created or deleted
 files.
++
+However, if the --combined-all-paths option is provided, instead of a
+two-line from-file/to-file you get a N+1 line from-file/to-file header,
+where N is the number of parents in the merge commit
+
+       --- a/file
+       --- a/file
+       --- a/file
+       +++ b/file
++
+This extended format can be useful if rename or copy detection is
+active, to allow you to see the original name of the file in different
+parents.
 
 4.   Chunk header format is modified to prevent people from
      accidentally feeding it to `patch -p1`. Combined diff format

@@ -380,4 +380,16 @@ test_expect_success 'grep --recurse-submodules should pass the pattern type alon
 	fi
 '
 
+test_expect_success 'grep --recurse-submodules with submodules without .gitmodules in the working tree' '
+	test_when_finished "git -C submodule checkout .gitmodules" &&
+	rm submodule/.gitmodules &&
+	git grep --recurse-submodules -e "(.|.)[\d]" >actual &&
+	cat >expect <<-\EOF &&
+	a:(1|2)d(3|4)
+	submodule/a:(1|2)d(3|4)
+	submodule/sub/a:(1|2)d(3|4)
+	EOF
+	test_cmp expect actual
+'
+
 test_done

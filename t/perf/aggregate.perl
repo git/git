@@ -3,9 +3,9 @@
 use lib '../../perl/build/lib';
 use strict;
 use warnings;
-use JSON;
 use Getopt::Long;
 use Git;
+use Cwd qw(realpath);
 
 sub get_times {
 	my $name = shift;
@@ -99,18 +99,21 @@ usage() unless $rc;
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
+	my $prefix = '';
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
 		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
 		$dir = "build/".$rev;
+	} elsif ($arg eq '.') {
+		$dir = '.';
 	} else {
-		$arg =~ s{/*$}{};
-		$dir = $arg;
-		$dirabbrevs{$dir} = $dir;
+		$dir = realpath($arg);
+		$dirnames{$dir} = $dir;
+		$prefix .= 'bindir';
 	}
 	push @dirs, $dir;
-	$dirnames{$dir} = $arg;
-	my $prefix = $dir;
+	$dirnames{$dir} ||= $arg;
+	$prefix .= $dir;
 	$prefix =~ tr/^a-zA-Z0-9/_/c;
 	$prefixes{$dir} = $prefix . '.';
 	shift @ARGV;
@@ -312,9 +315,6 @@ sub print_codespeed_results {
 		$environment = $reponame;
 	} elsif (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
 		$environment = $ENV{GIT_PERF_REPO_NAME};
-	} elsif (exists $ENV{GIT_TEST_INSTALLED} and $ENV{GIT_TEST_INSTALLED} ne "") {
-		$environment = $ENV{GIT_TEST_INSTALLED};
-		$environment =~ s|/bin-wrappers$||;
 	} else {
 		$environment = `uname -r`;
 		chomp $environment;
@@ -342,7 +342,8 @@ sub print_codespeed_results {
 		}
 	}
 
-	print to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
+	require JSON;
+	print JSON::to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
 }
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";

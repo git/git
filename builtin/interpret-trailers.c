@@ -80,6 +80,8 @@ static int parse_opt_parse(const struct option *opt, const char *arg,
 	v->only_trailers = 1;
 	v->only_input = 1;
 	v->unfold = 1;
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	return 0;
 }
 

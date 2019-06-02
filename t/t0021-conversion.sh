@@ -24,7 +24,7 @@ generate_random_characters () {
 }
 
 file_size () {
-	perl -e 'print -s $ARGV[0]' "$1"
+	test-tool path-utils file-size "$1"
 }
 
 filter_git () {

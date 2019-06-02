@@ -1,4 +1,3 @@
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "argv-array.h"
 #include "repository.h"
@@ -220,6 +219,9 @@ static int add_rejected_path(struct unpack_trees_options *o,
 			     enum unpack_trees_error_types e,
 			     const char *path)
 {
+	if (o->quiet)
+		return -1;
+
 	if (!o->show_all_errors)
 		return error(ERRORMSG(o, e), super_prefixed(path));
 
@@ -269,8 +271,7 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 		flags |= SUBMODULE_MOVE_HEAD_FORCE;
 
 	if (submodule_move_head(ce->name, old_id, new_id, flags))
-		return o->gently ? -1 :
-				   add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
+		return add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
 	return 0;
 }
 
@@ -294,29 +295,10 @@ static void load_gitmodules_file(struct index_state *index,
 			repo_read_gitmodules(the_repository);
 		} else if (state && (ce->ce_flags & CE_UPDATE)) {
 			submodule_free(the_repository);
-			checkout_entry(ce, state, NULL);
+			checkout_entry(ce, state, NULL, NULL);
 			repo_read_gitmodules(the_repository);
 		}
 	}
-}
-
-/*
- * Unlink the last component and schedule the leading directories for
- * removal, such that empty directories get removed.
- */
-static void unlink_entry(const struct cache_entry *ce)
-{
-	const struct submodule *sub = submodule_from_ce(ce);
-	if (sub) {
-		/* state.force is set at the caller. */
-		submodule_move_head(ce->name, "HEAD", NULL,
-				    SUBMODULE_MOVE_HEAD_FORCE);
-	}
-	if (!check_leading_path(ce->name, ce_namelen(ce)))
-		return;
-	if (remove_or_warn(ce->ce_mode, ce->name))
-		return;
-	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
 
 static struct progress *get_progress(struct unpack_trees_options *o)
@@ -380,7 +362,7 @@ static int check_updates(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0;
 	int errs = 0;
-	struct progress *progress = NULL;
+	struct progress *progress;
 	struct index_state *index = &o->result;
 	struct checkout state = CHECKOUT_INIT;
 	int i;
@@ -411,7 +393,7 @@ static int check_updates(struct unpack_trees_options *o)
 				unlink_entry(ce);
 		}
 	}
-	remove_marked_cache_entries(index);
+	remove_marked_cache_entries(index, 0);
 	remove_scheduled_dirs();
 
 	if (should_update_submodules() && o->update && !o->dry_run)
@@ -424,20 +406,21 @@ static int check_updates(struct unpack_trees_options *o)
 		 * below.
 		 */
 		struct oid_array to_fetch = OID_ARRAY_INIT;
-		int fetch_if_missing_store = fetch_if_missing;
-		fetch_if_missing = 0;
 		for (i = 0; i < index->cache_nr; i++) {
 			struct cache_entry *ce = index->cache[i];
-			if ((ce->ce_flags & CE_UPDATE) &&
-			    !S_ISGITLINK(ce->ce_mode)) {
-				if (!has_object_file(&ce->oid))
-					oid_array_append(&to_fetch, &ce->oid);
-			}
+
+			if (!(ce->ce_flags & CE_UPDATE) ||
+			    S_ISGITLINK(ce->ce_mode))
+				continue;
+			if (!oid_object_info_extended(the_repository, &ce->oid,
+						      NULL,
+						      OBJECT_INFO_FOR_PREFETCH))
+				continue;
+			oid_array_append(&to_fetch, &ce->oid);
 		}
 		if (to_fetch.nr)
 			fetch_objects(repository_format_partial_clone,
 				      to_fetch.oid, to_fetch.nr);
-		fetch_if_missing = fetch_if_missing_store;
 		oid_array_clear(&to_fetch);
 	}
 	for (i = 0; i < index->cache_nr; i++) {
@@ -450,12 +433,12 @@ static int check_updates(struct unpack_trees_options *o)
 			display_progress(progress, ++cnt);
 			ce->ce_flags &= ~CE_UPDATE;
 			if (o->update && !o->dry_run) {
-				errs |= checkout_entry(ce, &state, NULL);
+				errs |= checkout_entry(ce, &state, NULL, NULL);
 			}
 		}
 	}
 	stop_progress(&progress);
-	errs |= finish_delayed_checkout(&state);
+	errs |= finish_delayed_checkout(&state, NULL);
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKIN);
 
@@ -679,7 +662,7 @@ static int switch_cache_bottom(struct traverse_info *info)
 
 static inline int are_same_oid(struct name_entry *name_j, struct name_entry *name_k)
 {
-	return name_j->oid && name_k->oid && oideq(name_j->oid, name_k->oid);
+	return !is_null_oid(&name_j->oid) && !is_null_oid(&name_k->oid) && oideq(&name_j->oid, &name_k->oid);
 }
 
 static int all_trees_same_as_cache_tree(int n, unsigned long dirmask,
@@ -727,7 +710,6 @@ static int index_pos_by_traverse_info(struct name_entry *names,
  * instead of ODB since we already know what these trees contain.
  */
 static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
-				  struct name_entry *names,
 				  struct traverse_info *info)
 {
 	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
@@ -794,6 +776,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 				    struct name_entry *names,
 				    struct traverse_info *info)
 {
+	struct unpack_trees_options *o = info->data;
 	int i, ret, bottom;
 	int nr_buf = 0;
 	struct tree_desc t[MAX_UNPACK_TREES];
@@ -804,7 +787,6 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 
 	nr_entries = all_trees_same_as_cache_tree(n, dirmask, names, info);
 	if (nr_entries > 0) {
-		struct unpack_trees_options *o = info->data;
 		int pos = index_pos_by_traverse_info(names, info);
 
 		if (!o->merge || df_conflicts)
@@ -817,7 +799,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 		 * unprocessed entries before 'pos'.
 		 */
 		bottom = o->cache_bottom;
-		ret = traverse_by_cache_tree(pos, nr_entries, n, names, info);
+		ret = traverse_by_cache_tree(pos, nr_entries, n, info);
 		o->cache_bottom = bottom;
 		return ret;
 	}
@@ -857,13 +839,13 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 		else {
 			const struct object_id *oid = NULL;
 			if (dirmask & 1)
-				oid = names[i].oid;
+				oid = &names[i].oid;
 			buf[nr_buf++] = fill_tree_descriptor(t + i, oid);
 		}
 	}
 
 	bottom = switch_cache_bottom(&newinfo);
-	ret = traverse_trees(n, t, &newinfo);
+	ret = traverse_trees(o->src_index, n, t, &newinfo);
 	restore_cache_bottom(&newinfo, bottom);
 
 	for (i = 0; i < nr_buf; i++)
@@ -981,7 +963,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	ce->ce_mode = create_ce_mode(n->mode);
 	ce->ce_flags = create_ce_flags(stage);
 	ce->ce_namelen = len;
-	oidcpy(&ce->oid, n->oid);
+	oidcpy(&ce->oid, &n->oid);
 	make_traverse_path(ce->name, info, n);
 
 	return ce;
@@ -1060,7 +1042,7 @@ static int unpack_nondirectories(int n, unsigned long mask,
 static int unpack_failed(struct unpack_trees_options *o, const char *message)
 {
 	discard_index(&o->result);
-	if (!o->gently && !o->exiting_early) {
+	if (!o->quiet && !o->exiting_early) {
 		if (message)
 			return error("%s", message);
 		return -1;
@@ -1550,7 +1532,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		}
 
 		trace_performance_enter();
-		ret = traverse_trees(len, t, &info);
+		ret = traverse_trees(o->src_index, len, t, &info);
 		trace_performance_leave("traverse_trees");
 		if (ret < 0)
 			goto return_failed;
@@ -1630,7 +1612,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		move_index_extensions(&o->result, o->src_index);
 		if (!ret) {
 			if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
-				cache_tree_verify(&o->result);
+				cache_tree_verify(the_repository, &o->result);
 			if (!o->result.cache_tree)
 				o->result.cache_tree = cache_tree();
 			if (!cache_tree_fully_valid(o->result.cache_tree))
@@ -1638,6 +1620,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 						  WRITE_TREE_SILENT |
 						  WRITE_TREE_REPAIR);
 		}
+
+		o->result.updated_workdir = 1;
 		discard_index(o->dst_index);
 		*o->dst_index = o->result;
 	} else {
@@ -1665,8 +1649,7 @@ return_failed:
 static int reject_merge(const struct cache_entry *ce,
 			struct unpack_trees_options *o)
 {
-	return o->gently ? -1 :
-		add_rejected_path(o, ERROR_WOULD_OVERWRITE, ce->name);
+	return add_rejected_path(o, ERROR_WOULD_OVERWRITE, ce->name);
 }
 
 static int same(const struct cache_entry *a, const struct cache_entry *b)
@@ -1713,8 +1696,7 @@ static int verify_uptodate_1(const struct cache_entry *ce,
 			int r = check_submodule_move_head(ce,
 				"HEAD", oid_to_hex(&ce->oid), o);
 			if (r)
-				return o->gently ? -1 :
-					add_rejected_path(o, error_type, ce->name);
+				return add_rejected_path(o, error_type, ce->name);
 			return 0;
 		}
 
@@ -1732,8 +1714,7 @@ static int verify_uptodate_1(const struct cache_entry *ce,
 	}
 	if (errno == ENOENT)
 		return 0;
-	return o->gently ? -1 :
-		add_rejected_path(o, error_type, ce->name);
+	return add_rejected_path(o, error_type, ce->name);
 }
 
 int verify_uptodate(const struct cache_entry *ce,
@@ -1779,7 +1760,6 @@ static void invalidate_ce_path(const struct cache_entry *ce,
  */
 static int verify_clean_submodule(const char *old_sha1,
 				  const struct cache_entry *ce,
-				  enum unpack_trees_error_types error_type,
 				  struct unpack_trees_options *o)
 {
 	if (!submodule_from_ce(ce))
@@ -1790,7 +1770,6 @@ static int verify_clean_submodule(const char *old_sha1,
 }
 
 static int verify_clean_subdirectory(const struct cache_entry *ce,
-				     enum unpack_trees_error_types error_type,
 				     struct unpack_trees_options *o)
 {
 	/*
@@ -1813,7 +1792,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 		if (!sub_head && oideq(&oid, &ce->oid))
 			return 0;
 		return verify_clean_submodule(sub_head ? NULL : oid_to_hex(&oid),
-					      ce, error_type, o);
+					      ce, o);
 	}
 
 	/*
@@ -1855,8 +1834,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 		d.exclude_per_dir = o->dir->exclude_per_dir;
 	i = read_directory(&d, o->src_index, pathbuf, namelen+1, NULL);
 	if (i)
-		return o->gently ? -1 :
-			add_rejected_path(o, ERROR_NOT_UPTODATE_DIR, ce->name);
+		return add_rejected_path(o, ERROR_NOT_UPTODATE_DIR, ce->name);
 	free(pathbuf);
 	return cnt;
 }
@@ -1909,7 +1887,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 		 * files that are in "foo/" we would lose
 		 * them.
 		 */
-		if (verify_clean_subdirectory(ce, error_type, o) < 0)
+		if (verify_clean_subdirectory(ce, o) < 0)
 			return -1;
 		return 0;
 	}
@@ -1925,8 +1903,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 			return 0;
 	}
 
-	return o->gently ? -1 :
-		add_rejected_path(o, error_type, name);
+	return add_rejected_path(o, error_type, name);
 }
 
 /*
@@ -2366,7 +2343,7 @@ int bind_merge(const struct cache_entry * const *src,
 		return error("Cannot do a bind merge of %d trees",
 			     o->merge_size);
 	if (a && old)
-		return o->gently ? -1 :
+		return o->quiet ? -1 :
 			error(ERRORMSG(o, ERROR_BIND_OVERLAP),
 			      super_prefixed(a->name),
 			      super_prefixed(old->name));
@@ -2406,7 +2383,7 @@ int oneway_merge(const struct cache_entry * const *src,
 		if (o->update && S_ISGITLINK(old->ce_mode) &&
 		    should_update_submodules() && !verify_uptodate(old, o))
 			update |= CE_UPDATE;
-		add_entry(o, old, update, 0);
+		add_entry(o, old, update, CE_STAGEMASK);
 		return 0;
 	}
 	return merged_entry(a, old, o);

@@ -5,11 +5,13 @@
 # Copyright (c) 2007 Lars Hjemli
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
-USAGE="[--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
+USAGE="[--quiet] [--cached]
+   or: $dashless [--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] deinit [-f|--force] (--all| [--] <path>...)
    or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] set-branch (--default|--branch <branch>) [--] <path>
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--recursive] [--] [<path>...]
@@ -72,7 +74,7 @@ get_submodule_config () {
 	value=$(git config submodule."$name"."$option")
 	if test -z "$value"
 	then
-		value=$(git config -f .gitmodules submodule."$name"."$option")
+		value=$(git submodule--helper config submodule."$name"."$option")
 	fi
 	printf '%s' "${value:-$default}"
 }
@@ -80,6 +82,11 @@ get_submodule_config () {
 isnumber()
 {
 	n=$(($1 + 0)) 2>/dev/null && test "$n" = "$1"
+}
+
+# Given a full hex object ID, is this the zero OID?
+is_zero_oid () {
+	echo "$1" | sane_egrep '^0+$' >/dev/null 2>&1
 }
 
 # Sanitize the local git environment for use within a submodule. We
@@ -159,6 +166,11 @@ cmd_add()
 		shift
 	done
 
+	if ! git submodule--helper config --check-writeable >/dev/null 2>&1
+	then
+		 die "$(eval_gettext "please make sure that the .gitmodules file is in the working tree")"
+	fi
+
 	if test -n "$reference_path"
 	then
 		is_absolute_path "$reference_path" ||
@@ -218,6 +230,13 @@ cmd_add()
 	else
 		git ls-files -s "$sm_path" | sane_grep -v "^160000" > /dev/null 2>&1 &&
 		die "$(eval_gettext "'\$sm_path' already exists in the index and is not a submodule")"
+	fi
+
+	if test -d "$sm_path" &&
+		test -z $(git -C "$sm_path" rev-parse --show-cdup 2>/dev/null)
+	then
+	    git -C "$sm_path" rev-parse --verify -q HEAD >/dev/null ||
+	    die "$(eval_gettext "'\$sm_path' does not have a commit checked out")"
 	fi
 
 	if test -z "$force" &&
@@ -283,11 +302,11 @@ or you are unsure what this means choose another name with the '--name' option."
 	git add --no-warn-embedded-repo $force "$sm_path" ||
 	die "$(eval_gettext "Failed to add submodule '\$sm_path'")"
 
-	git config -f .gitmodules submodule."$sm_name".path "$sm_path" &&
-	git config -f .gitmodules submodule."$sm_name".url "$repo" &&
+	git submodule--helper config submodule."$sm_name".path "$sm_path" &&
+	git submodule--helper config submodule."$sm_name".url "$repo" &&
 	if test -n "$branch"
 	then
-		git config -f .gitmodules submodule."$sm_name".branch "$branch"
+		git submodule--helper config submodule."$sm_name".branch "$branch"
 	fi &&
 	git add --force .gitmodules ||
 	die "$(eval_gettext "Failed to register submodule '\$sm_path'")"
@@ -335,7 +354,7 @@ cmd_foreach()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper foreach ${GIT_QUIET:+--quiet} ${recursive:+--recursive} "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper foreach ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
 }
 
 #
@@ -366,7 +385,7 @@ cmd_init()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper init ${GIT_QUIET:+--quiet}  "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper init ${GIT_QUIET:+--quiet} -- "$@"
 }
 
 #
@@ -402,7 +421,7 @@ cmd_deinit()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit ${GIT_QUIET:+--quiet} ${prefix:+--prefix "$prefix"} ${force:+--force} ${deinit_all:+--all} "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit ${GIT_QUIET:+--quiet} ${prefix:+--prefix "$prefix"} ${force:+--force} ${deinit_all:+--all} -- "$@"
 }
 
 is_tip_reachable () (
@@ -531,6 +550,7 @@ cmd_update()
 		${depth:+--depth "$depth"} \
 		$recommend_shallow \
 		$jobs \
+		-- \
 		"$@" || echo "#unmatched" $?
 	} | {
 	err=
@@ -538,7 +558,7 @@ cmd_update()
 	do
 		die_if_unmatched "$quickabort" "$sha1"
 
-		git submodule--helper ensure-core-worktree "$sm_path"
+		git submodule--helper ensure-core-worktree "$sm_path" || exit 1
 
 		update_module=$(git submodule--helper update-module-mode $just_cloned "$sm_path" $update)
 
@@ -583,7 +603,7 @@ cmd_update()
 				# is not reachable from a ref.
 				is_tip_reachable "$sm_path" "$sha1" ||
 				fetch_in_submodule "$sm_path" $depth ||
-				say "$(eval_gettext "Unable to fetch in submodule path '\$displaypath'")"
+				say "$(eval_gettext "Unable to fetch in submodule path '\$displaypath'; trying to directly fetch \$sha1:")"
 
 				# Now we tried the usual fetch, but $sha1 may
 				# not be reachable from any of the refs
@@ -672,6 +692,72 @@ cmd_update()
 		exit 1
 	fi
 	}
+}
+
+#
+# Configures a submodule's default branch
+#
+# $@ = requested path
+#
+cmd_set_branch() {
+	unset_branch=false
+	branch=
+
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			# we don't do anything with this but we need to accept it
+			;;
+		-d|--default)
+			unset_branch=true
+			;;
+		-b|--branch)
+			case "$2" in '') usage ;; esac
+			branch=$2
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
+	if test $# -ne 1
+	then
+		usage
+	fi
+
+	# we can't use `git submodule--helper name` here because internally, it
+	# hashes the path so a trailing slash could lead to an unintentional no match
+	name="$(git submodule--helper list "$1" | cut -f2)"
+	if test -z "$name"
+	then
+		exit 1
+	fi
+
+	test -n "$branch"; has_branch=$?
+	test "$unset_branch" = true; has_unset_branch=$?
+
+	if test $((!$has_branch != !$has_unset_branch)) -eq 0
+	then
+		usage
+	fi
+
+	if test $has_branch -eq 0
+	then
+		git submodule--helper config submodule."$name".branch "$branch"
+	else
+		git submodule--helper config --unset submodule."$name".branch
+	fi
 }
 
 #
@@ -780,7 +866,7 @@ cmd_summary() {
 	while read -r mod_src mod_dst sha1_src sha1_dst status name
 	do
 		if test -z "$cached" &&
-			test $sha1_dst = 0000000000000000000000000000000000000000
+			is_zero_oid $sha1_dst
 		then
 			case "$mod_dst" in
 			160000)
@@ -840,8 +926,11 @@ cmd_summary() {
 			;;
 		esac
 
-		sha1_abbr_src=$(echo $sha1_src | cut -c1-7)
-		sha1_abbr_dst=$(echo $sha1_dst | cut -c1-7)
+		sha1_abbr_src=$(GIT_DIR="$name/.git" git rev-parse --short $sha1_src 2>/dev/null ||
+			echo $sha1_src | cut -c1-7)
+		sha1_abbr_dst=$(GIT_DIR="$name/.git" git rev-parse --short $sha1_dst 2>/dev/null ||
+			echo $sha1_dst | cut -c1-7)
+
 		if test $status = T
 		then
 			blob="$(gettext "blob")"
@@ -920,7 +1009,7 @@ cmd_status()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper status ${GIT_QUIET:+--quiet} ${cached:+--cached} ${recursive:+--recursive} "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper status ${GIT_QUIET:+--quiet} ${cached:+--cached} ${recursive:+--recursive} -- "$@"
 }
 #
 # Sync remote urls for submodules
@@ -953,7 +1042,7 @@ cmd_sync()
 		esac
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper sync ${GIT_QUIET:+--quiet} ${recursive:+--recursive} "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} ${prefix:+--super-prefix "$prefix"} submodule--helper sync ${GIT_QUIET:+--quiet} ${recursive:+--recursive} -- "$@"
 }
 
 cmd_absorbgitdirs()
@@ -970,7 +1059,7 @@ cmd_absorbgitdirs()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | foreach | init | deinit | update | status | summary | sync | absorbgitdirs)
+	add | foreach | init | deinit | update | set-branch | status | summary | sync | absorbgitdirs)
 		command=$1
 		;;
 	-q|--quiet)
@@ -1011,8 +1100,8 @@ then
     fi
 fi
 
-# "-b branch" is accepted only by "add"
-if test -n "$branch" && test "$command" != add
+# "-b branch" is accepted only by "add" and "set-branch"
+if test -n "$branch" && (test "$command" != add || test "$command" != set-branch)
 then
 	usage
 fi
@@ -1023,4 +1112,4 @@ then
 	usage
 fi
 
-"cmd_$command" "$@"
+"cmd_$(echo $command | sed -e s/-/_/g)" "$@"

@@ -75,6 +75,16 @@ test_expect_success 'rebase --keep-empty' '
 	test_line_count = 6 actual
 '
 
+cat > expect <<EOF
+error: nothing to do
+EOF
+
+test_expect_success 'rebase -i with empty HEAD' '
+	set_fake_editor &&
+	test_must_fail env FAKE_LINES="1 exec_true" git rebase -i HEAD^ >actual 2>&1 &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'rebase -i with the exec command' '
 	git checkout master &&
 	(
@@ -114,7 +124,7 @@ test_expect_success 'rebase -i with exec allows git commands in subdirs' '
 	git checkout master &&
 	mkdir subdir && (cd subdir &&
 	set_fake_editor &&
-	FAKE_LINES="1 exec_cd_subdir_&&_git_rev-parse_--is-inside-work-tree" \
+	FAKE_LINES="1 x_cd_subdir_&&_git_rev-parse_--is-inside-work-tree" \
 		git rebase -i HEAD^
 	)
 '
@@ -137,6 +147,25 @@ test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 	git rebase --continue
 '
 
+test_expect_success 'rebase -x with empty command fails' '
+	test_when_finished "git rebase --abort ||:" &&
+	test_must_fail env git rebase -x "" @ 2>actual &&
+	test_write_lines "error: empty exec command" >expected &&
+	test_i18ncmp expected actual &&
+	test_must_fail env git rebase -x " " @ 2>actual &&
+	test_i18ncmp expected actual
+'
+
+LF='
+'
+test_expect_success 'rebase -x with newline in command fails' '
+	test_when_finished "git rebase --abort ||:" &&
+	test_must_fail env git rebase -x "a${LF}b" @ 2>actual &&
+	test_write_lines "error: exec commands cannot contain newlines" \
+			 >expected &&
+	test_i18ncmp expected actual
+'
+
 test_expect_success 'rebase -i with exec of inexistent command' '
 	git checkout master &&
 	test_when_finished "git rebase --abort" &&
@@ -144,6 +173,11 @@ test_expect_success 'rebase -i with exec of inexistent command' '
 	test_must_fail env FAKE_LINES="exec_this-command-does-not-exist 1" \
 	git rebase -i HEAD^ >actual 2>&1 &&
 	! grep "Maybe git-rebase is broken" actual
+'
+
+test_expect_success 'implicit interactive rebase does not invoke sequence editor' '
+	test_when_finished "git rebase --abort ||:" &&
+	GIT_SEQUENCE_EDITOR="echo bad >" git rebase -x"echo one" @^
 '
 
 test_expect_success 'no changes are a nop' '
@@ -312,7 +346,7 @@ test_expect_success 'retain authorship when squashing' '
 	git show HEAD | grep "^Author: Twerp Snog"
 '
 
-test_expect_success '-p handles "no changes" gracefully' '
+test_expect_success REBASE_P '-p handles "no changes" gracefully' '
 	HEAD=$(git rev-parse HEAD) &&
 	set_fake_editor &&
 	git rebase -i -p HEAD^ &&
@@ -322,7 +356,7 @@ test_expect_success '-p handles "no changes" gracefully' '
 	test $HEAD = $(git rev-parse HEAD)
 '
 
-test_expect_failure 'exchange two commits with -p' '
+test_expect_failure REBASE_P 'exchange two commits with -p' '
 	git checkout H &&
 	set_fake_editor &&
 	FAKE_LINES="2 1" git rebase -i -p HEAD~2 &&
@@ -330,7 +364,7 @@ test_expect_failure 'exchange two commits with -p' '
 	test G = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
-test_expect_success 'preserve merges with -p' '
+test_expect_success REBASE_P 'preserve merges with -p' '
 	git checkout -b to-be-preserved master^ &&
 	: > unrelated-file &&
 	git add unrelated-file &&
@@ -373,7 +407,7 @@ test_expect_success 'preserve merges with -p' '
 	test $(git show HEAD:unrelated-file) = 1
 '
 
-test_expect_success 'edit ancestor with -p' '
+test_expect_success REBASE_P 'edit ancestor with -p' '
 	set_fake_editor &&
 	FAKE_LINES="1 2 edit 3 4" git rebase -i -p HEAD~3 &&
 	echo 2 > unrelated-file &&
@@ -387,6 +421,7 @@ test_expect_success 'edit ancestor with -p' '
 '
 
 test_expect_success '--continue tries to commit' '
+	git reset --hard D &&
 	test_tick &&
 	set_fake_editor &&
 	test_must_fail git rebase -i --onto new-branch1 HEAD^ &&
@@ -426,7 +461,7 @@ test_expect_success C_LOCALE_OUTPUT 'multi-fixup does not fire up editor' '
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 0 = $(git show | grep NEVER | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D multi-fixup
 '
 
@@ -441,7 +476,7 @@ test_expect_success 'commit message used after conflict' '
 		git rebase --continue &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D conflict-fixup
 '
 
@@ -456,7 +491,7 @@ test_expect_success 'commit message retained after conflict' '
 		git rebase --continue &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 2 = $(git show | grep TWICE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D conflict-squash
 '
 
@@ -481,7 +516,7 @@ test_expect_success C_LOCALE_OUTPUT 'squash and fixup generate correct log messa
 		grep "^# This is a combination of 3 commits\."  &&
 	git cat-file commit HEAD@{3} |
 		grep "^# This is a combination of 2 commits\."  &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D squash-fixup
 '
 
@@ -494,7 +529,7 @@ test_expect_success C_LOCALE_OUTPUT 'squash ignores comments' '
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D skip-comments
 '
 
@@ -507,7 +542,7 @@ test_expect_success C_LOCALE_OUTPUT 'squash ignores blank lines' '
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D skip-blank-lines
 '
 
@@ -515,7 +550,7 @@ test_expect_success 'squash works as expected' '
 	git checkout -b squash-works no-conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
-	FAKE_LINES="1 squash 3 2" EXPECT_HEADER_COUNT=2 \
+	FAKE_LINES="1 s 3 2" EXPECT_HEADER_COUNT=2 \
 		git rebase -i HEAD~3 &&
 	test $one = $(git rev-parse HEAD~2)
 '
@@ -648,7 +683,7 @@ test_expect_success 'rebase with a file named HEAD in worktree' '
 	) &&
 
 	set_fake_editor &&
-	FAKE_LINES="1 squash 2" git rebase -i to-be-rebased &&
+	FAKE_LINES="1 squash 2" git rebase -i @{-1} &&
 	test "$(git show -s --pretty=format:%an)" = "Squashed Away"
 
 '
@@ -748,7 +783,7 @@ test_expect_success 'reword' '
 	git show HEAD^ | grep "D changed" &&
 	FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" git rebase -i A &&
 	git show HEAD~3 | grep "B changed" &&
-	FAKE_LINES="1 reword 2 3 4" FAKE_COMMIT_MESSAGE="C changed" git rebase -i A &&
+	FAKE_LINES="1 r 2 pick 3 p 4" FAKE_COMMIT_MESSAGE="C changed" git rebase -i A &&
 	git show HEAD~2 | grep "C changed"
 '
 
@@ -774,7 +809,7 @@ test_expect_success 'rebase -i can copy notes over a fixup' '
 	git reset --hard n3 &&
 	git notes add -m"an earlier note" n2 &&
 	set_fake_editor &&
-	GIT_NOTES_REWRITE_MODE=concatenate FAKE_LINES="1 fixup 2" git rebase -i n1 &&
+	GIT_NOTES_REWRITE_MODE=concatenate FAKE_LINES="1 f 2" git rebase -i n1 &&
 	git notes show > output &&
 	test_cmp expect output
 '
@@ -1251,7 +1286,7 @@ rebase_setup_and_clean () {
 test_expect_success 'drop' '
 	rebase_setup_and_clean drop-test &&
 	set_fake_editor &&
-	FAKE_LINES="1 drop 2 3 drop 4 5" git rebase -i --root &&
+	FAKE_LINES="1 drop 2 3 d 4 5" git rebase -i --root &&
 	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test C = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test A = $(git cat-file commit HEAD^^ | sed -ne \$p)

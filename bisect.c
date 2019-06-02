@@ -558,7 +558,8 @@ struct commit_list *filter_skipped(struct commit_list *list,
  * is increased by one between each call, but that should not matter
  * for this application.
  */
-static unsigned get_prn(unsigned count) {
+static unsigned get_prn(unsigned count)
+{
 	count = count * 1103515245 + 12345;
 	return (count/65536) % PRN_MODULO;
 }
@@ -626,14 +627,15 @@ static struct commit_list *managed_skipped(struct commit_list *list,
 	return skip_away(list, count);
 }
 
-static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
+static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
+			     const char *prefix,
 			     const char *bad_format, const char *good_format,
 			     int read_paths)
 {
 	struct argv_array rev_argv = ARGV_ARRAY_INIT;
 	int i;
 
-	repo_init_revisions(the_repository, revs, prefix);
+	repo_init_revisions(r, revs, prefix);
 	revs->abbrev = 0;
 	revs->commit_format = CMIT_FMT_UNSPECIFIED;
 
@@ -656,7 +658,7 @@ static void bisect_common(struct rev_info *revs)
 	if (prepare_revision_walk(revs))
 		die("revision walk setup failed");
 	if (revs->tree_objects)
-		mark_edges_uninteresting(revs, NULL);
+		mark_edges_uninteresting(revs, NULL, 0);
 }
 
 static void exit_if_skipped_commits(struct commit_list *tried,
@@ -723,23 +725,25 @@ static int bisect_checkout(const struct object_id *bisect_rev, int no_checkout)
 	return run_command_v_opt(argv_show_branch, RUN_GIT_CMD);
 }
 
-static struct commit *get_commit_reference(const struct object_id *oid)
+static struct commit *get_commit_reference(struct repository *r,
+					   const struct object_id *oid)
 {
-	struct commit *r = lookup_commit_reference(the_repository, oid);
-	if (!r)
+	struct commit *c = lookup_commit_reference(r, oid);
+	if (!c)
 		die(_("Not a valid commit name %s"), oid_to_hex(oid));
-	return r;
+	return c;
 }
 
-static struct commit **get_bad_and_good_commits(int *rev_nr)
+static struct commit **get_bad_and_good_commits(struct repository *r,
+						int *rev_nr)
 {
 	struct commit **rev;
 	int i, n = 0;
 
 	ALLOC_ARRAY(rev, 1 + good_revs.nr);
-	rev[n++] = get_commit_reference(current_bad_oid);
+	rev[n++] = get_commit_reference(r, current_bad_oid);
 	for (i = 0; i < good_revs.nr; i++)
-		rev[n++] = get_commit_reference(good_revs.oid + i);
+		rev[n++] = get_commit_reference(r, good_revs.oid + i);
 	*rev_nr = n;
 
 	return rev;
@@ -823,12 +827,13 @@ static void check_merge_bases(int rev_nr, struct commit **rev, int no_checkout)
 	free_commit_list(result);
 }
 
-static int check_ancestors(int rev_nr, struct commit **rev, const char *prefix)
+static int check_ancestors(struct repository *r, int rev_nr,
+			   struct commit **rev, const char *prefix)
 {
 	struct rev_info revs;
 	int res;
 
-	bisect_rev_setup(&revs, prefix, "^%s", "%s", 0);
+	bisect_rev_setup(r, &revs, prefix, "^%s", "%s", 0);
 
 	bisect_common(&revs);
 	res = (revs.commits != NULL);
@@ -847,7 +852,9 @@ static int check_ancestors(int rev_nr, struct commit **rev, const char *prefix)
  * If a merge base must be tested by the user, its source code will be
  * checked out to be tested by the user and we will exit.
  */
-static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
+static void check_good_are_ancestors_of_bad(struct repository *r,
+					    const char *prefix,
+					    int no_checkout)
 {
 	char *filename = git_pathdup("BISECT_ANCESTORS_OK");
 	struct stat st;
@@ -866,8 +873,8 @@ static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
 		goto done;
 
 	/* Check if all good revs are ancestor of the bad rev. */
-	rev = get_bad_and_good_commits(&rev_nr);
-	if (check_ancestors(rev_nr, rev, prefix))
+	rev = get_bad_and_good_commits(r, &rev_nr);
+	if (check_ancestors(r, rev_nr, rev, prefix))
 		check_merge_bases(rev_nr, rev, no_checkout);
 	free(rev);
 
@@ -885,26 +892,19 @@ static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
 /*
  * This does "git diff-tree --pretty COMMIT" without one fork+exec.
  */
-static void show_diff_tree(const char *prefix, struct commit *commit)
+static void show_diff_tree(struct repository *r,
+			   const char *prefix,
+			   struct commit *commit)
 {
+	const char *argv[] = {
+		"diff-tree", "--pretty", "--stat", "--summary", "--cc", NULL
+	};
 	struct rev_info opt;
 
-	/* diff-tree init */
-	repo_init_revisions(the_repository, &opt, prefix);
-	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
-	opt.abbrev = 0;
-	opt.diff = 1;
+	git_config(git_diff_ui_config, NULL);
+	repo_init_revisions(r, &opt, prefix);
 
-	/* This is what "--pretty" does */
-	opt.verbose_header = 1;
-	opt.use_terminator = 0;
-	opt.commit_format = CMIT_FMT_DEFAULT;
-
-	/* diff-tree init */
-	if (!opt.diffopt.output_format)
-		opt.diffopt.output_format = DIFF_FORMAT_RAW;
-
-	setup_revisions(0, NULL, &opt, NULL);
+	setup_revisions(ARRAY_SIZE(argv) - 1, argv, &opt, NULL);
 	log_tree_commit(&opt, commit);
 }
 
@@ -945,7 +945,7 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
  * If no_checkout is non-zero, the bisection process does not
  * checkout the trial commit but instead simply updates BISECT_HEAD.
  */
-int bisect_next_all(const char *prefix, int no_checkout)
+int bisect_next_all(struct repository *r, const char *prefix, int no_checkout)
 {
 	struct rev_info revs;
 	struct commit_list *tried;
@@ -957,9 +957,9 @@ int bisect_next_all(const char *prefix, int no_checkout)
 	if (read_bisect_refs())
 		die(_("reading bisect refs failed"));
 
-	check_good_are_ancestors_of_bad(prefix, no_checkout);
+	check_good_are_ancestors_of_bad(r, prefix, no_checkout);
 
-	bisect_rev_setup(&revs, prefix, "%s", "^%s", 1);
+	bisect_rev_setup(r, &revs, prefix, "%s", "^%s", 1);
 	revs.limited = 1;
 
 	bisect_common(&revs);
@@ -993,7 +993,7 @@ int bisect_next_all(const char *prefix, int no_checkout)
 		exit_if_skipped_commits(tried, current_bad_oid);
 		printf("%s is the first %s commit\n", oid_to_hex(bisect_rev),
 			term_bad);
-		show_diff_tree(prefix, revs.commits->item);
+		show_diff_tree(r, prefix, revs.commits->item);
 		/* This means the bisection process succeeded. */
 		exit(10);
 	}

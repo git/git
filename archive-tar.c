@@ -142,7 +142,7 @@ static int stream_blocked(const struct object_id *oid)
  * string and appends it to a struct strbuf.
  */
 static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
-                                     const char *value, unsigned int valuelen)
+				     const char *value, unsigned int valuelen)
 {
 	int len, tmp;
 
@@ -202,7 +202,7 @@ static void prepare_header(struct archiver_args *args,
 			   unsigned int mode, unsigned long size)
 {
 	xsnprintf(header->mode, sizeof(header->mode), "%07o", mode & 07777);
-	xsnprintf(header->size, sizeof(header->size), "%011lo", S_ISREG(mode) ? size : 0);
+	xsnprintf(header->size, sizeof(header->size), "%011"PRIoMAX , S_ISREG(mode) ? (uintmax_t)size : (uintmax_t)0);
 	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo", (unsigned long) args->time);
 
 	xsnprintf(header->uid, sizeof(header->uid), "%07o", 0);
@@ -326,14 +326,15 @@ static int write_tar_entry(struct archiver_args *args,
 
 static void write_global_extended_header(struct archiver_args *args)
 {
-	const unsigned char *sha1 = args->commit_sha1;
+	const struct object_id *oid = args->commit_oid;
 	struct strbuf ext_header = STRBUF_INIT;
 	struct ustar_header header;
 	unsigned int mode;
 
-	if (sha1)
+	if (oid)
 		strbuf_append_ext_header(&ext_header, "comment",
-					 sha1_to_hex(sha1), 40);
+					 oid_to_hex(oid),
+					 the_hash_algo->hexsz);
 	if (args->time > USTAR_MAX_MTIME) {
 		strbuf_append_ext_header_uint(&ext_header, "mtime",
 					      args->time);

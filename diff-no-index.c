@@ -14,6 +14,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include "parse-options.h"
 #include "string-list.h"
 #include "dir.h"
 
@@ -233,35 +234,37 @@ static void fixup_paths(const char **path, struct strbuf *replacement)
 	}
 }
 
-void diff_no_index(struct repository *r,
-		   struct rev_info *revs,
-		   int argc, const char **argv)
+static const char * const diff_no_index_usage[] = {
+	N_("git diff --no-index [<options>] <path> <path>"),
+	NULL
+};
+
+int diff_no_index(struct rev_info *revs,
+		  int implicit_no_index,
+		  int argc, const char **argv)
 {
-	int i;
+	int i, no_index;
 	const char *paths[2];
 	struct strbuf replacement = STRBUF_INIT;
 	const char *prefix = revs->prefix;
+	struct option no_index_options[] = {
+		OPT_BOOL_F(0, "no-index", &no_index, "",
+			   PARSE_OPT_NONEG | PARSE_OPT_HIDDEN),
+		OPT_END(),
+	};
+	struct option *options;
 
-	/*
-	 * FIXME: --no-index should not look at index and we should be
-	 * able to pass NULL repo. Maybe later.
-	 */
-	repo_diff_setup(r, &revs->diffopt);
-	for (i = 1; i < argc - 2; ) {
-		int j;
-		if (!strcmp(argv[i], "--no-index"))
-			i++;
-		else if (!strcmp(argv[i], "--"))
-			i++;
-		else {
-			j = diff_opt_parse(&revs->diffopt, argv + i, argc - i,
-					   revs->prefix);
-			if (j <= 0)
-				die("invalid diff option/value: %s", argv[i]);
-			i += j;
-		}
+	options = parse_options_concat(no_index_options,
+				       revs->diffopt.parseopts);
+	argc = parse_options(argc, argv, revs->prefix, options,
+			     diff_no_index_usage, 0);
+	if (argc != 2) {
+		if (implicit_no_index)
+			warning(_("Not a git repository. Use --no-index to "
+				  "compare two paths outside a working tree"));
+		usage_with_options(diff_no_index_usage, options);
 	}
-
+	FREE_AND_NULL(options);
 	for (i = 0; i < 2; i++) {
 		const char *p = argv[argc - 2 + i];
 		if (!strcmp(p, "-"))
@@ -293,7 +296,7 @@ void diff_no_index(struct repository *r,
 	revs->diffopt.flags.exit_with_status = 1;
 
 	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
-		exit(1);
+		return 1;
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
@@ -304,5 +307,5 @@ void diff_no_index(struct repository *r,
 	 * The return code for --no-index imitates diff(1):
 	 * 0 = no changes, 1 = changes, else error
 	 */
-	exit(diff_result_code(&revs->diffopt, 0));
+	return diff_result_code(&revs->diffopt, 0);
 }

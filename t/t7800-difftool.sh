@@ -279,11 +279,27 @@ test_expect_success 'difftool + mergetool config variables' '
 	echo branch >expect &&
 	git difftool --no-prompt branch >actual &&
 	test_cmp expect actual &&
+	git difftool --gui --no-prompt branch >actual &&
+	test_cmp expect actual &&
 
 	# set merge.tool to something bogus, diff.tool to test-tool
 	test_config merge.tool bogus-tool &&
 	test_config diff.tool test-tool &&
 	git difftool --no-prompt branch >actual &&
+	test_cmp expect actual &&
+	git difftool --gui --no-prompt branch >actual &&
+	test_cmp expect actual &&
+
+	# set merge.tool, diff.tool to something bogus, merge.guitool to test-tool
+	test_config diff.tool bogus-tool &&
+	test_config merge.guitool test-tool &&
+	git difftool --gui --no-prompt branch >actual &&
+	test_cmp expect actual &&
+
+	# set merge.tool, diff.tool, merge.guitool to something bogus, diff.guitool to test-tool
+	test_config merge.guitool bogus-tool &&
+	test_config diff.guitool test-tool &&
+	git difftool --gui --no-prompt branch >actual &&
 	test_cmp expect actual
 '
 
@@ -332,7 +348,7 @@ test_expect_success 'difftool --extcmd cat arg1' '
 test_expect_success 'difftool --extcmd cat arg2' '
 	echo branch >expect &&
 	git difftool --no-prompt \
-		--extcmd sh\ -c\ \"cat\ \$2\" branch >actual &&
+		--extcmd sh\ -c\ \"cat\ \\\"\$2\\\"\" branch >actual &&
 	test_cmp expect actual
 '
 
@@ -546,7 +562,7 @@ do
 done >actual
 EOF
 
-test_expect_success SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
+test_expect_success SYMLINKS 'difftool --dir-diff --symlinks without unstaged changes' '
 	cat >expect <<-EOF &&
 	file
 	$PWD/file
@@ -555,7 +571,7 @@ test_expect_success SYMLINKS 'difftool --dir-diff --symlink without unstaged cha
 	sub/sub
 	$PWD/sub/sub
 	EOF
-	git difftool --dir-diff --symlink \
+	git difftool --dir-diff --symlinks \
 		--extcmd "./.git/CHECK_SYMLINKS" branch HEAD &&
 	test_cmp expect actual
 '
@@ -703,6 +719,24 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 	git difftool --no-symlinks --dir-diff --extcmd ls >output &&
 	grep -v ^/ output >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'outside worktree' '
+	echo 1 >1 &&
+	echo 2 >2 &&
+	test_expect_code 1 nongit git \
+		-c diff.tool=echo -c difftool.echo.cmd="echo \$LOCAL \$REMOTE" \
+		difftool --no-prompt --no-index ../1 ../2 >actual &&
+	echo "../1 ../2" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'difftool --gui, --tool and --extcmd are mutually exclusive' '
+	difftool_test_setup &&
+	test_must_fail git difftool --gui --tool=test-tool &&
+	test_must_fail git difftool --gui --extcmd=cat &&
+	test_must_fail git difftool --tool=test-tool --extcmd=cat &&
+	test_must_fail git difftool --gui --tool=test-tool --extcmd=cat
 '
 
 test_done

@@ -52,7 +52,7 @@ struct blame_origin {
 	struct blame_entry *suspects;
 	mmfile_t file;
 	struct object_id blob_oid;
-	unsigned mode;
+	unsigned short mode;
 	/* guilty gets set when shipping any suspects to the final
 	 * blame list instead of other commits
 	 */
@@ -177,6 +177,6 @@ struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 					long start, long end,
 					struct blame_origin *o);
 
-extern struct blame_origin *get_blame_suspects(struct commit *commit);
+struct blame_origin *get_blame_suspects(struct commit *commit);
 
 #endif /* BLAME_H */

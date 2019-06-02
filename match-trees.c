@@ -3,7 +3,7 @@
 #include "tree-walk.h"
 #include "object-store.h"
 
-static int score_missing(unsigned mode, const char *path)
+static int score_missing(unsigned mode)
 {
 	int score;
 
@@ -16,7 +16,7 @@ static int score_missing(unsigned mode, const char *path)
 	return score;
 }
 
-static int score_differs(unsigned mode1, unsigned mode2, const char *path)
+static int score_differs(unsigned mode1, unsigned mode2)
 {
 	int score;
 
@@ -29,7 +29,7 @@ static int score_differs(unsigned mode1, unsigned mode2, const char *path)
 	return score;
 }
 
-static int score_matches(unsigned mode1, unsigned mode2, const char *path)
+static int score_matches(unsigned mode1, unsigned mode2)
 {
 	int score;
 
@@ -98,24 +98,22 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
 
 		if (cmp < 0) {
 			/* path1 does not appear in two */
-			score += score_missing(one.entry.mode, one.entry.path);
+			score += score_missing(one.entry.mode);
 			update_tree_entry(&one);
 		} else if (cmp > 0) {
 			/* path2 does not appear in one */
-			score += score_missing(two.entry.mode, two.entry.path);
+			score += score_missing(two.entry.mode);
 			update_tree_entry(&two);
 		} else {
 			/* path appears in both */
-			if (!oideq(one.entry.oid, two.entry.oid)) {
+			if (!oideq(&one.entry.oid, &two.entry.oid)) {
 				/* they are different */
 				score += score_differs(one.entry.mode,
-						       two.entry.mode,
-						       one.entry.path);
+						       two.entry.mode);
 			} else {
 				/* same subtree or blob */
 				score += score_matches(one.entry.mode,
-						       two.entry.mode,
-						       one.entry.path);
+						       two.entry.mode);
 			}
 			update_tree_entry(&one);
 			update_tree_entry(&two);
@@ -142,7 +140,7 @@ static void match_trees(const struct object_id *hash1,
 	while (one.size) {
 		const char *path;
 		const struct object_id *elem;
-		unsigned mode;
+		unsigned short mode;
 		int score;
 
 		elem = tree_entry_extract(&one, &path, &mode);
@@ -179,7 +177,7 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 	char *buf;
 	unsigned long sz;
 	struct tree_desc desc;
-	struct object_id *rewrite_here;
+	unsigned char *rewrite_here;
 	const struct object_id *rewrite_with;
 	struct object_id subtree;
 	enum object_type type;
@@ -198,16 +196,27 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 	rewrite_here = NULL;
 	while (desc.size) {
 		const char *name;
-		unsigned mode;
-		const struct object_id *oid;
+		unsigned short mode;
 
-		oid = tree_entry_extract(&desc, &name, &mode);
+		tree_entry_extract(&desc, &name, &mode);
 		if (strlen(name) == toplen &&
 		    !memcmp(name, prefix, toplen)) {
 			if (!S_ISDIR(mode))
 				die("entry %s in tree %s is not a tree", name,
 				    oid_to_hex(oid1));
-			rewrite_here = (struct object_id *)oid;
+
+			/*
+			 * We cast here for two reasons:
+			 *
+			 *   - to flip the "char *" (for the path) to "unsigned
+			 *     char *" (for the hash stored after it)
+			 *
+			 *   - to discard the "const"; this is OK because we
+			 *     know it points into our non-const "buf"
+			 */
+			rewrite_here = (unsigned char *)(desc.entry.path +
+							 strlen(desc.entry.path) +
+							 1);
 			break;
 		}
 		update_tree_entry(&desc);
@@ -216,14 +225,16 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 		die("entry %.*s not found in tree %s", toplen, prefix,
 		    oid_to_hex(oid1));
 	if (*subpath) {
-		status = splice_tree(rewrite_here, subpath, oid2, &subtree);
+		struct object_id tree_oid;
+		hashcpy(tree_oid.hash, rewrite_here);
+		status = splice_tree(&tree_oid, subpath, oid2, &subtree);
 		if (status)
 			return status;
 		rewrite_with = &subtree;
 	} else {
 		rewrite_with = oid2;
 	}
-	oidcpy(rewrite_here, rewrite_with);
+	hashcpy(rewrite_here, rewrite_with->hash);
 	status = write_object_file(buf, sz, tree_type, result);
 	free(buf);
 	return status;
@@ -274,7 +285,7 @@ void shift_tree(const struct object_id *hash1,
 
 	if (add_score < del_score) {
 		/* We need to pick a subtree of two */
-		unsigned mode;
+		unsigned short mode;
 
 		if (!*del_prefix)
 			return;
@@ -302,7 +313,7 @@ void shift_tree_by(const struct object_id *hash1,
 		   const char *shift_prefix)
 {
 	struct object_id sub1, sub2;
-	unsigned mode1, mode2;
+	unsigned short mode1, mode2;
 	unsigned candidate = 0;
 
 	/* Can hash2 be a tree at shift_prefix in tree hash1? */

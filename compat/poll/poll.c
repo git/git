@@ -18,6 +18,9 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
+/* To bump the minimum Windows version to Windows Vista */
+#include "git-compat-util.h"
+
 /* Tell gcc not to warn about the (nfd < 0) tests, below.  */
 #if (__GNUC__ == 4 && 3 <= __GNUC_MINOR__) || 4 < __GNUC__
 # pragma GCC diagnostic ignored "-Wtype-limits"
@@ -449,7 +452,8 @@ poll (struct pollfd *pfd, nfds_t nfd, int timeout)
   static HANDLE hEvent;
   WSANETWORKEVENTS ev;
   HANDLE h, handle_array[FD_SETSIZE + 2];
-  DWORD ret, wait_timeout, nhandles, start = 0, elapsed, orig_timeout = 0;
+  DWORD ret, wait_timeout, nhandles, orig_timeout = 0;
+  ULONGLONG start = 0;
   fd_set rfds, wfds, xfds;
   BOOL poll_again;
   MSG msg;
@@ -465,7 +469,7 @@ poll (struct pollfd *pfd, nfds_t nfd, int timeout)
   if (timeout != INFTIM)
     {
       orig_timeout = timeout;
-      start = GetTickCount();
+      start = GetTickCount64();
     }
 
   if (!hEvent)
@@ -614,8 +618,8 @@ restart:
 
   if (!rc && orig_timeout && timeout != INFTIM)
     {
-      elapsed = GetTickCount() - start;
-      timeout = elapsed >= orig_timeout ? 0 : orig_timeout - elapsed;
+      ULONGLONG elapsed = GetTickCount64() - start;
+      timeout = elapsed >= orig_timeout ? 0 : (int)(orig_timeout - elapsed);
     }
 
   if (!rc && timeout)

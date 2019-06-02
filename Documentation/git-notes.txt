@@ -146,7 +146,7 @@ OPTIONS
 
 -C <object>::
 --reuse-message=<object>::
-	Take the given blob object (for	example, another note) as the
+	Take the given blob object (for example, another note) as the
 	note message. (Use `git notes copy <object>` instead to
 	copy notes between objects.)
 

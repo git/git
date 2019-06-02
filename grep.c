@@ -1513,7 +1513,6 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	}
 }
 
-#ifndef NO_PTHREADS
 int grep_use_locks;
 
 /*
@@ -1538,11 +1537,6 @@ static inline void grep_attr_unlock(void)
  * Same as git_attr_mutex, but protecting the thread-unsafe object db access.
  */
 pthread_mutex_t grep_read_mutex;
-
-#else
-#define grep_attr_lock()
-#define grep_attr_unlock()
-#endif
 
 static int match_funcname(struct grep_opt *opt, struct grep_source *gs, char *bol, char *eol)
 {
@@ -1811,7 +1805,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		 * is not thread-safe.
 		 */
 		grep_attr_lock();
-		textconv = userdiff_get_textconv(gs->driver);
+		textconv = userdiff_get_textconv(opt->repo, gs->driver);
 		grep_attr_unlock();
 	}
 

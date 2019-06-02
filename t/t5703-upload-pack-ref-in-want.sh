@@ -48,15 +48,15 @@ test_expect_success 'setup repository' '
 '
 
 test_expect_success 'config controls ref-in-want advertisement' '
-	git serve --advertise-capabilities >out &&
+	test-tool serve-v2 --advertise-capabilities >out &&
 	! grep -a ref-in-want out &&
 
 	git config uploadpack.allowRefInWant false &&
-	git serve --advertise-capabilities >out &&
+	test-tool serve-v2 --advertise-capabilities >out &&
 	! grep -a ref-in-want out &&
 
 	git config uploadpack.allowRefInWant true &&
-	git serve --advertise-capabilities >out &&
+	test-tool serve-v2 --advertise-capabilities >out &&
 	grep -a ref-in-want out
 '
 
@@ -70,7 +70,7 @@ test_expect_success 'invalid want-ref line' '
 	0000
 	EOF
 
-	test_must_fail git serve --stateless-rpc 2>out <in &&
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>out <in &&
 	grep "unknown ref" out
 '
 
@@ -90,7 +90,7 @@ test_expect_success 'basic want-ref' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -112,7 +112,7 @@ test_expect_success 'multiple want-ref lines' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -133,7 +133,7 @@ test_expect_success 'mix want and want-ref' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -153,7 +153,7 @@ test_expect_success 'want-ref with ref we already have commit for' '
 	0000
 	EOF
 
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	check_output
 '
 
@@ -208,7 +208,7 @@ test_expect_success 'server is initially ahead - no ref in want' '
 	cp -r "$LOCAL_PRISTINE" local &&
 	inconsistency master 1234567890123456789012345678901234567890 &&
 	test_must_fail git -C local fetch 2>err &&
-	grep "ERR upload-pack: not our ref" err
+	test_i18ngrep "fatal: remote error: upload-pack: not our ref" err
 '
 
 test_expect_success 'server is initially ahead - ref in want' '
@@ -254,10 +254,8 @@ test_expect_success 'server loses a ref - ref in want' '
 	echo "s/master/raster/" >"$HTTPD_ROOT_PATH/one-time-sed" &&
 	test_must_fail git -C local fetch 2>err &&
 
-	grep "ERR unknown ref refs/heads/raster" err
+	test_i18ngrep "fatal: remote error: unknown ref refs/heads/raster" err
 '
-
-stop_httpd
 
 REPO="$(pwd)/repo"
 LOCAL_PRISTINE="$(pwd)/local_pristine"

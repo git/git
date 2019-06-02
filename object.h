@@ -59,7 +59,7 @@ struct object_array {
 
 /*
  * object flag allocation:
- * revision.h:               0---------10                              2526
+ * revision.h:               0---------10                              25----28
  * fetch-pack.c:             01
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
@@ -78,7 +78,7 @@ struct object_array {
  * builtin/show-branch.c:    0-------------------------------------------26
  * builtin/unpack-objects.c:                                 2021
  */
-#define FLAG_BITS  27
+#define FLAG_BITS  29
 
 /*
  * The object type is stored in 3 bits.
@@ -90,19 +90,19 @@ struct object {
 	struct object_id oid;
 };
 
-extern const char *type_name(unsigned int type);
-extern int type_from_string_gently(const char *str, ssize_t, int gentle);
+const char *type_name(unsigned int type);
+int type_from_string_gently(const char *str, ssize_t, int gentle);
 #define type_from_string(str) type_from_string_gently(str, -1, 0)
 
 /*
  * Return the current number of buckets in the object hashmap.
  */
-extern unsigned int get_max_object_index(void);
+unsigned int get_max_object_index(void);
 
 /*
  * Return the object from the specified bucket in the object hashmap.
  */
-extern struct object *get_indexed_object(unsigned int);
+struct object *get_indexed_object(unsigned int);
 
 /*
  * This can be used to see if we have heard of the object before, but
@@ -118,7 +118,7 @@ extern struct object *get_indexed_object(unsigned int);
  */
 struct object *lookup_object(struct repository *r, const unsigned char *sha1);
 
-extern void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
+void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
 
 void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet);
 
@@ -189,6 +189,6 @@ void clear_object_flags(unsigned flags);
 /*
  * Clear the specified object flags from all in-core commit objects.
  */
-extern void clear_commit_marks_all(unsigned int flags);
+void clear_commit_marks_all(unsigned int flags);
 
 #endif /* OBJECT_H */

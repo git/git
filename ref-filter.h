@@ -96,6 +96,11 @@ struct ref_format {
 #define OPT_MERGED(f, h) _OPT_MERGED_NO_MERGED("merged", f, h)
 #define OPT_NO_MERGED(f, h) _OPT_MERGED_NO_MERGED("no-merged", f, h)
 
+#define OPT_REF_SORT(var) \
+	OPT_CALLBACK_F(0, "sort", (var), \
+		       N_("key"), N_("field name to sort on"), \
+		       PARSE_OPT_NONEG, parse_opt_ref_sorting)
+
 /*
  * API for filtering a set of refs. Based on the type of refs the user
  * has requested, we iterate through those refs and apply filters

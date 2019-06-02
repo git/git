@@ -204,6 +204,12 @@ test_expect_success 'overrides work between mixed transfer/upload-pack hideRefs'
 	grep refs/tags/magic actual
 '
 
+test_expect_success 'protocol v2 supports hiderefs' '
+	test_config uploadpack.hiderefs refs/tags &&
+	git -c protocol.version=2 ls-remote . >actual &&
+	! grep refs/tags actual
+'
+
 test_expect_success 'ls-remote --symref' '
 	git fetch origin &&
 	cat >expect <<-EOF &&
@@ -217,7 +223,9 @@ test_expect_success 'ls-remote --symref' '
 	$(git rev-parse refs/tags/mark1.10)	refs/tags/mark1.10
 	$(git rev-parse refs/tags/mark1.2)	refs/tags/mark1.2
 	EOF
-	git ls-remote --symref >actual &&
+	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
+	# protocol v0 here.
+	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref >actual &&
 	test_cmp expect actual
 '
 
@@ -226,7 +234,9 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	ref: refs/heads/master	HEAD
 	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	HEAD
 	EOF
-	git ls-remote --symref . HEAD >actual &&
+	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
+	# protocol v0 here.
+	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref . HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -237,7 +247,9 @@ test_expect_failure 'ls-remote with filtered symref (--heads)' '
 	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
 	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
 	EOF
-	git ls-remote --symref --heads . >actual &&
+	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
+	# protocol v0 here.
+	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref --heads . >actual &&
 	test_cmp expect actual
 '
 
@@ -246,9 +258,11 @@ test_expect_success 'ls-remote --symref omits filtered-out matches' '
 	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
 	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
 	EOF
-	git ls-remote --symref --heads . >actual &&
+	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
+	# protocol v0 here.
+	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref --heads . >actual &&
 	test_cmp expect actual &&
-	git ls-remote --symref . "refs/heads/*" >actual &&
+	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref . "refs/heads/*" >actual &&
 	test_cmp expect actual
 '
 
@@ -260,7 +274,7 @@ test_lazy_prereq GIT_DAEMON '
 # This test spawns a daemon, so run it only if the user would be OK with
 # testing with git-daemon.
 test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-compliant empty remote' '
-	JGIT_DAEMON_PORT=${JGIT_DAEMON_PORT-${this_test#t}} &&
+	test_set_port JGIT_DAEMON_PORT &&
 	JGIT_DAEMON_PID= &&
 	git init --bare empty.git &&
 	>empty.git/git-daemon-export-ok &&
@@ -300,6 +314,30 @@ test_expect_success 'ls-remote works outside repository' '
 	# lookups).
 	nongit git init --bare dst.git &&
 	nongit git ls-remote dst.git
+'
+
+test_expect_success 'ls-remote --sort fails gracefully outside repository' '
+	# Use a sort key that requires access to the referenced objects.
+	nongit test_must_fail git ls-remote --sort=authordate "$TRASH_DIRECTORY" 2>err &&
+	test_i18ngrep "^fatal: not a git repository, but the field '\''authordate'\'' requires access to object data" err
+'
+
+test_expect_success 'ls-remote patterns work with all protocol versions' '
+	git for-each-ref --format="%(objectname)	%(refname)" \
+		refs/heads/master refs/remotes/origin/master >expect &&
+	git -c protocol.version=1 ls-remote . master >actual.v1 &&
+	test_cmp expect actual.v1 &&
+	git -c protocol.version=2 ls-remote . master >actual.v2 &&
+	test_cmp expect actual.v2
+'
+
+test_expect_success 'ls-remote prefixes work with all protocol versions' '
+	git for-each-ref --format="%(objectname)	%(refname)" \
+		refs/heads/ refs/tags/ >expect &&
+	git -c protocol.version=1 ls-remote --heads --tags . >actual.v1 &&
+	test_cmp expect actual.v1 &&
+	git -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
+	test_cmp expect actual.v2
 '
 
 test_done

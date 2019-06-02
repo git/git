@@ -13,6 +13,7 @@
 #include "mergesort.h"
 #include "argv-array.h"
 #include "commit-reach.h"
+#include "advice.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 
@@ -336,14 +337,14 @@ static int handle_config(const char *key, const char *value, void *cb)
 		if (!name)
 			return 0;
 		if (!strcmp(subkey, "insteadof")) {
-			rewrite = make_rewrite(&rewrites, name, namelen);
 			if (!value)
 				return config_error_nonbool(key);
+			rewrite = make_rewrite(&rewrites, name, namelen);
 			add_instead_of(rewrite, xstrdup(value));
 		} else if (!strcmp(subkey, "pushinsteadof")) {
-			rewrite = make_rewrite(&rewrites_push, name, namelen);
 			if (!value)
 				return config_error_nonbool(key);
+			rewrite = make_rewrite(&rewrites_push, name, namelen);
 			add_instead_of(rewrite, xstrdup(value));
 		}
 	}
@@ -359,7 +360,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 		return 0;
 	/* Handle remote.<name>.* variables */
 	if (*name == '/') {
-		warning("Config remote shorthand cannot begin with '/': %s",
+		warning(_("config remote shorthand cannot begin with '/': %s"),
 			name);
 		return 0;
 	}
@@ -406,7 +407,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 		if (!remote->receivepack)
 			remote->receivepack = v;
 		else
-			error("more than one receivepack given, using the first");
+			error(_("more than one receivepack given, using the first"));
 	} else if (!strcmp(subkey, "uploadpack")) {
 		const char *v;
 		if (git_config_string(&v, key, value))
@@ -414,7 +415,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 		if (!remote->uploadpack)
 			remote->uploadpack = v;
 		else
-			error("more than one uploadpack given, using the first");
+			error(_("more than one uploadpack given, using the first"));
 	} else if (!strcmp(subkey, "tagopt")) {
 		if (!strcmp(value, "--no-tags"))
 			remote->fetch_tags = -1;
@@ -620,7 +621,7 @@ static void handle_duplicate(struct ref *ref1, struct ref *ref2)
 			 * FETCH_HEAD_IGNORE entries always appear at
 			 * the end of the list.
 			 */
-			die(_("Internal error"));
+			BUG("Internal error");
 		}
 	}
 	free(ref2->peer_ref);
@@ -680,7 +681,7 @@ static int match_name_with_pattern(const char *key, const char *name,
 	size_t namelen;
 	int ret;
 	if (!kstar)
-		die("Key '%s' of pattern had no '*'", key);
+		die(_("key '%s' of pattern had no '*'"), key);
 	klen = kstar - key;
 	ksuffixlen = strlen(kstar + 1);
 	namelen = strlen(name);
@@ -690,7 +691,7 @@ static int match_name_with_pattern(const char *key, const char *name,
 		struct strbuf sb = STRBUF_INIT;
 		const char *vstar = strchr(value, '*');
 		if (!vstar)
-			die("Value '%s' of pattern has no '*'", value);
+			die(_("value '%s' of pattern has no '*'"), value);
 		strbuf_add(&sb, value, vstar - value);
 		strbuf_add(&sb, name + klen, namelen - klen - ksuffixlen);
 		strbuf_addstr(&sb, vstar + 1);
@@ -707,7 +708,7 @@ static void query_refspecs_multiple(struct refspec *rs,
 	int find_src = !query->src;
 
 	if (find_src && !query->dst)
-		error("query_refspecs_multiple: need either src or dst");
+		BUG("query_refspecs_multiple: need either src or dst");
 
 	for (i = 0; i < rs->nr; i++) {
 		struct refspec_item *refspec = &rs->items[i];
@@ -735,7 +736,7 @@ int query_refspecs(struct refspec *rs, struct refspec_item *query)
 	char **result = find_src ? &query->src : &query->dst;
 
 	if (find_src && !query->dst)
-		return error("query_refspecs: need either src or dst");
+		BUG("query_refspecs: need either src or dst");
 
 	for (i = 0; i < rs->nr; i++) {
 		struct refspec_item *refspec = &rs->items[i];
@@ -819,11 +820,11 @@ struct ref *copy_ref_list(const struct ref *ref)
 	return ret;
 }
 
-static void free_ref(struct ref *ref)
+void free_one_ref(struct ref *ref)
 {
 	if (!ref)
 		return;
-	free_ref(ref->peer_ref);
+	free_one_ref(ref->peer_ref);
 	free(ref->remote_status);
 	free(ref->symref);
 	free(ref);
@@ -834,7 +835,7 @@ void free_refs(struct ref *ref)
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
-		free_ref(ref);
+		free_one_ref(ref);
 		ref = next;
 	}
 }
@@ -968,12 +969,13 @@ static char *guess_ref(const char *name, struct ref *peer)
 	if (!r)
 		return NULL;
 
-	if (starts_with(r, "refs/heads/"))
+	if (starts_with(r, "refs/heads/")) {
 		strbuf_addstr(&buf, "refs/heads/");
-	else if (starts_with(r, "refs/tags/"))
+	} else if (starts_with(r, "refs/tags/")) {
 		strbuf_addstr(&buf, "refs/tags/");
-	else
+	} else {
 		return NULL;
+	}
 
 	strbuf_addstr(&buf, name);
 	return strbuf_detach(&buf, NULL);
@@ -995,12 +997,68 @@ static int match_explicit_lhs(struct ref *src,
 		 * way to delete 'other' ref at the remote end.
 		 */
 		if (try_explicit_object_name(rs->src, match) < 0)
-			return error("src refspec %s does not match any.", rs->src);
+			return error(_("src refspec %s does not match any"), rs->src);
 		if (allocated_match)
 			*allocated_match = 1;
 		return 0;
 	default:
-		return error("src refspec %s matches more than one.", rs->src);
+		return error(_("src refspec %s matches more than one"), rs->src);
+	}
+}
+
+static void show_push_unqualified_ref_name_error(const char *dst_value,
+						 const char *matched_src_name)
+{
+	struct object_id oid;
+	enum object_type type;
+
+	/*
+	 * TRANSLATORS: "matches '%s'%" is the <dst> part of "git push
+	 * <remote> <src>:<dst>" push, and "being pushed ('%s')" is
+	 * the <src>.
+	 */
+	error(_("The destination you provided is not a full refname (i.e.,\n"
+		"starting with \"refs/\"). We tried to guess what you meant by:\n"
+		"\n"
+		"- Looking for a ref that matches '%s' on the remote side.\n"
+		"- Checking if the <src> being pushed ('%s')\n"
+		"  is a ref in \"refs/{heads,tags}/\". If so we add a corresponding\n"
+		"  refs/{heads,tags}/ prefix on the remote side.\n"
+		"\n"
+		"Neither worked, so we gave up. You must fully qualify the ref."),
+	      dst_value, matched_src_name);
+
+	if (!advice_push_unqualified_ref_name)
+		return;
+
+	if (get_oid(matched_src_name, &oid))
+		BUG("'%s' is not a valid object, "
+		    "match_explicit_lhs() should catch this!",
+		    matched_src_name);
+	type = oid_object_info(the_repository, &oid, NULL);
+	if (type == OBJ_COMMIT) {
+		advise(_("The <src> part of the refspec is a commit object.\n"
+			 "Did you mean to create a new branch by pushing to\n"
+			 "'%s:refs/heads/%s'?"),
+		       matched_src_name, dst_value);
+	} else if (type == OBJ_TAG) {
+		advise(_("The <src> part of the refspec is a tag object.\n"
+			 "Did you mean to create a new tag by pushing to\n"
+			 "'%s:refs/tags/%s'?"),
+		       matched_src_name, dst_value);
+	} else if (type == OBJ_TREE) {
+		advise(_("The <src> part of the refspec is a tree object.\n"
+			 "Did you mean to tag a new tree by pushing to\n"
+			 "'%s:refs/tags/%s'?"),
+		       matched_src_name, dst_value);
+	} else if (type == OBJ_BLOB) {
+		advise(_("The <src> part of the refspec is a blob object.\n"
+			 "Did you mean to tag a new blob by pushing to\n"
+			 "'%s:refs/tags/%s'?"),
+		       matched_src_name, dst_value);
+	} else {
+		BUG("'%s' should be commit/tag/tree/blob, is '%d'",
+		    matched_src_name, type);
 	}
 }
 
@@ -1030,7 +1088,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		if (!dst_value ||
 		    ((flag & REF_ISSYMREF) &&
 		     !starts_with(dst_value, "refs/heads/")))
-			die("%s cannot be resolved to branch.",
+			die(_("%s cannot be resolved to branch"),
 			    matched_src->name);
 	}
 
@@ -1038,33 +1096,30 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	case 1:
 		break;
 	case 0:
-		if (starts_with(dst_value, "refs/"))
+		if (starts_with(dst_value, "refs/")) {
 			matched_dst = make_linked_ref(dst_value, dst_tail);
-		else if (is_null_oid(&matched_src->new_oid))
-			error("unable to delete '%s': remote ref does not exist",
+		} else if (is_null_oid(&matched_src->new_oid)) {
+			error(_("unable to delete '%s': remote ref does not exist"),
 			      dst_value);
-		else if ((dst_guess = guess_ref(dst_value, matched_src))) {
+		} else if ((dst_guess = guess_ref(dst_value, matched_src))) {
 			matched_dst = make_linked_ref(dst_guess, dst_tail);
 			free(dst_guess);
-		} else
-			error("unable to push to unqualified destination: %s\n"
-			      "The destination refspec neither matches an "
-			      "existing ref on the remote nor\n"
-			      "begins with refs/, and we are unable to "
-			      "guess a prefix based on the source ref.",
-			      dst_value);
+		} else {
+			show_push_unqualified_ref_name_error(dst_value,
+							     matched_src->name);
+		}
 		break;
 	default:
 		matched_dst = NULL;
-		error("dst refspec %s matches more than one.",
+		error(_("dst refspec %s matches more than one"),
 		      dst_value);
 		break;
 	}
 	if (!matched_dst)
 		return -1;
 	if (matched_dst->peer_ref)
-		return error("dst ref %s receives from more than one src.",
-		      matched_dst->name);
+		return error(_("dst ref %s receives from more than one src"),
+			     matched_dst->name);
 	else {
 		matched_dst->peer_ref = allocated_src ?
 					matched_src :
@@ -1205,9 +1260,36 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	 * sent to the other side.
 	 */
 	if (sent_tips.nr) {
+		const int reachable_flag = 1;
+		struct commit_list *found_commits;
+		struct commit **src_commits;
+		int nr_src_commits = 0, alloc_src_commits = 16;
+		ALLOC_ARRAY(src_commits, alloc_src_commits);
+
 		for_each_string_list_item(item, &src_tag) {
 			struct ref *ref = item->util;
+			struct commit *commit;
+
+			if (is_null_oid(&ref->new_oid))
+				continue;
+			commit = lookup_commit_reference_gently(the_repository,
+								&ref->new_oid,
+								1);
+			if (!commit)
+				/* not pushing a commit, which is not an error */
+				continue;
+
+			ALLOC_GROW(src_commits, nr_src_commits + 1, alloc_src_commits);
+			src_commits[nr_src_commits++] = commit;
+		}
+
+		found_commits = get_reachable_subset(sent_tips.tip, sent_tips.nr,
+						     src_commits, nr_src_commits,
+						     reachable_flag);
+
+		for_each_string_list_item(item, &src_tag) {
 			struct ref *dst_ref;
+			struct ref *ref = item->util;
 			struct commit *commit;
 
 			if (is_null_oid(&ref->new_oid))
@@ -1223,7 +1305,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			 * Is this tag, which they do not have, reachable from
 			 * any of the commits we are sending?
 			 */
-			if (!in_merge_bases_many(commit, sent_tips.nr, sent_tips.tip))
+			if (!(commit->object.flags & reachable_flag))
 				continue;
 
 			/* Add it in */
@@ -1231,7 +1313,12 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			oidcpy(&dst_ref->new_oid, &ref->new_oid);
 			dst_ref->peer_ref = copy_ref(ref);
 		}
+
+		clear_commit_marks_many(nr_src_commits, src_commits, reachable_flag);
+		free(src_commits);
+		free_commit_list(found_commits);
 	}
+
 	string_list_clear(&src_tag, 0);
 	free(sent_tips.tip);
 }
@@ -1750,7 +1837,7 @@ int get_fetch_map(const struct ref *remote_refs,
 			ref_map = get_remote_ref(remote_refs, name);
 		}
 		if (!missing_ok && !ref_map)
-			die("Couldn't find remote ref %s", name);
+			die(_("couldn't find remote ref %s"), name);
 		if (ref_map) {
 			ref_map->peer_ref = get_local_ref(refspec->dst);
 			if (ref_map->peer_ref && refspec->force)
@@ -1763,7 +1850,7 @@ int get_fetch_map(const struct ref *remote_refs,
 			if (!starts_with((*rmp)->peer_ref->name, "refs/") ||
 			    check_refname_format((*rmp)->peer_ref->name, 0)) {
 				struct ref *ignore = *rmp;
-				error("* Ignoring funny ref '%s' locally",
+				error(_("* Ignoring funny ref '%s' locally"),
 				      (*rmp)->peer_ref->name);
 				*rmp = (*rmp)->next;
 				free(ignore->peer_ref);
@@ -1793,36 +1880,26 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
 }
 
 /*
- * Lookup the upstream branch for the given branch and if present, optionally
- * compute the commit ahead/behind values for the pair.
+ * Compute the commit ahead/behind values for the pair branch_name, base.
  *
  * If abf is AHEAD_BEHIND_FULL, compute the full ahead/behind and return the
  * counts in *num_ours and *num_theirs.  If abf is AHEAD_BEHIND_QUICK, skip
  * the (potentially expensive) a/b computation (*num_ours and *num_theirs are
  * set to zero).
  *
- * The name of the upstream branch (or NULL if no upstream is defined) is
- * returned via *upstream_name, if it is not itself NULL.
- *
- * Returns -1 if num_ours and num_theirs could not be filled in (e.g., no
- * upstream defined, or ref does not exist).  Returns 0 if the commits are
- * identical.  Returns 1 if commits are different.
+ * Returns -1 if num_ours and num_theirs could not be filled in (e.g., ref
+ * does not exist).  Returns 0 if the commits are identical.  Returns 1 if
+ * commits are different.
  */
-int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
-		       const char **upstream_name, enum ahead_behind_flags abf)
+
+static int stat_branch_pair(const char *branch_name, const char *base,
+			     int *num_ours, int *num_theirs,
+			     enum ahead_behind_flags abf)
 {
 	struct object_id oid;
 	struct commit *ours, *theirs;
 	struct rev_info revs;
-	const char *base;
 	struct argv_array argv = ARGV_ARRAY_INIT;
-
-	/* Cannot stat unless we are marked to build on top of somebody else. */
-	base = branch_get_upstream(branch, NULL);
-	if (upstream_name)
-		*upstream_name = base;
-	if (!base)
-		return -1;
 
 	/* Cannot stat if what we used to build on no longer exists */
 	if (read_ref(base, &oid))
@@ -1831,7 +1908,7 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	if (!theirs)
 		return -1;
 
-	if (read_ref(branch->refname, &oid))
+	if (read_ref(branch_name, &oid))
 		return -1;
 	ours = lookup_commit_reference(the_repository, &oid);
 	if (!ours)
@@ -1845,7 +1922,7 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	if (abf == AHEAD_BEHIND_QUICK)
 		return 1;
 	if (abf != AHEAD_BEHIND_FULL)
-		BUG("stat_tracking_info: invalid abf '%d'", abf);
+		BUG("stat_branch_pair: invalid abf '%d'", abf);
 
 	/* Run "rev-list --left-right ours...theirs" internally... */
 	argv_array_push(&argv, ""); /* ignored */
@@ -1858,7 +1935,7 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	repo_init_revisions(the_repository, &revs, NULL);
 	setup_revisions(argv.argc, argv.argv, &revs, NULL);
 	if (prepare_revision_walk(&revs))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 
 	/* ... and count the commits on each side. */
 	while (1) {
@@ -1880,6 +1957,42 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 }
 
 /*
+ * Lookup the tracking branch for the given branch and if present, optionally
+ * compute the commit ahead/behind values for the pair.
+ *
+ * If for_push is true, the tracking branch refers to the push branch,
+ * otherwise it refers to the upstream branch.
+ *
+ * The name of the tracking branch (or NULL if it is not defined) is
+ * returned via *tracking_name, if it is not itself NULL.
+ *
+ * If abf is AHEAD_BEHIND_FULL, compute the full ahead/behind and return the
+ * counts in *num_ours and *num_theirs.  If abf is AHEAD_BEHIND_QUICK, skip
+ * the (potentially expensive) a/b computation (*num_ours and *num_theirs are
+ * set to zero).
+ *
+ * Returns -1 if num_ours and num_theirs could not be filled in (e.g., no
+ * upstream defined, or ref does not exist).  Returns 0 if the commits are
+ * identical.  Returns 1 if commits are different.
+ */
+int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
+		       const char **tracking_name, int for_push,
+		       enum ahead_behind_flags abf)
+{
+	const char *base;
+
+	/* Cannot stat unless we are marked to build on top of somebody else. */
+	base = for_push ? branch_get_push(branch, NULL) :
+		branch_get_upstream(branch, NULL);
+	if (tracking_name)
+		*tracking_name = base;
+	if (!base)
+		return -1;
+
+	return stat_branch_pair(branch->refname, base, num_ours, num_theirs, abf);
+}
+
+/*
  * Return true when there is anything to report, otherwise false.
  */
 int format_tracking_info(struct branch *branch, struct strbuf *sb,
@@ -1890,7 +2003,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 	char *base;
 	int upstream_is_gone = 0;
 
-	sti = stat_tracking_info(branch, &ours, &theirs, &full_base, abf);
+	sti = stat_tracking_info(branch, &ours, &theirs, &full_base, 0, abf);
 	if (sti < 0) {
 		if (!full_base)
 			return 0;
@@ -2131,7 +2244,8 @@ static int parse_push_cas_option(struct push_cas_option *cas, const char *arg, i
 	else if (!colon[1])
 		oidclr(&entry->expect);
 	else if (get_oid(colon + 1, &entry->expect))
-		return error("cannot parse expected object name '%s'", colon + 1);
+		return error(_("cannot parse expected object name '%s'"),
+			     colon + 1);
 	return 0;
 }
 

@@ -372,15 +372,15 @@ such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
 Some parts of the system have dedicated maintainers with their own
 repositories.
 
-- 'git-gui/' comes from git-gui project, maintained by Pat Thoyts:
+- `git-gui/` comes from git-gui project, maintained by Pat Thoyts:
 
 	git://repo.or.cz/git-gui.git
 
-- 'gitk-git/' comes from Paul Mackerras's gitk project:
+- `gitk-git/` comes from Paul Mackerras's gitk project:
 
 	git://ozlabs.org/~paulus/gitk
 
-- 'po/' comes from the localization coordinator, Jiang Xin:
+- `po/` comes from the localization coordinator, Jiang Xin:
 
 	https://github.com/git-l10n/git-po/
 

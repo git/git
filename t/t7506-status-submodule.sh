@@ -325,7 +325,8 @@ test_expect_success 'setup superproject with untracked file in nested submodule'
 	(
 		cd super &&
 		git clean -dfx &&
-		rm .gitmodules &&
+		git rm .gitmodules &&
+		git commit -m "remove .gitmodules" &&
 		git submodule add -f ./sub1 &&
 		git submodule add -f ./sub2 &&
 		git submodule add -f ./sub1 sub3 &&

@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "trace2.h"
 
 static int boolean = 0;
 static int integer = 0;
@@ -36,6 +37,7 @@ static int length_callback(const struct option *opt, const char *arg, int unset)
 
 static int number_callback(const struct option *opt, const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
 	*(int *)opt->value = strtol(arg, NULL, 10);
 	return 0;
 }
@@ -119,7 +121,6 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
 		OPT_MAGNITUDE('m', "magnitude", &magnitude, "get a magnitude"),
 		OPT_SET_INT(0, "set23", &integer, "set integer to 23", 23),
-		OPT_DATE('t', NULL, &timestamp, "get timestamp of <time>"),
 		OPT_CALLBACK('L', "length", &integer, "str",
 			"get length of <str>", length_callback),
 		OPT_FILENAME('F', "file", &file, "set file to <file>"),
@@ -131,7 +132,7 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_NOOP_NOARG(0, "obsolete"),
 		OPT_STRING_LIST(0, "list", &list, "str", "add str to list"),
 		OPT_GROUP("Magic arguments"),
-		OPT_ARGUMENT("quux", "means --quux"),
+		OPT_ARGUMENT("quux", NULL, "means --quux"),
 		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
 			number_callback),
 		{ OPTION_COUNTUP, '+', NULL, &boolean, NULL, "same as -b",
@@ -148,10 +149,15 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_CALLBACK(0, "expect", &expect, "string",
 			     "expected output in the variable dump",
 			     collect_expect),
+		OPT_GROUP("Alias"),
+		OPT_STRING('A', "alias-source", &string, "string", "get a string"),
+		OPT_ALIAS('Z', "alias-target", "alias-source"),
 		OPT_END(),
 	};
 	int i;
 	int ret = 0;
+
+	trace2_cmd_name("_parse_");
 
 	argc = parse_options(argc, (const char **)argv, prefix, options, usage, 0);
 

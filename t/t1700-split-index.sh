@@ -25,14 +25,17 @@ test_expect_success 'enable split index' '
 	git update-index --split-index &&
 	test-tool dump-split-index .git/index >actual &&
 	indexversion=$(test-tool index-version <.git/index) &&
+
+	# NEEDSWORK: Stop hard-coding checksums.
 	if test "$indexversion" = "4"
 	then
-		own=3527df833c6c100d3d1d921a9a782d62a8be4b58
-		base=746f7ab2ed44fb839efdfbffcf399d0b113fb4cb
+		own=432ef4b63f32193984f339431fd50ca796493569
+		base=508851a7f0dfa8691e9f69c7f055865389012491
 	else
-		own=5e9b60117ece18da410ddecc8b8d43766a0e4204
-		base=4370042739b31cd17a5c5cd6043a77c9a00df113
+		own=8299b0bcd1ac364e5f1d7768efb62fa2da79a339
+		base=39d890139ee5356c7ef572216cebcd27aa41f9df
 	fi &&
+
 	cat >expect <<-EOF &&
 	own $own
 	base $base
@@ -381,6 +384,26 @@ test_expect_success 'check splitIndex.sharedIndexExpire set to "never" and "now"
 	test $(ls .git/sharedindex.* | wc -l) -le 2
 '
 
+test_expect_success POSIXPERM 'same mode for index & split index' '
+	git init same-mode &&
+	(
+		cd same-mode &&
+		test_commit A &&
+		test_modebits .git/index >index_mode &&
+		test_must_fail git config core.sharedRepository &&
+		git -c core.splitIndex=true status &&
+		shared=$(ls .git/sharedindex.*) &&
+		case "$shared" in
+		*" "*)
+			# we have more than one???
+			false ;;
+		*)
+			test_modebits "$shared" >split_index_mode &&
+			test_cmp index_mode split_index_mode ;;
+		esac
+	)
+'
+
 while read -r mode modebits
 do
 	test_expect_success POSIXPERM "split index respects core.sharedrepository $mode" '
@@ -447,6 +470,24 @@ test_expect_success 'writing split index with null sha1 does not write cache tre
 	GIT_ALLOW_NULL_SHA1=1 git reset --hard &&
 	test_might_fail test-tool dump-cache-tree >cache-tree.out &&
 	test_line_count = 0 cache-tree.out
+'
+
+test_expect_success 'do not refresh null base index' '
+	test_create_repo merge &&
+	(
+		cd merge &&
+		test_commit initial &&
+		git checkout -b side-branch &&
+		test_commit extra &&
+		git checkout master &&
+		git update-index --split-index &&
+		test_commit more &&
+		# must not write a new shareindex, or we wont catch the problem
+		git -c splitIndex.maxPercentChange=100 merge --no-edit side-branch 2>err &&
+		# i.e. do not expect warnings like
+		# could not freshen shared index .../shareindex.00000...
+		test_must_be_empty err
+	)
 '
 
 test_done

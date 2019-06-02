@@ -199,10 +199,6 @@ test_expect_success 'too-short tree' '
 	test_i18ngrep "too-short tree object" err
 '
 
-hex2oct() {
-    perl -ne 'printf "\\%03o", hex for /../g'
-}
-
 test_expect_success 'malformed mode in tree' '
 	hex_sha1=$(echo foo | git hash-object --stdin -w) &&
 	bin_sha1=$(echo $hex_sha1 | hex2oct) &&

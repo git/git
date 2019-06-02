@@ -112,8 +112,9 @@ When set to `merges`, rebase using `git rebase --rebase-merges` so that
 the local merge commits are included in the rebase (see
 linkgit:git-rebase[1] for details).
 +
-When set to preserve, rebase with the `--preserve-merges` option passed
-to `git rebase` so that locally created merge commits will not be flattened.
+When set to `preserve` (deprecated in favor of `merges`), rebase with the
+`--preserve-merges` option passed to `git rebase` so that locally created
+merge commits will not be flattened.
 +
 When false, merge the current branch into the upstream branch.
 +

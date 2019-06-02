@@ -439,14 +439,22 @@ test_expect_success 'setup tests for the --stdin parameter' '
 	) >input.dup
 '
 
-test_expect_success 'fetch refs from cmdline' '
-	(
-		cd client &&
-		git fetch-pack --no-progress .. $(cat ../input)
-	) >output &&
-	cut -d " " -f 2 <output | sort >actual &&
-	test_cmp expect actual
+test_expect_success 'setup fetch refs from cmdline v[12]' '
+	cp -r client client1 &&
+	cp -r client client2
 '
+
+for version in '' 1 2
+do
+	test_expect_success "protocol.version=$version fetch refs from cmdline" "
+		(
+			cd client$version &&
+			GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. \$(cat ../input)
+		) >output &&
+		cut -d ' ' -f 2 <output | sort >actual &&
+		test_cmp expect actual
+	"
+done
 
 test_expect_success 'fetch refs from stdin' '
 	(
@@ -628,7 +636,9 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	test_commit -C server 6 &&
 
 	git init client &&
-	test_must_fail git -C client fetch-pack ../server \
+	# Some protocol versions (e.g. 2) support fetching
+	# unadvertised objects, so restrict this test to v0.
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION= git -C client fetch-pack ../server \
 		$(git -C server rev-parse refs/heads/master^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
@@ -909,8 +919,5 @@ start_httpd
 test_expect_success 'fetch with --filter=blob:limit=0 and HTTP' '
 	fetch_filter_blob_limit_zero "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"
 '
-
-stop_httpd
-
 
 test_done

@@ -277,7 +277,7 @@ test_expect_success 'autosquash with empty custom instructionFormat' '
 	(
 		set_cat_todo_editor &&
 		test_must_fail git -c rebase.instructionFormat= \
-			rebase --autosquash  --force -i HEAD^ >actual &&
+			rebase --autosquash  --force-rebase -i HEAD^ >actual &&
 		git log -1 --format="pick %h %s" >expect &&
 		test_cmp expect actual
 	)

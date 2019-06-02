@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
@@ -50,6 +51,13 @@ static int filter_object(const char *path, unsigned mode,
 	return 0;
 }
 
+static int stream_blob(const struct object_id *oid)
+{
+	if (stream_blob_to_fd(1, oid, NULL, 0))
+		die("unable to stream %s to stdout", oid_to_hex(oid));
+	return 0;
+}
+
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			int unknown_type)
 {
@@ -66,7 +74,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	if (unknown_type)
 		flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
-	if (get_oid_with_context(obj_name, GET_OID_RECORD_PATH,
+	if (get_oid_with_context(the_repository, obj_name,
+				 GET_OID_RECORD_PATH,
 				 &oid, &obj_context))
 		die("Not a valid object name %s", obj_name);
 
@@ -92,7 +101,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		oi.sizep = &size;
 		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
-		printf("%lu\n", size);
+		printf("%"PRIuMAX"\n", (uintmax_t)size);
 		return 0;
 
 	case 'e':
@@ -132,7 +141,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		}
 
 		if (type == OBJ_BLOB)
-			return stream_blob_to_fd(1, &oid, NULL, 0);
+			return stream_blob(&oid);
 		buf = read_object_file(&oid, &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
@@ -155,7 +164,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 				oidcpy(&blob_oid, &oid);
 
 			if (oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB)
-				return stream_blob_to_fd(1, &blob_oid, NULL, 0);
+				return stream_blob(&blob_oid);
 			/*
 			 * we attempted to dereference a tag to a blob
 			 * and failed; there may be new dereference
@@ -202,14 +211,14 @@ struct expand_data {
 
 	/*
 	 * After a mark_query run, this object_info is set up to be
-	 * passed to sha1_object_info_extended. It will point to the data
+	 * passed to oid_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
 	 */
 	struct object_info info;
 
 	/*
 	 * This flag will be true if the requested batch format and options
-	 * don't require us to call sha1_object_info, which can then be
+	 * don't require us to call oid_object_info, which can then be
 	 * optimized out.
 	 */
 	unsigned skip_object_info : 1;
@@ -238,7 +247,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (data->mark_query)
 			data->info.sizep = &data->size;
 		else
-			strbuf_addf(sb, "%lu", data->size);
+			strbuf_addf(sb, "%"PRIuMAX , (uintmax_t)data->size);
 	} else if (is_atom("objectsize:disk", atom, len)) {
 		if (data->mark_query)
 			data->info.disk_sizep = &data->disk_size;
@@ -319,8 +328,9 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 				BUG("invalid cmdmode: %c", opt->cmdmode);
 			batch_write(opt, contents, size);
 			free(contents);
-		} else if (stream_blob_to_fd(1, oid, NULL, 0) < 0)
-			die("unable to stream %s to stdout", oid_to_hex(oid));
+		} else {
+			stream_blob(oid);
+		}
 	}
 	else {
 		enum object_type type;
@@ -372,13 +382,17 @@ static void batch_one_object(const char *obj_name,
 {
 	struct object_context ctx;
 	int flags = opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0;
-	enum follow_symlinks_result result;
+	enum get_oid_result result;
 
-	result = get_oid_with_context(obj_name, flags, &data->oid, &ctx);
+	result = get_oid_with_context(the_repository, obj_name,
+				      flags, &data->oid, &ctx);
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
 			printf("%s missing\n", obj_name);
+			break;
+		case SHORT_NAME_AMBIGUOUS:
+			printf("%s ambiguous\n", obj_name);
 			break;
 		case DANGLING_SYMLINK:
 			printf("dangling %"PRIuMAX"\n%s\n",
@@ -482,7 +496,7 @@ static int batch_objects(struct batch_options *opt)
 
 	/*
 	 * Expand once with our special mark_query flag, which will prime the
-	 * object_info to be handed to sha1_object_info_extended for each
+	 * object_info to be handed to oid_object_info_extended for each
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));
@@ -595,8 +609,10 @@ static int batch_option_callback(const struct option *opt,
 {
 	struct batch_options *bo = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (bo->enabled) {
-		return 1;
+		return error(_("only one batch option may be specified"));
 	}
 
 	bo->enabled = 1;
@@ -631,10 +647,12 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "buffer", &batch.buffer_output, N_("buffer --batch output")),
 		{ OPTION_CALLBACK, 0, "batch", &batch, "format",
 			N_("show info and content of objects fed from the standard input"),
-			PARSE_OPT_OPTARG, batch_option_callback },
+			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			batch_option_callback },
 		{ OPTION_CALLBACK, 0, "batch-check", &batch, "format",
 			N_("show info about objects fed from the standard input"),
-			PARSE_OPT_OPTARG, batch_option_callback },
+			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			batch_option_callback },
 		OPT_BOOL(0, "follow-symlinks", &batch.follow_symlinks,
 			 N_("follow in-tree symlinks (used with --batch or --batch-check)")),
 		OPT_BOOL(0, "batch-all-objects", &batch.all_objects,

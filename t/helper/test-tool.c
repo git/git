@@ -1,5 +1,12 @@
 #include "git-compat-util.h"
 #include "test-tool.h"
+#include "trace2.h"
+#include "parse-options.h"
+
+static const char * const test_tool_usage[] = {
+	"test-tool [-C <directory>] <command [<arguments>...]]",
+	NULL
+};
 
 struct test_cmd {
 	const char *name;
@@ -19,7 +26,9 @@ static struct test_cmd cmds[] = {
 	{ "dump-untracked-cache", cmd__dump_untracked_cache },
 	{ "example-decorate", cmd__example_decorate },
 	{ "genrandom", cmd__genrandom },
+	{ "genzeros", cmd__genzeros },
 	{ "hashmap", cmd__hashmap },
+	{ "hash-speed", cmd__hash_speed },
 	{ "index-version", cmd__index_version },
 	{ "json-writer", cmd__json_writer },
 	{ "lazy-init-name-hash", cmd__lazy_init_name_hash },
@@ -40,14 +49,19 @@ static struct test_cmd cmds[] = {
 	{ "revision-walking", cmd__revision_walking },
 	{ "run-command", cmd__run_command },
 	{ "scrap-cache-tree", cmd__scrap_cache_tree },
+	{ "serve-v2", cmd__serve_v2 },
 	{ "sha1", cmd__sha1 },
 	{ "sha1-array", cmd__sha1_array },
+	{ "sha256", cmd__sha256 },
 	{ "sigchain", cmd__sigchain },
 	{ "strcmp-offset", cmd__strcmp_offset },
 	{ "string-list", cmd__string_list },
 	{ "submodule-config", cmd__submodule_config },
+	{ "submodule-nested-repo-config", cmd__submodule_nested_repo_config },
 	{ "subprocess", cmd__subprocess },
+	{ "trace2", cmd__trace2 },
 	{ "urlmatch-normalization", cmd__urlmatch_normalization },
+	{ "xml-encode", cmd__xml_encode },
 	{ "wildmatch", cmd__wildmatch },
 #ifdef GIT_WINDOWS_NATIVE
 	{ "windows-named-pipe", cmd__windows_named_pipe },
@@ -55,20 +69,46 @@ static struct test_cmd cmds[] = {
 	{ "write-cache", cmd__write_cache },
 };
 
+static NORETURN void die_usage(void)
+{
+	size_t i;
+
+	fprintf(stderr, "usage: test-tool <toolname> [args]\n");
+	for (i = 0; i < ARRAY_SIZE(cmds); i++)
+		fprintf(stderr, "  %s\n", cmds[i].name);
+	exit(128);
+}
+
 int cmd_main(int argc, const char **argv)
 {
 	int i;
+	const char *working_directory = NULL;
+	struct option options[] = {
+		OPT_STRING('C', NULL, &working_directory, "directory",
+			   "change the working directory"),
+		OPT_END()
+	};
 
 	BUG_exit_code = 99;
+	argc = parse_options(argc, argv, NULL, options, test_tool_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION |
+			     PARSE_OPT_KEEP_ARGV0);
+
 	if (argc < 2)
-		die("I need a test name!");
+		die_usage();
+
+	if (working_directory && chdir(working_directory) < 0)
+		die("Could not cd to '%s'", working_directory);
 
 	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
 		if (!strcmp(cmds[i].name, argv[1])) {
 			argv++;
 			argc--;
+			trace2_cmd_name(cmds[i].name);
+			trace2_cmd_list_config();
 			return cmds[i].fn(argc, argv);
 		}
 	}
-	die("There is no test named '%s'", argv[1]);
+	error("there is no tool named '%s'", argv[1]);
+	die_usage();
 }

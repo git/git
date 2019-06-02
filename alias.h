@@ -1,5 +1,5 @@
-#ifndef __ALIAS_H__
-#define __ALIAS_H__
+#ifndef ALIAS_H
+#define ALIAS_H
 
 struct string_list;
 

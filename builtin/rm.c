@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds 2006
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
@@ -109,7 +110,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		const struct cache_entry *ce;
 		const char *name = list.entry[i].name;
 		struct object_id oid;
-		unsigned mode;
+		unsigned short mode;
 		int local_changes = 0;
 		int staged_changes = 0;
 

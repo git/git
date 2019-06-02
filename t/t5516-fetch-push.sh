@@ -95,7 +95,7 @@ mk_child() {
 
 check_push_result () {
 	test $# -ge 3 ||
-	error "bug in the test script: check_push_result requires at least 3 parameters"
+	BUG "check_push_result requires at least 3 parameters"
 
 	repo_name="$1"
 	shift
@@ -1147,8 +1147,12 @@ test_expect_success 'fetch exact SHA1' '
 		git prune &&
 		test_must_fail git cat-file -t $the_commit &&
 
+		# Some protocol versions (e.g. 2) support fetching
+		# unadvertised objects, so restrict this test to v0.
+
 		# fetching the hidden object should fail by default
-		test_must_fail git fetch -v ../testrepo $the_commit:refs/heads/copy 2>err &&
+		test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+			git fetch -v ../testrepo $the_commit:refs/heads/copy 2>err &&
 		test_i18ngrep "Server does not allow request for unadvertised object" err &&
 		test_must_fail git rev-parse --verify refs/heads/copy &&
 
@@ -1204,7 +1208,10 @@ do
 		mk_empty shallow &&
 		(
 			cd shallow &&
-			test_must_fail git fetch --depth=1 ../testrepo/.git $SHA1 &&
+			# Some protocol versions (e.g. 2) support fetching
+			# unadvertised objects, so restrict this test to v0.
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+				git fetch --depth=1 ../testrepo/.git $SHA1 &&
 			git --git-dir=../testrepo/.git config uploadpack.allowreachablesha1inwant true &&
 			git fetch --depth=1 ../testrepo/.git $SHA1 &&
 			git cat-file commit $SHA1
@@ -1232,15 +1239,21 @@ do
 		mk_empty shallow &&
 		(
 			cd shallow &&
-			test_must_fail ok=sigpipe git fetch ../testrepo/.git $SHA1_3 &&
-			test_must_fail ok=sigpipe git fetch ../testrepo/.git $SHA1_1 &&
+			# Some protocol versions (e.g. 2) support fetching
+			# unadvertised objects, so restrict this test to v0.
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+				git fetch ../testrepo/.git $SHA1_3 &&
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+				git fetch ../testrepo/.git $SHA1_1 &&
 			git --git-dir=../testrepo/.git config uploadpack.allowreachablesha1inwant true &&
 			git fetch ../testrepo/.git $SHA1_1 &&
 			git cat-file commit $SHA1_1 &&
 			test_must_fail git cat-file commit $SHA1_2 &&
 			git fetch ../testrepo/.git $SHA1_2 &&
 			git cat-file commit $SHA1_2 &&
-			test_must_fail ok=sigpipe git fetch ../testrepo/.git $SHA1_3
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+				git fetch ../testrepo/.git $SHA1_3 2>err &&
+			test_i18ngrep "remote error:.*not our ref.*$SHA1_3\$" err
 		)
 	'
 done
@@ -1270,6 +1283,17 @@ test_expect_success 'fetch follows tags by default' '
 		git for-each-ref >../actual
 	) &&
 	test_cmp expect actual
+'
+
+test_expect_success 'peeled advertisements are not considered ref tips' '
+	mk_empty testrepo &&
+	git -C testrepo commit --allow-empty -m one &&
+	git -C testrepo commit --allow-empty -m two &&
+	git -C testrepo tag -m foo mytag HEAD^ &&
+	oid=$(git -C testrepo rev-parse mytag^{commit}) &&
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+		git fetch testrepo $oid 2>err &&
+	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
 
 test_expect_success 'pushing a specific ref applies remote.$name.push as refmap' '
@@ -1370,7 +1394,7 @@ test_expect_success 'push does not follow tags by default' '
 	test_cmp expect actual
 '
 
-test_expect_success 'push --follow-tag only pushes relevant tags' '
+test_expect_success 'push --follow-tags only pushes relevant tags' '
 	mk_test testrepo heads/master &&
 	rm -fr src dst &&
 	git init src &&
@@ -1384,7 +1408,7 @@ test_expect_success 'push --follow-tag only pushes relevant tags' '
 		git tag -m "future" future &&
 		git checkout master &&
 		git for-each-ref refs/heads/master refs/tags/tag >../expect &&
-		git push --follow-tag ../dst master
+		git push --follow-tags ../dst master
 	) &&
 	(
 		cd dst &&
@@ -1577,7 +1601,13 @@ test_expect_success 'receive.denyCurrentBranch = updateInstead' '
 		test $(git -C .. rev-parse master) = $(git rev-parse HEAD) &&
 		git diff --quiet &&
 		git diff --cached --quiet
-	)
+	) &&
+
+	# (6) updateInstead intervened by fast-forward check
+	test_must_fail git push void master^:master &&
+	test $(git -C void rev-parse HEAD) = $(git rev-parse master) &&
+	git -C void diff --quiet &&
+	git -C void diff --cached --quiet
 '
 
 test_expect_success 'updateInstead with push-to-checkout hook' '

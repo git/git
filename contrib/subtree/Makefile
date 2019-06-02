@@ -59,6 +59,10 @@ $(GIT_SUBTREE): $(GIT_SUBTREE_SH)
 
 doc: $(GIT_SUBTREE_DOC) $(GIT_SUBTREE_HTML)
 
+man: $(GIT_SUBTREE_DOC)
+
+html: $(GIT_SUBTREE_HTML)
+
 install: $(GIT_SUBTREE)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
 	$(INSTALL) -m 755 $(GIT_SUBTREE) $(DESTDIR)$(gitexecdir)

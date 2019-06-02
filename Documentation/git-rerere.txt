@@ -24,7 +24,7 @@ on the initial manual merge, and applying previously recorded
 hand resolutions to their corresponding automerge results.
 
 [NOTE]
-You need to set the configuration variable rerere.enabled in order to
+You need to set the configuration variable `rerere.enabled` in order to
 enable this command.
 
 

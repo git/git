@@ -62,9 +62,17 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	with --no-full.
 
 --connectivity-only::
-	Check only the connectivity of tags, commits and tree objects. By
-	avoiding to unpack blobs, this speeds up the operation, at the
-	expense of missing corrupt objects or other problematic issues.
+	Check only the connectivity of reachable objects, making sure
+	that any objects referenced by a reachable tag, commit, or tree
+	is present. This speeds up the operation by avoiding reading
+	blobs entirely (though it does still check that referenced blobs
+	exist). This will detect corruption in commits and trees, but
+	not do any semantic checks (e.g., for format errors). Corruption
+	in blob objects will not be detected at all.
++
+Unreachable tags, commits, and trees will also be accessed to find the
+tips of dangling segments of history. Use `--no-dangling` if you don't
+care about this output and want to speed it up further.
 
 --strict::
 	Enable more strict checking, namely to catch a file mode
@@ -140,9 +148,9 @@ dangling <type> <object>::
 	The <type> object <object>, is present in the database but never
 	'directly' used. A dangling commit could be a root node.
 
-sha1 mismatch <object>::
-	The database has an object who's sha1 doesn't match the
-	database value.
+hash mismatch <object>::
+	The database has an object whose hash doesn't match the
+	object database value.
 	This indicates a serious data integrity problem.
 
 Environment Variables

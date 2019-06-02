@@ -93,6 +93,7 @@ test_expect_success 'No extra GIT_* on alias scripts' '
 		sed -n \
 			-e "/^GIT_PREFIX=/d" \
 			-e "/^GIT_TEXTDOMAINDIR=/d" \
+			-e "/^GIT_TRACE2_PARENT/d" \
 			-e "/^GIT_/s/=.*//p" |
 		sort
 	EOF
@@ -319,14 +320,14 @@ test_lazy_prereq GETCWD_IGNORES_PERMS '
 	base=GETCWD_TEST_BASE_DIR &&
 	mkdir -p $base/dir &&
 	chmod 100 $base ||
-	error "bug in test script: cannot prepare $base"
+	BUG "cannot prepare $base"
 
 	(cd $base/dir && /bin/pwd -P)
 	status=$?
 
 	chmod 700 $base &&
 	rm -rf $base ||
-	error "bug in test script: cannot clean $base"
+	BUG "cannot clean $base"
 	return $status
 '
 
@@ -451,6 +452,17 @@ test_expect_success 're-init from a linked worktree' '
 		find .git/worktrees -print | sort >actual &&
 		test_cmp expected actual
 	)
+'
+
+test_expect_success MINGW 'core.hidedotfiles = false' '
+	git config --global core.hidedotfiles false &&
+	rm -rf newdir &&
+	mkdir newdir &&
+	(
+		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG &&
+		git -C newdir init
+	) &&
+	! is_hidden newdir/.git
 '
 
 test_expect_success MINGW 'redirect std handles' '

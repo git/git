@@ -83,7 +83,8 @@ invocations. The automated message can include the branch description.
 If `--log` is specified, a shortlog of the commits being merged
 will be appended to the specified message.
 
---[no-]rerere-autoupdate::
+--rerere-autoupdate::
+--no-rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
 	result of auto-conflict resolution if possible.
 
@@ -342,7 +343,7 @@ include::merge-strategies.txt[]
 
 CONFIGURATION
 -------------
-include::merge-config.txt[]
+include::config/merge.txt[]
 
 branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and

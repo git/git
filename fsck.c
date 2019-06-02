@@ -410,14 +410,14 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			continue;
 
 		if (S_ISDIR(entry.mode)) {
-			obj = (struct object *)lookup_tree(the_repository, entry.oid);
+			obj = (struct object *)lookup_tree(the_repository, &entry.oid);
 			if (name && obj)
 				put_object_name(options, obj, "%s%s/", name,
 					entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
-			obj = (struct object *)lookup_blob(the_repository, entry.oid);
+			obj = (struct object *)lookup_blob(the_repository, &entry.oid);
 			if (name && obj)
 				put_object_name(options, obj, "%s%s", name,
 					entry.path);
@@ -479,7 +479,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		if (name) {
 			struct object *obj = &parents->item->object;
 
-			if (++counter > 1)
+			if (counter++)
 				put_object_name(options, obj, "%s^%d",
 					name, counter);
 			else if (generation > 0)
@@ -604,7 +604,7 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 	o_name = NULL;
 
 	while (desc.size) {
-		unsigned mode;
+		unsigned short mode;
 		const char *name;
 		const struct object_id *oid;
 

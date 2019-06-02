@@ -197,6 +197,12 @@ static void diffsize_consume(void *data, char *line, unsigned long len)
 	(*(int *)data)++;
 }
 
+static void diffsize_hunk(void *data, long ob, long on, long nb, long nn,
+			  const char *funcline, long funclen)
+{
+	diffsize_consume(data, NULL, 0);
+}
+
 static int diffsize(const char *a, const char *b)
 {
 	xpparam_t pp = { 0 };
@@ -210,7 +216,9 @@ static int diffsize(const char *a, const char *b)
 	mf2.size = strlen(b);
 
 	cfg.ctxlen = 3;
-	if (!xdi_diff_outf(&mf1, &mf2, diffsize_consume, &count, &pp, &cfg))
+	if (!xdi_diff_outf(&mf1, &mf2,
+			   diffsize_hunk, diffsize_consume, &count,
+			   &pp, &cfg))
 		return count;
 
 	error(_("failed to generate diff"));
@@ -354,7 +362,7 @@ static struct diff_filespec *get_filespec(const char *name, const char *p)
 {
 	struct diff_filespec *spec = alloc_filespec(name);
 
-	fill_filespec(spec, &null_oid, 0, 0644);
+	fill_filespec(spec, &null_oid, 0, 0100644);
 	spec->data = (char *)p;
 	spec->size = strlen(p);
 	spec->should_munmap = 0;
@@ -452,8 +460,13 @@ int show_range_diff(const char *range1, const char *range2,
 		struct diff_options opts;
 		struct strbuf indent = STRBUF_INIT;
 
-		memcpy(&opts, diffopt, sizeof(opts));
-		opts.output_format = DIFF_FORMAT_PATCH;
+		if (diffopt)
+			memcpy(&opts, diffopt, sizeof(opts));
+		else
+			diff_setup(&opts);
+
+		if (!opts.output_format)
+			opts.output_format = DIFF_FORMAT_PATCH;
 		opts.flags.suppress_diff_headers = 1;
 		opts.flags.dual_color_diffed_diffs = dual_color;
 		opts.output_prefix = output_prefix_cb;

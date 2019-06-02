@@ -99,7 +99,7 @@ static void verify_working_tree_path(struct repository *r,
 	for (parents = work_tree->parents; parents; parents = parents->next) {
 		const struct object_id *commit_oid = &parents->item->object.oid;
 		struct object_id blob_oid;
-		unsigned mode;
+		unsigned short mode;
 
 		if (!get_tree_entry(commit_oid, path, &blob_oid, &mode) &&
 		    oid_object_info(r, &blob_oid, NULL) == OBJ_BLOB)
@@ -116,35 +116,38 @@ static void verify_working_tree_path(struct repository *r,
 		die("no such path '%s' in HEAD", path);
 }
 
-static struct commit_list **append_parent(struct commit_list **tail, const struct object_id *oid)
+static struct commit_list **append_parent(struct repository *r,
+					  struct commit_list **tail,
+					  const struct object_id *oid)
 {
 	struct commit *parent;
 
-	parent = lookup_commit_reference(the_repository, oid);
+	parent = lookup_commit_reference(r, oid);
 	if (!parent)
 		die("no such commit %s", oid_to_hex(oid));
 	return &commit_list_insert(parent, tail)->next;
 }
 
-static void append_merge_parents(struct commit_list **tail)
+static void append_merge_parents(struct repository *r,
+				 struct commit_list **tail)
 {
 	int merge_head;
 	struct strbuf line = STRBUF_INIT;
 
-	merge_head = open(git_path_merge_head(the_repository), O_RDONLY);
+	merge_head = open(git_path_merge_head(r), O_RDONLY);
 	if (merge_head < 0) {
 		if (errno == ENOENT)
 			return;
 		die("cannot open '%s' for reading",
-		    git_path_merge_head(the_repository));
+		    git_path_merge_head(r));
 	}
 
 	while (!strbuf_getwholeline_fd(&line, merge_head, '\n')) {
 		struct object_id oid;
 		if (line.len < GIT_SHA1_HEXSZ || get_oid_hex(line.buf, &oid))
 			die("unknown line in '%s': %s",
-			    git_path_merge_head(the_repository), line.buf);
-		tail = append_parent(tail, &oid);
+			    git_path_merge_head(r), line.buf);
+		tail = append_parent(r, tail, &oid);
 	}
 	close(merge_head);
 	strbuf_release(&line);
@@ -155,11 +158,13 @@ static void append_merge_parents(struct commit_list **tail)
  * want to transfer ownership of the buffer to the commit (so we
  * must use detach).
  */
-static void set_commit_buffer_from_strbuf(struct commit *c, struct strbuf *sb)
+static void set_commit_buffer_from_strbuf(struct repository *r,
+					  struct commit *c,
+					  struct strbuf *sb)
 {
 	size_t len;
 	void *buf = strbuf_detach(sb, &len);
-	set_commit_buffer(the_repository, c, buf, len);
+	set_commit_buffer(r, c, buf, len);
 }
 
 /*
@@ -183,9 +188,9 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	unsigned mode;
 	struct strbuf msg = STRBUF_INIT;
 
-	read_index(r->index);
+	repo_read_index(r);
 	time(&now);
-	commit = alloc_commit_node(the_repository);
+	commit = alloc_commit_node(r);
 	commit->object.parsed = 1;
 	commit->date = now;
 	parent_tail = &commit->parents;
@@ -193,13 +198,14 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
 		die("no such ref: HEAD");
 
-	parent_tail = append_parent(parent_tail, &head_oid);
-	append_merge_parents(parent_tail);
+	parent_tail = append_parent(r, parent_tail, &head_oid);
+	append_merge_parents(r, parent_tail);
 	verify_working_tree_path(r, commit, path);
 
 	origin = make_origin(commit, path);
 
-	ident = fmt_ident("Not Committed Yet", "not.committed.yet", NULL, 0);
+	ident = fmt_ident("Not Committed Yet", "not.committed.yet",
+			WANT_BLANK_IDENT, NULL, 0);
 	strbuf_addstr(&msg, "tree 0000000000000000000000000000000000000000\n");
 	for (parent = commit->parents; parent; parent = parent->next)
 		strbuf_addf(&msg, "parent %s\n",
@@ -211,7 +217,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 		    ident, ident, path,
 		    (!contents_from ? path :
 		     (!strcmp(contents_from, "-") ? "standard input" : contents_from)));
-	set_commit_buffer_from_strbuf(commit, &msg);
+	set_commit_buffer_from_strbuf(r, commit, &msg);
 
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
@@ -265,7 +271,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	 * want to run "diff-index --cached".
 	 */
 	discard_index(r->index);
-	read_index(r->index);
+	repo_read_index(r);
 
 	len = strlen(path);
 	if (!mode) {
@@ -1556,7 +1562,8 @@ finish:
 	}
 	for (i = 0; i < num_sg; i++) {
 		if (sg_origin[i]) {
-			drop_origin_blob(sg_origin[i]);
+			if (!sg_origin[i]->suspects)
+				drop_origin_blob(sg_origin[i]);
 			blame_origin_decref(sg_origin[i]);
 		}
 	}
@@ -1678,7 +1685,7 @@ static struct commit *find_single_final(struct rev_info *revs,
 		struct object *obj = revs->pending.objects[i].item;
 		if (obj->flags & UNINTERESTING)
 			continue;
-		obj = deref_tag(the_repository, obj, NULL, 0);
+		obj = deref_tag(revs->repo, obj, NULL, 0);
 		if (obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)
@@ -1709,14 +1716,14 @@ static struct commit *dwim_reverse_initial(struct rev_info *revs,
 
 	/* Is that sole rev a committish? */
 	obj = revs->pending.objects[0].item;
-	obj = deref_tag(the_repository, obj, NULL, 0);
+	obj = deref_tag(revs->repo, obj, NULL, 0);
 	if (obj->type != OBJ_COMMIT)
 		return NULL;
 
 	/* Do we have HEAD? */
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
 		return NULL;
-	head_commit = lookup_commit_reference_gently(the_repository,
+	head_commit = lookup_commit_reference_gently(revs->repo,
 						     &head_oid, 1);
 	if (!head_commit)
 		return NULL;
@@ -1745,7 +1752,7 @@ static struct commit *find_single_initial(struct rev_info *revs,
 		struct object *obj = revs->pending.objects[i].item;
 		if (!(obj->flags & UNINTERESTING))
 			continue;
-		obj = deref_tag(the_repository, obj, NULL, 0);
+		obj = deref_tag(revs->repo, obj, NULL, 0);
 		if (obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)

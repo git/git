@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
@@ -76,7 +77,8 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	their = NULL;
 	if (entry)
 		their = entry->blob;
-	return merge_blobs(&the_index, path, base, our, their, size);
+	return merge_blobs(the_repository->index, path,
+			   base, our, their, size);
 }
 
 static void *origin(struct merge_list *entry, unsigned long *size)
@@ -110,7 +112,8 @@ static void show_diff(struct merge_list *entry)
 	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	ecb.outf = show_outf;
+	ecb.out_hunk = NULL;
+	ecb.out_line = show_outf;
 	ecb.priv = NULL;
 
 	src.ptr = origin(entry, &size);
@@ -153,15 +156,15 @@ static void show_result(void)
 /* An empty entry never compares same, not even to another empty entry */
 static int same_entry(struct name_entry *a, struct name_entry *b)
 {
-	return	a->oid &&
-		b->oid &&
-		oideq(a->oid, b->oid) &&
+	return	!is_null_oid(&a->oid) &&
+		!is_null_oid(&b->oid) &&
+		oideq(&a->oid, &b->oid) &&
 		a->mode == b->mode;
 }
 
 static int both_empty(struct name_entry *a, struct name_entry *b)
 {
-	return !(a->oid || b->oid);
+	return is_null_oid(&a->oid) && is_null_oid(&b->oid);
 }
 
 static struct merge_list *create_entry(unsigned stage, unsigned mode, const struct object_id *oid, const char *path)
@@ -177,7 +180,7 @@ static struct merge_list *create_entry(unsigned stage, unsigned mode, const stru
 
 static char *traverse_path(const struct traverse_info *info, const struct name_entry *n)
 {
-	char *path = xmallocz(traverse_path_len(info, n));
+	char *path = xmallocz(traverse_path_len(info, n) + the_hash_algo->rawsz);
 	return make_traverse_path(path, info, n);
 }
 
@@ -191,8 +194,8 @@ static void resolve(const struct traverse_info *info, struct name_entry *ours, s
 		return;
 
 	path = traverse_path(info, result);
-	orig = create_entry(2, ours->mode, ours->oid, path);
-	final = create_entry(0, result->mode, result->oid, path);
+	orig = create_entry(2, ours->mode, &ours->oid, path);
+	final = create_entry(0, result->mode, &result->oid, path);
 
 	final->link = orig;
 
@@ -216,7 +219,7 @@ static void unresolved_directory(const struct traverse_info *info,
 
 	newbase = traverse_path(info, p);
 
-#define ENTRY_OID(e) (((e)->mode && S_ISDIR((e)->mode)) ? (e)->oid : NULL)
+#define ENTRY_OID(e) (((e)->mode && S_ISDIR((e)->mode)) ? &(e)->oid : NULL)
 	buf0 = fill_tree_descriptor(t + 0, ENTRY_OID(n + 0));
 	buf1 = fill_tree_descriptor(t + 1, ENTRY_OID(n + 1));
 	buf2 = fill_tree_descriptor(t + 2, ENTRY_OID(n + 2));
@@ -242,7 +245,7 @@ static struct merge_list *link_entry(unsigned stage, const struct traverse_info 
 		path = entry->path;
 	else
 		path = traverse_path(info, n);
-	link = create_entry(stage, n->mode, n->oid, path);
+	link = create_entry(stage, n->mode, &n->oid, path);
 	link->link = entry;
 	return link;
 }
@@ -317,7 +320,7 @@ static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, s
 	}
 
 	if (same_entry(entry+0, entry+1)) {
-		if (entry[2].oid && !S_ISDIR(entry[2].mode)) {
+		if (!is_null_oid(&entry[2].oid) && !S_ISDIR(entry[2].mode)) {
 			/* We did not touch, they modified -- take theirs */
 			resolve(info, entry+1, entry+2);
 			return mask;
@@ -345,7 +348,7 @@ static void merge_trees(struct tree_desc t[3], const char *base)
 
 	setup_traverse_info(&info, base);
 	info.fn = threeway_callback;
-	traverse_trees(3, t, &info);
+	traverse_trees(&the_index, 3, t, &info);
 }
 
 static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)

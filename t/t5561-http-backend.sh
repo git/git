@@ -132,5 +132,4 @@ test_expect_success 'server request log matches test results' '
 	check_access_log exp
 '
 
-stop_httpd
 test_done

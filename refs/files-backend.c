@@ -10,6 +10,7 @@
 #include "../object.h"
 #include "../dir.h"
 #include "../chdir-notify.h"
+#include "worktree.h"
 
 /*
  * This backend uses the following flags in `ref_update::flags` for
@@ -149,6 +150,25 @@ static struct files_ref_store *files_downcast(struct ref_store *ref_store,
 	return refs;
 }
 
+static void files_reflog_path_other_worktrees(struct files_ref_store *refs,
+					      struct strbuf *sb,
+					      const char *refname)
+{
+	const char *real_ref;
+	const char *worktree_name;
+	int length;
+
+	if (parse_worktree_ref(refname, &worktree_name, &length, &real_ref))
+		BUG("refname %s is not a other-worktree ref", refname);
+
+	if (worktree_name)
+		strbuf_addf(sb, "%s/worktrees/%.*s/logs/%s", refs->gitcommondir,
+			    length, worktree_name, real_ref);
+	else
+		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir,
+			    real_ref);
+}
+
 static void files_reflog_path(struct files_ref_store *refs,
 			      struct strbuf *sb,
 			      const char *refname)
@@ -157,6 +177,10 @@ static void files_reflog_path(struct files_ref_store *refs,
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
 		strbuf_addf(sb, "%s/logs/%s", refs->gitdir, refname);
+		break;
+	case REF_TYPE_OTHER_PSEUDOREF:
+	case REF_TYPE_MAIN_PSEUDOREF:
+		files_reflog_path_other_worktrees(refs, sb, refname);
 		break;
 	case REF_TYPE_NORMAL:
 		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, refname);
@@ -176,12 +200,44 @@ static void files_ref_path(struct files_ref_store *refs,
 	case REF_TYPE_PSEUDOREF:
 		strbuf_addf(sb, "%s/%s", refs->gitdir, refname);
 		break;
+	case REF_TYPE_MAIN_PSEUDOREF:
+		if (!skip_prefix(refname, "main-worktree/", &refname))
+			BUG("ref %s is not a main pseudoref", refname);
+		/* fallthrough */
+	case REF_TYPE_OTHER_PSEUDOREF:
 	case REF_TYPE_NORMAL:
 		strbuf_addf(sb, "%s/%s", refs->gitcommondir, refname);
 		break;
 	default:
 		BUG("unknown ref type %d of ref %s",
 		    ref_type(refname), refname);
+	}
+}
+
+/*
+ * Manually add refs/bisect, refs/rewritten and refs/worktree, which, being
+ * per-worktree, might not appear in the directory listing for
+ * refs/ in the main repo.
+ */
+static void add_per_worktree_entries_to_dir(struct ref_dir *dir, const char *dirname)
+{
+	const char *prefixes[] = { "refs/bisect/", "refs/worktree/", "refs/rewritten/" };
+	int ip;
+
+	if (strcmp(dirname, "refs/"))
+		return;
+
+	for (ip = 0; ip < ARRAY_SIZE(prefixes); ip++) {
+		const char *prefix = prefixes[ip];
+		int prefix_len = strlen(prefix);
+		struct ref_entry *child_entry;
+		int pos;
+
+		pos = search_ref_dir(dir, prefix, prefix_len);
+		if (pos >= 0)
+			continue;
+		child_entry = create_dir_entry(dir->cache, prefix, prefix_len, 1);
+		add_entry_to_dir(dir, child_entry);
 	}
 }
 
@@ -268,20 +324,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	strbuf_release(&path);
 	closedir(d);
 
-	/*
-	 * Manually add refs/bisect, which, being per-worktree, might
-	 * not appear in the directory listing for refs/ in the main
-	 * repo.
-	 */
-	if (!strcmp(dirname, "refs/")) {
-		int pos = search_ref_dir(dir, "refs/bisect/", 12);
-
-		if (pos < 0) {
-			struct ref_entry *child_entry = create_dir_entry(
-					dir->cache, "refs/bisect/", 12, 1);
-			add_entry_to_dir(dir, child_entry);
-		}
-	}
+	add_per_worktree_entries_to_dir(dir, dirname);
 }
 
 static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
@@ -2217,8 +2260,7 @@ static int split_head_update(struct ref_update *update,
  * Note that the new update will itself be subject to splitting when
  * the iteration gets to it.
  */
-static int split_symref_update(struct files_ref_store *refs,
-			       struct ref_update *update,
+static int split_symref_update(struct ref_update *update,
 			       const char *referent,
 			       struct ref_transaction *transaction,
 			       struct string_list *affected_refnames,
@@ -2412,7 +2454,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * of processing the split-off update, so we
 			 * don't have to do it here.
 			 */
-			ret = split_symref_update(refs, update,
+			ret = split_symref_update(update,
 						  referent.buf, transaction,
 						  affected_refnames, err);
 			if (ret)
@@ -2659,18 +2701,32 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 		if (is_packed_transaction_needed(refs->packed_ref_store,
 						 packed_transaction)) {
 			ret = ref_transaction_prepare(packed_transaction, err);
+			/*
+			 * A failure during the prepare step will abort
+			 * itself, but not free. Do that now, and disconnect
+			 * from the files_transaction so it does not try to
+			 * abort us when we hit the cleanup code below.
+			 */
+			if (ret) {
+				ref_transaction_free(packed_transaction);
+				backend_data->packed_transaction = NULL;
+			}
 		} else {
 			/*
 			 * We can skip rewriting the `packed-refs`
 			 * file. But we do need to leave it locked, so
 			 * that somebody else doesn't pack a reference
 			 * that we are trying to delete.
+			 *
+			 * We need to disconnect our transaction from
+			 * backend_data, since the abort (whether successful or
+			 * not) will free it.
 			 */
+			backend_data->packed_transaction = NULL;
 			if (ref_transaction_abort(packed_transaction, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
-			backend_data->packed_transaction = NULL;
 		}
 	}
 

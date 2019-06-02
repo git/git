@@ -8,6 +8,7 @@ n,dry-run     dry run
 author=       author name and email address for patches without any
 patches=      path to the quilt patches
 series=       path to the quilt series file
+keep-non-patch Pass -b to git mailinfo
 "
 SUBDIRECTORY_ON=Yes
 . git-sh-setup
@@ -31,6 +32,9 @@ do
 	--series)
 		shift
 		QUILT_SERIES="$1"
+		;;
+	--keep-non-patch)
+		MAILINFO_OPT="-b"
 		;;
 	--)
 		shift
@@ -98,7 +102,7 @@ do
 		continue
 	fi
 	echo $patch_name
-	git mailinfo "$tmp_msg" "$tmp_patch" \
+	git mailinfo $MAILINFO_OPT "$tmp_msg" "$tmp_patch" \
 		<"$QUILT_PATCHES/$patch_name" >"$tmp_info" || exit 3
 	test -s "$tmp_patch" || {
 		echo "Patch is empty.  Was it split wrong?"

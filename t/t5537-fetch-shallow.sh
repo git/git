@@ -186,6 +186,33 @@ EOF
 	test_cmp expect actual
 '
 
+test_expect_success '.git/shallow is edited by repack' '
+	git init shallow-server &&
+	test_commit -C shallow-server A &&
+	test_commit -C shallow-server B &&
+	git -C shallow-server checkout -b branch &&
+	test_commit -C shallow-server C &&
+	test_commit -C shallow-server E &&
+	test_commit -C shallow-server D &&
+	d="$(git -C shallow-server rev-parse --verify D^0)" &&
+	git -C shallow-server checkout master &&
+
+	git clone --depth=1 --no-tags --no-single-branch \
+		"file://$PWD/shallow-server" shallow-client &&
+
+	: now remove the branch and fetch with prune &&
+	git -C shallow-server branch -D branch &&
+	git -C shallow-client fetch --prune --depth=1 \
+		origin "+refs/heads/*:refs/remotes/origin/*" &&
+	git -C shallow-client repack -adfl &&
+	test_must_fail git -C shallow-client rev-parse --verify $d^0 &&
+	! grep $d shallow-client/.git/shallow &&
+
+	git -C shallow-server branch branch-orig $d &&
+	git -C shallow-client fetch --prune --depth=2 \
+		origin "+refs/heads/*:refs/remotes/origin/*"
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
@@ -216,7 +243,8 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	       "$(git -C "$REPO" rev-parse HEAD)" \
 	       "$(git -C "$REPO" rev-parse HEAD^)" \
 	       >"$HTTPD_ROOT_PATH/one-time-sed" &&
-	test_must_fail git -C client fetch --depth=1 "$HTTPD_URL/one_time_sed/repo" \
+	test_must_fail env GIT_TEST_SIDEBAND_ALL=0 git -C client \
+		fetch --depth=1 "$HTTPD_URL/one_time_sed/repo" \
 		master:a_branch &&
 
 	# Ensure that the one-time-sed script was used.
@@ -226,7 +254,5 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	# fetch.
 	git -C client fsck
 '
-
-stop_httpd
 
 test_done

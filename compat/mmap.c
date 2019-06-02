@@ -4,7 +4,7 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 {
 	size_t n = 0;
 
-	if (start != NULL || !(flags & MAP_PRIVATE))
+	if (start != NULL || flags != MAP_PRIVATE || prot != PROT_READ)
 		die("Invalid usage of mmap when built with NO_MMAP");
 
 	start = xmalloc(length);

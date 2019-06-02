@@ -7,6 +7,7 @@
 #include "gettext.h"
 #include "strbuf.h"
 #include "utf8.h"
+#include "config.h"
 
 #ifndef NO_GETTEXT
 #	include <locale.h>
@@ -46,15 +47,15 @@ const char *get_preferred_languages(void)
 	return NULL;
 }
 
-#ifdef GETTEXT_POISON
 int use_gettext_poison(void)
 {
 	static int poison_requested = -1;
-	if (poison_requested == -1)
-		poison_requested = getenv("GIT_GETTEXT_POISON") ? 1 : 0;
+	if (poison_requested == -1) {
+		const char *v = getenv("GIT_TEST_GETTEXT_POISON");
+		poison_requested = v && strlen(v) ? 1 : 0;
+	}
 	return poison_requested;
 }
-#endif
 
 #ifndef NO_GETTEXT
 static int test_vsnprintf(const char *fmt, ...)
@@ -163,6 +164,8 @@ void git_setup_gettext(void)
 
 	if (!podir)
 		podir = p = system_path(GIT_LOCALE_PATH);
+
+	use_gettext_poison(); /* getenv() reentrancy paranoia */
 
 	if (!is_directory(podir)) {
 		free(p);

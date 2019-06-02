@@ -500,6 +500,10 @@ test_expect_success 'submit --shelve' '
 	)
 '
 
+last_shelve () {
+	p4 -G changes -s shelved -m 1 //depot/... | marshal_dump change
+}
+
 make_shelved_cl() {
 	test_commit "$1" >/dev/null &&
 	git p4 submit --origin HEAD^ --shelve >/dev/null &&
@@ -533,17 +537,60 @@ test_expect_success 'submit --update-shelve' '
 	) &&
 	(
 		cd "$cli" &&
-		change=$(p4 -G changes -s shelved -m 1 //depot/... | \
-			 marshal_dump change) &&
+		change=$(last_shelve) &&
 		p4 unshelve -c $change -s $change &&
 		grep -q updated-line shelf.t &&
 		p4 describe -S $change | grep added-file.t &&
-		test_path_is_missing shelved-change-1.t
+		test_path_is_missing shelved-change-1.t &&
+		p4 revert ...
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
+test_expect_success 'update a shelve involving moved and copied files' '
+	test_when_finished cleanup_git &&
+	(
+		cd "$cli" &&
+		: >file_to_move &&
+		p4 add file_to_move &&
+		p4 submit -d "change1" &&
+		p4 edit file_to_move &&
+		echo change >>file_to_move &&
+		p4 submit -d "change2" &&
+		p4 opened
+	) &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git config git-p4.detectCopies true &&
+		git config git-p4.detectRenames true &&
+		git config git-p4.skipSubmitEdit true &&
+		mkdir moved &&
+		cp file_to_move copy_of_file &&
+		git add copy_of_file &&
+		git mv file_to_move moved/ &&
+		git commit -m "rename a file" &&
+		git p4 submit -M --shelve --origin HEAD^ &&
+		: >new_file &&
+		git add new_file &&
+		git commit --amend &&
+		git show --stat HEAD &&
+		change=$(last_shelve) &&
+		git p4 submit -M --update-shelve $change --commit HEAD
+	) &&
+	(
+		cd "$cli" &&
+		change=$(last_shelve) &&
+		echo change=$change &&
+		p4 unshelve -s $change &&
+		p4 submit -d "Testing update-shelve" &&
+		test_path_is_file copy_of_file &&
+		test_path_is_file moved/file_to_move &&
+		test_path_is_missing file_to_move &&
+		test_path_is_file new_file &&
+		echo "unshelved and submitted change $change" &&
+		p4 changes moved/file_to_move | grep "Testing update-shelve" &&
+		p4 changes copy_of_file | grep "Testing update-shelve"
+	)
 '
 
 test_done

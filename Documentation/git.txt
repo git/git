@@ -402,11 +402,11 @@ Git so take care if using a foreign front-end.
 	of Git object directories which can be used to search for Git
 	objects. New objects will not be written to these directories.
 +
-	Entries that begin with `"` (double-quote) will be interpreted
-	as C-style quoted paths, removing leading and trailing
-	double-quotes and respecting backslash escapes. E.g., the value
-	`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
-	`path-with-"-and-:-in-it` and `vanilla-path`.
+Entries that begin with `"` (double-quote) will be interpreted
+as C-style quoted paths, removing leading and trailing
+double-quotes and respecting backslash escapes. E.g., the value
+`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
+`path-with-"-and-:-in-it` and `vanilla-path`.
 
 `GIT_DIR`::
 	If the `GIT_DIR` environment variable is set then it
@@ -536,7 +536,6 @@ other
 	The command-line parameters passed to the configured command are
 	determined by the ssh variant.  See `ssh.variant` option in
 	linkgit:git-config[1] for details.
-
 +
 `$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
 by the shell, which allows additional arguments to be included.
@@ -660,6 +659,54 @@ of clones and fetches.
 `GIT_TRACE_CURL_NO_DATA`::
 	When a curl trace is enabled (see `GIT_TRACE_CURL` above), do not dump
 	data (that is, only dump info lines and headers).
+
+`GIT_TRACE2`::
+	Enables more detailed trace messages from the "trace2" library.
+	Output from `GIT_TRACE2` is a simple text-based format for human
+	readability.
++
+If this variable is set to "1", "2" or "true" (comparison
+is case insensitive), trace messages will be printed to
+stderr.
++
+If the variable is set to an integer value greater than 2
+and lower than 10 (strictly) then Git will interpret this
+value as an open file descriptor and will try to write the
+trace messages into this file descriptor.
++
+Alternatively, if the variable is set to an absolute path
+(starting with a '/' character), Git will interpret this
+as a file path and will try to append the trace messages
+to it.  If the path already exists and is a directory, the
+trace messages will be written to files (one per process)
+in that directory, named according to the last component
+of the SID and an optional counter (to avoid filename
+collisions).
++
+In addition, if the variable is set to
+`af_unix:[<socket_type>:]<absolute-pathname>`, Git will try
+to open the path as a Unix Domain Socket.  The socket type
+can be either `stream` or `dgram`.
++
+Unsetting the variable, or setting it to empty, "0" or
+"false" (case insensitive) disables trace messages.
++
+See link:technical/api-trace2.html[Trace2 documentation]
+for full details.
+
+
+`GIT_TRACE2_EVENT`::
+	This setting writes a JSON-based format that is suited for machine
+	interpretation.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_TRACE2_PERF`::
+	In addition to the text-based messages available in `GIT_TRACE2`, this
+	setting writes a column-based format for understanding nesting
+	regions.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
 
 `GIT_REDACT_COOKIES`::
 	This can be set to a comma-separated list of strings. When a curl trace

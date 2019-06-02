@@ -265,7 +265,8 @@ int userdiff_config(const char *k, const char *v)
 	return 0;
 }
 
-struct userdiff_driver *userdiff_find_by_name(const char *name) {
+struct userdiff_driver *userdiff_find_by_name(const char *name)
+{
 	int len = strlen(name);
 	return userdiff_find_by_namelen(name, len);
 }
@@ -290,7 +291,8 @@ struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
 	return userdiff_find_by_name(check->items[0].value);
 }
 
-struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
+struct userdiff_driver *userdiff_get_textconv(struct repository *r,
+					      struct userdiff_driver *driver)
 {
 	if (!driver->textconv)
 		return NULL;
@@ -300,7 +302,7 @@ struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
 		struct strbuf name = STRBUF_INIT;
 
 		strbuf_addf(&name, "textconv/%s", driver->name);
-		notes_cache_init(c, name.buf, driver->textconv);
+		notes_cache_init(r, c, name.buf, driver->textconv);
 		driver->textconv_cache = c;
 		strbuf_release(&name);
 	}

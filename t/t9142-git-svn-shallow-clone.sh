@@ -26,6 +26,4 @@ test_expect_success 'clone trunk with "-r HEAD"' '
 	( cd g && git rev-parse --symbolic --verify HEAD )
 '
 
-stop_httpd
-
 test_done

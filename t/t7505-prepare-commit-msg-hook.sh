@@ -215,7 +215,7 @@ test_expect_success 'with hook and editor (merge)' '
 test_rebase () {
 	expect=$1 &&
 	mode=$2 &&
-	test_expect_$expect C_LOCALE_OUTPUT "with hook (rebase $mode)" '
+	test_expect_$expect C_LOCALE_OUTPUT "with hook (rebase ${mode:--i})" '
 		test_when_finished "\
 			git rebase --abort
 			git checkout -f master
@@ -225,7 +225,7 @@ test_rebase () {
 		GIT_EDITOR="\"$FAKE_EDITOR\"" &&
 		(
 			export GIT_SEQUENCE_EDITOR GIT_EDITOR &&
-			test_must_fail git rebase $mode b &&
+			test_must_fail git rebase -i $mode b &&
 			echo x >a &&
 			git add a &&
 			test_must_fail git rebase --continue &&
@@ -241,19 +241,19 @@ test_rebase () {
 			git add b &&
 			git rebase --continue
 		) &&
-		if test $mode = -p # reword amended after pick
+		if test "$mode" = -p # reword amended after pick
 		then
 			n=18
 		else
 			n=17
 		fi &&
 		git log --pretty=%s -g -n$n HEAD@{1} >actual &&
-		test_cmp "$TEST_DIRECTORY/t7505/expected-rebase$mode" actual
+		test_cmp "$TEST_DIRECTORY/t7505/expected-rebase${mode:--i}" actual
 	'
 }
 
-test_rebase success -i
-test_rebase success -p
+test_rebase success
+test_have_prereq !REBASE_P || test_rebase success -p
 
 test_expect_success 'with hook (cherry-pick)' '
 	test_when_finished "git checkout -f master" &&

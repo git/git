@@ -154,7 +154,7 @@ static int fetch_refs_from_bundle(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	struct bundle_transport_data *data = transport->data;
-	return unbundle(&data->header, data->fd,
+	return unbundle(the_repository, &data->header, data->fd,
 			transport->progress ? BUNDLE_VERBOSE : 0);
 }
 
@@ -252,6 +252,14 @@ static int connect_setup(struct transport *transport, int for_push)
 	return 0;
 }
 
+static void die_if_server_options(struct transport *transport)
+{
+	if (!transport->server_options || !transport->server_options->nr)
+		return;
+	advise(_("see protocol.version in 'git help config' for more details"));
+	die(_("server options require protocol version 2 or later"));
+}
+
 /*
  * Obtains the protocol version from the transport and writes it to
  * transport->data->version, first connecting if not already connected.
@@ -273,7 +281,8 @@ static struct ref *handshake(struct transport *transport, int for_push,
 
 	packet_reader_init(&reader, data->fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF);
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	data->version = discover_version(&reader);
 	switch (data->version) {
@@ -285,6 +294,7 @@ static struct ref *handshake(struct transport *transport, int for_push,
 		break;
 	case protocol_v1:
 	case protocol_v0:
+		die_if_server_options(transport);
 		get_remote_heads(&reader, &refs,
 				 for_push ? REF_NORMAL : 0,
 				 &data->extra_have,
@@ -313,7 +323,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 	int ret = 0;
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
-	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
 	struct ref *refs_tmp = NULL;
 
@@ -355,16 +364,17 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	switch (data->version) {
 	case protocol_v2:
-		refs = fetch_pack(&args, data->fd, data->conn,
+		refs = fetch_pack(&args, data->fd,
 				  refs_tmp ? refs_tmp : transport->remote_refs,
-				  dest, to_fetch, nr_heads, &data->shallow,
+				  to_fetch, nr_heads, &data->shallow,
 				  &transport->pack_lockfile, data->version);
 		break;
 	case protocol_v1:
 	case protocol_v0:
-		refs = fetch_pack(&args, data->fd, data->conn,
+		die_if_server_options(transport);
+		refs = fetch_pack(&args, data->fd,
 				  refs_tmp ? refs_tmp : transport->remote_refs,
-				  dest, to_fetch, nr_heads, &data->shallow,
+				  to_fetch, nr_heads, &data->shallow,
 				  &transport->pack_lockfile, data->version);
 		break;
 	case protocol_unknown_version:
@@ -388,7 +398,6 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	free_refs(refs_tmp);
 	free_refs(refs);
-	free(dest);
 	return ret;
 }
 
@@ -1061,6 +1070,7 @@ static int run_pre_push_hook(struct transport *transport,
 
 	proc.argv = argv;
 	proc.in = -1;
+	proc.trace2_hook_name = "pre-push";
 
 	if (start_command(&proc)) {
 		finish_command(&proc);
@@ -1105,7 +1115,8 @@ static int run_pre_push_hook(struct transport *transport,
 	return ret;
 }
 
-int transport_push(struct transport *transport,
+int transport_push(struct repository *r,
+		   struct transport *transport,
 		   struct refspec *rs, int flags,
 		   unsigned int *reject_reasons)
 {
@@ -1172,7 +1183,7 @@ int transport_push(struct transport *transport,
 					oid_array_append(&commits,
 							  &ref->new_oid);
 
-			if (!push_unpushed_submodules(&the_index,
+			if (!push_unpushed_submodules(r,
 						      &commits,
 						      transport->remote,
 						      rs,
@@ -1197,7 +1208,7 @@ int transport_push(struct transport *transport,
 					oid_array_append(&commits,
 							  &ref->new_oid);
 
-			if (find_unpushed_submodules(&the_index,
+			if (find_unpushed_submodules(r,
 						     &commits,
 						     transport->remote->name,
 						     &needs_pushing)) {
@@ -1413,9 +1424,9 @@ static void read_alternate_refs(const char *path,
 	fh = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, fh) != EOF) {
 		struct object_id oid;
+		const char *p;
 
-		if (get_oid_hex(line.buf, &oid) ||
-		    line.buf[GIT_SHA1_HEXSZ]) {
+		if (parse_oid_hex(line.buf, &oid, &p) || *p) {
 			warning(_("invalid line while parsing alternate refs: %s"),
 				line.buf);
 			break;
@@ -1433,7 +1444,7 @@ struct alternate_refs_data {
 	void *data;
 };
 
-static int refs_from_alternate_cb(struct alternate_object_database *e,
+static int refs_from_alternate_cb(struct object_directory *e,
 				  void *data)
 {
 	struct strbuf path = STRBUF_INIT;

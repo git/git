@@ -1,3 +1,4 @@
+/fuzz-commit-graph
 /fuzz_corpora
 /fuzz-pack-headers
 /fuzz-pack-idx
@@ -81,6 +82,7 @@
 /git-init-db
 /git-interpret-trailers
 /git-instaweb
+/git-legacy-stash
 /git-log
 /git-ls-files
 /git-ls-remote
@@ -121,9 +123,8 @@
 /git-read-tree
 /git-rebase
 /git-rebase--am
-/git-rebase--helper
+/git-rebase--common
 /git-rebase--interactive
-/git-rebase--merge
 /git-rebase--preserve-merges
 /git-receive-pack
 /git-reflog
@@ -134,7 +135,6 @@
 /git-remote-ftps
 /git-remote-fd
 /git-remote-ext
-/git-remote-testgit
 /git-remote-testpy
 /git-remote-testsvn
 /git-repack
@@ -228,3 +228,4 @@
 *.pdb
 /Debug/
 /Release/
+*.dSYM

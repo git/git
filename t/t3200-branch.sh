@@ -42,6 +42,10 @@ test_expect_success 'git branch a/b/c should create a branch' '
 	git branch a/b/c && test_path_is_file .git/refs/heads/a/b/c
 '
 
+test_expect_success 'git branch mb master... should create a branch' '
+	git branch mb master... && test_path_is_file .git/refs/heads/mb
+'
+
 test_expect_success 'git branch HEAD should fail' '
 	test_must_fail git branch HEAD
 '
@@ -264,6 +268,30 @@ test_expect_success 'git branch --list -d t should fail' '
 	test_must_fail git rev-parse refs/heads/t
 '
 
+test_expect_success 'deleting checked-out branch from repo that is a submodule' '
+	test_when_finished "rm -rf repo1 repo2" &&
+
+	git init repo1 &&
+	git init repo1/sub &&
+	test_commit -C repo1/sub x &&
+	git -C repo1 submodule add ./sub &&
+	git -C repo1 commit -m "adding sub" &&
+
+	git clone --recurse-submodules repo1 repo2 &&
+	git -C repo2/sub checkout -b work &&
+	test_must_fail git -C repo2/sub branch -D work
+'
+
+test_expect_success 'bare main worktree has HEAD at branch deleted by secondary worktree' '
+	test_when_finished "rm -rf nonbare base secondary" &&
+
+	git init nonbare &&
+	test_commit -C nonbare x &&
+	git clone --bare nonbare bare &&
+	git -C bare worktree add --detach ../secondary master &&
+	git -C secondary branch -D master
+'
+
 test_expect_success 'git branch --list -v with --abbrev' '
 	test_when_finished "git branch -D t" &&
 	git branch t &&
@@ -292,8 +320,8 @@ test_expect_success 'git branch --list -v with --abbrev' '
 test_expect_success 'git branch --column' '
 	COLUMNS=81 git branch --column=column >actual &&
 	cat >expected <<\EOF &&
-  a/b/c     bam       foo       l       * master    n         o/p       r
-  abc       bar       j/k       m/m       master2   o/o       q
+  a/b/c     bam       foo       l       * master    mb        o/o       q
+  abc       bar       j/k       m/m       master2   n         o/p       r
 EOF
 	test_cmp expected actual
 '
@@ -315,6 +343,7 @@ test_expect_success 'git branch --column with an extremely long branch name' '
   m/m
 * master
   master2
+  mb
   n
   o/o
   o/p
@@ -332,8 +361,8 @@ test_expect_success 'git branch with column.*' '
 	git config --unset column.branch &&
 	git config --unset column.ui &&
 	cat >expected <<\EOF &&
-  a/b/c   bam   foo   l   * master    n     o/p   r
-  abc     bar   j/k   m/m   master2   o/o   q
+  a/b/c   bam   foo   l   * master    mb   o/o   q
+  abc     bar   j/k   m/m   master2   n    o/p   r
 EOF
 	test_cmp expected actual
 '
@@ -357,6 +386,7 @@ test_expect_success 'git branch -v with column.ui ignored' '
   m/m
 * master
   master2
+  mb
   n
   o/o
   o/p

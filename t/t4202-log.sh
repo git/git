@@ -1703,4 +1703,8 @@ test_expect_success 'log --source paints symmetric ranges' '
 	test_cmp expect actual
 '
 
+test_expect_success '--exclude-promisor-objects does not BUG-crash' '
+	test_must_fail git log --exclude-promisor-objects source-a
+'
+
 test_done

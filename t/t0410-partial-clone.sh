@@ -239,6 +239,51 @@ test_expect_success 'rev-list stops traversal at missing and promised commit' '
 	! grep $FOO out
 '
 
+test_expect_success 'missing tree objects with --missing=allow-promisor and --exclude-promisor-objects' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo foo &&
+	test_commit -C repo bar &&
+	test_commit -C repo baz &&
+
+	promise_and_delete $(git -C repo rev-parse bar^{tree}) &&
+	promise_and_delete $(git -C repo rev-parse foo^{tree}) &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+
+	git -C repo rev-list --missing=allow-promisor --objects HEAD >objs 2>rev_list_err &&
+	test_must_be_empty rev_list_err &&
+	# 3 commits, 3 blobs, and 1 tree
+	test_line_count = 7 objs &&
+
+	# Do the same for --exclude-promisor-objects, but with all trees gone.
+	promise_and_delete $(git -C repo rev-parse baz^{tree}) &&
+	git -C repo rev-list --exclude-promisor-objects --objects HEAD >objs 2>rev_list_err &&
+	test_must_be_empty rev_list_err &&
+	# 3 commits, no blobs or trees
+	test_line_count = 3 objs
+'
+
+test_expect_success 'missing non-root tree object and rev-list' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	mkdir repo/dir &&
+	echo foo >repo/dir/foo &&
+	git -C repo add dir/foo &&
+	git -C repo commit -m "commit dir/foo" &&
+
+	promise_and_delete $(git -C repo rev-parse HEAD:dir) &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+
+	git -C repo rev-list --missing=allow-any --objects HEAD >objs 2>rev_list_err &&
+	test_must_be_empty rev_list_err &&
+	# 1 commit and 1 tree
+	test_line_count = 2 objs
+'
+
 test_expect_success 'rev-list stops traversal at missing and promised tree' '
 	rm -rf repo &&
 	test_create_repo repo &&
@@ -304,7 +349,7 @@ test_expect_success 'rev-list stops traversal at promisor commit, tree, and blob
 	grep $(git -C repo rev-parse bar) out  # sanity check that some walking was done
 '
 
-test_expect_success 'rev-list accepts missing and promised objects on command line' '
+test_expect_success 'rev-list dies for missing objects on cmd line' '
 	rm -rf repo &&
 	test_create_repo repo &&
 	test_commit -C repo foo &&
@@ -321,7 +366,19 @@ test_expect_success 'rev-list accepts missing and promised objects on command li
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
-	git -C repo rev-list --exclude-promisor-objects --objects "$COMMIT" "$TREE" "$BLOB"
+
+	for OBJ in "$COMMIT" "$TREE" "$BLOB"; do
+		test_must_fail git -C repo rev-list --objects \
+			--exclude-promisor-objects "$OBJ" &&
+		test_must_fail git -C repo rev-list --objects-edge-aggressive \
+			--exclude-promisor-objects "$OBJ" &&
+
+		# Do not die or crash when --ignore-missing is passed.
+		git -C repo rev-list --ignore-missing --objects \
+			--exclude-promisor-objects "$OBJ" &&
+		git -C repo rev-list --ignore-missing --objects-edge-aggressive \
+			--exclude-promisor-objects "$OBJ"
+	done
 '
 
 test_expect_success 'gc repacks promisor objects separately from non-promisor objects' '
@@ -435,7 +492,6 @@ test_expect_success 'gc stops traversal when a missing but promised object is re
 	! grep "$TREE_HASH" out
 '
 
-LIB_HTTPD_PORT=12345  # default port, 410, cannot be used as non-root
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
@@ -461,7 +517,5 @@ test_expect_success 'fetching of missing objects from an HTTP server' '
 	IDX=$(cat promisorlist | sed "s/promisor$/idx/") &&
 	git verify-pack --verbose "$IDX" | grep "$HASH"
 '
-
-stop_httpd
 
 test_done

@@ -33,6 +33,7 @@
 #include "object-store.h"
 #include "dir.h"
 #include "midx.h"
+#include "trace2.h"
 
 #define IN_PACK(obj) oe_in_pack(&to_pack, obj)
 #define SIZE(obj) oe_size(&to_pack, obj)
@@ -84,6 +85,7 @@ static unsigned long pack_size_limit;
 static int depth = 50;
 static int delta_search_threads;
 static int pack_to_stdout;
+static int sparse;
 static int thin;
 static int num_preferred_base;
 static struct progress *progress_state;
@@ -95,7 +97,7 @@ static off_t reuse_packfile_offset;
 static int use_bitmap_index_default = 1;
 static int use_bitmap_index = -1;
 static int write_bitmap_index;
-static uint16_t write_bitmap_options;
+static uint16_t write_bitmap_options = BITMAP_OPT_HASH_CACHE;
 
 static int exclude_promisor_objects;
 
@@ -962,6 +964,8 @@ static void write_pack_file(void)
 	if (written != nr_result)
 		die(_("wrote %"PRIu32" objects while expecting %"PRIu32),
 		    written, nr_result);
+	trace2_data_intmax("pack-objects", the_repository,
+			   "write_pack_file/wrote", nr_result);
 }
 
 static int no_try_delta(const char *path)
@@ -970,7 +974,7 @@ static int no_try_delta(const char *path)
 
 	if (!check)
 		check = attr_check_initl("delta", NULL);
-	git_check_attr(&the_index, path, check);
+	git_check_attr(the_repository->index, path, check);
 	if (ATTR_FALSE(check->items[0].value))
 		return 1;
 	return 0;
@@ -1076,7 +1080,7 @@ static int want_object_in_pack(const struct object_id *oid,
 
 	for (m = get_multi_pack_index(the_repository); m; m = m->next) {
 		struct pack_entry e;
-		if (fill_midx_entry(oid, &e, m)) {
+		if (fill_midx_entry(the_repository, oid, &e, m)) {
 			struct packed_git *p = e.p;
 			off_t offset;
 
@@ -1334,7 +1338,7 @@ static void add_pbase_object(struct tree_desc *tree,
 		if (cmp < 0)
 			return;
 		if (name[cmplen] != '/') {
-			add_object_entry(entry.oid,
+			add_object_entry(&entry.oid,
 					 object_type(entry.mode),
 					 fullname, 1);
 			return;
@@ -1345,7 +1349,7 @@ static void add_pbase_object(struct tree_desc *tree,
 			const char *down = name+cmplen+1;
 			int downlen = name_cmp_len(down);
 
-			tree = pbase_tree_get(entry.oid);
+			tree = pbase_tree_get(&entry.oid);
 			if (!tree)
 				return;
 			init_tree_desc(&sub, tree->tree_data, tree->tree_size);
@@ -1485,6 +1489,7 @@ static int can_reuse_delta(const unsigned char *base_sha1,
 			   struct object_entry **base_out)
 {
 	struct object_entry *base;
+	struct object_id base_oid;
 
 	if (!base_sha1)
 		return 0;
@@ -1506,10 +1511,9 @@ static int can_reuse_delta(const unsigned char *base_sha1,
 	 * even if it was buried too deep in history to make it into the
 	 * packing list.
 	 */
-	if (thin && bitmap_has_sha1_in_uninteresting(bitmap_git, base_sha1)) {
+	oidread(&base_oid, base_sha1);
+	if (thin && bitmap_has_oid_in_uninteresting(bitmap_git, &base_oid)) {
 		if (use_delta_islands) {
-			struct object_id base_oid;
-			hashcpy(base_oid.hash, base_sha1);
 			if (!in_same_island(&delta->idx.oid, &base_oid))
 				return 0;
 		}
@@ -1642,7 +1646,7 @@ static void check_object(struct object_entry *entry)
 
 		/*
 		 * No choice but to fall back to the recursive delta walk
-		 * with sha1_object_info() to find about the object type
+		 * with oid_object_info() to find about the object type
 		 * at this point...
 		 */
 		give_up:
@@ -1718,7 +1722,7 @@ static void drop_reused_delta(struct object_entry *entry)
 	if (packed_object_info(the_repository, IN_PACK(entry), entry->in_pack_offset, &oi) < 0) {
 		/*
 		 * We failed to get the info from this pack for some reason;
-		 * fall back to sha1_object_info, which may find another copy.
+		 * fall back to oid_object_info, which may find another copy.
 		 * And if that fails, the error will be recorded in oe_type(entry)
 		 * and dealt with in prepare_pack().
 		 */
@@ -1901,10 +1905,10 @@ static int type_size_sort(const void *_a, const void *_b)
 {
 	const struct object_entry *a = *(struct object_entry **)_a;
 	const struct object_entry *b = *(struct object_entry **)_b;
-	enum object_type a_type = oe_type(a);
-	enum object_type b_type = oe_type(b);
-	unsigned long a_size = SIZE(a);
-	unsigned long b_size = SIZE(b);
+	const enum object_type a_type = oe_type(a);
+	const enum object_type b_type = oe_type(b);
+	const unsigned long a_size = SIZE(a);
+	const unsigned long b_size = SIZE(b);
 
 	if (a_type > b_type)
 		return -1;
@@ -1919,7 +1923,7 @@ static int type_size_sort(const void *_a, const void *_b)
 	if (a->preferred_base < b->preferred_base)
 		return 1;
 	if (use_delta_islands) {
-		int island_cmp = island_delta_cmp(&a->idx.oid, &b->idx.oid);
+		const int island_cmp = island_delta_cmp(&a->idx.oid, &b->idx.oid);
 		if (island_cmp)
 			return island_cmp;
 	}
@@ -1953,13 +1957,6 @@ static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
 	return 0;
 }
 
-#ifndef NO_PTHREADS
-
-/* Protect access to object database */
-static pthread_mutex_t read_mutex;
-#define read_lock()		pthread_mutex_lock(&read_mutex)
-#define read_unlock()		pthread_mutex_unlock(&read_mutex)
-
 /* Protect delta_cache_size */
 static pthread_mutex_t cache_mutex;
 #define cache_lock()		pthread_mutex_lock(&cache_mutex)
@@ -1979,16 +1976,6 @@ static pthread_mutex_t progress_mutex;
  * ahead in the list because they can be stolen and would need
  * progress_mutex for protection.
  */
-#else
-
-#define read_lock()		(void)0
-#define read_unlock()		(void)0
-#define cache_lock()		(void)0
-#define cache_unlock()		(void)0
-#define progress_lock()		(void)0
-#define progress_unlock()	(void)0
-
-#endif
 
 /*
  * Return the size of the object without doing any delta
@@ -2005,11 +1992,11 @@ unsigned long oe_get_size_slow(struct packing_data *pack,
 	unsigned long used, avail, size;
 
 	if (e->type_ != OBJ_OFS_DELTA && e->type_ != OBJ_REF_DELTA) {
-		read_lock();
+		packing_data_lock(&to_pack);
 		if (oid_object_info(the_repository, &e->idx.oid, &size) < 0)
 			die(_("unable to get size of %s"),
 			    oid_to_hex(&e->idx.oid));
-		read_unlock();
+		packing_data_unlock(&to_pack);
 		return size;
 	}
 
@@ -2017,7 +2004,7 @@ unsigned long oe_get_size_slow(struct packing_data *pack,
 	if (!p)
 		BUG("when e->type is a delta, it must belong to a pack");
 
-	read_lock();
+	packing_data_lock(&to_pack);
 	w_curs = NULL;
 	buf = use_pack(p, &w_curs, e->in_pack_offset, &avail);
 	used = unpack_object_header_buffer(buf, avail, &type, &size);
@@ -2026,7 +2013,7 @@ unsigned long oe_get_size_slow(struct packing_data *pack,
 		    oid_to_hex(&e->idx.oid));
 
 	unuse_pack(&w_curs);
-	read_unlock();
+	packing_data_unlock(&to_pack);
 	return size;
 }
 
@@ -2088,22 +2075,22 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Load data if not already done */
 	if (!trg->data) {
-		read_lock();
+		packing_data_lock(&to_pack);
 		trg->data = read_object_file(&trg_entry->idx.oid, &type, &sz);
-		read_unlock();
+		packing_data_unlock(&to_pack);
 		if (!trg->data)
 			die(_("object %s cannot be read"),
 			    oid_to_hex(&trg_entry->idx.oid));
 		if (sz != trg_size)
-			die(_("object %s inconsistent object length (%lu vs %lu)"),
-			    oid_to_hex(&trg_entry->idx.oid), sz,
-			    trg_size);
+			die(_("object %s inconsistent object length (%"PRIuMAX" vs %"PRIuMAX")"),
+			    oid_to_hex(&trg_entry->idx.oid), (uintmax_t)sz,
+			    (uintmax_t)trg_size);
 		*mem_usage += sz;
 	}
 	if (!src->data) {
-		read_lock();
+		packing_data_lock(&to_pack);
 		src->data = read_object_file(&src_entry->idx.oid, &type, &sz);
-		read_unlock();
+		packing_data_unlock(&to_pack);
 		if (!src->data) {
 			if (src_entry->preferred_base) {
 				static int warned = 0;
@@ -2122,9 +2109,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 			    oid_to_hex(&src_entry->idx.oid));
 		}
 		if (sz != src_size)
-			die(_("object %s inconsistent object length (%lu vs %lu)"),
-			    oid_to_hex(&src_entry->idx.oid), sz,
-			    src_size);
+			die(_("object %s inconsistent object length (%"PRIuMAX" vs %"PRIuMAX")"),
+			    oid_to_hex(&src_entry->idx.oid), (uintmax_t)sz,
+			    (uintmax_t)src_size);
 		*mem_usage += sz;
 	}
 	if (!src->index) {
@@ -2183,7 +2170,7 @@ static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
 	struct object_entry *child = DELTA_CHILD(me);
 	unsigned int m = n;
 	while (child) {
-		unsigned int c = check_delta_limit(child, n + 1);
+		const unsigned int c = check_delta_limit(child, n + 1);
 		if (m < c)
 			m = c;
 		child = DELTA_SIBLING(child);
@@ -2238,7 +2225,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 		while (window_memory_limit &&
 		       mem_usage > window_memory_limit &&
 		       count > 1) {
-			uint32_t tail = (idx + window - count) % window;
+			const uint32_t tail = (idx + window - count) % window;
 			mem_usage -= free_unpacked(array + tail);
 			count--;
 		}
@@ -2347,13 +2334,11 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 	free(array);
 }
 
-#ifndef NO_PTHREADS
-
 static void try_to_free_from_threads(size_t size)
 {
-	read_lock();
+	packing_data_lock(&to_pack);
 	release_pack_memory(size);
-	read_unlock();
+	packing_data_unlock(&to_pack);
 }
 
 static try_to_free_t old_try_to_free_routine;
@@ -2395,11 +2380,9 @@ static pthread_cond_t progress_cond;
  */
 static void init_threaded_search(void)
 {
-	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&cache_mutex, NULL);
 	pthread_mutex_init(&progress_mutex, NULL);
 	pthread_cond_init(&progress_cond, NULL);
-	pthread_mutex_init(&to_pack.lock, NULL);
 	old_try_to_free_routine = set_try_to_free_routine(try_to_free_from_threads);
 }
 
@@ -2407,7 +2390,6 @@ static void cleanup_threaded_search(void)
 {
 	set_try_to_free_routine(old_try_to_free_routine);
 	pthread_cond_destroy(&progress_cond);
-	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&cache_mutex);
 	pthread_mutex_destroy(&progress_mutex);
 }
@@ -2578,10 +2560,6 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	free(p);
 }
 
-#else
-#define ll_find_deltas(l, s, w, d, p)	find_deltas(l, &s, w, d, p)
-#endif
-
 static void add_tag_chain(const struct object_id *oid)
 {
 	struct tag *tag;
@@ -2629,7 +2607,7 @@ static void prepare_pack(int window, int depth)
 	unsigned n;
 
 	if (use_delta_islands)
-		resolve_tree_islands(progress, &to_pack);
+		resolve_tree_islands(the_repository, progress, &to_pack);
 
 	get_object_details();
 
@@ -2729,17 +2707,19 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		use_bitmap_index_default = git_config_bool(k, v);
 		return 0;
 	}
+	if (!strcmp(k, "pack.usesparse")) {
+		sparse = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(k, "pack.threads")) {
 		delta_search_threads = git_config_int(k, v);
 		if (delta_search_threads < 0)
 			die(_("invalid number of threads specified (%d)"),
 			    delta_search_threads);
-#ifdef NO_PTHREADS
-		if (delta_search_threads != 1) {
+		if (!HAVE_THREADS && delta_search_threads != 1) {
 			warning(_("no threads support, ignoring %s"), k);
 			delta_search_threads = 0;
 		}
-#endif
 		return 0;
 	}
 	if (!strcmp(k, "pack.indexversion")) {
@@ -2807,9 +2787,11 @@ static void show_object(struct object *obj, const char *name, void *data)
 
 	if (use_delta_islands) {
 		const char *p;
-		unsigned depth = 0;
+		unsigned depth;
 		struct object_entry *ent;
 
+		/* the empty string is a root tree, which is depth 0 */
+		depth = *name ? 1 : 0;
 		for (p = strchr(name, '/'); p; p = strchr(p + 1, '/'))
 			depth++;
 
@@ -3103,15 +3085,22 @@ static void record_recent_commit(struct commit *commit, void *data)
 static void get_object_list(int ac, const char **av)
 {
 	struct rev_info revs;
+	struct setup_revision_opt s_r_opt = {
+		.allow_exclude_promisor_objects = 1,
+	};
 	char line[1000];
 	int flags = 0;
+	int save_warning;
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
-	setup_revisions(ac, av, &revs, NULL);
+	setup_revisions(ac, av, &revs, &s_r_opt);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
+
+	save_warning = warn_on_object_refname_ambiguity;
+	warn_on_object_refname_ambiguity = 0;
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
@@ -3139,15 +3128,17 @@ static void get_object_list(int ac, const char **av)
 			die(_("bad revision '%s'"), line);
 	}
 
+	warn_on_object_refname_ambiguity = save_warning;
+
 	if (use_bitmap_index && !get_object_list_from_bitmap(&revs))
 		return;
 
 	if (use_delta_islands)
-		load_delta_islands();
+		load_delta_islands(the_repository);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
-	mark_edges_uninteresting(&revs, show_edge);
+	mark_edges_uninteresting(&revs, show_edge, sparse);
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
@@ -3207,6 +3198,9 @@ static int option_parse_index_version(const struct option *opt,
 {
 	char *c;
 	const char *val = arg;
+
+	BUG_ON_OPT_NEG(unset);
+
 	pack_idx_opts.version = strtoul(val, &c, 10);
 	if (pack_idx_opts.version > 2)
 		die(_("unsupported index version %s"), val);
@@ -3253,7 +3247,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			 N_("similar to --all-progress when progress meter is shown")),
 		{ OPTION_CALLBACK, 0, "index-version", NULL, N_("<version>[,<offset>]"),
 		  N_("write the pack index file in the specified idx format version"),
-		  0, option_parse_index_version },
+		  PARSE_OPT_NONEG, option_parse_index_version },
 		OPT_MAGNITUDE(0, "max-pack-size", &pack_size_limit,
 			      N_("maximum size of each output pack file")),
 		OPT_BOOL(0, "local", &local,
@@ -3301,6 +3295,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "unpack-unreachable", NULL, N_("time"),
 		  N_("unpack unreachable objects newer than <time>"),
 		  PARSE_OPT_OPTARG, option_parse_unpack_unreachable },
+		OPT_BOOL(0, "sparse", &sparse,
+			 N_("use the sparse reachability algorithm")),
 		OPT_BOOL(0, "thin", &thin,
 			 N_("create thin packs")),
 		OPT_BOOL(0, "shallow", &shallow,
@@ -3333,6 +3329,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	read_replace_refs = 0;
 
+	sparse = git_env_bool("GIT_TEST_PACK_SPARSE", 0);
 	reset_pack_idx_option(&pack_idx_opts);
 	git_config(git_pack_config, NULL);
 
@@ -3402,10 +3399,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!delta_search_threads)	/* --threads=0 means autodetect */
 		delta_search_threads = online_cpus();
 
-#ifdef NO_PTHREADS
-	if (delta_search_threads != 1)
+	if (!HAVE_THREADS && delta_search_threads != 1)
 		warning(_("no threads support, ignoring --threads"));
-#endif
 	if (!pack_to_stdout && !pack_size_limit)
 		pack_size_limit = pack_size_limit_cfg;
 	if (pack_to_stdout && pack_size_limit)
@@ -3481,7 +3476,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	prepare_packing_data(&to_pack);
+	trace2_region_enter("pack-objects", "enumerate-objects",
+			    the_repository);
+	prepare_packing_data(the_repository, &to_pack);
 
 	if (progress)
 		progress_state = start_progress(_("Enumerating objects"), 0);
@@ -3495,12 +3492,23 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (include_tag && nr_result)
 		for_each_ref(add_ref_tag, NULL);
 	stop_progress(&progress_state);
+	trace2_region_leave("pack-objects", "enumerate-objects",
+			    the_repository);
 
 	if (non_empty && !nr_result)
 		return 0;
-	if (nr_result)
+	if (nr_result) {
+		trace2_region_enter("pack-objects", "prepare-pack",
+				    the_repository);
 		prepare_pack(window, depth);
+		trace2_region_leave("pack-objects", "prepare-pack",
+				    the_repository);
+	}
+
+	trace2_region_enter("pack-objects", "write-pack-file", the_repository);
 	write_pack_file();
+	trace2_region_leave("pack-objects", "write-pack-file", the_repository);
+
 	if (progress)
 		fprintf_ln(stderr,
 			   _("Total %"PRIu32" (delta %"PRIu32"),"

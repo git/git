@@ -9,7 +9,7 @@
 # at the discretion of Junio C Hamano.
 #
 
-USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-O<orderfile>] [file to merge] ...'
+USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-g|--gui|--no-gui] [-O<orderfile>] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 NONGIT_OK=Yes
 OPTIONS_SPEC=
@@ -389,6 +389,7 @@ print_noop_and_exit () {
 
 main () {
 	prompt=$(git config --bool mergetool.prompt)
+	GIT_MERGETOOL_GUI=false
 	guessed_merge_tool=false
 	orderfile=
 
@@ -413,6 +414,12 @@ main () {
 				merge_tool="$2"
 				shift ;;
 			esac
+			;;
+		--no-gui)
+			GIT_MERGETOOL_GUI=false
+			;;
+		-g|--gui)
+			GIT_MERGETOOL_GUI=true
 			;;
 		-y|--no-prompt)
 			prompt=false
@@ -442,12 +449,8 @@ main () {
 
 	if test -z "$merge_tool"
 	then
-		# Check if a merge tool has been configured
-		merge_tool=$(get_configured_merge_tool)
-		# Try to guess an appropriate merge tool if no tool has been set.
-		if test -z "$merge_tool"
+		if ! merge_tool=$(get_merge_tool)
 		then
-			merge_tool=$(guess_merge_tool) || exit
 			guessed_merge_tool=true
 		fi
 	fi

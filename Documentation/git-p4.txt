@@ -71,12 +71,12 @@ $ git p4 clone //depot/path/project
 ------------
 This:
 
-1.   Creates an empty Git repository in a subdirectory called 'project'.
+1. Creates an empty Git repository in a subdirectory called 'project'.
 +
-2.   Imports the full contents of the head revision from the given p4
-depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
+2. Imports the full contents of the head revision from the given p4
+   depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
 +
-3.   Creates a local branch, 'master' from this remote and checks it out.
+3. Creates a local branch, 'master' from this remote and checks it out.
 
 To reproduce the entire p4 history in Git, use the '@all' modifier on
 the depot path:

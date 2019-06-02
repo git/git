@@ -203,7 +203,7 @@ Alternatively, you can undo the 'git rebase' with
 CONFIGURATION
 -------------
 
-include::rebase-config.txt[]
+include::config/rebase.txt[]
 
 OPTIONS
 -------
@@ -299,6 +299,11 @@ See also INCOMPATIBLE OPTIONS below.
 	'theirs' as noted above for the `-m` option.
 +
 See also INCOMPATIBLE OPTIONS below.
+
+--rerere-autoupdate::
+--no-rerere-autoupdate::
+	Allow the rerere mechanism to update the index with the
+	result of auto-conflict resolution if possible.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
@@ -410,14 +415,14 @@ See also INCOMPATIBLE OPTIONS below.
 +
 By default, or when `no-rebase-cousins` was specified, commits which do not
 have `<upstream>` as direct ancestor will keep their original branch point,
-i.e. commits that would be excluded by gitlink:git-log[1]'s
+i.e. commits that would be excluded by linkgit:git-log[1]'s
 `--ancestry-path` option will keep their original ancestry by default. If
 the `rebase-cousins` mode is turned on, such commits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
-The `--rebase-merges` mode is similar in spirit to `--preserve-merges`, but
-in contrast to that option works well in interactive rebases: commits can be
-reordered, inserted and dropped at will.
+The `--rebase-merges` mode is similar in spirit to the deprecated
+`--preserve-merges`, but in contrast to that option works well in interactive
+rebases: commits can be reordered, inserted and dropped at will.
 +
 It is currently only possible to recreate the merge commits using the
 `recursive` merge strategy; Different merge strategies can be used only via
@@ -427,9 +432,10 @@ See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
 
 -p::
 --preserve-merges::
-	Recreate merge commits instead of flattening the history by replaying
-	commits a merge commit introduces. Merge conflict resolutions or manual
-	amendments to merge commits are not preserved.
+	[DEPRECATED: use `--rebase-merges` instead] Recreate merge commits
+	instead of flattening the history by replaying commits a merge commit
+	introduces. Merge conflict resolutions or manual amendments to merge
+	commits are not preserved.
 +
 This uses the `--interactive` machinery internally, but combining it
 with the `--interactive` option explicitly is generally not a good
@@ -441,7 +447,8 @@ See also INCOMPATIBLE OPTIONS below.
 --exec <cmd>::
 	Append "exec <cmd>" after each line creating a commit in the
 	final history. <cmd> will be interpreted as one or more shell
-	commands.
+	commands. Any command that fails will interrupt the rebase,
+	with exit code 1.
 +
 You may execute several commands by either using one instance of `--exec`
 with several commands:
@@ -500,18 +507,15 @@ See also INCOMPATIBLE OPTIONS below.
 	with care: the final stash application after a successful
 	rebase might result in non-trivial conflicts.
 
+--reschedule-failed-exec::
+--no-reschedule-failed-exec::
+	Automatically reschedule `exec` commands that failed. This only makes
+	sense in interactive mode (or when an `--exec` option was provided).
+
 INCOMPATIBLE OPTIONS
 --------------------
 
-git-rebase has many flags that are incompatible with each other,
-predominantly due to the fact that it has three different underlying
-implementations:
-
- * one based on linkgit:git-am[1] (the default)
- * one based on git-merge-recursive (merge backend)
- * one based on linkgit:git-cherry-pick[1] (interactive backend)
-
-Flags only understood by the am backend:
+The following options:
 
  * --committer-date-is-author-date
  * --ignore-date
@@ -519,26 +523,22 @@ Flags only understood by the am backend:
  * --ignore-whitespace
  * -C
 
-Flags understood by both merge and interactive backends:
+are incompatible with the following options:
 
  * --merge
  * --strategy
  * --strategy-option
  * --allow-empty-message
-
-Flags only understood by the interactive backend:
-
  * --[no-]autosquash
  * --rebase-merges
  * --preserve-merges
  * --interactive
  * --exec
  * --keep-empty
- * --autosquash
  * --edit-todo
  * --root when used in combination with --onto
 
-Other incompatible flag pairs:
+In addition, the following pairs of options are incompatible:
 
  * --preserve-merges and --interactive
  * --preserve-merges and --signoff
@@ -549,24 +549,27 @@ Other incompatible flag pairs:
 BEHAVIORAL DIFFERENCES
 -----------------------
 
- * empty commits:
+There are some subtle differences how the backends behave.
 
-    am-based rebase will drop any "empty" commits, whether the
-    commit started empty (had no changes relative to its parent to
-    start with) or ended empty (all changes were already applied
-    upstream in other commits).
+Empty commits
+~~~~~~~~~~~~~
 
-    merge-based rebase does the same.
+The am backend drops any "empty" commits, regardless of whether the
+commit started empty (had no changes relative to its parent to
+start with) or ended empty (all changes were already applied
+upstream in other commits).
 
-    interactive-based rebase will by default drop commits that
-    started empty and halt if it hits a commit that ended up empty.
-    The `--keep-empty` option exists for interactive rebases to allow
-    it to keep commits that started empty.
+The interactive backend drops commits by default that
+started empty and halts if it hits a commit that ended up empty.
+The `--keep-empty` option exists for the interactive backend to allow
+it to keep commits that started empty.
 
-  * directory rename detection:
+Directory rename detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    merge-based and interactive-based rebases work fine with
-    directory rename detection.  am-based rebases sometimes do not.
+Directory rename heuristics are enabled in the merge and interactive
+backends.  Due to the lack of accurate tree information, directory
+rename detection is disabled in the am backend.
 
 include::merge-strategies.txt[]
 
@@ -641,6 +644,9 @@ By replacing the command "pick" with the command "edit", you can tell
 the files and/or the commit message, amend the commit, and continue
 rebasing.
 
+To interrupt the rebase (just like an "edit" command would do, but without
+cherry-picking any commit first), use the "break" command.
+
 If you just want to edit the commit message for a commit, replace the
 command "pick" with the command "reword".
 
@@ -669,7 +675,8 @@ $ git rebase -i HEAD~5
 
 And move the first patch to the end of the list.
 
-You might want to preserve merges, if you have a history like this:
+You might want to recreate merge commits, e.g. if you have a history
+like this:
 
 ------------------
            X
@@ -683,7 +690,7 @@ Suppose you want to rebase the side branch starting at "A" to "Q". Make
 sure that the current HEAD is "B", and call
 
 -----------------------------
-$ git rebase -i -p --onto Q O
+$ git rebase -i -r --onto Q O
 -----------------------------
 
 Reordering and editing commits usually creates untested intermediate
@@ -971,7 +978,7 @@ when the merge operation did not even start), it is rescheduled immediately.
 
 At this time, the `merge` command will *always* use the `recursive`
 merge strategy for regular merges, and `octopus` for octopus merges,
-strategy, with no way to choose a different one. To work around
+with no way to choose a different one. To work around
 this, an `exec` command can be used to call `git merge` explicitly,
 using the fact that the labels are worktree-local refs (the ref
 `refs/rewritten/onto` would correspond to the label `onto`, for example).
@@ -1020,11 +1027,11 @@ merge cmake
 
 BUGS
 ----
-The todo list presented by `--preserve-merges --interactive` does not
-represent the topology of the revision graph.  Editing commits and
-rewording their commit messages should work fine, but attempts to
-reorder commits tend to produce counterintuitive results. Use
-`--rebase-merges` in such scenarios instead.
+The todo list presented by the deprecated `--preserve-merges --interactive`
+does not represent the topology of the revision graph (use `--rebase-merges`
+instead).  Editing commits and rewording their commit messages should work
+fine, but attempts to reorder commits tend to produce counterintuitive results.
+Use `--rebase-merges` in such scenarios instead.
 
 For example, an attempt to rearrange
 ------------

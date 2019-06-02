@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "object-store.h"
 #include "object.h"
@@ -23,7 +24,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	const char *hex;
 	struct object_id peeled;
 
-	if (!has_sha1_file(oid->hash))
+	if (!has_object_file(oid))
 		die("git show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
 
@@ -151,6 +152,7 @@ static int hash_callback(const struct option *opt, const char *arg, int unset)
 static int exclude_existing_callback(const struct option *opt, const char *arg,
 				     int unset)
 {
+	BUG_ON_OPT_NEG(unset);
 	exclude_arg = 1;
 	*(const char **)opt->value = arg;
 	return 0;
@@ -181,6 +183,8 @@ static const struct option show_ref_options[] = {
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
+	git_config(git_default_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);
 

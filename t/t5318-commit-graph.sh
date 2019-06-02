@@ -75,7 +75,7 @@ graph_read_expect() {
 
 test_expect_success 'write graph' '
 	cd "$TRASH_DIRECTORY/full" &&
-	graph1=$(git commit-graph write) &&
+	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
 	graph_read_expect "3"
 '
@@ -122,7 +122,7 @@ test_expect_success 'write graph with merges' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "10" "large_edges"
+	graph_read_expect "10" "extra_edges"
 '
 
 graph_git_behavior 'merge 1 vs 2' full merge/1 merge/2
@@ -157,7 +157,7 @@ test_expect_success 'write graph with new commit' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "large_edges"
+	graph_read_expect "11" "extra_edges"
 '
 
 graph_git_behavior 'full graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -167,7 +167,7 @@ test_expect_success 'write graph with nothing new' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "large_edges"
+	graph_read_expect "11" "extra_edges"
 '
 
 graph_git_behavior 'cleared graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -177,7 +177,7 @@ test_expect_success 'build graph from latest pack with closure' '
 	cd "$TRASH_DIRECTORY/full" &&
 	cat new-idx | git commit-graph write --stdin-packs &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "9" "large_edges"
+	graph_read_expect "9" "extra_edges"
 '
 
 graph_git_behavior 'graph from pack, commit 8 vs merge 1' full commits/8 merge/1
@@ -200,7 +200,7 @@ test_expect_success 'build graph from commits with append' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git rev-parse merge/3 | git commit-graph write --stdin-commits --append &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "10" "large_edges"
+	graph_read_expect "10" "extra_edges"
 '
 
 graph_git_behavior 'append graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -210,7 +210,7 @@ test_expect_success 'build graph using --reachable' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write --reachable &&
 	test_path_is_file $objdir/info/commit-graph &&
-	graph_read_expect "11" "large_edges"
+	graph_read_expect "11" "extra_edges"
 '
 
 graph_git_behavior 'append graph, commit 8 vs merge 1' full commits/8 merge/1
@@ -231,7 +231,7 @@ test_expect_success 'write graph in bare repo' '
 	cd "$TRASH_DIRECTORY/bare" &&
 	git commit-graph write &&
 	test_path_is_file $baredir/info/commit-graph &&
-	graph_read_expect "11" "large_edges"
+	graph_read_expect "11" "extra_edges"
 '
 
 graph_git_behavior 'bare repo with graph, commit 8 vs merge 1' bare commits/8 merge/1
@@ -366,23 +366,57 @@ GRAPH_OCTOPUS_DATA_OFFSET=$(($GRAPH_COMMIT_DATA_OFFSET + \
 GRAPH_BYTE_OCTOPUS=$(($GRAPH_OCTOPUS_DATA_OFFSET + 4))
 GRAPH_BYTE_FOOTER=$(($GRAPH_OCTOPUS_DATA_OFFSET + 4 * $NUM_OCTOPUS_EDGES))
 
-# usage: corrupt_graph_and_verify <position> <data> <string>
+corrupt_graph_setup() {
+	cd "$TRASH_DIRECTORY/full" &&
+	test_when_finished mv commit-graph-backup $objdir/info/commit-graph &&
+	cp $objdir/info/commit-graph commit-graph-backup
+}
+
+corrupt_graph_verify() {
+	grepstr=$1
+	test_must_fail git commit-graph verify 2>test_err &&
+	grep -v "^+" test_err >err &&
+	test_i18ngrep "$grepstr" err &&
+	if test "$2" != "no-copy"
+	then
+		cp $objdir/info/commit-graph commit-graph-pre-write-test
+	fi &&
+	git status --short &&
+	GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD=true git commit-graph write &&
+	git commit-graph verify
+}
+
+# usage: corrupt_graph_and_verify <position> <data> <string> [<zero_pos>]
 # Manipulates the commit-graph file at the position
-# by inserting the data, then runs 'git commit-graph verify'
+# by inserting the data, optionally zeroing the file
+# starting at <zero_pos>, then runs 'git commit-graph verify'
 # and places the output in the file 'err'. Test 'err' for
 # the given string.
 corrupt_graph_and_verify() {
 	pos=$1
 	data="${2:-\0}"
 	grepstr=$3
-	cd "$TRASH_DIRECTORY/full" &&
-	test_when_finished mv commit-graph-backup $objdir/info/commit-graph &&
-	cp $objdir/info/commit-graph commit-graph-backup &&
+	corrupt_graph_setup &&
+	orig_size=$(wc -c < $objdir/info/commit-graph) &&
+	zero_pos=${4:-${orig_size}} &&
 	printf "$data" | dd of="$objdir/info/commit-graph" bs=1 seek="$pos" conv=notrunc &&
-	test_must_fail git commit-graph verify 2>test_err &&
-	grep -v "^+" test_err >err
-	test_i18ngrep "$grepstr" err
+	dd of="$objdir/info/commit-graph" bs=1 seek="$zero_pos" if=/dev/null &&
+	generate_zero_bytes $(($orig_size - $zero_pos)) >>"$objdir/info/commit-graph" &&
+	corrupt_graph_verify "$grepstr"
+
 }
+
+test_expect_success POSIXPERM,SANITY 'detect permission problem' '
+	corrupt_graph_setup &&
+	chmod 000 $objdir/info/commit-graph &&
+	corrupt_graph_verify "Could not open" "no-copy"
+'
+
+test_expect_success 'detect too small' '
+	corrupt_graph_setup &&
+	echo "a small graph" >$objdir/info/commit-graph &&
+	corrupt_graph_verify "too small"
+'
 
 test_expect_success 'detect bad signature' '
 	corrupt_graph_and_verify 0 "\0" \
@@ -484,11 +518,17 @@ test_expect_success 'detect invalid checksum hash' '
 		"incorrect checksum"
 '
 
+test_expect_success 'detect incorrect chunk count' '
+	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\377" \
+		"chunk lookup table entry missing" $GRAPH_CHUNK_LOOKUP_OFFSET
+'
+
 test_expect_success 'git fsck (checks commit-graph)' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git fsck &&
 	corrupt_graph_and_verify $GRAPH_BYTE_FOOTER "\00" \
 		"incorrect checksum" &&
+	cp commit-graph-pre-write-test $objdir/info/commit-graph &&
 	test_must_fail git fsck
 '
 

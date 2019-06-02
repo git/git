@@ -134,7 +134,7 @@ struct transport {
 #define TRANSPORT_PUSH_OPTIONS			(1<<14)
 #define TRANSPORT_RECURSE_SUBMODULES_ONLY	(1<<15)
 
-extern int transport_summary_width(const struct ref *refs);
+int transport_summary_width(const struct ref *refs);
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
@@ -223,7 +223,8 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 #define REJECT_FETCH_FIRST     0x08
 #define REJECT_NEEDS_FORCE     0x10
 
-int transport_push(struct transport *connection,
+int transport_push(struct repository *repo,
+		   struct transport *connection,
 		   struct refspec *rs, int flags,
 		   unsigned int * reject_reasons);
 
@@ -262,5 +263,5 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 		  int verbose, int porcelain, unsigned int *reject_reasons);
 
 typedef void alternate_ref_fn(const struct object_id *oid, void *);
-extern void for_each_alternate_ref(alternate_ref_fn, void *);
+void for_each_alternate_ref(alternate_ref_fn, void *);
 #endif

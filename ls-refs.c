@@ -5,6 +5,7 @@
 #include "argv-array.h"
 #include "ls-refs.h"
 #include "pkt-line.h"
+#include "config.h"
 
 /*
  * Check if one of the prefixes is a prefix of the ref.
@@ -40,7 +41,10 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	const char *refname_nons = strip_namespace(refname);
 	struct strbuf refline = STRBUF_INIT;
 
-	if (!ref_match(&data->prefixes, refname))
+	if (ref_is_hidden(refname_nons, refname))
+		return 0;
+
+	if (!ref_match(&data->prefixes, refname_nons))
 		return 0;
 
 	strbuf_addf(&refline, "%s %s", oid_to_hex(oid), refname_nons);
@@ -69,12 +73,24 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
+static int ls_refs_config(const char *var, const char *value, void *data)
+{
+	/*
+	 * We only serve fetches over v2 for now, so respect only "uploadpack"
+	 * config. This may need to eventually be expanded to "receive", but we
+	 * don't yet know how that information will be passed to ls-refs.
+	 */
+	return parse_hide_refs_config(var, value, "uploadpack");
+}
+
 int ls_refs(struct repository *r, struct argv_array *keys,
 	    struct packet_reader *request)
 {
 	struct ls_refs_data data;
 
 	memset(&data, 0, sizeof(data));
+
+	git_config(ls_refs_config, NULL);
 
 	while (packet_reader_read(request) != PACKET_READ_FLUSH) {
 		const char *arg = request->line;

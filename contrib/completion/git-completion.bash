@@ -400,7 +400,7 @@ __gitcomp_builtin ()
 	if [ -z "$options" ]; then
 		# leading and trailing spaces are significant to make
 		# option removal work correctly.
-		options=" $(__git ${cmd/_/ } --git-completion-helper) $incl "
+		options=" $incl $(__git ${cmd/_/ } --git-completion-helper) "
 		for i in $excl; do
 			options="${options/ $i / }"
 		done
@@ -438,7 +438,7 @@ __gitcomp_nl ()
 # Callers must take care of providing only paths that match the current path
 # to be completed and adding any prefix path components, if necessary.
 # 1: List of newline-separated matching paths, complete with all prefix
-#    path componens.
+#    path components.
 __gitcomp_file_direct ()
 {
 	local IFS=$'\n'
@@ -853,9 +853,14 @@ __git_compute_merge_strategies ()
 	__git_merge_strategies=$(__git_list_merge_strategies)
 }
 
+__git_merge_strategy_options="ours theirs subtree subtree= patience
+	histogram diff-algorithm= ignore-space-change ignore-all-space
+	ignore-space-at-eol renormalize no-renormalize no-renames
+	find-renames find-renames= rename-threshold="
+
 __git_complete_revlist_file ()
 {
-	local pfx ls ref cur_="$cur"
+	local dequoted_word pfx ls ref cur_="$cur"
 	case "$cur_" in
 	*..?*:*)
 		return
@@ -863,14 +868,18 @@ __git_complete_revlist_file ()
 	?*:*)
 		ref="${cur_%%:*}"
 		cur_="${cur_#*:}"
-		case "$cur_" in
+
+		__git_dequote "$cur_"
+
+		case "$dequoted_word" in
 		?*/*)
-			pfx="${cur_%/*}"
-			cur_="${cur_##*/}"
+			pfx="${dequoted_word%/*}"
+			cur_="${dequoted_word##*/}"
 			ls="$ref:$pfx"
 			pfx="$pfx/"
 			;;
 		*)
+			cur_="$dequoted_word"
 			ls="$ref"
 			;;
 		esac
@@ -880,21 +889,10 @@ __git_complete_revlist_file ()
 		*)   pfx="$ref:$pfx" ;;
 		esac
 
-		__gitcomp_nl "$(__git ls-tree "$ls" \
-				| sed '/^100... blob /{
-				           s,^.*	,,
-				           s,$, ,
-				       }
-				       /^120000 blob /{
-				           s,^.*	,,
-				           s,$, ,
-				       }
-				       /^040000 tree /{
-				           s,^.*	,,
-				           s,$,/,
-				       }
-				       s/^.*	//')" \
-			"$pfx" "$cur_" ""
+		__gitcomp_file "$(__git ls-tree "$ls" \
+				| sed 's/^.*	//
+				       s/$//')" \
+			"$pfx" "$cur_"
 		;;
 	*...*)
 		pfx="${cur_%...*}..."
@@ -1003,10 +1001,19 @@ __git_complete_strategy ()
 	-s|--strategy)
 		__gitcomp "$__git_merge_strategies"
 		return 0
+		;;
+	-X)
+		__gitcomp "$__git_merge_strategy_options"
+		return 0
+		;;
 	esac
 	case "$cur" in
 	--strategy=*)
 		__gitcomp "$__git_merge_strategies" "" "${cur##--strategy=}"
+		return 0
+		;;
+	--strategy-option=*)
+		__gitcomp "$__git_merge_strategy_options" "" "${cur##--strategy-option=}"
 		return 0
 		;;
 	esac
@@ -1017,7 +1024,7 @@ __git_all_commands=
 __git_compute_all_commands ()
 {
 	test -n "$__git_all_commands" ||
-	__git_all_commands=$(git --list-cmds=main,others,alias,nohelpers)
+	__git_all_commands=$(__git --list-cmds=main,others,alias,nohelpers)
 }
 
 # Lists all set config variables starting with the given section prefix,
@@ -1170,6 +1177,7 @@ __git_count_arguments ()
 }
 
 __git_whitespacelist="nowarn warn error error-all fix"
+__git_patchformat="mbox stgit stgit-series hg mboxrd"
 __git_am_inprogress_options="--skip --continue --resolved --abort --quit --show-current-patch"
 
 _git_am ()
@@ -1182,6 +1190,10 @@ _git_am ()
 	case "$cur" in
 	--whitespace=*)
 		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
+		return
+		;;
+	--patch-format=*)
+		__gitcomp "$__git_patchformat" "" "${cur##--patch-format=}"
 		return
 		;;
 	--*)
@@ -1207,6 +1219,10 @@ _git_apply ()
 _git_add ()
 {
 	case "$cur" in
+	--chmod=*)
+		__gitcomp "+x -x" "" "${cur##--chmod=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin add
 		return
@@ -1266,6 +1282,8 @@ _git_bisect ()
 		;;
 	esac
 }
+
+__git_ref_fieldlist="refname objecttype objectsize objectname upstream push HEAD symref"
 
 _git_branch ()
 {
@@ -1350,6 +1368,9 @@ _git_cherry_pick ()
 		__gitcomp "$__git_cherry_pick_inprogress_options"
 		return
 	fi
+
+	__git_complete_strategy && return
+
 	case "$cur" in
 	--*)
 		__gitcomp_builtin cherry-pick "" \
@@ -1480,7 +1501,8 @@ _git_diff ()
 }
 
 __git_mergetools_common="diffuse diffmerge ecmerge emerge kdiff3 meld opendiff
-			tkdiff vimdiff gvimdiff xxdiff araxis p4merge bc codecompare
+			tkdiff vimdiff gvimdiff xxdiff araxis p4merge bc
+			codecompare smerge
 "
 
 _git_difftool ()
@@ -1513,6 +1535,10 @@ _git_fetch ()
 		__gitcomp "$__git_fetch_recurse_submodules" "" "${cur##--recurse-submodules=}"
 		return
 		;;
+	--filter=*)
+		__gitcomp "blob:none blob:limit= sparse:oid= sparse:path=" "" "${cur##--filter=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin fetch
 		return
@@ -1521,13 +1547,9 @@ _git_fetch ()
 	__git_complete_remote_or_refspec
 }
 
-__git_format_patch_options="
-	--stdout --attach --no-attach --thread --thread= --no-thread
-	--numbered --start-number --numbered-files --keep-subject --signoff
-	--signature --no-signature --in-reply-to= --cc= --full-index --binary
-	--not --all --cover-letter --no-prefix --src-prefix= --dst-prefix=
-	--inline --suffix= --ignore-if-in-upstream --subject-prefix=
-	--output-directory --reroll-count --to= --quiet --notes
+__git_format_patch_extra_options="
+	--full-index --not --all --no-prefix --src-prefix=
+	--dst-prefix= --notes
 "
 
 _git_format_patch ()
@@ -1540,7 +1562,7 @@ _git_format_patch ()
 		return
 		;;
 	--*)
-		__gitcomp "$__git_format_patch_options"
+		__gitcomp_builtin format-patch "$__git_format_patch_extra_options"
 		return
 		;;
 	esac
@@ -1631,9 +1653,9 @@ _git_help ()
 	esac
 	if test -n "$GIT_TESTING_ALL_COMMAND_LIST"
 	then
-		__gitcomp "$GIT_TESTING_ALL_COMMAND_LIST $(git --list-cmds=alias,list-guide) gitk"
+		__gitcomp "$GIT_TESTING_ALL_COMMAND_LIST $(__git --list-cmds=alias,list-guide) gitk"
 	else
-		__gitcomp "$(git --list-cmds=main,nohelpers,alias,list-guide) gitk"
+		__gitcomp "$(__git --list-cmds=main,nohelpers,alias,list-guide) gitk"
 	fi
 }
 
@@ -1713,8 +1735,8 @@ __git_log_shortlog_options="
 	--all-match --invert-grep
 "
 
-__git_log_pretty_formats="oneline short medium full fuller email raw format:"
-__git_log_date_formats="relative iso8601 rfc2822 short local default raw"
+__git_log_pretty_formats="oneline short medium full fuller email raw format: mboxrd"
+__git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default raw unix format:"
 
 _git_log ()
 {
@@ -1822,7 +1844,7 @@ _git_mergetool ()
 		return
 		;;
 	--*)
-		__gitcomp "--tool= --prompt --no-prompt"
+		__gitcomp "--tool= --prompt --no-prompt --gui --no-gui"
 		return
 		;;
 	esac
@@ -2070,7 +2092,7 @@ _git_send_email ()
 		return
 		;;
 	--*)
-		__gitcomp "--annotate --bcc --cc --cc-cmd --chain-reply-to
+		__gitcomp_builtin send-email "--annotate --bcc --cc --cc-cmd --chain-reply-to
 			--compose --confirm= --dry-run --envelope-sender
 			--from --identity
 			--in-reply-to --no-chain-reply-to --no-signed-off-by-cc
@@ -2079,7 +2101,7 @@ _git_send_email ()
 			--smtp-server-port --smtp-encryption= --smtp-user
 			--subject --suppress-cc= --suppress-from --thread --to
 			--validate --no-validate
-			$__git_format_patch_options"
+			$__git_format_patch_extra_options"
 		return
 		;;
 	esac
@@ -2232,7 +2254,7 @@ _git_config ()
 		return
 		;;
 	diff.submodule)
-		__gitcomp "log short"
+		__gitcomp "$__git_diff_submodule_formats"
 		return
 		;;
 	help.format)
@@ -2399,6 +2421,10 @@ _git_remote ()
 _git_replace ()
 {
 	case "$cur" in
+	--format=*)
+		__gitcomp "short medium long" "" "${cur##--format=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin replace
 		return
@@ -2440,6 +2466,7 @@ _git_revert ()
 		__gitcomp "$__git_revert_inprogress_options"
 		return
 	fi
+	__git_complete_strategy && return
 	case "$cur" in
 	--*)
 		__gitcomp_builtin revert "" \
@@ -2584,7 +2611,7 @@ _git_submodule ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="add status init deinit update summary foreach sync"
+	local subcommands="add status init deinit update set-branch summary foreach sync absorbgitdirs"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		case "$cur" in
@@ -2614,6 +2641,9 @@ _git_submodule ()
 			--recommend-shallow --no-recommend-shallow
 			--force --rebase --merge --reference --depth --recursive --jobs
 		"
+		;;
+	set-branch,--*)
+		__gitcomp "--default --branch"
 		;;
 	summary,--*)
 		__gitcomp "--cached --files --summary-limit"
@@ -2899,7 +2929,7 @@ __git_main ()
 			then
 				__gitcomp "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
 			else
-				__gitcomp "$(git --list-cmds=list-mainporcelain,others,nohelpers,alias,list-complete,config)"
+				__gitcomp "$(__git --list-cmds=list-mainporcelain,others,nohelpers,alias,list-complete,config)"
 			fi
 			;;
 		esac
@@ -2997,7 +3027,7 @@ if [[ -n ${ZSH_VERSION-} ]] &&
 
 		local IFS=$'\n'
 		compset -P '*[=:]'
-		compadd -Q -f -- ${=1} && _ret=0
+		compadd -f -- ${=1} && _ret=0
 	}
 
 	__gitcomp_file ()
@@ -3006,7 +3036,7 @@ if [[ -n ${ZSH_VERSION-} ]] &&
 
 		local IFS=$'\n'
 		compset -P '*[=:]'
-		compadd -Q -p "${2-}" -f -- ${=1} && _ret=0
+		compadd -p "${2-}" -f -- ${=1} && _ret=0
 	}
 
 	_git ()

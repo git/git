@@ -322,4 +322,24 @@ test_expect_success 'bare repository: test info/attributes' '
 	)
 '
 
+test_expect_success 'binary macro expanded by -a' '
+	echo "file binary" >.gitattributes &&
+	cat >expect <<-\EOF &&
+	file: binary: set
+	file: diff: unset
+	file: merge: unset
+	file: text: unset
+	EOF
+	git check-attr -a file >actual &&
+	test_cmp expect actual
+'
+
+
+test_expect_success 'query binary macro directly' '
+	echo "file binary" >.gitattributes &&
+	echo file: binary: set >expect &&
+	git check-attr binary file >actual &&
+	test_cmp expect actual
+'
+
 test_done

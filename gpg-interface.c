@@ -73,50 +73,115 @@ void signature_check_clear(struct signature_check *sigc)
 	FREE_AND_NULL(sigc->gpg_status);
 	FREE_AND_NULL(sigc->signer);
 	FREE_AND_NULL(sigc->key);
+	FREE_AND_NULL(sigc->fingerprint);
+	FREE_AND_NULL(sigc->primary_key_fingerprint);
 }
+
+/* An exclusive status -- only one of them can appear in output */
+#define GPG_STATUS_EXCLUSIVE	(1<<0)
+/* The status includes key identifier */
+#define GPG_STATUS_KEYID	(1<<1)
+/* The status includes user identifier */
+#define GPG_STATUS_UID		(1<<2)
+/* The status includes key fingerprints */
+#define GPG_STATUS_FINGERPRINT	(1<<3)
+
+/* Short-hand for standard exclusive *SIG status with keyid & UID */
+#define GPG_STATUS_STDSIG	(GPG_STATUS_EXCLUSIVE|GPG_STATUS_KEYID|GPG_STATUS_UID)
 
 static struct {
 	char result;
 	const char *check;
+	unsigned int flags;
 } sigcheck_gpg_status[] = {
-	{ 'G', "\n[GNUPG:] GOODSIG " },
-	{ 'B', "\n[GNUPG:] BADSIG " },
-	{ 'U', "\n[GNUPG:] TRUST_NEVER" },
-	{ 'U', "\n[GNUPG:] TRUST_UNDEFINED" },
-	{ 'E', "\n[GNUPG:] ERRSIG "},
-	{ 'X', "\n[GNUPG:] EXPSIG "},
-	{ 'Y', "\n[GNUPG:] EXPKEYSIG "},
-	{ 'R', "\n[GNUPG:] REVKEYSIG "},
+	{ 'G', "GOODSIG ", GPG_STATUS_STDSIG },
+	{ 'B', "BADSIG ", GPG_STATUS_STDSIG },
+	{ 'U', "TRUST_NEVER", 0 },
+	{ 'U', "TRUST_UNDEFINED", 0 },
+	{ 'E', "ERRSIG ", GPG_STATUS_EXCLUSIVE|GPG_STATUS_KEYID },
+	{ 'X', "EXPSIG ", GPG_STATUS_STDSIG },
+	{ 'Y', "EXPKEYSIG ", GPG_STATUS_STDSIG },
+	{ 'R', "REVKEYSIG ", GPG_STATUS_STDSIG },
+	{ 0, "VALIDSIG ", GPG_STATUS_FINGERPRINT },
 };
 
 static void parse_gpg_output(struct signature_check *sigc)
 {
 	const char *buf = sigc->gpg_status;
-	int i;
+	const char *line, *next;
+	int i, j;
+	int seen_exclusive_status = 0;
 
-	/* Iterate over all search strings */
-	for (i = 0; i < ARRAY_SIZE(sigcheck_gpg_status); i++) {
-		const char *found, *next;
+	/* Iterate over all lines */
+	for (line = buf; *line; line = strchrnul(line+1, '\n')) {
+		while (*line == '\n')
+			line++;
+		/* Skip lines that don't start with GNUPG status */
+		if (!skip_prefix(line, "[GNUPG:] ", &line))
+			continue;
 
-		if (!skip_prefix(buf, sigcheck_gpg_status[i].check + 1, &found)) {
-			found = strstr(buf, sigcheck_gpg_status[i].check);
-			if (!found)
-				continue;
-			found += strlen(sigcheck_gpg_status[i].check);
-		}
-		sigc->result = sigcheck_gpg_status[i].result;
-		/* The trust messages are not followed by key/signer information */
-		if (sigc->result != 'U') {
-			next = strchrnul(found, ' ');
-			sigc->key = xmemdupz(found, next - found);
-			/* The ERRSIG message is not followed by signer information */
-			if (*next && sigc-> result != 'E') {
-				found = next + 1;
-				next = strchrnul(found, '\n');
-				sigc->signer = xmemdupz(found, next - found);
+		/* Iterate over all search strings */
+		for (i = 0; i < ARRAY_SIZE(sigcheck_gpg_status); i++) {
+			if (skip_prefix(line, sigcheck_gpg_status[i].check, &line)) {
+				if (sigcheck_gpg_status[i].flags & GPG_STATUS_EXCLUSIVE) {
+					if (seen_exclusive_status++)
+						goto found_duplicate_status;
+				}
+
+				if (sigcheck_gpg_status[i].result)
+					sigc->result = sigcheck_gpg_status[i].result;
+				/* Do we have key information? */
+				if (sigcheck_gpg_status[i].flags & GPG_STATUS_KEYID) {
+					next = strchrnul(line, ' ');
+					free(sigc->key);
+					sigc->key = xmemdupz(line, next - line);
+					/* Do we have signer information? */
+					if (*next && (sigcheck_gpg_status[i].flags & GPG_STATUS_UID)) {
+						line = next + 1;
+						next = strchrnul(line, '\n');
+						free(sigc->signer);
+						sigc->signer = xmemdupz(line, next - line);
+					}
+				}
+				/* Do we have fingerprint? */
+				if (sigcheck_gpg_status[i].flags & GPG_STATUS_FINGERPRINT) {
+					next = strchrnul(line, ' ');
+					free(sigc->fingerprint);
+					sigc->fingerprint = xmemdupz(line, next - line);
+
+					/* Skip interim fields */
+					for (j = 9; j > 0; j--) {
+						if (!*next)
+							break;
+						line = next + 1;
+						next = strchrnul(line, ' ');
+					}
+
+					next = strchrnul(line, '\n');
+					free(sigc->primary_key_fingerprint);
+					sigc->primary_key_fingerprint = xmemdupz(line, next - line);
+				}
+
+				break;
 			}
 		}
 	}
+	return;
+
+found_duplicate_status:
+	/*
+	 * GOODSIG, BADSIG etc. can occur only once for each signature.
+	 * Therefore, if we had more than one then we're dealing with multiple
+	 * signatures.  We don't support them currently, and they're rather
+	 * hard to create, so something is likely fishy and we should reject
+	 * them altogether.
+	 */
+	sigc->result = 'E';
+	/* Clear partial data to avoid confusion */
+	FREE_AND_NULL(sigc->primary_key_fingerprint);
+	FREE_AND_NULL(sigc->fingerprint);
+	FREE_AND_NULL(sigc->signer);
+	FREE_AND_NULL(sigc->key);
 }
 
 int check_signature(const char *payload, size_t plen, const char *signature,

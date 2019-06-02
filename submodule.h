@@ -40,6 +40,7 @@ struct submodule_update_strategy {
 #define SUBMODULE_UPDATE_STRATEGY_INIT {SM_UPDATE_UNSPECIFIED, NULL}
 
 int is_gitmodules_unmerged(const struct index_state *istate);
+int is_writing_gitmodules_ok(void);
 int is_staging_gitmodules_ok(struct index_state *istate);
 int update_path_in_gitmodules(const char *oldpath, const char *newpath);
 int remove_path_from_gitmodules(const char *path);
@@ -102,15 +103,15 @@ int add_submodule_odb(const char *path);
  * Checks if there are submodule changes in a..b. If a is the null OID,
  * checks b and all its ancestors instead.
  */
-int submodule_touches_in_range(struct index_state *istate,
+int submodule_touches_in_range(struct repository *r,
 			       struct object_id *a,
 			       struct object_id *b);
-int find_unpushed_submodules(struct index_state *istate,
+int find_unpushed_submodules(struct repository *r,
 			     struct oid_array *commits,
 			     const char *remotes_name,
 			     struct string_list *needs_pushing);
 struct refspec;
-int push_unpushed_submodules(struct index_state *istate,
+int push_unpushed_submodules(struct repository *r,
 			     struct oid_array *commits,
 			     const struct remote *remote,
 			     const struct refspec *rs,
@@ -129,6 +130,8 @@ int submodule_move_head(const char *path,
 			const char *old,
 			const char *new_head,
 			unsigned flags);
+
+void submodule_unset_core_worktree(const struct submodule *sub);
 
 /*
  * Prepare the "env_array" parameter of a "struct child_process" for executing

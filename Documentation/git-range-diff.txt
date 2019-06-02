@@ -78,6 +78,23 @@ between patches", i.e. to compare the author, commit message and diff of
 corresponding old/new commits. There is currently no means to tweak the
 diff options passed to `git log` when generating those patches.
 
+OUTPUT STABILITY
+----------------
+
+The output of the `range-diff` command is subject to change. It is
+intended to be human-readable porcelain output, not something that can
+be used across versions of Git to get a textually stable `range-diff`
+(as opposed to something like the `--stable` option to
+linkgit:git-patch-id[1]). There's also no equivalent of
+linkgit:git-apply[1] for `range-diff`, the output is not intended to
+be machine-readable.
+
+This is particularly true when passing in diff options. Currently some
+options like `--stat` can, as an emergent effect, produce output
+that's quite useless in the context of `range-diff`. Future versions
+of `range-diff` may learn to interpret such options in a manner
+specific to `range-diff` (e.g. for `--stat` producing human-readable
+output which summarizes how the diffstat changed).
 
 CONFIGURATION
 -------------

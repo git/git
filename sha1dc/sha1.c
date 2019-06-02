@@ -93,7 +93,7 @@
 #define SHA1DC_BIGENDIAN
 
 /* Not under GCC-alike or glibc or *BSD or newlib or <processor whitelist> */
-#elif (defined(_AIX))
+#elif (defined(_AIX) || defined(__hpux))
 
 /*
  * Defines Big Endian on a whitelist of OSs that are known to be Big
@@ -124,10 +124,11 @@
 #endif
 /*ENDIANNESS SELECTION*/
 
+#ifndef SHA1DC_FORCE_ALIGNED_ACCESS
 #if defined(SHA1DC_FORCE_UNALIGNED_ACCESS) || defined(SHA1DC_ON_INTEL_LIKE_PROCESSOR)
 #define SHA1DC_ALLOW_UNALIGNED_ACCESS
-#endif /*UNALIGNMENT DETECTION*/
-
+#endif /*UNALIGNED ACCESS DETECTION*/
+#endif /*FORCE ALIGNED ACCESS*/
 
 #define rotate_right(x,n) (((x)>>(n))|((x)<<(32-(n))))
 #define rotate_left(x,n)  (((x)<<(n))|((x)>>(32-(n))))

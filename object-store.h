@@ -7,39 +7,32 @@
 #include "sha1-array.h"
 #include "strbuf.h"
 
-struct alternate_object_database {
-	struct alternate_object_database *next;
-
-	/* see alt_scratch_buf() */
-	struct strbuf scratch;
-	size_t base_len;
+struct object_directory {
+	struct object_directory *next;
 
 	/*
-	 * Used to store the results of readdir(3) calls when searching
-	 * for unique abbreviated hashes.  This cache is never
-	 * invalidated, thus it's racy and not necessarily accurate.
-	 * That's fine for its purpose; don't use it for tasks requiring
-	 * greater accuracy!
+	 * Used to store the results of readdir(3) calls when we are OK
+	 * sacrificing accuracy due to races for speed. That includes
+	 * object existence with OBJECT_INFO_QUICK, as well as
+	 * our search for unique abbreviated hashes. Don't use it for tasks
+	 * requiring greater accuracy!
+	 *
+	 * Be sure to call odb_load_loose_cache() before using.
 	 */
 	char loose_objects_subdir_seen[256];
-	struct oid_array loose_objects_cache;
+	struct oid_array loose_objects_cache[256];
 
 	/*
 	 * Path to the alternative object store. If this is a relative path,
 	 * it is relative to the current working directory.
 	 */
-	char path[FLEX_ARRAY];
+	char *path;
 };
+
 void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
-typedef int alt_odb_fn(struct alternate_object_database *, void *);
+typedef int alt_odb_fn(struct object_directory *, void *);
 int foreach_alt_odb(alt_odb_fn, void*);
-
-/*
- * Allocate a "struct alternate_object_database" but do _not_ actually
- * add it to the list of alternates.
- */
-struct alternate_object_database *alloc_alt_odb(const char *dir);
 
 /*
  * Add the directory to the on-disk alternates file; the new entry will also
@@ -55,12 +48,14 @@ void add_to_alternates_file(const char *dir);
 void add_to_alternates_memory(const char *dir);
 
 /*
- * Returns a scratch strbuf pre-filled with the alternate object directory,
- * including a trailing slash, which can be used to access paths in the
- * alternate. Always use this over direct access to alt->scratch, as it
- * cleans up any previous use of the scratch buffer.
+ * Populate and return the loose object cache array corresponding to the
+ * given object ID.
  */
-struct strbuf *alt_scratch_buf(struct alternate_object_database *alt);
+struct oid_array *odb_loose_cache(struct object_directory *odb,
+				  const struct object_id *oid);
+
+/* Empty the loose object cache for the specified object directory. */
+void odb_clear_loose_cache(struct object_directory *odb);
 
 struct packed_git {
 	struct packed_git *next;
@@ -81,8 +76,9 @@ struct packed_git {
 		 pack_keep_in_core:1,
 		 freshened:1,
 		 do_not_close:1,
-		 pack_promisor:1;
-	unsigned char sha1[20];
+		 pack_promisor:1,
+		 multi_pack_index:1;
+	unsigned char hash[GIT_MAX_RAWSZ];
 	struct revindex_entry *revindex;
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
@@ -92,16 +88,20 @@ struct multi_pack_index;
 
 struct raw_object_store {
 	/*
-	 * Path to the repository's object store.
-	 * Cannot be NULL after initialization.
+	 * Set of all object directories; the main directory is first (and
+	 * cannot be NULL after initialization). Subsequent directories are
+	 * alternates.
 	 */
-	char *objectdir;
+	struct object_directory *odb;
+	struct object_directory **odb_tail;
+	int loaded_alternates;
 
-	/* Path to extra alternate object database if not NULL */
+	/*
+	 * A list of alternate object directories loaded from the environment;
+	 * this should not generally need to be accessed directly, but will
+	 * populate the "odb" list when prepare_alt_odb() is run.
+	 */
 	char *alternate_db;
-
-	struct alternate_object_database *alt_odb_list;
-	struct alternate_object_database **alt_odb_tail;
 
 	/*
 	 * Objects that should be substituted by other objects
@@ -130,12 +130,6 @@ struct raw_object_store {
 	struct list_head packed_git_mru;
 
 	/*
-	 * A linked list containing all packfiles, starting with those
-	 * contained in the multi_pack_index.
-	 */
-	struct packed_git *all_packs;
-
-	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
 	 * approximate_object_count() instead.
@@ -155,37 +149,46 @@ void raw_object_store_clear(struct raw_object_store *o);
 
 /*
  * Put in `buf` the name of the file in the local object database that
- * would be used to store a loose object with the specified sha1.
+ * would be used to store a loose object with the specified oid.
  */
-void sha1_file_name(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
+const char *loose_object_path(struct repository *r, struct strbuf *buf,
+			      const struct object_id *oid);
 
-void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
+void *map_loose_object(struct repository *r, const struct object_id *oid,
+		       unsigned long *size);
 
-extern void *read_object_file_extended(const struct object_id *oid,
-				       enum object_type *type,
-				       unsigned long *size, int lookup_replace);
-static inline void *read_object_file(const struct object_id *oid, enum object_type *type, unsigned long *size)
+void *read_object_file_extended(struct repository *r,
+				const struct object_id *oid,
+				enum object_type *type,
+				unsigned long *size, int lookup_replace);
+static inline void *repo_read_object_file(struct repository *r,
+					  const struct object_id *oid,
+					  enum object_type *type,
+					  unsigned long *size)
 {
-	return read_object_file_extended(oid, type, size, 1);
+	return read_object_file_extended(r, oid, type, size, 1);
 }
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define read_object_file(oid, type, size) repo_read_object_file(the_repository, oid, type, size)
+#endif
 
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
-extern int hash_object_file(const void *buf, unsigned long len,
-			    const char *type, struct object_id *oid);
+int hash_object_file(const void *buf, unsigned long len,
+		     const char *type, struct object_id *oid);
 
-extern int write_object_file(const void *buf, unsigned long len,
-			     const char *type, struct object_id *oid);
+int write_object_file(const void *buf, unsigned long len,
+		      const char *type, struct object_id *oid);
 
-extern int hash_object_file_literally(const void *buf, unsigned long len,
-				      const char *type, struct object_id *oid,
-				      unsigned flags);
+int hash_object_file_literally(const void *buf, unsigned long len,
+			       const char *type, struct object_id *oid,
+			       unsigned flags);
 
-extern int pretend_object_file(void *, unsigned long, enum object_type,
-			       struct object_id *oid);
+int pretend_object_file(void *, unsigned long, enum object_type,
+			struct object_id *oid);
 
-extern int force_object_loose(const struct object_id *oid, time_t mtime);
+int force_object_loose(const struct object_id *oid, time_t mtime);
 
 /*
  * Open the loose object at path, check its hash, and return the contents,
@@ -200,29 +203,28 @@ int read_loose_object(const char *path,
 		      unsigned long *size,
 		      void **contents);
 
-/*
- * Convenience for sha1_object_info_extended() with a NULL struct
- * object_info. OBJECT_INFO_SKIP_CACHED is automatically set; pass
- * nonzero flags to also set other flags.
- */
-extern int has_sha1_file_with_flags(const unsigned char *sha1, int flags);
-static inline int has_sha1_file(const unsigned char *sha1)
-{
-	return has_sha1_file_with_flags(sha1, 0);
-}
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define has_sha1_file_with_flags(sha1, flags) repo_has_sha1_file_with_flags(the_repository, sha1, flags)
+#define has_sha1_file(sha1) repo_has_sha1_file(the_repository, sha1)
+#endif
 
 /* Same as the above, except for struct object_id. */
-extern int has_object_file(const struct object_id *oid);
-extern int has_object_file_with_flags(const struct object_id *oid, int flags);
+int repo_has_object_file(struct repository *r, const struct object_id *oid);
+int repo_has_object_file_with_flags(struct repository *r,
+				    const struct object_id *oid, int flags);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define has_object_file(oid) repo_has_object_file(the_repository, oid)
+#define has_object_file_with_flags(oid, flags) repo_has_object_file_with_flags(the_repository, oid, flags)
+#endif
 
 /*
  * Return true iff an alternate object database has a loose object
  * with the specified name.  This function does not respect replace
  * references.
  */
-extern int has_loose_object_nonlocal(const struct object_id *);
+int has_loose_object_nonlocal(const struct object_id *);
 
-extern void assert_oid_type(const struct object_id *oid, enum object_type expect);
+void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
 struct object_info {
 	/* Request */
@@ -273,6 +275,12 @@ struct object_info {
 #define OBJECT_INFO_QUICK 8
 /* Do not check loose object */
 #define OBJECT_INFO_IGNORE_LOOSE 16
+/*
+ * Do not attempt to fetch the object if missing (even if fetch_is_missing is
+ * nonzero). This is meant for bulk prefetching of missing blobs in a partial
+ * clone. Implies OBJECT_INFO_QUICK.
+ */
+#define OBJECT_INFO_FOR_PREFETCH (32 + OBJECT_INFO_QUICK)
 
 int oid_object_info_extended(struct repository *r,
 			     const struct object_id *,

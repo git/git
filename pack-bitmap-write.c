@@ -37,7 +37,7 @@ struct bitmap_writer {
 
 	struct progress *progress;
 	int show_progress;
-	unsigned char pack_checksum[20];
+	unsigned char pack_checksum[GIT_MAX_RAWSZ];
 };
 
 static struct bitmap_writer writer;
@@ -77,7 +77,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 			break;
 
 		default:
-			real_type = oid_object_info(the_repository,
+			real_type = oid_object_info(to_pack->repo,
 						    &entry->idx.oid, NULL);
 			break;
 		}
@@ -142,13 +142,13 @@ static inline void reset_all_seen(void)
 	seen_objects_nr = 0;
 }
 
-static uint32_t find_object_pos(const unsigned char *sha1)
+static uint32_t find_object_pos(const unsigned char *hash)
 {
-	struct object_entry *entry = packlist_find(writer.to_pack, sha1, NULL);
+	struct object_entry *entry = packlist_find(writer.to_pack, hash, NULL);
 
 	if (!entry) {
 		die("Failed to write bitmap index. Packfile doesn't have full closure "
-			"(object %s is missing)", sha1_to_hex(sha1));
+			"(object %s is missing)", hash_to_hex(hash));
 	}
 
 	return oe_in_pack_pos(writer.to_pack, entry);
@@ -262,7 +262,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	if (writer.show_progress)
 		writer.progress = start_progress("Building bitmaps", writer.selected_nr);
 
-	repo_init_revisions(the_repository, &revs, NULL);
+	repo_init_revisions(to_pack->repo, &revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
 	revs.blob_objects = 1;
@@ -363,7 +363,7 @@ static int date_compare(const void *_a, const void *_b)
 void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack)
 {
 	struct bitmap_index *bitmap_git;
-	if (!(bitmap_git = prepare_bitmap_git()))
+	if (!(bitmap_git = prepare_bitmap_git(to_pack->repo)))
 		return;
 
 	writer.reused = kh_init_sha1();
@@ -535,7 +535,7 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	header.entry_count = htonl(writer.selected_nr);
 	hashcpy(header.checksum, writer.pack_checksum);
 
-	hashwrite(f, &header, sizeof(header));
+	hashwrite(f, &header, sizeof(header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz);
 	dump_bitmap(f, writer.commits);
 	dump_bitmap(f, writer.trees);
 	dump_bitmap(f, writer.blobs);
