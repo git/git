@@ -3,7 +3,7 @@
 # Copyright (C) 2012,2013 Jiang Xin <worldhello.net AT gmail.com>
 # This file is distributed under the same license as the Git package.
 # Contributors:
-#   - Fangyi Zhou <fangyi.zhou AT yuriko.moe>
+#   - Fangyi Zhou <me AT fangyi.io>
 #   - Jiang Xin <worldhello.net AT gmail.com>
 #   - Lian Cheng <rhythm.mail AT gmail.com>
 #   - Ray Chen <oldsharp AT gmail.com>
@@ -1051,7 +1051,7 @@ msgstr "%.*s 不是一个有效的属性名"
 #: attr.c:368
 #, c-format
 msgid "%s not allowed: %s:%d"
-msgstr "不允许 %s ：%s:%d"
+msgstr "不允许 %s：%s:%d"
 
 #: attr.c:408
 msgid ""
@@ -1614,7 +1614,7 @@ msgstr "提交图文件的校验码错误，可能已经损坏"
 #: commit-graph.c:1172
 #, c-format
 msgid "commit-graph has incorrect OID order: %s then %s"
-msgstr "提交图形的 OID 顺序不正确：%s 然后 %s"
+msgstr "提交图形的对象 ID 顺序不正确：%s 然后 %s"
 
 #: commit-graph.c:1182 commit-graph.c:1197
 #, c-format
@@ -1638,7 +1638,7 @@ msgstr "无法从提交图形的对象库中解析提交 %s"
 #: commit-graph.c:1226
 #, c-format
 msgid "root tree OID for commit %s in commit-graph is %s != %s"
-msgstr "提交图形中的提交 %s 的根树 OID 是 %s != %s"
+msgstr "提交图形中的提交 %s 的根树对象 ID 是 %s != %s"
 
 #: commit-graph.c:1236
 #, c-format
@@ -2618,7 +2618,7 @@ msgstr "<宽度>[,<文件名宽度>[,<次数>]]"
 
 #: diff.c:5322
 msgid "generate diffstat"
-msgstr "生成 diffstat"
+msgstr "生成差异统计（diffstat）"
 
 #: diff.c:5324 diff.c:5327 diff.c:5330
 msgid "<width>"
@@ -2728,7 +2728,7 @@ msgstr "<n>[/<m>]"
 
 #: diff.c:5386
 msgid "break complete rewrite changes into pairs of delete and create"
-msgstr "打破完全重写变更为成对的删除和创建"
+msgstr "将完全重写的变更打破为成对的删除和创建"
 
 #: diff.c:5390
 msgid "detect renames"
@@ -2818,7 +2818,7 @@ msgstr "<文本>"
 
 #: diff.c:5446
 msgid "generate diff using the \"anchored diff\" algorithm"
-msgstr "使用“锚定差异算法生成差异"
+msgstr "使用 \"anchored diff\" 算法生成差异"
 
 #: diff.c:5448 diff.c:5457 diff.c:5460
 msgid "<mode>"
@@ -2934,7 +2934,7 @@ msgstr "控制输出中的文件显示顺序"
 
 #: diff.c:5510
 msgid "<object-id>"
-msgstr "<对象ID>"
+msgstr "<对象 ID>"
 
 #: diff.c:5511
 msgid ""
@@ -3929,7 +3929,7 @@ msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
 "moving it to %s."
 msgstr ""
-"路径更新：%s 添加到 %s，位于一个被重命名到 %s 的目录中，将其移动到 %s。"
+"路径已更新：%s 添加到 %s，位于一个被重命名到 %s 的目录中，将其移动到 %s。"
 
 #: merge-recursive.c:3173
 #, c-format
@@ -3946,8 +3946,8 @@ msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
 "%s; moving it to %s."
 msgstr ""
-"路径更新：%1$s 重命名为 %3$s 中的 %2$s，而该目录被重命名到 %4$s 中，将其移动"
-"到 %5$s。"
+"路径已更新：%1$s 重命名为 %3$s 中的 %2$s，而该目录被重命名到 %4$s 中，将其移"
+"动到 %5$s。"
 
 #: merge-recursive.c:3180
 #, c-format
@@ -3955,7 +3955,7 @@ msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
 "was renamed in %s, suggesting it should perhaps be moved to %s."
 msgstr ""
-"冲突（文件未知）：%1$s 重命名为 %3$s 中的 %2$s，而该目录被重命名到 %4$s 中，"
+"冲突（文件位置）：%1$s 重命名为 %3$s 中的 %2$s，而该目录被重命名到 %4$s 中，"
 "建议将其移动到 %5$s。"
 
 #: merge-recursive.c:3294
@@ -4062,11 +4062,11 @@ msgstr "多包索引缺少必需的包名块"
 
 #: midx.c:145
 msgid "multi-pack-index missing required OID fanout chunk"
-msgstr "多包索引缺少必需的 OID 扇出块"
+msgstr "多包索引缺少必需的对象 ID 扇出块"
 
 #: midx.c:147
 msgid "multi-pack-index missing required OID lookup chunk"
-msgstr "多包索引缺少必需的 OID 查询块"
+msgstr "多包索引缺少必需的对象 ID 查询块"
 
 #: midx.c:149
 msgid "multi-pack-index missing required object offsets chunk"
@@ -4118,16 +4118,16 @@ msgstr "正在查找引用的包文件"
 #, c-format
 msgid ""
 "oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
-msgstr "对象ID扇出无序：fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
+msgstr "对象 ID 扇出无序：fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
 
 #: midx.c:1067
 msgid "Verifying OID order in MIDX"
-msgstr "正在校验 MIDX 中的 OID 顺序"
+msgstr "正在校验 MIDX 中的对象 ID 顺序"
 
 #: midx.c:1076
 #, c-format
 msgid "oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"
-msgstr "对象ID查询无序：oid[%d] = %s >= %s = oid[%d]"
+msgstr "对象 ID 查询无序：oid[%d] = %s >= %s = oid[%d]"
 
 #: midx.c:1095
 msgid "Sorting objects by packfile"
@@ -4298,7 +4298,7 @@ msgstr "未知开关 `%c'"
 #: parse-options.c:863
 #, c-format
 msgid "unknown non-ascii option in string: `%s'"
-msgstr "字符串中未知的非ascii字符选项：`%s'"
+msgstr "字符串中未知的非 ascii 字符选项：`%s'"
 
 #: parse-options.c:887
 msgid "..."
@@ -4551,7 +4551,7 @@ msgstr "无法对 %s 执行 stat"
 #: read-cache.c:1314
 #, c-format
 msgid "'%s' appears as both a file and as a directory"
-msgstr "'%s' 既显示为文件又显示为目录"
+msgstr "'%s' 看起来既是文件又是目录"
 
 #: read-cache.c:1499
 msgid "Refresh index"
@@ -4587,7 +4587,7 @@ msgstr "坏的索引版本 %d"
 
 #: read-cache.c:1691
 msgid "bad index file sha1 signature"
-msgstr "坏的索引文件哈希值签名"
+msgstr "坏的索引文件 sha1 签名"
 
 #: read-cache.c:1721
 #, c-format
@@ -5230,7 +5230,7 @@ msgstr "选项 `%s' 必须指向一个提交"
 #: remote.c:363
 #, c-format
 msgid "config remote shorthand cannot begin with '/': %s"
-msgstr "配置的远程名称不能以 '/' 开始：%s"
+msgstr "配置的远程短名称不能以 '/' 开始：%s"
 
 #: remote.c:410
 msgid "more than one receivepack given, using the first"
@@ -6364,7 +6364,7 @@ msgstr "不能检出 %s"
 #: sequencer.c:3652
 #, c-format
 msgid "%s: not a valid OID"
-msgstr "%s：不是一个有效的对象ID"
+msgstr "%s：不是一个有效的对象 ID"
 
 #: sequencer.c:3657 git-rebase--preserve-merges.sh:724
 msgid "could not detach HEAD"
@@ -8061,17 +8061,17 @@ msgstr "您在执行反转提交 %s 的操作。"
 #  译者：注意保持前导空格
 #: wt-status.c:1431
 msgid "  (fix conflicts and run \"git revert --continue\")"
-msgstr "  （解决冲突并运行 \"git revert --continue\"）"
+msgstr "  （解决冲突并执行 \"git revert --continue\"）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1434
 msgid "  (run \"git revert --continue\" to continue)"
-msgstr "  （运行 \"git revert --continue\" 以继续）"
+msgstr "  （执行 \"git revert --continue\" 以继续）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1437
 msgid "  (all conflicts fixed: run \"git revert --continue\")"
-msgstr "  （所有冲突已解决：运行 \"git revert --continue\"）"
+msgstr "  （所有冲突已解决：执行 \"git revert --continue\"）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1439
@@ -8924,7 +8924,7 @@ msgstr "坏的 bisect_write 参数：%s"
 #: builtin/bisect--helper.c:220
 #, c-format
 msgid "couldn't get the oid of the rev '%s'"
-msgstr "无法获取版本 '%s' 的对象ID"
+msgstr "无法获取版本 '%s' 的对象 ID"
 
 #: builtin/bisect--helper.c:232
 #, c-format
@@ -8959,7 +8959,7 @@ msgstr ""
 #: builtin/bisect--helper.c:321
 #, c-format
 msgid "bisecting only with a %s commit"
-msgstr "二分查找只有一个 %s 提交"
+msgstr "在只有一个 %s 提交的情况下二分查找"
 
 #  译者：注意保持句尾空格
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -9055,7 +9055,7 @@ msgstr "打印二分查找术语"
 
 #: builtin/bisect--helper.c:645
 msgid "start the bisect session"
-msgstr "启动二分查找会话"
+msgstr "启动二分查找过程"
 
 #: builtin/bisect--helper.c:647
 msgid "update BISECT_HEAD instead of checking out the current commit"
@@ -10865,7 +10865,7 @@ msgstr "父提交"
 
 #: builtin/commit-tree.c:112
 msgid "id of a parent commit object"
-msgstr "父提交对象ID"
+msgstr "父提交对象 ID"
 
 #: builtin/commit-tree.c:114 builtin/commit.c:1480 builtin/merge.c:268
 #: builtin/notes.c:409 builtin/notes.c:575 builtin/stash.c:1473
@@ -12138,11 +12138,11 @@ msgstr "匿名输出"
 
 #: builtin/fast-export.c:1106
 msgid "Reference parents which are not in fast-export stream by object id"
-msgstr "引用父对象ID不在 fast-export 流中"
+msgstr "引用父对象 ID 不在 fast-export 流中"
 
 #: builtin/fast-export.c:1108
 msgid "Show original object ids of blobs/commits"
-msgstr "显示数据对象/提交的原始对象ID"
+msgstr "显示数据对象/提交的原始对象 ID"
 
 #: builtin/fetch.c:28
 msgid "git fetch [<options>] [<repository> [<refspec>...]]"
@@ -12565,7 +12565,7 @@ msgstr "缺失 %s %s"
 #: builtin/fsck.c:321
 #, c-format
 msgid "unreachable %s %s"
-msgstr "不可访问 %s %s"
+msgstr "不可达 %s %s"
 
 #: builtin/fsck.c:340
 #, c-format
@@ -14525,14 +14525,14 @@ msgstr ""
 
 #: builtin/merge.c:813
 msgid "An empty message aborts the commit.\n"
-msgstr "一个空的说明终止提交。\n"
+msgstr "空的提交说明会终止提交。\n"
 
 #: builtin/merge.c:816
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
 "the commit.\n"
-msgstr "以 '%c' 开始的行将被忽略，而一个空的提交说明将终止提交。\n"
+msgstr "以 '%c' 开始的行将被忽略，而空的提交说明将终止提交。\n"
 
 #: builtin/merge.c:857
 msgid "Empty commit message."
@@ -16452,7 +16452,7 @@ msgstr "签名提交"
 
 #: builtin/rebase.c:459 builtin/rebase.c:1397
 msgid "display a diffstat of what changed upstream"
-msgstr "显示上游变化的 diffstat"
+msgstr "显示上游变化的差异统计"
 
 #: builtin/rebase.c:461
 msgid "continue rebase"
@@ -16683,7 +16683,7 @@ msgstr "安静。暗示 --no-stat"
 
 #: builtin/rebase.c:1400
 msgid "do not show diffstat of what changed upstream"
-msgstr "不显示上游变化的 diffstat"
+msgstr "不显示上游变化的差异统计"
 
 #: builtin/rebase.c:1403
 msgid "add a Signed-off-by: line to each commit"
@@ -16867,25 +16867,25 @@ msgstr "--strategy 需要 --merge 或 --interactive"
 
 #: builtin/rebase.c:1796
 msgid "cannot combine am options with either interactive or merge options"
-msgstr "不能将 am 选项与交互或合并选项组合一起"
+msgstr "不能将 am 选项与交互或合并选项同时使用"
 
 #: builtin/rebase.c:1815
 msgid "cannot combine '--preserve-merges' with '--rebase-merges'"
-msgstr "不能将 '--preserve-merges' 和 '--rebase-merges' 组合一起"
+msgstr "不能将 '--preserve-merges' 和 '--rebase-merges' 同时使用"
 
 #: builtin/rebase.c:1819
 msgid ""
 "error: cannot combine '--preserve-merges' with '--reschedule-failed-exec'"
 msgstr ""
-"错误：不能将 '--preserve-merges' 和 '--reschedule-failed-exec' 组合一起"
+"错误：不能将 '--preserve-merges' 和 '--reschedule-failed-exec' 同时使用"
 
 #: builtin/rebase.c:1825
 msgid "cannot combine '--rebase-merges' with '--strategy-option'"
-msgstr "不能将 '--rebase-merges' 和 '--strategy-option' 组合一起"
+msgstr "不能将 '--rebase-merges' 和 '--strategy-option' 同时使用"
 
 #: builtin/rebase.c:1828
 msgid "cannot combine '--rebase-merges' with '--strategy'"
-msgstr "不能将 '--rebase-merges' 和 '--strategy' 组合一起"
+msgstr "不能将 '--rebase-merges' 和 '--strategy' 同时使用"
 
 #: builtin/rebase.c:1852
 #, c-format
@@ -17645,15 +17645,15 @@ msgstr ""
 
 #: builtin/repack.c:200
 msgid "could not start pack-objects to repack promisor objects"
-msgstr "无法运行 pack-objects 来重新打包 promisor 对象"
+msgstr "无法开始 pack-objects 来重新打包 promisor 对象"
 
 #: builtin/repack.c:239 builtin/repack.c:414
 msgid "repack: Expecting full hex object ID lines only from pack-objects."
-msgstr "repack：期望来自 pack-objects 的完整十六进制对象ID。"
+msgstr "repack：期望来自 pack-objects 的完整十六进制对象 ID。"
 
 #: builtin/repack.c:256
 msgid "could not finish pack-objects to repack promisor objects"
-msgstr "无法结束 pack-objects 来重新打包 promisor 对象"
+msgstr "无法完成 pack-objects 来重新打包 promisor 对象"
 
 #: builtin/repack.c:294
 msgid "pack everything in a single pack"
@@ -20241,7 +20241,7 @@ msgstr "未知选项：%s\n"
 #: git.c:359
 #, c-format
 msgid "while expanding alias '%s': '%s'"
-msgstr "在扩展别名'%s' 时：'%s'"
+msgstr "在扩展别名 '%s' 时：'%s'"
 
 #: git.c:368
 #, c-format
@@ -20260,7 +20260,7 @@ msgstr "%s 的空别名"
 #: git.c:379
 #, c-format
 msgid "recursive alias: %s"
-msgstr "别名递归：%s"
+msgstr "递归的别名：%s"
 
 #: git.c:459
 msgid "write failure on standard output"
@@ -20353,7 +20353,7 @@ msgstr ""
 #: remote-curl.c:157
 #, c-format
 msgid "invalid quoting in push-option value: '%s'"
-msgstr "在 push-option 取值中无效的引用：'%s'"
+msgstr "在 push-option 取值中无效的引号：'%s'"
 
 #: remote-curl.c:254
 #, c-format
@@ -20391,7 +20391,7 @@ msgstr "重定向到 %s"
 
 #: remote-curl.c:584
 msgid "shouldn't have EOF when not gentle on EOF"
-msgstr "当没有设置温和处理 EOF 时，不应该有 EOF"
+msgstr "当没有设置温和处理文件结束符（EOF）时，不应该有文件结束符"
 
 #: remote-curl.c:664
 msgid "unable to rewind rpc post data - try increasing http.postBuffer"
@@ -20709,7 +20709,7 @@ msgstr "清除不必要的文件和优化本地仓库"
 
 #: command-list.h:101
 msgid "Extract commit ID from an archive created using git-archive"
-msgstr "从 git-archive 创建的归档文件中提取提交ID"
+msgstr "从 git-archive 创建的归档文件中提取提交 ID"
 
 #: command-list.h:102
 msgid "Print lines matching a pattern"
@@ -20721,7 +20721,7 @@ msgstr "一个便携的 Git 图形客户端"
 
 #: command-list.h:104
 msgid "Compute object ID and optionally creates a blob from a file"
-msgstr "从一个文件计算对象ID，并可以创建 blob 数据对象"
+msgstr "从一个文件计算对象 ID，并可以创建 blob 数据对象"
 
 #: command-list.h:105
 msgid "Display help information about Git"
@@ -20862,7 +20862,7 @@ msgstr "帮助解析远程仓库访问参数的例程"
 
 #: command-list.h:139
 msgid "Compute unique ID for a patch"
-msgstr "计算一个补丁的唯一ID"
+msgstr "计算一个补丁的唯一 ID"
 
 #: command-list.h:140
 msgid "Prune all unreachable objects from the object database"
@@ -21366,7 +21366,7 @@ msgstr "'$sm_path' 已经存在于索引中且不是一个子模组"
 #: git-submodule.sh:239
 #, sh-format
 msgid "'$sm_path' does not have a commit checked out"
-msgstr "'$sm_path' 没有检出一个提交"
+msgstr "'$sm_path' 没有检出的提交"
 
 #: git-submodule.sh:245
 #, sh-format
@@ -22526,7 +22526,7 @@ msgid ""
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
 "以 \"GIT:\" 开头的行将被删除。\n"
-"考虑包含一个整体的 diffstat 或者您正在写的补丁的目录。\n"
+"考虑包含一个整体的差异统计或者您正在写的补丁的目录。\n"
 "\n"
 "如果您不想发送摘要，清除内容。\n"
 
