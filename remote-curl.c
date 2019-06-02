@@ -1117,13 +1117,13 @@ static void parse_fetch(struct strbuf *buf)
 			const char *q;
 
 			if (parse_oid_hex(p, &old_oid, &q))
-				die(_("protocol error: expected sha/ref, got %s'"), p);
+				die(_("protocol error: expected sha/ref, got '%s'"), p);
 			if (*q == ' ')
 				name = q + 1;
 			else if (!*q)
 				name = "";
 			else
-				die(_("protocol error: expected sha/ref, got %s'"), p);
+				die(_("protocol error: expected sha/ref, got '%s'"), p);
 
 			ref = alloc_ref(name);
 			oidcpy(&ref->old_oid, &old_oid);

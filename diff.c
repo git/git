@@ -5354,7 +5354,7 @@ static void prep_parse_options(struct diff_options *options)
 			     N_("show the given source prefix instead of \"a/\""),
 			     PARSE_OPT_NONEG),
 		OPT_STRING_F(0, "dst-prefix", &options->b_prefix, N_("<prefix>"),
-			     N_("show the given source prefix instead of \"b/\""),
+			     N_("show the given destination prefix instead of \"b/\""),
 			     PARSE_OPT_NONEG),
 		OPT_CALLBACK_F(0, "line-prefix", options, N_("<prefix>"),
 			       N_("prepend an additional prefix to every line of output"),
