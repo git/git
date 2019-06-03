@@ -4,6 +4,13 @@ Git 2.22 Release Notes
 Updates since v2.21
 -------------------
 
+Backward compatibility note
+
+ * The filter specification "--filter=sparse:path=<path>" used to
+   create a lazy/partial clone has been removed.  Using a blob that is
+   part of the project as sparse specification is still supported with
+   the "--filter=sparse:oid=<blob>" option.
+
 UI, Workflows & Features
 
  * "git checkout --no-overlay" can be used to trigger a new mode of
