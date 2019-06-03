@@ -426,7 +426,7 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r, const 
 	return graph_chain;
 }
 
-static struct commit_graph *read_commit_graph_one(struct repository *r, const char *obj_dir)
+struct commit_graph *read_commit_graph_one(struct repository *r, const char *obj_dir)
 {
 	struct commit_graph *g = load_commit_graph_v1(r, obj_dir);
 
@@ -1885,7 +1885,7 @@ static void graph_report(const char *fmt, ...)
 #define GENERATION_ZERO_EXISTS 1
 #define GENERATION_NUMBER_EXISTS 2
 
-int verify_commit_graph(struct repository *r, struct commit_graph *g)
+int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 {
 	uint32_t i, cur_fanout_pos = 0;
 	struct object_id prev_oid, cur_oid, checksum;
@@ -1893,6 +1893,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 	struct hashfile *f;
 	int devnull;
 	struct progress *progress = NULL;
+	int local_error = 0;
 
 	if (!g) {
 		graph_report("no commit-graph file loaded");
@@ -1987,6 +1988,9 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 				break;
 			}
 
+			/* parse parent in case it is in a base graph */
+			parse_commit_in_graph_one(r, g, graph_parents->item);
+
 			if (!oideq(&graph_parents->item->object.oid, &odb_parents->item->object.oid))
 				graph_report(_("commit-graph parent for %s is %s != %s"),
 					     oid_to_hex(&cur_oid),
@@ -2038,7 +2042,12 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 	}
 	stop_progress(&progress);
 
-	return verify_commit_graph_error;
+	local_error = verify_commit_graph_error;
+
+	if (!(flags & COMMIT_GRAPH_VERIFY_SHALLOW) && g->base_graph)
+		local_error |= verify_commit_graph(r, g->base_graph, flags);
+
+	return local_error;
 }
 
 void free_commit_graph(struct commit_graph *g)
