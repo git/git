@@ -1685,6 +1685,12 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 
 	if (ctx->split_opts && ctx->split_opts->expire_time)
 		expire_time -= ctx->split_opts->expire_time;
+	if (!ctx->split) {
+		char *chain_file_name = get_chain_filename(ctx->obj_dir);
+		unlink(chain_file_name);
+		free(chain_file_name);
+		ctx->num_commit_graphs_after = 0;
+	}
 
 	strbuf_addstr(&path, ctx->obj_dir);
 	strbuf_addstr(&path, "/info/commit-graphs");
@@ -1839,10 +1845,10 @@ int write_commit_graph(const char *obj_dir,
 
 	res = write_commit_graph_file(ctx);
 
-	if (ctx->split) {
+	if (ctx->split)
 		mark_commit_graphs(ctx);
-		expire_commit_graphs(ctx);
-	}
+
+	expire_commit_graphs(ctx);
 
 cleanup:
 	free(ctx->graph_name);
