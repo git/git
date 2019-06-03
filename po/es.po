@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-05-14 17:09+0800\n"
-"PO-Revision-Date: 2019-05-28 11:32-0500\n"
+"POT-Creation-Date: 2019-05-31 14:35+0800\n"
+"PO-Revision-Date: 2019-06-03 09:33-0500\n"
 "Last-Translator: christopher.diaz.riv@gmail.com\n"
 "Language-Team: CodeLabora <codelabora@gmail.com>\n"
 "Language: es\n"
@@ -622,7 +622,7 @@ msgid "Unable to write new index file"
 msgstr "No es posible escribir el archivo índice"
 
 #: apply.c:4963 apply.c:4966 builtin/am.c:2210 builtin/am.c:2213
-#: builtin/clone.c:123 builtin/fetch.c:118 builtin/merge.c:271
+#: builtin/clone.c:120 builtin/fetch.c:118 builtin/merge.c:271
 #: builtin/pull.c:207 builtin/submodule--helper.c:407
 #: builtin/submodule--helper.c:1366 builtin/submodule--helper.c:1369
 #: builtin/submodule--helper.c:1849 builtin/submodule--helper.c:1852
@@ -823,7 +823,7 @@ msgstr "anteponer prefijo a cada ruta en el archivo"
 #: builtin/commit-tree.c:117 builtin/config.c:129 builtin/fast-export.c:1091
 #: builtin/fast-export.c:1093 builtin/grep.c:895 builtin/hash-object.c:105
 #: builtin/ls-files.c:560 builtin/ls-files.c:563 builtin/notes.c:412
-#: builtin/notes.c:578 builtin/read-tree.c:123 parse-options.h:176
+#: builtin/notes.c:578 builtin/read-tree.c:123 parse-options.h:177
 msgid "file"
 msgstr "carpeta"
 
@@ -855,7 +855,7 @@ msgstr "comprimir mejor"
 msgid "list supported archive formats"
 msgstr "listar los formatos de carpeta soportados"
 
-#: archive.c:477 builtin/archive.c:91 builtin/clone.c:113 builtin/clone.c:116
+#: archive.c:477 builtin/archive.c:91 builtin/clone.c:110 builtin/clone.c:113
 #: builtin/submodule--helper.c:1378 builtin/submodule--helper.c:1858
 msgid "repo"
 msgstr "repo"
@@ -864,7 +864,7 @@ msgstr "repo"
 msgid "retrieve the archive from remote repository <repo>"
 msgstr "obtener la carpeta del repositorio remoto <repo>"
 
-#: archive.c:479 builtin/archive.c:93 builtin/difftool.c:713
+#: archive.c:479 builtin/archive.c:93 builtin/difftool.c:707
 #: builtin/notes.c:498
 msgid "command"
 msgstr "comando"
@@ -1447,161 +1447,161 @@ msgstr "offset del chunk de commit-graph inapropiado %08x%08x"
 msgid "commit-graph chunk id %08x appears multiple times"
 msgstr "id de chunk de commit-graph %08x parece tener múltiples tiempos"
 
-#: commit-graph.c:388
+#: commit-graph.c:390
 #, c-format
 msgid "could not find commit %s"
 msgstr "no se pudo encontrar commit %s"
 
-#: commit-graph.c:730 builtin/pack-objects.c:2649
+#: commit-graph.c:732 builtin/pack-objects.c:2649
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "incapaz de obtener el tipo de objeto: %s"
 
-#: commit-graph.c:763
+#: commit-graph.c:765
 msgid "Loading known commits in commit graph"
 msgstr "Cargando commits conocidos en commit graph"
 
-#: commit-graph.c:779
+#: commit-graph.c:781
 msgid "Expanding reachable commits in commit graph"
 msgstr "Expandiendo commits alcanzables en commit graph"
 
-#: commit-graph.c:791
+#: commit-graph.c:793
 msgid "Clearing commit marks in commit graph"
 msgstr "Limpiando marcas de commits en commit graph"
 
-#: commit-graph.c:811
+#: commit-graph.c:813
 msgid "Computing commit graph generation numbers"
 msgstr "Calculando números de generación de commit graph"
 
-#: commit-graph.c:928
+#: commit-graph.c:930
 #, c-format
 msgid "Finding commits for commit graph in %d pack"
 msgid_plural "Finding commits for commit graph in %d packs"
 msgstr[0] "Encontrando commits para commit graph en %d pack"
 msgstr[1] "Encontrando commits para commit graph en %d packs"
 
-#: commit-graph.c:941
+#: commit-graph.c:943
 #, c-format
 msgid "error adding pack %s"
 msgstr "error agregando pack %s"
 
-#: commit-graph.c:943
+#: commit-graph.c:945
 #, c-format
 msgid "error opening index for %s"
 msgstr "error abriendo index para %s"
 
-#: commit-graph.c:957
+#: commit-graph.c:959
 #, c-format
 msgid "Finding commits for commit graph from %d ref"
 msgid_plural "Finding commits for commit graph from %d refs"
 msgstr[0] "Encontrando commits para commit graph de %d ref"
 msgstr[1] "Encontrando commits para commit graph de %d refs"
 
-#: commit-graph.c:989
+#: commit-graph.c:991
 msgid "Finding commits for commit graph among packed objects"
 msgstr "Encontrando commits para commit graph entre los objetos empaquetados"
 
-#: commit-graph.c:1002
+#: commit-graph.c:1004
 msgid "Counting distinct commits in commit graph"
 msgstr "Contando commits distintos en commit graph"
 
-#: commit-graph.c:1015
+#: commit-graph.c:1017
 #, c-format
 msgid "the commit graph format cannot write %d commits"
 msgstr "el formato de gráficos de commit no pudede escribir %d commits"
 
-#: commit-graph.c:1024
+#: commit-graph.c:1026
 msgid "Finding extra edges in commit graph"
 msgstr "Encontrando esquinas extra en commit graph"
 
-#: commit-graph.c:1048
+#: commit-graph.c:1050
 msgid "too many commits to write graph"
 msgstr "demasiados commits para escribir el gráfico"
 
-#: commit-graph.c:1055 midx.c:805
+#: commit-graph.c:1057 midx.c:819
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "no se pudo crear directorios principales para %s"
 
-#: commit-graph.c:1095
+#: commit-graph.c:1097
 #, c-format
 msgid "Writing out commit graph in %d pass"
 msgid_plural "Writing out commit graph in %d passes"
 msgstr[0] "Escribiendo commit graph en %d paso"
 msgstr[1] "Escribiendo commit graph en %d pasos"
 
-#: commit-graph.c:1160
+#: commit-graph.c:1162
 msgid "the commit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 "el archivo de commit-graph tiene checksums incorrectos y probablemente está "
 "corrupto"
 
-#: commit-graph.c:1170
+#: commit-graph.c:1172
 #, c-format
 msgid "commit-graph has incorrect OID order: %s then %s"
 msgstr "commit-graph tiene un orden de OID incorrecto: %s luego %s"
 
-#: commit-graph.c:1180 commit-graph.c:1195
+#: commit-graph.c:1182 commit-graph.c:1197
 #, c-format
 msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr "commit-graph tiene un valor fanout incorrecto: fanout[%d] = %u != %u"
 
-#: commit-graph.c:1187
+#: commit-graph.c:1189
 #, c-format
 msgid "failed to parse commit %s from commit-graph"
 msgstr "falló al analizar commit %s para commit-graph"
 
-#: commit-graph.c:1204
+#: commit-graph.c:1206
 msgid "Verifying commits in commit graph"
 msgstr "Verificando commits en commit graph"
 
-#: commit-graph.c:1217
+#: commit-graph.c:1219
 #, c-format
 msgid "failed to parse commit %s from object database for commit-graph"
 msgstr ""
 "falló al analizar el commit %s de la base de datos de objetos para commit-"
 "graph"
 
-#: commit-graph.c:1224
+#: commit-graph.c:1226
 #, c-format
 msgid "root tree OID for commit %s in commit-graph is %s != %s"
 msgstr "árbol raíz OID para commit %s en commit-graph es %s != %s"
 
-#: commit-graph.c:1234
+#: commit-graph.c:1236
 #, c-format
 msgid "commit-graph parent list for commit %s is too long"
 msgstr "lista padre de commit-graph para commit %s es muy larga"
 
-#: commit-graph.c:1240
+#: commit-graph.c:1242
 #, c-format
 msgid "commit-graph parent for %s is %s != %s"
 msgstr "padre de commit-graph para %s es %s != %s"
 
-#: commit-graph.c:1253
+#: commit-graph.c:1255
 #, c-format
 msgid "commit-graph parent list for commit %s terminates early"
 msgstr "lista padre de commit-graph para commit %s termina antes"
 
-#: commit-graph.c:1258
+#: commit-graph.c:1260
 #, c-format
 msgid ""
 "commit-graph has generation number zero for commit %s, but non-zero elsewhere"
 msgstr ""
 "commit-graph ha generado número cero para %s, pero no-cero para los demás"
 
-#: commit-graph.c:1262
+#: commit-graph.c:1264
 #, c-format
 msgid ""
 "commit-graph has non-zero generation number for commit %s, but zero elsewhere"
 msgstr ""
 "commit-graph tiene generación no-cero para %s, pero cero para los demás"
 
-#: commit-graph.c:1277
+#: commit-graph.c:1279
 #, c-format
 msgid "commit-graph generation for commit %s is %u != %u"
 msgstr "generación commit-graph para commit %s es %u != %u"
 
-#: commit-graph.c:1283
+#: commit-graph.c:1285
 #, c-format
 msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
@@ -2413,8 +2413,8 @@ msgstr "--follow requiere exactamente un pathspec"
 msgid "invalid --stat value: %s"
 msgstr "valor --stat inválido: %s"
 
-#: diff.c:4689 diff.c:4694 diff.c:4699 diff.c:4704 diff.c:5216
-#: parse-options.c:200
+#: diff.c:4689 diff.c:4694 diff.c:4699 diff.c:4704 diff.c:5217
+#: parse-options.c:199 parse-options.c:203
 #, c-format
 msgid "%s expects a numerical value"
 msgstr "%s espera un valor numérico"
@@ -2481,144 +2481,144 @@ msgstr "argumento inválido para %s"
 msgid "failed to parse --submodule option parameter: '%s'"
 msgstr "falló al analizar parámetro de opción --submodule: '%s'"
 
-#: diff.c:5240
+#: diff.c:5242
 #, c-format
 msgid "bad --word-diff argument: %s"
 msgstr "mal argumento --word-diff: %s"
 
-#: diff.c:5263
+#: diff.c:5265
 msgid "Diff output format options"
 msgstr "Opciones de formato de salida para diff"
 
-#: diff.c:5265 diff.c:5271
+#: diff.c:5267 diff.c:5273
 msgid "generate patch"
 msgstr "generar parche"
 
-#: diff.c:5268 builtin/log.c:167
+#: diff.c:5270 builtin/log.c:167
 msgid "suppress diff output"
 msgstr "suprimir salida de diff"
 
-#: diff.c:5273 diff.c:5387 diff.c:5394
+#: diff.c:5275 diff.c:5389 diff.c:5396
 msgid "<n>"
 msgstr "<n>"
 
-#: diff.c:5274 diff.c:5277
+#: diff.c:5276 diff.c:5279
 msgid "generate diffs with <n> lines context"
 msgstr "genera diffs con <n> líneas de contexto"
 
-#: diff.c:5279
+#: diff.c:5281
 msgid "generate the diff in raw format"
 msgstr "genera el diff en formato raw"
 
-#: diff.c:5282
+#: diff.c:5284
 msgid "synonym for '-p --raw'"
 msgstr "sinónimo para '-p --stat'"
 
-#: diff.c:5286
+#: diff.c:5288
 msgid "synonym for '-p --stat'"
 msgstr "sinónimo para '-p --stat'"
 
-#: diff.c:5290
+#: diff.c:5292
 msgid "machine friendly --stat"
 msgstr "--stat amigable para máquina"
 
-#: diff.c:5293
+#: diff.c:5295
 msgid "output only the last line of --stat"
 msgstr "mostrar solo la última línea para --stat"
 
-#: diff.c:5295 diff.c:5303
+#: diff.c:5297 diff.c:5305
 msgid "<param1,param2>..."
 msgstr "<param1,param2>..."
 
-#: diff.c:5296
+#: diff.c:5298
 msgid ""
 "output the distribution of relative amount of changes for each sub-directory"
 msgstr ""
 "muestra la distribución de cantidades de cambios relativa para cada "
 "subdirectorio"
 
-#: diff.c:5300
+#: diff.c:5302
 msgid "synonym for --dirstat=cumulative"
 msgstr "sinónimo para --dirstat=cumulative"
 
-#: diff.c:5304
+#: diff.c:5306
 msgid "synonym for --dirstat=files,param1,param2..."
 msgstr "sinonimo para --dirstat=archivos,param1,param2..."
 
-#: diff.c:5308
+#: diff.c:5310
 msgid "warn if changes introduce conflict markers or whitespace errors"
 msgstr ""
 "advierte si cambios introducen conflictos de markers o errores de espacios "
 "en blanco"
 
-#: diff.c:5311
+#: diff.c:5313
 msgid "condensed summary such as creations, renames and mode changes"
 msgstr ""
 "resumen condensado de creaciones, cambios de nombres y cambios de modos"
 
-#: diff.c:5314
+#: diff.c:5316
 msgid "show only names of changed files"
 msgstr "mostrar solo nombres de archivos cambiados"
 
-#: diff.c:5317
+#: diff.c:5319
 msgid "show only names and status of changed files"
 msgstr "mostrar solo nombres y estados de archivos cambiados"
 
-#: diff.c:5319
+#: diff.c:5321
 msgid "<width>[,<name-width>[,<count>]]"
 msgstr "<ancho>[,<nombre-ancho>[,<cantidad>]]"
 
-#: diff.c:5320
+#: diff.c:5322
 msgid "generate diffstat"
 msgstr "generar diffstat"
 
-#: diff.c:5322 diff.c:5325 diff.c:5328
+#: diff.c:5324 diff.c:5327 diff.c:5330
 msgid "<width>"
 msgstr "<ancho>"
 
-#: diff.c:5323
+#: diff.c:5325
 msgid "generate diffstat with a given width"
 msgstr "genera diffstat con un ancho dado"
 
-#: diff.c:5326
+#: diff.c:5328
 msgid "generate diffstat with a given name width"
 msgstr "genera diffstat con un nombre de ancho dado"
 
-#: diff.c:5329
+#: diff.c:5331
 msgid "generate diffstat with a given graph width"
 msgstr "genera diffstat con un ancho de graph dado"
 
-#: diff.c:5331
+#: diff.c:5333
 msgid "<count>"
 msgstr "<cantidad>"
 
-#: diff.c:5332
+#: diff.c:5334
 msgid "generate diffstat with limited lines"
 msgstr "genera diffstat con líneas limitadas"
 
-#: diff.c:5335
+#: diff.c:5337
 msgid "generate compact summary in diffstat"
 msgstr "genera un resumen compacto de diffstat"
 
-#: diff.c:5338
+#: diff.c:5340
 msgid "output a binary diff that can be applied"
 msgstr "muestra un diff binario que puede ser aplicado"
 
-#: diff.c:5341
+#: diff.c:5343
 msgid "show full pre- and post-image object names on the \"index\" lines"
 msgstr ""
 "mostrar todo un pre- y post-image de nombres de objetos en las líneas \"index"
 "\""
 
-#: diff.c:5343
+#: diff.c:5345
 msgid "show colored diff"
 msgstr "mostrar diff colorido"
 
-#: diff.c:5344
+#: diff.c:5346
 msgid "<kind>"
 msgstr "<tipo>"
 
-#: diff.c:5345
+#: diff.c:5347
 msgid ""
 "highlight whitespace errors in the 'context', 'old' or 'new' lines in the "
 "diff"
@@ -2626,7 +2626,7 @@ msgstr ""
 "resaltar errores de espacios en blanco en las líneas 'context', 'old' o "
 "'new' del diff"
 
-#: diff.c:5348
+#: diff.c:5350
 msgid ""
 "do not munge pathnames and use NULs as output field terminators in --raw or "
 "--numstat"
@@ -2634,89 +2634,89 @@ msgstr ""
 "no consolidar los pathnames y usar NULs como terminadores de campos en --raw "
 "o --numstat"
 
-#: diff.c:5351 diff.c:5354 diff.c:5357 diff.c:5463
+#: diff.c:5353 diff.c:5356 diff.c:5359 diff.c:5465
 msgid "<prefix>"
 msgstr "<prefijo>"
 
-#: diff.c:5352
+#: diff.c:5354
 msgid "show the given source prefix instead of \"a/\""
 msgstr "mostrar el prefijo de fuente dado en lugar de \"a/\""
 
-#: diff.c:5355
+#: diff.c:5357
 msgid "show the given source prefix instead of \"b/\""
 msgstr "mostrar el prefijo de fuente dado en lugar de \"b/\""
 
-#: diff.c:5358
+#: diff.c:5360
 msgid "prepend an additional prefix to every line of output"
 msgstr "anteponer un prefijo adicional a cada línea mostrada"
 
-#: diff.c:5361
+#: diff.c:5363
 msgid "do not show any source or destination prefix"
 msgstr "no mostrar ningún prefijo de fuente o destino"
 
-#: diff.c:5364
+#: diff.c:5366
 msgid "show context between diff hunks up to the specified number of lines"
 msgstr ""
 "muestra el contexto entre hunks de diff hasta el número especificado de "
 "líneas"
 
-#: diff.c:5368 diff.c:5373 diff.c:5378
+#: diff.c:5370 diff.c:5375 diff.c:5380
 msgid "<char>"
 msgstr "<char>"
 
-#: diff.c:5369
+#: diff.c:5371
 msgid "specify the character to indicate a new line instead of '+'"
 msgstr "especifica el char para indicar una nueva línea en lugar de '+'"
 
-#: diff.c:5374
+#: diff.c:5376
 msgid "specify the character to indicate an old line instead of '-'"
 msgstr "especifica el char para indicar una línea vieja en lugar de '-'"
 
-#: diff.c:5379
+#: diff.c:5381
 msgid "specify the character to indicate a context instead of ' '"
 msgstr "especifica el char para indicar un contexto en lugar de ' '"
 
-#: diff.c:5382
+#: diff.c:5384
 msgid "Diff rename options"
 msgstr "Opciones de diff rename"
 
-#: diff.c:5383
+#: diff.c:5385
 msgid "<n>[/<m>]"
 msgstr "<n>[/<m>]"
 
-#: diff.c:5384
+#: diff.c:5386
 msgid "break complete rewrite changes into pairs of delete and create"
 msgstr "descomponer los cambios de reescritura en pares de borrar y crear"
 
-#: diff.c:5388
+#: diff.c:5390
 msgid "detect renames"
 msgstr "detectar renombrados"
 
-#: diff.c:5392
+#: diff.c:5394
 msgid "omit the preimage for deletes"
 msgstr "omite la preimage para borrados"
 
-#: diff.c:5395
+#: diff.c:5397
 msgid "detect copies"
 msgstr "detectar copias"
 
-#: diff.c:5399
+#: diff.c:5401
 msgid "use unmodified files as source to find copies"
 msgstr "usa archivos no modificados como fuente para encontrar copias"
 
-#: diff.c:5401
+#: diff.c:5403
 msgid "disable rename detection"
 msgstr "deshabilita detección de renombres"
 
-#: diff.c:5404
+#: diff.c:5406
 msgid "use empty blobs as rename source"
 msgstr "usa blobs vacíos como fuente de renombre"
 
-#: diff.c:5406
+#: diff.c:5408
 msgid "continue listing the history of a file beyond renames"
 msgstr "continua listando el historial de un archivo más allá de renombres"
 
-#: diff.c:5409
+#: diff.c:5411
 msgid ""
 "prevent rename/copy detection if the number of rename/copy targets exceeds "
 "given limit"
@@ -2724,155 +2724,155 @@ msgstr ""
 "previene detección de renombre/copias si el número de objetivos para "
 "renombres/copias excede el límite dado"
 
-#: diff.c:5411
+#: diff.c:5413
 msgid "Diff algorithm options"
 msgstr "Opciones de algoritmos de diff"
 
-#: diff.c:5413
+#: diff.c:5415
 msgid "produce the smallest possible diff"
 msgstr "produce el diff más pequeño posible"
 
-#: diff.c:5416
+#: diff.c:5418
 msgid "ignore whitespace when comparing lines"
 msgstr "ignorar espacios en blanco cuando comparando líneas"
 
-#: diff.c:5419
+#: diff.c:5421
 msgid "ignore changes in amount of whitespace"
 msgstr "ignorar cambios en la cantidad de líneas en blanco"
 
-#: diff.c:5422
+#: diff.c:5424
 msgid "ignore changes in whitespace at EOL"
 msgstr "ignorar cambios en espacios en blanco en EOL"
 
-#: diff.c:5425
+#: diff.c:5427
 msgid "ignore carrier-return at the end of line"
 msgstr "ignora carrier-return al final de la línea"
 
-#: diff.c:5428
+#: diff.c:5430
 msgid "ignore changes whose lines are all blank"
 msgstr "ignora cambios cuyas líneas son todas en blanco"
 
-#: diff.c:5431
+#: diff.c:5433
 msgid "heuristic to shift diff hunk boundaries for easy reading"
 msgstr "heurística para cambiar los límites de hunk para una fácil lectura"
 
-#: diff.c:5434
+#: diff.c:5436
 msgid "generate diff using the \"patience diff\" algorithm"
 msgstr "genera un diff usando algoritmo \"patience diff\""
 
-#: diff.c:5438
+#: diff.c:5440
 msgid "generate diff using the \"histogram diff\" algorithm"
 msgstr "genera un diff usando algoritmo \"histogram diff\""
 
-#: diff.c:5440
+#: diff.c:5442
 msgid "<algorithm>"
 msgstr "<algoritmo>"
 
-#: diff.c:5441
+#: diff.c:5443
 msgid "choose a diff algorithm"
 msgstr "escoge un algoritmo para diff"
 
-#: diff.c:5443
+#: diff.c:5445
 msgid "<text>"
 msgstr "<texto>"
 
-#: diff.c:5444
+#: diff.c:5446
 msgid "generate diff using the \"anchored diff\" algorithm"
 msgstr "genera un diff usando algoritmo \"anchored diff\""
 
-#: diff.c:5446 diff.c:5455 diff.c:5458
+#: diff.c:5448 diff.c:5457 diff.c:5460
 msgid "<mode>"
 msgstr "<modo>"
 
-#: diff.c:5447
+#: diff.c:5449
 msgid "show word diff, using <mode> to delimit changed words"
 msgstr ""
 "muestra diff por palabras usando <modo> para delimitar las palabras cambiadas"
 
-#: diff.c:5449 diff.c:5452 diff.c:5497
+#: diff.c:5451 diff.c:5454 diff.c:5499
 msgid "<regex>"
 msgstr "<regex>"
 
-#: diff.c:5450
+#: diff.c:5452
 msgid "use <regex> to decide what a word is"
 msgstr "usa <regex> para decidir que palabra es"
 
-#: diff.c:5453
+#: diff.c:5455
 msgid "equivalent to --word-diff=color --word-diff-regex=<regex>"
 msgstr "equivalente a --word-diff=color --word-diff-regex=<regex>"
 
-#: diff.c:5456
-msgid "move lines of code are colored differently"
-msgstr "líneas movidas de código son coloreadas diferente"
+#: diff.c:5458
+msgid "moved lines of code are colored differently"
+msgstr "líneas movidas de código están coloreadas diferente"
 
-#: diff.c:5459
+#: diff.c:5461
 msgid "how white spaces are ignored in --color-moved"
 msgstr "como espacios en blanco son ignorados en --color-moved"
 
-#: diff.c:5462
-msgid "Diff other options"
+#: diff.c:5464
+msgid "Other diff options"
 msgstr "Otras opciones de diff"
 
-#: diff.c:5464
+#: diff.c:5466
 msgid "when run from subdir, exclude changes outside and show relative paths"
 msgstr ""
 "cuando ejecutado desde un subdir, excluye cambios del exterior y muestra "
 "paths relativos"
 
-#: diff.c:5468
+#: diff.c:5470
 msgid "treat all files as text"
 msgstr "tratar todos los archivos como texto"
 
-#: diff.c:5470
+#: diff.c:5472
 msgid "swap two inputs, reverse the diff"
 msgstr "cambia dos inputs, invierte el diff"
 
-#: diff.c:5472
+#: diff.c:5474
 msgid "exit with 1 if there were differences, 0 otherwise"
 msgstr "termina con 1 si hubieron diferencias, de lo contrario con 0"
 
-#: diff.c:5474
+#: diff.c:5476
 msgid "disable all output of the program"
 msgstr "deshabilita todo el output del programa"
 
-#: diff.c:5476
+#: diff.c:5478
 msgid "allow an external diff helper to be executed"
 msgstr "permite la ejecución de un diff helper externo"
 
-#: diff.c:5478
+#: diff.c:5480
 msgid "run external text conversion filters when comparing binary files"
 msgstr ""
 "ejecuta filtros de conversión de texto externos cuando comparando binarios"
 
-#: diff.c:5480
+#: diff.c:5482
 msgid "<when>"
 msgstr "<cuando>"
 
-#: diff.c:5481
+#: diff.c:5483
 msgid "ignore changes to submodules in the diff generation"
 msgstr "ignorar cambios a submódulos en la generación de diff"
 
-#: diff.c:5484
+#: diff.c:5486
 msgid "<format>"
 msgstr "<formato>"
 
-#: diff.c:5485
+#: diff.c:5487
 msgid "specify how differences in submodules are shown"
 msgstr "especifica como son mostradas las diferencias en submódulos"
 
-#: diff.c:5489
+#: diff.c:5491
 msgid "hide 'git add -N' entries from the index"
 msgstr "ocultar entradas 'git add -N' del index"
 
-#: diff.c:5492
+#: diff.c:5494
 msgid "treat 'git add -N' entries as real in the index"
 msgstr "trata entradas 'git add -N' como reales en el index"
 
-#: diff.c:5494
+#: diff.c:5496
 msgid "<string>"
 msgstr "<string>"
 
-#: diff.c:5495
+#: diff.c:5497
 msgid ""
 "look for differences that change the number of occurrences of the specified "
 "string"
@@ -2880,7 +2880,7 @@ msgstr ""
 "busca por diferencias que cambien el número de ocurrencias para el string "
 "especificado"
 
-#: diff.c:5498
+#: diff.c:5500
 msgid ""
 "look for differences that change the number of occurrences of the specified "
 "regex"
@@ -2888,23 +2888,23 @@ msgstr ""
 "busca por diferencias que cambien el número de ocurrencias para el regex "
 "especificado"
 
-#: diff.c:5501
+#: diff.c:5503
 msgid "show all changes in the changeset with -S or -G"
 msgstr "mostrar todos los cambios en el changeset con -S o -G"
 
-#: diff.c:5504
+#: diff.c:5506
 msgid "treat <string> in -S as extended POSIX regular expression"
 msgstr "tratar <string> en -S como una expresión regular extendida de POSIX"
 
-#: diff.c:5507
+#: diff.c:5509
 msgid "control the order in which files appear in the output"
 msgstr "controlar el orden en el que los archivos aparecen en la salida"
 
-#: diff.c:5508
+#: diff.c:5510
 msgid "<object-id>"
 msgstr "<id-objeto>"
 
-#: diff.c:5509
+#: diff.c:5511
 msgid ""
 "look for differences that change the number of occurrences of the specified "
 "object"
@@ -2912,33 +2912,33 @@ msgstr ""
 "busca por diferencias que cambien el número de ocurrencias para el objeto "
 "especificado"
 
-#: diff.c:5511
+#: diff.c:5513
 msgid "[(A|C|D|M|R|T|U|X|B)...[*]]"
 msgstr "[(A|C|D|M|R|T|U|X|B)...[*]]"
 
-#: diff.c:5512
+#: diff.c:5514
 msgid "select files by diff type"
 msgstr "selecciona archivos por tipo de diff"
 
-#: diff.c:5514
+#: diff.c:5516
 msgid "<file>"
 msgstr "<archivo>"
 
-#: diff.c:5515
+#: diff.c:5517
 msgid "Output to a specific file"
 msgstr "Output a un archivo específico"
 
-#: diff.c:6148
+#: diff.c:6150
 msgid "inexact rename detection was skipped due to too many files."
 msgstr ""
 "detección de cambio de nombre inexacta fue saltada por haber muchos archivos."
 
-#: diff.c:6151
+#: diff.c:6153
 msgid "only found copies from modified paths due to too many files."
 msgstr ""
 "solo se encontraron copias de rutas modificadas por haber muchos archivos."
 
-#: diff.c:6154
+#: diff.c:6156
 #, c-format
 msgid ""
 "you may want to set your %s variable to at least %d and retry the command."
@@ -3254,7 +3254,7 @@ msgstr "error procesando refs deseadas: %d"
 msgid "no matching remote head"
 msgstr "no concuerda el head remoto"
 
-#: fetch-pack.c:1699 builtin/clone.c:676
+#: fetch-pack.c:1699 builtin/clone.c:673
 msgid "remote did not send all necessary objects"
 msgstr "remoto no mando todos los objetos necesarios"
 
@@ -3291,7 +3291,7 @@ msgstr "ignora color inválido '%.*s' en log.graphColors"
 msgid "'%s': unable to read %s"
 msgstr "'%s': no es posible leer %s"
 
-#: grep.c:2130 setup.c:164 builtin/clone.c:414 builtin/diff.c:82
+#: grep.c:2130 setup.c:164 builtin/clone.c:411 builtin/diff.c:82
 #: builtin/rm.c:135
 #, c-format
 msgid "failed to stat '%s'"
@@ -3574,7 +3574,7 @@ msgid "failed to read the cache"
 msgstr "falló al leer la cache"
 
 #: merge.c:107 rerere.c:720 builtin/am.c:1887 builtin/am.c:1921
-#: builtin/checkout.c:461 builtin/checkout.c:811 builtin/clone.c:776
+#: builtin/checkout.c:461 builtin/checkout.c:811 builtin/clone.c:773
 #: builtin/stash.c:264
 msgid "unable to write new index file"
 msgstr "no es posible escribir el archivo índice"
@@ -4071,78 +4071,78 @@ msgstr "multi-pack-index le falta el conjunto de offset del objeto requerido"
 msgid "multi-pack-index pack names out of order: '%s' before '%s'"
 msgstr "multi-pack-index nombres de paquete fuera de orden:'%s' antes '%s'"
 
-#: midx.c:209
+#: midx.c:208
 #, c-format
 msgid "bad pack-int-id: %u (%u total packs)"
 msgstr "mal pack-int-id: %u (%u paquetes totales)"
 
-#: midx.c:250
+#: midx.c:258
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
 msgstr "multi-pack-index guarda un offset de 64-bit, pero off_t es muy pequeño"
 
-#: midx.c:275
+#: midx.c:286
 msgid "error preparing packfile from multi-pack-index"
 msgstr "error preparando packfile de multi-pack-index"
 
-#: midx.c:443
+#: midx.c:457
 #, c-format
 msgid "failed to add packfile '%s'"
 msgstr "falló al agregar packfile '%s'"
 
-#: midx.c:449
+#: midx.c:463
 #, c-format
 msgid "failed to open pack-index '%s'"
 msgstr "falló al abrir pack-index '%s'"
 
-#: midx.c:543
+#: midx.c:557
 #, c-format
 msgid "failed to locate object %d in packfile"
 msgstr "falló al ubicar objeto %d en packfile"
 
-#: midx.c:979
+#: midx.c:993
 #, c-format
 msgid "failed to clear multi-pack-index at %s"
 msgstr "falló al limpiar multi-pack-index en %s"
 
-#: midx.c:1034
+#: midx.c:1048
 msgid "Looking for referenced packfiles"
 msgstr "Buscando por packfiles referidos"
 
-#: midx.c:1049
+#: midx.c:1063
 #, c-format
 msgid ""
 "oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
 msgstr ""
 "oid fanout fuera de orden: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
 
-#: midx.c:1053
+#: midx.c:1067
 msgid "Verifying OID order in MIDX"
 msgstr "Verificando orden de OID en MIDX"
 
-#: midx.c:1062
+#: midx.c:1076
 #, c-format
 msgid "oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"
 msgstr "oid lookup fuera de orden: oid[%d] = %s >= %s = oid[%d]"
 
-#: midx.c:1081
+#: midx.c:1095
 msgid "Sorting objects by packfile"
 msgstr "Ordenando objetos por packfile"
 
-#: midx.c:1087
+#: midx.c:1101
 msgid "Verifying object offsets"
 msgstr "Verificando offsets de objetos"
 
-#: midx.c:1103
+#: midx.c:1117
 #, c-format
 msgid "failed to load pack entry for oid[%d] = %s"
 msgstr "fallo al cargar entrada pack para oid[%d] = %s"
 
-#: midx.c:1109
+#: midx.c:1123
 #, c-format
 msgid "failed to load pack-index for packfile %s"
 msgstr "falló al cargar el pack-index para packfile %s"
 
-#: midx.c:1118
+#: midx.c:1132
 #, c-format
 msgid "incorrect object offset for oid[%d] = %s: %<PRIx64> != %<PRIx64>"
 msgstr "offset para objeto incorrecto oid[%d] = %s: %<PRIx64> != %<PRIx64>"
@@ -4233,13 +4233,13 @@ msgstr "hash no concuerda %s"
 msgid "offset before end of packfile (broken .idx?)"
 msgstr "offset antes del final del paquete (broken .idx?)"
 
-#: packfile.c:1880
+#: packfile.c:1868
 #, c-format
 msgid "offset before start of pack index for %s (corrupt index?)"
 msgstr ""
 "offset antes del comienzo del índice del paquete para %s (índice corrupto?)"
 
-#: packfile.c:1884
+#: packfile.c:1872
 #, c-format
 msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr ""
@@ -4260,7 +4260,7 @@ msgstr "%s es incompatible con %s"
 msgid "%s : incompatible with something else"
 msgstr "%s : incompatible con otra cosa"
 
-#: parse-options.c:92 parse-options.c:96 parse-options.c:287
+#: parse-options.c:92 parse-options.c:96 parse-options.c:319
 #, c-format
 msgid "%s takes no value"
 msgstr "%s no toma valores"
@@ -4270,41 +4270,41 @@ msgstr "%s no toma valores"
 msgid "%s isn't available"
 msgstr "%s no está disponible"
 
-#: parse-options.c:216
+#: parse-options.c:219
 #, c-format
 msgid "%s expects a non-negative integer value with an optional k/m/g suffix"
 msgstr "%s espera un valor entero no negativo con un sufijo opcional k/m/g"
 
-#: parse-options.c:356
+#: parse-options.c:389
 #, c-format
 msgid "ambiguous option: %s (could be --%s%s or --%s%s)"
 msgstr "opción ambigua: %s (puede ser --%s%s o --%s%s)"
 
-#: parse-options.c:390 parse-options.c:398
+#: parse-options.c:423 parse-options.c:431
 #, c-format
 msgid "did you mean `--%s` (with two dashes ?)"
 msgstr "¿quisiste decir `--%s` (con dos guiones)?"
 
-#: parse-options.c:733
+#: parse-options.c:859
 #, c-format
 msgid "unknown option `%s'"
 msgstr "opción `%s' desconocida"
 
-#: parse-options.c:735
+#: parse-options.c:861
 #, c-format
 msgid "unknown switch `%c'"
 msgstr "switch desconocido `%c'"
 
-#: parse-options.c:737
+#: parse-options.c:863
 #, c-format
 msgid "unknown non-ascii option in string: `%s'"
 msgstr "opcion desconocida en string no ascii: `%s'"
 
-#: parse-options.c:759
+#: parse-options.c:887
 msgid "..."
 msgstr "..."
 
-#: parse-options.c:778
+#: parse-options.c:906
 #, c-format
 msgid "usage: %s"
 msgstr "uso: %s"
@@ -4312,36 +4312,41 @@ msgstr "uso: %s"
 #. TRANSLATORS: the colon here should align with the
 #. one in "usage: %s" translation.
 #.
-#: parse-options.c:784
+#: parse-options.c:912
 #, c-format
 msgid "   or: %s"
 msgstr "   o: %s"
 
-#: parse-options.c:787
+#: parse-options.c:915
 #, c-format
 msgid "    %s"
 msgstr "    %s"
 
-#: parse-options.c:826
+#: parse-options.c:954
 msgid "-NUM"
 msgstr "-NUM"
 
-#: parse-options-cb.c:21
+#: parse-options.c:968
+#, c-format
+msgid "alias of --%s"
+msgstr "alias de --%s"
+
+#: parse-options-cb.c:20 parse-options-cb.c:24
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "opción `%s' espera un valor numérico"
 
-#: parse-options-cb.c:38
+#: parse-options-cb.c:41
 #, c-format
 msgid "malformed expiration date '%s'"
 msgstr "fecha de expiración mal formada: '%s'"
 
-#: parse-options-cb.c:51
+#: parse-options-cb.c:54
 #, c-format
 msgid "option `%s' expects \"always\", \"auto\", or \"never\""
 msgstr "opción `%s' puede usar \"always\", \"auto\", o \"never\""
 
-#: parse-options-cb.c:127 parse-options-cb.c:144
+#: parse-options-cb.c:130 parse-options-cb.c:147
 #, c-format
 msgid "malformed object name '%s'"
 msgstr "nombre de objeto mal formado '%s'"
@@ -4681,32 +4686,32 @@ msgstr "no se pudo refrescar el index compartido '%s'"
 msgid "broken index, expect %s in %s, got %s"
 msgstr "index roto, se esperaba %s en %s, se obtuvo %s"
 
-#: read-cache.c:2988 wrapper.c:658 builtin/merge.c:1117
+#: read-cache.c:2989 wrapper.c:658 builtin/merge.c:1117
 #, c-format
 msgid "could not close '%s'"
 msgstr "no se pudo cerrar '%s'"
 
-#: read-cache.c:3091 sequencer.c:2354 sequencer.c:3807
+#: read-cache.c:3092 sequencer.c:2354 sequencer.c:3807
 #, c-format
 msgid "could not stat '%s'"
 msgstr "no se pudo definir '%s'"
 
-#: read-cache.c:3104
+#: read-cache.c:3105
 #, c-format
 msgid "unable to open git dir: %s"
 msgstr "no es posible abrir el directorio de git: %s"
 
-#: read-cache.c:3116
+#: read-cache.c:3117
 #, c-format
 msgid "unable to unlink: %s"
 msgstr "no es posible eliminar el vinculo: %s"
 
-#: read-cache.c:3141
+#: read-cache.c:3142
 #, c-format
 msgid "cannot fix permission bits on '%s'"
 msgstr "no se pudo arreglar bits de permisos en '%s'"
 
-#: read-cache.c:3290
+#: read-cache.c:3291
 #, c-format
 msgid "%s: cannot drop to stage #0"
 msgstr "%s: no se puede eliminar a stage #0"
@@ -4965,7 +4970,7 @@ msgstr "no se pudo eliminar la referencia: %s"
 msgid "invalid refspec '%s'"
 msgstr "refspec inválido: '%s'"
 
-#: ref-filter.c:39 wt-status.c:1907
+#: ref-filter.c:39 wt-status.c:1909
 msgid "gone"
 msgstr "desaparecido"
 
@@ -6249,7 +6254,7 @@ msgstr "No se pudo aplicar %s... %.*s"
 msgid "Could not merge %.*s"
 msgstr "No se pudo fusionar %.*s"
 
-#: sequencer.c:2997 sequencer.c:3001 builtin/difftool.c:639
+#: sequencer.c:2997 sequencer.c:3001 builtin/difftool.c:633
 #, c-format
 msgid "could not copy '%s' to '%s'"
 msgstr "no se pudo copiar '%s' a '%s'"
@@ -6945,16 +6950,16 @@ msgstr "incapaz de analizar header de %s"
 msgid "unable to unpack contents of %s"
 msgstr "no es posible desempaquetar contenidos de %s"
 
-#: sha1-name.c:487
+#: sha1-name.c:490
 #, c-format
 msgid "short SHA1 %s is ambiguous"
 msgstr "SHA1 %s corto es ambiguo"
 
-#: sha1-name.c:498
+#: sha1-name.c:501
 msgid "The candidates are:"
 msgstr "Los candidatos son:"
 
-#: sha1-name.c:794
+#: sha1-name.c:800
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -7981,67 +7986,67 @@ msgstr "  (usa \"git am --skip\" para saltar este parche)"
 msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr "  (usa \"git am --abort\" para restaurar la rama original)"
 
-#: wt-status.c:1282
+#: wt-status.c:1284
 msgid "git-rebase-todo is missing."
 msgstr "git-rebase-todo no está presente."
 
-#: wt-status.c:1284
+#: wt-status.c:1286
 msgid "No commands done."
 msgstr "No se realizaron los comandos."
 
-#: wt-status.c:1287
+#: wt-status.c:1289
 #, c-format
 msgid "Last command done (%d command done):"
 msgid_plural "Last commands done (%d commands done):"
 msgstr[0] "El último comando realizado (%d comando realizado):"
 msgstr[1] "Los últimos comandos realizados (%d comandos realizados):"
 
-#: wt-status.c:1298
+#: wt-status.c:1300
 #, c-format
 msgid "  (see more in file %s)"
 msgstr "  (ver mas en el archivo %s)"
 
-#: wt-status.c:1303
+#: wt-status.c:1305
 msgid "No commands remaining."
 msgstr "No quedan mas comandos."
 
-#: wt-status.c:1306
+#: wt-status.c:1308
 #, c-format
 msgid "Next command to do (%d remaining command):"
 msgid_plural "Next commands to do (%d remaining commands):"
 msgstr[0] "Siguiente comando a realizar (%d comando restante):"
 msgstr[1] "Siguiente comandos a realizar (%d comandos faltantes):"
 
-#: wt-status.c:1314
+#: wt-status.c:1316
 msgid "  (use \"git rebase --edit-todo\" to view and edit)"
 msgstr "  (usa \"git rebase --edit-todo\" para ver y editar)"
 
-#: wt-status.c:1326
+#: wt-status.c:1328
 #, c-format
 msgid "You are currently rebasing branch '%s' on '%s'."
 msgstr "Estás aplicando un rebase de la rama '%s' en '%s."
 
-#: wt-status.c:1331
+#: wt-status.c:1333
 msgid "You are currently rebasing."
 msgstr "Estás aplicando un rebase."
 
-#: wt-status.c:1344
+#: wt-status.c:1346
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
 msgstr "  (corrige los conflictos y ejecuta \"git rebase --continue\")"
 
-#: wt-status.c:1346
+#: wt-status.c:1348
 msgid "  (use \"git rebase --skip\" to skip this patch)"
 msgstr "  (usa \"git rebase --skip\" para omitir este parche)"
 
-#: wt-status.c:1348
+#: wt-status.c:1350
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr "  (usa \"git rebase --abort\" para volver a tu rama original)"
 
-#: wt-status.c:1355
+#: wt-status.c:1357
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
 msgstr "  (todos los conflictos corregidos: ejecuta \"git rebase --continue\")"
 
-#: wt-status.c:1359
+#: wt-status.c:1361
 #, c-format
 msgid ""
 "You are currently splitting a commit while rebasing branch '%s' on '%s'."
@@ -8049,144 +8054,144 @@ msgstr ""
 "Estás dividiendo un commit mientras aplicas un rebase de la rama '%s' en "
 "'%s'."
 
-#: wt-status.c:1364
+#: wt-status.c:1366
 msgid "You are currently splitting a commit during a rebase."
 msgstr "Estás dividiendo un commit durante un rebase."
 
-#: wt-status.c:1367
+#: wt-status.c:1369
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr ""
 "  (Una vez que tu directorio de trabajo esté limpio, ejecuta \"git rebase --"
 "continue\")"
 
-#: wt-status.c:1371
+#: wt-status.c:1373
 #, c-format
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Estás editando un commit mientras se aplica un rebase de la rama '%s' en "
 "'%s'."
 
-#: wt-status.c:1376
+#: wt-status.c:1378
 msgid "You are currently editing a commit during a rebase."
 msgstr "Estás editando un commit durante un rebase."
 
-#: wt-status.c:1379
+#: wt-status.c:1381
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr "  (usa \"git commit --amend\" para enmendar el commit actual)"
 
-#: wt-status.c:1381
+#: wt-status.c:1383
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
 msgstr ""
 "  (usa \"git rebase --continue\" una vez que estés satisfecho con tus "
 "cambios)"
 
-#: wt-status.c:1392
+#: wt-status.c:1394
 msgid "Cherry-pick currently in progress."
 msgstr "Cherry-pick en progreso actualmente"
 
-#: wt-status.c:1395
+#: wt-status.c:1397
 #, c-format
 msgid "You are currently cherry-picking commit %s."
 msgstr "Estás realizando un cherry-picking en el commit %s."
 
-#: wt-status.c:1402
+#: wt-status.c:1404
 msgid "  (fix conflicts and run \"git cherry-pick --continue\")"
 msgstr "  (corrige los conflictos y ejecuta \"git cherry-pick --continue\")"
 
-#: wt-status.c:1405
+#: wt-status.c:1407
 msgid "  (run \"git cherry-pick --continue\" to continue)"
 msgstr "  (ejecuta \"git cherry-pick --continue\" para continuar)"
 
-#: wt-status.c:1408
+#: wt-status.c:1410
 msgid "  (all conflicts fixed: run \"git cherry-pick --continue\")"
 msgstr ""
 "  (todos los conflictos corregidos: ejecuta \"git cherry-pick --continue\")"
 
-#: wt-status.c:1410
+#: wt-status.c:1412
 msgid "  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"
 msgstr ""
 "  (use \"git cherry-pick --abort\" para cancelar la operación cherry-pick)"
 
-#: wt-status.c:1420
+#: wt-status.c:1422
 msgid "Revert currently in progress."
 msgstr "Revierte el estado en progreso actual"
 
-#: wt-status.c:1423
+#: wt-status.c:1425
 #, c-format
 msgid "You are currently reverting commit %s."
 msgstr "Estás revirtiendo el commit %s."
 
-#: wt-status.c:1429
+#: wt-status.c:1431
 msgid "  (fix conflicts and run \"git revert --continue\")"
 msgstr "  (corrige los conflictos y ejecuta \"git revert --continue\")"
 
-#: wt-status.c:1432
+#: wt-status.c:1434
 msgid "  (run \"git revert --continue\" to continue)"
 msgstr "  (ejecuta \"git revert --continue\" para continuar)"
 
-#: wt-status.c:1435
+#: wt-status.c:1437
 msgid "  (all conflicts fixed: run \"git revert --continue\")"
 msgstr "  (todos los conflictos corregidos: ejecuta \"git revert --continue\")"
 
-#: wt-status.c:1437
+#: wt-status.c:1439
 msgid "  (use \"git revert --abort\" to cancel the revert operation)"
 msgstr "  (usa \"git revert --abort\" para cancelar la operación de revertir)"
 
-#: wt-status.c:1447
+#: wt-status.c:1449
 #, c-format
 msgid "You are currently bisecting, started from branch '%s'."
 msgstr "Estás aplicando un bisect, comenzando en la rama '%s'."
 
-#: wt-status.c:1451
+#: wt-status.c:1453
 msgid "You are currently bisecting."
 msgstr "Estás aplicando un bisect."
 
-#: wt-status.c:1454
+#: wt-status.c:1456
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr "  (usa \"git bisect reset\" para volver a la rama original)"
 
-#: wt-status.c:1663
+#: wt-status.c:1665
 msgid "On branch "
 msgstr "En la rama "
 
-#: wt-status.c:1670
+#: wt-status.c:1672
 msgid "interactive rebase in progress; onto "
 msgstr "rebase interactivo en progreso; en "
 
-#: wt-status.c:1672
+#: wt-status.c:1674
 msgid "rebase in progress; onto "
 msgstr "rebase en progreso; en "
 
-#: wt-status.c:1677
+#: wt-status.c:1679
 msgid "HEAD detached at "
 msgstr "HEAD desacoplada en "
 
-#: wt-status.c:1679
+#: wt-status.c:1681
 msgid "HEAD detached from "
 msgstr "HEAD desacoplada de "
 
-#: wt-status.c:1682
+#: wt-status.c:1684
 msgid "Not currently on any branch."
 msgstr "Actualmente no estás en ninguna rama."
 
-#: wt-status.c:1699
+#: wt-status.c:1701
 msgid "Initial commit"
 msgstr "Confirmación inicial"
 
-#: wt-status.c:1700
+#: wt-status.c:1702
 msgid "No commits yet"
 msgstr "No hay commits todavía"
 
-#: wt-status.c:1714
+#: wt-status.c:1716
 msgid "Untracked files"
 msgstr "Archivos sin seguimiento"
 
-#: wt-status.c:1716
+#: wt-status.c:1718
 msgid "Ignored files"
 msgstr "Archivos ignorados"
 
-#: wt-status.c:1720
+#: wt-status.c:1722
 #, c-format
 msgid ""
 "It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
@@ -8197,31 +8202,31 @@ msgstr ""
 "puede acelerarlo, pero tiene que ser cuidadoso de no olvidar agregar\n"
 "nuevos archivos usted mismo (vea 'git help status')."
 
-#: wt-status.c:1726
+#: wt-status.c:1728
 #, c-format
 msgid "Untracked files not listed%s"
 msgstr "Archivos no rastreados no son mostrados %s"
 
-#: wt-status.c:1728
+#: wt-status.c:1730
 msgid " (use -u option to show untracked files)"
 msgstr " (usa la opción -u para mostrar los archivos sin seguimiento)"
 
-#: wt-status.c:1734
+#: wt-status.c:1736
 msgid "No changes"
 msgstr "Sin cambios"
 
-#: wt-status.c:1739
+#: wt-status.c:1741
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
 msgstr ""
 "sin cambios agregados al commit (usa \"git add\" y/o \"git commit -a\")\n"
 
-#: wt-status.c:1742
+#: wt-status.c:1744
 #, c-format
 msgid "no changes added to commit\n"
 msgstr "no se agregaron cambios al commit\n"
 
-#: wt-status.c:1745
+#: wt-status.c:1747
 #, c-format
 msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
@@ -8230,67 +8235,67 @@ msgstr ""
 "no hay nada agregado al commit pero hay archivos sin seguimiento presentes "
 "(usa \"git add\" para hacerles seguimiento)\n"
 
-#: wt-status.c:1748
+#: wt-status.c:1750
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
 msgstr ""
 "no hay nada agregado para confirmar, pero hay archivos sin seguimiento "
 "presentes\n"
 
-#: wt-status.c:1751
+#: wt-status.c:1753
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "no hay nada para confirmar (crea/copia archivos y usa \"git add\" para "
 "hacerles seguimiento)\n"
 
-#: wt-status.c:1754 wt-status.c:1759
+#: wt-status.c:1756 wt-status.c:1761
 #, c-format
 msgid "nothing to commit\n"
 msgstr "nada para hacer commit\n"
 
-#: wt-status.c:1757
+#: wt-status.c:1759
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
 msgstr ""
 "nada para hacer commit (usa -u para mostrar los archivos no rastreados)\n"
 
-#: wt-status.c:1761
+#: wt-status.c:1763
 #, c-format
 msgid "nothing to commit, working tree clean\n"
 msgstr "nada para hacer commit, el árbol de trabajo está limpio\n"
 
-#: wt-status.c:1874
+#: wt-status.c:1876
 msgid "No commits yet on "
 msgstr "No hay commits todavía en "
 
-#: wt-status.c:1878
+#: wt-status.c:1880
 msgid "HEAD (no branch)"
 msgstr "HEAD (sin rama)"
 
-#: wt-status.c:1909
+#: wt-status.c:1911
 msgid "different"
 msgstr "diferente"
 
-#: wt-status.c:1911 wt-status.c:1919
+#: wt-status.c:1913 wt-status.c:1921
 msgid "behind "
 msgstr "detrás "
 
-#: wt-status.c:1914 wt-status.c:1917
+#: wt-status.c:1916 wt-status.c:1919
 msgid "ahead "
 msgstr "adelante "
 
 #. TRANSLATORS: the action is e.g. "pull with rebase"
-#: wt-status.c:2441
+#: wt-status.c:2443
 #, c-format
 msgid "cannot %s: You have unstaged changes."
 msgstr "no se puede %s: Tienes cambios sin marcar."
 
-#: wt-status.c:2447
+#: wt-status.c:2449
 msgid "additionally, your index contains uncommitted changes."
 msgstr "adicionalmente, tu índice contiene cambios que no están en un commit."
 
-#: wt-status.c:2449
+#: wt-status.c:2451
 #, c-format
 msgid "cannot %s: Your index contains uncommitted changes."
 msgstr "no se puede %s: Tu índice contiene cambios que no están en un commit."
@@ -8531,7 +8536,7 @@ msgstr "offset de zona horaria inválido"
 msgid "Patch format detection failed."
 msgstr "Falló al detectar el formato del parche."
 
-#: builtin/am.c:949 builtin/clone.c:412
+#: builtin/am.c:949 builtin/clone.c:409
 #, c-format
 msgid "failed to create directory '%s'"
 msgstr "falló al crear el directorio '%s'"
@@ -8769,8 +8774,8 @@ msgstr "pasarlo a través de git-apply"
 #: builtin/fmt-merge-msg.c:674 builtin/grep.c:879 builtin/merge.c:247
 #: builtin/pull.c:158 builtin/pull.c:217 builtin/rebase.c:1412
 #: builtin/repack.c:317 builtin/repack.c:321 builtin/repack.c:323
-#: builtin/show-branch.c:651 builtin/show-ref.c:171 builtin/tag.c:397
-#: parse-options.h:140 parse-options.h:161 parse-options.h:303
+#: builtin/show-branch.c:651 builtin/show-ref.c:172 builtin/tag.c:397
+#: parse-options.h:141 parse-options.h:162 parse-options.h:311
 msgid "n"
 msgstr "n"
 
@@ -9650,7 +9655,7 @@ msgstr "ordenamiento y filtrado son case-insensitive"
 msgid "format to use for the output"
 msgstr "formato para usar para el output"
 
-#: builtin/branch.c:676 builtin/clone.c:751
+#: builtin/branch.c:676 builtin/clone.c:748
 msgid "HEAD not found below refs/heads!"
 msgstr "HEAD no encontrado abajo de refs/heads!"
 
@@ -10075,7 +10080,7 @@ msgstr "No se puede hacer reflog para '%s': %s\n"
 msgid "HEAD is now at"
 msgstr "HEAD está ahora en"
 
-#: builtin/checkout.c:894 builtin/clone.c:704
+#: builtin/checkout.c:894 builtin/clone.c:701
 msgid "unable to update HEAD"
 msgstr "no es posible actualizar  HEAD"
 
@@ -10215,7 +10220,7 @@ msgstr "'%s' no puede ser usado con '%s'"
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr "No se puede cambiar rama a un '%s' sin commits"
 
-#: builtin/checkout.c:1356 builtin/checkout.c:1358 builtin/clone.c:121
+#: builtin/checkout.c:1356 builtin/checkout.c:1358 builtin/clone.c:118
 #: builtin/remote.c:169 builtin/remote.c:171 builtin/worktree.c:492
 #: builtin/worktree.c:494
 msgid "branch"
@@ -10269,7 +10274,7 @@ msgstr "realizar una fusión de tres vías con la rama nueva"
 msgid "update ignored files (default)"
 msgstr "actualizar archivos ignorados (default)"
 
-#: builtin/checkout.c:1377 builtin/log.c:1594 parse-options.h:309
+#: builtin/checkout.c:1377 builtin/log.c:1594 parse-options.h:317
 msgid "style"
 msgstr "estilo"
 
@@ -10518,7 +10523,7 @@ msgstr "borrar directorios completos"
 #: builtin/clean.c:913 builtin/describe.c:546 builtin/describe.c:548
 #: builtin/grep.c:897 builtin/log.c:171 builtin/log.c:173
 #: builtin/ls-files.c:557 builtin/name-rev.c:417 builtin/name-rev.c:419
-#: builtin/show-ref.c:178
+#: builtin/show-ref.c:179
 msgid "pattern"
 msgstr "patrón"
 
@@ -10582,128 +10587,128 @@ msgstr "no usar hardlinks, siempre copiar"
 msgid "setup as shared repository"
 msgstr "configurar como repositorio compartido"
 
-#: builtin/clone.c:103 builtin/clone.c:107
+#: builtin/clone.c:104
 msgid "pathspec"
 msgstr "pathspec"
 
-#: builtin/clone.c:103 builtin/clone.c:107
+#: builtin/clone.c:104
 msgid "initialize submodules in the clone"
 msgstr "inicializar submódulos en el clonado"
 
-#: builtin/clone.c:110
+#: builtin/clone.c:107
 msgid "number of submodules cloned in parallel"
 msgstr "numero de submódulos clonados en paralelo"
 
-#: builtin/clone.c:111 builtin/init-db.c:486
+#: builtin/clone.c:108 builtin/init-db.c:486
 msgid "template-directory"
 msgstr "directorio-template"
 
-#: builtin/clone.c:112 builtin/init-db.c:487
+#: builtin/clone.c:109 builtin/init-db.c:487
 msgid "directory from which templates will be used"
 msgstr "directorio del cual los templates serán usados"
 
-#: builtin/clone.c:114 builtin/clone.c:116 builtin/submodule--helper.c:1379
+#: builtin/clone.c:111 builtin/clone.c:113 builtin/submodule--helper.c:1379
 #: builtin/submodule--helper.c:1859
 msgid "reference repository"
 msgstr "repositorio de referencia"
 
-#: builtin/clone.c:118 builtin/submodule--helper.c:1381
+#: builtin/clone.c:115 builtin/submodule--helper.c:1381
 #: builtin/submodule--helper.c:1861
 msgid "use --reference only while cloning"
 msgstr "usa--reference  solamente si estás clonado"
 
-#: builtin/clone.c:119 builtin/column.c:27 builtin/merge-file.c:46
+#: builtin/clone.c:116 builtin/column.c:27 builtin/merge-file.c:46
 #: builtin/pack-objects.c:3306 builtin/repack.c:329
 msgid "name"
 msgstr "nombre"
 
-#: builtin/clone.c:120
+#: builtin/clone.c:117
 msgid "use <name> instead of 'origin' to track upstream"
 msgstr "use <nombre> en lugar de 'origin' para rastrear upstream"
 
-#: builtin/clone.c:122
+#: builtin/clone.c:119
 msgid "checkout <branch> instead of the remote's HEAD"
 msgstr "checkout <rama> en lugar de HEAD remota"
 
-#: builtin/clone.c:124
+#: builtin/clone.c:121
 msgid "path to git-upload-pack on the remote"
 msgstr "ruta para git-upload-pack en el remoto"
 
-#: builtin/clone.c:125 builtin/fetch.c:142 builtin/grep.c:836
+#: builtin/clone.c:122 builtin/fetch.c:142 builtin/grep.c:836
 #: builtin/pull.c:225
 msgid "depth"
 msgstr "profundidad"
 
-#: builtin/clone.c:126
+#: builtin/clone.c:123
 msgid "create a shallow clone of that depth"
 msgstr "crear un clon superficial para esa profundidad"
 
-#: builtin/clone.c:127 builtin/fetch.c:144 builtin/pack-objects.c:3295
+#: builtin/clone.c:124 builtin/fetch.c:144 builtin/pack-objects.c:3295
 msgid "time"
 msgstr "tiempo"
 
-#: builtin/clone.c:128
+#: builtin/clone.c:125
 msgid "create a shallow clone since a specific time"
 msgstr "crear un clon superficial desde el tiempo específico"
 
-#: builtin/clone.c:129 builtin/fetch.c:146 builtin/fetch.c:169
+#: builtin/clone.c:126 builtin/fetch.c:146 builtin/fetch.c:169
 #: builtin/rebase.c:1389
 msgid "revision"
 msgstr "revision"
 
-#: builtin/clone.c:130 builtin/fetch.c:147
+#: builtin/clone.c:127 builtin/fetch.c:147
 msgid "deepen history of shallow clone, excluding rev"
 msgstr "ahondando historia de clon superficial, excluyendo rev"
 
-#: builtin/clone.c:132
+#: builtin/clone.c:129
 msgid "clone only one branch, HEAD or --branch"
 msgstr "clonar solo una rama,HEAD o --branch"
 
-#: builtin/clone.c:134
+#: builtin/clone.c:131
 msgid "don't clone any tags, and make later fetches not to follow them"
 msgstr "no clonar ningún tag, y hacer que los subsiguientes fetch no los sigan"
 
-#: builtin/clone.c:136
+#: builtin/clone.c:133
 msgid "any cloned submodules will be shallow"
 msgstr "cualquier submódulo clonado será superficial"
 
-#: builtin/clone.c:137 builtin/init-db.c:495
+#: builtin/clone.c:134 builtin/init-db.c:495
 msgid "gitdir"
 msgstr "gitdir"
 
-#: builtin/clone.c:138 builtin/init-db.c:496
+#: builtin/clone.c:135 builtin/init-db.c:496
 msgid "separate git dir from working tree"
 msgstr "separa git dir del árbol de trabajo"
 
-#: builtin/clone.c:139
+#: builtin/clone.c:136
 msgid "key=value"
 msgstr "llave=valor"
 
-#: builtin/clone.c:140
+#: builtin/clone.c:137
 msgid "set config inside the new repository"
 msgstr "configurar config dentro del nuevo repositorio"
 
-#: builtin/clone.c:142 builtin/fetch.c:164 builtin/ls-remote.c:76
+#: builtin/clone.c:139 builtin/fetch.c:164 builtin/ls-remote.c:76
 #: builtin/push.c:585 builtin/send-pack.c:172
 msgid "server-specific"
 msgstr "especifico-de-servidor"
 
-#: builtin/clone.c:142 builtin/fetch.c:164 builtin/ls-remote.c:76
+#: builtin/clone.c:139 builtin/fetch.c:164 builtin/ls-remote.c:76
 #: builtin/push.c:585 builtin/send-pack.c:173
 msgid "option to transmit"
 msgstr "opción para trasmitir"
 
-#: builtin/clone.c:143 builtin/fetch.c:165 builtin/pull.c:238
+#: builtin/clone.c:140 builtin/fetch.c:165 builtin/pull.c:238
 #: builtin/push.c:586
 msgid "use IPv4 addresses only"
 msgstr "solo usar direcciones IPv4"
 
-#: builtin/clone.c:145 builtin/fetch.c:167 builtin/pull.c:241
+#: builtin/clone.c:142 builtin/fetch.c:167 builtin/pull.c:241
 #: builtin/push.c:588
 msgid "use IPv6 addresses only"
 msgstr "solo usar direcciones IPv6"
 
-#: builtin/clone.c:283
+#: builtin/clone.c:280
 msgid ""
 "No directory name could be guessed.\n"
 "Please specify a directory on the command line"
@@ -10711,47 +10716,47 @@ msgstr ""
 "No se pudo adivinar ningún nombre de directorio.\n"
 "Por favor especifique un directorio en la línea de comando"
 
-#: builtin/clone.c:336
+#: builtin/clone.c:333
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr "info: No se pudo agregar un alterno para '%s': %s\n"
 
-#: builtin/clone.c:408
+#: builtin/clone.c:405
 #, c-format
 msgid "failed to open '%s'"
 msgstr "falló al abrir '%s'"
 
-#: builtin/clone.c:416
+#: builtin/clone.c:413
 #, c-format
 msgid "%s exists and is not a directory"
 msgstr "%s existe pero no es un directorio"
 
-#: builtin/clone.c:430
+#: builtin/clone.c:427
 #, c-format
 msgid "failed to stat %s\n"
 msgstr "falló al analizar %s\n"
 
-#: builtin/clone.c:447
+#: builtin/clone.c:444
 #, c-format
 msgid "failed to unlink '%s'"
 msgstr "falló al desvincular '%s'"
 
-#: builtin/clone.c:452
+#: builtin/clone.c:449
 #, c-format
 msgid "failed to create link '%s'"
 msgstr "falló al crear link '%s'"
 
-#: builtin/clone.c:456
+#: builtin/clone.c:453
 #, c-format
 msgid "failed to copy file to '%s'"
 msgstr "falló al copiar archivo a '%s'"
 
-#: builtin/clone.c:482
+#: builtin/clone.c:479
 #, c-format
 msgid "done.\n"
 msgstr "hecho.\n"
 
-#: builtin/clone.c:496
+#: builtin/clone.c:493
 msgid ""
 "Clone succeeded, but checkout failed.\n"
 "You can inspect what was checked out with 'git status'\n"
@@ -10761,96 +10766,96 @@ msgstr ""
 "Puede inspeccionar a qué se hizo checkout con 'git status'\n"
 "y volver a intentarlo con 'git checkout -f HEAD'\n"
 
-#: builtin/clone.c:573
+#: builtin/clone.c:570
 #, c-format
 msgid "Could not find remote branch %s to clone."
 msgstr "No se pudo encontrar la rama remota %s para clonar."
 
-#: builtin/clone.c:692
+#: builtin/clone.c:689
 #, c-format
 msgid "unable to update %s"
 msgstr "incapaz de actualizar %s"
 
-#: builtin/clone.c:742
+#: builtin/clone.c:739
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
 "remoto HEAD refiere a un ref inexistente, no se puede hacer checkout.\n"
 
-#: builtin/clone.c:773
+#: builtin/clone.c:770
 msgid "unable to checkout working tree"
 msgstr "no es posible realizar checkout en el árbol de trabajo"
 
-#: builtin/clone.c:818
+#: builtin/clone.c:815
 msgid "unable to write parameters to config file"
 msgstr "no es posible escribir parámetros al archivo config"
 
-#: builtin/clone.c:881
+#: builtin/clone.c:878
 msgid "cannot repack to clean up"
 msgstr "no se puede reempaquetar para limpiar"
 
-#: builtin/clone.c:883
+#: builtin/clone.c:880
 msgid "cannot unlink temporary alternates file"
 msgstr "no se puede desvincular archivos alternos temporales"
 
-#: builtin/clone.c:923 builtin/receive-pack.c:1952
+#: builtin/clone.c:920 builtin/receive-pack.c:1952
 msgid "Too many arguments."
 msgstr "Muchos argumentos."
 
-#: builtin/clone.c:927
+#: builtin/clone.c:924
 msgid "You must specify a repository to clone."
 msgstr "Tienes que especificar un repositorio para clonar."
 
-#: builtin/clone.c:940
+#: builtin/clone.c:937
 #, c-format
 msgid "--bare and --origin %s options are incompatible."
 msgstr "Las opciones --bare y --origin %s son incompatibles."
 
-#: builtin/clone.c:943
+#: builtin/clone.c:940
 msgid "--bare and --separate-git-dir are incompatible."
 msgstr "--bare y --separate-git-dir son incompatibles."
 
-#: builtin/clone.c:956
+#: builtin/clone.c:953
 #, c-format
 msgid "repository '%s' does not exist"
 msgstr "repositorio '%s' no existe"
 
-#: builtin/clone.c:962 builtin/fetch.c:1610
+#: builtin/clone.c:959 builtin/fetch.c:1610
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "profundidad %s no es un numero positivo"
 
-#: builtin/clone.c:972
+#: builtin/clone.c:969
 #, c-format
 msgid "destination path '%s' already exists and is not an empty directory."
 msgstr "la ruta de destino '%s' ya existe y no es un directorio vacío."
 
-#: builtin/clone.c:982
+#: builtin/clone.c:979
 #, c-format
 msgid "working tree '%s' already exists."
 msgstr "directorio de trabajo '%s' ya existe."
 
-#: builtin/clone.c:997 builtin/clone.c:1018 builtin/difftool.c:270
+#: builtin/clone.c:994 builtin/clone.c:1015 builtin/difftool.c:264
 #: builtin/worktree.c:296 builtin/worktree.c:328
 #, c-format
 msgid "could not create leading directories of '%s'"
 msgstr "no se pudo crear directorios principales de '%s'"
 
-#: builtin/clone.c:1002
+#: builtin/clone.c:999
 #, c-format
 msgid "could not create work tree dir '%s'"
 msgstr "no se pudo crear un árbol de trabajo '%s'"
 
-#: builtin/clone.c:1022
+#: builtin/clone.c:1019
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
 msgstr "Clonando en un repositorio vacío '%s'...\n"
 
-#: builtin/clone.c:1024
+#: builtin/clone.c:1021
 #, c-format
 msgid "Cloning into '%s'...\n"
 msgstr "Clonando en '%s'...\n"
 
-#: builtin/clone.c:1048
+#: builtin/clone.c:1045
 msgid ""
 "clone --recursive is not compatible with both --reference and --reference-if-"
 "able"
@@ -10858,36 +10863,36 @@ msgstr ""
 "clone --recursive no es compatible con --reference y --reference-if-able al "
 "mismo tiempo"
 
-#: builtin/clone.c:1109
+#: builtin/clone.c:1106
 msgid "--depth is ignored in local clones; use file:// instead."
 msgstr "--depth es ignorada en clonaciones locales; usa file:// más bien."
 
-#: builtin/clone.c:1111
+#: builtin/clone.c:1108
 msgid "--shallow-since is ignored in local clones; use file:// instead."
 msgstr "--shallow-since es ignorado en el clon local; use file:// ."
 
-#: builtin/clone.c:1113
+#: builtin/clone.c:1110
 msgid "--shallow-exclude is ignored in local clones; use file:// instead."
 msgstr "--shallow-exclude es ignorado en clones locales; use file://."
 
-#: builtin/clone.c:1115
+#: builtin/clone.c:1112
 msgid "--filter is ignored in local clones; use file:// instead."
 msgstr "--filter es ignorado en clones locales; usa file:// en su lugar."
 
-#: builtin/clone.c:1118
+#: builtin/clone.c:1115
 msgid "source repository is shallow, ignoring --local"
 msgstr "repositorio fuente es superficial, ignorando --local"
 
-#: builtin/clone.c:1123
+#: builtin/clone.c:1120
 msgid "--local is ignored"
 msgstr "--local es ignorado"
 
-#: builtin/clone.c:1200 builtin/clone.c:1208
+#: builtin/clone.c:1197 builtin/clone.c:1205
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Rama remota %s no encontrada en upstream %s"
 
-#: builtin/clone.c:1211
+#: builtin/clone.c:1208
 msgid "You appear to have cloned an empty repository."
 msgstr "Pareces haber clonado un repositorio sin contenido."
 
@@ -11319,7 +11324,7 @@ msgstr "terminar entradas con NUL"
 
 #: builtin/commit.c:1335 builtin/commit.c:1339 builtin/commit.c:1517
 #: builtin/fast-export.c:1085 builtin/fast-export.c:1088 builtin/rebase.c:1465
-#: parse-options.h:323
+#: parse-options.h:331
 msgid "mode"
 msgstr "modo"
 
@@ -11337,7 +11342,7 @@ msgstr ""
 "mostrar archivos ignorados, modos opcionales: traditional, matching, no. "
 "(Predeterminado: traditional)"
 
-#: builtin/commit.c:1342 parse-options.h:178
+#: builtin/commit.c:1342 parse-options.h:179
 msgid "when"
 msgstr "cuando"
 
@@ -11399,7 +11404,7 @@ msgid "override date for commit"
 msgstr "sobrescribe la fecha del commit"
 
 #: builtin/commit.c:1481 builtin/commit.c:1482 builtin/commit.c:1483
-#: builtin/commit.c:1484 parse-options.h:315 ref-filter.h:92
+#: builtin/commit.c:1484 parse-options.h:323 ref-filter.h:92
 msgid "commit"
 msgstr "confirmar"
 
@@ -12092,31 +12097,31 @@ msgstr "más de dos blobs entregados: '%s'"
 msgid "unhandled object '%s' given."
 msgstr "objeto no manejado '%s' entregado."
 
-#: builtin/difftool.c:31
+#: builtin/difftool.c:30
 msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
 msgstr "git difftool [<opciones>] [<commit> [<commit>]] [--] [<ruta>...]"
 
-#: builtin/difftool.c:259
+#: builtin/difftool.c:253
 #, c-format
 msgid "failed: %d"
 msgstr "falló: %d"
 
-#: builtin/difftool.c:301
+#: builtin/difftool.c:295
 #, c-format
 msgid "could not read symlink %s"
 msgstr "no se pudo leer el symlink %s"
 
-#: builtin/difftool.c:303
+#: builtin/difftool.c:297
 #, c-format
 msgid "could not read symlink file %s"
 msgstr "no se pudo leer el archivo symlink %s"
 
-#: builtin/difftool.c:311
+#: builtin/difftool.c:305
 #, c-format
 msgid "could not read object %s for symlink %s"
 msgstr "no se pudo leer el objeto %s para el symlink %s"
 
-#: builtin/difftool.c:412
+#: builtin/difftool.c:406
 msgid ""
 "combined diff formats('-c' and '--cc') are not supported in\n"
 "directory diff mode('-d' and '--dir-diff')."
@@ -12124,54 +12129,54 @@ msgstr ""
 "formatos combinados de diff ('-c' y '--cc') no soportados en\n"
 "modo diff para directorio('-d' y '--dir-diff')."
 
-#: builtin/difftool.c:632
+#: builtin/difftool.c:626
 #, c-format
 msgid "both files modified: '%s' and '%s'."
 msgstr "ambos archivos modificados: '%s' y '%s'."
 
-#: builtin/difftool.c:634
+#: builtin/difftool.c:628
 msgid "working tree file has been left."
 msgstr "archivo del árbol de trabajo ha sido dejado."
 
-#: builtin/difftool.c:645
+#: builtin/difftool.c:639
 #, c-format
 msgid "temporary files exist in '%s'."
 msgstr "archivo temporal existe en '%s'."
 
-#: builtin/difftool.c:646
+#: builtin/difftool.c:640
 msgid "you may want to cleanup or recover these."
 msgstr "tal vez desee limpiar o recuperar estos."
 
-#: builtin/difftool.c:695
+#: builtin/difftool.c:689
 msgid "use `diff.guitool` instead of `diff.tool`"
 msgstr "use `diff.guitool` en lugar de `diff.tool`"
 
-#: builtin/difftool.c:697
+#: builtin/difftool.c:691
 msgid "perform a full-directory diff"
 msgstr "realizar un diff de todo el directorio"
 
-#: builtin/difftool.c:699
+#: builtin/difftool.c:693
 msgid "do not prompt before launching a diff tool"
 msgstr "no mostrar antes de lanzar una herramienta de diff"
 
-#: builtin/difftool.c:704
+#: builtin/difftool.c:698
 msgid "use symlinks in dir-diff mode"
 msgstr "usar enlaces simbólicos en modo dir-diff"
 
-#: builtin/difftool.c:705
+#: builtin/difftool.c:699
 msgid "tool"
 msgstr "herramienta"
 
-#: builtin/difftool.c:706
+#: builtin/difftool.c:700
 msgid "use the specified diff tool"
 msgstr "usar la herramienta de diff especificada"
 
-#: builtin/difftool.c:708
+#: builtin/difftool.c:702
 msgid "print a list of diff tools that may be used with `--tool`"
 msgstr ""
 "mostrar una lista de herramientas de diff que pueden ser usadas con `--tool`"
 
-#: builtin/difftool.c:711
+#: builtin/difftool.c:705
 msgid ""
 "make 'git-difftool' exit when an invoked diff tool returns a non - zero exit "
 "code"
@@ -12179,23 +12184,31 @@ msgstr ""
 "hacer que 'git-difftool' salga cuando una herramienta de diff retorne un "
 "código de salida distinto de cero"
 
-#: builtin/difftool.c:714
+#: builtin/difftool.c:708
 msgid "specify a custom command for viewing diffs"
 msgstr "especificar un comando personalizado para ver diffs"
 
-#: builtin/difftool.c:715
+#: builtin/difftool.c:709
 msgid "passed to `diff`"
 msgstr "pasado a `diff`"
 
-#: builtin/difftool.c:730
+#: builtin/difftool.c:724
 msgid "difftool requires worktree or --no-index"
 msgstr "difftool requiere un árbol de trabajo o --no-index"
 
-#: builtin/difftool.c:744
+#: builtin/difftool.c:731
+msgid "--dir-diff is incompatible with --no-index"
+msgstr "--dirty-diff es incompatible con --no-index"
+
+#: builtin/difftool.c:734
+msgid "--gui, --tool and --extcmd are mutually exclusive"
+msgstr "--gui, --tool y --extcmd son mutuamente exclusivas"
+
+#: builtin/difftool.c:742
 msgid "no <tool> given for --tool=<tool>"
 msgstr "no se ha proporcionado <herramienta> para --tool=<herramienta>"
 
-#: builtin/difftool.c:751
+#: builtin/difftool.c:749
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "no se ha entregado <comando> para --extcmd=<comando>"
 
@@ -15956,15 +15969,15 @@ msgstr "Enumerando objetos"
 msgid "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>)"
 msgstr "Total %<PRIu32> (delta %<PRIu32>), reusado %<PRIu32> (delta %<PRIu32>)"
 
-#: builtin/pack-refs.c:7
+#: builtin/pack-refs.c:8
 msgid "git pack-refs [<options>]"
 msgstr "git pack-refs [<opciones>]"
 
-#: builtin/pack-refs.c:15
+#: builtin/pack-refs.c:16
 msgid "pack everything"
 msgstr "empaquetar todo"
 
-#: builtin/pack-refs.c:16
+#: builtin/pack-refs.c:17
 msgid "prune loose refs (default)"
 msgstr "recortar refs perdidos (default)"
 
@@ -18835,7 +18848,7 @@ msgstr "'%s' no es una ref válida."
 msgid "cannot find commit %s (%s)"
 msgstr "no se puede encontrar el commit %s (%s)"
 
-#: builtin/show-ref.c:11
+#: builtin/show-ref.c:12
 msgid ""
 "git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
 "hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
@@ -18843,39 +18856,39 @@ msgstr ""
 "git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
 "hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<patrón>...]"
 
-#: builtin/show-ref.c:12
+#: builtin/show-ref.c:13
 msgid "git show-ref --exclude-existing[=<pattern>]"
 msgstr "git show-ref --exclude-existing[=<patrón>]"
 
-#: builtin/show-ref.c:161
+#: builtin/show-ref.c:162
 msgid "only show tags (can be combined with heads)"
 msgstr "solo mostrar tags (puede ser combinado con heads)"
 
-#: builtin/show-ref.c:162
+#: builtin/show-ref.c:163
 msgid "only show heads (can be combined with tags)"
 msgstr "solo mostrar heads (puede ser combinado con tags)"
 
-#: builtin/show-ref.c:163
+#: builtin/show-ref.c:164
 msgid "stricter reference checking, requires exact ref path"
 msgstr "revisar referencias más estrictamente, requiere ruta de ref exacta"
 
-#: builtin/show-ref.c:166 builtin/show-ref.c:168
+#: builtin/show-ref.c:167 builtin/show-ref.c:169
 msgid "show the HEAD reference, even if it would be filtered out"
 msgstr "mostrar la referencia de HEAD, incluso si se filtrara"
 
-#: builtin/show-ref.c:170
+#: builtin/show-ref.c:171
 msgid "dereference tags into object IDs"
 msgstr "tags de deferencia en IDs de objeto"
 
-#: builtin/show-ref.c:172
+#: builtin/show-ref.c:173
 msgid "only show SHA1 hash using <n> digits"
 msgstr "solo mostrar hash SHA1 usando <n> dígitos"
 
-#: builtin/show-ref.c:176
+#: builtin/show-ref.c:177
 msgid "do not print results to stdout (useful with --verify)"
 msgstr "no mostrar resultados en stdout (útil con --verify)"
 
-#: builtin/show-ref.c:178
+#: builtin/show-ref.c:179
 msgid "show refs from stdin that aren't in local repository"
 msgstr "mostrar refs de stdin que no están en el repositorio local"
 
@@ -19643,12 +19656,12 @@ msgstr "incapaz de escribir el archivo de tag"
 #: builtin/tag.c:210
 #, c-format
 msgid ""
-"You have created a nested tag. The object referred to by your new is\n"
+"You have created a nested tag. The object referred to by your new tag is\n"
 "already a tag. If you meant to tag the object that it points to, use:\n"
 "\n"
 "\tgit tag -f %s %s^{}"
 msgstr ""
-"Has creado un tag anidado. El objeto referido por el nuevo ya\n"
+"Has creado un tag anidado. El objeto referido por el nuevo tag ya\n"
 "es un tag. Si quisiste hacer el tag al objeto que apunta, usa:\n"
 "\n"
 "\tgit tag -f %s %s^{}"
@@ -20779,27 +20792,27 @@ msgstr "args"
 msgid "object filtering"
 msgstr "filtrado de objeto"
 
-#: parse-options.h:169
+#: parse-options.h:170
 msgid "expiry-date"
 msgstr "fecha de expiración"
 
-#: parse-options.h:183
+#: parse-options.h:184
 msgid "no-op (backward compatibility)"
 msgstr "no-op (compatibilidad con versiones anteriores)"
 
-#: parse-options.h:296
+#: parse-options.h:304
 msgid "be more verbose"
 msgstr "ser mas verboso"
 
-#: parse-options.h:298
+#: parse-options.h:306
 msgid "be more quiet"
 msgstr "ser mas discreto"
 
-#: parse-options.h:304
+#: parse-options.h:312
 msgid "use <n> digits to display SHA-1s"
 msgstr "usa <n> dígitos para mostrar SHA-1s"
 
-#: parse-options.h:323
+#: parse-options.h:331
 msgid "how to strip spaces and #comments from message"
 msgstr "cómo quitar espacios y #comentarios de mensajes"
 
