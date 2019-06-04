@@ -75,8 +75,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-05-31 14:35+0800\n"
-"PO-Revision-Date: 2019-05-31 09:39+0200\n"
+"POT-Creation-Date: 2019-06-04 08:24+0800\n"
+"PO-Revision-Date: 2019-06-04 19:51+0200\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -2750,8 +2750,8 @@ msgid "show the given source prefix instead of \"a/\""
 msgstr "afficher le préfixe de source indiqué au lieu de \"a/\""
 
 #: diff.c:5357
-msgid "show the given source prefix instead of \"b/\""
-msgstr "afficher le préfixe de source indiqué au lieu de \"b/\""
+msgid "show the given destination prefix instead of \"b/\""
+msgstr "afficher le préfixe de destination indiqué au lieu de \"b/\""
 
 #: diff.c:5360
 msgid "prepend an additional prefix to every line of output"
@@ -3671,7 +3671,11 @@ msgstr "impossible de combiner des spécificateurs multiples de filtre"
 msgid "expected 'tree:<depth>'"
 msgstr "attendu : 'tree:<profondeur>'"
 
-#: list-objects-filter-options.c:156
+#: list-objects-filter-options.c:84
+msgid "sparse:path filters support has been dropped"
+msgstr "sparse : le support des filtres de chemin a été abandonné"
+
+#: list-objects-filter-options.c:158
 msgid "cannot change partial clone promisor remote"
 msgstr "impossible de modifier le prometteur distant de clone partiel"
 
@@ -19972,8 +19976,10 @@ msgid ""
 "\n"
 "\tgit tag -f %s %s^{}"
 msgstr ""
-"Vous avez créé une étiquette nichée. L'objet pointé par votre nouvelle étiquette\n"
-"est déjà une étiquette. Si vous vouliez étiqueter l'objet pointé, utilisez :\n"
+"Vous avez créé une étiquette nichée. L'objet pointé par votre nouvelle "
+"étiquette\n"
+"est déjà une étiquette. Si vous vouliez étiqueter l'objet pointé, "
+"utilisez :\n"
 "\n"
 "\tgit tag -f %s %s^{}"
 
@@ -21086,7 +21092,7 @@ msgstr "impossible de récupérer par sha1 sur http intelligent"
 
 #: remote-curl.c:1120 remote-curl.c:1126
 #, c-format
-msgid "protocol error: expected sha/ref, got %s'"
+msgid "protocol error: expected sha/ref, got '%s'"
 msgstr "erreur de protocole : sha/ref attendu, '%s' trouvé"
 
 #: remote-curl.c:1138 remote-curl.c:1252
@@ -21115,11 +21121,11 @@ msgstr "remote-curl : récupération tentée sans dépôt local"
 msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl : commande inconnue '%s' depuis git"
 
-#: list-objects-filter-options.h:63
+#: list-objects-filter-options.h:61
 msgid "args"
 msgstr "args"
 
-#: list-objects-filter-options.h:64
+#: list-objects-filter-options.h:62
 msgid "object filtering"
 msgstr "filtrage d'objet"
 
