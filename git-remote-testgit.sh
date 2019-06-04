@@ -12,9 +12,14 @@ url=$2
 
 dir="$GIT_DIR/testgit/$alias"
 
-refspec="refs/heads/*:refs/testgit/$alias/heads/*"
+h_refspec="refs/heads/*:refs/testgit/$alias/heads/*"
+t_refspec="refs/tags/*:refs/testgit/$alias/tags/*"
 
-test -n "$GIT_REMOTE_TESTGIT_NOREFSPEC" && refspec=""
+if test -n "$GIT_REMOTE_TESTGIT_NOREFSPEC"
+then
+	h_refspec=""
+	t_refspec=""
+fi
 
 GIT_DIR="$url/.git"
 export GIT_DIR
@@ -37,7 +42,8 @@ do
 	capabilities)
 		echo 'import'
 		echo 'export'
-		test -n "$refspec" && echo "refspec $refspec"
+		test -n "$h_refspec" && echo "refspec $h_refspec"
+		test -n "$t_refspec" && echo "refspec $t_refspec"
 		if test -n "$gitmarks"
 		then
 			echo "*import-marks $gitmarks"
@@ -49,7 +55,7 @@ do
 		echo
 		;;
 	list)
-		git for-each-ref --format='? %(refname)' 'refs/heads/'
+		git for-each-ref --format='? %(refname)' 'refs/heads/' 'refs/tags/'
 		head=$(git symbolic-ref HEAD)
 		echo "@$head HEAD"
 		echo
@@ -78,7 +84,8 @@ do
 
 		echo "feature done"
 		git fast-export \
-			${refspec:+"--refspec=$refspec"} \
+			${h_refspec:+"--refspec=$h_refspec"} \
+			${t_refspec:+"--refspec=$t_refspec"} \
 			${testgitmarks:+"--import-marks=$testgitmarks"} \
 			${testgitmarks:+"--export-marks=$testgitmarks"} \
 			$refs

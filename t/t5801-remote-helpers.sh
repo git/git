@@ -301,4 +301,14 @@ test_expect_success 'fetch url' '
 	compare_refs server HEAD local FETCH_HEAD
 '
 
+test_expect_failure 'fetch tag' '
+	(cd server &&
+	 git tag v1.0
+	) &&
+	(cd local &&
+	 git fetch
+	) &&
+	compare_refs local v1.0 server v1.0
+'
+
 test_done
