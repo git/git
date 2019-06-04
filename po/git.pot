@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-05-31 14:35+0800\n"
+"POT-Creation-Date: 2019-06-04 08:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2473,7 +2473,7 @@ msgid "show the given source prefix instead of \"a/\""
 msgstr ""
 
 #: diff.c:5357
-msgid "show the given source prefix instead of \"b/\""
+msgid "show the given destination prefix instead of \"b/\""
 msgstr ""
 
 #: diff.c:5360
@@ -3329,7 +3329,11 @@ msgstr ""
 msgid "expected 'tree:<depth>'"
 msgstr ""
 
-#: list-objects-filter-options.c:156
+#: list-objects-filter-options.c:84
+msgid "sparse:path filters support has been dropped"
+msgstr ""
+
+#: list-objects-filter-options.c:158
 msgid "cannot change partial clone promisor remote"
 msgstr ""
 
@@ -19438,7 +19442,7 @@ msgstr ""
 
 #: remote-curl.c:1120 remote-curl.c:1126
 #, c-format
-msgid "protocol error: expected sha/ref, got %s'"
+msgid "protocol error: expected sha/ref, got '%s'"
 msgstr ""
 
 #: remote-curl.c:1138 remote-curl.c:1252
@@ -19467,11 +19471,11 @@ msgstr ""
 msgid "remote-curl: unknown command '%s' from git"
 msgstr ""
 
-#: list-objects-filter-options.h:63
+#: list-objects-filter-options.h:61
 msgid "args"
 msgstr ""
 
-#: list-objects-filter-options.h:64
+#: list-objects-filter-options.h:62
 msgid "object filtering"
 msgstr ""
 
