@@ -124,7 +124,7 @@ test_expect_success 'forced push' '
 '
 
 test_expect_success 'cloning without refspec' '
-	GIT_REMOTE_TESTGIT_REFSPEC="" \
+	GIT_REMOTE_TESTGIT_NOREFSPEC=1 \
 	git clone "testgit::${PWD}/server" local2 2>error &&
 	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
@@ -133,7 +133,7 @@ test_expect_success 'cloning without refspec' '
 test_expect_success 'pulling without refspecs' '
 	(cd local2 &&
 	git reset --hard &&
-	GIT_REMOTE_TESTGIT_REFSPEC="" git pull 2>../error) &&
+	GIT_REMOTE_TESTGIT_NOREFSPEC=1 git pull 2>../error) &&
 	test_i18ngrep "this remote helper should implement refspec capability" error &&
 	compare_refs local2 HEAD server HEAD
 '
@@ -143,8 +143,8 @@ test_expect_success 'pushing without refspecs' '
 	(cd local2 &&
 	echo content >>file &&
 	git commit -a -m ten &&
-	GIT_REMOTE_TESTGIT_REFSPEC="" &&
-	export GIT_REMOTE_TESTGIT_REFSPEC &&
+	GIT_REMOTE_TESTGIT_NOREFSPEC=1 &&
+	export GIT_REMOTE_TESTGIT_NOREFSPEC &&
 	test_must_fail git push 2>../error) &&
 	test_i18ngrep "remote-helper doesn.t support push; refspec needed" error
 '

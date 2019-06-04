@@ -11,13 +11,10 @@ fi
 url=$2
 
 dir="$GIT_DIR/testgit/$alias"
-prefix="refs/testgit/$alias"
 
-default_refspec="refs/heads/*:${prefix}/heads/*"
+refspec="refs/heads/*:refs/testgit/$alias/heads/*"
 
-refspec="${GIT_REMOTE_TESTGIT_REFSPEC-$default_refspec}"
-
-test -z "$refspec" && prefix="refs"
+test -n "$GIT_REMOTE_TESTGIT_NOREFSPEC" && refspec=""
 
 GIT_DIR="$url/.git"
 export GIT_DIR
@@ -81,10 +78,10 @@ do
 
 		echo "feature done"
 		git fast-export \
+			${refspec:+"--refspec=$refspec"} \
 			${testgitmarks:+"--import-marks=$testgitmarks"} \
 			${testgitmarks:+"--export-marks=$testgitmarks"} \
-			$refs |
-		sed -e "s#refs/heads/#${prefix}/heads/#g"
+			$refs
 		echo "done"
 		;;
 	export)
