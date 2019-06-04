@@ -63,6 +63,11 @@ chomp(@tracked_pages);
 my @tracked_categories = split(/[ \n]/, run_git("config --get-all remote.${remotename}.categories"));
 chomp(@tracked_categories);
 
+# Just like @tracked_categories, but for MediaWiki namespaces.
+my @tracked_namespaces = split(/[ \n]/, run_git("config --get-all remote.${remotename}.namespaces"));
+for (@tracked_namespaces) { s/_/ /g; }
+chomp(@tracked_namespaces);
+
 # Import media files on pull
 my $import_media = run_git("config --get --bool remote.${remotename}.mediaimport");
 chomp($import_media);
@@ -256,6 +261,32 @@ sub get_mw_tracked_categories {
 	return;
 }
 
+sub get_mw_tracked_namespaces {
+    my $pages = shift;
+    foreach my $local_namespace (sort @tracked_namespaces) {
+        my $namespace_id;
+        if ($local_namespace eq "(Main)") {
+            $namespace_id = 0;
+        } else {
+            $namespace_id = get_mw_namespace_id($local_namespace);
+        }
+        # virtual namespaces don't support allpages
+        next if !defined($namespace_id) || $namespace_id < 0;
+        my $mw_pages = $mediawiki->list( {
+            action => 'query',
+            list => 'allpages',
+            apnamespace => $namespace_id,
+            aplimit => 'max' } )
+            || die $mediawiki->{error}->{code} . ': '
+                . $mediawiki->{error}->{details} . "\n";
+        print {*STDERR} "$#{$mw_pages} found in namespace $local_namespace ($namespace_id)\n";
+        foreach my $page (@{$mw_pages}) {
+            $pages->{$page->{title}} = $page;
+        }
+    }
+    return;
+}
+
 sub get_mw_all_pages {
 	my $pages = shift;
 	# No user-provided list, get the list of pages from the API.
@@ -318,6 +349,10 @@ sub get_mw_pages {
 	if (@tracked_categories) {
 		$user_defined = 1;
 		get_mw_tracked_categories(\%pages);
+	}
+	if (@tracked_namespaces) {
+		$user_defined = 1;
+		get_mw_tracked_namespaces(\%pages);
 	}
 	if (!$user_defined) {
 		get_mw_all_pages(\%pages);
@@ -857,7 +892,7 @@ sub mw_import_revids {
 
 	my $n = 0;
 	my $n_actual = 0;
-	my $last_timestamp = 0; # Placeholer in case $rev->timestamp is undefined
+	my $last_timestamp = 0; # Placeholder in case $rev->timestamp is undefined
 
 	foreach my $pagerevid (@{$revision_ids}) {
 	        # Count page even if we skip it, since we display
@@ -1308,7 +1343,8 @@ sub get_mw_namespace_id {
 	my $id;
 
 	if (!defined $ns) {
-		print {*STDERR} "No such namespace ${name} on MediaWiki.\n";
+		my @namespaces = map { s/ /_/g; $_; } sort keys %namespace_id;
+		print {*STDERR} "No such namespace ${name} on MediaWiki, known namespaces: @namespaces\n";
 		$ns = {is_namespace => 0};
 		$namespace_id{$name} = $ns;
 	}

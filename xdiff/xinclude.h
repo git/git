@@ -13,8 +13,8 @@
  *  Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  License along with this library; if not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  *
@@ -23,13 +23,7 @@
 #if !defined(XINCLUDE_H)
 #define XINCLUDE_H
 
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <limits.h>
-
+#include "git-compat-util.h"
 #include "xmacros.h"
 #include "xdiff.h"
 #include "xtypes.h"

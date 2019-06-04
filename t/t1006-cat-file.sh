@@ -140,15 +140,17 @@ test_expect_success '--batch-check without %(rest) considers whole line' '
 	test_cmp expect actual
 '
 
+test_oid_init
+
 tree_sha1=$(git write-tree)
-tree_size=33
+tree_size=$(($(test_oid rawsz) + 13))
 tree_pretty_content="100644 blob $hello_sha1	hello"
 
 run_tests 'tree' $tree_sha1 $tree_size "" "$tree_pretty_content"
 
 commit_message="Initial commit"
 commit_sha1=$(echo_without_newline "$commit_message" | git commit-tree $tree_sha1)
-commit_size=177
+commit_size=$(($(test_oid hexsz) + 137))
 commit_content="tree $tree_sha1
 author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 0000000000 +0000
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 0000000000 +0000
@@ -218,8 +220,8 @@ test_expect_success "--batch-check for a non-existent hash" '
     test "0000000000000000000000000000000000000042 missing
 0000000000000000000000000000000000000084 missing" = \
     "$( ( echo 0000000000000000000000000000000000000042;
-         echo_without_newline 0000000000000000000000000000000000000084; ) \
-       | git cat-file --batch-check)"
+	 echo_without_newline 0000000000000000000000000000000000000084; ) |
+       git cat-file --batch-check)"
 '
 
 test_expect_success "--batch for an existent and a non-existent hash" '
@@ -227,8 +229,8 @@ test_expect_success "--batch for an existent and a non-existent hash" '
 $tag_content
 0000000000000000000000000000000000000000 missing" = \
     "$( ( echo $tag_sha1;
-         echo_without_newline 0000000000000000000000000000000000000000; ) \
-       | git cat-file --batch)"
+	 echo_without_newline 0000000000000000000000000000000000000000; ) |
+       git cat-file --batch)"
 '
 
 test_expect_success "--batch-check for an empty line" '
@@ -236,8 +238,8 @@ test_expect_success "--batch-check for an empty line" '
 '
 
 test_expect_success 'empty --batch-check notices missing object' '
-	echo "$_z40 missing" >expect &&
-	echo "$_z40" | git cat-file --batch-check="" >actual &&
+	echo "$ZERO_OID missing" >expect &&
+	echo "$ZERO_OID" | git cat-file --batch-check="" >actual &&
 	test_cmp expect actual
 '
 
@@ -282,7 +284,7 @@ test_expect_success "--batch-check with multiple sha1s gives correct format" '
 '
 
 test_expect_success 'setup blobs which are likely to delta' '
-	test-genrandom foo 10240 >foo &&
+	test-tool genrandom foo 10240 >foo &&
 	{ cat foo; echo plus; } >foo-plus &&
 	git add foo foo-plus &&
 	git commit -m foo &&
@@ -294,8 +296,8 @@ test_expect_success 'setup blobs which are likely to delta' '
 
 test_expect_success 'confirm that neither loose blob is a delta' '
 	cat >expect <<-EOF &&
-	$_z40
-	$_z40
+	$ZERO_OID
+	$ZERO_OID
 	EOF
 	git cat-file --batch-check="%(deltabase)" <blobs >actual &&
 	test_cmp expect actual
@@ -550,8 +552,8 @@ test_expect_success 'git cat-file --batch --follow-symlink returns correct sha a
 test_expect_success 'cat-file --batch-all-objects shows all objects' '
 	# make new repos so we know the full set of objects; we will
 	# also make sure that there are some packed and some loose
-	# objects, some referenced and some not, and that there are
-	# some available only via alternates.
+	# objects, some referenced and some not, some duplicates, and that
+	# there are some available only via alternates.
 	git init all-one &&
 	(
 		cd all-one &&
@@ -567,9 +569,22 @@ test_expect_success 'cat-file --batch-all-objects shows all objects' '
 		cd all-two &&
 		echo local-unref | git hash-object -w --stdin
 	) >>expect.unsorted &&
+	git -C all-two rev-parse HEAD:file |
+		git -C all-two pack-objects .git/objects/pack/pack &&
 	sort <expect.unsorted >expect &&
 	git -C all-two cat-file --batch-all-objects \
 				--batch-check="%(objectname)" >actual &&
+	test_cmp expect actual
+'
+
+# The only user-visible difference is that the objects are no longer sorted,
+# and the resulting sort order is undefined. So we can only check that it
+# produces the same objects as the ordered case, but that at least exercises
+# the code.
+test_expect_success 'cat-file --unordered works' '
+	git -C all-two cat-file --batch-all-objects --unordered \
+				--batch-check="%(objectname)" >actual.unsorted &&
+	sort <actual.unsorted >actual &&
 	test_cmp expect actual
 '
 

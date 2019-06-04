@@ -75,18 +75,18 @@ struct buffer {
 };
 
 /* Curl request read/write callbacks */
-extern size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-extern size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-extern size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 #ifndef NO_CURL_IOCTL
-extern curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
+curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
 #endif
 
 /* Slot lifecycle functions */
-extern struct active_request_slot *get_active_slot(void);
-extern int start_active_slot(struct active_request_slot *slot);
-extern void run_active_slot(struct active_request_slot *slot);
-extern void finish_all_active_slots(void);
+struct active_request_slot *get_active_slot(void);
+int start_active_slot(struct active_request_slot *slot);
+void run_active_slot(struct active_request_slot *slot);
+void finish_all_active_slots(void);
 
 /*
  * This will run one slot to completion in a blocking manner, similar to how
@@ -98,20 +98,20 @@ int run_one_slot(struct active_request_slot *slot,
 		 struct slot_results *results);
 
 #ifdef USE_CURL_MULTI
-extern void fill_active_slots(void);
-extern void add_fill_function(void *data, int (*fill)(void *));
-extern void step_active_slots(void);
+void fill_active_slots(void);
+void add_fill_function(void *data, int (*fill)(void *));
+void step_active_slots(void);
 #endif
 
-extern void http_init(struct remote *remote, const char *url,
-		      int proactive_auth);
-extern void http_cleanup(void);
-extern struct curl_slist *http_copy_default_headers(void);
+void http_init(struct remote *remote, const char *url,
+	       int proactive_auth);
+void http_cleanup(void);
+struct curl_slist *http_copy_default_headers(void);
 
 extern long int git_curl_ipresolve;
 extern int active_requests;
 extern int http_is_verbose;
-extern size_t http_post_buffer;
+extern ssize_t http_post_buffer;
 extern struct credential http_auth;
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
@@ -136,17 +136,25 @@ static inline int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
+/*
+ * Normalize curl results to handle CURL_FAILONERROR (or lack thereof). Failing
+ * http codes have their "result" converted to CURLE_HTTP_RETURNED_ERROR, and
+ * an appropriate string placed in the errorstr buffer (pass curl_errorstr if
+ * you don't have a custom buffer).
+ */
+void normalize_curl_result(CURLcode *result, long http_code, char *errorstr,
+			   size_t errorlen);
+
 /* Helpers for modifying and creating URLs */
-extern void append_remote_object_url(struct strbuf *buf, const char *url,
-				     const char *hex,
-				     int only_two_digit_prefix);
-extern char *get_remote_object_url(const char *url, const char *hex,
-				   int only_two_digit_prefix);
+void append_remote_object_url(struct strbuf *buf, const char *url,
+			      const char *hex,
+			      int only_two_digit_prefix);
+char *get_remote_object_url(const char *url, const char *hex,
+			    int only_two_digit_prefix);
 
 /* Options for http_get_*() */
 struct http_get_options {
 	unsigned no_cache:1,
-		 keep_error:1,
 		 initial_request:1;
 
 	/* If non-NULL, returns the content-type of the response. */
@@ -172,6 +180,13 @@ struct http_get_options {
 	 * for details.
 	 */
 	struct strbuf *base_url;
+
+	/*
+	 * If not NULL, contains additional HTTP headers to be sent with the
+	 * request. The strings in the list must not be freed until after the
+	 * request has completed.
+	 */
+	struct string_list *extra_headers;
 };
 
 /* Return values for http_get_*() */
@@ -189,49 +204,49 @@ struct http_get_options {
  */
 int http_get_strbuf(const char *url, struct strbuf *result, struct http_get_options *options);
 
-extern int http_fetch_ref(const char *base, struct ref *ref);
+int http_fetch_ref(const char *base, struct ref *ref);
 
 /* Helpers for fetching packs */
-extern int http_get_info_packs(const char *base_url,
-	struct packed_git **packs_head);
+int http_get_info_packs(const char *base_url,
+			struct packed_git **packs_head);
 
 struct http_pack_request {
 	char *url;
 	struct packed_git *target;
 	struct packed_git **lst;
 	FILE *packfile;
-	char tmpfile[PATH_MAX];
+	struct strbuf tmpfile;
 	struct active_request_slot *slot;
 };
 
-extern struct http_pack_request *new_http_pack_request(
+struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url);
-extern int finish_http_pack_request(struct http_pack_request *preq);
-extern void release_http_pack_request(struct http_pack_request *preq);
+int finish_http_pack_request(struct http_pack_request *preq);
+void release_http_pack_request(struct http_pack_request *preq);
 
 /* Helpers for fetching object */
 struct http_object_request {
 	char *url;
-	char tmpfile[PATH_MAX];
+	struct strbuf tmpfile;
 	int localfile;
 	CURLcode curl_result;
 	char errorstr[CURL_ERROR_SIZE];
 	long http_code;
-	unsigned char sha1[20];
-	unsigned char real_sha1[20];
-	git_SHA_CTX c;
+	struct object_id oid;
+	struct object_id real_oid;
+	git_hash_ctx c;
 	git_zstream stream;
 	int zret;
 	int rename;
 	struct active_request_slot *slot;
 };
 
-extern struct http_object_request *new_http_object_request(
-	const char *base_url, unsigned char *sha1);
-extern void process_http_object_request(struct http_object_request *freq);
-extern int finish_http_object_request(struct http_object_request *freq);
-extern void abort_http_object_request(struct http_object_request *freq);
-extern void release_http_object_request(struct http_object_request *freq);
+struct http_object_request *new_http_object_request(
+	const char *base_url, const struct object_id *oid);
+void process_http_object_request(struct http_object_request *freq);
+int finish_http_object_request(struct http_object_request *freq);
+void abort_http_object_request(struct http_object_request *freq);
+void release_http_object_request(struct http_object_request *freq);
 
 /* setup routine for curl_easy_setopt CURLOPT_DEBUGFUNCTION */
 void setup_curl_trace(CURL *handle);

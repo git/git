@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git' [--version] [--help] [-C <path>] [-c <name>=<value>]
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-    [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
+    [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
     [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
     [--super-prefix=<path>]
     <command> [<args>]
@@ -35,492 +35,6 @@ manual page gives you an overview of the command-line command syntax.
 A formatted and hyperlinked copy of the latest Git documentation
 can be viewed at `https://git.github.io/htmldocs/git.html`.
 
-ifdef::stalenotes[]
-[NOTE]
-============
-
-You are reading the documentation for the latest (possibly
-unreleased) version of Git, that is available from the 'master'
-branch of the `git.git` repository.
-Documentation for older releases are available here:
-
-* link:v2.11.0/git.html[documentation for release 2.11]
-
-* release notes for
-  link:RelNotes/2.11.0.txt[2.11].
-
-* link:v2.10.2/git.html[documentation for release 2.10.2]
-
-* release notes for
-  link:RelNotes/2.10.2.txt[2.10.2],
-  link:RelNotes/2.10.1.txt[2.10.1],
-  link:RelNotes/2.10.0.txt[2.10].
-
-* link:v2.9.3/git.html[documentation for release 2.9.3]
-
-* release notes for
-  link:RelNotes/2.9.3.txt[2.9.3],
-  link:RelNotes/2.9.2.txt[2.9.2],
-  link:RelNotes/2.9.1.txt[2.9.1],
-  link:RelNotes/2.9.0.txt[2.9].
-
-* link:v2.8.4/git.html[documentation for release 2.8.4]
-
-* release notes for
-  link:RelNotes/2.8.4.txt[2.8.4],
-  link:RelNotes/2.8.3.txt[2.8.3],
-  link:RelNotes/2.8.2.txt[2.8.2],
-  link:RelNotes/2.8.1.txt[2.8.1],
-  link:RelNotes/2.8.0.txt[2.8].
-
-* link:v2.7.3/git.html[documentation for release 2.7.3]
-
-* release notes for
-  link:RelNotes/2.7.3.txt[2.7.3],
-  link:RelNotes/2.7.2.txt[2.7.2],
-  link:RelNotes/2.7.1.txt[2.7.1],
-  link:RelNotes/2.7.0.txt[2.7].
-
-* link:v2.6.6/git.html[documentation for release 2.6.6]
-
-* release notes for
-  link:RelNotes/2.6.6.txt[2.6.6],
-  link:RelNotes/2.6.5.txt[2.6.5],
-  link:RelNotes/2.6.4.txt[2.6.4],
-  link:RelNotes/2.6.3.txt[2.6.3],
-  link:RelNotes/2.6.2.txt[2.6.2],
-  link:RelNotes/2.6.1.txt[2.6.1],
-  link:RelNotes/2.6.0.txt[2.6].
-
-* link:v2.5.5/git.html[documentation for release 2.5.5]
-
-* release notes for
-  link:RelNotes/2.5.5.txt[2.5.5],
-  link:RelNotes/2.5.4.txt[2.5.4],
-  link:RelNotes/2.5.3.txt[2.5.3],
-  link:RelNotes/2.5.2.txt[2.5.2],
-  link:RelNotes/2.5.1.txt[2.5.1],
-  link:RelNotes/2.5.0.txt[2.5].
-
-* link:v2.4.11/git.html[documentation for release 2.4.11]
-
-* release notes for
-  link:RelNotes/2.4.11.txt[2.4.11],
-  link:RelNotes/2.4.10.txt[2.4.10],
-  link:RelNotes/2.4.9.txt[2.4.9],
-  link:RelNotes/2.4.8.txt[2.4.8],
-  link:RelNotes/2.4.7.txt[2.4.7],
-  link:RelNotes/2.4.6.txt[2.4.6],
-  link:RelNotes/2.4.5.txt[2.4.5],
-  link:RelNotes/2.4.4.txt[2.4.4],
-  link:RelNotes/2.4.3.txt[2.4.3],
-  link:RelNotes/2.4.2.txt[2.4.2],
-  link:RelNotes/2.4.1.txt[2.4.1],
-  link:RelNotes/2.4.0.txt[2.4].
-
-* link:v2.3.10/git.html[documentation for release 2.3.10]
-
-* release notes for
-  link:RelNotes/2.3.10.txt[2.3.10],
-  link:RelNotes/2.3.9.txt[2.3.9],
-  link:RelNotes/2.3.8.txt[2.3.8],
-  link:RelNotes/2.3.7.txt[2.3.7],
-  link:RelNotes/2.3.6.txt[2.3.6],
-  link:RelNotes/2.3.5.txt[2.3.5],
-  link:RelNotes/2.3.4.txt[2.3.4],
-  link:RelNotes/2.3.3.txt[2.3.3],
-  link:RelNotes/2.3.2.txt[2.3.2],
-  link:RelNotes/2.3.1.txt[2.3.1],
-  link:RelNotes/2.3.0.txt[2.3].
-
-* link:v2.2.3/git.html[documentation for release 2.2.3]
-
-* release notes for
-  link:RelNotes/2.2.3.txt[2.2.3],
-  link:RelNotes/2.2.2.txt[2.2.2],
-  link:RelNotes/2.2.1.txt[2.2.1],
-  link:RelNotes/2.2.0.txt[2.2].
-
-* link:v2.1.4/git.html[documentation for release 2.1.4]
-
-* release notes for
-  link:RelNotes/2.1.4.txt[2.1.4],
-  link:RelNotes/2.1.3.txt[2.1.3],
-  link:RelNotes/2.1.2.txt[2.1.2],
-  link:RelNotes/2.1.1.txt[2.1.1],
-  link:RelNotes/2.1.0.txt[2.1].
-
-* link:v2.0.5/git.html[documentation for release 2.0.5]
-
-* release notes for
-  link:RelNotes/2.0.5.txt[2.0.5],
-  link:RelNotes/2.0.4.txt[2.0.4],
-  link:RelNotes/2.0.3.txt[2.0.3],
-  link:RelNotes/2.0.2.txt[2.0.2],
-  link:RelNotes/2.0.1.txt[2.0.1],
-  link:RelNotes/2.0.0.txt[2.0.0].
-
-* link:v1.9.5/git.html[documentation for release 1.9.5]
-
-* release notes for
-  link:RelNotes/1.9.5.txt[1.9.5],
-  link:RelNotes/1.9.4.txt[1.9.4],
-  link:RelNotes/1.9.3.txt[1.9.3],
-  link:RelNotes/1.9.2.txt[1.9.2],
-  link:RelNotes/1.9.1.txt[1.9.1],
-  link:RelNotes/1.9.0.txt[1.9.0].
-
-* link:v1.8.5.6/git.html[documentation for release 1.8.5.6]
-
-* release notes for
-  link:RelNotes/1.8.5.6.txt[1.8.5.6],
-  link:RelNotes/1.8.5.5.txt[1.8.5.5],
-  link:RelNotes/1.8.5.4.txt[1.8.5.4],
-  link:RelNotes/1.8.5.3.txt[1.8.5.3],
-  link:RelNotes/1.8.5.2.txt[1.8.5.2],
-  link:RelNotes/1.8.5.1.txt[1.8.5.1],
-  link:RelNotes/1.8.5.txt[1.8.5].
-
-* link:v1.8.4.5/git.html[documentation for release 1.8.4.5]
-
-* release notes for
-  link:RelNotes/1.8.4.5.txt[1.8.4.5],
-  link:RelNotes/1.8.4.4.txt[1.8.4.4],
-  link:RelNotes/1.8.4.3.txt[1.8.4.3],
-  link:RelNotes/1.8.4.2.txt[1.8.4.2],
-  link:RelNotes/1.8.4.1.txt[1.8.4.1],
-  link:RelNotes/1.8.4.txt[1.8.4].
-
-* link:v1.8.3.4/git.html[documentation for release 1.8.3.4]
-
-* release notes for
-  link:RelNotes/1.8.3.4.txt[1.8.3.4],
-  link:RelNotes/1.8.3.3.txt[1.8.3.3],
-  link:RelNotes/1.8.3.2.txt[1.8.3.2],
-  link:RelNotes/1.8.3.1.txt[1.8.3.1],
-  link:RelNotes/1.8.3.txt[1.8.3].
-
-* link:v1.8.2.3/git.html[documentation for release 1.8.2.3]
-
-* release notes for
-  link:RelNotes/1.8.2.3.txt[1.8.2.3],
-  link:RelNotes/1.8.2.2.txt[1.8.2.2],
-  link:RelNotes/1.8.2.1.txt[1.8.2.1],
-  link:RelNotes/1.8.2.txt[1.8.2].
-
-* link:v1.8.1.6/git.html[documentation for release 1.8.1.6]
-
-* release notes for
-  link:RelNotes/1.8.1.6.txt[1.8.1.6],
-  link:RelNotes/1.8.1.5.txt[1.8.1.5],
-  link:RelNotes/1.8.1.4.txt[1.8.1.4],
-  link:RelNotes/1.8.1.3.txt[1.8.1.3],
-  link:RelNotes/1.8.1.2.txt[1.8.1.2],
-  link:RelNotes/1.8.1.1.txt[1.8.1.1],
-  link:RelNotes/1.8.1.txt[1.8.1].
-
-* link:v1.8.0.3/git.html[documentation for release 1.8.0.3]
-
-* release notes for
-  link:RelNotes/1.8.0.3.txt[1.8.0.3],
-  link:RelNotes/1.8.0.2.txt[1.8.0.2],
-  link:RelNotes/1.8.0.1.txt[1.8.0.1],
-  link:RelNotes/1.8.0.txt[1.8.0].
-
-* link:v1.7.12.4/git.html[documentation for release 1.7.12.4]
-
-* release notes for
-  link:RelNotes/1.7.12.4.txt[1.7.12.4],
-  link:RelNotes/1.7.12.3.txt[1.7.12.3],
-  link:RelNotes/1.7.12.2.txt[1.7.12.2],
-  link:RelNotes/1.7.12.1.txt[1.7.12.1],
-  link:RelNotes/1.7.12.txt[1.7.12].
-
-* link:v1.7.11.7/git.html[documentation for release 1.7.11.7]
-
-* release notes for
-  link:RelNotes/1.7.11.7.txt[1.7.11.7],
-  link:RelNotes/1.7.11.6.txt[1.7.11.6],
-  link:RelNotes/1.7.11.5.txt[1.7.11.5],
-  link:RelNotes/1.7.11.4.txt[1.7.11.4],
-  link:RelNotes/1.7.11.3.txt[1.7.11.3],
-  link:RelNotes/1.7.11.2.txt[1.7.11.2],
-  link:RelNotes/1.7.11.1.txt[1.7.11.1],
-  link:RelNotes/1.7.11.txt[1.7.11].
-
-* link:v1.7.10.5/git.html[documentation for release 1.7.10.5]
-
-* release notes for
-  link:RelNotes/1.7.10.5.txt[1.7.10.5],
-  link:RelNotes/1.7.10.4.txt[1.7.10.4],
-  link:RelNotes/1.7.10.3.txt[1.7.10.3],
-  link:RelNotes/1.7.10.2.txt[1.7.10.2],
-  link:RelNotes/1.7.10.1.txt[1.7.10.1],
-  link:RelNotes/1.7.10.txt[1.7.10].
-
-* link:v1.7.9.7/git.html[documentation for release 1.7.9.7]
-
-* release notes for
-  link:RelNotes/1.7.9.7.txt[1.7.9.7],
-  link:RelNotes/1.7.9.6.txt[1.7.9.6],
-  link:RelNotes/1.7.9.5.txt[1.7.9.5],
-  link:RelNotes/1.7.9.4.txt[1.7.9.4],
-  link:RelNotes/1.7.9.3.txt[1.7.9.3],
-  link:RelNotes/1.7.9.2.txt[1.7.9.2],
-  link:RelNotes/1.7.9.1.txt[1.7.9.1],
-  link:RelNotes/1.7.9.txt[1.7.9].
-
-* link:v1.7.8.6/git.html[documentation for release 1.7.8.6]
-
-* release notes for
-  link:RelNotes/1.7.8.6.txt[1.7.8.6],
-  link:RelNotes/1.7.8.5.txt[1.7.8.5],
-  link:RelNotes/1.7.8.4.txt[1.7.8.4],
-  link:RelNotes/1.7.8.3.txt[1.7.8.3],
-  link:RelNotes/1.7.8.2.txt[1.7.8.2],
-  link:RelNotes/1.7.8.1.txt[1.7.8.1],
-  link:RelNotes/1.7.8.txt[1.7.8].
-
-* link:v1.7.7.7/git.html[documentation for release 1.7.7.7]
-
-* release notes for
-  link:RelNotes/1.7.7.7.txt[1.7.7.7],
-  link:RelNotes/1.7.7.6.txt[1.7.7.6],
-  link:RelNotes/1.7.7.5.txt[1.7.7.5],
-  link:RelNotes/1.7.7.4.txt[1.7.7.4],
-  link:RelNotes/1.7.7.3.txt[1.7.7.3],
-  link:RelNotes/1.7.7.2.txt[1.7.7.2],
-  link:RelNotes/1.7.7.1.txt[1.7.7.1],
-  link:RelNotes/1.7.7.txt[1.7.7].
-
-* link:v1.7.6.6/git.html[documentation for release 1.7.6.6]
-
-* release notes for
-  link:RelNotes/1.7.6.6.txt[1.7.6.6],
-  link:RelNotes/1.7.6.5.txt[1.7.6.5],
-  link:RelNotes/1.7.6.4.txt[1.7.6.4],
-  link:RelNotes/1.7.6.3.txt[1.7.6.3],
-  link:RelNotes/1.7.6.2.txt[1.7.6.2],
-  link:RelNotes/1.7.6.1.txt[1.7.6.1],
-  link:RelNotes/1.7.6.txt[1.7.6].
-
-* link:v1.7.5.4/git.html[documentation for release 1.7.5.4]
-
-* release notes for
-  link:RelNotes/1.7.5.4.txt[1.7.5.4],
-  link:RelNotes/1.7.5.3.txt[1.7.5.3],
-  link:RelNotes/1.7.5.2.txt[1.7.5.2],
-  link:RelNotes/1.7.5.1.txt[1.7.5.1],
-  link:RelNotes/1.7.5.txt[1.7.5].
-
-* link:v1.7.4.5/git.html[documentation for release 1.7.4.5]
-
-* release notes for
-  link:RelNotes/1.7.4.5.txt[1.7.4.5],
-  link:RelNotes/1.7.4.4.txt[1.7.4.4],
-  link:RelNotes/1.7.4.3.txt[1.7.4.3],
-  link:RelNotes/1.7.4.2.txt[1.7.4.2],
-  link:RelNotes/1.7.4.1.txt[1.7.4.1],
-  link:RelNotes/1.7.4.txt[1.7.4].
-
-* link:v1.7.3.5/git.html[documentation for release 1.7.3.5]
-
-* release notes for
-  link:RelNotes/1.7.3.5.txt[1.7.3.5],
-  link:RelNotes/1.7.3.4.txt[1.7.3.4],
-  link:RelNotes/1.7.3.3.txt[1.7.3.3],
-  link:RelNotes/1.7.3.2.txt[1.7.3.2],
-  link:RelNotes/1.7.3.1.txt[1.7.3.1],
-  link:RelNotes/1.7.3.txt[1.7.3].
-
-* link:v1.7.2.5/git.html[documentation for release 1.7.2.5]
-
-* release notes for
-  link:RelNotes/1.7.2.5.txt[1.7.2.5],
-  link:RelNotes/1.7.2.4.txt[1.7.2.4],
-  link:RelNotes/1.7.2.3.txt[1.7.2.3],
-  link:RelNotes/1.7.2.2.txt[1.7.2.2],
-  link:RelNotes/1.7.2.1.txt[1.7.2.1],
-  link:RelNotes/1.7.2.txt[1.7.2].
-
-* link:v1.7.1.4/git.html[documentation for release 1.7.1.4]
-
-* release notes for
-  link:RelNotes/1.7.1.4.txt[1.7.1.4],
-  link:RelNotes/1.7.1.3.txt[1.7.1.3],
-  link:RelNotes/1.7.1.2.txt[1.7.1.2],
-  link:RelNotes/1.7.1.1.txt[1.7.1.1],
-  link:RelNotes/1.7.1.txt[1.7.1].
-
-* link:v1.7.0.9/git.html[documentation for release 1.7.0.9]
-
-* release notes for
-  link:RelNotes/1.7.0.9.txt[1.7.0.9],
-  link:RelNotes/1.7.0.8.txt[1.7.0.8],
-  link:RelNotes/1.7.0.7.txt[1.7.0.7],
-  link:RelNotes/1.7.0.6.txt[1.7.0.6],
-  link:RelNotes/1.7.0.5.txt[1.7.0.5],
-  link:RelNotes/1.7.0.4.txt[1.7.0.4],
-  link:RelNotes/1.7.0.3.txt[1.7.0.3],
-  link:RelNotes/1.7.0.2.txt[1.7.0.2],
-  link:RelNotes/1.7.0.1.txt[1.7.0.1],
-  link:RelNotes/1.7.0.txt[1.7.0].
-
-* link:v1.6.6.3/git.html[documentation for release 1.6.6.3]
-
-* release notes for
-  link:RelNotes/1.6.6.3.txt[1.6.6.3],
-  link:RelNotes/1.6.6.2.txt[1.6.6.2],
-  link:RelNotes/1.6.6.1.txt[1.6.6.1],
-  link:RelNotes/1.6.6.txt[1.6.6].
-
-* link:v1.6.5.9/git.html[documentation for release 1.6.5.9]
-
-* release notes for
-  link:RelNotes/1.6.5.9.txt[1.6.5.9],
-  link:RelNotes/1.6.5.8.txt[1.6.5.8],
-  link:RelNotes/1.6.5.7.txt[1.6.5.7],
-  link:RelNotes/1.6.5.6.txt[1.6.5.6],
-  link:RelNotes/1.6.5.5.txt[1.6.5.5],
-  link:RelNotes/1.6.5.4.txt[1.6.5.4],
-  link:RelNotes/1.6.5.3.txt[1.6.5.3],
-  link:RelNotes/1.6.5.2.txt[1.6.5.2],
-  link:RelNotes/1.6.5.1.txt[1.6.5.1],
-  link:RelNotes/1.6.5.txt[1.6.5].
-
-* link:v1.6.4.5/git.html[documentation for release 1.6.4.5]
-
-* release notes for
-  link:RelNotes/1.6.4.5.txt[1.6.4.5],
-  link:RelNotes/1.6.4.4.txt[1.6.4.4],
-  link:RelNotes/1.6.4.3.txt[1.6.4.3],
-  link:RelNotes/1.6.4.2.txt[1.6.4.2],
-  link:RelNotes/1.6.4.1.txt[1.6.4.1],
-  link:RelNotes/1.6.4.txt[1.6.4].
-
-* link:v1.6.3.4/git.html[documentation for release 1.6.3.4]
-
-* release notes for
-  link:RelNotes/1.6.3.4.txt[1.6.3.4],
-  link:RelNotes/1.6.3.3.txt[1.6.3.3],
-  link:RelNotes/1.6.3.2.txt[1.6.3.2],
-  link:RelNotes/1.6.3.1.txt[1.6.3.1],
-  link:RelNotes/1.6.3.txt[1.6.3].
-
-* release notes for
-  link:RelNotes/1.6.2.5.txt[1.6.2.5],
-  link:RelNotes/1.6.2.4.txt[1.6.2.4],
-  link:RelNotes/1.6.2.3.txt[1.6.2.3],
-  link:RelNotes/1.6.2.2.txt[1.6.2.2],
-  link:RelNotes/1.6.2.1.txt[1.6.2.1],
-  link:RelNotes/1.6.2.txt[1.6.2].
-
-* link:v1.6.1.3/git.html[documentation for release 1.6.1.3]
-
-* release notes for
-  link:RelNotes/1.6.1.3.txt[1.6.1.3],
-  link:RelNotes/1.6.1.2.txt[1.6.1.2],
-  link:RelNotes/1.6.1.1.txt[1.6.1.1],
-  link:RelNotes/1.6.1.txt[1.6.1].
-
-* link:v1.6.0.6/git.html[documentation for release 1.6.0.6]
-
-* release notes for
-  link:RelNotes/1.6.0.6.txt[1.6.0.6],
-  link:RelNotes/1.6.0.5.txt[1.6.0.5],
-  link:RelNotes/1.6.0.4.txt[1.6.0.4],
-  link:RelNotes/1.6.0.3.txt[1.6.0.3],
-  link:RelNotes/1.6.0.2.txt[1.6.0.2],
-  link:RelNotes/1.6.0.1.txt[1.6.0.1],
-  link:RelNotes/1.6.0.txt[1.6.0].
-
-* link:v1.5.6.6/git.html[documentation for release 1.5.6.6]
-
-* release notes for
-  link:RelNotes/1.5.6.6.txt[1.5.6.6],
-  link:RelNotes/1.5.6.5.txt[1.5.6.5],
-  link:RelNotes/1.5.6.4.txt[1.5.6.4],
-  link:RelNotes/1.5.6.3.txt[1.5.6.3],
-  link:RelNotes/1.5.6.2.txt[1.5.6.2],
-  link:RelNotes/1.5.6.1.txt[1.5.6.1],
-  link:RelNotes/1.5.6.txt[1.5.6].
-
-* link:v1.5.5.6/git.html[documentation for release 1.5.5.6]
-
-* release notes for
-  link:RelNotes/1.5.5.6.txt[1.5.5.6],
-  link:RelNotes/1.5.5.5.txt[1.5.5.5],
-  link:RelNotes/1.5.5.4.txt[1.5.5.4],
-  link:RelNotes/1.5.5.3.txt[1.5.5.3],
-  link:RelNotes/1.5.5.2.txt[1.5.5.2],
-  link:RelNotes/1.5.5.1.txt[1.5.5.1],
-  link:RelNotes/1.5.5.txt[1.5.5].
-
-* link:v1.5.4.7/git.html[documentation for release 1.5.4.7]
-
-* release notes for
-  link:RelNotes/1.5.4.7.txt[1.5.4.7],
-  link:RelNotes/1.5.4.6.txt[1.5.4.6],
-  link:RelNotes/1.5.4.5.txt[1.5.4.5],
-  link:RelNotes/1.5.4.4.txt[1.5.4.4],
-  link:RelNotes/1.5.4.3.txt[1.5.4.3],
-  link:RelNotes/1.5.4.2.txt[1.5.4.2],
-  link:RelNotes/1.5.4.1.txt[1.5.4.1],
-  link:RelNotes/1.5.4.txt[1.5.4].
-
-* link:v1.5.3.8/git.html[documentation for release 1.5.3.8]
-
-* release notes for
-  link:RelNotes/1.5.3.8.txt[1.5.3.8],
-  link:RelNotes/1.5.3.7.txt[1.5.3.7],
-  link:RelNotes/1.5.3.6.txt[1.5.3.6],
-  link:RelNotes/1.5.3.5.txt[1.5.3.5],
-  link:RelNotes/1.5.3.4.txt[1.5.3.4],
-  link:RelNotes/1.5.3.3.txt[1.5.3.3],
-  link:RelNotes/1.5.3.2.txt[1.5.3.2],
-  link:RelNotes/1.5.3.1.txt[1.5.3.1],
-  link:RelNotes/1.5.3.txt[1.5.3].
-
-* link:v1.5.2.5/git.html[documentation for release 1.5.2.5]
-
-* release notes for
-  link:RelNotes/1.5.2.5.txt[1.5.2.5],
-  link:RelNotes/1.5.2.4.txt[1.5.2.4],
-  link:RelNotes/1.5.2.3.txt[1.5.2.3],
-  link:RelNotes/1.5.2.2.txt[1.5.2.2],
-  link:RelNotes/1.5.2.1.txt[1.5.2.1],
-  link:RelNotes/1.5.2.txt[1.5.2].
-
-* link:v1.5.1.6/git.html[documentation for release 1.5.1.6]
-
-* release notes for
-  link:RelNotes/1.5.1.6.txt[1.5.1.6],
-  link:RelNotes/1.5.1.5.txt[1.5.1.5],
-  link:RelNotes/1.5.1.4.txt[1.5.1.4],
-  link:RelNotes/1.5.1.3.txt[1.5.1.3],
-  link:RelNotes/1.5.1.2.txt[1.5.1.2],
-  link:RelNotes/1.5.1.1.txt[1.5.1.1],
-  link:RelNotes/1.5.1.txt[1.5.1].
-
-* link:v1.5.0.7/git.html[documentation for release 1.5.0.7]
-
-* release notes for
-  link:RelNotes/1.5.0.7.txt[1.5.0.7],
-  link:RelNotes/1.5.0.6.txt[1.5.0.6],
-  link:RelNotes/1.5.0.5.txt[1.5.0.5],
-  link:RelNotes/1.5.0.3.txt[1.5.0.3],
-  link:RelNotes/1.5.0.2.txt[1.5.0.2],
-  link:RelNotes/1.5.0.1.txt[1.5.0.1],
-  link:RelNotes/1.5.0.txt[1.5.0].
-
-* documentation for release link:v1.4.4.4/git.html[1.4.4.4],
-  link:v1.3.3/git.html[1.3.3],
-  link:v1.2.6/git.html[1.2.6],
-  link:v1.0.13/git.html[1.0.13].
-
-============
-
-endif::stalenotes[]
 
 OPTIONS
 -------
@@ -561,7 +75,8 @@ example the following invocations are equivalent:
 Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
 `foo.bar` to the boolean true value (just like `[foo]bar` would in a
 config file). Including the equals but with an empty value (like `git -c
-foo.bar= ...`) sets `foo.bar` to the empty string.
+foo.bar= ...`) sets `foo.bar` to the empty string which `git config
+--type=bool` will convert to `false`.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.
@@ -588,6 +103,7 @@ foo.bar= ...`) sets `foo.bar` to the empty string.
 	configuration options (see the "Configuration Mechanism" section
 	below).
 
+-P::
 --no-pager::
 	Do not pipe Git output into a pager.
 
@@ -643,6 +159,20 @@ foo.bar= ...`) sets `foo.bar` to the empty string.
 --icase-pathspecs::
 	Add "icase" magic to all pathspec. This is equivalent to setting
 	the `GIT_ICASE_PATHSPECS` environment variable to `1`.
+
+--no-optional-locks::
+	Do not perform optional operations that require locks. This is
+	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
+
+--list-cmds=group[,group...]::
+	List commands by group. This is an internal/experimental
+	option and may change or be removed in the future. Supported
+	groups are: builtins, parseopt (builtin commands that use
+	parse-options), main (all commands in libexec directory),
+	others (all other commands in `$PATH` that have git- prefix),
+	list-<category> (see categories in command-list.txt),
+	nohelpers (exclude helper commands), alias and config
+	(retrieve command list from config variable completion.commands)
 
 GIT COMMANDS
 ------------
@@ -872,11 +402,11 @@ Git so take care if using a foreign front-end.
 	of Git object directories which can be used to search for Git
 	objects. New objects will not be written to these directories.
 +
-	Entries that begin with `"` (double-quote) will be interpreted
-	as C-style quoted paths, removing leading and trailing
-	double-quotes and respecting backslash escapes. E.g., the value
-	`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
-	`path-with-"-and-:-in-it` and `vanilla-path`.
+Entries that begin with `"` (double-quote) will be interpreted
+as C-style quoted paths, removing leading and trailing
+double-quotes and respecting backslash escapes. E.g., the value
+`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
+`path-with-"-and-:-in-it` and `vanilla-path`.
 
 `GIT_DIR`::
 	If the `GIT_DIR` environment variable is set then it
@@ -1003,11 +533,9 @@ other
 	If either of these environment variables is set then 'git fetch'
 	and 'git push' will use the specified command instead of 'ssh'
 	when they need to connect to a remote system.
-	The command will be given exactly two or four arguments: the
-	'username@host' (or just 'host') from the URL and the shell
-	command to execute on that remote system, optionally preceded by
-	`-p` (literally) and the 'port' from the URL when it specifies
-	something other than the default SSH port.
+	The command-line parameters passed to the configured command are
+	determined by the ssh variant.  See `ssh.variant` option in
+	linkgit:git-config[1] for details.
 +
 `$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
 by the shell, which allows additional arguments to be included.
@@ -1018,6 +546,12 @@ needed).
 Usually it is easier to configure any desired options through your
 personal `.ssh/config` file.  Please consult your ssh documentation
 for further details.
+
+`GIT_SSH_VARIANT`::
+	If this environment variable is set, it overrides Git's autodetection
+	whether `GIT_SSH`/`GIT_SSH_COMMAND`/`core.sshCommand` refer to OpenSSH,
+	plink or tortoiseplink. This variable overrides the config setting
+	`ssh.variant` that serves the same purpose.
 
 `GIT_ASKPASS`::
 	If this environment variable is set, then Git commands which need to
@@ -1064,11 +598,15 @@ trace messages into this file descriptor.
 +
 Alternatively, if the variable is set to an absolute path
 (starting with a '/' character), Git will interpret this
-as a file path and will try to write the trace messages
-into it.
+as a file path and will try to append the trace messages
+to it.
 +
 Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
+
+`GIT_TRACE_FSMONITOR`::
+	Enables trace messages for the filesystem monitor extension.
+	See `GIT_TRACE` for available trace output options.
 
 `GIT_TRACE_PACK_ACCESS`::
 	Enables trace messages for all accesses to any packs. For each
@@ -1117,6 +655,64 @@ of clones and fetches.
 	This option overrides setting the `GIT_CURL_VERBOSE` environment
 	variable.
 	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_CURL_NO_DATA`::
+	When a curl trace is enabled (see `GIT_TRACE_CURL` above), do not dump
+	data (that is, only dump info lines and headers).
+
+`GIT_TRACE2`::
+	Enables more detailed trace messages from the "trace2" library.
+	Output from `GIT_TRACE2` is a simple text-based format for human
+	readability.
++
+If this variable is set to "1", "2" or "true" (comparison
+is case insensitive), trace messages will be printed to
+stderr.
++
+If the variable is set to an integer value greater than 2
+and lower than 10 (strictly) then Git will interpret this
+value as an open file descriptor and will try to write the
+trace messages into this file descriptor.
++
+Alternatively, if the variable is set to an absolute path
+(starting with a '/' character), Git will interpret this
+as a file path and will try to append the trace messages
+to it.  If the path already exists and is a directory, the
+trace messages will be written to files (one per process)
+in that directory, named according to the last component
+of the SID and an optional counter (to avoid filename
+collisions).
++
+In addition, if the variable is set to
+`af_unix:[<socket_type>:]<absolute-pathname>`, Git will try
+to open the path as a Unix Domain Socket.  The socket type
+can be either `stream` or `dgram`.
++
+Unsetting the variable, or setting it to empty, "0" or
+"false" (case insensitive) disables trace messages.
++
+See link:technical/api-trace2.html[Trace2 documentation]
+for full details.
+
+
+`GIT_TRACE2_EVENT`::
+	This setting writes a JSON-based format that is suited for machine
+	interpretation.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_TRACE2_PERF`::
+	In addition to the text-based messages available in `GIT_TRACE2`, this
+	setting writes a column-based format for understanding nesting
+	regions.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_REDACT_COOKIES`::
+	This can be set to a comma-separated list of strings. When a curl trace
+	is enabled (see `GIT_TRACE_CURL` above), whenever a "Cookies:" header
+	sent by the client is dumped, values of cookies whose key is in that
+	list (case-sensitive) are redacted.
 
 `GIT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
@@ -1175,6 +771,47 @@ of clones and fetches.
 	submodule initialization from an untrusted repository or for programs
 	which feed potentially-untrusted URLS to git commands.  See
 	linkgit:git-config[1] for more details.
+
+`GIT_PROTOCOL`::
+	For internal use only.  Used in handshaking the wire protocol.
+	Contains a colon ':' separated list of keys with optional values
+	'key[=value]'.  Presence of unknown keys and values must be
+	ignored.
+
+`GIT_OPTIONAL_LOCKS`::
+	If set to `0`, Git will complete any requested operation without
+	performing any optional sub-operations that require taking a lock.
+	For example, this will prevent `git status` from refreshing the
+	index as a side effect. This is useful for processes running in
+	the background which do not want to cause lock contention with
+	other operations on the repository.  Defaults to `1`.
+
+`GIT_REDIRECT_STDIN`::
+`GIT_REDIRECT_STDOUT`::
+`GIT_REDIRECT_STDERR`::
+	Windows-only: allow redirecting the standard input/output/error
+	handles to paths specified by the environment variables. This is
+	particularly useful in multi-threaded applications where the
+	canonical way to pass standard handles via `CreateProcess()` is
+	not an option because it would require the handles to be marked
+	inheritable (and consequently *every* spawned process would
+	inherit them, possibly blocking regular Git operations). The
+	primary intended use case is to use named pipes for communication
+	(e.g. `\\.\pipe\my-git-stdin-123`).
++
+Two special values are supported: `off` will simply close the
+corresponding standard handle, and if `GIT_REDIRECT_STDERR` is
+`2>&1`, standard error will be redirected to the same handle as
+standard output.
+
+`GIT_PRINT_SHA1_ELLIPSIS` (deprecated)::
+	If set to `yes`, print an ellipsis following an
+	(abbreviated) SHA-1 value.  This affects indications of
+	detached HEADs (linkgit:git-checkout[1]) and the raw
+	diff output (linkgit:git-diff[1]).  Printing an
+	ellipsis in the cases mentioned is no longer considered
+	adequate and support for it is likely to be removed in the
+	foreseeable future (along with the variable).
 
 Discussion[[Discussion]]
 ------------------------
@@ -1268,7 +905,12 @@ Reporting Bugs
 
 Report bugs to the Git mailing list <git@vger.kernel.org> where the
 development and maintenance is primarily done.  You do not have to be
-subscribed to the list to send a message there.
+subscribed to the list to send a message there.  See the list archive
+at https://public-inbox.org/git for previous bug reports and other
+discussions.
+
+Issues which are security relevant should be disclosed privately to
+the Git Security mailing list <git-security@googlegroups.com>.
 
 SEE ALSO
 --------

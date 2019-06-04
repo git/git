@@ -9,7 +9,7 @@ git-ls-files - Show information about files in the index and the working tree
 SYNOPSIS
 --------
 [verse]
-'git ls-files' [-z] [-t] [-v]
+'git ls-files' [-z] [-t] [-v] [-f]
 		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])*
 		(-[c|d|o|i|s|u|k|m])*
 		[--eol]
@@ -53,11 +53,12 @@ OPTIONS
 	Show only ignored files in the output. When showing files in the
 	index, print only those matched by an exclude pattern. When
 	showing "other" files, show only those matched by an exclude
-	pattern.
+	pattern. Standard ignore rules are not automatically activated,
+	therefore at least one of the `--exclude*` options is required.
 
 -s::
 --stage::
-	Show staged contents' object name, mode bits and stage number in the output.
+	Show staged contents' mode bits, object name and stage number in the output.
 
 --directory::
 	If a whole directory is classified as "other", show just its
@@ -77,7 +78,8 @@ OPTIONS
 	succeed.
 
 -z::
-	\0 line termination on output.
+	\0 line termination on output and do not quote filenames.
+	See OUTPUT below for more information.
 
 -x <pattern>::
 --exclude=<pattern>::
@@ -116,6 +118,7 @@ OPTIONS
 	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
 	`--name-status` for more user-friendly alternatives.
 +
+--
 This option identifies the file status with the following tags (followed by
 a space) at the start of each line:
 
@@ -126,10 +129,16 @@ a space) at the start of each line:
 	C::	modified/changed
 	K::	to be killed
 	?::	other
+--
 
 -v::
 	Similar to `-t`, but use lowercase letters for files
 	that are marked as 'assume unchanged' (see
+	linkgit:git-update-index[1]).
+
+-f::
+	Similar to `-t`, but use lowercase letters for files
+	that are marked as 'fsmonitor valid' (see
 	linkgit:git-update-index[1]).
 
 --full-name::
@@ -177,7 +186,7 @@ followed by the  ("attr/<eolattr>").
 	Files to show. If no files are given all files which match the other
 	specified criteria are shown.
 
-Output
+OUTPUT
 ------
 'git ls-files' just outputs the filenames unless `--stage` is specified in
 which case it outputs:
@@ -196,12 +205,13 @@ the index records up to three such pairs; one from tree O in stage
 the user (or the porcelain) to see what should eventually be recorded at the
 path. (see linkgit:git-read-tree[1] for more information on state)
 
-When `-z` option is not used, TAB, LF, and backslash characters
-in pathnames are represented as `\t`, `\n`, and `\\`,
-respectively.
+Without the `-z` option, pathnames with "unusual" characters are
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]).  Using `-z` the filename is output
+verbatim and the line is terminated by a NUL byte.
 
 
-Exclude Patterns
+EXCLUDE PATTERNS
 ----------------
 
 'git ls-files' can use a list of "exclude patterns" when

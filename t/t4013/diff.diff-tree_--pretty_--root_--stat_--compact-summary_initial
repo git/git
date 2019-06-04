@@ -1,0 +1,12 @@
+$ git diff-tree --pretty --root --stat --compact-summary initial
+commit 444ac553ac7612cc88969031b02b3767fb8a353a
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:00:00 2006 +0000
+
+    Initial
+
+ dir/sub (new) | 2 ++
+ file0 (new)   | 3 +++
+ file2 (new)   | 3 +++
+ 3 files changed, 8 insertions(+)
+$

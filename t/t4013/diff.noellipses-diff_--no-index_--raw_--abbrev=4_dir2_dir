@@ -1,0 +1,3 @@
+$ git diff --no-index --raw --abbrev=4 dir2 dir
+:000000 100644 0000 0000 A	dir/sub
+$

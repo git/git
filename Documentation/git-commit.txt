@@ -17,16 +17,20 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Stores the current contents of the index in a new commit along
-with a log message from the user describing the changes.
+Create a new commit containing the current contents of the index and
+the given log message describing the changes. The new commit is a
+direct child of HEAD, usually the tip of the current branch, and the
+branch is updated to point to it (unless no branch is associated with
+the working tree, in which case HEAD is "detached" as described in
+linkgit:git-checkout[1]).
 
-The content to be added can be specified in several ways:
+The content to be committed can be specified in several ways:
 
-1. by using 'git add' to incrementally "add" changes to the
-   index before using the 'commit' command (Note: even modified
-   files must be "added");
+1. by using linkgit:git-add[1] to incrementally "add" changes to the
+   index before using the 'commit' command (Note: even modified files
+   must be "added");
 
-2. by using 'git rm' to remove files from the working tree
+2. by using linkgit:git-rm[1] to remove files from the working tree
    and the index, again before using the 'commit' command;
 
 3. by listing files as arguments to the 'commit' command
@@ -95,7 +99,7 @@ OPTIONS
 
 --reset-author::
 	When used with -C/-c/--amend options, or when committing after a
-	a conflicting cherry-pick, declare that the authorship of the
+	conflicting cherry-pick, declare that the authorship of the
 	resulting commit now belongs to the committer. This also renews
 	the author timestamp.
 
@@ -112,14 +116,17 @@ OPTIONS
 	`--dry-run`.
 
 --long::
-	When doing a dry-run, give the output in a the long-format.
+	When doing a dry-run, give the output in the long-format.
 	Implies `--dry-run`.
 
 -z::
 --null::
-	When showing `short` or `porcelain` status output, terminate
-	entries in the status output with NUL, instead of LF. If no
-	format is given, implies the `--porcelain` output format.
+	When showing `short` or `porcelain` status output, print the
+	filename verbatim and terminate the entries with NUL, instead of LF.
+	If no format is given, implies the `--porcelain` output format.
+	Without the `-z` option, filenames with "unusual" characters are
+	quoted as explained for the configuration variable `core.quotePath`
+	(see linkgit:git-config[1]).
 
 -F <file>::
 --file=<file>::
@@ -141,6 +148,8 @@ OPTIONS
 	Use the given <msg> as the commit message.
 	If multiple `-m` options are given, their values are
 	concatenated as separate paragraphs.
++
+The `-m` option is mutually exclusive with `-c`, `-C`, and `-F`.
 
 -t <file>::
 --template=<file>::
@@ -193,11 +202,12 @@ whitespace::
 verbatim::
 	Do not change the message at all.
 scissors::
-	Same as `whitespace`, except that everything from (and
-	including) the line
-	"`# ------------------------ >8 ------------------------`"
-	is truncated if the message is to be edited. "`#`" can be
-	customized with core.commentChar.
+	Same as `whitespace` except that everything from (and including)
+	the line found below is truncated, if the message is to be edited.
+	"`#`" can be customized with core.commentChar.
+
+		# ------------------------ >8 ------------------------
+
 default::
 	Same as `strip` if the message is to be edited.
 	Otherwise `whitespace`.
@@ -460,7 +470,7 @@ order).  See linkgit:git-var[1] for details.
 HOOKS
 -----
 This command can run `commit-msg`, `prepare-commit-msg`, `pre-commit`,
-and `post-commit` hooks.  See linkgit:githooks[5] for more
+`post-commit` and `post-rewrite` hooks.  See linkgit:githooks[5] for more
 information.
 
 FILES

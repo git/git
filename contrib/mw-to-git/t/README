@@ -121,4 +121,4 @@ How to write a new test
 
 Please, follow the standards given by git. See git/t/README.
 New file should be named as t936[0-9]-*.sh.
-Be sure to reset your wiki regulary with the function `wiki_reset`.
+Be sure to reset your wiki regularly with the function `wiki_reset`.

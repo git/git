@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "userdiff.h"
 #include "attr.h"
 
@@ -37,7 +38,16 @@ IPATTERN("fortran",
 	 "|//|\\*\\*|::|[/<>=]="),
 IPATTERN("fountain", "^((\\.[^.]|(int|ext|est|int\\.?/ext|i/e)[. ]).*)$",
 	 "[^ \t-]+"),
-PATTERNS("html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$",
+PATTERNS("golang",
+	 /* Functions */
+	 "^[ \t]*(func[ \t]*.*(\\{[ \t]*)?)\n"
+	 /* Structs and interfaces */
+	 "^[ \t]*(type[ \t].*(struct|interface)[ \t]*(\\{[ \t]*)?)",
+	 /* -- */
+	 "[a-zA-Z_][a-zA-Z0-9_]*"
+	 "|[-+0-9.eE]+i?|0[xX]?[0-9a-fA-F]+i?"
+	 "|[-+*/<>%&^|=!:]=|--|\\+\\+|<<=?|>>=?|&\\^=?|&&|\\|\\||<-|\\.{3}"),
+PATTERNS("html", "^[ \t]*(<[Hh][1-6]([ \t].*)?>.*)$",
 	 "[^<>= \t]+"),
 PATTERNS("java",
 	 "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
@@ -104,7 +114,7 @@ PATTERNS("perl",
 	 "|<<|<>|<=>|>>"),
 PATTERNS("php",
 	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
-	 "^[\t ]*(class.*)$",
+	 "^[\t ]*((((final|abstract)[\t ]+)?class|interface|trait).*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
@@ -137,7 +147,7 @@ PATTERNS("csharp",
 	 /* Keywords */
 	 "!^[ \t]*(do|while|for|if|else|instanceof|new|return|switch|case|throw|catch|using)\n"
 	 /* Methods and constructors */
-	 "^[ \t]*(((static|public|internal|private|protected|new|virtual|sealed|override|unsafe)[ \t]+)*[][<>@.~_[:alnum:]]+[ \t]+[<>@._[:alnum:]]+[ \t]*\\(.*\\))[ \t]*$\n"
+	 "^[ \t]*(((static|public|internal|private|protected|new|virtual|sealed|override|unsafe|async)[ \t]+)*[][<>@.~_[:alnum:]]+[ \t]+[<>@._[:alnum:]]+[ \t]*\\(.*\\))[ \t]*$\n"
 	 /* Properties */
 	 "^[ \t]*(((static|public|internal|private|protected|new|virtual|sealed|override|unsafe)[ \t]+)*[][<>@.~_[:alnum:]]+[ \t]+[@._[:alnum:]]+)[ \t]*$\n"
 	 /* Type definitions */
@@ -255,35 +265,34 @@ int userdiff_config(const char *k, const char *v)
 	return 0;
 }
 
-struct userdiff_driver *userdiff_find_by_name(const char *name) {
+struct userdiff_driver *userdiff_find_by_name(const char *name)
+{
 	int len = strlen(name);
 	return userdiff_find_by_namelen(name, len);
 }
 
-struct userdiff_driver *userdiff_find_by_path(const char *path)
+struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
+					      const char *path)
 {
-	static struct git_attr *attr;
-	struct git_attr_check check;
+	static struct attr_check *check;
 
-	if (!attr)
-		attr = git_attr("diff");
-	check.attr = attr;
-
+	if (!check)
+		check = attr_check_initl("diff", NULL);
 	if (!path)
 		return NULL;
-	if (git_check_attr(path, 1, &check))
-		return NULL;
+	git_check_attr(istate, path, check);
 
-	if (ATTR_TRUE(check.value))
+	if (ATTR_TRUE(check->items[0].value))
 		return &driver_true;
-	if (ATTR_FALSE(check.value))
+	if (ATTR_FALSE(check->items[0].value))
 		return &driver_false;
-	if (ATTR_UNSET(check.value))
+	if (ATTR_UNSET(check->items[0].value))
 		return NULL;
-	return userdiff_find_by_name(check.value);
+	return userdiff_find_by_name(check->items[0].value);
 }
 
-struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
+struct userdiff_driver *userdiff_get_textconv(struct repository *r,
+					      struct userdiff_driver *driver)
 {
 	if (!driver->textconv)
 		return NULL;
@@ -293,8 +302,9 @@ struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
 		struct strbuf name = STRBUF_INIT;
 
 		strbuf_addf(&name, "textconv/%s", driver->name);
-		notes_cache_init(c, name.buf, driver->textconv);
+		notes_cache_init(r, c, name.buf, driver->textconv);
 		driver->textconv_cache = c;
+		strbuf_release(&name);
 	}
 
 	return driver;

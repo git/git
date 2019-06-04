@@ -7,82 +7,70 @@ test_description='Test the post-checkout hook.'
 . ./test-lib.sh
 
 test_expect_success setup '
-	echo Data for commit0. >a &&
-	echo Data for commit0. >b &&
-	git update-index --add a &&
-	git update-index --add b &&
-	tree0=$(git write-tree) &&
-	commit0=$(echo setup | git commit-tree $tree0) &&
-	git update-ref refs/heads/master $commit0 &&
-	git clone ./. clone1 &&
-	git clone ./. clone2 &&
-	GIT_DIR=clone2/.git git branch new2 &&
-	echo Data for commit1. >clone2/b &&
-	GIT_DIR=clone2/.git git add clone2/b &&
-	GIT_DIR=clone2/.git git commit -m new2
-'
-
-for clone in 1 2; do
-    cat >clone${clone}/.git/hooks/post-checkout <<'EOF'
-#!/bin/sh
-echo $@ > $GIT_DIR/post-checkout.args
-EOF
-    chmod u+x clone${clone}/.git/hooks/post-checkout
-done
-
-test_expect_success 'post-checkout runs as expected ' '
-	GIT_DIR=clone1/.git git checkout master &&
-	test -e clone1/.git/post-checkout.args
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-checkout <<-\EOF &&
+	echo "$@" >.git/post-checkout.args
+	EOF
+	test_commit one &&
+	test_commit two &&
+	test_commit rebase-on-me &&
+	git reset --hard HEAD^ &&
+	test_commit three
 '
 
 test_expect_success 'post-checkout receives the right arguments with HEAD unchanged ' '
-	old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout master &&
+	read old new flag <.git/post-checkout.args &&
 	test $old = $new && test $flag = 1
 '
 
-test_expect_success 'post-checkout runs as expected ' '
-	GIT_DIR=clone1/.git git checkout master &&
-	test -e clone1/.git/post-checkout.args
-'
-
 test_expect_success 'post-checkout args are correct with git checkout -b ' '
-	GIT_DIR=clone1/.git git checkout -b new1 &&
-	old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout -b new1 &&
+	read old new flag <.git/post-checkout.args &&
 	test $old = $new && test $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args with HEAD changed ' '
-	GIT_DIR=clone2/.git git checkout new2 &&
-	old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout two &&
+	read old new flag <.git/post-checkout.args &&
 	test $old != $new && test $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args when not switching branches ' '
-	GIT_DIR=clone2/.git git checkout master b &&
-	old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout master -- three.t &&
+	read old new flag <.git/post-checkout.args &&
 	test $old = $new && test $flag = 0
 '
 
-if test "$(git config --bool core.filemode)" = true; then
-mkdir -p templates/hooks
-cat >templates/hooks/post-checkout <<'EOF'
-#!/bin/sh
-echo $@ > $GIT_DIR/post-checkout.args
-EOF
-chmod +x templates/hooks/post-checkout
+test_expect_success 'post-checkout is triggered on rebase' '
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout -b rebase-test master &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag <.git/post-checkout.args &&
+	test $old != $new && test $flag = 1
+'
+
+test_expect_success 'post-checkout is triggered on rebase with fast-forward' '
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout -b ff-rebase-test rebase-on-me^ &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag <.git/post-checkout.args &&
+	test $old != $new && test $flag = 1
+'
 
 test_expect_success 'post-checkout hook is triggered by clone' '
+	mkdir -p templates/hooks &&
+	write_script templates/hooks/post-checkout <<-\EOF &&
+	echo "$@" >"$GIT_DIR/post-checkout.args"
+	EOF
 	git clone --template=templates . clone3 &&
 	test -f clone3/.git/post-checkout.args
 '
-fi
 
 test_done

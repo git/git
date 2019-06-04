@@ -3,6 +3,12 @@
 test_description='test unique sha1 abbreviation on "index from..to" line'
 . ./test-lib.sh
 
+if ! test_have_prereq SHA1
+then
+       skip_all='not using SHA-1 for objects'
+       test_done
+fi
+
 cat >expect_initial <<EOF
 100644 blob 51d2738463ea4ca66f8691c91e33ce64b7d41bb1	foo
 EOF

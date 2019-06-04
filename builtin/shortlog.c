@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "diff.h"
 #include "string-list.h"
@@ -10,7 +11,8 @@
 #include "parse-options.h"
 
 static char const * const shortlog_usage[] = {
-	N_("git shortlog [<options>] [<revision-range>] [[--] [<path>...]]"),
+	N_("git shortlog [<options>] [<revision-range>] [[--] <path>...]"),
+	N_("git log --pretty=short | git shortlog [<options>]"),
 	NULL
 };
 
@@ -51,26 +53,8 @@ static void insert_one_record(struct shortlog *log,
 			      const char *oneline)
 {
 	struct string_list_item *item;
-	const char *mailbuf, *namebuf;
-	size_t namelen, maillen;
-	struct strbuf namemailbuf = STRBUF_INIT;
-	struct ident_split ident;
 
-	if (split_ident_line(&ident, author, strlen(author)))
-		return;
-
-	namebuf = ident.name_begin;
-	mailbuf = ident.mail_begin;
-	namelen = ident.name_end - ident.name_begin;
-	maillen = ident.mail_end - ident.mail_begin;
-
-	map_user(&log->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
-	strbuf_add(&namemailbuf, namebuf, namelen);
-
-	if (log->email)
-		strbuf_addf(&namemailbuf, " <%.*s>", (int)maillen, mailbuf);
-
-	item = string_list_insert(&log->list, namemailbuf.buf);
+	item = string_list_insert(&log->list, author);
 
 	if (log->summary)
 		item->util = (void *)(UTIL_TO_INT(item) + 1);
@@ -113,9 +97,33 @@ static void insert_one_record(struct shortlog *log,
 	}
 }
 
+static int parse_stdin_author(struct shortlog *log,
+			       struct strbuf *out, const char *in)
+{
+	const char *mailbuf, *namebuf;
+	size_t namelen, maillen;
+	struct ident_split ident;
+
+	if (split_ident_line(&ident, in, strlen(in)))
+		return -1;
+
+	namebuf = ident.name_begin;
+	mailbuf = ident.mail_begin;
+	namelen = ident.name_end - ident.name_begin;
+	maillen = ident.mail_end - ident.mail_begin;
+
+	map_user(&log->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
+	strbuf_add(out, namebuf, namelen);
+	if (log->email)
+		strbuf_addf(out, " <%.*s>", (int)maillen, mailbuf);
+
+	return 0;
+}
+
 static void read_from_stdin(struct shortlog *log)
 {
 	struct strbuf author = STRBUF_INIT;
+	struct strbuf mapped_author = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 	static const char *author_match[2] = { "Author: ", "author " };
 	static const char *committer_match[2] = { "Commit: ", "committer " };
@@ -133,9 +141,15 @@ static void read_from_stdin(struct shortlog *log)
 		while (strbuf_getline_lf(&oneline, stdin) != EOF &&
 		       !oneline.len)
 			; /* discard blanks */
-		insert_one_record(log, v, oneline.buf);
+
+		strbuf_reset(&mapped_author);
+		if (parse_stdin_author(log, &mapped_author, v) < 0)
+			continue;
+
+		insert_one_record(log, mapped_author.buf, oneline.buf);
 	}
 	strbuf_release(&author);
+	strbuf_release(&mapped_author);
 	strbuf_release(&oneline);
 }
 
@@ -148,12 +162,13 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 
 	ctx.fmt = CMIT_FMT_USERFORMAT;
 	ctx.abbrev = log->abbrev;
-	ctx.subject = "";
-	ctx.after_subject = "";
+	ctx.print_email_subject = 1;
 	ctx.date_mode.type = DATE_NORMAL;
 	ctx.output_encoding = get_log_output_encoding();
 
-	fmt = log->committer ? "%cn <%ce>" : "%an <%ae>";
+	fmt = log->committer ?
+		(log->email ? "%cN <%cE>" : "%cN") :
+		(log->email ? "%aN <%aE>" : "%aN");
 
 	format_commit_message(commit, fmt, &author, &ctx);
 	if (!log->summary) {
@@ -253,8 +268,9 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 			 N_("Suppress commit descriptions, only provides commit count")),
 		OPT_BOOL('e', "email", &log.email,
 			 N_("Show the email address of each author")),
-		{ OPTION_CALLBACK, 'w', NULL, &log, N_("w[,i1[,i2]]"),
-			N_("Linewrap output"), PARSE_OPT_OPTARG, &parse_wrap_args },
+		{ OPTION_CALLBACK, 'w', NULL, &log, N_("<w>[,<i1>[,<i2>]]"),
+			N_("Linewrap output"), PARSE_OPT_OPTARG,
+			&parse_wrap_args },
 		OPT_END(),
 	};
 
@@ -262,14 +278,17 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 	shortlog_init(&log);
-	init_revisions(&rev, prefix);
+	repo_init_revisions(the_repository, &rev, prefix);
 	parse_options_start(&ctx, argc, argv, prefix, options,
 			    PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0);
 
 	for (;;) {
 		switch (parse_options_step(&ctx, options, shortlog_usage)) {
 		case PARSE_OPT_HELP:
+		case PARSE_OPT_ERROR:
 			exit(129);
+		case PARSE_OPT_COMPLETE:
+			exit(0);
 		case PARSE_OPT_DONE:
 			goto parse_done;
 		}
@@ -277,6 +296,11 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	}
 parse_done:
 	argc = parse_options_end(&ctx);
+
+	if (nongit && argc > 1) {
+		error(_("too many arguments given outside repository"));
+		usage_with_options(shortlog_usage, options);
+	}
 
 	if (setup_revisions(argc, argv, &rev, NULL) != 1) {
 		error(_("unrecognized argument: %s"), argv[1]);

@@ -4,9 +4,10 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "builtin.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "parse-options.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
@@ -23,11 +24,11 @@ static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
 static const char *init_db_template_dir;
 
-static void copy_templates_1(struct strbuf *path, struct strbuf *template,
+static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 			     DIR *dir)
 {
 	size_t path_baselen = path->len;
-	size_t template_baselen = template->len;
+	size_t template_baselen = template_path->len;
 	struct dirent *de;
 
 	/* Note: if ".git/hooks" file exists in the repository being
@@ -43,12 +44,12 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template,
 		int exists = 0;
 
 		strbuf_setlen(path, path_baselen);
-		strbuf_setlen(template, template_baselen);
+		strbuf_setlen(template_path, template_baselen);
 
 		if (de->d_name[0] == '.')
 			continue;
 		strbuf_addstr(path, de->d_name);
-		strbuf_addstr(template, de->d_name);
+		strbuf_addstr(template_path, de->d_name);
 		if (lstat(path->buf, &st_git)) {
 			if (errno != ENOENT)
 				die_errno(_("cannot stat '%s'"), path->buf);
@@ -56,36 +57,37 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template,
 		else
 			exists = 1;
 
-		if (lstat(template->buf, &st_template))
-			die_errno(_("cannot stat template '%s'"), template->buf);
+		if (lstat(template_path->buf, &st_template))
+			die_errno(_("cannot stat template '%s'"), template_path->buf);
 
 		if (S_ISDIR(st_template.st_mode)) {
-			DIR *subdir = opendir(template->buf);
+			DIR *subdir = opendir(template_path->buf);
 			if (!subdir)
-				die_errno(_("cannot opendir '%s'"), template->buf);
+				die_errno(_("cannot opendir '%s'"), template_path->buf);
 			strbuf_addch(path, '/');
-			strbuf_addch(template, '/');
-			copy_templates_1(path, template, subdir);
+			strbuf_addch(template_path, '/');
+			copy_templates_1(path, template_path, subdir);
 			closedir(subdir);
 		}
 		else if (exists)
 			continue;
 		else if (S_ISLNK(st_template.st_mode)) {
 			struct strbuf lnk = STRBUF_INIT;
-			if (strbuf_readlink(&lnk, template->buf, 0) < 0)
-				die_errno(_("cannot readlink '%s'"), template->buf);
+			if (strbuf_readlink(&lnk, template_path->buf,
+					    st_template.st_size) < 0)
+				die_errno(_("cannot readlink '%s'"), template_path->buf);
 			if (symlink(lnk.buf, path->buf))
 				die_errno(_("cannot symlink '%s' '%s'"),
 					  lnk.buf, path->buf);
 			strbuf_release(&lnk);
 		}
 		else if (S_ISREG(st_template.st_mode)) {
-			if (copy_file(path->buf, template->buf, st_template.st_mode))
+			if (copy_file(path->buf, template_path->buf, st_template.st_mode))
 				die_errno(_("cannot copy '%s' to '%s'"),
-					  template->buf, path->buf);
+					  template_path->buf, path->buf);
 		}
 		else
-			error(_("ignoring template %s"), template->buf);
+			error(_("ignoring template %s"), template_path->buf);
 	}
 }
 
@@ -94,7 +96,7 @@ static void copy_templates(const char *template_dir)
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf template_path = STRBUF_INIT;
 	size_t template_len;
-	struct repository_format template_format;
+	struct repository_format template_format = REPOSITORY_FORMAT_INIT;
 	struct strbuf err = STRBUF_INIT;
 	DIR *dir;
 	char *to_free = NULL;
@@ -116,7 +118,7 @@ static void copy_templates(const char *template_dir)
 
 	dir = opendir(template_path.buf);
 	if (!dir) {
-		warning(_("templates not found %s"), template_dir);
+		warning(_("templates not found in %s"), template_dir);
 		goto free_return;
 	}
 
@@ -146,12 +148,16 @@ free_return:
 	free(to_free);
 	strbuf_release(&path);
 	strbuf_release(&template_path);
+	clear_repository_format(&template_format);
 }
 
 static int git_init_db_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "init.templatedir"))
 		return git_config_pathname(&init_db_template_dir, k, v);
+
+	if (starts_with(k, "core."))
+		return platform_core_config(k, v, cb);
 
 	return 0;
 }
@@ -183,6 +189,7 @@ static int create_default_files(const char *template_path,
 	struct strbuf err = STRBUF_INIT;
 
 	/* Just look for `init.templatedir` */
+	init_db_template_dir = NULL; /* re-set in case it was set before */
 	git_config(git_init_db_config, NULL);
 
 	/*
@@ -262,7 +269,7 @@ static int create_default_files(const char *template_path,
 		const char *work_tree = get_git_work_tree();
 		git_config_set("core.bare", "false");
 		/* allow template config file to override the default */
-		if (log_all_ref_updates == -1)
+		if (log_all_ref_updates == LOG_REFS_UNSET)
 			git_config_set("core.logallrefupdates", "true");
 		if (needs_work_tree_config(original_git_dir, work_tree))
 			git_config_set("core.worktree", work_tree);
@@ -338,7 +345,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 {
 	int reinit;
 	int exist_ok = flags & INIT_DB_EXIST_OK;
-	char *original_git_dir = xstrdup(real_path(git_dir));
+	char *original_git_dir = real_pathdup(git_dir, 1);
 
 	if (real_git_dir) {
 		struct stat st;
@@ -358,6 +365,9 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		git_dir = get_git_dir();
 	}
 	startup_info->have_repository = 1;
+
+	/* Just look for `core.hidedotfiles` */
+	git_config(git_init_db_config, NULL);
 
 	safe_create_dir(git_dir, 0);
 
@@ -390,7 +400,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		else if (get_shared_repository() == PERM_EVERYBODY)
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
-			die("BUG: invalid value for shared_repository");
+			BUG("invalid value for shared_repository");
 		git_config_set("core.sharedrepository", buf);
 		git_config_set("receive.denyNonFastforwards", "true");
 	}
@@ -449,6 +459,7 @@ static int guess_repository_type(const char *git_dir)
 
 static int shared_callback(const struct option *opt, const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
 	*((int *) opt->value) = (arg) ? git_config_perm("arg", arg) : PERM_GROUP;
 	return 0;
 }
@@ -489,7 +500,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
 	if (real_git_dir && !is_absolute_path(real_git_dir))
-		real_git_dir = xstrdup(real_path(real_git_dir));
+		real_git_dir = real_pathdup(real_git_dir, 1);
 
 	if (argc == 1) {
 		int mkdir_tried = 0;
@@ -539,8 +550,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
 	 * without --bare.  Catch the error early.
 	 */
-	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	work_tree = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	git_dir = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
+	work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
 	if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
 		die(_("%s (or --work-tree=<directory>) not allowed without "
 			  "specifying %s (or --git-dir=<directory>)"),
@@ -560,7 +571,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		const char *git_dir_parent = strrchr(git_dir, '/');
 		if (git_dir_parent) {
 			char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
-			git_work_tree_cfg = xstrdup(real_path(rel));
+			git_work_tree_cfg = real_pathdup(rel, 1);
 			free(rel);
 		}
 		if (!git_work_tree_cfg)
@@ -577,6 +588,10 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		if (work_tree)
 			set_git_work_tree(work_tree);
 	}
+
+	UNLEAK(real_git_dir);
+	UNLEAK(git_dir);
+	UNLEAK(work_tree);
 
 	flags |= INIT_DB_EXIST_OK;
 	return init_db(git_dir, real_git_dir, template_dir, flags);

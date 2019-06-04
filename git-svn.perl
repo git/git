@@ -374,7 +374,8 @@ version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
 if (defined $_authors_prog) {
-	$_authors_prog = "'" . File::Spec->rel2abs($_authors_prog) . "'";
+	my $abs_file = File::Spec->rel2abs($_authors_prog);
+	$_authors_prog = "'" . $abs_file . "'" if -x $abs_file;
 }
 
 unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
@@ -931,6 +932,7 @@ sub cmd_dcommit {
 		# information from different SVN repos, and paths
 		# which are not underneath this repository root.
 		my $rooturl = $gs->repos_root;
+	        Git::SVN::remove_username($rooturl);
 		foreach my $d (@$linear_refs) {
 			my %parentshash;
 			read_commit_parents(\%parentshash, $d);
@@ -1175,10 +1177,10 @@ sub cmd_branch {
 	::_req_svn();
 	require SVN::Client;
 
+	my ($config, $baton, undef) = Git::SVN::Ra::prepare_config_once();
 	my $ctx = SVN::Client->new(
-		config => SVN::Core::config_get_config(
-			$Git::SVN::Ra::config_dir
-		),
+		auth => $baton,
+		config => $config,
 		log_msg => sub {
 			${ $_[0] } = defined $_message
 				? $_message
@@ -1198,6 +1200,11 @@ sub cmd_branch {
 	print "Copying ${src} at r${rev} to ${dst}...\n";
 	$ctx->copy($src, $rev, $dst)
 		unless $_dry_run;
+
+	# Release resources held by ctx before creating another SVN::Ra
+	# so destruction is orderly.  This seems necessary with SVN 1.9.5
+	# to avoid segfaults.
+	$ctx = undef;
 
 	$gs->fetch_all;
 }
@@ -1865,6 +1872,7 @@ sub get_commit_entry {
 			}
 		}
 		$msgbuf =~ s/\s+$//s;
+		$msgbuf =~ s/\r\n/\n/sg; # SVN 1.6+ disallows CRLF
 		if ($Git::SVN::_add_author_from && defined($author)
 		    && !$saw_from) {
 			$msgbuf .= "\n\nFrom: $author";

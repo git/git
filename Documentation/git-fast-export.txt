@@ -9,7 +9,7 @@ git-fast-export - Git data exporter
 SYNOPSIS
 --------
 [verse]
-'git fast-export [options]' | 'git fast-import'
+'git fast-export [<options>]' | 'git fast-import'
 
 DESCRIPTION
 -----------
@@ -110,6 +110,25 @@ marks the same across runs.
 	the shape of the history and stored tree.  See the section on
 	`ANONYMIZING` below.
 
+--reference-excluded-parents::
+	By default, running a command such as `git fast-export
+	master~5..master` will not include the commit master{tilde}5
+	and will make master{tilde}4 no longer have master{tilde}5 as
+	a parent (though both the old master{tilde}4 and new
+	master{tilde}4 will have all the same files).  Use
+	--reference-excluded-parents to instead have the the stream
+	refer to commits in the excluded range of history by their
+	sha1sum.  Note that the resulting stream can only be used by a
+	repository which already contains the necessary parent
+	commits.
+
+--show-original-ids::
+	Add an extra directive to the output for commits and blobs,
+	`original-oid <SHA1SUM>`.  While such directives will likely be
+	ignored by importers such as git-fast-import, it may be useful
+	for intermediary filters (e.g. for rewriting commit messages
+	which refer to older commits, or for stripping blobs by id).
+
 --refspec::
 	Apply the specified refspec to each ref exported. Multiple of them can
 	be specified.
@@ -119,7 +138,9 @@ marks the same across runs.
 	'git rev-list', that specifies the specific objects and references
 	to export.  For example, `master~10..master` causes the
 	current master reference to be exported along with all objects
-	added since its 10th ancestor commit.
+	added since its 10th ancestor commit and (unless the
+	--reference-excluded-parents option is specified) all files
+	common to master{tilde}9 and master{tilde}10.
 
 EXAMPLES
 --------
@@ -202,7 +223,7 @@ smaller output, and it is usually easy to quickly confirm that there is
 no private data in the stream.
 
 
-Limitations
+LIMITATIONS
 -----------
 
 Since 'git fast-import' cannot tag trees, you will not be

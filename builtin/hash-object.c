@@ -5,17 +5,19 @@
  * Copyright (C) Junio C Hamano, 2005
  */
 #include "builtin.h"
+#include "config.h"
+#include "object-store.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 
 /*
  * This is to create corrupt objects for debugging and as such it
  * needs to bypass the data conversion performed by, and the type
  * limitation imposed by, index_fd() and its callees.
  */
-static int hash_literally(unsigned char *sha1, int fd, const char *type, unsigned flags)
+static int hash_literally(struct object_id *oid, int fd, const char *type, unsigned flags)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int ret;
@@ -23,7 +25,8 @@ static int hash_literally(unsigned char *sha1, int fd, const char *type, unsigne
 	if (strbuf_read(&buf, fd, 4096) < 0)
 		ret = -1;
 	else
-		ret = hash_sha1_file_literally(buf.buf, buf.len, type, sha1, flags);
+		ret = hash_object_file_literally(buf.buf, buf.len, type, oid,
+						 flags);
 	strbuf_release(&buf);
 	return ret;
 }
@@ -32,16 +35,17 @@ static void hash_fd(int fd, const char *type, const char *path, unsigned flags,
 		    int literally)
 {
 	struct stat st;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	if (fstat(fd, &st) < 0 ||
 	    (literally
-	     ? hash_literally(sha1, fd, type, flags)
-	     : index_fd(sha1, fd, &st, type_from_string(type), path, flags)))
+	     ? hash_literally(&oid, fd, type, flags)
+	     : index_fd(the_repository->index, &oid, fd, &st,
+			type_from_string(type), path, flags)))
 		die((flags & HASH_WRITE_OBJECT)
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);
-	printf("%s\n", sha1_to_hex(sha1));
+	printf("%s\n", oid_to_hex(&oid));
 	maybe_flush_or_die(stdout, "hash to stdout");
 }
 
@@ -102,7 +106,6 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	int i;
-	int prefix_length = -1;
 	const char *errstr = NULL;
 
 	argc = parse_options(argc, argv, NULL, hash_object_options,
@@ -113,9 +116,8 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	else
 		prefix = setup_git_directory_gently(&nongit);
 
-	prefix_length = prefix ? strlen(prefix) : 0;
 	if (vpath && prefix)
-		vpath = prefix_filename(prefix, prefix_length, vpath);
+		vpath = xstrdup(prefix_filename(prefix, vpath));
 
 	git_config(git_default_config, NULL);
 
@@ -144,11 +146,13 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 
 	for (i = 0 ; i < argc; i++) {
 		const char *arg = argv[i];
+		char *to_free = NULL;
 
-		if (0 <= prefix_length)
-			arg = prefix_filename(prefix, prefix_length, arg);
+		if (prefix)
+			arg = to_free = prefix_filename(prefix, arg);
 		hash_object(arg, type, no_filters ? NULL : vpath ? vpath : arg,
 			    flags, literally);
+		free(to_free);
 	}
 
 	if (stdin_paths)

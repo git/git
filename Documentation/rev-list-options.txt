@@ -13,8 +13,6 @@ has a line that matches `<pattern>`), unless otherwise noted.
 Note that these are applied before commit
 ordering and formatting options, such as `--reverse`.
 
---
-
 -<number>::
 -n <number>::
 --max-count=<number>::
@@ -91,9 +89,14 @@ endif::git-rev-list[]
 	Consider the limiting patterns to be fixed strings (don't interpret
 	pattern as a regular expression).
 
+-P::
 --perl-regexp::
-	Consider the limiting patterns to be Perl-compatible regular expressions.
-	Requires libpcre to be compiled in.
+	Consider the limiting patterns to be Perl-compatible regular
+	expressions.
++
+Support for these types of regular expressions is an optional
+compile-time dependency. If Git wasn't compiled with support for them
+providing this option will cause it to die.
 
 --remove-empty::
 	Stop when a given path disappears from the tree.
@@ -133,8 +136,8 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	for all following revision specifiers, up to the next `--not`.
 
 --all::
-	Pretend as if all the refs in `refs/` are listed on the
-	command line as '<commit>'.
+	Pretend as if all the refs in `refs/`, along with `HEAD`, are
+	listed on the command line as '<commit>'.
 
 --branches[=<pattern>]::
 	Pretend as if all the refs in `refs/heads` are listed
@@ -178,6 +181,14 @@ explicitly.
 --reflog::
 	Pretend as if all objects mentioned by reflogs are listed on the
 	command line as `<commit>`.
+
+--single-worktree::
+	By default, all working trees will be examined by the
+	following options when there are more than one (see
+	linkgit:git-worktree[1]): `--all`, `--reflog` and
+	`--indexed-objects`.
+	This option forces them to examine the current working tree
+	only.
 
 --ignore-missing::
 	Upon seeing an invalid object name in the input, pretend as if
@@ -259,13 +270,13 @@ depending on a few rules:
 +
 --
 1. If the starting point is specified as `ref@{Nth}`, show the index
-format.
+   format.
 +
 2. If the starting point was specified as `ref@{now}`, show the
-timestamp format.
+   timestamp format.
 +
 3. If neither was used, but `--date` was given on the command line, show
-the timestamp in the format requested by `--date`.
+   the timestamp in the format requested by `--date`.
 +
 4. Otherwise, show the index format.
 --
@@ -294,8 +305,6 @@ ifdef::git-rev-list[]
 	Show progress reports on stderr as objects are considered. The
 	`<header>` text will be printed with each progress update.
 endif::git-rev-list[]
-
---
 
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -673,6 +682,11 @@ ifdef::git-rev-list[]
 	all object IDs which I need to download if I have the commit
 	object _bar_ but not _foo_''.
 
+--in-commit-order::
+	Print tree and blob ids in order of the commits. The tree
+	and blob ids are printed after they are first referenced
+	by a commit.
+
 --objects-edge::
 	Similar to `--objects`, but also print the IDs of excluded
 	commits prefixed with a ``-'' character.  This is used by
@@ -693,6 +707,69 @@ ifdef::git-rev-list[]
 --unpacked::
 	Only useful with `--objects`; print the object IDs that are not
 	in packs.
+
+--filter=<filter-spec>::
+	Only useful with one of the `--objects*`; omits objects (usually
+	blobs) from the list of printed objects.  The '<filter-spec>'
+	may be one of the following:
++
+The form '--filter=blob:none' omits all blobs.
++
+The form '--filter=blob:limit=<n>[kmg]' omits blobs larger than n bytes
+or units.  n may be zero.  The suffixes k, m, and g can be used to name
+units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same
+as 'blob:limit=1024'.
++
+The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
+specification contained in the blob (or blob-expression) '<blob-ish>'
+to omit blobs that would not be not required for a sparse checkout on
+the requested refs.
++
+The form '--filter=tree:<depth>' omits all blobs and trees whose depth
+from the root tree is >= <depth> (minimum depth if an object is located
+at multiple depths in the commits traversed). <depth>=0 will not include
+any trees or blobs unless included explicitly in the command-line (or
+standard input when --stdin is used). <depth>=1 will include only the
+tree and blobs which are referenced directly by a commit reachable from
+<commit> or an explicitly-given object. <depth>=2 is like <depth>=1
+while also including trees and blobs one more level removed from an
+explicitly-given commit or tree.
++
+Note that the form '--filter=sparse:path=<path>' that wants to read
+from an arbitrary path on the filesystem has been dropped for security
+reasons.
+
+--no-filter::
+	Turn off any previous `--filter=` argument.
+
+--filter-print-omitted::
+	Only useful with `--filter=`; prints a list of the objects omitted
+	by the filter.  Object IDs are prefixed with a ``~'' character.
+
+--missing=<missing-action>::
+	A debug option to help with future "partial clone" development.
+	This option specifies how missing objects are handled.
++
+The form '--missing=error' requests that rev-list stop with an error if
+a missing object is encountered.  This is the default action.
++
+The form '--missing=allow-any' will allow object traversal to continue
+if a missing object is encountered.  Missing objects will silently be
+omitted from the results.
++
+The form '--missing=allow-promisor' is like 'allow-any', but will only
+allow object traversal to continue for EXPECTED promisor missing objects.
+Unexpected missing objects will raise an error.
++
+The form '--missing=print' is like 'allow-any', but will also print a
+list of the missing objects.  Object IDs are prefixed with a ``?'' character.
+
+--exclude-promisor-objects::
+	(For internal use only.)  Prefilter object traversal at
+	promisor boundary.  This is used with partial clone.  This is
+	stronger than `--missing=allow-promisor` because it limits the
+	traversal, rather than just silencing errors about missing
+	objects.
 endif::git-rev-list[]
 
 --no-walk[=(sorted|unsorted)]::
@@ -729,12 +806,13 @@ include::pretty-options.txt[]
 	author's). If `-local` is appended to the format (e.g.,
 	`iso-local`), the user's local time zone is used instead.
 +
+--
 `--date=relative` shows dates relative to the current time,
 e.g. ``2 hours ago''. The `-local` option has no effect for
 `--date=relative`.
-+
+
 `--date=local` is an alias for `--date=default-local`.
-+
+
 `--date=iso` (or `--date=iso8601`) shows timestamps in a ISO 8601-like format.
 The differences to the strict ISO 8601 format are:
 
@@ -742,15 +820,14 @@ The differences to the strict ISO 8601 format are:
 	- a space between time and time zone
 	- no colon between hours and minutes of the time zone
 
-+
 `--date=iso-strict` (or `--date=iso8601-strict`) shows timestamps in strict
 ISO 8601 format.
-+
+
 `--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
 format, often found in email messages.
-+
+
 `--date=short` shows only the date, but not the time, in `YYYY-MM-DD` format.
-+
+
 `--date=raw` shows the date as seconds since the epoch (1970-01-01
 00:00:00 UTC), followed by a space, and then the timezone as an offset
 from UTC (a `+` or `-` with four digits; the first two are hours, and
@@ -759,20 +836,28 @@ with `strftime("%s %z")`).
 Note that the `-local` option does not affect the seconds-since-epoch
 value (which is always measured in UTC), but does switch the accompanying
 timezone value.
-+
+
+`--date=human` shows the timezone if the timezone does not match the
+current time-zone, and doesn't print the whole date if that matches
+(ie skip printing year for dates that are "this year", but also skip
+the whole date itself if it's in the last few days and we can just say
+what weekday it was).  For older dates the hour and minute is also
+omitted.
+
 `--date=unix` shows the date as a Unix epoch timestamp (seconds since
 1970).  As with `--raw`, this is always in UTC and therefore `-local`
 has no effect.
-+
-`--date=format:...` feeds the format `...` to your system `strftime`.
+
+`--date=format:...` feeds the format `...` to your system `strftime`,
+except for %z and %Z, which are handled internally.
 Use `--date=format:%c` to show the date in your system locale's
 preferred format.  See the `strftime` manual for a complete list of
 format placeholders. When using `-local`, the correct syntax is
 `--date=format-local:...`.
-+
+
 `--date=default` is the default format, and is similar to
 `--date=rfc2822`, with a few exceptions:
-
+--
 	- there is no comma after the day-of-week
 
 	- the time zone is omitted when the local time zone is used
@@ -785,11 +870,11 @@ endif::git-rev-list[]
 
 --parents::
 	Print also the parents of the commit (in the form "commit parent...").
-	Also enables parent rewriting, see 'History Simplification' below.
+	Also enables parent rewriting, see 'History Simplification' above.
 
 --children::
 	Print also the children of the commit (in the form "commit child...").
-	Also enables parent rewriting, see 'History Simplification' below.
+	Also enables parent rewriting, see 'History Simplification' above.
 
 ifdef::git-rev-list[]
 --timestamp::
@@ -832,7 +917,7 @@ you would get an output like this:
 	to be drawn properly.
 	Cannot be combined with `--no-walk`.
 +
-This enables parent rewriting, see 'History Simplification' below.
+This enables parent rewriting, see 'History Simplification' above.
 +
 This implies the `--topo-order` option by default, but the
 `--date-order` option may also be specified.
@@ -875,6 +960,13 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	patch output by omitting uninteresting hunks whose contents in
 	the parents have only two variants and the merge result picks
 	one of them without modification.
+
+--combined-all-paths::
+	This flag causes combined diffs (used for merge commits) to
+	list the name of the file from all parents.  It thus only has
+	effect when -c or --cc are specified, and is likely only
+	useful if filename changes are detected (i.e. when either
+	rename or copy detection have been requested).
 
 -m::
 	This flag makes the merge commits show the full diff like

@@ -1,4 +1,4 @@
-gitremote-helpers(1)
+gitremote-helpers(7)
 ====================
 
 NAME
@@ -102,6 +102,14 @@ Capabilities for Pushing
 +
 Supported commands: 'connect'.
 
+'stateless-connect'::
+	Experimental; for internal use only.
+	Can attempt to connect to a remote server for communication
+	using git's wire-protocol version 2.  See the documentation
+	for the stateless-connect command for more information.
++
+Supported commands: 'stateless-connect'.
+
 'push'::
 	Can discover remote refs and push local commits and the
 	history leading up to them to new or existing remote refs.
@@ -135,6 +143,14 @@ Capabilities for Fetching
 	requires a bidirectional, full-duplex connection.
 +
 Supported commands: 'connect'.
+
+'stateless-connect'::
+	Experimental; for internal use only.
+	Can attempt to connect to a remote server for communication
+	using git's wire-protocol version 2.  See the documentation
+	for the stateless-connect command for more information.
++
+Supported commands: 'stateless-connect'.
 
 'fetch'::
 	Can discover remote refs and transfer objects reachable from
@@ -375,6 +391,22 @@ Supported if the helper has the "export" capability.
 +
 Supported if the helper has the "connect" capability.
 
+'stateless-connect' <service>::
+	Experimental; for internal use only.
+	Connects to the given remote service for communication using
+	git's wire-protocol version 2.  Valid replies to this command
+	are empty line (connection established), 'fallback' (no smart
+	transport support, fall back to dumb transports) and just
+	exiting with error message printed (can't connect, don't bother
+	trying to fall back).  After line feed terminating the positive
+	(empty) response, the output of the service starts.  Messages
+	(both request and response) must consist of zero or more
+	PKT-LINEs, terminating in a flush packet. The client must not
+	expect the server to store any state in between request-response
+	pairs.  After the connection ends, the remote helper exits.
++
+Supported if the helper has the "stateless-connect" capability.
+
 If a fatal error occurs, the program writes the error message to
 stderr and exits. The caller should expect that a suitable error
 message has been printed if the child closes the connection without
@@ -436,7 +468,7 @@ set by Git if the remote helper has the 'option' capability.
 
 'option dry-run' {'true'|'false'}:
 	If true, pretend the operation completed successfully,
-	but don't actually change any repository data.	For most
+	but don't actually change any repository data.  For most
 	helpers this only applies to the 'push', if supported.
 
 'option servpath <c-style-quoted-path>'::
@@ -452,15 +484,26 @@ set by Git if the remote helper has the 'option' capability.
 	Request the helper to perform a force update.  Defaults to
 	'false'.
 
-'option cloning {'true'|'false'}::
+'option cloning' {'true'|'false'}::
 	Notify the helper this is a clone request (i.e. the current
 	repository is guaranteed empty).
 
-'option update-shallow {'true'|'false'}::
+'option update-shallow' {'true'|'false'}::
 	Allow to extend .git/shallow if the new refs require it.
 
-'option pushcert {'true'|'false'}::
+'option pushcert' {'true'|'false'}::
 	GPG sign pushes.
+
+'option push-option <string>::
+	Transmit <string> as a push option. As the push option
+	must not contain LF or NUL characters, the string is not encoded.
+
+'option from-promisor' {'true'|'false'}::
+	Indicate that these objects are being fetched from a promisor.
+
+'option no-dependents' {'true'|'false'}::
+	Indicate that only the objects wanted need to be fetched, not
+	their dependents.
 
 SEE ALSO
 --------
@@ -469,8 +512,6 @@ linkgit:git-remote[1]
 linkgit:git-remote-ext[1]
 
 linkgit:git-remote-fd[1]
-
-linkgit:git-remote-testgit[1]
 
 linkgit:git-fast-import[1]
 

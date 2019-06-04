@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "utf8.h"
 #include "diff.h"
@@ -97,6 +98,10 @@ static void setup_commit_formats(void)
 		{ "fuller",	CMIT_FMT_FULLER,	0,	8 },
 		{ "full",	CMIT_FMT_FULL,		0,	8 },
 		{ "oneline",	CMIT_FMT_ONELINE,	1,	0 }
+		/*
+		 * Please update $__git_log_pretty_formats in
+		 * git-completion.bash when you add new formats.
+		 */
 	};
 	commit_formats_len = ARRAY_SIZE(builtin_formats);
 	builtin_formats_len = commit_formats_len;
@@ -338,8 +343,7 @@ static int is_rfc2047_special(char ch, enum rfc2047_type type)
 	return !(isalnum(ch) || ch == '!' || ch == '*' || ch == '+' || ch == '-' || ch == '/');
 }
 
-static int needs_rfc2047_encoding(const char *line, int len,
-				  enum rfc2047_type type)
+static int needs_rfc2047_encoding(const char *line, int len)
 {
 	int i;
 
@@ -405,11 +409,11 @@ static void add_rfc2047(struct strbuf *sb, const char *line, size_t len,
 const char *show_ident_date(const struct ident_split *ident,
 			    const struct date_mode *mode)
 {
-	unsigned long date = 0;
+	timestamp_t date = 0;
 	long tz = 0;
 
 	if (ident->date_begin && ident->date_end)
-		date = strtoul(ident->date_begin, NULL, 10);
+		date = parse_timestamp(ident->date_begin, NULL, 10);
 	if (date_overflows(date))
 		date = 0;
 	else {
@@ -465,7 +469,7 @@ void pp_user_info(struct pretty_print_context *pp,
 		}
 
 		strbuf_addstr(sb, "From: ");
-		if (needs_rfc2047_encoding(namebuf, namelen, RFC2047_ADDRESS)) {
+		if (needs_rfc2047_encoding(namebuf, namelen)) {
 			add_rfc2047(sb, namebuf, namelen,
 				    encoding, RFC2047_ADDRESS);
 			max_length = 76; /* per rfc2047 */
@@ -548,7 +552,7 @@ static void add_merge_info(const struct pretty_print_context *pp,
 		struct object_id *oidp = &parent->item->object.oid;
 		strbuf_addch(sb, ' ');
 		if (pp->abbrev)
-			strbuf_add_unique_abbrev(sb, oidp->hash, pp->abbrev);
+			strbuf_add_unique_abbrev(sb, oidp, pp->abbrev);
 		else
 			strbuf_addstr(sb, oid_to_hex(oidp));
 		parent = parent->next;
@@ -594,14 +598,15 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 	return strbuf_detach(&tmp, NULL);
 }
 
-const char *logmsg_reencode(const struct commit *commit,
-			    char **commit_encoding,
-			    const char *output_encoding)
+const char *repo_logmsg_reencode(struct repository *r,
+				 const struct commit *commit,
+				 char **commit_encoding,
+				 const char *output_encoding)
 {
 	static const char *utf8 = "UTF-8";
 	const char *use_encoding;
 	char *encoding;
-	const char *msg = get_commit_buffer(commit, NULL);
+	const char *msg = repo_get_commit_buffer(r, commit, NULL);
 	char *out;
 
 	if (!output_encoding || !*output_encoding) {
@@ -629,7 +634,7 @@ const char *logmsg_reencode(const struct commit *commit,
 		 * the cached copy from get_commit_buffer, we need to duplicate it
 		 * to avoid munging the cached copy.
 		 */
-		if (msg == get_cached_commit_buffer(commit, NULL))
+		if (msg == get_cached_commit_buffer(r, commit, NULL))
 			out = xstrdup(msg);
 		else
 			out = (char *)msg;
@@ -643,7 +648,7 @@ const char *logmsg_reencode(const struct commit *commit,
 		 */
 		out = reencode_string(msg, output_encoding, use_encoding);
 		if (out)
-			unuse_commit_buffer(commit, msg);
+			repo_unuse_commit_buffer(r, commit, msg);
 	}
 
 	/*
@@ -783,28 +788,8 @@ struct format_commit_context {
 	size_t body_off;
 
 	/* The following ones are relative to the result struct strbuf. */
-	struct chunk abbrev_commit_hash;
-	struct chunk abbrev_tree_hash;
-	struct chunk abbrev_parent_hashes;
 	size_t wrap_start;
 };
-
-static int add_again(struct strbuf *sb, struct chunk *chunk)
-{
-	if (chunk->len) {
-		strbuf_adddup(sb, chunk->off, chunk->len);
-		return 1;
-	}
-
-	/*
-	 * We haven't seen this chunk before.  Our caller is surely
-	 * going to add it the hard way now.  Remember the most likely
-	 * start of the to-be-added chunk: the current end of the
-	 * struct strbuf.
-	 */
-	chunk->off = sb->len;
-	return 0;
-}
 
 static void parse_commit_header(struct format_commit_context *context)
 {
@@ -890,16 +875,6 @@ const char *format_subject(struct strbuf *sb, const char *msg,
 	return msg;
 }
 
-static void format_trailers(struct strbuf *sb, const char *msg)
-{
-	struct trailer_info info;
-
-	trailer_info_get(&info, msg);
-	strbuf_add(sb, info.trailer_start,
-		   info.trailer_end - info.trailer_start);
-	trailer_info_release(&info);
-}
-
 static void parse_commit_message(struct format_commit_context *c)
 {
 	const char *msg = c->message + c->message_off;
@@ -966,6 +941,7 @@ static size_t parse_color(struct strbuf *sb, /* in UTF-8 */
 			  struct format_commit_context *c)
 {
 	const char *rest = placeholder;
+	const char *basic_color = NULL;
 
 	if (placeholder[1] == '(') {
 		const char *begin = placeholder + 2;
@@ -974,28 +950,45 @@ static size_t parse_color(struct strbuf *sb, /* in UTF-8 */
 
 		if (!end)
 			return 0;
+
 		if (skip_prefix(begin, "auto,", &begin)) {
 			if (!want_color(c->pretty_ctx->color))
 				return end - placeholder + 1;
+		} else if (skip_prefix(begin, "always,", &begin)) {
+			/* nothing to do; we do not respect want_color at all */
+		} else {
+			/* the default is the same as "auto" */
+			if (!want_color(c->pretty_ctx->color))
+				return end - placeholder + 1;
 		}
+
 		if (color_parse_mem(begin, end - begin, color) < 0)
 			die(_("unable to parse --pretty format"));
 		strbuf_addstr(sb, color);
 		return end - placeholder + 1;
 	}
+
+	/*
+	 * We handle things like "%C(red)" above; for historical reasons, there
+	 * are a few colors that can be specified without parentheses (and
+	 * they cannot support things like "auto" or "always" at all).
+	 */
 	if (skip_prefix(placeholder + 1, "red", &rest))
-		strbuf_addstr(sb, GIT_COLOR_RED);
+		basic_color = GIT_COLOR_RED;
 	else if (skip_prefix(placeholder + 1, "green", &rest))
-		strbuf_addstr(sb, GIT_COLOR_GREEN);
+		basic_color = GIT_COLOR_GREEN;
 	else if (skip_prefix(placeholder + 1, "blue", &rest))
-		strbuf_addstr(sb, GIT_COLOR_BLUE);
+		basic_color = GIT_COLOR_BLUE;
 	else if (skip_prefix(placeholder + 1, "reset", &rest))
-		strbuf_addstr(sb, GIT_COLOR_RESET);
+		basic_color = GIT_COLOR_RESET;
+
+	if (basic_color && want_color(c->pretty_ctx->color))
+		strbuf_addstr(sb, basic_color);
+
 	return rest - placeholder;
 }
 
-static size_t parse_padding_placeholder(struct strbuf *sb,
-					const char *placeholder,
+static size_t parse_padding_placeholder(const char *placeholder,
 					struct format_commit_context *c)
 {
 	const char *ch = placeholder;
@@ -1066,6 +1059,78 @@ static size_t parse_padding_placeholder(struct strbuf *sb,
 	return 0;
 }
 
+static int match_placeholder_arg_value(const char *to_parse, const char *candidate,
+				       const char **end, const char **valuestart,
+				       size_t *valuelen)
+{
+	const char *p;
+
+	if (!(skip_prefix(to_parse, candidate, &p)))
+		return 0;
+	if (valuestart) {
+		if (*p == '=') {
+			*valuestart = p + 1;
+			*valuelen = strcspn(*valuestart, ",)");
+			p = *valuestart + *valuelen;
+		} else {
+			if (*p != ',' && *p != ')')
+				return 0;
+			*valuestart = NULL;
+			*valuelen = 0;
+		}
+	}
+	if (*p == ',') {
+		*end = p + 1;
+		return 1;
+	}
+	if (*p == ')') {
+		*end = p;
+		return 1;
+	}
+	return 0;
+}
+
+static int match_placeholder_bool_arg(const char *to_parse, const char *candidate,
+				      const char **end, int *val)
+{
+	const char *argval;
+	char *strval;
+	size_t arglen;
+	int v;
+
+	if (!match_placeholder_arg_value(to_parse, candidate, end, &argval, &arglen))
+		return 0;
+
+	if (!argval) {
+		*val = 1;
+		return 1;
+	}
+
+	strval = xstrndup(argval, arglen);
+	v = git_parse_maybe_bool(strval);
+	free(strval);
+
+	if (v == -1)
+		return 0;
+
+	*val = v;
+
+	return 1;
+}
+
+static int format_trailer_match_cb(const struct strbuf *key, void *ud)
+{
+	const struct string_list *list = ud;
+	const struct string_list_item *item;
+
+	for_each_string_list_item (item, list) {
+		if (key->len == (uintptr_t)item->util &&
+		    !strncasecmp(item->string, key->buf, key->len))
+			return 1;
+	}
+	return 0;
+}
+
 static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				const char *placeholder,
 				void *context)
@@ -1074,9 +1139,15 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	const struct commit *commit = c->commit;
 	const char *msg = c->message;
 	struct commit_list *p;
-	int ch;
+	const char *arg;
+	size_t res;
+	char **slot;
 
 	/* these are independent of the commit */
+	res = strbuf_expand_literal_cb(sb, placeholder, NULL);
+	if (res)
+		return res;
+
 	switch (placeholder[0]) {
 	case 'C':
 		if (starts_with(placeholder + 1, "(auto)")) {
@@ -1095,16 +1166,6 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			 */
 			return ret;
 		}
-	case 'n':		/* newline */
-		strbuf_addch(sb, '\n');
-		return 1;
-	case 'x':
-		/* %x00 == NUL, %x0a == LF, etc. */
-		ch = hex2chr(placeholder + 1);
-		if (ch < 0)
-			return 0;
-		strbuf_addch(sb, ch);
-		return 3;
 	case 'w':
 		if (placeholder[1] == '(') {
 			unsigned long width = 0, indent1 = 0, indent2 = 0;
@@ -1132,12 +1193,12 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 	case '<':
 	case '>':
-		return parse_padding_placeholder(sb, placeholder, c);
+		return parse_padding_placeholder(placeholder, c);
 	}
 
 	/* these depend on the commit */
 	if (!commit->object.parsed)
-		parse_object(commit->object.oid.hash);
+		parse_object(the_repository, &commit->object.oid);
 
 	switch (placeholder[0]) {
 	case 'H':		/* commit hash */
@@ -1147,24 +1208,17 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		return 1;
 	case 'h':		/* abbreviated commit hash */
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_COMMIT));
-		if (add_again(sb, &c->abbrev_commit_hash)) {
-			strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
-			return 1;
-		}
-		strbuf_add_unique_abbrev(sb, commit->object.oid.hash,
+		strbuf_add_unique_abbrev(sb, &commit->object.oid,
 					 c->pretty_ctx->abbrev);
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
-		c->abbrev_commit_hash.len = sb->len - c->abbrev_commit_hash.off;
 		return 1;
 	case 'T':		/* tree hash */
-		strbuf_addstr(sb, oid_to_hex(&commit->tree->object.oid));
+		strbuf_addstr(sb, oid_to_hex(get_commit_tree_oid(commit)));
 		return 1;
 	case 't':		/* abbreviated tree hash */
-		if (add_again(sb, &c->abbrev_tree_hash))
-			return 1;
-		strbuf_add_unique_abbrev(sb, commit->tree->object.oid.hash,
+		strbuf_add_unique_abbrev(sb,
+					 get_commit_tree_oid(commit),
 					 c->pretty_ctx->abbrev);
-		c->abbrev_tree_hash.len = sb->len - c->abbrev_tree_hash.off;
 		return 1;
 	case 'P':		/* parent hashes */
 		for (p = commit->parents; p; p = p->next) {
@@ -1174,27 +1228,31 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		}
 		return 1;
 	case 'p':		/* abbreviated parent hashes */
-		if (add_again(sb, &c->abbrev_parent_hashes))
-			return 1;
 		for (p = commit->parents; p; p = p->next) {
 			if (p != commit->parents)
 				strbuf_addch(sb, ' ');
-			strbuf_add_unique_abbrev(sb, p->item->object.oid.hash,
+			strbuf_add_unique_abbrev(sb, &p->item->object.oid,
 						 c->pretty_ctx->abbrev);
 		}
-		c->abbrev_parent_hashes.len = sb->len -
-		                              c->abbrev_parent_hashes.off;
 		return 1;
 	case 'm':		/* left/right/bottom */
 		strbuf_addstr(sb, get_revision_mark(NULL, commit));
 		return 1;
 	case 'd':
-		load_ref_decorations(DECORATE_SHORT_REFS);
+		load_ref_decorations(NULL, DECORATE_SHORT_REFS);
 		format_decorations(sb, commit, c->auto_color);
 		return 1;
 	case 'D':
-		load_ref_decorations(DECORATE_SHORT_REFS);
+		load_ref_decorations(NULL, DECORATE_SHORT_REFS);
 		format_decorations_extended(sb, commit, c->auto_color, "", ", ", "");
+		return 1;
+	case 'S':		/* tag/branch like --source */
+		if (!(c->pretty_ctx->rev && c->pretty_ctx->rev->sources))
+			return 0;
+		slot = revision_sources_at(c->pretty_ctx->rev->sources, commit);
+		if (!(slot && *slot))
+			return 0;
+		strbuf_addstr(sb, *slot);
 		return 1;
 	case 'g':		/* reflog info */
 		switch(placeholder[1]) {
@@ -1258,6 +1316,14 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			if (c->signature_check.key)
 				strbuf_addstr(sb, c->signature_check.key);
 			break;
+		case 'F':
+			if (c->signature_check.fingerprint)
+				strbuf_addstr(sb, c->signature_check.fingerprint);
+			break;
+		case 'P':
+			if (c->signature_check.primary_key_fingerprint)
+				strbuf_addstr(sb, c->signature_check.primary_key_fingerprint);
+			break;
 		default:
 			return 0;
 		}
@@ -1304,9 +1370,55 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		return 1;
 	}
 
-	if (starts_with(placeholder, "(trailers)")) {
-		format_trailers(sb, msg + c->subject_off);
-		return strlen("(trailers)");
+	if (skip_prefix(placeholder, "(trailers", &arg)) {
+		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+		struct string_list filter_list = STRING_LIST_INIT_NODUP;
+		struct strbuf sepbuf = STRBUF_INIT;
+		size_t ret = 0;
+
+		opts.no_divider = 1;
+
+		if (*arg == ':') {
+			arg++;
+			for (;;) {
+				const char *argval;
+				size_t arglen;
+
+				if (match_placeholder_arg_value(arg, "key", &arg, &argval, &arglen)) {
+					uintptr_t len = arglen;
+
+					if (!argval)
+						goto trailer_out;
+
+					if (len && argval[len - 1] == ':')
+						len--;
+					string_list_append(&filter_list, argval)->util = (char *)len;
+
+					opts.filter = format_trailer_match_cb;
+					opts.filter_data = &filter_list;
+					opts.only_trailers = 1;
+				} else if (match_placeholder_arg_value(arg, "separator", &arg, &argval, &arglen)) {
+					char *fmt;
+
+					strbuf_reset(&sepbuf);
+					fmt = xstrndup(argval, arglen);
+					strbuf_expand(&sepbuf, fmt, strbuf_expand_literal_cb, NULL);
+					free(fmt);
+					opts.separator = &sepbuf;
+				} else if (!match_placeholder_bool_arg(arg, "only", &arg, &opts.only_trailers) &&
+					   !match_placeholder_bool_arg(arg, "unfold", &arg, &opts.unfold) &&
+					   !match_placeholder_bool_arg(arg, "valueonly", &arg, &opts.value_only))
+					break;
+			}
+		}
+		if (*arg == ')') {
+			format_trailers_from_commit(sb, msg + c->subject_off, &opts);
+			ret = arg - placeholder + 1;
+		}
+	trailer_out:
+		string_list_clear(&filter_list, 0);
+		strbuf_release(&sepbuf);
+		return ret;
 	}
 
 	return 0;	/* unknown placeholder */
@@ -1475,6 +1587,9 @@ static size_t userformat_want_item(struct strbuf *sb, const char *placeholder,
 	case 'N':
 		w->notes = 1;
 		break;
+	case 'S':
+		w->source = 1;
+		break;
 	}
 	return 0;
 }
@@ -1492,9 +1607,10 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 	strbuf_release(&dummy);
 }
 
-void format_commit_message(const struct commit *commit,
-			   const char *format, struct strbuf *sb,
-			   const struct pretty_print_context *pretty_ctx)
+void repo_format_commit_message(struct repository *r,
+				const struct commit *commit,
+				const char *format, struct strbuf *sb,
+				const struct pretty_print_context *pretty_ctx)
 {
 	struct format_commit_context context;
 	const char *output_enc = pretty_ctx->output_encoding;
@@ -1508,9 +1624,9 @@ void format_commit_message(const struct commit *commit,
 	 * convert a commit message to UTF-8 first
 	 * as far as 'format_commit_item' assumes it in UTF-8
 	 */
-	context.message = logmsg_reencode(commit,
-					  &context.commit_encoding,
-					  utf8);
+	context.message = repo_logmsg_reencode(r, commit,
+					       &context.commit_encoding,
+					       utf8);
 
 	strbuf_expand(sb, format, format_commit_item, &context);
 	rewrap_message_tail(sb, &context, 0, 0, 0);
@@ -1526,7 +1642,7 @@ void format_commit_message(const struct commit *commit,
 	}
 
 	if (output_enc) {
-		int outsz;
+		size_t outsz;
 		char *out = reencode_string_len(sb->buf, sb->len,
 						output_enc, utf8, &outsz);
 		if (out)
@@ -1534,7 +1650,7 @@ void format_commit_message(const struct commit *commit,
 	}
 
 	free(context.commit_encoding);
-	unuse_commit_buffer(commit, context.message);
+	repo_unuse_commit_buffer(r, commit, context.message);
 }
 
 static void pp_header(struct pretty_print_context *pp,
@@ -1563,7 +1679,7 @@ static void pp_header(struct pretty_print_context *pp,
 		}
 
 		if (starts_with(line, "parent ")) {
-			if (linelen != 48)
+			if (linelen != the_hash_algo->hexsz + 8)
 				die("bad parent line in commit");
 			continue;
 		}
@@ -1571,7 +1687,7 @@ static void pp_header(struct pretty_print_context *pp,
 		if (!parents_shown) {
 			unsigned num = commit_list_count(commit->parents);
 			/* with enough slop */
-			strbuf_grow(sb, num * 50 + 20);
+			strbuf_grow(sb, num * (GIT_MAX_HEXSZ + 10) + 20);
 			add_merge_info(pp, sb, commit);
 			parents_shown = 1;
 		}
@@ -1607,9 +1723,10 @@ void pp_title_line(struct pretty_print_context *pp,
 				pp->preserve_subject ? "\n" : " ");
 
 	strbuf_grow(sb, title.len + 1024);
-	if (pp->subject) {
-		strbuf_addstr(sb, pp->subject);
-		if (needs_rfc2047_encoding(title.buf, title.len, RFC2047_SUBJECT))
+	if (pp->print_email_subject) {
+		if (pp->rev)
+			fmt_output_email_subject(sb, pp->rev);
+		if (needs_rfc2047_encoding(title.buf, title.len))
 			add_rfc2047(sb, title.buf, title.len,
 						encoding, RFC2047_SUBJECT);
 		else
@@ -1818,7 +1935,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	}
 
 	pp_header(pp, encoding, commit, &msg, sb);
-	if (pp->fmt != CMIT_FMT_ONELINE && !pp->subject) {
+	if (pp->fmt != CMIT_FMT_ONELINE && !pp->print_email_subject) {
 		strbuf_addch(sb, '\n');
 	}
 

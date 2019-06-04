@@ -146,8 +146,8 @@
 #define _SGI_SOURCE 1
 
 #if defined(WIN32) && !defined(__CYGWIN__) /* Both MinGW and MSVC */
-# if defined (_MSC_VER) && !defined(_WIN32_WINNT)
-#  define _WIN32_WINNT 0x0502
+# if !defined(_WIN32_WINNT)
+#  define _WIN32_WINNT 0x0600
 # endif
 #define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
 #include <winsock2.h>
@@ -180,19 +180,27 @@
 #include <regex.h>
 #include <utime.h>
 #include <syslog.h>
-#ifndef NO_SYS_POLL_H
+#if !defined(NO_POLL_H)
+#include <poll.h>
+#elif !defined(NO_SYS_POLL_H)
 #include <sys/poll.h>
 #else
+/* Pull the compat stuff */
 #include <poll.h>
 #endif
 #ifdef HAVE_BSD_SYSCTL
 #include <sys/sysctl.h>
 #endif
 
+#if defined(__CYGWIN__)
+#include "compat/win32/path-utils.h"
+#endif
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */
+#include "compat/win32/path-utils.h"
 #include "compat/mingw.h"
 #elif defined(_MSC_VER)
+#include "compat/win32/path-utils.h"
 #include "compat/msvc.h"
 #else
 #include <sys/utsname.h>
@@ -217,7 +225,7 @@
 #endif
 #ifdef NO_INTPTR_T
 /*
- * On I16LP32, ILP32 and LP64 "long" is the save bet, however
+ * On I16LP32, ILP32 and LP64 "long" is the safe bet, however
  * on LLP86, IL33LLP64 and P64 it needs to be "long long",
  * while on IP16 and IP16L32 it is "int" (resp. "short")
  * Size needs to match (or exceed) 'sizeof(void *)'.
@@ -242,7 +250,7 @@ typedef unsigned long uintptr_t;
 
 #ifdef MKDIR_WO_TRAILING_SLASH
 #define mkdir(a,b) compat_mkdir_wo_trailing_slash((a),(b))
-extern int compat_mkdir_wo_trailing_slash(const char*, mode_t);
+int compat_mkdir_wo_trailing_slash(const char*, mode_t);
 #endif
 
 #ifdef NO_STRUCT_ITIMERVAL
@@ -260,9 +268,9 @@ struct itimerval {
 #include <libgen.h>
 #else
 #define basename gitbasename
-extern char *gitbasename(char *);
+char *gitbasename(char *);
 #define dirname gitdirname
-extern char *gitdirname(char *);
+char *gitdirname(char *);
 #endif
 
 #ifndef NO_ICONV
@@ -279,6 +287,10 @@ extern char *gitdirname(char *);
 #endif
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#endif
+
+#ifdef HAVE_SYSINFO
+# include <sys/sysinfo.h>
 #endif
 
 /* On most systems <netdb.h> would have given us this, but
@@ -319,6 +331,11 @@ extern char *gitdirname(char *);
 #define PRIo32 "o"
 #endif
 
+typedef uintmax_t timestamp_t;
+#define PRItime PRIuMAX
+#define parse_timestamp strtoumax
+#define TIME_MAX UINTMAX_MAX
+
 #ifndef PATH_SEP
 #define PATH_SEP ':'
 #endif
@@ -328,6 +345,14 @@ extern char *gitdirname(char *);
 #endif
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH "/usr/local/bin:/usr/bin:/bin"
+#endif
+
+#ifndef platform_core_config
+static inline int noop_core_config(const char *var, const char *value, void *cb)
+{
+	return 0;
+}
+#define platform_core_config noop_core_config
 #endif
 
 #ifndef has_dos_drive_prefix
@@ -370,6 +395,23 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define find_last_dir_sep git_find_last_dir_sep
 #endif
 
+#ifndef query_user_email
+#define query_user_email() NULL
+#endif
+
+#ifdef __TANDEM
+#include <floss.h(floss_execl,floss_execlp,floss_execv,floss_execvp)>
+#include <floss.h(floss_getpwuid)>
+#ifndef NSIG
+/*
+ * NonStop NSE and NSX do not provide NSIG. SIGGUARDIAN(99) is the highest
+ * known, by detective work using kill -l as a list is all signals
+ * instead of signal.h where it should be.
+ */
+# define NSIG 100
+#endif
+#endif
+
 #if defined(__HP_cc) && (__HP_cc >= 61000)
 #define NORETURN __attribute__((noreturn))
 #define NORETURN_PTR
@@ -396,6 +438,8 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define LAST_ARG_MUST_BE_NULL
 #endif
 
+#define MAYBE_UNUSED __attribute__((__unused__))
+
 #include "compat/bswap.h"
 
 #include "wildmatch.h"
@@ -403,15 +447,15 @@ static inline char *git_find_last_dir_sep(const char *path)
 struct strbuf;
 
 /* General helper functions */
-extern void vreportf(const char *prefix, const char *err, va_list params);
-extern NORETURN void usage(const char *err);
-extern NORETURN void usagef(const char *err, ...) __attribute__((format (printf, 1, 2)));
-extern NORETURN void die(const char *err, ...) __attribute__((format (printf, 1, 2)));
-extern NORETURN void die_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
-extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
-extern int error_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
-extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
-extern void warning_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
+void vreportf(const char *prefix, const char *err, va_list params);
+NORETURN void usage(const char *err);
+NORETURN void usagef(const char *err, ...) __attribute__((format (printf, 1, 2)));
+NORETURN void die(const char *err, ...) __attribute__((format (printf, 1, 2)));
+NORETURN void die_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
+int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
+int error_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
+void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
+void warning_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
 #ifndef NO_OPENSSL
 #ifdef APPLE_COMMON_CRYPTO
@@ -439,15 +483,15 @@ static inline int const_error(void)
 #define error_errno(...) (error_errno(__VA_ARGS__), const_error())
 #endif
 
-extern void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params));
-extern void set_error_routine(void (*routine)(const char *err, va_list params));
+void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params));
+void set_error_routine(void (*routine)(const char *err, va_list params));
 extern void (*get_error_routine(void))(const char *err, va_list params);
-extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
+void set_warn_routine(void (*routine)(const char *warn, va_list params));
 extern void (*get_warn_routine(void))(const char *warn, va_list params);
-extern void set_die_is_recursing_routine(int (*routine)(void));
-extern void set_error_handle(FILE *);
+void set_die_is_recursing_routine(int (*routine)(void));
 
-extern int starts_with(const char *str, const char *prefix);
+int starts_with(const char *str, const char *prefix);
+int istarts_with(const char *str, const char *prefix);
 
 /*
  * If the string "str" begins with the string found in "prefix", return 1.
@@ -475,6 +519,29 @@ static inline int skip_prefix(const char *str, const char *prefix,
 		}
 	} while (*str++ == *prefix++);
 	return 0;
+}
+
+/*
+ * If the string "str" is the same as the string in "prefix", then the "arg"
+ * parameter is set to the "def" parameter and 1 is returned.
+ * If the string "str" begins with the string found in "prefix" and then a
+ * "=" sign, then the "arg" parameter is set to "str + strlen(prefix) + 1"
+ * (i.e., to the point in the string right after the prefix and the "=" sign),
+ * and 1 is returned.
+ *
+ * Otherwise, return 0 and leave "arg" untouched.
+ *
+ * When we accept both a "--key" and a "--key=<val>" option, this function
+ * can be used instead of !strcmp(arg, "--key") and then
+ * skip_prefix(arg, "--key=", &arg) to parse such an option.
+ */
+int skip_to_optional_arg_default(const char *str, const char *prefix,
+				 const char **arg, const char *def);
+
+static inline int skip_to_optional_arg(const char *str, const char *prefix,
+				       const char **arg)
+{
+	return skip_to_optional_arg_default(str, prefix, arg, "");
 }
 
 /*
@@ -527,6 +594,16 @@ static inline int ends_with(const char *str, const char *suffix)
 	return strip_suffix(str, suffix, &len);
 }
 
+#define SWAP(a, b) do {						\
+	void *_swap_a_ptr = &(a);				\
+	void *_swap_b_ptr = &(b);				\
+	unsigned char _swap_buffer[sizeof(a)];			\
+	memcpy(_swap_buffer, _swap_a_ptr, sizeof(a));		\
+	memcpy(_swap_a_ptr, _swap_b_ptr, sizeof(a) +		\
+	       BUILD_ASSERT_OR_ZERO(sizeof(a) == sizeof(b)));	\
+	memcpy(_swap_b_ptr, _swap_buffer, sizeof(a));		\
+} while (0)
+
 #if defined(NO_MMAP) || defined(USE_WIN32_MMAP)
 
 #ifndef PROT_READ
@@ -537,8 +614,8 @@ static inline int ends_with(const char *str, const char *suffix)
 
 #define mmap git_mmap
 #define munmap git_munmap
-extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
-extern int git_munmap(void *start, size_t length);
+void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+int git_munmap(void *start, size_t length);
 
 #else /* NO_MMAP || USE_WIN32_MMAP */
 
@@ -592,79 +669,74 @@ extern int git_munmap(void *start, size_t length);
 #undef stat
 #endif
 #define stat(path, buf) git_stat(path, buf)
-extern int git_stat(const char *, struct stat *);
+int git_stat(const char *, struct stat *);
 #ifdef fstat
 #undef fstat
 #endif
 #define fstat(fd, buf) git_fstat(fd, buf)
-extern int git_fstat(int, struct stat *);
+int git_fstat(int, struct stat *);
 #ifdef lstat
 #undef lstat
 #endif
 #define lstat(path, buf) git_lstat(path, buf)
-extern int git_lstat(const char *, struct stat *);
+int git_lstat(const char *, struct stat *);
 #endif
 
 #define DEFAULT_PACKED_GIT_LIMIT \
-	((1024L * 1024L) * (size_t)(sizeof(void*) >= 8 ? 8192 : 256))
+	((1024L * 1024L) * (size_t)(sizeof(void*) >= 8 ? (32 * 1024L * 1024L) : 256))
 
 #ifdef NO_PREAD
 #define pread git_pread
-extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
+ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 #endif
 /*
  * Forward decl that will remind us if its twin in cache.h changes.
  * This function is used in compat/pread.c.  But we can't include
  * cache.h there.
  */
-extern ssize_t read_in_full(int fd, void *buf, size_t count);
+ssize_t read_in_full(int fd, void *buf, size_t count);
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
-extern int gitsetenv(const char *, const char *, int);
+int gitsetenv(const char *, const char *, int);
 #endif
 
 #ifdef NO_MKDTEMP
 #define mkdtemp gitmkdtemp
-extern char *gitmkdtemp(char *);
-#endif
-
-#ifdef NO_MKSTEMPS
-#define mkstemps gitmkstemps
-extern int gitmkstemps(char *, int);
+char *gitmkdtemp(char *);
 #endif
 
 #ifdef NO_UNSETENV
 #define unsetenv gitunsetenv
-extern void gitunsetenv(const char *);
+void gitunsetenv(const char *);
 #endif
 
 #ifdef NO_STRCASESTR
 #define strcasestr gitstrcasestr
-extern char *gitstrcasestr(const char *haystack, const char *needle);
+char *gitstrcasestr(const char *haystack, const char *needle);
 #endif
 
 #ifdef NO_STRLCPY
 #define strlcpy gitstrlcpy
-extern size_t gitstrlcpy(char *, const char *, size_t);
+size_t gitstrlcpy(char *, const char *, size_t);
 #endif
 
 #ifdef NO_STRTOUMAX
 #define strtoumax gitstrtoumax
-extern uintmax_t gitstrtoumax(const char *, char **, int);
+uintmax_t gitstrtoumax(const char *, char **, int);
 #define strtoimax gitstrtoimax
-extern intmax_t gitstrtoimax(const char *, char **, int);
+intmax_t gitstrtoimax(const char *, char **, int);
 #endif
 
 #ifdef NO_HSTRERROR
 #define hstrerror githstrerror
-extern const char *githstrerror(int herror);
+const char *githstrerror(int herror);
 #endif
 
 #ifdef NO_MEMMEM
 #define memmem gitmemmem
 void *gitmemmem(const void *haystack, size_t haystacklen,
-                const void *needle, size_t needlelen);
+		const void *needle, size_t needlelen);
 #endif
 
 #ifdef OVERRIDE_STRDUP
@@ -684,11 +756,13 @@ char *gitstrdup(const char *s);
 #endif
 
 #ifdef FREAD_READS_DIRECTORIES
-#ifdef fopen
-#undef fopen
-#endif
-#define fopen(a,b) git_fopen(a,b)
-extern FILE *git_fopen(const char*, const char*);
+# if !defined(SUPPRESS_FOPEN_REDEFINITION)
+#  ifdef fopen
+#   undef fopen
+#  endif
+#  define fopen(a,b) git_fopen(a,b)
+# endif
+FILE *git_fopen(const char*, const char*);
 #endif
 
 #ifdef SNPRINTF_RETURNS_BOGUS
@@ -696,14 +770,14 @@ extern FILE *git_fopen(const char*, const char*);
 #undef snprintf
 #endif
 #define snprintf git_snprintf
-extern int git_snprintf(char *str, size_t maxsize,
-			const char *format, ...);
+int git_snprintf(char *str, size_t maxsize,
+		 const char *format, ...);
 #ifdef vsnprintf
 #undef vsnprintf
 #endif
 #define vsnprintf git_vsnprintf
-extern int git_vsnprintf(char *str, size_t maxsize,
-			 const char *format, va_list ap);
+int git_vsnprintf(char *str, size_t maxsize,
+		  const char *format, va_list ap);
 #endif
 
 #ifdef __GLIBC_PREREQ
@@ -732,13 +806,11 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 
 #ifdef NO_PTHREADS
 #define atexit git_atexit
-extern int git_atexit(void (*handler)(void));
+int git_atexit(void (*handler)(void));
 #endif
 
-extern void release_pack_memory(size_t);
-
 typedef void (*try_to_free_t)(size_t);
-extern try_to_free_t set_try_to_free_routine(try_to_free_t);
+try_to_free_t set_try_to_free_routine(try_to_free_t);
 
 static inline size_t st_add(size_t a, size_t b)
 {
@@ -774,31 +846,37 @@ static inline size_t st_sub(size_t a, size_t b)
 # define xalloca(size)      (xmalloc(size))
 # define xalloca_free(p)    (free(p))
 #endif
-extern char *xstrdup(const char *str);
-extern void *xmalloc(size_t size);
-extern void *xmallocz(size_t size);
-extern void *xmallocz_gently(size_t size);
-extern void *xmemdupz(const void *data, size_t len);
-extern char *xstrndup(const char *str, size_t len);
-extern void *xrealloc(void *ptr, size_t size);
-extern void *xcalloc(size_t nmemb, size_t size);
-extern void *xmmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
-extern void *xmmap_gently(void *start, size_t length, int prot, int flags, int fd, off_t offset);
-extern int xopen(const char *path, int flags, ...);
-extern ssize_t xread(int fd, void *buf, size_t len);
-extern ssize_t xwrite(int fd, const void *buf, size_t len);
-extern ssize_t xpread(int fd, void *buf, size_t len, off_t offset);
-extern int xdup(int fd);
-extern FILE *xfopen(const char *path, const char *mode);
-extern FILE *xfdopen(int fd, const char *mode);
-extern int xmkstemp(char *template);
-extern int xmkstemp_mode(char *template, int mode);
-extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
-extern int odb_pack_keep(char *name, size_t namesz, const unsigned char *sha1);
-extern char *xgetcwd(void);
-extern FILE *fopen_for_writing(const char *path);
+char *xstrdup(const char *str);
+void *xmalloc(size_t size);
+void *xmallocz(size_t size);
+void *xmallocz_gently(size_t size);
+void *xmemdupz(const void *data, size_t len);
+char *xstrndup(const char *str, size_t len);
+void *xrealloc(void *ptr, size_t size);
+void *xcalloc(size_t nmemb, size_t size);
+void *xmmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+void *xmmap_gently(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+int xopen(const char *path, int flags, ...);
+ssize_t xread(int fd, void *buf, size_t len);
+ssize_t xwrite(int fd, const void *buf, size_t len);
+ssize_t xpread(int fd, void *buf, size_t len, off_t offset);
+int xdup(int fd);
+FILE *xfopen(const char *path, const char *mode);
+FILE *xfdopen(int fd, const char *mode);
+int xmkstemp(char *temp_filename);
+int xmkstemp_mode(char *temp_filename, int mode);
+char *xgetcwd(void);
+FILE *fopen_for_writing(const char *path);
+FILE *fopen_or_warn(const char *path, const char *mode);
+
+/*
+ * FREE_AND_NULL(ptr) is like free(ptr) followed by ptr = NULL. Note
+ * that ptr is used twice, so don't pass e.g. ptr++.
+ */
+#define FREE_AND_NULL(p) do { free(p); (p) = NULL; } while (0)
 
 #define ALLOC_ARRAY(x, alloc) (x) = xmalloc(st_mult(sizeof(*(x)), (alloc)))
+#define CALLOC_ARRAY(x, alloc) (x) = xcalloc((alloc), sizeof(*(x)));
 #define REALLOC_ARRAY(x, alloc) (x) = xrealloc((x), st_mult(sizeof(*(x)), (alloc)))
 
 #define COPY_ARRAY(dst, src, n) copy_array((dst), (src), (n), sizeof(*(dst)) + \
@@ -807,6 +885,14 @@ static inline void copy_array(void *dst, const void *src, size_t n, size_t size)
 {
 	if (n)
 		memcpy(dst, src, st_mult(size, n));
+}
+
+#define MOVE_ARRAY(dst, src, n) move_array((dst), (src), (n), sizeof(*(dst)) + \
+	BUILD_ASSERT_OR_ZERO(sizeof(*(dst)) == sizeof(*(src))))
+static inline void move_array(void *dst, const void *src, size_t n, size_t size)
+{
+	if (n)
+		memmove(dst, src, st_mult(size, n));
 }
 
 /*
@@ -873,13 +959,21 @@ static inline char *xstrdup_or_null(const char *str)
 
 static inline size_t xsize_t(off_t len)
 {
-	if (len > (size_t) len)
+	size_t size = (size_t) len;
+
+	if (len != (off_t) size)
 		die("Cannot handle files this big");
-	return (size_t)len;
+	return size;
 }
 
 __attribute__((format (printf, 3, 4)))
-extern int xsnprintf(char *dst, size_t max, const char *fmt, ...);
+int xsnprintf(char *dst, size_t max, const char *fmt, ...);
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 256
+#endif
+
+int xgethostname(char *buf, size_t len);
 
 /* in ctype.c, for kwset users */
 extern const unsigned char tolower_trans_tbl[256];
@@ -945,6 +1039,23 @@ static inline int sane_iscase(int x, int is_lower)
 		return (x & 0x20) == 0;
 }
 
+/*
+ * Like skip_prefix, but compare case-insensitively. Note that the comparison
+ * is done via tolower(), so it is strictly ASCII (no multi-byte characters or
+ * locale-specific conversions).
+ */
+static inline int skip_iprefix(const char *str, const char *prefix,
+			       const char **out)
+{
+	do {
+		if (!*prefix) {
+			*out = str;
+			return 1;
+		}
+	} while (tolower(*str++) == tolower(*prefix++));
+	return 0;
+}
+
 static inline int strtoul_ui(char const *s, int base, unsigned int *result)
 {
 	unsigned long ul;
@@ -987,6 +1098,17 @@ static inline void sane_qsort(void *base, size_t nmemb, size_t size,
 	if (nmemb > 1)
 		qsort(base, nmemb, size, compar);
 }
+
+#ifndef HAVE_ISO_QSORT_S
+int git_qsort_s(void *base, size_t nmemb, size_t size,
+		int (*compar)(const void *, const void *, void *), void *ctx);
+#define qsort_s git_qsort_s
+#endif
+
+#define QSORT_S(base, n, compar, ctx) do {			\
+	if (qsort_s((base), (n), sizeof(*(base)), compar, ctx))	\
+		BUG("qsort_s() failed");			\
+} while (0)
 
 #ifndef REG_STARTEND
 #error "Git requires REG_STARTEND support. Compile with NO_REGEX=NeedsStartEnd"
@@ -1044,6 +1166,18 @@ static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 #define HAVE_VARIADIC_MACROS 1
 #endif
 
+/* usage.c: only to be used for testing BUG() implementation (see test-tool) */
+extern int BUG_exit_code;
+
+#ifdef HAVE_VARIADIC_MACROS
+__attribute__((format (printf, 3, 4))) NORETURN
+void BUG_fl(const char *file, int line, const char *fmt, ...);
+#define BUG(...) BUG_fl(__FILE__, __LINE__, __VA_ARGS__)
+#else
+__attribute__((format (printf, 1, 2))) NORETURN
+void BUG(const char *fmt, ...);
+#endif
+
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
  * Returns 0 on success, which includes trying to unlink an object that does
@@ -1077,8 +1211,8 @@ int remove_or_warn(unsigned int mode, const char *path);
 int access_or_warn(const char *path, int mode, unsigned flag);
 int access_or_die(const char *path, int mode, unsigned flag);
 
-/* Warn on an inaccessible file that ought to be accessible */
-void warn_on_inaccessible(const char *path);
+/* Warn on an inaccessible file if errno indicates this is an error */
+int warn_on_fopen_errors(const char *path);
 
 #ifdef GMTIME_UNRELIABLE_ERRORS
 struct tm *git_gmtime(const time_t *);
@@ -1101,6 +1235,72 @@ struct tm *git_gmtime_r(const time_t *, struct tm *);
 #define getc_unlocked(fh) getc(fh)
 #endif
 
-extern int cmd_main(int, const char **);
+#ifdef FILENO_IS_A_MACRO
+int git_fileno(FILE *stream);
+# ifndef COMPAT_CODE_FILENO
+#  undef fileno
+#  define fileno(p) git_fileno(p)
+# endif
+#endif
+
+#ifdef NEED_ACCESS_ROOT_HANDLER
+int git_access(const char *path, int mode);
+# ifndef COMPAT_CODE_ACCESS
+#  ifdef access
+#  undef access
+#  endif
+#  define access(path, mode) git_access(path, mode)
+# endif
+#endif
+
+/*
+ * Our code often opens a path to an optional file, to work on its
+ * contents when we can successfully open it.  We can ignore a failure
+ * to open if such an optional file does not exist, but we do want to
+ * report a failure in opening for other reasons (e.g. we got an I/O
+ * error, or the file is there, but we lack the permission to open).
+ *
+ * Call this function after seeing an error from open() or fopen() to
+ * see if the errno indicates a missing file that we can safely ignore.
+ */
+static inline int is_missing_file_error(int errno_)
+{
+	return (errno_ == ENOENT || errno_ == ENOTDIR);
+}
+
+int cmd_main(int, const char **);
+
+/*
+ * Intercept all calls to exit() and route them to trace2 to
+ * optionally emit a message before calling the real exit().
+ */
+int trace2_cmd_exit_fl(const char *file, int line, int code);
+#define exit(code) exit(trace2_cmd_exit_fl(__FILE__, __LINE__, (code)))
+
+/*
+ * You can mark a stack variable with UNLEAK(var) to avoid it being
+ * reported as a leak by tools like LSAN or valgrind. The argument
+ * should generally be the variable itself (not its address and not what
+ * it points to). It's safe to use this on pointers which may already
+ * have been freed, or on pointers which may still be in use.
+ *
+ * Use this _only_ for a variable that leaks by going out of scope at
+ * program exit (so only from cmd_* functions or their direct helpers).
+ * Normal functions, especially those which may be called multiple
+ * times, should actually free their memory. This is only meant as
+ * an annotation, and does nothing in non-leak-checking builds.
+ */
+#ifdef SUPPRESS_ANNOTATED_LEAKS
+void unleak_memory(const void *ptr, size_t len);
+#define UNLEAK(var) unleak_memory(&(var), sizeof(var))
+#else
+#define UNLEAK(var) do {} while (0)
+#endif
+
+/*
+ * This include must come after system headers, since it introduces macros that
+ * replace system names.
+ */
+#include "banned.h"
 
 #endif

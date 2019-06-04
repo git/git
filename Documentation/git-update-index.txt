@@ -16,9 +16,11 @@ SYNOPSIS
 	     [--chmod=(+|-)x]
 	     [--[no-]assume-unchanged]
 	     [--[no-]skip-worktree]
+	     [--[no-]fsmonitor-valid]
 	     [--ignore-submodules]
 	     [--[no-]split-index]
 	     [--[no-|test-|force-]untracked-cache]
+	     [--[no-]fsmonitor]
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin] [--index-version <n>]
@@ -111,6 +113,12 @@ you will need to handle the situation manually.
 	set and unset the "skip-worktree" bit for the paths. See
 	section "Skip-worktree bit" below for more information.
 
+--[no-]fsmonitor-valid::
+	When one of these flags is specified, the object name recorded
+	for the paths are not updated. Instead, these options
+	set and unset the "fsmonitor valid" bit for the paths. See
+	section "File System Monitor" below for more information.
+
 -g::
 --again::
 	Runs 'git update-index' itself on the paths whose index
@@ -153,7 +161,7 @@ you will need to handle the situation manually.
 +
 Version 4 performs a simple pathname compression that reduces index
 size by 30%-50% on large repositories, which results in faster load
-time. Version 4 is relatively young (first released in in 1.8.0 in
+time. Version 4 is relatively young (first released in 1.8.0 in
 October 2012). Other Git implementations such as JGit and libgit2
 may not support it yet.
 
@@ -163,14 +171,16 @@ may not support it yet.
 
 --split-index::
 --no-split-index::
-	Enable or disable split index mode. If enabled, the index is
-	split into two files, $GIT_DIR/index and $GIT_DIR/sharedindex.<SHA-1>.
-	Changes are accumulated in $GIT_DIR/index while the shared
-	index file contains all index entries stays unchanged. If
-	split-index mode is already enabled and `--split-index` is
-	given again, all changes in $GIT_DIR/index are pushed back to
-	the shared index file. This mode is designed for very large
-	indexes that take a significant amount of time to read or write.
+	Enable or disable split index mode. If split-index mode is
+	already enabled and `--split-index` is given again, all
+	changes in $GIT_DIR/index are pushed back to the shared index
+	file.
++
+These options take effect whatever the value of the `core.splitIndex`
+configuration variable (see linkgit:git-config[1]). But a warning is
+emitted when the change goes against the configured value, as the
+configured value will take effect next time the index is read and this
+will remove the intended effect of the option.
 
 --untracked-cache::
 --no-untracked-cache::
@@ -199,6 +209,15 @@ will remove the intended effect of the option.
 	`--untracked-cache` used to imply `--test-untracked-cache` but
 	this option would enable the extension unconditionally.
 
+--fsmonitor::
+--no-fsmonitor::
+	Enable or disable files system monitor feature. These options
+	take effect whatever the value of the `core.fsmonitor`
+	configuration variable (see linkgit:git-config[1]). But a warning
+	is emitted when the change goes against the configured value, as
+	the configured value will take effect next time the index is
+	read and this will remove the intended effect of the option.
+
 \--::
 	Do not interpret any more arguments as options.
 
@@ -209,10 +228,10 @@ will remove the intended effect of the option.
 	cleaner names.
 	The same applies to directories ending '/' and paths with '//'
 
-Using --refresh
+USING --REFRESH
 ---------------
 `--refresh` does not calculate a new sha1 file or bring the index
-up-to-date for mode/content changes. But what it *does* do is to
+up to date for mode/content changes. But what it *does* do is to
 "re-match" the stat information of a file with the index, so that you
 can refresh the index for a file that hasn't been changed but where
 the stat entry is out of date.
@@ -220,16 +239,16 @@ the stat entry is out of date.
 For example, you'd want to do this after doing a 'git read-tree', to link
 up the stat index details with the proper files.
 
-Using --cacheinfo or --info-only
+USING --CACHEINFO OR --INFO-ONLY
 --------------------------------
 `--cacheinfo` is used to register a file that is not in the
 current working directory.  This is useful for minimum-checkout
 merging.
 
-To pretend you have a file with mode and sha1 at path, say:
+To pretend you have a file at path with mode and sha1, say:
 
 ----------------
-$ git update-index --cacheinfo <mode>,<sha1>,<path>
+$ git update-index --add --cacheinfo <mode>,<sha1>,<path>
 ----------------
 
 `--info-only` is used to register files without placing them in the object
@@ -242,29 +261,26 @@ useful when the file is available, but you do not wish to update the
 object database.
 
 
-Using --index-info
+USING --INDEX-INFO
 ------------------
 
 `--index-info` is a more powerful mechanism that lets you feed
 multiple entry definitions from the standard input, and designed
 specifically for scripts.  It can take inputs of three formats:
 
-    . mode         SP sha1          TAB path
-+
-The first format is what "git-apply --index-info"
-reports, and used to reconstruct a partial tree
-that is used for phony merge base tree when falling
-back on 3-way merge.
-
     . mode SP type SP sha1          TAB path
 +
-The second format is to stuff 'git ls-tree' output
-into the index file.
+This format is to stuff `git ls-tree` output into the index.
 
     . mode         SP sha1 SP stage TAB path
 +
 This format is to put higher order stages into the
 index file and matches 'git ls-files --stage' output.
+
+    . mode         SP sha1          TAB path
++
+This format is no longer produced by any Git command, but is
+and will continue to be supported by `update-index --index-info`.
 
 To place a higher stage entry to the index, the path should
 first be removed by feeding a mode=0 entry for the path, and
@@ -298,7 +314,7 @@ $ git ls-files -s
 ------------
 
 
-Using ``assume unchanged'' bit
+USING ``ASSUME UNCHANGED'' BIT
 ------------------------------
 
 Many operations in Git depend on your filesystem to have an
@@ -331,7 +347,7 @@ the index (use `git update-index --really-refresh` if you want
 to mark them as "assume unchanged").
 
 
-Examples
+EXAMPLES
 --------
 To update and refresh only the files already checked out:
 
@@ -368,7 +384,7 @@ M foo.c
 <9> now it checks with lstat(2) and finds it has been changed.
 
 
-Skip-worktree bit
+SKIP-WORKTREE BIT
 -----------------
 
 Skip-worktree bit can be defined in one (long) sentence: When reading
@@ -388,7 +404,32 @@ Although this bit looks similar to assume-unchanged bit, its goal is
 different from assume-unchanged bit's. Skip-worktree also takes
 precedence over assume-unchanged bit when both are set.
 
-Untracked cache
+SPLIT INDEX
+-----------
+
+This mode is designed for repositories with very large indexes, and
+aims at reducing the time it takes to repeatedly write these indexes.
+
+In this mode, the index is split into two files, $GIT_DIR/index and
+$GIT_DIR/sharedindex.<SHA-1>. Changes are accumulated in
+$GIT_DIR/index, the split index, while the shared index file contains
+all index entries and stays unchanged.
+
+All changes in the split index are pushed back to the shared index
+file when the number of entries in the split index reaches a level
+specified by the splitIndex.maxPercentChange config variable (see
+linkgit:git-config[1]).
+
+Each time a new shared index file is created, the old shared index
+files are deleted if their modification time is older than what is
+specified by the splitIndex.sharedIndexExpire config variable (see
+linkgit:git-config[1]).
+
+To avoid deleting a shared index file that is still used, its
+modification time is updated to the current time everytime a new split
+index based on the shared index file is either created or read from.
+
+UNTRACKED CACHE
 ---------------
 
 This cache is meant to speed up commands that involve determining
@@ -420,7 +461,61 @@ command reads the index; while when `--[no-|force-]untracked-cache`
 are used, the untracked cache is immediately added to or removed from
 the index.
 
-Configuration
+Before 2.17, the untracked cache had a bug where replacing a directory
+with a symlink to another directory could cause it to incorrectly show
+files tracked by git as untracked. See the "status: add a failing test
+showing a core.untrackedCache bug" commit to git.git. A workaround for
+that is (and this might work for other undiscovered bugs in the
+future):
+
+----------------
+$ git -c core.untrackedCache=false status
+----------------
+
+This bug has also been shown to affect non-symlink cases of replacing
+a directory with a file when it comes to the internal structures of
+the untracked cache, but no case has been reported where this resulted in
+wrong "git status" output.
+
+There are also cases where existing indexes written by git versions
+before 2.17 will reference directories that don't exist anymore,
+potentially causing many "could not open directory" warnings to be
+printed on "git status". These are new warnings for existing issues
+that were previously silently discarded.
+
+As with the bug described above the solution is to one-off do a "git
+status" run with `core.untrackedCache=false` to flush out the leftover
+bad data.
+
+FILE SYSTEM MONITOR
+-------------------
+
+This feature is intended to speed up git operations for repos that have
+large working directories.
+
+It enables git to work together with a file system monitor (see the
+"fsmonitor-watchman" section of linkgit:githooks[5]) that can
+inform it as to what files have been modified. This enables git to avoid
+having to lstat() every file to find modified files.
+
+When used in conjunction with the untracked cache, it can further improve
+performance by avoiding the cost of scanning the entire working directory
+looking for new files.
+
+If you want to enable (or disable) this feature, it is easier to use
+the `core.fsmonitor` configuration variable (see
+linkgit:git-config[1]) than using the `--fsmonitor` option to
+`git update-index` in each repository, especially if you want to do so
+across all repositories you use, because you can set the configuration
+variable in your `$HOME/.gitconfig` just once and have it affect all
+repositories you touch.
+
+When the `core.fsmonitor` configuration variable is changed, the
+file system monitor is added to or removed from the index the next time
+a command reads the index. When `--[no-]fsmonitor` are used, the file
+system monitor is immediately added to or removed from the index.
+
+CONFIGURATION
 -------------
 
 The command honors `core.filemode` configuration variable.  If

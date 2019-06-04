@@ -80,7 +80,7 @@ valid pack like:
     # now add our object data
     cat object >>tmp.pack
     # and then append the pack trailer
-    /path/to/git.git/test-sha1 -b <tmp.pack >trailer
+    /path/to/git.git/t/helper/test-tool sha1 -b <tmp.pack >trailer
     cat trailer >>tmp.pack
 ------------
 

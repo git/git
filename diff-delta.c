@@ -319,7 +319,9 @@ create_delta(const struct delta_index *index,
 	     const void *trg_buf, unsigned long trg_size,
 	     unsigned long *delta_size, unsigned long max_size)
 {
-	unsigned int i, outpos, outsize, moff, msize, val;
+	unsigned int i, val;
+	off_t outpos, moff;
+	size_t l, outsize, msize;
 	int inscnt;
 	const unsigned char *ref_data, *ref_top, *data, *top;
 	unsigned char *out;
@@ -336,20 +338,20 @@ create_delta(const struct delta_index *index,
 		return NULL;
 
 	/* store reference buffer size */
-	i = index->src_size;
-	while (i >= 0x80) {
-		out[outpos++] = i | 0x80;
-		i >>= 7;
+	l = index->src_size;
+	while (l >= 0x80) {
+		out[outpos++] = l | 0x80;
+		l >>= 7;
 	}
-	out[outpos++] = i;
+	out[outpos++] = l;
 
 	/* store target buffer size */
-	i = trg_size;
-	while (i >= 0x80) {
-		out[outpos++] = i | 0x80;
-		i >>= 7;
+	l = trg_size;
+	while (l >= 0x80) {
+		out[outpos++] = l | 0x80;
+		l >>= 7;
 	}
-	out[outpos++] = i;
+	out[outpos++] = l;
 
 	ref_data = index->src_buf;
 	ref_top = ref_data + index->src_size;
@@ -451,6 +453,9 @@ create_delta(const struct delta_index *index,
 			data += msize;
 			moff += msize;
 			msize = left;
+
+			if (moff > 0xffffffff)
+				msize = 0;
 
 			if (msize < 4096) {
 				int j;

@@ -9,11 +9,11 @@ git-diff - Show changes between commits, commit and working tree, etc
 SYNOPSIS
 --------
 [verse]
-'git diff' [options] [<commit>] [--] [<path>...]
-'git diff' [options] --cached [<commit>] [--] [<path>...]
-'git diff' [options] <commit> <commit> [--] [<path>...]
-'git diff' [options] <blob> <blob>
-'git diff' [options] [--no-index] [--] <path> <path>
+'git diff' [<options>] [<commit>] [--] [<path>...]
+'git diff' [<options>] --cached [<commit>] [--] [<path>...]
+'git diff' [<options>] <commit> <commit> [--] [<path>...]
+'git diff' [<options>] <blob> <blob>
+'git diff' [<options>] --no-index [--] <path> <path>
 
 DESCRIPTION
 -----------
@@ -21,7 +21,7 @@ Show changes between the working tree and the index or a tree, changes
 between the index and a tree, changes between two trees, changes between
 two blob objects, or changes between two files on disk.
 
-'git diff' [--options] [--] [<path>...]::
+'git diff' [<options>] [--] [<path>...]::
 
 	This form is to view the changes you made relative to
 	the index (staging area for the next commit).  In other
@@ -29,7 +29,7 @@ two blob objects, or changes between two files on disk.
 	further add to the index but you still haven't.  You can
 	stage these changes by using linkgit:git-add[1].
 
-'git diff' --no-index [--options] [--] [<path>...]::
+'git diff' [<options>] --no-index [--] <path> <path>::
 
 	This form is to compare the given two paths on the
 	filesystem.  You can omit the `--no-index` option when
@@ -38,7 +38,7 @@ two blob objects, or changes between two files on disk.
 	or when running the command outside a working tree
 	controlled by Git.
 
-'git diff' [--options] --cached [<commit>] [--] [<path>...]::
+'git diff' [<options>] --cached [<commit>] [--] [<path>...]::
 
 	This form is to view the changes you staged for the next
 	commit relative to the named <commit>.  Typically you
@@ -48,7 +48,7 @@ two blob objects, or changes between two files on disk.
 	<commit> is not given, it shows all staged changes.
 	--staged is a synonym of --cached.
 
-'git diff' [--options] <commit> [--] [<path>...]::
+'git diff' [<options>] <commit> [--] [<path>...]::
 
 	This form is to view the changes you have in your
 	working tree relative to the named <commit>.  You can
@@ -56,26 +56,26 @@ two blob objects, or changes between two files on disk.
 	branch name to compare with the tip of a different
 	branch.
 
-'git diff' [--options] <commit> <commit> [--] [<path>...]::
+'git diff' [<options>] <commit> <commit> [--] [<path>...]::
 
 	This is to view the changes between two arbitrary
 	<commit>.
 
-'git diff' [--options] <commit>..<commit> [--] [<path>...]::
+'git diff' [<options>] <commit>..<commit> [--] [<path>...]::
 
 	This is synonymous to the previous form.  If <commit> on
 	one side is omitted, it will have the same effect as
 	using HEAD instead.
 
-'git diff' [--options] <commit>\...<commit> [--] [<path>...]::
+'git diff' [<options>] <commit>\...<commit> [--] [<path>...]::
 
 	This form is to view the changes on the branch containing
 	and up to the second <commit>, starting at a common ancestor
 	of both <commit>.  "git diff A\...B" is equivalent to
-	"git diff $(git-merge-base A B) B".  You can omit any one
+	"git diff $(git merge-base A B) B".  You can omit any one
 	of <commit>, which has the same effect as using HEAD instead.
 
-Just in case if you are doing something exotic, it should be
+Just in case you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
 in the last two forms that use ".." notations, can be any
 <tree>.
@@ -87,7 +87,7 @@ and the range notations ("<commit>..<commit>" and
 "<commit>\...<commit>") do not mean a range as defined in the
 "SPECIFYING RANGES" section in linkgit:gitrevisions[7].
 
-'git diff' [options] <blob> <blob>::
+'git diff' [<options>] <blob> <blob>::
 
 	This form is to view the differences between the raw
 	contents of two blob objects.
@@ -96,6 +96,20 @@ OPTIONS
 -------
 :git-diff: 1
 include::diff-options.txt[]
+
+-1 --base::
+-2 --ours::
+-3 --theirs::
+	Compare the working tree with the "base" version (stage #1),
+	"our branch" (stage #2) or "their branch" (stage #3).  The
+	index contains these stages only for unmerged entries i.e.
+	while resolving conflicts.  See linkgit:git-read-tree[1]
+	section "3-Way Merge" for detailed information.
+
+-0::
+	Omit diff output for unmerged entries and just show
+	"Unmerged".  Can be used only when comparing the working tree
+	with the index.
 
 <path>...::
 	The <paths> parameters, when given, are used to limit
@@ -118,9 +132,9 @@ $ git diff HEAD       <3>
 +
 <1> Changes in the working tree not yet staged for the next commit.
 <2> Changes between the index and your last commit; what you
-would be committing if you run "git commit" without "-a" option.
+    would be committing if you run "git commit" without "-a" option.
 <3> Changes in the working tree since your last commit; what you
-would be committing if you run "git commit -a"
+    would be committing if you run "git commit -a"
 
 Comparing with arbitrary commits::
 +
@@ -131,10 +145,10 @@ $ git diff HEAD^ HEAD      <3>
 ------------
 +
 <1> Instead of using the tip of the current branch, compare with the
-tip of "test" branch.
+    tip of "test" branch.
 <2> Instead of comparing with the tip of "test" branch, compare with
-the tip of the current branch, but limit the comparison to the
-file "test".
+    the tip of the current branch, but limit the comparison to the
+    file "test".
 <3> Compare the version before the last commit and the last commit.
 
 Comparing branches::
@@ -148,7 +162,7 @@ $ git diff topic...master  <3>
 <1> Changes between the tips of the topic and the master branches.
 <2> Same as above.
 <3> Changes that occurred on the master branch since when the topic
-branch was started off it.
+    branch was started off it.
 
 Limiting the diff output::
 +
@@ -159,9 +173,9 @@ $ git diff arch/i386 include/asm-i386   <3>
 ------------
 +
 <1> Show only modification, rename, and copy, but not addition
-or deletion.
+    or deletion.
 <2> Show only names and the nature of change, but not actual
-diff output.
+    diff output.
 <3> Limit diff output to named subtrees.
 
 Munging the diff output::
@@ -172,7 +186,7 @@ $ git diff -R                          <2>
 ------------
 +
 <1> Spend extra cycles to find renames, copies and complete
-rewrites (very expensive).
+    rewrites (very expensive).
 <2> Output diff in reverse.
 
 SEE ALSO

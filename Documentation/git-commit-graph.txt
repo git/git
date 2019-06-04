@@ -1,0 +1,105 @@
+git-commit-graph(1)
+===================
+
+NAME
+----
+git-commit-graph - Write and verify Git commit-graph files
+
+
+SYNOPSIS
+--------
+[verse]
+'git commit-graph read' [--object-dir <dir>]
+'git commit-graph verify' [--object-dir <dir>]
+'git commit-graph write' <options> [--object-dir <dir>]
+
+
+DESCRIPTION
+-----------
+
+Manage the serialized commit-graph file.
+
+
+OPTIONS
+-------
+--object-dir::
+	Use given directory for the location of packfiles and commit-graph
+	file. This parameter exists to specify the location of an alternate
+	that only has the objects directory, not a full `.git` directory. The
+	commit-graph file is expected to be at `<dir>/info/commit-graph` and
+	the packfiles are expected to be in `<dir>/pack`.
+
+
+COMMANDS
+--------
+'write'::
+
+Write a commit-graph file based on the commits found in packfiles.
++
+With the `--stdin-packs` option, generate the new commit graph by
+walking objects only in the specified pack-indexes. (Cannot be combined
+with `--stdin-commits` or `--reachable`.)
++
+With the `--stdin-commits` option, generate the new commit graph by
+walking commits starting at the commits specified in stdin as a list
+of OIDs in hex, one OID per line. (Cannot be combined with
+`--stdin-packs` or `--reachable`.)
++
+With the `--reachable` option, generate the new commit graph by walking
+commits starting at all refs. (Cannot be combined with `--stdin-commits`
+or `--stdin-packs`.)
++
+With the `--append` option, include all commits that are present in the
+existing commit-graph file.
+
+'read'::
+
+Read the commit-graph file and output basic details about it.
+Used for debugging purposes.
+
+'verify'::
+
+Read the commit-graph file and verify its contents against the object
+database. Used to check for corrupted data.
+
+
+EXAMPLES
+--------
+
+* Write a commit-graph file for the packed commits in your local `.git`
+  directory.
++
+------------------------------------------------
+$ git commit-graph write
+------------------------------------------------
+
+* Write a commit-graph file, extending the current commit-graph file
+  using commits in `<pack-index>`.
++
+------------------------------------------------
+$ echo <pack-index> | git commit-graph write --stdin-packs
+------------------------------------------------
+
+* Write a commit-graph file containing all reachable commits.
++
+------------------------------------------------
+$ git show-ref -s | git commit-graph write --stdin-commits
+------------------------------------------------
+
+* Write a commit-graph file containing all commits in the current
+  commit-graph file along with those reachable from `HEAD`.
++
+------------------------------------------------
+$ git rev-parse HEAD | git commit-graph write --stdin-commits --append
+------------------------------------------------
+
+* Read basic information from the commit-graph file.
++
+------------------------------------------------
+$ git commit-graph read
+------------------------------------------------
+
+
+GIT
+---
+Part of the linkgit:git[1] suite

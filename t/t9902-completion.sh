@@ -13,7 +13,7 @@ complete ()
 	return 0
 }
 
-# Be careful when updating this list:
+# Be careful when updating these lists:
 #
 # (1) The build tree may have build artifact from different branch, or
 #     the user's $PATH may have a random executable that may begin
@@ -30,7 +30,8 @@ complete ()
 #     completion for "git <TAB>", and a plumbing is excluded.  "add",
 #     "filter-branch" and "ls-files" are listed for this.
 
-GIT_TESTING_COMMAND_COMPLETION='add checkout check-attr filter-branch ls-files'
+GIT_TESTING_ALL_COMMAND_LIST='add checkout check-attr filter-branch ls-files'
+GIT_TESTING_PORCELAIN_COMMAND_LIST='add checkout filter-branch'
 
 . "$GIT_BUILD_DIR/contrib/completion/git-completion.bash"
 
@@ -84,10 +85,11 @@ test_completion ()
 	then
 		printf '%s\n' "$2" >expected
 	else
-		sed -e 's/Z$//' >expected
+		sed -e 's/Z$//' |sort >expected
 	fi &&
 	run_completion "$1" &&
-	test_cmp expected out
+	sort out >out_sorted &&
+	test_cmp expected out_sorted
 }
 
 # Test __gitcomp.
@@ -98,7 +100,7 @@ test_gitcomp ()
 {
 	local -a COMPREPLY &&
 	sed -e 's/Z$//' >expected &&
-	cur="$1" &&
+	local cur="$1" &&
 	shift &&
 	__gitcomp "$@" &&
 	print_comp &&
@@ -113,7 +115,7 @@ test_gitcomp_nl ()
 {
 	local -a COMPREPLY &&
 	sed -e 's/Z$//' >expected &&
-	cur="$1" &&
+	local cur="$1" &&
 	shift &&
 	__gitcomp_nl "$@" &&
 	print_comp &&
@@ -124,140 +126,336 @@ invalid_variable_name='${foo.bar}'
 
 actual="$TRASH_DIRECTORY/actual"
 
-test_expect_success 'setup for __gitdir tests' '
+if test_have_prereq MINGW
+then
+	ROOT="$(pwd -W)"
+else
+	ROOT="$(pwd)"
+fi
+
+test_expect_success 'setup for __git_find_repo_path/__gitdir tests' '
 	mkdir -p subdir/subsubdir &&
+	mkdir -p non-repo &&
 	git init otherrepo
 '
 
-test_expect_success '__gitdir - from command line (through $__git_dir)' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" >expected &&
+test_expect_success '__git_find_repo_path - from command line (through $__git_dir)' '
+	echo "$ROOT/otherrepo/.git" >expected &&
 	(
-		__git_dir="$TRASH_DIRECTORY/otherrepo/.git" &&
-		__gitdir >"$actual"
+		__git_dir="$ROOT/otherrepo/.git" &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - repo as argument' '
-	echo "otherrepo/.git" >expected &&
-	__gitdir "otherrepo" >"$actual" &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success '__gitdir - remote as argument' '
-	echo "remote" >expected &&
-	__gitdir "remote" >"$actual" &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success '__gitdir - .git directory in cwd' '
+test_expect_success '__git_find_repo_path - .git directory in cwd' '
 	echo ".git" >expected &&
-	__gitdir >"$actual" &&
+	(
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - .git directory in parent' '
-	echo "$(pwd -P)/.git" >expected &&
+test_expect_success '__git_find_repo_path - .git directory in parent' '
+	echo "$ROOT/.git" >expected &&
 	(
 		cd subdir/subsubdir &&
-		__gitdir >"$actual"
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - cwd is a .git directory' '
+test_expect_success '__git_find_repo_path - cwd is a .git directory' '
 	echo "." >expected &&
 	(
 		cd .git &&
-		__gitdir >"$actual"
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - parent is a .git directory' '
-	echo "$(pwd -P)/.git" >expected &&
+test_expect_success '__git_find_repo_path - parent is a .git directory' '
+	echo "$ROOT/.git" >expected &&
 	(
-		cd .git/refs/heads &&
-		__gitdir >"$actual"
+		cd .git/objects &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - $GIT_DIR set while .git directory in cwd' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" >expected &&
+test_expect_success '__git_find_repo_path - $GIT_DIR set while .git directory in cwd' '
+	echo "$ROOT/otherrepo/.git" >expected &&
 	(
-		GIT_DIR="$TRASH_DIRECTORY/otherrepo/.git" &&
+		GIT_DIR="$ROOT/otherrepo/.git" &&
 		export GIT_DIR &&
-		__gitdir >"$actual"
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - $GIT_DIR set while .git directory in parent' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" >expected &&
+test_expect_success '__git_find_repo_path - $GIT_DIR set while .git directory in parent' '
+	echo "$ROOT/otherrepo/.git" >expected &&
 	(
-		GIT_DIR="$TRASH_DIRECTORY/otherrepo/.git" &&
+		GIT_DIR="$ROOT/otherrepo/.git" &&
 		export GIT_DIR &&
 		cd subdir &&
-		__gitdir >"$actual"
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - non-existing $GIT_DIR' '
+test_expect_success '__git_find_repo_path - from command line while "git -C"' '
+	echo "$ROOT/.git" >expected &&
 	(
-		GIT_DIR="$TRASH_DIRECTORY/non-existing" &&
-		export GIT_DIR &&
-		test_must_fail __gitdir
-	)
+		__git_dir="$ROOT/.git" &&
+		__git_C_args=(-C otherrepo) &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
 '
 
-function pwd_P_W () {
-	if test_have_prereq MINGW
-	then
-		pwd -W
-	else
-		pwd -P
-	fi
-}
+test_expect_success '__git_find_repo_path - relative dir from command line and "git -C"' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd subdir &&
+		__git_dir="otherrepo/.git" &&
+		__git_C_args=(-C ..) &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
 
-test_expect_success '__gitdir - gitfile in cwd' '
-	echo "$(pwd_P_W)/otherrepo/.git" >expected &&
-	echo "gitdir: $(pwd_P_W)/otherrepo/.git" >subdir/.git &&
+test_expect_success '__git_find_repo_path - $GIT_DIR set while "git -C"' '
+	echo "$ROOT/.git" >expected &&
+	(
+		GIT_DIR="$ROOT/.git" &&
+		export GIT_DIR &&
+		__git_C_args=(-C otherrepo) &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_find_repo_path - relative dir in $GIT_DIR and "git -C"' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd subdir &&
+		GIT_DIR="otherrepo/.git" &&
+		export GIT_DIR &&
+		__git_C_args=(-C ..) &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_find_repo_path - "git -C" while .git directory in cwd' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		__git_C_args=(-C otherrepo) &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_find_repo_path - "git -C" while cwd is a .git directory' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd .git &&
+		__git_C_args=(-C .. -C otherrepo) &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_find_repo_path - "git -C" while .git directory in parent' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd subdir &&
+		__git_C_args=(-C .. -C otherrepo) &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_find_repo_path - non-existing path in "git -C"' '
+	(
+		__git_C_args=(-C non-existing) &&
+		test_must_fail __git_find_repo_path &&
+		printf "$__git_repo_path" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_find_repo_path - non-existing path in $__git_dir' '
+	(
+		__git_dir="non-existing" &&
+		test_must_fail __git_find_repo_path &&
+		printf "$__git_repo_path" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_find_repo_path - non-existing $GIT_DIR' '
+	(
+		GIT_DIR="$ROOT/non-existing" &&
+		export GIT_DIR &&
+		test_must_fail __git_find_repo_path &&
+		printf "$__git_repo_path" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_find_repo_path - gitfile in cwd' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	echo "gitdir: $ROOT/otherrepo/.git" >subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
 		cd subdir &&
-		__gitdir >"$actual"
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - gitfile in parent' '
-	echo "$(pwd_P_W)/otherrepo/.git" >expected &&
-	echo "gitdir: $(pwd_P_W)/otherrepo/.git" >subdir/.git &&
+test_expect_success '__git_find_repo_path - gitfile in parent' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	echo "gitdir: $ROOT/otherrepo/.git" >subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
 		cd subdir/subsubdir &&
-		__gitdir >"$actual"
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success SYMLINKS '__gitdir - resulting path avoids symlinks' '
-	echo "$(pwd -P)/otherrepo/.git" >expected &&
+test_expect_success SYMLINKS '__git_find_repo_path - resulting path avoids symlinks' '
+	echo "$ROOT/otherrepo/.git" >expected &&
 	mkdir otherrepo/dir &&
 	test_when_finished "rm -rf otherrepo/dir" &&
 	ln -s otherrepo/dir link &&
 	test_when_finished "rm -f link" &&
 	(
 		cd link &&
+		__git_find_repo_path &&
+		echo "$__git_repo_path" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_find_repo_path - not a git repository' '
+	(
+		cd non-repo &&
+		GIT_CEILING_DIRECTORIES="$ROOT" &&
+		export GIT_CEILING_DIRECTORIES &&
+		test_must_fail __git_find_repo_path &&
+		printf "$__git_repo_path" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__gitdir - finds repo' '
+	echo "$ROOT/.git" >expected &&
+	(
+		cd subdir/subsubdir &&
 		__gitdir >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success '__gitdir - not a git repository' '
-	nongit test_must_fail __gitdir
+
+test_expect_success '__gitdir - returns error when cant find repo' '
+	(
+		__git_dir="non-existing" &&
+		test_must_fail __gitdir >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__gitdir - repo as argument' '
+	echo "otherrepo/.git" >expected &&
+	(
+		__gitdir "otherrepo" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - remote as argument' '
+	echo "remote" >expected &&
+	(
+		__gitdir "remote" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+
+test_expect_success '__git_dequote - plain unquoted word' '
+	__git_dequote unquoted-word &&
+	verbose test unquoted-word = "$dequoted_word"
+'
+
+# input:    b\a\c\k\'\\\"s\l\a\s\h\es
+# expected: back'\"slashes
+test_expect_success '__git_dequote - backslash escaped' '
+	__git_dequote "b\a\c\k\\'\''\\\\\\\"s\l\a\s\h\es" &&
+	verbose test "back'\''\\\"slashes" = "$dequoted_word"
+'
+
+# input:    sin'gle\' '"quo'ted
+# expected: single\ "quoted
+test_expect_success '__git_dequote - single quoted' '
+	__git_dequote "'"sin'gle\\\\' '\\\"quo'ted"'" &&
+	verbose test '\''single\ "quoted'\'' = "$dequoted_word"
+'
+
+# input:    dou"ble\\" "\"\quot"ed
+# expected: double\ "\quoted
+test_expect_success '__git_dequote - double quoted' '
+	__git_dequote '\''dou"ble\\" "\"\quot"ed'\'' &&
+	verbose test '\''double\ "\quoted'\'' = "$dequoted_word"
+'
+
+# input: 'open single quote
+test_expect_success '__git_dequote - open single quote' '
+	__git_dequote "'\''open single quote" &&
+	verbose test "open single quote" = "$dequoted_word"
+'
+
+# input: "open double quote
+test_expect_success '__git_dequote - open double quote' '
+	__git_dequote "\"open double quote" &&
+	verbose test "open double quote" = "$dequoted_word"
+'
+
+
+test_expect_success '__gitcomp_direct - puts everything into COMPREPLY as-is' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	with-trailing-space Z
+	without-trailing-spaceZ
+	--option Z
+	--option=Z
+	$invalid_variable_name Z
+	EOF
+	(
+		cur=should_be_ignored &&
+		__gitcomp_direct "$(cat expected)" &&
+		print_comp
+	) &&
+	test_cmp expected out
 '
 
 test_expect_success '__gitcomp - trailing space - options' '
@@ -300,6 +498,42 @@ test_expect_success '__gitcomp - suffix' '
 		"ma" "." <<-\EOF
 	branch.master.Z
 	branch.maint.Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore optional negative options' '
+	test_gitcomp "--" "--abc --def --no-one -- --no-two" <<-\EOF
+	--abc Z
+	--def Z
+	--no-one Z
+	--no-... Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore/narrow optional negative options' '
+	test_gitcomp "--a" "--abc --abcdef --no-one -- --no-two" <<-\EOF
+	--abc Z
+	--abcdef Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore/narrow optional negative options' '
+	test_gitcomp "--n" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
+	--no-... Z
+	EOF
+'
+
+test_expect_success '__gitcomp - expand all negative options' '
+	test_gitcomp "--no-" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
+	--no-two Z
+	EOF
+'
+
+test_expect_success '__gitcomp - expand/narrow all negative options' '
+	test_gitcomp "--no-o" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
 	EOF
 '
 
@@ -361,9 +595,774 @@ test_expect_success '__git_remotes - list remotes from $GIT_DIR/remotes and from
 	git remote add remote_in_config_1 git://remote_1 &&
 	test_when_finished "git remote remove remote_in_config_2" &&
 	git remote add remote_in_config_2 git://remote_2 &&
-	__git_remotes >actual &&
+	(
+		__git_remotes >actual
+	) &&
 	test_cmp expect actual
 '
+
+test_expect_success '__git_is_configured_remote' '
+	test_when_finished "git remote remove remote_1" &&
+	git remote add remote_1 git://remote_1 &&
+	test_when_finished "git remote remove remote_2" &&
+	git remote add remote_2 git://remote_2 &&
+	(
+		verbose __git_is_configured_remote remote_2 &&
+		test_must_fail __git_is_configured_remote non-existent
+	)
+'
+
+test_expect_success 'setup for ref completion' '
+	git commit --allow-empty -m initial &&
+	git branch matching-branch &&
+	git tag matching-tag &&
+	(
+		cd otherrepo &&
+		git commit --allow-empty -m initial &&
+		git branch -m master master-in-other &&
+		git branch branch-in-other &&
+		git tag tag-in-other
+	) &&
+	git remote add other "$ROOT/otherrepo/.git" &&
+	git fetch --no-tags other &&
+	rm -f .git/FETCH_HEAD &&
+	git init thirdrepo
+'
+
+test_expect_success '__git_refs - simple' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	other/branch-in-other
+	other/master-in-other
+	matching-tag
+	EOF
+	(
+		cur= &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master
+	refs/heads/matching-branch
+	refs/remotes/other/branch-in-other
+	refs/remotes/other/master-in-other
+	refs/tags/matching-tag
+	EOF
+	(
+		cur=refs/heads/ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - repo given on the command line' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	tag-in-other
+	EOF
+	(
+		__git_dir="$ROOT/otherrepo/.git" &&
+		cur= &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - remote on local file system' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	tag-in-other
+	EOF
+	(
+		cur= &&
+		__git_refs otherrepo >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - remote on local file system - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cur=refs/ &&
+		__git_refs otherrepo >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	EOF
+	(
+		cur= &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote - full refs' '
+	cat >expected <<-EOF &&
+	HEAD
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cur=refs/ &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote - repo given on the command line' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	EOF
+	(
+		cd thirdrepo &&
+		__git_dir="$ROOT/.git" &&
+		cur= &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote - full refs - repo given on the command line' '
+	cat >expected <<-EOF &&
+	HEAD
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cd thirdrepo &&
+		__git_dir="$ROOT/.git" &&
+		cur=refs/ &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote - remote name matches a directory' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	EOF
+	mkdir other &&
+	test_when_finished "rm -rf other" &&
+	(
+		cur= &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - URL remote' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	tag-in-other
+	EOF
+	(
+		cur= &&
+		__git_refs "file://$ROOT/otherrepo/.git" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - URL remote - full refs' '
+	cat >expected <<-EOF &&
+	HEAD
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cur=refs/ &&
+		__git_refs "file://$ROOT/otherrepo/.git" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - non-existing remote' '
+	(
+		cur= &&
+		__git_refs non-existing >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - non-existing remote - full refs' '
+	(
+		cur=refs/ &&
+		__git_refs non-existing >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - non-existing URL remote' '
+	(
+		cur= &&
+		__git_refs "file://$ROOT/non-existing" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - non-existing URL remote - full refs' '
+	(
+		cur=refs/ &&
+		__git_refs "file://$ROOT/non-existing" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - not in a git repository' '
+	(
+		GIT_CEILING_DIRECTORIES="$ROOT" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd subdir &&
+		cur= &&
+		__git_refs >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - unique remote branches for git checkout DWIMery' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	other/ambiguous
+	other/branch-in-other
+	other/master-in-other
+	remote/ambiguous
+	remote/branch-in-remote
+	matching-tag
+	branch-in-other
+	branch-in-remote
+	master-in-other
+	EOF
+	for remote_ref in refs/remotes/other/ambiguous \
+		refs/remotes/remote/ambiguous \
+		refs/remotes/remote/branch-in-remote
+	do
+		git update-ref $remote_ref master &&
+		test_when_finished "git update-ref -d $remote_ref"
+	done &&
+	(
+		cur= &&
+		__git_refs "" 1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - after --opt=' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	other/branch-in-other
+	other/master-in-other
+	matching-tag
+	EOF
+	(
+		cur="--opt=" &&
+		__git_refs "" "" "" "" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - after --opt= - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master
+	refs/heads/matching-branch
+	refs/remotes/other/branch-in-other
+	refs/remotes/other/master-in-other
+	refs/tags/matching-tag
+	EOF
+	(
+		cur="--opt=refs/" &&
+		__git_refs "" "" "" refs/ >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git refs - exluding refs' '
+	cat >expected <<-EOF &&
+	^HEAD
+	^master
+	^matching-branch
+	^other/branch-in-other
+	^other/master-in-other
+	^matching-tag
+	EOF
+	(
+		cur=^ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git refs - exluding full refs' '
+	cat >expected <<-EOF &&
+	^refs/heads/master
+	^refs/heads/matching-branch
+	^refs/remotes/other/branch-in-other
+	^refs/remotes/other/master-in-other
+	^refs/tags/matching-tag
+	EOF
+	(
+		cur=^refs/ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'setup for filtering matching refs' '
+	git branch matching/branch &&
+	git tag matching/tag &&
+	git -C otherrepo branch matching/branch-in-other &&
+	git fetch --no-tags other &&
+	rm -f .git/FETCH_HEAD
+'
+
+test_expect_success '__git_refs - dont filter refs unless told so' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	matching/branch
+	other/branch-in-other
+	other/master-in-other
+	other/matching/branch-in-other
+	matching-tag
+	matching/tag
+	EOF
+	(
+		cur=master &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs' '
+	cat >expected <<-EOF &&
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	EOF
+	(
+		cur=mat &&
+		__git_refs "" "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/matching-branch
+	refs/heads/matching/branch
+	EOF
+	(
+		cur=refs/heads/mat &&
+		__git_refs "" "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote on local file system' '
+	cat >expected <<-EOF &&
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs otherrepo "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - configured remote' '
+	cat >expected <<-EOF &&
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs other "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master-in-other
+	refs/heads/matching/branch-in-other
+	EOF
+	(
+		cur=refs/heads/ma &&
+		__git_refs other "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - checkout DWIMery' '
+	cat >expected <<-EOF &&
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	matching/branch-in-other
+	EOF
+	for remote_ref in refs/remotes/other/ambiguous \
+		refs/remotes/remote/ambiguous \
+		refs/remotes/remote/branch-in-remote
+	do
+		git update-ref $remote_ref master &&
+		test_when_finished "git update-ref -d $remote_ref"
+	done &&
+	(
+		cur=mat &&
+		__git_refs "" 1 "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'teardown after filtering matching refs' '
+	git branch -d matching/branch &&
+	git tag -d matching/tag &&
+	git update-ref -d refs/remotes/other/matching/branch-in-other &&
+	git -C otherrepo branch -D matching/branch-in-other
+'
+
+test_expect_success '__git_refs - for-each-ref format specifiers in prefix' '
+	cat >expected <<-EOF &&
+	evil-%%-%42-%(refname)..master
+	EOF
+	(
+		cur="evil-%%-%42-%(refname)..mas" &&
+		__git_refs "" "" "evil-%%-%42-%(refname).." mas >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_complete_refs - simple' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	HEAD Z
+	master Z
+	matching-branch Z
+	other/branch-in-other Z
+	other/master-in-other Z
+	matching-tag Z
+	EOF
+	(
+		cur= &&
+		__git_complete_refs &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - matching' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	matching-branch Z
+	matching-tag Z
+	EOF
+	(
+		cur=mat &&
+		__git_complete_refs &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - remote' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	HEAD Z
+	branch-in-other Z
+	master-in-other Z
+	EOF
+	(
+		cur= &&
+		__git_complete_refs --remote=other &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - track' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	HEAD Z
+	master Z
+	matching-branch Z
+	other/branch-in-other Z
+	other/master-in-other Z
+	matching-tag Z
+	branch-in-other Z
+	master-in-other Z
+	EOF
+	(
+		cur= &&
+		__git_complete_refs --track &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - current word' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	matching-branch Z
+	matching-tag Z
+	EOF
+	(
+		cur="--option=mat" &&
+		__git_complete_refs --cur="${cur#*=}" &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - prefix' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	v1.0..matching-branch Z
+	v1.0..matching-tag Z
+	EOF
+	(
+		cur=v1.0..mat &&
+		__git_complete_refs --pfx=v1.0.. --cur=mat &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - suffix' '
+	cat >expected <<-EOF &&
+	HEAD.
+	master.
+	matching-branch.
+	other/branch-in-other.
+	other/master-in-other.
+	matching-tag.
+	EOF
+	(
+		cur= &&
+		__git_complete_refs --sfx=. &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - simple' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	HEAD:HEAD Z
+	branch-in-other:branch-in-other Z
+	master-in-other:master-in-other Z
+	EOF
+	(
+		cur= &&
+		__git_complete_fetch_refspecs other &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - matching' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	branch-in-other:branch-in-other Z
+	EOF
+	(
+		cur=br &&
+		__git_complete_fetch_refspecs other "" br &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - prefix' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	+HEAD:HEAD Z
+	+branch-in-other:branch-in-other Z
+	+master-in-other:master-in-other Z
+	EOF
+	(
+		cur="+" &&
+		__git_complete_fetch_refspecs other "+" ""  &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - fully qualified' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	refs/heads/branch-in-other:refs/heads/branch-in-other Z
+	refs/heads/master-in-other:refs/heads/master-in-other Z
+	refs/tags/tag-in-other:refs/tags/tag-in-other Z
+	EOF
+	(
+		cur=refs/ &&
+		__git_complete_fetch_refspecs other "" refs/ &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - fully qualified & prefix' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	+refs/heads/branch-in-other:refs/heads/branch-in-other Z
+	+refs/heads/master-in-other:refs/heads/master-in-other Z
+	+refs/tags/tag-in-other:refs/tags/tag-in-other Z
+	EOF
+	(
+		cur=+refs/ &&
+		__git_complete_fetch_refspecs other + refs/ &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success 'teardown after ref completion' '
+	git branch -d matching-branch &&
+	git tag -d matching-tag &&
+	git remote remove other
+'
+
+
+test_path_completion ()
+{
+	test $# = 2 || BUG "not 2 parameters to test_path_completion"
+
+	local cur="$1" expected="$2"
+	echo "$expected" >expected &&
+	(
+		# In the following tests calling this function we only
+		# care about how __git_complete_index_file() deals with
+		# unusual characters in path names.  By requesting only
+		# untracked files we dont have to bother adding any
+		# paths to the index in those tests.
+		__git_complete_index_file --others &&
+		print_comp
+	) &&
+	test_cmp expected out
+}
+
+test_expect_success 'setup for path completion tests' '
+	mkdir simple-dir \
+	      "spaces in dir" \
+	      árvíztűrő &&
+	touch simple-dir/simple-file \
+	      "spaces in dir/spaces in file" \
+	      "árvíztűrő/Сайн яваарай" &&
+	if test_have_prereq !MINGW &&
+	   mkdir BS\\dir \
+		 '$'separators\034in\035dir'' &&
+	   touch BS\\dir/DQ\"file \
+		 '$'separators\034in\035dir/sep\036in\037file''
+	then
+		test_set_prereq FUNNIERNAMES
+	else
+		rm -rf BS\\dir '$'separators\034in\035dir''
+	fi
+'
+
+test_expect_success '__git_complete_index_file - simple' '
+	test_path_completion simple simple-dir &&  # Bash is supposed to
+						   # add the trailing /.
+	test_path_completion simple-dir/simple simple-dir/simple-file
+'
+
+test_expect_success \
+    '__git_complete_index_file - escaped characters on cmdline' '
+	test_path_completion spac "spaces in dir" &&  # Bash will turn this
+						      # into "spaces\ in\ dir"
+	test_path_completion "spaces\\ i" \
+			     "spaces in dir" &&
+	test_path_completion "spaces\\ in\\ dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "spaces\\ in\\ dir/spaces\\ i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success \
+    '__git_complete_index_file - quoted characters on cmdline' '
+	# Testing with an opening but without a corresponding closing
+	# double quote is important.
+	test_path_completion \"spac "spaces in dir" &&
+	test_path_completion "\"spaces i" \
+			     "spaces in dir" &&
+	test_path_completion "\"spaces in dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "\"spaces in dir/spaces i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success '__git_complete_index_file - UTF-8 in ls-files output' '
+	test_path_completion á árvíztűrő &&
+	test_path_completion árvíztűrő/С "árvíztűrő/Сайн яваарай"
+'
+
+test_expect_success FUNNIERNAMES \
+    '__git_complete_index_file - C-style escapes in ls-files output' '
+	test_path_completion BS \
+			     BS\\dir &&
+	test_path_completion BS\\\\d \
+			     BS\\dir &&
+	test_path_completion BS\\\\dir/DQ \
+			     BS\\dir/DQ\"file &&
+	test_path_completion BS\\\\dir/DQ\\\"f \
+			     BS\\dir/DQ\"file
+'
+
+test_expect_success FUNNIERNAMES \
+    '__git_complete_index_file - \nnn-escaped characters in ls-files output' '
+	test_path_completion sep '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034i'' \
+			     '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034in\035dir/sep'' \
+			     '$'separators\034in\035dir/sep\036in\037file'' &&
+	test_path_completion '$'separators\034in\035dir/sep\036i'' \
+			     '$'separators\034in\035dir/sep\036in\037file''
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - removing repeated quoted path components' '
+	test_when_finished rm -r repeated-quoted &&
+	mkdir repeated-quoted &&      # A directory whose name in itself
+				      # would not be quoted ...
+	>repeated-quoted/0-file &&
+	>repeated-quoted/1\"file &&   # ... but here the file makes the
+				      # dirname quoted ...
+	>repeated-quoted/2-file &&
+	>repeated-quoted/3\"file &&   # ... and here, too.
+
+	# Still, we shold only list the directory name only once.
+	test_path_completion repeated repeated-quoted
+'
+
+test_expect_success 'teardown after path completion tests' '
+	rm -rf simple-dir "spaces in dir" árvíztűrő \
+	       BS\\dir '$'separators\034in\035dir''
+'
+
 
 test_expect_success '__git_get_config_variables' '
 	cat >expect <<-EOF &&
@@ -385,17 +1384,6 @@ test_expect_success '__git_pretty_aliases' '
 	test_config pretty.author "%an %ae" &&
 	test_config pretty.hash %H &&
 	__git_pretty_aliases >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success '__git_aliases' '
-	cat >expect <<-EOF &&
-	ci
-	co
-	EOF
-	test_config alias.ci commit &&
-	test_config alias.co checkout &&
-	__git_aliases >actual &&
 	test_cmp expect actual
 '
 
@@ -434,14 +1422,22 @@ test_expect_success 'double dash "git" itself' '
 test_expect_success 'double dash "git checkout"' '
 	test_completion "git checkout --" <<-\EOF
 	--quiet Z
+	--detach Z
+	--track Z
+	--orphan=Z
 	--ours Z
 	--theirs Z
-	--track Z
-	--no-track Z
 	--merge Z
-	--conflict=
-	--orphan Z
+	--conflict=Z
 	--patch Z
+	--ignore-skip-worktree-bits Z
+	--ignore-other-worktrees Z
+	--recurse-submodules Z
+	--progress Z
+	--guess Z
+	--no-guess Z
+	--no-... Z
+	--overlay Z
 	EOF
 '
 
@@ -475,7 +1471,12 @@ test_expect_success 'general options plus command' '
 	test_completion "git --namespace=foo check" "checkout " &&
 	test_completion "git --paginate check" "checkout " &&
 	test_completion "git --info-path check" "checkout " &&
-	test_completion "git --no-replace-objects check" "checkout "
+	test_completion "git --no-replace-objects check" "checkout " &&
+	test_completion "git --git-dir some/path check" "checkout " &&
+	test_completion "git -c conf.var=value check" "checkout " &&
+	test_completion "git -C some/path check" "checkout " &&
+	test_completion "git --work-tree some/path check" "checkout " &&
+	test_completion "git --namespace name/space check" "checkout "
 '
 
 test_expect_success 'git --help completion' '
@@ -483,10 +1484,16 @@ test_expect_success 'git --help completion' '
 	test_completion "git --help core" "core-tutorial "
 '
 
-test_expect_success 'setup for ref completion' '
+test_expect_success 'completion.commands removes multiple commands' '
+	test_config completion.commands "-cherry -mergetool" &&
+	git --list-cmds=list-mainporcelain,list-complete,config >out &&
+	! grep -E "^(cherry|mergetool)$" out
+'
+
+test_expect_success 'setup for integration tests' '
 	echo content >file1 &&
 	echo more >file2 &&
-	git add . &&
+	git add file1 file2 &&
 	git commit -m one &&
 	git branch mybranch &&
 	git tag mytag
@@ -500,6 +1507,12 @@ test_expect_success 'checkout completes ref names' '
 	EOF
 '
 
+test_expect_success 'git -C <path> checkout uses the right repo' '
+	test_completion "git -C subdir -C subsubdir -C .. -C ../otherrepo checkout b" <<-\EOF
+	branch-in-other Z
+	EOF
+'
+
 test_expect_success 'show completes all refs' '
 	test_completion "git show m" <<-\EOF
 	master Z
@@ -510,31 +1523,31 @@ test_expect_success 'show completes all refs' '
 
 test_expect_success '<ref>: completes paths' '
 	test_completion "git show mytag:f" <<-\EOF
-	file1 Z
-	file2 Z
+	file1Z
+	file2Z
 	EOF
 '
 
 test_expect_success 'complete tree filename with spaces' '
 	echo content >"name with spaces" &&
-	git add . &&
+	git add "name with spaces" &&
 	git commit -m spaces &&
 	test_completion "git show HEAD:nam" <<-\EOF
-	name with spaces Z
+	name with spacesZ
 	EOF
 '
 
 test_expect_success 'complete tree filename with metacharacters' '
 	echo content >"name with \${meta}" &&
-	git add . &&
+	git add "name with \${meta}" &&
 	git commit -m meta &&
 	test_completion "git show HEAD:nam" <<-\EOF
-	name with ${meta} Z
-	name with spaces Z
+	name with ${meta}Z
+	name with spacesZ
 	EOF
 '
 
-test_expect_success 'send-email' '
+test_expect_success PERL 'send-email' '
 	test_completion "git send-email --cov" "--cover-letter " &&
 	test_completion "git send-email ma" "master "
 '
@@ -545,6 +1558,7 @@ test_expect_success 'complete files' '
 
 	echo "expected" > .gitignore &&
 	echo "out" >> .gitignore &&
+	echo "out_sorted" >> .gitignore &&
 
 	git add .gitignore &&
 	test_completion "git commit " ".gitignore" &&
@@ -634,6 +1648,13 @@ test_expect_success 'completion used <cmd> completion for alias: !f() { : git <c
 	EOF
 '
 
+test_expect_success 'completion without explicit _git_xxx function' '
+	test_completion "git version --" <<-\EOF
+	--build-options Z
+	--no-build-options Z
+	EOF
+'
+
 test_expect_failure 'complete with tilde expansion' '
 	git init tmp && cd tmp &&
 	test_when_finished "cd .. && rm -rf tmp" &&
@@ -641,6 +1662,65 @@ test_expect_failure 'complete with tilde expansion' '
 	touch ~/tmp/file &&
 
 	test_completion "git add ~/tmp/" "~/tmp/file"
+'
+
+test_expect_success 'setup other remote for remote reference completion' '
+	git remote add other otherrepo &&
+	git fetch other
+'
+
+for flag in -d --delete
+do
+	test_expect_success "__git_complete_remote_or_refspec - push $flag other" '
+		sed -e "s/Z$//" >expected <<-EOF &&
+		master-in-other Z
+		EOF
+		(
+			words=(git push '$flag' other ma) &&
+			cword=${#words[@]} cur=${words[cword-1]} &&
+			__git_complete_remote_or_refspec &&
+			print_comp
+		) &&
+		test_cmp expected out
+	'
+
+	test_expect_failure "__git_complete_remote_or_refspec - push other $flag" '
+		sed -e "s/Z$//" >expected <<-EOF &&
+		master-in-other Z
+		EOF
+		(
+			words=(git push other '$flag' ma) &&
+			cword=${#words[@]} cur=${words[cword-1]} &&
+			__git_complete_remote_or_refspec &&
+			print_comp
+		) &&
+		test_cmp expected out
+	'
+done
+
+test_expect_success 'sourcing the completion script clears cached commands' '
+	__git_compute_all_commands &&
+	verbose test -n "$__git_all_commands" &&
+	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+	verbose test -z "$__git_all_commands"
+'
+
+test_expect_success 'sourcing the completion script clears cached merge strategies' '
+	GIT_TEST_GETTEXT_POISON= &&
+	__git_compute_merge_strategies &&
+	verbose test -n "$__git_merge_strategies" &&
+	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+	verbose test -z "$__git_merge_strategies"
+'
+
+test_expect_success 'sourcing the completion script clears cached --options' '
+	__gitcomp_builtin checkout &&
+	verbose test -n "$__gitcomp_builtin_checkout" &&
+	__gitcomp_builtin notes_edit &&
+	verbose test -n "$__gitcomp_builtin_notes_edit" &&
+	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+	verbose test -z "$__gitcomp_builtin_checkout" &&
+	verbose test -z "$__gitcomp_builtin_notes_edit"
 '
 
 test_done

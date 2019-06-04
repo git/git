@@ -126,12 +126,12 @@ test_expect_success 'NUL separation with --stat' '
 	test_i18ncmp expected actual
 '
 
-test_expect_failure 'NUL termination with --stat' '
+test_expect_failure C_LOCALE_OUTPUT 'NUL termination with --stat' '
 	stat0_part=$(git diff --stat HEAD^ HEAD) &&
 	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
 	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n0" >expected &&
 	git log -z --stat --pretty="tformat:%s" >actual &&
-	test_i18ncmp expected actual
+	test_cmp expected actual
 '
 
 test_expect_success 'setup more commits' '
@@ -516,22 +516,22 @@ test_expect_success 'log decoration properly follows tag chain' '
 	git commit --amend -m shorter &&
 	git log --no-walk --tags --pretty="%H %d" --decorate=full >actual &&
 	cat <<-EOF >expected &&
-	$head1  (tag: refs/tags/tag2)
 	$head2  (tag: refs/tags/message-one)
 	$old_head1  (tag: refs/tags/message-two)
+	$head1  (tag: refs/tags/tag2)
 	EOF
-	sort actual >actual1 &&
+	sort -k3 actual >actual1 &&
 	test_cmp expected actual1
 '
 
 test_expect_success 'clean log decoration' '
 	git log --no-walk --tags --pretty="%H %D" --decorate=full >actual &&
 	cat >expected <<-EOF &&
-	$head1 tag: refs/tags/tag2
 	$head2 tag: refs/tags/message-one
 	$old_head1 tag: refs/tags/message-two
+	$head1 tag: refs/tags/tag2
 	EOF
-	sort actual >actual1 &&
+	sort -k3 actual >actual1 &&
 	test_cmp expected actual1
 '
 
@@ -539,25 +539,252 @@ cat >trailers <<EOF
 Signed-off-by: A U Thor <author@example.com>
 Acked-by: A U Thor <author@example.com>
 [ v2 updated patch description ]
-Signed-off-by: A U Thor <author@example.com>
+Signed-off-by: A U Thor
+  <author@example.com>
 EOF
 
-test_expect_success 'pretty format %(trailers) shows trailers' '
+unfold () {
+	perl -0pe 's/\n\s+/ /g'
+}
+
+test_expect_success 'set up trailer tests' '
 	echo "Some contents" >trailerfile &&
 	git add trailerfile &&
-	git commit -F - <<-EOF &&
+	git commit -F - <<-EOF
 	trailers: this commit message has trailers
 
 	This commit is a test commit with trailers at the end. We parse this
-	message and display the trailers using %bT
+	message and display the trailers using %(trailers).
 
 	$(cat trailers)
 	EOF
+'
+
+test_expect_success 'pretty format %(trailers) shows trailers' '
 	git log --no-walk --pretty="%(trailers)" >actual &&
-	cat >expect <<-EOF &&
-	$(cat trailers)
+	{
+		cat trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
 
+test_expect_success '%(trailers:only) shows only "key: value" trailers' '
+	git log --no-walk --pretty="%(trailers:only)" >actual &&
+	{
+		grep -v patch.description <trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only=yes) shows only "key: value" trailers' '
+	git log --no-walk --pretty=format:"%(trailers:only=yes)" >actual &&
+	grep -v patch.description <trailers >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only=no) shows all trailers' '
+	git log --no-walk --pretty=format:"%(trailers:only=no)" >actual &&
+	cat trailers >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only=no,only=true) shows only "key: value" trailers' '
+	git log --no-walk --pretty=format:"%(trailers:only=yes)" >actual &&
+	grep -v patch.description <trailers >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:unfold) unfolds trailers' '
+	git log --no-walk --pretty="%(trailers:unfold)" >actual &&
+	{
+		unfold <trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success ':only and :unfold work together' '
+	git log --no-walk --pretty="%(trailers:only,unfold)" >actual &&
+	git log --no-walk --pretty="%(trailers:unfold,only)" >reverse &&
+	test_cmp actual reverse &&
+	{
+		grep -v patch.description <trailers | unfold &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key=foo) shows that trailer' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by)" >actual &&
+	echo "Acked-by: A U Thor <author@example.com>" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key=foo) is case insensitive' '
+	git log --no-walk --pretty="format:%(trailers:key=AcKed-bY)" >actual &&
+	echo "Acked-by: A U Thor <author@example.com>" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key=foo:) trailing colon also works' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by:)" >actual &&
+	echo "Acked-by: A U Thor <author@example.com>" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key=foo) multiple keys' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by:,key=Signed-off-By)" >actual &&
+	grep -v patch.description <trailers >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key=nonexistant) becomes empty' '
+	git log --no-walk --pretty="x%(trailers:key=Nacked-by)x" >actual &&
+	echo "xx" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key=foo) handles multiple lines even if folded' '
+	git log --no-walk --pretty="format:%(trailers:key=Signed-Off-by)" >actual &&
+	grep -v patch.description <trailers | grep -v Acked-by >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key=foo,unfold) properly unfolds' '
+	git log --no-walk --pretty="format:%(trailers:key=Signed-Off-by,unfold)" >actual &&
+	unfold <trailers | grep Signed-off-by >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:key=foo,only=no) also includes nontrailer lines' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,only=no)" >actual &&
+	{
+		echo "Acked-by: A U Thor <author@example.com>" &&
+		grep patch.description <trailers
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key) without value is error' '
+	git log --no-walk --pretty="tformat:%(trailers:key)" >actual &&
+	echo "%(trailers:key)" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:key=foo,valueonly) shows only value' '
+	git log --no-walk --pretty="format:%(trailers:key=Acked-by,valueonly)" >actual &&
+	echo "A U Thor <author@example.com>" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers:separator) changes separator' '
+	git log --no-walk --pretty=format:"X%(trailers:separator=%x00,unfold)X" >actual &&
+	printf "XSigned-off-by: A U Thor <author@example.com>\0Acked-by: A U Thor <author@example.com>\0[ v2 updated patch description ]\0Signed-off-by: A U Thor <author@example.com>X" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty format %(trailers) combining separator/key/valueonly' '
+	git commit --allow-empty -F - <<-\EOF &&
+	Important fix
+
+	The fix is explained here
+
+	Closes: #1234
 	EOF
+
+	git commit --allow-empty -F - <<-\EOF &&
+	Another fix
+
+	The fix is explained here
+
+	Closes: #567
+	Closes: #890
+	EOF
+
+	git commit --allow-empty -F - <<-\EOF &&
+	Does not close any tickets
+	EOF
+
+	git log --pretty="%s% (trailers:separator=%x2c%x20,key=Closes,valueonly)" HEAD~3.. >actual &&
+	test_write_lines \
+		"Does not close any tickets" \
+		"Another fix #567, #890" \
+		"Important fix #1234" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'trailer parsing not fooled by --- line' '
+	git commit --allow-empty -F - <<-\EOF &&
+	this is the subject
+
+	This is the body. The message has a "---" line which would confuse a
+	message+patch parser. But here we know we have only a commit message,
+	so we get it right.
+
+	trailer: wrong
+	---
+	This is more body.
+
+	trailer: right
+	EOF
+
+	{
+		echo "trailer: right" &&
+		echo
+	} >expect &&
+	git log --no-walk --format="%(trailers)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'set up %S tests' '
+	git checkout --orphan source-a &&
+	test_commit one &&
+	test_commit two &&
+	git checkout -b source-b HEAD^ &&
+	test_commit three
+'
+
+test_expect_success 'log --format=%S paints branch names' '
+	cat >expect <<-\EOF &&
+	source-b
+	source-a
+	source-b
+	EOF
+	git log --format=%S source-a source-b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --format=%S paints tag names' '
+	git tag -m tagged source-tag &&
+	cat >expect <<-\EOF &&
+	source-tag
+	source-a
+	source-tag
+	EOF
+	git log --format=%S source-tag source-a >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --format=%S paints symmetric ranges' '
+	cat >expect <<-\EOF &&
+	source-b
+	source-a
+	EOF
+	git log --format=%S source-a...source-b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%S in git log --format works with other placeholders (part 1)' '
+	git log --format="source-b %h" source-b >expect &&
+	git log --format="%S %h" source-b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%S in git log --format works with other placeholders (part 2)' '
+	git log --format="%h source-b" source-b >expect &&
+	git log --format="%h %S" source-b >actual &&
 	test_cmp expect actual
 '
 

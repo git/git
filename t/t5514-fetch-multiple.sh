@@ -152,7 +152,6 @@ test_expect_success 'git fetch --multiple (ignoring skipFetchAll)' '
 '
 
 test_expect_success 'git fetch --all --no-tags' '
-	>expect &&
 	git clone one test5 &&
 	git clone test5 test6 &&
 	(cd test5 && git tag test-tag) &&
@@ -161,7 +160,7 @@ test_expect_success 'git fetch --all --no-tags' '
 		git fetch --all --no-tags &&
 		git tag >output
 	) &&
-	test_cmp expect test6/output
+	test_must_be_empty test6/output
 '
 
 test_expect_success 'git fetch --all --tags' '

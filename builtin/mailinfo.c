@@ -11,13 +11,6 @@
 static const char mailinfo_usage[] =
 	"git mailinfo [-k | -b] [-m | --message-id] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] <msg> <patch> < mail >info";
 
-static char *prefix_copy(const char *prefix, const char *filename)
-{
-	if (!prefix || is_absolute_path(filename))
-		return xstrdup(filename);
-	return xstrdup(prefix_filename(prefix, strlen(prefix), filename));
-}
-
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
 	const char *def_charset;
@@ -60,8 +53,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	mi.input = stdin;
 	mi.output = stdout;
 
-	msgfile = prefix_copy(prefix, argv[1]);
-	patchfile = prefix_copy(prefix, argv[2]);
+	msgfile = prefix_filename(prefix, argv[1]);
+	patchfile = prefix_filename(prefix, argv[2]);
 
 	status = !!mailinfo(&mi, msgfile, patchfile);
 	clear_mailinfo(&mi);

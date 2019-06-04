@@ -19,16 +19,33 @@ all::
 # have been written to the final string if enough space had been available.
 #
 # Define FREAD_READS_DIRECTORIES if you are on a system which succeeds
-# when attempting to read from an fopen'ed directory.
+# when attempting to read from an fopen'ed directory (or even to fopen
+# it at all).
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies BLK_SHA1.
 #
-# Define USE_LIBPCRE if you have and want to use libpcre. git-grep will be
-# able to use Perl-compatible regular expressions.
+# Define USE_LIBPCRE if you have and want to use libpcre. Various
+# commands such as log and grep offer runtime options to use
+# Perl-compatible regular expressions instead of standard or extended
+# POSIX regular expressions.
 #
-# Define LIBPCREDIR=/foo/bar if your libpcre header and library files are in
-# /foo/bar/include and /foo/bar/lib directories.
+# USE_LIBPCRE is a synonym for USE_LIBPCRE2, define USE_LIBPCRE1
+# instead if you'd like to use the legacy version 1 of the PCRE
+# library. Support for version 1 will likely be removed in some future
+# release of Git, as upstream has all but abandoned it.
+#
+# When using USE_LIBPCRE1, define NO_LIBPCRE1_JIT if the PCRE v1
+# library is compiled without --enable-jit. We will auto-detect
+# whether the version of the PCRE v1 library in use has JIT support at
+# all, but we unfortunately can't auto-detect whether JIT support
+# hasn't been compiled in in an otherwise JIT-supporting version. If
+# you have link-time errors about a missing `pcre_jit_exec` define
+# this, or recompile PCRE v1 with --enable-jit.
+#
+# Define LIBPCREDIR=/foo/bar if your PCRE header and library files are
+# in /foo/bar/include and /foo/bar/lib directories. Which version of
+# PCRE this points to determined by the USE_LIBPCRE1 and USE_LIBPCRE2
+# variables.
 #
 # Define HAVE_ALLOCA_H if you have working alloca(3) defined in that header.
 #
@@ -41,6 +58,13 @@ all::
 #
 # Define CURL_CONFIG to curl's configuration program that prints information
 # about the library (e.g., its version number).  The default is 'curl-config'.
+#
+# Define CURL_LDFLAGS to specify flags that you need to link when using libcurl,
+# if you do not want to rely on the libraries provided by CURL_CONFIG.  The
+# default value is a result of `curl-config --libs`.  An example value for
+# CURL_LDFLAGS is as follows:
+#
+#     CURL_LDFLAGS=-lcurl
 #
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports (dumb).
@@ -102,8 +126,6 @@ all::
 #
 # Define MKDIR_WO_TRAILING_SLASH if your mkdir() can't deal with trailing slash.
 #
-# Define NO_MKSTEMPS if you don't have mkstemps in the C library.
-#
 # Define NO_GECOS_IN_PWENT if you don't have pw_gecos in struct passwd
 # in the C library.
 #
@@ -142,17 +164,37 @@ all::
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
+# Define DC_SHA1 to unconditionally enable the collision-detecting sha1
+# algorithm. This is slower, but may detect attempted collision attacks.
+# Takes priority over other *_SHA1 knobs.
+#
+# Define DC_SHA1_EXTERNAL in addition to DC_SHA1 if you want to build / link
+# git with the external SHA1 collision-detect library.
+# Without this option, i.e. the default behavior is to build git with its
+# own built-in code (or submodule).
+#
+# Define DC_SHA1_SUBMODULE in addition to DC_SHA1 to use the
+# sha1collisiondetection shipped as a submodule instead of the
+# non-submodule copy in sha1dc/. This is an experimental option used
+# by the git project to migrate to using sha1collisiondetection as a
+# submodule.
+#
+# Define OPENSSL_SHA1 environment variable when running make to link
+# with the SHA1 routine from openssl library.
+#
 # Define SHA1_MAX_BLOCK_SIZE to limit the amount of data that will be hashed
 # in one call to the platform's SHA1_Update(). e.g. APPLE_COMMON_CRYPTO
 # wants 'SHA1_MAX_BLOCK_SIZE=1024L*1024L*1024L' defined.
 #
+# Define BLK_SHA256 to use the built-in SHA-256 routines.
+#
+# Define GCRYPT_SHA256 to use the SHA-256 routines in libgcrypt.
+#
+# Define OPENSSL_SHA256 to use the SHA-256 routines in OpenSSL.
+#
 # Define NEEDS_CRYPTO_WITH_SSL if you need -lcrypto when using -lssl (Darwin).
 #
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lssl when using -lcrypto (Darwin).
-#
-# Define NEEDS_SSL_WITH_CURL if you need -lssl with -lcurl (Minix).
-#
-# Define NEEDS_IDN_WITH_CURL if you need -lidn when using -lcurl (Minix).
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
 #
@@ -171,10 +213,15 @@ all::
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
+# Define MMAP_PREVENTS_DELETE if a file that is currently mmapped cannot be
+# deleted or cannot be replaced using rename().
+#
+# Define NO_POLL_H if you don't have poll.h.
+#
 # Define NO_SYS_POLL_H if you don't have sys/poll.h.
 #
 # Define NO_POLL if you do not have or don't want to use poll().
-# This also implies NO_SYS_POLL_H.
+# This also implies NO_POLL_H and NO_SYS_POLL_H.
 #
 # Define NEEDS_SYS_PARAM_H if you need to include sys/param.h to compile,
 # *PLEASE* REPORT to git@vger.kernel.org if your platform needs this;
@@ -211,6 +258,10 @@ all::
 #
 # Define OLD_ICONV if your library has an old iconv(), where the second
 # (input buffer pointer) parameter is declared with type (const char **).
+#
+# Define ICONV_OMITS_BOM if your iconv implementation does not write a
+# byte-order mark (BOM) when writing UTF-16 or UTF-32 and always writes in
+# big-endian format.
 #
 # Define NO_DEFLATE_BOUND if your zlib does not have deflateBound.
 #
@@ -250,12 +301,21 @@ all::
 # apostrophes to be ASCII so that cut&pasting examples to the shell
 # will work.
 #
+# Define USE_ASCIIDOCTOR to use Asciidoctor instead of AsciiDoc to build the
+# documentation.
+#
+# Define ASCIIDOCTOR_EXTENSIONS_LAB to point to the location of the Asciidoctor
+# Extensions Lab if you have it available.
+#
 # Define PERL_PATH to the path of your Perl binary (usually /usr/bin/perl).
 #
-# Define NO_PERL_MAKEMAKER if you cannot use Makefiles generated by perl's
-# MakeMaker (e.g. using ActiveState under Cygwin).
-#
 # Define NO_PERL if you do not want Perl scripts or libraries at all.
+#
+# Define NO_PERL_CPAN_FALLBACKS if you do not want to install bundled
+# copies of CPAN modules that serve as a fallback in case the modules
+# are not available on the system. This option is intended for
+# distributions that want to use their packaged versions of Perl
+# modules, instead of the fallbacks shipped with Git.
 #
 # Define PYTHON_PATH to the path of your Python binary (often /usr/bin/python
 # but /usr/bin/python2.7 on some platforms).
@@ -279,6 +339,9 @@ all::
 # is a simplified version of the merge sort used in glibc. This is
 # recommended if Git triggers O(n^2) behavior in your platform's qsort().
 #
+# Define HAVE_ISO_QSORT_S if your platform provides a qsort_s() that's
+# compatible with the one described in C11 Annex K.
+#
 # Define UNRELIABLE_FSTAT if your system's fstat does not return the same
 # information on a not yet closed file that lstat would return for the same
 # file after it was closed.
@@ -286,6 +349,13 @@ all::
 # Define OBJECT_CREATION_USES_RENAMES if your operating systems has problems
 # when hardlinking a file to another name and unlinking the original file right
 # away (some NTFS drivers seem to zero the contents in that scenario).
+#
+# Define INSTALL_SYMLINKS if you prefer to have everything that can be
+# symlinked between bin/ and libexec/ to use relative symlinks between
+# the two. This option overrides NO_CROSS_DIRECTORY_HARDLINKS and
+# NO_INSTALL_HARDLINKS which will also use symlinking by indirection
+# within the same directory in some cases, INSTALL_SYMLINKS will
+# always symlink to the final target directly.
 #
 # Define NO_CROSS_DIRECTORY_HARDLINKS if you plan to distribute the installed
 # programs as a tar, where bin/ and libexec/ might be on different file systems.
@@ -306,11 +376,6 @@ all::
 #
 # Define HAVE_DEV_TTY if your system can open /dev/tty to interact with the
 # user.
-#
-# Define GETTEXT_POISON if you are debugging the choice of strings marked
-# for translation.  In a GETTEXT_POISON build, you can turn all strings marked
-# for translation into gibberish by setting the GIT_GETTEXT_POISON variable
-# (to any value) in your environment.
 #
 # Define JSMIN to point to JavaScript minifier that functions as
 # a filter to have gitweb.js minified.
@@ -345,7 +410,7 @@ all::
 # (defaults to "man") if you want to have a different default when
 # "git help" is called without a parameter specifying the format.
 #
-# Define TEST_GIT_INDEX_VERSION to 2, 3 or 4 to run the test suite
+# Define GIT_TEST_INDEX_VERSION to 2, 3 or 4 to run the test suite
 # with a different indexfile format version.  If it isn't set the index
 # file format used is index-v[23].
 #
@@ -372,6 +437,11 @@ all::
 #
 # Define HAVE_GETDELIM if your system has the getdelim() function.
 #
+# Define FILENO_IS_A_MACRO if fileno() is a macro, not a real function.
+#
+# Define NEED_ACCESS_ROOT_HANDLER if access() under root may success for X_OK
+# even if execution permission isn't granted for any user.
+#
 # Define PAGER_ENV to a SP separated VAR=VAL pairs to define
 # default environment variables to be passed when a pager is spawned, e.g.
 #
@@ -379,31 +449,72 @@ all::
 #
 # to say "export LESS=FRX (and LV=-c) if the environment variable
 # LESS (and LV) is not set, respectively".
+#
+# Define TEST_SHELL_PATH if you want to use a shell besides SHELL_PATH for
+# running the test scripts (e.g., bash has better support for "set -x"
+# tracing).
+#
+# When cross-compiling, define HOST_CPU as the canonical name of the CPU on
+# which the built Git will run (for instance "x86_64").
+#
+# Define RUNTIME_PREFIX to configure Git to resolve its ancillary tooling and
+# support files relative to the location of the runtime binary, rather than
+# hard-coding them into the binary. Git installations built with RUNTIME_PREFIX
+# can be moved to arbitrary filesystem locations. RUNTIME_PREFIX also causes
+# Perl scripts to use a modified entry point header allowing them to resolve
+# support files at runtime.
+#
+# When using RUNTIME_PREFIX, define HAVE_BSD_KERN_PROC_SYSCTL if your platform
+# supports the KERN_PROC BSD sysctl function.
+#
+# When using RUNTIME_PREFIX, define PROCFS_EXECUTABLE_PATH if your platform
+# mounts a "procfs" filesystem capable of resolving the path of the current
+# executable. If defined, this must be the canonical path for the "procfs"
+# current executable path.
+#
+# When using RUNTIME_PREFIX, define HAVE_NS_GET_EXECUTABLE_PATH if your platform
+# supports calling _NSGetExecutablePath to retrieve the path of the running
+# executable.
+#
+# When using RUNTIME_PREFIX, define HAVE_WPGMPTR if your platform offers
+# the global variable _wpgmptr containing the absolute path of the current
+# executable (this is the case on Windows).
+#
+# Define DEVELOPER to enable more compiler warnings. Compiler version
+# and family are auto detected, but could be overridden by defining
+# COMPILER_FEATURES (see config.mak.dev). You can still set
+# CFLAGS="..." in combination with DEVELOPER enables, whether that's
+# for tweaking something unrelated (e.g. optimization level), or for
+# selectively overriding something DEVELOPER or one of the DEVOPTS
+# (see just below) brings in.
+#
+# When DEVELOPER is set, DEVOPTS can be used to control compiler
+# options.  This variable contains keywords separated by
+# whitespace. The following keywords are are recognized:
+#
+#    no-error:
+#
+#        suppresses the -Werror that implicitly comes with
+#        DEVELOPER=1. Useful for getting the full set of errors
+#        without immediately dying, or for logging them.
+#
+#    extra-all:
+#
+#        The DEVELOPER mode enables -Wextra with a few exceptions. By
+#        setting this flag the exceptions are removed, and all of
+#        -Wextra is used.
+#
+#    pedantic:
+#
+#        Enable -pedantic compilation. This also disables
+#        USE_PARENS_AROUND_GETTEXT_N to produce only relevant warnings.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
-# CFLAGS and LDFLAGS are for the users to override from the command line.
-
-CFLAGS = -g -O2 -Wall
-DEVELOPER_CFLAGS = -Werror \
-	-Wdeclaration-after-statement \
-	-Wno-format-zero-length \
-	-Wold-style-definition \
-	-Woverflow \
-	-Wpointer-arith \
-	-Wstrict-prototypes \
-	-Wunused \
-	-Wvla
-LDFLAGS =
-ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
-ALL_LDFLAGS = $(LDFLAGS)
-STRIP ?= strip
-
-# Create as necessary, replace existing, make ranlib unneeded.
-ARFLAGS = rcs
-
+# Set our default configuration.
+#
 # Among the variables below, these:
 #   gitexecdir
 #   template_dir
@@ -416,17 +527,19 @@ ARFLAGS = rcs
 #   mandir
 #   infodir
 #   htmldir
+#   localedir
+#   perllibdir
 # This can help installing the suite in a relocatable way.
 
 prefix = $(HOME)
-bindir_relative = bin
-bindir = $(prefix)/$(bindir_relative)
+bindir = $(prefix)/bin
 mandir = $(prefix)/share/man
 infodir = $(prefix)/share/info
 gitexecdir = libexec/git-core
 mergetoolsdir = $(gitexecdir)/mergetools
 sharedir = $(prefix)/share
 gitwebdir = $(sharedir)/gitweb
+perllibdir = $(sharedir)/perl5
 localedir = $(sharedir)/locale
 template_dir = share/git-core/templates
 htmldir = $(prefix)/share/doc/git-doc
@@ -436,12 +549,17 @@ lib = lib
 # DESTDIR =
 pathsep = :
 
+bindir_relative = $(patsubst $(prefix)/%,%,$(bindir))
 mandir_relative = $(patsubst $(prefix)/%,%,$(mandir))
 infodir_relative = $(patsubst $(prefix)/%,%,$(infodir))
+gitexecdir_relative = $(patsubst $(prefix)/%,%,$(gitexecdir))
+localedir_relative = $(patsubst $(prefix)/%,%,$(localedir))
 htmldir_relative = $(patsubst $(prefix)/%,%,$(htmldir))
+perllibdir_relative = $(patsubst $(prefix)/%,%,$(perllibdir))
 
-export prefix bindir sharedir sysconfdir gitwebdir localedir
+export prefix bindir sharedir sysconfdir gitwebdir perllibdir localedir
 
+# Set our default programs
 CC = cc
 AR = ar
 RM = rm -f
@@ -454,25 +572,14 @@ TCLTK_PATH = wish
 XGETTEXT = xgettext
 MSGFMT = msgfmt
 CURL_CONFIG = curl-config
-PTHREAD_LIBS = -lpthread
-PTHREAD_CFLAGS =
 GCOV = gcov
+STRIP = strip
 SPATCH = spatch
 
 export TCL_PATH TCLTK_PATH
 
-SPARSE_FLAGS =
-SPATCH_FLAGS = --all-includes
-
-
-
-### --- END CONFIGURATION SECTION ---
-
-# Those must not be GNU-specific; they are shared with perl/ which may
-# be built by a different compiler. (Note that this is an artifact now
-# but it still might be nice to keep that distinction.)
-BASIC_CFLAGS = -I.
-BASIC_LDFLAGS =
+# Set our default LIBS variables
+PTHREAD_LIBS = -lpthread
 
 # Guard against environment variables
 BUILTIN_OBJS =
@@ -483,13 +590,17 @@ XDIFF_OBJS =
 VCSSVN_OBJS =
 GENERATED_H =
 EXTRA_CPPFLAGS =
+FUZZ_OBJS =
+FUZZ_PROGRAMS =
 LIB_OBJS =
 PROGRAM_OBJS =
 PROGRAMS =
+EXCLUDED_PROGRAMS =
 SCRIPT_PERL =
 SCRIPT_PYTHON =
 SCRIPT_SH =
 SCRIPT_LIB =
+TEST_BUILTINS_OBJS =
 TEST_PROGRAMS_NEED_X =
 
 # Having this variable in your environment would break pipelines because
@@ -506,43 +617,33 @@ SCRIPT_SH += git-merge-one-file.sh
 SCRIPT_SH += git-merge-resolve.sh
 SCRIPT_SH += git-mergetool.sh
 SCRIPT_SH += git-quiltimport.sh
-SCRIPT_SH += git-rebase.sh
-SCRIPT_SH += git-remote-testgit.sh
+SCRIPT_SH += git-legacy-stash.sh
 SCRIPT_SH += git-request-pull.sh
-SCRIPT_SH += git-stash.sh
 SCRIPT_SH += git-submodule.sh
 SCRIPT_SH += git-web--browse.sh
 
 SCRIPT_LIB += git-mergetool--lib
 SCRIPT_LIB += git-parse-remote
 SCRIPT_LIB += git-rebase--am
-SCRIPT_LIB += git-rebase--interactive
-SCRIPT_LIB += git-rebase--merge
+SCRIPT_LIB += git-rebase--common
+SCRIPT_LIB += git-rebase--preserve-merges
 SCRIPT_LIB += git-sh-setup
 SCRIPT_LIB += git-sh-i18n
 
 SCRIPT_PERL += git-add--interactive.perl
-SCRIPT_PERL += git-difftool.perl
 SCRIPT_PERL += git-archimport.perl
 SCRIPT_PERL += git-cvsexportcommit.perl
 SCRIPT_PERL += git-cvsimport.perl
 SCRIPT_PERL += git-cvsserver.perl
-SCRIPT_PERL += git-relink.perl
 SCRIPT_PERL += git-send-email.perl
 SCRIPT_PERL += git-svn.perl
 
 SCRIPT_PYTHON += git-p4.py
 
-NO_INSTALL += git-remote-testgit
-
 # Generated files for scripts
 SCRIPT_SH_GEN = $(patsubst %.sh,%,$(SCRIPT_SH))
 SCRIPT_PERL_GEN = $(patsubst %.perl,%,$(SCRIPT_PERL))
 SCRIPT_PYTHON_GEN = $(patsubst %.py,%,$(SCRIPT_PYTHON))
-
-SCRIPT_SH_INS = $(filter-out $(NO_INSTALL),$(SCRIPT_SH_GEN))
-SCRIPT_PERL_INS = $(filter-out $(NO_INSTALL),$(SCRIPT_PERL_GEN))
-SCRIPT_PYTHON_INS = $(filter-out $(NO_INSTALL),$(SCRIPT_PYTHON_GEN))
 
 # Individual rules to allow e.g.
 # "make -C ../.. SCRIPT_PERL=contrib/foo/bar.perl build-perl-script"
@@ -553,11 +654,11 @@ build-sh-script: $(SCRIPT_SH_GEN)
 build-python-script: $(SCRIPT_PYTHON_GEN)
 
 .PHONY: install-perl-script install-sh-script install-python-script
-install-sh-script: $(SCRIPT_SH_INS)
+install-sh-script: $(SCRIPT_SH_GEN)
 	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-install-perl-script: $(SCRIPT_PERL_INS)
+install-perl-script: $(SCRIPT_PERL_GEN)
 	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-install-python-script: $(SCRIPT_PYTHON_INS)
+install-python-script: $(SCRIPT_PYTHON_GEN)
 	$(INSTALL) $^ '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 
 .PHONY: clean-perl-script clean-sh-script clean-python-script
@@ -568,12 +669,21 @@ clean-perl-script:
 clean-python-script:
 	$(RM) $(SCRIPT_PYTHON_GEN)
 
-SCRIPTS = $(SCRIPT_SH_INS) \
-	  $(SCRIPT_PERL_INS) \
-	  $(SCRIPT_PYTHON_INS) \
+SCRIPTS = $(SCRIPT_SH_GEN) \
+	  $(SCRIPT_PERL_GEN) \
+	  $(SCRIPT_PYTHON_GEN) \
 	  git-instaweb
 
 ETAGS_TARGET = TAGS
+
+FUZZ_OBJS += fuzz-commit-graph.o
+FUZZ_OBJS += fuzz-pack-headers.o
+FUZZ_OBJS += fuzz-pack-idx.o
+
+# Always build fuzz objects even if not testing, to prevent bit-rot.
+all:: $(FUZZ_OBJS)
+
+FUZZ_PROGRAMS += $(patsubst %.o,%,$(FUZZ_OBJS))
 
 # Empty...
 EXTRA_PROGRAMS =
@@ -588,8 +698,6 @@ PROGRAM_OBJS += http-backend.o
 PROGRAM_OBJS += imap-send.o
 PROGRAM_OBJS += sh-i18n--envsubst.o
 PROGRAM_OBJS += shell.o
-PROGRAM_OBJS += show-index.o
-PROGRAM_OBJS += upload-pack.o
 PROGRAM_OBJS += remote-testsvn.o
 
 # Binary suffix, set to .exe for Windows builds
@@ -597,39 +705,65 @@ X =
 
 PROGRAMS += $(patsubst %.o,git-%$X,$(PROGRAM_OBJS))
 
-TEST_PROGRAMS_NEED_X += test-chmtime
-TEST_PROGRAMS_NEED_X += test-ctype
-TEST_PROGRAMS_NEED_X += test-config
-TEST_PROGRAMS_NEED_X += test-date
-TEST_PROGRAMS_NEED_X += test-delta
-TEST_PROGRAMS_NEED_X += test-dump-cache-tree
-TEST_PROGRAMS_NEED_X += test-dump-split-index
-TEST_PROGRAMS_NEED_X += test-dump-untracked-cache
+TEST_BUILTINS_OBJS += test-chmtime.o
+TEST_BUILTINS_OBJS += test-config.o
+TEST_BUILTINS_OBJS += test-ctype.o
+TEST_BUILTINS_OBJS += test-date.o
+TEST_BUILTINS_OBJS += test-delta.o
+TEST_BUILTINS_OBJS += test-drop-caches.o
+TEST_BUILTINS_OBJS += test-dump-cache-tree.o
+TEST_BUILTINS_OBJS += test-dump-fsmonitor.o
+TEST_BUILTINS_OBJS += test-dump-split-index.o
+TEST_BUILTINS_OBJS += test-dump-untracked-cache.o
+TEST_BUILTINS_OBJS += test-example-decorate.o
+TEST_BUILTINS_OBJS += test-genrandom.o
+TEST_BUILTINS_OBJS += test-genzeros.o
+TEST_BUILTINS_OBJS += test-hash.o
+TEST_BUILTINS_OBJS += test-hashmap.o
+TEST_BUILTINS_OBJS += test-hash-speed.o
+TEST_BUILTINS_OBJS += test-index-version.o
+TEST_BUILTINS_OBJS += test-json-writer.o
+TEST_BUILTINS_OBJS += test-lazy-init-name-hash.o
+TEST_BUILTINS_OBJS += test-match-trees.o
+TEST_BUILTINS_OBJS += test-mergesort.o
+TEST_BUILTINS_OBJS += test-mktemp.o
+TEST_BUILTINS_OBJS += test-online-cpus.o
+TEST_BUILTINS_OBJS += test-parse-options.o
+TEST_BUILTINS_OBJS += test-path-utils.o
+TEST_BUILTINS_OBJS += test-pkt-line.o
+TEST_BUILTINS_OBJS += test-prio-queue.o
+TEST_BUILTINS_OBJS += test-reach.o
+TEST_BUILTINS_OBJS += test-read-cache.o
+TEST_BUILTINS_OBJS += test-read-midx.o
+TEST_BUILTINS_OBJS += test-ref-store.o
+TEST_BUILTINS_OBJS += test-regex.o
+TEST_BUILTINS_OBJS += test-repository.o
+TEST_BUILTINS_OBJS += test-revision-walking.o
+TEST_BUILTINS_OBJS += test-run-command.o
+TEST_BUILTINS_OBJS += test-scrap-cache-tree.o
+TEST_BUILTINS_OBJS += test-serve-v2.o
+TEST_BUILTINS_OBJS += test-sha1.o
+TEST_BUILTINS_OBJS += test-sha1-array.o
+TEST_BUILTINS_OBJS += test-sha256.o
+TEST_BUILTINS_OBJS += test-sigchain.o
+TEST_BUILTINS_OBJS += test-strcmp-offset.o
+TEST_BUILTINS_OBJS += test-string-list.o
+TEST_BUILTINS_OBJS += test-submodule-config.o
+TEST_BUILTINS_OBJS += test-submodule-nested-repo-config.o
+TEST_BUILTINS_OBJS += test-subprocess.o
+TEST_BUILTINS_OBJS += test-trace2.o
+TEST_BUILTINS_OBJS += test-urlmatch-normalization.o
+TEST_BUILTINS_OBJS += test-xml-encode.o
+TEST_BUILTINS_OBJS += test-wildmatch.o
+TEST_BUILTINS_OBJS += test-windows-named-pipe.o
+TEST_BUILTINS_OBJS += test-write-cache.o
+
+# Do not add more tests here unless they have extra dependencies. Add
+# them in TEST_BUILTINS_OBJS above.
 TEST_PROGRAMS_NEED_X += test-fake-ssh
-TEST_PROGRAMS_NEED_X += test-genrandom
-TEST_PROGRAMS_NEED_X += test-hashmap
-TEST_PROGRAMS_NEED_X += test-index-version
 TEST_PROGRAMS_NEED_X += test-line-buffer
-TEST_PROGRAMS_NEED_X += test-match-trees
-TEST_PROGRAMS_NEED_X += test-mergesort
-TEST_PROGRAMS_NEED_X += test-mktemp
-TEST_PROGRAMS_NEED_X += test-parse-options
-TEST_PROGRAMS_NEED_X += test-path-utils
-TEST_PROGRAMS_NEED_X += test-prio-queue
-TEST_PROGRAMS_NEED_X += test-read-cache
-TEST_PROGRAMS_NEED_X += test-regex
-TEST_PROGRAMS_NEED_X += test-revision-walking
-TEST_PROGRAMS_NEED_X += test-run-command
-TEST_PROGRAMS_NEED_X += test-scrap-cache-tree
-TEST_PROGRAMS_NEED_X += test-sha1
-TEST_PROGRAMS_NEED_X += test-sha1-array
-TEST_PROGRAMS_NEED_X += test-sigchain
-TEST_PROGRAMS_NEED_X += test-string-list
-TEST_PROGRAMS_NEED_X += test-submodule-config
-TEST_PROGRAMS_NEED_X += test-subprocess
 TEST_PROGRAMS_NEED_X += test-svn-fe
-TEST_PROGRAMS_NEED_X += test-urlmatch-normalization
-TEST_PROGRAMS_NEED_X += test-wildmatch
+TEST_PROGRAMS_NEED_X += test-tool
 
 TEST_PROGRAMS = $(patsubst %,t/helper/%$X,$(TEST_PROGRAMS_NEED_X))
 
@@ -678,17 +812,20 @@ endif
 export PERL_PATH
 export PYTHON_PATH
 
+TEST_SHELL_PATH = $(SHELL_PATH)
+
 LIB_FILE = libgit.a
 XDIFF_LIB = xdiff/lib.a
 VCSSVN_LIB = vcs-svn/lib.a
 
-GENERATED_H += common-cmds.h
+GENERATED_H += command-list.h
 
-LIB_H = $(shell $(FIND) . \
+LIB_H := $(sort $(shell git ls-files '*.h' ':!t/' ':!Documentation/' 2>/dev/null || \
+	$(FIND) . \
 	-name .git -prune -o \
 	-name t -prune -o \
 	-name Documentation -prune -o \
-	-name '*.h' -print)
+	-name '*.h' -print))
 
 LIB_OBJS += abspath.o
 LIB_OBJS += advice.o
@@ -702,15 +839,20 @@ LIB_OBJS += argv-array.o
 LIB_OBJS += attr.o
 LIB_OBJS += base85.o
 LIB_OBJS += bisect.o
+LIB_OBJS += blame.o
 LIB_OBJS += blob.o
 LIB_OBJS += branch.o
 LIB_OBJS += bulk-checkin.o
 LIB_OBJS += bundle.o
 LIB_OBJS += cache-tree.o
+LIB_OBJS += chdir-notify.o
+LIB_OBJS += checkout.o
 LIB_OBJS += color.o
 LIB_OBJS += column.o
 LIB_OBJS += combine-diff.o
 LIB_OBJS += commit.o
+LIB_OBJS += commit-graph.o
+LIB_OBJS += commit-reach.o
 LIB_OBJS += compat/obstack.o
 LIB_OBJS += compat/terminal.o
 LIB_OBJS += config.o
@@ -723,6 +865,7 @@ LIB_OBJS += csum-file.o
 LIB_OBJS += ctype.o
 LIB_OBJS += date.o
 LIB_OBJS += decorate.o
+LIB_OBJS += delta-islands.o
 LIB_OBJS += diffcore-break.o
 LIB_OBJS += diffcore-delta.o
 LIB_OBJS += diffcore-order.o
@@ -741,39 +884,54 @@ LIB_OBJS += ewah/bitmap.o
 LIB_OBJS += ewah/ewah_bitmap.o
 LIB_OBJS += ewah/ewah_io.o
 LIB_OBJS += ewah/ewah_rlw.o
-LIB_OBJS += exec_cmd.o
+LIB_OBJS += exec-cmd.o
+LIB_OBJS += fetch-negotiator.o
+LIB_OBJS += fetch-object.o
 LIB_OBJS += fetch-pack.o
 LIB_OBJS += fsck.o
+LIB_OBJS += fsmonitor.o
 LIB_OBJS += gettext.o
 LIB_OBJS += gpg-interface.o
 LIB_OBJS += graph.o
 LIB_OBJS += grep.o
 LIB_OBJS += hashmap.o
+LIB_OBJS += linear-assignment.o
 LIB_OBJS += help.o
 LIB_OBJS += hex.o
 LIB_OBJS += ident.o
+LIB_OBJS += interdiff.o
+LIB_OBJS += json-writer.o
 LIB_OBJS += kwset.o
 LIB_OBJS += levenshtein.o
 LIB_OBJS += line-log.o
 LIB_OBJS += line-range.o
 LIB_OBJS += list-objects.o
+LIB_OBJS += list-objects-filter.o
+LIB_OBJS += list-objects-filter-options.o
 LIB_OBJS += ll-merge.o
 LIB_OBJS += lockfile.o
 LIB_OBJS += log-tree.o
+LIB_OBJS += ls-refs.o
 LIB_OBJS += mailinfo.o
 LIB_OBJS += mailmap.o
 LIB_OBJS += match-trees.o
+LIB_OBJS += mem-pool.o
 LIB_OBJS += merge.o
 LIB_OBJS += merge-blobs.o
 LIB_OBJS += merge-recursive.o
 LIB_OBJS += mergesort.o
-LIB_OBJS += mru.o
+LIB_OBJS += midx.o
 LIB_OBJS += name-hash.o
+LIB_OBJS += negotiator/default.o
+LIB_OBJS += negotiator/skipping.o
 LIB_OBJS += notes.o
 LIB_OBJS += notes-cache.o
 LIB_OBJS += notes-merge.o
 LIB_OBJS += notes-utils.o
 LIB_OBJS += object.o
+LIB_OBJS += oidmap.o
+LIB_OBJS += oidset.o
+LIB_OBJS += packfile.o
 LIB_OBJS += pack-bitmap.o
 LIB_OBJS += pack-bitmap-write.o
 LIB_OBJS += pack-check.o
@@ -793,28 +951,36 @@ LIB_OBJS += pretty.o
 LIB_OBJS += prio-queue.o
 LIB_OBJS += progress.o
 LIB_OBJS += prompt.o
+LIB_OBJS += protocol.o
 LIB_OBJS += quote.o
+LIB_OBJS += range-diff.o
 LIB_OBJS += reachable.o
 LIB_OBJS += read-cache.o
+LIB_OBJS += rebase-interactive.o
 LIB_OBJS += reflog-walk.o
 LIB_OBJS += refs.o
 LIB_OBJS += refs/files-backend.o
 LIB_OBJS += refs/iterator.o
+LIB_OBJS += refs/packed-backend.o
+LIB_OBJS += refs/ref-cache.o
+LIB_OBJS += refspec.o
 LIB_OBJS += ref-filter.o
 LIB_OBJS += remote.o
-LIB_OBJS += replace_object.o
+LIB_OBJS += replace-object.o
+LIB_OBJS += repository.o
 LIB_OBJS += rerere.o
 LIB_OBJS += resolve-undo.o
 LIB_OBJS += revision.o
 LIB_OBJS += run-command.o
 LIB_OBJS += send-pack.o
 LIB_OBJS += sequencer.o
+LIB_OBJS += serve.o
 LIB_OBJS += server-info.o
 LIB_OBJS += setup.o
 LIB_OBJS += sha1-array.o
 LIB_OBJS += sha1-lookup.o
-LIB_OBJS += sha1_file.o
-LIB_OBJS += sha1_name.o
+LIB_OBJS += sha1-file.o
+LIB_OBJS += sha1-name.o
 LIB_OBJS += shallow.o
 LIB_OBJS += sideband.o
 LIB_OBJS += sigchain.o
@@ -824,11 +990,24 @@ LIB_OBJS += streaming.o
 LIB_OBJS += string-list.o
 LIB_OBJS += submodule.o
 LIB_OBJS += submodule-config.o
+LIB_OBJS += sub-process.o
 LIB_OBJS += symlinks.o
 LIB_OBJS += tag.o
 LIB_OBJS += tempfile.o
+LIB_OBJS += thread-utils.o
 LIB_OBJS += tmp-objdir.o
 LIB_OBJS += trace.o
+LIB_OBJS += trace2.o
+LIB_OBJS += trace2/tr2_cfg.o
+LIB_OBJS += trace2/tr2_cmd_name.o
+LIB_OBJS += trace2/tr2_dst.o
+LIB_OBJS += trace2/tr2_sid.o
+LIB_OBJS += trace2/tr2_sysenv.o
+LIB_OBJS += trace2/tr2_tbuf.o
+LIB_OBJS += trace2/tr2_tgt_event.o
+LIB_OBJS += trace2/tr2_tgt_normal.o
+LIB_OBJS += trace2/tr2_tgt_perf.o
+LIB_OBJS += trace2/tr2_tls.o
 LIB_OBJS += trailer.o
 LIB_OBJS += transport.o
 LIB_OBJS += transport-helper.o
@@ -836,6 +1015,7 @@ LIB_OBJS += tree-diff.o
 LIB_OBJS += tree.o
 LIB_OBJS += tree-walk.o
 LIB_OBJS += unpack-trees.o
+LIB_OBJS += upload-pack.o
 LIB_OBJS += url.o
 LIB_OBJS += urlmatch.o
 LIB_OBJS += usage.o
@@ -848,7 +1028,7 @@ LIB_OBJS += walker.o
 LIB_OBJS += wildmatch.o
 LIB_OBJS += worktree.o
 LIB_OBJS += wrapper.o
-LIB_OBJS += write_or_die.o
+LIB_OBJS += write-or-die.o
 LIB_OBJS += ws.o
 LIB_OBJS += wt-status.o
 LIB_OBJS += xdiff-interface.o
@@ -875,6 +1055,7 @@ BUILTIN_OBJS += builtin/clone.o
 BUILTIN_OBJS += builtin/column.o
 BUILTIN_OBJS += builtin/commit-tree.o
 BUILTIN_OBJS += builtin/commit.o
+BUILTIN_OBJS += builtin/commit-graph.o
 BUILTIN_OBJS += builtin/config.o
 BUILTIN_OBJS += builtin/count-objects.o
 BUILTIN_OBJS += builtin/credential.o
@@ -883,6 +1064,7 @@ BUILTIN_OBJS += builtin/diff-files.o
 BUILTIN_OBJS += builtin/diff-index.o
 BUILTIN_OBJS += builtin/diff-tree.o
 BUILTIN_OBJS += builtin/diff.o
+BUILTIN_OBJS += builtin/difftool.o
 BUILTIN_OBJS += builtin/fast-export.o
 BUILTIN_OBJS += builtin/fetch-pack.o
 BUILTIN_OBJS += builtin/fetch.o
@@ -912,6 +1094,7 @@ BUILTIN_OBJS += builtin/merge-recursive.o
 BUILTIN_OBJS += builtin/merge-tree.o
 BUILTIN_OBJS += builtin/mktag.o
 BUILTIN_OBJS += builtin/mktree.o
+BUILTIN_OBJS += builtin/multi-pack-index.o
 BUILTIN_OBJS += builtin/mv.o
 BUILTIN_OBJS += builtin/name-rev.o
 BUILTIN_OBJS += builtin/notes.o
@@ -923,7 +1106,9 @@ BUILTIN_OBJS += builtin/prune-packed.o
 BUILTIN_OBJS += builtin/prune.o
 BUILTIN_OBJS += builtin/pull.o
 BUILTIN_OBJS += builtin/push.o
+BUILTIN_OBJS += builtin/range-diff.o
 BUILTIN_OBJS += builtin/read-tree.o
+BUILTIN_OBJS += builtin/rebase.o
 BUILTIN_OBJS += builtin/receive-pack.o
 BUILTIN_OBJS += builtin/reflog.o
 BUILTIN_OBJS += builtin/remote.o
@@ -940,7 +1125,9 @@ BUILTIN_OBJS += builtin/rm.o
 BUILTIN_OBJS += builtin/send-pack.o
 BUILTIN_OBJS += builtin/shortlog.o
 BUILTIN_OBJS += builtin/show-branch.o
+BUILTIN_OBJS += builtin/show-index.o
 BUILTIN_OBJS += builtin/show-ref.o
+BUILTIN_OBJS += builtin/stash.o
 BUILTIN_OBJS += builtin/stripspace.o
 BUILTIN_OBJS += builtin/submodule--helper.o
 BUILTIN_OBJS += builtin/symbolic-ref.o
@@ -951,6 +1138,7 @@ BUILTIN_OBJS += builtin/update-index.o
 BUILTIN_OBJS += builtin/update-ref.o
 BUILTIN_OBJS += builtin/update-server-info.o
 BUILTIN_OBJS += builtin/upload-archive.o
+BUILTIN_OBJS += builtin/upload-pack.o
 BUILTIN_OBJS += builtin/var.o
 BUILTIN_OBJS += builtin/verify-commit.o
 BUILTIN_OBJS += builtin/verify-pack.o
@@ -963,12 +1151,58 @@ EXTLIBS =
 
 GIT_USER_AGENT = git/$(GIT_VERSION)
 
+ifeq ($(wildcard sha1collisiondetection/lib/sha1.h),sha1collisiondetection/lib/sha1.h)
+DC_SHA1_SUBMODULE = auto
+endif
+
+# Set CFLAGS, LDFLAGS and other *FLAGS variables. These might be
+# tweaked by config.* below as well as the command-line, both of
+# which'll override these defaults.
+CFLAGS = -g -O2 -Wall
+LDFLAGS =
+BASIC_CFLAGS = -I.
+BASIC_LDFLAGS =
+
+# library flags
+ARFLAGS = rcs
+PTHREAD_CFLAGS =
+
+# For the 'sparse' target
+SPARSE_FLAGS ?=
+SP_EXTRA_FLAGS =
+
+# For the 'coccicheck' target; setting SPATCH_BATCH_SIZE higher will
+# usually result in less CPU usage at the cost of higher peak memory.
+# Setting it to 0 will feed all files in a single spatch invocation.
+SPATCH_FLAGS = --all-includes --patch .
+SPATCH_BATCH_SIZE = 1
+
 include config.mak.uname
 -include config.mak.autogen
 -include config.mak
 
 ifdef DEVELOPER
-CFLAGS += $(DEVELOPER_CFLAGS)
+include config.mak.dev
+endif
+
+ALL_CFLAGS = $(DEVELOPER_CFLAGS) $(CPPFLAGS) $(CFLAGS)
+ALL_LDFLAGS = $(LDFLAGS)
+
+comma := ,
+empty :=
+space := $(empty) $(empty)
+
+ifdef SANITIZE
+SANITIZERS := $(foreach flag,$(subst $(comma),$(space),$(SANITIZE)),$(flag))
+BASIC_CFLAGS += -fsanitize=$(SANITIZE) -fno-sanitize-recover=$(SANITIZE)
+BASIC_CFLAGS += -fno-omit-frame-pointer
+ifneq ($(filter undefined,$(SANITIZERS)),)
+BASIC_CFLAGS += -DNO_UNALIGNED_LOADS
+BASIC_CFLAGS += -DSHA1DC_FORCE_ALIGNED_ACCESS
+endif
+ifneq ($(filter leak,$(SANITIZERS)),)
+BASIC_CFLAGS += -DSUPPRESS_ANNOTATED_LEAKS
+endif
 endif
 
 ifndef sysconfdir
@@ -1010,6 +1244,12 @@ BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_P
 PATH := $(SANE_TOOL_PATH):${PATH}
 else
 BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
+endif
+
+ifeq (,$(HOST_CPU))
+	BASIC_CFLAGS += -DGIT_HOST_CPU="\"$(firstword $(subst -, ,$(uname_M)))\""
+else
+	BASIC_CFLAGS += -DGIT_HOST_CPU="\"$(HOST_CPU)\""
 endif
 
 ifneq (,$(INLINE))
@@ -1065,13 +1305,29 @@ ifdef NO_LIBGEN_H
 	COMPAT_OBJS += compat/basename.o
 endif
 
-ifdef USE_LIBPCRE
-	BASIC_CFLAGS += -DUSE_LIBPCRE
-	ifdef LIBPCREDIR
-		BASIC_CFLAGS += -I$(LIBPCREDIR)/include
-		EXTLIBS += -L$(LIBPCREDIR)/$(lib) $(CC_LD_DYNPATH)$(LIBPCREDIR)/$(lib)
+USE_LIBPCRE2 ?= $(USE_LIBPCRE)
+
+ifneq (,$(USE_LIBPCRE2))
+	ifdef USE_LIBPCRE1
+$(error Only set USE_LIBPCRE2 (or its alias USE_LIBPCRE) or USE_LIBPCRE1, not both!)
 	endif
+
+	BASIC_CFLAGS += -DUSE_LIBPCRE2
+	EXTLIBS += -lpcre2-8
+endif
+
+ifdef USE_LIBPCRE1
+	BASIC_CFLAGS += -DUSE_LIBPCRE1
 	EXTLIBS += -lpcre
+
+ifdef NO_LIBPCRE1_JIT
+	BASIC_CFLAGS += -DNO_LIBPCRE1_JIT
+endif
+endif
+
+ifdef LIBPCREDIR
+	BASIC_CFLAGS += -I$(LIBPCREDIR)/include
+	EXTLIBS += -L$(LIBPCREDIR)/$(lib) $(CC_LD_DYNPATH)$(LIBPCREDIR)/$(lib)
 endif
 
 ifdef HAVE_ALLOCA_H
@@ -1086,23 +1342,21 @@ ifdef NO_CURL
 	REMOTE_CURL_PRIMARY =
 	REMOTE_CURL_ALIASES =
 	REMOTE_CURL_NAMES =
+	EXCLUDED_PROGRAMS += git-http-fetch git-http-push
 else
 	ifdef CURLDIR
 		# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
 		BASIC_CFLAGS += -I$(CURLDIR)/include
-		CURL_LIBCURL = -L$(CURLDIR)/$(lib) $(CC_LD_DYNPATH)$(CURLDIR)/$(lib) -lcurl
+		CURL_LIBCURL = -L$(CURLDIR)/$(lib) $(CC_LD_DYNPATH)$(CURLDIR)/$(lib)
 	else
-		CURL_LIBCURL = -lcurl
+		CURL_LIBCURL =
 	endif
-	ifdef NEEDS_SSL_WITH_CURL
-		CURL_LIBCURL += -lssl
-		ifdef NEEDS_CRYPTO_WITH_SSL
-			CURL_LIBCURL += -lcrypto
-		endif
-	endif
-	ifdef NEEDS_IDN_WITH_CURL
-		CURL_LIBCURL += -lidn
-	endif
+
+ifdef CURL_LDFLAGS
+	CURL_LIBCURL += $(CURL_LDFLAGS)
+else
+	CURL_LIBCURL += $(shell $(CURL_CONFIG) --libs)
+endif
 
 	REMOTE_CURL_PRIMARY = git-remote-http$X
 	REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
@@ -1113,7 +1367,11 @@ else
 	ifeq "$(curl_check)" "070908"
 		ifndef NO_EXPAT
 			PROGRAM_OBJS += http-push.o
+		else
+			EXCLUDED_PROGRAMS += git-http-push
 		endif
+	else
+		EXCLUDED_PROGRAMS += git-http-push
 	endif
 	curl_check := $(shell (echo 072200; $(CURL_CONFIG) --vernum | sed -e '/^70[BC]/s/^/0/') 2>/dev/null | sort -r | sed -ne 2p)
 	ifeq "$(curl_check)" "072200"
@@ -1157,7 +1415,6 @@ ifndef NO_OPENSSL
 	endif
 else
 	BASIC_CFLAGS += -DNO_OPENSSL
-	BLK_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
 ifdef NO_OPENSSL
@@ -1172,17 +1429,22 @@ ifdef APPLE_COMMON_CRYPTO
 	LIB_4_CRYPTO += -framework Security -framework CoreFoundation
 endif
 endif
-ifdef NEEDS_LIBICONV
-	ifdef ICONVDIR
-		BASIC_CFLAGS += -I$(ICONVDIR)/include
-		ICONV_LINK = -L$(ICONVDIR)/$(lib) $(CC_LD_DYNPATH)$(ICONVDIR)/$(lib)
-	else
-		ICONV_LINK =
+ifndef NO_ICONV
+	ifdef NEEDS_LIBICONV
+		ifdef ICONVDIR
+			BASIC_CFLAGS += -I$(ICONVDIR)/include
+			ICONV_LINK = -L$(ICONVDIR)/$(lib) $(CC_LD_DYNPATH)$(ICONVDIR)/$(lib)
+		else
+			ICONV_LINK =
+		endif
+		ifdef NEEDS_LIBINTL_BEFORE_LIBICONV
+			ICONV_LINK += -lintl
+		endif
+		EXTLIBS += $(ICONV_LINK) -liconv
 	endif
-	ifdef NEEDS_LIBINTL_BEFORE_LIBICONV
-		ICONV_LINK += -lintl
-	endif
-	EXTLIBS += $(ICONV_LINK) -liconv
+endif
+ifdef ICONV_OMITS_BOM
+	BASIC_CFLAGS += -DICONV_OMITS_BOM
 endif
 ifdef NEEDS_LIBGEN
 	EXTLIBS += -lgen
@@ -1234,13 +1496,14 @@ ifdef NO_SYMLINK_HEAD
 	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
 endif
 ifdef GETTEXT_POISON
-	BASIC_CFLAGS += -DGETTEXT_POISON
+$(warning The GETTEXT_POISON option has been removed in favor of runtime GIT_TEST_GETTEXT_POISON. See t/README!)
 endif
 ifdef NO_GETTEXT
 	BASIC_CFLAGS += -DNO_GETTEXT
 	USE_GETTEXT_SCHEME ?= fallthrough
 endif
 ifdef NO_POLL
+	NO_POLL_H = YesPlease
 	NO_SYS_POLL_H = YesPlease
 	COMPAT_CFLAGS += -DNO_POLL -Icompat/poll
 	COMPAT_OBJS += compat/poll/poll.o
@@ -1272,15 +1535,15 @@ ifdef MKDIR_WO_TRAILING_SLASH
 	COMPAT_CFLAGS += -DMKDIR_WO_TRAILING_SLASH
 	COMPAT_OBJS += compat/mkdir.o
 endif
-ifdef NO_MKSTEMPS
-	COMPAT_CFLAGS += -DNO_MKSTEMPS
-endif
 ifdef NO_UNSETENV
 	COMPAT_CFLAGS += -DNO_UNSETENV
 	COMPAT_OBJS += compat/unsetenv.o
 endif
 ifdef NO_SYS_SELECT_H
 	BASIC_CFLAGS += -DNO_SYS_SELECT_H
+endif
+ifdef NO_POLL_H
+	BASIC_CFLAGS += -DNO_POLL_H
 endif
 ifdef NO_SYS_POLL_H
 	BASIC_CFLAGS += -DNO_SYS_POLL_H
@@ -1302,6 +1565,9 @@ else
 		COMPAT_CFLAGS += -DUSE_WIN32_MMAP
 		COMPAT_OBJS += compat/win32mmap.o
 	endif
+endif
+ifdef MMAP_PREVENTS_DELETE
+	BASIC_CFLAGS += -DMMAP_PREVENTS_DELETE
 endif
 ifdef OBJECT_CREATION_USES_RENAMES
 	COMPAT_CFLAGS += -DOBJECT_CREATION_MODE=1
@@ -1351,7 +1617,10 @@ ifdef NO_INET_PTON
 	LIB_OBJS += compat/inet_pton.o
 	BASIC_CFLAGS += -DNO_INET_PTON
 endif
-ifndef NO_UNIX_SOCKETS
+ifdef NO_UNIX_SOCKETS
+	BASIC_CFLAGS += -DNO_UNIX_SOCKETS
+	EXCLUDED_PROGRAMS += git-credential-cache git-credential-cache--daemon
+else
 	LIB_OBJS += unix-socket.o
 	PROGRAM_OBJS += credential-cache.o
 	PROGRAM_OBJS += credential-cache--daemon.o
@@ -1378,30 +1647,69 @@ ifdef APPLE_COMMON_CRYPTO
 	SHA1_MAX_BLOCK_SIZE = 1024L*1024L*1024L
 endif
 
+ifdef OPENSSL_SHA1
+	EXTLIBS += $(LIB_4_CRYPTO)
+	BASIC_CFLAGS += -DSHA1_OPENSSL
+else
 ifdef BLK_SHA1
-	SHA1_HEADER = "block-sha1/sha1.h"
 	LIB_OBJS += block-sha1/sha1.o
+	BASIC_CFLAGS += -DSHA1_BLK
 else
 ifdef PPC_SHA1
-	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
+	BASIC_CFLAGS += -DSHA1_PPC
 else
 ifdef APPLE_COMMON_CRYPTO
 	COMPAT_CFLAGS += -DCOMMON_DIGEST_FOR_OPENSSL
-	SHA1_HEADER = <CommonCrypto/CommonDigest.h>
+	BASIC_CFLAGS += -DSHA1_APPLE
 else
-	SHA1_HEADER = <openssl/sha.h>
-	EXTLIBS += $(LIB_4_CRYPTO)
+	DC_SHA1 := YesPlease
+	BASIC_CFLAGS += -DSHA1_DC
+	LIB_OBJS += sha1dc_git.o
+ifdef DC_SHA1_EXTERNAL
+	ifdef DC_SHA1_SUBMODULE
+		ifneq ($(DC_SHA1_SUBMODULE),auto)
+$(error Only set DC_SHA1_EXTERNAL or DC_SHA1_SUBMODULE, not both)
+		endif
+	endif
+	BASIC_CFLAGS += -DDC_SHA1_EXTERNAL
+	EXTLIBS += -lsha1detectcoll
+else
+ifdef DC_SHA1_SUBMODULE
+	LIB_OBJS += sha1collisiondetection/lib/sha1.o
+	LIB_OBJS += sha1collisiondetection/lib/ubc_check.o
+	BASIC_CFLAGS += -DDC_SHA1_SUBMODULE
+else
+	LIB_OBJS += sha1dc/sha1.o
+	LIB_OBJS += sha1dc/ubc_check.o
 endif
+	BASIC_CFLAGS += \
+		-DSHA1DC_NO_STANDARD_INCLUDES \
+		-DSHA1DC_INIT_SAFE_HASH_DEFAULT=0 \
+		-DSHA1DC_CUSTOM_INCLUDE_SHA1_C="\"cache.h\"" \
+		-DSHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="\"git-compat-util.h\""
+endif
+endif
+endif
+endif
+endif
+
+ifdef OPENSSL_SHA256
+	EXTLIBS += $(LIB_4_CRYPTO)
+	BASIC_CFLAGS += -DSHA256_OPENSSL
+else
+ifdef GCRYPT_SHA256
+	BASIC_CFLAGS += -DSHA256_GCRYPT
+	EXTLIBS += -lgcrypt
+else
+	LIB_OBJS += sha256/block/sha256.o
+	BASIC_CFLAGS += -DSHA256_BLK
 endif
 endif
 
 ifdef SHA1_MAX_BLOCK_SIZE
 	LIB_OBJS += compat/sha1-chunked.o
 	BASIC_CFLAGS += -DSHA1_MAX_BLOCK_SIZE="$(SHA1_MAX_BLOCK_SIZE)"
-endif
-ifdef NO_PERL_MAKEMAKER
-	export NO_PERL_MAKEMAKER
 endif
 ifdef NO_HSTRERROR
 	COMPAT_CFLAGS += -DNO_HSTRERROR
@@ -1418,6 +1726,11 @@ ifdef INTERNAL_QSORT
 	COMPAT_CFLAGS += -DINTERNAL_QSORT
 	COMPAT_OBJS += compat/qsort.o
 endif
+ifdef HAVE_ISO_QSORT_S
+	COMPAT_CFLAGS += -DHAVE_ISO_QSORT_S
+else
+	COMPAT_OBJS += compat/qsort_s.o
+endif
 ifdef RUNTIME_PREFIX
 	COMPAT_CFLAGS += -DRUNTIME_PREFIX
 endif
@@ -1427,7 +1740,6 @@ ifdef NO_PTHREADS
 else
 	BASIC_CFLAGS += $(PTHREAD_CFLAGS)
 	EXTLIBS += $(PTHREAD_LIBS)
-	LIB_OBJS += thread-utils.o
 endif
 
 ifdef HAVE_PATHS_H
@@ -1501,8 +1813,35 @@ ifdef HAVE_BSD_SYSCTL
 	BASIC_CFLAGS += -DHAVE_BSD_SYSCTL
 endif
 
+ifdef HAVE_BSD_KERN_PROC_SYSCTL
+	BASIC_CFLAGS += -DHAVE_BSD_KERN_PROC_SYSCTL
+endif
+
 ifdef HAVE_GETDELIM
 	BASIC_CFLAGS += -DHAVE_GETDELIM
+endif
+
+ifneq ($(PROCFS_EXECUTABLE_PATH),)
+	procfs_executable_path_SQ = $(subst ','\'',$(PROCFS_EXECUTABLE_PATH))
+	BASIC_CFLAGS += '-DPROCFS_EXECUTABLE_PATH="$(procfs_executable_path_SQ)"'
+endif
+
+ifdef HAVE_NS_GET_EXECUTABLE_PATH
+	BASIC_CFLAGS += -DHAVE_NS_GET_EXECUTABLE_PATH
+endif
+
+ifdef HAVE_WPGMPTR
+	BASIC_CFLAGS += -DHAVE_WPGMPTR
+endif
+
+ifdef FILENO_IS_A_MACRO
+	COMPAT_CFLAGS += -DFILENO_IS_A_MACRO
+	COMPAT_OBJS += compat/fileno.o
+endif
+
+ifdef NEED_ACCESS_ROOT_HANDLER
+	COMPAT_CFLAGS += -DNEED_ACCESS_ROOT_HANDLER
+	COMPAT_OBJS += compat/access.o
 endif
 
 ifeq ($(TCLTK_PATH),)
@@ -1542,6 +1881,7 @@ ifndef V
 	QUIET_MSGFMT   = @echo '   ' MSGFMT $@;
 	QUIET_GCOV     = @echo '   ' GCOV $@;
 	QUIET_SP       = @echo '   ' SP $<;
+	QUIET_HDR      = @echo '   ' HDR $<;
 	QUIET_RC       = @echo '   ' RC $@;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
@@ -1578,28 +1918,58 @@ endif
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
 
-SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
 ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
 ETC_GITATTRIBUTES_SQ = $(subst ','\'',$(ETC_GITATTRIBUTES))
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
 bindir_relative_SQ = $(subst ','\'',$(bindir_relative))
+mandir_SQ = $(subst ','\'',$(mandir))
 mandir_relative_SQ = $(subst ','\'',$(mandir_relative))
 infodir_relative_SQ = $(subst ','\'',$(infodir_relative))
+perllibdir_SQ = $(subst ','\'',$(perllibdir))
 localedir_SQ = $(subst ','\'',$(localedir))
+localedir_relative_SQ = $(subst ','\'',$(localedir_relative))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
+gitexecdir_relative_SQ = $(subst ','\'',$(gitexecdir_relative))
 template_dir_SQ = $(subst ','\'',$(template_dir))
 htmldir_relative_SQ = $(subst ','\'',$(htmldir_relative))
 prefix_SQ = $(subst ','\'',$(prefix))
+perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
 gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+TEST_SHELL_PATH_SQ = $(subst ','\'',$(TEST_SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 DIFF_SQ = $(subst ','\'',$(DIFF))
 PERLLIB_EXTRA_SQ = $(subst ','\'',$(PERLLIB_EXTRA))
+
+# RUNTIME_PREFIX's resolution logic requires resource paths to be expressed
+# relative to each other and share an installation path.
+#
+# This is a dependency in:
+# - Git's binary RUNTIME_PREFIX logic in (see "exec_cmd.c").
+# - The runtime prefix Perl header (see
+#   "perl/header_templates/runtime_prefix.template.pl").
+ifdef RUNTIME_PREFIX
+
+ifneq ($(filter /%,$(firstword $(gitexecdir_relative))),)
+$(error RUNTIME_PREFIX requires a relative gitexecdir, not: $(gitexecdir))
+endif
+
+ifneq ($(filter /%,$(firstword $(localedir_relative))),)
+$(error RUNTIME_PREFIX requires a relative localedir, not: $(localedir))
+endif
+
+ifndef NO_PERL
+ifneq ($(filter /%,$(firstword $(perllibdir_relative))),)
+$(error RUNTIME_PREFIX requires a relative perllibdir, not: $(perllibdir))
+endif
+endif
+
+endif
 
 # We must filter out any object files from $(GITLIBS),
 # as it is typically used like:
@@ -1611,8 +1981,7 @@ PERLLIB_EXTRA_SQ = $(subst ','\'',$(PERLLIB_EXTRA))
 # from the dependency list, that would make each entry appear twice.
 LIBS = $(filter-out %.o, $(GITLIBS)) $(EXTLIBS)
 
-BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' \
-	$(COMPAT_CFLAGS)
+BASIC_CFLAGS += $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
 
 # Quote for C
@@ -1697,9 +2066,6 @@ ifndef NO_TCLTK
 	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) gitexecdir='$(gitexec_instdir_SQ)' all
 	$(QUIET_SUBDIR0)gitk-git $(QUIET_SUBDIR1) all
 endif
-ifndef NO_PERL
-	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' localedir='$(localedir_SQ)' all
-endif
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) SHELL_PATH='$(SHELL_PATH_SQ)' PERL_PATH='$(PERL_PATH_SQ)'
 
 please_set_SHELL_PATH_to_a_more_modern_shell:
@@ -1753,9 +2119,9 @@ git$X: git.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(LIBS)
 
-help.sp help.s help.o: common-cmds.h
+help.sp help.s help.o: command-list.h
 
-builtin/help.sp builtin/help.s builtin/help.o: common-cmds.h GIT-PREFIX
+builtin/help.sp builtin/help.s builtin/help.o: command-list.h GIT-PREFIX
 builtin/help.sp builtin/help.s builtin/help.o: EXTRA_CPPFLAGS = \
 	'-DGIT_HTML_PATH="$(htmldir_relative_SQ)"' \
 	'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
@@ -1764,7 +2130,10 @@ builtin/help.sp builtin/help.s builtin/help.o: EXTRA_CPPFLAGS = \
 version.sp version.s version.o: GIT-VERSION-FILE GIT-USER-AGENT
 version.sp version.s version.o: EXTRA_CPPFLAGS = \
 	'-DGIT_VERSION="$(GIT_VERSION)"' \
-	'-DGIT_USER_AGENT=$(GIT_USER_AGENT_CQ_SQ)'
+	'-DGIT_USER_AGENT=$(GIT_USER_AGENT_CQ_SQ)' \
+	'-DGIT_BUILT_FROM_COMMIT="$(shell \
+		GIT_CEILING_DIRECTORIES="$(CURDIR)/.." \
+		git rev-parse -q --verify HEAD 2>/dev/null)"'
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && \
@@ -1772,14 +2141,17 @@ $(BUILT_INS): git$X
 	ln -s $< $@ 2>/dev/null || \
 	cp $< $@
 
-common-cmds.h: generate-cmdlist.sh command-list.txt
+command-list.h: generate-cmdlist.sh command-list.txt
 
-common-cmds.h: $(wildcard Documentation/git-*.txt)
-	$(QUIET_GEN)$(SHELL_PATH) ./generate-cmdlist.sh command-list.txt >$@+ && mv $@+ $@
+command-list.h: $(wildcard Documentation/git*.txt) Documentation/*config.txt Documentation/config/*.txt
+	$(QUIET_GEN)$(SHELL_PATH) ./generate-cmdlist.sh \
+		$(patsubst %,--exclude-program %,$(EXCLUDED_PROGRAMS)) \
+		command-list.txt >$@+ && mv $@+ $@
 
 SCRIPT_DEFINES = $(SHELL_PATH_SQ):$(DIFF_SQ):$(GIT_VERSION):\
 	$(localedir_SQ):$(NO_CURL):$(USE_GETTEXT_SCHEME):$(SANE_TOOL_PATH_SQ):\
-	$(gitwebdir_SQ):$(PERL_PATH_SQ):$(SANE_TEXT_GREP):$(PAGER_ENV)
+	$(gitwebdir_SQ):$(PERL_PATH_SQ):$(SANE_TEXT_GREP):$(PAGER_ENV):\
+	$(perllibdir_SQ)
 define cmd_munge_script
 $(RM) $@ $@+ && \
 sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
@@ -1813,45 +2185,53 @@ $(SCRIPT_LIB) : % : %.sh GIT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	mv $@+ $@
 
-git.res: git.rc GIT-VERSION-FILE
+git.res: git.rc GIT-VERSION-FILE GIT-PREFIX
 	$(QUIET_RC)$(RC) \
-	  $(join -DMAJOR= -DMINOR=, $(wordlist 1,2,$(subst -, ,$(subst ., ,$(GIT_VERSION))))) \
-	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" $< -o $@
+	  $(join -DMAJOR= -DMINOR= -DMICRO= -DPATCHLEVEL=, $(wordlist 1, 4, \
+	    $(shell echo $(GIT_VERSION) 0 0 0 0 | tr '.a-zA-Z-' ' '))) \
+	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" -i $< -o $@
 
 # This makes sure we depend on the NO_PERL setting itself.
 $(SCRIPT_PERL_GEN): GIT-BUILD-OPTIONS
 
+# Used for substitution in Perl modules. Disabled when using RUNTIME_PREFIX
+# since the locale directory is injected.
+perl_localedir_SQ = $(localedir_SQ)
+
 ifndef NO_PERL
-$(SCRIPT_PERL_GEN): perl/perl.mak
+PERL_HEADER_TEMPLATE = perl/header_templates/fixed_prefix.template.pl
+PERL_DEFINES = $(PERL_PATH_SQ):$(PERLLIB_EXTRA_SQ):$(perllibdir_SQ)
 
-perl/perl.mak: perl/PM.stamp
+PERL_DEFINES := $(PERL_PATH_SQ) $(PERLLIB_EXTRA_SQ) $(perllibdir_SQ)
+PERL_DEFINES += $(RUNTIME_PREFIX)
 
-perl/PM.stamp: FORCE
-	@$(FIND) perl -type f -name '*.pm' | sort >$@+ && \
-	{ cmp $@+ $@ >/dev/null 2>/dev/null || mv $@+ $@; } && \
-	$(RM) $@+
+# Support Perl runtime prefix. In this mode, a different header is installed
+# into Perl scripts.
+ifdef RUNTIME_PREFIX
 
-perl/perl.mak: GIT-CFLAGS GIT-PREFIX perl/Makefile perl/Makefile.PL
-	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
+PERL_HEADER_TEMPLATE = perl/header_templates/runtime_prefix.template.pl
 
-PERL_DEFINES = $(PERL_PATH_SQ):$(PERLLIB_EXTRA_SQ)
-$(SCRIPT_PERL_GEN): % : %.perl perl/perl.mak GIT-PERL-DEFINES GIT-VERSION-FILE
+# Don't export a fixed $(localedir) path; it will be resolved by the Perl header
+# at runtime.
+perl_localedir_SQ =
+
+endif
+
+PERL_DEFINES += $(gitexecdir) $(perllibdir) $(localedir)
+
+$(SCRIPT_PERL_GEN): % : %.perl GIT-PERL-DEFINES GIT-PERL-HEADER GIT-VERSION-FILE
 	$(QUIET_GEN)$(RM) $@ $@+ && \
-	INSTLIBDIR=`MAKEFLAGS= $(MAKE) -C perl -s --no-print-directory instlibdir` && \
-	INSTLIBDIR_EXTRA='$(PERLLIB_EXTRA_SQ)' && \
-	INSTLIBDIR="$$INSTLIBDIR$${INSTLIBDIR_EXTRA:+:$$INSTLIBDIR_EXTRA}" && \
 	sed -e '1{' \
 	    -e '	s|#!.*perl|#!$(PERL_PATH_SQ)|' \
-	    -e '	h' \
-	    -e '	s=.*=use lib (split(/$(pathsep)/, $$ENV{GITPERLLIB} || "'"$$INSTLIBDIR"'"));=' \
-	    -e '	H' \
-	    -e '	x' \
+	    -e '	r GIT-PERL-HEADER' \
+	    -e '	G' \
 	    -e '}' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $< >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
 
+PERL_DEFINES := $(subst $(space),:,$(PERL_DEFINES))
 GIT-PERL-DEFINES: FORCE
 	@FLAGS='$(PERL_DEFINES)'; \
 	    if test x"$$FLAGS" != x"`cat $@ 2>/dev/null`" ; then \
@@ -1859,6 +2239,22 @@ GIT-PERL-DEFINES: FORCE
 		echo "$$FLAGS" >$@; \
 	    fi
 
+GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
+	$(QUIET_GEN)$(RM) $@ && \
+	INSTLIBDIR='$(perllibdir_SQ)' && \
+	INSTLIBDIR_EXTRA='$(PERLLIB_EXTRA_SQ)' && \
+	INSTLIBDIR="$$INSTLIBDIR$${INSTLIBDIR_EXTRA:+:$$INSTLIBDIR_EXTRA}" && \
+	sed -e 's=@@PATHSEP@@=$(pathsep)=g' \
+	    -e "s=@@INSTLIBDIR@@=$$INSTLIBDIR=g" \
+	    -e 's=@@PERLLIBDIR_REL@@=$(perllibdir_relative_SQ)=g' \
+	    -e 's=@@GITEXECDIR_REL@@=$(gitexecdir_relative_SQ)=g' \
+	    -e 's=@@LOCALEDIR_REL@@=$(localedir_relative_SQ)=g' \
+	    $< >$@+ && \
+	mv $@+ $@
+
+.PHONY: perllibdir
+perllibdir:
+	@echo '$(perllibdir_SQ)'
 
 .PHONY: gitweb
 gitweb:
@@ -1936,15 +2332,15 @@ XDIFF_OBJS += xdiff/xhistogram.o
 
 VCSSVN_OBJS += vcs-svn/line_buffer.o
 VCSSVN_OBJS += vcs-svn/sliding_window.o
-VCSSVN_OBJS += vcs-svn/repo_tree.o
 VCSSVN_OBJS += vcs-svn/fast_export.o
 VCSSVN_OBJS += vcs-svn/svndiff.o
 VCSSVN_OBJS += vcs-svn/svndump.o
 
-TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS))
+TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS)) $(patsubst %,t/helper/%,$(TEST_BUILTINS_OBJS))
 OBJECTS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
 	$(XDIFF_OBJS) \
 	$(VCSSVN_OBJS) \
+	$(FUZZ_OBJS) \
 	common-main.o \
 	git.o
 ifndef NO_CURL
@@ -1994,18 +2390,19 @@ else
 # Dependencies on header files, for platforms that do not support
 # the gcc -MMD option.
 #
-# Dependencies on automatically generated headers such as common-cmds.h
+# Dependencies on automatically generated headers such as command-list.h
 # should _not_ be included here, since they are necessary even when
 # building an object for the first time.
 
-$(OBJECTS): $(LIB_H)
+$(OBJECTS): $(LIB_H) $(GENERATED_H)
 endif
 
-exec_cmd.sp exec_cmd.s exec_cmd.o: GIT-PREFIX
-exec_cmd.sp exec_cmd.s exec_cmd.o: EXTRA_CPPFLAGS = \
+exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
+exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
 	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
+	'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
 	'-DBINDIR="$(bindir_relative_SQ)"' \
-	'-DPREFIX="$(prefix_SQ)"'
+	'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"'
 
 builtin/init-db.sp builtin/init-db.s builtin/init-db.o: GIT-PREFIX
 builtin/init-db.sp builtin/init-db.s builtin/init-db.o: EXTRA_CPPFLAGS = \
@@ -2021,10 +2418,12 @@ attr.sp attr.s attr.o: EXTRA_CPPFLAGS = \
 
 gettext.sp gettext.s gettext.o: GIT-PREFIX
 gettext.sp gettext.s gettext.o: EXTRA_CPPFLAGS = \
-	-DGIT_LOCALE_PATH='"$(localedir_SQ)"'
+	-DGIT_LOCALE_PATH='"$(localedir_relative_SQ)"'
 
-http-push.sp http.sp http-walker.sp remote-curl.sp imap-send.sp: SPARSE_FLAGS += \
+http-push.sp http.sp http-walker.sp remote-curl.sp imap-send.sp: SP_EXTRA_FLAGS += \
 	-DCURL_DISABLE_TYPECHECK
+
+pack-revindex.sp: SP_EXTRA_FLAGS += -Wno-memcpy-max-count
 
 ifdef NO_EXPAT
 http-walker.sp http-walker.s http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
@@ -2038,7 +2437,7 @@ endif
 ifdef USE_NED_ALLOCATOR
 compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 	-DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR
-compat/nedmalloc/nedmalloc.sp: SPARSE_FLAGS += -Wno-non-pointer-null
+compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
 git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
@@ -2046,7 +2445,7 @@ git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
 
 git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIBS) $(IMAP_SEND_LDFLAGS)
+		$(IMAP_SEND_LDFLAGS) $(LIBS)
 
 git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
@@ -2080,12 +2479,22 @@ $(VCSSVN_LIB): $(VCSSVN_OBJS)
 
 export DEFAULT_EDITOR DEFAULT_PAGER
 
-.PHONY: doc man html info pdf
-doc:
+Documentation/GIT-EXCLUDED-PROGRAMS: FORCE
+	@EXCLUDED='EXCLUDED_PROGRAMS := $(EXCLUDED_PROGRAMS)'; \
+	    if test x"$$EXCLUDED" != \
+		x"`cat Documentation/GIT-EXCLUDED-PROGRAMS 2>/dev/null`" ; then \
+		echo >&2 "    * new documentation flags"; \
+		echo "$$EXCLUDED" >Documentation/GIT-EXCLUDED-PROGRAMS; \
+            fi
+
+.PHONY: doc man man-perl html info pdf
+doc: man-perl
 	$(MAKE) -C Documentation all
 
-man:
+man: man-perl
 	$(MAKE) -C Documentation man
+
+man-perl: perl/build/man/man3/Git.3pm
 
 html:
 	$(MAKE) -C Documentation html
@@ -2110,7 +2519,7 @@ XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --language=Perl \
 LOCALIZED_C = $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H)
 LOCALIZED_SH = $(SCRIPT_SH)
 LOCALIZED_SH += git-parse-remote.sh
-LOCALIZED_SH += git-rebase--interactive.sh
+LOCALIZED_SH += git-rebase--preserve-merges.sh
 LOCALIZED_SH += git-sh-setup.sh
 LOCALIZED_PERL = $(SCRIPT_PERL)
 
@@ -2120,12 +2529,33 @@ LOCALIZED_SH += t/t0200/test.sh
 LOCALIZED_PERL += t/t0200/test.perl
 endif
 
+## Note that this is meant to be run only by the localization coordinator
+## under a very controlled condition, i.e. (1) it is to be run in a
+## Git repository (not a tarball extract), (2) any local modifications
+## will be lost.
+## Gettext tools cannot work with our own custom PRItime type, so
+## we replace PRItime with PRIuMAX.  We need to update this to
+## PRIdMAX if we switch to a signed type later.
+
 po/git.pot: $(GENERATED_H) FORCE
+	# All modifications will be reverted at the end, so we do not
+	# want to have any local change.
+	git diff --quiet HEAD && git diff --quiet --cached
+
+	@for s in $(LOCALIZED_C) $(LOCALIZED_SH) $(LOCALIZED_PERL); \
+	do \
+		sed -e 's|PRItime|PRIuMAX|g' <"$$s" >"$$s+" && \
+		cat "$$s+" >"$$s" && rm "$$s+"; \
+	done
+
 	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ $(XGETTEXT_FLAGS_C) $(LOCALIZED_C)
 	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ --join-existing $(XGETTEXT_FLAGS_SH) \
 		$(LOCALIZED_SH)
 	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ --join-existing $(XGETTEXT_FLAGS_PERL) \
 		$(LOCALIZED_PERL)
+
+	# Reverting the munged source, leaving only the updated $@
+	git reset --hard
 	mv $@+ $@
 
 .PHONY: pot
@@ -2140,6 +2570,29 @@ endif
 
 po/build/locale/%/LC_MESSAGES/git.mo: po/%.po
 	$(QUIET_MSGFMT)mkdir -p $(dir $@) && $(MSGFMT) -o $@ $<
+
+LIB_PERL := $(wildcard perl/Git.pm perl/Git/*.pm perl/Git/*/*.pm perl/Git/*/*/*.pm)
+LIB_PERL_GEN := $(patsubst perl/%.pm,perl/build/lib/%.pm,$(LIB_PERL))
+LIB_CPAN := $(wildcard perl/FromCPAN/*.pm perl/FromCPAN/*/*.pm)
+LIB_CPAN_GEN := $(patsubst perl/%.pm,perl/build/lib/%.pm,$(LIB_CPAN))
+
+ifndef NO_PERL
+all:: $(LIB_PERL_GEN)
+ifndef NO_PERL_CPAN_FALLBACKS
+all:: $(LIB_CPAN_GEN)
+endif
+NO_PERL_CPAN_FALLBACKS_SQ = $(subst ','\'',$(NO_PERL_CPAN_FALLBACKS))
+endif
+
+perl/build/lib/%.pm: perl/%.pm
+	$(QUIET_GEN)mkdir -p $(dir $@) && \
+	sed -e 's|@@LOCALEDIR@@|$(perl_localedir_SQ)|g' \
+	    -e 's|@@NO_PERL_CPAN_FALLBACKS@@|$(NO_PERL_CPAN_FALLBACKS_SQ)|g' \
+	< $< > $@
+
+perl/build/man/man3/Git.3pm: perl/Git.pm
+	$(QUIET_GEN)mkdir -p $(dir $@) && \
+	pod2man $< $@
 
 FIND_SOURCE_FILES = ( \
 	git ls-files \
@@ -2204,17 +2657,23 @@ GIT-LDFLAGS: FORCE
 # and the first level quoting from the shell that runs "echo".
 GIT-BUILD-OPTIONS: FORCE
 	@echo SHELL_PATH=\''$(subst ','\'',$(SHELL_PATH_SQ))'\' >$@+
+	@echo TEST_SHELL_PATH=\''$(subst ','\'',$(TEST_SHELL_PATH_SQ))'\' >>$@+
 	@echo PERL_PATH=\''$(subst ','\'',$(PERL_PATH_SQ))'\' >>$@+
 	@echo DIFF=\''$(subst ','\'',$(subst ','\'',$(DIFF)))'\' >>$@+
 	@echo PYTHON_PATH=\''$(subst ','\'',$(PYTHON_PATH_SQ))'\' >>$@+
 	@echo TAR=\''$(subst ','\'',$(subst ','\'',$(TAR)))'\' >>$@+
 	@echo NO_CURL=\''$(subst ','\'',$(subst ','\'',$(NO_CURL)))'\' >>$@+
 	@echo NO_EXPAT=\''$(subst ','\'',$(subst ','\'',$(NO_EXPAT)))'\' >>$@+
-	@echo USE_LIBPCRE=\''$(subst ','\'',$(subst ','\'',$(USE_LIBPCRE)))'\' >>$@+
+	@echo USE_LIBPCRE1=\''$(subst ','\'',$(subst ','\'',$(USE_LIBPCRE1)))'\' >>$@+
+	@echo USE_LIBPCRE2=\''$(subst ','\'',$(subst ','\'',$(USE_LIBPCRE2)))'\' >>$@+
+	@echo NO_LIBPCRE1_JIT=\''$(subst ','\'',$(subst ','\'',$(NO_LIBPCRE1_JIT)))'\' >>$@+
 	@echo NO_PERL=\''$(subst ','\'',$(subst ','\'',$(NO_PERL)))'\' >>$@+
+	@echo NO_PTHREADS=\''$(subst ','\'',$(subst ','\'',$(NO_PTHREADS)))'\' >>$@+
 	@echo NO_PYTHON=\''$(subst ','\'',$(subst ','\'',$(NO_PYTHON)))'\' >>$@+
 	@echo NO_UNIX_SOCKETS=\''$(subst ','\'',$(subst ','\'',$(NO_UNIX_SOCKETS)))'\' >>$@+
 	@echo PAGER_ENV=\''$(subst ','\'',$(subst ','\'',$(PAGER_ENV)))'\' >>$@+
+	@echo DC_SHA1=\''$(subst ','\'',$(subst ','\'',$(DC_SHA1)))'\' >>$@+
+	@echo X=\'$(X)\' >>$@+
 ifdef TEST_OUTPUT_DIRECTORY
 	@echo TEST_OUTPUT_DIRECTORY=\''$(subst ','\'',$(subst ','\'',$(TEST_OUTPUT_DIRECTORY)))'\' >>$@+
 endif
@@ -2228,7 +2687,6 @@ ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
 	@echo GIT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@+
 endif
 	@echo NO_GETTEXT=\''$(subst ','\'',$(subst ','\'',$(NO_GETTEXT)))'\' >>$@+
-	@echo GETTEXT_POISON=\''$(subst ','\'',$(subst ','\'',$(GETTEXT_POISON)))'\' >>$@+
 ifdef GIT_PERF_REPEAT_COUNT
 	@echo GIT_PERF_REPEAT_COUNT=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_REPEAT_COUNT)))'\' >>$@+
 endif
@@ -2241,8 +2699,14 @@ endif
 ifdef GIT_PERF_MAKE_OPTS
 	@echo GIT_PERF_MAKE_OPTS=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_MAKE_OPTS)))'\' >>$@+
 endif
-ifdef TEST_GIT_INDEX_VERSION
-	@echo TEST_GIT_INDEX_VERSION=\''$(subst ','\'',$(subst ','\'',$(TEST_GIT_INDEX_VERSION)))'\' >>$@+
+ifdef GIT_PERF_MAKE_COMMAND
+	@echo GIT_PERF_MAKE_COMMAND=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_MAKE_COMMAND)))'\' >>$@+
+endif
+ifdef GIT_INTEROP_MAKE_OPTS
+	@echo GIT_INTEROP_MAKE_OPTS=\''$(subst ','\'',$(subst ','\'',$(GIT_INTEROP_MAKE_OPTS)))'\' >>$@+
+endif
+ifdef GIT_TEST_INDEX_VERSION
+	@echo GIT_TEST_INDEX_VERSION=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_INDEX_VERSION)))'\' >>$@+
 endif
 	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
 
@@ -2261,7 +2725,6 @@ endif
 test_bindir_programs := $(patsubst %,bin-wrappers/%,$(BINDIR_PROGRAMS_NEED_X) $(BINDIR_PROGRAMS_NO_X) $(TEST_PROGRAMS_NEED_X))
 
 all:: $(TEST_PROGRAMS) $(test_bindir_programs)
-all:: $(NO_INSTALL)
 
 bin-wrappers/%: wrap-for-bin.sh
 	@mkdir -p bin-wrappers
@@ -2293,22 +2756,42 @@ t/helper/test-svn-fe$X: $(VCSSVN_LIB)
 
 .PRECIOUS: $(TEST_OBJS)
 
+t/helper/test-tool$X: $(patsubst %,t/helper/%,$(TEST_BUILTINS_OBJS))
+
 t/helper/test-%$X: t/helper/test-%.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(filter %.a,$^) $(LIBS)
 
-check-sha1:: t/helper/test-sha1$X
+check-sha1:: t/helper/test-tool$X
 	t/helper/test-sha1.sh
 
 SP_OBJ = $(patsubst %.o,%.sp,$(C_OBJ))
 
 $(SP_OBJ): %.sp: %.c GIT-CFLAGS FORCE
 	$(QUIET_SP)cgcc -no-compile $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) \
-		$(SPARSE_FLAGS) $<
+		$(SPARSE_FLAGS) $(SP_EXTRA_FLAGS) $<
 
 .PHONY: sparse $(SP_OBJ)
 sparse: $(SP_OBJ)
 
-check: common-cmds.h
+GEN_HDRS := command-list.h unicode-width.h
+EXCEPT_HDRS := $(GEN_HDRS) compat/% xdiff/%
+ifndef GCRYPT_SHA256
+	EXCEPT_HDRS += sha256/gcrypt.h
+endif
+CHK_HDRS = $(filter-out $(EXCEPT_HDRS),$(patsubst ./%,%,$(LIB_H)))
+HCO = $(patsubst %.h,%.hco,$(CHK_HDRS))
+
+$(HCO): %.hco: %.h FORCE
+	$(QUIET_HDR)$(CC) -include git-compat-util.h -I. -o /dev/null -c -xc $<
+
+.PHONY: hdr-check $(HCO)
+hdr-check: $(HCO)
+
+.PHONY: style
+style:
+	git clang-format --style file --diff --extensions c,h
+
+check: command-list.h
 	@if sparse; \
 	then \
 		echo >&2 "Use 'make sparse' instead"; \
@@ -2319,16 +2802,37 @@ check: common-cmds.h
 	fi
 
 C_SOURCES = $(patsubst %.o,%.c,$(C_OBJ))
-%.cocci.patch: %.cocci $(C_SOURCES)
+ifdef DC_SHA1_SUBMODULE
+COCCI_SOURCES = $(filter-out sha1collisiondetection/%,$(C_SOURCES))
+else
+COCCI_SOURCES = $(filter-out sha1dc/%,$(C_SOURCES))
+endif
+
+%.cocci.patch: %.cocci $(COCCI_SOURCES)
 	@echo '    ' SPATCH $<; \
-	for f in $(C_SOURCES); do \
-		$(SPATCH) --sp-file $< $$f $(SPATCH_FLAGS); \
-	done >$@ 2>$@.log; \
+	if test $(SPATCH_BATCH_SIZE) = 0; then \
+		limit=; \
+	else \
+		limit='-n $(SPATCH_BATCH_SIZE)'; \
+	fi; \
+	if ! echo $(COCCI_SOURCES) | xargs $$limit \
+		$(SPATCH) --sp-file $< $(SPATCH_FLAGS) \
+		>$@+ 2>$@.log; \
+	then \
+		cat $@.log; \
+		exit 1; \
+	fi; \
+	mv $@+ $@; \
 	if test -s $@; \
 	then \
 		echo '    ' SPATCH result: $@; \
 	fi
-coccicheck: $(patsubst %.cocci,%.cocci.patch,$(wildcard contrib/coccinelle/*.cocci))
+coccicheck: $(addsuffix .patch,$(filter-out %.pending.cocci,$(wildcard contrib/coccinelle/*.cocci)))
+
+# See contrib/coccinelle/README
+coccicheck-pending: $(addsuffix .patch,$(wildcard contrib/coccinelle/*.pending.cocci))
+
+.PHONY: coccicheck coccicheck-pending
 
 ### Installation rules
 
@@ -2378,7 +2882,9 @@ ifndef NO_GETTEXT
 	(cd '$(DESTDIR_SQ)$(localedir_SQ)' && umask 022 && $(TAR) xof -)
 endif
 ifndef NO_PERL
-	$(MAKE) -C perl prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(perllibdir_SQ)'
+	(cd perl/build/lib && $(TAR) cf - .) | \
+	(cd '$(DESTDIR_SQ)$(perllibdir_SQ)' && umask 022 && $(TAR) xof -)
 	$(MAKE) -C gitweb install
 endif
 ifndef NO_TCLTK
@@ -2391,48 +2897,62 @@ endif
 
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
+	destdir_from_execdir_SQ=$$(echo '$(gitexecdir_relative_SQ)' | sed -e 's|[^/][^/]*|..|g') && \
 	{ test "$$bindir/" = "$$execdir/" || \
 	  for p in git$X $(filter $(install_bindir_programs),$(ALL_PROGRAMS)); do \
 		$(RM) "$$execdir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
-		ln "$$bindir/$$p" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$bindir/$$p" "$$execdir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/$$p" "$$execdir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
+		  ln "$$bindir/$$p" "$$execdir/$$p" 2>/dev/null || \
+		  cp "$$bindir/$$p" "$$execdir/$$p" || exit; } \
 	  done; \
 	} && \
 	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
 		$(RM) "$$bindir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
-		ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$bindir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "git$X" "$$bindir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
+		  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
+		  cp "$$bindir/git$X" "$$bindir/$$p" || exit; } \
 	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
-		ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$execdir/git$X" "$$execdir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/git$X" "$$execdir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
+		  ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
+		  cp "$$execdir/git$X" "$$execdir/$$p" || exit; } \
 	done && \
 	remote_curl_aliases="$(REMOTE_CURL_ALIASES)" && \
 	for p in $$remote_curl_aliases; do \
 		$(RM) "$$execdir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
-		ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "git-remote-http$X" "$$execdir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
+		  ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
+		  cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; } \
 	done && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
-.PHONY: install-gitweb install-doc install-man install-html install-info install-pdf
+.PHONY: install-gitweb install-doc install-man install-man-perl install-html install-info install-pdf
 .PHONY: quick-install-doc quick-install-man quick-install-html
 install-gitweb:
 	$(MAKE) -C gitweb install
 
-install-doc:
+install-doc: install-man-perl
 	$(MAKE) -C Documentation install
 
-install-man:
+install-man: install-man-perl
 	$(MAKE) -C Documentation install-man
+
+install-man-perl: man-perl
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(mandir_SQ)/man3'
+	(cd perl/build/man/man3 && $(TAR) cf - .) | \
+	(cd '$(DESTDIR_SQ)$(mandir_SQ)/man3' && umask 022 && $(TAR) xof -)
 
 install-html:
 	$(MAKE) -C Documentation install-html
@@ -2468,6 +2988,21 @@ dist: git-archive$(X) configure
 		$(GIT_TARNAME)/configure \
 		$(GIT_TARNAME)/version \
 		$(GIT_TARNAME)/git-gui/version
+ifdef DC_SHA1_SUBMODULE
+	@mkdir -p $(GIT_TARNAME)/sha1collisiondetection/lib
+	@cp sha1collisiondetection/LICENSE.txt \
+		$(GIT_TARNAME)/sha1collisiondetection/
+	@cp sha1collisiondetection/LICENSE.txt \
+		$(GIT_TARNAME)/sha1collisiondetection/
+	@cp sha1collisiondetection/lib/sha1.[ch] \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/
+	@cp sha1collisiondetection/lib/ubc_check.[ch] \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/
+	$(TAR) rf $(GIT_TARNAME).tar \
+		$(GIT_TARNAME)/sha1collisiondetection/LICENSE.txt \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/sha1.[ch] \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/ubc_check.[ch]
+endif
 	@$(RM) -r $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
@@ -2475,6 +3010,16 @@ rpm::
 	@echo >&2 "Use distro packaged sources to run rpmbuild"
 	@false
 .PHONY: rpm
+
+artifacts-tar:: $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS) \
+		GIT-BUILD-OPTIONS $(TEST_PROGRAMS) $(test_bindir_programs) \
+		$(MOFILES)
+	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) \
+		SHELL_PATH='$(SHELL_PATH_SQ)' PERL_PATH='$(PERL_PATH_SQ)'
+	test -n "$(ARTIFACTS_DIRECTORY)"
+	mkdir -p "$(ARTIFACTS_DIRECTORY)"
+	$(TAR) czf "$(ARTIFACTS_DIRECTORY)/artifacts.tar.gz" $^ templates/blt/
+.PHONY: artifacts-tar
 
 htmldocs = git-htmldocs-$(GIT_VERSION)
 manpages = git-manpages-$(GIT_VERSION)
@@ -2509,23 +3054,27 @@ profile-clean:
 	$(RM) $(addsuffix *.gcda,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
-clean: profile-clean coverage-clean
+cocciclean:
+	$(RM) contrib/coccinelle/*.cocci.patch*
+
+clean: profile-clean coverage-clean cocciclean
 	$(RM) *.res
 	$(RM) $(OBJECTS)
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(VCSSVN_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
-	$(RM) $(TEST_PROGRAMS) $(NO_INSTALL)
+	$(RM) $(TEST_PROGRAMS)
+	$(RM) $(FUZZ_PROGRAMS)
 	$(RM) -r bin-wrappers $(dep_dirs)
 	$(RM) -r po/build/
-	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h $(ETAGS_TARGET) tags cscope*
+	$(RM) *.pyc *.pyo */*.pyc */*.pyo command-list.h $(ETAGS_TARGET) tags cscope*
 	$(RM) -r $(GIT_TARNAME) .doc-tmp-dir
 	$(RM) $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
-	$(RM) contrib/coccinelle/*.cocci.patch*
 	$(MAKE) -C Documentation/ clean
+	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
 ifndef NO_PERL
 	$(MAKE) -C gitweb clean
-	$(MAKE) -C perl clean
+	$(RM) -r perl/build/
 endif
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
@@ -2535,9 +3084,9 @@ ifndef NO_TCLTK
 endif
 	$(RM) GIT-VERSION-FILE GIT-CFLAGS GIT-LDFLAGS GIT-BUILD-OPTIONS
 	$(RM) GIT-USER-AGENT GIT-PREFIX
-	$(RM) GIT-SCRIPT-DEFINES GIT-PERL-DEFINES GIT-PYTHON-VARS
+	$(RM) GIT-SCRIPT-DEFINES GIT-PERL-DEFINES GIT-PERL-HEADER GIT-PYTHON-VARS
 
-.PHONY: all install profile-clean clean strip
+.PHONY: all install profile-clean cocciclean clean strip
 .PHONY: shell_compatibility_test please_set_SHELL_PATH_to_a_more_modern_shell
 .PHONY: FORCE cscope
 
@@ -2552,13 +3101,13 @@ ALL_COMMANDS += git-gui git-citool
 .PHONY: check-docs
 check-docs::
 	$(MAKE) -C Documentation lint-docs
-	@(for v in $(ALL_COMMANDS); \
+	@(for v in $(patsubst %$X,%,$(ALL_COMMANDS)); \
 	do \
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-subtree | \
 		git-fsck-objects | git-init-db | \
-		git-remote-* | git-stage | \
+		git-remote-* | git-stage | git-legacy-* | \
 		git-?*--?* ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
@@ -2573,15 +3122,16 @@ check-docs::
 	( \
 		sed -e '1,/^### command list/d' \
 		    -e '/^#/d' \
+		    -e '/guide$$/d' \
 		    -e 's/[ 	].*//' \
 		    -e 's/^/listed /' command-list.txt; \
 		$(MAKE) -C Documentation print-man1 | \
 		grep '\.txt$$' | \
-		sed -e 's|Documentation/|documented |' \
+		sed -e 's|^|documented |' \
 		    -e 's/\.txt//'; \
 	) | while read how cmd; \
 	do \
-		case " $(ALL_COMMANDS) " in \
+		case " $(patsubst %$X,%,$(ALL_COMMANDS) $(EXCLUDED_PROGRAMS)) " in \
 		*" $$cmd "*)	;; \
 		*) echo "removed but $$how: $$cmd" ;; \
 		esac; \
@@ -2624,6 +3174,11 @@ coverage-test: coverage-clean-results coverage-compile
 	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" \
 		DEFAULT_TEST_TARGET=test -j1 test
 
+coverage-prove: coverage-clean-results coverage-compile
+	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" \
+		DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$(GIT_PROVE_OPTS) -j1" \
+		-j1 test
+
 coverage-report:
 	$(QUIET_GCOV)for dir in $(object_dirs); do \
 		$(GCOV) $(GCOVFLAGS) --object-directory=$$dir $$dir*.c || exit; \
@@ -2640,3 +3195,26 @@ cover_db: coverage-report
 cover_db_html: cover_db
 	cover -report html -outputdir cover_db_html cover_db
 
+
+### Fuzz testing
+#
+# Building fuzz targets generally requires a special set of compiler flags that
+# are not necessarily appropriate for general builds, and that vary greatly
+# depending on the compiler version used.
+#
+# An example command to build against libFuzzer from LLVM 4.0.0:
+#
+# make CC=clang CXX=clang++ \
+#      CFLAGS="-fsanitize-coverage=trace-pc-guard -fsanitize=address" \
+#      LIB_FUZZING_ENGINE=/usr/lib/llvm-4.0/lib/libFuzzer.a \
+#      fuzz-all
+#
+FUZZ_CXXFLAGS ?= $(CFLAGS)
+
+.PHONY: fuzz-all
+
+$(FUZZ_PROGRAMS): all
+	$(QUIET_LINK)$(CXX) $(FUZZ_CXXFLAGS) $(LIB_OBJS) $(BUILTIN_OBJS) \
+		$(XDIFF_OBJS) $(EXTLIBS) git.o $@.o $(LIB_FUZZING_ENGINE) -o $@
+
+fuzz-all: $(FUZZ_PROGRAMS)

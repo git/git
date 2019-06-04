@@ -1,8 +1,10 @@
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "color.h"
 #include "graph.h"
 #include "revision.h"
+#include "argv-array.h"
 
 /* Internal API */
 
@@ -78,6 +80,26 @@ static void graph_show_line_prefix(const struct diff_options *diffopt)
 
 static const char **column_colors;
 static unsigned short column_colors_max;
+
+static void parse_graph_colors_config(struct argv_array *colors, const char *string)
+{
+	const char *end, *start;
+
+	start = string;
+	end = string + strlen(string);
+	while (start < end) {
+		const char *comma = strchrnul(start, ',');
+		char color[COLOR_MAXLEN];
+
+		if (!color_parse_mem(start, comma - start, color))
+			argv_array_push(colors, color);
+		else
+			warning(_("ignore invalid color '%.*s' in log.graphColors"),
+				(int)(comma - start), start);
+		start = comma + 1;
+	}
+	argv_array_push(colors, GIT_COLOR_RESET);
+}
 
 void graph_set_column_colors(const char **colors, unsigned short colors_max)
 {
@@ -238,9 +260,22 @@ struct git_graph *graph_init(struct rev_info *opt)
 {
 	struct git_graph *graph = xmalloc(sizeof(struct git_graph));
 
-	if (!column_colors)
-		graph_set_column_colors(column_colors_ansi,
-					column_colors_ansi_max);
+	if (!column_colors) {
+		char *string;
+		if (git_config_get_string("log.graphcolors", &string)) {
+			/* not configured -- use default */
+			graph_set_column_colors(column_colors_ansi,
+						column_colors_ansi_max);
+		} else {
+			static struct argv_array custom_colors = ARGV_ARRAY_INIT;
+			argv_array_clear(&custom_colors);
+			parse_graph_colors_config(&custom_colors, string);
+			free(string);
+			/* graph_set_column_colors takes a max-index, not a count */
+			graph_set_column_colors(custom_colors.argv,
+						custom_colors.argc - 1);
+		}
+	}
 
 	graph->commit = NULL;
 	graph->revs = opt;
@@ -463,7 +498,6 @@ static void graph_update_width(struct git_graph *graph,
 static void graph_update_columns(struct git_graph *graph)
 {
 	struct commit_list *parent;
-	struct column *tmp_columns;
 	int max_new_columns;
 	int mapping_idx;
 	int i, seen_this, is_commit_in_columns;
@@ -476,11 +510,8 @@ static void graph_update_columns(struct git_graph *graph)
 	 * We'll re-use the old columns array as storage to compute the new
 	 * columns list for the commit after this one.
 	 */
-	tmp_columns = graph->columns;
-	graph->columns = graph->new_columns;
+	SWAP(graph->columns, graph->new_columns);
 	graph->num_columns = graph->num_new_columns;
-
-	graph->new_columns = tmp_columns;
 	graph->num_new_columns = 0;
 
 	/*
@@ -665,12 +696,8 @@ static void graph_pad_horizontally(struct git_graph *graph, struct strbuf *sb,
 	 * This way, fields printed to the right of the graph will remain
 	 * aligned for the entire commit.
 	 */
-	int extra;
-	if (chars_written >= graph->width)
-		return;
-
-	extra = graph->width - chars_written;
-	strbuf_addf(sb, "%*s", (int) extra, "");
+	if (chars_written < graph->width)
+		strbuf_addchars(sb, ' ', graph->width - chars_written);
 }
 
 static void graph_output_padding_line(struct git_graph *graph,
@@ -756,7 +783,7 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 		if (col->commit == graph->commit) {
 			seen_this = 1;
 			strbuf_write_column(sb, col, '|');
-			strbuf_addf(sb, "%*s", graph->expansion_row, "");
+			strbuf_addchars(sb, ' ', graph->expansion_row);
 			chars_written += 1 + graph->expansion_row;
 		} else if (seen_this && (graph->expansion_row == 0)) {
 			/*
@@ -815,27 +842,55 @@ static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
 }
 
 /*
- * Draw an octopus merge and return the number of characters written.
+ * Draw the horizontal dashes of an octopus merge and return the number of
+ * characters written.
  */
 static int graph_draw_octopus_merge(struct git_graph *graph,
 				    struct strbuf *sb)
 {
 	/*
-	 * Here dashless_commits represents the number of parents
-	 * which don't need to have dashes (because their edges fit
-	 * neatly under the commit).
+	 * Here dashless_parents represents the number of parents which don't
+	 * need to have dashes (the edges labeled "0" and "1").  And
+	 * dashful_parents are the remaining ones.
+	 *
+	 * | *---.
+	 * | |\ \ \
+	 * | | | | |
+	 * x 0 1 2 3
+	 *
 	 */
-	const int dashless_commits = 2;
-	int col_num, i;
-	int num_dashes =
-		((graph->num_parents - dashless_commits) * 2) - 1;
-	for (i = 0; i < num_dashes; i++) {
-		col_num = (i / 2) + dashless_commits + graph->commit_index;
-		strbuf_write_column(sb, &graph->new_columns[col_num], '-');
+	const int dashless_parents = 2;
+	int dashful_parents = graph->num_parents - dashless_parents;
+
+	/*
+	 * Usually, we add one new column for each parent (like the diagram
+	 * above) but sometimes the first parent goes into an existing column,
+	 * like this:
+	 *
+	 * | *---.
+	 * | |\ \ \
+	 * |/ / / /
+	 * x 0 1 2
+	 *
+	 * In which case the number of parents will be one greater than the
+	 * number of added columns.
+	 */
+	int added_cols = (graph->num_new_columns - graph->num_columns);
+	int parent_in_old_cols = graph->num_parents - added_cols;
+
+	/*
+	 * In both cases, commit_index corresponds to the edge labeled "0".
+	 */
+	int first_col = graph->commit_index + dashless_parents
+	    - parent_in_old_cols;
+
+	int i;
+	for (i = 0; i < dashful_parents; i++) {
+		strbuf_write_column(sb, &graph->new_columns[i+first_col], '-');
+		strbuf_write_column(sb, &graph->new_columns[i+first_col],
+				    i == dashful_parents-1 ? '.' : '-');
 	}
-	col_num = (i / 2) + dashless_commits + graph->commit_index;
-	strbuf_write_column(sb, &graph->new_columns[col_num], '.');
-	return num_dashes + 1;
+	return 2 * dashful_parents;
 }
 
 static void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
@@ -997,7 +1052,6 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct strbuf 
 static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf *sb)
 {
 	int i;
-	int *tmp_mapping;
 	short used_horizontal = 0;
 	int horizontal_edge = -1;
 	int horizontal_edge_target = -1;
@@ -1132,9 +1186,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 	/*
 	 * Swap mapping and new_mapping
 	 */
-	tmp_mapping = graph->mapping;
-	graph->mapping = graph->new_mapping;
-	graph->new_mapping = tmp_mapping;
+	SWAP(graph->mapping, graph->new_mapping);
 
 	/*
 	 * If graph->mapping indicates that all of the branch lines

@@ -7,7 +7,7 @@ gitignore - Specifies intentionally untracked files to ignore
 
 SYNOPSIS
 --------
-$HOME/.config/git/ignore, $GIT_DIR/info/exclude, .gitignore
+$XDG_CONFIG_HOME/git/ignore, $GIT_DIR/info/exclude, .gitignore
 
 DESCRIPTION
 -----------
@@ -102,12 +102,11 @@ PATTERN FORMAT
    (relative to the toplevel of the work tree if not from a
    `.gitignore` file).
 
- - Otherwise, Git treats the pattern as a shell glob suitable
-   for consumption by fnmatch(3) with the FNM_PATHNAME flag:
-   wildcards in the pattern will not match a / in the pathname.
-   For example, "Documentation/{asterisk}.html" matches
-   "Documentation/git.html" but not "Documentation/ppc/ppc.html"
-   or "tools/perf/Documentation/perf.html".
+ - Otherwise, Git treats the pattern as a shell glob: "`*`" matches
+   anything except "`/`", "`?`" matches any one character except "`/`"
+   and "`[]`" matches one character in a selected range. See
+   fnmatch(3) and the FNM_PATHNAME flag for a more detailed
+   description.
 
  - A leading slash matches the beginning of the pathname.
    For example, "/{asterisk}.c" matches "cat-file.c" but not
@@ -130,7 +129,16 @@ full pathname may have special meaning:
    matches zero or more directories. For example, "`a/**/b`"
    matches "`a/b`", "`a/x/b`", "`a/x/y/b`" and so on.
 
- - Other consecutive asterisks are considered invalid.
+ - Other consecutive asterisks are considered regular asterisks and
+   will match according to the previous rules.
+
+CONFIGURATION
+-------------
+
+The optional configuration variable `core.excludesFile` indicates a path to a
+file containing patterns of file names to exclude, similar to
+`$GIT_DIR/info/exclude`.  Patterns in the exclude file are used in addition to
+those in `$GIT_DIR/info/exclude`.
 
 NOTES
 -----

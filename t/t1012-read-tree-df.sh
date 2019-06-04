@@ -32,7 +32,7 @@ settree () {
 
 checkindex () {
 	git ls-files -s |
-	sed "s|^[0-7][0-7]* $_x40 \([0-3]\)	|\1 |" >current &&
+	sed "s|^[0-7][0-7]* $OID_REGEX \([0-3]\)	|\1 |" >current &&
 	cat >expect &&
 	test_cmp expect current
 }

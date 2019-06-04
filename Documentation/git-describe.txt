@@ -3,14 +3,14 @@ git-describe(1)
 
 NAME
 ----
-git-describe - Describe a commit using the most recent tag reachable from it
-
+git-describe - Give an object a human readable name based on an available ref
 
 SYNOPSIS
 --------
 [verse]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
+'git describe' <blob>
 
 DESCRIPTION
 -----------
@@ -18,11 +18,19 @@ The command finds the most recent tag that is reachable from a
 commit.  If the tag points to the commit, then only the tag is
 shown.  Otherwise, it suffixes the tag name with the number of
 additional commits on top of the tagged object and the
-abbreviated object name of the most recent commit.
+abbreviated object name of the most recent commit. The result
+is a "human-readable" object name which can also be used to
+identify the commit to other git commands.
 
 By default (without --all or --tags) `git describe` only shows
 annotated tags.  For more information about creating annotated tags
 see the -a and -s options to linkgit:git-tag[1].
+
+If the given object refers to a blob, it will be described
+as `<commit-ish>:<path>`, such that the blob can be found
+at `<path>` in the `<commit-ish>`, which itself describes the
+first commit in which this blob occurs in a reverse revision walk
+from HEAD.
 
 OPTIONS
 -------
@@ -30,9 +38,14 @@ OPTIONS
 	Commit-ish object names to describe.  Defaults to HEAD if omitted.
 
 --dirty[=<mark>]::
-	Describe the working tree.
-	It means describe HEAD and appends <mark> (`-dirty` by
-	default) if the working tree is dirty.
+--broken[=<mark>]::
+	Describe the state of the working tree.  When the working
+	tree matches HEAD, the output is the same as "git describe
+	HEAD".  If the working tree has local modification "-dirty"
+	is appended to it.  If a repository is corrupt and Git
+	cannot determine if there is local modification, Git will
+	error out, unless `--broken' is given, which appends
+	the suffix "-broken" instead.
 
 --all::
 	Instead of using only the annotated tags, use any ref
@@ -82,8 +95,25 @@ OPTIONS
 
 --match <pattern>::
 	Only consider tags matching the given `glob(7)` pattern,
-	excluding the "refs/tags/" prefix.  This can be used to avoid
-	leaking private tags from the repository.
+	excluding the "refs/tags/" prefix. If used with `--all`, it also
+	considers local branches and remote-tracking references matching the
+	pattern, excluding respectively "refs/heads/" and "refs/remotes/"
+	prefix; references of other types are never considered. If given
+	multiple times, a list of patterns will be accumulated, and tags
+	matching any of the patterns will be considered.  Use `--no-match` to
+	clear and reset the list of patterns.
+
+--exclude <pattern>::
+	Do not consider tags matching the given `glob(7)` pattern, excluding
+	the "refs/tags/" prefix. If used with `--all`, it also does not consider
+	local branches and remote-tracking references matching the pattern,
+	excluding respectively "refs/heads/" and "refs/remotes/" prefix;
+	references of other types are never considered. If given multiple times,
+	a list of patterns will be accumulated and tags matching any of the
+	patterns will be excluded. When combined with --match a tag will be
+	considered when it matches at least one --match pattern and does not
+	match any of the --exclude patterns. Use `--no-exclude` to clear and
+	reset the list of patterns.
 
 --always::
 	Show uniquely abbreviated commit object as fallback.
@@ -109,7 +139,7 @@ at the end.
 
 The number of additional commits is the number
 of commits which would be displayed by "git log v1.0.4..parent".
-The hash suffix is "-g" + 7-char abbreviation for the tip commit
+The hash suffix is "-g" + unambiguous abbreviation for the tip commit
 of parent (which was `2414721b194453f058079d897d13c4e377f92dc6`).
 The "g" prefix stands for "git" and is used to allow describing the version of
 a software depending on the SCM the software is managed with. This is useful
@@ -163,6 +193,14 @@ has the fewest commits different from the input commit-ish will be
 selected and output.  Here fewest commits different is defined as
 the number of commits which would be shown by `git log tag..input`
 will be the smallest number of commits possible.
+
+BUGS
+----
+
+Tree objects as well as tag objects not pointing at commits, cannot be described.
+When describing blobs, the lightweight tags pointing at blobs are ignored,
+but the blob is still described as <committ-ish>:<path> despite the lightweight
+tag being favorable.
 
 GIT
 ---

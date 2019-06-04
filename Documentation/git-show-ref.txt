@@ -37,8 +37,8 @@ OPTIONS
 
 	Show the HEAD reference, even if it would normally be filtered out.
 
---tags::
 --heads::
+--tags::
 
 	Limit to "refs/heads" and "refs/tags", respectively.  These options
 	are not mutually exclusive; when given both, references stored in
@@ -120,8 +120,8 @@ $ git show-ref --heads --hash
 ...
 -----------------------------------------------------------------------------
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 To show all references called "master", whether tags or heads or anything
 else, and regardless of how deep in the reference naming hierarchy they are,

@@ -172,24 +172,28 @@ With `-n` option, the remote heads are not queried first with
 
 'prune'::
 
-Deletes all stale remote-tracking branches under <name>.
-These stale branches have already been removed from the remote repository
-referenced by <name>, but are still locally available in
-"remotes/<name>".
+Deletes stale references associated with <name>. By default, stale
+remote-tracking branches under <name> are deleted, but depending on
+global configuration and the configuration of the remote we might even
+prune local tags that haven't been pushed there. Equivalent to `git
+fetch --prune <name>`, except that no new references will be fetched.
++
+See the PRUNING section of linkgit:git-fetch[1] for what it'll prune
+depending on various configuration.
 +
 With `--dry-run` option, report what branches will be pruned, but do not
 actually prune them.
 
 'update'::
 
-Fetch updates for a named set of remotes in the repository as defined by
-remotes.<group>.  If a named group is not specified on the command line,
+Fetch updates for remotes or remote groups in the repository as defined by
+remotes.<group>.  If neither group nor remote is specified on the command line,
 the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
 be updated.  (See linkgit:git-config[1]).
 +
-With `--prune` option, prune all the remotes that are updated.
+With `--prune` option, run pruning against all the remotes that are updated.
 
 
 DISCUSSION
@@ -199,7 +203,7 @@ The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
 linkgit:git-config[1]).
 
-Examples
+EXAMPLES
 --------
 
 * Add a new remote, fetch, and check out a branch from it

@@ -84,8 +84,8 @@ format sections of the manual for 'git diff-{asterisk}' commands) or
 diff-patch format.
 
 
-diffcore-break: For Splitting Up "Complete Rewrites"
-----------------------------------------------------
+diffcore-break: For Splitting Up Complete Rewrites
+--------------------------------------------------
 
 The second transformation in the chain is diffcore-break, and is
 controlled by the -B option to the 'git diff-{asterisk}' commands.  This is
@@ -119,7 +119,7 @@ the original is used), and can be customized by giving a number
 after "-B" option (e.g. "-B75" to tell it to use 75%).
 
 
-diffcore-rename: For Detection Renames and Copies
+diffcore-rename: For Detecting Renames and Copies
 -------------------------------------------------
 
 This transformation is used to detect renames and copies, and is
@@ -177,8 +177,8 @@ the expense of making it slower.  Without `--find-copies-harder`,
 copied happened to have been modified in the same changeset.
 
 
-diffcore-merge-broken: For Putting "Complete Rewrites" Back Together
---------------------------------------------------------------------
+diffcore-merge-broken: For Putting Complete Rewrites Back Together
+------------------------------------------------------------------
 
 This transformation is used to merge filepairs broken by
 diffcore-break, and not transformed into rename/copy by
@@ -242,7 +242,8 @@ textual diff has an added or a deleted line that matches the given
 regular expression.  This means that it will detect in-file (or what
 rename-detection considers the same file) moves, which is noise.  The
 implementation runs diff twice and greps, and this can be quite
-expensive.
+expensive.  To speed things up binary files without textconv filters
+will be ignored.
 
 When `-S` or `-G` are used without `--pickaxe-all`, only filepairs
 that match their respective criterion are kept in the output.  When
@@ -288,4 +289,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

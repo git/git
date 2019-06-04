@@ -9,13 +9,14 @@ git-tag - Create, list, delete or verify a tag object signed with GPG
 SYNOPSIS
 --------
 [verse]
-'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>]
+'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>] [-e]
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
-'git tag' [-n[<num>]] -l [--contains <commit>] [--points-at <object>]
-	[--column[=<options>] | --no-column] [--create-reflog] [--sort=<key>]
-	[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]
-'git tag' -v <tagname>...
+'git tag' [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]
+	[--points-at <object>] [--column[=<options>] | --no-column]
+	[--create-reflog] [--sort=<key>] [--format=<format>]
+	[--[no-]merged [<commit>]] [<pattern>...]
+'git tag' -v [--format=<format>] <tagname>...
 
 DESCRIPTION
 -----------
@@ -33,8 +34,8 @@ in the tag message.
 If `-m <msg>` or `-F <file>` is given and `-a`, `-s`, and `-u <keyid>`
 are absent, `-a` is implied.
 
-Otherwise just a tag reference for the SHA-1 object name of the commit object is
-created (i.e. a lightweight tag).
+Otherwise, a tag reference that points directly at the given object
+(i.e., a lightweight tag) is created.
 
 A GnuPG signed tag object will be created when `-s` or `-u
 <keyid>` is used.  When `-u <keyid>` is not used, the
@@ -82,18 +83,24 @@ OPTIONS
 
 -n<num>::
 	<num> specifies how many lines from the annotation, if any,
-	are printed when using -l.
-	The default is not to print any annotation lines.
-	If no number is given to `-n`, only the first line is printed.
-	If the tag is not annotated, the commit message is displayed instead.
+	are printed when using -l. Implies `--list`.
++
+The default is not to print any annotation lines.
+If no number is given to `-n`, only the first line is printed.
+If the tag is not annotated, the commit message is displayed instead.
 
--l <pattern>::
---list <pattern>::
-	List tags with names that match the given pattern (or all if no
-	pattern is given).  Running "git tag" without arguments also
-	lists all tags. The pattern is a shell wildcard (i.e., matched
-	using fnmatch(3)).  Multiple patterns may be given; if any of
-	them matches, the tag is shown.
+-l::
+--list::
+	List tags. With optional `<pattern>...`, e.g. `git tag --list
+	'v-*'`, list only the tags that match the pattern(s).
++
+Running "git tag" without arguments also lists all tags. The pattern
+is a shell wildcard (i.e., matched using fnmatch(3)). Multiple
+patterns may be given; if any of them matches, the tag is shown.
++
+This option is implicitly supplied if any other list-like option such
+as `--contains` is provided. See the documentation for each of those
+options for details.
 
 --sort=<key>::
 	Sort based on the key given.  Prefix `-` to sort in
@@ -101,12 +108,17 @@ OPTIONS
 	multiple times, in which case the last key becomes the primary
 	key. Also supports "version:refname" or "v:refname" (tag
 	names are treated as versions). The "version:refname" sort
-	order can also be affected by the
-	"versionsort.prereleaseSuffix" configuration variable.
+	order can also be affected by the "versionsort.suffix"
+	configuration variable.
 	The keys supported are the same as those in `git for-each-ref`.
 	Sort order defaults to the value configured for the `tag.sort`
 	variable if it exists, or lexicographic order otherwise. See
 	linkgit:git-config[1].
+
+--color[=<when>]::
+	Respect any colors specified in the `--format` option. The
+	`<when>` field must be one of `always`, `never`, or `auto` (if
+	`<when>` is absent, behave as if `always` was given).
 
 -i::
 --ignore-case::
@@ -122,10 +134,23 @@ This option is only applicable when listing tags without annotation lines.
 
 --contains [<commit>]::
 	Only list tags which contain the specified commit (HEAD if not
-	specified).
+	specified). Implies `--list`.
+
+--no-contains [<commit>]::
+	Only list tags which don't contain the specified commit (HEAD if
+	not specified). Implies `--list`.
+
+--merged [<commit>]::
+	Only list tags whose commits are reachable from the specified
+	commit (`HEAD` if not specified), incompatible with `--no-merged`.
+
+--no-merged [<commit>]::
+	Only list tags whose commits are not reachable from the specified
+	commit (`HEAD` if not specified), incompatible with `--merged`.
 
 --points-at <object>::
-	Only list tags of the given object.
+	Only list tags of the given object (HEAD if not
+	specified). Implies `--list`.
 
 -m <msg>::
 --message=<msg>::
@@ -142,6 +167,12 @@ This option is only applicable when listing tags without annotation lines.
 	Implies `-a` if none of `-a`, `-s`, or `-u <keyid>`
 	is given.
 
+-e::
+--edit::
+	The message taken from file with `-F` and command line with
+	`-m` are usually used as the tag message unmodified.
+	This option lets you further edit the message taken from these sources.
+
 --cleanup=<mode>::
 	This option sets how the tag message is cleaned up.
 	The  '<mode>' can be one of 'verbatim', 'whitespace' and 'strip'.  The
@@ -150,7 +181,17 @@ This option is only applicable when listing tags without annotation lines.
 	'strip' removes both whitespace and commentary.
 
 --create-reflog::
-	Create a reflog for the tag.
+	Create a reflog for the tag. To globally enable reflogs for tags, see
+	`core.logAllRefUpdates` in linkgit:git-config[1].
+	The negated form `--no-create-reflog` only overrides an earlier
+	`--create-reflog`, but currently does not negate the setting of
+	`core.logAllRefUpdates`.
+
+--format=<format>::
+	A string that interpolates `%(fieldname)` from a tag ref being shown
+	and the object it points at.  The format is the same as
+	that of linkgit:git-for-each-ref[1].  When unspecified,
+	defaults to `%(refname:strip=2)`.
 
 <tagname>::
 	The name of the tag to create, delete, or describe.
@@ -162,17 +203,6 @@ This option is only applicable when listing tags without annotation lines.
 <object>::
 	The object that the new tag will refer to, usually a commit.
 	Defaults to HEAD.
-
-<format>::
-	A string that interpolates `%(fieldname)` from the object
-	pointed at by a ref being shown.  The format is the same as
-	that of linkgit:git-for-each-ref[1].  When unspecified,
-	defaults to `%(refname:strip=2)`.
-
---[no-]merged [<commit>]::
-	Only list tags whose tips are reachable, or not reachable
-	if `--no-merged` is used, from the specified commit (`HEAD`
-	if not specified).
 
 CONFIGURATION
 -------------
@@ -186,6 +216,9 @@ it in the repository configuration as follows:
     signingKey = <gpg-keyid>
 -------------------------------------
 
+`pager.tag` is only respected when listing tags, i.e., when `-l` is
+used or implied. The default is to use a pager.
+See linkgit:git-config[1].
 
 DISCUSSION
 ----------
@@ -204,16 +237,16 @@ your repository directly), then others will have already seen
 the old tag. In that case you can do one of two things:
 
 . The sane thing.
-Just admit you screwed up, and use a different name. Others have
-already seen one tag-name, and if you keep the same name, you
-may be in the situation that two people both have "version X",
-but they actually have 'different' "X"'s.  So just call it "X.1"
-and be done with it.
+  Just admit you screwed up, and use a different name. Others have
+  already seen one tag-name, and if you keep the same name, you
+  may be in the situation that two people both have "version X",
+  but they actually have 'different' "X"'s.  So just call it "X.1"
+  and be done with it.
 
 . The insane thing.
-You really want to call the new version "X" too, 'even though'
-others have already seen the old one. So just use 'git tag -f'
-again, as if you hadn't already published the old one.
+  You really want to call the new version "X" too, 'even though'
+  others have already seen the old one. So just use 'git tag -f'
+  again, as if you hadn't already published the old one.
 
 However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a

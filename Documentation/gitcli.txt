@@ -110,8 +110,8 @@ couple of magic command-line options:
 +
 ---------------------------------------------
 $ git describe -h
-usage: git describe [options] <commit-ish>*
-   or: git describe [options] --dirty
+usage: git describe [<options>] <commit-ish>*
+   or: git describe [<options>] --dirty
 
     --contains            find the tag that comes after the commit
     --debug               debug search strategy on stderr
@@ -194,7 +194,7 @@ different things.
  * The `--index` option is used to ask a command that
    usually works on files in the working tree to *also*
    affect the index.  For example, `git stash apply` usually
-   merges changes recorded in a stash to the working tree,
+   merges changes recorded in a stash entry to the working tree,
    but with the `--index` option, it also merges changes to
    the index as well.
 

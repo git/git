@@ -4,6 +4,8 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "config.h"
+#include "object-store.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
@@ -31,21 +33,18 @@ static const  char * const ls_tree_usage[] = {
 
 static int show_recursive(const char *base, int baselen, const char *pathname)
 {
-	const char **s;
+	int i;
 
 	if (ls_options & LS_RECURSIVE)
 		return 1;
 
-	s = pathspec._raw;
-	if (!s)
+	if (!pathspec.nr)
 		return 0;
 
-	for (;;) {
-		const char *spec = *s++;
+	for (i = 0; i < pathspec.nr; i++) {
+		const char *spec = pathspec.items[i].match;
 		int len, speclen;
 
-		if (!spec)
-			return 0;
 		if (strncmp(base, spec, baselen))
 			continue;
 		len = strlen(pathname);
@@ -59,9 +58,10 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 			continue;
 		return 1;
 	}
+	return 0;
 }
 
-static int show_tree(const unsigned char *sha1, struct strbuf *base,
+static int show_tree(const struct object_id *oid, struct strbuf *base,
 		const char *pathname, unsigned mode, int stage, void *context)
 {
 	int retval = 0;
@@ -95,20 +95,20 @@ static int show_tree(const unsigned char *sha1, struct strbuf *base,
 			char size_text[24];
 			if (!strcmp(type, blob_type)) {
 				unsigned long size;
-				if (sha1_object_info(sha1, &size) == OBJ_BAD)
+				if (oid_object_info(the_repository, oid, &size) == OBJ_BAD)
 					xsnprintf(size_text, sizeof(size_text),
 						  "BAD");
 				else
 					xsnprintf(size_text, sizeof(size_text),
-						  "%lu", size);
+						  "%"PRIuMAX, (uintmax_t)size);
 			} else
 				xsnprintf(size_text, sizeof(size_text), "-");
 			printf("%06o %s %s %7s\t", mode, type,
-			       find_unique_abbrev(sha1, abbrev),
+			       find_unique_abbrev(oid, abbrev),
 			       size_text);
 		} else
 			printf("%06o %s %s\t", mode, type,
-			       find_unique_abbrev(sha1, abbrev));
+			       find_unique_abbrev(oid, abbrev));
 	}
 	baselen = base->len;
 	strbuf_addstr(base, pathname);
@@ -121,7 +121,7 @@ static int show_tree(const unsigned char *sha1, struct strbuf *base,
 
 int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct tree *tree;
 	int i, full_tree = 0;
 	const struct option ls_tree_options[] = {
@@ -166,7 +166,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 
 	if (argc < 1)
 		usage_with_options(ls_tree_usage, ls_tree_options);
-	if (get_sha1(argv[0], sha1))
+	if (get_oid(argv[0], &oid))
 		die("Not a valid object name %s", argv[0]);
 
 	/*
@@ -175,15 +175,16 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	 * cannot be lifted until it is converted to use
 	 * match_pathspec() or tree_entry_interesting()
 	 */
-	parse_pathspec(&pathspec, PATHSPEC_GLOB | PATHSPEC_ICASE |
-				  PATHSPEC_EXCLUDE,
+	parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC &
+				  ~(PATHSPEC_FROMTOP | PATHSPEC_LITERAL),
 		       PATHSPEC_PREFER_CWD,
 		       prefix, argv + 1);
 	for (i = 0; i < pathspec.nr; i++)
 		pathspec.items[i].nowildcard_len = pathspec.items[i].len;
 	pathspec.has_wildcard = 0;
-	tree = parse_tree_indirect(sha1);
+	tree = parse_tree_indirect(&oid);
 	if (!tree)
 		die("not a tree object");
-	return !!read_tree_recursive(tree, "", 0, 0, &pathspec, show_tree, NULL);
+	return !!read_tree_recursive(the_repository, tree, "", 0, 0,
+				     &pathspec, show_tree, NULL);
 }

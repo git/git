@@ -3,7 +3,7 @@ gitattributes(5)
 
 NAME
 ----
-gitattributes - defining attributes per path
+gitattributes - Defining attributes per path
 
 SYNOPSIS
 --------
@@ -18,12 +18,14 @@ A `gitattributes` file is a simple text file that gives
 
 Each line in `gitattributes` file is of form:
 
-	pattern	attr1 attr2 ...
+	pattern attr1 attr2 ...
 
 That is, a pattern followed by an attributes list,
-separated by whitespaces.  When the pattern matches the
-path in question, the attributes listed on the line are given to
-the path.
+separated by whitespaces. Leading and trailing whitespaces are
+ignored. Lines that begin with '#' are ignored. Patterns
+that begin with a double quote are quoted in C style.
+When the pattern matches the path in question, the attributes
+listed on the line are given to the path.
 
 Each attribute can be in one of these states for a given path:
 
@@ -54,9 +56,16 @@ Unspecified::
 
 When more than one pattern matches the path, a later line
 overrides an earlier line.  This overriding is done per
-attribute.  The rules how the pattern matches paths are the
-same as in `.gitignore` files; see linkgit:gitignore[5].
-Unlike `.gitignore`, negative patterns are forbidden.
+attribute.
+
+The rules by which the pattern matches paths are the same as in
+`.gitignore` files (see linkgit:gitignore[5]), with a few exceptions:
+
+  - negative patterns are forbidden
+
+  - patterns that match a directory do not recursively match paths
+    inside that directory (so using the trailing-slash `path/` syntax is
+    pointless in an attributes file; use `path/**` instead)
 
 When deciding what attributes are assigned to a path, Git
 consults `$GIT_DIR/info/attributes` file (which has the highest
@@ -86,7 +95,7 @@ is either not set or empty, $HOME/.config/git/attributes is used instead.
 Attributes for all users on a system should be placed in the
 `$(prefix)/etc/gitattributes` file.
 
-Sometimes you would need to override an setting of an attribute
+Sometimes you would need to override a setting of an attribute
 for a path to `Unspecified` state.  This can be done by listing
 the name of the attribute prefixed with an exclamation point `!`.
 
@@ -115,7 +124,9 @@ text file is normalized, its line endings are converted to LF in the
 repository.  To control what line ending style is used in the working
 directory, use the `eol` attribute for a single file and the
 `core.eol` configuration variable for all text files.
-Note that `core.autocrlf` overrides `core.eol`
+Note that setting `core.autocrlf` to `true` or `input` overrides
+`core.eol` (see the definitions of those options in
+linkgit:git-config[1]).
 
 Set::
 
@@ -149,7 +160,10 @@ unspecified.
 
 This attribute sets a specific line-ending style to be used in the
 working directory.  It enables end-of-line conversion without any
-content checks, effectively setting the `text` attribute.
+content checks, effectively setting the `text` attribute.  Note that
+setting this attribute on paths which are in the index with CRLF line
+endings may make the paths to be considered dirty.  Adding the path to
+the index again will normalize the line endings in the index.
 
 Set to string value "crlf"::
 
@@ -227,11 +241,8 @@ From a clean working directory:
 
 -------------------------------------------------
 $ echo "* text=auto" >.gitattributes
-$ rm .git/index     # Remove the index to force Git to
-$ git reset         # re-scan the working directory
+$ git add --renormalize .
 $ git status        # Show files that will be normalized
-$ git add -u
-$ git add .gitattributes
 $ git commit -m "Introduce end-of-line normalization"
 -------------------------------------------------
 
@@ -268,6 +279,96 @@ few exceptions.  Even though...
 - 'git diff' itself does not touch the files in the work tree, it is
   often run to inspect the changes you intend to next 'git add'.  To
   catch potential problems early, safety triggers.
+
+
+`working-tree-encoding`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Git recognizes files encoded in ASCII or one of its supersets (e.g.
+UTF-8, ISO-8859-1, ...) as text files. Files encoded in certain other
+encodings (e.g. UTF-16) are interpreted as binary and consequently
+built-in Git text processing tools (e.g. 'git diff') as well as most Git
+web front ends do not visualize the contents of these files by default.
+
+In these cases you can tell Git the encoding of a file in the working
+directory with the `working-tree-encoding` attribute. If a file with this
+attribute is added to Git, then Git reencodes the content from the
+specified encoding to UTF-8. Finally, Git stores the UTF-8 encoded
+content in its internal data structure (called "the index"). On checkout
+the content is reencoded back to the specified encoding.
+
+Please note that using the `working-tree-encoding` attribute may have a
+number of pitfalls:
+
+- Alternative Git implementations (e.g. JGit or libgit2) and older Git
+  versions (as of March 2018) do not support the `working-tree-encoding`
+  attribute. If you decide to use the `working-tree-encoding` attribute
+  in your repository, then it is strongly recommended to ensure that all
+  clients working with the repository support it.
++
+For example, Microsoft Visual Studio resources files (`*.rc`) or
+PowerShell script files (`*.ps1`) are sometimes encoded in UTF-16.
+If you declare `*.ps1` as files as UTF-16 and you add `foo.ps1` with
+a `working-tree-encoding` enabled Git client, then `foo.ps1` will be
+stored as UTF-8 internally. A client without `working-tree-encoding`
+support will checkout `foo.ps1` as UTF-8 encoded file. This will
+typically cause trouble for the users of this file.
++
+If a Git client that does not support the `working-tree-encoding`
+attribute adds a new file `bar.ps1`, then `bar.ps1` will be
+stored "as-is" internally (in this example probably as UTF-16).
+A client with `working-tree-encoding` support will interpret the
+internal contents as UTF-8 and try to convert it to UTF-16 on checkout.
+That operation will fail and cause an error.
+
+- Reencoding content to non-UTF encodings can cause errors as the
+  conversion might not be UTF-8 round trip safe. If you suspect your
+  encoding to not be round trip safe, then add it to
+  `core.checkRoundtripEncoding` to make Git check the round trip
+  encoding (see linkgit:git-config[1]). SHIFT-JIS (Japanese character
+  set) is known to have round trip issues with UTF-8 and is checked by
+  default.
+
+- Reencoding content requires resources that might slow down certain
+  Git operations (e.g 'git checkout' or 'git add').
+
+Use the `working-tree-encoding` attribute only if you cannot store a file
+in UTF-8 encoding and if you want Git to be able to process the content
+as text.
+
+As an example, use the following attributes if your '*.ps1' files are
+UTF-16 encoded with byte order mark (BOM) and you want Git to perform
+automatic line ending conversion based on your platform.
+
+------------------------
+*.ps1		text working-tree-encoding=UTF-16
+------------------------
+
+Use the following attributes if your '*.ps1' files are UTF-16 little
+endian encoded without BOM and you want Git to use Windows line endings
+in the working directory (use `UTF-16LE-BOM` instead of `UTF-16LE` if
+you want UTF-16 little endian with BOM).
+Please note, it is highly recommended to
+explicitly define the line endings with `eol` if the `working-tree-encoding`
+attribute is used to avoid ambiguity.
+
+------------------------
+*.ps1		text working-tree-encoding=UTF-16LE eol=CRLF
+------------------------
+
+You can get a list of all available encodings on your platform with the
+following command:
+
+------------------------
+iconv --list
+------------------------
+
+If you do not know the encoding of a file, then you can use the `file`
+command to guess the encoding:
+
+------------------------
+file foo.ps1
+------------------------
 
 
 `ident`
@@ -324,6 +425,9 @@ a non-zero status, is not an error but makes the filter a no-op passthru.
 You can declare that a filter turns a content that by itself is unusable
 into a usable content by setting the filter.<driver>.required configuration
 variable to `true`.
+
+Note: Whenever the clean filter is changed, the repo should be renormalized:
+$ git add --renormalize .
 
 For example, in .gitattributes, you would assign the `filter`
 attribute for paths.
@@ -387,46 +491,14 @@ Long Running Filter Process
 If the filter command (a string value) is defined via
 `filter.<driver>.process` then Git can process all blobs with a
 single filter invocation for the entire life of a single Git
-command. This is achieved by using a packet format (pkt-line,
-see technical/protocol-common.txt) based protocol over standard
-input and standard output as follows. All packets, except for the
-"*CONTENT" packets and the "0000" flush packet, are considered
-text and therefore are terminated by a LF.
+command. This is achieved by using the long-running process protocol
+(described in technical/long-running-process-protocol.txt).
 
-Git starts the filter when it encounters the first file
-that needs to be cleaned or smudged. After the filter started
-Git sends a welcome message ("git-filter-client"), a list of supported
-protocol version numbers, and a flush packet. Git expects to read a welcome
-response message ("git-filter-server"), exactly one protocol version number
-from the previously sent list, and a flush packet. All further
-communication will be based on the selected version. The remaining
-protocol description below documents "version=2". Please note that
-"version=42" in the example below does not exist and is only there
-to illustrate how the protocol would look like with more than one
-version.
-
-After the version negotiation Git sends a list of all capabilities that
-it supports and a flush packet. Git expects to read a list of desired
-capabilities, which must be a subset of the supported capabilities list,
-and a flush packet as response:
-------------------------
-packet:          git> git-filter-client
-packet:          git> version=2
-packet:          git> version=42
-packet:          git> 0000
-packet:          git< git-filter-server
-packet:          git< version=2
-packet:          git< 0000
-packet:          git> capability=clean
-packet:          git> capability=smudge
-packet:          git> capability=not-yet-invented
-packet:          git> 0000
-packet:          git< capability=clean
-packet:          git< capability=smudge
-packet:          git< 0000
-------------------------
-Supported filter capabilities in version 2 are "clean" and
-"smudge".
+When Git encounters the first file that needs to be cleaned or smudged,
+it starts the filter and performs the handshake. In the handshake, the
+welcome message sent by Git is "git-filter-client", only version 2 is
+suppported, and the supported capabilities are "clean", "smudge", and
+"delay".
 
 Afterwards Git sends a list of "key=value" pairs terminated with
 a flush packet. The list will contain at least the filter command
@@ -512,11 +584,66 @@ the protocol then Git will stop the filter process and restart it
 with the next file that needs to be processed. Depending on the
 `filter.<driver>.required` flag Git will interpret that as error.
 
-After the filter has processed a blob it is expected to wait for
-the next "key=value" list containing a command. Git will close
-the command pipe on exit. The filter is expected to detect EOF
-and exit gracefully on its own. Git will wait until the filter
-process has stopped.
+Delay
+^^^^^
+
+If the filter supports the "delay" capability, then Git can send the
+flag "can-delay" after the filter command and pathname. This flag
+denotes that the filter can delay filtering the current blob (e.g. to
+compensate network latencies) by responding with no content but with
+the status "delayed" and a flush packet.
+------------------------
+packet:          git> command=smudge
+packet:          git> pathname=path/testfile.dat
+packet:          git> can-delay=1
+packet:          git> 0000
+packet:          git> CONTENT
+packet:          git> 0000
+packet:          git< status=delayed
+packet:          git< 0000
+------------------------
+
+If the filter supports the "delay" capability then it must support the
+"list_available_blobs" command. If Git sends this command, then the
+filter is expected to return a list of pathnames representing blobs
+that have been delayed earlier and are now available.
+The list must be terminated with a flush packet followed
+by a "success" status that is also terminated with a flush packet. If
+no blobs for the delayed paths are available, yet, then the filter is
+expected to block the response until at least one blob becomes
+available. The filter can tell Git that it has no more delayed blobs
+by sending an empty list. As soon as the filter responds with an empty
+list, Git stops asking. All blobs that Git has not received at this
+point are considered missing and will result in an error.
+
+------------------------
+packet:          git> command=list_available_blobs
+packet:          git> 0000
+packet:          git< pathname=path/testfile.dat
+packet:          git< pathname=path/otherfile.dat
+packet:          git< 0000
+packet:          git< status=success
+packet:          git< 0000
+------------------------
+
+After Git received the pathnames, it will request the corresponding
+blobs again. These requests contain a pathname and an empty content
+section. The filter is expected to respond with the smudged content
+in the usual way as explained above.
+------------------------
+packet:          git> command=smudge
+packet:          git> pathname=path/testfile.dat
+packet:          git> 0000
+packet:          git> 0000  # empty content!
+packet:          git< status=success
+packet:          git< 0000
+packet:          git< SMUDGED_CONTENT
+packet:          git< 0000
+packet:          git< 0000  # empty list, keep "status=success" unchanged!
+------------------------
+
+Example
+^^^^^^^
 
 A long running filter demo implementation can be found in
 `contrib/long-running-filter/example.pl` located in the Git
@@ -685,6 +812,8 @@ patterns are available:
 - `fortran` suitable for source code in the Fortran language.
 
 - `fountain` suitable for Fountain documents.
+
+- `golang` suitable for source code in the Go language.
 
 - `html` suitable for HTML/XHTML documents.
 
@@ -1104,8 +1233,8 @@ to:
 ------------
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 If you have these three `gitattributes` file:
 

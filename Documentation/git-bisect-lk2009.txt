@@ -633,11 +633,11 @@ and so at step 3) we compute f(X).
 Let's take the following graph as an example:
 
 -------------
-	    G-H-I-J
-	   /       \
+            G-H-I-J
+           /       \
 A-B-C-D-E-F         O
-	   \       /
-	    K-L-M-N
+           \       /
+            K-L-M-N
 -------------
 
 If we compute the following non optimal function on it:
@@ -649,25 +649,25 @@ g(X) = min(number_of_ancestors(X), number_of_descendants(X))
 we get:
 
 -------------
-	    4 3 2 1
-	    G-H-I-J
+            4 3 2 1
+            G-H-I-J
 1 2 3 4 5 6/       \0
 A-B-C-D-E-F         O
-	   \       /
-	    K-L-M-N
-	    4 3 2 1
+           \       /
+            K-L-M-N
+            4 3 2 1
 -------------
 
 but with the algorithm used by git bisect we get:
 
 -------------
-	    7 7 6 5
-	    G-H-I-J
+            7 7 6 5
+            G-H-I-J
 1 2 3 4 5 6/       \0
 A-B-C-D-E-F         O
-	   \       /
-	    K-L-M-N
-	    7 7 6 5
+           \       /
+            K-L-M-N
+            7 7 6 5
 -------------
 
 So we chose G, H, K or L as the best bisection point, which is better
@@ -773,7 +773,7 @@ forked of the main branch at a commit named "D" like this:
 -------------
 A-B-C-D-E-F-G  <--main
        \
-	H-I-J  <--dev
+        H-I-J  <--dev
 -------------
 
 The commit "D" is called a "merge base" for branch "main" and "dev"
@@ -1103,7 +1103,7 @@ _____________
 Combining test suites, git bisect and other systems together
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We have seen that test suites an git bisect are very powerful when
+We have seen that test suites and git bisect are very powerful when
 used together. It can be even more powerful if you can combine them
 with other systems.
 
@@ -1347,12 +1347,12 @@ author to given a talk and for publishing this paper.
 References
 ----------
 
-- [[[1]]] http://www.nist.gov/public_affairs/releases/n02-10.htm['Software Errors Cost U.S. Economy $59.5 Billion Annually'. Nist News Release.]
-- [[[2]]] http://java.sun.com/docs/codeconv/html/CodeConventions.doc.html#16712['Code Conventions for the Java Programming Language'. Sun Microsystems.]
-- [[[3]]] http://en.wikipedia.org/wiki/Software_maintenance['Software maintenance'. Wikipedia.]
-- [[[4]]] http://article.gmane.org/gmane.comp.version-control.git/45195/[Junio C Hamano. 'Automated bisect success story'. Gmane.]
-- [[[5]]] http://lwn.net/Articles/317154/[Christian Couder. 'Fully automated bisecting with "git bisect run"'. LWN.net.]
-- [[[6]]] http://lwn.net/Articles/277872/[Jonathan Corbet. 'Bisection divides users and developers'. LWN.net.]
-- [[[7]]] http://article.gmane.org/gmane.linux.scsi/36652/[Ingo Molnar. 'Re: BUG 2.6.23-rc3 can't see sd partitions on Alpha'. Gmane.]
-- [[[8]]] http://www.kernel.org/pub/software/scm/git/docs/git-bisect.html[Junio C Hamano and the git-list. 'git-bisect(1) Manual Page'. Linux Kernel Archives.]
-- [[[9]]] http://github.com/Ealdwulf/bbchop[Ealdwulf. 'bbchop'. GitHub.]
+- [[[1]]] https://www.nist.gov/sites/default/files/documents/director/planning/report02-3.pdf['The Economic Impacts of Inadequate Infratructure for Software Testing'.  Nist Planning Report 02-3], see Executive Summary and Chapter 8.
+- [[[2]]] http://www.oracle.com/technetwork/java/codeconvtoc-136057.html['Code Conventions for the Java Programming Language'. Sun Microsystems.]
+- [[[3]]] https://en.wikipedia.org/wiki/Software_maintenance['Software maintenance'. Wikipedia.]
+- [[[4]]] https://public-inbox.org/git/7vps5xsbwp.fsf_-_@assigned-by-dhcp.cox.net/[Junio C Hamano. 'Automated bisect success story'.]
+- [[[5]]] https://lwn.net/Articles/317154/[Christian Couder. 'Fully automated bisecting with "git bisect run"'. LWN.net.]
+- [[[6]]] https://lwn.net/Articles/277872/[Jonathan Corbet. 'Bisection divides users and developers'. LWN.net.]
+- [[[7]]] http://marc.info/?l=linux-kernel&m=119702753411680&w=2[Ingo Molnar. 'Re: BUG 2.6.23-rc3 can't see sd partitions on Alpha'. Linux-kernel mailing list.]
+- [[[8]]] https://www.kernel.org/pub/software/scm/git/docs/git-bisect.html[Junio C Hamano and the git-list. 'git-bisect(1) Manual Page'. Linux Kernel Archives.]
+- [[[9]]] https://github.com/Ealdwulf/bbchop[Ealdwulf. 'bbchop'. GitHub.]

@@ -1,0 +1,28 @@
+(
+# LINT: 'if', 'then', 'elif', 'else', 'fi' do not need "&&"
+	if test -n ""
+	then
+# LINT: missing "&&" on 'echo'
+		echo very
+# LINT: last statement before 'elif' does not need "&&"
+		echo empty
+	elif test -z ""
+# LINT: last statement before 'else' does not need "&&"
+		echo foo
+	else
+		echo foo &&
+# LINT: last statement before 'fi' does not need "&&"
+		cat <<-\EOF
+		bar
+		EOF
+# LINT: missing "&&" on 'fi'
+	fi
+	echo poodle
+) &&
+(
+# LINT: 'then' on same line as 'if'
+	if test -n ""; then
+		echo very &&
+		echo empty
+	if
+)

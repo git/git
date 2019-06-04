@@ -41,8 +41,7 @@ test_expect_success 'no warning with bogus GIT_INDEX_VERSION and existing index'
 		GIT_INDEX_VERSION=1 &&
 		export GIT_INDEX_VERSION &&
 		git add a 2>actual.err &&
-		>expect.err &&
-		test_i18ncmp expect.err actual.err
+		test_must_be_empty actual.err
 	)
 '
 
@@ -68,7 +67,7 @@ test_expect_success 'GIT_INDEX_VERSION takes precedence over config' '
 		git config --add index.version 2 &&
 		git add a 2>&1 &&
 		echo 4 >expect &&
-		test-index-version <.git/index >actual &&
+		test-tool index-version <.git/index >actual &&
 		test_cmp expect actual
 	)
 '

@@ -6,74 +6,102 @@
 test_description='Test git update-ref and basic ref logging'
 . ./test-lib.sh
 
-Z=$_z40
-
-test_expect_success setup '
-
-	for name in A B C D E F
-	do
-		test_tick &&
-		T=$(git write-tree) &&
-		sha1=$(echo $name | git commit-tree $T) &&
-		eval $name=$sha1
-	done
-
-'
+Z=$ZERO_OID
 
 m=refs/heads/master
 n_dir=refs/heads/gu
 n=$n_dir/fixes
 outside=refs/foo
+bare=bare-repo
 
-test_expect_success \
-	"create $m" \
-	"git update-ref $m $A &&
-	 test $A"' = $(cat .git/'"$m"')'
-test_expect_success \
-	"create $m" \
-	"git update-ref $m $B $A &&
-	 test $B"' = $(cat .git/'"$m"')'
+create_test_commits ()
+{
+	prfx="$1"
+	for name in A B C D E F
+	do
+		test_tick &&
+		T=$(git write-tree) &&
+		sha1=$(echo $name | git commit-tree $T) &&
+		eval $prfx$name=$sha1
+	done
+}
+
+test_expect_success setup '
+	create_test_commits "" &&
+	mkdir $bare &&
+	cd $bare &&
+	git init --bare &&
+	create_test_commits "bare" &&
+	cd -
+'
+
+test_expect_success "create $m" '
+	git update-ref $m $A &&
+	test $A = $(cat .git/$m)
+'
+test_expect_success "create $m with oldvalue verification" '
+	git update-ref $m $B $A &&
+	test $B = $(cat .git/$m)
+'
 test_expect_success "fail to delete $m with stale ref" '
 	test_must_fail git update-ref -d $m $A &&
 	test $B = "$(cat .git/$m)"
 '
 test_expect_success "delete $m" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref -d $m $B &&
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 '
-rm -f .git/$m
 
-test_expect_success "delete $m without oldvalue verification" "
+test_expect_success "delete $m without oldvalue verification" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref $m $A &&
-	test $A = \$(cat .git/$m) &&
+	test $A = $(cat .git/$m) &&
 	git update-ref -d $m &&
-	! test -f .git/$m
-"
-rm -f .git/$m
+	test_path_is_missing .git/$m
+'
 
-test_expect_success \
-	"fail to create $n" \
-	"touch .git/$n_dir &&
-	 test_must_fail git update-ref $n $A >out 2>err"
-rm -f .git/$n_dir out err
+test_expect_success "fail to create $n" '
+	test_when_finished "rm -f .git/$n_dir" &&
+	touch .git/$n_dir &&
+	test_must_fail git update-ref $n $A
+'
 
-test_expect_success \
-	"create $m (by HEAD)" \
-	"git update-ref HEAD $A &&
-	 test $A"' = $(cat .git/'"$m"')'
-test_expect_success \
-	"create $m (by HEAD)" \
-	"git update-ref HEAD $B $A &&
-	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "create $m (by HEAD)" '
+	git update-ref HEAD $A &&
+	test $A = $(cat .git/$m)
+'
+test_expect_success "create $m (by HEAD) with oldvalue verification" '
+	git update-ref HEAD $B $A &&
+	test $B = $(cat .git/$m)
+'
 test_expect_success "fail to delete $m (by HEAD) with stale ref" '
 	test_must_fail git update-ref -d HEAD $A &&
 	test $B = $(cat .git/$m)
 '
 test_expect_success "delete $m (by HEAD)" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref -d HEAD $B &&
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 '
-rm -f .git/$m
+
+test_expect_success "deleting current branch adds message to HEAD's log" '
+	test_when_finished "rm -f .git/$m" &&
+	git update-ref $m $A &&
+	git symbolic-ref HEAD $m &&
+	git update-ref -m delete-$m -d $m &&
+	test_path_is_missing .git/$m &&
+	grep "delete-$m$" .git/logs/HEAD
+'
+
+test_expect_success "deleting by HEAD adds message to HEAD's log" '
+	test_when_finished "rm -f .git/$m" &&
+	git update-ref $m $A &&
+	git symbolic-ref HEAD $m &&
+	git update-ref -m delete-by-head -d HEAD &&
+	test_path_is_missing .git/$m &&
+	grep "delete-by-head$" .git/logs/HEAD
+'
 
 test_expect_success 'update-ref does not create reflogs by default' '
 	test_when_finished "git update-ref -d $outside" &&
@@ -93,40 +121,96 @@ test_expect_success 'update-ref creates reflogs with --create-reflog' '
 	git reflog exists $outside
 '
 
-test_expect_success \
-	"create $m (by HEAD)" \
-	"git update-ref HEAD $A &&
-	 test $A"' = $(cat .git/'"$m"')'
-test_expect_success \
-	"pack refs" \
-	"git pack-refs --all"
-test_expect_success \
-	"move $m (by HEAD)" \
-	"git update-ref HEAD $B $A &&
-	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success 'creates no reflog in bare repository' '
+	git -C $bare update-ref $m $bareA &&
+	git -C $bare rev-parse $bareA >expect &&
+	git -C $bare rev-parse $m >actual &&
+	test_cmp expect actual &&
+	test_must_fail git -C $bare reflog exists $m
+'
+
+test_expect_success 'core.logAllRefUpdates=true creates reflog in bare repository' '
+	test_when_finished "git -C $bare config --unset core.logAllRefUpdates && \
+		rm $bare/logs/$m" &&
+	git -C $bare config core.logAllRefUpdates true &&
+	git -C $bare update-ref $m $bareB &&
+	git -C $bare rev-parse $bareB >expect &&
+	git -C $bare rev-parse $m >actual &&
+	test_cmp expect actual &&
+	git -C $bare reflog exists $m
+'
+
+test_expect_success 'core.logAllRefUpdates=true does not create reflog by default' '
+	test_config core.logAllRefUpdates true &&
+	test_when_finished "git update-ref -d $outside" &&
+	git update-ref $outside $A &&
+	git rev-parse $A >expect &&
+	git rev-parse $outside >actual &&
+	test_cmp expect actual &&
+	test_must_fail git reflog exists $outside
+'
+
+test_expect_success 'core.logAllRefUpdates=always creates reflog by default' '
+	test_config core.logAllRefUpdates always &&
+	test_when_finished "git update-ref -d $outside" &&
+	git update-ref $outside $A &&
+	git rev-parse $A >expect &&
+	git rev-parse $outside >actual &&
+	test_cmp expect actual &&
+	git reflog exists $outside
+'
+
+test_expect_success 'core.logAllRefUpdates=always creates no reflog for ORIG_HEAD' '
+	test_config core.logAllRefUpdates always &&
+	git update-ref ORIG_HEAD $A &&
+	test_must_fail git reflog exists ORIG_HEAD
+'
+
+test_expect_success '--no-create-reflog overrides core.logAllRefUpdates=always' '
+	test_config core.logAllRefUpdates true &&
+	test_when_finished "git update-ref -d $outside" &&
+	git update-ref --no-create-reflog $outside $A &&
+	git rev-parse $A >expect &&
+	git rev-parse $outside >actual &&
+	test_cmp expect actual &&
+	test_must_fail git reflog exists $outside
+'
+
+test_expect_success "create $m (by HEAD)" '
+	git update-ref HEAD $A &&
+	test $A = $(cat .git/$m)
+'
+test_expect_success 'pack refs' '
+	git pack-refs --all
+'
+test_expect_success "move $m (by HEAD)" '
+	git update-ref HEAD $B $A &&
+	test $B = $(cat .git/$m)
+'
 test_expect_success "delete $m (by HEAD) should remove both packed and loose $m" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref -d HEAD $B &&
 	! grep "$m" .git/packed-refs &&
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 '
-rm -f .git/$m
 
 cp -f .git/HEAD .git/HEAD.orig
-test_expect_success "delete symref without dereference" '
+test_expect_success 'delete symref without dereference' '
+	test_when_finished "cp -f .git/HEAD.orig .git/HEAD" &&
 	git update-ref --no-deref -d HEAD &&
-	! test -f .git/HEAD
+	test_path_is_missing .git/HEAD
 '
-cp -f .git/HEAD.orig .git/HEAD
 
-test_expect_success "delete symref without dereference when the referred ref is packed" '
+test_expect_success 'delete symref without dereference when the referred ref is packed' '
+	test_when_finished "cp -f .git/HEAD.orig .git/HEAD" &&
 	echo foo >foo.c &&
 	git add foo.c &&
 	git commit -m foo &&
 	git pack-refs --all &&
 	git update-ref --no-deref -d HEAD &&
-	! test -f .git/HEAD
+	test_path_is_missing .git/HEAD
 '
-cp -f .git/HEAD.orig .git/HEAD
+
 git update-ref -d $m
 
 test_expect_success 'update-ref -d is not confused by self-reference' '
@@ -155,86 +239,114 @@ test_expect_success 'update-ref --no-deref -d can delete reference to bad ref' '
 	test_path_is_missing .git/refs/heads/ref-to-bad
 '
 
-test_expect_success '(not) create HEAD with old sha1' "
+test_expect_success '(not) create HEAD with old sha1' '
 	test_must_fail git update-ref HEAD $A $B
-"
-test_expect_success "(not) prior created .git/$m" "
-	! test -f .git/$m
-"
-rm -f .git/$m
-
-test_expect_success \
-	"create HEAD" \
-	"git update-ref HEAD $A"
-test_expect_success '(not) change HEAD with wrong SHA1' "
-	test_must_fail git update-ref HEAD $B $Z
-"
-test_expect_success "(not) changed .git/$m" "
-	! test $B"' = $(cat .git/'"$m"')
 '
-rm -f .git/$m
+test_expect_success "(not) prior created .git/$m" '
+	test_when_finished "rm -f .git/$m" &&
+	test_path_is_missing .git/$m
+'
+
+test_expect_success 'create HEAD' '
+	git update-ref HEAD $A
+'
+test_expect_success '(not) change HEAD with wrong SHA1' '
+	test_must_fail git update-ref HEAD $B $Z
+'
+test_expect_success "(not) changed .git/$m" '
+	test_when_finished "rm -f .git/$m" &&
+	! test $B = $(cat .git/$m)
+'
 
 rm -f .git/logs/refs/heads/master
-test_expect_success \
-	"create $m (logged by touch)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
-	 git update-ref --create-reflog HEAD '"$A"' -m "Initial Creation" &&
-	 test '"$A"' = $(cat .git/'"$m"')'
-test_expect_success \
-	"update $m (logged by touch)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:31" \
-	 git update-ref HEAD'" $B $A "'-m "Switch" &&
-	 test '"$B"' = $(cat .git/'"$m"')'
-test_expect_success \
-	"set $m (logged by touch)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:41" \
-	 git update-ref HEAD'" $A &&
-	 test $A"' = $(cat .git/'"$m"')'
+test_expect_success "create $m (logged by touch)" '
+	test_config core.logAllRefUpdates false &&
+	GIT_COMMITTER_DATE="2005-05-26 23:30" \
+	git update-ref --create-reflog HEAD $A -m "Initial Creation" &&
+	test $A = $(cat .git/$m)
+'
+test_expect_success "update $m (logged by touch)" '
+	test_config core.logAllRefUpdates false &&
+	GIT_COMMITTER_DATE="2005-05-26 23:31" \
+	git update-ref HEAD $B $A -m "Switch" &&
+	test $B = $(cat .git/$m)
+'
+test_expect_success "set $m (logged by touch)" '
+	test_config core.logAllRefUpdates false &&
+	GIT_COMMITTER_DATE="2005-05-26 23:41" \
+	git update-ref HEAD $A &&
+	test $A = $(cat .git/$m)
+'
+
+test_expect_success 'empty directory removal' '
+	git branch d1/d2/r1 HEAD &&
+	git branch d1/r2 HEAD &&
+	test_path_is_file .git/refs/heads/d1/d2/r1 &&
+	test_path_is_file .git/logs/refs/heads/d1/d2/r1 &&
+	git branch -d d1/d2/r1 &&
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	test_path_is_missing .git/logs/refs/heads/d1/d2 &&
+	test_path_is_file .git/refs/heads/d1/r2 &&
+	test_path_is_file .git/logs/refs/heads/d1/r2
+'
+
+test_expect_success 'symref empty directory removal' '
+	git branch e1/e2/r1 HEAD &&
+	git branch e1/r2 HEAD &&
+	git checkout e1/e2/r1 &&
+	test_when_finished "git checkout master" &&
+	test_path_is_file .git/refs/heads/e1/e2/r1 &&
+	test_path_is_file .git/logs/refs/heads/e1/e2/r1 &&
+	git update-ref -d HEAD &&
+	test_path_is_missing .git/refs/heads/e1/e2 &&
+	test_path_is_missing .git/logs/refs/heads/e1/e2 &&
+	test_path_is_file .git/refs/heads/e1/r2 &&
+	test_path_is_file .git/logs/refs/heads/e1/r2 &&
+	test_path_is_file .git/logs/HEAD
+'
 
 cat >expect <<EOF
 $Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	Initial Creation
 $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150260 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
-test_expect_success \
-	"verifying $m's log" \
-	"test_cmp expect .git/logs/$m"
-rm -rf .git/$m .git/logs expect
+test_expect_success "verifying $m's log (logged by touch)" '
+	test_when_finished "rm -rf .git/$m .git/logs expect" &&
+	test_cmp expect .git/logs/$m
+'
 
-test_expect_success \
-	'enable core.logAllRefUpdates' \
-	'git config core.logAllRefUpdates true &&
-	 test true = $(git config --bool --get core.logAllRefUpdates)'
-
-test_expect_success \
-	"create $m (logged by config)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:32" \
-	 git update-ref HEAD'" $A "'-m "Initial Creation" &&
-	 test '"$A"' = $(cat .git/'"$m"')'
-test_expect_success \
-	"update $m (logged by config)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:33" \
-	 git update-ref HEAD'" $B $A "'-m "Switch" &&
-	 test '"$B"' = $(cat .git/'"$m"')'
-test_expect_success \
-	"set $m (logged by config)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:43" \
-	 git update-ref HEAD '"$A &&
-	 test $A"' = $(cat .git/'"$m"')'
+test_expect_success "create $m (logged by config)" '
+	test_config core.logAllRefUpdates true &&
+	GIT_COMMITTER_DATE="2005-05-26 23:32" \
+	git update-ref HEAD $A -m "Initial Creation" &&
+	test $A = $(cat .git/$m)
+'
+test_expect_success "update $m (logged by config)" '
+	test_config core.logAllRefUpdates true &&
+	GIT_COMMITTER_DATE="2005-05-26 23:33" \
+	git update-ref HEAD'" $B $A "'-m "Switch" &&
+	test $B = $(cat .git/$m)
+'
+test_expect_success "set $m (logged by config)" '
+	test_config core.logAllRefUpdates true &&
+	GIT_COMMITTER_DATE="2005-05-26 23:43" \
+	git update-ref HEAD $A &&
+	test $A = $(cat .git/$m)
+'
 
 cat >expect <<EOF
 $Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 +0000	Initial Creation
 $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
 EOF
-test_expect_success \
-	"verifying $m's log" \
-	'test_cmp expect .git/logs/$m'
-rm -f .git/$m .git/logs/$m expect
+test_expect_success "verifying $m's log (logged by config)" '
+	test_when_finished "rm -f .git/$m .git/logs/$m expect" &&
+	test_cmp expect .git/logs/$m
+'
 
 git update-ref $m $D
 cat >.git/logs/$m <<EOF
-0000000000000000000000000000000000000000 $C $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
+$Z $C $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
 $C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150350 -0500
 $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
 $F $Z $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
@@ -244,86 +356,85 @@ EOF
 ed="Thu, 26 May 2005 18:32:00 -0500"
 gd="Thu, 26 May 2005 18:33:00 -0500"
 ld="Thu, 26 May 2005 18:43:00 -0500"
-test_expect_success \
-	'Query "master@{May 25 2005}" (before history)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{May 25 2005}" >o 2>e &&
-	 test '"$C"' = $(cat o) &&
-	 test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
-test_expect_success \
-	"Query master@{2005-05-25} (before history)" \
-	'rm -f o e &&
-	 git rev-parse --verify master@{2005-05-25} >o 2>e &&
-	 test '"$C"' = $(cat o) &&
-	 echo test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
-test_expect_success \
-	'Query "master@{May 26 2005 23:31:59}" (1 second before history)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
-	 test '"$C"' = $(cat o) &&
-	 test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"'
-test_expect_success \
-	'Query "master@{May 26 2005 23:32:00}" (exactly history start)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
-	 test '"$C"' = $(cat o) &&
-	 test "" = "$(cat e)"'
-test_expect_success \
-	'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
-	 test '"$A"' = $(cat o) &&
-	 test "" = "$(cat e)"'
-test_expect_success \
-	'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{2005-05-26 23:33:01}" >o 2>e &&
-	 test '"$B"' = $(cat o) &&
-	 test "warning: Log for ref '"$m has gap after $gd"'." = "$(cat e)"'
-test_expect_success \
-	'Query "master@{2005-05-26 23:38:00}" (middle of history)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
-	 test '"$Z"' = $(cat o) &&
-	 test "" = "$(cat e)"'
-test_expect_success \
-	'Query "master@{2005-05-26 23:43:00}" (exact end of history)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
-	 test '"$E"' = $(cat o) &&
-	 test "" = "$(cat e)"'
-test_expect_success \
-	'Query "master@{2005-05-28}" (past end of history)' \
-	'rm -f o e &&
-	 git rev-parse --verify "master@{2005-05-28}" >o 2>e &&
-	 test '"$D"' = $(cat o) &&
-	 test "warning: Log for ref '"$m unexpectedly ended on $ld"'." = "$(cat e)"'
-
+test_expect_success 'Query "master@{May 25 2005}" (before history)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{May 25 2005}" >o 2>e &&
+	test $C = $(cat o) &&
+	test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
+'
+test_expect_success 'Query master@{2005-05-25} (before history)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify master@{2005-05-25} >o 2>e &&
+	test $C = $(cat o) &&
+	test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
+'
+test_expect_success 'Query "master@{May 26 2005 23:31:59}" (1 second before history)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
+	test $C = $(cat o) &&
+	test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
+'
+test_expect_success 'Query "master@{May 26 2005 23:32:00}" (exactly history start)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
+	test $C = $(cat o) &&
+	test "" = "$(cat e)"
+'
+test_expect_success 'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
+	test $A = $(cat o) &&
+	test "" = "$(cat e)"
+'
+test_expect_success 'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{2005-05-26 23:33:01}" >o 2>e &&
+	test $B = $(cat o) &&
+	test_i18ngrep -F "warning: log for ref $m has gap after $gd" e
+'
+test_expect_success 'Query "master@{2005-05-26 23:38:00}" (middle of history)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
+	test $Z = $(cat o) &&
+	test "" = "$(cat e)"
+'
+test_expect_success 'Query "master@{2005-05-26 23:43:00}" (exact end of history)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
+	test $E = $(cat o) &&
+	test "" = "$(cat e)"
+'
+test_expect_success 'Query "master@{2005-05-28}" (past end of history)' '
+	test_when_finished "rm -f o e" &&
+	git rev-parse --verify "master@{2005-05-28}" >o 2>e &&
+	test $D = $(cat o) &&
+	test_i18ngrep -F "warning: log for ref $m unexpectedly ended on $ld" e
+'
 
 rm -f .git/$m .git/logs/$m expect
 
-test_expect_success \
-    'creating initial files' \
-    'echo TEST >F &&
-     git add F &&
-	 GIT_AUTHOR_DATE="2005-05-26 23:30" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:30" git commit -m add -a &&
-	 h_TEST=$(git rev-parse --verify HEAD) &&
-	 echo The other day this did not work. >M &&
-	 echo And then Bob told me how to fix it. >>M &&
-	 echo OTHER >F &&
-	 GIT_AUTHOR_DATE="2005-05-26 23:41" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:41" git commit -F M -a &&
-	 h_OTHER=$(git rev-parse --verify HEAD) &&
-	 GIT_AUTHOR_DATE="2005-05-26 23:44" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:44" git commit --amend &&
-	 h_FIXED=$(git rev-parse --verify HEAD) &&
-	 echo Merged initial commit and a later commit. >M &&
-	 echo $h_TEST >.git/MERGE_HEAD &&
-	 GIT_AUTHOR_DATE="2005-05-26 23:45" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:45" git commit -F M &&
-	 h_MERGED=$(git rev-parse --verify HEAD) &&
-	 rm -f M'
+test_expect_success 'creating initial files' '
+	test_when_finished rm -f M &&
+	echo TEST >F &&
+	git add F &&
+	GIT_AUTHOR_DATE="2005-05-26 23:30" \
+	GIT_COMMITTER_DATE="2005-05-26 23:30" git commit -m add -a &&
+	h_TEST=$(git rev-parse --verify HEAD) &&
+	echo The other day this did not work. >M &&
+	echo And then Bob told me how to fix it. >>M &&
+	echo OTHER >F &&
+	GIT_AUTHOR_DATE="2005-05-26 23:41" \
+	GIT_COMMITTER_DATE="2005-05-26 23:41" git commit -F M -a &&
+	h_OTHER=$(git rev-parse --verify HEAD) &&
+	GIT_AUTHOR_DATE="2005-05-26 23:44" \
+	GIT_COMMITTER_DATE="2005-05-26 23:44" git commit --amend &&
+	h_FIXED=$(git rev-parse --verify HEAD) &&
+	echo Merged initial commit and a later commit. >M &&
+	echo $h_TEST >.git/MERGE_HEAD &&
+	GIT_AUTHOR_DATE="2005-05-26 23:45" \
+	GIT_COMMITTER_DATE="2005-05-26 23:45" git commit -F M &&
+	h_MERGED=$(git rev-parse --verify HEAD)
+'
 
 cat >expect <<EOF
 $Z $h_TEST $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	commit (initial): add
@@ -331,20 +442,80 @@ $h_TEST $h_OTHER $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000	com
 $h_OTHER $h_FIXED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151040 +0000	commit (amend): The other day this did not work.
 $h_FIXED $h_MERGED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151100 +0000	commit (merge): Merged initial commit and a later commit.
 EOF
-test_expect_success \
-	'git commit logged updates' \
-	"test_cmp expect .git/logs/$m"
+test_expect_success 'git commit logged updates' '
+	test_cmp expect .git/logs/$m
+'
 unset h_TEST h_OTHER h_FIXED h_MERGED
 
-test_expect_success \
-	'git cat-file blob master:F (expect OTHER)' \
-	'test OTHER = $(git cat-file blob master:F)'
-test_expect_success \
-	'git cat-file blob master@{2005-05-26 23:30}:F (expect TEST)' \
-	'test TEST = $(git cat-file blob "master@{2005-05-26 23:30}:F")'
-test_expect_success \
-	'git cat-file blob master@{2005-05-26 23:42}:F (expect OTHER)' \
-	'test OTHER = $(git cat-file blob "master@{2005-05-26 23:42}:F")'
+test_expect_success 'git cat-file blob master:F (expect OTHER)' '
+	test OTHER = $(git cat-file blob master:F)
+'
+test_expect_success 'git cat-file blob master@{2005-05-26 23:30}:F (expect TEST)' '
+	test TEST = $(git cat-file blob "master@{2005-05-26 23:30}:F")
+'
+test_expect_success 'git cat-file blob master@{2005-05-26 23:42}:F (expect OTHER)' '
+	test OTHER = $(git cat-file blob "master@{2005-05-26 23:42}:F")
+'
+
+# Test adding and deleting pseudorefs
+
+test_expect_success 'given old value for missing pseudoref, do not create' '
+	test_must_fail git update-ref PSEUDOREF $A $B 2>err &&
+	test_path_is_missing .git/PSEUDOREF &&
+	test_i18ngrep "could not read ref" err
+'
+
+test_expect_success 'create pseudoref' '
+	git update-ref PSEUDOREF $A &&
+	test $A = $(cat .git/PSEUDOREF)
+'
+
+test_expect_success 'overwrite pseudoref with no old value given' '
+	git update-ref PSEUDOREF $B &&
+	test $B = $(cat .git/PSEUDOREF)
+'
+
+test_expect_success 'overwrite pseudoref with correct old value' '
+	git update-ref PSEUDOREF $C $B &&
+	test $C = $(cat .git/PSEUDOREF)
+'
+
+test_expect_success 'do not overwrite pseudoref with wrong old value' '
+	test_must_fail git update-ref PSEUDOREF $D $E 2>err &&
+	test $C = $(cat .git/PSEUDOREF) &&
+	test_i18ngrep "unexpected object ID" err
+'
+
+test_expect_success 'delete pseudoref' '
+	git update-ref -d PSEUDOREF &&
+	test_path_is_missing .git/PSEUDOREF
+'
+
+test_expect_success 'do not delete pseudoref with wrong old value' '
+	git update-ref PSEUDOREF $A &&
+	test_must_fail git update-ref -d PSEUDOREF $B 2>err &&
+	test $A = $(cat .git/PSEUDOREF) &&
+	test_i18ngrep "unexpected object ID" err
+'
+
+test_expect_success 'delete pseudoref with correct old value' '
+	git update-ref -d PSEUDOREF $A &&
+	test_path_is_missing .git/PSEUDOREF
+'
+
+test_expect_success 'create pseudoref with old OID zero' '
+	git update-ref PSEUDOREF $A $Z &&
+	test $A = $(cat .git/PSEUDOREF)
+'
+
+test_expect_success 'do not overwrite pseudoref with old OID zero' '
+	test_when_finished git update-ref -d PSEUDOREF &&
+	test_must_fail git update-ref PSEUDOREF $B $Z 2>err &&
+	test $A = $(cat .git/PSEUDOREF) &&
+	test_i18ngrep "already exists" err
+'
+
+# Test --stdin
 
 a=refs/heads/a
 b=refs/heads/b
@@ -479,7 +650,7 @@ test_expect_success 'stdin fails with duplicate refs' '
 	create $a $m
 	EOF
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed." err
+	test_i18ngrep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed" err
 '
 
 test_expect_success 'stdin create ref works' '
@@ -501,6 +672,7 @@ test_expect_success 'stdin does not create reflogs by default' '
 '
 
 test_expect_success 'stdin creates reflogs with --create-reflog' '
+	test_when_finished "git update-ref -d $outside" &&
 	echo "create $outside $m" >stdin &&
 	git update-ref --create-reflog --stdin <stdin &&
 	git rev-parse $m >expect &&
@@ -630,6 +802,37 @@ test_expect_success 'stdin delete symref works option no-deref' '
 	EOF
 	git update-ref --stdin <stdin &&
 	test_must_fail git rev-parse --verify -q TESTSYMREF &&
+	git rev-parse $m~1 >expect &&
+	git rev-parse $b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin update symref works flag --no-deref' '
+	git symbolic-ref TESTSYMREFONE $b &&
+	git symbolic-ref TESTSYMREFTWO $b &&
+	cat >stdin <<-EOF &&
+	update TESTSYMREFONE $a $b
+	update TESTSYMREFTWO $a $b
+	EOF
+	git update-ref --no-deref --stdin <stdin &&
+	git rev-parse TESTSYMREFONE TESTSYMREFTWO >expect &&
+	git rev-parse $a $a >actual &&
+	test_cmp expect actual &&
+	git rev-parse $m~1 >expect &&
+	git rev-parse $b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin delete symref works flag --no-deref' '
+	git symbolic-ref TESTSYMREFONE $b &&
+	git symbolic-ref TESTSYMREFTWO $b &&
+	cat >stdin <<-EOF &&
+	delete TESTSYMREFONE $b
+	delete TESTSYMREFTWO $b
+	EOF
+	git update-ref --no-deref --stdin <stdin &&
+	test_must_fail git rev-parse --verify -q TESTSYMREFONE &&
+	test_must_fail git rev-parse --verify -q TESTSYMREFTWO &&
 	git rev-parse $m~1 >expect &&
 	git rev-parse $b >actual &&
 	test_cmp expect actual
@@ -880,7 +1083,7 @@ test_expect_success 'stdin -z fails option with unknown name' '
 test_expect_success 'stdin -z fails with duplicate refs' '
 	printf $F "create $a" "$m" "create $b" "$m" "create $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed." err
+	test_i18ngrep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed" err
 '
 
 test_expect_success 'stdin -z create ref works' '
@@ -1111,7 +1314,7 @@ test_expect_success 'fails with duplicate HEAD update' '
 	update HEAD $B
 	EOF
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: multiple updates for '\''HEAD'\'' (including one via its referent .refs/heads/target1.) are not allowed" err &&
+	test_i18ngrep "fatal: multiple updates for '\''HEAD'\'' (including one via its referent .refs/heads/target1.) are not allowed" err &&
 	echo "refs/heads/target1" >expect &&
 	git symbolic-ref HEAD >actual &&
 	test_cmp expect actual &&
@@ -1128,7 +1331,7 @@ test_expect_success 'fails with duplicate ref update via symref' '
 	update refs/heads/symref2 $B
 	EOF
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: multiple updates for '\''refs/heads/target2'\'' (including one via symref .refs/heads/symref2.) are not allowed" err &&
+	test_i18ngrep "fatal: multiple updates for '\''refs/heads/target2'\'' (including one via symref .refs/heads/symref2.) are not allowed" err &&
 	echo "refs/heads/target2" >expect &&
 	git symbolic-ref refs/heads/symref2 >actual &&
 	test_cmp expect actual &&
@@ -1141,7 +1344,10 @@ run_with_limited_open_files () {
 	(ulimit -n 32 && "$@")
 }
 
-test_lazy_prereq ULIMIT_FILE_DESCRIPTORS 'run_with_limited_open_files true'
+test_lazy_prereq ULIMIT_FILE_DESCRIPTORS '
+	test_have_prereq !MINGW,!CYGWIN &&
+	run_with_limited_open_files true
+'
 
 test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches does not burst open file limit' '
 (

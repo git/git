@@ -1,9 +1,12 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"
+#include "submodule.h"
 
 static int quiet, verbose, stdin_paths, show_non_matching, no_index;
 static const char * const check_ignore_usage[] = {
@@ -70,7 +73,7 @@ static int check_ignore(struct dir_struct *dir,
 {
 	const char *full_path;
 	char *seen;
-	int num_ignored = 0, dtype = DT_UNKNOWN, i;
+	int num_ignored = 0, i;
 	struct exclude *exclude;
 	struct pathspec pathspec;
 
@@ -87,21 +90,24 @@ static int check_ignore(struct dir_struct *dir,
 	parse_pathspec(&pathspec,
 		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
 		       PATHSPEC_SYMLINK_LEADING_PATH |
-		       PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE |
 		       PATHSPEC_KEEP_ORDER,
 		       prefix, argv);
+
+	die_path_inside_submodule(&the_index, &pathspec);
 
 	/*
 	 * look for pathspecs matching entries in the index, since these
 	 * should not be ignored, in order to be consistent with
 	 * 'git status', 'git add' etc.
 	 */
-	seen = find_pathspecs_matching_against_index(&pathspec);
+	seen = find_pathspecs_matching_against_index(&pathspec, &the_index);
 	for (i = 0; i < pathspec.nr; i++) {
 		full_path = pathspec.items[i].match;
 		exclude = NULL;
 		if (!seen[i]) {
-			exclude = last_exclude_matching(dir, full_path, &dtype);
+			int dtype = DT_UNKNOWN;
+			exclude = last_exclude_matching(dir, &the_index,
+							full_path, &dtype);
 		}
 		if (!quiet && (exclude || show_non_matching))
 			output_exclude(pathspec.items[i].original, exclude);

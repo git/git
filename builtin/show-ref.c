@@ -1,6 +1,8 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
+#include "object-store.h"
 #include "object.h"
 #include "tag.h"
 #include "string-list.h"
@@ -19,19 +21,34 @@ static const char *exclude_existing_arg;
 
 static void show_one(const char *refname, const struct object_id *oid)
 {
-	const char *hex = find_unique_abbrev(oid->hash, abbrev);
+	const char *hex;
+	struct object_id peeled;
+
+	if (!has_object_file(oid))
+		die("git show-ref: bad ref %s (%s)", refname,
+		    oid_to_hex(oid));
+
+	if (quiet)
+		return;
+
+	hex = find_unique_abbrev(oid, abbrev);
 	if (hash_only)
 		printf("%s\n", hex);
 	else
 		printf("%s %s\n", hex, refname);
+
+	if (!deref_tags)
+		return;
+
+	if (!peel_ref(refname, &peeled)) {
+		hex = find_unique_abbrev(&peeled, abbrev);
+		printf("%s %s^{}\n", hex, refname);
+	}
 }
 
 static int show_ref(const char *refname, const struct object_id *oid,
 		    int flag, void *cbdata)
 {
-	const char *hex;
-	struct object_id peeled;
-
 	if (show_head && !strcmp(refname, "HEAD"))
 		goto match;
 
@@ -54,9 +71,6 @@ static int show_ref(const char *refname, const struct object_id *oid,
 				continue;
 			if (len == reflen)
 				goto match;
-			/* "--verify" requires an exact match */
-			if (verify)
-				continue;
 			if (refname[reflen - len - 1] == '/')
 				goto match;
 		}
@@ -66,26 +80,8 @@ static int show_ref(const char *refname, const struct object_id *oid,
 match:
 	found_match++;
 
-	/* This changes the semantics slightly that even under quiet we
-	 * detect and return error if the repository is corrupt and
-	 * ref points at a nonexistent object.
-	 */
-	if (!has_sha1_file(oid->hash))
-		die("git show-ref: bad ref %s (%s)", refname,
-		    oid_to_hex(oid));
-
-	if (quiet)
-		return 0;
-
 	show_one(refname, oid);
 
-	if (!deref_tags)
-		return 0;
-
-	if (!peel_ref(refname, peeled.hash)) {
-		hex = find_unique_abbrev(peeled.hash, abbrev);
-		printf("%s %s^{}\n", hex, refname);
-	}
 	return 0;
 }
 
@@ -156,6 +152,7 @@ static int hash_callback(const struct option *opt, const char *arg, int unset)
 static int exclude_existing_callback(const struct option *opt, const char *arg,
 				     int unset)
 {
+	BUG_ON_OPT_NEG(unset);
 	exclude_arg = 1;
 	*(const char **)opt->value = arg;
 	return 0;
@@ -186,6 +183,8 @@ static const struct option show_ref_options[] = {
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
+	git_config(git_default_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);
 
@@ -202,10 +201,9 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		while (*pattern) {
 			struct object_id oid;
 
-			if (starts_with(*pattern, "refs/") &&
-			    !read_ref(*pattern, oid.hash)) {
-				if (!quiet)
-					show_one(*pattern, &oid);
+			if ((starts_with(*pattern, "refs/") || !strcmp(*pattern, "HEAD")) &&
+			    !read_ref(*pattern, &oid)) {
+				show_one(*pattern, &oid);
 			}
 			else if (!quiet)
 				die("'%s' - not a valid ref", *pattern);

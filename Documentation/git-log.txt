@@ -9,7 +9,7 @@ git-log - Show commit logs
 SYNOPSIS
 --------
 [verse]
-'git log' [<options>] [<revision range>] [[\--] <path>...]
+'git log' [<options>] [<revision range>] [[--] <path>...]
 
 DESCRIPTION
 -----------
@@ -37,6 +37,13 @@ OPTIONS
 	specified, then if the output is going to a terminal, the ref names
 	are shown as if 'short' were given, otherwise no ref names are
 	shown. The default option is 'short'.
+
+--decorate-refs=<pattern>::
+--decorate-refs-exclude=<pattern>::
+	If no `--decorate-refs` is given, pretend as if all refs were
+	included.  For each candidate, do not use it for decoration if it
+	matches any patterns given to `--decorate-refs-exclude` or if it
+	doesn't match any of the patterns given to `--decorate-refs`.
 
 --source::
 	Print out the ref name given on the command line by which each
@@ -83,13 +90,13 @@ include::line-range-format.txt[]
 	ways to spell <revision range>, see the 'Specifying Ranges'
 	section of linkgit:gitrevisions[7].
 
-[\--] <path>...::
+[--] <path>...::
 	Show only commits that are enough to explain how the files
 	that match the specified paths came to be.  See 'History
 	Simplification' below for details and other simplification
 	modes.
 +
-Paths may need to be prefixed with ``\-- '' to separate them from
+Paths may need to be prefixed with `--` to separate them from
 options or the revision range, when confusion arises.
 
 include::rev-list-options.txt[]
@@ -118,7 +125,7 @@ EXAMPLES
 `git log --since="2 weeks ago" -- gitk`::
 
 	Show the changes during the last two weeks to the file 'gitk'.
-	The ``--'' is necessary to avoid confusion with the *branch* named
+	The `--` is necessary to avoid confusion with the *branch* named
 	'gitk'
 
 `git log --name-status release..test`::
@@ -185,6 +192,10 @@ log.date::
 	Default format for human-readable dates.  (Compare the
 	`--date` option.)  Defaults to "default", which means to write
 	dates like `Sat May 8 19:35:34 2010 -0500`.
++
+If the format is set to "auto:foo" and the pager is in use, format
+"foo" will be the used for the date format. Otherwise "default" will
+be used.
 
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when

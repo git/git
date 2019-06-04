@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
 #include "parse-options.h"
@@ -13,6 +14,8 @@ static int label_cb(const struct option *opt, const char *arg, int unset)
 {
 	static int label_count = 0;
 	const char **names = (const char **)opt->value;
+
+	BUG_ON_OPT_NEG(unset);
 
 	if (label_count >= 3)
 		return error("too many labels on the command line");
@@ -28,7 +31,6 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	xmparam_t xmp = {{0}};
 	int ret = 0, i = 0, to_stdout = 0;
 	int quiet = 0;
-	int prefixlen = 0;
 	struct option options[] = {
 		OPT_BOOL('p', "stdout", &to_stdout, N_("send results to standard output")),
 		OPT_SET_INT(0, "diff3", &xmp.style, N_("use a diff3 based merge"), XDL_MERGE_DIFF3),
@@ -65,15 +67,19 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 			return error_errno("failed to redirect stderr to /dev/null");
 	}
 
-	if (prefix)
-		prefixlen = strlen(prefix);
-
 	for (i = 0; i < 3; i++) {
-		const char *fname = prefix_filename(prefix, prefixlen, argv[i]);
+		char *fname;
+		int ret;
+
 		if (!names[i])
 			names[i] = argv[i];
-		if (read_mmfile(mmfs + i, fname))
+
+		fname = prefix_filename(prefix, argv[i]);
+		ret = read_mmfile(mmfs + i, fname);
+		free(fname);
+		if (ret)
 			return -1;
+
 		if (mmfs[i].size > MAX_XDIFF_SIZE ||
 		    buffer_is_binary(mmfs[i].ptr, mmfs[i].size))
 			return error("Cannot merge binary files: %s",
@@ -90,7 +96,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 	if (ret >= 0) {
 		const char *filename = argv[0];
-		const char *fpath = prefix_filename(prefix, prefixlen, argv[0]);
+		char *fpath = prefix_filename(prefix, argv[0]);
 		FILE *f = to_stdout ? stdout : fopen(fpath, "wb");
 
 		if (!f)
@@ -102,6 +108,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 		else if (fclose(f))
 			ret = error_errno("Could not close %s", filename);
 		free(result.ptr);
+		free(fpath);
 	}
 
 	if (ret > 127)

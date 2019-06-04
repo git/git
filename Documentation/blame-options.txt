@@ -77,7 +77,7 @@ include::line-range-format.txt[]
 	terminal. Can't use `--progress` together with `--porcelain`
 	or `--incremental`.
 
--M|<num>|::
+-M[<num>]::
 	Detect moved or copied lines within a file. When a commit
 	moves or copies a block of lines (e.g. the original file
 	has A and then B, and the commit changes it to B and then
@@ -93,7 +93,7 @@ alphanumeric characters that Git must detect as moving/copying
 within a file for it to associate those lines with the parent
 commit. The default value is 20.
 
--C|<num>|::
+-C[<num>]::
 	In addition to `-M`, detect lines moved or copied from other
 	files that were modified in the same commit.  This is
 	useful when you reorganize your program and move code

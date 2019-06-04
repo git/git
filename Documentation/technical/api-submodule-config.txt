@@ -4,7 +4,7 @@ submodule config cache API
 The submodule config cache API allows to read submodule
 configurations/information from specified revisions. Internally
 information is lazily read into a cache that is used to avoid
-unnecessary parsing of the same .gitmodule files. Lookups can be done by
+unnecessary parsing of the same .gitmodules files. Lookups can be done by
 submodule path or name.
 
 Usage
@@ -38,7 +38,7 @@ Data Structures
 Functions
 ---------
 
-`void submodule_free()`::
+`void submodule_free(struct repository *r)`::
 
 	Use these to free the internally cached values.
 

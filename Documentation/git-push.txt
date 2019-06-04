@@ -11,8 +11,8 @@ SYNOPSIS
 [verse]
 'git push' [--all | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
 	   [--repo=<repository>] [-f | --force] [-d | --delete] [--prune] [-v | --verbose]
-	   [-u | --set-upstream] [--push-option=<string>]
-	   [--[no-]signed|--sign=(true|false|if-asked)]
+	   [-u | --set-upstream] [-o <string> | --push-option=<string>]
+	   [--[no-]signed|--signed=(true|false|if-asked)]
 	   [--force-with-lease[=<refname>[:<expect>]]]
 	   [--no-verify] [<repository> [<refspec>...]]
 
@@ -73,23 +73,78 @@ be omitted--such a push will update a ref that `<src>` normally updates
 without any `<refspec>` on the command line.  Otherwise, missing
 `:<dst>` means to update the same ref as the `<src>`.
 +
+If <dst> doesn't start with `refs/` (e.g. `refs/heads/master`) we will
+try to infer where in `refs/*` on the destination <repository> it
+belongs based on the the type of <src> being pushed and whether <dst>
+is ambiguous.
++
+--
+* If <dst> unambiguously refers to a ref on the <repository> remote,
+  then push to that ref.
+
+* If <src> resolves to a ref starting with refs/heads/ or refs/tags/,
+  then prepend that to <dst>.
+
+* Other ambiguity resolutions might be added in the future, but for
+  now any other cases will error out with an error indicating what we
+  tried, and depending on the `advice.pushUnqualifiedRefname`
+  configuration (see linkgit:git-config[1]) suggest what refs/
+  namespace you may have wanted to push to.
+
+--
++
 The object referenced by <src> is used to update the <dst> reference
-on the remote side.  By default this is only allowed if <dst> is not
-a tag (annotated or lightweight), and then only if it can fast-forward
-<dst>.  By having the optional leading `+`, you can tell Git to update
-the <dst> ref even if it is not allowed by default (e.g., it is not a
-fast-forward.)  This does *not* attempt to merge <src> into <dst>.  See
-EXAMPLES below for details.
+on the remote side. Whether this is allowed depends on where in
+`refs/*` the <dst> reference lives as described in detail below, in
+those sections "update" means any modifications except deletes, which
+as noted after the next few sections are treated differently.
 +
-`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
+The `refs/heads/*` namespace will only accept commit objects, and
+updates only if they can be fast-forwarded.
 +
-Pushing an empty <src> allows you to delete the <dst> ref from
-the remote repository.
+The `refs/tags/*` namespace will accept any kind of object (as
+commits, trees and blobs can be tagged), and any updates to them will
+be rejected.
++
+It's possible to push any type of object to any namespace outside of
+`refs/{tags,heads}/*`. In the case of tags and commits, these will be
+treated as if they were the commits inside `refs/heads/*` for the
+purposes of whether the update is allowed.
++
+I.e. a fast-forward of commits and tags outside `refs/{tags,heads}/*`
+is allowed, even in cases where what's being fast-forwarded is not a
+commit, but a tag object which happens to point to a new commit which
+is a fast-forward of the commit the last tag (or commit) it's
+replacing. Replacing a tag with an entirely different tag is also
+allowed, if it points to the same commit, as well as pushing a peeled
+tag, i.e. pushing the commit that existing tag object points to, or a
+new tag object which an existing commit points to.
++
+Tree and blob objects outside of `refs/{tags,heads}/*` will be treated
+the same way as if they were inside `refs/tags/*`, any update of them
+will be rejected.
++
+All of the rules described above about what's not allowed as an update
+can be overridden by adding an the optional leading `+` to a refspec
+(or using `--force` command line option). The only exception to this
+is that no amount of forcing will make the `refs/heads/*` namespace
+accept a non-commit object. Hooks and configuration can also override
+or amend these rules, see e.g. `receive.denyNonFastForwards` in
+linkgit:git-config[1] and `pre-receive` and `update` in
+linkgit:githooks[5].
++
+Pushing an empty <src> allows you to delete the <dst> ref from the
+remote repository. Deletions are always accepted without a leading `+`
+in the refspec (or `--force`), except when forbidden by configuration
+or hooks. See `receive.denyDeletes` in linkgit:git-config[1] and
+`pre-receive` and `update` in linkgit:githooks[5].
 +
 The special refspec `:` (or `+:` to allow non-fast-forward updates)
 directs Git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.
++
+`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 
 --all::
 	Push all branches (i.e. refs under `refs/heads/`); cannot be
@@ -123,6 +178,7 @@ already exists on the remote side.
 	will be tab-separated and sent to stdout instead of stderr.  The full
 	symbolic names of the refs will be given.
 
+-d::
 --delete::
 	All listed refs are deleted from the remote repository. This is
 	the same as prefixing all refs with a colon.
@@ -141,7 +197,7 @@ already exists on the remote side.
 	information, see `push.followTags` in linkgit:git-config[1].
 
 --[no-]signed::
---sign=(true|false|if-asked)::
+--signed=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
 	logged.  If `false` or `--no-signed`, no signing will be
@@ -156,11 +212,17 @@ already exists on the remote side.
 	Either all refs are updated, or on error, no refs are updated.
 	If the server does not support atomic pushes the push will fail.
 
--o::
---push-option::
+-o <option>::
+--push-option=<option>::
 	Transmit the given string to the server, which passes them to
 	the pre-receive as well as the post-receive hook. The given string
 	must not contain a NUL or LF character.
+	When multiple `--push-option=<option>` are given, they are
+	all sent to the other side in the order listed on the
+	command line.
+	When no `--push-option=<option>` is given from the command
+	line, the values of configuration variable `push.pushOption`
+	are used instead.
 
 --receive-pack=<git-receive-pack>::
 --exec=<git-receive-pack>::
@@ -217,6 +279,47 @@ with this feature.
 +
 "--no-force-with-lease" will cancel all the previous --force-with-lease on the
 command line.
++
+A general note on safety: supplying this option without an expected
+value, i.e. as `--force-with-lease` or `--force-with-lease=<refname>`
+interacts very badly with anything that implicitly runs `git fetch` on
+the remote to be pushed to in the background, e.g. `git fetch origin`
+on your repository in a cronjob.
++
+The protection it offers over `--force` is ensuring that subsequent
+changes your work wasn't based on aren't clobbered, but this is
+trivially defeated if some background process is updating refs in the
+background. We don't have anything except the remote tracking info to
+go by as a heuristic for refs you're expected to have seen & are
+willing to clobber.
++
+If your editor or some other system is running `git fetch` in the
+background for you a way to mitigate this is to simply set up another
+remote:
++
+	git remote add origin-push $(git config remote.origin.url)
+	git fetch origin-push
++
+Now when the background process runs `git fetch origin` the references
+on `origin-push` won't be updated, and thus commands like:
++
+	git push --force-with-lease origin-push
++
+Will fail unless you manually run `git fetch origin-push`. This method
+is of course entirely defeated by something that runs `git fetch
+--all`, in that case you'd need to either disable it or do something
+more tedious like:
++
+	git fetch              # update 'master' from remote
+	git tag base master    # mark our base point
+	git rebase -i master   # rewrite some commits
+	git push --force-with-lease=master:base master:master
++
+I.e. create a `base` tag for versions of the upstream code that you've
+seen and are willing to overwrite, then rewrite history, and finally
+force push changes to `master` if the remote version is still at
+`base`, regardless of what your local `remotes/origin/master` has been
+updated to in the background.
 
 -f::
 --force::
@@ -253,7 +356,7 @@ origin +master` to force a push to the `master` branch). See the
 	These options are passed to linkgit:git-send-pack[1]. A thin transfer
 	significantly reduces the amount of sent data when the sender and
 	receiver share many of the same objects in common. The default is
-	\--thin.
+	`--thin`.
 
 -q::
 --quiet::
@@ -272,7 +375,7 @@ origin +master` to force a push to the `master` branch). See the
 	standard error stream is not directed to a terminal.
 
 --no-recurse-submodules::
---recurse-submodules=check|on-demand|no::
+--recurse-submodules=check|on-demand|only|no::
 	May be used to make sure all submodule commits used by the
 	revisions to be pushed are available on a remote-tracking branch.
 	If 'check' is used Git will verify that all submodule commits that
@@ -280,11 +383,12 @@ origin +master` to force a push to the `master` branch). See the
 	remote of the submodule. If any commits are missing the push will
 	be aborted and exit with non-zero status. If 'on-demand' is used
 	all submodules that changed in the revisions to be pushed will be
-	pushed. If on-demand was not able to push all necessary revisions
-	it will also be aborted and exit with non-zero status. A value of
-	'no' or using `--no-recurse-submodules` can be used to override the
-	push.recurseSubmodules configuration variable when no submodule
-	recursion is required.
+	pushed. If on-demand was not able to push all necessary revisions it will
+	also be aborted and exit with non-zero status. If 'only' is used all
+	submodules will be recursively pushed while the superproject is left
+	unpushed. A value of 'no' or using `--no-recurse-submodules` can be used
+	to override the push.recurseSubmodules configuration variable when no
+	submodule recursion is required.
 
 --[no-]verify::
 	Toggle the pre-push hook (see linkgit:githooks[5]).  The
@@ -375,7 +479,7 @@ reason::
 	refs, no explanation is needed. For a failed ref, the reason for
 	failure is described.
 
-Note about fast-forwards
+NOTE ABOUT FAST-FORWARDS
 ------------------------
 
 When an update changes a branch (or more in general, a ref) that used to
@@ -462,7 +566,7 @@ overwrite it. In other words, "git push --force" is a method reserved for
 a case where you do mean to lose history.
 
 
-Examples
+EXAMPLES
 --------
 
 `git push`::
@@ -506,6 +610,9 @@ the ones in the examples below) can be configured as the default for
 	to update the ref that matches `satellite/master` (most probably
 	`refs/remotes/satellite/master`) in the `mothership` repository;
 	do the same for `dev` and `satellite/dev`.
++
+See the section describing `<refspec>...` above for a discussion of
+the matching semantics.
 +
 This is to emulate `git fetch` run on the `mothership` using `git
 push` that is run in the opposite direction in order to integrate

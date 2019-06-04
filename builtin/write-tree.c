@@ -3,8 +3,10 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "tree.h"
 #include "cache-tree.h"
 #include "parse-options.h"
@@ -18,14 +20,13 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int flags = 0, ret;
 	const char *prefix = NULL;
-	unsigned char sha1[20];
+	struct object_id oid;
 	const char *me = "git-write-tree";
 	struct option write_tree_options[] = {
 		OPT_BIT(0, "missing-ok", &flags, N_("allow missing objects"),
 			WRITE_TREE_MISSING_OK),
-		{ OPTION_STRING, 0, "prefix", &prefix, N_("<prefix>/"),
-		  N_("write tree object for a subdirectory <prefix>") ,
-		  PARSE_OPT_LITERAL_ARGHELP },
+		OPT_STRING(0, "prefix", &prefix, N_("<prefix>/"),
+			   N_("write tree object for a subdirectory <prefix>")),
 		{ OPTION_BIT, 0, "ignore-cache-tree", &flags, NULL,
 		  N_("only useful for debugging"),
 		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, NULL,
@@ -37,10 +38,10 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 	argc = parse_options(argc, argv, unused_prefix, write_tree_options,
 			     write_tree_usage, 0);
 
-	ret = write_cache_as_tree(sha1, flags, prefix);
+	ret = write_cache_as_tree(&oid, flags, prefix);
 	switch (ret) {
 	case 0:
-		printf("%s\n", sha1_to_hex(sha1));
+		printf("%s\n", oid_to_hex(&oid));
 		break;
 	case WRITE_TREE_UNREADABLE_INDEX:
 		die("%s: error reading the index", me);

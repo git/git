@@ -44,8 +44,7 @@ test_expect_success 'read-tree does not resolve content merge' '
 test_expect_success 'git merge-index git-merge-one-file resolves' '
 	git merge-index git-merge-one-file -a &&
 	git diff-files --name-only --diff-filter=U >unmerged &&
-	>expect &&
-	test_cmp expect unmerged &&
+	test_must_be_empty unmerged &&
 	test_cmp expect-merged file &&
 	git cat-file blob :file >file-index &&
 	test_cmp expect-merged file-index

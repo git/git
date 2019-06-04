@@ -3,9 +3,14 @@
 	Perform the merge and commit the result. This option can
 	be used to override --no-commit.
 +
-With --no-commit perform the merge but pretend the merge
-failed and do not autocommit, to give the user a chance to
-inspect and further tweak the merge result before committing.
+With --no-commit perform the merge and stop just before creating
+a merge commit, to give the user a chance to inspect and further
+tweak the merge result before committing.
++
+Note that fast-forward updates do not create a merge commit and
+therefore there is no way to stop those merges with --no-commit.
+Thus, if you want to ensure your branch is not changed or updated
+by the merge command, use --no-ff with --no-commit.
 
 --edit::
 -e::
@@ -27,6 +32,13 @@ they run `git merge`. To make it easier to adjust such scripts to the
 updated behaviour, the environment variable `GIT_MERGE_AUTOEDIT` can be
 set to `no` at the beginning of them.
 
+--cleanup=<mode>::
+	This option determines how the merge message will be cleaned up before
+	commiting. See linkgit:git-commit[1] for more details. In addition, if
+	the '<mode>' is given a value of `scissors`, scissors will be appended
+	to `MERGE_MSG` before being passed on to the commit machinery in the
+	case of a merge conflict.
+
 --ff::
 	When the merge resolves as a fast-forward, only update the branch
 	pointer, without creating a merge commit.  This is the default
@@ -35,12 +47,19 @@ set to `no` at the beginning of them.
 --no-ff::
 	Create a merge commit even when the merge resolves as a
 	fast-forward.  This is the default behaviour when merging an
-	annotated (and possibly signed) tag.
+	annotated (and possibly signed) tag that is not stored in
+	its natural place in 'refs/tags/' hierarchy.
 
 --ff-only::
 	Refuse to merge and exit with a non-zero status unless the
-	current `HEAD` is already up-to-date or the merge can be
+	current `HEAD` is already up to date or the merge can be
 	resolved as a fast-forward.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign the resulting merge commit. The `keyid` argument is
+	optional and defaults to the committer identity; if specified,
+	it must be stuck to the option without a space.
 
 --log[=<n>]::
 --no-log::
@@ -51,6 +70,16 @@ set to `no` at the beginning of them.
 With --no-log do not list one-line descriptions from the
 actual commits being merged.
 
+--signoff::
+--no-signoff::
+	Add Signed-off-by line by the committer at the end of the commit
+	log message.  The meaning of a signoff depends on the project,
+	but it typically certifies that committer has
+	the rights to submit this work under the same license and
+	agrees to a Developer Certificate of Origin
+	(see http://developercertificate.org/ for more information).
++
+With --no-signoff do not add a Signed-off-by line.
 
 --stat::
 -n::

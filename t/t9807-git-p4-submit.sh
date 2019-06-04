@@ -139,6 +139,62 @@ test_expect_success 'submit with master branch name from argv' '
 	)
 '
 
+test_expect_success 'allow submit from branch with same revision but different name' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_commit "file8" &&
+		git checkout -b branch1 &&
+		git checkout -b branch2 &&
+		git config git-p4.skipSubmitEdit true &&
+		git config git-p4.allowSubmit "branch1" &&
+		test_must_fail git p4 submit &&
+		git checkout branch1 &&
+		git p4 submit
+	)
+'
+
+# make two commits, but tell it to apply only one
+
+test_expect_success 'submit --commit one' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_commit "file9" &&
+		test_commit "file10" &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit --commit HEAD
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing "file9.t" &&
+		test_path_is_file "file10.t"
+	)
+'
+
+# make three commits, but tell it to apply only range
+
+test_expect_success 'submit --commit range' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_commit "file11" &&
+		test_commit "file12" &&
+		test_commit "file13" &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit --commit HEAD~2..HEAD
+	) &&
+	(
+		cd "$cli" &&
+		test_path_is_missing "file11.t" &&
+		test_path_is_file "file12.t" &&
+		test_path_is_file "file13.t"
+	)
+'
+
 #
 # Basic submit tests, the five handled cases
 #
@@ -444,7 +500,17 @@ test_expect_success 'submit --shelve' '
 	)
 '
 
-# Update an existing shelved changelist
+last_shelve () {
+	p4 -G changes -s shelved -m 1 //depot/... | marshal_dump change
+}
+
+make_shelved_cl() {
+	test_commit "$1" >/dev/null &&
+	git p4 submit --origin HEAD^ --shelve >/dev/null &&
+	p4 -G changes -s shelved -m 1 | marshal_dump change
+}
+
+# Update existing shelved changelists
 
 test_expect_success 'submit --update-shelve' '
 	test_when_finished cleanup_git &&
@@ -454,36 +520,77 @@ test_expect_success 'submit --update-shelve' '
 		p4 revert ... &&
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
-		test_commit "test-update-shelved-change" &&
-		git p4 submit --origin=HEAD^ --shelve &&
+		shelved_cl0=$(make_shelved_cl "shelved-change-0") &&
+		echo shelved_cl0=$shelved_cl0 &&
+		shelved_cl1=$(make_shelved_cl "shelved-change-1") &&
 
-		shelf_cl=$(p4 -G changes -s shelved -m 1 |\
-			marshal_dump change) &&
-		test -n $shelf_cl &&
-		echo "updating shelved change list $shelf_cl" &&
+		echo "updating shelved change lists $shelved_cl0 and $shelved_cl1" &&
 
 		echo "updated-line" >>shelf.t &&
 		echo added-file.t >added-file.t &&
 		git add shelf.t added-file.t &&
-		git rm -f test-update-shelved-change.t &&
+		git rm -f shelved-change-1.t &&
 		git commit --amend -C HEAD &&
 		git show --stat HEAD &&
-		git p4 submit -v --origin HEAD^ --update-shelve $shelf_cl &&
+		git p4 submit -v --origin HEAD~2 --update-shelve $shelved_cl0 --update-shelve $shelved_cl1 &&
 		echo "done git p4 submit"
 	) &&
 	(
 		cd "$cli" &&
-		change=$(p4 -G changes -s shelved -m 1 //depot/... | \
-			 marshal_dump change) &&
+		change=$(last_shelve) &&
 		p4 unshelve -c $change -s $change &&
 		grep -q updated-line shelf.t &&
 		p4 describe -S $change | grep added-file.t &&
-		test_path_is_missing test-update-shelved-change.t
+		test_path_is_missing shelved-change-1.t &&
+		p4 revert ...
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
+test_expect_success 'update a shelve involving moved and copied files' '
+	test_when_finished cleanup_git &&
+	(
+		cd "$cli" &&
+		: >file_to_move &&
+		p4 add file_to_move &&
+		p4 submit -d "change1" &&
+		p4 edit file_to_move &&
+		echo change >>file_to_move &&
+		p4 submit -d "change2" &&
+		p4 opened
+	) &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git config git-p4.detectCopies true &&
+		git config git-p4.detectRenames true &&
+		git config git-p4.skipSubmitEdit true &&
+		mkdir moved &&
+		cp file_to_move copy_of_file &&
+		git add copy_of_file &&
+		git mv file_to_move moved/ &&
+		git commit -m "rename a file" &&
+		git p4 submit -M --shelve --origin HEAD^ &&
+		: >new_file &&
+		git add new_file &&
+		git commit --amend &&
+		git show --stat HEAD &&
+		change=$(last_shelve) &&
+		git p4 submit -M --update-shelve $change --commit HEAD
+	) &&
+	(
+		cd "$cli" &&
+		change=$(last_shelve) &&
+		echo change=$change &&
+		p4 unshelve -s $change &&
+		p4 submit -d "Testing update-shelve" &&
+		test_path_is_file copy_of_file &&
+		test_path_is_file moved/file_to_move &&
+		test_path_is_missing file_to_move &&
+		test_path_is_file new_file &&
+		echo "unshelved and submitted change $change" &&
+		p4 changes moved/file_to_move | grep "Testing update-shelve" &&
+		p4 changes copy_of_file | grep "Testing update-shelve"
+	)
 '
 
 test_done

@@ -79,13 +79,25 @@ pack_obj () {
 		;;
 	esac
 
+	# If it's not a delta, we can convince pack-objects to generate a pack
+	# with just our entry, and then strip off the header (12 bytes) and
+	# trailer (20 bytes).
+	if test -z "$2"
+	then
+		echo "$1" | git pack-objects --stdout >pack_obj.tmp &&
+		size=$(wc -c <pack_obj.tmp) &&
+		dd if=pack_obj.tmp bs=1 count=$((size - 20 - 12)) skip=12 &&
+		rm -f pack_obj.tmp
+		return
+	fi
+
 	echo >&2 "BUG: don't know how to print $1${2:+ (from $2)}"
 	return 1
 }
 
 # Compute and append pack trailer to "$1"
 pack_trailer () {
-	test-sha1 -b <"$1" >trailer.tmp &&
+	test-tool sha1 -b <"$1" >trailer.tmp &&
 	cat trailer.tmp >>"$1" &&
 	rm -f trailer.tmp
 }

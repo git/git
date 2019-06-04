@@ -23,6 +23,9 @@ SYNOPSIS
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet] [--notes[=<ref>]]
+		   [--interdiff=<previous>]
+		   [--range-diff=<previous> [--creation-factor=<percent>]]
+		   [--progress]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
 
@@ -46,7 +49,7 @@ There are two ways to specify which commits to operate on.
 
 The first rule takes precedence in the case of a single <commit>.  To
 apply the second rule, i.e., format everything since the beginning of
-history up until <commit>, use the '\--root' option: `git format-patch
+history up until <commit>, use the `--root` option: `git format-patch
 --root <commit>`.  If you want to format only <commit> itself, you
 can do this with `git format-patch -1 <commit>`.
 
@@ -227,6 +230,38 @@ feeding the result to `git send-email`.
 	containing the branch description, shortlog and the overall diffstat.  You can
 	fill in a description in the file before sending it out.
 
+--interdiff=<previous>::
+	As a reviewer aid, insert an interdiff into the cover letter,
+	or as commentary of the lone patch of a 1-patch series, showing
+	the differences between the previous version of the patch series and
+	the series currently being formatted. `previous` is a single revision
+	naming the tip of the previous series which shares a common base with
+	the series being formatted (for example `git format-patch
+	--cover-letter --interdiff=feature/v1 -3 feature/v2`).
+
+--range-diff=<previous>::
+	As a reviewer aid, insert a range-diff (see linkgit:git-range-diff[1])
+	into the cover letter, or as commentary of the lone patch of a
+	1-patch series, showing the differences between the previous
+	version of the patch series and the series currently being formatted.
+	`previous` can be a single revision naming the tip of the previous
+	series if it shares a common base with the series being formatted (for
+	example `git format-patch --cover-letter --range-diff=feature/v1 -3
+	feature/v2`), or a revision range if the two versions of the series are
+	disjoint (for example `git format-patch --cover-letter
+	--range-diff=feature/v1~3..feature/v1 -3 feature/v2`).
++
+Note that diff options passed to the command affect how the primary
+product of `format-patch` is generated, and they are not passed to
+the underlying `range-diff` machinery used to generate the cover-letter
+material (this may change in the future).
+
+--creation-factor=<percent>::
+	Used with `--range-diff`, tweak the heuristic which matches up commits
+	between the previous and current series of patches by adjusting the
+	creation/deletion cost fudge factor. See linkgit:git-range-diff[1])
+	for details.
+
 --notes[=<ref>]::
 	Append the notes (see linkgit:git-notes[1]) for the commit
 	after the three-dash line.
@@ -239,7 +274,7 @@ keeping them as Git notes allows them to be maintained between versions
 of the patch series (but see the discussion of the `notes.rewrite`
 configuration options in linkgit:git-notes[1] to use this workflow).
 
---[no]-signature=<signature>::
+--[no-]signature=<signature>::
 	Add a signature to each message produced. Per RFC 3676 the signature
 	is separated from the body by a line with '-- ' on it. If the
 	signature option is omitted the signature defaults to the Git version
@@ -282,6 +317,9 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
 	<since>).  Note that root commits included in the specified
 	range are always formatted as creation patches, independently
 	of this flag.
+
+--progress::
+	Show progress reports on stderr as patches are generated.
 
 CONFIGURATION
 -------------
@@ -466,9 +504,9 @@ Toggle it to make sure it is set to `false`. Also, search for
 "mailnews.wraplength" and set the value to 0.
 
 3. Disable the use of format=flowed:
-Edit..Preferences..Advanced..Config Editor.  Search for
-"mailnews.send_plaintext_flowed".
-Toggle it to make sure it is set to `false`.
+   Edit..Preferences..Advanced..Config Editor.  Search for
+   "mailnews.send_plaintext_flowed".
+   Toggle it to make sure it is set to `false`.
 
 After that is done, you should be able to compose email as you
 otherwise would (cut + paste, 'git format-patch' | 'git imap-send', etc),
@@ -557,7 +595,7 @@ series A, B, C, the history would be like:
 ................................................
 
 With `git format-patch --base=P -3 C` (or variants thereof, e.g. with
-`--cover-letter` of using `Z..C` instead of `-3 C` to specify the
+`--cover-letter` or using `Z..C` instead of `-3 C` to specify the
 range), the base tree information block is shown at the end of the
 first message the command outputs (either the first patch, or the
 cover letter), like this:
@@ -591,14 +629,14 @@ EXAMPLES
 --------
 
 * Extract commits between revisions R1 and R2, and apply them on top of
-the current branch using 'git am' to cherry-pick them:
+  the current branch using 'git am' to cherry-pick them:
 +
 ------------
 $ git format-patch -k --stdout R1..R2 | git am -3 -k
 ------------
 
 * Extract all commits which are in the current branch but not in the
-origin branch:
+  origin branch:
 +
 ------------
 $ git format-patch origin
@@ -607,7 +645,7 @@ $ git format-patch origin
 For each commit a separate file is created in the current directory.
 
 * Extract all commits that lead to 'origin' since the inception of the
-project:
+  project:
 +
 ------------
 $ git format-patch --root origin
@@ -626,7 +664,7 @@ Note that non-Git "patch" programs won't understand renaming patches, so
 use it only when you know the recipient uses Git to apply your patch.
 
 * Extract three topmost commits from the current branch and format them
-as e-mailable patches:
+  as e-mailable patches:
 +
 ------------
 $ git format-patch -3

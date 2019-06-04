@@ -17,15 +17,15 @@ export TEXTDOMAINDIR
 
 # First decide what scheme to use...
 GIT_INTERNAL_GETTEXT_SH_SCHEME=fallthrough
-if test -n "@@USE_GETTEXT_SCHEME@@"
+if test -n "$GIT_TEST_GETTEXT_POISON"
+then
+	GIT_INTERNAL_GETTEXT_SH_SCHEME=poison
+elif test -n "@@USE_GETTEXT_SCHEME@@"
 then
 	GIT_INTERNAL_GETTEXT_SH_SCHEME="@@USE_GETTEXT_SCHEME@@"
 elif test -n "$GIT_INTERNAL_GETTEXT_TEST_FALLBACKS"
 then
 	: no probing necessary
-elif test -n "$GIT_GETTEXT_POISON"
-then
-	GIT_INTERNAL_GETTEXT_SH_SCHEME=poison
 elif type gettext.sh >/dev/null 2>&1
 then
 	# GNU libintl's gettext.sh

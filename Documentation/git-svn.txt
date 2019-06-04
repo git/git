@@ -8,7 +8,7 @@ git-svn - Bidirectional operation between a Subversion repository and Git
 SYNOPSIS
 --------
 [verse]
-'git svn' <command> [options] [arguments]
+'git svn' <command> [<options>] [<arguments>]
 
 DESCRIPTION
 -----------
@@ -95,6 +95,10 @@ If you still want the old default, you can get it by passing
 `--prefix ""` on the command line (`--prefix=""` may not work if
 your Perl's Getopt::Long is < v2.37).
 
+--ignore-refs=<regex>;;
+	When passed to 'init' or 'clone' this regular expression will
+	be preserved as a config key.  See 'fetch' for a description
+	of `--ignore-refs`.
 --ignore-paths=<regex>;;
 	When passed to 'init' or 'clone' this regular expression will
 	be preserved as a config key.  See 'fetch' for a description
@@ -122,7 +126,7 @@ your Perl's Getopt::Long is < v2.37).
 	command-line argument.
 +
 This automatically updates the rev_map if needed (see
-'$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
+'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
 
 --localtime;;
 	Store Git commit times in the local time zone instead of UTC.  This
@@ -137,6 +141,18 @@ the same local time zone.
 
 --parent;;
 	Fetch only from the SVN parent of the current HEAD.
+
+--ignore-refs=<regex>;;
+	Ignore refs for branches or tags matching the Perl regular
+	expression. A "negative look-ahead assertion" like
+	`^refs/remotes/origin/(?!tags/wanted-tag|wanted-branch).*$`
+	can be used to allow only certain refs.
++
+[verse]
+config key: svn-remote.<name>.ignore-refs
++
+If the ignore-refs configuration key is set, and the command-line
+option is also given, both regular expressions will be used.
 
 --ignore-paths=<regex>;;
 	This allows one to specify a Perl regular expression that will
@@ -223,7 +239,7 @@ Like 'git rebase'; this requires that the working tree be clean
 and have no uncommitted changes.
 +
 This automatically updates the rev_map if needed (see
-'$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
+'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
 
 -l;;
 --local;;
@@ -408,7 +424,7 @@ Any other arguments are passed directly to 'git log'
 'set-tree'::
 	You should consider using 'dcommit' instead of this command.
 	Commit specified commit or tree objects to SVN.  This relies on
-	your imported fetch data being up-to-date.  This makes
+	your imported fetch data being up to date.  This makes
 	absolutely no attempts to do patching when committing to SVN, it
 	simply overwrites files with those specified in the tree or
 	commit.  All merging is assumed to have taken place
@@ -436,13 +452,28 @@ Any other arguments are passed directly to 'git log'
 
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
-	command-line.  This command does not rely on being inside an `git svn
+	command-line.  This command does not rely on being inside a `git svn
 	init`-ed repository.  This command takes three arguments, (a) the
 	original tree to diff against, (b) the new tree result, (c) the
 	URL of the target Subversion repository.  The final argument
 	(URL) may be omitted if you are working from a 'git svn'-aware
 	repository (that has been `init`-ed with 'git svn').
 	The -r<revision> option is required for this.
++
+The commit message is supplied either directly with the `-m` or `-F`
+option, or indirectly from the tag or commit when the second tree-ish
+denotes such an object, or it is requested by invoking an editor (see
+`--edit` option below).
+
+-m <msg>;;
+--message=<msg>;;
+	Use the given `msg` as the commit message. This option
+	disables the `--edit` option.
+
+-F <filename>;;
+--file=<filename>;;
+	Take the commit message from the given file. This option
+	disables the `--edit` option.
 
 'info'::
 	Shows information about a file or directory similar to what
@@ -493,7 +524,7 @@ This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
 	way to repair the repo is to use 'reset'.
 +
 Only the rev_map and refs/remotes/git-svn are changed (see
-'$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
+'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
 Follow 'reset' with a 'fetch' and then 'git reset' or 'git rebase' to
 move local branches onto the new tree.
 
@@ -604,7 +635,8 @@ config key: svn.findcopiesharder
 
 -A<filename>::
 --authors-file=<filename>::
-	Syntax is compatible with the file used by 'git cvsimport':
+	Syntax is compatible with the file used by 'git cvsimport' but
+	an empty email address can be supplied with '<>':
 +
 ------------------------------------------------------------------------
 	loginname = Joe User <user@example.com>
@@ -623,8 +655,14 @@ config key: svn.authorsfile
 	If this option is specified, for each SVN committer name that
 	does not exist in the authors file, the given file is executed
 	with the committer name as the first argument.  The program is
-	expected to return a single line of the form "Name <email>",
-	which will be treated as if included in the authors file.
+	expected to return a single line of the form "Name <email>" or
+	"Name <>", which will be treated as if included in the authors
+	file.
++
+Due to historical reasons a relative 'filename' is first searched
+relative to the current directory for 'init' and 'clone' and relative
+to the root of the working tree for 'fetch'. If 'filename' is
+not found, it is searched like any other command in '$PATH'.
 +
 [verse]
 config key: svn.authorsProg
@@ -669,7 +707,7 @@ creating the branch or tag.
 config key: svn.useLogAuthor
 
 --add-author-from::
-	When committing to svn from Git (as part of 'commit-diff', 'set-tree' or 'dcommit'
+	When committing to svn from Git (as part of 'set-tree' or 'dcommit'
 	operations), if the existing log message doesn't already have a
 	`From:` or `Signed-off-by:` line, append a `From:` line based on the
 	Git commit's author string.  If you use this, then `--use-log-author`
@@ -722,7 +760,7 @@ svn-remote.<name>.noMetadata::
 +
 This option can only be used for one-shot imports as 'git svn'
 will not be able to fetch again without metadata. Additionally,
-if you lose your '$GIT_DIR/svn/\*\*/.rev_map.*' files, 'git svn' will not
+if you lose your '$GIT_DIR/svn/\**/.rev_map.*' files, 'git svn' will not
 be able to rebuild them.
 +
 The 'git svn log' command will not work on repositories using
@@ -1062,10 +1100,10 @@ listed below are allowed:
 	tags = tags/*/project-a:refs/remotes/project-a/tags/*
 ------------------------------------------------------------------------
 
-Keep in mind that the '\*' (asterisk) wildcard of the local ref
-(right of the ':') *must* be the farthest right path component;
+Keep in mind that the `*` (asterisk) wildcard of the local ref
+(right of the `:`) *must* be the farthest right path component;
 however the remote wildcard may be anywhere as long as it's an
-independent path component (surrounded by '/' or EOL).   This
+independent path component (surrounded by `/` or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using 'git config'.
 
@@ -1116,7 +1154,7 @@ fetching, then $GIT_DIR/svn/.metadata must be manually edited to remove
 
 FILES
 -----
-$GIT_DIR/svn/\*\*/.rev_map.*::
+$GIT_DIR/svn/\**/.rev_map.*::
 	Mapping between Subversion revision numbers and Git commit
 	names.  In a repository where the noMetadata option is not set,
 	this can be rebuilt from the git-svn-id: lines that are at the

@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git add' [--verbose | -v] [--dry-run | -n] [--force | -f] [--interactive | -i] [--patch | -p]
 	  [--edit | -e] [--[no-]all | --[no-]ignore-removal | [--update | -u]]
-	  [--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing]
+	  [--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing] [--renormalize]
 	  [--chmod=(+|-)x] [--] [<pathspec>...]
 
 DESCRIPTION
@@ -58,9 +58,12 @@ OPTIONS
 	specifying `dir` will record not just a file `dir/file1`
 	modified in the working tree, a file `dir/file2` added to
 	the working tree, but also a file `dir/file3` removed from
-	the working tree.  Note that older versions of Git used
+	the working tree). Note that older versions of Git used
 	to ignore removed files; use `--no-all` option if you want
-	to add modified or new files but ignore removed	ones.
+	to add modified or new files but ignore removed ones.
++
+For more details about the <pathspec> syntax, see the 'pathspec' entry
+in linkgit:gitglossary[7].
 
 -n::
 --dry-run::
@@ -121,7 +124,7 @@ subdirectories).
 --no-ignore-removal::
 	Update the index not only where the working tree has a file
 	matching <pathspec> but also where the index already has an
-	entry.	This adds, modifies, and removes index entries to
+	entry. This adds, modifies, and removes index entries to
 	match the working tree.
 +
 If no <pathspec> is given when `-A` option is used, all
@@ -165,6 +168,20 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	be ignored, no matter if they are already present in the work
 	tree or not.
 
+--no-warn-embedded-repo::
+	By default, `git add` will warn when adding an embedded
+	repository to the index without using `git submodule add` to
+	create an entry in `.gitmodules`. This option will suppress the
+	warning (e.g., if you are manually performing operations on
+	submodules).
+
+--renormalize::
+	Apply the "clean" process freshly to all tracked files to
+	forcibly add them again to the index.  This is useful after
+	changing `core.autocrlf` configuration or the `text` attribute
+	in order to correct files added with wrong CRLF/LF line endings.
+	This option implies `-u`.
+
 --chmod=(+|-)x::
 	Override the executable bit of the added files.  The executable
 	bit is only changed in the index, the files on disk are left
@@ -176,20 +193,11 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	for command-line options).
 
 
-Configuration
--------------
-
-The optional configuration variable `core.excludesFile` indicates a path to a
-file containing patterns of file names to exclude from git-add, similar to
-$GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
-those in info/exclude.  See linkgit:gitignore[5].
-
-
 EXAMPLES
 --------
 
 * Adds content from all `*.txt` files under `Documentation` directory
-and its subdirectories:
+  and its subdirectories:
 +
 ------------
 $ git add Documentation/\*.txt
@@ -209,7 +217,7 @@ Because this example lets the shell expand the asterisk (i.e. you are
 listing the files explicitly), it does not consider
 `subdir/git-foo.sh`.
 
-Interactive mode
+INTERACTIVE MODE
 ----------------
 When the command enters the interactive mode, it shows the
 output of the 'status' subcommand, and then goes into its

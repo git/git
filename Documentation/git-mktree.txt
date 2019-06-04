@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Reads standard input in non-recursive `ls-tree` output format, and creates
-a tree object.  The order of the tree entries is normalised by mktree so
+a tree object.  The order of the tree entries is normalized by mktree so
 pre-sorting the input is not required.  The object name of the tree object
 built is written to the standard output.
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='unpack-objects'
+test_description='test push with submodules'
 
 . ./test-lib.sh
 
@@ -27,7 +27,7 @@ test_expect_success setup '
 	)
 '
 
-test_expect_success push '
+test_expect_success 'push works with recorded gitlink' '
 	(
 		cd work &&
 		git push ../pub.git master
@@ -117,6 +117,27 @@ test_expect_success 'push succeeds if submodule commit not on remote but using o
 		git add gar/bage &&
 		git commit -m "Recurse on-demand from config for gar/bage" &&
 		git -c push.recurseSubmodules=on-demand push ../pub.git master &&
+		# Check that the supermodule commit got there
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master &&
+		# Check that the submodule commit got there too
+		cd gar/bage &&
+		git diff --quiet origin/master master
+	)
+'
+
+test_expect_success 'push succeeds if submodule commit not on remote but using auto-on-demand via submodule.recurse config' '
+	(
+		cd work/gar/bage &&
+		>recurse-on-demand-from-submodule-recurse-config &&
+		git add recurse-on-demand-from-submodule-recurse-config &&
+		git commit -m "Recurse submodule.recurse from config junk"
+	) &&
+	(
+		cd work &&
+		git add gar/bage &&
+		git commit -m "Recurse submodule.recurse from config for gar/bage" &&
+		git -c submodule.recurse push ../pub.git master &&
 		# Check that the supermodule commit got there
 		git fetch ../pub.git &&
 		git diff --quiet FETCH_HEAD master &&
@@ -277,6 +298,16 @@ test_expect_success 'push succeeds if submodule commit disabling recursion from 
 	)
 '
 
+test_expect_success 'submodule entry pointing at a tag is error' '
+	git -C work/gar/bage tag -a test1 -m "tag" &&
+	tag=$(git -C work/gar/bage rev-parse test1^{tag}) &&
+	git -C work update-index --cacheinfo 160000 "$tag" gar/bage &&
+	git -C work commit -m "bad commit" &&
+	test_when_finished "git -C work reset --hard HEAD^" &&
+	test_must_fail git -C work push --recurse-submodules=on-demand ../pub.git master 2>err &&
+	test_i18ngrep "is a tag, not a commit" err
+'
+
 test_expect_success 'push fails if recurse submodules option passed as yes' '
 	(
 		cd work/gar/bage &&
@@ -323,7 +354,7 @@ test_expect_success 'push succeeds if submodule has no remote and is on the firs
 	git clone a a1 &&
 	(
 		cd a1 &&
-		git init b
+		git init b &&
 		(
 			cd b &&
 			>junk &&
@@ -332,7 +363,7 @@ test_expect_success 'push succeeds if submodule has no remote and is on the firs
 		) &&
 		git add b &&
 		git commit -m "added submodule" &&
-		git push --recurse-submodule=check origin master
+		git push --recurse-submodules=check origin master
 	)
 '
 
@@ -452,6 +483,102 @@ test_expect_success 'push --dry-run does not recursively update submodules' '
 	git -C pub.git rev-parse master >actual_pub &&
 	test_cmp expected_pub actual_pub &&
 	test_cmp expected_submodule actual_submodule
+'
+
+test_expect_success 'push --dry-run does not recursively update submodules' '
+	git -C work push --dry-run --recurse-submodules=only ../pub.git master &&
+
+	git -C submodule.git rev-parse master >actual_submodule &&
+	git -C pub.git rev-parse master >actual_pub &&
+	test_cmp expected_pub actual_pub &&
+	test_cmp expected_submodule actual_submodule
+'
+
+test_expect_success 'push only unpushed submodules recursively' '
+	git -C work/gar/bage rev-parse master >expected_submodule &&
+	git -C pub.git rev-parse master >expected_pub &&
+
+	git -C work push --recurse-submodules=only ../pub.git master &&
+
+	git -C submodule.git rev-parse master >actual_submodule &&
+	git -C pub.git rev-parse master >actual_pub &&
+	test_cmp expected_submodule actual_submodule &&
+	test_cmp expected_pub actual_pub
+'
+
+test_expect_success 'push propagating the remotes name to a submodule' '
+	git -C work remote add origin ../pub.git &&
+	git -C work remote add pub ../pub.git &&
+
+	> work/gar/bage/junk10 &&
+	git -C work/gar/bage add junk10 &&
+	git -C work/gar/bage commit -m "Tenth junk" &&
+	git -C work add gar/bage &&
+	git -C work commit -m "Tenth junk added to gar/bage" &&
+
+	# Fails when submodule does not have a matching remote
+	test_must_fail git -C work push --recurse-submodules=on-demand pub master &&
+	# Succeeds when submodules has matching remote and refspec
+	git -C work push --recurse-submodules=on-demand origin master &&
+
+	git -C submodule.git rev-parse master >actual_submodule &&
+	git -C pub.git rev-parse master >actual_pub &&
+	git -C work/gar/bage rev-parse master >expected_submodule &&
+	git -C work rev-parse master >expected_pub &&
+	test_cmp expected_submodule actual_submodule &&
+	test_cmp expected_pub actual_pub
+'
+
+test_expect_success 'push propagating refspec to a submodule' '
+	> work/gar/bage/junk11 &&
+	git -C work/gar/bage add junk11 &&
+	git -C work/gar/bage commit -m "Eleventh junk" &&
+
+	git -C work checkout branch2 &&
+	git -C work add gar/bage &&
+	git -C work commit -m "updating gar/bage in branch2" &&
+
+	# Fails when submodule does not have a matching branch
+	test_must_fail git -C work push --recurse-submodules=on-demand origin branch2 &&
+	# Fails when refspec includes an object id
+	test_must_fail git -C work push --recurse-submodules=on-demand origin \
+		"$(git -C work rev-parse branch2):refs/heads/branch2" &&
+	# Fails when refspec includes HEAD and parent and submodule do not
+	# have the same named branch checked out
+	test_must_fail git -C work push --recurse-submodules=on-demand origin \
+		HEAD:refs/heads/branch2 &&
+
+	git -C work/gar/bage branch branch2 master &&
+	git -C work push --recurse-submodules=on-demand origin branch2 &&
+
+	git -C submodule.git rev-parse branch2 >actual_submodule &&
+	git -C pub.git rev-parse branch2 >actual_pub &&
+	git -C work/gar/bage rev-parse branch2 >expected_submodule &&
+	git -C work rev-parse branch2 >expected_pub &&
+	test_cmp expected_submodule actual_submodule &&
+	test_cmp expected_pub actual_pub
+'
+
+test_expect_success 'push propagating HEAD refspec to a submodule' '
+	git -C work/gar/bage checkout branch2 &&
+	> work/gar/bage/junk12 &&
+	git -C work/gar/bage add junk12 &&
+	git -C work/gar/bage commit -m "Twelfth junk" &&
+
+	git -C work checkout branch2 &&
+	git -C work add gar/bage &&
+	git -C work commit -m "updating gar/bage in branch2" &&
+
+	# Passes since the superproject and submodules HEAD are both on branch2
+	git -C work push --recurse-submodules=on-demand origin \
+		HEAD:refs/heads/branch2 &&
+
+	git -C submodule.git rev-parse branch2 >actual_submodule &&
+	git -C pub.git rev-parse branch2 >actual_pub &&
+	git -C work/gar/bage rev-parse branch2 >expected_submodule &&
+	git -C work rev-parse branch2 >expected_pub &&
+	test_cmp expected_submodule actual_submodule &&
+	test_cmp expected_pub actual_pub
 '
 
 test_done

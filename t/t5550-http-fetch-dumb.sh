@@ -20,8 +20,9 @@ test_expect_success 'create http-accessible bare repository with loose objects' 
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	 git config core.bare true &&
 	 mkdir -p hooks &&
-	 echo "exec git update-server-info" >hooks/post-update &&
-	 chmod +x hooks/post-update &&
+	 write_script "hooks/post-update" <<-\EOF &&
+	 exec git update-server-info
+	EOF
 	 hooks/post-update
 	) &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
@@ -32,6 +33,15 @@ test_expect_success 'clone http repository' '
 	git clone $HTTPD_URL/dumb/repo.git clone-tmpl &&
 	cp -R clone-tmpl clone &&
 	test_cmp file clone/file
+'
+
+test_expect_success 'list refs from outside any repository' '
+	cat >expect <<-EOF &&
+	$(git rev-parse master)	HEAD
+	$(git rev-parse master)	refs/heads/master
+	EOF
+	nongit git ls-remote "$HTTPD_URL/dumb/repo.git" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'create password-protected repository' '
@@ -157,6 +167,17 @@ test_expect_success 'fetch changes via manual http-fetch' '
 	 git checkout master-new &&
 	 test $HEAD = $(git rev-parse --verify HEAD)) &&
 	test_cmp file clone2/file
+'
+
+test_expect_success 'manual http-fetch without -a works just as well' '
+	cp -R clone-tmpl clone3 &&
+
+	HEAD=$(git rev-parse --verify HEAD) &&
+	(cd clone3 &&
+	 git http-fetch -w heads/master-new $HEAD $(git config remote.origin.url) &&
+	 git checkout master-new &&
+	 test $HEAD = $(git rev-parse --verify HEAD)) &&
+	test_cmp file clone3/file
 '
 
 test_expect_success 'http remote detects correct HEAD' '
@@ -378,5 +399,29 @@ test_expect_success 'http-alternates triggers not-from-user protocol check' '
 		clone $HTTPD_URL/dumb/evil.git evil-user
 '
 
-stop_httpd
+test_expect_success 'can redirect through non-"info/refs?service=git-upload-pack" URL' '
+	git clone "$HTTPD_URL/redir-to/dumb/repo.git"
+'
+
+test_expect_success 'print HTTP error when any intermediate redirect throws error' '
+	test_must_fail git clone "$HTTPD_URL/redir-to/502" 2> stderr &&
+	test_i18ngrep "unable to access.*/redir-to/502" stderr
+'
+
+test_expect_success 'fetching via http alternates works' '
+	parent=$HTTPD_DOCUMENT_ROOT_PATH/alt-parent.git &&
+	git init --bare "$parent" &&
+	git -C "$parent" --work-tree=. commit --allow-empty -m foo &&
+	git -C "$parent" update-server-info &&
+	commit=$(git -C "$parent" rev-parse HEAD) &&
+
+	child=$HTTPD_DOCUMENT_ROOT_PATH/alt-child.git &&
+	git init --bare "$child" &&
+	echo "../../alt-parent.git/objects" >"$child/objects/info/alternates" &&
+	git -C "$child" update-ref HEAD $commit &&
+	git -C "$child" update-server-info &&
+
+	git -c http.followredirects=true clone "$HTTPD_URL/dumb/alt-child.git"
+'
+
 test_done

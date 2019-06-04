@@ -1,0 +1,4 @@
+$ git diff-tree -R --stat --compact-summary initial mode
+ file0 (mode -x) | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+$

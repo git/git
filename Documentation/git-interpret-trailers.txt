@@ -3,24 +3,27 @@ git-interpret-trailers(1)
 
 NAME
 ----
-git-interpret-trailers - help add structured information into commit messages
+git-interpret-trailers - Add or parse structured information in commit messages
 
 SYNOPSIS
 --------
 [verse]
-'git interpret-trailers' [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]
+'git interpret-trailers' [<options>] [(--trailer <token>[(=|:)<value>])...] [<file>...]
+'git interpret-trailers' [<options>] [--parse] [<file>...]
 
 DESCRIPTION
 -----------
-Help adding 'trailers' lines, that look similar to RFC 822 e-mail
+Help parsing or adding 'trailers' lines, that look similar to RFC 822 e-mail
 headers, at the end of the otherwise free-form part of a commit
 message.
 
 This command reads some patches or commit messages from either the
-<file> arguments or the standard input if no <file> is specified. Then
-this command applies the arguments passed using the `--trailer`
-option, if any, to the commit message part of each input file. The
-result is emitted on the standard output.
+<file> arguments or the standard input if no <file> is specified. If
+`--parse` is specified, the output consists of the parsed trailers.
+
+Otherwise, this command applies the arguments passed using the
+`--trailer` option, if any, to the commit message part of each input
+file. The result is emitted on the standard output.
 
 Some configuration variables control the way the `--trailer` arguments
 are applied to each commit message and the way any existing trailer in
@@ -48,13 +51,14 @@ with only spaces at the end of the commit message part, one blank line
 will be added before the new trailer.
 
 Existing trailers are extracted from the input message by looking for
-a group of one or more lines that (i) are all trailers, or (ii) contains at
+a group of one or more lines that (i) is all trailers, or (ii) contains at
 least one Git-generated or user-configured trailer and consists of at
 least 25% trailers.
 The group must be preceded by one or more empty (or whitespace-only) lines.
 The group must either be at the end of the message or be the last
-non-whitespace lines before a line that starts with '---'. Such three
-minus signs start the patch part of the message.
+non-whitespace lines before a line that starts with '---' (followed by a
+space or the end of the line). Such three minus signs start the patch
+part of the message. See also `--no-divider` below.
 
 When reading trailers, there can be whitespaces after the
 token, the separator and the value. There can also be whitespaces
@@ -79,6 +83,53 @@ OPTIONS
 	Specify a (<token>, <value>) pair that should be applied as a
 	trailer to the input messages. See the description of this
 	command.
+
+--where <placement>::
+--no-where::
+	Specify where all new trailers will be added.  A setting
+	provided with '--where' overrides all configuration variables
+	and applies to all '--trailer' options until the next occurrence of
+	'--where' or '--no-where'. Possible values are `after`, `before`,
+	`end` or `start`.
+
+--if-exists <action>::
+--no-if-exists::
+	Specify what action will be performed when there is already at
+	least one trailer with the same <token> in the message.  A setting
+	provided with '--if-exists' overrides all configuration variables
+	and applies to all '--trailer' options until the next occurrence of
+	'--if-exists' or '--no-if-exists'. Possible actions are `addIfDifferent`,
+	`addIfDifferentNeighbor`, `add`, `replace` and `doNothing`.
+
+--if-missing <action>::
+--no-if-missing::
+	Specify what action will be performed when there is no other
+	trailer with the same <token> in the message.  A setting
+	provided with '--if-missing' overrides all configuration variables
+	and applies to all '--trailer' options until the next occurrence of
+	'--if-missing' or '--no-if-missing'. Possible actions are `doNothing`
+	or `add`.
+
+--only-trailers::
+	Output only the trailers, not any other parts of the input.
+
+--only-input::
+	Output only trailers that exist in the input; do not add any
+	from the command-line or by following configured `trailer.*`
+	rules.
+
+--unfold::
+	Remove any whitespace-continuation in trailers, so that each
+	trailer appears on a line by itself with its full content.
+
+--parse::
+	A convenience alias for `--only-trailers --only-input
+	--unfold`.
+
+--no-divider::
+	Do not treat `---` as the end of the commit message. Use this
+	when you know your input contains just the commit message itself
+	(and not an email or the output of `git format-patch`).
 
 CONFIGURATION VARIABLES
 -----------------------
@@ -123,7 +174,7 @@ trailer.ifexists::
 	same <token> in the message.
 +
 The valid values for this option are: `addIfDifferentNeighbor` (this
-is the default), `addIfDifferent`, `add`, `overwrite` or `doNothing`.
+is the default), `addIfDifferent`, `add`, `replace` or `doNothing`.
 +
 With `addIfDifferentNeighbor`, a new trailer will be added only if no
 trailer with the same (<token>, <value>) pair is above or below the line
@@ -170,8 +221,8 @@ trailer.<token>.where::
 	configuration variable and it overrides what is specified by
 	that option for trailers with the specified <token>.
 
-trailer.<token>.ifexist::
-	This option takes the same values as the 'trailer.ifexist'
+trailer.<token>.ifexists::
+	This option takes the same values as the 'trailer.ifexists'
 	configuration variable and it overrides what is specified by
 	that option for trailers with the specified <token>.
 

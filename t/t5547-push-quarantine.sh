@@ -39,7 +39,7 @@ test_expect_success 'push to repo path with path separator (colon)' '
 	# so make it likely for us to generate a delta by having
 	# a non-trivial file with multiple versions.
 
-	test-genrandom foo 4096 >file.bin &&
+	test-tool genrandom foo 4096 >file.bin &&
 	git add file.bin &&
 	git commit -m bin &&
 
@@ -56,6 +56,17 @@ test_expect_success 'push to repo path with path separator (colon)' '
 	# Note that we have to use the full path here, or it gets confused
 	# with the ssh host:path syntax.
 	git push "$(pwd)/xxx${pathsep}yyy.git" HEAD
+'
+
+test_expect_success 'updating a ref from quarantine is forbidden' '
+	git init --bare update.git &&
+	write_script update.git/hooks/pre-receive <<-\EOF &&
+	read old new refname
+	git update-ref refs/heads/unrelated $new
+	exit 1
+	EOF
+	test_must_fail git push update.git HEAD &&
+	git -C update.git fsck
 '
 
 test_done

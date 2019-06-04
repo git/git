@@ -40,7 +40,7 @@ beginning. It is always easier to squash a few commits together than
 to split one big commit into several.  Don't be afraid of making too
 small or imperfect steps along the way. You can always go back later
 and edit the commits with `git rebase --interactive` before you
-publish them.  You can use `git stash save --keep-index` to run the
+publish them.  You can use `git stash push --keep-index` to run the
 test suite independent of other uncommitted changes; see the EXAMPLES
 section of linkgit:git-stash[1].
 
@@ -107,7 +107,7 @@ the unstable branch into the stable one.  Hence the following:
 .Merge upwards
 [caption="Rule: "]
 =====================================
-Always commit your fixes to the oldest supported branch that require
+Always commit your fixes to the oldest supported branch that requires
 them.  Then (periodically) merge the integration branches upwards into each
 other.
 =====================================
@@ -407,8 +407,8 @@ follows.
 `git pull <url> <branch>`
 =====================================
 
-Occasionally, the maintainer may get merge conflicts when he tries to
-pull changes from downstream.  In this case, he can ask downstream to
+Occasionally, the maintainer may get merge conflicts when they try to
+pull changes from downstream.  In this case, they can ask downstream to
 do the merge and resolve the conflicts themselves (perhaps they will
 know better how to resolve them).  It is one of the rare cases where
 downstream 'should' merge from upstream.
@@ -477,4 +477,4 @@ linkgit:git-am[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

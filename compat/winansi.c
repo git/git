@@ -105,6 +105,13 @@ static int is_console(int fd)
 	if (!fd) {
 		if (!GetConsoleMode(hcon, &mode))
 			return 0;
+		/*
+		 * This code path is only reached if there is no console
+		 * attached to stdout/stderr, i.e. we will not need to output
+		 * any text to any console, therefore we might just as well
+		 * use black as foreground color.
+		 */
+		sbi.wAttributes = 0;
 	} else if (!GetConsoleScreenBufferInfo(hcon, &sbi))
 		return 0;
 
@@ -133,6 +140,11 @@ static void write_console(unsigned char *str, size_t len)
 
 	/* convert utf-8 to utf-16 */
 	int wlen = xutftowcsn(wbuf, (char*) str, ARRAY_SIZE(wbuf), len);
+	if (wlen < 0) {
+		wchar_t *err = L"[invalid]";
+		WriteConsoleW(console, err, wcslen(err), &dummy, NULL);
+		return;
+	}
 
 	/* write directly to console */
 	WriteConsoleW(console, wbuf, wlen, &dummy, NULL);
@@ -462,6 +474,18 @@ static void die_lasterr(const char *fmt, ...)
 	va_end(params);
 }
 
+#undef dup2
+int winansi_dup2(int oldfd, int newfd)
+{
+	int ret = dup2(oldfd, newfd);
+
+	if (!ret && newfd >= 0 && newfd <= 2)
+		fd_is_interactive[newfd] = oldfd < 0 || oldfd > 2 ?
+			0 : fd_is_interactive[oldfd];
+
+	return ret;
+}
+
 static HANDLE duplicate_handle(HANDLE hnd)
 {
 	HANDLE hresult, hproc = GetCurrentProcess();
@@ -494,25 +518,24 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 	 * It is because of this implicit close() that we created the
 	 * copy of the original.
 	 *
-	 * Note that the OS can recycle HANDLE (numbers) just like it
-	 * recycles fd (numbers), so we must update the cached value
-	 * of "console".  You can use GetFileType() to see that
-	 * handle and _get_osfhandle(fd) may have the same number
-	 * value, but they refer to different actual files now.
+	 * Note that we need to update the cached console handle to the
+	 * duplicated one because the dup2() call will implicitly close
+	 * the original one.
 	 *
 	 * Note that dup2() when given target := {0,1,2} will also
 	 * call SetStdHandle(), so we don't need to worry about that.
 	 */
-	dup2(new_fd, fd);
 	if (console == handle)
 		console = duplicate;
-	handle = INVALID_HANDLE_VALUE;
+	dup2(new_fd, fd);
 
 	/* Close the temp fd.  This explicitly closes "new_handle"
 	 * (because it has been associated with it).
 	 */
 	close(new_fd);
 
+	if (fd == 2)
+		setvbuf(stderr, NULL, _IONBF, BUFSIZ);
 	fd_is_interactive[fd] |= FD_SWAPPED;
 
 	return duplicate;
@@ -550,6 +573,8 @@ static void detect_msys_tty(int fd)
 			!wcsstr(name, L"-pty"))
 		return;
 
+	if (fd == 2)
+		setvbuf(stderr, NULL, _IONBF, BUFSIZ);
 	fd_is_interactive[fd] |= FD_MSYS;
 }
 

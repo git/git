@@ -20,12 +20,12 @@ check_have () {
 }
 
 check_fsck () {
-	output=$(git fsck --full)
+	git fsck --full >fsck.output
 	case "$1" in
 	'')
-		test -z "$output" ;;
+		test_must_be_empty fsck.output ;;
 	*)
-		echo "$output" | grep "$1" ;;
+		test_i18ngrep "$1" fsck.output ;;
 	esac
 }
 
@@ -232,25 +232,34 @@ test_expect_success '--expire=never' '
 '
 
 test_expect_success 'gc.reflogexpire=never' '
+	test_config gc.reflogexpire never &&
+	test_config gc.reflogexpireunreachable never &&
 
-	git config gc.reflogexpire never &&
-	git config gc.reflogexpireunreachable never &&
-	git reflog expire --verbose --all &&
+	git reflog expire --verbose --all >output &&
+	test_line_count = 9 output &&
+
 	git reflog refs/heads/master >output &&
 	test_line_count = 4 output
 '
 
 test_expect_success 'gc.reflogexpire=false' '
+	test_config gc.reflogexpire false &&
+	test_config gc.reflogexpireunreachable false &&
 
-	git config gc.reflogexpire false &&
-	git config gc.reflogexpireunreachable false &&
 	git reflog expire --verbose --all &&
 	git reflog refs/heads/master >output &&
-	test_line_count = 4 output &&
+	test_line_count = 4 output
 
-	git config --unset gc.reflogexpire &&
-	git config --unset gc.reflogexpireunreachable
+'
 
+test_expect_success 'git reflog expire unknown reference' '
+	test_config gc.reflogexpire never &&
+	test_config gc.reflogexpireunreachable never &&
+
+	test_must_fail git reflog expire master@{123} 2>stderr &&
+	test_i18ngrep "points nowhere" stderr &&
+	test_must_fail git reflog expire does-not-exist 2>stderr &&
+	test_i18ngrep "points nowhere" stderr
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '
@@ -290,9 +299,8 @@ test_expect_success 'stale dirs do not cause d/f conflicts (reflogs off)' '
 	# same as before, but we only create a reflog for "one" if
 	# it already exists, which it does not
 	git -c core.logallrefupdates=false branch one master &&
-	: >expect &&
 	git log -g --format="%gd %gs" one >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 # Triggering the bug detected by this test requires a newline to fall
@@ -339,8 +347,8 @@ test_expect_failure 'reflog with non-commit entries displays all entries' '
 '
 
 test_expect_success 'reflog expire operates on symref not referrent' '
-	git branch -l the_symref &&
-	git branch -l referrent &&
+	git branch --create-reflog the_symref &&
+	git branch --create-reflog referrent &&
 	git update-ref referrent HEAD &&
 	git symbolic-ref refs/heads/the_symref refs/heads/referrent &&
 	test_when_finished "rm -f .git/refs/heads/referrent.lock" &&
@@ -366,6 +374,21 @@ test_expect_success 'continue walking past root commits' '
 		test_commit orphan2-1 &&
 		git log -g --format="%gd %gs" >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'expire with multiple worktrees' '
+	git init main-wt &&
+	(
+		cd main-wt &&
+		test_tick &&
+		test_commit foo &&
+		git  worktree add link-wt &&
+		test_tick &&
+		test_commit -C link-wt foobar &&
+		test_tick &&
+		git reflog expire --verbose --all --expire=$test_tick &&
+		test_must_be_empty .git/worktrees/link-wt/logs/HEAD
 	)
 '
 

@@ -4,6 +4,7 @@ test_description='git log'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
+. "$TEST_DIRECTORY/lib-terminal.sh"
 
 test_expect_success setup '
 
@@ -230,14 +231,47 @@ second
 initial
 EOF
 test_expect_success 'log --invert-grep --grep' '
-	git log --pretty="tformat:%s" --invert-grep --grep=th --grep=Sec >actual &&
-	test_cmp expect actual
+	# Fixed
+	git -c grep.patternType=fixed log --pretty="tformat:%s" --invert-grep --grep=th --grep=Sec >actual &&
+	test_cmp expect actual &&
+
+	# POSIX basic
+	git -c grep.patternType=basic log --pretty="tformat:%s" --invert-grep --grep=t[h] --grep=S[e]c >actual &&
+	test_cmp expect actual &&
+
+	# POSIX extended
+	git -c grep.patternType=basic log --pretty="tformat:%s" --invert-grep --grep=t[h] --grep=S[e]c >actual &&
+	test_cmp expect actual &&
+
+	# PCRE
+	if test_have_prereq PCRE
+	then
+		git -c grep.patternType=perl log --pretty="tformat:%s" --invert-grep --grep=t[h] --grep=S[e]c >actual &&
+		test_cmp expect actual
+	fi
 '
 
 test_expect_success 'log --invert-grep --grep -i' '
 	echo initial >expect &&
-	git log --pretty="tformat:%s" --invert-grep -i --grep=th --grep=Sec >actual &&
-	test_cmp expect actual
+
+	# Fixed
+	git -c grep.patternType=fixed log --pretty="tformat:%s" --invert-grep -i --grep=th --grep=Sec >actual &&
+	test_cmp expect actual &&
+
+	# POSIX basic
+	git -c grep.patternType=basic log --pretty="tformat:%s" --invert-grep -i --grep=t[h] --grep=S[e]c >actual &&
+	test_cmp expect actual &&
+
+	# POSIX extended
+	git -c grep.patternType=extended log --pretty="tformat:%s" --invert-grep -i --grep=t[h] --grep=S[e]c >actual &&
+	test_cmp expect actual &&
+
+	# PCRE
+	if test_have_prereq PCRE
+	then
+		git -c grep.patternType=perl log --pretty="tformat:%s" --invert-grep -i --grep=t[h] --grep=S[e]c >actual &&
+		test_cmp expect actual
+	fi
 '
 
 test_expect_success 'log --grep option parsing' '
@@ -255,21 +289,60 @@ test_expect_success 'log -i --grep' '
 
 test_expect_success 'log --grep -i' '
 	echo Second >expect &&
+
+	# Fixed
 	git log -1 --pretty="tformat:%s" --grep=sec -i >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	# POSIX basic
+	git -c grep.patternType=basic log -1 --pretty="tformat:%s" --grep=s[e]c -i >actual &&
+	test_cmp expect actual &&
+
+	# POSIX extended
+	git -c grep.patternType=extended log -1 --pretty="tformat:%s" --grep=s[e]c -i >actual &&
+	test_cmp expect actual &&
+
+	# PCRE
+	if test_have_prereq PCRE
+	then
+		git -c grep.patternType=perl log -1 --pretty="tformat:%s" --grep=s[e]c -i >actual &&
+		test_cmp expect actual
+	fi
 '
 
 test_expect_success 'log -F -E --grep=<ere> uses ere' '
 	echo second >expect &&
-	git log -1 --pretty="tformat:%s" -F -E --grep=s.c.nd >actual &&
+	# basic would need \(s\) to do the same
+	git log -1 --pretty="tformat:%s" -F -E --grep="(s).c.nd" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success PCRE 'log -F -E --perl-regexp --grep=<pcre> uses PCRE' '
+	test_when_finished "rm -rf num_commits" &&
+	git init num_commits &&
+	(
+		cd num_commits &&
+		test_commit 1d &&
+		test_commit 2e
+	) &&
+
+	# In PCRE \d in [\d] is like saying "0-9", and matches the 2
+	# in 2e...
+	echo 2e >expect &&
+	git -C num_commits log -1 --pretty="tformat:%s" -F -E --perl-regexp --grep="[\d]" >actual &&
+	test_cmp expect actual &&
+
+	# ...in POSIX basic and extended it is the same as [d],
+	# i.e. "d", which matches 1d, but does not match 2e.
+	echo 1d >expect &&
+	git -C num_commits log -1 --pretty="tformat:%s" -F -E --grep="[\d]" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'log with grep.patternType configuration' '
-	>expect &&
 	git -c grep.patterntype=fixed \
 	log -1 --pretty=tformat:%s --grep=s.c.nd >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'log with grep.patternType configuration and command line' '
@@ -277,6 +350,93 @@ test_expect_success 'log with grep.patternType configuration and command line' '
 	git -c grep.patterntype=fixed \
 	log -1 --pretty=tformat:%s --basic-regexp --grep=s.c.nd >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'log with various grep.patternType configurations & command-lines' '
+	git init pattern-type &&
+	(
+		cd pattern-type &&
+		test_commit 1 file A &&
+
+		# The tagname is overridden here because creating a
+		# tag called "(1|2)" as test_commit would otherwise
+		# implicitly do would fail on e.g. MINGW.
+		test_commit "(1|2)" file B 2 &&
+
+		echo "(1|2)" >expect.fixed &&
+		cp expect.fixed expect.basic &&
+		cp expect.fixed expect.extended &&
+		cp expect.fixed expect.perl &&
+
+		# A strcmp-like match with fixed.
+		git -c grep.patternType=fixed log --pretty=tformat:%s \
+			--grep="(1|2)" >actual.fixed &&
+
+		# POSIX basic matches (, | and ) literally.
+		git -c grep.patternType=basic log --pretty=tformat:%s \
+			--grep="(.|.)" >actual.basic &&
+
+		# POSIX extended needs to have | escaped to match it
+		# literally, whereas under basic this is the same as
+		# (|2), i.e. it would also match "1". This test checks
+		# for extended by asserting that it is not matching
+		# what basic would match.
+		git -c grep.patternType=extended log --pretty=tformat:%s \
+			--grep="\|2" >actual.extended &&
+		if test_have_prereq PCRE
+		then
+			# Only PCRE would match [\d]\| with only
+			# "(1|2)" due to [\d]. POSIX basic would match
+			# both it and "1" since similarly to the
+			# extended match above it is the same as
+			# \([\d]\|\). POSIX extended would
+			# match neither.
+			git -c grep.patternType=perl log --pretty=tformat:%s \
+				--grep="[\d]\|" >actual.perl &&
+			test_cmp expect.perl actual.perl
+		fi &&
+		test_cmp expect.fixed actual.fixed &&
+		test_cmp expect.basic actual.basic &&
+		test_cmp expect.extended actual.extended &&
+
+		git log --pretty=tformat:%s -F \
+			--grep="(1|2)" >actual.fixed.short-arg &&
+		git log --pretty=tformat:%s -E \
+			--grep="\|2" >actual.extended.short-arg &&
+		if test_have_prereq PCRE
+		then
+			git log --pretty=tformat:%s -P \
+				--grep="[\d]\|" >actual.perl.short-arg
+		else
+			test_must_fail git log -P \
+				--grep="[\d]\|"
+		fi &&
+		test_cmp expect.fixed actual.fixed.short-arg &&
+		test_cmp expect.extended actual.extended.short-arg &&
+		if test_have_prereq PCRE
+		then
+			test_cmp expect.perl actual.perl.short-arg
+		fi &&
+
+		git log --pretty=tformat:%s --fixed-strings \
+			--grep="(1|2)" >actual.fixed.long-arg &&
+		git log --pretty=tformat:%s --basic-regexp \
+			--grep="(.|.)" >actual.basic.long-arg &&
+		git log --pretty=tformat:%s --extended-regexp \
+			--grep="\|2" >actual.extended.long-arg &&
+		if test_have_prereq PCRE
+		then
+			git log --pretty=tformat:%s --perl-regexp \
+				--grep="[\d]\|" >actual.perl.long-arg &&
+			test_cmp expect.perl actual.perl.long-arg
+		else
+			test_must_fail git log --perl-regexp \
+				--grep="[\d]\|"
+		fi &&
+		test_cmp expect.fixed actual.fixed.long-arg &&
+		test_cmp expect.basic actual.basic.long-arg &&
+		test_cmp expect.extended actual.extended.long-arg
+	)
 '
 
 cat > expect <<EOF
@@ -359,6 +519,28 @@ test_expect_success 'log --graph --line-prefix="| | | " with merge' '
 	test_cmp expect actual
 '
 
+cat > expect.colors <<\EOF
+*   Merge branch 'side'
+<BLUE>|<RESET><CYAN>\<RESET>
+<BLUE>|<RESET> * side-2
+<BLUE>|<RESET> * side-1
+* <CYAN>|<RESET> Second
+* <CYAN>|<RESET> sixth
+* <CYAN>|<RESET> fifth
+* <CYAN>|<RESET> fourth
+<CYAN>|<RESET><CYAN>/<RESET>
+* third
+* second
+* initial
+EOF
+
+test_expect_success 'log --graph with merge with log.graphColors' '
+	test_config log.graphColors " blue,invalid-color, cyan, red  , " &&
+	git log --color=always --graph --date-order --pretty=tformat:%s |
+		test_decode_color | sed "s/ *\$//" >actual &&
+	test_cmp expect.colors actual
+'
+
 test_expect_success 'log --raw --graph -m with merge' '
 	git log --raw --graph --oneline -m master | head -n 500 >actual &&
 	grep "initial" actual
@@ -376,7 +558,7 @@ cat > expect <<\EOF
 | |
 | |     Merge branch 'side'
 | |
-| * commit side
+| * commit tags/side-2
 | | Author: A U Thor <author@example.com>
 | |
 | |     side-2
@@ -498,7 +680,7 @@ test_expect_success 'log --graph with merge' '
 '
 
 test_expect_success 'log.decorate configuration' '
-	git log --oneline >expect.none &&
+	git log --oneline --no-decorate >expect.none &&
 	git log --oneline --decorate >expect.short &&
 	git log --oneline --decorate=full >expect.full &&
 
@@ -552,6 +734,126 @@ test_expect_success 'log.decorate configuration' '
 	git log --pretty=raw >actual &&
 	test_cmp expect.raw actual
 
+'
+
+test_expect_success 'decorate-refs with glob' '
+	cat >expect.decorate <<-\EOF &&
+	Merge-tag-reach
+	Merge-tags-octopus-a-and-octopus-b
+	seventh
+	octopus-b (octopus-b)
+	octopus-a (octopus-a)
+	reach
+	EOF
+	git log -n6 --decorate=short --pretty="tformat:%f%d" \
+		--decorate-refs="heads/octopus*" >actual &&
+	test_cmp expect.decorate actual
+'
+
+test_expect_success 'decorate-refs without globs' '
+	cat >expect.decorate <<-\EOF &&
+	Merge-tag-reach
+	Merge-tags-octopus-a-and-octopus-b
+	seventh
+	octopus-b
+	octopus-a
+	reach (tag: reach)
+	EOF
+	git log -n6 --decorate=short --pretty="tformat:%f%d" \
+		--decorate-refs="tags/reach" >actual &&
+	test_cmp expect.decorate actual
+'
+
+test_expect_success 'multiple decorate-refs' '
+	cat >expect.decorate <<-\EOF &&
+	Merge-tag-reach
+	Merge-tags-octopus-a-and-octopus-b
+	seventh
+	octopus-b (octopus-b)
+	octopus-a (octopus-a)
+	reach (tag: reach)
+	EOF
+	git log -n6 --decorate=short --pretty="tformat:%f%d" \
+		--decorate-refs="heads/octopus*" \
+		--decorate-refs="tags/reach" >actual &&
+    test_cmp expect.decorate actual
+'
+
+test_expect_success 'decorate-refs-exclude with glob' '
+	cat >expect.decorate <<-\EOF &&
+	Merge-tag-reach (HEAD -> master)
+	Merge-tags-octopus-a-and-octopus-b
+	seventh (tag: seventh)
+	octopus-b (tag: octopus-b)
+	octopus-a (tag: octopus-a)
+	reach (tag: reach, reach)
+	EOF
+	git log -n6 --decorate=short --pretty="tformat:%f%d" \
+		--decorate-refs-exclude="heads/octopus*" >actual &&
+	test_cmp expect.decorate actual
+'
+
+test_expect_success 'decorate-refs-exclude without globs' '
+	cat >expect.decorate <<-\EOF &&
+	Merge-tag-reach (HEAD -> master)
+	Merge-tags-octopus-a-and-octopus-b
+	seventh (tag: seventh)
+	octopus-b (tag: octopus-b, octopus-b)
+	octopus-a (tag: octopus-a, octopus-a)
+	reach (reach)
+	EOF
+	git log -n6 --decorate=short --pretty="tformat:%f%d" \
+		--decorate-refs-exclude="tags/reach" >actual &&
+	test_cmp expect.decorate actual
+'
+
+test_expect_success 'multiple decorate-refs-exclude' '
+	cat >expect.decorate <<-\EOF &&
+	Merge-tag-reach (HEAD -> master)
+	Merge-tags-octopus-a-and-octopus-b
+	seventh (tag: seventh)
+	octopus-b (tag: octopus-b)
+	octopus-a (tag: octopus-a)
+	reach (reach)
+	EOF
+	git log -n6 --decorate=short --pretty="tformat:%f%d" \
+		--decorate-refs-exclude="heads/octopus*" \
+		--decorate-refs-exclude="tags/reach" >actual &&
+	test_cmp expect.decorate actual
+'
+
+test_expect_success 'decorate-refs and decorate-refs-exclude' '
+	cat >expect.decorate <<-\EOF &&
+	Merge-tag-reach (master)
+	Merge-tags-octopus-a-and-octopus-b
+	seventh
+	octopus-b
+	octopus-a
+	reach (reach)
+	EOF
+	git log -n6 --decorate=short --pretty="tformat:%f%d" \
+		--decorate-refs="heads/*" \
+		--decorate-refs-exclude="heads/oc*" >actual &&
+	test_cmp expect.decorate actual
+'
+
+test_expect_success 'log.decorate config parsing' '
+	git log --oneline --decorate=full >expect.full &&
+	git log --oneline --decorate=short >expect.short &&
+
+	test_config log.decorate full &&
+	test_config log.mailmap true &&
+	git log --oneline >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --decorate=short >actual &&
+	test_cmp expect.short actual
+'
+
+test_expect_success TTY 'log output on a TTY' '
+	git log --color --oneline --decorate >expect.short &&
+
+	test_terminal git log --oneline >actual &&
+	test_cmp expect.short actual
 '
 
 test_expect_success 'reflog is expected format' '
@@ -1190,6 +1492,54 @@ test_expect_success 'log --line-prefix="*** " --graph with diff and stats' '
 	test_i18ncmp expect actual.sanitized
 '
 
+cat >expect <<-\EOF
+* reach
+|
+| A	reach.t
+* Merge branch 'tangle'
+*   Merge branch 'side'
+|\
+| * side-2
+|
+|   A	2
+* Second
+|
+| A	one
+* sixth
+
+  D	a/two
+EOF
+
+test_expect_success 'log --graph with --name-status' '
+	git log --graph --format=%s --name-status tangle..reach >actual &&
+	sanitize_output <actual >actual.sanitized &&
+	test_cmp expect actual.sanitized
+'
+
+cat >expect <<-\EOF
+* reach
+|
+| reach.t
+* Merge branch 'tangle'
+*   Merge branch 'side'
+|\
+| * side-2
+|
+|   2
+* Second
+|
+| one
+* sixth
+
+  a/two
+EOF
+
+test_expect_success 'log --graph with --name-only' '
+	git log --graph --format=%s --name-only tangle..reach >actual &&
+	sanitize_output <actual >actual.sanitized &&
+	test_cmp expect actual.sanitized
+'
+
 test_expect_success 'dotdot is a parent directory' '
 	mkdir -p a/b &&
 	( echo sixth && echo fifth ) >expect &&
@@ -1205,10 +1555,26 @@ test_expect_success GPG 'setup signed branch' '
 	git commit -S -m signed_commit
 '
 
+test_expect_success GPGSM 'setup signed branch x509' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b signed-x509 master &&
+	echo foo >foo &&
+	git add foo &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git commit -S -m signed_commit
+'
+
 test_expect_success GPG 'log --graph --show-signature' '
 	git log --graph --show-signature -n1 signed >actual &&
 	grep "^| gpg: Signature made" actual &&
 	grep "^| gpg: Good signature" actual
+'
+
+test_expect_success GPGSM 'log --graph --show-signature x509' '
+	git log --graph --show-signature -n1 signed-x509 >actual &&
+	grep "^| gpgsm: Signature made" actual &&
+	grep "^| gpgsm: Good signature" actual
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag' '
@@ -1228,6 +1594,27 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 	grep "^|\\\  merged tag" actual &&
 	grep "^| | gpg: Signature made" actual &&
 	grep "^| | gpg: Good signature" actual
+'
+
+test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git checkout -b plain-x509 master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-x509 master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_x509 &&
+	git checkout plain-x509 &&
+	git merge --no-ff -m msg signed_tag_x509 &&
+	git log --graph --show-signature -n1 plain-x509 >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpgsm: Signature made" actual &&
+	grep "^| | gpgsm: Good signature" actual
 '
 
 test_expect_success GPG '--no-show-signature overrides --show-signature' '
@@ -1273,6 +1660,11 @@ test_expect_success 'log diagnoses bogus HEAD' '
 	test_i18ngrep broken stderr
 '
 
+test_expect_success 'log does not default to HEAD when rev input is given' '
+	git log --branches=does-not-exist >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'set up --source tests' '
 	git checkout --orphan source-a &&
 	test_commit one &&
@@ -1300,6 +1692,19 @@ test_expect_success 'log --source paints tag names' '
 	EOF
 	git log --oneline --source source-tag source-a >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'log --source paints symmetric ranges' '
+	cat >expect <<-\EOF &&
+	09e12a9	source-b three
+	8e393e1	source-a two
+	EOF
+	git log --oneline --source source-a...source-b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--exclude-promisor-objects does not BUG-crash' '
+	test_must_fail git log --exclude-promisor-objects source-a
 '
 
 test_done

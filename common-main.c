@@ -1,5 +1,6 @@
 #include "cache.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
+#include "attr.h"
 
 /*
  * Many parts of Git have subprograms communicate via pipe, expect the
@@ -24,18 +25,33 @@ static void restore_sigpipe_to_default(void)
 
 int main(int argc, const char **argv)
 {
+	int result;
+
+	trace2_initialize_clock();
+
 	/*
 	 * Always open file descriptors 0/1/2 to avoid clobbering files
 	 * in die().  It also avoids messing up when the pipes are dup'ed
 	 * onto stdin/stdout/stderr in the child processes we spawn.
 	 */
 	sanitize_stdfds();
+	restore_sigpipe_to_default();
+
+	git_resolve_executable_dir(argv[0]);
+
+	trace2_initialize();
+	trace2_cmd_start(argv);
+	trace2_collect_process_info(TRACE2_PROCESS_INFO_STARTUP);
 
 	git_setup_gettext();
 
-	git_extract_argv0_path(argv[0]);
+	initialize_the_repository();
 
-	restore_sigpipe_to_default();
+	attr_start();
 
-	return cmd_main(argc, argv);
+	result = cmd_main(argc, argv);
+
+	trace2_cmd_exit(result);
+
+	return result;
 }

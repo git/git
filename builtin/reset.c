@@ -7,11 +7,13 @@
  *
  * Copyright (c) 2005, 2006 Linus Torvalds and Junio C Hamano
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
+#include "config.h"
 #include "lockfile.h"
 #include "tag.h"
 #include "object.h"
-#include "commit.h"
+#include "pretty.h"
 #include "run-command.h"
 #include "refs.h"
 #include "diff.h"
@@ -21,6 +23,10 @@
 #include "parse-options.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"
+#include "submodule.h"
+#include "submodule-config.h"
+
+#define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
 static const char * const git_reset_usage[] = {
 	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"),
@@ -36,15 +42,16 @@ static const char *reset_type_names[] = {
 
 static inline int is_merge(void)
 {
-	return !access(git_path_merge_head(), F_OK);
+	return !access(git_path_merge_head(the_repository), F_OK);
 }
 
 static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 {
-	int nr = 1;
+	int i, nr = 0;
 	struct tree_desc desc[2];
 	struct tree *tree;
 	struct unpack_trees_options opts;
+	int ret = -1;
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
@@ -72,45 +79,46 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 		struct object_id head_oid;
 		if (get_oid("HEAD", &head_oid))
 			return error(_("You do not have a valid HEAD."));
-		if (!fill_tree_descriptor(desc, head_oid.hash))
+		if (!fill_tree_descriptor(desc + nr, &head_oid))
 			return error(_("Failed to find tree of HEAD."));
 		nr++;
 		opts.fn = twoway_merge;
 	}
 
-	if (!fill_tree_descriptor(desc + nr - 1, oid->hash))
-		return error(_("Failed to find tree of %s."), oid_to_hex(oid));
+	if (!fill_tree_descriptor(desc + nr, oid)) {
+		error(_("Failed to find tree of %s."), oid_to_hex(oid));
+		goto out;
+	}
+	nr++;
+
 	if (unpack_trees(nr, desc, &opts))
-		return -1;
+		goto out;
 
 	if (reset_type == MIXED || reset_type == HARD) {
-		tree = parse_tree_indirect(oid->hash);
-		prime_cache_tree(&the_index, tree);
+		tree = parse_tree_indirect(oid);
+		prime_cache_tree(the_repository, the_repository->index, tree);
 	}
 
-	return 0;
+	ret = 0;
+
+out:
+	for (i = 0; i < nr; i++)
+		free((void *)desc[i].buffer);
+	return ret;
 }
 
 static void print_new_head_line(struct commit *commit)
 {
-	const char *hex, *body;
-	const char *msg;
+	struct strbuf buf = STRBUF_INIT;
 
-	hex = find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV);
-	printf(_("HEAD is now at %s"), hex);
-	msg = logmsg_reencode(commit, NULL, get_log_output_encoding());
-	body = strstr(msg, "\n\n");
-	if (body) {
-		const char *eol;
-		size_t len;
-		body = skip_blank_lines(body + 2);
-		eol = strchr(body, '\n');
-		len = eol ? eol - body : strlen(body);
-		printf(" %.*s\n", (int) len, body);
-	}
-	else
-		printf("\n");
-	unuse_commit_buffer(commit, msg);
+	printf(_("HEAD is now at %s"),
+		find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+
+	pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
+	if (buf.len > 0)
+		printf(" %s", buf.buf);
+	putchar('\n');
+	strbuf_release(&buf);
 }
 
 static void update_index_from_diff(struct diff_queue_struct *q,
@@ -129,7 +137,7 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 			continue;
 		}
 
-		ce = make_cache_entry(one->mode, one->oid.hash, one->path,
+		ce = make_cache_entry(&the_index, one->mode, &one->oid, one->path,
 				      0, 0);
 		if (!ce)
 			die(_("make_cache_entry failed for path '%s'"),
@@ -153,8 +161,10 @@ static int read_from_tree(const struct pathspec *pathspec,
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
 	opt.format_callback_data = &intent_to_add;
+	opt.flags.override_submodule_config = 1;
+	opt.repo = the_repository;
 
-	if (do_diff_cache(tree_oid->hash, &opt))
+	if (do_diff_cache(tree_oid, &opt))
 		return 1;
 	diffcore_std(&opt);
 	diff_flush(&opt);
@@ -216,8 +226,8 @@ static void parse_args(struct pathspec *pathspec,
 		 * has to be unambiguous. If there is a single argument, it
 		 * can not be a tree
 		 */
-		else if ((!argv[1] && !get_sha1_committish(argv[0], unused.hash)) ||
-			 (argv[1] && !get_sha1_treeish(argv[0], unused.hash))) {
+		else if ((!argv[1] && !get_oid_committish(argv[0], &unused)) ||
+			 (argv[1] && !get_oid_treeish(argv[0], &unused))) {
 			/*
 			 * Ok, argv[0] looks like a commit/tree; it should not
 			 * be a filename.
@@ -236,7 +246,6 @@ static void parse_args(struct pathspec *pathspec,
 
 	parse_pathspec(pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
-		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP |
 		       (patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0),
 		       prefix, argv);
 }
@@ -253,15 +262,23 @@ static int reset_refs(const char *rev, const struct object_id *oid)
 	if (!get_oid("HEAD", &oid_orig)) {
 		orig = &oid_orig;
 		set_reflog_message(&msg, "updating ORIG_HEAD", NULL);
-		update_ref_oid(msg.buf, "ORIG_HEAD", orig, old_orig, 0,
+		update_ref(msg.buf, "ORIG_HEAD", orig, old_orig, 0,
 			   UPDATE_REFS_MSG_ON_ERR);
 	} else if (old_orig)
-		delete_ref("ORIG_HEAD", old_orig->hash, 0);
+		delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
 	set_reflog_message(&msg, "updating HEAD", rev);
-	update_ref_status = update_ref_oid(msg.buf, "HEAD", oid, orig, 0,
+	update_ref_status = update_ref(msg.buf, "HEAD", oid, orig, 0,
 				       UPDATE_REFS_MSG_ON_ERR);
 	strbuf_release(&msg);
 	return update_ref_status;
+}
+
+static int git_reset_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "submodule.recurse"))
+		return git_default_submodule_config(var, value, cb);
+
+	return git_default_config(var, value, cb);
 }
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
@@ -283,35 +300,39 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				N_("reset HEAD, index and working tree"), MERGE),
 		OPT_SET_INT(0, "keep", &reset_type,
 				N_("reset HEAD but keep local changes"), KEEP),
+		{ OPTION_CALLBACK, 0, "recurse-submodules", NULL,
+			    "reset", "control recursive updating of submodules",
+			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater },
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
 				N_("record only the fact that removed paths will be added later")),
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	git_config(git_reset_config, NULL);
+	git_config_get_bool("reset.quiet", &quiet);
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
 
-	unborn = !strcmp(rev, "HEAD") && get_sha1("HEAD", oid.hash);
+	unborn = !strcmp(rev, "HEAD") && get_oid("HEAD", &oid);
 	if (unborn) {
 		/* reset on unborn branch: treat as reset to empty tree */
-		hashcpy(oid.hash, EMPTY_TREE_SHA1_BIN);
+		oidcpy(&oid, the_hash_algo->empty_tree);
 	} else if (!pathspec.nr) {
 		struct commit *commit;
-		if (get_sha1_committish(rev, oid.hash))
+		if (get_oid_committish(rev, &oid))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
-		commit = lookup_commit_reference(oid.hash);
+		commit = lookup_commit_reference(the_repository, &oid);
 		if (!commit)
 			die(_("Could not parse object '%s'."), rev);
 		oidcpy(&oid, &commit->object.oid);
 	} else {
 		struct tree *tree;
-		if (get_sha1_treeish(rev, oid.hash))
+		if (get_oid_treeish(rev, &oid))
 			die(_("Failed to resolve '%s' as a valid tree."), rev);
-		tree = parse_tree_indirect(oid.hash);
+		tree = parse_tree_indirect(&oid);
 		if (!tree)
 			die(_("Could not parse object '%s'."), rev);
 		oidcpy(&oid, &tree->object.oid);
@@ -320,6 +341,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (patch_mode) {
 		if (reset_type != NONE)
 			die(_("--patch is incompatible with --{hard,mixed,soft}"));
+		trace2_cmd_mode("patch-interactive");
 		return run_add_interactive(rev, "--patch=reset", &pathspec);
 	}
 
@@ -335,6 +357,11 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
+
+	if (pathspec.nr)
+		trace2_cmd_mode("path");
+	else
+		trace2_cmd_mode(reset_type_names[reset_type]);
 
 	if (reset_type != SOFT && (reset_type != MIXED || get_git_work_tree()))
 		setup_work_tree();
@@ -353,15 +380,26 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die_if_unmerged_cache(reset_type);
 
 	if (reset_type != SOFT) {
-		struct lock_file *lock = xcalloc(1, sizeof(*lock));
-		hold_locked_index(lock, LOCK_DIE_ON_ERROR);
+		struct lock_file lock = LOCK_INIT;
+		hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
 		if (reset_type == MIXED) {
 			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
 			if (read_from_tree(&pathspec, &oid, intent_to_add))
 				return 1;
-			if (get_git_work_tree())
+			the_index.updated_skipworktree = 1;
+			if (!quiet && get_git_work_tree()) {
+				uint64_t t_begin, t_delta_in_ms;
+
+				t_begin = getnanotime();
 				refresh_index(&the_index, flags, NULL, NULL,
 					      _("Unstaged changes after reset:"));
+				t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
+				if (advice_reset_quiet_warning && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
+					printf(_("\nIt took %.2f seconds to enumerate unstaged changes after reset.  You can\n"
+						"use '--quiet' to avoid this.  Set the config setting reset.quiet to true\n"
+						"to make this the default.\n"), t_delta_in_ms / 1000.0);
+				}
+			}
 		} else {
 			int err = reset_index(&oid, reset_type, quiet);
 			if (reset_type == KEEP && !err)
@@ -370,7 +408,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				die(_("Could not reset index file to revision '%s'."), rev);
 		}
 
-		if (write_locked_index(&the_index, lock, COMMIT_LOCK))
+		if (write_locked_index(&the_index, &lock, COMMIT_LOCK))
 			die(_("Could not write new index file."));
 	}
 
@@ -380,10 +418,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		update_ref_status = reset_refs(rev, &oid);
 
 		if (reset_type == HARD && !update_ref_status && !quiet)
-			print_new_head_line(lookup_commit_reference(oid.hash));
+			print_new_head_line(lookup_commit_reference(the_repository, &oid));
 	}
 	if (!pathspec.nr)
-		remove_branch_state();
+		remove_branch_state(the_repository);
 
 	return update_ref_status;
 }

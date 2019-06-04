@@ -133,6 +133,13 @@ close TEMPFILE3;
 unlink $tmpfile3;
 chdir($abs_repo_dir);
 
+# unquoting paths
+is(Git::unquote_path('abc'), 'abc', 'unquote unquoted path');
+is(Git::unquote_path('"abc def"'), 'abc def', 'unquote simple quoted path');
+is(Git::unquote_path('"abc\"\\\\ \a\b\t\n\v\f\r\001\040"'),
+		     "abc\"\\ \x07\x08\x09\x0a\x0b\x0c\x0d\x01 ",
+		     'unquote escape sequences');
+
 printf "1..%d\n", Test::More->builder->current_test;
 
 my $is_passing = eval { Test::More->is_passing };

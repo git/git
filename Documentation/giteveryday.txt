@@ -244,7 +244,7 @@ commands in addition to the ones needed by participants.
 
 This section can also be used by those who respond to `git
 request-pull` or pull-request on GitHub (www.github.com) to
-integrate the work of others into their history. An sub-area
+integrate the work of others into their history. A sub-area
 lieutenant for a repository will act both as a participant and
 as an integrator.
 
@@ -307,9 +307,16 @@ master or exposed as a part of a stable branch.
 <9> backport a critical fix.
 <10> create a signed tag.
 <11> make sure master was not accidentally rewound beyond that
-already pushed out.  `ko` shorthand points at the Git maintainer's
+already pushed out.
+<12> In the output from `git show-branch`, `master` should have
+everything `ko/master` has, and `next` should have
+everything `ko/next` has, etc.
+<13> push out the bleeding edge, together with new tags that point
+into the pushed history.
+
+In this example, the `ko` shorthand points at the Git maintainer's
 repository at kernel.org, and looks like this:
-+
+
 ------------
 (in .git/config)
 [remote "ko"]
@@ -320,12 +327,6 @@ repository at kernel.org, and looks like this:
 	push = +refs/heads/pu
 	push = refs/heads/maint
 ------------
-+
-<12> In the output from `git show-branch`, `master` should have
-everything `ko/master` has, and `next` should have
-everything `ko/next` has, etc.
-<13> push out the bleeding edge, together with new tags that point
-into the pushed history.
 
 
 Repository Administration[[ADMINISTRATION]]

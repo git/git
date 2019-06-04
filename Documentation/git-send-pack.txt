@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git send-pack' [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>]
 		[--verbose] [--thin] [--atomic]
-		[--[no-]signed|--sign=(true|false|if-asked)]
+		[--[no-]signed|--signed=(true|false|if-asked)]
 		[<host>:]<directory> [<ref>...]
 
 DESCRIPTION
@@ -71,7 +71,7 @@ be in a separate packet, and the list must end with a flush packet.
 	refs.
 
 --[no-]signed::
---sign=(true|false|if-asked)::
+--signed=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
 	logged.  If `false` or `--no-signed`, no signing will be
@@ -80,6 +80,12 @@ be in a separate packet, and the list must end with a flush packet.
 	sign if and only if the server supports signed pushes.  The push
 	will also fail if the actual call to `gpg --sign` fails.  See
 	linkgit:git-receive-pack[1] for the details on the receiving end.
+
+--push-option=<string>::
+	Pass the specified string as a push option for consumption by
+	hooks on the server side.  If the server doesn't support push
+	options, error out.  See linkgit:git-push[1] and
+	linkgit:githooks[5] for details.
 
 <host>::
 	A remote host to house the repository.  When this
@@ -93,7 +99,7 @@ be in a separate packet, and the list must end with a flush packet.
 	The remote refs to update.
 
 
-Specifying the Refs
+SPECIFYING THE REFS
 -------------------
 
 There are three ways to specify which refs to update on the

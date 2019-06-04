@@ -24,7 +24,7 @@ code.  For Git in general, a few rough rules are:
 
    "Once it _is_ in the tree, it's not really worth the patch noise to
    go and fix it up."
-   Cf. http://article.gmane.org/gmane.linux.kernel/943020
+   Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
 
 Make your code readable and sensible, and don't try to be clever.
 
@@ -118,6 +118,24 @@ For shell scripts specifically (not exhaustive):
 		do this
 	fi
 
+ - If a command sequence joined with && or || or | spans multiple
+   lines, put each command on a separate line and put && and || and |
+   operators at the end of each line, rather than the start. This
+   means you don't need to use \ to join lines, since the above
+   operators imply the sequence isn't finished.
+
+	(incorrect)
+	grep blob verify_pack_result \
+	| awk -f print_1.awk \
+	| sort >actual &&
+	...
+
+	(correct)
+	grep blob verify_pack_result |
+	awk -f print_1.awk |
+	sort >actual &&
+	...
+
  - We prefer "test" over "[ ... ]".
 
  - We do not write the noiseword "function" in front of shell
@@ -206,11 +224,38 @@ For C programs:
 		x = 1;
 	}
 
-   is frowned upon.  A gray area is when the statement extends
-   over a few lines, and/or you have a lengthy comment atop of
-   it.  Also, like in the Linux kernel, if there is a long list
-   of "else if" statements, it can make sense to add braces to
-   single line blocks.
+   is frowned upon. But there are a few exceptions:
+
+	- When the statement extends over a few lines (e.g., a while loop
+	  with an embedded conditional, or a comment). E.g.:
+
+		while (foo) {
+			if (x)
+				one();
+			else
+				two();
+		}
+
+		if (foo) {
+			/*
+			 * This one requires some explanation,
+			 * so we're better off with braces to make
+			 * it obvious that the indentation is correct.
+			 */
+			doit();
+		}
+
+	- When there are multiple arms to a conditional and some of them
+	  require braces, enclose even a single line block in braces for
+	  consistency. E.g.:
+
+		if (foo) {
+			doit();
+		} else {
+			one();
+			two();
+			three();
+		}
 
  - We try to avoid assignments in the condition of an "if" statement.
 
@@ -229,12 +274,12 @@ For C programs:
 
    Note however that a comment that explains a translatable string to
    translators uses a convention of starting with a magic token
-   "TRANSLATORS: " immediately after the opening delimiter, even when
-   it spans multiple lines.  We do not add an asterisk at the beginning
-   of each line, either.  E.g.
+   "TRANSLATORS: ", e.g.
 
-	/* TRANSLATORS: here is a comment that explains the string
-	   to be translated, that follows immediately after it */
+	/*
+	 * TRANSLATORS: here is a comment that explains the string to
+	 * be translated, that follows immediately after it.
+	 */
 	_("Here is a translatable string explained by the above.");
 
  - Double negation is often harder to understand than no negation
@@ -331,7 +376,10 @@ For C programs:
    string_list for sorted string lists, a hash map (mapping struct
    objects) named "struct decorate", amongst other things.
 
- - When you come up with an API, document it.
+ - When you come up with an API, document its functions and structures
+   in the header file that exposes the API to its callers. Use what is
+   in "strbuf.h" as a model for the appropriate tone and level of
+   detail.
 
  - The first #include in C files, except in platform specific compat/
    implementations, must be either "git-compat-util.h", "cache.h" or
@@ -358,6 +406,11 @@ For C programs:
 
  - Use Git's gettext wrappers to make the user interface
    translatable. See "Marking strings for translation" in po/README.
+
+ - Variables and functions local to a given source file should be marked
+   with "static". Variables that are visible to other source files
+   must be declared with "extern" in header files. However, function
+   declarations should not use "extern", as that is already the default.
 
 For Perl programs:
 
@@ -527,11 +580,14 @@ Writing Documentation:
  or commands:
 
  Literal examples (e.g. use of command-line options, command names,
- branch names, configuration and environment variables) must be
- typeset in monospace (i.e. wrapped with backticks):
+ branch names, URLs, pathnames (files and directories), configuration and
+ environment variables) must be typeset in monospace (i.e. wrapped with
+ backticks):
    `--pretty=oneline`
    `git rev-list`
    `remote.pushDefault`
+   `http://git.example.com`
+   `.git/config`
    `GIT_DIR`
    `HEAD`
 

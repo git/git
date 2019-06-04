@@ -77,7 +77,19 @@ test_expect_success 'ls-files recurses more than 1 level' '
 	git -C submodule/subsub commit -m "add d" &&
 	git -C submodule submodule add ./subsub &&
 	git -C submodule commit -m "added subsub" &&
+	git submodule absorbgitdirs &&
 	git ls-files --recurse-submodules >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ls-files works with GIT_DIR' '
+	cat >expect <<-\EOF &&
+	.gitmodules
+	c
+	subsub/d
+	EOF
+
+	git --git-dir=submodule/.git ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
@@ -120,6 +132,45 @@ test_expect_success '--recurse-submodules and pathspecs setup' '
 	test_cmp expect actual &&
 	cat actual &&
 	git ls-files --recurse-submodules "*" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'inactive submodule' '
+	test_when_finished "git config --bool submodule.submodule.active true" &&
+	test_when_finished "git -C submodule config --bool submodule.subsub.active true" &&
+	git config --bool submodule.submodule.active "false" &&
+
+	cat >expect <<-\EOF &&
+	.gitmodules
+	a
+	b/b
+	h.txt
+	sib/file
+	sub/file
+	submodule
+	EOF
+
+	git ls-files --recurse-submodules >actual &&
+	test_cmp expect actual &&
+
+	git config --bool submodule.submodule.active "true" &&
+	git -C submodule config --bool submodule.subsub.active "false" &&
+
+	cat >expect <<-\EOF &&
+	.gitmodules
+	a
+	b/b
+	h.txt
+	sib/file
+	sub/file
+	submodule/.gitmodules
+	submodule/c
+	submodule/f.TXT
+	submodule/g.txt
+	submodule/subsub
+	EOF
+
+	git ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
 
@@ -185,6 +236,45 @@ test_expect_success '--recurse-submodules and pathspecs' '
 	git ls-files --recurse-submodules "s???file" >actual &&
 	test_cmp expect actual &&
 	git ls-files --recurse-submodules "s*file" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--recurse-submodules and relative paths' '
+	# From subdir
+	cat >expect <<-\EOF &&
+	b
+	EOF
+	git -C b ls-files --recurse-submodules >actual &&
+	test_cmp expect actual &&
+
+	# Relative path to top
+	cat >expect <<-\EOF &&
+	../.gitmodules
+	../a
+	b
+	../h.txt
+	../sib/file
+	../sub/file
+	../submodule/.gitmodules
+	../submodule/c
+	../submodule/f.TXT
+	../submodule/g.txt
+	../submodule/subsub/d
+	../submodule/subsub/e.txt
+	EOF
+	git -C b ls-files --recurse-submodules -- .. >actual &&
+	test_cmp expect actual &&
+
+	# Relative path to submodule
+	cat >expect <<-\EOF &&
+	../submodule/.gitmodules
+	../submodule/c
+	../submodule/f.TXT
+	../submodule/g.txt
+	../submodule/subsub/d
+	../submodule/subsub/e.txt
+	EOF
+	git -C b ls-files --recurse-submodules -- ../submodule >actual &&
 	test_cmp expect actual
 '
 

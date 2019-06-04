@@ -8,7 +8,7 @@ struct revindex_entry {
 	unsigned int nr;
 };
 
-void load_pack_revindex(struct packed_git *p);
+int load_pack_revindex(struct packed_git *p);
 int find_revindex_position(struct packed_git *p, off_t ofs);
 
 struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs);

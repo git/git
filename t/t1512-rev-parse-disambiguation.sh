@@ -22,14 +22,20 @@ one tagged as v1.0.0.  They all have one regular file each.
 
 . ./test-lib.sh
 
+if ! test_have_prereq SHA1
+then
+	skip_all='not using SHA-1 for objects'
+	test_done
+fi
+
 test_expect_success 'blob and tree' '
 	test_tick &&
 	(
 		for i in 0 1 2 3 4 5 6 7 8 9
 		do
 			echo $i
-		done
-		echo
+		done &&
+		echo &&
 		echo b1rwzyc3
 	) >a0blgqsjc &&
 
@@ -216,7 +222,7 @@ test_expect_success 'more history' '
 
 	test_might_fail git rm -f a0blgqsjc &&
 	(
-		git cat-file blob $side:f5518nwu
+		git cat-file blob $side:f5518nwu &&
 		echo j3l0i9s6
 	) >ab2gs879 &&
 	git add ab2gs879 &&
@@ -359,6 +365,37 @@ test_expect_success 'core.disambiguate does not override context' '
 	# treeish ambiguous between tag and tree
 	test_must_fail \
 		git -c core.disambiguate=committish rev-parse $sha1^{tree}
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguous commits are printed by type first, then hash order' '
+	test_must_fail git rev-parse 0000 2>stderr &&
+	grep ^hint: stderr >hints &&
+	grep 0000 hints >objects &&
+	cat >expected <<-\EOF &&
+	tag
+	commit
+	tree
+	blob
+	EOF
+	awk "{print \$3}" <objects >objects.types &&
+	uniq <objects.types >objects.types.uniq &&
+	test_cmp expected objects.types.uniq &&
+	for type in tag commit tree blob
+	do
+		grep $type objects >$type.objects &&
+		sort $type.objects >$type.objects.sorted &&
+		test_cmp $type.objects.sorted $type.objects
+	done
+'
+
+test_expect_success 'cat-file --batch and --batch-check show ambiguous' '
+	echo "0000 ambiguous" >expect &&
+	echo 0000 | git cat-file --batch-check >actual 2>err &&
+	test_cmp expect actual &&
+	test_i18ngrep hint: err &&
+	echo 0000 | git cat-file --batch >actual 2>err &&
+	test_cmp expect actual &&
+	test_i18ngrep hint: err
 '
 
 test_done

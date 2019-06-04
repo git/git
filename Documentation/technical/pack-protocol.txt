@@ -22,6 +22,16 @@ protocol-common.txt. When the grammar indicate `PKT-LINE(...)`, unless
 otherwise noted the usual pkt-line LF rules apply: the sender SHOULD
 include a LF, but the receiver MUST NOT complain if it is not present.
 
+An error packet is a special pkt-line that contains an error string.
+
+----
+  error-line     =  PKT-LINE("ERR" SP explanation-text)
+----
+
+Throughout the protocol, where `PKT-LINE(...)` is expected, an error packet MAY
+be sent. Once this packet is sent by a client or a server, the data transfer
+process defined in this protocol is terminated.
+
 Transports
 ----------
 There are three transports over which the packfile protocol is
@@ -39,6 +49,20 @@ communicates with that invoked process over the SSH connection.
 The file:// transport runs the 'upload-pack' or 'receive-pack'
 process locally and communicates with it over a pipe.
 
+Extra Parameters
+----------------
+
+The protocol provides a mechanism in which clients can send additional
+information in its first message to the server. These are called "Extra
+Parameters", and are supported by the Git, SSH, and HTTP protocols.
+
+Each Extra Parameter takes the form of `<key>=<value>` or `<key>`.
+
+Servers that receive any such Extra Parameters MUST ignore all
+unrecognized keys. Currently, the only Extra Parameter recognized is
+"version" with a value of '1' or '2'.  See protocol-v2.txt for more
+information on protocol version 2.
+
 Git Transport
 -------------
 
@@ -46,18 +70,25 @@ The Git transport starts off by sending the command and repository
 on the wire using the pkt-line format, followed by a NUL byte and a
 hostname parameter, terminated by a NUL byte.
 
-   0032git-upload-pack /project.git\0host=myserver.com\0
+   0033git-upload-pack /project.git\0host=myserver.com\0
+
+The transport may send Extra Parameters by adding an additional NUL
+byte, and then adding one or more NUL-terminated strings:
+
+   003egit-upload-pack /project.git\0host=myserver.com\0\0version=1\0
 
 --
-   git-proto-request = request-command SP pathname NUL [ host-parameter NUL ]
+   git-proto-request = request-command SP pathname NUL
+		       [ host-parameter NUL ] [ NUL extra-parameters ]
    request-command   = "git-upload-pack" / "git-receive-pack" /
 		       "git-upload-archive"   ; case sensitive
    pathname          = *( %x01-ff ) ; exclude NUL
    host-parameter    = "host=" hostname [ ":" port ]
+   extra-parameters  = 1*extra-parameter
+   extra-parameter   = 1*( %x01-ff ) NUL
 --
 
-Only host-parameter is allowed in the git-proto-request. Clients
-MUST NOT attempt to send additional parameters. It is used for the
+host-parameter is used for the
 git-daemon name based virtual hosting.  See --interpolated-path
 option to git daemon, with the %H/%CH format characters.
 
@@ -67,13 +98,6 @@ process on the server side over the Git protocol is this:
    $ echo -e -n \
      "0039git-upload-pack /schacon/gitbook.git\0host=example.com\0" |
      nc -v example.com 9418
-
-If the server refuses the request for some reasons, it could abort
-gracefully with an error message.
-
-----
-  error-line     =  PKT-LINE("ERR" SP explanation-text)
-----
 
 
 SSH Transport
@@ -117,6 +141,12 @@ we execute it without the leading '/'.
 		     v
    ssh user@example.com "git-upload-pack '~alice/project.git'"
 
+Depending on the value of the `protocol.version` configuration variable,
+Git may attempt to send Extra Parameters as a colon-separated string in
+the GIT_PROTOCOL environment variable. This is done only if
+the `ssh.variant` configuration variable indicates that the ssh command
+supports passing environment variables as an argument.
+
 A few things to remember here:
 
 - The "command name" is spelled with dash (e.g. git-upload-pack), but
@@ -137,11 +167,13 @@ Reference Discovery
 -------------------
 
 When the client initially connects the server will immediately respond
-with a listing of each reference it has (all branches and tags) along
+with a version number (if "version=1" is sent as an Extra Parameter),
+and a listing of each reference it has (all branches and tags) along
 with the object name that each reference currently points to.
 
-   $ echo -e -n "0039git-upload-pack /schacon/gitbook.git\0host=example.com\0" |
+   $ echo -e -n "0044git-upload-pack /schacon/gitbook.git\0host=example.com\0\0version=1\0" |
       nc -v example.com 9418
+   000aversion 1
    00887217a7c7e582c46cec22a130adf4b9d7d950fba0 HEAD\0multi_ack thin-pack
 		side-band side-band-64k ofs-delta shallow no-progress include-tag
    00441d3fcd5ced445d1abc402225c0b8a1299641f497 refs/heads/integration
@@ -165,7 +197,8 @@ immediately after the ref itself, if presented. A conforming server
 MUST peel the ref if it's an annotated tag.
 
 ----
-  advertised-refs  =  (no-refs / list-of-refs)
+  advertised-refs  =  *1("version 1")
+		      (no-refs / list-of-refs)
 		      *shallow
 		      flush-pkt
 
@@ -199,7 +232,7 @@ After reference and capabilities discovery, the client can decide to
 terminate the connection by sending a flush-pkt, telling the server it can
 now gracefully terminate, and disconnect, when it does not need any pack
 data. This can happen with the ls-remote command, and also can happen when
-the client already is up-to-date.
+the client already is up to date.
 
 Otherwise, it enters the negotiation phase, where the client and
 server determine what the minimal packfile necessary for transport is,
@@ -212,6 +245,7 @@ out of what the server said it could do with the first 'want' line.
   upload-request    =  want-list
 		       *shallow-line
 		       *1depth-request
+		       [filter-request]
 		       flush-pkt
 
   want-list         =  first-want
@@ -227,6 +261,8 @@ out of what the server said it could do with the first 'want' line.
   additional-want   =  PKT-LINE("want" SP obj-id)
 
   depth             =  1*DIGIT
+
+  filter-request    =  PKT-LINE("filter" SP filter-spec)
 ----
 
 Clients MUST send all the obj-ids it wants from the reference
@@ -248,6 +284,13 @@ any commits beyond this depth, nor does it want objects needed only to
 complete those commits. Commits whose parents are not received as a
 result are defined as shallow and marked as such in the server. This
 information is sent back to the client in the next step.
+
+The client can optionally request that pack-objects omit various
+objects from the packfile using one of several filtering techniques.
+These are intended for use with partial clone and partial fetch
+operations. An object that does not meet a filter-spec value is
+omitted unless explicitly requested in a 'want' line. See `rev-list`
+for possible filter-spec values.
 
 Once all the 'want's and 'shallow's (and optional 'deepen') are
 transferred, clients MUST send a flush-pkt, to tell the server side
@@ -350,6 +393,10 @@ name of the last commit determined to be common. The server only sends
 ACK after 'done' if there is at least one common base and multi_ack or
 multi_ack_detailed is enabled. The server always sends NAK after 'done'
 if there is no common base found.
+
+Instead of 'ACK' or 'NAK', the server may send an error message (for
+example, if it does not recognize an object in a 'want' line received
+from the client).
 
 Then the server will start sending its packfile data.
 
@@ -468,13 +515,10 @@ that it wants to update, it sends a line listing the obj-id currently on
 the server, the obj-id the client would like to update it to and the name
 of the reference.
 
-This list is followed by a flush-pkt. Then the push options are transmitted
-one per packet followed by another flush-pkt. After that the packfile that
-should contain all the objects that the server will need to complete the new
-references will be sent.
+This list is followed by a flush-pkt.
 
 ----
-  update-request    =  *shallow ( command-list | push-cert ) [packfile]
+  update-requests   =  *shallow ( command-list | push-cert )
 
   shallow           =  PKT-LINE("shallow" SP obj-id)
 
@@ -495,12 +539,35 @@ references will be sent.
 		      PKT-LINE("pusher" SP ident LF)
 		      PKT-LINE("pushee" SP url LF)
 		      PKT-LINE("nonce" SP nonce LF)
+		      *PKT-LINE("push-option" SP push-option LF)
 		      PKT-LINE(LF)
 		      *PKT-LINE(command LF)
 		      *PKT-LINE(gpg-signature-lines LF)
 		      PKT-LINE("push-cert-end" LF)
 
-  packfile          = "PACK" 28*(OCTET)
+  push-option       =  1*( VCHAR | SP )
+----
+
+If the server has advertised the 'push-options' capability and the client has
+specified 'push-options' as part of the capability list above, the client then
+sends its push options followed by a flush-pkt.
+
+----
+  push-options      =  *PKT-LINE(push-option) flush-pkt
+----
+
+For backwards compatibility with older Git servers, if the client sends a push
+cert and push options, it MUST send its push options both embedded within the
+push cert and after the push cert. (Note that the push options within the cert
+are prefixed, but the push options after the cert are not.) Both these lists
+MUST be the same, modulo the prefix.
+
+After that the packfile that
+should contain all the objects that the server will need to complete the new
+references will be sent.
+
+----
+  packfile          =  "PACK" 28*(OCTET)
 ----
 
 If the receiving end does not support delete-refs, the sending end MUST
@@ -590,14 +657,14 @@ can be rejected.
 An example client/server communication might look like this:
 
 ----
-   S: 007c74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/local\0report-status delete-refs ofs-delta\n
+   S: 006274730d410fcb6603ace96f1dc55ea6196122532d refs/heads/local\0report-status delete-refs ofs-delta\n
    S: 003e7d1665144a3a975c05f1f43902ddaf084e784dbe refs/heads/debug\n
    S: 003f74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/master\n
-   S: 003f74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/team\n
+   S: 003d74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/team\n
    S: 0000
 
-   C: 003e7d1665144a3a975c05f1f43902ddaf084e784dbe 74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/debug\n
-   C: 003e74730d410fcb6603ace96f1dc55ea6196122532d 5a3f6be755bbb7deae50065988cbfa1ffa9ab68a refs/heads/master\n
+   C: 00677d1665144a3a975c05f1f43902ddaf084e784dbe 74730d410fcb6603ace96f1dc55ea6196122532d refs/heads/debug\n
+   C: 006874730d410fcb6603ace96f1dc55ea6196122532d 5a3f6be755bbb7deae50065988cbfa1ffa9ab68a refs/heads/master\n
    C: 0000
    C: [PACKDATA]
 

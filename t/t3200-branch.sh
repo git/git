@@ -6,6 +6,7 @@
 test_description='git branch assorted tests'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'prepare a trivial repository' '
 	echo Hello >A &&
@@ -41,16 +42,20 @@ test_expect_success 'git branch a/b/c should create a branch' '
 	git branch a/b/c && test_path_is_file .git/refs/heads/a/b/c
 '
 
+test_expect_success 'git branch mb master... should create a branch' '
+	git branch mb master... && test_path_is_file .git/refs/heads/mb
+'
+
 test_expect_success 'git branch HEAD should fail' '
 	test_must_fail git branch HEAD
 '
 
 cat >expect <<EOF
-$_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
-test_expect_success 'git branch -l d/e/f should create a branch and a log' '
+test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
-	git branch -l d/e/f &&
+	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
 	test_path_is_file .git/refs/heads/d/e/f &&
 	test_path_is_file .git/logs/refs/heads/d/e/f &&
 	test_cmp expect .git/logs/refs/heads/d/e/f
@@ -81,7 +86,7 @@ test_expect_success 'git branch -m dumps usage' '
 
 test_expect_success 'git branch -m m broken_symref should work' '
 	test_when_finished "git branch -D broken_symref" &&
-	git branch -l m &&
+	git branch --create-reflog m &&
 	git symbolic-ref refs/heads/broken_symref refs/heads/i_am_broken &&
 	git branch -m m broken_symref &&
 	git reflog exists refs/heads/broken_symref &&
@@ -89,15 +94,42 @@ test_expect_success 'git branch -m m broken_symref should work' '
 '
 
 test_expect_success 'git branch -m m m/m should work' '
-	git branch -l m &&
+	git branch --create-reflog m &&
 	git branch -m m m/m &&
 	git reflog exists refs/heads/m/m
 '
 
 test_expect_success 'git branch -m n/n n should work' '
-	git branch -l n/n &&
+	git branch --create-reflog n/n &&
 	git branch -m n/n n &&
 	git reflog exists refs/heads/n
+'
+
+# The topmost entry in reflog for branch bbb is about branch creation.
+# Hence, we compare bbb@{1} (instead of bbb@{0}) with aaa@{0}.
+
+test_expect_success 'git branch -m bbb should rename checked out branch' '
+	test_when_finished git branch -D bbb &&
+	test_when_finished git checkout master &&
+	git checkout -b aaa &&
+	git commit --allow-empty -m "a new commit" &&
+	git rev-parse aaa@{0} >expect &&
+	git branch -m bbb &&
+	git rev-parse bbb@{1} >actual &&
+	test_cmp expect actual &&
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/bbb >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'renaming checked out branch works with d/f conflict' '
+	test_when_finished "git branch -D foo/bar || git branch -D foo" &&
+	test_when_finished git checkout master &&
+	git checkout -b foo &&
+	git branch -m foo/bar &&
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/foo/bar >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git branch -m o/o o should fail when o/p exists' '
@@ -139,6 +171,35 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	test $(git rev-parse --abbrev-ref HEAD) = bam
 '
 
+test_expect_success 'git branch -M baz bam should add entries to .git/logs/HEAD' '
+	msg="Branch: renamed refs/heads/baz to refs/heads/bam" &&
+	grep " 0\{40\}.*$msg$" .git/logs/HEAD &&
+	grep "^0\{40\}.*$msg$" .git/logs/HEAD
+'
+
+test_expect_success 'git branch -M should leave orphaned HEAD alone' '
+	git init orphan &&
+	(
+		cd orphan &&
+		test_commit initial &&
+		git checkout --orphan lonely &&
+		grep lonely .git/HEAD &&
+		test_path_is_missing .git/refs/head/lonely &&
+		git branch -M master mistress &&
+		grep lonely .git/HEAD
+	)
+'
+
+test_expect_success 'resulting reflog can be shown by log -g' '
+	oid=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
+	HEAD@{0} $oid $msg
+	HEAD@{2} $oid checkout: moving from foo to baz
+	EOF
+	git log -g --format="%gd %H %gs" -2 HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git branch -M baz bam should succeed when baz is checked out as linked working tree' '
 	git checkout master &&
 	git worktree add -b baz bazdir &&
@@ -177,41 +238,90 @@ test_expect_success 'git branch -M master2 master2 should work when master is ch
 
 test_expect_success 'git branch -v -d t should work' '
 	git branch t &&
-	test_path_is_file .git/refs/heads/t &&
+	git rev-parse --verify refs/heads/t &&
 	git branch -v -d t &&
-	test_path_is_missing .git/refs/heads/t
+	test_must_fail git rev-parse --verify refs/heads/t
 '
 
 test_expect_success 'git branch -v -m t s should work' '
 	git branch t &&
-	test_path_is_file .git/refs/heads/t &&
+	git rev-parse --verify refs/heads/t &&
 	git branch -v -m t s &&
-	test_path_is_missing .git/refs/heads/t &&
-	test_path_is_file .git/refs/heads/s &&
+	test_must_fail git rev-parse --verify refs/heads/t &&
+	git rev-parse --verify refs/heads/s &&
 	git branch -d s
 '
 
 test_expect_success 'git branch -m -d t s should fail' '
 	git branch t &&
-	test_path_is_file .git/refs/heads/t &&
+	git rev-parse refs/heads/t &&
 	test_must_fail git branch -m -d t s &&
 	git branch -d t &&
-	test_path_is_missing .git/refs/heads/t
+	test_must_fail git rev-parse refs/heads/t
 '
 
 test_expect_success 'git branch --list -d t should fail' '
 	git branch t &&
-	test_path_is_file .git/refs/heads/t &&
+	git rev-parse refs/heads/t &&
 	test_must_fail git branch --list -d t &&
 	git branch -d t &&
-	test_path_is_missing .git/refs/heads/t
+	test_must_fail git rev-parse refs/heads/t
+'
+
+test_expect_success 'deleting checked-out branch from repo that is a submodule' '
+	test_when_finished "rm -rf repo1 repo2" &&
+
+	git init repo1 &&
+	git init repo1/sub &&
+	test_commit -C repo1/sub x &&
+	git -C repo1 submodule add ./sub &&
+	git -C repo1 commit -m "adding sub" &&
+
+	git clone --recurse-submodules repo1 repo2 &&
+	git -C repo2/sub checkout -b work &&
+	test_must_fail git -C repo2/sub branch -D work
+'
+
+test_expect_success 'bare main worktree has HEAD at branch deleted by secondary worktree' '
+	test_when_finished "rm -rf nonbare base secondary" &&
+
+	git init nonbare &&
+	test_commit -C nonbare x &&
+	git clone --bare nonbare bare &&
+	git -C bare worktree add --detach ../secondary master &&
+	git -C secondary branch -D master
+'
+
+test_expect_success 'git branch --list -v with --abbrev' '
+	test_when_finished "git branch -D t" &&
+	git branch t &&
+	git branch -v --list t >actual.default &&
+	git branch -v --list --abbrev t >actual.abbrev &&
+	test_cmp actual.default actual.abbrev &&
+
+	git branch -v --list --no-abbrev t >actual.noabbrev &&
+	git branch -v --list --abbrev=0 t >actual.0abbrev &&
+	test_cmp actual.noabbrev actual.0abbrev &&
+
+	git branch -v --list --abbrev=36 t >actual.36abbrev &&
+	# how many hexdigits are used?
+	read name objdefault rest <actual.abbrev &&
+	read name obj36 rest <actual.36abbrev &&
+	objfull=$(git rev-parse --verify t) &&
+
+	# are we really getting abbreviations?
+	test "$obj36" != "$objdefault" &&
+	expr "$obj36" : "$objdefault" >/dev/null &&
+	test "$objfull" != "$obj36" &&
+	expr "$objfull" : "$obj36" >/dev/null
+
 '
 
 test_expect_success 'git branch --column' '
 	COLUMNS=81 git branch --column=column >actual &&
 	cat >expected <<\EOF &&
-  a/b/c     bam       foo       l       * master    n         o/p       r
-  abc       bar       j/k       m/m       master2   o/o       q
+  a/b/c     bam       foo       l       * master    mb        o/o       q
+  abc       bar       j/k       m/m       master2   n         o/p       r
 EOF
 	test_cmp expected actual
 '
@@ -233,6 +343,7 @@ test_expect_success 'git branch --column with an extremely long branch name' '
   m/m
 * master
   master2
+  mb
   n
   o/o
   o/p
@@ -250,8 +361,8 @@ test_expect_success 'git branch with column.*' '
 	git config --unset column.branch &&
 	git config --unset column.ui &&
 	cat >expected <<\EOF &&
-  a/b/c   bam   foo   l   * master    n     o/p   r
-  abc     bar   j/k   m/m   master2   o/o   q
+  a/b/c   bam   foo   l   * master    mb   o/o   q
+  abc     bar   j/k   m/m   master2   n    o/p   r
 EOF
 	test_cmp expected actual
 '
@@ -275,6 +386,7 @@ test_expect_success 'git branch -v with column.ui ignored' '
   m/m
 * master
   master2
+  mb
   n
   o/o
   o/p
@@ -296,9 +408,9 @@ mv .git/config-saved .git/config
 git config branch.s/s.dummy Hello
 
 test_expect_success 'git branch -m s/s s should work when s/t is deleted' '
-	git branch -l s/s &&
+	git branch --create-reflog s/s &&
 	git reflog exists refs/heads/s/s &&
-	git branch -l s/t &&
+	git branch --create-reflog s/t &&
 	git reflog exists refs/heads/s/t &&
 	git branch -d s/t &&
 	git branch -m s/s s &&
@@ -307,7 +419,263 @@ test_expect_success 'git branch -m s/s s should work when s/t is deleted' '
 
 test_expect_success 'config information was renamed, too' '
 	test $(git config branch.s.dummy) = Hello &&
-	test_must_fail git config branch.s/s/dummy
+	test_must_fail git config branch.s/s.dummy
+'
+
+test_expect_success 'git branch -m correctly renames multiple config sections' '
+	test_when_finished "git checkout master" &&
+	git checkout -b source master &&
+
+	# Assert that a config file with multiple config sections has
+	# those sections preserved...
+	cat >expect <<-\EOF &&
+	branch.dest.key1=value1
+	some.gar.b=age
+	branch.dest.key2=value2
+	EOF
+	cat >config.branch <<\EOF &&
+;; Note the lack of -\EOF above & mixed indenting here. This is
+;; intentional, we are also testing that the formatting of copied
+;; sections is preserved.
+
+;; Comment for source. Tabs
+[branch "source"]
+	;; Comment for the source value
+	key1 = value1
+;; Comment for some.gar. Spaces
+[some "gar"]
+    ;; Comment for the some.gar value
+    b = age
+;; Comment for source, again. Mixed tabs/spaces.
+[branch "source"]
+    ;; Comment for the source value, again
+	key2 = value2
+EOF
+	cat config.branch >>.git/config &&
+	git branch -m source dest &&
+	git config -f .git/config -l | grep -F -e source -e dest -e some.gar >actual &&
+	test_cmp expect actual &&
+
+	# ...and that the comments for those sections are also
+	# preserved.
+	cat config.branch | sed "s/\"source\"/\"dest\"/" >expect &&
+	sed -n -e "/Note the lack/,\$p" .git/config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch -c dumps usage' '
+	test_expect_code 128 git branch -c 2>err &&
+	test_i18ngrep "branch name required" err
+'
+
+test_expect_success 'git branch --copy dumps usage' '
+	test_expect_code 128 git branch --copy 2>err &&
+	test_i18ngrep "branch name required" err
+'
+
+test_expect_success 'git branch -c d e should work' '
+	git branch --create-reflog d &&
+	git reflog exists refs/heads/d &&
+	git config branch.d.dummy Hello &&
+	git branch -c d e &&
+	git reflog exists refs/heads/d &&
+	git reflog exists refs/heads/e &&
+	echo Hello >expect &&
+	git config branch.e.dummy >actual &&
+	test_cmp expect actual &&
+	echo Hello >expect &&
+	git config branch.d.dummy >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch --copy is a synonym for -c' '
+	git branch --create-reflog copy &&
+	git reflog exists refs/heads/copy &&
+	git config branch.copy.dummy Hello &&
+	git branch --copy copy copy-to &&
+	git reflog exists refs/heads/copy &&
+	git reflog exists refs/heads/copy-to &&
+	echo Hello >expect &&
+	git config branch.copy.dummy >actual &&
+	test_cmp expect actual &&
+	echo Hello >expect &&
+	git config branch.copy-to.dummy >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch -c ee ef should copy ee to create branch ef' '
+	git checkout -b ee &&
+	git reflog exists refs/heads/ee &&
+	git config branch.ee.dummy Hello &&
+	git branch -c ee ef &&
+	git reflog exists refs/heads/ee &&
+	git reflog exists refs/heads/ef &&
+	test $(git config branch.ee.dummy) = Hello &&
+	test $(git config branch.ef.dummy) = Hello &&
+	test $(git rev-parse --abbrev-ref HEAD) = ee
+'
+
+test_expect_success 'git branch -c f/f g/g should work' '
+	git branch --create-reflog f/f &&
+	git reflog exists refs/heads/f/f &&
+	git config branch.f/f.dummy Hello &&
+	git branch -c f/f g/g &&
+	git reflog exists refs/heads/f/f &&
+	git reflog exists refs/heads/g/g &&
+	test $(git config branch.f/f.dummy) = Hello &&
+	test $(git config branch.g/g.dummy) = Hello
+'
+
+test_expect_success 'git branch -c m2 m2 should work' '
+	git branch --create-reflog m2 &&
+	git reflog exists refs/heads/m2 &&
+	git config branch.m2.dummy Hello &&
+	git branch -c m2 m2 &&
+	git reflog exists refs/heads/m2 &&
+	test $(git config branch.m2.dummy) = Hello
+'
+
+test_expect_success 'git branch -c zz zz/zz should fail' '
+	git branch --create-reflog zz &&
+	git reflog exists refs/heads/zz &&
+	test_must_fail git branch -c zz zz/zz
+'
+
+test_expect_success 'git branch -c b/b b should fail' '
+	git branch --create-reflog b/b &&
+	test_must_fail git branch -c b/b b
+'
+
+test_expect_success 'git branch -C o/q o/p should work when o/p exists' '
+	git branch --create-reflog o/q &&
+	git reflog exists refs/heads/o/q &&
+	git reflog exists refs/heads/o/p &&
+	git branch -C o/q o/p
+'
+
+test_expect_success 'git branch -c -f o/q o/p should work when o/p exists' '
+	git reflog exists refs/heads/o/q &&
+	git reflog exists refs/heads/o/p &&
+	git branch -c -f o/q o/p
+'
+
+test_expect_success 'git branch -c qq rr/qq should fail when rr exists' '
+	git branch qq &&
+	git branch rr &&
+	test_must_fail git branch -c qq rr/qq
+'
+
+test_expect_success 'git branch -C b1 b2 should fail when b2 is checked out' '
+	git branch b1 &&
+	git checkout -b b2 &&
+	test_must_fail git branch -C b1 b2
+'
+
+test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' '
+	git checkout -b c1 &&
+	git branch c2 &&
+	git branch -C c1 c2 &&
+	test $(git rev-parse --abbrev-ref HEAD) = c1
+'
+
+test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
+	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
+	! grep "$msg$" .git/logs/HEAD
+'
+
+test_expect_success 'git branch -C master should work when master is checked out' '
+	git checkout master &&
+	git branch -C master
+'
+
+test_expect_success 'git branch -C master master should work when master is checked out' '
+	git checkout master &&
+	git branch -C master master
+'
+
+test_expect_success 'git branch -C master5 master5 should work when master is checked out' '
+	git checkout master &&
+	git branch master5 &&
+	git branch -C master5 master5
+'
+
+test_expect_success 'git branch -C ab cd should overwrite existing config for cd' '
+	git branch --create-reflog cd &&
+	git reflog exists refs/heads/cd &&
+	git config branch.cd.dummy CD &&
+	git branch --create-reflog ab &&
+	git reflog exists refs/heads/ab &&
+	git config branch.ab.dummy AB &&
+	git branch -C ab cd &&
+	git reflog exists refs/heads/ab &&
+	git reflog exists refs/heads/cd &&
+	test $(git config branch.ab.dummy) = AB &&
+	test $(git config branch.cd.dummy) = AB
+'
+
+test_expect_success 'git branch -c correctly copies multiple config sections' '
+	FOO=1 &&
+	export FOO &&
+	test_when_finished "git checkout master" &&
+	git checkout -b source2 master &&
+
+	# Assert that a config file with multiple config sections has
+	# those sections preserved...
+	cat >expect <<-\EOF &&
+	branch.source2.key1=value1
+	branch.dest2.key1=value1
+	more.gar.b=age
+	branch.source2.key2=value2
+	branch.dest2.key2=value2
+	EOF
+	cat >config.branch <<\EOF &&
+;; Note the lack of -\EOF above & mixed indenting here. This is
+;; intentional, we are also testing that the formatting of copied
+;; sections is preserved.
+
+;; Comment for source2. Tabs
+[branch "source2"]
+	;; Comment for the source2 value
+	key1 = value1
+;; Comment for more.gar. Spaces
+[more "gar"]
+    ;; Comment for the more.gar value
+    b = age
+;; Comment for source2, again. Mixed tabs/spaces.
+[branch "source2"]
+    ;; Comment for the source2 value, again
+	key2 = value2
+EOF
+	cat config.branch >>.git/config &&
+	git branch -c source2 dest2 &&
+	git config -f .git/config -l | grep -F -e source2 -e dest2 -e more.gar >actual &&
+	test_cmp expect actual &&
+
+	# ...and that the comments and formatting for those sections
+	# is also preserved.
+	cat >expect <<\EOF &&
+;; Comment for source2. Tabs
+[branch "source2"]
+	;; Comment for the source2 value
+	key1 = value1
+;; Comment for more.gar. Spaces
+[branch "dest2"]
+	;; Comment for the source2 value
+	key1 = value1
+;; Comment for more.gar. Spaces
+[more "gar"]
+    ;; Comment for the more.gar value
+    b = age
+;; Comment for source2, again. Mixed tabs/spaces.
+[branch "source2"]
+    ;; Comment for the source2 value, again
+	key2 = value2
+[branch "dest2"]
+    ;; Comment for the source2 value, again
+	key2 = value2
+EOF
+	sed -n -e "/Comment for source2/,\$p" .git/config >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'deleting a symref' '
@@ -347,7 +715,7 @@ test_expect_success 'renaming a symref is not allowed' '
 '
 
 test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for u is a symlink' '
-	git branch -l u &&
+	git branch --create-reflog u &&
 	mv .git/logs/refs/heads/u real-u &&
 	ln -s real-u .git/logs/refs/heads/u &&
 	test_must_fail git branch -m u v
@@ -501,6 +869,7 @@ test_expect_success 'use --set-upstream-to modify HEAD' '
 test_expect_success 'use --set-upstream-to modify a particular branch' '
 	git branch my13 &&
 	git branch --set-upstream-to master my13 &&
+	test_when_finished "git branch --unset-upstream my13" &&
 	test "$(git config branch.my13.remote)" = "." &&
 	test "$(git config branch.my13.merge)" = "refs/heads/master"
 '
@@ -546,38 +915,8 @@ test_expect_success 'test --unset-upstream on a particular branch' '
 	test_must_fail git config branch.my14.merge
 '
 
-test_expect_success '--set-upstream shows message when creating a new branch that exists as remote-tracking' '
-	git update-ref refs/remotes/origin/master HEAD &&
-	git branch --set-upstream origin/master 2>actual &&
-	test_when_finished git update-ref -d refs/remotes/origin/master &&
-	test_when_finished git branch -d origin/master &&
-	cat >expected <<EOF &&
-The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
-
-If you wanted to make '"'master'"' track '"'origin/master'"', do this:
-
-    git branch -d origin/master
-    git branch --set-upstream-to origin/master
-EOF
-	test_i18ncmp expected actual
-'
-
-test_expect_success '--set-upstream with two args only shows the deprecation message' '
-	git branch --set-upstream master my13 2>actual &&
-	test_when_finished git branch --unset-upstream master &&
-	cat >expected <<EOF &&
-The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
-EOF
-	test_i18ncmp expected actual
-'
-
-test_expect_success '--set-upstream with one arg only shows the deprecation message if the branch existed' '
-	git branch --set-upstream my13 2>actual &&
-	test_when_finished git branch --unset-upstream my13 &&
-	cat >expected <<EOF &&
-The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
-EOF
-	test_i18ncmp expected actual
+test_expect_success 'disabled option --set-upstream fails' '
+    test_must_fail git branch --set-upstream origin/master
 '
 
 test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '
@@ -592,7 +931,7 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-$_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
@@ -902,19 +1241,6 @@ test_expect_success 'attempt to delete a branch merged to its base' '
 	test_must_fail git branch -d my10
 '
 
-test_expect_success 'use set-upstream on the current branch' '
-	git checkout master &&
-	git --bare init myupstream.git &&
-	git push myupstream.git master:refs/heads/frotz &&
-	git remote add origin myupstream.git &&
-	git fetch &&
-	git branch --set-upstream master origin/frotz &&
-
-	test "z$(git config branch.master.remote)" = "zorigin" &&
-	test "z$(git config branch.master.merge)" = "zrefs/heads/frotz"
-
-'
-
 test_expect_success 'use --edit-description' '
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
@@ -925,7 +1251,7 @@ test_expect_success 'use --edit-description' '
 	EOF
 	EDITOR=./editor git branch --edit-description &&
 	echo "New contents" >expect &&
-	test_cmp EDITOR_OUTPUT expect
+	test_cmp expect EDITOR_OUTPUT
 '
 
 test_expect_success 'detect typo in branch name when using --edit-description' '
@@ -945,6 +1271,33 @@ test_expect_success 'refuse --edit-description on unborn branch for now' '
 
 test_expect_success '--merged catches invalid object names' '
 	test_must_fail git branch --merged 0000000000000000000000000000000000000000
+'
+
+test_expect_success '--merged is incompatible with --no-merged' '
+	test_must_fail git branch --merged HEAD --no-merged HEAD
+'
+
+test_expect_success '--list during rebase' '
+	test_when_finished "reset_rebase" &&
+	git checkout master &&
+	FAKE_LINES="1 edit 2" &&
+	export FAKE_LINES &&
+	set_fake_editor &&
+	git rebase -i HEAD~2 &&
+	git branch --list >actual &&
+	test_i18ngrep "rebasing master" actual
+'
+
+test_expect_success '--list during rebase from detached HEAD' '
+	test_when_finished "reset_rebase && git checkout master" &&
+	git checkout master^0 &&
+	oid=$(git rev-parse --short HEAD) &&
+	FAKE_LINES="1 edit 2" &&
+	export FAKE_LINES &&
+	set_fake_editor &&
+	git rebase -i HEAD~2 &&
+	git branch --list >actual &&
+	test_i18ngrep "rebasing detached HEAD $oid" actual
 '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '
@@ -979,6 +1332,52 @@ test_expect_success 'tracking with unexpected .fetch refspec' '
 		git rev-parse --verify a >expect &&
 		git rev-parse --verify local/a/master >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'configured committerdate sort' '
+	git init sort &&
+	(
+		cd sort &&
+		git config branch.sort committerdate &&
+		test_commit initial &&
+		git checkout -b a &&
+		test_commit a &&
+		git checkout -b c &&
+		test_commit c &&
+		git checkout -b b &&
+		test_commit b &&
+		git branch >actual &&
+		cat >expect <<-\EOF &&
+		  master
+		  a
+		  c
+		* b
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'option override configured sort' '
+	(
+		cd sort &&
+		git config branch.sort committerdate &&
+		git branch --sort=refname >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		* b
+		  c
+		  master
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'invalid sort parameter in configuration' '
+	(
+		cd sort &&
+		git config branch.sort "v:notvalid" &&
+		test_must_fail git branch
 	)
 '
 

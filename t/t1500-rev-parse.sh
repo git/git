@@ -3,7 +3,7 @@
 test_description='test git rev-parse'
 . ./test-lib.sh
 
-# usage: [options] label is-bare is-inside-git is-inside-work prefix git-dir
+# usage: [options] label is-bare is-inside-git is-inside-work prefix git-dir absolute-git-dir
 test_rev_parse () {
 	d=
 	bare=
@@ -29,7 +29,8 @@ test_rev_parse () {
 		 --is-inside-git-dir \
 		 --is-inside-work-tree \
 		 --show-prefix \
-		 --git-dir
+		 --git-dir \
+		 --absolute-git-dir
 	do
 		test $# -eq 0 && break
 		expect="$1"
@@ -62,29 +63,102 @@ test_expect_success 'setup' '
 	cp -R .git repo.git
 '
 
-test_rev_parse toplevel false false true '' .git
+test_rev_parse toplevel false false true '' .git "$ROOT/.git"
 
-test_rev_parse -C .git .git/ false true false '' .
-test_rev_parse -C .git/objects .git/objects/ false true false '' "$ROOT/.git"
+test_rev_parse -C .git .git/ false true false '' . "$ROOT/.git"
+test_rev_parse -C .git/objects .git/objects/ false true false '' "$ROOT/.git" "$ROOT/.git"
 
-test_rev_parse -C sub/dir subdirectory false false true sub/dir/ "$ROOT/.git"
+test_rev_parse -C sub/dir subdirectory false false true sub/dir/ "$ROOT/.git" "$ROOT/.git"
 
 test_rev_parse -b t 'core.bare = true' true false false
 
 test_rev_parse -b u 'core.bare undefined' false false true
 
 
-test_rev_parse -C work -g ../.git -b f 'GIT_DIR=../.git, core.bare = false' false false true ''
+test_rev_parse -C work -g ../.git -b f 'GIT_DIR=../.git, core.bare = false' false false true '' "../.git" "$ROOT/.git"
 
 test_rev_parse -C work -g ../.git -b t 'GIT_DIR=../.git, core.bare = true' true false false ''
 
 test_rev_parse -C work -g ../.git -b u 'GIT_DIR=../.git, core.bare undefined' false false true ''
 
 
-test_rev_parse -C work -g ../repo.git -b f 'GIT_DIR=../repo.git, core.bare = false' false false true ''
+test_rev_parse -C work -g ../repo.git -b f 'GIT_DIR=../repo.git, core.bare = false' false false true '' "../repo.git" "$ROOT/repo.git"
 
 test_rev_parse -C work -g ../repo.git -b t 'GIT_DIR=../repo.git, core.bare = true' true false false ''
 
 test_rev_parse -C work -g ../repo.git -b u 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
+
+test_expect_success 'git-common-dir from worktree root' '
+	echo .git >expect &&
+	git rev-parse --git-common-dir >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git-common-dir inside sub-dir' '
+	mkdir -p path/to/child &&
+	test_when_finished "rm -rf path" &&
+	echo "$(git -C path/to/child rev-parse --show-cdup).git" >expect &&
+	git -C path/to/child rev-parse --git-common-dir >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git-path from worktree root' '
+	echo .git/objects >expect &&
+	git rev-parse --git-path objects >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git-path inside sub-dir' '
+	mkdir -p path/to/child &&
+	test_when_finished "rm -rf path" &&
+	echo "$(git -C path/to/child rev-parse --show-cdup).git/objects" >expect &&
+	git -C path/to/child rev-parse --git-path objects >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --is-shallow-repository in shallow repo' '
+	test_commit test_commit &&
+	echo true >expect &&
+	git clone --depth 1 --no-local . shallow &&
+	test_when_finished "rm -rf shallow" &&
+	git -C shallow rev-parse --is-shallow-repository >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
+	echo false >expect &&
+	git rev-parse --is-shallow-repository >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'showing the superproject correctly' '
+	git rev-parse --show-superproject-working-tree >out &&
+	test_must_be_empty out &&
+
+	test_create_repo super &&
+	test_commit -C super test_commit &&
+	test_create_repo sub &&
+	test_commit -C sub test_commit &&
+	git -C super submodule add ../sub dir/sub &&
+	echo $(pwd)/super >expect  &&
+	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
+	test_cmp expect out &&
+
+	test_commit -C super submodule_add &&
+	git -C super checkout -b branch1 &&
+	git -C super/dir/sub checkout -b branch1 &&
+	test_commit -C super/dir/sub branch1_commit &&
+	git -C super add dir/sub &&
+	test_commit -C super branch1_commit &&
+	git -C super checkout -b branch2 master &&
+	git -C super/dir/sub checkout -b branch2 master &&
+	test_commit -C super/dir/sub branch2_commit &&
+	git -C super add dir/sub &&
+	test_commit -C super branch2_commit &&
+	test_must_fail git -C super merge branch1 &&
+
+	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
+	test_cmp expect out
+'
 
 test_done

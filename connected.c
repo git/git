@@ -1,8 +1,10 @@
 #include "cache.h"
+#include "object-store.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "connected.h"
 #include "transport.h"
+#include "packfile.h"
 
 /*
  * If we feed all the commits we want to verify to this command
@@ -15,13 +17,13 @@
  *
  * Returns 0 if everything is connected, non-zero otherwise.
  */
-int check_connected(sha1_iterate_fn fn, void *cb_data,
+int check_connected(oid_iterate_fn fn, void *cb_data,
 		    struct check_connected_options *opt)
 {
 	struct child_process rev_list = CHILD_PROCESS_INIT;
 	struct check_connected_options defaults = CHECK_CONNECTED_INIT;
-	char commit[41];
-	unsigned char sha1[20];
+	char commit[GIT_MAX_HEXSZ + 1];
+	struct object_id oid;
 	int err = 0;
 	struct packed_git *new_pack = NULL;
 	struct transport *transport;
@@ -31,7 +33,7 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 		opt = &defaults;
 	transport = opt->transport;
 
-	if (fn(cb_data, sha1)) {
+	if (fn(cb_data, &oid)) {
 		if (opt->err_fd)
 			close(opt->err_fd);
 		return err;
@@ -48,6 +50,22 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 		strbuf_release(&idx_file);
 	}
 
+	if (opt->check_refs_only) {
+		/*
+		 * For partial clones, we don't want to have to do a regular
+		 * connectivity check because we have to enumerate and exclude
+		 * all promisor objects (slow), and then the connectivity check
+		 * itself becomes a no-op because in a partial clone every
+		 * object is a promisor object. Instead, just make sure we
+		 * received the objects pointed to by each wanted ref.
+		 */
+		do {
+			if (!repo_has_object_file(the_repository, &oid))
+				return 1;
+		} while (!fn(cb_data, &oid));
+		return 0;
+	}
+
 	if (opt->shallow_file) {
 		argv_array_push(&rev_list.args, "--shallow-file");
 		argv_array_push(&rev_list.args, opt->shallow_file);
@@ -55,8 +73,12 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 	argv_array_push(&rev_list.args,"rev-list");
 	argv_array_push(&rev_list.args, "--objects");
 	argv_array_push(&rev_list.args, "--stdin");
-	argv_array_push(&rev_list.args, "--not");
-	argv_array_push(&rev_list.args, "--all");
+	if (repository_format_partial_clone)
+		argv_array_push(&rev_list.args, "--exclude-promisor-objects");
+	if (!opt->is_deepening_fetch) {
+		argv_array_push(&rev_list.args, "--not");
+		argv_array_push(&rev_list.args, "--all");
+	}
 	argv_array_push(&rev_list.args, "--quiet");
 	if (opt->progress)
 		argv_array_pushf(&rev_list.args, "--progress=%s",
@@ -76,7 +98,7 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	commit[40] = '\n';
+	commit[GIT_SHA1_HEXSZ] = '\n';
 	do {
 		/*
 		 * If index-pack already checked that:
@@ -86,17 +108,17 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 		 * are sure the ref is good and not sending it to
 		 * rev-list for verification.
 		 */
-		if (new_pack && find_pack_entry_one(sha1, new_pack))
+		if (new_pack && find_pack_entry_one(oid.hash, new_pack))
 			continue;
 
-		memcpy(commit, sha1_to_hex(sha1), 40);
-		if (write_in_full(rev_list.in, commit, 41) < 0) {
+		memcpy(commit, oid_to_hex(&oid), GIT_SHA1_HEXSZ);
+		if (write_in_full(rev_list.in, commit, GIT_SHA1_HEXSZ + 1) < 0) {
 			if (errno != EPIPE && errno != EINVAL)
 				error_errno(_("failed write to rev-list"));
 			err = -1;
 			break;
 		}
-	} while (!fn(cb_data, sha1));
+	} while (!fn(cb_data, &oid));
 
 	if (close(rev_list.in))
 		err = error_errno(_("failed to close rev-list's stdin"));

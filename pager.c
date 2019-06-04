@@ -1,6 +1,8 @@
 #include "cache.h"
+#include "config.h"
 #include "run-command.h"
 #include "sigchain.h"
+#include "alias.h"
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"
@@ -41,37 +43,6 @@ static int core_pager_config(const char *var, const char *value, void *data)
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);
 	return 0;
-}
-
-static void read_early_config(config_fn_t cb, void *data)
-{
-	git_config_with_options(cb, data, NULL, 1);
-
-	/*
-	 * Note that this is a really dirty hack that does the wrong thing in
-	 * many cases. The crux of the problem is that we cannot run
-	 * setup_git_directory() early on in git's setup, so we have no idea if
-	 * we are in a repository or not, and therefore are not sure whether
-	 * and how to read repository-local config.
-	 *
-	 * So if we _aren't_ in a repository (or we are but we would reject its
-	 * core.repositoryformatversion), we'll read whatever is in .git/config
-	 * blindly. Similarly, if we _are_ in a repository, but not at the
-	 * root, we'll fail to find .git/config (because it's really
-	 * ../.git/config, etc). See t7006 for a complete set of failures.
-	 *
-	 * However, we have historically provided this hack because it does
-	 * work some of the time (namely when you are at the top-level of a
-	 * valid repository), and would rarely make things worse (i.e., you do
-	 * not generally have a .git/config file sitting around).
-	 */
-	if (!startup_info->have_repository) {
-		struct git_config_source repo_config;
-
-		memset(&repo_config, 0, sizeof(repo_config));
-		repo_config.file = ".git/config";
-		git_config_with_options(cb, data, &repo_config, 1);
-	}
 }
 
 const char *git_pager(int stdout_is_tty)
@@ -129,6 +100,7 @@ void prepare_pager_args(struct child_process *pager_process, const char *pager)
 	argv_array_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
 	setup_pager_env(&pager_process->env_array);
+	pager_process->trace2_child_class = "pager";
 }
 
 void setup_pager(void)
@@ -139,10 +111,15 @@ void setup_pager(void)
 		return;
 
 	/*
-	 * force computing the width of the terminal before we redirect
-	 * the standard output to the pager.
+	 * After we redirect standard output, we won't be able to use an ioctl
+	 * to get the terminal size. Let's grab it now, and then set $COLUMNS
+	 * to communicate it to any sub-processes.
 	 */
-	(void) term_columns();
+	{
+		char buf[64];
+		xsnprintf(buf, sizeof(buf), "%d", term_columns());
+		setenv("COLUMNS", buf, 0);
+	}
 
 	setenv("GIT_PAGER_IN_USE", "true", 1);
 
@@ -166,9 +143,7 @@ void setup_pager(void)
 
 int pager_in_use(void)
 {
-	const char *env;
-	env = getenv("GIT_PAGER_IN_USE");
-	return env ? git_config_bool("GIT_PAGER_IN_USE", env) : 0;
+	return git_env_bool("GIT_PAGER_IN_USE", 0);
 }
 
 /*
@@ -226,7 +201,7 @@ static int pager_command_config(const char *var, const char *value, void *vdata)
 	const char *cmd;
 
 	if (skip_prefix(var, "pager.", &cmd) && !strcmp(cmd, data->cmd)) {
-		int b = git_config_maybe_bool(var, value);
+		int b = git_parse_maybe_bool(value);
 		if (b >= 0)
 			data->want = b;
 		else {

@@ -1,6 +1,7 @@
 #ifndef CONNECTED_H
 #define CONNECTED_H
 
+struct object_id;
 struct transport;
 
 /*
@@ -8,7 +9,7 @@ struct transport;
  * When called after returning the name for the last object, return -1
  * to signal EOF, otherwise return 0.
  */
-typedef int (*sha1_iterate_fn)(void *, unsigned char [20]);
+typedef int (*oid_iterate_fn)(void *, struct object_id *oid);
 
 /*
  * Named-arguments struct for check_connected. All arguments are
@@ -38,20 +39,35 @@ struct check_connected_options {
 	 * Insert these variables into the environment of the child process.
 	 */
 	const char **env;
+
+	/*
+	 * If non-zero, check the ancestry chain completely, not stopping at
+	 * any existing ref. This is necessary when deepening existing refs
+	 * during a fetch.
+	 */
+	unsigned is_deepening_fetch : 1;
+
+	/*
+	 * If non-zero, only check the top-level objects referenced by the
+	 * wanted refs (passed in as cb_data). This is useful for partial
+	 * clones, where enumerating and excluding all promisor objects is very
+	 * slow and the commit-walk itself becomes a no-op.
+	 */
+	unsigned check_refs_only : 1;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }
 
 /*
- * Make sure that our object store has all the commits necessary to
- * connect the ancestry chain to some of our existing refs, and all
- * the trees and blobs that these commits use.
+ * Make sure that all given objects and all objects reachable from them
+ * either exist in our object store or (if the repository is a partial
+ * clone) are promised to be available.
  *
  * Return 0 if Ok, non zero otherwise (i.e. some missing objects)
  *
  * If "opt" is NULL, behaves as if CHECK_CONNECTED_INIT was passed.
  */
-int check_connected(sha1_iterate_fn fn, void *cb_data,
+int check_connected(oid_iterate_fn fn, void *cb_data,
 		    struct check_connected_options *opt);
 
 #endif /* CONNECTED_H */

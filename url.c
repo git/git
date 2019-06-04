@@ -104,7 +104,8 @@ void end_url_with_slash(struct strbuf *buf, const char *url)
 	strbuf_complete(buf, '/');
 }
 
-void str_end_url_with_slash(const char *url, char **dest) {
+void str_end_url_with_slash(const char *url, char **dest)
+{
 	struct strbuf buf = STRBUF_INIT;
 	end_url_with_slash(&buf, url);
 	free(*dest);

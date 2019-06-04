@@ -186,4 +186,135 @@ test_expect_success 'no advice given for explicit detached head state' '
 	test_cmp expect.no-advice actual
 '
 
+# Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (new format)
+test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not asked to' "
+
+	commit=$(git rev-parse --short=12 master^) &&
+	commit2=$(git rev-parse --short=12 master~2) &&
+	commit3=$(git rev-parse --short=12 master~3) &&
+
+	# The first detach operation is more chatty than the following ones.
+	cat >1st_detach <<-EOF &&
+	Note: checking out 'HEAD^'.
+
+	You are in 'detached HEAD' state. You can look around, make experimental
+	changes and commit them, and you can discard any commits you make in this
+	state without impacting any branches by performing another checkout.
+
+	If you want to create a new branch to retain commits you create, you may
+	do so (now or later) by using -b with the checkout command again. Example:
+
+	  git checkout -b <new-branch-name>
+
+	HEAD is now at \$commit three
+	EOF
+
+	# The remaining ones just show info about previous and current HEADs.
+	cat >2nd_detach <<-EOF &&
+	Previous HEAD position was \$commit three
+	HEAD is now at \$commit2 two
+	EOF
+
+	cat >3rd_detach <<-EOF &&
+	Previous HEAD position was \$commit2 two
+	HEAD is now at \$commit3 one
+	EOF
+
+	reset &&
+	check_not_detached &&
+
+	# Various ways of *not* asking for ellipses
+
+	sane_unset GIT_PRINT_SHA1_ELLIPSIS &&
+	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 1st_detach actual &&
+
+	GIT_PRINT_SHA1_ELLIPSIS="no" git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 2nd_detach actual &&
+
+	GIT_PRINT_SHA1_ELLIPSIS= git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 3rd_detach actual &&
+
+	sane_unset GIT_PRINT_SHA1_ELLIPSIS &&
+
+	# We only have four commits, but we can re-use them
+	reset &&
+	check_not_detached &&
+
+	# Make no mention of the env var at all
+	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 1st_detach actual &&
+
+	GIT_PRINT_SHA1_ELLIPSIS='nope' &&
+	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 2nd_detach actual &&
+
+	GIT_PRINT_SHA1_ELLIPSIS=nein &&
+	git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 3rd_detach actual &&
+
+	true
+"
+
+# Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (old format)
+test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked to' "
+
+	commit=$(git rev-parse --short=12 master^) &&
+	commit2=$(git rev-parse --short=12 master~2) &&
+	commit3=$(git rev-parse --short=12 master~3) &&
+
+	# The first detach operation is more chatty than the following ones.
+	cat >1st_detach <<-EOF &&
+	Note: checking out 'HEAD^'.
+
+	You are in 'detached HEAD' state. You can look around, make experimental
+	changes and commit them, and you can discard any commits you make in this
+	state without impacting any branches by performing another checkout.
+
+	If you want to create a new branch to retain commits you create, you may
+	do so (now or later) by using -b with the checkout command again. Example:
+
+	  git checkout -b <new-branch-name>
+
+	HEAD is now at \$commit... three
+	EOF
+
+	# The remaining ones just show info about previous and current HEADs.
+	cat >2nd_detach <<-EOF &&
+	Previous HEAD position was \$commit... three
+	HEAD is now at \$commit2... two
+	EOF
+
+	cat >3rd_detach <<-EOF &&
+	Previous HEAD position was \$commit2... two
+	HEAD is now at \$commit3... one
+	EOF
+
+	reset &&
+	check_not_detached &&
+
+	# Various ways of asking for ellipses...
+	# The user can just use any kind of quoting (including none).
+
+	GIT_PRINT_SHA1_ELLIPSIS=yes git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 1st_detach actual &&
+
+	GIT_PRINT_SHA1_ELLIPSIS=Yes git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 2nd_detach actual &&
+
+	GIT_PRINT_SHA1_ELLIPSIS=YES git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	check_detached &&
+	test_i18ncmp 3rd_detach actual &&
+
+	true
+"
+
 test_done

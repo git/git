@@ -11,6 +11,8 @@
 # The following functions will also be available in the commit filter:
 
 functions=$(cat << \EOF
+EMPTY_TREE=$(git hash-object -t tree /dev/null)
+
 warn () {
 	echo "$*" >&2
 }
@@ -46,6 +48,8 @@ git_commit_non_empty_tree()
 {
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
 		map "$3"
+	elif test $# = 1 && test "$1" = $EMPTY_TREE; then
+		:
 	else
 		git commit-tree "$@"
 	fi
@@ -79,12 +83,13 @@ set_ident () {
 	finish_ident COMMITTER
 }
 
-USAGE="[--env-filter <command>] [--tree-filter <command>]
-	[--index-filter <command>] [--parent-filter <command>]
-	[--msg-filter <command>] [--commit-filter <command>]
-	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
-	[--original <namespace>] [-d <directory>] [-f | --force]
-	[<rev-list options>...]"
+USAGE="[--setup <command>] [--subdirectory-filter <directory>] [--env-filter <command>]
+	[--tree-filter <command>] [--index-filter <command>]
+	[--parent-filter <command>] [--msg-filter <command>]
+	[--commit-filter <command>] [--tag-name-filter <command>]
+	[--original <namespace>]
+	[-d <directory>] [-f | --force] [--state-branch <branch>]
+	[--] [<rev-list options>...]"
 
 OPTIONS_SPEC=
 . git-sh-setup
@@ -94,6 +99,7 @@ if [ "$(is_bare_repository)" = false ]; then
 fi
 
 tempdir=.git-rewrite
+filter_setup=
 filter_env=
 filter_tree=
 filter_index=
@@ -102,6 +108,7 @@ filter_msg=cat
 filter_commit=
 filter_tag_name=
 filter_subdir=
+state_branch=
 orig_namespace=refs/original/
 force=
 prune_empty=
@@ -146,6 +153,13 @@ do
 	-d)
 		tempdir="$OPTARG"
 		;;
+	--setup)
+		filter_setup="$OPTARG"
+		;;
+	--subdirectory-filter)
+		filter_subdir="$OPTARG"
+		remap_to_ancestor=t
+		;;
 	--env-filter)
 		filter_env="$OPTARG"
 		;;
@@ -167,12 +181,11 @@ do
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
 		;;
-	--subdirectory-filter)
-		filter_subdir="$OPTARG"
-		remap_to_ancestor=t
-		;;
 	--original)
 		orig_namespace=$(expr "$OPTARG/" : '\(.*[^/]\)/*$')/
+		;;
+	--state-branch)
+		state_branch="$OPTARG"
 		;;
 	*)
 		usage
@@ -212,6 +225,13 @@ trap 'cd "$orig_dir"; rm -rf "$tempdir"' 0
 ORIG_GIT_DIR="$GIT_DIR"
 ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
 ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
+ORIG_GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME"
+ORIG_GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL"
+ORIG_GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE"
+ORIG_GIT_COMMITTER_NAME="$GIT_COMMITTER_NAME"
+ORIG_GIT_COMMITTER_EMAIL="$GIT_COMMITTER_EMAIL"
+ORIG_GIT_COMMITTER_DATE="$GIT_COMMITTER_DATE"
+
 GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
 
@@ -233,17 +253,47 @@ done < "$tempdir"/backup-refs
 
 # The refs should be updated if their heads were rewritten
 git rev-parse --no-flags --revs-only --symbolic-full-name \
-	--default HEAD "$@" > "$tempdir"/raw-heads || exit
-sed -e '/^^/d' "$tempdir"/raw-heads >"$tempdir"/heads
+	--default HEAD "$@" > "$tempdir"/raw-refs || exit
+while read ref
+do
+	case "$ref" in ^?*) continue ;; esac
+
+	if git rev-parse --verify "$ref"^0 >/dev/null 2>&1
+	then
+		echo "$ref"
+	else
+		warn "WARNING: not rewriting '$ref' (not a committish)"
+	fi
+done >"$tempdir"/heads <"$tempdir"/raw-refs
 
 test -s "$tempdir"/heads ||
-	die "Which ref do you want to rewrite?"
+	die "You must specify a ref to rewrite."
 
 GIT_INDEX_FILE="$(pwd)/../index"
 export GIT_INDEX_FILE
 
 # map old->new commit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
+
+if test -n "$state_branch"
+then
+	state_commit=$(git rev-parse --no-flags --revs-only "$state_branch")
+	if test -n "$state_commit"
+	then
+		echo "Populating map from $state_branch ($state_commit)" 1>&2
+		perl -e'open(MAP, "-|", "git show $ARGV[0]:filter.map") or die;
+			while (<MAP>) {
+				m/(.*):(.*)/ or die;
+				open F, ">../map/$1" or die;
+				print F "$2" or die;
+				close(F) or die;
+			}
+			close(MAP) or die;' "$state_commit" \
+				|| die "Unable to load state from $state_branch:filter.map"
+	else
+		echo "Branch $state_branch does not exist. Will create" 1>&2
+	fi
+fi
 
 # we need "--" only if there are no path arguments in $@
 nonrevs=$(git rev-parse --no-revs "$@") || exit
@@ -272,7 +322,7 @@ git rev-list --reverse --topo-order --default HEAD \
 	die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
-test $commits -eq 0 && die "Found nothing to rewrite"
+test $commits -eq 0 && die_with_status 2 "Found nothing to rewrite"
 
 # Rewrite the commits
 report_progress ()
@@ -315,10 +365,14 @@ else
 	need_index=
 fi
 
+eval "$filter_setup" < /dev/null ||
+	die "filter setup failed: $filter_setup"
+
 while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
 
 	report_progress
+	test -f "$workdir"/../map/$commit && continue
 
 	case "$filter_subdir" in
 	"")
@@ -520,7 +574,7 @@ if [ "$filter_tag_name" ]; then
 					}' \
 				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
 				    -e 'p' ) |
-				git mktag) ||
+				git hash-object -t tag -w --stdin) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \
 			   sane_grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
@@ -534,12 +588,9 @@ if [ "$filter_tag_name" ]; then
 	done
 fi
 
-cd "$orig_dir"
-rm -rf "$tempdir"
-
-trap - 0
-
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
+unset GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
 test -z "$ORIG_GIT_DIR" || {
 	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
 }
@@ -551,6 +602,58 @@ test -z "$ORIG_GIT_INDEX_FILE" || {
 	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
 	export GIT_INDEX_FILE
 }
+test -z "$ORIG_GIT_AUTHOR_NAME" || {
+	GIT_AUTHOR_NAME="$ORIG_GIT_AUTHOR_NAME" &&
+	export GIT_AUTHOR_NAME
+}
+test -z "$ORIG_GIT_AUTHOR_EMAIL" || {
+	GIT_AUTHOR_EMAIL="$ORIG_GIT_AUTHOR_EMAIL" &&
+	export GIT_AUTHOR_EMAIL
+}
+test -z "$ORIG_GIT_AUTHOR_DATE" || {
+	GIT_AUTHOR_DATE="$ORIG_GIT_AUTHOR_DATE" &&
+	export GIT_AUTHOR_DATE
+}
+test -z "$ORIG_GIT_COMMITTER_NAME" || {
+	GIT_COMMITTER_NAME="$ORIG_GIT_COMMITTER_NAME" &&
+	export GIT_COMMITTER_NAME
+}
+test -z "$ORIG_GIT_COMMITTER_EMAIL" || {
+	GIT_COMMITTER_EMAIL="$ORIG_GIT_COMMITTER_EMAIL" &&
+	export GIT_COMMITTER_EMAIL
+}
+test -z "$ORIG_GIT_COMMITTER_DATE" || {
+	GIT_COMMITTER_DATE="$ORIG_GIT_COMMITTER_DATE" &&
+	export GIT_COMMITTER_DATE
+}
+
+if test -n "$state_branch"
+then
+	echo "Saving rewrite state to $state_branch" 1>&2
+	state_blob=$(
+		perl -e'opendir D, "../map" or die;
+			open H, "|-", "git hash-object -w --stdin" or die;
+			foreach (sort readdir(D)) {
+				next if m/^\.\.?$/;
+				open F, "<../map/$_" or die;
+				chomp($f = <F>);
+				print H "$_:$f\n" or die;
+			}
+			close(H) or die;' || die "Unable to save state")
+	state_tree=$(printf '100644 blob %s\tfilter.map\n' "$state_blob" | git mktree)
+	if test -n "$state_commit"
+	then
+		state_commit=$(echo "Sync" | git commit-tree "$state_tree" -p "$state_commit")
+	else
+		state_commit=$(echo "Sync" | git commit-tree "$state_tree" )
+	fi
+	git update-ref "$state_branch" "$state_commit"
+fi
+
+cd "$orig_dir"
+rm -rf "$tempdir"
+
+trap - 0
 
 if [ "$(is_bare_repository)" = false ]; then
 	git read-tree -u -m HEAD || exit

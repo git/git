@@ -1,0 +1,9 @@
+worktree.guessRemote::
+	If no branch is specified and neither `-b` nor `-B` nor
+	`--detach` is used, then `git worktree add` defaults to
+	creating a new branch from HEAD.  If `worktree.guessRemote` is
+	set to true, `worktree add` tries to find a remote-tracking
+	branch whose name uniquely matches the new branch name.  If
+	such a branch exists, it is checked out and set as "upstream"
+	for the new branch.  If no such match can be found, it falls
+	back to creating a new branch from the current HEAD.

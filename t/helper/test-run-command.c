@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include "test-tool.h"
 #include "git-compat-util.h"
 #include "run-command.h"
 #include "argv-array.h"
@@ -49,11 +50,20 @@ static int task_finished(int result,
 	return 1;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__run_command(int argc, const char **argv)
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int jobs;
 
+	if (argc < 3)
+		return 1;
+	while (!strcmp(argv[1], "env")) {
+		if (!argv[2])
+			die("env specifier without a value");
+		argv_array_push(&proc.env_array, argv[2]);
+		argv += 2;
+		argc -= 2;
+	}
 	if (argc < 3)
 		return 1;
 	proc.argv = (const char **)argv + 2;

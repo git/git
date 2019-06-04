@@ -1,5 +1,7 @@
+#include "test-tool.h"
 #include "git-compat-util.h"
 #include "hashmap.h"
+#include "strbuf.h"
 
 struct test_entry
 {
@@ -13,23 +15,28 @@ static const char *get_value(const struct test_entry *e)
 	return e->key + strlen(e->key) + 1;
 }
 
-static int test_entry_cmp(const struct test_entry *e1,
-		const struct test_entry *e2, const char* key)
+static int test_entry_cmp(const void *cmp_data,
+			  const void *entry,
+			  const void *entry_or_key,
+			  const void *keydata)
 {
-	return strcmp(e1->key, key ? key : e2->key);
+	const int ignore_case = cmp_data ? *((int *)cmp_data) : 0;
+	const struct test_entry *e1 = entry;
+	const struct test_entry *e2 = entry_or_key;
+	const char *key = keydata;
+
+	if (ignore_case)
+		return strcasecmp(e1->key, key ? key : e2->key);
+	else
+		return strcmp(e1->key, key ? key : e2->key);
 }
 
-static int test_entry_cmp_icase(const struct test_entry *e1,
-		const struct test_entry *e2, const char* key)
+static struct test_entry *alloc_test_entry(unsigned int hash,
+					   char *key, char *value)
 {
-	return strcasecmp(e1->key, key ? key : e2->key);
-}
-
-static struct test_entry *alloc_test_entry(int hash, char *key, int klen,
-		char *value, int vlen)
-{
-	struct test_entry *entry = malloc(sizeof(struct test_entry) + klen
-			+ vlen + 2);
+	size_t klen = strlen(key);
+	size_t vlen = strlen(value);
+	struct test_entry *entry = xmalloc(st_add4(sizeof(*entry), klen, vlen, 2));
 	hashmap_entry_init(entry, hash);
 	memcpy(entry->key, key, klen + 1);
 	memcpy(entry->key + klen + 1, value, vlen + 1);
@@ -71,7 +78,7 @@ static unsigned int hash(unsigned int method, unsigned int i, const char *key)
 
 /*
  * Test performance of hashmap.[ch]
- * Usage: time echo "perfhashmap method rounds" | test-hashmap
+ * Usage: time echo "perfhashmap method rounds" | test-tool hashmap
  */
 static void perf_hashmap(unsigned int method, unsigned int rounds)
 {
@@ -81,18 +88,18 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 	unsigned int *hashes;
 	unsigned int i, j;
 
-	entries = malloc(TEST_SIZE * sizeof(struct test_entry *));
-	hashes = malloc(TEST_SIZE * sizeof(int));
+	ALLOC_ARRAY(entries, TEST_SIZE);
+	ALLOC_ARRAY(hashes, TEST_SIZE);
 	for (i = 0; i < TEST_SIZE; i++) {
-		snprintf(buf, sizeof(buf), "%i", i);
-		entries[i] = alloc_test_entry(0, buf, strlen(buf), "", 0);
+		xsnprintf(buf, sizeof(buf), "%i", i);
+		entries[i] = alloc_test_entry(0, buf, "");
 		hashes[i] = hash(method, i, entries[i]->key);
 	}
 
 	if (method & TEST_ADD) {
 		/* test adding to the map */
 		for (j = 0; j < rounds; j++) {
-			hashmap_init(&map, (hashmap_cmp_fn) test_entry_cmp, 0);
+			hashmap_init(&map, test_entry_cmp, NULL, 0);
 
 			/* add entries */
 			for (i = 0; i < TEST_SIZE; i++) {
@@ -104,7 +111,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 		}
 	} else {
 		/* test map lookups */
-		hashmap_init(&map, (hashmap_cmp_fn) test_entry_cmp, 0);
+		hashmap_init(&map, test_entry_cmp, NULL, 0);
 
 		/* fill the map (sparsely if specified) */
 		j = (method & TEST_SPARSE) ? TEST_SIZE / 10 : TEST_SIZE;
@@ -138,56 +145,53 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
  *
  * perfhashmap method rounds -> test hashmap.[ch] performance
  */
-int cmd_main(int argc, const char **argv)
+int cmd__hashmap(int argc, const char **argv)
 {
-	char line[1024];
+	struct strbuf line = STRBUF_INIT;
 	struct hashmap map;
 	int icase;
 
 	/* init hash map */
 	icase = argc > 1 && !strcmp("ignorecase", argv[1]);
-	hashmap_init(&map, (hashmap_cmp_fn) (icase ? test_entry_cmp_icase
-			: test_entry_cmp), 0);
+	hashmap_init(&map, test_entry_cmp, &icase, 0);
 
 	/* process commands from stdin */
-	while (fgets(line, sizeof(line), stdin)) {
+	while (strbuf_getline(&line, stdin) != EOF) {
 		char *cmd, *p1 = NULL, *p2 = NULL;
-		int l1 = 0, l2 = 0, hash = 0;
+		unsigned int hash = 0;
 		struct test_entry *entry;
 
 		/* break line into command and up to two parameters */
-		cmd = strtok(line, DELIM);
+		cmd = strtok(line.buf, DELIM);
 		/* ignore empty lines */
 		if (!cmd || *cmd == '#')
 			continue;
 
 		p1 = strtok(NULL, DELIM);
 		if (p1) {
-			l1 = strlen(p1);
 			hash = icase ? strihash(p1) : strhash(p1);
 			p2 = strtok(NULL, DELIM);
-			if (p2)
-				l2 = strlen(p2);
 		}
 
-		if (!strcmp("hash", cmd) && l1) {
+		if (!strcmp("hash", cmd) && p1) {
 
 			/* print results of different hash functions */
-			printf("%u %u %u %u\n", strhash(p1), memhash(p1, l1),
-					strihash(p1), memihash(p1, l1));
+			printf("%u %u %u %u\n",
+			       strhash(p1), memhash(p1, strlen(p1)),
+			       strihash(p1), memihash(p1, strlen(p1)));
 
-		} else if (!strcmp("add", cmd) && l1 && l2) {
+		} else if (!strcmp("add", cmd) && p1 && p2) {
 
 			/* create entry with key = p1, value = p2 */
-			entry = alloc_test_entry(hash, p1, l1, p2, l2);
+			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add to hashmap */
 			hashmap_add(&map, entry);
 
-		} else if (!strcmp("put", cmd) && l1 && l2) {
+		} else if (!strcmp("put", cmd) && p1 && p2) {
 
 			/* create entry with key = p1, value = p2 */
-			entry = alloc_test_entry(hash, p1, l1, p2, l2);
+			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add / replace entry */
 			entry = hashmap_put(&map, entry);
@@ -196,7 +200,7 @@ int cmd_main(int argc, const char **argv)
 			puts(entry ? get_value(entry) : "NULL");
 			free(entry);
 
-		} else if (!strcmp("get", cmd) && l1) {
+		} else if (!strcmp("get", cmd) && p1) {
 
 			/* lookup entry in hashmap */
 			entry = hashmap_get_from_hash(&map, hash, p1);
@@ -209,7 +213,7 @@ int cmd_main(int argc, const char **argv)
 				entry = hashmap_get_next(&map, entry);
 			}
 
-		} else if (!strcmp("remove", cmd) && l1) {
+		} else if (!strcmp("remove", cmd) && p1) {
 
 			/* setup static key */
 			struct hashmap_entry key;
@@ -232,9 +236,10 @@ int cmd_main(int argc, const char **argv)
 		} else if (!strcmp("size", cmd)) {
 
 			/* print table sizes */
-			printf("%u %u\n", map.tablesize, map.size);
+			printf("%u %u\n", map.tablesize,
+			       hashmap_get_size(&map));
 
-		} else if (!strcmp("intern", cmd) && l1) {
+		} else if (!strcmp("intern", cmd) && p1) {
 
 			/* test that strintern works */
 			const char *i1 = strintern(p1);
@@ -248,7 +253,7 @@ int cmd_main(int argc, const char **argv)
 			else
 				printf("%s\n", i1);
 
-		} else if (!strcmp("perfhashmap", cmd) && l1 && l2) {
+		} else if (!strcmp("perfhashmap", cmd) && p1 && p2) {
 
 			perf_hashmap(atoi(p1), atoi(p2));
 
@@ -259,6 +264,7 @@ int cmd_main(int argc, const char **argv)
 		}
 	}
 
+	strbuf_release(&line);
 	hashmap_free(&map, 1);
 	return 0;
 }

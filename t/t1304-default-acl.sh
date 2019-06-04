@@ -54,7 +54,7 @@ test_expect_success SETFACL 'Setup test repo' '
 
 test_expect_success SETFACL 'Objects creation does not break ACLs with restrictive umask' '
 	# SHA1 for empty blob
-	check_perms_and_acl .git/objects/e6/9de29bb2d1d6434b8b29ae775ad8c2e48c5391
+	check_perms_and_acl .git/objects/$(echo $EMPTY_BLOB | sed -e "s,^\(..\),\1/,")
 '
 
 test_expect_success SETFACL 'git gc does not break ACLs with restrictive umask' '

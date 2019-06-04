@@ -32,11 +32,8 @@ Iteration functions
 
 * `for_each_glob_ref_in()` the previous and `for_each_ref_in()` combined.
 
-* `head_ref_submodule()`, `for_each_ref_submodule()`,
-  `for_each_ref_in_submodule()`, `for_each_tag_ref_submodule()`,
-  `for_each_branch_ref_submodule()`, `for_each_remote_ref_submodule()`
-  do the same as the functions described above but for a specified
-  submodule.
+* Use `refs_` API for accessing submodules. The submodule ref store could
+  be obtained with `get_submodule_ref_store()`.
 
 * `for_each_rawref()` can be used to learn about broken ref and symref.
 

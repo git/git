@@ -6,6 +6,7 @@
 #define PRECOMPOSE_UNICODE_C
 
 #include "cache.h"
+#include "config.h"
 #include "utf8.h"
 #include "precompose_utf8.h"
 
@@ -78,7 +79,7 @@ void precompose_argv(int argc, const char **argv)
 		size_t namelen;
 		oldarg = argv[i];
 		if (has_non_ascii(oldarg, (size_t)-1, &namelen)) {
-			newarg = reencode_string_iconv(oldarg, namelen, ic_precompose, NULL);
+			newarg = reencode_string_iconv(oldarg, namelen, ic_precompose, 0, NULL);
 			if (newarg)
 				argv[i] = newarg;
 		}

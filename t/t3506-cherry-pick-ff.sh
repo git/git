@@ -64,10 +64,10 @@ test_expect_success 'merge setup' '
 	git checkout -b new A
 '
 
-test_expect_success 'cherry-pick a non-merge with --ff and -m should fail' '
+test_expect_success 'cherry-pick explicit first parent of a non-merge with --ff' '
 	git reset --hard A -- &&
-	test_must_fail git cherry-pick --ff -m 1 B &&
-	git diff --exit-code A --
+	git cherry-pick --ff -m 1 B &&
+	git diff --exit-code C --
 '
 
 test_expect_success 'cherry pick a merge with --ff but without -m should fail' '

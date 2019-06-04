@@ -109,7 +109,7 @@ summary of the situation with 'git status':
 $ git status
 On branch master
 Changes to be committed:
-Your branch is up-to-date with 'origin/master'.
+Your branch is up to date with 'origin/master'.
   (use "git reset HEAD <file>..." to unstage)
 
 	modified:   file1
@@ -674,4 +674,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

@@ -1,10 +1,13 @@
 #include "cache.h"
-#include "commit.h"
+#include "config.h"
+#include "pretty.h"
 #include "refs.h"
 #include "builtin.h"
 #include "color.h"
 #include "argv-array.h"
 #include "parse-options.h"
+#include "dir.h"
+#include "commit-slab.h"
 
 static const char* show_branch_usage[] = {
     N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
@@ -19,6 +22,11 @@ static int showbranch_use_color = -1;
 
 static struct argv_array default_args = ARGV_ARRAY_INIT;
 
+/*
+ * TODO: convert this use of commit->object.flags to commit-slab
+ * instead to store a pointer to ref name directly. Then use the same
+ * UNINTERESTING definition from revision.h here.
+ */
 #define UNINTERESTING	01
 
 #define REV_SHIFT	 2
@@ -57,15 +65,27 @@ struct commit_name {
 	int generation; /* how many parents away from head_name */
 };
 
+define_commit_slab(commit_name_slab, struct commit_name *);
+static struct commit_name_slab name_slab;
+
+static struct commit_name *commit_to_name(struct commit *commit)
+{
+	return *commit_name_slab_at(&name_slab, commit);
+}
+
+
 /* Name the commit as nth generation ancestor of head_name;
  * we count only the first-parent relationship for naming purposes.
  */
 static void name_commit(struct commit *commit, const char *head_name, int nth)
 {
 	struct commit_name *name;
-	if (!commit->util)
-		commit->util = xmalloc(sizeof(struct commit_name));
-	name = commit->util;
+
+	name = *commit_name_slab_at(&name_slab, commit);
+	if (!name) {
+		name = xmalloc(sizeof(*name));
+		*commit_name_slab_at(&name_slab, commit) = name;
+	}
 	name->head_name = head_name;
 	name->generation = nth;
 }
@@ -77,8 +97,8 @@ static void name_commit(struct commit *commit, const char *head_name, int nth)
  */
 static void name_parent(struct commit *commit, struct commit *parent)
 {
-	struct commit_name *commit_name = commit->util;
-	struct commit_name *parent_name = parent->util;
+	struct commit_name *commit_name = commit_to_name(commit);
+	struct commit_name *parent_name = commit_to_name(parent);
 	if (!commit_name)
 		return;
 	if (!parent_name ||
@@ -92,12 +112,12 @@ static int name_first_parent_chain(struct commit *c)
 	int i = 0;
 	while (c) {
 		struct commit *p;
-		if (!c->util)
+		if (!commit_to_name(c))
 			break;
 		if (!c->parents)
 			break;
 		p = c->parents->item;
-		if (!p->util) {
+		if (!commit_to_name(p)) {
 			name_parent(c, p);
 			i++;
 		}
@@ -120,7 +140,7 @@ static void name_commits(struct commit_list *list,
 	/* First give names to the given heads */
 	for (cl = list; cl; cl = cl->next) {
 		c = cl->item;
-		if (c->util)
+		if (commit_to_name(c))
 			continue;
 		for (i = 0; i < num_rev; i++) {
 			if (rev[i] == c) {
@@ -146,9 +166,9 @@ static void name_commits(struct commit_list *list,
 			struct commit_name *n;
 			int nth;
 			c = cl->item;
-			if (!c->util)
+			if (!commit_to_name(c))
 				continue;
-			n = c->util;
+			n = commit_to_name(c);
 			parents = c->parents;
 			nth = 0;
 			while (parents) {
@@ -156,7 +176,7 @@ static void name_commits(struct commit_list *list,
 				struct strbuf newname = STRBUF_INIT;
 				parents = parents->next;
 				nth++;
-				if (p->util)
+				if (commit_to_name(p))
 					continue;
 				switch (n->generation) {
 				case 0:
@@ -269,14 +289,13 @@ static void show_one_commit(struct commit *commit, int no_name)
 {
 	struct strbuf pretty = STRBUF_INIT;
 	const char *pretty_str = "(unavailable)";
-	struct commit_name *name = commit->util;
+	struct commit_name *name = commit_to_name(commit);
 
 	if (commit->object.parsed) {
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &pretty);
 		pretty_str = pretty.buf;
 	}
-	if (starts_with(pretty_str, "[PATCH] "))
-		pretty_str += 8;
+	skip_prefix(pretty_str, "[PATCH] ", &pretty_str);
 
 	if (!no_name) {
 		if (name && name->head_name) {
@@ -291,7 +310,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 		}
 		else
 			printf("[%s] ",
-			       find_unique_abbrev(commit->object.oid.hash,
+			       find_unique_abbrev(&commit->object.oid,
 						  DEFAULT_ABBREV));
 	}
 	puts(pretty_str);
@@ -359,7 +378,8 @@ static void sort_ref_range(int bottom, int top)
 static int append_ref(const char *refname, const struct object_id *oid,
 		      int allow_dups)
 {
-	struct commit *commit = lookup_commit_reference_gently(oid->hash, 1);
+	struct commit *commit = lookup_commit_reference_gently(the_repository,
+							       oid, 1);
 	int i;
 
 	if (!commit)
@@ -392,7 +412,7 @@ static int append_head_ref(const char *refname, const struct object_id *oid,
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (get_sha1(refname + ofs, tmp.hash) || oidcmp(&tmp, oid))
+	if (get_oid(refname + ofs, &tmp) || !oideq(&tmp, oid))
 		ofs = 5;
 	return append_ref(refname + ofs, oid, 0);
 }
@@ -407,7 +427,7 @@ static int append_remote_ref(const char *refname, const struct object_id *oid,
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (get_sha1(refname + ofs, tmp.hash) || oidcmp(&tmp, oid))
+	if (get_oid(refname + ofs, &tmp) || !oideq(&tmp, oid))
 		ofs = 5;
 	return append_ref(refname + ofs, oid, 0);
 }
@@ -422,14 +442,6 @@ static int append_tag_ref(const char *refname, const struct object_id *oid,
 
 static const char *match_ref_pattern = NULL;
 static int match_ref_slash = 0;
-static int count_slash(const char *s)
-{
-	int cnt = 0;
-	while (*s)
-		if (*s++ == '/')
-			cnt++;
-	return cnt;
-}
 
 static int append_matching_ref(const char *refname, const struct object_id *oid,
 			       int flag, void *cb_data)
@@ -439,13 +451,13 @@ static int append_matching_ref(const char *refname, const struct object_id *oid,
 	 * refs/tags/v0.99.9a and friends.
 	 */
 	const char *tail;
-	int slash = count_slash(refname);
+	int slash = count_slashes(refname);
 	for (tail = refname; *tail && match_ref_slash < slash; )
 		if (*tail++ == '/')
 			slash--;
 	if (!*tail)
 		return 0;
-	if (wildmatch(match_ref_pattern, tail, 0, NULL))
+	if (wildmatch(match_ref_pattern, tail, 0))
 		return 0;
 	if (starts_with(refname, "refs/heads/"))
 		return append_head_ref(refname, oid, flag, cb_data);
@@ -470,18 +482,14 @@ static void snarf_refs(int head, int remotes)
 	}
 }
 
-static int rev_is_head(char *head, int headlen, char *name,
+static int rev_is_head(const char *head, const char *name,
 		       unsigned char *head_sha1, unsigned char *sha1)
 {
-	if ((!head[0]) ||
-	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
+	if (!head || (head_sha1 && sha1 && !hasheq(head_sha1, sha1)))
 		return 0;
-	if (starts_with(head, "refs/heads/"))
-		head += 11;
-	if (starts_with(name, "refs/heads/"))
-		name += 11;
-	else if (starts_with(name, "heads/"))
-		name += 6;
+	skip_prefix(head, "refs/heads/", &head);
+	if (!skip_prefix(name, "refs/heads/", &name))
+		skip_prefix(name, "heads/", &name);
 	return !strcmp(head, name);
 }
 
@@ -525,7 +533,7 @@ static int show_independent(struct commit **rev,
 static void append_one_rev(const char *av)
 {
 	struct object_id revkey;
-	if (!get_sha1(av, revkey.hash)) {
+	if (!get_oid(av, &revkey)) {
 		append_ref(av, &revkey, 0);
 		return;
 	}
@@ -534,7 +542,7 @@ static void append_one_rev(const char *av)
 		int saved_matches = ref_name_cnt;
 
 		match_ref_pattern = av;
-		match_ref_slash = count_slash(av);
+		match_ref_slash = count_slashes(av);
 		for_each_ref(append_matching_ref, NULL);
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
@@ -596,6 +604,7 @@ static int parse_reflog_param(const struct option *opt, const char *arg,
 {
 	char *ep;
 	const char **base = (const char **)opt->value;
+	BUG_ON_OPT_NEG(unset);
 	if (!arg)
 		arg = "";
 	reflog = strtoul(arg, &ep, 10);
@@ -620,9 +629,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int all_heads = 0, all_remotes = 0;
 	int all_mask, all_revs;
 	enum rev_sort_order sort_order = REV_SORT_IN_GRAPH_ORDER;
-	char head[128];
-	const char *head_p;
-	int head_len;
+	char *head;
 	struct object_id head_oid;
 	int merge_base = 0;
 	int independent = 0;
@@ -668,10 +675,12 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		{ OPTION_CALLBACK, 'g', "reflog", &reflog_base, N_("<n>[,<base>]"),
 			    N_("show <n> most recent ref-log entries starting at "
 			       "base"),
-			    PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP,
+			    PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
 			    parse_reflog_param },
 		OPT_END()
 	};
+
+	init_commit_name_slab(&name_slab);
 
 	git_config(git_show_branch_config, NULL);
 
@@ -718,8 +727,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			static const char *fake_av[2];
 
 			fake_av[0] = resolve_refdup("HEAD",
-						    RESOLVE_REF_READING,
-						    oid.hash, NULL);
+						    RESOLVE_REF_READING, &oid,
+						    NULL);
 			fake_av[1] = NULL;
 			av = fake_av;
 			ac = 1;
@@ -733,7 +742,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			die(Q_("only %d entry can be shown at one time.",
 			       "only %d entries can be shown at one time.",
 			       MAX_REVS), MAX_REVS);
-		if (!dwim_ref(*av, strlen(*av), oid.hash, &ref))
+		if (!dwim_ref(*av, strlen(*av), &oid, &ref))
 			die(_("no such ref %s"), *av);
 
 		/* Has the base been specified? */
@@ -742,9 +751,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			base = strtoul(reflog_base, &ep, 10);
 			if (*ep) {
 				/* Ah, that is a date spec... */
-				unsigned long at;
+				timestamp_t at;
 				at = approxidate(reflog_base);
-				read_ref_at(ref, flags, at, -1, oid.hash, NULL,
+				read_ref_at(get_main_ref_store(the_repository),
+					    ref, flags, at, -1, &oid, NULL,
 					    NULL, NULL, &base);
 			}
 		}
@@ -753,10 +763,11 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			char *logmsg;
 			char *nth_desc;
 			const char *msg;
-			unsigned long timestamp;
+			timestamp_t timestamp;
 			int tz;
 
-			if (read_ref_at(ref, flags, 0, base+i, oid.hash, &logmsg,
+			if (read_ref_at(get_main_ref_store(the_repository),
+					ref, flags, 0, base + i, &oid, &logmsg,
 					&timestamp, &tz, NULL)) {
 				reflog = i;
 				break;
@@ -787,32 +798,24 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			snarf_refs(all_heads, all_remotes);
 	}
 
-	head_p = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-				    head_oid.hash, NULL);
-	if (head_p) {
-		head_len = strlen(head_p);
-		memcpy(head, head_p, head_len + 1);
-	}
-	else {
-		head_len = 0;
-		head[0] = 0;
-	}
+	head = resolve_refdup("HEAD", RESOLVE_REF_READING,
+			      &head_oid, NULL);
 
-	if (with_current_branch && head_p) {
+	if (with_current_branch && head) {
 		int has_head = 0;
 		for (i = 0; !has_head && i < ref_name_cnt; i++) {
 			/* We are only interested in adding the branch
 			 * HEAD points at.
 			 */
 			if (rev_is_head(head,
-					head_len,
 					ref_name[i],
 					head_oid.hash, NULL))
 				has_head++;
 		}
 		if (!has_head) {
-			int offset = starts_with(head, "refs/heads/") ? 11 : 0;
-			append_one_rev(head + offset);
+			const char *name = head;
+			skip_prefix(name, "refs/heads/", &name);
+			append_one_rev(name);
 		}
 	}
 
@@ -829,9 +832,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			die(Q_("cannot handle more than %d rev.",
 			       "cannot handle more than %d revs.",
 			       MAX_REVS), MAX_REVS);
-		if (get_sha1(ref_name[num_rev], revkey.hash))
+		if (get_oid(ref_name[num_rev], &revkey))
 			die(_("'%s' is not a valid ref."), ref_name[num_rev]);
-		commit = lookup_commit_reference(revkey.hash);
+		commit = lookup_commit_reference(the_repository, &revkey);
 		if (!commit)
 			die(_("cannot find commit %s (%s)"),
 			    ref_name[num_rev], oid_to_hex(&revkey));
@@ -866,7 +869,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		for (i = 0; i < num_rev; i++) {
 			int j;
 			int is_head = rev_is_head(head,
-						  head_len,
 						  ref_name[i],
 						  head_oid.hash,
 						  rev[i]->object.oid.hash);

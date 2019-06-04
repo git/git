@@ -7,6 +7,10 @@ syntax.  Here are various ways to spell object names.  The
 ones listed near the end of this list name trees and
 blobs contained in a commit.
 
+NOTE: This document shows the "raw" syntax as seen by git. The shell
+and other UIs might require additional quoting to protect special
+characters and to avoid word splitting.
+
 '<sha1>', e.g. 'dae86e1950b1277e545cee180551750029cfe735', 'dae86e'::
   The full SHA-1 object name (40-byte hexadecimal string), or
   a leading substring that is unique within the repository.
@@ -54,14 +58,14 @@ when you run `git merge`.
 when you run `git cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
-the '$GIT_DIR/refs' directory or from the '$GIT_DIR/packed-refs' file.
+the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
 While the ref name encoding is unspecified, UTF-8 is preferred as
 some output processing may assume ref names in UTF-8.
 
 '@'::
   '@' alone is a shortcut for `HEAD`.
 
-'<refname>@{<date>}', e.g. 'master@\{yesterday\}', 'HEAD@{5 minutes ago}'::
+'[<refname>]@{<date>}', e.g. 'master@\{yesterday\}', 'HEAD@{5 minutes ago}'::
   A ref followed by the suffix '@' with a date specification
   enclosed in a brace
   pair (e.g. '\{yesterday\}', '{1 month 2 weeks 3 days 1 hour 1
@@ -91,19 +95,20 @@ some output processing may assume ref names in UTF-8.
   The construct '@{-<n>}' means the <n>th branch/commit checked out
   before the current one.
 
-'<branchname>@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
+'[<branchname>]@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
   The suffix '@\{upstream\}' to a branchname (short form '<branchname>@\{u\}')
   refers to the branch that the branch specified by branchname is set to build on
   top of (configured with `branch.<name>.remote` and
   `branch.<name>.merge`).  A missing branchname defaults to the
-  current one.
+  current one. These suffixes are also accepted when spelled in uppercase, and
+  they mean the same thing no matter the case.
 
-'<branchname>@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
+'[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
   `git push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Since our push destination is
   in a remote repository, of course, we report the local tracking branch
-  that corresponds to that branch (i.e., something in 'refs/remotes/').
+  that corresponds to that branch (i.e., something in `refs/remotes/`).
 +
 Here's an example to make it more clear:
 +
@@ -122,8 +127,11 @@ refs/remotes/myfork/mybranch
 Note in the example that we set up a triangular workflow, where we pull
 from one location and push to another. In a non-triangular workflow,
 '@\{push}' is the same as '@\{upstream}', and there is no need for it.
++
+This suffix is also accepted when spelled in uppercase, and means the same
+thing no matter the case.
 
-'<rev>{caret}', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
+'<rev>{caret}[<n>]', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.
   '<rev>{caret}'
@@ -131,7 +139,9 @@ from one location and push to another. In a non-triangular workflow,
   '<rev>{caret}0' means the commit itself and is used when '<rev>' is the
   object name of a tag object that refers to a commit object.
 
-'<rev>{tilde}<n>', e.g. 'master{tilde}3'::
+'<rev>{tilde}[<n>]', e.g. 'HEAD{tilde}, master{tilde}3'::
+  A suffix '{tilde}' to a revision parameter means the first parent of
+  that commit object.
   A suffix '{tilde}<n>' to a revision parameter means the commit
   object that is the <n>th generation ancestor of the named
   commit object, following only the first parents.  I.e. '<rev>{tilde}3' is
@@ -151,12 +161,12 @@ from one location and push to another. In a non-triangular workflow,
   '<rev>{caret}0'
   is a short-hand for '<rev>{caret}\{commit\}'.
 +
-'rev{caret}\{object\}' can be used to make sure 'rev' names an
-object that exists, without requiring 'rev' to be a tag, and
-without dereferencing 'rev'; because a tag is already an object,
+'<rev>{caret}\{object\}' can be used to make sure '<rev>' names an
+object that exists, without requiring '<rev>' to be a tag, and
+without dereferencing '<rev>'; because a tag is already an object,
 it does not have to be dereferenced even once to get to an object.
 +
-'rev{caret}\{tag\}' can be used to ensure that 'rev' identifies an
+'<rev>{caret}\{tag\}' can be used to ensure that '<rev>' identifies an
 existing tag object.
 
 '<rev>{caret}{}', e.g. 'v0.99.8{caret}{}'::
@@ -176,26 +186,26 @@ existing tag object.
   A colon, followed by a slash, followed by a text, names
   a commit whose commit message matches the specified regular expression.
   This name returns the youngest matching commit which is
-  reachable from any ref. The regular expression can match any part of the
+  reachable from any ref, including HEAD.
+  The regular expression can match any part of the
   commit message. To match messages starting with a string, one can use
   e.g. ':/^foo'. The special sequence ':/!' is reserved for modifiers to what
   is matched. ':/!-foo' performs a negative match, while ':/!!foo' matches a
   literal '!' character, followed by 'foo'. Any other sequence beginning with
   ':/!' is reserved for now.
+  Depending on the given text, the shell's word splitting rules might
+  require additional quoting.
 
-'<rev>:<path>', e.g. 'HEAD:README', ':README', 'master:./README'::
+'<rev>:<path>', e.g. 'HEAD:README', 'master:./README'::
   A suffix ':' followed by a path names the blob or tree
   at the given path in the tree-ish object named by the part
   before the colon.
-  ':path' (with an empty part before the colon)
-  is a special case of the syntax described next: content
-  recorded in the index at the given path.
   A path starting with './' or '../' is relative to the current working directory.
   The given path will be converted to be relative to the working tree's root directory.
   This is most useful to address a blob or tree from a commit or tree that has
   the same tree structure as the working tree.
 
-':<n>:<path>', e.g. ':0:README', ':README'::
+':[<n>:]<path>', e.g. ':0:README', ':README'::
   A colon, optionally followed by a stage number (0 to 3) and a
   colon, followed by a path, names a blob object in the
   index at the given path. A missing stage number (and the colon
@@ -267,7 +277,7 @@ The '..' (two-dot) Range Notation::
  for commits that are reachable from r2 excluding those that are reachable
  from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
 
-The '...' (three dot) Symmetric Difference Notation::
+The '...' (three-dot) Symmetric Difference Notation::
  A similar notation 'r1\...r2' is called symmetric difference
  of 'r1' and 'r2' and is defined as
  'r1 r2 --not $(git merge-base --all r1 r2)'.
@@ -291,7 +301,7 @@ The 'r1{caret}@' notation means all parents of 'r1'.
 The 'r1{caret}!' notation includes commit 'r1' but excludes all of its parents.
 By itself, this notation denotes the single commit 'r1'.
 
-The '<rev>{caret}-{<n>}' notation includes '<rev>' but excludes the <n>th
+The '<rev>{caret}-[<n>]' notation includes '<rev>' but excludes the <n>th
 parent (i.e. a shorthand for '<rev>{caret}<n>..<rev>'), with '<n>' = 1 if
 not given. This is typically useful for merge commits where you
 can just pass '<commit>{caret}-' to get all the commits in the branch
@@ -333,7 +343,7 @@ Revision Range Summary
   as giving commit '<rev>' and then all its parents prefixed with
   '{caret}' to exclude them (and their ancestors).
 
-'<rev>{caret}-{<n>}', e.g. 'HEAD{caret}-, HEAD{caret}-2'::
+'<rev>{caret}-<n>', e.g. 'HEAD{caret}-, HEAD{caret}-2'::
 	Equivalent to '<rev>{caret}<n>..<rev>', with '<n>' = 1 if not
 	given.
 
@@ -341,6 +351,7 @@ Here are a handful of examples using the Loeliger illustration above,
 with each step in the notation's expansion and selection carefully
 spelt out:
 
+....
    Args   Expanded arguments    Selected commits
    D                            G H D
    D F                          G H I J D F
@@ -363,3 +374,4 @@ spelt out:
 	  = B ^B^1 ^B^2 ^B^3
 	  = B ^D ^E ^F          B
    F^! D  = F ^I ^J D           G H D F
+....

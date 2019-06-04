@@ -142,6 +142,10 @@ constructor pick {} {
 				-label [mc "Recent Repositories"]
 		}
 
+	if {[set lenrecent [llength $sorted_recent]] < $maxrecent} {
+		set lenrecent $maxrecent
+	}
+
 		${NS}::label $w_body.space
 		${NS}::label $w_body.recentlabel \
 			-anchor w \
@@ -153,7 +157,7 @@ constructor pick {} {
 			-background [get_bg_color $w_body.recentlabel] \
 			-wrap none \
 			-width 50 \
-			-height $maxrecent
+			-height $lenrecent
 		$w_recentlist tag conf link \
 			-foreground blue \
 			-underline 1
@@ -235,19 +239,19 @@ method _invoke_next {} {
 
 proc _get_recentrepos {} {
 	set recent [list]
-	foreach p [get_config gui.recentrepo] {
+	foreach p [lsort -unique [get_config gui.recentrepo]] {
 		if {[_is_git [file join $p .git]]} {
 			lappend recent $p
 		} else {
 			_unset_recentrepo $p
 		}
 	}
-	return [lsort $recent]
+	return $recent
 }
 
 proc _unset_recentrepo {p} {
 	regsub -all -- {([()\[\]{}\.^$+*?\\])} $p {\\\1} p
-	git config --global --unset gui.recentrepo "^$p\$"
+	catch {git config --global --unset-all gui.recentrepo "^$p\$"}
 	load_config 1
 }
 
@@ -262,12 +266,11 @@ proc _append_recentrepos {path} {
 	set i [lsearch $recent $path]
 	if {$i >= 0} {
 		_unset_recentrepo $path
-		set recent [lreplace $recent $i $i]
 	}
 
-	lappend recent $path
 	git config --global --add gui.recentrepo $path
 	load_config 1
+	set recent [get_config gui.recentrepo]
 
 	if {[set maxrecent [get_config gui.maxrecentrepo]] eq {}} {
 		set maxrecent 10
@@ -275,7 +278,7 @@ proc _append_recentrepos {path} {
 
 	while {[llength $recent] > $maxrecent} {
 		_unset_recentrepo [lindex $recent 0]
-		set recent [lrange $recent 1 end]
+		set recent [get_config gui.recentrepo]
 	}
 }
 

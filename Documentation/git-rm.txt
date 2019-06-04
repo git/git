@@ -140,20 +140,21 @@ Only submodules using a gitfile (which means they were cloned
 with a Git version 1.7.8 or newer) will be removed from the work
 tree, as their repository lives inside the .git directory of the
 superproject. If a submodule (or one of those nested inside it)
-still uses a .git directory, `git rm` will fail - no matter if forced
-or not - to protect the submodule's history. If it exists the
-submodule.<name> section in the linkgit:gitmodules[5] file will also
-be removed and that file will be staged (unless --cached or -n are used).
+still uses a .git directory, `git rm` will move the submodules
+git directory into the superprojects git directory to protect
+the submodule's history. If it exists the submodule.<name> section
+in the linkgit:gitmodules[5] file will also be removed and that file
+will be staged (unless --cached or -n are used).
 
-A submodule is considered up-to-date when the HEAD is the same as
+A submodule is considered up to date when the HEAD is the same as
 recorded in the index, no tracked files are modified and no untracked
 files that aren't ignored are present in the submodules work tree.
 Ignored files are deemed expendable and won't stop a submodule's work
 tree from being removed.
 
 If you only want to remove the local checkout of a submodule from your
-work tree without committing the removal,
-use linkgit:git-submodule[1] `deinit` instead.
+work tree without committing the removal, use linkgit:git-submodule[1] `deinit`
+instead. Also see linkgit:gitsubmodules[7] for details on submodule removal.
 
 EXAMPLES
 --------

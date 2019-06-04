@@ -8,7 +8,7 @@ git-update-ref - Update the object name stored in a ref safely
 SYNOPSIS
 --------
 [verse]
-'git update-ref' [-m <reason>] (-d <ref> [<oldvalue>] | [--no-deref] [--create-reflog] <ref> <newvalue> [<oldvalue>] | --stdin [-z])
+'git update-ref' [-m <reason>] [--no-deref] (-d <ref> [<oldvalue>] | [--create-reflog] <ref> <newvalue> [<oldvalue>] | --stdin [-z])
 
 DESCRIPTION
 -----------
@@ -120,7 +120,7 @@ modifications are performed.  Note that while each individual
 <ref> is updated or deleted atomically, a concurrent reader may
 still see a subset of the modifications.
 
-Logging Updates
+LOGGING UPDATES
 ---------------
 If config parameter "core.logAllRefUpdates" is true and the ref is one under
 "refs/heads/", "refs/remotes/", "refs/notes/", or the symbolic ref HEAD; or
@@ -129,8 +129,8 @@ a line to the log file "$GIT_DIR/logs/<ref>" (dereferencing all
 symbolic refs before creating the log name) describing the change
 in ref value.  Log lines are formatted as:
 
-    . oldsha1 SP newsha1 SP committer LF
-+
+    oldsha1 SP newsha1 SP committer LF
+
 Where "oldsha1" is the 40 character hexadecimal value previously
 stored in <ref>, "newsha1" is the 40 character hexadecimal value of
 <newvalue> and "committer" is the committer's name, email address
@@ -138,8 +138,8 @@ and date in the standard Git committer ident format.
 
 Optionally with -m:
 
-    . oldsha1 SP newsha1 SP committer TAB message LF
-+
+    oldsha1 SP newsha1 SP committer TAB message LF
+
 Where all fields are as described above and "message" is the
 value supplied to the -m option.
 

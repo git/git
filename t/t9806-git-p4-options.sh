@@ -134,7 +134,7 @@ test_expect_success 'clone --changesfile' '
 	(
 		cd "$git" &&
 		git log --oneline p4/master >lines &&
-		test_line_count = 2 lines
+		test_line_count = 2 lines &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_file file3
@@ -298,11 +298,6 @@ test_expect_success 'use --git-dir option and GIT_DIR' '
 	(GIT_DIR="$git" git p4 sync) &&
 	(cd "$git" && git checkout -q p4/master) &&
 	test_path_is_file "$git"/cli_file2.t
-'
-
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

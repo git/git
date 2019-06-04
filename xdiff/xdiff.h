@@ -13,8 +13,8 @@
  *  Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  License along with this library; if not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  *
@@ -27,32 +27,30 @@
 extern "C" {
 #endif /* #ifdef __cplusplus */
 
+/* xpparm_t.flags */
+#define XDF_NEED_MINIMAL (1 << 0)
 
-#define XDF_NEED_MINIMAL (1 << 1)
-#define XDF_IGNORE_WHITESPACE (1 << 2)
-#define XDF_IGNORE_WHITESPACE_CHANGE (1 << 3)
-#define XDF_IGNORE_WHITESPACE_AT_EOL (1 << 4)
-#define XDF_WHITESPACE_FLAGS (XDF_IGNORE_WHITESPACE | XDF_IGNORE_WHITESPACE_CHANGE | XDF_IGNORE_WHITESPACE_AT_EOL)
-
-#define XDF_PATIENCE_DIFF (1 << 5)
-#define XDF_HISTOGRAM_DIFF (1 << 6)
-#define XDF_DIFF_ALGORITHM_MASK (XDF_PATIENCE_DIFF | XDF_HISTOGRAM_DIFF)
-#define XDF_DIFF_ALG(x) ((x) & XDF_DIFF_ALGORITHM_MASK)
+#define XDF_IGNORE_WHITESPACE (1 << 1)
+#define XDF_IGNORE_WHITESPACE_CHANGE (1 << 2)
+#define XDF_IGNORE_WHITESPACE_AT_EOL (1 << 3)
+#define XDF_IGNORE_CR_AT_EOL (1 << 4)
+#define XDF_WHITESPACE_FLAGS (XDF_IGNORE_WHITESPACE | \
+			      XDF_IGNORE_WHITESPACE_CHANGE | \
+			      XDF_IGNORE_WHITESPACE_AT_EOL | \
+			      XDF_IGNORE_CR_AT_EOL)
 
 #define XDF_IGNORE_BLANK_LINES (1 << 7)
 
-#define XDF_INDENT_HEURISTIC (1 << 8)
+#define XDF_PATIENCE_DIFF (1 << 14)
+#define XDF_HISTOGRAM_DIFF (1 << 15)
+#define XDF_DIFF_ALGORITHM_MASK (XDF_PATIENCE_DIFF | XDF_HISTOGRAM_DIFF)
+#define XDF_DIFF_ALG(x) ((x) & XDF_DIFF_ALGORITHM_MASK)
 
+#define XDF_INDENT_HEURISTIC (1 << 23)
+
+/* xdemitconf_t.flags */
 #define XDL_EMIT_FUNCNAMES (1 << 0)
 #define XDL_EMIT_FUNCCONTEXT (1 << 2)
-
-#define XDL_MMB_READONLY (1 << 0)
-
-#define XDL_MMF_ATOMIC (1 << 0)
-
-#define XDL_BDOP_INS 1
-#define XDL_BDOP_CPY 2
-#define XDL_BDOP_INSB 3
 
 /* merge simplification levels */
 #define XDL_MERGE_MINIMAL 0
@@ -80,11 +78,19 @@ typedef struct s_mmbuffer {
 
 typedef struct s_xpparam {
 	unsigned long flags;
+
+	/* See Documentation/diff-options.txt. */
+	char **anchors;
+	size_t anchors_nr;
 } xpparam_t;
 
 typedef struct s_xdemitcb {
 	void *priv;
-	int (*outf)(void *, mmbuffer_t *, int);
+	int (*out_hunk)(void *,
+			long old_begin, long old_nr,
+			long new_begin, long new_nr,
+			const char *func, long funclen);
+	int (*out_line)(void *, mmbuffer_t *, int);
 } xdemitcb_t;
 
 typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long buffer_size, void *priv);
@@ -107,9 +113,9 @@ typedef struct s_bdiffparam {
 } bdiffparam_t;
 
 
-#define xdl_malloc(x) malloc(x)
+#define xdl_malloc(x) xmalloc(x)
 #define xdl_free(ptr) free(ptr)
-#define xdl_realloc(ptr,x) realloc(ptr,x)
+#define xdl_realloc(ptr,x) xrealloc(ptr,x)
 
 void *xdl_mmfile_first(mmfile_t *mmf, long *size);
 long xdl_mmfile_size(mmfile_t *mmf);

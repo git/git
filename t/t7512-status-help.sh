@@ -780,6 +780,24 @@ EOF
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'status when cherry-picking after committing conflict resolution' '
+	git reset --hard cherry_branch &&
+	test_when_finished "git cherry-pick --abort" &&
+	test_must_fail git cherry-pick cherry_branch_second one_cherry &&
+	echo end >main.txt &&
+	git commit -a &&
+	cat >expected <<EOF &&
+On branch cherry_branch
+Cherry-pick currently in progress.
+  (run "git cherry-pick --continue" to continue)
+  (use "git cherry-pick --abort" to cancel the cherry-pick operation)
+
+nothing to commit (use -u to show untracked files)
+EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
 test_expect_success 'status showing detached at and from a tag' '
 	test_commit atag tagging &&
 	git checkout atag &&
@@ -851,6 +869,24 @@ test_expect_success 'status after reverting commit' '
 	git revert --continue &&
 	cat >expected <<\EOF &&
 On branch master
+nothing to commit (use -u to show untracked files)
+EOF
+	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'status while reverting after committing conflict resolution' '
+	test_when_finished "git revert --abort" &&
+	git reset --hard new &&
+	test_must_fail git revert old new &&
+	echo reverted >to-revert.txt &&
+	git commit -a &&
+	cat >expected <<EOF &&
+On branch master
+Revert currently in progress.
+  (run "git revert --continue" to continue)
+  (use "git revert --abort" to cancel the revert operation)
+
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
@@ -941,6 +977,25 @@ You are currently editing a commit while rebasing branch '\''several_commits'\''
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'status: handle not-yet-started rebase -i gracefully' '
+	ONTO=$(git rev-parse --short HEAD^) &&
+	COMMIT=$(git rev-parse --short HEAD) &&
+	EDITOR="git status --untracked-files=no >actual" git rebase -i HEAD^ &&
+	cat >expected <<EOF &&
+On branch several_commits
+No commands done.
+Next command to do (1 remaining command):
+   pick $COMMIT four_commit
+  (use "git rebase --edit-todo" to view and edit)
+You are currently editing a commit while rebasing branch '\''several_commits'\'' on '\''$ONTO'\''.
+  (use "git commit --amend" to amend the current commit)
+  (use "git rebase --continue" once you are satisfied with your changes)
+
+nothing to commit (use -u to show untracked files)
+EOF
 	test_i18ncmp expected actual
 '
 

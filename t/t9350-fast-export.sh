@@ -43,20 +43,20 @@ test_expect_success 'fast-export | fast-import' '
 	MUSS=$(git rev-parse --verify muss) &&
 	mkdir new &&
 	git --git-dir=new/.git init &&
-	git fast-export --all |
+	git fast-export --all >actual &&
 	(cd new &&
 	 git fast-import &&
 	 test $MASTER = $(git rev-parse --verify refs/heads/master) &&
 	 test $REIN = $(git rev-parse --verify refs/tags/rein) &&
 	 test $WER = $(git rev-parse --verify refs/heads/wer) &&
-	 test $MUSS = $(git rev-parse --verify refs/tags/muss))
+	 test $MUSS = $(git rev-parse --verify refs/tags/muss)) <actual
 
 '
 
 test_expect_success 'fast-export master~2..master' '
 
-	git fast-export master~2..master |
-		sed "s/master/partial/" |
+	git fast-export master~2..master >actual &&
+	sed "s/master/partial/" actual |
 		(cd new &&
 		 git fast-import &&
 		 test $MASTER != $(git rev-parse --verify refs/heads/partial) &&
@@ -66,19 +66,48 @@ test_expect_success 'fast-export master~2..master' '
 
 '
 
+test_expect_success 'fast-export --reference-excluded-parents master~2..master' '
+
+	git fast-export --reference-excluded-parents master~2..master >actual &&
+	grep commit.refs/heads/master actual >commit-count &&
+	test_line_count = 2 commit-count &&
+	sed "s/master/rewrite/" actual |
+		(cd new &&
+		 git fast-import &&
+		 test $MASTER = $(git rev-parse --verify refs/heads/rewrite))
+'
+
+test_expect_success 'fast-export --show-original-ids' '
+
+	git fast-export --show-original-ids master >output &&
+	grep ^original-oid output| sed -e s/^original-oid.// | sort >actual &&
+	git rev-list --objects master muss >objects-and-names &&
+	awk "{print \$1}" objects-and-names | sort >commits-trees-blobs &&
+	comm -23 actual commits-trees-blobs >unfound &&
+	test_must_be_empty unfound
+'
+
+test_expect_success 'fast-export --show-original-ids | git fast-import' '
+
+	git fast-export --show-original-ids master muss | git fast-import --quiet &&
+	test $MASTER = $(git rev-parse --verify refs/heads/master) &&
+	test $MUSS = $(git rev-parse --verify refs/tags/muss)
+'
+
 test_expect_success 'iso-8859-1' '
 
 	git config i18n.commitencoding ISO8859-1 &&
 	# use author and committer name in ISO-8859-1 to match it.
-	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
+	. "$TEST_DIRECTORY"/t3901/8859-1.txt &&
 	test_tick &&
 	echo rosten >file &&
 	git commit -s -m den file &&
-	git fast-export wer^..wer |
-		sed "s/wer/i18n/" |
+	git fast-export wer^..wer >iso8859-1.fi &&
+	sed "s/wer/i18n/" iso8859-1.fi |
 		(cd new &&
 		 git fast-import &&
-		 git cat-file commit i18n | grep "Áéí óú")
+		 git cat-file commit i18n >actual &&
+		 grep "Áéí óú" actual)
 
 '
 test_expect_success 'import/export-marks' '
@@ -87,20 +116,14 @@ test_expect_success 'import/export-marks' '
 	git fast-export --export-marks=tmp-marks HEAD &&
 	test -s tmp-marks &&
 	test_line_count = 3 tmp-marks &&
-	test $(
-		git fast-export --import-marks=tmp-marks\
-		--export-marks=tmp-marks HEAD |
-		grep ^commit |
-		wc -l) \
-	-eq 0 &&
+	git fast-export --import-marks=tmp-marks \
+		--export-marks=tmp-marks HEAD >actual &&
+	test $(grep ^commit actual | wc -l) -eq 0 &&
 	echo change > file &&
 	git commit -m "last commit" file &&
-	test $(
-		git fast-export --import-marks=tmp-marks \
-		--export-marks=tmp-marks HEAD |
-		grep ^commit\  |
-		wc -l) \
-	-eq 1 &&
+	git fast-export --import-marks=tmp-marks \
+		--export-marks=tmp-marks HEAD >actual &&
+	test $(grep ^commit\  actual | wc -l) -eq 1 &&
 	test_line_count = 4 tmp-marks
 
 '
@@ -184,7 +207,7 @@ test_expect_success 'submodule fast-export | fast-import' '
 	rm -rf new &&
 	mkdir new &&
 	git --git-dir=new/.git init &&
-	git fast-export --signed-tags=strip --all |
+	git fast-export --signed-tags=strip --all >actual &&
 	(cd new &&
 	 git fast-import &&
 	 test "$SUBENT1" = "$(git ls-tree refs/heads/master^ sub)" &&
@@ -192,7 +215,7 @@ test_expect_success 'submodule fast-export | fast-import' '
 	 git checkout master &&
 	 git submodule init &&
 	 git submodule update &&
-	 cmp sub/file ../sub/file)
+	 cmp sub/file ../sub/file) <actual
 
 '
 
@@ -234,7 +257,7 @@ test_expect_success 'fast-export -C -C | fast-import' '
 	mkdir new &&
 	git --git-dir=new/.git init &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	grep "^C file6 file7\$" output &&
+	grep "^C file2 file4\$" output &&
 	cat output |
 	(cd new &&
 	 git fast-import &&
@@ -330,6 +353,22 @@ test_expect_success 'rewriting tag of filtered out object' '
 )
 '
 
+test_expect_success 'rewrite tag predating pathspecs to nothing' '
+	test_create_repo rewrite_tag_predating_pathspecs &&
+	(
+		cd rewrite_tag_predating_pathspecs &&
+
+		test_commit initial &&
+
+		git tag -a -m "Some old tag" v0.0.0.0.0.0.1 &&
+
+		test_commit bar &&
+
+		git fast-export --tag-of-filtered-object=rewrite --all -- bar.t >output &&
+		grep from.$ZERO_OID output
+	)
+'
+
 cat > limit-by-paths/expected << EOF
 blob
 mark :1
@@ -367,12 +406,34 @@ test_expect_success 'path limiting with import-marks does not lose unmodified fi
 	echo more content >> file &&
 	test_tick &&
 	git commit -mnext file &&
-	git fast-export --import-marks=marks simple -- file file0 | grep file0
+	git fast-export --import-marks=marks simple -- file file0 >actual &&
+	grep file0 actual
+'
+
+test_expect_success 'avoid corrupt stream with non-existent mark' '
+	test_create_repo avoid_non_existent_mark &&
+	(
+		cd avoid_non_existent_mark &&
+
+		test_commit important-path &&
+
+		test_commit ignored &&
+
+		git branch A &&
+		git branch B &&
+
+		echo foo >>important-path.t &&
+		git add important-path.t &&
+		test_commit more changes &&
+
+		git fast-export --all -- important-path.t | git fast-import --force
+	)
 '
 
 test_expect_success 'full-tree re-shows unmodified files'        '
 	git checkout -f simple &&
-	test $(git fast-export --full-tree simple | grep -c file0) -eq 3
+	git fast-export --full-tree simple >actual &&
+	test $(grep -c file0 actual) -eq 3
 '
 
 test_expect_success 'set-up a few more tags for tag export tests' '
@@ -505,21 +566,68 @@ test_expect_success 'refs are updated even if no commits need to be exported' '
 '
 
 test_expect_success 'use refspec' '
-	git fast-export --refspec refs/heads/master:refs/heads/foobar master | \
-		grep "^commit " | sort | uniq > actual &&
+	git fast-export --refspec refs/heads/master:refs/heads/foobar master >actual2 &&
+	grep "^commit " actual2 | sort | uniq >actual &&
 	echo "commit refs/heads/foobar" > expected &&
 	test_cmp expected actual
 '
 
-test_expect_success 'delete refspec' '
+test_expect_success 'delete ref because entire history excluded' '
 	git branch to-delete &&
-	git fast-export --refspec :refs/heads/to-delete to-delete ^to-delete > actual &&
-	cat > expected <<-EOF &&
+	git fast-export to-delete ^to-delete >actual &&
+	cat >expected <<-EOF &&
 	reset refs/heads/to-delete
 	from 0000000000000000000000000000000000000000
 
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'delete refspec' '
+	git fast-export --refspec :refs/heads/to-delete >actual &&
+	cat >expected <<-EOF &&
+	reset refs/heads/to-delete
+	from 0000000000000000000000000000000000000000
+
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'when using -C, do not declare copy when source of copy is also modified' '
+	test_create_repo src &&
+	echo a_line >src/file.txt &&
+	git -C src add file.txt &&
+	git -C src commit -m 1st_commit &&
+
+	cp src/file.txt src/file2.txt &&
+	echo another_line >>src/file.txt &&
+	git -C src add file.txt file2.txt &&
+	git -C src commit -m 2nd_commit &&
+
+	test_create_repo dst &&
+	git -C src fast-export --all -C >actual &&
+	git -C dst fast-import <actual &&
+	git -C src show >expected &&
+	git -C dst show >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge commit gets exported with --import-marks' '
+	test_create_repo merging &&
+	(
+		cd merging &&
+		test_commit initial &&
+		git checkout -b topic &&
+		test_commit on-topic &&
+		git checkout master &&
+		test_commit on-master &&
+		test_tick &&
+		git merge --no-ff -m Yeah topic &&
+
+		echo ":1 $(git rev-parse HEAD^^)" >marks &&
+		git fast-export --import-marks=marks master >out &&
+		grep Yeah out
+	)
 '
 
 test_done

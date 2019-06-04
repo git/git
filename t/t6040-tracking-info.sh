@@ -44,7 +44,7 @@ b1 [ahead 1, behind 1] d
 b2 [ahead 1, behind 1] d
 b3 [behind 1] b
 b4 [ahead 2] f
-b5 g
+b5 [gone] g
 b6 c
 EOF
 
@@ -100,7 +100,7 @@ test_expect_success 'checkout (up-to-date with upstream)' '
 	(
 		cd test && git checkout b6
 	) >actual &&
-	test_i18ngrep "Your branch is up-to-date with .origin/master" actual
+	test_i18ngrep "Your branch is up to date with .origin/master" actual
 '
 
 test_expect_success 'status (diverged from upstream)' '
@@ -130,7 +130,7 @@ test_expect_success 'status (up-to-date with upstream)' '
 		# reports nothing to commit
 		test_must_fail git commit --dry-run
 	) >actual &&
-	test_i18ngrep "Your branch is up-to-date with .origin/master" actual
+	test_i18ngrep "Your branch is up to date with .origin/master" actual
 '
 
 cat >expect <<\EOF
@@ -142,6 +142,48 @@ test_expect_success 'status -s -b (diverged from upstream)' '
 		cd test &&
 		git checkout b1 >/dev/null &&
 		git status -s -b | head -1
+	) >actual &&
+	test_i18ncmp expect actual
+'
+
+cat >expect <<\EOF
+## b1...origin/master [different]
+EOF
+
+test_expect_success 'status -s -b --no-ahead-behind (diverged from upstream)' '
+	(
+		cd test &&
+		git checkout b1 >/dev/null &&
+		git status -s -b --no-ahead-behind | head -1
+	) >actual &&
+	test_i18ncmp expect actual
+'
+
+cat >expect <<\EOF
+On branch b1
+Your branch and 'origin/master' have diverged,
+and have 1 and 1 different commits each, respectively.
+EOF
+
+test_expect_success 'status --long --branch' '
+	(
+		cd test &&
+		git checkout b1 >/dev/null &&
+		git status --long -b | head -3
+	) >actual &&
+	test_i18ncmp expect actual
+'
+
+cat >expect <<\EOF
+On branch b1
+Your branch and 'origin/master' refer to different commits.
+EOF
+
+test_expect_success 'status --long --branch --no-ahead-behind' '
+	(
+		cd test &&
+		git checkout b1 >/dev/null &&
+		git status --long -b --no-ahead-behind | head -2
 	) >actual &&
 	test_i18ncmp expect actual
 '
@@ -188,35 +230,29 @@ test_expect_success 'fail to track annotated tags' '
 	test_must_fail git checkout heavytrack
 '
 
-test_expect_success 'setup tracking with branch --set-upstream on existing branch' '
+test_expect_success '--set-upstream-to does not change branch' '
 	git branch from-master master &&
-	test_must_fail git config branch.from-master.merge > actual &&
-	git branch --set-upstream from-master master &&
-	git config branch.from-master.merge > actual &&
-	grep -q "^refs/heads/master$" actual
-'
-
-test_expect_success '--set-upstream does not change branch' '
+	git branch --set-upstream-to master from-master &&
 	git branch from-master2 master &&
 	test_must_fail git config branch.from-master2.merge > actual &&
 	git rev-list from-master2 &&
 	git update-ref refs/heads/from-master2 from-master2^ &&
 	git rev-parse from-master2 >expect2 &&
-	git branch --set-upstream from-master2 master &&
+	git branch --set-upstream-to master from-master2 &&
 	git config branch.from-master.merge > actual &&
 	git rev-parse from-master2 >actual2 &&
 	grep -q "^refs/heads/master$" actual &&
 	cmp expect2 actual2
 '
 
-test_expect_success '--set-upstream @{-1}' '
-	git checkout from-master &&
+test_expect_success '--set-upstream-to @{-1}' '
+	git checkout follower &&
 	git checkout from-master2 &&
 	git config branch.from-master2.merge > expect2 &&
-	git branch --set-upstream @{-1} follower &&
+	git branch --set-upstream-to @{-1} from-master &&
 	git config branch.from-master.merge > actual &&
 	git config branch.from-master2.merge > actual2 &&
-	git branch --set-upstream from-master follower &&
+	git branch --set-upstream-to follower from-master &&
 	git config branch.from-master.merge > expect &&
 	test_cmp expect2 actual2 &&
 	test_cmp expect actual

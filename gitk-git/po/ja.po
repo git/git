@@ -2,16 +2,17 @@
 # Copyright (C) 2005-2015 Paul Mackerras
 # This file is distributed under the same license as the gitk package.
 #
-# YOKOTA Hiroshi <yokota@netlab.cs.tsukuba.ac.jp>, 2015.
 # Mizar <mizar.jp@gmail.com>, 2009.
 # Junio C Hamano <gitster@pobox.com>, 2009.
+# YOKOTA Hiroshi <yokota@netlab.cs.tsukuba.ac.jp>, 2015.
+# Satoshi Yasushima <s.yasushima@gmail.com>, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
 "PO-Revision-Date: 2015-11-12 13:00+0900\n"
-"Last-Translator: YOKOTA Hiroshi <yokota@netlab.cs.tsukuba.ac.jp>\n"
+"Last-Translator: Satoshi Yasushima <s.yasushima@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -314,11 +315,11 @@ msgstr "マークを付けたコミットと比較する"
 
 #: gitk:2630 gitk:2641
 msgid "Diff this -> marked commit"
-msgstr "これと選択したコミットのdiffを見る"
+msgstr "これとマークを付けたコミットのdiffを見る"
 
 #: gitk:2631 gitk:2642
 msgid "Diff marked commit -> this"
-msgstr "選択したコミットとこれのdiffを見る"
+msgstr "マークを付けたコミットとこれのdiffを見る"
 
 #: gitk:2632
 msgid "Revert this commit"
@@ -373,14 +374,14 @@ msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
 "\n"
-"Copyright © 2005-2014 Paul Mackerras\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
 "Gitk - gitコミットビューア\n"
 "\n"
-"Copyright © 2005-2014 Paul Mackerras\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "使用および再配布は GNU General Public License に従ってください"
 

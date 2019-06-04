@@ -253,7 +253,7 @@ test_expect_success 'merge the added subproj again, should do nothing' '
 		# this shouldn not actually do anything, since FETCH_HEAD
 		# is already a parent
 		result=$(git merge -s ours -m "merge -s -ours" FETCH_HEAD) &&
-		check_equal "${result}" "Already up-to-date."
+		check_equal "${result}" "Already up to date."
 	)
 '
 
@@ -540,26 +540,10 @@ test_expect_success 'make sure exactly the right set of files ends up in the sub
 		git fetch .. subproj-br &&
 		git merge FETCH_HEAD &&
 
-		chks="sub1
-sub2
-sub3
-sub4" &&
-		chks_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chks
-TXT
-) &&
-		chkms="main-sub1
-main-sub2
-main-sub3
-main-sub4" &&
-		chkms_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chkms
-TXT
-) &&
-
-		subfiles=$(git ls-files) &&
-		check_equal "$subfiles" "$chkms
-$chks"
+		test_write_lines main-sub1 main-sub2 main-sub3 main-sub4 \
+			sub1 sub2 sub3 sub4 >expect &&
+		git ls-files >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -606,25 +590,11 @@ test_expect_success 'make sure the subproj *only* contains commits that affect t
 		git fetch .. subproj-br &&
 		git merge FETCH_HEAD &&
 
-		chks="sub1
-sub2
-sub3
-sub4" &&
-		chks_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chks
-TXT
-) &&
-		chkms="main-sub1
-main-sub2
-main-sub3
-main-sub4" &&
-		chkms_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chkms
-TXT
-) &&
-		allchanges=$(git log --name-only --pretty=format:"" | sort | sed "/^$/d") &&
-		check_equal "$allchanges" "$chkms
-$chks"
+		test_write_lines main-sub1 main-sub2 main-sub3 main-sub4 \
+			sub1 sub2 sub3 sub4 >expect &&
+		git log --name-only --pretty=format:"" >log &&
+		sort <log | sed "/^\$/ d" >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -675,29 +645,16 @@ test_expect_success 'make sure exactly the right set of files ends up in the mai
 		cd "$subtree_test_count" &&
 		git subtree pull --prefix="sub dir" ./"sub proj" master &&
 
-		chkm="main1
-main2" &&
-		chks="sub1
-sub2
-sub3
-sub4" &&
-		chks_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chks
-TXT
-) &&
-		chkms="main-sub1
-main-sub2
-main-sub3
-main-sub4" &&
-		chkms_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chkms
-TXT
-) &&
-		mainfiles=$(git ls-files) &&
-		check_equal "$mainfiles" "$chkm
-$chkms_sub
-$chks_sub"
-)
+		test_write_lines main1 main2 >chkm &&
+		test_write_lines main-sub1 main-sub2 main-sub3 main-sub4 >chkms &&
+		sed "s,^,sub dir/," chkms >chkms_sub &&
+		test_write_lines sub1 sub2 sub3 sub4 >chks &&
+		sed "s,^,sub dir/," chks >chks_sub &&
+
+		cat chkm chkms_sub chks_sub >expect &&
+		git ls-files >actual &&
+		test_cmp expect actual
+	)
 '
 
 next_test
@@ -708,7 +665,7 @@ test_expect_success 'make sure each filename changed exactly once in the entire 
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git config log.date relative
+		git config log.date relative &&
 		git fetch ./"sub proj" master &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
@@ -748,37 +705,21 @@ test_expect_success 'make sure each filename changed exactly once in the entire 
 		cd "$subtree_test_count" &&
 		git subtree pull --prefix="sub dir" ./"sub proj" master &&
 
-		chkm="main1
-main2" &&
-		chks="sub1
-sub2
-sub3
-sub4" &&
-		chks_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chks
-TXT
-) &&
-		chkms="main-sub1
-main-sub2
-main-sub3
-main-sub4" &&
-		chkms_sub=$(cat <<TXT | sed '\''s,^,sub dir/,'\''
-$chkms
-TXT
-) &&
+		test_write_lines main1 main2 >chkm &&
+		test_write_lines sub1 sub2 sub3 sub4 >chks &&
+		test_write_lines main-sub1 main-sub2 main-sub3 main-sub4 >chkms &&
+		sed "s,^,sub dir/," chkms >chkms_sub &&
 
 		# main-sub?? and /"sub dir"/main-sub?? both change, because those are the
 		# changes that were split into their own history.  And "sub dir"/sub?? never
 		# change, since they were *only* changed in the subtree branch.
-		allchanges=$(git log --name-only --pretty=format:"" | sort | sed "/^$/d") &&
-		expected=''"$(cat <<TXT | sort
-$chkms
-$chkm
-$chks
-$chkms_sub
-TXT
-)"'' &&
-		check_equal "$allchanges" "$expected"
+		git log --name-only --pretty=format:"" >log &&
+		sort <log >sorted-log &&
+		sed "/^$/ d" sorted-log >actual &&
+
+		cat chkms chkm chks chkms_sub >expect-unsorted &&
+		sort expect-unsorted >expect &&
+		test_cmp expect actual
 	)
 '
 

@@ -9,7 +9,7 @@ git-fast-import - Backend for fast Git data importers
 SYNOPSIS
 --------
 [verse]
-frontend | 'git fast-import' [options]
+frontend | 'git fast-import' [<options>]
 
 DESCRIPTION
 -----------
@@ -40,9 +40,10 @@ OPTIONS
 	not contain the old commit).
 
 --quiet::
-	Disable all non-fatal output, making fast-import silent when it
-	is successful.  This option disables the output shown by
-	--stats.
+	Disable the output shown by --stats, making fast-import usually
+	be silent when it is successful.  However, if the import stream
+	has directives intended to show user output (e.g. `progress`
+	directives), the corresponding messages will still be shown.
 
 --stats::
 	Display some basic statistics about the objects fast-import has
@@ -121,7 +122,7 @@ Performance and Compression Tuning
 
 --depth=<n>::
 	Maximum delta depth, for blob and tree deltification.
-	Default is 10.
+	Default is 50.
 
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
@@ -139,7 +140,7 @@ Performance and Compression Tuning
 fastimport.unpackLimit::
 	See linkgit:git-config[1]
 
-Performance
+PERFORMANCE
 -----------
 The design of fast-import allows it to import large projects in a minimum
 amount of memory usage and processing time.  Assuming the frontend
@@ -155,7 +156,7 @@ faster if the source data is stored on a different drive than the
 destination Git repository (due to less IO contention).
 
 
-Development Cost
+DEVELOPMENT COST
 ----------------
 A typical frontend for fast-import tends to weigh in at approximately 200
 lines of Perl/Python/Ruby code.  Most developers have been able to
@@ -165,7 +166,7 @@ an ideal situation, given that most conversion tools are throw-away
 (use once, and never look back).
 
 
-Parallel Operation
+PARALLEL OPERATION
 ------------------
 Like 'git push' or 'git fetch', imports handled by fast-import are safe to
 run alongside parallel `git repack -a -d` or `git gc` invocations,
@@ -186,7 +187,7 @@ this only be used on an otherwise quiet repository.  Using --force
 is not necessary for an initial import into an empty repository.
 
 
-Technical Discussion
+TECHNICAL DISCUSSION
 --------------------
 fast-import tracks a set of branches in memory.  Any branch can be created
 or modified at any point during the import process by sending a
@@ -204,7 +205,7 @@ directory also allows fast-import to run very quickly, as it does not
 need to perform any costly file update operations when switching
 between branches.
 
-Input Format
+INPUT FORMAT
 ------------
 With the exception of raw file data (which Git does not interpret)
 the fast-import input format is text (ASCII) based.  This text based
@@ -384,6 +385,7 @@ change to the project.
 ....
 	'commit' SP <ref> LF
 	mark?
+	original-oid?
 	('author' (SP <name>)? SP LT <email> GT SP <when> LF)?
 	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
@@ -420,7 +422,12 @@ However it is recommended that a `filedeleteall` command precede
 all `filemodify`, `filecopy`, `filerename` and `notemodify` commands in
 the same commit, as `filedeleteall` wipes the branch clean (see below).
 
-The `LF` after the command is optional (it used to be required).
+The `LF` after the command is optional (it used to be required).  Note
+that for reasons of backward compatibility, if the commit ends with a
+`data` command (i.e. it has has no `from`, `merge`, `filemodify`,
+`filedelete`, `filecopy`, `filerename`, `filedeleteall` or
+`notemodify` commands) then two `LF` commands may appear at the end of
+the command instead of just one.
 
 `author`
 ^^^^^^^^
@@ -740,6 +747,19 @@ New marks are created automatically.  Existing marks can be moved
 to another object simply by reusing the same `<idnum>` in another
 `mark` command.
 
+`original-oid`
+~~~~~~~~~~~~~~
+Provides the name of the object in the original source control system.
+fast-import will simply ignore this directive, but filter processes
+which operate on and modify the stream before feeding to fast-import
+may have uses for this information
+
+....
+	'original-oid' SP <object-identifier> LF
+....
+
+where `<object-identifer>` is any string not containing LF.
+
 `tag`
 ~~~~~
 Creates an annotated tag referring to a specific commit.  To create
@@ -748,6 +768,7 @@ lightweight (non-annotated) tags see the `reset` command below.
 ....
 	'tag' SP <name> LF
 	'from' SP <commit-ish> LF
+	original-oid?
 	'tagger' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 ....
@@ -822,6 +843,7 @@ assigned mark.
 ....
 	'blob' LF
 	mark?
+	original-oid?
 	data
 ....
 
@@ -949,10 +971,6 @@ might want to refer to in their commit messages.
 	'get-mark' SP ':' <idnum> LF
 ....
 
-This command can be used anywhere in the stream that comments are
-accepted.  In particular, the `get-mark` command can be used in the
-middle of a commit but not in the middle of a `data` command.
-
 See ``Responses To Commands'' below for details about how to read
 this output safely.
 
@@ -979,9 +997,10 @@ Output uses the same format as `git cat-file --batch`:
 	<contents> LF
 ====
 
-This command can be used anywhere in the stream that comments are
-accepted.  In particular, the `cat-blob` command can be used in the
-middle of a commit but not in the middle of a `data` command.
+This command can be used where a `filemodify` directive can appear,
+allowing it to be used in the middle of a commit.  For a `filemodify`
+using an inline directive, it can also appear right before the `data`
+directive.
 
 See ``Responses To Commands'' below for details about how to read
 this output safely.
@@ -994,8 +1013,8 @@ printing a blob from the active commit (with `cat-blob`) or copying a
 blob or tree from a previous commit for use in the current one (with
 `filemodify`).
 
-The `ls` command can be used anywhere in the stream that comments are
-accepted, including the middle of a commit.
+The `ls` command can also be used where a `filemodify` directive can
+appear, allowing it to be used in the middle of a commit.
 
 Reading from the active commit::
 	This form can only be used in the middle of a `commit`.
@@ -1131,7 +1150,7 @@ If the `--done` command-line option or `feature done` command is
 in use, the `done` command is mandatory and marks the end of the
 stream.
 
-Responses To Commands
+RESPONSES TO COMMANDS
 ---------------------
 New objects written by fast-import are not available immediately.
 Most fast-import commands have no visible effect until the next
@@ -1160,7 +1179,7 @@ To avoid deadlock, such frontends must completely consume any
 pending output from `progress`, `ls`, `get-mark`, and `cat-blob` before
 performing writes to fast-import that might block.
 
-Crash Reports
+CRASH REPORTS
 -------------
 If fast-import is supplied invalid input it will terminate with a
 non-zero exit status and create a crash report in the top level of
@@ -1247,7 +1266,7 @@ An example crash:
 	END OF CRASH REPORT
 ====
 
-Tips and Tricks
+TIPS AND TRICKS
 ---------------
 The following tips and tricks have been collected from various
 users of fast-import, and are offered here as suggestions.
@@ -1349,7 +1368,7 @@ Your users will feel better knowing how much of the data stream
 has been processed.
 
 
-Packfile Optimization
+PACKFILE OPTIMIZATION
 ---------------------
 When packing a blob fast-import always attempts to deltify against the last
 blob written.  Unless specifically arranged for by the frontend,
@@ -1379,8 +1398,15 @@ deltas are suboptimal (see above) then also adding the `-f` option
 to force recomputation of all deltas can significantly reduce the
 final packfile size (30-50% smaller can be quite typical).
 
+Instead of running `git repack` you can also run `git gc
+--aggressive`, which will also optimize other things after an import
+(e.g. pack loose refs). As noted in the "AGGRESSIVE" section in
+linkgit:git-gc[1] the `--aggressive` option will find new deltas with
+the `-f` option to linkgit:git-repack[1]. For the reasons elaborated
+on above using `--aggressive` after a fast-import is one of the few
+cases where it's known to be worthwhile.
 
-Memory Utilization
+MEMORY UTILIZATION
 ------------------
 There are a number of factors which affect how much memory fast-import
 requires to perform an import.  Like critical sections of core
@@ -1458,7 +1484,7 @@ and lazy loading of subtrees, allows fast-import to efficiently import
 projects with 2,000+ branches and 45,114+ files in a very limited
 memory footprint (less than 2.7 MiB per active branch).
 
-Signals
+SIGNALS
 -------
 Sending *SIGUSR1* to the 'git fast-import' process ends the current
 packfile early, simulating a `checkpoint` command.  The impatient

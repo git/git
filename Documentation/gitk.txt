@@ -8,7 +8,7 @@ gitk - The Git repository browser
 SYNOPSIS
 --------
 [verse]
-'gitk' [<options>] [<revision range>] [\--] [<path>...]
+'gitk' [<options>] [<revision range>] [--] [<path>...]
 
 DESCRIPTION
 -----------
@@ -168,28 +168,30 @@ Files
 -----
 User configuration and preferences are stored at:
 
-* '$XDG_CONFIG_HOME/git/gitk' if it exists, otherwise
-* '$HOME/.gitk' if it exists
+* `$XDG_CONFIG_HOME/git/gitk` if it exists, otherwise
+* `$HOME/.gitk` if it exists
 
-If neither of the above exist then '$XDG_CONFIG_HOME/git/gitk' is created and
+If neither of the above exist then `$XDG_CONFIG_HOME/git/gitk` is created and
 used by default. If '$XDG_CONFIG_HOME' is not set it defaults to
-'$HOME/.config' in all cases.
+`$HOME/.config` in all cases.
 
 History
 -------
 Gitk was the first graphical repository browser. It's written in
-tcl/tk and started off in a separate repository but was later merged
-into the main Git repository.
+tcl/tk.
 
+'gitk' is actually maintained as an independent project, but stable
+versions are distributed as part of the Git suite for the convenience
+of end users.
+
+gitk-git/ comes from Paul Mackerras's gitk project:
+
+	git://ozlabs.org/~paulus/gitk
 
 SEE ALSO
 --------
 'qgit(1)'::
 	A repository browser written in C++ using Qt.
-
-'gitview(1)'::
-	A repository browser written in Python using Gtk. It's based on
-	'bzrk(1)' and distributed in the contrib area of the Git repository.
 
 'tig(1)'::
 	A minimal repository browser and Git tool output highlighter written

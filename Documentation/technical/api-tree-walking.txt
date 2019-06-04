@@ -55,9 +55,9 @@ Initializing
 
 `fill_tree_descriptor`::
 
-	Initialize a `tree_desc` and decode its first entry given the sha1 of
-	a tree. Returns the `buffer` member if the sha1 is a valid tree
-	identifier and NULL otherwise.
+	Initialize a `tree_desc` and decode its first entry given the
+	object ID of a tree. Returns the `buffer` member if the latter
+	is a valid tree identifier and NULL otherwise.
 
 `setup_traverse_info`::
 

@@ -1,0 +1,109 @@
+Multi-Pack-Index (MIDX) Design Notes
+====================================
+
+The Git object directory contains a 'pack' directory containing
+packfiles (with suffix ".pack") and pack-indexes (with suffix
+".idx"). The pack-indexes provide a way to lookup objects and
+navigate to their offset within the pack, but these must come
+in pairs with the packfiles. This pairing depends on the file
+names, as the pack-index differs only in suffix with its pack-
+file. While the pack-indexes provide fast lookup per packfile,
+this performance degrades as the number of packfiles increases,
+because abbreviations need to inspect every packfile and we are
+more likely to have a miss on our most-recently-used packfile.
+For some large repositories, repacking into a single packfile
+is not feasible due to storage space or excessive repack times.
+
+The multi-pack-index (MIDX for short) stores a list of objects
+and their offsets into multiple packfiles. It contains:
+
+- A list of packfile names.
+- A sorted list of object IDs.
+- A list of metadata for the ith object ID including:
+  - A value j referring to the jth packfile.
+  - An offset within the jth packfile for the object.
+- If large offsets are required, we use another list of large
+  offsets similar to version 2 pack-indexes.
+
+Thus, we can provide O(log N) lookup time for any number
+of packfiles.
+
+Design Details
+--------------
+
+- The MIDX is stored in a file named 'multi-pack-index' in the
+  .git/objects/pack directory. This could be stored in the pack
+  directory of an alternate. It refers only to packfiles in that
+  same directory.
+
+- The pack.multiIndex config setting must be on to consume MIDX files.
+
+- The file format includes parameters for the object ID hash
+  function, so a future change of hash algorithm does not require
+  a change in format.
+
+- The MIDX keeps only one record per object ID. If an object appears
+  in multiple packfiles, then the MIDX selects the copy in the most-
+  recently modified packfile.
+
+- If there exist packfiles in the pack directory not registered in
+  the MIDX, then those packfiles are loaded into the `packed_git`
+  list and `packed_git_mru` cache.
+
+- The pack-indexes (.idx files) remain in the pack directory so we
+  can delete the MIDX file, set core.midx to false, or downgrade
+  without any loss of information.
+
+- The MIDX file format uses a chunk-based approach (similar to the
+  commit-graph file) that allows optional data to be added.
+
+Future Work
+-----------
+
+- Add a 'verify' subcommand to the 'git midx' builtin to verify the
+  contents of the multi-pack-index file match the offsets listed in
+  the corresponding pack-indexes.
+
+- The multi-pack-index allows many packfiles, especially in a context
+  where repacking is expensive (such as a very large repo), or
+  unexpected maintenance time is unacceptable (such as a high-demand
+  build machine). However, the multi-pack-index needs to be rewritten
+  in full every time. We can extend the format to be incremental, so
+  writes are fast. By storing a small "tip" multi-pack-index that
+  points to large "base" MIDX files, we can keep writes fast while
+  still reducing the number of binary searches required for object
+  lookups.
+
+- The reachability bitmap is currently paired directly with a single
+  packfile, using the pack-order as the object order to hopefully
+  compress the bitmaps well using run-length encoding. This could be
+  extended to pair a reachability bitmap with a multi-pack-index. If
+  the multi-pack-index is extended to store a "stable object order"
+  (a function Order(hash) = integer that is constant for a given hash,
+  even as the multi-pack-index is updated) then a reachability bitmap
+  could point to a multi-pack-index and be updated independently.
+
+- Packfiles can be marked as "special" using empty files that share
+  the initial name but replace ".pack" with ".keep" or ".promisor".
+  We can add an optional chunk of data to the multi-pack-index that
+  records flags of information about the packfiles. This allows new
+  states, such as 'repacked' or 'redeltified', that can help with
+  pack maintenance in a multi-pack environment. It may also be
+  helpful to organize packfiles by object type (commit, tree, blob,
+  etc.) and use this metadata to help that maintenance.
+
+- The partial clone feature records special "promisor" packs that
+  may point to objects that are not stored locally, but available
+  on request to a server. The multi-pack-index does not currently
+  track these promisor packs.
+
+Related Links
+-------------
+[0] https://bugs.chromium.org/p/git/issues/detail?id=6
+    Chromium work item for: Multi-Pack Index (MIDX)
+
+[1] https://public-inbox.org/git/20180107181459.222909-1-dstolee@microsoft.com/
+    An earlier RFC for the multi-pack-index feature
+
+[2] https://public-inbox.org/git/alpine.DEB.2.20.1803091557510.23109@alexmv-linux/
+    Git Merge 2018 Contributor's summit notes (includes discussion of MIDX)

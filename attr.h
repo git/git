@@ -1,14 +1,21 @@
 #ifndef ATTR_H
 #define ATTR_H
 
+struct index_state;
+
 /* An attribute is a pointer to this opaque structure */
 struct git_attr;
+
+/* opaque structures used internally for attribute collection */
+struct all_attrs_item;
+struct attr_stack;
+struct index_state;
 
 /*
  * Given a string, return the gitattribute object that
  * corresponds to it.
  */
-struct git_attr *git_attr(const char *);
+const struct git_attr *git_attr(const char *);
 
 /* Internal use */
 extern const char git_attr__true[];
@@ -20,38 +27,59 @@ extern const char git_attr__false[];
 #define ATTR_UNSET(v) ((v) == NULL)
 
 /*
- * Send one or more git_attr_check to git_check_attr(), and
+ * Send one or more git_attr_check to git_check_attrs(), and
  * each 'value' member tells what its value is.
  * Unset one is returned as NULL.
  */
-struct git_attr_check {
-	struct git_attr *attr;
+struct attr_check_item {
+	const struct git_attr *attr;
 	const char *value;
 };
+
+struct attr_check {
+	int nr;
+	int alloc;
+	struct attr_check_item *items;
+	int all_attrs_nr;
+	struct all_attrs_item *all_attrs;
+	struct attr_stack *stack;
+};
+
+struct attr_check *attr_check_alloc(void);
+struct attr_check *attr_check_initl(const char *, ...);
+struct attr_check *attr_check_dup(const struct attr_check *check);
+
+struct attr_check_item *attr_check_append(struct attr_check *check,
+					  const struct git_attr *attr);
+
+void attr_check_reset(struct attr_check *check);
+void attr_check_clear(struct attr_check *check);
+void attr_check_free(struct attr_check *check);
 
 /*
  * Return the name of the attribute represented by the argument.  The
  * return value is a pointer to a null-delimited string that is part
  * of the internal data structure; it should not be modified or freed.
  */
-char *git_attr_name(struct git_attr *);
+const char *git_attr_name(const struct git_attr *);
 
-int git_check_attr(const char *path, int, struct git_attr_check *);
+void git_check_attr(const struct index_state *istate,
+		    const char *path, struct attr_check *check);
 
 /*
- * Retrieve all attributes that apply to the specified path.  *num
- * will be set to the number of attributes on the path; **check will
- * be set to point at a newly-allocated array of git_attr_check
- * objects describing the attributes and their values.  *check must be
- * free()ed by the caller.
+ * Retrieve all attributes that apply to the specified path.
+ * check holds the attributes and their values.
  */
-int git_all_attrs(const char *path, int *num, struct git_attr_check **check);
+void git_all_attrs(const struct index_state *istate,
+		   const char *path, struct attr_check *check);
 
 enum git_attr_direction {
 	GIT_ATTR_CHECKIN,
 	GIT_ATTR_CHECKOUT,
 	GIT_ATTR_INDEX
 };
-void git_attr_set_direction(enum git_attr_direction, struct index_state *);
+void git_attr_set_direction(enum git_attr_direction new_direction);
+
+void attr_start(void);
 
 #endif /* ATTR_H */

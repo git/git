@@ -21,8 +21,9 @@ HERE=contrib/mw-to-git/
 INSTALL = install
 
 SCRIPT_PERL_FULL=$(patsubst %,$(HERE)/%,$(SCRIPT_PERL))
-INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/perl \
-                -s --no-print-directory instlibdir)
+INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/ \
+                -s --no-print-directory prefix=$(prefix) \
+                perllibdir=$(perllibdir) perllibdir)
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 INSTLIBDIR_SQ = $(subst ','\'',$(INSTLIBDIR))
 

@@ -24,7 +24,7 @@ on the initial manual merge, and applying previously recorded
 hand resolutions to their corresponding automerge results.
 
 [NOTE]
-You need to set the configuration variable rerere.enabled in order to
+You need to set the configuration variable `rerere.enabled` in order to
 enable this command.
 
 
@@ -205,11 +205,17 @@ development on the topic branch:
 ------------
 
 you could run `git rebase master topic`, to bring yourself
-up-to-date before your topic is ready to be sent upstream.
+up to date before your topic is ready to be sent upstream.
 This would result in falling back to a three-way merge, and it
 would conflict the same way as the test merge you resolved earlier.
 'git rerere' will be run by 'git rebase' to help you resolve this
 conflict.
+
+[NOTE] 'git rerere' relies on the conflict markers in the file to
+detect the conflict.  If the file already contains lines that look the
+same as lines with conflict markers, 'git rerere' may fail to record a
+conflict resolution.  To work around this, the `conflict-marker-size`
+setting in linkgit:gitattributes[5] can be used.
 
 GIT
 ---

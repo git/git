@@ -653,4 +653,20 @@ test_expect_success 'git clean -d respects pathspecs (pathspec is prefix of dir)
 	test_path_is_dir foobar
 '
 
+test_expect_success 'git clean -d skips untracked dirs containing ignored files' '
+	echo /foo/bar >.gitignore &&
+	echo ignoreme >>.gitignore &&
+	rm -rf foo &&
+	mkdir -p foo/a/aa/aaa foo/b/bb/bbb &&
+	touch foo/bar foo/baz foo/a/aa/ignoreme foo/b/ignoreme foo/b/bb/1 foo/b/bb/2 &&
+	git clean -df &&
+	test_path_is_dir foo &&
+	test_path_is_file foo/bar &&
+	test_path_is_missing foo/baz &&
+	test_path_is_file foo/a/aa/ignoreme &&
+	test_path_is_missing foo/a/aa/aaa &&
+	test_path_is_file foo/b/ignoreme &&
+	test_path_is_missing foo/b/bb
+'
+
 test_done

@@ -9,7 +9,7 @@ git-show - Show various types of objects
 SYNOPSIS
 --------
 [verse]
-'git show' [options] <object>...
+'git show' [<options>] [<object>...]
 
 DESCRIPTION
 -----------
@@ -35,7 +35,7 @@ This manual page describes only the most frequently used options.
 OPTIONS
 -------
 <object>...::
-	The names of objects to show.
+	The names of objects to show (defaults to 'HEAD').
 	For a more complete list of ways to spell object names, see
 	"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
@@ -77,7 +77,7 @@ EXAMPLES
 	Concatenates the contents of said Makefiles in the head
 	of the branch `master`.
 
-Discussion
+DISCUSSION
 ----------
 
 include::i18n.txt[]

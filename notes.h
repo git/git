@@ -3,33 +3,41 @@
 
 #include "string-list.h"
 
+struct object_id;
+struct strbuf;
+
 /*
  * Function type for combining two notes annotating the same object.
  *
  * When adding a new note annotating the same object as an existing note, it is
  * up to the caller to decide how to combine the two notes. The decision is
  * made by passing in a function of the following form. The function accepts
- * two SHA1s -- of the existing note and the new note, respectively. The
+ * two object_ids -- of the existing note and the new note, respectively. The
  * function then combines the notes in whatever way it sees fit, and writes the
- * resulting SHA1 into the first SHA1 argument (cur_sha1). A non-zero return
+ * resulting oid into the first argument (cur_oid). A non-zero return
  * value indicates failure.
  *
- * The two given SHA1s shall both be non-NULL and different from each other.
- * Either of them (but not both) may be == null_sha1, which indicates an
- * empty/non-existent note. If the resulting SHA1 (cur_sha1) is == null_sha1,
+ * The two given object_ids shall both be non-NULL and different from each
+ * other. Either of them (but not both) may be == null_oid, which indicates an
+ * empty/non-existent note. If the resulting oid (cur_oid) is == null_oid,
  * the note will be removed from the notes tree.
  *
  * The default combine_notes function (you get this when passing NULL) is
  * combine_notes_concatenate(), which appends the contents of the new note to
  * the contents of the existing note.
  */
-typedef int (*combine_notes_fn)(unsigned char *cur_sha1, const unsigned char *new_sha1);
+typedef int (*combine_notes_fn)(struct object_id *cur_oid,
+				const struct object_id *new_oid);
 
 /* Common notes combinators */
-int combine_notes_concatenate(unsigned char *cur_sha1, const unsigned char *new_sha1);
-int combine_notes_overwrite(unsigned char *cur_sha1, const unsigned char *new_sha1);
-int combine_notes_ignore(unsigned char *cur_sha1, const unsigned char *new_sha1);
-int combine_notes_cat_sort_uniq(unsigned char *cur_sha1, const unsigned char *new_sha1);
+int combine_notes_concatenate(struct object_id *cur_oid,
+			      const struct object_id *new_oid);
+int combine_notes_overwrite(struct object_id *cur_oid,
+			    const struct object_id *new_oid);
+int combine_notes_ignore(struct object_id *cur_oid,
+			 const struct object_id *new_oid);
+int combine_notes_cat_sort_uniq(struct object_id *cur_oid,
+				const struct object_id *new_oid);
 
 /*
  * Notes tree object
@@ -121,8 +129,8 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-int add_note(struct notes_tree *t, const unsigned char *object_sha1,
-		const unsigned char *note_sha1, combine_notes_fn combine_notes);
+int add_note(struct notes_tree *t, const struct object_id *object_oid,
+		const struct object_id *note_oid, combine_notes_fn combine_notes);
 
 /*
  * Remove the given note object from the given notes_tree structure
@@ -140,8 +148,8 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  *
  * Return NULL if the given object has no notes.
  */
-const unsigned char *get_note(struct notes_tree *t,
-		const unsigned char *object_sha1);
+const struct object_id *get_note(struct notes_tree *t,
+		const struct object_id *object_oid);
 
 /*
  * Copy a note from one object to another in the given notes_tree.
@@ -156,7 +164,7 @@ const unsigned char *get_note(struct notes_tree *t,
  * zero.
  */
 int copy_note(struct notes_tree *t,
-	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      const struct object_id *from_obj, const struct object_id *to_obj,
 	      int force, combine_notes_fn combine_notes);
 
 /*
@@ -202,8 +210,8 @@ int copy_note(struct notes_tree *t,
  * - copy_note()
  * - free_notes()
  */
-typedef int each_note_fn(const unsigned char *object_sha1,
-		const unsigned char *note_sha1, char *note_path,
+typedef int each_note_fn(const struct object_id *object_oid,
+		const struct object_id *note_oid, char *note_path,
 		void *cb_data);
 int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
 		void *cb_data);
@@ -212,7 +220,7 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
  * Write the given notes_tree structure to the object database
  *
  * Creates a new tree object encapsulating the current state of the given
- * notes_tree, and stores its SHA1 into the 'result' argument.
+ * notes_tree, and stores its object id into the 'result' argument.
  *
  * Returns zero on success, non-zero on failure.
  *
@@ -220,7 +228,7 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
  * this function has returned zero. Please also remember to create a
  * corresponding commit object, and update the appropriate notes ref.
  */
-int write_notes_tree(struct notes_tree *t, unsigned char *result);
+int write_notes_tree(struct notes_tree *t, struct object_id *result);
 
 /* Flags controlling the operation of prune */
 #define NOTES_PRUNE_VERBOSE 1
@@ -268,16 +276,14 @@ void init_display_notes(struct display_notes_opt *opt);
 
 /*
  * Append notes for the given 'object_sha1' from all trees set up by
- * init_display_notes() to 'sb'.  The 'flags' are a bitwise
- * combination of
+ * init_display_notes() to 'sb'.
  *
- * - NOTES_SHOW_HEADER: add a 'Notes (refname):' header
- *
- * - NOTES_INDENT: indent the notes by 4 places
+ * If 'raw' is false the note will be indented by 4 places and
+ * a 'Notes (refname):' header added.
  *
  * You *must* call init_display_notes() before using this function.
  */
-void format_display_notes(const unsigned char *object_sha1,
+void format_display_notes(const struct object_id *object_oid,
 			  struct strbuf *sb, const char *output_encoding, int raw);
 
 /*

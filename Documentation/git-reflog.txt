@@ -20,9 +20,9 @@ depending on the subcommand:
 'git reflog' ['show'] [log-options] [<ref>]
 'git reflog expire' [--expire=<time>] [--expire-unreachable=<time>]
 	[--rewrite] [--updateref] [--stale-fix]
-	[--dry-run] [--verbose] [--all | <refs>...]
+	[--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]
 'git reflog delete' [--rewrite] [--updateref]
-	[--dry-run] [--verbose] ref@\{specifier\}...
+	[--dry-run | -n] [--verbose] ref@\{specifier\}...
 'git reflog exists' <ref>
 
 Reference logs, or "reflogs", record when the tips of branches and
@@ -71,6 +71,11 @@ Options for `expire`
 
 --all::
 	Process the reflogs of all references.
+
+--single-worktree::
+	By default when `--all` is specified, reflogs from all working
+	trees are processed. This option limits the processing to reflogs
+	from the current working tree only.
 
 --expire=<time>::
 	Prune entries older than the specified time. If this option is

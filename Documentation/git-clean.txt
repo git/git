@@ -55,14 +55,13 @@ OPTIONS
 
 -e <pattern>::
 --exclude=<pattern>::
-	In addition to those found in .gitignore (per directory) and
-	$GIT_DIR/info/exclude, also consider these patterns to be in the
-	set of the ignore rules in effect.
+	Use the given exclude pattern in addition to the standard ignore rules
+	(see linkgit:gitignore[5]).
 
 -x::
-	Don't use the standard ignore rules read from .gitignore (per
-	directory) and $GIT_DIR/info/exclude, but do still use the ignore
-	rules given with `-e` options.  This allows removing all untracked
+	Don't use the standard ignore rules (see linkgit:gitignore[5]), but
+	still use the ignore rules given with `-e` options from the command
+	line.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
 	conjunction with 'git reset') to create a pristine
 	working directory to test a clean build.

@@ -631,7 +631,7 @@ So after you do a `cp -a` to create a new copy, you'll want to do
 $ git update-index --refresh
 ----------------
 +
-in the new repository to make sure that the index file is up-to-date.
+in the new repository to make sure that the index file is up to date.
 
 Note that the second point is true even across machines. You can
 duplicate a remote Git repository with *any* regular copy mechanism, be it
@@ -701,7 +701,7 @@ $ git checkout-index -u -a
 ----------------
 
 where the `-u` flag means that you want the checkout to keep the index
-up-to-date (so that you don't have to refresh it afterward), and the
+up to date (so that you don't have to refresh it afterward), and the
 `-a` flag means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the `-f`
 flag first, to tell 'git checkout-index' to *force* overwriting of any old
@@ -1283,7 +1283,7 @@ run a single command, 'git-receive-pack'.
 
 First, you need to create an empty repository on the remote
 machine that will house your public repository. This empty
-repository will be populated and be kept up-to-date by pushing
+repository will be populated and be kept up to date by pushing
 into it later. Obviously, this repository creation needs to be
 done only once.
 
@@ -1429,7 +1429,7 @@ Although Git is a truly distributed system, it is often
 convenient to organize your project with an informal hierarchy
 of developers. Linux kernel development is run this way. There
 is a nice illustration (page 17, "Merges to Mainline") in
-http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf[Randy Dunlap's presentation].
+https://web.archive.org/web/20120915203609/http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf[Randy Dunlap's presentation].
 
 It should be stressed that this hierarchy is purely *informal*.
 There is nothing fundamental in Git that enforces the "chain of
@@ -1450,7 +1450,7 @@ transport protocols (HTTP), you need to keep this repository
 would contain a call to 'git update-server-info'
 but you need to manually enable the hook with
 `mv post-update.sample post-update`.  This makes sure
-'git update-server-info' keeps the necessary files up-to-date.
+'git update-server-info' keeps the necessary files up to date.
 
 3. Push into the public repository from your primary
    repository.
@@ -1658,4 +1658,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

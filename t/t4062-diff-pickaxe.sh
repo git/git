@@ -14,9 +14,16 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "A 4k file"
 '
+
+# OpenBSD only supports up to 255 repetitions, so repeat twice for 64*64=4096.
 test_expect_success '-G matches' '
-	git diff --name-only -G "^0{4096}$" HEAD^ >out &&
+	git diff --name-only -G "^(0{64}){64}$" HEAD^ >out &&
 	test 4096-zeroes.txt = "$(cat out)"
+'
+
+test_expect_success '-S --pickaxe-regex' '
+	git diff --name-only -S0 --pickaxe-regex HEAD^ >out &&
+	verbose test 4096-zeroes.txt = "$(cat out)"
 '
 
 test_done

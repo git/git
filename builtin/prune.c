@@ -6,14 +6,15 @@
 #include "reachable.h"
 #include "parse-options.h"
 #include "progress.h"
+#include "object-store.h"
 
 static const char * const prune_usage[] = {
-	N_("git prune [-n] [-v] [--expire <time>] [--] [<head>...]"),
+	N_("git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"),
 	NULL
 };
 static int show_only;
 static int verbose;
-static unsigned long expire;
+static timestamp_t expire;
 static int show_progress = -1;
 
 static int prune_tmp_file(const char *fullpath)
@@ -30,16 +31,39 @@ static int prune_tmp_file(const char *fullpath)
 	return 0;
 }
 
-static int prune_object(const unsigned char *sha1, const char *fullpath,
+static void perform_reachability_traversal(struct rev_info *revs)
+{
+	static int initialized;
+	struct progress *progress = NULL;
+
+	if (initialized)
+		return;
+
+	if (show_progress)
+		progress = start_delayed_progress(_("Checking connectivity"), 0);
+	mark_reachable_objects(revs, 1, expire, progress);
+	stop_progress(&progress);
+	initialized = 1;
+}
+
+static int is_object_reachable(const struct object_id *oid,
+			       struct rev_info *revs)
+{
+	struct object *obj;
+
+	perform_reachability_traversal(revs);
+
+	obj = lookup_object(the_repository, oid->hash);
+	return obj && (obj->flags & SEEN);
+}
+
+static int prune_object(const struct object_id *oid, const char *fullpath,
 			void *data)
 {
+	struct rev_info *revs = data;
 	struct stat st;
 
-	/*
-	 * Do we know about this object?
-	 * It must have been reachable
-	 */
-	if (lookup_object(sha1))
+	if (is_object_reachable(oid, revs))
 		return 0;
 
 	if (lstat(fullpath, &st)) {
@@ -50,9 +74,10 @@ static int prune_object(const unsigned char *sha1, const char *fullpath,
 	if (st.st_mtime > expire)
 		return 0;
 	if (show_only || verbose) {
-		enum object_type type = sha1_object_info(sha1, NULL);
-		printf("%s %s\n", sha1_to_hex(sha1),
-		       (type > 0) ? typename(type) : "unknown");
+		enum object_type type = oid_object_info(the_repository, oid,
+							NULL);
+		printf("%s %s\n", oid_to_hex(oid),
+		       (type > 0) ? type_name(type) : "unknown");
 	}
 	if (!show_only)
 		unlink_or_warn(fullpath);
@@ -68,7 +93,7 @@ static int prune_cruft(const char *basename, const char *path, void *data)
 	return 0;
 }
 
-static int prune_subdir(int nr, const char *path, void *data)
+static int prune_subdir(unsigned int nr, const char *path, void *data)
 {
 	if (!show_only)
 		rmdir(path);
@@ -100,22 +125,24 @@ static void remove_temporary_files(const char *path)
 int cmd_prune(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
-	struct progress *progress = NULL;
+	int exclude_promisor_objects = 0;
 	const struct option options[] = {
 		OPT__DRY_RUN(&show_only, N_("do not remove, show only")),
 		OPT__VERBOSE(&verbose, N_("report pruned objects")),
 		OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
 		OPT_EXPIRY_DATE(0, "expire", &expire,
 				N_("expire objects older than <time>")),
+		OPT_BOOL(0, "exclude-promisor-objects", &exclude_promisor_objects,
+			 N_("limit traversal to objects outside promisor packfiles")),
 		OPT_END()
 	};
 	char *s;
 
-	expire = ULONG_MAX;
+	expire = TIME_MAX;
 	save_commit_buffer = 0;
-	check_replace_refs = 0;
+	read_replace_refs = 0;
 	ref_paranoia = 1;
-	init_revisions(&revs, prefix);
+	repo_init_revisions(the_repository, &revs, prefix);
 
 	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
 
@@ -123,11 +150,12 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		die(_("cannot prune in a precious-objects repo"));
 
 	while (argc--) {
-		unsigned char sha1[20];
+		struct object_id oid;
 		const char *name = *argv++;
 
-		if (!get_sha1(name, sha1)) {
-			struct object *object = parse_object_or_die(sha1, name);
+		if (!get_oid(name, &oid)) {
+			struct object *object = parse_object_or_die(&oid,
+								    name);
 			add_pending_object(&revs, object, "");
 		}
 		else
@@ -136,13 +164,13 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 
 	if (show_progress == -1)
 		show_progress = isatty(2);
-	if (show_progress)
-		progress = start_progress_delay(_("Checking connectivity"), 0, 0, 2);
+	if (exclude_promisor_objects) {
+		fetch_if_missing = 0;
+		revs.exclude_promisor_objects = 1;
+	}
 
-	mark_reachable_objects(&revs, 1, expire, progress);
-	stop_progress(&progress);
 	for_each_loose_file_in_objdir(get_object_directory(), prune_object,
-				      prune_cruft, prune_subdir, NULL);
+				      prune_cruft, prune_subdir, &revs);
 
 	prune_packed_objects(show_only ? PRUNE_PACKED_DRY_RUN : 0);
 	remove_temporary_files(get_object_directory());
@@ -150,8 +178,10 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	remove_temporary_files(s);
 	free(s);
 
-	if (is_repository_shallow())
-		prune_shallow(show_only);
+	if (is_repository_shallow(the_repository)) {
+		perform_reachability_traversal(&revs);
+		prune_shallow(show_only ? PRUNE_SHOW_ONLY : 0);
+	}
 
 	return 0;
 }

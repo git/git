@@ -9,7 +9,7 @@
 # at the discretion of Junio C Hamano.
 #
 
-USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-O<orderfile>] [file to merge] ...'
+USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-g|--gui|--no-gui] [-O<orderfile>] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 NONGIT_OK=Yes
 OPTIONS_SPEC=
@@ -389,6 +389,7 @@ print_noop_and_exit () {
 
 main () {
 	prompt=$(git config --bool mergetool.prompt)
+	GIT_MERGETOOL_GUI=false
 	guessed_merge_tool=false
 	orderfile=
 
@@ -414,6 +415,12 @@ main () {
 				shift ;;
 			esac
 			;;
+		--no-gui)
+			GIT_MERGETOOL_GUI=false
+			;;
+		-g|--gui)
+			GIT_MERGETOOL_GUI=true
+			;;
 		-y|--no-prompt)
 			prompt=false
 			;;
@@ -421,7 +428,7 @@ main () {
 			prompt=true
 			;;
 		-O*)
-			orderfile="$1"
+			orderfile="${1#-O}"
 			;;
 		--)
 			shift
@@ -442,17 +449,24 @@ main () {
 
 	if test -z "$merge_tool"
 	then
-		# Check if a merge tool has been configured
-		merge_tool=$(get_configured_merge_tool)
-		# Try to guess an appropriate merge tool if no tool has been set.
-		if test -z "$merge_tool"
+		if ! merge_tool=$(get_merge_tool)
 		then
-			merge_tool=$(guess_merge_tool) || exit
 			guessed_merge_tool=true
 		fi
 	fi
 	merge_keep_backup="$(git config --bool mergetool.keepBackup || echo true)"
 	merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
+
+	prefix=$(git rev-parse --show-prefix) || exit 1
+	cd_to_toplevel
+
+	if test -n "$orderfile"
+	then
+		orderfile=$(
+			git rev-parse --prefix "$prefix" -- "$orderfile" |
+			sed -e 1d
+		)
+	fi
 
 	if test $# -eq 0 && test -e "$GIT_DIR/MERGE_RR"
 	then
@@ -461,13 +475,15 @@ main () {
 		then
 			print_noop_and_exit
 		fi
+	elif test $# -ge 0
+	then
+		# rev-parse provides the -- needed for 'set'
+		eval "set $(git rev-parse --sq --prefix "$prefix" -- "$@")"
 	fi
 
 	files=$(git -c core.quotePath=false \
 		diff --name-only --diff-filter=U \
-		${orderfile:+"$orderfile"} -- "$@")
-
-	cd_to_toplevel
+		${orderfile:+"-O$orderfile"} -- "$@")
 
 	if test -z "$files"
 	then
@@ -478,14 +494,16 @@ main () {
 	printf "%s\n" "$files"
 
 	rc=0
-	for i in $files
+	set -- $files
+	while test $# -ne 0
 	do
 		printf "\n"
-		if ! merge_file "$i"
+		if ! merge_file "$1"
 		then
 			rc=1
-			prompt_after_failed_merge || exit 1
+			test $# -ne 1 && prompt_after_failed_merge || exit 1
 		fi
+		shift
 	done
 
 	exit $rc

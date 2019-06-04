@@ -57,6 +57,13 @@ OPTIONS
 	With this option, 'git cherry-pick' will let you edit the commit
 	message prior to committing.
 
+--cleanup=<mode>::
+	This option determines how the commit message will be cleaned up before
+	being passed on to the commit machinery. See linkgit:git-commit[1] for more
+	details. In particular, if the '<mode>' is given a value of `scissors`,
+	scissors will be appended to `MERGE_MSG` before being passed on in the case
+	of a conflict.
+
 -x::
 	When recording the commit, append a line that says
 	"(cherry picked from commit ...)" to the original commit
@@ -148,6 +155,11 @@ effect to your index in a row.
 	Pass the merge strategy-specific option through to the
 	merge strategy.  See linkgit:git-merge[1] for details.
 
+--rerere-autoupdate::
+--no-rerere-autoupdate::
+	Allow the rerere mechanism to update the index with the
+	result of auto-conflict resolution if possible.
+
 SEQUENCER SUBCOMMANDS
 ---------------------
 include::sequencer.txt[]
@@ -213,16 +225,16 @@ $ git reset --merge ORIG_HEAD        <3>
 $ git cherry-pick -Xpatience topic^  <4>
 ------------
 <1> apply the change that would be shown by `git show topic^`.
-In this example, the patch does not apply cleanly, so
-information about the conflict is written to the index and
-working tree and no new commit results.
+    In this example, the patch does not apply cleanly, so
+    information about the conflict is written to the index and
+    working tree and no new commit results.
 <2> summarize changes to be reconciled
 <3> cancel the cherry-pick.  In other words, return to the
-pre-cherry-pick state, preserving any local modifications you had in
-the working tree.
+    pre-cherry-pick state, preserving any local modifications
+    you had in the working tree.
 <4> try to apply the change introduced by `topic^` again,
-spending extra time to avoid mistakes based on incorrectly matching
-context lines.
+    spending extra time to avoid mistakes based on incorrectly
+    matching context lines.
 
 SEE ALSO
 --------

@@ -15,7 +15,7 @@ add_blob() {
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
 	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
-	test-chmtime =+0 $BLOB_FILE
+	test-tool chmtime =+0 $BLOB_FILE
 }
 
 test_expect_success setup '
@@ -33,7 +33,7 @@ test_expect_success 'prune stale packs' '
 	orig_pack=$(echo .git/objects/pack/*.pack) &&
 	: > .git/objects/tmp_1.pack &&
 	: > .git/objects/tmp_2.pack &&
-	test-chmtime =-86501 .git/objects/tmp_1.pack &&
+	test-tool chmtime =-86501 .git/objects/tmp_1.pack &&
 	git prune --expire 1.day &&
 	test_path_is_file $orig_pack &&
 	test_path_is_file .git/objects/tmp_2.pack &&
@@ -47,7 +47,7 @@ test_expect_success 'prune --expire' '
 	git prune --expire=1.hour.ago &&
 	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
-	test-chmtime =-86500 $BLOB_FILE &&
+	test-tool chmtime =-86500 $BLOB_FILE &&
 	git prune --expire 1.day &&
 	verbose test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
@@ -57,11 +57,11 @@ test_expect_success 'prune --expire' '
 test_expect_success 'gc: implicit prune --expire' '
 
 	add_blob &&
-	test-chmtime =-$((2*$week-30)) $BLOB_FILE &&
+	test-tool chmtime =-$((2*$week-30)) $BLOB_FILE &&
 	git gc &&
 	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
-	test-chmtime =-$((2*$week+1)) $BLOB_FILE &&
+	test-tool chmtime =-$((2*$week+1)) $BLOB_FILE &&
 	git gc &&
 	verbose test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
@@ -112,17 +112,16 @@ test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 	# (should be removed and disabled by previous test)
 	test_path_is_missing .git/logs &&
 	git prune -n >prune_actual &&
-	: >prune_expected &&
-	test_cmp prune_actual prune_expected
+	test_must_be_empty prune_actual
 
 '
 
 test_expect_success 'prune: prune former HEAD after checking out branch' '
 
-	head_sha1=$(git rev-parse HEAD) &&
+	head_oid=$(git rev-parse HEAD) &&
 	git checkout --quiet master &&
 	git prune -v >prune_actual &&
-	grep "$head_sha1" prune_actual
+	grep "$head_oid" prune_actual
 
 '
 
@@ -141,7 +140,7 @@ test_expect_success 'prune: do not prune heads listed as an argument' '
 test_expect_success 'gc --no-prune' '
 
 	add_blob &&
-	test-chmtime =-$((5001*$day)) $BLOB_FILE &&
+	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git config gc.pruneExpire 2.days.ago &&
 	git gc --no-prune &&
 	verbose test 1 = $(git count-objects | sed "s/ .*//") &&
@@ -163,7 +162,7 @@ test_expect_success 'gc respects gc.pruneExpire' '
 test_expect_success 'gc --prune=<date>' '
 
 	add_blob &&
-	test-chmtime =-$((5001*$day)) $BLOB_FILE &&
+	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git gc --prune=5002.days.ago &&
 	test_path_is_file $BLOB_FILE &&
 	git gc --prune=5000.days.ago &&
@@ -205,7 +204,7 @@ test_expect_success 'prune --expire=never' '
 
 test_expect_success 'gc: prune old objects after local clone' '
 	add_blob &&
-	test-chmtime =-$((2*$week+1)) $BLOB_FILE &&
+	test-tool chmtime =-$((2*$week+1)) $BLOB_FILE &&
 	git clone --no-hardlinks . aclone &&
 	(
 		cd aclone &&
@@ -266,13 +265,25 @@ EOF
 '
 
 test_expect_success 'prune .git/shallow' '
-	SHA1=$(echo hi|git commit-tree HEAD^{tree}) &&
-	echo $SHA1 >.git/shallow &&
+	oid=$(echo hi|git commit-tree HEAD^{tree}) &&
+	echo $oid >.git/shallow &&
 	git prune --dry-run >out &&
-	grep $SHA1 .git/shallow &&
-	grep $SHA1 out &&
+	grep $oid .git/shallow &&
+	grep $oid out &&
 	git prune &&
 	test_path_is_missing .git/shallow
+'
+
+test_expect_success 'prune .git/shallow when there are no loose objects' '
+	oid=$(echo hi|git commit-tree HEAD^{tree}) &&
+	echo $oid >.git/shallow &&
+	git update-ref refs/heads/shallow-tip $oid &&
+	git repack -ad &&
+	# verify assumption that all loose objects are gone
+	git count-objects | grep ^0 &&
+	git prune &&
+	echo $oid >expect &&
+	test_cmp expect .git/shallow
 '
 
 test_expect_success 'prune: handle alternate object database' '
@@ -281,6 +292,61 @@ test_expect_success 'prune: handle alternate object database' '
 	git clone --shared A B &&
 	git -C B commit --allow-empty -m "next commit" &&
 	git -C B prune
+'
+
+test_expect_success 'prune: handle index in multiple worktrees' '
+	git worktree add second-worktree &&
+	echo "new blob for second-worktree" >second-worktree/blob &&
+	git -C second-worktree add blob &&
+	git prune --expire=now &&
+	git -C second-worktree show :blob >actual &&
+	test_cmp second-worktree/blob actual
+'
+
+test_expect_success 'prune: handle HEAD in multiple worktrees' '
+	git worktree add --detach third-worktree &&
+	echo "new blob for third-worktree" >third-worktree/blob &&
+	git -C third-worktree add blob &&
+	git -C third-worktree commit -m "third" &&
+	rm .git/worktrees/third-worktree/index &&
+	test_must_fail git -C third-worktree show :blob &&
+	git prune --expire=now &&
+	git -C third-worktree show HEAD:blob >actual &&
+	test_cmp third-worktree/blob actual
+'
+
+test_expect_success 'prune: handle HEAD reflog in multiple worktrees' '
+	git config core.logAllRefUpdates true &&
+	echo "lost blob for third-worktree" >expected &&
+	(
+		cd third-worktree &&
+		cat ../expected >blob &&
+		git add blob &&
+		git commit -m "second commit in third" &&
+		git reset --hard HEAD^
+	) &&
+	git prune --expire=now &&
+	oid=`git hash-object expected` &&
+	git -C third-worktree show "$oid" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'prune: handle expire option correctly' '
+	test_must_fail git prune --expire 2>error &&
+	test_i18ngrep "requires a value" error &&
+
+	test_must_fail git prune --expire=nyah 2>error &&
+	test_i18ngrep "malformed expiration" error &&
+
+	git prune --no-expire
+'
+
+test_expect_success 'trivial prune with bitmaps enabled' '
+	git repack -adb &&
+	blob=$(echo bitmap-unreachable-blob | git hash-object -w --stdin) &&
+	git prune --expire=now &&
+	git cat-file -e HEAD &&
+	test_must_fail git cat-file -e $blob
 '
 
 test_done

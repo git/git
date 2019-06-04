@@ -64,8 +64,7 @@ test_expect_success 'added submodule (subdirectory only)' "
 		cd sub &&
 		git submodule summary . >../actual
 	) &&
-	>expected &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'added submodule (subdirectory with explicit path)' "
@@ -241,9 +240,11 @@ EOF
 	test_cmp expected actual
 "
 
-test_create_repo sm2 &&
-head7=$(add_file sm2 foo8 foo9) &&
-git add sm2
+test_expect_success 'create second submodule' '
+	test_create_repo sm2 &&
+	head7=$(add_file sm2 foo8 foo9) &&
+	git add sm2
+'
 
 test_expect_success 'multiple submodules' "
 	git submodule summary >actual &&
@@ -299,7 +300,7 @@ test_expect_success 'should not fail in an empty repo' "
 	git init xyzzy &&
 	cd xyzzy &&
 	git submodule summary >output 2>&1 &&
-	test_cmp output /dev/null
+	test_must_be_empty output
 "
 
 test_done

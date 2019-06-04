@@ -59,6 +59,16 @@ test_expect_success 'submodule add --reference uses alternates' '
 	test_alternate_is_used super/.git/modules/sub/objects/info/alternates super/sub
 '
 
+test_expect_success 'submodule add --reference with --dissociate does not use alternates' '
+	(
+		cd super &&
+		git submodule add --reference ../B --dissociate "file://$base_dir/A" sub-dissociate &&
+		git commit -m B-super-added &&
+		git repack -ad
+	) &&
+	test_path_is_missing super/.git/modules/sub-dissociate/objects/info/alternates
+'
+
 test_expect_success 'that reference gets used with add' '
 	(
 		cd super/sub &&
@@ -80,6 +90,13 @@ test_expect_success 'updating superproject keeps alternates' '
 	git clone super super-clone &&
 	git -C super-clone submodule update --init --reference ../B &&
 	test_alternate_is_used super-clone/.git/modules/sub/objects/info/alternates super-clone/sub
+'
+
+test_expect_success 'updating superproject with --dissociate does not keep alternates' '
+	test_when_finished "rm -rf super-clone" &&
+	git clone super super-clone &&
+	git -C super-clone submodule update --init --reference ../B --dissociate &&
+	test_path_is_missing super-clone/.git/modules/sub/objects/info/alternates
 '
 
 test_expect_success 'submodules use alternates when cloning a superproject' '
@@ -131,7 +148,7 @@ test_expect_success 'preparing second superproject with a nested submodule plus 
 		cd supersuper &&
 		echo "I am super super." >file &&
 		git add file &&
-		git commit -m B-super-super-initial
+		git commit -m B-super-super-initial &&
 		git submodule add "file://$base_dir/super" subwithsub &&
 		git commit -m B-super-super-added &&
 		git submodule update --init --recursive &&

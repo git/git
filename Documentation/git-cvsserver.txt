@@ -22,7 +22,7 @@ cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 Usage:
 
 [verse]
-'git-cvsserver' [options] [pserver|server] [<directory> ...]
+'git-cvsserver' [<options>] [pserver|server] [<directory> ...]
 
 OPTIONS
 -------
@@ -207,7 +207,7 @@ allowing access over SSH.
 ------
 
 [[dbbackend]]
-Database Backend
+DATABASE BACKEND
 ----------------
 
 'git-cvsserver' uses one database per Git head (i.e. CVS module) to
@@ -223,7 +223,7 @@ access method and requested operation.
 That means that even if you offer only read access (e.g. by using
 the pserver method), 'git-cvsserver' should have write access to
 the database to work reliably (otherwise you need to make sure
-that the database is up-to-date any time 'git-cvsserver' is executed).
+that the database is up to date any time 'git-cvsserver' is executed).
 
 By default it uses SQLite databases in the Git directory, named
 `gitcvs.<module_name>.sqlite`. Note that the SQLite backend creates
@@ -321,7 +321,7 @@ git-cvsserver, as described above.
 When these environment variables are set, the corresponding
 command-line arguments may not be used.
 
-Eclipse CVS Client Notes
+ECLIPSE CVS CLIENT NOTES
 ------------------------
 
 To get a checkout with the Eclipse CVS client:
@@ -346,7 +346,7 @@ offer. In that case CVS_SERVER is ignored, and you will have to replace
 the cvs utility on the server with 'git-cvsserver' or manipulate your `.bashrc`
 so that calling 'cvs' effectively calls 'git-cvsserver'.
 
-Clients known to work
+CLIENTS KNOWN TO WORK
 ---------------------
 
 - CVS 1.12.9 on Debian
@@ -354,7 +354,7 @@ Clients known to work
 - Eclipse 3.0, 3.1.2 on MacOSX (see Eclipse CVS Client Notes)
 - TortoiseCVS
 
-Operations supported
+OPERATIONS SUPPORTED
 --------------------
 
 All the operations required for normal use are supported, including
@@ -424,7 +424,7 @@ For best consistency with 'cvs', it is probably best to override the
 defaults by setting `gitcvs.usecrlfattr` to true,
 and `gitcvs.allBinary` to "guess".
 
-Dependencies
+DEPENDENCIES
 ------------
 'git-cvsserver' depends on DBD::SQLite.
 

@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/git/git/_apis/build/status/git.git)](https://dev.azure.com/git/git/_build/latest?definitionId=11)
+
 Git - fast, scalable, distributed revision control system
 =========================================================
 
@@ -12,7 +14,7 @@ Torvalds with help of a group of hackers around the net.
 
 Please read the file [INSTALL][] for installation instructions.
 
-Many Git online resources are accessible from http://git-scm.com/
+Many Git online resources are accessible from <https://git-scm.com/>
 including full documentation and Git related tools.
 
 See [Documentation/gittutorial.txt][] to get started, then see
@@ -33,8 +35,11 @@ requests, comments and patches to git@vger.kernel.org (read
 [Documentation/SubmittingPatches][] for instructions on patch submission).
 To subscribe to the list, send an email with just "subscribe git" in
 the body to majordomo@vger.kernel.org. The mailing list archives are
-available at https://public-inbox.org/git,
-http://marc.info/?l=git and other archival sites.
+available at <https://public-inbox.org/git/>,
+<http://marc.info/?l=git> and other archival sites.
+
+Issues which are security relevant should be disclosed privately to
+the Git Security mailing list <git-security@googlegroups.com>.
 
 The maintainer frequently sends the "What's cooking" reports that
 list the current status of various development topics to the mailing

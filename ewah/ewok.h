@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef __EWOK_BITMAP_H__
 #define __EWOK_BITMAP_H__
@@ -74,12 +73,6 @@ void ewah_pool_free(struct ewah_bitmap *self);
 struct ewah_bitmap *ewah_new(void);
 
 /**
- * Clear all the bits in the bitmap. Does not free or resize
- * memory.
- */
-void ewah_clear(struct ewah_bitmap *self);
-
-/**
  * Free all the memory of the bitmap
  */
 void ewah_free(struct ewah_bitmap *self);
@@ -87,21 +80,11 @@ void ewah_free(struct ewah_bitmap *self);
 int ewah_serialize_to(struct ewah_bitmap *self,
 		      int (*write_fun)(void *out, const void *buf, size_t len),
 		      void *out);
-int ewah_serialize(struct ewah_bitmap *self, int fd);
-int ewah_serialize_native(struct ewah_bitmap *self, int fd);
 int ewah_serialize_strbuf(struct ewah_bitmap *self, struct strbuf *);
 
-int ewah_deserialize(struct ewah_bitmap *self, int fd);
-int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len);
+ssize_t ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len);
 
 uint32_t ewah_checksum(struct ewah_bitmap *self);
-
-/**
- * Logical not (bitwise negation) in-place on the bitmap
- *
- * This operation is linear time based on the size of the bitmap.
- */
-void ewah_not(struct ewah_bitmap *self);
 
 /**
  * Call the given callback with the position of every single bit
@@ -165,22 +148,7 @@ void ewah_iterator_init(struct ewah_iterator *it, struct ewah_bitmap *parent);
  */
 int ewah_iterator_next(eword_t *next, struct ewah_iterator *it);
 
-void ewah_or(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out);
-
-void ewah_and_not(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out);
-
 void ewah_xor(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out);
-
-void ewah_and(
 	struct ewah_bitmap *ewah_i,
 	struct ewah_bitmap *ewah_j,
 	struct ewah_bitmap *out);
@@ -205,7 +173,6 @@ struct bitmap {
 
 struct bitmap *bitmap_new(void);
 void bitmap_set(struct bitmap *self, size_t pos);
-void bitmap_clear(struct bitmap *self, size_t pos);
 int bitmap_get(struct bitmap *self, size_t pos);
 void bitmap_reset(struct bitmap *self);
 void bitmap_free(struct bitmap *self);
@@ -219,7 +186,6 @@ void bitmap_and_not(struct bitmap *self, struct bitmap *other);
 void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other);
 void bitmap_or(struct bitmap *self, const struct bitmap *other);
 
-void bitmap_each_bit(struct bitmap *self, ewah_callback callback, void *data);
 size_t bitmap_popcount(struct bitmap *self);
 
 #endif

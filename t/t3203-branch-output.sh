@@ -2,6 +2,7 @@
 
 test_description='git branch display tests'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'make commits' '
 	echo content >file &&
@@ -99,6 +100,50 @@ test_expect_success 'git branch -v pattern does not show branch summaries' '
 	test_must_fail git branch -v branch*
 '
 
+test_expect_success 'git branch `--show-current` shows current branch' '
+	cat >expect <<-\EOF &&
+	branch-two
+	EOF
+	git checkout branch-two &&
+	git branch --show-current >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch `--show-current` is silent when detached HEAD' '
+	git checkout HEAD^0 &&
+	git branch --show-current >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'git branch `--show-current` works properly when tag exists' '
+	cat >expect <<-\EOF &&
+	branch-and-tag-name
+	EOF
+	test_when_finished "
+		git checkout branch-one
+		git branch -D branch-and-tag-name
+	" &&
+	git checkout -b branch-and-tag-name &&
+	test_when_finished "git tag -d branch-and-tag-name" &&
+	git tag branch-and-tag-name &&
+	git branch --show-current >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch `--show-current` works properly with worktrees' '
+	cat >expect <<-\EOF &&
+	branch-one
+	branch-two
+	EOF
+	git checkout branch-one &&
+	git worktree add worktree branch-two &&
+	{
+		git branch --show-current &&
+		git -C worktree branch --show-current
+	} >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git branch shows detached HEAD properly' '
 	cat >expect <<EOF &&
 * (HEAD detached at $(git rev-parse --short HEAD^0))
@@ -194,7 +239,7 @@ test_expect_success 'local-branch symrefs shortened properly' '
 	git symbolic-ref refs/heads/ref-to-remote refs/remotes/origin/branch-one &&
 	cat >expect <<-\EOF &&
 	  ref-to-branch -> branch-one
-	  ref-to-remote -> refs/remotes/origin/branch-one
+	  ref-to-remote -> origin/branch-one
 	EOF
 	git branch >actual.raw &&
 	grep ref-to <actual.raw >actual &&
@@ -223,6 +268,44 @@ test_expect_success 'sort branches, ignore case' '
 		EOF
 		test_cmp expected actual
 	)
+'
+
+test_expect_success 'git branch --format option' '
+	cat >expect <<-\EOF &&
+	Refname is (HEAD detached from fromtag)
+	Refname is refs/heads/ambiguous
+	Refname is refs/heads/branch-one
+	Refname is refs/heads/branch-two
+	Refname is refs/heads/master
+	Refname is refs/heads/ref-to-branch
+	Refname is refs/heads/ref-to-remote
+	EOF
+	git branch --format="Refname is %(refname)" >actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success "set up color tests" '
+	echo "<RED>master<RESET>" >expect.color &&
+	echo "master" >expect.bare &&
+	color_args="--format=%(color:red)%(refname:short) --list master"
+'
+
+test_expect_success '%(color) omitted without tty' '
+	TERM=vt100 git branch $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.bare actual
+'
+
+test_expect_success TTY '%(color) present with tty' '
+	test_terminal git branch $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.color actual
+'
+
+test_expect_success '--color overrides auto-color' '
+	git branch --color $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.color actual
 '
 
 test_done

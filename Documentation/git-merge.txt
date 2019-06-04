@@ -12,8 +12,7 @@ SYNOPSIS
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
 	[-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
-	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
-'git merge' <msg> HEAD <commit>...
+	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>] [<commit>...]
 'git merge' --abort
 'git merge' --continue
 
@@ -46,11 +45,7 @@ a log message from the user describing the changes.
     D---E---F---G---H master
 ------------
 
-The second syntax (<msg> `HEAD` <commit>...) is supported for
-historical reasons.  Do not use it from the command line or in
-new scripts.  It is the same as `git merge -m <msg> <commit>...`.
-
-The third syntax ("`git merge --abort`") can only be run after the
+The second syntax ("`git merge --abort`") can only be run after the
 merge has resulted in conflicts. 'git merge --abort' will abort the
 merge process and try to reconstruct the pre-merge state. However,
 if there were uncommitted changes when the merge started (and
@@ -62,18 +57,12 @@ reconstruct the original (pre-merge) changes. Therefore:
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
-The fourth syntax ("`git merge --continue`") can only be run after the
+The third syntax ("`git merge --continue`") can only be run after the
 merge has resulted in conflicts.
 
 OPTIONS
 -------
 include::merge-options.txt[]
-
--S[<keyid>]::
---gpg-sign[=<keyid>]::
-	GPG-sign the resulting merge commit. The `keyid` argument is
-	optional and defaults to the committer identity; if specified,
-	it must be stuck to the option without a space.
 
 -m <msg>::
 	Set the commit message to be used for the merge commit (in
@@ -86,7 +75,16 @@ The 'git fmt-merge-msg' command can be
 used to give a good default for automated 'git merge'
 invocations. The automated message can include the branch description.
 
---[no-]rerere-autoupdate::
+-F <file>::
+--file=<file>::
+	Read the commit message to be used for the merge commit (in
+	case one is created).
++
+If `--log` is specified, a shortlog of the commits being merged
+will be appended to the specified message.
+
+--rerere-autoupdate::
+--no-rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
 	result of auto-conflict resolution if possible.
 
@@ -133,12 +131,12 @@ merge' may need to update.
 
 To avoid recording unrelated changes in the merge commit,
 'git pull' and 'git merge' will also abort if there are any changes
-registered in the index relative to the `HEAD` commit.  (One
-exception is when the changed index entries are in the state that
-would result from the merge already.)
+registered in the index relative to the `HEAD` commit.  (Special
+narrow exceptions to this rule may exist depending on which merge
+strategy is in use, but generally, the index must match HEAD.)
 
 If all named commits are already ancestors of `HEAD`, 'git merge'
-will exit early with the message "Already up-to-date."
+will exit early with the message "Already up to date."
 
 FAST-FORWARD MERGE
 ------------------
@@ -285,7 +283,10 @@ After seeing a conflict, you can do two things:
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
-   'git add' them to the index.  Use 'git commit' to seal the deal.
+   'git add' them to the index.  Use 'git commit' or
+   'git merge --continue' to seal the deal. The latter command
+   checks whether there is a (interrupted) merge in progress
+   before calling 'git commit'.
 
 You can work through the conflict with a number of tools:
 
@@ -342,7 +343,7 @@ include::merge-strategies.txt[]
 
 CONFIGURATION
 -------------
-include::merge-config.txt[]
+include::config/merge.txt[]
 
 branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and

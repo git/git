@@ -73,7 +73,7 @@ test_expect_success 'diff identical, but newly created symlink and file' '
 	>expected &&
 	rm -f frotz nitfol &&
 	echo xyzzy >nitfol &&
-	test-chmtime +10 nitfol &&
+	test-tool chmtime +10 nitfol &&
 	if test_have_prereq SYMLINKS
 	then
 		ln -s xyzzy frotz
@@ -126,7 +126,7 @@ test_expect_success SYMLINKS 'diff symlinks with non-existing targets' '
 	ln -s take\ over brain &&
 	test_must_fail git diff --no-index pinky brain >output 2>output.err &&
 	grep narf output &&
-	! test -s output.err
+	test_must_be_empty output.err
 '
 
 test_expect_success SYMLINKS 'setup symlinks with attributes' '
@@ -139,11 +139,13 @@ test_expect_success SYMLINKS 'setup symlinks with attributes' '
 test_expect_success SYMLINKS 'symlinks do not respect userdiff config by path' '
 	cat >expect <<-\EOF &&
 	diff --git a/file.bin b/file.bin
-	index e69de29..d95f3ad 100644
-	Binary files a/file.bin and b/file.bin differ
+	new file mode 100644
+	index 0000000..d95f3ad
+	Binary files /dev/null and b/file.bin differ
 	diff --git a/link.bin b/link.bin
-	index e69de29..dce41ec 120000
-	--- a/link.bin
+	new file mode 120000
+	index 0000000..dce41ec
+	--- /dev/null
 	+++ b/link.bin
 	@@ -0,0 +1 @@
 	+file.bin

@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "string-list.h"
 
@@ -41,7 +42,7 @@ static int prefix_cb(struct string_list_item *item, void *cb_data)
 	return starts_with(item->string, prefix);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__string_list(int argc, const char **argv)
 {
 	if (argc == 5 && !strcmp(argv[1], "split")) {
 		struct string_list list = STRING_LIST_INIT_DUP;
@@ -94,6 +95,31 @@ int cmd_main(int argc, const char **argv)
 		string_list_remove_duplicates(&list, 0);
 		write_list_compact(&list);
 		string_list_clear(&list, 0);
+		return 0;
+	}
+
+	if (argc == 2 && !strcmp(argv[1], "sort")) {
+		struct string_list list = STRING_LIST_INIT_NODUP;
+		struct strbuf sb = STRBUF_INIT;
+		struct string_list_item *item;
+
+		strbuf_read(&sb, 0, 0);
+
+		/*
+		 * Split by newline, but don't create a string_list item
+		 * for the empty string after the last separator.
+		 */
+		if (sb.len && sb.buf[sb.len - 1] == '\n')
+			strbuf_setlen(&sb, sb.len - 1);
+		string_list_split_in_place(&list, sb.buf, '\n', -1);
+
+		string_list_sort(&list);
+
+		for_each_string_list_item(item, &list)
+			puts(item->string);
+
+		string_list_clear(&list, 0);
+		strbuf_release(&sb);
 		return 0;
 	}
 

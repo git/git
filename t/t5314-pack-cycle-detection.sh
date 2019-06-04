@@ -73,7 +73,7 @@ make_pack () {
 }
 
 test_expect_success 'setup' '
-	test-genrandom base 4096 >base &&
+	test-tool genrandom base 4096 >base &&
 	for i in one two
 	do
 		# we want shared content here to encourage deltas...
@@ -98,9 +98,8 @@ test_expect_success 'repack' '
 	# We first want to check that we do not have any internal errors,
 	# and also that we do not hit the last-ditch cycle-breaking code
 	# in write_object(), which will issue a warning to stderr.
-	>expect &&
 	git repack -ad 2>stderr &&
-	test_cmp expect stderr &&
+	test_must_be_empty stderr &&
 
 	# And then double-check that the resulting pack is usable (i.e.,
 	# we did not fail to notice any cycles). We know we are accessing

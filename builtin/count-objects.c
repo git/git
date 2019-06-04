@@ -5,10 +5,14 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
+#include "repository.h"
 #include "builtin.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "packfile.h"
+#include "object-store.h"
 
 static unsigned long garbage;
 static off_t size_garbage;
@@ -53,7 +57,7 @@ static void loose_garbage(const char *path)
 		report_garbage(PACKDIR_FILE_GARBAGE, path);
 }
 
-static int count_loose(const unsigned char *sha1, const char *path, void *data)
+static int count_loose(const struct object_id *oid, const char *path, void *data)
 {
 	struct stat st;
 
@@ -62,7 +66,7 @@ static int count_loose(const unsigned char *sha1, const char *path, void *data)
 	else {
 		loose_size += on_disk_bytes(st);
 		loose++;
-		if (verbose && has_sha1_pack(sha1))
+		if (verbose && has_object_pack(oid))
 			packed_loose++;
 	}
 	return 0;
@@ -74,10 +78,10 @@ static int count_cruft(const char *basename, const char *path, void *data)
 	return 0;
 }
 
-static int print_alternate(struct alternate_object_database *alt, void *data)
+static int print_alternate(struct object_directory *odb, void *data)
 {
 	printf("alternate: ");
-	quote_c_style(alt->path, NULL, stdout, 0);
+	quote_c_style(odb->path, NULL, stdout, 0);
 	putchar('\n');
 	return 0;
 }
@@ -118,9 +122,8 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		struct strbuf loose_buf = STRBUF_INIT;
 		struct strbuf pack_buf = STRBUF_INIT;
 		struct strbuf garbage_buf = STRBUF_INIT;
-		if (!packed_git)
-			prepare_packed_git();
-		for (p = packed_git; p; p = p->next) {
+
+		for (p = get_all_packs(the_repository); p; p = p->next) {
 			if (!p->pack_local)
 				continue;
 			if (open_pack_index(p))

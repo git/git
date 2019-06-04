@@ -80,12 +80,16 @@ show_tool_names () {
 	}
 }
 
-diff_mode() {
+diff_mode () {
 	test "$TOOL_MODE" = diff
 }
 
-merge_mode() {
+merge_mode () {
 	test "$TOOL_MODE" = merge
+}
+
+gui_mode () {
+	test "$GIT_MERGETOOL_GUI" = true
 }
 
 translate_merge_tool_path () {
@@ -279,6 +283,7 @@ list_merge_tool_candidates () {
 		fi
 		tools="$tools gvimdiff diffuse diffmerge ecmerge"
 		tools="$tools p4merge araxis bc codecompare"
+		tools="$tools smerge"
 	fi
 	case "${VISUAL:-$EDITOR}" in
 	*vim*)
@@ -350,17 +355,39 @@ guess_merge_tool () {
 }
 
 get_configured_merge_tool () {
-	# Diff mode first tries diff.tool and falls back to merge.tool.
-	# Merge mode only checks merge.tool
+	keys=
 	if diff_mode
 	then
-		merge_tool=$(git config diff.tool || git config merge.tool)
+		if gui_mode
+		then
+			keys="diff.guitool merge.guitool diff.tool merge.tool"
+		else
+			keys="diff.tool merge.tool"
+		fi
 	else
-		merge_tool=$(git config merge.tool)
+		if gui_mode
+		then
+			keys="merge.guitool merge.tool"
+		else
+			keys="merge.tool"
+		fi
 	fi
+
+	merge_tool=$(
+		IFS=' '
+		for key in $keys
+		do
+			selected=$(git config $key)
+			if test -n "$selected"
+			then
+				echo "$selected"
+				return
+			fi
+		done)
+
 	if test -n "$merge_tool" && ! valid_tool "$merge_tool"
 	then
-		echo >&2 "git config option $TOOL_MODE.tool set to unknown tool: $merge_tool"
+		echo >&2 "git config option $TOOL_MODE.${gui_prefix}tool set to unknown tool: $merge_tool"
 		echo >&2 "Resetting to default..."
 		return 1
 	fi
@@ -397,14 +424,17 @@ get_merge_tool_path () {
 }
 
 get_merge_tool () {
+	is_guessed=false
 	# Check if a merge tool has been configured
 	merge_tool=$(get_configured_merge_tool)
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"
 	then
 		merge_tool=$(guess_merge_tool) || exit
+		is_guessed=true
 	fi
 	echo "$merge_tool"
+	test "$is_guessed" = false
 }
 
 mergetool_find_win32_cmd () {

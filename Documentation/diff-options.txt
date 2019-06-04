@@ -36,10 +36,20 @@ endif::git-format-patch[]
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
-	the usual three.
+	the usual three. Implies `--patch`.
 ifndef::git-format-patch[]
 	Implies `-p`.
 endif::git-format-patch[]
+
+--output=<file>::
+	Output to a specific file instead of stdout.
+
+--output-indicator-new=<char>::
+--output-indicator-old=<char>::
+--output-indicator-context=<char>::
+	Specify the character used to indicate new, old or context
+	lines in the generated patch. Normally they are '+', '-' and
+	' ' respectively.
 
 ifndef::git-format-patch[]
 --raw::
@@ -63,7 +73,12 @@ ifndef::git-format-patch[]
 	Synonym for `-p --raw`.
 endif::git-format-patch[]
 
-include::diff-heuristic-options.txt[]
+--indent-heuristic::
+	Enable the heuristic that shifts diff hunk boundaries to make patches
+	easier to read. This is the default.
+
+--no-indent-heuristic::
+	Disable the indent heuristic.
 
 --minimal::
 	Spend extra time to make sure the smallest possible
@@ -74,6 +89,16 @@ include::diff-heuristic-options.txt[]
 
 --histogram::
 	Generate a diff using the "histogram diff" algorithm.
+
+--anchored=<text>::
+	Generate a diff using the "anchored diff" algorithm.
++
+This option may be specified more than once.
++
+If a line exists in both the source and destination, exists only once,
+and starts with this text, this algorithm attempts to prevent it from
+appearing as a deletion or addition in the output. It uses the "patience
+diff" algorithm internally.
 
 --diff-algorithm={patience|minimal|histogram|myers}::
 	Choose a diff algorithm. The variants are as follows:
@@ -91,7 +116,7 @@ include::diff-heuristic-options.txt[]
 	low-occurrence common elements".
 --
 +
-For instance, if you configured diff.algorithm variable to a
+For instance, if you configured the `diff.algorithm` variable to a
 non-default value and want to use the default one, then you
 have to use `--diff-algorithm=default` option.
 
@@ -113,6 +138,14 @@ have to use `--diff-algorithm=default` option.
 These parameters can also be set individually with `--stat-width=<width>`,
 `--stat-name-width=<name-width>` and `--stat-count=<count>`.
 
+--compact-summary::
+	Output a condensed summary of extended header information such
+	as file creations or deletions ("new" or "gone", optionally "+l"
+	if it's a symlink) and mode changes ("+x" or "-x" for adding
+	or removing executable bit respectively) in diffstat. The
+	information is put between the filename part and the graph
+	part. Implies `--stat`.
+
 --numstat::
 	Similar to `--stat`, but shows number of added and
 	deleted lines in decimal notation and pathname without
@@ -125,6 +158,7 @@ These parameters can also be set individually with `--stat-width=<width>`,
 	number of modified files, as well as number of added and deleted
 	lines.
 
+-X[<param1,param2,...>]::
 --dirstat[=<param1,param2,...>]::
 	Output the distribution of relative amount of changes for each
 	sub-directory. The behavior of `--dirstat` can be customized by
@@ -169,6 +203,12 @@ directories with less than 10% of the total amount of changed files,
 and accumulating child directory counts in the parent directories:
 `--dirstat=files,10,cumulative`.
 
+--cumulative::
+	Synonym for --dirstat=cumulative
+
+--dirstat-by-file[=<param1,param2>...]::
+	Synonym for --dirstat=files,param1,param2...
+
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
@@ -192,10 +232,9 @@ ifndef::git-log[]
 	given, do not munge pathnames and use NULs as output field terminators.
 endif::git-log[]
 +
-Without this option, each pathname output will have TAB, LF, double quotes,
-and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
-respectively, and the pathname will be enclosed in double quotes if
-any of those replacements occurred.
+Without this option, pathnames with "unusual" characters are quoted as
+explained for the configuration variable `core.quotePath` (see
+linkgit:git-config[1]).
 
 --name-only::
 	Show only names of changed files.
@@ -231,6 +270,81 @@ ifdef::git-diff[]
 	This can be used to override configuration settings.
 endif::git-diff[]
 	It is the same as `--color=never`.
+
+--color-moved[=<mode>]::
+	Moved lines of code are colored differently.
+ifdef::git-diff[]
+	It can be changed by the `diff.colorMoved` configuration setting.
+endif::git-diff[]
+	The <mode> defaults to 'no' if the option is not given
+	and to 'zebra' if the option with no mode is given.
+	The mode must be one of:
++
+--
+no::
+	Moved lines are not highlighted.
+default::
+	Is a synonym for `zebra`. This may change to a more sensible mode
+	in the future.
+plain::
+	Any line that is added in one location and was removed
+	in another location will be colored with 'color.diff.newMoved'.
+	Similarly 'color.diff.oldMoved' will be used for removed lines
+	that are added somewhere else in the diff. This mode picks up any
+	moved line, but it is not very useful in a review to determine
+	if a block of code was moved without permutation.
+blocks::
+	Blocks of moved text of at least 20 alphanumeric characters
+	are detected greedily. The detected blocks are
+	painted using either the 'color.diff.{old,new}Moved' color.
+	Adjacent blocks cannot be told apart.
+zebra::
+	Blocks of moved text are detected as in 'blocks' mode. The blocks
+	are painted using either the 'color.diff.{old,new}Moved' color or
+	'color.diff.{old,new}MovedAlternative'. The change between
+	the two colors indicates that a new block was detected.
+dimmed-zebra::
+	Similar to 'zebra', but additional dimming of uninteresting parts
+	of moved code is performed. The bordering lines of two adjacent
+	blocks are considered interesting, the rest is uninteresting.
+	`dimmed_zebra` is a deprecated synonym.
+--
+
+--no-color-moved::
+	Turn off move detection. This can be used to override configuration
+	settings. It is the same as `--color-moved=no`.
+
+--color-moved-ws=<modes>::
+	This configures how whitespace is ignored when performing the
+	move detection for `--color-moved`.
+ifdef::git-diff[]
+	It can be set by the `diff.colorMovedWS` configuration setting.
+endif::git-diff[]
+	These modes can be given as a comma separated list:
++
+--
+no::
+	Do not ignore whitespace when performing move detection.
+ignore-space-at-eol::
+	Ignore changes in whitespace at EOL.
+ignore-space-change::
+	Ignore changes in amount of whitespace.  This ignores whitespace
+	at line end, and considers all other sequences of one or
+	more whitespace characters to be equivalent.
+ignore-all-space::
+	Ignore whitespace when comparing lines. This ignores differences
+	even if one line has whitespace where the other line has none.
+allow-indentation-change::
+	Initially ignore any whitespace in the move detection, then
+	group the moved code blocks only into a block if the change in
+	whitespace is the same per line. This is incompatible with the
+	other modes.
+--
+
+--no-color-moved-ws::
+	Do not ignore whitespace when performing move detection. This can be
+	used to override configuration settings. It is the same as
+	`--color-moved-ws=no`.
 
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
@@ -289,27 +403,29 @@ endif::git-format-patch[]
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
 
+--[no-]rename-empty::
+	Whether to use empty blobs as rename source.
+
 ifndef::git-format-patch[]
 --check::
 	Warn if changes introduce conflict markers or whitespace errors.
 	What are considered whitespace errors is controlled by `core.whitespace`
 	configuration.  By default, trailing whitespaces (including
-	lines that solely consist of whitespaces) and a space character
+	lines that consist solely of whitespaces) and a space character
 	that is immediately followed by a tab character inside the
 	initial indent of the line are considered whitespace errors.
 	Exits with non-zero status if problems are found. Not compatible
 	with --exit-code.
 
 --ws-error-highlight=<kind>::
-	Highlight whitespace errors on lines specified by <kind>
-	in the color specified by `color.diff.whitespace`.  <kind>
-	is a comma separated list of `old`, `new`, `context`.  When
-	this option is not given, only whitespace errors in `new`
-	lines are highlighted.  E.g. `--ws-error-highlight=new,old`
-	highlights whitespace errors on both deleted and added lines.
-	`all` can be used as a short-hand for `old,new,context`.
-	The `diff.wsErrorHighlight` configuration variable can be
-	used to specify the default behaviour.
+	Highlight whitespace errors in the `context`, `old` or `new`
+	lines of the diff.  Multiple values are separated by comma,
+	`none` resets previous values, `default` reset the list to
+	`new` and `all` is a shorthand for `old,new,context`.  When
+	this option is not given, and the configuration variable
+	`diff.wsErrorHighlight` is not set, only whitespace errors in
+	`new` lines are highlighted. The whitespace errors are colored
+	with `color.diff.whitespace`.
 
 endif::git-format-patch[]
 
@@ -320,7 +436,7 @@ endif::git-format-patch[]
 
 --binary::
 	In addition to `--full-index`, output a binary diff that
-	can be applied with `git-apply`.
+	can be applied with `git-apply`. Implies `--patch`.
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
@@ -393,7 +509,7 @@ endif::git-log[]
 	the diff between the preimage and `/dev/null`. The resulting patch
 	is not meant to be applied with `patch` or `git apply`; this is
 	solely for people who want to just concentrate on reviewing the
-	text after the change. In addition, the output obviously lack
+	text after the change. In addition, the output obviously lacks
 	enough information to apply such a patch in reverse, even manually,
 	hence the name of the option.
 +
@@ -422,6 +538,12 @@ ifndef::git-format-patch[]
 +
 Also, these upper-case letters can be downcased to exclude.  E.g.
 `--diff-filter=ad` excludes added and deleted paths.
++
+Note that not all diffs can feature all types. For instance, diffs
+from the index to the working tree can never have Added entries
+(because the set of paths included in the diff is limited by what is in
+the index).  Similarly, copied and renamed entries cannot appear if
+detection for those types is disabled.
 
 -S<string>::
 	Look for differences that change the number of occurrences of
@@ -433,6 +555,8 @@ struct), and want to know the history of that block since it first
 came into being: use the feature iteratively to feed the interesting
 block in the preimage back into `-S`, and keep going until you get the
 very first version of the block.
++
+Binary files are searched as well.
 
 -G<regex>::
 	Look for differences whose patch text contains added/removed
@@ -452,8 +576,20 @@ While `git log -G"regexec\(regexp"` will show this commit, `git log
 -S"regexec\(regexp" --pickaxe-regex` will not (because the number of
 occurrences of that string did not change).
 +
+Unless `--text` is supplied patches of binary files without a textconv
+filter will be ignored.
++
 See the 'pickaxe' entry in linkgit:gitdiffcore[7] for more
 information.
+
+--find-object=<object-id>::
+	Look for differences that change the number of occurrences of
+	the specified object. Similar to `-S`, just the argument is different
+	in that it doesn't search for a specific string but for a specific
+	object id.
++
+The object can be a blob or a submodule commit. It implies the `-t` option in
+`git-log` to also find trees.
 
 --pickaxe-all::
 	When `-S` or `-G` finds a change, show all the changes in that
@@ -463,14 +599,45 @@ information.
 --pickaxe-regex::
 	Treat the <string> given to `-S` as an extended POSIX regular
 	expression to match.
+
 endif::git-format-patch[]
 
 -O<orderfile>::
-	Output the patch in the order specified in the
-	<orderfile>, which has one shell glob pattern per line.
+	Control the order in which files appear in the output.
 	This overrides the `diff.orderFile` configuration variable
 	(see linkgit:git-config[1]).  To cancel `diff.orderFile`,
 	use `-O/dev/null`.
++
+The output order is determined by the order of glob patterns in
+<orderfile>.
+All files with pathnames that match the first pattern are output
+first, all files with pathnames that match the second pattern (but not
+the first) are output next, and so on.
+All files with pathnames that do not match any pattern are output
+last, as if there was an implicit match-all pattern at the end of the
+file.
+If multiple pathnames have the same rank (they match the same pattern
+but no earlier patterns), their output order relative to each other is
+the normal order.
++
+<orderfile> is parsed as follows:
++
+--
+ - Blank lines are ignored, so they can be used as separators for
+   readability.
+
+ - Lines starting with a hash ("`#`") are ignored, so they can be used
+   for comments.  Add a backslash ("`\`") to the beginning of the
+   pattern if it starts with a hash.
+
+ - Each other line contains a single pattern.
+--
++
+Patterns have the same syntax and semantics as patterns used for
+fnmatch(3) without the FNM_PATHNAME flag, except a pathname also
+matches a pattern if removing any number of the final pathname
+components matches the pattern.  For example, the pattern "`foo*bar`"
+matches "`fooasdfbar`" and "`foo/bar/baz/asdf`" but not "`foobarx`".
 
 ifndef::git-format-patch[]
 -R::
@@ -489,6 +656,9 @@ endif::git-format-patch[]
 -a::
 --text::
 	Treat all files as text.
+
+--ignore-cr-at-eol::
+	Ignore carriage-return at the end of line when doing a comparison.
 
 --ignore-space-at-eol::
 	Ignore changes in whitespace at EOL.
@@ -511,6 +681,8 @@ endif::git-format-patch[]
 --inter-hunk-context=<lines>::
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.
+	Defaults to `diff.interHunkContext` or 0 if the config option
+	is unset.
 
 -W::
 --function-context::

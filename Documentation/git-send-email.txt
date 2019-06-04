@@ -9,7 +9,7 @@ git-send-email - Send a collection of patches as emails
 SYNOPSIS
 --------
 [verse]
-'git send-email' [options] <file|directory|rev-list options>...
+'git send-email' [<options>] <file|directory|rev-list options>...
 'git send-email' --dump-aliases
 
 
@@ -33,7 +33,7 @@ This is what linkgit:git-format-patch[1] generates.  Most headers and MIME
 formatting are ignored.
 
 2. The original format used by Greg Kroah-Hartman's 'send_lots_of_email.pl'
-script
+   script
 +
 This format expects the first line of the file to contain the "Cc:" value
 and the "Subject:" of the message as the second line.
@@ -84,12 +84,17 @@ See the CONFIGURATION section for `sendemail.multiEdit`.
 	the value of GIT_AUTHOR_IDENT, or GIT_COMMITTER_IDENT if that is not
 	set, as returned by "git var -l".
 
+--reply-to=<address>::
+	Specify the address where replies from recipients should go to.
+	Use this if replies to messages should go to another address than what
+	is specified with the --from parameter.
+
 --in-reply-to=<identifier>::
 	Make the first mail (or all the mails with `--no-thread`) appear as a
 	reply to the given Message-Id, which avoids breaking threads to
 	provide a new patch series.
 	The second and subsequent emails will be sent as replies according to
-	the `--[no]-chain-reply-to` setting.
+	the `--[no-]chain-reply-to` setting.
 +
 So for example when `--thread` and `--no-chain-reply-to` are specified, the
 second and subsequent patches will be replies to the first one like in the
@@ -132,15 +137,17 @@ Note that no attempts whatsoever are made to validate the encoding.
 	Specify encoding of compose message. Default is the value of the
 	'sendemail.composeencoding'; if that is unspecified, UTF-8 is assumed.
 
---transfer-encoding=(7bit|8bit|quoted-printable|base64)::
+--transfer-encoding=(7bit|8bit|quoted-printable|base64|auto)::
 	Specify the transfer encoding to be used to send the message over SMTP.
 	7bit will fail upon encountering a non-ASCII message.  quoted-printable
 	can be useful when the repository contains files that contain carriage
 	returns, but makes the raw patch email file (as saved from a MUA) much
 	harder to inspect manually.  base64 is even more fool proof, but also
-	even more opaque.  Default is the value of the `sendemail.transferEncoding`
-	configuration value; if that is unspecified, git will use 8bit and not
-	add a Content-Transfer-Encoding header.
+	even more opaque.  auto will use 8bit when possible, and quoted-printable
+	otherwise.
++
+Default is the value of the `sendemail.transferEncoding` configuration
+value; if that is unspecified, default to `auto`.
 
 --xmailer::
 --no-xmailer::
@@ -183,7 +190,9 @@ $ git send-email --smtp-auth="PLAIN LOGIN GSSAPI" ...
 If at least one of the specified mechanisms matches the ones advertised by the
 SMTP server and if it is supported by the utilized SASL library, the mechanism
 is used for authentication. If neither 'sendemail.smtpAuth' nor `--smtp-auth`
-is specified, all mechanisms supported by the SASL library can be used.
+is specified, all mechanisms supported by the SASL library can be used. The
+special value 'none' maybe specified to completely disable authentication
+independently of `--smtp-user`
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
@@ -197,15 +206,18 @@ or on the command line. If a username has been specified (with
 specified (with `--smtp-pass` or `sendemail.smtpPass`), then
 a password is obtained using 'git-credential'.
 
+--no-smtp-auth::
+	Disable SMTP authentication. Short hand for `--smtp-auth=none`
+
 --smtp-server=<host>::
 	If set, specifies the outgoing SMTP server to use (e.g.
 	`smtp.example.com` or a raw IP address).  Alternatively it can
 	specify a full pathname of a sendmail-like program instead;
 	the program must support the `-i` option.  Default value can
 	be specified by the `sendemail.smtpServer` configuration
-	option; the built-in default is `/usr/sbin/sendmail` or
-	`/usr/lib/sendmail` if such program is available, or
-	`localhost` otherwise.
+	option; the built-in default is to search for `sendmail` in
+	`/usr/sbin`, `/usr/lib` and $PATH if such program is
+	available, falling back to `localhost` otherwise.
 
 --smtp-server-port=<port>::
 	Specifies a port different from the default port (SMTP
@@ -247,6 +259,21 @@ must be used for each option.
 	Enable (1) or disable (0) debug output. If enabled, SMTP
 	commands and replies will be printed. Useful to debug TLS
 	connection and authentication problems.
+
+--batch-size=<num>::
+	Some email servers (e.g. smtp.163.com) limit the number emails to be
+	sent per session (connection) and this will lead to a failure when
+	sending many messages.  With this option, send-email will disconnect after
+	sending $<num> messages and wait for a few seconds (see --relogin-delay)
+	and reconnect, to work around such a limit.  You may want to
+	use some form of credential helper to avoid having to retype
+	your password every time this happens.  Defaults to the
+	`sendemail.smtpBatchSize` configuration variable.
+
+--relogin-delay=<int>::
+	Waiting $<int> seconds before reconnecting to SMTP server. Used together
+	with --batch-size option.  Defaults to the `sendemail.smtpReloginDelay`
+	configuration variable.
 
 Automating
 ~~~~~~~~~~
@@ -299,16 +326,19 @@ Automating
 	auto-cc of:
 +
 --
-- 'author' will avoid including the patch author
-- 'self' will avoid including the sender
+- 'author' will avoid including the patch author.
+- 'self' will avoid including the sender.
 - 'cc' will avoid including anyone mentioned in Cc lines in the patch header
   except for self (use 'self' for that).
 - 'bodycc' will avoid including anyone mentioned in Cc lines in the
   patch body (commit message) except for self (use 'self' for that).
 - 'sob' will avoid including anyone mentioned in Signed-off-by lines except
-   for self (use 'self' for that).
+  for self (use 'self' for that).
+- 'misc-by' will avoid including anyone mentioned in Acked-by,
+  Reviewed-by, Tested-by and other "-by" lines in the patch body,
+  except Signed-off-by (use 'sob' for that).
 - 'cccmd' will avoid running the --cc-cmd.
-- 'body' is equivalent to 'sob' + 'bodycc'
+- 'body' is equivalent to 'sob' + 'bodycc' + 'misc-by'.
 - 'all' will suppress all auto cc values.
 --
 +
@@ -377,8 +407,12 @@ have been specified, in which case default to 'compose'.
 	Currently, validation means the following:
 +
 --
-		*	Warn of patches that contain lines longer than 998 characters; this
-			is due to SMTP limits as described by http://www.ietf.org/rfc/rfc2821.txt.
+		*	Invoke the sendemail-validate hook if present (see linkgit:githooks[5]).
+		*	Warn of patches that contain lines longer than
+			998 characters unless a suitable transfer encoding
+			('auto', 'base64', or 'quoted-printable') is used;
+			this is due to SMTP limits as described by
+			http://www.ietf.org/rfc/rfc5322.txt.
 --
 +
 Default is the value of `sendemail.validate`; if this is not set,
@@ -437,8 +471,8 @@ sendemail.confirm::
 	one of 'always', 'never', 'cc', 'compose', or 'auto'. See `--confirm`
 	in the previous section for the meaning of these values.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 Use gmail as the smtp server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To use 'git send-email' to send your patches through the GMail SMTP server,
@@ -452,16 +486,7 @@ edit ~/.gitconfig to specify your account settings:
 
 If you have multifactor authentication setup on your gmail account, you will
 need to generate an app-specific password for use with 'git send-email'. Visit
-https://security.google.com/settings/security/apppasswords to setup an
-app-specific password.  Once setup, you can store it with the credentials
-helper:
-
-	$ git credential fill
-	protocol=smtp
-	host=smtp.gmail.com
-	username=youname@gmail.com
-	password=app-password
-
+https://security.google.com/settings/security/apppasswords to create it.
 
 Once your commits are ready to be sent to the mailing list, run the
 following commands:
@@ -469,6 +494,11 @@ following commands:
 	$ git format-patch --cover-letter -M origin/master -o outgoing/
 	$ edit outgoing/0000-*
 	$ git send-email outgoing/*
+
+The first time you run it, you will be prompted for your credentials.  Enter the
+app-specific or your regular password as appropriate.  If you have credential
+helper configured (see linkgit:git-credential[1]), the password will be saved in
+the credential store so you won't have to type it the next time.
 
 Note: the following perl modules are required
       Net::SMTP::SSL, MIME::Base64 and Authen::SASL

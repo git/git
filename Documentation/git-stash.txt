@@ -9,12 +9,13 @@ SYNOPSIS
 --------
 [verse]
 'git stash' list [<options>]
-'git stash' show [<stash>]
+'git stash' show [<options>] [<stash>]
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]
-	     [-u|--include-untracked] [-a|--all] [<message>]]
+'git stash' [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]
+	     [-u|--include-untracked] [-a|--all] [-m|--message <message>]
+	     [--] [<pathspec>...]]
 'git stash' clear
 'git stash' create [<message>]
 'git stash' store [-m|--message <message>] [-q|--quiet] <commit>
@@ -30,7 +31,7 @@ and reverts the working directory to match the `HEAD` commit.
 The modifications stashed away by this command can be listed with
 `git stash list`, inspected with `git stash show`, and restored
 (potentially on top of a different commit) with `git stash apply`.
-Calling `git stash` without any arguments is equivalent to `git stash save`.
+Calling `git stash` without any arguments is equivalent to `git stash push`.
 A stash is by default listed as "WIP on 'branchname' ...", but
 you can give a more descriptive message on the command line when
 you create one.
@@ -45,14 +46,24 @@ stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 OPTIONS
 -------
 
-save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
+push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--] [<pathspec>...]::
 
-	Save your local modifications to a new 'stash', and run `git reset
-	--hard` to revert them.  The <message> part is optional and gives
-	the description along with the stashed state.  For quickly making
-	a snapshot, you can omit _both_ "save" and <message>, but giving
-	only <message> does not trigger this action to prevent a misspelled
-	subcommand from making an unwanted stash.
+	Save your local modifications to a new 'stash entry' and roll them
+	back to HEAD (in the working tree and in the index).
+	The <message> part is optional and gives
+	the description along with the stashed state.
++
+For quickly making a snapshot, you can omit "push".  In this mode,
+non-option arguments are not allowed to prevent a misspelled
+subcommand from making an unwanted stash entry.  The two exceptions to this
+are `stash -p` which acts as alias for `stash push -p` and pathspecs,
+which are allowed after a double hyphen `--` for disambiguation.
++
+When pathspec is given to 'git stash push', the new stash entry records the
+modified states only for the files that match the pathspec.  The index
+entries and working tree files are then rolled back to the state in
+HEAD only for these files, too, leaving files that do not match the
+pathspec intact.
 +
 If the `--keep-index` option is used, all changes already added to the
 index are left intact.
@@ -73,12 +84,18 @@ linkgit:git-add[1] to learn how to operate the `--patch` mode.
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
+save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
+
+	This option is deprecated in favour of 'git stash push'.  It
+	differs from "stash push" in that it cannot take pathspecs,
+	and any non-option arguments form the message.
+
 list [<options>]::
 
-	List the stashes that you currently have.  Each 'stash' is listed
-	with its name (e.g. `stash@{0}` is the latest stash, `stash@{1}` is
+	List the stash entries that you currently have.  Each 'stash entry' is
+	listed with its name (e.g. `stash@{0}` is the latest entry, `stash@{1}` is
 	the one before, etc.), the name of the branch that was current when the
-	stash was made, and a short description of the commit the stash was
+	entry was made, and a short description of the commit the entry was
 	based on.
 +
 ----------------------------------------------------------------
@@ -89,13 +106,14 @@ stash@{1}: On master: 9cc0589... Add git-stash
 The command takes options applicable to the 'git log'
 command to control what is shown and how. See linkgit:git-log[1].
 
-show [<stash>]::
+show [<options>] [<stash>]::
 
-	Show the changes recorded in the stash as a diff between the
-	stashed state and its original parent. When no `<stash>` is given,
-	shows the latest one. By default, the command shows the diffstat, but
-	it will accept any format known to 'git diff' (e.g., `git stash show
-	-p stash@{1}` to view the second most recent stash in patch form).
+	Show the changes recorded in the stash entry as a diff between the
+	stashed contents and the commit back when the stash entry was first
+	created. When no `<stash>` is given, it shows the latest one.
+	By default, the command shows the diffstat, but it will accept any
+	format known to 'git diff' (e.g., `git stash show -p stash@{1}`
+	to view the second most recent entry in patch form).
 	You can use stash.showStat and/or stash.showPatch config variables
 	to change the default behavior.
 
@@ -103,7 +121,7 @@ pop [--index] [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list and apply it
 	on top of the current working tree state, i.e., do the inverse
-	operation of `git stash save`. The working directory must
+	operation of `git stash push`. The working directory must
 	match the index.
 +
 Applying the state can fail with conflicts; in this case, it is not
@@ -122,7 +140,7 @@ apply [--index] [-q|--quiet] [<stash>]::
 
 	Like `pop`, but do not remove the state from the stash list. Unlike `pop`,
 	`<stash>` may be any commit that looks like a commit created by
-	`stash save` or `stash create`.
+	`stash push` or `stash create`.
 
 branch <branchname> [<stash>]::
 
@@ -133,45 +151,46 @@ branch <branchname> [<stash>]::
 	`stash@{<revision>}`, it then drops the `<stash>`. When no `<stash>`
 	is given, applies the latest one.
 +
-This is useful if the branch on which you ran `git stash save` has
+This is useful if the branch on which you ran `git stash push` has
 changed enough that `git stash apply` fails due to conflicts. Since
-the stash is applied on top of the commit that was HEAD at the time
-`git stash` was run, it restores the originally stashed state with
-no conflicts.
+the stash entry is applied on top of the commit that was HEAD at the
+time `git stash` was run, it restores the originally stashed state
+with no conflicts.
 
 clear::
-	Remove all the stashed states. Note that those states will then
+	Remove all the stash entries. Note that those entries will then
 	be subject to pruning, and may be impossible to recover (see
 	'Examples' below for a possible strategy).
 
 drop [-q|--quiet] [<stash>]::
 
-	Remove a single stashed state from the stash list. When no `<stash>`
-	is given, it removes the latest one. i.e. `stash@{0}`, otherwise
-	`<stash>` must be a valid stash log reference of the form
-	`stash@{<revision>}`.
+	Remove a single stash entry from the list of stash entries.
+	When no `<stash>` is given, it removes the latest one.
+	i.e. `stash@{0}`, otherwise `<stash>` must be a valid stash
+	log reference of the form `stash@{<revision>}`.
 
 create::
 
-	Create a stash (which is a regular commit object) and return its
-	object name, without storing it anywhere in the ref namespace.
+	Create a stash entry (which is a regular commit object) and
+	return its object name, without storing it anywhere in the ref
+	namespace.
 	This is intended to be useful for scripts.  It is probably not
-	the command you want to use; see "save" above.
+	the command you want to use; see "push" above.
 
 store::
 
 	Store a given stash created via 'git stash create' (which is a
 	dangling merge commit) in the stash ref, updating the stash
 	reflog.  This is intended to be useful for scripts.  It is
-	probably not the command you want to use; see "save" above.
+	probably not the command you want to use; see "push" above.
 
 DISCUSSION
 ----------
 
-A stash is represented as a commit whose tree records the state of the
-working directory, and its first parent is the commit at `HEAD` when
-the stash was created.  The tree of the second parent records the
-state of the index when the stash is made, and it is made a child of
+A stash entry is represented as a commit whose tree records the state
+of the working directory, and its first parent is the commit at `HEAD`
+when the entry was created.  The tree of the second parent records the
+state of the index when the entry is made, and it is made a child of
 the `HEAD` commit.  The ancestry graph looks like this:
 
             .----W
@@ -239,14 +258,14 @@ $ git stash pop
 
 Testing partial commits::
 
-You can use `git stash save --keep-index` when you want to make two or
+You can use `git stash push --keep-index` when you want to make two or
 more commits out of the changes in the work tree, and you want to test
 each change before committing:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
 $ git add --patch foo            # add just first part to the index
-$ git stash save --keep-index    # save all other changes to the stash
+$ git stash push --keep-index    # save all other changes to the stash
 $ edit/build/test first part
 $ git commit -m 'First part'     # commit fully tested change
 $ git stash pop                  # prepare to work on all other changes
@@ -255,12 +274,12 @@ $ edit/build/test remaining parts
 $ git commit foo -m 'Remaining parts'
 ----------------------------------------------------------------
 
-Recovering stashes that were cleared/dropped erroneously::
+Recovering stash entries that were cleared/dropped erroneously::
 
-If you mistakenly drop or clear stashes, they cannot be recovered
+If you mistakenly drop or clear stash entries, they cannot be recovered
 through the normal safety mechanisms.  However, you can try the
-following incantation to get a list of stashes that are still in your
-repository, but not reachable any more:
+following incantation to get a list of stash entries that are still in
+your repository, but not reachable any more:
 +
 ----------------------------------------------------------------
 git fsck --unreachable |

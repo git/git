@@ -43,8 +43,10 @@ void syslog(int priority, const char *fmt, ...)
 	va_end(ap);
 
 	while ((pos = strstr(str, "%1")) != NULL) {
+		char *oldstr = str;
 		str = realloc(str, st_add(++str_len, 1));
 		if (!str) {
+			free(oldstr);
 			warning_errno("realloc failed");
 			return;
 		}

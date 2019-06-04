@@ -1,10 +1,12 @@
 #include "cache.h"
 #include "run-command.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "sigchain.h"
 #include "argv-array.h"
 #include "thread-utils.h"
 #include "strbuf.h"
+#include "string-list.h"
+#include "quote.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -29,6 +31,8 @@ static int installed_child_cleanup_handler;
 
 static void cleanup_children(int sig, int in_signal)
 {
+	struct child_to_clean *children_to_wait_for = NULL;
+
 	while (children_to_clean) {
 		struct child_to_clean *p = children_to_clean;
 		children_to_clean = p->next;
@@ -45,6 +49,23 @@ static void cleanup_children(int sig, int in_signal)
 		}
 
 		kill(p->pid, sig);
+
+		if (p->process && p->process->wait_after_clean) {
+			p->next = children_to_wait_for;
+			children_to_wait_for = p;
+		} else {
+			if (!in_signal)
+				free(p);
+		}
+	}
+
+	while (children_to_wait_for) {
+		struct child_to_clean *p = children_to_wait_for;
+		children_to_wait_for = p->next;
+
+		while (waitpid(p->pid, NULL, 0) < 0 && errno == EINTR)
+			; /* spin waiting for process exit or error */
+
 		if (!in_signal)
 			free(p);
 	}
@@ -98,18 +119,65 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
-#ifndef GIT_WINDOWS_NATIVE
-static inline void dup_devnull(int to)
+int is_executable(const char *name)
 {
-	int fd = open("/dev/null", O_RDWR);
-	if (fd < 0)
-		die_errno(_("open /dev/null failed"));
-	if (dup2(fd, to) < 0)
-		die_errno(_("dup2(%d,%d) failed"), fd, to);
-	close(fd);
+	struct stat st;
+
+	if (stat(name, &st) || /* stat, not lstat */
+	    !S_ISREG(st.st_mode))
+		return 0;
+
+#if defined(GIT_WINDOWS_NATIVE)
+	/*
+	 * On Windows there is no executable bit. The file extension
+	 * indicates whether it can be run as an executable, and Git
+	 * has special-handling to detect scripts and launch them
+	 * through the indicated script interpreter. We test for the
+	 * file extension first because virus scanners may make
+	 * it quite expensive to open many files.
+	 */
+	if (ends_with(name, ".exe"))
+		return S_IXUSR;
+
+{
+	/*
+	 * Now that we know it does not have an executable extension,
+	 * peek into the file instead.
+	 */
+	char buf[3] = { 0 };
+	int n;
+	int fd = open(name, O_RDONLY);
+	st.st_mode &= ~S_IXUSR;
+	if (fd >= 0) {
+		n = read(fd, buf, 2);
+		if (n == 2)
+			/* look for a she-bang */
+			if (!strcmp(buf, "#!"))
+				st.st_mode |= S_IXUSR;
+		close(fd);
+	}
 }
 #endif
+	return st.st_mode & S_IXUSR;
+}
 
+/*
+ * Search $PATH for a command.  This emulates the path search that
+ * execvp would perform, without actually executing the command so it
+ * can be used before fork() to prepare to run a command using
+ * execve() or after execvp() to diagnose why it failed.
+ *
+ * The caller should ensure that file contains no directory
+ * separators.
+ *
+ * Returns the path to the command, as found in $PATH or NULL if the
+ * command could not be found.  The caller inherits ownership of the memory
+ * used to store the resultant path.
+ *
+ * This should not be used on Windows, where the $PATH search rules
+ * are more complicated (e.g., a search for "foo" should find
+ * "foo.exe").
+ */
 static char *locate_in_PATH(const char *file)
 {
 	const char *p = getenv("PATH");
@@ -130,7 +198,7 @@ static char *locate_in_PATH(const char *file)
 		}
 		strbuf_addstr(&buf, file);
 
-		if (!access(buf.buf, F_OK))
+		if (is_executable(buf.buf))
 			return strbuf_detach(&buf, NULL);
 
 		if (!*end)
@@ -151,8 +219,28 @@ static int exists_in_PATH(const char *file)
 
 int sane_execvp(const char *file, char * const argv[])
 {
+#ifndef GIT_WINDOWS_NATIVE
+	/*
+	 * execvp() doesn't return, so we all we can do is tell trace2
+	 * what we are about to do and let it leave a hint in the log
+	 * (unless of course the execvp() fails).
+	 *
+	 * we skip this for Windows because the compat layer already
+	 * has to emulate the execvp() call anyway.
+	 */
+	int exec_id = trace2_exec(file, (const char **)argv);
+#endif
+
 	if (!execvp(file, argv))
 		return 0; /* cannot happen ;-) */
+
+#ifndef GIT_WINDOWS_NATIVE
+	{
+		int ec = errno;
+		trace2_exec_result(exec_id, ec);
+		errno = ec;
+	}
+#endif
 
 	/*
 	 * When a command can't be found because one of the directories
@@ -177,7 +265,7 @@ int sane_execvp(const char *file, char * const argv[])
 static const char **prepare_shell_cmd(struct argv_array *out, const char **argv)
 {
 	if (!argv[0])
-		die("BUG: shell command is empty");
+		BUG("shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
 #ifndef GIT_WINDOWS_NATIVE
@@ -202,30 +290,250 @@ static const char **prepare_shell_cmd(struct argv_array *out, const char **argv)
 }
 
 #ifndef GIT_WINDOWS_NATIVE
-static int execv_shell_cmd(const char **argv)
-{
-	struct argv_array nargv = ARGV_ARRAY_INIT;
-	prepare_shell_cmd(&nargv, argv);
-	trace_argv_printf(nargv.argv, "trace: exec:");
-	sane_execvp(nargv.argv[0], (char **)nargv.argv);
-	argv_array_clear(&nargv);
-	return -1;
-}
-#endif
-
-#ifndef GIT_WINDOWS_NATIVE
 static int child_notifier = -1;
 
-static void notify_parent(void)
+enum child_errcode {
+	CHILD_ERR_CHDIR,
+	CHILD_ERR_DUP2,
+	CHILD_ERR_CLOSE,
+	CHILD_ERR_SIGPROCMASK,
+	CHILD_ERR_ENOENT,
+	CHILD_ERR_SILENT,
+	CHILD_ERR_ERRNO
+};
+
+struct child_err {
+	enum child_errcode err;
+	int syserr; /* errno */
+};
+
+static void child_die(enum child_errcode err)
 {
-	/*
-	 * execvp failed.  If possible, we'd like to let start_command
-	 * know, so failures like ENOENT can be handled right away; but
-	 * otherwise, finish_command will still report the error.
-	 */
-	xwrite(child_notifier, "", 1);
+	struct child_err buf;
+
+	buf.err = err;
+	buf.syserr = errno;
+
+	/* write(2) on buf smaller than PIPE_BUF (min 512) is atomic: */
+	xwrite(child_notifier, &buf, sizeof(buf));
+	_exit(1);
 }
+
+static void child_dup2(int fd, int to)
+{
+	if (dup2(fd, to) < 0)
+		child_die(CHILD_ERR_DUP2);
+}
+
+static void child_close(int fd)
+{
+	if (close(fd))
+		child_die(CHILD_ERR_CLOSE);
+}
+
+static void child_close_pair(int fd[2])
+{
+	child_close(fd[0]);
+	child_close(fd[1]);
+}
+
+/*
+ * parent will make it look like the child spewed a fatal error and died
+ * this is needed to prevent changes to t0061.
+ */
+static void fake_fatal(const char *err, va_list params)
+{
+	vreportf("fatal: ", err, params);
+}
+
+static void child_error_fn(const char *err, va_list params)
+{
+	const char msg[] = "error() should not be called in child\n";
+	xwrite(2, msg, sizeof(msg) - 1);
+}
+
+static void child_warn_fn(const char *err, va_list params)
+{
+	const char msg[] = "warn() should not be called in child\n";
+	xwrite(2, msg, sizeof(msg) - 1);
+}
+
+static void NORETURN child_die_fn(const char *err, va_list params)
+{
+	const char msg[] = "die() should not be called in child\n";
+	xwrite(2, msg, sizeof(msg) - 1);
+	_exit(2);
+}
+
+/* this runs in the parent process */
+static void child_err_spew(struct child_process *cmd, struct child_err *cerr)
+{
+	static void (*old_errfn)(const char *err, va_list params);
+
+	old_errfn = get_error_routine();
+	set_error_routine(fake_fatal);
+	errno = cerr->syserr;
+
+	switch (cerr->err) {
+	case CHILD_ERR_CHDIR:
+		error_errno("exec '%s': cd to '%s' failed",
+			    cmd->argv[0], cmd->dir);
+		break;
+	case CHILD_ERR_DUP2:
+		error_errno("dup2() in child failed");
+		break;
+	case CHILD_ERR_CLOSE:
+		error_errno("close() in child failed");
+		break;
+	case CHILD_ERR_SIGPROCMASK:
+		error_errno("sigprocmask failed restoring signals");
+		break;
+	case CHILD_ERR_ENOENT:
+		error_errno("cannot run %s", cmd->argv[0]);
+		break;
+	case CHILD_ERR_SILENT:
+		break;
+	case CHILD_ERR_ERRNO:
+		error_errno("cannot exec '%s'", cmd->argv[0]);
+		break;
+	}
+	set_error_routine(old_errfn);
+}
+
+static int prepare_cmd(struct argv_array *out, const struct child_process *cmd)
+{
+	if (!cmd->argv[0])
+		BUG("command is empty");
+
+	/*
+	 * Add SHELL_PATH so in the event exec fails with ENOEXEC we can
+	 * attempt to interpret the command with 'sh'.
+	 */
+	argv_array_push(out, SHELL_PATH);
+
+	if (cmd->git_cmd) {
+		argv_array_push(out, "git");
+		argv_array_pushv(out, cmd->argv);
+	} else if (cmd->use_shell) {
+		prepare_shell_cmd(out, cmd->argv);
+	} else {
+		argv_array_pushv(out, cmd->argv);
+	}
+
+	/*
+	 * If there are no '/' characters in the command then perform a path
+	 * lookup and use the resolved path as the command to exec.  If there
+	 * are '/' characters, we have exec attempt to invoke the command
+	 * directly.
+	 */
+	if (!strchr(out->argv[1], '/')) {
+		char *program = locate_in_PATH(out->argv[1]);
+		if (program) {
+			free((char *)out->argv[1]);
+			out->argv[1] = program;
+		} else {
+			argv_array_clear(out);
+			errno = ENOENT;
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static char **prep_childenv(const char *const *deltaenv)
+{
+	extern char **environ;
+	char **childenv;
+	struct string_list env = STRING_LIST_INIT_DUP;
+	struct strbuf key = STRBUF_INIT;
+	const char *const *p;
+	int i;
+
+	/* Construct a sorted string list consisting of the current environ */
+	for (p = (const char *const *) environ; p && *p; p++) {
+		const char *equals = strchr(*p, '=');
+
+		if (equals) {
+			strbuf_reset(&key);
+			strbuf_add(&key, *p, equals - *p);
+			string_list_append(&env, key.buf)->util = (void *) *p;
+		} else {
+			string_list_append(&env, *p)->util = (void *) *p;
+		}
+	}
+	string_list_sort(&env);
+
+	/* Merge in 'deltaenv' with the current environ */
+	for (p = deltaenv; p && *p; p++) {
+		const char *equals = strchr(*p, '=');
+
+		if (equals) {
+			/* ('key=value'), insert or replace entry */
+			strbuf_reset(&key);
+			strbuf_add(&key, *p, equals - *p);
+			string_list_insert(&env, key.buf)->util = (void *) *p;
+		} else {
+			/* otherwise ('key') remove existing entry */
+			string_list_remove(&env, *p, 0);
+		}
+	}
+
+	/* Create an array of 'char *' to be used as the childenv */
+	ALLOC_ARRAY(childenv, env.nr + 1);
+	for (i = 0; i < env.nr; i++)
+		childenv[i] = env.items[i].util;
+	childenv[env.nr] = NULL;
+
+	string_list_clear(&env, 0);
+	strbuf_release(&key);
+	return childenv;
+}
+
+struct atfork_state {
+#ifndef NO_PTHREADS
+	int cs;
 #endif
+	sigset_t old;
+};
+
+#define CHECK_BUG(err, msg) \
+	do { \
+		int e = (err); \
+		if (e) \
+			BUG("%s: %s", msg, strerror(e)); \
+	} while(0)
+
+static void atfork_prepare(struct atfork_state *as)
+{
+	sigset_t all;
+
+	if (sigfillset(&all))
+		die_errno("sigfillset");
+#ifdef NO_PTHREADS
+	if (sigprocmask(SIG_SETMASK, &all, &as->old))
+		die_errno("sigprocmask");
+#else
+	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &all, &as->old),
+		"blocking all signals");
+	CHECK_BUG(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &as->cs),
+		"disabling cancellation");
+#endif
+}
+
+static void atfork_parent(struct atfork_state *as)
+{
+#ifdef NO_PTHREADS
+	if (sigprocmask(SIG_SETMASK, &as->old, NULL))
+		die_errno("sigprocmask");
+#else
+	CHECK_BUG(pthread_setcancelstate(as->cs, NULL),
+		"re-enabling cancellation");
+	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &as->old, NULL),
+		"restoring signal mask");
+#endif
+}
+#endif /* GIT_WINDOWS_NATIVE */
 
 static inline void set_cloexec(int fd)
 {
@@ -262,13 +570,6 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 		code += 128;
 	} else if (WIFEXITED(status)) {
 		code = WEXITSTATUS(status);
-		/*
-		 * Convert special exit code when execvp failed.
-		 */
-		if (code == 127) {
-			code = -1;
-			failed_errno = ENOENT;
-		}
 	} else {
 		error("waitpid is confused (%s)", argv0);
 	}
@@ -277,6 +578,90 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 
 	errno = failed_errno;
 	return code;
+}
+
+static void trace_add_env(struct strbuf *dst, const char *const *deltaenv)
+{
+	struct string_list envs = STRING_LIST_INIT_DUP;
+	const char *const *e;
+	int i;
+	int printed_unset = 0;
+
+	/* Last one wins, see run-command.c:prep_childenv() for context */
+	for (e = deltaenv; e && *e; e++) {
+		struct strbuf key = STRBUF_INIT;
+		char *equals = strchr(*e, '=');
+
+		if (equals) {
+			strbuf_add(&key, *e, equals - *e);
+			string_list_insert(&envs, key.buf)->util = equals + 1;
+		} else {
+			string_list_insert(&envs, *e)->util = NULL;
+		}
+		strbuf_release(&key);
+	}
+
+	/* "unset X Y...;" */
+	for (i = 0; i < envs.nr; i++) {
+		const char *var = envs.items[i].string;
+		const char *val = envs.items[i].util;
+
+		if (val || !getenv(var))
+			continue;
+
+		if (!printed_unset) {
+			strbuf_addstr(dst, " unset");
+			printed_unset = 1;
+		}
+		strbuf_addf(dst, " %s", var);
+	}
+	if (printed_unset)
+		strbuf_addch(dst, ';');
+
+	/* ... followed by "A=B C=D ..." */
+	for (i = 0; i < envs.nr; i++) {
+		const char *var = envs.items[i].string;
+		const char *val = envs.items[i].util;
+		const char *oldval;
+
+		if (!val)
+			continue;
+
+		oldval = getenv(var);
+		if (oldval && !strcmp(val, oldval))
+			continue;
+
+		strbuf_addf(dst, " %s=", var);
+		sq_quote_buf_pretty(dst, val);
+	}
+	string_list_clear(&envs, 0);
+}
+
+static void trace_run_command(const struct child_process *cp)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!trace_want(&trace_default_key))
+		return;
+
+	strbuf_addstr(&buf, "trace: run_command:");
+	if (cp->dir) {
+		strbuf_addstr(&buf, " cd ");
+		sq_quote_buf_pretty(&buf, cp->dir);
+		strbuf_addch(&buf, ';');
+	}
+	/*
+	 * The caller is responsible for initializing cp->env from
+	 * cp->env_array if needed. We only check one place.
+	 */
+	if (cp->env)
+		trace_add_env(&buf, cp->env);
+	if (cp->git_cmd)
+		strbuf_addstr(&buf, " git");
+	sq_quote_argv_pretty(&buf, cp->argv);
+
+	trace_printf("%s", buf.buf);
+	strbuf_release(&buf);
 }
 
 int start_command(struct child_process *cmd)
@@ -347,116 +732,167 @@ fail_pipe:
 		cmd->err = fderr[0];
 	}
 
-	trace_argv_printf(cmd->argv, "trace: run_command:");
+	trace2_child_start(cmd);
+	trace_run_command(cmd);
+
 	fflush(NULL);
 
 #ifndef GIT_WINDOWS_NATIVE
 {
 	int notify_pipe[2];
+	int null_fd = -1;
+	char **childenv;
+	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct child_err cerr;
+	struct atfork_state as;
+
+	if (prepare_cmd(&argv, cmd) < 0) {
+		failed_errno = errno;
+		cmd->pid = -1;
+		if (!cmd->silent_exec_failure)
+			error_errno("cannot run %s", cmd->argv[0]);
+		goto end_of_spawn;
+	}
+
 	if (pipe(notify_pipe))
 		notify_pipe[0] = notify_pipe[1] = -1;
 
+	if (cmd->no_stdin || cmd->no_stdout || cmd->no_stderr) {
+		null_fd = open("/dev/null", O_RDWR | O_CLOEXEC);
+		if (null_fd < 0)
+			die_errno(_("open /dev/null failed"));
+		set_cloexec(null_fd);
+	}
+
+	childenv = prep_childenv(cmd->env);
+	atfork_prepare(&as);
+
+	/*
+	 * NOTE: In order to prevent deadlocking when using threads special
+	 * care should be taken with the function calls made in between the
+	 * fork() and exec() calls.  No calls should be made to functions which
+	 * require acquiring a lock (e.g. malloc) as the lock could have been
+	 * held by another thread at the time of forking, causing the lock to
+	 * never be released in the child process.  This means only
+	 * Async-Signal-Safe functions are permitted in the child.
+	 */
 	cmd->pid = fork();
 	failed_errno = errno;
 	if (!cmd->pid) {
+		int sig;
 		/*
-		 * Redirect the channel to write syscall error messages to
-		 * before redirecting the process's stderr so that all die()
-		 * in subsequent call paths use the parent's stderr.
+		 * Ensure the default die/error/warn routines do not get
+		 * called, they can take stdio locks and malloc.
 		 */
-		if (cmd->no_stderr || need_err) {
-			int child_err = dup(2);
-			set_cloexec(child_err);
-			set_error_handle(fdopen(child_err, "w"));
-		}
+		set_die_routine(child_die_fn);
+		set_error_routine(child_error_fn);
+		set_warn_routine(child_warn_fn);
 
 		close(notify_pipe[0]);
 		set_cloexec(notify_pipe[1]);
 		child_notifier = notify_pipe[1];
-		atexit(notify_parent);
 
 		if (cmd->no_stdin)
-			dup_devnull(0);
+			child_dup2(null_fd, 0);
 		else if (need_in) {
-			dup2(fdin[0], 0);
-			close_pair(fdin);
+			child_dup2(fdin[0], 0);
+			child_close_pair(fdin);
 		} else if (cmd->in) {
-			dup2(cmd->in, 0);
-			close(cmd->in);
+			child_dup2(cmd->in, 0);
+			child_close(cmd->in);
 		}
 
 		if (cmd->no_stderr)
-			dup_devnull(2);
+			child_dup2(null_fd, 2);
 		else if (need_err) {
-			dup2(fderr[1], 2);
-			close_pair(fderr);
+			child_dup2(fderr[1], 2);
+			child_close_pair(fderr);
 		} else if (cmd->err > 1) {
-			dup2(cmd->err, 2);
-			close(cmd->err);
+			child_dup2(cmd->err, 2);
+			child_close(cmd->err);
 		}
 
 		if (cmd->no_stdout)
-			dup_devnull(1);
+			child_dup2(null_fd, 1);
 		else if (cmd->stdout_to_stderr)
-			dup2(2, 1);
+			child_dup2(2, 1);
 		else if (need_out) {
-			dup2(fdout[1], 1);
-			close_pair(fdout);
+			child_dup2(fdout[1], 1);
+			child_close_pair(fdout);
 		} else if (cmd->out > 1) {
-			dup2(cmd->out, 1);
-			close(cmd->out);
+			child_dup2(cmd->out, 1);
+			child_close(cmd->out);
 		}
 
 		if (cmd->dir && chdir(cmd->dir))
-			die_errno("exec '%s': cd to '%s' failed", cmd->argv[0],
-			    cmd->dir);
-		if (cmd->env) {
-			for (; *cmd->env; cmd->env++) {
-				if (strchr(*cmd->env, '='))
-					putenv((char *)*cmd->env);
-				else
-					unsetenv(*cmd->env);
-			}
+			child_die(CHILD_ERR_CHDIR);
+
+		/*
+		 * restore default signal handlers here, in case
+		 * we catch a signal right before execve below
+		 */
+		for (sig = 1; sig < NSIG; sig++) {
+			/* ignored signals get reset to SIG_DFL on execve */
+			if (signal(sig, SIG_DFL) == SIG_IGN)
+				signal(sig, SIG_IGN);
 		}
-		if (cmd->git_cmd)
-			execv_git_cmd(cmd->argv);
-		else if (cmd->use_shell)
-			execv_shell_cmd(cmd->argv);
-		else
-			sane_execvp(cmd->argv[0], (char *const*) cmd->argv);
+
+		if (sigprocmask(SIG_SETMASK, &as.old, NULL) != 0)
+			child_die(CHILD_ERR_SIGPROCMASK);
+
+		/*
+		 * Attempt to exec using the command and arguments starting at
+		 * argv.argv[1].  argv.argv[0] contains SHELL_PATH which will
+		 * be used in the event exec failed with ENOEXEC at which point
+		 * we will try to interpret the command using 'sh'.
+		 */
+		execve(argv.argv[1], (char *const *) argv.argv + 1,
+		       (char *const *) childenv);
+		if (errno == ENOEXEC)
+			execve(argv.argv[0], (char *const *) argv.argv,
+			       (char *const *) childenv);
+
 		if (errno == ENOENT) {
-			if (!cmd->silent_exec_failure)
-				error("cannot run %s: %s", cmd->argv[0],
-					strerror(ENOENT));
-			exit(127);
+			if (cmd->silent_exec_failure)
+				child_die(CHILD_ERR_SILENT);
+			child_die(CHILD_ERR_ENOENT);
 		} else {
-			die_errno("cannot exec '%s'", cmd->argv[0]);
+			child_die(CHILD_ERR_ERRNO);
 		}
 	}
+	atfork_parent(&as);
 	if (cmd->pid < 0)
 		error_errno("cannot fork() for %s", cmd->argv[0]);
 	else if (cmd->clean_on_exit)
 		mark_child_for_cleanup(cmd->pid, cmd);
 
 	/*
-	 * Wait for child's execvp. If the execvp succeeds (or if fork()
+	 * Wait for child's exec. If the exec succeeds (or if fork()
 	 * failed), EOF is seen immediately by the parent. Otherwise, the
-	 * child process sends a single byte.
+	 * child process sends a child_err struct.
 	 * Note that use of this infrastructure is completely advisory,
 	 * therefore, we keep error checks minimal.
 	 */
 	close(notify_pipe[1]);
-	if (read(notify_pipe[0], &notify_pipe[1], 1) == 1) {
+	if (xread(notify_pipe[0], &cerr, sizeof(cerr)) == sizeof(cerr)) {
 		/*
-		 * At this point we know that fork() succeeded, but execvp()
+		 * At this point we know that fork() succeeded, but exec()
 		 * failed. Errors have been reported to our stderr.
 		 */
 		wait_or_whine(cmd->pid, cmd->argv[0], 0);
+		child_err_spew(cmd, &cerr);
 		failed_errno = errno;
 		cmd->pid = -1;
 	}
 	close(notify_pipe[0]);
+
+	if (null_fd >= 0)
+		close(null_fd);
+	argv_array_clear(&argv);
+	free(childenv);
 }
+end_of_spawn:
+
 #else
 {
 	int fhin = 0, fhout = 1, fherr = 2;
@@ -511,6 +947,8 @@ fail_pipe:
 #endif
 
 	if (cmd->pid < 0) {
+		trace2_child_exit(cmd, -1);
+
 		if (need_in)
 			close_pair(fdin);
 		else if (cmd->in)
@@ -549,13 +987,16 @@ fail_pipe:
 int finish_command(struct child_process *cmd)
 {
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 0);
+	trace2_child_exit(cmd, ret);
 	child_process_clear(cmd);
 	return ret;
 }
 
 int finish_command_in_signal(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid, cmd->argv[0], 1);
+	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 1);
+	trace2_child_exit(cmd, ret);
+	return ret;
 }
 
 
@@ -564,7 +1005,7 @@ int run_command(struct child_process *cmd)
 	int code;
 
 	if (cmd->out < 0 || cmd->err < 0)
-		die("BUG: run_command with a pipe can cause deadlock");
+		BUG("run_command with a pipe can cause deadlock");
 
 	code = start_command(cmd);
 	if (code)
@@ -577,7 +1018,18 @@ int run_command_v_opt(const char **argv, int opt)
 	return run_command_v_opt_cd_env(argv, opt, NULL, NULL);
 }
 
+int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class)
+{
+	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, tr2_class);
+}
+
 int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env)
+{
+	return run_command_v_opt_cd_env_tr2(argv, opt, dir, env, NULL);
+}
+
+int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
+				 const char *const *env, const char *tr2_class)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	cmd.argv = argv;
@@ -589,6 +1041,7 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
 	cmd.dir = dir;
 	cmd.env = env;
+	cmd.trace2_child_class = tr2_class;
 	return run_command(&cmd);
 }
 
@@ -813,7 +1266,7 @@ int start_async(struct async *async)
 	{
 		int err = pthread_create(&async->tid, NULL, run_thread, async);
 		if (err) {
-			error_errno("cannot create thread");
+			error(_("cannot create async thread: %s"), strerror(err));
 			goto error;
 		}
 	}
@@ -846,14 +1299,46 @@ int finish_async(struct async *async)
 #endif
 }
 
+int async_with_fork(void)
+{
+#ifdef NO_PTHREADS
+	return 1;
+#else
+	return 0;
+#endif
+}
+
 const char *find_hook(const char *name)
 {
 	static struct strbuf path = STRBUF_INIT;
 
 	strbuf_reset(&path);
 	strbuf_git_path(&path, "hooks/%s", name);
-	if (access(path.buf, X_OK) < 0)
+	if (access(path.buf, X_OK) < 0) {
+		int err = errno;
+
+#ifdef STRIP_EXTENSION
+		strbuf_addstr(&path, STRIP_EXTENSION);
+		if (access(path.buf, X_OK) >= 0)
+			return path.buf;
+		if (errno == EACCES)
+			err = errno;
+#endif
+
+		if (err == EACCES && advice_ignored_hook) {
+			static struct string_list advise_given = STRING_LIST_INIT_DUP;
+
+			if (!string_list_lookup(&advise_given, name)) {
+				string_list_insert(&advise_given, name);
+				advise(_("The '%s' hook was ignored because "
+					 "it's not set as executable.\n"
+					 "You can disable this warning with "
+					 "`git config advice.ignoredHook false`."),
+				       path.buf);
+			}
+		}
 		return NULL;
+	}
 	return path.buf;
 }
 
@@ -872,6 +1357,7 @@ int run_hook_ve(const char *const *env, const char *name, va_list args)
 	hook.env = env;
 	hook.no_stdin = 1;
 	hook.stdout_to_stderr = 1;
+	hook.trace2_hook_name = name;
 
 	return run_command(&hook);
 }
@@ -1131,7 +1617,7 @@ static void pp_init(struct parallel_processes *pp,
 
 	pp->data = data;
 	if (!get_next_task)
-		die("BUG: you need to specify a get_next_task function");
+		BUG("you need to specify a get_next_task function");
 	pp->get_next_task = get_next_task;
 
 	pp->start_failure = start_failure ? start_failure : default_start_failure;
@@ -1193,7 +1679,7 @@ static int pp_start_one(struct parallel_processes *pp)
 		if (pp->children[i].state == GIT_CP_FREE)
 			break;
 	if (i == pp->max_processes)
-		die("BUG: bookkeeping is hard");
+		BUG("bookkeeping is hard");
 
 	code = pp->get_next_task(&pp->children[i].process,
 				 &pp->children[i].err,
@@ -1211,7 +1697,7 @@ static int pp_start_one(struct parallel_processes *pp)
 	if (start_command(&pp->children[i].process)) {
 		code = pp->start_failure(&pp->children[i].err,
 					 pp->data,
-					 &pp->children[i].data);
+					 pp->children[i].data);
 		strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
 		strbuf_reset(&pp->children[i].err);
 		if (code)
@@ -1279,7 +1765,7 @@ static int pp_collect_finished(struct parallel_processes *pp)
 
 		code = pp->task_finished(code,
 					 &pp->children[i].err, pp->data,
-					 &pp->children[i].data);
+					 pp->children[i].data);
 
 		if (code)
 			result = code;
@@ -1359,4 +1845,22 @@ int run_processes_parallel(int n,
 
 	pp_cleanup(&pp);
 	return 0;
+}
+
+int run_processes_parallel_tr2(int n, get_next_task_fn get_next_task,
+			       start_failure_fn start_failure,
+			       task_finished_fn task_finished, void *pp_cb,
+			       const char *tr2_category, const char *tr2_label)
+{
+	int result;
+
+	trace2_region_enter_printf(tr2_category, tr2_label, NULL, "max:%d",
+				   ((n < 1) ? online_cpus() : n));
+
+	result = run_processes_parallel(n, get_next_task, start_failure,
+					task_finished, pp_cb);
+
+	trace2_region_leave(tr2_category, tr2_label, NULL);
+
+	return result;
 }

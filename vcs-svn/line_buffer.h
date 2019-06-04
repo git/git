@@ -1,5 +1,5 @@
-#ifndef LINE_BUFFER_H_
-#define LINE_BUFFER_H_
+#ifndef LINE_BUFFER_H
+#define LINE_BUFFER_H
 
 #include "strbuf.h"
 

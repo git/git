@@ -10,8 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
-	      [-t] [-r] [-c | --cc] [--root] [<common diff options>]
-	      <tree-ish> [<tree-ish>] [<path>...]
+	      [-t] [-r] [-c | --cc] [--combined-all-paths] [--root]
+	      [<common diff options>] <tree-ish> [<tree-ish>] [<path>...]
 
 DESCRIPTION
 -----------
@@ -31,10 +31,7 @@ include::diff-options.txt[]
 
 <path>...::
 	If provided, the results are limited to a subset of files
-	matching one of these prefix strings.
-	i.e., file matches `/^<pattern1>|<pattern2>|.../`
-	Note that this parameter does not provide any wildcard or regexp
-	features.
+	matching one of the provided pathspecs.
 
 -r::
         recurse into sub-trees
@@ -108,57 +105,19 @@ include::pretty-options.txt[]
 	itself and the commit log message is not shown, just like in any other
 	"empty diff" case.
 
+--combined-all-paths::
+	This flag causes combined diffs (used for merge commits) to
+	list the name of the file from all parents.  It thus only has
+	effect when -c or --cc are specified, and is likely only
+	useful if filename changes are detected (i.e. when either
+	rename or copy detection have been requested).
+
 --always::
 	Show the commit itself and the commit log message even
 	if the diff itself is empty.
 
 
 include::pretty-formats.txt[]
-
-
-Limiting Output
----------------
-If you're only interested in differences in a subset of files, for
-example some architecture-specific files, you might do:
-
-	git diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
-
-and it will only show you what changed in those two directories.
-
-Or if you are searching for what changed in just `kernel/sched.c`, just do
-
-	git diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
-
-and it will ignore all differences to other files.
-
-The pattern is always the prefix, and is matched exactly.  There are no
-wildcards.  Even stricter, it has to match a complete path component.
-I.e. "foo" does not pick up `foobar.h`.  "foo" does match `foo/bar.h`
-so it can be used to name subdirectories.
-
-An example of normal usage is:
-
-  torvalds@ppc970:~/git> git diff-tree --abbrev 5319e4
-  :100664 100664 ac348b... a01513...	git-fsck-objects.c
-
-which tells you that the last commit changed just one file (it's from
-this one:
-
------------------------------------------------------------------------------
-commit 3c6f7ca19ad4043e9e72fa94106f352897e651a8
-tree 5319e4d609cdd282069cc4dce33c1db559539b03
-parent b4e628ea30d5ab3606119d2ea5caeab141d38df7
-author Linus Torvalds <torvalds@ppc970.osdl.org> Sat Apr 9 12:02:30 2005
-committer Linus Torvalds <torvalds@ppc970.osdl.org> Sat Apr 9 12:02:30 2005
-
-Make "git-fsck-objects" print out all the root commits it finds.
-
-Once I do the reference tracking, I'll also make it print out all the
-HEAD commits it finds, which is even more interesting.
------------------------------------------------------------------------------
-
-in case you care).
-
 
 include::diff-format.txt[]
 

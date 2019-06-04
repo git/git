@@ -11,3 +11,7 @@ doc.dep
 cmds-*.txt
 mergetools-*.txt
 manpage-base-url.xsl
+SubmittingPatches.txt
+tmp-doc-diff/
+GIT-ASCIIDOCFLAGS
+/GIT-EXCLUDED-PROGRAMS

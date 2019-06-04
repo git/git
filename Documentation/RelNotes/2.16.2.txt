@@ -1,0 +1,30 @@
+Git v2.16.2 Release Notes
+=========================
+
+Fixes since v2.16.1
+-------------------
+
+ * An old regression in "git describe --all $annotated_tag^0" has been
+   fixed.
+
+ * "git svn dcommit" did not take into account the fact that a
+   svn+ssh:// URL with a username@ (typically used for pushing) refers
+   to the same SVN repository without the username@ and failed when
+   svn.pushmergeinfo option is set.
+
+ * "git merge -Xours/-Xtheirs" learned to use our/their version when
+   resolving a conflicting updates to a symbolic link.
+
+ * "git clone $there $here" is allowed even when here directory exists
+   as long as it is an empty directory, but the command incorrectly
+   removed it upon a failure of the operation.
+
+ * "git stash -- <pathspec>" incorrectly blew away untracked files in
+   the directory that matched the pathspec, which has been corrected.
+
+ * "git add -p" was taught to ignore local changes to submodules as
+   they do not interfere with the partial addition of regular changes
+   anyway.
+
+
+Also contains various documentation updates and code clean-ups.

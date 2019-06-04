@@ -40,6 +40,8 @@ test_expect_success 'setup: messages' '
 	dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio
 	dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te
 	feugait nulla facilisi.
+
+	Reported-by: A N Other <a.n.other@example.com>
 	EOF
 
 	cat >failmail <<-\EOF &&
@@ -67,20 +69,20 @@ test_expect_success 'setup: messages' '
 
 	EOF
 
-	cat >scissors-msg <<-\EOF &&
-	Test git-am with scissors line
+	cat >msg-without-scissors-line <<-\EOF &&
+	Test that git-am --scissors cuts at the scissors line
 
 	This line should be included in the commit message.
 	EOF
 
-	cat - scissors-msg >no-scissors-msg <<-\EOF &&
+	printf "Subject: " >subject-prefix &&
+
+	cat - subject-prefix msg-without-scissors-line >msg-with-scissors-line <<-\EOF
 	This line should not be included in the commit message with --scissors enabled.
 
 	 - - >8 - - remove everything above this line - - >8 - -
 
 	EOF
-
-	signoff="Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 '
 
 test_expect_success setup '
@@ -93,7 +95,7 @@ test_expect_success setup '
 	echo world >>file &&
 	git add file &&
 	test_tick &&
-	git commit -s -F msg &&
+	git commit -F msg &&
 	git tag second &&
 
 	git format-patch --stdout first >patch1 &&
@@ -124,8 +126,6 @@ test_expect_success setup '
 		echo "Date: $GIT_AUTHOR_DATE" &&
 		echo &&
 		sed -e "1,2d" msg &&
-		echo &&
-		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" &&
 		echo "---" &&
 		git diff-tree --no-commit-id --stat -p second
 	} >patch1-stgit.eml &&
@@ -140,28 +140,25 @@ test_expect_success setup '
 		echo "# User $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" &&
 		echo "# Date $test_tick 25200" &&
 		echo "#      $(git show --pretty="%aD" -s second)" &&
-		echo "# Node ID $_z40" &&
-		echo "# Parent  $_z40" &&
+		echo "# Node ID $ZERO_OID" &&
+		echo "# Parent  $ZERO_OID" &&
 		cat msg &&
-		echo &&
-		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" &&
 		echo &&
 		git diff-tree --no-commit-id -p second
 	} >patch1-hg.eml &&
 
 
-	echo scissors-file >scissors-file &&
-	git add scissors-file &&
-	git commit -F scissors-msg &&
-	git tag scissors &&
-	git format-patch --stdout scissors^ >scissors-patch.eml &&
+	echo file >file &&
+	git add file &&
+	git commit -F msg-without-scissors-line &&
+	git tag expected-for-scissors &&
 	git reset --hard HEAD^ &&
 
-	echo no-scissors-file >no-scissors-file &&
-	git add no-scissors-file &&
-	git commit -F no-scissors-msg &&
-	git tag no-scissors &&
-	git format-patch --stdout no-scissors^ >no-scissors-patch.eml &&
+	echo file >file &&
+	git add file &&
+	git commit -F msg-with-scissors-line &&
+	git tag expected-for-no-scissors &&
+	git format-patch --stdout expected-for-no-scissors^ >patch-with-scissors-line.eml &&
 	git reset --hard HEAD^ &&
 
 	sed -n -e "3,\$p" msg >file &&
@@ -418,10 +415,10 @@ test_expect_success 'am --scissors cuts the message at the scissors line' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout second &&
-	git am --scissors scissors-patch.eml &&
+	git am --scissors patch-with-scissors-line.eml &&
 	test_path_is_missing .git/rebase-apply &&
-	git diff --exit-code scissors &&
-	test_cmp_rev scissors HEAD
+	git diff --exit-code expected-for-scissors &&
+	test_cmp_rev expected-for-scissors HEAD
 '
 
 test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
@@ -429,10 +426,10 @@ test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
 	git reset --hard &&
 	git checkout second &&
 	test_config mailinfo.scissors true &&
-	git am --no-scissors no-scissors-patch.eml &&
+	git am --no-scissors patch-with-scissors-line.eml &&
 	test_path_is_missing .git/rebase-apply &&
-	git diff --exit-code no-scissors &&
-	test_cmp_rev no-scissors HEAD
+	git diff --exit-code expected-for-no-scissors &&
+	test_cmp_rev expected-for-no-scissors HEAD
 '
 
 test_expect_success 'setup: new author and committer' '
@@ -470,13 +467,15 @@ test_expect_success 'am --signoff adds Signed-off-by: line' '
 	git reset --hard &&
 	git checkout -b master2 first &&
 	git am --signoff <patch2 &&
-	printf "%s\n" "$signoff" >expected &&
-	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >>expected &&
-	git cat-file commit HEAD^ | grep "Signed-off-by:" >actual &&
-	test_cmp expected actual &&
-	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >expected &&
-	git cat-file commit HEAD | grep "Signed-off-by:" >actual &&
-	test_cmp expected actual
+	{
+		printf "third\n\nSigned-off-by: %s <%s>\n\n" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" &&
+		cat msg &&
+		printf "Signed-off-by: %s <%s>\n\n" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL"
+	} >expected-log &&
+	git log --pretty=%B -2 HEAD >actual &&
+	test_cmp expected-log actual
 '
 
 test_expect_success 'am stays in branch' '
@@ -486,17 +485,60 @@ test_expect_success 'am stays in branch' '
 '
 
 test_expect_success 'am --signoff does not add Signed-off-by: line if already there' '
-	git format-patch --stdout HEAD^ >patch3 &&
-	sed -e "/^Subject/ s,\[PATCH,Re: Re: Re: & 1/5 v2] [foo," patch3 >patch4 &&
-	rm -fr .git/rebase-apply &&
-	git reset --hard &&
-	git checkout HEAD^ &&
-	git am --signoff patch4 &&
-	git cat-file commit HEAD >actual &&
-	test $(grep -c "^Signed-off-by:" actual) -eq 1
+	git format-patch --stdout first >patch3 &&
+	git reset --hard first &&
+	git am --signoff <patch3 &&
+	git log --pretty=%B -2 HEAD >actual &&
+	test_cmp expected-log actual
+'
+
+test_expect_success 'am --signoff adds Signed-off-by: if another author is preset' '
+	NAME="A N Other" &&
+	EMAIL="a.n.other@example.com" &&
+	{
+		printf "third\n\nSigned-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$NAME" "$EMAIL" &&
+		cat msg &&
+		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$NAME" "$EMAIL"
+	} >expected-log &&
+	git reset --hard first &&
+	GIT_COMMITTER_NAME="$NAME" GIT_COMMITTER_EMAIL="$EMAIL" \
+		git am --signoff <patch3 &&
+	git log --pretty=%B -2 HEAD >actual &&
+	test_cmp expected-log actual
+'
+
+test_expect_success 'am --signoff duplicates Signed-off-by: if it is not the last one' '
+	NAME="A N Other" &&
+	EMAIL="a.n.other@example.com" &&
+	{
+		printf "third\n\nSigned-off-by: %s <%s>\n\
+Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$NAME" "$EMAIL" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" &&
+		cat msg &&
+		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\
+Signed-off-by: %s <%s>\n\n" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$NAME" "$EMAIL" \
+			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL"
+	} >expected-log &&
+	git format-patch --stdout first >patch3 &&
+	git reset --hard first &&
+	git am --signoff <patch3 &&
+	git log --pretty=%B -2 HEAD >actual &&
+	test_cmp expected-log actual
 '
 
 test_expect_success 'am without --keep removes Re: and [PATCH] stuff' '
+	git format-patch --stdout HEAD^ >tmp &&
+	sed -e "/^Subject/ s,\[PATCH,Re: Re: Re: & 1/5 v2] [foo," tmp >patch4 &&
+	git reset --hard HEAD^ &&
+	git am <patch4 &&
 	git rev-parse HEAD >expected &&
 	git rev-parse master2 >actual &&
 	test_cmp expected actual
@@ -608,7 +650,7 @@ test_expect_success 'am -3 -q is quiet' '
 	git checkout -f lorem2 &&
 	git reset base3way --hard &&
 	git am -3 -q lorem-move.patch >output.out 2>&1 &&
-	! test -s output.out
+	test_must_be_empty output.out
 '
 
 test_expect_success 'am pauses on conflict' '
@@ -617,6 +659,11 @@ test_expect_success 'am pauses on conflict' '
 	git checkout lorem2^^ &&
 	test_must_fail git am lorem-move.patch &&
 	test -d .git/rebase-apply
+'
+
+test_expect_success 'am --show-current-patch' '
+	git am --show-current-patch >actual.patch &&
+	test_cmp .git/rebase-apply/0001 actual.patch
 '
 
 test_expect_success 'am --skip works' '
@@ -826,7 +873,7 @@ test_expect_success 'am -q is quiet' '
 	git checkout first &&
 	test_tick &&
 	git am -q <patch1 >output.out 2>&1 &&
-	! test -s output.out
+	test_must_be_empty output.out
 '
 
 test_expect_success 'am empty-file does not infloop' '
@@ -983,7 +1030,9 @@ test_expect_success 'am works with multi-line in-body headers' '
 	rm -fr .git/rebase-apply &&
 	git checkout -f first &&
 	echo one >> file &&
-	git commit -am "$LONG" --author="$LONG <long@example.com>" &&
+	git commit -am "$LONG
+
+    Body test" --author="$LONG <long@example.com>" &&
 	git format-patch --stdout -1 >patch &&
 	# bump from, date, and subject down to in-body header
 	perl -lpe "
@@ -997,7 +1046,19 @@ test_expect_success 'am works with multi-line in-body headers' '
 	git am msg &&
 	# Ensure that the author and full message are present
 	git cat-file commit HEAD | grep "^author.*long@example.com" &&
-	git cat-file commit HEAD | grep "^$LONG"
+	git cat-file commit HEAD | grep "^$LONG$"
+'
+
+test_expect_success 'am --quit keeps HEAD where it is' '
+	mkdir .git/rebase-apply &&
+	>.git/rebase-apply/last &&
+	>.git/rebase-apply/next &&
+	git rev-parse HEAD^ >.git/ORIG_HEAD &&
+	git rev-parse HEAD >expected &&
+	git am --quit &&
+	test_path_is_missing .git/rebase-apply &&
+	git rev-parse HEAD >actual &&
+	test_cmp expected actual
 '
 
 test_done

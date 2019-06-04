@@ -33,7 +33,7 @@ test_expect_success 'absorb the git dir' '
 	test_cmp expect.2 actual.2
 '
 
-test_expect_success 'absorbing does not fail for deinitalized submodules' '
+test_expect_success 'absorbing does not fail for deinitialized submodules' '
 	test_when_finished "git submodule update --init" &&
 	git submodule deinit --all &&
 	git submodule absorbgitdirs &&
@@ -56,6 +56,38 @@ test_expect_success 'absorb the git dir in a nested submodule' '
 	git status >expect.1 &&
 	git -C sub1/nested rev-parse HEAD >expect.2 &&
 	git submodule absorbgitdirs &&
+	test -f sub1/nested/.git &&
+	test -d .git/modules/sub1/modules/nested &&
+	git status >actual.1 &&
+	git -C sub1/nested rev-parse HEAD >actual.2 &&
+	test_cmp expect.1 actual.1 &&
+	test_cmp expect.2 actual.2
+'
+
+test_expect_success 're-setup nested submodule' '
+	# un-absorb the direct submodule, to test if the nested submodule
+	# is still correct (needs a rewrite of the gitfile only)
+	rm -rf sub1/.git &&
+	mv .git/modules/sub1 sub1/.git &&
+	GIT_WORK_TREE=. git -C sub1 config --unset core.worktree &&
+	# fixup the nested submodule
+	echo "gitdir: ../.git/modules/nested" >sub1/nested/.git &&
+	GIT_WORK_TREE=../../../nested git -C sub1/.git/modules/nested config \
+		core.worktree "../../../nested" &&
+	# make sure this re-setup is correct
+	git status --ignore-submodules=none &&
+
+	# also make sure this old setup does not regress
+	git submodule update --init --recursive >out 2>err &&
+	test_must_be_empty out &&
+	test_must_be_empty err
+'
+
+test_expect_success 'absorb the git dir in a nested submodule' '
+	git status >expect.1 &&
+	git -C sub1/nested rev-parse HEAD >expect.2 &&
+	git submodule absorbgitdirs &&
+	test -f sub1/.git &&
 	test -f sub1/nested/.git &&
 	test -d .git/modules/sub1/modules/nested &&
 	git status >actual.1 &&

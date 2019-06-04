@@ -16,7 +16,7 @@ SYNOPSIS
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort)
+'git am' (--continue | --skip | --abort | --quit | --show-current-patch)
 
 DESCRIPTION
 -----------
@@ -99,6 +99,11 @@ default.   You can use `--no-utf8` to override this.
 	am.threeWay configuration variable. For more information,
 	see am.threeWay in linkgit:git-config[1].
 
+--rerere-autoupdate::
+--no-rerere-autoupdate::
+	Allow the rerere mechanism to update the index with the
+	result of auto-conflict resolution if possible.
+
 --ignore-space-change::
 --ignore-whitespace::
 --whitespace=<option>::
@@ -166,6 +171,14 @@ default.   You can use `--no-utf8` to override this.
 
 --abort::
 	Restore the original branch and abort the patching operation.
+
+--quit::
+	Abort the patching operation but keep HEAD and the index
+	untouched.
+
+--show-current-patch::
+	Show the patch being applied when "git am" is stopped because
+	of conflicts.
 
 DISCUSSION
 ----------

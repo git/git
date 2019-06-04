@@ -12,14 +12,16 @@ SYNOPSIS
 'git pack-objects' [-q | --progress | --all-progress] [--all-progress-implied]
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
-	[--revs [--unpacked | --all]] [--stdout | base-name]
-	[--shallow] [--keep-true-parents] < object-list
+	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
+	[--stdout [--filter=<filter-spec>] | base-name]
+	[--shallow] [--keep-true-parents] [--sparse] < object-list
 
 
 DESCRIPTION
 -----------
-Reads list of objects from the standard input, and writes a packed
-archive with specified base-name, or to the standard output.
+Reads list of objects from the standard input, and writes either one or
+more packed archives with the specified base-name to disk, or a packed
+archive to the standard output.
 
 A packed archive is an efficient way to transfer a set of objects
 between two repositories as well as an access efficient archival
@@ -47,9 +49,9 @@ transport by their peers.
 OPTIONS
 -------
 base-name::
-	Write into a pair of files (.pack and .idx), using
+	Write into pairs of files (.pack and .idx), using
 	<base-name> to determine the name of the created file.
-	When this option is used, the two files are written in
+	When this option is used, the two files in a pair are written in
 	<base-name>-<SHA-1>.{pack,idx} files.  <SHA-1> is a hash
 	based on the pack content and is written to the standard
 	output of the command.
@@ -94,7 +96,9 @@ base-name::
 	it too deep affects the performance on the unpacker
 	side, because delta data needs to be applied that many
 	times to get to the necessary object.
-	The default value for --window is 10 and --depth is 50.
++
+The default value for --window is 10 and --depth is 50. The maximum
+depth is 4095.
 
 --window-memory=<n>::
 	This option provides an additional limit on top of `--window`;
@@ -108,9 +112,13 @@ base-name::
 	is taken from the `pack.windowMemory` configuration variable.
 
 --max-pack-size=<n>::
-	Maximum size of each output pack file. The size can be suffixed with
+	In unusual scenarios, you may not be able to create files
+	larger than a certain size on your filesystem, and this option
+	can be used to tell the command to split the output packfile
+	into multiple independent packfiles, each not larger than the
+	given size. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
-	If specified, multiple packfiles may be created, which also
+	This option
 	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
 	`pack.packSizeLimit` is set.
@@ -119,6 +127,13 @@ base-name::
 	This flag causes an object already in a local pack that
 	has a .keep file to be ignored, even if it would have
 	otherwise been packed.
+
+--keep-pack=<pack-name>::
+	This flag causes an object already in the given pack to be
+	ignored, even if it would have otherwise been
+	packed. `<pack-name>` is the the pack file name without
+	leading directory (e.g. `pack-123.pack`). The option could be
+	specified multiple times to keep multiple packs.
 
 --incremental::
 	This flag causes an object already in a pack to be ignored
@@ -181,6 +196,15 @@ base-name::
 	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
 
+--sparse::
+	Use the "sparse" algorithm to determine which objects to include in
+	the pack, when combined with the "--revs" option. This algorithm
+	only walks trees that appear in paths that introduce new objects.
+	This can have significant performance benefits when computing
+	a pack to send a small change. However, it is possible that extra
+	objects are added to the pack-file if the included commits contain
+	certain types of direct renames.
+
 --thin::
 	Create a "thin" pack by omitting the common objects between a
 	sender and a receiver in order to reduce network transfer. This
@@ -230,6 +254,146 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 --keep-true-parents::
 	With this option, parents that are hidden by grafts are packed
 	nevertheless.
+
+--filter=<filter-spec>::
+	Requires `--stdout`.  Omits certain objects (usually blobs) from
+	the resulting packfile.  See linkgit:git-rev-list[1] for valid
+	`<filter-spec>` forms.
+
+--no-filter::
+	Turns off any previous `--filter=` argument.
+
+--missing=<missing-action>::
+	A debug option to help with future "partial clone" development.
+	This option specifies how missing objects are handled.
++
+The form '--missing=error' requests that pack-objects stop with an error if
+a missing object is encountered.  This is the default action.
++
+The form '--missing=allow-any' will allow object traversal to continue
+if a missing object is encountered.  Missing objects will silently be
+omitted from the results.
++
+The form '--missing=allow-promisor' is like 'allow-any', but will only
+allow object traversal to continue for EXPECTED promisor missing objects.
+Unexpected missing object will raise an error.
+
+--exclude-promisor-objects::
+	Omit objects that are known to be in the promisor remote.  (This
+	option has the purpose of operating only on locally created objects,
+	so that when we repack, we still maintain a distinction between
+	locally created objects [without .promisor] and objects from the
+	promisor remote [with .promisor].)  This is used with partial clone.
+
+--keep-unreachable::
+	Objects unreachable from the refs in packs named with
+	--unpacked= option are added to the resulting pack, in
+	addition to the reachable objects that are not in packs marked
+	with *.keep files. This implies `--revs`.
+
+--pack-loose-unreachable::
+	Pack unreachable loose objects (and their loose counterparts
+	removed). This implies `--revs`.
+
+--unpack-unreachable::
+	Keep unreachable objects in loose form. This implies `--revs`.
+
+--delta-islands::
+	Restrict delta matches based on "islands". See DELTA ISLANDS
+	below.
+
+
+DELTA ISLANDS
+-------------
+
+When possible, `pack-objects` tries to reuse existing on-disk deltas to
+avoid having to search for new ones on the fly. This is an important
+optimization for serving fetches, because it means the server can avoid
+inflating most objects at all and just send the bytes directly from
+disk. This optimization can't work when an object is stored as a delta
+against a base which the receiver does not have (and which we are not
+already sending). In that case the server "breaks" the delta and has to
+find a new one, which has a high CPU cost. Therefore it's important for
+performance that the set of objects in on-disk delta relationships match
+what a client would fetch.
+
+In a normal repository, this tends to work automatically. The objects
+are mostly reachable from the branches and tags, and that's what clients
+fetch. Any deltas we find on the server are likely to be between objects
+the client has or will have.
+
+But in some repository setups, you may have several related but separate
+groups of ref tips, with clients tending to fetch those groups
+independently. For example, imagine that you are hosting several "forks"
+of a repository in a single shared object store, and letting clients
+view them as separate repositories through `GIT_NAMESPACE` or separate
+repos using the alternates mechanism. A naive repack may find that the
+optimal delta for an object is against a base that is only found in
+another fork. But when a client fetches, they will not have the base
+object, and we'll have to find a new delta on the fly.
+
+A similar situation may exist if you have many refs outside of
+`refs/heads/` and `refs/tags/` that point to related objects (e.g.,
+`refs/pull` or `refs/changes` used by some hosting providers). By
+default, clients fetch only heads and tags, and deltas against objects
+found only in those other groups cannot be sent as-is.
+
+Delta islands solve this problem by allowing you to group your refs into
+distinct "islands". Pack-objects computes which objects are reachable
+from which islands, and refuses to make a delta from an object `A`
+against a base which is not present in all of `A`'s islands. This
+results in slightly larger packs (because we miss some delta
+opportunities), but guarantees that a fetch of one island will not have
+to recompute deltas on the fly due to crossing island boundaries.
+
+When repacking with delta islands the delta window tends to get
+clogged with candidates that are forbidden by the config. Repacking
+with a big --window helps (and doesn't take as long as it otherwise
+might because we can reject some object pairs based on islands before
+doing any computation on the content).
+
+Islands are configured via the `pack.island` option, which can be
+specified multiple times. Each value is a left-anchored regular
+expressions matching refnames. For example:
+
+-------------------------------------------
+[pack]
+island = refs/heads/
+island = refs/tags/
+-------------------------------------------
+
+puts heads and tags into an island (whose name is the empty string; see
+below for more on naming). Any refs which do not match those regular
+expressions (e.g., `refs/pull/123`) is not in any island. Any object
+which is reachable only from `refs/pull/` (but not heads or tags) is
+therefore not a candidate to be used as a base for `refs/heads/`.
+
+Refs are grouped into islands based on their "names", and two regexes
+that produce the same name are considered to be in the same
+island. The names are computed from the regexes by concatenating any
+capture groups from the regex, with a '-' dash in between. (And if
+there are no capture groups, then the name is the empty string, as in
+the above example.) This allows you to create arbitrary numbers of
+islands. Only up to 14 such capture groups are supported though.
+
+For example, imagine you store the refs for each fork in
+`refs/virtual/ID`, where `ID` is a numeric identifier. You might then
+configure:
+
+-------------------------------------------
+[pack]
+island = refs/virtual/([0-9]+)/heads/
+island = refs/virtual/([0-9]+)/tags/
+island = refs/virtual/([0-9]+)/(pull)/
+-------------------------------------------
+
+That puts the heads and tags for each fork in their own island (named
+"1234" or similar), and the pull refs for each go into their own
+"1234-pull".
+
+Note that we pick a single island for each regex to go into, using "last
+one wins" ordering (which allows repo-specific config to take precedence
+over user-wide config, and so forth).
 
 SEE ALSO
 --------

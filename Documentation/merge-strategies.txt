@@ -23,8 +23,9 @@ recursive::
 	causing mismerges by tests done on actual merge commits
 	taken from Linux 2.6 kernel development history.
 	Additionally this can detect and handle merges involving
-	renames.  This is the default merge strategy when
-	pulling or merging one branch.
+	renames, but currently cannot make use of detected
+	copies.  This is the default merge strategy when pulling
+	or merging one branch.
 +
 The 'recursive' strategy can take the following options:
 
@@ -39,7 +40,8 @@ even look at what the other tree contains at all.  It discards everything
 the other tree did, declaring 'our' history contains all that happened in it.
 
 theirs;;
-	This is the opposite of 'ours'.
+	This is the opposite of 'ours'; note that, unlike 'ours', there is
+	no 'theirs' merge strategy to confuse this merge option with.
 
 patience;;
 	With this option, 'merge-recursive' spends a little extra time
@@ -57,11 +59,12 @@ diff-algorithm=[patience|minimal|histogram|myers];;
 ignore-space-change;;
 ignore-all-space;;
 ignore-space-at-eol;;
+ignore-cr-at-eol;;
 	Treats lines with the indicated type of whitespace change as
 	unchanged for the sake of a three-way merge.  Whitespace
 	changes mixed with other changes to a line are not ignored.
-	See also linkgit:git-diff[1] `-b`, `-w`, and
-	`--ignore-space-at-eol`.
+	See also linkgit:git-diff[1] `-b`, `-w`,
+	`--ignore-space-at-eol`, and `--ignore-cr-at-eol`.
 +
 * If 'their' version only introduces whitespace changes to a line,
   'our' version is used;
@@ -82,12 +85,14 @@ no-renormalize;;
 	`merge.renormalize` configuration variable.
 
 no-renames;;
-	Turn off rename detection.
+	Turn off rename detection. This overrides the `merge.renames`
+	configuration variable.
 	See also linkgit:git-diff[1] `--no-renames`.
 
 find-renames[=<n>];;
 	Turn on rename detection, optionally setting the similarity
-	threshold.  This is the default.
+	threshold.  This is the default. This overrides the
+	'merge.renames' configuration variable.
 	See also linkgit:git-diff[1] `--find-renames`.
 
 rename-threshold=<n>;;

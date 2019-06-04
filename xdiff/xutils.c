@@ -13,8 +13,8 @@
  *  Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  License along with this library; if not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  *
@@ -54,7 +54,7 @@ int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 		mb[2].size = strlen(mb[2].ptr);
 		i++;
 	}
-	if (ecb->outf(ecb->priv, mb, i) < 0) {
+	if (ecb->out_line(ecb->priv, mb, i) < 0) {
 
 		return -1;
 	}
@@ -156,6 +156,24 @@ int xdl_blankline(const char *line, long size, long flags)
 	return (i == size);
 }
 
+/*
+ * Have we eaten everything on the line, except for an optional
+ * CR at the very end?
+ */
+static int ends_with_optional_cr(const char *l, long s, long i)
+{
+	int complete = s && l[s-1] == '\n';
+
+	if (complete)
+		s--;
+	if (s == i)
+		return 1;
+	/* do not ignore CR at the end of an incomplete line */
+	if (complete && s == i + 1 && l[i] == '\r')
+		return 1;
+	return 0;
+}
+
 int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 {
 	int i1, i2;
@@ -170,7 +188,8 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 
 	/*
 	 * -w matches everything that matches with -b, and -b in turn
-	 * matches everything that matches with --ignore-space-at-eol.
+	 * matches everything that matches with --ignore-space-at-eol,
+	 * which in turn matches everything that matches with --ignore-cr-at-eol.
 	 *
 	 * Each flavor of ignoring needs different logic to skip whitespaces
 	 * while we have both sides to compare.
@@ -204,6 +223,14 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 			i1++;
 			i2++;
 		}
+	} else if (flags & XDF_IGNORE_CR_AT_EOL) {
+		/* Find the first difference and see how the line ends */
+		while (i1 < s1 && i2 < s2 && l1[i1] == l2[i2]) {
+			i1++;
+			i2++;
+		}
+		return (ends_with_optional_cr(l1, s1, i1) &&
+			ends_with_optional_cr(l2, s2, i2));
 	}
 
 	/*
@@ -230,9 +257,16 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 		char const *top, long flags) {
 	unsigned long ha = 5381;
 	char const *ptr = *data;
+	int cr_at_eol_only = (flags & XDF_WHITESPACE_FLAGS) == XDF_IGNORE_CR_AT_EOL;
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
-		if (XDL_ISSPACE(*ptr)) {
+		if (cr_at_eol_only) {
+			/* do not ignore CR at the end of an incomplete line */
+			if (*ptr == '\r' &&
+			    (ptr + 1 < top && ptr[1] == '\n'))
+				continue;
+		}
+		else if (XDL_ISSPACE(*ptr)) {
 			const char *ptr2 = ptr;
 			int at_eol;
 			while (ptr + 1 < top && XDL_ISSPACE(ptr[1])
@@ -310,8 +344,9 @@ int xdl_num_out(char *out, long val) {
 	return str - out;
 }
 
-int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
-		      const char *func, long funclen, xdemitcb_t *ecb) {
+static int xdl_format_hunk_hdr(long s1, long c1, long s2, long c2,
+			       const char *func, long funclen,
+			       xdemitcb_t *ecb) {
 	int nb = 0;
 	mmbuffer_t mb;
 	char buf[128];
@@ -353,9 +388,21 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 
 	mb.ptr = buf;
 	mb.size = nb;
-	if (ecb->outf(ecb->priv, &mb, 1) < 0)
+	if (ecb->out_line(ecb->priv, &mb, 1) < 0)
 		return -1;
+	return 0;
+}
 
+int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
+		      const char *func, long funclen,
+		      xdemitcb_t *ecb) {
+	if (!ecb->out_hunk)
+		return xdl_format_hunk_hdr(s1, c1, s2, c2, func, funclen, ecb);
+	if (ecb->out_hunk(ecb->priv,
+			  c1 ? s1 : s1 - 1, c1,
+			  c2 ? s2 : s2 - 1, c2,
+			  func, funclen) < 0)
+		return -1;
 	return 0;
 }
 

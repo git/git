@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "strbuf.h"
 #include "parse-options.h"
 #include "string-list.h"
@@ -41,7 +42,6 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 		git_config(column_config, NULL);
 
 	memset(&copts, 0, sizeof(copts));
-	copts.width = term_columns();
 	copts.padding = 1;
 	argc = parse_options(argc, argv, "", options, builtin_column_usage, 0);
 	if (argc)

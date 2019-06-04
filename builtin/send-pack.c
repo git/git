@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 #include "commit.h"
 #include "refs.h"
 #include "pkt-line.h"
@@ -13,6 +14,7 @@
 #include "sha1-array.h"
 #include "gpg-interface.h"
 #include "gettext.h"
+#include "protocol.h"
 
 static const char * const send_pack_usage[] = {
 	N_("git send-pack [--all | --mirror] [--dry-run] [--force] "
@@ -104,7 +106,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
 		if (!git_config_get_value("push.gpgsign", &value)) {
-			switch (git_config_maybe_bool("push.gpgsign", value)) {
+			switch (git_parse_maybe_bool(value)) {
 			case 0:
 				args.push_cert = SEND_PACK_PUSH_CERT_NEVER;
 				break;
@@ -119,20 +121,19 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 			}
 		}
 	}
-	return 0;
+	return git_default_config(k, v, cb);
 }
 
 int cmd_send_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, nr_refspecs = 0;
-	const char **refspecs = NULL;
+	struct refspec rs = REFSPEC_INIT_PUSH;
 	const char *remote_name = NULL;
 	struct remote *remote = NULL;
 	const char *dest = NULL;
 	int fd[2];
 	struct child_process *conn;
-	struct sha1_array extra_have = SHA1_ARRAY_INIT;
-	struct sha1_array shallow = SHA1_ARRAY_INIT;
+	struct oid_array extra_have = OID_ARRAY_INIT;
+	struct oid_array shallow = OID_ARRAY_INIT;
 	struct ref *remote_refs, *local_refs;
 	int ret;
 	int helper_status = 0;
@@ -144,6 +145,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	unsigned force_update = 0;
 	unsigned quiet = 0;
 	int push_cert = 0;
+	struct string_list push_options = STRING_LIST_INIT_NODUP;
 	unsigned use_thin_pack = 0;
 	unsigned atomic = 0;
 	unsigned stateless_rpc = 0;
@@ -152,6 +154,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int progress = -1;
 	int from_stdin = 0;
 	struct push_cas_option cas = {0};
+	struct packet_reader reader;
 
 	struct option options[] = {
 		OPT__VERBOSITY(&verbose),
@@ -163,8 +166,11 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "mirror", &send_mirror, N_("mirror all refs")),
 		OPT_BOOL('f', "force", &force_update, N_("force updates")),
 		{ OPTION_CALLBACK,
-		  0, "signed", &push_cert, "yes|no|if-asked", N_("GPG sign the push"),
+		  0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
 		  PARSE_OPT_OPTARG, option_parse_push_signed },
+		OPT_STRING_LIST(0, "push-option", &push_options,
+				N_("server-specific"),
+				N_("option to transmit")),
 		OPT_BOOL(0, "progress", &progress, N_("force progress reporting")),
 		OPT_BOOL(0, "thin", &use_thin_pack, N_("use thin pack")),
 		OPT_BOOL(0, "atomic", &atomic, N_("request atomic transaction on remote side")),
@@ -172,7 +178,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stdin", &from_stdin, N_("read refs from stdin")),
 		OPT_BOOL(0, "helper-status", &helper_status, N_("print status from remote helper")),
 		{ OPTION_CALLBACK,
-		  0, CAS_OPT_NAME, &cas, N_("refname>:<expect"),
+		  0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
 		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
 		OPT_END()
@@ -182,8 +188,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, send_pack_usage, 0);
 	if (argc > 0) {
 		dest = argv[0];
-		refspecs = (const char **)(argv + 1);
-		nr_refspecs = argc - 1;
+		refspec_appendn(&rs, argv + 1, argc - 1);
 	}
 
 	if (!dest)
@@ -199,33 +204,26 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	args.use_thin_pack = use_thin_pack;
 	args.atomic = atomic;
 	args.stateless_rpc = stateless_rpc;
+	args.push_options = push_options.nr ? &push_options : NULL;
 
 	if (from_stdin) {
-		struct argv_array all_refspecs = ARGV_ARRAY_INIT;
-
-		for (i = 0; i < nr_refspecs; i++)
-			argv_array_push(&all_refspecs, refspecs[i]);
-
 		if (args.stateless_rpc) {
 			const char *buf;
 			while ((buf = packet_read_line(0, NULL)))
-				argv_array_push(&all_refspecs, buf);
+				refspec_append(&rs, buf);
 		} else {
 			struct strbuf line = STRBUF_INIT;
 			while (strbuf_getline(&line, stdin) != EOF)
-				argv_array_push(&all_refspecs, line.buf);
+				refspec_append(&rs, line.buf);
 			strbuf_release(&line);
 		}
-
-		refspecs = all_refspecs.argv;
-		nr_refspecs = all_refspecs.argc;
 	}
 
 	/*
 	 * --all and --mirror are incompatible; neither makes sense
 	 * with any refspecs.
 	 */
-	if ((nr_refspecs > 0 && (send_all || args.send_mirror)) ||
+	if ((rs.nr > 0 && (send_all || args.send_mirror)) ||
 	    (send_all && args.send_mirror))
 		usage_with_options(send_pack_usage, options);
 
@@ -250,10 +248,23 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
-	get_remote_heads(fd[0], NULL, 0, &remote_refs, REF_NORMAL,
-			 &extra_have, &shallow);
+	packet_reader_init(&reader, fd[0], NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	transport_verify_remote_names(nr_refspecs, refspecs);
+	switch (discover_version(&reader)) {
+	case protocol_v2:
+		die("support for protocol v2 not implemented yet");
+		break;
+	case protocol_v1:
+	case protocol_v0:
+		get_remote_heads(&reader, &remote_refs, REF_NORMAL,
+				 &extra_have, &shallow);
+		break;
+	case protocol_unknown_version:
+		BUG("unknown protocol version");
+	}
 
 	local_refs = get_local_heads();
 
@@ -265,7 +276,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		flags |= MATCH_REFS_MIRROR;
 
 	/* match them up */
-	if (match_push_refs(local_refs, &remote_refs, nr_refspecs, refspecs, flags))
+	if (match_push_refs(local_refs, &remote_refs, &rs, flags))
 		return -1;
 
 	if (!is_empty_cas(&cas))
