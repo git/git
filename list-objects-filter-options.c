@@ -78,9 +78,12 @@ static int gently_parse_list_objects_filter(
 		return 0;
 
 	} else if (skip_prefix(arg, "sparse:path=", &v0)) {
-		filter_options->choice = LOFC_SPARSE_PATH;
-		filter_options->sparse_path_value = strdup(v0);
-		return 0;
+		if (errbuf) {
+			strbuf_addstr(
+				errbuf,
+				_("sparse:path filters support has been dropped"));
+		}
+		return 1;
 	}
 	/*
 	 * Please update _git_fetch() in git-completion.bash when you
@@ -136,7 +139,6 @@ void list_objects_filter_release(
 {
 	free(filter_options->filter_spec);
 	free(filter_options->sparse_oid_value);
-	free(filter_options->sparse_path_value);
 	memset(filter_options, 0, sizeof(*filter_options));
 }
 
