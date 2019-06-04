@@ -285,6 +285,11 @@ static int refname_hash_exists(struct hashmap *map, const char *refname)
 	return !!hashmap_get_from_hash(map, strhash(refname), refname);
 }
 
+static void clear_item(struct refname_hash_entry *item)
+{
+	oidclr(&item->oid);
+}
+
 static void find_non_local_tags(const struct ref *refs,
 				struct ref **head,
 				struct ref ***tail)
@@ -318,7 +323,7 @@ static void find_non_local_tags(const struct ref *refs,
 			    !has_sha1_file_with_flags(item->oid.hash,
 						      OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, item->oid.hash))
-				oidclr(&item->oid);
+				clear_item(item);
 			item = NULL;
 			continue;
 		}
@@ -332,7 +337,7 @@ static void find_non_local_tags(const struct ref *refs,
 		if (item &&
 		    !has_sha1_file_with_flags(item->oid.hash, OBJECT_INFO_QUICK) &&
 		    !will_fetch(head, item->oid.hash))
-			oidclr(&item->oid);
+			clear_item(item);
 
 		item = NULL;
 
@@ -353,7 +358,7 @@ static void find_non_local_tags(const struct ref *refs,
 	if (item &&
 	    !has_sha1_file_with_flags(item->oid.hash, OBJECT_INFO_QUICK) &&
 	    !will_fetch(head, item->oid.hash))
-		oidclr(&item->oid);
+		clear_item(item);
 
 	/*
 	 * For all the tags in the remote_refs_list,
