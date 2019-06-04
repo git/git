@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git v2.22.0 round 2\n"
+"Project-Id-Version: git v2.22.0 round 3\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-05-31 14:35+0800\n"
-"PO-Revision-Date: 2019-06-01 08:20+0700\n"
+"POT-Creation-Date: 2019-06-04 08:24+0800\n"
+"PO-Revision-Date: 2019-06-04 08:07+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -57,7 +57,7 @@ msgstr ""
 #, c-format
 msgid "It is not possible to %s because you have unmerged files."
 msgstr ""
-"Nó là không thể thực hiện với %s bởi vì bạn có những tập tin chưa được hòa "
+"Việc này không thể thực hiện với %s bởi vì bạn có những tập tin chưa được hòa "
 "trộn."
 
 #: advice.c:174
@@ -2618,8 +2618,8 @@ msgid "show the given source prefix instead of \"a/\""
 msgstr "hiển thị tiền tố nguồn đã cho thay cho \"a/\""
 
 #: diff.c:5357
-msgid "show the given source prefix instead of \"b/\""
-msgstr "hiển thị tiền tố nguồn đã cho thay cho \"b/\""
+msgid "show the given destination prefix instead of \"b/\""
+msgstr "hiển thị tiền tố đích đã cho thay cho \"b/\""
 
 #: diff.c:5360
 msgid "prepend an additional prefix to every line of output"
@@ -3509,7 +3509,11 @@ msgstr "không thể tổ hợp nhiều đặc tả kiểu lọc"
 msgid "expected 'tree:<depth>'"
 msgstr "cần “tree:<depth>”"
 
-#: list-objects-filter-options.c:156
+#: list-objects-filter-options.c:84
+msgid "sparse:path filters support has been dropped"
+msgstr "việc hỗ trợ bộ lọc sparse:đường/dẫn đã bị bỏ"
+
+#: list-objects-filter-options.c:158
 msgid "cannot change partial clone promisor remote"
 msgstr "không thể thay đổi nhân bản từng phần máy chủ promisor"
 
@@ -20704,7 +20708,7 @@ msgstr "không nên có EOF khi không gentle trên EOF"
 
 #: remote-curl.c:664
 msgid "unable to rewind rpc post data - try increasing http.postBuffer"
-msgstr "không thể tua lại dữ liệu rpc - thử tăng http. postBuffer"
+msgstr "không thể tua lại dữ liệu post rpc - thử tăng http.postBuffer"
 
 #: remote-curl.c:724
 #, c-format
@@ -20739,8 +20743,8 @@ msgstr "không thể lấy về bằng sha1 thông qua smart http"
 
 #: remote-curl.c:1120 remote-curl.c:1126
 #, c-format
-msgid "protocol error: expected sha/ref, got %s'"
-msgstr "lỗi giao thức: cần sha/ref, nhưng lại nhận được %s”"
+msgid "protocol error: expected sha/ref, got '%s'"
+msgstr "lỗi giao thức: cần sha/ref, nhưng lại nhận được “%s”"
 
 #: remote-curl.c:1138 remote-curl.c:1252
 #, c-format
@@ -20768,11 +20772,11 @@ msgstr "remote-curl: đã cố gắng fetch mà không có kho nội bộ"
 msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl: không hiểu lệnh “%s” từ git"
 
-#: list-objects-filter-options.h:63
+#: list-objects-filter-options.h:61
 msgid "args"
 msgstr "các_tham_số"
 
-#: list-objects-filter-options.h:64
+#: list-objects-filter-options.h:62
 msgid "object filtering"
 msgstr "lọc đối tượng"
 
