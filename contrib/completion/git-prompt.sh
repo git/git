@@ -35,6 +35,11 @@
 #
 # The prompt status always includes the current branch name.
 #
+# The prompt can be customized by setting various shell variables
+# (GIT_PS1_SHOWDIRTYSTATE, GIT_PS1_SHOWSTASHSTATE, etc.), which are described
+# below. Make sure that these variables get set *before* the
+# "source ~/.git-prompt.sh" line from step 2 (above) runs.
+#
 # In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty value,
 # unstaged (*) and staged (+) changes will be shown next to the branch
 # name.  You can configure this per-repository with the
