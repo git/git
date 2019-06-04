@@ -237,6 +237,7 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 struct refname_hash_entry {
 	struct hashmap_entry ent; /* must be the first member */
 	struct object_id oid;
+	int ignore;
 	char refname[FLEX_ARRAY];
 };
 
@@ -287,7 +288,7 @@ static int refname_hash_exists(struct hashmap *map, const char *refname)
 
 static void clear_item(struct refname_hash_entry *item)
 {
-	oidclr(&item->oid);
+	item->ignore = 1;
 }
 
 static void find_non_local_tags(const struct ref *refs,
@@ -373,7 +374,7 @@ static void find_non_local_tags(const struct ref *refs,
 			BUG("unseen remote ref?");
 
 		/* Unless we have already decided to ignore this item... */
-		if (is_null_oid(&item->oid))
+		if (item->ignore)
 			continue;
 
 		rm = alloc_ref(item->refname);
