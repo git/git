@@ -366,19 +366,21 @@ static void find_non_local_tags(const struct ref *refs,
 	 */
 	for_each_string_list_item(remote_ref_item, &remote_refs_list) {
 		const char *refname = remote_ref_item->string;
+		struct ref *rm;
 
 		item = hashmap_get_from_hash(&remote_refs, strhash(refname), refname);
 		if (!item)
 			BUG("unseen remote ref?");
 
 		/* Unless we have already decided to ignore this item... */
-		if (!is_null_oid(&item->oid)) {
-			struct ref *rm = alloc_ref(item->refname);
-			rm->peer_ref = alloc_ref(item->refname);
-			oidcpy(&rm->old_oid, &item->oid);
-			**tail = rm;
-			*tail = &rm->next;
-		}
+		if (is_null_oid(&item->oid))
+			continue;
+
+		rm = alloc_ref(item->refname);
+		rm->peer_ref = alloc_ref(item->refname);
+		oidcpy(&rm->old_oid, &item->oid);
+		**tail = rm;
+		*tail = &rm->next;
 	}
 	hashmap_free(&remote_refs, 1);
 	string_list_clear(&remote_refs_list, 0);
