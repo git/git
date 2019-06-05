@@ -75,9 +75,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-06-04 08:24+0800\n"
-"PO-Revision-Date: 2019-06-04 19:51+0200\n"
-"Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
+"POT-Creation-Date: 2019-02-15 10:09+0800\n"
+"PO-Revision-Date: 2019-06-05 11:20+0200\n"
+"Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -472,7 +472,7 @@ msgstr "impossible de lire le contenu actuel de '%s'"
 #: apply.c:3614
 #, c-format
 msgid "Failed to fall back on three-way merge...\n"
-msgstr "Echec du retour à une fusion à 3 points…\n"
+msgstr "Échec du retour à une fusion à 3 points…\n"
 
 #: apply.c:3628
 #, c-format
@@ -756,7 +756,7 @@ msgstr "accepter un patch qui touche hors de la copie de travail"
 
 #: apply.c:4994
 msgid "also apply the patch (use with --stat/--summary/--check)"
-msgstr "appliquer aussi le patch (à utiliser avec ---stat/--summary/--check)"
+msgstr "appliquer aussi le patch (à utiliser avec --stat/--summary/--check)"
 
 #: apply.c:4996
 msgid "attempt three-way merge if a patch does not apply"
@@ -1203,7 +1203,7 @@ msgstr ""
 "\n"
 "Après correction de la cause de l'erreur, vous pouvez essayer de corriger\n"
 "l'information de suivi distant en invoquant\n"
-"\"git branch --setup-upstream-to=%s%s%s\"."
+"\"git branch --set-upstream-to=%s%s%s\"."
 
 #: branch.c:67
 #, c-format
@@ -6322,7 +6322,7 @@ msgstr "un picorage ou un retour est déjà en cours"
 
 #: sequencer.c:2657
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
-msgstr "essayez \"git cherry-pick (--continue|--quit|-- abort)\""
+msgstr "essayez \"git cherry-pick (--continue | --quit | --abort)\""
 
 #: sequencer.c:2660
 #, c-format
@@ -8657,7 +8657,7 @@ msgstr "Vous vouliez sûrement dire 'git add .' ?\n"
 
 #: builtin/am.c:348
 msgid "could not parse author script"
-msgstr "impossible d'analyser le script author"
+msgstr "impossible d'analyser l'auteur du script"
 
 #: builtin/am.c:432
 #, c-format
@@ -8883,7 +8883,7 @@ msgstr "git am [<options>] [(<mbox> | <Maildir>)...]"
 
 #: builtin/am.c:2167
 msgid "git am [<options>] (--continue | --skip | --abort)"
-msgstr "git am [<options>] (--continue | --quit | --abort)"
+msgstr "git am [<options>] (--continue | --skip | --abort)"
 
 #: builtin/am.c:2173
 msgid "run interactively"
@@ -10940,7 +10940,7 @@ msgstr "échec du stat de %s\n"
 #: builtin/clone.c:444
 #, c-format
 msgid "failed to unlink '%s'"
-msgstr "échec lors de l'unlink de '%s'"
+msgstr "échec pour délier '%s'"
 
 #: builtin/clone.c:449
 #, c-format
@@ -10997,7 +10997,7 @@ msgstr "impossible de remballer pour nettoyer"
 
 #: builtin/clone.c:880
 msgid "cannot unlink temporary alternates file"
-msgstr "impossible de unlinker le fichier temporaire alternates"
+msgstr "impossible de délier le fichier temporaire alternates"
 
 #: builtin/clone.c:920 builtin/receive-pack.c:1952
 msgid "Too many arguments."
@@ -12832,7 +12832,7 @@ msgstr "git for-each-ref [<options>] [<motif>]"
 
 #: builtin/for-each-ref.c:11
 msgid "git for-each-ref [--points-at <object>]"
-msgstr "git for-each-ref [--point-at <objet>]"
+msgstr "git for-each-ref [--points-at <objet>]"
 
 #: builtin/for-each-ref.c:12
 msgid "git for-each-ref [(--merged | --no-merged) [<commit>]]"
@@ -13963,12 +13963,12 @@ msgstr "impossible de faire un stat du modèle '%s'"
 #: builtin/init-db.c:66
 #, c-format
 msgid "cannot opendir '%s'"
-msgstr "impossible d'ouvrir (opendir) '%s'"
+msgstr "impossible d'ouvrir le répertoire '%s'"
 
 #: builtin/init-db.c:78
 #, c-format
 msgid "cannot readlink '%s'"
-msgstr "impossible de readlink '%s'"
+msgstr "impossible de lire le lien '%s'"
 
 #: builtin/init-db.c:80
 #, c-format
@@ -17381,7 +17381,7 @@ msgstr "mode inconnu : %s"
 
 #: builtin/rebase.c:1747
 msgid "--strategy requires --merge or --interactive"
-msgstr "--stratégie requiert --merge ou --interactive"
+msgstr "--strategy requiert --merge ou --interactive"
 
 #: builtin/rebase.c:1796
 msgid "cannot combine am options with either interactive or merge options"
