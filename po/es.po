@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-05-31 14:35+0800\n"
-"PO-Revision-Date: 2019-06-03 09:33-0500\n"
+"POT-Creation-Date: 2019-06-04 08:24+0800\n"
+"PO-Revision-Date: 2019-06-04 18:51-0500\n"
 "Last-Translator: christopher.diaz.riv@gmail.com\n"
 "Language-Team: CodeLabora <codelabora@gmail.com>\n"
 "Language: es\n"
@@ -2643,8 +2643,8 @@ msgid "show the given source prefix instead of \"a/\""
 msgstr "mostrar el prefijo de fuente dado en lugar de \"a/\""
 
 #: diff.c:5357
-msgid "show the given source prefix instead of \"b/\""
-msgstr "mostrar el prefijo de fuente dado en lugar de \"b/\""
+msgid "show the given destination prefix instead of \"b/\""
+msgstr "mostrar el prefijo de destino en lugar de \"b/\""
 
 #: diff.c:5360
 msgid "prepend an additional prefix to every line of output"
@@ -3540,7 +3540,11 @@ msgstr "no se pueden combinar múltiples tipos de especificaciones de filtro"
 msgid "expected 'tree:<depth>'"
 msgstr "se esperaba 'tree:<depth>'"
 
-#: list-objects-filter-options.c:156
+#: list-objects-filter-options.c:84
+msgid "sparse:path filters support has been dropped"
+msgstr "soporte para filtros sparse:path ha sido discontinuado"
+
+#: list-objects-filter-options.c:158
 msgid "cannot change partial clone promisor remote"
 msgstr "no se puede cambiar un clon parcial remoto promisor"
 
@@ -20755,7 +20759,7 @@ msgstr "no se puede hacer fetch por sha1 sobre smart http"
 
 #: remote-curl.c:1120 remote-curl.c:1126
 #, c-format
-msgid "protocol error: expected sha/ref, got %s'"
+msgid "protocol error: expected sha/ref, got '%s'"
 msgstr "error de protocolo: se esperaba sha/ref, se obtuvo '%s'"
 
 #: remote-curl.c:1138 remote-curl.c:1252
@@ -20784,11 +20788,11 @@ msgstr "remote-curl: fetch intentado sin un repositorio local"
 msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl: comando '%s' desconocido de git"
 
-#: list-objects-filter-options.h:63
+#: list-objects-filter-options.h:61
 msgid "args"
 msgstr "args"
 
-#: list-objects-filter-options.h:64
+#: list-objects-filter-options.h:62
 msgid "object filtering"
 msgstr "filtrado de objeto"
 
