@@ -153,8 +153,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.22\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-05-31 14:35+0800\n"
-"PO-Revision-Date: 2019-06-02 09:25+0200\n"
+"POT-Creation-Date: 2019-06-04 08:24+0800\n"
+"PO-Revision-Date: 2019-06-05 08:50+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -2823,7 +2823,7 @@ msgid "show the given source prefix instead of \"a/\""
 msgstr "префикс вместо „a/“ за източник"
 
 #: diff.c:5357
-msgid "show the given source prefix instead of \"b/\""
+msgid "show the given destination prefix instead of \"b/\""
 msgstr "префикс вместо „b/“ за цел"
 
 #: diff.c:5360
@@ -3733,7 +3733,11 @@ msgstr "не може да комбинирате множество филтр�
 msgid "expected 'tree:<depth>'"
 msgstr "очаква се „tree:ДЪЛБОЧИНА“"
 
-#: list-objects-filter-options.c:156
+#: list-objects-filter-options.c:84
+msgid "sparse:path filters support has been dropped"
+msgstr "поддръжката на филтри със „sparse:path“ е премахната"
+
+#: list-objects-filter-options.c:158
 msgid "cannot change partial clone promisor remote"
 msgstr "не може да промените хранилището-гарант на непълно хранилище"
 
@@ -21303,7 +21307,7 @@ msgstr "умният вариант на http не може да доставя 
 
 #: remote-curl.c:1120 remote-curl.c:1126
 #, c-format
-msgid "protocol error: expected sha/ref, got %s'"
+msgid "protocol error: expected sha/ref, got '%s'"
 msgstr "протоколна грешка: очаква се SHA1 или указател, а бе получено: „%s“"
 
 #: remote-curl.c:1138 remote-curl.c:1252
@@ -21332,11 +21336,11 @@ msgstr "remote-curl: опит за доставяне без локално хр
 msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl: непозната команда „%s“ от git"
 
-#: list-objects-filter-options.h:63
+#: list-objects-filter-options.h:61
 msgid "args"
 msgstr "АРГУМЕНТИ"
 
-#: list-objects-filter-options.h:64
+#: list-objects-filter-options.h:62
 msgid "object filtering"
 msgstr "филтриране по вид на обекта"
 
