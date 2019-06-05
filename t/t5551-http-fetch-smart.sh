@@ -272,11 +272,10 @@ test_expect_success CMDLINE_LIMIT \
 	)
 '
 
-test_expect_success 'large fetch-pack requests can be split across POSTs' '
+test_expect_success 'large fetch-pack requests can be sent using chunked encoding' '
 	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
-	grep "^=> Send header: POST" err >posts &&
-	test_line_count = 2 posts
+	grep "^=> Send header: Transfer-Encoding: chunked" err
 '
 
 test_expect_success 'test allowreachablesha1inwant' '
