@@ -411,6 +411,122 @@ test_expect_success 'disappearing dir in rename/directory conflict handled' '
 	)
 '
 
+# Test for basic rename/add-dest conflict, with rename needing content merge:
+#   Commit O: a
+#   Commit A: rename a->b, modifying b too
+#   Commit B: modify a, add different b
+
+test_expect_success 'setup rename-with-content-merge vs. add' '
+	test_create_repo rename-with-content-merge-and-add &&
+	(
+		cd rename-with-content-merge-and-add &&
+
+		test_seq 1 5 >a &&
+		git add a &&
+		git commit -m O &&
+		git tag O &&
+
+		git checkout -b A O &&
+		git mv a b &&
+		test_seq 0 5 >b &&
+		git add b &&
+		git commit -m A &&
+
+		git checkout -b B O &&
+		echo 6 >>a &&
+		echo hello world >b &&
+		git add a b &&
+		git commit -m B
+	)
+'
+
+test_expect_success 'handle rename-with-content-merge vs. add' '
+	(
+		cd rename-with-content-merge-and-add &&
+
+		git checkout A^0 &&
+
+		test_must_fail git merge -s recursive B^0 >out &&
+		test_i18ngrep "CONFLICT (rename/add)" out &&
+
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		# Also, make sure both unmerged entries are for "b"
+		git ls-files -u b >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		test_path_is_missing a &&
+		test_path_is_file b &&
+
+		test_seq 0 6 >tmp &&
+		git hash-object tmp >expect &&
+		git rev-parse B:b >>expect &&
+		git rev-parse >actual  \
+			:2:b    :3:b   &&
+		test_cmp expect actual &&
+
+		# Test that the two-way merge in b is as expected
+		git cat-file -p :2:b >>ours &&
+		git cat-file -p :3:b >>theirs &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			ours empty theirs &&
+		test_cmp ours b
+	)
+'
+
+test_expect_success 'handle rename-with-content-merge vs. add, merge other way' '
+	(
+		cd rename-with-content-merge-and-add &&
+
+		git reset --hard &&
+		git clean -fdx &&
+
+		git checkout B^0 &&
+
+		test_must_fail git merge -s recursive A^0 >out &&
+		test_i18ngrep "CONFLICT (rename/add)" out &&
+
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		# Also, make sure both unmerged entries are for "b"
+		git ls-files -u b >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		test_path_is_missing a &&
+		test_path_is_file b &&
+
+		test_seq 0 6 >tmp &&
+		git rev-parse B:b >expect &&
+		git hash-object tmp >>expect &&
+		git rev-parse >actual  \
+			:2:b    :3:b   &&
+		test_cmp expect actual &&
+
+		# Test that the two-way merge in b is as expected
+		git cat-file -p :2:b >>ours &&
+		git cat-file -p :3:b >>theirs &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "A^0" \
+			ours empty theirs &&
+		test_cmp ours b
+	)
+'
+
 # Test for all kinds of things that can go wrong with rename/rename (2to1):
 #   Commit A: new files: a & b
 #   Commit B: rename a->c, modify b

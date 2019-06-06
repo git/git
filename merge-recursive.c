@@ -1660,6 +1660,7 @@ static int handle_rename_add(struct merge_options *opt,
 	       c->path, add_branch);
 
 	prev_path_desc = xstrfmt("version of %s from %s", path, a->path);
+	ci->ren1->src_entry->stages[other_stage].path = a->path;
 	if (merge_mode_and_contents(opt, a, c,
 				    &ci->ren1->src_entry->stages[other_stage],
 				    prev_path_desc,
