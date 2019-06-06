@@ -22,7 +22,7 @@ code.  For Git in general, a few rough rules are:
    preparatory clean-up step is good, but otherwise avoid useless code
    churn for the sake of conforming to the style.
 
-   "Once it _is_ in the tree, it's not really worth the patch noise to
+   "Once it is in the tree, it's not really worth the patch noise to
    go and fix it up."
    Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
 
