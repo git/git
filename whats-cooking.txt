@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2019, #01; Mon, 3)
+Subject: What's cooking in git.git (Jun 2019, #02; Thu, 6)
 X-master-at: 74583d89127e21255c12dd3c8a3bf60b497d7d03
-X-next-at: 20b46463406ef6ca70b1a63c5e26d4e2ead8dc13
+X-next-at: ee3066bb6536c68f973b3c0ffaaa13f4bfda5ea3
 
-What's cooking in git.git (Jun 2019, #01; Mon, 3)
+What's cooking in git.git (Jun 2019, #02; Thu, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The third round of release candidate has been tagged, as we decided
-to merge one last minute topic with security implications.
-Hopefully the final will be identical to this one, modulo l10n that
-needs to happen on top.
+On top of -rc3, the tip of 'master' will have a fix for a
+corner-case regression in the merge-recursive machinery introduced
+during this cycle before the final.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,43 +22,93 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* cc/list-objects-filter-wo-sparse-path (2019-05-29) 1 commit
-  (merged to 'next' on 2019-05-30 at 5a294203ad)
- + list-objects-filter: disable 'sparse:path' filters
-
- Disable "--filter=sparse:path=<path>" that would allow reading from
- paths on the filesystem.
-
---------------------------------------------------
 [New Topics]
 
-* md/list-objects-filter-memfix (2019-05-31) 1 commit
- - list-objects-filter: correct usage of ALLOC_GROW
+* en/merge-directory-renames-fix (2019-06-05) 1 commit
+  (merged to 'next' on 2019-06-06 at fd59bad9d7)
+ + merge-recursive: restore accidentally dropped setting of path
 
- The filter_data used in the list-objects-filter (which manages a
- lazily sparse clone repository) did not use the dynamic array API
- correctly---'nr' is supposed to point at one past the last element
- of the array in use.  This has been corrected.
+ Recent code restructuring of merge-recursive engine introduced a
+ regression dealing with rename/add conflict.
 
- Will merge to 'next'.
-
-
-* md/list-objects-filter-parse-msgfix (2019-05-31) 1 commit
- - list-objects-filter-options: error is localizeable
-
- Make an end-user facing message localizable.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* cm/send-email-document-req-modules (2019-05-31) 1 commit
- - send-email: update documentation of required Perl modules
+* fc/fetch-with-import-fix (2019-06-04) 5 commits
+ - fetch: fix regression with transport helpers
+ - fetch: make the code more understandable
+ - fetch: trivial cleanup
+ - t5801 (remote-helpers): add test to fetch tags
+ - t5801 (remote-helpers): cleanup refspec stuff
 
- A doc update.
+ Code restructuring during 2.20 period broke fetching tags via
+ "import" based transports.
 
  Will merge to 'next'.
+
+
+* jl/status-reduce-vertical-blank (2019-06-04) 1 commit
+ - status: remove the empty line after hints
+ (this branch uses nd/switch-and-restore.)
+
+ Extra blank lines in "git status" output have been reduced.
+
+ Needs to wait on nd/switch-and-restore to stabilize.
+
+
+* md/url-parse-harden (2019-06-04) 2 commits
+  (merged to 'next' on 2019-06-06 at b187c3dbfe)
+ + url: do not allow %00 to represent NUL in URLs
+ + url: do not read past end of buffer
+
+ The URL decoding code has been updated to avoid going past the end
+ of the string while parsing %-<hex>-<hex> sequence.
+
+ Will cook in 'next'.
+
+
+* mo/clang-format-for-each-update (2019-06-04) 1 commit
+  (merged to 'next' on 2019-06-06 at ee3066bb65)
+ + clang-format: use git grep to generate the ForEachMacros list
+
+ The list of for-each like macros used by clang-format has been
+ updated.
+
+ Will cook in 'next'.
+
+
+* dl/config-alias-doc (2019-06-06) 2 commits
+ - config/alias.txt: document alias accepting non-command first word
+ - config/alias.txt: change " and ' to `
+
+
+* dl/includeif-onbranch (2019-06-05) 1 commit
+ - config: learn the "onbranch:" includeIf condition
+
+
+* ds/commit-graph-incremental (2019-06-06) 15 commits
+ - SQUASH??? 5323 is already taken
+ - commit-graph: clean up chains after flattened write
+ - commit-graph: verify chains with --shallow mode
+ - commit-graph: create options for split files
+ - commit-graph: expire commit-graph files
+ - commit-graph: allow cross-alternate chains
+ - commit-graph: merge commit-graph chains
+ - commit-graph: add --split option to builtin
+ - commit-graph: write commit-graph chains
+ - commit-graph: rearrange chunk count logic
+ - commit-graph: add base graphs chunk
+ - commit-graph: load commit-graph chains
+ - commit-graph: rename commit_compare to oid_compare
+ - commit-graph: prepare for commit-graph chains
+ - commit-graph: document commit-graph chains
+ (this branch uses ds/commit-graph-write-refactor; is tangled with ds/close-object-store.)
+
+ Needs to wait on ds/commit-graph-write-refactor to stabilize.
+
+
+* tm/tag-gpgsign-config (2019-06-05) 1 commit
+ - tag: add tag.gpgSign config option to force all tags be GPG-signed
 
 --------------------------------------------------
 [Stalled]
@@ -145,6 +194,36 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* md/list-objects-filter-memfix (2019-05-31) 1 commit
+  (merged to 'next' on 2019-06-06 at 80f0187cef)
+ + list-objects-filter: correct usage of ALLOC_GROW
+
+ The filter_data used in the list-objects-filter (which manages a
+ lazily sparse clone repository) did not use the dynamic array API
+ correctly---'nr' is supposed to point at one past the last element
+ of the array in use.  This has been corrected.
+
+ Will cook in 'next'.
+
+
+* md/list-objects-filter-parse-msgfix (2019-05-31) 1 commit
+  (merged to 'next' on 2019-06-06 at 736f3c175b)
+ + list-objects-filter-options: error is localizeable
+
+ Make an end-user facing message localizable.
+
+ Will cook in 'next'.
+
+
+* cm/send-email-document-req-modules (2019-05-31) 1 commit
+  (merged to 'next' on 2019-06-06 at acf1c2fc96)
+ + send-email: update documentation of required Perl modules
+
+ A doc update.
+
+ Will cook in 'next'.
+
+
 * po/doc-branch (2019-05-29) 1 commit
  - doc branch: provide examples for listing remote tracking branches
 
@@ -161,11 +240,12 @@ of the repositories listed at
 
 
 * ab/hash-object-doc (2019-05-28) 1 commit
- - hash-object doc: stop mentioning git-cvsimport
+  (merged to 'next' on 2019-06-06 at 8e4d85b906)
+ + hash-object doc: stop mentioning git-cvsimport
 
  Doc update.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ds/object-info-for-prefetch-fix (2019-05-28) 1 commit
@@ -462,7 +542,7 @@ of the repositories listed at
  - packfile: rename close_all_packs to close_object_store
  - packfile: close commit-graph in close_all_packs
  - commit-graph: use raw_object_store when closing
- (this branch uses ds/commit-graph-write-refactor.)
+ (this branch uses ds/commit-graph-write-refactor; is tangled with ds/commit-graph-incremental.)
 
  The commit-graph file is now part of the "files that the runtime
  may keep open file descriptors on, all of which would need to be
@@ -577,12 +657,15 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* an/ignore-doc-update (2019-05-31) 1 commit
- - gitignore.txt: make slash-rules more readable
+* an/ignore-doc-update (2019-06-04) 1 commit
+  (merged to 'next' on 2019-06-06 at 8579d82c0d)
+ + gitignore.txt: make slash-rules more readable
 
  The description about slashes in gitignore patterns (used to
  indicate things like "anchored to this level only" and "only
  matches directories") has been revamped.
+
+ Will cook in 'next'.
 
 
 * en/fast-export-encoding (2019-05-14) 5 commits
@@ -632,6 +715,8 @@ of the repositories listed at
  in other worktrees connected to the same repository prefixed with
  '+', similar to the way the currently checked out branch is shown
  with '*' in front.
+
+ Will merge to 'next'.
 
 
 * es/first-contrib-tutorial (2019-05-29) 3 commits
@@ -717,6 +802,7 @@ of the repositories listed at
  - doc: document --overwrite-ignore
  - git-checkout.txt: fix one syntax line
  - git-checkout.txt: spell out --no-option
+ (this branch is used by jl/status-reduce-vertical-blank.)
 
  Two new commands "git switch" and "git restore" are introduced to
  split "checking out a branch to work on advancing its history" and
@@ -724,8 +810,6 @@ of the repositories listed at
  advancing the current history" out of the single "git checkout"
  command.
 
- The "switch" part seems more or less ready for testing.  Perhaps
- we should split this back into two topics and merge it to 'next'.
  cf. <20190329103919.15642-1-pclouds@gmail.com> (switch v6)
  cf. <20190425094600.15673-1-pclouds@gmail.com> (restore v3)
 
@@ -799,7 +883,7 @@ of the repositories listed at
  - commit-graph: collapse parameters into flags
  - commit-graph: return with errors during write
  - commit-graph: fix the_repository reference
- (this branch is used by ds/close-object-store.)
+ (this branch is used by ds/close-object-store and ds/commit-graph-incremental.)
 
  Renamed from commit-graph-format-v2 and changed scope.
 
