@@ -36,6 +36,8 @@ except NameError:
     unicode = str
     bytes = bytes
     basestring = (str,bytes)
+    raw_input = input
+    from functools import reduce
 else:
     # 'unicode' exists, must be Python 2
     str = str
@@ -3968,6 +3970,7 @@ class P4Unshelve(Command):
                 break
 
         if not found:
+            sync = P4Sync()
             sys.exit("gave up trying to rename existing branch {0}".format(sync.branch))
 
     def findLastP4Revision(self, starting_point):
