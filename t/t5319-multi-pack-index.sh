@@ -412,4 +412,24 @@ test_expect_success 'expire does not remove any packs' '
 	)
 '
 
+test_expect_success 'expire removes unreferenced packs' '
+	(
+		cd dup &&
+		git pack-objects --revs .git/objects/pack/pack-combined <<-EOF &&
+		refs/heads/A
+		^refs/heads/C
+		EOF
+		git multi-pack-index write &&
+		ls .git/objects/pack | grep -v -e pack-[AB] >expect &&
+		git multi-pack-index expire &&
+		ls .git/objects/pack >actual &&
+		test_cmp expect actual &&
+		ls .git/objects/pack/ | grep idx >expect-idx &&
+		test-tool read-midx .git/objects | grep idx >actual-midx &&
+		test_cmp expect-idx actual-midx &&
+		git multi-pack-index verify &&
+		git fsck
+	)
+'
+
 test_done
