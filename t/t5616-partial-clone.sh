@@ -359,7 +359,7 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 		--filter=blob:none $HTTPD_URL/one_time_sed/server repo &&
 
 	# Sanity check to ensure that the client does not have that blob.
-	git -C repo rev-list --objects --exclude-promisor-objects \
+	git -C repo rev-list --objects --ignore-missing \
 		-- $(cat deltabase) >objlist &&
 	test_line_count = 0 objlist &&
 
