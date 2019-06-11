@@ -346,30 +346,37 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
 
-	# Create a commit with a blob to be used as a delta base.
+	# Create a commit with 2 blobs to be used as delta bases.
 	for i in $(test_seq 10)
 	do
-		echo "this is a line" >>"$SERVER/foo.txt"
+		echo "this is a line" >>"$SERVER/foo.txt" &&
+		echo "this is another line" >>"$SERVER/have.txt"
 	done &&
-	git -C "$SERVER" add foo.txt &&
+	git -C "$SERVER" add foo.txt have.txt &&
 	git -C "$SERVER" commit -m bar &&
-	git -C "$SERVER" rev-parse HEAD:foo.txt >deltabase &&
+	git -C "$SERVER" rev-parse HEAD:foo.txt >deltabase_missing &&
+	git -C "$SERVER" rev-parse HEAD:have.txt >deltabase_have &&
 
+	# Clone. The client has deltabase_have but not deltabase_missing.
 	git -c protocol.version=2 clone --no-checkout \
 		--filter=blob:none $HTTPD_URL/one_time_sed/server repo &&
+	git -C repo hash-object -w -- "$SERVER/have.txt" &&
 
-	# Sanity check to ensure that the client does not have that blob.
+	# Sanity check to ensure that the client does not have
+	# deltabase_missing.
 	git -C repo rev-list --objects --ignore-missing \
-		-- $(cat deltabase) >objlist &&
+		-- $(cat deltabase_missing) >objlist &&
 	test_line_count = 0 objlist &&
 
 	# Another commit. This commit will be fetched by the client.
 	echo "abcdefghijklmnopqrstuvwxyz" >>"$SERVER/foo.txt" &&
-	git -C "$SERVER" add foo.txt &&
+	echo "abcdefghijklmnopqrstuvwxyz" >>"$SERVER/have.txt" &&
+	git -C "$SERVER" add foo.txt have.txt &&
 	git -C "$SERVER" commit -m baz &&
 
 	# Pack a thin pack containing, among other things, HEAD:foo.txt
-	# delta-ed against HEAD^:foo.txt.
+	# delta-ed against HEAD^:foo.txt and HEAD:have.txt delta-ed against
+	# HEAD^:have.txt.
 	printf "%s\n--not\n%s\n" \
 		$(git -C "$SERVER" rev-parse HEAD) \
 		$(git -C "$SERVER" rev-parse HEAD^) |
@@ -381,8 +388,13 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 	# most significant nybble of the first byte is 0b1111 (0b1 to indicate
 	# that the header continues, and 0b111 to indicate REF_DELTA), followed
 	# by any 3 nybbles, then the OID of the delta base.
-	git -C "$SERVER" rev-parse HEAD^:foo.txt >deltabase &&
-	printf "f.,..%s" $(intersperse "," <deltabase) >want &&
+	printf "f.,..%s" $(intersperse "," <deltabase_missing) >want &&
+	hex_unpack <thin.pack | intersperse "," >have &&
+	grep $(cat want) have &&
+
+	# Ensure that the pack contains one delta against HEAD^:have.txt,
+	# similar to the above.
+	printf "f.,..%s" $(intersperse "," <deltabase_have) >want &&
 	hex_unpack <thin.pack | intersperse "," >have &&
 	grep $(cat want) have &&
 
@@ -394,7 +406,12 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 
 	# Fetch the thin pack and ensure that index-pack is able to handle the
 	# REF_DELTA object with a missing promisor delta base.
-	git -C repo -c protocol.version=2 fetch &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C repo -c protocol.version=2 fetch &&
+
+	# Ensure that the missing delta base was directly fetched, but not the
+	# one that the client has.
+	grep "want $(cat deltabase_missing)" trace &&
+	! grep "want $(cat deltabase_have)" trace &&
 
 	# Ensure that the one-time-sed script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
