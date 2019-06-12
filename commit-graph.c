@@ -950,6 +950,19 @@ static void fill_oids_from_commit_hex(struct write_commit_graph_context *ctx,
 	strbuf_release(&progress_title);
 }
 
+static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
+{
+	if (ctx->report_progress)
+		ctx->progress = start_delayed_progress(
+			_("Finding commits for commit graph among packed objects"),
+			ctx->approx_nr_objects);
+	for_each_packed_object(add_packed_commits, ctx,
+			       FOR_EACH_OBJECT_PACK_ORDER);
+	if (ctx->progress_done < ctx->approx_nr_objects)
+		display_progress(ctx->progress, ctx->approx_nr_objects);
+	stop_progress(&ctx->progress);
+}
+
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
@@ -1006,17 +1019,8 @@ int write_commit_graph(const char *obj_dir,
 	if (commit_hex)
 		fill_oids_from_commit_hex(ctx, commit_hex);
 
-	if (!pack_indexes && !commit_hex) {
-		if (ctx->report_progress)
-			ctx->progress = start_delayed_progress(
-				_("Finding commits for commit graph among packed objects"),
-				ctx->approx_nr_objects);
-		for_each_packed_object(add_packed_commits, ctx,
-				       FOR_EACH_OBJECT_PACK_ORDER);
-		if (ctx->progress_done < ctx->approx_nr_objects)
-			display_progress(ctx->progress, ctx->approx_nr_objects);
-		stop_progress(&ctx->progress);
-	}
+	if (!pack_indexes && !commit_hex)
+		fill_oids_from_all_packs(ctx);
 
 	close_reachable(ctx);
 
