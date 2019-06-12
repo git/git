@@ -1015,21 +1015,91 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 }
 
+static int write_commit_graph_file(struct write_commit_graph_context *ctx)
+{
+	uint32_t i;
+	struct hashfile *f;
+	struct lock_file lk = LOCK_INIT;
+	uint32_t chunk_ids[5];
+	uint64_t chunk_offsets[5];
+	const unsigned hashsz = the_hash_algo->rawsz;
+	struct strbuf progress_title = STRBUF_INIT;
+	int num_chunks = ctx->num_extra_edges ? 4 : 3;
+
+	ctx->graph_name = get_commit_graph_filename(ctx->obj_dir);
+	if (safe_create_leading_directories(ctx->graph_name)) {
+		UNLEAK(ctx->graph_name);
+		error(_("unable to create leading directories of %s"),
+			ctx->graph_name);
+		return -1;
+	}
+
+	hold_lock_file_for_update(&lk, ctx->graph_name, LOCK_DIE_ON_ERROR);
+	f = hashfd(lk.tempfile->fd, lk.tempfile->filename.buf);
+
+	hashwrite_be32(f, GRAPH_SIGNATURE);
+
+	hashwrite_u8(f, GRAPH_VERSION);
+	hashwrite_u8(f, oid_version());
+	hashwrite_u8(f, num_chunks);
+	hashwrite_u8(f, 0); /* unused padding byte */
+
+	chunk_ids[0] = GRAPH_CHUNKID_OIDFANOUT;
+	chunk_ids[1] = GRAPH_CHUNKID_OIDLOOKUP;
+	chunk_ids[2] = GRAPH_CHUNKID_DATA;
+	if (ctx->num_extra_edges)
+		chunk_ids[3] = GRAPH_CHUNKID_EXTRAEDGES;
+	else
+		chunk_ids[3] = 0;
+	chunk_ids[4] = 0;
+
+	chunk_offsets[0] = 8 + (num_chunks + 1) * GRAPH_CHUNKLOOKUP_WIDTH;
+	chunk_offsets[1] = chunk_offsets[0] + GRAPH_FANOUT_SIZE;
+	chunk_offsets[2] = chunk_offsets[1] + hashsz * ctx->commits.nr;
+	chunk_offsets[3] = chunk_offsets[2] + (hashsz + 16) * ctx->commits.nr;
+	chunk_offsets[4] = chunk_offsets[3] + 4 * ctx->num_extra_edges;
+
+	for (i = 0; i <= num_chunks; i++) {
+		uint32_t chunk_write[3];
+
+		chunk_write[0] = htonl(chunk_ids[i]);
+		chunk_write[1] = htonl(chunk_offsets[i] >> 32);
+		chunk_write[2] = htonl(chunk_offsets[i] & 0xffffffff);
+		hashwrite(f, chunk_write, 12);
+	}
+
+	if (ctx->report_progress) {
+		strbuf_addf(&progress_title,
+			    Q_("Writing out commit graph in %d pass",
+			       "Writing out commit graph in %d passes",
+			       num_chunks),
+			    num_chunks);
+		ctx->progress = start_delayed_progress(
+			progress_title.buf,
+			num_chunks * ctx->commits.nr);
+	}
+	write_graph_chunk_fanout(f, ctx);
+	write_graph_chunk_oids(f, hashsz, ctx);
+	write_graph_chunk_data(f, hashsz, ctx);
+	if (ctx->num_extra_edges)
+		write_graph_chunk_extra_edges(f, ctx);
+	stop_progress(&ctx->progress);
+	strbuf_release(&progress_title);
+
+	close_commit_graph(ctx->r);
+	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC);
+	commit_lock_file(&lk);
+
+	return 0;
+}
+
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
 		       unsigned int flags)
 {
 	struct write_commit_graph_context *ctx;
-	struct hashfile *f;
 	uint32_t i, count_distinct = 0;
-	char *graph_name = NULL;
-	struct lock_file lk = LOCK_INIT;
-	uint32_t chunk_ids[5];
-	uint64_t chunk_offsets[5];
-	int num_chunks;
-	const unsigned hashsz = the_hash_algo->rawsz;
-	struct strbuf progress_title = STRBUF_INIT;
 	int res = 0;
 
 	if (!commit_graph_compatible(the_repository))
@@ -1096,75 +1166,10 @@ int write_commit_graph(const char *obj_dir,
 
 	compute_generation_numbers(ctx);
 
-	num_chunks = ctx->num_extra_edges ? 4 : 3;
-
-	ctx->graph_name = get_commit_graph_filename(ctx->obj_dir);
-	if (safe_create_leading_directories(ctx->graph_name)) {
-		UNLEAK(ctx->graph_name);
-		error(_("unable to create leading directories of %s"),
-			ctx->graph_name);
-		res = -1;
-		goto cleanup;
-	}
-
-	hold_lock_file_for_update(&lk, ctx->graph_name, LOCK_DIE_ON_ERROR);
-	f = hashfd(lk.tempfile->fd, lk.tempfile->filename.buf);
-
-	hashwrite_be32(f, GRAPH_SIGNATURE);
-
-	hashwrite_u8(f, GRAPH_VERSION);
-	hashwrite_u8(f, oid_version());
-	hashwrite_u8(f, num_chunks);
-	hashwrite_u8(f, 0); /* unused padding byte */
-
-	chunk_ids[0] = GRAPH_CHUNKID_OIDFANOUT;
-	chunk_ids[1] = GRAPH_CHUNKID_OIDLOOKUP;
-	chunk_ids[2] = GRAPH_CHUNKID_DATA;
-	if (ctx->num_extra_edges)
-		chunk_ids[3] = GRAPH_CHUNKID_EXTRAEDGES;
-	else
-		chunk_ids[3] = 0;
-	chunk_ids[4] = 0;
-
-	chunk_offsets[0] = 8 + (num_chunks + 1) * GRAPH_CHUNKLOOKUP_WIDTH;
-	chunk_offsets[1] = chunk_offsets[0] + GRAPH_FANOUT_SIZE;
-	chunk_offsets[2] = chunk_offsets[1] + hashsz * ctx->commits.nr;
-	chunk_offsets[3] = chunk_offsets[2] + (hashsz + 16) * ctx->commits.nr;
-	chunk_offsets[4] = chunk_offsets[3] + 4 * ctx->num_extra_edges;
-
-	for (i = 0; i <= num_chunks; i++) {
-		uint32_t chunk_write[3];
-
-		chunk_write[0] = htonl(chunk_ids[i]);
-		chunk_write[1] = htonl(chunk_offsets[i] >> 32);
-		chunk_write[2] = htonl(chunk_offsets[i] & 0xffffffff);
-		hashwrite(f, chunk_write, 12);
-	}
-
-	if (ctx->report_progress) {
-		strbuf_addf(&progress_title,
-			    Q_("Writing out commit graph in %d pass",
-			       "Writing out commit graph in %d passes",
-			       num_chunks),
-			    num_chunks);
-		ctx->progress = start_delayed_progress(
-			progress_title.buf,
-			num_chunks * ctx->commits.nr);
-	}
-	write_graph_chunk_fanout(f, ctx);
-	write_graph_chunk_oids(f, hashsz, ctx);
-	write_graph_chunk_data(f, hashsz, ctx);
-	if (ctx->num_extra_edges)
-		write_graph_chunk_extra_edges(f, ctx);
-	stop_progress(&ctx->progress);
-	strbuf_release(&progress_title);
-
-	close_commit_graph(ctx->r);
-	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC);
-	commit_lock_file(&lk);
+	res = write_commit_graph_file(ctx);
 
 cleanup:
-	free(graph_name);
+	free(ctx->graph_name);
 	free(ctx->commits.list);
 	free(ctx->oids.list);
 	free(ctx);
