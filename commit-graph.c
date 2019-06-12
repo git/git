@@ -867,6 +867,51 @@ int write_commit_graph_reachable(const char *obj_dir, unsigned int flags)
 	return result;
 }
 
+static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
+				struct string_list *pack_indexes)
+{
+	uint32_t i;
+	struct strbuf progress_title = STRBUF_INIT;
+	struct strbuf packname = STRBUF_INIT;
+	int dirlen;
+
+	strbuf_addf(&packname, "%s/pack/", ctx->obj_dir);
+	dirlen = packname.len;
+	if (ctx->report_progress) {
+		strbuf_addf(&progress_title,
+			    Q_("Finding commits for commit graph in %d pack",
+			       "Finding commits for commit graph in %d packs",
+			       pack_indexes->nr),
+			    pack_indexes->nr);
+		ctx->progress = start_delayed_progress(progress_title.buf, 0);
+		ctx->progress_done = 0;
+	}
+	for (i = 0; i < pack_indexes->nr; i++) {
+		struct packed_git *p;
+		strbuf_setlen(&packname, dirlen);
+		strbuf_addstr(&packname, pack_indexes->items[i].string);
+		p = add_packed_git(packname.buf, packname.len, 1);
+		if (!p) {
+			error(_("error adding pack %s"), packname.buf);
+			return -1;
+		}
+		if (open_pack_index(p)) {
+			error(_("error opening index for %s"), packname.buf);
+			return -1;
+		}
+		for_each_object_in_pack(p, add_packed_commits, ctx,
+					FOR_EACH_OBJECT_PACK_ORDER);
+		close_pack(p);
+		free(p);
+	}
+
+	stop_progress(&ctx->progress);
+	strbuf_reset(&progress_title);
+	strbuf_release(&packname);
+
+	return 0;
+}
+
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
@@ -916,42 +961,8 @@ int write_commit_graph(const char *obj_dir,
 	}
 
 	if (pack_indexes) {
-		struct strbuf packname = STRBUF_INIT;
-		int dirlen;
-		strbuf_addf(&packname, "%s/pack/", obj_dir);
-		dirlen = packname.len;
-		if (ctx->report_progress) {
-			strbuf_addf(&progress_title,
-				    Q_("Finding commits for commit graph in %d pack",
-				       "Finding commits for commit graph in %d packs",
-				       pack_indexes->nr),
-				    pack_indexes->nr);
-			ctx->progress = start_delayed_progress(progress_title.buf, 0);
-			ctx->progress_done = 0;
-		}
-		for (i = 0; i < pack_indexes->nr; i++) {
-			struct packed_git *p;
-			strbuf_setlen(&packname, dirlen);
-			strbuf_addstr(&packname, pack_indexes->items[i].string);
-			p = add_packed_git(packname.buf, packname.len, 1);
-			if (!p) {
-				error(_("error adding pack %s"), packname.buf);
-				res = -1;
-				goto cleanup;
-			}
-			if (open_pack_index(p)) {
-				error(_("error opening index for %s"), packname.buf);
-				res = -1;
-				goto cleanup;
-			}
-			for_each_object_in_pack(p, add_packed_commits, ctx,
-						FOR_EACH_OBJECT_PACK_ORDER);
-			close_pack(p);
-			free(p);
-		}
-		stop_progress(&ctx->progress);
-		strbuf_reset(&progress_title);
-		strbuf_release(&packname);
+		if ((res = fill_oids_from_packs(ctx, pack_indexes)))
+			goto cleanup;
 	}
 
 	if (commit_hex) {
