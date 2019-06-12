@@ -228,9 +228,8 @@ stage_submodule () {
 }
 
 checkout_staged_file () {
-	tmpfile=$(expr \
-		"$(git checkout-index --temp --stage="$1" "$2" 2>/dev/null)" \
-		: '\([^	]*\)	')
+	tmpfile="$(git checkout-index --temp --stage="$1" "$2" 2>/dev/null)" &&
+	tmpfile=${tmpfile%%'	'*}
 
 	if test $? -eq 0 && test -n "$tmpfile"
 	then
@@ -255,13 +254,16 @@ merge_file () {
 		return 1
 	fi
 
-	if BASE=$(expr "$MERGED" : '\(.*\)\.[^/]*$')
-	then
-		ext=$(expr "$MERGED" : '.*\(\.[^/]*\)$')
-	else
+	# extract file extension from the last path component
+	case "${MERGED##*/}" in
+	*.*)
+		ext=.${MERGED##*.}
+		BASE=${MERGED%"$ext"}
+		;;
+	*)
 		BASE=$MERGED
 		ext=
-	fi
+	esac
 
 	mergetool_tmpdir_init
 
@@ -406,7 +408,7 @@ main () {
 		-t|--tool*)
 			case "$#,$1" in
 			*,*=*)
-				merge_tool=$(expr "z$1" : 'z-[^=]*=\(.*\)')
+				merge_tool=${1#*=}
 				;;
 			1,*)
 				usage ;;
