@@ -279,15 +279,30 @@ merge_file () {
 	REMOTE="$MERGETOOL_TMPDIR/${BASE}_REMOTE_$$$ext"
 	BASE="$MERGETOOL_TMPDIR/${BASE}_BASE_$$$ext"
 
-	base_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==1) print $1;}')
-	local_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}')
-	remote_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}')
+	base_mode= local_mode= remote_mode=
+
+	# here, $IFS is just a LF
+	for line in $f
+	do
+		mode=${line%% *}		# 1st word
+		sha1=${line#"$mode "}
+		sha1=${sha1%% *}		# 2nd word
+		case "${line#$mode $sha1 }" in	# remainder
+		'1	'*)
+			base_mode=$mode
+			;;
+		'2	'*)
+			local_mode=$mode local_sha1=$sha1
+			;;
+		'3	'*)
+			remote_mode=$mode remote_sha1=$sha1
+			;;
+		esac
+	done
 
 	if is_submodule "$local_mode" || is_submodule "$remote_mode"
 	then
 		echo "Submodule merge conflict for '$MERGED':"
-		local_sha1=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $2;}')
-		remote_sha1=$(git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $2;}')
 		describe_file "$local_mode" "local" "$local_sha1"
 		describe_file "$remote_mode" "remote" "$remote_sha1"
 		resolve_submodule_merge
