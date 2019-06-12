@@ -127,23 +127,6 @@ Design Details
   helpful for these clones, anyway. The commit-graph will not be read or
   written when shallow commits are present.
 
-Future Work
------------
-
-- After computing and storing generation numbers, we must make graph
-  walks aware of generation numbers to gain the performance benefits they
-  enable. This will mostly be accomplished by swapping a commit-date-ordered
-  priority queue with one ordered by generation number. The following
-  operations are important candidates:
-
-    - 'log --topo-order'
-    - 'tag --merged'
-
-- A server could provide a commit-graph file as part of the network protocol
-  to avoid extra calculations by clients. This feature is only of benefit if
-  the user is willing to trust the file, because verifying the file is correct
-  is as hard as computing it from scratch.
-
 Related Links
 -------------
 [0] https://bugs.chromium.org/p/git/issues/detail?id=8
