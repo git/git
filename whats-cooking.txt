@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2019, #02; Thu, 6)
-X-master-at: 74583d89127e21255c12dd3c8a3bf60b497d7d03
-X-next-at: ee3066bb6536c68f973b3c0ffaaa13f4bfda5ea3
+Subject: What's cooking in git.git (Jun 2019, #03; Wed, 12)
+X-master-at: b697d92f56511e804b8ba20ccbe7bdc85dc66810
+X-next-at: 95628af9bbb1414c85a80e992c77d3eb4efd24a4
 
-What's cooking in git.git (Jun 2019, #02; Thu, 6)
+What's cooking in git.git (Jun 2019, #03; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-On top of -rc3, the tip of 'master' will have a fix for a
-corner-case regression in the merge-recursive machinery introduced
-during this cycle before the final.
+Git 2.22 final has been tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,7 +20,7 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * en/merge-directory-renames-fix (2019-06-05) 1 commit
   (merged to 'next' on 2019-06-06 at fd59bad9d7)
@@ -31,84 +29,88 @@ of the repositories listed at
  Recent code restructuring of merge-recursive engine introduced a
  regression dealing with rename/add conflict.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* mo/hpux-dynpath (2019-06-07) 1 commit
+ - configure: Detect linking style for HP aCC on HP-UX
 
-* fc/fetch-with-import-fix (2019-06-04) 5 commits
- - fetch: fix regression with transport helpers
- - fetch: make the code more understandable
- - fetch: trivial cleanup
- - t5801 (remote-helpers): add test to fetch tags
- - t5801 (remote-helpers): cleanup refspec stuff
-
- Code restructuring during 2.20 period broke fetching tags via
- "import" based transports.
+ Auto-detect how to tell HP-UX aCC where to use dynamicallly linked
+ libraries from at runtime.
 
  Will merge to 'next'.
 
 
-* jl/status-reduce-vertical-blank (2019-06-04) 1 commit
- - status: remove the empty line after hints
- (this branch uses nd/switch-and-restore.)
+* js/mergetool-optim (2019-06-12) 4 commits
+ - mergetool: use shell variable magic instead of `awk`
+ - mergetool: dissect strings with shell variable magic instead of `expr`
+ - t7610-mergetool: use test_cmp instead of test $(cat file) = $txt
+ - t7610-mergetool: do not place pipelines headed by `yes` in subshells
 
- Extra blank lines in "git status" output have been reduced.
+ "git mergetool" and its tests now spawn fewer subprocesses.
 
- Needs to wait on nd/switch-and-restore to stabilize.
-
-
-* md/url-parse-harden (2019-06-04) 2 commits
-  (merged to 'next' on 2019-06-06 at b187c3dbfe)
- + url: do not allow %00 to represent NUL in URLs
- + url: do not read past end of buffer
-
- The URL decoding code has been updated to avoid going past the end
- of the string while parsing %-<hex>-<hex> sequence.
-
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
-* mo/clang-format-for-each-update (2019-06-04) 1 commit
-  (merged to 'next' on 2019-06-06 at ee3066bb65)
- + clang-format: use git grep to generate the ForEachMacros list
-
- The list of for-each like macros used by clang-format has been
- updated.
-
- Will cook in 'next'.
+* cc/test-oidmap (2019-06-11) 4 commits
+ - oidmap: use sha1hash() instead of static hash() function
+ - SQUASH??? sh style
+ - t: add t0016-oidmap.sh
+ - t/helper: add test-oidmap.c
 
 
-* dl/config-alias-doc (2019-06-06) 2 commits
- - config/alias.txt: document alias accepting non-command first word
- - config/alias.txt: change " and ' to `
+* ds/midx-expire-repack (2019-06-11) 11 commits
+ - t5319-multi-pack-index.sh: test batch size zero
+ - midx: add test that 'expire' respects .keep files
+ - multi-pack-index: test expire while adding packs
+ - midx: implement midx_repack()
+ - multi-pack-index: prepare 'repack' subcommand
+ - multi-pack-index: implement 'expire' subcommand
+ - midx: refactor permutation logic and pack sorting
+ - midx: simplify computation of pack name lengths
+ - multi-pack-index: prepare for 'expire' subcommand
+ - Docs: rearrange subcommands for multi-pack-index
+ - repack: refactor pack deletion for future use
+
+ "git multi-pack-index" learned expire and repack subcommands.
+
+ Will merge to 'next'.
 
 
-* dl/includeif-onbranch (2019-06-05) 1 commit
- - config: learn the "onbranch:" includeIf condition
+* md/sort-detached-head-first (2019-06-11) 1 commit
+ - ref-filter: sort detached HEAD lines firstly
+
+ "git branch --list" learned to always output the detached HEAD as
+ the first item (when the HEAD is detached, of course), instead of
+ relying on the textual order of sorting
 
 
-* ds/commit-graph-incremental (2019-06-06) 15 commits
- - SQUASH??? 5323 is already taken
- - commit-graph: clean up chains after flattened write
- - commit-graph: verify chains with --shallow mode
- - commit-graph: create options for split files
- - commit-graph: expire commit-graph files
- - commit-graph: allow cross-alternate chains
- - commit-graph: merge commit-graph chains
- - commit-graph: add --split option to builtin
- - commit-graph: write commit-graph chains
- - commit-graph: rearrange chunk count logic
- - commit-graph: add base graphs chunk
- - commit-graph: load commit-graph chains
- - commit-graph: rename commit_compare to oid_compare
- - commit-graph: prepare for commit-graph chains
- - commit-graph: document commit-graph chains
- (this branch uses ds/commit-graph-write-refactor; is tangled with ds/close-object-store.)
+* nd/completion-no-cache-failure (2019-06-12) 1 commit
+ - completion: do not cache if --git-completion-helper fails
 
- Needs to wait on ds/commit-graph-write-refactor to stabilize.
+ An incorrect list of options was cached after command line
+ completion failed (e.g. trying to complete a command that requires
+ a repository outside one), which has been corrected.
+
+ Will merge to 'next'.
 
 
-* tm/tag-gpgsign-config (2019-06-05) 1 commit
- - tag: add tag.gpgSign config option to force all tags be GPG-signed
+* sg/rebase-progress (2019-06-11) 4 commits
+ - progress: use term_clear_line()
+ - rebase: fix garbled progress display with '-x'
+ - pager: add a helper function to clear the last line in the terminal
+ - t3404-rebase-interactive: use the 'q_to_cr' helper
+
+ Use "Erase in Line" CSI sequence that is already used in the editor
+ support to clear cruft in the progress output.
+
+
+* sg/trace2-rename (2019-06-12) 1 commit
+ - Revert "test-lib: whitelist GIT_TR2_* in the environment"
+
+ Dev support update to help tracing out tests.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -152,15 +154,6 @@ of the repositories listed at
  Stalled
 
 
-* js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
- - add -p: coalesce hunks before testing applicability
-
- Applicability check after a patch is edited in a "git add -i/p"
- session has been improved.
-
- Will drop as "add -i in C" topic seems to be getting ready to test.
-
-
 * js/protocol-advertise-multi (2018-12-28) 1 commit
  - protocol: advertise multiple supported versions
 
@@ -194,6 +187,102 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* fc/fetch-with-import-fix (2019-06-04) 5 commits
+ - fetch: fix regression with transport helpers
+ - fetch: make the code more understandable
+ - fetch: trivial cleanup
+ - t5801 (remote-helpers): add test to fetch tags
+ - t5801 (remote-helpers): cleanup refspec stuff
+
+ Code restructuring during 2.20 period broke fetching tags via
+ "import" based transports.
+
+ Will merge to 'next'.
+
+
+* jl/status-reduce-vertical-blank (2019-06-04) 1 commit
+ - status: remove the empty line after hints
+ (this branch uses nd/switch-and-restore.)
+
+ Extra blank lines in "git status" output have been reduced.
+
+ Needs to wait on nd/switch-and-restore to stabilize.
+
+
+* md/url-parse-harden (2019-06-04) 2 commits
+  (merged to 'next' on 2019-06-06 at b187c3dbfe)
+ + url: do not allow %00 to represent NUL in URLs
+ + url: do not read past end of buffer
+
+ The URL decoding code has been updated to avoid going past the end
+ of the string while parsing %-<hex>-<hex> sequence.
+
+ Will merge to 'master'.
+
+
+* mo/clang-format-for-each-update (2019-06-04) 1 commit
+  (merged to 'next' on 2019-06-06 at ee3066bb65)
+ + clang-format: use git grep to generate the ForEachMacros list
+
+ The list of for-each like macros used by clang-format has been
+ updated.
+
+ Will merge to 'master'.
+
+
+* dl/config-alias-doc (2019-06-06) 2 commits
+ - config/alias.txt: document alias accepting non-command first word
+ - config/alias.txt: change " and ' to `
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* dl/includeif-onbranch (2019-06-05) 1 commit
+ - config: learn the "onbranch:" includeIf condition
+
+ The conditional inclusion mechanism learned to base the choice on
+ the branch the HEAD currently is on.
+
+ Will merge to 'next'.
+
+
+* ds/commit-graph-incremental (2019-06-12) 16 commits
+ - commit-graph: test --split across alternate without --split
+ - commit-graph: test octopus merges with --split
+ - commit-graph: clean up chains after flattened write
+ - commit-graph: verify chains with --shallow mode
+ - commit-graph: create options for split files
+ - commit-graph: expire commit-graph files
+ - commit-graph: allow cross-alternate chains
+ - commit-graph: merge commit-graph chains
+ - commit-graph: add --split option to builtin
+ - commit-graph: write commit-graph chains
+ - commit-graph: rearrange chunk count logic
+ - commit-graph: add base graphs chunk
+ - commit-graph: load commit-graph chains
+ - commit-graph: rename commit_compare to oid_compare
+ - commit-graph: prepare for commit-graph chains
+ - commit-graph: document commit-graph chains
+ (this branch uses ds/commit-graph-write-refactor; is tangled with ds/close-object-store.)
+
+ The commits in a repository can be described by multiple
+ commit-graph files now, which allows the commit-graph files to be
+ updated incrementally.
+
+ Will merge to 'next'.
+
+
+* tm/tag-gpgsign-config (2019-06-05) 1 commit
+ - tag: add tag.gpgSign config option to force all tags be GPG-signed
+
+ A new tag.gpgSign configuration variable turns "git tag -a" into
+ "git tag -s".
+
+ Will merge to 'next'.
+
+
 * md/list-objects-filter-memfix (2019-05-31) 1 commit
   (merged to 'next' on 2019-06-06 at 80f0187cef)
  + list-objects-filter: correct usage of ALLOC_GROW
@@ -203,7 +292,7 @@ of the repositories listed at
  correctly---'nr' is supposed to point at one past the last element
  of the array in use.  This has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * md/list-objects-filter-parse-msgfix (2019-05-31) 1 commit
@@ -212,7 +301,7 @@ of the repositories listed at
 
  Make an end-user facing message localizable.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * cm/send-email-document-req-modules (2019-05-31) 1 commit
@@ -221,13 +310,15 @@ of the repositories listed at
 
  A doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * po/doc-branch (2019-05-29) 1 commit
  - doc branch: provide examples for listing remote tracking branches
 
- RFC
+ Doc update.
+
+ Will merge to 'next'.
 
 
 * bb/unicode-12.1-reiwa (2019-05-29) 1 commit
@@ -236,7 +327,7 @@ of the repositories listed at
 
  Update to Unicode 12.1 width table.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/hash-object-doc (2019-05-28) 1 commit
@@ -245,7 +336,7 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ds/object-info-for-prefetch-fix (2019-05-28) 1 commit
@@ -254,7 +345,7 @@ of the repositories listed at
 
  Code cleanup and futureproof.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ds/topo-traversal-using-commit-graph (2019-05-28) 2 commits
@@ -265,7 +356,7 @@ of the repositories listed at
  Prepare use of reachability index in topological walker that works
  on a range (A..B).
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * es/git-debugger-doc (2019-05-28) 1 commit
@@ -274,7 +365,7 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * es/grep-require-name-when-needed (2019-05-28) 1 commit
@@ -283,7 +374,7 @@ of the repositories listed at
 
  More parameter validation.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ew/server-info-remove-crufts (2019-05-28) 1 commit
@@ -293,7 +384,7 @@ of the repositories listed at
  "git update-server-info" used to leave stale packfiles in its
  output, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/HEAD-symref-in-xfer-namespaces (2019-05-28) 1 commit
@@ -304,7 +395,7 @@ of the repositories listed at
  value for the HEAD symbolic ref when the namespace feature is in
  use, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/am-i-resolved-fix (2019-05-28) 4 commits
@@ -317,7 +408,7 @@ of the repositories listed at
  "git am -i --resolved" segfaulted after trying to see a commit as
  if it were a tree, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/bisect-helper-check-get-oid-return-value (2019-05-28) 1 commit
@@ -326,7 +417,7 @@ of the repositories listed at
 
  Code cleanup.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/bundle-verify-require-object-store (2019-05-28) 1 commit
@@ -337,7 +428,7 @@ of the repositories listed at
  the receiving repository, but the command did not check if we are
  in a repository upfront, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/fsmonitor-unflake (2019-05-28) 2 commits
@@ -349,7 +440,7 @@ of the repositories listed at
  the on-disk index file, breaking t7519 tests occasionally, which
  has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * mm/p4-unshelve-windows-fix (2019-05-28) 1 commit
@@ -360,7 +451,7 @@ of the repositories listed at
  "git p4" was not properly quoted to protect a caret and running a
  broken command on Windows, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pb/request-pull-verify-remote-ref (2019-05-28) 2 commits
@@ -372,7 +463,7 @@ of the repositories listed at
  from in the local repository and in the published repository are
  different.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * po/git-help-on-git-itself (2019-05-16) 2 commits
@@ -383,7 +474,7 @@ of the repositories listed at
  "git help git" was hard to discover (well, at least for some
  people).
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sw/git-p4-unshelve-branched-files (2019-05-28) 1 commit
@@ -392,7 +483,7 @@ of the repositories listed at
 
  "git p4" update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * vv/merge-squash-with-explicit-commit (2019-05-28) 1 commit
@@ -404,7 +495,7 @@ of the repositories listed at
  by adding the "--commit" option; the command now refuses to work
  when both options are given.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * xl/record-partial-clone-origin (2019-05-29) 1 commit
@@ -416,7 +507,7 @@ of the repositories listed at
  hardcoded name "origin" to name that remote; it has been corrected
  to honor the "--origin <name>" option.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/fail-prereqs-in-test (2019-05-14) 1 commit
@@ -427,7 +518,7 @@ of the repositories listed at
  ensure that the remainer of the tests still succeeds when tests
  with prerequisites are skipped.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/help-unknown-ref-fix (2019-05-15) 2 commits
@@ -438,7 +529,7 @@ of the repositories listed at
  Improve the code to show args with potential typo that cannot be
  interpreted as a commit-ish.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/rebase-cleanup (2019-05-15) 5 commits
@@ -452,10 +543,13 @@ of the repositories listed at
  Update supporting parts of "git rebase" to remove code that should
  no longer be used.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* jt/partial-clone-missing-ref-delta-base (2019-05-15) 2 commits
+* jt/partial-clone-missing-ref-delta-base (2019-06-11) 4 commits
+  (merged to 'next' on 2019-06-12 at 95628af9bb)
+ + t5616: cover case of client having delta base
+ + t5616: use correct flag to check object is missing
   (merged to 'next' on 2019-05-29 at 5d7573a151)
  + index-pack: prefetch missing REF_DELTA bases
  + t5616: refactor packfile replacement
@@ -464,7 +558,7 @@ of the repositories listed at
  necessary to complete delta in a thin packfile, which has been
  corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * bl/userdiff-octave (2019-05-29) 2 commits
@@ -477,7 +571,7 @@ of the repositories listed at
  boundary for Matlab has been extend to cover Octave, which is more
  or less equivalent.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ew/update-server-info (2019-05-15) 1 commit
@@ -487,7 +581,7 @@ of the repositories listed at
  "git update-server-info" learned not to rewrite the file with the
  same contents.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/corrupt-worktrees (2019-05-15) 1 commit
@@ -497,7 +591,7 @@ of the repositories listed at
  "git worktree add" used to fail when another worktree connected to
  the same repository was corrupt, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * mh/import-transport-fd-fix (2019-05-16) 2 commits
@@ -509,7 +603,7 @@ of the repositories listed at
  backend was mixed up, leading to unrelated file descriptor getting
  closed, which has been fixed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/deprecate-R-for-dynpath (2019-05-19) 1 commit
@@ -522,7 +616,7 @@ of the repositories listed at
  which is the more recent GCC uses.  Those who need to build with an
  old GCC can still use "CC_LD_DYNPATH=-R"
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ba/clone-remote-submodules (2019-05-28) 1 commit
@@ -535,10 +629,10 @@ of the repositories listed at
  remote-tracking branches from the get-go, by passing the new
  "--remote-submodules" option.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* ds/close-object-store (2019-05-28) 3 commits
+* ds/close-object-store (2019-06-12) 3 commits
  - packfile: rename close_all_packs to close_object_store
  - packfile: close commit-graph in close_all_packs
  - commit-graph: use raw_object_store when closing
@@ -550,18 +644,19 @@ of the repositories listed at
  an existing commit-graph file now is closed before "gc" finalizes a
  new instance to replace it.
 
- Waiting on ds/commit-graph-write-refactor to stabilize.
+ Will merge to 'next'.
 
 
 * ml/userdiff-rust (2019-05-30) 2 commits
- - userdiff: two simplifications of patterns for rust
+  (merged to 'next' on 2019-06-12 at 33b88fa9e5)
+ + userdiff: two simplifications of patterns for rust
   (merged to 'next' on 2019-05-19 at 1266fddce5)
  + userdiff: add built-in pattern for rust
 
  The pattern "git diff/grep" use to extract funcname and words
  boundary for Rust has been added.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pw/rebase-edit-message-for-replayed-merge (2019-05-19) 1 commit
@@ -574,7 +669,7 @@ of the repositories listed at
  one (i.e. fast-forward instead), but did not.  Which has been
  corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sb/format-patch-base-patch-id-fix (2019-05-08) 2 commits
@@ -582,12 +677,11 @@ of the repositories listed at
  + format-patch: make --base patch-id output stable
  + format-patch: inform user that patch-id generation is unstable
 
- The recently added "--base" option of "format-patch" computed the
- patch-ids for prerequisite patches in an unstable way, which has
- been updated to compute in a way that is compatible with "git
- patch-id --stable".
+ The "--base" option of "format-patch" computed the patch-ids for
+ prerequisite patches in an unstable way, which has been updated to
+ compute in a way that is compatible with "git patch-id --stable".
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/send-email-transferencoding-fix (2019-05-29) 7 commits
@@ -608,7 +702,7 @@ of the repositories listed at
  (finally) redoing the order of setting the default, reading the
  configuration and command line options.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * dl/format-patch-notes-config (2019-05-17) 2 commits
@@ -619,7 +713,7 @@ of the repositories listed at
  "git format-patch" learns a configuration to set the default for
  its --notes=<ref> option.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/unused-params-final-batch (2019-05-13) 14 commits
@@ -642,7 +736,7 @@ of the repositories listed at
  Remove many unused parameters throughout the codebase, with the
  ultimate aim to allow us compile with -Wunused-parameter cleanly.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/init-relative-template-fix (2019-05-13) 1 commit
@@ -654,7 +748,7 @@ of the repositories listed at
  but it instead was made relative to the repository, which has been
  corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * an/ignore-doc-update (2019-06-04) 1 commit
@@ -665,7 +759,7 @@ of the repositories listed at
  indicate things like "anchored to this level only" and "only
  matches directories") has been revamped.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * en/fast-export-encoding (2019-05-14) 5 commits
@@ -679,7 +773,7 @@ of the repositories listed at
  The "git fast-export/import" pair has been taught to handle commits
  with log messages in encoding other than UTF-8 better.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/merge-quit (2019-05-19) 2 commits
@@ -690,7 +784,7 @@ of the repositories listed at
  "git merge" learned "--quit" option that cleans up the in-progress
  merge while leaving the working tree and the index still in a mess.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pw/rebase-abort-clean-rewritten (2019-05-15) 4 commits
@@ -729,7 +823,7 @@ of the repositories listed at
  A new tutorial targetting specifically aspiring git-core
  developers.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * cc/multi-promisor (2019-04-15) 17 commits
@@ -754,8 +848,6 @@ of the repositories listed at
  Teach the lazy clone machinery that there can be more than one
  promisor remote and consult them in order when downloading missing
  objects on demand.
-
- Needs review.
 
 
 * nd/switch-and-restore (2019-05-07) 43 commits
@@ -810,6 +902,7 @@ of the repositories listed at
  advancing the current history" out of the single "git checkout"
  command.
 
+ Will merge to 'next'.
  cf. <20190329103919.15642-1-pclouds@gmail.com> (switch v6)
  cf. <20190425094600.15673-1-pclouds@gmail.com> (restore v3)
 
@@ -868,10 +961,10 @@ of the repositories listed at
  must be a valid refname component.  The code now sanitizes the names
  given to worktrees, to make sure these refs are well-formed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* ds/commit-graph-write-refactor (2019-05-13) 11 commits
+* ds/commit-graph-write-refactor (2019-06-12) 11 commits
  - commit-graph: extract write_commit_graph_file()
  - commit-graph: extract copy_oids_to_commits()
  - commit-graph: extract count_distinct_commits()
@@ -887,15 +980,11 @@ of the repositories listed at
 
  Renamed from commit-graph-format-v2 and changed scope.
 
- Expecting a reroll.
- I think it is almost there, modulo a few internal API details..
- cf. <pull.112.v4.git.gitgitgadget@gmail.com> (v4)
- cf. <17829620-1084-74e5-54ad-aa95990f4dbd@gmail.com>
+ Will merge to 'next'.
 
 
-* br/blame-ignore (2019-05-17) 10 commits
- - SQUASH??? test-lint -- seq not portable
- - SQUASH??? error: decl-after-stmt
+* br/blame-ignore (2019-06-10) 9 commits
+ - blame: add a test to cover blame_coalesce()
  - blame: use the fingerprint heuristic to match ignored lines
  - blame: add a fingerprint heuristic to match ignored lines
  - blame: optionally track line fingerprints during fill_blame_origin()
@@ -908,30 +997,13 @@ of the repositories listed at
  "git blame" learned to "ignore" commits in the history, whose
  effects (as well as their presence) get ignored.
 
- cf. <20190515214503.77162-1-brho@google.com> (v7)
+ cf. <20190610153014.42055-1-brho@google.com> (v8)
 
 --------------------------------------------------
 [Discarded]
 
-* nd/precious (2019-04-09) 1 commit
- . Introduce "precious" file concept
+* js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
+ . add -p: coalesce hunks before testing applicability
 
- "git clean" learned to pay attention to the 'precious' attributes
- and keep untracked paths with the attribute instead of removing
- when the "--keep-precious" is given.
-
- Retracted.
- cf. <CACsJy8AEZ-Lz6zgEsuNukvphB9TTa9FAC1gK05fhnie2xtfc9w@mail.gmail.com>
-
- I am not sure what aspect of this longer-term "precious" vision,
- which gets taught to various commands and use cases individually
- and incrementally, Ævar finds problematic, which I understand is
- the reason of redtraction.
-
-
-* jc/send-email-transferencoding-fix (2019-05-09) 2 commits
- . send-email: honor transferencoding config option again
- . send-email: update the mechanism to set default configuration values
-
- Replaced by  Ævar's "do the default in the right order" approach.
- cf. <20190508105607.178244-1-gitster@pobox.com> (v2)
+ Applicability check after a patch is edited in a "git add -i/p"
+ session has been improved.
