@@ -1,1 +1,2 @@
 start-ssh-agent.cmd
+eval `ssh-agent`
