@@ -1815,7 +1815,9 @@ static void mark_new_skip_worktree(struct pattern_list *pl,
 	 * 2. Widen worktree according to sparse-checkout file.
 	 * Matched entries will have skip_wt_flag cleared (i.e. "in")
 	 */
+	enable_fscache(istate->cache_nr);
 	clear_ce_flags(istate, select_flag, skip_wt_flag, pl, show_progress);
+	disable_fscache();
 }
 
 static void populate_from_existing_patterns(struct unpack_trees_options *o,
