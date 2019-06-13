@@ -43,7 +43,7 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 
 	memset(&copts, 0, sizeof(copts));
 	copts.padding = 1;
-	argc = parse_options(argc, argv, "", options, builtin_column_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, builtin_column_usage, 0);
 	if (argc)
 		usage_with_options(builtin_column_usage, options);
 	if (real_command || command) {

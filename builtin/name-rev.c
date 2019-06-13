@@ -40,9 +40,7 @@ static void set_commit_rev_name(struct commit *commit, struct rev_name *name)
 }
 
 static int is_better_name(struct rev_name *name,
-			  const char *tip_name,
 			  timestamp_t taggerdate,
-			  int generation,
 			  int distance,
 			  int from_tag)
 {
@@ -103,8 +101,7 @@ static void name_rev(struct commit *commit,
 		name = xmalloc(sizeof(rev_name));
 		set_commit_rev_name(commit, name);
 		goto copy_data;
-	} else if (is_better_name(name, tip_name, taggerdate,
-				  generation, distance, from_tag)) {
+	} else if (is_better_name(name, taggerdate, distance, from_tag)) {
 copy_data:
 		name->tip_name = tip_name;
 		name->taggerdate = taggerdate;

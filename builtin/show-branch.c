@@ -514,7 +514,6 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 
 static int show_independent(struct commit **rev,
 			    int num_rev,
-			    char **ref_name,
 			    unsigned int *rev_mask)
 {
 	int i;
@@ -862,7 +861,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		return show_merge_base(seen, num_rev);
 
 	if (independent)
-		return show_independent(rev, num_rev, ref_name, rev_mask);
+		return show_independent(rev, num_rev, rev_mask);
 
 	/* Show list; --more=-1 means list-only */
 	if (1 < num_rev || extra < 0) {
