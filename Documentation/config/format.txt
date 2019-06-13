@@ -85,3 +85,18 @@ format.outputDirectory::
 format.useAutoBase::
 	A boolean value which lets you enable the `--base=auto` option of
 	format-patch by default.
+
+format.notes::
+	Provides the default value for the `--notes` option to
+	format-patch. Accepts a boolean value, or a ref which specifies
+	where to get notes. If false, format-patch defaults to
+	`--no-notes`. If true, format-patch defaults to `--notes`. If
+	set to a non-boolean value, format-patch defaults to
+	`--notes=<ref>`, where `ref` is the non-boolean value. Defaults
+	to false.
++
+If one wishes to use the ref `ref/notes/true`, please use that literal
+instead.
++
+This configuration can be specified multiple times in order to allow
+multiple notes refs to be included.
