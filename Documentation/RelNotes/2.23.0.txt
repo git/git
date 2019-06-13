@@ -1,0 +1,77 @@
+Git 2.23 Release Notes
+======================
+
+Updates since v2.22
+-------------------
+
+Backward compatibility note
+
+ * The "--base" option of "format-patch" computed the patch-ids for
+   prerequisite patches in an unstable way, which has been updated to
+   compute in a way that is compatible with "git patch-id --stable".
+
+
+UI, Workflows & Features
+
+ * The "git fast-export/import" pair has been taught to handle commits
+   with log messages in encoding other than UTF-8 better.
+
+ * In recent versions of Git, per-worktree refs are exposed in
+   refs/worktrees/<wtname>/ hierarchy, which means that worktree names
+   must be a valid refname component.  The code now sanitizes the names
+   given to worktrees, to make sure these refs are well-formed.
+
+ * "git merge" learned "--quit" option that cleans up the in-progress
+   merge while leaving the working tree and the index still in a mess.
+
+ * "git format-patch" learns a configuration to set the default for
+   its --notes=<ref> option.
+
+ * The code to show args with potential typo that cannot be
+   interpreted as a commit-ish has been improved.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Update supporting parts of "git rebase" to remove code that should
+   no longer be used.
+
+ * Developer support to emulate unsatisfied prerequisites in tests to
+   ensure that the remainer of the tests still succeeds when tests
+   with prerequisites are skipped.
+
+ * "git update-server-info" learned not to rewrite the file with the
+   same contents.
+
+ * The way of specifying the path to find dynamic libraries at runtime
+   has been simplified.  The old default to pass -R/path/to/dir has been
+   replaced with the new default to pass -Wl,-rpath,/path/to/dir,
+   which is the more recent GCC uses.  Those who need to build with an
+   old GCC can still use "CC_LD_DYNPATH=-R"
+
+
+Fixes since v2.22
+-----------------
+
+ * A relative pathname given to "git init --template=<path> <repo>"
+   ought to be relative to the directory "git init" gets invoked in,
+   but it instead was made relative to the repository, which has been
+   corrected.
+   (merge e1df7fe43f nd/init-relative-template-fix later to maint).
+
+ * "git worktree add" used to fail when another worktree connected to
+   the same repository was corrupt, which has been corrected.
+   (merge 105df73e71 nd/corrupt-worktrees later to maint).
+
+ * The ownership rule for the file descriptor to fast-import remote
+   backend was mixed up, leading to unrelated file descriptor getting
+   closed, which has been fixed.
+   (merge 3203566a71 mh/import-transport-fd-fix later to maint).
+
+ * A "merge -c" instruction during "git rebase --rebase-merges" should
+   give the user a chance to edit the log message, even when there is
+   otherwise no need to create a new merge and replace the existing
+   one (i.e. fast-forward instead), but did not.  Which has been
+   corrected.
+
+ * Other code cleanup, docfix, build fix, etc.
