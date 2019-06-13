@@ -23,7 +23,7 @@ static int find_rename_dst(struct diff_filespec *two)
 	first = 0;
 	last = rename_dst_nr;
 	while (last > first) {
-		int next = (last + first) >> 1;
+		int next = first + ((last - first) >> 1);
 		struct diff_rename_dst *dst = &(rename_dst[next]);
 		int cmp = strcmp(two->path, dst->two->path);
 		if (!cmp)
@@ -83,7 +83,7 @@ static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
 	first = 0;
 	last = rename_src_nr;
 	while (last > first) {
-		int next = (last + first) >> 1;
+		int next = first + ((last - first) >> 1);
 		struct diff_rename_src *src = &(rename_src[next]);
 		int cmp = strcmp(one->path, src->p->one->path);
 		if (!cmp)

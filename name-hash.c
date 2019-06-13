@@ -345,8 +345,9 @@ static int handle_range_dir(
 	else {
 		int begin = k_start;
 		int end = k_end;
+		assert(begin >= 0);
 		while (begin < end) {
-			int mid = (begin + end) >> 1;
+			int mid = begin + ((end - begin) >> 1);
 			int cmp = strncmp(istate->cache[mid]->name, prefix->buf, prefix->len);
 			if (cmp == 0) /* mid has same prefix; look in second part */
 				begin = mid + 1;
