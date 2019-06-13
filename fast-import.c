@@ -2585,6 +2585,7 @@ static void parse_new_commit(const char *arg)
 	struct branch *b;
 	char *author = NULL;
 	char *committer = NULL;
+	const char *encoding = NULL;
 	struct hash_list *merge_list = NULL;
 	unsigned int merge_count;
 	unsigned char prev_fanout, new_fanout;
@@ -2607,6 +2608,8 @@ static void parse_new_commit(const char *arg)
 	}
 	if (!committer)
 		die("Expected committer but didn't get one");
+	if (skip_prefix(command_buf.buf, "encoding ", &encoding))
+		read_next_command();
 	parse_data(&msg, 0, NULL);
 	read_next_command();
 	parse_from(b);
@@ -2670,9 +2673,13 @@ static void parse_new_commit(const char *arg)
 	}
 	strbuf_addf(&new_data,
 		"author %s\n"
-		"committer %s\n"
-		"\n",
+		"committer %s\n",
 		author ? author : committer, committer);
+	if (encoding)
+		strbuf_addf(&new_data,
+			"encoding %s\n",
+			encoding);
+	strbuf_addch(&new_data, '\n');
 	strbuf_addbuf(&new_data, &msg);
 	free(author);
 	free(committer);
