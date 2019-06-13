@@ -1204,7 +1204,7 @@ test_expect_success $PREREQ 'no in-reply-to and no threading' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--no-thread \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	! grep "In-Reply-To: " stdout
 '
 
@@ -1224,8 +1224,63 @@ test_expect_success $PREREQ 'sendemail.to works' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "To: Somebody <somebody@ex.com>" stdout
+'
+
+test_expect_success $PREREQ 'setup sendemail.identity' '
+	git config --replace-all sendemail.to "default@example.com" &&
+	git config --replace-all sendemail.isp.to "isp@example.com" &&
+	git config --replace-all sendemail.cloud.to "cloud@example.com"
+'
+
+test_expect_success $PREREQ 'sendemail.identity: reads the correct identity config' '
+	git -c sendemail.identity=cloud send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: identity overrides sendemail.identity' '
+	git -c sendemail.identity=cloud send-email \
+		--identity=isp \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: isp@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: --no-identity clears previous identity' '
+	git -c sendemail.identity=cloud send-email \
+		--no-identity \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: default@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: bool identity variable existance overrides' '
+	git -c sendemail.identity=cloud \
+		-c sendemail.xmailer=true \
+		-c sendemail.cloud.xmailer=false \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout &&
+	! grep "X-Mailer" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: bool variable fallback' '
+	git -c sendemail.identity=cloud \
+		-c sendemail.xmailer=false \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout &&
+	! grep "X-Mailer" stdout
 '
 
 test_expect_success $PREREQ '--no-to overrides sendemail.to' '
@@ -1234,7 +1289,7 @@ test_expect_success $PREREQ '--no-to overrides sendemail.to' '
 		--from="Example <nobody@example.com>" \
 		--no-to \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "To: nobody@example.com" stdout &&
 	! grep "To: Somebody <somebody@ex.com>" stdout
 '
@@ -1245,7 +1300,7 @@ test_expect_success $PREREQ 'sendemail.cc works' '
 		--dry-run \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "Cc: Somebody <somebody@ex.com>" stdout
 '
 
@@ -1256,7 +1311,7 @@ test_expect_success $PREREQ '--no-cc overrides sendemail.cc' '
 		--no-cc \
 		--cc=bodies@example.com \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "Cc: bodies@example.com" stdout &&
 	! grep "Cc: Somebody <somebody@ex.com>" stdout
 '
@@ -1268,7 +1323,7 @@ test_expect_success $PREREQ 'sendemail.bcc works' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server relay.example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "RCPT TO:<other@ex.com>" stdout
 '
 
@@ -1280,7 +1335,7 @@ test_expect_success $PREREQ '--no-bcc overrides sendemail.bcc' '
 		--bcc=bodies@example.com \
 		--to=nobody@example.com \
 		--smtp-server relay.example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "RCPT TO:<bodies@example.com>" stdout &&
 	! grep "RCPT TO:<other@ex.com>" stdout
 '
@@ -1437,22 +1492,10 @@ test_expect_success $PREREQ 'setup expect' '
 	EOF
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=7bit fails on 8bit data' '
-	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 7bit &&
-	test_must_fail git send-email \
-		--transfer-encoding=7bit \
-		--smtp-server="$(pwd)/fake.sendmail" \
-		email-using-8bit \
-		2>errors >out &&
-	grep "cannot send message as 7bit" errors &&
-	test -z "$(ls msgtxt*)"
-'
-
 test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEncoding' '
 	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 8bit &&
-	test_must_fail git send-email \
+	test_must_fail git -c sendemail.transferEncoding=8bit \
+		send-email \
 		--transfer-encoding=7bit \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
@@ -1461,16 +1504,26 @@ test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEnc
 	test -z "$(ls msgtxt*)"
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=8bit' '
+test_expect_success $PREREQ 'sendemail.transferEncoding via config' '
 	clean_fake_sendmail &&
-	git send-email \
-		--transfer-encoding=8bit \
+	test_must_fail git -c sendemail.transferEncoding=7bit \
+		send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
-	sed '1,/^$/d' email-using-8bit >expected &&
-	test_cmp expected actual
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
+'
+
+test_expect_success $PREREQ 'sendemail.transferEncoding via cli' '
+	clean_fake_sendmail &&
+	test_must_fail git send-email \
+		--transfer-encoding=7bit \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		email-using-8bit \
+		2>errors >out &&
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
 '
 
 test_expect_success $PREREQ 'setup expect' '
@@ -1785,6 +1838,15 @@ test_dump_aliases '--dump-aliases gnus format' \
 
 test_expect_success '--dump-aliases must be used alone' '
 	test_must_fail git send-email --dump-aliases --to=janice@example.com -1 refs/heads/accounting
+'
+
+test_expect_success $PREREQ 'aliases and sendemail.identity' '
+	test_must_fail git \
+		-c sendemail.identity=cloud \
+		-c sendemail.aliasesfile=default-aliases \
+		-c sendemail.cloud.aliasesfile=cloud-aliases \
+		send-email -1 2>stderr &&
+	test_i18ngrep "cloud-aliases" stderr
 '
 
 test_sendmail_aliases () {

@@ -278,6 +278,14 @@ must be used for each option.
 Automating
 ~~~~~~~~~~
 
+--no-[to|cc|bcc]::
+	Clears any list of "To:", "Cc:", "Bcc:" addresses previously
+	set via config.
+
+--no-identity::
+	Clears the previously read value of `sendemail.identity` set
+	via config, if any.
+
 --to-cmd=<command>::
 	Specify a command to execute once per patch file which
 	should generate patch file specific "To:" entries.

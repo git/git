@@ -177,11 +177,15 @@ my $re_encoded_text = qr/[^? \000-\037\177-\377]+/;
 my $re_encoded_word = qr/=\?($re_token)\?($re_token)\?($re_encoded_text)\?=/;
 
 # Variables we fill in automatically, or via prompting:
-my (@to,$no_to,@initial_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
+my (@to,@cc,@xh,$envelope_sender,
 	$initial_in_reply_to,$reply_to,$initial_subject,@files,
-	$author,$sender,$smtp_authpass,$annotate,$use_xmailer,$compose,$time);
-
-my $envelope_sender;
+	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
+# Things we either get from config, *or* are overridden on the
+# command-line.
+my ($no_cc, $no_to, $no_bcc, $no_identity);
+my (@config_to, @getopt_to);
+my (@config_cc, @getopt_cc);
+my (@config_bcc, @getopt_bcc);
 
 # Example reply to:
 #$initial_in_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -228,33 +232,37 @@ sub do_edit {
 }
 
 # Variables with corresponding config settings
-my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc);
+my ($suppress_from, $signed_off_by_cc);
 my ($cover_cc, $cover_to);
 my ($to_cmd, $cc_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
 my ($batch_size, $relogin_delay);
 my ($identity, $aliasfiletype, @alias_files, $smtp_domain, $smtp_auth);
-my ($validate, $confirm);
+my ($confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
 my ($compose_encoding);
+# Variables with corresponding config settings & hardcoded defaults
+my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
+my $thread = 1;
+my $chain_reply_to = 0;
+my $use_xmailer = 1;
+my $validate = 1;
 my $target_xfer_encoding = 'auto';
 
-my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
-
 my %config_bool_settings = (
-    "thread" => [\$thread, 1],
-    "chainreplyto" => [\$chain_reply_to, 0],
-    "suppressfrom" => [\$suppress_from, undef],
-    "signedoffbycc" => [\$signed_off_by_cc, undef],
-    "cccover" => [\$cover_cc, undef],
-    "tocover" => [\$cover_to, undef],
-    "signedoffcc" => [\$signed_off_by_cc, undef],      # Deprecated
-    "validate" => [\$validate, 1],
-    "multiedit" => [\$multiedit, undef],
-    "annotate" => [\$annotate, undef],
-    "xmailer" => [\$use_xmailer, 1]
+    "thread" => \$thread,
+    "chainreplyto" => \$chain_reply_to,
+    "suppressfrom" => \$suppress_from,
+    "signedoffbycc" => \$signed_off_by_cc,
+    "cccover" => \$cover_cc,
+    "tocover" => \$cover_to,
+    "signedoffcc" => \$signed_off_by_cc,
+    "validate" => \$validate,
+    "multiedit" => \$multiedit,
+    "annotate" => \$annotate,
+    "xmailer" => \$use_xmailer,
 );
 
 my %config_settings = (
@@ -267,12 +275,12 @@ my %config_settings = (
     "smtpauth" => \$smtp_auth,
     "smtpbatchsize" => \$batch_size,
     "smtprelogindelay" => \$relogin_delay,
-    "to" => \@initial_to,
+    "to" => \@config_to,
     "tocmd" => \$to_cmd,
-    "cc" => \@initial_cc,
+    "cc" => \@config_cc,
     "cccmd" => \$cc_cmd,
     "aliasfiletype" => \$aliasfiletype,
-    "bcc" => \@bcclist,
+    "bcc" => \@config_bcc,
     "suppresscc" => \@suppress_cc,
     "envelopesender" => \$envelope_sender,
     "confirm"   => \$confirm,
@@ -315,13 +323,87 @@ sub signal_handler {
 $SIG{TERM} = \&signal_handler;
 $SIG{INT}  = \&signal_handler;
 
+# Read our sendemail.* config
+sub read_config {
+	my ($configured, $prefix) = @_;
+
+	foreach my $setting (keys %config_bool_settings) {
+		my $target = $config_bool_settings{$setting};
+		my $v = Git::config_bool(@repo, "$prefix.$setting");
+		next unless defined $v;
+		next if $configured->{$setting}++;
+		$$target = $v;
+	}
+
+	foreach my $setting (keys %config_path_settings) {
+		my $target = $config_path_settings{$setting};
+		if (ref($target) eq "ARRAY") {
+			my @values = Git::config_path(@repo, "$prefix.$setting");
+			next unless @values;
+			next if $configured->{$setting}++;
+			@$target = @values;
+		}
+		else {
+			my $v = Git::config_path(@repo, "$prefix.$setting");
+			next unless defined $v;
+			next if $configured->{$setting}++;
+			$$target = $v;
+		}
+	}
+
+	foreach my $setting (keys %config_settings) {
+		my $target = $config_settings{$setting};
+		if (ref($target) eq "ARRAY") {
+			my @values = Git::config(@repo, "$prefix.$setting");
+			next unless @values;
+			next if $configured->{$setting}++;
+			@$target = @values;
+		}
+		else {
+			my $v = Git::config(@repo, "$prefix.$setting");
+			next unless defined $v;
+			next if $configured->{$setting}++;
+			$$target = $v;
+		}
+	}
+
+	if (!defined $smtp_encryption) {
+		my $setting = "$prefix.smtpencryption";
+		my $enc = Git::config(@repo, $setting);
+		return unless defined $enc;
+		return if $configured->{$setting}++;
+		if (defined $enc) {
+			$smtp_encryption = $enc;
+		} elsif (Git::config_bool(@repo, "$prefix.smtpssl")) {
+			$smtp_encryption = 'ssl';
+		}
+	}
+}
+
+# sendemail.identity yields to --identity. We must parse this
+# special-case first before the rest of the config is read.
+$identity = Git::config(@repo, "sendemail.identity");
+my $rc = GetOptions(
+	"identity=s" => \$identity,
+	"no-identity" => \$no_identity,
+);
+usage() unless $rc;
+undef $identity if $no_identity;
+
+# Now we know enough to read the config
+{
+    my %configured;
+    read_config(\%configured, "sendemail.$identity") if defined $identity;
+    read_config(\%configured, "sendemail");
+}
+
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
 
 my $help;
 my $git_completion_helper;
-my $rc = GetOptions("h" => \$help,
-                    "dump-aliases" => \$dump_aliases);
+$rc = GetOptions("h" => \$help,
+                 "dump-aliases" => \$dump_aliases);
 usage() unless $rc;
 die __("--dump-aliases incompatible with other options\n")
     if !$help and $dump_aliases and @ARGV;
@@ -330,12 +412,12 @@ $rc = GetOptions(
                     "in-reply-to=s" => \$initial_in_reply_to,
 		    "reply-to=s" => \$reply_to,
 		    "subject=s" => \$initial_subject,
-		    "to=s" => \@initial_to,
+		    "to=s" => \@getopt_to,
 		    "to-cmd=s" => \$to_cmd,
 		    "no-to" => \$no_to,
-		    "cc=s" => \@initial_cc,
+		    "cc=s" => \@getopt_cc,
 		    "no-cc" => \$no_cc,
-		    "bcc=s" => \@bcclist,
+		    "bcc=s" => \@getopt_bcc,
 		    "no-bcc" => \$no_bcc,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "no-chain-reply-to" => sub {$chain_reply_to = 0},
@@ -351,7 +433,6 @@ $rc = GetOptions(
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
 		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
-		    "identity=s" => \$identity,
 		    "annotate!" => \$annotate,
 		    "no-annotate" => sub {$annotate = 0},
 		    "compose" => \$compose,
@@ -386,6 +467,11 @@ $rc = GetOptions(
 		    "git-completion-helper" => \$git_completion_helper,
 	 );
 
+# Munge any "either config or getopt, not both" variables
+my @initial_to = @getopt_to ? @getopt_to : ($no_to ? () : @config_to);
+my @initial_cc = @getopt_cc ? @getopt_cc : ($no_cc ? () : @config_cc);
+my @initial_bcc = @getopt_bcc ? @getopt_bcc : ($no_bcc ? () : @config_bcc);
+
 usage() if $help;
 completion_helper() if $git_completion_helper;
 unless ($rc) {
@@ -398,65 +484,6 @@ die __("Cannot run git format-patch from outside a repository\n")
 die __("`batch-size` and `relogin` must be specified together " .
 	"(via command-line or configuration option)\n")
 	if defined $relogin_delay and not defined $batch_size;
-
-# Now, let's fill any that aren't set in with defaults:
-
-sub read_config {
-	my ($prefix) = @_;
-
-	foreach my $setting (keys %config_bool_settings) {
-		my $target = $config_bool_settings{$setting}->[0];
-		$$target = Git::config_bool(@repo, "$prefix.$setting") unless (defined $$target);
-	}
-
-	foreach my $setting (keys %config_path_settings) {
-		my $target = $config_path_settings{$setting};
-		if (ref($target) eq "ARRAY") {
-			unless (@$target) {
-				my @values = Git::config_path(@repo, "$prefix.$setting");
-				@$target = @values if (@values && defined $values[0]);
-			}
-		}
-		else {
-			$$target = Git::config_path(@repo, "$prefix.$setting") unless (defined $$target);
-		}
-	}
-
-	foreach my $setting (keys %config_settings) {
-		my $target = $config_settings{$setting};
-		next if $setting eq "to" and defined $no_to;
-		next if $setting eq "cc" and defined $no_cc;
-		next if $setting eq "bcc" and defined $no_bcc;
-		if (ref($target) eq "ARRAY") {
-			unless (@$target) {
-				my @values = Git::config(@repo, "$prefix.$setting");
-				@$target = @values if (@values && defined $values[0]);
-			}
-		}
-		else {
-			$$target = Git::config(@repo, "$prefix.$setting") unless (defined $$target);
-		}
-	}
-
-	if (!defined $smtp_encryption) {
-		my $enc = Git::config(@repo, "$prefix.smtpencryption");
-		if (defined $enc) {
-			$smtp_encryption = $enc;
-		} elsif (Git::config_bool(@repo, "$prefix.smtpssl")) {
-			$smtp_encryption = 'ssl';
-		}
-	}
-}
-
-# read configuration from [sendemail "$identity"], fall back on [sendemail]
-$identity = Git::config(@repo, "sendemail.identity") unless (defined $identity);
-read_config("sendemail.$identity") if (defined $identity);
-read_config("sendemail");
-
-# fall back on builtin bool defaults
-foreach my $setting (values %config_bool_settings) {
-	${$setting->[0]} = $setting->[1] unless (defined (${$setting->[0]}));
-}
 
 # 'default' encryption is none -- this only prevents a warning
 $smtp_encryption = '' unless (defined $smtp_encryption);
@@ -941,7 +968,7 @@ sub expand_one_alias {
 
 @initial_to = process_address_list(@initial_to);
 @initial_cc = process_address_list(@initial_cc);
-@bcclist = process_address_list(@bcclist);
+@initial_bcc = process_address_list(@initial_bcc);
 
 if ($thread && !defined $initial_in_reply_to && $prompting) {
 	$initial_in_reply_to = ask(
@@ -1364,7 +1391,7 @@ sub send_message {
 		    }
 	       @cc);
 	my $to = join (",\n\t", @recipients);
-	@recipients = unique_email_list(@recipients,@cc,@bcclist);
+	@recipients = unique_email_list(@recipients,@cc,@initial_bcc);
 	@recipients = (map { extract_valid_address_or_die($_) } @recipients);
 	my $date = format_2822_time($time++);
 	my $gitversion = '@@GIT_VERSION@@';
