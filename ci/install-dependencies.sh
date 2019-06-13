@@ -9,12 +9,12 @@ P4WHENCE=http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 
 case "$jobname" in
-linux-clang|linux-gcc)
+linux-clang|linux-gcc|linux-gcc-extra)
 	sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
 	sudo apt-get -q update
 	sudo apt-get -q -y install language-pack-is libsvn-perl apache2
 	case "$jobname" in
-	linux-gcc)
+	linux-gcc|linux-gcc-extra)
 		sudo apt-get -q -y install gcc-8
 		;;
 	esac

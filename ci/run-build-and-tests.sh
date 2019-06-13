@@ -11,8 +11,7 @@ windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
 esac
 
 make
-make test
-if test "$jobname" = "linux-gcc"
+if test "$jobname" = "linux-gcc-extra"
 then
 	export GIT_TEST_SPLIT_INDEX=yes
 	export GIT_TEST_FULL_IN_PACK_ARRAY=true
@@ -20,8 +19,8 @@ then
 	export GIT_TEST_OE_DELTA_SIZE=5
 	export GIT_TEST_COMMIT_GRAPH=1
 	export GIT_TEST_MULTI_PACK_INDEX=1
-	make test
 fi
+make test
 
 check_unignored_build_artifacts
 

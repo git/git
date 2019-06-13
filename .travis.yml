@@ -16,6 +16,10 @@ compiler:
 
 matrix:
   include:
+    - env: jobname=linux-gcc-extra
+      os: linux
+      compiler: gcc
+      addons:
     - env: jobname=GIT_TEST_GETTEXT_POISON
       os: linux
       compiler:

@@ -154,8 +154,8 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=YesPlease
 
 case "$jobname" in
-linux-clang|linux-gcc)
-	if [ "$jobname" = linux-gcc ]
+linux-clang|linux-gcc|linux-gcc-extra)
+	if [ "$jobname" = linux-gcc -o "$jobname" = linux-gcc-extra ]
 	then
 		export CC=gcc-8
 	fi
