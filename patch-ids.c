@@ -11,7 +11,7 @@ static int patch_id_defined(struct commit *commit)
 }
 
 int commit_patch_id(struct commit *commit, struct diff_options *options,
-		    struct object_id *oid, int diff_header_only)
+		    struct object_id *oid, int diff_header_only, int stable)
 {
 	if (!patch_id_defined(commit))
 		return -1;
@@ -22,7 +22,7 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
 	else
 		diff_root_tree_oid(&commit->object.oid, "", options);
 	diffcore_std(options);
-	return diff_flush_patch_id(options, oid, diff_header_only);
+	return diff_flush_patch_id(options, oid, diff_header_only, stable);
 }
 
 /*
@@ -46,11 +46,11 @@ static int patch_id_neq(const void *cmpfn_data,
 	struct patch_id *b = (void *)entry_or_key;
 
 	if (is_null_oid(&a->patch_id) &&
-	    commit_patch_id(a->commit, opt, &a->patch_id, 0))
+	    commit_patch_id(a->commit, opt, &a->patch_id, 0, 0))
 		return error("Could not get patch ID for %s",
 			oid_to_hex(&a->commit->object.oid));
 	if (is_null_oid(&b->patch_id) &&
-	    commit_patch_id(b->commit, opt, &b->patch_id, 0))
+	    commit_patch_id(b->commit, opt, &b->patch_id, 0, 0))
 		return error("Could not get patch ID for %s",
 			oid_to_hex(&b->commit->object.oid));
 	return !oideq(&a->patch_id, &b->patch_id);
@@ -80,7 +80,7 @@ static int init_patch_id_entry(struct patch_id *patch,
 	struct object_id header_only_patch_id;
 
 	patch->commit = commit;
-	if (commit_patch_id(commit, &ids->diffopts, &header_only_patch_id, 1))
+	if (commit_patch_id(commit, &ids->diffopts, &header_only_patch_id, 1, 0))
 		return -1;
 
 	hashmap_entry_init(patch, sha1hash(header_only_patch_id.hash));
