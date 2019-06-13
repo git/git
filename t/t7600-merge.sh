@@ -893,4 +893,24 @@ test_expect_success 'merge --quit' '
 	)
 '
 
+test_expect_success 'merge suggests matching remote refname' '
+	git commit --allow-empty -m not-local &&
+	git update-ref refs/remotes/origin/not-local HEAD &&
+	git reset --hard HEAD^ &&
+
+	# This is white-box testing hackery; we happen to know
+	# that reading packed refs is more picky about the memory
+	# ownership of strings we pass to for_each_ref() callbacks.
+	git pack-refs --all --prune &&
+
+	test_must_fail git merge not-local 2>stderr &&
+	grep origin/not-local stderr
+'
+
+test_expect_success 'suggested names are not ambiguous' '
+	git update-ref refs/heads/origin/not-local HEAD &&
+	test_must_fail git merge not-local 2>stderr &&
+	grep remotes/origin/not-local stderr
+'
+
 test_done
