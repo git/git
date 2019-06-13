@@ -37,6 +37,7 @@
 #include "packfile.h"
 #include "tag.h"
 #include "alias.h"
+#include "branch.h"
 #include "commit-reach.h"
 #include "wt-status.h"
 
@@ -73,6 +74,7 @@ static int option_renormalize;
 static int verbosity;
 static int allow_rerere_auto;
 static int abort_current_merge;
+static int quit_current_merge;
 static int continue_current_merge;
 static int allow_unrelated_histories;
 static int show_progress = -1;
@@ -274,6 +276,8 @@ static struct option builtin_merge_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOL(0, "abort", &abort_current_merge,
 		N_("abort the current in-progress merge")),
+	OPT_BOOL(0, "quit", &quit_current_merge,
+		N_("--abort but leave index and working tree alone")),
 	OPT_BOOL(0, "continue", &continue_current_merge,
 		N_("continue the current in-progress merge")),
 	OPT_BOOL(0, "allow-unrelated-histories", &allow_unrelated_histories,
@@ -286,14 +290,6 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOL(0, "verify", &verify_msg, N_("verify commit-msg hook")),
 	OPT_END()
 };
-
-/* Cleans up metadata that is uninteresting after a succeeded merge. */
-static void drop_save(void)
-{
-	unlink(git_path_merge_head(the_repository));
-	unlink(git_path_merge_msg(the_repository));
-	unlink(git_path_merge_mode(the_repository));
-}
 
 static int save_state(struct object_id *stash)
 {
@@ -388,7 +384,7 @@ static void finish_up_to_date(const char *msg)
 {
 	if (verbosity >= 0)
 		printf("%s%s\n", squash ? _(" (nothing to squash)") : "", msg);
-	drop_save();
+	remove_merge_branch_state(the_repository);
 }
 
 static void squash_message(struct commit *commit, struct commit_list *remoteheads)
@@ -881,7 +877,7 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 			&result_commit, NULL, sign_commit))
 		die(_("failed to write commit object"));
 	finish(head, remoteheads, &result_commit, "In-index merge");
-	drop_save();
+	remove_merge_branch_state(the_repository);
 	return 0;
 }
 
@@ -907,7 +903,7 @@ static int finish_automerge(struct commit *head,
 	strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
 	finish(head, remoteheads, &result_commit, buf.buf);
 	strbuf_release(&buf);
-	drop_save();
+	remove_merge_branch_state(the_repository);
 	return 0;
 }
 
@@ -1289,6 +1285,16 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		goto done;
 	}
 
+	if (quit_current_merge) {
+		if (orig_argc != 2)
+			usage_msg_opt(_("--quit expects no arguments"),
+				      builtin_merge_usage,
+				      builtin_merge_options);
+
+		remove_merge_branch_state(the_repository);
+		goto done;
+	}
+
 	if (continue_current_merge) {
 		int nargc = 1;
 		const char *nargv[] = {"commit", NULL};
@@ -1495,7 +1501,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		}
 
 		finish(head_commit, remoteheads, &commit->object.oid, msg.buf);
-		drop_save();
+		remove_merge_branch_state(the_repository);
 		goto done;
 	} else if (!remoteheads->next && common->next)
 		;
