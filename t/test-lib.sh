@@ -1607,3 +1607,7 @@ test_lazy_prereq SHA1 '
 test_lazy_prereq REBASE_P '
 	test -z "$GIT_TEST_SKIP_REBASE_P"
 '
+
+test_lazy_prereq FAIL_PREREQS '
+	test -n "$GIT_TEST_FAIL_PREREQS"
+'
