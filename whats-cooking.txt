@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2019, #03; Wed, 12)
-X-master-at: b697d92f56511e804b8ba20ccbe7bdc85dc66810
-X-next-at: 95628af9bbb1414c85a80e992c77d3eb4efd24a4
+Subject: What's cooking in git.git (Jun 2019, #04; Fri, 14)
+X-master-at: 0aae918dd929862d3ce0ea2960897787bb269a3b
+X-next-at: d03e0c960ffbffc6714d0e076319c44163f03ac5
 
-What's cooking in git.git (Jun 2019, #03; Wed, 12)
+What's cooking in git.git (Jun 2019, #04; Fri, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.22 final has been tagged.
+The first batch of topics post 2.22 are now in 'master'.  Let's thin
+down what are left in 'next' before taking anything new, and try to
+keep this cycle short.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,95 +24,222 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* en/merge-directory-renames-fix (2019-06-05) 1 commit
-  (merged to 'next' on 2019-06-06 at fd59bad9d7)
- + merge-recursive: restore accidentally dropped setting of path
+* ab/deprecate-R-for-dynpath (2019-05-19) 1 commit
+  (merged to 'next' on 2019-05-19 at 944976e981)
+ + Makefile: remove the NO_R_TO_GCC_LINKER flag
 
- Recent code restructuring of merge-recursive engine introduced a
- regression dealing with rename/add conflict.
+ The way of specifying the path to find dynamic libraries at runtime
+ has been simplified.  The old default to pass -R/path/to/dir has been
+ replaced with the new default to pass -Wl,-rpath,/path/to/dir,
+ which is the more recent GCC uses.  Those who need to build with an
+ old GCC can still use "CC_LD_DYNPATH=-R"
+
+
+* ab/fail-prereqs-in-test (2019-05-14) 1 commit
+  (merged to 'next' on 2019-05-16 at d1be55f485)
+ + tests: add a special setup where prerequisites fail
+
+ Developer support to emulate unsatisfied prerequisites in tests to
+ ensure that the remainer of the tests still succeeds when tests
+ with prerequisites are skipped.
+
+
+* ab/send-email-transferencoding-fix (2019-05-29) 7 commits
+  (merged to 'next' on 2019-05-29 at c8a99d18c0)
+ + send-email: fix regression in sendemail.identity parsing
+ + send-email: document --no-[to|cc|bcc]
+ + send-email: fix broken transferEncoding tests
+ + send-email: remove cargo-culted multi-patch pattern in tests
+  (merged to 'next' on 2019-05-13 at 38c6a1e7e0)
+ + send-email: do defaults -> config -> getopt in that order
+ + send-email: rename the @bcclist variable for consistency
+ + send-email: move the read_config() function above getopts
+
+ Since "git send-email" learned to take 'auto' as the value for the
+ transfer-encoding, it by mistake stopped honoring the values given
+ to the configuration variables sendemail.transferencoding and/or
+ sendemail.<ident>.transferencoding.  This has been corrected to
+ (finally) redoing the order of setting the default, reading the
+ configuration and command line options.
+
+
+* dl/format-patch-notes-config (2019-05-17) 2 commits
+  (merged to 'next' on 2019-05-19 at d3f6f1872b)
+ + format-patch: teach format.notes config option
+ + git-format-patch.txt: document --no-notes option
+
+ "git format-patch" learns a configuration to set the default for
+ its --notes=<ref> option.
+
+
+* en/fast-export-encoding (2019-05-14) 5 commits
+  (merged to 'next' on 2019-05-16 at c88bd3edb5)
+ + fast-export: do automatic reencoding of commit messages only if requested
+ + fast-export: differentiate between explicitly UTF-8 and implicitly UTF-8
+ + fast-export: avoid stripping encoding header if we cannot reencode
+ + fast-import: support 'encoding' commit header
+ + t9350: fix encoding test to actually test reencoding
+
+ The "git fast-export/import" pair has been taught to handle commits
+ with log messages in encoding other than UTF-8 better.
+
+
+* ew/update-server-info (2019-05-15) 1 commit
+  (merged to 'next' on 2019-05-19 at bf4f2871ab)
+ + update-server-info: avoid needless overwrites
+
+ "git update-server-info" learned not to rewrite the file with the
+ same contents.
+
+
+* jk/help-unknown-ref-fix (2019-05-15) 2 commits
+  (merged to 'next' on 2019-05-19 at e3e01160f7)
+ + help_unknown_ref(): check for refname ambiguity
+ + help_unknown_ref(): duplicate collected refnames
+
+ Improve the code to show args with potential typo that cannot be
+ interpreted as a commit-ish.
+
+
+* jk/unused-params-final-batch (2019-05-13) 14 commits
+  (merged to 'next' on 2019-05-15 at ef7435264c)
+ + verify-commit: simplify parameters to run_gpg_verify()
+ + show-branch: drop unused parameter from show_independent()
+ + rev-list: drop unused void pointer from finish_commit()
+ + remove_all_fetch_refspecs(): drop unused "remote" parameter
+ + receive-pack: drop unused "commands" from prepare_shallow_update()
+ + pack-objects: drop unused rev_info parameters
+ + name-rev: drop unused parameters from is_better_name()
+ + mktree: drop unused length parameter
+ + wt-status: drop unused status parameter
+ + read-cache: drop unused parameter from threaded load
+ + clone: drop dest parameter from copy_alternates()
+ + submodule: drop unused prefix parameter from some functions
+ + builtin: consistently pass cmd_* prefix to parse_options
+ + cmd_{read,write}_tree: rename "unused" variable that is used
+
+ Remove many unused parameters throughout the codebase, with the
+ ultimate aim to allow us compile with -Wunused-parameter cleanly.
+
+
+* js/rebase-cleanup (2019-05-15) 5 commits
+  (merged to 'next' on 2019-05-16 at ccfed8f263)
+ + rebase: fold git-rebase--common into the -p backend
+ + sequencer: the `am` and `rebase--interactive` scripts are gone
+ + .gitignore: there is no longer a built-in `git-rebase--interactive`
+ + t3400: stop referring to the scripted rebase
+ + Drop unused git-rebase--am.sh
+
+ Update supporting parts of "git rebase" to remove code that should
+ no longer be used.
+
+
+* mh/import-transport-fd-fix (2019-05-16) 2 commits
+  (merged to 'next' on 2019-05-19 at 5e86f92f7a)
+ + Use xmmap_gently instead of xmmap in use_pack
+ + dup() the input fd for fast-import used for remote helpers
+
+ The ownership rule for the file descriptor to fast-import remote
+ backend was mixed up, leading to unrelated file descriptor getting
+ closed, which has been fixed.
+
+
+* nd/corrupt-worktrees (2019-05-15) 1 commit
+  (merged to 'next' on 2019-05-16 at d92c25f800)
+ + worktree add: be tolerant of corrupt worktrees
+
+ "git worktree add" used to fail when another worktree connected to
+ the same repository was corrupt, which has been corrected.
+
+
+* nd/init-relative-template-fix (2019-05-13) 1 commit
+  (merged to 'next' on 2019-05-15 at 4d5b17f712)
+ + init: make --template path relative to $CWD
+
+ A relative pathname given to "git init --template=<path> <repo>"
+ ought to be relative to the directory "git init" gets invoked in,
+ but it instead was made relative to the repository, which has been
+ corrected.
+
+
+* nd/merge-quit (2019-05-19) 2 commits
+  (merged to 'next' on 2019-05-19 at 9880e7ee4e)
+ + merge: add --quit
+ + merge: remove drop_save() in favor of remove_merge_branch_state()
+
+ "git merge" learned "--quit" option that cleans up the in-progress
+ merge while leaving the working tree and the index still in a mess.
+
+
+* nd/worktree-name-sanitization (2019-05-15) 1 commit
+  (merged to 'next' on 2019-05-16 at 9a2dd33122)
+ + worktree add: sanitize worktree names
+
+ In recent versions of Git, per-worktree refs are exposed in
+ refs/worktrees/<wtname>/ hierarchy, which means that worktree names
+ must be a valid refname component.  The code now sanitizes the names
+ given to worktrees, to make sure these refs are well-formed.
+
+
+* pw/rebase-edit-message-for-replayed-merge (2019-05-19) 1 commit
+  (merged to 'next' on 2019-05-19 at dc3e30641c)
+ + rebase -r: always reword merge -c
+
+ A "merge -c" instruction during "git rebase --rebase-merges" should
+ give the user a chance to edit the log message, even when there is
+ otherwise no need to create a new merge and replace the existing
+ one (i.e. fast-forward instead), but did not.  Which has been
+ corrected.
+
+
+* sb/format-patch-base-patch-id-fix (2019-05-08) 2 commits
+  (merged to 'next' on 2019-05-15 at 1ab7d2b71c)
+ + format-patch: make --base patch-id output stable
+ + format-patch: inform user that patch-id generation is unstable
+
+ The "--base" option of "format-patch" computed the patch-ids for
+ prerequisite patches in an unstable way, which has been updated to
+ compute in a way that is compatible with "git patch-id --stable".
 
 --------------------------------------------------
 [New Topics]
 
-* mo/hpux-dynpath (2019-06-07) 1 commit
- - configure: Detect linking style for HP aCC on HP-UX
+* js/gcc-8-and-9 (2019-06-13) 4 commits
+ - config: avoid calling `labs()` on too-large data type
+ - winansi: simplify loading the GetCurrentConsoleFontEx() function
+ - kwset: allow building with GCC 8
+ - poll (mingw): allow compiling with GCC 8 and DEVELOPER=1
 
- Auto-detect how to tell HP-UX aCC where to use dynamicallly linked
- libraries from at runtime.
+ Code clean-up for new compilers.
 
- Will merge to 'next'.
-
-
-* js/mergetool-optim (2019-06-12) 4 commits
- - mergetool: use shell variable magic instead of `awk`
- - mergetool: dissect strings with shell variable magic instead of `expr`
- - t7610-mergetool: use test_cmp instead of test $(cat file) = $txt
- - t7610-mergetool: do not place pipelines headed by `yes` in subshells
-
- "git mergetool" and its tests now spawn fewer subprocesses.
-
- Will merge to 'next'.
+ The 'kwset' one may want to be discussed a bit longer.  Perhaps
+ merge the other three earlier to 'next' and then to 'master'
+ separately?
 
 
-* cc/test-oidmap (2019-06-11) 4 commits
- - oidmap: use sha1hash() instead of static hash() function
- - SQUASH??? sh style
- - t: add t0016-oidmap.sh
- - t/helper: add test-oidmap.c
+* pw/add-p-recount (2019-06-13) 1 commit
+ - add -p: fix checkout -p with pathological context
+
+ "git checkout -p" needs to selectively apply a patch in reverse,
+ which did not work well.
+
+ Will merge to 'next' and then to 'master'.
 
 
-* ds/midx-expire-repack (2019-06-11) 11 commits
- - t5319-multi-pack-index.sh: test batch size zero
- - midx: add test that 'expire' respects .keep files
- - multi-pack-index: test expire while adding packs
- - midx: implement midx_repack()
- - multi-pack-index: prepare 'repack' subcommand
- - multi-pack-index: implement 'expire' subcommand
- - midx: refactor permutation logic and pack sorting
- - midx: simplify computation of pack name lengths
- - multi-pack-index: prepare for 'expire' subcommand
- - Docs: rearrange subcommands for multi-pack-index
- - repack: refactor pack deletion for future use
+* rs/avoid-overflow-in-midpoint-computation (2019-06-13) 1 commit
+ - cleanup: fix possible overflow errors in binary search, part 2
 
- "git multi-pack-index" learned expire and repack subcommands.
+ Code clean-up to avoid signed integer overlaps during binary search.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
-* md/sort-detached-head-first (2019-06-11) 1 commit
- - ref-filter: sort detached HEAD lines firstly
+* js/t3404-typofix (2019-06-14) 1 commit
+ - t3404: fix a typo
 
- "git branch --list" learned to always output the detached HEAD as
- the first item (when the HEAD is detached, of course), instead of
- relying on the textual order of sorting
+ Typofix.
 
-
-* nd/completion-no-cache-failure (2019-06-12) 1 commit
- - completion: do not cache if --git-completion-helper fails
-
- An incorrect list of options was cached after command line
- completion failed (e.g. trying to complete a command that requires
- a repository outside one), which has been corrected.
-
- Will merge to 'next'.
-
-
-* sg/rebase-progress (2019-06-11) 4 commits
- - progress: use term_clear_line()
- - rebase: fix garbled progress display with '-x'
- - pager: add a helper function to clear the last line in the terminal
- - t3404-rebase-interactive: use the 'q_to_cr' helper
-
- Use "Erase in Line" CSI sequence that is already used in the editor
- support to clear cruft in the progress output.
-
-
-* sg/trace2-rename (2019-06-12) 1 commit
- - Revert "test-lib: whitelist GIT_TR2_* in the environment"
-
- Dev support update to help tracing out tests.
-
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -187,6 +316,93 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mo/hpux-dynpath (2019-06-07) 1 commit
+ - configure: Detect linking style for HP aCC on HP-UX
+
+ Auto-detect how to tell HP-UX aCC where to use dynamicallly linked
+ libraries from at runtime.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* js/mergetool-optim (2019-06-12) 4 commits
+ - mergetool: use shell variable magic instead of `awk`
+ - mergetool: dissect strings with shell variable magic instead of `expr`
+ - t7610-mergetool: use test_cmp instead of test $(cat file) = $txt
+ - t7610-mergetool: do not place pipelines headed by `yes` in subshells
+
+ "git mergetool" and its tests now spawn fewer subprocesses.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* cc/test-oidmap (2019-06-13) 3 commits
+ - oidmap: use sha1hash() instead of static hash() function
+ - t: add t0016-oidmap.sh
+ - t/helper: add test-oidmap.c
+
+ Extend the test coverage a bit.
+
+
+* ds/midx-expire-repack (2019-06-11) 11 commits
+ - t5319-multi-pack-index.sh: test batch size zero
+ - midx: add test that 'expire' respects .keep files
+ - multi-pack-index: test expire while adding packs
+ - midx: implement midx_repack()
+ - multi-pack-index: prepare 'repack' subcommand
+ - multi-pack-index: implement 'expire' subcommand
+ - midx: refactor permutation logic and pack sorting
+ - midx: simplify computation of pack name lengths
+ - multi-pack-index: prepare for 'expire' subcommand
+ - Docs: rearrange subcommands for multi-pack-index
+ - repack: refactor pack deletion for future use
+
+ "git multi-pack-index" learned expire and repack subcommands.
+
+ Will merge to 'next'.
+
+
+* md/sort-detached-head-first (2019-06-11) 1 commit
+ - ref-filter: sort detached HEAD lines firstly
+
+ "git branch --list" learned to always output the detached HEAD as
+ the first item (when the HEAD is detached, of course), instead of
+ relying on the textual order of sorting
+
+ At least the test needs to be redone.
+
+
+* nd/completion-no-cache-failure (2019-06-12) 1 commit
+ - completion: do not cache if --git-completion-helper fails
+
+ An incorrect list of options was cached after command line
+ completion failed (e.g. trying to complete a command that requires
+ a repository outside one), which has been corrected.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* sg/rebase-progress (2019-06-11) 4 commits
+ - progress: use term_clear_line()
+ - rebase: fix garbled progress display with '-x'
+ - pager: add a helper function to clear the last line in the terminal
+ - t3404-rebase-interactive: use the 'q_to_cr' helper
+
+ Use "Erase in Line" CSI sequence that is already used in the editor
+ support to clear cruft in the progress output.
+
+ Its test may have to be updated to work around glitch in test setup
+ on Windows.
+
+
+* sg/trace2-rename (2019-06-12) 1 commit
+ - Revert "test-lib: whitelist GIT_TR2_* in the environment"
+
+ Dev support update to help tracing out tests.
+
+ Will merge to 'next' and then to 'master'.
+
+
 * fc/fetch-with-import-fix (2019-06-04) 5 commits
  - fetch: fix regression with transport helpers
  - fetch: make the code more understandable
@@ -197,7 +413,7 @@ of the repositories listed at
  Code restructuring during 2.20 period broke fetching tags via
  "import" based transports.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
 * jl/status-reduce-vertical-blank (2019-06-04) 1 commit
@@ -236,7 +452,7 @@ of the repositories listed at
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
 * dl/includeif-onbranch (2019-06-05) 1 commit
@@ -280,7 +496,7 @@ of the repositories listed at
  A new tag.gpgSign configuration variable turns "git tag -a" into
  "git tag -s".
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
 * md/list-objects-filter-memfix (2019-05-31) 1 commit
@@ -318,7 +534,7 @@ of the repositories listed at
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
 * bb/unicode-12.1-reiwa (2019-05-29) 1 commit
@@ -510,42 +726,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ab/fail-prereqs-in-test (2019-05-14) 1 commit
-  (merged to 'next' on 2019-05-16 at d1be55f485)
- + tests: add a special setup where prerequisites fail
-
- Developer support to emulate unsatisfied prerequisites in tests to
- ensure that the remainer of the tests still succeeds when tests
- with prerequisites are skipped.
-
- Will merge to 'master'.
-
-
-* jk/help-unknown-ref-fix (2019-05-15) 2 commits
-  (merged to 'next' on 2019-05-19 at e3e01160f7)
- + help_unknown_ref(): check for refname ambiguity
- + help_unknown_ref(): duplicate collected refnames
-
- Improve the code to show args with potential typo that cannot be
- interpreted as a commit-ish.
-
- Will merge to 'master'.
-
-
-* js/rebase-cleanup (2019-05-15) 5 commits
-  (merged to 'next' on 2019-05-16 at ccfed8f263)
- + rebase: fold git-rebase--common into the -p backend
- + sequencer: the `am` and `rebase--interactive` scripts are gone
- + .gitignore: there is no longer a built-in `git-rebase--interactive`
- + t3400: stop referring to the scripted rebase
- + Drop unused git-rebase--am.sh
-
- Update supporting parts of "git rebase" to remove code that should
- no longer be used.
-
- Will merge to 'master'.
-
-
 * jt/partial-clone-missing-ref-delta-base (2019-06-11) 4 commits
   (merged to 'next' on 2019-06-12 at 95628af9bb)
  + t5616: cover case of client having delta base
@@ -570,51 +750,6 @@ of the repositories listed at
  The pattern "git diff/grep" use to extract funcname and words
  boundary for Matlab has been extend to cover Octave, which is more
  or less equivalent.
-
- Will merge to 'master'.
-
-
-* ew/update-server-info (2019-05-15) 1 commit
-  (merged to 'next' on 2019-05-19 at bf4f2871ab)
- + update-server-info: avoid needless overwrites
-
- "git update-server-info" learned not to rewrite the file with the
- same contents.
-
- Will merge to 'master'.
-
-
-* nd/corrupt-worktrees (2019-05-15) 1 commit
-  (merged to 'next' on 2019-05-16 at d92c25f800)
- + worktree add: be tolerant of corrupt worktrees
-
- "git worktree add" used to fail when another worktree connected to
- the same repository was corrupt, which has been corrected.
-
- Will merge to 'master'.
-
-
-* mh/import-transport-fd-fix (2019-05-16) 2 commits
-  (merged to 'next' on 2019-05-19 at 5e86f92f7a)
- + Use xmmap_gently instead of xmmap in use_pack
- + dup() the input fd for fast-import used for remote helpers
-
- The ownership rule for the file descriptor to fast-import remote
- backend was mixed up, leading to unrelated file descriptor getting
- closed, which has been fixed.
-
- Will merge to 'master'.
-
-
-* ab/deprecate-R-for-dynpath (2019-05-19) 1 commit
-  (merged to 'next' on 2019-05-19 at 944976e981)
- + Makefile: remove the NO_R_TO_GCC_LINKER flag
-
- The way of specifying the path to find dynamic libraries at runtime
- has been simplified.  The old default to pass -R/path/to/dir has been
- replaced with the new default to pass -Wl,-rpath,/path/to/dir,
- which is the more recent GCC uses.  Those who need to build with an
- old GCC can still use "CC_LD_DYNPATH=-R"
 
  Will merge to 'master'.
 
@@ -644,7 +779,7 @@ of the repositories listed at
  an existing commit-graph file now is closed before "gc" finalizes a
  new instance to replace it.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
 * ml/userdiff-rust (2019-05-30) 2 commits
@@ -659,98 +794,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* pw/rebase-edit-message-for-replayed-merge (2019-05-19) 1 commit
-  (merged to 'next' on 2019-05-19 at dc3e30641c)
- + rebase -r: always reword merge -c
-
- A "merge -c" instruction during "git rebase --rebase-merges" should
- give the user a chance to edit the log message, even when there is
- otherwise no need to create a new merge and replace the existing
- one (i.e. fast-forward instead), but did not.  Which has been
- corrected.
-
- Will merge to 'master'.
-
-
-* sb/format-patch-base-patch-id-fix (2019-05-08) 2 commits
-  (merged to 'next' on 2019-05-15 at 1ab7d2b71c)
- + format-patch: make --base patch-id output stable
- + format-patch: inform user that patch-id generation is unstable
-
- The "--base" option of "format-patch" computed the patch-ids for
- prerequisite patches in an unstable way, which has been updated to
- compute in a way that is compatible with "git patch-id --stable".
-
- Will merge to 'master'.
-
-
-* ab/send-email-transferencoding-fix (2019-05-29) 7 commits
-  (merged to 'next' on 2019-05-29 at c8a99d18c0)
- + send-email: fix regression in sendemail.identity parsing
- + send-email: document --no-[to|cc|bcc]
- + send-email: fix broken transferEncoding tests
- + send-email: remove cargo-culted multi-patch pattern in tests
-  (merged to 'next' on 2019-05-13 at 38c6a1e7e0)
- + send-email: do defaults -> config -> getopt in that order
- + send-email: rename the @bcclist variable for consistency
- + send-email: move the read_config() function above getopts
-
- Since "git send-email" learned to take 'auto' as the value for the
- transfer-encoding, it by mistake stopped honoring the values given
- to the configuration variables sendemail.transferencoding and/or
- sendemail.<ident>.transferencoding.  This has been corrected to
- (finally) redoing the order of setting the default, reading the
- configuration and command line options.
-
- Will merge to 'master'.
-
-
-* dl/format-patch-notes-config (2019-05-17) 2 commits
-  (merged to 'next' on 2019-05-19 at d3f6f1872b)
- + format-patch: teach format.notes config option
- + git-format-patch.txt: document --no-notes option
-
- "git format-patch" learns a configuration to set the default for
- its --notes=<ref> option.
-
- Will merge to 'master'.
-
-
-* jk/unused-params-final-batch (2019-05-13) 14 commits
-  (merged to 'next' on 2019-05-15 at ef7435264c)
- + verify-commit: simplify parameters to run_gpg_verify()
- + show-branch: drop unused parameter from show_independent()
- + rev-list: drop unused void pointer from finish_commit()
- + remove_all_fetch_refspecs(): drop unused "remote" parameter
- + receive-pack: drop unused "commands" from prepare_shallow_update()
- + pack-objects: drop unused rev_info parameters
- + name-rev: drop unused parameters from is_better_name()
- + mktree: drop unused length parameter
- + wt-status: drop unused status parameter
- + read-cache: drop unused parameter from threaded load
- + clone: drop dest parameter from copy_alternates()
- + submodule: drop unused prefix parameter from some functions
- + builtin: consistently pass cmd_* prefix to parse_options
- + cmd_{read,write}_tree: rename "unused" variable that is used
-
- Remove many unused parameters throughout the codebase, with the
- ultimate aim to allow us compile with -Wunused-parameter cleanly.
-
- Will merge to 'master'.
-
-
-* nd/init-relative-template-fix (2019-05-13) 1 commit
-  (merged to 'next' on 2019-05-15 at 4d5b17f712)
- + init: make --template path relative to $CWD
-
- A relative pathname given to "git init --template=<path> <repo>"
- ought to be relative to the directory "git init" gets invoked in,
- but it instead was made relative to the repository, which has been
- corrected.
-
- Will merge to 'master'.
-
-
 * an/ignore-doc-update (2019-06-04) 1 commit
   (merged to 'next' on 2019-06-06 at 8579d82c0d)
  + gitignore.txt: make slash-rules more readable
@@ -758,31 +801,6 @@ of the repositories listed at
  The description about slashes in gitignore patterns (used to
  indicate things like "anchored to this level only" and "only
  matches directories") has been revamped.
-
- Will merge to 'master'.
-
-
-* en/fast-export-encoding (2019-05-14) 5 commits
-  (merged to 'next' on 2019-05-16 at c88bd3edb5)
- + fast-export: do automatic reencoding of commit messages only if requested
- + fast-export: differentiate between explicitly UTF-8 and implicitly UTF-8
- + fast-export: avoid stripping encoding header if we cannot reencode
- + fast-import: support 'encoding' commit header
- + t9350: fix encoding test to actually test reencoding
-
- The "git fast-export/import" pair has been taught to handle commits
- with log messages in encoding other than UTF-8 better.
-
- Will merge to 'master'.
-
-
-* nd/merge-quit (2019-05-19) 2 commits
-  (merged to 'next' on 2019-05-19 at 9880e7ee4e)
- + merge: add --quit
- + merge: remove drop_save() in favor of remove_merge_branch_state()
-
- "git merge" learned "--quit" option that cleans up the in-progress
- merge while leaving the working tree and the index still in a mess.
 
  Will merge to 'master'.
 
@@ -810,7 +828,7 @@ of the repositories listed at
  '+', similar to the way the currently checked out branch is shown
  with '*' in front.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
 * es/first-contrib-tutorial (2019-05-29) 3 commits
@@ -952,18 +970,6 @@ of the repositories listed at
  cf. <xmqqa7fxionx.fsf@gitster-ct.c.googlers.com>
 
 
-* nd/worktree-name-sanitization (2019-05-15) 1 commit
-  (merged to 'next' on 2019-05-16 at 9a2dd33122)
- + worktree add: sanitize worktree names
-
- In recent versions of Git, per-worktree refs are exposed in
- refs/worktrees/<wtname>/ hierarchy, which means that worktree names
- must be a valid refname component.  The code now sanitizes the names
- given to worktrees, to make sure these refs are well-formed.
-
- Will merge to 'master'.
-
-
 * ds/commit-graph-write-refactor (2019-06-12) 11 commits
  - commit-graph: extract write_commit_graph_file()
  - commit-graph: extract copy_oids_to_commits()
@@ -980,7 +986,7 @@ of the repositories listed at
 
  Renamed from commit-graph-format-v2 and changed scope.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
 * br/blame-ignore (2019-06-10) 9 commits
@@ -997,6 +1003,8 @@ of the repositories listed at
  "git blame" learned to "ignore" commits in the history, whose
  effects (as well as their presence) get ignored.
 
+ Except for a minor nit in its tests, this seems to be more or less
+ ready for 'next'.
  cf. <20190610153014.42055-1-brho@google.com> (v8)
 
 --------------------------------------------------
