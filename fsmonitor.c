@@ -56,7 +56,7 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 
 void fill_fsmonitor_bitmap(struct index_state *istate)
 {
-	int i;
+	unsigned int i;
 	istate->fsmonitor_dirty = ewah_new();
 	for (i = 0; i < istate->cache_nr; i++)
 		if (!(istate->cache[i]->ce_flags & CE_FSMONITOR_VALID))
@@ -135,7 +135,7 @@ void refresh_fsmonitor(struct index_state *istate)
 	size_t bol; /* beginning of line */
 	uint64_t last_update;
 	char *buf;
-	int i;
+	unsigned int i;
 
 	if (!core_fsmonitor || has_run_once)
 		return;
@@ -193,7 +193,7 @@ void refresh_fsmonitor(struct index_state *istate)
 
 void add_fsmonitor(struct index_state *istate)
 {
-	int i;
+	unsigned int i;
 
 	if (!istate->fsmonitor_last_update) {
 		trace_printf_key(&trace_fsmonitor, "add fsmonitor");
@@ -226,7 +226,7 @@ void remove_fsmonitor(struct index_state *istate)
 
 void tweak_fsmonitor(struct index_state *istate)
 {
-	int i;
+	unsigned int i;
 	int fsmonitor_enabled = git_config_get_fsmonitor();
 
 	if (istate->fsmonitor_dirty) {
