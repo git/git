@@ -1,1 +1,4 @@
-az artifacts universal download --organization "https://dev.azure.com/bnhassin/" --feed "myFeed" --name "myPackageName" --version 1.0.0 --path . --file-filter "**/*.exe;**/*.dll"
+az artifacts universal download --organization "https://dev.azure.com/bnhassin/" --feed "myFeed" --name "myPackageName" --version 1.0.0 --path . --file-filter "**/*.exe;**/*.pdll"
+az devops security permission namespace show --id
+                                             [--detect {false, true}]
+                                             [--org]
