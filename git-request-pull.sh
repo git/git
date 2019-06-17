@@ -65,6 +65,8 @@ test -z "$head" && die "fatal: Not a valid revision: $local"
 headrev=$(git rev-parse --verify --quiet "$head"^0)
 test -z "$headrev" && die "fatal: Ambiguous revision: $local"
 
+local_sha1=$(git rev-parse --verify --quiet "$head")
+
 # Was it a branch with a description?
 branch_name=${head#refs/heads/}
 if test "z$branch_name" = "z$headref" ||
@@ -77,41 +79,51 @@ merge_base=$(git merge-base $baserev $headrev) ||
 die "fatal: No commits in common between $base and $head"
 
 # $head is the refname from the command line.
-# If a ref with the same name as $head exists at the remote
-# and their values match, use that.
-#
-# Otherwise find a random ref that matches $headrev.
+# Find a ref with the same name as $head that exists at the remote
+# and points to the same commit as the local object.
 find_matching_ref='
 	my ($head,$headrev) = (@ARGV);
-	my ($found);
+	my $pattern = qr{/\Q$head\E$};
+	my ($remote_sha1, $found);
 
 	while (<STDIN>) {
 		chomp;
 		my ($sha1, $ref, $deref) = /^(\S+)\s+([^^]+)(\S*)$/;
-		my ($pattern);
-		next unless ($sha1 eq $headrev);
 
-		$pattern="/$head\$";
-		if ($ref eq $head) {
-			$found = $ref;
-		}
-		if ($ref =~ /$pattern/) {
-			$found = $ref;
-		}
 		if ($sha1 eq $head) {
-			$found = $sha1;
+			$found = $remote_sha1 = $sha1;
+			break;
+		}
+
+		if ($ref eq $head || $ref =~ $pattern) {
+			if ($deref eq "") {
+				# Remember the matching object on the remote side
+				$remote_sha1 = $sha1;
+			}
+			if ($sha1 eq $headrev) {
+				$found = $ref;
+				break;
+			}
 		}
 	}
 	if ($found) {
-		print "$found\n";
+		$remote_sha1 = $headrev if ! defined $remote_sha1;
+		print "$remote_sha1 $found\n";
 	}
 '
 
-ref=$(git ls-remote "$url" | @@PERL@@ -e "$find_matching_ref" "${remote:-HEAD}" "$headrev")
+set fnord $(git ls-remote "$url" | @@PERL@@ -e "$find_matching_ref" "${remote:-HEAD}" "$headrev")
+remote_sha1=$2
+ref=$3
 
 if test -z "$ref"
 then
 	echo "warn: No match for commit $headrev found at $url" >&2
+	echo "warn: Are you sure you pushed '${remote:-HEAD}' there?" >&2
+	status=1
+elif test "$local_sha1" != "$remote_sha1"
+then
+	echo "warn: $head found at $url but points to a different object" >&2
 	echo "warn: Are you sure you pushed '${remote:-HEAD}' there?" >&2
 	status=1
 fi
