@@ -71,6 +71,8 @@ test_expect_success 'gc --keep-largest-pack' '
 		git gc --keep-largest-pack &&
 		( cd .git/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 2 pack-list &&
+		awk "/^P /{print \$2}" <.git/objects/info/packs >pack-info &&
+		test_line_count = 2 pack-info &&
 		test_path_is_file $BASE_PACK &&
 		git fsck
 	)

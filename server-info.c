@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "dir.h"
 #include "repository.h"
 #include "refs.h"
 #include "object.h"
@@ -283,26 +284,21 @@ static void init_pack_info(const char *infofile, int force)
 {
 	struct packed_git *p;
 	int stale;
-	int i = 0;
+	int i;
+	size_t alloc = 0;
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		/* we ignore things on alternate path since they are
 		 * not available to the pullers in general.
 		 */
-		if (!p->pack_local)
+		if (!p->pack_local || !file_exists(p->pack_name))
 			continue;
-		i++;
-	}
-	num_pack = i;
-	info = xcalloc(num_pack, sizeof(struct pack_info *));
-	for (i = 0, p = get_all_packs(the_repository); p; p = p->next) {
-		if (!p->pack_local)
-			continue;
-		assert(i < num_pack);
+
+		i = num_pack++;
+		ALLOC_GROW(info, num_pack, alloc);
 		info[i] = xcalloc(1, sizeof(struct pack_info));
 		info[i]->p = p;
 		info[i]->old_num = -1;
-		i++;
 	}
 
 	if (infofile && !force)
