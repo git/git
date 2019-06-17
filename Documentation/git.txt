@@ -33,7 +33,8 @@ individual Git commands with "git help command".  linkgit:gitcli[7]
 manual page gives you an overview of the command-line command syntax.
 
 A formatted and hyperlinked copy of the latest Git documentation
-can be viewed at `https://git.github.io/htmldocs/git.html`.
+can be viewed at https://git.github.io/htmldocs/git.html
+or https://git-scm.com/docs.
 
 
 OPTIONS
