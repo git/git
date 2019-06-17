@@ -30,6 +30,19 @@ UI, Workflows & Features
  * The code to show args with potential typo that cannot be
    interpreted as a commit-ish has been improved.
 
+ * "git clone --recurse-submodules" learned to set up the submodules
+   to ignore commit object names recorded in the superproject gitlink
+   and instead use the commits that happen to be at the tip of the
+   remote-tracking branches from the get-go, by passing the new
+   "--remote-submodules" option.
+
+ * The pattern "git diff/grep" use to extract funcname and words
+   boundary for Matlab has been extend to cover Octave, which is more
+   or less equivalent.
+
+ * "git help git" was hard to discover (well, at least for some
+   people).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -48,6 +61,13 @@ Performance, Internal Implementation, Development Support etc.
    replaced with the new default to pass -Wl,-rpath,/path/to/dir,
    which is the more recent GCC uses.  Those who need to build with an
    old GCC can still use "CC_LD_DYNPATH=-R"
+
+ * Prepare use of reachability index in topological walker that works
+   on a range (A..B).
+
+ * A new tutorial targetting specifically aspiring git-core
+   developers has been added.
+
 
 
 Fixes since v2.22
@@ -74,4 +94,61 @@ Fixes since v2.22
    one (i.e. fast-forward instead), but did not.  Which has been
    corrected.
 
+ * Code cleanup and futureproof.
+   (merge 31f5256c82 ds/object-info-for-prefetch-fix later to maint).
+
+ * More parameter validation.
+   (merge de99eb0c24 es/grep-require-name-when-needed later to maint).
+
+ * "git update-server-info" used to leave stale packfiles in its
+   output, which has been corrected.
+   (merge e941c48d49 ew/server-info-remove-crufts later to maint).
+
+ * The server side support for "git fetch" used to show incorrect
+   value for the HEAD symbolic ref when the namespace feature is in
+   use, which has been corrected.
+   (merge 533e088250 jk/HEAD-symref-in-xfer-namespaces later to maint).
+
+ * "git am -i --resolved" segfaulted after trying to see a commit as
+   if it were a tree, which has been corrected.
+   (merge 7663e438c5 jk/am-i-resolved-fix later to maint).
+
+ * "git bundle verify" needs to see if prerequisite objects exist in
+   the receiving repository, but the command did not check if we are
+   in a repository upfront, which has been corrected.
+   (merge 3bbbe467f2 js/bundle-verify-require-object-store later to maint).
+
+ * "git merge --squash" is designed to update the working tree and the
+   index without creating the commit, and this cannot be countermanded
+   by adding the "--commit" option; the command now refuses to work
+   when both options are given.
+   (merge 1d14d0c994 vv/merge-squash-with-explicit-commit later to maint).
+
+ * The data collected by fsmonitor was not properly written back to
+   the on-disk index file, breaking t7519 tests occasionally, which
+   has been corrected.
+   (merge b5a8169752 js/fsmonitor-unflake later to maint).
+
+ * Update to Unicode 12.1 width table.
+   (merge 5817f9caa3 bb/unicode-12.1-reiwa later to maint).
+
+ * The command line to invoke a "git cat-file" command from inside
+   "git p4" was not properly quoted to protect a caret and running a
+   broken command on Windows, which has been corrected.
+   (merge c3f2358de3 mm/p4-unshelve-windows-fix later to maint).
+
+ * "git request-pull" learned to warn when the ref we ask them to pull
+   from in the local repository and in the published repository are
+   different.
+   (merge 0454220d66 pb/request-pull-verify-remote-ref later to maint).
+
+ * When creating a partial clone, the object filtering criteria is
+   recorded for the origin of the clone, but this incorrectly used a
+   hardcoded name "origin" to name that remote; it has been corrected
+   to honor the "--origin <name>" option.
+   (merge 1c4a9f9114 xl/record-partial-clone-origin later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
+   (merge f547101b26 es/git-debugger-doc later to maint).
+   (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
+   (merge 0108f47eb3 sw/git-p4-unshelve-branched-files later to maint).
