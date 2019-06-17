@@ -13,8 +13,7 @@ SYNOPSIS
 	[-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
 	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>] [<commit>...]
-'git merge' --abort
-'git merge' --continue
+'git merge' (--continue | --abort | --quit)
 
 DESCRIPTION
 -----------
