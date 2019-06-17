@@ -436,7 +436,9 @@ static struct commit *handle_commit(struct rev_info *revs,
 			die("unable to parse commit %s", name);
 		if (flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
-			revs->limited = 1;
+
+			if (!revs->topo_order || !generation_numbers_enabled(the_repository))
+				revs->limited = 1;
 		}
 		if (revs->sources) {
 			char **slot = revision_sources_at(revs->sources, commit);
@@ -3262,6 +3264,9 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 	for (p = commit->parents; p; p = p->next) {
 		struct commit *parent = p->item;
 		int *pi;
+
+		if (parent->object.flags & UNINTERESTING)
+			continue;
 
 		if (parse_commit_gently(parent, 1) < 0)
 			continue;
