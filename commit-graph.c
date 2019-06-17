@@ -43,15 +43,23 @@
 
 char *get_commit_graph_filename(const char *obj_dir)
 {
-	return xstrfmt("%s/info/commit-graph", obj_dir);
+	char *filename = xstrfmt("%s/info/commit-graph", obj_dir);
+	char *normalized = xmalloc(strlen(filename) + 1);
+	normalize_path_copy(normalized, filename);
+	free(filename);
+	return normalized;
 }
 
 static char *get_split_graph_filename(const char *obj_dir,
 				      const char *oid_hex)
 {
-	return xstrfmt("%s/info/commit-graphs/graph-%s.graph",
-		       obj_dir,
-		       oid_hex);
+	char *filename = xstrfmt("%s/info/commit-graphs/graph-%s.graph",
+				 obj_dir,
+				 oid_hex);
+	char *normalized = xmalloc(strlen(filename) + 1);
+	normalize_path_copy(normalized, filename);
+	free(filename);
+	return normalized;
 }
 
 static char *get_chain_filename(const char *obj_dir)
@@ -1680,7 +1688,6 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	struct strbuf path = STRBUF_INIT;
 	DIR *dir;
 	struct dirent *de;
-	size_t dirnamelen;
 	timestamp_t expire_time = time(NULL);
 
 	if (ctx->split_opts && ctx->split_opts->expire_time)
@@ -1701,16 +1708,13 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 		return;
 	}
 
-	strbuf_addch(&path, '/');
-	dirnamelen = path.len;
 	while ((de = readdir(dir)) != NULL) {
 		struct stat st;
 		uint32_t i, found = 0;
 
-		strbuf_setlen(&path, dirnamelen);
-		strbuf_addstr(&path, de->d_name);
+		char *filename = get_split_graph_filename(path.buf, de->d_name);
 
-		stat(path.buf, &st);
+		stat(filename, &st);
 
 		if (st.st_mtime > expire_time)
 			continue;
@@ -1719,15 +1723,16 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 
 		for (i = 0; i < ctx->num_commit_graphs_after; i++) {
 			if (!strcmp(ctx->commit_graph_filenames_after[i],
-				    path.buf)) {
+				    filename)) {
 				found = 1;
 				break;
 			}
 		}
 
 		if (!found)
-			unlink(path.buf);
+			unlink(filename);
 
+		free(filename);
 	}
 }
 
