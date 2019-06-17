@@ -15,7 +15,8 @@ SYNOPSIS
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
-	  [--jobs <n>] [--] <repository> [<directory>]
+	  [--[no-]remote-submodules] [--jobs <n>] [--] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
@@ -259,6 +260,12 @@ or `--mirror` is given)
 
 --[no-]shallow-submodules::
 	All submodules which are cloned will be shallow with a depth of 1.
+
+--[no-]remote-submodules::
+	All submodules which are cloned will use the status of the submodule’s
+	remote-tracking branch to update the submodule, rather than the
+	superproject’s recorded SHA-1. Equivalent to passing `--remote` to
+	`git submodule update`.
 
 --separate-git-dir=<git dir>::
 	Instead of placing the cloned repository where it is supposed
