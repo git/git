@@ -216,6 +216,18 @@ test_expect_success 'test merge stragety constants' '
 	)
 '
 
+test_expect_success 'remove commit-graph-chain file after flattening' '
+	git clone . flatten &&
+	(
+		cd flatten &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		git commit-graph write --reachable &&
+		test_path_is_missing $graphdir/commit-graph-chain &&
+		ls $graphdir >graph-files &&
+		test_line_count = 0 graph-files
+	)
+'
+
 corrupt_file() {
 	file=$1
 	pos=$2
