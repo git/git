@@ -301,4 +301,19 @@ test_expect_success 'add octopus merge' '
 
 graph_git_behavior 'graph exists' merge/octopus commits/12
 
+test_expect_success 'split across alternate where alternate is not split' '
+	git commit-graph write --reachable &&
+	test_path_is_file .git/objects/info/commit-graph &&
+	cp .git/objects/info/commit-graph . &&
+	git clone --no-hardlinks . alt-split &&
+	(
+		cd alt-split &&
+		echo "$(pwd)"/../.git/objects >.git/objects/info/alternates &&
+		test_commit 18 &&
+		git commit-graph write --reachable --split &&
+		test_line_count = 1 $graphdir/commit-graph-chain
+	) &&
+	test_cmp commit-graph .git/objects/info/commit-graph
+'
+
 test_done
