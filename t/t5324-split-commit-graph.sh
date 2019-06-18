@@ -216,4 +216,66 @@ test_expect_success 'test merge stragety constants' '
 	)
 '
 
+corrupt_file() {
+	file=$1
+	pos=$2
+	data="${3:-\0}"
+	printf "$data" | dd of="$file" bs=1 seek="$pos" conv=notrunc
+}
+
+test_expect_success 'verify hashes along chain, even in shallow' '
+	git clone --no-hardlinks . verify &&
+	(
+		cd verify &&
+		git commit-graph verify &&
+		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_file "$base_file" 1760 "\01" &&
+		test_must_fail git commit-graph verify --shallow 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "incorrect checksum" err
+	)
+'
+
+test_expect_success 'verify --shallow does not check base contents' '
+	git clone --no-hardlinks . verify-shallow &&
+	(
+		cd verify-shallow &&
+		git commit-graph verify &&
+		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_file "$base_file" 1000 "\01" &&
+		git commit-graph verify --shallow &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "incorrect checksum" err
+	)
+'
+
+test_expect_success 'warn on base graph chunk incorrect' '
+	git clone --no-hardlinks . base-chunk &&
+	(
+		cd base-chunk &&
+		git commit-graph verify &&
+		base_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_file "$base_file" 1376 "\01" &&
+		git commit-graph verify --shallow 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "commit-graph chain does not match" err
+	)
+'
+
+test_expect_success 'verify after commit-graph-chain corruption' '
+	git clone --no-hardlinks . verify-chain &&
+	(
+		cd verify-chain &&
+		corrupt_file "$graphdir/commit-graph-chain" 60 "G" &&
+		git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "invalid commit-graph chain" err &&
+		corrupt_file "$graphdir/commit-graph-chain" 60 "A" &&
+		git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "unable to find all commit-graph files" err
+	)
+'
+
 test_done

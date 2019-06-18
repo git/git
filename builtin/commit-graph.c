@@ -5,17 +5,18 @@
 #include "parse-options.h"
 #include "repository.h"
 #include "commit-graph.h"
+#include "object-store.h"
 
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph [--object-dir <objdir>]"),
 	N_("git commit-graph read [--object-dir <objdir>]"),
-	N_("git commit-graph verify [--object-dir <objdir>]"),
+	N_("git commit-graph verify [--object-dir <objdir>] [--shallow]"),
 	N_("git commit-graph write [--object-dir <objdir>] [--append|--split] [--reachable|--stdin-packs|--stdin-commits] <split options>"),
 	NULL
 };
 
 static const char * const builtin_commit_graph_verify_usage[] = {
-	N_("git commit-graph verify [--object-dir <objdir>]"),
+	N_("git commit-graph verify [--object-dir <objdir>] [--shallow]"),
 	NULL
 };
 
@@ -36,6 +37,7 @@ static struct opts_commit_graph {
 	int stdin_commits;
 	int append;
 	int split;
+	int shallow;
 } opts;
 
 static int graph_verify(int argc, const char **argv)
@@ -45,11 +47,14 @@ static int graph_verify(int argc, const char **argv)
 	int open_ok;
 	int fd;
 	struct stat st;
+	int flags = 0;
 
 	static struct option builtin_commit_graph_verify_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
 			   N_("dir"),
 			   N_("The object directory to store the graph")),
+		OPT_BOOL(0, "shallow", &opts.shallow,
+			 N_("if the commit-graph is split, only verify the tip file")),
 		OPT_END(),
 	};
 
@@ -59,21 +64,27 @@ static int graph_verify(int argc, const char **argv)
 
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
+	if (opts.shallow)
+		flags |= COMMIT_GRAPH_VERIFY_SHALLOW;
 
 	graph_name = get_commit_graph_filename(opts.obj_dir);
 	open_ok = open_commit_graph(graph_name, &fd, &st);
-	if (!open_ok && errno == ENOENT)
-		return 0;
-	if (!open_ok)
+	if (!open_ok && errno != ENOENT)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
-	graph = load_commit_graph_one_fd_st(fd, &st);
+
 	FREE_AND_NULL(graph_name);
 
+	if (open_ok)
+		graph = load_commit_graph_one_fd_st(fd, &st);
+	 else
+		graph = read_commit_graph_one(the_repository, opts.obj_dir);
+
+	/* Return failure if open_ok predicted success */
 	if (!graph)
-		return 1;
+		return !!open_ok;
 
 	UNLEAK(graph);
-	return verify_commit_graph(the_repository, graph);
+	return verify_commit_graph(the_repository, graph, flags);
 }
 
 static int graph_read(int argc, const char **argv)
