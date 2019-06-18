@@ -290,4 +290,15 @@ test_expect_success 'verify after commit-graph-chain corruption' '
 	)
 '
 
+test_expect_success 'add octopus merge' '
+	git reset --hard commits/10 &&
+	git merge commits/3 commits/4 &&
+	git branch merge/octopus &&
+	git commit-graph write --reachable --split &&
+	git commit-graph verify &&
+	test_line_count = 3 $graphdir/commit-graph-chain
+'
+
+graph_git_behavior 'graph exists' merge/octopus commits/12
+
 test_done
