@@ -71,8 +71,8 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 
 			level->dir = opendir(iter->base.path.buf);
 			if (!level->dir && errno != ENOENT) {
-				warning("error opening directory %s: %s",
-					iter->base.path.buf, strerror(errno));
+				warning_errno("error opening directory '%s'",
+					      iter->base.path.buf);
 				/* Popping the level is handled below */
 			}
 
@@ -122,11 +122,11 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 			if (!de) {
 				/* This level is exhausted; pop up a level. */
 				if (errno) {
-					warning("error reading directory %s: %s",
-						iter->base.path.buf, strerror(errno));
+					warning_errno("error reading directory '%s'",
+						      iter->base.path.buf);
 				} else if (closedir(level->dir))
-					warning("error closing directory %s: %s",
-						iter->base.path.buf, strerror(errno));
+					warning_errno("error closing directory '%s'",
+						      iter->base.path.buf);
 
 				level->dir = NULL;
 				if (--iter->levels_nr == 0)
@@ -140,9 +140,8 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 			strbuf_addstr(&iter->base.path, de->d_name);
 			if (lstat(iter->base.path.buf, &iter->base.st) < 0) {
 				if (errno != ENOENT)
-					warning("error reading path '%s': %s",
-						iter->base.path.buf,
-						strerror(errno));
+					warning_errno("failed to stat '%s'",
+						      iter->base.path.buf);
 				continue;
 			}
 
@@ -170,9 +169,11 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 			&iter->levels[iter->levels_nr - 1];
 
 		if (level->dir && closedir(level->dir)) {
+			int saved_errno = errno;
 			strbuf_setlen(&iter->base.path, level->prefix_len);
-			warning("error closing directory %s: %s",
-				iter->base.path.buf, strerror(errno));
+			errno = saved_errno;
+			warning_errno("error closing directory '%s'",
+				      iter->base.path.buf);
 		}
 	}
 
