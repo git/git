@@ -221,6 +221,19 @@ endif::git-pull[]
 	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
 
+--show-forced-updates::
+	By default, git checks if a branch is force-updated during
+	fetch. This can be disabled through fetch.showForcedUpdates, but
+	the --show-forced-updates option guarantees this check occurs.
+	See linkgit:git-config[1].
+
+--no-show-forced-updates::
+	By default, git checks if a branch is force-updated during
+	fetch. Pass --no-show-forced-updates or set fetch.showForcedUpdates
+	to false to skip this check for performance reasons. If used during
+	'git-pull' the --ff-only option will still check for forced updates
+	before attempting a fast-forward update. See linkgit:git-config[1].
+
 -4::
 --ipv4::
 	Use IPv4 addresses only, ignoring IPv6 addresses.
