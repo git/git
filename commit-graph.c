@@ -1472,12 +1472,16 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		}
 
 		if (ctx->base_graph_name) {
-			result = rename(ctx->base_graph_name,
-					ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 2]);
+			const char *dest = ctx->commit_graph_filenames_after[
+						ctx->num_commit_graphs_after - 2];
 
-			if (result) {
-				error(_("failed to rename base commit-graph file"));
-				return -1;
+			if (strcmp(ctx->base_graph_name, dest)) {
+				result = rename(ctx->base_graph_name, dest);
+
+				if (result) {
+					error(_("failed to rename base commit-graph file"));
+					return -1;
+				}
 			}
 		} else {
 			char *graph_name = get_commit_graph_filename(ctx->obj_dir);
