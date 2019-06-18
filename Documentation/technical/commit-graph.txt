@@ -186,6 +186,86 @@ positions to refer to their parents, which may be in `graph-{hash1}.graph` or
 its containment in the intervals [0, X0), [X0, X0 + X1), [X0 + X1, X0 + X1 +
 X2).
 
+Each commit-graph file (except the base, `graph-{hash0}.graph`) contains data
+specifying the hashes of all files in the lower layers. In the above example,
+`graph-{hash1}.graph` contains `{hash0}` while `graph-{hash2}.graph` contains
+`{hash0}` and `{hash1}`.
+
+## Merging commit-graph files
+
+If we only added a new commit-graph file on every write, we would run into a
+linear search problem through many commit-graph files.  Instead, we use a merge
+strategy to decide when the stack should collapse some number of levels.
+
+The diagram below shows such a collapse. As a set of new commits are added, it
+is determined by the merge strategy that the files should collapse to
+`graph-{hash1}`. Thus, the new commits, the commits in `graph-{hash2}` and
+the commits in `graph-{hash1}` should be combined into a new `graph-{hash3}`
+file.
+
+			    +---------------------+
+			    |                     |
+			    |    (new commits)    |
+			    |                     |
+			    +---------------------+
+			    |                     |
+ +-----------------------+  +---------------------+
+ |  graph-{hash2} |->|                     |
+ +-----------------------+  +---------------------+
+	  |                 |                     |
+ +-----------------------+  +---------------------+
+ |                       |  |                     |
+ |  graph-{hash1} |->|                     |
+ |                       |  |                     |
+ +-----------------------+  +---------------------+
+	  |                  tmp_graphXXX
+ +-----------------------+
+ |                       |
+ |                       |
+ |                       |
+ |  graph-{hash0} |
+ |                       |
+ |                       |
+ |                       |
+ +-----------------------+
+
+During this process, the commits to write are combined, sorted and we write the
+contents to a temporary file, all while holding a `commit-graph-chain.lock`
+lock-file.  When the file is flushed, we rename it to `graph-{hash3}`
+according to the computed `{hash3}`. Finally, we write the new chain data to
+`commit-graph-chain.lock`:
+
+```
+	{hash3}
+	{hash0}
+```
+
+We then close the lock-file.
+
+## Merge Strategy
+
+When writing a set of commits that do not exist in the commit-graph stack of
+height N, we default to creating a new file at level N + 1. We then decide to
+merge with the Nth level if one of two conditions hold:
+
+  1. The expected file size for level N + 1 is at least half the file size for
+     level N.
+
+  2. Level N + 1 contains more than 64,0000 commits.
+
+This decision cascades down the levels: when we merge a level we create a new
+set of commits that then compares to the next level.
+
+The first condition bounds the number of levels to be logarithmic in the total
+number of commits.  The second condition bounds the total number of commits in
+a `graph-{hashN}` file and not in the `commit-graph` file, preventing
+significant performance issues when the stack merges and another process only
+partially reads the previous stack.
+
+The merge strategy values (2 for the size multiple, 64,000 for the maximum
+number of commits) could be extracted into config settings for full
+flexibility.
+
 Related Links
 -------------
 [0] https://bugs.chromium.org/p/git/issues/detail?id=8

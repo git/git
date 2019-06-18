@@ -119,4 +119,17 @@ test_expect_success 'add one commit, write a tip graph' '
 
 graph_git_behavior 'three-layer commit-graph: commit 11 vs 6' commits/11 commits/6
 
+test_expect_success 'add one commit, write a merged graph' '
+	test_commit 12 &&
+	git branch commits/12 &&
+	git commit-graph write --reachable --split &&
+	test_path_is_file $graphdir/commit-graph-chain &&
+	test_line_count = 2 $graphdir/commit-graph-chain &&
+	ls $graphdir/graph-*.graph >graph-files &&
+	test_line_count = 4 graph-files &&
+	verify_chain_files_exist $graphdir
+'
+
+graph_git_behavior 'merged commit-graph: commit 12 vs 6' commits/12 commits/6
+
 test_done
