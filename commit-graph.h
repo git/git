@@ -47,6 +47,7 @@ struct commit_graph {
 	unsigned char num_chunks;
 	uint32_t num_commits;
 	struct object_id oid;
+	char *filename;
 
 	uint32_t num_commits_in_base;
 	struct commit_graph *base_graph;
@@ -71,6 +72,7 @@ int generation_numbers_enabled(struct repository *r);
 
 #define COMMIT_GRAPH_APPEND     (1 << 0)
 #define COMMIT_GRAPH_PROGRESS   (1 << 1)
+#define COMMIT_GRAPH_SPLIT      (1 << 2)
 
 /*
  * The write_commit_graph* methods return zero on success
