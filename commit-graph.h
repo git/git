@@ -48,6 +48,7 @@ struct commit_graph {
 	uint32_t num_commits;
 	struct object_id oid;
 	char *filename;
+	const char *obj_dir;
 
 	uint32_t num_commits_in_base;
 	struct commit_graph *base_graph;
