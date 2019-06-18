@@ -17,6 +17,11 @@ int cmd__dir_iterator(int argc, const char **argv)
 
 	diter = dir_iterator_begin(path.buf);
 
+	if (!diter) {
+		printf("dir_iterator_begin failure: %d\n", errno);
+		exit(EXIT_FAILURE);
+	}
+
 	while (dir_iterator_advance(diter) == ITER_OK) {
 		if (S_ISDIR(diter->st.st_mode))
 			printf("[d] ");

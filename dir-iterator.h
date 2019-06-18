@@ -8,18 +8,22 @@
  *
  * Iterate over a directory tree, recursively, including paths of all
  * types and hidden paths. Skip "." and ".." entries and don't follow
- * symlinks except for the original path.
+ * symlinks except for the original path. Note that the original path
+ * is not included in the iteration.
  *
  * Every time dir_iterator_advance() is called, update the members of
  * the dir_iterator structure to reflect the next path in the
  * iteration. The order that paths are iterated over within a
- * directory is undefined, but directory paths are always iterated
- * over before the subdirectory contents.
+ * directory is undefined, directory paths are always given before
+ * their contents.
  *
  * A typical iteration looks like this:
  *
  *     int ok;
  *     struct iterator *iter = dir_iterator_begin(path);
+ *
+ *     if (!iter)
+ *             goto error_handler;
  *
  *     while ((ok = dir_iterator_advance(iter)) == ITER_OK) {
  *             if (want_to_stop_iteration()) {
@@ -59,8 +63,9 @@ struct dir_iterator {
 };
 
 /*
- * Start a directory iteration over path. Return a dir_iterator that
- * holds the internal state of the iteration.
+ * Start a directory iteration over path. On success, return a
+ * dir_iterator that holds the internal state of the iteration.
+ * In case of failure, return NULL and set errno accordingly.
  *
  * The iteration includes all paths under path, not including path
  * itself and not including "." or ".." entries.
