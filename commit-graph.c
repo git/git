@@ -768,6 +768,8 @@ struct write_commit_graph_context {
 	unsigned append:1,
 		 report_progress:1,
 		 split:1;
+
+	const struct split_commit_graph_opts *split_opts;
 };
 
 static void write_graph_chunk_fanout(struct hashfile *f,
@@ -1116,14 +1118,15 @@ static int add_ref_to_list(const char *refname,
 	return 0;
 }
 
-int write_commit_graph_reachable(const char *obj_dir, unsigned int flags)
+int write_commit_graph_reachable(const char *obj_dir, unsigned int flags,
+				 const struct split_commit_graph_opts *split_opts)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
 	int result;
 
 	for_each_ref(add_ref_to_list, &list);
 	result = write_commit_graph(obj_dir, NULL, &list,
-				    flags);
+				    flags, split_opts);
 
 	string_list_clear(&list, 0);
 	return result;
@@ -1498,20 +1501,25 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	return 0;
 }
 
-static int split_strategy_max_commits = 64000;
-static float split_strategy_size_mult = 2.0f;
-
 static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 {
 	struct commit_graph *g = ctx->r->objects->commit_graph;
 	uint32_t num_commits = ctx->commits.nr;
 	uint32_t i;
 
+	int max_commits = 0;
+	int size_mult = 2;
+
+	if (ctx->split_opts) {
+		max_commits = ctx->split_opts->max_commits;
+		size_mult = ctx->split_opts->size_multiple;
+	}
+
 	g = ctx->r->objects->commit_graph;
 	ctx->num_commit_graphs_after = ctx->num_commit_graphs_before + 1;
 
-	while (g && (g->num_commits <= split_strategy_size_mult * num_commits ||
-		     num_commits > split_strategy_max_commits)) {
+	while (g && (g->num_commits <= size_mult * num_commits ||
+		    (max_commits && num_commits > max_commits))) {
 		if (strcmp(g->obj_dir, ctx->obj_dir))
 			break;
 
@@ -1675,7 +1683,10 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	DIR *dir;
 	struct dirent *de;
 	size_t dirnamelen;
-	time_t expire_time = time(NULL);
+	timestamp_t expire_time = time(NULL);
+
+	if (ctx->split_opts && ctx->split_opts->expire_time)
+		expire_time -= ctx->split_opts->expire_time;
 
 	strbuf_addstr(&path, ctx->obj_dir);
 	strbuf_addstr(&path, "/info/commit-graphs");
@@ -1719,7 +1730,8 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
-		       unsigned int flags)
+		       unsigned int flags,
+		       const struct split_commit_graph_opts *split_opts)
 {
 	struct write_commit_graph_context *ctx;
 	uint32_t i, count_distinct = 0;
@@ -1734,6 +1746,7 @@ int write_commit_graph(const char *obj_dir,
 	ctx->append = flags & COMMIT_GRAPH_APPEND ? 1 : 0;
 	ctx->report_progress = flags & COMMIT_GRAPH_PROGRESS ? 1 : 0;
 	ctx->split = flags & COMMIT_GRAPH_SPLIT ? 1 : 0;
+	ctx->split_opts = split_opts;
 
 	if (ctx->split) {
 		struct commit_graph *g;
@@ -1761,8 +1774,8 @@ int write_commit_graph(const char *obj_dir,
 	ctx->approx_nr_objects = approximate_object_count();
 	ctx->oids.alloc = ctx->approx_nr_objects / 32;
 
-	if (ctx->split && ctx->oids.alloc > split_strategy_max_commits)
-		ctx->oids.alloc = split_strategy_max_commits;
+	if (ctx->split && split_opts && ctx->oids.alloc > split_opts->max_commits)
+		ctx->oids.alloc = split_opts->max_commits;
 
 	if (ctx->append) {
 		prepare_commit_graph_one(ctx->r, ctx->obj_dir);

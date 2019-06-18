@@ -10,7 +10,7 @@ static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph [--object-dir <objdir>]"),
 	N_("git commit-graph read [--object-dir <objdir>]"),
 	N_("git commit-graph verify [--object-dir <objdir>]"),
-	N_("git commit-graph write [--object-dir <objdir>] [--append|--split] [--reachable|--stdin-packs|--stdin-commits]"),
+	N_("git commit-graph write [--object-dir <objdir>] [--append|--split] [--reachable|--stdin-packs|--stdin-commits] <split options>"),
 	NULL
 };
 
@@ -25,7 +25,7 @@ static const char * const builtin_commit_graph_read_usage[] = {
 };
 
 static const char * const builtin_commit_graph_write_usage[] = {
-	N_("git commit-graph write [--object-dir <objdir>] [--append|--split] [--reachable|--stdin-packs|--stdin-commits]"),
+	N_("git commit-graph write [--object-dir <objdir>] [--append|--split] [--reachable|--stdin-packs|--stdin-commits] <split options>"),
 	NULL
 };
 
@@ -135,6 +135,7 @@ static int graph_read(int argc, const char **argv)
 }
 
 extern int read_replace_refs;
+static struct split_commit_graph_opts split_opts;
 
 static int graph_write(int argc, const char **argv)
 {
@@ -158,8 +159,18 @@ static int graph_write(int argc, const char **argv)
 			N_("include all commits already in the commit-graph file")),
 		OPT_BOOL(0, "split", &opts.split,
 			N_("allow writing an incremental commit-graph file")),
+		OPT_INTEGER(0, "max-commits", &split_opts.max_commits,
+			N_("maximum number of commits in a non-base split commit-graph")),
+		OPT_INTEGER(0, "size-multiple", &split_opts.size_multiple,
+			N_("maximum ratio between two levels of a split commit-graph")),
+		OPT_EXPIRY_DATE(0, "expire-time", &split_opts.expire_time,
+			N_("maximum number of commits in a non-base split commit-graph")),
 		OPT_END(),
 	};
+
+	split_opts.size_multiple = 2;
+	split_opts.max_commits = 0;
+	split_opts.expire_time = 0;
 
 	argc = parse_options(argc, argv, NULL,
 			     builtin_commit_graph_write_options,
@@ -176,8 +187,11 @@ static int graph_write(int argc, const char **argv)
 
 	read_replace_refs = 0;
 
-	if (opts.reachable)
-		return write_commit_graph_reachable(opts.obj_dir, flags);
+	if (opts.reachable) {
+		if (write_commit_graph_reachable(opts.obj_dir, flags, &split_opts))
+			return 1;
+		return 0;
+	}
 
 	string_list_init(&lines, 0);
 	if (opts.stdin_packs || opts.stdin_commits) {
@@ -197,7 +211,8 @@ static int graph_write(int argc, const char **argv)
 	if (write_commit_graph(opts.obj_dir,
 			       pack_indexes,
 			       commit_hex,
-			       flags))
+			       flags,
+			       &split_opts))
 		result = 1;
 
 	UNLEAK(lines);
