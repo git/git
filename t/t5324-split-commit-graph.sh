@@ -237,6 +237,7 @@ corrupt_file() {
 	file=$1
 	pos=$2
 	data="${3:-\0}"
+	chmod a+w "$file" &&
 	printf "$data" | dd of="$file" bs=1 seek="$pos" conv=notrunc
 }
 
@@ -292,6 +293,24 @@ test_expect_success 'verify after commit-graph-chain corruption' '
 		git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "unable to find all commit-graph files" err
+	)
+'
+
+test_expect_success 'verify across alternates' '
+	git clone --no-hardlinks . verify-alt &&
+	(
+		cd verify-alt &&
+		rm -rf $graphdir &&
+		altdir="$(pwd)/../.git/objects" &&
+		echo "$altdir" >.git/objects/info/alternates &&
+		git commit-graph verify --object-dir="$altdir/" &&
+		test_commit extra &&
+		git commit-graph write --reachable --split &&
+		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_file "$tip_file" 100 "\01" &&
+		test_must_fail git commit-graph verify --shallow 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_i18ngrep "commit-graph has incorrect fanout value" err
 	)
 '
 
