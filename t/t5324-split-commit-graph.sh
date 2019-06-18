@@ -163,7 +163,12 @@ test_expect_success 'create fork and chain across alternate' '
 		test_line_count = 1 graph-files &&
 		git -c core.commitGraph=true  rev-list HEAD >expect &&
 		git -c core.commitGraph=false rev-list HEAD >actual &&
-		test_cmp expect actual
+		test_cmp expect actual &&
+		test_commit 14 &&
+		git commit-graph write --reachable --split --object-dir=.git/objects/ &&
+		test_line_count = 3 $graphdir/commit-graph-chain &&
+		ls $graphdir/graph-*.graph >graph-files &&
+		test_line_count = 1 graph-files
 	)
 '
 
