@@ -37,6 +37,12 @@ advice.*::
 		we can still suggest that the user push to either
 		refs/heads/* or refs/tags/* based on the type of the
 		source object.
+	statusAheadBehind::
+		Shown when linkgit:git-status[1] computes the ahead/behind
+		counts for a local ref compared to its remote tracking ref,
+		and that calculation takes longer than expected. Will not
+		appear if `status.aheadBehind` is false or the option
+		`--no-ahead-behind` is given.
 	statusHints::
 		Show directions on how to proceed from the current
 		state in the output of linkgit:git-status[1], in

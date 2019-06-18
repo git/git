@@ -19,6 +19,8 @@
 #include "lockfile.h"
 #include "sequencer.h"
 
+#define AB_DELAY_WARNING_IN_MS (2 * 1000)
+
 static const char cut_line[] =
 "------------------------ >8 ------------------------\n";
 
@@ -1085,13 +1087,28 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 	struct branch *branch;
 	char comment_line_string[3];
 	int i;
+	uint64_t t_begin = 0;
 
 	assert(s->branch && !s->is_initial);
 	if (!skip_prefix(s->branch, "refs/heads/", &branch_name))
 		return;
 	branch = branch_get(branch_name);
+
+	t_begin = getnanotime();
+
 	if (!format_tracking_info(branch, &sb, s->ahead_behind_flags))
 		return;
+
+	if (advice_status_ahead_behind_warning &&
+	    s->ahead_behind_flags == AHEAD_BEHIND_FULL) {
+		uint64_t t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
+		if (t_delta_in_ms > AB_DELAY_WARNING_IN_MS) {
+			strbuf_addf(&sb, _("\n"
+					   "It took %.2f seconds to compute the branch ahead/behind values.\n"
+					   "You can use '--no-ahead-behind' to avoid this.\n"),
+				    t_delta_in_ms / 1000.0);
+		}
+	}
 
 	i = 0;
 	if (s->display_comment_prefix) {
