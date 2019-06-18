@@ -3,6 +3,7 @@
 #include "color.h"
 #include "help.h"
 
+int advice_fetch_show_forced_updates = 1;
 int advice_push_update_rejected = 1;
 int advice_push_non_ff_current = 1;
 int advice_push_non_ff_matching = 1;
@@ -59,6 +60,7 @@ static struct {
 	const char *name;
 	int *preference;
 } advice_config[] = {
+	{ "fetchShowForcedUpdates", &advice_fetch_show_forced_updates },
 	{ "pushUpdateRejected", &advice_push_update_rejected },
 	{ "pushNonFFCurrent", &advice_push_non_ff_current },
 	{ "pushNonFFMatching", &advice_push_non_ff_matching },

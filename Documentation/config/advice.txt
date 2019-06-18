@@ -4,6 +4,10 @@ advice.*::
 	can tell Git that you do not need help by setting these to 'false':
 +
 --
+	fetchShowForcedUpdates::
+		Advice shown when linkgit:git-fetch[1] takes a long time
+		to calculate forced updates after ref updates, or to warn
+		that the check is disabled.
 	pushUpdateRejected::
 		Set this variable to 'false' if you want to disable
 		'pushNonFFCurrent',

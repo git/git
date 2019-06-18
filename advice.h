@@ -3,6 +3,7 @@
 
 #include "git-compat-util.h"
 
+extern int advice_fetch_show_forced_updates;
 extern int advice_push_update_rejected;
 extern int advice_push_non_ff_current;
 extern int advice_push_non_ff_matching;
