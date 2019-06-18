@@ -99,7 +99,7 @@ EOF
 printf "propter nomen suum." >> expect.txt
 
 test_expect_success "merge does not add LF away of change" \
-	"test_cmp test3.txt expect.txt"
+	"test_cmp expect.txt test3.txt"
 
 cp test.txt backup.txt
 test_expect_success "merge with conflicts" \
@@ -122,7 +122,7 @@ non timebo mala, quoniam tu mecum es:
 virga tua et baculus tuus ipsa me consolata sunt.
 EOF
 
-test_expect_success "expected conflict markers" "test_cmp test.txt expect.txt"
+test_expect_success "expected conflict markers" "test_cmp expect.txt test.txt"
 
 cp backup.txt test.txt
 
@@ -138,7 +138,7 @@ non timebo mala, quoniam tu mecum es:
 virga tua et baculus tuus ipsa me consolata sunt.
 EOF
 test_expect_success "merge conflicting with --ours" \
-	"git merge-file --ours test.txt orig.txt new3.txt && test_cmp test.txt expect.txt"
+	"git merge-file --ours test.txt orig.txt new3.txt && test_cmp expect.txt test.txt"
 cp backup.txt test.txt
 
 cat > expect.txt << EOF
@@ -154,7 +154,7 @@ non timebo mala, quoniam tu mecum es:
 virga tua et baculus tuus ipsa me consolata sunt.
 EOF
 test_expect_success "merge conflicting with --theirs" \
-	"git merge-file --theirs test.txt orig.txt new3.txt && test_cmp test.txt expect.txt"
+	"git merge-file --theirs test.txt orig.txt new3.txt && test_cmp expect.txt test.txt"
 cp backup.txt test.txt
 
 cat > expect.txt << EOF
@@ -171,7 +171,7 @@ non timebo mala, quoniam tu mecum es:
 virga tua et baculus tuus ipsa me consolata sunt.
 EOF
 test_expect_success "merge conflicting with --union" \
-	"git merge-file --union test.txt orig.txt new3.txt && test_cmp test.txt expect.txt"
+	"git merge-file --union test.txt orig.txt new3.txt && test_cmp expect.txt test.txt"
 cp backup.txt test.txt
 
 test_expect_success "merge with conflicts, using -L" \
@@ -195,7 +195,7 @@ virga tua et baculus tuus ipsa me consolata sunt.
 EOF
 
 test_expect_success "expected conflict markers, with -L" \
-	"test_cmp test.txt expect.txt"
+	"test_cmp expect.txt test.txt"
 
 sed "s/ tu / TU /" < new1.txt > new5.txt
 test_expect_success "conflict in removed tail" \

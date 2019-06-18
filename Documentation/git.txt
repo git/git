@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git' [--version] [--help] [-C <path>] [-c <name>=<value>]
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-    [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
+    [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
     [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
     [--super-prefix=<path>]
     <command> [<args>]
@@ -33,7 +33,8 @@ individual Git commands with "git help command".  linkgit:gitcli[7]
 manual page gives you an overview of the command-line command syntax.
 
 A formatted and hyperlinked copy of the latest Git documentation
-can be viewed at `https://git.github.io/htmldocs/git.html`.
+can be viewed at https://git.github.io/htmldocs/git.html
+or https://git-scm.com/docs.
 
 
 OPTIONS
@@ -76,7 +77,7 @@ Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
 `foo.bar` to the boolean true value (just like `[foo]bar` would in a
 config file). Including the equals but with an empty value (like `git -c
 foo.bar= ...`) sets `foo.bar` to the empty string which `git config
---bool` will convert to `false`.
+--type=bool` will convert to `false`.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.
@@ -103,6 +104,7 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 	configuration options (see the "Configuration Mechanism" section
 	below).
 
+-P::
 --no-pager::
 	Do not pipe Git output into a pager.
 
@@ -162,6 +164,16 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 --no-optional-locks::
 	Do not perform optional operations that require locks. This is
 	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
+
+--list-cmds=group[,group...]::
+	List commands by group. This is an internal/experimental
+	option and may change or be removed in the future. Supported
+	groups are: builtins, parseopt (builtin commands that use
+	parse-options), main (all commands in libexec directory),
+	others (all other commands in `$PATH` that have git- prefix),
+	list-<category> (see categories in command-list.txt),
+	nohelpers (exclude helper commands), alias and config
+	(retrieve command list from config variable completion.commands)
 
 GIT COMMANDS
 ------------
@@ -391,11 +403,11 @@ Git so take care if using a foreign front-end.
 	of Git object directories which can be used to search for Git
 	objects. New objects will not be written to these directories.
 +
-	Entries that begin with `"` (double-quote) will be interpreted
-	as C-style quoted paths, removing leading and trailing
-	double-quotes and respecting backslash escapes. E.g., the value
-	`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
-	`path-with-"-and-:-in-it` and `vanilla-path`.
+Entries that begin with `"` (double-quote) will be interpreted
+as C-style quoted paths, removing leading and trailing
+double-quotes and respecting backslash escapes. E.g., the value
+`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
+`path-with-"-and-:-in-it` and `vanilla-path`.
 
 `GIT_DIR`::
 	If the `GIT_DIR` environment variable is set then it
@@ -525,7 +537,6 @@ other
 	The command-line parameters passed to the configured command are
 	determined by the ssh variant.  See `ssh.variant` option in
 	linkgit:git-config[1] for details.
-
 +
 `$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
 by the shell, which allows additional arguments to be included.
@@ -588,8 +599,8 @@ trace messages into this file descriptor.
 +
 Alternatively, if the variable is set to an absolute path
 (starting with a '/' character), Git will interpret this
-as a file path and will try to write the trace messages
-into it.
+as a file path and will try to append the trace messages
+to it.
 +
 Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
@@ -649,6 +660,54 @@ of clones and fetches.
 `GIT_TRACE_CURL_NO_DATA`::
 	When a curl trace is enabled (see `GIT_TRACE_CURL` above), do not dump
 	data (that is, only dump info lines and headers).
+
+`GIT_TRACE2`::
+	Enables more detailed trace messages from the "trace2" library.
+	Output from `GIT_TRACE2` is a simple text-based format for human
+	readability.
++
+If this variable is set to "1", "2" or "true" (comparison
+is case insensitive), trace messages will be printed to
+stderr.
++
+If the variable is set to an integer value greater than 2
+and lower than 10 (strictly) then Git will interpret this
+value as an open file descriptor and will try to write the
+trace messages into this file descriptor.
++
+Alternatively, if the variable is set to an absolute path
+(starting with a '/' character), Git will interpret this
+as a file path and will try to append the trace messages
+to it.  If the path already exists and is a directory, the
+trace messages will be written to files (one per process)
+in that directory, named according to the last component
+of the SID and an optional counter (to avoid filename
+collisions).
++
+In addition, if the variable is set to
+`af_unix:[<socket_type>:]<absolute-pathname>`, Git will try
+to open the path as a Unix Domain Socket.  The socket type
+can be either `stream` or `dgram`.
++
+Unsetting the variable, or setting it to empty, "0" or
+"false" (case insensitive) disables trace messages.
++
+See link:technical/api-trace2.html[Trace2 documentation]
+for full details.
+
+
+`GIT_TRACE2_EVENT`::
+	This setting writes a JSON-based format that is suited for machine
+	interpretation.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_TRACE2_PERF`::
+	In addition to the text-based messages available in `GIT_TRACE2`, this
+	setting writes a column-based format for understanding nesting
+	regions.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
 
 `GIT_REDACT_COOKIES`::
 	This can be set to a comma-separated list of strings. When a curl trace
@@ -847,7 +906,9 @@ Reporting Bugs
 
 Report bugs to the Git mailing list <git@vger.kernel.org> where the
 development and maintenance is primarily done.  You do not have to be
-subscribed to the list to send a message there.
+subscribed to the list to send a message there.  See the list archive
+at https://public-inbox.org/git for previous bug reports and other
+discussions.
 
 Issues which are security relevant should be disclosed privately to
 the Git Security mailing list <git-security@googlegroups.com>.

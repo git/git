@@ -626,12 +626,11 @@ test_expect_success TTY 'sub-commands of externals use their own pager' '
 
 test_expect_success TTY 'external command pagers override sub-commands' '
 	sane_unset PAGER GIT_PAGER &&
-	>expect &&
 	>actual &&
 	test_config pager.external false &&
 	test_config pager.log "sed s/^/log:/ >actual" &&
 	test_terminal git --exec-path=. external log --format=%s -1 &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'command with underscores does not complain' '

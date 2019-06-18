@@ -6,13 +6,27 @@ test_description='split index mode tests'
 
 # We need total control of index splitting here
 sane_unset GIT_TEST_SPLIT_INDEX
-sane_unset GIT_FSMONITOR_TEST
+
+# Testing a hard coded SHA against an index with an extension
+# that can vary from run to run is problematic so we disable
+# those extensions.
+sane_unset GIT_TEST_FSMONITOR
+sane_unset GIT_TEST_INDEX_THREADS
+
+# Create a file named as $1 with content read from stdin.
+# Set the file's mtime to a few seconds in the past to avoid racy situations.
+create_non_racy_file () {
+	cat >"$1" &&
+	test-tool chmtime =-5 "$1"
+}
 
 test_expect_success 'enable split index' '
 	git config splitIndex.maxPercentChange 100 &&
 	git update-index --split-index &&
 	test-tool dump-split-index .git/index >actual &&
 	indexversion=$(test-tool index-version <.git/index) &&
+
+	# NEEDSWORK: Stop hard-coding checksums.
 	if test "$indexversion" = "4"
 	then
 		own=432ef4b63f32193984f339431fd50ca796493569
@@ -21,6 +35,7 @@ test_expect_success 'enable split index' '
 		own=8299b0bcd1ac364e5f1d7768efb62fa2da79a339
 		base=39d890139ee5356c7ef572216cebcd27aa41f9df
 	fi &&
+
 	cat >expect <<-EOF &&
 	own $own
 	base $base
@@ -31,7 +46,7 @@ test_expect_success 'enable split index' '
 '
 
 test_expect_success 'add one file' '
-	: >one &&
+	create_non_racy_file one &&
 	git update-index --add one &&
 	git ls-files --stage >ls-files.actual &&
 	cat >ls-files.expect <<-EOF &&
@@ -57,7 +72,7 @@ test_expect_success 'disable split index' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	BASE=$(test-tool dump-split-index .git/index | grep "^own" | sed "s/own/base/") &&
+	BASE=$(test-tool dump-split-index .git/index | sed -n "s/^own/base/p") &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	not a split index
@@ -83,7 +98,7 @@ test_expect_success 'enable split index again, "one" now belongs to base index"'
 '
 
 test_expect_success 'modify original file, base index untouched' '
-	echo modified >one &&
+	echo modified | create_non_racy_file one &&
 	git update-index one &&
 	git ls-files --stage >ls-files.actual &&
 	cat >ls-files.expect <<-EOF &&
@@ -102,7 +117,7 @@ test_expect_success 'modify original file, base index untouched' '
 '
 
 test_expect_success 'add another file, which stays index' '
-	: >two &&
+	create_non_racy_file two &&
 	git update-index --add two &&
 	git ls-files --stage >ls-files.actual &&
 	cat >ls-files.expect <<-EOF &&
@@ -143,9 +158,7 @@ test_expect_success 'remove file not in base index' '
 test_expect_success 'remove file in base index' '
 	git update-index --force-remove one &&
 	git ls-files --stage >ls-files.actual &&
-	cat >ls-files.expect <<-EOF &&
-	EOF
-	test_cmp ls-files.expect ls-files.actual &&
+	test_must_be_empty ls-files.actual &&
 
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
@@ -157,7 +170,7 @@ test_expect_success 'remove file in base index' '
 '
 
 test_expect_success 'add original file back' '
-	: >one &&
+	create_non_racy_file one &&
 	git update-index --add one &&
 	git ls-files --stage >ls-files.actual &&
 	cat >ls-files.expect <<-EOF &&
@@ -176,7 +189,7 @@ test_expect_success 'add original file back' '
 '
 
 test_expect_success 'add new file' '
-	: >two &&
+	create_non_racy_file two &&
 	git update-index --add two &&
 	git ls-files --stage >actual &&
 	cat >expect <<-EOF &&
@@ -220,7 +233,7 @@ test_expect_success 'rev-parse --shared-index-path' '
 
 test_expect_success 'set core.splitIndex config variable to true' '
 	git config core.splitIndex true &&
-	: >three &&
+	create_non_racy_file three &&
 	git update-index --add three &&
 	git ls-files --stage >ls-files.actual &&
 	cat >ls-files.expect <<-EOF &&
@@ -255,9 +268,9 @@ test_expect_success 'set core.splitIndex config variable to false' '
 	test_cmp expect actual
 '
 
-test_expect_success 'set core.splitIndex config variable to true' '
+test_expect_success 'set core.splitIndex config variable back to true' '
 	git config core.splitIndex true &&
-	: >three &&
+	create_non_racy_file three &&
 	git update-index --add three &&
 	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
@@ -267,7 +280,7 @@ test_expect_success 'set core.splitIndex config variable to true' '
 	deletions:
 	EOF
 	test_cmp expect actual &&
-	: >four &&
+	create_non_racy_file four &&
 	git update-index --add four &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
@@ -281,7 +294,7 @@ test_expect_success 'set core.splitIndex config variable to true' '
 
 test_expect_success 'check behavior with splitIndex.maxPercentChange unset' '
 	git config --unset splitIndex.maxPercentChange &&
-	: >five &&
+	create_non_racy_file five &&
 	git update-index --add five &&
 	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
@@ -291,7 +304,7 @@ test_expect_success 'check behavior with splitIndex.maxPercentChange unset' '
 	deletions:
 	EOF
 	test_cmp expect actual &&
-	: >six &&
+	create_non_racy_file six &&
 	git update-index --add six &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
@@ -305,7 +318,7 @@ test_expect_success 'check behavior with splitIndex.maxPercentChange unset' '
 
 test_expect_success 'check splitIndex.maxPercentChange set to 0' '
 	git config splitIndex.maxPercentChange 0 &&
-	: >seven &&
+	create_non_racy_file seven &&
 	git update-index --add seven &&
 	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
@@ -315,7 +328,7 @@ test_expect_success 'check splitIndex.maxPercentChange set to 0' '
 	deletions:
 	EOF
 	test_cmp expect actual &&
-	: >eight &&
+	create_non_racy_file eight &&
 	git update-index --add eight &&
 	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
@@ -328,17 +341,17 @@ test_expect_success 'check splitIndex.maxPercentChange set to 0' '
 '
 
 test_expect_success 'shared index files expire after 2 weeks by default' '
-	: >ten &&
+	create_non_racy_file ten &&
 	git update-index --add ten &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	just_under_2_weeks_ago=$((5-14*86400)) &&
 	test-tool chmtime =$just_under_2_weeks_ago .git/sharedindex.* &&
-	: >eleven &&
+	create_non_racy_file eleven &&
 	git update-index --add eleven &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	just_over_2_weeks_ago=$((-1-14*86400)) &&
 	test-tool chmtime =$just_over_2_weeks_ago .git/sharedindex.* &&
-	: >twelve &&
+	create_non_racy_file twelve &&
 	git update-index --add twelve &&
 	test $(ls .git/sharedindex.* | wc -l) -le 2
 '
@@ -346,12 +359,12 @@ test_expect_success 'shared index files expire after 2 weeks by default' '
 test_expect_success 'check splitIndex.sharedIndexExpire set to 16 days' '
 	git config splitIndex.sharedIndexExpire "16.days.ago" &&
 	test-tool chmtime =$just_over_2_weeks_ago .git/sharedindex.* &&
-	: >thirteen &&
+	create_non_racy_file thirteen &&
 	git update-index --add thirteen &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	just_over_16_days_ago=$((-1-16*86400)) &&
 	test-tool chmtime =$just_over_16_days_ago .git/sharedindex.* &&
-	: >fourteen &&
+	create_non_racy_file fourteen &&
 	git update-index --add fourteen &&
 	test $(ls .git/sharedindex.* | wc -l) -le 2
 '
@@ -360,15 +373,35 @@ test_expect_success 'check splitIndex.sharedIndexExpire set to "never" and "now"
 	git config splitIndex.sharedIndexExpire never &&
 	just_10_years_ago=$((-365*10*86400)) &&
 	test-tool chmtime =$just_10_years_ago .git/sharedindex.* &&
-	: >fifteen &&
+	create_non_racy_file fifteen &&
 	git update-index --add fifteen &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	git config splitIndex.sharedIndexExpire now &&
 	just_1_second_ago=-1 &&
 	test-tool chmtime =$just_1_second_ago .git/sharedindex.* &&
-	: >sixteen &&
+	create_non_racy_file sixteen &&
 	git update-index --add sixteen &&
 	test $(ls .git/sharedindex.* | wc -l) -le 2
+'
+
+test_expect_success POSIXPERM 'same mode for index & split index' '
+	git init same-mode &&
+	(
+		cd same-mode &&
+		test_commit A &&
+		test_modebits .git/index >index_mode &&
+		test_must_fail git config core.sharedRepository &&
+		git -c core.splitIndex=true status &&
+		shared=$(ls .git/sharedindex.*) &&
+		case "$shared" in
+		*" "*)
+			# we have more than one???
+			false ;;
+		*)
+			test_modebits "$shared" >split_index_mode &&
+			test_cmp index_mode split_index_mode ;;
+		esac
+	)
 '
 
 while read -r mode modebits
@@ -381,7 +414,7 @@ do
 		# Create one new shared index file
 		git config core.sharedrepository "$mode" &&
 		git config core.splitIndex true &&
-		: >one &&
+		create_non_racy_file one &&
 		git update-index --add one &&
 		echo "$modebits" >expect &&
 		test_modebits .git/index >actual &&
@@ -426,7 +459,7 @@ test_expect_success 'writing split index with null sha1 does not write cache tre
 	git commit -m "commit" &&
 	{
 		git ls-tree HEAD &&
-		printf "160000 commit $_z40\\tbroken\\n"
+		printf "160000 commit $ZERO_OID\\tbroken\\n"
 	} >broken-tree &&
 	echo "add broken entry" >msg &&
 
@@ -435,8 +468,26 @@ test_expect_success 'writing split index with null sha1 does not write cache tre
 	commit=$(git commit-tree $tree -p HEAD <msg) &&
 	git update-ref HEAD "$commit" &&
 	GIT_ALLOW_NULL_SHA1=1 git reset --hard &&
-	(test-tool dump-cache-tree >cache-tree.out || true) &&
+	test_might_fail test-tool dump-cache-tree >cache-tree.out &&
 	test_line_count = 0 cache-tree.out
+'
+
+test_expect_success 'do not refresh null base index' '
+	test_create_repo merge &&
+	(
+		cd merge &&
+		test_commit initial &&
+		git checkout -b side-branch &&
+		test_commit extra &&
+		git checkout master &&
+		git update-index --split-index &&
+		test_commit more &&
+		# must not write a new shareindex, or we wont catch the problem
+		git -c splitIndex.maxPercentChange=100 merge --no-edit side-branch 2>err &&
+		# i.e. do not expect warnings like
+		# could not freshen shared index .../shareindex.00000...
+		test_must_be_empty err
+	)
 '
 
 test_done

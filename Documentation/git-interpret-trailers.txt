@@ -3,13 +3,13 @@ git-interpret-trailers(1)
 
 NAME
 ----
-git-interpret-trailers - add or parse structured information in commit messages
+git-interpret-trailers - Add or parse structured information in commit messages
 
 SYNOPSIS
 --------
 [verse]
-'git interpret-trailers' [options] [(--trailer <token>[(=|:)<value>])...] [<file>...]
-'git interpret-trailers' [options] [--parse] [<file>...]
+'git interpret-trailers' [<options>] [(--trailer <token>[(=|:)<value>])...] [<file>...]
+'git interpret-trailers' [<options>] [--parse] [<file>...]
 
 DESCRIPTION
 -----------
@@ -56,8 +56,9 @@ least one Git-generated or user-configured trailer and consists of at
 least 25% trailers.
 The group must be preceded by one or more empty (or whitespace-only) lines.
 The group must either be at the end of the message or be the last
-non-whitespace lines before a line that starts with '---'. Such three
-minus signs start the patch part of the message.
+non-whitespace lines before a line that starts with '---' (followed by a
+space or the end of the line). Such three minus signs start the patch
+part of the message. See also `--no-divider` below.
 
 When reading trailers, there can be whitespaces after the
 token, the separator and the value. There can also be whitespaces
@@ -88,7 +89,8 @@ OPTIONS
 	Specify where all new trailers will be added.  A setting
 	provided with '--where' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--where' or '--no-where'.
+	'--where' or '--no-where'. Possible values are `after`, `before`,
+	`end` or `start`.
 
 --if-exists <action>::
 --no-if-exists::
@@ -96,7 +98,8 @@ OPTIONS
 	least one trailer with the same <token> in the message.  A setting
 	provided with '--if-exists' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-exists' or '--no-if-exists'.
+	'--if-exists' or '--no-if-exists'. Possible actions are `addIfDifferent`,
+	`addIfDifferentNeighbor`, `add`, `replace` and `doNothing`.
 
 --if-missing <action>::
 --no-if-missing::
@@ -104,7 +107,8 @@ OPTIONS
 	trailer with the same <token> in the message.  A setting
 	provided with '--if-missing' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-missing' or '--no-if-missing'.
+	'--if-missing' or '--no-if-missing'. Possible actions are `doNothing`
+	or `add`.
 
 --only-trailers::
 	Output only the trailers, not any other parts of the input.
@@ -121,6 +125,11 @@ OPTIONS
 --parse::
 	A convenience alias for `--only-trailers --only-input
 	--unfold`.
+
+--no-divider::
+	Do not treat `---` as the end of the commit message. Use this
+	when you know your input contains just the commit message itself
+	(and not an email or the output of `git format-patch`).
 
 CONFIGURATION VARIABLES
 -----------------------

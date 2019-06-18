@@ -12,7 +12,7 @@ SYNOPSIS
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
 	[-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
-	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
+	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>] [<commit>...]
 'git merge' --abort
 'git merge' --continue
 
@@ -57,7 +57,7 @@ reconstruct the original (pre-merge) changes. Therefore:
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
-The fourth syntax ("`git merge --continue`") can only be run after the
+The third syntax ("`git merge --continue`") can only be run after the
 merge has resulted in conflicts.
 
 OPTIONS
@@ -75,7 +75,16 @@ The 'git fmt-merge-msg' command can be
 used to give a good default for automated 'git merge'
 invocations. The automated message can include the branch description.
 
---[no-]rerere-autoupdate::
+-F <file>::
+--file=<file>::
+	Read the commit message to be used for the merge commit (in
+	case one is created).
++
+If `--log` is specified, a shortlog of the commits being merged
+will be appended to the specified message.
+
+--rerere-autoupdate::
+--no-rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
 	result of auto-conflict resolution if possible.
 
@@ -90,6 +99,10 @@ commit or stash your changes before running 'git merge'.
 +
 'git merge --abort' is equivalent to 'git reset --merge' when
 `MERGE_HEAD` is present.
+
+--quit::
+	Forget about the current merge in progress. Leave the index
+	and the working tree as-is.
 
 --continue::
 	After a 'git merge' stops due to conflicts you can conclude the
@@ -122,9 +135,9 @@ merge' may need to update.
 
 To avoid recording unrelated changes in the merge commit,
 'git pull' and 'git merge' will also abort if there are any changes
-registered in the index relative to the `HEAD` commit.  (One
-exception is when the changed index entries are in the state that
-would result from the merge already.)
+registered in the index relative to the `HEAD` commit.  (Special
+narrow exceptions to this rule may exist depending on which merge
+strategy is in use, but generally, the index must match HEAD.)
 
 If all named commits are already ancestors of `HEAD`, 'git merge'
 will exit early with the message "Already up to date."
@@ -334,7 +347,7 @@ include::merge-strategies.txt[]
 
 CONFIGURATION
 -------------
-include::merge-config.txt[]
+include::config/merge.txt[]
 
 branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and

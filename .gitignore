@@ -1,8 +1,13 @@
+/fuzz-commit-graph
+/fuzz_corpora
+/fuzz-pack-headers
+/fuzz-pack-idx
 /GIT-BUILD-OPTIONS
 /GIT-CFLAGS
 /GIT-LDFLAGS
 /GIT-PREFIX
 /GIT-PERL-DEFINES
+/GIT-PERL-HEADER
 /GIT-PYTHON-VARS
 /GIT-SCRIPT-DEFINES
 /GIT-USER-AGENT
@@ -34,6 +39,7 @@
 /git-clone
 /git-column
 /git-commit
+/git-commit-graph
 /git-commit-tree
 /git-config
 /git-count-objects
@@ -76,6 +82,7 @@
 /git-init-db
 /git-interpret-trailers
 /git-instaweb
+/git-legacy-stash
 /git-log
 /git-ls-files
 /git-ls-remote
@@ -97,8 +104,9 @@
 /git-mergetool--lib
 /git-mktag
 /git-mktree
-/git-name-rev
+/git-multi-pack-index
 /git-mv
+/git-name-rev
 /git-notes
 /git-p4
 /git-pack-redundant
@@ -111,12 +119,10 @@
 /git-pull
 /git-push
 /git-quiltimport
+/git-range-diff
 /git-read-tree
 /git-rebase
-/git-rebase--am
-/git-rebase--helper
-/git-rebase--interactive
-/git-rebase--merge
+/git-rebase--preserve-merges
 /git-receive-pack
 /git-reflog
 /git-remote
@@ -126,7 +132,6 @@
 /git-remote-ftps
 /git-remote-fd
 /git-remote-ext
-/git-remote-testgit
 /git-remote-testpy
 /git-remote-testsvn
 /git-repack
@@ -140,6 +145,7 @@
 /git-rm
 /git-send-email
 /git-send-pack
+/git-serve
 /git-sh-i18n
 /git-sh-i18n--envsubst
 /git-sh-setup
@@ -179,7 +185,7 @@
 /gitweb/gitweb.cgi
 /gitweb/static/gitweb.js
 /gitweb/static/gitweb.min.*
-/common-cmds.h
+/command-list.h
 *.tar.gz
 *.dsc
 *.deb
@@ -203,6 +209,7 @@
 /config.mak.autogen
 /config.mak.append
 /configure
+/.vscode/
 /tags
 /TAGS
 /cscope*
@@ -218,3 +225,4 @@
 *.pdb
 /Debug/
 /Release/
+*.dSYM

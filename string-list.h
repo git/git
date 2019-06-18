@@ -114,14 +114,6 @@ void filter_string_list(struct string_list *list, int free_util,
 			string_list_each_func_t want, void *cb_data);
 
 /**
- * Dump a string_list to stdout, useful mainly for debugging
- * purposes. It can take an optional header argument and it writes out
- * the string-pointer pairs of the string_list, each one in its own
- * line.
- */
-void print_string_list(const struct string_list *p, const char *text);
-
-/**
  * Free a string_list. The `string` pointer of the items will be freed
  * in case the `strdup_strings` member of the string_list is set. The
  * second parameter controls if the `util` pointer of the items should
@@ -182,8 +174,8 @@ struct string_list_item *string_list_insert(struct string_list *list, const char
  * Remove the given string from the sorted list.  If the string
  * doesn't exist, the list is not altered.
  */
-extern void string_list_remove(struct string_list *list, const char *string,
-			       int free_util);
+void string_list_remove(struct string_list *list, const char *string,
+			int free_util);
 
 /**
  * Check if the given string is part of a sorted list. If it is part of the list,

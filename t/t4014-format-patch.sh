@@ -36,8 +36,27 @@ test_expect_success setup '
 	git checkout master &&
 	git diff-tree -p C2 | git apply --index &&
 	test_tick &&
-	git commit -m "Master accepts moral equivalent of #2"
+	git commit -m "Master accepts moral equivalent of #2" &&
 
+	git checkout side &&
+	git checkout -b patchid &&
+	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file2 &&
+	for i in 1 2 3 A 4 B C 7 8 9 10 D E F 5 6; do echo "$i"; done >file3 &&
+	for i in 8 9 10; do echo "$i"; done >file &&
+	git add file file2 file3 &&
+	test_tick &&
+	git commit -m "patchid 1" &&
+	for i in 4 A B 7 8 9 10; do echo "$i"; done >file2 &&
+	for i in 8 9 10 5 6; do echo "$i"; done >file3 &&
+	git add file2 file3 &&
+	test_tick &&
+	git commit -m "patchid 2" &&
+	for i in 10 5 6; do echo "$i"; done >file &&
+	git add file &&
+	test_tick &&
+	git commit -m "patchid 3" &&
+
+	git checkout master
 '
 
 test_expect_success "format-patch --ignore-if-in-upstream" '
@@ -578,15 +597,24 @@ test_expect_success 'excessive subject' '
 
 	rm -rf patches/ &&
 	git checkout side &&
+	before=$(git hash-object file) &&
+	before=$(git rev-parse --short $before) &&
 	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >>file &&
+	after=$(git hash-object file) &&
+	after=$(git rev-parse --short $after) &&
 	git update-index file &&
 	git commit -m "This is an excessively long subject line for a message due to the habit some projects have of not having a short, one-line subject at the start of the commit message, but rather sticking a whole paragraph right at the start as the only thing in the commit message. It had better not become the filename for the patch." &&
 	git format-patch -o patches/ master..side &&
 	ls patches/0004-This-is-an-excessively-long-subject-line-for-a-messa.patch
 '
 
-test_expect_success 'cover-letter inherits diff options' '
+test_expect_success 'failure to write cover-letter aborts gracefully' '
+	test_when_finished "rmdir 0000-cover-letter.patch" &&
+	mkdir 0000-cover-letter.patch &&
+	test_must_fail git format-patch --no-renames --cover-letter -1
+'
 
+test_expect_success 'cover-letter inherits diff options' '
 	git mv file foo &&
 	git commit -m foo &&
 	git format-patch --no-renames --cover-letter -1 &&
@@ -616,7 +644,7 @@ test_expect_success 'shortlog of cover-letter wraps overly-long onelines' '
 '
 
 cat > expect << EOF
-index 40f36c6..2dc5c23 100644
+index $before..$after 100644
 --- a/file
 +++ b/file
 @@ -13,4 +13,20 @@ C
@@ -640,7 +668,7 @@ test_expect_success 'format-patch respects -U' '
 cat > expect << EOF
 
 diff --git a/file b/file
-index 40f36c6..2dc5c23 100644
+index $before..$after 100644
 --- a/file
 +++ b/file
 @@ -14,3 +14,19 @@ C
@@ -727,6 +755,76 @@ test_expect_success 'format-patch --notes --signoff' '
 	# Notes message must come after three dashes
 	! sed "/^---$/q" out | grep "test message" &&
 	sed "1,/^---$/d" out | grep "test message"
+'
+
+test_expect_success 'format-patch notes output control' '
+	git notes add -m "notes config message" HEAD &&
+	test_when_finished git notes remove HEAD &&
+
+	git format-patch -1 --stdout >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes --notes >out &&
+	grep "notes config message" out &&
+
+	test_config format.notes true &&
+	git format-patch -1 --stdout >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --notes >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes --notes >out &&
+	grep "notes config message" out
+'
+
+test_expect_success 'format-patch with multiple notes refs' '
+	git notes --ref note1 add -m "this is note 1" HEAD &&
+	test_when_finished git notes --ref note1 remove HEAD &&
+	git notes --ref note2 add -m "this is note 2" HEAD &&
+	test_when_finished git notes --ref note2 remove HEAD &&
+
+	git format-patch -1 --stdout >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note1 >out &&
+	grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note2 >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note1 --notes=note2 >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+
+	test_config format.notes note1 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note2 >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes --notes=note2 >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out &&
+
+	git config --add format.notes note2 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out
 '
 
 echo "fatal: --name-only does not make sense" > expect.name-only
@@ -1523,14 +1621,14 @@ test_expect_success 'cover letter auto user override' '
 test_expect_success 'format-patch --zero-commit' '
 	git format-patch --zero-commit --stdout v2..v1 >patch2 &&
 	grep "^From " patch2 | sort | uniq >actual &&
-	echo "From $_z40 Mon Sep 17 00:00:00 2001" >expect &&
+	echo "From $ZERO_OID Mon Sep 17 00:00:00 2001" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'From line has expected format' '
 	git format-patch --stdout v2..v1 >patch2 &&
 	grep "^From " patch2 >from &&
-	grep "^From $_x40 Mon Sep 17 00:00:00 2001$" patch2 >filtered &&
+	grep "^From $OID_REGEX Mon Sep 17 00:00:00 2001$" patch2 >filtered &&
 	test_cmp from filtered
 '
 
@@ -1550,14 +1648,23 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 '
 
 test_expect_success 'format-patch --base' '
-	git checkout side &&
-	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual &&
+	git checkout patchid &&
+	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual1 &&
+	git format-patch --stdout --base=HEAD~3 HEAD~.. | tail -n 7 >actual2 &&
 	echo >expected &&
 	echo "base-commit: $(git rev-parse HEAD~3)" >>expected &&
 	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --stable | awk "{print \$1}")" >>expected &&
 	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expected &&
 	signature >> expected &&
-	test_cmp expected actual
+	test_cmp expected actual1 &&
+	test_cmp expected actual2 &&
+	echo >fail &&
+	echo "base-commit: $(git rev-parse HEAD~3)" >>fail &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --unstable | awk "{print \$1}")" >>fail &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --unstable | awk "{print \$1}")" >>fail &&
+	signature >> fail &&
+	! test_cmp fail actual1 &&
+	! test_cmp fail actual2
 '
 
 test_expect_success 'format-patch --base errors out when base commit is in revision list' '
@@ -1661,6 +1768,15 @@ test_expect_success 'format-patch --base with --attach' '
 	test_write_lines 1 2 >expect &&
 	test_cmp expect actual
 '
+test_expect_success 'format-patch --attach cover-letter only is non-multipart' '
+	test_when_finished "rm -fr patches" &&
+	git format-patch -o patches --cover-letter --attach=mimemime --base=HEAD~ -1 &&
+	! egrep "^--+mimemime" patches/0000*.patch &&
+	egrep "^--+mimemime$" patches/0001*.patch >output &&
+	test_line_count = 2 output &&
+	egrep "^--+mimemime--$" patches/0001*.patch >output &&
+	test_line_count = 1 output
+'
 
 test_expect_success 'format-patch --pretty=mboxrd' '
 	sp=" " &&
@@ -1700,6 +1816,40 @@ test_expect_success 'format-patch --pretty=mboxrd' '
 	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >patch &&
 	git grep -h --no-index -A11 \
 		"^>From could trip up a loose mbox parser" patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'interdiff: setup' '
+	git checkout -b boop master &&
+	test_commit fnorp blorp &&
+	test_commit fleep blorp
+'
+
+test_expect_success 'interdiff: cover-letter' '
+	sed "y/q/ /" >expect <<-\EOF &&
+	+fleep
+	--q
+	EOF
+	git format-patch --cover-letter --interdiff=boop~2 -1 boop &&
+	test_i18ngrep "^Interdiff:$" 0000-cover-letter.patch &&
+	test_i18ngrep ! "^Interdiff:$" 0001-fleep.patch &&
+	sed "1,/^@@ /d; /^-- $/q" <0000-cover-letter.patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'interdiff: reroll-count' '
+	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
+	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
+'
+
+test_expect_success 'interdiff: solo-patch' '
+	cat >expect <<-\EOF &&
+	  +fleep
+
+	EOF
+	git format-patch --interdiff=boop~2 -1 boop &&
+	test_i18ngrep "^Interdiff:$" 0001-fleep.patch &&
+	sed "1,/^  @@ /d; /^$/q" <0001-fleep.patch >actual &&
 	test_cmp expect actual
 '
 

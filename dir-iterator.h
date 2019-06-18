@@ -1,6 +1,8 @@
 #ifndef DIR_ITERATOR_H
 #define DIR_ITERATOR_H
 
+#include "strbuf.h"
+
 /*
  * Iterate over a directory tree.
  *

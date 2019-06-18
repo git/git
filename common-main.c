@@ -25,12 +25,23 @@ static void restore_sigpipe_to_default(void)
 
 int main(int argc, const char **argv)
 {
+	int result;
+
+	trace2_initialize_clock();
+
 	/*
 	 * Always open file descriptors 0/1/2 to avoid clobbering files
 	 * in die().  It also avoids messing up when the pipes are dup'ed
 	 * onto stdin/stdout/stderr in the child processes we spawn.
 	 */
 	sanitize_stdfds();
+	restore_sigpipe_to_default();
+
+	git_resolve_executable_dir(argv[0]);
+
+	trace2_initialize();
+	trace2_cmd_start(argv);
+	trace2_collect_process_info(TRACE2_PROCESS_INFO_STARTUP);
 
 	git_setup_gettext();
 
@@ -38,9 +49,9 @@ int main(int argc, const char **argv)
 
 	attr_start();
 
-	git_extract_argv0_path(argv[0]);
+	result = cmd_main(argc, argv);
 
-	restore_sigpipe_to_default();
+	trace2_cmd_exit(result);
 
-	return cmd_main(argc, argv);
+	return result;
 }

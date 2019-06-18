@@ -88,14 +88,22 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 void packet_flush(int fd)
 {
 	packet_trace("0000", 4, 1);
-	write_or_die(fd, "0000", 4);
+	if (write_in_full(fd, "0000", 4) < 0)
+		die_errno(_("unable to write flush packet"));
+}
+
+void packet_delim(int fd)
+{
+	packet_trace("0001", 4, 1);
+	if (write_in_full(fd, "0001", 4) < 0)
+		die_errno(_("unable to write delim packet"));
 }
 
 int packet_flush_gently(int fd)
 {
 	packet_trace("0000", 4, 1);
 	if (write_in_full(fd, "0000", 4) < 0)
-		return error("flush packet write failed");
+		return error(_("flush packet write failed"));
 	return 0;
 }
 
@@ -105,7 +113,13 @@ void packet_buf_flush(struct strbuf *buf)
 	strbuf_add(buf, "0000", 4);
 }
 
-static void set_packet_header(char *buf, const int size)
+void packet_buf_delim(struct strbuf *buf)
+{
+	packet_trace("0001", 4, 1);
+	strbuf_add(buf, "0001", 4);
+}
+
+void set_packet_header(char *buf, int size)
 {
 	static char hexchar[] = "0123456789abcdef";
 
@@ -117,35 +131,37 @@ static void set_packet_header(char *buf, const int size)
 	#undef hex
 }
 
-static void format_packet(struct strbuf *out, const char *fmt, va_list args)
+static void format_packet(struct strbuf *out, const char *prefix,
+			  const char *fmt, va_list args)
 {
 	size_t orig_len, n;
 
 	orig_len = out->len;
 	strbuf_addstr(out, "0000");
+	strbuf_addstr(out, prefix);
 	strbuf_vaddf(out, fmt, args);
 	n = out->len - orig_len;
 
 	if (n > LARGE_PACKET_MAX)
-		die("protocol error: impossibly long line");
+		die(_("protocol error: impossibly long line"));
 
 	set_packet_header(&out->buf[orig_len], n);
 	packet_trace(out->buf + orig_len + 4, n - 4, 1);
 }
 
-static int packet_write_fmt_1(int fd, int gently,
+static int packet_write_fmt_1(int fd, int gently, const char *prefix,
 			      const char *fmt, va_list args)
 {
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	format_packet(&buf, fmt, args);
+	format_packet(&buf, prefix, fmt, args);
 	if (write_in_full(fd, buf.buf, buf.len) < 0) {
 		if (!gently) {
 			check_pipe(errno);
-			die_errno("packet write with format failed");
+			die_errno(_("packet write with format failed"));
 		}
-		return error("packet write with format failed");
+		return error(_("packet write with format failed"));
 	}
 
 	return 0;
@@ -156,7 +172,7 @@ void packet_write_fmt(int fd, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	packet_write_fmt_1(fd, 0, fmt, args);
+	packet_write_fmt_1(fd, 0, "", fmt, args);
 	va_end(args);
 }
 
@@ -166,7 +182,7 @@ int packet_write_fmt_gently(int fd, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	status = packet_write_fmt_1(fd, 1, fmt, args);
+	status = packet_write_fmt_1(fd, 1, "", fmt, args);
 	va_end(args);
 	return status;
 }
@@ -177,21 +193,21 @@ static int packet_write_gently(const int fd_out, const char *buf, size_t size)
 	size_t packet_size;
 
 	if (size > sizeof(packet_write_buffer) - 4)
-		return error("packet write failed - data exceeds max packet size");
+		return error(_("packet write failed - data exceeds max packet size"));
 
 	packet_trace(buf, size, 1);
 	packet_size = size + 4;
 	set_packet_header(packet_write_buffer, packet_size);
 	memcpy(packet_write_buffer + 4, buf, size);
 	if (write_in_full(fd_out, packet_write_buffer, packet_size) < 0)
-		return error("packet write failed");
+		return error(_("packet write failed"));
 	return 0;
 }
 
 void packet_write(int fd_out, const char *buf, size_t size)
 {
 	if (packet_write_gently(fd_out, buf, size))
-		die_errno("packet write failed");
+		die_errno(_("packet write failed"));
 }
 
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
@@ -199,8 +215,24 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	format_packet(buf, fmt, args);
+	format_packet(buf, "", fmt, args);
 	va_end(args);
+}
+
+void packet_buf_write_len(struct strbuf *buf, const char *data, size_t len)
+{
+	size_t orig_len, n;
+
+	orig_len = buf->len;
+	strbuf_addstr(buf, "0000");
+	strbuf_add(buf, data, len);
+	n = buf->len - orig_len;
+
+	if (n > LARGE_PACKET_MAX)
+		die(_("protocol error: impossibly long line"));
+
+	set_packet_header(&buf->buf[orig_len], n);
+	packet_trace(data, len, 1);
 }
 
 int write_packetized_from_fd(int fd_in, int fd_out)
@@ -249,7 +281,7 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	ssize_t ret;
 
 	if (fd >= 0 && src_buf && *src_buf)
-		die("BUG: multiple sources given to packet_read");
+		BUG("multiple sources given to packet_read");
 
 	/* Read up to "size" bytes from our source, whatever it is. */
 	if (src_buf && *src_buf) {
@@ -260,7 +292,7 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	} else {
 		ret = read_in_full(fd, dst, size);
 		if (ret < 0)
-			die_errno("read error");
+			die_errno(_("read error"));
 	}
 
 	/* And complain if we didn't get enough bytes to satisfy the read. */
@@ -268,7 +300,7 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 		if (options & PACKET_READ_GENTLE_ON_EOF)
 			return -1;
 
-		die("The remote end hung up unexpectedly");
+		die(_("the remote end hung up unexpectedly"));
 	}
 
 	return ret;
@@ -280,28 +312,43 @@ static int packet_length(const char *linelen)
 	return (val < 0) ? val : (val << 8) | hex2chr(linelen + 2);
 }
 
-int packet_read(int fd, char **src_buf, size_t *src_len,
-		char *buffer, unsigned size, int options)
+enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
+						size_t *src_len, char *buffer,
+						unsigned size, int *pktlen,
+						int options)
 {
-	int len, ret;
+	int len;
 	char linelen[4];
 
-	ret = get_packet_data(fd, src_buf, src_len, linelen, 4, options);
-	if (ret < 0)
-		return ret;
-	len = packet_length(linelen);
-	if (len < 0)
-		die("protocol error: bad line length character: %.4s", linelen);
-	if (!len) {
-		packet_trace("0000", 4, 0);
-		return 0;
+	if (get_packet_data(fd, src_buffer, src_len, linelen, 4, options) < 0) {
+		*pktlen = -1;
+		return PACKET_READ_EOF;
 	}
+
+	len = packet_length(linelen);
+
+	if (len < 0) {
+		die(_("protocol error: bad line length character: %.4s"), linelen);
+	} else if (!len) {
+		packet_trace("0000", 4, 0);
+		*pktlen = 0;
+		return PACKET_READ_FLUSH;
+	} else if (len == 1) {
+		packet_trace("0001", 4, 0);
+		*pktlen = 0;
+		return PACKET_READ_DELIM;
+	} else if (len < 4) {
+		die(_("protocol error: bad line length %d"), len);
+	}
+
 	len -= 4;
-	if (len >= size)
-		die("protocol error: bad line length %d", len);
-	ret = get_packet_data(fd, src_buf, src_len, buffer, len, options);
-	if (ret < 0)
-		return ret;
+	if ((unsigned)len >= size)
+		die(_("protocol error: bad line length %d"), len);
+
+	if (get_packet_data(fd, src_buffer, src_len, buffer, len, options) < 0) {
+		*pktlen = -1;
+		return PACKET_READ_EOF;
+	}
 
 	if ((options & PACKET_READ_CHOMP_NEWLINE) &&
 	    len && buffer[len-1] == '\n')
@@ -309,7 +356,24 @@ int packet_read(int fd, char **src_buf, size_t *src_len,
 
 	buffer[len] = 0;
 	packet_trace(buffer, len, 0);
-	return len;
+
+	if ((options & PACKET_READ_DIE_ON_ERR_PACKET) &&
+	    starts_with(buffer, "ERR "))
+		die(_("remote error: %s"), buffer + 4);
+
+	*pktlen = len;
+	return PACKET_READ_NORMAL;
+}
+
+int packet_read(int fd, char **src_buffer, size_t *src_len,
+		char *buffer, unsigned size, int options)
+{
+	int pktlen = -1;
+
+	packet_read_with_status(fd, src_buffer, src_len, buffer, size,
+				&pktlen, options);
+
+	return pktlen;
 }
 
 static char *packet_read_line_generic(int fd,
@@ -376,4 +440,131 @@ ssize_t read_packetized_to_strbuf(int fd_in, struct strbuf *sb_out)
 		return packet_len;
 	}
 	return sb_out->len - orig_len;
+}
+
+int recv_sideband(const char *me, int in_stream, int out)
+{
+	char buf[LARGE_PACKET_MAX + 1];
+	int len;
+	struct strbuf scratch = STRBUF_INIT;
+	enum sideband_type sideband_type;
+
+	while (1) {
+		len = packet_read(in_stream, NULL, NULL, buf, LARGE_PACKET_MAX,
+				  0);
+		if (!demultiplex_sideband(me, buf, len, 0, &scratch,
+					  &sideband_type))
+			continue;
+		switch (sideband_type) {
+		case SIDEBAND_PRIMARY:
+			write_or_die(out, buf + 1, len - 1);
+			break;
+		default: /* errors: message already written */
+			return sideband_type;
+		}
+	}
+}
+
+/* Packet Reader Functions */
+void packet_reader_init(struct packet_reader *reader, int fd,
+			char *src_buffer, size_t src_len,
+			int options)
+{
+	memset(reader, 0, sizeof(*reader));
+
+	reader->fd = fd;
+	reader->src_buffer = src_buffer;
+	reader->src_len = src_len;
+	reader->buffer = packet_buffer;
+	reader->buffer_size = sizeof(packet_buffer);
+	reader->options = options;
+	reader->me = "git";
+}
+
+enum packet_read_status packet_reader_read(struct packet_reader *reader)
+{
+	struct strbuf scratch = STRBUF_INIT;
+
+	if (reader->line_peeked) {
+		reader->line_peeked = 0;
+		return reader->status;
+	}
+
+	/*
+	 * Consume all progress packets until a primary payload packet is
+	 * received
+	 */
+	while (1) {
+		enum sideband_type sideband_type;
+		reader->status = packet_read_with_status(reader->fd,
+							 &reader->src_buffer,
+							 &reader->src_len,
+							 reader->buffer,
+							 reader->buffer_size,
+							 &reader->pktlen,
+							 reader->options);
+		if (!reader->use_sideband)
+			break;
+		if (demultiplex_sideband(reader->me, reader->buffer,
+					 reader->pktlen, 1, &scratch,
+					 &sideband_type))
+			break;
+	}
+
+	if (reader->status == PACKET_READ_NORMAL)
+		/* Skip the sideband designator if sideband is used */
+		reader->line = reader->use_sideband ?
+			reader->buffer + 1 : reader->buffer;
+	else
+		reader->line = NULL;
+
+	return reader->status;
+}
+
+enum packet_read_status packet_reader_peek(struct packet_reader *reader)
+{
+	/* Only allow peeking a single line */
+	if (reader->line_peeked)
+		return reader->status;
+
+	/* Peek a line by reading it and setting peeked flag */
+	packet_reader_read(reader);
+	reader->line_peeked = 1;
+	return reader->status;
+}
+
+void packet_writer_init(struct packet_writer *writer, int dest_fd)
+{
+	writer->dest_fd = dest_fd;
+	writer->use_sideband = 0;
+}
+
+void packet_writer_write(struct packet_writer *writer, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	packet_write_fmt_1(writer->dest_fd, 0,
+			   writer->use_sideband ? "\001" : "", fmt, args);
+	va_end(args);
+}
+
+void packet_writer_error(struct packet_writer *writer, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	packet_write_fmt_1(writer->dest_fd, 0,
+			   writer->use_sideband ? "\003" : "ERR ", fmt, args);
+	va_end(args);
+}
+
+void packet_writer_delim(struct packet_writer *writer)
+{
+	packet_delim(writer->dest_fd);
+}
+
+void packet_writer_flush(struct packet_writer *writer)
+{
+	packet_flush(writer->dest_fd);
 }

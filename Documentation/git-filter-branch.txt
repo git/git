@@ -189,7 +189,7 @@ to other tags will be rewritten to point to the underlying commit.
 	rewriting.  When applying a tree filter, the command needs to
 	temporarily check out the tree to some directory, which may consume
 	considerable space in case of large projects.  By default it
-	does this in the '.git-rewrite/' directory but you can override
+	does this in the `.git-rewrite/` directory but you can override
 	that choice by this parameter.
 
 -f::
@@ -230,7 +230,7 @@ rewrite, the exit status is `2`.  On any other error, the exit status may be
 any other non-zero value.
 
 
-Examples
+EXAMPLES
 --------
 
 Suppose you want to remove a file (containing confidential information
@@ -288,7 +288,7 @@ git filter-branch --parent-filter \
 or even simpler:
 
 -----------------------------------------------
-echo "$commit-id $graft-id" >> .git/info/grafts
+git replace --graft $commit-id $graft-id
 git filter-branch $graft-id..HEAD
 -----------------------------------------------
 
@@ -406,7 +406,7 @@ git filter-branch --index-filter \
 
 
 
-Checklist for Shrinking a Repository
+CHECKLIST FOR SHRINKING A REPOSITORY
 ------------------------------------
 
 git-filter-branch can be used to get rid of a subset of files,
@@ -445,7 +445,7 @@ warned.
   (or if your git-gc is not new enough to support arguments to
   `--prune`, use `git repack -ad; git prune` instead).
 
-Notes
+NOTES
 -----
 
 git-filter-branch allows you to make complex shell-scripted rewrites

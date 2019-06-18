@@ -15,7 +15,8 @@ SYNOPSIS
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
-	  [--jobs <n>] [--] <repository> [<directory>]
+	  [--[no-]remote-submodules] [--jobs <n>] [--] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
@@ -131,6 +132,14 @@ objects from the source repository into a pack in the cloned repository.
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
+--server-option=<option>::
+	Transmit the given string to the server when communicating using
+	protocol version 2.  The given string must not contain a NUL or LF
+	character.  The server's handling of server options, including
+	unknown ones, is server-specific.
+	When multiple `--server-option=<option>` are given, they are all
+	sent to the other side in the order listed on the command line.
+
 --no-checkout::
 -n::
 	No checkout of HEAD is performed after the clone is complete.
@@ -189,6 +198,12 @@ objects from the source repository into a pack in the cloned repository.
 	values are given for the same key, each value will be written to
 	the config file. This makes it safe, for example, to add
 	additional fetch refspecs to the origin remote.
++
+Due to limitations of the current implementation, some configuration
+variables do not take effect until after the initial fetch and checkout.
+Configuration variables known to not take effect are:
+`remote.<name>.mirror` and `remote.<name>.tagOpt`.  Use the
+corresponding `--mirror` and `--no-tags` options instead.
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
@@ -246,6 +261,12 @@ or `--mirror` is given)
 --[no-]shallow-submodules::
 	All submodules which are cloned will be shallow with a depth of 1.
 
+--[no-]remote-submodules::
+	All submodules which are cloned will use the status of the submodule’s
+	remote-tracking branch to update the submodule, rather than the
+	superproject’s recorded SHA-1. Equivalent to passing `--remote` to
+	`git submodule update`.
+
 --separate-git-dir=<git dir>::
 	Instead of placing the cloned repository where it is supposed
 	to be, place the cloned repository at the specified directory,
@@ -260,7 +281,7 @@ or `--mirror` is given)
 
 <repository>::
 	The (possibly remote) repository to clone from.  See the
-	<<URLS,URLS>> section below for more information on specifying
+	<<URLS,GIT URLS>> section below for more information on specifying
 	repositories.
 
 <directory>::
@@ -273,7 +294,7 @@ or `--mirror` is given)
 :git-clone: 1
 include::urls.txt[]
 
-Examples
+EXAMPLES
 --------
 
 * Clone from upstream:

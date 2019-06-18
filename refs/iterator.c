@@ -54,7 +54,7 @@ static int empty_ref_iterator_advance(struct ref_iterator *ref_iterator)
 static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator,
 				   struct object_id *peeled)
 {
-	die("BUG: peel called for empty iterator");
+	BUG("peel called for empty iterator");
 }
 
 static int empty_ref_iterator_abort(struct ref_iterator *ref_iterator)
@@ -177,7 +177,7 @@ static int merge_ref_iterator_peel(struct ref_iterator *ref_iterator,
 		(struct merge_ref_iterator *)ref_iterator;
 
 	if (!iter->current) {
-		die("BUG: peel called before advance for merge iterator");
+		BUG("peel called before advance for merge iterator");
 	}
 	return ref_iterator_peel(*iter->current, peeled);
 }
@@ -338,7 +338,7 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			 * trimming, report it as a bug:
 			 */
 			if (strlen(iter->iter0->refname) <= iter->trim)
-				die("BUG: attempt to trim too many characters");
+				BUG("attempt to trim too many characters");
 			iter->base.refname = iter->iter0->refname + iter->trim;
 		} else {
 			iter->base.refname = iter->iter0->refname;
@@ -407,15 +407,15 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 
 struct ref_iterator *current_ref_iter = NULL;
 
-int do_for_each_ref_iterator(struct ref_iterator *iter,
-			     each_ref_fn fn, void *cb_data)
+int do_for_each_repo_ref_iterator(struct repository *r, struct ref_iterator *iter,
+				  each_repo_ref_fn fn, void *cb_data)
 {
 	int retval = 0, ok;
 	struct ref_iterator *old_ref_iter = current_ref_iter;
 
 	current_ref_iter = iter;
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
-		retval = fn(iter->refname, iter->oid, iter->flags, cb_data);
+		retval = fn(r, iter->refname, iter->oid, iter->flags, cb_data);
 		if (retval) {
 			/*
 			 * If ref_iterator_abort() returns ITER_ERROR,

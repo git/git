@@ -6,12 +6,12 @@ test_description='git add --all'
 
 test_expect_success setup '
 	(
-		echo .gitignore
+		echo .gitignore &&
 		echo will-remove
 	) >expect &&
 	(
-		echo actual
-		echo expect
+		echo actual &&
+		echo expect &&
 		echo ignored
 	) >.gitignore &&
 	git --literal-pathspecs add --all &&
@@ -25,10 +25,10 @@ test_expect_success setup '
 
 test_expect_success 'git add --all' '
 	(
-		echo .gitignore
-		echo not-ignored
-		echo "M	.gitignore"
-		echo "A	not-ignored"
+		echo .gitignore &&
+		echo not-ignored &&
+		echo "M	.gitignore" &&
+		echo "A	not-ignored" &&
 		echo "D	will-remove"
 	) >expect &&
 	>ignored &&
@@ -48,8 +48,7 @@ test_expect_success 'Just "git add" is a no-op' '
 	>will-not-be-added &&
 	git add &&
 	git diff-index --name-status --cached HEAD >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

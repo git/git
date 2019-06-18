@@ -293,9 +293,9 @@ checkout_files () {
 	do
 		rm crlf_false_attr__$f.txt &&
 		if test -z "$ceol"; then
-			git checkout crlf_false_attr__$f.txt
+			git checkout -- crlf_false_attr__$f.txt
 		else
-			git -c core.eol=$ceol checkout crlf_false_attr__$f.txt
+			git -c core.eol=$ceol checkout -- crlf_false_attr__$f.txt
 		fi
 	done
 

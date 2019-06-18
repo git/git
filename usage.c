@@ -22,17 +22,48 @@ void vreportf(const char *prefix, const char *err, va_list params)
 static NORETURN void usage_builtin(const char *err, va_list params)
 {
 	vreportf("usage: ", err, params);
+
+	/*
+	 * When we detect a usage error *before* the command dispatch in
+	 * cmd_main(), we don't know what verb to report.  Force it to this
+	 * to facilitate post-processing.
+	 */
+	trace2_cmd_name("_usage_");
+
+	/*
+	 * Currently, the (err, params) are usually just the static usage
+	 * string which isn't very useful here.  Usually, the call site
+	 * manually calls fprintf(stderr,...) with the actual detailed
+	 * syntax error before calling usage().
+	 *
+	 * TODO It would be nice to update the call sites to pass both
+	 * the static usage string and the detailed error message.
+	 */
+
 	exit(129);
 }
 
 static NORETURN void die_builtin(const char *err, va_list params)
 {
+	/*
+	 * We call this trace2 function first and expect it to va_copy 'params'
+	 * before using it (because an 'ap' can only be walked once).
+	 */
+	trace2_cmd_error_va(err, params);
+
 	vreportf("fatal: ", err, params);
+
 	exit(128);
 }
 
 static void error_builtin(const char *err, va_list params)
 {
+	/*
+	 * We call this trace2 function first and expect it to va_copy 'params'
+	 * before using it (because an 'ap' can only be walked once).
+	 */
+	trace2_cmd_error_va(err, params);
+
 	vreportf("error: ", err, params);
 }
 
@@ -148,6 +179,7 @@ static const char *fmt_with_err(char *buf, int n, const char *fmt)
 		}
 	}
 	str_error[j] = 0;
+	/* Truncation is acceptable here */
 	snprintf(buf, n, "%s: %s", fmt, str_error);
 	return buf;
 }
@@ -210,6 +242,9 @@ void warning(const char *warn, ...)
 	va_end(params);
 }
 
+/* Only set this, ever, from t/helper/, when verifying that bugs are caught. */
+int BUG_exit_code;
+
 static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
 {
 	char prefix[256];
@@ -221,6 +256,8 @@ static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_lis
 		snprintf(prefix, sizeof(prefix), "BUG: ");
 
 	vreportf(prefix, fmt, params);
+	if (BUG_exit_code)
+		exit(BUG_exit_code);
 	abort();
 }
 

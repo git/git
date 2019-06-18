@@ -12,6 +12,7 @@
 #include "packfile.h"
 #include "worktree.h"
 #include "object-store.h"
+#include "pack-bitmap.h"
 
 struct connectivity_progress {
 	struct progress *progress;
@@ -78,7 +79,7 @@ static void add_recent_object(const struct object_id *oid,
 	 * later processing, and the revision machinery expects
 	 * commits and tags to have been parsed.
 	 */
-	type = oid_object_info(oid, NULL);
+	type = oid_object_info(the_repository, oid, NULL);
 	if (type < 0)
 		die("unable to get object info for %s", oid_to_hex(oid));
 
@@ -88,10 +89,10 @@ static void add_recent_object(const struct object_id *oid,
 		obj = parse_object_or_die(oid, NULL);
 		break;
 	case OBJ_TREE:
-		obj = (struct object *)lookup_tree(oid);
+		obj = (struct object *)lookup_tree(the_repository, oid);
 		break;
 	case OBJ_BLOB:
-		obj = (struct object *)lookup_blob(oid);
+		obj = (struct object *)lookup_blob(the_repository, oid);
 		break;
 	default:
 		die("unknown object type for %s: %s",
@@ -108,7 +109,7 @@ static int add_recent_loose(const struct object_id *oid,
 			    const char *path, void *data)
 {
 	struct stat st;
-	struct object *obj = lookup_object(oid->hash);
+	struct object *obj = lookup_object(the_repository, oid->hash);
 
 	if (obj && obj->flags & SEEN)
 		return 0;
@@ -133,7 +134,7 @@ static int add_recent_packed(const struct object_id *oid,
 			     struct packed_git *p, uint32_t pos,
 			     void *data)
 {
-	struct object *obj = lookup_object(oid->hash);
+	struct object *obj = lookup_object(the_repository, oid->hash);
 
 	if (obj && obj->flags & SEEN)
 		return 0;
@@ -158,10 +159,44 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 				      FOR_EACH_OBJECT_LOCAL_ONLY);
 }
 
+static void *lookup_object_by_type(struct repository *r,
+				   const struct object_id *oid,
+				   enum object_type type)
+{
+	switch (type) {
+	case OBJ_COMMIT:
+		return lookup_commit(r, oid);
+	case OBJ_TREE:
+		return lookup_tree(r, oid);
+	case OBJ_TAG:
+		return lookup_tag(r, oid);
+	case OBJ_BLOB:
+		return lookup_blob(r, oid);
+	default:
+		die("BUG: unknown object type %d", type);
+	}
+}
+
+static int mark_object_seen(const struct object_id *oid,
+			     enum object_type type,
+			     int exclude,
+			     uint32_t name_hash,
+			     struct packed_git *found_pack,
+			     off_t found_offset)
+{
+	struct object *obj = lookup_object_by_type(the_repository, oid, type);
+	if (!obj)
+		die("unable to create object '%s'", oid_to_hex(oid));
+
+	obj->flags |= SEEN;
+	return 0;
+}
+
 void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 			    timestamp_t mark_recent, struct progress *progress)
 {
 	struct connectivity_progress cp;
+	struct bitmap_index *bitmap_git;
 
 	/*
 	 * Set up revision parsing, and mark us as being interested
@@ -187,6 +222,13 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
 	cp.progress = progress;
 	cp.count = 0;
+
+	bitmap_git = prepare_bitmap_walk(revs);
+	if (bitmap_git) {
+		traverse_bitmap_commit_list(bitmap_git, mark_object_seen);
+		free_bitmap_index(bitmap_git);
+		return;
+	}
 
 	/*
 	 * Set up the revision walk - this will move all commits

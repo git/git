@@ -81,7 +81,7 @@ int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
 				mi = (nr - 1) * (miv - lov) / (hiv - lov);
 				if (lo <= mi && mi < hi)
 					break;
-				die("BUG: assertion failed in binary search");
+				BUG("assertion failed in binary search");
 			}
 		}
 	}

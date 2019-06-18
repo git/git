@@ -118,6 +118,24 @@ For shell scripts specifically (not exhaustive):
 		do this
 	fi
 
+ - If a command sequence joined with && or || or | spans multiple
+   lines, put each command on a separate line and put && and || and |
+   operators at the end of each line, rather than the start. This
+   means you don't need to use \ to join lines, since the above
+   operators imply the sequence isn't finished.
+
+	(incorrect)
+	grep blob verify_pack_result \
+	| awk -f print_1.awk \
+	| sort >actual &&
+	...
+
+	(correct)
+	grep blob verify_pack_result |
+	awk -f print_1.awk |
+	sort >actual &&
+	...
+
  - We prefer "test" over "[ ... ]".
 
  - We do not write the noiseword "function" in front of shell
@@ -358,7 +376,10 @@ For C programs:
    string_list for sorted string lists, a hash map (mapping struct
    objects) named "struct decorate", amongst other things.
 
- - When you come up with an API, document it.
+ - When you come up with an API, document its functions and structures
+   in the header file that exposes the API to its callers. Use what is
+   in "strbuf.h" as a model for the appropriate tone and level of
+   detail.
 
  - The first #include in C files, except in platform specific compat/
    implementations, must be either "git-compat-util.h", "cache.h" or
@@ -390,6 +411,12 @@ For C programs:
    with "static". Variables that are visible to other source files
    must be declared with "extern" in header files. However, function
    declarations should not use "extern", as that is already the default.
+
+ - You can launch gdb around your program using the shorthand GIT_DEBUGGER.
+   Run `GIT_DEBUGGER=1 ./bin-wrappers/git foo` to simply use gdb as is, or
+   run `GIT_DEBUGGER="<debugger> <debugger-args>" ./bin-wrappers/git foo` to
+   use your own debugger and arguments. Example: `GIT_DEBUGGER="ddd --gdb"
+   ./bin-wrappers/git log` (See `wrap-for-bin.sh`.)
 
 For Perl programs:
 
@@ -559,11 +586,14 @@ Writing Documentation:
  or commands:
 
  Literal examples (e.g. use of command-line options, command names,
- branch names, configuration and environment variables) must be
- typeset in monospace (i.e. wrapped with backticks):
+ branch names, URLs, pathnames (files and directories), configuration and
+ environment variables) must be typeset in monospace (i.e. wrapped with
+ backticks):
    `--pretty=oneline`
    `git rev-list`
    `remote.pushDefault`
+   `http://git.example.com`
+   `.git/config`
    `GIT_DIR`
    `HEAD`
 

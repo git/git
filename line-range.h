@@ -1,6 +1,8 @@
 #ifndef LINE_RANGE_H
 #define LINE_RANGE_H
 
+struct index_state;
+
 /*
  * Parse one item in an -L begin,end option w.r.t. the notional file
  * object 'cb_data' consisting of 'lines' lines.
@@ -19,11 +21,11 @@
 
 typedef const char *(*nth_line_fn_t)(void *data, long lno);
 
-extern int parse_range_arg(const char *arg,
-			   nth_line_fn_t nth_line_cb,
-			   void *cb_data, long lines, long anchor,
-			   long *begin, long *end,
-			   const char *path);
+int parse_range_arg(const char *arg,
+		    nth_line_fn_t nth_line_cb,
+		    void *cb_data, long lines, long anchor,
+		    long *begin, long *end,
+		    const char *path, struct index_state *istate);
 
 /*
  * Scan past a range argument that could be parsed by
@@ -34,6 +36,6 @@ extern int parse_range_arg(const char *arg,
  * NULL in case the argument is obviously malformed.
  */
 
-extern const char *skip_range_arg(const char *arg);
+const char *skip_range_arg(const char *arg, struct index_state *istate);
 
 #endif /* LINE_RANGE_H */

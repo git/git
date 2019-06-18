@@ -23,7 +23,7 @@ test_expect_success GPG 'create signed commits' '
 	echo 3 >bar && git add bar &&
 	test_tick && git commit -S -m "bad on side" &&
 	git cat-file commit side-bad >raw &&
-	sed -e "s/bad/forged bad/" raw >forged &&
+	sed -e "s/^bad/forged bad/" raw >forged &&
 	git hash-object -w -t commit forged >forged.commit &&
 	git checkout initial &&
 
@@ -101,6 +101,13 @@ test_expect_success GPG 'merge commit with bad signature with merge.verifySignat
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config merge.verifySignatures true &&
 	git merge --no-verify-signatures $(cat forged.commit)
+'
+
+test_expect_success GPG 'merge unsigned commit into unborn branch' '
+	test_when_finished "git checkout initial" &&
+	git checkout --orphan unborn &&
+	test_must_fail git merge --verify-signatures side-unsigned 2>mergeerror &&
+	test_i18ngrep "does not have a GPG signature" mergeerror
 '
 
 test_done

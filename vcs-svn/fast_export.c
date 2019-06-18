@@ -320,7 +320,8 @@ const char *fast_export_read_path(const char *path, uint32_t *mode_out)
 	err = fast_export_ls(path, mode_out, &buf);
 	if (err) {
 		if (errno != ENOENT)
-			die_errno("BUG: unexpected fast_export_ls error");
+			BUG("unexpected fast_export_ls error: %s",
+			    strerror(errno));
 		/* Treat missing paths as directories. */
 		*mode_out = S_IFDIR;
 		return NULL;
@@ -338,7 +339,8 @@ void fast_export_copy(uint32_t revision, const char *src, const char *dst)
 	err = fast_export_ls_rev(revision, src, &mode, &data);
 	if (err) {
 		if (errno != ENOENT)
-			die_errno("BUG: unexpected fast_export_ls_rev error");
+			BUG("unexpected fast_export_ls_rev error: %s",
+			    strerror(errno));
 		fast_export_delete(dst);
 		return;
 	}

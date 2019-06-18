@@ -3,12 +3,14 @@
 #include "config.h"
 #include "branch.h"
 #include "refs.h"
+#include "refspec.h"
 #include "remote.h"
+#include "sequencer.h"
 #include "commit.h"
 #include "worktree.h"
 
 struct tracking {
-	struct refspec spec;
+	struct refspec_item spec;
 	char *src;
 	const char *remote;
 	int matches;
@@ -24,9 +26,7 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 			tracking->remote = remote->name;
 		} else {
 			free(tracking->spec.src);
-			if (tracking->src) {
-				FREE_AND_NULL(tracking->src);
-			}
+			FREE_AND_NULL(tracking->src);
 		}
 		tracking->spec.src = NULL;
 	}
@@ -218,8 +218,8 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 static int check_tracking_branch(struct remote *remote, void *cb_data)
 {
 	char *tracking_branch = cb_data;
-	struct refspec query;
-	memset(&query, 0, sizeof(struct refspec));
+	struct refspec_item query;
+	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = tracking_branch;
 	return !remote_find_tracking(remote, &query);
 }
@@ -243,7 +243,8 @@ N_("\n"
 "will track its remote counterpart, you may want to use\n"
 "\"git push -u\" to set the upstream config as you push.");
 
-void create_branch(const char *name, const char *start_name,
+void create_branch(struct repository *r,
+		   const char *name, const char *start_name,
 		   int force, int clobber_head_ok, int reflog,
 		   int quiet, enum branch_track track)
 {
@@ -268,7 +269,7 @@ void create_branch(const char *name, const char *start_name,
 	}
 
 	real_ref = NULL;
-	if (get_oid(start_name, &oid)) {
+	if (get_oid_mb(start_name, &oid)) {
 		if (explicit_tracking) {
 			if (advice_set_upstream_failure) {
 				error(_(upstream_missing), start_name);
@@ -301,7 +302,7 @@ void create_branch(const char *name, const char *start_name,
 		break;
 	}
 
-	if ((commit = lookup_commit_reference(&oid)) == NULL)
+	if ((commit = lookup_commit_reference(r, &oid)) == NULL)
 		die(_("Not a valid branch point: '%s'."), start_name);
 	oidcpy(&oid, &commit->object.oid);
 
@@ -337,15 +338,19 @@ void create_branch(const char *name, const char *start_name,
 	free(real_ref);
 }
 
-void remove_branch_state(void)
+void remove_merge_branch_state(struct repository *r)
 {
-	unlink(git_path_cherry_pick_head());
-	unlink(git_path_revert_head());
-	unlink(git_path_merge_head());
-	unlink(git_path_merge_rr());
-	unlink(git_path_merge_msg());
-	unlink(git_path_merge_mode());
-	unlink(git_path_squash_msg());
+	unlink(git_path_merge_head(r));
+	unlink(git_path_merge_rr(r));
+	unlink(git_path_merge_msg(r));
+	unlink(git_path_merge_mode(r));
+}
+
+void remove_branch_state(struct repository *r)
+{
+	sequencer_post_commit_cleanup(r);
+	unlink(git_path_squash_msg(r));
+	remove_merge_branch_state(r);
 }
 
 void die_if_checked_out(const char *branch, int ignore_current_worktree)

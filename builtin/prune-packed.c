@@ -3,6 +3,7 @@
 #include "progress.h"
 #include "parse-options.h"
 #include "packfile.h"
+#include "object-store.h"
 
 static const char * const prune_packed_usage[] = {
 	N_("git prune-packed [-n | --dry-run] [-q | --quiet]"),
@@ -25,7 +26,7 @@ static int prune_object(const struct object_id *oid, const char *path,
 {
 	int *opts = data;
 
-	if (!has_sha1_pack(oid->hash))
+	if (!has_object_pack(oid))
 		return 0;
 
 	if (*opts & PRUNE_PACKED_DRY_RUN)
@@ -61,6 +62,11 @@ int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, prune_packed_options,
 			     prune_packed_usage, 0);
+
+	if (argc > 0)
+		usage_msg_opt(_("too many arguments"),
+			      prune_packed_usage,
+			      prune_packed_options);
 
 	prune_packed_objects(opts);
 	return 0;

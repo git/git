@@ -2,6 +2,7 @@
 #include "config.h"
 #include "run-command.h"
 #include "sigchain.h"
+#include "alias.h"
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"
@@ -99,6 +100,7 @@ void prepare_pager_args(struct child_process *pager_process, const char *pager)
 	argv_array_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
 	setup_pager_env(&pager_process->env_array);
+	pager_process->trace2_child_class = "pager";
 }
 
 void setup_pager(void)
@@ -109,10 +111,15 @@ void setup_pager(void)
 		return;
 
 	/*
-	 * force computing the width of the terminal before we redirect
-	 * the standard output to the pager.
+	 * After we redirect standard output, we won't be able to use an ioctl
+	 * to get the terminal size. Let's grab it now, and then set $COLUMNS
+	 * to communicate it to any sub-processes.
 	 */
-	(void) term_columns();
+	{
+		char buf[64];
+		xsnprintf(buf, sizeof(buf), "%d", term_columns());
+		setenv("COLUMNS", buf, 0);
+	}
 
 	setenv("GIT_PAGER_IN_USE", "true", 1);
 

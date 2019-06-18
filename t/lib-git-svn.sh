@@ -13,6 +13,7 @@ fi
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
+test_set_port SVNSERVE_PORT
 
 svn >/dev/null 2>&1
 if test $? -ne 1
@@ -75,11 +76,6 @@ maybe_start_httpd () {
 		LIB_HTTPD_SVN="$loc"
 		start_httpd
 		;;
-	*)
-		stop_httpd () {
-			: noop
-		}
-		;;
 	esac
 }
 
@@ -119,7 +115,6 @@ require_svnserve () {
 }
 
 start_svnserve () {
-	SVNSERVE_PORT=${SVNSERVE_PORT-${this_test#t}}
 	svnserve --listen-port $SVNSERVE_PORT \
 		 --root "$rawsvnrepo" \
 		 --listen-once \

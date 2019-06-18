@@ -57,7 +57,7 @@ OPTIONS
 	This is sort of "Git root" - if you run 'git daemon' with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
 	'git://example.com/hello.git', 'git daemon' will interpret the path
-	as '/srv/git/hello.git'.
+	as `/srv/git/hello.git`.
 
 --base-path-relaxed::
 	If --base-path is enabled and repo lookup fails, with this option

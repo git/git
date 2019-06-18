@@ -92,8 +92,8 @@ It is okay to err on the side of caution, causing the bundle file
 to contain objects already in the destination, as these are ignored
 when unpacking at the destination.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 Assume you want to transfer the history from a repository R1 on machine A
 to another repository R2 on machine B.

@@ -41,9 +41,26 @@ void oid_array_clear(struct oid_array *array)
 	array->sorted = 0;
 }
 
+
+int oid_array_for_each(struct oid_array *array,
+		       for_each_oid_fn fn,
+		       void *data)
+{
+	int i;
+
+	/* No oid_array_sort() here! See the api-oid-array.txt docs! */
+
+	for (i = 0; i < array->nr; i++) {
+		int ret = fn(array->oid + i, data);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
+
 int oid_array_for_each_unique(struct oid_array *array,
-				for_each_oid_fn fn,
-				void *data)
+			      for_each_oid_fn fn,
+			      void *data)
 {
 	int i;
 
@@ -52,11 +69,28 @@ int oid_array_for_each_unique(struct oid_array *array,
 
 	for (i = 0; i < array->nr; i++) {
 		int ret;
-		if (i > 0 && !oidcmp(array->oid + i, array->oid + i - 1))
+		if (i > 0 && oideq(array->oid + i, array->oid + i - 1))
 			continue;
 		ret = fn(array->oid + i, data);
 		if (ret)
 			return ret;
 	}
 	return 0;
+}
+
+void oid_array_filter(struct oid_array *array,
+		      for_each_oid_fn want,
+		      void *cb_data)
+{
+	unsigned nr = array->nr, src, dst;
+	struct object_id *oids = array->oid;
+
+	for (src = dst = 0; src < nr; src++) {
+		if (want(&oids[src], cb_data)) {
+			if (src != dst)
+				oidcpy(&oids[dst], &oids[src]);
+			dst++;
+		}
+	}
+	array->nr = dst;
 }

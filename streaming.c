@@ -5,6 +5,7 @@
 #include "streaming.h"
 #include "repository.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "packfile.h"
 
 enum input_source {
@@ -116,7 +117,7 @@ static enum input_source istream_source(const struct object_id *oid,
 
 	oi->typep = type;
 	oi->sizep = &size;
-	status = oid_object_info_extended(oid, oi, 0);
+	status = oid_object_info_extended(the_repository, oid, oi, 0);
 	if (status < 0)
 		return stream_error;
 
@@ -139,7 +140,7 @@ struct git_istream *open_istream(const struct object_id *oid,
 {
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
-	const struct object_id *real = lookup_replace_object(oid);
+	const struct object_id *real = lookup_replace_object(the_repository, oid);
 	enum input_source src = istream_source(real, type, &oi);
 
 	if (src < 0)
@@ -337,16 +338,16 @@ static struct stream_vtbl loose_vtbl = {
 
 static open_method_decl(loose)
 {
-	st->u.loose.mapped = map_sha1_file(the_repository,
-					   oid->hash, &st->u.loose.mapsize);
+	st->u.loose.mapped = map_loose_object(the_repository,
+					      oid, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
 		return -1;
-	if ((unpack_sha1_header(&st->z,
-				st->u.loose.mapped,
-				st->u.loose.mapsize,
-				st->u.loose.hdr,
-				sizeof(st->u.loose.hdr)) < 0) ||
-	    (parse_sha1_header(st->u.loose.hdr, &st->size) < 0)) {
+	if ((unpack_loose_header(&st->z,
+				 st->u.loose.mapped,
+				 st->u.loose.mapsize,
+				 st->u.loose.hdr,
+				 sizeof(st->u.loose.hdr)) < 0) ||
+	    (parse_loose_header(st->u.loose.hdr, &st->size) < 0)) {
 		git_inflate_end(&st->z);
 		munmap(st->u.loose.mapped, st->u.loose.mapsize);
 		return -1;
@@ -407,6 +408,15 @@ static read_method_decl(pack_non_delta)
 			st->z_state = z_done;
 			break;
 		}
+
+		/*
+		 * Unlike the loose object case, we do not have to worry here
+		 * about running out of input bytes and spinning infinitely. If
+		 * we get Z_BUF_ERROR due to too few input bytes, then we'll
+		 * replenish them in the next use_pack() call when we loop. If
+		 * we truly hit the end of the pack (i.e., because it's corrupt
+		 * or truncated), then use_pack() catches that and will die().
+		 */
 		if (status != Z_OK && status != Z_BUF_ERROR) {
 			git_inflate_end(&st->z);
 			st->z_state = z_error;
@@ -489,7 +499,7 @@ static struct stream_vtbl incore_vtbl = {
 
 static open_method_decl(incore)
 {
-	st->u.incore.buf = read_object_file_extended(oid, type, &st->size, 0);
+	st->u.incore.buf = read_object_file_extended(the_repository, oid, type, &st->size, 0);
 	st->u.incore.read_ptr = 0;
 	st->vtbl = &incore_vtbl;
 

@@ -7,6 +7,7 @@
 #include "quote.h"
 #include "tree.h"
 #include "parse-options.h"
+#include "object-store.h"
 
 static struct treeent {
 	unsigned mode;
@@ -66,7 +67,7 @@ static const char *mktree_usage[] = {
 	NULL
 };
 
-static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_missing)
+static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 {
 	char *ptr, *ntr;
 	const char *p;
@@ -97,7 +98,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 
 	*ntr++ = 0; /* now at the beginning of SHA1 */
 
-	path = ntr + 41;  /* at the beginning of name */
+	path = (char *)p + 1;  /* at the beginning of name */
 	if (!nul_term_line && path[0] == '"') {
 		struct strbuf p_uq = STRBUF_INIT;
 		if (unquote_c_style(&p_uq, path, NULL))
@@ -116,7 +117,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 	}
 
 	/* Check the type of object identified by sha1 */
-	obj_type = oid_object_info(&oid, NULL);
+	obj_type = oid_object_info(the_repository, &oid, NULL);
 	if (obj_type < 0) {
 		if (allow_missing) {
 			; /* no problem - missing objects are presumed to be of the right type */
@@ -171,7 +172,7 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 					break;
 				die("input format error: (blank line only valid in batch mode)");
 			}
-			mktree_line(sb.buf, sb.len, nul_term_line, allow_missing);
+			mktree_line(sb.buf, nul_term_line, allow_missing);
 		}
 		if (is_batch_mode && got_eof && used < 1) {
 			/*

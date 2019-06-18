@@ -50,15 +50,15 @@ test_expect_success 'create_symref(FOO, refs/heads/master)' '
 '
 
 test_expect_success 'for_each_reflog()' '
-	echo $_z40 > .git/logs/PSEUDO-MAIN &&
+	echo $ZERO_OID > .git/logs/PSEUDO-MAIN &&
 	mkdir -p     .git/logs/refs/bisect &&
-	echo $_z40 > .git/logs/refs/bisect/random &&
+	echo $ZERO_OID > .git/logs/refs/bisect/random &&
 
-	echo $_z40 > .git/worktrees/wt/logs/PSEUDO-WT &&
+	echo $ZERO_OID > .git/worktrees/wt/logs/PSEUDO-WT &&
 	mkdir -p     .git/worktrees/wt/logs/refs/bisect &&
-	echo $_z40 > .git/worktrees/wt/logs/refs/bisect/wt-random &&
+	echo $ZERO_OID > .git/worktrees/wt/logs/refs/bisect/wt-random &&
 
-	$RWT for-each-reflog | cut -c 42- | sort >actual &&
+	$RWT for-each-reflog | cut -d" " -f 2- | sort >actual &&
 	cat >expected <<-\EOF &&
 	HEAD 0x1
 	PSEUDO-WT 0x0
@@ -68,7 +68,7 @@ test_expect_success 'for_each_reflog()' '
 	EOF
 	test_cmp expected actual &&
 
-	$RMAIN for-each-reflog | cut -c 42- | sort >actual &&
+	$RMAIN for-each-reflog | cut -d" " -f 2- | sort >actual &&
 	cat >expected <<-\EOF &&
 	HEAD 0x1
 	PSEUDO-MAIN 0x0

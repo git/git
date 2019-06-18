@@ -219,8 +219,28 @@ static int exists_in_PATH(const char *file)
 
 int sane_execvp(const char *file, char * const argv[])
 {
+#ifndef GIT_WINDOWS_NATIVE
+	/*
+	 * execvp() doesn't return, so we all we can do is tell trace2
+	 * what we are about to do and let it leave a hint in the log
+	 * (unless of course the execvp() fails).
+	 *
+	 * we skip this for Windows because the compat layer already
+	 * has to emulate the execvp() call anyway.
+	 */
+	int exec_id = trace2_exec(file, (const char **)argv);
+#endif
+
 	if (!execvp(file, argv))
 		return 0; /* cannot happen ;-) */
+
+#ifndef GIT_WINDOWS_NATIVE
+	{
+		int ec = errno;
+		trace2_exec_result(exec_id, ec);
+		errno = ec;
+	}
+#endif
 
 	/*
 	 * When a command can't be found because one of the directories
@@ -245,7 +265,7 @@ int sane_execvp(const char *file, char * const argv[])
 static const char **prepare_shell_cmd(struct argv_array *out, const char **argv)
 {
 	if (!argv[0])
-		die("BUG: shell command is empty");
+		BUG("shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
 #ifndef GIT_WINDOWS_NATIVE
@@ -380,10 +400,10 @@ static void child_err_spew(struct child_process *cmd, struct child_err *cerr)
 	set_error_routine(old_errfn);
 }
 
-static void prepare_cmd(struct argv_array *out, const struct child_process *cmd)
+static int prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 {
 	if (!cmd->argv[0])
-		die("BUG: command is empty");
+		BUG("command is empty");
 
 	/*
 	 * Add SHELL_PATH so in the event exec fails with ENOEXEC we can
@@ -403,16 +423,22 @@ static void prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 	/*
 	 * If there are no '/' characters in the command then perform a path
 	 * lookup and use the resolved path as the command to exec.  If there
-	 * are no '/' characters or if the command wasn't found in the path,
-	 * have exec attempt to invoke the command directly.
+	 * are '/' characters, we have exec attempt to invoke the command
+	 * directly.
 	 */
 	if (!strchr(out->argv[1], '/')) {
 		char *program = locate_in_PATH(out->argv[1]);
 		if (program) {
 			free((char *)out->argv[1]);
 			out->argv[1] = program;
+		} else {
+			argv_array_clear(out);
+			errno = ENOENT;
+			return -1;
 		}
 	}
+
+	return 0;
 }
 
 static char **prep_childenv(const char *const *deltaenv)
@@ -471,15 +497,12 @@ struct atfork_state {
 	sigset_t old;
 };
 
-#ifndef NO_PTHREADS
-static void bug_die(int err, const char *msg)
-{
-	if (err) {
-		errno = err;
-		die_errno("BUG: %s", msg);
-	}
-}
-#endif
+#define CHECK_BUG(err, msg) \
+	do { \
+		int e = (err); \
+		if (e) \
+			BUG("%s: %s", msg, strerror(e)); \
+	} while(0)
 
 static void atfork_prepare(struct atfork_state *as)
 {
@@ -491,9 +514,9 @@ static void atfork_prepare(struct atfork_state *as)
 	if (sigprocmask(SIG_SETMASK, &all, &as->old))
 		die_errno("sigprocmask");
 #else
-	bug_die(pthread_sigmask(SIG_SETMASK, &all, &as->old),
+	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &all, &as->old),
 		"blocking all signals");
-	bug_die(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &as->cs),
+	CHECK_BUG(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &as->cs),
 		"disabling cancellation");
 #endif
 }
@@ -504,9 +527,9 @@ static void atfork_parent(struct atfork_state *as)
 	if (sigprocmask(SIG_SETMASK, &as->old, NULL))
 		die_errno("sigprocmask");
 #else
-	bug_die(pthread_setcancelstate(as->cs, NULL),
+	CHECK_BUG(pthread_setcancelstate(as->cs, NULL),
 		"re-enabling cancellation");
-	bug_die(pthread_sigmask(SIG_SETMASK, &as->old, NULL),
+	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &as->old, NULL),
 		"restoring signal mask");
 #endif
 }
@@ -709,6 +732,7 @@ fail_pipe:
 		cmd->err = fderr[0];
 	}
 
+	trace2_child_start(cmd);
 	trace_run_command(cmd);
 
 	fflush(NULL);
@@ -722,6 +746,14 @@ fail_pipe:
 	struct child_err cerr;
 	struct atfork_state as;
 
+	if (prepare_cmd(&argv, cmd) < 0) {
+		failed_errno = errno;
+		cmd->pid = -1;
+		if (!cmd->silent_exec_failure)
+			error_errno("cannot run %s", cmd->argv[0]);
+		goto end_of_spawn;
+	}
+
 	if (pipe(notify_pipe))
 		notify_pipe[0] = notify_pipe[1] = -1;
 
@@ -732,7 +764,6 @@ fail_pipe:
 		set_cloexec(null_fd);
 	}
 
-	prepare_cmd(&argv, cmd);
 	childenv = prep_childenv(cmd->env);
 	atfork_prepare(&as);
 
@@ -860,6 +891,8 @@ fail_pipe:
 	argv_array_clear(&argv);
 	free(childenv);
 }
+end_of_spawn:
+
 #else
 {
 	int fhin = 0, fhout = 1, fherr = 2;
@@ -914,6 +947,8 @@ fail_pipe:
 #endif
 
 	if (cmd->pid < 0) {
+		trace2_child_exit(cmd, -1);
+
 		if (need_in)
 			close_pair(fdin);
 		else if (cmd->in)
@@ -952,13 +987,16 @@ fail_pipe:
 int finish_command(struct child_process *cmd)
 {
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 0);
+	trace2_child_exit(cmd, ret);
 	child_process_clear(cmd);
 	return ret;
 }
 
 int finish_command_in_signal(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid, cmd->argv[0], 1);
+	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 1);
+	trace2_child_exit(cmd, ret);
+	return ret;
 }
 
 
@@ -967,7 +1005,7 @@ int run_command(struct child_process *cmd)
 	int code;
 
 	if (cmd->out < 0 || cmd->err < 0)
-		die("BUG: run_command with a pipe can cause deadlock");
+		BUG("run_command with a pipe can cause deadlock");
 
 	code = start_command(cmd);
 	if (code)
@@ -980,7 +1018,18 @@ int run_command_v_opt(const char **argv, int opt)
 	return run_command_v_opt_cd_env(argv, opt, NULL, NULL);
 }
 
+int run_command_v_opt_tr2(const char **argv, int opt, const char *tr2_class)
+{
+	return run_command_v_opt_cd_env_tr2(argv, opt, NULL, NULL, tr2_class);
+}
+
 int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env)
+{
+	return run_command_v_opt_cd_env_tr2(argv, opt, dir, env, NULL);
+}
+
+int run_command_v_opt_cd_env_tr2(const char **argv, int opt, const char *dir,
+				 const char *const *env, const char *tr2_class)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	cmd.argv = argv;
@@ -992,6 +1041,7 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
 	cmd.dir = dir;
 	cmd.env = env;
+	cmd.trace2_child_class = tr2_class;
 	return run_command(&cmd);
 }
 
@@ -1216,7 +1266,7 @@ int start_async(struct async *async)
 	{
 		int err = pthread_create(&async->tid, NULL, run_thread, async);
 		if (err) {
-			error_errno("cannot create thread");
+			error(_("cannot create async thread: %s"), strerror(err));
 			goto error;
 		}
 	}
@@ -1246,6 +1296,15 @@ int finish_async(struct async *async)
 	if (pthread_join(async->tid, &ret))
 		error("pthread_join failed");
 	return (int)(intptr_t)ret;
+#endif
+}
+
+int async_with_fork(void)
+{
+#ifdef NO_PTHREADS
+	return 1;
+#else
+	return 0;
 #endif
 }
 
@@ -1298,6 +1357,7 @@ int run_hook_ve(const char *const *env, const char *name, va_list args)
 	hook.env = env;
 	hook.no_stdin = 1;
 	hook.stdout_to_stderr = 1;
+	hook.trace2_hook_name = name;
 
 	return run_command(&hook);
 }
@@ -1557,7 +1617,7 @@ static void pp_init(struct parallel_processes *pp,
 
 	pp->data = data;
 	if (!get_next_task)
-		die("BUG: you need to specify a get_next_task function");
+		BUG("you need to specify a get_next_task function");
 	pp->get_next_task = get_next_task;
 
 	pp->start_failure = start_failure ? start_failure : default_start_failure;
@@ -1619,7 +1679,7 @@ static int pp_start_one(struct parallel_processes *pp)
 		if (pp->children[i].state == GIT_CP_FREE)
 			break;
 	if (i == pp->max_processes)
-		die("BUG: bookkeeping is hard");
+		BUG("bookkeeping is hard");
 
 	code = pp->get_next_task(&pp->children[i].process,
 				 &pp->children[i].err,
@@ -1785,4 +1845,22 @@ int run_processes_parallel(int n,
 
 	pp_cleanup(&pp);
 	return 0;
+}
+
+int run_processes_parallel_tr2(int n, get_next_task_fn get_next_task,
+			       start_failure_fn start_failure,
+			       task_finished_fn task_finished, void *pp_cb,
+			       const char *tr2_category, const char *tr2_label)
+{
+	int result;
+
+	trace2_region_enter_printf(tr2_category, tr2_label, NULL, "max:%d",
+				   ((n < 1) ? online_cpus() : n));
+
+	result = run_processes_parallel(n, get_next_task, start_failure,
+					task_finished, pp_cb);
+
+	trace2_region_leave(tr2_category, tr2_label, NULL);
+
+	return result;
 }

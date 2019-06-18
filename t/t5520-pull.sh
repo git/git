@@ -461,7 +461,8 @@ test_expect_success 'pull.rebase=1 is treated as true and flattens keep-merge' '
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success 'pull.rebase=preserve rebases and merges keep-merge' '
+test_expect_success REBASE_P \
+	'pull.rebase=preserve rebases and merges keep-merge' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase preserve &&
 	git pull . copy &&
@@ -475,8 +476,20 @@ test_expect_success 'pull.rebase=interactive' '
 	false
 	EOF
 	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
+	test_when_finished "test_might_fail git rebase --abort" &&
 	test_must_fail git pull --rebase=interactive . copy &&
 	test "I was here" = "$(cat fake.out)"
+'
+
+test_expect_success 'pull --rebase=i' '
+	write_script "$TRASH_DIRECTORY/fake-editor" <<-\EOF &&
+	echo I was here, too >fake.out &&
+	false
+	EOF
+	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
+	test_when_finished "test_might_fail git rebase --abort" &&
+	test_must_fail git pull --rebase=i . copy &&
+	test "I was here, too" = "$(cat fake.out)"
 '
 
 test_expect_success 'pull.rebase=invalid fails' '
@@ -502,7 +515,8 @@ test_expect_success '--rebase=true rebases and flattens keep-merge' '
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success '--rebase=preserve rebases and merges keep-merge' '
+test_expect_success REBASE_P \
+	'--rebase=preserve rebases and merges keep-merge' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase true &&
 	git pull --rebase=preserve . copy &&
@@ -615,6 +629,18 @@ test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
 		test "$(git ls-files)" = staged-file &&
 		test "$(git show :staged-file)" = staged-file &&
 		test_i18ngrep "unborn branch with changes added to the index" err
+	)
+'
+
+test_expect_success 'pull --rebase fails on corrupt HEAD' '
+	test_when_finished "rm -rf corrupt" &&
+	git init corrupt &&
+	(
+		cd corrupt &&
+		test_commit one &&
+		obj=$(git rev-parse --verify HEAD | sed "s#^..#&/#") &&
+		rm -f .git/objects/$obj &&
+		test_must_fail git pull --rebase
 	)
 '
 

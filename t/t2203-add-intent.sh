@@ -27,12 +27,12 @@ test_expect_success 'git status' '
 
 test_expect_success 'git status with porcelain v2' '
 	git status --porcelain=v2 | grep -v "^?" >actual &&
-	nam1=d00491fd7e5bb6fa28c517a0bb32b8b506539d4d &&
-	nam2=ce013625030ba8dba906f756967f9e9ca394464a &&
+	nam1=$(echo 1 | git hash-object --stdin) &&
+	nam2=$(git hash-object elif) &&
 	cat >expect <<-EOF &&
-	1 DA N... 100644 000000 100644 $nam1 $_z40 1.t
-	1 A. N... 000000 100644 100644 $_z40 $nam2 elif
-	1 .A N... 000000 000000 100644 $_z40 $_z40 file
+	1 DA N... 100644 000000 100644 $nam1 $ZERO_OID 1.t
+	1 A. N... 000000 100644 100644 $ZERO_OID $nam2 elif
+	1 .A N... 000000 000000 100644 $ZERO_OID $ZERO_OID file
 	EOF
 	test_cmp expect actual
 '
@@ -70,8 +70,7 @@ test_expect_success 'i-t-a entry is simply ignored' '
 	git commit -m second &&
 	test $(git ls-tree HEAD -- nitfol | wc -l) = 0 &&
 	test $(git diff --name-only HEAD -- nitfol | wc -l) = 1 &&
-	test $(git diff --name-only --ita-invisible-in-index HEAD -- nitfol | wc -l) = 0 &&
-	test $(git diff --name-only --ita-invisible-in-index -- nitfol | wc -l) = 1
+	test $(git diff --name-only -- nitfol | wc -l) = 1
 '
 
 test_expect_success 'can commit with an unrelated i-t-a entry in index' '
@@ -99,13 +98,13 @@ test_expect_success 'cache-tree invalidates i-t-a paths' '
 
 	: >dir/bar &&
 	git add -N dir/bar &&
-	git diff --cached --name-only >actual &&
+	git diff --name-only >actual &&
 	echo dir/bar >expect &&
 	test_cmp expect actual &&
 
 	git write-tree >/dev/null &&
 
-	git diff --cached --name-only >actual &&
+	git diff --name-only >actual &&
 	echo dir/bar >expect &&
 	test_cmp expect actual
 '
@@ -181,12 +180,23 @@ test_expect_success 'rename detection finds the right names' '
 		EOF
 		test_cmp expected.2 actual.2 &&
 
-		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		hash=$(git hash-object third) &&
 		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
 		cat >expected.3 <<-EOF &&
 		2 .R N... 100644 100644 100644 $hash $hash R100 third	first
 		EOF
-		test_cmp expected.3 actual.3
+		test_cmp expected.3 actual.3 &&
+
+		git diff --stat >actual.4 &&
+		cat >expected.4 <<-EOF &&
+		 first => third | 0
+		 1 file changed, 0 insertions(+), 0 deletions(-)
+		EOF
+		test_cmp expected.4 actual.4 &&
+
+		git diff --cached --stat >actual.5 &&
+		test_must_be_empty actual.5
+
 	)
 '
 
@@ -212,7 +222,7 @@ test_expect_success 'double rename detection in status' '
 		EOF
 		test_cmp expected.2 actual.2 &&
 
-		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		hash=$(git hash-object third) &&
 		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
 		cat >expected.3 <<-EOF &&
 		2 R. N... 100644 100644 100644 $hash $hash R100 second	first
@@ -222,5 +232,45 @@ test_expect_success 'double rename detection in status' '
 	)
 '
 
-test_done
+test_expect_success 'diff-files/diff-cached shows ita as new/not-new files' '
+	git reset --hard &&
+	echo new >new-ita &&
+	git add -N new-ita &&
+	git diff --summary >actual &&
+	echo " create mode 100644 new-ita" >expected &&
+	test_cmp expected actual &&
+	git diff --cached --summary >actual2 &&
+	test_must_be_empty actual2
+'
 
+
+test_expect_success '"diff HEAD" includes ita as new files' '
+	git reset --hard &&
+	echo new >new-ita &&
+	git add -N new-ita &&
+	git diff HEAD >actual &&
+	cat >expected <<-\EOF &&
+	diff --git a/new-ita b/new-ita
+	new file mode 100644
+	index 0000000..3e75765
+	--- /dev/null
+	+++ b/new-ita
+	@@ -0,0 +1 @@
+	+new
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'apply --intent-to-add' '
+	git reset --hard &&
+	echo new >new-ita &&
+	git add -N new-ita &&
+	git diff >expected &&
+	grep "new file" expected &&
+	git reset --hard &&
+	git apply --intent-to-add expected &&
+	git diff >actual &&
+	test_cmp expected actual
+'
+
+test_done

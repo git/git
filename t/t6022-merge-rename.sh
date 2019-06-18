@@ -247,7 +247,7 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	git reset --hard HEAD^ &&
 	git checkout change &&
 	GIT_MERGE_VERBOSITY=3 git merge change+rename >out &&
-	test_i18ngrep "^Skipped B" out
+	test_i18ngrep ! "^Skipped B" out
 '
 
 test_expect_success 'setup for rename + d/f conflicts' '
@@ -893,8 +893,7 @@ test_expect_success 'do not follow renames for empty files' '
 	git mv empty1 empty2 &&
 	git commit -m rename &&
 	test_must_fail git merge empty-base &&
-	>expect &&
-	test_cmp expect empty2
+	test_must_be_empty empty2
 '
 
 test_done

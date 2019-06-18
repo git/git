@@ -221,13 +221,13 @@ static struct packed_ref_store *packed_downcast(struct ref_store *ref_store,
 	struct packed_ref_store *refs;
 
 	if (ref_store->be != &refs_be_packed)
-		die("BUG: ref_store is type \"%s\" not \"packed\" in %s",
+		BUG("ref_store is type \"%s\" not \"packed\" in %s",
 		    ref_store->be->name, caller);
 
 	refs = (struct packed_ref_store *)ref_store;
 
 	if ((refs->store_flags & required_flags) != required_flags)
-		die("BUG: unallowed operation (%s), requires %x, has %x\n",
+		BUG("unallowed operation (%s), requires %x, has %x\n",
 		    caller, required_flags, refs->store_flags);
 
 	return refs;
@@ -274,8 +274,8 @@ struct snapshot_record {
 static int cmp_packed_ref_records(const void *v1, const void *v2)
 {
 	const struct snapshot_record *e1 = v1, *e2 = v2;
-	const char *r1 = e1->start + GIT_SHA1_HEXSZ + 1;
-	const char *r2 = e2->start + GIT_SHA1_HEXSZ + 1;
+	const char *r1 = e1->start + the_hash_algo->hexsz + 1;
+	const char *r2 = e2->start + the_hash_algo->hexsz + 1;
 
 	while (1) {
 		if (*r1 == '\n')
@@ -297,7 +297,7 @@ static int cmp_packed_ref_records(const void *v1, const void *v2)
  */
 static int cmp_record_to_refname(const char *rec, const char *refname)
 {
-	const char *r1 = rec + GIT_SHA1_HEXSZ + 1;
+	const char *r1 = rec + the_hash_algo->hexsz + 1;
 	const char *r2 = refname;
 
 	while (1) {
@@ -344,7 +344,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		if (!eol)
 			/* The safety check should prevent this. */
 			BUG("unterminated line found in packed-refs");
-		if (eol - pos < GIT_SHA1_HEXSZ + 2)
+		if (eol - pos < the_hash_algo->hexsz + 2)
 			die_invalid_line(snapshot->refs->path,
 					 pos, eof - pos);
 		eol++;
@@ -456,7 +456,7 @@ static void verify_buffer_safe(struct snapshot *snapshot)
 		return;
 
 	last_line = find_start_of_record(start, eof - 1);
-	if (*(eof - 1) != '\n' || eof - last_line < GIT_SHA1_HEXSZ + 2)
+	if (*(eof - 1) != '\n' || eof - last_line < the_hash_algo->hexsz + 2)
 		die_invalid_line(snapshot->refs->path,
 				 last_line, eof - last_line);
 }
@@ -499,6 +499,7 @@ static int load_contents(struct snapshot *snapshot)
 	size = xsize_t(st.st_size);
 
 	if (!size) {
+		close(fd);
 		return 0;
 	} else if (mmap_strategy == MMAP_NONE || size <= SMALL_FILE_SIZE) {
 		snapshot->buf = xmalloc(size);
@@ -795,7 +796,7 @@ static int next_record(struct packed_ref_iterator *iter)
 
 	iter->base.flags = REF_ISPACKED;
 
-	if (iter->eof - p < GIT_SHA1_HEXSZ + 2 ||
+	if (iter->eof - p < the_hash_algo->hexsz + 2 ||
 	    parse_oid_hex(p, &iter->oid, &p) ||
 	    !isspace(*p++))
 		die_invalid_line(iter->snapshot->refs->path,
@@ -825,7 +826,7 @@ static int next_record(struct packed_ref_iterator *iter)
 
 	if (iter->pos < iter->eof && *iter->pos == '^') {
 		p = iter->pos + 1;
-		if (iter->eof - p < GIT_SHA1_HEXSZ + 1 ||
+		if (iter->eof - p < the_hash_algo->hexsz + 1 ||
 		    parse_oid_hex(p, &iter->peeled, &p) ||
 		    *p++ != '\n')
 			die_invalid_line(iter->snapshot->refs->path,
@@ -1036,7 +1037,7 @@ void packed_refs_unlock(struct ref_store *ref_store)
 			"packed_refs_unlock");
 
 	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: packed_refs_unlock() called when not locked");
+		BUG("packed_refs_unlock() called when not locked");
 	rollback_lock_file(&refs->lock);
 }
 
@@ -1089,7 +1090,7 @@ static int write_with_updates(struct packed_ref_store *refs,
 	char *packed_refs_path;
 
 	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: write_with_updates() called while unlocked");
+		BUG("write_with_updates() called while unlocked");
 
 	/*
 	 * If packed-refs is a symlink, we want to overwrite the
@@ -1159,7 +1160,7 @@ static int write_with_updates(struct packed_ref_store *refs,
 						    "reference already exists",
 						    update->refname);
 					goto error;
-				} else if (oidcmp(&update->old_oid, iter->oid)) {
+				} else if (!oideq(&update->old_oid, iter->oid)) {
 					strbuf_addf(err, "cannot update ref '%s': "
 						    "is at %s but expected %s",
 						    update->refname,
@@ -1563,21 +1564,21 @@ static int packed_create_symref(struct ref_store *ref_store,
 			       const char *refname, const char *target,
 			       const char *logmsg)
 {
-	die("BUG: packed reference store does not support symrefs");
+	BUG("packed reference store does not support symrefs");
 }
 
 static int packed_rename_ref(struct ref_store *ref_store,
 			    const char *oldrefname, const char *newrefname,
 			    const char *logmsg)
 {
-	die("BUG: packed reference store does not support renaming references");
+	BUG("packed reference store does not support renaming references");
 }
 
 static int packed_copy_ref(struct ref_store *ref_store,
 			   const char *oldrefname, const char *newrefname,
 			   const char *logmsg)
 {
-	die("BUG: packed reference store does not support copying references");
+	BUG("packed reference store does not support copying references");
 }
 
 static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_store)
@@ -1610,7 +1611,7 @@ static int packed_create_reflog(struct ref_store *ref_store,
 			       const char *refname, int force_create,
 			       struct strbuf *err)
 {
-	die("BUG: packed reference store does not support reflogs");
+	BUG("packed reference store does not support reflogs");
 }
 
 static int packed_delete_reflog(struct ref_store *ref_store,

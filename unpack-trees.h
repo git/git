@@ -1,10 +1,14 @@
 #ifndef UNPACK_TREES_H
 #define UNPACK_TREES_H
 
+#include "cache.h"
+#include "argv-array.h"
 #include "string-list.h"
+#include "tree-walk.h"
 
 #define MAX_UNPACK_TREES 8
 
+struct cache_entry;
 struct unpack_trees_options;
 struct exclude_list;
 
@@ -32,10 +36,16 @@ enum unpack_trees_error_types {
 void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 				  const char *cmd);
 
+/*
+ * Frees resources allocated by setup_unpack_trees_porcelain().
+ */
+void clear_unpack_trees_porcelain(struct unpack_trees_options *opts);
+
 struct unpack_trees_options {
 	unsigned int reset,
 		     merge,
 		     update,
+		     clone,
 		     index_only,
 		     nontrivial_merge,
 		     trivial_merges_only,
@@ -46,7 +56,7 @@ struct unpack_trees_options {
 		     diff_index_cached,
 		     debug_unpack,
 		     skip_sparse_checkout,
-		     gently,
+		     quiet,
 		     exiting_early,
 		     show_all_errors,
 		     dry_run;
@@ -56,6 +66,7 @@ struct unpack_trees_options {
 	struct pathspec *pathspec;
 	merge_fn_t fn;
 	const char *msgs[NB_UNPACK_TREES_ERROR_TYPES];
+	struct argv_array msgs_to_free;
 	/*
 	 * Store error messages in an array, each case
 	 * corresponding to a error message type
@@ -75,8 +86,11 @@ struct unpack_trees_options {
 	struct exclude_list *el; /* for internal use */
 };
 
-extern int unpack_trees(unsigned n, struct tree_desc *t,
-		struct unpack_trees_options *options);
+int unpack_trees(unsigned n, struct tree_desc *t,
+		 struct unpack_trees_options *options);
+
+int verify_uptodate(const struct cache_entry *ce,
+		    struct unpack_trees_options *o);
 
 int threeway_merge(const struct cache_entry * const *stages,
 		   struct unpack_trees_options *o);

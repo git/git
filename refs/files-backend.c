@@ -10,6 +10,7 @@
 #include "../object.h"
 #include "../dir.h"
 #include "../chdir-notify.h"
+#include "worktree.h"
 
 /*
  * This backend uses the following flags in `ref_update::flags` for
@@ -62,10 +63,6 @@ struct ref_lock {
 	struct object_id old_oid;
 };
 
-/*
- * Future: need to be in "struct repository"
- * when doing a full libification.
- */
 struct files_ref_store {
 	struct ref_store base;
 	unsigned int store_flags;
@@ -125,7 +122,7 @@ static void files_assert_main_repository(struct files_ref_store *refs,
 	if (refs->store_flags & REF_STORE_MAIN)
 		return;
 
-	die("BUG: operation %s only allowed for main ref store", caller);
+	BUG("operation %s only allowed for main ref store", caller);
 }
 
 /*
@@ -141,16 +138,35 @@ static struct files_ref_store *files_downcast(struct ref_store *ref_store,
 	struct files_ref_store *refs;
 
 	if (ref_store->be != &refs_be_files)
-		die("BUG: ref_store is type \"%s\" not \"files\" in %s",
+		BUG("ref_store is type \"%s\" not \"files\" in %s",
 		    ref_store->be->name, caller);
 
 	refs = (struct files_ref_store *)ref_store;
 
 	if ((refs->store_flags & required_flags) != required_flags)
-		die("BUG: operation %s requires abilities 0x%x, but only have 0x%x",
+		BUG("operation %s requires abilities 0x%x, but only have 0x%x",
 		    caller, required_flags, refs->store_flags);
 
 	return refs;
+}
+
+static void files_reflog_path_other_worktrees(struct files_ref_store *refs,
+					      struct strbuf *sb,
+					      const char *refname)
+{
+	const char *real_ref;
+	const char *worktree_name;
+	int length;
+
+	if (parse_worktree_ref(refname, &worktree_name, &length, &real_ref))
+		BUG("refname %s is not a other-worktree ref", refname);
+
+	if (worktree_name)
+		strbuf_addf(sb, "%s/worktrees/%.*s/logs/%s", refs->gitcommondir,
+			    length, worktree_name, real_ref);
+	else
+		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir,
+			    real_ref);
 }
 
 static void files_reflog_path(struct files_ref_store *refs,
@@ -162,11 +178,15 @@ static void files_reflog_path(struct files_ref_store *refs,
 	case REF_TYPE_PSEUDOREF:
 		strbuf_addf(sb, "%s/logs/%s", refs->gitdir, refname);
 		break;
+	case REF_TYPE_OTHER_PSEUDOREF:
+	case REF_TYPE_MAIN_PSEUDOREF:
+		files_reflog_path_other_worktrees(refs, sb, refname);
+		break;
 	case REF_TYPE_NORMAL:
 		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, refname);
 		break;
 	default:
-		die("BUG: unknown ref type %d of ref %s",
+		BUG("unknown ref type %d of ref %s",
 		    ref_type(refname), refname);
 	}
 }
@@ -180,12 +200,44 @@ static void files_ref_path(struct files_ref_store *refs,
 	case REF_TYPE_PSEUDOREF:
 		strbuf_addf(sb, "%s/%s", refs->gitdir, refname);
 		break;
+	case REF_TYPE_MAIN_PSEUDOREF:
+		if (!skip_prefix(refname, "main-worktree/", &refname))
+			BUG("ref %s is not a main pseudoref", refname);
+		/* fallthrough */
+	case REF_TYPE_OTHER_PSEUDOREF:
 	case REF_TYPE_NORMAL:
 		strbuf_addf(sb, "%s/%s", refs->gitcommondir, refname);
 		break;
 	default:
-		die("BUG: unknown ref type %d of ref %s",
+		BUG("unknown ref type %d of ref %s",
 		    ref_type(refname), refname);
+	}
+}
+
+/*
+ * Manually add refs/bisect, refs/rewritten and refs/worktree, which, being
+ * per-worktree, might not appear in the directory listing for
+ * refs/ in the main repo.
+ */
+static void add_per_worktree_entries_to_dir(struct ref_dir *dir, const char *dirname)
+{
+	const char *prefixes[] = { "refs/bisect/", "refs/worktree/", "refs/rewritten/" };
+	int ip;
+
+	if (strcmp(dirname, "refs/"))
+		return;
+
+	for (ip = 0; ip < ARRAY_SIZE(prefixes); ip++) {
+		const char *prefix = prefixes[ip];
+		int prefix_len = strlen(prefix);
+		struct ref_entry *child_entry;
+		int pos;
+
+		pos = search_ref_dir(dir, prefix, prefix_len);
+		if (pos >= 0)
+			continue;
+		child_entry = create_dir_entry(dir->cache, prefix, prefix_len, 1);
+		add_entry_to_dir(dir, child_entry);
 	}
 }
 
@@ -272,20 +324,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	strbuf_release(&path);
 	closedir(d);
 
-	/*
-	 * Manually add refs/bisect, which, being per-worktree, might
-	 * not appear in the directory listing for refs/ in the main
-	 * repo.
-	 */
-	if (!strcmp(dirname, "refs/")) {
-		int pos = search_ref_dir(dir, "refs/bisect/", 12);
-
-		if (pos < 0) {
-			struct ref_entry *child_entry = create_dir_entry(
-					dir->cache, "refs/bisect/", 12, 1);
-			add_entry_to_dir(dir, child_entry);
-		}
-	}
+	add_per_worktree_entries_to_dir(dir, dirname);
 }
 
 static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
@@ -367,7 +406,7 @@ stat_ref:
 	/* Follow "normalized" - ie "refs/.." symlinks by hand */
 	if (S_ISLNK(st.st_mode)) {
 		strbuf_reset(&sb_contents);
-		if (strbuf_readlink(&sb_contents, path, 0) < 0) {
+		if (strbuf_readlink(&sb_contents, path, st.st_size) < 0) {
 			if (errno == ENOENT || errno == EINVAL)
 				/* inconsistent with lstat; retry */
 				goto stat_ref;
@@ -845,7 +884,7 @@ static int verify_lock(struct ref_store *ref_store, struct ref_lock *lock,
 			return 0;
 		}
 	}
-	if (old_oid && oidcmp(&lock->old_oid, old_oid)) {
+	if (old_oid && !oideq(&lock->old_oid, old_oid)) {
 		strbuf_addf(err, "ref '%s' is at %s but expected %s",
 			    lock->ref_name,
 			    oid_to_hex(&lock->old_oid),
@@ -1586,26 +1625,17 @@ static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 			    const struct object_id *new_oid,
 			    const char *committer, const char *msg)
 {
-	int msglen, written;
-	unsigned maxlen, len;
-	char *logrec;
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
 
-	msglen = msg ? strlen(msg) : 0;
-	maxlen = strlen(committer) + msglen + 100;
-	logrec = xmalloc(maxlen);
-	len = xsnprintf(logrec, maxlen, "%s %s %s\n",
-			oid_to_hex(old_oid),
-			oid_to_hex(new_oid),
-			committer);
-	if (msglen)
-		len += copy_reflog_msg(logrec + len - 1, msg) - 1;
-
-	written = len <= maxlen ? write_in_full(fd, logrec, len) : -1;
-	free(logrec);
-	if (written < 0)
-		return -1;
-
-	return 0;
+	strbuf_addf(&sb, "%s %s %s", oid_to_hex(old_oid), oid_to_hex(new_oid), committer);
+	if (msg && *msg)
+		copy_reflog_msg(&sb, msg);
+	strbuf_addch(&sb, '\n');
+	if (write_in_full(fd, sb.buf, sb.len) < 0)
+		ret = -1;
+	strbuf_release(&sb);
+	return ret;
 }
 
 static int files_log_ref_write(struct files_ref_store *refs,
@@ -1664,7 +1694,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 	struct object *o;
 	int fd;
 
-	o = parse_object(oid);
+	o = parse_object(the_repository, oid);
 	if (!o) {
 		strbuf_addf(err,
 			    "trying to write ref '%s' with nonexistent object %s",
@@ -1680,7 +1710,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 		return -1;
 	}
 	fd = get_lock_file_fd(&lock->lk);
-	if (write_in_full(fd, oid_to_hex(oid), GIT_SHA1_HEXSZ) < 0 ||
+	if (write_in_full(fd, oid_to_hex(oid), the_hash_algo->hexsz) < 0 ||
 	    write_in_full(fd, &term, 1) < 0 ||
 	    close_ref_gently(lock) < 0) {
 		strbuf_addf(err,
@@ -2010,7 +2040,7 @@ static int files_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 
 	}
 	if (!ret && sb.len)
-		die("BUG: reverse reflog parser had leftover data");
+		BUG("reverse reflog parser had leftover data");
 
 	fclose(logfp);
 	strbuf_release(&sb);
@@ -2088,7 +2118,7 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 static int files_reflog_iterator_peel(struct ref_iterator *ref_iterator,
 				   struct object_id *peeled)
 {
-	die("BUG: ref_iterator_peel() called for reflog_iterator");
+	BUG("ref_iterator_peel() called for reflog_iterator");
 }
 
 static int files_reflog_iterator_abort(struct ref_iterator *ref_iterator)
@@ -2230,8 +2260,7 @@ static int split_head_update(struct ref_update *update,
  * Note that the new update will itself be subject to splitting when
  * the iteration gets to it.
  */
-static int split_symref_update(struct files_ref_store *refs,
-			       struct ref_update *update,
+static int split_symref_update(struct ref_update *update,
 			       const char *referent,
 			       struct ref_transaction *transaction,
 			       struct string_list *affected_refnames,
@@ -2320,7 +2349,7 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
 			 struct strbuf *err)
 {
 	if (!(update->flags & REF_HAVE_OLD) ||
-		   !oidcmp(oid, &update->old_oid))
+		   oideq(oid, &update->old_oid))
 		return 0;
 
 	if (is_null_oid(&update->old_oid))
@@ -2425,7 +2454,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * of processing the split-off update, so we
 			 * don't have to do it here.
 			 */
-			ret = split_symref_update(refs, update,
+			ret = split_symref_update(update,
 						  referent.buf, transaction,
 						  affected_refnames, err);
 			if (ret)
@@ -2456,7 +2485,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	    !(update->flags & REF_DELETING) &&
 	    !(update->flags & REF_LOG_ONLY)) {
 		if (!(update->type & REF_ISSYMREF) &&
-		    !oidcmp(&lock->old_oid, &update->new_oid)) {
+		    oideq(&lock->old_oid, &update->new_oid)) {
 			/*
 			 * The reference already has the desired
 			 * value, so we don't need to write it.
@@ -2672,18 +2701,32 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 		if (is_packed_transaction_needed(refs->packed_ref_store,
 						 packed_transaction)) {
 			ret = ref_transaction_prepare(packed_transaction, err);
+			/*
+			 * A failure during the prepare step will abort
+			 * itself, but not free. Do that now, and disconnect
+			 * from the files_transaction so it does not try to
+			 * abort us when we hit the cleanup code below.
+			 */
+			if (ret) {
+				ref_transaction_free(packed_transaction);
+				backend_data->packed_transaction = NULL;
+			}
 		} else {
 			/*
 			 * We can skip rewriting the `packed-refs`
 			 * file. But we do need to leave it locked, so
 			 * that somebody else doesn't pack a reference
 			 * that we are trying to delete.
+			 *
+			 * We need to disconnect our transaction from
+			 * backend_data, since the abort (whether successful or
+			 * not) will free it.
 			 */
+			backend_data->packed_transaction = NULL;
 			if (ref_transaction_abort(packed_transaction, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
-			backend_data->packed_transaction = NULL;
 		}
 	}
 
@@ -2873,7 +2916,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	assert(err);
 
 	if (transaction->state != REF_TRANSACTION_OPEN)
-		die("BUG: commit called for transaction that is not open");
+		BUG("commit called for transaction that is not open");
 
 	/* Fail if a refname appears more than once in the transaction: */
 	for (i = 0; i < transaction->nr; i++)
@@ -2899,7 +2942,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	 */
 	if (refs_for_each_rawref(&refs->base, ref_present,
 				 &affected_refnames))
-		die("BUG: initial ref transaction called with existing refs");
+		BUG("initial ref transaction called with existing refs");
 
 	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store, err);
 	if (!packed_transaction) {
@@ -2912,7 +2955,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 
 		if ((update->flags & REF_HAVE_OLD) &&
 		    !is_null_oid(&update->old_oid))
-			die("BUG: initial ref transaction with old_sha1 set");
+			BUG("initial ref transaction with old_sha1 set");
 		if (refs_verify_refname_available(&refs->base, update->refname,
 						  &affected_refnames, NULL,
 						  err)) {
@@ -2995,7 +3038,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "reflog_expire");
-	static struct lock_file reflog_lock;
+	struct lock_file reflog_lock = LOCK_INIT;
 	struct expire_reflog_cb cb;
 	struct ref_lock *lock;
 	struct strbuf log_file_sb = STRBUF_INIT;
@@ -3074,7 +3117,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 			rollback_lock_file(&reflog_lock);
 		} else if (update &&
 			   (write_in_full(get_lock_file_fd(&lock->lk),
-				oid_to_hex(&cb.last_kept_oid), GIT_SHA1_HEXSZ) < 0 ||
+				oid_to_hex(&cb.last_kept_oid), the_hash_algo->hexsz) < 0 ||
 			    write_str_in_full(get_lock_file_fd(&lock->lk), "\n") < 0 ||
 			    close_ref_gently(lock) < 0)) {
 			status |= error("couldn't write %s",

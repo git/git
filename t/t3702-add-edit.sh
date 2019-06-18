@@ -40,7 +40,6 @@ test_expect_success 'setup' '
 
 cat > expected-patch << EOF
 diff --git a/file b/file
-index b9834b5..9020acb 100644
 --- a/file
 +++ b/file
 @@ -1,11 +1,6 @@
@@ -80,7 +79,6 @@ EOF
 
 cat > expected << EOF
 diff --git a/file b/file
-index b9834b5..ef6e94c 100644
 --- a/file
 +++ b/file
 @@ -1,10 +1,12 @@
@@ -100,7 +98,7 @@ EOF
 
 echo "#!$SHELL_PATH" >fake-editor.sh
 cat >> fake-editor.sh <<\EOF
-mv -f "$1" orig-patch &&
+egrep -v '^index' "$1" >orig-patch &&
 mv -f patch "$1"
 EOF
 
@@ -112,9 +110,10 @@ test_expect_success 'add -e' '
 	cp second-part file &&
 	git add -e &&
 	test_cmp second-part file &&
-	test_cmp orig-patch expected-patch &&
-	git diff --cached > out &&
-	test_cmp out expected
+	test_cmp expected-patch orig-patch &&
+	git diff --cached >actual &&
+	grep -v index actual >out &&
+	test_cmp expected out
 
 '
 

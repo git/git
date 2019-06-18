@@ -342,7 +342,7 @@ Fixes since v2.16
    validate the data and connected-ness of objects in the received
    pack; the code to perform this check has been taught about the
    narrow clone's convention that missing objects that are reachable
-   from objects in a pack that came from a promissor remote is OK.
+   from objects in a pack that came from a promisor remote is OK.
 
  * There was an unused file-scope static variable left in http.c when
    building for versions of libCURL that is older than 7.19.4, which

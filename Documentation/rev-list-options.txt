@@ -13,8 +13,6 @@ has a line that matches `<pattern>`), unless otherwise noted.
 Note that these are applied before commit
 ordering and formatting options, such as `--reverse`.
 
---
-
 -<number>::
 -n <number>::
 --max-count=<number>::
@@ -272,13 +270,13 @@ depending on a few rules:
 +
 --
 1. If the starting point is specified as `ref@{Nth}`, show the index
-format.
+   format.
 +
 2. If the starting point was specified as `ref@{now}`, show the
-timestamp format.
+   timestamp format.
 +
 3. If neither was used, but `--date` was given on the command line, show
-the timestamp in the format requested by `--date`.
+   the timestamp in the format requested by `--date`.
 +
 4. Otherwise, show the index format.
 --
@@ -307,8 +305,6 @@ ifdef::git-rev-list[]
 	Show progress reports on stderr as objects are considered. The
 	`<header>` text will be printed with each progress update.
 endif::git-rev-list[]
-
---
 
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -729,15 +725,26 @@ specification contained in the blob (or blob-expression) '<blob-ish>'
 to omit blobs that would not be not required for a sparse checkout on
 the requested refs.
 +
-The form '--filter=sparse:path=<path>' similarly uses a sparse-checkout
-specification contained in <path>.
+The form '--filter=tree:<depth>' omits all blobs and trees whose depth
+from the root tree is >= <depth> (minimum depth if an object is located
+at multiple depths in the commits traversed). <depth>=0 will not include
+any trees or blobs unless included explicitly in the command-line (or
+standard input when --stdin is used). <depth>=1 will include only the
+tree and blobs which are referenced directly by a commit reachable from
+<commit> or an explicitly-given object. <depth>=2 is like <depth>=1
+while also including trees and blobs one more level removed from an
+explicitly-given commit or tree.
++
+Note that the form '--filter=sparse:path=<path>' that wants to read
+from an arbitrary path on the filesystem has been dropped for security
+reasons.
 
 --no-filter::
 	Turn off any previous `--filter=` argument.
 
 --filter-print-omitted::
 	Only useful with `--filter=`; prints a list of the objects omitted
-	by the filter.	Object IDs are prefixed with a ``~'' character.
+	by the filter.  Object IDs are prefixed with a ``~'' character.
 
 --missing=<missing-action>::
 	A debug option to help with future "partial clone" development.
@@ -756,7 +763,6 @@ Unexpected missing objects will raise an error.
 +
 The form '--missing=print' is like 'allow-any', but will also print a
 list of the missing objects.  Object IDs are prefixed with a ``?'' character.
-endif::git-rev-list[]
 
 --exclude-promisor-objects::
 	(For internal use only.)  Prefilter object traversal at
@@ -764,6 +770,7 @@ endif::git-rev-list[]
 	stronger than `--missing=allow-promisor` because it limits the
 	traversal, rather than just silencing errors about missing
 	objects.
+endif::git-rev-list[]
 
 --no-walk[=(sorted|unsorted)]::
 	Only show the given commits, but do not traverse their ancestors.
@@ -799,12 +806,13 @@ include::pretty-options.txt[]
 	author's). If `-local` is appended to the format (e.g.,
 	`iso-local`), the user's local time zone is used instead.
 +
+--
 `--date=relative` shows dates relative to the current time,
 e.g. ``2 hours ago''. The `-local` option has no effect for
 `--date=relative`.
-+
+
 `--date=local` is an alias for `--date=default-local`.
-+
+
 `--date=iso` (or `--date=iso8601`) shows timestamps in a ISO 8601-like format.
 The differences to the strict ISO 8601 format are:
 
@@ -812,15 +820,14 @@ The differences to the strict ISO 8601 format are:
 	- a space between time and time zone
 	- no colon between hours and minutes of the time zone
 
-+
 `--date=iso-strict` (or `--date=iso8601-strict`) shows timestamps in strict
 ISO 8601 format.
-+
+
 `--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
 format, often found in email messages.
-+
+
 `--date=short` shows only the date, but not the time, in `YYYY-MM-DD` format.
-+
+
 `--date=raw` shows the date as seconds since the epoch (1970-01-01
 00:00:00 UTC), followed by a space, and then the timezone as an offset
 from UTC (a `+` or `-` with four digits; the first two are hours, and
@@ -829,21 +836,28 @@ with `strftime("%s %z")`).
 Note that the `-local` option does not affect the seconds-since-epoch
 value (which is always measured in UTC), but does switch the accompanying
 timezone value.
-+
+
+`--date=human` shows the timezone if the timezone does not match the
+current time-zone, and doesn't print the whole date if that matches
+(ie skip printing year for dates that are "this year", but also skip
+the whole date itself if it's in the last few days and we can just say
+what weekday it was).  For older dates the hour and minute is also
+omitted.
+
 `--date=unix` shows the date as a Unix epoch timestamp (seconds since
 1970).  As with `--raw`, this is always in UTC and therefore `-local`
 has no effect.
-+
+
 `--date=format:...` feeds the format `...` to your system `strftime`,
 except for %z and %Z, which are handled internally.
 Use `--date=format:%c` to show the date in your system locale's
 preferred format.  See the `strftime` manual for a complete list of
 format placeholders. When using `-local`, the correct syntax is
 `--date=format-local:...`.
-+
+
 `--date=default` is the default format, and is similar to
 `--date=rfc2822`, with a few exceptions:
-
+--
 	- there is no comma after the day-of-week
 
 	- the time zone is omitted when the local time zone is used
@@ -946,6 +960,13 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	patch output by omitting uninteresting hunks whose contents in
 	the parents have only two variants and the merge result picks
 	one of them without modification.
+
+--combined-all-paths::
+	This flag causes combined diffs (used for merge commits) to
+	list the name of the file from all parents.  It thus only has
+	effect when -c or --cc are specified, and is likely only
+	useful if filename changes are detected (i.e. when either
+	rename or copy detection have been requested).
 
 -m::
 	This flag makes the merge commits show the full diff like

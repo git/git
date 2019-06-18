@@ -1,12 +1,15 @@
 #ifndef ATTR_H
 #define ATTR_H
 
+struct index_state;
+
 /* An attribute is a pointer to this opaque structure */
 struct git_attr;
 
 /* opaque structures used internally for attribute collection */
 struct all_attrs_item;
 struct attr_stack;
+struct index_state;
 
 /*
  * Given a string, return the gitattribute object that
@@ -42,40 +45,41 @@ struct attr_check {
 	struct attr_stack *stack;
 };
 
-extern struct attr_check *attr_check_alloc(void);
-extern struct attr_check *attr_check_initl(const char *, ...);
-extern struct attr_check *attr_check_dup(const struct attr_check *check);
+struct attr_check *attr_check_alloc(void);
+struct attr_check *attr_check_initl(const char *, ...);
+struct attr_check *attr_check_dup(const struct attr_check *check);
 
-extern struct attr_check_item *attr_check_append(struct attr_check *check,
-						 const struct git_attr *attr);
+struct attr_check_item *attr_check_append(struct attr_check *check,
+					  const struct git_attr *attr);
 
-extern void attr_check_reset(struct attr_check *check);
-extern void attr_check_clear(struct attr_check *check);
-extern void attr_check_free(struct attr_check *check);
+void attr_check_reset(struct attr_check *check);
+void attr_check_clear(struct attr_check *check);
+void attr_check_free(struct attr_check *check);
 
 /*
  * Return the name of the attribute represented by the argument.  The
  * return value is a pointer to a null-delimited string that is part
  * of the internal data structure; it should not be modified or freed.
  */
-extern const char *git_attr_name(const struct git_attr *);
+const char *git_attr_name(const struct git_attr *);
 
-extern int git_check_attr(const char *path, struct attr_check *check);
+void git_check_attr(const struct index_state *istate,
+		    const char *path, struct attr_check *check);
 
 /*
  * Retrieve all attributes that apply to the specified path.
  * check holds the attributes and their values.
  */
-extern void git_all_attrs(const char *path, struct attr_check *check);
+void git_all_attrs(const struct index_state *istate,
+		   const char *path, struct attr_check *check);
 
 enum git_attr_direction {
 	GIT_ATTR_CHECKIN,
 	GIT_ATTR_CHECKOUT,
 	GIT_ATTR_INDEX
 };
-void git_attr_set_direction(enum git_attr_direction new_direction,
-			    struct index_state *istate);
+void git_attr_set_direction(enum git_attr_direction new_direction);
 
-extern void attr_start(void);
+void attr_start(void);
 
 #endif /* ATTR_H */

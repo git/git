@@ -40,6 +40,11 @@ test_expect_success clone '
 	git clone "file://$UNCPATH" clone
 '
 
+test_expect_success 'clone with backslashed path' '
+	BACKSLASHED="$(echo "$UNCPATH" | tr / \\\\)" &&
+	git clone "$BACKSLASHED" backslashed
+'
+
 test_expect_success push '
 	(
 		cd clone &&
@@ -55,6 +60,18 @@ test_expect_success MINGW 'remote nick cannot contain backslashes' '
 	BACKSLASHED="$(winpwd | tr / \\\\)" &&
 	git ls-remote "$BACKSLASHED" >out 2>err &&
 	test_i18ngrep ! "unable to access" err
+'
+
+test_expect_success 'unc alternates' '
+	tree="$(git rev-parse HEAD:)" &&
+	mkdir test-unc-alternate &&
+	(
+		cd test-unc-alternate &&
+		git init &&
+		test_must_fail git show $tree &&
+		echo "$UNCPATH/.git/objects" >.git/objects/info/alternates &&
+		git show $tree
+	)
 '
 
 test_done

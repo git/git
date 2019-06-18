@@ -38,8 +38,9 @@ OPTIONS
 	started.
 
 --reset::
-        Same as -m, except that unmerged entries are discarded
-        instead of failing.
+	Same as -m, except that unmerged entries are discarded instead
+	of failing. When used with `-u`, updates leading to loss of
+	working tree changes will not abort the operation.
 
 -u::
 	After a successful merge, update the files in the work
@@ -128,11 +129,15 @@ OPTIONS
 	Instead of reading tree object(s) into the index, just empty
 	it.
 
+-q::
+--quiet::
+	Quiet, suppress feedback messages.
+
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
 
 
-Merging
+MERGING
 -------
 If `-m` is specified, 'git read-tree' can perform 3 kinds of
 merge, a single tree merge if only 1 tree is given, a
@@ -382,7 +387,7 @@ middle of doing, and when your working tree is ready (i.e. you
 have finished your work-in-progress), attempt the merge again.
 
 
-Sparse checkout
+SPARSE CHECKOUT
 ---------------
 
 "Sparse checkout" allows populating the working directory sparsely.

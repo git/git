@@ -266,7 +266,7 @@ The `pu` branch will be updated even if it is does not fast-forward,
 because it is prefixed with a plus sign; `tmp` will not be.
 
 * Peek at a remote's branch, without configuring the remote in your local
-repository:
+  repository:
 +
 ------------------------------------------------
 $ git fetch git://git.kernel.org/pub/scm/git/git.git maint

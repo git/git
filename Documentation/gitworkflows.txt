@@ -107,7 +107,7 @@ the unstable branch into the stable one.  Hence the following:
 .Merge upwards
 [caption="Rule: "]
 =====================================
-Always commit your fixes to the oldest supported branch that require
+Always commit your fixes to the oldest supported branch that requires
 them.  Then (periodically) merge the integration branches upwards into each
 other.
 =====================================

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "repository.h"
 #include "pack.h"
 #include "pack-revindex.h"
 #include "progress.h"
@@ -47,7 +48,8 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	return data_crc != ntohl(*index_crc);
 }
 
-static int verify_packfile(struct packed_git *p,
+static int verify_packfile(struct repository *r,
+			   struct packed_git *p,
 			   struct pack_window **w_curs,
 			   verify_fn fn,
 			   struct progress *progress, uint32_t base_count)
@@ -78,10 +80,10 @@ static int verify_packfile(struct packed_git *p,
 	} while (offset < pack_sig_ofs);
 	the_hash_algo->final_fn(hash, &ctx);
 	pack_sig = use_pack(p, w_curs, pack_sig_ofs, NULL);
-	if (hashcmp(hash, pack_sig))
+	if (!hasheq(hash, pack_sig))
 		err = error("%s pack checksum mismatch",
 			    p->pack_name);
-	if (hashcmp(index_base + index_size - the_hash_algo->hexsz, pack_sig))
+	if (!hasheq(index_base + index_size - the_hash_algo->hexsz, pack_sig))
 		err = error("%s pack checksum does not match its index",
 			    p->pack_name);
 	unuse_pack(w_curs);
@@ -134,7 +136,7 @@ static int verify_packfile(struct packed_git *p,
 			data = NULL;
 			data_valid = 0;
 		} else {
-			data = unpack_entry(p, entries[i].offset, &type, &size);
+			data = unpack_entry(r, p, entries[i].offset, &type, &size);
 			data_valid = 1;
 		}
 
@@ -179,13 +181,13 @@ int verify_pack_index(struct packed_git *p)
 	the_hash_algo->init_fn(&ctx);
 	the_hash_algo->update_fn(&ctx, index_base, (unsigned int)(index_size - the_hash_algo->rawsz));
 	the_hash_algo->final_fn(hash, &ctx);
-	if (hashcmp(hash, index_base + index_size - the_hash_algo->rawsz))
+	if (!hasheq(hash, index_base + index_size - the_hash_algo->rawsz))
 		err = error("Packfile index for %s hash mismatch",
 			    p->pack_name);
 	return err;
 }
 
-int verify_pack(struct packed_git *p, verify_fn fn,
+int verify_pack(struct repository *r, struct packed_git *p, verify_fn fn,
 		struct progress *progress, uint32_t base_count)
 {
 	int err = 0;
@@ -195,7 +197,7 @@ int verify_pack(struct packed_git *p, verify_fn fn,
 	if (!p->index_data)
 		return -1;
 
-	err |= verify_packfile(p, &w_curs, fn, progress, base_count);
+	err |= verify_packfile(r, p, &w_curs, fn, progress, base_count);
 	unuse_pack(&w_curs);
 
 	return err;

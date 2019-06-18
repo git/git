@@ -8,6 +8,7 @@
 #include "pack.h"
 #include "strbuf.h"
 #include "packfile.h"
+#include "object-store.h"
 
 static struct bulk_checkin_state {
 	unsigned plugged:1;
@@ -36,9 +37,9 @@ static void finish_bulk_checkin(struct bulk_checkin_state *state)
 		unlink(state->pack_tmp_name);
 		goto clear_exit;
 	} else if (state->nr_written == 1) {
-		hashclose(state->f, oid.hash, CSUM_FSYNC);
+		finalize_hashfile(state->f, oid.hash, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 	} else {
-		int fd = hashclose(state->f, oid.hash, 0);
+		int fd = finalize_hashfile(state->f, oid.hash, 0);
 		fixup_pack_header_footer(fd, oid.hash, state->pack_tmp_name,
 					 state->nr_written, oid.hash,
 					 state->offset);
@@ -66,12 +67,12 @@ static int already_written(struct bulk_checkin_state *state, struct object_id *o
 	int i;
 
 	/* The object may already exist in the repository */
-	if (has_sha1_file(oid->hash))
+	if (has_object_file(oid))
 		return 1;
 
 	/* Might want to keep the list sorted */
 	for (i = 0; i < state->nr_written; i++)
-		if (!oidcmp(&state->written[i]->oid, oid))
+		if (oideq(&state->written[i]->oid, oid))
 			return 1;
 
 	/* This is a new object we need to keep */
@@ -230,7 +231,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 		 * pack, and write into it.
 		 */
 		if (!idx)
-			die("BUG: should not happen");
+			BUG("should not happen");
 		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
 		finish_bulk_checkin(state);

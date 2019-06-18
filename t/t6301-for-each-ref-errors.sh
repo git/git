@@ -4,7 +4,7 @@ test_description='for-each-ref errors for broken refs'
 
 . ./test-lib.sh
 
-ZEROS=$_z40
+ZEROS=$ZERO_OID
 MISSING=abababababababababababababababababababab
 
 test_expect_success setup '

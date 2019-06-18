@@ -82,7 +82,8 @@ test_expect_success 'ff update, important file modified' '
 	touch subdir/e &&
 	git add subdir/e &&
 
-	test_must_fail git merge E^0
+	test_must_fail git merge E^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'resolve, trivial' '
@@ -91,7 +92,8 @@ test_expect_success 'resolve, trivial' '
 
 	touch random_file && git add random_file &&
 
-	test_must_fail git merge -s resolve C^0
+	test_must_fail git merge -s resolve C^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'resolve, non-trivial' '
@@ -100,7 +102,8 @@ test_expect_success 'resolve, non-trivial' '
 
 	touch random_file && git add random_file &&
 
-	test_must_fail git merge -s resolve D^0
+	test_must_fail git merge -s resolve D^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'recursive' '
@@ -109,7 +112,8 @@ test_expect_success 'recursive' '
 
 	touch random_file && git add random_file &&
 
-	test_must_fail git merge -s recursive C^0
+	test_must_fail git merge -s recursive C^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'recursive, when merge branch matches merge base' '
@@ -118,7 +122,45 @@ test_expect_success 'recursive, when merge branch matches merge base' '
 
 	touch random_file && git add random_file &&
 
-	test_must_fail git merge -s recursive F^0
+	test_must_fail git merge -s recursive F^0 &&
+	test_path_is_missing .git/MERGE_HEAD
+'
+
+test_expect_success 'merge-recursive, when index==head but head!=HEAD' '
+	git reset --hard &&
+	git checkout C^0 &&
+
+	# Make index match B
+	git diff C B -- | git apply --cached &&
+	# Merge B & F, with B as "head"
+	git merge-recursive A -- B F > out &&
+	test_i18ngrep "Already up to date" out
+'
+
+test_expect_success 'recursive, when file has staged changes not matching HEAD nor what a merge would give' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	mkdir subdir &&
+	test_seq 1 10 >subdir/a &&
+	git add subdir/a &&
+
+	# We have staged changes; merge should error out
+	test_must_fail git merge -s recursive E^0 2>err &&
+	test_i18ngrep "changes to the following files would be overwritten" err
+'
+
+test_expect_success 'recursive, when file has staged changes matching what a merge would give' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	mkdir subdir &&
+	test_seq 1 11 >subdir/a &&
+	git add subdir/a &&
+
+	# We have staged changes; merge should error out
+	test_must_fail git merge -s recursive E^0 2>err &&
+	test_i18ngrep "changes to the following files would be overwritten" err
 '
 
 test_expect_success 'octopus, unrelated file touched' '
@@ -127,7 +169,8 @@ test_expect_success 'octopus, unrelated file touched' '
 
 	touch random_file && git add random_file &&
 
-	test_must_fail git merge C^0 D^0
+	test_must_fail git merge C^0 D^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'octopus, related file removed' '
@@ -136,7 +179,8 @@ test_expect_success 'octopus, related file removed' '
 
 	git rm b &&
 
-	test_must_fail git merge C^0 D^0
+	test_must_fail git merge C^0 D^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'octopus, related file modified' '
@@ -145,7 +189,8 @@ test_expect_success 'octopus, related file modified' '
 
 	echo 12 >>a && git add a &&
 
-	test_must_fail git merge C^0 D^0
+	test_must_fail git merge C^0 D^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'ours' '
@@ -154,7 +199,8 @@ test_expect_success 'ours' '
 
 	touch random_file && git add random_file &&
 
-	test_must_fail git merge -s ours C^0
+	test_must_fail git merge -s ours C^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_expect_success 'subtree' '
@@ -163,7 +209,8 @@ test_expect_success 'subtree' '
 
 	touch random_file && git add random_file &&
 
-	test_must_fail git merge -s subtree E^0
+	test_must_fail git merge -s subtree E^0 &&
+	test_path_is_missing .git/MERGE_HEAD
 '
 
 test_done

@@ -1,6 +1,8 @@
 #ifndef MAILINFO_H
 #define MAILINFO_H
 
+#include "strbuf.h"
+
 #define MAX_BOUNDARIES 5
 
 struct mailinfo {
@@ -20,6 +22,8 @@ struct mailinfo {
 	struct strbuf *content[MAX_BOUNDARIES];
 	struct strbuf **content_top;
 	struct strbuf charset;
+	unsigned int format_flowed:1;
+	unsigned int delsp:1;
 	char *message_id;
 	enum  {
 		TE_DONTCARE, TE_QP, TE_BASE64
@@ -35,8 +39,8 @@ struct mailinfo {
 	int input_error;
 };
 
-extern void setup_mailinfo(struct mailinfo *);
-extern int mailinfo(struct mailinfo *, const char *msg, const char *patch);
-extern void clear_mailinfo(struct mailinfo *);
+void setup_mailinfo(struct mailinfo *);
+int mailinfo(struct mailinfo *, const char *msg, const char *patch);
+void clear_mailinfo(struct mailinfo *);
 
 #endif /* MAILINFO_H */

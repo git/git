@@ -30,7 +30,7 @@ test_expect_success 'git svn mkdirs recreates empty directories after git svn gc
 		do
 			if ! test -d "$i"
 			then
-				echo >&2 "$i does not exist"
+				echo >&2 "$i does not exist" &&
 				exit 1
 			fi
 		done

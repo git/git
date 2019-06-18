@@ -67,6 +67,13 @@ resolve_full_httpd () {
 		httpd_only="${httpd%% *}" # cut on first space
 		return
 		;;
+	*python*)
+		# server is started by running via generated gitweb.py in
+		# $fqgitdir/gitweb
+		full_httpd="$fqgitdir/gitweb/gitweb.py"
+		httpd_only="${httpd%% *}" # cut on first space
+		return
+		;;
 	esac
 
 	httpd_only="$(echo $httpd | cut -f1 -d' ')"
@@ -110,7 +117,7 @@ start_httpd () {
 
 	# don't quote $full_httpd, there can be arguments to it (-f)
 	case "$httpd" in
-	*mongoose*|*plackup*)
+	*mongoose*|*plackup*|*python*)
 		#These servers don't have a daemon mode so we'll have to fork it
 		$full_httpd "$conf" &
 		#Save the pid before doing anything else (we'll print it later)
@@ -326,13 +333,17 @@ EOF
 }
 
 apache2_conf () {
-	if test -z "$module_path"
-	then
-		test -d "/usr/lib/httpd/modules" &&
-			module_path="/usr/lib/httpd/modules"
-		test -d "/usr/lib/apache2/modules" &&
-			module_path="/usr/lib/apache2/modules"
-	fi
+	for candidate in \
+		/etc/httpd \
+		/usr/lib/apache2 \
+		/usr/lib/httpd ;
+	do
+		if test -d "$candidate/modules"
+		then
+			module_path="$candidate/modules"
+			break
+		fi
+	done
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
 	echo 'text/css css' > "$fqgitdir/mime.types"
@@ -356,7 +367,7 @@ EOF
 			break
 		fi
 	done
-	for mod in mime dir env log_config authz_core
+	for mod in mime dir env log_config authz_core unixd
 	do
 		if test -e $module_path/mod_${mod}.so
 		then
@@ -591,6 +602,121 @@ EOF
 	rm -f "$conf"
 }
 
+python_conf() {
+	# Python's builtin http.server and its CGI support is very limited.
+	# CGI handler is capable of running CGI script only from inside a directory.
+	# Trying to set cgi_directories=["/"] will add double slash to SCRIPT_NAME
+	# and that in turn breaks gitweb's relative link generation.
+
+	# create a simple web root where $fqgitdir/gitweb/$httpd_only is our root
+	mkdir -p "$fqgitdir/gitweb/$httpd_only/cgi-bin"
+	# Python http.server follows the symlinks
+	ln -sf "$root/gitweb.cgi" "$fqgitdir/gitweb/$httpd_only/cgi-bin/gitweb.cgi"
+	ln -sf "$root/static" "$fqgitdir/gitweb/$httpd_only/"
+
+	# generate a standalone 'python http.server' script in $fqgitdir/gitweb
+	# This asumes that python is in user's $PATH
+	# This script is Python 2 and 3 compatible
+	cat > "$fqgitdir/gitweb/gitweb.py" <<EOF
+#!/usr/bin/env python
+import os
+import sys
+
+# Open log file in line buffering mode
+accesslogfile = open("$fqgitdir/gitweb/access.log", 'a', buffering=1)
+errorlogfile = open("$fqgitdir/gitweb/error.log", 'a', buffering=1)
+
+# and replace our stdout and stderr with log files
+# also do a lowlevel duplicate of the logfile file descriptors so that
+# our CGI child process writes any stderr warning also to the log file
+_orig_stdout_fd = sys.stdout.fileno()
+sys.stdout.close()
+os.dup2(accesslogfile.fileno(), _orig_stdout_fd)
+sys.stdout = accesslogfile
+
+_orig_stderr_fd = sys.stderr.fileno()
+sys.stderr.close()
+os.dup2(errorlogfile.fileno(), _orig_stderr_fd)
+sys.stderr = errorlogfile
+
+from functools import partial
+
+if sys.version_info < (3, 0):  # Python 2
+	from CGIHTTPServer import CGIHTTPRequestHandler
+	from BaseHTTPServer import HTTPServer as ServerClass
+else:  # Python 3
+	from http.server import CGIHTTPRequestHandler
+	from http.server import HTTPServer as ServerClass
+
+
+# Those environment variables will be passed to the cgi script
+os.environ.update({
+	"GIT_EXEC_PATH": "$GIT_EXEC_PATH",
+	"GIT_DIR": "$GIT_DIR",
+	"GITWEB_CONFIG": "$GITWEB_CONFIG"
+})
+
+
+class GitWebRequestHandler(CGIHTTPRequestHandler):
+
+	def log_message(self, format, *args):
+		# Write access logs to stdout
+		sys.stdout.write("%s - - [%s] %s\n" %
+				(self.address_string(),
+				self.log_date_time_string(),
+				format%args))
+
+	def do_HEAD(self):
+		self.redirect_path()
+		CGIHTTPRequestHandler.do_HEAD(self)
+
+	def do_GET(self):
+		if self.path == "/":
+			self.send_response(303, "See Other")
+			self.send_header("Location", "/cgi-bin/gitweb.cgi")
+			self.end_headers()
+			return
+		self.redirect_path()
+		CGIHTTPRequestHandler.do_GET(self)
+
+	def do_POST(self):
+		self.redirect_path()
+		CGIHTTPRequestHandler.do_POST(self)
+
+	# rewrite path of every request that is not gitweb.cgi to out of cgi-bin
+	def redirect_path(self):
+		if not self.path.startswith("/cgi-bin/gitweb.cgi"):
+			self.path = self.path.replace("/cgi-bin/", "/")
+
+	# gitweb.cgi is the only thing that is ever going to be run here.
+	# Ignore everything else
+	def is_cgi(self):
+		result = False
+		if self.path.startswith('/cgi-bin/gitweb.cgi'):
+			result = CGIHTTPRequestHandler.is_cgi(self)
+		return result
+
+
+bind = "127.0.0.1"
+if "$local" == "true":
+	bind = "0.0.0.0"
+
+# Set our http root directory
+# This is a work around for a missing directory argument in older Python versions
+# as this was added to SimpleHTTPRequestHandler in Python 3.7
+os.chdir("$fqgitdir/gitweb/$httpd_only/")
+
+GitWebRequestHandler.protocol_version = "HTTP/1.0"
+httpd = ServerClass((bind, $port), GitWebRequestHandler)
+
+sa = httpd.socket.getsockname()
+print("Serving HTTP on", sa[0], "port", sa[1], "...")
+httpd.serve_forever()
+EOF
+
+	chmod a+x "$fqgitdir/gitweb/gitweb.py"
+}
+
 gitweb_conf() {
 	cat > "$fqgitdir/gitweb/gitweb_config.perl" <<EOF
 #!@@PERL@@
@@ -618,6 +744,9 @@ configure_httpd() {
 		;;
 	*plackup*)
 		plackup_conf
+		;;
+	*python*)
+		python_conf
 		;;
 	*)
 		echo "Unknown httpd specified: $httpd"

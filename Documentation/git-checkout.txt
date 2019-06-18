@@ -38,6 +38,15 @@ equivalent to
 $ git checkout -b <branch> --track <remote>/<branch>
 ------------
 +
+If the branch exists in multiple remotes and one of them is named by
+the `checkout.defaultRemote` configuration variable, we'll use that
+one for the purposes of disambiguation, even if the `<branch>` isn't
+unique across all remotes. Set it to
+e.g. `checkout.defaultRemote=origin` to always checkout remote
+branches from there if `<branch>` is ambiguous but exists on the
+'origin' remote. See also `checkout.defaultRemote` in
+linkgit:git-config[1].
++
 You could omit <branch>, in which case the command degenerates to
 "check out the current branch", which is a glorified no-op with
 rather expensive side-effects to show only the tracking information,
@@ -233,6 +242,8 @@ should result in deletion of the path).
 +
 When checking out paths from the index, this option lets you recreate
 the conflicted merge in the specified paths.
++
+When switching branches with `--merge`, staged changes may be lost.
 
 --conflict=<style>::
 	The same as --merge option above, but changes the way the
@@ -251,6 +262,9 @@ the conflicted merge in the specified paths.
 This means that you can use `git checkout -p` to selectively discard
 edits from your current working tree. See the ``Interactive Mode''
 section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
++
+Note that this option uses the no overlay mode by default (see also
+`--[no-]overlay`), and currently doesn't support overlay mode.
 
 --ignore-other-worktrees::
 	`git checkout` refuses when the wanted ref is already checked
@@ -267,6 +281,17 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	Just like linkgit:git-submodule[1], this will detach the
 	submodules HEAD.
 
+--no-guess::
+	Do not attempt to create a branch if a remote tracking branch
+	of the same name exists.
+
+--[no-]overlay::
+	In the default overlay mode, `git checkout` never
+	removes files from the index or the working tree.  When
+	specifying `--no-overlay`, files that appear in the index and
+	working tree, but not in <tree-ish> are removed, to make them
+	match <tree-ish> exactly.
+
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
 	when prepended with "refs/heads/", is a valid ref), then that
@@ -276,7 +301,7 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 +
 You can use the `"@{-N}"` syntax to refer to the N-th last
 branch/commit checked out using "git checkout" operation. You may
-also specify `-` which is synonymous to `"@{-1}`.
+also specify `-` which is synonymous to `"@{-1}"`.
 +
 As a special case, you may use `"A...B"` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
@@ -288,6 +313,10 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 <start_point>::
 	The name of a commit at which to start the new branch; see
 	linkgit:git-branch[1] for details. Defaults to HEAD.
++
+As a special case, you may use `"A...B"` as a shortcut for the
+merge base of `A` and `B` if there is exactly one merge base. You can
+leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 <tree-ish>::
 	Tree to checkout from (when paths are given). If not specified,
@@ -302,9 +331,9 @@ branch refers to a specific commit. Let's look at a repo with three
 commits, one of them tagged, and with branch 'master' checked out:
 
 ------------
-	   HEAD (refers to branch 'master')
-	    |
-	    v
+           HEAD (refers to branch 'master')
+            |
+            v
 a---b---c  branch 'master' (refers to commit 'c')
     ^
     |
@@ -320,9 +349,9 @@ to commit 'd':
 ------------
 $ edit; git add; git commit
 
-	       HEAD (refers to branch 'master')
-		|
-		v
+               HEAD (refers to branch 'master')
+                |
+                v
 a---b---c---d  branch 'master' (refers to commit 'd')
     ^
     |
@@ -389,7 +418,7 @@ at what happens when we then checkout master:
 ------------
 $ git checkout master
 
-	       HEAD (refers to branch 'master')
+               HEAD (refers to branch 'master')
       e---f     |
      /          v
 a---b---c---d  branch 'master' (refers to commit 'd')
@@ -411,14 +440,14 @@ $ git tag foo           <3>
 ------------
 
 <1> creates a new branch 'foo', which refers to commit 'f', and then
-updates HEAD to refer to branch 'foo'. In other words, we'll no longer
-be in detached HEAD state after this command.
+    updates HEAD to refer to branch 'foo'. In other words, we'll no longer
+    be in detached HEAD state after this command.
 
 <2> similarly creates a new branch 'foo', which refers to commit 'f',
-but leaves HEAD detached.
+    but leaves HEAD detached.
 
 <3> creates a new tag 'foo', which refers to commit 'f',
-leaving HEAD detached.
+    leaving HEAD detached.
 
 If we have moved away from commit 'f', then we must first recover its object
 name (typically by using git reflog), and then we can create a reference to
@@ -446,8 +475,8 @@ EXAMPLES
 --------
 
 . The following sequence checks out the `master` branch, reverts
-the `Makefile` to two revisions back, deletes hello.c by
-mistake, and gets it back from the index.
+  the `Makefile` to two revisions back, deletes hello.c by
+  mistake, and gets it back from the index.
 +
 ------------
 $ git checkout master             <1>
@@ -481,7 +510,7 @@ $ git checkout -- hello.c
 ------------
 
 . After working in the wrong branch, switching to the correct
-branch would be done using:
+  branch would be done using:
 +
 ------------
 $ git checkout mytopic
@@ -509,7 +538,7 @@ registered in your index file, so `git diff` would show you what
 changes you made since the tip of the new branch.
 
 . When a merge conflict happens during switching branches with
-the `-m` option, you would see something like this:
+  the `-m` option, you would see something like this:
 +
 ------------
 $ git checkout -m mytopic

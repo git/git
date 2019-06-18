@@ -1,56 +1,13 @@
 #include "cache.h"
-#include "sha1-lookup.h"
+#include "oidmap.h"
+#include "object-store.h"
+#include "replace-object.h"
 #include "refs.h"
+#include "repository.h"
 #include "commit.h"
 
-/*
- * An array of replacements.  The array is kept sorted by the original
- * sha1.
- */
-static struct replace_object {
-	struct object_id original;
-	struct object_id replacement;
-} **replace_object;
-
-static int replace_object_alloc, replace_object_nr;
-
-static const unsigned char *replace_sha1_access(size_t index, void *table)
-{
-	struct replace_object **replace = table;
-	return replace[index]->original.hash;
-}
-
-static int replace_object_pos(const unsigned char *sha1)
-{
-	return sha1_pos(sha1, replace_object, replace_object_nr,
-			replace_sha1_access);
-}
-
-static int register_replace_object(struct replace_object *replace,
-				   int ignore_dups)
-{
-	int pos = replace_object_pos(replace->original.hash);
-
-	if (0 <= pos) {
-		if (ignore_dups)
-			free(replace);
-		else {
-			free(replace_object[pos]);
-			replace_object[pos] = replace;
-		}
-		return 1;
-	}
-	pos = -pos - 1;
-	ALLOC_GROW(replace_object, replace_object_nr + 1, replace_object_alloc);
-	replace_object_nr++;
-	if (pos < replace_object_nr)
-		MOVE_ARRAY(replace_object + pos + 1, replace_object + pos,
-			   replace_object_nr - pos - 1);
-	replace_object[pos] = replace;
-	return 0;
-}
-
-static int register_replace_ref(const char *refname,
+static int register_replace_ref(struct repository *r,
+				const char *refname,
 				const struct object_id *oid,
 				int flag, void *cb_data)
 {
@@ -59,9 +16,9 @@ static int register_replace_ref(const char *refname,
 	const char *hash = slash ? slash + 1 : refname;
 	struct replace_object *repl_obj = xmalloc(sizeof(*repl_obj));
 
-	if (get_oid_hex(hash, &repl_obj->original)) {
+	if (get_oid_hex(hash, &repl_obj->original.oid)) {
 		free(repl_obj);
-		warning("bad replace ref name: %s", refname);
+		warning(_("bad replace ref name: %s"), refname);
 		return 0;
 	}
 
@@ -69,23 +26,22 @@ static int register_replace_ref(const char *refname,
 	oidcpy(&repl_obj->replacement, oid);
 
 	/* Register new object */
-	if (register_replace_object(repl_obj, 1))
-		die("duplicate replace ref: %s", refname);
+	if (oidmap_put(r->objects->replace_map, repl_obj))
+		die(_("duplicate replace ref: %s"), refname);
 
 	return 0;
 }
 
-static void prepare_replace_object(void)
+void prepare_replace_object(struct repository *r)
 {
-	static int replace_object_prepared;
-
-	if (replace_object_prepared)
+	if (r->objects->replace_map)
 		return;
 
-	for_each_replace_ref(register_replace_ref, NULL);
-	replace_object_prepared = 1;
-	if (!replace_object_nr)
-		check_replace_refs = 0;
+	r->objects->replace_map =
+		xmalloc(sizeof(*r->objects->replace_map));
+	oidmap_init(r->objects->replace_map, 0);
+
+	for_each_replace_ref(r, register_replace_ref, NULL);
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
@@ -96,25 +52,23 @@ static void prepare_replace_object(void)
  * replacement object's name (replaced recursively, if necessary).
  * The return value is either oid or a pointer to a
  * permanently-allocated value.  This function always respects replace
- * references, regardless of the value of check_replace_refs.
+ * references, regardless of the value of read_replace_refs.
  */
-const struct object_id *do_lookup_replace_object(const struct object_id *oid)
+const struct object_id *do_lookup_replace_object(struct repository *r,
+						 const struct object_id *oid)
 {
-	int pos, depth = MAXREPLACEDEPTH;
+	int depth = MAXREPLACEDEPTH;
 	const struct object_id *cur = oid;
 
-	prepare_replace_object();
+	prepare_replace_object(r);
 
 	/* Try to recursively replace the object */
-	do {
-		if (--depth < 0)
-			die("replace depth too high for object %s",
-			    oid_to_hex(oid));
-
-		pos = replace_object_pos(cur->hash);
-		if (0 <= pos)
-			cur = &replace_object[pos]->replacement;
-	} while (0 <= pos);
-
-	return cur;
+	while (depth-- > 0) {
+		struct replace_object *repl_obj =
+			oidmap_get(r->objects->replace_map, cur);
+		if (!repl_obj)
+			return cur;
+		cur = &repl_obj->replacement;
+	}
+	die(_("replace depth too high for object %s"), oid_to_hex(oid));
 }

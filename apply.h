@@ -1,6 +1,11 @@
 #ifndef APPLY_H
 #define APPLY_H
 
+#include "lockfile.h"
+#include "string-list.h"
+
+struct repository;
+
 enum apply_ws_error_action {
 	nowarn_ws_error,
 	warn_on_ws_error,
@@ -45,6 +50,7 @@ struct apply_state {
 	int check; /* preimage must match working tree, don't actually apply */
 	int check_index; /* preimage must match the indexed version */
 	int update_index; /* check_index && apply */
+	int ita_only;	  /* add intent-to-add entries to the index */
 
 	/* These control cosmetic aspect of the output */
 	int diffstat; /* just show a diffstat, and don't actually apply */
@@ -61,6 +67,7 @@ struct apply_state {
 	int unsafe_paths;
 
 	/* Other non boolean parameters */
+	struct repository *repo;
 	const char *index_file;
 	enum apply_verbosity apply_verbosity;
 	const char *fake_ancestor;
@@ -110,14 +117,15 @@ struct apply_state {
 	int applied_after_fixing_ws;
 };
 
-extern int apply_parse_options(int argc, const char **argv,
-			       struct apply_state *state,
-			       int *force_apply, int *options,
-			       const char * const *apply_usage);
-extern int init_apply_state(struct apply_state *state,
-			    const char *prefix);
-extern void clear_apply_state(struct apply_state *state);
-extern int check_apply_state(struct apply_state *state, int force_apply);
+int apply_parse_options(int argc, const char **argv,
+			struct apply_state *state,
+			int *force_apply, int *options,
+			const char * const *apply_usage);
+int init_apply_state(struct apply_state *state,
+		     struct repository *repo,
+		     const char *prefix);
+void clear_apply_state(struct apply_state *state);
+int check_apply_state(struct apply_state *state, int force_apply);
 
 /*
  * Some aspects of the apply behavior are controlled by the following
@@ -126,9 +134,8 @@ extern int check_apply_state(struct apply_state *state, int force_apply);
 #define APPLY_OPT_INACCURATE_EOF	(1<<0) /* accept inaccurate eof */
 #define APPLY_OPT_RECOUNT		(1<<1) /* accept inaccurate line count */
 
-extern int apply_all_patches(struct apply_state *state,
-			     int argc,
-			     const char **argv,
-			     int options);
+int apply_all_patches(struct apply_state *state,
+		      int argc, const char **argv,
+		      int options);
 
 #endif

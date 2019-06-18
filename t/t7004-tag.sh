@@ -325,11 +325,10 @@ test_expect_success \
 	test_cmp expect actual
 '
 
->expect
 test_expect_success \
 	'listing tags using v.* should print nothing because none have v.' '
 	git tag -l "v.*" > actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 cat >expect <<EOF
@@ -363,7 +362,7 @@ test_expect_success 'tag -l <pattern> -l <pattern> works, as our buggy documenta
 '
 
 test_expect_success 'listing tags in column' '
-	COLUMNS=40 git tag -l --column=row >actual &&
+	COLUMNS=41 git tag -l --column=row >actual &&
 	cat >expected <<\EOF &&
 a1      aa1     cba     t210    t211
 v0.2.1  v1.0    v1.0.1  v1.1.3
@@ -693,9 +692,8 @@ test_expect_success \
 '
 
 test_expect_success 'The -n 100 invocation means -n --list 100, not -n100' '
-	>expect &&
 	git tag -n 100 >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	git tag -m "A msg" 100 &&
 	echo "100             A msg" >expect &&
@@ -974,9 +972,8 @@ test_expect_success GPG 'verifying a proper tag with --format pass and format ac
 '
 
 test_expect_success GPG 'verifying a forged tag with --format should fail silently' '
-	>expect &&
 	test_must_fail git tag -v --format="tagname : %(tag)" "forged-tag" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 # blank and empty messages for signed tags:
@@ -1056,7 +1053,18 @@ test_expect_success GPG \
 	git tag -s -F sigblanknonlfile blanknonlfile-signed-tag &&
 	get_tag_msg blanknonlfile-signed-tag >actual &&
 	test_cmp expect actual &&
-	git tag -v signed-tag
+	git tag -v blanknonlfile-signed-tag
+'
+
+test_expect_success GPG 'signed tag with embedded PGP message' '
+	cat >msg <<-\EOF &&
+	-----BEGIN PGP MESSAGE-----
+
+	this is not a real PGP message
+	-----END PGP MESSAGE-----
+	EOF
+	git tag -s -F msg confusing-pgp-message &&
+	git tag -v confusing-pgp-message
 '
 
 # messages with commented lines for signed tags:
@@ -1343,6 +1351,19 @@ test_expect_success GPG \
 	'test_config gpg.program echo &&
 	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
+# try to sign with bad user.signingkey
+test_expect_success GPGSM \
+	'git tag -s fails if gpgsm is misconfigured (bad key)' \
+	'test_config user.signingkey BobTheMouse &&
+	 test_config gpg.format x509 &&
+	 test_must_fail git tag -s -m tail tag-gpg-failure'
+
+# try to produce invalid signature
+test_expect_success GPGSM \
+	'git tag -s fails if gpgsm is misconfigured (bad signature format)' \
+	'test_config gpg.x509.program echo &&
+	 test_config gpg.format x509 &&
+	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
 # try to verify without gpg:
 
@@ -1371,9 +1392,8 @@ test_expect_success 'message in editor has initial comment: first line' '
 test_expect_success \
 	'message in editor has initial comment: remainder' '
 	# remove commented lines from the remainder -- should be empty
-	>rest.expect &&
 	sed -e 1d -e "/^#/d" <actual >rest.actual &&
-	test_cmp rest.expect rest.actual
+	test_must_be_empty rest.actual
 '
 
 get_tag_header reuse $commit commit $time >expect
@@ -1455,19 +1475,18 @@ test_expect_success 'checking that first commit is in all tags (relative)' "
 
 # All the --contains tests above, but with --no-contains
 test_expect_success 'checking that first commit is not listed in any tag with --no-contains  (hash)' "
-	>expected &&
 	git tag -l --no-contains $hash1 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'checking that first commit is in all tags (tag)' "
 	git tag -l --no-contains v1.0 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'checking that first commit is in all tags (relative)' "
 	git tag -l --no-contains HEAD~2 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 cat > expected <<EOF
@@ -1491,12 +1510,9 @@ test_expect_success 'inverse of the last test, with --no-contains' "
 	test_cmp expected actual
 "
 
-cat > expected <<EOF
-EOF
-
 test_expect_success 'checking that third commit has no tags' "
 	git tag -l --contains $hash3 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 cat > expected <<EOF
@@ -1595,9 +1611,8 @@ test_expect_success 'checking that --contains can be used in non-list mode' '
 '
 
 test_expect_success 'checking that initial commit is in all tags with --no-contains' "
-	>expected &&
 	git tag -l --no-contains $hash1 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 # mixing modes and options:
@@ -1683,6 +1698,17 @@ test_expect_success '--points-at finds annotated tags of tags' '
 	EOF
 	git tag --points-at=annotated-v4.0 >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'recursive tagging should give advice' '
+	sed -e "s/|$//" <<-EOF >expect &&
+	hint: You have created a nested tag. The object referred to by your new tag is
+	hint: already a tag. If you meant to tag the object that it points to, use:
+	hint: |
+	hint: 	git tag -f nested annotated-v4.0^{}
+	EOF
+	git tag -m nested nested annotated-v4.0 2>actual &&
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'multiple --points-at are OR-ed together' '
@@ -1894,7 +1920,6 @@ test_expect_success 'version sort with very long prerelease suffix' '
 '
 
 test_expect_success ULIMIT_STACK_SIZE '--contains and --no-contains work in a deep repo' '
-	>expect &&
 	i=1 &&
 	while test $i -lt 8000
 	do
@@ -1909,7 +1934,7 @@ EOF"
 	git checkout master &&
 	git tag far-far-away HEAD^ &&
 	run_with_limited_stack git tag --contains HEAD >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	run_with_limited_stack git tag --no-contains HEAD >actual &&
 	test_line_count "-gt" 10 actual
 '

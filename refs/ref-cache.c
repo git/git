@@ -23,7 +23,7 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry)
 	dir = &entry->u.subdir;
 	if (entry->flag & REF_INCOMPLETE) {
 		if (!dir->cache->fill_ref_dir)
-			die("BUG: incomplete ref_store without fill_ref_dir function");
+			BUG("incomplete ref_store without fill_ref_dir function");
 
 		dir->cache->fill_ref_dir(dir->cache->ref_store, dir, entry->name);
 		entry->flag &= ~REF_INCOMPLETE;
@@ -272,7 +272,7 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
 		/* This is impossible by construction */
 		die("Reference directory conflict: %s", ref1->name);
 
-	if (oidcmp(&ref1->u.value.oid, &ref2->u.value.oid))
+	if (!oideq(&ref1->u.value.oid, &ref2->u.value.oid))
 		die("Duplicated ref, and SHA1s don't match: %s", ref1->name);
 
 	warning("Duplicated ref: %s", ref1->name);

@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "lockfile.h"
 #include "bundle.h"
+#include "object-store.h"
+#include "repository.h"
 #include "object.h"
 #include "commit.h"
 #include "diff.h"
@@ -125,7 +127,9 @@ static int list_refs(struct ref_list *r, int argc, const char **argv)
 /* Remember to update object flag allocation in object.h */
 #define PREREQ_MARK (1u<<16)
 
-int verify_bundle(struct bundle_header *header, int verbose)
+int verify_bundle(struct repository *r,
+		  struct bundle_header *header,
+		  int verbose)
 {
 	/*
 	 * Do fast check, then if any prereqs are missing then go line by line
@@ -138,10 +142,13 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
-	init_revisions(&revs, NULL);
+	if (!r || !r->objects || !r->objects->odb)
+		return error(_("need a repository to verify a bundle"));
+
+	repo_init_revisions(r, &revs, NULL);
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		struct object *o = parse_object(&e->oid);
+		struct object *o = parse_object(r, &e->oid);
 		if (o) {
 			o->flags |= PREREQ_MARK;
 			add_pending_object(&revs, o, e->name);
@@ -166,7 +173,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		struct object *o = parse_object(&e->oid);
+		struct object *o = parse_object(r, &e->oid);
 		assert(o); /* otherwise we'd have returned early */
 		if (o->flags & SHOWN)
 			continue;
@@ -178,7 +185,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	/* Clean up objects used, as they will be reused. */
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		commit = lookup_commit_reference_gently(&e->oid, 1);
+		commit = lookup_commit_reference_gently(r, &e->oid, 1);
 		if (commit)
 			clear_commit_marks(commit, ALL_REV_FLAGS);
 	}
@@ -241,7 +248,7 @@ out:
 }
 
 
-/* Write the pack data to bundle_fd, then close it if it is > 1. */
+/* Write the pack data to bundle_fd */
 static int write_pack_data(int bundle_fd, struct rev_info *revs)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
@@ -254,6 +261,20 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs)
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
 	pack_objects.git_cmd = 1;
+
+	/*
+	 * start_command() will close our descriptor if it's >1. Duplicate it
+	 * to avoid surprising the caller.
+	 */
+	if (pack_objects.out > 1) {
+		pack_objects.out = dup(pack_objects.out);
+		if (pack_objects.out < 0) {
+			error_errno(_("unable to dup bundle descriptor"));
+			child_process_clear(&pack_objects);
+			return -1;
+		}
+	}
+
 	if (start_command(&pack_objects))
 		return error(_("Could not spawn pack-objects"));
 
@@ -367,13 +388,13 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		 * commit that is referenced by the tag, and not the tag
 		 * itself.
 		 */
-		if (oidcmp(&oid, &e->item->oid)) {
+		if (!oideq(&oid, &e->item->oid)) {
 			/*
 			 * Is this the positive end of a range expressed
 			 * in terms of a tag (e.g. v2.0 from the range
 			 * "v1.0..v2.0")?
 			 */
-			struct commit *one = lookup_commit_reference(&oid);
+			struct commit *one = lookup_commit_reference(revs->repo, &oid);
 			struct object *obj;
 
 			if (e->item == &(one->object)) {
@@ -406,10 +427,10 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 	return ref_count;
 }
 
-int create_bundle(struct bundle_header *header, const char *path,
+int create_bundle(struct repository *r, const char *path,
 		  int argc, const char **argv)
 {
-	static struct lock_file lock;
+	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;
 	int bundle_to_stdout;
 	int ref_count = 0;
@@ -418,27 +439,16 @@ int create_bundle(struct bundle_header *header, const char *path,
 	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
 		bundle_fd = 1;
-	else {
+	else
 		bundle_fd = hold_lock_file_for_update(&lock, path,
 						      LOCK_DIE_ON_ERROR);
-
-		/*
-		 * write_pack_data() will close the fd passed to it,
-		 * but commit_lock_file() will also try to close the
-		 * lockfile's fd. So make a copy of the file
-		 * descriptor to avoid trying to close it twice.
-		 */
-		bundle_fd = dup(bundle_fd);
-		if (bundle_fd < 0)
-			die_errno("unable to dup file descriptor");
-	}
 
 	/* write signature */
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
 
 	/* init revs to list objects for pack-objects later */
 	save_commit_buffer = 0;
-	init_revisions(&revs, NULL);
+	repo_init_revisions(r, &revs, NULL);
 
 	/* write prerequisites */
 	if (compute_and_write_prerequisites(bundle_fd, &revs, argc, argv))
@@ -460,10 +470,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 		goto err;
 
 	/* write pack */
-	if (write_pack_data(bundle_fd, &revs)) {
-		bundle_fd = -1; /* already closed by the above call */
+	if (write_pack_data(bundle_fd, &revs))
 		goto err;
-	}
 
 	if (!bundle_to_stdout) {
 		if (commit_lock_file(&lock))
@@ -471,15 +479,12 @@ int create_bundle(struct bundle_header *header, const char *path,
 	}
 	return 0;
 err:
-	if (!bundle_to_stdout) {
-		if (0 <= bundle_fd)
-			close(bundle_fd);
-		rollback_lock_file(&lock);
-	}
+	rollback_lock_file(&lock);
 	return -1;
 }
 
-int unbundle(struct bundle_header *header, int bundle_fd, int flags)
+int unbundle(struct repository *r, struct bundle_header *header,
+	     int bundle_fd, int flags)
 {
 	const char *argv_index_pack[] = {"index-pack",
 					 "--fix-thin", "--stdin", NULL, NULL};
@@ -488,7 +493,7 @@ int unbundle(struct bundle_header *header, int bundle_fd, int flags)
 	if (flags & BUNDLE_VERBOSE)
 		argv_index_pack[3] = "-v";
 
-	if (verify_bundle(header, 0))
+	if (verify_bundle(r, header, 0))
 		return -1;
 	ip.argv = argv_index_pack;
 	ip.in = bundle_fd;

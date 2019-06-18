@@ -56,8 +56,8 @@ OPTIONS
 	reachable from any of our references, keep objects
 	reachable from listed <head>s.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 To prune objects not used by your repository or another that
 borrows from your repository via its
@@ -67,7 +67,7 @@ borrows from your repository via its
 $ git prune $(cd ../another && git rev-parse --all)
 ------------
 
-Notes
+NOTES
 -----
 
 In most cases, users will not need to call 'git prune' directly, but

@@ -13,7 +13,7 @@ complete ()
 	return 0
 }
 
-# Be careful when updating this list:
+# Be careful when updating these lists:
 #
 # (1) The build tree may have build artifact from different branch, or
 #     the user's $PATH may have a random executable that may begin
@@ -30,7 +30,8 @@ complete ()
 #     completion for "git <TAB>", and a plumbing is excluded.  "add",
 #     "filter-branch" and "ls-files" are listed for this.
 
-GIT_TESTING_COMMAND_COMPLETION='add checkout check-attr filter-branch ls-files'
+GIT_TESTING_ALL_COMMAND_LIST='add checkout check-attr filter-branch ls-files'
+GIT_TESTING_PORCELAIN_COMMAND_LIST='add checkout filter-branch'
 
 . "$GIT_BUILD_DIR/contrib/completion/git-completion.bash"
 
@@ -84,10 +85,11 @@ test_completion ()
 	then
 		printf '%s\n' "$2" >expected
 	else
-		sed -e 's/Z$//' >expected
+		sed -e 's/Z$//' |sort >expected
 	fi &&
 	run_completion "$1" &&
-	test_cmp expected out
+	sort out >out_sorted &&
+	test_cmp expected out_sorted
 }
 
 # Test __gitcomp.
@@ -179,7 +181,7 @@ test_expect_success '__git_find_repo_path - cwd is a .git directory' '
 test_expect_success '__git_find_repo_path - parent is a .git directory' '
 	echo "$ROOT/.git" >expected &&
 	(
-		cd .git/refs/heads &&
+		cd .git/objects &&
 		__git_find_repo_path &&
 		echo "$__git_repo_path" >"$actual"
 	) &&
@@ -400,6 +402,46 @@ test_expect_success '__gitdir - remote as argument' '
 	test_cmp expected "$actual"
 '
 
+
+test_expect_success '__git_dequote - plain unquoted word' '
+	__git_dequote unquoted-word &&
+	verbose test unquoted-word = "$dequoted_word"
+'
+
+# input:    b\a\c\k\'\\\"s\l\a\s\h\es
+# expected: back'\"slashes
+test_expect_success '__git_dequote - backslash escaped' '
+	__git_dequote "b\a\c\k\\'\''\\\\\\\"s\l\a\s\h\es" &&
+	verbose test "back'\''\\\"slashes" = "$dequoted_word"
+'
+
+# input:    sin'gle\' '"quo'ted
+# expected: single\ "quoted
+test_expect_success '__git_dequote - single quoted' '
+	__git_dequote "'"sin'gle\\\\' '\\\"quo'ted"'" &&
+	verbose test '\''single\ "quoted'\'' = "$dequoted_word"
+'
+
+# input:    dou"ble\\" "\"\quot"ed
+# expected: double\ "\quoted
+test_expect_success '__git_dequote - double quoted' '
+	__git_dequote '\''dou"ble\\" "\"\quot"ed'\'' &&
+	verbose test '\''double\ "\quoted'\'' = "$dequoted_word"
+'
+
+# input: 'open single quote
+test_expect_success '__git_dequote - open single quote' '
+	__git_dequote "'\''open single quote" &&
+	verbose test "open single quote" = "$dequoted_word"
+'
+
+# input: "open double quote
+test_expect_success '__git_dequote - open double quote' '
+	__git_dequote "\"open double quote" &&
+	verbose test "open double quote" = "$dequoted_word"
+'
+
+
 test_expect_success '__gitcomp_direct - puts everything into COMPREPLY as-is' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
 	with-trailing-space Z
@@ -456,6 +498,42 @@ test_expect_success '__gitcomp - suffix' '
 		"ma" "." <<-\EOF
 	branch.master.Z
 	branch.maint.Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore optional negative options' '
+	test_gitcomp "--" "--abc --def --no-one -- --no-two" <<-\EOF
+	--abc Z
+	--def Z
+	--no-one Z
+	--no-... Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore/narrow optional negative options' '
+	test_gitcomp "--a" "--abc --abcdef --no-one -- --no-two" <<-\EOF
+	--abc Z
+	--abcdef Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore/narrow optional negative options' '
+	test_gitcomp "--n" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
+	--no-... Z
+	EOF
+'
+
+test_expect_success '__gitcomp - expand all negative options' '
+	test_gitcomp "--no-" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
+	--no-two Z
+	EOF
+'
+
+test_expect_success '__gitcomp - expand/narrow all negative options' '
+	test_gitcomp "--no-o" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
 	EOF
 '
 
@@ -1025,7 +1103,7 @@ test_expect_success '__git_complete_refs - remote' '
 	master-in-other Z
 	EOF
 	(
-		cur=
+		cur= &&
 		__git_complete_refs --remote=other &&
 		print_comp
 	) &&
@@ -1044,7 +1122,7 @@ test_expect_success '__git_complete_refs - track' '
 	master-in-other Z
 	EOF
 	(
-		cur=
+		cur= &&
 		__git_complete_refs --track &&
 		print_comp
 	) &&
@@ -1168,6 +1246,124 @@ test_expect_success 'teardown after ref completion' '
 	git remote remove other
 '
 
+
+test_path_completion ()
+{
+	test $# = 2 || BUG "not 2 parameters to test_path_completion"
+
+	local cur="$1" expected="$2"
+	echo "$expected" >expected &&
+	(
+		# In the following tests calling this function we only
+		# care about how __git_complete_index_file() deals with
+		# unusual characters in path names.  By requesting only
+		# untracked files we dont have to bother adding any
+		# paths to the index in those tests.
+		__git_complete_index_file --others &&
+		print_comp
+	) &&
+	test_cmp expected out
+}
+
+test_expect_success 'setup for path completion tests' '
+	mkdir simple-dir \
+	      "spaces in dir" \
+	      árvíztűrő &&
+	touch simple-dir/simple-file \
+	      "spaces in dir/spaces in file" \
+	      "árvíztűrő/Сайн яваарай" &&
+	if test_have_prereq !MINGW &&
+	   mkdir BS\\dir \
+		 '$'separators\034in\035dir'' &&
+	   touch BS\\dir/DQ\"file \
+		 '$'separators\034in\035dir/sep\036in\037file''
+	then
+		test_set_prereq FUNNIERNAMES
+	else
+		rm -rf BS\\dir '$'separators\034in\035dir''
+	fi
+'
+
+test_expect_success '__git_complete_index_file - simple' '
+	test_path_completion simple simple-dir &&  # Bash is supposed to
+						   # add the trailing /.
+	test_path_completion simple-dir/simple simple-dir/simple-file
+'
+
+test_expect_success \
+    '__git_complete_index_file - escaped characters on cmdline' '
+	test_path_completion spac "spaces in dir" &&  # Bash will turn this
+						      # into "spaces\ in\ dir"
+	test_path_completion "spaces\\ i" \
+			     "spaces in dir" &&
+	test_path_completion "spaces\\ in\\ dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "spaces\\ in\\ dir/spaces\\ i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success \
+    '__git_complete_index_file - quoted characters on cmdline' '
+	# Testing with an opening but without a corresponding closing
+	# double quote is important.
+	test_path_completion \"spac "spaces in dir" &&
+	test_path_completion "\"spaces i" \
+			     "spaces in dir" &&
+	test_path_completion "\"spaces in dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "\"spaces in dir/spaces i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success '__git_complete_index_file - UTF-8 in ls-files output' '
+	test_path_completion á árvíztűrő &&
+	test_path_completion árvíztűrő/С "árvíztűrő/Сайн яваарай"
+'
+
+test_expect_success FUNNIERNAMES \
+    '__git_complete_index_file - C-style escapes in ls-files output' '
+	test_path_completion BS \
+			     BS\\dir &&
+	test_path_completion BS\\\\d \
+			     BS\\dir &&
+	test_path_completion BS\\\\dir/DQ \
+			     BS\\dir/DQ\"file &&
+	test_path_completion BS\\\\dir/DQ\\\"f \
+			     BS\\dir/DQ\"file
+'
+
+test_expect_success FUNNIERNAMES \
+    '__git_complete_index_file - \nnn-escaped characters in ls-files output' '
+	test_path_completion sep '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034i'' \
+			     '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034in\035dir/sep'' \
+			     '$'separators\034in\035dir/sep\036in\037file'' &&
+	test_path_completion '$'separators\034in\035dir/sep\036i'' \
+			     '$'separators\034in\035dir/sep\036in\037file''
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - removing repeated quoted path components' '
+	test_when_finished rm -r repeated-quoted &&
+	mkdir repeated-quoted &&      # A directory whose name in itself
+				      # would not be quoted ...
+	>repeated-quoted/0-file &&
+	>repeated-quoted/1\"file &&   # ... but here the file makes the
+				      # dirname quoted ...
+	>repeated-quoted/2-file &&
+	>repeated-quoted/3\"file &&   # ... and here, too.
+
+	# Still, we shold only list the directory name only once.
+	test_path_completion repeated repeated-quoted
+'
+
+test_expect_success 'teardown after path completion tests' '
+	rm -rf simple-dir "spaces in dir" árvíztűrő \
+	       BS\\dir '$'separators\034in\035dir''
+'
+
+
 test_expect_success '__git_get_config_variables' '
 	cat >expect <<-EOF &&
 	name-1
@@ -1188,17 +1384,6 @@ test_expect_success '__git_pretty_aliases' '
 	test_config pretty.author "%an %ae" &&
 	test_config pretty.hash %H &&
 	__git_pretty_aliases >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success '__git_aliases' '
-	cat >expect <<-EOF &&
-	ci
-	co
-	EOF
-	test_config alias.ci commit &&
-	test_config alias.co checkout &&
-	__git_aliases >actual &&
 	test_cmp expect actual
 '
 
@@ -1249,8 +1434,10 @@ test_expect_success 'double dash "git checkout"' '
 	--ignore-other-worktrees Z
 	--recurse-submodules Z
 	--progress Z
-	--no-track Z
-	--no-recurse-submodules Z
+	--guess Z
+	--no-guess Z
+	--no-... Z
+	--overlay Z
 	EOF
 '
 
@@ -1297,6 +1484,12 @@ test_expect_success 'git --help completion' '
 	test_completion "git --help core" "core-tutorial "
 '
 
+test_expect_success 'completion.commands removes multiple commands' '
+	test_config completion.commands "-cherry -mergetool" &&
+	git --list-cmds=list-mainporcelain,list-complete,config >out &&
+	! grep -E "^(cherry|mergetool)$" out
+'
+
 test_expect_success 'setup for integration tests' '
 	echo content >file1 &&
 	echo more >file2 &&
@@ -1330,8 +1523,8 @@ test_expect_success 'show completes all refs' '
 
 test_expect_success '<ref>: completes paths' '
 	test_completion "git show mytag:f" <<-\EOF
-	file1 Z
-	file2 Z
+	file1Z
+	file2Z
 	EOF
 '
 
@@ -1340,7 +1533,7 @@ test_expect_success 'complete tree filename with spaces' '
 	git add "name with spaces" &&
 	git commit -m spaces &&
 	test_completion "git show HEAD:nam" <<-\EOF
-	name with spaces Z
+	name with spacesZ
 	EOF
 '
 
@@ -1349,12 +1542,12 @@ test_expect_success 'complete tree filename with metacharacters' '
 	git add "name with \${meta}" &&
 	git commit -m meta &&
 	test_completion "git show HEAD:nam" <<-\EOF
-	name with ${meta} Z
-	name with spaces Z
+	name with ${meta}Z
+	name with spacesZ
 	EOF
 '
 
-test_expect_success 'send-email' '
+test_expect_success PERL 'send-email' '
 	test_completion "git send-email --cov" "--cover-letter " &&
 	test_completion "git send-email ma" "master "
 '
@@ -1365,6 +1558,7 @@ test_expect_success 'complete files' '
 
 	echo "expected" > .gitignore &&
 	echo "out" >> .gitignore &&
+	echo "out_sorted" >> .gitignore &&
 
 	git add .gitignore &&
 	test_completion "git commit " ".gitignore" &&
@@ -1457,6 +1651,7 @@ test_expect_success 'completion used <cmd> completion for alias: !f() { : git <c
 test_expect_success 'completion without explicit _git_xxx function' '
 	test_completion "git version --" <<-\EOF
 	--build-options Z
+	--no-build-options Z
 	EOF
 '
 
@@ -1510,14 +1705,8 @@ test_expect_success 'sourcing the completion script clears cached commands' '
 	verbose test -z "$__git_all_commands"
 '
 
-test_expect_success 'sourcing the completion script clears cached porcelain commands' '
-	__git_compute_porcelain_commands &&
-	verbose test -n "$__git_porcelain_commands" &&
-	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-	verbose test -z "$__git_porcelain_commands"
-'
-
-test_expect_success !GETTEXT_POISON 'sourcing the completion script clears cached merge strategies' '
+test_expect_success 'sourcing the completion script clears cached merge strategies' '
+	GIT_TEST_GETTEXT_POISON= &&
 	__git_compute_merge_strategies &&
 	verbose test -n "$__git_merge_strategies" &&
 	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&

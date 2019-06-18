@@ -186,8 +186,8 @@ actually prune them.
 
 'update'::
 
-Fetch updates for a named set of remotes in the repository as defined by
-remotes.<group>.  If a named group is not specified on the command line,
+Fetch updates for remotes or remote groups in the repository as defined by
+remotes.<group>.  If neither group nor remote is specified on the command line,
 the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
@@ -203,7 +203,7 @@ The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
 linkgit:git-config[1]).
 
-Examples
+EXAMPLES
 --------
 
 * Add a new remote, fetch, and check out a branch from it

@@ -19,37 +19,37 @@ test_expect_success 'create tree with matching file' '
 '
 
 test_expect_success 'raw diff shows null sha1 (addition)' '
-	echo ":000000 100644 $_z40 $_z40 A	foo" >expect &&
+	echo ":000000 100644 $ZERO_OID $ZERO_OID A	foo" >expect &&
 	git diff-tree $EMPTY_TREE $bogus_tree >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'raw diff shows null sha1 (removal)' '
-	echo ":100644 000000 $_z40 $_z40 D	foo" >expect &&
+	echo ":100644 000000 $ZERO_OID $ZERO_OID D	foo" >expect &&
 	git diff-tree $bogus_tree $EMPTY_TREE >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'raw diff shows null sha1 (modification)' '
-	echo ":100644 100644 $blob $_z40 M	foo" >expect &&
+	echo ":100644 100644 $blob $ZERO_OID M	foo" >expect &&
 	git diff-tree $good_tree $bogus_tree >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'raw diff shows null sha1 (other direction)' '
-	echo ":100644 100644 $_z40 $blob M	foo" >expect &&
+	echo ":100644 100644 $ZERO_OID $blob M	foo" >expect &&
 	git diff-tree $bogus_tree $good_tree >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'raw diff shows null sha1 (reverse)' '
-	echo ":100644 100644 $_z40 $blob M	foo" >expect &&
+	echo ":100644 100644 $ZERO_OID $blob M	foo" >expect &&
 	git diff-tree -R $good_tree $bogus_tree >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'raw diff shows null sha1 (index)' '
-	echo ":100644 100644 $_z40 $blob M	foo" >expect &&
+	echo ":100644 100644 $ZERO_OID $blob M	foo" >expect &&
 	git diff-index $bogus_tree >actual &&
 	test_cmp expect actual
 '

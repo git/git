@@ -11,6 +11,8 @@
 # The following functions will also be available in the commit filter:
 
 functions=$(cat << \EOF
+EMPTY_TREE=$(git hash-object -t tree /dev/null)
+
 warn () {
 	echo "$*" >&2
 }
@@ -46,7 +48,7 @@ git_commit_non_empty_tree()
 {
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
 		map "$3"
-	elif test $# = 1 && test "$1" = 4b825dc642cb6eb9a060e54bf8d69288fbee4904; then
+	elif test $# = 1 && test "$1" = $EMPTY_TREE; then
 		:
 	else
 		git commit-tree "$@"
@@ -370,6 +372,7 @@ while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
 
 	report_progress
+	test -f "$workdir"/../map/$commit && continue
 
 	case "$filter_subdir" in
 	"")

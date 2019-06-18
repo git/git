@@ -86,14 +86,14 @@ test_expect_success 'pre-rebase got correct input (4)' '
 	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,work4
 '
 
-test_expect_success 'rebase -i -p with linear history' '
+test_expect_success REBASE_P 'rebase -i -p with linear history' '
 	git checkout -b work5 other &&
 	git rebase -i -p --root --onto master &&
 	git log --pretty=tformat:"%s" > rebased5 &&
 	test_cmp expect rebased5
 '
 
-test_expect_success 'pre-rebase got correct input (5)' '
+test_expect_success REBASE_P 'pre-rebase got correct input (5)' '
 	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,
 '
 
@@ -120,7 +120,7 @@ commit work6~4
 1
 EOF
 
-test_expect_success 'rebase -i -p with merge' '
+test_expect_success REBASE_P 'rebase -i -p with merge' '
 	git checkout -b work6 other &&
 	git rebase -i -p --root --onto master &&
 	log_with_names work6 > rebased6 &&
@@ -155,7 +155,7 @@ commit work7~5
 1
 EOF
 
-test_expect_success 'rebase -i -p with two roots' '
+test_expect_success REBASE_P 'rebase -i -p with two roots' '
 	git checkout -b work7 other &&
 	git rebase -i -p --root --onto master &&
 	log_with_names work7 > rebased7 &&
@@ -261,7 +261,7 @@ commit conflict3~6
 1
 EOF
 
-test_expect_success 'rebase -i -p --root with conflict (first part)' '
+test_expect_success REBASE_P 'rebase -i -p --root with conflict (first part)' '
 	git checkout -b conflict3 other &&
 	test_must_fail git rebase -i -p --root --onto master &&
 	git ls-files -u | grep "B$"
@@ -272,7 +272,7 @@ test_expect_success 'fix the conflict' '
 	git add B
 '
 
-test_expect_success 'rebase -i -p --root with conflict (second part)' '
+test_expect_success REBASE_P 'rebase -i -p --root with conflict (second part)' '
 	git rebase --continue &&
 	log_with_names conflict3 >out &&
 	test_cmp expect-conflict-p out

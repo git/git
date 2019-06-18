@@ -643,9 +643,9 @@ int xsnprintf(char *dst, size_t max, const char *fmt, ...)
 	va_end(ap);
 
 	if (len < 0)
-		die("BUG: your snprintf is broken");
+		BUG("your snprintf is broken");
 	if (len >= max)
-		die("BUG: attempt to snprintf into too-small buffer");
+		BUG("attempt to snprintf into too-small buffer");
 	return len;
 }
 
@@ -689,4 +689,17 @@ int xgethostname(char *buf, size_t len)
 	if (!ret)
 		buf[len - 1] = 0;
 	return ret;
+}
+
+int is_empty_or_missing_file(const char *filename)
+{
+	struct stat st;
+
+	if (stat(filename, &st) < 0) {
+		if (errno == ENOENT)
+			return 1;
+		die_errno(_("could not stat %s"), filename);
+	}
+
+	return !st.st_size;
 }

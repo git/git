@@ -479,7 +479,7 @@ static struct commit *check_single_commit(struct rev_info *revs)
 		struct object *obj = revs->pending.objects[i].item;
 		if (obj->flags & UNINTERESTING)
 			continue;
-		obj = deref_tag(obj, NULL, 0);
+		obj = deref_tag(revs->repo, obj, NULL, 0);
 		if (obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (commit)
@@ -498,7 +498,7 @@ static struct commit *check_single_commit(struct rev_info *revs)
 
 static void fill_blob_sha1(struct commit *commit, struct diff_filespec *spec)
 {
-	unsigned mode;
+	unsigned short mode;
 	struct object_id oid;
 
 	if (get_tree_entry(&commit->object.oid, spec->path, &oid, &mode))
@@ -508,7 +508,9 @@ static void fill_blob_sha1(struct commit *commit, struct diff_filespec *spec)
 	return;
 }
 
-static void fill_line_ends(struct diff_filespec *spec, long *lines,
+static void fill_line_ends(struct repository *r,
+			   struct diff_filespec *spec,
+			   long *lines,
 			   unsigned long **line_ends)
 {
 	int num = 0, size = 50;
@@ -516,7 +518,7 @@ static void fill_line_ends(struct diff_filespec *spec, long *lines,
 	unsigned long *ends = NULL;
 	char *data = NULL;
 
-	if (diff_populate_filespec(spec, 0))
+	if (diff_populate_filespec(r, spec, 0))
 		die("Cannot read blob %s", oid_to_hex(&spec->oid));
 
 	ALLOC_ARRAY(ends, size);
@@ -555,7 +557,8 @@ static const char *nth_line(void *data, long line)
 }
 
 static struct line_log_data *
-parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
+parse_lines(struct repository *r, struct commit *commit,
+	    const char *prefix, struct string_list *args)
 {
 	long lines = 0;
 	unsigned long *ends = NULL;
@@ -571,7 +574,7 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 		long begin = 0, end = 0;
 		long anchor;
 
-		name_part = skip_range_arg(item->string);
+		name_part = skip_range_arg(item->string, r->index);
 		if (!name_part || *name_part != ':' || !name_part[1])
 			die("-L argument not 'start,end:file' or ':funcname:file': %s",
 			    item->string);
@@ -583,7 +586,7 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 
 		spec = alloc_filespec(full_name);
 		fill_blob_sha1(commit, spec);
-		fill_line_ends(spec, &lines, &ends);
+		fill_line_ends(r, spec, &lines, &ends);
 		cb_data.spec = spec;
 		cb_data.lines = lines;
 		cb_data.line_ends = ends;
@@ -596,13 +599,13 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 
 		if (parse_range_arg(range_part, nth_line, &cb_data,
 				    lines, anchor, &begin, &end,
-				    full_name))
+				    full_name, r->index))
 			die("malformed -L argument '%s'", range_part);
-		if (lines < end || ((lines || begin) && lines < begin))
+		if ((!lines && (begin || end)) || lines < begin)
 			die("file %s has only %lu lines", name_part, lines);
 		if (begin < 1)
 			begin = 1;
-		if (end < 1)
+		if (end < 1 || lines < end)
 			end = lines;
 		begin--;
 		line_log_data_insert(&ranges, full_name, begin, end);
@@ -739,7 +742,7 @@ void line_log_init(struct rev_info *rev, const char *prefix, struct string_list 
 	struct line_log_data *range;
 
 	commit = check_single_commit(rev);
-	range = parse_lines(commit, prefix, args);
+	range = parse_lines(rev->diffopt.repo, commit, prefix, args);
 	add_line_range(rev, commit, range);
 
 	if (!rev->diffopt.detect_rename) {
@@ -816,8 +819,8 @@ static void queue_diffs(struct line_log_data *range,
 	assert(commit);
 
 	DIFF_QUEUE_CLEAR(&diff_queued_diff);
-	diff_tree_oid(parent ? &parent->tree->object.oid : NULL,
-		      &commit->tree->object.oid, "", opt);
+	diff_tree_oid(parent ? get_commit_tree_oid(parent) : NULL,
+		      get_commit_tree_oid(commit), "", opt);
 	if (opt->detect_rename) {
 		filter_diffs_for_paths(range, 1);
 		if (diff_might_be_rename())
@@ -891,8 +894,8 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 		return;
 
 	if (pair->one->oid_valid)
-		fill_line_ends(pair->one, &p_lines, &p_ends);
-	fill_line_ends(pair->two, &t_lines, &t_ends);
+		fill_line_ends(rev->diffopt.repo, pair->one, &p_lines, &p_ends);
+	fill_line_ends(rev->diffopt.repo, pair->two, &t_lines, &t_ends);
 
 	fprintf(opt->file, "%s%sdiff --git a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
 	fprintf(opt->file, "%s%s--- %s%s%s\n", prefix, c_meta,
@@ -1008,12 +1011,12 @@ static int process_diff_filepair(struct rev_info *rev,
 		return 0;
 
 	assert(pair->two->oid_valid);
-	diff_populate_filespec(pair->two, 0);
+	diff_populate_filespec(rev->diffopt.repo, pair->two, 0);
 	file_target.ptr = pair->two->data;
 	file_target.size = pair->two->size;
 
 	if (pair->one->oid_valid) {
-		diff_populate_filespec(pair->one, 0);
+		diff_populate_filespec(rev->diffopt.repo, pair->one, 0);
 		file_parent.ptr = pair->one->data;
 		file_parent.size = pair->one->size;
 	} else {
@@ -1100,10 +1103,12 @@ static int process_all_files(struct line_log_data **range_out,
 
 int line_log_print(struct rev_info *rev, struct commit *commit)
 {
-	struct line_log_data *range = lookup_line_range(rev, commit);
 
 	show_log(rev);
-	dump_diff_hacky(rev, range);
+	if (!(rev->diffopt.output_format & DIFF_FORMAT_NO_OUTPUT)) {
+		struct line_log_data *range = lookup_line_range(rev, commit);
+		dump_diff_hacky(rev, range);
+	}
 	return 1;
 }
 

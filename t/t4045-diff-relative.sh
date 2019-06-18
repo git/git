@@ -8,6 +8,7 @@ test_expect_success 'setup' '
 	echo content >file1 &&
 	mkdir subdir &&
 	echo other content >subdir/file2 &&
+	blob=$(git hash-object subdir/file2) &&
 	git add . &&
 	git commit -m one
 '
@@ -17,10 +18,11 @@ check_diff () {
 	shift
 	expect=$1
 	shift
+	short_blob=$(git rev-parse --short $blob)
 	cat >expected <<-EOF
 	diff --git a/$expect b/$expect
 	new file mode 100644
-	index 0000000..25c05ef
+	index 0000000..$short_blob
 	--- /dev/null
 	+++ b/$expect
 	@@ -0,0 +1 @@
@@ -68,7 +70,7 @@ check_raw () {
 	expect=$1
 	shift
 	cat >expected <<-EOF
-	:000000 100644 0000000000000000000000000000000000000000 25c05ef3639d2d270e7fe765a67668f098092bc5 A	$expect
+	:000000 100644 0000000000000000000000000000000000000000 $blob A	$expect
 	EOF
 	test_expect_success "--raw $*" "
 		git -C '$dir' diff --no-abbrev --raw $* HEAD^ >actual &&

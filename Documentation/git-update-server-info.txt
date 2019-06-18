@@ -9,7 +9,7 @@ git-update-server-info - Update auxiliary info file to help dumb servers
 SYNOPSIS
 --------
 [verse]
-'git update-server-info' [--force]
+'git update-server-info'
 
 DESCRIPTION
 -----------
@@ -18,15 +18,6 @@ have some auxiliary information files in $GIT_DIR/info and
 $GIT_OBJECT_DIRECTORY/info directories to help clients discover
 what references and packs the server has.  This command
 generates such auxiliary files.
-
-
-OPTIONS
--------
-
--f::
---force::
-	Update the info files from scratch.
-
 
 OUTPUT
 ------

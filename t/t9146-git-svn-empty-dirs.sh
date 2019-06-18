@@ -21,7 +21,7 @@ test_expect_success 'empty directories exist' '
 		do
 			if ! test -d "$i"
 			then
-				echo >&2 "$i does not exist"
+				echo >&2 "$i does not exist" &&
 				exit 1
 			fi
 		done
@@ -38,7 +38,7 @@ test_expect_success 'option automkdirs set to false' '
 		do
 			if test -d "$i"
 			then
-				echo >&2 "$i exists"
+				echo >&2 "$i exists" &&
 				exit 1
 			fi
 		done
@@ -63,7 +63,7 @@ test_expect_success 'git svn mkdirs recreates empty directories' '
 		do
 			if ! test -d "$i"
 			then
-				echo >&2 "$i does not exist"
+				echo >&2 "$i does not exist" &&
 				exit 1
 			fi
 		done
@@ -79,21 +79,21 @@ test_expect_success 'git svn mkdirs -r works' '
 		do
 			if ! test -d "$i"
 			then
-				echo >&2 "$i does not exist"
+				echo >&2 "$i does not exist" &&
 				exit 1
 			fi
-		done
+		done &&
 
 		if test -d "! !"
 		then
-			echo >&2 "$i should not exist"
+			echo >&2 "$i should not exist" &&
 			exit 1
-		fi
+		fi &&
 
 		git svn mkdirs -r8 &&
 		if ! test -d "! !"
 		then
-			echo >&2 "$i not exist"
+			echo >&2 "$i not exist" &&
 			exit 1
 		fi
 	)
@@ -115,7 +115,7 @@ test_expect_success 'empty directories in trunk exist' '
 		do
 			if ! test -d "$i"
 			then
-				echo >&2 "$i does not exist"
+				echo >&2 "$i does not exist" &&
 				exit 1
 			fi
 		done
@@ -148,7 +148,7 @@ test_expect_success 'git svn gc-ed files work' '
 			do
 				if ! test -d "$i"
 				then
-					echo >&2 "$i does not exist"
+					echo >&2 "$i does not exist" &&
 					exit 1
 				fi
 			done

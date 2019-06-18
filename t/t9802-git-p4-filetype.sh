@@ -310,7 +310,7 @@ test_expect_success SYMLINKS 'empty symlink target' '
 		# p4 to sync here will make it generate errors.
 		cd "$cli" &&
 		p4 print -q //depot/empty-symlink#2 >out &&
-		test ! -s out
+		test_must_be_empty out
 	) &&
 	test_when_finished cleanup_git &&
 
@@ -331,10 +331,6 @@ test_expect_success SYMLINKS 'empty symlink target' '
 		cd "$git" &&
 		test $(readlink empty-symlink) = target2
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

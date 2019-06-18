@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "refs.h"
+#include "object-store.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
@@ -10,6 +11,8 @@
 #include "branch.h"
 #include "fmt-merge-msg.h"
 #include "gpg-interface.h"
+#include "repository.h"
+#include "commit-reach.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	N_("git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),
@@ -76,9 +79,9 @@ static struct merge_parent *find_merge_parent(struct merge_parents *table,
 {
 	int i;
 	for (i = 0; i < table->nr; i++) {
-		if (given && oidcmp(&table->item[i].given, given))
+		if (given && !oideq(&table->item[i].given, given))
 			continue;
-		if (commit && oidcmp(&table->item[i].commit, commit))
+		if (commit && !oideq(&table->item[i].commit, commit))
 			continue;
 		return &table->item[i];
 	}
@@ -108,14 +111,15 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	struct string_list_item *item;
 	int pulling_head = 0;
 	struct object_id oid;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
-	if (len < GIT_SHA1_HEXSZ + 3 || line[GIT_SHA1_HEXSZ] != '\t')
+	if (len < hexsz + 3 || line[hexsz] != '\t')
 		return 1;
 
-	if (starts_with(line + GIT_SHA1_HEXSZ + 1, "not-for-merge"))
+	if (starts_with(line + hexsz + 1, "not-for-merge"))
 		return 0;
 
-	if (line[GIT_SHA1_HEXSZ + 1] != '\t')
+	if (line[hexsz + 1] != '\t')
 		return 2;
 
 	i = get_oid_hex(line, &oid);
@@ -130,7 +134,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 
 	if (line[len - 1] == '\n')
 		line[len - 1] = 0;
-	line += GIT_SHA1_HEXSZ + 2;
+	line += hexsz + 2;
 
 	/*
 	 * At this point, line points at the beginning of comment e.g.
@@ -342,7 +346,9 @@ static void shortlog(const char *name,
 	const struct object_id *oid = &origin_data->oid;
 	int limit = opts->shortlog_len;
 
-	branch = deref_tag(parse_object(oid), oid_to_hex(oid), GIT_SHA1_HEXSZ);
+	branch = deref_tag(the_repository, parse_object(the_repository, oid),
+			   oid_to_hex(oid),
+			   the_hash_algo->hexsz);
 	if (!branch || branch->type != OBJ_COMMIT)
 		return;
 
@@ -545,6 +551,7 @@ static void find_merge_parents(struct merge_parents *result,
 		int len;
 		char *p = in->buf + pos;
 		char *newline = strchr(p, '\n');
+		const char *q;
 		struct object_id oid;
 		struct commit *parent;
 		struct object *obj;
@@ -552,24 +559,23 @@ static void find_merge_parents(struct merge_parents *result,
 		len = newline ? newline - p : strlen(p);
 		pos += len + !!newline;
 
-		if (len < GIT_SHA1_HEXSZ + 3 ||
-		    get_oid_hex(p, &oid) ||
-		    p[GIT_SHA1_HEXSZ] != '\t' ||
-		    p[GIT_SHA1_HEXSZ + 1] != '\t')
+		if (parse_oid_hex(p, &oid, &q) ||
+		    q[0] != '\t' ||
+		    q[1] != '\t')
 			continue; /* skip not-for-merge */
 		/*
 		 * Do not use get_merge_parent() here; we do not have
 		 * "name" here and we do not want to contaminate its
 		 * util field yet.
 		 */
-		obj = parse_object(&oid);
+		obj = parse_object(the_repository, &oid);
 		parent = (struct commit *)peel_to_type(NULL, 0, obj, OBJ_COMMIT);
 		if (!parent)
 			continue;
 		commit_list_insert(parent, &parents);
 		add_merge_parent(result, &obj->oid, &parent->object.oid);
 	}
-	head_commit = lookup_commit(head);
+	head_commit = lookup_commit(the_repository, head);
 	if (head_commit)
 		commit_list_insert(head_commit, &parents);
 	reduce_heads_replace(&parents);
@@ -577,7 +583,7 @@ static void find_merge_parents(struct merge_parents *result,
 	while (parents) {
 		struct commit *cmit = pop_commit(&parents);
 		for (i = 0; i < result->nr; i++)
-			if (!oidcmp(&result->item[i].commit, &cmit->object.oid))
+			if (oideq(&result->item[i].commit, &cmit->object.oid))
 				result->item[i].used = 1;
 	}
 
@@ -623,7 +629,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		i++;
 		p[len] = 0;
 		if (handle_line(p, &merge_parents))
-			die ("Error in line %d: %.*s", i, len, p);
+			die("error in line %d: %.*s", i, len, p);
 	}
 
 	if (opts->add_title && srcs.nr)
@@ -637,7 +643,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		struct rev_info rev;
 
 		head = lookup_commit_or_die(&head_oid, "HEAD");
-		init_revisions(&rev, NULL);
+		repo_init_revisions(the_repository, &rev, NULL);
 		rev.commit_format = CMIT_FMT_ONELINE;
 		rev.ignore_merges = 1;
 		rev.limited = 1;

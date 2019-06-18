@@ -41,7 +41,7 @@ OPTIONS
 <directory>::
 	The repository to sync into.
 
-pre-receive Hook
+PRE-RECEIVE HOOK
 ----------------
 Before any ref is updated, if $GIT_DIR/hooks/pre-receive file exists
 and is executable, it will be invoked once with no parameters.  The
@@ -116,7 +116,7 @@ bail out if the update is not to be supported.
 
 See the notes on the quarantine environment below.
 
-update Hook
+UPDATE HOOK
 -----------
 Before each ref is updated, if $GIT_DIR/hooks/update file exists
 and is executable, it is invoked once per ref, with three parameters:
@@ -138,7 +138,7 @@ ensure the ref will actually be updated, it is only a prerequisite.
 As such it is not a good idea to send notices (e.g. email) from
 this hook.  Consider using the post-receive hook instead.
 
-post-receive Hook
+POST-RECEIVE HOOK
 -----------------
 After all refs were updated (or attempted to be updated), if any
 ref update was successful, and if $GIT_DIR/hooks/post-receive
@@ -198,7 +198,7 @@ after it was updated by 'git-receive-pack', but before the hook was able
 to evaluate it.  It is recommended that hooks rely on sha1-new
 rather than the current value of refname.
 
-post-update Hook
+POST-UPDATE HOOK
 ----------------
 After all other processing, if at least one ref was updated, and
 if $GIT_DIR/hooks/post-update file exists and is executable, then
@@ -216,7 +216,7 @@ if the repository is packed and is served via a dumb transport.
 	exec git update-server-info
 
 
-Quarantine Environment
+QUARANTINE ENVIRONMENT
 ----------------------
 
 When `receive-pack` takes in objects, they are placed into a temporary

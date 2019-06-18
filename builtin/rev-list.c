@@ -6,6 +6,8 @@
 #include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
+#include "object.h"
+#include "object-store.h"
 #include "pack.h"
 #include "pack-bitmap.h"
 #include "builtin.h"
@@ -16,6 +18,7 @@
 #include "reflog-walk.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-store.h"
 
 static const char rev_list_usage[] =
 "git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
@@ -74,7 +77,7 @@ static enum missing_action arg_missing_action;
 
 #define DEFAULT_OIDSET_SIZE     (16*1024)
 
-static void finish_commit(struct commit *commit, void *data);
+static void finish_commit(struct commit *commit);
 static void show_commit(struct commit *commit, void *data)
 {
 	struct rev_list_info *info = data;
@@ -83,7 +86,7 @@ static void show_commit(struct commit *commit, void *data)
 	display_progress(progress, ++progress_counter);
 
 	if (info->flags & REV_LIST_QUIET) {
-		finish_commit(commit, data);
+		finish_commit(commit);
 		return;
 	}
 
@@ -96,7 +99,7 @@ static void show_commit(struct commit *commit, void *data)
 			revs->count_left++;
 		else
 			revs->count_right++;
-		finish_commit(commit, data);
+		finish_commit(commit);
 		return;
 	}
 
@@ -185,16 +188,17 @@ static void show_commit(struct commit *commit, void *data)
 			putchar('\n');
 	}
 	maybe_flush_or_die(stdout, "stdout");
-	finish_commit(commit, data);
+	finish_commit(commit);
 }
 
-static void finish_commit(struct commit *commit, void *data)
+static void finish_commit(struct commit *commit)
 {
 	if (commit->parents) {
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
-	free_commit_buffer(commit);
+	free_commit_buffer(the_repository->parsed_objects,
+			   commit);
 }
 
 static inline void finish_object__ma(struct object *obj)
@@ -207,7 +211,8 @@ static inline void finish_object__ma(struct object *obj)
 	 */
 	switch (arg_missing_action) {
 	case MA_ERROR:
-		die("missing blob object '%s'", oid_to_hex(&obj->oid));
+		die("missing %s object '%s'",
+		    type_name(obj->type), oid_to_hex(&obj->oid));
 		return;
 
 	case MA_ALLOW_ANY:
@@ -220,8 +225,8 @@ static inline void finish_object__ma(struct object *obj)
 	case MA_ALLOW_PROMISOR:
 		if (is_promisor_object(&obj->oid))
 			return;
-		die("unexpected missing blob object '%s'",
-		    oid_to_hex(&obj->oid));
+		die("unexpected missing %s object '%s'",
+		    type_name(obj->type), oid_to_hex(&obj->oid));
 		return;
 
 	default:
@@ -233,12 +238,12 @@ static inline void finish_object__ma(struct object *obj)
 static int finish_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-	if (obj->type == OBJ_BLOB && !has_object_file(&obj->oid)) {
+	if (oid_object_info_extended(the_repository, &obj->oid, NULL, 0) < 0) {
 		finish_object__ma(obj);
 		return 1;
 	}
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
-		parse_object(&obj->oid);
+		parse_object(the_repository, &obj->oid);
 	return 0;
 }
 
@@ -357,6 +362,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct rev_list_info info;
+	struct setup_revision_opt s_r_opt = {
+		.allow_exclude_promisor_objects = 1,
+	};
 	int i;
 	int bisect_list = 0;
 	int bisect_show_vars = 0;
@@ -368,7 +376,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		usage(rev_list_usage);
 
 	git_config(git_default_config, NULL);
-	init_revisions(&revs, prefix);
+	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 
@@ -400,7 +408,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	argc = setup_revisions(argc, argv, &revs, NULL);
+	if (arg_missing_action)
+		revs.do_not_die_on_missing_tree = 1;
+
+	argc = setup_revisions(argc, argv, &revs, &s_r_opt);
 
 	memset(&info, 0, sizeof(info));
 	info.revs = &revs;
@@ -491,7 +502,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if ((!revs.commits && reflog_walk_empty(revs.reflog_info) &&
 	     (!(revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
 	      !revs.pending.nr) &&
-	     !revs.rev_input_given) ||
+	     !revs.rev_input_given && !revs.read_from_stdin) ||
 	    revs.diff)
 		usage(rev_list_usage);
 
@@ -514,17 +525,21 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (revs.count && !revs.left_right && !revs.cherry_mark) {
 			uint32_t commit_count;
 			int max_count = revs.max_count;
-			if (!prepare_bitmap_walk(&revs)) {
-				count_bitmap_commit_list(&commit_count, NULL, NULL, NULL);
+			struct bitmap_index *bitmap_git;
+			if ((bitmap_git = prepare_bitmap_walk(&revs))) {
+				count_bitmap_commit_list(bitmap_git, &commit_count, NULL, NULL, NULL);
 				if (max_count >= 0 && max_count < commit_count)
 					commit_count = max_count;
 				printf("%d\n", commit_count);
+				free_bitmap_index(bitmap_git);
 				return 0;
 			}
 		} else if (revs.max_count < 0 &&
 			   revs.tag_objects && revs.tree_objects && revs.blob_objects) {
-			if (!prepare_bitmap_walk(&revs)) {
-				traverse_bitmap_commit_list(&show_object_fast);
+			struct bitmap_index *bitmap_git;
+			if ((bitmap_git = prepare_bitmap_walk(&revs))) {
+				traverse_bitmap_commit_list(bitmap_git, &show_object_fast);
+				free_bitmap_index(bitmap_git);
 				return 0;
 			}
 		}
@@ -533,7 +548,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	if (revs.tree_objects)
-		mark_edges_uninteresting(&revs, show_edge);
+		mark_edges_uninteresting(&revs, show_edge, 0);
 
 	if (bisect_list) {
 		int reaches, all;

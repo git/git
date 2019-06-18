@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
@@ -13,6 +14,7 @@
 #include "tree-walk.h"
 #include "sha1-array.h"
 #include "packfile.h"
+#include "object-store.h"
 
 struct batch_options {
 	int enabled;
@@ -20,6 +22,7 @@ struct batch_options {
 	int print_contents;
 	int buffer_output;
 	int all_objects;
+	int unordered;
 	int cmdmode; /* may be 'w' or 'c' for --filters or --textconv */
 	const char *format;
 };
@@ -38,13 +41,20 @@ static int filter_object(const char *path, unsigned mode,
 			     oid_to_hex(oid), path);
 	if ((type == OBJ_BLOB) && S_ISREG(mode)) {
 		struct strbuf strbuf = STRBUF_INIT;
-		if (convert_to_working_tree(path, *buf, *size, &strbuf)) {
+		if (convert_to_working_tree(&the_index, path, *buf, *size, &strbuf)) {
 			free(*buf);
 			*size = strbuf.len;
 			*buf = strbuf_detach(&strbuf, NULL);
 		}
 	}
 
+	return 0;
+}
+
+static int stream_blob(const struct object_id *oid)
+{
+	if (stream_blob_to_fd(1, oid, NULL, 0))
+		die("unable to stream %s to stdout", oid_to_hex(oid));
 	return 0;
 }
 
@@ -64,7 +74,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	if (unknown_type)
 		flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
-	if (get_oid_with_context(obj_name, GET_OID_RECORD_PATH,
+	if (get_oid_with_context(the_repository, obj_name,
+				 GET_OID_RECORD_PATH,
 				 &oid, &obj_context))
 		die("Not a valid object name %s", obj_name);
 
@@ -77,7 +88,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	switch (opt) {
 	case 't':
 		oi.type_name = &sb;
-		if (oid_object_info_extended(&oid, &oi, flags) < 0)
+		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
 		if (sb.len) {
 			printf("%s\n", sb.buf);
@@ -88,9 +99,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 
 	case 's':
 		oi.sizep = &size;
-		if (oid_object_info_extended(&oid, &oi, flags) < 0)
+		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
-		printf("%lu\n", size);
+		printf("%"PRIuMAX"\n", (uintmax_t)size);
 		return 0;
 
 	case 'e':
@@ -111,12 +122,13 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			die("git cat-file --textconv %s: <object> must be <sha1:path>",
 			    obj_name);
 
-		if (textconv_object(path, obj_context.mode, &oid, 1, &buf, &size))
+		if (textconv_object(the_repository, path, obj_context.mode,
+				    &oid, 1, &buf, &size))
 			break;
 		/* else fallthrough */
 
 	case 'p':
-		type = oid_object_info(&oid, NULL);
+		type = oid_object_info(the_repository, &oid, NULL);
 		if (type < 0)
 			die("Not a valid object name %s", obj_name);
 
@@ -129,7 +141,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		}
 
 		if (type == OBJ_BLOB)
-			return stream_blob_to_fd(1, &oid, NULL, 0);
+			return stream_blob(&oid);
 		buf = read_object_file(&oid, &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
@@ -140,7 +152,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	case 0:
 		if (type_from_string(exp_type) == OBJ_BLOB) {
 			struct object_id blob_oid;
-			if (oid_object_info(&oid, NULL) == OBJ_TAG) {
+			if (oid_object_info(the_repository, &oid, NULL) == OBJ_TAG) {
 				char *buffer = read_object_file(&oid, &type,
 								&size);
 				const char *target;
@@ -151,8 +163,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			} else
 				oidcpy(&blob_oid, &oid);
 
-			if (oid_object_info(&blob_oid, NULL) == OBJ_BLOB)
-				return stream_blob_to_fd(1, &blob_oid, NULL, 0);
+			if (oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB)
+				return stream_blob(&blob_oid);
 			/*
 			 * we attempted to dereference a tag to a blob
 			 * and failed; there may be new dereference
@@ -199,14 +211,14 @@ struct expand_data {
 
 	/*
 	 * After a mark_query run, this object_info is set up to be
-	 * passed to sha1_object_info_extended. It will point to the data
+	 * passed to oid_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
 	 */
 	struct object_info info;
 
 	/*
 	 * This flag will be true if the requested batch format and options
-	 * don't require us to call sha1_object_info, which can then be
+	 * don't require us to call oid_object_info, which can then be
 	 * optimized out.
 	 */
 	unsigned skip_object_info : 1;
@@ -235,7 +247,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (data->mark_query)
 			data->info.sizep = &data->size;
 		else
-			strbuf_addf(sb, "%lu", data->size);
+			strbuf_addf(sb, "%"PRIuMAX , (uintmax_t)data->size);
 	} else if (is_atom("objectsize:disk", atom, len)) {
 		if (data->mark_query)
 			data->info.disk_sizep = &data->disk_size;
@@ -303,7 +315,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					    oid_to_hex(oid), data->rest);
 			} else if (opt->cmdmode == 'c') {
 				enum object_type type;
-				if (!textconv_object(data->rest, 0100644, oid,
+				if (!textconv_object(the_repository,
+						     data->rest, 0100644, oid,
 						     1, &contents, &size))
 					contents = read_object_file(oid,
 								    &type,
@@ -312,11 +325,12 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					die("could not convert '%s' %s",
 					    oid_to_hex(oid), data->rest);
 			} else
-				die("BUG: invalid cmdmode: %c", opt->cmdmode);
+				BUG("invalid cmdmode: %c", opt->cmdmode);
 			batch_write(opt, contents, size);
 			free(contents);
-		} else if (stream_blob_to_fd(1, oid, NULL, 0) < 0)
-			die("unable to stream %s to stdout", oid_to_hex(oid));
+		} else {
+			stream_blob(oid);
+		}
 	}
 	else {
 		enum object_type type;
@@ -336,13 +350,13 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	}
 }
 
-static void batch_object_write(const char *obj_name, struct batch_options *opt,
+static void batch_object_write(const char *obj_name,
+			       struct strbuf *scratch,
+			       struct batch_options *opt,
 			       struct expand_data *data)
 {
-	struct strbuf buf = STRBUF_INIT;
-
 	if (!data->skip_object_info &&
-	    oid_object_info_extended(&data->oid, &data->info,
+	    oid_object_info_extended(the_repository, &data->oid, &data->info,
 				     OBJECT_INFO_LOOKUP_REPLACE) < 0) {
 		printf("%s missing\n",
 		       obj_name ? obj_name : oid_to_hex(&data->oid));
@@ -350,10 +364,10 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 		return;
 	}
 
-	strbuf_expand(&buf, opt->format, expand_format, data);
-	strbuf_addch(&buf, '\n');
-	batch_write(opt, buf.buf, buf.len);
-	strbuf_release(&buf);
+	strbuf_reset(scratch);
+	strbuf_expand(scratch, opt->format, expand_format, data);
+	strbuf_addch(scratch, '\n');
+	batch_write(opt, scratch->buf, scratch->len);
 
 	if (opt->print_contents) {
 		print_object_or_die(opt, data);
@@ -361,18 +375,24 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	}
 }
 
-static void batch_one_object(const char *obj_name, struct batch_options *opt,
+static void batch_one_object(const char *obj_name,
+			     struct strbuf *scratch,
+			     struct batch_options *opt,
 			     struct expand_data *data)
 {
 	struct object_context ctx;
 	int flags = opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0;
-	enum follow_symlinks_result result;
+	enum get_oid_result result;
 
-	result = get_oid_with_context(obj_name, flags, &data->oid, &ctx);
+	result = get_oid_with_context(the_repository, obj_name,
+				      flags, &data->oid, &ctx);
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
 			printf("%s missing\n", obj_name);
+			break;
+		case SHORT_NAME_AMBIGUOUS:
+			printf("%s ambiguous\n", obj_name);
 			break;
 		case DANGLING_SYMLINK:
 			printf("dangling %"PRIuMAX"\n%s\n",
@@ -387,7 +407,7 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 			       (uintmax_t)strlen(obj_name), obj_name);
 			break;
 		default:
-			die("BUG: unknown get_sha1_with_context result %d\n",
+			BUG("unknown get_sha1_with_context result %d\n",
 			       result);
 			break;
 		}
@@ -403,42 +423,70 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 		return;
 	}
 
-	batch_object_write(obj_name, opt, data);
+	batch_object_write(obj_name, scratch, opt, data);
 }
 
 struct object_cb_data {
 	struct batch_options *opt;
 	struct expand_data *expand;
+	struct oidset *seen;
+	struct strbuf *scratch;
 };
 
 static int batch_object_cb(const struct object_id *oid, void *vdata)
 {
 	struct object_cb_data *data = vdata;
 	oidcpy(&data->expand->oid, oid);
-	batch_object_write(NULL, data->opt, data->expand);
+	batch_object_write(NULL, data->scratch, data->opt, data->expand);
 	return 0;
 }
 
-static int batch_loose_object(const struct object_id *oid,
-			      const char *path,
-			      void *data)
+static int collect_loose_object(const struct object_id *oid,
+				const char *path,
+				void *data)
 {
 	oid_array_append(data, oid);
 	return 0;
 }
 
-static int batch_packed_object(const struct object_id *oid,
-			       struct packed_git *pack,
-			       uint32_t pos,
-			       void *data)
+static int collect_packed_object(const struct object_id *oid,
+				 struct packed_git *pack,
+				 uint32_t pos,
+				 void *data)
 {
 	oid_array_append(data, oid);
 	return 0;
+}
+
+static int batch_unordered_object(const struct object_id *oid, void *vdata)
+{
+	struct object_cb_data *data = vdata;
+
+	if (oidset_insert(data->seen, oid))
+		return 0;
+
+	return batch_object_cb(oid, data);
+}
+
+static int batch_unordered_loose(const struct object_id *oid,
+				 const char *path,
+				 void *data)
+{
+	return batch_unordered_object(oid, data);
+}
+
+static int batch_unordered_packed(const struct object_id *oid,
+				  struct packed_git *pack,
+				  uint32_t pos,
+				  void *data)
+{
+	return batch_unordered_object(oid, data);
 }
 
 static int batch_objects(struct batch_options *opt)
 {
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf input = STRBUF_INIT;
+	struct strbuf output = STRBUF_INIT;
 	struct expand_data data;
 	int save_warning;
 	int retval = 0;
@@ -448,13 +496,14 @@ static int batch_objects(struct batch_options *opt)
 
 	/*
 	 * Expand once with our special mark_query flag, which will prime the
-	 * object_info to be handed to sha1_object_info_extended for each
+	 * object_info to be handed to oid_object_info_extended for each
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));
 	data.mark_query = 1;
-	strbuf_expand(&buf, opt->format, expand_format, &data);
+	strbuf_expand(&output, opt->format, expand_format, &data);
 	data.mark_query = 0;
+	strbuf_release(&output);
 	if (opt->cmdmode)
 		data.split_on_whitespace = 1;
 
@@ -472,19 +521,37 @@ static int batch_objects(struct batch_options *opt)
 		data.info.typep = &data.type;
 
 	if (opt->all_objects) {
-		struct oid_array sa = OID_ARRAY_INIT;
 		struct object_cb_data cb;
 
-		for_each_loose_object(batch_loose_object, &sa, 0);
-		for_each_packed_object(batch_packed_object, &sa, 0);
 		if (repository_format_partial_clone)
 			warning("This repository has extensions.partialClone set. Some objects may not be loaded.");
 
 		cb.opt = opt;
 		cb.expand = &data;
-		oid_array_for_each_unique(&sa, batch_object_cb, &cb);
+		cb.scratch = &output;
 
-		oid_array_clear(&sa);
+		if (opt->unordered) {
+			struct oidset seen = OIDSET_INIT;
+
+			cb.seen = &seen;
+
+			for_each_loose_object(batch_unordered_loose, &cb, 0);
+			for_each_packed_object(batch_unordered_packed, &cb,
+					       FOR_EACH_OBJECT_PACK_ORDER);
+
+			oidset_clear(&seen);
+		} else {
+			struct oid_array sa = OID_ARRAY_INIT;
+
+			for_each_loose_object(collect_loose_object, &sa, 0);
+			for_each_packed_object(collect_packed_object, &sa, 0);
+
+			oid_array_for_each_unique(&sa, batch_object_cb, &cb);
+
+			oid_array_clear(&sa);
+		}
+
+		strbuf_release(&output);
 		return 0;
 	}
 
@@ -498,14 +565,14 @@ static int batch_objects(struct batch_options *opt)
 	save_warning = warn_on_object_refname_ambiguity;
 	warn_on_object_refname_ambiguity = 0;
 
-	while (strbuf_getline(&buf, stdin) != EOF) {
+	while (strbuf_getline(&input, stdin) != EOF) {
 		if (data.split_on_whitespace) {
 			/*
 			 * Split at first whitespace, tying off the beginning
 			 * of the string and saving the remainder (or NULL) in
 			 * data.rest.
 			 */
-			char *p = strpbrk(buf.buf, " \t");
+			char *p = strpbrk(input.buf, " \t");
 			if (p) {
 				while (*p && strchr(" \t", *p))
 					*p++ = '\0';
@@ -513,10 +580,11 @@ static int batch_objects(struct batch_options *opt)
 			data.rest = p;
 		}
 
-		batch_one_object(buf.buf, opt, &data);
+		batch_one_object(input.buf, &output, opt, &data);
 	}
 
-	strbuf_release(&buf);
+	strbuf_release(&input);
+	strbuf_release(&output);
 	warn_on_object_refname_ambiguity = save_warning;
 	return retval;
 }
@@ -541,8 +609,10 @@ static int batch_option_callback(const struct option *opt,
 {
 	struct batch_options *bo = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (bo->enabled) {
-		return 1;
+		return error(_("only one batch option may be specified"));
 	}
 
 	bo->enabled = 1;
@@ -577,14 +647,18 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "buffer", &batch.buffer_output, N_("buffer --batch output")),
 		{ OPTION_CALLBACK, 0, "batch", &batch, "format",
 			N_("show info and content of objects fed from the standard input"),
-			PARSE_OPT_OPTARG, batch_option_callback },
+			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			batch_option_callback },
 		{ OPTION_CALLBACK, 0, "batch-check", &batch, "format",
 			N_("show info about objects fed from the standard input"),
-			PARSE_OPT_OPTARG, batch_option_callback },
+			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			batch_option_callback },
 		OPT_BOOL(0, "follow-symlinks", &batch.follow_symlinks,
 			 N_("follow in-tree symlinks (used with --batch or --batch-check)")),
 		OPT_BOOL(0, "batch-all-objects", &batch.all_objects,
 			 N_("show all objects with --batch or --batch-check")),
+		OPT_BOOL(0, "unordered", &batch.unordered,
+			 N_("do not order --batch-all-objects output")),
 		OPT_END()
 	};
 

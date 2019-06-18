@@ -131,7 +131,7 @@ cmp_diff_files_output () {
     # object ID for the changed files because it wants you to look at the
     # filesystem.
     sed <"$2" >.test-tmp \
-	-e '/^:000000 /d;s/'$_x40'\( [MCRNDU][0-9]*\)	/'$_z40'\1	/' &&
+	-e '/^:000000 /d;s/'$OID_REGEX'\( [MCRNDU][0-9]*\)	/'$ZERO_OID'\1	/' &&
     test_cmp "$1" .test-tmp
 }
 

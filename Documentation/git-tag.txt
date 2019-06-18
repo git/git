@@ -34,8 +34,8 @@ in the tag message.
 If `-m <msg>` or `-F <file>` is given and `-a`, `-s`, and `-u <keyid>`
 are absent, `-a` is implied.
 
-Otherwise just a tag reference for the SHA-1 object name of the commit object is
-created (i.e. a lightweight tag).
+Otherwise, a tag reference that points directly at the given object
+(i.e., a lightweight tag) is created.
 
 A GnuPG signed tag object will be created when `-s` or `-u
 <keyid>` is used.  When `-u <keyid>` is not used, the
@@ -115,7 +115,7 @@ options for details.
 	variable if it exists, or lexicographic order otherwise. See
 	linkgit:git-config[1].
 
---color[=<when>]:
+--color[=<when>]::
 	Respect any colors specified in the `--format` option. The
 	`<when>` field must be one of `always`, `never`, or `auto` (if
 	`<when>` is absent, behave as if `always` was given).
@@ -187,6 +187,12 @@ This option is only applicable when listing tags without annotation lines.
 	`--create-reflog`, but currently does not negate the setting of
 	`core.logAllRefUpdates`.
 
+--format=<format>::
+	A string that interpolates `%(fieldname)` from a tag ref being shown
+	and the object it points at.  The format is the same as
+	that of linkgit:git-for-each-ref[1].  When unspecified,
+	defaults to `%(refname:strip=2)`.
+
 <tagname>::
 	The name of the tag to create, delete, or describe.
 	The new tag name must pass all checks defined by
@@ -197,12 +203,6 @@ This option is only applicable when listing tags without annotation lines.
 <object>::
 	The object that the new tag will refer to, usually a commit.
 	Defaults to HEAD.
-
-<format>::
-	A string that interpolates `%(fieldname)` from a tag ref being shown
-	and the object it points at.  The format is the same as
-	that of linkgit:git-for-each-ref[1].  When unspecified,
-	defaults to `%(refname:strip=2)`.
 
 CONFIGURATION
 -------------
@@ -237,16 +237,16 @@ your repository directly), then others will have already seen
 the old tag. In that case you can do one of two things:
 
 . The sane thing.
-Just admit you screwed up, and use a different name. Others have
-already seen one tag-name, and if you keep the same name, you
-may be in the situation that two people both have "version X",
-but they actually have 'different' "X"'s.  So just call it "X.1"
-and be done with it.
+  Just admit you screwed up, and use a different name. Others have
+  already seen one tag-name, and if you keep the same name, you
+  may be in the situation that two people both have "version X",
+  but they actually have 'different' "X"'s.  So just call it "X.1"
+  and be done with it.
 
 . The insane thing.
-You really want to call the new version "X" too, 'even though'
-others have already seen the old one. So just use 'git tag -f'
-again, as if you hadn't already published the old one.
+  You really want to call the new version "X" too, 'even though'
+  others have already seen the old one. So just use 'git tag -f'
+  again, as if you hadn't already published the old one.
 
 However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a
