@@ -1111,11 +1111,13 @@ static void finalize_deferred_config(struct wt_status *s)
 
 	/*
 	 * If the user did not give a "--[no]-ahead-behind" command
-	 * line argument, then we inherit the a/b config setting.
-	 * If is not set, then we inherit _FULL for backwards
-	 * compatibility.
+	 * line argument *AND* we will print in a human-readable format
+	 * (short, long etc.) then we inherit from the status.aheadbehind
+	 * config setting.  In all other cases (and porcelain V[12] formats
+	 * in particular), we inherit _FULL for backwards compatibility.
 	 */
-	if (s->ahead_behind_flags == AHEAD_BEHIND_UNSPECIFIED)
+	if (use_deferred_config &&
+	    s->ahead_behind_flags == AHEAD_BEHIND_UNSPECIFIED)
 		s->ahead_behind_flags = status_deferred_config.ahead_behind;
 
 	if (s->ahead_behind_flags == AHEAD_BEHIND_UNSPECIFIED)
