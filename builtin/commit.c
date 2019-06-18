@@ -1078,9 +1078,11 @@ static const char *read_commit_message(const char *name)
 static struct status_deferred_config {
 	enum wt_status_format status_format;
 	int show_branch;
+	enum ahead_behind_flags ahead_behind;
 } status_deferred_config = {
 	STATUS_FORMAT_UNSPECIFIED,
-	-1 /* unspecified */
+	-1, /* unspecified */
+	AHEAD_BEHIND_UNSPECIFIED,
 };
 
 static void finalize_deferred_config(struct wt_status *s)
@@ -1106,6 +1108,15 @@ static void finalize_deferred_config(struct wt_status *s)
 		s->show_branch = status_deferred_config.show_branch;
 	if (s->show_branch < 0)
 		s->show_branch = 0;
+
+	/*
+	 * If the user did not give a "--[no]-ahead-behind" command
+	 * line argument, then we inherit the a/b config setting.
+	 * If is not set, then we inherit _FULL for backwards
+	 * compatibility.
+	 */
+	if (s->ahead_behind_flags == AHEAD_BEHIND_UNSPECIFIED)
+		s->ahead_behind_flags = status_deferred_config.ahead_behind;
 
 	if (s->ahead_behind_flags == AHEAD_BEHIND_UNSPECIFIED)
 		s->ahead_behind_flags = AHEAD_BEHIND_FULL;
@@ -1244,6 +1255,10 @@ static int git_status_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "status.branch")) {
 		status_deferred_config.show_branch = git_config_bool(k, v);
+		return 0;
+	}
+	if (!strcmp(k, "status.aheadbehind")) {
+		status_deferred_config.ahead_behind = git_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "status.showstash")) {
