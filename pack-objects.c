@@ -6,17 +6,17 @@
 #include "config.h"
 
 static uint32_t locate_object_entry_hash(struct packing_data *pdata,
-					 const unsigned char *sha1,
+					 const struct object_id *oid,
 					 int *found)
 {
 	uint32_t i, mask = (pdata->index_size - 1);
 
-	i = sha1hash(sha1) & mask;
+	i = sha1hash(oid->hash) & mask;
 
 	while (pdata->index[i] > 0) {
 		uint32_t pos = pdata->index[i] - 1;
 
-		if (hasheq(sha1, pdata->objects[pos].idx.oid.hash)) {
+		if (oideq(oid, &pdata->objects[pos].idx.oid)) {
 			*found = 1;
 			return i;
 		}
@@ -56,7 +56,7 @@ static void rehash_objects(struct packing_data *pdata)
 	for (i = 0; i < pdata->nr_objects; i++) {
 		int found;
 		uint32_t ix = locate_object_entry_hash(pdata,
-						       entry->idx.oid.hash,
+						       &entry->idx.oid,
 						       &found);
 
 		if (found)
@@ -77,7 +77,7 @@ struct object_entry *packlist_find(struct packing_data *pdata,
 	if (!pdata->index_size)
 		return NULL;
 
-	i = locate_object_entry_hash(pdata, oid->hash, &found);
+	i = locate_object_entry_hash(pdata, oid, &found);
 
 	if (index_pos)
 		*index_pos = i;
