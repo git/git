@@ -2183,6 +2183,10 @@ _git_switch ()
 		fi
 		if [ -z "$(__git_find_on_cmdline "-d --detach")" ]; then
 			only_local_ref=y
+		else
+			# --guess --detach is invalid combination, no
+			# dwim will be done when --detach is specified
+			track_opt=
 		fi
 		if [ $only_local_ref = y -a -z "$track_opt" ]; then
 			__gitcomp_direct "$(__git_heads "" "$cur" " ")"
