@@ -90,9 +90,8 @@ test_expect_success 'restore --ignore-unmerged ignores unmerged entries' '
 
 		git restore --ignore-unmerged --quiet . >output 2>&1 &&
 		git diff common >diff-output &&
-		: >empty &&
-		test_cmp empty output &&
-		test_cmp empty diff-output
+		test_must_be_empty output &&
+		test_must_be_empty diff-output
 	)
 '
 
