@@ -324,14 +324,6 @@ static const double __ac_HASH_UPPER = 0.77;
 		code;												\
 	} }
 
-#define __kh_oid_cmp(a, b) (hashcmp(a, b) == 0)
-
-KHASH_INIT(sha1, const unsigned char *, void *, 1, sha1hash, __kh_oid_cmp)
-typedef kh_sha1_t khash_sha1;
-
-KHASH_INIT(sha1_pos, const unsigned char *, int, 1, sha1hash, __kh_oid_cmp)
-typedef kh_sha1_pos_t khash_sha1_pos;
-
 static inline unsigned int oid_hash(struct object_id oid)
 {
 	return sha1hash(oid.hash);
