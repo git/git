@@ -1326,9 +1326,7 @@ static void die_if_some_operation_in_progress(void)
 		      "Consider \"git revert --quit\" "
 		      "or \"git worktree add\"."));
 	if (state.bisect_in_progress)
-		die(_("cannot switch branch while bisecting\n"
-		      "Consider \"git bisect reset HEAD\" "
-		      "or \"git worktree add\"."));
+		warning(_("you are switching branch while bisecting"));
 }
 
 static int checkout_branch(struct checkout_opts *opts,
