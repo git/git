@@ -324,20 +324,20 @@ static const double __ac_HASH_UPPER = 0.77;
 		code;												\
 	} }
 
-static inline unsigned int oid_hash(struct object_id oid)
+static inline unsigned int oidhash_by_value(struct object_id oid)
 {
 	return sha1hash(oid.hash);
 }
 
-static inline int oid_equal(struct object_id a, struct object_id b)
+static inline int oideq_by_value(struct object_id a, struct object_id b)
 {
 	return oideq(&a, &b);
 }
 
-KHASH_INIT(oid_set, struct object_id, int, 0, oid_hash, oid_equal)
+KHASH_INIT(oid_set, struct object_id, int, 0, oidhash_by_value, oideq_by_value)
 
-KHASH_INIT(oid_map, struct object_id, void *, 1, oid_hash, oid_equal)
+KHASH_INIT(oid_map, struct object_id, void *, 1, oidhash_by_value, oideq_by_value)
 
-KHASH_INIT(oid_pos, struct object_id, int, 1, oid_hash, oid_equal)
+KHASH_INIT(oid_pos, struct object_id, int, 1, oidhash_by_value, oideq_by_value)
 
 #endif /* __AC_KHASH_H */
