@@ -342,7 +342,7 @@ static inline int oid_equal(struct object_id a, struct object_id b)
 	return oideq(&a, &b);
 }
 
-KHASH_INIT(oid, struct object_id, int, 0, oid_hash, oid_equal)
+KHASH_INIT(oid_set, struct object_id, int, 0, oid_hash, oid_equal)
 
 KHASH_INIT(oid_map, struct object_id, void *, 1, oid_hash, oid_equal)
 

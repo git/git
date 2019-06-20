@@ -20,7 +20,7 @@
  * A single oidset; should be zero-initialized (or use OIDSET_INIT).
  */
 struct oidset {
-	kh_oid_t set;
+	kh_oid_set_t set;
 };
 
 #define OIDSET_INIT { { 0 } }
@@ -62,7 +62,7 @@ int oidset_remove(struct oidset *set, const struct object_id *oid);
 void oidset_clear(struct oidset *set);
 
 struct oidset_iter {
-	kh_oid_t *set;
+	kh_oid_set_t *set;
 	khiter_t iter;
 };
 
