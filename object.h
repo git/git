@@ -118,7 +118,7 @@ struct object *get_indexed_object(unsigned int);
  */
 struct object *lookup_object(struct repository *r, const struct object_id *oid);
 
-void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
+void *create_object(struct repository *r, const struct object_id *oid, void *obj);
 
 void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet);
 

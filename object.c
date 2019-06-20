@@ -141,13 +141,13 @@ static void grow_object_hash(struct repository *r)
 	r->parsed_objects->obj_hash_size = new_hash_size;
 }
 
-void *create_object(struct repository *r, const unsigned char *sha1, void *o)
+void *create_object(struct repository *r, const struct object_id *oid, void *o)
 {
 	struct object *obj = o;
 
 	obj->parsed = 0;
 	obj->flags = 0;
-	hashcpy(obj->oid.hash, sha1);
+	oidcpy(&obj->oid, oid);
 
 	if (r->parsed_objects->obj_hash_size - 1 <= r->parsed_objects->nr_objs * 2)
 		grow_object_hash(r);
@@ -182,7 +182,7 @@ struct object *lookup_unknown_object(const struct object_id *oid)
 {
 	struct object *obj = lookup_object(the_repository, oid);
 	if (!obj)
-		obj = create_object(the_repository, oid->hash,
+		obj = create_object(the_repository, oid,
 				    alloc_object_node(the_repository));
 	return obj;
 }
