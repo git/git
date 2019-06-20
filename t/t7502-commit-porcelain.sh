@@ -402,7 +402,7 @@ echo editor started >"$(pwd)/.git/result"
 exit 0
 EOF
 
-test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
+test_expect_success !FAIL_PREREQS,!AUTOIDENT 'do not fire editor when committer is bogus' '
 	>.git/result &&
 
 	echo >>negative &&
