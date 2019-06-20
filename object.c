@@ -178,11 +178,11 @@ void *object_as_type(struct repository *r, struct object *obj, enum object_type 
 	}
 }
 
-struct object *lookup_unknown_object(const unsigned char *sha1)
+struct object *lookup_unknown_object(const struct object_id *oid)
 {
-	struct object *obj = lookup_object(the_repository, sha1);
+	struct object *obj = lookup_object(the_repository, oid->hash);
 	if (!obj)
-		obj = create_object(the_repository, sha1,
+		obj = create_object(the_repository, oid->hash,
 				    alloc_object_node(the_repository));
 	return obj;
 }
