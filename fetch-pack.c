@@ -907,32 +907,32 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (args->depth > 0 || args->deepen_since || args->deepen_not)
 		args->deepen = 1;
 	if (server_supports("multi_ack_detailed")) {
-		print_verbose(args, _("Server supports multi_ack_detailed"));
+		print_verbose(args, _("Server supports %s"), "multi_ack_detailed");
 		multi_ack = 2;
 		if (server_supports("no-done")) {
-			print_verbose(args, _("Server supports no-done"));
+			print_verbose(args, _("Server supports %s"), "no-done");
 			if (args->stateless_rpc)
 				no_done = 1;
 		}
 	}
 	else if (server_supports("multi_ack")) {
-		print_verbose(args, _("Server supports multi_ack"));
+		print_verbose(args, _("Server supports %s"), "multi_ack");
 		multi_ack = 1;
 	}
 	if (server_supports("side-band-64k")) {
-		print_verbose(args, _("Server supports side-band-64k"));
+		print_verbose(args, _("Server supports %s"), "side-band-64k");
 		use_sideband = 2;
 	}
 	else if (server_supports("side-band")) {
-		print_verbose(args, _("Server supports side-band"));
+		print_verbose(args, _("Server supports %s"), "side-band");
 		use_sideband = 1;
 	}
 	if (server_supports("allow-tip-sha1-in-want")) {
-		print_verbose(args, _("Server supports allow-tip-sha1-in-want"));
+		print_verbose(args, _("Server supports %s"), "allow-tip-sha1-in-want");
 		allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
 	}
 	if (server_supports("allow-reachable-sha1-in-want")) {
-		print_verbose(args, _("Server supports allow-reachable-sha1-in-want"));
+		print_verbose(args, _("Server supports %s"), "allow-reachable-sha1-in-want");
 		allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
 	}
 	if (!server_supports("thin-pack"))
@@ -942,13 +942,13 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (!server_supports("include-tag"))
 		args->include_tag = 0;
 	if (server_supports("ofs-delta"))
-		print_verbose(args, _("Server supports ofs-delta"));
+		print_verbose(args, _("Server supports %s"), "ofs-delta");
 	else
 		prefer_ofs_delta = 0;
 
 	if (server_supports("filter")) {
 		server_supports_filtering = 1;
-		print_verbose(args, _("Server supports filter"));
+		print_verbose(args, _("Server supports %s"), "filter");
 	} else if (args->filter_options.choice) {
 		warning("filtering not recognized by server, ignoring");
 	}
