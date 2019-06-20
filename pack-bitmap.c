@@ -1057,13 +1057,13 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 	reposition = xcalloc(num_objects, sizeof(uint32_t));
 
 	for (i = 0; i < num_objects; ++i) {
-		const unsigned char *sha1;
+		struct object_id oid;
 		struct revindex_entry *entry;
 		struct object_entry *oe;
 
 		entry = &bitmap_git->pack->revindex[i];
-		sha1 = nth_packed_object_sha1(bitmap_git->pack, entry->nr);
-		oe = packlist_find(mapping, sha1, NULL);
+		nth_packed_object_oid(&oid, bitmap_git->pack, entry->nr);
+		oe = packlist_find(mapping, &oid, NULL);
 
 		if (oe)
 			reposition[i] = oe_in_pack_pos(mapping, oe) + 1;

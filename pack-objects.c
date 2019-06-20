@@ -68,7 +68,7 @@ static void rehash_objects(struct packing_data *pdata)
 }
 
 struct object_entry *packlist_find(struct packing_data *pdata,
-				   const unsigned char *sha1,
+				   const struct object_id *oid,
 				   uint32_t *index_pos)
 {
 	uint32_t i;
@@ -77,7 +77,7 @@ struct object_entry *packlist_find(struct packing_data *pdata,
 	if (!pdata->index_size)
 		return NULL;
 
-	i = locate_object_entry_hash(pdata, sha1, &found);
+	i = locate_object_entry_hash(pdata, oid->hash, &found);
 
 	if (index_pos)
 		*index_pos = i;
