@@ -989,12 +989,19 @@ static void fill_origin_fingerprints(struct blame_origin *o, mmfile_t *file)
 		return;
 	o->num_lines = find_line_starts(&line_starts, o->file.ptr,
 					o->file.size);
-	/* TODO: Will fill in fingerprints in a future commit */
+	o->fingerprints = xcalloc(sizeof(struct fingerprint), o->num_lines);
+	get_line_fingerprints(o->fingerprints, o->file.ptr, line_starts,
+			      0, o->num_lines);
 	free(line_starts);
 }
 
 static void drop_origin_fingerprints(struct blame_origin *o)
 {
+	if (o->fingerprints) {
+		free_line_fingerprints(o->fingerprints, o->num_lines);
+		o->num_lines = 0;
+		FREE_AND_NULL(o->fingerprints);
+	}
 }
 
 /*
@@ -1572,9 +1579,34 @@ static int are_lines_adjacent(struct blame_line_tracker *first,
 	       first->s_lno + 1 == second->s_lno;
 }
 
+static int scan_parent_range(struct fingerprint *p_fps,
+			     struct fingerprint *t_fps, int t_idx,
+			     int from, int nr_lines)
+{
+	int sim, p_idx;
+	#define FINGERPRINT_FILE_THRESHOLD	10
+	int best_sim_val = FINGERPRINT_FILE_THRESHOLD;
+	int best_sim_idx = -1;
+
+	for (p_idx = from; p_idx < from + nr_lines; p_idx++) {
+		sim = fingerprint_similarity(&t_fps[t_idx], &p_fps[p_idx]);
+		if (sim < best_sim_val)
+			continue;
+		/* Break ties with the closest-to-target line number */
+		if (sim == best_sim_val && best_sim_idx != -1 &&
+		    abs(best_sim_idx - t_idx) < abs(p_idx - t_idx))
+			continue;
+		best_sim_val = sim;
+		best_sim_idx = p_idx;
+	}
+	return best_sim_idx;
+}
+
 /*
- * This cheap heuristic assigns lines in the chunk to their relative location in
- * the parent's chunk.  Any additional lines are left with the target.
+ * The first pass checks the blame entry (from the target) against the parent's
+ * diff chunk.  If that fails for a line, the second pass tries to match that
+ * line to any part of parent file.  That catches cases where a change was
+ * broken into two chunks by 'context.'
  */
 static void guess_line_blames(struct blame_origin *parent,
 			      struct blame_origin *target,
@@ -1583,11 +1615,22 @@ static void guess_line_blames(struct blame_origin *parent,
 {
 	int i, best_idx, target_idx;
 	int parent_slno = tlno + offset;
+	int *fuzzy_matches;
 
+	fuzzy_matches = fuzzy_find_matching_lines(parent, target,
+						  tlno, parent_slno, same,
+						  parent_len);
 	for (i = 0; i < same - tlno; i++) {
 		target_idx = tlno + i;
-		best_idx = target_idx + offset;
-		if (best_idx < parent_slno + parent_len) {
+		if (fuzzy_matches && fuzzy_matches[i] >= 0) {
+			best_idx = fuzzy_matches[i];
+		} else {
+			best_idx = scan_parent_range(parent->fingerprints,
+						     target->fingerprints,
+						     target_idx, 0,
+						     parent->num_lines);
+		}
+		if (best_idx >= 0) {
 			line_blames[i].is_parent = 1;
 			line_blames[i].s_lno = best_idx;
 		} else {
@@ -1595,6 +1638,7 @@ static void guess_line_blames(struct blame_origin *parent,
 			line_blames[i].s_lno = target_idx;
 		}
 	}
+	free(fuzzy_matches);
 }
 
 /*
@@ -2371,6 +2415,12 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 			if (!porigin)
 				continue;
 			pass_blame_to_parent(sb, origin, porigin, 1);
+			/*
+			 * Preemptively drop porigin so we can refresh the
+			 * fingerprints if we use the parent again, which can
+			 * occur if you ignore back-to-back commits.
+			 */
+			drop_origin_blob(porigin);
 			if (!origin->suspects)
 				goto finish;
 		}

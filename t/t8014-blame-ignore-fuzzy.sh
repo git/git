@@ -3,9 +3,6 @@
 test_description='git blame ignore fuzzy heuristic'
 . ./test-lib.sh
 
-# short circuit until blame has the fuzzy capabilities
-test_done
-
 pick_author='s/^[0-9a-f^]* *(\([^ ]*\) .*/\1/'
 
 # Each test is composed of 4 variables:
