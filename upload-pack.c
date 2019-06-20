@@ -528,13 +528,13 @@ static int get_reachable_list(struct object_array *src,
 		return -1;
 
 	while ((i = read_in_full(cmd.out, namebuf, hexsz + 1)) == hexsz + 1) {
-		struct object_id sha1;
+		struct object_id oid;
 		const char *p;
 
-		if (parse_oid_hex(namebuf, &sha1, &p) || *p != '\n')
+		if (parse_oid_hex(namebuf, &oid, &p) || *p != '\n')
 			break;
 
-		o = lookup_object(the_repository, sha1.hash);
+		o = lookup_object(the_repository, oid.hash);
 		if (o && o->type == OBJ_COMMIT) {
 			o->flags &= ~TMP_MARK;
 		}
