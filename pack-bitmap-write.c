@@ -142,13 +142,13 @@ static inline void reset_all_seen(void)
 	seen_objects_nr = 0;
 }
 
-static uint32_t find_object_pos(const unsigned char *hash)
+static uint32_t find_object_pos(const struct object_id *oid)
 {
-	struct object_entry *entry = packlist_find(writer.to_pack, hash, NULL);
+	struct object_entry *entry = packlist_find(writer.to_pack, oid->hash, NULL);
 
 	if (!entry) {
 		die("Failed to write bitmap index. Packfile doesn't have full closure "
-			"(object %s is missing)", hash_to_hex(hash));
+			"(object %s is missing)", oid_to_hex(oid));
 	}
 
 	return oe_in_pack_pos(writer.to_pack, entry);
@@ -157,7 +157,7 @@ static uint32_t find_object_pos(const unsigned char *hash)
 static void show_object(struct object *object, const char *name, void *data)
 {
 	struct bitmap *base = data;
-	bitmap_set(base, find_object_pos(object->oid.hash));
+	bitmap_set(base, find_object_pos(&object->oid));
 	mark_as_seen(object);
 }
 
@@ -170,7 +170,7 @@ static int
 add_to_include_set(struct bitmap *base, struct commit *commit)
 {
 	khiter_t hash_pos;
-	uint32_t bitmap_pos = find_object_pos(commit->object.oid.hash);
+	uint32_t bitmap_pos = find_object_pos(&commit->object.oid);
 
 	if (bitmap_get(base, bitmap_pos))
 		return 0;
@@ -375,14 +375,14 @@ void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack)
 	 */
 }
 
-static struct ewah_bitmap *find_reused_bitmap(const unsigned char *sha1)
+static struct ewah_bitmap *find_reused_bitmap(const struct object_id *oid)
 {
 	khiter_t hash_pos;
 
 	if (!writer.reused)
 		return NULL;
 
-	hash_pos = kh_get_sha1(writer.reused, sha1);
+	hash_pos = kh_get_sha1(writer.reused, oid->hash);
 	if (hash_pos >= kh_end(writer.reused))
 		return NULL;
 
@@ -422,14 +422,14 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 
 		if (next == 0) {
 			chosen = indexed_commits[i];
-			reused_bitmap = find_reused_bitmap(chosen->object.oid.hash);
+			reused_bitmap = find_reused_bitmap(&chosen->object.oid);
 		} else {
 			chosen = indexed_commits[i + next];
 
 			for (j = 0; j <= next; ++j) {
 				struct commit *cm = indexed_commits[i + j];
 
-				reused_bitmap = find_reused_bitmap(cm->object.oid.hash);
+				reused_bitmap = find_reused_bitmap(&cm->object.oid);
 				if (reused_bitmap || (cm->object.flags & NEEDS_BITMAP) != 0) {
 					chosen = cm;
 					break;
