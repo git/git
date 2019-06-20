@@ -61,7 +61,7 @@ int type_from_string_gently(const char *str, ssize_t len, int gentle)
  */
 static unsigned int hash_obj(const struct object_id *oid, unsigned int n)
 {
-	return sha1hash(oid->hash) & (n - 1);
+	return oidhash(oid) & (n - 1);
 }
 
 /*

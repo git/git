@@ -76,7 +76,7 @@ static int commit_name_neq(const void *unused_cmp_data,
 
 static inline struct commit_name *find_commit_name(const struct object_id *peeled)
 {
-	return hashmap_get_from_hash(&names, sha1hash(peeled->hash), peeled);
+	return hashmap_get_from_hash(&names, oidhash(peeled), peeled);
 }
 
 static int replace_name(struct commit_name *e,
@@ -123,7 +123,7 @@ static void add_to_known_names(const char *path,
 		if (!e) {
 			e = xmalloc(sizeof(struct commit_name));
 			oidcpy(&e->peeled, peeled);
-			hashmap_entry_init(e, sha1hash(peeled->hash));
+			hashmap_entry_init(e, oidhash(peeled));
 			hashmap_add(&names, e);
 			e->path = NULL;
 		}

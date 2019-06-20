@@ -326,7 +326,7 @@ static const double __ac_HASH_UPPER = 0.77;
 
 static inline unsigned int oidhash_by_value(struct object_id oid)
 {
-	return sha1hash(oid.hash);
+	return oidhash(&oid);
 }
 
 static inline int oideq_by_value(struct object_id a, struct object_id b)

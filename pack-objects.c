@@ -11,7 +11,7 @@ static uint32_t locate_object_entry_hash(struct packing_data *pdata,
 {
 	uint32_t i, mask = (pdata->index_size - 1);
 
-	i = sha1hash(oid->hash) & mask;
+	i = oidhash(oid) & mask;
 
 	while (pdata->index[i] > 0) {
 		uint32_t pos = pdata->index[i] - 1;

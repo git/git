@@ -1,6 +1,8 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
+#include "hash.h"
+
 /*
  * Generic implementation of hash-based key-value mappings.
  *
@@ -118,14 +120,14 @@ unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len);
  * the results will be different on big-endian and little-endian
  * platforms, so they should not be stored or transferred over the net.
  */
-static inline unsigned int sha1hash(const unsigned char *sha1)
+static inline unsigned int oidhash(const struct object_id *oid)
 {
 	/*
-	 * Equivalent to 'return *(unsigned int *)sha1;', but safe on
+	 * Equivalent to 'return *(unsigned int *)oid->hash;', but safe on
 	 * platforms that don't support unaligned reads.
 	 */
 	unsigned int hash;
-	memcpy(&hash, sha1, sizeof(hash));
+	memcpy(&hash, oid->hash, sizeof(hash));
 	return hash;
 }
 
