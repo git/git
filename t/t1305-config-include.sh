@@ -310,20 +310,13 @@ test_expect_success SYMLINKS 'conditional include, gitdir matching symlink, icas
 '
 
 test_expect_success 'include cycles are detected' '
-	cat >.gitconfig <<-\EOF &&
-	[test]value = gitconfig
-	[include]path = cycle
-	EOF
-	cat >cycle <<-\EOF &&
-	[test]value = cycle
-	[include]path = .gitconfig
-	EOF
-	cat >expect <<-\EOF &&
-	gitconfig
-	cycle
-	EOF
-	test_must_fail git config --get-all test.value 2>stderr &&
-	test_i18ngrep "exceeded maximum include depth" stderr
+	git init --bare cycle &&
+	git -C cycle config include.path cycle &&
+	git config -f cycle/cycle include.path config &&
+	test_must_fail \
+		env GIT_TEST_GETTEXT_POISON= \
+		git -C cycle config --get-all test.value 2>stderr &&
+	grep "exceeded maximum include depth" stderr
 '
 
 test_done
