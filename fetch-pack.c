@@ -902,6 +902,13 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	sort_ref_list(&ref, ref_compare_name);
 	QSORT(sought, nr_sought, cmp_ref_by_name);
 
+	if ((agent_feature = server_feature_value("agent", &agent_len))) {
+		agent_supported = 1;
+		if (agent_len)
+			print_verbose(args, _("Server version is %.*s"),
+				      agent_len, agent_feature);
+	}
+
 	if (server_supports("shallow"))
 		print_verbose(args, _("Server supports %s"), "shallow");
 	else if (args->depth > 0 || is_repository_shallow(the_repository))
@@ -961,12 +968,6 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		warning("filtering not recognized by server, ignoring");
 	}
 
-	if ((agent_feature = server_feature_value("agent", &agent_len))) {
-		agent_supported = 1;
-		if (agent_len)
-			print_verbose(args, _("Server version is %.*s"),
-				      agent_len, agent_feature);
-	}
 	if (server_supports("deepen-since")) {
 		print_verbose(args, _("Server supports %s"), "deepen-since");
 		deepen_since_ok = 1;
