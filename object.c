@@ -59,9 +59,9 @@ int type_from_string_gently(const char *str, ssize_t len, int gentle)
  * the specified sha1.  n must be a power of 2.  Please note that the
  * return value is *not* consistent across computer architectures.
  */
-static unsigned int hash_obj(const unsigned char *sha1, unsigned int n)
+static unsigned int hash_obj(const struct object_id *oid, unsigned int n)
 {
-	return sha1hash(sha1) & (n - 1);
+	return sha1hash(oid->hash) & (n - 1);
 }
 
 /*
@@ -71,7 +71,7 @@ static unsigned int hash_obj(const unsigned char *sha1, unsigned int n)
  */
 static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
 {
-	unsigned int j = hash_obj(obj->oid.hash, size);
+	unsigned int j = hash_obj(&obj->oid, size);
 
 	while (hash[j]) {
 		j++;
@@ -93,7 +93,7 @@ struct object *lookup_object(struct repository *r, const struct object_id *oid)
 	if (!r->parsed_objects->obj_hash)
 		return NULL;
 
-	first = i = hash_obj(oid->hash, r->parsed_objects->obj_hash_size);
+	first = i = hash_obj(oid, r->parsed_objects->obj_hash_size);
 	while ((obj = r->parsed_objects->obj_hash[i]) != NULL) {
 		if (oideq(oid, &obj->oid))
 			break;
