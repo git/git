@@ -902,7 +902,9 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	sort_ref_list(&ref, ref_compare_name);
 	QSORT(sought, nr_sought, cmp_ref_by_name);
 
-	if ((args->depth > 0 || is_repository_shallow(the_repository)) && !server_supports("shallow"))
+	if (server_supports("shallow"))
+		print_verbose(args, _("Server supports %s"), "shallow");
+	else if (args->depth > 0 || is_repository_shallow(the_repository))
 		die(_("Server does not support shallow clients"));
 	if (args->depth > 0 || args->deepen_since || args->deepen_not)
 		args->deepen = 1;
@@ -935,11 +937,17 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		print_verbose(args, _("Server supports %s"), "allow-reachable-sha1-in-want");
 		allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
 	}
-	if (!server_supports("thin-pack"))
+	if (server_supports("thin-pack"))
+		print_verbose(args, _("Server supports %s"), "thin-pack");
+	else
 		args->use_thin_pack = 0;
-	if (!server_supports("no-progress"))
+	if (server_supports("no-progress"))
+		print_verbose(args, _("Server supports %s"), "no-progress");
+	else
 		args->no_progress = 0;
-	if (!server_supports("include-tag"))
+	if (server_supports("include-tag"))
+		print_verbose(args, _("Server supports %s"), "include-tag");
+	else
 		args->include_tag = 0;
 	if (server_supports("ofs-delta"))
 		print_verbose(args, _("Server supports %s"), "ofs-delta");
@@ -959,15 +967,19 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 			print_verbose(args, _("Server version is %.*s"),
 				      agent_len, agent_feature);
 	}
-	if (server_supports("deepen-since"))
+	if (server_supports("deepen-since")) {
+		print_verbose(args, _("Server supports %s"), "deepen-since");
 		deepen_since_ok = 1;
-	else if (args->deepen_since)
+	} else if (args->deepen_since)
 		die(_("Server does not support --shallow-since"));
-	if (server_supports("deepen-not"))
+	if (server_supports("deepen-not")) {
+		print_verbose(args, _("Server supports %s"), "deepen-not");
 		deepen_not_ok = 1;
-	else if (args->deepen_not)
+	} else if (args->deepen_not)
 		die(_("Server does not support --shallow-exclude"));
-	if (!server_supports("deepen-relative") && args->deepen_relative)
+	if (server_supports("deepen-relative"))
+		print_verbose(args, _("Server supports %s"), "deepen-relative");
+	else if (args->deepen_relative)
 		die(_("Server does not support --deepen"));
 
 	if (!args->no_dependents) {
