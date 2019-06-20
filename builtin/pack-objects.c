@@ -3131,7 +3131,7 @@ static void get_object_list(int ac, const char **av)
 		return;
 
 	if (use_delta_islands)
-		load_delta_islands(the_repository);
+		load_delta_islands(the_repository, progress);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
