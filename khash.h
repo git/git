@@ -345,9 +345,7 @@ static inline int oid_equal(struct object_id a, struct object_id b)
 KHASH_INIT(oid, struct object_id, int, 0, oid_hash, oid_equal)
 
 KHASH_INIT(oid_map, struct object_id, void *, 1, oid_hash, oid_equal)
-typedef kh_oid_t khash_oid_map;
 
 KHASH_INIT(oid_pos, struct object_id, int, 1, oid_hash, oid_equal)
-typedef kh_oid_pos_t khash_oid_pos;
 
 #endif /* __AC_KHASH_H */

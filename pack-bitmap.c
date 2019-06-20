@@ -365,7 +365,7 @@ struct include_data {
 static inline int bitmap_position_extended(struct bitmap_index *bitmap_git,
 					   const struct object_id *oid)
 {
-	khash_oid_pos *positions = bitmap_git->ext_index.positions;
+	kh_oid_pos_t *positions = bitmap_git->ext_index.positions;
 	khiter_t pos = kh_get_oid_pos(positions, *oid);
 
 	if (pos < kh_end(positions)) {
