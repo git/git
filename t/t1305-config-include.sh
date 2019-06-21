@@ -314,7 +314,7 @@ test_expect_success 'include cycles are detected' '
 	git -C cycle config include.path cycle &&
 	git config -f cycle/cycle include.path config &&
 	test_must_fail \
-		env GIT_TEST_GETTEXT_POISON= \
+		env GIT_TEST_GETTEXT_POISON=false \
 		git -C cycle config --get-all test.value 2>stderr &&
 	grep "exceeded maximum include depth" stderr
 '
