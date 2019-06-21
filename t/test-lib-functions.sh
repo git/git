@@ -309,7 +309,7 @@ test_unset_prereq () {
 }
 
 test_set_prereq () {
-	if test -n "$GIT_TEST_FAIL_PREREQS"
+	if test -n "$GIT_TEST_FAIL_PREREQS_INTERNAL"
 	then
 		case "$1" in
 		# The "!" case is handled below with
@@ -1043,7 +1043,7 @@ perl () {
 # The error/skip message should be given by $2.
 #
 test_skip_or_die () {
-	if ! git env--helper --mode-bool --variable=$1 --default=0 --exit-code --quiet
+	if ! git env--helper --type=bool --default=false --exit-code $1
 	then
 		skip_all=$2
 		test_done

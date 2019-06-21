@@ -1389,6 +1389,25 @@ yes () {
 	done
 }
 
+# The GIT_TEST_FAIL_PREREQS code hooks into test_set_prereq(), and
+# thus needs to be set up really early, and set an internal variable
+# for convenience so the hot test_set_prereq() codepath doesn't need
+# to call "git env--helper". Only do that work if needed by seeing if
+# GIT_TEST_FAIL_PREREQS is set at all.
+GIT_TEST_FAIL_PREREQS_INTERNAL=
+if test -n "$GIT_TEST_FAIL_PREREQS"
+then
+	if git env--helper --type=bool --default=0 --exit-code GIT_TEST_FAIL_PREREQS
+	then
+		GIT_TEST_FAIL_PREREQS_INTERNAL=true
+		test_set_prereq FAIL_PREREQS
+	fi
+else
+	test_lazy_prereq FAIL_PREREQS '
+		git env--helper --type=bool --default=0 --exit-code GIT_TEST_FAIL_PREREQS
+	'
+fi
+
 # Fix some commands on Windows
 uname_s=$(uname -s)
 case $uname_s in
@@ -1604,8 +1623,4 @@ test_lazy_prereq SHA1 '
 
 test_lazy_prereq REBASE_P '
 	test -z "$GIT_TEST_SKIP_REBASE_P"
-'
-
-test_lazy_prereq FAIL_PREREQS '
-	test -n "$GIT_TEST_FAIL_PREREQS"
 '

@@ -334,7 +334,7 @@ that cannot be easily covered by a few specific test cases. These
 could be enabled by running the test suite with correct GIT_TEST_
 environment set.
 
-GIT_TEST_FAIL_PREREQS<non-empty?> fails all prerequisites. This is
+GIT_TEST_FAIL_PREREQS=<boolean> fails all prerequisites. This is
 useful for discovering issues with the tests where say a later test
 implicitly depends on an optional earlier test.
 
