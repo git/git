@@ -148,8 +148,21 @@ SpacesInSquareBrackets: false
 Cpp11BracedListStyle: false
 
 # A list of macros that should be interpreted as foreach loops instead of as
-# function calls.
-ForEachMacros: ['for_each_string_list_item', 'for_each_wanted_builtin', 'for_each_builtin', 'for_each_ut']
+# function calls. Taken from:
+#   git grep -h '^#define [^[:space:]]*for_each[^[:space:]]*(' \
+#   | sed "s,^#define \([^[:space:]]*for_each[^[:space:]]*\)(.*$,  - '\1'," \
+#   | sort | uniq
+ForEachMacros:
+  - 'for_each_abbrev'
+  - 'for_each_builtin'
+  - 'for_each_string_list_item'
+  - 'for_each_ut'
+  - 'for_each_wanted_builtin'
+  - 'list_for_each'
+  - 'list_for_each_dir'
+  - 'list_for_each_prev'
+  - 'list_for_each_prev_safe'
+  - 'list_for_each_safe'
 
 # The maximum number of consecutive empty lines to keep.
 MaxEmptyLinesToKeep: 1
