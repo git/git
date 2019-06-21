@@ -43,6 +43,9 @@ UI, Workflows & Features
  * "git help git" was hard to discover (well, at least for some
    people).
 
+ * The pattern "git diff/grep" use to extract funcname and words
+   boundary for Rust has been added.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -148,7 +151,33 @@ Fixes since v2.22
    to honor the "--origin <name>" option.
    (merge 1c4a9f9114 xl/record-partial-clone-origin later to maint).
 
+ * "git fetch" into a lazy clone forgot to fetch base objects that are
+   necessary to complete delta in a thin packfile, which has been
+   corrected.
+   (merge 810e19322d jt/partial-clone-missing-ref-delta-base later to maint).
+
+ * The filter_data used in the list-objects-filter (which manages a
+   lazily sparse clone repository) did not use the dynamic array API
+   correctly---'nr' is supposed to point at one past the last element
+   of the array in use.  This has been corrected.
+   (merge 7140600e2e md/list-objects-filter-memfix later to maint).
+
+ * The description about slashes in gitignore patterns (used to
+   indicate things like "anchored to this level only" and "only
+   matches directories") has been revamped.
+   (merge 1a58bad014 an/ignore-doc-update later to maint).
+
+ * The URL decoding code has been updated to avoid going past the end
+   of the string while parsing %-<hex>-<hex> sequence.
+   (merge d37dc239a4 md/url-parse-harden later to maint).
+
+ * The list of for-each like macros used by clang-format has been
+   updated.
+   (merge fc7e03aace mo/clang-format-for-each-update later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f547101b26 es/git-debugger-doc later to maint).
    (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
    (merge 0108f47eb3 sw/git-p4-unshelve-branched-files later to maint).
+   (merge 9df8f734fd cm/send-email-document-req-modules later to maint).
+   (merge afc3bf6eb1 ab/hash-object-doc later to maint).
