@@ -89,28 +89,28 @@ PATTERN FORMAT
    Put a backslash ("`\`") in front of the first "`!`" for patterns
    that begin with a literal "`!`", for example, "`\!important!.txt`".
 
- - If the pattern ends with a slash, it is removed for the
-   purpose of the following description, but it would only find
-   a match with a directory.  In other words, `foo/` will match a
-   directory `foo` and paths underneath it, but will not match a
-   regular file or a symbolic link `foo` (this is consistent
-   with the way how pathspec works in general in Git).
+ - The slash '/' is used as the directory separator. Separators may
+   occur at the beginning, middle or end of the `.gitignore` search pattern.
 
- - If the pattern does not contain a slash '/', Git treats it as
-   a shell glob pattern and checks for a match against the
-   pathname relative to the location of the `.gitignore` file
-   (relative to the toplevel of the work tree if not from a
-   `.gitignore` file).
+ - If there is a separator at the beginning or middle (or both) of the
+   pattern, then the pattern is relative to the directory level of the
+   particular `.gitignore` file itself. Otherwise the pattern may also
+   match at any level below the `.gitignore` level.
 
- - Otherwise, Git treats the pattern as a shell glob: "`*`" matches
-   anything except "`/`", "`?`" matches any one character except "`/`"
-   and "`[]`" matches one character in a selected range. See
-   fnmatch(3) and the FNM_PATHNAME flag for a more detailed
-   description.
+ - If there is a separator at the end of the pattern then the pattern
+   will only match directories, otherwise the pattern can match both
+   files and directories.
 
- - A leading slash matches the beginning of the pathname.
-   For example, "/{asterisk}.c" matches "cat-file.c" but not
-   "mozilla-sha1/sha1.c".
+ - For example, a pattern `doc/frotz/` matches `doc/frotz` directory,
+   but not `a/doc/frotz` directory; however `frotz/` matches `frotz`
+   and `a/frotz` that is a directory (all paths are relative from
+   the `.gitignore` file).
+
+ - An asterisk "`*`" matches anything except a slash.
+   The character "`?`" matches any one character except "`/`".
+   The range notation, e.g. `[a-zA-Z]`, can be used to match
+   one of the characters in a range. See fnmatch(3) and the
+   FNM_PATHNAME flag for a more detailed description.
 
 Two consecutive asterisks ("`**`") in patterns matched against
 full pathname may have special meaning:
@@ -151,6 +151,28 @@ To stop tracking a file that is currently tracked, use
 
 EXAMPLES
 --------
+
+ - The pattern `hello.*` matches any file or folder
+   whose name begins with `hello`. If one wants to restrict
+   this only to the directory and not in its subdirectories,
+   one can prepend the pattern with a slash, i.e. `/hello.*`;
+   the pattern now matches `hello.txt`, `hello.c` but not
+   `a/hello.java`.
+
+ - The pattern `foo/` will match a directory `foo` and
+   paths underneath it, but will not match a regular file
+   or a symbolic link `foo` (this is consistent with the
+   way how pathspec works in general in Git)
+
+ - The pattern `doc/frotz` and `/doc/frotz` have the same effect
+   in any `.gitignore` file. In other words, a leading slash
+   is not relevant  if there is already a middle slash in
+   the pattern.
+
+ - The pattern "foo/*", matches "foo/test.json"
+   (a regular file), "foo/bar" (a directory), but it does not match
+   "foo/bar/hello.c" (a regular file), as the asterisk in the
+   pattern does not match "bar/hello.c" which has a slash in it.
 
 --------------------------------------------------------------
     $ git status
