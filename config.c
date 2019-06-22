@@ -834,24 +834,16 @@ static int git_parse_source(config_fn_t fn, void *data,
 	return error_return;
 }
 
-static int parse_unit_factor(const char *end, uintmax_t *factor)
+static uintmax_t get_unit_factor(const char *end)
 {
-	if (!*end) {
-		*factor = 1;
+	if (!*end)
 		return 1;
-	}
-	else if (!strcasecmp(end, "k")) {
-		*factor = 1024;
-		return 1;
-	}
-	else if (!strcasecmp(end, "m")) {
-		*factor = 1024 * 1024;
-		return 1;
-	}
-	else if (!strcasecmp(end, "g")) {
-		*factor = 1024 * 1024 * 1024;
-		return 1;
-	}
+	else if (!strcasecmp(end, "k"))
+		return 1024;
+	else if (!strcasecmp(end, "m"))
+		return 1024 * 1024;
+	else if (!strcasecmp(end, "g"))
+		return 1024 * 1024 * 1024;
 	return 0;
 }
 
@@ -867,7 +859,8 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 		val = strtoimax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
-		if (!parse_unit_factor(end, &factor)) {
+		factor = get_unit_factor(end);
+		if (!factor) {
 			errno = EINVAL;
 			return 0;
 		}
@@ -896,7 +889,8 @@ static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 		val = strtoumax(value, &end, 0);
 		if (errno == ERANGE)
 			return 0;
-		if (!parse_unit_factor(end, &factor)) {
+		factor = get_unit_factor(end);
+		if (!factor) {
 			errno = EINVAL;
 			return 0;
 		}
