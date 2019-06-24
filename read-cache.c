@@ -1693,6 +1693,7 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	return 0;
 }
 
+static struct index_entry_offset_table *do_read_ieot_extension(struct index_state *, const char *, uint32_t);
 static int read_index_extension(struct index_state *istate,
 				const char *map,
 				unsigned long *offset)
@@ -1740,7 +1741,11 @@ static int read_index_extension(struct index_state *istate,
 		/* already handled in do_read_index() */
 		break;
 	case CACHE_EXT_INDEXENTRYOFFSETTABLE:
-		/* already handled in do_read_index() */
+		if (istate->jw) {
+			free(do_read_ieot_extension(istate, data, sz));
+		} else {
+			/* already handled in do_read_index() */
+		}
 		break;
 	default:
 		if (*ext < 'A' || 'Z' < *ext)
@@ -1938,7 +1943,7 @@ struct index_entry_offset_table
 	struct index_entry_offset entries[FLEX_ARRAY];
 };
 
-static struct index_entry_offset_table *read_ieot_extension(const char *mmap, size_t mmap_size, size_t offset);
+static struct index_entry_offset_table *read_ieot_extension(struct index_state *istate, const char *mmap, size_t mmap_size, size_t offset);
 static void write_ieot_extension(struct strbuf *sb, struct index_entry_offset_table *ieot);
 
 static size_t read_eoie_extension(const char *mmap, size_t mmap_size);
@@ -2292,7 +2297,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	 * to multi-thread the reading of the cache entries.
 	 */
 	if (extension_offset && nr_threads > 1)
-		ieot = read_ieot_extension(mmap, mmap_size, extension_offset);
+		ieot = read_ieot_extension(istate, mmap, mmap_size, extension_offset);
 
 	if (ieot) {
 		src_offset += load_cache_entries_threaded(istate, mmap, mmap_size, nr_threads, ieot);
@@ -3634,12 +3639,13 @@ static void write_eoie_extension(struct strbuf *sb, git_hash_ctx *eoie_context, 
 
 #define IEOT_VERSION	(1)
 
-static struct index_entry_offset_table *read_ieot_extension(const char *mmap, size_t mmap_size, size_t offset)
+static struct index_entry_offset_table *read_ieot_extension(
+		struct index_state *istate,
+		const char *mmap, size_t mmap_size,
+		size_t offset)
 {
 	const char *index = NULL;
-	uint32_t extsize, ext_version;
-	struct index_entry_offset_table *ieot;
-	int i, nr;
+	uint32_t extsize;
 
 	/* find the IEOT extension */
 	if (!offset)
@@ -3655,6 +3661,17 @@ static struct index_entry_offset_table *read_ieot_extension(const char *mmap, si
 	}
 	if (!index)
 		return NULL;
+	return do_read_ieot_extension(istate, index, extsize);
+}
+
+static struct index_entry_offset_table *do_read_ieot_extension(
+		struct index_state *istate,
+		const char *index,
+		uint32_t extsize)
+{
+	uint32_t ext_version;
+	struct index_entry_offset_table *ieot;
+	int i, nr;
 
 	/* validate the version is IEOT_VERSION */
 	ext_version = get_be32(index);
@@ -3670,6 +3687,10 @@ static struct index_entry_offset_table *read_ieot_extension(const char *mmap, si
 		error("invalid number of IEOT entries %d", nr);
 		return NULL;
 	}
+	if (istate->jw) {
+		jw_object_intmax(istate->jw, "version", ext_version);
+		jw_object_inline_begin_array(istate->jw, "entries");
+	}
 	ieot = xmalloc(sizeof(struct index_entry_offset_table)
 		       + (nr * sizeof(struct index_entry_offset)));
 	ieot->nr = nr;
@@ -3678,7 +3699,15 @@ static struct index_entry_offset_table *read_ieot_extension(const char *mmap, si
 		index += sizeof(uint32_t);
 		ieot->entries[i].nr = get_be32(index);
 		index += sizeof(uint32_t);
+
+		if (istate->jw) {
+			jw_array_inline_begin_object(istate->jw);
+			jw_object_intmax(istate->jw, "offset", ieot->entries[i].offset);
+			jw_object_intmax(istate->jw, "count", ieot->entries[i].nr);
+			jw_end(istate->jw);
+		}
 	}
+	jw_end_gently(istate->jw);
 
 	return ieot;
 }

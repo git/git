@@ -84,7 +84,18 @@
   "extensions": {
     "IEOT": {
       "file_offset": <number>,
-      "ext_size": <number>
+      "ext_size": <number>,
+      "version": 1,
+      "entries": [
+        {
+          "offset": <number>,
+          "count": 2
+        },
+        {
+          "offset": <number>,
+          "count": 2
+        }
+      ]
     },
     "EOIE": {
       "file_offset": <number>,
