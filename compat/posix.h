@@ -176,6 +176,16 @@ typedef unsigned long uintptr_t;
 #define _ALL_SOURCE 1
 #endif
 
+#ifdef USE_MIMALLOC
+#include "mimalloc.h"
+#define malloc mi_malloc
+#define calloc mi_calloc
+#define realloc mi_realloc
+#define free mi_free
+#define strdup mi_strdup
+#define strndup mi_strndup
+#endif
+
 #ifdef MKDIR_WO_TRAILING_SLASH
 #define mkdir(a,b) compat_mkdir_wo_trailing_slash((a),(b))
 int compat_mkdir_wo_trailing_slash(const char*, mode_t);
