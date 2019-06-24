@@ -90,4 +90,17 @@ test_expect_success 'ls-files --json, rerere extension' '
 	)
 '
 
+test_expect_success !SINGLE_CPU 'ls-files --json and multicore extensions' '
+	git init eoie &&
+	(
+		cd eoie &&
+		git config index.threads 2 &&
+		touch one two three four &&
+		git add . &&
+		cp ../filter.sed . &&
+		strip_number offset &&
+		compare_json eoie
+	)
+'
+
 test_done

@@ -1611,3 +1611,7 @@ test_lazy_prereq REBASE_P '
 test_lazy_prereq FAIL_PREREQS '
 	test -n "$GIT_TEST_FAIL_PREREQS"
 '
+
+test_lazy_prereq SINGLE_CPU '
+	test "$(test-tool online-cpus)" -eq 1
+'

@@ -1731,6 +1731,14 @@ static int read_index_extension(struct index_state *istate,
 		read_fsmonitor_extension(istate, data, sz);
 		break;
 	case CACHE_EXT_ENDOFINDEXENTRIES:
+		if (istate->jw) {
+			/* must be synchronized with read_eoie_extension() */
+			jw_object_intmax(istate->jw, "offset", get_be32(data));
+			jw_object_string(istate->jw, "oid",
+					 hash_to_hex((const unsigned char*)data + sizeof(uint32_t)));
+		}
+		/* already handled in do_read_index() */
+		break;
 	case CACHE_EXT_INDEXENTRYOFFSETTABLE:
 		/* already handled in do_read_index() */
 		break;
