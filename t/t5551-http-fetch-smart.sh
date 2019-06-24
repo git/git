@@ -199,7 +199,7 @@ test_expect_success 'GIT_SMART_HTTP can disable smart http' '
 
 test_expect_success 'invalid Content-Type rejected' '
 	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual &&
-	grep "not valid:" actual
+	test_i18ngrep "not valid:" actual
 '
 
 test_expect_success 'create namespaced refs' '
@@ -466,7 +466,7 @@ test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
 
 test_expect_success 'server-side error detected' '
 	test_must_fail git clone $HTTPD_URL/error_smart/repo.git 2>actual &&
-	grep "server-side error" actual
+	test_i18ngrep "server-side error" actual
 '
 
 test_done
