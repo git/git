@@ -45,6 +45,7 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 
+struct ewah_bitmap;
 struct stat_data;
 
 struct json_writer
@@ -87,6 +88,8 @@ void jw_object_null(struct json_writer *jw, const char *key);
 void jw_object_filemode(struct json_writer *jw, const char *key, mode_t value);
 void jw_object_stat_data(struct json_writer *jw, const char *key,
 			 const struct stat_data *sd);
+void jw_object_ewah(struct json_writer *jw, const char *key,
+		    struct ewah_bitmap *ewah);
 void jw_object_sub_jw(struct json_writer *jw, const char *key,
 		      const struct json_writer *value);
 

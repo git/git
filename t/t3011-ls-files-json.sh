@@ -44,4 +44,18 @@ test_expect_success 'ls-files --json, main entries, UNTR and TREE' '
 	compare_json basic
 '
 
+test_expect_success 'ls-files --json, split index' '
+	git init split &&
+	(
+		cd split &&
+		echo one >one &&
+		git add one &&
+		git update-index --split-index &&
+		echo updated >>one &&
+		test_must_fail git -c splitIndex.maxPercentChange=100 update-index --refresh &&
+		cp ../filter.sed . &&
+		compare_json split-index
+	)
+'
+
 test_done

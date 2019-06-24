@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "ewah/ewok.h"
 #include "json-writer.h"
 
 void jw_init(struct json_writer *jw)
@@ -221,6 +222,19 @@ void jw_object_stat_data(struct json_writer *jw, const char *name,
 	jw_object_intmax(jw, "uid", sd->sd_uid);
 	jw_object_intmax(jw, "gid", sd->sd_gid);
 	jw_object_intmax(jw, "size", sd->sd_size);
+	jw_end(jw);
+}
+
+static void dump_ewah_one(size_t pos, void *jw)
+{
+	jw_array_intmax(jw, pos);
+}
+
+void jw_object_ewah(struct json_writer *jw, const char *key,
+		    struct ewah_bitmap *ewah)
+{
+	jw_object_inline_begin_array(jw, key);
+	ewah_each_bit(ewah, dump_ewah_one, jw);
 	jw_end(jw);
 }
 
