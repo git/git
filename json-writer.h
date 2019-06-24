@@ -121,6 +121,12 @@ static inline void jw_object_inline_begin_array_gently(struct json_writer *jw,
 		jw_object_inline_begin_array(jw, name);
 }
 
+static inline void jw_array_inline_begin_object_gently(struct json_writer *jw)
+{
+	if (jw)
+		jw_array_inline_begin_object(jw);
+}
+
 static inline void jw_end_gently(struct json_writer *jw)
 {
 	if (jw)

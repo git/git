@@ -30,6 +30,7 @@ test_expect_success 'setup' '
 	git add sub/two &&
 
 	git commit -m first &&
+	git update-index --untracked-cache &&
 
 	echo intent-to-add >ita &&
 	git add -N ita &&
@@ -39,7 +40,7 @@ test_expect_success 'setup' '
 	strip_string oid ident
 '
 
-test_expect_success 'ls-files --json, main entries and TREE' '
+test_expect_success 'ls-files --json, main entries, UNTR and TREE' '
 	compare_json basic
 '
 

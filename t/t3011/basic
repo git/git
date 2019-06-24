@@ -80,6 +80,45 @@
           }
         ]
       }
+    },
+    "UNTR": {
+      "file_offset": <number>,
+      "ext_size": <number>,
+      "ident": <string>,
+      "info_exclude": {
+        "valid": true,
+        "oid": <string>,
+        "stat": {
+          "ctime_sec": <number>,
+          "ctime_nsec": <number>,
+          "mtime_sec": <number>,
+          "mtime_nsec": <number>,
+          "device": <number>,
+          "inode": <number>,
+          "uid": <number>,
+          "gid": <number>,
+          "size": 0
+        }
+      },
+      "excludes_file": {
+        "valid": true,
+        "oid": <string>,
+        "stat": {
+          "ctime_sec": <number>,
+          "ctime_nsec": <number>,
+          "mtime_sec": <number>,
+          "mtime_nsec": <number>,
+          "device": <number>,
+          "inode": <number>,
+          "uid": <number>,
+          "gid": <number>,
+          "size": 0
+        }
+      },
+      "flags": 6,
+      "show_other_directories": true,
+      "hide_empty_directories": true,
+      "excludes_per_dir": ".gitignore"
     }
   }
 }

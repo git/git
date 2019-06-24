@@ -19,6 +19,7 @@
 #include "varint.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "json-writer.h"
 #include "submodule-config.h"
 
 /*
@@ -2826,7 +2827,42 @@ static void load_oid_stat(struct oid_stat *oid_stat, const unsigned char *data,
 	oid_stat->valid = 1;
 }
 
-struct untracked_cache *read_untracked_extension(const void *data, unsigned long sz)
+static void jw_object_oid_stat(struct json_writer *jw, const char *key,
+			       const struct oid_stat *oid_stat)
+{
+	jw_object_inline_begin_object(jw, key);
+	jw_object_bool(jw, "valid", oid_stat->valid);
+	jw_object_string(jw, "oid", oid_to_hex(&oid_stat->oid));
+	jw_object_stat_data(jw, "stat", &oid_stat->stat);
+	jw_end(jw);
+}
+
+static void jw_object_untracked_cache_dir(struct json_writer *jw,
+					  const struct untracked_cache_dir *ucd)
+{
+	int i;
+
+	jw_object_bool(jw, "valid", ucd->valid);
+	jw_object_bool(jw, "check-only", ucd->check_only);
+	jw_object_stat_data(jw, "stat", &ucd->stat_data);
+	jw_object_string(jw, "exclude-oid", oid_to_hex(&ucd->exclude_oid));
+	jw_object_inline_begin_array(jw, "untracked");
+	for (i = 0; i < ucd->untracked_nr; i++)
+		jw_array_string(jw, ucd->untracked[i]);
+	jw_end(jw);
+
+	jw_object_inline_begin_object(jw, "dirs");
+	for (i = 0; i < ucd->dirs_nr; i++) {
+		jw_object_inline_begin_object(jw, ucd->dirs[i]->name);
+		jw_object_untracked_cache_dir(jw, ucd->dirs[i]);
+		jw_end(jw);
+	}
+	jw_end(jw);
+}
+
+struct untracked_cache *read_untracked_extension(const void *data,
+						 unsigned long sz,
+						 struct json_writer *jw)
 {
 	struct untracked_cache *uc;
 	struct read_data rd;
@@ -2864,6 +2900,19 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	uc->dir_flags = get_be32(next + ouc_offset(dir_flags));
 	exclude_per_dir = (const char *)next + exclude_per_dir_offset;
 	uc->exclude_per_dir = xstrdup(exclude_per_dir);
+
+	if (jw) {
+		jw_object_string(jw, "ident", ident);
+		jw_object_oid_stat(jw, "info_exclude", &uc->ss_info_exclude);
+		jw_object_oid_stat(jw, "excludes_file", &uc->ss_excludes_file);
+		jw_object_intmax(jw, "flags", uc->dir_flags);
+		if (uc->dir_flags & DIR_SHOW_OTHER_DIRECTORIES)
+			jw_object_bool(jw, "show_other_directories", 1);
+		if (uc->dir_flags & DIR_HIDE_EMPTY_DIRECTORIES)
+			jw_object_bool(jw, "hide_empty_directories", 1);
+		jw_object_string(jw, "excludes_per_dir", uc->exclude_per_dir);
+	}
+
 	/* NUL after exclude_per_dir is covered by sizeof(*ouc) */
 	next += exclude_per_dir_offset + strlen(exclude_per_dir) + 1;
 	if (next >= end)
@@ -2904,6 +2953,12 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	ewah_each_bit(rd.valid, read_stat, &rd);
 	ewah_each_bit(rd.sha1_valid, read_oid, &rd);
 	next = rd.data;
+
+	if (jw) {
+		jw_object_inline_begin_object(jw, "root");
+		jw_object_untracked_cache_dir(jw, uc->root);
+		jw_end(jw);
+	}
 
 done:
 	free(rd.ucd);
