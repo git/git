@@ -70,4 +70,24 @@ test_expect_success 'ls-files --json, fsmonitor extension ' '
 	)
 '
 
+test_expect_success 'ls-files --json, rerere extension' '
+	git init rerere &&
+	(
+		cd rerere &&
+		mkdir fi &&
+		test_commit initial fi/le first &&
+		git branch side &&
+		test_commit second fi/le second &&
+		git checkout side &&
+		test_commit third fi/le third &&
+		git checkout master &&
+		git config rerere.enabled true &&
+		test_must_fail git merge side &&
+		echo resolved >fi/le &&
+		git add fi/le &&
+		cp ../filter.sed . &&
+		compare_json rerere
+	)
+'
+
 test_done

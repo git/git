@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "dir.h"
+#include "json-writer.h"
 #include "resolve-undo.h"
 #include "string-list.h"
 
@@ -49,7 +50,30 @@ void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
 	}
 }
 
-struct string_list *resolve_undo_read(const char *data, unsigned long size)
+static void dump_resolve_undo(struct json_writer *jw,
+			      const char *path,
+			      const struct resolve_undo_info *ui)
+{
+	int i;
+
+	if (!jw)
+		return;
+
+	jw_array_inline_begin_object(jw);
+	jw_object_string(jw, "path", path);
+
+	jw_object_inline_begin_array(jw, "stages");
+	for (i = 0; i < 3; i++) {
+		jw_array_inline_begin_object(jw);
+		jw_object_filemode(jw, "mode", ui->mode[i]);
+		jw_object_string(jw, "oid", oid_to_hex(&ui->oid[i]));
+		jw_end(jw);
+	}
+	jw_end(jw);
+}
+
+struct string_list *resolve_undo_read(const char *data, unsigned long size,
+				      struct json_writer *jw)
 {
 	struct string_list *resolve_undo;
 	size_t len;
@@ -59,6 +83,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 
 	resolve_undo = xcalloc(1, sizeof(*resolve_undo));
 	resolve_undo->strdup_strings = 1;
+	jw_object_inline_begin_array_gently(jw, "entries");
 
 	while (size) {
 		struct string_list_item *lost;
@@ -94,7 +119,10 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 			size -= rawsz;
 			data += rawsz;
 		}
+
+		dump_resolve_undo(jw, lost->string, ui);
 	}
+	jw_end_gently(jw);
 	return resolve_undo;
 
 error:

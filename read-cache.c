@@ -1719,7 +1719,7 @@ static int read_index_extension(struct index_state *istate,
 		istate->cache_tree = cache_tree_read(data, sz, istate->jw);
 		break;
 	case CACHE_EXT_RESOLVE_UNDO:
-		istate->resolve_undo = resolve_undo_read(data, sz);
+		istate->resolve_undo = resolve_undo_read(data, sz, istate->jw);
 		break;
 	case CACHE_EXT_LINK:
 		ret = read_link_extension(istate, data, sz);
