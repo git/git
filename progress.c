@@ -88,7 +88,6 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 	const char *tp;
 	struct strbuf *counters_sb = &progress->counters_sb;
 	int show_update = 0;
-	int last_count_len = counters_sb->len;
 
 	if (progress->delay && (!progress_update || --progress->delay))
 		return;
@@ -116,26 +115,21 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 	if (show_update) {
 		if (is_foreground_fd(fileno(stderr)) || done) {
 			const char *eol = done ? done : "\r";
-			size_t clear_len = counters_sb->len < last_count_len ?
-					last_count_len - counters_sb->len + 1 :
-					0;
-			size_t progress_line_len = progress->title_len +
-						counters_sb->len + 2;
-			int cols = term_columns();
 
+			term_clear_line();
 			if (progress->split) {
-				fprintf(stderr, "  %s%*s", counters_sb->buf,
-					(int) clear_len, eol);
-			} else if (!done && cols < progress_line_len) {
-				clear_len = progress->title_len + 1 < cols ?
-					    cols - progress->title_len - 1 : 0;
-				fprintf(stderr, "%s:%*s\n  %s%s",
-					progress->title, (int) clear_len, "",
-					counters_sb->buf, eol);
+				fprintf(stderr, "  %s%s", counters_sb->buf,
+					eol);
+			} else if (!done &&
+				   /* The "+ 2" accounts for the ": ". */
+				   term_columns() < progress->title_len +
+						    counters_sb->len + 2) {
+				fprintf(stderr, "%s:\n  %s%s",
+					progress->title, counters_sb->buf, eol);
 				progress->split = 1;
 			} else {
-				fprintf(stderr, "%s: %s%*s", progress->title,
-					counters_sb->buf, (int) clear_len, eol);
+				fprintf(stderr, "%s: %s%s", progress->title,
+					counters_sb->buf, eol);
 			}
 			fflush(stderr);
 		}
