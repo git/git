@@ -326,6 +326,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 #define UNTRACKED_CHANGED	(1 << 7)
 #define FSMONITOR_CHANGED	(1 << 8)
 
+struct json_writer;
 struct split_index;
 struct untracked_cache;
 
@@ -350,6 +351,7 @@ struct index_state {
 	uint64_t fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
 	struct mem_pool *ce_mem_pool;
+	struct json_writer *jw;
 };
 
 /* Name hashing */
