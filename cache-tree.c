@@ -3,6 +3,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
+#include "json-writer.h"
 #include "object-store.h"
 #include "replace-object.h"
 
@@ -492,7 +493,8 @@ void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
 	write_one(sb, root, "", 0);
 }
 
-static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
+static struct cache_tree *read_one(const char **buffer, unsigned long *size_p,
+				   struct json_writer *jw)
 {
 	const char *buf = *buffer;
 	unsigned long size = *size_p;
@@ -546,6 +548,15 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 			*buffer, subtree_nr);
 #endif
 
+	if (jw) {
+		if (it->entry_count >= 0) {
+			jw_object_string(jw, "oid", oid_to_hex(&it->oid));
+			jw_object_intmax(jw, "entry_count", it->entry_count);
+		} else {
+			jw_object_null(jw, "oid");
+		}
+		jw_object_inline_begin_array(jw, "subdirs");
+	}
 	/*
 	 * Just a heuristic -- we do not add directories that often but
 	 * we do not want to have to extend it immediately when we do,
@@ -559,12 +570,18 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 		struct cache_tree_sub *subtree;
 		const char *name = buf;
 
-		sub = read_one(&buf, &size);
+		if (jw) {
+			jw_array_inline_begin_object(jw);
+			jw_object_string(jw, "name", name);
+		}
+		sub = read_one(&buf, &size, jw);
+		jw_end_gently(jw);
 		if (!sub)
 			goto free_return;
 		subtree = cache_tree_sub(it, name);
 		subtree->cache_tree = sub;
 	}
+	jw_end_gently(jw);
 	if (subtree_nr != it->subtree_nr)
 		die("cache-tree: internal error");
 	*buffer = buf;
@@ -576,11 +593,20 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	return NULL;
 }
 
-struct cache_tree *cache_tree_read(const char *buffer, unsigned long size)
+struct cache_tree *cache_tree_read(const char *buffer, unsigned long size,
+				   struct json_writer *jw)
 {
+	struct cache_tree *ret;
+
+	if (jw) {
+		jw_object_inline_begin_object(jw, "root");
+	}
 	if (buffer[0])
-		return NULL; /* not the whole tree */
-	return read_one(&buffer, &size);
+		ret = NULL; /* not the whole tree */
+	else
+		ret = read_one(&buffer, &size, jw);
+	jw_end_gently(jw);
+	return ret;
 }
 
 static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *path)

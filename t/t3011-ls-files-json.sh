@@ -29,6 +29,8 @@ test_expect_success 'setup' '
 	echo 2 >sub/two &&
 	git add sub/two &&
 
+	git commit -m first &&
+
 	echo intent-to-add >ita &&
 	git add -N ita &&
 
@@ -37,7 +39,7 @@ test_expect_success 'setup' '
 	strip_string oid ident
 '
 
-test_expect_success 'ls-files --json, main entries' '
+test_expect_success 'ls-files --json, main entries and TREE' '
 	compare_json basic
 '
 

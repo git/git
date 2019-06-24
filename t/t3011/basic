@@ -63,5 +63,23 @@
       },
       "file_offset": <number>
     }
-  ]
+  ],
+  "extensions": {
+    "TREE": {
+      "file_offset": <number>,
+      "ext_size": <number>,
+      "root": {
+        "oid": null,
+        "subdirs": [
+          {
+            "name": "sub",
+            "oid": <string>,
+            "entry_count": 1,
+            "subdirs": [
+            ]
+          }
+        ]
+      }
+    }
+  }
 }
