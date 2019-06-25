@@ -2411,6 +2411,12 @@ int wmain(int argc, const wchar_t **wargv)
 
 	trace2_initialize_clock();
 
+#ifdef _MSC_VER
+#ifdef USE_MSVC_CRTDBG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+#endif
+
 	maybe_redirect_std_handles();
 
 	/* determine size of argv and environ conversion buffer */
