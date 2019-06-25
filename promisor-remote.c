@@ -5,6 +5,7 @@
 #include "transport.h"
 
 static char *repository_format_partial_clone;
+static const char *core_partial_clone_filter_default;
 
 void set_repository_format_partial_clone(char *partial_clone)
 {
@@ -102,6 +103,10 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 	const char *name;
 	int namelen;
 	const char *subkey;
+
+	if (!strcmp(var, "core.partialclonefilter"))
+		return git_config_string(&core_partial_clone_filter_default,
+					 var, value);
 
 	if (parse_config_key(var, "remote", &name, &namelen, &subkey) < 0)
 		return 0;
