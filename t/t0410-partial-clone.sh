@@ -166,8 +166,9 @@ test_expect_success 'fetching of missing objects' '
 	# associated packfile contains the object
 	ls repo/.git/objects/pack/pack-*.promisor >promisorlist &&
 	test_line_count = 1 promisorlist &&
-	IDX=$(cat promisorlist | sed "s/promisor$/idx/") &&
-	git verify-pack --verbose "$IDX" | grep "$HASH"
+	IDX=$(sed "s/promisor$/idx/" promisorlist) &&
+	git verify-pack --verbose "$IDX" >out &&
+	grep "$HASH" out
 '
 
 test_expect_success 'fetching of missing objects works with ref-in-want enabled' '
@@ -514,8 +515,9 @@ test_expect_success 'fetching of missing objects from an HTTP server' '
 	# associated packfile contains the object
 	ls repo/.git/objects/pack/pack-*.promisor >promisorlist &&
 	test_line_count = 1 promisorlist &&
-	IDX=$(cat promisorlist | sed "s/promisor$/idx/") &&
-	git verify-pack --verbose "$IDX" | grep "$HASH"
+	IDX=$(sed "s/promisor$/idx/" promisorlist) &&
+	git verify-pack --verbose "$IDX" >out &&
+	grep "$HASH" out
 '
 
 test_done
