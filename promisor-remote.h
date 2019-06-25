@@ -5,10 +5,13 @@ struct object_id;
 
 /*
  * Promisor remote linked list
- * Its information come from remote.XXX config entries.
+ *
+ * Information in its fields come from remote.XXX config entries or
+ * from extensions.partialclone or core.partialclonefilter.
  */
 struct promisor_remote {
 	struct promisor_remote *next;
+	const char *partial_clone_filter;
 	const char name[FLEX_ARRAY];
 };
 
