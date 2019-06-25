@@ -2388,6 +2388,12 @@ static void maybe_redirect_std_handles(void)
 				  GENERIC_WRITE, FILE_FLAG_NO_BUFFERING);
 }
 
+#ifdef _MSC_VER
+#ifdef _DEBUG
+#include <crtdbg.h>
+#endif
+#endif
+
 /*
  * We implement wmain() and compile with -municode, which would
  * normally ignore main(), but we call the latter from the former
