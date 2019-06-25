@@ -1,6 +1,8 @@
 #include "cache.h"
+#include "object-store.h"
 #include "promisor-remote.h"
 #include "config.h"
+#include "fetch-object.h"
 
 static struct promisor_remote *promisors;
 static struct promisor_remote **promisors_tail = &promisors;
@@ -89,4 +91,69 @@ struct promisor_remote *promisor_remote_find(const char *remote_name)
 int has_promisor_remote(void)
 {
 	return !!promisor_remote_find(NULL);
+}
+
+static int remove_fetched_oids(struct repository *repo,
+			       struct object_id **oids,
+			       int oid_nr, int to_free)
+{
+	int i, remaining_nr = 0;
+	int *remaining = xcalloc(oid_nr, sizeof(*remaining));
+	struct object_id *old_oids = *oids;
+	struct object_id *new_oids;
+
+	for (i = 0; i < oid_nr; i++)
+		if (oid_object_info_extended(repo, &old_oids[i], NULL,
+					     OBJECT_INFO_SKIP_FETCH_OBJECT)) {
+			remaining[i] = 1;
+			remaining_nr++;
+		}
+
+	if (remaining_nr) {
+		int j = 0;
+		new_oids = xcalloc(remaining_nr, sizeof(*new_oids));
+		for (i = 0; i < oid_nr; i++)
+			if (remaining[i])
+				oidcpy(&new_oids[j++], &old_oids[i]);
+		*oids = new_oids;
+		if (to_free)
+			free(old_oids);
+	}
+
+	free(remaining);
+
+	return remaining_nr;
+}
+
+int promisor_remote_get_direct(struct repository *repo,
+			       const struct object_id *oids,
+			       int oid_nr)
+{
+	struct promisor_remote *r;
+	struct object_id *remaining_oids = (struct object_id *)oids;
+	int remaining_nr = oid_nr;
+	int to_free = 0;
+	int res = -1;
+
+	promisor_remote_init();
+
+	for (r = promisors; r; r = r->next) {
+		if (fetch_objects(r->name, remaining_oids, remaining_nr) < 0) {
+			if (remaining_nr == 1)
+				continue;
+			remaining_nr = remove_fetched_oids(repo, &remaining_oids,
+							 remaining_nr, to_free);
+			if (remaining_nr) {
+				to_free = 1;
+				continue;
+			}
+		}
+		res = 0;
+		break;
+	}
+
+	if (to_free)
+		free(remaining_oids);
+
+	return res;
 }
