@@ -16,7 +16,7 @@
 #include "submodule-config.h"
 #include "fsmonitor.h"
 #include "object-store.h"
-#include "fetch-object.h"
+#include "promisor-remote.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -400,7 +400,7 @@ static int check_updates(struct unpack_trees_options *o)
 		load_gitmodules_file(index, &state);
 
 	enable_delayed_checkout(&state);
-	if (repository_format_partial_clone && o->update && !o->dry_run) {
+	if (has_promisor_remote() && o->update && !o->dry_run) {
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.
@@ -419,8 +419,8 @@ static int check_updates(struct unpack_trees_options *o)
 			oid_array_append(&to_fetch, &ce->oid);
 		}
 		if (to_fetch.nr)
-			fetch_objects(repository_format_partial_clone,
-				      to_fetch.oid, to_fetch.nr);
+			promisor_remote_get_direct(the_repository,
+						   to_fetch.oid, to_fetch.nr);
 		oid_array_clear(&to_fetch);
 	}
 	for (i = 0; i < index->cache_nr; i++) {
