@@ -4,18 +4,6 @@ test_description='ls-files dumping json'
 
 . ./test-lib.sh
 
-strip_number() {
-	for name; do
-		echo 's/\("'$name'":\) [0-9]\+/\1 <number>/' >>filter.sed
-	done
-}
-
-strip_string() {
-	for name; do
-		echo 's/\("'$name'":\) ".*"/\1 <string>/' >>filter.sed
-	done
-}
-
 compare_json() {
 	git ls-files --debug-json >json &&
 	sed -f filter.sed json >filtered &&
@@ -35,9 +23,21 @@ test_expect_success 'setup' '
 	echo intent-to-add >ita &&
 	git add -N ita &&
 
-	strip_number ctime_sec ctime_nsec mtime_sec mtime_nsec &&
-	strip_number device inode uid gid file_offset ext_size last_update &&
-	strip_string oid ident
+	cat >filter.sed <<-\EOF
+	s/\("ctime_sec":\) [0-9][0-9]*/\1 <number>/
+	s/\("ctime_nsec":\) [0-9][0-9]*/\1 <number>/
+	s/\("mtime_sec":\) [0-9][0-9]*/\1 <number>/
+	s/\("mtime_nsec":\) [0-9][0-9]*/\1 <number>/
+	s/\("device":\) [0-9][0-9]*/\1 <number>/
+	s/\("inode":\) [0-9][0-9]*/\1 <number>/
+	s/\("uid":\) [0-9][0-9]*/\1 <number>/
+	s/\("gid":\) [0-9][0-9]*/\1 <number>/
+	s/\("file_offset":\) [0-9][0-9]*/\1 <number>/
+	s/\("ext_size":\) [0-9][0-9]*/\1 <number>/
+	s/\("last_update":\) [0-9][0-9]*/\1 <number>/
+	s/\("oid":\) ".*"/\1 <string>/
+	s/\("ident":\) ".*"/\1 <string>/
+	EOF
 '
 
 test_expect_success 'ls-files --json, main entries, UNTR and TREE' '
@@ -98,7 +98,9 @@ test_expect_success !SINGLE_CPU 'ls-files --json and multicore extensions' '
 		touch one two three four &&
 		git add . &&
 		cp ../filter.sed . &&
-		strip_number offset &&
+		cat >>filter.sed <<-\EOF &&
+		s/\("offset":\) [0-9][0-9]*/\1 <number>/
+		EOF
 		compare_json eoie
 	)
 '
