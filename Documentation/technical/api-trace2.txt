@@ -35,7 +35,7 @@ Format details are given in a later section.
 === The Normal Format Target
 
 The normal format target is a tradition printf format and similar
-to GIT_TRACE format.  This format is enabled with the `GIT_TR`
+to GIT_TRACE format.  This format is enabled with the `GIT_TRACE2`
 environment variable or the `trace2.normalTarget` system or global
 config setting.
 
