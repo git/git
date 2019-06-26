@@ -20,6 +20,7 @@
 #include "commit-slab.h"
 #include "commit-graph.h"
 #include "commit-reach.h"
+#include "argv-array.h"
 
 static struct ref_msg {
 	const char *gone;
@@ -1790,21 +1791,62 @@ static int filter_pattern_match(struct ref_filter *filter, const char *refname)
 	return match_pattern(filter, refname);
 }
 
-/*
- * Find the longest prefix of pattern we can pass to
- * `for_each_fullref_in()`, namely the part of pattern preceding the
- * first glob character. (Note that `for_each_fullref_in()` is
- * perfectly happy working with a prefix that doesn't end at a
- * pathname component boundary.)
- */
-static void find_longest_prefix(struct strbuf *out, const char *pattern)
+static int qsort_strcmp(const void *va, const void *vb)
 {
-	const char *p;
+	const char *a = *(const char **)va;
+	const char *b = *(const char **)vb;
 
-	for (p = pattern; *p && !is_glob_special(*p); p++)
-		;
+	return strcmp(a, b);
+}
 
-	strbuf_add(out, pattern, p - pattern);
+static void find_longest_prefixes_1(struct string_list *out,
+				  struct strbuf *prefix,
+				  const char **patterns, size_t nr)
+{
+	size_t i;
+
+	for (i = 0; i < nr; i++) {
+		char c = patterns[i][prefix->len];
+		if (!c || is_glob_special(c)) {
+			string_list_append(out, prefix->buf);
+			return;
+		}
+	}
+
+	i = 0;
+	while (i < nr) {
+		size_t end;
+
+		/*
+		* Set "end" to the index of the element _after_ the last one
+		* in our group.
+		*/
+		for (end = i + 1; end < nr; end++) {
+			if (patterns[i][prefix->len] != patterns[end][prefix->len])
+				break;
+		}
+
+		strbuf_addch(prefix, patterns[i][prefix->len]);
+		find_longest_prefixes_1(out, prefix, patterns + i, end - i);
+		strbuf_setlen(prefix, prefix->len - 1);
+
+		i = end;
+	}
+}
+
+static void find_longest_prefixes(struct string_list *out,
+				  const char **patterns)
+{
+	struct argv_array sorted = ARGV_ARRAY_INIT;
+	struct strbuf prefix = STRBUF_INIT;
+
+	argv_array_pushv(&sorted, patterns);
+	QSORT(sorted.argv, sorted.argc, qsort_strcmp);
+
+	find_longest_prefixes_1(out, &prefix, sorted.argv, sorted.argc);
+
+	argv_array_clear(&sorted);
+	strbuf_release(&prefix);
 }
 
 /*
@@ -1817,7 +1859,8 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       void *cb_data,
 				       int broken)
 {
-	struct strbuf prefix = STRBUF_INIT;
+	struct string_list prefixes = STRING_LIST_INIT_DUP;
+	struct string_list_item *prefix;
 	int ret;
 
 	if (!filter->match_as_path) {
@@ -1843,21 +1886,15 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		return for_each_fullref_in("", cb, cb_data, broken);
 	}
 
-	if (filter->name_patterns[1]) {
-		/*
-		 * multiple patterns; in theory this could still work as long
-		 * as the patterns are disjoint. We'd just make multiple calls
-		 * to for_each_ref(). But if they're not disjoint, we'd end up
-		 * reporting the same ref multiple times. So let's punt on that
-		 * for now.
-		 */
-		return for_each_fullref_in("", cb, cb_data, broken);
+	find_longest_prefixes(&prefixes, filter->name_patterns);
+
+	for_each_string_list_item(prefix, &prefixes) {
+		ret = for_each_fullref_in(prefix->string, cb, cb_data, broken);
+		if (ret)
+			break;
 	}
 
-	find_longest_prefix(&prefix, filter->name_patterns[0]);
-
-	ret = for_each_fullref_in(prefix.buf, cb, cb_data, broken);
-	strbuf_release(&prefix);
+	string_list_clear(&prefixes, 0);
 	return ret;
 }
 
