@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2019, #05; Wed, 19)
-X-master-at: a6a95cd1b46e48e5fe06bdbb0839a67ebeef4682
-X-next-at: 172b71a6c5b95846749746f7d63238d5f702bb00
+Subject: What's cooking in git.git (Jun 2019, #06; Wed, 26)
+X-master-at: 8dca754b1e874719a732bc9ab7b0e14b21b1bc10
+X-next-at: ee2e6308ae95ce7ba2fabedcc43f5f741e71c152
 
-What's cooking in git.git (Jun 2019, #05; Wed, 19)
+What's cooking in git.git (Jun 2019, #06; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The secondt batch of topics post 2.22 are now in 'master'.  Let's
-thin down what are left in 'next' before taking anything new, and
-try to keep this cycle short.
+The third batch of topics post 2.22 are now in 'master', and the tip
+of 'next' has been rewound.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,300 +23,369 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ba/clone-remote-submodules (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at 71972f94c2)
- + clone: add `--remote-submodules` flag
-
- "git clone --recurse-submodules" learned to set up the submodules
- to ignore commit object names recorded in the superproject gitlink
- and instead use the commits that happen to be at the tip of the
- remote-tracking branches from the get-go, by passing the new
- "--remote-submodules" option.
-
-
-* bb/unicode-12.1-reiwa (2019-05-29) 1 commit
-  (merged to 'next' on 2019-05-30 at 016465335c)
- + unicode: update the width tables to Unicode 12.1
-
- Update to Unicode 12.1 width table.
-
-
-* bl/userdiff-octave (2019-05-29) 2 commits
-  (merged to 'next' on 2019-05-29 at 6ed07afc89)
- + userdiff: fix grammar and style issues
-  (merged to 'next' on 2019-05-19 at 9ea1180d6c)
- + userdiff: add Octave
-
- The pattern "git diff/grep" use to extract funcname and words
- boundary for Matlab has been extend to cover Octave, which is more
- or less equivalent.
-
-
-* ds/object-info-for-prefetch-fix (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at ee0055b276)
- + sha1-file: split OBJECT_INFO_FOR_PREFETCH
-
- Code cleanup and futureproof.
-
-
-* ds/topo-traversal-using-commit-graph (2019-05-28) 2 commits
-  (merged to 'next' on 2019-05-30 at 590527995e)
- + revision: keep topo-walk free of unintersting commits
- + revision: use generation for A..B --topo-order queries
-
- Prepare use of reachability index in topological walker that works
- on a range (A..B).
-
-
-* es/first-contrib-tutorial (2019-05-29) 3 commits
-  (merged to 'next' on 2019-05-30 at 96317960ab)
- + doc: add some nit fixes to MyFirstContribution
-  (merged to 'next' on 2019-05-19 at 9ddfae82bf)
- + documentation: add anchors to MyFirstContribution
- + documentation: add tutorial for first contribution
-
- A new tutorial targetting specifically aspiring git-core
- developers.
-
-
-* es/git-debugger-doc (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at 449ba4ae6c)
- + doc: hint about GIT_DEBUGGER in CodingGuidelines
+* ab/hash-object-doc (2019-05-28) 1 commit
+  (merged to 'next' on 2019-06-06 at 8e4d85b906)
+ + hash-object doc: stop mentioning git-cvsimport
 
  Doc update.
 
 
-* es/grep-require-name-when-needed (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at e1ec57894a)
- + grep: fail if call could output and name is null
+* an/ignore-doc-update (2019-06-04) 1 commit
+  (merged to 'next' on 2019-06-06 at 8579d82c0d)
+ + gitignore.txt: make slash-rules more readable
 
- More parameter validation.
-
-
-* ew/server-info-remove-crufts (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at 655ba18f30)
- + server-info: do not list unlinked packs
-
- "git update-server-info" used to leave stale packfiles in its
- output, which has been corrected.
+ The description about slashes in gitignore patterns (used to
+ indicate things like "anchored to this level only" and "only
+ matches directories") has been revamped.
 
 
-* jk/HEAD-symref-in-xfer-namespaces (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at c2cfe38955)
- + upload-pack: strip namespace from symref data
+* cm/send-email-document-req-modules (2019-05-31) 1 commit
+  (merged to 'next' on 2019-06-06 at acf1c2fc96)
+ + send-email: update documentation of required Perl modules
 
- The server side support for "git fetch" used to show incorrect
- value for the HEAD symbolic ref when the namespace feature is in
- use, which has been corrected.
+ A doc update.
 
 
-* jk/am-i-resolved-fix (2019-05-28) 4 commits
-  (merged to 'next' on 2019-05-29 at e711103b1a)
- + am: fix --interactive HEAD tree resolution
- + am: drop tty requirement for --interactive
- + am: read interactive input from stdin
- + am: simplify prompt response handling
+* jt/partial-clone-missing-ref-delta-base (2019-06-11) 4 commits
+  (merged to 'next' on 2019-06-12 at 95628af9bb)
+ + t5616: cover case of client having delta base
+ + t5616: use correct flag to check object is missing
+  (merged to 'next' on 2019-05-29 at 5d7573a151)
+ + index-pack: prefetch missing REF_DELTA bases
+ + t5616: refactor packfile replacement
 
- "git am -i --resolved" segfaulted after trying to see a commit as
- if it were a tree, which has been corrected.
-
-
-* js/bisect-helper-check-get-oid-return-value (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at 24125b3bc0)
- + bisect--helper: verify HEAD could be parsed before continuing
-
- Code cleanup.
+ "git fetch" into a lazy clone forgot to fetch base objects that are
+ necessary to complete delta in a thin packfile, which has been
+ corrected.
 
 
-* js/bundle-verify-require-object-store (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at 747fbbaf11)
- + bundle verify: error out if called without an object database
+* md/list-objects-filter-memfix (2019-05-31) 1 commit
+  (merged to 'next' on 2019-06-06 at 80f0187cef)
+ + list-objects-filter: correct usage of ALLOC_GROW
 
- "git bundle verify" needs to see if prerequisite objects exist in
- the receiving repository, but the command did not check if we are
- in a repository upfront, which has been corrected.
-
-
-* js/fsmonitor-unflake (2019-05-28) 2 commits
-  (merged to 'next' on 2019-05-30 at 1aa850bc59)
- + mark_fsmonitor_valid(): mark the index as changed if needed
- + fill_stat_cache_info(): prepare for an fsmonitor fix
-
- The data collected by fsmonitor was not properly written back to
- the on-disk index file, breaking t7519 tests occasionally, which
- has been corrected.
+ The filter_data used in the list-objects-filter (which manages a
+ lazily sparse clone repository) did not use the dynamic array API
+ correctly---'nr' is supposed to point at one past the last element
+ of the array in use.  This has been corrected.
 
 
-* mm/p4-unshelve-windows-fix (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-31 at d45167d723)
- + p4 unshelve: fix "Not a valid object name HEAD0" on Windows
+* md/list-objects-filter-parse-msgfix (2019-05-31) 1 commit
+  (merged to 'next' on 2019-06-06 at 736f3c175b)
+ + list-objects-filter-options: error is localizeable
 
- The command line to invoke a "git cat-file" command from inside
- "git p4" was not properly quoted to protect a caret and running a
- broken command on Windows, which has been corrected.
+ Make an end-user facing message localizable.
 
 
-* pb/request-pull-verify-remote-ref (2019-05-28) 2 commits
-  (merged to 'next' on 2019-05-31 at 0f73300dfa)
- + request-pull: warn if the remote object is not the same as the local one
- + request-pull: quote regex metacharacters in local ref
+* md/url-parse-harden (2019-06-04) 2 commits
+  (merged to 'next' on 2019-06-06 at b187c3dbfe)
+ + url: do not allow %00 to represent NUL in URLs
+ + url: do not read past end of buffer
 
- "git request-pull" learned to warn when the ref we ask them to pull
- from in the local repository and in the published repository are
- different.
-
-
-* po/git-help-on-git-itself (2019-05-16) 2 commits
-  (merged to 'next' on 2019-05-31 at 455541d73a)
- + Doc: git.txt: remove backticks from link and add git-scm.com/docs
- + git.c: show usage for accessing the git(1) help page
-
- "git help git" was hard to discover (well, at least for some
- people).
+ The URL decoding code has been updated to avoid going past the end
+ of the string while parsing %-<hex>-<hex> sequence.
 
 
-* sw/git-p4-unshelve-branched-files (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-30 at e1985f61fc)
- + git-p4: allow unshelving of branched files
+* ml/userdiff-rust (2019-05-30) 2 commits
+  (merged to 'next' on 2019-06-12 at 33b88fa9e5)
+ + userdiff: two simplifications of patterns for rust
+  (merged to 'next' on 2019-05-19 at 1266fddce5)
+ + userdiff: add built-in pattern for rust
 
- "git p4" update.
-
-
-* vv/merge-squash-with-explicit-commit (2019-05-28) 1 commit
-  (merged to 'next' on 2019-05-29 at 209baa3e55)
- + merge: refuse --commit with --squash
-
- "git merge --squash" is designed to update the working tree and the
- index without creating the commit, and this cannot be countermanded
- by adding the "--commit" option; the command now refuses to work
- when both options are given.
+ The pattern "git diff/grep" use to extract funcname and words
+ boundary for Rust has been added.
 
 
-* xl/record-partial-clone-origin (2019-05-29) 1 commit
-  (merged to 'next' on 2019-05-31 at dc291fa199)
- + clone: respect user supplied origin name when setting up partial clone
+* mo/clang-format-for-each-update (2019-06-04) 1 commit
+  (merged to 'next' on 2019-06-06 at ee3066bb65)
+ + clang-format: use git grep to generate the ForEachMacros list
 
- When creating a partial clone, the object filtering criteria is
- recorded for the origin of the clone, but this incorrectly used a
- hardcoded name "origin" to name that remote; it has been corrected
- to honor the "--origin <name>" option.
+ The list of for-each like macros used by clang-format has been
+ updated.
 
 --------------------------------------------------
 [New Topics]
 
-* cb/fsmonitor-intfix (2019-06-17) 1 commit
- - fsmonitor: avoid signed integer overflow / infinite loop
+* ab/test-env (2019-06-21) 8 commits
+ - tests: make GIT_TEST_FAIL_PREREQS a boolean
+ - tests: replace test_tristate with "git env--helper"
+ - tests README: re-flow a previously changed paragraph
+ - tests: make GIT_TEST_GETTEXT_POISON a boolean
+ - t6040 test: stop using global "script" variable
+ - config.c: refactor die_bad_number() to not call gettext() early
+ - env--helper: new undocumented builtin wrapping git_env_*()
+ - config tests: simplify include cycle test
 
- Variable type fix.
-
- Will merge to 'next' and then to 'master'.
-
-
-* es/rev-list-no-object-names (2019-06-19) 1 commit
- - rev-list: teach --no-object-names to enable piping
-
- "git rev-list --objects" learned with "--no-object-names" option to
- squelch the path to the object that is used as a grouping hint for
- pack-objects.
-
- Will merge to 'next'.
-
-
-* md/list-objects-filter-combo (2019-06-17) 10 commits
- - list-objects-filter-options: make parser void
- - list-objects-filter-options: clean up use of ALLOC_GROW
- - list-objects-filter-options: allow mult. --filter
- - strbuf: give URL-encoding API a char predicate fn
- - list-objects-filter-options: make filter_spec a string_list
- - list-objects-filter-options: move error check up
- - list-objects-filter: implement composite filters
- - list-objects-filter-options: always supply *errbuf
- - list-objects-filter: put omits set in filter struct
- - list-objects-filter: make API easier to use
-
- The list-objects-filter API (used to create a sparse/lazy clone)
- learned to take a combined filter specification.
+ Many GIT_TEST_* environment variables control various aspects of
+ how our tests are run, but a few followed "non-empty is true, empty
+ or unset is false" while others followed the usual "there are a few
+ ways to spell true, like yes, on, etc., and also ways to spell
+ false, like no, off, etc." convention.
 
 
-* pw/doc-synopsis-markup-opmode-options (2019-06-17) 1 commit
- - show --continue/skip etc. consistently in synopsis
+* cc/first-contrib-tutorial (2019-06-24) 1 commit
+ - doc: improve usage string in MyFirstContribution
 
- Docfix.
-
- Will merge to 'next' and then to 'master'.
-
-
-* rs/copy-array (2019-06-17) 2 commits
- - use COPY_ARRAY for copying arrays
- - coccinelle: use COPY_ARRAY for copying arrays
-
- Code clean-up.
-
- Will merge to 'next' and then to 'master'.
-
-
-* cb/mkstemps-uint-type-fix (2019-06-19) 1 commit
- - wrapper: avoid undefined behaviour in macOS
-
- Variable type fix.
-
- Will merge to 'next' and then to 'master'.
-
-
-* cb/xdiff-no-system-includes-in-dot-c (2019-06-19) 1 commit
- - xdiff: avoid accidental redefinition of LFS feature in OpenIndiana
-
- Compilation fix.
-
- Will be rerolled together with patches from the
- jk/no-system-includes-in-dot-c topic.
-
-
-* jk/no-system-includes-in-dot-c (2019-06-19) 2 commits
- - wt-status.h: drop stdio.h include
- - verify-tag: drop signal.h include
-
- Compilation fix.
-
- Will be rerolled with the above.
-
-
-* jk/trailers-use-config (2019-06-19) 1 commit
- - interpret-trailers: load default config
-
- "git interpret-trailers" always treated '#' as the comment
- character, regardless of core.commentChar setting, which has been
- corrected.
-
- Will merge to 'next' and then to 'master'.
-
-
-* nd/fetch-multi-gc-once (2019-06-19) 1 commit
- - fetch: only run 'gc' once when fetching multiple remotes
-
- "git fetch" that grabs from a group of remotes learned to run the
- auto-gc only once at the very end.
+ Update docs used in a tutorial.
 
  Will merge to 'next'.
 
 
-* ra/cherry-pick-revert-skip (2019-06-19) 5 commits
- - cherry-pick/revert: advise using --skip
- - cherry-pick/revert: add --skip option
- - sequencer: use argv_array in reset_merge
- - sequencer: rename reset_for_rollback to reset_merge
- - sequencer: add advice for revert
+* ds/early-access (2019-06-20) 3 commits
+ - repo-settings: pack.useSparse=true
+ - repo-settings: use index.version=4 by default
+ - repo-settings: create core.featureAdoptionRate setting
 
- "git cherry-pick/revert" learned a new "--skip" action.
+ A mechanism to enable newish configuration settings in bulk has
+ been invented.
 
 
-* tg/stash-ref-by-index-fix (2019-06-19) 1 commit
- - stash: fix show referencing stash index
+* jh/msvc (2019-06-25) 20 commits
+ - msvc: ignore .dll and incremental compile output
+ - msvc: avoid debug assertion windows in Debug Mode
+ - msvc: do not pretend to support all signals
+ - msvc: add pragmas for common warnings
+ - msvc: add a compile-time flag to allow detailed heap debugging
+ - msvc: support building Git using MS Visual C++
+ - msvc: update Makefile to allow for spaces in the compiler path
+ - msvc: fix detect_msys_tty()
+ - msvc: define ftello()
+ - msvc: do not re-declare the timespec struct
+ - msvc: mark a variable as non-const
+ - msvc: define O_ACCMODE
+ - msvc: include sigset_t definition
+ - msvc: fix dependencies of compat/msvc.c
+ - mingw: replace mingw_startup() hack
+ - obstack: fix compiler warning
+ - cache-tree/blame: avoid reusing the DEBUG constant
+ - t0001 (mingw): do not expect a specific order of stdout/stderr
+ - Mark .bat files as requiring CR/LF endings
+ - mingw: fix a typo in the msysGit-specific section
 
- "git stash show 23" used to work, but no more after getting
- rewritten in C; this regression has been corrected.
+ Support to build with MSVC has been updated.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'next'.
+
+
+* jk/delta-islands-progress-fix (2019-06-20) 1 commit
+ - delta-islands: respect progress flag
+
+ The codepath to compute delta islands used to spew progress output
+ without giving the callers any way to squelch it, which has been
+ fixed.
+
+ Will merge to 'next'.
+
+
+* jk/oidhash (2019-06-20) 17 commits
+ - hashmap: convert sha1hash() to oidhash()
+ - hash.h: move object_id definition from cache.h
+ - khash: rename oid helper functions
+ - khash: drop sha1-specific map types
+ - pack-bitmap: convert khash_sha1 maps into kh_oid_map
+ - delta-islands: convert island_marks khash to use oids
+ - khash: rename kh_oid_t to kh_oid_set
+ - khash: drop broken oid_map typedef
+ - object: convert create_object() to use object_id
+ - object: convert internal hash_obj() to object_id
+ - object: convert lookup_object() to use object_id
+ - object: convert lookup_unknown_object() to use object_id
+ - pack-objects: convert locate_object_entry_hash() to object_id
+ - pack-objects: convert packlist_find() to use object_id
+ - pack-bitmap-write: convert some helpers to use object_id
+ - upload-pack: rename a "sha1" variable to "oid"
+ - describe: fix accidental oid/hash type-punning
+
+ Code clean-up to remove hardcoded SHA-1 hash from manty places.
+
+ Will merge to 'next'.
+
+
+* nd/fetch-capability-tweak (2019-06-20) 3 commits
+ - fetch-pack: print server version at the top in -v -v
+ - fetch-pack: print all relevant supported capabilities with -v -v
+ - fetch-pack: move capability names out of i18n strings
+
+ Protocol capabilities that go over wire should never be translated,
+ but it was incorrectly marked for translation, which has been
+ corrected.  The output of protocol capabilities for debugging has
+ been tweaked a bit.
+
+ Will merge to 'next'.
+
+
+* nd/index-dump-in-json (2019-06-26) 11 commits
+ - SQUASH???
+ - t3008: use the new SINGLE_CPU prereq
+ - read-cache.c: dump "IEOT" extension as json
+ - read-cache.c: dump "EOIE" extension as json
+ - resolve-undo.c: dump "REUC" extension as json
+ - fsmonitor.c: dump "FSMN" extension as json
+ - split-index.c: dump "link" extension as json
+ - dir.c: dump "UNTR" extension as json
+ - cache-tree.c: dump "TREE" extension as json
+ - read-cache.c: dump common extension info in json
+ - ls-files: add --json to dump the index
+
+ "ls-files" learned "--debug-json" option to dump the contents and
+ the extensions of the index file.
+
+
+* nd/switch-and-restore-more (2019-06-20) 2 commits
+ - completion: disable dwim on "git switch -d"
+ - switch: allow to switch in the middle of bisect
+ (this branch is used by jl/status-reduce-vertical-blank; uses nd/switch-and-restore.)
+
+ (this topic is just bits and pieces out of 4 patches)
+
+
+* rs/config-unit-parsing (2019-06-24) 3 commits
+ - config: simplify parsing of unit factors
+ - config: don't multiply in parse_unit_factor()
+ - config: use unsigned_mult_overflows to check for overflows
+ (this branch uses js/gcc-8-and-9.)
+
+ The code to parse scaled numbers out of configuration files has
+ been made more robust and also easier to follow.
+
+ Will merge to 'next'.
+
+
+* ab/fail-prereqs-in-test (2019-06-21) 1 commit
+ - tests: mark two failing tests under FAIL_PREREQS
+
+ Test updates.
+
+ Will merge to 'next'.
+
+
+* ds/fetch-disable-force-notice (2019-06-21) 3 commits
+ - pull: add --[no-]show-forced-updates passthrough
+ - fetch: warn about forced updates in branch listing
+ - fetch: add --[no-]show-forced-updates argument
+
+ "git fetch" and "git pull" reports when a fetch results in
+ non-fast-forward updates to let the user notice unusual situation.
+ The commands learned "--no-shown-forced-updates" option to disable
+ this safety feature.
+
+ Will merge to 'next'.
+
+
+* jh/status-aheadbehind (2019-06-21) 3 commits
+ - status: ignore status.aheadbehind in porcelain formats
+ - status: warn when a/b calculation takes too long
+ - status: add status.aheadbehind setting
+
+ "git status" can be told a non-standard default value for the
+ "--[no-]ahead-behind" option with a new configuration variable
+ status.aheadBehind.
+
+ Will merge to 'next'.
+
+
+* js/t0001-case-insensitive (2019-06-24) 1 commit
+ - t0001: fix on case-insensitive filesystems
+
+ Test update.
+
+ Will merge to 'next'.
+
+
+* dr/progress-i18n (2019-06-24) 1 commit
+ - l10n: localizable upload progress messages
+
+ Progress messages have been made localizable.
+
+ Not quite with the code duplication...
+
+
+* jw/gitweb-sample-update (2019-06-24) 1 commit
+ - doc: don't use git.kernel.org as example gitweb URL
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* ms/submodule-foreach-fix (2019-06-25) 1 commit
+ - submodule foreach: fix recursion of options
+
+ "git submodule foreach" did not protect command line options passed
+ to the command to be run in each submodule correctly, when the
+ "--recursive" option was in use.
+
+ Will merge to 'next'.
+
+
+* pw/status-with-corrupt-sequencer-state (2019-06-25) 3 commits
+ - status: do not report errors in sequencer/todo
+ - sequencer: factor out todo command name parsing
+ - sequencer: always allow tab after command name
+
+ The code to read state files used by the sequencer machinery for
+ "git status" has been made more robust against a corrupt or stale
+ state files.
+
+
+* sg/t5551-fetch-smart-error-is-translated (2019-06-25) 1 commit
+ - t5551: use 'test_i18ngrep' to check translated output
+
+ Test update.
+
+ Will merge to 'next'.
+
+
+* ab/no-kwset (2019-06-26) 7 commits
+ - grep: use PCRE v2 for optimized fixed-string search
+ - grep: remove the kwset optimization
+ - grep: drop support for \0 in --fixed-strings <pattern>
+ - grep: make the behavior for \0 in patterns sane
+ - grep tests: move binary pattern tests into their own file
+ - grep tests: move "grep binary" alongside the rest
+ - grep: inline the return value of a function call used only once
+
+ Retire use of kwset library, which is an optimization for looking
+ for fixed strings, with use of pcre2 JIT.
+
+ Will merge to 'next'.
+
+
+* mt/dir-iterator-updates (2019-06-25) 10 commits
+ - clone: replace strcmp by fspathcmp
+ - clone: use dir-iterator to avoid explicit dir traversal
+ - clone: extract function from copy_or_link_directory
+ - clone: copy hidden paths at local clone
+ - dir-iterator: add flags parameter to dir_iterator_begin
+ - dir-iterator: refactor state machine model
+ - dir-iterator: use warning_errno when possible
+ - dir-iterator: add tests for dir-iterator API
+ - clone: better handle symlinked files at .git/objects/
+ - clone: test for our behavior on odd objects/* content
+
+ Adjust the dir-iterator API and apply it to the local clone
+ optimization codepath.
+
+ Is this ready for 'next'?
+
+
+* nd/tree-walk-with-repo (2019-06-26) 6 commits
+ - Use the right 'struct repository' instead of the_repository
+ - match-trees.c: remove the_repo from shift_tree*()
+ - tree-walk.c: remove the_repo from get_tree_entry_follow_symlinks()
+ - tree-walk.c: remove the_repo from get_tree_entry()
+ - tree-walk.c: remove the_repo from fill_tree_descriptor()
+ - sha1-file.c: remove the_repo from read_object_with_reference()
+
+ The tree-walk API learned to pass an in-core repository
+ instance throughout more codepaths.
+
+
+* jh/trace2-sid-fix (2019-06-26) 1 commit
+ - trace2: correct typo in technical documentation
+
+ Typofix.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -394,62 +462,195 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cb/fsmonitor-intfix (2019-06-17) 1 commit
+  (merged to 'next' on 2019-06-26 at bed7c7e78b)
+ + fsmonitor: avoid signed integer overflow / infinite loop
+
+ Variable type fix.
+
+ Will merge to 'master'.
+
+
+* es/rev-list-no-object-names (2019-06-20) 1 commit
+ - rev-list: teach --no-object-names to enable piping
+
+ "git rev-list --objects" learned with "--no-object-names" option to
+ squelch the path to the object that is used as a grouping hint for
+ pack-objects.
+
+ Will merge to 'next'.
+
+
+* md/list-objects-filter-combo (2019-06-17) 10 commits
+ - list-objects-filter-options: make parser void
+ - list-objects-filter-options: clean up use of ALLOC_GROW
+ - list-objects-filter-options: allow mult. --filter
+ - strbuf: give URL-encoding API a char predicate fn
+ - list-objects-filter-options: make filter_spec a string_list
+ - list-objects-filter-options: move error check up
+ - list-objects-filter: implement composite filters
+ - list-objects-filter-options: always supply *errbuf
+ - list-objects-filter: put omits set in filter struct
+ - list-objects-filter: make API easier to use
+
+ The list-objects-filter API (used to create a sparse/lazy clone)
+ learned to take a combined filter specification.
+
+ Will merge to 'next'.
+
+
+* pw/doc-synopsis-markup-opmode-options (2019-06-17) 1 commit
+  (merged to 'next' on 2019-06-26 at 4258eddd2d)
+ + show --continue/skip etc. consistently in synopsis
+
+ Docfix.
+
+ Will merge to 'master'.
+
+
+* rs/copy-array (2019-06-17) 2 commits
+  (merged to 'next' on 2019-06-26 at dfaa162f88)
+ + use COPY_ARRAY for copying arrays
+ + coccinelle: use COPY_ARRAY for copying arrays
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* cb/mkstemps-uint-type-fix (2019-06-19) 1 commit
+  (merged to 'next' on 2019-06-26 at df44db4a69)
+ + wrapper: avoid undefined behaviour in macOS
+
+ Variable type fix.
+
+ Will merge to 'master'.
+
+
+* cb/xdiff-no-system-includes-in-dot-c (2019-06-19) 1 commit
+ - xdiff: avoid accidental redefinition of LFS feature in OpenIndiana
+
+ Compilation fix.
+
+ Will be rerolled together with patches from the
+ jk/no-system-includes-in-dot-c topic.
+
+
+* jk/no-system-includes-in-dot-c (2019-06-19) 2 commits
+ - wt-status.h: drop stdio.h include
+ - verify-tag: drop signal.h include
+
+ Compilation fix.
+
+ Will be rerolled with the above.
+
+
+* jk/trailers-use-config (2019-06-19) 1 commit
+  (merged to 'next' on 2019-06-26 at 1ba8a7c2dd)
+ + interpret-trailers: load default config
+
+ "git interpret-trailers" always treated '#' as the comment
+ character, regardless of core.commentChar setting, which has been
+ corrected.
+
+ Will merge to 'master'.
+
+
+* nd/fetch-multi-gc-once (2019-06-19) 1 commit
+ - fetch: only run 'gc' once when fetching multiple remotes
+
+ "git fetch" that grabs from a group of remotes learned to run the
+ auto-gc only once at the very end.
+
+ Will merge to 'next'.
+
+
+* ra/cherry-pick-revert-skip (2019-06-24) 6 commits
+ - cherry-pick/revert: advise using --skip
+ - cherry-pick/revert: add --skip option
+ - sequencer: use argv_array in reset_merge
+ - sequencer: rename reset_for_rollback to reset_merge
+ - sequencer: add advice for revert
+ - advice: add sequencerInUse config variable
+
+ "git cherry-pick/revert" learned a new "--skip" action.
+
+ Is this one ready for 'next'?
+
+
+* tg/stash-ref-by-index-fix (2019-06-19) 1 commit
+  (merged to 'next' on 2019-06-26 at ee2e6308ae)
+ + stash: fix show referencing stash index
+
+ "git stash show 23" used to work, but no more after getting
+ rewritten in C; this regression has been corrected.
+
+ Will merge to 'master'.
+
+
 * js/gcc-8-and-9 (2019-06-13) 4 commits
  - config: avoid calling `labs()` on too-large data type
  - winansi: simplify loading the GetCurrentConsoleFontEx() function
  - kwset: allow building with GCC 8
  - poll (mingw): allow compiling with GCC 8 and DEVELOPER=1
+ (this branch is used by rs/config-unit-parsing.)
 
  Code clean-up for new compilers.
 
+ Will merge to 'next'.
  The 'kwset' one may get a wholesale replacement, either with new
  version of kwset from upstream or removal of its users, but in the
  meantime, it is probably OK to merge it down.
 
 
 * pw/add-p-recount (2019-06-13) 1 commit
- - add -p: fix checkout -p with pathological context
+  (merged to 'next' on 2019-06-26 at 63e063d65d)
+ + add -p: fix checkout -p with pathological context
 
  "git checkout -p" needs to selectively apply a patch in reverse,
  which did not work well.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
 * rs/avoid-overflow-in-midpoint-computation (2019-06-13) 1 commit
- - cleanup: fix possible overflow errors in binary search, part 2
+  (merged to 'next' on 2019-06-26 at e6bd5b496b)
+ + cleanup: fix possible overflow errors in binary search, part 2
 
  Code clean-up to avoid signed integer overlaps during binary search.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
 * js/t3404-typofix (2019-06-14) 1 commit
- - t3404: fix a typo
+  (merged to 'next' on 2019-06-26 at ba3fcc1fc1)
+ + t3404: fix a typo
 
  Typofix.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
 * mo/hpux-dynpath (2019-06-07) 1 commit
- - configure: Detect linking style for HP aCC on HP-UX
+  (merged to 'next' on 2019-06-26 at 5add3b28b2)
+ + configure: Detect linking style for HP aCC on HP-UX
 
- Auto-detect how to tell HP-UX aCC where to use dynamicallly linked
+ Auto-detect how to tell HP-UX aCC where to use dynamically linked
  libraries from at runtime.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
 * js/mergetool-optim (2019-06-12) 4 commits
- - mergetool: use shell variable magic instead of `awk`
- - mergetool: dissect strings with shell variable magic instead of `expr`
- - t7610-mergetool: use test_cmp instead of test $(cat file) = $txt
- - t7610-mergetool: do not place pipelines headed by `yes` in subshells
+  (merged to 'next' on 2019-06-26 at 8ad650bfa8)
+ + mergetool: use shell variable magic instead of `awk`
+ + mergetool: dissect strings with shell variable magic instead of `expr`
+ + t7610-mergetool: use test_cmp instead of test $(cat file) = $txt
+ + t7610-mergetool: do not place pipelines headed by `yes` in subshells
 
  "git mergetool" and its tests now spawn fewer subprocesses.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
 * cc/test-oidmap (2019-06-17) 4 commits
@@ -492,86 +693,69 @@ of the repositories listed at
 
 
 * nd/completion-no-cache-failure (2019-06-12) 1 commit
- - completion: do not cache if --git-completion-helper fails
+  (merged to 'next' on 2019-06-26 at f7b5a0a622)
+ + completion: do not cache if --git-completion-helper fails
 
  An incorrect list of options was cached after command line
  completion failed (e.g. trying to complete a command that requires
  a repository outside one), which has been corrected.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
-* sg/rebase-progress (2019-06-11) 4 commits
+* sg/rebase-progress (2019-06-24) 5 commits
  - progress: use term_clear_line()
  - rebase: fix garbled progress display with '-x'
  - pager: add a helper function to clear the last line in the terminal
- - t3404-rebase-interactive: use the 'q_to_cr' helper
+ - t3404: make the 'rebase.missingCommitsCheck=ignore' test more focused
+ - t3404: modernize here doc style
 
  Use "Erase in Line" CSI sequence that is already used in the editor
  support to clear cruft in the progress output.
 
- Its test may have to be updated to work around glitch in test setup
- on Windows.
+ Will merge to 'next'.
 
 
 * sg/trace2-rename (2019-06-12) 1 commit
- - Revert "test-lib: whitelist GIT_TR2_* in the environment"
+  (merged to 'next' on 2019-06-26 at 8ee228c455)
+ + Revert "test-lib: whitelist GIT_TR2_* in the environment"
 
  Dev support update to help tracing out tests.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
 * fc/fetch-with-import-fix (2019-06-04) 5 commits
- - fetch: fix regression with transport helpers
- - fetch: make the code more understandable
- - fetch: trivial cleanup
- - t5801 (remote-helpers): add test to fetch tags
- - t5801 (remote-helpers): cleanup refspec stuff
+  (merged to 'next' on 2019-06-26 at b7e7f359a9)
+ + fetch: fix regression with transport helpers
+ + fetch: make the code more understandable
+ + fetch: trivial cleanup
+ + t5801 (remote-helpers): add test to fetch tags
+ + t5801 (remote-helpers): cleanup refspec stuff
 
  Code restructuring during 2.20 period broke fetching tags via
  "import" based transports.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
-* jl/status-reduce-vertical-blank (2019-06-04) 1 commit
+* jl/status-reduce-vertical-blank (2019-06-21) 1 commit
  - status: remove the empty line after hints
- (this branch uses nd/switch-and-restore.)
+ (this branch uses nd/switch-and-restore and nd/switch-and-restore-more.)
 
  Extra blank lines in "git status" output have been reduced.
 
  Needs to wait on nd/switch-and-restore to stabilize.
 
 
-* md/url-parse-harden (2019-06-04) 2 commits
-  (merged to 'next' on 2019-06-06 at b187c3dbfe)
- + url: do not allow %00 to represent NUL in URLs
- + url: do not read past end of buffer
-
- The URL decoding code has been updated to avoid going past the end
- of the string while parsing %-<hex>-<hex> sequence.
-
- Will merge to 'master'.
-
-
-* mo/clang-format-for-each-update (2019-06-04) 1 commit
-  (merged to 'next' on 2019-06-06 at ee3066bb65)
- + clang-format: use git grep to generate the ForEachMacros list
-
- The list of for-each like macros used by clang-format has been
- updated.
-
- Will merge to 'master'.
-
-
 * dl/config-alias-doc (2019-06-06) 2 commits
- - config/alias.txt: document alias accepting non-command first word
- - config/alias.txt: change " and ' to `
+  (merged to 'next' on 2019-06-26 at 3776902022)
+ + config/alias.txt: document alias accepting non-command first word
+ + config/alias.txt: change " and ' to `
 
  Doc update.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
 * dl/includeif-onbranch (2019-06-05) 1 commit
@@ -612,80 +796,29 @@ of the repositories listed at
 
 
 * tm/tag-gpgsign-config (2019-06-05) 1 commit
- - tag: add tag.gpgSign config option to force all tags be GPG-signed
+  (merged to 'next' on 2019-06-26 at 015709def5)
+ + tag: add tag.gpgSign config option to force all tags be GPG-signed
 
  A new tag.gpgSign configuration variable turns "git tag -a" into
  "git tag -s".
-
- Will merge to 'next' and then to 'master'.
-
-
-* md/list-objects-filter-memfix (2019-05-31) 1 commit
-  (merged to 'next' on 2019-06-06 at 80f0187cef)
- + list-objects-filter: correct usage of ALLOC_GROW
-
- The filter_data used in the list-objects-filter (which manages a
- lazily sparse clone repository) did not use the dynamic array API
- correctly---'nr' is supposed to point at one past the last element
- of the array in use.  This has been corrected.
-
- Will merge to 'master'.
-
-
-* md/list-objects-filter-parse-msgfix (2019-05-31) 1 commit
-  (merged to 'next' on 2019-06-06 at 736f3c175b)
- + list-objects-filter-options: error is localizeable
-
- Make an end-user facing message localizable.
-
- Will merge to 'master'.
-
-
-* cm/send-email-document-req-modules (2019-05-31) 1 commit
-  (merged to 'next' on 2019-06-06 at acf1c2fc96)
- + send-email: update documentation of required Perl modules
-
- A doc update.
 
  Will merge to 'master'.
 
 
 * po/doc-branch (2019-05-29) 1 commit
- - doc branch: provide examples for listing remote tracking branches
+  (merged to 'next' on 2019-06-26 at 0debcb13e5)
+ + doc branch: provide examples for listing remote tracking branches
 
  Doc update.
-
- Will merge to 'next' and then to 'master'.
-
-
-* ab/hash-object-doc (2019-05-28) 1 commit
-  (merged to 'next' on 2019-06-06 at 8e4d85b906)
- + hash-object doc: stop mentioning git-cvsimport
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* jt/partial-clone-missing-ref-delta-base (2019-06-11) 4 commits
-  (merged to 'next' on 2019-06-12 at 95628af9bb)
- + t5616: cover case of client having delta base
- + t5616: use correct flag to check object is missing
-  (merged to 'next' on 2019-05-29 at 5d7573a151)
- + index-pack: prefetch missing REF_DELTA bases
- + t5616: refactor packfile replacement
-
- "git fetch" into a lazy clone forgot to fetch base objects that are
- necessary to complete delta in a thin packfile, which has been
- corrected.
 
  Will merge to 'master'.
 
 
 * ds/close-object-store (2019-06-12) 3 commits
- - packfile: rename close_all_packs to close_object_store
- - packfile: close commit-graph in close_all_packs
- - commit-graph: use raw_object_store when closing
+  (merged to 'next' on 2019-06-26 at 86b60f2631)
+ + packfile: rename close_all_packs to close_object_store
+ + packfile: close commit-graph in close_all_packs
+ + commit-graph: use raw_object_store when closing
  (this branch is used by ds/commit-graph-incremental; uses ds/commit-graph-write-refactor.)
 
  The commit-graph file is now part of the "files that the runtime
@@ -693,29 +826,6 @@ of the repositories listed at
  closed when done with the object store", and the file descriptor to
  an existing commit-graph file now is closed before "gc" finalizes a
  new instance to replace it.
-
- Will merge to 'next' and then to 'master'.
-
-
-* ml/userdiff-rust (2019-05-30) 2 commits
-  (merged to 'next' on 2019-06-12 at 33b88fa9e5)
- + userdiff: two simplifications of patterns for rust
-  (merged to 'next' on 2019-05-19 at 1266fddce5)
- + userdiff: add built-in pattern for rust
-
- The pattern "git diff/grep" use to extract funcname and words
- boundary for Rust has been added.
-
- Will merge to 'master'.
-
-
-* an/ignore-doc-update (2019-06-04) 1 commit
-  (merged to 'next' on 2019-06-06 at 8579d82c0d)
- + gitignore.txt: make slash-rules more readable
-
- The description about slashes in gitignore patterns (used to
- indicate things like "anchored to this level only" and "only
- matches directories") has been revamped.
 
  Will merge to 'master'.
 
@@ -734,19 +844,20 @@ of the repositories listed at
 
 
 * nb/branch-show-other-worktrees-head (2019-05-07) 3 commits
- - branch: add worktree info on verbose output
- - branch: update output to include worktree info
- - ref-filter: add worktreepath atom
+  (merged to 'next' on 2019-06-26 at ae3b7a626d)
+ + branch: add worktree info on verbose output
+ + branch: update output to include worktree info
+ + ref-filter: add worktreepath atom
 
  "git branch --list" learned to show branches that are checked out
  in other worktrees connected to the same repository prefixed with
  '+', similar to the way the currently checked out branch is shown
  with '*' in front.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
-* cc/multi-promisor (2019-04-15) 17 commits
+* cc/multi-promisor (2019-06-25) 15 commits
  - Move core_partial_clone_filter_default to promisor-remote.c
  - Move repository_format_partial_clone to promisor-remote.c
  - Remove fetch-object.{c,h} in favor of promisor-remote.{c,h}
@@ -755,7 +866,6 @@ of the repositories listed at
  - t0410: test fetching from many promisor remotes
  - builtin/fetch: remove unique promisor remote limitation
  - promisor-remote: parse remote.*.partialclonefilter
- - diff: use promisor-remote.h instead of fetch-object.h
  - Use promisor_remote_get_direct() and has_promisor_remote()
  - promisor-remote: use repository_format_partial_clone
  - promisor-remote: add promisor_remote_reinit()
@@ -763,14 +873,14 @@ of the repositories listed at
  - Add initial support for many promisor remotes
  - fetch-object: make functions return an error code
  - t0410: remove pipes after git commands
- - Merge branch 'jt/batch-fetch-blobs-in-diff' into cc/multi-promisor
 
  Teach the lazy clone machinery that there can be more than one
  promisor remote and consult them in order when downloading missing
  objects on demand.
 
 
-* nd/switch-and-restore (2019-05-07) 43 commits
+* nd/switch-and-restore (2019-06-20) 44 commits
+ - t2027: use test_must_be_empty
  - Declare both git-switch and git-restore experimental
  - help: move git-diff and git-reset to different groups
  - doc: promote "git restore"
@@ -814,7 +924,7 @@ of the repositories listed at
  - doc: document --overwrite-ignore
  - git-checkout.txt: fix one syntax line
  - git-checkout.txt: spell out --no-option
- (this branch is used by jl/status-reduce-vertical-blank.)
+ (this branch is used by jl/status-reduce-vertical-blank and nd/switch-and-restore-more.)
 
  Two new commands "git switch" and "git restore" are introduced to
  split "checking out a branch to work on advancing its history" and
@@ -848,7 +958,7 @@ of the repositories listed at
 
  "git p4" update.
 
- Is this ready for 'next'?
+ Will merge to 'next'.
 
 
 * dl/rebase-i-keep-base (2019-04-25) 6 commits
@@ -873,25 +983,26 @@ of the repositories listed at
 
 
 * ds/commit-graph-write-refactor (2019-06-12) 11 commits
- - commit-graph: extract write_commit_graph_file()
- - commit-graph: extract copy_oids_to_commits()
- - commit-graph: extract count_distinct_commits()
- - commit-graph: extract fill_oids_from_all_packs()
- - commit-graph: extract fill_oids_from_commit_hex()
- - commit-graph: extract fill_oids_from_packs()
- - commit-graph: create write_commit_graph_context
- - commit-graph: remove Future Work section
- - commit-graph: collapse parameters into flags
- - commit-graph: return with errors during write
- - commit-graph: fix the_repository reference
+  (merged to 'next' on 2019-06-26 at 5430eafe51)
+ + commit-graph: extract write_commit_graph_file()
+ + commit-graph: extract copy_oids_to_commits()
+ + commit-graph: extract count_distinct_commits()
+ + commit-graph: extract fill_oids_from_all_packs()
+ + commit-graph: extract fill_oids_from_commit_hex()
+ + commit-graph: extract fill_oids_from_packs()
+ + commit-graph: create write_commit_graph_context
+ + commit-graph: remove Future Work section
+ + commit-graph: collapse parameters into flags
+ + commit-graph: return with errors during write
+ + commit-graph: fix the_repository reference
  (this branch is used by ds/close-object-store and ds/commit-graph-incremental.)
 
  Renamed from commit-graph-format-v2 and changed scope.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
 
 
-* br/blame-ignore (2019-06-10) 9 commits
+* br/blame-ignore (2019-06-20) 9 commits
  - blame: add a test to cover blame_coalesce()
  - blame: use the fingerprint heuristic to match ignored lines
  - blame: add a fingerprint heuristic to match ignored lines
@@ -905,15 +1016,5 @@ of the repositories listed at
  "git blame" learned to "ignore" commits in the history, whose
  effects (as well as their presence) get ignored.
 
- Except for a minor nit in its tests, this seems to be more or less
- ready for 'next'.
- cf. <20190610153014.42055-1-brho@google.com> (v8)
-
---------------------------------------------------
-[Discarded]
-
-* js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
- . add -p: coalesce hunks before testing applicability
-
- Applicability check after a patch is edited in a "git add -i/p"
- session has been improved.
+ Will merge to 'next'.
+ cf. <20190620163820.231316-1-brho@google.com> (v9)
