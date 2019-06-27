@@ -840,13 +840,13 @@ static int reset_head(struct object_id *oid, const char *action,
 		goto leave_reset_head;
 	}
 
-	if (!reset_hard && !fill_tree_descriptor(&desc[nr++], &head_oid)) {
+	if (!reset_hard && !fill_tree_descriptor(the_repository, &desc[nr++], &head_oid)) {
 		ret = error(_("failed to find tree of %s"),
 			    oid_to_hex(&head_oid));
 		goto leave_reset_head;
 	}
 
-	if (!fill_tree_descriptor(&desc[nr++], oid)) {
+	if (!fill_tree_descriptor(the_repository, &desc[nr++], oid)) {
 		ret = error(_("failed to find tree of %s"), oid_to_hex(oid));
 		goto leave_reset_head;
 	}

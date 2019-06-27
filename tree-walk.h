@@ -45,7 +45,9 @@ int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long
 int tree_entry(struct tree_desc *, struct name_entry *);
 int tree_entry_gently(struct tree_desc *, struct name_entry *);
 
-void *fill_tree_descriptor(struct tree_desc *desc, const struct object_id *oid);
+void *fill_tree_descriptor(struct repository *r,
+			   struct tree_desc *desc,
+			   const struct object_id *oid);
 
 struct traverse_info;
 typedef int (*traverse_callback_t)(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *);

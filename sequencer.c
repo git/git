@@ -3194,7 +3194,7 @@ static int do_reset(struct repository *r,
 		return error_resolve_conflict(_(action_name(opts)));
 	}
 
-	if (!fill_tree_descriptor(&desc, &oid)) {
+	if (!fill_tree_descriptor(r, &desc, &oid)) {
 		error(_("failed to find tree of %s"), oid_to_hex(&oid));
 		rollback_lock_file(&lock);
 		free((void *)desc.buffer);

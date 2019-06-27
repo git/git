@@ -81,13 +81,15 @@ int init_tree_desc_gently(struct tree_desc *desc, const void *buffer, unsigned l
 	return result;
 }
 
-void *fill_tree_descriptor(struct tree_desc *desc, const struct object_id *oid)
+void *fill_tree_descriptor(struct repository *r,
+			   struct tree_desc *desc,
+			   const struct object_id *oid)
 {
 	unsigned long size = 0;
 	void *buf = NULL;
 
 	if (oid) {
-		buf = read_object_with_reference(the_repository, oid, tree_type, &size, NULL);
+		buf = read_object_with_reference(r, oid, tree_type, &size, NULL);
 		if (!buf)
 			die("unable to read tree %s", oid_to_hex(oid));
 	}

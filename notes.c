@@ -397,7 +397,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 	struct name_entry entry;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
-	buf = fill_tree_descriptor(&desc, &subtree->val_oid);
+	buf = fill_tree_descriptor(the_repository, &desc, &subtree->val_oid);
 	if (!buf)
 		die("Could not read %s for notes-index",
 		     oid_to_hex(&subtree->val_oid));
