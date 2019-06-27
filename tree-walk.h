@@ -68,7 +68,7 @@ struct traverse_info {
 	int show_all_errors;
 };
 
-int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned short *);
+int get_tree_entry(struct repository *, const struct object_id *, const char *, struct object_id *, unsigned short *);
 char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n);
 void setup_traverse_info(struct traverse_info *info, const char *base);
 

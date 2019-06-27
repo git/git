@@ -1677,7 +1677,8 @@ int repo_get_oid_blob(struct repository *r,
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
-static void diagnose_invalid_oid_path(const char *prefix,
+static void diagnose_invalid_oid_path(struct repository *r,
+				      const char *prefix,
 				      const char *filename,
 				      const struct object_id *tree_oid,
 				      const char *object_name,
@@ -1695,7 +1696,7 @@ static void diagnose_invalid_oid_path(const char *prefix,
 	if (is_missing_file_error(errno)) {
 		char *fullname = xstrfmt("%s%s", prefix, filename);
 
-		if (!get_tree_entry(tree_oid, fullname, &oid, &mode)) {
+		if (!get_tree_entry(r, tree_oid, fullname, &oid, &mode)) {
 			die("Path '%s' exists, but not '%s'.\n"
 			    "Did you mean '%.*s:%s' aka '%.*s:./%s'?",
 			    fullname,
@@ -1902,10 +1903,10 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 					filename, oid, &oc->symlink_path,
 					&oc->mode);
 			} else {
-				ret = get_tree_entry(&tree_oid, filename, oid,
+				ret = get_tree_entry(repo, &tree_oid, filename, oid,
 						     &oc->mode);
 				if (ret && only_to_die) {
-					diagnose_invalid_oid_path(prefix,
+					diagnose_invalid_oid_path(repo, prefix,
 								   filename,
 								   &tree_oid,
 								   name, len);

@@ -475,7 +475,7 @@ static int get_tree_entry_if_blob(const struct object_id *tree,
 {
 	int ret;
 
-	ret = get_tree_entry(tree, path, &dfs->oid, &dfs->mode);
+	ret = get_tree_entry(the_repository, tree, path, &dfs->oid, &dfs->mode);
 	if (S_ISDIR(dfs->mode)) {
 		oidcpy(&dfs->oid, &null_oid);
 		dfs->mode = 0;
@@ -1905,7 +1905,8 @@ static int tree_has_path(struct tree *tree, const char *path)
 	struct object_id hashy;
 	unsigned short mode_o;
 
-	return !get_tree_entry(&tree->object.oid, path,
+	return !get_tree_entry(the_repository,
+			       &tree->object.oid, path,
 			       &hashy, &mode_o);
 }
 
@@ -2500,7 +2501,8 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 	 * the various handle_rename_*() functions update the index
 	 * explicitly rather than relying on unpack_trees() to have done it.
 	 */
-	get_tree_entry(&tree->object.oid,
+	get_tree_entry(opt->repo,
+		       &tree->object.oid,
 		       pair->two->path,
 		       &re->dst_entry->stages[stage].oid,
 		       &re->dst_entry->stages[stage].mode);
