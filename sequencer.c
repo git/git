@@ -2100,7 +2100,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 		if (skip_prefix(bol, todo_command_info[i].str, &bol)) {
 			item->command = i;
 			break;
-		} else if ((bol + 1 == eol || bol[1] == ' ') &&
+		} else if ((bol + 1 == eol || bol[1] == ' ' || bol[1] == '\t') &&
 			   *bol == todo_command_info[i].c) {
 			bol++;
 			item->command = i;
