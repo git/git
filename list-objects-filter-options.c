@@ -30,11 +30,8 @@ static int gently_parse_list_objects_filter(
 	const char *v0;
 
 	if (filter_options->choice) {
-		if (errbuf) {
-			strbuf_addstr(
-				errbuf,
-				_("multiple filter-specs cannot be combined"));
-		}
+		strbuf_addstr(
+			errbuf, _("multiple filter-specs cannot be combined"));
 		return 1;
 	}
 
@@ -52,11 +49,7 @@ static int gently_parse_list_objects_filter(
 
 	} else if (skip_prefix(arg, "tree:", &v0)) {
 		if (!git_parse_ulong(v0, &filter_options->tree_exclude_depth)) {
-			if (errbuf) {
-				strbuf_addstr(
-					errbuf,
-					_("expected 'tree:<depth>'"));
-			}
+			strbuf_addstr(errbuf, _("expected 'tree:<depth>'"));
 			return 1;
 		}
 		filter_options->choice = LOFC_TREE_DEPTH;
@@ -90,8 +83,7 @@ static int gently_parse_list_objects_filter(
 	 * add new filters
 	 */
 
-	if (errbuf)
-		strbuf_addf(errbuf, _("invalid filter-spec '%s'"), arg);
+	strbuf_addf(errbuf, _("invalid filter-spec '%s'"), arg);
 
 	memset(filter_options, 0, sizeof(*filter_options));
 	return 1;
@@ -175,6 +167,8 @@ void partial_clone_register(
 void partial_clone_get_default_filter_spec(
 	struct list_objects_filter_options *filter_options)
 {
+	struct strbuf errbuf = STRBUF_INIT;
+
 	/*
 	 * Parse default value, but silently ignore it if it is invalid.
 	 */
@@ -182,5 +176,6 @@ void partial_clone_get_default_filter_spec(
 		return;
 	gently_parse_list_objects_filter(filter_options,
 					 core_partial_clone_filter_default,
-					 NULL);
+					 &errbuf);
+	strbuf_release(&errbuf);
 }
