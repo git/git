@@ -120,14 +120,12 @@ static int parse_combine_subfilter(
 	struct strbuf *subspec,
 	struct strbuf *errbuf)
 {
-	size_t new_index = filter_options->sub_nr++;
+	size_t new_index = filter_options->sub_nr;
 	char *decoded;
 	int result;
 
-	ALLOC_GROW(filter_options->sub, filter_options->sub_nr,
-		   filter_options->sub_alloc);
-	memset(&filter_options->sub[new_index], 0,
-	       sizeof(*filter_options->sub));
+	ALLOC_GROW_BY(filter_options->sub, filter_options->sub_nr, 1,
+		      filter_options->sub_alloc);
 
 	decoded = url_percent_decode(subspec->buf);
 
@@ -255,13 +253,12 @@ int parse_list_objects_filter(
 
 		string_list_append(&filter_options->filter_spec, xstrdup("+"));
 		filter_spec_append_urlencode(filter_options, arg);
-		ALLOC_GROW(filter_options->sub, filter_options->sub_nr + 1,
-			   filter_options->sub_alloc);
-		filter_options = &filter_options->sub[filter_options->sub_nr++];
-		memset(filter_options, 0, sizeof(*filter_options));
+		ALLOC_GROW_BY(filter_options->sub, filter_options->sub_nr, 1,
+			      filter_options->sub_alloc);
 
 		parse_error = gently_parse_list_objects_filter(
-			filter_options, arg, &errbuf);
+			&filter_options->sub[filter_options->sub_nr - 1], arg,
+			&errbuf);
 	}
 	if (parse_error)
 		die("%s", errbuf.buf);
