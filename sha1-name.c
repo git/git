@@ -478,7 +478,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	 * or migrated from loose to packed.
 	 */
 	if (status == MISSING_OBJECT) {
-		reprepare_packed_git(the_repository);
+		reprepare_packed_git(r);
 		find_short_object_filename(&ds);
 		find_short_packed_object(&ds);
 		status = finish_object_disambiguation(&ds, oid);
@@ -1389,9 +1389,7 @@ int repo_get_oid_mb(struct repository *r,
 	two = lookup_commit_reference_gently(r, &oid_tmp, 0);
 	if (!two)
 		return -1;
-	if (r != the_repository)
-		BUG("sorry get_merge_bases() can't take struct repository yet");
-	mbs = get_merge_bases(one, two);
+	mbs = repo_get_merge_bases(r, one, two);
 	if (!mbs || mbs->next)
 		st = -1;
 	else {

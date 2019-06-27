@@ -3733,7 +3733,7 @@ static int pick_commits(struct repository *r,
 			unlink(rebase_path_author_script());
 			unlink(rebase_path_stopped_sha());
 			unlink(rebase_path_amend());
-			unlink(git_path_merge_head(the_repository));
+			unlink(git_path_merge_head(r));
 			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
 			if (item->command == TODO_BREAK)
@@ -4107,7 +4107,7 @@ static int commit_staged_changes(struct repository *r,
 			   opts, flags))
 		return error(_("could not commit staged changes."));
 	unlink(rebase_path_amend());
-	unlink(git_path_merge_head(the_repository));
+	unlink(git_path_merge_head(r));
 	if (final_fixup) {
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
