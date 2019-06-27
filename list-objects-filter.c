@@ -26,6 +26,20 @@
  */
 #define FILTER_SHOWN_BUT_REVISIT (1<<21)
 
+struct filter {
+	enum list_objects_filter_result (*filter_object_fn)(
+		struct repository *r,
+		enum list_objects_filter_situation filter_situation,
+		struct object *obj,
+		const char *pathname,
+		const char *filename,
+		void *filter_data);
+
+	void (*free_fn)(void *filter_data);
+
+	void *filter_data;
+};
+
 /*
  * A filter for list-objects to omit ALL blobs from the traversal.
  * And to OPTIONALLY collect a list of the omitted OIDs.
@@ -67,18 +81,17 @@ static enum list_objects_filter_result filter_blobs_none(
 	}
 }
 
-static void *filter_blobs_none__init(
+static void filter_blobs_none__init(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn)
+	struct filter *filter)
 {
 	struct filter_blobs_none_data *d = xcalloc(1, sizeof(*d));
 	d->omits = omitted;
 
-	*filter_fn = filter_blobs_none;
-	*filter_free_fn = free;
-	return d;
+	filter->filter_data = d;
+	filter->filter_object_fn = filter_blobs_none;
+	filter->free_fn = free;
 }
 
 /*
@@ -201,11 +214,10 @@ static void filter_trees_free(void *filter_data) {
 	free(d);
 }
 
-static void *filter_trees_depth__init(
+static void filter_trees_depth__init(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn)
+	struct filter *filter)
 {
 	struct filter_trees_depth_data *d = xcalloc(1, sizeof(*d));
 	d->omits = omitted;
@@ -213,9 +225,9 @@ static void *filter_trees_depth__init(
 	d->exclude_depth = filter_options->tree_exclude_depth;
 	d->current_depth = 0;
 
-	*filter_fn = filter_trees_depth;
-	*filter_free_fn = filter_trees_free;
-	return d;
+	filter->filter_data = d;
+	filter->filter_object_fn = filter_trees_depth;
+	filter->free_fn = filter_trees_free;
 }
 
 /*
@@ -281,19 +293,18 @@ include_it:
 	return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 }
 
-static void *filter_blobs_limit__init(
+static void filter_blobs_limit__init(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn)
+	struct filter *filter)
 {
 	struct filter_blobs_limit_data *d = xcalloc(1, sizeof(*d));
 	d->omits = omitted;
 	d->max_bytes = filter_options->blob_limit_value;
 
-	*filter_fn = filter_blobs_limit;
-	*filter_free_fn = free;
-	return d;
+	filter->filter_data = d;
+	filter->filter_object_fn = filter_blobs_limit;
+	filter->free_fn = free;
 }
 
 /*
@@ -456,11 +467,10 @@ static void filter_sparse_free(void *filter_data)
 	free(d);
 }
 
-static void *filter_sparse_oid__init(
+static void filter_sparse_oid__init(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn)
+	struct filter *filter)
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
 	d->omits = omitted;
@@ -473,16 +483,15 @@ static void *filter_sparse_oid__init(
 	d->array_frame[d->nr].child_prov_omit = 0;
 	d->nr++;
 
-	*filter_fn = filter_sparse;
-	*filter_free_fn = filter_sparse_free;
-	return d;
+	filter->filter_data = d;
+	filter->filter_object_fn = filter_sparse;
+	filter->free_fn = filter_sparse_free;
 }
 
-typedef void *(*filter_init_fn)(
+typedef void (*filter_init_fn)(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn);
+	struct filter *filter);
 
 /*
  * Must match "enum list_objects_filter_choice".
@@ -495,12 +504,11 @@ static filter_init_fn s_filters[] = {
 	filter_sparse_oid__init,
 };
 
-void *list_objects_filter__init(
+struct filter *list_objects_filter__init(
 	struct oidset *omitted,
-	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn)
+	struct list_objects_filter_options *filter_options)
 {
+	struct filter *filter;
 	filter_init_fn init_fn;
 
 	assert((sizeof(s_filters) / sizeof(s_filters[0])) == LOFC__COUNT);
@@ -510,10 +518,40 @@ void *list_objects_filter__init(
 		    filter_options->choice);
 
 	init_fn = s_filters[filter_options->choice];
-	if (init_fn)
-		return init_fn(omitted, filter_options,
-			       filter_fn, filter_free_fn);
-	*filter_fn = NULL;
-	*filter_free_fn = NULL;
-	return NULL;
+	if (!init_fn)
+		return NULL;
+
+	filter = xcalloc(1, sizeof(*filter));
+	init_fn(omitted, filter_options, filter);
+	return filter;
+}
+
+enum list_objects_filter_result list_objects_filter__filter_object(
+	struct repository *r,
+	enum list_objects_filter_situation filter_situation,
+	struct object *obj,
+	const char *pathname,
+	const char *filename,
+	struct filter *filter)
+{
+	if (filter && (obj->flags & NOT_USER_GIVEN))
+		return filter->filter_object_fn(r, filter_situation, obj,
+						pathname, filename,
+						filter->filter_data);
+	/*
+	 * No filter is active or user gave object explicitly. In this case,
+	 * always show the object (except when LOFS_END_TREE, since this tree
+	 * had already been shown when LOFS_BEGIN_TREE).
+	 */
+	if (filter_situation == LOFS_END_TREE)
+		return 0;
+	return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+}
+
+void list_objects_filter__free(struct filter *filter)
+{
+	if (!filter)
+		return;
+	filter->free_fn(filter->filter_data);
+	free(filter);
 }

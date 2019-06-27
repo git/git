@@ -60,30 +60,27 @@ enum list_objects_filter_situation {
 	LOFS_BLOB
 };
 
-typedef enum list_objects_filter_result (*filter_object_fn)(
+struct filter;
+
+/* Constructor for the set of defined list-objects filters. */
+struct filter *list_objects_filter__init(
+	struct oidset *omitted,
+	struct list_objects_filter_options *filter_options);
+
+/*
+ * Lets `filter` decide how to handle the `obj`. If `filter` is NULL, this
+ * function behaves as expected if no filter is configured: all objects are
+ * included.
+ */
+enum list_objects_filter_result list_objects_filter__filter_object(
 	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
 	const char *pathname,
 	const char *filename,
-	void *filter_data);
+	struct filter *filter);
 
-typedef void (*filter_free_fn)(void *filter_data);
-
-/*
- * Constructor for the set of defined list-objects filters.
- * Returns a generic "void *filter_data".
- *
- * The returned "filter_fn" will be used by traverse_commit_list()
- * to filter the results.
- *
- * The returned "filter_free_fn" is a destructor for the
- * filter_data.
- */
-void *list_objects_filter__init(
-	struct oidset *omitted,
-	struct list_objects_filter_options *filter_options,
-	filter_object_fn *filter_fn,
-	filter_free_fn *filter_free_fn);
+/* Destroys `filter`. Does nothing if `filter` is null. */
+void list_objects_filter__free(struct filter *filter);
 
 #endif /* LIST_OBJECTS_FILTER_H */
