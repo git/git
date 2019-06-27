@@ -351,7 +351,16 @@ test_expect_success 'combine:... for a simple combination' '
 	expect_has HEAD dir1 &&
 
 	# There are also 2 commit objects
-	test_line_count = 5 actual
+	test_line_count = 5 actual &&
+
+	cp actual expected &&
+
+	# Try again using repeated --filter - this is equivalent to a manual
+	# combine with "combine:...+..."
+	git -C r3 rev-list --objects --filter=combine:tree:2 \
+		--filter=blob:none HEAD >actual &&
+
+	test_cmp expected actual
 '
 
 test_expect_success 'combine:... with URL encoding' '
@@ -417,10 +426,12 @@ test_expect_success 'combine:... with edge-case hex digits: Ff Aa 0 9' '
 	test_line_count = 5 actual
 '
 
-test_expect_success 'add a sparse pattern blob whose path has reserved chars' '
+test_expect_success 'add sparse pattern blobs whose paths have reserved chars' '
 	cp r3/pattern r3/pattern1+renamed% &&
-	git -C r3 add pattern1+renamed% &&
-	git -C r3 commit -m "add sparse pattern file with reserved chars"
+	cp r3/pattern "r3/p;at%ter+n" &&
+	cp r3/pattern r3/^~pattern &&
+	git -C r3 add pattern1+renamed% "p;at%ter+n" ^~pattern &&
+	git -C r3 commit -m "add sparse pattern files with reserved chars"
 '
 
 test_expect_success 'combine:... with more than two sub-filters' '
@@ -445,7 +456,32 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	git -C r3 rev-list --objects \
 		--filter=combine:tree:3+blob:limit=40+sparse:oid=master:pattern1%2brenamed%25 \
 		HEAD >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	# Use the same composite filter again, but with a pattern file name that
+	# requires encoding multiple characters, and use implicit filter
+	# combining.
+	test_when_finished "rm -f trace1" &&
+	GIT_TRACE=$(pwd)/trace1 git -C r3 rev-list --objects \
+		--filter=tree:3 --filter=blob:limit=40 \
+		--filter=sparse:oid="master:p;at%ter+n" \
+		HEAD >actual &&
+
+	test_cmp expect actual &&
+	grep "Add to combine filter-spec: sparse:oid=master:p%3bat%25ter%2bn" \
+		trace1 &&
+
+	# Repeat the above test, but this time, the characters to encode are in
+	# the LHS of the combined filter.
+	test_when_finished "rm -f trace2" &&
+	GIT_TRACE=$(pwd)/trace2 git -C r3 rev-list --objects \
+		--filter=sparse:oid=master:^~pattern \
+		--filter=tree:3 --filter=blob:limit=40 \
+		HEAD >actual &&
+
+	test_cmp expect actual &&
+	grep "Add to combine filter-spec: sparse:oid=master:%5e%7epattern" \
+		trace2
 '
 
 # Test provisional omit collection logic with a repo that has objects appearing

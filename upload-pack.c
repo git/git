@@ -883,6 +883,7 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 		if (skip_prefix(reader->line, "filter ", &arg)) {
 			if (!filter_capability_requested)
 				die("git upload-pack: filtering capability not negotiated");
+			list_objects_filter_die_if_populated(&filter_options);
 			parse_list_objects_filter(&filter_options, arg);
 			continue;
 		}
@@ -1304,6 +1305,7 @@ static void process_args(struct packet_reader *request,
 		}
 
 		if (allow_filter && skip_prefix(arg, "filter ", &p)) {
+			list_objects_filter_die_if_populated(&filter_options);
 			parse_list_objects_filter(&filter_options, p);
 			continue;
 		}

@@ -63,6 +63,17 @@ struct list_objects_filter_options {
 /* Normalized command line arguments */
 #define CL_ARG__FILTER "filter"
 
+void list_objects_filter_die_if_populated(
+	struct list_objects_filter_options *filter_options);
+
+/*
+ * Parses the filter spec string given by arg and either (1) simply places the
+ * result in filter_options if it is not yet populated or (2) combines it with
+ * the filter already in filter_options if it is already populated. In the case
+ * of (2), the filter specs are combined as if specified with 'combine:'.
+ *
+ * Dies and prints a user-facing message if an error occurs.
+ */
 int parse_list_objects_filter(
 	struct list_objects_filter_options *filter_options,
 	const char *arg);

@@ -6,6 +6,7 @@
 #include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
+#include "trace.h"
 #include "url.h"
 
 static int parse_combine_filter(
@@ -178,15 +179,92 @@ cleanup:
 	return result;
 }
 
-int parse_list_objects_filter(struct list_objects_filter_options *filter_options,
-			      const char *arg)
+static int allow_unencoded(char ch)
+{
+	if (ch <= ' ' || ch == '%' || ch == '+')
+		return 0;
+	return !strchr(RESERVED_NON_WS, ch);
+}
+
+static void filter_spec_append_urlencode(
+	struct list_objects_filter_options *filter, const char *raw)
 {
 	struct strbuf buf = STRBUF_INIT;
+	strbuf_addstr_urlencode(&buf, raw, allow_unencoded);
+	trace_printf("Add to combine filter-spec: %s\n", buf.buf);
+	string_list_append(&filter->filter_spec, strbuf_detach(&buf, NULL));
+}
+
+/*
+ * Changes filter_options into an equivalent LOFC_COMBINE filter options
+ * instance. Does not do anything if filter_options is already LOFC_COMBINE.
+ */
+static void transform_to_combine_type(
+	struct list_objects_filter_options *filter_options)
+{
+	assert(filter_options->choice);
+	if (filter_options->choice == LOFC_COMBINE)
+		return;
+	{
+		const int initial_sub_alloc = 2;
+		struct list_objects_filter_options *sub_array =
+			xcalloc(initial_sub_alloc, sizeof(*sub_array));
+		sub_array[0] = *filter_options;
+		memset(filter_options, 0, sizeof(*filter_options));
+		filter_options->sub = sub_array;
+		filter_options->sub_alloc = initial_sub_alloc;
+	}
+	filter_options->sub_nr = 1;
+	filter_options->choice = LOFC_COMBINE;
+	string_list_append(&filter_options->filter_spec, xstrdup("combine:"));
+	filter_spec_append_urlencode(
+		filter_options,
+		list_objects_filter_spec(&filter_options->sub[0]));
+	/*
+	 * We don't need the filter_spec strings for subfilter specs, only the
+	 * top level.
+	 */
+	string_list_clear(&filter_options->sub[0].filter_spec, /*free_util=*/0);
+}
+
+void list_objects_filter_die_if_populated(
+	struct list_objects_filter_options *filter_options)
+{
 	if (filter_options->choice)
 		die(_("multiple filter-specs cannot be combined"));
-	string_list_append(&filter_options->filter_spec, xstrdup(arg));
-	if (gently_parse_list_objects_filter(filter_options, arg, &buf))
-		die("%s", buf.buf);
+}
+
+int parse_list_objects_filter(
+	struct list_objects_filter_options *filter_options,
+	const char *arg)
+{
+	struct strbuf errbuf = STRBUF_INIT;
+	int parse_error;
+
+	if (!filter_options->choice) {
+		string_list_append(&filter_options->filter_spec, xstrdup(arg));
+
+		parse_error = gently_parse_list_objects_filter(
+			filter_options, arg, &errbuf);
+	} else {
+		/*
+		 * Make filter_options an LOFC_COMBINE spec so we can trivially
+		 * add subspecs to it.
+		 */
+		transform_to_combine_type(filter_options);
+
+		string_list_append(&filter_options->filter_spec, xstrdup("+"));
+		filter_spec_append_urlencode(filter_options, arg);
+		ALLOC_GROW(filter_options->sub, filter_options->sub_nr + 1,
+			   filter_options->sub_alloc);
+		filter_options = &filter_options->sub[filter_options->sub_nr++];
+		memset(filter_options, 0, sizeof(*filter_options));
+
+		parse_error = gently_parse_list_objects_filter(
+			filter_options, arg, &errbuf);
+	}
+	if (parse_error)
+		die("%s", errbuf.buf);
 	return 0;
 }
 

@@ -738,6 +738,22 @@ explicitly-given commit or tree.
 Note that the form '--filter=sparse:path=<path>' that wants to read
 from an arbitrary path on the filesystem has been dropped for security
 reasons.
++
+Multiple '--filter=' flags can be specified to combine filters. Only
+objects which are accepted by every filter are included.
++
+The form '--filter=combine:<filter1>+<filter2>+...<filterN>' can also be
+used to combined several filters, but this is harder than just repeating
+the '--filter' flag and is usually not necessary. Filters are joined by
+'{plus}' and individual filters are %-encoded (i.e. URL-encoded).
+Besides the '{plus}' and '%' characters, the following characters are
+reserved and also must be encoded: `~!@#$^&*()[]{}\;",<>?`+&#39;&#96;+
+as well as all characters with ASCII code &lt;= `0x20`, which includes
+space and newline.
++
+Other arbitrary characters can also be encoded. For instance,
+'combine:tree:3+blob:none' and 'combine:tree%3A3+blob%3Anone' are
+equivalent.
 
 --no-filter::
 	Turn off any previous `--filter=` argument.
