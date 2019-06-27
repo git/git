@@ -184,7 +184,7 @@ int parse_list_objects_filter(struct list_objects_filter_options *filter_options
 	struct strbuf buf = STRBUF_INIT;
 	if (filter_options->choice)
 		die(_("multiple filter-specs cannot be combined"));
-	filter_options->filter_spec = strdup(arg);
+	string_list_append(&filter_options->filter_spec, xstrdup(arg));
 	if (gently_parse_list_objects_filter(filter_options, arg, &buf))
 		die("%s", buf.buf);
 	return 0;
@@ -203,19 +203,36 @@ int opt_parse_list_objects_filter(const struct option *opt,
 	return parse_list_objects_filter(filter_options, arg);
 }
 
-void expand_list_objects_filter_spec(
-	const struct list_objects_filter_options *filter,
-	struct strbuf *expanded_spec)
+const char *list_objects_filter_spec(struct list_objects_filter_options *filter)
 {
-	strbuf_init(expanded_spec, strlen(filter->filter_spec));
-	if (filter->choice == LOFC_BLOB_LIMIT)
-		strbuf_addf(expanded_spec, "blob:limit=%lu",
+	if (!filter->filter_spec.nr)
+		BUG("no filter_spec available for this filter");
+	if (filter->filter_spec.nr != 1) {
+		struct strbuf concatted = STRBUF_INIT;
+		strbuf_add_separated_string_list(
+			&concatted, "", &filter->filter_spec);
+		string_list_clear(&filter->filter_spec, /*free_util=*/0);
+		string_list_append(
+			&filter->filter_spec, strbuf_detach(&concatted, NULL));
+	}
+
+	return filter->filter_spec.items[0].string;
+}
+
+const char *expand_list_objects_filter_spec(
+	struct list_objects_filter_options *filter)
+{
+	if (filter->choice == LOFC_BLOB_LIMIT) {
+		struct strbuf expanded_spec = STRBUF_INIT;
+		strbuf_addf(&expanded_spec, "blob:limit=%lu",
 			    filter->blob_limit_value);
-	else if (filter->choice == LOFC_TREE_DEPTH)
-		strbuf_addf(expanded_spec, "tree:%lu",
-			    filter->tree_exclude_depth);
-	else
-		strbuf_addstr(expanded_spec, filter->filter_spec);
+		string_list_clear(&filter->filter_spec, /*free_util=*/0);
+		string_list_append(
+			&filter->filter_spec,
+			strbuf_detach(&expanded_spec, NULL));
+	}
+
+	return list_objects_filter_spec(filter);
 }
 
 void list_objects_filter_release(
@@ -225,7 +242,7 @@ void list_objects_filter_release(
 
 	if (!filter_options)
 		return;
-	free(filter_options->filter_spec);
+	string_list_clear(&filter_options->filter_spec, /*free_util=*/0);
 	free(filter_options->sparse_oid_value);
 	for (sub = 0; sub < filter_options->sub_nr; sub++)
 		list_objects_filter_release(&filter_options->sub[sub]);
@@ -235,7 +252,7 @@ void list_objects_filter_release(
 
 void partial_clone_register(
 	const char *remote,
-	const struct list_objects_filter_options *filter_options)
+	struct list_objects_filter_options *filter_options)
 {
 	/*
 	 * Record the name of the partial clone remote in the
@@ -258,7 +275,7 @@ void partial_clone_register(
 	 * the default for subsequent fetches from this remote.
 	 */
 	core_partial_clone_filter_default =
-		xstrdup(filter_options->filter_spec);
+		xstrdup(expand_list_objects_filter_spec(filter_options));
 	git_config_set("core.partialclonefilter",
 		       core_partial_clone_filter_default);
 }
@@ -274,7 +291,8 @@ void partial_clone_get_default_filter_spec(
 	if (!core_partial_clone_filter_default)
 		return;
 
-	filter_options->filter_spec = strdup(core_partial_clone_filter_default);
+	string_list_append(&filter_options->filter_spec,
+			   core_partial_clone_filter_default);
 	gently_parse_list_objects_filter(filter_options,
 					 core_partial_clone_filter_default,
 					 &errbuf);

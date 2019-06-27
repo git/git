@@ -590,11 +590,4 @@ test_expect_success 'expand blob limit in protocol' '
 	grep "blob:limit=1024" trace
 '
 
-test_expect_success 'expand tree depth limit in protocol' '
-	GIT_TRACE_PACKET="$(pwd)/tree_trace" git -c protocol.version=2 clone \
-		--filter=tree:0k "file://$(pwd)/r2" tree &&
-	! grep "tree:0k" tree_trace &&
-	grep "tree:0" tree_trace
-'
-
 test_done
