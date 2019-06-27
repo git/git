@@ -1890,16 +1890,8 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			new_filename = resolve_relative_path(repo, filename);
 			if (new_filename)
 				filename = new_filename;
-			/*
-			 * NEEDSWORK: Eventually get_tree_entry*() should
-			 * learn to take struct repository directly and we
-			 * would not need to inject submodule odb to the
-			 * in-core odb.
-			 */
-			if (repo != the_repository)
-				add_to_alternates_memory(repo->objects->odb->path);
 			if (flags & GET_OID_FOLLOW_SYMLINKS) {
-				ret = get_tree_entry_follow_symlinks(&tree_oid,
+				ret = get_tree_entry_follow_symlinks(repo, &tree_oid,
 					filename, oid, &oc->symlink_path,
 					&oc->mode);
 			} else {
