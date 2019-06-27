@@ -13,6 +13,7 @@ enum list_objects_filter_choice {
 	LOFC_BLOB_LIMIT,
 	LOFC_TREE_DEPTH,
 	LOFC_SPARSE_OID,
+	LOFC_COMBINE,
 	LOFC__COUNT /* must be last */
 };
 
@@ -38,13 +39,23 @@ struct list_objects_filter_options {
 	unsigned int no_filter : 1;
 
 	/*
-	 * Parsed values (fields) from within the filter-spec.  These are
-	 * choice-specific; not all values will be defined for any given
-	 * choice.
+	 * BEGIN choice-specific parsed values from within the filter-spec. Only
+	 * some values will be defined for any given choice.
 	 */
+
 	struct object_id *sparse_oid_value;
 	unsigned long blob_limit_value;
 	unsigned long tree_exclude_depth;
+
+	/* LOFC_COMBINE values */
+
+	/* This array contains all the subfilters which this filter combines. */
+	size_t sub_nr, sub_alloc;
+	struct list_objects_filter_options *sub;
+
+	/*
+	 * END choice-specific parsed values.
+	 */
 };
 
 /* Normalized command line arguments */

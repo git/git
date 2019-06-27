@@ -62,7 +62,13 @@ enum list_objects_filter_situation {
 
 struct filter;
 
-/* Constructor for the set of defined list-objects filters. */
+/*
+ * Constructor for the set of defined list-objects filters.
+ * The `omitted` set is optional. It is populated with objects that the
+ * filter excludes. This set should not be considered finalized until
+ * after list_objects_filter__free is called on the returned `struct
+ * filter *`.
+ */
 struct filter *list_objects_filter__init(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options);
@@ -80,7 +86,10 @@ enum list_objects_filter_result list_objects_filter__filter_object(
 	const char *filename,
 	struct filter *filter);
 
-/* Destroys `filter`. Does nothing if `filter` is null. */
+/*
+ * Destroys `filter` and finalizes the `omitted` set, if present. Does
+ * nothing if `filter` is null.
+ */
 void list_objects_filter__free(struct filter *filter);
 
 #endif /* LIST_OBJECTS_FILTER_H */

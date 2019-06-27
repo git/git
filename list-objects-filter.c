@@ -26,6 +26,14 @@
  */
 #define FILTER_SHOWN_BUT_REVISIT (1<<21)
 
+struct subfilter {
+	struct filter *filter;
+	struct oidset seen;
+	struct oidset omits;
+	struct object_id skip_tree;
+	unsigned is_skipping_tree : 1;
+};
+
 struct filter {
 	enum list_objects_filter_result (*filter_object_fn)(
 		struct repository *r,
@@ -35,6 +43,23 @@ struct filter {
 		const char *filename,
 		struct oidset *omits,
 		void *filter_data);
+
+	/*
+	 * Optional. If this function is supplied and the filter needs
+	 * to collect omits, then this function is called once before
+	 * free_fn is called.
+	 *
+	 * This is required because the following two conditions hold:
+	 *
+	 *   a. A tree filter can add and remove objects as an object
+	 *      graph is traversed.
+	 *   b. A combine filter's omit set is the union of all its
+	 *      subfilters, which may include tree: filters.
+	 *
+	 * As such, the omits sets must be separate sets, and can only
+	 * be unioned after the traversal is completed.
+	 */
+	void (*finalize_omits_fn)(struct oidset *omits, void *filter_data);
 
 	void (*free_fn)(void *filter_data);
 
@@ -471,6 +496,139 @@ static void filter_sparse_oid__init(
 	filter->free_fn = filter_sparse_free;
 }
 
+/* A filter which only shows objects shown by all sub-filters. */
+struct combine_filter_data {
+	struct subfilter *sub;
+	size_t nr;
+};
+
+static enum list_objects_filter_result process_subfilter(
+	struct repository *r,
+	enum list_objects_filter_situation filter_situation,
+	struct object *obj,
+	const char *pathname,
+	const char *filename,
+	struct subfilter *sub)
+{
+	enum list_objects_filter_result result;
+
+	/*
+	 * Check and update is_skipping_tree before oidset_contains so
+	 * that is_skipping_tree gets unset even when the object is
+	 * marked as seen.  As of this writing, no filter uses
+	 * LOFR_MARK_SEEN on trees that also uses LOFR_SKIP_TREE, so the
+	 * ordering is only theoretically important. Be cautious if you
+	 * change the order of the below checks and more filters have
+	 * been added!
+	 */
+	if (sub->is_skipping_tree) {
+		if (filter_situation == LOFS_END_TREE &&
+		    oideq(&obj->oid, &sub->skip_tree))
+			sub->is_skipping_tree = 0;
+		else
+			return LOFR_ZERO;
+	}
+	if (oidset_contains(&sub->seen, &obj->oid))
+		return LOFR_ZERO;
+
+	result = list_objects_filter__filter_object(
+		r, filter_situation, obj, pathname, filename, sub->filter);
+
+	if (result & LOFR_MARK_SEEN)
+		oidset_insert(&sub->seen, &obj->oid);
+
+	if (result & LOFR_SKIP_TREE) {
+		sub->is_skipping_tree = 1;
+		sub->skip_tree = obj->oid;
+	}
+
+	return result;
+}
+
+static enum list_objects_filter_result filter_combine(
+	struct repository *r,
+	enum list_objects_filter_situation filter_situation,
+	struct object *obj,
+	const char *pathname,
+	const char *filename,
+	struct oidset *omits,
+	void *filter_data)
+{
+	struct combine_filter_data *d = filter_data;
+	enum list_objects_filter_result combined_result =
+		LOFR_DO_SHOW | LOFR_MARK_SEEN | LOFR_SKIP_TREE;
+	size_t sub;
+
+	for (sub = 0; sub < d->nr; sub++) {
+		enum list_objects_filter_result sub_result = process_subfilter(
+			r, filter_situation, obj, pathname, filename,
+			&d->sub[sub]);
+		if (!(sub_result & LOFR_DO_SHOW))
+			combined_result &= ~LOFR_DO_SHOW;
+		if (!(sub_result & LOFR_MARK_SEEN))
+			combined_result &= ~LOFR_MARK_SEEN;
+		if (!d->sub[sub].is_skipping_tree)
+			combined_result &= ~LOFR_SKIP_TREE;
+	}
+
+	return combined_result;
+}
+
+static void filter_combine__free(void *filter_data)
+{
+	struct combine_filter_data *d = filter_data;
+	size_t sub;
+	for (sub = 0; sub < d->nr; sub++) {
+		list_objects_filter__free(d->sub[sub].filter);
+		oidset_clear(&d->sub[sub].seen);
+		if (d->sub[sub].omits.set.size)
+			BUG("expected oidset to be cleared already");
+	}
+	free(d->sub);
+}
+
+static void add_all(struct oidset *dest, struct oidset *src) {
+	struct oidset_iter iter;
+	struct object_id *src_oid;
+
+	oidset_iter_init(src, &iter);
+	while ((src_oid = oidset_iter_next(&iter)) != NULL)
+		oidset_insert(dest, src_oid);
+}
+
+static void filter_combine__finalize_omits(
+	struct oidset *omits,
+	void *filter_data)
+{
+	struct combine_filter_data *d = filter_data;
+	size_t sub;
+
+	for (sub = 0; sub < d->nr; sub++) {
+		add_all(omits, &d->sub[sub].omits);
+		oidset_clear(&d->sub[sub].omits);
+	}
+}
+
+static void filter_combine__init(
+	struct list_objects_filter_options *filter_options,
+	struct filter* filter)
+{
+	struct combine_filter_data *d = xcalloc(1, sizeof(*d));
+	size_t sub;
+
+	d->nr = filter_options->sub_nr;
+	d->sub = xcalloc(d->nr, sizeof(*d->sub));
+	for (sub = 0; sub < d->nr; sub++)
+		d->sub[sub].filter = list_objects_filter__init(
+			filter->omits ? &d->sub[sub].omits : NULL,
+			&filter_options->sub[sub]);
+
+	filter->filter_data = d;
+	filter->filter_object_fn = filter_combine;
+	filter->free_fn = filter_combine__free;
+	filter->finalize_omits_fn = filter_combine__finalize_omits;
+}
+
 typedef void (*filter_init_fn)(
 	struct list_objects_filter_options *filter_options,
 	struct filter *filter);
@@ -484,6 +642,7 @@ static filter_init_fn s_filters[] = {
 	filter_blobs_limit__init,
 	filter_trees_depth__init,
 	filter_sparse_oid__init,
+	filter_combine__init,
 };
 
 struct filter *list_objects_filter__init(
@@ -536,6 +695,8 @@ void list_objects_filter__free(struct filter *filter)
 {
 	if (!filter)
 		return;
+	if (filter->finalize_omits_fn && filter->omits)
+		filter->finalize_omits_fn(filter->omits, filter->filter_data);
 	filter->free_fn(filter->filter_data);
 	free(filter);
 }
