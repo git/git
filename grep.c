@@ -388,11 +388,11 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 	int options = PCRE_MULTILINE;
 
 	if (opt->ignore_case) {
-		if (has_non_ascii(p->pattern))
+		if (!opt->ignore_locale && has_non_ascii(p->pattern))
 			p->pcre1_tables = pcre_maketables();
 		options |= PCRE_CASELESS;
 	}
-	if (is_utf8_locale() && has_non_ascii(p->pattern))
+	if (!opt->ignore_locale && is_utf8_locale() && has_non_ascii(p->pattern))
 		options |= PCRE_UTF8;
 
 	p->pcre1_regexp = pcre_compile(p->pattern, options, &error, &erroffset,
@@ -498,14 +498,14 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	p->pcre2_compile_context = NULL;
 
 	if (opt->ignore_case) {
-		if (has_non_ascii(p->pattern)) {
+		if (!opt->ignore_locale && has_non_ascii(p->pattern)) {
 			character_tables = pcre2_maketables(NULL);
 			p->pcre2_compile_context = pcre2_compile_context_create(NULL);
 			pcre2_set_character_tables(p->pcre2_compile_context, character_tables);
 		}
 		options |= PCRE2_CASELESS;
 	}
-	if (is_utf8_locale() && has_non_ascii(p->pattern))
+	if (!opt->ignore_locale && is_utf8_locale() && has_non_ascii(p->pattern))
 		options |= PCRE2_UTF;
 
 	p->pcre2_pattern = pcre2_compile((PCRE2_SPTR)p->pattern,
