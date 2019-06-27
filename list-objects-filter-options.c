@@ -35,11 +35,8 @@ static int gently_parse_list_objects_filter(
 {
 	const char *v0;
 
-	if (filter_options->choice) {
-		strbuf_addstr(
-			errbuf, _("multiple filter-specs cannot be combined"));
-		return 1;
-	}
+	if (filter_options->choice)
+		BUG("filter_options already populated");
 
 	if (!strcmp(arg, "blob:none")) {
 		filter_options->choice = LOFC_BLOB_NONE;
@@ -185,6 +182,8 @@ int parse_list_objects_filter(struct list_objects_filter_options *filter_options
 			      const char *arg)
 {
 	struct strbuf buf = STRBUF_INIT;
+	if (filter_options->choice)
+		die(_("multiple filter-specs cannot be combined"));
 	filter_options->filter_spec = strdup(arg);
 	if (gently_parse_list_objects_filter(filter_options, arg, &buf))
 		die("%s", buf.buf);
