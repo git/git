@@ -232,7 +232,7 @@ void list_objects_filter_die_if_populated(
 		die(_("multiple filter-specs cannot be combined"));
 }
 
-int parse_list_objects_filter(
+void parse_list_objects_filter(
 	struct list_objects_filter_options *filter_options,
 	const char *arg)
 {
@@ -262,7 +262,6 @@ int parse_list_objects_filter(
 	}
 	if (parse_error)
 		die("%s", errbuf.buf);
-	return 0;
 }
 
 int opt_parse_list_objects_filter(const struct option *opt,
@@ -270,12 +269,11 @@ int opt_parse_list_objects_filter(const struct option *opt,
 {
 	struct list_objects_filter_options *filter_options = opt->value;
 
-	if (unset || !arg) {
+	if (unset || !arg)
 		list_objects_filter_set_no_filter(filter_options);
-		return 0;
-	}
-
-	return parse_list_objects_filter(filter_options, arg);
+	else
+		parse_list_objects_filter(filter_options, arg);
+	return 0;
 }
 
 const char *list_objects_filter_spec(struct list_objects_filter_options *filter)

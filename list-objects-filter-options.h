@@ -74,7 +74,7 @@ void list_objects_filter_die_if_populated(
  *
  * Dies and prints a user-facing message if an error occurs.
  */
-int parse_list_objects_filter(
+void parse_list_objects_filter(
 	struct list_objects_filter_options *filter_options,
 	const char *arg);
 
