@@ -153,9 +153,9 @@ static struct tree *shift_tree_object(struct repository *repo,
 	struct object_id shifted;
 
 	if (!*subtree_shift) {
-		shift_tree(&one->object.oid, &two->object.oid, &shifted, 0);
+		shift_tree(repo, &one->object.oid, &two->object.oid, &shifted, 0);
 	} else {
-		shift_tree_by(&one->object.oid, &two->object.oid, &shifted,
+		shift_tree_by(repo, &one->object.oid, &two->object.oid, &shifted,
 			      subtree_shift);
 	}
 	if (oideq(&two->object.oid, &shifted))
