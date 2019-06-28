@@ -21,7 +21,7 @@ has_any () {
 }
 
 test_expect_success 'setup repo with moderate-sized history' '
-	test_commit_bulk --id=file 10 &&
+	test_commit_bulk --id=file 100 &&
 	git checkout -b other HEAD~5 &&
 	test_commit_bulk --id=side 10 &&
 	git checkout master &&
