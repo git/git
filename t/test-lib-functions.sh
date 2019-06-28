@@ -1334,6 +1334,12 @@ test_oid () {
 	eval "printf '%s' \"\${$var}\""
 }
 
+# Insert a slash into an object ID so it can be used to reference a location
+# under ".git/objects".  For example, "deadbeef..." becomes "de/adbeef..".
+test_oid_to_path () {
+	echo "${1%${1#??}}/${1#??}"
+}
+
 # Choose a port number based on the test script's number and store it in
 # the given variable name, unless that variable already contains a number.
 test_set_port () {
