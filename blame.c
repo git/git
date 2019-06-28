@@ -981,7 +981,7 @@ static int *fuzzy_find_matching_lines(struct blame_origin *parent,
 	return result;
 }
 
-static void fill_origin_fingerprints(struct blame_origin *o, mmfile_t *file)
+static void fill_origin_fingerprints(struct blame_origin *o)
 {
 	int *line_starts;
 
@@ -1035,7 +1035,7 @@ static void fill_origin_blob(struct diff_options *opt,
 	else
 		*file = o->file;
 	if (fill_fingerprints)
-		fill_origin_fingerprints(o, file);
+		fill_origin_fingerprints(o);
 }
 
 static void drop_origin_blob(struct blame_origin *o)
@@ -1653,7 +1653,6 @@ static void guess_line_blames(struct blame_origin *parent,
  */
 static void ignore_blame_entry(struct blame_entry *e,
 			       struct blame_origin *parent,
-			       struct blame_origin *target,
 			       struct blame_entry **diffp,
 			       struct blame_entry **ignoredp,
 			       struct blame_line_tracker *line_blames)
@@ -1802,7 +1801,7 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 			samep = n;
 		}
 		if (ignore_diffs) {
-			ignore_blame_entry(e, parent, target, &diffp, &ignoredp,
+			ignore_blame_entry(e, parent, &diffp, &ignoredp,
 					   line_blames + e->s_lno - tlno);
 		} else {
 			e->next = diffp;
