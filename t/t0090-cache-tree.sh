@@ -162,8 +162,8 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 '
 
 test_expect_success PERL 'commit -p with shrinking cache-tree' '
-	mkdir -p deep/subdir &&
-	echo content >deep/subdir/file &&
+	mkdir -p deep/very-long-subdir &&
+	echo content >deep/very-long-subdir/file &&
 	git add deep &&
 	git commit -m add &&
 	git rm -r deep &&
