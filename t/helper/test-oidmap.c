@@ -47,21 +47,7 @@ int cmd__oidmap(int argc, const char **argv)
 		if (p1)
 			p2 = strtok(NULL, DELIM);
 
-		if (!strcmp("add", cmd) && p1 && p2) {
-
-			if (get_oid(p1, &oid)) {
-				printf("Unknown oid: %s\n", p1);
-				continue;
-			}
-
-			/* create entry with oidkey from p1, value = p2 */
-			FLEX_ALLOC_STR(entry, name, p2);
-			oidcpy(&entry->entry.oid, &oid);
-
-			/* add to oidmap */
-			oidmap_put(&map, entry);
-
-		} else if (!strcmp("put", cmd) && p1 && p2) {
+		if (!strcmp("put", cmd) && p1 && p2) {
 
 			if (get_oid(p1, &oid)) {
 				printf("Unknown oid: %s\n", p1);
