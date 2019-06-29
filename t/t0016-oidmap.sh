@@ -67,6 +67,24 @@ Unknown oid: invalidOid
 
 '
 
+test_expect_success 'remove' '
+
+test_oidmap "put one 1
+put two 2
+put three 3
+remove one
+remove two
+remove invalidOid
+remove four" "NULL
+NULL
+NULL
+1
+2
+Unknown oid: invalidOid
+NULL"
+
+'
+
 test_expect_success 'iterate' '
 
 test_oidmap "put one 1
