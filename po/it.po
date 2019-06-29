@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2019-06-04 08:24+0800\n"
-"PO-Revision-Date: 2019-06-23 20:50+0200\n"
+"PO-Revision-Date: 2019-06-27 20:16+0200\n"
 "Last-Translator: Alessandro Menti <alessandro.menti@alessandromenti.it>\n"
 "Language-Team: Italian <>\n"
 "Language: it\n"
@@ -6252,7 +6252,7 @@ msgstr "è già in corso un'operazione di cherry-pick o di revert"
 
 #: sequencer.c:2657
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
-msgstr "prova \"git cherry-pick (--continue | --quit | -- abort)\""
+msgstr "prova \"git cherry-pick (--continue | --quit | --abort)\""
 
 #: sequencer.c:2660
 #, c-format
