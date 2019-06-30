@@ -298,28 +298,28 @@ EOF
 last_test=13
 
 test_expect_success setup '
-	{ for i in $(test_seq 2 $last_test)
+	for i in $(test_seq 2 $last_test)
 	do
 		# Append each line in a separate commit to make it easy to
 		# check which original line the blame output relates to.
 
 		line_count=0 &&
-		{ while IFS= read line
+		while IFS= read line
 		do
 			line_count=$((line_count+1)) &&
 			echo "$line" >>"$i" &&
 			git add "$i" &&
 			test_tick &&
 			GIT_AUTHOR_NAME="$line_count" git commit -m "$line_count"
-		done } <"a$i"
-	done } &&
+		done <"a$i"
+	done &&
 
-	{ for i in $(test_seq 2 $last_test)
+	for i in $(test_seq 2 $last_test)
 	do
 		# Overwrite the files with the final content.
 		cp b$i $i &&
 		git add $i
-	done } &&
+	done &&
 	test_tick &&
 
 	# Commit the final content all at once so it can all be
