@@ -1552,6 +1552,32 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 	free_worktrees(worktrees);
 }
 
+struct add_alternate_refs_data {
+	struct rev_info *revs;
+	unsigned int flags;
+};
+
+static void add_one_alternate_ref(const struct object_id *oid,
+				  void *vdata)
+{
+	const char *name = ".alternate";
+	struct add_alternate_refs_data *data = vdata;
+	struct object *obj;
+
+	obj = get_reference(data->revs, name, oid, data->flags);
+	add_rev_cmdline(data->revs, obj, name, REV_CMD_REV, data->flags);
+	add_pending_object(data->revs, obj, name);
+}
+
+static void add_alternate_refs_to_pending(struct rev_info *revs,
+					  unsigned int flags)
+{
+	struct add_alternate_refs_data data;
+	data.revs = revs;
+	data.flags = flags;
+	for_each_alternate_ref(add_one_alternate_ref, &data);
+}
+
 static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 			    int exclude_parent)
 {
@@ -1954,6 +1980,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk") ||
 	    !strcmp(arg, "--bisect") || starts_with(arg, "--glob=") ||
 	    !strcmp(arg, "--indexed-objects") ||
+	    !strcmp(arg, "--alternate-refs") ||
 	    starts_with(arg, "--exclude=") ||
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
@@ -2440,6 +2467,8 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		add_reflogs_to_pending(revs, *flags);
 	} else if (!strcmp(arg, "--indexed-objects")) {
 		add_index_objects_to_pending(revs, *flags);
+	} else if (!strcmp(arg, "--alternate-refs")) {
+		add_alternate_refs_to_pending(revs, *flags);
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
