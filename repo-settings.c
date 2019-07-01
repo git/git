@@ -16,6 +16,9 @@ static int git_repo_config(const char *key, const char *value, void *cb)
 			UPDATE_DEFAULT(rs->gc_write_commit_graph, 1);
 			UPDATE_DEFAULT(rs->index_version, 4);
 		}
+		if (rate >= 5) {
+			UPDATE_DEFAULT(rs->pack_use_sparse, 1);
+		}
 		return 0;
 	}
 	if (!strcmp(key, "core.commitgraph")) {
@@ -24,6 +27,10 @@ static int git_repo_config(const char *key, const char *value, void *cb)
 	}
 	if (!strcmp(key, "gc.writecommitgraph")) {
 		rs->gc_write_commit_graph = git_config_bool(key, value);
+		return 0;
+	}
+	if (!strcmp(key, "pack.usesparse")) {
+		rs->pack_use_sparse = git_config_bool(key, value);
 		return 0;
 	}
 	if (!strcmp(key, "index.version")) {
@@ -44,6 +51,7 @@ void prepare_repo_settings(struct repository *r)
 	/* Defaults */
 	r->settings->core_commit_graph = -1;
 	r->settings->gc_write_commit_graph = -1;
+	r->settings->pack_use_sparse = -1;
 	r->settings->index_version = -1;
 
 	repo_config(r, git_repo_config, r->settings);

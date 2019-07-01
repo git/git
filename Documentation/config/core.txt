@@ -624,3 +624,12 @@ The settings do not modify the user-facing output of porcelain commands.
 +
 * `index.version=4` uses prefix-compression to reduce the size of the
 .git/index file.
++
+If the value is at least 5, then all of the defaults above are included,
+plus the defaults below. These represent new features that present
+significant performance benefits, but may not have been released for
+multiple major versions.
++
+* `pack.useSparse=true` uses the sparse tree-walk algorithm, which is
+optimized for enumerating objects during linkgit:git-push[1] from a
+client machine.
