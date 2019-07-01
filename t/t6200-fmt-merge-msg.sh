@@ -66,7 +66,7 @@ test_expect_success setup '
 	git commit -a -m "Right #5" &&
 
 	git checkout -b long &&
-	test_commit_bulk --start=0 --message="\$n" --filename=one 30 &&
+	test_commit_bulk --start=0 --message="%s" --filename=one 30 &&
 
 	git show-branch &&
 
