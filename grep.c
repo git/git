@@ -644,6 +644,9 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
 
+	if (memchr(p->pattern, 0, p->patternlen) && !opt->pcre2)
+		die(_("given pattern contains NULL byte (via -f <file>). This is only supported with -P under PCRE v2"));
+
 	/*
 	 * Even when -F (fixed) asks us to do a non-regexp search, we
 	 * may not be able to correctly case-fold when -i
@@ -665,9 +668,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 		kwsprep(p->kws);
 		return;
 	}
-
-	if (memchr(p->pattern, 0, p->patternlen) && !opt->pcre2)
-		die(_("given pattern contains NULL byte (via -f <file>). This is only supported with -P under PCRE v2"));
 
 	if (opt->fixed) {
 		/*
