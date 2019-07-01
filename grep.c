@@ -356,18 +356,6 @@ static NORETURN void compile_regexp_failed(const struct grep_pat *p,
 	die("%s'%s': %s", where, p->pattern, error);
 }
 
-static int is_fixed(const char *s, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i < len; i++) {
-		if (is_regex_special(s[i]))
-			return 0;
-	}
-
-	return 1;
-}
-
 #ifdef USE_LIBPCRE1
 static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 {
@@ -643,38 +631,12 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
+	p->fixed = opt->fixed;
 
 	if (memchr(p->pattern, 0, p->patternlen) && !opt->pcre2)
 		die(_("given pattern contains NULL byte (via -f <file>). This is only supported with -P under PCRE v2"));
 
-	/*
-	 * Even when -F (fixed) asks us to do a non-regexp search, we
-	 * may not be able to correctly case-fold when -i
-	 * (ignore-case) is asked (in which case, we'll synthesize a
-	 * regexp to match the pattern that matches regexp special
-	 * characters literally, while ignoring case differences).  On
-	 * the other hand, even without -F, if the pattern does not
-	 * have any regexp special characters and there is no need for
-	 * case-folding search, we can internally turn it into a
-	 * simple string match using kws.  p->fixed tells us if we
-	 * want to use kws.
-	 */
-	if (opt->fixed || is_fixed(p->pattern, p->patternlen))
-		p->fixed = !p->ignore_case || !has_non_ascii(p->pattern);
-
-	if (p->fixed) {
-		p->kws = kwsalloc(p->ignore_case ? tolower_trans_tbl : NULL);
-		kwsincr(p->kws, p->pattern, p->patternlen);
-		kwsprep(p->kws);
-		return;
-	}
-
 	if (opt->fixed) {
-		/*
-		 * We come here when the pattern has the non-ascii
-		 * characters we cannot case-fold, and asked to
-		 * ignore-case.
-		 */
 		compile_fixed_regexp(p, opt);
 		return;
 	}
@@ -1042,9 +1004,7 @@ void free_grep_patterns(struct grep_opt *opt)
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			if (p->kws)
-				kwsfree(p->kws);
-			else if (p->pcre1_regexp)
+			if (p->pcre1_regexp)
 				free_pcre1_regexp(p);
 			else if (p->pcre2_pattern)
 				free_pcre2_pattern(p);
@@ -1104,29 +1064,12 @@ static void show_name(struct grep_opt *opt, const char *name)
 	opt->output(opt, opt->null_following_name ? "\0" : "\n", 1);
 }
 
-static int fixmatch(struct grep_pat *p, char *line, char *eol,
-		    regmatch_t *match)
-{
-	struct kwsmatch kwsm;
-	size_t offset = kwsexec(p->kws, line, eol - line, &kwsm);
-	if (offset == -1) {
-		match->rm_so = match->rm_eo = -1;
-		return REG_NOMATCH;
-	} else {
-		match->rm_so = offset;
-		match->rm_eo = match->rm_so + kwsm.size[0];
-		return 0;
-	}
-}
-
 static int patmatch(struct grep_pat *p, char *line, char *eol,
 		    regmatch_t *match, int eflags)
 {
 	int hit;
 
-	if (p->fixed)
-		hit = !fixmatch(p, line, eol, match);
-	else if (p->pcre1_regexp)
+	if (p->pcre1_regexp)
 		hit = !pcre1match(p, line, eol, match, eflags);
 	else if (p->pcre2_pattern)
 		hit = !pcre2match(p, line, eol, match, eflags);
