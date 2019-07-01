@@ -577,7 +577,8 @@ the `GIT_NOTES_REF` environment variable.  See linkgit:git-notes[1].
 
 core.commitGraph::
 	If true, then git will read the commit-graph file (if it exists)
-	to parse the graph structure of commits. Defaults to false. See
+	to parse the graph structure of commits. Defaults to false, unless
+	`core.featureAdoptionRate` is at least three. See
 	linkgit:git-commit-graph[1] for more information.
 
 core.useReplaceRefs::
@@ -601,3 +602,22 @@ core.abbrev::
 	in your repository, which hopefully is enough for
 	abbreviated object names to stay unique for some time.
 	The minimum length is 4.
+
+core.featureAdoptionRate::
+	Set an integer value on a scale from 0 to 10 describing your
+	desire to adopt new performance features. Defaults to 0. As
+	the value increases, features are enabled by changing the
+	default values of other config settings. If a config variable
+	is specified explicitly, the explicit value will override these
+	defaults:
++
+If the value is at least 3, then the following defaults are modified.
+These represent relatively new features that have existed for multiple
+major releases, and may present performance benefits. These benefits
+depend on the amount and kind of data in your repo and how you use it.
+The settings do not modify the user-facing output of porcelain commands.
++
+* `core.commitGraph=true` enables reading commit-graph files.
++
+* `gc.writeCommitGraph=true` eneables writing commit-graph files during
+`git gc`.
