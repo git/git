@@ -368,18 +368,6 @@ static int is_fixed(const char *s, size_t len)
 	return 1;
 }
 
-static int has_null(const char *s, size_t len)
-{
-	/*
-	 * regcomp cannot accept patterns with NULs so when using it
-	 * we consider any pattern containing a NUL fixed.
-	 */
-	if (memchr(s, 0, len))
-		return 1;
-
-	return 0;
-}
-
 #ifdef USE_LIBPCRE1
 static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 {
@@ -668,9 +656,7 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	 * simple string match using kws.  p->fixed tells us if we
 	 * want to use kws.
 	 */
-	if (opt->fixed ||
-	    has_null(p->pattern, p->patternlen) ||
-	    is_fixed(p->pattern, p->patternlen))
+	if (opt->fixed || is_fixed(p->pattern, p->patternlen))
 		p->fixed = !p->ignore_case || !has_non_ascii(p->pattern);
 
 	if (p->fixed) {
@@ -678,7 +664,12 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 		kwsincr(p->kws, p->pattern, p->patternlen);
 		kwsprep(p->kws);
 		return;
-	} else if (opt->fixed) {
+	}
+
+	if (memchr(p->pattern, 0, p->patternlen) && !opt->pcre2)
+		die(_("given pattern contains NULL byte (via -f <file>). This is only supported with -P under PCRE v2"));
+
+	if (opt->fixed) {
 		/*
 		 * We come here when the pattern has the non-ascii
 		 * characters we cannot case-fold, and asked to

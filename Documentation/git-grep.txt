@@ -271,6 +271,23 @@ providing this option will cause it to die.
 
 -f <file>::
 	Read patterns from <file>, one per line.
++
+Passing the pattern via <file> allows for providing a search pattern
+containing a \0.
++
+Not all pattern types support patterns containing \0. Git will error
+out if a given pattern type can't support such a pattern. The
+`--perl-regexp` pattern type when compiled against the PCRE v2 backend
+has the widest support for these types of patterns.
++
+In versions of Git before 2.23.0 patterns containing \0 would be
+silently considered fixed. This was never documented, there were also
+odd and undocumented interactions between e.g. non-ASCII patterns
+containing \0 and `--ignore-case`.
++
+In future versions we may learn to support patterns containing \0 for
+more search backends, until then we'll die when the pattern type in
+question doesn't support them.
 
 -e::
 	The next parameter is the pattern. This option has to be

@@ -2,41 +2,55 @@
 
 test_description='git grep with a binary pattern files'
 
-. ./test-lib.sh
+. ./lib-gettext.sh
 
-nul_match () {
+nul_match_internal () {
 	matches=$1
-	flags=$2
-	pattern=$3
+	prereqs=$2
+	lc_all=$3
+	extra_flags=$4
+	flags=$5
+	pattern=$6
 	pattern_human=$(echo "$pattern" | sed 's/Q/<NUL>/g')
 
 	if test "$matches" = 1
 	then
-		test_expect_success "git grep -f f $flags '$pattern_human' a" "
+		test_expect_success $prereqs "LC_ALL='$lc_all' git grep $extra_flags -f f $flags '$pattern_human' a" "
 			printf '$pattern' | q_to_nul >f &&
-			git grep -f f $flags a
+			LC_ALL='$lc_all' git grep $extra_flags -f f $flags a
 		"
 	elif test "$matches" = 0
 	then
-		test_expect_success "git grep -f f $flags '$pattern_human' a" "
+		test_expect_success $prereqs "LC_ALL='$lc_all' git grep $extra_flags -f f $flags '$pattern_human' a" "
+			>stderr &&
 			printf '$pattern' | q_to_nul >f &&
-			test_must_fail git grep -f f $flags a
+			test_must_fail env LC_ALL=\"$lc_all\" git grep $extra_flags -f f $flags a 2>stderr &&
+			test_i18ngrep ! 'This is only supported with -P under PCRE v2' stderr
 		"
-	elif test "$matches" = T1
+	elif test "$matches" = P
 	then
-		test_expect_failure "git grep -f f $flags '$pattern_human' a" "
+		test_expect_success $prereqs "error, PCRE v2 only: LC_ALL='$lc_all' git grep -f f $flags '$pattern_human' a" "
+			>stderr &&
 			printf '$pattern' | q_to_nul >f &&
-			git grep -f f $flags a
-		"
-	elif test "$matches" = T0
-	then
-		test_expect_failure "git grep -f f $flags '$pattern_human' a" "
-			printf '$pattern' | q_to_nul >f &&
-			test_must_fail git grep -f f $flags a
+			test_must_fail env LC_ALL=\"$lc_all\" git grep -f f $flags a 2>stderr &&
+			test_i18ngrep 'This is only supported with -P under PCRE v2' stderr
 		"
 	else
 		test_expect_success "PANIC: Test framework error. Unknown matches value $matches" 'false'
 	fi
+}
+
+nul_match () {
+	matches=$1
+	matches_pcre2=$2
+	matches_pcre2_locale=$3
+	flags=$4
+	pattern=$5
+	pattern_human=$(echo "$pattern" | sed 's/Q/<NUL>/g')
+
+	nul_match_internal "$matches" "" "C" "" "$flags" "$pattern"
+	nul_match_internal "$matches_pcre2" "LIBPCRE2" "C" "-P" "$flags" "$pattern"
+	nul_match_internal "$matches_pcre2_locale" "LIBPCRE2,GETTEXT_LOCALE" "$is_IS_locale" "-P" "$flags" "$pattern"
 }
 
 test_expect_success 'setup' "
@@ -45,70 +59,69 @@ test_expect_success 'setup' "
 	git commit -m.
 "
 
-nul_match 1 '-F' 'yQf'
-nul_match 0 '-F' 'yQx'
-nul_match 1 '-Fi' 'YQf'
-nul_match 0 '-Fi' 'YQx'
-nul_match 1 '' 'yQf'
-nul_match 0 '' 'yQx'
-nul_match 1 '' 'æQð'
-nul_match 1 '-F' 'eQm[*]c'
-nul_match 1 '-Fi' 'EQM[*]C'
+# Simple fixed-string matching that can use kwset (no -i && non-ASCII)
+nul_match 1 1 1 '-F' 'yQf'
+nul_match 0 0 0 '-F' 'yQx'
+nul_match 1 1 1 '-Fi' 'YQf'
+nul_match 0 0 0 '-Fi' 'YQx'
+nul_match 1 1 1 '' 'yQf'
+nul_match 0 0 0 '' 'yQx'
+nul_match 1 1 1 '' 'æQð'
+nul_match 1 1 1 '-F' 'eQm[*]c'
+nul_match 1 1 1 '-Fi' 'EQM[*]C'
 
 # Regex patterns that would match but shouldn't with -F
-nul_match 0 '-F' 'yQ[f]'
-nul_match 0 '-F' '[y]Qf'
-nul_match 0 '-Fi' 'YQ[F]'
-nul_match 0 '-Fi' '[Y]QF'
-nul_match 0 '-F' 'æQ[ð]'
-nul_match 0 '-F' '[æ]Qð'
-nul_match 0 '-Fi' 'ÆQ[Ð]'
-nul_match 0 '-Fi' '[Æ]QÐ'
+nul_match 0 0 0 '-F' 'yQ[f]'
+nul_match 0 0 0 '-F' '[y]Qf'
+nul_match 0 0 0 '-Fi' 'YQ[F]'
+nul_match 0 0 0 '-Fi' '[Y]QF'
+nul_match 0 0 0 '-F' 'æQ[ð]'
+nul_match 0 0 0 '-F' '[æ]Qð'
 
-# kwset is disabled on -i & non-ASCII. No way to match non-ASCII \0
-# patterns case-insensitively.
-nul_match T1 '-i' 'ÆQÐ'
+# The -F kwset codepath can't handle -i && non-ASCII...
+nul_match P 1 1 '-i' '[æ]Qð'
 
-# \0 implicitly disables regexes. This is an undocumented internal
-# limitation.
-nul_match T1 '' 'yQ[f]'
-nul_match T1 '' '[y]Qf'
-nul_match T1 '-i' 'YQ[F]'
-nul_match T1 '-i' '[Y]Qf'
-nul_match T1 '' 'æQ[ð]'
-nul_match T1 '' '[æ]Qð'
-nul_match T1 '-i' 'ÆQ[Ð]'
+# ...PCRE v2 only matches non-ASCII with -i casefolding under UTF-8
+# semantics
+nul_match P P P '-Fi' 'ÆQ[Ð]'
+nul_match P 0 1 '-i'  'ÆQ[Ð]'
+nul_match P 0 1 '-i'  '[Æ]QÐ'
+nul_match P 0 1 '-i' '[Æ]Qð'
+nul_match P 0 1 '-i' 'ÆQÐ'
 
-# ... because of \0 implicitly disabling regexes regexes that
-# should/shouldn't match don't do the right thing.
-nul_match T1 '' 'eQm.*cQ'
-nul_match T1 '-i' 'EQM.*cQ'
-nul_match T0 '' 'eQm[*]c'
-nul_match T0 '-i' 'EQM[*]C'
+# \0 in regexes can only work with -P & PCRE v2
+nul_match P 1 1 '' 'yQ[f]'
+nul_match P 1 1 '' '[y]Qf'
+nul_match P 1 1 '-i' 'YQ[F]'
+nul_match P 1 1 '-i' '[Y]Qf'
+nul_match P 1 1 '' 'æQ[ð]'
+nul_match P 1 1 '' '[æ]Qð'
+nul_match P 0 1 '-i' 'ÆQ[Ð]'
+nul_match P 1 1 '' 'eQm.*cQ'
+nul_match P 1 1 '-i' 'EQM.*cQ'
+nul_match P 0 0 '' 'eQm[*]c'
+nul_match P 0 0 '-i' 'EQM[*]C'
 
-# Due to the REG_STARTEND extension when kwset() is disabled on -i &
-# non-ASCII the string will be matched in its entirety, but the
-# pattern will be cut off at the first \0.
-nul_match 0 '-i' 'NOMATCHQð'
-nul_match T0 '-i' '[Æ]QNOMATCH'
-nul_match T0 '-i' '[æ]QNOMATCH'
-# Matches, but for the wrong reasons, just stops at [æ]
-nul_match 1 '-i' '[Æ]Qð'
-nul_match 1 '-i' '[æ]Qð'
+# Assert that we're using REG_STARTEND and the pattern doesn't match
+# just because it's cut off at the first \0.
+nul_match 0 0 0 '-i' 'NOMATCHQð'
+nul_match P 0 0 '-i' '[Æ]QNOMATCH'
+nul_match P 0 0 '-i' '[æ]QNOMATCH'
 
 # Ensure that the matcher doesn't regress to something that stops at
 # \0
-nul_match 0 '-F' 'yQ[f]'
-nul_match 0 '-Fi' 'YQ[F]'
-nul_match 0 '' 'yQNOMATCH'
-nul_match 0 '' 'QNOMATCH'
-nul_match 0 '-i' 'YQNOMATCH'
-nul_match 0 '-i' 'QNOMATCH'
-nul_match 0 '-F' 'æQ[ð]'
-nul_match 0 '-Fi' 'ÆQ[Ð]'
-nul_match 0 '' 'yQNÓMATCH'
-nul_match 0 '' 'QNÓMATCH'
-nul_match 0 '-i' 'YQNÓMATCH'
-nul_match 0 '-i' 'QNÓMATCH'
+nul_match 0 0 0 '-F' 'yQ[f]'
+nul_match 0 0 0 '-Fi' 'YQ[F]'
+nul_match 0 0 0 '' 'yQNOMATCH'
+nul_match 0 0 0 '' 'QNOMATCH'
+nul_match 0 0 0 '-i' 'YQNOMATCH'
+nul_match 0 0 0 '-i' 'QNOMATCH'
+nul_match 0 0 0 '-F' 'æQ[ð]'
+nul_match P P P '-Fi' 'ÆQ[Ð]'
+nul_match P 0 1 '-i' 'ÆQ[Ð]'
+nul_match 0 0 0 '' 'yQNÓMATCH'
+nul_match 0 0 0 '' 'QNÓMATCH'
+nul_match 0 0 0 '-i' 'YQNÓMATCH'
+nul_match 0 0 0 '-i' 'QNÓMATCH'
 
 test_done
