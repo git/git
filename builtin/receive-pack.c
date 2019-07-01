@@ -12,7 +12,6 @@
 #include "object.h"
 #include "remote.h"
 #include "connect.h"
-#include "transport.h"
 #include "string-list.h"
 #include "sha1-array.h"
 #include "connected.h"
