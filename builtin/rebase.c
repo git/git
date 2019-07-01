@@ -834,6 +834,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
 	struct object_id squash_onto;
 	char *squash_onto_name = NULL;
+	int reschedule_failed_exec = -1;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -929,7 +930,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "root", &options.root,
 			 N_("rebase all reachable commits up to the root(s)")),
 		OPT_BOOL(0, "reschedule-failed-exec",
-			 &options.reschedule_failed_exec,
+			 &reschedule_failed_exec,
 			 N_("automatically re-schedule any `exec` that fails")),
 		OPT_END(),
 	};
@@ -1227,8 +1228,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
-	if (options.reschedule_failed_exec && !is_interactive(&options))
-		die(_("--reschedule-failed-exec requires an interactive rebase"));
+	if (reschedule_failed_exec > 0 && !is_interactive(&options))
+		die(_("--reschedule-failed-exec requires "
+		      "--exec or --interactive"));
+	if (reschedule_failed_exec >= 0)
+		options.reschedule_failed_exec = reschedule_failed_exec;
 
 	if (options.git_am_opts.argc) {
 		/* all am options except -q are compatible only with --am */
