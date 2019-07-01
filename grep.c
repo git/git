@@ -650,13 +650,11 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
-	int ascii_only;
 	int err;
 	int regflags = REG_NEWLINE;
 
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
-	ascii_only     = !has_non_ascii(p->pattern);
 
 	/*
 	 * Even when -F (fixed) asks us to do a non-regexp search, we
@@ -673,7 +671,7 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (opt->fixed ||
 	    has_null(p->pattern, p->patternlen) ||
 	    is_fixed(p->pattern, p->patternlen))
-		p->fixed = !p->ignore_case || ascii_only;
+		p->fixed = !p->ignore_case || !has_non_ascii(p->pattern);
 
 	if (p->fixed) {
 		p->kws = kwsalloc(p->ignore_case ? tolower_trans_tbl : NULL);
