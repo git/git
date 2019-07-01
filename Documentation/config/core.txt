@@ -621,3 +621,6 @@ The settings do not modify the user-facing output of porcelain commands.
 +
 * `gc.writeCommitGraph=true` eneables writing commit-graph files during
 `git gc`.
++
+* `index.version=4` uses prefix-compression to reduce the size of the
+.git/index file.
