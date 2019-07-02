@@ -2762,6 +2762,15 @@ static int rollback_single_pick(struct repository *r)
 	return reset_merge(&head_oid);
 }
 
+static int skip_single_pick(void)
+{
+	struct object_id head;
+
+	if (read_ref_full("HEAD", 0, &head, NULL))
+		return error(_("cannot resolve HEAD"));
+	return reset_merge(&head);
+}
+
 int sequencer_rollback(struct repository *r, struct replay_opts *opts)
 {
 	FILE *f;
@@ -2808,6 +2817,70 @@ int sequencer_rollback(struct repository *r, struct replay_opts *opts)
 	return sequencer_remove_state(opts);
 fail:
 	strbuf_release(&buf);
+	return -1;
+}
+
+int sequencer_skip(struct repository *r, struct replay_opts *opts)
+{
+	enum replay_action action = -1;
+	sequencer_get_last_command(r, &action);
+
+	/*
+	 * Check whether the subcommand requested to skip the commit is actually
+	 * in progress and that it's safe to skip the commit.
+	 *
+	 * opts->action tells us which subcommand requested to skip the commit.
+	 * If the corresponding .git/<ACTION>_HEAD exists, we know that the
+	 * action is in progress and we can skip the commit.
+	 *
+	 * Otherwise we check that the last instruction was related to the
+	 * particular subcommand we're trying to execute and barf if that's not
+	 * the case.
+	 *
+	 * Finally we check that the rollback is "safe", i.e., has the HEAD
+	 * moved? In this case, it doesn't make sense to "reset the merge" and
+	 * "skip the commit" as the user already handled this by committing. But
+	 * we'd not want to barf here, instead give advice on how to proceed. We
+	 * only need to check that when .git/<ACTION>_HEAD doesn't exist because
+	 * it gets removed when the user commits, so if it still exists we're
+	 * sure the user can't have committed before.
+	 */
+	switch (opts->action) {
+	case REPLAY_REVERT:
+		if (!file_exists(git_path_revert_head(r))) {
+			if (action != REPLAY_REVERT)
+				return error(_("no revert in progress"));
+			if (!rollback_is_safe())
+				goto give_advice;
+		}
+		break;
+	case REPLAY_PICK:
+		if (!file_exists(git_path_cherry_pick_head(r))) {
+			if (action != REPLAY_PICK)
+				return error(_("no cherry-pick in progress"));
+			if (!rollback_is_safe())
+				goto give_advice;
+		}
+		break;
+	default:
+		BUG("unexpected action in sequencer_skip");
+	}
+
+	if (skip_single_pick())
+		return error(_("failed to skip the commit"));
+	if (!is_directory(git_path_seq_dir()))
+		return 0;
+
+	return sequencer_continue(r, opts);
+
+give_advice:
+	error(_("there is nothing to skip"));
+
+	if (advice_resolve_conflict) {
+		advise(_("have you committed already?\n"
+			 "try \"git %s --continue\""),
+			 action == REPLAY_REVERT ? "revert" : "cherry-pick");
+	}
 	return -1;
 }
 
