@@ -22,7 +22,7 @@ DESCRIPTION
 
 Clones a repository into a newly created directory, creates
 remote-tracking branches for each branch in the cloned repository
-(visible using `git branch -r`), and creates and checks out an
+(visible using `git branch --remotes`), and creates and checks out an
 initial branch that is forked from the cloned repository's
 currently active branch.
 
@@ -80,13 +80,13 @@ which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
 If these objects are removed and were referenced by the cloned repository,
 then the cloned repository will become corrupt.
 +
-Note that running `git repack` without the `-l` option in a repository
-cloned with `-s` will copy objects from the source repository into a pack
-in the cloned repository, removing the disk space savings of `clone -s`.
-It is safe, however, to run `git gc`, which uses the `-l` option by
+Note that running `git repack` without the `--local` option in a repository
+cloned with `--shared` will copy objects from the source repository into a pack
+in the cloned repository, removing the disk space savings of `clone --shared`.
+It is safe, however, to run `git gc`, which uses the `--local` option by
 default.
 +
-If you want to break the dependency of a repository cloned with `-s` on
+If you want to break the dependency of a repository cloned with `--shared` on
 its source repository, you can simply run `git repack -a` to copy all
 objects from the source repository into a pack in the cloned repository.
 
@@ -127,7 +127,7 @@ objects from the source repository into a pack in the cloned repository.
 
 --progress::
 	Progress status is reported on the standard error stream
-	by default when it is attached to a terminal, unless -q
+	by default when it is attached to a terminal, unless `--quiet`
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
@@ -147,7 +147,7 @@ objects from the source repository into a pack in the cloned repository.
 	Make a 'bare' Git repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.git`, make the `<directory>`
-	itself the `$GIT_DIR`. This obviously implies the `-n`
+	itself the `$GIT_DIR`. This obviously implies the `--no-checkout`
 	because there is nowhere to check out the working tree.
 	Also the branch heads at the remote are copied directly
 	to corresponding local branch heads, without mapping
