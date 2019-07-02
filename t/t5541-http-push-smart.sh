@@ -177,6 +177,64 @@ test_expect_success 'push (chunked)' '
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
+test_expect_success 'push --atomic also prevents branch creation' '
+	# Make up/master
+	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-branches.git &&
+	git init --bare "$d" &&
+	git --git-dir="$d" config http.receivepack true &&
+	up="$HTTPD_URL"/smart/atomic-branches.git &&
+	test_commit atomic1 &&
+	test_commit atomic2 &&
+	git push "$up" master &&
+	# Make master incompatible with up/master
+	git reset --hard HEAD^ &&
+	# Add a new branch
+	git branch atomic &&
+	# --atomic should roll back creation of up/atomic
+	test_must_fail git push --atomic "$up" master atomic &&
+	git ls-remote "$up" >up-remotes &&
+	test_must_fail grep atomic up-remotes
+'
+
+test_expect_success 'push --atomic shows all failed refs' '
+	# Make up/master, up/allrefs
+	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-failed-refs.git &&
+	git init --bare "$d" &&
+	git --git-dir="$d" config http.receivepack true &&
+	up="$HTTPD_URL"/smart/atomic-failed-refs.git &&
+	test_commit allrefs1 &&
+	test_commit allrefs2 &&
+	git branch allrefs &&
+	git push "$up" master allrefs &&
+	# Make master and allrefs incompatible with up/master, up/allrefs
+	git checkout allrefs &&
+	git reset --hard HEAD^ &&
+	git checkout master &&
+	git reset --hard HEAD^ &&
+	# --atomic should complain about both master and allrefs
+	test_must_fail git push --atomic "$up" master allrefs >&output &&
+	grep master output &&
+	grep allrefs output
+'
+
+test_expect_success 'push --atomic indicates collateral failures' '
+	# Make up/master, up/collateral
+	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-collateral.git &&
+	git init --bare "$d" &&
+	git --git-dir="$d" config http.receivepack true &&
+	up="$HTTPD_URL"/smart/atomic-collateral.git &&
+	test_commit collateral1 &&
+	test_commit collateral2 &&
+	git branch collateral &&
+	git push "$up" master collateral &&
+	# Make master incompatible with up/master
+	git reset --hard HEAD^ &&
+	# --atomic should mention collateral was OK but failed anyway
+	test_must_fail git push --atomic "$up" master collateral >&output &&
+	grep "master -> master" output &&
+	grep "collateral -> collateral" output
+'
+
 test_expect_success 'push --all can push to empty repo' '
 	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-all.git &&
 	git init --bare "$d" &&
