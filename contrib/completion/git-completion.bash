@@ -1474,6 +1474,8 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--dirstat-by-file= --cumulative
 			--diff-algorithm=
 			--submodule --submodule= --ignore-submodules
+			--indent-heuristic --no-indent-heuristic
+			--textconv --no-textconv
 "
 
 _git_diff ()
@@ -1782,6 +1784,10 @@ _git_log ()
 		__gitcomp "$__git_diff_submodule_formats" "" "${cur##--submodule=}"
 		return
 		;;
+	--no-walk=*)
+		__gitcomp "sorted unsorted" "" "${cur##--no-walk=}"
+		return
+		;;
 	--*)
 		__gitcomp "
 			$__git_log_common_options
@@ -1789,16 +1795,19 @@ _git_log ()
 			$__git_log_gitk_options
 			--root --topo-order --date-order --reverse
 			--follow --full-diff
-			--abbrev-commit --abbrev=
+			--abbrev-commit --no-abbrev-commit --abbrev=
 			--relative-date --date=
 			--pretty= --format= --oneline
 			--show-signature
 			--cherry-mark
 			--cherry-pick
 			--graph
-			--decorate --decorate=
+			--decorate --decorate= --no-decorate
 			--walk-reflogs
+			--no-walk --no-walk= --do-walk
 			--parents --children
+			--expand-tabs --expand-tabs= --no-expand-tabs
+			--patch
 			$merge
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
@@ -2525,8 +2534,9 @@ _git_show ()
 		return
 		;;
 	--*)
-		__gitcomp "--pretty= --format= --abbrev-commit --oneline
-			--show-signature
+		__gitcomp "--pretty= --format= --abbrev-commit --no-abbrev-commit
+			--oneline --show-signature --patch
+			--expand-tabs --expand-tabs= --no-expand-tabs
 			$__git_diff_common_options
 			"
 		return
