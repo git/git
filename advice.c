@@ -15,6 +15,7 @@ int advice_status_u_option = 1;
 int advice_commit_before_merge = 1;
 int advice_reset_quiet_warning = 1;
 int advice_resolve_conflict = 1;
+int advice_sequencer_in_use = 1;
 int advice_implicit_identity = 1;
 int advice_detached_head = 1;
 int advice_set_upstream_failure = 1;
@@ -71,6 +72,7 @@ static struct {
 	{ "commitBeforeMerge", &advice_commit_before_merge },
 	{ "resetQuiet", &advice_reset_quiet_warning },
 	{ "resolveConflict", &advice_resolve_conflict },
+	{ "sequencerInUse", &advice_sequencer_in_use },
 	{ "implicitIdentity", &advice_implicit_identity },
 	{ "detachedHead", &advice_detached_head },
 	{ "setupStreamFailure", &advice_set_upstream_failure },

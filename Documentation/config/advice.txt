@@ -57,6 +57,8 @@ advice.*::
 	resolveConflict::
 		Advice shown by various commands when conflicts
 		prevent the operation from being performed.
+	sequencerInUse::
+		Advice shown when a sequencer command is already in progress.
 	implicitIdentity::
 		Advice on how to set your identity configuration when
 		your information is guessed from the system username and
