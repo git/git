@@ -150,8 +150,7 @@ static void throughput_string(struct strbuf *buf, uint64_t total,
 	strbuf_addstr(buf, ", ");
 	strbuf_humanise_bytes(buf, total);
 	strbuf_addstr(buf, " | ");
-	strbuf_humanise_bytes(buf, rate * 1024);
-	strbuf_addstr(buf, "/s");
+	strbuf_humanise_rate(buf, rate * 1024);
 }
 
 void display_throughput(struct progress *progress, uint64_t total)
