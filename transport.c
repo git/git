@@ -1233,8 +1233,9 @@ int transport_push(struct repository *r,
 				case REF_STATUS_UPTODATE:
 				case REF_STATUS_OK:
 					it->status = REF_STATUS_ATOMIC_PUSH_FAILED;
+					break;
 				default:
-					continue;
+					break;
 				}
 		}
 

@@ -212,7 +212,7 @@ test_expect_success 'push --atomic shows all failed refs' '
 	git checkout master &&
 	git reset --hard HEAD^ &&
 	# --atomic should complain about both master and allrefs
-	test_must_fail git push --atomic "$up" master allrefs >&output &&
+	test_must_fail git push --atomic "$up" master allrefs >output 2>&1 &&
 	grep master output &&
 	grep allrefs output
 '
@@ -230,7 +230,7 @@ test_expect_success 'push --atomic indicates collateral failures' '
 	# Make master incompatible with up/master
 	git reset --hard HEAD^ &&
 	# --atomic should mention collateral was OK but failed anyway
-	test_must_fail git push --atomic "$up" master collateral >&output &&
+	test_must_fail git push --atomic "$up" master collateral >output 2>&1 &&
 	grep "master -> master" output &&
 	grep "collateral -> collateral" output
 '
