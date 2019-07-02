@@ -40,8 +40,8 @@ configuration variables.
 
 OPTIONS
 -------
---local::
 -l::
+--local::
 	When the repository to clone from is on a local machine,
 	this flag bypasses the normal "Git aware" transport
 	mechanism and clones the repository by making a copy of
@@ -62,8 +62,8 @@ Git transport instead.
 	directory instead of using hardlinks. This may be desirable
 	if you are trying to make a back-up of your repository.
 
---shared::
 -s::
+--shared::
 	When the repository to clone is on the local machine,
 	instead of using hard links, automatically setup
 	`.git/objects/info/alternates` to share the objects
@@ -115,13 +115,13 @@ objects from the source repository into a pack in the cloned repository.
 	same repository, and this option can be used to stop the
 	borrowing.
 
---quiet::
 -q::
+--quiet::
 	Operate quietly.  Progress is not reported to the standard
 	error stream.
 
---verbose::
 -v::
+--verbose::
 	Run verbosely. Does not affect the reporting of progress status
 	to the standard error stream.
 
@@ -139,8 +139,8 @@ objects from the source repository into a pack in the cloned repository.
 	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
 
---no-checkout::
 -n::
+--no-checkout::
 	No checkout of HEAD is performed after the clone is complete.
 
 --bare::
@@ -163,13 +163,13 @@ objects from the source repository into a pack in the cloned repository.
 	that all these refs are overwritten by a `git remote update` in the
 	target repository.
 
---origin <name>::
 -o <name>::
+--origin <name>::
 	Instead of using the remote name `origin` to keep track
 	of the upstream repository, use `<name>`.
 
---branch <name>::
 -b <name>::
+--branch <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
 	to by the cloned repository's HEAD, point to `<name>` branch
 	instead. In a non-bare repository, this is the branch that will
@@ -177,8 +177,8 @@ objects from the source repository into a pack in the cloned repository.
 	`--branch` can also take tags and detaches the HEAD at that commit
 	in the resulting repository.
 
---upload-pack <upload-pack>::
 -u <upload-pack>::
+--upload-pack <upload-pack>::
 	When given, and the repository to clone from is accessed
 	via ssh, this specifies a non-default path for the command
 	run on the other end.
@@ -187,8 +187,8 @@ objects from the source repository into a pack in the cloned repository.
 	Specify the directory from which templates will be used;
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
---config <key>=<value>::
 -c <key>=<value>::
+--config <key>=<value>::
 	Set a configuration variable in the newly-created repository;
 	this takes effect immediately after the repository is
 	initialized, but before the remote history is fetched or any
