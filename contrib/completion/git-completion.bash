@@ -55,7 +55,7 @@ __git_find_repo_path ()
 	fi
 
 	if [ -n "${__git_C_args-}" ]; then
-		__git_repo_path="$(git "${__git_C_args[@]}" \
+		__git_repo_path="$(__git "${__git_C_args[@]}" \
 			${__git_dir:+--git-dir="$__git_dir"} \
 			rev-parse --absolute-git-dir 2>/dev/null)"
 	elif [ -n "${__git_dir-}" ]; then
@@ -67,7 +67,7 @@ __git_find_repo_path ()
 	elif [ -d .git ]; then
 		__git_repo_path=.git
 	else
-		__git_repo_path="$(git rev-parse --git-dir 2>/dev/null)"
+		__git_repo_path="$(__git rev-parse --git-dir 2>/dev/null)"
 	fi
 }
 
@@ -379,7 +379,7 @@ fi
 
 # This function is equivalent to
 #
-#    __gitcomp "$(git xxx --git-completion-helper) ..."
+#    __gitcomp "$(__git xxx --git-completion-helper) ..."
 #
 # except that the output is cached. Accept 1-3 arguments:
 # 1: the git command to execute, this is also the cache key
@@ -1240,7 +1240,7 @@ _git_archive ()
 {
 	case "$cur" in
 	--format=*)
-		__gitcomp "$(git archive --list)" "" "${cur##--format=}"
+		__gitcomp "$(__git archive --list)" "" "${cur##--format=}"
 		return
 		;;
 	--remote=*)
@@ -2185,7 +2185,7 @@ __git_config_vars=
 __git_compute_config_vars ()
 {
 	test -n "$__git_config_vars" ||
-	__git_config_vars="$(git help --config-for-completion | sort | uniq)"
+	__git_config_vars="$(__git help --config-for-completion | sort | uniq)"
 }
 
 _git_config ()
