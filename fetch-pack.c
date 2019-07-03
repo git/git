@@ -286,7 +286,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 		 * we cannot trust the object flags).
 		 */
 		if (!args->no_dependents &&
-		    ((o = lookup_object(the_repository, remote->hash)) != NULL) &&
+		    ((o = lookup_object(the_repository, remote)) != NULL) &&
 				(o->flags & COMPLETE)) {
 			continue;
 		}
@@ -364,7 +364,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 			if (skip_prefix(reader.line, "unshallow ", &arg)) {
 				if (get_oid_hex(arg, &oid))
 					die(_("invalid unshallow line: %s"), reader.line);
-				if (!lookup_object(the_repository, oid.hash))
+				if (!lookup_object(the_repository, &oid))
 					die(_("object not found: %s"), reader.line);
 				/* make sure that it is parsed as shallow */
 				if (!parse_object(the_repository, &oid))
@@ -707,7 +707,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o = deref_tag(the_repository,
 					     lookup_object(the_repository,
-					     ref->old_oid.hash),
+					     &ref->old_oid),
 					     NULL, 0);
 
 		if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
@@ -734,7 +734,7 @@ static int everything_local(struct fetch_pack_args *args,
 		const struct object_id *remote = &ref->old_oid;
 		struct object *o;
 
-		o = lookup_object(the_repository, remote->hash);
+		o = lookup_object(the_repository, remote);
 		if (!o || !(o->flags & COMPLETE)) {
 			retval = 0;
 			print_verbose(args, "want %s (%s)", oid_to_hex(remote),
@@ -1048,7 +1048,7 @@ static void add_wants(int no_dependents, const struct ref *wants, struct strbuf 
 		 * we cannot trust the object flags).
 		 */
 		if (!no_dependents &&
-		    ((o = lookup_object(the_repository, remote->hash)) != NULL) &&
+		    ((o = lookup_object(the_repository, remote)) != NULL) &&
 		    (o->flags & COMPLETE)) {
 			continue;
 		}
@@ -1275,7 +1275,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 		if (skip_prefix(reader->line, "unshallow ", &arg)) {
 			if (get_oid_hex(arg, &oid))
 				die(_("invalid unshallow line: %s"), reader->line);
-			if (!lookup_object(the_repository, oid.hash))
+			if (!lookup_object(the_repository, &oid))
 				die(_("object not found: %s"), reader->line);
 			/* make sure that it is parsed as shallow */
 			if (!parse_object(the_repository, &oid))

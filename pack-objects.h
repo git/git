@@ -187,7 +187,7 @@ struct object_entry *packlist_alloc(struct packing_data *pdata,
 				    uint32_t index_pos);
 
 struct object_entry *packlist_find(struct packing_data *pdata,
-				   const unsigned char *sha1,
+				   const struct object_id *oid,
 				   uint32_t *index_pos);
 
 static inline uint32_t pack_name_hash(const char *name)
