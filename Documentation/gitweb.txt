@@ -28,8 +28,7 @@ Gitweb provides a web interface to Git repositories.  Its features include:
   revisions one at a time, viewing the history of the repository.
 * Finding commits which commit messages matches given search term.
 
-See http://git.kernel.org/?p=git/git.git;a=tree;f=gitweb[] or
-http://repo.or.cz/w/git.git/tree/HEAD:/gitweb/[] for gitweb source code,
+See http://repo.or.cz/w/git.git/tree/HEAD:/gitweb/[] for gitweb source code,
 browsed using gitweb itself.
 
 
