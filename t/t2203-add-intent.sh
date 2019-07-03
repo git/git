@@ -247,12 +247,14 @@ test_expect_success 'diff-files/diff-cached shows ita as new/not-new files' '
 test_expect_success '"diff HEAD" includes ita as new files' '
 	git reset --hard &&
 	echo new >new-ita &&
+	oid=$(git hash-object new-ita) &&
+	oid=$(git rev-parse --short $oid) &&
 	git add -N new-ita &&
 	git diff HEAD >actual &&
-	cat >expected <<-\EOF &&
+	cat >expected <<-EOF &&
 	diff --git a/new-ita b/new-ita
 	new file mode 100644
-	index 0000000..3e75765
+	index 0000000..$oid
 	--- /dev/null
 	+++ b/new-ita
 	@@ -0,0 +1 @@
