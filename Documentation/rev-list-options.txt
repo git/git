@@ -182,6 +182,14 @@ explicitly.
 	Pretend as if all objects mentioned by reflogs are listed on the
 	command line as `<commit>`.
 
+--alternate-refs::
+	Pretend as if all objects mentioned as ref tips of alternate
+	repositories were listed on the command line. An alternate
+	repository is any repository whose object directory is specified
+	in `objects/info/alternates`.  The set of included objects may
+	be modified by `core.alternateRefsCommand`, etc. See
+	linkgit:git-config[1].
+
 --single-worktree::
 	By default, all working trees will be examined by the
 	following options when there are more than one (see
