@@ -206,18 +206,22 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	git worktree add -f bazdir2 baz &&
 	git branch -M baz bam &&
 	test $(git -C bazdir rev-parse --abbrev-ref HEAD) = bam &&
-	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam
+	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam &&
+	rm -r bazdir bazdir2 &&
+	git worktree prune
 '
 
 test_expect_success 'git branch -M baz bam should succeed within a worktree in which baz is checked out' '
 	git checkout -b baz &&
-	git worktree add -f bazdir3 baz &&
+	git worktree add -f bazdir baz &&
 	(
-		cd bazdir3 &&
+		cd bazdir &&
 		git branch -M baz bam &&
 		test $(git rev-parse --abbrev-ref HEAD) = bam
 	) &&
-	test $(git rev-parse --abbrev-ref HEAD) = bam
+	test $(git rev-parse --abbrev-ref HEAD) = bam &&
+	rm -r bazdir &&
+	git worktree prune
 '
 
 test_expect_success 'git branch -M master should work when master is checked out' '
@@ -804,7 +808,9 @@ test_expect_success 'test deleting branch without config' '
 test_expect_success 'deleting currently checked out branch fails' '
 	git worktree add -b my7 my7 &&
 	test_must_fail git -C my7 branch -d my7 &&
-	test_must_fail git branch -d my7
+	test_must_fail git branch -d my7 &&
+	rm -r my7 &&
+	git worktree prune
 '
 
 test_expect_success 'test --track without .fetch entries' '

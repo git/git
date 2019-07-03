@@ -26,8 +26,10 @@ DESCRIPTION
 -----------
 
 If `--list` is given, or if there are no non-option arguments, existing
-branches are listed; the current branch will be highlighted with an
-asterisk.  Option `-r` causes the remote-tracking branches to be listed,
+branches are listed; the current branch will be highlighted in green and
+marked with an asterisk.  Any branches checked out in linked worktrees will
+be highlighted in cyan and marked with a plus sign. Option `-r` causes the
+remote-tracking branches to be listed,
 and option `-a` shows both local and remote branches. If a `<pattern>`
 is given, it is used as a shell wildcard to restrict the output to
 matching branches. If multiple patterns are given, a branch is shown if
@@ -174,8 +176,10 @@ This option is only applicable in non-verbose mode.
 	When in list mode,
 	show sha1 and commit subject line for each head, along with
 	relationship to upstream branch (if any). If given twice, print
-	the name of the upstream branch, as well (see also `git remote
-	show <remote>`).
+	the path of the linked worktree (if any) and the name of the upstream
+	branch, as well (see also `git remote show <remote>`).  Note that the
+	current worktree's HEAD will not have its path printed (it will always
+	be your current directory).
 
 -q::
 --quiet::
