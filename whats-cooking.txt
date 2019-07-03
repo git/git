@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2019, #07; Fri, 28)
+Subject: What's cooking in git.git (Jul 2019, #01; Wed, 3)
 X-master-at: 8dca754b1e874719a732bc9ab7b0e14b21b1bc10
-X-next-at: 81fc6c5d4a7fb145529da1dfc407c4e0c0e8ae8e
+X-next-at: 7e3185f69d3a7787a33c0a87c34e609ef9958fe8
 
-What's cooking in git.git (Jun 2019, #07; Fri, 28)
+What's cooking in git.git (Jul 2019, #01; Wed, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,104 +23,84 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* cb/windows-manifest (2019-06-27) 1 commit
- - mingw: embed a manifest to trick UAC into Doing The Right Thing
+* bc/hash-independent-tests-part-4 (2019-07-01) 10 commits
+ - t2203: avoid hard-coded object ID values
+ - t1710: make hash independent
+ - t1007: remove SHA1 prerequisites
+ - t0090: make test pass with SHA-256
+ - t0027: make hash size independent
+ - t6030: make test work with SHA-256
+ - t5000: make hash independent
+ - t1450: make hash size independent
+ - t1410: make hash size independent
+ - t: add helper to convert object IDs to paths
 
- Windows update.
-
- Will merge to 'next'.
-
-
-* js/mingw-gcc-stash-protect (2019-06-27) 1 commit
- - mingw: enable stack smashing protector
-
- Windows update.
-
- Will merge to 'next'.
-
-
-* js/mingw-use-utf8 (2019-06-27) 2 commits
- - mingw: use Unicode functions explicitly
- - mingw: get pw_name in UTF-8 format
-
- Windows update.
-
- Will merge to 'next'.
+ Update to the tests to help SHA-256 transition continues.
 
 
-* kb/windows-force-utf8 (2019-06-27) 1 commit
- - gettext: always use UTF-8 on native Windows
+* pw/prompt-cherry-pick-revert-fix (2019-07-01) 1 commit
+ - git-prompt: improve cherry-pick/revert detection
 
- Windows update.
+ When one step in multi step cherry-pick or revert is reset or
+ committed, the command line prompt script failed to notice the
+ current status, which has been improved.
 
  Will merge to 'next'.
 
 
-* js/rebase-reschedule-applies-only-to-interactive (2019-06-27) 1 commit
- - rebase: ignore rebase.reschedulefailedexec unless interactive
+* pw/rebase-progress-test-cleanup (2019-07-01) 1 commit
+ - t3420: remove progress lines before comparing output
+ (this branch uses sg/rebase-progress.)
 
- The configuration variable rebase.rescheduleFailedExec should be
- effective only while running an interactive rebase and should not
- affect anything when running an non-interactive one, which was not
- the case.  This has been corrected.
-
- Almost there, modulo minor nits.
- 
-
-
-* jt/t5551-test-chunked (2019-06-27) 1 commit
- - t5551: test usage of chunked encoding explicitly
-
- Update smart-http test.
+ Test cleanup.
 
  Will merge to 'next'.
 
 
-* tb/ref-filter-multiple-patterns (2019-06-27) 1 commit
- - ref-filter.c: find disjoint pattern prefixes
+* sg/git-C-empty-doc (2019-07-01) 1 commit
+ - Document that 'git -C ""' works and doesn't change directory
 
- "git for-each-ref" with multiple patterns have been optimized.
-
- Will merge to 'next'.
-
-
-* ew/repack-with-bitmaps-by-default (2019-06-28) 1 commit
- - repack: disable bitmaps-by-default if .keep files exist
-
- Generation of pack bitmaps are now disabled when .keep files exist,
- as these are mutually exclusive features.
-
-
-* jk/br-blame-ignore-unused-fix (2019-06-28) 1 commit
- - blame: drop some unused function parameters
- (this branch uses br/blame-ignore.)
-
- Move this into the base topic, once acked.
-
-
-* jk/check-connected-with-alternates (2019-06-28) 1 commit
- - check_connected: assume alternate ref tips are valid
-
- The tips of refs from the alternate object store can be used as
- starting point for reachability computation now.
+ Doc update.
 
  Will merge to 'next'.
 
 
-* jk/test-commit-bulk (2019-06-28) 6 commits
- - t6200: use test_commit_bulk
- - t5703: use test_commit_bulk
- - t5702: use test_commit_bulk
- - t3311: use test_commit_bulk
- - t5310: increase the number of bitmapped commits
- - test-lib: introduce test_commit_bulk
+* es/local-atomic-push-failure-with-http (2019-07-02) 2 commits
+ - SQUASH???
+ - transport-helper: enforce atomic in push_refs_with_push
 
- A test helper has been introduced to optimize preparation of test
- repositories with many simple commits, and a handful of test
- scripts have been updated to use it.
+ "git push --atomic" that goes over the transport-helper (namely,
+ the smart http transport) failed to prevent refs to be pushed when
+ it can locally tell that one of the ref update will fail without
+ having to consult the other end, which has been corrected.
+
+ Need to either wait for reroll or squash the fix in directly.
+
+
+* es/walken-tutorial (2019-07-02) 1 commit
+ - documentation: add tutorial for revision walking
+
+ Yet another revision walker tutorial.
+
+
+* qn/clone-doc-use-long-form (2019-07-02) 2 commits
+ - docs: git-clone: list short form of options first
+ - docs: git-clone: refer to long form of options
+
+ The "git clone" documentation refers to command line options in its
+ description in the short form; they have been replaced with long
+ forms to make them more recognisable.
 
  Will merge to 'next'.
- I think I spotted one unused command, which we may want to remove, though.
+
+
+* sg/ci-brew-gcc-workaround (2019-07-03) 2 commits
+ - ci: disable Homebrew's auto cleanup
+ - ci: don't update Homebrew
+
+ Dev support update.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -197,6 +177,108 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cb/windows-manifest (2019-06-27) 1 commit
+  (merged to 'next' on 2019-07-03 at 875721bdc9)
+ + mingw: embed a manifest to trick UAC into Doing The Right Thing
+
+ Windows update.
+
+ Will merge to 'master'.
+
+
+* js/mingw-gcc-stack-protect (2019-06-27) 1 commit
+  (merged to 'next' on 2019-07-03 at 7e3185f69d)
+ + mingw: enable stack smashing protector
+
+ Windows update.
+
+ Will merge to 'master'.
+
+
+* js/mingw-use-utf8 (2019-06-27) 2 commits
+  (merged to 'next' on 2019-07-03 at f528daf88d)
+ + mingw: use Unicode functions explicitly
+ + mingw: get pw_name in UTF-8 format
+
+ Windows update.
+
+ Will merge to 'master'.
+
+
+* kb/windows-force-utf8 (2019-06-27) 1 commit
+ - gettext: always use UTF-8 on native Windows
+
+ Windows update.
+
+ On hold.
+ cf. <nycvar.QRO.7.76.6.1907031321270.44@tvgsbejvaqbjf.bet>
+
+
+* js/rebase-reschedule-applies-only-to-interactive (2019-07-01) 1 commit
+ - rebase --am: ignore rebase.rescheduleFailedExec
+
+ The configuration variable rebase.rescheduleFailedExec should be
+ effective only while running an interactive rebase and should not
+ affect anything when running an non-interactive one, which was not
+ the case.  This has been corrected.
+
+ Will merge to 'next'.
+
+
+* jt/t5551-test-chunked (2019-06-27) 1 commit
+  (merged to 'next' on 2019-07-03 at aafd74451c)
+ + t5551: test usage of chunked encoding explicitly
+
+ Update smart-http test.
+
+ Will merge to 'master'.
+
+
+* tb/ref-filter-multiple-patterns (2019-06-27) 1 commit
+  (merged to 'next' on 2019-07-03 at f59ad42c4a)
+ + ref-filter.c: find disjoint pattern prefixes
+
+ "git for-each-ref" with multiple patterns have been optimized.
+
+ Will merge to 'master'.
+
+
+* ew/repack-with-bitmaps-by-default (2019-07-01) 1 commit
+ - repack: disable bitmaps-by-default if .keep files exist
+
+ Generation of pack bitmaps are now disabled when .keep files exist,
+ as these are mutually exclusive features.
+
+ Will merge to 'next'.
+
+
+* jk/check-connected-with-alternates (2019-07-01) 2 commits
+ - check_everything_connected: assume alternate ref tips are valid
+ - object-store.h: move for_each_alternate_ref() from transport.h
+
+ The tips of refs from the alternate object store can be used as
+ starting point for reachability computation now.
+
+ Will merge to 'next'.
+
+
+* jk/test-commit-bulk (2019-07-02) 7 commits
+ - SQUASH???
+ - t6200: use test_commit_bulk
+ - t5703: use test_commit_bulk
+ - t5702: use test_commit_bulk
+ - t3311: use test_commit_bulk
+ - t5310: increase the number of bitmapped commits
+ - test-lib: introduce test_commit_bulk
+
+ A test helper has been introduced to optimize preparation of test
+ repositories with many simple commits, and a handful of test
+ scripts have been updated to use it.
+
+ Will merge to 'next'.
+ I think I spotted one unused command, which we may want to remove, though.
+
+
 * ab/test-env (2019-06-21) 8 commits
  - tests: make GIT_TEST_FAIL_PREREQS a boolean
  - tests: replace test_tristate with "git env--helper"
@@ -213,6 +295,8 @@ of the repositories listed at
  ways to spell true, like yes, on, etc., and also ways to spell
  false, like no, off, etc." convention.
 
+ Will merge to 'next'.
+
 
 * cc/first-contrib-tutorial (2019-06-24) 1 commit
   (merged to 'next' on 2019-06-27 at a9f2ab2f21)
@@ -223,7 +307,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ds/early-access (2019-06-20) 3 commits
+* ds/early-access (2019-07-01) 3 commits
  - repo-settings: pack.useSparse=true
  - repo-settings: use index.version=4 by default
  - repo-settings: create core.featureAdoptionRate setting
@@ -231,7 +315,8 @@ of the repositories listed at
  A mechanism to enable newish configuration settings in bulk has
  been invented.
 
- Looked mostly sane, modulo minor nits.
+ The model may need to be rethought.  A linear scale with "early
+ adoption" mindset may not match diverse use cases of the tool.
 
 
 * jh/msvc (2019-06-25) 20 commits
@@ -390,12 +475,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dr/progress-i18n (2019-06-24) 1 commit
+* dr/progress-i18n (2019-07-02) 1 commit
  - l10n: localizable upload progress messages
 
  Progress messages have been made localizable.
 
- Not quite with the code duplication...
+ Will merge to 'next'.
 
 
 * jw/gitweb-sample-update (2019-06-24) 1 commit
@@ -419,15 +504,16 @@ of the repositories listed at
 
 
 * pw/status-with-corrupt-sequencer-state (2019-06-27) 3 commits
- - status: do not report errors in sequencer/todo
- - sequencer: factor out todo command name parsing
- - sequencer: always allow tab after command name
+  (merged to 'next' on 2019-07-03 at 273aee6b3c)
+ + status: do not report errors in sequencer/todo
+ + sequencer: factor out todo command name parsing
+ + sequencer: always allow tab after command name
 
  The code to read state files used by the sequencer machinery for
  "git status" has been made more robust against a corrupt or stale
  state files.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/t5551-fetch-smart-error-is-translated (2019-06-25) 1 commit
@@ -439,7 +525,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ab/no-kwset (2019-06-28) 9 commits
+* ab/no-kwset (2019-07-01) 10 commits
  - grep: use PCRE v2 for optimized fixed-string search
  - grep: remove the kwset optimization
  - grep: drop support for \0 in --fixed-strings <pattern>
@@ -447,13 +533,15 @@ of the repositories listed at
  - grep tests: move binary pattern tests into their own file
  - grep tests: move "grep binary" alongside the rest
  - grep: inline the return value of a function call used only once
+ - t4210: skip more command-line encoding tests on MinGW
  - grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
  - log tests: test regex backends in "--encode=<enc>" tests
 
  Retire use of kwset library, which is an optimization for looking
  for fixed strings, with use of pcre2 JIT.
 
- Will merge to 'next'.
+ On hold.
+ cf. <nycvar.QRO.7.76.6.1907021417050.48@tvgsbejvaqbjf.bet>
 
 
 * mt/dir-iterator-updates (2019-06-25) 10 commits
@@ -485,6 +573,8 @@ of the repositories listed at
 
  The tree-walk API learned to pass an in-core repository
  instance throughout more codepaths.
+
+ Will merge to 'next'.
 
 
 * cb/fsmonitor-intfix (2019-06-17) 1 commit
@@ -523,7 +613,8 @@ of the repositories listed at
  learned to take a combined filter specification.
 
  There is a bit of interaction with cc/multi-promisor topic, whose
- conflict resolution I have no confidence in X-<.
+ conflict resolution I have no confidence in X-<.  Extra sets of
+ eyes are appreciated.
 
 
 * pw/doc-synopsis-markup-opmode-options (2019-06-17) 1 commit
@@ -593,13 +684,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ra/cherry-pick-revert-skip (2019-06-24) 6 commits
+* ra/cherry-pick-revert-skip (2019-07-02) 5 commits
  - cherry-pick/revert: advise using --skip
  - cherry-pick/revert: add --skip option
  - sequencer: use argv_array in reset_merge
  - sequencer: rename reset_for_rollback to reset_merge
  - sequencer: add advice for revert
- - advice: add sequencerInUse config variable
 
  "git cherry-pick/revert" learned a new "--skip" action.
 
@@ -682,7 +772,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* cc/test-oidmap (2019-06-17) 4 commits
+* cc/test-oidmap (2019-07-01) 6 commits
+  (merged to 'next' on 2019-07-01 at 331a414a24)
+ + t0016: add 'remove' subcommand test
+ + test-oidmap: remove 'add' subcommand
   (merged to 'next' on 2019-06-27 at 247a4341ca)
  + test-hashmap: remove 'hash' command
  + oidmap: use sha1hash() instead of static hash() function
@@ -694,7 +787,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ds/midx-expire-repack (2019-06-11) 11 commits
+* ds/midx-expire-repack (2019-07-01) 12 commits
+  (merged to 'next' on 2019-07-01 at c2a907f395)
+ + t5319: use 'test-tool path-utils' instead of 'ls -l'
   (merged to 'next' on 2019-06-27 at 35e6e3b38d)
  + t5319-multi-pack-index.sh: test batch size zero
  + midx: add test that 'expire' respects .keep files
@@ -742,6 +837,7 @@ of the repositories listed at
  + pager: add a helper function to clear the last line in the terminal
  + t3404: make the 'rebase.missingCommitsCheck=ignore' test more focused
  + t3404: modernize here doc style
+ (this branch is used by pw/rebase-progress-test-cleanup.)
 
  Use "Erase in Line" CSI sequence that is already used in the editor
  support to clear cruft in the progress output.
@@ -804,31 +900,32 @@ of the repositories listed at
 
 
 * ds/commit-graph-incremental (2019-06-19) 18 commits
- - commit-graph: test verify across alternates
- - commit-graph: normalize commit-graph filenames
- - commit-graph: test --split across alternate without --split
- - commit-graph: test octopus merges with --split
- - commit-graph: clean up chains after flattened write
- - commit-graph: verify chains with --shallow mode
- - commit-graph: create options for split files
- - commit-graph: expire commit-graph files
- - commit-graph: allow cross-alternate chains
- - commit-graph: merge commit-graph chains
- - commit-graph: add --split option to builtin
- - commit-graph: write commit-graph chains
- - commit-graph: rearrange chunk count logic
- - commit-graph: add base graphs chunk
- - commit-graph: load commit-graph chains
- - commit-graph: rename commit_compare to oid_compare
- - commit-graph: prepare for commit-graph chains
- - commit-graph: document commit-graph chains
+  (merged to 'next' on 2019-07-03 at 5dee5edbdf)
+ + commit-graph: test verify across alternates
+ + commit-graph: normalize commit-graph filenames
+ + commit-graph: test --split across alternate without --split
+ + commit-graph: test octopus merges with --split
+ + commit-graph: clean up chains after flattened write
+ + commit-graph: verify chains with --shallow mode
+ + commit-graph: create options for split files
+ + commit-graph: expire commit-graph files
+ + commit-graph: allow cross-alternate chains
+ + commit-graph: merge commit-graph chains
+ + commit-graph: add --split option to builtin
+ + commit-graph: write commit-graph chains
+ + commit-graph: rearrange chunk count logic
+ + commit-graph: add base graphs chunk
+ + commit-graph: load commit-graph chains
+ + commit-graph: rename commit_compare to oid_compare
+ + commit-graph: prepare for commit-graph chains
+ + commit-graph: document commit-graph chains
  (this branch uses ds/close-object-store and ds/commit-graph-write-refactor.)
 
  The commits in a repository can be described by multiple
  commit-graph files now, which allows the commit-graph files to be
  updated incrementally.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * tm/tag-gpgsign-config (2019-06-05) 1 commit
@@ -917,6 +1014,7 @@ of the repositories listed at
 
  There is a bit of interaction with md/list-objects-filter-combo
  topic, whose conflict resolution I have no confidence in X-<.
+ Extra sets of eyes are appreciated.
 
 
 * nd/switch-and-restore (2019-06-20) 46 commits
@@ -1046,7 +1144,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* br/blame-ignore (2019-06-20) 9 commits
+* br/blame-ignore (2019-07-01) 11 commits
+  (merged to 'next' on 2019-07-01 at f4b79421c9)
+ + t8014: remove unnecessary braces
+ + blame: drop some unused function parameters
   (merged to 'next' on 2019-06-27 at 36b91a787f)
  + blame: add a test to cover blame_coalesce()
  + blame: use the fingerprint heuristic to match ignored lines
@@ -1057,9 +1158,8 @@ of the repositories listed at
  + blame: use a helper function in blame_chunk()
  + Move oidset_parse_file() to oidset.c
  + fsck: rename and touch up init_skiplist()
- (this branch is used by jk/br-blame-ignore-unused-fix.)
 
  "git blame" learned to "ignore" commits in the history, whose
  effects (as well as their presence) get ignored.
 
- Needs a touch-up to reduce -Wunused-parameters error.
+ Will cook in 'next'.
