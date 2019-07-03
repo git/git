@@ -20,7 +20,7 @@ test_expect_success 'verify graph with no graph file' '
 test_expect_success 'write graph with no packs' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write --object-dir . &&
-	test_path_is_file info/commit-graph
+	test_path_is_missing info/commit-graph
 '
 
 test_expect_success 'close with correct error on bad input' '
