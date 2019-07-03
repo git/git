@@ -224,6 +224,7 @@ static int set_git_option(struct git_transport_options *opts,
 		opts->no_dependents = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_LIST_OBJECTS_FILTER)) {
+		list_objects_filter_die_if_populated(&opts->filter_options);
 		parse_list_objects_filter(&opts->filter_options, value);
 		return 0;
 	}

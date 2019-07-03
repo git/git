@@ -86,6 +86,12 @@ char *url_decode_mem(const char *url, int len)
 	return url_decode_internal(&url, len, NULL, &out, 0);
 }
 
+char *url_percent_decode(const char *encoded)
+{
+	struct strbuf out = STRBUF_INIT;
+	return url_decode_internal(&encoded, strlen(encoded), NULL, &out, 0);
+}
+
 char *url_decode_parameter_name(const char **query)
 {
 	struct strbuf out = STRBUF_INIT;

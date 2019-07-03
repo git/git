@@ -1153,13 +1153,11 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		transport->server_options = &server_options;
 
 	if (filter_options.choice) {
-		struct strbuf expanded_filter_spec = STRBUF_INIT;
-		expand_list_objects_filter_spec(&filter_options,
-						&expanded_filter_spec);
+		const char *spec =
+			expand_list_objects_filter_spec(&filter_options);
 		transport_set_option(transport, TRANS_OPT_LIST_OBJECTS_FILTER,
-				     expanded_filter_spec.buf);
+				     spec);
 		transport_set_option(transport, TRANS_OPT_FROM_PROMISOR, "1");
-		strbuf_release(&expanded_filter_spec);
 	}
 
 	if (transport->smart_options && !deepen && !filter_options.choice)

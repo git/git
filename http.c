@@ -513,9 +513,11 @@ static void set_proxyauth_name_password(CURL *result)
 #else
 		struct strbuf s = STRBUF_INIT;
 
-		strbuf_addstr_urlencode(&s, proxy_auth.username, 1);
+		strbuf_addstr_urlencode(&s, proxy_auth.username,
+					is_rfc3986_unreserved);
 		strbuf_addch(&s, ':');
-		strbuf_addstr_urlencode(&s, proxy_auth.password, 1);
+		strbuf_addstr_urlencode(&s, proxy_auth.password,
+					is_rfc3986_unreserved);
 		curl_proxyuserpwd = strbuf_detach(&s, NULL);
 		curl_easy_setopt(result, CURLOPT_PROXYUSERPWD, curl_proxyuserpwd);
 #endif
@@ -2272,7 +2274,7 @@ struct http_pack_request *new_http_pack_request(
 			    sha1_pack_name(target->hash));
 	} else {
 		strbuf_addf(&preq->tmpfile, "%s/pack/pack-", get_object_directory());
-		strbuf_addstr_urlencode(&preq->tmpfile, base_url, 1);
+		strbuf_addstr_urlencode(&preq->tmpfile, base_url, is_rfc3986_unreserved);
 		strbuf_addstr(&preq->tmpfile, ".temp");
 	}
 
