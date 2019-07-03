@@ -9,7 +9,7 @@ git-multi-pack-index - Write and verify multi-pack-indexes
 SYNOPSIS
 --------
 [verse]
-'git multi-pack-index' [--object-dir=<dir>] <verb>
+'git multi-pack-index' [--object-dir=<dir>] <subcommand>
 
 DESCRIPTION
 -----------
@@ -23,13 +23,35 @@ OPTIONS
 	`<dir>/packs/multi-pack-index` for the current MIDX file, and
 	`<dir>/packs` for the pack-files to index.
 
+The following subcommands are available:
+
 write::
-	When given as the verb, write a new MIDX file to
-	`<dir>/packs/multi-pack-index`.
+	Write a new MIDX file.
 
 verify::
-	When given as the verb, verify the contents of the MIDX file
-	at `<dir>/packs/multi-pack-index`.
+	Verify the contents of the MIDX file.
+
+expire::
+	Delete the pack-files that are tracked 	by the MIDX file, but
+	have no objects referenced by the MIDX. Rewrite the MIDX file
+	afterward to remove all references to these pack-files.
+
+repack::
+	Create a new pack-file containing objects in small pack-files
+	referenced by the multi-pack-index. If the size given by the
+	`--batch-size=<size>` argument is zero, then create a pack
+	containing all objects referenced by the multi-pack-index. For
+	a non-zero batch size, Select the pack-files by examining packs
+	from oldest-to-newest, computing the "expected size" by counting
+	the number of objects in the pack referenced by the
+	multi-pack-index, then divide by the total number of objects in
+	the pack and multiply by the pack size. We select packs with
+	expected size below the batch size until the set of packs have
+	total expected size at least the batch size. If the total size
+	does not reach the batch size, then do nothing. If a new pack-
+	file is created, rewrite the multi-pack-index to reference the
+	new pack-file. A later run of 'git multi-pack-index expire' will
+	delete the pack-files that were part of this batch.
 
 
 EXAMPLES
