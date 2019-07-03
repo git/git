@@ -248,7 +248,8 @@ static void check_shallow_file_for_update(struct repository *r)
 	if (r->parsed_objects->is_shallow == -1)
 		BUG("shallow must be initialized by now");
 
-	if (!stat_validity_check(r->parsed_objects->shallow_stat, git_path_shallow(the_repository)))
+	if (!stat_validity_check(r->parsed_objects->shallow_stat,
+				 git_path_shallow(r)))
 		die("shallow file has changed since we read it");
 }
 

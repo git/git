@@ -153,9 +153,9 @@ static struct tree *shift_tree_object(struct repository *repo,
 	struct object_id shifted;
 
 	if (!*subtree_shift) {
-		shift_tree(&one->object.oid, &two->object.oid, &shifted, 0);
+		shift_tree(repo, &one->object.oid, &two->object.oid, &shifted, 0);
 	} else {
-		shift_tree_by(&one->object.oid, &two->object.oid, &shifted,
+		shift_tree_by(repo, &one->object.oid, &two->object.oid, &shifted,
 			      subtree_shift);
 	}
 	if (oideq(&two->object.oid, &shifted))
@@ -465,17 +465,18 @@ static void get_files_dirs(struct merge_options *opt, struct tree *tree)
 {
 	struct pathspec match_all;
 	memset(&match_all, 0, sizeof(match_all));
-	read_tree_recursive(the_repository, tree, "", 0, 0,
+	read_tree_recursive(opt->repo, tree, "", 0, 0,
 			    &match_all, save_files_dirs, opt);
 }
 
-static int get_tree_entry_if_blob(const struct object_id *tree,
+static int get_tree_entry_if_blob(struct repository *r,
+				  const struct object_id *tree,
 				  const char *path,
 				  struct diff_filespec *dfs)
 {
 	int ret;
 
-	ret = get_tree_entry(tree, path, &dfs->oid, &dfs->mode);
+	ret = get_tree_entry(r, tree, path, &dfs->oid, &dfs->mode);
 	if (S_ISDIR(dfs->mode)) {
 		oidcpy(&dfs->oid, &null_oid);
 		dfs->mode = 0;
@@ -487,15 +488,16 @@ static int get_tree_entry_if_blob(const struct object_id *tree,
  * Returns an index_entry instance which doesn't have to correspond to
  * a real cache entry in Git's index.
  */
-static struct stage_data *insert_stage_data(const char *path,
+static struct stage_data *insert_stage_data(struct repository *r,
+		const char *path,
 		struct tree *o, struct tree *a, struct tree *b,
 		struct string_list *entries)
 {
 	struct string_list_item *item;
 	struct stage_data *e = xcalloc(1, sizeof(struct stage_data));
-	get_tree_entry_if_blob(&o->object.oid, path, &e->stages[1]);
-	get_tree_entry_if_blob(&a->object.oid, path, &e->stages[2]);
-	get_tree_entry_if_blob(&b->object.oid, path, &e->stages[3]);
+	get_tree_entry_if_blob(r, &o->object.oid, path, &e->stages[1]);
+	get_tree_entry_if_blob(r, &a->object.oid, path, &e->stages[2]);
+	get_tree_entry_if_blob(r, &b->object.oid, path, &e->stages[3]);
 	item = string_list_insert(entries, path);
 	item->util = e;
 	return e;
@@ -1900,12 +1902,14 @@ static struct diff_queue_struct *get_diffpairs(struct merge_options *opt,
 	return ret;
 }
 
-static int tree_has_path(struct tree *tree, const char *path)
+static int tree_has_path(struct repository *r, struct tree *tree,
+			 const char *path)
 {
 	struct object_id hashy;
 	unsigned short mode_o;
 
-	return !get_tree_entry(&tree->object.oid, path,
+	return !get_tree_entry(r,
+			       &tree->object.oid, path,
 			       &hashy, &mode_o);
 }
 
@@ -2056,7 +2060,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	 */
 	if (collision_ent->reported_already) {
 		clean = 0;
-	} else if (tree_has_path(tree, new_path)) {
+	} else if (tree_has_path(opt->repo, tree, new_path)) {
 		collision_ent->reported_already = 1;
 		strbuf_add_separated_string_list(&collision_paths, ", ",
 						 &collision_ent->source_files);
@@ -2134,7 +2138,7 @@ static void handle_directory_level_conflicts(struct merge_options *opt,
 			string_list_append(&remove_from_merge,
 					   merge_ent->dir)->util = merge_ent;
 			strbuf_release(&merge_ent->new_dir);
-		} else if (tree_has_path(head, head_ent->dir)) {
+		} else if (tree_has_path(opt->repo, head, head_ent->dir)) {
 			/* 2. This wasn't a directory rename after all */
 			string_list_append(&remove_from_head,
 					   head_ent->dir)->util = head_ent;
@@ -2148,7 +2152,7 @@ static void handle_directory_level_conflicts(struct merge_options *opt,
 	hashmap_iter_init(dir_re_merge, &iter);
 	while ((merge_ent = hashmap_iter_next(&iter))) {
 		head_ent = dir_rename_find_entry(dir_re_head, merge_ent->dir);
-		if (tree_has_path(merge, merge_ent->dir)) {
+		if (tree_has_path(opt->repo, merge, merge_ent->dir)) {
 			/* 2. This wasn't a directory rename after all */
 			string_list_append(&remove_from_merge,
 					   merge_ent->dir)->util = merge_ent;
@@ -2477,7 +2481,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 		if (pair->status == 'R')
 			re->dst_entry->processed = 1;
 
-		re->dst_entry = insert_stage_data(new_path,
+		re->dst_entry = insert_stage_data(opt->repo, new_path,
 						  o_tree, a_tree, b_tree,
 						  entries);
 		item = string_list_insert(entries, new_path);
@@ -2500,7 +2504,8 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 	 * the various handle_rename_*() functions update the index
 	 * explicitly rather than relying on unpack_trees() to have done it.
 	 */
-	get_tree_entry(&tree->object.oid,
+	get_tree_entry(opt->repo,
+		       &tree->object.oid,
 		       pair->two->path,
 		       &re->dst_entry->stages[stage].oid,
 		       &re->dst_entry->stages[stage].mode);
@@ -2585,14 +2590,16 @@ static struct string_list *get_renames(struct merge_options *opt,
 		re->dir_rename_original_dest = NULL;
 		item = string_list_lookup(entries, re->pair->one->path);
 		if (!item)
-			re->src_entry = insert_stage_data(re->pair->one->path,
+			re->src_entry = insert_stage_data(opt->repo,
+					re->pair->one->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->src_entry = item->util;
 
 		item = string_list_lookup(entries, re->pair->two->path);
 		if (!item)
-			re->dst_entry = insert_stage_data(re->pair->two->path,
+			re->dst_entry = insert_stage_data(opt->repo,
+					re->pair->two->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->dst_entry = item->util;
