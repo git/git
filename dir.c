@@ -701,7 +701,7 @@ static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
 	first = 0;
 	last = dir->dirs_nr;
 	while (last > first) {
-		int cmp, next = (last + first) >> 1;
+		int cmp, next = first + ((last - first) >> 1);
 		d = dir->dirs[next];
 		cmp = strncmp(name, d->name, len);
 		if (!cmp && strlen(d->name) > len)
