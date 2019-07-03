@@ -89,6 +89,17 @@ static void remove_pack_on_signal(int signo)
 	raise(signo);
 }
 
+static int has_pack_keep_file(void)
+{
+	struct packed_git *p;
+
+	for (p = get_all_packs(the_repository); p; p = p->next) {
+		if (p->pack_keep)
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * Adds all packs hex strings to the fname list, which do not
  * have a corresponding .keep file. These packs are not to
@@ -333,9 +344,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	    (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE)))
 		die(_("--keep-unreachable and -A are incompatible"));
 
-	if (write_bitmaps < 0)
+	if (write_bitmaps < 0) {
 		write_bitmaps = (pack_everything & ALL_INTO_ONE) &&
-				 is_bare_repository();
+				 is_bare_repository() &&
+				 keep_pack_list.nr == 0 &&
+				 !has_pack_keep_file();
+	}
 	if (pack_kept_objects < 0)
 		pack_kept_objects = write_bitmaps;
 
