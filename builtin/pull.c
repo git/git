@@ -10,6 +10,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "protocol.h"
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "sha1-array.h"
@@ -880,6 +881,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
 	int autostash;
+
+	register_allowed_protocol_version(protocol_v2);
+	register_allowed_protocol_version(protocol_v1);
+	register_allowed_protocol_version(protocol_v0);
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);

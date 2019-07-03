@@ -10,6 +10,7 @@
 #include "remote.h"
 #include "transport.h"
 #include "parse-options.h"
+#include "protocol.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "send-pack.h"
@@ -589,6 +590,9 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 				TRANSPORT_FAMILY_IPV6),
 		OPT_END()
 	};
+
+	register_allowed_protocol_version(protocol_v1);
+	register_allowed_protocol_version(protocol_v0);
 
 	packet_trace_identity("push");
 	git_config(git_push_config, &flags);
