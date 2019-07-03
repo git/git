@@ -48,6 +48,7 @@ static int prune_tags = -1; /* unspecified */
 
 static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity, deepen_relative;
 static int progress = -1;
+static int enable_auto_gc = 1;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
 static int max_children = 1;
 static enum transport_family family;
@@ -169,6 +170,8 @@ static struct option builtin_fetch_options[] = {
 	OPT_STRING_LIST(0, "negotiation-tip", &negotiation_tip, N_("revision"),
 			N_("report that we have only objects reachable from this object")),
 	OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+	OPT_BOOL(0, "auto-gc", &enable_auto_gc,
+		 N_("run 'gc --auto' after fetching")),
 	OPT_END()
 };
 
@@ -1432,7 +1435,7 @@ static int fetch_multiple(struct string_list *list)
 			return errcode;
 	}
 
-	argv_array_pushl(&argv, "fetch", "--append", NULL);
+	argv_array_pushl(&argv, "fetch", "--append", "--no-auto-gc", NULL);
 	add_options_to_argv(&argv);
 
 	for (i = 0; i < list->nr; i++) {
@@ -1682,11 +1685,13 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	close_object_store(the_repository->objects);
 
-	argv_array_pushl(&argv_gc_auto, "gc", "--auto", NULL);
-	if (verbosity < 0)
-		argv_array_push(&argv_gc_auto, "--quiet");
-	run_command_v_opt(argv_gc_auto.argv, RUN_GIT_CMD);
-	argv_array_clear(&argv_gc_auto);
+	if (enable_auto_gc) {
+		argv_array_pushl(&argv_gc_auto, "gc", "--auto", NULL);
+		if (verbosity < 0)
+			argv_array_push(&argv_gc_auto, "--quiet");
+		run_command_v_opt(argv_gc_auto.argv, RUN_GIT_CMD);
+		argv_array_clear(&argv_gc_auto);
+	}
 
 	return result;
 }
