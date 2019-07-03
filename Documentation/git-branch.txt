@@ -8,12 +8,14 @@ git-branch - List, create, or delete branches
 SYNOPSIS
 --------
 [verse]
-'git branch' [--color[=<when>] | --no-color] [-r | -a]
-	[--list] [--show-current] [-v [--abbrev=<length> | --no-abbrev]]
+'git branch' [--color[=<when>] | --no-color] [--show-current]
+	[-v [--abbrev=<length> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
 	[(--merged | --no-merged) [<commit>]]
 	[--contains [<commit]] [--no-contains [<commit>]]
-	[--points-at <object>] [--format=<format>] [<pattern>...]
+	[--points-at <object>] [--format=<format>]
+	[(-r | --remotes) | (-a | --all)]
+	[--list] [<pattern>...]
 'git branch' [--track | --no-track] [-f] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
@@ -30,11 +32,15 @@ branches are listed; the current branch will be highlighted in green and
 marked with an asterisk.  Any branches checked out in linked worktrees will
 be highlighted in cyan and marked with a plus sign. Option `-r` causes the
 remote-tracking branches to be listed,
-and option `-a` shows both local and remote branches. If a `<pattern>`
+and option `-a` shows both local and remote branches.
+
+If a `<pattern>`
 is given, it is used as a shell wildcard to restrict the output to
 matching branches. If multiple patterns are given, a branch is shown if
-it matches any of the patterns.  Note that when providing a
-`<pattern>`, you must use `--list`; otherwise the command is interpreted
+it matches any of the patterns.
+
+Note that when providing a
+`<pattern>`, you must use `--list`; otherwise the command may be interpreted
 as branch creation.
 
 With `--contains`, shows only the branches that contain the named commit
@@ -155,10 +161,12 @@ This option is only applicable in non-verbose mode.
 -r::
 --remotes::
 	List or delete (if used with -d) the remote-tracking branches.
+	Combine with `--list` to match the optional pattern(s).
 
 -a::
 --all::
 	List both remote-tracking branches and local branches.
+	Combine with `--list` to match optional pattern(s).
 
 -l::
 --list::
@@ -326,6 +334,18 @@ $ git branch -D test                                    <2>
 <2> Delete the "test" branch even if the "master" branch (or whichever branch
     is currently checked out) does not have all commits from the test branch.
 
+Listing branches from a specific remote::
++
+------------
+$ git branch -r -l '<remote>/<pattern>'                 <1>
+$ git for-each-ref 'refs/remotes/<remote>/<pattern>'    <2>
+------------
++
+<1> Using `-a` would conflate <remote> with any local branches you happen to
+    have been prefixed with the same <remote> pattern.
+<2> `for-each-ref` can take a wide range of options. See linkgit:git-for-each-ref[1]
+
+Patterns will normally need quoting.
 
 NOTES
 -----
