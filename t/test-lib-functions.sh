@@ -908,6 +908,21 @@ test_cmp_rev () {
 	fi
 }
 
+# Compare paths respecting core.ignoreCase
+test_cmp_fspath () {
+	if test "x$1" = "x$2"
+	then
+		return 0
+	fi
+
+	if test true != "$(git config --get --type=bool core.ignorecase)"
+	then
+		return 1
+	fi
+
+	test "x$(echo "$1" | tr A-Z a-z)" =  "x$(echo "$2" | tr A-Z a-z)"
+}
+
 # Print a sequence of integers in increasing order, either with
 # two arguments (start and end):
 #
