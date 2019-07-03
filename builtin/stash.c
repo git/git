@@ -713,11 +713,11 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 static int show_stash(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	int opts = 0;
 	int ret = 0;
 	struct stash_info info;
 	struct rev_info rev;
 	struct argv_array stash_args = ARGV_ARRAY_INIT;
+	struct argv_array revision_args = ARGV_ARRAY_INIT;
 	struct option options[] = {
 		OPT_END()
 	};
@@ -726,11 +726,12 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	git_config(git_diff_ui_config, NULL);
 	init_revisions(&rev, prefix);
 
+	argv_array_push(&revision_args, argv[0]);
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-')
 			argv_array_push(&stash_args, argv[i]);
 		else
-			opts++;
+			argv_array_push(&revision_args, argv[i]);
 	}
 
 	ret = get_stash_info(&info, stash_args.argc, stash_args.argv);
@@ -742,7 +743,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	 * The config settings are applied only if there are not passed
 	 * any options.
 	 */
-	if (!opts) {
+	if (revision_args.argc == 1) {
 		git_config(git_stash_config, NULL);
 		if (show_stat)
 			rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT;
@@ -756,7 +757,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	argc = setup_revisions(argc, argv, &rev, NULL);
+	argc = setup_revisions(revision_args.argc, revision_args.argv, &rev, NULL);
 	if (argc > 1) {
 		free_stash_info(&info);
 		usage_with_options(git_stash_show_usage, options);
