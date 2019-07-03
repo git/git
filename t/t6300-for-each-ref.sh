@@ -346,6 +346,32 @@ test_expect_success 'Verify descending sort' '
 '
 
 cat >expected <<\EOF
+refs/tags/testtag
+refs/tags/testtag-2
+EOF
+
+test_expect_success 'exercise patterns with prefixes' '
+	git tag testtag-2 &&
+	test_when_finished "git tag -d testtag-2" &&
+	git for-each-ref --format="%(refname)" \
+		refs/tags/testtag refs/tags/testtag-2 >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+refs/tags/testtag
+refs/tags/testtag-2
+EOF
+
+test_expect_success 'exercise glob patterns with prefixes' '
+	git tag testtag-2 &&
+	test_when_finished "git tag -d testtag-2" &&
+	git for-each-ref --format="%(refname)" \
+		refs/tags/testtag "refs/tags/testtag-*" >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
 'refs/heads/master'
 'refs/remotes/origin/master'
 'refs/tags/testtag'
