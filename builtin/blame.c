@@ -59,8 +59,8 @@ static size_t blame_date_width;
 
 static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
-#ifndef DEBUG
-#define DEBUG 0
+#ifndef DEBUG_BLAME
+#define DEBUG_BLAME 0
 #endif
 
 static unsigned blame_move_score;
@@ -1062,7 +1062,7 @@ parse_done:
 	if (blame_copy_score)
 		sb.copy_score = blame_copy_score;
 
-	sb.debug = DEBUG;
+	sb.debug = DEBUG_BLAME;
 	sb.on_sanity_fail = &sanity_check_on_fail;
 
 	sb.show_root = show_root;
