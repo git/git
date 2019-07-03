@@ -889,8 +889,16 @@ static int git_format_config(const char *var, const char *value, void *cb)
 static const char *output_directory = NULL;
 static int outdir_offset;
 
+static FILE *fopen_excl(const char *filename)
+{
+	int fd = open(filename, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	if (fd < 0)
+		return NULL;
+	return fdopen(fd, "w");
+}
+
 static int open_next_file(struct commit *commit, const char *subject,
-			 struct rev_info *rev, int quiet)
+			  struct rev_info *rev, int quiet, int clobber)
 {
 	struct strbuf filename = STRBUF_INIT;
 	int suffix_len = strlen(rev->patch_suffix) + 1;
@@ -915,7 +923,12 @@ static int open_next_file(struct commit *commit, const char *subject,
 	if (!quiet)
 		printf("%s\n", filename.buf + outdir_offset);
 
-	if ((rev->diffopt.file = fopen(filename.buf, "w")) == NULL) {
+	if (clobber)
+		rev->diffopt.file = fopen(filename.buf, "w");
+	else
+		rev->diffopt.file = fopen_excl(filename.buf);
+
+	if (!rev->diffopt.file) {
 		error_errno(_("cannot open patch file %s"), filename.buf);
 		strbuf_release(&filename);
 		return -1;
@@ -1052,7 +1065,8 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      struct commit *origin,
 			      int nr, struct commit **list,
 			      const char *branch_name,
-			      int quiet)
+			      int quiet,
+			      int clobber)
 {
 	const char *committer;
 	const char *body = "*** SUBJECT HERE ***\n\n*** BLURB HERE ***\n";
@@ -1071,7 +1085,8 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	committer = git_committer_info(0);
 
 	if (!use_stdout &&
-	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
+	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter",
+			   rev, quiet, clobber))
 		die(_("failed to create cover-letter file"));
 
 	log_write_email_headers(rev, head, &pp.after_subject, &need_8bit_cte, 0);
@@ -1535,6 +1550,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf buf = STRBUF_INIT;
 	int use_patch_format = 0;
 	int quiet = 0;
+	int clobber = 1;
 	int reroll_count = -1;
 	char *branch_name = NULL;
 	char *base_commit = NULL;
@@ -1621,6 +1637,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&quiet, N_("don't print the patch filenames")),
 		OPT_BOOL(0, "progress", &show_progress,
 			 N_("show progress while generating patches")),
+		OPT_BOOL(0, "clobber", &clobber,
+			 N_("allow overwriting output files")),
 		OPT_CALLBACK(0, "interdiff", &idiff_prev, N_("rev"),
 			     N_("show changes against <rev> in cover letter or single patch"),
 			     parse_opt_object_name),
@@ -1911,7 +1929,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, use_stdout,
-				  origin, nr, list, branch_name, quiet);
+				  origin, nr, list, branch_name,
+				  quiet, clobber);
 		print_bases(&bases, rev.diffopt.file);
 		print_signature(rev.diffopt.file);
 		total++;
@@ -1966,7 +1985,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 
 		if (!use_stdout &&
-		    open_next_file(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
+		    open_next_file(rev.numbered_files ? NULL : commit, NULL,
+				   &rev, quiet, clobber))
 			die(_("failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
 		free_commit_buffer(the_repository->parsed_objects,
