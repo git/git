@@ -323,13 +323,26 @@ included in the client's request:
 	indicating its sideband (1, 2, or 3), and the server may send "0005\2"
 	(a PKT-LINE of sideband 2 with no payload) as a keepalive packet.
 
+If the 'packfile-uris' feature is advertised, the following argument
+can be included in the client's request as well as the potential
+addition of the 'packfile-uris' section in the server's response as
+explained below.
+
+    packfile-uris <comma-separated list of protocols>
+	Indicates to the server that the client is willing to receive
+	URIs of any of the given protocols in place of objects in the
+	sent packfile. Before performing the connectivity check, the
+	client should download from all given URIs. Currently, the
+	protocols supported are "http" and "https".
+
 The response of `fetch` is broken into a number of sections separated by
 delimiter packets (0001), with each section beginning with its section
-header.
+header. Most sections are sent only when the packfile is sent.
 
-    output = *section
-    section = (acknowledgments | shallow-info | wanted-refs | packfile)
-	      (flush-pkt | delim-pkt)
+    output = acknowledgements flush-pkt |
+	     [acknowledgments delim-pkt] [shallow-info delim-pkt]
+	     [wanted-refs delim-pkt] [packfile-uris delim-pkt]
+	     packfile flush-pkt
 
     acknowledgments = PKT-LINE("acknowledgments" LF)
 		      (nak | *ack)
@@ -347,13 +360,17 @@ header.
 		  *PKT-LINE(wanted-ref LF)
     wanted-ref = obj-id SP refname
 
+    packfile-uris = PKT-LINE("packfile-uris" LF) *packfile-uri
+    packfile-uri = PKT-LINE(40*(HEXDIGIT) SP *%x20-ff LF)
+
     packfile = PKT-LINE("packfile" LF)
 	       *PKT-LINE(%x01-03 *%x00-ff)
 
     acknowledgments section
-	* If the client determines that it is finished with negotiations
-	  by sending a "done" line, the acknowledgments sections MUST be
-	  omitted from the server's response.
+	* If the client determines that it is finished with negotiations by
+	  sending a "done" line (thus requiring the server to send a packfile),
+	  the acknowledgments sections MUST be omitted from the server's
+	  response.
 
 	* Always begins with the section header "acknowledgments"
 
@@ -404,9 +421,6 @@ header.
 	  which the client has not indicated was shallow as a part of
 	  its request.
 
-	* This section is only included if a packfile section is also
-	  included in the response.
-
     wanted-refs section
 	* This section is only included if the client has requested a
 	  ref using a 'want-ref' line and if a packfile section is also
@@ -419,6 +433,16 @@ header.
 
 	* The server MUST NOT send any refs which were not requested
 	  using 'want-ref' lines.
+
+    packfile-uris section
+	* This section is only included if the client sent
+	  'packfile-uris' and the server has at least one such URI to
+	  send.
+
+	* Always begins with the section header "packfile-uris".
+
+	* For each URI the server sends, it sends a hash of the pack's
+	  contents (as output by git index-pack) followed by the URI.
 
     packfile section
 	* This section is only included if the client has sent 'want'

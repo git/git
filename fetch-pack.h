@@ -83,7 +83,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       struct ref **sought,
 		       int nr_sought,
 		       struct oid_array *shallow,
-		       char **pack_lockfile,
+		       struct string_list *pack_lockfiles,
 		       enum protocol_version version);
 
 /*
