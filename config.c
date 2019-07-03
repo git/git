@@ -19,6 +19,7 @@
 #include "utf8.h"
 #include "dir.h"
 #include "color.h"
+#include "refs.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -170,6 +171,12 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	return ret;
 }
 
+static void add_trailing_starstar_for_dir(struct strbuf *pat)
+{
+	if (pat->len && is_dir_sep(pat->buf[pat->len - 1]))
+		strbuf_addstr(pat, "**");
+}
+
 static int prepare_include_condition_pattern(struct strbuf *pat)
 {
 	struct strbuf path = STRBUF_INIT;
@@ -199,8 +206,7 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 	} else if (!is_absolute_path(pat->buf))
 		strbuf_insert(pat, 0, "**/", 3);
 
-	if (pat->len && is_dir_sep(pat->buf[pat->len - 1]))
-		strbuf_addstr(pat, "**");
+	add_trailing_starstar_for_dir(pat);
 
 	strbuf_release(&path);
 	return prefix;
@@ -264,6 +270,25 @@ done:
 	return ret;
 }
 
+static int include_by_branch(const char *cond, size_t cond_len)
+{
+	int flags;
+	int ret;
+	struct strbuf pattern = STRBUF_INIT;
+	const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
+	const char *shortname;
+
+	if (!refname || !(flags & REF_ISSYMREF)	||
+			!skip_prefix(refname, "refs/heads/", &shortname))
+		return 0;
+
+	strbuf_add(&pattern, cond, cond_len);
+	add_trailing_starstar_for_dir(&pattern);
+	ret = !wildmatch(pattern.buf, shortname, WM_PATHNAME);
+	strbuf_release(&pattern);
+	return ret;
+}
+
 static int include_condition_is_true(const struct config_options *opts,
 				     const char *cond, size_t cond_len)
 {
@@ -272,6 +297,8 @@ static int include_condition_is_true(const struct config_options *opts,
 		return include_by_gitdir(opts, cond, cond_len, 0);
 	else if (skip_prefix_mem(cond, cond_len, "gitdir/i:", &cond, &cond_len))
 		return include_by_gitdir(opts, cond, cond_len, 1);
+	else if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
+		return include_by_branch(cond, cond_len);
 
 	/* unknown conditionals are always false */
 	return 0;
