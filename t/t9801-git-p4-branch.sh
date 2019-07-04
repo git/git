@@ -411,6 +411,46 @@ test_expect_failure 'git p4 clone file subset branch' '
 	)
 '
 
+# Check that excluded files are omitted during import
+test_expect_success 'git p4 clone complex branches with excluded files' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList branch1:branch2 &&
+		git config --add git-p4.branchList branch1:branch3 &&
+		git config --add git-p4.branchList branch1:branch4 &&
+		git config --add git-p4.branchList branch1:branch5 &&
+		git config --add git-p4.branchList branch1:branch6 &&
+		git p4 clone --dest=. --detect-branches -//depot/branch1/file2 -//depot/branch2/file2 -//depot/branch3/file2 -//depot/branch4/file2 -//depot/branch5/file2 -//depot/branch6/file2 //depot@all &&
+		git log --all --graph --decorate --stat &&
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch2 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3 &&
+		git reset --hard p4/depot/branch3 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3 &&
+		git reset --hard p4/depot/branch4 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch5 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_file file3 &&
+		git reset --hard p4/depot/branch6 &&
+		test_path_is_file file1 &&
+		test_path_is_missing file2 &&
+		test_path_is_missing file3
+	)
+'
+
 # From a report in http://stackoverflow.com/questions/11893688
 # where --use-client-spec caused branch prefixes not to be removed;
 # every file in git appeared into a subdirectory of the branch name.
@@ -607,6 +647,98 @@ test_expect_success 'Update a file in git side and submit to P4 using client vie
 		p4 sync ... &&
 		cd branch1 &&
 		grep "client spec" file1
+	)
+'
+
+test_expect_success 'restart p4d (case folding enabled)' '
+	stop_and_cleanup_p4d &&
+	start_p4d -C1
+'
+
+#
+# 1: //depot/main/mf1
+# 2: integrate //depot/main/... -> //depot/branch1/...
+# 3: //depot/main/mf2
+# 4: //depot/BRANCH1/B1f3
+# 5: //depot/branch1/b1f4
+#
+test_expect_success !CASE_INSENSITIVE_FS 'basic p4 branches for case folding' '
+	(
+		cd "$cli" &&
+		mkdir -p main &&
+
+		echo mf1 >main/mf1 &&
+		p4 add main/mf1 &&
+		p4 submit -d "main/mf1" &&
+
+		p4 integrate //depot/main/... //depot/branch1/... &&
+		p4 submit -d "integrate main to branch1" &&
+
+		echo mf2 >main/mf2 &&
+		p4 add main/mf2 &&
+		p4 submit -d "main/mf2" &&
+
+		mkdir BRANCH1 &&
+		echo B1f3 >BRANCH1/B1f3 &&
+		p4 add BRANCH1/B1f3 &&
+		p4 submit -d "BRANCH1/B1f3" &&
+
+		echo b1f4 >branch1/b1f4 &&
+		p4 add branch1/b1f4 &&
+		p4 submit -d "branch1/b1f4"
+	)
+'
+
+# Check that files are properly split across branches when ignorecase is set
+test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone, branchList branch definition, ignorecase' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList main:branch1 &&
+		git config --type=bool core.ignoreCase true &&
+		git p4 clone --dest=. --detect-branches //depot@all &&
+
+		git log --all --graph --decorate --stat &&
+
+		git reset --hard p4/master &&
+		test_path_is_file mf1 &&
+		test_path_is_file mf2 &&
+		test_path_is_missing B1f3 &&
+		test_path_is_missing b1f4 &&
+
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file mf1 &&
+		test_path_is_missing mf2 &&
+		test_path_is_file B1f3 &&
+		test_path_is_file b1f4
+	)
+'
+
+# Check that files are properly split across branches when ignorecase is set, use-client-spec case
+test_expect_success !CASE_INSENSITIVE_FS 'git p4 clone with client-spec, branchList branch definition, ignorecase' '
+	client_view "//depot/... //client/..." &&
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList main:branch1 &&
+		git config --type=bool core.ignoreCase true &&
+		git p4 clone --dest=. --use-client-spec --detect-branches //depot@all &&
+
+		git log --all --graph --decorate --stat &&
+
+		git reset --hard p4/master &&
+		test_path_is_file mf1 &&
+		test_path_is_file mf2 &&
+		test_path_is_missing B1f3 &&
+		test_path_is_missing b1f4 &&
+
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file mf1 &&
+		test_path_is_missing mf2 &&
+		test_path_is_file B1f3 &&
+		test_path_is_file b1f4
 	)
 '
 

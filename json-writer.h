@@ -42,7 +42,11 @@
  * of the given strings.
  */
 
+#include "git-compat-util.h"
 #include "strbuf.h"
+
+struct ewah_bitmap;
+struct stat_data;
 
 struct json_writer
 {
@@ -81,6 +85,11 @@ void jw_object_true(struct json_writer *jw, const char *key);
 void jw_object_false(struct json_writer *jw, const char *key);
 void jw_object_bool(struct json_writer *jw, const char *key, int value);
 void jw_object_null(struct json_writer *jw, const char *key);
+void jw_object_filemode(struct json_writer *jw, const char *key, mode_t value);
+void jw_object_stat_data(struct json_writer *jw, const char *key,
+			 const struct stat_data *sd);
+void jw_object_ewah(struct json_writer *jw, const char *key,
+		    struct ewah_bitmap *ewah);
 void jw_object_sub_jw(struct json_writer *jw, const char *key,
 		      const struct json_writer *value);
 
@@ -103,5 +112,28 @@ void jw_array_inline_begin_array(struct json_writer *jw);
 
 int jw_is_terminated(const struct json_writer *jw);
 void jw_end(struct json_writer *jw);
+
+/*
+ * These _gently versions accept NULL json_writer to reduce too much
+ * branching at the call site.
+ */
+static inline void jw_object_inline_begin_array_gently(struct json_writer *jw,
+						       const char *name)
+{
+	if (jw)
+		jw_object_inline_begin_array(jw, name);
+}
+
+static inline void jw_array_inline_begin_object_gently(struct json_writer *jw)
+{
+	if (jw)
+		jw_array_inline_begin_object(jw);
+}
+
+static inline void jw_end_gently(struct json_writer *jw)
+{
+	if (jw)
+		jw_end(jw);
+}
 
 #endif /* JSON_WRITER_H */

@@ -10,6 +10,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "protocol.h"
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "sha1-array.h"
@@ -128,6 +129,7 @@ static char *opt_update_shallow;
 static char *opt_refmap;
 static char *opt_ipv4;
 static char *opt_ipv6;
+static int opt_show_forced_updates = -1;
 
 static struct option pull_options[] = {
 	/* Shared options */
@@ -240,6 +242,8 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU('6',  "ipv6", &opt_ipv6, NULL,
 		N_("use IPv6 addresses only"),
 		PARSE_OPT_NOARG),
+	OPT_BOOL(0, "show-forced-updates", &opt_show_forced_updates,
+		 N_("check for forced-updates on all updated branches")),
 
 	OPT_END()
 };
@@ -549,6 +553,10 @@ static int run_fetch(const char *repo, const char **refspecs)
 		argv_array_push(&args, opt_ipv4);
 	if (opt_ipv6)
 		argv_array_push(&args, opt_ipv6);
+	if (opt_show_forced_updates > 0)
+		argv_array_push(&args, "--show-forced-updates");
+	else if (opt_show_forced_updates == 0)
+		argv_array_push(&args, "--no-show-forced-updates");
 
 	if (repo) {
 		argv_array_push(&args, repo);
@@ -873,6 +881,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
 	int autostash;
+
+	register_allowed_protocol_version(protocol_v2);
+	register_allowed_protocol_version(protocol_v1);
+	register_allowed_protocol_version(protocol_v0);
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);

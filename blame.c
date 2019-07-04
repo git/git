@@ -311,12 +311,707 @@ static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b,
 	return xdi_diff(file_a, file_b, &xpp, &xecfg, &ecb);
 }
 
+static const char *get_next_line(const char *start, const char *end)
+{
+	const char *nl = memchr(start, '\n', end - start);
+
+	return nl ? nl + 1 : end;
+}
+
+static int find_line_starts(int **line_starts, const char *buf,
+			    unsigned long len)
+{
+	const char *end = buf + len;
+	const char *p;
+	int *lineno;
+	int num = 0;
+
+	for (p = buf; p < end; p = get_next_line(p, end))
+		num++;
+
+	ALLOC_ARRAY(*line_starts, num + 1);
+	lineno = *line_starts;
+
+	for (p = buf; p < end; p = get_next_line(p, end))
+		*lineno++ = p - buf;
+
+	*lineno = len;
+
+	return num;
+}
+
+struct fingerprint_entry;
+
+/* A fingerprint is intended to loosely represent a string, such that two
+ * fingerprints can be quickly compared to give an indication of the similarity
+ * of the strings that they represent.
+ *
+ * A fingerprint is represented as a multiset of the lower-cased byte pairs in
+ * the string that it represents. Whitespace is added at each end of the
+ * string. Whitespace pairs are ignored. Whitespace is converted to '\0'.
+ * For example, the string "Darth   Radar" will be converted to the following
+ * fingerprint:
+ * {"\0d", "da", "da", "ar", "ar", "rt", "th", "h\0", "\0r", "ra", "ad", "r\0"}
+ *
+ * The similarity between two fingerprints is the size of the intersection of
+ * their multisets, including repeated elements. See fingerprint_similarity for
+ * examples.
+ *
+ * For ease of implementation, the fingerprint is implemented as a map
+ * of byte pairs to the count of that byte pair in the string, instead of
+ * allowing repeated elements in a set.
+ */
+struct fingerprint {
+	struct hashmap map;
+	/* As we know the maximum number of entries in advance, it's
+	 * convenient to store the entries in a single array instead of having
+	 * the hashmap manage the memory.
+	 */
+	struct fingerprint_entry *entries;
+};
+
+/* A byte pair in a fingerprint. Stores the number of times the byte pair
+ * occurs in the string that the fingerprint represents.
+ */
+struct fingerprint_entry {
+	/* The hashmap entry - the hash represents the byte pair in its
+	 * entirety so we don't need to store the byte pair separately.
+	 */
+	struct hashmap_entry entry;
+	/* The number of times the byte pair occurs in the string that the
+	 * fingerprint represents.
+	 */
+	int count;
+};
+
+/* See `struct fingerprint` for an explanation of what a fingerprint is.
+ * \param result the fingerprint of the string is stored here. This must be
+ * 		 freed later using free_fingerprint.
+ * \param line_begin the start of the string
+ * \param line_end the end of the string
+ */
+static void get_fingerprint(struct fingerprint *result,
+			    const char *line_begin,
+			    const char *line_end)
+{
+	unsigned int hash, c0 = 0, c1;
+	const char *p;
+	int max_map_entry_count = 1 + line_end - line_begin;
+	struct fingerprint_entry *entry = xcalloc(max_map_entry_count,
+		sizeof(struct fingerprint_entry));
+	struct fingerprint_entry *found_entry;
+
+	hashmap_init(&result->map, NULL, NULL, max_map_entry_count);
+	result->entries = entry;
+	for (p = line_begin; p <= line_end; ++p, c0 = c1) {
+		/* Always terminate the string with whitespace.
+		 * Normalise whitespace to 0, and normalise letters to
+		 * lower case. This won't work for multibyte characters but at
+		 * worst will match some unrelated characters.
+		 */
+		if ((p == line_end) || isspace(*p))
+			c1 = 0;
+		else
+			c1 = tolower(*p);
+		hash = c0 | (c1 << 8);
+		/* Ignore whitespace pairs */
+		if (hash == 0)
+			continue;
+		hashmap_entry_init(entry, hash);
+
+		found_entry = hashmap_get(&result->map, entry, NULL);
+		if (found_entry) {
+			found_entry->count += 1;
+		} else {
+			entry->count = 1;
+			hashmap_add(&result->map, entry);
+			++entry;
+		}
+	}
+}
+
+static void free_fingerprint(struct fingerprint *f)
+{
+	hashmap_free(&f->map, 0);
+	free(f->entries);
+}
+
+/* Calculates the similarity between two fingerprints as the size of the
+ * intersection of their multisets, including repeated elements. See
+ * `struct fingerprint` for an explanation of the fingerprint representation.
+ * The similarity between "cat mat" and "father rather" is 2 because "at" is
+ * present twice in both strings while the similarity between "tim" and "mit"
+ * is 0.
+ */
+static int fingerprint_similarity(struct fingerprint *a, struct fingerprint *b)
+{
+	int intersection = 0;
+	struct hashmap_iter iter;
+	const struct fingerprint_entry *entry_a, *entry_b;
+
+	hashmap_iter_init(&b->map, &iter);
+
+	while ((entry_b = hashmap_iter_next(&iter))) {
+		if ((entry_a = hashmap_get(&a->map, entry_b, NULL))) {
+			intersection += entry_a->count < entry_b->count ?
+					entry_a->count : entry_b->count;
+		}
+	}
+	return intersection;
+}
+
+/* Subtracts byte-pair elements in B from A, modifying A in place.
+ */
+static void fingerprint_subtract(struct fingerprint *a, struct fingerprint *b)
+{
+	struct hashmap_iter iter;
+	struct fingerprint_entry *entry_a;
+	const struct fingerprint_entry *entry_b;
+
+	hashmap_iter_init(&b->map, &iter);
+
+	while ((entry_b = hashmap_iter_next(&iter))) {
+		if ((entry_a = hashmap_get(&a->map, entry_b, NULL))) {
+			if (entry_a->count <= entry_b->count)
+				hashmap_remove(&a->map, entry_b, NULL);
+			else
+				entry_a->count -= entry_b->count;
+		}
+	}
+}
+
+/* Calculate fingerprints for a series of lines.
+ * Puts the fingerprints in the fingerprints array, which must have been
+ * preallocated to allow storing line_count elements.
+ */
+static void get_line_fingerprints(struct fingerprint *fingerprints,
+				  const char *content, const int *line_starts,
+				  long first_line, long line_count)
+{
+	int i;
+	const char *linestart, *lineend;
+
+	line_starts += first_line;
+	for (i = 0; i < line_count; ++i) {
+		linestart = content + line_starts[i];
+		lineend = content + line_starts[i + 1];
+		get_fingerprint(fingerprints + i, linestart, lineend);
+	}
+}
+
+static void free_line_fingerprints(struct fingerprint *fingerprints,
+				   int nr_fingerprints)
+{
+	int i;
+
+	for (i = 0; i < nr_fingerprints; i++)
+		free_fingerprint(&fingerprints[i]);
+}
+
+/* This contains the data necessary to linearly map a line number in one half
+ * of a diff chunk to the line in the other half of the diff chunk that is
+ * closest in terms of its position as a fraction of the length of the chunk.
+ */
+struct line_number_mapping {
+	int destination_start, destination_length,
+		source_start, source_length;
+};
+
+/* Given a line number in one range, offset and scale it to map it onto the
+ * other range.
+ * Essentially this mapping is a simple linear equation but the calculation is
+ * more complicated to allow performing it with integer operations.
+ * Another complication is that if a line could map onto many lines in the
+ * destination range then we want to choose the line at the center of those
+ * possibilities.
+ * Example: if the chunk is 2 lines long in A and 10 lines long in B then the
+ * first 5 lines in B will map onto the first line in the A chunk, while the
+ * last 5 lines will all map onto the second line in the A chunk.
+ * Example: if the chunk is 10 lines long in A and 2 lines long in B then line
+ * 0 in B will map onto line 2 in A, and line 1 in B will map onto line 7 in A.
+ */
+static int map_line_number(int line_number,
+	const struct line_number_mapping *mapping)
+{
+	return ((line_number - mapping->source_start) * 2 + 1) *
+	       mapping->destination_length /
+	       (mapping->source_length * 2) +
+	       mapping->destination_start;
+}
+
+/* Get a pointer to the element storing the similarity between a line in A
+ * and a line in B.
+ *
+ * The similarities are stored in a 2-dimensional array. Each "row" in the
+ * array contains the similarities for a line in B. The similarities stored in
+ * a row are the similarities between the line in B and the nearby lines in A.
+ * To keep the length of each row the same, it is padded out with values of -1
+ * where the search range extends beyond the lines in A.
+ * For example, if max_search_distance_a is 2 and the two sides of a diff chunk
+ * look like this:
+ * a | m
+ * b | n
+ * c | o
+ * d | p
+ * e | q
+ * Then the similarity array will contain:
+ * [-1, -1, am, bm, cm,
+ *  -1, an, bn, cn, dn,
+ *  ao, bo, co, do, eo,
+ *  bp, cp, dp, ep, -1,
+ *  cq, dq, eq, -1, -1]
+ * Where similarities are denoted either by -1 for invalid, or the
+ * concatenation of the two lines in the diff being compared.
+ *
+ * \param similarities array of similarities between lines in A and B
+ * \param line_a the index of the line in A, in the same frame of reference as
+ *	closest_line_a.
+ * \param local_line_b the index of the line in B, relative to the first line
+ *		       in B that similarities represents.
+ * \param closest_line_a the index of the line in A that is deemed to be
+ *			 closest to local_line_b. This must be in the same
+ *			 frame of reference as line_a. This value defines
+ *			 where similarities is centered for the line in B.
+ * \param max_search_distance_a maximum distance in lines from the closest line
+ * 				in A for other lines in A for which
+ * 				similarities may be calculated.
+ */
+static int *get_similarity(int *similarities,
+			   int line_a, int local_line_b,
+			   int closest_line_a, int max_search_distance_a)
+{
+	assert(abs(line_a - closest_line_a) <=
+	       max_search_distance_a);
+	return similarities + line_a - closest_line_a +
+	       max_search_distance_a +
+	       local_line_b * (max_search_distance_a * 2 + 1);
+}
+
+#define CERTAIN_NOTHING_MATCHES -2
+#define CERTAINTY_NOT_CALCULATED -1
+
+/* Given a line in B, first calculate its similarities with nearby lines in A
+ * if not already calculated, then identify the most similar and second most
+ * similar lines. The "certainty" is calculated based on those two
+ * similarities.
+ *
+ * \param start_a the index of the first line of the chunk in A
+ * \param length_a the length in lines of the chunk in A
+ * \param local_line_b the index of the line in B, relative to the first line
+ * 		       in the chunk.
+ * \param fingerprints_a array of fingerprints for the chunk in A
+ * \param fingerprints_b array of fingerprints for the chunk in B
+ * \param similarities 2-dimensional array of similarities between lines in A
+ * 		       and B. See get_similarity() for more details.
+ * \param certainties array of values indicating how strongly a line in B is
+ * 		      matched with some line in A.
+ * \param second_best_result array of absolute indices in A for the second
+ * 			     closest match of a line in B.
+ * \param result array of absolute indices in A for the closest match of a line
+ * 		 in B.
+ * \param max_search_distance_a maximum distance in lines from the closest line
+ * 				in A for other lines in A for which
+ * 				similarities may be calculated.
+ * \param map_line_number_in_b_to_a parameter to map_line_number().
+ */
+static void find_best_line_matches(
+	int start_a,
+	int length_a,
+	int start_b,
+	int local_line_b,
+	struct fingerprint *fingerprints_a,
+	struct fingerprint *fingerprints_b,
+	int *similarities,
+	int *certainties,
+	int *second_best_result,
+	int *result,
+	const int max_search_distance_a,
+	const struct line_number_mapping *map_line_number_in_b_to_a)
+{
+
+	int i, search_start, search_end, closest_local_line_a, *similarity,
+		best_similarity = 0, second_best_similarity = 0,
+		best_similarity_index = 0, second_best_similarity_index = 0;
+
+	/* certainty has already been calculated so no need to redo the work */
+	if (certainties[local_line_b] != CERTAINTY_NOT_CALCULATED)
+		return;
+
+	closest_local_line_a = map_line_number(
+		local_line_b + start_b, map_line_number_in_b_to_a) - start_a;
+
+	search_start = closest_local_line_a - max_search_distance_a;
+	if (search_start < 0)
+		search_start = 0;
+
+	search_end = closest_local_line_a + max_search_distance_a + 1;
+	if (search_end > length_a)
+		search_end = length_a;
+
+	for (i = search_start; i < search_end; ++i) {
+		similarity = get_similarity(similarities,
+					    i, local_line_b,
+					    closest_local_line_a,
+					    max_search_distance_a);
+		if (*similarity == -1) {
+			/* This value will never exceed 10 but assert just in
+			 * case
+			 */
+			assert(abs(i - closest_local_line_a) < 1000);
+			/* scale the similarity by (1000 - distance from
+			 * closest line) to act as a tie break between lines
+			 * that otherwise are equally similar.
+			 */
+			*similarity = fingerprint_similarity(
+				fingerprints_b + local_line_b,
+				fingerprints_a + i) *
+				(1000 - abs(i - closest_local_line_a));
+		}
+		if (*similarity > best_similarity) {
+			second_best_similarity = best_similarity;
+			second_best_similarity_index = best_similarity_index;
+			best_similarity = *similarity;
+			best_similarity_index = i;
+		} else if (*similarity > second_best_similarity) {
+			second_best_similarity = *similarity;
+			second_best_similarity_index = i;
+		}
+	}
+
+	if (best_similarity == 0) {
+		/* this line definitely doesn't match with anything. Mark it
+		 * with this special value so it doesn't get invalidated and
+		 * won't be recalculated.
+		 */
+		certainties[local_line_b] = CERTAIN_NOTHING_MATCHES;
+		result[local_line_b] = -1;
+	} else {
+		/* Calculate the certainty with which this line matches.
+		 * If the line matches well with two lines then that reduces
+		 * the certainty. However we still want to prioritise matching
+		 * a line that matches very well with two lines over matching a
+		 * line that matches poorly with one line, hence doubling
+		 * best_similarity.
+		 * This means that if we have
+		 * line X that matches only one line with a score of 3,
+		 * line Y that matches two lines equally with a score of 5,
+		 * and line Z that matches only one line with a score or 2,
+		 * then the lines in order of certainty are X, Y, Z.
+		 */
+		certainties[local_line_b] = best_similarity * 2 -
+			second_best_similarity;
+
+		/* We keep both the best and second best results to allow us to
+		 * check at a later stage of the matching process whether the
+		 * result needs to be invalidated.
+		 */
+		result[local_line_b] = start_a + best_similarity_index;
+		second_best_result[local_line_b] =
+			start_a + second_best_similarity_index;
+	}
+}
+
+/*
+ * This finds the line that we can match with the most confidence, and
+ * uses it as a partition. It then calls itself on the lines on either side of
+ * that partition. In this way we avoid lines appearing out of order, and
+ * retain a sensible line ordering.
+ * \param start_a index of the first line in A with which lines in B may be
+ * 		  compared.
+ * \param start_b index of the first line in B for which matching should be
+ * 		  done.
+ * \param length_a number of lines in A with which lines in B may be compared.
+ * \param length_b number of lines in B for which matching should be done.
+ * \param fingerprints_a mutable array of fingerprints in A. The first element
+ * 			 corresponds to the line at start_a.
+ * \param fingerprints_b array of fingerprints in B. The first element
+ * 			 corresponds to the line at start_b.
+ * \param similarities 2-dimensional array of similarities between lines in A
+ * 		       and B. See get_similarity() for more details.
+ * \param certainties array of values indicating how strongly a line in B is
+ * 		      matched with some line in A.
+ * \param second_best_result array of absolute indices in A for the second
+ * 			     closest match of a line in B.
+ * \param result array of absolute indices in A for the closest match of a line
+ * 		 in B.
+ * \param max_search_distance_a maximum distance in lines from the closest line
+ * 			      in A for other lines in A for which
+ * 			      similarities may be calculated.
+ * \param max_search_distance_b an upper bound on the greatest possible
+ * 			      distance between lines in B such that they will
+ *                              both be compared with the same line in A
+ * 			      according to max_search_distance_a.
+ * \param map_line_number_in_b_to_a parameter to map_line_number().
+ */
+static void fuzzy_find_matching_lines_recurse(
+	int start_a, int start_b,
+	int length_a, int length_b,
+	struct fingerprint *fingerprints_a,
+	struct fingerprint *fingerprints_b,
+	int *similarities,
+	int *certainties,
+	int *second_best_result,
+	int *result,
+	int max_search_distance_a,
+	int max_search_distance_b,
+	const struct line_number_mapping *map_line_number_in_b_to_a)
+{
+	int i, invalidate_min, invalidate_max, offset_b,
+		second_half_start_a, second_half_start_b,
+		second_half_length_a, second_half_length_b,
+		most_certain_line_a, most_certain_local_line_b = -1,
+		most_certain_line_certainty = -1,
+		closest_local_line_a;
+
+	for (i = 0; i < length_b; ++i) {
+		find_best_line_matches(start_a,
+				       length_a,
+				       start_b,
+				       i,
+				       fingerprints_a,
+				       fingerprints_b,
+				       similarities,
+				       certainties,
+				       second_best_result,
+				       result,
+				       max_search_distance_a,
+				       map_line_number_in_b_to_a);
+
+		if (certainties[i] > most_certain_line_certainty) {
+			most_certain_line_certainty = certainties[i];
+			most_certain_local_line_b = i;
+		}
+	}
+
+	/* No matches. */
+	if (most_certain_local_line_b == -1)
+		return;
+
+	most_certain_line_a = result[most_certain_local_line_b];
+
+	/*
+	 * Subtract the most certain line's fingerprint in B from the matched
+	 * fingerprint in A. This means that other lines in B can't also match
+	 * the same parts of the line in A.
+	 */
+	fingerprint_subtract(fingerprints_a + most_certain_line_a - start_a,
+			     fingerprints_b + most_certain_local_line_b);
+
+	/* Invalidate results that may be affected by the choice of most
+	 * certain line.
+	 */
+	invalidate_min = most_certain_local_line_b - max_search_distance_b;
+	invalidate_max = most_certain_local_line_b + max_search_distance_b + 1;
+	if (invalidate_min < 0)
+		invalidate_min = 0;
+	if (invalidate_max > length_b)
+		invalidate_max = length_b;
+
+	/* As the fingerprint in A has changed, discard previously calculated
+	 * similarity values with that fingerprint.
+	 */
+	for (i = invalidate_min; i < invalidate_max; ++i) {
+		closest_local_line_a = map_line_number(
+			i + start_b, map_line_number_in_b_to_a) - start_a;
+
+		/* Check that the lines in A and B are close enough that there
+		 * is a similarity value for them.
+		 */
+		if (abs(most_certain_line_a - start_a - closest_local_line_a) >
+			max_search_distance_a) {
+			continue;
+		}
+
+		*get_similarity(similarities, most_certain_line_a - start_a,
+				i, closest_local_line_a,
+				max_search_distance_a) = -1;
+	}
+
+	/* More invalidating of results that may be affected by the choice of
+	 * most certain line.
+	 * Discard the matches for lines in B that are currently matched with a
+	 * line in A such that their ordering contradicts the ordering imposed
+	 * by the choice of most certain line.
+	 */
+	for (i = most_certain_local_line_b - 1; i >= invalidate_min; --i) {
+		/* In this loop we discard results for lines in B that are
+		 * before most-certain-line-B but are matched with a line in A
+		 * that is after most-certain-line-A.
+		 */
+		if (certainties[i] >= 0 &&
+		    (result[i] >= most_certain_line_a ||
+		     second_best_result[i] >= most_certain_line_a)) {
+			certainties[i] = CERTAINTY_NOT_CALCULATED;
+		}
+	}
+	for (i = most_certain_local_line_b + 1; i < invalidate_max; ++i) {
+		/* In this loop we discard results for lines in B that are
+		 * after most-certain-line-B but are matched with a line in A
+		 * that is before most-certain-line-A.
+		 */
+		if (certainties[i] >= 0 &&
+		    (result[i] <= most_certain_line_a ||
+		     second_best_result[i] <= most_certain_line_a)) {
+			certainties[i] = CERTAINTY_NOT_CALCULATED;
+		}
+	}
+
+	/* Repeat the matching process for lines before the most certain line.
+	 */
+	if (most_certain_local_line_b > 0) {
+		fuzzy_find_matching_lines_recurse(
+			start_a, start_b,
+			most_certain_line_a + 1 - start_a,
+			most_certain_local_line_b,
+			fingerprints_a, fingerprints_b, similarities,
+			certainties, second_best_result, result,
+			max_search_distance_a,
+			max_search_distance_b,
+			map_line_number_in_b_to_a);
+	}
+	/* Repeat the matching process for lines after the most certain line.
+	 */
+	if (most_certain_local_line_b + 1 < length_b) {
+		second_half_start_a = most_certain_line_a;
+		offset_b = most_certain_local_line_b + 1;
+		second_half_start_b = start_b + offset_b;
+		second_half_length_a =
+			length_a + start_a - second_half_start_a;
+		second_half_length_b =
+			length_b + start_b - second_half_start_b;
+		fuzzy_find_matching_lines_recurse(
+			second_half_start_a, second_half_start_b,
+			second_half_length_a, second_half_length_b,
+			fingerprints_a + second_half_start_a - start_a,
+			fingerprints_b + offset_b,
+			similarities +
+				offset_b * (max_search_distance_a * 2 + 1),
+			certainties + offset_b,
+			second_best_result + offset_b, result + offset_b,
+			max_search_distance_a,
+			max_search_distance_b,
+			map_line_number_in_b_to_a);
+	}
+}
+
+/* Find the lines in the parent line range that most closely match the lines in
+ * the target line range. This is accomplished by matching fingerprints in each
+ * blame_origin, and choosing the best matches that preserve the line ordering.
+ * See struct fingerprint for details of fingerprint matching, and
+ * fuzzy_find_matching_lines_recurse for details of preserving line ordering.
+ *
+ * The performance is believed to be O(n log n) in the typical case and O(n^2)
+ * in a pathological case, where n is the number of lines in the target range.
+ */
+static int *fuzzy_find_matching_lines(struct blame_origin *parent,
+				      struct blame_origin *target,
+				      int tlno, int parent_slno, int same,
+				      int parent_len)
+{
+	/* We use the terminology "A" for the left hand side of the diff AKA
+	 * parent, and "B" for the right hand side of the diff AKA target. */
+	int start_a = parent_slno;
+	int length_a = parent_len;
+	int start_b = tlno;
+	int length_b = same - tlno;
+
+	struct line_number_mapping map_line_number_in_b_to_a = {
+		start_a, length_a, start_b, length_b
+	};
+
+	struct fingerprint *fingerprints_a = parent->fingerprints;
+	struct fingerprint *fingerprints_b = target->fingerprints;
+
+	int i, *result, *second_best_result,
+		*certainties, *similarities, similarity_count;
+
+	/*
+	 * max_search_distance_a means that given a line in B, compare it to
+	 * the line in A that is closest to its position, and the lines in A
+	 * that are no greater than max_search_distance_a lines away from the
+	 * closest line in A.
+	 *
+	 * max_search_distance_b is an upper bound on the greatest possible
+	 * distance between lines in B such that they will both be compared
+	 * with the same line in A according to max_search_distance_a.
+	 */
+	int max_search_distance_a = 10, max_search_distance_b;
+
+	if (length_a <= 0)
+		return NULL;
+
+	if (max_search_distance_a >= length_a)
+		max_search_distance_a = length_a ? length_a - 1 : 0;
+
+	max_search_distance_b = ((2 * max_search_distance_a + 1) * length_b
+				 - 1) / length_a;
+
+	result = xcalloc(sizeof(int), length_b);
+	second_best_result = xcalloc(sizeof(int), length_b);
+	certainties = xcalloc(sizeof(int), length_b);
+
+	/* See get_similarity() for details of similarities. */
+	similarity_count = length_b * (max_search_distance_a * 2 + 1);
+	similarities = xcalloc(sizeof(int), similarity_count);
+
+	for (i = 0; i < length_b; ++i) {
+		result[i] = -1;
+		second_best_result[i] = -1;
+		certainties[i] = CERTAINTY_NOT_CALCULATED;
+	}
+
+	for (i = 0; i < similarity_count; ++i)
+		similarities[i] = -1;
+
+	fuzzy_find_matching_lines_recurse(start_a, start_b,
+					  length_a, length_b,
+					  fingerprints_a + start_a,
+					  fingerprints_b + start_b,
+					  similarities,
+					  certainties,
+					  second_best_result,
+					  result,
+					  max_search_distance_a,
+					  max_search_distance_b,
+					  &map_line_number_in_b_to_a);
+
+	free(similarities);
+	free(certainties);
+	free(second_best_result);
+
+	return result;
+}
+
+static void fill_origin_fingerprints(struct blame_origin *o, mmfile_t *file)
+{
+	int *line_starts;
+
+	if (o->fingerprints)
+		return;
+	o->num_lines = find_line_starts(&line_starts, o->file.ptr,
+					o->file.size);
+	o->fingerprints = xcalloc(sizeof(struct fingerprint), o->num_lines);
+	get_line_fingerprints(o->fingerprints, o->file.ptr, line_starts,
+			      0, o->num_lines);
+	free(line_starts);
+}
+
+static void drop_origin_fingerprints(struct blame_origin *o)
+{
+	if (o->fingerprints) {
+		free_line_fingerprints(o->fingerprints, o->num_lines);
+		o->num_lines = 0;
+		FREE_AND_NULL(o->fingerprints);
+	}
+}
+
 /*
  * Given an origin, prepare mmfile_t structure to be used by the
  * diff machinery
  */
 static void fill_origin_blob(struct diff_options *opt,
-			     struct blame_origin *o, mmfile_t *file, int *num_read_blob)
+			     struct blame_origin *o, mmfile_t *file,
+			     int *num_read_blob, int fill_fingerprints)
 {
 	if (!o->file.ptr) {
 		enum object_type type;
@@ -340,11 +1035,14 @@ static void fill_origin_blob(struct diff_options *opt,
 	}
 	else
 		*file = o->file;
+	if (fill_fingerprints)
+		fill_origin_fingerprints(o, file);
 }
 
 static void drop_origin_blob(struct blame_origin *o)
 {
 	FREE_AND_NULL(o->file.ptr);
+	drop_origin_fingerprints(o);
 }
 
 /*
@@ -480,7 +1178,9 @@ void blame_coalesce(struct blame_scoreboard *sb)
 
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
 		if (ent->suspect == next->suspect &&
-		    ent->s_lno + ent->num_lines == next->s_lno) {
+		    ent->s_lno + ent->num_lines == next->s_lno &&
+		    ent->ignored == next->ignored &&
+		    ent->unblamable == next->unblamable) {
 			ent->num_lines += next->num_lines;
 			ent->next = next->next;
 			blame_origin_decref(next->suspect);
@@ -730,7 +1430,13 @@ static void split_overlap(struct blame_entry *split,
 			  struct blame_origin *parent)
 {
 	int chunk_end_lno;
+	int i;
 	memset(split, 0, sizeof(struct blame_entry [3]));
+
+	for (i = 0; i < 3; i++) {
+		split[i].ignored = e->ignored;
+		split[i].unblamable = e->unblamable;
+	}
 
 	if (e->s_lno < tlno) {
 		/* there is a pre-chunk part not blamed on parent */
@@ -840,6 +1546,165 @@ static struct blame_entry *reverse_blame(struct blame_entry *head,
 }
 
 /*
+ * Splits a blame entry into two entries at 'len' lines.  The original 'e'
+ * consists of len lines, i.e. [e->lno, e->lno + len), and the second part,
+ * which is returned, consists of the remainder: [e->lno + len, e->lno +
+ * e->num_lines).  The caller needs to sort out the reference counting for the
+ * new entry's suspect.
+ */
+static struct blame_entry *split_blame_at(struct blame_entry *e, int len,
+					  struct blame_origin *new_suspect)
+{
+	struct blame_entry *n = xcalloc(1, sizeof(struct blame_entry));
+
+	n->suspect = new_suspect;
+	n->ignored = e->ignored;
+	n->unblamable = e->unblamable;
+	n->lno = e->lno + len;
+	n->s_lno = e->s_lno + len;
+	n->num_lines = e->num_lines - len;
+	e->num_lines = len;
+	e->score = 0;
+	return n;
+}
+
+struct blame_line_tracker {
+	int is_parent;
+	int s_lno;
+};
+
+static int are_lines_adjacent(struct blame_line_tracker *first,
+			      struct blame_line_tracker *second)
+{
+	return first->is_parent == second->is_parent &&
+	       first->s_lno + 1 == second->s_lno;
+}
+
+static int scan_parent_range(struct fingerprint *p_fps,
+			     struct fingerprint *t_fps, int t_idx,
+			     int from, int nr_lines)
+{
+	int sim, p_idx;
+	#define FINGERPRINT_FILE_THRESHOLD	10
+	int best_sim_val = FINGERPRINT_FILE_THRESHOLD;
+	int best_sim_idx = -1;
+
+	for (p_idx = from; p_idx < from + nr_lines; p_idx++) {
+		sim = fingerprint_similarity(&t_fps[t_idx], &p_fps[p_idx]);
+		if (sim < best_sim_val)
+			continue;
+		/* Break ties with the closest-to-target line number */
+		if (sim == best_sim_val && best_sim_idx != -1 &&
+		    abs(best_sim_idx - t_idx) < abs(p_idx - t_idx))
+			continue;
+		best_sim_val = sim;
+		best_sim_idx = p_idx;
+	}
+	return best_sim_idx;
+}
+
+/*
+ * The first pass checks the blame entry (from the target) against the parent's
+ * diff chunk.  If that fails for a line, the second pass tries to match that
+ * line to any part of parent file.  That catches cases where a change was
+ * broken into two chunks by 'context.'
+ */
+static void guess_line_blames(struct blame_origin *parent,
+			      struct blame_origin *target,
+			      int tlno, int offset, int same, int parent_len,
+			      struct blame_line_tracker *line_blames)
+{
+	int i, best_idx, target_idx;
+	int parent_slno = tlno + offset;
+	int *fuzzy_matches;
+
+	fuzzy_matches = fuzzy_find_matching_lines(parent, target,
+						  tlno, parent_slno, same,
+						  parent_len);
+	for (i = 0; i < same - tlno; i++) {
+		target_idx = tlno + i;
+		if (fuzzy_matches && fuzzy_matches[i] >= 0) {
+			best_idx = fuzzy_matches[i];
+		} else {
+			best_idx = scan_parent_range(parent->fingerprints,
+						     target->fingerprints,
+						     target_idx, 0,
+						     parent->num_lines);
+		}
+		if (best_idx >= 0) {
+			line_blames[i].is_parent = 1;
+			line_blames[i].s_lno = best_idx;
+		} else {
+			line_blames[i].is_parent = 0;
+			line_blames[i].s_lno = target_idx;
+		}
+	}
+	free(fuzzy_matches);
+}
+
+/*
+ * This decides which parts of a blame entry go to the parent (added to the
+ * ignoredp list) and which stay with the target (added to the diffp list).  The
+ * actual decision was made in a separate heuristic function, and those answers
+ * for the lines in 'e' are in line_blames.  This consumes e, essentially
+ * putting it on a list.
+ *
+ * Note that the blame entries on the ignoredp list are not necessarily sorted
+ * with respect to the parent's line numbers yet.
+ */
+static void ignore_blame_entry(struct blame_entry *e,
+			       struct blame_origin *parent,
+			       struct blame_origin *target,
+			       struct blame_entry **diffp,
+			       struct blame_entry **ignoredp,
+			       struct blame_line_tracker *line_blames)
+{
+	int entry_len, nr_lines, i;
+
+	/*
+	 * We carve new entries off the front of e.  Each entry comes from a
+	 * contiguous chunk of lines: adjacent lines from the same origin
+	 * (either the parent or the target).
+	 */
+	entry_len = 1;
+	nr_lines = e->num_lines;	/* e changes in the loop */
+	for (i = 0; i < nr_lines; i++) {
+		struct blame_entry *next = NULL;
+
+		/*
+		 * We are often adjacent to the next line - only split the blame
+		 * entry when we have to.
+		 */
+		if (i + 1 < nr_lines) {
+			if (are_lines_adjacent(&line_blames[i],
+					       &line_blames[i + 1])) {
+				entry_len++;
+				continue;
+			}
+			next = split_blame_at(e, entry_len,
+					      blame_origin_incref(e->suspect));
+		}
+		if (line_blames[i].is_parent) {
+			e->ignored = 1;
+			blame_origin_decref(e->suspect);
+			e->suspect = blame_origin_incref(parent);
+			e->s_lno = line_blames[i - entry_len + 1].s_lno;
+			e->next = *ignoredp;
+			*ignoredp = e;
+		} else {
+			e->unblamable = 1;
+			/* e->s_lno is already in the target's address space. */
+			e->next = *diffp;
+			*diffp = e;
+		}
+		assert(e->num_lines == entry_len);
+		e = next;
+		entry_len = 1;
+	}
+	assert(!e);
+}
+
+/*
  * Process one hunk from the patch between the current suspect for
  * blame_entry e and its parent.  This first blames any unfinished
  * entries before the chunk (which is where target and parent start
@@ -848,13 +1713,20 @@ static struct blame_entry *reverse_blame(struct blame_entry *head,
  * -C options may lead to overlapping/duplicate source line number
  * ranges, all we can rely on from sorting/merging is the order of the
  * first suspect line number.
+ *
+ * tlno: line number in the target where this chunk begins
+ * same: line number in the target where this chunk ends
+ * offset: add to tlno to get the chunk starting point in the parent
+ * parent_len: number of lines in the parent chunk
  */
 static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
-			int tlno, int offset, int same,
-			struct blame_origin *parent)
+			int tlno, int offset, int same, int parent_len,
+			struct blame_origin *parent,
+			struct blame_origin *target, int ignore_diffs)
 {
 	struct blame_entry *e = **srcq;
-	struct blame_entry *samep = NULL, *diffp = NULL;
+	struct blame_entry *samep = NULL, *diffp = NULL, *ignoredp = NULL;
+	struct blame_line_tracker *line_blames = NULL;
 
 	while (e && e->s_lno < tlno) {
 		struct blame_entry *next = e->next;
@@ -865,14 +1737,9 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 		 */
 		if (e->s_lno + e->num_lines > tlno) {
 			/* Move second half to a new record */
-			int len = tlno - e->s_lno;
-			struct blame_entry *n = xcalloc(1, sizeof (struct blame_entry));
-			n->suspect = e->suspect;
-			n->lno = e->lno + len;
-			n->s_lno = e->s_lno + len;
-			n->num_lines = e->num_lines - len;
-			e->num_lines = len;
-			e->score = 0;
+			struct blame_entry *n;
+
+			n = split_blame_at(e, tlno - e->s_lno, e->suspect);
 			/* Push new record to diffp */
 			n->next = diffp;
 			diffp = n;
@@ -908,6 +1775,14 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 	 */
 	samep = NULL;
 	diffp = NULL;
+
+	if (ignore_diffs && same - tlno > 0) {
+		line_blames = xcalloc(sizeof(struct blame_line_tracker),
+				      same - tlno);
+		guess_line_blames(parent, target, tlno, offset, same,
+				  parent_len, line_blames);
+	}
+
 	while (e && e->s_lno < same) {
 		struct blame_entry *next = e->next;
 
@@ -919,21 +1794,36 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 			 * Move second half to a new record to be
 			 * processed by later chunks
 			 */
-			int len = same - e->s_lno;
-			struct blame_entry *n = xcalloc(1, sizeof (struct blame_entry));
-			n->suspect = blame_origin_incref(e->suspect);
-			n->lno = e->lno + len;
-			n->s_lno = e->s_lno + len;
-			n->num_lines = e->num_lines - len;
-			e->num_lines = len;
-			e->score = 0;
+			struct blame_entry *n;
+
+			n = split_blame_at(e, same - e->s_lno,
+					   blame_origin_incref(e->suspect));
 			/* Push new record to samep */
 			n->next = samep;
 			samep = n;
 		}
-		e->next = diffp;
-		diffp = e;
+		if (ignore_diffs) {
+			ignore_blame_entry(e, parent, target, &diffp, &ignoredp,
+					   line_blames + e->s_lno - tlno);
+		} else {
+			e->next = diffp;
+			diffp = e;
+		}
 		e = next;
+	}
+	free(line_blames);
+	if (ignoredp) {
+		/*
+		 * Note ignoredp is not sorted yet, and thus neither is dstq.
+		 * That list must be sorted before we queue_blames().  We defer
+		 * sorting until after all diff hunks are processed, so that
+		 * guess_line_blames() can pick *any* line in the parent.  The
+		 * slight drawback is that we end up sorting all blame entries
+		 * passed to the parent, including those that are unrelated to
+		 * changes made by the ignored commit.
+		 */
+		**dstq = reverse_blame(ignoredp, **dstq);
+		*dstq = &ignoredp->next;
 	}
 	**srcq = reverse_blame(diffp, reverse_blame(samep, e));
 	/* Move across elements that are in the unblamable portion */
@@ -943,7 +1833,9 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 
 struct blame_chunk_cb_data {
 	struct blame_origin *parent;
+	struct blame_origin *target;
 	long offset;
+	int ignore_diffs;
 	struct blame_entry **dstq;
 	struct blame_entry **srcq;
 };
@@ -956,7 +1848,8 @@ static int blame_chunk_cb(long start_a, long count_a,
 	if (start_a - start_b != d->offset)
 		die("internal error in blame::blame_chunk_cb");
 	blame_chunk(&d->dstq, &d->srcq, start_b, start_a - start_b,
-		    start_b + count_b, d->parent);
+		    start_b + count_b, count_a, d->parent, d->target,
+		    d->ignore_diffs);
 	d->offset = start_a + count_a - (start_b + count_b);
 	return 0;
 }
@@ -968,7 +1861,7 @@ static int blame_chunk_cb(long start_a, long count_a,
  */
 static void pass_blame_to_parent(struct blame_scoreboard *sb,
 				 struct blame_origin *target,
-				 struct blame_origin *parent)
+				 struct blame_origin *parent, int ignore_diffs)
 {
 	mmfile_t file_p, file_o;
 	struct blame_chunk_cb_data d;
@@ -978,11 +1871,15 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 		return; /* nothing remains for this target */
 
 	d.parent = parent;
+	d.target = target;
 	d.offset = 0;
+	d.ignore_diffs = ignore_diffs;
 	d.dstq = &newdest; d.srcq = &target->suspects;
 
-	fill_origin_blob(&sb->revs->diffopt, parent, &file_p, &sb->num_read_blob);
-	fill_origin_blob(&sb->revs->diffopt, target, &file_o, &sb->num_read_blob);
+	fill_origin_blob(&sb->revs->diffopt, parent, &file_p,
+			 &sb->num_read_blob, ignore_diffs);
+	fill_origin_blob(&sb->revs->diffopt, target, &file_o,
+			 &sb->num_read_blob, ignore_diffs);
 	sb->num_get_patch++;
 
 	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, sb->xdl_opts))
@@ -990,8 +1887,13 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 		    oid_to_hex(&parent->commit->object.oid),
 		    oid_to_hex(&target->commit->object.oid));
 	/* The rest are the same as the parent */
-	blame_chunk(&d.dstq, &d.srcq, INT_MAX, d.offset, INT_MAX, parent);
+	blame_chunk(&d.dstq, &d.srcq, INT_MAX, d.offset, INT_MAX, 0,
+		    parent, target, 0);
 	*d.dstq = NULL;
+	if (ignore_diffs)
+		newdest = llist_mergesort(newdest, get_next_blame,
+					  set_next_blame,
+					  compare_blame_suspect);
 	queue_blames(sb, parent, newdest);
 
 	return;
@@ -1188,7 +2090,8 @@ static void find_move_in_parent(struct blame_scoreboard *sb,
 	if (!unblamed)
 		return; /* nothing remains for this target */
 
-	fill_origin_blob(&sb->revs->diffopt, parent, &file_p, &sb->num_read_blob);
+	fill_origin_blob(&sb->revs->diffopt, parent, &file_p,
+			 &sb->num_read_blob, 0);
 	if (!file_p.ptr)
 		return;
 
@@ -1317,7 +2220,8 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 			norigin = get_origin(parent, p->one->path);
 			oidcpy(&norigin->blob_oid, &p->one->oid);
 			norigin->mode = p->one->mode;
-			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p, &sb->num_read_blob);
+			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p,
+					 &sb->num_read_blob, 0);
 			if (!file_p.ptr)
 				continue;
 
@@ -1495,9 +2399,32 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 			blame_origin_incref(porigin);
 			origin->previous = porigin;
 		}
-		pass_blame_to_parent(sb, origin, porigin);
+		pass_blame_to_parent(sb, origin, porigin, 0);
 		if (!origin->suspects)
 			goto finish;
+	}
+
+	/*
+	 * Pass remaining suspects for ignored commits to their parents.
+	 */
+	if (oidset_contains(&sb->ignore_list, &commit->object.oid)) {
+		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
+		     i < num_sg && sg;
+		     sg = sg->next, i++) {
+			struct blame_origin *porigin = sg_origin[i];
+
+			if (!porigin)
+				continue;
+			pass_blame_to_parent(sb, origin, porigin, 1);
+			/*
+			 * Preemptively drop porigin so we can refresh the
+			 * fingerprints if we use the parent again, which can
+			 * occur if you ignore back-to-back commits.
+			 */
+			drop_origin_blob(porigin);
+			if (!origin->suspects)
+				goto finish;
+		}
 	}
 
 	/*
@@ -1640,37 +2567,14 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 	}
 }
 
-static const char *get_next_line(const char *start, const char *end)
-{
-	const char *nl = memchr(start, '\n', end - start);
-	return nl ? nl + 1 : end;
-}
-
 /*
  * To allow quick access to the contents of nth line in the
  * final image, prepare an index in the scoreboard.
  */
 static int prepare_lines(struct blame_scoreboard *sb)
 {
-	const char *buf = sb->final_buf;
-	unsigned long len = sb->final_buf_size;
-	const char *end = buf + len;
-	const char *p;
-	int *lineno;
-	int num = 0;
-
-	for (p = buf; p < end; p = get_next_line(p, end))
-		num++;
-
-	ALLOC_ARRAY(sb->lineno, num + 1);
-	lineno = sb->lineno;
-
-	for (p = buf; p < end; p = get_next_line(p, end))
-		*lineno++ = p - buf;
-
-	*lineno = len;
-
-	sb->num_lines = num;
+	sb->num_lines = find_line_starts(&sb->lineno, sb->final_buf,
+					 sb->final_buf_size);
 	return sb->num_lines;
 }
 

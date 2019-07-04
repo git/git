@@ -42,8 +42,8 @@ test_expect_success 'do partial clone 1' '
 
 	test_cmp expect_1.oids observed.oids &&
 	test "$(git -C pc1 config --local core.repositoryformatversion)" = "1" &&
-	test "$(git -C pc1 config --local extensions.partialclone)" = "origin" &&
-	test "$(git -C pc1 config --local core.partialclonefilter)" = "blob:none"
+	test "$(git -C pc1 config --local remote.origin.promisor)" = "true" &&
+	test "$(git -C pc1 config --local remote.origin.partialclonefilter)" = "blob:none"
 '
 
 # checkout master to force dynamic object fetch of blobs at HEAD.
@@ -206,6 +206,25 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 	sort -u fetched_types >unique_types.observed &&
 	test_write_lines blob commit tree >unique_types.expected &&
 	test_cmp unique_types.expected unique_types.observed
+'
+
+test_expect_success 'implicitly construct combine: filter with repeated flags' '
+	GIT_TRACE=$(pwd)/trace git clone --bare \
+		--filter=blob:none --filter=tree:1 \
+		"file://$(pwd)/srv.bare" pc2 &&
+	grep "trace:.* git pack-objects .*--filter=combine:blob:none+tree:1" \
+		trace &&
+	git -C pc2 rev-list --objects --missing=allow-any HEAD >objects &&
+
+	# We should have gotten some root trees.
+	grep " $" objects &&
+	# Should not have gotten any non-root trees or blobs.
+	! grep " ." objects &&
+
+	xargs -n 1 git -C pc2 cat-file -t <objects >types &&
+	sort -u types >unique_types.actual &&
+	test_write_lines commit tree >unique_types.expected &&
+	test_cmp unique_types.expected unique_types.actual
 '
 
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '

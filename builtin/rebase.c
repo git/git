@@ -29,8 +29,8 @@
 #include "rebase-interactive.h"
 
 static char const * const builtin_rebase_usage[] = {
-	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
-		"[<upstream>] [<branch>]"),
+	N_("git rebase [-i] [options] [--exec <cmd>] "
+		"[--onto <newbase> | --keep-base] [<upstream> [<branch>]]"),
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
 		"--root [<branch>]"),
 	N_("git rebase --continue | --abort | --skip | --edit-todo"),
@@ -738,20 +738,30 @@ static int finish_rebase(struct rebase_options *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
 	const char *argv_gc_auto[] = { "gc", "--auto", NULL };
+	int ret = 0;
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 	apply_autostash(opts);
-	close_all_packs(the_repository->objects);
+	close_object_store(the_repository->objects);
 	/*
 	 * We ignore errors in 'gc --auto', since the
 	 * user should see them.
 	 */
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
-	strbuf_addstr(&dir, opts->state_dir);
-	remove_dir_recursively(&dir, 0);
-	strbuf_release(&dir);
+	if (opts->type == REBASE_INTERACTIVE) {
+		struct replay_opts replay = REPLAY_OPTS_INIT;
 
-	return 0;
+		replay.action = REPLAY_INTERACTIVE_REBASE;
+		ret = sequencer_remove_state(&replay);
+	} else {
+		strbuf_addstr(&dir, opts->state_dir);
+		if (remove_dir_recursively(&dir, 0))
+			ret = error(_("could not remove '%s'"),
+				    opts->state_dir);
+		strbuf_release(&dir);
+	}
+
+	return ret;
 }
 
 static struct commit *peel_committish(const char *name)
@@ -1250,25 +1260,46 @@ static int is_linear_history(struct commit *from, struct commit *to)
 	return 1;
 }
 
-static int can_fast_forward(struct commit *onto, struct object_id *head_oid,
-			    struct object_id *merge_base)
+static int can_fast_forward(struct commit *onto, struct commit *upstream,
+			    struct commit *restrict_revision,
+			    struct object_id *head_oid, struct object_id *merge_base)
 {
 	struct commit *head = lookup_commit(the_repository, head_oid);
-	struct commit_list *merge_bases;
-	int res;
+	struct commit_list *merge_bases = NULL;
+	int res = 0;
 
 	if (!head)
-		return 0;
+		goto done;
 
 	merge_bases = get_merge_bases(onto, head);
-	if (merge_bases && !merge_bases->next) {
-		oidcpy(merge_base, &merge_bases->item->object.oid);
-		res = oideq(merge_base, &onto->object.oid);
-	} else {
+	if (!merge_bases || merge_bases->next) {
 		oidcpy(merge_base, &null_oid);
-		res = 0;
+		goto done;
 	}
+
+	oidcpy(merge_base, &merge_bases->item->object.oid);
+	if (!oideq(merge_base, &onto->object.oid))
+		goto done;
+
+	if (restrict_revision && !oideq(&restrict_revision->object.oid, merge_base))
+		goto done;
+
+	if (!upstream)
+		goto done;
+
 	free_commit_list(merge_bases);
+	merge_bases = get_merge_bases(upstream, head);
+	if (!merge_bases || merge_bases->next)
+		goto done;
+
+	if (!oideq(&onto->object.oid, &merge_bases->item->object.oid))
+		goto done;
+
+	res = 1;
+
+done:
+	if (merge_bases)
+		free_commit_list(merge_bases);
 	return res && is_linear_history(onto, head);
 }
 
@@ -1366,6 +1397,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct rebase_options options = REBASE_OPTIONS_INIT;
 	const char *branch_name;
 	int ret, flags, total_argc, in_progress = 0;
+	int keep_base = 0;
 	int ok_to_skip_pre_rebase = 0;
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf revisions = STRBUF_INIT;
@@ -1383,6 +1415,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
 			   N_("rebase onto given branch instead of upstream")),
+		OPT_BOOL(0, "keep-base", &keep_base,
+			 N_("use the merge-base of upstream and branch as the current base")),
 		OPT_BOOL(0, "no-verify", &ok_to_skip_pre_rebase,
 			 N_("allow pre-rebase hook to run")),
 		OPT_NEGBIT('q', "quiet", &options.flags,
@@ -1536,9 +1570,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
 
-	if (options.type == REBASE_PRESERVE_MERGES)
-		warning(_("git rebase --preserve-merges is deprecated. "
-			  "Use --rebase-merges instead."));
+	if (keep_base) {
+		if (options.onto_name)
+			die(_("cannot combine '--keep-base' with '--onto'"));
+		if (options.root)
+			die(_("cannot combine '--keep-base' with '--root'"));
+	}
 
 	if (action != ACTION_NONE && !in_progress)
 		die(_("No rebase in progress?"));
@@ -1600,7 +1637,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (reset_head(NULL, "reset", NULL, RESET_HEAD_HARD,
 			       NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
-		remove_branch_state(the_repository);
+		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
 			exit(1);
 		goto run_rebase;
@@ -1620,16 +1657,24 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
-		remove_branch_state(the_repository);
-		ret = finish_rebase(&options);
+		remove_branch_state(the_repository, 0);
+		ret = !!finish_rebase(&options);
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, options.state_dir);
-		ret = !!remove_dir_recursively(&buf, 0);
-		if (ret)
-			die(_("could not remove '%s'"), options.state_dir);
+		if (options.type == REBASE_INTERACTIVE) {
+			struct replay_opts replay = REPLAY_OPTS_INIT;
+
+			replay.action = REPLAY_INTERACTIVE_REBASE;
+			ret = !!sequencer_remove_state(&replay);
+		} else {
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, options.state_dir);
+			ret = !!remove_dir_recursively(&buf, 0);
+			if (ret)
+				error(_("could not remove '%s'"),
+				       options.state_dir);
+		}
 		goto cleanup;
 	}
 	case ACTION_EDIT_TODO:
@@ -1864,12 +1909,22 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Make sure the branch to rebase onto is valid. */
-	if (!options.onto_name)
+	if (keep_base) {
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, options.upstream_name);
+		strbuf_addstr(&buf, "...");
+		options.onto_name = xstrdup(buf.buf);
+	} else if (!options.onto_name)
 		options.onto_name = options.upstream_name;
 	if (strstr(options.onto_name, "...")) {
-		if (get_oid_mb(options.onto_name, &merge_base) < 0)
-			die(_("'%s': need exactly one merge base"),
-			    options.onto_name);
+		if (get_oid_mb(options.onto_name, &merge_base) < 0) {
+			if (keep_base)
+				die(_("'%s': need exactly one merge base with branch"),
+				    options.upstream_name);
+			else
+				die(_("'%s': need exactly one merge base"),
+				    options.onto_name);
+		}
 		options.onto = lookup_commit_or_die(&merge_base,
 						    options.onto_name);
 	} else {
@@ -2004,13 +2059,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * Check if we are already based on onto with linear history,
-	 * but this should be done only when upstream and onto are the same
-	 * and if this is not an interactive rebase.
+	 * in which case we could fast-forward without replacing the commits
+	 * with new commits recreated by replaying their changes. This
+	 * optimization must not be done if this is an interactive rebase.
 	 */
-	if (can_fast_forward(options.onto, &options.orig_head, &merge_base) &&
-	    !is_interactive(&options) && !options.restrict_revision &&
-	    options.upstream &&
-	    !oidcmp(&options.upstream->object.oid, &options.onto->object.oid)) {
+	if (can_fast_forward(options.onto, options.upstream, options.restrict_revision,
+		    &options.orig_head, &merge_base) &&
+	    !is_interactive(&options)) {
 		int flag;
 
 		if (!(options.flags & REBASE_FORCE)) {
@@ -2104,7 +2159,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	strbuf_addf(&msg, "%s: checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
 	if (reset_head(&options.onto->object.oid, "checkout", NULL,
-		       RESET_HEAD_DETACH | RESET_ORIG_HEAD | 
+		       RESET_HEAD_DETACH | RESET_ORIG_HEAD |
 		       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
 		       NULL, msg.buf))
 		die(_("Could not detach HEAD"));
@@ -2141,6 +2196,7 @@ run_rebase:
 	ret = !!run_specific_rebase(&options, action);
 
 cleanup:
+	strbuf_release(&buf);
 	strbuf_release(&revisions);
 	free(options.head_name);
 	free(options.gpg_sign_opt);

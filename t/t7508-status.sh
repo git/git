@@ -94,19 +94,16 @@ test_expect_success 'status --column' '
 #   (use "git pull" to merge the remote branch into yours)
 #
 # Changes to be committed:
-#   (use "git reset HEAD <file>..." to unstage)
-#
+#   (use "git restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
 # Changes not staged for commit:
 #   (use "git add <file>..." to update what will be committed)
-#   (use "git checkout -- <file>..." to discard changes in working directory)
-#
+#   (use "git restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
 #   (use "git add <file>..." to include in what will be committed)
-#
 #	dir1/untracked dir2/untracked
 #	dir2/modified  untracked
 #
@@ -128,19 +125,16 @@ cat >expect <<\EOF
 #   (use "git pull" to merge the remote branch into yours)
 #
 # Changes to be committed:
-#   (use "git reset HEAD <file>..." to unstage)
-#
+#   (use "git restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
 # Changes not staged for commit:
 #   (use "git add <file>..." to update what will be committed)
-#   (use "git checkout -- <file>..." to discard changes in working directory)
-#
+#   (use "git restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
 #   (use "git add <file>..." to include in what will be committed)
-#
 #	dir1/untracked
 #	dir2/modified
 #	dir2/untracked
@@ -278,24 +272,20 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir2/modified
 
 Ignored files:
   (use "git add -f <file>..." to include in what will be committed)
-
 	.gitignore
 	dir1/untracked
 	dir2/untracked
@@ -347,19 +337,16 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Ignored files:
   (use "git add -f <file>..." to include in what will be committed)
-
 	.gitignore
 	dir1/untracked
 	dir2/modified
@@ -420,14 +407,12 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)
@@ -484,19 +469,16 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -542,19 +524,16 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -605,19 +584,16 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   ../dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	untracked
 	../dir2/modified
 	../dir2/untracked
@@ -676,19 +652,16 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	<GREEN>new file:   dir2/added<RESET>
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	<RED>modified:   dir1/modified<RESET>
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	<BLUE>dir1/untracked<RESET>
 	<BLUE>dir2/modified<RESET>
 	<BLUE>dir2/untracked<RESET>
@@ -802,19 +775,16 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -852,13 +822,11 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/
 	untracked
@@ -896,20 +864,17 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -956,15 +921,13 @@ and have 1 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be committed:
@@ -974,7 +937,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1019,13 +981,11 @@ and have 2 and 2 different commits each, respectively.
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1068,15 +1028,13 @@ and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD^1 <file>..." to unstage)
-
+  (use "git restore --source=HEAD^1 --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be committed:
@@ -1086,7 +1044,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1123,14 +1080,12 @@ and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be committed:
@@ -1140,7 +1095,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1235,15 +1189,13 @@ and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
+  (use "git restore <file>..." to discard changes in working directory)
   (commit or discard the untracked or modified content in submodules)
-
 	modified:   dir1/modified
 	modified:   sm (modified content)
 
@@ -1254,7 +1206,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1295,14 +1246,12 @@ and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 	modified:   sm (new commits)
 
@@ -1318,7 +1267,6 @@ Submodules changed but not updated:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1379,14 +1327,12 @@ cat > expect << EOF
 ;   (use "git pull" to merge the remote branch into yours)
 ;
 ; Changes to be committed:
-;   (use "git reset HEAD <file>..." to unstage)
-;
+;   (use "git restore --staged <file>..." to unstage)
 ;	modified:   sm
 ;
 ; Changes not staged for commit:
 ;   (use "git add <file>..." to update what will be committed)
-;   (use "git checkout -- <file>..." to discard changes in working directory)
-;
+;   (use "git restore <file>..." to discard changes in working directory)
 ;	modified:   dir1/modified
 ;	modified:   sm (new commits)
 ;
@@ -1402,7 +1348,6 @@ cat > expect << EOF
 ;
 ; Untracked files:
 ;   (use "git add <file>..." to include in what will be committed)
-;
 ;	.gitmodules
 ;	dir1/untracked
 ;	dir2/modified
@@ -1431,13 +1376,11 @@ and have 2 and 2 different commits each, respectively.
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1458,19 +1401,16 @@ and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1581,14 +1521,12 @@ and have 2 and 2 different commits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
-
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)

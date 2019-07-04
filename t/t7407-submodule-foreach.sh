@@ -421,4 +421,11 @@ test_expect_success 'option-like arguments passed to foreach commands are not lo
 	test_cmp expected actual
 '
 
+test_expect_success 'option-like arguments passed to foreach recurse correctly' '
+	git -C clone2 submodule foreach --recursive "echo be --an-option" >expect &&
+	git -C clone2 submodule foreach --recursive echo be --an-option >actual &&
+	grep -e "--an-option" expect &&
+	test_cmp expect actual
+'
+
 test_done

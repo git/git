@@ -24,7 +24,7 @@ test_expect_success 'list refs with git:// using protocol v2' '
 		ls-remote --symref "$GIT_DAEMON_URL/parent" >actual &&
 
 	# Client requested to use protocol v2
-	grep "git> .*\\\0\\\0version=2\\\0$" log &&
+	grep "git> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "git< version 2" log &&
 
@@ -56,7 +56,7 @@ test_expect_success 'clone with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "clone> .*\\\0\\\0version=2\\\0$" log &&
+	grep "clone> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "clone< version 2" log
 '
@@ -74,7 +74,7 @@ test_expect_success 'fetch with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
+	grep "fetch> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "fetch< version 2" log
 '
@@ -103,7 +103,7 @@ test_expect_success 'pull with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
+	grep "fetch> .*\\\0\\\0version=2.*\\\0$" log &&
 	# Server responded using protocol v2
 	grep "fetch< version 2" log
 '
@@ -659,7 +659,7 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	test_when_finished "rm -f log" &&
 	# Till v2 for push is designed, make sure that if a client has
 	# protocol.version configured to use v2, that the client instead falls
-	# back and uses v0.
+	# back to previous versions.
 
 	test_commit -C http_child three &&
 
@@ -672,10 +672,8 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s client_branch >expect &&
 	test_cmp expect actual &&
 
-	# Client didnt request to use protocol v2
-	! grep "Git-Protocol: version=2" log &&
-	# Server didnt respond using protocol v2
-	! grep "git< version 2" log
+	# Server responded with version 1
+	grep "git< version 1" log
 '
 
 test_expect_success 'when server sends "ready", expect DELIM' '
@@ -727,6 +725,63 @@ test_expect_success 'when server does not send "ready", expect FLUSH' '
 	grep "fetch< .*acknowledgments" log &&
 	! grep "fetch< .*ready" log &&
 	test_i18ngrep "expected no other sections to be sent after no .ready." err
+'
+
+configure_exclusion () {
+	git -C "$1" hash-object "$2" >objh &&
+	git -C "$1" pack-objects "$HTTPD_DOCUMENT_ROOT_PATH/mypack" <objh >packh &&
+	git -C "$1" config --add \
+		"uploadpack.blobpackfileuri" \
+		"$(cat objh) $(cat packh) $HTTPD_URL/dumb/mypack-$(cat packh).pack" &&
+	cat objh
+}
+
+test_expect_success 'part of packfile response provided as URI' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+	rm -rf "$P" http_child log &&
+
+	git init "$P" &&
+	git -C "$P" config "uploadpack.allowsidebandall" "true" &&
+
+	echo my-blob >"$P/my-blob" &&
+	git -C "$P" add my-blob &&
+	echo other-blob >"$P/other-blob" &&
+	git -C "$P" add other-blob &&
+	git -C "$P" commit -m x &&
+
+	configure_exclusion "$P" my-blob >h &&
+	configure_exclusion "$P" other-blob >h2 &&
+
+	GIT_TRACE=1 GIT_TRACE_PACKET="$(pwd)/log" GIT_TEST_SIDEBAND_ALL=1 \
+	git -c protocol.version=2 \
+		-c fetch.uriprotocols=http,https \
+		clone "$HTTPD_URL/smart/http_parent" http_child &&
+
+	# Ensure that my-blob and other-blob are in separate packfiles.
+	for idx in http_child/.git/objects/pack/*.idx
+	do
+		git verify-pack --verbose $idx >out &&
+		{
+			grep "^[0-9a-f]\{16,\} " out || :
+		} >out.objectlist &&
+		if test_line_count = 1 out.objectlist
+		then
+			if grep $(cat h) out
+			then
+				>hfound
+			fi &&
+			if grep $(cat h2) out
+			then
+				>h2found
+			fi
+		fi
+	done &&
+	test -f hfound &&
+	test -f h2found &&
+
+	# Ensure that there are exactly 6 files (3 .pack and 3 .idx).
+	ls http_child/.git/objects/pack/* >filelist &&
+	test_line_count = 6 filelist
 '
 
 test_done

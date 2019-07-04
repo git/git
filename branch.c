@@ -346,9 +346,9 @@ void remove_merge_branch_state(struct repository *r)
 	unlink(git_path_merge_mode(r));
 }
 
-void remove_branch_state(struct repository *r)
+void remove_branch_state(struct repository *r, int verbose)
 {
-	sequencer_post_commit_cleanup(r);
+	sequencer_post_commit_cleanup(r, verbose);
 	unlink(git_path_squash_msg(r));
 	remove_merge_branch_state(r);
 }

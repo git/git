@@ -363,24 +363,27 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 	const char *extra_headers = opt->extra_headers;
 	const char *name = oid_to_hex(opt->zero_commit ?
 				      &null_oid : &commit->object.oid);
+	struct strbuf message_ids = STRBUF_INIT;
 
 	*need_8bit_cte_p = 0; /* unknown */
 
 	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
 	graph_show_oneline(opt->graph);
-	if (opt->message_id) {
-		fprintf(opt->diffopt.file, "Message-Id: <%s>\n", opt->message_id);
-		graph_show_oneline(opt->graph);
-	}
+
+	if (opt->message_id)
+		strbuf_addf(&message_ids, "Message-Id: <%s>\n", opt->message_id);
+
 	if (opt->ref_message_ids && opt->ref_message_ids->nr > 0) {
 		int i, n;
 		n = opt->ref_message_ids->nr;
-		fprintf(opt->diffopt.file, "In-Reply-To: <%s>\n", opt->ref_message_ids->items[n-1].string);
+		strbuf_addf(&message_ids, "In-Reply-To: <%s>\n",
+			    opt->ref_message_ids->items[n-1].string);
 		for (i = 0; i < n; i++)
-			fprintf(opt->diffopt.file, "%s<%s>\n", (i > 0 ? "\t" : "References: "),
-			       opt->ref_message_ids->items[i].string);
-		graph_show_oneline(opt->graph);
+			strbuf_addf(&message_ids, "%s<%s>\n",
+				    (i > 0 ? "\t" : "References: "),
+				    opt->ref_message_ids->items[i].string);
 	}
+
 	if (opt->mime_boundary && maybe_multipart) {
 		static struct strbuf subject_buffer = STRBUF_INIT;
 		static struct strbuf buffer = STRBUF_INIT;
@@ -425,6 +428,17 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		opt->diffopt.stat_sep = buffer.buf;
 		strbuf_release(&filename);
 	}
+
+	if (message_ids.len) {
+		static struct strbuf buf = STRBUF_INIT;
+
+		strbuf_reset(&buf);
+		strbuf_addbuf(&buf, &message_ids);
+		if (extra_headers)
+			strbuf_addstr(&buf, extra_headers);
+		extra_headers = buf.buf;
+	}
+
 	*extra_headers_p = extra_headers;
 }
 

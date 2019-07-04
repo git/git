@@ -741,7 +741,7 @@ used earlier, and create a branch in it. You do that by simply just
 saying that you want to check out a new branch:
 
 ------------
-$ git checkout -b mybranch
+$ git switch -c mybranch
 ------------
 
 will create a new branch based at the current `HEAD` position, and switch
@@ -755,7 +755,7 @@ just telling 'git checkout' what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
 ------------
-$ git checkout -b mybranch earlier-commit
+$ git switch -c mybranch earlier-commit
 ------------
 
 and it would create the new branch `mybranch` at the earlier commit,
@@ -765,7 +765,7 @@ and check out the state at that time.
 You can always just jump back to your original `master` branch by doing
 
 ------------
-$ git checkout master
+$ git switch master
 ------------
 
 (or any other branch-name, for that matter) and if you forget which
@@ -794,7 +794,7 @@ $ git branch <branchname> [startingpoint]
 
 which will simply _create_ the branch, but will not do anything further.
 You can then later -- once you decide that you want to actually develop
-on that branch -- switch to that branch with a regular 'git checkout'
+on that branch -- switch to that branch with a regular 'git switch'
 with the branchname as the argument.
 
 
@@ -808,7 +808,7 @@ being the same as the original `master` branch, let's make sure we're in
 that branch, and do some work there.
 
 ------------------------------------------------
-$ git checkout mybranch
+$ git switch mybranch
 $ echo "Work, work, work" >>hello
 $ git commit -m "Some work." -i hello
 ------------------------------------------------
@@ -825,7 +825,7 @@ does some work in the original branch, and simulate that by going back
 to the master branch, and editing the same file differently there:
 
 ------------
-$ git checkout master
+$ git switch master
 ------------
 
 Here, take a moment to look at the contents of `hello`, and notice how they
@@ -958,7 +958,7 @@ to the `master` branch. Let's go back to `mybranch`, and run
 'git merge' to get the "upstream changes" back to your branch.
 
 ------------
-$ git checkout mybranch
+$ git switch mybranch
 $ git merge -m "Merge upstream changes." master
 ------------
 
@@ -1133,9 +1133,8 @@ Remember, before running 'git merge', our `master` head was at
 work." commit.
 
 ------------
-$ git checkout mybranch
-$ git reset --hard master^2
-$ git checkout master
+$ git switch -C mybranch master^2
+$ git switch master
 $ git reset --hard master^
 ------------
 

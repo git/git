@@ -6,6 +6,8 @@
 #include "tree-walk.h"
 
 struct cache_tree;
+struct json_writer;
+
 struct cache_tree_sub {
 	struct cache_tree *cache_tree;
 	int count;		/* internally used by update_one() */
@@ -28,7 +30,8 @@ void cache_tree_invalidate_path(struct index_state *, const char *);
 struct cache_tree_sub *cache_tree_sub(struct cache_tree *, const char *);
 
 void cache_tree_write(struct strbuf *, struct cache_tree *root);
-struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
+struct cache_tree *cache_tree_read(const char *buffer, unsigned long size,
+				   struct json_writer *jw);
 
 int cache_tree_fully_valid(struct cache_tree *);
 int cache_tree_update(struct index_state *, int);

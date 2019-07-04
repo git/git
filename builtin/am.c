@@ -1801,7 +1801,7 @@ next:
 	 */
 	if (!state->rebasing) {
 		am_destroy(state);
-		close_all_packs(the_repository->objects);
+		close_object_store(the_repository->objects);
 		run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
 	}
 }
@@ -1956,7 +1956,7 @@ static int clean_index(const struct object_id *head, const struct object_id *rem
 	if (merge_tree(remote_tree))
 		return -1;
 
-	remove_branch_state(the_repository);
+	remove_branch_state(the_repository, 0);
 
 	return 0;
 }

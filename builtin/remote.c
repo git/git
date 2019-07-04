@@ -24,8 +24,9 @@ static const char * const builtin_remote_usage[] = {
 	N_("git remote set-branches [--add] <name> <branch>..."),
 	N_("git remote get-url [--push] [--all] <name>"),
 	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
-	N_("git remote set-url --add <name> <newurl>"),
-	N_("git remote set-url --delete <name> <url>"),
+	N_("git remote set-url --add [--push] <name> <newurl>"),
+	N_("git remote set-url --delete [--push] <name> <url>"),
+	N_("git remote set-url --save-to-push <name> <url>"),
 	NULL
 };
 
@@ -77,8 +78,9 @@ static const char * const builtin_remote_geturl_usage[] = {
 
 static const char * const builtin_remote_seturl_usage[] = {
 	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
-	N_("git remote set-url --add <name> <newurl>"),
-	N_("git remote set-url --delete <name> <url>"),
+	N_("git remote set-url --add [--push] <name> <newurl>"),
+	N_("git remote set-url --delete [--push] <name> <url>"),
+	N_("git remote set-url --save-to-push <name> <url>"),
 	NULL
 };
 
@@ -1519,7 +1521,7 @@ static int get_url(int argc, const char **argv)
 
 static int set_url(int argc, const char **argv)
 {
-	int i, push_mode = 0, add_mode = 0, delete_mode = 0;
+	int i, push_mode = 0, save_to_push = 0, add_mode = 0, delete_mode = 0;
 	int matches = 0, negative_matches = 0;
 	const char *remotename = NULL;
 	const char *newurl = NULL;
@@ -1532,6 +1534,8 @@ static int set_url(int argc, const char **argv)
 	struct option options[] = {
 		OPT_BOOL('\0', "push", &push_mode,
 			 N_("manipulate push URLs")),
+		OPT_BOOL('\0', "save-to-push", &save_to_push,
+			 N_("change fetching URL behavior")),
 		OPT_BOOL('\0', "add", &add_mode,
 			 N_("add URL")),
 		OPT_BOOL('\0', "delete", &delete_mode,
@@ -1543,6 +1547,8 @@ static int set_url(int argc, const char **argv)
 
 	if (add_mode && delete_mode)
 		die(_("--add --delete doesn't make sense"));
+	if (save_to_push && (push_mode || add_mode || delete_mode))
+		die(_("--save-to-push cannot be used with other options"));
 
 	if (argc < 3 || argc > 4 || ((add_mode || delete_mode) && argc != 3))
 		usage_with_options(builtin_remote_seturl_usage, options);
@@ -1564,6 +1570,16 @@ static int set_url(int argc, const char **argv)
 		urlset = remote->pushurl;
 		urlset_nr = remote->pushurl_nr;
 	} else {
+		if (save_to_push) {
+			if (remote->url_nr != 1)
+				die(_("--save-to-push can only be used when only one url is defined"));
+
+			strbuf_addf(&name_buf, "remote.%s.pushurl", remotename);
+			git_config_set_multivar(name_buf.buf,
+			      remote->url[0], "^$", 0);
+			strbuf_reset(&name_buf);
+		}
+
 		strbuf_addf(&name_buf, "remote.%s.url", remotename);
 		urlset = remote->url;
 		urlset_nr = remote->url_nr;

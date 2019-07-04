@@ -33,6 +33,10 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 	packet_trace_identity("upload-pack");
 	read_replace_refs = 0;
 
+	register_allowed_protocol_version(protocol_v2);
+	register_allowed_protocol_version(protocol_v1);
+	register_allowed_protocol_version(protocol_v0);
+
 	argc = parse_options(argc, argv, prefix, options, upload_pack_usage, 0);
 
 	if (argc != 1)

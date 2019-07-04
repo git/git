@@ -25,7 +25,7 @@
 #include "packfile.h"
 #include "parse-options.h"
 #include "help.h"
-#include "fetch-object.h"
+#include "promisor-remote.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -6514,8 +6514,7 @@ static void add_if_missing(struct repository *r,
 
 void diffcore_std(struct diff_options *options)
 {
-	if (options->repo == the_repository &&
-	    repository_format_partial_clone) {
+	if (options->repo == the_repository && has_promisor_remote()) {
 		/*
 		 * Prefetch the diff pairs that are about to be flushed.
 		 */
@@ -6532,8 +6531,8 @@ void diffcore_std(struct diff_options *options)
 			/*
 			 * NEEDSWORK: Consider deduplicating the OIDs sent.
 			 */
-			fetch_objects(repository_format_partial_clone,
-				      to_fetch.oid, to_fetch.nr);
+			promisor_remote_get_direct(options->repo,
+						   to_fetch.oid, to_fetch.nr);
 		oid_array_clear(&to_fetch);
 	}
 

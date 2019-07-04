@@ -105,6 +105,7 @@ static struct child_process *get_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
+	struct strbuf version_advert = STRBUF_INIT;
 	struct child_process *helper;
 	int duped;
 	int code;
@@ -126,6 +127,11 @@ static struct child_process *get_helper(struct transport *transport)
 	if (have_git_dir())
 		argv_array_pushf(&helper->env_array, "%s=%s",
 				 GIT_DIR_ENVIRONMENT, get_git_dir());
+
+	get_client_protocol_version_advertisement(&version_advert);
+	if (version_advert.len > 0)
+		argv_array_pushf(&helper->env_array, "%s=%s",
+				 GIT_PROTOCOL_ENVIRONMENT, version_advert.buf);
 
 	helper->trace2_child_class = helper->args.argv[0]; /* "remote-<name>" */
 
@@ -399,10 +405,11 @@ static int fetch_with_fetch(struct transport *transport,
 
 		if (starts_with(buf.buf, "lock ")) {
 			const char *name = buf.buf + 5;
-			if (transport->pack_lockfile)
+			if (transport->pack_lockfiles.nr)
 				warning(_("%s also locked %s"), data->name, name);
 			else
-				transport->pack_lockfile = xstrdup(name);
+				string_list_append(&transport->pack_lockfiles,
+						   name);
 		}
 		else if (data->check_connectivity &&
 			 data->transport_options.check_self_contained_and_connected &&
@@ -682,13 +689,9 @@ static int fetch(struct transport *transport,
 		set_helper_option(transport, "update-shallow", "true");
 
 	if (data->transport_options.filter_options.choice) {
-		struct strbuf expanded_filter_spec = STRBUF_INIT;
-		expand_list_objects_filter_spec(
-			&data->transport_options.filter_options,
-			&expanded_filter_spec);
-		set_helper_option(transport, "filter",
-				  expanded_filter_spec.buf);
-		strbuf_release(&expanded_filter_spec);
+		const char *spec = expand_list_objects_filter_spec(
+			&data->transport_options.filter_options);
+		set_helper_option(transport, "filter", spec);
 	}
 
 	if (data->transport_options.negotiation_tips)

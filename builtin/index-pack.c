@@ -14,7 +14,7 @@
 #include "thread-utils.h"
 #include "packfile.h"
 #include "object-store.h"
-#include "fetch-object.h"
+#include "promisor-remote.h"
 
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
@@ -1352,7 +1352,7 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		sorted_by_pos[i] = &ref_deltas[i];
 	QSORT(sorted_by_pos, nr_ref_deltas, delta_pos_compare);
 
-	if (repository_format_partial_clone) {
+	if (has_promisor_remote()) {
 		/*
 		 * Prefetch the delta bases.
 		 */
@@ -1366,8 +1366,8 @@ static void fix_unresolved_deltas(struct hashfile *f)
 			oid_array_append(&to_fetch, &d->oid);
 		}
 		if (to_fetch.nr)
-			fetch_objects(repository_format_partial_clone,
-				      to_fetch.oid, to_fetch.nr);
+			promisor_remote_get_direct(the_repository,
+						   to_fetch.oid, to_fetch.nr);
 		oid_array_clear(&to_fetch);
 	}
 

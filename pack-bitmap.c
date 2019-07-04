@@ -365,7 +365,7 @@ struct include_data {
 static inline int bitmap_position_extended(struct bitmap_index *bitmap_git,
 					   const struct object_id *oid)
 {
-	khash_oid_pos *positions = bitmap_git->ext_index.positions;
+	kh_oid_pos_t *positions = bitmap_git->ext_index.positions;
 	khiter_t pos = kh_get_oid_pos(positions, *oid);
 
 	if (pos < kh_end(positions)) {
@@ -1041,7 +1041,7 @@ static int rebuild_bitmap(uint32_t *reposition,
 
 int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 			     struct packing_data *mapping,
-			     khash_sha1 *reused_bitmaps,
+			     kh_oid_map_t *reused_bitmaps,
 			     int show_progress)
 {
 	uint32_t i, num_objects;
@@ -1057,13 +1057,13 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 	reposition = xcalloc(num_objects, sizeof(uint32_t));
 
 	for (i = 0; i < num_objects; ++i) {
-		const unsigned char *sha1;
+		struct object_id oid;
 		struct revindex_entry *entry;
 		struct object_entry *oe;
 
 		entry = &bitmap_git->pack->revindex[i];
-		sha1 = nth_packed_object_sha1(bitmap_git->pack, entry->nr);
-		oe = packlist_find(mapping, sha1, NULL);
+		nth_packed_object_oid(&oid, bitmap_git->pack, entry->nr);
+		oe = packlist_find(mapping, &oid, NULL);
 
 		if (oe)
 			reposition[i] = oe_in_pack_pos(mapping, oe) + 1;
@@ -1080,9 +1080,9 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 			if (!rebuild_bitmap(reposition,
 					    lookup_stored_bitmap(stored),
 					    rebuild)) {
-				hash_pos = kh_put_sha1(reused_bitmaps,
-						       stored->oid.hash,
-						       &hash_ret);
+				hash_pos = kh_put_oid_map(reused_bitmaps,
+							  stored->oid,
+							  &hash_ret);
 				kh_value(reused_bitmaps, hash_pos) =
 					bitmap_to_ewah(rebuild);
 			}

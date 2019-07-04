@@ -8,12 +8,14 @@ git-branch - List, create, or delete branches
 SYNOPSIS
 --------
 [verse]
-'git branch' [--color[=<when>] | --no-color] [-r | -a]
-	[--list] [--show-current] [-v [--abbrev=<length> | --no-abbrev]]
+'git branch' [--color[=<when>] | --no-color] [--show-current]
+	[-v [--abbrev=<length> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
 	[(--merged | --no-merged) [<commit>]]
 	[--contains [<commit]] [--no-contains [<commit>]]
-	[--points-at <object>] [--format=<format>] [<pattern>...]
+	[--points-at <object>] [--format=<format>]
+	[(-r | --remotes) | (-a | --all)]
+	[--list] [<pattern>...]
 'git branch' [--track | --no-track] [-f] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
@@ -26,13 +28,19 @@ DESCRIPTION
 -----------
 
 If `--list` is given, or if there are no non-option arguments, existing
-branches are listed; the current branch will be highlighted with an
-asterisk.  Option `-r` causes the remote-tracking branches to be listed,
-and option `-a` shows both local and remote branches. If a `<pattern>`
+branches are listed; the current branch will be highlighted in green and
+marked with an asterisk.  Any branches checked out in linked worktrees will
+be highlighted in cyan and marked with a plus sign. Option `-r` causes the
+remote-tracking branches to be listed,
+and option `-a` shows both local and remote branches.
+
+If a `<pattern>`
 is given, it is used as a shell wildcard to restrict the output to
 matching branches. If multiple patterns are given, a branch is shown if
-it matches any of the patterns.  Note that when providing a
-`<pattern>`, you must use `--list`; otherwise the command is interpreted
+it matches any of the patterns.
+
+Note that when providing a
+`<pattern>`, you must use `--list`; otherwise the command may be interpreted
 as branch creation.
 
 With `--contains`, shows only the branches that contain the named commit
@@ -52,7 +60,7 @@ can leave out at most one of `A` and `B`, in which case it defaults to
 `HEAD`.
 
 Note that this will create the new branch, but it will not switch the
-working tree to it; use "git checkout <newbranch>" to switch to the
+working tree to it; use "git switch <newbranch>" to switch to the
 new branch.
 
 When a local branch is started off a remote-tracking branch, Git sets up the
@@ -153,10 +161,12 @@ This option is only applicable in non-verbose mode.
 -r::
 --remotes::
 	List or delete (if used with -d) the remote-tracking branches.
+	Combine with `--list` to match the optional pattern(s).
 
 -a::
 --all::
 	List both remote-tracking branches and local branches.
+	Combine with `--list` to match optional pattern(s).
 
 -l::
 --list::
@@ -174,8 +184,10 @@ This option is only applicable in non-verbose mode.
 	When in list mode,
 	show sha1 and commit subject line for each head, along with
 	relationship to upstream branch (if any). If given twice, print
-	the name of the upstream branch, as well (see also `git remote
-	show <remote>`).
+	the path of the linked worktree (if any) and the name of the upstream
+	branch, as well (see also `git remote show <remote>`).  Note that the
+	current worktree's HEAD will not have its path printed (it will always
+	be your current directory).
 
 -q::
 --quiet::
@@ -202,7 +214,7 @@ This option is only applicable in non-verbose mode.
 +
 This behavior is the default when the start point is a remote-tracking branch.
 Set the branch.autoSetupMerge configuration variable to `false` if you
-want `git checkout` and `git branch` to always behave as if `--no-track`
+want `git switch`, `git checkout` and `git branch` to always behave as if `--no-track`
 were given. Set it to `always` if you want this behavior when the
 start-point is either a local or remote-tracking branch.
 
@@ -301,7 +313,7 @@ Start development from a known tag::
 $ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
 $ cd my2.6
 $ git branch my2.6.14 v2.6.14   <1>
-$ git checkout my2.6.14
+$ git switch my2.6.14
 ------------
 +
 <1> This step and the next one could be combined into a single step with
@@ -322,13 +334,25 @@ $ git branch -D test                                    <2>
 <2> Delete the "test" branch even if the "master" branch (or whichever branch
     is currently checked out) does not have all commits from the test branch.
 
+Listing branches from a specific remote::
++
+------------
+$ git branch -r -l '<remote>/<pattern>'                 <1>
+$ git for-each-ref 'refs/remotes/<remote>/<pattern>'    <2>
+------------
++
+<1> Using `-a` would conflate <remote> with any local branches you happen to
+    have been prefixed with the same <remote> pattern.
+<2> `for-each-ref` can take a wide range of options. See linkgit:git-for-each-ref[1]
+
+Patterns will normally need quoting.
 
 NOTES
 -----
 
-If you are creating a branch that you want to checkout immediately, it is
-easier to use the git checkout command with its `-b` option to create
-a branch and check it out with a single command.
+If you are creating a branch that you want to switch to immediately,
+it is easier to use the "git switch" command with its `-c` option to
+do the same thing with a single command.
 
 The options `--contains`, `--no-contains`, `--merged` and `--no-merged`
 serve four related but different purposes:

@@ -26,7 +26,7 @@ SYNOPSIS
 		   [--no-notes | --notes[=<ref>]]
 		   [--interdiff=<previous>]
 		   [--range-diff=<previous> [--creation-factor=<percent>]]
-		   [--progress]
+		   [--progress] [--[no-]clobber]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
 
@@ -93,6 +93,12 @@ include::diff-options.txt[]
 --output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
+
+--clobber::
+--no-clobber::
+	(experimental)
+	Allow overwriting existing files, which is the default.  To
+	make the command refrain from overwriting, use `--no-clobber`.
 
 -n::
 --numbered::
@@ -426,8 +432,8 @@ One way to test if your MUA is set up correctly is:
 * Apply it:
 
     $ git fetch <project> master:test-apply
-    $ git checkout test-apply
-    $ git reset --hard
+    $ git switch test-apply
+    $ git restore --source=HEAD --staged --worktree :/
     $ git am a.patch
 
 If it does not apply correctly, there can be various reasons.

@@ -378,8 +378,7 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 			*(p+1) = 0;
 			if (!get_oid(p - (hexsz - 1), &oid)) {
 				struct object *o =
-					lookup_object(the_repository,
-						      oid.hash);
+					lookup_object(the_repository, &oid);
 				if (o)
 					name = get_rev_name(o, &buf);
 			}

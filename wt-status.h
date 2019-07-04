@@ -1,7 +1,6 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-#include <stdio.h>
 #include "string-list.h"
 #include "color.h"
 #include "pathspec.h"
@@ -64,6 +63,9 @@ enum wt_status_format {
 
 	STATUS_FORMAT_UNSPECIFIED
 };
+
+#define HEAD_DETACHED_AT _("HEAD detached at ")
+#define HEAD_DETACHED_FROM _("HEAD detached from ")
 
 struct wt_status_state {
 	int merge_in_progress;

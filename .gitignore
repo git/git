@@ -58,6 +58,7 @@
 /git-difftool
 /git-difftool--helper
 /git-describe
+/git-env--helper
 /git-fast-export
 /git-fast-import
 /git-fetch
@@ -139,6 +140,7 @@
 /git-request-pull
 /git-rerere
 /git-reset
+/git-restore
 /git-rev-list
 /git-rev-parse
 /git-revert
@@ -163,6 +165,7 @@
 /git-submodule
 /git-submodule--helper
 /git-svn
+/git-switch
 /git-symbolic-ref
 /git-tag
 /git-unpack-file
@@ -223,6 +226,11 @@
 *.user
 *.idb
 *.pdb
+*.ilk
+*.iobj
+*.ipdb
+*.dll
+.vs/
 /Debug/
 /Release/
 *.dSYM

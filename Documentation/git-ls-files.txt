@@ -162,6 +162,11 @@ a space) at the start of each line:
 	possible for manual inspection; the exact format may change at
 	any time.
 
+--debug-json::
+	Dump the entire index content in JSON format. This is for
+	debugging purposes. The JSON structure is subject to change.
+	Note that the strings are not always valid UTF-8.
+
 --eol::
 	Show <eolinfo> and <eolattr> of files.
 	<eolinfo> is the file content identification used by Git when

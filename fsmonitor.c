@@ -3,6 +3,7 @@
 #include "dir.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "json-writer.h"
 #include "run-command.h"
 #include "strbuf.h"
 
@@ -50,13 +51,18 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	}
 	istate->fsmonitor_dirty = fsmonitor_dirty;
 
+	if (istate->jw) {
+		jw_object_intmax(istate->jw, "version", hdr_version);
+		jw_object_intmax(istate->jw, "last_update", istate->fsmonitor_last_update);
+		jw_object_ewah(istate->jw, "dirty", fsmonitor_dirty);
+	}
 	trace_printf_key(&trace_fsmonitor, "read fsmonitor extension successful");
 	return 0;
 }
 
 void fill_fsmonitor_bitmap(struct index_state *istate)
 {
-	int i;
+	unsigned int i;
 	istate->fsmonitor_dirty = ewah_new();
 	for (i = 0; i < istate->cache_nr; i++)
 		if (!(istate->cache[i]->ce_flags & CE_FSMONITOR_VALID))
@@ -134,7 +140,7 @@ void refresh_fsmonitor(struct index_state *istate)
 	size_t bol; /* beginning of line */
 	uint64_t last_update;
 	char *buf;
-	int i;
+	unsigned int i;
 
 	if (!core_fsmonitor || istate->fsmonitor_has_run_once)
 		return;
@@ -192,7 +198,7 @@ void refresh_fsmonitor(struct index_state *istate)
 
 void add_fsmonitor(struct index_state *istate)
 {
-	int i;
+	unsigned int i;
 
 	if (!istate->fsmonitor_last_update) {
 		trace_printf_key(&trace_fsmonitor, "add fsmonitor");
@@ -225,7 +231,7 @@ void remove_fsmonitor(struct index_state *istate)
 
 void tweak_fsmonitor(struct index_state *istate)
 {
-	int i;
+	unsigned int i;
 	int fsmonitor_enabled = git_config_get_fsmonitor();
 
 	if (istate->fsmonitor_dirty) {

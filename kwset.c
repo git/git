@@ -38,7 +38,13 @@
 #include "compat/obstack.h"
 
 #define NCHAR (UCHAR_MAX + 1)
-#define obstack_chunk_alloc xmalloc
+/* adapter for `xmalloc()`, which takes `size_t`, not `long` */
+static void *obstack_chunk_alloc(long size)
+{
+	if (size < 0)
+		BUG("Cannot allocate a negative amount: %ld", size);
+	return xmalloc(size);
+}
 #define obstack_chunk_free free
 
 #define U(c) ((unsigned char) (c))
@@ -475,7 +481,7 @@ kwsprep (kwset_t kws)
 	for (i = 0; i < NCHAR; ++i)
 	  kwset->next[i] = next[U(trans[i])];
       else
-	memcpy(kwset->next, next, NCHAR * sizeof(struct trie *));
+	COPY_ARRAY(kwset->next, next, NCHAR);
     }
 
   /* Fix things up for any translation table. */

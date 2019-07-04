@@ -9,9 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git revert' [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<keyid>]] <commit>...
-'git revert' --continue
-'git revert' --quit
-'git revert' --abort
+'git revert' (--continue | --skip | --abort | --quit)
 
 DESCRIPTION
 -----------
@@ -26,9 +24,12 @@ effect of some earlier commits (often only a faulty one).  If you want to
 throw away all uncommitted changes in your working directory, you
 should see linkgit:git-reset[1], particularly the `--hard` option.  If
 you want to extract specific files as they were in another commit, you
-should see linkgit:git-checkout[1], specifically the `git checkout
-<commit> -- <filename>` syntax.  Take care with these alternatives as
+should see linkgit:git-restore[1], specifically the `--source`
+option. Take care with these alternatives as
 both will discard uncommitted changes in your working directory.
+
+See "Reset, restore and revert" in linkgit:git[1] for the differences
+between the three commands.
 
 OPTIONS
 -------

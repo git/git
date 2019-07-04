@@ -238,7 +238,7 @@ static int mark_used(struct object *obj, int type, void *data, struct fsck_optio
 static void mark_unreachable_referents(const struct object_id *oid)
 {
 	struct fsck_options options = FSCK_OPTIONS_DEFAULT;
-	struct object *obj = lookup_object(the_repository, oid->hash);
+	struct object *obj = lookup_object(the_repository, oid);
 
 	if (!obj || !(obj->flags & HAS_OBJ))
 		return; /* not part of our original set */
@@ -497,7 +497,7 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 	struct object *obj;
 
 	if (!is_null_oid(oid)) {
-		obj = lookup_object(the_repository, oid->hash);
+		obj = lookup_object(the_repository, oid);
 		if (obj && (obj->flags & HAS_OBJ)) {
 			if (timestamp && name_objects)
 				add_decoration(fsck_walk_options.object_names,
@@ -756,7 +756,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 
 static void mark_object_for_connectivity(const struct object_id *oid)
 {
-	struct object *obj = lookup_unknown_object(oid->hash);
+	struct object *obj = lookup_unknown_object(oid);
 	obj->flags |= HAS_OBJ;
 }
 
@@ -879,7 +879,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		struct object_id oid;
 		if (!get_oid(arg, &oid)) {
 			struct object *obj = lookup_object(the_repository,
-							   oid.hash);
+							   &oid);
 
 			if (!obj || !(obj->flags & HAS_OBJ)) {
 				if (is_promisor_object(&oid))

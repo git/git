@@ -20,7 +20,7 @@
  * A single oidset; should be zero-initialized (or use OIDSET_INIT).
  */
 struct oidset {
-	kh_oid_t set;
+	kh_oid_set_t set;
 };
 
 #define OIDSET_INIT { { 0 } }
@@ -61,8 +61,16 @@ int oidset_remove(struct oidset *set, const struct object_id *oid);
  */
 void oidset_clear(struct oidset *set);
 
+/**
+ * Add the contents of the file 'path' to an initialized oidset.  Each line is
+ * an unabbreviated object name.  Comments begin with '#', and trailing comments
+ * are allowed.  Leading whitespace and empty or white-space only lines are
+ * ignored.
+ */
+void oidset_parse_file(struct oidset *set, const char *path);
+
 struct oidset_iter {
-	kh_oid_t *set;
+	kh_oid_set_t *set;
 	khiter_t iter;
 };
 

@@ -20,7 +20,15 @@ test_expect_success 'verify graph with no graph file' '
 test_expect_success 'write graph with no packs' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write --object-dir . &&
-	test_path_is_file info/commit-graph
+	test_path_is_missing info/commit-graph
+'
+
+test_expect_success 'close with correct error on bad input' '
+	cd "$TRASH_DIRECTORY/full" &&
+	echo doesnotexist >in &&
+	{ git commit-graph write --stdin-packs <in 2>stderr; ret=$?; } &&
+	test "$ret" = 1 &&
+	test_i18ngrep "error adding pack" stderr
 '
 
 test_expect_success 'create commits and repack' '
