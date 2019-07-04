@@ -1952,7 +1952,7 @@ struct passwd *getpwuid(int uid)
 	if (initialized)
 		return p;
 
-	len = sizeof(buf);
+	len = ARRAY_SIZE(buf);
 	if (!GetUserNameW(buf, &len)) {
 		initialized = 1;
 		return NULL;
