@@ -478,7 +478,7 @@ static char *find_name_gnu(struct apply_state *state,
 
 	/*
 	 * Proposed "new-style" GNU patch/diff format; see
-	 * http://marc.info/?l=git&m=112927316408690&w=2
+	 * https://public-inbox.org/git/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
 	 */
 	if (unquote_c_style(&name, line, NULL)) {
 		strbuf_release(&name);
