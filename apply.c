@@ -469,7 +469,7 @@ static char *squash_slash(char *name)
 	return name;
 }
 
-static char *find_name_gnu(struct apply_state *state,
+static char *find_name_gnu(struct strbuf *root,
 			   const char *line,
 			   int p_value)
 {
@@ -495,8 +495,8 @@ static char *find_name_gnu(struct apply_state *state,
 	}
 
 	strbuf_remove(&name, 0, cp - name.buf);
-	if (state->root.len)
-		strbuf_insert(&name, 0, state->root.buf, state->root.len);
+	if (root->len)
+		strbuf_insert(&name, 0, root->buf, root->len);
 	return squash_slash(strbuf_detach(&name, NULL));
 }
 
@@ -659,7 +659,7 @@ static size_t diff_timestamp_len(const char *line, size_t len)
 	return line + len - end;
 }
 
-static char *find_name_common(struct apply_state *state,
+static char *find_name_common(struct strbuf *root,
 			      const char *line,
 			      const char *def,
 			      int p_value,
@@ -702,30 +702,30 @@ static char *find_name_common(struct apply_state *state,
 			return squash_slash(xstrdup(def));
 	}
 
-	if (state->root.len) {
-		char *ret = xstrfmt("%s%.*s", state->root.buf, len, start);
+	if (root->len) {
+		char *ret = xstrfmt("%s%.*s", root->buf, len, start);
 		return squash_slash(ret);
 	}
 
 	return squash_slash(xmemdupz(start, len));
 }
 
-static char *find_name(struct apply_state *state,
+static char *find_name(struct strbuf *root,
 		       const char *line,
 		       char *def,
 		       int p_value,
 		       int terminate)
 {
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, p_value);
+		char *name = find_name_gnu(root, line, p_value);
 		if (name)
 			return name;
 	}
 
-	return find_name_common(state, line, def, p_value, NULL, terminate);
+	return find_name_common(root, line, def, p_value, NULL, terminate);
 }
 
-static char *find_name_traditional(struct apply_state *state,
+static char *find_name_traditional(struct strbuf *root,
 				   const char *line,
 				   char *def,
 				   int p_value)
@@ -734,7 +734,7 @@ static char *find_name_traditional(struct apply_state *state,
 	size_t date_len;
 
 	if (*line == '"') {
-		char *name = find_name_gnu(state, line, p_value);
+		char *name = find_name_gnu(root, line, p_value);
 		if (name)
 			return name;
 	}
@@ -742,10 +742,10 @@ static char *find_name_traditional(struct apply_state *state,
 	len = strchrnul(line, '\n') - line;
 	date_len = diff_timestamp_len(line, len);
 	if (!date_len)
-		return find_name_common(state, line, def, p_value, NULL, TERM_TAB);
+		return find_name_common(root, line, def, p_value, NULL, TERM_TAB);
 	len -= date_len;
 
-	return find_name_common(state, line, def, p_value, line + len, 0);
+	return find_name_common(root, line, def, p_value, line + len, 0);
 }
 
 /*
@@ -759,7 +759,7 @@ static int guess_p_value(struct apply_state *state, const char *nameline)
 
 	if (is_dev_null(nameline))
 		return -1;
-	name = find_name_traditional(state, nameline, NULL, 0);
+	name = find_name_traditional(&state->root, nameline, NULL, 0);
 	if (!name)
 		return -1;
 	cp = strchr(name, '/');
@@ -883,17 +883,17 @@ static int parse_traditional_patch(struct apply_state *state,
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
-		name = find_name_traditional(state, second, NULL, state->p_value);
+		name = find_name_traditional(&state->root, second, NULL, state->p_value);
 		patch->new_name = name;
 	} else if (is_dev_null(second)) {
 		patch->is_new = 0;
 		patch->is_delete = 1;
-		name = find_name_traditional(state, first, NULL, state->p_value);
+		name = find_name_traditional(&state->root, first, NULL, state->p_value);
 		patch->old_name = name;
 	} else {
 		char *first_name;
-		first_name = find_name_traditional(state, first, NULL, state->p_value);
-		name = find_name_traditional(state, second, first_name, state->p_value);
+		first_name = find_name_traditional(&state->root, first, NULL, state->p_value);
+		name = find_name_traditional(&state->root, second, first_name, state->p_value);
 		free(first_name);
 		if (has_epoch_timestamp(first)) {
 			patch->is_new = 1;
@@ -940,7 +940,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 			       int side)
 {
 	if (!*name && !isnull) {
-		*name = find_name(state, line, NULL, state->p_value, TERM_TAB);
+		*name = find_name(&state->root, line, NULL, state->p_value, TERM_TAB);
 		return 0;
 	}
 
@@ -949,7 +949,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 		if (isnull)
 			return error(_("git apply: bad git-diff - expected /dev/null, got %s on line %d"),
 				     *name, state->linenr);
-		another = find_name(state, line, NULL, state->p_value, TERM_TAB);
+		another = find_name(&state->root, line, NULL, state->p_value, TERM_TAB);
 		if (!another || strcmp(another, *name)) {
 			free(another);
 			return error((side == DIFF_NEW_NAME) ?
@@ -1032,7 +1032,7 @@ static int gitdiff_copysrc(struct apply_state *state,
 {
 	patch->is_copy = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->old_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
@@ -1042,7 +1042,7 @@ static int gitdiff_copydst(struct apply_state *state,
 {
 	patch->is_copy = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->new_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
@@ -1052,7 +1052,7 @@ static int gitdiff_renamesrc(struct apply_state *state,
 {
 	patch->is_rename = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->old_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
@@ -1062,7 +1062,7 @@ static int gitdiff_renamedst(struct apply_state *state,
 {
 	patch->is_rename = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(state, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->new_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
