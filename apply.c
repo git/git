@@ -1137,17 +1137,17 @@ static int gitdiff_unrecognized(struct apply_state *state,
  * Skip p_value leading components from "line"; as we do not accept
  * absolute paths, return NULL in that case.
  */
-static const char *skip_tree_prefix(struct apply_state *state,
+static const char *skip_tree_prefix(int p_value,
 				    const char *line,
 				    int llen)
 {
 	int nslash;
 	int i;
 
-	if (!state->p_value)
+	if (!p_value)
 		return (llen && line[0] == '/') ? NULL : line;
 
-	nslash = state->p_value;
+	nslash = p_value;
 	for (i = 0; i < llen; i++) {
 		int ch = line[i];
 		if (ch == '/' && --nslash <= 0)
@@ -1184,7 +1184,7 @@ static char *git_header_name(struct apply_state *state,
 			goto free_and_fail1;
 
 		/* strip the a/b prefix including trailing slash */
-		cp = skip_tree_prefix(state, first.buf, first.len);
+		cp = skip_tree_prefix(state->p_value, first.buf, first.len);
 		if (!cp)
 			goto free_and_fail1;
 		strbuf_remove(&first, 0, cp - first.buf);
@@ -1201,7 +1201,7 @@ static char *git_header_name(struct apply_state *state,
 		if (*second == '"') {
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail1;
-			cp = skip_tree_prefix(state, sp.buf, sp.len);
+			cp = skip_tree_prefix(state->p_value, sp.buf, sp.len);
 			if (!cp)
 				goto free_and_fail1;
 			/* They must match, otherwise ignore */
@@ -1212,7 +1212,7 @@ static char *git_header_name(struct apply_state *state,
 		}
 
 		/* unquoted second */
-		cp = skip_tree_prefix(state, second, line + llen - second);
+		cp = skip_tree_prefix(state->p_value, second, line + llen - second);
 		if (!cp)
 			goto free_and_fail1;
 		if (line + llen - cp != first.len ||
@@ -1227,7 +1227,7 @@ static char *git_header_name(struct apply_state *state,
 	}
 
 	/* unquoted first name */
-	name = skip_tree_prefix(state, line, llen);
+	name = skip_tree_prefix(state->p_value, line, llen);
 	if (!name)
 		return NULL;
 
@@ -1243,7 +1243,7 @@ static char *git_header_name(struct apply_state *state,
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail2;
 
-			np = skip_tree_prefix(state, sp.buf, sp.len);
+			np = skip_tree_prefix(state->p_value, sp.buf, sp.len);
 			if (!np)
 				goto free_and_fail2;
 
@@ -1287,7 +1287,7 @@ static char *git_header_name(struct apply_state *state,
 			 */
 			if (!name[len + 1])
 				return NULL; /* no postimage name */
-			second = skip_tree_prefix(state, name + len + 1,
+			second = skip_tree_prefix(state->p_value, name + len + 1,
 						  line_len - (len + 1));
 			if (!second)
 				return NULL;
