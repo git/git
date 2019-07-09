@@ -88,6 +88,10 @@ ifndef::git-pull[]
 	Allow several <repository> and <group> arguments to be
 	specified. No <refspec>s may be specified.
 
+--[no-]auto-gc::
+	Run `git gc --auto` at the end to perform garbage collection
+	if needed. This is enabled by default.
+
 -p::
 --prune::
 	Before fetching, remove any remote-tracking references that no
