@@ -475,8 +475,18 @@ else
       if test "$git_cv_ld_rpath" = "yes"; then
          CC_LD_DYNPATH=-rpath
       else
-         CC_LD_DYNPATH=
-         AC_MSG_WARN([linker does not support runtime path to dynamic libraries])
+         AC_CACHE_CHECK([if linker supports -Wl,+b,], git_cv_ld_wl_b, [
+            SAVE_LDFLAGS="${LDFLAGS}"
+            LDFLAGS="${SAVE_LDFLAGS} -Wl,+b,/"
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_wl_b=yes], [git_cv_ld_wl_b=no])
+            LDFLAGS="${SAVE_LDFLAGS}"
+         ])
+         if test "$git_cv_ld_wl_b" = "yes"; then
+            CC_LD_DYNPATH=-Wl,+b,
+          else
+             CC_LD_DYNPATH=
+             AC_MSG_WARN([linker does not support runtime path to dynamic libraries])
+          fi
       fi
    fi
 fi
