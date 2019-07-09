@@ -896,9 +896,9 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 			errno = EINVAL;
 			return 0;
 		}
-		uval = labs(val);
+		uval = val < 0 ? -val : val;
 		uval *= factor;
-		if (uval > max || labs(val) > uval) {
+		if (uval > max || (val < 0 ? -val : val) > uval) {
 			errno = ERANGE;
 			return 0;
 		}
