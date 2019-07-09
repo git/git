@@ -279,7 +279,7 @@ static const char *gpg_sign_opt_quoted(struct replay_opts *opts)
 int sequencer_remove_state(struct replay_opts *opts)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int i;
+	int i, ret = 0;
 
 	if (is_rebase_i(opts) &&
 	    strbuf_read_file(&buf, rebase_path_refs_to_delete(), 0) > 0) {
@@ -288,8 +288,10 @@ int sequencer_remove_state(struct replay_opts *opts)
 			char *eol = strchr(p, '\n');
 			if (eol)
 				*eol = '\0';
-			if (delete_ref("(rebase -i) cleanup", p, NULL, 0) < 0)
+			if (delete_ref("(rebase -i) cleanup", p, NULL, 0) < 0) {
 				warning(_("could not delete '%s'"), p);
+				ret = -1;
+			}
 			if (!eol)
 				break;
 			p = eol + 1;
@@ -305,10 +307,11 @@ int sequencer_remove_state(struct replay_opts *opts)
 
 	strbuf_reset(&buf);
 	strbuf_addstr(&buf, get_dir(opts));
-	remove_dir_recursively(&buf, 0);
+	if (remove_dir_recursively(&buf, 0))
+		ret = error(_("could not remove '%s'"), buf.buf);
 	strbuf_release(&buf);
 
-	return 0;
+	return ret;
 }
 
 static const char *action_name(const struct replay_opts *opts)
