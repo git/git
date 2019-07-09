@@ -428,7 +428,7 @@ git-psuh - Delight users' typo with a shy horse
 SYNOPSIS
 --------
 [verse]
-'git-psuh'
+'git-psuh [<arg>...]'
 
 DESCRIPTION
 -----------
@@ -491,14 +491,16 @@ Take a look at `Documentation/technical/api-parse-options.txt`. This is a handy
 tool for pulling out options you need to be able to handle, and it takes a
 usage string.
 
-In order to use it, we'll need to prepare a NULL-terminated usage string and a
-`builtin_psuh_options` array. Add a line to `#include "parse-options.h"`.
+In order to use it, we'll need to prepare a NULL-terminated array of usage
+strings and a `builtin_psuh_options` array.
 
-At global scope, add your usage:
+Add a line to `#include "parse-options.h"`.
+
+At global scope, add your array of usage strings:
 
 ----
 static const char * const psuh_usage[] = {
-	N_("git psuh"),
+	N_("git psuh [<arg>...]"),
 	NULL,
 };
 ----
