@@ -3741,8 +3741,11 @@ static int pick_commits(struct repository *r,
 			unlink(git_path_merge_head(the_repository));
 			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
-			if (item->command == TODO_BREAK)
+			if (item->command == TODO_BREAK) {
+				if (!opts->verbose)
+					term_clear_line();
 				return stopped_at_head(r);
+			}
 		}
 		if (item->command <= TODO_SQUASH) {
 			if (is_rebase_i(opts))
@@ -3764,11 +3767,14 @@ static int pick_commits(struct repository *r,
 			}
 			if (item->command == TODO_EDIT) {
 				struct commit *commit = item->commit;
-				if (!res)
+				if (!res) {
+					if (!opts->verbose)
+						term_clear_line();
 					fprintf(stderr,
 						_("Stopped at %s...  %.*s\n"),
 						short_commit_name(commit),
 						item->arg_len, arg);
+				}
 				return error_with_patch(r, commit,
 					arg, item->arg_len, opts, res, !res);
 			}
@@ -3806,6 +3812,8 @@ static int pick_commits(struct repository *r,
 			int saved = *end_of_arg;
 			struct stat st;
 
+			if (!opts->verbose)
+				term_clear_line();
 			*end_of_arg = '\0';
 			res = do_exec(r, arg);
 			*end_of_arg = saved;
@@ -3964,10 +3972,13 @@ cleanup_head_ref:
 		}
 		apply_autostash(opts);
 
-		if (!opts->quiet)
+		if (!opts->quiet) {
+			if (!opts->verbose)
+				term_clear_line();
 			fprintf(stderr,
 				"Successfully rebased and updated %s.\n",
 				head_ref.buf);
+		}
 
 		strbuf_release(&buf);
 		strbuf_release(&head_ref);

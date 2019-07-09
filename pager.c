@@ -178,6 +178,26 @@ int term_columns(void)
 }
 
 /*
+ * Clear the entire line, leave cursor in first column.
+ */
+void term_clear_line(void)
+{
+	if (is_terminal_dumb())
+		/*
+		 * Fall back to print a terminal width worth of space
+		 * characters (hoping that the terminal is still as wide
+		 * as it was upon the first call to term_columns()).
+		 */
+		fprintf(stderr, "\r%*s\r", term_columns(), "");
+	else
+		/*
+		 * On non-dumb terminals use an escape sequence to clear
+		 * the whole line, no matter how wide the terminal.
+		 */
+		fputs("\r\033[K", stderr);
+}
+
+/*
  * How many columns do we need to show this number in decimal?
  */
 int decimal_width(uintmax_t number)

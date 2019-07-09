@@ -96,10 +96,10 @@ static int launch_specified_editor(const char *editor, const char *path,
 
 		if (print_waiting_for_editor && !is_terminal_dumb())
 			/*
-			 * Go back to the beginning and erase the entire line to
-			 * avoid wasting the vertical space.
+			 * Erase the entire line to avoid wasting the
+			 * vertical space.
 			 */
-			fputs("\r\033[K", stderr);
+			term_clear_line();
 	}
 
 	if (!buffer)
