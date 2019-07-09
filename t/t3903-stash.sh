@@ -708,6 +708,24 @@ test_expect_success 'invalid ref of the form "n", n >= N' '
 	git stash drop
 '
 
+test_expect_success 'valid ref of the form "n", n < N' '
+	git stash clear &&
+	echo bar5 >file &&
+	echo bar6 >file2 &&
+	git add file2 &&
+	git stash &&
+	git stash show 0 &&
+	git stash branch tmp 0 &&
+	git checkout master &&
+	git stash &&
+	git stash apply 0 &&
+	git reset --hard &&
+	git stash pop 0 &&
+	git stash &&
+	git stash drop 0 &&
+	test_must_fail git stash drop
+'
+
 test_expect_success 'branch: do not drop the stash if the branch exists' '
 	git stash clear &&
 	echo foo >file &&
