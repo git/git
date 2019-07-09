@@ -211,6 +211,26 @@ people via patch over e-mail.
 
 include::cmds-foreignscminterface.txt[]
 
+Reset, restore and revert
+~~~~~~~~~~~~~~~~~~~~~~~~~
+There are three commands with similar names: `git reset`,
+`git restore` and `git revert`.
+
+* linkgit:git-revert[1] is about making a new commit that reverts the
+  changes made by other commits.
+
+* linkgit:git-restore[1] is about restoring files in the working tree
+  from either the index or another commit. This command does not
+  update your branch. The command can also be used to restore files in
+  the index from another commit.
+
+* linkgit:git-reset[1] is about updating your branch, moving the tip
+  in order to add or remove commits from the branch. This operation
+  changes the commit history.
++
+`git reset` can also be used to restore the index, overlapping with
+`git restore`.
+
 
 Low-level commands (plumbing)
 -----------------------------

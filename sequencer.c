@@ -2314,19 +2314,21 @@ static int have_finished_the_last_pick(void)
 	return ret;
 }
 
-void sequencer_post_commit_cleanup(struct repository *r)
+void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 {
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int need_cleanup = 0;
 
 	if (file_exists(git_path_cherry_pick_head(r))) {
-		unlink(git_path_cherry_pick_head(r));
+		if (!unlink(git_path_cherry_pick_head(r)) && verbose)
+			warning(_("cancelling a cherry picking in progress"));
 		opts.action = REPLAY_PICK;
 		need_cleanup = 1;
 	}
 
 	if (file_exists(git_path_revert_head(r))) {
-		unlink(git_path_revert_head(r));
+		if (!unlink(git_path_revert_head(r)) && verbose)
+			warning(_("cancelling a revert in progress"));
 		opts.action = REPLAY_REVERT;
 		need_cleanup = 1;
 	}

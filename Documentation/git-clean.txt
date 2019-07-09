@@ -63,7 +63,7 @@ OPTIONS
 	still use the ignore rules given with `-e` options from the command
 	line.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
-	conjunction with 'git reset') to create a pristine
+	conjunction with 'git restore' or 'git reset') to create a pristine
 	working directory to test a clean build.
 
 -X::

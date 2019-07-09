@@ -149,7 +149,7 @@ instead.
 Discussion on fork-point mode
 -----------------------------
 
-After working on the `topic` branch created with `git checkout -b
+After working on the `topic` branch created with `git switch -c
 topic origin/master`, the history of remote-tracking branch
 `origin/master` may have been rewound and rebuilt, leading to a
 history of this shape:

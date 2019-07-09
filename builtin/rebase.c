@@ -1610,7 +1610,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (reset_head(NULL, "reset", NULL, RESET_HEAD_HARD,
 			       NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
-		remove_branch_state(the_repository);
+		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
 			exit(1);
 		goto run_rebase;
@@ -1630,7 +1630,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
-		remove_branch_state(the_repository);
+		remove_branch_state(the_repository, 0);
 		ret = !!finish_rebase(&options);
 		goto cleanup;
 	}

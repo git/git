@@ -17,7 +17,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 If <branch> is specified, 'git rebase' will perform an automatic
-`git checkout <branch>` before doing anything else.  Otherwise
+`git switch <branch>` before doing anything else.  Otherwise
 it remains on the current branch.
 
 If <upstream> is not specified, the upstream configured in
