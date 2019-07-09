@@ -386,7 +386,6 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 	my @env = keys %ENV;
 	my $ok = join("|", qw(
 		TRACE
-		TR2_
 		DEBUG
 		TEST
 		.*_TEST
