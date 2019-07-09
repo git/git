@@ -46,6 +46,35 @@ UI, Workflows & Features
  * The pattern "git diff/grep" use to extract funcname and words
    boundary for Rust has been added.
 
+ * "git status" can be told a non-standard default value for the
+   "--[no-]ahead-behind" option with a new configuration variable
+   status.aheadBehind.
+
+ * "git fetch" and "git pull" reports when a fetch results in
+   non-fast-forward updates to let the user notice unusual situation.
+   The commands learned "--no-shown-forced-updates" option to disable
+   this safety feature.
+
+ * Two new commands "git switch" and "git restore" are introduced to
+   split "checking out a branch to work on advancing its history" and
+   "checking out paths out of the index and/or a tree-ish to work on
+   advancing the current history" out of the single "git checkout"
+   command.
+
+ * "git branch --list" learned to always output the detached HEAD as
+   the first item (when the HEAD is detached, of course), regardless
+   of the locale.
+
+ * The conditional inclusion mechanism learned to base the choice on
+   the branch the HEAD currently is on.
+
+ * "git rev-list --objects" learned with "--no-object-names" option to
+   squelch the path to the object that is used as a grouping hint for
+   pack-objects.
+
+ * A new tag.gpgSign configuration variable turns "git tag -a" into
+   "git tag -s".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -71,6 +100,17 @@ Performance, Internal Implementation, Development Support etc.
  * A new tutorial targetting specifically aspiring git-core
    developers has been added.
 
+ * Auto-detect how to tell HP-UX aCC where to use dynamically linked
+   libraries from at runtime.
+
+ * "git mergetool" and its tests now spawn fewer subprocesses.
+
+ * Dev support update to help tracing out tests.
+
+ * Support to build with MSVC has been updated.
+
+ * "git fetch" that grabs from a group of remotes learned to run the
+   auto-gc only once at the very end.
 
 
 Fixes since v2.22
@@ -175,9 +215,84 @@ Fixes since v2.22
    updated.
    (merge fc7e03aace mo/clang-format-for-each-update later to maint).
 
+ * "git branch --list" learned to show branches that are checked out
+   in other worktrees connected to the same repository prefixed with
+   '+', similar to the way the currently checked out branch is shown
+   with '*' in front.
+   (merge 6e9381469e nb/branch-show-other-worktrees-head later to maint).
+
+ * Code restructuring during 2.20 period broke fetching tags via
+   "import" based transports.
+   (merge f80d922355 fc/fetch-with-import-fix later to maint).
+
+ * The commit-graph file is now part of the "files that the runtime
+   may keep open file descriptors on, all of which would need to be
+   closed when done with the object store", and the file descriptor to
+   an existing commit-graph file now is closed before "gc" finalizes a
+   new instance to replace it.
+   (merge 2d511cfc0b ds/close-object-store later to maint).
+
+ * "git checkout -p" needs to selectively apply a patch in reverse,
+   which did not work well.
+   (merge 2bd69b9024 pw/add-p-recount later to maint).
+
+ * Code clean-up to avoid signed integer wraparounds during binary search.
+   (merge 568a05c5ec rs/avoid-overflow-in-midpoint-computation later to maint).
+
+ * "git interpret-trailers" always treated '#' as the comment
+   character, regardless of core.commentChar setting, which has been
+   corrected.
+   (merge 29c83fc23f jk/trailers-use-config later to maint).
+
+ * "git stash show 23" used to work, but no more after getting
+   rewritten in C; this regression has been corrected.
+   (merge 63b50c8ffe tg/stash-ref-by-index-fix later to maint).
+
+ * "git rebase --abort" used to leave refs/rewritten/ when concluding
+   "git rebase -r", which has been corrected.
+   (merge d559f502c5 pw/rebase-abort-clean-rewritten later to maint).
+
+ * An incorrect list of options was cached after command line
+   completion failed (e.g. trying to complete a command that requires
+   a repository outside one), which has been corrected.
+   (merge 69702523af nd/completion-no-cache-failure later to maint).
+
+ * The code to parse scaled numbers out of configuration files has
+   been made more robust and also easier to follow.
+   (merge 39c575c969 rs/config-unit-parsing later to maint).
+
+ * The codepath to compute delta islands used to spew progress output
+   without giving the callers any way to squelch it, which has been
+   fixed.
+   (merge bdbdf42f8a jk/delta-islands-progress-fix later to maint).
+
+ * Protocol capabilities that go over wire should never be translated,
+   but it was incorrectly marked for translation, which has been
+   corrected.  The output of protocol capabilities for debugging has
+   been tweaked a bit.
+
+ * Use "Erase in Line" CSI sequence that is already used in the editor
+   support to clear cruft in the progress output.
+   (merge 5b12e3123b sg/rebase-progress later to maint).
+
+ * "git submodule foreach" did not protect command line options passed
+   to the command to be run in each submodule correctly, when the
+   "--recursive" option was in use.
+   (merge 30db18b148 ms/submodule-foreach-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f547101b26 es/git-debugger-doc later to maint).
    (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
    (merge 0108f47eb3 sw/git-p4-unshelve-branched-files later to maint).
    (merge 9df8f734fd cm/send-email-document-req-modules later to maint).
    (merge afc3bf6eb1 ab/hash-object-doc later to maint).
+   (merge 1fde99cfc7 po/doc-branch later to maint).
+   (merge 459842e1c2 dl/config-alias-doc later to maint).
+   (merge 5d137fc2c7 cb/fsmonitor-intfix later to maint).
+   (merge 921d49be86 rs/copy-array later to maint).
+   (merge cc8d872e69 js/t3404-typofix later to maint).
+   (merge 729a9b558b cb/mkstemps-uint-type-fix later to maint).
+   (merge 9dae4fe79f js/gcc-8-and-9 later to maint).
+   (merge ed33bd8f30 js/t0001-case-insensitive later to maint).
+   (merge dfa880e336 jw/gitweb-sample-update later to maint).
+   (merge e532a90a9f sg/t5551-fetch-smart-error-is-translated later to maint).
