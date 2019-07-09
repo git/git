@@ -12,6 +12,7 @@ extern int advice_push_needs_force;
 extern int advice_push_unqualified_ref_name;
 extern int advice_status_hints;
 extern int advice_status_u_option;
+extern int advice_status_ahead_behind_warning;
 extern int advice_commit_before_merge;
 extern int advice_reset_quiet_warning;
 extern int advice_resolve_conflict;
