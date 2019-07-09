@@ -668,7 +668,7 @@ completed.)
 	"event":"signal",
 	...
 	"t_abs":0.001227,  # elapsed time in seconds
-	"signal":13        # SIGTERM, SIGINT, etc.
+	"signo":13         # SIGTERM, SIGINT, etc.
 }
 ------------
 
