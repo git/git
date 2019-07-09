@@ -49,6 +49,7 @@ static const char rev_list_usage[] =
 "    --objects | --objects-edge\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
+"    --[no-]object-names\n"
 "    --abbrev=<n> | --no-abbrev\n"
 "    --abbrev-commit\n"
 "    --left-right\n"
@@ -74,6 +75,9 @@ enum missing_action {
 	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
 };
 static enum missing_action arg_missing_action;
+
+/* display only the oid of each object encountered */
+static int arg_show_object_names = 1;
 
 #define DEFAULT_OIDSET_SIZE     (16*1024)
 
@@ -255,7 +259,10 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 	display_progress(progress, ++progress_counter);
 	if (info->flags & REV_LIST_QUIET)
 		return;
-	show_object_with_name(stdout, obj, name);
+	if (arg_show_object_names)
+		show_object_with_name(stdout, obj, name);
+	else
+		printf("%s\n", oid_to_hex(&obj->oid));
 }
 
 static void show_edge(struct commit *commit)
@@ -483,6 +490,16 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			continue; /* already handled above */
 		if (skip_prefix(arg, "--missing=", &arg))
 			continue; /* already handled above */
+
+		if (!strcmp(arg, ("--no-object-names"))) {
+			arg_show_object_names = 0;
+			continue;
+		}
+
+		if (!strcmp(arg, ("--object-names"))) {
+			arg_show_object_names = 1;
+			continue;
+		}
 
 		usage(rev_list_usage);
 

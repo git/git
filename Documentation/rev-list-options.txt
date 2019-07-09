@@ -708,6 +708,16 @@ ifdef::git-rev-list[]
 	Only useful with `--objects`; print the object IDs that are not
 	in packs.
 
+--object-names::
+	Only useful with `--objects`; print the names of the object IDs
+	that are found. This is the default behavior.
+
+--no-object-names::
+	Only useful with `--objects`; does not print the names of the object
+	IDs that are found. This inverts `--object-names`. This flag allows
+	the output to be more easily parsed by commands such as
+	linkgit:git-cat-file[1].
+
 --filter=<filter-spec>::
 	Only useful with one of the `--objects*`; omits objects (usually
 	blobs) from the list of printed objects.  The '<filter-spec>'
