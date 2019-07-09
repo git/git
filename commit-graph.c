@@ -1279,7 +1279,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
 
 		graph_commit = lookup_commit(r, &cur_oid);
-		odb_commit = (struct commit *)create_object(r, cur_oid.hash, alloc_commit_node(r));
+		odb_commit = (struct commit *)create_object(r, &cur_oid, alloc_commit_node(r));
 		if (parse_commit_internal(odb_commit, 0, 0)) {
 			graph_report(_("failed to parse commit %s from object database for commit-graph"),
 				     oid_to_hex(&cur_oid));

@@ -266,7 +266,7 @@ static unsigned int hash_filespec(struct repository *r,
 		hash_object_file(filespec->data, filespec->size, "blob",
 				 &filespec->oid);
 	}
-	return sha1hash(filespec->oid.hash);
+	return oidhash(&filespec->oid);
 }
 
 static int find_identical_files(struct hashmap *srcs,

@@ -275,7 +275,7 @@ static void export_blob(const struct object_id *oid)
 	if (is_null_oid(oid))
 		return;
 
-	object = lookup_object(the_repository, oid->hash);
+	object = lookup_object(the_repository, oid);
 	if (object && object->flags & SHOWN)
 		return;
 
@@ -453,7 +453,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 						  &spec->oid));
 			else {
 				struct object *object = lookup_object(the_repository,
-								      spec->oid.hash);
+								      &spec->oid);
 				printf("M %06o :%d ", spec->mode,
 				       get_object_mark(object));
 			}

@@ -83,7 +83,7 @@ static int init_patch_id_entry(struct patch_id *patch,
 	if (commit_patch_id(commit, &ids->diffopts, &header_only_patch_id, 1, 0))
 		return -1;
 
-	hashmap_entry_init(patch, sha1hash(header_only_patch_id.hash));
+	hashmap_entry_init(patch, oidhash(&header_only_patch_id));
 	return 0;
 }
 
