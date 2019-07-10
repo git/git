@@ -38,13 +38,16 @@ struct dir_iterator_int {
 	 * that will be included in this iteration.
 	 */
 	struct dir_iterator_level *levels;
+
+	/* Combination of flags for this dir-iterator */
+	unsigned int flags;
 };
 
 /*
  * Push a level in the iter stack and initialize it with information from
  * the directory pointed by iter->base->path. It is assumed that this
  * strbuf points to a valid directory path. Return 0 on success and -1
- * otherwise, leaving the stack unchanged.
+ * otherwise, setting errno accordingly and leaving the stack unchanged.
  */
 static int push_level(struct dir_iterator_int *iter)
 {
@@ -59,11 +62,13 @@ static int push_level(struct dir_iterator_int *iter)
 
 	level->dir = opendir(iter->base.path.buf);
 	if (!level->dir) {
+		int saved_errno = errno;
 		if (errno != ENOENT) {
 			warning_errno("error opening directory '%s'",
 				      iter->base.path.buf);
 		}
 		iter->levels_nr--;
+		errno = saved_errno;
 		return -1;
 	}
 
@@ -90,11 +95,13 @@ static int pop_level(struct dir_iterator_int *iter)
 /*
  * Populate iter->base with the necessary information on the next iteration
  * entry, represented by the given dirent de. Return 0 on success and -1
- * otherwise.
+ * otherwise, setting errno accordingly.
  */
 static int prepare_next_entry_data(struct dir_iterator_int *iter,
 				   struct dirent *de)
 {
+	int err, saved_errno;
+
 	strbuf_addstr(&iter->base.path, de->d_name);
 	/*
 	 * We have to reset these because the path strbuf might have
@@ -105,13 +112,17 @@ static int prepare_next_entry_data(struct dir_iterator_int *iter,
 	iter->base.basename = iter->base.path.buf +
 			      iter->levels[iter->levels_nr - 1].prefix_len;
 
-	if (lstat(iter->base.path.buf, &iter->base.st)) {
-		if (errno != ENOENT)
-			warning_errno("failed to stat '%s'", iter->base.path.buf);
-		return -1;
-	}
+	if (iter->flags & DIR_ITERATOR_FOLLOW_SYMLINKS)
+		err = stat(iter->base.path.buf, &iter->base.st);
+	else
+		err = lstat(iter->base.path.buf, &iter->base.st);
 
-	return 0;
+	saved_errno = errno;
+	if (err && errno != ENOENT)
+		warning_errno("failed to stat '%s'", iter->base.path.buf);
+
+	errno = saved_errno;
+	return err;
 }
 
 int dir_iterator_advance(struct dir_iterator *dir_iterator)
@@ -119,11 +130,11 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 	struct dir_iterator_int *iter =
 		(struct dir_iterator_int *)dir_iterator;
 
-	if (S_ISDIR(iter->base.st.st_mode)) {
-		if (push_level(iter) && iter->levels_nr == 0) {
-			/* Pushing the first level failed */
-			return dir_iterator_abort(dir_iterator);
-		}
+	if (S_ISDIR(iter->base.st.st_mode) && push_level(iter)) {
+		if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
+			goto error_out;
+		if (iter->levels_nr == 0)
+			goto error_out;
 	}
 
 	/* Loop until we find an entry that we can give back to the caller. */
@@ -137,22 +148,32 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 		de = readdir(level->dir);
 
 		if (!de) {
-			if (errno)
+			if (errno) {
 				warning_errno("error reading directory '%s'",
 					      iter->base.path.buf);
-			else if (pop_level(iter) == 0)
+				if (iter->flags & DIR_ITERATOR_PEDANTIC)
+					goto error_out;
+			} else if (pop_level(iter) == 0) {
 				return dir_iterator_abort(dir_iterator);
+			}
 			continue;
 		}
 
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
 
-		if (prepare_next_entry_data(iter, de))
+		if (prepare_next_entry_data(iter, de)) {
+			if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
+				goto error_out;
 			continue;
+		}
 
 		return ITER_OK;
 	}
+
+error_out:
+	dir_iterator_abort(dir_iterator);
+	return ITER_ERROR;
 }
 
 int dir_iterator_abort(struct dir_iterator *dir_iterator)
@@ -178,7 +199,7 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 	return ITER_DONE;
 }
 
-struct dir_iterator *dir_iterator_begin(const char *path)
+struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
 {
 	struct dir_iterator_int *iter = xcalloc(1, sizeof(*iter));
 	struct dir_iterator *dir_iterator = &iter->base;
@@ -189,6 +210,7 @@ struct dir_iterator *dir_iterator_begin(const char *path)
 
 	ALLOC_GROW(iter->levels, 10, iter->levels_alloc);
 	iter->levels_nr = 0;
+	iter->flags = flags;
 
 	/*
 	 * Note: stat already checks for NULL or empty strings and
