@@ -52,4 +52,17 @@ test_expect_success 'dir-iterator should list files in the correct order' '
 	test_cmp expected-pre-order-output actual-pre-order-output
 '
 
+test_expect_success 'begin should fail upon inexistent paths' '
+	test_must_fail test-tool dir-iterator ./inexistent-path \
+		>actual-inexistent-path-output &&
+	echo "dir_iterator_begin failure: 2" >expected-inexistent-path-output &&
+	test_cmp expected-inexistent-path-output actual-inexistent-path-output
+'
+
+test_expect_success 'begin should fail upon non directory paths' '
+	test_must_fail test-tool dir-iterator ./dir/b >actual-non-dir-output &&
+	echo "dir_iterator_begin failure: 20" >expected-non-dir-output &&
+	test_cmp expected-non-dir-output actual-non-dir-output
+'
+
 test_done

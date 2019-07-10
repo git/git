@@ -2143,13 +2143,22 @@ static struct ref_iterator_vtable files_reflog_iterator_vtable = {
 static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
 						  const char *gitdir)
 {
-	struct files_reflog_iterator *iter = xcalloc(1, sizeof(*iter));
-	struct ref_iterator *ref_iterator = &iter->base;
+	struct dir_iterator *diter;
+	struct files_reflog_iterator *iter;
+	struct ref_iterator *ref_iterator;
 	struct strbuf sb = STRBUF_INIT;
 
-	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable, 0);
 	strbuf_addf(&sb, "%s/logs", gitdir);
-	iter->dir_iterator = dir_iterator_begin(sb.buf);
+
+	diter = dir_iterator_begin(sb.buf);
+	if(!diter)
+		return empty_ref_iterator_begin();
+
+	iter = xcalloc(1, sizeof(*iter));
+	ref_iterator = &iter->base;
+
+	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable, 0);
+	iter->dir_iterator = diter;
 	iter->ref_store = ref_store;
 	strbuf_release(&sb);
 
