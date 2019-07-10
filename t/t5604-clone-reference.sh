@@ -266,7 +266,7 @@ test_expect_success 'clone a repo with garbage in objects/*' '
 	test_cmp expected actual
 '
 
-test_expect_success SYMLINKS 'setup repo with manually symlinked dirs and unknown files at objects/' '
+test_expect_success SYMLINKS 'setup repo with manually symlinked or unknown files at objects/' '
 	git init T &&
 	(
 		cd T &&
@@ -280,10 +280,19 @@ test_expect_success SYMLINKS 'setup repo with manually symlinked dirs and unknow
 		ln -s packs pack &&
 		find ?? -type d >loose-dirs &&
 		last_loose=$(tail -n 1 loose-dirs) &&
-		rm -f loose-dirs &&
 		mv $last_loose a-loose-dir &&
 		ln -s a-loose-dir $last_loose &&
+		first_loose=$(head -n 1 loose-dirs) &&
+		rm -f loose-dirs &&
+
+		cd $first_loose &&
+		obj=$(ls *) &&
+		mv $obj ../an-object &&
+		ln -s ../an-object $obj &&
+
+		cd ../ &&
 		find . -type f | sort >../../../T.objects-files.raw &&
+		find . -type l | sort >../../../T.objects-symlinks.raw &&
 		echo unknown_content >unknown_file
 	) &&
 	git -C T fsck &&
@@ -291,7 +300,7 @@ test_expect_success SYMLINKS 'setup repo with manually symlinked dirs and unknow
 '
 
 
-test_expect_success SYMLINKS 'clone repo with symlinked dirs and unknown files at objects/' '
+test_expect_success SYMLINKS 'clone repo with symlinked or unknown files at objects/' '
 	for option in --local --no-hardlinks --shared --dissociate
 	do
 		git clone $option T T$option || return 1 &&
@@ -300,7 +309,8 @@ test_expect_success SYMLINKS 'clone repo with symlinked dirs and unknown files a
 		test_cmp T.objects T$option.objects &&
 		(
 			cd T$option/.git/objects &&
-			find . -type f | sort >../../../T$option.objects-files.raw
+			find . -type f | sort >../../../T$option.objects-files.raw &&
+			find . -type l | sort >../../../T$option.objects-symlinks.raw
 		)
 	done &&
 
@@ -314,6 +324,7 @@ test_expect_success SYMLINKS 'clone repo with symlinked dirs and unknown files a
 	./Y/Z
 	./Y/Z
 	./a-loose-dir/Z
+	./an-object
 	./Y/Z
 	./info/packs
 	./pack/pack-Z.idx
@@ -323,13 +334,15 @@ test_expect_success SYMLINKS 'clone repo with symlinked dirs and unknown files a
 	./unknown_file
 	EOF
 
-	for option in --local --dissociate --no-hardlinks
+	for option in --local --no-hardlinks --dissociate
 	do
-		test_cmp expected-files T$option.objects-files.raw.de-sha || return 1
+		test_cmp expected-files T$option.objects-files.raw.de-sha || return 1 &&
+		test_must_be_empty T$option.objects-symlinks.raw.de-sha || return 1
 	done &&
 
 	echo ./info/alternates >expected-files &&
-	test_cmp expected-files T--shared.objects-files.raw
+	test_cmp expected-files T--shared.objects-files.raw &&
+	test_must_be_empty T--shared.objects-symlinks.raw
 '
 
 test_done
