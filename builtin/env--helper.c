@@ -7,7 +7,7 @@ static char const * const env__helper_usage[] = {
 	NULL
 };
 
-enum {
+static enum {
 	ENV_HELPER_TYPE_BOOL = 1,
 	ENV_HELPER_TYPE_ULONG
 } cmdmode = 0;
