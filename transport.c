@@ -1226,6 +1226,19 @@ int transport_push(struct repository *r,
 		err = push_had_errors(remote_refs);
 		ret = push_ret | err;
 
+		if ((flags & TRANSPORT_PUSH_ATOMIC) && err) {
+			for (struct ref *it = remote_refs; it; it = it->next)
+				switch (it->status) {
+				case REF_STATUS_NONE:
+				case REF_STATUS_UPTODATE:
+				case REF_STATUS_OK:
+					it->status = REF_STATUS_ATOMIC_PUSH_FAILED;
+					break;
+				default:
+					break;
+				}
+		}
+
 		if (!quiet || err)
 			transport_print_push_status(transport->url, remote_refs,
 					verbose | porcelain, porcelain,
