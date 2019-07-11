@@ -1673,7 +1673,10 @@ static void emit_hunk_header(struct emit_callback *ecbdata,
 	if (ecbdata->opt->flags.dual_color_diffed_diffs)
 		strbuf_addstr(&msgbuf, reverse);
 	strbuf_addstr(&msgbuf, frag);
-	strbuf_add(&msgbuf, line, ep - line);
+	if (ecbdata->opt->flags.suppress_hunk_header_line_count)
+		strbuf_add(&msgbuf, atat, sizeof(atat));
+	else
+		strbuf_add(&msgbuf, line, ep - line);
 	strbuf_addstr(&msgbuf, reset);
 
 	/*
