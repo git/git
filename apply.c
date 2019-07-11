@@ -22,6 +22,12 @@
 #include "rerere.h"
 #include "apply.h"
 
+struct gitdiff_data {
+	struct strbuf *root;
+	int linenr;
+	int p_value;
+};
+
 static void git_apply_config(void)
 {
 	git_config_get_string_const("apply.whitespace", &apply_default_whitespace);
@@ -914,7 +920,7 @@ static int parse_traditional_patch(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_hdrend(struct apply_state *state,
+static int gitdiff_hdrend(struct gitdiff_data *state,
 			  const char *line,
 			  struct patch *patch)
 {
@@ -933,14 +939,14 @@ static int gitdiff_hdrend(struct apply_state *state,
 #define DIFF_OLD_NAME 0
 #define DIFF_NEW_NAME 1
 
-static int gitdiff_verify_name(struct apply_state *state,
+static int gitdiff_verify_name(struct gitdiff_data *state,
 			       const char *line,
 			       int isnull,
 			       char **name,
 			       int side)
 {
 	if (!*name && !isnull) {
-		*name = find_name(&state->root, line, NULL, state->p_value, TERM_TAB);
+		*name = find_name(state->root, line, NULL, state->p_value, TERM_TAB);
 		return 0;
 	}
 
@@ -949,7 +955,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 		if (isnull)
 			return error(_("git apply: bad git-diff - expected /dev/null, got %s on line %d"),
 				     *name, state->linenr);
-		another = find_name(&state->root, line, NULL, state->p_value, TERM_TAB);
+		another = find_name(state->root, line, NULL, state->p_value, TERM_TAB);
 		if (!another || strcmp(another, *name)) {
 			free(another);
 			return error((side == DIFF_NEW_NAME) ?
@@ -965,7 +971,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_oldname(struct apply_state *state,
+static int gitdiff_oldname(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -974,7 +980,7 @@ static int gitdiff_oldname(struct apply_state *state,
 				   DIFF_OLD_NAME);
 }
 
-static int gitdiff_newname(struct apply_state *state,
+static int gitdiff_newname(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -992,21 +998,21 @@ static int parse_mode_line(const char *line, int linenr, unsigned int *mode)
 	return 0;
 }
 
-static int gitdiff_oldmode(struct apply_state *state,
+static int gitdiff_oldmode(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	return parse_mode_line(line, state->linenr, &patch->old_mode);
 }
 
-static int gitdiff_newmode(struct apply_state *state,
+static int gitdiff_newmode(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	return parse_mode_line(line, state->linenr, &patch->new_mode);
 }
 
-static int gitdiff_delete(struct apply_state *state,
+static int gitdiff_delete(struct gitdiff_data *state,
 			  const char *line,
 			  struct patch *patch)
 {
@@ -1016,7 +1022,7 @@ static int gitdiff_delete(struct apply_state *state,
 	return gitdiff_oldmode(state, line, patch);
 }
 
-static int gitdiff_newfile(struct apply_state *state,
+static int gitdiff_newfile(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
@@ -1026,47 +1032,47 @@ static int gitdiff_newfile(struct apply_state *state,
 	return gitdiff_newmode(state, line, patch);
 }
 
-static int gitdiff_copysrc(struct apply_state *state,
+static int gitdiff_copysrc(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	patch->is_copy = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->old_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_copydst(struct apply_state *state,
+static int gitdiff_copydst(struct gitdiff_data *state,
 			   const char *line,
 			   struct patch *patch)
 {
 	patch->is_copy = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->new_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_renamesrc(struct apply_state *state,
+static int gitdiff_renamesrc(struct gitdiff_data *state,
 			     const char *line,
 			     struct patch *patch)
 {
 	patch->is_rename = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->old_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_renamedst(struct apply_state *state,
+static int gitdiff_renamedst(struct gitdiff_data *state,
 			     const char *line,
 			     struct patch *patch)
 {
 	patch->is_rename = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(&state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
+	patch->new_name = find_name(state->root, line, NULL, state->p_value ? state->p_value - 1 : 0, 0);
 	return 0;
 }
 
-static int gitdiff_similarity(struct apply_state *state,
+static int gitdiff_similarity(struct gitdiff_data *state,
 			      const char *line,
 			      struct patch *patch)
 {
@@ -1076,7 +1082,7 @@ static int gitdiff_similarity(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_dissimilarity(struct apply_state *state,
+static int gitdiff_dissimilarity(struct gitdiff_data *state,
 				 const char *line,
 				 struct patch *patch)
 {
@@ -1086,7 +1092,7 @@ static int gitdiff_dissimilarity(struct apply_state *state,
 	return 0;
 }
 
-static int gitdiff_index(struct apply_state *state,
+static int gitdiff_index(struct gitdiff_data *state,
 			 const char *line,
 			 struct patch *patch)
 {
@@ -1126,7 +1132,7 @@ static int gitdiff_index(struct apply_state *state,
  * This is normal for a diff that doesn't change anything: we'll fall through
  * into the next diff. Tell the parser to break out.
  */
-static int gitdiff_unrecognized(struct apply_state *state,
+static int gitdiff_unrecognized(struct gitdiff_data *state,
 				const char *line,
 				struct patch *patch)
 {
@@ -1322,6 +1328,7 @@ static int parse_git_header(struct apply_state *state,
 			    struct patch *patch)
 {
 	unsigned long offset;
+	struct gitdiff_data parse_hdr_state;
 
 	/* A git diff has explicit new/delete information, so we don't guess */
 	patch->is_new = 0;
@@ -1343,10 +1350,14 @@ static int parse_git_header(struct apply_state *state,
 	line += len;
 	size -= len;
 	state->linenr++;
+	parse_hdr_state.root = &state->root;
+	parse_hdr_state.linenr = state->linenr;
+	parse_hdr_state.p_value = state->p_value;
+
 	for (offset = len ; size > 0 ; offset += len, size -= len, line += len, state->linenr++) {
 		static const struct opentry {
 			const char *str;
-			int (*fn)(struct apply_state *, const char *, struct patch *);
+			int (*fn)(struct gitdiff_data *, const char *, struct patch *);
 		} optable[] = {
 			{ "@@ -", gitdiff_hdrend },
 			{ "--- ", gitdiff_oldname },
@@ -1377,7 +1388,7 @@ static int parse_git_header(struct apply_state *state,
 			int res;
 			if (len < oplen || memcmp(p->str, line, oplen))
 				continue;
-			res = p->fn(state, line + oplen, patch);
+			res = p->fn(&parse_hdr_state, line + oplen, patch);
 			if (res < 0)
 				return -1;
 			if (check_header_line(state->linenr, patch))
