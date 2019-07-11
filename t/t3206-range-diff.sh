@@ -99,7 +99,7 @@ test_expect_success 'changed commit' '
 	1:  4de457d = 1:  a4b3333 s/5/A/
 	2:  fccce22 = 2:  f51d370 s/4/A/
 	3:  147e64e ! 3:  0559556 s/11/B/
-	    @@
+	    @@ file: A
 	      9
 	      10
 	     -11
@@ -109,7 +109,7 @@ test_expect_success 'changed commit' '
 	      13
 	      14
 	4:  a63e992 ! 4:  d966c5c s/12/B/
-	    @@
+	    @@ file
 	     @@ file: A
 	      9
 	      10
@@ -158,7 +158,7 @@ test_expect_success 'changed commit with sm config' '
 	1:  4de457d = 1:  a4b3333 s/5/A/
 	2:  fccce22 = 2:  f51d370 s/4/A/
 	3:  147e64e ! 3:  0559556 s/11/B/
-	    @@
+	    @@ file: A
 	      9
 	      10
 	     -11
@@ -168,7 +168,7 @@ test_expect_success 'changed commit with sm config' '
 	      13
 	      14
 	4:  a63e992 ! 4:  d966c5c s/12/B/
-	    @@
+	    @@ file
 	     @@ file: A
 	      9
 	      10
@@ -186,9 +186,10 @@ test_expect_success 'renamed file' '
 	sed s/Z/\ /g >expected <<-EOF &&
 	1:  4de457d = 1:  f258d75 s/5/A/
 	2:  fccce22 ! 2:  017b62d s/4/A/
-	    @@
+	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
+	    Z ## Commit message ##
 	    -    s/4/A/
 	    +    s/4/A/ + rename file
 	    Z
@@ -198,8 +199,8 @@ test_expect_success 'renamed file' '
 	    Z 1
 	    Z 2
 	3:  147e64e ! 3:  3ce7af6 s/11/B/
-	    @@
-	    Z
+	    @@ Metadata
+	    Z ## Commit message ##
 	    Z    s/11/B/
 	    Z
 	    - ## file ##
@@ -210,8 +211,8 @@ test_expect_success 'renamed file' '
 	    Z 9
 	    Z 10
 	4:  a63e992 ! 4:  1e6226b s/12/B/
-	    @@
-	    Z
+	    @@ Metadata
+	    Z ## Commit message ##
 	    Z    s/12/B/
 	    Z
 	    - ## file ##
@@ -230,30 +231,32 @@ test_expect_success 'file added and later removed' '
 	sed s/Z/\ /g >expected <<-EOF &&
 	1:  4de457d = 1:  096b1ba s/5/A/
 	2:  fccce22 ! 2:  d92e698 s/4/A/
-	    @@
+	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
+	    Z ## Commit message ##
 	    -    s/4/A/
 	    +    s/4/A/ + new-file
 	    Z
 	    Z ## file ##
 	    Z@@
-	    @@
+	    @@ file
 	    Z A
 	    Z 6
 	    Z 7
 	    +
 	    + ## new-file (new) ##
 	3:  147e64e ! 3:  9a1db4d s/11/B/
-	    @@
+	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
+	    Z ## Commit message ##
 	    -    s/11/B/
 	    +    s/11/B/ + remove file
 	    Z
 	    Z ## file ##
 	    Z@@ file: A
-	    @@
+	    @@ file: A
 	    Z 12
 	    Z 13
 	    Z 14
@@ -274,8 +277,8 @@ test_expect_success 'changed message' '
 	sed s/Z/\ /g >expected <<-EOF &&
 	1:  4de457d = 1:  f686024 s/5/A/
 	2:  fccce22 ! 2:  4ab067d s/4/A/
-	    @@
-	    Z
+	    @@ Metadata
+	    Z ## Commit message ##
 	    Z    s/4/A/
 	    Z
 	    +    Also a silly comment here!
@@ -293,8 +296,8 @@ test_expect_success 'dual-coloring' '
 	sed -e "s|^:||" >expect <<-\EOF &&
 	:<YELLOW>1:  a4b3333 = 1:  f686024 s/5/A/<RESET>
 	:<RED>2:  f51d370 <RESET><YELLOW>!<RESET><GREEN> 2:  4ab067d<RESET><YELLOW> s/4/A/<RESET>
-	:    <REVERSE><CYAN>@@<RESET>
-	:     <RESET>
+	:    <REVERSE><CYAN>@@<RESET> <RESET>Metadata<RESET>
+	:      ## Commit message ##<RESET>
 	:         s/4/A/<RESET>
 	:     <RESET>
 	:    <REVERSE><GREEN>+<RESET><BOLD>    Also a silly comment here!<RESET>
@@ -303,7 +306,7 @@ test_expect_success 'dual-coloring' '
 	:    <CYAN> @@<RESET>
 	:      1<RESET>
 	:<RED>3:  0559556 <RESET><YELLOW>!<RESET><GREEN> 3:  b9cb956<RESET><YELLOW> s/11/B/<RESET>
-	:    <REVERSE><CYAN>@@<RESET>
+	:    <REVERSE><CYAN>@@<RESET> <RESET>file: A<RESET>
 	:      9<RESET>
 	:      10<RESET>
 	:    <RED> -11<RESET>
@@ -313,7 +316,7 @@ test_expect_success 'dual-coloring' '
 	:      13<RESET>
 	:      14<RESET>
 	:<RED>4:  d966c5c <RESET><YELLOW>!<RESET><GREEN> 4:  8add5f1<RESET><YELLOW> s/12/B/<RESET>
-	:    <REVERSE><CYAN>@@<RESET>
+	:    <REVERSE><CYAN>@@<RESET> <RESET>file<RESET>
 	:    <CYAN> @@ file: A<RESET>
 	:      9<RESET>
 	:      10<RESET>
