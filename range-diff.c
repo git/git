@@ -10,6 +10,7 @@
 #include "commit.h"
 #include "pretty.h"
 #include "userdiff.h"
+#include "apply.h"
 
 struct patch_util {
 	/* For the search for an exact match */
@@ -101,12 +102,35 @@ static int read_patches(const char *range, struct string_list *list)
 		}
 
 		if (starts_with(line, "diff --git")) {
+			struct patch patch = { 0 };
+			struct strbuf root = STRBUF_INIT;
+			int linenr = 0;
+
 			in_header = 0;
 			strbuf_addch(&buf, '\n');
 			if (!util->diff_offset)
 				util->diff_offset = buf.len;
-			strbuf_addch(&buf, ' ');
-			strbuf_addstr(&buf, line);
+			line[len - 1] = '\n';
+			len = parse_git_diff_header(&root, &linenr, 1, line,
+						    len, size, &patch);
+			if (len < 0)
+				die(_("could not parse git header '%.*s'"), (int)len, line);
+			strbuf_addstr(&buf, " ## ");
+			if (patch.is_new > 0)
+				strbuf_addf(&buf, "%s (new)", patch.new_name);
+			else if (patch.is_delete > 0)
+				strbuf_addf(&buf, "%s (deleted)", patch.old_name);
+			else if (patch.is_rename)
+				strbuf_addf(&buf, "%s => %s", patch.old_name, patch.new_name);
+			else
+				strbuf_addstr(&buf, patch.new_name);
+
+			if (patch.new_mode && patch.old_mode &&
+			    patch.old_mode != patch.new_mode)
+				strbuf_addf(&buf, " (mode change %06o => %06o)",
+					    patch.old_mode, patch.new_mode);
+
+			strbuf_addstr(&buf, " ##");
 		} else if (in_header) {
 			if (starts_with(line, "Author: ")) {
 				strbuf_addstr(&buf, line);
@@ -122,17 +146,13 @@ static int read_patches(const char *range, struct string_list *list)
 		} else if (skip_prefix(line, "@@ ", &p)) {
 			p = strstr(p, "@@");
 			strbuf_addstr(&buf, p ? p : "@@");
-		} else if (!line[0] || starts_with(line, "index "))
+		} else if (!line[0])
 			/*
 			 * A completely blank (not ' \n', which is context)
 			 * line is not valid in a diff.  We skip it
 			 * silently, because this neatly handles the blank
 			 * separator line between commits in git-log
 			 * output.
-			 *
-			 * We also want to ignore the diff's `index` lines
-			 * because they contain exact blob hashes in which
-			 * we are not interested.
 			 */
 			continue;
 		else if (line[0] == '>') {
