@@ -119,9 +119,10 @@ static int read_patches(const char *range, struct string_list *list)
 				strbuf_addch(&buf, '\n');
 			}
 			continue;
-		} else if (starts_with(line, "@@ "))
-			strbuf_addstr(&buf, "@@");
-		else if (!line[0] || starts_with(line, "index "))
+		} else if (skip_prefix(line, "@@ ", &p)) {
+			p = strstr(p, "@@");
+			strbuf_addstr(&buf, p ? p : "@@");
+		} else if (!line[0] || starts_with(line, "index "))
 			/*
 			 * A completely blank (not ' \n', which is context)
 			 * line is not valid in a diff.  We skip it
