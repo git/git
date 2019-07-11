@@ -112,6 +112,8 @@ Performance, Internal Implementation, Development Support etc.
  * "git fetch" that grabs from a group of remotes learned to run the
    auto-gc only once at the very end.
 
+ * A handful of Windows build patches have been upstreamed.
+
 
 Fixes since v2.22
 -----------------
@@ -280,6 +282,17 @@ Fixes since v2.22
    "--recursive" option was in use.
    (merge 30db18b148 ms/submodule-foreach-fix later to maint).
 
+ * The configuration variable rebase.rescheduleFailedExec should be
+   effective only while running an interactive rebase and should not
+   affect anything when running an non-interactive one, which was not
+   the case.  This has been corrected.
+   (merge 906b63942a js/rebase-reschedule-applies-only-to-interactive later to maint).
+
+ * The "git clone" documentation refers to command line options in its
+   description in the short form; they have been replaced with long
+   forms to make them more recognisable.
+   (merge bfc8c84ed5 qn/clone-doc-use-long-form later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f547101b26 es/git-debugger-doc later to maint).
    (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
@@ -296,3 +309,6 @@ Fixes since v2.22
    (merge ed33bd8f30 js/t0001-case-insensitive later to maint).
    (merge dfa880e336 jw/gitweb-sample-update later to maint).
    (merge e532a90a9f sg/t5551-fetch-smart-error-is-translated later to maint).
+   (merge 8d45ad8c29 jt/t5551-test-chunked later to maint).
+   (merge 1a64e07d23 sg/git-C-empty-doc later to maint).
+   (merge 37a2e35395 sg/ci-brew-gcc-workaround later to maint).
