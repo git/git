@@ -117,6 +117,40 @@ struct apply_state {
 	int applied_after_fixing_ws;
 };
 
+/*
+ * This represents a "patch" to a file, both metainfo changes
+ * such as creation/deletion, filemode and content changes represented
+ * as a series of fragments.
+ */
+struct patch {
+	char *new_name, *old_name, *def_name;
+	unsigned int old_mode, new_mode;
+	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
+	int rejected;
+	unsigned ws_rule;
+	int lines_added, lines_deleted;
+	int score;
+	int extension_linenr; /* first line specifying delete/new/rename/copy */
+	unsigned int is_toplevel_relative:1;
+	unsigned int inaccurate_eof:1;
+	unsigned int is_binary:1;
+	unsigned int is_copy:1;
+	unsigned int is_rename:1;
+	unsigned int recount:1;
+	unsigned int conflicted_threeway:1;
+	unsigned int direct_to_threeway:1;
+	unsigned int crlf_in_old:1;
+	struct fragment *fragments;
+	char *result;
+	size_t resultsize;
+	char old_oid_prefix[GIT_MAX_HEXSZ + 1];
+	char new_oid_prefix[GIT_MAX_HEXSZ + 1];
+	struct patch *next;
+
+	/* three-way fallback result */
+	struct object_id threeway_stage[3];
+};
+
 int apply_parse_options(int argc, const char **argv,
 			struct apply_state *state,
 			int *force_apply, int *options,
@@ -126,6 +160,20 @@ int init_apply_state(struct apply_state *state,
 		     const char *prefix);
 void clear_apply_state(struct apply_state *state);
 int check_apply_state(struct apply_state *state, int force_apply);
+
+/*
+ * Parse a git diff header, starting at line.  Fills the relevant
+ * metadata information in 'struct patch'.
+ *
+ * Returns -1 on failure, the length of the parsed header otherwise.
+ */
+int parse_git_diff_header(struct strbuf *root,
+			  int *linenr,
+			  int p_value,
+			  const char *line,
+			  int len,
+			  unsigned int size,
+			  struct patch *patch);
 
 /*
  * Some aspects of the apply behavior are controlled by the following
