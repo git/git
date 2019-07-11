@@ -148,7 +148,7 @@ static int read_patches(const char *range, struct string_list *list)
 }
 
 static int patch_util_cmp(const void *dummy, const struct patch_util *a,
-		     const struct patch_util *b, const char *keydata)
+			  const struct patch_util *b, const char *keydata)
 {
 	return strcmp(a->diff, keydata ? keydata : b->diff);
 }
@@ -373,7 +373,7 @@ static struct diff_filespec *get_filespec(const char *name, const char *p)
 }
 
 static void patch_diff(const char *a, const char *b,
-			      struct diff_options *diffopt)
+		       struct diff_options *diffopt)
 {
 	diff_queue(&diff_queued_diff,
 		   get_filespec("a", a), get_filespec("b", b));
