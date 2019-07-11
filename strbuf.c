@@ -811,23 +811,55 @@ void strbuf_addstr_urlencode(struct strbuf *sb, const char *s,
 	strbuf_add_urlencode(sb, s, strlen(s), reserved);
 }
 
-void strbuf_humanise_bytes(struct strbuf *buf, off_t bytes)
+static void strbuf_humanise(struct strbuf *buf, off_t bytes,
+				 int humanise_rate)
 {
 	if (bytes > 1 << 30) {
-		strbuf_addf(buf, "%u.%2.2u GiB",
+		strbuf_addf(buf,
+				humanise_rate == 0 ?
+					/* TRANSLATORS: IEC 80000-13:2008 gibibyte */
+					_("%u.%2.2u GiB") :
+					/* TRANSLATORS: IEC 80000-13:2008 gibibyte/second */
+					_("%u.%2.2u GiB/s"),
 			    (unsigned)(bytes >> 30),
 			    (unsigned)(bytes & ((1 << 30) - 1)) / 10737419);
 	} else if (bytes > 1 << 20) {
 		unsigned x = bytes + 5243;  /* for rounding */
-		strbuf_addf(buf, "%u.%2.2u MiB",
+		strbuf_addf(buf,
+				humanise_rate == 0 ?
+					/* TRANSLATORS: IEC 80000-13:2008 mebibyte */
+					_("%u.%2.2u MiB") :
+					/* TRANSLATORS: IEC 80000-13:2008 mebibyte/second */
+					_("%u.%2.2u MiB/s"),
 			    x >> 20, ((x & ((1 << 20) - 1)) * 100) >> 20);
 	} else if (bytes > 1 << 10) {
 		unsigned x = bytes + 5;  /* for rounding */
-		strbuf_addf(buf, "%u.%2.2u KiB",
+		strbuf_addf(buf,
+				humanise_rate == 0 ?
+					/* TRANSLATORS: IEC 80000-13:2008 kibibyte */
+					_("%u.%2.2u KiB") :
+					/* TRANSLATORS: IEC 80000-13:2008 kibibyte/second */
+					_("%u.%2.2u KiB/s"),
 			    x >> 10, ((x & ((1 << 10) - 1)) * 100) >> 10);
 	} else {
-		strbuf_addf(buf, "%u bytes", (unsigned)bytes);
+		strbuf_addf(buf,
+				humanise_rate == 0 ?
+					/* TRANSLATORS: IEC 80000-13:2008 byte */
+					Q_("%u byte", "%u bytes", (unsigned)bytes) :
+					/* TRANSLATORS: IEC 80000-13:2008 byte/second */
+					Q_("%u byte/s", "%u bytes/s", (unsigned)bytes),
+				(unsigned)bytes);
 	}
+}
+
+void strbuf_humanise_bytes(struct strbuf *buf, off_t bytes)
+{
+	strbuf_humanise(buf, bytes, 0);
+}
+
+void strbuf_humanise_rate(struct strbuf *buf, off_t bytes)
+{
+	strbuf_humanise(buf, bytes, 1);
 }
 
 void strbuf_add_absolute_path(struct strbuf *sb, const char *path)
