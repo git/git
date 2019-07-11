@@ -150,7 +150,7 @@ win32_compute_revents (HANDLE h, int *p_sought)
       if (!once_only)
 	{
 	  NtQueryInformationFile = (PNtQueryInformationFile)(void (*)(void))
-	    GetProcAddress (GetModuleHandle ("ntdll.dll"),
+	    GetProcAddress (GetModuleHandleW (L"ntdll.dll"),
 			    "NtQueryInformationFile");
 	  once_only = TRUE;
 	}
