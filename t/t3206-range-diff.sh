@@ -110,7 +110,7 @@ test_expect_success 'changed commit' '
 	      14
 	4:  a63e992 ! 4:  d966c5c s/12/B/
 	    @@
-	     @@ A
+	     @@ file: A
 	      9
 	      10
 	    - B
@@ -169,7 +169,7 @@ test_expect_success 'changed commit with sm config' '
 	      14
 	4:  a63e992 ! 4:  d966c5c s/12/B/
 	    @@
-	     @@ A
+	     @@ file: A
 	      9
 	      10
 	    - B
@@ -203,20 +203,24 @@ test_expect_success 'renamed file' '
 	    Z    s/11/B/
 	    Z
 	    - ## file ##
+	    -@@ file: A
 	    + ## renamed-file ##
-	    Z@@ A
+	    +@@ renamed-file: A
 	    Z 8
 	    Z 9
+	    Z 10
 	4:  a63e992 ! 4:  1e6226b s/12/B/
 	    @@
 	    Z
 	    Z    s/12/B/
 	    Z
 	    - ## file ##
+	    -@@ file: A
 	    + ## renamed-file ##
-	    Z@@ A
+	    +@@ renamed-file: A
 	    Z 9
 	    Z 10
+	    Z B
 	EOF
 	test_cmp expected actual
 '
@@ -248,7 +252,7 @@ test_expect_success 'file added and later removed' '
 	    +    s/11/B/ + remove file
 	    Z
 	    Z ## file ##
-	    Z@@ A
+	    Z@@ file: A
 	    @@
 	    Z 12
 	    Z 13
@@ -310,7 +314,7 @@ test_expect_success 'dual-coloring' '
 	:      14<RESET>
 	:<RED>4:  d966c5c <RESET><YELLOW>!<RESET><GREEN> 4:  8add5f1<RESET><YELLOW> s/12/B/<RESET>
 	:    <REVERSE><CYAN>@@<RESET>
-	:    <CYAN> @@ A<RESET>
+	:    <CYAN> @@ file: A<RESET>
 	:      9<RESET>
 	:      10<RESET>
 	:    <REVERSE><RED>-<RESET><FAINT> BB<RESET>

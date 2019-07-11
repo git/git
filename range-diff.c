@@ -46,7 +46,7 @@ static int read_patches(const char *range, struct string_list *list)
 	struct strbuf buf = STRBUF_INIT, contents = STRBUF_INIT;
 	struct patch_util *util = NULL;
 	int in_header = 1;
-	char *line;
+	char *line, *current_filename = NULL;
 	int offset, len;
 	size_t size;
 
@@ -125,6 +125,12 @@ static int read_patches(const char *range, struct string_list *list)
 			else
 				strbuf_addstr(&buf, patch.new_name);
 
+			free(current_filename);
+			if (patch.is_delete > 0)
+				current_filename = xstrdup(patch.old_name);
+			else
+				current_filename = xstrdup(patch.new_name);
+
 			if (patch.new_mode && patch.old_mode &&
 			    patch.old_mode != patch.new_mode)
 				strbuf_addf(&buf, " (mode change %06o => %06o)",
@@ -145,7 +151,11 @@ static int read_patches(const char *range, struct string_list *list)
 			continue;
 		} else if (skip_prefix(line, "@@ ", &p)) {
 			p = strstr(p, "@@");
-			strbuf_addstr(&buf, p ? p : "@@");
+			strbuf_addstr(&buf, "@@");
+			if (current_filename && p[2])
+				strbuf_addf(&buf, " %s:", current_filename);
+			if (p)
+				strbuf_addstr(&buf, p + 2);
 		} else if (!line[0])
 			/*
 			 * A completely blank (not ' \n', which is context)
@@ -177,6 +187,7 @@ static int read_patches(const char *range, struct string_list *list)
 	if (util)
 		string_list_append(list, buf.buf)->util = util;
 	strbuf_release(&buf);
+	free(current_filename);
 
 	if (finish_command(&cp))
 		return -1;
