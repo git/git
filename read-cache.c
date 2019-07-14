@@ -2140,7 +2140,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (mmap_size < sizeof(struct cache_header) + the_hash_algo->rawsz)
 		die(_("%s: index file smaller than expected"), path);
 
-	mmap = xmmap(NULL, mmap_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	mmap = xmmap_gently(NULL, mmap_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (mmap == MAP_FAILED)
 		die_errno(_("%s: unable to map index file"), path);
 	close(fd);
