@@ -116,6 +116,9 @@ static void parse_gpg_output(struct signature_check *sigc)
 	for (line = buf; *line; line = strchrnul(line+1, '\n')) {
 		while (*line == '\n')
 			line++;
+		if (!*line)
+			break;
+
 		/* Skip lines that don't start with GNUPG status */
 		if (!skip_prefix(line, "[GNUPG:] ", &line))
 			continue;
