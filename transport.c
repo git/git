@@ -1227,7 +1227,8 @@ int transport_push(struct repository *r,
 		ret = push_ret | err;
 
 		if ((flags & TRANSPORT_PUSH_ATOMIC) && err) {
-			for (struct ref *it = remote_refs; it; it = it->next)
+			struct ref *it;
+			for (it = remote_refs; it; it = it->next)
 				switch (it->status) {
 				case REF_STATUS_NONE:
 				case REF_STATUS_UPTODATE:
