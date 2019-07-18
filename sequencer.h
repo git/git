@@ -44,6 +44,7 @@ struct replay_opts {
 	int quiet;
 	int reschedule_failed_exec;
 	int ignore_whitespace;
+	int committer_date_is_author_date;
 
 	int mainline;
 
