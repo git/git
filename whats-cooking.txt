@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2019, #03; Fri, 12)
+Subject: What's cooking in git.git (Jul 2019, #04; Thu, 18)
 X-master-at: 9d418600f4d10dcbbfb0b5fdbc71d509e03ba719
-X-next-at: 5628b89657138aca6088e0c4bfa2bccdba573c6b
+X-next-at: 960e92d24f97b83a5afe35e978f7537ea42a72ec
 
-What's cooking in git.git (Jul 2019, #03; Fri, 12)
+What's cooking in git.git (Jul 2019, #04; Thu, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,124 +18,135 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* cb/windows-manifest (2019-06-27) 1 commit
-  (merged to 'next' on 2019-07-03 at 875721bdc9)
- + mingw: embed a manifest to trick UAC into Doing The Right Thing
-
- Windows update.
-
-
-* dr/progress-i18n (2019-07-02) 1 commit
-  (merged to 'next' on 2019-07-09 at 1fe05d45de)
- + l10n: localizable upload progress messages
-
- Progress messages have been made localizable.
-
-
-* js/mingw-gcc-stack-protect (2019-06-27) 1 commit
-  (merged to 'next' on 2019-07-03 at 7e3185f69d)
- + mingw: enable stack smashing protector
-
- Windows update.
-
-
-* js/mingw-use-utf8 (2019-07-08) 3 commits
-  (merged to 'next' on 2019-07-09 at f6a9349604)
- + mingw: fix possible buffer overrun when calling `GetUserNameW()`
-  (merged to 'next' on 2019-07-03 at f528daf88d)
- + mingw: use Unicode functions explicitly
- + mingw: get pw_name in UTF-8 format
-
- Windows update.
-
-
-* js/rebase-reschedule-applies-only-to-interactive (2019-07-01) 1 commit
-  (merged to 'next' on 2019-07-09 at a13c7444c5)
- + rebase --am: ignore rebase.rescheduleFailedExec
-
- The configuration variable rebase.rescheduleFailedExec should be
- effective only while running an interactive rebase and should not
- affect anything when running an non-interactive one, which was not
- the case.  This has been corrected.
-
-
-* jt/t5551-test-chunked (2019-06-27) 1 commit
-  (merged to 'next' on 2019-07-03 at aafd74451c)
- + t5551: test usage of chunked encoding explicitly
-
- Update smart-http test.
-
-
-* kb/windows-force-utf8 (2019-07-03) 1 commit
-  (merged to 'next' on 2019-07-09 at 19dfe81d85)
- + gettext: always use UTF-8 on native Windows
-
- Windows update.
-
-
-* qn/clone-doc-use-long-form (2019-07-02) 2 commits
-  (merged to 'next' on 2019-07-09 at b2e1880627)
- + docs: git-clone: list short form of options first
- + docs: git-clone: refer to long form of options
-
- The "git clone" documentation refers to command line options in its
- description in the short form; they have been replaced with long
- forms to make them more recognisable.
-
-
-* sg/ci-brew-gcc-workaround (2019-07-08) 3 commits
-  (merged to 'next' on 2019-07-09 at a1b3e98f0c)
- + ci/lib.sh: update a comment about installed P4 and Git-LFS versions
-  (merged to 'next' on 2019-07-03 at 264f2c817a)
- + ci: disable Homebrew's auto cleanup
- + ci: don't update Homebrew
-
- Dev support update.
-
-
-* sg/git-C-empty-doc (2019-07-01) 1 commit
-  (merged to 'next' on 2019-07-09 at 351952f80f)
- + Document that 'git -C ""' works and doesn't change directory
-
- Doc update.
-
---------------------------------------------------
 [New Topics]
 
-* js/trace2-signo-typofix (2019-07-09) 1 commit
-  (merged to 'next' on 2019-07-11 at b2d2029b90)
- + trace2: correct trace2 field name documentation
+* ac/log-use-mailmap-by-default-transition (2019-07-15) 3 commits
+ - tests: defang pager tests by explicitly disabling the log.mailmap warning
+ - documentation: mention --no-use-mailmap and log.mailmap false setting
+ - log: add warning for unspecified log.mailmap setting
 
- Documentation fix.
-
- Will merge to 'master'.
-
-
-* ma/ref-filter-leakfix (2019-07-10) 1 commit
-  (merged to 'next' on 2019-07-11 at a7a4bb81ac)
- + ref-filter: fix memory leak in `free_array_item()`
-
- Leakfix.
-
- Will merge to 'master'.
-
-
-* js/unmap-before-ext-diff (2019-07-11) 1 commit
- - diff: munmap() file contents before running external diff
-
- Windows update.
+ The "git log" command learns to issue a warning when log.mailmap
+ configuration is not set and --[no-]mailmap option is not used, to
+ prepare users for future versions of Git that uses the mailmap by
+ default.
 
  Will merge to 'next'.
 
 
-* rm/gpg-program-doc-fix (2019-07-12) 1 commit
- - gpg(docs): use correct --verify syntax
+* vn/xmmap-gently (2019-07-14) 1 commit
+ - read-cache.c: do not die if mmap fails
+
+ Clean-up an error codepath.
+
+ Will merge to 'next'.
+
+
+* jc/post-c89-rules-doc (2019-07-18) 1 commit
+ - CodingGuidelines: spell out post-C89 rules
+
+ We have been trying out a few language features outside c89; the
+ coding guidelines document did not talk about them and instead had
+ a blanket ban against them.
+
+ Will merge to 'next'.
+
+
+* js/mingw-spawn-with-spaces-in-path (2019-07-16) 1 commit
+ - mingw: support spawning programs containing spaces in their names
+
+ Window 7 update ;-)
+
+ Will merge to 'next'.
+
+
+* sr/gpg-interface-stop-at-the-end (2019-07-16) 1 commit
+ - gpg-interface: do not scan past the end of buffer
+
+ A codepath that reads from GPG for signed object verification read
+ past the end of allocated buffer, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* tg/stash-keep-index-with-removed-paths (2019-07-16) 1 commit
+ - stash: fix handling removed files with --keep-index
+
+ "git stash --keep-index" did not work correctly on paths that have
+ been removed, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* jc/denoise-rm-to-resolve (2019-07-18) 1 commit
+ - rm: resolving by removal is not a warning-worthy event
+
+ "git rm" to resolve a conflicted path leaked an internal message
+ "needs merge" before actually removing the path, which was
+ confusing.  This has been corrected.
+
+ Will merge to 'next'.
+
+
+* js/clean-report-too-long-a-path (2019-07-18) 1 commit
+ - clean: show an error message when the path is too long
+
+ "git clean" silently skipped a path when it cannot lstat() it; now
+ it gives a warning.
+
+ Will merge to 'next'.
+
+
+* di/readme-markup-fix (2019-07-18) 1 commit
+ - README: fix rendering of text in angle brackets
 
  Docfix.
 
  Will merge to 'next'.
+
+
+* js/builtin-add-i (2019-07-18) 11 commits
+ - built-in add -i: implement the `help` command
+ - built-in add -i: use color in the main loop
+ - built-in add -i: support `?` (prompt help)
+ - built-in add -i: show unique prefixes of the commands
+ - Add a function to determine unique prefixes for a list of strings
+ - built-in add -i: implement the main loop
+ - built-in add -i: color the header in the `status` command
+ - built-in add -i: refresh the index before running `status`
+ - built-in add -i: implement the `status` command
+ - diff: export diffstat interface
+ - Start to implement a built-in version of `git add --interactive`
+
+ The beginning of rewriting "git add -i" in C.
+
+
+* js/visual-studio (2019-07-18) 24 commits
+ - git: avoid calling aliased builtins via their dashed form
+ - t5505,t5516: create .git/branches/ when needed
+ - bin-wrappers: append `.exe` to target paths if necessary
+ - .gitignore: ignore Visual Studio's temporary/generated files
+ - .gitignore: touch up the entries regarding Visual Studio
+ - vcxproj: also link-or-copy builtins
+ - msvc: add a Makefile target to pre-generate the Visual Studio solution
+ - contrib/buildsystems: add a backend for modern Visual Studio versions
+ - contrib/buildsystems: handle options starting with a slash
+ - contrib/buildsystems: also handle -lexpat
+ - contrib/buildsystems: handle libiconv, too
+ - contrib/buildsystems: handle the curl library option
+ - contrib/buildsystems: error out on unknown option
+ - contrib/buildsystems: optionally capture the dry-run in a file
+ - contrib/buildsystems: redirect errors of the dry run into a log file
+ - contrib/buildsystems: ignore gettext stuff
+ - contrib/buildsystems: handle quoted spaces in filenames
+ - contrib/buildsystems: fix misleading error message
+ - contrib/buildsystems: ignore irrelevant files in Generators/
+ - contrib/buildsystems: ignore invalidcontinue.obj
+ - Vcproj.pm: urlencode '<' and '>' when generating VC projects
+ - Vcproj.pm: do not configure VCWebServiceProxyGeneratorTool
+ - Vcproj.pm: list git.exe first to be startup project
+ - Vcproj.pm: auto-generate GUIDs
+
+ Support building Git with Visual Studio
 
 --------------------------------------------------
 [Stalled]
@@ -232,6 +243,42 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* js/trace2-signo-typofix (2019-07-09) 1 commit
+  (merged to 'next' on 2019-07-11 at b2d2029b90)
+ + trace2: correct trace2 field name documentation
+
+ Documentation fix.
+
+ Will merge to 'master'.
+
+
+* ma/ref-filter-leakfix (2019-07-10) 1 commit
+  (merged to 'next' on 2019-07-11 at a7a4bb81ac)
+ + ref-filter: fix memory leak in `free_array_item()`
+
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* js/unmap-before-ext-diff (2019-07-11) 1 commit
+  (merged to 'next' on 2019-07-15 at 7aa292c66c)
+ + diff: munmap() file contents before running external diff
+
+ Windows update.
+
+ Will merge to 'master'.
+
+
+* rm/gpg-program-doc-fix (2019-07-12) 1 commit
+  (merged to 'next' on 2019-07-15 at ef358ec2e9)
+ + gpg(docs): use correct --verify syntax
+
+ Docfix.
+
+ Will merge to 'master'.
+
+
 * mt/dir-iterator-updates (2019-07-11) 10 commits
  - clone: replace strcmp by fspathcmp
  - clone: use dir-iterator to avoid explicit dir traversal
@@ -269,25 +316,26 @@ of the repositories listed at
 
 
 * tg/range-diff-output-update (2019-07-11) 14 commits
- - range-diff: add headers to the outer hunk header
- - range-diff: add filename to inner diff
- - range-diff: add section header instead of diff header
- - range-diff: suppress line count in outer diff
- - range-diff: don't remove funcname from inner diff
- - range-diff: split lines manually
- - range-diff: fix function parameter indentation
- - apply: make parse_git_diff_header public
- - apply: only pass required data to gitdiff_* functions
- - apply: only pass required data to find_name_*
- - apply: only pass required data to check_header_line
- - apply: only pass required data to git_header_name
- - apply: only pass required data to skip_tree_prefix
- - apply: replace marc.info link with public-inbox
+  (merged to 'next' on 2019-07-15 at b847d206ed)
+ + range-diff: add headers to the outer hunk header
+ + range-diff: add filename to inner diff
+ + range-diff: add section header instead of diff header
+ + range-diff: suppress line count in outer diff
+ + range-diff: don't remove funcname from inner diff
+ + range-diff: split lines manually
+ + range-diff: fix function parameter indentation
+ + apply: make parse_git_diff_header public
+ + apply: only pass required data to gitdiff_* functions
+ + apply: only pass required data to find_name_*
+ + apply: only pass required data to check_header_line
+ + apply: only pass required data to git_header_name
+ + apply: only pass required data to skip_tree_prefix
+ + apply: replace marc.info link with public-inbox
 
  "git range-diff" output has been tweaked for easier identification
  of which part of what file the patch shown is about.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bc/hash-independent-tests-part-4 (2019-07-01) 10 commits
@@ -329,8 +377,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* es/local-atomic-push-failure-with-http (2019-07-12) 1 commit
- - transport-helper: enforce atomic in push_refs_with_push
+* es/local-atomic-push-failure-with-http (2019-07-16) 2 commits
+ - transport-helper: avoid var decl in for () loop control
+  (merged to 'next' on 2019-07-15 at 960e92d24f)
+ + transport-helper: enforce atomic in push_refs_with_push
 
  "git push --atomic" that goes over the transport-helper (namely,
  the smart http transport) failed to prevent refs to be pushed when
@@ -394,7 +444,8 @@ of the repositories listed at
 
 
 * ab/test-env (2019-07-11) 9 commits
- - env--helper: mark a file-local symbol as static
+  (merged to 'next' on 2019-07-15 at 42e86beb20)
+ + env--helper: mark a file-local symbol as static
   (merged to 'next' on 2019-07-09 at 096658f382)
  + tests: make GIT_TEST_FAIL_PREREQS a boolean
  + tests: replace test_tristate with "git env--helper"
@@ -411,7 +462,7 @@ of the repositories listed at
  ways to spell true, like yes, on, etc., and also ways to spell
  false, like no, off, etc." convention.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/early-access (2019-07-01) 3 commits
@@ -440,21 +491,22 @@ of the repositories listed at
 
 
 * ab/no-kwset (2019-07-01) 10 commits
- - grep: use PCRE v2 for optimized fixed-string search
- - grep: remove the kwset optimization
- - grep: drop support for \0 in --fixed-strings <pattern>
- - grep: make the behavior for NUL-byte in patterns sane
- - grep tests: move binary pattern tests into their own file
- - grep tests: move "grep binary" alongside the rest
- - grep: inline the return value of a function call used only once
- - t4210: skip more command-line encoding tests on MinGW
- - grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
- - log tests: test regex backends in "--encode=<enc>" tests
+  (merged to 'next' on 2019-07-15 at ed0479ce3d)
+ + grep: use PCRE v2 for optimized fixed-string search
+ + grep: remove the kwset optimization
+ + grep: drop support for \0 in --fixed-strings <pattern>
+ + grep: make the behavior for NUL-byte in patterns sane
+ + grep tests: move binary pattern tests into their own file
+ + grep tests: move "grep binary" alongside the rest
+ + grep: inline the return value of a function call used only once
+ + t4210: skip more command-line encoding tests on MinGW
+ + grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
+ + log tests: test regex backends in "--encode=<enc>" tests
 
  Retire use of kwset library, which is an optimization for looking
  for fixed strings, with use of pcre2 JIT.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/tree-walk-with-repo (2019-06-28) 7 commits
@@ -594,7 +646,7 @@ of the repositories listed at
  commit-graph files now, which allows the commit-graph files to be
  updated incrementally.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * cc/multi-promisor (2019-06-25) 15 commits
@@ -671,4 +723,4 @@ of the repositories listed at
  "git blame" learned to "ignore" commits in the history, whose
  effects (as well as their presence) get ignored.
 
- Will cook in 'next'.
+ Will merge to 'master'.
