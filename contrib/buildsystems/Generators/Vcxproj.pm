@@ -273,6 +273,9 @@ EOM
   </Target>
 EOM
     }
+    if ($target eq 'git') {
+      print F "  <Import Project=\"LinkOrCopyBuiltins.targets\" />\n";
+    }
     print F << "EOM";
 </Project>
 EOM
