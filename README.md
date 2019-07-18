@@ -19,7 +19,7 @@ including full documentation and Git related tools.
 
 See [Documentation/gittutorial.txt][] to get started, then see
 [Documentation/giteveryday.txt][] for a useful minimum set of commands, and
-Documentation/git-<commandname>.txt for documentation of each command.
+`Documentation/git-<commandname>.txt` for documentation of each command.
 If git has been correctly installed, then the tutorial can also be
 read with `man gittutorial` or `git help tutorial`, and the
 documentation of each command with `man git-<commandname>` or `git help
