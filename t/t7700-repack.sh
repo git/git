@@ -239,4 +239,14 @@ test_expect_success 'bitmaps can be disabled on bare repos' '
 	test -z "$bitmap"
 '
 
+test_expect_success 'no bitmaps created if .keep files present' '
+	pack=$(ls bare.git/objects/pack/*.pack) &&
+	test_path_is_file "$pack" &&
+	keep=${pack%.pack}.keep &&
+	>"$keep" &&
+	git -C bare.git repack -ad &&
+	find bare.git/objects/pack/ -type f -name "*.bitmap" >actual &&
+	test_must_be_empty actual
+'
+
 test_done
