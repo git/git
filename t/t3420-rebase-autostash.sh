@@ -30,7 +30,8 @@ test_expect_success setup '
 	echo conflicting-change >file2 &&
 	git add . &&
 	test_tick &&
-	git commit -m "related commit"
+	git commit -m "related commit" &&
+	remove_progress_re="$(printf "s/.*\\r//")"
 '
 
 create_expected_success_am () {
@@ -48,8 +49,8 @@ create_expected_success_interactive () {
 	q_to_cr >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
 	HEAD is now at $(git rev-parse --short feature-branch) third commit
-	Rebasing (1/2)QRebasing (2/2)QApplied autostash.
-	Q                                                                                QSuccessfully rebased and updated refs/heads/rebased-feature-branch.
+	Applied autostash.
+	Successfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
 
@@ -67,13 +68,13 @@ create_expected_failure_am () {
 }
 
 create_expected_failure_interactive () {
-	q_to_cr >expected <<-EOF
+	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
 	HEAD is now at $(git rev-parse --short feature-branch) third commit
-	Rebasing (1/2)QRebasing (2/2)QApplying autostash resulted in conflicts.
+	Applying autostash resulted in conflicts.
 	Your changes are safe in the stash.
 	You can run "git stash pop" or "git stash drop" at any time.
-	Q                                                                                QSuccessfully rebased and updated refs/heads/rebased-feature-branch.
+	Successfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
 
@@ -109,7 +110,8 @@ testrebase () {
 			suffix=interactive
 		fi &&
 		create_expected_success_$suffix &&
-		test_i18ncmp expected actual
+		sed "$remove_progress_re" <actual >actual2 &&
+		test_i18ncmp expected actual2
 	'
 
 	test_expect_success "rebase$type: dirty index, non-conflicting rebase" '
@@ -209,7 +211,8 @@ testrebase () {
 			suffix=interactive
 		fi &&
 		create_expected_failure_$suffix &&
-		test_i18ncmp expected actual
+		sed "$remove_progress_re" <actual >actual2 &&
+		test_i18ncmp expected actual2
 	'
 }
 
