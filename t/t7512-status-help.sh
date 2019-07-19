@@ -798,6 +798,22 @@ EOF
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'status shows cherry-pick with invalid oid' '
+	mkdir .git/sequencer &&
+	test_write_lines "pick invalid-oid" >.git/sequencer/todo &&
+	git status --untracked-files=no >actual 2>err &&
+	git cherry-pick --quit &&
+	test_must_be_empty err &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'status does not show error if .git/sequencer is a file' '
+	test_when_finished "rm .git/sequencer" &&
+	test_write_lines hello >.git/sequencer &&
+	git status --untracked-files=no 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'status showing detached at and from a tag' '
 	test_commit atag tagging &&
 	git checkout atag &&

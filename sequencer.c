@@ -2079,6 +2079,18 @@ const char *todo_item_get_arg(struct todo_list *todo_list,
 	return todo_list->buf.buf + item->arg_offset;
 }
 
+static int is_command(enum todo_command command, const char **bol)
+{
+	const char *str = todo_command_info[command].str;
+	const char nick = todo_command_info[command].c;
+	const char *p = *bol + 1;
+
+	return skip_prefix(*bol, str, bol) ||
+		((nick && **bol == nick) &&
+		 (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || !*p) &&
+		 (*bol = p));
+}
+
 static int parse_insn_line(struct repository *r, struct todo_item *item,
 			   const char *buf, const char *bol, char *eol)
 {
@@ -2100,12 +2112,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	}
 
 	for (i = 0; i < TODO_COMMENT; i++)
-		if (skip_prefix(bol, todo_command_info[i].str, &bol)) {
-			item->command = i;
-			break;
-		} else if ((bol + 1 == eol || bol[1] == ' ') &&
-			   *bol == todo_command_info[i].c) {
-			bol++;
+		if (is_command(i, &bol)) {
 			item->command = i;
 			break;
 		}
@@ -2173,34 +2180,26 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 
 int sequencer_get_last_command(struct repository *r, enum replay_action *action)
 {
-	struct todo_item item;
-	char *eol;
-	const char *todo_file;
+	const char *todo_file, *bol;
 	struct strbuf buf = STRBUF_INIT;
-	int ret = -1;
+	int ret = 0;
 
 	todo_file = git_path_todo_file();
 	if (strbuf_read_file(&buf, todo_file, 0) < 0) {
-		if (errno == ENOENT)
+		if (errno == ENOENT || errno == ENOTDIR)
 			return -1;
 		else
 			return error_errno("unable to open '%s'", todo_file);
 	}
-	eol = strchrnul(buf.buf, '\n');
-	if (buf.buf != eol && eol[-1] == '\r')
-		eol--; /* strip Carriage Return */
-	if (parse_insn_line(r, &item, buf.buf, buf.buf, eol))
-		goto fail;
-	if (item.command == TODO_PICK)
+	bol = buf.buf + strspn(buf.buf, " \t\r\n");
+	if (is_command(TODO_PICK, &bol) && (*bol == ' ' || *bol == '\t'))
 		*action = REPLAY_PICK;
-	else if (item.command == TODO_REVERT)
+	else if (is_command(TODO_REVERT, &bol) &&
+		 (*bol == ' ' || *bol == '\t'))
 		*action = REPLAY_REVERT;
 	else
-		goto fail;
+		ret = -1;
 
-	ret = 0;
-
- fail:
 	strbuf_release(&buf);
 
 	return ret;
