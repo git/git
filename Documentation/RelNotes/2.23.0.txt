@@ -75,6 +75,22 @@ UI, Workflows & Features
  * A new tag.gpgSign configuration variable turns "git tag -a" into
    "git tag -s".
 
+ * "git multi-pack-index" learned expire and repack subcommands.
+
+ * "git blame" learned to "ignore" commits in the history, whose
+   effects (as well as their presence) get ignored.
+
+ * "git cherry-pick/revert" learned a new "--skip" action.
+
+ * The tips of refs from the alternate object store can be used as
+   starting point for reachability computation now.
+
+ * Extra blank lines in "git status" output have been reduced.
+
+ * The commits in a repository can be described by multiple
+   commit-graph files now, which allows the commit-graph files to be
+   updated incrementally.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -113,6 +129,19 @@ Performance, Internal Implementation, Development Support etc.
    auto-gc only once at the very end.
 
  * A handful of Windows build patches have been upstreamed.
+
+ * The code to read state files used by the sequencer machinery for
+   "git status" has been made more robust against a corrupt or stale
+   state files.
+
+ * "git for-each-ref" with multiple patterns have been optimized.
+
+ * The tree-walk API learned to pass an in-core repository
+   instance throughout more codepaths.
+
+ * When one step in multi step cherry-pick or revert is reset or
+   committed, the command line prompt script failed to notice the
+   current status, which has been improved.
 
 
 Fixes since v2.22
@@ -293,6 +322,10 @@ Fixes since v2.22
    forms to make them more recognisable.
    (merge bfc8c84ed5 qn/clone-doc-use-long-form later to maint).
 
+ * Generation of pack bitmaps are now disabled when .keep files exist,
+   as these are mutually exclusive features.
+   (merge 7328482253 ew/repack-with-bitmaps-by-default later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f547101b26 es/git-debugger-doc later to maint).
    (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
@@ -312,3 +345,5 @@ Fixes since v2.22
    (merge 8d45ad8c29 jt/t5551-test-chunked later to maint).
    (merge 1a64e07d23 sg/git-C-empty-doc later to maint).
    (merge 37a2e35395 sg/ci-brew-gcc-workaround later to maint).
+   (merge 24df0d49c4 js/trace2-signo-typofix later to maint).
+   (merge fbec05c210 cc/test-oidmap later to maint).
