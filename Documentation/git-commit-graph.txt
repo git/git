@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git commit-graph read' [--object-dir <dir>]
-'git commit-graph verify' [--object-dir <dir>]
+'git commit-graph verify' [--object-dir <dir>] [--shallow]
 'git commit-graph write' <options> [--object-dir <dir>]
 
 
@@ -26,7 +26,7 @@ OPTIONS
 	Use given directory for the location of packfiles and commit-graph
 	file. This parameter exists to specify the location of an alternate
 	that only has the objects directory, not a full `.git` directory. The
-	commit-graph file is expected to be at `<dir>/info/commit-graph` and
+	commit-graph file is expected to be in the `<dir>/info` directory and
 	the packfiles are expected to be in `<dir>/pack`.
 
 
@@ -51,6 +51,25 @@ or `--stdin-packs`.)
 +
 With the `--append` option, include all commits that are present in the
 existing commit-graph file.
++
+With the `--split` option, write the commit-graph as a chain of multiple
+commit-graph files stored in `<dir>/info/commit-graphs`. The new commits
+not already in the commit-graph are added in a new "tip" file. This file
+is merged with the existing file if the following merge conditions are
+met:
++
+* If `--size-multiple=<X>` is not specified, let `X` equal 2. If the new
+tip file would have `N` commits and the previous tip has `M` commits and
+`X` times `N` is greater than  `M`, instead merge the two files into a
+single file.
++
+* If `--max-commits=<M>` is specified with `M` a positive integer, and the
+new tip file would have more than `M` commits, then instead merge the new
+tip with the previous tip.
++
+Finally, if `--expire-time=<datetime>` is not specified, let `datetime`
+be the current time. After writing the split commit-graph, delete all
+unused commit-graph whose modified times are older than `datetime`.
 
 'read'::
 
@@ -61,6 +80,9 @@ Used for debugging purposes.
 
 Read the commit-graph file and verify its contents against the object
 database. Used to check for corrupted data.
++
+With the `--shallow` option, only check the tip commit-graph file in
+a chain of split commit-graphs.
 
 
 EXAMPLES
