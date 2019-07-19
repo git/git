@@ -33,6 +33,8 @@ void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
 typedef int alt_odb_fn(struct object_directory *, void *);
 int foreach_alt_odb(alt_odb_fn, void*);
+typedef void alternate_ref_fn(const struct object_id *oid, void *);
+void for_each_alternate_ref(alternate_ref_fn, void *);
 
 /*
  * Add the directory to the on-disk alternates file; the new entry will also
