@@ -478,7 +478,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	 * or migrated from loose to packed.
 	 */
 	if (status == MISSING_OBJECT) {
-		reprepare_packed_git(the_repository);
+		reprepare_packed_git(r);
 		find_short_object_filename(&ds);
 		find_short_packed_object(&ds);
 		status = finish_object_disambiguation(&ds, oid);
@@ -1389,9 +1389,7 @@ int repo_get_oid_mb(struct repository *r,
 	two = lookup_commit_reference_gently(r, &oid_tmp, 0);
 	if (!two)
 		return -1;
-	if (r != the_repository)
-		BUG("sorry get_merge_bases() can't take struct repository yet");
-	mbs = get_merge_bases(one, two);
+	mbs = repo_get_merge_bases(r, one, two);
 	if (!mbs || mbs->next)
 		st = -1;
 	else {
@@ -1677,7 +1675,8 @@ int repo_get_oid_blob(struct repository *r,
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
-static void diagnose_invalid_oid_path(const char *prefix,
+static void diagnose_invalid_oid_path(struct repository *r,
+				      const char *prefix,
 				      const char *filename,
 				      const struct object_id *tree_oid,
 				      const char *object_name,
@@ -1695,7 +1694,7 @@ static void diagnose_invalid_oid_path(const char *prefix,
 	if (is_missing_file_error(errno)) {
 		char *fullname = xstrfmt("%s%s", prefix, filename);
 
-		if (!get_tree_entry(tree_oid, fullname, &oid, &mode)) {
+		if (!get_tree_entry(r, tree_oid, fullname, &oid, &mode)) {
 			die("Path '%s' exists, but not '%s'.\n"
 			    "Did you mean '%.*s:%s' aka '%.*s:./%s'?",
 			    fullname,
@@ -1889,23 +1888,15 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			new_filename = resolve_relative_path(repo, filename);
 			if (new_filename)
 				filename = new_filename;
-			/*
-			 * NEEDSWORK: Eventually get_tree_entry*() should
-			 * learn to take struct repository directly and we
-			 * would not need to inject submodule odb to the
-			 * in-core odb.
-			 */
-			if (repo != the_repository)
-				add_to_alternates_memory(repo->objects->odb->path);
 			if (flags & GET_OID_FOLLOW_SYMLINKS) {
-				ret = get_tree_entry_follow_symlinks(&tree_oid,
+				ret = get_tree_entry_follow_symlinks(repo, &tree_oid,
 					filename, oid, &oc->symlink_path,
 					&oc->mode);
 			} else {
-				ret = get_tree_entry(&tree_oid, filename, oid,
+				ret = get_tree_entry(repo, &tree_oid, filename, oid,
 						     &oc->mode);
 				if (ret && only_to_die) {
-					diagnose_invalid_oid_path(prefix,
+					diagnose_invalid_oid_path(repo, prefix,
 								   filename,
 								   &tree_oid,
 								   name, len);

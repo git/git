@@ -45,13 +45,15 @@ int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long
 int tree_entry(struct tree_desc *, struct name_entry *);
 int tree_entry_gently(struct tree_desc *, struct name_entry *);
 
-void *fill_tree_descriptor(struct tree_desc *desc, const struct object_id *oid);
+void *fill_tree_descriptor(struct repository *r,
+			   struct tree_desc *desc,
+			   const struct object_id *oid);
 
 struct traverse_info;
 typedef int (*traverse_callback_t)(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *);
 int traverse_trees(struct index_state *istate, int n, struct tree_desc *t, struct traverse_info *info);
 
-enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned short *mode);
+enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r, struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned short *mode);
 
 struct traverse_info {
 	const char *traverse_path;
@@ -66,7 +68,7 @@ struct traverse_info {
 	int show_all_errors;
 };
 
-int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned short *);
+int get_tree_entry(struct repository *, const struct object_id *, const char *, struct object_id *, unsigned short *);
 char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n);
 void setup_traverse_info(struct traverse_info *info, const char *base);
 

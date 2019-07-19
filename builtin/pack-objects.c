@@ -1428,7 +1428,8 @@ static void add_preferred_base(struct object_id *oid)
 	if (window <= num_preferred_base++)
 		return;
 
-	data = read_object_with_reference(oid, tree_type, &size, &tree_oid);
+	data = read_object_with_reference(the_repository, oid,
+					  tree_type, &size, &tree_oid);
 	if (!data)
 		return;
 

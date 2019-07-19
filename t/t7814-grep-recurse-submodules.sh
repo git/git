@@ -14,12 +14,14 @@ test_expect_success 'setup directory structure and submodule' '
 	echo "(3|4)" >b/b &&
 	git add a b &&
 	git commit -m "add a and b" &&
+	test_tick &&
 	git init submodule &&
 	echo "(1|2)d(3|4)" >submodule/a &&
 	git -C submodule add a &&
 	git -C submodule commit -m "add a" &&
 	git submodule add ./submodule &&
-	git commit -m "added submodule"
+	git commit -m "added submodule" &&
+	test_tick
 '
 
 test_expect_success 'grep correctly finds patterns in a submodule' '
@@ -65,11 +67,14 @@ test_expect_success 'grep and nested submodules' '
 	echo "(1|2)d(3|4)" >submodule/sub/a &&
 	git -C submodule/sub add a &&
 	git -C submodule/sub commit -m "add a" &&
+	test_tick &&
 	git -C submodule submodule add ./sub &&
 	git -C submodule add sub &&
 	git -C submodule commit -m "added sub" &&
+	test_tick &&
 	git add submodule &&
 	git commit -m "updated submodule" &&
+	test_tick &&
 
 	cat >expect <<-\EOF &&
 	a:(1|2)d(3|4)
@@ -179,15 +184,18 @@ test_expect_success !MINGW 'grep recurse submodule colon in name' '
 	echo "(1|2)d(3|4)" >"parent/fi:le" &&
 	git -C parent add "fi:le" &&
 	git -C parent commit -m "add fi:le" &&
+	test_tick &&
 
 	git init "su:b" &&
 	test_when_finished "rm -rf su:b" &&
 	echo "(1|2)d(3|4)" >"su:b/fi:le" &&
 	git -C "su:b" add "fi:le" &&
 	git -C "su:b" commit -m "add fi:le" &&
+	test_tick &&
 
 	git -C parent submodule add "../su:b" "su:b" &&
 	git -C parent commit -m "add submodule" &&
+	test_tick &&
 
 	cat >expect <<-\EOF &&
 	fi:le:(1|2)d(3|4)
@@ -210,15 +218,18 @@ test_expect_success 'grep history with moved submoules' '
 	echo "(1|2)d(3|4)" >parent/file &&
 	git -C parent add file &&
 	git -C parent commit -m "add file" &&
+	test_tick &&
 
 	git init sub &&
 	test_when_finished "rm -rf sub" &&
 	echo "(1|2)d(3|4)" >sub/file &&
 	git -C sub add file &&
 	git -C sub commit -m "add file" &&
+	test_tick &&
 
 	git -C parent submodule add ../sub dir/sub &&
 	git -C parent commit -m "add submodule" &&
+	test_tick &&
 
 	cat >expect <<-\EOF &&
 	dir/sub/file:(1|2)d(3|4)
@@ -229,6 +240,7 @@ test_expect_success 'grep history with moved submoules' '
 
 	git -C parent mv dir/sub sub-moved &&
 	git -C parent commit -m "moved submodule" &&
+	test_tick &&
 
 	cat >expect <<-\EOF &&
 	file:(1|2)d(3|4)
@@ -251,6 +263,7 @@ test_expect_success 'grep using relative path' '
 	echo "(1|2)d(3|4)" >sub/file &&
 	git -C sub add file &&
 	git -C sub commit -m "add file" &&
+	test_tick &&
 
 	git init parent &&
 	echo "(1|2)d(3|4)" >parent/file &&
@@ -260,6 +273,7 @@ test_expect_success 'grep using relative path' '
 	git -C parent add src/file2 &&
 	git -C parent submodule add ../sub &&
 	git -C parent commit -m "add files and submodule" &&
+	test_tick &&
 
 	# From top works
 	cat >expect <<-\EOF &&
@@ -293,6 +307,7 @@ test_expect_success 'grep from a subdir' '
 	echo "(1|2)d(3|4)" >sub/file &&
 	git -C sub add file &&
 	git -C sub commit -m "add file" &&
+	test_tick &&
 
 	git init parent &&
 	mkdir parent/src &&
@@ -301,6 +316,7 @@ test_expect_success 'grep from a subdir' '
 	git -C parent submodule add ../sub src/sub &&
 	git -C parent submodule add ../sub sub &&
 	git -C parent commit -m "add files and submodules" &&
+	test_tick &&
 
 	# Verify grep from root works
 	cat >expect <<-\EOF &&

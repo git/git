@@ -1476,7 +1476,8 @@ int df_name_compare(const char *name1, int len1, int mode1, const char *name2, i
 int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
-void *read_object_with_reference(const struct object_id *oid,
+void *read_object_with_reference(struct repository *r,
+				 const struct object_id *oid,
 				 const char *required_type,
 				 unsigned long *size,
 				 struct object_id *oid_ret);
@@ -1762,8 +1763,8 @@ int add_files_to_cache(const char *prefix, const struct pathspec *pathspec, int 
 extern int diff_auto_refresh_index;
 
 /* match-trees.c */
-void shift_tree(const struct object_id *, const struct object_id *, struct object_id *, int);
-void shift_tree_by(const struct object_id *, const struct object_id *, struct object_id *, const char *);
+void shift_tree(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, int);
+void shift_tree_by(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, const char *);
 
 /*
  * whitespace rules.

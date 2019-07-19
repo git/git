@@ -1505,7 +1505,8 @@ void *read_object_file_extended(struct repository *r,
 	return NULL;
 }
 
-void *read_object_with_reference(const struct object_id *oid,
+void *read_object_with_reference(struct repository *r,
+				 const struct object_id *oid,
 				 const char *required_type_name,
 				 unsigned long *size,
 				 struct object_id *actual_oid_return)
@@ -1521,7 +1522,7 @@ void *read_object_with_reference(const struct object_id *oid,
 		int ref_length = -1;
 		const char *ref_type = NULL;
 
-		buffer = read_object_file(&actual_oid, &type, &isize);
+		buffer = repo_read_object_file(r, &actual_oid, &type, &isize);
 		if (!buffer)
 			return NULL;
 		if (type == required_type) {

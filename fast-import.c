@@ -2410,7 +2410,8 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
 	} else if (!get_oid(p, &commit_oid)) {
 		unsigned long size;
-		char *buf = read_object_with_reference(&commit_oid,
+		char *buf = read_object_with_reference(the_repository,
+						       &commit_oid,
 						       commit_type, &size,
 						       &commit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
@@ -2482,7 +2483,8 @@ static void parse_from_existing(struct branch *b)
 		unsigned long size;
 		char *buf;
 
-		buf = read_object_with_reference(&b->oid, commit_type, &size,
+		buf = read_object_with_reference(the_repository,
+						 &b->oid, commit_type, &size,
 						 &b->oid);
 		parse_from_commit(b, buf, size);
 		free(buf);
@@ -2560,7 +2562,8 @@ static struct hash_list *parse_merge(unsigned int *count)
 			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!get_oid(from, &n->oid)) {
 			unsigned long size;
-			char *buf = read_object_with_reference(&n->oid,
+			char *buf = read_object_with_reference(the_repository,
+							       &n->oid,
 							       commit_type,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)

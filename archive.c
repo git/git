@@ -418,7 +418,9 @@ static void parse_treeish_arg(const char **argv,
 		unsigned short mode;
 		int err;
 
-		err = get_tree_entry(&tree->object.oid, prefix, &tree_oid,
+		err = get_tree_entry(ar_args->repo,
+				     &tree->object.oid,
+				     prefix, &tree_oid,
 				     &mode);
 		if (err || !S_ISDIR(mode))
 			die(_("current working directory is untracked"));

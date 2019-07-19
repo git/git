@@ -496,12 +496,13 @@ static struct commit *check_single_commit(struct rev_info *revs)
 	return (struct commit *) commit;
 }
 
-static void fill_blob_sha1(struct commit *commit, struct diff_filespec *spec)
+static void fill_blob_sha1(struct repository *r, struct commit *commit,
+			   struct diff_filespec *spec)
 {
 	unsigned short mode;
 	struct object_id oid;
 
-	if (get_tree_entry(&commit->object.oid, spec->path, &oid, &mode))
+	if (get_tree_entry(r, &commit->object.oid, spec->path, &oid, &mode))
 		die("There is no path %s in the commit", spec->path);
 	fill_filespec(spec, &oid, 1, mode);
 
@@ -585,7 +586,7 @@ parse_lines(struct repository *r, struct commit *commit,
 					name_part);
 
 		spec = alloc_filespec(full_name);
-		fill_blob_sha1(commit, spec);
+		fill_blob_sha1(r, commit, spec);
 		fill_line_ends(r, spec, &lines, &ends);
 		cb_data.spec = spec;
 		cb_data.lines = lines;
