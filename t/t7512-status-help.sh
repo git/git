@@ -33,7 +33,6 @@ You have unmerged paths.
 
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -54,7 +53,6 @@ All conflicts fixed but you are still merging.
   (use "git commit" to conclude merge)
 
 Changes to be committed:
-
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
@@ -87,7 +85,6 @@ You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
 Unmerged paths:
   (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -111,7 +108,6 @@ You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
-
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
@@ -150,7 +146,6 @@ You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO
 Unmerged paths:
   (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -177,7 +172,6 @@ You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
-
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
@@ -247,7 +241,6 @@ You are currently splitting a commit while rebasing branch '\''split_commit'\'' 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -355,7 +348,6 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -454,7 +446,6 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -558,7 +549,6 @@ You are currently splitting a commit while rebasing branch '\''several_edits'\''
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
-
 	modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -747,7 +737,6 @@ You are currently cherry-picking commit $TO_CHERRY_PICK.
 
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
-
 	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -771,7 +760,6 @@ You are currently cherry-picking commit $TO_CHERRY_PICK.
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
 Changes to be committed:
-
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
@@ -852,7 +840,6 @@ You are currently reverting commit $TO_REVERT.
 Unmerged paths:
   (use "git restore --staged <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
-
 	both modified:   to-revert.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -872,7 +859,6 @@ You are currently reverting commit $TO_REVERT.
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
-
 	modified:   to-revert.txt
 
 Untracked files not listed (use -u option to show untracked files)
