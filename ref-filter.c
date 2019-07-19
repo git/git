@@ -2142,7 +2142,9 @@ static void free_array_item(struct ref_array_item *item)
 {
 	free((char *)item->symref);
 	if (item->value) {
-		free((char *)item->value->s);
+		int i;
+		for (i = 0; i < used_atom_cnt; i++)
+			free((char *)item->value[i].s);
 		free(item->value);
 	}
 	free(item);
@@ -2153,14 +2155,16 @@ void ref_array_clear(struct ref_array *array)
 {
 	int i;
 
-	for (i = 0; i < used_atom_cnt; i++)
-		free((char *)used_atom[i].name);
-	FREE_AND_NULL(used_atom);
-	used_atom_cnt = 0;
 	for (i = 0; i < array->nr; i++)
 		free_array_item(array->items[i]);
 	FREE_AND_NULL(array->items);
 	array->nr = array->alloc = 0;
+
+	for (i = 0; i < used_atom_cnt; i++)
+		free((char *)used_atom[i].name);
+	FREE_AND_NULL(used_atom);
+	used_atom_cnt = 0;
+
 	if (ref_to_worktree_map.worktrees) {
 		hashmap_free(&(ref_to_worktree_map.map), 1);
 		free_worktrees(ref_to_worktree_map.worktrees);
