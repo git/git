@@ -5,7 +5,7 @@
 
 test_description='Gettext Shell poison'
 
-GIT_TEST_GETTEXT_POISON=YesPlease
+GIT_TEST_GETTEXT_POISON=true
 export GIT_TEST_GETTEXT_POISON
 . ./lib-gettext.sh
 
@@ -30,5 +30,10 @@ test_expect_success 'eval_gettext: our eval_gettext() fallback has poison semant
     eval_gettext "test more words" >actual &&
     test_cmp expect actual
 '
+
+test_expect_success "gettext: invalid GIT_TEST_GETTEXT_POISON value doesn't infinitely loop" "
+	test_must_fail env GIT_TEST_GETTEXT_POISON=xyz git version 2>error &&
+	grep \"fatal: bad numeric config value 'xyz' for 'GIT_TEST_GETTEXT_POISON': invalid unit\" error
+"
 
 test_done
