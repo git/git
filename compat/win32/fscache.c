@@ -8,6 +8,7 @@
 #include "config.h"
 #include "../../mem-pool.h"
 #include "ntifs.h"
+#include "wsl.h"
 
 static volatile long initialized;
 static DWORD dwTlsIndex;
@@ -46,6 +47,7 @@ static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 struct fsentry {
 	struct hashmap_entry ent;
 	mode_t st_mode;
+	ULONG reparse_tag;
 	/* Pointer to the directory listing, or NULL for the listing itself. */
 	struct fsentry *list;
 	/* Pointer to the next file entry of the list. */
@@ -202,8 +204,34 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 
 	fse = fsentry_alloc(cache, list, buf, len);
 
+	fse->reparse_tag =
+		fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+		fdata->EaSize : 0;
+
+	/*
+	 * On certain Windows versions, host directories mapped into
+	 * Windows Containers ("Volumes", see https://docs.docker.com/storage/volumes/)
+	 * look like symbolic links, but their targets are paths that
+	 * are valid only in kernel mode.
+	 *
+	 * Let's work around this by detecting that situation and
+	 * telling Git that these are *not* symbolic links.
+	 */
+	if (fse->reparse_tag == IO_REPARSE_TAG_SYMLINK &&
+	    sizeof(buf) > (size_t)(list ? list->len + 1 : 0) + fse->len + 1 &&
+	    is_inside_windows_container()) {
+		size_t off = 0;
+		if (list) {
+			memcpy(buf, list->dirent.d_name, list->len);
+			buf[list->len] = '/';
+			off = list->len + 1;
+		}
+		memcpy(buf + off, fse->dirent.d_name, fse->len);
+		buf[off + fse->len] = '\0';
+	}
+
 	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes,
-					    fdata->EaSize);
+					    fdata->EaSize, buf);
 	fse->dirent.d_type = S_ISREG(fse->st_mode) ? DT_REG :
 			S_ISDIR(fse->st_mode) ? DT_DIR : DT_LNK;
 	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_PATH :
@@ -215,6 +243,21 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 			     &(fse->u.s.st_mtim));
 	filetime_to_timespec((FILETIME *)&(fdata->CreationTime),
 			     &(fse->u.s.st_ctim));
+	if (fdata->EaSize > 0 &&
+	    sizeof(buf) >= (size_t)(list ? list->len+1 : 0) + fse->len+1 &&
+	    are_wsl_compatible_mode_bits_enabled()) {
+		size_t off = 0;
+		wchar_t wpath[MAX_LONG_PATH];
+		if (list && list->len) {
+			memcpy(buf, list->dirent.d_name, list->len);
+			buf[list->len] = '/';
+			off = list->len + 1;
+		}
+		memcpy(buf + off, fse->dirent.d_name, fse->len);
+		buf[off + fse->len] = '\0';
+		if (xutftowcs_long_path(wpath, buf) >= 0)
+			copy_wsl_mode_bits_from_disk(wpath, -1, &fse->st_mode);
+	}
 
 	return fse;
 }
@@ -472,6 +515,7 @@ int fscache_enable(size_t initial_size)
 		/* redirect opendir and lstat to the fscache implementations */
 		opendir = fscache_opendir;
 		lstat = fscache_lstat;
+		win32_is_mount_point = fscache_is_mount_point;
 	}
 	initialized++;
 	LeaveCriticalSection(&fscache_cs);
@@ -532,6 +576,7 @@ void fscache_disable(void)
 		/* reset opendir and lstat to the original implementations */
 		opendir = dirent_opendir;
 		lstat = mingw_lstat;
+		win32_is_mount_point = mingw_is_mount_point;
 	}
 	LeaveCriticalSection(&fscache_cs);
 
@@ -617,6 +662,44 @@ int fscache_lstat(const char *filename, struct stat *st)
 	/* don't forget to release fsentry */
 	fsentry_release(fse);
 	return 0;
+}
+
+/*
+ * is_mount_point() replacement, uses cache if enabled, otherwise falls
+ * back to mingw_is_mount_point().
+ */
+int fscache_is_mount_point(struct strbuf *path)
+{
+	int dirlen, base, len;
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wflexible-array-extensions"
+#endif
+	struct heap_fsentry key[2];
+#pragma GCC diagnostic pop
+	struct fsentry *fse;
+	struct fscache *cache = fscache_getcache();
+
+	if (!cache || !do_fscache_enabled(cache, path->buf))
+		return mingw_is_mount_point(path);
+
+	cache->lstat_requests++;
+	/* split path into path + name */
+	len = path->len;
+	if (len && is_dir_sep(path->buf[len - 1]))
+		len--;
+	base = len;
+	while (base && !is_dir_sep(path->buf[base - 1]))
+		base--;
+	dirlen = base ? base - 1 : 0;
+
+	/* lookup entry for path + name in cache */
+	fsentry_init(&key[0].u.ent, NULL, path->buf, dirlen);
+	fsentry_init(&key[1].u.ent, &key[0].u.ent, path->buf + base, len - base);
+	fse = fscache_get(cache, &key[1].u.ent);
+	if (!fse)
+		return mingw_is_mount_point(path);
+	return fse->reparse_tag == IO_REPARSE_TAG_MOUNT_POINT;
 }
 
 typedef struct fscache_DIR {
