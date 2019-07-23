@@ -3,6 +3,7 @@
 #include "dir.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "json-writer.h"
 #include "run-command.h"
 #include "strbuf.h"
 
@@ -50,6 +51,11 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	}
 	istate->fsmonitor_dirty = fsmonitor_dirty;
 
+	if (istate->jw) {
+		jw_object_intmax(istate->jw, "version", hdr_version);
+		jw_object_intmax(istate->jw, "last_update", istate->fsmonitor_last_update);
+		jw_object_ewah(istate->jw, "dirty", fsmonitor_dirty);
+	}
 	trace_printf_key(&trace_fsmonitor, "read fsmonitor extension successful");
 	return 0;
 }

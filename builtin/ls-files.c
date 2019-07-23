@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
+#include "json-writer.h"
 #include "quote.h"
 #include "dir.h"
 #include "builtin.h"
@@ -31,6 +32,7 @@ static int show_modified;
 static int show_killed;
 static int show_valid_bit;
 static int show_fsmonitor_bit;
+static int show_json;
 static int line_terminator = '\n';
 static int debug_mode;
 static int show_eol;
@@ -577,6 +579,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("pretend that paths removed since <tree-ish> are still present")),
 		OPT__ABBREV(&abbrev),
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
+		OPT_BOOL(0, "debug-json", &show_json,
+			N_("dump index content in JSON format")),
 		OPT_END()
 	};
 
@@ -632,7 +636,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		    "--error-unmatch");
 
 	parse_pathspec(&pathspec, 0,
-		       PATHSPEC_PREFER_CWD,
+		       show_json ? PATHSPEC_PREFER_FULL : PATHSPEC_PREFER_CWD,
 		       prefix, argv);
 
 	/*
@@ -660,8 +664,18 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	/* With no flags, we default to showing the cached files */
 	if (!(show_stage || show_deleted || show_others || show_unmerged ||
-	      show_killed || show_modified || show_resolve_undo))
+	      show_killed || show_modified || show_resolve_undo || show_json))
 		show_cached = 1;
+	if (show_json && (show_stage || show_deleted || show_others ||
+			  show_unmerged || show_killed || show_modified ||
+			  show_cached || pathspec.nr))
+		die(_("--debug-json cannot be used with other file selection options"));
+	if (show_json && show_resolve_undo)
+		die(_("--debug-json cannot be used with %s"), "--resolve-undo");
+	if (show_json && with_tree)
+		die(_("--debug-json cannot be used with %s"), "--with-tree");
+	if (show_json && debug_mode)
+		die(_("--debug-json cannot be used with %s"), "--debug");
 
 	if (with_tree) {
 		/*
@@ -673,10 +687,22 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		overlay_tree_on_index(the_repository->index, with_tree, max_prefix);
 	}
 
-	show_files(the_repository, &dir);
+	if (!show_json) {
+		show_files(the_repository, &dir);
 
-	if (show_resolve_undo)
-		show_ru_info(the_repository->index);
+		if (show_resolve_undo)
+			show_ru_info(the_repository->index);
+	} else {
+		struct json_writer jw = JSON_WRITER_INIT;
+
+		discard_index(the_repository->index);
+		the_repository->index->jw = &jw;
+		if (repo_read_index(the_repository) < 0)
+			die("index file corrupt");
+		puts(jw.json.buf);
+		the_repository->index->jw = NULL;
+		jw_release(&jw);
+	}
 
 	if (ps_matched) {
 		int bad;

@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "oid": <string>,
+  "mtime_sec": <number>,
+  "mtime_nsec": <number>,
+  "entries": [
+    {
+      "id": 0,
+      "name": "",
+      "mode": "100644",
+      "flags": 0,
+      "oid": <string>,
+      "stat": {
+        "ctime_sec": <number>,
+        "ctime_nsec": <number>,
+        "mtime_sec": <number>,
+        "mtime_nsec": <number>,
+        "device": <number>,
+        "inode": <number>,
+        "uid": <number>,
+        "gid": <number>,
+        "size": 4
+      },
+      "file_offset": <number>
+    }
+  ],
+  "extensions": {
+    "link": {
+      "file_offset": <number>,
+      "ext_size": <number>,
+      "oid": <string>,
+      "delete_bitmap": [
+      ],
+      "replace_bitmap": [
+        0
+      ]
+    }
+  }
+}

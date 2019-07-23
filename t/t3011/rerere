@@ -1,0 +1,66 @@
+{
+  "version": 2,
+  "oid": <string>,
+  "mtime_sec": <number>,
+  "mtime_nsec": <number>,
+  "entries": [
+    {
+      "id": 0,
+      "name": "fi/le",
+      "mode": "100644",
+      "flags": 0,
+      "oid": <string>,
+      "stat": {
+        "ctime_sec": <number>,
+        "ctime_nsec": <number>,
+        "mtime_sec": <number>,
+        "mtime_nsec": <number>,
+        "device": <number>,
+        "inode": <number>,
+        "uid": <number>,
+        "gid": <number>,
+        "size": 9
+      },
+      "file_offset": <number>
+    }
+  ],
+  "extensions": {
+    "TREE": {
+      "file_offset": <number>,
+      "ext_size": <number>,
+      "root": {
+        "oid": null,
+        "subdirs": [
+          {
+            "name": "fi",
+            "oid": null,
+            "subdirs": [
+            ]
+          }
+        ]
+      }
+    },
+    "REUC": {
+      "file_offset": <number>,
+      "ext_size": <number>,
+      "entries": [
+        {
+          "path": "fi/le",
+          "stages": [
+            {
+              "mode": "100644",
+              "oid": <string>
+            },
+            {
+              "mode": "100644",
+              "oid": <string>
+            },
+            {
+              "mode": "100644",
+              "oid": <string>
+            }
+          ]
+        }
+      ]
+    }
+  }
