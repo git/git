@@ -28,6 +28,7 @@
 #include "commit-graph.h"
 #include "prio-queue.h"
 #include "hashmap.h"
+#include "utf8.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -2684,6 +2685,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	grep_commit_pattern_type(GREP_PATTERN_TYPE_UNSPECIFIED,
 				 &revs->grep_filter);
+	if (!is_encoding_utf8(get_log_output_encoding()))
+		revs->grep_filter.ignore_locale = 1;
 	compile_grep_patterns(&revs->grep_filter);
 
 	if (revs->reverse && revs->reflog_info)

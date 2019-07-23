@@ -32,7 +32,6 @@ typedef int pcre2_compile_context;
 typedef int pcre2_match_context;
 typedef int pcre2_jit_stack;
 #endif
-#include "kwset.h"
 #include "thread-utils.h"
 #include "userdiff.h"
 
@@ -97,7 +96,6 @@ struct grep_pat {
 	pcre2_match_context *pcre2_match_context;
 	pcre2_jit_stack *pcre2_jit_stack;
 	uint32_t pcre2_jit_on;
-	kwset_t kws;
 	unsigned fixed:1;
 	unsigned ignore_case:1;
 	unsigned word_regexp:1;
@@ -173,6 +171,7 @@ struct grep_opt {
 	int funcbody;
 	int extended_regexp_option;
 	int pattern_type_option;
+	int ignore_locale;
 	char colors[NR_GREP_COLORS][COLOR_MAXLEN];
 	unsigned pre_context;
 	unsigned post_context;
