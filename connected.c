@@ -5,6 +5,7 @@
 #include "connected.h"
 #include "transport.h"
 #include "packfile.h"
+#include "promisor-remote.h"
 
 /*
  * If we feed all the commits we want to verify to this command
@@ -75,7 +76,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 	argv_array_push(&rev_list.args,"rev-list");
 	argv_array_push(&rev_list.args, "--objects");
 	argv_array_push(&rev_list.args, "--stdin");
-	if (repository_format_partial_clone)
+	if (has_promisor_remote())
 		argv_array_push(&rev_list.args, "--exclude-promisor-objects");
 	if (!opt->is_deepening_fetch) {
 		argv_array_push(&rev_list.args, "--not");
