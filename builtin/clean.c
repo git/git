@@ -1041,6 +1041,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
+	enable_fscache(active_nr);
 
 	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++)
@@ -1115,6 +1116,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	disable_fscache();
 	strbuf_release(&abs_path);
 	strbuf_release(&buf);
 	string_list_clear(&del_list, 0);
