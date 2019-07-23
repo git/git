@@ -114,12 +114,12 @@ cp expect_log_x expect_log_y
 test_expect_success 'Add a few hundred commits w/notes to trigger fanout (x -> y)' '
 	git update-ref refs/notes/y refs/notes/x &&
 	git config core.notesRef refs/notes/y &&
-	i=5 &&
-	while test $i -lt $num
+	test_commit_bulk --start=6 --id=commit $((num - 5)) &&
+	i=0 &&
+	while test $i -lt $((num - 5))
 	do
-		i=$(($i + 1)) &&
-		test_commit "commit$i" >/dev/null &&
-		git notes add -m "notes for commit$i" || return 1
+		git notes add -m "notes for commit$i" HEAD~$i || return 1
+		i=$((i + 1))
 	done &&
 	test "$(git rev-parse refs/notes/y)" != "$(git rev-parse refs/notes/x)" &&
 	# Expected number of commits and notes
