@@ -928,6 +928,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
+	register_allowed_protocol_version(protocol_v2);
+	register_allowed_protocol_version(protocol_v1);
+	register_allowed_protocol_version(protocol_v0);
+
 	fetch_if_missing = 0;
 
 	packet_trace_identity("clone");

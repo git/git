@@ -1043,7 +1043,7 @@ static enum ssh_variant determine_ssh_variant(const char *ssh_command,
  */
 static struct child_process *git_connect_git(int fd[2], char *hostandport,
 					     const char *path, const char *prog,
-					     enum protocol_version version,
+					     const struct strbuf *version_advert,
 					     int flags)
 {
 	struct child_process *conn;
@@ -1081,12 +1081,9 @@ static struct child_process *git_connect_git(int fd[2], char *hostandport,
 		    prog, path, 0,
 		    target_host, 0);
 
-	/* If using a new version put that stuff here after a second null byte */
-	if (version > 0) {
-		strbuf_addch(&request, '\0');
-		strbuf_addf(&request, "version=%d%c",
-			    version, '\0');
-	}
+	/* Add version fields after a second null byte */
+	strbuf_addch(&request, '\0');
+	strbuf_addf(&request, "%s%c", version_advert->buf, '\0');
 
 	packet_write(fd[1], request.buf, request.len);
 
@@ -1101,14 +1098,13 @@ static struct child_process *git_connect_git(int fd[2], char *hostandport,
  */
 static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 			     enum ssh_variant variant, const char *port,
-			     enum protocol_version version, int flags)
+			     const struct strbuf *version_advert, int flags)
 {
-	if (variant == VARIANT_SSH &&
-	    version > 0) {
+	if (variant == VARIANT_SSH) {
 		argv_array_push(args, "-o");
 		argv_array_push(args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
-		argv_array_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
-				 version);
+		argv_array_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=%s",
+				 version_advert->buf);
 	}
 
 	if (flags & CONNECT_IPV4) {
@@ -1161,7 +1157,7 @@ static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 
 /* Prepare a child_process for use by Git's SSH-tunneled transport. */
 static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
-			  const char *port, enum protocol_version version,
+			  const char *port, const struct strbuf *version_advert,
 			  int flags)
 {
 	const char *ssh;
@@ -1195,15 +1191,16 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 
 		argv_array_push(&detect.args, ssh);
 		argv_array_push(&detect.args, "-G");
-		push_ssh_options(&detect.args, &detect.env_array,
-				 VARIANT_SSH, port, version, flags);
+		push_ssh_options(&detect.args, &detect.env_array, VARIANT_SSH,
+				 port, version_advert, flags);
 		argv_array_push(&detect.args, ssh_host);
 
 		variant = run_command(&detect) ? VARIANT_SIMPLE : VARIANT_SSH;
 	}
 
 	argv_array_push(&conn->args, ssh);
-	push_ssh_options(&conn->args, &conn->env_array, variant, port, version, flags);
+	push_ssh_options(&conn->args, &conn->env_array, variant, port,
+			 version_advert, flags);
 	argv_array_push(&conn->args, ssh_host);
 }
 
@@ -1223,16 +1220,10 @@ struct child_process *git_connect(int fd[2], const char *url,
 {
 	char *hostandport, *path;
 	struct child_process *conn;
+	struct strbuf version_advert = STRBUF_INIT;
 	enum protocol protocol;
-	enum protocol_version version = get_protocol_version_config();
 
-	/*
-	 * NEEDSWORK: If we are trying to use protocol v2 and we are planning
-	 * to perform a push, then fallback to v0 since the client doesn't know
-	 * how to push yet using v2.
-	 */
-	if (version == protocol_v2 && !strcmp("git-receive-pack", prog))
-		version = protocol_v0;
+	get_client_protocol_version_advertisement(&version_advert);
 
 	/* Without this we cannot rely on waitpid() to tell
 	 * what happened to our children.
@@ -1247,7 +1238,8 @@ struct child_process *git_connect(int fd[2], const char *url,
 		printf("Diag: path=%s\n", path ? path : "NULL");
 		conn = NULL;
 	} else if (protocol == PROTO_GIT) {
-		conn = git_connect_git(fd, hostandport, path, prog, version, flags);
+		conn = git_connect_git(fd, hostandport, path, prog,
+				       &version_advert, flags);
 		conn->trace2_child_class = "transport/git";
 	} else {
 		struct strbuf cmd = STRBUF_INIT;
@@ -1292,14 +1284,14 @@ struct child_process *git_connect(int fd[2], const char *url,
 				return NULL;
 			}
 			conn->trace2_child_class = "transport/ssh";
-			fill_ssh_args(conn, ssh_host, port, version, flags);
+			fill_ssh_args(conn, ssh_host, port, &version_advert,
+				      flags);
 		} else {
 			transport_check_allowed("file");
 			conn->trace2_child_class = "transport/file";
-			if (version > 0) {
-				argv_array_pushf(&conn->env_array, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
-						 version);
-			}
+			argv_array_pushf(&conn->env_array,
+					 GIT_PROTOCOL_ENVIRONMENT "=%s",
+					 version_advert.buf);
 		}
 		argv_array_push(&conn->args, cmd.buf);
 

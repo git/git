@@ -332,6 +332,19 @@ static int get_protocol_http_header(enum protocol_version version,
 	return 0;
 }
 
+static int get_client_protocol_http_header(const struct strbuf *version_advert,
+					   struct strbuf *header)
+{
+	if (version_advert->len > 0) {
+		strbuf_addf(header, GIT_PROTOCOL_HEADER ": %s",
+			    version_advert->buf);
+
+		return 1;
+	}
+
+	return 0;
+}
+
 static void check_smart_http(struct discovery *d, const char *service,
 			     struct strbuf *type)
 {
@@ -395,11 +408,11 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	struct strbuf refs_url = STRBUF_INIT;
 	struct strbuf effective_url = STRBUF_INIT;
 	struct strbuf protocol_header = STRBUF_INIT;
+	struct strbuf version_advert = STRBUF_INIT;
 	struct string_list extra_headers = STRING_LIST_INIT_DUP;
 	struct discovery *last = last_discovery;
 	int http_ret, maybe_smart = 0;
 	struct http_get_options http_options;
-	enum protocol_version version = get_protocol_version_config();
 
 	if (last && !strcmp(service, last->service))
 		return last;
@@ -416,16 +429,10 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		strbuf_addf(&refs_url, "service=%s", service);
 	}
 
-	/*
-	 * NEEDSWORK: If we are trying to use protocol v2 and we are planning
-	 * to perform a push, then fallback to v0 since the client doesn't know
-	 * how to push yet using v2.
-	 */
-	if (version == protocol_v2 && !strcmp("git-receive-pack", service))
-		version = protocol_v0;
+	get_client_protocol_version_advertisement(&version_advert);
 
 	/* Add the extra Git-Protocol header */
-	if (get_protocol_http_header(version, &protocol_header))
+	if (get_client_protocol_http_header(&version_advert, &protocol_header))
 		string_list_append(&extra_headers, protocol_header.buf);
 
 	memset(&http_options, 0, sizeof(http_options));
@@ -1354,6 +1361,8 @@ int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int nongit;
+
+	register_allowed_protocol_versions_from_env();
 
 	setup_git_directory_gently(&nongit);
 	if (argc < 2) {
