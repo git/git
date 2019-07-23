@@ -1234,4 +1234,11 @@ test_expect_success 'stash works when user.name and user.email are not set' '
 	)
 '
 
+test_expect_success 'stash --keep-index with file deleted in index does not resurrect it on disk' '
+	test_commit to-remove to-remove &&
+	git rm to-remove &&
+	git stash --keep-index &&
+	test_path_is_missing to-remove
+'
+
 test_done
