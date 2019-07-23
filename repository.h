@@ -4,6 +4,7 @@
 #include "path.h"
 
 struct config_set;
+struct repo_settings;
 struct git_hash_algo;
 struct index_state;
 struct lock_file;
@@ -71,6 +72,8 @@ struct repository {
 	 * as a submodule of another repository.
 	 */
 	char *submodule_prefix;
+
+	struct repo_settings *settings;
 
 	/* Subsystems */
 	/*
