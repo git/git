@@ -94,6 +94,13 @@ check_tar() {
 	'
 }
 
+test_expect_success 'setup' '
+	test_oid_cache <<-EOF
+	obj sha1:19f9c8273ec45a8938e6999cb59b3ff66739902a
+	obj sha256:3c666f798798601571f5cec0adb57ce4aba8546875e7693177e0535f34d2c49b
+	EOF
+'
+
 test_expect_success \
     'populate workdir' \
     'mkdir a &&
@@ -369,11 +376,10 @@ test_lazy_prereq TAR_HUGE '
 '
 
 test_expect_success LONG_IS_64BIT 'set up repository with huge blob' '
-	obj_d=19 &&
-	obj_f=f9c8273ec45a8938e6999cb59b3ff66739902a &&
-	obj=${obj_d}${obj_f} &&
-	mkdir -p .git/objects/$obj_d &&
-	cp "$TEST_DIRECTORY"/t5000/$obj .git/objects/$obj_d/$obj_f &&
+	obj=$(test_oid obj) &&
+	path=$(test_oid_to_path $obj) &&
+	mkdir -p .git/objects/$(dirname $path) &&
+	cp "$TEST_DIRECTORY"/t5000/huge-object .git/objects/$path &&
 	rm -f .git/index &&
 	git update-index --add --cacheinfo 100644,$obj,huge &&
 	git commit -m huge

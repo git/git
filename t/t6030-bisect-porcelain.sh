@@ -615,6 +615,7 @@ test_expect_success 'broken branch creation' '
 	git add missing/MISSING &&
 	git commit -m "6(broken): Added file that will be deleted" &&
 	git tag BROKEN_HASH6 &&
+	deleted=$(git rev-parse --verify HEAD:missing) &&
 	add_line_into_file "7(broken): second line on a broken branch" hello2 &&
 	git tag BROKEN_HASH7 &&
 	add_line_into_file "8(broken): third line on a broken branch" hello2 &&
@@ -622,12 +623,12 @@ test_expect_success 'broken branch creation' '
 	git rm missing/MISSING &&
 	git commit -m "9(broken): Remove missing file" &&
 	git tag BROKEN_HASH9 &&
-	rm .git/objects/39/f7e61a724187ab767d2e08442d9b6b9dab587d
+	rm .git/objects/$(test_oid_to_path $deleted)
 '
 
 echo "" > expected.ok
 cat > expected.missing-tree.default <<EOF
-fatal: unable to read tree 39f7e61a724187ab767d2e08442d9b6b9dab587d
+fatal: unable to read tree $deleted
 EOF
 
 test_expect_success 'bisect fails if tree is broken on start commit' '
@@ -713,12 +714,12 @@ test_expect_success 'bisect: demonstrate identification of damage boundary' "
 "
 
 cat > expected.bisect-log <<EOF
-# bad: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
-# good: [7b7f204a749c3125d5224ed61ea2ae1187ad046f] Add <2: A new day for git> into <hello>.
-git bisect start '32a594a3fdac2d57cf6d02987e30eec68511498c' '7b7f204a749c3125d5224ed61ea2ae1187ad046f'
-# good: [3de952f2416b6084f557ec417709eac740c6818c] Add <3: Another new day for git> into <hello>.
-git bisect good 3de952f2416b6084f557ec417709eac740c6818c
-# first bad commit: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
+# bad: [$HASH4] Add <4: Ciao for now> into <hello>.
+# good: [$HASH2] Add <2: A new day for git> into <hello>.
+git bisect start '$HASH4' '$HASH2'
+# good: [$HASH3] Add <3: Another new day for git> into <hello>.
+git bisect good $HASH3
+# first bad commit: [$HASH4] Add <4: Ciao for now> into <hello>.
 EOF
 
 test_expect_success 'bisect log: successful result' '
@@ -731,14 +732,14 @@ test_expect_success 'bisect log: successful result' '
 '
 
 cat > expected.bisect-skip-log <<EOF
-# bad: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
-# good: [7b7f204a749c3125d5224ed61ea2ae1187ad046f] Add <2: A new day for git> into <hello>.
-git bisect start '32a594a3fdac2d57cf6d02987e30eec68511498c' '7b7f204a749c3125d5224ed61ea2ae1187ad046f'
-# skip: [3de952f2416b6084f557ec417709eac740c6818c] Add <3: Another new day for git> into <hello>.
-git bisect skip 3de952f2416b6084f557ec417709eac740c6818c
+# bad: [$HASH4] Add <4: Ciao for now> into <hello>.
+# good: [$HASH2] Add <2: A new day for git> into <hello>.
+git bisect start '$HASH4' '$HASH2'
+# skip: [$HASH3] Add <3: Another new day for git> into <hello>.
+git bisect skip $HASH3
 # only skipped commits left to test
-# possible first bad commit: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
-# possible first bad commit: [3de952f2416b6084f557ec417709eac740c6818c] Add <3: Another new day for git> into <hello>.
+# possible first bad commit: [$HASH4] Add <4: Ciao for now> into <hello>.
+# possible first bad commit: [$HASH3] Add <3: Another new day for git> into <hello>.
 EOF
 
 test_expect_success 'bisect log: only skip commits left' '
