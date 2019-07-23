@@ -26,7 +26,7 @@ SYNOPSIS
 		   [--no-notes | --notes[=<ref>]]
 		   [--interdiff=<previous>]
 		   [--range-diff=<previous> [--creation-factor=<percent>]]
-		   [--progress]
+		   [--progress] [--[no-]clobber]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
 
@@ -93,6 +93,12 @@ include::diff-options.txt[]
 --output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
+
+--clobber::
+--no-clobber::
+	(experimental)
+	Allow overwriting existing files, which is the default.  To
+	make the command refrain from overwriting, use `--no-clobber`.
 
 -n::
 --numbered::
