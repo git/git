@@ -46,6 +46,7 @@ static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 struct fsentry {
 	struct hashmap_entry ent;
 	mode_t st_mode;
+	ULONG reparse_tag;
 	/* Pointer to the directory listing, or NULL for the listing itself. */
 	struct fsentry *list;
 	/* Pointer to the next file entry of the list. */
@@ -196,6 +197,10 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 	len = xwcstoutfn(buf, ARRAY_SIZE(buf), fdata->FileName, fdata->FileNameLength / sizeof(wchar_t));
 
 	fse = fsentry_alloc(cache, list, buf, len);
+
+	fse->reparse_tag =
+		fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+		fdata->EaSize : 0;
 
 	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes);
 	fse->dirent.d_type = S_ISDIR(fse->st_mode) ? DT_DIR : DT_REG;
@@ -464,6 +469,7 @@ int fscache_enable(size_t initial_size)
 		/* redirect opendir and lstat to the fscache implementations */
 		opendir = fscache_opendir;
 		lstat = fscache_lstat;
+		win32_is_mount_point = fscache_is_mount_point;
 	}
 	initialized++;
 	LeaveCriticalSection(&fscache_cs);
@@ -524,6 +530,7 @@ void fscache_disable(void)
 		/* reset opendir and lstat to the original implementations */
 		opendir = dirent_opendir;
 		lstat = mingw_lstat;
+		win32_is_mount_point = mingw_is_mount_point;
 	}
 	LeaveCriticalSection(&fscache_cs);
 
@@ -592,6 +599,39 @@ int fscache_lstat(const char *filename, struct stat *st)
 	/* don't forget to release fsentry */
 	fsentry_release(fse);
 	return 0;
+}
+
+/*
+ * is_mount_point() replacement, uses cache if enabled, otherwise falls
+ * back to mingw_is_mount_point().
+ */
+int fscache_is_mount_point(struct strbuf *path)
+{
+	int dirlen, base, len;
+	struct heap_fsentry key[2];
+	struct fsentry *fse;
+	struct fscache *cache = fscache_getcache();
+
+	if (!cache || !do_fscache_enabled(cache, path->buf))
+		return mingw_is_mount_point(path);
+
+	cache->lstat_requests++;
+	/* split path into path + name */
+	len = path->len;
+	if (len && is_dir_sep(path->buf[len - 1]))
+		len--;
+	base = len;
+	while (base && !is_dir_sep(path->buf[base - 1]))
+		base--;
+	dirlen = base ? base - 1 : 0;
+
+	/* lookup entry for path + name in cache */
+	fsentry_init(&key[0].u.ent, NULL, path->buf, dirlen);
+	fsentry_init(&key[1].u.ent, &key[0].u.ent, path->buf + base, len - base);
+	fse = fscache_get(cache, &key[1].u.ent);
+	if (!fse)
+		return mingw_is_mount_point(path);
+	return fse->reparse_tag == IO_REPARSE_TAG_MOUNT_POINT;
 }
 
 typedef struct fscache_DIR {
