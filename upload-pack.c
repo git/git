@@ -213,18 +213,17 @@ static void create_pack_file(const struct object_array *have_obj,
 		argv_array_push(&pack_objects.args, "--delta-base-offset");
 	if (use_include_tag)
 		argv_array_push(&pack_objects.args, "--include-tag");
-	if (filter_options.filter_spec) {
-		struct strbuf expanded_filter_spec = STRBUF_INIT;
-		expand_list_objects_filter_spec(&filter_options,
-						&expanded_filter_spec);
+	if (filter_options.choice) {
+		const char *spec =
+			expand_list_objects_filter_spec(&filter_options);
 		if (pack_objects.use_shell) {
 			struct strbuf buf = STRBUF_INIT;
-			sq_quote_buf(&buf, expanded_filter_spec.buf);
+			sq_quote_buf(&buf, spec);
 			argv_array_pushf(&pack_objects.args, "--filter=%s", buf.buf);
 			strbuf_release(&buf);
 		} else {
 			argv_array_pushf(&pack_objects.args, "--filter=%s",
-					 expanded_filter_spec.buf);
+					 spec);
 		}
 	}
 	if (uri_protocols) {
@@ -938,6 +937,7 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 		if (skip_prefix(reader->line, "filter ", &arg)) {
 			if (!filter_capability_requested)
 				die("git upload-pack: filtering capability not negotiated");
+			list_objects_filter_die_if_populated(&filter_options);
 			parse_list_objects_filter(&filter_options, arg);
 			continue;
 		}
@@ -1362,6 +1362,7 @@ static void process_args(struct packet_reader *request,
 		}
 
 		if (allow_filter && skip_prefix(arg, "filter ", &p)) {
+			list_objects_filter_die_if_populated(&filter_options);
 			parse_list_objects_filter(&filter_options, p);
 			continue;
 		}

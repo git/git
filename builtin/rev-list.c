@@ -473,8 +473,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 				die(_("object filtering requires --objects"));
 			if (filter_options.choice == LOFC_SPARSE_OID &&
 			    !filter_options.sparse_oid_value)
-				die(_("invalid sparse value '%s'"),
-				    filter_options.filter_spec);
+				die(
+					_("invalid sparse value '%s'"),
+					list_objects_filter_spec(
+						&filter_options));
 			continue;
 		}
 		if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
