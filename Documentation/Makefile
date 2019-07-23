@@ -78,6 +78,7 @@ SP_ARTICLES += $(API_DOCS)
 
 TECH_DOCS += MyFirstContribution
 TECH_DOCS += SubmittingPatches
+TECH_DOCS += MyFirstRevWalk
 TECH_DOCS += technical/hash-function-transition
 TECH_DOCS += technical/http-protocol
 TECH_DOCS += technical/index-format
