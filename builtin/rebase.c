@@ -1486,10 +1486,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
 
-	prefix = setup_git_directory();
-	trace_repo_setup(prefix);
-	setup_work_tree();
-
 	options.allow_empty_message = 1;
 	git_config(rebase_config, &options);
 
