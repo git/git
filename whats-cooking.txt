@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2019, #05; Fri, 19)
-X-master-at: 9c9b961d7eb15fb583a2a812088713a68a85f1c0
-X-next-at: 102302147b47505b8667bbd7a42e242728b3a860
+Subject: What's cooking in git.git (Jul 2019, #06; Thu, 25)
+X-master-at: 3034dab9ed6b11970a53099a7b3ca981f1461365
+X-next-at: 0f2c4a37fdba75d06ae7254c4b30ed7739985214
 
-What's cooking in git.git (Jul 2019, #05; Fri, 19)
+What's cooking in git.git (Jul 2019, #06; Thu, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The sixth batch is in and the 'next' branch has thinned down quite a
-bit.
+The seventh batch is in; I've merged fix-up topics that has been in
+'master' for some time (i.e. up to the third batch of this cycle)
+down to 'maint'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,195 +24,291 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* br/blame-ignore (2019-07-01) 11 commits
-  (merged to 'next' on 2019-07-01 at f4b79421c9)
- + t8014: remove unnecessary braces
- + blame: drop some unused function parameters
-  (merged to 'next' on 2019-06-27 at 36b91a787f)
- + blame: add a test to cover blame_coalesce()
- + blame: use the fingerprint heuristic to match ignored lines
- + blame: add a fingerprint heuristic to match ignored lines
- + blame: optionally track line fingerprints during fill_blame_origin()
- + blame: add config options for the output of ignored or unblamable lines
- + blame: add the ability to ignore commits and their changes
- + blame: use a helper function in blame_chunk()
- + Move oidset_parse_file() to oidset.c
- + fsck: rename and touch up init_skiplist()
+* ab/test-env (2019-07-11) 9 commits
+  (merged to 'next' on 2019-07-15 at 42e86beb20)
+ + env--helper: mark a file-local symbol as static
+  (merged to 'next' on 2019-07-09 at 096658f382)
+ + tests: make GIT_TEST_FAIL_PREREQS a boolean
+ + tests: replace test_tristate with "git env--helper"
+ + tests README: re-flow a previously changed paragraph
+ + tests: make GIT_TEST_GETTEXT_POISON a boolean
+ + t6040 test: stop using global "script" variable
+ + config.c: refactor die_bad_number() to not call gettext() early
+ + env--helper: new undocumented builtin wrapping git_env_*()
+ + config tests: simplify include cycle test
 
- "git blame" learned to "ignore" commits in the history, whose
- effects (as well as their presence) get ignored.
-
-
-* cc/test-oidmap (2019-07-01) 6 commits
-  (merged to 'next' on 2019-07-01 at 331a414a24)
- + t0016: add 'remove' subcommand test
- + test-oidmap: remove 'add' subcommand
-  (merged to 'next' on 2019-06-27 at 247a4341ca)
- + test-hashmap: remove 'hash' command
- + oidmap: use sha1hash() instead of static hash() function
- + t: add t0016-oidmap.sh
- + t/helper: add test-oidmap.c
-
- Extend the test coverage a bit.
+ Many GIT_TEST_* environment variables control various aspects of
+ how our tests are run, but a few followed "non-empty is true, empty
+ or unset is false" while others followed the usual "there are a few
+ ways to spell true, like yes, on, etc., and also ways to spell
+ false, like no, off, etc." convention.
 
 
-* ds/commit-graph-incremental (2019-06-19) 18 commits
-  (merged to 'next' on 2019-07-03 at 5dee5edbdf)
- + commit-graph: test verify across alternates
- + commit-graph: normalize commit-graph filenames
- + commit-graph: test --split across alternate without --split
- + commit-graph: test octopus merges with --split
- + commit-graph: clean up chains after flattened write
- + commit-graph: verify chains with --shallow mode
- + commit-graph: create options for split files
- + commit-graph: expire commit-graph files
- + commit-graph: allow cross-alternate chains
- + commit-graph: merge commit-graph chains
- + commit-graph: add --split option to builtin
- + commit-graph: write commit-graph chains
- + commit-graph: rearrange chunk count logic
- + commit-graph: add base graphs chunk
- + commit-graph: load commit-graph chains
- + commit-graph: rename commit_compare to oid_compare
- + commit-graph: prepare for commit-graph chains
- + commit-graph: document commit-graph chains
+* ac/log-use-mailmap-by-default-transition (2019-07-15) 3 commits
+  (merged to 'next' on 2019-07-19 at e5669de950)
+ + tests: defang pager tests by explicitly disabling the log.mailmap warning
+ + documentation: mention --no-use-mailmap and log.mailmap false setting
+ + log: add warning for unspecified log.mailmap setting
 
- The commits in a repository can be described by multiple
- commit-graph files now, which allows the commit-graph files to be
- updated incrementally.
+ The "git log" command learns to issue a warning when log.mailmap
+ configuration is not set and --[no-]mailmap option is not used, to
+ prepare users for future versions of Git that uses the mailmap by
+ default.
 
 
-* ds/midx-expire-repack (2019-07-01) 12 commits
-  (merged to 'next' on 2019-07-01 at c2a907f395)
- + t5319: use 'test-tool path-utils' instead of 'ls -l'
-  (merged to 'next' on 2019-06-27 at 35e6e3b38d)
- + t5319-multi-pack-index.sh: test batch size zero
- + midx: add test that 'expire' respects .keep files
- + multi-pack-index: test expire while adding packs
- + midx: implement midx_repack()
- + multi-pack-index: prepare 'repack' subcommand
- + multi-pack-index: implement 'expire' subcommand
- + midx: refactor permutation logic and pack sorting
- + midx: simplify computation of pack name lengths
- + multi-pack-index: prepare for 'expire' subcommand
- + Docs: rearrange subcommands for multi-pack-index
- + repack: refactor pack deletion for future use
+* di/readme-markup-fix (2019-07-18) 1 commit
+  (merged to 'next' on 2019-07-19 at 339470d824)
+ + README: fix rendering of text in angle brackets
 
- "git multi-pack-index" learned expire and repack subcommands.
+ Docfix.
 
 
-* ea/merge-code-cleanup (2019-07-09) 1 commit
-  (merged to 'next' on 2019-07-11 at a7b831b03e)
- + builtin/merge.c - cleanup of code in for-cycle that tests strategies
+* es/local-atomic-push-failure-with-http (2019-07-16) 2 commits
+  (merged to 'next' on 2019-07-19 at 8d5b776a96)
+ + transport-helper: avoid var decl in for () loop control
+  (merged to 'next' on 2019-07-15 at 960e92d24f)
+ + transport-helper: enforce atomic in push_refs_with_push
 
- A loop has been rewritten for conciseness and clarity.
-
-
-* ew/repack-with-bitmaps-by-default (2019-07-01) 1 commit
-  (merged to 'next' on 2019-07-09 at 985419cb6e)
- + repack: disable bitmaps-by-default if .keep files exist
-
- Generation of pack bitmaps are now disabled when .keep files exist,
- as these are mutually exclusive features.
+ "git push --atomic" that goes over the transport-helper (namely,
+ the smart http transport) failed to prevent refs to be pushed when
+ it can locally tell that one of the ref update will fail without
+ having to consult the other end, which has been corrected.
 
 
-* jk/check-connected-with-alternates (2019-07-01) 2 commits
-  (merged to 'next' on 2019-07-09 at b5888bd955)
- + check_everything_connected: assume alternate ref tips are valid
- + object-store.h: move for_each_alternate_ref() from transport.h
+* jc/denoise-rm-to-resolve (2019-07-18) 1 commit
+  (merged to 'next' on 2019-07-19 at 12f7e5d413)
+ + rm: resolving by removal is not a warning-worthy event
 
- The tips of refs from the alternate object store can be used as
- starting point for reachability computation now.
-
-
-* jl/status-reduce-vertical-blank (2019-06-21) 1 commit
-  (merged to 'next' on 2019-07-11 at 5716f37348)
- + status: remove the empty line after hints
-
- Extra blank lines in "git status" output have been reduced.
+ "git rm" to resolve a conflicted path leaked an internal message
+ "needs merge" before actually removing the path, which was
+ confusing.  This has been corrected.
 
 
-* js/trace2-signo-typofix (2019-07-09) 1 commit
-  (merged to 'next' on 2019-07-11 at b2d2029b90)
- + trace2: correct trace2 field name documentation
+* jc/post-c89-rules-doc (2019-07-18) 1 commit
+  (merged to 'next' on 2019-07-19 at 8acd58e189)
+ + CodingGuidelines: spell out post-C89 rules
 
- Documentation fix.
-
-
-* kb/mingw-set-home (2019-07-08) 1 commit
-  (merged to 'next' on 2019-07-11 at 51c7e23dab)
- + mingw: initialize HOME on startup
-
- Windows port update.
+ We have been trying out a few language features outside c89; the
+ coding guidelines document did not talk about them and instead had
+ a blanket ban against them.
 
 
-* ma/ref-filter-leakfix (2019-07-10) 1 commit
-  (merged to 'next' on 2019-07-11 at a7a4bb81ac)
- + ref-filter: fix memory leak in `free_array_item()`
+* jk/test-commit-bulk (2019-07-23) 6 commits
+  (merged to 'next' on 2019-07-23 at edc849c7dd)
+ + t6200: use test_commit_bulk
+ + t5703: use test_commit_bulk
+ + t5702: use test_commit_bulk
+ + t3311: use test_commit_bulk
+ + t5310: increase the number of bitmapped commits
+ + test-lib: introduce test_commit_bulk
 
- Leakfix.
-
-
-* nd/tree-walk-with-repo (2019-06-28) 7 commits
-  (merged to 'next' on 2019-07-09 at 3e613f977c)
- + t7814: do not generate same commits in different repos
- + Use the right 'struct repository' instead of the_repository
- + match-trees.c: remove the_repo from shift_tree*()
- + tree-walk.c: remove the_repo from get_tree_entry_follow_symlinks()
- + tree-walk.c: remove the_repo from get_tree_entry()
- + tree-walk.c: remove the_repo from fill_tree_descriptor()
- + sha1-file.c: remove the_repo from read_object_with_reference()
-
- The tree-walk API learned to pass an in-core repository
- instance throughout more codepaths.
+ A test helper has been introduced to optimize preparation of test
+ repositories with many simple commits, and a handful of test
+ scripts have been updated to use it.
 
 
-* pw/prompt-cherry-pick-revert-fix (2019-07-01) 1 commit
-  (merged to 'next' on 2019-07-09 at bf8f0af685)
- + git-prompt: improve cherry-pick/revert detection
+* js/clean-report-too-long-a-path (2019-07-19) 1 commit
+  (merged to 'next' on 2019-07-19 at b7da0a821c)
+ + clean: show an error message when the path is too long
 
- When one step in multi step cherry-pick or revert is reset or
- committed, the command line prompt script failed to notice the
- current status, which has been improved.
-
-
-* pw/rebase-progress-test-cleanup (2019-07-08) 1 commit
-  (merged to 'next' on 2019-07-11 at 1363de0fe2)
- + t3420: remove progress lines before comparing output
-
- Test cleanup.
+ "git clean" silently skipped a path when it cannot lstat() it; now
+ it gives a warning.
 
 
-* pw/status-with-corrupt-sequencer-state (2019-06-27) 3 commits
-  (merged to 'next' on 2019-07-03 at 273aee6b3c)
- + status: do not report errors in sequencer/todo
- + sequencer: factor out todo command name parsing
- + sequencer: always allow tab after command name
+* js/mingw-spawn-with-spaces-in-path (2019-07-16) 1 commit
+  (merged to 'next' on 2019-07-19 at 33dd6d0401)
+ + mingw: support spawning programs containing spaces in their names
 
- The code to read state files used by the sequencer machinery for
- "git status" has been made more robust against a corrupt or stale
- state files.
+ Window 7 update ;-)
 
 
-* ra/cherry-pick-revert-skip (2019-07-02) 5 commits
-  (merged to 'next' on 2019-07-09 at 4ffa502220)
- + cherry-pick/revert: advise using --skip
- + cherry-pick/revert: add --skip option
- + sequencer: use argv_array in reset_merge
- + sequencer: rename reset_for_rollback to reset_merge
- + sequencer: add advice for revert
+* js/unmap-before-ext-diff (2019-07-11) 1 commit
+  (merged to 'next' on 2019-07-15 at 7aa292c66c)
+ + diff: munmap() file contents before running external diff
 
- "git cherry-pick/revert" learned a new "--skip" action.
+ Windows update.
 
 
-* tb/ref-filter-multiple-patterns (2019-06-27) 1 commit
-  (merged to 'next' on 2019-07-03 at f59ad42c4a)
- + ref-filter.c: find disjoint pattern prefixes
+* mt/dir-iterator-updates (2019-07-11) 10 commits
+  (merged to 'next' on 2019-07-19 at 2ebb586ce6)
+ + clone: replace strcmp by fspathcmp
+ + clone: use dir-iterator to avoid explicit dir traversal
+ + clone: extract function from copy_or_link_directory
+ + clone: copy hidden paths at local clone
+ + dir-iterator: add flags parameter to dir_iterator_begin
+ + dir-iterator: refactor state machine model
+ + dir-iterator: use warning_errno when possible
+ + dir-iterator: add tests for dir-iterator API
+ + clone: better handle symlinked files at .git/objects/
+ + clone: test for our behavior on odd objects/* content
 
- "git for-each-ref" with multiple patterns have been optimized.
+ Adjust the dir-iterator API and apply it to the local clone
+ optimization codepath.
+
+
+* rm/gpg-program-doc-fix (2019-07-12) 1 commit
+  (merged to 'next' on 2019-07-15 at ef358ec2e9)
+ + gpg(docs): use correct --verify syntax
+
+ Docfix.
+
+
+* sr/gpg-interface-stop-at-the-end (2019-07-16) 1 commit
+  (merged to 'next' on 2019-07-19 at 5d38aa1236)
+ + gpg-interface: do not scan past the end of buffer
+
+ A codepath that reads from GPG for signed object verification read
+ past the end of allocated buffer, which has been fixed.
+
+
+* tg/range-diff-output-update (2019-07-11) 14 commits
+  (merged to 'next' on 2019-07-15 at b847d206ed)
+ + range-diff: add headers to the outer hunk header
+ + range-diff: add filename to inner diff
+ + range-diff: add section header instead of diff header
+ + range-diff: suppress line count in outer diff
+ + range-diff: don't remove funcname from inner diff
+ + range-diff: split lines manually
+ + range-diff: fix function parameter indentation
+ + apply: make parse_git_diff_header public
+ + apply: only pass required data to gitdiff_* functions
+ + apply: only pass required data to find_name_*
+ + apply: only pass required data to check_header_line
+ + apply: only pass required data to git_header_name
+ + apply: only pass required data to skip_tree_prefix
+ + apply: replace marc.info link with public-inbox
+
+ "git range-diff" output has been tweaked for easier identification
+ of which part of what file the patch shown is about.
+
+
+* tg/stash-keep-index-with-removed-paths (2019-07-16) 1 commit
+  (merged to 'next' on 2019-07-19 at d4ae24a939)
+ + stash: fix handling removed files with --keep-index
+
+ "git stash --keep-index" did not work correctly on paths that have
+ been removed, which has been fixed.
+
+
+* vn/xmmap-gently (2019-07-14) 1 commit
+  (merged to 'next' on 2019-07-19 at d95c1d2be3)
+ + read-cache.c: do not die if mmap fails
+
+ Clean-up an error codepath.
+
+--------------------------------------------------
+[New Topics]
+
+* bb/grep-pcre2-bug-message-fix (2019-07-23) 1 commit
+  (merged to 'next' on 2019-07-23 at 8bd5a68618)
+ + grep: print the pcre2_jit_on value
+
+ BUG() message fix.
+
+ The codepath may want to just simply be removed, though.
+
+
+* ra/rebase-i-more-options (2019-07-23) 4 commits
+ - SQUASH???
+ - rebase -i: support --committer-date-is-author-date
+ - sequencer: add NULL checks under read_author_script
+ - rebase -i: add --ignore-whitespace flag
+
+ "git rebase -i" learned a few options that are known by "git
+ rebase" proper.
+
+ Needs a bit of fixups, at least.
+
+
+* sg/travis-gcc-4.8 (2019-07-19) 1 commit
+  (merged to 'next' on 2019-07-25 at e3d546eb15)
+ + travis-ci: build with GCC 4.8 as well
+
+ Add a job to build with a tad older GCC to make sure we are still
+ buildable.
+
+ Will merge to 'master'.
+
+
+* ab/pcre-jit-fixes (2019-07-24) 3 commits
+ - grep: stop using a custom JIT stack with PCRE v1
+ - grep: stop "using" a custom JIT stack with PCRE v2
+ - grep: remove overly paranoid BUG(...) code
+
+ A few simplification and bugfixes to PCRE interface.
+
+ Will merge to 'next'.
+
+
+* jk/xdiff-clamp-funcname-context-index (2019-07-23) 1 commit
+  (merged to 'next' on 2019-07-25 at b2944a0ba6)
+ + xdiff: clamp function context indices in post-image
+
+ The internal diff machinery can be made to read out of bounds while
+ looking for --funcion-context line in a corner case, which has been
+ corrected.
+
+ Will merge to 'master'.
+
+
+* js/rebase-cleanup (2019-07-25) 2 commits
+  (merged to 'next' on 2019-07-25 at 3d9cedf470)
+ + git: mark cmd_rebase as requiring a worktree
+ + rebase: fix white-space
+
+ A few leftover cleanup to "git rebase" in C.
+
+ Will merge to 'master'.
+
+
+* js/rebase-r-strategy (2019-07-25) 12 commits
+ - rebase -r: do not (re-)generate root commits with `--root` *and* `--onto`
+ - t3418: test `rebase -r` with merge strategies
+ - t/lib-rebase: prepare for testing `git rebase --rebase-merges`
+ - rebase -r: support merge strategies other than `recursive`
+ - t3427: mark two test cases as requiring support for `git rebase -p`
+ - t3427: fix another incorrect assumption
+ - t3427: accommodate for the `rebase --merge` backend having been replaced
+ - t3427: fix erroneous assumption
+ - t3427: condense the unnecessarily repetitive test cases into three
+ - t3427: move the `filter-branch` invocation into the `setup` case
+ - t3427: simplify the `setup` test case significantly
+ - t3427: add a clarifying comment
+
+ "git rebase --rebase-merges" learned to drive different merge
+ strategies and pass strategy specific options to them.
+
+
+* js/trace2-json-schema (2019-07-25) 3 commits
+ - ci: run trace2 schema validation in the CI suite
+ - trace2: add a schema validator for trace2 events
+ - trace2: add a JSON schema for trace2 events
+
+ The JSON output produced by "trace2" subsystem now has JSON schema
+ defined on it, to allow us validate the output and catch deviation.
+
+ The CI integration may be a bit too heavy-handed.
 
 --------------------------------------------------
 [Stalled]
+
+* cb/xdiff-no-system-includes-in-dot-c (2019-06-19) 1 commit
+ - xdiff: avoid accidental redefinition of LFS feature in OpenIndiana
+
+ Compilation fix.
+
+ Will be rerolled together with patches from the
+ jk/no-system-includes-in-dot-c topic.
+
+
+* jk/no-system-includes-in-dot-c (2019-06-19) 2 commits
+ - wt-status.h: drop stdio.h include
+ - verify-tag: drop signal.h include
+
+ Compilation fix.
+
+ Will be rerolled with the above.
+
 
 * nd/index-dump-in-json (2019-06-26) 11 commits
  - SQUASH???
@@ -269,8 +366,6 @@ of the repositories listed at
  WIP for allowing a response to "git fetch" to instruct the bulk of
  the pack contents to be instead taken from elsewhere (aka CDN).
 
- Stalled
-
 
 * js/protocol-advertise-multi (2018-12-28) 1 commit
  - protocol: advertise multiple supported versions
@@ -304,99 +399,6 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
-
-* ac/log-use-mailmap-by-default-transition (2019-07-15) 3 commits
-  (merged to 'next' on 2019-07-19 at e5669de950)
- + tests: defang pager tests by explicitly disabling the log.mailmap warning
- + documentation: mention --no-use-mailmap and log.mailmap false setting
- + log: add warning for unspecified log.mailmap setting
-
- The "git log" command learns to issue a warning when log.mailmap
- configuration is not set and --[no-]mailmap option is not used, to
- prepare users for future versions of Git that uses the mailmap by
- default.
-
- Will merge to 'master'.
-
-
-* vn/xmmap-gently (2019-07-14) 1 commit
-  (merged to 'next' on 2019-07-19 at d95c1d2be3)
- + read-cache.c: do not die if mmap fails
-
- Clean-up an error codepath.
-
- Will merge to 'master'.
-
-
-* jc/post-c89-rules-doc (2019-07-18) 1 commit
-  (merged to 'next' on 2019-07-19 at 8acd58e189)
- + CodingGuidelines: spell out post-C89 rules
-
- We have been trying out a few language features outside c89; the
- coding guidelines document did not talk about them and instead had
- a blanket ban against them.
-
- Will merge to 'master'.
-
-
-* js/mingw-spawn-with-spaces-in-path (2019-07-16) 1 commit
-  (merged to 'next' on 2019-07-19 at 33dd6d0401)
- + mingw: support spawning programs containing spaces in their names
-
- Window 7 update ;-)
-
- Will merge to 'master'.
-
-
-* sr/gpg-interface-stop-at-the-end (2019-07-16) 1 commit
-  (merged to 'next' on 2019-07-19 at 5d38aa1236)
- + gpg-interface: do not scan past the end of buffer
-
- A codepath that reads from GPG for signed object verification read
- past the end of allocated buffer, which has been fixed.
-
- Will merge to 'master'.
-
-
-* tg/stash-keep-index-with-removed-paths (2019-07-16) 1 commit
-  (merged to 'next' on 2019-07-19 at d4ae24a939)
- + stash: fix handling removed files with --keep-index
-
- "git stash --keep-index" did not work correctly on paths that have
- been removed, which has been fixed.
-
- Will merge to 'master'.
-
-
-* jc/denoise-rm-to-resolve (2019-07-18) 1 commit
-  (merged to 'next' on 2019-07-19 at 12f7e5d413)
- + rm: resolving by removal is not a warning-worthy event
-
- "git rm" to resolve a conflicted path leaked an internal message
- "needs merge" before actually removing the path, which was
- confusing.  This has been corrected.
-
- Will merge to 'master'.
-
-
-* js/clean-report-too-long-a-path (2019-07-19) 1 commit
-  (merged to 'next' on 2019-07-19 at b7da0a821c)
- + clean: show an error message when the path is too long
-
- "git clean" silently skipped a path when it cannot lstat() it; now
- it gives a warning.
-
- Will merge to 'master'.
-
-
-* di/readme-markup-fix (2019-07-18) 1 commit
-  (merged to 'next' on 2019-07-19 at 339470d824)
- + README: fix rendering of text in angle brackets
-
- Docfix.
-
- Will merge to 'master'.
-
 
 * js/builtin-add-i (2019-07-18) 11 commits
  - built-in add -i: implement the `help` command
@@ -442,65 +444,8 @@ of the repositories listed at
 
  Support building Git with Visual Studio
 
-
-* js/unmap-before-ext-diff (2019-07-11) 1 commit
-  (merged to 'next' on 2019-07-15 at 7aa292c66c)
- + diff: munmap() file contents before running external diff
-
- Windows update.
-
- Will merge to 'master'.
-
-
-* rm/gpg-program-doc-fix (2019-07-12) 1 commit
-  (merged to 'next' on 2019-07-15 at ef358ec2e9)
- + gpg(docs): use correct --verify syntax
-
- Docfix.
-
- Will merge to 'master'.
-
-
-* mt/dir-iterator-updates (2019-07-11) 10 commits
-  (merged to 'next' on 2019-07-19 at 2ebb586ce6)
- + clone: replace strcmp by fspathcmp
- + clone: use dir-iterator to avoid explicit dir traversal
- + clone: extract function from copy_or_link_directory
- + clone: copy hidden paths at local clone
- + dir-iterator: add flags parameter to dir_iterator_begin
- + dir-iterator: refactor state machine model
- + dir-iterator: use warning_errno when possible
- + dir-iterator: add tests for dir-iterator API
- + clone: better handle symlinked files at .git/objects/
- + clone: test for our behavior on odd objects/* content
-
- Adjust the dir-iterator API and apply it to the local clone
- optimization codepath.
-
- Will merge to 'master'.
-
-
-* tg/range-diff-output-update (2019-07-11) 14 commits
-  (merged to 'next' on 2019-07-15 at b847d206ed)
- + range-diff: add headers to the outer hunk header
- + range-diff: add filename to inner diff
- + range-diff: add section header instead of diff header
- + range-diff: suppress line count in outer diff
- + range-diff: don't remove funcname from inner diff
- + range-diff: split lines manually
- + range-diff: fix function parameter indentation
- + apply: make parse_git_diff_header public
- + apply: only pass required data to gitdiff_* functions
- + apply: only pass required data to find_name_*
- + apply: only pass required data to check_header_line
- + apply: only pass required data to git_header_name
- + apply: only pass required data to skip_tree_prefix
- + apply: replace marc.info link with public-inbox
-
- "git range-diff" output has been tweaked for easier identification
- of which part of what file the patch shown is about.
-
- Will merge to 'master'.
+ The ".git/branches" bit needs to be ejected and treated separately,
+ but other than that, the topic looked reasonable.
 
 
 * bc/hash-independent-tests-part-4 (2019-07-01) 10 commits
@@ -517,68 +462,13 @@ of the repositories listed at
 
  Update to the tests to help SHA-256 transition continues.
 
- Ready?  After cursory scan of this series I didn't find anything
- glaringly wrong.  Will merge to 'next' until I hear otherwise
- within a few days.
-
-
-* es/local-atomic-push-failure-with-http (2019-07-16) 2 commits
-  (merged to 'next' on 2019-07-19 at 8d5b776a96)
- + transport-helper: avoid var decl in for () loop control
-  (merged to 'next' on 2019-07-15 at 960e92d24f)
- + transport-helper: enforce atomic in push_refs_with_push
-
- "git push --atomic" that goes over the transport-helper (namely,
- the smart http transport) failed to prevent refs to be pushed when
- it can locally tell that one of the ref update will fail without
- having to consult the other end, which has been corrected.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * es/walken-tutorial (2019-07-02) 1 commit
  - documentation: add tutorial for revision walking
 
  Yet another revision walker tutorial.
-
-
-* jk/test-commit-bulk (2019-07-02) 7 commits
- - SQUASH???
- - t6200: use test_commit_bulk
- - t5703: use test_commit_bulk
- - t5702: use test_commit_bulk
- - t3311: use test_commit_bulk
- - t5310: increase the number of bitmapped commits
- - test-lib: introduce test_commit_bulk
-
- A test helper has been introduced to optimize preparation of test
- repositories with many simple commits, and a handful of test
- scripts have been updated to use it.
-
- Needs a bit more polishing.
- I think I spotted one unused command, which we may want to remove, though.
-
-
-* ab/test-env (2019-07-11) 9 commits
-  (merged to 'next' on 2019-07-15 at 42e86beb20)
- + env--helper: mark a file-local symbol as static
-  (merged to 'next' on 2019-07-09 at 096658f382)
- + tests: make GIT_TEST_FAIL_PREREQS a boolean
- + tests: replace test_tristate with "git env--helper"
- + tests README: re-flow a previously changed paragraph
- + tests: make GIT_TEST_GETTEXT_POISON a boolean
- + t6040 test: stop using global "script" variable
- + config.c: refactor die_bad_number() to not call gettext() early
- + env--helper: new undocumented builtin wrapping git_env_*()
- + config tests: simplify include cycle test
-
- Many GIT_TEST_* environment variables control various aspects of
- how our tests are run, but a few followed "non-empty is true, empty
- or unset is false" while others followed the usual "there are a few
- ways to spell true, like yes, on, etc., and also ways to spell
- false, like no, off, etc." convention.
-
- Will merge to 'master'.
 
 
 * ds/early-access (2019-07-01) 3 commits
@@ -589,8 +479,9 @@ of the repositories listed at
  A mechanism to enable newish configuration settings in bulk has
  been invented.
 
- The model may need to be rethought.  A linear scale with "early
- adoption" mindset may not match diverse use cases of the tool.
+ Will replace with a redesigned variant which is being discussed
+ when the dust settles.
+ cf. <pull.292.v2.git.gitgitgadget@gmail.com> (v2)
 
 
 * ab/no-kwset (2019-07-01) 10 commits
@@ -609,7 +500,8 @@ of the repositories listed at
  Retire use of kwset library, which is an optimization for looking
  for fixed strings, with use of pcre2 JIT.
 
- Will merge to 'master'.
+ Needs to wait for a few pcre JIT related fixups, including the
+ handling of non-UTF8 haystack.
 
 
 * md/list-objects-filter-combo (2019-06-28) 10 commits
@@ -627,27 +519,7 @@ of the repositories listed at
  The list-objects-filter API (used to create a sparse/lazy clone)
  learned to take a combined filter specification.
 
- There is a bit of interaction with cc/multi-promisor topic, whose
- conflict resolution I have no confidence in X-<.  Extra sets of
- eyes are appreciated.
-
-
-* cb/xdiff-no-system-includes-in-dot-c (2019-06-19) 1 commit
- - xdiff: avoid accidental redefinition of LFS feature in OpenIndiana
-
- Compilation fix.
-
- Will be rerolled together with patches from the
- jk/no-system-includes-in-dot-c topic.
-
-
-* jk/no-system-includes-in-dot-c (2019-06-19) 2 commits
- - wt-status.h: drop stdio.h include
- - verify-tag: drop signal.h include
-
- Compilation fix.
-
- Will be rerolled with the above.
+ Will merge to 'next'.
 
 
 * cc/multi-promisor (2019-06-25) 15 commits
@@ -671,9 +543,7 @@ of the repositories listed at
  promisor remote and consult them in order when downloading missing
  objects on demand.
 
- There is a bit of interaction with md/list-objects-filter-combo
- topic, whose conflict resolution I have no confidence in X-<.
- Extra sets of eyes are appreciated.
+ Will merge to 'next'.
 
 
 * jc/format-patch-noclobber (2019-02-22) 1 commit
@@ -682,7 +552,7 @@ of the repositories listed at
  "git format-patch" used to overwrite an existing patch/cover-letter
  file.  A new "--no-clobber" option stops it.
 
- Undecided but inclined to discard.
+ Will discard.
 
 
 * dl/rebase-i-keep-base (2019-04-25) 6 commits
@@ -703,4 +573,4 @@ of the repositories listed at
 
  On hold.
  cf. <20190508001252.15752-1-avarab@gmail.com>
- cf. <xmqqa7fxionx.fsf@gitster-ct.c.googlers.com>
+ cf. <20190719210156.GA9688@archbookpro.localdomain>
