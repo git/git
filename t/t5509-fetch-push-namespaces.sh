@@ -124,4 +124,32 @@ test_expect_success 'try to update a hidden full ref' '
 	test_must_fail git -C original push pushee-namespaced master
 '
 
+test_expect_success 'set up ambiguous HEAD' '
+	git init ambiguous &&
+	(
+		cd ambiguous &&
+		git commit --allow-empty -m foo &&
+		git update-ref refs/namespaces/ns/refs/heads/one HEAD &&
+		git update-ref refs/namespaces/ns/refs/heads/two HEAD &&
+		git symbolic-ref refs/namespaces/ns/HEAD \
+			refs/namespaces/ns/refs/heads/two
+	)
+'
+
+test_expect_success 'clone chooses correct HEAD (v0)' '
+	GIT_NAMESPACE=ns git -c protocol.version=0 \
+		clone ambiguous ambiguous-v0 &&
+	echo refs/heads/two >expect &&
+	git -C ambiguous-v0 symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone chooses correct HEAD (v2)' '
+	GIT_NAMESPACE=ns git -c protocol.version=2 \
+		clone ambiguous ambiguous-v2 &&
+	echo refs/heads/two >expect &&
+	git -C ambiguous-v2 symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
