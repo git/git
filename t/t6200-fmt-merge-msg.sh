@@ -66,12 +66,7 @@ test_expect_success setup '
 	git commit -a -m "Right #5" &&
 
 	git checkout -b long &&
-	i=0 &&
-	while test $i -lt 30
-	do
-		test_commit $i one &&
-		i=$(($i+1))
-	done &&
+	test_commit_bulk --start=0 --message=%s --filename=one 30 &&
 
 	git show-branch &&
 
