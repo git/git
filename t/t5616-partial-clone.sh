@@ -244,11 +244,25 @@ test_expect_success 'fetch what is specified on CLI even if already promised' '
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
-# Converts bytes into a form suitable for inclusion in a sed command. For
-# example, "printf 'ab\r\n' | hex_unpack" results in '\x61\x62\x0d\x0a'.
-sed_escape () {
-	perl -e '$/ = undef; $input = <>; print unpack("H2" x length($input), $input)' |
-		sed 's/\(..\)/\\x\1/g'
+# Converts bytes into their hexadecimal representation. For example,
+# "printf 'ab\r\n' | hex_unpack" results in '61620d0a'.
+hex_unpack () {
+	perl -e '$/ = undef; $input = <>; print unpack("H2" x length($input), $input)'
+}
+
+# Inserts $1 at the start of the string and every 2 characters thereafter.
+intersperse () {
+	sed 's/\(..\)/'$1'\1/g'
+}
+
+# Create a one-time-sed command to replace the existing packfile with $1.
+replace_packfile () {
+	# The protocol requires that the packfile be sent in sideband 1, hence
+	# the extra \x01 byte at the beginning.
+	printf "1,/packfile/!c %04x\\\\x01%s0000" \
+		"$(($(wc -c <$1) + 5))" \
+		"$(hex_unpack <$1 | intersperse '\\x')" \
+		>"$HTTPD_ROOT_PATH/one-time-sed"
 }
 
 test_expect_success 'upon cloning, check that all refs point to objects' '
@@ -270,10 +284,7 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	# Replace the existing packfile with the crafted one. The protocol
 	# requires that the packfile be sent in sideband 1, hence the extra
 	# \x01 byte at the beginning.
-	printf "1,/packfile/!c %04x\\\\x01%s0000" \
-		"$(($(wc -c <incomplete.pack) + 5))" \
-		"$(sed_escape <incomplete.pack)" \
-		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+	replace_packfile incomplete.pack &&
 
 	# Use protocol v2 because the sed command looks for the "packfile"
 	# section header.
@@ -313,10 +324,7 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	# Replace the existing packfile with the crafted one. The protocol
 	# requires that the packfile be sent in sideband 1, hence the extra
 	# \x01 byte at the beginning.
-	printf "1,/packfile/!c %04x\\\\x01%s0000" \
-		"$(($(wc -c <incomplete.pack) + 5))" \
-		"$(sed_escape <incomplete.pack)" \
-		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+	replace_packfile incomplete.pack &&
 
 	# Use protocol v2 because the sed command looks for the "packfile"
 	# section header.
@@ -326,6 +334,84 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	git -c protocol.version=2 clone \
 		--filter=blob:none $HTTPD_URL/one_time_sed/server repo 2> err &&
 	! grep "missing object referenced by" err &&
+
+	# Ensure that the one-time-sed script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
+'
+
+test_expect_success 'tolerate server sending REF_DELTA against missing promisor objects' '
+	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
+	rm -rf "$SERVER" repo &&
+	test_create_repo "$SERVER" &&
+	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
+	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
+
+	# Create a commit with 2 blobs to be used as delta bases.
+	for i in $(test_seq 10)
+	do
+		echo "this is a line" >>"$SERVER/foo.txt" &&
+		echo "this is another line" >>"$SERVER/have.txt"
+	done &&
+	git -C "$SERVER" add foo.txt have.txt &&
+	git -C "$SERVER" commit -m bar &&
+	git -C "$SERVER" rev-parse HEAD:foo.txt >deltabase_missing &&
+	git -C "$SERVER" rev-parse HEAD:have.txt >deltabase_have &&
+
+	# Clone. The client has deltabase_have but not deltabase_missing.
+	git -c protocol.version=2 clone --no-checkout \
+		--filter=blob:none $HTTPD_URL/one_time_sed/server repo &&
+	git -C repo hash-object -w -- "$SERVER/have.txt" &&
+
+	# Sanity check to ensure that the client does not have
+	# deltabase_missing.
+	git -C repo rev-list --objects --ignore-missing \
+		-- $(cat deltabase_missing) >objlist &&
+	test_line_count = 0 objlist &&
+
+	# Another commit. This commit will be fetched by the client.
+	echo "abcdefghijklmnopqrstuvwxyz" >>"$SERVER/foo.txt" &&
+	echo "abcdefghijklmnopqrstuvwxyz" >>"$SERVER/have.txt" &&
+	git -C "$SERVER" add foo.txt have.txt &&
+	git -C "$SERVER" commit -m baz &&
+
+	# Pack a thin pack containing, among other things, HEAD:foo.txt
+	# delta-ed against HEAD^:foo.txt and HEAD:have.txt delta-ed against
+	# HEAD^:have.txt.
+	printf "%s\n--not\n%s\n" \
+		$(git -C "$SERVER" rev-parse HEAD) \
+		$(git -C "$SERVER" rev-parse HEAD^) |
+		git -C "$SERVER" pack-objects --thin --stdout >thin.pack &&
+
+	# Ensure that the pack contains one delta against HEAD^:foo.txt. Since
+	# the delta contains at least 26 novel characters, the size cannot be
+	# contained in 4 bits, so the object header will take up 2 bytes. The
+	# most significant nybble of the first byte is 0b1111 (0b1 to indicate
+	# that the header continues, and 0b111 to indicate REF_DELTA), followed
+	# by any 3 nybbles, then the OID of the delta base.
+	printf "f.,..%s" $(intersperse "," <deltabase_missing) >want &&
+	hex_unpack <thin.pack | intersperse "," >have &&
+	grep $(cat want) have &&
+
+	# Ensure that the pack contains one delta against HEAD^:have.txt,
+	# similar to the above.
+	printf "f.,..%s" $(intersperse "," <deltabase_have) >want &&
+	hex_unpack <thin.pack | intersperse "," >have &&
+	grep $(cat want) have &&
+
+	replace_packfile thin.pack &&
+
+	# Use protocol v2 because the sed command looks for the "packfile"
+	# section header.
+	test_config -C "$SERVER" protocol.version 2 &&
+
+	# Fetch the thin pack and ensure that index-pack is able to handle the
+	# REF_DELTA object with a missing promisor delta base.
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C repo -c protocol.version=2 fetch &&
+
+	# Ensure that the missing delta base was directly fetched, but not the
+	# one that the client has.
+	grep "want $(cat deltabase_missing)" trace &&
+	! grep "want $(cat deltabase_have)" trace &&
 
 	# Ensure that the one-time-sed script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
