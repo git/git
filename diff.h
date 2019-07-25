@@ -98,6 +98,7 @@ struct diff_flags {
 	unsigned stat_with_summary;
 	unsigned suppress_diff_headers;
 	unsigned dual_color_diffed_diffs;
+	unsigned suppress_hunk_header_line_count;
 };
 
 static inline void diff_flags_or(struct diff_flags *a,

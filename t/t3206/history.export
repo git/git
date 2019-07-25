@@ -22,8 +22,8 @@ data 51
 19
 20
 
-reset refs/heads/removed
-commit refs/heads/removed
+reset refs/heads/renamed-file
+commit refs/heads/renamed-file
 mark :2
 author Thomas Rast <trast@inf.ethz.ch> 1374424921 +0200
 committer Thomas Rast <trast@inf.ethz.ch> 1374484724 +0200
@@ -599,6 +599,82 @@ s/12/B/
 from :46
 M 100644 :28 file
 
-reset refs/heads/removed
-from :47
+commit refs/heads/added-removed
+mark :48
+author Thomas Rast <trast@inf.ethz.ch> 1374485014 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574151 +0100
+data 7
+s/5/A/
+from :2
+M 100644 :3 file
+
+blob
+mark :49
+data 0
+
+commit refs/heads/added-removed
+mark :50
+author Thomas Rast <trast@inf.ethz.ch> 1374485024 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574177 +0100
+data 18
+s/4/A/ + new-file
+from :48
+M 100644 :5 file
+M 100644 :49 new-file
+
+commit refs/heads/added-removed
+mark :51
+author Thomas Rast <trast@inf.ethz.ch> 1374485036 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574177 +0100
+data 22
+s/11/B/ + remove file
+from :50
+M 100644 :7 file
+D new-file
+
+commit refs/heads/added-removed
+mark :52
+author Thomas Rast <trast@inf.ethz.ch> 1374485044 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574177 +0100
+data 8
+s/12/B/
+from :51
+M 100644 :9 file
+
+commit refs/heads/renamed-file
+mark :53
+author Thomas Rast <trast@inf.ethz.ch> 1374485014 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574309 +0100
+data 7
+s/5/A/
+from :2
+M 100644 :3 file
+
+commit refs/heads/renamed-file
+mark :54
+author Thomas Rast <trast@inf.ethz.ch> 1374485024 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574312 +0100
+data 21
+s/4/A/ + rename file
+from :53
+D file
+M 100644 :5 renamed-file
+
+commit refs/heads/renamed-file
+mark :55
+author Thomas Rast <trast@inf.ethz.ch> 1374485036 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574319 +0100
+data 8
+s/11/B/
+from :54
+M 100644 :7 renamed-file
+
+commit refs/heads/renamed-file
+mark :56
+author Thomas Rast <trast@inf.ethz.ch> 1374485044 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1556574319 +0100
+data 8
+s/12/B/
+from :55
+M 100644 :9 renamed-file
 
