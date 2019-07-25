@@ -91,6 +91,14 @@ UI, Workflows & Features
    commit-graph files now, which allows the commit-graph files to be
    updated incrementally.
 
+ * The "git log" command learns to issue a warning when log.mailmap
+   configuration is not set and --[no-]mailmap option is not used, to
+   prepare users for future versions of Git that uses the mailmap by
+   default.
+
+ * "git range-diff" output has been tweaked for easier identification
+   of which part of what file the patch shown is about.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -142,6 +150,24 @@ Performance, Internal Implementation, Development Support etc.
  * When one step in multi step cherry-pick or revert is reset or
    committed, the command line prompt script failed to notice the
    current status, which has been improved.
+
+ * Many GIT_TEST_* environment variables control various aspects of
+   how our tests are run, but a few followed "non-empty is true, empty
+   or unset is false" while others followed the usual "there are a few
+   ways to spell true, like yes, on, etc., and also ways to spell
+   false, like no, off, etc." convention.
+
+ * Adjust the dir-iterator API and apply it to the local clone
+   optimization codepath.
+
+ * We have been trying out a few language features outside c89; the
+   coding guidelines document did not talk about them and instead had
+   a blanket ban against them.
+   (merge cc0c42975a jc/post-c89-rules-doc later to maint).
+
+ * A test helper has been introduced to optimize preparation of test
+   repositories with many simple commits, and a handful of test
+   scripts have been updated to use it.
 
 
 Fixes since v2.22
@@ -326,6 +352,32 @@ Fixes since v2.22
    as these are mutually exclusive features.
    (merge 7328482253 ew/repack-with-bitmaps-by-default later to maint).
 
+ * "git rm" to resolve a conflicted path leaked an internal message
+   "needs merge" before actually removing the path, which was
+   confusing.  This has been corrected.
+   (merge b2b1f615ce jc/denoise-rm-to-resolve later to maint).
+
+ * "git stash --keep-index" did not work correctly on paths that have
+   been removed, which has been fixed.
+   (merge b932f6a5e8 tg/stash-keep-index-with-removed-paths later to maint).
+
+ * Window 7 update ;-)
+   (merge eb7c786314 js/mingw-spawn-with-spaces-in-path later to maint).
+
+ * A codepath that reads from GPG for signed object verification read
+   past the end of allocated buffer, which has been fixed.
+   (merge 64c45dc72e sr/gpg-interface-stop-at-the-end later to maint).
+
+ * "git clean" silently skipped a path when it cannot lstat() it; now
+   it gives a warning.
+   (merge b09364c47a js/clean-report-too-long-a-path later to maint).
+
+ * "git push --atomic" that goes over the transport-helper (namely,
+   the smart http transport) failed to prevent refs to be pushed when
+   it can locally tell that one of the ref update will fail without
+   having to consult the other end, which has been corrected.
+   (merge 2581ea3d31 es/local-atomic-push-failure-with-http later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f547101b26 es/git-debugger-doc later to maint).
    (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
@@ -347,3 +399,7 @@ Fixes since v2.22
    (merge 37a2e35395 sg/ci-brew-gcc-workaround later to maint).
    (merge 24df0d49c4 js/trace2-signo-typofix later to maint).
    (merge fbec05c210 cc/test-oidmap later to maint).
+   (merge 7926cee904 di/readme-markup-fix later to maint).
+   (merge 02638d1e11 vn/xmmap-gently later to maint).
+   (merge f7bf24d4dd rm/gpg-program-doc-fix later to maint).
+   (merge 3aef54e8b8 js/unmap-before-ext-diff later to maint).
