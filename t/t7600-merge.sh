@@ -570,6 +570,12 @@ test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --no-ff --squash c1
 '
 
+test_expect_success 'combining --squash and --commit is refused' '
+	git reset --hard c0 &&
+	test_must_fail git merge --squash --commit c1 &&
+	test_must_fail git merge --commit --squash c1
+'
+
 test_expect_success 'option --ff-only overwrites --no-ff' '
 	git merge --no-ff --ff-only c1 &&
 	test_must_fail git merge --no-ff --ff-only c2
