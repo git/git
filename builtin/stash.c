@@ -1391,30 +1391,16 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		}
 
 		if (keep_index == 1 && !is_null_oid(&info.i_tree)) {
-			struct child_process cp_ls = CHILD_PROCESS_INIT;
-			struct child_process cp_checkout = CHILD_PROCESS_INIT;
-			struct strbuf out = STRBUF_INIT;
+			struct child_process cp = CHILD_PROCESS_INIT;
 
-			if (reset_tree(&info.i_tree, 0, 1)) {
-				ret = -1;
-				goto done;
-			}
-
-			cp_ls.git_cmd = 1;
-			argv_array_pushl(&cp_ls.args, "ls-files", "-z",
-					 "--modified", "--", NULL);
-
-			add_pathspecs(&cp_ls.args, ps);
-			if (pipe_command(&cp_ls, NULL, 0, &out, 0, NULL, 0)) {
-				ret = -1;
-				goto done;
-			}
-
-			cp_checkout.git_cmd = 1;
-			argv_array_pushl(&cp_checkout.args, "checkout-index",
-					 "-z", "--force", "--stdin", NULL);
-			if (pipe_command(&cp_checkout, out.buf, out.len, NULL,
-					 0, NULL, 0)) {
+			cp.git_cmd = 1;
+			argv_array_pushl(&cp.args, "checkout", "--no-overlay",
+					 oid_to_hex(&info.i_tree), "--", NULL);
+			if (!ps->nr)
+				argv_array_push(&cp.args, ":/");
+			else
+				add_pathspecs(&cp.args, ps);
+			if (run_command(&cp)) {
 				ret = -1;
 				goto done;
 			}
