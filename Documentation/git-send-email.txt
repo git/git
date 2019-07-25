@@ -500,8 +500,12 @@ app-specific or your regular password as appropriate.  If you have credential
 helper configured (see linkgit:git-credential[1]), the password will be saved in
 the credential store so you won't have to type it the next time.
 
-Note: the following perl modules are required
-      Net::SMTP::SSL, MIME::Base64 and Authen::SASL
+Note: the following core Perl modules that may be installed with your
+distribution of Perl are required:
+MIME::Base64, MIME::QuotedPrint, Net::Domain and Net::SMTP.
+These additional Perl modules are also required:
+Authen::SASL and Mail::Address.
+
 
 SEE ALSO
 --------
