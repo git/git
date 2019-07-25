@@ -826,7 +826,7 @@ int match_stat_data(const struct stat_data *sd, struct stat *st);
 int match_stat_data_racy(const struct index_state *istate,
 			 const struct stat_data *sd, struct stat *st);
 
-void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
+void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, struct stat *st);
 
 #define REFRESH_REALLY		0x0001	/* ignore_valid */
 #define REFRESH_UNMERGED	0x0002	/* allow unmerged */
