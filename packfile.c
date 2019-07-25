@@ -640,7 +640,7 @@ unsigned char *use_pack(struct packed_git *p,
 			while (packed_git_limit < pack_mapped
 				&& unuse_one_window(p))
 				; /* nothing */
-			win->base = xmmap(NULL, win->len,
+			win->base = xmmap_gently(NULL, win->len,
 				PROT_READ, MAP_PRIVATE,
 				p->pack_fd, win->offset);
 			if (win->base == MAP_FAILED)
