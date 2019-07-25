@@ -293,7 +293,7 @@ To smoke out issues like these, Git tested with a translation mode that
 emits gibberish on every call to gettext. To use it run the test suite
 with it, e.g.:
 
-    cd t && GIT_TEST_GETTEXT_POISON=YesPlease prove -j 9 ./t[0-9]*.sh
+    cd t && GIT_TEST_GETTEXT_POISON=true prove -j 9 ./t[0-9]*.sh
 
 If tests break with it you should inspect them manually and see if
 what you're translating is sane, i.e. that you're not translating

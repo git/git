@@ -38,7 +38,7 @@ test_expect_success setup '
 	advance h
 '
 
-script='s/^..\(b.\) *[0-9a-f]* \(.*\)$/\1 \2/p'
+t6040_script='s/^..\(b.\) *[0-9a-f]* \(.*\)$/\1 \2/p'
 cat >expect <<\EOF
 b1 [ahead 1, behind 1] d
 b2 [ahead 1, behind 1] d
@@ -53,7 +53,7 @@ test_expect_success 'branch -v' '
 		cd test &&
 		git branch -v
 	) |
-	sed -n -e "$script" >actual &&
+	sed -n -e "$t6040_script" >actual &&
 	test_i18ncmp expect actual
 '
 
@@ -71,7 +71,7 @@ test_expect_success 'branch -vv' '
 		cd test &&
 		git branch -vv
 	) |
-	sed -n -e "$script" >actual &&
+	sed -n -e "$t6040_script" >actual &&
 	test_i18ncmp expect actual
 '
 

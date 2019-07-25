@@ -15,8 +15,7 @@
 #
 #	test_done
 
-test_tristate GIT_TEST_GIT_DAEMON
-if test "$GIT_TEST_GIT_DAEMON" = false
+if ! git env--helper --type=bool --default=true --exit-code GIT_TEST_GIT_DAEMON
 then
 	skip_all="git-daemon testing disabled (unset GIT_TEST_GIT_DAEMON to enable)"
 	test_done
@@ -24,7 +23,7 @@ fi
 
 if test_have_prereq !PIPE
 then
-	test_skip_or_die $GIT_TEST_GIT_DAEMON "file system does not support FIFOs"
+	test_skip_or_die GIT_TEST_GIT_DAEMON "file system does not support FIFOs"
 fi
 
 test_set_port LIB_GIT_DAEMON_PORT
@@ -73,7 +72,7 @@ start_git_daemon() {
 		kill "$GIT_DAEMON_PID"
 		wait "$GIT_DAEMON_PID"
 		unset GIT_DAEMON_PID
-		test_skip_or_die $GIT_TEST_GIT_DAEMON \
+		test_skip_or_die GIT_TEST_GIT_DAEMON \
 			"git daemon failed to start"
 	fi
 }
