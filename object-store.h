@@ -277,10 +277,14 @@ struct object_info {
 #define OBJECT_INFO_IGNORE_LOOSE 16
 /*
  * Do not attempt to fetch the object if missing (even if fetch_is_missing is
- * nonzero). This is meant for bulk prefetching of missing blobs in a partial
- * clone. Implies OBJECT_INFO_QUICK.
+ * nonzero).
  */
-#define OBJECT_INFO_FOR_PREFETCH (32 + OBJECT_INFO_QUICK)
+#define OBJECT_INFO_SKIP_FETCH_OBJECT 32
+/*
+ * This is meant for bulk prefetching of missing blobs in a partial
+ * clone. Implies OBJECT_INFO_SKIP_FETCH_OBJECT and OBJECT_INFO_QUICK
+ */
+#define OBJECT_INFO_FOR_PREFETCH (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK)
 
 int oid_object_info_extended(struct repository *r,
 			     const struct object_id *,
