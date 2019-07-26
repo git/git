@@ -29,8 +29,6 @@ typedef int pcre_jit_stack;
 typedef int pcre2_code;
 typedef int pcre2_match_data;
 typedef int pcre2_compile_context;
-typedef int pcre2_match_context;
-typedef int pcre2_jit_stack;
 #endif
 #include "thread-utils.h"
 #include "userdiff.h"
@@ -93,8 +91,6 @@ struct grep_pat {
 	pcre2_code *pcre2_pattern;
 	pcre2_match_data *pcre2_match_data;
 	pcre2_compile_context *pcre2_compile_context;
-	pcre2_match_context *pcre2_match_context;
-	pcre2_jit_stack *pcre2_jit_stack;
 	uint32_t pcre2_jit_on;
 	unsigned fixed:1;
 	unsigned ignore_case:1;

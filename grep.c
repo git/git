@@ -534,14 +534,6 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 			p->pcre2_jit_on = 0;
 			return;
 		}
-
-		p->pcre2_jit_stack = pcre2_jit_stack_create(1, 1024 * 1024, NULL);
-		if (!p->pcre2_jit_stack)
-			die("Couldn't allocate PCRE2 JIT stack");
-		p->pcre2_match_context = pcre2_match_context_create(NULL);
-		if (!p->pcre2_match_context)
-			die("Couldn't allocate PCRE2 match context");
-		pcre2_jit_stack_assign(p->pcre2_match_context, NULL, p->pcre2_jit_stack);
 	}
 }
 
@@ -585,8 +577,6 @@ static void free_pcre2_pattern(struct grep_pat *p)
 	pcre2_compile_context_free(p->pcre2_compile_context);
 	pcre2_code_free(p->pcre2_pattern);
 	pcre2_match_data_free(p->pcre2_match_data);
-	pcre2_jit_stack_free(p->pcre2_jit_stack);
-	pcre2_match_context_free(p->pcre2_match_context);
 }
 #else /* !USE_LIBPCRE2 */
 static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt)
