@@ -14,13 +14,9 @@
 #ifndef GIT_PCRE_STUDY_JIT_COMPILE
 #define GIT_PCRE_STUDY_JIT_COMPILE 0
 #endif
-#if PCRE_MAJOR <= 8 && PCRE_MINOR < 20
-typedef int pcre_jit_stack;
-#endif
 #else
 typedef int pcre;
 typedef int pcre_extra;
-typedef int pcre_jit_stack;
 #endif
 #ifdef USE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
@@ -85,7 +81,6 @@ struct grep_pat {
 	regex_t regexp;
 	pcre *pcre1_regexp;
 	pcre_extra *pcre1_extra_info;
-	pcre_jit_stack *pcre1_jit_stack;
 	const unsigned char *pcre1_tables;
 	int pcre1_jit_on;
 	pcre2_code *pcre2_pattern;
