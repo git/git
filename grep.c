@@ -616,7 +616,7 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 		die(_("given pattern contains NULL byte (via -f <file>). This is only supported with -P under PCRE v2"));
 
 	pat_is_fixed = is_fixed(p->pattern, p->patternlen);
-	if (opt->fixed || pat_is_fixed) {
+	if (p->fixed || pat_is_fixed) {
 #ifdef USE_LIBPCRE2
 		opt->pcre2 = 1;
 		if (pat_is_fixed) {
