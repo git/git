@@ -394,14 +394,11 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 
 #ifdef GIT_PCRE1_USE_JIT
 	pcre_config(PCRE_CONFIG_JIT, &p->pcre1_jit_on);
-	if (p->pcre1_jit_on == 1) {
+	if (p->pcre1_jit_on) {
 		p->pcre1_jit_stack = pcre_jit_stack_alloc(1, 1024 * 1024);
 		if (!p->pcre1_jit_stack)
 			die("Couldn't allocate PCRE JIT stack");
 		pcre_assign_jit_stack(p->pcre1_extra_info, NULL, p->pcre1_jit_stack);
-	} else if (p->pcre1_jit_on != 0) {
-		BUG("The pcre1_jit_on variable should be 0 or 1, not %d",
-		    p->pcre1_jit_on);
 	}
 #endif
 }
@@ -510,7 +507,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	}
 
 	pcre2_config(PCRE2_CONFIG_JIT, &p->pcre2_jit_on);
-	if (p->pcre2_jit_on == 1) {
+	if (p->pcre2_jit_on) {
 		jitret = pcre2_jit_compile(p->pcre2_pattern, PCRE2_JIT_COMPLETE);
 		if (jitret)
 			die("Couldn't JIT the PCRE2 pattern '%s', got '%d'\n", p->pattern, jitret);
@@ -545,9 +542,6 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 		if (!p->pcre2_match_context)
 			die("Couldn't allocate PCRE2 match context");
 		pcre2_jit_stack_assign(p->pcre2_match_context, NULL, p->pcre2_jit_stack);
-	} else if (p->pcre2_jit_on != 0) {
-		BUG("The pcre2_jit_on variable should be 0 or 1, not %d",
-		    p->pcre1_jit_on);
 	}
 }
 
