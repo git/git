@@ -606,7 +606,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
 	int regflags = REG_NEWLINE;
-	int pat_is_fixed;
 
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
@@ -615,11 +614,11 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (memchr(p->pattern, 0, p->patternlen) && !opt->pcre2)
 		die(_("given pattern contains NULL byte (via -f <file>). This is only supported with -P under PCRE v2"));
 
-	pat_is_fixed = is_fixed(p->pattern, p->patternlen);
-	if (p->fixed || pat_is_fixed) {
+	p->is_fixed = is_fixed(p->pattern, p->patternlen);
+	if (p->fixed || p->is_fixed) {
 #ifdef USE_LIBPCRE2
 		opt->pcre2 = 1;
-		if (pat_is_fixed) {
+		if (p->is_fixed) {
 			compile_pcre2_pattern(p, opt);
 		} else {
 			/*

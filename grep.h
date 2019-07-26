@@ -88,6 +88,7 @@ struct grep_pat {
 	pcre2_compile_context *pcre2_compile_context;
 	uint32_t pcre2_jit_on;
 	unsigned fixed:1;
+	unsigned is_fixed:1;
 	unsigned ignore_case:1;
 	unsigned word_regexp:1;
 };
