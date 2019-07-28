@@ -1,0 +1,4 @@
+dependencies {
+    def appCenterSdkVersion = '2.2.0'
+    implementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
+}
