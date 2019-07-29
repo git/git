@@ -106,8 +106,8 @@ static void setup_commit_formats(void)
 	commit_formats_len = ARRAY_SIZE(builtin_formats);
 	builtin_formats_len = commit_formats_len;
 	ALLOC_GROW(commit_formats, commit_formats_len, commit_formats_alloc);
-	memcpy(commit_formats, builtin_formats,
-	       sizeof(*builtin_formats)*ARRAY_SIZE(builtin_formats));
+	COPY_ARRAY(commit_formats, builtin_formats,
+		   ARRAY_SIZE(builtin_formats));
 
 	git_config(git_pretty_formats_config, NULL);
 }
