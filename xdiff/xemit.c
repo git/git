@@ -210,7 +210,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			if (fs1 < 0)
 				fs1 = 0;
 			if (fs1 < s1) {
-				s2 -= s1 - fs1;
+				s2 = XDL_MAX(s2 - (s1 - fs1), 0);
 				s1 = fs1;
 			}
 		}
@@ -232,7 +232,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			if (fe1 < 0)
 				fe1 = xe->xdf1.nrec;
 			if (fe1 > e1) {
-				e2 += fe1 - e1;
+				e2 = XDL_MIN(e2 + (fe1 - e1), xe->xdf2.nrec);
 				e1 = fe1;
 			}
 
