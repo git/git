@@ -972,7 +972,11 @@ sub coalesce_overlapping_hunks {
 			next;
 		}
 		if ($ofs_delta) {
-			$n_ofs += $ofs_delta;
+			if ($patch_mode_flavour{IS_REVERSE}) {
+				$o_ofs -= $ofs_delta;
+			} else {
+				$n_ofs += $ofs_delta;
+			}
 			$_->{TEXT}->[0] = format_hunk_header($o_ofs, $o_cnt,
 							     $n_ofs, $n_cnt);
 		}
