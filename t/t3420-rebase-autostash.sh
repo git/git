@@ -49,7 +49,7 @@ create_expected_success_interactive () {
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
 	HEAD is now at $(git rev-parse --short feature-branch) third commit
 	Rebasing (1/2)QRebasing (2/2)QApplied autostash.
-	Successfully rebased and updated refs/heads/rebased-feature-branch.
+	Q                                                                                QSuccessfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
 
@@ -73,7 +73,7 @@ create_expected_failure_interactive () {
 	Rebasing (1/2)QRebasing (2/2)QApplying autostash resulted in conflicts.
 	Your changes are safe in the stash.
 	You can run "git stash pop" or "git stash drop" at any time.
-	Successfully rebased and updated refs/heads/rebased-feature-branch.
+	Q                                                                                QSuccessfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
 
