@@ -73,4 +73,75 @@ Fixes since v2.22
  * The list of for-each like macros used by clang-format has been
    updated.
 
-Also contains various documentation updates and code clean-ups.
+ * "git push --atomic" that goes over the transport-helper (namely,
+   the smart http transport) failed to prevent refs to be pushed when
+   it can locally tell that one of the ref update will fail without
+   having to consult the other end, which has been corrected.
+
+ * "git clean" silently skipped a path when it cannot lstat() it; now
+   it gives a warning.
+
+ * A codepath that reads from GPG for signed object verification read
+   past the end of allocated buffer, which has been fixed.
+
+ * "git rm" to resolve a conflicted path leaked an internal message
+   "needs merge" before actually removing the path, which was
+   confusing.  This has been corrected.
+
+ * The "git clone" documentation refers to command line options in its
+   description in the short form; they have been replaced with long
+   forms to make them more recognisable.
+
+ * The configuration variable rebase.rescheduleFailedExec should be
+   effective only while running an interactive rebase and should not
+   affect anything when running an non-interactive one, which was not
+   the case.  This has been corrected.
+
+ * "git submodule foreach" did not protect command line options passed
+   to the command to be run in each submodule correctly, when the
+   "--recursive" option was in use.
+
+ * Use "Erase in Line" CSI sequence that is already used in the editor
+   support to clear cruft in the progress output.
+
+ * The codepath to compute delta islands used to spew progress output
+   without giving the callers any way to squelch it, which has been
+   fixed.
+
+ * The code to parse scaled numbers out of configuration files has
+   been made more robust and also easier to follow.
+
+ * An incorrect list of options was cached after command line
+   completion failed (e.g. trying to complete a command that requires
+   a repository outside one), which has been corrected.
+
+ * "git rebase --abort" used to leave refs/rewritten/ when concluding
+   "git rebase -r", which has been corrected.
+
+ * "git stash show 23" used to work, but no more after getting
+   rewritten in C; this regression has been corrected.
+
+ * "git interpret-trailers" always treated '#' as the comment
+   character, regardless of core.commentChar setting, which has been
+   corrected.
+
+ * Code clean-up to avoid signed integer overlaps during binary search.
+
+ * "git checkout -p" needs to selectively apply a patch in reverse,
+   which did not work well.
+
+ * The commit-graph file is now part of the "files that the runtime
+   may keep open file descriptors on, all of which would need to be
+   closed when done with the object store", and the file descriptor to
+   an existing commit-graph file now is closed before "gc" finalizes a
+   new instance to replace it.
+
+ * Code restructuring during 2.20 period broke fetching tags via
+   "import" based transports.
+
+ * We have been trying out a few language features outside c89; the
+   coding guidelines document did not talk about them and instead had
+   a blanket ban against them.
+
+
+Also contains various documentation updates, code clean-ups and minor fixups.
