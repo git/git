@@ -422,7 +422,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (!names.nr && !po_args.quiet)
 		printf_ln(_("Nothing new to pack."));
 
-	close_all_packs(the_repository->objects);
+	close_object_store(the_repository->objects);
 
 	/*
 	 * Ok we have prepared all new packfiles.

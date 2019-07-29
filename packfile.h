@@ -90,7 +90,7 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
 void close_pack_windows(struct packed_git *);
 void close_pack(struct packed_git *);
-void close_all_packs(struct raw_object_store *o);
+void close_object_store(struct raw_object_store *o);
 void unuse_pack(struct pack_window **);
 void clear_delta_base_cache(void);
 struct packed_git *add_packed_git(const char *path, size_t path_len, int local);
