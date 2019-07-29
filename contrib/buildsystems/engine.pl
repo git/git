@@ -57,6 +57,8 @@ while (@ARGV) {
         open(F, "<$infile") || die "Couldn't open file $infile";
         @makedry = <F>;
         close(F);
+    } else {
+        die "Unknown option: " . $arg;
     }
 }
 
