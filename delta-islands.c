@@ -454,7 +454,7 @@ static void deduplicate_islands(struct repository *r)
 	free(list);
 }
 
-void load_delta_islands(struct repository *r)
+void load_delta_islands(struct repository *r, int progress)
 {
 	island_marks = kh_init_sha1();
 	remote_islands = kh_init_str();
@@ -463,7 +463,8 @@ void load_delta_islands(struct repository *r)
 	for_each_ref(find_island_for_ref, NULL);
 	deduplicate_islands(r);
 
-	fprintf(stderr, _("Marked %d islands, done.\n"), island_counter);
+	if (progress)
+		fprintf(stderr, _("Marked %d islands, done.\n"), island_counter);
 }
 
 void propagate_island_marks(struct commit *commit)
