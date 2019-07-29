@@ -1031,7 +1031,7 @@ test_expect_success 'rebase -i --root reword root commit' '
 	test -z "$(git show -s --format=%p HEAD^)"
 '
 
-test_expect_success 'rebase -i --root when root has untracked file confilct' '
+test_expect_success 'rebase -i --root when root has untracked file conflict' '
 	test_when_finished "reset_rebase" &&
 	git checkout -b failing-root-pick A &&
 	echo x >file2 &&
