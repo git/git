@@ -502,7 +502,7 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	 * Try TMP_MAX different filenames.
 	 */
 	gettimeofday(&tv, NULL);
-	value = ((size_t)(tv.tv_usec << 16)) ^ tv.tv_sec ^ getpid();
+	value = ((uint64_t)tv.tv_usec << 16) ^ tv.tv_sec ^ getpid();
 	filename_template = &pattern[len - 6 - suffix_len];
 	for (count = 0; count < TMP_MAX; ++count) {
 		uint64_t v = value;
