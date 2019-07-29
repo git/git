@@ -378,6 +378,11 @@ Fixes since v2.22
    having to consult the other end, which has been corrected.
    (merge 2581ea3d31 es/local-atomic-push-failure-with-http later to maint).
 
+ * The internal diff machinery can be made to read out of bounds while
+   looking for --funcion-context line in a corner case, which has been
+   corrected.
+   (merge b777f3fd61 jk/xdiff-clamp-funcname-context-index later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f547101b26 es/git-debugger-doc later to maint).
    (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
