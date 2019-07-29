@@ -373,7 +373,7 @@ static void prune_index(struct index_state *istate,
 	first = pos;
 	last = istate->cache_nr;
 	while (last > first) {
-		int next = (last + first) >> 1;
+		int next = first + ((last - first) >> 1);
 		const struct cache_entry *ce = istate->cache[next];
 		if (!strncmp(ce->name, prefix, prefixlen)) {
 			first = next+1;

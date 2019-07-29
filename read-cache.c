@@ -549,7 +549,7 @@ static int index_name_stage_pos(const struct index_state *istate, const char *na
 	first = 0;
 	last = istate->cache_nr;
 	while (last > first) {
-		int next = (last + first) >> 1;
+		int next = first + ((last - first) >> 1);
 		struct cache_entry *ce = istate->cache[next];
 		int cmp = cache_name_stage_compare(name, namelen, stage, ce->name, ce_namelen(ce), ce_stage(ce));
 		if (!cmp)
