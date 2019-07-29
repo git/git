@@ -239,6 +239,7 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 struct refname_hash_entry {
 	struct hashmap_entry ent; /* must be the first member */
 	struct object_id oid;
+	int ignore;
 	char refname[FLEX_ARRAY];
 };
 
@@ -287,6 +288,11 @@ static int refname_hash_exists(struct hashmap *map, const char *refname)
 	return !!hashmap_get_from_hash(map, strhash(refname), refname);
 }
 
+static void clear_item(struct refname_hash_entry *item)
+{
+	item->ignore = 1;
+}
+
 static void find_non_local_tags(const struct ref *refs,
 				struct ref **head,
 				struct ref ***tail)
@@ -319,7 +325,7 @@ static void find_non_local_tags(const struct ref *refs,
 			    !will_fetch(head, ref->old_oid.hash) &&
 			    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, item->oid.hash))
-				oidclr(&item->oid);
+				clear_item(item);
 			item = NULL;
 			continue;
 		}
@@ -333,7 +339,7 @@ static void find_non_local_tags(const struct ref *refs,
 		if (item &&
 		    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 		    !will_fetch(head, item->oid.hash))
-			oidclr(&item->oid);
+			clear_item(item);
 
 		item = NULL;
 
@@ -354,7 +360,7 @@ static void find_non_local_tags(const struct ref *refs,
 	if (item &&
 	    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 	    !will_fetch(head, item->oid.hash))
-		oidclr(&item->oid);
+		clear_item(item);
 
 	/*
 	 * For all the tags in the remote_refs_list,
@@ -362,19 +368,21 @@ static void find_non_local_tags(const struct ref *refs,
 	 */
 	for_each_string_list_item(remote_ref_item, &remote_refs_list) {
 		const char *refname = remote_ref_item->string;
+		struct ref *rm;
 
 		item = hashmap_get_from_hash(&remote_refs, strhash(refname), refname);
 		if (!item)
 			BUG("unseen remote ref?");
 
 		/* Unless we have already decided to ignore this item... */
-		if (!is_null_oid(&item->oid)) {
-			struct ref *rm = alloc_ref(item->refname);
-			rm->peer_ref = alloc_ref(item->refname);
-			oidcpy(&rm->old_oid, &item->oid);
-			**tail = rm;
-			*tail = &rm->next;
-		}
+		if (item->ignore)
+			continue;
+
+		rm = alloc_ref(item->refname);
+		rm->peer_ref = alloc_ref(item->refname);
+		oidcpy(&rm->old_oid, &item->oid);
+		**tail = rm;
+		*tail = &rm->next;
 	}
 	hashmap_free(&remote_refs, 1);
 	string_list_clear(&remote_refs_list, 0);
