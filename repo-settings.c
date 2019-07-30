@@ -42,6 +42,10 @@ void prepare_repo_settings(struct repository *r)
 		UPDATE_DEFAULT(r->settings.core_commit_graph, 1);
 		UPDATE_DEFAULT(r->settings.gc_write_commit_graph, 1);
 	}
+	if (!repo_config_get_bool(r, "feature.manyfiles", &value) && value) {
+		UPDATE_DEFAULT(r->settings.index_version, 4);
+		UPDATE_DEFAULT(r->settings.core_untracked_cache, UNTRACKED_CACHE_WRITE);
+	}
 
 	/* Hack for test programs like test-dump-untracked-cache */
 	if (ignore_untracked_cache_config)

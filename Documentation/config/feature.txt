@@ -13,3 +13,13 @@ feature.manyCommits::
 +
 * `gc.writeCommitGraph=true` enables writing the commit-graph file during
 garbage collection.
+
+feature.manyFiles::
+	Enable config options that optimize for repos with many files in the
+	working directory. With many files, commands such as `git status` and
+	`git checkout` may be slow and these new defaults improve performance:
++
+* `index.version=4` enables path-prefix compression in the index.
++
+* `core.untrackedCache=true` enables the untracked cache. This setting assumes
+that mtime is working on your machine.
