@@ -34,6 +34,18 @@ void prepare_repo_settings(struct repository *r)
 		free(strval);
 	}
 
+	if (!repo_config_get_maybe_bool(r, "merge.directoryrenames", &value))
+		r->settings.merge_directory_renames = value ? MERGE_DIRECTORY_RENAMES_TRUE : 0;
+	else if (!repo_config_get_string(r, "merge.directoryrenames", &strval)) {
+		if (!strcasecmp(strval, "conflict"))
+			r->settings.merge_directory_renames = MERGE_DIRECTORY_RENAMES_CONFLICT;
+	}
+	if (!repo_config_get_string(r, "fetch.negotiationalgorithm", &strval)) {
+		if (!strcasecmp(strval, "skipping"))
+			r->settings.fetch_negotiation_algorithm = FETCH_NEGOTIATION_SKIPPING;
+		else
+			r->settings.fetch_negotiation_algorithm = FETCH_NEGOTIATION_DEFAULT;
+	}
 
 	if (!repo_config_get_bool(r, "pack.usesparse", &value))
 		r->settings.pack_use_sparse = value;
@@ -46,6 +58,11 @@ void prepare_repo_settings(struct repository *r)
 		UPDATE_DEFAULT(r->settings.index_version, 4);
 		UPDATE_DEFAULT(r->settings.core_untracked_cache, UNTRACKED_CACHE_WRITE);
 	}
+	if (!repo_config_get_bool(r, "feature.experimental", &value) && value) {
+		UPDATE_DEFAULT(r->settings.pack_use_sparse, 1);
+		UPDATE_DEFAULT(r->settings.merge_directory_renames, MERGE_DIRECTORY_RENAMES_TRUE);
+		UPDATE_DEFAULT(r->settings.fetch_negotiation_algorithm, FETCH_NEGOTIATION_SKIPPING);
+	}
 
 	/* Hack for test programs like test-dump-untracked-cache */
 	if (ignore_untracked_cache_config)
@@ -53,4 +70,6 @@ void prepare_repo_settings(struct repository *r)
 	else
 		UPDATE_DEFAULT(r->settings.core_untracked_cache, UNTRACKED_CACHE_KEEP);
 
+	UPDATE_DEFAULT(r->settings.merge_directory_renames, MERGE_DIRECTORY_RENAMES_CONFLICT);
+	UPDATE_DEFAULT(r->settings.fetch_negotiation_algorithm, FETCH_NEGOTIATION_DEFAULT);
 }

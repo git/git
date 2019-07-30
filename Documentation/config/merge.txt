@@ -54,7 +54,8 @@ merge.directoryRenames::
 	moved into the new directory.  If set to "conflict", a conflict
 	will be reported for such paths.  If merge.renames is false,
 	merge.directoryRenames is ignored and treated as false.  Defaults
-	to "conflict".
+	to "conflict" unless `feature.experimental` is enabled and the
+	default is "true".
 
 merge.renormalize::
 	Tell Git that canonical representation of files in the
