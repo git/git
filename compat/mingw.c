@@ -2500,6 +2500,28 @@ pid_t waitpid(pid_t pid, int *status, int options)
 	return -1;
 }
 
+int mingw_is_mount_point(struct strbuf *path)
+{
+	WIN32_FIND_DATAW findbuf = { 0 };
+	HANDLE handle;
+	wchar_t wfilename[MAX_PATH];
+	int wlen = xutftowcs_path(wfilename, path->buf);
+	if (wlen < 0)
+		die(_("could not get long path for '%s'"), path->buf);
+
+	/* remove trailing slash, if any */
+	if (wlen > 0 && wfilename[wlen - 1] == L'/')
+		wfilename[--wlen] = L'\0';
+
+	handle = FindFirstFileW(wfilename, &findbuf);
+	if (handle == INVALID_HANDLE_VALUE)
+		return 0;
+	FindClose(handle);
+
+	return (findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+		(findbuf.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT);
+}
+
 int xutftowcsn(wchar_t *wcs, const char *utfs, size_t wcslen, int utflen)
 {
 	int upos = 0, wpos = 0;
