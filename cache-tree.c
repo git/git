@@ -6,8 +6,8 @@
 #include "object-store.h"
 #include "replace-object.h"
 
-#ifndef DEBUG
-#define DEBUG 0
+#ifndef DEBUG_CACHE_TREE
+#define DEBUG_CACHE_TREE 0
 #endif
 
 struct cache_tree *cache_tree(void)
@@ -111,7 +111,7 @@ static int do_invalidate_path(struct cache_tree *it, const char *path)
 	int namelen;
 	struct cache_tree_sub *down;
 
-#if DEBUG
+#if DEBUG_CACHE_TREE
 	fprintf(stderr, "cache-tree invalidate <%s>\n", path);
 #endif
 
@@ -398,7 +398,7 @@ static int update_one(struct cache_tree *it,
 		strbuf_addf(&buffer, "%o %.*s%c", mode, entlen, path + baselen, '\0');
 		strbuf_add(&buffer, oid->hash, the_hash_algo->rawsz);
 
-#if DEBUG
+#if DEBUG_CACHE_TREE
 		fprintf(stderr, "cache-tree update-one %o %.*s\n",
 			mode, entlen, path + baselen);
 #endif
@@ -421,7 +421,7 @@ static int update_one(struct cache_tree *it,
 
 	strbuf_release(&buffer);
 	it->entry_count = to_invalidate ? -1 : i - *skip_count;
-#if DEBUG
+#if DEBUG_CACHE_TREE
 	fprintf(stderr, "cache-tree update-one (%d ent, %d subtree) %s\n",
 		it->entry_count, it->subtree_nr,
 		oid_to_hex(&it->oid));
@@ -462,7 +462,7 @@ static void write_one(struct strbuf *buffer, struct cache_tree *it,
 	strbuf_add(buffer, path, pathlen);
 	strbuf_addf(buffer, "%c%d %d\n", 0, it->entry_count, it->subtree_nr);
 
-#if DEBUG
+#if DEBUG_CACHE_TREE
 	if (0 <= it->entry_count)
 		fprintf(stderr, "cache-tree <%.*s> (%d ent, %d subtree) %s\n",
 			pathlen, path, it->entry_count, it->subtree_nr,
@@ -536,7 +536,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 		size -= rawsz;
 	}
 
-#if DEBUG
+#if DEBUG_CACHE_TREE
 	if (0 <= it->entry_count)
 		fprintf(stderr, "cache-tree <%s> (%d ent, %d subtree) %s\n",
 			*buffer, it->entry_count, subtree_nr,

@@ -15,14 +15,15 @@ SYNOPSIS
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
-	  [--jobs <n>] [--] <repository> [<directory>]
+	  [--[no-]remote-submodules] [--jobs <n>] [--] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
 
 Clones a repository into a newly created directory, creates
 remote-tracking branches for each branch in the cloned repository
-(visible using `git branch -r`), and creates and checks out an
+(visible using `git branch --remotes`), and creates and checks out an
 initial branch that is forked from the cloned repository's
 currently active branch.
 
@@ -40,8 +41,8 @@ configuration variables.
 
 OPTIONS
 -------
---local::
 -l::
+--local::
 	When the repository to clone from is on a local machine,
 	this flag bypasses the normal "Git aware" transport
 	mechanism and clones the repository by making a copy of
@@ -62,8 +63,8 @@ Git transport instead.
 	directory instead of using hardlinks. This may be desirable
 	if you are trying to make a back-up of your repository.
 
---shared::
 -s::
+--shared::
 	When the repository to clone is on the local machine,
 	instead of using hard links, automatically setup
 	`.git/objects/info/alternates` to share the objects
@@ -80,13 +81,13 @@ which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
 If these objects are removed and were referenced by the cloned repository,
 then the cloned repository will become corrupt.
 +
-Note that running `git repack` without the `-l` option in a repository
-cloned with `-s` will copy objects from the source repository into a pack
-in the cloned repository, removing the disk space savings of `clone -s`.
-It is safe, however, to run `git gc`, which uses the `-l` option by
+Note that running `git repack` without the `--local` option in a repository
+cloned with `--shared` will copy objects from the source repository into a pack
+in the cloned repository, removing the disk space savings of `clone --shared`.
+It is safe, however, to run `git gc`, which uses the `--local` option by
 default.
 +
-If you want to break the dependency of a repository cloned with `-s` on
+If you want to break the dependency of a repository cloned with `--shared` on
 its source repository, you can simply run `git repack -a` to copy all
 objects from the source repository into a pack in the cloned repository.
 
@@ -115,19 +116,19 @@ objects from the source repository into a pack in the cloned repository.
 	same repository, and this option can be used to stop the
 	borrowing.
 
---quiet::
 -q::
+--quiet::
 	Operate quietly.  Progress is not reported to the standard
 	error stream.
 
---verbose::
 -v::
+--verbose::
 	Run verbosely. Does not affect the reporting of progress status
 	to the standard error stream.
 
 --progress::
 	Progress status is reported on the standard error stream
-	by default when it is attached to a terminal, unless -q
+	by default when it is attached to a terminal, unless `--quiet`
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
@@ -139,15 +140,15 @@ objects from the source repository into a pack in the cloned repository.
 	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
 
---no-checkout::
 -n::
+--no-checkout::
 	No checkout of HEAD is performed after the clone is complete.
 
 --bare::
 	Make a 'bare' Git repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.git`, make the `<directory>`
-	itself the `$GIT_DIR`. This obviously implies the `-n`
+	itself the `$GIT_DIR`. This obviously implies the `--no-checkout`
 	because there is nowhere to check out the working tree.
 	Also the branch heads at the remote are copied directly
 	to corresponding local branch heads, without mapping
@@ -163,13 +164,13 @@ objects from the source repository into a pack in the cloned repository.
 	that all these refs are overwritten by a `git remote update` in the
 	target repository.
 
---origin <name>::
 -o <name>::
+--origin <name>::
 	Instead of using the remote name `origin` to keep track
 	of the upstream repository, use `<name>`.
 
---branch <name>::
 -b <name>::
+--branch <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
 	to by the cloned repository's HEAD, point to `<name>` branch
 	instead. In a non-bare repository, this is the branch that will
@@ -177,8 +178,8 @@ objects from the source repository into a pack in the cloned repository.
 	`--branch` can also take tags and detaches the HEAD at that commit
 	in the resulting repository.
 
---upload-pack <upload-pack>::
 -u <upload-pack>::
+--upload-pack <upload-pack>::
 	When given, and the repository to clone from is accessed
 	via ssh, this specifies a non-default path for the command
 	run on the other end.
@@ -187,8 +188,8 @@ objects from the source repository into a pack in the cloned repository.
 	Specify the directory from which templates will be used;
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
---config <key>=<value>::
 -c <key>=<value>::
+--config <key>=<value>::
 	Set a configuration variable in the newly-created repository;
 	this takes effect immediately after the repository is
 	initialized, but before the remote history is fetched or any
@@ -259,6 +260,12 @@ or `--mirror` is given)
 
 --[no-]shallow-submodules::
 	All submodules which are cloned will be shallow with a depth of 1.
+
+--[no-]remote-submodules::
+	All submodules which are cloned will use the status of the submodule’s
+	remote-tracking branch to update the submodule, rather than the
+	superproject’s recorded SHA-1. Equivalent to passing `--remote` to
+	`git submodule update`.
 
 --separate-git-dir=<git dir>::
 	Instead of placing the cloned repository where it is supposed

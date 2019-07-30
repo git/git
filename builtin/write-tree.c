@@ -16,16 +16,16 @@ static const char * const write_tree_usage[] = {
 	NULL
 };
 
-int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
+int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
 {
 	int flags = 0, ret;
-	const char *prefix = NULL;
+	const char *tree_prefix = NULL;
 	struct object_id oid;
 	const char *me = "git-write-tree";
 	struct option write_tree_options[] = {
 		OPT_BIT(0, "missing-ok", &flags, N_("allow missing objects"),
 			WRITE_TREE_MISSING_OK),
-		OPT_STRING(0, "prefix", &prefix, N_("<prefix>/"),
+		OPT_STRING(0, "prefix", &tree_prefix, N_("<prefix>/"),
 			   N_("write tree object for a subdirectory <prefix>")),
 		{ OPTION_BIT, 0, "ignore-cache-tree", &flags, NULL,
 		  N_("only useful for debugging"),
@@ -35,10 +35,10 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 	};
 
 	git_config(git_default_config, NULL);
-	argc = parse_options(argc, argv, unused_prefix, write_tree_options,
+	argc = parse_options(argc, argv, cmd_prefix, write_tree_options,
 			     write_tree_usage, 0);
 
-	ret = write_cache_as_tree(&oid, flags, prefix);
+	ret = write_cache_as_tree(&oid, flags, tree_prefix);
 	switch (ret) {
 	case 0:
 		printf("%s\n", oid_to_hex(&oid));
@@ -50,7 +50,7 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 		die("%s: error building trees", me);
 		break;
 	case WRITE_TREE_PREFIX_ERROR:
-		die("%s: prefix %s not found", me, prefix);
+		die("%s: prefix %s not found", me, tree_prefix);
 		break;
 	}
 	return ret;

@@ -57,7 +57,8 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		if (!symref_target)
 			die("'%s' is a symref but it is not?", refname);
 
-		strbuf_addf(&refline, " symref-target:%s", symref_target);
+		strbuf_addf(&refline, " symref-target:%s",
+			    strip_namespace(symref_target));
 	}
 
 	if (data->peel) {

@@ -332,7 +332,7 @@ static int resolve_against_held(unsigned nr, const struct object_id *base,
 {
 	struct object *obj;
 	struct obj_buffer *obj_buffer;
-	obj = lookup_object(the_repository, base->hash);
+	obj = lookup_object(the_repository, base);
 	if (!obj)
 		return 0;
 	obj_buffer = lookup_object_buffer(obj);

@@ -43,30 +43,6 @@ int git_deflate_end_gently(git_zstream *);
 int git_deflate(git_zstream *, int flush);
 unsigned long git_deflate_bound(git_zstream *, unsigned long);
 
-/* The length in bytes and in hex digits of an object name (SHA-1 value). */
-#define GIT_SHA1_RAWSZ 20
-#define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
-/* The block size of SHA-1. */
-#define GIT_SHA1_BLKSZ 64
-
-/* The length in bytes and in hex digits of an object name (SHA-256 value). */
-#define GIT_SHA256_RAWSZ 32
-#define GIT_SHA256_HEXSZ (2 * GIT_SHA256_RAWSZ)
-/* The block size of SHA-256. */
-#define GIT_SHA256_BLKSZ 64
-
-/* The length in byte and in hex digits of the largest possible hash value. */
-#define GIT_MAX_RAWSZ GIT_SHA256_RAWSZ
-#define GIT_MAX_HEXSZ GIT_SHA256_HEXSZ
-/* The largest possible block size for any supported hash. */
-#define GIT_MAX_BLKSZ GIT_SHA256_BLKSZ
-
-struct object_id {
-	unsigned char hash[GIT_MAX_RAWSZ];
-};
-
-#define the_hash_algo the_repository->hash_algo
-
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)
 #else
@@ -826,7 +802,7 @@ int match_stat_data(const struct stat_data *sd, struct stat *st);
 int match_stat_data_racy(const struct index_state *istate,
 			 const struct stat_data *sd, struct stat *st);
 
-void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
+void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, struct stat *st);
 
 #define REFRESH_REALLY		0x0001	/* ignore_valid */
 #define REFRESH_UNMERGED	0x0002	/* allow unmerged */
@@ -1500,7 +1476,8 @@ int df_name_compare(const char *name1, int len1, int mode1, const char *name2, i
 int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
-void *read_object_with_reference(const struct object_id *oid,
+void *read_object_with_reference(struct repository *r,
+				 const struct object_id *oid,
 				 const char *required_type,
 				 unsigned long *size,
 				 struct object_id *oid_ret);
@@ -1759,6 +1736,7 @@ void setup_pager(void);
 int pager_in_use(void);
 extern int pager_use_color;
 int term_columns(void);
+void term_clear_line(void);
 int decimal_width(uintmax_t);
 int check_pager_config(const char *cmd);
 void prepare_pager_args(struct child_process *, const char *pager);
@@ -1785,8 +1763,8 @@ int add_files_to_cache(const char *prefix, const struct pathspec *pathspec, int 
 extern int diff_auto_refresh_index;
 
 /* match-trees.c */
-void shift_tree(const struct object_id *, const struct object_id *, struct object_id *, int);
-void shift_tree_by(const struct object_id *, const struct object_id *, struct object_id *, const char *);
+void shift_tree(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, int);
+void shift_tree_by(struct repository *, const struct object_id *, const struct object_id *, struct object_id *, const char *);
 
 /*
  * whitespace rules.

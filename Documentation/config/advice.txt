@@ -4,6 +4,10 @@ advice.*::
 	can tell Git that you do not need help by setting these to 'false':
 +
 --
+	fetchShowForcedUpdates::
+		Advice shown when linkgit:git-fetch[1] takes a long time
+		to calculate forced updates after ref updates, or to warn
+		that the check is disabled.
 	pushUpdateRejected::
 		Set this variable to 'false' if you want to disable
 		'pushNonFFCurrent',
@@ -37,12 +41,19 @@ advice.*::
 		we can still suggest that the user push to either
 		refs/heads/* or refs/tags/* based on the type of the
 		source object.
+	statusAheadBehind::
+		Shown when linkgit:git-status[1] computes the ahead/behind
+		counts for a local ref compared to its remote tracking ref,
+		and that calculation takes longer than expected. Will not
+		appear if `status.aheadBehind` is false or the option
+		`--no-ahead-behind` is given.
 	statusHints::
 		Show directions on how to proceed from the current
 		state in the output of linkgit:git-status[1], in
 		the template shown when writing commit messages in
 		linkgit:git-commit[1], and in the help message shown
-		by linkgit:git-checkout[1] when switching branch.
+		by linkgit:git-switch[1] or
+		linkgit:git-checkout[1] when switching branch.
 	statusUoption::
 		Advise to consider using the `-u` option to linkgit:git-status[1]
 		when the command takes more than 2 seconds to enumerate untracked
@@ -57,17 +68,21 @@ advice.*::
 	resolveConflict::
 		Advice shown by various commands when conflicts
 		prevent the operation from being performed.
+	sequencerInUse::
+		Advice shown when a sequencer command is already in progress.
 	implicitIdentity::
 		Advice on how to set your identity configuration when
 		your information is guessed from the system username and
 		domain name.
 	detachedHead::
-		Advice shown when you used linkgit:git-checkout[1] to
-		move to the detach HEAD state, to instruct how to create
-		a local branch after the fact.
+		Advice shown when you used
+		linkgit:git-switch[1] or linkgit:git-checkout[1]
+		to move to the detach HEAD state, to instruct how to
+		create a local branch after the fact.
 	checkoutAmbiguousRemoteBranchName::
 		Advice shown when the argument to
-		linkgit:git-checkout[1] ambiguously resolves to a
+		linkgit:git-checkout[1] and linkgit:git-switch[1]
+		ambiguously resolves to a
 		remote tracking branch on more than one remote in
 		situations where an unambiguous argument would have
 		otherwise caused a remote-tracking branch to be

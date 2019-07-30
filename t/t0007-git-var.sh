@@ -17,7 +17,7 @@ test_expect_success 'get GIT_COMMITTER_IDENT' '
 	test_cmp expect actual
 '
 
-test_expect_success !AUTOIDENT 'requested identites are strict' '
+test_expect_success !FAIL_PREREQS,!AUTOIDENT 'requested identites are strict' '
 	(
 		sane_unset GIT_COMMITTER_NAME &&
 		sane_unset GIT_COMMITTER_EMAIL &&

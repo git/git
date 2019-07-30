@@ -136,7 +136,7 @@ test_expect_success POSIXPERM 'forced modes' '
 	(
 		cd new &&
 		umask 002 &&
-		git init --shared=0660 --template=../templates &&
+		git init --shared=0660 --template=templates &&
 		>frotz &&
 		git add frotz &&
 		git commit -a -m initial &&
@@ -192,7 +192,7 @@ test_expect_success POSIXPERM 're-init respects core.sharedrepository (remote)' 
 	umask 0022 &&
 	git init --bare --shared=0666 child.git &&
 	test_path_is_missing child.git/foo &&
-	git init --bare --template=../templates child.git &&
+	git init --bare --template=templates child.git &&
 	echo "-rw-rw-rw-" >expect &&
 	test_modebits child.git/foo >actual &&
 	test_cmp expect actual
@@ -203,7 +203,7 @@ test_expect_success POSIXPERM 'template can set core.sharedrepository' '
 	umask 0022 &&
 	git config core.sharedrepository 0666 &&
 	cp .git/config templates/config &&
-	git init --bare --template=../templates child.git &&
+	git init --bare --template=templates child.git &&
 	echo "-rw-rw-rw-" >expect &&
 	test_modebits child.git/HEAD >actual &&
 	test_cmp expect actual

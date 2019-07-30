@@ -9,15 +9,6 @@ test_hashmap() {
 	test_cmp expect actual
 }
 
-test_expect_success 'hash functions' '
-
-test_hashmap "hash key1" "2215982743 2215982743 116372151 116372151" &&
-test_hashmap "hash key2" "2215982740 2215982740 116372148 116372148" &&
-test_hashmap "hash fooBarFrotz" "1383912807 1383912807 3189766727 3189766727" &&
-test_hashmap "hash foobarfrotz" "2862305959 2862305959 3189766727 3189766727"
-
-'
-
 test_expect_success 'put' '
 
 test_hashmap "put key1 value1

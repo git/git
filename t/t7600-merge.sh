@@ -570,6 +570,12 @@ test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --no-ff --squash c1
 '
 
+test_expect_success 'combining --squash and --commit is refused' '
+	git reset --hard c0 &&
+	test_must_fail git merge --squash --commit c1 &&
+	test_must_fail git merge --commit --squash c1
+'
+
 test_expect_success 'option --ff-only overwrites --no-ff' '
 	git merge --no-ff --ff-only c1 &&
 	test_must_fail git merge --no-ff --ff-only c2
@@ -865,6 +871,52 @@ test_expect_success EXECKEEPSPID 'killed merge can be completed with --continue'
 	  exec git merge --no-ff --edit c1'\'' &&
 	git merge --continue &&
 	verify_parents $c0 $c1
+'
+
+test_expect_success 'merge --quit' '
+	git init merge-quit &&
+	(
+		cd merge-quit &&
+		test_commit base &&
+		echo one >>base.t &&
+		git commit -am one &&
+		git branch one &&
+		git checkout base &&
+		echo two >>base.t &&
+		git commit -am two &&
+		test_must_fail git -c rerere.enabled=true merge one &&
+		test_path_is_file .git/MERGE_HEAD &&
+		test_path_is_file .git/MERGE_MODE &&
+		test_path_is_file .git/MERGE_MSG &&
+		git rerere status >rerere.before &&
+		git merge --quit &&
+		test_path_is_missing .git/MERGE_HEAD &&
+		test_path_is_missing .git/MERGE_MODE &&
+		test_path_is_missing .git/MERGE_MSG &&
+		git rerere status >rerere.after &&
+		test_must_be_empty rerere.after &&
+		! test_cmp rerere.after rerere.before
+	)
+'
+
+test_expect_success 'merge suggests matching remote refname' '
+	git commit --allow-empty -m not-local &&
+	git update-ref refs/remotes/origin/not-local HEAD &&
+	git reset --hard HEAD^ &&
+
+	# This is white-box testing hackery; we happen to know
+	# that reading packed refs is more picky about the memory
+	# ownership of strings we pass to for_each_ref() callbacks.
+	git pack-refs --all --prune &&
+
+	test_must_fail git merge not-local 2>stderr &&
+	grep origin/not-local stderr
+'
+
+test_expect_success 'suggested names are not ambiguous' '
+	git update-ref refs/heads/origin/not-local HEAD &&
+	test_must_fail git merge not-local 2>stderr &&
+	grep remotes/origin/not-local stderr
 '
 
 test_done

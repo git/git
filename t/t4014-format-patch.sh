@@ -36,8 +36,27 @@ test_expect_success setup '
 	git checkout master &&
 	git diff-tree -p C2 | git apply --index &&
 	test_tick &&
-	git commit -m "Master accepts moral equivalent of #2"
+	git commit -m "Master accepts moral equivalent of #2" &&
 
+	git checkout side &&
+	git checkout -b patchid &&
+	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file2 &&
+	for i in 1 2 3 A 4 B C 7 8 9 10 D E F 5 6; do echo "$i"; done >file3 &&
+	for i in 8 9 10; do echo "$i"; done >file &&
+	git add file file2 file3 &&
+	test_tick &&
+	git commit -m "patchid 1" &&
+	for i in 4 A B 7 8 9 10; do echo "$i"; done >file2 &&
+	for i in 8 9 10 5 6; do echo "$i"; done >file3 &&
+	git add file2 file3 &&
+	test_tick &&
+	git commit -m "patchid 2" &&
+	for i in 10 5 6; do echo "$i"; done >file &&
+	git add file &&
+	test_tick &&
+	git commit -m "patchid 3" &&
+
+	git checkout master
 '
 
 test_expect_success "format-patch --ignore-if-in-upstream" '
@@ -736,6 +755,76 @@ test_expect_success 'format-patch --notes --signoff' '
 	# Notes message must come after three dashes
 	! sed "/^---$/q" out | grep "test message" &&
 	sed "1,/^---$/d" out | grep "test message"
+'
+
+test_expect_success 'format-patch notes output control' '
+	git notes add -m "notes config message" HEAD &&
+	test_when_finished git notes remove HEAD &&
+
+	git format-patch -1 --stdout >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes --notes >out &&
+	grep "notes config message" out &&
+
+	test_config format.notes true &&
+	git format-patch -1 --stdout >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --notes >out &&
+	grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --notes --no-notes >out &&
+	! grep "notes config message" out &&
+	git format-patch -1 --stdout --no-notes --notes >out &&
+	grep "notes config message" out
+'
+
+test_expect_success 'format-patch with multiple notes refs' '
+	git notes --ref note1 add -m "this is note 1" HEAD &&
+	test_when_finished git notes --ref note1 remove HEAD &&
+	git notes --ref note2 add -m "this is note 2" HEAD &&
+	test_when_finished git notes --ref note2 remove HEAD &&
+
+	git format-patch -1 --stdout >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note1 >out &&
+	grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note2 >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note1 --notes=note2 >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+
+	test_config format.notes note1 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git format-patch -1 --stdout --notes=note2 >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes --notes=note2 >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out &&
+
+	git config --add format.notes note2 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git format-patch -1 --stdout --no-notes >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out
 '
 
 echo "fatal: --name-only does not make sense" > expect.name-only
@@ -1559,7 +1648,7 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 '
 
 test_expect_success 'format-patch --base' '
-	git checkout side &&
+	git checkout patchid &&
 	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual1 &&
 	git format-patch --stdout --base=HEAD~3 HEAD~.. | tail -n 7 >actual2 &&
 	echo >expected &&
@@ -1568,7 +1657,14 @@ test_expect_success 'format-patch --base' '
 	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expected &&
 	signature >> expected &&
 	test_cmp expected actual1 &&
-	test_cmp expected actual2
+	test_cmp expected actual2 &&
+	echo >fail &&
+	echo "base-commit: $(git rev-parse HEAD~3)" >>fail &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --unstable | awk "{print \$1}")" >>fail &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --unstable | awk "{print \$1}")" >>fail &&
+	signature >> fail &&
+	! test_cmp fail actual1 &&
+	! test_cmp fail actual2
 '
 
 test_expect_success 'format-patch --base errors out when base commit is in revision list' '

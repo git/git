@@ -47,7 +47,7 @@ static int default_follow;
 static int default_show_signature;
 static int decoration_style;
 static int decoration_given;
-static int use_mailmap_config;
+static int use_mailmap_config = -1;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
@@ -63,9 +63,14 @@ struct line_opt_callback_data {
 	struct string_list args;
 };
 
+static int session_is_interactive(void)
+{
+	return isatty(1) || pager_in_use();
+}
+
 static int auto_decoration_style(void)
 {
-	return (isatty(1) || pager_in_use()) ? DECORATE_SHORT_REFS : 0;
+	return session_is_interactive() ? DECORATE_SHORT_REFS : 0;
 }
 
 static int parse_decoration_style(const char *value)
@@ -151,6 +156,16 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 		parse_date_format(default_date_mode, &rev->date_mode);
 }
 
+static char warn_unspecified_mailmap_msg[] =
+N_("log.mailmap is not set; its implicit value will change in an\n"
+   "upcoming release. To squelch this message and preserve current\n"
+   "behaviour, set the log.mailmap configuration value to false.\n"
+   "\n"
+   "To squelch this message and adopt the new behaviour now, set the\n"
+   "log.mailmap configuration value to true.\n"
+   "\n"
+   "See 'git help config' and search for 'log.mailmap' for further information.");
+
 static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
@@ -198,6 +213,13 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 
 	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
+
+	if (mailmap < 0) {
+		if (session_is_interactive() && !rev->pretty_given)
+			warning("%s\n", _(warn_unspecified_mailmap_msg));
+
+		mailmap = 0;
+	}
 
 	if (!rev->show_notes_given && (!rev->pretty_given || w.notes))
 		rev->show_notes = 1;
@@ -779,6 +801,8 @@ enum {
 
 static int git_format_config(const char *var, const char *value, void *cb)
 {
+	struct rev_info *rev = cb;
+
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
 			die(_("format.headers without value"));
@@ -862,6 +886,22 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			from = xstrdup(git_committer_info(IDENT_NO_DATE));
 		else
 			from = NULL;
+		return 0;
+	}
+	if (!strcmp(var, "format.notes")) {
+		struct strbuf buf = STRBUF_INIT;
+		int b = git_parse_maybe_bool(value);
+		if (!b)
+			return 0;
+		rev->show_notes = 1;
+		if (b < 0) {
+			strbuf_addstr(&buf, value);
+			expand_notes_ref(&buf);
+			string_list_append(&rev->notes_opt.extra_notes_refs,
+					strbuf_detach(&buf, NULL));
+		} else {
+			rev->notes_opt.use_default_notes = 1;
+		}
 		return 0;
 	}
 
@@ -1435,7 +1475,7 @@ static void prepare_bases(struct base_tree_info *bases,
 		struct object_id *patch_id;
 		if (*commit_base_at(&commit_base, commit))
 			continue;
-		if (commit_patch_id(commit, &diffopt, &oid, 0))
+		if (commit_patch_id(commit, &diffopt, &oid, 0, 1))
 			die(_("cannot get patch id"));
 		ALLOC_GROW(bases->patch_id, bases->nr_patch_id + 1, bases->alloc_patch_id);
 		patch_id = bases->patch_id + bases->nr_patch_id;
@@ -1617,8 +1657,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	extra_to.strdup_strings = 1;
 	extra_cc.strdup_strings = 1;
 	init_log_defaults();
-	git_config(git_format_config, NULL);
 	repo_init_revisions(the_repository, &rev, prefix);
+	git_config(git_format_config, &rev);
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.expand_tabs_in_log_default = 0;
 	rev.verbose_header = 1;

@@ -43,6 +43,7 @@ diffpatterns="
 	php
 	python
 	ruby
+	rust
 	tex
 	custom1
 	custom2

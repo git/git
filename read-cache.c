@@ -195,7 +195,7 @@ int match_stat_data(const struct stat_data *sd, struct stat *st)
  * cache, ie the parts that aren't tracked by GIT, and only used
  * to validate the cache.
  */
-void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
+void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, struct stat *st)
 {
 	fill_stat_data(&ce->ce_stat_data, st);
 
@@ -204,7 +204,7 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 
 	if (S_ISREG(st->st_mode)) {
 		ce_mark_uptodate(ce);
-		mark_fsmonitor_valid(ce);
+		mark_fsmonitor_valid(istate, ce);
 	}
 }
 
@@ -549,7 +549,7 @@ static int index_name_stage_pos(const struct index_state *istate, const char *na
 	first = 0;
 	last = istate->cache_nr;
 	while (last > first) {
-		int next = (last + first) >> 1;
+		int next = first + ((last - first) >> 1);
 		struct cache_entry *ce = istate->cache[next];
 		int cmp = cache_name_stage_compare(name, namelen, stage, ce->name, ce_namelen(ce), ce_stage(ce));
 		if (!cmp)
@@ -728,7 +728,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	memcpy(ce->name, path, namelen);
 	ce->ce_namelen = namelen;
 	if (!intent_only)
-		fill_stat_cache_info(ce, st);
+		fill_stat_cache_info(istate, ce, st);
 	else
 		ce->ce_flags |= CE_INTENT_TO_ADD;
 
@@ -1432,7 +1432,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 			 */
 			if (!S_ISGITLINK(ce->ce_mode)) {
 				ce_mark_uptodate(ce);
-				mark_fsmonitor_valid(ce);
+				mark_fsmonitor_valid(istate, ce);
 			}
 			return ce;
 		}
@@ -1447,7 +1447,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	updated = make_empty_cache_entry(istate, ce_namelen(ce));
 	copy_cache_entry(updated, ce);
 	memcpy(updated->name, ce->name, ce->ce_namelen + 1);
-	fill_stat_cache_info(updated, &st);
+	fill_stat_cache_info(istate, updated, &st);
 	/*
 	 * If ignore_valid is not set, we should leave CE_VALID bit
 	 * alone.  Otherwise, paths marked with --no-assume-unchanged
@@ -2037,7 +2037,7 @@ static void *load_cache_entries_thread(void *_data)
 }
 
 static unsigned long load_cache_entries_threaded(struct index_state *istate, const char *mmap, size_t mmap_size,
-			unsigned long src_offset, int nr_threads, struct index_entry_offset_table *ieot)
+						 int nr_threads, struct index_entry_offset_table *ieot)
 {
 	int i, offset, ieot_blocks, ieot_start, err;
 	struct load_cache_entries_thread_data *data;
@@ -2140,7 +2140,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (mmap_size < sizeof(struct cache_header) + the_hash_algo->rawsz)
 		die(_("%s: index file smaller than expected"), path);
 
-	mmap = xmmap(NULL, mmap_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	mmap = xmmap_gently(NULL, mmap_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (mmap == MAP_FAILED)
 		die_errno(_("%s: unable to map index file"), path);
 	close(fd);
@@ -2198,7 +2198,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 		ieot = read_ieot_extension(mmap, mmap_size, extension_offset);
 
 	if (ieot) {
-		src_offset += load_cache_entries_threaded(istate, mmap, mmap_size, src_offset, nr_threads, ieot);
+		src_offset += load_cache_entries_threaded(istate, mmap, mmap_size, nr_threads, ieot);
 		free(ieot);
 	} else {
 		src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);

@@ -630,9 +630,8 @@ test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
 	test_i18ngrep "the following paths have collided" icasefs/warning
 '
 
-partial_clone () {
+partial_clone_server () {
 	       SERVER="$1" &&
-	       URL="$2" &&
 
 	rm -rf "$SERVER" client &&
 	test_create_repo "$SERVER" &&
@@ -642,8 +641,14 @@ partial_clone () {
 	test_commit -C "$SERVER" two &&
 	HASH2=$(git hash-object "$SERVER/two.t") &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
-	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
+	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1
+}
 
+partial_clone () {
+	       SERVER="$1" &&
+	       URL="$2" &&
+
+	partial_clone_server "${SERVER}" &&
 	git clone --filter=blob:limit=0 "$URL" client &&
 
 	git -C client fsck &&
@@ -658,6 +663,11 @@ partial_clone () {
 
 test_expect_success 'partial clone' '
 	partial_clone server "file://$(pwd)/server"
+'
+
+test_expect_success 'partial clone with -o' '
+	partial_clone_server server &&
+	git clone -o blah --filter=blob:limit=0 "file://$(pwd)/server" client
 '
 
 test_expect_success 'partial clone: warn if server does not support object filtering' '

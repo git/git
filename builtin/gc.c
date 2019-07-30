@@ -653,7 +653,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	gc_before_repack();
 
 	if (!repository_format_precious_objects) {
-		close_all_packs(the_repository->objects);
+		close_object_store(the_repository->objects);
 		if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
 			die(FAILED_RUN, repack.argv[0]);
 
@@ -681,13 +681,15 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git(the_repository);
 	if (pack_garbage.nr > 0) {
-		close_all_packs(the_repository->objects);
+		close_object_store(the_repository->objects);
 		clean_pack_garbage();
 	}
 
-	if (gc_write_commit_graph)
-		write_commit_graph_reachable(get_object_directory(), 0,
-					     !quiet && !daemonized);
+	if (gc_write_commit_graph &&
+	    write_commit_graph_reachable(get_object_directory(),
+					 !quiet && !daemonized ? COMMIT_GRAPH_PROGRESS : 0,
+					 NULL))
+		return 1;
 
 	if (auto_gc && too_many_loose_objects())
 		warning(_("There are too many unreachable loose objects; "

@@ -301,8 +301,7 @@ topics on 'next':
 .Rewind and rebuild next
 [caption="Recipe: "]
 =====================================
-* `git checkout next`
-* `git reset --hard master`
+* `git switch -C next master`
 * `git merge ai/topic_in_next1`
 * `git merge ai/topic_in_next2`
 * ...

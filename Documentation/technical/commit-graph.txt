@@ -127,22 +127,196 @@ Design Details
   helpful for these clones, anyway. The commit-graph will not be read or
   written when shallow commits are present.
 
-Future Work
------------
+Commit Graphs Chains
+--------------------
 
-- After computing and storing generation numbers, we must make graph
-  walks aware of generation numbers to gain the performance benefits they
-  enable. This will mostly be accomplished by swapping a commit-date-ordered
-  priority queue with one ordered by generation number. The following
-  operations are important candidates:
+Typically, repos grow with near-constant velocity (commits per day). Over time,
+the number of commits added by a fetch operation is much smaller than the
+number of commits in the full history. By creating a "chain" of commit-graphs,
+we enable fast writes of new commit data without rewriting the entire commit
+history -- at least, most of the time.
 
-    - 'log --topo-order'
-    - 'tag --merged'
+## File Layout
 
-- A server could provide a commit-graph file as part of the network protocol
-  to avoid extra calculations by clients. This feature is only of benefit if
-  the user is willing to trust the file, because verifying the file is correct
-  is as hard as computing it from scratch.
+A commit-graph chain uses multiple files, and we use a fixed naming convention
+to organize these files. Each commit-graph file has a name
+`$OBJDIR/info/commit-graphs/graph-{hash}.graph` where `{hash}` is the hex-
+valued hash stored in the footer of that file (which is a hash of the file's
+contents before that hash). For a chain of commit-graph files, a plain-text
+file at `$OBJDIR/info/commit-graphs/commit-graph-chain` contains the
+hashes for the files in order from "lowest" to "highest".
+
+For example, if the `commit-graph-chain` file contains the lines
+
+```
+	{hash0}
+	{hash1}
+	{hash2}
+```
+
+then the commit-graph chain looks like the following diagram:
+
+ +-----------------------+
+ |  graph-{hash2}.graph  |
+ +-----------------------+
+	  |
+ +-----------------------+
+ |                       |
+ |  graph-{hash1}.graph  |
+ |                       |
+ +-----------------------+
+	  |
+ +-----------------------+
+ |                       |
+ |                       |
+ |                       |
+ |  graph-{hash0}.graph  |
+ |                       |
+ |                       |
+ |                       |
+ +-----------------------+
+
+Let X0 be the number of commits in `graph-{hash0}.graph`, X1 be the number of
+commits in `graph-{hash1}.graph`, and X2 be the number of commits in
+`graph-{hash2}.graph`. If a commit appears in position i in `graph-{hash2}.graph`,
+then we interpret this as being the commit in position (X0 + X1 + i), and that
+will be used as its "graph position". The commits in `graph-{hash2}.graph` use these
+positions to refer to their parents, which may be in `graph-{hash1}.graph` or
+`graph-{hash0}.graph`. We can navigate to an arbitrary commit in position j by checking
+its containment in the intervals [0, X0), [X0, X0 + X1), [X0 + X1, X0 + X1 +
+X2).
+
+Each commit-graph file (except the base, `graph-{hash0}.graph`) contains data
+specifying the hashes of all files in the lower layers. In the above example,
+`graph-{hash1}.graph` contains `{hash0}` while `graph-{hash2}.graph` contains
+`{hash0}` and `{hash1}`.
+
+## Merging commit-graph files
+
+If we only added a new commit-graph file on every write, we would run into a
+linear search problem through many commit-graph files.  Instead, we use a merge
+strategy to decide when the stack should collapse some number of levels.
+
+The diagram below shows such a collapse. As a set of new commits are added, it
+is determined by the merge strategy that the files should collapse to
+`graph-{hash1}`. Thus, the new commits, the commits in `graph-{hash2}` and
+the commits in `graph-{hash1}` should be combined into a new `graph-{hash3}`
+file.
+
+			    +---------------------+
+			    |                     |
+			    |    (new commits)    |
+			    |                     |
+			    +---------------------+
+			    |                     |
+ +-----------------------+  +---------------------+
+ |  graph-{hash2} |->|                     |
+ +-----------------------+  +---------------------+
+	  |                 |                     |
+ +-----------------------+  +---------------------+
+ |                       |  |                     |
+ |  graph-{hash1} |->|                     |
+ |                       |  |                     |
+ +-----------------------+  +---------------------+
+	  |                  tmp_graphXXX
+ +-----------------------+
+ |                       |
+ |                       |
+ |                       |
+ |  graph-{hash0} |
+ |                       |
+ |                       |
+ |                       |
+ +-----------------------+
+
+During this process, the commits to write are combined, sorted and we write the
+contents to a temporary file, all while holding a `commit-graph-chain.lock`
+lock-file.  When the file is flushed, we rename it to `graph-{hash3}`
+according to the computed `{hash3}`. Finally, we write the new chain data to
+`commit-graph-chain.lock`:
+
+```
+	{hash3}
+	{hash0}
+```
+
+We then close the lock-file.
+
+## Merge Strategy
+
+When writing a set of commits that do not exist in the commit-graph stack of
+height N, we default to creating a new file at level N + 1. We then decide to
+merge with the Nth level if one of two conditions hold:
+
+  1. `--size-multiple=<X>` is specified or X = 2, and the number of commits in
+     level N is less than X times the number of commits in level N + 1.
+
+  2. `--max-commits=<C>` is specified with non-zero C and the number of commits
+     in level N + 1 is more than C commits.
+
+This decision cascades down the levels: when we merge a level we create a new
+set of commits that then compares to the next level.
+
+The first condition bounds the number of levels to be logarithmic in the total
+number of commits.  The second condition bounds the total number of commits in
+a `graph-{hashN}` file and not in the `commit-graph` file, preventing
+significant performance issues when the stack merges and another process only
+partially reads the previous stack.
+
+The merge strategy values (2 for the size multiple, 64,000 for the maximum
+number of commits) could be extracted into config settings for full
+flexibility.
+
+## Deleting graph-{hash} files
+
+After a new tip file is written, some `graph-{hash}` files may no longer
+be part of a chain. It is important to remove these files from disk, eventually.
+The main reason to delay removal is that another process could read the
+`commit-graph-chain` file before it is rewritten, but then look for the
+`graph-{hash}` files after they are deleted.
+
+To allow holding old split commit-graphs for a while after they are unreferenced,
+we update the modified times of the files when they become unreferenced. Then,
+we scan the `$OBJDIR/info/commit-graphs/` directory for `graph-{hash}`
+files whose modified times are older than a given expiry window. This window
+defaults to zero, but can be changed using command-line arguments or a config
+setting.
+
+## Chains across multiple object directories
+
+In a repo with alternates, we look for the `commit-graph-chain` file starting
+in the local object directory and then in each alternate. The first file that
+exists defines our chain. As we look for the `graph-{hash}` files for
+each `{hash}` in the chain file, we follow the same pattern for the host
+directories.
+
+This allows commit-graphs to be split across multiple forks in a fork network.
+The typical case is a large "base" repo with many smaller forks.
+
+As the base repo advances, it will likely update and merge its commit-graph
+chain more frequently than the forks. If a fork updates their commit-graph after
+the base repo, then it should "reparent" the commit-graph chain onto the new
+chain in the base repo. When reading each `graph-{hash}` file, we track
+the object directory containing it. During a write of a new commit-graph file,
+we check for any changes in the source object directory and read the
+`commit-graph-chain` file for that source and create a new file based on those
+files. During this "reparent" operation, we necessarily need to collapse all
+levels in the fork, as all of the files are invalid against the new base file.
+
+It is crucial to be careful when cleaning up "unreferenced" `graph-{hash}.graph`
+files in this scenario. It falls to the user to define the proper settings for
+their custom environment:
+
+ 1. When merging levels in the base repo, the unreferenced files may still be
+    referenced by chains from fork repos.
+
+ 2. The expiry time should be set to a length of time such that every fork has
+    time to recompute their commit-graph chain to "reparent" onto the new base
+    file(s).
+
+ 3. If the commit-graph chain is updated in the base, the fork will not have
+    access to the new chain until its chain is updated to reference those files.
+    (This may change in the future [5].)
 
 Related Links
 -------------
@@ -170,3 +344,7 @@ Related Links
 
 [4] https://public-inbox.org/git/20180108154822.54829-1-git@jeffhostetler.com/T/#u
     A patch to remove the ahead-behind calculation from 'status'.
+
+[5] https://public-inbox.org/git/f27db281-abad-5043-6d71-cbb083b1c877@gmail.com/
+    A discussion of a "two-dimensional graph position" that can allow reading
+    multiple commit-graph chains at the same time.

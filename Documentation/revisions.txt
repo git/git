@@ -115,7 +115,7 @@ Here's an example to make it more clear:
 ------------------------------
 $ git config push.default current
 $ git config remote.pushdefault myfork
-$ git checkout -b mybranch origin/master
+$ git switch -c mybranch origin/master
 
 $ git rev-parse --symbolic-full-name @{upstream}
 refs/remotes/origin/master

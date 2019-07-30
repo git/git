@@ -99,7 +99,7 @@ test_expect_success 'changed commit' '
 	1:  4de457d = 1:  a4b3333 s/5/A/
 	2:  fccce22 = 2:  f51d370 s/4/A/
 	3:  147e64e ! 3:  0559556 s/11/B/
-	    @@ -10,7 +10,7 @@
+	    @@ file: A
 	      9
 	      10
 	     -11
@@ -109,8 +109,8 @@ test_expect_success 'changed commit' '
 	      13
 	      14
 	4:  a63e992 ! 4:  d966c5c s/12/B/
-	    @@ -8,7 +8,7 @@
-	     @@
+	    @@ file
+	     @@ file: A
 	      9
 	      10
 	    - B
@@ -158,7 +158,7 @@ test_expect_success 'changed commit with sm config' '
 	1:  4de457d = 1:  a4b3333 s/5/A/
 	2:  fccce22 = 2:  f51d370 s/4/A/
 	3:  147e64e ! 3:  0559556 s/11/B/
-	    @@ -10,7 +10,7 @@
+	    @@ file: A
 	      9
 	      10
 	     -11
@@ -168,8 +168,8 @@ test_expect_success 'changed commit with sm config' '
 	      13
 	      14
 	4:  a63e992 ! 4:  d966c5c s/12/B/
-	    @@ -8,7 +8,7 @@
-	     @@
+	    @@ file
+	     @@ file: A
 	      9
 	      10
 	    - B
@@ -177,6 +177,92 @@ test_expect_success 'changed commit with sm config' '
 	     -12
 	     +B
 	      13
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'renamed file' '
+	git range-diff --no-color --submodule=log topic...renamed-file >actual &&
+	sed s/Z/\ /g >expected <<-EOF &&
+	1:  4de457d = 1:  f258d75 s/5/A/
+	2:  fccce22 ! 2:  017b62d s/4/A/
+	    @@ Metadata
+	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
+	    Z
+	    Z ## Commit message ##
+	    -    s/4/A/
+	    +    s/4/A/ + rename file
+	    Z
+	    - ## file ##
+	    + ## file => renamed-file ##
+	    Z@@
+	    Z 1
+	    Z 2
+	3:  147e64e ! 3:  3ce7af6 s/11/B/
+	    @@ Metadata
+	    Z ## Commit message ##
+	    Z    s/11/B/
+	    Z
+	    - ## file ##
+	    -@@ file: A
+	    + ## renamed-file ##
+	    +@@ renamed-file: A
+	    Z 8
+	    Z 9
+	    Z 10
+	4:  a63e992 ! 4:  1e6226b s/12/B/
+	    @@ Metadata
+	    Z ## Commit message ##
+	    Z    s/12/B/
+	    Z
+	    - ## file ##
+	    -@@ file: A
+	    + ## renamed-file ##
+	    +@@ renamed-file: A
+	    Z 9
+	    Z 10
+	    Z B
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'file added and later removed' '
+	git range-diff --no-color --submodule=log topic...added-removed >actual &&
+	sed s/Z/\ /g >expected <<-EOF &&
+	1:  4de457d = 1:  096b1ba s/5/A/
+	2:  fccce22 ! 2:  d92e698 s/4/A/
+	    @@ Metadata
+	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
+	    Z
+	    Z ## Commit message ##
+	    -    s/4/A/
+	    +    s/4/A/ + new-file
+	    Z
+	    Z ## file ##
+	    Z@@
+	    @@ file
+	    Z A
+	    Z 6
+	    Z 7
+	    +
+	    + ## new-file (new) ##
+	3:  147e64e ! 3:  9a1db4d s/11/B/
+	    @@ Metadata
+	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
+	    Z
+	    Z ## Commit message ##
+	    -    s/11/B/
+	    +    s/11/B/ + remove file
+	    Z
+	    Z ## file ##
+	    Z@@ file: A
+	    @@ file: A
+	    Z 12
+	    Z 13
+	    Z 14
+	    +
+	    + ## new-file (deleted) ##
+	4:  a63e992 = 4:  fea3b5c s/12/B/
 	EOF
 	test_cmp expected actual
 '
@@ -191,15 +277,15 @@ test_expect_success 'changed message' '
 	sed s/Z/\ /g >expected <<-EOF &&
 	1:  4de457d = 1:  f686024 s/5/A/
 	2:  fccce22 ! 2:  4ab067d s/4/A/
-	    @@ -2,6 +2,8 @@
-	    Z
+	    @@ Metadata
+	    Z ## Commit message ##
 	    Z    s/4/A/
 	    Z
 	    +    Also a silly comment here!
 	    +
-	    Z diff --git a/file b/file
-	    Z --- a/file
-	    Z +++ b/file
+	    Z ## file ##
+	    Z@@
+	    Z 1
 	3:  147e64e = 3:  b9cb956 s/11/B/
 	4:  a63e992 = 4:  8add5f1 s/12/B/
 	EOF
@@ -210,17 +296,17 @@ test_expect_success 'dual-coloring' '
 	sed -e "s|^:||" >expect <<-\EOF &&
 	:<YELLOW>1:  a4b3333 = 1:  f686024 s/5/A/<RESET>
 	:<RED>2:  f51d370 <RESET><YELLOW>!<RESET><GREEN> 2:  4ab067d<RESET><YELLOW> s/4/A/<RESET>
-	:    <REVERSE><CYAN>@@ -2,6 +2,8 @@<RESET>
-	:     <RESET>
+	:    <REVERSE><CYAN>@@<RESET> <RESET>Metadata<RESET>
+	:      ## Commit message ##<RESET>
 	:         s/4/A/<RESET>
 	:     <RESET>
 	:    <REVERSE><GREEN>+<RESET><BOLD>    Also a silly comment here!<RESET>
 	:    <REVERSE><GREEN>+<RESET>
-	:      diff --git a/file b/file<RESET>
-	:      --- a/file<RESET>
-	:      +++ b/file<RESET>
+	:      ## file ##<RESET>
+	:    <CYAN> @@<RESET>
+	:      1<RESET>
 	:<RED>3:  0559556 <RESET><YELLOW>!<RESET><GREEN> 3:  b9cb956<RESET><YELLOW> s/11/B/<RESET>
-	:    <REVERSE><CYAN>@@ -10,7 +10,7 @@<RESET>
+	:    <REVERSE><CYAN>@@<RESET> <RESET>file: A<RESET>
 	:      9<RESET>
 	:      10<RESET>
 	:    <RED> -11<RESET>
@@ -230,8 +316,8 @@ test_expect_success 'dual-coloring' '
 	:      13<RESET>
 	:      14<RESET>
 	:<RED>4:  d966c5c <RESET><YELLOW>!<RESET><GREEN> 4:  8add5f1<RESET><YELLOW> s/12/B/<RESET>
-	:    <REVERSE><CYAN>@@ -8,7 +8,7 @@<RESET>
-	:    <CYAN> @@<RESET>
+	:    <REVERSE><CYAN>@@<RESET> <RESET>file<RESET>
+	:    <CYAN> @@ file: A<RESET>
 	:      9<RESET>
 	:      10<RESET>
 	:    <REVERSE><RED>-<RESET><FAINT> BB<RESET>

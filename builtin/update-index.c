@@ -280,7 +280,7 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
-	fill_stat_cache_info(ce, st);
+	fill_stat_cache_info(&the_index, ce, st);
 	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
 
 	if (index_path(&the_index, &ce->oid, path, st,
@@ -601,7 +601,7 @@ static struct cache_entry *read_one_ent(const char *which,
 	struct object_id oid;
 	struct cache_entry *ce;
 
-	if (get_tree_entry(ent, path, &oid, &mode)) {
+	if (get_tree_entry(the_repository, ent, path, &oid, &mode)) {
 		if (which)
 			error("%s: not in %s branch.", path, which);
 		return NULL;

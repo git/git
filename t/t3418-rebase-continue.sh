@@ -265,4 +265,12 @@ test_expect_success '--reschedule-failed-exec' '
 	test_i18ngrep "has been rescheduled" err
 '
 
+test_expect_success 'rebase.reschedulefailedexec only affects `rebase -i`' '
+	test_config rebase.reschedulefailedexec true &&
+	test_must_fail git rebase -x false HEAD^ &&
+	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
+	git rebase --abort &&
+	git rebase HEAD^
+'
+
 test_done

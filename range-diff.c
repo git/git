@@ -10,6 +10,7 @@
 #include "commit.h"
 #include "pretty.h"
 #include "userdiff.h"
+#include "apply.h"
 
 struct patch_util {
 	/* For the search for an exact match */
@@ -24,6 +25,17 @@ struct patch_util {
 	struct object_id oid;
 };
 
+static size_t find_end_of_line(char *buffer, unsigned long size)
+{
+	char *eol = memchr(buffer, '\n', size);
+
+	if (!eol)
+		return size;
+
+	*eol = '\0';
+	return eol + 1 - buffer;
+}
+
 /*
  * Reads the patches into a string list, with the `util` field being populated
  * as struct object_id (will need to be free()d).
@@ -31,10 +43,12 @@ struct patch_util {
 static int read_patches(const char *range, struct string_list *list)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	FILE *in;
-	struct strbuf buf = STRBUF_INIT, line = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT, contents = STRBUF_INIT;
 	struct patch_util *util = NULL;
 	int in_header = 1;
+	char *line, *current_filename = NULL;
+	int offset, len;
+	size_t size;
 
 	argv_array_pushl(&cp.args, "log", "--no-color", "-p", "--no-merges",
 			"--reverse", "--date-order", "--decorate=no",
@@ -54,17 +68,20 @@ static int read_patches(const char *range, struct string_list *list)
 
 	if (start_command(&cp))
 		return error_errno(_("could not start `log`"));
-	in = fdopen(cp.out, "r");
-	if (!in) {
+	if (strbuf_read(&contents, cp.out, 0) < 0) {
 		error_errno(_("could not read `log` output"));
 		finish_command(&cp);
 		return -1;
 	}
 
-	while (strbuf_getline(&line, in) != EOF) {
+	line = contents.buf;
+	size = contents.len;
+	for (offset = 0; size > 0; offset += len, size -= len, line += len) {
 		const char *p;
 
-		if (skip_prefix(line.buf, "commit ", &p)) {
+		len = find_end_of_line(line, size);
+		line[len - 1] = '\0';
+		if (skip_prefix(line, "commit ", &p)) {
 			if (util) {
 				string_list_append(list, buf.buf)->util = util;
 				strbuf_reset(&buf);
@@ -75,8 +92,7 @@ static int read_patches(const char *range, struct string_list *list)
 				free(util);
 				string_list_clear(list, 1);
 				strbuf_release(&buf);
-				strbuf_release(&line);
-				fclose(in);
+				strbuf_release(&contents);
 				finish_command(&cp);
 				return -1;
 			}
@@ -85,61 +101,95 @@ static int read_patches(const char *range, struct string_list *list)
 			continue;
 		}
 
-		if (starts_with(line.buf, "diff --git")) {
+		if (starts_with(line, "diff --git")) {
+			struct patch patch = { 0 };
+			struct strbuf root = STRBUF_INIT;
+			int linenr = 0;
+
 			in_header = 0;
 			strbuf_addch(&buf, '\n');
 			if (!util->diff_offset)
 				util->diff_offset = buf.len;
-			strbuf_addch(&buf, ' ');
-			strbuf_addbuf(&buf, &line);
+			line[len - 1] = '\n';
+			len = parse_git_diff_header(&root, &linenr, 1, line,
+						    len, size, &patch);
+			if (len < 0)
+				die(_("could not parse git header '%.*s'"), (int)len, line);
+			strbuf_addstr(&buf, " ## ");
+			if (patch.is_new > 0)
+				strbuf_addf(&buf, "%s (new)", patch.new_name);
+			else if (patch.is_delete > 0)
+				strbuf_addf(&buf, "%s (deleted)", patch.old_name);
+			else if (patch.is_rename)
+				strbuf_addf(&buf, "%s => %s", patch.old_name, patch.new_name);
+			else
+				strbuf_addstr(&buf, patch.new_name);
+
+			free(current_filename);
+			if (patch.is_delete > 0)
+				current_filename = xstrdup(patch.old_name);
+			else
+				current_filename = xstrdup(patch.new_name);
+
+			if (patch.new_mode && patch.old_mode &&
+			    patch.old_mode != patch.new_mode)
+				strbuf_addf(&buf, " (mode change %06o => %06o)",
+					    patch.old_mode, patch.new_mode);
+
+			strbuf_addstr(&buf, " ##");
 		} else if (in_header) {
-			if (starts_with(line.buf, "Author: ")) {
-				strbuf_addbuf(&buf, &line);
+			if (starts_with(line, "Author: ")) {
+				strbuf_addstr(&buf, " ## Metadata ##\n");
+				strbuf_addstr(&buf, line);
 				strbuf_addstr(&buf, "\n\n");
-			} else if (starts_with(line.buf, "    ")) {
-				strbuf_rtrim(&line);
-				strbuf_addbuf(&buf, &line);
+				strbuf_addstr(&buf, " ## Commit message ##\n");
+			} else if (starts_with(line, "    ")) {
+				p = line + len - 2;
+				while (isspace(*p) && p >= line)
+					p--;
+				strbuf_add(&buf, line, p - line + 1);
 				strbuf_addch(&buf, '\n');
 			}
 			continue;
-		} else if (starts_with(line.buf, "@@ "))
+		} else if (skip_prefix(line, "@@ ", &p)) {
+			p = strstr(p, "@@");
 			strbuf_addstr(&buf, "@@");
-		else if (!line.buf[0] || starts_with(line.buf, "index "))
+			if (current_filename && p[2])
+				strbuf_addf(&buf, " %s:", current_filename);
+			if (p)
+				strbuf_addstr(&buf, p + 2);
+		} else if (!line[0])
 			/*
 			 * A completely blank (not ' \n', which is context)
 			 * line is not valid in a diff.  We skip it
 			 * silently, because this neatly handles the blank
 			 * separator line between commits in git-log
 			 * output.
-			 *
-			 * We also want to ignore the diff's `index` lines
-			 * because they contain exact blob hashes in which
-			 * we are not interested.
 			 */
 			continue;
-		else if (line.buf[0] == '>') {
+		else if (line[0] == '>') {
 			strbuf_addch(&buf, '+');
-			strbuf_add(&buf, line.buf + 1, line.len - 1);
-		} else if (line.buf[0] == '<') {
+			strbuf_addstr(&buf, line + 1);
+		} else if (line[0] == '<') {
 			strbuf_addch(&buf, '-');
-			strbuf_add(&buf, line.buf + 1, line.len - 1);
-		} else if (line.buf[0] == '#') {
+			strbuf_addstr(&buf, line + 1);
+		} else if (line[0] == '#') {
 			strbuf_addch(&buf, ' ');
-			strbuf_add(&buf, line.buf + 1, line.len - 1);
+			strbuf_addstr(&buf, line + 1);
 		} else {
 			strbuf_addch(&buf, ' ');
-			strbuf_addbuf(&buf, &line);
+			strbuf_addstr(&buf, line);
 		}
 
 		strbuf_addch(&buf, '\n');
 		util->diffsize++;
 	}
-	fclose(in);
-	strbuf_release(&line);
+	strbuf_release(&contents);
 
 	if (util)
 		string_list_append(list, buf.buf)->util = util;
 	strbuf_release(&buf);
+	free(current_filename);
 
 	if (finish_command(&cp))
 		return -1;
@@ -148,7 +198,7 @@ static int read_patches(const char *range, struct string_list *list)
 }
 
 static int patch_util_cmp(const void *dummy, const struct patch_util *a,
-		     const struct patch_util *b, const char *keydata)
+			  const struct patch_util *b, const char *keydata)
 {
 	return strcmp(a->diff, keydata ? keydata : b->diff);
 }
@@ -354,8 +404,9 @@ static void output_pair_header(struct diff_options *diffopt,
 	fwrite(buf->buf, buf->len, 1, diffopt->file);
 }
 
-static struct userdiff_driver no_func_name = {
-	.funcname = { "$^", 0 }
+static struct userdiff_driver section_headers = {
+	.funcname = { "^ ## (.*) ##$\n"
+		      "^.?@@ (.*)$", REG_EXTENDED }
 };
 
 static struct diff_filespec *get_filespec(const char *name, const char *p)
@@ -367,13 +418,13 @@ static struct diff_filespec *get_filespec(const char *name, const char *p)
 	spec->size = strlen(p);
 	spec->should_munmap = 0;
 	spec->is_stdin = 1;
-	spec->driver = &no_func_name;
+	spec->driver = &section_headers;
 
 	return spec;
 }
 
 static void patch_diff(const char *a, const char *b,
-			      struct diff_options *diffopt)
+		       struct diff_options *diffopt)
 {
 	diff_queue(&diff_queued_diff,
 		   get_filespec("a", a), get_filespec("b", b));
@@ -469,6 +520,7 @@ int show_range_diff(const char *range1, const char *range2,
 			opts.output_format = DIFF_FORMAT_PATCH;
 		opts.flags.suppress_diff_headers = 1;
 		opts.flags.dual_color_diffed_diffs = dual_color;
+		opts.flags.suppress_hunk_header_line_count = 1;
 		opts.output_prefix = output_prefix_cb;
 		strbuf_addstr(&indent, "    ");
 		opts.output_prefix_data = &indent;

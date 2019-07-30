@@ -78,7 +78,7 @@ static void *preload_thread(void *_data)
 		if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY|CE_MATCH_IGNORE_FSMONITOR))
 			continue;
 		ce_mark_uptodate(ce);
-		mark_fsmonitor_valid(ce);
+		mark_fsmonitor_valid(index, ce);
 	} while (--nr > 0);
 	if (p->progress) {
 		struct progress_data *pd = p->progress;

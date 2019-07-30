@@ -199,7 +199,7 @@ test_expect_success 'GIT_SMART_HTTP can disable smart http' '
 
 test_expect_success 'invalid Content-Type rejected' '
 	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual &&
-	grep "not valid:" actual
+	test_i18ngrep "not valid:" actual
 '
 
 test_expect_success 'create namespaced refs' '
@@ -301,11 +301,10 @@ test_expect_success CMDLINE_LIMIT \
 	)
 '
 
-test_expect_success 'large fetch-pack requests can be split across POSTs' '
+test_expect_success 'large fetch-pack requests can be sent using chunked encoding' '
 	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
-	grep "^=> Send header: POST" err >posts &&
-	test_line_count = 2 posts
+	grep "^=> Send header: Transfer-Encoding: chunked" err
 '
 
 test_expect_success 'test allowreachablesha1inwant' '
@@ -466,7 +465,7 @@ test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
 
 test_expect_success 'server-side error detected' '
 	test_must_fail git clone $HTTPD_URL/error_smart/repo.git 2>actual &&
-	grep "server-side error" actual
+	test_i18ngrep "server-side error" actual
 '
 
 test_done

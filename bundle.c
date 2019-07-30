@@ -142,6 +142,9 @@ int verify_bundle(struct repository *r,
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
+	if (!r || !r->objects || !r->objects->odb)
+		return error(_("need a repository to verify a bundle"));
+
 	repo_init_revisions(r, &revs, NULL);
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;

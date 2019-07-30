@@ -324,30 +324,20 @@ static const double __ac_HASH_UPPER = 0.77;
 		code;												\
 	} }
 
-#define __kh_oid_cmp(a, b) (hashcmp(a, b) == 0)
-
-KHASH_INIT(sha1, const unsigned char *, void *, 1, sha1hash, __kh_oid_cmp)
-typedef kh_sha1_t khash_sha1;
-
-KHASH_INIT(sha1_pos, const unsigned char *, int, 1, sha1hash, __kh_oid_cmp)
-typedef kh_sha1_pos_t khash_sha1_pos;
-
-static inline unsigned int oid_hash(struct object_id oid)
+static inline unsigned int oidhash_by_value(struct object_id oid)
 {
-	return sha1hash(oid.hash);
+	return oidhash(&oid);
 }
 
-static inline int oid_equal(struct object_id a, struct object_id b)
+static inline int oideq_by_value(struct object_id a, struct object_id b)
 {
 	return oideq(&a, &b);
 }
 
-KHASH_INIT(oid, struct object_id, int, 0, oid_hash, oid_equal)
+KHASH_INIT(oid_set, struct object_id, int, 0, oidhash_by_value, oideq_by_value)
 
-KHASH_INIT(oid_map, struct object_id, void *, 1, oid_hash, oid_equal)
-typedef kh_oid_t khash_oid_map;
+KHASH_INIT(oid_map, struct object_id, void *, 1, oidhash_by_value, oideq_by_value)
 
-KHASH_INIT(oid_pos, struct object_id, int, 1, oid_hash, oid_equal)
-typedef kh_oid_pos_t khash_oid_pos;
+KHASH_INIT(oid_pos, struct object_id, int, 1, oidhash_by_value, oideq_by_value)
 
 #endif /* __AC_KHASH_H */

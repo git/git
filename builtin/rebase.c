@@ -508,7 +508,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	if (argc == 1)
 		usage_with_options(builtin_rebase_interactive_usage, options);
 
-	argc = parse_options(argc, argv, NULL, options,
+	argc = parse_options(argc, argv, prefix, options,
 			builtin_rebase_interactive_usage, PARSE_OPT_KEEP_ARGV0);
 
 	if (!is_null_oid(&squash_onto))
@@ -738,20 +738,30 @@ static int finish_rebase(struct rebase_options *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
 	const char *argv_gc_auto[] = { "gc", "--auto", NULL };
+	int ret = 0;
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 	apply_autostash(opts);
-	close_all_packs(the_repository->objects);
+	close_object_store(the_repository->objects);
 	/*
 	 * We ignore errors in 'gc --auto', since the
 	 * user should see them.
 	 */
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
-	strbuf_addstr(&dir, opts->state_dir);
-	remove_dir_recursively(&dir, 0);
-	strbuf_release(&dir);
+	if (opts->type == REBASE_INTERACTIVE) {
+		struct replay_opts replay = REPLAY_OPTS_INIT;
 
-	return 0;
+		replay.action = REPLAY_INTERACTIVE_REBASE;
+		ret = sequencer_remove_state(&replay);
+	} else {
+		strbuf_addstr(&dir, opts->state_dir);
+		if (remove_dir_recursively(&dir, 0))
+			ret = error(_("could not remove '%s'"),
+				    opts->state_dir);
+		strbuf_release(&dir);
+	}
+
+	return ret;
 }
 
 static struct commit *peel_committish(const char *name)
@@ -840,13 +850,13 @@ static int reset_head(struct object_id *oid, const char *action,
 		goto leave_reset_head;
 	}
 
-	if (!reset_hard && !fill_tree_descriptor(&desc[nr++], &head_oid)) {
+	if (!reset_hard && !fill_tree_descriptor(the_repository, &desc[nr++], &head_oid)) {
 		ret = error(_("failed to find tree of %s"),
 			    oid_to_hex(&head_oid));
 		goto leave_reset_head;
 	}
 
-	if (!fill_tree_descriptor(&desc[nr++], oid)) {
+	if (!fill_tree_descriptor(the_repository, &desc[nr++], oid)) {
 		ret = error(_("failed to find tree of %s"), oid_to_hex(oid));
 		goto leave_reset_head;
 	}
@@ -1153,10 +1163,6 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	}
 
 	switch (opts->type) {
-	case REBASE_AM:
-		backend = "git-rebase--am";
-		backend_func = "git_rebase__am";
-		break;
 	case REBASE_PRESERVE_MERGES:
 		backend = "git-rebase--preserve-merges";
 		backend_func = "git_rebase__preserve_merges";
@@ -1167,8 +1173,7 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	}
 
 	strbuf_addf(&script_snippet,
-		    ". git-sh-setup && . git-rebase--common &&"
-		    " . %s && %s", backend, backend_func);
+		    ". git-sh-setup && . %s && %s", backend, backend_func);
 	argv[0] = script_snippet.buf;
 
 	status = run_command_v_opt(argv, RUN_USING_SHELL);
@@ -1384,6 +1389,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
 	struct object_id squash_onto;
 	char *squash_onto_name = NULL;
+	int reschedule_failed_exec = -1;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -1476,7 +1482,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "root", &options.root,
 			 N_("rebase all reachable commits up to the root(s)")),
 		OPT_BOOL(0, "reschedule-failed-exec",
-			 &options.reschedule_failed_exec,
+			 &reschedule_failed_exec,
 			 N_("automatically re-schedule any `exec` that fails")),
 		OPT_END(),
 	};
@@ -1485,10 +1491,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
-
-	prefix = setup_git_directory();
-	trace_repo_setup(prefix);
-	setup_work_tree();
 
 	options.allow_empty_message = 1;
 	git_config(rebase_config, &options);
@@ -1605,7 +1607,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (reset_head(NULL, "reset", NULL, RESET_HEAD_HARD,
 			       NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
-		remove_branch_state(the_repository);
+		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
 			exit(1);
 		goto run_rebase;
@@ -1625,16 +1627,24 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
-		remove_branch_state(the_repository);
-		ret = finish_rebase(&options);
+		remove_branch_state(the_repository, 0);
+		ret = !!finish_rebase(&options);
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, options.state_dir);
-		ret = !!remove_dir_recursively(&buf, 0);
-		if (ret)
-			die(_("could not remove '%s'"), options.state_dir);
+		if (options.type == REBASE_INTERACTIVE) {
+			struct replay_opts replay = REPLAY_OPTS_INIT;
+
+			replay.action = REPLAY_INTERACTIVE_REBASE;
+			ret = !!sequencer_remove_state(&replay);
+		} else {
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, options.state_dir);
+			ret = !!remove_dir_recursively(&buf, 0);
+			if (ret)
+				error(_("could not remove '%s'"),
+				       options.state_dir);
+		}
 		goto cleanup;
 	}
 	case ACTION_EDIT_TODO:
@@ -1783,8 +1793,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
-	if (options.reschedule_failed_exec && !is_interactive(&options))
-		die(_("%s requires an interactive rebase"), "--reschedule-failed-exec");
+	if (reschedule_failed_exec > 0 && !is_interactive(&options))
+		die(_("--reschedule-failed-exec requires "
+		      "--exec or --interactive"));
+	if (reschedule_failed_exec >= 0)
+		options.reschedule_failed_exec = reschedule_failed_exec;
 
 	if (options.git_am_opts.argc) {
 		/* all am options except -q are compatible only with --am */
@@ -2109,7 +2122,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	strbuf_addf(&msg, "%s: checkout %s",
 		    getenv(GIT_REFLOG_ACTION_ENVIRONMENT), options.onto_name);
 	if (reset_head(&options.onto->object.oid, "checkout", NULL,
-		       RESET_HEAD_DETACH | RESET_ORIG_HEAD | 
+		       RESET_HEAD_DETACH | RESET_ORIG_HEAD |
 		       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
 		       NULL, msg.buf))
 		die(_("Could not detach HEAD"));
@@ -2146,6 +2159,7 @@ run_rebase:
 	ret = !!run_specific_rebase(&options, action);
 
 cleanup:
+	strbuf_release(&buf);
 	strbuf_release(&revisions);
 	free(options.head_name);
 	free(options.gpg_sign_opt);

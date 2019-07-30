@@ -445,6 +445,14 @@ test_expect_success 'verify --[no-]ahead-behind with V2 format' '
 		EOF
 
 		git status --ahead-behind --porcelain=v2 --branch --untracked-files=all >actual &&
+		test_cmp expect actual &&
+
+		# Confirm that "status.aheadbehind" DOES NOT work on V2 format.
+		git -c status.aheadbehind=false status --porcelain=v2 --branch --untracked-files=all >actual &&
+		test_cmp expect actual &&
+
+		# Confirm that "status.aheadbehind" DOES NOT work on V2 format.
+		git -c status.aheadbehind=true status --porcelain=v2 --branch --untracked-files=all >actual &&
 		test_cmp expect actual
 	)
 '

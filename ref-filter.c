@@ -20,6 +20,9 @@
 #include "commit-slab.h"
 #include "commit-graph.h"
 #include "commit-reach.h"
+#include "worktree.h"
+#include "hashmap.h"
+#include "argv-array.h"
 
 static struct ref_msg {
 	const char *gone;
@@ -74,6 +77,27 @@ static struct expand_data {
 
 	struct object_info info;
 } oi, oi_deref;
+
+struct ref_to_worktree_entry {
+	struct hashmap_entry ent; /* must be the first member! */
+	struct worktree *wt; /* key is wt->head_ref */
+};
+
+static int ref_to_worktree_map_cmpfnc(const void *unused_lookupdata,
+				      const void *existing_hashmap_entry_to_test,
+				      const void *key,
+				      const void *keydata_aka_refname)
+{
+	const struct ref_to_worktree_entry *e = existing_hashmap_entry_to_test;
+	const struct ref_to_worktree_entry *k = key;
+	return strcmp(e->wt->head_ref,
+		keydata_aka_refname ? keydata_aka_refname : k->wt->head_ref);
+}
+
+static struct ref_to_worktree_map {
+	struct hashmap map;
+	struct worktree **worktrees;
+} ref_to_worktree_map;
 
 /*
  * An atom is a valid field atom listed below, possibly prefixed with
@@ -480,6 +504,7 @@ static struct {
 	{ "flag", SOURCE_NONE },
 	{ "HEAD", SOURCE_NONE, FIELD_STR, head_atom_parser },
 	{ "color", SOURCE_NONE, FIELD_STR, color_atom_parser },
+	{ "worktreepath", SOURCE_NONE },
 	{ "align", SOURCE_NONE, FIELD_STR, align_atom_parser },
 	{ "end", SOURCE_NONE },
 	{ "if", SOURCE_NONE, FIELD_STR, if_atom_parser },
@@ -1447,35 +1472,35 @@ char *get_head_description(void)
 	struct wt_status_state state;
 	memset(&state, 0, sizeof(state));
 	wt_status_get_state(the_repository, &state, 1);
+
+	/*
+	 * The ( character must be hard-coded and not part of a localizable
+	 * string, since the description is used as a sort key and compared
+	 * with ref names.
+	 */
+	strbuf_addch(&desc, '(');
 	if (state.rebase_in_progress ||
 	    state.rebase_interactive_in_progress) {
 		if (state.branch)
-			strbuf_addf(&desc, _("(no branch, rebasing %s)"),
+			strbuf_addf(&desc, _("no branch, rebasing %s"),
 				    state.branch);
 		else
-			strbuf_addf(&desc, _("(no branch, rebasing detached HEAD %s)"),
+			strbuf_addf(&desc, _("no branch, rebasing detached HEAD %s"),
 				    state.detached_from);
 	} else if (state.bisect_in_progress)
-		strbuf_addf(&desc, _("(no branch, bisect started on %s)"),
+		strbuf_addf(&desc, _("no branch, bisect started on %s"),
 			    state.branch);
 	else if (state.detached_from) {
 		if (state.detached_at)
-			/*
-			 * TRANSLATORS: make sure this matches "HEAD
-			 * detached at " in wt-status.c
-			 */
-			strbuf_addf(&desc, _("(HEAD detached at %s)"),
-				state.detached_from);
+			strbuf_addstr(&desc, HEAD_DETACHED_AT);
 		else
-			/*
-			 * TRANSLATORS: make sure this matches "HEAD
-			 * detached from " in wt-status.c
-			 */
-			strbuf_addf(&desc, _("(HEAD detached from %s)"),
-				state.detached_from);
+			strbuf_addstr(&desc, HEAD_DETACHED_FROM);
+		strbuf_addstr(&desc, state.detached_from);
 	}
 	else
-		strbuf_addstr(&desc, _("(no branch)"));
+		strbuf_addstr(&desc, _("no branch"));
+	strbuf_addch(&desc, ')');
+
 	free(state.branch);
 	free(state.onto);
 	free(state.detached_from);
@@ -1531,6 +1556,48 @@ static int get_object(struct ref_array_item *ref, int deref, struct object **obj
 	return 0;
 }
 
+static void populate_worktree_map(struct hashmap *map, struct worktree **worktrees)
+{
+	int i;
+
+	for (i = 0; worktrees[i]; i++) {
+		if (worktrees[i]->head_ref) {
+			struct ref_to_worktree_entry *entry;
+			entry = xmalloc(sizeof(*entry));
+			entry->wt = worktrees[i];
+			hashmap_entry_init(entry, strhash(worktrees[i]->head_ref));
+
+			hashmap_add(map, entry);
+		}
+	}
+}
+
+static void lazy_init_worktree_map(void)
+{
+	if (ref_to_worktree_map.worktrees)
+		return;
+
+	ref_to_worktree_map.worktrees = get_worktrees(0);
+	hashmap_init(&(ref_to_worktree_map.map), ref_to_worktree_map_cmpfnc, NULL, 0);
+	populate_worktree_map(&(ref_to_worktree_map.map), ref_to_worktree_map.worktrees);
+}
+
+static char *get_worktree_path(const struct used_atom *atom, const struct ref_array_item *ref)
+{
+	struct hashmap_entry entry;
+	struct ref_to_worktree_entry *lookup_result;
+
+	lazy_init_worktree_map();
+
+	hashmap_entry_init(&entry, strhash(ref->refname));
+	lookup_result = hashmap_get(&(ref_to_worktree_map.map), &entry, ref->refname);
+
+	if (lookup_result)
+		return xstrdup(lookup_result->wt->path);
+	else
+		return xstrdup("");
+}
+
 /*
  * Parse the object referred by ref, and grab needed value.
  */
@@ -1568,6 +1635,13 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 
 		if (starts_with(name, "refname"))
 			refname = get_refname(atom, ref);
+		else if (!strcmp(name, "worktreepath")) {
+			if (ref->kind == FILTER_REFS_BRANCHES)
+				v->s = get_worktree_path(atom, ref);
+			else
+				v->s = xstrdup("");
+			continue;
+		}
 		else if (starts_with(name, "symref"))
 			refname = get_symref(atom, ref);
 		else if (starts_with(name, "upstream")) {
@@ -1790,21 +1864,62 @@ static int filter_pattern_match(struct ref_filter *filter, const char *refname)
 	return match_pattern(filter, refname);
 }
 
-/*
- * Find the longest prefix of pattern we can pass to
- * `for_each_fullref_in()`, namely the part of pattern preceding the
- * first glob character. (Note that `for_each_fullref_in()` is
- * perfectly happy working with a prefix that doesn't end at a
- * pathname component boundary.)
- */
-static void find_longest_prefix(struct strbuf *out, const char *pattern)
+static int qsort_strcmp(const void *va, const void *vb)
 {
-	const char *p;
+	const char *a = *(const char **)va;
+	const char *b = *(const char **)vb;
 
-	for (p = pattern; *p && !is_glob_special(*p); p++)
-		;
+	return strcmp(a, b);
+}
 
-	strbuf_add(out, pattern, p - pattern);
+static void find_longest_prefixes_1(struct string_list *out,
+				  struct strbuf *prefix,
+				  const char **patterns, size_t nr)
+{
+	size_t i;
+
+	for (i = 0; i < nr; i++) {
+		char c = patterns[i][prefix->len];
+		if (!c || is_glob_special(c)) {
+			string_list_append(out, prefix->buf);
+			return;
+		}
+	}
+
+	i = 0;
+	while (i < nr) {
+		size_t end;
+
+		/*
+		* Set "end" to the index of the element _after_ the last one
+		* in our group.
+		*/
+		for (end = i + 1; end < nr; end++) {
+			if (patterns[i][prefix->len] != patterns[end][prefix->len])
+				break;
+		}
+
+		strbuf_addch(prefix, patterns[i][prefix->len]);
+		find_longest_prefixes_1(out, prefix, patterns + i, end - i);
+		strbuf_setlen(prefix, prefix->len - 1);
+
+		i = end;
+	}
+}
+
+static void find_longest_prefixes(struct string_list *out,
+				  const char **patterns)
+{
+	struct argv_array sorted = ARGV_ARRAY_INIT;
+	struct strbuf prefix = STRBUF_INIT;
+
+	argv_array_pushv(&sorted, patterns);
+	QSORT(sorted.argv, sorted.argc, qsort_strcmp);
+
+	find_longest_prefixes_1(out, &prefix, sorted.argv, sorted.argc);
+
+	argv_array_clear(&sorted);
+	strbuf_release(&prefix);
 }
 
 /*
@@ -1817,7 +1932,8 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       void *cb_data,
 				       int broken)
 {
-	struct strbuf prefix = STRBUF_INIT;
+	struct string_list prefixes = STRING_LIST_INIT_DUP;
+	struct string_list_item *prefix;
 	int ret;
 
 	if (!filter->match_as_path) {
@@ -1843,21 +1959,15 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		return for_each_fullref_in("", cb, cb_data, broken);
 	}
 
-	if (filter->name_patterns[1]) {
-		/*
-		 * multiple patterns; in theory this could still work as long
-		 * as the patterns are disjoint. We'd just make multiple calls
-		 * to for_each_ref(). But if they're not disjoint, we'd end up
-		 * reporting the same ref multiple times. So let's punt on that
-		 * for now.
-		 */
-		return for_each_fullref_in("", cb, cb_data, broken);
+	find_longest_prefixes(&prefixes, filter->name_patterns);
+
+	for_each_string_list_item(prefix, &prefixes) {
+		ret = for_each_fullref_in(prefix->string, cb, cb_data, broken);
+		if (ret)
+			break;
 	}
 
-	find_longest_prefix(&prefix, filter->name_patterns[0]);
-
-	ret = for_each_fullref_in(prefix.buf, cb, cb_data, broken);
-	strbuf_release(&prefix);
+	string_list_clear(&prefixes, 0);
 	return ret;
 }
 
@@ -2032,7 +2142,9 @@ static void free_array_item(struct ref_array_item *item)
 {
 	free((char *)item->symref);
 	if (item->value) {
-		free((char *)item->value->s);
+		int i;
+		for (i = 0; i < used_atom_cnt; i++)
+			free((char *)item->value[i].s);
 		free(item->value);
 	}
 	free(item);
@@ -2043,14 +2155,21 @@ void ref_array_clear(struct ref_array *array)
 {
 	int i;
 
-	for (i = 0; i < used_atom_cnt; i++)
-		free((char *)used_atom[i].name);
-	FREE_AND_NULL(used_atom);
-	used_atom_cnt = 0;
 	for (i = 0; i < array->nr; i++)
 		free_array_item(array->items[i]);
 	FREE_AND_NULL(array->items);
 	array->nr = array->alloc = 0;
+
+	for (i = 0; i < used_atom_cnt; i++)
+		free((char *)used_atom[i].name);
+	FREE_AND_NULL(used_atom);
+	used_atom_cnt = 0;
+
+	if (ref_to_worktree_map.worktrees) {
+		hashmap_free(&(ref_to_worktree_map.map), 1);
+		free_worktrees(ref_to_worktree_map.worktrees);
+		ref_to_worktree_map.worktrees = NULL;
+	}
 }
 
 static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata)

@@ -397,7 +397,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 	struct name_entry entry;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
-	buf = fill_tree_descriptor(&desc, &subtree->val_oid);
+	buf = fill_tree_descriptor(the_repository, &desc, &subtree->val_oid);
 	if (!buf)
 		die("Could not read %s for notes-index",
 		     oid_to_hex(&subtree->val_oid));
@@ -1015,7 +1015,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 		return;
 	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, &object_oid))
 		die("Cannot use notes ref %s", notes_ref);
-	if (get_tree_entry(&object_oid, "", &oid, &mode))
+	if (get_tree_entry(the_repository, &object_oid, "", &oid, &mode))
 		die("Failed to read notes tree referenced by %s (%s)",
 		    notes_ref, oid_to_hex(&object_oid));
 

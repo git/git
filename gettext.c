@@ -12,7 +12,25 @@
 #ifndef NO_GETTEXT
 #	include <locale.h>
 #	include <libintl.h>
-#	ifdef HAVE_LIBCHARSET_H
+#	ifdef GIT_WINDOWS_NATIVE
+
+static const char *locale_charset(void)
+{
+	const char *env = getenv("LC_ALL"), *dot;
+
+	if (!env || !*env)
+		env = getenv("LC_CTYPE");
+	if (!env || !*env)
+		env = getenv("LANG");
+
+	if (!env)
+		return "UTF-8";
+
+	dot = strchr(env, '.');
+	return !dot ? env : dot + 1;
+}
+
+#	elif defined HAVE_LIBCHARSET_H
 #		include <libcharset.h>
 #	else
 #		include <langinfo.h>
@@ -50,10 +68,8 @@ const char *get_preferred_languages(void)
 int use_gettext_poison(void)
 {
 	static int poison_requested = -1;
-	if (poison_requested == -1) {
-		const char *v = getenv("GIT_TEST_GETTEXT_POISON");
-		poison_requested = v && strlen(v) ? 1 : 0;
-	}
+	if (poison_requested == -1)
+		poison_requested = git_env_bool("GIT_TEST_GETTEXT_POISON", 0);
 	return poison_requested;
 }
 

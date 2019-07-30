@@ -559,7 +559,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 		pcre2_jit_stack_assign(p->pcre2_match_context, NULL, p->pcre2_jit_stack);
 	} else if (p->pcre2_jit_on != 0) {
 		BUG("The pcre2_jit_on variable should be 0 or 1, not %d",
-		    p->pcre1_jit_on);
+		    p->pcre2_jit_on);
 	}
 }
 
@@ -1779,6 +1779,10 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 	struct userdiff_driver *textconv = NULL;
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
 	xdemitconf_t xecfg;
+
+	if (!opt->status_only && gs->name == NULL)
+		BUG("grep call which could print a name requires "
+		    "grep_source.name be non-NULL");
 
 	if (!opt->output)
 		opt->output = std_output;

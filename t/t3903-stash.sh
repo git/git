@@ -708,6 +708,24 @@ test_expect_success 'invalid ref of the form "n", n >= N' '
 	git stash drop
 '
 
+test_expect_success 'valid ref of the form "n", n < N' '
+	git stash clear &&
+	echo bar5 >file &&
+	echo bar6 >file2 &&
+	git add file2 &&
+	git stash &&
+	git stash show 0 &&
+	git stash branch tmp 0 &&
+	git checkout master &&
+	git stash &&
+	git stash apply 0 &&
+	git reset --hard &&
+	git stash pop 0 &&
+	git stash &&
+	git stash drop 0 &&
+	test_must_fail git stash drop
+'
+
 test_expect_success 'branch: do not drop the stash if the branch exists' '
 	git stash clear &&
 	echo foo >file &&
@@ -1214,6 +1232,13 @@ test_expect_success 'stash works when user.name and user.email are not set' '
 		git show -s --format="%an <%ae>" refs/stash >actual &&
 		test_cmp expect actual
 	)
+'
+
+test_expect_success 'stash --keep-index with file deleted in index does not resurrect it on disk' '
+	test_commit to-remove to-remove &&
+	git rm to-remove &&
+	git stash --keep-index &&
+	test_path_is_missing to-remove
 '
 
 test_done

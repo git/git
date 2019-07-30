@@ -230,7 +230,7 @@ $ git branch -r
   staging/master
   staging/staging-linus
   staging/staging-next
-$ git checkout -b staging staging/master
+$ git switch -c staging staging/master
 ...
 ------------
 

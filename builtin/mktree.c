@@ -67,7 +67,7 @@ static const char *mktree_usage[] = {
 	NULL
 };
 
-static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_missing)
+static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 {
 	char *ptr, *ntr;
 	const char *p;
@@ -172,7 +172,7 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 					break;
 				die("input format error: (blank line only valid in batch mode)");
 			}
-			mktree_line(sb.buf, sb.len, nul_term_line, allow_missing);
+			mktree_line(sb.buf, nul_term_line, allow_missing);
 		}
 		if (is_batch_mode && got_eof && used < 1) {
 			/*

@@ -41,7 +41,7 @@ following commands.
 
   * linkgit:git-log[1] to see what happened.
 
-  * linkgit:git-checkout[1] and linkgit:git-branch[1] to switch
+  * linkgit:git-switch[1] and linkgit:git-branch[1] to switch
     branches.
 
   * linkgit:git-add[1] to manage the index file.
@@ -51,8 +51,7 @@ following commands.
 
   * linkgit:git-commit[1] to advance the current branch.
 
-  * linkgit:git-reset[1] and linkgit:git-checkout[1] (with
-    pathname parameters) to undo changes.
+  * linkgit:git-restore[1] to undo changes.
 
   * linkgit:git-merge[1] to merge between local branches.
 
@@ -80,9 +79,9 @@ $ git tag v2.43 <2>
 Create a topic branch and develop.::
 +
 ------------
-$ git checkout -b alsa-audio <1>
+$ git switch -c alsa-audio <1>
 $ edit/compile/test
-$ git checkout -- curses/ux_audio_oss.c <2>
+$ git restore curses/ux_audio_oss.c <2>
 $ git add curses/ux_audio_alsa.c <3>
 $ edit/compile/test
 $ git diff HEAD <4>
@@ -90,7 +89,7 @@ $ git commit -a -s <5>
 $ edit/compile/test
 $ git diff HEAD^ <6>
 $ git commit -a --amend <7>
-$ git checkout master <8>
+$ git switch master <8>
 $ git merge alsa-audio <9>
 $ git log --since='3 days ago' <10>
 $ git log v2.43.. curses/ <11>
@@ -148,11 +147,11 @@ Clone the upstream and work on it.  Feed changes to upstream.::
 ------------
 $ git clone git://git.kernel.org/pub/scm/.../torvalds/linux-2.6 my2.6
 $ cd my2.6
-$ git checkout -b mine master <1>
+$ git switch -c mine master <1>
 $ edit/compile/test; git commit -a -s <2>
 $ git format-patch master <3>
 $ git send-email --to="person <email@example.com>" 00*.patch <4>
-$ git checkout master <5>
+$ git switch master <5>
 $ git pull <6>
 $ git log -p ORIG_HEAD.. arch/i386 include/asm-i386 <7>
 $ git ls-remote --heads http://git.kernel.org/.../jgarzik/libata-dev.git <8>
@@ -194,7 +193,7 @@ satellite$ edit/compile/test/commit
 satellite$ git push origin <4>
 
 mothership$ cd frotz
-mothership$ git checkout master
+mothership$ git switch master
 mothership$ git merge satellite/master <5>
 ------------
 +
@@ -216,7 +215,7 @@ machine into the master branch.
 Branch off of a specific tag.::
 +
 ------------
-$ git checkout -b private2.6.14 v2.6.14 <1>
+$ git switch -c private2.6.14 v2.6.14 <1>
 $ edit/compile/test; git commit -a
 $ git checkout master
 $ git cherry-pick v2.6.14..private2.6.14 <2>
@@ -274,14 +273,14 @@ $ mailx <3>
 & s 2 3 4 5 ./+to-apply
 & s 7 8 ./+hold-linus
 & q
-$ git checkout -b topic/one master
+$ git switch -c topic/one master
 $ git am -3 -i -s ./+to-apply <4>
 $ compile/test
-$ git checkout -b hold/linus && git am -3 -i -s ./+hold-linus <5>
-$ git checkout topic/one && git rebase master <6>
-$ git checkout pu && git reset --hard next <7>
+$ git switch -c hold/linus && git am -3 -i -s ./+hold-linus <5>
+$ git switch topic/one && git rebase master <6>
+$ git switch -C pu next <7>
 $ git merge topic/one topic/two && git merge hold/linus <8>
-$ git checkout maint
+$ git switch maint
 $ git cherry-pick master~4 <9>
 $ compile/test
 $ git tag -s -m "GIT 0.99.9x" v0.99.9x <10>

@@ -19,3 +19,19 @@ blame.showEmail::
 blame.showRoot::
 	Do not treat root commits as boundaries in linkgit:git-blame[1].
 	This option defaults to false.
+
+blame.ignoreRevsFile::
+	Ignore revisions listed in the file, one unabbreviated object name per
+	line, in linkgit:git-blame[1].  Whitespace and comments beginning with
+	`#` are ignored.  This option may be repeated multiple times.  Empty
+	file names will reset the list of ignored revisions.  This option will
+	be handled before the command line option `--ignore-revs-file`.
+
+blame.markUnblamables::
+	Mark lines that were changed by an ignored revision that we could not
+	attribute to another commit with a '*' in the output of
+	linkgit:git-blame[1].
+
+blame.markIgnoredLines::
+	Mark lines that were changed by an ignored revision that we attributed to
+	another commit with a '?' in the output of linkgit:git-blame[1].

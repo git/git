@@ -116,9 +116,9 @@ struct object *get_indexed_object(unsigned int);
  * half-initialised objects, the caller is expected to initialize them
  * by calling parse_object() on them.
  */
-struct object *lookup_object(struct repository *r, const unsigned char *sha1);
+struct object *lookup_object(struct repository *r, const struct object_id *oid);
 
-void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
+void *create_object(struct repository *r, const struct object_id *oid, void *obj);
 
 void *object_as_type(struct repository *r, struct object *obj, enum object_type type, int quiet);
 
@@ -143,7 +143,7 @@ struct object *parse_object_or_die(const struct object_id *oid, const char *name
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
 
 /** Returns the object, with potentially excess memory allocated. **/
-struct object *lookup_unknown_object(const unsigned  char *sha1);
+struct object *lookup_unknown_object(const struct object_id *oid);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);

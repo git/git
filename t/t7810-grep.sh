@@ -412,7 +412,7 @@ do
 		test_cmp expected actual
 	'
 
-	test_expect_success !PCRE "grep $L with grep.patterntype=perl errors without PCRE" '
+	test_expect_success !FAIL_PREREQS,!PCRE "grep $L with grep.patterntype=perl errors without PCRE" '
 		test_must_fail git -c grep.patterntype=perl grep "foo.*bar"
 	'
 
@@ -1234,7 +1234,7 @@ test_expect_success PCRE 'grep --perl-regexp pattern' '
 	test_cmp expected actual
 '
 
-test_expect_success !PCRE 'grep --perl-regexp pattern errors without PCRE' '
+test_expect_success !FAIL_PREREQS,!PCRE 'grep --perl-regexp pattern errors without PCRE' '
 	test_must_fail git grep --perl-regexp "foo.*bar"
 '
 
@@ -1249,7 +1249,7 @@ test_expect_success LIBPCRE2 "grep -P with (*NO_JIT) doesn't error out" '
 
 '
 
-test_expect_success !PCRE 'grep -P pattern errors without PCRE' '
+test_expect_success !FAIL_PREREQS,!PCRE 'grep -P pattern errors without PCRE' '
 	test_must_fail git grep -P "foo.*bar"
 '
 

@@ -233,6 +233,129 @@ test_merge () {
 	git tag "$1"
 }
 
+# Efficiently create <nr> commits, each with a unique number (from 1 to <nr>
+# by default) in the commit message.
+#
+# Usage: test_commit_bulk [options] <nr>
+#   -C <dir>:
+#	Run all git commands in directory <dir>
+#   --ref=<n>:
+#	ref on which to create commits (default: HEAD)
+#   --start=<n>:
+#	number commit messages from <n> (default: 1)
+#   --message=<msg>:
+#	use <msg> as the commit mesasge (default: "commit %s")
+#   --filename=<fn>:
+#	modify <fn> in each commit (default: %s.t)
+#   --contents=<string>:
+#	place <string> in each file (default: "content %s")
+#   --id=<string>:
+#	shorthand to use <string> and %s in message, filename, and contents
+#
+# The message, filename, and contents strings are evaluated by printf, with the
+# first "%s" replaced by the current commit number. So you can do:
+#
+#   test_commit_bulk --filename=file --contents="modification %s"
+#
+# to have every commit touch the same file, but with unique content.
+#
+test_commit_bulk () {
+	tmpfile=.bulk-commit.input
+	indir=.
+	ref=HEAD
+	n=1
+	message='commit %s'
+	filename='%s.t'
+	contents='content %s'
+	while test $# -gt 0
+	do
+		case "$1" in
+		-C)
+			indir=$2
+			shift
+			;;
+		--ref=*)
+			ref=${1#--*=}
+			;;
+		--start=*)
+			n=${1#--*=}
+			;;
+		--message=*)
+			message=${1#--*=}
+			;;
+		--filename=*)
+			filename=${1#--*=}
+			;;
+		--contents=*)
+			contents=${1#--*=}
+			;;
+		--id=*)
+			message="${1#--*=} %s"
+			filename="${1#--*=}-%s.t"
+			contents="${1#--*=} %s"
+			;;
+		-*)
+			BUG "invalid test_commit_bulk option: $1"
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+	total=$1
+
+	add_from=
+	if git -C "$indir" rev-parse --verify "$ref"
+	then
+		add_from=t
+	fi
+
+	while test "$total" -gt 0
+	do
+		test_tick &&
+		echo "commit $ref"
+		printf 'author %s <%s> %s\n' \
+			"$GIT_AUTHOR_NAME" \
+			"$GIT_AUTHOR_EMAIL" \
+			"$GIT_AUTHOR_DATE"
+		printf 'committer %s <%s> %s\n' \
+			"$GIT_COMMITTER_NAME" \
+			"$GIT_COMMITTER_EMAIL" \
+			"$GIT_COMMITTER_DATE"
+		echo "data <<EOF"
+		printf "$message\n" $n
+		echo "EOF"
+		if test -n "$add_from"
+		then
+			echo "from $ref^0"
+			add_from=
+		fi
+		printf "M 644 inline $filename\n" $n
+		echo "data <<EOF"
+		printf "$contents\n" $n
+		echo "EOF"
+		echo
+		n=$((n + 1))
+		total=$((total - 1))
+	done >"$tmpfile"
+
+	git -C "$indir" \
+	    -c fastimport.unpacklimit=0 \
+	    fast-import <"$tmpfile" || return 1
+
+	# This will be left in place on failure, which may aid debugging.
+	rm -f "$tmpfile"
+
+	# If we updated HEAD, then be nice and update the index and working
+	# tree, too.
+	if test "$ref" = "HEAD"
+	then
+		git -C "$indir" checkout -f HEAD || return 1
+	fi
+
+}
+
 # This function helps systems where core.filemode=false is set.
 # Use it instead of plain 'chmod +x' to set or unset the executable bit
 # of a file in the working directory and add it to the index.
@@ -309,6 +432,26 @@ test_unset_prereq () {
 }
 
 test_set_prereq () {
+	if test -n "$GIT_TEST_FAIL_PREREQS_INTERNAL"
+	then
+		case "$1" in
+		# The "!" case is handled below with
+		# test_unset_prereq()
+		!*)
+			;;
+		# (Temporary?) whitelist of things we can't easily
+		# pretend not to support
+		SYMLINKS)
+			;;
+		# Inspecting whether GIT_TEST_FAIL_PREREQS is on
+		# should be unaffected.
+		FAIL_PREREQS)
+			;;
+		*)
+			return
+		esac
+	fi
+
 	case "$1" in
 	!*)
 		test_unset_prereq "${1#!}"
@@ -888,6 +1031,21 @@ test_cmp_rev () {
 	fi
 }
 
+# Compare paths respecting core.ignoreCase
+test_cmp_fspath () {
+	if test "x$1" = "x$2"
+	then
+		return 0
+	fi
+
+	if test true != "$(git config --get --type=bool core.ignorecase)"
+	then
+		return 1
+	fi
+
+	test "x$(echo "$1" | tr A-Z a-z)" =  "x$(echo "$2" | tr A-Z a-z)"
+}
+
 # Print a sequence of integers in increasing order, either with
 # two arguments (start and end):
 #
@@ -1015,62 +1173,20 @@ perl () {
 	command "$PERL_PATH" "$@" 2>&7
 } 7>&2 2>&4
 
-# Is the value one of the various ways to spell a boolean true/false?
-test_normalize_bool () {
-	git -c magic.variable="$1" config --bool magic.variable 2>/dev/null
-}
-
-# Given a variable $1, normalize the value of it to one of "true",
-# "false", or "auto" and store the result to it.
-#
-#     test_tristate GIT_TEST_HTTPD
-#
-# A variable set to an empty string is set to 'false'.
-# A variable set to 'false' or 'auto' keeps its value.
-# Anything else is set to 'true'.
-# An unset variable defaults to 'auto'.
-#
-# The last rule is to allow people to set the variable to an empty
-# string and export it to decline testing the particular feature
-# for versions both before and after this change.  We used to treat
-# both unset and empty variable as a signal for "do not test" and
-# took any non-empty string as "please test".
-
-test_tristate () {
-	if eval "test x\"\${$1+isset}\" = xisset"
-	then
-		# explicitly set
-		eval "
-			case \"\$$1\" in
-			'')	$1=false ;;
-			auto)	;;
-			*)	$1=\$(test_normalize_bool \$$1 || echo true) ;;
-			esac
-		"
-	else
-		eval "$1=auto"
-	fi
-}
-
 # Exit the test suite, either by skipping all remaining tests or by
-# exiting with an error. If "$1" is "auto", we then we assume we were
-# opportunistically trying to set up some tests and we skip. If it is
-# "true", then we report a failure.
+# exiting with an error. If our prerequisite variable $1 falls back
+# on a default assume we were opportunistically trying to set up some
+# tests and we skip. If it is explicitly "true", then we report a failure.
 #
 # The error/skip message should be given by $2.
 #
 test_skip_or_die () {
-	case "$1" in
-	auto)
+	if ! git env--helper --type=bool --default=false --exit-code $1
+	then
 		skip_all=$2
 		test_done
-		;;
-	true)
-		error "$2"
-		;;
-	*)
-		error "BUG: test tristate is '$1' (real error: $2)"
-	esac
+	fi
+	error "$2"
 }
 
 # The following mingw_* functions obey POSIX shell syntax, but are actually

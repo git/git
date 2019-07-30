@@ -53,7 +53,7 @@ static int is_object_reachable(const struct object_id *oid,
 
 	perform_reachability_traversal(revs);
 
-	obj = lookup_object(the_repository, oid->hash);
+	obj = lookup_object(the_repository, oid);
 	return obj && (obj->flags & SEEN);
 }
 

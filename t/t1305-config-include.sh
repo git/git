@@ -309,21 +309,53 @@ test_expect_success SYMLINKS 'conditional include, gitdir matching symlink, icas
 	)
 '
 
+test_expect_success 'conditional include, onbranch' '
+	echo "[includeIf \"onbranch:foo-branch\"]path=bar9" >>.git/config &&
+	echo "[test]nine=9" >.git/bar9 &&
+	git checkout -b master &&
+	test_must_fail git config test.nine &&
+	git checkout -b foo-branch &&
+	echo 9 >expect &&
+	git config test.nine >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'conditional include, onbranch, wildcard' '
+	echo "[includeIf \"onbranch:?oo-*/**\"]path=bar10" >>.git/config &&
+	echo "[test]ten=10" >.git/bar10 &&
+	git checkout -b not-foo-branch/a &&
+	test_must_fail git config test.ten &&
+
+	echo 10 >expect &&
+	git checkout -b foo-branch/a/b/c &&
+	git config test.ten >actual &&
+	test_cmp expect actual &&
+
+	git checkout -b moo-bar/a &&
+	git config test.ten >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'conditional include, onbranch, implicit /** for /' '
+	echo "[includeIf \"onbranch:foo-dir/\"]path=bar11" >>.git/config &&
+	echo "[test]eleven=11" >.git/bar11 &&
+	git checkout -b not-foo-dir/a &&
+	test_must_fail git config test.eleven &&
+
+	echo 11 >expect &&
+	git checkout -b foo-dir/a/b/c &&
+	git config test.eleven >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'include cycles are detected' '
-	cat >.gitconfig <<-\EOF &&
-	[test]value = gitconfig
-	[include]path = cycle
-	EOF
-	cat >cycle <<-\EOF &&
-	[test]value = cycle
-	[include]path = .gitconfig
-	EOF
-	cat >expect <<-\EOF &&
-	gitconfig
-	cycle
-	EOF
-	test_must_fail git config --get-all test.value 2>stderr &&
-	test_i18ngrep "exceeded maximum include depth" stderr
+	git init --bare cycle &&
+	git -C cycle config include.path cycle &&
+	git config -f cycle/cycle include.path config &&
+	test_must_fail \
+		env GIT_TEST_GETTEXT_POISON=false \
+		git -C cycle config --get-all test.value 2>stderr &&
+	grep "exceeded maximum include depth" stderr
 '
 
 test_done

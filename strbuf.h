@@ -373,6 +373,12 @@ void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
 void strbuf_humanise_bytes(struct strbuf *buf, off_t bytes);
 
 /**
+ * Append the given byte rate as a human-readable string (i.e. 12.23 KiB/s,
+ * 3.50 MiB/s).
+ */
+void strbuf_humanise_rate(struct strbuf *buf, off_t bytes);
+
+/**
  * Add a formatted string to the buffer.
  */
 __attribute__((format (printf,2,3)))

@@ -528,13 +528,13 @@ static int get_reachable_list(struct object_array *src,
 		return -1;
 
 	while ((i = read_in_full(cmd.out, namebuf, hexsz + 1)) == hexsz + 1) {
-		struct object_id sha1;
+		struct object_id oid;
 		const char *p;
 
-		if (parse_oid_hex(namebuf, &sha1, &p) || *p != '\n')
+		if (parse_oid_hex(namebuf, &oid, &p) || *p != '\n')
 			break;
 
-		o = lookup_object(the_repository, sha1.hash);
+		o = lookup_object(the_repository, &oid);
 		if (o && o->type == OBJ_COMMIT) {
 			o->flags &= ~TMP_MARK;
 		}
@@ -722,7 +722,7 @@ static void deepen_by_rev_list(struct packet_writer *writer, int ac,
 {
 	struct commit_list *result;
 
-	close_commit_graph(the_repository);
+	close_commit_graph(the_repository->objects);
 	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
 	send_shallow(writer, result);
 	free_commit_list(result);
@@ -960,7 +960,7 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 static int mark_our_ref(const char *refname, const char *refname_full,
 			const struct object_id *oid)
 {
-	struct object *o = lookup_unknown_object(oid->hash);
+	struct object *o = lookup_unknown_object(oid);
 
 	if (ref_is_hidden(refname, refname_full)) {
 		o->flags |= HIDDEN_REF;
@@ -1037,8 +1037,8 @@ static int find_symref(const char *refname, const struct object_id *oid,
 	symref_target = resolve_ref_unsafe(refname, 0, NULL, &flag);
 	if (!symref_target || (flag & REF_ISSYMREF) == 0)
 		die("'%s' is a symref but it is not?", refname);
-	item = string_list_append(cb_data, refname);
-	item->util = xstrdup(symref_target);
+	item = string_list_append(cb_data, strip_namespace(refname));
+	item->util = xstrdup(strip_namespace(symref_target));
 	return 0;
 }
 

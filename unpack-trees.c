@@ -315,7 +315,7 @@ static struct progress *get_progress(struct unpack_trees_options *o)
 			total++;
 	}
 
-	return start_delayed_progress(_("Checking out files"), total);
+	return start_delayed_progress(_("Updating files"), total);
 }
 
 static void setup_collided_checkout_detection(struct checkout *state,
@@ -840,7 +840,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 			const struct object_id *oid = NULL;
 			if (dirmask & 1)
 				oid = &names[i].oid;
-			buf[nr_buf++] = fill_tree_descriptor(t + i, oid);
+			buf[nr_buf++] = fill_tree_descriptor(the_repository, t + i, oid);
 		}
 	}
 

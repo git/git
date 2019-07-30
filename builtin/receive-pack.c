@@ -12,7 +12,6 @@
 #include "object.h"
 #include "remote.h"
 #include "connect.h"
-#include "transport.h"
 #include "string-list.h"
 #include "sha1-array.h"
 #include "connected.h"
@@ -1809,8 +1808,7 @@ static const char *unpack_with_sideband(struct shallow_info *si)
 	return ret;
 }
 
-static void prepare_shallow_update(struct command *commands,
-				   struct shallow_info *si)
+static void prepare_shallow_update(struct shallow_info *si)
 {
 	int i, j, k, bitmap_size = DIV_ROUND_UP(si->ref->nr, 32);
 
@@ -1876,7 +1874,7 @@ static void update_shallow_info(struct command *commands,
 	si->ref = ref;
 
 	if (shallow_update) {
-		prepare_shallow_update(commands, si);
+		prepare_shallow_update(si);
 		return;
 	}
 
@@ -2043,7 +2041,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			proc.git_cmd = 1;
 			proc.argv = argv_gc_auto;
 
-			close_all_packs(the_repository->objects);
+			close_object_store(the_repository->objects);
 			if (!start_command(&proc)) {
 				if (use_sideband)
 					copy_to_sideband(proc.err, -1, NULL);

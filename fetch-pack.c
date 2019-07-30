@@ -286,7 +286,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 		 * we cannot trust the object flags).
 		 */
 		if (!args->no_dependents &&
-		    ((o = lookup_object(the_repository, remote->hash)) != NULL) &&
+		    ((o = lookup_object(the_repository, remote)) != NULL) &&
 				(o->flags & COMPLETE)) {
 			continue;
 		}
@@ -364,7 +364,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 			if (skip_prefix(reader.line, "unshallow ", &arg)) {
 				if (get_oid_hex(arg, &oid))
 					die(_("invalid unshallow line: %s"), reader.line);
-				if (!lookup_object(the_repository, oid.hash))
+				if (!lookup_object(the_repository, &oid))
 					die(_("object not found: %s"), reader.line);
 				/* make sure that it is parsed as shallow */
 				if (!parse_object(the_repository, &oid))
@@ -707,7 +707,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o = deref_tag(the_repository,
 					     lookup_object(the_repository,
-					     ref->old_oid.hash),
+					     &ref->old_oid),
 					     NULL, 0);
 
 		if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
@@ -734,7 +734,7 @@ static int everything_local(struct fetch_pack_args *args,
 		const struct object_id *remote = &ref->old_oid;
 		struct object *o;
 
-		o = lookup_object(the_repository, remote->hash);
+		o = lookup_object(the_repository, remote);
 		if (!o || !(o->flags & COMPLETE)) {
 			retval = 0;
 			print_verbose(args, "want %s (%s)", oid_to_hex(remote),
@@ -902,72 +902,85 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	sort_ref_list(&ref, ref_compare_name);
 	QSORT(sought, nr_sought, cmp_ref_by_name);
 
-	if ((args->depth > 0 || is_repository_shallow(the_repository)) && !server_supports("shallow"))
-		die(_("Server does not support shallow clients"));
-	if (args->depth > 0 || args->deepen_since || args->deepen_not)
-		args->deepen = 1;
-	if (server_supports("multi_ack_detailed")) {
-		print_verbose(args, _("Server supports multi_ack_detailed"));
-		multi_ack = 2;
-		if (server_supports("no-done")) {
-			print_verbose(args, _("Server supports no-done"));
-			if (args->stateless_rpc)
-				no_done = 1;
-		}
-	}
-	else if (server_supports("multi_ack")) {
-		print_verbose(args, _("Server supports multi_ack"));
-		multi_ack = 1;
-	}
-	if (server_supports("side-band-64k")) {
-		print_verbose(args, _("Server supports side-band-64k"));
-		use_sideband = 2;
-	}
-	else if (server_supports("side-band")) {
-		print_verbose(args, _("Server supports side-band"));
-		use_sideband = 1;
-	}
-	if (server_supports("allow-tip-sha1-in-want")) {
-		print_verbose(args, _("Server supports allow-tip-sha1-in-want"));
-		allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
-	}
-	if (server_supports("allow-reachable-sha1-in-want")) {
-		print_verbose(args, _("Server supports allow-reachable-sha1-in-want"));
-		allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
-	}
-	if (!server_supports("thin-pack"))
-		args->use_thin_pack = 0;
-	if (!server_supports("no-progress"))
-		args->no_progress = 0;
-	if (!server_supports("include-tag"))
-		args->include_tag = 0;
-	if (server_supports("ofs-delta"))
-		print_verbose(args, _("Server supports ofs-delta"));
-	else
-		prefer_ofs_delta = 0;
-
-	if (server_supports("filter")) {
-		server_supports_filtering = 1;
-		print_verbose(args, _("Server supports filter"));
-	} else if (args->filter_options.choice) {
-		warning("filtering not recognized by server, ignoring");
-	}
-
 	if ((agent_feature = server_feature_value("agent", &agent_len))) {
 		agent_supported = 1;
 		if (agent_len)
 			print_verbose(args, _("Server version is %.*s"),
 				      agent_len, agent_feature);
 	}
-	if (server_supports("deepen-since"))
+
+	if (server_supports("shallow"))
+		print_verbose(args, _("Server supports %s"), "shallow");
+	else if (args->depth > 0 || is_repository_shallow(the_repository))
+		die(_("Server does not support shallow clients"));
+	if (args->depth > 0 || args->deepen_since || args->deepen_not)
+		args->deepen = 1;
+	if (server_supports("multi_ack_detailed")) {
+		print_verbose(args, _("Server supports %s"), "multi_ack_detailed");
+		multi_ack = 2;
+		if (server_supports("no-done")) {
+			print_verbose(args, _("Server supports %s"), "no-done");
+			if (args->stateless_rpc)
+				no_done = 1;
+		}
+	}
+	else if (server_supports("multi_ack")) {
+		print_verbose(args, _("Server supports %s"), "multi_ack");
+		multi_ack = 1;
+	}
+	if (server_supports("side-band-64k")) {
+		print_verbose(args, _("Server supports %s"), "side-band-64k");
+		use_sideband = 2;
+	}
+	else if (server_supports("side-band")) {
+		print_verbose(args, _("Server supports %s"), "side-band");
+		use_sideband = 1;
+	}
+	if (server_supports("allow-tip-sha1-in-want")) {
+		print_verbose(args, _("Server supports %s"), "allow-tip-sha1-in-want");
+		allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
+	}
+	if (server_supports("allow-reachable-sha1-in-want")) {
+		print_verbose(args, _("Server supports %s"), "allow-reachable-sha1-in-want");
+		allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
+	}
+	if (server_supports("thin-pack"))
+		print_verbose(args, _("Server supports %s"), "thin-pack");
+	else
+		args->use_thin_pack = 0;
+	if (server_supports("no-progress"))
+		print_verbose(args, _("Server supports %s"), "no-progress");
+	else
+		args->no_progress = 0;
+	if (server_supports("include-tag"))
+		print_verbose(args, _("Server supports %s"), "include-tag");
+	else
+		args->include_tag = 0;
+	if (server_supports("ofs-delta"))
+		print_verbose(args, _("Server supports %s"), "ofs-delta");
+	else
+		prefer_ofs_delta = 0;
+
+	if (server_supports("filter")) {
+		server_supports_filtering = 1;
+		print_verbose(args, _("Server supports %s"), "filter");
+	} else if (args->filter_options.choice) {
+		warning("filtering not recognized by server, ignoring");
+	}
+
+	if (server_supports("deepen-since")) {
+		print_verbose(args, _("Server supports %s"), "deepen-since");
 		deepen_since_ok = 1;
-	else if (args->deepen_since)
+	} else if (args->deepen_since)
 		die(_("Server does not support --shallow-since"));
-	if (server_supports("deepen-not"))
+	if (server_supports("deepen-not")) {
+		print_verbose(args, _("Server supports %s"), "deepen-not");
 		deepen_not_ok = 1;
-	else if (args->deepen_not)
+	} else if (args->deepen_not)
 		die(_("Server does not support --shallow-exclude"));
-	if (!server_supports("deepen-relative") && args->deepen_relative)
+	if (server_supports("deepen-relative"))
+		print_verbose(args, _("Server supports %s"), "deepen-relative");
+	else if (args->deepen_relative)
 		die(_("Server does not support --deepen"));
 
 	if (!args->no_dependents) {
@@ -1048,7 +1061,7 @@ static void add_wants(int no_dependents, const struct ref *wants, struct strbuf 
 		 * we cannot trust the object flags).
 		 */
 		if (!no_dependents &&
-		    ((o = lookup_object(the_repository, remote->hash)) != NULL) &&
+		    ((o = lookup_object(the_repository, remote)) != NULL) &&
 		    (o->flags & COMPLETE)) {
 			continue;
 		}
@@ -1275,7 +1288,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 		if (skip_prefix(reader->line, "unshallow ", &arg)) {
 			if (get_oid_hex(arg, &oid))
 				die(_("invalid unshallow line: %s"), reader->line);
-			if (!lookup_object(the_repository, oid.hash))
+			if (!lookup_object(the_repository, &oid))
 				die(_("object not found: %s"), reader->line);
 			/* make sure that it is parsed as shallow */
 			if (!parse_object(the_repository, &oid))

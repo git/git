@@ -3299,4 +3299,24 @@ test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous thi
 	sed -e s/LFs/LLL/ W-input | tr L "\n" | test_must_fail git fast-import
 '
 
+###
+### series X (other new features)
+###
+
+test_expect_success 'X: handling encoding' '
+	test_tick &&
+	cat >input <<-INPUT_END &&
+	commit refs/heads/encoding
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	encoding iso-8859-7
+	data <<COMMIT
+	INPUT_END
+
+	printf "Pi: \360\nCOMMIT\n" >>input &&
+
+	git fast-import <input &&
+	git cat-file -p encoding | grep $(printf "\360") &&
+	git log -1 --format=%B encoding | grep $(printf "\317\200")
+'
+
 test_done

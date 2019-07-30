@@ -16,6 +16,7 @@
 #include "tree.h"
 #include "object-store.h"
 #include "midx.h"
+#include "commit-graph.h"
 
 char *odb_pack_name(struct strbuf *buf,
 		    const unsigned char *sha1,
@@ -336,7 +337,7 @@ void close_pack(struct packed_git *p)
 	close_pack_index(p);
 }
 
-void close_all_packs(struct raw_object_store *o)
+void close_object_store(struct raw_object_store *o)
 {
 	struct packed_git *p;
 
@@ -350,6 +351,36 @@ void close_all_packs(struct raw_object_store *o)
 		close_midx(o->multi_pack_index);
 		o->multi_pack_index = NULL;
 	}
+
+	close_commit_graph(o);
+}
+
+void unlink_pack_path(const char *pack_name, int force_delete)
+{
+	static const char *exts[] = {".pack", ".idx", ".keep", ".bitmap", ".promisor"};
+	int i;
+	struct strbuf buf = STRBUF_INIT;
+	size_t plen;
+
+	strbuf_addstr(&buf, pack_name);
+	strip_suffix_mem(buf.buf, &buf.len, ".pack");
+	plen = buf.len;
+
+	if (!force_delete) {
+		strbuf_addstr(&buf, ".keep");
+		if (!access(buf.buf, F_OK)) {
+			strbuf_release(&buf);
+			return;
+		}
+	}
+
+	for (i = 0; i < ARRAY_SIZE(exts); i++) {
+		strbuf_setlen(&buf, plen);
+		strbuf_addstr(&buf, exts[i]);
+		unlink(buf.buf);
+	}
+
+	strbuf_release(&buf);
 }
 
 /*
@@ -640,7 +671,7 @@ unsigned char *use_pack(struct packed_git *p,
 			while (packed_git_limit < pack_mapped
 				&& unuse_one_window(p))
 				; /* nothing */
-			win->base = xmmap(NULL, win->len,
+			win->base = xmmap_gently(NULL, win->len,
 				PROT_READ, MAP_PRIVATE,
 				p->pack_fd, win->offset);
 			if (win->base == MAP_FAILED)
@@ -1269,7 +1300,7 @@ static enum object_type packed_to_object_type(struct repository *r,
 		if (poi_stack_nr >= poi_stack_alloc && poi_stack == small_poi_stack) {
 			poi_stack_alloc = alloc_nr(poi_stack_nr);
 			ALLOC_ARRAY(poi_stack, poi_stack_alloc);
-			memcpy(poi_stack, small_poi_stack, sizeof(off_t)*poi_stack_nr);
+			COPY_ARRAY(poi_stack, small_poi_stack, poi_stack_nr);
 		} else {
 			ALLOC_GROW(poi_stack, poi_stack_nr+1, poi_stack_alloc);
 		}
@@ -1679,8 +1710,8 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		    && delta_stack == small_delta_stack) {
 			delta_stack_alloc = alloc_nr(delta_stack_nr);
 			ALLOC_ARRAY(delta_stack, delta_stack_alloc);
-			memcpy(delta_stack, small_delta_stack,
-			       sizeof(*delta_stack)*delta_stack_nr);
+			COPY_ARRAY(delta_stack, small_delta_stack,
+				   delta_stack_nr);
 		} else {
 			ALLOC_GROW(delta_stack, delta_stack_nr+1, delta_stack_alloc);
 		}

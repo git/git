@@ -51,7 +51,7 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *,
 				       struct packed_git **packfile,
 				       uint32_t *entries, off_t *up_to);
 int rebuild_existing_bitmaps(struct bitmap_index *, struct packing_data *mapping,
-			     khash_sha1 *reused_bitmaps, int show_progress);
+			     kh_oid_map_t *reused_bitmaps, int show_progress);
 void free_bitmap_index(struct bitmap_index *);
 
 /*

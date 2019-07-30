@@ -211,8 +211,24 @@ test_expect_success 'prompt - merge' '
 
 test_expect_success 'prompt - cherry-pick' '
 	printf " (master|CHERRY-PICKING)" >expected &&
-	test_must_fail git cherry-pick b1 &&
-	test_when_finished "git reset --hard" &&
+	test_must_fail git cherry-pick b1 b1^ &&
+	test_when_finished "git cherry-pick --abort" &&
+	__git_ps1 >"$actual" &&
+	test_cmp expected "$actual" &&
+	git reset --merge &&
+	test_must_fail git rev-parse CHERRY_PICK_HEAD &&
+	__git_ps1 >"$actual" &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - revert' '
+	printf " (master|REVERTING)" >expected &&
+	test_must_fail git revert b1^ b1 &&
+	test_when_finished "git revert --abort" &&
+	__git_ps1 >"$actual" &&
+	test_cmp expected "$actual" &&
+	git reset --merge &&
+	test_must_fail git rev-parse REVERT_HEAD &&
 	__git_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '

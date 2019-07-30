@@ -37,6 +37,7 @@
 #include "packfile.h"
 #include "tag.h"
 #include "alias.h"
+#include "branch.h"
 #include "commit-reach.h"
 #include "wt-status.h"
 
@@ -58,7 +59,7 @@ static const char * const builtin_merge_usage[] = {
 };
 
 static int show_diffstat = 1, shortlog_len = -1, squash;
-static int option_commit = 1;
+static int option_commit = -1;
 static int option_edit = -1;
 static int allow_trivial = 1, have_message, verify_signatures;
 static int overwrite_ignore = 1;
@@ -73,6 +74,7 @@ static int option_renormalize;
 static int verbosity;
 static int allow_rerere_auto;
 static int abort_current_merge;
+static int quit_current_merge;
 static int continue_current_merge;
 static int allow_unrelated_histories;
 static int show_progress = -1;
@@ -274,6 +276,8 @@ static struct option builtin_merge_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOL(0, "abort", &abort_current_merge,
 		N_("abort the current in-progress merge")),
+	OPT_BOOL(0, "quit", &quit_current_merge,
+		N_("--abort but leave index and working tree alone")),
 	OPT_BOOL(0, "continue", &continue_current_merge,
 		N_("continue the current in-progress merge")),
 	OPT_BOOL(0, "allow-unrelated-histories", &allow_unrelated_histories,
@@ -286,14 +290,6 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOL(0, "verify", &verify_msg, N_("verify commit-msg hook")),
 	OPT_END()
 };
-
-/* Cleans up metadata that is uninteresting after a succeeded merge. */
-static void drop_save(void)
-{
-	unlink(git_path_merge_head(the_repository));
-	unlink(git_path_merge_msg(the_repository));
-	unlink(git_path_merge_mode(the_repository));
-}
 
 static int save_state(struct object_id *stash)
 {
@@ -388,7 +384,7 @@ static void finish_up_to_date(const char *msg)
 {
 	if (verbosity >= 0)
 		printf("%s%s\n", squash ? _(" (nothing to squash)") : "", msg);
-	drop_save();
+	remove_merge_branch_state(the_repository);
 }
 
 static void squash_message(struct commit *commit, struct commit_list *remoteheads)
@@ -457,7 +453,7 @@ static void finish(struct commit *head_commit,
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
 			 */
-			close_all_packs(the_repository->objects);
+			close_object_store(the_repository->objects);
 			run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
 		}
 	}
@@ -881,7 +877,7 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 			&result_commit, NULL, sign_commit))
 		die(_("failed to write commit object"));
 	finish(head, remoteheads, &result_commit, "In-index merge");
-	drop_save();
+	remove_merge_branch_state(the_repository);
 	return 0;
 }
 
@@ -896,6 +892,7 @@ static int finish_automerge(struct commit *head,
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id result_commit;
 
+	write_tree_trivial(result_tree);
 	free_commit_list(common);
 	parents = remoteheads;
 	if (!head_subsumed || fast_forward == FF_NO)
@@ -907,7 +904,7 @@ static int finish_automerge(struct commit *head,
 	strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
 	finish(head, remoteheads, &result_commit, buf.buf);
 	strbuf_release(&buf);
-	drop_save();
+	remove_merge_branch_state(the_repository);
 	return 0;
 }
 
@@ -1289,6 +1286,16 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		goto done;
 	}
 
+	if (quit_current_merge) {
+		if (orig_argc != 2)
+			usage_msg_opt(_("--quit expects no arguments"),
+				      builtin_merge_usage,
+				      builtin_merge_options);
+
+		remove_merge_branch_state(the_repository);
+		goto done;
+	}
+
 	if (continue_current_merge) {
 		int nargc = 1;
 		const char *nargv[] = {"commit", NULL};
@@ -1339,8 +1346,18 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (squash) {
 		if (fast_forward == FF_NO)
 			die(_("You cannot combine --squash with --no-ff."));
+		if (option_commit > 0)
+			die(_("You cannot combine --squash with --commit."));
+		/*
+		 * squash can now silently disable option_commit - this is not
+		 * a problem as it is only overriding the default, not a user
+		 * supplied option.
+		 */
 		option_commit = 0;
 	}
+
+	if (option_commit < 0)
+		option_commit = 1;
 
 	if (!argc) {
 		if (default_to_upstream)
@@ -1495,7 +1512,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		}
 
 		finish(head_commit, remoteheads, &commit->object.oid, msg.buf);
-		drop_save();
+		remove_merge_branch_state(the_repository);
 		goto done;
 	} else if (!remoteheads->next && common->next)
 		;
@@ -1570,8 +1587,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	    save_state(&stash))
 		oidclr(&stash);
 
-	for (i = 0; i < use_strategies_nr; i++) {
-		int ret;
+	for (i = 0; !merge_was_ok && i < use_strategies_nr; i++) {
+		int ret, cnt;
 		if (i) {
 			printf(_("Rewinding the tree to pristine...\n"));
 			restore_state(&head_commit->object.oid, &stash);
@@ -1588,40 +1605,26 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		ret = try_merge_strategy(use_strategies[i]->name,
 					 common, remoteheads,
 					 head_commit);
-		if (!option_commit && !ret) {
-			merge_was_ok = 1;
-			/*
-			 * This is necessary here just to avoid writing
-			 * the tree, but later we will *not* exit with
-			 * status code 1 because merge_was_ok is set.
-			 */
-			ret = 1;
-		}
-
-		if (ret) {
-			/*
-			 * The backend exits with 1 when conflicts are
-			 * left to be resolved, with 2 when it does not
-			 * handle the given merge at all.
-			 */
-			if (ret == 1) {
-				int cnt = evaluate_result();
-
-				if (best_cnt <= 0 || cnt <= best_cnt) {
-					best_strategy = use_strategies[i]->name;
-					best_cnt = cnt;
+		/*
+		 * The backend exits with 1 when conflicts are
+		 * left to be resolved, with 2 when it does not
+		 * handle the given merge at all.
+		 */
+		if (ret < 2) {
+			if (!ret) {
+				if (option_commit) {
+					/* Automerge succeeded. */
+					automerge_was_ok = 1;
+					break;
 				}
+				merge_was_ok = 1;
 			}
-			if (merge_was_ok)
-				break;
-			else
-				continue;
+			cnt = evaluate_result();
+			if (best_cnt <= 0 || cnt <= best_cnt) {
+				best_strategy = use_strategies[i]->name;
+				best_cnt = cnt;
+			}
 		}
-
-		/* Automerge succeeded. */
-		write_tree_trivial(&result_tree);
-		automerge_was_ok = 1;
-		break;
 	}
 
 	/*

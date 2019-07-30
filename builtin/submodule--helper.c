@@ -540,6 +540,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		if (info->quiet)
 			argv_array_push(&cpr.args, "--quiet");
 
+		argv_array_push(&cpr.args, "--");
 		argv_array_pushv(&cpr.args, info->argv);
 
 		if (run_command(&cpr))
@@ -2107,8 +2108,7 @@ static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 		return 1;
 
 	for (i = 0; i < list.nr; i++)
-		absorb_git_dir_into_superproject(prefix,
-				list.entries[i]->name, flags);
+		absorb_git_dir_into_superproject(list.entries[i]->name, flags);
 
 	return 0;
 }

@@ -21,15 +21,14 @@ static const char * const verify_commit_usage[] = {
 		NULL
 };
 
-static int run_gpg_verify(const struct object_id *oid, const char *buf, unsigned long size, unsigned flags)
+static int run_gpg_verify(struct commit *commit, unsigned flags)
 {
 	struct signature_check signature_check;
 	int ret;
 
 	memset(&signature_check, 0, sizeof(signature_check));
 
-	ret = check_commit_signature(lookup_commit(the_repository, oid),
-				     &signature_check);
+	ret = check_commit_signature(commit, &signature_check);
 	print_signature_buffer(&signature_check, flags);
 
 	signature_check_clear(&signature_check);
@@ -38,26 +37,20 @@ static int run_gpg_verify(const struct object_id *oid, const char *buf, unsigned
 
 static int verify_commit(const char *name, unsigned flags)
 {
-	enum object_type type;
 	struct object_id oid;
-	char *buf;
-	unsigned long size;
-	int ret;
+	struct object *obj;
 
 	if (get_oid(name, &oid))
 		return error("commit '%s' not found.", name);
 
-	buf = read_object_file(&oid, &type, &size);
-	if (!buf)
+	obj = parse_object(the_repository, &oid);
+	if (!obj)
 		return error("%s: unable to read file.", name);
-	if (type != OBJ_COMMIT)
+	if (obj->type != OBJ_COMMIT)
 		return error("%s: cannot verify a non-commit object of type %s.",
-				name, type_name(type));
+				name, type_name(obj->type));
 
-	ret = run_gpg_verify(&oid, buf, size, flags);
-
-	free(buf);
-	return ret;
+	return run_gpg_verify((struct commit *)obj, flags);
 }
 
 static int git_verify_commit_config(const char *var, const char *value, void *cb)

@@ -195,10 +195,30 @@ For C programs:
    by e.g. "echo DEVELOPER=1 >>config.mak".
 
  - We try to support a wide range of C compilers to compile Git with,
-   including old ones. That means that you should not use C99
-   initializers, even if a lot of compilers grok it.
+   including old ones.  You should not use features from newer C
+   standard, even if your compiler groks them.
 
- - Variables have to be declared at the beginning of the block.
+   There are a few exceptions to this guideline:
+
+   . since early 2012 with e1327023ea, we have been using an enum
+     definition whose last element is followed by a comma.  This, like
+     an array initializer that ends with a trailing comma, can be used
+     to reduce the patch noise when adding a new identifer at the end.
+
+   . since mid 2017 with cbc0f81d, we have been using designated
+     initializers for struct (e.g. "struct t v = { .val = 'a' };").
+
+   . since mid 2017 with 512f41cf, we have been using designated
+     initializers for array (e.g. "int array[10] = { [5] = 2 }").
+
+   These used to be forbidden, but we have not heard any breakage
+   report, and they are assumed to be safe.
+
+ - Variables have to be declared at the beginning of the block, before
+   the first statement (i.e. -Wdeclaration-after-statement).
+
+ - Declaring a variable in the for loop "for (int i = 0; i < 10; i++)"
+   is still not allowed in this codebase.
 
  - NULL pointers shall be written as NULL, not as 0.
 
@@ -411,6 +431,12 @@ For C programs:
    with "static". Variables that are visible to other source files
    must be declared with "extern" in header files. However, function
    declarations should not use "extern", as that is already the default.
+
+ - You can launch gdb around your program using the shorthand GIT_DEBUGGER.
+   Run `GIT_DEBUGGER=1 ./bin-wrappers/git foo` to simply use gdb as is, or
+   run `GIT_DEBUGGER="<debugger> <debugger-args>" ./bin-wrappers/git foo` to
+   use your own debugger and arguments. Example: `GIT_DEBUGGER="ddd --gdb"
+   ./bin-wrappers/git log` (See `wrap-for-bin.sh`.)
 
 For Perl programs:
 

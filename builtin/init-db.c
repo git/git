@@ -502,6 +502,9 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	if (real_git_dir && !is_absolute_path(real_git_dir))
 		real_git_dir = real_pathdup(real_git_dir, 1);
 
+	if (template_dir && *template_dir && !is_absolute_path(template_dir))
+		template_dir = absolute_pathdup(template_dir);
+
 	if (argc == 1) {
 		int mkdir_tried = 0;
 	retry:

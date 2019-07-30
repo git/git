@@ -136,10 +136,13 @@ test_expect_success 'git branch `--show-current` works properly with worktrees' 
 	branch-two
 	EOF
 	git checkout branch-one &&
-	git worktree add worktree branch-two &&
+	test_when_finished "
+		git worktree remove worktree_dir
+	" &&
+	git worktree add worktree_dir branch-two &&
 	{
 		git branch --show-current &&
-		git -C worktree branch --show-current
+		git -C worktree_dir branch --show-current
 	} >actual &&
 	test_cmp expect actual
 '
@@ -284,6 +287,24 @@ test_expect_success 'git branch --format option' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'worktree colors correct' '
+	cat >expect <<-EOF &&
+	* <GREEN>(HEAD detached from fromtag)<RESET>
+	  ambiguous<RESET>
+	  branch-one<RESET>
+	+ <CYAN>branch-two<RESET>
+	  master<RESET>
+	  ref-to-branch<RESET> -> branch-one
+	  ref-to-remote<RESET> -> origin/branch-one
+	EOF
+	git worktree add worktree_dir branch-two &&
+	git branch --color >actual.raw &&
+	rm -r worktree_dir &&
+	git worktree prune &&
+	test_decode_color <actual.raw >actual &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success "set up color tests" '
 	echo "<RED>master<RESET>" >expect.color &&
 	echo "master" >expect.bare &&
@@ -306,6 +327,25 @@ test_expect_success '--color overrides auto-color' '
 	git branch --color $color_args >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect.color actual
+'
+
+test_expect_success 'verbose output lists worktree path' '
+	one=$(git rev-parse --short HEAD) &&
+	two=$(git rev-parse --short master) &&
+	cat >expect <<-EOF &&
+	* (HEAD detached from fromtag) $one one
+	  ambiguous                    $one one
+	  branch-one                   $two two
+	+ branch-two                   $one ($(pwd)/worktree_dir) one
+	  master                       $two two
+	  ref-to-branch                $two two
+	  ref-to-remote                $two two
+	EOF
+	git worktree add worktree_dir branch-two &&
+	git branch -vv >actual &&
+	rm -r worktree_dir &&
+	git worktree prune &&
+	test_i18ncmp expect actual
 '
 
 test_done

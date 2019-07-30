@@ -644,7 +644,7 @@ static struct tree_content *grow_tree_content(
 	struct tree_content *r = new_tree_content(t->entry_count + amt);
 	r->entry_count = t->entry_count;
 	r->delta_depth = t->delta_depth;
-	memcpy(r->entries,t->entries,t->entry_count*sizeof(t->entries[0]));
+	COPY_ARRAY(r->entries, t->entries, t->entry_count);
 	release_tree_content(t);
 	return r;
 }
@@ -2410,7 +2410,8 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
 	} else if (!get_oid(p, &commit_oid)) {
 		unsigned long size;
-		char *buf = read_object_with_reference(&commit_oid,
+		char *buf = read_object_with_reference(the_repository,
+						       &commit_oid,
 						       commit_type, &size,
 						       &commit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
@@ -2482,7 +2483,8 @@ static void parse_from_existing(struct branch *b)
 		unsigned long size;
 		char *buf;
 
-		buf = read_object_with_reference(&b->oid, commit_type, &size,
+		buf = read_object_with_reference(the_repository,
+						 &b->oid, commit_type, &size,
 						 &b->oid);
 		parse_from_commit(b, buf, size);
 		free(buf);
@@ -2560,7 +2562,8 @@ static struct hash_list *parse_merge(unsigned int *count)
 			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!get_oid(from, &n->oid)) {
 			unsigned long size;
-			char *buf = read_object_with_reference(&n->oid,
+			char *buf = read_object_with_reference(the_repository,
+							       &n->oid,
 							       commit_type,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
@@ -2585,6 +2588,7 @@ static void parse_new_commit(const char *arg)
 	struct branch *b;
 	char *author = NULL;
 	char *committer = NULL;
+	const char *encoding = NULL;
 	struct hash_list *merge_list = NULL;
 	unsigned int merge_count;
 	unsigned char prev_fanout, new_fanout;
@@ -2607,6 +2611,8 @@ static void parse_new_commit(const char *arg)
 	}
 	if (!committer)
 		die("Expected committer but didn't get one");
+	if (skip_prefix(command_buf.buf, "encoding ", &encoding))
+		read_next_command();
 	parse_data(&msg, 0, NULL);
 	read_next_command();
 	parse_from(b);
@@ -2670,9 +2676,13 @@ static void parse_new_commit(const char *arg)
 	}
 	strbuf_addf(&new_data,
 		"author %s\n"
-		"committer %s\n"
-		"\n",
+		"committer %s\n",
 		author ? author : committer, committer);
+	if (encoding)
+		strbuf_addf(&new_data,
+			"encoding %s\n",
+			encoding);
+	strbuf_addch(&new_data, '\n');
 	strbuf_addbuf(&new_data, &msg);
 	free(author);
 	free(committer);

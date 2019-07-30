@@ -149,8 +149,8 @@ win32_compute_revents (HANDLE h, int *p_sought)
     case FILE_TYPE_PIPE:
       if (!once_only)
 	{
-	  NtQueryInformationFile = (PNtQueryInformationFile)
-	    GetProcAddress (GetModuleHandle ("ntdll.dll"),
+	  NtQueryInformationFile = (PNtQueryInformationFile)(void (*)(void))
+	    GetProcAddress (GetModuleHandleW (L"ntdll.dll"),
 			    "NtQueryInformationFile");
 	  once_only = TRUE;
 	}

@@ -63,3 +63,8 @@ fetch.negotiationAlgorithm::
 	Unknown values will cause 'git fetch' to error out.
 +
 See also the `--negotiation-tip` option for linkgit:git-fetch[1].
+
+fetch.showForcedUpdates::
+	Set to false to enable `--no-show-forced-updates` in
+	linkgit:git-fetch[1] and linkgit:git-pull[1] commands.
+	Defaults to true.
