@@ -1,0 +1,15 @@
+feature.*::
+	The config settings that start with `feature.` modify the defaults of
+	a group of other config settings. These groups are created by the Git
+	developer community as recommended defaults and are subject to change.
+	In particular, new config options may be added with different defaults.
+
+feature.manyCommits::
+	Enable config options that optimize for repos with many commits. This
+	setting is recommended for repos with at least 100,000 commits. The
+	new default values are:
++
+* `core.commitGraph=true` enables reading the commit-graph file.
++
+* `gc.writeCommitGraph=true` enables writing the commit-graph file during
+garbage collection.
