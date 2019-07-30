@@ -228,7 +228,7 @@ EOM
     print F << "EOM";
   </ItemGroup>
 EOM
-    if (!$static_library || $target =~ 'vcs-svn') {
+    if (!$static_library || $target =~ 'vcs-svn' || $target =~ 'xdiff') {
       my $uuid_libgit = $$build_structure{"LIBS_libgit_GUID"};
       my $uuid_xdiff_lib = $$build_structure{"LIBS_xdiff/lib_GUID"};
 
@@ -238,11 +238,15 @@ EOM
       <Project>$uuid_libgit</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+EOM
+      if (!($name =~ 'xdiff')) {
+        print F << "EOM";
     <ProjectReference Include="$cdup\\xdiff\\lib\\xdiff_lib.vcxproj">
       <Project>$uuid_xdiff_lib</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
 EOM
+      }
       if ($name =~ /(test-(line-buffer|svn-fe)|^git-remote-testsvn)\.exe$/) {
         my $uuid_vcs_svn_lib = $$build_structure{"LIBS_vcs-svn/lib_GUID"};
         print F << "EOM";
