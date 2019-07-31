@@ -170,31 +170,45 @@ NULL
 '
 
 test_expect_success 'iterate' '
+	test-tool hashmap >actual.raw <<-\EOF &&
+	put key1 value1
+	put key2 value2
+	put fooBarFrotz value3
+	iterate
+	EOF
 
-test_hashmap "put key1 value1
-put key2 value2
-put fooBarFrotz value3
-iterate" "NULL
-NULL
-NULL
-key2 value2
-key1 value1
-fooBarFrotz value3"
+	cat >expect <<-\EOF &&
+	NULL
+	NULL
+	NULL
+	fooBarFrotz value3
+	key1 value1
+	key2 value2
+	EOF
 
+	sort <actual.raw >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'iterate (case insensitive)' '
+	test-tool hashmap ignorecase >actual.raw <<-\EOF &&
+	put key1 value1
+	put key2 value2
+	put fooBarFrotz value3
+	iterate
+	EOF
 
-test_hashmap "put key1 value1
-put key2 value2
-put fooBarFrotz value3
-iterate" "NULL
-NULL
-NULL
-fooBarFrotz value3
-key2 value2
-key1 value1" ignorecase
+	cat >expect <<-\EOF &&
+	NULL
+	NULL
+	NULL
+	fooBarFrotz value3
+	key1 value1
+	key2 value2
+	EOF
 
+	sort <actual.raw >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'grow / shrink' '

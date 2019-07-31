@@ -86,17 +86,25 @@ NULL"
 '
 
 test_expect_success 'iterate' '
+	test-tool oidmap >actual.raw <<-\EOF &&
+	put one 1
+	put two 2
+	put three 3
+	iterate
+	EOF
 
-test_oidmap "put one 1
-put two 2
-put three 3
-iterate" "NULL
-NULL
-NULL
-$(git rev-parse two) 2
-$(git rev-parse one) 1
-$(git rev-parse three) 3"
+	# sort "expect" too so we do not rely on the order of particular oids
+	sort >expect <<-EOF &&
+	NULL
+	NULL
+	NULL
+	$(git rev-parse one) 1
+	$(git rev-parse two) 2
+	$(git rev-parse three) 3
+	EOF
 
+	sort <actual.raw >actual &&
+	test_cmp expect actual
 '
 
 test_done
