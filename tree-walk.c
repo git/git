@@ -181,21 +181,32 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 		info->prev = &dummy;
 }
 
-char *make_traverse_path(char *path, const struct traverse_info *info,
+char *make_traverse_path(char *path, size_t pathlen,
+			 const struct traverse_info *info,
 			 const char *name, size_t namelen)
 {
-	size_t pathlen = info->pathlen;
+	/* Always points to the end of the name we're about to add */
+	size_t pos = st_add(info->pathlen, namelen);
 
-	path[pathlen + namelen] = 0;
+	if (pos >= pathlen)
+		BUG("too small buffer passed to make_traverse_path");
+
+	path[pos] = 0;
 	for (;;) {
-		memcpy(path + pathlen, name, namelen);
-		if (!pathlen)
+		if (pos < namelen)
+			BUG("traverse_info pathlen does not match strings");
+		pos -= namelen;
+		memcpy(path + pos, name, namelen);
+
+		if (!pos)
 			break;
-		path[--pathlen] = '/';
+		path[--pos] = '/';
+
+		if (!info)
+			BUG("traverse_info ran out of list items");
 		name = info->name;
 		namelen = info->namelen;
 		info = info->prev;
-		pathlen -= namelen;
 	}
 	return path;
 }
@@ -207,7 +218,8 @@ void strbuf_make_traverse_path(struct strbuf *out,
 	size_t len = traverse_path_len(info, namelen);
 
 	strbuf_grow(out, len);
-	make_traverse_path(out->buf + out->len, info, name, namelen);
+	make_traverse_path(out->buf + out->len, out->alloc - out->len,
+			   info, name, namelen);
 	strbuf_setlen(out, out->len + len);
 }
 

@@ -70,7 +70,7 @@ struct traverse_info {
 };
 
 int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned short *);
-char *make_traverse_path(char *path, const struct traverse_info *info,
+char *make_traverse_path(char *path, size_t pathlen, const struct traverse_info *info,
 			 const char *name, size_t namelen);
 void strbuf_make_traverse_path(struct strbuf *out,
 			       const struct traverse_info *info,

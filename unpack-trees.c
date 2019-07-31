@@ -968,7 +968,8 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	ce->ce_flags = create_ce_flags(stage);
 	ce->ce_namelen = len;
 	oidcpy(&ce->oid, &n->oid);
-	make_traverse_path(ce->name, info, n->path, n->pathlen);
+	/* len+1 because the cache_entry allocates space for NUL */
+	make_traverse_path(ce->name, len + 1, info, n->path, n->pathlen);
 
 	return ce;
 }
