@@ -177,10 +177,8 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 	info->pathlen = pathlen ? pathlen + 1 : 0;
 	info->name.path = base;
 	info->name.pathlen = pathlen;
-	if (pathlen) {
-		hashcpy(info->name.oid.hash, (const unsigned char *)base + pathlen + 1);
+	if (pathlen)
 		info->prev = &dummy;
-	}
 }
 
 char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n)

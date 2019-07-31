@@ -62,9 +62,7 @@ Initializing
 `setup_traverse_info`::
 
 	Initialize a `traverse_info` given the pathname of the tree to start
-	traversing from. The `base` argument is assumed to be the `path`
-	member of the `name_entry` being recursed into unless the tree is a
-	top-level tree in which case the empty string ("") is used.
+	traversing from.
 
 Walking
 -------
