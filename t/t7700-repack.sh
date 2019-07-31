@@ -243,6 +243,7 @@ test_expect_success 'no bitmaps created if .keep files present' '
 	pack=$(ls bare.git/objects/pack/*.pack) &&
 	test_path_is_file "$pack" &&
 	keep=${pack%.pack}.keep &&
+	test_when_finished "rm -f \"\$keep\"" &&
 	>"$keep" &&
 	git -C bare.git repack -ad &&
 	find bare.git/objects/pack/ -type f -name "*.bitmap" >actual &&
