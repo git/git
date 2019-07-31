@@ -89,4 +89,9 @@ test_expect_failure 'ignore .git/ with invalid config' '
 	test_with_config "["
 '
 
+test_expect_success 'early config and onbranch' '
+	echo "[broken" >broken &&
+	test_with_config "[includeif \"onbranch:refs/heads/master\"]path=../broken"
+'
+
 test_done
