@@ -93,4 +93,15 @@ test_expect_success 'Rebase -Xsubtree --keep-empty --onto commit' '
 	verbose test "$(commit_message HEAD)" = "Empty commit"
 '
 
+test_expect_success 'Rebase -Xsubtree --keep-empty --rebase-merges --onto commit' '
+	reset_rebase &&
+	git checkout -b rebase-merges-onto to-rebase &&
+	test_must_fail git rebase -Xsubtree=files_subtree --keep-empty --rebase-merges --onto files-master --root &&
+	: first pick results in no changes &&
+	git rebase --continue &&
+	verbose test "$(commit_message HEAD~2)" = "master4" &&
+	verbose test "$(commit_message HEAD~)" = "files_subtree/master5" &&
+	verbose test "$(commit_message HEAD)" = "Empty commit"
+'
+
 test_done

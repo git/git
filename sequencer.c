@@ -4440,6 +4440,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 {
 	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	int rebase_cousins = flags & TODO_LIST_REBASE_COUSINS;
+	int root_with_onto = flags & TODO_LIST_ROOT_WITH_ONTO;
 	struct strbuf buf = STRBUF_INIT, oneline = STRBUF_INIT;
 	struct strbuf label = STRBUF_INIT;
 	struct commit_list *commits = NULL, **tail = &commits, *iter;
@@ -4606,7 +4607,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 
 		if (!commit)
 			strbuf_addf(out, "%s %s\n", cmd_reset,
-				    rebase_cousins ? "onto" : "[new root]");
+				    rebase_cousins || root_with_onto ?
+				    "onto" : "[new root]");
 		else {
 			const char *to = NULL;
 

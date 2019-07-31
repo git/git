@@ -62,7 +62,7 @@ struct rebase_options {
 	const char *onto_name;
 	const char *revisions;
 	const char *switch_to;
-	int root;
+	int root, root_with_onto;
 	struct object_id *squash_onto;
 	struct commit *restrict_revision;
 	int dont_finish_rebase;
@@ -374,6 +374,7 @@ static int run_rebase_interactive(struct rebase_options *opts,
 	flags |= abbreviate_commands ? TODO_LIST_ABBREVIATE_CMDS : 0;
 	flags |= opts->rebase_merges ? TODO_LIST_REBASE_MERGES : 0;
 	flags |= opts->rebase_cousins > 0 ? TODO_LIST_REBASE_COUSINS : 0;
+	flags |= opts->root_with_onto ? TODO_LIST_ROOT_WITH_ONTO : 0;
 	flags |= command == ACTION_SHORTEN_OIDS ? TODO_LIST_SHORTEN_IDS : 0;
 
 	switch (command) {
@@ -1841,7 +1842,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			options.squash_onto = &squash_onto;
 			options.onto_name = squash_onto_name =
 				xstrdup(oid_to_hex(&squash_onto));
-		}
+		} else
+			options.root_with_onto = 1;
+
 		options.upstream_name = NULL;
 		options.upstream = NULL;
 		if (argc > 1)
