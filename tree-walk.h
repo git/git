@@ -56,7 +56,10 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, c
 struct traverse_info {
 	const char *traverse_path;
 	struct traverse_info *prev;
-	struct name_entry name;
+	const char *name;
+	size_t namelen;
+	unsigned mode;
+
 	int pathlen;
 	struct pathspec *pathspec;
 
@@ -67,7 +70,8 @@ struct traverse_info {
 };
 
 int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned short *);
-char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n);
+char *make_traverse_path(char *path, const struct traverse_info *info,
+			 const char *name, size_t namelen);
 void setup_traverse_info(struct traverse_info *info, const char *base);
 
 static inline int traverse_path_len(const struct traverse_info *info, const struct name_entry *n)
