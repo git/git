@@ -123,7 +123,6 @@
 /git-read-tree
 /git-rebase
 /git-rebase--common
-/git-rebase--interactive
 /git-rebase--preserve-merges
 /git-receive-pack
 /git-reflog
