@@ -1811,15 +1811,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			      "'--reschedule-failed-exec'"));
 	}
 
-	if (options.rebase_merges) {
-		if (strategy_options.nr)
-			die(_("cannot combine '--rebase-merges' with "
-			      "'--strategy-option'"));
-		if (options.strategy)
-			die(_("cannot combine '--rebase-merges' with "
-			      "'--strategy'"));
-	}
-
 	if (!options.root) {
 		if (argc < 1) {
 			struct branch *branch;
