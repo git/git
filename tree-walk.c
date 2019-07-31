@@ -200,6 +200,17 @@ char *make_traverse_path(char *path, const struct traverse_info *info,
 	return path;
 }
 
+void strbuf_make_traverse_path(struct strbuf *out,
+			       const struct traverse_info *info,
+			       const char *name, size_t namelen)
+{
+	size_t len = traverse_path_len(info, namelen);
+
+	strbuf_grow(out, len);
+	make_traverse_path(out->buf + out->len, info, name, namelen);
+	strbuf_setlen(out, out->len + len);
+}
+
 struct tree_desc_skip {
 	struct tree_desc_skip *prev;
 	const void *ptr;
@@ -396,12 +407,10 @@ int traverse_trees(struct index_state *istate,
 		tx[i].d = t[i];
 
 	if (info->prev) {
-		strbuf_grow(&base, info->pathlen);
-		make_traverse_path(base.buf, info->prev, info->name,
-				   info->namelen);
-		base.buf[info->pathlen-1] = '/';
-		strbuf_setlen(&base, info->pathlen);
-		traverse_path = xstrndup(base.buf, info->pathlen);
+		strbuf_make_traverse_path(&base, info->prev,
+					  info->name, info->namelen);
+		strbuf_addch(&base, '/');
+		traverse_path = xstrndup(base.buf, base.len);
 	} else {
 		traverse_path = xstrndup(info->name, info->pathlen);
 	}

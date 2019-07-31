@@ -686,21 +686,19 @@ static int index_pos_by_traverse_info(struct name_entry *names,
 				      struct traverse_info *info)
 {
 	struct unpack_trees_options *o = info->data;
-	size_t len = traverse_path_len(info, tree_entry_len(names));
-	char *name = xmalloc(len + 1 /* slash */ + 1 /* NUL */);
+	struct strbuf name = STRBUF_INIT;
 	int pos;
 
-	make_traverse_path(name, info, names->path, names->pathlen);
-	name[len++] = '/';
-	name[len] = '\0';
-	pos = index_name_pos(o->src_index, name, len);
+	strbuf_make_traverse_path(&name, info, names->path, names->pathlen);
+	strbuf_addch(&name, '/');
+	pos = index_name_pos(o->src_index, name.buf, name.len);
 	if (pos >= 0)
 		BUG("This is a directory and should not exist in index");
 	pos = -pos - 1;
-	if (!starts_with(o->src_index->cache[pos]->name, name) ||
-	    (pos > 0 && starts_with(o->src_index->cache[pos-1]->name, name)))
+	if (!starts_with(o->src_index->cache[pos]->name, name.buf) ||
+	    (pos > 0 && starts_with(o->src_index->cache[pos-1]->name, name.buf)))
 		BUG("pos must point at the first entry in this directory");
-	free(name);
+	strbuf_release(&name);
 	return pos;
 }
 

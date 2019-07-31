@@ -138,6 +138,10 @@ same in the next callback invocation.
 	This utilizes the memory structure of a tree entry to avoid the
 	overhead of using a generic strlen().
 
+`strbuf_make_traverse_path`::
+
+	Convenience wrapper to `make_traverse_path` into a strbuf.
+
 Authors
 -------
 
