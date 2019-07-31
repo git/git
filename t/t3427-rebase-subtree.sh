@@ -41,27 +41,21 @@ commit_message() {
 
 test_expect_success 'setup' '
 	test_commit README &&
-	mkdir files &&
-	(
-		cd files &&
-		git init &&
-		test_commit master1 &&
-		test_commit master2 &&
-		test_commit master3
-	) &&
-	git fetch files master &&
-	git branch files-master FETCH_HEAD &&
-	git read-tree --prefix=files_subtree files-master &&
-	git checkout -- files_subtree &&
-	tree=$(git write-tree) &&
-	head=$(git rev-parse HEAD) &&
-	rev=$(git rev-parse --verify files-master^0) &&
-	commit=$(git commit-tree -p $head -p $rev -m "Add subproject master" $tree) &&
-	git update-ref HEAD $commit &&
-	(
-		cd files_subtree &&
-		test_commit master4
-	) &&
+
+	git init files &&
+	test_commit -C files master1 &&
+	test_commit -C files master2 &&
+	test_commit -C files master3 &&
+
+	: perform subtree merge into files_subtree/ &&
+	git fetch files refs/heads/master:refs/heads/files-master &&
+	git merge -s ours --no-commit --allow-unrelated-histories \
+		files-master &&
+	git read-tree --prefix=files_subtree -u files-master &&
+	git commit -m "Add subproject master" &&
+
+	: add two extra commits to rebase &&
+	test_commit -C files_subtree master4 &&
 	test_commit files_subtree/master5
 '
 
