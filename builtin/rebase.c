@@ -1153,10 +1153,6 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	}
 
 	switch (opts->type) {
-	case REBASE_AM:
-		backend = "git-rebase--am";
-		backend_func = "git_rebase__am";
-		break;
 	case REBASE_PRESERVE_MERGES:
 		backend = "git-rebase--preserve-merges";
 		backend_func = "git_rebase__preserve_merges";
