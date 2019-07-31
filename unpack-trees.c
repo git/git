@@ -686,7 +686,7 @@ static int index_pos_by_traverse_info(struct name_entry *names,
 				      struct traverse_info *info)
 {
 	struct unpack_trees_options *o = info->data;
-	size_t len = traverse_path_len(info, names);
+	size_t len = traverse_path_len(info, tree_entry_len(names));
 	char *name = xmalloc(len + 1 /* slash */ + 1 /* NUL */);
 	int pos;
 
@@ -936,7 +936,7 @@ static int compare_entry(const struct cache_entry *ce, const struct traverse_inf
 	 * Even if the beginning compared identically, the ce should
 	 * compare as bigger than a directory leading up to it!
 	 */
-	return ce_namelen(ce) > traverse_path_len(info, n);
+	return ce_namelen(ce) > traverse_path_len(info, tree_entry_len(n));
 }
 
 static int ce_in_traverse_path(const struct cache_entry *ce,
@@ -960,7 +960,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	struct index_state *istate,
 	int is_transient)
 {
-	size_t len = traverse_path_len(info, n);
+	size_t len = traverse_path_len(info, tree_entry_len(n));
 	struct cache_entry *ce =
 		is_transient ?
 		make_empty_transient_cache_entry(len) :

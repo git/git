@@ -74,9 +74,10 @@ char *make_traverse_path(char *path, const struct traverse_info *info,
 			 const char *name, size_t namelen);
 void setup_traverse_info(struct traverse_info *info, const char *base);
 
-static inline size_t traverse_path_len(const struct traverse_info *info, const struct name_entry *n)
+static inline size_t traverse_path_len(const struct traverse_info *info,
+				       size_t namelen)
 {
-	return st_add(info->pathlen, tree_entry_len(n));
+	return st_add(info->pathlen, namelen);
 }
 
 /* in general, positive means "kind of interesting" */
