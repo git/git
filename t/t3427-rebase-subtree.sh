@@ -68,7 +68,7 @@ test_expect_failure REBASE_P 'Rebase -Xsubtree --preserve-merges --onto commit' 
 	reset_rebase &&
 	git checkout -b rebase-preserve-merges to-rebase &&
 	git rebase -Xsubtree=files_subtree --preserve-merges --onto files-master master &&
-	verbose test "$(commit_message HEAD~)" = "files_subtree/master4" &&
+	verbose test "$(commit_message HEAD~)" = "master4" &&
 	verbose test "$(commit_message HEAD)" = "files_subtree/master5"
 '
 
@@ -77,7 +77,7 @@ test_expect_failure REBASE_P 'Rebase -Xsubtree --keep-empty --preserve-merges --
 	reset_rebase &&
 	git checkout -b rebase-keep-empty to-rebase &&
 	git rebase -Xsubtree=files_subtree --keep-empty --preserve-merges --onto files-master master &&
-	verbose test "$(commit_message HEAD~2)" = "files_subtree/master4" &&
+	verbose test "$(commit_message HEAD~2)" = "master4" &&
 	verbose test "$(commit_message HEAD~)" = "files_subtree/master5" &&
 	verbose test "$(commit_message HEAD)" = "Empty commit"
 '
@@ -87,7 +87,7 @@ test_expect_failure 'Rebase -Xsubtree --onto commit' '
 	reset_rebase &&
 	git checkout -b rebase-onto to-rebase &&
 	git rebase -Xsubtree=files_subtree --onto files-master master &&
-	verbose test "$(commit_message HEAD~2)" = "files_subtree/master4" &&
+	verbose test "$(commit_message HEAD~2)" = "master4" &&
 	verbose test "$(commit_message HEAD~)" = "files_subtree/master5" &&
 	verbose test "$(commit_message HEAD)" = "Empty commit"
 '
