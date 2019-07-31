@@ -1,0 +1,135 @@
+Debugging the GitWeb HTTP request processing
+============================================
+
+This version of the GitWeb server script has an ability to debug
+the requests coming through the gitweb interface by adding an
+option to the request URL: `...;debug=(yes|true|on|1)`
+
+Note that for security and possibly performance reasons, this
+also requires server-side envvar `GITWEB_MAY_DEBUG=yes` to be
+explicitly set by the server administrator.
+
+This can be done e.g. by wrapper shell scripts that would tweak
+CGI request processing and `sudo` what is needed from the web
+server account to execute as the git account.
+
+Examples below assume an installation of such web-served Git
+repositories under an `/srv/git/` directory:
+
+./etc/sudoers.d/git-apache
+----
+wwwrun  ALL=(git)       NOPASSWD:SETENV:/usr/lib/git/*,/usr/share/gitweb/gitweb.cgi
+----
+
+./srv/git/git-http-backend
+----
+#!/bin/sh
+
+# Wrapper for SuExec of the CGI script
+#   /srv/git/git-http-backend
+# cat /etc/sudoers.d/git-apache
+#   wwwrun  ALL=(git)       NOPASSWD:SETENV:/usr/lib/git/*
+
+#PATH_INFO="$SCRIPT_URL"
+GIT_PROJECT_ROOT=/srv/git
+REMOTE_USER="$REDIRECT_REMOTE_USER"
+GIT_HTTP_EXPORT_ALL=true
+GITWEB_MAY_DEBUG=yes
+export GITWEB_MAY_DEBUG
+export PATH_INFO GIT_PROJECT_ROOT REMOTE_USER GIT_HTTP_EXPORT_ALL REQUEST_METHOD
+sudo -E -u git /usr/lib/git/git-http-backend "$@"
+----
+
+./srv/git/git-web
+----
+#!/bin/sh
+
+# Wrapper for SuExec of the CGI script
+#   /srv/git/git-web
+# cat /etc/sudoers.d/git-apache
+#   wwwrun  ALL=(git)       NOPASSWD:SETENV:/usr/lib/git/*,/usr/share/gitweb/gitweb.cgi
+
+export PATH_INFO GIT_PROJECT_ROOT REMOTE_USER GIT_HTTP_EXPORT_ALL REQUEST_METHOD
+GITWEB_MAY_DEBUG=yes
+export GITWEB_MAY_DEBUG
+sudo -E -u git /usr/share/gitweb/gitweb.cgi "$@"
+----
+
+Corresponding Apache HTTPD configuration could could look like:
+./etc/apache2/conf.d/gitsmart.conf
+----
+# Web-serves the $SERVERURL/git/ namespace.
+# See also:
+#   http://git-scm.com/docs/git-http-backend
+#   http://git-scm.com/2010/03/04/smart-http.html
+#   man git-http-backend
+
+TimeOut  900
+KeepAliveTimeout 900
+
+<Directory "/srv/git">
+        Options +ExecCGI +FollowSymLinks
+        AllowOverride AuthConfig FileInfo
+#    <IfModule mod_access_compat.c>
+        Order allow,deny
+        Allow from all
+#    </IfModule>
+#    <IfModule !mod_access_compat.c>
+        Require all granted
+#    </IfModule>
+</Directory>
+
+<Directory "/usr/lib/git/">
+        AllowOverride None
+        Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+#    <IfModule mod_access_compat.c>
+        Order allow,deny
+        Allow from all
+#    </IfModule>
+#    <IfModule !mod_access_compat.c>
+        Require all granted
+#    </IfModule>
+</Directory>
+
+Alias /static/ "/usr/share/gitweb/static/"
+<Directory "/usr/share/gitweb">
+        Options ExecCGI
+        AllowOverride None
+#    <IfModule mod_access_compat.c>
+        Order allow,deny
+        Allow from all
+#    </IfModule>
+#    <IfModule !mod_access_compat.c>
+        Require all granted
+#    </IfModule>
+</Directory>
+
+SetEnv PATH_INFO $SCRIPT_URL
+SetEnv GIT_PROJECT_ROOT /srv/git
+SetEnv GIT_HTTP_EXPORT_ALL
+SetEnv REMOTE_USER $REDIRECT_REMOTE_USER
+
+### Adapted from "Accelerated static Apache 2.x" chapter in the manpage
+AliasMatch ^/git/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /srv/git/$1
+AliasMatch ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /srv/git/$1
+
+### Custom scripts that tweak enviroment and do a sudo
+ScriptAliasMatch \
+                       "(?x)^/git/(.*/(HEAD | \
+                                       info/refs | \
+                                       objects/info/[^/]+ | \
+                                       git-(upload|receive)-pack))$" \
+                       /srv/git/git-http-backend/$1
+ScriptAlias /git/ /srv/git/git-web/
+
+<LocationMatch "^/git/.*/git-(receive|upload)-pack$">
+        Options +ExecCGI
+        Order Deny,Allow
+        Deny from env=AUTHREQUIRED
+
+        AuthType Basic
+        AuthName "Git Access"
+        Require group committers
+        Satisfy Any
+</LocationMatch>
+----
