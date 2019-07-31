@@ -163,7 +163,6 @@ Performance, Internal Implementation, Development Support etc.
  * We have been trying out a few language features outside c89; the
    coding guidelines document did not talk about them and instead had
    a blanket ban against them.
-   (merge cc0c42975a jc/post-c89-rules-doc later to maint).
 
  * A test helper has been introduced to optimize preparation of test
    repositories with many simple commits, and a handful of test
@@ -177,16 +176,13 @@ Fixes since v2.22
    ought to be relative to the directory "git init" gets invoked in,
    but it instead was made relative to the repository, which has been
    corrected.
-   (merge e1df7fe43f nd/init-relative-template-fix later to maint).
 
  * "git worktree add" used to fail when another worktree connected to
    the same repository was corrupt, which has been corrected.
-   (merge 105df73e71 nd/corrupt-worktrees later to maint).
 
  * The ownership rule for the file descriptor to fast-import remote
    backend was mixed up, leading to unrelated file descriptor getting
    closed, which has been fixed.
-   (merge 3203566a71 mh/import-transport-fd-fix later to maint).
 
  * A "merge -c" instruction during "git rebase --rebase-merges" should
    give the user a chance to edit the log message, even when there is
@@ -195,82 +191,65 @@ Fixes since v2.22
    corrected.
 
  * Code cleanup and futureproof.
-   (merge 31f5256c82 ds/object-info-for-prefetch-fix later to maint).
 
  * More parameter validation.
-   (merge de99eb0c24 es/grep-require-name-when-needed later to maint).
 
  * "git update-server-info" used to leave stale packfiles in its
    output, which has been corrected.
-   (merge e941c48d49 ew/server-info-remove-crufts later to maint).
 
  * The server side support for "git fetch" used to show incorrect
    value for the HEAD symbolic ref when the namespace feature is in
    use, which has been corrected.
-   (merge 533e088250 jk/HEAD-symref-in-xfer-namespaces later to maint).
 
  * "git am -i --resolved" segfaulted after trying to see a commit as
    if it were a tree, which has been corrected.
-   (merge 7663e438c5 jk/am-i-resolved-fix later to maint).
 
  * "git bundle verify" needs to see if prerequisite objects exist in
    the receiving repository, but the command did not check if we are
    in a repository upfront, which has been corrected.
-   (merge 3bbbe467f2 js/bundle-verify-require-object-store later to maint).
 
  * "git merge --squash" is designed to update the working tree and the
    index without creating the commit, and this cannot be countermanded
    by adding the "--commit" option; the command now refuses to work
    when both options are given.
-   (merge 1d14d0c994 vv/merge-squash-with-explicit-commit later to maint).
 
  * The data collected by fsmonitor was not properly written back to
    the on-disk index file, breaking t7519 tests occasionally, which
    has been corrected.
-   (merge b5a8169752 js/fsmonitor-unflake later to maint).
 
  * Update to Unicode 12.1 width table.
-   (merge 5817f9caa3 bb/unicode-12.1-reiwa later to maint).
 
  * The command line to invoke a "git cat-file" command from inside
    "git p4" was not properly quoted to protect a caret and running a
    broken command on Windows, which has been corrected.
-   (merge c3f2358de3 mm/p4-unshelve-windows-fix later to maint).
 
  * "git request-pull" learned to warn when the ref we ask them to pull
    from in the local repository and in the published repository are
    different.
-   (merge 0454220d66 pb/request-pull-verify-remote-ref later to maint).
 
  * When creating a partial clone, the object filtering criteria is
    recorded for the origin of the clone, but this incorrectly used a
    hardcoded name "origin" to name that remote; it has been corrected
    to honor the "--origin <name>" option.
-   (merge 1c4a9f9114 xl/record-partial-clone-origin later to maint).
 
  * "git fetch" into a lazy clone forgot to fetch base objects that are
    necessary to complete delta in a thin packfile, which has been
    corrected.
-   (merge 810e19322d jt/partial-clone-missing-ref-delta-base later to maint).
 
  * The filter_data used in the list-objects-filter (which manages a
    lazily sparse clone repository) did not use the dynamic array API
    correctly---'nr' is supposed to point at one past the last element
    of the array in use.  This has been corrected.
-   (merge 7140600e2e md/list-objects-filter-memfix later to maint).
 
  * The description about slashes in gitignore patterns (used to
    indicate things like "anchored to this level only" and "only
    matches directories") has been revamped.
-   (merge 1a58bad014 an/ignore-doc-update later to maint).
 
  * The URL decoding code has been updated to avoid going past the end
    of the string while parsing %-<hex>-<hex> sequence.
-   (merge d37dc239a4 md/url-parse-harden later to maint).
 
  * The list of for-each like macros used by clang-format has been
    updated.
-   (merge fc7e03aace mo/clang-format-for-each-update later to maint).
 
  * "git branch --list" learned to show branches that are checked out
    in other worktrees connected to the same repository prefixed with
@@ -280,48 +259,38 @@ Fixes since v2.22
 
  * Code restructuring during 2.20 period broke fetching tags via
    "import" based transports.
-   (merge f80d922355 fc/fetch-with-import-fix later to maint).
 
  * The commit-graph file is now part of the "files that the runtime
    may keep open file descriptors on, all of which would need to be
    closed when done with the object store", and the file descriptor to
    an existing commit-graph file now is closed before "gc" finalizes a
    new instance to replace it.
-   (merge 2d511cfc0b ds/close-object-store later to maint).
 
  * "git checkout -p" needs to selectively apply a patch in reverse,
    which did not work well.
-   (merge 2bd69b9024 pw/add-p-recount later to maint).
 
  * Code clean-up to avoid signed integer wraparounds during binary search.
-   (merge 568a05c5ec rs/avoid-overflow-in-midpoint-computation later to maint).
 
  * "git interpret-trailers" always treated '#' as the comment
    character, regardless of core.commentChar setting, which has been
    corrected.
-   (merge 29c83fc23f jk/trailers-use-config later to maint).
 
  * "git stash show 23" used to work, but no more after getting
    rewritten in C; this regression has been corrected.
-   (merge 63b50c8ffe tg/stash-ref-by-index-fix later to maint).
 
  * "git rebase --abort" used to leave refs/rewritten/ when concluding
    "git rebase -r", which has been corrected.
-   (merge d559f502c5 pw/rebase-abort-clean-rewritten later to maint).
 
  * An incorrect list of options was cached after command line
    completion failed (e.g. trying to complete a command that requires
    a repository outside one), which has been corrected.
-   (merge 69702523af nd/completion-no-cache-failure later to maint).
 
  * The code to parse scaled numbers out of configuration files has
    been made more robust and also easier to follow.
-   (merge 39c575c969 rs/config-unit-parsing later to maint).
 
  * The codepath to compute delta islands used to spew progress output
    without giving the callers any way to squelch it, which has been
    fixed.
-   (merge bdbdf42f8a jk/delta-islands-progress-fix later to maint).
 
  * Protocol capabilities that go over wire should never be translated,
    but it was incorrectly marked for translation, which has been
@@ -330,23 +299,19 @@ Fixes since v2.22
 
  * Use "Erase in Line" CSI sequence that is already used in the editor
    support to clear cruft in the progress output.
-   (merge 5b12e3123b sg/rebase-progress later to maint).
 
  * "git submodule foreach" did not protect command line options passed
    to the command to be run in each submodule correctly, when the
    "--recursive" option was in use.
-   (merge 30db18b148 ms/submodule-foreach-fix later to maint).
 
  * The configuration variable rebase.rescheduleFailedExec should be
    effective only while running an interactive rebase and should not
    affect anything when running an non-interactive one, which was not
    the case.  This has been corrected.
-   (merge 906b63942a js/rebase-reschedule-applies-only-to-interactive later to maint).
 
  * The "git clone" documentation refers to command line options in its
    description in the short form; they have been replaced with long
    forms to make them more recognisable.
-   (merge bfc8c84ed5 qn/clone-doc-use-long-form later to maint).
 
  * Generation of pack bitmaps are now disabled when .keep files exist,
    as these are mutually exclusive features.
@@ -355,28 +320,23 @@ Fixes since v2.22
  * "git rm" to resolve a conflicted path leaked an internal message
    "needs merge" before actually removing the path, which was
    confusing.  This has been corrected.
-   (merge b2b1f615ce jc/denoise-rm-to-resolve later to maint).
 
  * "git stash --keep-index" did not work correctly on paths that have
    been removed, which has been fixed.
    (merge b932f6a5e8 tg/stash-keep-index-with-removed-paths later to maint).
 
  * Window 7 update ;-)
-   (merge eb7c786314 js/mingw-spawn-with-spaces-in-path later to maint).
 
  * A codepath that reads from GPG for signed object verification read
    past the end of allocated buffer, which has been fixed.
-   (merge 64c45dc72e sr/gpg-interface-stop-at-the-end later to maint).
 
  * "git clean" silently skipped a path when it cannot lstat() it; now
    it gives a warning.
-   (merge b09364c47a js/clean-report-too-long-a-path later to maint).
 
  * "git push --atomic" that goes over the transport-helper (namely,
    the smart http transport) failed to prevent refs to be pushed when
    it can locally tell that one of the ref update will fail without
    having to consult the other end, which has been corrected.
-   (merge 2581ea3d31 es/local-atomic-push-failure-with-http later to maint).
 
  * The internal diff machinery can be made to read out of bounds while
    looking for --funcion-context line in a corner case, which has been
@@ -384,27 +344,6 @@ Fixes since v2.22
    (merge b777f3fd61 jk/xdiff-clamp-funcname-context-index later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge f547101b26 es/git-debugger-doc later to maint).
-   (merge 7877ac3d7b js/bisect-helper-check-get-oid-return-value later to maint).
-   (merge 0108f47eb3 sw/git-p4-unshelve-branched-files later to maint).
-   (merge 9df8f734fd cm/send-email-document-req-modules later to maint).
-   (merge afc3bf6eb1 ab/hash-object-doc later to maint).
-   (merge 1fde99cfc7 po/doc-branch later to maint).
-   (merge 459842e1c2 dl/config-alias-doc later to maint).
-   (merge 5d137fc2c7 cb/fsmonitor-intfix later to maint).
-   (merge 921d49be86 rs/copy-array later to maint).
-   (merge cc8d872e69 js/t3404-typofix later to maint).
-   (merge 729a9b558b cb/mkstemps-uint-type-fix later to maint).
-   (merge 9dae4fe79f js/gcc-8-and-9 later to maint).
-   (merge ed33bd8f30 js/t0001-case-insensitive later to maint).
-   (merge dfa880e336 jw/gitweb-sample-update later to maint).
-   (merge e532a90a9f sg/t5551-fetch-smart-error-is-translated later to maint).
-   (merge 8d45ad8c29 jt/t5551-test-chunked later to maint).
-   (merge 1a64e07d23 sg/git-C-empty-doc later to maint).
-   (merge 37a2e35395 sg/ci-brew-gcc-workaround later to maint).
-   (merge 24df0d49c4 js/trace2-signo-typofix later to maint).
    (merge fbec05c210 cc/test-oidmap later to maint).
-   (merge 7926cee904 di/readme-markup-fix later to maint).
-   (merge 02638d1e11 vn/xmmap-gently later to maint).
-   (merge f7bf24d4dd rm/gpg-program-doc-fix later to maint).
-   (merge 3aef54e8b8 js/unmap-before-ext-diff later to maint).
+   (merge 7a06fb038c jk/no-system-includes-in-dot-c later to maint).
+   (merge 81ed2b405c cb/xdiff-no-system-includes-in-dot-c later to maint).
