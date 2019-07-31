@@ -168,7 +168,7 @@ int tree_entry_gently(struct tree_desc *desc, struct name_entry *entry)
 
 void setup_traverse_info(struct traverse_info *info, const char *base)
 {
-	int pathlen = strlen(base);
+	size_t pathlen = strlen(base);
 	static struct traverse_info dummy;
 
 	memset(info, 0, sizeof(*info));
@@ -184,7 +184,7 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 char *make_traverse_path(char *path, const struct traverse_info *info,
 			 const char *name, size_t namelen)
 {
-	int pathlen = info->pathlen;
+	size_t pathlen = info->pathlen;
 
 	path[pathlen + namelen] = 0;
 	for (;;) {

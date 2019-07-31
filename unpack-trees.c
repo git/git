@@ -686,7 +686,7 @@ static int index_pos_by_traverse_info(struct name_entry *names,
 				      struct traverse_info *info)
 {
 	struct unpack_trees_options *o = info->data;
-	int len = traverse_path_len(info, names);
+	size_t len = traverse_path_len(info, names);
 	char *name = xmalloc(len + 1 /* slash */ + 1 /* NUL */);
 	int pos;
 
@@ -814,7 +814,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	newinfo.name = p->path;
 	newinfo.namelen = p->pathlen;
 	newinfo.mode = p->mode;
-	newinfo.pathlen += tree_entry_len(p) + 1;
+	newinfo.pathlen = st_add3(newinfo.pathlen, tree_entry_len(p), 1);
 	newinfo.df_conflicts |= df_conflicts;
 
 	/*
@@ -960,7 +960,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	struct index_state *istate,
 	int is_transient)
 {
-	int len = traverse_path_len(info, n);
+	size_t len = traverse_path_len(info, n);
 	struct cache_entry *ce =
 		is_transient ?
 		make_empty_transient_cache_entry(len) :
