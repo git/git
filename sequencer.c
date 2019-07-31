@@ -767,7 +767,7 @@ static int parse_key_value_squoted(char *buf, struct string_list *list)
  *	GIT_AUTHOR_DATE='$author_date'
  *
  * where $author_name, $author_email and $author_date are quoted. We are strict
- * with our parsing, as the file was meant to be eval'd in the old
+ * with our parsing, as the file was meant to be eval'd in the now-removed
  * git-am.sh/git-rebase--interactive.sh scripts, and thus if the file differs
  * from what this function expects, it is better to bail out than to do
  * something that the user does not expect.
