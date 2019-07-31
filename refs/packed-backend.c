@@ -1012,14 +1012,23 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	}
 
 	/*
-	 * Now that we hold the `packed-refs` lock, make sure that our
-	 * snapshot matches the current version of the file. Normally
-	 * `get_snapshot()` does that for us, but that function
-	 * assumes that when the file is locked, any existing snapshot
-	 * is still valid. We've just locked the file, but it might
-	 * have changed the moment *before* we locked it.
+	 * There is a stat-validity problem might cause `update-ref -d`
+	 * lost the newly commit of a ref, because a new `packed-refs`
+	 * file might has the same on-disk file attributes such as
+	 * timestamp, file size and inode value, but has a changed
+	 * ref value.
+	 *
+	 * This could happen with a very small chance when
+	 * `update-ref -d` is called and at the same time another
+	 * `pack-refs --all` process is running.
+	 *
+	 * Now that we hold the `packed-refs` lock, it is important
+	 * to make sure we could read the latest version of
+	 * `packed-refs` file no matter we have just mmap it or not.
+	 * So what need to do is clear the snapshot if we hold it
+	 * already.
 	 */
-	validate_snapshot(refs);
+	clear_snapshot(refs);
 
 	/*
 	 * Now make sure that the packed-refs file as it exists in the
