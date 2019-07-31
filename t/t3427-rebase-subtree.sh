@@ -83,10 +83,10 @@ test_expect_failure REBASE_P 'Rebase -Xsubtree --keep-empty --preserve-merges --
 '
 
 # FAILURE: fatal: Could not parse object
-test_expect_failure 'Rebase -Xsubtree --onto commit' '
+test_expect_failure 'Rebase -Xsubtree --keep-empty --onto commit' '
 	reset_rebase &&
 	git checkout -b rebase-onto to-rebase &&
-	git rebase -Xsubtree=files_subtree --onto files-master master &&
+	git rebase -Xsubtree=files_subtree --keep-empty --onto files-master master &&
 	verbose test "$(commit_message HEAD~2)" = "master4" &&
 	verbose test "$(commit_message HEAD~)" = "files_subtree/master5" &&
 	verbose test "$(commit_message HEAD)" = "Empty commit"
