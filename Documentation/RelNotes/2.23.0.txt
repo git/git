@@ -10,6 +10,9 @@ Backward compatibility note
    prerequisite patches in an unstable way, which has been updated to
    compute in a way that is compatible with "git patch-id --stable".
 
+ * The "git log" command by default behaves as if the --mailmap option
+   was given.
+
 
 UI, Workflows & Features
 
@@ -90,11 +93,6 @@ UI, Workflows & Features
  * The commits in a repository can be described by multiple
    commit-graph files now, which allows the commit-graph files to be
    updated incrementally.
-
- * The "git log" command learns to issue a warning when log.mailmap
-   configuration is not set and --[no-]mailmap option is not used, to
-   prepare users for future versions of Git that uses the mailmap by
-   default.
 
  * "git range-diff" output has been tweaked for easier identification
    of which part of what file the patch shown is about.
