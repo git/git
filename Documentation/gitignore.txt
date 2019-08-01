@@ -74,8 +74,12 @@ PATTERN FORMAT
    for readability.
 
  - A line starting with # serves as a comment.
-   Put a backslash ("`\`") in front of the first hash for patterns
-   that begin with a hash.
+   Put a backslash ("`\`") in front of each hash for patterns
+   containing a hash.
+
+ - A # after a pattern will be treated as the start of a comment.
+   Put a backslash ("`\`") in front of each hash for patterns
+   containing a hash.
 
  - Trailing spaces are ignored unless they are quoted with backslash
    ("`\`").
