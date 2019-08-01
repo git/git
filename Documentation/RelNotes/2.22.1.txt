@@ -94,7 +94,7 @@ Fixes since v2.22
 
  * The configuration variable rebase.rescheduleFailedExec should be
    effective only while running an interactive rebase and should not
-   affect anything when running an non-interactive one, which was not
+   affect anything when running a non-interactive one, which was not
    the case.  This has been corrected.
 
  * "git submodule foreach" did not protect command line options passed
