@@ -96,7 +96,11 @@ static off_t reuse_packfile_offset;
 
 static int use_bitmap_index_default = 1;
 static int use_bitmap_index = -1;
-static int write_bitmap_index;
+static enum {
+	WRITE_BITMAP_FALSE = 0,
+	WRITE_BITMAP_QUIET,
+	WRITE_BITMAP_TRUE,
+} write_bitmap_index;
 static uint16_t write_bitmap_options = BITMAP_OPT_HASH_CACHE;
 
 static int exclude_promisor_objects;
@@ -892,7 +896,8 @@ static void write_pack_file(void)
 						 nr_written, oid.hash, offset);
 			close(fd);
 			if (write_bitmap_index) {
-				warning(_(no_split_warning));
+				if (write_bitmap_index != WRITE_BITMAP_QUIET)
+					warning(_(no_split_warning));
 				write_bitmap_index = 0;
 			}
 		}
@@ -1176,7 +1181,8 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 	if (!want_object_in_pack(oid, exclude, &found_pack, &found_offset)) {
 		/* The pack is missing an object, so it will not have closure */
 		if (write_bitmap_index) {
-			warning(_(no_closure_warning));
+			if (write_bitmap_index != WRITE_BITMAP_QUIET)
+				warning(_(no_closure_warning));
 			write_bitmap_index = 0;
 		}
 		return 0;
@@ -3313,8 +3319,13 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			    N_("do not hide commits by grafts"), 0),
 		OPT_BOOL(0, "use-bitmap-index", &use_bitmap_index,
 			 N_("use a bitmap index if available to speed up counting objects")),
-		OPT_BOOL(0, "write-bitmap-index", &write_bitmap_index,
-			 N_("write a bitmap index together with the pack index")),
+		OPT_SET_INT(0, "write-bitmap-index", &write_bitmap_index,
+			    N_("write a bitmap index together with the pack index"),
+			    WRITE_BITMAP_TRUE),
+		OPT_SET_INT_F(0, "write-bitmap-index-quiet",
+			      &write_bitmap_index,
+			      N_("write a bitmap index if possible"),
+			      WRITE_BITMAP_QUIET, PARSE_OPT_HIDDEN),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
 		{ OPTION_CALLBACK, 0, "missing", NULL, N_("action"),
 		  N_("handling for missing objects"), PARSE_OPT_NONEG,
