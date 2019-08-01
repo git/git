@@ -1,18 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2019, #07; Mon, 29)
-X-master-at: 026dd738a6e5f1e42ef0f390feacb5ed6acc4ee8
-X-next-at: 4dedae46a21fbd9d3232915177485ac88f42884f
+Subject: What's cooking in git.git (Aug 2019, #01; Thu, 1)
+X-master-at: 51cf315870bbb7254ddf06c84fe03b41bc48eebd
+X-next-at: 66108df07cb19d083b2ca07a23f4bf494216042f
 
-What's cooking in git.git (Jul 2019, #07; Mon, 29)
+What's cooking in git.git (Aug 2019, #01; Thu, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The first preview for 2.23 has been tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,61 +20,148 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bb/grep-pcre2-bug-message-fix (2019-07-23) 1 commit
-  (merged to 'next' on 2019-07-23 at 8bd5a68618)
- + grep: print the pcre2_jit_on value
+* bc/hash-independent-tests-part-4 (2019-07-01) 10 commits
+  (merged to 'next' on 2019-07-29 at d1efaea0ec)
+ + t2203: avoid hard-coded object ID values
+ + t1710: make hash independent
+ + t1007: remove SHA1 prerequisites
+ + t0090: make test pass with SHA-256
+ + t0027: make hash size independent
+ + t6030: make test work with SHA-256
+ + t5000: make hash independent
+ + t1450: make hash size independent
+ + t1410: make hash size independent
+ + t: add helper to convert object IDs to paths
 
- BUG() message fix.
-
- The codepath may want to just simply be removed, though.
-
-
-* jk/xdiff-clamp-funcname-context-index (2019-07-23) 1 commit
-  (merged to 'next' on 2019-07-25 at b2944a0ba6)
- + xdiff: clamp function context indices in post-image
-
- The internal diff machinery can be made to read out of bounds while
- looking for --funcion-context line in a corner case, which has been
- corrected.
+ Update to the tests to help SHA-256 transition continues.
 
 
-* js/rebase-cleanup (2019-07-25) 2 commits
-  (merged to 'next' on 2019-07-25 at 3d9cedf470)
- + git: mark cmd_rebase as requiring a worktree
- + rebase: fix white-space
+* cb/xdiff-no-system-includes-in-dot-c (2019-07-28) 3 commits
+  (merged to 'next' on 2019-07-29 at 35ea0d8cba)
+ + xdiff: remove duplicate headers from xpatience.c
+ + xdiff: remove duplicate headers from xhistogram.c
+ + xdiff: drop system includes in xutils.c
+ (this branch uses jk/no-system-includes-in-dot-c.)
 
- A few leftover cleanup to "git rebase" in C.
+ Compilation fix.
 
 
-* sg/travis-gcc-4.8 (2019-07-19) 1 commit
-  (merged to 'next' on 2019-07-25 at e3d546eb15)
- + travis-ci: build with GCC 4.8 as well
+* jc/dir-iterator-test-fix (2019-07-30) 1 commit
+  (merged to 'next' on 2019-07-31 at 8637ae9f34)
+ + test-dir-iterator: do not assume errno values
 
- Add a job to build with a tad older GCC to make sure we are still
- buildable.
+ Test fix.
+
+
+* jk/no-system-includes-in-dot-c (2019-06-19) 2 commits
+  (merged to 'next' on 2019-07-29 at 8081b8c13d)
+ + wt-status.h: drop stdio.h include
+ + verify-tag: drop signal.h include
+ (this branch is used by cb/xdiff-no-system-includes-in-dot-c.)
+
+ Compilation fix.
+
+
+* jk/repack-silence-auto-bitmap-warning (2019-07-31) 3 commits
+  (merged to 'next' on 2019-07-31 at 3aa218347c)
+ + repack: simplify handling of auto-bitmaps and .keep files
+ + repack: silence warnings when auto-enabled bitmaps cannot be built
+ + t7700: clean up .keep file in bitmap-writing test
+
+ Squelch unneeded and misleading warnings from "repack" when the
+ command attempts to generate pack bitmaps without explicitly asked
+ for by the user.
+
+
+* jk/sort-iter-test-output (2019-07-31) 1 commit
+  (merged to 'next' on 2019-07-31 at 449695af8f)
+ + t: sort output of hashmap iteration
+
+ Test fix.
+
+
+--------------------------------------------------
+[New Topics]
+
+* ds/feature-macros (2019-07-30) 5 commits
+ - repo-settings: create feature.experimental setting
+ - repo-settings: create feature.manyFiles setting
+ - repo-settings: parse core.untrackedCache
+ - repo-settings: add feature.manyCommits setting
+ - repo-settings: consolidate some config settings
+
+
+* mt/grep-submodules-working-tree (2019-07-30) 1 commit
+ - grep: fix worktree case in submodules
+
+ "git grep --recurse-submodules" that looks at the working tree
+ files looked at the contents in the index in submodules, instead of
+ files in the working tree.
+
+ Will merge to 'next'.
+
+
+* sg/fsck-config-in-doc (2019-07-29) 1 commit
+ - Documentation/git-fsck.txt: include fsck.* config variables
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jk/tree-walk-overflow (2019-07-31) 6 commits
+ - tree-walk: harden make_traverse_path() length computations
+ - tree-walk: add a strbuf wrapper for make_traverse_path()
+ - tree-walk: accept a raw length for traverse_path_len()
+ - tree-walk: use size_t consistently
+ - tree-walk: drop oid from traverse_info
+ - setup_traverse_info(): stop copying oid
+
+ Codepaths to walk tree objects have been audited for integer
+ overflows and hardened.
+
+ Will merge to 'next'.
+
+
+* js/early-config-with-onbranch (2019-07-31) 1 commit
+  (merged to 'next' on 2019-08-01 at 26b713c824)
+ + config: work around bug with includeif:onbranch and early config
+
+ The recently added [includeif "onbranch:branch"] feature does not
+ work well with an early config mechanism, as it attempts to find
+ out what branch we are on before we even haven't located the git
+ repository.  The inclusion during early config scan is ignored to
+ work around this issue.
+
+ Will merge to 'master'.
+
+
+* jc/log-mailmap-flip-defaults (2019-08-01) 1 commit
+  (merged to 'next' on 2019-08-01 at 80cddd7895)
+ + log: flip the --mailmap default unconditionally
+
+
+* sg/t5510-test-i18ngrep-fix (2019-07-31) 1 commit
+ - t5510-fetch: fix negated 'test_i18ngrep' invocation
+ (this branch is used by sg/do-not-skip-non-httpd-tests.)
+
+ Test fix.
+
+ Will merge to 'next'.
+
+
+* sg/do-not-skip-non-httpd-tests (2019-08-01) 3 commits
+ - tests: warn against appending non-httpd-specific tests at the end
+ - t5703: run all non-httpd-specific tests before sourcing 'lib-httpd.sh'
+ - t5510-fetch: run non-httpd-specific test before sourcing 'lib-httpd.sh'
+ (this branch uses sg/t5510-test-i18ngrep-fix.)
+
+ Test fix.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* nd/index-dump-in-json (2019-06-26) 11 commits
- - SQUASH???
- - t3008: use the new SINGLE_CPU prereq
- - read-cache.c: dump "IEOT" extension as json
- - read-cache.c: dump "EOIE" extension as json
- - resolve-undo.c: dump "REUC" extension as json
- - fsmonitor.c: dump "FSMN" extension as json
- - split-index.c: dump "link" extension as json
- - dir.c: dump "UNTR" extension as json
- - cache-tree.c: dump "TREE" extension as json
- - read-cache.c: dump common extension info in json
- - ls-files: add --json to dump the index
-
- "ls-files" learned "--debug-json" option to dump the contents and
- the extensions of the index file.
-
- At least the fixup at the tip needs to be squashed into the right
- commit.  Also the new test seems flaky.
-
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
  - index: offer advice for unknown index extensions
@@ -157,28 +242,6 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* cb/xdiff-no-system-includes-in-dot-c (2019-07-28) 3 commits
-  (merged to 'next' on 2019-07-29 at 35ea0d8cba)
- + xdiff: remove duplicate headers from xpatience.c
- + xdiff: remove duplicate headers from xhistogram.c
- + xdiff: drop system includes in xutils.c
- (this branch uses jk/no-system-includes-in-dot-c.)
-
- Compilation fix.
-
- Will merge to 'master'.
-
-
-* jk/no-system-includes-in-dot-c (2019-06-19) 2 commits
-  (merged to 'next' on 2019-07-29 at 8081b8c13d)
- + wt-status.h: drop stdio.h include
- + verify-tag: drop signal.h include
- (this branch is used by cb/xdiff-no-system-includes-in-dot-c.)
-
- Compilation fix.
-
- Will merge to 'master'.
-
 * ra/rebase-i-more-options (2019-07-23) 4 commits
  - SQUASH???
  - rebase -i: support --committer-date-is-author-date
@@ -191,12 +254,11 @@ of the repositories listed at
  Needs a bit of fixups, at least.
 
 
-* js/rebase-r-strategy (2019-07-25) 12 commits
+* js/rebase-r-strategy (2019-07-31) 16 commits
  - rebase -r: do not (re-)generate root commits with `--root` *and* `--onto`
  - t3418: test `rebase -r` with merge strategies
  - t/lib-rebase: prepare for testing `git rebase --rebase-merges`
  - rebase -r: support merge strategies other than `recursive`
- - t3427: mark two test cases as requiring support for `git rebase -p`
  - t3427: fix another incorrect assumption
  - t3427: accommodate for the `rebase --merge` backend having been replaced
  - t3427: fix erroneous assumption
@@ -204,6 +266,11 @@ of the repositories listed at
  - t3427: move the `filter-branch` invocation into the `setup` case
  - t3427: simplify the `setup` test case significantly
  - t3427: add a clarifying comment
+ - rebase: fold git-rebase--common into the -p backend
+ - sequencer: the `am` and `rebase--interactive` scripts are gone
+ - .gitignore: there is no longer a built-in `git-rebase--interactive`
+ - t3400: stop referring to the scripted rebase
+ - Drop unused git-rebase--am.sh
 
  "git rebase --rebase-merges" learned to drive different merge
  strategies and pass strategy specific options to them.
@@ -268,41 +335,10 @@ of the repositories listed at
  tests should rely on the existence of the support to pass.
 
 
-* bc/hash-independent-tests-part-4 (2019-07-01) 10 commits
-  (merged to 'next' on 2019-07-29 at d1efaea0ec)
- + t2203: avoid hard-coded object ID values
- + t1710: make hash independent
- + t1007: remove SHA1 prerequisites
- + t0090: make test pass with SHA-256
- + t0027: make hash size independent
- + t6030: make test work with SHA-256
- + t5000: make hash independent
- + t1450: make hash size independent
- + t1410: make hash size independent
- + t: add helper to convert object IDs to paths
-
- Update to the tests to help SHA-256 transition continues.
-
- Will merge to 'master'.
-
-
 * es/walken-tutorial (2019-07-02) 1 commit
  - documentation: add tutorial for revision walking
 
  Yet another revision walker tutorial.
-
-
-* ds/early-access (2019-07-01) 3 commits
- - repo-settings: pack.useSparse=true
- - repo-settings: use index.version=4 by default
- - repo-settings: create core.featureAdoptionRate setting
-
- A mechanism to enable newish configuration settings in bulk has
- been invented.
-
- Will replace with a redesigned variant which is being discussed
- when the dust settles.
- cf. <pull.292.v2.git.gitgitgadget@gmail.com> (v2)
 
 
 * ab/no-kwset (2019-07-01) 10 commits
@@ -408,3 +444,36 @@ of the repositories listed at
  On hold.
  cf. <20190508001252.15752-1-avarab@gmail.com>
  cf. <20190719210156.GA9688@archbookpro.localdomain>
+
+--------------------------------------------------
+[Discarded]
+
+* nd/index-dump-in-json (2019-06-26) 11 commits
+ . SQUASH???
+ . t3008: use the new SINGLE_CPU prereq
+ . read-cache.c: dump "IEOT" extension as json
+ . read-cache.c: dump "EOIE" extension as json
+ . resolve-undo.c: dump "REUC" extension as json
+ . fsmonitor.c: dump "FSMN" extension as json
+ . split-index.c: dump "link" extension as json
+ . dir.c: dump "UNTR" extension as json
+ . cache-tree.c: dump "TREE" extension as json
+ . read-cache.c: dump common extension info in json
+ . ls-files: add --json to dump the index
+
+ "ls-files" learned "--debug-json" option to dump the contents and
+ the extensions of the index file.
+
+ Retracted at least for now.
+ cf. <CACsJy8A8fJZq6k2i_e0EpkxN8SZ4+8h1FA0eV6e9xFLaMDcsPg@mail.gmail.com>
+
+
+* ds/early-access (2019-07-01) 3 commits
+ . repo-settings: pack.useSparse=true
+ . repo-settings: use index.version=4 by default
+ . repo-settings: create core.featureAdoptionRate setting
+
+ A mechanism to enable newish configuration settings in bulk has
+ been invented.
+
+ ds/feature-macros has replaced this topic.
