@@ -52,7 +52,7 @@ UI, Workflows & Features
 
  * "git fetch" and "git pull" reports when a fetch results in
    non-fast-forward updates to let the user notice unusual situation.
-   The commands learned "--no-shown-forced-updates" option to disable
+   The commands learned "--no-show-forced-updates" option to disable
    this safety feature.
 
  * Two new commands "git switch" and "git restore" are introduced to
@@ -68,7 +68,7 @@ UI, Workflows & Features
  * The conditional inclusion mechanism learned to base the choice on
    the branch the HEAD currently is on.
 
- * "git rev-list --objects" learned with "--no-object-names" option to
+ * "git rev-list --objects" learned the "--no-object-names" option to
    squelch the path to the object that is used as a grouping hint for
    pack-objects.
 
@@ -106,7 +106,7 @@ Performance, Internal Implementation, Development Support etc.
    no longer be used.
 
  * Developer support to emulate unsatisfied prerequisites in tests to
-   ensure that the remainer of the tests still succeeds when tests
+   ensure that the remainder of the tests still succeeds when tests
    with prerequisites are skipped.
 
  * "git update-server-info" learned not to rewrite the file with the
@@ -121,7 +121,7 @@ Performance, Internal Implementation, Development Support etc.
  * Prepare use of reachability index in topological walker that works
    on a range (A..B).
 
- * A new tutorial targetting specifically aspiring git-core
+ * A new tutorial targeting specifically aspiring git-core
    developers has been added.
 
  * Auto-detect how to tell HP-UX aCC where to use dynamically linked
@@ -181,7 +181,7 @@ Fixes since v2.22
    the same repository was corrupt, which has been corrected.
 
  * The ownership rule for the file descriptor to fast-import remote
-   backend was mixed up, leading to unrelated file descriptor getting
+   backend was mixed up, leading to an unrelated file descriptor getting
    closed, which has been fixed.
 
  * A "merge -c" instruction during "git rebase --rebase-merges" should
@@ -306,7 +306,7 @@ Fixes since v2.22
 
  * The configuration variable rebase.rescheduleFailedExec should be
    effective only while running an interactive rebase and should not
-   affect anything when running an non-interactive one, which was not
+   affect anything when running a non-interactive one, which was not
    the case.  This has been corrected.
 
  * The "git clone" documentation refers to command line options in its
@@ -339,7 +339,7 @@ Fixes since v2.22
    having to consult the other end, which has been corrected.
 
  * The internal diff machinery can be made to read out of bounds while
-   looking for --funcion-context line in a corner case, which has been
+   looking for --function-context line in a corner case, which has been
    corrected.
    (merge b777f3fd61 jk/xdiff-clamp-funcname-context-index later to maint).
 
