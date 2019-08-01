@@ -417,4 +417,7 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
 '
 
+# DO NOT add non-httpd-specific tests here, because the last part of this
+# test script is only executed when httpd is available and enabled.
+
 test_done
