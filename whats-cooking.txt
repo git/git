@@ -1,16 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2019, #01; Thu, 1)
-X-master-at: 51cf315870bbb7254ddf06c84fe03b41bc48eebd
-X-next-at: 66108df07cb19d083b2ca07a23f4bf494216042f
+Subject: What's cooking in git.git (Aug 2019, #02; Fri, 2)
+X-master-at: 7c20df84bd21ec0215358381844274fa10515017
+X-next-at: deed80330f2f849fecaf1d22eaf715b93ef96954
 
-What's cooking in git.git (Aug 2019, #01; Thu, 1)
+What's cooking in git.git (Aug 2019, #02; Fri, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+The first release candidate for 2.23 has been tagged.  "git log"
+will by default honor the ".mailmap" file like "git shortlog" does,
+which is a backward-incompatible change that is shipped without big
+fanfare.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,107 +25,12 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/hash-independent-tests-part-4 (2019-07-01) 10 commits
-  (merged to 'next' on 2019-07-29 at d1efaea0ec)
- + t2203: avoid hard-coded object ID values
- + t1710: make hash independent
- + t1007: remove SHA1 prerequisites
- + t0090: make test pass with SHA-256
- + t0027: make hash size independent
- + t6030: make test work with SHA-256
- + t5000: make hash independent
- + t1450: make hash size independent
- + t1410: make hash size independent
- + t: add helper to convert object IDs to paths
+* jc/log-mailmap-flip-defaults (2019-08-02) 2 commits
+ - log: really flip the --mailmap default
+  (merged to 'next' on 2019-08-01 at 80cddd7895)
+ + log: flip the --mailmap default unconditionally
 
- Update to the tests to help SHA-256 transition continues.
-
-
-* cb/xdiff-no-system-includes-in-dot-c (2019-07-28) 3 commits
-  (merged to 'next' on 2019-07-29 at 35ea0d8cba)
- + xdiff: remove duplicate headers from xpatience.c
- + xdiff: remove duplicate headers from xhistogram.c
- + xdiff: drop system includes in xutils.c
- (this branch uses jk/no-system-includes-in-dot-c.)
-
- Compilation fix.
-
-
-* jc/dir-iterator-test-fix (2019-07-30) 1 commit
-  (merged to 'next' on 2019-07-31 at 8637ae9f34)
- + test-dir-iterator: do not assume errno values
-
- Test fix.
-
-
-* jk/no-system-includes-in-dot-c (2019-06-19) 2 commits
-  (merged to 'next' on 2019-07-29 at 8081b8c13d)
- + wt-status.h: drop stdio.h include
- + verify-tag: drop signal.h include
- (this branch is used by cb/xdiff-no-system-includes-in-dot-c.)
-
- Compilation fix.
-
-
-* jk/repack-silence-auto-bitmap-warning (2019-07-31) 3 commits
-  (merged to 'next' on 2019-07-31 at 3aa218347c)
- + repack: simplify handling of auto-bitmaps and .keep files
- + repack: silence warnings when auto-enabled bitmaps cannot be built
- + t7700: clean up .keep file in bitmap-writing test
-
- Squelch unneeded and misleading warnings from "repack" when the
- command attempts to generate pack bitmaps without explicitly asked
- for by the user.
-
-
-* jk/sort-iter-test-output (2019-07-31) 1 commit
-  (merged to 'next' on 2019-07-31 at 449695af8f)
- + t: sort output of hashmap iteration
-
- Test fix.
-
-
---------------------------------------------------
-[New Topics]
-
-* ds/feature-macros (2019-07-30) 5 commits
- - repo-settings: create feature.experimental setting
- - repo-settings: create feature.manyFiles setting
- - repo-settings: parse core.untrackedCache
- - repo-settings: add feature.manyCommits setting
- - repo-settings: consolidate some config settings
-
-
-* mt/grep-submodules-working-tree (2019-07-30) 1 commit
- - grep: fix worktree case in submodules
-
- "git grep --recurse-submodules" that looks at the working tree
- files looked at the contents in the index in submodules, instead of
- files in the working tree.
-
- Will merge to 'next'.
-
-
-* sg/fsck-config-in-doc (2019-07-29) 1 commit
- - Documentation/git-fsck.txt: include fsck.* config variables
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* jk/tree-walk-overflow (2019-07-31) 6 commits
- - tree-walk: harden make_traverse_path() length computations
- - tree-walk: add a strbuf wrapper for make_traverse_path()
- - tree-walk: accept a raw length for traverse_path_len()
- - tree-walk: use size_t consistently
- - tree-walk: drop oid from traverse_info
- - setup_traverse_info(): stop copying oid
-
- Codepaths to walk tree objects have been audited for integer
- overflows and hardened.
-
- Will merge to 'next'.
+ Hotfix for making "git log" use the mailmap by default.
 
 
 * js/early-config-with-onbranch (2019-07-31) 1 commit
@@ -133,32 +43,64 @@ of the repositories listed at
  repository.  The inclusion during early config scan is ignored to
  work around this issue.
 
- Will merge to 'master'.
+
+* js/visual-studio (2019-07-29) 23 commits
+ + git: avoid calling aliased builtins via their dashed form
+ + bin-wrappers: append `.exe` to target paths if necessary
+ + .gitignore: ignore Visual Studio's temporary/generated files
+ + .gitignore: touch up the entries regarding Visual Studio
+ + vcxproj: also link-or-copy builtins
+ + msvc: add a Makefile target to pre-generate the Visual Studio solution
+ + contrib/buildsystems: add a backend for modern Visual Studio versions
+ + contrib/buildsystems: handle options starting with a slash
+ + contrib/buildsystems: also handle -lexpat
+ + contrib/buildsystems: handle libiconv, too
+ + contrib/buildsystems: handle the curl library option
+ + contrib/buildsystems: error out on unknown option
+ + contrib/buildsystems: optionally capture the dry-run in a file
+ + contrib/buildsystems: redirect errors of the dry run into a log file
+ + contrib/buildsystems: ignore gettext stuff
+ + contrib/buildsystems: handle quoted spaces in filenames
+ + contrib/buildsystems: fix misleading error message
+ + contrib/buildsystems: ignore irrelevant files in Generators/
+ + contrib/buildsystems: ignore invalidcontinue.obj
+ + Vcproj.pm: urlencode '<' and '>' when generating VC projects
+ + Vcproj.pm: do not configure VCWebServiceProxyGeneratorTool
+ + Vcproj.pm: list git.exe first to be startup project
+ + Vcproj.pm: auto-generate GUIDs
+
+ Support building Git with Visual Studio
+
+ The bits about .git/branches/* have been dropped from the series.
+ We may want to drop the support for it, but until that happens, the
+ tests should rely on the existence of the support to pass.
 
 
-* jc/log-mailmap-flip-defaults (2019-08-01) 1 commit
-  (merged to 'next' on 2019-08-01 at 80cddd7895)
- + log: flip the --mailmap default unconditionally
+* sg/fsck-config-in-doc (2019-07-29) 1 commit
+ + Documentation/git-fsck.txt: include fsck.* config variables
+
+ Doc update.
+
+--------------------------------------------------
+[New Topics]
+
+* cb/pcre2-chartables-leakfix (2019-08-02) 1 commit
+ - grep: avoid leak of chartables in PCRE2
 
 
-* sg/t5510-test-i18ngrep-fix (2019-07-31) 1 commit
- - t5510-fetch: fix negated 'test_i18ngrep' invocation
- (this branch is used by sg/do-not-skip-non-httpd-tests.)
-
- Test fix.
-
- Will merge to 'next'.
+* jh/trace2-pretty-output (2019-08-01) 3 commits
+ - trace2: trim whitespace in region messages in perf target format
+ - trace2: trim whitespace in start message in perf target format
+ - trace2: cleanup column alignment in perf target format
 
 
-* sg/do-not-skip-non-httpd-tests (2019-08-01) 3 commits
- - tests: warn against appending non-httpd-specific tests at the end
- - t5703: run all non-httpd-specific tests before sourcing 'lib-httpd.sh'
- - t5510-fetch: run non-httpd-specific test before sourcing 'lib-httpd.sh'
- (this branch uses sg/t5510-test-i18ngrep-fix.)
+* sc/pack-refs-deletion-racefix (2019-08-02) 1 commit
+ - pack-refs: always refresh after taking the lock file
 
- Test fix.
 
- Will merge to 'next'.
+* vn/restore-empty-ita-corner-case-fix (2019-08-02) 2 commits
+ - restore: add test for deleted ita files
+ - checkout.c: unstage empty deleted ita files
 
 --------------------------------------------------
 [Stalled]
@@ -233,6 +175,62 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ds/feature-macros (2019-07-30) 5 commits
+ - repo-settings: create feature.experimental setting
+ - repo-settings: create feature.manyFiles setting
+ - repo-settings: parse core.untrackedCache
+ - repo-settings: add feature.manyCommits setting
+ - repo-settings: consolidate some config settings
+
+
+* mt/grep-submodules-working-tree (2019-07-30) 1 commit
+  (merged to 'next' on 2019-08-02 at e1a46a195f)
+ + grep: fix worktree case in submodules
+
+ "git grep --recurse-submodules" that looks at the working tree
+ files looked at the contents in the index in submodules, instead of
+ files in the working tree.
+
+ Will cook in 'next'.
+
+
+* jk/tree-walk-overflow (2019-08-01) 6 commits
+  (merged to 'next' on 2019-08-02 at 116467c77a)
+ + tree-walk: harden make_traverse_path() length computations
+ + tree-walk: add a strbuf wrapper for make_traverse_path()
+ + tree-walk: accept a raw length for traverse_path_len()
+ + tree-walk: use size_t consistently
+ + tree-walk: drop oid from traverse_info
+ + setup_traverse_info(): stop copying oid
+
+ Codepaths to walk tree objects have been audited for integer
+ overflows and hardened.
+
+ Will cook in 'next'.
+
+
+* sg/t5510-test-i18ngrep-fix (2019-07-31) 1 commit
+  (merged to 'next' on 2019-08-02 at 678564fda2)
+ + t5510-fetch: fix negated 'test_i18ngrep' invocation
+ (this branch is used by sg/do-not-skip-non-httpd-tests.)
+
+ Test fix.
+
+ Will cook in 'next'.
+
+
+* sg/do-not-skip-non-httpd-tests (2019-08-02) 3 commits
+  (merged to 'next' on 2019-08-02 at e700df0693)
+ + t: warn against adding non-httpd-specific tests after sourcing 'lib-httpd'
+ + t5703: run all non-httpd-specific tests before sourcing 'lib-httpd.sh'
+ + t5510-fetch: run non-httpd-specific test before sourcing 'lib-httpd.sh'
+ (this branch uses sg/t5510-test-i18ngrep-fix.)
+
+ Test fix.
+
+ Will cook in 'next'.
+
+
 * vn/reset-deleted-ita (2019-07-26) 1 commit
  - reset: unstage empty deleted ita files
 
@@ -301,38 +299,6 @@ of the repositories listed at
  - Start to implement a built-in version of `git add --interactive`
 
  The beginning of rewriting "git add -i" in C.
-
-
-* js/visual-studio (2019-07-29) 23 commits
- - git: avoid calling aliased builtins via their dashed form
- - bin-wrappers: append `.exe` to target paths if necessary
- - .gitignore: ignore Visual Studio's temporary/generated files
- - .gitignore: touch up the entries regarding Visual Studio
- - vcxproj: also link-or-copy builtins
- - msvc: add a Makefile target to pre-generate the Visual Studio solution
- - contrib/buildsystems: add a backend for modern Visual Studio versions
- - contrib/buildsystems: handle options starting with a slash
- - contrib/buildsystems: also handle -lexpat
- - contrib/buildsystems: handle libiconv, too
- - contrib/buildsystems: handle the curl library option
- - contrib/buildsystems: error out on unknown option
- - contrib/buildsystems: optionally capture the dry-run in a file
- - contrib/buildsystems: redirect errors of the dry run into a log file
- - contrib/buildsystems: ignore gettext stuff
- - contrib/buildsystems: handle quoted spaces in filenames
- - contrib/buildsystems: fix misleading error message
- - contrib/buildsystems: ignore irrelevant files in Generators/
- - contrib/buildsystems: ignore invalidcontinue.obj
- - Vcproj.pm: urlencode '<' and '>' when generating VC projects
- - Vcproj.pm: do not configure VCWebServiceProxyGeneratorTool
- - Vcproj.pm: list git.exe first to be startup project
- - Vcproj.pm: auto-generate GUIDs
-
- Support building Git with Visual Studio
-
- The bits about .git/branches/* have been dropped from the series.
- We may want to drop the support for it, but until that happens, the
- tests should rely on the existence of the support to pass.
 
 
 * es/walken-tutorial (2019-07-02) 1 commit
