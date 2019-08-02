@@ -3,6 +3,7 @@
 #include "dir.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "fsmonitor-ipc.h"
 #include "run-command.h"
 #include "strbuf.h"
 
@@ -231,6 +232,7 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 
 void refresh_fsmonitor(struct index_state *istate)
 {
+	struct repository *r = istate->repo ? istate->repo : the_repository;
 	struct strbuf query_result = STRBUF_INIT;
 	int query_success = 0, hook_version = -1;
 	size_t bol = 0; /* beginning of line */
@@ -247,6 +249,48 @@ void refresh_fsmonitor(struct index_state *istate)
 	istate->fsmonitor_has_run_once = 1;
 
 	trace_printf_key(&trace_fsmonitor, "refresh fsmonitor");
+
+	if (r->settings.use_builtin_fsmonitor > 0) {
+		query_success = !fsmonitor_ipc__send_query(
+			istate->fsmonitor_last_update ?
+			istate->fsmonitor_last_update : "builtin:fake",
+			&query_result);
+		if (query_success) {
+			/*
+			 * The response contains a series of nul terminated
+			 * strings.  The first is the new token.
+			 *
+			 * Use `char *buf` as an interlude to trick the CI
+			 * static analysis to let us use `strbuf_addstr()`
+			 * here (and only copy the token) rather than
+			 * `strbuf_addbuf()`.
+			 */
+			buf = query_result.buf;
+			strbuf_addstr(&last_update_token, buf);
+			bol = last_update_token.len + 1;
+		} else {
+			/*
+			 * The builtin daemon is not available on this
+			 * platform -OR- we failed to get a response.
+			 *
+			 * Generate a fake token (rather than a V1
+			 * timestamp) for the index extension.  (If
+			 * they switch back to the hook API, we don't
+			 * want ambiguous state.)
+			 */
+			strbuf_addstr(&last_update_token, "builtin:fake");
+		}
+
+		/*
+		 * Regardless of whether we successfully talked to a
+		 * fsmonitor daemon or not, we skip over and do not
+		 * try to use the hook.  The "core.useBuiltinFSMonitor"
+		 * config setting ALWAYS overrides the "core.fsmonitor"
+		 * hook setting.
+		 */
+		goto apply_results;
+	}
+
 	/*
 	 * This could be racy so save the date/time now and query_fsmonitor
 	 * should be inclusive to ensure we don't miss potential changes.
@@ -301,6 +345,7 @@ void refresh_fsmonitor(struct index_state *istate)
 			core_fsmonitor, query_success ? "success" : "failure");
 	}
 
+apply_results:
 	/* a fsmonitor process can return '/' to indicate all entries are invalid */
 	if (query_success && query_result.buf[bol] != '/') {
 		/* Mark all entries returned by the monitor as dirty */
