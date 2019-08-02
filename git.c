@@ -739,8 +739,6 @@ static int run_argv(int *argcp, const char ***argv)
 		 */
 		if (!done_alias)
 			handle_builtin(*argcp, *argv);
-
-#if 0 // TODO In GFW, need to amend a7924b655e940b06cb547c235d6bed9767929673 to include trace2_ and _tr2 lines.
 		else if (get_builtin(**argv)) {
 			struct argv_array args = ARGV_ARRAY_INIT;
 			int i;
@@ -775,7 +773,6 @@ static int run_argv(int *argcp, const char ***argv)
 				exit(i);
 			die("could not execute builtin %s", **argv);
 		}
-#endif // a7924b655e940b06cb547c235d6bed9767929673
 
 		/* .. then try the external ones */
 		execv_dashed_external(*argv);
