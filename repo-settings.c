@@ -58,6 +58,9 @@ void prepare_repo_settings(struct repository *r)
 		r->settings.core_multi_pack_index = value;
 	UPDATE_DEFAULT_BOOL(r->settings.core_multi_pack_index, 1);
 
+	if (!repo_config_get_bool(r, "core.usebuiltinfsmonitor", &value) && value)
+		r->settings.use_builtin_fsmonitor = 1;
+
 	if (!repo_config_get_bool(r, "feature.manyfiles", &value) && value) {
 		UPDATE_DEFAULT_BOOL(r->settings.index_version, 4);
 		UPDATE_DEFAULT_BOOL(r->settings.core_untracked_cache, UNTRACKED_CACHE_WRITE);
