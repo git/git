@@ -7,8 +7,6 @@ test_description='Test automatic use of a pager.'
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'setup' '
-	: squelch advice messages during the transition &&
-	git config --global log.mailmap false &&
 	sane_unset GIT_PAGER GIT_PAGER_IN_USE &&
 	test_unconfig core.pager &&
 

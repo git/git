@@ -442,6 +442,34 @@ test_expect_success 'Log output with log.mailmap' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log.mailmap=false disables mailmap' '
+	cat >expect <<-\EOF &&
+	Author: CTO <cto@coompany.xx>
+	Author: claus <me@company.xx>
+	Author: santa <me@company.xx>
+	Author: nick2 <nick2@company.xx>
+	Author: nick2 <bugs@company.xx>
+	Author: nick1 <bugs@company.xx>
+	Author: A U Thor <author@example.com>
+	EOF
+	git -c log.mailmap=False log | grep Author > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-use-mailmap disables mailmap' '
+	cat >expect <<-\EOF &&
+	Author: CTO <cto@coompany.xx>
+	Author: claus <me@company.xx>
+	Author: santa <me@company.xx>
+	Author: nick2 <nick2@company.xx>
+	Author: nick2 <bugs@company.xx>
+	Author: nick1 <bugs@company.xx>
+	Author: A U Thor <author@example.com>
+	EOF
+	git log --no-use-mailmap | grep Author > actual &&
+	test_cmp expect actual
+'
+
 cat >expect <<\EOF
 Author: Santa Claus <santa.claus@northpole.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
@@ -458,6 +486,11 @@ EOF
 
 test_expect_success 'Grep author with log.mailmap' '
 	git -c log.mailmap=True log --author Santa | grep Author >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log.mailmap is true by default these days' '
+	git log --author Santa | grep Author >actual &&
 	test_cmp expect actual
 '
 
