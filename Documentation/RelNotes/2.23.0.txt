@@ -345,3 +345,4 @@ Fixes since v2.22
    (merge fbec05c210 cc/test-oidmap later to maint).
    (merge 7a06fb038c jk/no-system-includes-in-dot-c later to maint).
    (merge 81ed2b405c cb/xdiff-no-system-includes-in-dot-c later to maint).
+   (merge d61e6ce1dd sg/fsck-config-in-doc later to maint).
