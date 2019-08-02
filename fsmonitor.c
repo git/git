@@ -3,6 +3,7 @@
 #include "dir.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "fsmonitor-ipc.h"
 #include "run-command.h"
 #include "strbuf.h"
 
@@ -148,13 +149,26 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 /*
  * Call the query-fsmonitor hook passing the last update token of the saved results.
  */
-static int query_fsmonitor(int version, const char *last_update, struct strbuf *query_result)
+static int query_fsmonitor(int version, struct index_state *istate, struct strbuf *query_result)
 {
+	struct repository *r = istate->repo ? istate->repo : the_repository;
+	const char *last_update = istate->fsmonitor_last_update;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int result;
 
 	if (!core_fsmonitor)
 		return -1;
+
+	if (r->settings.use_builtin_fsmonitor > 0) {
+#ifdef HAVE_FSMONITOR_DAEMON_BACKEND
+		return fsmonitor_ipc__send_query(last_update, query_result);
+#else
+		/* Fake a trivial response. */
+		warning(_("fsmonitor--daemon unavailable; falling back"));
+		strbuf_add(query_result, "/", 2);
+		return 0;
+#endif
+	}
 
 	strvec_push(&cp.args, core_fsmonitor);
 	strvec_pushf(&cp.args, "%d", version);
@@ -263,7 +277,7 @@ void refresh_fsmonitor(struct index_state *istate)
 	if (istate->fsmonitor_last_update) {
 		if (hook_version == -1 || hook_version == HOOK_INTERFACE_VERSION2) {
 			query_success = !query_fsmonitor(HOOK_INTERFACE_VERSION2,
-				istate->fsmonitor_last_update, &query_result);
+				istate, &query_result);
 
 			if (query_success) {
 				if (hook_version < 0)
@@ -293,7 +307,7 @@ void refresh_fsmonitor(struct index_state *istate)
 
 		if (hook_version == HOOK_INTERFACE_VERSION1) {
 			query_success = !query_fsmonitor(HOOK_INTERFACE_VERSION1,
-				istate->fsmonitor_last_update, &query_result);
+				istate, &query_result);
 		}
 
 		trace_performance_since(last_update, "fsmonitor process '%s'", core_fsmonitor);
