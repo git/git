@@ -17,7 +17,7 @@ linkgit:git-receive-pack[1]. On the fetch side, malformed objects will
 instead be left unreferenced in the repository.
 +
 Due to the non-quarantine nature of the `fetch.fsckObjects`
-implementation it can not be relied upon to leave the object store
+implementation it cannot be relied upon to leave the object store
 clean like `receive.fsckObjects` can.
 +
 As objects are unpacked they're written to the object store, so there
