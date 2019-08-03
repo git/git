@@ -39,7 +39,7 @@ OPTIONS
 	commit, branch or tag associated with it.
 +
 If not specified, the default restore source for the working tree is
-the index, and the default restore source for the index index is
+the index, and the default restore source for the index is
 `HEAD`. When both `--staged` and `--worktree` are specified,
 `--source` must also be specified.
 
