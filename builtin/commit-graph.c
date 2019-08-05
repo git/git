@@ -213,8 +213,10 @@ static int graph_write(int argc, const char **argv)
 
 		if (opts.stdin_packs)
 			pack_indexes = &lines;
-		if (opts.stdin_commits)
+		if (opts.stdin_commits) {
 			commit_hex = &lines;
+			flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
+		}
 
 		UNLEAK(buf);
 	}

@@ -23,7 +23,7 @@ test_expect_success 'write graph with no packs' '
 	test_path_is_missing info/commit-graph
 '
 
-test_expect_success 'close with correct error on bad input' '
+test_expect_success 'exit with correct error on bad input to --stdin-packs' '
 	cd "$TRASH_DIRECTORY/full" &&
 	echo doesnotexist >in &&
 	test_expect_code 1 git commit-graph write --stdin-packs <in 2>stderr &&
@@ -38,6 +38,15 @@ test_expect_success 'create commits and repack' '
 		git branch commits/$i
 	done &&
 	git repack
+'
+
+test_expect_success 'exit with correct error on bad input to --stdin-commits' '
+	cd "$TRASH_DIRECTORY/full" &&
+	echo HEAD | test_expect_code 1 git commit-graph write --stdin-commits 2>stderr &&
+	test_i18ngrep "invalid commit object id" stderr &&
+	# valid tree OID, but not a commit OID
+	git rev-parse HEAD^{tree} | test_expect_code 1 git commit-graph write --stdin-commits 2>stderr &&
+	test_i18ngrep "invalid commit object id" stderr
 '
 
 graph_git_two_modes() {
