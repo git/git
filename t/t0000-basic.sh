@@ -285,14 +285,14 @@ test_expect_success C_LOCALE_OUTPUT 'test --verbose' '
 	mv t1234-verbose/out t1234-verbose/out+ &&
 	grep -v "^Initialized empty" t1234-verbose/out+ >t1234-verbose/out &&
 	check_sub_test_lib_test t1234-verbose <<-\EOF
-	> expecting success: true
+	> expecting success of 1234.1 '\''passing test'\'': true
 	> ok 1 - passing test
 	> Z
-	> expecting success: echo foo
+	> expecting success of 1234.2 '\''test with output'\'': echo foo
 	> foo
 	> ok 2 - test with output
 	> Z
-	> expecting success: false
+	> expecting success of 1234.3 '\''failing test'\'': false
 	> not ok 3 - failing test
 	> #	false
 	> Z
@@ -313,7 +313,7 @@ test_expect_success 'test --verbose-only' '
 	check_sub_test_lib_test t2345-verbose-only-2 <<-\EOF
 	> ok 1 - passing test
 	> Z
-	> expecting success: echo foo
+	> expecting success of 2345.2 '\''test with output'\'': echo foo
 	> foo
 	> ok 2 - test with output
 	> Z
