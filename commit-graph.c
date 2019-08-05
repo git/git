@@ -1133,7 +1133,8 @@ static int add_ref_to_list(const char *refname,
 	return 0;
 }
 
-int write_commit_graph_reachable(const char *obj_dir, unsigned int flags,
+int write_commit_graph_reachable(const char *obj_dir,
+				 enum commit_graph_write_flags flags,
 				 const struct split_commit_graph_opts *split_opts)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
@@ -1750,7 +1751,7 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
-		       unsigned int flags,
+		       enum commit_graph_write_flags flags,
 		       const struct split_commit_graph_opts *split_opts)
 {
 	struct write_commit_graph_context *ctx;
@@ -1771,9 +1772,9 @@ int write_commit_graph(const char *obj_dir,
 	if (len && ctx->obj_dir[len - 1] == '/')
 		ctx->obj_dir[len - 1] = 0;
 
-	ctx->append = flags & COMMIT_GRAPH_APPEND ? 1 : 0;
-	ctx->report_progress = flags & COMMIT_GRAPH_PROGRESS ? 1 : 0;
-	ctx->split = flags & COMMIT_GRAPH_SPLIT ? 1 : 0;
+	ctx->append = flags & COMMIT_GRAPH_WRITE_APPEND ? 1 : 0;
+	ctx->report_progress = flags & COMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0;
+	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
 	ctx->split_opts = split_opts;
 
 	if (ctx->split) {
