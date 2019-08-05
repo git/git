@@ -26,8 +26,7 @@ test_expect_success 'write graph with no packs' '
 test_expect_success 'close with correct error on bad input' '
 	cd "$TRASH_DIRECTORY/full" &&
 	echo doesnotexist >in &&
-	{ git commit-graph write --stdin-packs <in 2>stderr; ret=$?; } &&
-	test "$ret" = 1 &&
+	test_expect_code 1 git commit-graph write --stdin-packs <in 2>stderr &&
 	test_i18ngrep "error adding pack" stderr
 '
 
