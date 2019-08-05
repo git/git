@@ -276,15 +276,15 @@ test_expect_success 'pretend we have a mix of all possible results' "
 
 test_expect_success C_LOCALE_OUTPUT 'test --verbose' '
 	test_must_fail run_sub_test_lib_test \
-		test-verbose "test verbose" --verbose <<-\EOF &&
+		t1234-verbose "test verbose" --verbose <<-\EOF &&
 	test_expect_success "passing test" true
 	test_expect_success "test with output" "echo foo"
 	test_expect_success "failing test" false
 	test_done
 	EOF
-	mv test-verbose/out test-verbose/out+ &&
-	grep -v "^Initialized empty" test-verbose/out+ >test-verbose/out &&
-	check_sub_test_lib_test test-verbose <<-\EOF
+	mv t1234-verbose/out t1234-verbose/out+ &&
+	grep -v "^Initialized empty" t1234-verbose/out+ >t1234-verbose/out &&
+	check_sub_test_lib_test t1234-verbose <<-\EOF
 	> expecting success: true
 	> ok 1 - passing test
 	> Z
@@ -303,14 +303,14 @@ test_expect_success C_LOCALE_OUTPUT 'test --verbose' '
 
 test_expect_success 'test --verbose-only' '
 	test_must_fail run_sub_test_lib_test \
-		test-verbose-only-2 "test verbose-only=2" \
+		t2345-verbose-only-2 "test verbose-only=2" \
 		--verbose-only=2 <<-\EOF &&
 	test_expect_success "passing test" true
 	test_expect_success "test with output" "echo foo"
 	test_expect_success "failing test" false
 	test_done
 	EOF
-	check_sub_test_lib_test test-verbose-only-2 <<-\EOF
+	check_sub_test_lib_test t2345-verbose-only-2 <<-\EOF
 	> ok 1 - passing test
 	> Z
 	> expecting success: echo foo
