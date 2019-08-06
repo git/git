@@ -148,6 +148,7 @@ static GIT_PATH_FUNC(rebase_path_refs_to_delete, "rebase-merge/refs-to-delete")
  */
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
 static GIT_PATH_FUNC(rebase_path_cdate_is_adate, "rebase-merge/cdate_is_adate")
+static GIT_PATH_FUNC(rebase_path_ignore_date, "rebase-merge/ignore_date")
 static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
 static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
 static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
@@ -931,6 +932,17 @@ static int setenv_committer_date_to_author_date(void)
 	return res;
 }
 
+static void ignore_author_date(const char **author)
+{
+	struct strbuf new_author = STRBUF_INIT;
+	char *idx = memchr(*author, '>', strlen(*author));
+
+	strbuf_add(&new_author, *author, idx - *author);
+	strbuf_addstr(&new_author, "> ");
+	datestamp(&new_author);
+	*author = strbuf_detach(&new_author, NULL);
+}
+
 static const char staged_changes_advice[] =
 N_("you have staged changes in your working tree\n"
 "If these changes are meant to be squashed into the previous commit, run:\n"
@@ -988,7 +1000,7 @@ static int run_git_commit(struct repository *r,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	if (opts->committer_date_is_author_date &&
+	if (opts->committer_date_is_author_date && !opts->ignore_date &&
 	    setenv_committer_date_to_author_date())
 		return 1;
 	if ((flags & CREATE_ROOT_COMMIT) && !(flags & AMEND_MSG)) {
@@ -1016,10 +1028,18 @@ static int run_git_commit(struct repository *r,
 
 		if (res <= 0)
 			res = error_errno(_("could not read '%s'"), defmsg);
-		else
+		else {
+			if (opts->ignore_date) {
+				if (!author)
+					BUG("ignore-date can only be used with "
+					    "rebase -i, which must set the "
+					    "author before committing the tree");
+				ignore_author_date(&author);
+			}
 			res = commit_tree(msg.buf, msg.len, cache_tree_oid,
 					  NULL, &root_commit, author,
 					  opts->gpg_sign);
+		}
 
 		strbuf_release(&msg);
 		strbuf_release(&script);
@@ -1049,6 +1069,8 @@ static int run_git_commit(struct repository *r,
 		argv_array_push(&cmd.args, "--amend");
 	if (opts->gpg_sign)
 		argv_array_pushf(&cmd.args, "-S%s", opts->gpg_sign);
+	if (opts->ignore_date)
+		argv_array_pushf(&cmd.args, "--date=%ld", time(NULL));
 	if (defmsg)
 		argv_array_pushl(&cmd.args, "-F", defmsg, NULL);
 	else if (!(flags & EDIT_MSG))
@@ -1428,7 +1450,7 @@ static int try_to_commit(struct repository *r,
 	if (parse_head(r, &current_head))
 		return -1;
 	if (!(flags & AMEND_MSG) && opts->committer_date_is_author_date &&
-	    setenv_committer_date_to_author_date())
+	    !opts->ignore_date && setenv_committer_date_to_author_date())
 		return -1;
 	if (flags & AMEND_MSG) {
 		const char *exclude_gpgsig[] = { "gpgsig", NULL };
@@ -1450,7 +1472,7 @@ static int try_to_commit(struct repository *r,
 			res = error(_("unable to parse commit author"));
 			goto out;
 		}
-		if (opts->committer_date_is_author_date) {
+		if (opts->committer_date_is_author_date && !opts->ignore_date) {
 			char *date;
 			int len = strlen(author);
 			char *idx = memchr(author, '>', len);
@@ -1510,6 +1532,11 @@ static int try_to_commit(struct repository *r,
 
 	reset_ident_date();
 
+	if (opts->ignore_date) {
+		ignore_author_date(&author);
+		free(author_to_free);
+		author_to_free = (char *)author;
+	}
 	if (commit_tree_extended(msg->buf, msg->len, &tree, parents,
 				 oid, author, opts->gpg_sign, extra)) {
 		res = error(_("failed to write commit object"));
@@ -2587,6 +2614,11 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->committer_date_is_author_date = 1;
 		}
 
+		if (file_exists(rebase_path_ignore_date())) {
+			opts->allow_ff = 0;
+			opts->ignore_date = 1;
+		}
+
 		if (file_exists(rebase_path_reschedule_failed_exec()))
 			opts->reschedule_failed_exec = 1;
 
@@ -2671,6 +2703,8 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_signoff(), "--signoff\n");
 	if (opts->committer_date_is_author_date)
 		write_file(rebase_path_cdate_is_adate(), "%s", "");
+	if (opts->ignore_date)
+		write_file(rebase_path_ignore_date(), "%s", "");
 	if (opts->reschedule_failed_exec)
 		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 
@@ -3596,6 +3630,9 @@ static int do_merge(struct repository *r,
 		argv_array_push(&cmd.args, git_path_merge_msg(r));
 		if (opts->gpg_sign)
 			argv_array_push(&cmd.args, opts->gpg_sign);
+		if (opts->ignore_date)
+			argv_array_pushf(&cmd.args,
+					 "GIT_AUTHOR_DATE=%ld", time(NULL));
 
 		/* Add the tips to be merged */
 		for (j = to_merge; j; j = j->next)
@@ -3869,7 +3906,8 @@ static int pick_commits(struct repository *r,
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
 				opts->record_origin || opts->edit ||
-				opts->committer_date_is_author_date));
+				opts->committer_date_is_author_date ||
+				opts->ignore_date));
 	if (read_and_refresh_cache(r, opts))
 		return -1;
 
