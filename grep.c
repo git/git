@@ -150,11 +150,21 @@ int grep_config(const char *var, const char *value, void *cb)
  * Initialize one instance of grep_opt and copy the
  * default values from the template we read the configuration
  * information in an earlier call to git_config(grep_config).
+ *
+ * If using PCRE make sure that the library is configured
+ * to use the right allocator (ex: NED)
  */
 void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix)
 {
 	struct grep_opt *def = &grep_defaults;
 	int i;
+
+#ifdef USE_NED_ALLOCATOR
+#ifdef USE_LIBPCRE1
+	pcre_malloc = malloc;
+	pcre_free = free;
+#endif
+#endif
 
 	memset(opt, 0, sizeof(*opt));
 	opt->repo = repo;
