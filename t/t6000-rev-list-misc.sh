@@ -140,4 +140,12 @@ test_expect_success '--header shows a NUL after each commit' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list --end-of-options' '
+	git update-ref refs/heads/--output=yikes HEAD &&
+	git rev-list --end-of-options --output=yikes >actual &&
+	test_path_is_missing yikes &&
+	git rev-list HEAD >expect &&
+	test_cmp expect actual
+'
+
 test_done
