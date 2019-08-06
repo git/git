@@ -7,6 +7,9 @@ test_description='tests to ensure compatibility between am and interactive backe
 
 . ./test-lib.sh
 
+GIT_AUTHOR_DATE="1999-04-02T08:03:20+05:30"
+export GIT_AUTHOR_DATE
+
 # This is a special case in which both am and interactive backends
 # provide the same output. It was done intentionally because
 # both the backends fall short of optimal behaviour.
@@ -60,6 +63,22 @@ test_expect_success '--ignore-whitespace works with interactive backend' '
 	git rebase --abort &&
 	git rebase --merge --ignore-whitespace main side &&
 	test_cmp expect file
+'
+
+test_expect_success '--committer-date-is-author-date works with am backend' '
+	git rebase -f HEAD^ &&
+	git rebase --committer-date-is-author-date HEAD^ &&
+	git show HEAD --pretty="format:%at" >authortime &&
+	git show HEAD --pretty="format:%ct" >committertime &&
+	test_cmp authortime committertime
+'
+
+test_expect_success '--committer-date-is-author-date works with interactive backend' '
+	git rebase -f HEAD^ &&
+	git rebase -i --committer-date-is-author-date HEAD^ &&
+	git show HEAD --pretty="format:%at" >authortime &&
+	git show HEAD --pretty="format:%ct" >committertime &&
+	test_cmp authortime committertime
 '
 
 test_done
