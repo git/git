@@ -16,6 +16,47 @@ static int grep_source_is_binary(struct grep_source *gs,
 
 static struct grep_opt grep_defaults;
 
+#ifdef USE_LIBPCRE2
+static pcre2_general_context *pcre2_global_context;
+
+#ifdef USE_NED_ALLOCATOR
+static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
+{
+	return xmalloc(size); /* will use nedalloc underneath */
+}
+
+static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
+{
+	return free(pointer);
+}
+
+/*
+ * BUG: this is technically not needed if we will do UTF matching
+ *      but UTF locale detection is currently broken
+ * TODO: has_non_ascii() doesn't support NUL in pattern
+ */
+void setup_pcre2_as_needed(struct grep_opt *opt, const char *pat)
+{
+	if (!pcre2_global_context && opt->ignore_case &&
+		has_non_ascii(pat))
+		pcre2_global_context = pcre2_general_context_create(
+					pcre2_malloc, pcre2_free, NULL);
+}
+
+static void cleanup_pcre2_as_needed(void)
+{
+	pcre2_general_context_free(pcre2_global_context);
+}
+
+#else
+#define setup_pcre2_as_needed(opt, pat)
+#define cleanup_pcre2_as_needed()
+#endif
+#else
+#define setup_pcre2_as_needed(opt, pat)
+#define cleanup_pcre2_as_needed()
+#endif
+
 static const char *color_grep_slots[] = {
 	[GREP_COLOR_CONTEXT]	    = "context",
 	[GREP_COLOR_FILENAME]	    = "filename",
@@ -153,6 +194,7 @@ int grep_config(const char *var, const char *value, void *cb)
  *
  * If using PCRE make sure that the library is configured
  * to use the right allocator (ex: NED)
+ * if any object is created it should be cleaned up in grep_destroy()
  */
 void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix)
 {
@@ -186,6 +228,11 @@ void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix
 
 	for (i = 0; i < NR_GREP_COLORS; i++)
 		color_set(opt->colors[i], def->colors[i]);
+}
+
+void grep_destroy(void)
+{
+	cleanup_pcre2_as_needed();
 }
 
 static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct grep_opt *opt)
@@ -326,6 +373,7 @@ void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen,
 		     const char *origin, int no, enum grep_pat_token t)
 {
 	struct grep_pat *p = create_grep_pat(pat, patlen, origin, no, t, 0);
+	setup_pcre2_as_needed(opt, pat);
 	do_append_grep_pat(&opt->pattern_tail, p);
 }
 
@@ -507,9 +555,18 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 
 	p->pcre2_compile_context = NULL;
 
+	/*
+	 * pcre2_global_context is initialized in append_grep_pat()
+	 * with logic from setup_pcre2_as_needed() that mimics what
+	 * is used here and with the BUG() to protect from mismatches
+	 */
 	if (opt->ignore_case) {
 		if (has_non_ascii(p->pattern)) {
-			character_tables = pcre2_maketables(NULL);
+#ifdef USE_NED_ALLOCATOR
+			if (!pcre2_global_context)
+				BUG("pcre2_global_context uninitialized");
+#endif
+			character_tables = pcre2_maketables(pcre2_global_context);
 			p->pcre2_compile_context = pcre2_compile_context_create(NULL);
 			pcre2_set_character_tables(p->pcre2_compile_context, character_tables);
 		}
