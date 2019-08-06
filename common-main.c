@@ -39,15 +39,15 @@ int main(int argc, const char **argv)
 
 	git_resolve_executable_dir(argv[0]);
 
-	trace2_initialize();
-	trace2_cmd_start(argv);
-	trace2_collect_process_info(TRACE2_PROCESS_INFO_STARTUP);
-
 	git_setup_gettext();
 
 	initialize_the_repository();
 
 	attr_start();
+
+	trace2_initialize();
+	trace2_cmd_start(argv);
+	trace2_collect_process_info(TRACE2_PROCESS_INFO_STARTUP);
 
 	result = cmd_main(argc, argv);
 
