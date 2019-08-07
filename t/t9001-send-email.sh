@@ -225,6 +225,8 @@ X-Mailer: X-MAILER-STRING
 In-Reply-To: <unique-message-id@example.com>
 References: <unique-message-id@example.com>
 Reply-To: Reply <reply@example.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -251,10 +253,9 @@ test_suppress_self () {
 
 	mv msgtxt1 msgtxt1-$3 &&
 	sed -e '/^$/q' msgtxt1-$3 >"msghdr1-$3" &&
-	>"expected-no-cc-$3" &&
 
 	(grep '^Cc:' msghdr1-$3 >"actual-no-cc-$3";
-	 test_cmp expected-no-cc-$3 actual-no-cc-$3)
+	 test_must_be_empty actual-no-cc-$3)
 }
 
 test_suppress_self_unquoted () {
@@ -330,7 +331,7 @@ test_expect_success $PREREQ 'Show all headers' '
 
 test_expect_success $PREREQ 'Prompting works' '
 	clean_fake_sendmail &&
-	(echo "to@example.com"
+	(echo "to@example.com" &&
 	 echo ""
 	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
@@ -415,6 +416,7 @@ test_expect_success $PREREQ 'reject long lines' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
+		--transfer-encoding=8bit \
 		$patches longline.patch \
 		2>errors &&
 	grep longline.patch errors
@@ -456,6 +458,71 @@ test_expect_success $PREREQ 'allow long lines with --no-validate' '
 		2>errors
 '
 
+test_expect_success $PREREQ 'short lines with auto encoding are 8bit' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="A <author@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--transfer-encoding=auto \
+		$patches &&
+	grep "Content-Transfer-Encoding: 8bit" msgtxt1
+'
+
+test_expect_success $PREREQ 'long lines with auto encoding are quoted-printable' '
+	clean_fake_sendmail &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--transfer-encoding=auto \
+		--no-validate \
+		longline.patch &&
+	grep "Content-Transfer-Encoding: quoted-printable" msgtxt1
+'
+
+test_expect_success $PREREQ 'carriage returns with auto encoding are quoted-printable' '
+	clean_fake_sendmail &&
+	cp $patches cr.patch &&
+	printf "this is a line\r\n" >>cr.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--transfer-encoding=auto \
+		--no-validate \
+		cr.patch &&
+	grep "Content-Transfer-Encoding: quoted-printable" msgtxt1
+'
+
+for enc in auto quoted-printable base64
+do
+	test_expect_success $PREREQ "--validate passes with encoding $enc" '
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			--transfer-encoding=$enc \
+			--validate \
+			$patches longline.patch
+	'
+
+done
+
+for enc in 7bit 8bit quoted-printable base64
+do
+	test_expect_success $PREREQ "--transfer-encoding=$enc produces correct header" '
+		clean_fake_sendmail &&
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			--transfer-encoding=$enc \
+			$patches &&
+		grep "Content-Transfer-Encoding: $enc" msgtxt1
+	'
+done
+
 test_expect_success $PREREQ 'Invalid In-Reply-To' '
 	clean_fake_sendmail &&
 	git send-email \
@@ -470,8 +537,8 @@ test_expect_success $PREREQ 'Invalid In-Reply-To' '
 
 test_expect_success $PREREQ 'Valid In-Reply-To when prompting' '
 	clean_fake_sendmail &&
-	(echo "From Example <from@example.com>"
-	 echo "To Example <to@example.com>"
+	(echo "From Example <from@example.com>" &&
+	 echo "To Example <to@example.com>" &&
 	 echo ""
 	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
@@ -573,6 +640,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -617,6 +686,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -652,6 +723,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -678,6 +751,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -712,6 +787,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -743,6 +820,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -774,6 +853,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -809,6 +890,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -837,6 +920,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -1119,7 +1204,7 @@ test_expect_success $PREREQ 'no in-reply-to and no threading' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--no-thread \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	! grep "In-Reply-To: " stdout
 '
 
@@ -1139,8 +1224,63 @@ test_expect_success $PREREQ 'sendemail.to works' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "To: Somebody <somebody@ex.com>" stdout
+'
+
+test_expect_success $PREREQ 'setup sendemail.identity' '
+	git config --replace-all sendemail.to "default@example.com" &&
+	git config --replace-all sendemail.isp.to "isp@example.com" &&
+	git config --replace-all sendemail.cloud.to "cloud@example.com"
+'
+
+test_expect_success $PREREQ 'sendemail.identity: reads the correct identity config' '
+	git -c sendemail.identity=cloud send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: identity overrides sendemail.identity' '
+	git -c sendemail.identity=cloud send-email \
+		--identity=isp \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: isp@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: --no-identity clears previous identity' '
+	git -c sendemail.identity=cloud send-email \
+		--no-identity \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: default@example.com" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: bool identity variable existance overrides' '
+	git -c sendemail.identity=cloud \
+		-c sendemail.xmailer=true \
+		-c sendemail.cloud.xmailer=false \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout &&
+	! grep "X-Mailer" stdout
+'
+
+test_expect_success $PREREQ 'sendemail.identity: bool variable fallback' '
+	git -c sendemail.identity=cloud \
+		-c sendemail.xmailer=false \
+		send-email \
+		--dry-run \
+		--from="nobody@example.com" \
+		$patches >stdout &&
+	grep "To: cloud@example.com" stdout &&
+	! grep "X-Mailer" stdout
 '
 
 test_expect_success $PREREQ '--no-to overrides sendemail.to' '
@@ -1149,7 +1289,7 @@ test_expect_success $PREREQ '--no-to overrides sendemail.to' '
 		--from="Example <nobody@example.com>" \
 		--no-to \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "To: nobody@example.com" stdout &&
 	! grep "To: Somebody <somebody@ex.com>" stdout
 '
@@ -1160,7 +1300,7 @@ test_expect_success $PREREQ 'sendemail.cc works' '
 		--dry-run \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "Cc: Somebody <somebody@ex.com>" stdout
 '
 
@@ -1171,7 +1311,7 @@ test_expect_success $PREREQ '--no-cc overrides sendemail.cc' '
 		--no-cc \
 		--cc=bodies@example.com \
 		--to=nobody@example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "Cc: bodies@example.com" stdout &&
 	! grep "Cc: Somebody <somebody@ex.com>" stdout
 '
@@ -1183,7 +1323,7 @@ test_expect_success $PREREQ 'sendemail.bcc works' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server relay.example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "RCPT TO:<other@ex.com>" stdout
 '
 
@@ -1195,7 +1335,7 @@ test_expect_success $PREREQ '--no-bcc overrides sendemail.bcc' '
 		--bcc=bodies@example.com \
 		--to=nobody@example.com \
 		--smtp-server relay.example.com \
-		$patches $patches >stdout &&
+		$patches >stdout &&
 	grep "RCPT TO:<bodies@example.com>" stdout &&
 	! grep "RCPT TO:<other@ex.com>" stdout
 '
@@ -1352,22 +1492,10 @@ test_expect_success $PREREQ 'setup expect' '
 	EOF
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=7bit fails on 8bit data' '
-	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 7bit &&
-	test_must_fail git send-email \
-		--transfer-encoding=7bit \
-		--smtp-server="$(pwd)/fake.sendmail" \
-		email-using-8bit \
-		2>errors >out &&
-	grep "cannot send message as 7bit" errors &&
-	test -z "$(ls msgtxt*)"
-'
-
 test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEncoding' '
 	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 8bit &&
-	test_must_fail git send-email \
+	test_must_fail git -c sendemail.transferEncoding=8bit \
+		send-email \
 		--transfer-encoding=7bit \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
@@ -1376,16 +1504,26 @@ test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEnc
 	test -z "$(ls msgtxt*)"
 '
 
-test_expect_success $PREREQ 'sendemail.transferencoding=8bit' '
+test_expect_success $PREREQ 'sendemail.transferEncoding via config' '
 	clean_fake_sendmail &&
-	git send-email \
-		--transfer-encoding=8bit \
+	test_must_fail git -c sendemail.transferEncoding=7bit \
+		send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		email-using-8bit \
 		2>errors >out &&
-	sed '1,/^$/d' msgtxt1 >actual &&
-	sed '1,/^$/d' email-using-8bit >expected &&
-	test_cmp expected actual
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
+'
+
+test_expect_success $PREREQ 'sendemail.transferEncoding via cli' '
+	clean_fake_sendmail &&
+	test_must_fail git send-email \
+		--transfer-encoding=7bit \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		email-using-8bit \
+		2>errors >out &&
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
 '
 
 test_expect_success $PREREQ 'setup expect' '
@@ -1702,6 +1840,15 @@ test_expect_success '--dump-aliases must be used alone' '
 	test_must_fail git send-email --dump-aliases --to=janice@example.com -1 refs/heads/accounting
 '
 
+test_expect_success $PREREQ 'aliases and sendemail.identity' '
+	test_must_fail git \
+		-c sendemail.identity=cloud \
+		-c sendemail.aliasesfile=default-aliases \
+		-c sendemail.cloud.aliasesfile=cloud-aliases \
+		send-email -1 2>stderr &&
+	test_i18ngrep "cloud-aliases" stderr
+'
+
 test_sendmail_aliases () {
 	msg="$1" && shift &&
 	expect="$@" &&
@@ -1966,11 +2113,11 @@ test_expect_success $PREREQ 'invoke hook' '
 
 		# Verify error message when a patch is rejected by the hook
 		sed -e "s/add master/x/" ../0001-add-master.patch >../another.patch &&
-		git send-email \
+		test_must_fail git send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/../fake.sendmail" \
-			../another.patch 2>err
+			../another.patch 2>err &&
 		test_i18ngrep "rejected by sendemail-validate hook" err
 	)
 '

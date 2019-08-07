@@ -95,10 +95,9 @@ test_expect_success 'rev-list --ancestry-path F...I' '
 
 # G.t is dropped in an "-s ours" merge
 test_expect_success 'rev-list G..M -- G.t' '
-	>expect &&
 	git rev-list --format=%s G..M -- G.t |
 	sed -e "/^commit /d" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'rev-list --ancestry-path G..M -- G.t' '

@@ -13,7 +13,7 @@ test_expect_success 'init depot' '
 		cd "$cli" &&
 		echo file1 >file1 &&
 		p4 add file1 &&
-		p4 submit -d "change 1"
+		p4 submit -d "change 1" &&
 		echo file2 >file2 &&
 		p4 add file2 &&
 		p4 submit -d "change 2"
@@ -94,10 +94,6 @@ test_expect_success 'submit description with extra info lines from verbose p4 ch
 		cd "$cli" &&
 		test_path_is_file file4
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

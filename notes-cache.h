@@ -3,13 +3,15 @@
 
 #include "notes.h"
 
+struct repository;
+
 struct notes_cache {
 	struct notes_tree tree;
 	char *validity;
 };
 
-void notes_cache_init(struct notes_cache *c, const char *name,
-		     const char *validity);
+void notes_cache_init(struct repository *r, struct notes_cache *c,
+		      const char *name, const char *validity);
 int notes_cache_write(struct notes_cache *c);
 
 char *notes_cache_get(struct notes_cache *c, struct object_id *oid, size_t

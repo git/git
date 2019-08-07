@@ -180,7 +180,7 @@ test_expect_success 'setup for many rename source candidates' '
 	git add "path??" &&
 	test_tick &&
 	git commit -m "hundred" &&
-	(cat path1; echo new) >new-path &&
+	(cat path1 && echo new) >new-path &&
 	echo old >>path1 &&
 	git add new-path path1 &&
 	git diff -l 4 -C -C --cached --name-status >actual 2>actual.err &&

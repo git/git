@@ -17,16 +17,20 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Stores the current contents of the index in a new commit along
-with a log message from the user describing the changes.
+Create a new commit containing the current contents of the index and
+the given log message describing the changes. The new commit is a
+direct child of HEAD, usually the tip of the current branch, and the
+branch is updated to point to it (unless no branch is associated with
+the working tree, in which case HEAD is "detached" as described in
+linkgit:git-checkout[1]).
 
-The content to be added can be specified in several ways:
+The content to be committed can be specified in several ways:
 
-1. by using 'git add' to incrementally "add" changes to the
-   index before using the 'commit' command (Note: even modified
-   files must be "added");
+1. by using linkgit:git-add[1] to incrementally "add" changes to the
+   index before using the 'commit' command (Note: even modified files
+   must be "added");
 
-2. by using 'git rm' to remove files from the working tree
+2. by using linkgit:git-rm[1] to remove files from the working tree
    and the index, again before using the 'commit' command;
 
 3. by listing files as arguments to the 'commit' command
@@ -355,7 +359,7 @@ When recording your own work, the contents of modified files in
 your working tree are temporarily stored to a staging area
 called the "index" with 'git add'.  A file can be
 reverted back, only in the index but not in the working tree,
-to that of the last commit with `git reset HEAD -- <file>`,
+to that of the last commit with `git restore --staged <file>`,
 which effectively reverts 'git add' and prevents the changes to
 this file from participating in the next commit.  After building
 the state to be committed incrementally with these commands,

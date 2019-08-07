@@ -16,8 +16,8 @@ static int cmd_sync(void)
 	if ((0 == dwRet) || (dwRet > MAX_PATH))
 		return error("Error getting current directory");
 
-	if ((Buffer[0] < 'A') || (Buffer[0] > 'Z'))
-		return error("Invalid drive letter '%c'", Buffer[0]);
+	if (!has_dos_drive_prefix(Buffer))
+		return error("'%s': invalid drive letter", Buffer);
 
 	szVolumeAccessPath[4] = Buffer[0];
 	hVolWrite = CreateFile(szVolumeAccessPath, GENERIC_READ | GENERIC_WRITE,

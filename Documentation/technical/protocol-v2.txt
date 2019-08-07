@@ -1,5 +1,5 @@
- Git Wire Protocol, Version 2
-==============================
+Git Wire Protocol, Version 2
+============================
 
 This document presents a specification for a version 2 of Git's wire
 protocol.  Protocol v2 will improve upon v1 in the following ways:
@@ -22,8 +22,8 @@ will be commands which a client can request be executed.  Once a command
 has completed, a client can reuse the connection and request that other
 commands be executed.
 
- Packet-Line Framing
----------------------
+Packet-Line Framing
+-------------------
 
 All communication is done using packet-line framing, just as in v1.  See
 `Documentation/technical/pack-protocol.txt` and
@@ -34,8 +34,8 @@ In protocol v2 these special packets will have the following semantics:
   * '0000' Flush Packet (flush-pkt) - indicates the end of a message
   * '0001' Delimiter Packet (delim-pkt) - separates sections of a message
 
- Initial Client Request
-------------------------
+Initial Client Request
+----------------------
 
 In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
@@ -43,30 +43,29 @@ used which inevitably sets `GIT_PROTOCOL`.  More information can be
 found in `pack-protocol.txt` and `http-protocol.txt`.  In all cases the
 response from the server is the capability advertisement.
 
- Git Transport
-~~~~~~~~~~~~~~~
+Git Transport
+~~~~~~~~~~~~~
 
 When using the git:// transport, you can request to use protocol v2 by
 sending "version=2" as an extra parameter:
 
    003egit-upload-pack /project.git\0host=myserver.com\0\0version=2\0
 
- SSH and File Transport
-~~~~~~~~~~~~~~~~~~~~~~~~
+SSH and File Transport
+~~~~~~~~~~~~~~~~~~~~~~
 
 When using either the ssh:// or file:// transport, the GIT_PROTOCOL
 environment variable must be set explicitly to include "version=2".
 
- HTTP Transport
-~~~~~~~~~~~~~~~~
+HTTP Transport
+~~~~~~~~~~~~~~
 
 When using the http:// or https:// transport a client makes a "smart"
 info/refs request as described in `http-protocol.txt` and requests that
 v2 be used by supplying "version=2" in the `Git-Protocol` header.
 
-   C: Git-Protocol: version=2
-   C:
    C: GET $GIT_URL/info/refs?service=git-upload-pack HTTP/1.0
+   C: Git-Protocol: version=2
 
 A v2 server would reply:
 
@@ -80,8 +79,8 @@ A v2 server would reply:
 Subsequent requests are then made directly to the service
 `$GIT_URL/git-upload-pack`. (This works the same for git-receive-pack).
 
- Capability Advertisement
---------------------------
+Capability Advertisement
+------------------------
 
 A server which decides to communicate (based on a request from a client)
 using protocol version 2, notifies the client by sending a version string
@@ -102,8 +101,8 @@ to be executed by the client.
     key = 1*(ALPHA | DIGIT | "-_")
     value = 1*(ALPHA | DIGIT | " -_.,?\/{}[]()<>!@#$%^&*+=:;")
 
- Command Request
------------------
+Command Request
+---------------
 
 After receiving the capability advertisement, a client can then issue a
 request to select the command it wants with any particular capabilities
@@ -138,8 +137,8 @@ command be executed or can terminate the connection.  A client may
 optionally send an empty request consisting of just a flush-pkt to
 indicate that no more requests will be made.
 
- Capabilities
---------------
+Capabilities
+------------
 
 There are two different types of capabilities: normal capabilities,
 which can be used to to convey information or alter the behavior of a
@@ -154,8 +153,8 @@ management on the server side in order to function correctly.  This
 permits simple round-robin load-balancing on the server side, without
 needing to worry about state management.
 
- agent
-~~~~~~~
+agent
+~~~~~
 
 The server can advertise the `agent` capability with a value `X` (in the
 form `agent=X`) to notify the client that the server is running version
@@ -169,8 +168,8 @@ printable ASCII characters except space (i.e., the byte range 32 < x <
 and debugging purposes, and MUST NOT be used to programmatically assume
 the presence or absence of particular features.
 
- ls-refs
-~~~~~~~~~
+ls-refs
+~~~~~~~
 
 `ls-refs` is the command used to request a reference advertisement in v2.
 Unlike the current reference advertisement, ls-refs takes in arguments
@@ -200,8 +199,8 @@ The output of ls-refs is as follows:
     symref = "symref-target:" symref-target
     peeled = "peeled:" obj-id
 
- fetch
-~~~~~~~
+fetch
+~~~~~
 
 `fetch` is the command used to fetch a packfile in v2.  It can be looked
 at as a modified version of the v1 fetch where the ref-advertisement is
@@ -297,14 +296,39 @@ included in the client's request:
 	Request that various objects from the packfile be omitted
 	using one of several filtering techniques. These are intended
 	for use with partial clone and partial fetch operations. See
-	`rev-list` for possible "filter-spec" values.
+	`rev-list` for possible "filter-spec" values. When communicating
+	with other processes, senders SHOULD translate scaled integers
+	(e.g. "1k") into a fully-expanded form (e.g. "1024") to aid
+	interoperability with older receivers that may not understand
+	newly-invented scaling suffixes. However, receivers SHOULD
+	accept the following suffixes: 'k', 'm', and 'g' for 1024,
+	1048576, and 1073741824, respectively.
+
+If the 'ref-in-want' feature is advertised, the following argument can
+be included in the client's request as well as the potential addition of
+the 'wanted-refs' section in the server's response as explained below.
+
+    want-ref <ref>
+	Indicates to the server that the client wants to retrieve a
+	particular ref, where <ref> is the full name of a ref on the
+	server.
+
+If the 'sideband-all' feature is advertised, the following argument can be
+included in the client's request:
+
+    sideband-all
+	Instruct the server to send the whole response multiplexed, not just
+	the packfile section. All non-flush and non-delim PKT-LINE in the
+	response (not only in the packfile section) will then start with a byte
+	indicating its sideband (1, 2, or 3), and the server may send "0005\2"
+	(a PKT-LINE of sideband 2 with no payload) as a keepalive packet.
 
 The response of `fetch` is broken into a number of sections separated by
 delimiter packets (0001), with each section beginning with its section
 header.
 
     output = *section
-    section = (acknowledgments | shallow-info | packfile)
+    section = (acknowledgments | shallow-info | wanted-refs | packfile)
 	      (flush-pkt | delim-pkt)
 
     acknowledgments = PKT-LINE("acknowledgments" LF)
@@ -318,6 +342,10 @@ header.
 		   *PKT-LINE((shallow | unshallow) LF)
     shallow = "shallow" SP obj-id
     unshallow = "unshallow" SP obj-id
+
+    wanted-refs = PKT-LINE("wanted-refs" LF)
+		  *PKT-LINE(wanted-ref LF)
+    wanted-ref = obj-id SP refname
 
     packfile = PKT-LINE("packfile" LF)
 	       *PKT-LINE(%x01-03 *%x00-ff)
@@ -379,6 +407,19 @@ header.
 	* This section is only included if a packfile section is also
 	  included in the response.
 
+    wanted-refs section
+	* This section is only included if the client has requested a
+	  ref using a 'want-ref' line and if a packfile section is also
+	  included in the response.
+
+	* Always begins with the section header "wanted-refs".
+
+	* The server will send a ref listing ("<oid> <refname>") for
+	  each reference requested using 'want-ref' lines.
+
+	* The server MUST NOT send any refs which were not requested
+	  using 'want-ref' lines.
+
     packfile section
 	* This section is only included if the client has sent 'want'
 	  lines in its request and either requested that no more
@@ -403,8 +444,8 @@ header.
 		2 - progress messages
 		3 - fatal error message just before stream aborts
 
- server-option
-~~~~~~~~~~~~~~~
+server-option
+~~~~~~~~~~~~~
 
 If advertised, indicates that any number of server specific options can be
 included in a request.  This is done by sending each option as a

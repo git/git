@@ -807,10 +807,9 @@ test_expect_success 'trailing whitespace is ignored' '
 	cat >expect <<EOF &&
 whitespace/untracked
 EOF
-	: >err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success !MINGW 'quoting allows trailing whitespace' '
@@ -820,10 +819,9 @@ test_expect_success !MINGW 'quoting allows trailing whitespace' '
 	>whitespace/untracked &&
 	echo "whitespace/trailing\\ \\ " >ignore &&
 	echo whitespace/untracked >expect &&
-	: >err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
@@ -845,10 +843,9 @@ test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
 	whitespace/trailing 6 \\a\\Z
 	EOF
 	echo whitespace/untracked >expect &&
-	>err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success 'info/exclude trumps core.excludesfile' '

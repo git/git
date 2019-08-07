@@ -117,11 +117,23 @@ test_expect_failure 'clone --local detects misnamed objects' '
 '
 
 test_expect_success 'fetch into corrupted repo with index-pack' '
+	cp -R bit-error bit-error-cp &&
+	test_when_finished "rm -rf bit-error-cp" &&
 	(
-		cd bit-error &&
+		cd bit-error-cp &&
 		test_must_fail git -c transfer.unpackLimit=1 \
 			fetch ../no-bit-error 2>stderr &&
 		test_i18ngrep ! -i collision stderr
+	)
+'
+
+test_expect_success 'internal tree objects are not "missing"' '
+	git init missing-empty &&
+	(
+		cd missing-empty &&
+		empty_tree=$(git hash-object -t tree /dev/null) &&
+		commit=$(echo foo | git commit-tree $empty_tree) &&
+		git rev-list --objects $commit
 	)
 '
 

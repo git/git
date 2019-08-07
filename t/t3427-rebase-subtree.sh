@@ -38,7 +38,8 @@ test_expect_success 'setup' '
 '
 
 # FAILURE: Does not preserve master4.
-test_expect_failure 'Rebase -Xsubtree --preserve-merges --onto commit 4' '
+test_expect_failure REBASE_P \
+	'Rebase -Xsubtree --preserve-merges --onto commit 4' '
 	reset_rebase &&
 	git checkout -b rebase-preserve-merges-4 master &&
 	git filter-branch --prune-empty -f --subdirectory-filter files_subtree &&
@@ -48,7 +49,8 @@ test_expect_failure 'Rebase -Xsubtree --preserve-merges --onto commit 4' '
 '
 
 # FAILURE: Does not preserve master5.
-test_expect_failure 'Rebase -Xsubtree --preserve-merges --onto commit 5' '
+test_expect_failure REBASE_P \
+	'Rebase -Xsubtree --preserve-merges --onto commit 5' '
 	reset_rebase &&
 	git checkout -b rebase-preserve-merges-5 master &&
 	git filter-branch --prune-empty -f --subdirectory-filter files_subtree &&
@@ -58,7 +60,8 @@ test_expect_failure 'Rebase -Xsubtree --preserve-merges --onto commit 5' '
 '
 
 # FAILURE: Does not preserve master4.
-test_expect_failure 'Rebase -Xsubtree --keep-empty --preserve-merges --onto commit 4' '
+test_expect_failure REBASE_P \
+	'Rebase -Xsubtree --keep-empty --preserve-merges --onto commit 4' '
 	reset_rebase &&
 	git checkout -b rebase-keep-empty-4 master &&
 	git filter-branch --prune-empty -f --subdirectory-filter files_subtree &&
@@ -68,7 +71,8 @@ test_expect_failure 'Rebase -Xsubtree --keep-empty --preserve-merges --onto comm
 '
 
 # FAILURE: Does not preserve master5.
-test_expect_failure 'Rebase -Xsubtree --keep-empty --preserve-merges --onto commit 5' '
+test_expect_failure REBASE_P \
+	'Rebase -Xsubtree --keep-empty --preserve-merges --onto commit 5' '
 	reset_rebase &&
 	git checkout -b rebase-keep-empty-5 master &&
 	git filter-branch --prune-empty -f --subdirectory-filter files_subtree &&
@@ -78,7 +82,8 @@ test_expect_failure 'Rebase -Xsubtree --keep-empty --preserve-merges --onto comm
 '
 
 # FAILURE: Does not preserve Empty.
-test_expect_failure 'Rebase -Xsubtree --keep-empty --preserve-merges --onto empty commit' '
+test_expect_failure REBASE_P \
+	'Rebase -Xsubtree --keep-empty --preserve-merges --onto empty commit' '
 	reset_rebase &&
 	git checkout -b rebase-keep-empty-empty master &&
 	git filter-branch --prune-empty -f --subdirectory-filter files_subtree &&

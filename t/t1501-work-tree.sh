@@ -41,7 +41,7 @@ test_expect_success 'setup: helper for testing rev-parse' '
 			# rev-parse --show-prefix should output
 			# a single newline when at the top of the work tree,
 			# but we test for that separately.
-			test -z "$4" && ! test -s actual.prefix ||
+			test -z "$4" && test_must_be_empty actual.prefix ||
 			test_cmp expected.prefix actual.prefix
 		fi
 	}
@@ -238,10 +238,10 @@ test_expect_success '_gently() groks relative GIT_DIR & GIT_WORK_TREE' '
 
 test_expect_success 'diff-index respects work tree under .git dir' '
 	cat >diff-index-cached.expected <<-EOF &&
-	:000000 100644 $_z40 $EMPTY_BLOB A	sub/dir/tracked
+	:000000 100644 $ZERO_OID $EMPTY_BLOB A	sub/dir/tracked
 	EOF
 	cat >diff-index.expected <<-EOF &&
-	:000000 100644 $_z40 $_z40 A	sub/dir/tracked
+	:000000 100644 $ZERO_OID $ZERO_OID A	sub/dir/tracked
 	EOF
 
 	(
@@ -257,7 +257,7 @@ test_expect_success 'diff-index respects work tree under .git dir' '
 
 test_expect_success 'diff-files respects work tree under .git dir' '
 	cat >diff-files.expected <<-EOF &&
-	:100644 100644 $EMPTY_BLOB $_z40 M	sub/dir/tracked
+	:100644 100644 $EMPTY_BLOB $ZERO_OID M	sub/dir/tracked
 	EOF
 
 	(

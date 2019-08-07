@@ -50,12 +50,12 @@ struct decoration {
  * NULL), returning the previously associated pointer. If there is no previous
  * association, this function returns NULL.
  */
-extern void *add_decoration(struct decoration *n, const struct object *obj, void *decoration);
+void *add_decoration(struct decoration *n, const struct object *obj, void *decoration);
 
 /*
  * Return the pointer associated to the given object. If there is no
  * association, this function returns NULL.
  */
-extern void *lookup_decoration(struct decoration *n, const struct object *obj);
+void *lookup_decoration(struct decoration *n, const struct object *obj);
 
 #endif

@@ -15,8 +15,10 @@ compare_ws_file () {
 	pfx=$1
 	exp=$2.expect
 	act=$pfx.actual.$3
-	tr '\015\000abcdef0123456789' QN00000000000000000 <"$2" >"$exp" &&
-	tr '\015\000abcdef0123456789' QN00000000000000000 <"$3" >"$act" &&
+	tr '\015\000abcdef0123456789' QN00000000000000000 <"$2" |
+		sed -e "s/0000*/$ZERO_OID/" >"$exp" &&
+	tr '\015\000abcdef0123456789' QN00000000000000000 <"$3" |
+		sed -e "s/0000*/$ZERO_OID/" >"$act" &&
 	test_cmp "$exp" "$act" &&
 	rm "$exp" "$act"
 }
@@ -293,9 +295,9 @@ checkout_files () {
 	do
 		rm crlf_false_attr__$f.txt &&
 		if test -z "$ceol"; then
-			git checkout crlf_false_attr__$f.txt
+			git checkout -- crlf_false_attr__$f.txt
 		else
-			git -c core.eol=$ceol checkout crlf_false_attr__$f.txt
+			git -c core.eol=$ceol checkout -- crlf_false_attr__$f.txt
 		fi
 	done
 

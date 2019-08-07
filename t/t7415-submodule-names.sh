@@ -122,6 +122,16 @@ test_expect_success 'transfer.fsckObjects handles odd pack (index)' '
 	test_must_fail git -C dst.git index-pack --strict --stdin <odd.pack
 '
 
+test_expect_success 'index-pack --strict works for non-repo pack' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	cp odd.pack dst.git &&
+	test_must_fail git -C dst.git index-pack --strict odd.pack 2>output &&
+	# Make sure we fail due to bad gitmodules content, not because we
+	# could not read the blob in the first place.
+	grep gitmodulesName output
+'
+
 test_expect_success 'fsck detects symlinked .gitmodules file' '
 	git init symlink &&
 	(
@@ -135,19 +145,49 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 		tricky="[foo]bar=true" &&
 		content=$(git hash-object -w ../.gitmodules) &&
 		target=$(printf "$tricky" | git hash-object -w --stdin) &&
-		tree=$(
-			{
-				printf "100644 blob $content\t$tricky\n" &&
-				printf "120000 blob $target\t.gitmodules\n"
-			} | git mktree
-		) &&
-		commit=$(git commit-tree $tree) &&
+		{
+			printf "100644 blob $content\t$tricky\n" &&
+			printf "120000 blob $target\t.gitmodules\n"
+		} | git mktree &&
 
 		# Check not only that we fail, but that it is due to the
 		# symlink detector; this grep string comes from the config
 		# variable name and will not be translated.
 		test_must_fail git fsck 2>output &&
-		grep gitmodulesSymlink output
+		test_i18ngrep gitmodulesSymlink output
+	)
+'
+
+test_expect_success 'fsck detects non-blob .gitmodules' '
+	git init non-blob &&
+	(
+		cd non-blob &&
+
+		# As above, make the funny tree directly to avoid index
+		# restrictions.
+		mkdir subdir &&
+		cp ../.gitmodules subdir/file &&
+		git add subdir/file &&
+		git commit -m ok &&
+		git ls-tree HEAD | sed s/subdir/.gitmodules/ | git mktree &&
+
+		test_must_fail git fsck 2>output &&
+		test_i18ngrep gitmodulesBlob output
+	)
+'
+
+test_expect_success 'fsck detects corrupt .gitmodules' '
+	git init corrupt &&
+	(
+		cd corrupt &&
+
+		echo "[broken" >.gitmodules &&
+		git add .gitmodules &&
+		git commit -m "broken gitmodules" &&
+
+		git fsck 2>output &&
+		test_i18ngrep gitmodulesParse output &&
+		test_i18ngrep ! "bad config" output
 	)
 '
 

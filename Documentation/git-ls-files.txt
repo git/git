@@ -118,6 +118,7 @@ OPTIONS
 	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
 	`--name-status` for more user-friendly alternatives.
 +
+--
 This option identifies the file status with the following tags (followed by
 a space) at the start of each line:
 
@@ -128,6 +129,7 @@ a space) at the start of each line:
 	C::	modified/changed
 	K::	to be killed
 	?::	other
+--
 
 -v::
 	Similar to `-t`, but use lowercase letters for files

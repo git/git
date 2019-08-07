@@ -194,10 +194,12 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 
 	EOF
 
-	unset GIT_COMMITTER_EMAIL &&
-	git config user.email hasnokey@nowhere.com &&
-	test_must_fail git push --signed dst noop ff +noff &&
-	git config user.signingkey committer@example.com &&
+	test_config user.email hasnokey@nowhere.com &&
+	(
+		sane_unset GIT_COMMITTER_EMAIL &&
+		test_must_fail git push --signed dst noop ff +noff
+	) &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
 	git push --signed dst noop ff +noff &&
 
 	(
@@ -209,6 +211,59 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 		EOF
 		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" dst/push-cert
 	) >expect &&
+
+	noop=$(git rev-parse noop) &&
+	ff=$(git rev-parse ff) &&
+	noff=$(git rev-parse noff) &&
+	grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	grep "$noop $noff refs/heads/noff" dst/push-cert &&
+	test_cmp expect dst/push-cert-status
+'
+
+test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
+	test_config gpg.format x509 &&
+	prepare_dst &&
+	mkdir -p dst/.git/hooks &&
+	git -C dst config receive.certnonceseed sekrit &&
+	write_script dst/.git/hooks/post-receive <<-\EOF &&
+	# discard the update list
+	cat >/dev/null
+	# record the push certificate
+	if test -n "${GIT_PUSH_CERT-}"
+	then
+		git cat-file blob $GIT_PUSH_CERT >../push-cert
+	fi &&
+
+	cat >../push-cert-status <<E_O_F
+	SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
+	KEY=${GIT_PUSH_CERT_KEY-nokey}
+	STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
+	NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+	NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+	E_O_F
+
+	EOF
+
+	test_config user.email hasnokey@nowhere.com &&
+	test_config user.signingkey "" &&
+	(
+		sane_unset GIT_COMMITTER_EMAIL &&
+		test_must_fail git push --signed dst noop ff +noff
+	) &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git push --signed dst noop ff +noff &&
+
+	(
+		cat <<-\EOF &&
+		SIGNER=/CN=C O Mitter/O=Example/SN=C O/GN=Mitter
+		KEY=
+		STATUS=G
+		NONCE_STATUS=OK
+		EOF
+		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" dst/push-cert
+	) >expect.in &&
+	key=$(cat "${GNUPGHOME}/trustlist.txt" | cut -d" " -f1 | tr -d ":") &&
+	sed -e "s/^KEY=/KEY=${key}/" expect.in >expect &&
 
 	noop=$(git rev-parse noop) &&
 	ff=$(git rev-parse ff) &&

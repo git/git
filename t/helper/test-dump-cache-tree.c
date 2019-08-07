@@ -33,7 +33,7 @@ static int dump_cache_tree(struct cache_tree *it,
 	}
 	else {
 		dump_one(it, pfx, "");
-		if (oidcmp(&it->oid, &ref->oid) ||
+		if (!oideq(&it->oid, &ref->oid) ||
 		    ref->entry_count != it->entry_count ||
 		    ref->subtree_nr != it->subtree_nr) {
 			/* claims to be valid but is lying */

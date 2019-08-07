@@ -1,0 +1,11 @@
+# LINT: 'for' loop cuddled with "(" and ")" and nested 'if' with complex
+# LINT: multi-line condition; indented with spaces, not tabs
+(for i in a b c; do
+   if test "$(echo $(waffle bat))" = "eleventeen" &&
+     test "$x" = "$y"; then
+     :
+   else
+     echo >file
+   fi
+ done) &&
+test ! -f file

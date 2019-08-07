@@ -3,9 +3,9 @@
 use lib '../../perl/build/lib';
 use strict;
 use warnings;
-use JSON;
 use Getopt::Long;
 use Git;
+use Cwd qw(realpath);
 
 sub get_times {
 	my $name = shift;
@@ -13,27 +13,42 @@ sub get_times {
 	my $line = <$fh>;
 	return undef if not defined $line;
 	close $fh or die "cannot close $name: $!";
-	$line =~ /^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/
-		or die "bad input line: $line";
-	my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
-	return ($rt, $4, $5);
+	# times
+	if ($line =~ /^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/) {
+		my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
+		return ($rt, $4, $5);
+	# size
+	} elsif ($line =~ /^\d+$/) {
+		return $&;
+	} else {
+		die "bad input line: $line";
+	}
+}
+
+sub relative_change {
+	my ($r, $firstr) = @_;
+	if ($firstr > 0) {
+		return sprintf "%+.1f%%", 100.0*($r-$firstr)/$firstr;
+	} elsif ($r == 0) {
+		return "=";
+	} else {
+		return "+inf";
+	}
 }
 
 sub format_times {
 	my ($r, $u, $s, $firstr) = @_;
+	# no value means we did not finish the test
 	if (!defined $r) {
 		return "<missing>";
 	}
-	my $out = sprintf "%.2f(%.2f+%.2f)", $r, $u, $s;
-	if (defined $firstr) {
-		if ($firstr > 0) {
-			$out .= sprintf " %+.1f%%", 100.0*($r-$firstr)/$firstr;
-		} elsif ($r == 0) {
-			$out .= " =";
-		} else {
-			$out .= " +inf";
-		}
+	# a single value means we have a size, not times
+	if (!defined $u) {
+		return format_size($r, $firstr);
 	}
+	# otherwise, we have real/user/system times
+	my $out = sprintf "%.2f(%.2f+%.2f)", $r, $u, $s;
+	$out .= ' ' . relative_change($r, $firstr) if defined $firstr;
 	return $out;
 }
 
@@ -51,6 +66,25 @@ EOT
 	exit(1);
 }
 
+sub human_size {
+	my $n = shift;
+	my @units = ('', qw(K M G));
+	while ($n > 900 && @units > 1) {
+		$n /= 1000;
+		shift @units;
+	}
+	return $n unless length $units[0];
+	return sprintf '%.1f%s', $n, $units[0];
+}
+
+sub format_size {
+	my ($size, $first) = @_;
+	# match the width of a time: 0.00(0.00+0.00)
+	my $out = sprintf '%15s', human_size($size);
+	$out .= ' ' . relative_change($size, $first) if defined $first;
+	return $out;
+}
+
 my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
     $codespeed, $sortby, $subsection, $reponame);
 
@@ -65,18 +99,21 @@ usage() unless $rc;
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
+	my $prefix = '';
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
 		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
 		$dir = "build/".$rev;
+	} elsif ($arg eq '.') {
+		$dir = '.';
 	} else {
-		$arg =~ s{/*$}{};
-		$dir = $arg;
-		$dirabbrevs{$dir} = $dir;
+		$dir = realpath($arg);
+		$dirnames{$dir} = $dir;
+		$prefix .= 'bindir';
 	}
 	push @dirs, $dir;
-	$dirnames{$dir} = $arg;
-	my $prefix = $dir;
+	$dirnames{$dir} ||= $arg;
+	$prefix .= $dir;
 	$prefix =~ tr/^a-zA-Z0-9/_/c;
 	$prefixes{$dir} = $prefix . '.';
 	shift @ARGV;
@@ -181,7 +218,14 @@ sub print_default_results {
 		my $firstr;
 		for my $i (0..$#dirs) {
 			my $d = $dirs[$i];
-			$times{$prefixes{$d}.$t} = [get_times("$resultsdir/$prefixes{$d}$t.times")];
+			my $base = "$resultsdir/$prefixes{$d}$t";
+			$times{$prefixes{$d}.$t} = [];
+			foreach my $type (qw(times size)) {
+				if (-e "$base.$type") {
+					$times{$prefixes{$d}.$t} = [get_times("$base.$type")];
+					last;
+				}
+			}
 			my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
 			my $w = length format_times($r,$u,$s,$firstr);
 			$colwidth[$i] = $w if $w > $colwidth[$i];
@@ -271,9 +315,6 @@ sub print_codespeed_results {
 		$environment = $reponame;
 	} elsif (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
 		$environment = $ENV{GIT_PERF_REPO_NAME};
-	} elsif (exists $ENV{GIT_TEST_INSTALLED} and $ENV{GIT_TEST_INSTALLED} ne "") {
-		$environment = $ENV{GIT_TEST_INSTALLED};
-		$environment =~ s|/bin-wrappers$||;
 	} else {
 		$environment = `uname -r`;
 		chomp $environment;
@@ -301,7 +342,8 @@ sub print_codespeed_results {
 		}
 	}
 
-	print to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
+	require JSON;
+	print JSON::to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
 }
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";

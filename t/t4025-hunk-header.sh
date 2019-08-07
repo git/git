@@ -12,12 +12,12 @@ NS="$N$N$N$N$N$N$N$N$N$N$N$N$N"
 test_expect_success setup '
 
 	(
-		echo "A $NS"
+		echo "A $NS" &&
 		for c in B C D E F G H I J K
 		do
 			echo "  $c"
-		done
-		echo "L  $NS"
+		done &&
+		echo "L  $NS" &&
 		for c in M N O P Q R S T U V
 		do
 			echo "  $c"
@@ -34,10 +34,10 @@ test_expect_success 'hunk header truncation with an overly long line' '
 
 	git diff | sed -n -e "s/^.*@@//p" >actual &&
 	(
-		echo " A $N$N$N$N$N$N$N$N$N2"
+		echo " A $N$N$N$N$N$N$N$N$N2" &&
 		echo " L  $N$N$N$N$N$N$N$N$N1"
 	) >expected &&
-	test_cmp actual expected
+	test_cmp expected actual
 
 '
 

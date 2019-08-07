@@ -77,6 +77,14 @@ test_expect_success 'git pull -q -v' '
 	test_must_be_empty out &&
 	test -s err)
 '
+test_expect_success 'git pull --cleanup errors early on invalid argument' '
+	mkdir clonedcleanup &&
+	(cd clonedcleanup && git init &&
+	test_must_fail git pull --cleanup invalid "../parent" >out 2>err &&
+	test_must_be_empty out &&
+	test -s err)
+'
+
 
 test_expect_success 'git pull --force' '
 	mkdir clonedoldstyle &&

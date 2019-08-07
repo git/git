@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds 2006
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
@@ -60,7 +61,7 @@ static void print_error_files(struct string_list *files_list,
 	}
 }
 
-static void submodules_absorb_gitdir_if_needed(const char *prefix)
+static void submodules_absorb_gitdir_if_needed(void)
 {
 	int i;
 	for (i = 0; i < list.nr; i++) {
@@ -82,7 +83,7 @@ static void submodules_absorb_gitdir_if_needed(const char *prefix)
 			continue;
 
 		if (!submodule_uses_gitfile(name))
-			absorb_git_dir_into_superproject(prefix, name,
+			absorb_git_dir_into_superproject(name,
 				ABSORB_GITDIR_RECURSE_SUBMODULES);
 	}
 }
@@ -109,7 +110,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		const struct cache_entry *ce;
 		const char *name = list.entry[i].name;
 		struct object_id oid;
-		unsigned mode;
+		unsigned short mode;
 		int local_changes = 0;
 		int staged_changes = 0;
 
@@ -178,9 +179,9 @@ static int check_local_mod(struct object_id *head, int index_only)
 		 * way as changed from the HEAD.
 		 */
 		if (no_head
-		     || get_tree_entry(head, name, &oid, &mode)
+		     || get_tree_entry(the_repository, head, name, &oid, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
-		     || oidcmp(&ce->oid, &oid))
+		     || !oideq(&ce->oid, &oid))
 			staged_changes = 1;
 
 		/*
@@ -272,20 +273,20 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD,
 		       prefix, argv);
-	refresh_index(&the_index, REFRESH_QUIET, &pathspec, NULL, NULL);
+	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, &pathspec, NULL, NULL);
 
 	seen = xcalloc(pathspec.nr, 1);
 
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
-		if (!ce_path_match(ce, &pathspec, seen))
+		if (!ce_path_match(&the_index, ce, &pathspec, seen))
 			continue;
 		ALLOC_GROW(list.entry, list.nr + 1, list.alloc);
 		list.entry[list.nr].name = xstrdup(ce->name);
 		list.entry[list.nr].is_submodule = S_ISGITLINK(ce->ce_mode);
 		if (list.entry[list.nr++].is_submodule &&
 		    !is_staging_gitmodules_ok(&the_index))
-			die (_("Please stage your changes to .gitmodules or stash them to proceed"));
+			die(_("please stage your changes to .gitmodules or stash them to proceed"));
 	}
 
 	if (pathspec.nr) {
@@ -312,7 +313,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!index_only)
-		submodules_absorb_gitdir_if_needed(prefix);
+		submodules_absorb_gitdir_if_needed();
 
 	/*
 	 * If not forced, the file, the index and the HEAD (if exists)

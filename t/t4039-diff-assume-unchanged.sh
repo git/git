@@ -34,9 +34,8 @@ test_expect_success POSIXPERM 'find-copies-harder is not confused by mode bits' 
 	git add exec &&
 	git commit -m exec &&
 	git update-index --assume-unchanged exec &&
-	>expect &&
 	git diff-files --find-copies-harder -- exec >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

@@ -105,8 +105,4 @@ test_expect_success 'branch with shell char' '
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done

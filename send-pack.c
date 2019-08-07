@@ -2,6 +2,7 @@
 #include "config.h"
 #include "commit.h"
 #include "refs.h"
+#include "object-store.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
@@ -39,7 +40,7 @@ int option_parse_push_signed(const struct option *opt,
 
 static void feed_object(const struct object_id *oid, FILE *fh, int negative)
 {
-	if (negative && !has_sha1_file(oid->hash))
+	if (negative && !has_object_file(oid))
 		return;
 
 	if (negative)
@@ -75,7 +76,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struc
 		argv_array_push(&po.args, "-q");
 	if (args->progress)
 		argv_array_push(&po.args, "--progress");
-	if (is_repository_shallow())
+	if (is_repository_shallow(the_repository))
 		argv_array_push(&po.args, "--shallow");
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;
@@ -134,38 +135,36 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struc
 	return 0;
 }
 
-static int receive_unpack_status(int in)
+static int receive_unpack_status(struct packet_reader *reader)
 {
-	const char *line = packet_read_line(in, NULL);
-	if (!line)
+	if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 		return error(_("unexpected flush packet while reading remote unpack status"));
-	if (!skip_prefix(line, "unpack ", &line))
-		return error(_("unable to parse remote unpack status: %s"), line);
-	if (strcmp(line, "ok"))
-		return error(_("remote unpack failed: %s"), line);
+	if (!skip_prefix(reader->line, "unpack ", &reader->line))
+		return error(_("unable to parse remote unpack status: %s"), reader->line);
+	if (strcmp(reader->line, "ok"))
+		return error(_("remote unpack failed: %s"), reader->line);
 	return 0;
 }
 
-static int receive_status(int in, struct ref *refs)
+static int receive_status(struct packet_reader *reader, struct ref *refs)
 {
 	struct ref *hint;
 	int ret;
 
 	hint = NULL;
-	ret = receive_unpack_status(in);
+	ret = receive_unpack_status(reader);
 	while (1) {
-		char *refname;
+		const char *refname;
 		char *msg;
-		char *line = packet_read_line(in, NULL);
-		if (!line)
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
-		if (!starts_with(line, "ok ") && !starts_with(line, "ng ")) {
-			error("invalid ref status from remote: %s", line);
+		if (!starts_with(reader->line, "ok ") && !starts_with(reader->line, "ng ")) {
+			error("invalid ref status from remote: %s", reader->line);
 			ret = -1;
 			break;
 		}
 
-		refname = line + 3;
+		refname = reader->line + 3;
 		msg = strchr(refname, ' ');
 		if (msg)
 			*msg++ = '\0';
@@ -186,7 +185,7 @@ static int receive_status(int in, struct ref *refs)
 			continue;
 		}
 
-		if (line[0] == 'o' && line[1] == 'k')
+		if (reader->line[0] == 'o' && reader->line[1] == 'k')
 			hint->status = REF_STATUS_OK;
 		else {
 			hint->status = REF_STATUS_REMOTE_REJECT;
@@ -202,9 +201,8 @@ static int receive_status(int in, struct ref *refs)
 static int sideband_demux(int in, int out, void *data)
 {
 	int *fd = data, ret;
-#ifdef NO_PTHREADS
-	close(fd[1]);
-#endif
+	if (async_with_fork())
+		close(fd[1]);
 	ret = recv_sideband("send-pack", fd[0], out);
 	close(out);
 	return ret;
@@ -220,7 +218,7 @@ static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *c
 
 static void advertise_shallow_grafts_buf(struct strbuf *sb)
 {
-	if (!is_repository_shallow())
+	if (!is_repository_shallow(the_repository))
 		return;
 	for_each_commit_graft(advertise_shallow_grafts_cb, sb);
 }
@@ -390,6 +388,7 @@ int send_pack(struct send_pack_args *args,
 	int ret;
 	struct async demux;
 	const char *push_cert_nonce = NULL;
+	struct packet_reader reader;
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
@@ -537,7 +536,7 @@ int send_pack(struct send_pack_args *args,
 	}
 
 	if (args->stateless_rpc) {
-		if (!args->dry_run && (cmds_sent || is_repository_shallow())) {
+		if (!args->dry_run && (cmds_sent || is_repository_shallow(the_repository))) {
 			packet_buf_flush(&req_buf);
 			send_sideband(out, -1, req_buf.buf, req_buf.len, LARGE_PACKET_MAX);
 		}
@@ -559,6 +558,10 @@ int send_pack(struct send_pack_args *args,
 		in = demux.out;
 	}
 
+	packet_reader_init(&reader, in, NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
+
 	if (need_pack_data && cmds_sent) {
 		if (pack_objects(out, remote_refs, extra_have, args) < 0) {
 			for (ref = remote_refs; ref; ref = ref->next)
@@ -573,7 +576,7 @@ int send_pack(struct send_pack_args *args,
 			 * are failing, and just want the error() side effects.
 			 */
 			if (status_report)
-				receive_unpack_status(in);
+				receive_unpack_status(&reader);
 
 			if (use_sideband) {
 				close(demux.out);
@@ -590,7 +593,7 @@ int send_pack(struct send_pack_args *args,
 		packet_flush(out);
 
 	if (status_report && cmds_sent)
-		ret = receive_status(in, remote_refs);
+		ret = receive_status(&reader, remote_refs);
 	else
 		ret = 0;
 	if (args->stateless_rpc)

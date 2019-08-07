@@ -16,7 +16,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	int ret;
 	struct apply_state state;
 
-	if (init_apply_state(&state, prefix))
+	if (init_apply_state(&state, the_repository, prefix))
 		exit(128);
 
 	argc = apply_parse_options(argc, argv,

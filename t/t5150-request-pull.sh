@@ -81,7 +81,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	cat <<-EOT >fuzz.sed
 	#!/bin/sed -nf
 	s/$downstream_url_for_sed/URL/g
-	s/$_x40/OBJECT_NAME/g
+	s/$OID_REGEX/OBJECT_NAME/g
 	s/A U Thor/AUTHOR/g
 	s/[-0-9]\{10\} [:0-9]\{8\} [-+][0-9]\{4\}/DATE/g
 	s/        [^ ].*/        SUBJECT/g
@@ -243,6 +243,59 @@ test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
 		git push origin master:for-upstream &&
 		git request-pull -- initial "$downstream_url" master:for-upstream >../request
 	)
+
+'
+
+test_expect_success 'request-pull quotes regex metacharacters properly' '
+
+	rm -fr downstream.git &&
+	git init --bare downstream.git &&
+	(
+		cd local &&
+		git checkout initial &&
+		git merge --ff-only master &&
+		git tag -mrelease v2.0 &&
+		git push origin refs/tags/v2.0:refs/tags/v2-0 &&
+		test_must_fail git request-pull initial "$downstream_url" tags/v2.0 \
+			2>../err
+	) &&
+	grep "No match for commit .*" err &&
+	grep "Are you sure you pushed" err
+
+'
+
+test_expect_success 'pull request with mismatched object' '
+
+	rm -fr downstream.git &&
+	git init --bare downstream.git &&
+	(
+		cd local &&
+		git checkout initial &&
+		git merge --ff-only master &&
+		git push origin HEAD:refs/tags/full &&
+		test_must_fail git request-pull initial "$downstream_url" tags/full \
+			2>../err
+	) &&
+	grep "points to a different object" err &&
+	grep "Are you sure you pushed" err
+
+'
+
+test_expect_success 'pull request with stale object' '
+
+	rm -fr downstream.git &&
+	git init --bare downstream.git &&
+	(
+		cd local &&
+		git checkout initial &&
+		git merge --ff-only master &&
+		git push origin refs/tags/full &&
+		git tag -f -m"Thirty-one days" full &&
+		test_must_fail git request-pull initial "$downstream_url" tags/full \
+			2>../err
+	) &&
+	grep "points to a different object" err &&
+	grep "Are you sure you pushed" err
 
 '
 

@@ -1,5 +1,5 @@
-#ifndef FAST_EXPORT_H_
-#define FAST_EXPORT_H_
+#ifndef FAST_EXPORT_H
+#define FAST_EXPORT_H
 
 struct strbuf;
 struct line_buffer;

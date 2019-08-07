@@ -34,7 +34,7 @@ doit () {
 
 	commit=$(echo $NAME | git commit-tree $T $PARENTS) &&
 
-	echo $commit >.git/refs/tags/$NAME &&
+	git update-ref "refs/tags/$NAME" "$commit" &&
 	echo $commit
 }
 
@@ -245,7 +245,7 @@ test_expect_success 'using reflog to find the fork point' '
 			git commit --allow-empty -m "Derived #$count" &&
 			git rev-parse HEAD >derived$count &&
 			git checkout -B base $E || exit 1
-		done
+		done &&
 
 		for count in 1 2 3
 		do

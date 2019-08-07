@@ -158,9 +158,14 @@ test_expect_success 'git archive --format=zip with --output' \
     'git archive --format=zip --output=d2.zip HEAD &&
     test_cmp_bin d.zip d2.zip'
 
-test_expect_success 'git archive with --output, inferring format' '
+test_expect_success 'git archive with --output, inferring format (local)' '
 	git archive --output=d3.zip HEAD &&
 	test_cmp_bin d.zip d3.zip
+'
+
+test_expect_success 'git archive with --output, inferring format (remote)' '
+	git archive --remote=. --output=d4.zip HEAD &&
+	test_cmp_bin d.zip d4.zip
 '
 
 test_expect_success \

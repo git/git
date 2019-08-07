@@ -66,12 +66,7 @@ test_expect_success setup '
 	git commit -a -m "Right #5" &&
 
 	git checkout -b long &&
-	i=0 &&
-	while test $i -lt 30
-	do
-		test_commit $i one &&
-		i=$(($i+1))
-	done &&
+	test_commit_bulk --start=0 --message=%s --filename=one 30 &&
 
 	git show-branch &&
 
@@ -366,8 +361,6 @@ test_expect_success 'merge-msg with nothing to merge' '
 	test_unconfig merge.log &&
 	test_config merge.summary yes &&
 
-	>empty &&
-
 	(
 		cd remote &&
 		git checkout -b unrelated &&
@@ -376,7 +369,7 @@ test_expect_success 'merge-msg with nothing to merge' '
 		git fmt-merge-msg <.git/FETCH_HEAD >../actual
 	) &&
 
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'merge-msg tag' '

@@ -14,6 +14,7 @@
  */
 
 #include "git-compat-util.h"
+#include "trace2.h"
 
 /* Substitution of environment variables in shell format strings.
    Copyright (C) 2003-2007 Free Software Foundation, Inc.
@@ -66,6 +67,8 @@ cmd_main (int argc, const char *argv[])
 {
   /* Default values for command line options.  */
   /* unsigned short int show_variables = 0; */
+
+  trace2_cmd_name("sh-i18n--envsubst");
 
   switch (argc)
 	{
@@ -246,7 +249,7 @@ sorted_string_list_member (const string_list_ty *slp, const char *s)
 	{
 	  /* Here we know that if s is in the list, it is at an index j
 	     with j1 <= j < j2.  */
-	  size_t j = (j1 + j2) >> 1;
+	  size_t j = j1 + ((j2 - j1) >> 1);
 	  int result = strcmp (slp->item[j], s);
 
 	  if (result > 0)

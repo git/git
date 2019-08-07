@@ -278,6 +278,4 @@ test_expect_success 'push options keep quoted characters intact (http)' '
 	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options
 '
 
-stop_httpd
-
 test_done

@@ -7,9 +7,9 @@ test_description='test fetching over git protocol'
 start_git_daemon
 
 check_verbose_connect () {
-	grep -F "Looking up 127.0.0.1 ..." stderr &&
-	grep -F "Connecting to 127.0.0.1 (port " stderr &&
-	grep -F "done." stderr
+	test_i18ngrep -F "Looking up 127.0.0.1 ..." stderr &&
+	test_i18ngrep -F "Connecting to 127.0.0.1 (port " stderr &&
+	test_i18ngrep -F "done." stderr
 }
 
 test_expect_success 'setup repository' '
@@ -51,7 +51,7 @@ test_expect_success 'no-op fetch -v stderr is as expected' '
 
 test_expect_success 'no-op fetch without "-v" is quiet' '
 	(cd clone && git fetch 2>../stderr) &&
-	! test -s stderr
+	test_must_be_empty stderr
 '
 
 test_expect_success 'remote detects correct HEAD' '
@@ -90,6 +90,7 @@ test_expect_success 'fetch notices corrupt pack' '
 test_expect_success 'fetch notices corrupt idx' '
 	cp -R "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_pack.git "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad2.git &&
 	(cd "$GIT_DAEMON_DOCUMENT_ROOT_PATH"/repo_bad2.git &&
+	 rm -f objects/pack/multi-pack-index &&
 	 p=$(ls objects/pack/pack-*.idx) &&
 	 chmod u+w $p &&
 	 printf %0256d 0 | dd of=$p bs=256 count=1 seek=1 conv=notrunc
@@ -183,19 +184,6 @@ test_expect_success 'hostname cannot break out of directory' '
 		git ls-remote "$GIT_DAEMON_URL/escape.git"
 '
 
-test_expect_success 'daemon log records all attributes' '
-	cat >expect <<-\EOF &&
-	Extended attribute "host": localhost
-	Extended attribute "protocol": version=1
-	EOF
-	>daemon.log &&
-	GIT_OVERRIDE_VIRTUAL_HOST=localhost \
-		git -c protocol.version=1 \
-			ls-remote "$GIT_DAEMON_URL/interp.git" &&
-	grep -i extended.attribute daemon.log | cut -d" " -f2- >actual &&
-	test_cmp expect actual
-'
-
 test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
 	{
 		printf "git-upload-pack /interp.git\n\0host=localhost" | packetize
@@ -211,5 +199,4 @@ test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
 	test_cmp expect actual
 '
 
-stop_git_daemon
 test_done

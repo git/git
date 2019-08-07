@@ -48,6 +48,7 @@ SYNOPSIS
 	     [ --date=<format>]
 	     [ [ --objects | --objects-edge | --objects-edge-aggressive ]
 	       [ --unpacked ]
+	       [ --object-names | --no-object-names ]
 	       [ --filter=<filter-spec> [ --filter-print-omitted ] ] ]
 	     [ --missing=<missing-action> ]
 	     [ --pretty | --header ]

@@ -18,6 +18,17 @@ struct git_transport_options {
 	unsigned deepen_relative : 1;
 	unsigned from_promisor : 1;
 	unsigned no_dependents : 1;
+
+	/*
+	 * If this transport supports connect or stateless-connect,
+	 * the corresponding field in struct fetch_pack_args is copied
+	 * here after fetching.
+	 *
+	 * See the definition of connectivity_checked in struct
+	 * fetch_pack_args for more information.
+	 */
+	unsigned connectivity_checked:1;
+
 	int depth;
 	const char *deepen_since;
 	const struct string_list *deepen_not;
@@ -25,6 +36,16 @@ struct git_transport_options {
 	const char *receivepack;
 	struct push_cas_option *cas;
 	struct list_objects_filter_options filter_options;
+
+	/*
+	 * This is only used during fetch. See the documentation of
+	 * negotiation_tips in struct fetch_pack_args.
+	 *
+	 * This field is only supported by transports that support connect or
+	 * stateless_connect. Set this field directly instead of using
+	 * transport_set_option().
+	 */
+	struct oid_array *negotiation_tips;
 };
 
 enum transport_family {
@@ -113,7 +134,7 @@ struct transport {
 #define TRANSPORT_PUSH_OPTIONS			(1<<14)
 #define TRANSPORT_RECURSE_SUBMODULES_ONLY	(1<<15)
 
-extern int transport_summary_width(const struct ref *refs);
+int transport_summary_width(const struct ref *refs);
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
@@ -202,8 +223,9 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 #define REJECT_FETCH_FIRST     0x08
 #define REJECT_NEEDS_FORCE     0x10
 
-int transport_push(struct transport *connection,
-		   int refspec_nr, const char **refspec, int flags,
+int transport_push(struct repository *repo,
+		   struct transport *connection,
+		   struct refspec *rs, int flags,
 		   unsigned int * reject_reasons);
 
 /*
@@ -233,8 +255,6 @@ int transport_helper_init(struct transport *transport, const char *name);
 int bidirectional_transfer_loop(int input, int output);
 
 /* common methods used by transport.c and builtin/send-pack.c */
-void transport_verify_remote_names(int nr_heads, const char **heads);
-
 void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose);
 
 int transport_refs_pushed(struct ref *ref);
@@ -242,6 +262,4 @@ int transport_refs_pushed(struct ref *ref);
 void transport_print_push_status(const char *dest, struct ref *refs,
 		  int verbose, int porcelain, unsigned int *reject_reasons);
 
-typedef void alternate_ref_fn(const char *refname, const struct object_id *oid, void *);
-extern void for_each_alternate_ref(alternate_ref_fn, void *);
 #endif

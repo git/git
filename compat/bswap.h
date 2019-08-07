@@ -1,3 +1,6 @@
+#ifndef COMPAT_BSWAP_H
+#define COMPAT_BSWAP_H
+
 /*
  * Let's make sure we always have a sane definition for ntohl()/htonl().
  * Some libraries define those as a function call, just to perform byte
@@ -210,3 +213,5 @@ static inline void put_be64(void *ptr, uint64_t value)
 }
 
 #endif
+
+#endif /* COMPAT_BSWAP_H */

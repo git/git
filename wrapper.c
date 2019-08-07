@@ -502,7 +502,7 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	 * Try TMP_MAX different filenames.
 	 */
 	gettimeofday(&tv, NULL);
-	value = ((size_t)(tv.tv_usec << 16)) ^ tv.tv_sec ^ getpid();
+	value = ((uint64_t)tv.tv_usec << 16) ^ tv.tv_sec ^ getpid();
 	filename_template = &pattern[len - 6 - suffix_len];
 	for (count = 0; count < TMP_MAX; ++count) {
 		uint64_t v = value;
@@ -689,4 +689,17 @@ int xgethostname(char *buf, size_t len)
 	if (!ret)
 		buf[len - 1] = 0;
 	return ret;
+}
+
+int is_empty_or_missing_file(const char *filename)
+{
+	struct stat st;
+
+	if (stat(filename, &st) < 0) {
+		if (errno == ENOENT)
+			return 1;
+		die_errno(_("could not stat %s"), filename);
+	}
+
+	return !st.st_size;
 }

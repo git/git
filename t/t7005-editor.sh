@@ -112,7 +112,7 @@ do
 done
 
 test_expect_success 'editor with a space' '
-	echo "echo space >\$1" >"e space.sh" &&
+	echo "echo space >\"\$1\"" >"e space.sh" &&
 	chmod a+x "e space.sh" &&
 	GIT_EDITOR="./e\ space.sh" git commit --amend &&
 	test space = "$(git show -s --pretty=format:%s)"

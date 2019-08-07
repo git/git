@@ -52,7 +52,7 @@ test_expect_success rebase '
 	test_cmp expect actual
 
 '
-test_expect_success rebasep '
+test_expect_success REBASE_P rebasep '
 
 	git checkout side-merge &&
 	git rebase -p side &&

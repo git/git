@@ -183,7 +183,7 @@ test_expect_success 'merge empty notes ref (z => y)' '
 	git notes add -m "foo" &&
 	git notes remove &&
 	git notes >output_notes_z &&
-	test_cmp /dev/null output_notes_z &&
+	test_must_be_empty output_notes_z &&
 	# Do the merge (z => y)
 	git config core.notesRef refs/notes/y &&
 	git notes merge z &&

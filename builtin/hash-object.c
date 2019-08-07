@@ -6,6 +6,7 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "object-store.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
@@ -39,7 +40,8 @@ static void hash_fd(int fd, const char *type, const char *path, unsigned flags,
 	if (fstat(fd, &st) < 0 ||
 	    (literally
 	     ? hash_literally(&oid, fd, type, flags)
-	     : index_fd(&oid, fd, &st, type_from_string(type), path, flags)))
+	     : index_fd(the_repository->index, &oid, fd, &st,
+			type_from_string(type), path, flags)))
 		die((flags & HASH_WRITE_OBJECT)
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);
@@ -106,7 +108,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	int i;
 	const char *errstr = NULL;
 
-	argc = parse_options(argc, argv, NULL, hash_object_options,
+	argc = parse_options(argc, argv, prefix, hash_object_options,
 			     hash_object_usage, 0);
 
 	if (flags & HASH_WRITE_OBJECT)

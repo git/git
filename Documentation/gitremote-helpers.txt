@@ -1,4 +1,4 @@
-gitremote-helpers(1)
+gitremote-helpers(7)
 ====================
 
 NAME
@@ -468,7 +468,7 @@ set by Git if the remote helper has the 'option' capability.
 
 'option dry-run' {'true'|'false'}:
 	If true, pretend the operation completed successfully,
-	but don't actually change any repository data.	For most
+	but don't actually change any repository data.  For most
 	helpers this only applies to the 'push', if supported.
 
 'option servpath <c-style-quoted-path>'::
@@ -512,8 +512,6 @@ linkgit:git-remote[1]
 linkgit:git-remote-ext[1]
 
 linkgit:git-remote-fd[1]
-
-linkgit:git-remote-testgit[1]
 
 linkgit:git-fast-import[1]
 

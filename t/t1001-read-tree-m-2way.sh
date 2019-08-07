@@ -30,7 +30,7 @@ read_tree_twoway () {
 compare_change () {
 	sed -n >current \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
-	    -e 's/^\([-+][0-7][0-7][0-7][0-7][0-7][0-7]\) '"$_x40"' /\1 X /p' \
+	    -e 's/^\([-+][0-7][0-7][0-7][0-7][0-7][0-7]\) '"$OID_REGEX"' /\1 X /p' \
 	    "$1"
 	test_cmp expected current
 }

@@ -42,6 +42,8 @@ test_decode_color () {
 		function name(n) {
 			if (n == 0) return "RESET";
 			if (n == 1) return "BOLD";
+			if (n == 2) return "FAINT";
+			if (n == 3) return "ITALIC";
 			if (n == 7) return "REVERSE";
 			if (n == 30) return "BLACK";
 			if (n == 31) return "RED";
@@ -112,6 +114,13 @@ append_cr () {
 
 remove_cr () {
 	tr '\015' Q | sed -e 's/Q$//'
+}
+
+# Generate an output of $1 bytes of all zeroes (NULs, not ASCII zeroes).
+# If $1 is 'infinity', output forever or until the receiving pipe stops reading,
+# whichever comes first.
+generate_zero_bytes () {
+	test-tool genzeros "$@"
 }
 
 # In some bourne shell implementations, the "unset" builtin returns
@@ -224,6 +233,129 @@ test_merge () {
 	git tag "$1"
 }
 
+# Efficiently create <nr> commits, each with a unique number (from 1 to <nr>
+# by default) in the commit message.
+#
+# Usage: test_commit_bulk [options] <nr>
+#   -C <dir>:
+#	Run all git commands in directory <dir>
+#   --ref=<n>:
+#	ref on which to create commits (default: HEAD)
+#   --start=<n>:
+#	number commit messages from <n> (default: 1)
+#   --message=<msg>:
+#	use <msg> as the commit mesasge (default: "commit %s")
+#   --filename=<fn>:
+#	modify <fn> in each commit (default: %s.t)
+#   --contents=<string>:
+#	place <string> in each file (default: "content %s")
+#   --id=<string>:
+#	shorthand to use <string> and %s in message, filename, and contents
+#
+# The message, filename, and contents strings are evaluated by printf, with the
+# first "%s" replaced by the current commit number. So you can do:
+#
+#   test_commit_bulk --filename=file --contents="modification %s"
+#
+# to have every commit touch the same file, but with unique content.
+#
+test_commit_bulk () {
+	tmpfile=.bulk-commit.input
+	indir=.
+	ref=HEAD
+	n=1
+	message='commit %s'
+	filename='%s.t'
+	contents='content %s'
+	while test $# -gt 0
+	do
+		case "$1" in
+		-C)
+			indir=$2
+			shift
+			;;
+		--ref=*)
+			ref=${1#--*=}
+			;;
+		--start=*)
+			n=${1#--*=}
+			;;
+		--message=*)
+			message=${1#--*=}
+			;;
+		--filename=*)
+			filename=${1#--*=}
+			;;
+		--contents=*)
+			contents=${1#--*=}
+			;;
+		--id=*)
+			message="${1#--*=} %s"
+			filename="${1#--*=}-%s.t"
+			contents="${1#--*=} %s"
+			;;
+		-*)
+			BUG "invalid test_commit_bulk option: $1"
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+	total=$1
+
+	add_from=
+	if git -C "$indir" rev-parse --verify "$ref"
+	then
+		add_from=t
+	fi
+
+	while test "$total" -gt 0
+	do
+		test_tick &&
+		echo "commit $ref"
+		printf 'author %s <%s> %s\n' \
+			"$GIT_AUTHOR_NAME" \
+			"$GIT_AUTHOR_EMAIL" \
+			"$GIT_AUTHOR_DATE"
+		printf 'committer %s <%s> %s\n' \
+			"$GIT_COMMITTER_NAME" \
+			"$GIT_COMMITTER_EMAIL" \
+			"$GIT_COMMITTER_DATE"
+		echo "data <<EOF"
+		printf "$message\n" $n
+		echo "EOF"
+		if test -n "$add_from"
+		then
+			echo "from $ref^0"
+			add_from=
+		fi
+		printf "M 644 inline $filename\n" $n
+		echo "data <<EOF"
+		printf "$contents\n" $n
+		echo "EOF"
+		echo
+		n=$((n + 1))
+		total=$((total - 1))
+	done >"$tmpfile"
+
+	git -C "$indir" \
+	    -c fastimport.unpacklimit=0 \
+	    fast-import <"$tmpfile" || return 1
+
+	# This will be left in place on failure, which may aid debugging.
+	rm -f "$tmpfile"
+
+	# If we updated HEAD, then be nice and update the index and working
+	# tree, too.
+	if test "$ref" = "HEAD"
+	then
+		git -C "$indir" checkout -f HEAD || return 1
+	fi
+
+}
+
 # This function helps systems where core.filemode=false is set.
 # Use it instead of plain 'chmod +x' to set or unset the executable bit
 # of a file in the working directory and add it to the index.
@@ -300,6 +432,26 @@ test_unset_prereq () {
 }
 
 test_set_prereq () {
+	if test -n "$GIT_TEST_FAIL_PREREQS_INTERNAL"
+	then
+		case "$1" in
+		# The "!" case is handled below with
+		# test_unset_prereq()
+		!*)
+			;;
+		# (Temporary?) whitelist of things we can't easily
+		# pretend not to support
+		SYMLINKS)
+			;;
+		# Inspecting whether GIT_TEST_FAIL_PREREQS is on
+		# should be unaffected.
+		FAIL_PREREQS)
+			;;
+		*)
+			return
+		esac
+	fi
+
 	case "$1" in
 	!*)
 		test_unset_prereq "${1#!}"
@@ -416,14 +568,14 @@ test_declared_prereq () {
 test_verify_prereq () {
 	test -z "$test_prereq" ||
 	expr >/dev/null "$test_prereq" : '[A-Z0-9_,!]*$' ||
-	error "bug in the test script: '$test_prereq' does not look like a prereq"
+	BUG "'$test_prereq' does not look like a prereq"
 }
 
 test_expect_failure () {
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
+	BUG "not 2 or 3 parameters to test-expect-failure"
 	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
@@ -443,7 +595,7 @@ test_expect_success () {
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	BUG "not 2 or 3 parameters to test-expect-success"
 	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
@@ -470,7 +622,7 @@ test_expect_success () {
 test_external () {
 	test "$#" = 4 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 3 ||
-	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
+	BUG "not 3 or 4 parameters to test_external"
 	descr="$1"
 	shift
 	test_verify_prereq
@@ -565,6 +717,14 @@ test_path_is_dir () {
 	fi
 }
 
+test_path_exists () {
+	if ! test -e "$1"
+	then
+		echo "Path $1 doesn't exist. $2"
+		false
+	fi
+}
+
 # Check if the directory exists and is empty as expected, barf otherwise.
 test_dir_is_empty () {
 	test_path_is_dir "$1" &&
@@ -573,6 +733,15 @@ test_dir_is_empty () {
 		echo "Directory '$1' is not empty, it contains:"
 		ls -la "$1"
 		return 1
+	fi
+}
+
+# Check if the file exists and has a size greater than zero
+test_file_not_empty () {
+	if ! test -s "$1"
+	then
+		echo "'$1' is not a non-empty file."
+		false
 	fi
 }
 
@@ -603,7 +772,7 @@ test_path_is_missing () {
 test_line_count () {
 	if test $# != 3
 	then
-		error "bug in the test script: not 3 parameters to test_line_count"
+		BUG "not 3 parameters to test_line_count"
 	elif ! test $(wc -l <"$3") "$1" "$2"
 	then
 		echo "test_line_count: line count for $3 !$1 $2"
@@ -737,6 +906,29 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+# Check that the given config key has the expected value.
+#
+#    test_cmp_config [-C <dir>] <expected-value>
+#                    [<git-config-options>...] <config-key>
+#
+# for example to check that the value of core.bar is foo
+#
+#    test_cmp_config foo core.bar
+#
+test_cmp_config() {
+	local GD &&
+	if test "$1" = "-C"
+	then
+		shift &&
+		GD="-C $1" &&
+		shift
+	fi &&
+	printf "%s\n" "$1" >expect.config &&
+	shift &&
+	git $GD config "$@" >actual.config &&
+	test_cmp expect.config actual.config
+}
+
 # test_cmp_bin - helper to compare binary files
 
 test_cmp_bin() {
@@ -745,31 +937,30 @@ test_cmp_bin() {
 
 # Use this instead of test_cmp to compare files that contain expected and
 # actual output from git commands that can be translated.  When running
-# under GETTEXT_POISON this pretends that the command produced expected
+# under GIT_TEST_GETTEXT_POISON this pretends that the command produced expected
 # results.
 test_i18ncmp () {
-	test -n "$GETTEXT_POISON" || test_cmp "$@"
+	! test_have_prereq C_LOCALE_OUTPUT || test_cmp "$@"
 }
 
 # Use this instead of "grep expected-string actual" to see if the
 # output from a git command that can be translated either contains an
 # expected string, or does not contain an unwanted one.  When running
-# under GETTEXT_POISON this pretends that the command produced expected
+# under GIT_TEST_GETTEXT_POISON this pretends that the command produced expected
 # results.
 test_i18ngrep () {
 	eval "last_arg=\${$#}"
 
 	test -f "$last_arg" ||
-	error "bug in the test script: test_i18ngrep requires a file" \
-	      "to read as the last parameter"
+	BUG "test_i18ngrep requires a file to read as the last parameter"
 
 	if test $# -lt 2 ||
 	   { test "x!" = "x$1" && test $# -lt 3 ; }
 	then
-		error "bug in the test script: too few parameters to test_i18ngrep"
+		BUG "too few parameters to test_i18ngrep"
 	fi
 
-	if test -n "$GETTEXT_POISON"
+	if test_have_prereq !C_LOCALE_OUTPUT
 	then
 		# pretend success
 		return 0
@@ -821,9 +1012,38 @@ test_must_be_empty () {
 
 # Tests that its two parameters refer to the same revision
 test_cmp_rev () {
-	git rev-parse --verify "$1" >expect.rev &&
-	git rev-parse --verify "$2" >actual.rev &&
-	test_cmp expect.rev actual.rev
+	if test $# != 2
+	then
+		error "bug in the test script: test_cmp_rev requires two revisions, but got $#"
+	else
+		local r1 r2
+		r1=$(git rev-parse --verify "$1") &&
+		r2=$(git rev-parse --verify "$2") &&
+		if test "$r1" != "$r2"
+		then
+			cat >&4 <<-EOF
+			error: two revisions point to different objects:
+			  '$1': $r1
+			  '$2': $r2
+			EOF
+			return 1
+		fi
+	fi
+}
+
+# Compare paths respecting core.ignoreCase
+test_cmp_fspath () {
+	if test "x$1" = "x$2"
+	then
+		return 0
+	fi
+
+	if test true != "$(git config --get --type=bool core.ignorecase)"
+	then
+		return 1
+	fi
+
+	test "x$(echo "$1" | tr A-Z a-z)" =  "x$(echo "$2" | tr A-Z a-z)"
 }
 
 # Print a sequence of integers in increasing order, either with
@@ -838,7 +1058,7 @@ test_seq () {
 	case $# in
 	1)	set 1 "$@" ;;
 	2)	;;
-	*)	error "bug in the test script: not 1 or 2 parameters to test_seq" ;;
+	*)	BUG "not 1 or 2 parameters to test_seq" ;;
 	esac
 	test_seq_counter__=$1
 	while test "$test_seq_counter__" -le "$2"
@@ -876,21 +1096,50 @@ test_when_finished () {
 	# doing so on Bash is better than nothing (the test will
 	# silently pass on other shells).
 	test "${BASH_SUBSHELL-0}" = 0 ||
-	error "bug in test script: test_when_finished does nothing in a subshell"
+	BUG "test_when_finished does nothing in a subshell"
 	test_cleanup="{ $*
 		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_cleanup"
+}
+
+# This function can be used to schedule some commands to be run
+# unconditionally at the end of the test script, e.g. to stop a daemon:
+#
+#	test_expect_success 'test git daemon' '
+#		git daemon &
+#		daemon_pid=$! &&
+#		test_atexit 'kill $daemon_pid' &&
+#		hello world
+#	'
+#
+# The commands will be executed before the trash directory is removed,
+# i.e. the atexit commands will still be able to access any pidfiles or
+# socket files.
+#
+# Note that these commands will be run even when a test script run
+# with '--immediate' fails.  Be careful with your atexit commands to
+# minimize any changes to the failed state.
+
+test_atexit () {
+	# We cannot detect when we are in a subshell in general, but by
+	# doing so on Bash is better than nothing (the test will
+	# silently pass on other shells).
+	test "${BASH_SUBSHELL-0}" = 0 ||
+	error "bug in test script: test_atexit does nothing in a subshell"
+	test_atexit_cleanup="{ $*
+		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_atexit_cleanup"
 }
 
 # Most tests can use the created repository, but some may need to create more.
 # Usage: test_create_repo <directory>
 test_create_repo () {
 	test "$#" = 1 ||
-	error "bug in the test script: not 1 parameter to test-create-repo"
+	BUG "not 1 parameter to test-create-repo"
 	repo="$1"
 	mkdir -p "$repo"
 	(
 		cd "$repo" || error "Cannot setup test environment"
-		"$GIT_EXEC_PATH/git-init" "--template=$GIT_BUILD_DIR/templates/blt/" >&3 2>&4 ||
+		"${GIT_TEST_INSTALLED:-$GIT_EXEC_PATH}/git$X" init \
+			"--template=$GIT_BUILD_DIR/templates/blt/" >&3 2>&4 ||
 		error "cannot run git init -- have you built things yet?"
 		mv .git/hooks .git/hooks-disabled
 	) || exit
@@ -924,62 +1173,20 @@ perl () {
 	command "$PERL_PATH" "$@" 2>&7
 } 7>&2 2>&4
 
-# Is the value one of the various ways to spell a boolean true/false?
-test_normalize_bool () {
-	git -c magic.variable="$1" config --bool magic.variable 2>/dev/null
-}
-
-# Given a variable $1, normalize the value of it to one of "true",
-# "false", or "auto" and store the result to it.
-#
-#     test_tristate GIT_TEST_HTTPD
-#
-# A variable set to an empty string is set to 'false'.
-# A variable set to 'false' or 'auto' keeps its value.
-# Anything else is set to 'true'.
-# An unset variable defaults to 'auto'.
-#
-# The last rule is to allow people to set the variable to an empty
-# string and export it to decline testing the particular feature
-# for versions both before and after this change.  We used to treat
-# both unset and empty variable as a signal for "do not test" and
-# took any non-empty string as "please test".
-
-test_tristate () {
-	if eval "test x\"\${$1+isset}\" = xisset"
-	then
-		# explicitly set
-		eval "
-			case \"\$$1\" in
-			'')	$1=false ;;
-			auto)	;;
-			*)	$1=\$(test_normalize_bool \$$1 || echo true) ;;
-			esac
-		"
-	else
-		eval "$1=auto"
-	fi
-}
-
 # Exit the test suite, either by skipping all remaining tests or by
-# exiting with an error. If "$1" is "auto", we then we assume we were
-# opportunistically trying to set up some tests and we skip. If it is
-# "true", then we report a failure.
+# exiting with an error. If our prerequisite variable $1 falls back
+# on a default assume we were opportunistically trying to set up some
+# tests and we skip. If it is explicitly "true", then we report a failure.
 #
 # The error/skip message should be given by $2.
 #
 test_skip_or_die () {
-	case "$1" in
-	auto)
+	if ! git env--helper --type=bool --default=false --exit-code $1
+	then
 		skip_all=$2
 		test_done
-		;;
-	true)
-		error "$2"
-		;;
-	*)
-		error "BUG: test tristate is '$1' (real error: $2)"
-	esac
+	fi
+	error "$2"
 }
 
 # The following mingw_* functions obey POSIX shell syntax, but are actually
@@ -1146,4 +1353,124 @@ depacketize () {
 			}
 		}
 	'
+}
+
+# Converts base-16 data into base-8. The output is given as a sequence of
+# escaped octals, suitable for consumption by 'printf'.
+hex2oct () {
+	perl -ne 'printf "\\%03o", hex for /../g'
+}
+
+# Set the hash algorithm in use to $1.  Only useful when testing the testsuite.
+test_set_hash () {
+	test_hash_algo="$1"
+}
+
+# Detect the hash algorithm in use.
+test_detect_hash () {
+	# Currently we only support SHA-1, but in the future this function will
+	# actually detect the algorithm in use.
+	test_hash_algo='sha1'
+}
+
+# Load common hash metadata and common placeholder object IDs for use with
+# test_oid.
+test_oid_init () {
+	test -n "$test_hash_algo" || test_detect_hash &&
+	test_oid_cache <"$TEST_DIRECTORY/oid-info/hash-info" &&
+	test_oid_cache <"$TEST_DIRECTORY/oid-info/oid"
+}
+
+# Load key-value pairs from stdin suitable for use with test_oid.  Blank lines
+# and lines starting with "#" are ignored.  Keys must be shell identifier
+# characters.
+#
+# Examples:
+# rawsz sha1:20
+# rawsz sha256:32
+test_oid_cache () {
+	local tag rest k v &&
+
+	{ test -n "$test_hash_algo" || test_detect_hash; } &&
+	while read tag rest
+	do
+		case $tag in
+		\#*)
+			continue;;
+		?*)
+			# non-empty
+			;;
+		*)
+			# blank line
+			continue;;
+		esac &&
+
+		k="${rest%:*}" &&
+		v="${rest#*:}" &&
+
+		if ! expr "$k" : '[a-z0-9][a-z0-9]*$' >/dev/null
+		then
+			BUG 'bad hash algorithm'
+		fi &&
+		eval "test_oid_${k}_$tag=\"\$v\""
+	done
+}
+
+# Look up a per-hash value based on a key ($1).  The value must have been loaded
+# by test_oid_init or test_oid_cache.
+test_oid () {
+	local var="test_oid_${test_hash_algo}_$1" &&
+
+	# If the variable is unset, we must be missing an entry for this
+	# key-hash pair, so exit with an error.
+	if eval "test -z \"\${$var+set}\""
+	then
+		BUG "undefined key '$1'"
+	fi &&
+	eval "printf '%s' \"\${$var}\""
+}
+
+# Insert a slash into an object ID so it can be used to reference a location
+# under ".git/objects".  For example, "deadbeef..." becomes "de/adbeef..".
+test_oid_to_path () {
+	echo "${1%${1#??}}/${1#??}"
+}
+
+# Choose a port number based on the test script's number and store it in
+# the given variable name, unless that variable already contains a number.
+test_set_port () {
+	local var=$1 port
+
+	if test $# -ne 1 || test -z "$var"
+	then
+		BUG "test_set_port requires a variable name"
+	fi
+
+	eval port=\$$var
+	case "$port" in
+	"")
+		# No port is set in the given env var, use the test
+		# number as port number instead.
+		# Remove not only the leading 't', but all leading zeros
+		# as well, so the arithmetic below won't (mis)interpret
+		# a test number like '0123' as an octal value.
+		port=${this_test#${this_test%%[1-9]*}}
+		if test "${port:-0}" -lt 1024
+		then
+			# root-only port, use a larger one instead.
+			port=$(($port + 10000))
+		fi
+		;;
+	*[!0-9]*|0*)
+		error >&7 "invalid port number: $port"
+		;;
+	*)
+		# The user has specified the port.
+		;;
+	esac
+
+	# Make sure that parallel '--stress' test jobs get different
+	# ports.
+	port=$(($port + ${GIT_TEST_STRESS_JOB_NR:-0}))
+	eval $var=$port
 }

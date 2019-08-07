@@ -28,7 +28,9 @@ to define the operation mode for the functions listed below.
 FUNCTIONS
 ---------
 get_merge_tool::
-	returns a merge tool.
+	returns a merge tool. the return code is 1 if we returned a guessed
+	merge tool, else 0. '$GIT_MERGETOOL_GUI' may be set to 'true' to
+	search for the appropriate guitool.
 
 get_merge_tool_cmd::
 	returns the custom command for a merge tool.

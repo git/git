@@ -311,4 +311,93 @@ test_expect_success \
      test_must_fail git cat-file blob $blob_2 > /dev/null &&
      test_must_fail git cat-file blob $blob_3 > /dev/null'
 
+# \0 - empty base
+# \1 - one byte in result
+# \1 - one literal byte (X)
+test_expect_success \
+    'apply good minimal delta' \
+    'printf "\0\1\1X" > minimal_delta &&
+     test-tool delta -p /dev/null minimal_delta /dev/null'
+
+# \0 - empty base
+# \1 - 1 byte in result
+# \2 - two literal bytes (one too many)
+test_expect_success \
+    'apply delta with too many literal bytes' \
+    'printf "\0\1\2XX" > too_big_literal &&
+     test_must_fail test-tool delta -p /dev/null too_big_literal /dev/null'
+
+# \4 - four bytes in base
+# \1 - one byte in result
+# \221 - copy, one byte offset, one byte size
+#   \0 - copy from offset 0
+#   \2 - copy two bytes (one too many)
+test_expect_success \
+    'apply delta with too many copied bytes' \
+    'printf "\4\1\221\0\2" > too_big_copy &&
+     printf base >base &&
+     test_must_fail test-tool delta -p base too_big_copy /dev/null'
+
+# \0 - empty base
+# \2 - two bytes in result
+# \2 - two literal bytes (we are short one)
+test_expect_success \
+    'apply delta with too few literal bytes' \
+    'printf "\0\2\2X" > truncated_delta &&
+     test_must_fail test-tool delta -p /dev/null truncated_delta /dev/null'
+
+# \0 - empty base
+# \1 - one byte in result
+# \221 - copy, one byte offset, one byte size
+#   \0 - copy from offset 0
+#   \1 - copy one byte (we are short one)
+test_expect_success \
+    'apply delta with too few bytes in base' \
+    'printf "\0\1\221\0\1" > truncated_base &&
+     test_must_fail test-tool delta -p /dev/null truncated_base /dev/null'
+
+# \4 - four bytes in base
+# \2 - two bytes in result
+# \1 - one literal byte (X)
+# \221 - copy, one byte offset, one byte size
+#        (offset/size missing)
+#
+# Note that the literal byte is necessary to get past the uninteresting minimum
+# delta size check.
+test_expect_success \
+    'apply delta with truncated copy parameters' \
+    'printf "\4\2\1X\221" > truncated_copy_delta &&
+     printf base >base &&
+     test_must_fail test-tool delta -p base truncated_copy_delta /dev/null'
+
+# \0 - empty base
+# \1 - one byte in result
+# \1 - one literal byte (X)
+# \1 - trailing garbage command
+test_expect_success \
+    'apply delta with trailing garbage literal' \
+    'printf "\0\1\1X\1" > tail_garbage_literal &&
+     test_must_fail test-tool delta -p /dev/null tail_garbage_literal /dev/null'
+
+# \4 - four bytes in base
+# \1 - one byte in result
+# \1 - one literal byte (X)
+# \221 - copy, one byte offset, one byte size
+#   \0 - copy from offset 0
+#   \1 - copy 1 byte
+test_expect_success \
+    'apply delta with trailing garbage copy' \
+    'printf "\4\1\1X\221\0\1" > tail_garbage_copy &&
+     printf base >base &&
+     test_must_fail test-tool delta -p /dev/null tail_garbage_copy /dev/null'
+
+# \0 - empty base
+# \1 - one byte in result
+# \1 - one literal byte (X)
+# \0 - bogus opcode
+test_expect_success \
+    'apply delta with trailing garbage opcode' \
+    'printf "\0\1\1X\0" > tail_garbage_opcode &&
+     test_must_fail test-tool delta -p /dev/null tail_garbage_opcode /dev/null'
+
 test_done

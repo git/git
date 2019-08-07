@@ -1,0 +1,4 @@
+function y = RIGHT()
+x = 5;
+y = ChangeMe + x;
+end

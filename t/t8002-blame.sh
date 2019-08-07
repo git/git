@@ -118,4 +118,8 @@ test_expect_success '--no-abbrev works like --abbrev=40' '
 	check_abbrev 40 --no-abbrev
 '
 
+test_expect_success '--exclude-promisor-objects does not BUG-crash' '
+	test_must_fail git blame --exclude-promisor-objects one
+'
+
 test_done

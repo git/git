@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "object-store.h"
 #include "commit.h"
 #include "tag.h"
 #include "diff.h"
@@ -10,6 +11,7 @@
 #include "pack-bitmap.h"
 #include "sha1-lookup.h"
 #include "pack-objects.h"
+#include "commit-reach.h"
 
 struct bitmapped_commit {
 	struct commit *commit;
@@ -26,8 +28,8 @@ struct bitmap_writer {
 	struct ewah_bitmap *blobs;
 	struct ewah_bitmap *tags;
 
-	khash_sha1 *bitmaps;
-	khash_sha1 *reused;
+	kh_oid_map_t *bitmaps;
+	kh_oid_map_t *reused;
 	struct packing_data *to_pack;
 
 	struct bitmapped_commit *selected;
@@ -35,7 +37,7 @@ struct bitmap_writer {
 
 	struct progress *progress;
 	int show_progress;
-	unsigned char pack_checksum[20];
+	unsigned char pack_checksum[GIT_MAX_RAWSZ];
 };
 
 static struct bitmap_writer writer;
@@ -75,7 +77,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 			break;
 
 		default:
-			real_type = oid_object_info(the_repository,
+			real_type = oid_object_info(to_pack->repo,
 						    &entry->idx.oid, NULL);
 			break;
 		}
@@ -140,13 +142,13 @@ static inline void reset_all_seen(void)
 	seen_objects_nr = 0;
 }
 
-static uint32_t find_object_pos(const unsigned char *sha1)
+static uint32_t find_object_pos(const struct object_id *oid)
 {
-	struct object_entry *entry = packlist_find(writer.to_pack, sha1, NULL);
+	struct object_entry *entry = packlist_find(writer.to_pack, oid, NULL);
 
 	if (!entry) {
 		die("Failed to write bitmap index. Packfile doesn't have full closure "
-			"(object %s is missing)", sha1_to_hex(sha1));
+			"(object %s is missing)", oid_to_hex(oid));
 	}
 
 	return oe_in_pack_pos(writer.to_pack, entry);
@@ -155,7 +157,7 @@ static uint32_t find_object_pos(const unsigned char *sha1)
 static void show_object(struct object *object, const char *name, void *data)
 {
 	struct bitmap *base = data;
-	bitmap_set(base, find_object_pos(object->oid.hash));
+	bitmap_set(base, find_object_pos(&object->oid));
 	mark_as_seen(object);
 }
 
@@ -168,12 +170,12 @@ static int
 add_to_include_set(struct bitmap *base, struct commit *commit)
 {
 	khiter_t hash_pos;
-	uint32_t bitmap_pos = find_object_pos(commit->object.oid.hash);
+	uint32_t bitmap_pos = find_object_pos(&commit->object.oid);
 
 	if (bitmap_get(base, bitmap_pos))
 		return 0;
 
-	hash_pos = kh_get_sha1(writer.bitmaps, commit->object.oid.hash);
+	hash_pos = kh_get_oid_map(writer.bitmaps, commit->object.oid);
 	if (hash_pos < kh_end(writer.bitmaps)) {
 		struct bitmapped_commit *bc = kh_value(writer.bitmaps, hash_pos);
 		bitmap_or_ewah(base, bc->bitmap);
@@ -254,13 +256,13 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	struct bitmap *base = bitmap_new();
 	struct rev_info revs;
 
-	writer.bitmaps = kh_init_sha1();
+	writer.bitmaps = kh_init_oid_map();
 	writer.to_pack = to_pack;
 
 	if (writer.show_progress)
 		writer.progress = start_progress("Building bitmaps", writer.selected_nr);
 
-	init_revisions(&revs, NULL);
+	repo_init_revisions(to_pack->repo, &revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
 	revs.blob_objects = 1;
@@ -309,7 +311,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 		if (i >= reuse_after)
 			stored->flags |= BITMAP_FLAG_REUSE;
 
-		hash_pos = kh_put_sha1(writer.bitmaps, object->oid.hash, &hash_ret);
+		hash_pos = kh_put_oid_map(writer.bitmaps, object->oid, &hash_ret);
 		if (hash_ret == 0)
 			die("Duplicate entry when writing index: %s",
 			    oid_to_hex(&object->oid));
@@ -360,21 +362,27 @@ static int date_compare(const void *_a, const void *_b)
 
 void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack)
 {
-	if (prepare_bitmap_git() < 0)
+	struct bitmap_index *bitmap_git;
+	if (!(bitmap_git = prepare_bitmap_git(to_pack->repo)))
 		return;
 
-	writer.reused = kh_init_sha1();
-	rebuild_existing_bitmaps(to_pack, writer.reused, writer.show_progress);
+	writer.reused = kh_init_oid_map();
+	rebuild_existing_bitmaps(bitmap_git, to_pack, writer.reused,
+				 writer.show_progress);
+	/*
+	 * NEEDSWORK: rebuild_existing_bitmaps() makes writer.reused reference
+	 * some bitmaps in bitmap_git, so we can't free the latter.
+	 */
 }
 
-static struct ewah_bitmap *find_reused_bitmap(const unsigned char *sha1)
+static struct ewah_bitmap *find_reused_bitmap(const struct object_id *oid)
 {
 	khiter_t hash_pos;
 
 	if (!writer.reused)
 		return NULL;
 
-	hash_pos = kh_get_sha1(writer.reused, sha1);
+	hash_pos = kh_get_oid_map(writer.reused, *oid);
 	if (hash_pos >= kh_end(writer.reused))
 		return NULL;
 
@@ -414,14 +422,14 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 
 		if (next == 0) {
 			chosen = indexed_commits[i];
-			reused_bitmap = find_reused_bitmap(chosen->object.oid.hash);
+			reused_bitmap = find_reused_bitmap(&chosen->object.oid);
 		} else {
 			chosen = indexed_commits[i + next];
 
 			for (j = 0; j <= next; ++j) {
 				struct commit *cm = indexed_commits[i + j];
 
-				reused_bitmap = find_reused_bitmap(cm->object.oid.hash);
+				reused_bitmap = find_reused_bitmap(&cm->object.oid);
 				if (reused_bitmap || (cm->object.flags & NEEDS_BITMAP) != 0) {
 					chosen = cm;
 					break;
@@ -527,7 +535,7 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	header.entry_count = htonl(writer.selected_nr);
 	hashcpy(header.checksum, writer.pack_checksum);
 
-	hashwrite(f, &header, sizeof(header));
+	hashwrite(f, &header, sizeof(header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz);
 	dump_bitmap(f, writer.commits);
 	dump_bitmap(f, writer.trees);
 	dump_bitmap(f, writer.blobs);

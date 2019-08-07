@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git-upload-pack' [--[no-]strict] [--timeout=<n>] [--stateless-rpc]
 		  [--advertise-refs] <directory>
+
 DESCRIPTION
 -----------
 Invoked by 'git fetch-pack', learns what
@@ -20,7 +21,6 @@ This command is usually not invoked directly by the end user.
 The UI for the protocol is on the 'git fetch-pack' side, and the
 program pair is meant to be used to pull updates from a remote
 repository.  For push operations, see 'git send-pack'.
-
 
 OPTIONS
 -------

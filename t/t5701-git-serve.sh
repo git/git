@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test git-serve and server commands'
+test_description='test protocol v2 server commands'
 
 . ./test-lib.sh
 
@@ -14,49 +14,50 @@ test_expect_success 'test capability advertisement' '
 	0000
 	EOF
 
-	git serve --advertise-capabilities >out &&
-	test-pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	GIT_TEST_SIDEBAND_ALL=0 test-tool serve-v2 \
+		--advertise-capabilities >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'stateless-rpc flag does not list capabilities' '
 	# Empty request
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	0000
 	EOF
-	git serve --stateless-rpc >out <in &&
+	test-tool serve-v2 --stateless-rpc >out <in &&
 	test_must_be_empty out &&
 
 	# EOF
-	git serve --stateless-rpc >out &&
+	test-tool serve-v2 --stateless-rpc >out &&
 	test_must_be_empty out
 '
 
 test_expect_success 'request invalid capability' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	foobar
 	0000
 	EOF
-	test_must_fail git serve --stateless-rpc 2>err <in &&
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
 	test_i18ngrep "unknown capability" err
 '
 
 test_expect_success 'request with no command' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	agent=git/test
 	0000
 	EOF
-	test_must_fail git serve --stateless-rpc 2>err <in &&
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
 	test_i18ngrep "no command requested" err
 '
 
 test_expect_success 'request invalid command' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=foo
 	agent=git/test
 	0000
 	EOF
-	test_must_fail git serve --stateless-rpc 2>err <in &&
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
 	test_i18ngrep "invalid command" err
 '
 
@@ -71,7 +72,7 @@ test_expect_success 'setup some refs and tags' '
 '
 
 test_expect_success 'basics of ls-refs' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0000
 	EOF
@@ -87,13 +88,13 @@ test_expect_success 'basics of ls-refs' '
 	0000
 	EOF
 
-	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'basic ref-prefixes' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	ref-prefix refs/heads/master
@@ -107,13 +108,13 @@ test_expect_success 'basic ref-prefixes' '
 	0000
 	EOF
 
-	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'refs/heads prefix' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	ref-prefix refs/heads/
@@ -127,13 +128,13 @@ test_expect_success 'refs/heads prefix' '
 	0000
 	EOF
 
-	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'peel parameter' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	peel
@@ -148,13 +149,13 @@ test_expect_success 'peel parameter' '
 	0000
 	EOF
 
-	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'symrefs parameter' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	symrefs
@@ -169,13 +170,13 @@ test_expect_success 'symrefs parameter' '
 	0000
 	EOF
 
-	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'sending server-options' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	server-option=hello
 	server-option=world
@@ -189,22 +190,25 @@ test_expect_success 'sending server-options' '
 	0000
 	EOF
 
-	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'unexpected lines are not allowed in fetch request' '
 	git init server &&
 
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	this-is-not-a-command
 	0000
 	EOF
 
-	test_must_fail git -C server serve --stateless-rpc <in >/dev/null 2>err &&
+	(
+		cd server &&
+		test_must_fail test-tool serve-v2 --stateless-rpc
+	) <in >/dev/null 2>err &&
 	grep "unexpected line: .this-is-not-a-command." err
 '
 

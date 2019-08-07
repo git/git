@@ -328,7 +328,7 @@ test_expect_success 'cvs update (subdirectories)' \
   '(for dir in A A/B A/B/C A/D E; do
       mkdir $dir &&
       echo "test file in $dir" >"$dir/file_in_$(echo $dir|sed -e "s#/# #g")"  &&
-      git add $dir;
+      git add $dir
    done) &&
    git commit -q -m "deep sub directory structure" &&
    git push gitcvs.git >/dev/null &&
@@ -371,7 +371,7 @@ test_expect_success 'cvs update (merge)' \
   'echo Line 0 >expected &&
    for i in 1 2 3 4 5 6 7
    do
-     echo Line $i >>merge
+     echo Line $i >>merge &&
      echo Line $i >>expected
    done &&
    echo Line 8 >>expected &&
@@ -382,7 +382,7 @@ test_expect_success 'cvs update (merge)' \
    GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep merge CVS/Entries|cut -d/ -f2,3,5))" = "merge/1.1/" &&
    test_cmp merge ../merge &&
-   ( echo Line 0; cat merge ) >merge.tmp &&
+   ( echo Line 0 && cat merge ) >merge.tmp &&
    mv merge.tmp merge &&
    cd "$WORKDIR" &&
    echo Line 8 >>merge &&
@@ -410,7 +410,7 @@ do
 done
 
 test_expect_success 'cvs update (conflict merge)' \
-  '( echo LINE 0; cat merge ) >merge.tmp &&
+  '( echo LINE 0 && cat merge ) >merge.tmp &&
    mv merge.tmp merge &&
    git add merge &&
    git commit -q -m "Merge test (conflict)" &&

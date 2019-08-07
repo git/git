@@ -118,7 +118,7 @@ test_expect_success 'grep with skip-worktree file' '
 	test "$(git grep --no-ext-grep test)" = "1:test"
 '
 
-echo ":000000 100644 $_z40 $EMPTY_BLOB A	1" > expected
+echo ":000000 100644 $ZERO_OID $EMPTY_BLOB A	1" > expected
 test_expect_success 'diff-index does not examine skip-worktree absent entries' '
 	setup_absent &&
 	git diff-index HEAD -- 1 > result &&

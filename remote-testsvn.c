@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "remote.h"
+#include "object-store.h"
 #include "strbuf.h"
 #include "url.h"
 #include "exec-cmd.h"

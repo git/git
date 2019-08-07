@@ -28,15 +28,14 @@ Gitweb provides a web interface to Git repositories.  Its features include:
   revisions one at a time, viewing the history of the repository.
 * Finding commits which commit messages matches given search term.
 
-See http://git.kernel.org/?p=git/git.git;a=tree;f=gitweb[] or
-http://repo.or.cz/w/git.git/tree/HEAD:/gitweb/[] for gitweb source code,
+See http://repo.or.cz/w/git.git/tree/HEAD:/gitweb/[] for gitweb source code,
 browsed using gitweb itself.
 
 
 CONFIGURATION
 -------------
 Various aspects of gitweb's behavior can be controlled through the configuration
-file 'gitweb_config.perl' or '/etc/gitweb.conf'.  See the linkgit:gitweb.conf[5]
+file `gitweb_config.perl` or `/etc/gitweb.conf`.  See the linkgit:gitweb.conf[5]
 for details.
 
 Repositories
@@ -51,7 +50,7 @@ projects' root" subsection).
 our $projectroot = '/path/to/parent/directory';
 -----------------------------------------------------------------------
 
-The default value for `$projectroot` is '/pub/git'.  You can change it during
+The default value for `$projectroot` is `/pub/git`.  You can change it during
 building gitweb via `GITWEB_PROJECTROOT` build configuration variable.
 
 By default all Git repositories under `$projectroot` are visible and available
@@ -231,7 +230,7 @@ Unnamed repository; edit this file to name it for gitweb.
 -------------------------------------------------------------------------------
 +
 from the template during repository creation, usually installed in
-'/usr/share/git-core/templates/'.  You can use the `gitweb.description` repo
+`/usr/share/git-core/templates/`.  You can use the `gitweb.description` repo
 configuration variable, but the file takes precedence.
 
 category (or `gitweb.category`)::
@@ -407,7 +406,7 @@ in the instructions so they can be included in a future release.
 Apache as CGI
 ~~~~~~~~~~~~~
 Apache must be configured to support CGI scripts in the directory in
-which gitweb is installed.  Let's assume that it is '/var/www/cgi-bin'
+which gitweb is installed.  Let's assume that it is `/var/www/cgi-bin`
 directory.
 
 -----------------------------------------------------------------------
@@ -431,7 +430,7 @@ You can use mod_perl with gitweb.  You must install Apache::Registry
 (for mod_perl 1.x) or ModPerl::Registry (for mod_perl 2.x) to enable
 this support.
 
-Assuming that gitweb is installed to '/var/www/perl', the following
+Assuming that gitweb is installed to `/var/www/perl`, the following
 Apache configuration (for mod_perl 2.x) is suitable.
 
 -----------------------------------------------------------------------
@@ -456,7 +455,7 @@ Apache with FastCGI
 ~~~~~~~~~~~~~~~~~~~
 Gitweb works with Apache and FastCGI.  First you need to rename, copy
 or symlink gitweb.cgi to gitweb.fcgi.  Let's assume that gitweb is
-installed in '/usr/share/gitweb' directory.  The following Apache
+installed in `/usr/share/gitweb` directory.  The following Apache
 configuration is suitable (UNTESTED!)
 
 -----------------------------------------------------------------------
@@ -503,22 +502,22 @@ repositories, you can configure Apache like this:
 -----------------------------------------------------------------------
 
 The above configuration expects your public repositories to live under
-'/pub/git' and will serve them as `http://git.domain.org/dir-under-pub-git`,
+`/pub/git` and will serve them as `http://git.domain.org/dir-under-pub-git`,
 both as clonable Git URL and as browseable gitweb interface.  If you then
 start your linkgit:git-daemon[1] with `--base-path=/pub/git --export-all`
 then you can even use the `git://` URL with exactly the same path.
 
 Setting the environment variable `GITWEB_CONFIG` will tell gitweb to use the
-named file (i.e. in this example '/etc/gitweb.conf') as a configuration for
+named file (i.e. in this example `/etc/gitweb.conf`) as a configuration for
 gitweb.  You don't really need it in above example; it is required only if
 your configuration file is in different place than built-in (during
-compiling gitweb) 'gitweb_config.perl' or '/etc/gitweb.conf'.  See
+compiling gitweb) 'gitweb_config.perl' or `/etc/gitweb.conf`.  See
 linkgit:gitweb.conf[5] for details, especially information about precedence
 rules.
 
 If you use the rewrite rules from the example you *might* also need
 something like the following in your gitweb configuration file
-('/etc/gitweb.conf' following example):
+(`/etc/gitweb.conf` following example):
 ----------------------------------------------------------------------------
 @stylesheets = ("/some/absolute/path/gitweb.css");
 $my_uri    = "/";
@@ -575,7 +574,7 @@ like this:
 
 Here actual project root is passed to gitweb via `GITWEB_PROJECT_ROOT`
 environment variable from a web server, so you need to put the following
-line in gitweb configuration file ('/etc/gitweb.conf' in above example):
+line in gitweb configuration file (`/etc/gitweb.conf` in above example):
 --------------------------------------------------------------------------
 $projectroot = $ENV{'GITWEB_PROJECTROOT'} || "/pub/git";
 --------------------------------------------------------------------------
@@ -585,7 +584,7 @@ referenced by `$per_request_config`;
 
 These configurations enable two things. First, each unix user (`<user>`) of
 the server will be able to browse through gitweb Git repositories found in
-'~/public_git/' with the following url:
+`~/public_git/` with the following url:
 
   http://git.example.org/~<user>/
 
@@ -596,7 +595,7 @@ If you already use `mod_userdir` in your virtual host or you don't want to
 use the \'~' as first character, just comment or remove the second rewrite
 rule, and uncomment one of the following according to what you want.
 
-Second, repositories found in '/pub/scm/' and '/var/git/' will be accessible
+Second, repositories found in `/pub/scm/` and `/var/git/` will be accessible
 through `http://git.example.org/scm/` and `http://git.example.org/var/`.
 You can add as many project roots as you want by adding rewrite rules like
 the third and the fourth.
@@ -614,7 +613,7 @@ that it consumes and produces URLs in the form
   http://git.example.com/project.git/shortlog/sometag
 
 i.e. without 'gitweb.cgi' part, by using a configuration such as the
-following.  This configuration assumes that '/var/www/gitweb' is the
+following.  This configuration assumes that `/var/www/gitweb` is the
 DocumentRoot of your webserver, contains the gitweb.cgi script and
 complementary static files (stylesheet, favicon, JavaScript):
 
@@ -645,9 +644,9 @@ parameter.
 `@stylesheets`, `$my_uri` and `$home_link`, but you lose "dumb client"
 access to your project .git dirs (described in "Single URL for gitweb and
 for fetching" section).  A possible workaround for the latter is the
-following: in your project root dir (e.g. '/pub/git') have the projects
-named *without* a .git extension (e.g. '/pub/git/project' instead of
-'/pub/git/project.git') and configure Apache as follows:
+following: in your project root dir (e.g. `/pub/git`) have the projects
+named *without* a .git extension (e.g. `/pub/git/project` instead of
+`/pub/git/project.git`) and configure Apache as follows:
 ----------------------------------------------------------------------------
 <VirtualHost *:80>
 	ServerAlias git.example.com
@@ -681,7 +680,7 @@ cloned), while
 will provide human-friendly gitweb access.
 
 This solution is not 100% bulletproof, in the sense that if some project has
-a named ref (branch, tag) starting with 'git/', then paths such as
+a named ref (branch, tag) starting with `git/`, then paths such as
 
   http://git.example.com/project/command/abranch..git/abranch
 
@@ -697,7 +696,7 @@ SEE ALSO
 --------
 linkgit:gitweb.conf[5], linkgit:git-instaweb[1]
 
-'gitweb/README', 'gitweb/INSTALL'
+`gitweb/README`, `gitweb/INSTALL`
 
 GIT
 ---

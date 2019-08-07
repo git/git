@@ -162,7 +162,7 @@ ScriptAliasMatch ^/git/[^/]*(.*) /usr/libexec/git-core/git-http-backend/storage.
 
 Accelerated static Apache 2.x::
 	Similar to the above, but Apache can be used to return static
-	files that are stored on disk.	On many systems this may
+	files that are stored on disk.  On many systems this may
 	be more efficient as Apache can ask the kernel to copy the
 	file contents from the file system directly to the network:
 +

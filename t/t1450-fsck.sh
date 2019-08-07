@@ -9,6 +9,7 @@ test_description='git fsck random collection of tests
 . ./test-lib.sh
 
 test_expect_success setup '
+	test_oid_init &&
 	git config gc.auto 0 &&
 	git config i18n.commitencoding ISO-8859-1 &&
 	test_commit A fileA one &&
@@ -16,8 +17,7 @@ test_expect_success setup '
 	git checkout HEAD^0 &&
 	test_commit B fileB two &&
 	git tag -d A B &&
-	git reflog expire --expire=now --all &&
-	>empty
+	git reflog expire --expire=now --all
 '
 
 test_expect_success 'loose objects borrowed from alternate are not missing' '
@@ -29,12 +29,12 @@ test_expect_success 'loose objects borrowed from alternate are not missing' '
 		test_commit C fileC one &&
 		git fsck --no-dangling >../actual 2>&1
 	) &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'HEAD is part of refs, valid objects appear valid' '
 	git fsck >actual 2>&1 &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 # Corruption tests follow.  Make sure to remove all traces of the
@@ -55,8 +55,8 @@ test_expect_success 'setup: helpers for corruption tests' '
 
 test_expect_success 'object with bad sha1' '
 	sha=$(echo blob | git hash-object -w --stdin) &&
-	old=$(echo $sha | sed "s+^..+&/+") &&
-	new=$(dirname $old)/ffffffffffffffffffffffffffffffffffffff &&
+	old=$(test_oid_to_path "$sha") &&
+	new=$(dirname $old)/$(test_oid ff_2) &&
 	sha="$(dirname $new)$(basename $new)" &&
 	mv .git/objects/$old .git/objects/$new &&
 	test_when_finished "remove_object $sha" &&
@@ -71,7 +71,7 @@ test_expect_success 'object with bad sha1' '
 
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "$sha.*corrupt" out
+	test_i18ngrep "$sha.*corrupt" out
 '
 
 test_expect_success 'branch pointing to non-commit' '
@@ -79,17 +79,17 @@ test_expect_success 'branch pointing to non-commit' '
 	test_when_finished "git update-ref -d refs/heads/invalid" &&
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "not a commit" out
+	test_i18ngrep "not a commit" out
 '
 
 test_expect_success 'HEAD link pointing at a funny object' '
 	test_when_finished "mv .git/SAVED_HEAD .git/HEAD" &&
 	mv .git/HEAD .git/SAVED_HEAD &&
-	echo 0000000000000000000000000000000000000000 >.git/HEAD &&
+	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
 	cat out &&
-	grep "detached HEAD points" out
+	test_i18ngrep "detached HEAD points" out
 '
 
 test_expect_success 'HEAD link pointing at a funny place' '
@@ -99,7 +99,42 @@ test_expect_success 'HEAD link pointing at a funny place' '
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
 	cat out &&
-	grep "HEAD points to something strange" out
+	test_i18ngrep "HEAD points to something strange" out
+'
+
+test_expect_success 'HEAD link pointing at a funny object (from different wt)' '
+	test_when_finished "mv .git/SAVED_HEAD .git/HEAD" &&
+	test_when_finished "rm -rf .git/worktrees wt" &&
+	git worktree add wt &&
+	mv .git/HEAD .git/SAVED_HEAD &&
+	echo $ZERO_OID >.git/HEAD &&
+	# avoid corrupt/broken HEAD from interfering with repo discovery
+	test_must_fail git -C wt fsck 2>out &&
+	test_i18ngrep "main-worktree/HEAD: detached HEAD points" out
+'
+
+test_expect_success 'other worktree HEAD link pointing at a funny object' '
+	test_when_finished "rm -rf .git/worktrees other" &&
+	git worktree add other &&
+	echo $ZERO_OID >.git/worktrees/other/HEAD &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "worktrees/other/HEAD: detached HEAD points" out
+'
+
+test_expect_success 'other worktree HEAD link pointing at missing object' '
+	test_when_finished "rm -rf .git/worktrees other" &&
+	git worktree add other &&
+	echo "Contents missing from repo" | git hash-object --stdin >.git/worktrees/other/HEAD &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "worktrees/other/HEAD: invalid sha1 pointer" out
+'
+
+test_expect_success 'other worktree HEAD link pointing at a funny place' '
+	test_when_finished "rm -rf .git/worktrees other" &&
+	git worktree add other &&
+	echo "ref: refs/funny/place" >.git/worktrees/other/HEAD &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "worktrees/other/HEAD points to something strange" out
 '
 
 test_expect_success 'email without @ is okay' '
@@ -123,7 +158,7 @@ test_expect_success 'email with embedded > is not okay' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "error in commit $new" out
+	test_i18ngrep "error in commit $new" out
 '
 
 test_expect_success 'missing < email delimiter is reported nicely' '
@@ -135,7 +170,7 @@ test_expect_success 'missing < email delimiter is reported nicely' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "error in commit $new.* - bad name" out
+	test_i18ngrep "error in commit $new.* - bad name" out
 '
 
 test_expect_success 'missing email is reported nicely' '
@@ -147,7 +182,7 @@ test_expect_success 'missing email is reported nicely' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "error in commit $new.* - missing email" out
+	test_i18ngrep "error in commit $new.* - missing email" out
 '
 
 test_expect_success '> in name is reported' '
@@ -159,7 +194,7 @@ test_expect_success '> in name is reported' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "error in commit $new" out
+	test_i18ngrep "error in commit $new" out
 '
 
 # date is 2^64 + 1
@@ -173,7 +208,7 @@ test_expect_success 'integer overflow in timestamps is reported' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "error in commit $new.*integer overflow" out
+	test_i18ngrep "error in commit $new.*integer overflow" out
 '
 
 test_expect_success 'commit with NUL in header' '
@@ -185,7 +220,7 @@ test_expect_success 'commit with NUL in header' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
 	cat out &&
-	grep "error in commit $new.*unterminated header: NUL at offset" out
+	test_i18ngrep "error in commit $new.*unterminated header: NUL at offset" out
 '
 
 test_expect_success 'tree object with duplicate entries' '
@@ -206,14 +241,20 @@ test_expect_success 'tree object with duplicate entries' '
 		git hash-object -w -t tree --stdin
 	) &&
 	test_must_fail git fsck 2>out &&
-	grep "error in tree .*contains duplicate file entries" out
+	test_i18ngrep "error in tree .*contains duplicate file entries" out
 '
 
 test_expect_success 'unparseable tree object' '
+	test_oid_cache <<-\EOF &&
+	junk sha1:twenty-bytes-of-junk
+	junk sha256:twenty-bytes-of-junk-twelve-more
+	EOF
+
 	test_when_finished "git update-ref -d refs/heads/wrong" &&
 	test_when_finished "remove_object \$tree_sha1" &&
 	test_when_finished "remove_object \$commit_sha1" &&
-	tree_sha1=$(printf "100644 \0twenty-bytes-of-junk" | git hash-object -t tree --stdin -w --literally) &&
+	junk=$(test_oid junk) &&
+	tree_sha1=$(printf "100644 \0$junk" | git hash-object -t tree --stdin -w --literally) &&
 	commit_sha1=$(git commit-tree $tree_sha1) &&
 	git update-ref refs/heads/wrong $commit_sha1 &&
 	test_must_fail git fsck 2>out &&
@@ -221,10 +262,6 @@ test_expect_success 'unparseable tree object' '
 	test_i18ngrep "$tree_sha1" out &&
 	test_i18ngrep ! "fatal: empty filename in tree entry" out
 '
-
-hex2oct() {
-	perl -ne 'printf "\\%03o", hex for /../g'
-}
 
 test_expect_success 'tree entry with type mismatch' '
 	test_when_finished "remove_object \$blob" &&
@@ -245,8 +282,9 @@ test_expect_success 'tree entry with type mismatch' '
 '
 
 test_expect_success 'tag pointing to nonexistent' '
-	cat >invalid-tag <<-\EOF &&
-	object ffffffffffffffffffffffffffffffffffffffff
+	badoid=$(test_oid deadbeef) &&
+	cat >invalid-tag <<-EOF &&
+	object $badoid
 	type commit
 	tag invalid
 	tagger T A Gger <tagger@example.com> 1234567890 -0000
@@ -260,7 +298,7 @@ test_expect_success 'tag pointing to nonexistent' '
 	test_when_finished "git update-ref -d refs/tags/invalid" &&
 	test_must_fail git fsck --tags >out &&
 	cat out &&
-	grep "broken link" out
+	test_i18ngrep "broken link" out
 '
 
 test_expect_success 'tag pointing to something else than its type' '
@@ -302,7 +340,7 @@ test_expect_success 'tag with incorrect tag name & missing tagger' '
 	warning in tag $tag: badTagName: invalid '\''tag'\'' name: wrong name format
 	warning in tag $tag: missingTaggerEntry: invalid format - expected '\''tagger'\'' line
 	EOF
-	test_cmp expect out
+	test_i18ncmp expect out
 '
 
 test_expect_success 'tag with bad tagger' '
@@ -321,7 +359,7 @@ test_expect_success 'tag with bad tagger' '
 	echo $tag >.git/refs/tags/wrong &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
-	grep "error in tag .*: invalid author/committer" out
+	test_i18ngrep "error in tag .*: invalid author/committer" out
 '
 
 test_expect_success 'tag with NUL in header' '
@@ -341,23 +379,23 @@ test_expect_success 'tag with NUL in header' '
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
 	cat out &&
-	grep "error in tag $tag.*unterminated header: NUL at offset" out
+	test_i18ngrep "error in tag $tag.*unterminated header: NUL at offset" out
 '
 
 test_expect_success 'cleaned up' '
 	git fsck >actual 2>&1 &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'rev-list --verify-objects' '
 	git rev-list --verify-objects --all >/dev/null 2>out &&
-	test_cmp empty out
+	test_must_be_empty out
 '
 
 test_expect_success 'rev-list --verify-objects with bad sha1' '
 	sha=$(echo blob | git hash-object -w --stdin) &&
-	old=$(echo $sha | sed "s+^..+&/+") &&
-	new=$(dirname $old)/ffffffffffffffffffffffffffffffffffffff &&
+	old=$(test_oid_to_path $sha) &&
+	new=$(dirname $old)/$(test_oid ff_2) &&
 	sha="$(dirname $new)$(basename $new)" &&
 	mv .git/objects/$old .git/objects/$new &&
 	test_when_finished "remove_object $sha" &&
@@ -372,7 +410,7 @@ test_expect_success 'rev-list --verify-objects with bad sha1' '
 
 	test_might_fail git rev-list --verify-objects refs/heads/bogus >/dev/null 2>out &&
 	cat out &&
-	grep -q "error: sha1 mismatch 63ffffffffffffffffffffffffffffffffffffff" out
+	test_i18ngrep -q "error: hash mismatch $(dirname $new)$(test_oid ff_2)" out
 '
 
 test_expect_success 'force fsck to ignore double author' '
@@ -387,28 +425,27 @@ test_expect_success 'force fsck to ignore double author' '
 '
 
 _bz='\0'
-_bz5="$_bz$_bz$_bz$_bz$_bz"
-_bz20="$_bz5$_bz5$_bz5$_bz5"
+_bzoid=$(printf $ZERO_OID | sed -e 's/00/\\0/g')
 
 test_expect_success 'fsck notices blob entry pointing to null sha1' '
 	(git init null-blob &&
 	 cd null-blob &&
-	 sha=$(printf "100644 file$_bz$_bz20" |
+	 sha=$(printf "100644 file$_bz$_bzoid" |
 	       git hash-object -w --stdin -t tree) &&
 	  git fsck 2>out &&
 	  cat out &&
-	  grep "warning.*null sha1" out
+	  test_i18ngrep "warning.*null sha1" out
 	)
 '
 
 test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	(git init null-commit &&
 	 cd null-commit &&
-	 sha=$(printf "160000 submodule$_bz$_bz20" |
+	 sha=$(printf "160000 submodule$_bz$_bzoid" |
 	       git hash-object -w --stdin -t tree) &&
 	  git fsck 2>out &&
 	  cat out &&
-	  grep "warning.*null sha1" out
+	  test_i18ngrep "warning.*null sha1" out
 	)
 '
 
@@ -429,7 +466,7 @@ while read name path pretty; do
 			bad_tree=$(git mktree <bad) &&
 			git fsck 2>out &&
 			cat out &&
-			grep "warning.*tree $bad_tree" out
+			test_i18ngrep "warning.*tree $bad_tree" out
 		)'
 	done <<-\EOF
 	100644 blob
@@ -475,9 +512,9 @@ test_expect_success 'NUL in commit' '
 		git branch bad $(cat name) &&
 
 		test_must_fail git -c fsck.nulInCommit=error fsck 2>warn.1 &&
-		grep nulInCommit warn.1 &&
+		test_i18ngrep nulInCommit warn.1 &&
 		git fsck 2>warn.2 &&
-		grep nulInCommit warn.2
+		test_i18ngrep nulInCommit warn.2
 	)
 '
 
@@ -556,7 +593,7 @@ test_expect_success 'fsck --connectivity-only' '
 		# its type. That lets us see that --connectivity-only is
 		# not actually looking at the contents, but leaves it
 		# free to examine the type if it chooses.
-		empty=.git/objects/e6/9de29bb2d1d6434b8b29ae775ad8c2e48c5391 &&
+		empty=.git/objects/$(test_oid_to_path $EMPTY_BLOB) &&
 		blob=$(echo unrelated | git hash-object -w --stdin) &&
 		mv -f $(sha1_file $blob) $empty &&
 
@@ -595,18 +632,20 @@ test_expect_success 'fsck --name-objects' '
 		remove_object $(git rev-parse julius:caesar.t) &&
 		test_must_fail git fsck --name-objects >out &&
 		tree=$(git rev-parse --verify julius:) &&
-		egrep "$tree \((refs/heads/master|HEAD)@\{[0-9]*\}:" out
+		test_i18ngrep -E "$tree \((refs/heads/master|HEAD)@\{[0-9]*\}:" out
 	)
 '
 
 test_expect_success 'alternate objects are correctly blamed' '
 	test_when_finished "rm -rf alt.git .git/objects/info/alternates" &&
+	name=$(test_oid numeric) &&
+	path=$(test_oid_to_path "$name") &&
 	git init --bare alt.git &&
 	echo "../../alt.git/objects" >.git/objects/info/alternates &&
-	mkdir alt.git/objects/12 &&
-	>alt.git/objects/12/34567890123456789012345678901234567890 &&
+	mkdir alt.git/objects/$(dirname $path) &&
+	>alt.git/objects/$(dirname $path)/$(basename $path) &&
 	test_must_fail git fsck >out 2>&1 &&
-	grep alt.git out
+	test_i18ngrep alt.git out
 '
 
 test_expect_success 'fsck errors in packed objects' '
@@ -625,8 +664,8 @@ test_expect_success 'fsck errors in packed objects' '
 	remove_object $one &&
 	remove_object $two &&
 	test_must_fail git fsck 2>out &&
-	grep "error in commit $one.* - bad name" out &&
-	grep "error in commit $two.* - bad name" out &&
+	test_i18ngrep "error in commit $one.* - bad name" out &&
+	test_i18ngrep "error in commit $two.* - bad name" out &&
 	! grep corrupt out
 '
 
@@ -674,20 +713,39 @@ test_expect_success 'fsck detects trailing loose garbage (commit)' '
 	test_i18ngrep "garbage.*$commit" out
 '
 
-test_expect_success 'fsck detects trailing loose garbage (blob)' '
+test_expect_success 'fsck detects trailing loose garbage (large blob)' '
 	blob=$(echo trailing | git hash-object -w --stdin) &&
 	file=$(sha1_file $blob) &&
 	test_when_finished "remove_object $blob" &&
 	chmod +w "$file" &&
 	echo garbage >>"$file" &&
-	test_must_fail git fsck 2>out &&
+	test_must_fail git -c core.bigfilethreshold=5 fsck 2>out &&
 	test_i18ngrep "garbage.*$blob" out
+'
+
+test_expect_success 'fsck detects truncated loose object' '
+	# make it big enough that we know we will truncate in the data
+	# portion, not the header
+	test-tool genrandom truncate 4096 >file &&
+	blob=$(git hash-object -w file) &&
+	file=$(sha1_file $blob) &&
+	test_when_finished "remove_object $blob" &&
+	test_copy_bytes 1024 <"$file" >tmp &&
+	rm "$file" &&
+	mv -f tmp "$file" &&
+
+	# check both regular and streaming code paths
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep corrupt.*$blob out &&
+
+	test_must_fail git -c core.bigfilethreshold=128 fsck 2>out &&
+	test_i18ngrep corrupt.*$blob out
 '
 
 # for each of type, we have one version which is referenced by another object
 # (and so while unreachable, not dangling), and another variant which really is
 # dangling.
-test_expect_success 'fsck notices dangling objects' '
+test_expect_success 'create dangling-object repository' '
 	git init dangling &&
 	(
 		cd dangling &&
@@ -698,22 +756,37 @@ test_expect_success 'fsck notices dangling objects' '
 		commit=$(git commit-tree $tree) &&
 		dcommit=$(git commit-tree -p $commit $tree) &&
 
-		cat >expect <<-EOF &&
+		cat >expect <<-EOF
 		dangling blob $dblob
 		dangling commit $dcommit
 		dangling tree $dtree
 		EOF
+	)
+'
 
+test_expect_success 'fsck notices dangling objects' '
+	(
+		cd dangling &&
 		git fsck >actual &&
 		# the output order is non-deterministic, as it comes from a hash
 		sort <actual >actual.sorted &&
-		test_cmp expect actual.sorted
+		test_i18ncmp expect actual.sorted
+	)
+'
+
+test_expect_success 'fsck --connectivity-only notices dangling objects' '
+	(
+		cd dangling &&
+		git fsck --connectivity-only >actual &&
+		# the output order is non-deterministic, as it comes from a hash
+		sort <actual >actual.sorted &&
+		test_i18ncmp expect actual.sorted
 	)
 '
 
 test_expect_success 'fsck $name notices bogus $name' '
 	test_must_fail git fsck bogus &&
-	test_must_fail git fsck $_z40
+	test_must_fail git fsck $ZERO_OID
 '
 
 test_expect_success 'bogus head does not fallback to all heads' '
@@ -723,7 +796,7 @@ test_expect_success 'bogus head does not fallback to all heads' '
 	blob=$(git rev-parse :foo) &&
 	test_when_finished "git rm --cached foo" &&
 	remove_object $blob &&
-	test_must_fail git fsck $_z40 >out 2>&1 &&
+	test_must_fail git fsck $ZERO_OID >out 2>&1 &&
 	! grep $blob out
 '
 
@@ -755,7 +828,7 @@ test_expect_success 'detect corrupt index file in fsck' '
 	test_when_finished "mv .git/index.backup .git/index" &&
 	corrupt_index_checksum &&
 	test_must_fail git fsck --cache 2>errors &&
-	grep "bad index file" errors
+	test_i18ngrep "bad index file" errors
 '
 
 test_done

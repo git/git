@@ -538,33 +538,50 @@ test_expect_success 'with 2 files arguments' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with message that has comments' '
-	cat basic_message >message_with_comments &&
-	sed -e "s/ Z\$/ /" >>message_with_comments <<-\EOF &&
-		# comment
+# Cover multiple comment characters with the same test input.
+for char in "#" ";"
+do
+	case "$char" in
+	"#")
+		# This is the default, so let's explicitly _not_
+		# set any config to make sure it behaves as we expect.
+		;;
+	*)
+		config="-c core.commentChar=$char"
+		;;
+	esac
 
-		# other comment
-		Cc: Z
-		# yet another comment
-		Reviewed-by: Johan
-		Reviewed-by: Z
-		# last comment
+	test_expect_success "with message that has comments ($char)" '
+		cat basic_message >message_with_comments &&
+		sed -e "s/ Z\$/ /" \
+		    -e "s/#/$char/g" >>message_with_comments <<-EOF &&
+			# comment
 
-	EOF
-	cat basic_patch >>message_with_comments &&
-	cat basic_message >expected &&
-	cat >>expected <<-\EOF &&
-		# comment
+			# other comment
+			Cc: Z
+			# yet another comment
+			Reviewed-by: Johan
+			Reviewed-by: Z
+			# last comment
 
-		Reviewed-by: Johan
-		Cc: Peff
-		# last comment
+		EOF
+		cat basic_patch >>message_with_comments &&
+		cat basic_message >expected &&
+		sed -e "s/#/$char/g" >>expected <<-\EOF &&
+			# comment
 
-	EOF
-	cat basic_patch >>expected &&
-	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
-	test_cmp expected actual
-'
+			Reviewed-by: Johan
+			Cc: Peff
+			# last comment
+
+		EOF
+		cat basic_patch >>expected &&
+		git $config interpret-trailers \
+			--trim-empty --trailer "Cc: Peff" \
+			message_with_comments >actual &&
+		test_cmp expected actual
+	'
+done
 
 test_expect_success 'with message that has an old style conflict block' '
 	cat basic_message >message_with_comments &&
@@ -1414,6 +1431,48 @@ test_expect_success 'unfold' '
 		___
 	EOF
 	git interpret-trailers --only-trailers --only-input --unfold >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'handling of --- lines in input' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse >actual <<-\EOF &&
+	subject
+
+	body
+
+	not-a-trailer: too soon
+	------ this is just a line in the commit message with a bunch of
+	------ dashes; it does not have any syntactic meaning.
+
+	real-trailer: just right
+	---
+	below the dashed line may be a patch, etc.
+
+	not-a-trailer: too late
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success 'suppress --- handling' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
+	subject
+
+	This commit message has a "---" in it, but because we tell
+	interpret-trailers not to respect that, it has no effect.
+
+	not-a-trailer: too soon
+	---
+
+	This is still the commit message body.
+
+	real-trailer: just right
+	EOF
+
 	test_cmp expected actual
 '
 

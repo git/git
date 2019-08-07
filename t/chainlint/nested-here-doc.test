@@ -1,0 +1,33 @@
+# LINT: inner "EOF" not misintrepreted as closing ARBITRARY here-doc
+cat <<ARBITRARY >foop &&
+naddle
+fub <<EOF
+	nozzle
+	noodle
+EOF
+formp
+ARBITRARY
+
+(
+# LINT: inner "EOF" not misintrepreted as closing INPUT_END here-doc
+	cat <<-\INPUT_END &&
+	fish are mice
+	but geese go slow
+	data <<EOF
+		perl is lerp
+		and nothing else
+	EOF
+	toink
+	INPUT_END
+
+# LINT: same but missing "&&"
+	cat <<-\EOT
+	text goes here
+	data <<EOF
+		data goes here
+	EOF
+	more test here
+	EOT
+
+	foobar
+)

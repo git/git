@@ -38,8 +38,9 @@ OPTIONS
 	started.
 
 --reset::
-        Same as -m, except that unmerged entries are discarded
-        instead of failing.
+	Same as -m, except that unmerged entries are discarded instead
+	of failing. When used with `-u`, updates leading to loss of
+	working tree changes will not abort the operation.
 
 -u::
 	After a successful merge, update the files in the work
@@ -127,6 +128,10 @@ OPTIONS
 --empty::
 	Instead of reading tree object(s) into the index, just empty
 	it.
+
+-q::
+--quiet::
+	Quiet, suppress feedback messages.
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.

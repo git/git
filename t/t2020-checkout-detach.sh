@@ -195,16 +195,22 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 
 	# The first detach operation is more chatty than the following ones.
 	cat >1st_detach <<-EOF &&
-	Note: checking out 'HEAD^'.
+	Note: switching to 'HEAD^'.
 
 	You are in 'detached HEAD' state. You can look around, make experimental
 	changes and commit them, and you can discard any commits you make in this
-	state without impacting any branches by performing another checkout.
+	state without impacting any branches by switching back to a branch.
 
 	If you want to create a new branch to retain commits you create, you may
-	do so (now or later) by using -b with the checkout command again. Example:
+	do so (now or later) by using -c with the switch command. Example:
 
-	  git checkout -b <new-branch-name>
+	  git switch -c <new-branch-name>
+
+	Or undo this operation with:
+
+	  git switch -
+
+	Turn off this advice by setting config variable advice.detachedHead to false
 
 	HEAD is now at \$commit three
 	EOF
@@ -271,16 +277,22 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 
 	# The first detach operation is more chatty than the following ones.
 	cat >1st_detach <<-EOF &&
-	Note: checking out 'HEAD^'.
+	Note: switching to 'HEAD^'.
 
 	You are in 'detached HEAD' state. You can look around, make experimental
 	changes and commit them, and you can discard any commits you make in this
-	state without impacting any branches by performing another checkout.
+	state without impacting any branches by switching back to a branch.
 
 	If you want to create a new branch to retain commits you create, you may
-	do so (now or later) by using -b with the checkout command again. Example:
+	do so (now or later) by using -c with the switch command. Example:
 
-	  git checkout -b <new-branch-name>
+	  git switch -c <new-branch-name>
+
+	Or undo this operation with:
+
+	  git switch -
+
+	Turn off this advice by setting config variable advice.detachedHead to false
 
 	HEAD is now at \$commit... three
 	EOF

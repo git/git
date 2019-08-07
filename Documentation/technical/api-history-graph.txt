@@ -80,7 +80,7 @@ Calling sequence
   it is invoked.
 
 * For each commit, call `graph_next_line()` repeatedly, until
-  `graph_is_commit_finished()` returns non-zero.  Each call go
+  `graph_is_commit_finished()` returns non-zero.  Each call to
   `graph_next_line()` will output a single line of the graph.  The resulting
   lines will not contain any newlines.  `graph_next_line()` returns 1 if the
   resulting line contains the current commit, or 0 if this is merely a line
@@ -115,7 +115,6 @@ struct commit *commit;
 struct git_graph *graph = graph_init(opts);
 
 while ((commit = get_revision(opts)) != NULL) {
-	graph_update(graph, commit);
 	while (!graph_is_commit_finished(graph))
 	{
 		struct strbuf sb;

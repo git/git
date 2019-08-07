@@ -70,9 +70,8 @@ test_run_rebase () {
 		test_linear_range "\'"$expected"\'" d..
 	"
 }
-#TODO: make order consistent across all flavors of rebase
-test_run_rebase success 'e n o' ''
-test_run_rebase success 'e n o' -m
+test_run_rebase success 'n o e' ''
+test_run_rebase success 'n o e' -m
 test_run_rebase success 'n o e' -i
 
 test_run_rebase () {
@@ -87,9 +86,8 @@ test_run_rebase () {
 		test_linear_range "\'"$expected"\'" c..
 	"
 }
-#TODO: make order consistent across all flavors of rebase
-test_run_rebase success 'd e n o' ''
-test_run_rebase success 'd e n o' -m
+test_run_rebase success 'd n o e' ''
+test_run_rebase success 'd n o e' -m
 test_run_rebase success 'd n o e' -i
 
 test_run_rebase () {
@@ -104,10 +102,14 @@ test_run_rebase () {
 		test_linear_range "\'"$expected"\'" c..
 	"
 }
-#TODO: make order consistent across all flavors of rebase
-test_run_rebase success 'd e n o' ''
-test_run_rebase success 'd e n o' -m
+test_run_rebase success 'd n o e' ''
+test_run_rebase success 'd n o e' -m
 test_run_rebase success 'd n o e' -i
+
+if ! test_have_prereq REBASE_P; then
+	skip_all='skipping git rebase -p tests, as asked for'
+	test_done
+fi
 
 test_expect_success "rebase -p is no-op in non-linear history" "
 	reset_rebase &&

@@ -1,0 +1,12 @@
+(
+# LINT: swallow inline comment (leaving command intact)
+	foobar && # comment 1
+# LINT: mispositioned "&&" (correctly) swallowed with comment
+	barfoo # wrong position for &&
+# LINT: "#" in string not misinterpreted as comment
+	flibble "not a # comment"
+) &&
+
+# LINT: "#" in string in cuddled subshell not misinterpreted as comment
+(cd foo &&
+	flibble "not a # comment")

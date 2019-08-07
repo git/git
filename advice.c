@@ -1,26 +1,35 @@
 #include "cache.h"
 #include "config.h"
 #include "color.h"
+#include "help.h"
 
+int advice_fetch_show_forced_updates = 1;
 int advice_push_update_rejected = 1;
 int advice_push_non_ff_current = 1;
 int advice_push_non_ff_matching = 1;
 int advice_push_already_exists = 1;
 int advice_push_fetch_first = 1;
 int advice_push_needs_force = 1;
+int advice_push_unqualified_ref_name = 1;
 int advice_status_hints = 1;
 int advice_status_u_option = 1;
+int advice_status_ahead_behind_warning = 1;
 int advice_commit_before_merge = 1;
+int advice_reset_quiet_warning = 1;
 int advice_resolve_conflict = 1;
+int advice_sequencer_in_use = 1;
 int advice_implicit_identity = 1;
 int advice_detached_head = 1;
 int advice_set_upstream_failure = 1;
 int advice_object_name_warning = 1;
+int advice_amworkdir = 1;
 int advice_rm_hints = 1;
 int advice_add_embedded_repo = 1;
 int advice_ignored_hook = 1;
 int advice_waiting_for_editor = 1;
 int advice_graft_file_deprecated = 1;
+int advice_checkout_ambiguous_remote_branch_name = 1;
+int advice_nested_tag = 1;
 
 static int advice_use_color = -1;
 static char advice_colors[][COLOR_MAXLEN] = {
@@ -53,28 +62,36 @@ static struct {
 	const char *name;
 	int *preference;
 } advice_config[] = {
-	{ "pushupdaterejected", &advice_push_update_rejected },
-	{ "pushnonffcurrent", &advice_push_non_ff_current },
-	{ "pushnonffmatching", &advice_push_non_ff_matching },
-	{ "pushalreadyexists", &advice_push_already_exists },
-	{ "pushfetchfirst", &advice_push_fetch_first },
-	{ "pushneedsforce", &advice_push_needs_force },
-	{ "statushints", &advice_status_hints },
-	{ "statusuoption", &advice_status_u_option },
-	{ "commitbeforemerge", &advice_commit_before_merge },
-	{ "resolveconflict", &advice_resolve_conflict },
-	{ "implicitidentity", &advice_implicit_identity },
-	{ "detachedhead", &advice_detached_head },
-	{ "setupstreamfailure", &advice_set_upstream_failure },
-	{ "objectnamewarning", &advice_object_name_warning },
-	{ "rmhints", &advice_rm_hints },
-	{ "addembeddedrepo", &advice_add_embedded_repo },
-	{ "ignoredhook", &advice_ignored_hook },
-	{ "waitingforeditor", &advice_waiting_for_editor },
-	{ "graftfiledeprecated", &advice_graft_file_deprecated },
+	{ "fetchShowForcedUpdates", &advice_fetch_show_forced_updates },
+	{ "pushUpdateRejected", &advice_push_update_rejected },
+	{ "pushNonFFCurrent", &advice_push_non_ff_current },
+	{ "pushNonFFMatching", &advice_push_non_ff_matching },
+	{ "pushAlreadyExists", &advice_push_already_exists },
+	{ "pushFetchFirst", &advice_push_fetch_first },
+	{ "pushNeedsForce", &advice_push_needs_force },
+	{ "pushUnqualifiedRefName", &advice_push_unqualified_ref_name },
+	{ "statusHints", &advice_status_hints },
+	{ "statusUoption", &advice_status_u_option },
+	{ "statusAheadBehindWarning", &advice_status_ahead_behind_warning },
+	{ "commitBeforeMerge", &advice_commit_before_merge },
+	{ "resetQuiet", &advice_reset_quiet_warning },
+	{ "resolveConflict", &advice_resolve_conflict },
+	{ "sequencerInUse", &advice_sequencer_in_use },
+	{ "implicitIdentity", &advice_implicit_identity },
+	{ "detachedHead", &advice_detached_head },
+	{ "setupStreamFailure", &advice_set_upstream_failure },
+	{ "objectNameWarning", &advice_object_name_warning },
+	{ "amWorkDir", &advice_amworkdir },
+	{ "rmHints", &advice_rm_hints },
+	{ "addEmbeddedRepo", &advice_add_embedded_repo },
+	{ "ignoredHook", &advice_ignored_hook },
+	{ "waitingForEditor", &advice_waiting_for_editor },
+	{ "graftFileDeprecated", &advice_graft_file_deprecated },
+	{ "checkoutAmbiguousRemoteBranchName", &advice_checkout_ambiguous_remote_branch_name },
+	{ "nestedTag", &advice_nested_tag },
 
 	/* make this an alias for backward compatibility */
-	{ "pushnonfastforward", &advice_push_update_rejected }
+	{ "pushNonFastForward", &advice_push_update_rejected }
 };
 
 void advise(const char *advice, ...)
@@ -122,13 +139,21 @@ int git_default_advice_config(const char *var, const char *value)
 		return 0;
 
 	for (i = 0; i < ARRAY_SIZE(advice_config); i++) {
-		if (strcmp(k, advice_config[i].name))
+		if (strcasecmp(k, advice_config[i].name))
 			continue;
 		*advice_config[i].preference = git_config_bool(var, value);
 		return 0;
 	}
 
 	return 0;
+}
+
+void list_config_advices(struct string_list *list, const char *prefix)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(advice_config); i++)
+		list_config_item(list, prefix, advice_config[i].name);
 }
 
 int error_resolve_conflict(const char *me)
@@ -174,13 +199,22 @@ void NORETURN die_conclude_merge(void)
 void detach_advice(const char *new_name)
 {
 	const char *fmt =
-	_("Note: checking out '%s'.\n\n"
+	_("Note: switching to '%s'.\n"
+	"\n"
 	"You are in 'detached HEAD' state. You can look around, make experimental\n"
 	"changes and commit them, and you can discard any commits you make in this\n"
-	"state without impacting any branches by performing another checkout.\n\n"
+	"state without impacting any branches by switching back to a branch.\n"
+	"\n"
 	"If you want to create a new branch to retain commits you create, you may\n"
-	"do so (now or later) by using -b with the checkout command again. Example:\n\n"
-	"  git checkout -b <new-branch-name>\n\n");
+	"do so (now or later) by using -c with the switch command. Example:\n"
+	"\n"
+	"  git switch -c <new-branch-name>\n"
+	"\n"
+	"Or undo this operation with:\n"
+	"\n"
+	"  git switch -\n"
+	"\n"
+	"Turn off this advice by setting config variable advice.detachedHead to false\n\n");
 
 	fprintf(stderr, fmt, new_name);
 }

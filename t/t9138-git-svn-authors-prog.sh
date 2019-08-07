@@ -38,7 +38,7 @@ test_expect_success 'import authors with prog and file' '
 
 test_expect_success 'imported 6 revisions successfully' '
 	(
-		cd x
+		cd x &&
 		git rev-list refs/remotes/git-svn >actual &&
 		test_line_count = 6 actual
 	)
@@ -46,7 +46,7 @@ test_expect_success 'imported 6 revisions successfully' '
 
 test_expect_success 'authors-prog ran correctly' '
 	(
-		cd x
+		cd x &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >actual &&
 		grep "^author ee-foo <ee-foo@example\.com> " actual &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn~2 >actual &&
@@ -62,7 +62,7 @@ test_expect_success 'authors-prog ran correctly' '
 
 test_expect_success 'authors-file overrode authors-prog' '
 	(
-		cd x
+		cd x &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
 		grep "^author FFFFFFF FFFFFFF <fFf@other\.example\.com> " actual
 	)

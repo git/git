@@ -3,7 +3,7 @@ gitattributes(5)
 
 NAME
 ----
-gitattributes - defining attributes per path
+gitattributes - Defining attributes per path
 
 SYNOPSIS
 --------
@@ -18,7 +18,7 @@ A `gitattributes` file is a simple text file that gives
 
 Each line in `gitattributes` file is of form:
 
-	pattern	attr1 attr2 ...
+	pattern attr1 attr2 ...
 
 That is, a pattern followed by an attributes list,
 separated by whitespaces. Leading and trailing whitespaces are
@@ -112,7 +112,8 @@ Checking-out and checking-in
 
 These attributes affect how the contents stored in the
 repository are copied to the working tree files when commands
-such as 'git checkout' and 'git merge' run.  They also affect how
+such as 'git switch', 'git checkout'  and 'git merge' run.
+They also affect how
 Git stores the contents you prepare in the working tree in the
 repository upon 'git add' and 'git commit'.
 
@@ -124,7 +125,9 @@ text file is normalized, its line endings are converted to LF in the
 repository.  To control what line ending style is used in the working
 directory, use the `eol` attribute for a single file and the
 `core.eol` configuration variable for all text files.
-Note that `core.autocrlf` overrides `core.eol`
+Note that setting `core.autocrlf` to `true` or `input` overrides
+`core.eol` (see the definitions of those options in
+linkgit:git-config[1]).
 
 Set::
 
@@ -303,21 +306,21 @@ number of pitfalls:
   attribute. If you decide to use the `working-tree-encoding` attribute
   in your repository, then it is strongly recommended to ensure that all
   clients working with the repository support it.
-
-  For example, Microsoft Visual Studio resources files (`*.rc`) or
-  PowerShell script files (`*.ps1`) are sometimes encoded in UTF-16.
-  If you declare `*.ps1` as files as UTF-16 and you add `foo.ps1` with
-  a `working-tree-encoding` enabled Git client, then `foo.ps1` will be
-  stored as UTF-8 internally. A client without `working-tree-encoding`
-  support will checkout `foo.ps1` as UTF-8 encoded file. This will
-  typically cause trouble for the users of this file.
-
-  If a Git client, that does not support the `working-tree-encoding`
-  attribute, adds a new file `bar.ps1`, then `bar.ps1` will be
-  stored "as-is" internally (in this example probably as UTF-16).
-  A client with `working-tree-encoding` support will interpret the
-  internal contents as UTF-8 and try to convert it to UTF-16 on checkout.
-  That operation will fail and cause an error.
++
+For example, Microsoft Visual Studio resources files (`*.rc`) or
+PowerShell script files (`*.ps1`) are sometimes encoded in UTF-16.
+If you declare `*.ps1` as files as UTF-16 and you add `foo.ps1` with
+a `working-tree-encoding` enabled Git client, then `foo.ps1` will be
+stored as UTF-8 internally. A client without `working-tree-encoding`
+support will checkout `foo.ps1` as UTF-8 encoded file. This will
+typically cause trouble for the users of this file.
++
+If a Git client that does not support the `working-tree-encoding`
+attribute adds a new file `bar.ps1`, then `bar.ps1` will be
+stored "as-is" internally (in this example probably as UTF-16).
+A client with `working-tree-encoding` support will interpret the
+internal contents as UTF-8 and try to convert it to UTF-16 on checkout.
+That operation will fail and cause an error.
 
 - Reencoding content to non-UTF encodings can cause errors as the
   conversion might not be UTF-8 round trip safe. If you suspect your
@@ -344,7 +347,9 @@ automatic line ending conversion based on your platform.
 
 Use the following attributes if your '*.ps1' files are UTF-16 little
 endian encoded without BOM and you want Git to use Windows line endings
-in the working directory. Please note, it is highly recommended to
+in the working directory (use `UTF-16LE-BOM` instead of `UTF-16LE` if
+you want UTF-16 little endian with BOM).
+Please note, it is highly recommended to
 explicitly define the line endings with `eol` if the `working-tree-encoding`
 attribute is used to avoid ambiguity.
 
@@ -815,7 +820,7 @@ patterns are available:
 
 - `java` suitable for source code in the Java language.
 
-- `matlab` suitable for source code in the MATLAB language.
+- `matlab` suitable for source code in the MATLAB and Octave languages.
 
 - `objc` suitable for source code in the Objective-C language.
 
@@ -828,6 +833,8 @@ patterns are available:
 - `python` suitable for source code in the Python language.
 
 - `ruby` suitable for source code in the Ruby language.
+
+- `rust` suitable for source code in the Rust language.
 
 - `tex` suitable for source code for LaTeX documents.
 

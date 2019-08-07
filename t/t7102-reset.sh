@@ -549,8 +549,7 @@ test_expect_success 'reset -N keeps removed files as intent-to-add' '
 
 	tree=$(git write-tree) &&
 	git ls-tree $tree new-file >actual &&
-	>expect &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	git diff --name-only >actual &&
 	echo new-file >expect &&
@@ -563,9 +562,8 @@ test_expect_success 'reset --mixed sets up work tree' '
 		cd mixed_worktree &&
 		test_commit dummy
 	) &&
-	: >expect &&
 	git --git-dir=mixed_worktree/.git --work-tree=mixed_worktree reset >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

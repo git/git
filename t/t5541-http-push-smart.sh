@@ -38,25 +38,21 @@ GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
 EOF
 test_expect_success 'no empty path components' '
+	# Clear the log, so that it does not affect the "used receive-pack
+	# service" test which reads the log too.
+	test_when_finished ">\"\$HTTPD_ROOT_PATH\"/access.log" &&
+
 	# In the URL, add a trailing slash, and see if git appends yet another
 	# slash.
 	cd "$ROOT_PATH" &&
 	git clone $HTTPD_URL/smart/test_repo.git/ test_repo_clone &&
 
-	sed -e "
-		s/^.* \"//
-		s/\"//
-		s/ [1-9][0-9]*\$//
-		s/^GET /GET  /
-	" >act <"$HTTPD_ROOT_PATH"/access.log &&
-
-	# Clear the log, so that it does not affect the "used receive-pack
-	# service" test which reads the log too.
-	#
-	# We do this before the actual comparison to ensure the log is cleared.
-	echo > "$HTTPD_ROOT_PATH"/access.log &&
-
-	test_cmp exp act
+	# NEEDSWORK: If the overspecification of the expected result is reduced, we
+	# might be able to run this test in all protocol versions.
+	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	then
+		check_access_log exp
+	fi
 '
 
 test_expect_success 'clone remote repository' '
@@ -124,7 +120,6 @@ test_expect_success 'rejected update prints status' '
 rm -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/hooks/update"
 
 cat >exp <<EOF
-
 GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
 GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
@@ -138,13 +133,12 @@ GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
 EOF
 test_expect_success 'used receive-pack service' '
-	sed -e "
-		s/^.* \"//
-		s/\"//
-		s/ [1-9][0-9]*\$//
-		s/^GET /GET  /
-	" >act <"$HTTPD_ROOT_PATH"/access.log &&
-	test_cmp exp act
+	# NEEDSWORK: If the overspecification of the expected result is reduced, we
+	# might be able to run this test in all protocol versions.
+	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	then
+		check_access_log exp
+	fi
 '
 
 test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
@@ -183,6 +177,55 @@ test_expect_success 'push (chunked)' '
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
+test_expect_success 'push --atomic also prevents branch creation, reports collateral' '
+	# Setup upstream repo - empty for now
+	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-branches.git &&
+	git init --bare "$d" &&
+	test_config -C "$d" http.receivepack true &&
+	up="$HTTPD_URL"/smart/atomic-branches.git &&
+
+	# Tell "$up" about two branches for now
+	test_commit atomic1 &&
+	test_commit atomic2 &&
+	git branch collateral &&
+	git push "$up" master collateral &&
+
+	# collateral is a valid push, but should be failed by atomic push
+	git checkout collateral &&
+	test_commit collateral1 &&
+
+	# Make master incompatible with upstream to provoke atomic
+	git checkout master &&
+	git reset --hard HEAD^ &&
+
+	# Add a new branch which should be failed by atomic push. This is a
+	# regression case.
+	git branch atomic &&
+
+	# --atomic should cause entire push to be rejected
+	test_must_fail git push --atomic "$up" master atomic collateral 2>output &&
+
+	# the new branch should not have been created upstream
+	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+
+	# upstream should still reflect atomic2, the last thing we pushed
+	# successfully
+	git rev-parse atomic2 >expected &&
+	# on master...
+	git -C "$d" rev-parse refs/heads/master >actual &&
+	test_cmp expected actual &&
+	# ...and collateral.
+	git -C "$d" rev-parse refs/heads/collateral >actual &&
+	test_cmp expected actual &&
+
+	# the failed refs should be indicated to the user
+	grep "^ ! .*rejected.* master -> master" output &&
+
+	# the collateral failure refs should be indicated to the user
+	grep "^ ! .*rejected.* atomic -> atomic .*atomic push failed" output &&
+	grep "^ ! .*rejected.* collateral -> collateral .*atomic push failed" output
+'
+
 test_expect_success 'push --all can push to empty repo' '
 	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-all.git &&
 	git init --bare "$d" &&
@@ -219,14 +262,14 @@ test_expect_success TTY 'push shows progress when stderr is a tty' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_commit noisy &&
 	test_terminal git push >output 2>&1 &&
-	test_i18ngrep "^Writing objects" output
+	test_i18ngrep "Writing objects" output
 '
 
 test_expect_success TTY 'push --quiet silences status and progress' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_commit quiet &&
 	test_terminal git push --quiet >output 2>&1 &&
-	test_cmp /dev/null output
+	test_must_be_empty output
 '
 
 test_expect_success TTY 'push --no-progress silences progress but not status' '
@@ -234,7 +277,7 @@ test_expect_success TTY 'push --no-progress silences progress but not status' '
 	test_commit no-progress &&
 	test_terminal git push --no-progress >output 2>&1 &&
 	test_i18ngrep "^To http" output &&
-	test_i18ngrep ! "^Writing objects" output
+	test_i18ngrep ! "Writing objects" output
 '
 
 test_expect_success 'push --progress shows progress to non-tty' '
@@ -242,7 +285,7 @@ test_expect_success 'push --progress shows progress to non-tty' '
 	test_commit progress &&
 	git push --progress >output 2>&1 &&
 	test_i18ngrep "^To http" output &&
-	test_i18ngrep "^Writing objects" output
+	test_i18ngrep "Writing objects" output
 '
 
 test_expect_success 'http push gives sane defaults to reflog' '
@@ -389,5 +432,4 @@ test_expect_success 'colorize errors/hints' '
 	test_i18ngrep ! "^hint: " decoded
 '
 
-stop_httpd
 test_done

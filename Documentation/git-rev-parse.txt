@@ -9,7 +9,7 @@ git-rev-parse - Pick out and massage parameters
 SYNOPSIS
 --------
 [verse]
-'git rev-parse' [ --option ] <args>...
+'git rev-parse' [<options>] <args>...
 
 DESCRIPTION
 -----------
@@ -360,7 +360,7 @@ Example
 
 ------------
 OPTS_SPEC="\
-some-command [options] <args>...
+some-command [<options>] <args>...
 
 some-command does foo and bar!
 --
@@ -385,7 +385,7 @@ When `"$@"` is `-h` or `--help` in the above example, the following
 usage text would be shown:
 
 ------------
-usage: some-command [options] <args>...
+usage: some-command [<options>] <args>...
 
     some-command does foo and bar!
 

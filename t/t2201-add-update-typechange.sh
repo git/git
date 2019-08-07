@@ -75,35 +75,35 @@ test_expect_success modify '
 		git ls-tree -r HEAD |
 		sed -e "s/^/:/" -e "
 			/	caskly/{
-				s/	caskly/ $_z40 D&/
+				s/	caskly/ $ZERO_OID D&/
 				s/blob/000000/
 			}
 			/	nitfol/{
-				s/	nitfol/ $_z40 $T_letter&/
+				s/	nitfol/ $ZERO_OID $T_letter&/
 				s/blob/100644/
 			}
 			/	rezrov.bozbar/{
-				s/	rezrov.bozbar/ $_z40 D&/
+				s/	rezrov.bozbar/ $ZERO_OID D&/
 				s/blob/000000/
 			}
 			/	xyzzy/{
-				s/	xyzzy/ $_z40 D&/
+				s/	xyzzy/ $ZERO_OID D&/
 				s/blob/000000/
 			}
 			/	yomin/{
-			    s/	yomin/ $_z40 T&/
+			    s/	yomin/ $ZERO_OID T&/
 				s/blob/160000/
 			}
 		"
 	} >expect &&
 	{
 		cat expect
-		echo ":100644 160000 $_empty $_z40 T	yonk"
-		echo ":100644 000000 $_empty $_z40 D	zifmia"
+		echo ":100644 160000 $_empty $ZERO_OID T	yonk"
+		echo ":100644 000000 $_empty $ZERO_OID D	zifmia"
 	} >expect-files &&
 	{
 		cat expect
-		echo ":000000 160000 $_z40 $_z40 A	yonk"
+		echo ":000000 160000 $ZERO_OID $ZERO_OID A	yonk"
 	} >expect-index &&
 	{
 		echo "100644 $_empty 0	nitfol"

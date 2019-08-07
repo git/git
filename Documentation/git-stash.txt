@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git stash' list [<options>]
-'git stash' show [<stash>]
+'git stash' show [<options>] [<stash>]
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
@@ -106,7 +106,7 @@ stash@{1}: On master: 9cc0589... Add git-stash
 The command takes options applicable to the 'git log'
 command to control what is shown and how. See linkgit:git-log[1].
 
-show [<stash>]::
+show [<options>] [<stash>]::
 
 	Show the changes recorded in the stash entry as a diff between the
 	stashed contents and the commit back when the stash entry was first
@@ -235,12 +235,12 @@ return to your original branch to make the emergency fix, like this:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
-$ git checkout -b my_wip
+$ git switch -c my_wip
 $ git commit -a -m "WIP"
-$ git checkout master
+$ git switch master
 $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
-$ git checkout my_wip
+$ git switch my_wip
 $ git reset --soft HEAD^
 # ... continue hacking ...
 ----------------------------------------------------------------
@@ -293,7 +293,8 @@ SEE ALSO
 linkgit:git-checkout[1],
 linkgit:git-commit[1],
 linkgit:git-reflog[1],
-linkgit:git-reset[1]
+linkgit:git-reset[1],
+linkgit:git-switch[1]
 
 GIT
 ---

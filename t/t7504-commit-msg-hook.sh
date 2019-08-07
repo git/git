@@ -157,6 +157,7 @@ test_expect_success 'merge bypasses failing hook with --no-verify' '
 	test_when_finished "git branch -D newbranch" &&
 	test_when_finished "git checkout -f master" &&
 	git checkout --orphan newbranch &&
+	git rm -f file &&
 	: >file2 &&
 	git add file2 &&
 	git commit --no-verify file2 -m in-side-branch &&
@@ -168,7 +169,7 @@ test_expect_success 'merge bypasses failing hook with --no-verify' '
 chmod -x "$HOOK"
 test_expect_success POSIXPERM 'with non-executable hook' '
 
-	echo "content" >> file &&
+	echo "content" >file &&
 	git add file &&
 	git commit -m "content"
 
@@ -249,6 +250,7 @@ test_expect_success 'hook called in git-merge picks up commit message' '
 	test_when_finished "git branch -D newbranch" &&
 	test_when_finished "git checkout -f master" &&
 	git checkout --orphan newbranch &&
+	git rm -f file &&
 	: >file2 &&
 	git add file2 &&
 	git commit --no-verify file2 -m in-side-branch &&

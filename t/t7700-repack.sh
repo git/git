@@ -221,5 +221,45 @@ test_expect_success 'repack --keep-pack' '
 	)
 '
 
-test_done
+test_expect_success 'bitmaps are created by default in bare repos' '
+	git clone --bare .git bare.git &&
+	git -C bare.git repack -ad &&
+	bitmap=$(ls bare.git/objects/pack/*.bitmap) &&
+	test_path_is_file "$bitmap"
+'
 
+test_expect_success 'incremental repack does not complain' '
+	git -C bare.git repack -q 2>repack.err &&
+	test_must_be_empty repack.err
+'
+
+test_expect_success 'bitmaps can be disabled on bare repos' '
+	git -c repack.writeBitmaps=false -C bare.git repack -ad &&
+	bitmap=$(ls bare.git/objects/pack/*.bitmap 2>/dev/null || :) &&
+	test -z "$bitmap"
+'
+
+test_expect_success 'no bitmaps created if .keep files present' '
+	pack=$(ls bare.git/objects/pack/*.pack) &&
+	test_path_is_file "$pack" &&
+	keep=${pack%.pack}.keep &&
+	test_when_finished "rm -f \"\$keep\"" &&
+	>"$keep" &&
+	git -C bare.git repack -ad 2>stderr &&
+	test_must_be_empty stderr &&
+	find bare.git/objects/pack/ -type f -name "*.bitmap" >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'auto-bitmaps do not complain if unavailable' '
+	test_config -C bare.git pack.packSizeLimit 1M &&
+	blob=$(test-tool genrandom big $((1024*1024)) |
+	       git -C bare.git hash-object -w --stdin) &&
+	git -C bare.git update-ref refs/tags/big $blob &&
+	git -C bare.git repack -ad 2>stderr &&
+	test_must_be_empty stderr &&
+	find bare.git/objects/pack -type f -name "*.bitmap" >actual &&
+	test_must_be_empty actual
+'
+
+test_done

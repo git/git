@@ -1,0 +1,108 @@
+Git v2.19.2 Release Notes
+=========================
+
+Fixes since v2.19.1
+-------------------
+
+ * "git interpret-trailers" and its underlying machinery had a buggy
+   code that attempted to ignore patch text after commit log message,
+   which triggered in various codepaths that will always get the log
+   message alone and never get such an input.
+
+ * "git rebase -i" did not clear the state files correctly when a run
+   of "squash/fixup" is aborted and then the user manually amended the
+   commit instead, which has been corrected.
+
+ * When fsmonitor is in use, after operation on submodules updates
+   .gitmodules, we lost track of the fact that we did so and relied on
+   stale fsmonitor data.
+
+ * Fix for a long-standing bug that leaves the index file corrupt when
+   it shrinks during a partial commit.
+
+ * Further fix for O_APPEND emulation on Windows
+
+ * A corner case bugfix in "git rerere" code.
+
+ * "git add ':(attr:foo)'" is not supported and is supposed to be
+   rejected while the command line arguments are parsed, but we fail
+   to reject such a command line upfront.
+
+ * "git rebase" etc. in Git 2.19 fails to abort when given an empty
+   commit log message as result of editing, which has been corrected.
+
+ * The code to backfill objects in lazily cloned repository did not
+   work correctly, which has been corrected.
+
+ * Update error messages given by "git remote" and make them consistent.
+
+ * "git update-ref" learned to make both "--no-deref" and "--stdin"
+   work at the same time.
+
+ * Recently added "range-diff" had a corner-case bug to cause it
+   segfault, which has been corrected.
+
+ * The recently introduced commit-graph auxiliary data is incompatible
+   with mechanisms such as replace & grafts that "breaks" immutable
+   nature of the object reference relationship.  Disable optimizations
+   based on its use (and updating existing commit-graph) when these
+   incompatible features are in use in the repository.
+
+ * The mailmap file update.
+
+ * The code in "git status" sometimes hit an assertion failure.  This
+   was caused by a structure that was reused without cleaning the data
+   used for the first run, which has been corrected.
+
+ * A corner-case bugfix.
+
+ * A partial clone that is configured to lazily fetch missing objects
+   will on-demand issue a "git fetch" request to the originating
+   repository to fill not-yet-obtained objects.  The request has been
+   optimized for requesting a tree object (and not the leaf blob
+   objects contained in it) by telling the originating repository that
+   no blobs are needed.
+
+ * The codepath to support the experimental split-index mode had
+   remaining "racily clean" issues fixed.
+
+ * "git log --graph" showing an octopus merge sometimes miscounted the
+   number of display columns it is consuming to show the merge and its
+   parent commits, which has been corrected.
+
+ * The implementation of run_command() API on the UNIX platforms had a
+   bug that caused a command not on $PATH to be found in the current
+   directory.
+
+ * A mutex used in "git pack-objects" were not correctly initialized
+   and this caused "git repack" to dump core on Windows.
+
+ * Under certain circumstances, "git diff D:/a/b/c D:/a/b/d" on
+   Windows would strip initial parts from the paths because they
+   were not recognized as absolute, which has been corrected.
+
+ * The receive.denyCurrentBranch=updateInstead codepath kicked in even
+   when the push should have been rejected due to other reasons, such
+   as it does not fast-forward or the update-hook rejects it, which
+   has been corrected.
+
+ * "git repack" in a shallow clone did not correctly update the
+   shallow points in the repository, leading to a repository that
+   does not pass fsck.
+
+ * Operations on promisor objects make sense in the context of only a
+   small subset of the commands that internally use the revisions
+   machinery, but the "--exclude-promisor-objects" option were taken
+   and led to nonsense results by commands like "log", to which it
+   didn't make much sense.  This has been corrected.
+
+ * The "container" mode of TravisCI is going away.  Our .travis.yml
+   file is getting prepared for the transition.
+
+ * Our test scripts can now take the '-V' option as a synonym for the
+   '--verbose-log' option.
+
+ * A regression in Git 2.12 era made "git fsck" fall into an infinite
+   loop while processing truncated loose objects.
+
+Also contains various documentation updates and code clean-ups.

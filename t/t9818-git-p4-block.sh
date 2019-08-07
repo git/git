@@ -129,6 +129,7 @@ test_expect_success 'Create a repo with multiple depot paths' '
 '
 
 test_expect_success 'Clone repo with multiple depot paths' '
+	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
 		git p4 clone --changes-block-size=4 //depot/pathA@all //depot/pathB@all \
@@ -138,8 +139,11 @@ test_expect_success 'Clone repo with multiple depot paths' '
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
+test_expect_success 'Clone repo with self-sizing block size' '
+	test_when_finished cleanup_git &&
+	git p4 clone --changes-block-size=1000000 //depot@all --destination="$git" &&
+	git -C "$git" log --oneline >log &&
+	test_line_count \> 10 log
 '
 
 test_done

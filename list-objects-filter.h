@@ -1,6 +1,11 @@
 #ifndef LIST_OBJECTS_FILTER_H
 #define LIST_OBJECTS_FILTER_H
 
+struct list_objects_filter_options;
+struct object;
+struct oidset;
+struct repository;
+
 /*
  * During list-object traversal we allow certain objects to be
  * filtered (omitted) from the result.  The active filter uses
@@ -19,6 +24,11 @@
  * _DO_SHOW   : Show this object in the results (call show() on it).
  *              In general, objects should only be shown once, but
  *              this result DOES NOT imply that we mark it SEEN.
+ *
+ * _SKIP_TREE : Used in LOFS_BEGIN_TREE situation - indicates that
+ *              the tree's children should not be iterated over. This
+ *              is used as an optimization when all children will
+ *              definitely be ignored.
  *
  * Most of the time, you want the combination (_MARK_SEEN | _DO_SHOW)
  * but they can be used independently, such as when sparse-checkout
@@ -41,6 +51,7 @@ enum list_objects_filter_result {
 	LOFR_ZERO      = 0,
 	LOFR_MARK_SEEN = 1<<0,
 	LOFR_DO_SHOW   = 1<<1,
+	LOFR_SKIP_TREE = 1<<2,
 };
 
 enum list_objects_filter_situation {
@@ -50,6 +61,7 @@ enum list_objects_filter_situation {
 };
 
 typedef enum list_objects_filter_result (*filter_object_fn)(
+	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
 	const char *pathname,

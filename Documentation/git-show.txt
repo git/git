@@ -9,7 +9,7 @@ git-show - Show various types of objects
 SYNOPSIS
 --------
 [verse]
-'git show' [options] [<object>...]
+'git show' [<options>] [<object>...]
 
 DESCRIPTION
 -----------

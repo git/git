@@ -227,12 +227,11 @@ test_expect_success 'index removal and worktree narrowing at the same time' '
 '
 
 test_expect_success 'read-tree --reset removes outside worktree' '
-	>empty &&
 	echo init.t >.git/info/sparse-checkout &&
 	git checkout -f top &&
 	git reset --hard removed &&
 	git ls-files sub/added >result &&
-	test_cmp empty result
+	test_must_be_empty result
 '
 
 test_expect_success 'print errors when failed to update worktree' '

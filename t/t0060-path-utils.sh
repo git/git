@@ -306,6 +306,8 @@ test_git_path GIT_COMMON_DIR=bar hooks/me                 bar/hooks/me
 test_git_path GIT_COMMON_DIR=bar config                   bar/config
 test_git_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
 test_git_path GIT_COMMON_DIR=bar shallow                  bar/shallow
+test_git_path GIT_COMMON_DIR=bar common                   bar/common
+test_git_path GIT_COMMON_DIR=bar common/file              bar/common/file
 
 # In the tests below, $(pwd) must be used because it is a native path on
 # Windows and avoids MSYS's path mangling (which simplifies "foo/../bar" and
@@ -330,6 +332,9 @@ test_submodule_relative_url "(null)" "../foo" "../submodule" "../submodule"
 test_submodule_relative_url "(null)" "./foo/bar" "../submodule" "foo/submodule"
 test_submodule_relative_url "(null)" "./foo" "../submodule" "submodule"
 test_submodule_relative_url "(null)" "//somewhere else/repo" "../subrepo" "//somewhere else/subrepo"
+test_submodule_relative_url "(null)" "//somewhere else/repo" "../../subrepo" "//subrepo"
+test_submodule_relative_url "(null)" "//somewhere else/repo" "../../../subrepo" "/subrepo"
+test_submodule_relative_url "(null)" "//somewhere else/repo" "../../../../subrepo" "subrepo"
 test_submodule_relative_url "(null)" "$(pwd)/subsuper_update_r" "../subsubsuper_update_r" "$(pwd)/subsubsuper_update_r"
 test_submodule_relative_url "(null)" "$(pwd)/super_update_r2" "../subsuper_update_r" "$(pwd)/subsuper_update_r"
 test_submodule_relative_url "(null)" "$(pwd)/." "../." "$(pwd)/."
@@ -344,10 +349,20 @@ test_submodule_relative_url "(null)" "file:///tmp/repo" "../subrepo" "file:///tm
 test_submodule_relative_url "(null)" "foo/bar" "../submodule" "foo/submodule"
 test_submodule_relative_url "(null)" "foo" "../submodule" "submodule"
 test_submodule_relative_url "(null)" "helper:://hostname/repo" "../subrepo" "helper:://hostname/subrepo"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../../subrepo" "helper:://subrepo"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../../../subrepo" "helper::/subrepo"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../../../../subrepo" "helper::subrepo"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../../../../../subrepo" "helper:subrepo"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../../../../../../subrepo" ".:subrepo"
 test_submodule_relative_url "(null)" "ssh://hostname/repo" "../subrepo" "ssh://hostname/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname/repo" "../../subrepo" "ssh://subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname/repo" "../../../subrepo" "ssh:/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname/repo" "../../../../subrepo" "ssh:subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname/repo" "../../../../../subrepo" ".:subrepo"
 test_submodule_relative_url "(null)" "ssh://hostname:22/repo" "../subrepo" "ssh://hostname:22/subrepo"
 test_submodule_relative_url "(null)" "user@host:path/to/repo" "../subrepo" "user@host:path/to/subrepo"
 test_submodule_relative_url "(null)" "user@host:repo" "../subrepo" "user@host:subrepo"
+test_submodule_relative_url "(null)" "user@host:repo" "../../subrepo" ".:subrepo"
 
 test_expect_success 'match .gitmodules' '
 	test-tool path-utils is_dotgitmodules \

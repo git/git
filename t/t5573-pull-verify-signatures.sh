@@ -29,7 +29,7 @@ test_expect_success GPG 'create repositories with signed commits' '
 		echo 4 >d && git add d &&
 		test_tick && git commit -S -m "bad" &&
 		git cat-file commit HEAD >raw &&
-		sed -e "s/bad/forged bad/" raw >forged &&
+		sed -e "s/^bad/forged bad/" raw >forged &&
 		git hash-object -w -t commit forged >forged.commit &&
 		git checkout $(cat forged.commit)
 	) &&
@@ -76,6 +76,13 @@ test_expect_success GPG 'pull commit with bad signature with --no-verify-signatu
 	test_config merge.verifySignatures true &&
 	test_config pull.verifySignatures true &&
 	git pull --ff-only --no-verify-signatures bad 2>pullerror
+'
+
+test_expect_success GPG 'pull unsigned commit into unborn branch' '
+	git init empty-repo &&
+	test_must_fail \
+		git -C empty-repo pull --verify-signatures ..  2>pullerror &&
+	test_i18ngrep "does not have a GPG signature" pullerror
 '
 
 test_done

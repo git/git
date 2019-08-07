@@ -174,7 +174,7 @@ test_expect_success ' context does not include other functions' '
 '
 
 test_expect_success ' context does not include preceding empty lines' '
-	test "$(first_context_line <long_common_tail.diff.diff)" != " "
+	test "$(first_context_line <long_common_tail.diff)" != " "
 '
 
 check_diff changed_hello_appended 'changed function plus appended function'

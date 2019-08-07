@@ -13,6 +13,7 @@ fi
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
+test_set_port SVNSERVE_PORT
 
 svn >/dev/null 2>&1
 if test $? -ne 1
@@ -68,19 +69,12 @@ svn_cmd () {
 maybe_start_httpd () {
 	loc=${1-svn}
 
-	test_tristate GIT_SVN_TEST_HTTPD
-	case $GIT_SVN_TEST_HTTPD in
-	true)
+	if git env--helper --type=bool --default=false --exit-code GIT_TEST_HTTPD
+	then
 		. "$TEST_DIRECTORY"/lib-httpd.sh
 		LIB_HTTPD_SVN="$loc"
 		start_httpd
-		;;
-	*)
-		stop_httpd () {
-			: noop
-		}
-		;;
-	esac
+	fi
 }
 
 convert_to_rev_db () {
@@ -110,8 +104,7 @@ EOF
 }
 
 require_svnserve () {
-	test_tristate GIT_TEST_SVNSERVE
-	if ! test "$GIT_TEST_SVNSERVE" = true
+	if ! git env--helper --type=bool --default=false --exit-code GIT_TEST_SVNSERVE
 	then
 		skip_all='skipping svnserve test. (set $GIT_TEST_SVNSERVE to enable)'
 		test_done
@@ -119,7 +112,6 @@ require_svnserve () {
 }
 
 start_svnserve () {
-	SVNSERVE_PORT=${SVNSERVE_PORT-${this_test#t}}
 	svnserve --listen-port $SVNSERVE_PORT \
 		 --root "$rawsvnrepo" \
 		 --listen-once \

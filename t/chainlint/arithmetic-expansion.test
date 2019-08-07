@@ -1,0 +1,11 @@
+(
+	foo &&
+# LINT: closing ")" of $((...)) not misinterpreted as subshell-closing ")"
+	bar=$((42 + 1)) &&
+	baz
+) &&
+(
+# LINT: missing "&&" on $((...))
+	bar=$((42 + 1))
+	baz
+)

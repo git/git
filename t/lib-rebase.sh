@@ -14,8 +14,8 @@
 #       specified line.
 #
 #   "<cmd> <lineno>" -- add a line with the specified command
-#       ("squash", "fixup", "edit", "reword" or "drop") and the SHA1 taken
-#       from the specified line.
+#       ("pick", "squash", "fixup", "edit", "reword" or "drop") and the
+#       SHA1 taken from the specified line.
 #
 #   "exec_cmd_with_args" -- add an "exec cmd with args" line.
 #
@@ -47,9 +47,9 @@ set_fake_editor () {
 	action=pick
 	for line in $FAKE_LINES; do
 		case $line in
-		squash|fixup|edit|reword|drop)
+		pick|p|squash|s|fixup|f|edit|e|reword|r|drop|d)
 			action="$line";;
-		exec*)
+		exec_*|x_*|break|b)
 			echo "$line" | sed 's/_/ /g' >> "$1";;
 		"#")
 			echo '# comment' >> "$1";;

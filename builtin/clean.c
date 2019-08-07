@@ -6,6 +6,7 @@
  * Based on git-clean.sh by Pavel Roskin
  */
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
@@ -16,6 +17,7 @@
 #include "column.h"
 #include "color.h"
 #include "pathspec.h"
+#include "help.h"
 
 static int force = -1; /* unset */
 static int interactive;
@@ -32,6 +34,7 @@ static const char *msg_would_remove = N_("Would remove %s\n");
 static const char *msg_skip_git_dir = N_("Skipping repository %s\n");
 static const char *msg_would_skip_git_dir = N_("Would skip repository %s\n");
 static const char *msg_warn_remove_failed = N_("failed to remove %s");
+static const char *msg_warn_lstat_failed = N_("could not lstat %s\n");
 
 enum color_clean {
 	CLEAN_COLOR_RESET = 0,
@@ -40,6 +43,15 @@ enum color_clean {
 	CLEAN_COLOR_HEADER = 3,
 	CLEAN_COLOR_HELP = 4,
 	CLEAN_COLOR_ERROR = 5
+};
+
+static const char *color_interactive_slots[] = {
+	[CLEAN_COLOR_ERROR]  = "error",
+	[CLEAN_COLOR_HEADER] = "header",
+	[CLEAN_COLOR_HELP]   = "help",
+	[CLEAN_COLOR_PLAIN]  = "plain",
+	[CLEAN_COLOR_PROMPT] = "prompt",
+	[CLEAN_COLOR_RESET]  = "reset",
 };
 
 static int clean_use_color = -1;
@@ -82,22 +94,7 @@ struct menu_stuff {
 	void *stuff;
 };
 
-static int parse_clean_color_slot(const char *var)
-{
-	if (!strcasecmp(var, "reset"))
-		return CLEAN_COLOR_RESET;
-	if (!strcasecmp(var, "plain"))
-		return CLEAN_COLOR_PLAIN;
-	if (!strcasecmp(var, "prompt"))
-		return CLEAN_COLOR_PROMPT;
-	if (!strcasecmp(var, "header"))
-		return CLEAN_COLOR_HEADER;
-	if (!strcasecmp(var, "help"))
-		return CLEAN_COLOR_HELP;
-	if (!strcasecmp(var, "error"))
-		return CLEAN_COLOR_ERROR;
-	return -1;
-}
+define_list_config_array(color_interactive_slots);
 
 static int git_clean_config(const char *var, const char *value, void *cb)
 {
@@ -113,7 +110,7 @@ static int git_clean_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (skip_prefix(var, "color.interactive.", &slot_name)) {
-		int slot = parse_clean_color_slot(slot_name);
+		int slot = LOOKUP_CONFIG(color_interactive_slots, slot_name);
 		if (slot < 0)
 			return 0;
 		if (!value)
@@ -145,6 +142,7 @@ static void clean_print_color(enum color_clean ix)
 static int exclude_cb(const struct option *opt, const char *arg, int unset)
 {
 	struct string_list *exclude_list = opt->value;
+	BUG_ON_OPT_NEG(unset);
 	string_list_append(exclude_list, arg);
 	return 0;
 }
@@ -197,7 +195,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		strbuf_setlen(path, len);
 		strbuf_addstr(path, e->d_name);
 		if (lstat(path->buf, &st))
-			; /* fall thru */
+			warning_errno(_(msg_warn_lstat_failed), path->buf);
 		else if (S_ISDIR(st.st_mode)) {
 			if (remove_dirs(path, prefix, force_flag, dry_run, quiet, &gone))
 				ret = 1;
@@ -981,7 +979,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			continue;
 
 		if (pathspec.nr)
-			matches = dir_path_match(ent, &pathspec, 0, NULL);
+			matches = dir_path_match(&the_index, ent, &pathspec, 0, NULL);
 
 		if (pathspec.nr && !matches)
 			continue;

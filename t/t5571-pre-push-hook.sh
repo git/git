@@ -78,8 +78,8 @@ test_expect_success 'push to default' '
 cat >expected <<EOF
 parent1
 repo1
-refs/tags/one $COMMIT1 refs/tags/tag1 $_z40
-HEAD~ $COMMIT2 refs/heads/prev $_z40
+refs/tags/one $COMMIT1 refs/tags/tag1 $ZERO_OID
+HEAD~ $COMMIT2 refs/heads/prev $ZERO_OID
 EOF
 
 test_expect_success 'push non-branches' '
@@ -90,7 +90,7 @@ test_expect_success 'push non-branches' '
 cat >expected <<EOF
 parent1
 repo1
-(delete) $_z40 refs/heads/prev $COMMIT2
+(delete) $ZERO_OID refs/heads/prev $COMMIT2
 EOF
 
 test_expect_success 'push delete' '
@@ -101,7 +101,7 @@ test_expect_success 'push delete' '
 cat >expected <<EOF
 repo1
 repo1
-HEAD $COMMIT3 refs/heads/other $_z40
+HEAD $COMMIT3 refs/heads/other $ZERO_OID
 EOF
 
 test_expect_success 'push to URL' '

@@ -13,6 +13,36 @@ constant fmt !~ "%";
   );
 
 @@
+expression E;
+struct strbuf SB;
+format F =~ "s";
+@@
+- strbuf_addf(E, "%@F@", SB.buf);
++ strbuf_addbuf(E, &SB);
+
+@@
+expression E;
+struct strbuf *SBP;
+format F =~ "s";
+@@
+- strbuf_addf(E, "%@F@", SBP->buf);
++ strbuf_addbuf(E, SBP);
+
+@@
+expression E;
+struct strbuf SB;
+@@
+- strbuf_addstr(E, SB.buf);
++ strbuf_addbuf(E, &SB);
+
+@@
+expression E;
+struct strbuf *SBP;
+@@
+- strbuf_addstr(E, SBP->buf);
++ strbuf_addbuf(E, SBP);
+
+@@
 expression E1, E2;
 format F =~ "s";
 @@

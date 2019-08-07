@@ -3,6 +3,8 @@
 
 #include "string-list.h"
 
+struct commit;
+
 struct shortlog {
 	struct string_list list;
 	int summary;

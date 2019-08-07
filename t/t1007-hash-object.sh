@@ -21,10 +21,7 @@ test_blob_exists() {
 }
 
 hello_content="Hello World"
-hello_sha1=5e1c309dae7f45e0f39b1bf3ac3cd9db12e7d689
-
 example_content="This is an example"
-example_sha1=ddd3f836d3e3fbb7ae289aa9ae83536f76956399
 
 setup_repo() {
 	echo_without_newline "$hello_content" > hello
@@ -44,7 +41,16 @@ pop_repo() {
 	rm -rf $test_repo
 }
 
-setup_repo
+test_expect_success 'setup' '
+	setup_repo &&
+	test_oid_cache <<-EOF
+	hello sha1:5e1c309dae7f45e0f39b1bf3ac3cd9db12e7d689
+	hello sha256:1e3b6c04d2eeb2b3e45c8a330445404c0b7cc7b257e2b097167d26f5230090c4
+
+	example sha1:ddd3f836d3e3fbb7ae289aa9ae83536f76956399
+	example sha256:b44fe1fe65589848253737db859bd490453510719d7424daab03daf0767b85ae
+	EOF
+'
 
 # Argument checking
 
@@ -74,22 +80,22 @@ test_expect_success "Can't use --path with --no-filters" '
 push_repo
 
 test_expect_success 'hash a file' '
-	test $hello_sha1 = $(git hash-object hello)
+	test "$(test_oid hello)" = $(git hash-object hello)
 '
 
-test_blob_does_not_exist $hello_sha1
+test_blob_does_not_exist "$(test_oid hello)"
 
 test_expect_success 'hash from stdin' '
-	test $example_sha1 = $(git hash-object --stdin < example)
+	test "$(test_oid example)" = $(git hash-object --stdin < example)
 '
 
-test_blob_does_not_exist $example_sha1
+test_blob_does_not_exist "$(test_oid example)"
 
 test_expect_success 'hash a file and write to database' '
-	test $hello_sha1 = $(git hash-object -w hello)
+	test "$(test_oid hello)" = $(git hash-object -w hello)
 '
 
-test_blob_exists $hello_sha1
+test_blob_exists "$(test_oid hello)"
 
 test_expect_success 'git hash-object --stdin file1 <file0 first operates on file0, then file1' '
 	echo foo > file1 &&
@@ -162,10 +168,10 @@ for args in "-w --stdin" "--stdin -w"; do
 	push_repo
 
 	test_expect_success "hash from stdin and write to database ($args)" '
-		test $example_sha1 = $(git hash-object $args < example)
+		test "$(test_oid example)" = $(git hash-object $args < example)
 	'
 
-	test_blob_exists $example_sha1
+	test_blob_exists "$(test_oid example)"
 
 	pop_repo
 done
@@ -173,22 +179,22 @@ done
 filenames="hello
 example"
 
-sha1s="$hello_sha1
-$example_sha1"
+oids="$(test_oid hello)
+$(test_oid example)"
 
 test_expect_success "hash two files with names on stdin" '
-	test "$sha1s" = "$(echo_without_newline "$filenames" | git hash-object --stdin-paths)"
+	test "$oids" = "$(echo_without_newline "$filenames" | git hash-object --stdin-paths)"
 '
 
 for args in "-w --stdin-paths" "--stdin-paths -w"; do
 	push_repo
 
 	test_expect_success "hash two files with names on stdin and write to database ($args)" '
-		test "$sha1s" = "$(echo_without_newline "$filenames" | git hash-object $args)"
+		test "$oids" = "$(echo_without_newline "$filenames" | git hash-object $args)"
 	'
 
-	test_blob_exists $hello_sha1
-	test_blob_exists $example_sha1
+	test_blob_exists "$(test_oid hello)"
+	test_blob_exists "$(test_oid example)"
 
 	pop_repo
 done
@@ -198,10 +204,6 @@ test_expect_success 'too-short tree' '
 	test_must_fail git hash-object -t tree malformed-tree 2>err &&
 	test_i18ngrep "too-short tree object" err
 '
-
-hex2oct() {
-    perl -ne 'printf "\\%03o", hex for /../g'
-}
 
 test_expect_success 'malformed mode in tree' '
 	hex_sha1=$(echo foo | git hash-object --stdin -w) &&

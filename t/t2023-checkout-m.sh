@@ -46,4 +46,28 @@ test_expect_success '-m restores 3-way conflicted+resolved file' '
 	test_cmp both.txt.conflicted.cleaned both.txt.cleaned
 '
 
+test_expect_success 'force checkout a conflict file creates stage zero entry' '
+	git init co-force &&
+	(
+		cd co-force &&
+		echo a >a &&
+		git add a &&
+		git commit -ama &&
+		A_OBJ=$(git rev-parse :a) &&
+		git branch topic &&
+		echo b >a &&
+		git commit -amb &&
+		B_OBJ=$(git rev-parse :a) &&
+		git checkout topic &&
+		echo c >a &&
+		C_OBJ=$(git hash-object a) &&
+		git checkout -m master &&
+		test_cmp_rev :1:a $A_OBJ &&
+		test_cmp_rev :2:a $B_OBJ &&
+		test_cmp_rev :3:a $C_OBJ &&
+		git checkout -f topic &&
+		test_cmp_rev :0:a $A_OBJ
+	)
+'
+
 test_done

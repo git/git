@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "diff.h"
@@ -5,12 +6,13 @@
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
+#include "repository.h"
 
 static struct rev_info log_tree_opt;
 
 static int diff_tree_commit_oid(const struct object_id *oid)
 {
-	struct commit *commit = lookup_commit_reference(oid);
+	struct commit *commit = lookup_commit_reference(the_repository, oid);
 	if (!commit)
 		return -1;
 	return log_tree_commit(&log_tree_opt, commit);
@@ -24,7 +26,7 @@ static int stdin_diff_commit(struct commit *commit, const char *p)
 
 	/* Graft the fake parents locally to the commit */
 	while (isspace(*p++) && !parse_oid_hex(p, &oid, &p)) {
-		struct commit *parent = lookup_commit(&oid);
+		struct commit *parent = lookup_commit(the_repository, &oid);
 		if (!pptr) {
 			/* Free the real parent list */
 			free_commit_list(commit->parents);
@@ -45,7 +47,7 @@ static int stdin_diff_trees(struct tree *tree1, const char *p)
 	struct tree *tree2;
 	if (!isspace(*p++) || parse_oid_hex(p, &oid, &p) || *p)
 		return error("Need exactly two trees, separated by a space");
-	tree2 = lookup_tree(&oid);
+	tree2 = lookup_tree(the_repository, &oid);
 	if (!tree2 || parse_tree(tree2))
 		return -1;
 	printf("%s %s\n", oid_to_hex(&tree1->object.oid),
@@ -68,7 +70,7 @@ static int diff_tree_stdin(char *line)
 	line[len-1] = 0;
 	if (parse_oid_hex(line, &oid, &p))
 		return -1;
-	obj = parse_object(&oid);
+	obj = parse_object(the_repository, &oid);
 	if (!obj)
 		return -1;
 	if (obj->type == OBJ_COMMIT)
@@ -81,9 +83,13 @@ static int diff_tree_stdin(char *line)
 }
 
 static const char diff_tree_usage[] =
-"git diff-tree [--stdin] [-m] [-c] [--cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
+"git diff-tree [--stdin] [-m] [-c | --cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
 "[<common-diff-options>] <tree-ish> [<tree-ish>] [<path>...]\n"
 "  -r            diff recursively\n"
+"  -c            show combined diff for merge commits\n"
+"  --cc          show combined diff for merge commits removing uninteresting hunks\n"
+"  --combined-all-paths\n"
+"                show name of file in all parents for combined diffs\n"
 "  --root        include the initial commit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
 
@@ -109,7 +115,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		usage(diff_tree_usage);
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
-	init_revisions(opt, prefix);
+	repo_init_revisions(the_repository, opt, prefix);
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 	opt->abbrev = 0;
@@ -162,9 +168,11 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		int saved_nrl = 0;
 		int saved_dcctc = 0;
 
-		if (opt->diffopt.detect_rename)
-			opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
-					       DIFF_SETUP_USE_CACHE);
+		if (opt->diffopt.detect_rename) {
+			if (!the_index.cache)
+				repo_read_index(the_repository);
+			opt->diffopt.setup |= DIFF_SETUP_USE_SIZE_CACHE;
+		}
 		while (fgets(line, sizeof(line), stdin)) {
 			struct object_id oid;
 

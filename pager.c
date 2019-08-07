@@ -2,6 +2,7 @@
 #include "config.h"
 #include "run-command.h"
 #include "sigchain.h"
+#include "alias.h"
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"
@@ -99,6 +100,7 @@ void prepare_pager_args(struct child_process *pager_process, const char *pager)
 	argv_array_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
 	setup_pager_env(&pager_process->env_array);
+	pager_process->trace2_child_class = "pager";
 }
 
 void setup_pager(void)
@@ -173,6 +175,26 @@ int term_columns(void)
 #endif
 
 	return term_columns_at_startup;
+}
+
+/*
+ * Clear the entire line, leave cursor in first column.
+ */
+void term_clear_line(void)
+{
+	if (is_terminal_dumb())
+		/*
+		 * Fall back to print a terminal width worth of space
+		 * characters (hoping that the terminal is still as wide
+		 * as it was upon the first call to term_columns()).
+		 */
+		fprintf(stderr, "\r%*s\r", term_columns(), "");
+	else
+		/*
+		 * On non-dumb terminals use an escape sequence to clear
+		 * the whole line, no matter how wide the terminal.
+		 */
+		fputs("\r\033[K", stderr);
 }
 
 /*

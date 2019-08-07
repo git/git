@@ -104,7 +104,7 @@ begins with `ext::`.  Examples:
 	link-level address).
 
 "ext::git-server-alias foo %G/repo% with% spaces %Vfoo"::
-	Represents a repository with path '/repo with spaces' accessed
+	Represents a repository with path `/repo with spaces` accessed
 	using the helper program "git-server-alias foo".  The hostname for
 	the remote server passed in the protocol stream will be "foo"
 	(this allows multiple virtual Git servers to share a
@@ -118,7 +118,7 @@ begins with `ext::`.  Examples:
 
 SEE ALSO
 --------
-linkgit:gitremote-helpers[1]
+linkgit:gitremote-helpers[7]
 
 GIT
 ---

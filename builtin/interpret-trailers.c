@@ -10,6 +10,7 @@
 #include "parse-options.h"
 #include "string-list.h"
 #include "trailer.h"
+#include "config.h"
 
 static const char * const git_interpret_trailers_usage[] = {
 	N_("git interpret-trailers [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]"),
@@ -80,6 +81,8 @@ static int parse_opt_parse(const struct option *opt, const char *arg,
 	v->only_trailers = 1;
 	v->only_input = 1;
 	v->unfold = 1;
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	return 0;
 }
 
@@ -104,10 +107,13 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "unfold", &opts.unfold, N_("join whitespace-continued values")),
 		{ OPTION_CALLBACK, 0, "parse", &opts, NULL, N_("set parsing options"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, parse_opt_parse },
+		OPT_BOOL(0, "no-divider", &opts.no_divider, N_("do not treat --- specially")),
 		OPT_CALLBACK(0, "trailer", &trailers, N_("trailer"),
 				N_("trailer(s) to add"), option_parse_trailer),
 		OPT_END()
 	};
+
+	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_interpret_trailers_usage, 0);

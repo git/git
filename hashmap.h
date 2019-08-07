@@ -1,6 +1,8 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
+#include "hash.h"
+
 /*
  * Generic implementation of hash-based key-value mappings.
  *
@@ -104,11 +106,11 @@
  * `memihash_cont` is a variant of `memihash` that allows a computation to be
  * continued with another chunk of data.
  */
-extern unsigned int strhash(const char *buf);
-extern unsigned int strihash(const char *buf);
-extern unsigned int memhash(const void *buf, size_t len);
-extern unsigned int memihash(const void *buf, size_t len);
-extern unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len);
+unsigned int strhash(const char *buf);
+unsigned int strihash(const char *buf);
+unsigned int memhash(const void *buf, size_t len);
+unsigned int memihash(const void *buf, size_t len);
+unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len);
 
 /*
  * Converts a cryptographic hash (e.g. SHA-1) into an int-sized hash code
@@ -118,14 +120,14 @@ extern unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_
  * the results will be different on big-endian and little-endian
  * platforms, so they should not be stored or transferred over the net.
  */
-static inline unsigned int sha1hash(const unsigned char *sha1)
+static inline unsigned int oidhash(const struct object_id *oid)
 {
 	/*
-	 * Equivalent to 'return *(unsigned int *)sha1;', but safe on
+	 * Equivalent to 'return *(unsigned int *)oid->hash;', but safe on
 	 * platforms that don't support unaligned reads.
 	 */
 	unsigned int hash;
-	memcpy(&hash, sha1, sizeof(hash));
+	memcpy(&hash, oid->hash, sizeof(hash));
 	return hash;
 }
 
@@ -216,7 +218,7 @@ struct hashmap {
  * parameter may be used to preallocate a sufficiently large table and thus
  * prevent expensive resizing. If 0, the table is dynamically resized.
  */
-extern void hashmap_init(struct hashmap *map,
+void hashmap_init(struct hashmap *map,
 			 hashmap_cmp_fn equals_function,
 			 const void *equals_function_data,
 			 size_t initial_size);
@@ -227,7 +229,7 @@ extern void hashmap_init(struct hashmap *map,
  * If `free_entries` is true, each hashmap_entry in the map is freed as well
  * using stdlibs free().
  */
-extern void hashmap_free(struct hashmap *map, int free_entries);
+void hashmap_free(struct hashmap *map, int free_entries);
 
 /* hashmap_entry functions */
 
@@ -284,7 +286,7 @@ static inline unsigned int hashmap_get_size(struct hashmap *map)
  * If an entry with matching hash code is found, `key` and `keydata` are passed
  * to `hashmap_cmp_fn` to decide whether the entry matches the key.
  */
-extern void *hashmap_get(const struct hashmap *map, const void *key,
+void *hashmap_get(const struct hashmap *map, const void *key,
 			 const void *keydata);
 
 /*
@@ -316,7 +318,7 @@ static inline void *hashmap_get_from_hash(const struct hashmap *map,
  * `entry` is the hashmap_entry to start the search from, obtained via a previous
  * call to `hashmap_get` or `hashmap_get_next`.
  */
-extern void *hashmap_get_next(const struct hashmap *map, const void *entry);
+void *hashmap_get_next(const struct hashmap *map, const void *entry);
 
 /*
  * Adds a hashmap entry. This allows to add duplicate entries (i.e.
@@ -325,7 +327,7 @@ extern void *hashmap_get_next(const struct hashmap *map, const void *entry);
  * `map` is the hashmap structure.
  * `entry` is the entry to add.
  */
-extern void hashmap_add(struct hashmap *map, void *entry);
+void hashmap_add(struct hashmap *map, void *entry);
 
 /*
  * Adds or replaces a hashmap entry. If the hashmap contains duplicate
@@ -335,7 +337,7 @@ extern void hashmap_add(struct hashmap *map, void *entry);
  * `entry` is the entry to add or replace.
  * Returns the replaced entry, or NULL if not found (i.e. the entry was added).
  */
-extern void *hashmap_put(struct hashmap *map, void *entry);
+void *hashmap_put(struct hashmap *map, void *entry);
 
 /*
  * Removes a hashmap entry matching the specified key. If the hashmap contains
@@ -344,7 +346,7 @@ extern void *hashmap_put(struct hashmap *map, void *entry);
  *
  * Argument explanation is the same as in `hashmap_get`.
  */
-extern void *hashmap_remove(struct hashmap *map, const void *key,
+void *hashmap_remove(struct hashmap *map, const void *key,
 		const void *keydata);
 
 /*
@@ -365,10 +367,10 @@ struct hashmap_iter {
 };
 
 /* Initializes a `hashmap_iter` structure. */
-extern void hashmap_iter_init(struct hashmap *map, struct hashmap_iter *iter);
+void hashmap_iter_init(struct hashmap *map, struct hashmap_iter *iter);
 
 /* Returns the next hashmap_entry, or NULL if there are no more entries. */
-extern void *hashmap_iter_next(struct hashmap_iter *iter);
+void *hashmap_iter_next(struct hashmap_iter *iter);
 
 /* Initializes the iterator and returns the first entry, if any. */
 static inline void *hashmap_iter_first(struct hashmap *map,
@@ -429,7 +431,7 @@ static inline void hashmap_enable_item_counting(struct hashmap *map)
  *
  * Uses a hashmap to store the pool of interned strings.
  */
-extern const void *memintern(const void *data, size_t len);
+const void *memintern(const void *data, size_t len);
 static inline const char *strintern(const char *string)
 {
 	return memintern(string, strlen(string));

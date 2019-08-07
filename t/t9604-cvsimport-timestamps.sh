@@ -31,7 +31,7 @@ test_expect_success PERL 'check timestamps are UTC (TZ=CST6CDT)' '
 	Rev  2 2005-02-01 00:00:00 +0000
 	Rev  1 2005-01-01 00:00:00 +0000
 	EOF
-	test_cmp actual-1 expect-1
+	test_cmp expect-1 actual-1
 '
 
 test_expect_success PERL 'check timestamps with author-specific timezones' '
@@ -65,7 +65,7 @@ test_expect_success PERL 'check timestamps with author-specific timezones' '
 	Rev  2 2005-01-31 18:00:00 -0600 User Two
 	Rev  1 2005-01-01 00:00:00 +0000 User One
 	EOF
-	test_cmp actual-2 expect-2
+	test_cmp expect-2 actual-2
 '
 
 test_done

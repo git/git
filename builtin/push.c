@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "config.h"
 #include "refs.h"
+#include "refspec.h"
 #include "run-command.h"
 #include "builtin.h"
 #include "remote.h"
@@ -56,18 +57,9 @@ static enum transport_family family;
 
 static struct push_cas_option cas;
 
-static const char **refspec;
-static int refspec_nr;
-static int refspec_alloc;
+static struct refspec rs = REFSPEC_INIT_PUSH;
 
 static struct string_list push_options_config = STRING_LIST_INIT_DUP;
-
-static void add_refspec(const char *ref)
-{
-	refspec_nr++;
-	ALLOC_GROW(refspec, refspec_nr, refspec_alloc);
-	refspec[refspec_nr-1] = ref;
-}
 
 static const char *map_refspec(const char *ref,
 			       struct remote *remote, struct ref *local_refs)
@@ -78,12 +70,11 @@ static const char *map_refspec(const char *ref,
 	if (count_refspec_match(ref, local_refs, &matched) != 1)
 		return ref;
 
-	if (remote->push) {
-		struct refspec query;
-		memset(&query, 0, sizeof(struct refspec));
+	if (remote->push.nr) {
+		struct refspec_item query;
+		memset(&query, 0, sizeof(struct refspec_item));
 		query.src = matched->name;
-		if (!query_refspecs(remote->push, remote->push_refspec_nr, &query) &&
-		    query.dst) {
+		if (!query_refspecs(&remote->push, &query) && query.dst) {
 			struct strbuf buf = STRBUF_INIT;
 			strbuf_addf(&buf, "%s%s:%s",
 				    query.force ? "+" : "",
@@ -138,7 +129,7 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 			}
 			ref = map_refspec(ref, remote, local_refs);
 		}
-		add_refspec(ref);
+		refspec_append(&rs, ref);
 	}
 }
 
@@ -152,7 +143,9 @@ static int push_url_of_remote(struct remote *remote, const char ***url_p)
 	return remote->url_nr;
 }
 
-static NORETURN int die_push_simple(struct branch *branch, struct remote *remote) {
+static NORETURN int die_push_simple(struct branch *branch,
+				    struct remote *remote)
+{
 	/*
 	 * There's no point in using shorten_unambiguous_ref here,
 	 * as the ambiguity would be on the remote side, not what
@@ -182,10 +175,10 @@ static NORETURN int die_push_simple(struct branch *branch, struct remote *remote
 	      "\n"
 	      "To push to the branch of the same name on the remote, use\n"
 	      "\n"
-	      "    git push %s %s\n"
+	      "    git push %s HEAD\n"
 	      "%s"),
 	    remote->name, short_upstream,
-	    remote->name, branch->name, advice_maybe);
+	    remote->name, advice_maybe);
 }
 
 static const char message_detached_head_die[] =
@@ -226,7 +219,7 @@ static void setup_push_upstream(struct remote *remote, struct branch *branch,
 	}
 
 	strbuf_addf(&refspec, "%s:%s", branch->refname, branch->merge[0]->src);
-	add_refspec(refspec.buf);
+	refspec_append(&rs, refspec.buf);
 }
 
 static void setup_push_current(struct remote *remote, struct branch *branch)
@@ -236,7 +229,7 @@ static void setup_push_current(struct remote *remote, struct branch *branch)
 	if (!branch)
 		die(_(message_detached_head_die), remote->name);
 	strbuf_addf(&refspec, "%s:%s", branch->refname, branch->refname);
-	add_refspec(refspec.buf);
+	refspec_append(&rs, refspec.buf);
 }
 
 static int is_workflow_triangular(struct remote *remote)
@@ -253,7 +246,7 @@ static void setup_default_push_refspecs(struct remote *remote)
 	switch (push_default) {
 	default:
 	case PUSH_DEFAULT_MATCHING:
-		add_refspec(":");
+		refspec_append(&rs, ":");
 		break;
 
 	case PUSH_DEFAULT_UNSPECIFIED:
@@ -341,7 +334,8 @@ static void advise_ref_needs_force(void)
 	advise(_(message_advice_ref_needs_force));
 }
 
-static int push_with_options(struct transport *transport, int flags)
+static int push_with_options(struct transport *transport, struct refspec *rs,
+			     int flags)
 {
 	int err;
 	unsigned int reject_reasons;
@@ -363,8 +357,8 @@ static int push_with_options(struct transport *transport, int flags)
 
 	if (verbosity > 0)
 		fprintf(stderr, _("Pushing to %s\n"), transport->url);
-	err = transport_push(transport, refspec_nr, refspec, flags,
-			     &reject_reasons);
+	err = transport_push(the_repository, transport,
+			     rs, flags, &reject_reasons);
 	if (err != 0) {
 		fprintf(stderr, "%s", push_get_color(PUSH_COLOR_ERROR));
 		error(_("failed to push some refs to '%s'"), transport->url);
@@ -397,6 +391,7 @@ static int do_push(const char *repo, int flags,
 	struct remote *remote = pushremote_get(repo);
 	const char **url;
 	int url_nr;
+	struct refspec *push_refspec = &rs;
 
 	if (!remote) {
 		if (repo)
@@ -417,27 +412,9 @@ static int do_push(const char *repo, int flags,
 	if (push_options->nr)
 		flags |= TRANSPORT_PUSH_OPTIONS;
 
-	if ((flags & TRANSPORT_PUSH_ALL) && refspec) {
-		if (!strcmp(*refspec, "refs/tags/*"))
-			return error(_("--all and --tags are incompatible"));
-		return error(_("--all can't be combined with refspecs"));
-	}
-
-	if ((flags & TRANSPORT_PUSH_MIRROR) && refspec) {
-		if (!strcmp(*refspec, "refs/tags/*"))
-			return error(_("--mirror and --tags are incompatible"));
-		return error(_("--mirror can't be combined with refspecs"));
-	}
-
-	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
-				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
-		return error(_("--all and --mirror are incompatible"));
-	}
-
-	if (!refspec && !(flags & TRANSPORT_PUSH_ALL)) {
-		if (remote->push_refspec_nr) {
-			refspec = remote->push_refspec;
-			refspec_nr = remote->push_refspec_nr;
+	if (!push_refspec->nr && !(flags & TRANSPORT_PUSH_ALL)) {
+		if (remote->push.nr) {
+			push_refspec = &remote->push;
 		} else if (!(flags & TRANSPORT_PUSH_MIRROR))
 			setup_default_push_refspecs(remote);
 	}
@@ -449,7 +426,7 @@ static int do_push(const char *repo, int flags,
 				transport_get(remote, url[i]);
 			if (flags & TRANSPORT_PUSH_OPTIONS)
 				transport->push_options = push_options;
-			if (push_with_options(transport, flags))
+			if (push_with_options(transport, push_refspec, flags))
 				errs++;
 		}
 	} else {
@@ -457,7 +434,7 @@ static int do_push(const char *repo, int flags,
 			transport_get(remote, NULL);
 		if (flags & TRANSPORT_PUSH_OPTIONS)
 			transport->push_options = push_options;
-		if (push_with_options(transport, flags))
+		if (push_with_options(transport, push_refspec, flags))
 			errs++;
 	}
 	return !!errs;
@@ -584,10 +561,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
 		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
 		{ OPTION_CALLBACK,
-		  0, CAS_OPT_NAME, &cas, N_("refname>:<expect"),
+		  0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
-		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, "check|on-demand|no",
+		  PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option },
+		{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, "(check|on-demand|no)",
 			N_("control recursive pushing of submodules"),
 			PARSE_OPT_OPTARG, option_parse_recurse_submodules },
 		OPT_BOOL_F( 0 , "thin", &thin, N_("use thin pack"), PARSE_OPT_NOCOMPLETE),
@@ -602,7 +579,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "follow-tags", &flags, N_("push missing but relevant tags"),
 			TRANSPORT_PUSH_FOLLOW_TAGS),
 		{ OPTION_CALLBACK,
-		  0, "signed", &push_cert, "yes|no|if-asked", N_("GPG sign the push"),
+		  0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
 		  PARSE_OPT_OPTARG, option_parse_push_signed },
 		OPT_BIT(0, "atomic", &flags, N_("request atomic transaction on remote side"), TRANSPORT_PUSH_ATOMIC),
 		OPT_STRING_LIST('o', "push-option", &push_options_cmdline, N_("server-specific"), N_("option to transmit")),
@@ -625,6 +602,20 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		die(_("--delete is incompatible with --all, --mirror and --tags"));
 	if (deleterefs && argc < 2)
 		die(_("--delete doesn't make sense without any refs"));
+	if (flags & TRANSPORT_PUSH_ALL) {
+		if (tags)
+			die(_("--all and --tags are incompatible"));
+		if (argc >= 2)
+			die(_("--all can't be combined with refspecs"));
+	}
+	if (flags & TRANSPORT_PUSH_MIRROR) {
+		if (tags)
+			die(_("--mirror and --tags are incompatible"));
+		if (argc >= 2)
+			die(_("--mirror can't be combined with refspecs"));
+	}
+	if ((flags & TRANSPORT_PUSH_ALL) && (flags & TRANSPORT_PUSH_MIRROR))
+		die(_("--all and --mirror are incompatible"));
 
 	if (recurse_submodules == RECURSE_SUBMODULES_CHECK)
 		flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
@@ -634,7 +625,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		flags |= TRANSPORT_RECURSE_SUBMODULES_ONLY;
 
 	if (tags)
-		add_refspec("refs/tags/*");
+		refspec_append(&rs, "refs/tags/*");
 
 	if (argc > 0) {
 		repo = argv[0];

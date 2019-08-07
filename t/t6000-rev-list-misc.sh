@@ -48,6 +48,26 @@ test_expect_success 'rev-list --objects with pathspecs and copied files' '
 	! grep one output
 '
 
+test_expect_success 'rev-list --objects --no-object-names has no space/names' '
+	git rev-list --objects --no-object-names HEAD >output &&
+	! grep wanted_file output &&
+	! grep unwanted_file output &&
+	! grep " " output
+'
+
+test_expect_success 'rev-list --objects --no-object-names works with cat-file' '
+	git rev-list --objects --no-object-names --all >list-output &&
+	git cat-file --batch-check <list-output >cat-output &&
+	! grep missing cat-output
+'
+
+test_expect_success '--no-object-names and --object-names are last-one-wins' '
+	git rev-list --objects --no-object-names --object-names --all >output &&
+	grep wanted_file output &&
+	git rev-list --objects --object-names --no-object-names --all >output &&
+	! grep wanted_file output
+'
+
 test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
 	git commit --allow-empty -m another &&
 	git tag -a -m "annotated" v1.0 &&
@@ -58,8 +78,7 @@ test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
 
 test_expect_success 'propagate uninteresting flag down correctly' '
 	git rev-list --objects ^HEAD^{tree} HEAD^{tree} >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'symleft flag bit is propagated down from tag' '
@@ -91,8 +110,15 @@ test_expect_success 'rev-list can show index objects' '
 	9200b628cf9dc883a85a7abc8d6e6730baee589c two
 	EOF
 	echo only-in-index >only-in-index &&
+	test_when_finished "git reset --hard" &&
 	git add only-in-index &&
 	git rev-list --objects --indexed-objects >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list can negate index objects' '
+	git rev-parse HEAD >expect &&
+	git rev-list -1 --objects HEAD --not --indexed-objects >actual &&
 	test_cmp expect actual
 '
 

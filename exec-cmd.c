@@ -209,6 +209,8 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
 		return -1;
 	}
 
+	trace2_cmd_path(buf->buf);
+
 	return 0;
 }
 
@@ -358,7 +360,7 @@ int execl_git_cmd(const char *cmd, ...)
 	}
 	va_end(param);
 	if (MAX_ARGS <= argc)
-		return error("too many args to run %s", cmd);
+		return error(_("too many args to run %s"), cmd);
 
 	argv[argc] = NULL;
 	return execv_git_cmd(argv);

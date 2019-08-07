@@ -84,7 +84,7 @@ test_expect_success 'status score=100%' '
 	test_i18ngrep "deleted:" actual &&
 	test_i18ngrep "new file:" actual &&
 
-	git status --find-rename=100% >actual &&
+	git status --find-renames=100% >actual &&
 	test_i18ngrep "deleted:" actual &&
 	test_i18ngrep "new file:" actual
 '
@@ -93,11 +93,11 @@ test_expect_success 'status score=01%' '
 	git status -M=01% >actual &&
 	test_i18ngrep "renamed:" actual &&
 
-	git status --find-rename=01% >actual &&
+	git status --find-renames=01% >actual &&
 	test_i18ngrep "renamed:" actual
 '
 
-test_expect_success 'copies not overridden by find-rename' '
+test_expect_success 'copies not overridden by find-renames' '
 	cp renamed copy &&
 	git add copy &&
 
@@ -105,7 +105,7 @@ test_expect_success 'copies not overridden by find-rename' '
 	test_i18ngrep "copied:" actual &&
 	test_i18ngrep "renamed:" actual &&
 
-	git -c status.renames=copies status --find-rename=01% >actual &&
+	git -c status.renames=copies status --find-renames=01% >actual &&
 	test_i18ngrep "copied:" actual &&
 	test_i18ngrep "renamed:" actual
 '

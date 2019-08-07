@@ -1,0 +1,25 @@
+(
+# LINT: missing internal "&&" and ending "&&"
+	cat foo ; echo bar
+# LINT: final statement before ")" only missing internal "&&"
+	cat foo ; echo bar
+) &&
+(
+# LINT: missing internal "&&"
+	cat foo ; echo bar &&
+	cat foo ; echo bar
+) &&
+(
+# LINT: not fooled by semicolon in string
+	echo "foo; bar" &&
+	cat foo; echo bar
+) &&
+(
+# LINT: unnecessary terminating semicolon
+	foo;
+) &&
+(cd foo &&
+	for i in a b c; do
+# LINT: unnecessary terminating semicolon
+		echo;
+	done)

@@ -21,7 +21,7 @@ struct column_data {
 };
 
 /* return length of 's' in letters, ANSI escapes stripped */
-static int item_length(unsigned int colopts, const char *s)
+static int item_length(const char *s)
 {
 	int len, i = 0;
 	struct strbuf str = STRBUF_INIT;
@@ -167,7 +167,7 @@ static void display_table(const struct string_list *list,
 
 	ALLOC_ARRAY(data.len, list->nr);
 	for (i = 0; i < list->nr; i++)
-		data.len[i] = item_length(colopts, list->items[i].string);
+		data.len[i] = item_length(list->items[i].string);
 
 	layout(&data, &initial_width);
 

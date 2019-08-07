@@ -277,7 +277,7 @@ test_expect_success 'autosquash with empty custom instructionFormat' '
 	(
 		set_cat_todo_editor &&
 		test_must_fail git -c rebase.instructionFormat= \
-			rebase --autosquash  --force -i HEAD^ >actual &&
+			rebase --autosquash  --force-rebase -i HEAD^ >actual &&
 		git log -1 --format="pick %h %s" >expect &&
 		test_cmp expect actual
 	)
@@ -328,6 +328,25 @@ test_expect_success 'wrapped original subject' '
 	git rebase -i --autosquash --keep-empty HEAD~2 &&
 	parent=$(git rev-parse HEAD^) &&
 	test $base = $parent
+'
+
+test_expect_success 'abort last squash' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	test_when_finished "git checkout master" &&
+
+	git checkout -b some-squashes &&
+	git commit --allow-empty -m first &&
+	git commit --allow-empty --squash HEAD &&
+	git commit --allow-empty -m second &&
+	git commit --allow-empty --squash HEAD &&
+
+	test_must_fail git -c core.editor="grep -q ^pick" \
+		rebase -ki --autosquash HEAD~4 &&
+	: do not finish the squash, but resolve it manually &&
+	git commit --allow-empty --amend -m edited-first &&
+	git rebase --skip &&
+	git show >actual &&
+	! grep first actual
 '
 
 test_done

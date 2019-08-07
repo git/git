@@ -94,7 +94,7 @@ test_expect_success 'clone empty repository' '
 	 git config receive.denyCurrentBranch warn) &&
 	git clone empty empty-clone &&
 	test_tick &&
-	(cd empty-clone
+	(cd empty-clone &&
 	 echo "content" >> foo &&
 	 git add foo &&
 	 git commit -m "Initial commit" &&

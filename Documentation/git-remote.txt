@@ -186,8 +186,8 @@ actually prune them.
 
 'update'::
 
-Fetch updates for a named set of remotes in the repository as defined by
-remotes.<group>.  If a named group is not specified on the command line,
+Fetch updates for remotes or remote groups in the repository as defined by
+remotes.<group>.  If neither group nor remote is specified on the command line,
 the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
@@ -230,7 +230,7 @@ $ git branch -r
   staging/master
   staging/staging-linus
   staging/staging-next
-$ git checkout -b staging staging/master
+$ git switch -c staging staging/master
 ...
 ------------
 

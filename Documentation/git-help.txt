@@ -8,7 +8,7 @@ git-help - Display help information about Git
 SYNOPSIS
 --------
 [verse]
-'git help' [-a|--all] [-g|--guide]
+'git help' [-a|--all [--[no-]verbose]] [-g|--guide]
 	   [-i|--info|-m|--man|-w|--web] [COMMAND|GUIDE]
 
 DESCRIPTION
@@ -29,6 +29,10 @@ guide is brought up. The 'man' program is used by default for this
 purpose, but this can be overridden by other options or configuration
 variables.
 
+If an alias is given, git shows the definition of the alias on
+standard output. To get the manual page for the aliased command, use
+`git COMMAND --help`.
+
 Note that `git --help ...` is identical to `git help ...` because the
 former is internally converted into the latter.
 
@@ -42,6 +46,15 @@ OPTIONS
 --all::
 	Prints all the available commands on the standard output. This
 	option overrides any given command or guide name.
+
+--verbose::
+	When used with `--all` print description for all recognized
+	commands. This is the default.
+
+-c::
+--config::
+	List all available configuration variables. This is a short
+	summary of the list in linkgit:git-config[1].
 
 -g::
 --guides::
@@ -105,9 +118,9 @@ format is chosen. The following values are currently supported:
 
 * "man": use the 'man' program as usual,
 * "woman": use 'emacsclient' to launch the "woman" mode in emacs
-(this only works starting with emacsclient versions 22),
+  (this only works starting with emacsclient versions 22),
 * "konqueror": use 'kfmclient' to open the man page in a new konqueror
-tab (see 'Note about konqueror' below).
+  tab (see 'Note about konqueror' below).
 
 Values for other tools can be used if there is a corresponding
 `man.<tool>.cmd` configuration entry (see below).
@@ -158,8 +171,8 @@ variable, we launch 'kfmclient' to try to open the man page on an
 already opened konqueror in a new tab if possible.
 
 For consistency, we also try such a trick if 'man.konqueror.path' is
-set to something like 'A_PATH_TO/konqueror'. That means we will try to
-launch 'A_PATH_TO/kfmclient' instead.
+set to something like `A_PATH_TO/konqueror`. That means we will try to
+launch `A_PATH_TO/kfmclient` instead.
 
 If you really want to use 'konqueror', then you can use something like
 the following:

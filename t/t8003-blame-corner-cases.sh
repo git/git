@@ -216,14 +216,18 @@ test_expect_success 'blame -L with invalid start' '
 '
 
 test_expect_success 'blame -L with invalid end' '
-	test_must_fail git blame -L1,5 tres 2>errors &&
-	test_i18ngrep "has only 2 lines" errors
+	git blame -L1,5 tres >out &&
+	test_line_count = 2 out
 '
 
 test_expect_success 'blame parses <end> part of -L' '
 	git blame -L1,1 tres >out &&
-	cat out &&
-	test $(wc -l < out) -eq 1
+	test_line_count = 1 out
+'
+
+test_expect_success 'blame -Ln,-(n+1)' '
+	git blame -L3,-4 nine_lines >out &&
+	test_line_count = 3 out
 '
 
 test_expect_success 'indent of line numbers, nine lines' '
@@ -269,6 +273,42 @@ test_expect_success 'blame file with CRLF core.autocrlf=true' '
 	rm tmp &&
 	git blame crlfinrepo >actual &&
 	grep "A U Thor" actual
+'
+
+# Tests the splitting and merging of blame entries in blame_coalesce().
+# The output of blame is the same, regardless of whether blame_coalesce() runs
+# or not, so we'd likely only notice a problem if blame crashes or assigned
+# blame to the "splitting" commit ('SPLIT' below).
+test_expect_success 'blame coalesce' '
+	cat >giraffe <<-\EOF &&
+	ABC
+	DEF
+	EOF
+	git add giraffe &&
+	git commit -m "original file" &&
+	oid=$(git rev-parse HEAD) &&
+
+	cat >giraffe <<-\EOF &&
+	ABC
+	SPLIT
+	DEF
+	EOF
+	git add giraffe &&
+	git commit -m "interior SPLIT line" &&
+
+	cat >giraffe <<-\EOF &&
+	ABC
+	DEF
+	EOF
+	git add giraffe &&
+	git commit -m "same contents as original" &&
+
+	cat >expect <<-EOF &&
+	$oid 1) ABC
+	$oid 2) DEF
+	EOF
+	git -c core.abbrev=40 blame -s giraffe >actual &&
+	test_cmp expect actual
 '
 
 test_done

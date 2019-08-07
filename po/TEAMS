@@ -11,14 +11,14 @@ Leader:		Jordi Mas <jmas@softcatala.org>
 Members:	Alex Henrie <alexhenrie24@gmail.com>
 
 Language:	de (German)
-Repository:	https://github.com/ralfth/git-po-de
-Leader:		Ralf Thielow <ralf.thielow@gmail.com>
-Members:	Thomas Rast <tr@thomasrast.ch>
-		Jan Krüger <jk@jk.gs>
-		Christian Stimming <stimming@tuhh.de>
+Repository:	https://github.com/ruester/git-po-de
+Leader:		Matthias Rüster <matthias.ruester@gmail.com>
+Members:	Ralf Thielow <ralf.thielow@gmail.com>
 		Phillip Szelat <phillip.szelat@gmail.com>
-		Matthias Rüster <matthias.ruester@gmail.com>
-		Magnus Görlitz <magnus.goerlitz@googlemail.com>
+
+Language:	el (Greek)
+Repository:	https://github.com/vyruss/git-po-el
+Leader:		Jimmy Angelakos <vyruss@hellug.gr>
 
 Language:	es (Spanish)
 Repository:	https://github.com/ChrisADR/git-po
@@ -33,14 +33,13 @@ Language:	is (Icelandic)
 Leader:		Ævar Arnfjörð Bjarmason <avarab@gmail.com>
 
 Language:	it (Italian)
-Repository:	https://github.com/quizzlo/git-po-it/
-Leader:		Marco Paolone <marcopaolone AT gmail.com>
-Members:	Stefano Lattarini <stefano.lattarini AT gmail.com>
+Repository:	https://github.com/AlessandroMenti/git-po
+Leader:		Alessandro Menti <alessandro.menti@alessandromenti.it>
 
 Language:	ko (Korean)
 Repository:	https://github.com/git-l10n-ko/git-l10n-ko/
-Leader:		Changwoo Ryu <cwryu@debian.org>
-Members:	Gwan-gyeong Mun <elongbug@gmail.com>
+Leader:		Gwan-gyeong Mun <elongbug@gmail.com>
+Members:	Changwoo Ryu <cwryu@debian.org>
 		Sihyeon Jang <uneedsihyeon@gmail.com>
 
 Language:	pt_PT (Portuguese - Portugal)
@@ -67,4 +66,4 @@ Repository:	https://github.com/jiangxin/git/
 Leader:		Jiang Xin <worldhello.net AT gmail.com>
 Members:	Ray Chen <oldsharp AT gmail.com>
 		依云 <lilydjwg AT gmail.com>
-		Fangyi Zhou <fangyi.zhou AT yuriko.moe>
+		Fangyi Zhou <me AT fangyi.io>

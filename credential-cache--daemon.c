@@ -91,7 +91,8 @@ static timestamp_t check_expirations(void)
 }
 
 static int read_request(FILE *fh, struct credential *c,
-			struct strbuf *action, int *timeout) {
+			struct strbuf *action, int *timeout)
+{
 	static struct strbuf item = STRBUF_INIT;
 	const char *p;
 

@@ -178,7 +178,7 @@ test_expect_success 'atomic push obeys update hook preventing a branch to be pus
 test_expect_success 'atomic push is not advertised if configured' '
 	mk_repo_pair &&
 	(
-		cd upstream
+		cd upstream &&
 		git config receive.advertiseatomic 0
 	) &&
 	(

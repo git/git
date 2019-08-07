@@ -46,9 +46,9 @@ static char *url_decode_internal(const char **query, int len,
 			break;
 		}
 
-		if (c == '%') {
+		if (c == '%' && (len < 0 || len >= 3)) {
 			int val = hex2chr(q + 1);
-			if (0 <= val) {
+			if (0 < val) {
 				strbuf_addch(out, val);
 				q += 3;
 				len -= 3;
@@ -104,7 +104,8 @@ void end_url_with_slash(struct strbuf *buf, const char *url)
 	strbuf_complete(buf, '/');
 }
 
-void str_end_url_with_slash(const char *url, char **dest) {
+void str_end_url_with_slash(const char *url, char **dest)
+{
 	struct strbuf buf = STRBUF_INIT;
 	end_url_with_slash(&buf, url);
 	free(*dest);

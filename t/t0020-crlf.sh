@@ -98,6 +98,16 @@ test_expect_success 'safecrlf: git diff demotes safecrlf=true to warn' '
 '
 
 
+test_expect_success 'safecrlf: no warning with safecrlf=false' '
+	git config core.autocrlf input &&
+	git config core.safecrlf false &&
+
+	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	git add allcrlf 2>err &&
+	test_must_be_empty err
+'
+
+
 test_expect_success 'switch off autocrlf, safecrlf, reset HEAD' '
 	git config core.autocrlf false &&
 	git config core.safecrlf false &&
@@ -150,7 +160,7 @@ test_expect_success 'checkout with autocrlf=input' '
 	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 	test_must_fail has_cr one &&
-	test_must_fail has_cr two &&
+	test_must_fail has_cr dir/two &&
 	git update-index -- one dir/two &&
 	test "$one" = $(git hash-object --stdin <one) &&
 	test "$two" = $(git hash-object --stdin <dir/two) &&

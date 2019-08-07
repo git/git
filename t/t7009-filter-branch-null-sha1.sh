@@ -12,7 +12,7 @@ test_expect_success 'setup: base commits' '
 test_expect_success 'setup: a commit with a bogus null sha1 in the tree' '
 	{
 		git ls-tree HEAD &&
-		printf "160000 commit $_z40\\tbroken\\n"
+		printf "160000 commit $ZERO_OID\\tbroken\\n"
 	} >broken-tree &&
 	echo "add broken entry" >msg &&
 
