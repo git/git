@@ -1070,7 +1070,8 @@ static int run_git_commit(struct repository *r,
 	if (opts->gpg_sign)
 		argv_array_pushf(&cmd.args, "-S%s", opts->gpg_sign);
 	if (opts->ignore_date)
-		argv_array_pushf(&cmd.args, "--date=%ld", time(NULL));
+		argv_array_pushf(&cmd.args, "--date=%"PRIuMAX,
+				 (uintmax_t)time(NULL));
 	if (defmsg)
 		argv_array_pushl(&cmd.args, "-F", defmsg, NULL);
 	else if (!(flags & EDIT_MSG))
@@ -3632,7 +3633,8 @@ static int do_merge(struct repository *r,
 			argv_array_push(&cmd.args, opts->gpg_sign);
 		if (opts->ignore_date)
 			argv_array_pushf(&cmd.args,
-					 "GIT_AUTHOR_DATE=%ld", time(NULL));
+					 "GIT_AUTHOR_DATE=%"PRIuMAX,
+					 (uintmax_t)time(NULL));
 
 		/* Add the tips to be merged */
 		for (j = to_merge; j; j = j->next)
