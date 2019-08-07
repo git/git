@@ -3066,7 +3066,7 @@ static int init_mparams(void) {
 #if !ONLY_MSPACES
     /* Set up lock for main malloc area */
     gm->mflags = mparams.default_mflags;
-    INITIAL_LOCK(&gm->mutex);
+    (void)INITIAL_LOCK(&gm->mutex);
 #endif
 
 #if (FOOTERS && !INSECURE)
@@ -5017,7 +5017,7 @@ static mstate init_user_mstate(char* tbase, size_t tsize) {
   mchunkptr msp = align_as_chunk(tbase);
   mstate m = (mstate)(chunk2mem(msp));
   memset(m, 0, msize);
-  INITIAL_LOCK(&m->mutex);
+  (void)INITIAL_LOCK(&m->mutex);
   msp->head = (msize|PINUSE_BIT|CINUSE_BIT);
   m->seg.base = m->least_addr = tbase;
   m->seg.size = m->footprint = m->max_footprint = tsize;
