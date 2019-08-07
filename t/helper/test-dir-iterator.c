@@ -10,7 +10,6 @@
  */
 int cmd__dir_iterator(int argc, const char **argv)
 {
-	struct strbuf path = STRBUF_INIT;
 	struct dir_iterator *diter;
 	unsigned int flags = 0;
 	int iter_status;
@@ -27,8 +26,7 @@ int cmd__dir_iterator(int argc, const char **argv)
 	if (!*argv || argc != 1)
 		die("dir-iterator needs exactly one non-option argument");
 
-	strbuf_add(&path, *argv, strlen(*argv));
-	diter = dir_iterator_begin(path.buf, flags);
+	diter = dir_iterator_begin(*argv, flags);
 
 	if (!diter) {
 		printf("dir_iterator_begin failure: %d\n", errno);
