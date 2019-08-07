@@ -84,6 +84,15 @@ test_expect_success '--no-verify with no hook' '
 	test_path_is_missing actual_hooks
 '
 
+test_expect_success '--no-verify with no hook (merge)' '
+	test_when_finished "rm -f actual_hooks" &&
+	git branch -f side side-orig &&
+	git checkout side &&
+	git merge --no-verify -m "merge master" master &&
+	git checkout master &&
+	test_path_is_missing actual_hooks
+'
+
 test_expect_success 'with succeeding hook' '
 	test_when_finished "rm -f \"$PRECOMMIT\" expected_hooks actual_hooks" &&
 	cp "$HOOKDIR/success.sample" "$PRECOMMIT" &&
@@ -131,6 +140,16 @@ test_expect_success '--no-verify with succeeding hook' '
 	test_path_is_missing actual_hooks
 '
 
+test_expect_success '--no-verify with succeeding hook (merge)' '
+	test_when_finished "rm -f \"$PREMERGE\" actual_hooks" &&
+	cp "$HOOKDIR/success.sample" "$PREMERGE" &&
+	git branch -f side side-orig &&
+	git checkout side &&
+	git merge --no-verify -m "merge master" master &&
+	git checkout master &&
+	test_path_is_missing actual_hooks
+'
+
 test_expect_success 'with failing hook' '
 	test_when_finished "rm -f \"$PRECOMMIT\" expected_hooks actual_hooks" &&
 	cp "$HOOKDIR/fail.sample" "$PRECOMMIT" &&
@@ -160,6 +179,16 @@ test_expect_success 'with failing hook (merge)' '
 	test_cmp expected_hooks actual_hooks
 '
 
+test_expect_success '--no-verify with failing hook (merge)' '
+	test_when_finished "rm -f \"$PREMERGE\" actual_hooks" &&
+	cp "$HOOKDIR/fail.sample" "$PREMERGE" &&
+	git branch -f side side-orig &&
+	git checkout side &&
+	git merge --no-verify -m "merge master" master &&
+	git checkout master &&
+	test_path_is_missing actual_hooks
+'
+
 test_expect_success POSIXPERM 'with non-executable hook' '
 	test_when_finished "rm -f \"$PRECOMMIT\" actual_hooks" &&
 	cp "$HOOKDIR/non-exec.sample" "$PRECOMMIT" &&
@@ -184,6 +213,16 @@ test_expect_success POSIXPERM 'with non-executable hook (merge)' '
 	git branch -f side side-orig &&
 	git checkout side &&
 	git merge -m "merge master" master &&
+	git checkout master &&
+	test_path_is_missing actual_hooks
+'
+
+test_expect_success POSIXPERM '--no-verify with non-executable hook (merge)' '
+	test_when_finished "rm -f \"$PREMERGE\" actual_hooks" &&
+	cp "$HOOKDIR/non-exec.sample" "$PREMERGE" &&
+	git branch -f side side-orig &&
+	git checkout side &&
+	git merge --no-verify -m "merge master" master &&
 	git checkout master &&
 	test_path_is_missing actual_hooks
 '

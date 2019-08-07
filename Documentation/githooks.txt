@@ -106,7 +106,8 @@ the use of non-ASCII filenames.
 pre-merge-commit
 ~~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-merge[1]. It takes no parameters, and is
+This hook is invoked by linkgit:git-merge[1], and can be bypassed
+with the `--no-verify` option.  It takes no parameters, and is
 invoked after the merge has been carried out successfully and before
 obtaining the proposed commit log message to
 make a commit.  Exiting with a non-zero status from this script
