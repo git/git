@@ -799,6 +799,7 @@ static void read_alternate_refs(const char *path,
 
 	fclose(fh);
 	finish_command(&cmd);
+	strbuf_release(&line);
 }
 
 struct alternate_refs_data {
