@@ -94,6 +94,17 @@ void sq_quote_argv_pretty(struct strbuf *dst, const char **argv)
 	}
 }
 
+void sq_quote_argv_pretty_ltrim(struct strbuf *dst, const char **argv)
+{
+	int i;
+
+	for (i = 0; argv[i]; i++) {
+		if (i > 0)
+			strbuf_addch(dst, ' ');
+		sq_quote_buf_pretty(dst, argv[i]);
+	}
+}
+
 static char *sq_dequote_step(char *arg, char **next)
 {
 	char *dst = arg;
