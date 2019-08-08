@@ -54,7 +54,7 @@ this:
 do not do this you will get an error for each ref that it does not point
 to a valid object.
 
-Note: As a side-effect of this you can not safely assume that all
+Note: As a side-effect of this you cannot safely assume that all
 objects you lookup are available in superproject. All submodule objects
 will be available the same way as the superprojects objects.
 

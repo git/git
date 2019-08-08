@@ -262,7 +262,7 @@ This updates (or creates, as necessary) branches `pu` and `tmp` in
 the local repository by fetching from the branches (respectively)
 `pu` and `maint` from the remote repository.
 +
-The `pu` branch will be updated even if it is does not fast-forward,
+The `pu` branch will be updated even if it does not fast-forward,
 because it is prefixed with a plus sign; `tmp` will not be.
 
 * Peek at a remote's branch, without configuring the remote in your local
@@ -285,7 +285,7 @@ BUGS
 ----
 Using --recurse-submodules can only fetch new commits in already checked
 out submodules right now. When e.g. upstream added a new submodule in the
-just fetched commits of the superproject the submodule itself can not be
+just fetched commits of the superproject the submodule itself cannot be
 fetched, making it impossible to check out that submodule later without
 having to do a fetch again. This is expected to be fixed in a future Git
 version.
