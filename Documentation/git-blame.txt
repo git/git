@@ -153,18 +153,26 @@ Also you can use a regular expression to specify the line range:
 
 which limits the annotation to the body of the `hello` subroutine.
 
-When you are not interested in changes older than version
-v2.6.18, or changes older than 3 weeks, you can use revision
-range specifiers  similar to 'git rev-list':
+When you are only interested in recent changes, you can use revision
+range specifiers and limiting options, just as with 'git rev-list'.
 
-	git blame v2.6.18.. -- foo
-	git blame --since=3.weeks -- foo
+You can limit the annotation to commits from the past 3 weeks:
 
-When revision range specifiers are used to limit the annotation,
-lines that have not changed since the range boundary (either the
-commit v2.6.18 or the most recent commit that is more than 3
-weeks old in the above example) are blamed for that range
-boundary commit.
+  git blame --since=3.weeks -- foo
+
+The oldest commit in that span of time will be given the blame for any
+lines that have not changed since.
+
+Or you can limit the annotation to commits that are not ancestors of
+v2.6.18:
+
+  git blame v2.6.18.. -- foo
+
+Unlike the --since option, the two-dot range specifier does not perform
+a date-based cutoff. If changes from branch `fix` were merged in after
+v2.6.18, the commits on `fix` which introduced those changes will appear
+in the output of 'git blame', even if those commits took place at an
+earlier time than v2.6.18.
 
 A particularly useful way is to see if an added file has lines
 created by copy-and-paste from existing files.  Sometimes this
