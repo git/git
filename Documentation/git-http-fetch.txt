@@ -9,7 +9,7 @@ git-http-fetch - Download from a remote Git repository via HTTP
 SYNOPSIS
 --------
 [verse]
-'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [--stdin] <commit> <url>
+'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [--stdin | --packfile | <commit>] <url>
 
 DESCRIPTION
 -----------
@@ -39,6 +39,12 @@ commit-id::
 	case), 'git http-fetch' expects lines on stdin in the format
 
 		<commit-id>['\t'<filename-as-in--w>]
+
+--packfile::
+	Instead of a commit id on the command line (which is not expected in
+	this case), 'git http-fetch' fetches the packfile directly at the given
+	URL and uses index-pack to generate corresponding .idx and .keep files.
+	The output of index-pack is printed to stdout.
 
 --recover::
 	Verify that everything reachable from target is fetched.  Used after
