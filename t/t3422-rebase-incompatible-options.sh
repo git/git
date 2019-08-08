@@ -76,14 +76,4 @@ test_expect_success REBASE_P \
 	test_must_fail git rebase --preserve-merges --rebase-merges A
 '
 
-test_expect_success '--rebase-merges incompatible with --strategy' '
-	git checkout B^0 &&
-	test_must_fail git rebase --rebase-merges -s resolve A
-'
-
-test_expect_success '--rebase-merges incompatible with --strategy-option' '
-	git checkout B^0 &&
-	test_must_fail git rebase --rebase-merges -Xignore-space-change A
-'
-
 test_done

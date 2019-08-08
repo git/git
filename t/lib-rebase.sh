@@ -44,10 +44,10 @@ set_fake_editor () {
 	rm -f "$1"
 	echo 'rebase -i script before editing:'
 	cat "$1".tmp
-	action=pick
+	action=\&
 	for line in $FAKE_LINES; do
 		case $line in
-		pick|p|squash|s|fixup|f|edit|e|reword|r|drop|d)
+		pick|p|squash|s|fixup|f|edit|e|reword|r|drop|d|label|l|reset|r|merge|m)
 			action="$line";;
 		exec_*|x_*|break|b)
 			echo "$line" | sed 's/_/ /g' >> "$1";;
@@ -58,11 +58,12 @@ set_fake_editor () {
 		bad)
 			action="badcmd";;
 		fakesha)
+			test \& != "$action" || action=pick
 			echo "$action XXXXXXX False commit" >> "$1"
 			action=pick;;
 		*)
-			sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
-			action=pick;;
+			sed -n "${line}s/^[a-z][a-z]*/$action/p" < "$1".tmp >> "$1"
+			action=\&;;
 		esac
 	done
 	echo 'rebase -i script after editing:'
