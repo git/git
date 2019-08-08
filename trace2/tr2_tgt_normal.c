@@ -142,8 +142,11 @@ static void fn_error_va_fl(const char *file, int line, const char *fmt,
 {
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addstr(&buf_payload, "error ");
-	maybe_append_string_va(&buf_payload, fmt, ap);
+	strbuf_addstr(&buf_payload, "error");
+	if (fmt && *fmt) {
+		strbuf_addch(&buf_payload, ' ');
+		maybe_append_string_va(&buf_payload, fmt, ap);
+	}
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
