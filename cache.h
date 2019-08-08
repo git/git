@@ -937,8 +937,6 @@ extern int grafts_replace_parents;
 #define GIT_REPO_VERSION 0
 #define GIT_REPO_VERSION_READ 1
 extern int repository_format_precious_objects;
-extern char *repository_format_partial_clone;
-extern const char *core_partial_clone_filter_default;
 extern int repository_format_worktree_config;
 
 /*
