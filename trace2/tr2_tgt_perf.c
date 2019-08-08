@@ -184,7 +184,7 @@ static void fn_start_fl(const char *file, int line,
 	const char *event_name = "start";
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	sq_quote_argv_pretty(&buf_payload, argv);
+	sq_quote_argv_pretty_ltrim(&buf_payload, argv);
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 NULL, NULL, &buf_payload);
@@ -299,8 +299,9 @@ static void fn_alias_fl(const char *file, int line, const char *alias,
 	const char *event_name = "alias";
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addf(&buf_payload, "alias:%s argv:", alias);
-	sq_quote_argv_pretty(&buf_payload, argv);
+	strbuf_addf(&buf_payload, "alias:%s argv:[", alias);
+	sq_quote_argv_pretty_ltrim(&buf_payload, argv);
+	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL, NULL,
 			 &buf_payload);
@@ -329,10 +330,14 @@ static void fn_child_start_fl(const char *file, int line,
 		sq_quote_buf_pretty(&buf_payload, cmd->dir);
 	}
 
-	strbuf_addstr(&buf_payload, " argv:");
-	if (cmd->git_cmd)
-		strbuf_addstr(&buf_payload, " git");
-	sq_quote_argv_pretty(&buf_payload, cmd->argv);
+	strbuf_addstr(&buf_payload, " argv:[");
+	if (cmd->git_cmd) {
+		strbuf_addstr(&buf_payload, "git");
+		if (cmd->argv[0])
+			strbuf_addch(&buf_payload, ' ');
+	}
+	sq_quote_argv_pretty_ltrim(&buf_payload, cmd->argv);
+	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 NULL, NULL, &buf_payload);
@@ -383,10 +388,14 @@ static void fn_exec_fl(const char *file, int line, uint64_t us_elapsed_absolute,
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	strbuf_addf(&buf_payload, "id:%d ", exec_id);
-	strbuf_addstr(&buf_payload, "argv:");
-	if (exe)
-		strbuf_addf(&buf_payload, " %s", exe);
-	sq_quote_argv_pretty(&buf_payload, argv);
+	strbuf_addstr(&buf_payload, "argv:[");
+	if (exe) {
+		strbuf_addstr(&buf_payload, exe);
+		if (argv[0])
+			strbuf_addch(&buf_payload, ' ');
+	}
+	sq_quote_argv_pretty_ltrim(&buf_payload, argv);
+	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 NULL, NULL, &buf_payload);
