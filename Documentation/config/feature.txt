@@ -1,0 +1,42 @@
+feature.*::
+	The config settings that start with `feature.` modify the defaults of
+	a group of other config settings. These groups are created by the Git
+	developer community as recommended defaults and are subject to change.
+	In particular, new config options may be added with different defaults.
+
+feature.experimental::
+	Enable config options that are new to Git, and are being considered for
+	future defaults. Config settings included here may be added or removed
+	with each release, including minor version updates. These settings may
+	have unintended interactions since they are so new. Please enable this
+	setting if you are interested in providing feedback on experimental
+	features. The new default values are:
++
+* `pack.useSparse=true` uses a new algorithm when constructing a pack-file
+which can improve `git push` performance in repos with many files.
++
+* `merge.directoryRenames=true` uses a new algorithm for detecting renames by
+using entire directories at a time instead of single files at a time.
++
+* `fetch.negotiationAlgorithm=skipping` may improve fetch negotiation times by
+skipping more commits at a time, reducing the number of round trips.
+
+feature.manyCommits::
+	Enable config options that optimize for repos with many commits. This
+	setting is recommended for repos with at least 100,000 commits. The
+	new default values are:
++
+* `core.commitGraph=true` enables reading the commit-graph file.
++
+* `gc.writeCommitGraph=true` enables writing the commit-graph file during
+garbage collection.
+
+feature.manyFiles::
+	Enable config options that optimize for repos with many files in the
+	working directory. With many files, commands such as `git status` and
+	`git checkout` may be slow and these new defaults improve performance:
++
+* `index.version=4` enables path-prefix compression in the index.
++
+* `core.untrackedCache=true` enables the untracked cache. This setting assumes
+that mtime is working on your machine.
