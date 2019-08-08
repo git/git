@@ -632,7 +632,7 @@ static int unpack_index_entry(struct cache_entry *ce,
 	return ret;
 }
 
-static int find_cache_pos(struct traverse_info *, const struct name_entry *);
+static int find_cache_pos(struct traverse_info *, const char *p, size_t len);
 
 static void restore_cache_bottom(struct traverse_info *info, int bottom)
 {
@@ -651,7 +651,7 @@ static int switch_cache_bottom(struct traverse_info *info)
 	if (o->diff_index_cached)
 		return 0;
 	ret = o->cache_bottom;
-	pos = find_cache_pos(info->prev, &info->name);
+	pos = find_cache_pos(info->prev, info->name, info->namelen);
 
 	if (pos < -1)
 		o->cache_bottom = -2 - pos;
@@ -686,21 +686,19 @@ static int index_pos_by_traverse_info(struct name_entry *names,
 				      struct traverse_info *info)
 {
 	struct unpack_trees_options *o = info->data;
-	int len = traverse_path_len(info, names);
-	char *name = xmalloc(len + 1 /* slash */ + 1 /* NUL */);
+	struct strbuf name = STRBUF_INIT;
 	int pos;
 
-	make_traverse_path(name, info, names);
-	name[len++] = '/';
-	name[len] = '\0';
-	pos = index_name_pos(o->src_index, name, len);
+	strbuf_make_traverse_path(&name, info, names->path, names->pathlen);
+	strbuf_addch(&name, '/');
+	pos = index_name_pos(o->src_index, name.buf, name.len);
 	if (pos >= 0)
 		BUG("This is a directory and should not exist in index");
 	pos = -pos - 1;
-	if (!starts_with(o->src_index->cache[pos]->name, name) ||
-	    (pos > 0 && starts_with(o->src_index->cache[pos-1]->name, name)))
+	if (!starts_with(o->src_index->cache[pos]->name, name.buf) ||
+	    (pos > 0 && starts_with(o->src_index->cache[pos-1]->name, name.buf)))
 		BUG("pos must point at the first entry in this directory");
-	free(name);
+	strbuf_release(&name);
 	return pos;
 }
 
@@ -811,8 +809,10 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	newinfo = *info;
 	newinfo.prev = info;
 	newinfo.pathspec = info->pathspec;
-	newinfo.name = *p;
-	newinfo.pathlen += tree_entry_len(p) + 1;
+	newinfo.name = p->path;
+	newinfo.namelen = p->pathlen;
+	newinfo.mode = p->mode;
+	newinfo.pathlen = st_add3(newinfo.pathlen, tree_entry_len(p), 1);
 	newinfo.df_conflicts |= df_conflicts;
 
 	/*
@@ -863,14 +863,18 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
  * itself - the caller needs to do the final check for the cache
  * entry having more data at the end!
  */
-static int do_compare_entry_piecewise(const struct cache_entry *ce, const struct traverse_info *info, const struct name_entry *n)
+static int do_compare_entry_piecewise(const struct cache_entry *ce,
+				      const struct traverse_info *info,
+				      const char *name, size_t namelen,
+				      unsigned mode)
 {
-	int len, pathlen, ce_len;
+	int pathlen, ce_len;
 	const char *ce_name;
 
 	if (info->prev) {
 		int cmp = do_compare_entry_piecewise(ce, info->prev,
-						     &info->name);
+						     info->name, info->namelen,
+						     info->mode);
 		if (cmp)
 			return cmp;
 	}
@@ -884,15 +888,15 @@ static int do_compare_entry_piecewise(const struct cache_entry *ce, const struct
 	ce_len -= pathlen;
 	ce_name = ce->name + pathlen;
 
-	len = tree_entry_len(n);
-	return df_name_compare(ce_name, ce_len, S_IFREG, n->path, len, n->mode);
+	return df_name_compare(ce_name, ce_len, S_IFREG, name, namelen, mode);
 }
 
 static int do_compare_entry(const struct cache_entry *ce,
 			    const struct traverse_info *info,
-			    const struct name_entry *n)
+			    const char *name, size_t namelen,
+			    unsigned mode)
 {
-	int len, pathlen, ce_len;
+	int pathlen, ce_len;
 	const char *ce_name;
 	int cmp;
 
@@ -902,7 +906,7 @@ static int do_compare_entry(const struct cache_entry *ce,
 	 * it is quicker to use the precomputed version.
 	 */
 	if (!info->traverse_path)
-		return do_compare_entry_piecewise(ce, info, n);
+		return do_compare_entry_piecewise(ce, info, name, namelen, mode);
 
 	cmp = strncmp(ce->name, info->traverse_path, info->pathlen);
 	if (cmp)
@@ -917,13 +921,12 @@ static int do_compare_entry(const struct cache_entry *ce,
 	ce_len -= pathlen;
 	ce_name = ce->name + pathlen;
 
-	len = tree_entry_len(n);
-	return df_name_compare(ce_name, ce_len, S_IFREG, n->path, len, n->mode);
+	return df_name_compare(ce_name, ce_len, S_IFREG, name, namelen, mode);
 }
 
 static int compare_entry(const struct cache_entry *ce, const struct traverse_info *info, const struct name_entry *n)
 {
-	int cmp = do_compare_entry(ce, info, n);
+	int cmp = do_compare_entry(ce, info, n->path, n->pathlen, n->mode);
 	if (cmp)
 		return cmp;
 
@@ -931,7 +934,7 @@ static int compare_entry(const struct cache_entry *ce, const struct traverse_inf
 	 * Even if the beginning compared identically, the ce should
 	 * compare as bigger than a directory leading up to it!
 	 */
-	return ce_namelen(ce) > traverse_path_len(info, n);
+	return ce_namelen(ce) > traverse_path_len(info, tree_entry_len(n));
 }
 
 static int ce_in_traverse_path(const struct cache_entry *ce,
@@ -939,7 +942,8 @@ static int ce_in_traverse_path(const struct cache_entry *ce,
 {
 	if (!info->prev)
 		return 1;
-	if (do_compare_entry(ce, info->prev, &info->name))
+	if (do_compare_entry(ce, info->prev,
+			     info->name, info->namelen, info->mode))
 		return 0;
 	/*
 	 * If ce (blob) is the same name as the path (which is a tree
@@ -954,7 +958,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	struct index_state *istate,
 	int is_transient)
 {
-	int len = traverse_path_len(info, n);
+	size_t len = traverse_path_len(info, tree_entry_len(n));
 	struct cache_entry *ce =
 		is_transient ?
 		make_empty_transient_cache_entry(len) :
@@ -964,7 +968,8 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info,
 	ce->ce_flags = create_ce_flags(stage);
 	ce->ce_namelen = len;
 	oidcpy(&ce->oid, &n->oid);
-	make_traverse_path(ce->name, info, n);
+	/* len+1 because the cache_entry allocates space for NUL */
+	make_traverse_path(ce->name, len + 1, info, n->path, n->pathlen);
 
 	return ce;
 }
@@ -1057,13 +1062,12 @@ static int unpack_failed(struct unpack_trees_options *o, const char *message)
  * the directory.
  */
 static int find_cache_pos(struct traverse_info *info,
-			  const struct name_entry *p)
+			  const char *p, size_t p_len)
 {
 	int pos;
 	struct unpack_trees_options *o = info->data;
 	struct index_state *index = o->src_index;
 	int pfxlen = info->pathlen;
-	int p_len = tree_entry_len(p);
 
 	for (pos = o->cache_bottom; pos < index->cache_nr; pos++) {
 		const struct cache_entry *ce = index->cache[pos];
@@ -1099,7 +1103,7 @@ static int find_cache_pos(struct traverse_info *info,
 			ce_len = ce_slash - ce_name;
 		else
 			ce_len = ce_namelen(ce) - pfxlen;
-		cmp = name_compare(p->path, p_len, ce_name, ce_len);
+		cmp = name_compare(p, p_len, ce_name, ce_len);
 		/*
 		 * Exact match; if we have a directory we need to
 		 * delay returning it.
@@ -1114,7 +1118,7 @@ static int find_cache_pos(struct traverse_info *info,
 		 * E.g.  ce_name == "t-i", and p->path == "t"; we may
 		 * have "t/a" in the index.
 		 */
-		if (p_len < ce_len && !memcmp(ce_name, p->path, p_len) &&
+		if (p_len < ce_len && !memcmp(ce_name, p, p_len) &&
 		    ce_name[p_len] < '/')
 			continue; /* keep looking */
 		break;
@@ -1125,7 +1129,7 @@ static int find_cache_pos(struct traverse_info *info,
 static struct cache_entry *find_cache_entry(struct traverse_info *info,
 					    const struct name_entry *p)
 {
-	int pos = find_cache_pos(info, p);
+	int pos = find_cache_pos(info, p->path, p->pathlen);
 	struct unpack_trees_options *o = info->data;
 
 	if (0 <= pos)
@@ -1138,10 +1142,10 @@ static void debug_path(struct traverse_info *info)
 {
 	if (info->prev) {
 		debug_path(info->prev);
-		if (*info->prev->name.path)
+		if (*info->prev->name)
 			putchar('/');
 	}
-	printf("%s", info->name.path);
+	printf("%s", info->name);
 }
 
 static void debug_name_entry(int i, struct name_entry *n)

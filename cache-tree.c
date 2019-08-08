@@ -713,7 +713,7 @@ static struct cache_tree *find_cache_tree_from_traversal(struct cache_tree *root
 	if (!info->prev)
 		return root;
 	our_parent = find_cache_tree_from_traversal(root, info->prev);
-	return cache_tree_find(our_parent, info->name.path);
+	return cache_tree_find(our_parent, info->name);
 }
 
 int cache_tree_matches_traversal(struct cache_tree *root,

@@ -180,8 +180,9 @@ static struct merge_list *create_entry(unsigned stage, unsigned mode, const stru
 
 static char *traverse_path(const struct traverse_info *info, const struct name_entry *n)
 {
-	char *path = xmallocz(traverse_path_len(info, n) + the_hash_algo->rawsz);
-	return make_traverse_path(path, info, n);
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_make_traverse_path(&buf, info, n->path, n->pathlen);
+	return strbuf_detach(&buf, NULL);
 }
 
 static void resolve(const struct traverse_info *info, struct name_entry *ours, struct name_entry *result)
