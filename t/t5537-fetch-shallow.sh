@@ -255,4 +255,7 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	git -C client fsck
 '
 
+# DO NOT add non-httpd-specific tests here, because the last part of this
+# test script is only executed when httpd is available and enabled.
+
 test_done
