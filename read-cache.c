@@ -1720,7 +1720,17 @@ static int read_index_extension(struct index_state *istate,
 		if (*ext < 'A' || 'Z' < *ext)
 			return error(_("index uses %.4s extension, which we do not understand"),
 				     ext);
-		fprintf_ln(stderr, _("ignoring %.4s extension"), ext);
+		if (advice_unknown_index_extension) {
+			warning(_("ignoring optional %.4s index extension"), ext);
+			advise(_("This is likely due to the file having been written by a newer\n"
+				 "version of Git than is reading it. You can upgrade Git to\n"
+				 "take advantage of performance improvements from the updated\n"
+				 "file format.\n"
+				 "\n"
+				 "Run \"%s\"\n"
+				 "to suppress this message."),
+			       "git config advice.unknownIndexExtension false");
+		}
 		break;
 	}
 	return 0;
