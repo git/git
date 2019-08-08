@@ -850,6 +850,15 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 	return 0;
 }
 
+static const char warn_show_forced_updates[] =
+N_("Fetch normally indicates which branches had a forced update,\n"
+   "but that check has been disabled. To re-enable, use '--show-forced-updates'\n"
+   "flag or run 'git config fetch.showForcedUpdates true'.");
+static const char warn_time_show_forced_updates[] =
+N_("It took %.2f seconds to check forced updates. You can use\n"
+   "'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates false'\n"
+   " to avoid this check.\n");
+
 static int store_updated_refs(const char *raw_url, const char *remote_name,
 			      int connectivity_checked, struct ref *ref_map)
 {
@@ -1005,12 +1014,10 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 	if (advice_fetch_show_forced_updates) {
 		if (!fetch_show_forced_updates) {
-			warning(_("Fetch normally indicates which branches had a forced update, but that check has been disabled."));
-			warning(_("To re-enable, use '--show-forced-updates' flag or run 'git config fetch.showForcedUpdates true'."));
+			warning(_(warn_show_forced_updates));
 		} else if (forced_updates_ms > FORCED_UPDATES_DELAY_WARNING_IN_MS) {
-			warning(_("It took %.2f seconds to check forced updates. You can use '--no-show-forced-updates'\n"),
+			warning(_(warn_time_show_forced_updates),
 				forced_updates_ms / 1000.0);
-			warning(_("or run 'git config fetch.showForcedUpdates false' to avoid this check.\n"));
 		}
 	}
 
