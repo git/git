@@ -434,6 +434,7 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r, const 
 
 	free(oids);
 	fclose(fp);
+	strbuf_release(&line);
 
 	return graph_chain;
 }
@@ -1186,7 +1187,7 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 	}
 
 	stop_progress(&ctx->progress);
-	strbuf_reset(&progress_title);
+	strbuf_release(&progress_title);
 	strbuf_release(&packname);
 
 	return 0;
@@ -1713,10 +1714,8 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	strbuf_addstr(&path, "/info/commit-graphs");
 	dir = opendir(path.buf);
 
-	if (!dir) {
-		strbuf_release(&path);
-		return;
-	}
+	if (!dir)
+		goto out;
 
 	strbuf_addch(&path, '/');
 	dirnamelen = path.len;
@@ -1745,6 +1744,9 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 		if (!found)
 			unlink(path.buf);
 	}
+
+out:
+	strbuf_release(&path);
 }
 
 int write_commit_graph(const char *obj_dir,
