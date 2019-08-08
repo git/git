@@ -157,5 +157,12 @@ int repo_read_index_unmerged(struct repository *);
  */
 void repo_update_index_if_able(struct repository *, struct lock_file *);
 
+/*
+ * Refresh the index and write it out. If the index file could not be
+ * locked, error out, except in gentle mode. The flags will be passed
+ * through to refresh_index().
+ */
+int repo_refresh_and_write_index(struct repository *r,
+				 unsigned int flags, int gentle);
 
 #endif /* REPOSITORY_H */
