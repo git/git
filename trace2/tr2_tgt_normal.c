@@ -135,11 +135,6 @@ static void maybe_append_string_va(struct strbuf *buf, const char *fmt,
 		va_end(copy_ap);
 		return;
 	}
-
-	if (fmt && *fmt) {
-		strbuf_addstr(buf, fmt);
-		return;
-	}
 }
 
 static void fn_error_va_fl(const char *file, int line, const char *fmt,
