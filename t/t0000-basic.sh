@@ -25,16 +25,14 @@ try_local_x () {
 	echo "$x"
 }
 
-# This test is an experiment to check whether any Git users are using
-# Shells that don't support the "local" keyword. "local" is not
+# Check whether the shell supports the "local" keyword. "local" is not
 # POSIX-standard, but it is very widely supported by POSIX-compliant
-# shells, and if it doesn't cause problems for people, we would like
-# to be able to use it in Git code.
+# shells, and we rely on it within Git's test framework.
 #
-# For now, this is the only test that requires "local". If your shell
-# fails this test, you can ignore the failure, but please report the
-# problem to the Git mailing list <git@vger.kernel.org>, as it might
-# convince us to continue avoiding the use of "local".
+# If your shell fails this test, the results of other tests may be
+# unreliable. You may wish to report the problem to the Git mailing
+# list <git@vger.kernel.org>, as it could cause us to reconsider
+# relying on "local".
 test_expect_success 'verify that the running shell supports "local"' '
 	x="notlocal" &&
 	echo "local" >expected1 &&
