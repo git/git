@@ -14,13 +14,9 @@
 #ifndef GIT_PCRE_STUDY_JIT_COMPILE
 #define GIT_PCRE_STUDY_JIT_COMPILE 0
 #endif
-#if PCRE_MAJOR <= 8 && PCRE_MINOR < 20
-typedef int pcre_jit_stack;
-#endif
 #else
 typedef int pcre;
 typedef int pcre_extra;
-typedef int pcre_jit_stack;
 #endif
 #ifdef USE_LIBPCRE2
 #define PCRE2_CODE_UNIT_WIDTH 8
@@ -29,10 +25,7 @@ typedef int pcre_jit_stack;
 typedef int pcre2_code;
 typedef int pcre2_match_data;
 typedef int pcre2_compile_context;
-typedef int pcre2_match_context;
-typedef int pcre2_jit_stack;
 #endif
-#include "kwset.h"
 #include "thread-utils.h"
 #include "userdiff.h"
 
@@ -88,17 +81,14 @@ struct grep_pat {
 	regex_t regexp;
 	pcre *pcre1_regexp;
 	pcre_extra *pcre1_extra_info;
-	pcre_jit_stack *pcre1_jit_stack;
 	const unsigned char *pcre1_tables;
 	int pcre1_jit_on;
 	pcre2_code *pcre2_pattern;
 	pcre2_match_data *pcre2_match_data;
 	pcre2_compile_context *pcre2_compile_context;
-	pcre2_match_context *pcre2_match_context;
-	pcre2_jit_stack *pcre2_jit_stack;
 	uint32_t pcre2_jit_on;
-	kwset_t kws;
 	unsigned fixed:1;
+	unsigned is_fixed:1;
 	unsigned ignore_case:1;
 	unsigned word_regexp:1;
 };
@@ -173,6 +163,7 @@ struct grep_opt {
 	int funcbody;
 	int extended_regexp_option;
 	int pattern_type_option;
+	int ignore_locale;
 	char colors[NR_GREP_COLORS][COLOR_MAXLEN];
 	unsigned pre_context;
 	unsigned post_context;
