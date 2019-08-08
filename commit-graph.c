@@ -1636,7 +1636,7 @@ static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 				num_parents++;
 
 			if (num_parents > 2)
-				ctx->num_extra_edges += num_parents - 2;
+				ctx->num_extra_edges += num_parents - 1;
 		}
 	}
 
