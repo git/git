@@ -104,6 +104,11 @@ care about this output and want to speed it up further.
 	progress status even if the standard error stream is not
 	directed to a terminal.
 
+CONFIGURATION
+-------------
+
+include::config/fsck.txt[]
+
 DISCUSSION
 ----------
 
