@@ -30,15 +30,9 @@ static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
 	return free(pointer);
 }
 
-/*
- * BUG: this is technically not needed if we will do UTF matching
- *      but UTF locale detection is currently broken
- * TODO: has_non_ascii() doesn't support NUL in pattern
- */
-void setup_pcre2_as_needed(struct grep_opt *opt, const char *pat)
+static void setup_pcre2_as_needed(void)
 {
-	if (!pcre2_global_context && opt->ignore_case &&
-		has_non_ascii(pat))
+	if (!pcre2_global_context)
 		pcre2_global_context = pcre2_general_context_create(
 					pcre2_malloc, pcre2_free, NULL);
 }
@@ -49,11 +43,11 @@ static void cleanup_pcre2_as_needed(void)
 }
 
 #else
-#define setup_pcre2_as_needed(opt, pat)
+#define setup_pcre2_as_needed()
 #define cleanup_pcre2_as_needed()
 #endif
 #else
-#define setup_pcre2_as_needed(opt, pat)
+#define setup_pcre2_as_needed()
 #define cleanup_pcre2_as_needed()
 #endif
 
@@ -205,6 +199,9 @@ void grep_init(struct grep_opt *opt, struct repository *repo, const char *prefix
 #ifdef USE_LIBPCRE1
 	pcre_malloc = malloc;
 	pcre_free = free;
+#endif
+#ifdef USE_LIBPCRE2
+	setup_pcre2_as_needed();
 #endif
 #endif
 
@@ -373,7 +370,6 @@ void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen,
 		     const char *origin, int no, enum grep_pat_token t)
 {
 	struct grep_pat *p = create_grep_pat(pat, patlen, origin, no, t, 0);
-	setup_pcre2_as_needed(opt, pat);
 	do_append_grep_pat(&opt->pattern_tail, p);
 }
 
@@ -555,9 +551,10 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	p->pcre2_compile_context = NULL;
 
 	/*
-	 * pcre2_global_context is initialized in append_grep_pat()
-	 * with logic from setup_pcre2_as_needed() that mimics what
-	 * is used here and with the BUG() to protect from mismatches
+	 * pcre2_global_context is initialized in grep_init()
+	 * through setup_pcre2_as_needed()
+	 * BUG() is needed to protect against a segfault in Windows if
+	 * NED is used to clear this PCRE2 leaking pointer
 	 */
 	if (opt->ignore_case) {
 		if (has_non_ascii(p->pattern)) {
@@ -580,7 +577,9 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 					 p->pcre2_compile_context);
 
 	if (p->pcre2_pattern) {
-		p->pcre2_match_data = pcre2_match_data_create_from_pattern(p->pcre2_pattern, NULL);
+		p->pcre2_match_data =
+			pcre2_match_data_create_from_pattern(p->pcre2_pattern,
+							pcre2_global_context);
 		if (!p->pcre2_match_data)
 			die("Couldn't allocate PCRE2 match data");
 	} else {
@@ -617,10 +616,12 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 			return;
 		}
 
-		p->pcre2_jit_stack = pcre2_jit_stack_create(1, 1024 * 1024, NULL);
+		p->pcre2_jit_stack = pcre2_jit_stack_create(1, 1024 * 1024,
+							pcre2_global_context);
 		if (!p->pcre2_jit_stack)
 			die("Couldn't allocate PCRE2 JIT stack");
-		p->pcre2_match_context = pcre2_match_context_create(NULL);
+		p->pcre2_match_context = pcre2_match_context_create(
+						pcre2_global_context);
 		if (!p->pcre2_match_context)
 			die("Couldn't allocate PCRE2 match context");
 		pcre2_jit_stack_assign(p->pcre2_match_context, NULL, p->pcre2_jit_stack);
