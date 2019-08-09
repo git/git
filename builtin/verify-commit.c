@@ -12,7 +12,6 @@
 #include "repository.h"
 #include "commit.h"
 #include "run-command.h"
-#include <signal.h>
 #include "parse-options.h"
 #include "gpg-interface.h"
 

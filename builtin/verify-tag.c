@@ -10,7 +10,6 @@
 #include "builtin.h"
 #include "tag.h"
 #include "run-command.h"
-#include <signal.h>
 #include "parse-options.h"
 #include "gpg-interface.h"
 #include "ref-filter.h"
