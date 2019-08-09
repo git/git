@@ -20,8 +20,6 @@
  *
  */
 #include "xinclude.h"
-#include "xtypes.h"
-#include "xdiff.h"
 
 /*
  * The basic idea of patience diff is to find lines that are unique in

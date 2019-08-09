@@ -20,11 +20,7 @@
  *
  */
 
-#include <limits.h>
-#include <assert.h>
 #include "xinclude.h"
-
-
 
 
 long xdl_bogosqrt(long n) {
