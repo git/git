@@ -232,7 +232,7 @@ write so it might not be enough to grant the users using
 'git-cvsserver' write access to the database file without granting
 them write access to the directory, too.
 
-The database can not be reliably regenerated in a
+The database cannot be reliably regenerated in a
 consistent form after the branch it is tracking has changed.
 Example: For merged branches, 'git-cvsserver' only tracks
 one branch of development, and after a 'git merge' an

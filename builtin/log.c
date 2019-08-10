@@ -47,7 +47,7 @@ static int default_follow;
 static int default_show_signature;
 static int decoration_style;
 static int decoration_given;
-static int use_mailmap_config = -1;
+static int use_mailmap_config = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
@@ -156,21 +156,11 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 		parse_date_format(default_date_mode, &rev->date_mode);
 }
 
-static char warn_unspecified_mailmap_msg[] =
-N_("log.mailmap is not set; its implicit value will change in an\n"
-   "upcoming release. To squelch this message and preserve current\n"
-   "behaviour, set the log.mailmap configuration value to false.\n"
-   "\n"
-   "To squelch this message and adopt the new behaviour now, set the\n"
-   "log.mailmap configuration value to true.\n"
-   "\n"
-   "See 'git help config' and search for 'log.mailmap' for further information.");
-
 static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
 	struct userformat_want w;
-	int quiet = 0, source = 0, mailmap = 0;
+	int quiet = 0, source = 0, mailmap;
 	static struct line_opt_callback_data line_cb = {NULL, NULL, STRING_LIST_INIT_DUP};
 	static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
 	static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
@@ -213,13 +203,6 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 
 	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
-
-	if (mailmap < 0) {
-		if (session_is_interactive() && !rev->pretty_given)
-			warning("%s\n", _(warn_unspecified_mailmap_msg));
-
-		mailmap = 0;
-	}
 
 	if (!rev->show_notes_given && (!rev->pretty_given || w.notes))
 		rev->show_notes = 1;

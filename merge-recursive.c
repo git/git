@@ -2863,7 +2863,8 @@ static int detect_and_process_renames(struct merge_options *opt,
 	head_pairs = get_diffpairs(opt, common, head);
 	merge_pairs = get_diffpairs(opt, common, merge);
 
-	if (opt->detect_directory_renames) {
+	if ((opt->detect_directory_renames == 2) ||
+	    (opt->detect_directory_renames == 1 && !opt->call_depth)) {
 		dir_re_head = get_directory_renames(head_pairs);
 		dir_re_merge = get_directory_renames(merge_pairs);
 

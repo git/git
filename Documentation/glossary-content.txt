@@ -255,7 +255,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_object]]object::
 	The unit of storage in Git. It is uniquely identified by the
 	<<def_SHA1,SHA-1>> of its contents. Consequently, an
-	object can not be changed.
+	object cannot be changed.
 
 [[def_object_database]]object database::
 	Stores a set of "objects", and an individual <<def_object,object>> is

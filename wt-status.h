@@ -1,7 +1,6 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-#include <stdio.h>
 #include "string-list.h"
 #include "color.h"
 #include "pathspec.h"

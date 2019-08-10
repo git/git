@@ -4403,4 +4403,115 @@ test_expect_success '13d-check(info): messages for rename/rename(1to1) via dual 
 	)
 '
 
+# Testcase 13e, directory rename in virtual merge base
+#
+# This testcase has a slightly different setup than all the above cases, in
+# order to include a recursive case:
+#
+#      A   C
+#      o - o
+#     / \ / \
+#  O o   X   ?
+#     \ / \ /
+#      o   o
+#      B   D
+#
+#   Commit O: a/{z,y}
+#   Commit A: b/{z,y}
+#   Commit B: a/{z,y,x}
+#   Commit C: b/{z,y,x}
+#   Commit D: b/{z,y}, a/x
+#   Expected: b/{z,y,x}  (sort of; see below for why this might not be expected)
+#
+#   NOTES: 'X' represents a virtual merge base.  With the default of
+#          directory rename detection yielding conflicts, merging A and B
+#          results in a conflict complaining about whether 'x' should be
+#          under 'a/' or 'b/'.  However, when creating the virtual merge
+#          base 'X', since virtual merge bases need to be written out as a
+#          tree, we cannot have a conflict, so some resolution has to be
+#          picked.
+#
+#          In choosing the right resolution, it's worth noting here that
+#          commits C & D are merges of A & B that choose different
+#          locations for 'x' (i.e. they resolve the conflict differently),
+#          and so it would be nice when merging C & D if git could detect
+#          this difference of opinion and report a conflict.  But the only
+#          way to do so that I can think of would be to have the virtual
+#          merge base place 'x' in some directory other than either 'a/' or
+#          'b/', which seems a little weird -- especially since it'd result
+#          in a rename/rename(1to2) conflict with a source path that never
+#          existed in any version.
+#
+#          So, for now, when directory rename detection is set to
+#          'conflict' just avoid doing directory rename detection at all in
+#          the recursive case.  This will not allow us to detect a conflict
+#          in the outer merge for this special kind of setup, but it at
+#          least avoids hitting a BUG().
+#
+test_expect_success '13e-setup: directory rename detection in recursive case' '
+	test_create_repo 13e &&
+	(
+		cd 13e &&
+
+		mkdir a &&
+		echo z >a/z &&
+		echo y >a/y &&
+		git add a &&
+		test_tick &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git mv a/ b/ &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		echo x >a/x &&
+		git add a &&
+		test_tick &&
+		git commit -m "B" &&
+
+		git branch C A &&
+		git branch D B &&
+
+		git checkout C &&
+		test_must_fail git -c merge.directoryRenames=conflict merge B &&
+		git add b/x &&
+		test_tick &&
+		git commit -m "C" &&
+
+
+		git checkout D &&
+		test_must_fail git -c merge.directoryRenames=conflict merge A &&
+		git add b/x &&
+		mkdir a &&
+		git mv b/x a/x &&
+		test_tick &&
+		git commit -m "D"
+	)
+'
+
+test_expect_success '13e-check: directory rename detection in recursive case' '
+	(
+		cd 13e &&
+
+		git checkout --quiet D^0 &&
+
+		git -c merge.directoryRenames=conflict merge -s recursive C^0 >out 2>err &&
+
+		test_i18ngrep ! CONFLICT out &&
+		test_i18ngrep ! BUG: err &&
+		test_i18ngrep ! core.dumped err &&
+		test_must_be_empty err &&
+
+		git ls-files >paths &&
+		! grep a/x paths &&
+		grep b/x paths
+	)
+'
+
 test_done
