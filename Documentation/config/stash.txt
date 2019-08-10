@@ -4,7 +4,7 @@ stash.useBuiltin::
        the built-in rewrite of it in C.
 +
 The C rewrite is first included with Git version 2.22 (and Git for Windows
-version 2.19). This option serves an an escape hatch to re-enable the
+version 2.19). This option serves as an escape hatch to re-enable the
 legacy version in case any bugs are found in the rewrite. This option and
 the shell script version of linkgit:git-stash[1] will be removed in some
 future release.

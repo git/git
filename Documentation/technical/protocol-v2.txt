@@ -141,7 +141,7 @@ Capabilities
 ------------
 
 There are two different types of capabilities: normal capabilities,
-which can be used to to convey information or alter the behavior of a
+which can be used to convey information or alter the behavior of a
 request, and commands, which are the core actions that a client wants to
 perform (fetch, push, etc).
 

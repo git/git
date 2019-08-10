@@ -456,7 +456,7 @@ packfile marked as UNREACHABLE_GARBAGE (using the PSRC field; see
 below). To avoid the race when writing new objects referring to an
 about-to-be-deleted object, code paths that write new objects will
 need to copy any objects from UNREACHABLE_GARBAGE packs that they
-refer to to new, non-UNREACHABLE_GARBAGE packs (or loose objects).
+refer to new, non-UNREACHABLE_GARBAGE packs (or loose objects).
 UNREACHABLE_GARBAGE are then safe to delete if their creation time (as
 indicated by the file's mtime) is long enough ago.
 

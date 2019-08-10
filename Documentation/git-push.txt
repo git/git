@@ -75,7 +75,7 @@ without any `<refspec>` on the command line.  Otherwise, missing
 +
 If <dst> doesn't start with `refs/` (e.g. `refs/heads/master`) we will
 try to infer where in `refs/*` on the destination <repository> it
-belongs based on the the type of <src> being pushed and whether <dst>
+belongs based on the type of <src> being pushed and whether <dst>
 is ambiguous.
 +
 --

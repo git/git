@@ -131,7 +131,7 @@ depth is 4095.
 --keep-pack=<pack-name>::
 	This flag causes an object already in the given pack to be
 	ignored, even if it would have otherwise been
-	packed. `<pack-name>` is the the pack file name without
+	packed. `<pack-name>` is the pack file name without
 	leading directory (e.g. `pack-123.pack`). The option could be
 	specified multiple times to keep multiple packs.
 

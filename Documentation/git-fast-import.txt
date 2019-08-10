@@ -425,7 +425,7 @@ the same commit, as `filedeleteall` wipes the branch clean (see below).
 
 The `LF` after the command is optional (it used to be required).  Note
 that for reasons of backward compatibility, if the commit ends with a
-`data` command (i.e. it has has no `from`, `merge`, `filemodify`,
+`data` command (i.e. it has no `from`, `merge`, `filemodify`,
 `filedelete`, `filecopy`, `filerename`, `filedeleteall` or
 `notemodify` commands) then two `LF` commands may appear at the end of
 the command instead of just one.

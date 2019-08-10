@@ -14,7 +14,7 @@ color.blame.highlightRecent::
 +
 This setting should be set to a comma-separated list of color and date settings,
 starting and ending with a color, the dates should be set from oldest to newest.
-The metadata will be colored given the colors if the the line was introduced
+The metadata will be colored given the colors if the line was introduced
 before the given timestamp, overwriting older timestamped colors.
 +
 Instead of an absolute timestamp relative timestamps work as well, e.g.

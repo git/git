@@ -116,7 +116,7 @@ marks the same across runs.
 	and will make master{tilde}4 no longer have master{tilde}5 as
 	a parent (though both the old master{tilde}4 and new
 	master{tilde}4 will have all the same files).  Use
-	--reference-excluded-parents to instead have the the stream
+	--reference-excluded-parents to instead have the stream
 	refer to commits in the excluded range of history by their
 	sha1sum.  Note that the resulting stream can only be used by a
 	repository which already contains the necessary parent

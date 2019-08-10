@@ -142,7 +142,7 @@ depth is 4095.
 
 --keep-pack=<pack-name>::
 	Exclude the given pack from repacking. This is the equivalent
-	of having `.keep` file on the pack. `<pack-name>` is the the
+	of having `.keep` file on the pack. `<pack-name>` is the
 	pack file name without leading directory (e.g. `pack-123.pack`).
 	The option could be specified multiple times to keep multiple
 	packs.
