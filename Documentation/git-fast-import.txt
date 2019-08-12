@@ -390,7 +390,7 @@ change to the project.
 	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 	('from' SP <commit-ish> LF)?
-	('merge' SP <commit-ish> LF)?
+	('merge' SP <commit-ish> LF)*
 	(filemodify | filedelete | filecopy | filerename | filedeleteall | notemodify)*
 	LF?
 ....
