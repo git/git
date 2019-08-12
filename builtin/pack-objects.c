@@ -2342,15 +2342,6 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 	free(array);
 }
 
-static void try_to_free_from_threads(size_t size)
-{
-	packing_data_lock(&to_pack);
-	release_pack_memory(size);
-	packing_data_unlock(&to_pack);
-}
-
-static try_to_free_t old_try_to_free_routine;
-
 /*
  * The main object list is split into smaller lists, each is handed to
  * one worker.
@@ -2391,12 +2382,10 @@ static void init_threaded_search(void)
 	pthread_mutex_init(&cache_mutex, NULL);
 	pthread_mutex_init(&progress_mutex, NULL);
 	pthread_cond_init(&progress_cond, NULL);
-	old_try_to_free_routine = set_try_to_free_routine(try_to_free_from_threads);
 }
 
 static void cleanup_threaded_search(void)
 {
-	set_try_to_free_routine(old_try_to_free_routine);
 	pthread_cond_destroy(&progress_cond);
 	pthread_mutex_destroy(&cache_mutex);
 	pthread_mutex_destroy(&progress_mutex);

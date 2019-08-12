@@ -818,9 +818,6 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 int git_atexit(void (*handler)(void));
 #endif
 
-typedef void (*try_to_free_t)(size_t);
-try_to_free_t set_try_to_free_routine(try_to_free_t);
-
 static inline size_t st_add(size_t a, size_t b)
 {
 	if (unsigned_add_overflows(a, b))

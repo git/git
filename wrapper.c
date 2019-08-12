@@ -4,12 +4,6 @@
 #include "cache.h"
 #include "config.h"
 
-static void do_nothing(size_t size)
-{
-}
-
-static void (*try_to_free_routine)(size_t size) = do_nothing;
-
 static int memory_limit_check(size_t size, int gentle)
 {
 	static size_t limit = 0;
@@ -30,24 +24,11 @@ static int memory_limit_check(size_t size, int gentle)
 	return 0;
 }
 
-try_to_free_t set_try_to_free_routine(try_to_free_t routine)
-{
-	try_to_free_t old = try_to_free_routine;
-	if (!routine)
-		routine = do_nothing;
-	try_to_free_routine = routine;
-	return old;
-}
-
 char *xstrdup(const char *str)
 {
 	char *ret = strdup(str);
-	if (!ret) {
-		try_to_free_routine(strlen(str) + 1);
-		ret = strdup(str);
-		if (!ret)
-			die("Out of memory, strdup failed");
-	}
+	if (!ret)
+		die("Out of memory, strdup failed");
 	return ret;
 }
 
@@ -61,19 +42,13 @@ static void *do_xmalloc(size_t size, int gentle)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret) {
-		try_to_free_routine(size);
-		ret = malloc(size);
-		if (!ret && !size)
-			ret = malloc(1);
-		if (!ret) {
-			if (!gentle)
-				die("Out of memory, malloc failed (tried to allocate %lu bytes)",
-				    (unsigned long)size);
-			else {
-				error("Out of memory, malloc failed (tried to allocate %lu bytes)",
-				      (unsigned long)size);
-				return NULL;
-			}
+		if (!gentle)
+			die("Out of memory, malloc failed (tried to allocate %lu bytes)",
+			    (unsigned long)size);
+		else {
+			error("Out of memory, malloc failed (tried to allocate %lu bytes)",
+			      (unsigned long)size);
+			return NULL;
 		}
 	}
 #ifdef XMALLOC_POISON
@@ -138,14 +113,8 @@ void *xrealloc(void *ptr, size_t size)
 	ret = realloc(ptr, size);
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
-	if (!ret) {
-		try_to_free_routine(size);
-		ret = realloc(ptr, size);
-		if (!ret && !size)
-			ret = realloc(ptr, 1);
-		if (!ret)
-			die("Out of memory, realloc failed");
-	}
+	if (!ret)
+		die("Out of memory, realloc failed");
 	return ret;
 }
 
@@ -160,14 +129,8 @@ void *xcalloc(size_t nmemb, size_t size)
 	ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
-	if (!ret) {
-		try_to_free_routine(nmemb * size);
-		ret = calloc(nmemb, size);
-		if (!ret && (!nmemb || !size))
-			ret = calloc(1, 1);
-		if (!ret)
-			die("Out of memory, calloc failed");
-	}
+	if (!ret)
+		die("Out of memory, calloc failed");
 	return ret;
 }
 
