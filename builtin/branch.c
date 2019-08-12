@@ -96,9 +96,10 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 		int slot = LOOKUP_CONFIG(color_branch_slots, slot_name);
 		if (slot < 0)
 			return 0;
-		if (!value)
-			return config_error_nonbool(var);
-		return color_parse(value, branch_colors[slot]);
+		if (value)
+			return color_parse(value, branch_colors[slot]);
+		return config_error_nonbool(var);
+		
 	}
 	return git_color_default_config(var, value, cb);
 }
@@ -761,12 +762,13 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (!ref_exists(branch_ref.buf)) {
 			strbuf_release(&branch_ref);
 
-			if (!argc)
-				return error(_("No commit on branch '%s' yet."),
-					     branch_name);
-			else
+			if (argc)
 				return error(_("No branch named '%s'."),
 					     branch_name);
+			else
+				return error(_("No commit on branch '%s' yet."),
+					     branch_name);
+				
 		}
 		strbuf_release(&branch_ref);
 

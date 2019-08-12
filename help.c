@@ -260,7 +260,7 @@ void load_command_list(const char *prefix,
 		struct cmdnames *main_cmds,
 		struct cmdnames *other_cmds)
 {
-	const char *env_path = getenv("PATH");
+	const char *env_path = getenv(PATH_ENVIRONMENT);
 	const char *exec_path = git_exec_path();
 
 	if (exec_path) {

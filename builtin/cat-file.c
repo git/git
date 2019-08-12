@@ -676,23 +676,25 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		else
 			usage_with_options(cat_file_usage, options);
 	}
-	if (!opt && !batch.enabled) {
-		if (argc == 2) {
-			exp_type = argv[0];
-			obj_name = argv[1];
-		} else
-			usage_with_options(cat_file_usage, options);
-	}
-	if (batch.enabled) {
+	
+	if(batch.enabled){
+
 		if (batch.cmdmode != opt || argc)
 			usage_with_options(cat_file_usage, options);
 		if (batch.cmdmode && batch.all_objects)
 			die("--batch-all-objects cannot be combined with "
 			    "--textconv nor with --filters");
+	
 	}
-
-	if ((batch.follow_symlinks || batch.all_objects) && !batch.enabled) {
+	else if (!opt){
+		if (argc == 2) {
+			exp_type = argv[0];
+			obj_name = argv[1];
+		} else
+			usage_with_options(cat_file_usage, options);
+		if ((batch.follow_symlinks || batch.all_objects) && !batch.enabled) {
 		usage_with_options(cat_file_usage, options);
+	}
 	}
 
 	if (force_path && opt != 'c' && opt != 'w') {

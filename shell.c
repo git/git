@@ -39,7 +39,7 @@ static char *make_cmd(const char *prog)
 
 static void cd_to_homedir(void)
 {
-	const char *home = getenv("HOME");
+	const char *home = getenv(HOME_ENVIRONMENT);
 	if (!home)
 		die("could not determine user's home directory; HOME is unset");
 	if (chdir(home) == -1)

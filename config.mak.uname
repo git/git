@@ -427,6 +427,7 @@ ifeq ($(uname_S),Windows)
 
 	CC = compat/vcbuild/scripts/clink.pl
 	AR = compat/vcbuild/scripts/lib.pl
+	LD = $(CC)
 	CFLAGS =
 	BASIC_CFLAGS = -nologo -I. -Icompat/vcbuild/include -DWIN32 -D_CONSOLE -DHAVE_STRING_H -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE
 	COMPAT_OBJS = compat/msvc.o compat/winansi.o \
@@ -510,6 +511,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	# INLINE='' would just replace one set of warnings with another and
 	# still not compile in c89 mode, due to non-const array initializations.
 	CC = cc -c99
+	LD = $(CC)
 	# Build down-rev compatible objects that don't use our new getopt_long.
 	ifeq ($(uname_R).$(uname_V),J06.21)
 		CC += -WRVU=J06.20
@@ -657,8 +659,10 @@ else
 			BASIC_LDFLAGS += -Wl,--large-address-aware
 		endif
 		CC = gcc
+		LD = $(CC)
 		COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO=0 -DDETECT_MSYS_TTY \
 			-fstack-protector-strong
+		BASIC_LDFLAGS += -fstack-protector-strong
 		EXTLIBS += -lntdll
 		INSTALL = /bin/install
 		NO_R_TO_GCC_LINKER = YesPlease
@@ -690,6 +694,101 @@ ifeq ($(uname_S),QNX)
 	NO_R_TO_GCC_LINKER = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
+endif
+ifeq ($(uname_S),Plan9)
+	CC = pcc
+	CFLAGS = -FVB+
+	ARFLAGS = uv
+	# pcc don't use mismatched objfiles
+	ifeq ($(objtype),386)
+		LD = 8l
+	endif
+	ifeq ($(objtype),amd64)
+		LD = 6l
+	endif
+	ifeq ($(objtype),arm)
+		LD = 5l
+	endif
+	ifeq ($(objtype),mips)
+		LD = vl
+	endif
+	ifeq ($(objtype),mips64)
+		LD = 4l
+	endif
+	ifeq ($(objtype),power)
+		LD = ql
+	endif
+	ifeq ($(objtype),sparc)
+		LD = kl
+	endif
+	ifeq ($(objtype),spim)
+		LD = 0l
+	endif
+	ifeq ($(objtype),spim64)
+		LD = xl
+	endif
+	BASIC_CFLAGS += -Icompat/plan9
+	BASIC_CFLAGS += -D__PLAN9__
+	BASIC_CFLAGS += -D_POSIX_SOURCE
+	BASIC_CFLAGS += -D_BSD_EXTENSION
+	BASIC_CFLAGS += -D_SUSV2_SOURCE
+	BASIC_CFLAGS += -D_PLAN9_SOURCE
+	BASIC_CFLAGS += -D_RESEARCH_SOURCE
+	BASIC_CFLAGS += -D_REENTRANT_SOURCE
+	BASIC_CFLAGS += -DHAVE_SOCK_OPTS
+	BASIC_CFLAGS += -Dsockaddr_storage=sockaddr_in6
+	BASIC_CFLAGS += -DHOME_ENVIRONMENT=\"home\"
+	BASIC_CFLAGS += -DPATH_ENVIRONMENT=\"path\"
+	BASIC_CFLAGS += -D_PATH_SEP=1
+	BASIC_CFLAGS += -D_PATH_DEFPATH=\"/bin\\x01.\\x01/bin/ape\"
+	COMPAT_CFLAGS += -DHAVE_STDINT_H
+	COMPAT_CFLAGS += -DHAVE_LOCALE_H
+	LDFLAGS = -L/$(objtype)/lib/ape
+
+	NEEDS_CRYPTO_WITH_SSL = YesPlease
+	NEEDS_SYS_PARAM_H = YesPlease
+	NO_NSEC = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
+	NO_GECOS_IN_PWENT = YesPlease
+	NO_GETTEXT = YesPlease
+	NO_SETENV = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_STRLCPY = YesPlease
+	NO_STRTOUMAX = YesPlease
+	NO_REGEX = YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_INITGROUPS = YesPlease
+	NO_MMAP = YesPlease
+	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
+	NO_STRUCT_ITIMERVAL = YesPlease
+	NO_SETITIMER = YesPlease
+	NO_ICONV = YesPlease
+	NO_SYMLINK_HEAD = YesPlease
+	OPENSSL_SHA1 = YesPlease
+	OPENSSL_SHA256 = YesPlease
+	NO_MEMMEM = YesPlease
+	HAVE_CLOCK_GETTIME = YesPlease
+
+	NO_SVN_TESTS = YesPlease
+	NO_PERL = YesPlease
+	NO_PYTHON = YesPlease
+	NO_TCLTK = YesPlease
+	NO_INSTALL_HARDLINKS = YesPlease
+
+	ETC_GITCONFIG = /sys/lib/git/config
+	ETC_GITATTRIBUTES = /sys/lib/git/attributes
+	USER_GITCONFIG = ~/lib/git/config
+	USER_GITCREDENTIALS = ~/lib/git/credentials
+	USER_GITCREDENTIAL_CACHE = ~/lib/git/credential-cache
+
+	DEFAULT_PAGER = /bin/p
+	PAGER_ENV = terminal=
+	SHELL_PATH = /bin/ape/sh
+	DEFAULT_EDITOR = /bin/ed
+
+	CURL_LDFLAGS = -lcurl -lssl -lcrypto
+	USE_EXEC_WRAPPER = YesPlease
 endif
 
 vcxproj:

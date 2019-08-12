@@ -314,8 +314,7 @@ static struct option builtin_add_options[] = {
 
 static int add_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "add.ignoreerrors") ||
-	    !strcmp(var, "add.ignore-errors")) {
+	if (!(strcmp(var, "add.ignoreerrors") && strcmp(var, "add.ignore-errors"))) {
 		ignore_add_errors = git_config_bool(var, value);
 		return 0;
 	}
@@ -342,9 +341,7 @@ static void check_embedded_repo(const char *path)
 {
 	struct strbuf name = STRBUF_INIT;
 
-	if (!warn_on_embedded_repo)
-		return;
-	if (!ends_with(path, "/"))
+	if (!(warn_on_embedded_repo && ends_with(path, "/")))
 		return;
 
 	/* Drop trailing slash for aesthetics */

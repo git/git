@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if ! echo abc | sed 's/(ab)c/\1/' >/dev/null 2>&1
+then
+	alias sed='sed -E'
+fi
+
 die () {
 	echo "$@" >&2
 	exit 1
@@ -10,7 +15,7 @@ command_list () {
 }
 
 get_categories () {
-	tr ' ' '\n'|
+	tr ' ' '\012'|
 	grep -v '^$' |
 	sort |
 	uniq
@@ -18,16 +23,16 @@ get_categories () {
 
 category_list () {
 	command_list "$1" |
-	cut -c 40- |
+	awk '{ print substr($0, 40) }' |
 	get_categories
 }
 
 get_synopsis () {
 	sed -n '
-		/^NAME/,/'"$1"'/H
+		/^NAME/,/'"$1"'/h
 		${
 			x
-			s/.*'"$1"' - \(.*\)/N_("\1")/
+			s/.*'"$1"' - (.*)/N_("\1")/
 			p
 		}' "Documentation/$1.txt"
 }
@@ -60,16 +65,23 @@ define_category_names () {
 	echo "};"
 }
 
+if test -z "$(echo -n)"
+then
+	alias print='echo -n'
+else
+	alias print='printf %s'
+fi
+
 print_command_list () {
 	echo "static struct cmdname_help command_list[] = {"
 
 	command_list "$1" |
 	while read cmd rest
 	do
-		printf "	{ \"$cmd\", $(get_synopsis $cmd), 0"
+		print "	{ \"$cmd\", $(get_synopsis $cmd), 0"
 		for cat in $(echo "$rest" | get_categories)
 		do
-			printf " | CAT_$cat"
+			print " | CAT_$cat"
 		done
 		echo " },"
 	done

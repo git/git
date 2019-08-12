@@ -168,7 +168,7 @@ int cmd_main(int argc, const char **argv)
 	if (file) {
 		string_list_append(&fns, file);
 	} else {
-		if ((file = expand_user_path("~/.git-credentials", 0)))
+		if ((file = expand_user_path(USER_GITCREDENTIALS, 0)))
 			string_list_append_nodup(&fns, file);
 		file = xdg_config_home("credentials");
 		if (file)
