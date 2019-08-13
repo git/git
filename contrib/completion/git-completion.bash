@@ -2225,7 +2225,7 @@ __git_config_vars=
 __git_compute_config_vars ()
 {
 	test -n "$__git_config_vars" ||
-	__git_config_vars="$(git help --config-for-completion | sort | uniq)"
+	__git_config_vars="$(git help --config-for-completion | sort -u)"
 }
 
 _git_config ()
