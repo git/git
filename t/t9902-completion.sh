@@ -1733,6 +1733,13 @@ test_expect_success 'git -c - variable name' '
 	EOF
 '
 
+test_expect_success 'git -c - value' '
+	test_completion "git -c color.pager=" <<-\EOF
+	false Z
+	true Z
+	EOF
+'
+
 test_expect_success 'sourcing the completion script clears cached commands' '
 	__git_compute_all_commands &&
 	verbose test -n "$__git_all_commands" &&

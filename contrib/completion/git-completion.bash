@@ -2229,96 +2229,112 @@ __git_compute_config_vars ()
 }
 
 # Completes possible values of various configuration variables.
+#
+# Usage: __git_complete_config_variable_value [<option>]...
+# --varname=<word>: The name of the configuration variable whose value is
+#                   to be completed.  Defaults to the previous word on the
+#                   command line.
+# --cur=<word>: The current value to be completed.  Defaults to the current
+#               word to be completed.
 __git_complete_config_variable_value ()
 {
-	local varname
+	local varname="$prev" cur_="$cur"
+
+	while test $# != 0; do
+		case "$1" in
+		--varname=*)	varname="${1##--varname=}" ;;
+		--cur=*)	cur_="${1##--cur=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
 
 	if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
-		varname="${prev,,}"
+		varname="${varname,,}"
 	else
-		varname="$(echo "$prev" |tr A-Z a-z)"
+		varname="$(echo "$varname" |tr A-Z a-z)"
 	fi
 
 	case "$varname" in
 	branch.*.remote|branch.*.pushremote)
-		__gitcomp_nl "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)" "" "$cur_"
 		return
 		;;
 	branch.*.merge)
-		__git_complete_refs
+		__git_complete_refs --cur="$cur_"
 		return
 		;;
 	branch.*.rebase)
-		__gitcomp "false true merges preserve interactive"
+		__gitcomp "false true merges preserve interactive" "" "$cur_"
 		return
 		;;
 	remote.pushdefault)
-		__gitcomp_nl "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)" "" "$cur_"
 		return
 		;;
 	remote.*.fetch)
-		local remote="${prev#remote.}"
+		local remote="${varname#remote.}"
 		remote="${remote%.fetch}"
-		if [ -z "$cur" ]; then
+		if [ -z "$cur_" ]; then
 			__gitcomp_nl "refs/heads/" "" "" ""
 			return
 		fi
-		__gitcomp_nl "$(__git_refs_remotes "$remote")"
+		__gitcomp_nl "$(__git_refs_remotes "$remote")" "" "$cur_"
 		return
 		;;
 	remote.*.push)
-		local remote="${prev#remote.}"
+		local remote="${varname#remote.}"
 		remote="${remote%.push}"
 		__gitcomp_nl "$(__git for-each-ref \
-			--format='%(refname):%(refname)' refs/heads)"
+			--format='%(refname):%(refname)' refs/heads)" "" "$cur_"
 		return
 		;;
 	pull.twohead|pull.octopus)
 		__git_compute_merge_strategies
-		__gitcomp "$__git_merge_strategies"
+		__gitcomp "$__git_merge_strategies" "" "$cur_"
 		return
 		;;
 	color.pager)
-		__gitcomp "false true"
+		__gitcomp "false true" "" "$cur_"
 		return
 		;;
 	color.*.*)
 		__gitcomp "
 			normal black red green yellow blue magenta cyan white
 			bold dim ul blink reverse
-			"
+			" "" "$cur_"
 		return
 		;;
 	color.*)
-		__gitcomp "false true always never auto"
+		__gitcomp "false true always never auto" "" "$cur_"
 		return
 		;;
 	diff.submodule)
-		__gitcomp "$__git_diff_submodule_formats"
+		__gitcomp "$__git_diff_submodule_formats" "" "$cur_"
 		return
 		;;
 	help.format)
-		__gitcomp "man info web html"
+		__gitcomp "man info web html" "" "$cur_"
 		return
 		;;
 	log.date)
-		__gitcomp "$__git_log_date_formats"
+		__gitcomp "$__git_log_date_formats" "" "$cur_"
 		return
 		;;
 	sendemail.aliasfiletype)
-		__gitcomp "mutt mailrc pine elm gnus"
+		__gitcomp "mutt mailrc pine elm gnus" "" "$cur_"
 		return
 		;;
 	sendemail.confirm)
-		__gitcomp "$__git_send_email_confirm_options"
+		__gitcomp "$__git_send_email_confirm_options" "" "$cur_"
 		return
 		;;
 	sendemail.suppresscc)
-		__gitcomp "$__git_send_email_suppresscc_options"
+		__gitcomp "$__git_send_email_suppresscc_options" "" "$cur_"
 		return
 		;;
 	sendemail.transferencoding)
-		__gitcomp "7bit 8bit quoted-printable base64"
+		__gitcomp "7bit 8bit quoted-printable base64" "" "$cur_"
 		return
 		;;
 	*.*)
@@ -2430,7 +2446,8 @@ __git_complete_config_variable_name_and_value ()
 {
 	case "$cur" in
 	*=*)
-		# in the next patch...
+		__git_complete_config_variable_value \
+			--varname="${cur%%=*}" --cur="${cur#*=}"
 		;;
 	*)
 		__git_complete_config_variable_name --sfx='='
