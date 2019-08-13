@@ -1399,6 +1399,12 @@ _git_clean ()
 
 _git_clone ()
 {
+	case "$prev" in
+	-c|--config)
+		__git_complete_config_variable_name_and_value
+		return
+		;;
+	esac
 	case "$cur" in
 	--*)
 		__gitcomp_builtin clone
