@@ -2228,7 +2228,8 @@ __git_compute_config_vars ()
 	__git_config_vars="$(git help --config-for-completion | sort -u)"
 }
 
-_git_config ()
+# Completes possible values of various configuration variables.
+__git_complete_config_variable_value ()
 {
 	local varname
 
@@ -2320,19 +2321,16 @@ _git_config ()
 		__gitcomp "7bit 8bit quoted-printable base64"
 		return
 		;;
-	--get|--get-all|--unset|--unset-all)
-		__gitcomp_nl "$(__git_config_get_set_variables)"
-		return
-		;;
 	*.*)
 		return
 		;;
 	esac
+}
+
+# Completes configuration sections, subsections, variable names.
+__git_complete_config_variable_name ()
+{
 	case "$cur" in
-	--*)
-		__gitcomp_builtin config
-		return
-		;;
 	branch.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_"
@@ -2407,6 +2405,29 @@ _git_config ()
 						print s "."
 				}
 				')"
+		;;
+	esac
+}
+
+_git_config ()
+{
+	case "$prev" in
+	--get|--get-all|--unset|--unset-all)
+		__gitcomp_nl "$(__git_config_get_set_variables)"
+		return
+		;;
+	*.*)
+		__git_complete_config_variable_value
+		return
+		;;
+	esac
+	case "$cur" in
+	--*)
+		__gitcomp_builtin config
+		;;
+	*)
+		__git_complete_config_variable_name
+		;;
 	esac
 }
 
