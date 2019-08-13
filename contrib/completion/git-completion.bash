@@ -360,7 +360,7 @@ __gitcomp ()
 			c="$c${4-}"
 			if [[ $c == "$cur_"* ]]; then
 				case $c in
-				--*=|*.) ;;
+				*=|*.) ;;
 				*) c="$c " ;;
 				esac
 				COMPREPLY[i++]="${2-}$c"
@@ -2328,18 +2328,33 @@ __git_complete_config_variable_value ()
 }
 
 # Completes configuration sections, subsections, variable names.
+#
+# Usage: __git_complete_config_variable_name [<option>]...
+# --sfx=<suffix>: A suffix to be appended to each fully completed
+#                 configuration variable name (but not to sections or
+#                 subsections) instead of the default space.
 __git_complete_config_variable_name ()
 {
+	local sfx
+
+	while test $# != 0; do
+		case "$1" in
+		--sfx=*)	sfx="${1##--sfx=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+
 	case "$cur" in
 	branch.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_"
+		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
-		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_"
+		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	guitool.*.*)
@@ -2347,28 +2362,28 @@ __git_complete_config_variable_name ()
 		__gitcomp "
 			argPrompt cmd confirm needsFile noConsole noRescan
 			prompt revPrompt revUnmerged title
-			" "$pfx" "$cur_"
+			" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	difftool.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_"
+		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	man.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_"
+		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	mergetool.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_"
+		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	pager.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__git_compute_all_commands
-		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_"
+		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	remote.*.*)
@@ -2376,23 +2391,23 @@ __git_complete_config_variable_name ()
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
 			receivepack uploadpack tagOpt pushurl
-			" "$pfx" "$cur_"
+			" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	remote.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
-		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_"
+		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	url.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_"
+		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	*.*)
 		__git_compute_config_vars
-		__gitcomp "$__git_config_vars"
+		__gitcomp "$__git_config_vars" "" "$cur" "$sfx"
 		;;
 	*)
 		__git_compute_config_vars
@@ -2405,6 +2420,20 @@ __git_complete_config_variable_name ()
 						print s "."
 				}
 				')"
+		;;
+	esac
+}
+
+# Completes '='-separated configuration sections/variable names and values
+# for 'git -c section.name=value'.
+__git_complete_config_variable_name_and_value ()
+{
+	case "$cur" in
+	*=*)
+		# in the next patch...
+		;;
+	*)
+		__git_complete_config_variable_name --sfx='='
 		;;
 	esac
 }
@@ -2984,7 +3013,11 @@ __git_main ()
 			# Bash filename completion
 			return
 			;;
-		-c|--namespace)
+		-c)
+			__git_complete_config_variable_name_and_value
+			return
+			;;
+		--namespace)
 			# we don't support completing these options' arguments
 			return
 			;;
