@@ -1698,6 +1698,27 @@ do
 	'
 done
 
+test_expect_failure 'git config - section' '
+	test_completion "git config br" <<-\EOF
+	branch.Z
+	browser.Z
+	EOF
+'
+
+test_expect_success 'git config - variable name' '
+	test_completion "git config log.d" <<-\EOF
+	log.date Z
+	log.decorate Z
+	EOF
+'
+
+test_expect_success 'git config - value' '
+	test_completion "git config color.pager " <<-\EOF
+	false Z
+	true Z
+	EOF
+'
+
 test_expect_success 'sourcing the completion script clears cached commands' '
 	__git_compute_all_commands &&
 	verbose test -n "$__git_all_commands" &&
