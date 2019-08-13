@@ -1698,7 +1698,7 @@ do
 	'
 done
 
-test_expect_failure 'git config - section' '
+test_expect_success 'git config - section' '
 	test_completion "git config br" <<-\EOF
 	branch.Z
 	browser.Z

@@ -2398,7 +2398,15 @@ _git_config ()
 		;;
 	*)
 		__git_compute_config_vars
-		__gitcomp "$(echo "$__git_config_vars" | sed 's/\.[^ ]*/./g')"
+		__gitcomp "$(echo "$__git_config_vars" |
+				awk -F . '{
+					sections[$1] = 1
+				}
+				END {
+					for (s in sections)
+						print s "."
+				}
+				')"
 	esac
 }
 
