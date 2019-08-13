@@ -2277,11 +2277,6 @@ _git_config ()
 		__gitcomp "$__git_merge_strategies"
 		return
 		;;
-	color.branch|color.diff|color.interactive|\
-	color.showbranch|color.status|color.ui)
-		__gitcomp "always never auto"
-		return
-		;;
 	color.pager)
 		__gitcomp "false true"
 		return
@@ -2291,6 +2286,10 @@ _git_config ()
 			normal black red green yellow blue magenta cyan white
 			bold dim ul blink reverse
 			"
+		return
+		;;
+	color.*)
+		__gitcomp "false true always never auto"
 		return
 		;;
 	diff.submodule)
