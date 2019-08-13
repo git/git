@@ -11,6 +11,17 @@ struct pathspec;
 struct raw_object_store;
 struct submodule_cache;
 
+struct repo_settings {
+	int initialized;
+
+	int core_commit_graph;
+	int gc_write_commit_graph;
+
+	int index_version;
+
+	int pack_use_sparse;
+};
+
 struct repository {
 	/* Environment */
 	/*
@@ -71,6 +82,8 @@ struct repository {
 	 * as a submodule of another repository.
 	 */
 	char *submodule_prefix;
+
+	struct repo_settings settings;
 
 	/* Subsystems */
 	/*
@@ -157,5 +170,6 @@ int repo_read_index_unmerged(struct repository *);
  */
 void repo_update_index_if_able(struct repository *, struct lock_file *);
 
+void prepare_repo_settings(struct repository *r);
 
 #endif /* REPOSITORY_H */
