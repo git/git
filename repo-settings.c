@@ -36,9 +36,12 @@ void prepare_repo_settings(struct repository *r)
 		free(strval);
 	}
 
-
 	if (!repo_config_get_bool(r, "pack.usesparse", &value))
 		r->settings.pack_use_sparse = value;
+	if (!repo_config_get_bool(r, "feature.manyfiles", &value) && value) {
+		UPDATE_DEFAULT_BOOL(r->settings.index_version, 4);
+		UPDATE_DEFAULT_BOOL(r->settings.core_untracked_cache, UNTRACKED_CACHE_WRITE);
+	}
 
 	/* Hack for test programs like test-dump-untracked-cache */
 	if (ignore_untracked_cache_config)
