@@ -524,7 +524,7 @@ __git_index_files ()
 			# Even when a directory name itself does not contain
 			# any special characters, it will still be quoted if
 			# any of its (stripped) trailing path components do.
-			# Because of this we may have seen the same direcory
+			# Because of this we may have seen the same directory
 			# both quoted and unquoted.
 			if (p in paths)
 				# We have seen the same directory unquoted,
