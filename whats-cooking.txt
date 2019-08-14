@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2019, #03; Tue, 6)
-X-master-at: 7c20df84bd21ec0215358381844274fa10515017
-X-next-at: deed80330f2f849fecaf1d22eaf715b93ef96954
+Subject: What's cooking in git.git (Aug 2019, #04; Wed, 14)
+X-master-at: ff66981f4593aec0f3b3eeace0eacb7dbe44fd8c
+X-next-at: e5444969c986fc1503282c63d33931021c78d991
 
-What's cooking in git.git (Aug 2019, #03; Tue, 6)
+What's cooking in git.git (Aug 2019, #04; Wed, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,15 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-There are a few last-minute fix-up topics in flight, which I'll be
-merging to 'next' and then down to 'master' soonish, before rc2.
-They are marked as "Will merge to 'next' and then to 'master'" in
-this report; please raise hand if some of them are not ready or
-appropriate, to stop me before too late.
+We have a handful of topics in 'next', but as far as I can tell,
+there is not anything that is so urgent and needs to go in the
+upcoming release.  Hence the upcoming 2.23 release would hopefully
+be pretty much the same as the tip of the 'master' as of today.
+
+Unless we find something else that is glaringly wrong there in the
+next few days, that is.  But in such a case it is likely we'd need
+to delay the release to deal with the issue.  Let's hope there isn't
+such a serious regression.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,104 +28,205 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* bc/hash-independent-tests-part-4 (2019-08-08) 2 commits
+  (merged to 'next' on 2019-08-08 at fd54f4fafc)
+ + t0000: reword comments for "local" test
+ + t: decrease nesting in test_oid_to_path
+
+ Test fix.
+
+
+* ds/commit-graph-incremental (2019-08-07) 1 commit
+  (merged to 'next' on 2019-08-07 at 9094f5b305)
+ + commit-graph: release strbufs after use
+
+ Leakfix.
+
 
 * ds/commit-graph-octopus-fix (2019-08-05) 1 commit
- - commit-graph: fix bug around octopus merges
+  (merged to 'next' on 2019-08-07 at 9f8eaf7c4e)
+ + commit-graph: fix bug around octopus merges
 
  commit-graph did not handle commits with more than two parents
  correctly, which has been corrected.
 
- Will merge to 'next' and then to 'master'.
-
-
-* mr/doc-can-not-to-cannot (2019-08-05) 1 commit
- - doc: typo: s/can not/cannot/ and s/is does/does/
-
- Docfix.
-
- Will merge to 'next' and then to 'master'.
-
-
-* nd/switch-and-restore (2019-08-05) 1 commit
- - restore: fix typo in docs
-
- Docfix.
-
- Will merge to 'next' and then to 'master'.
-
-
-* sg/commit-graph-validate (2019-08-05) 3 commits
- - commit-graph: error out on invalid commit oids in 'write --stdin-commits'
- - commit-graph: turn a group of write-related macro flags into an enum
- - t5318-commit-graph: use 'test_expect_code'
-
- The code to write commit-graph over given commit object names has
- been made a bit more robust.
-
- Will merge to 'next'.
-
-
-* sg/show-failed-test-names (2019-08-05) 2 commits
- - tests: show the test name and number at the start of verbose output
- - t0000-basic: use realistic test script names in the verbose tests
-
- The first line of verbose output from each test piece now carries
- the test name and number to help scanning with eyeballs.
-
- Will merge to 'next'.
-
 
 * en/disable-dir-rename-in-recursive-merge (2019-08-06) 1 commit
- - merge-recursive: avoid directory rename detection in recursive case
+  (merged to 'next' on 2019-08-07 at f1efcbfd99)
+ + merge-recursive: avoid directory rename detection in recursive case
 
  "merge-recursive" hit a BUG() when building a virtual merge base
  detected a directory rename.
 
- Will merge to 'next' and then to 'master'.
-
-
-* js/pre-merge-commit-hook (2019-08-06) 4 commits
- - merge: --no-verify to bypass pre-merge-commit hook
- - git-merge: honor pre-merge-commit hook
- - merge: do no-verify like commit
- - t7503: verify proper hook execution
-
- A new "pre-merge-commit" hook has been introduced.
-
 
 * ja/l10n-fixes (2019-08-06) 1 commit
- - l10n: reformat some localized strings for v2.23.0
+  (merged to 'next' on 2019-08-07 at 24aa435a4b)
+ + l10n: reformat some localized strings for v2.23.0
 
  A few messages have been updated to help localization better.
 
- Will merge to 'next' and then to 'master'.
+
+* mr/doc-can-not-to-cannot (2019-08-05) 1 commit
+  (merged to 'next' on 2019-08-07 at 128135f4e4)
+ + doc: typo: s/can not/cannot/ and s/is does/does/
+
+ Docfix.
 
 
-* jk/eoo (2019-08-06) 3 commits
- - gitcli: document --end-of-options
- - parse-options: allow --end-of-options as a synonym for "--"
- - revision: allow --end-of-options to end option parsing
+* mt/dir-iterator-updates (2019-08-07) 2 commits
+  (merged to 'next' on 2019-08-07 at 68e9a16b4a)
+ + test-dir-iterator: use path argument directly
+ + dir-iterator: release strbuf after use
 
- The command line parser learned "--end-of-options" notation; the
- standard convention for scripters to have hardcoded set of options
- first on the command line, and force the command to treat end-user
- input as non-options, has been to use "--" as the delimiter, but
- that would not work for commands that use "--" as a delimiter
- between revs and pathspec.
+ Leakfix.
+
+
+* nd/switch-and-restore (2019-08-05) 1 commit
+  (merged to 'next' on 2019-08-07 at 6a047a8092)
+ + restore: fix typo in docs
+
+ Docfix.
+
+
+* rs/plug-strbuf-reak-in-read-alt-refs (2019-08-07) 1 commit
+  (merged to 'next' on 2019-08-07 at bd704faa3e)
+ + sha1-file: release strbuf after use
+
+ Leakfix.
+
+--------------------------------------------------
+[New Topics]
+
+* py/git-gui-do-quit (2019-08-07) 2 commits
+ - Merge branch 'py/call-do-quit-before-exit' of github.com:gitster/git-gui into py/git-gui-do-quit
+ - git-gui: call do_quit before destroying the main window
+
+ "git gui" learned to call the clean-up procedure before exiting.
 
  Will merge to 'next'.
 
 
-* jk/repo-init-cleanup (2019-08-06) 3 commits
- - config: stop checking whether the_repository is NULL
- - common-main: delay trace2 initialization
- - t1309: use short branch name in includeIf.onbranch test
+* rs/nedalloc-fixlets (2019-08-07) 2 commits
+  (merged to 'next' on 2019-08-09 at 0e9286fb70)
+ + nedmalloc: avoid compiler warning about unused value
+ + nedmalloc: do assignments only after the declaration section
 
- Further clean-up of the initialization code.
+ Compilation fix.
+
+ Will cook in 'next'.
+
+
+* jk/perf-no-dups (2019-08-12) 1 commit
+  (merged to 'next' on 2019-08-14 at 3010a7d19f)
+ + t/perf: rename duplicate-numbered test script
+
+ Test & perf scripts must use unique numeric prefix, but a pair
+ shared the same number, which is fixed here.
+
+ Will cook in 'next'.
+
+
+* en/fast-import-merge-doc (2019-08-12) 1 commit
+  (merged to 'next' on 2019-08-14 at 65efc63345)
+ + git-fast-import.txt: clarify that multiple merge commits are allowed
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* bc/reread-attributes-during-rebase (2019-08-13) 3 commits
+ - SQUASH???
+ - apply: reload .gitattributes after patching it
+ - path: add a function to check for path suffix
+
+ The "git am" based backend of "git rebase" ignored the result of
+ updating ".gitattributes" done in one step when replaying
+ subsequent steps.
+
+ Will squash the tip commit in and then merge to 'next'.
+
+
+* jk/drop-release-pack-memory (2019-08-13) 1 commit
+ - packfile: drop release_pack_memory()
+
+ xmalloc() used to have a mechanism to ditch memory and address
+ space resources as the last resort upon seeing an allocation
+ failure from the underlying malloc(), which made the code complex
+ and thread-unsafe with dubious benefit, as major memory resource
+ users already do limit their uses with various other mechanisms.
+ It has been simplified away.
+
+ Will merge to 'next'.
+
+
+* sg/complete-configuration-variables (2019-08-13) 11 commits
+ - completion: complete config variables and values for 'git clone --config='
+ - completion: complete config variables names and values for 'git clone -c'
+ - completion: complete values of configuration variables after 'git -c var='
+ - completion: complete configuration sections and variable names for 'git -c'
+ - completion: split _git_config()
+ - completion: simplify inner 'case' pattern in __gitcomp()
+ - completion: use 'sort -u' to deduplicate config variable names
+ - completion: deduplicate configuration sections
+ - completion: add tests for 'git config' completion
+ - completion: complete more values of more 'color.*' configuration variables
+ - completion: fix a typo in a comment
+
+ Command line completion updates for "git -c var.name=val"
+
+ Will merge to 'next'.
+
+
+* sg/worktree-remove-errormsg (2019-08-13) 1 commit
+  (merged to 'next' on 2019-08-14 at e5444969c9)
+ + worktree remove: clarify error message on dirty worktree
+
+ Error message update/clarification.
+
+ Will cook in 'next'.
+
+
+* mt/threaded-grep-in-object-store (2019-08-13) 4 commits
+ - grep: re-enable threads in some non-worktree cases
+ - grep: disable grep_read_mutex when possible
+ - grep: allow locks to be enabled individually
+ - object-store: add lock to read_object_file_extended()
+
+
+* pd/fetch-jobs (2019-08-13) 5 commits
+ . fetch: make --jobs control submodules and remotes
+ . fetch: add the --submodule-fetch-jobs option
+ . fetch: add the fetch.jobs config key
+ . fetch: add the "--fetch-jobs" option
+ . fetch: rename max_children to max_children_for_submodules
+
+ "git fetch --jobs" is getting taught to also run fetch jobs in
+ parallel when fetching from multiple remote repositories.
+
+
+* cb/fetch-set-upstream (2019-08-14) 1 commit
+ - pull, fetch: add --set-upstream option
+
+ "git fetch" learned "--set-upstream" option to help those who first
+ clone from their private fork they intend to push to, add the true
+ upstream via "git remote add" and then "git fetch" from it.
 
 --------------------------------------------------
 [Stalled]
+
+* js/trace2-json-schema (2019-07-25) 3 commits
+ . ci: run trace2 schema validation in the CI suite
+ . trace2: add a schema validator for trace2 events
+ . trace2: add a JSON schema for trace2 events
+
+ The JSON output produced by "trace2" subsystem now has JSON schema
+ defined on it, to allow us validate the output and catch deviation.
+
+ The CI integration may be a bit too heavy-handed.
+
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
  - index: offer advice for unknown index extensions
@@ -193,6 +298,63 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* sg/commit-graph-validate (2019-08-05) 3 commits
+  (merged to 'next' on 2019-08-09 at 87f61abb73)
+ + commit-graph: error out on invalid commit oids in 'write --stdin-commits'
+ + commit-graph: turn a group of write-related macro flags into an enum
+ + t5318-commit-graph: use 'test_expect_code'
+
+ The code to write commit-graph over given commit object names has
+ been made a bit more robust.
+
+ Will cook in 'next'.
+
+
+* sg/show-failed-test-names (2019-08-05) 2 commits
+  (merged to 'next' on 2019-08-09 at c49ece8a0d)
+ + tests: show the test name and number at the start of verbose output
+ + t0000-basic: use realistic test script names in the verbose tests
+
+ The first line of verbose output from each test piece now carries
+ the test name and number to help scanning with eyeballs.
+
+ Will cook in 'next'.
+
+
+* js/pre-merge-commit-hook (2019-08-07) 4 commits
+ - merge: --no-verify to bypass pre-merge-commit hook
+ - git-merge: honor pre-merge-commit hook
+ - merge: do no-verify like commit
+ - t7503: verify proper hook execution
+
+ A new "pre-merge-commit" hook has been introduced.
+
+ Will merge to 'next'.
+
+
+* jk/eoo (2019-08-06) 3 commits
+ - gitcli: document --end-of-options
+ - parse-options: allow --end-of-options as a synonym for "--"
+ - revision: allow --end-of-options to end option parsing
+
+ The command line parser learned "--end-of-options" notation; the
+ standard convention for scripters to have hardcoded set of options
+ first on the command line, and force the command to treat end-user
+ input as non-options, has been to use "--" as the delimiter, but
+ that would not work for commands that use "--" as a delimiter
+ between revs and pathspec.
+
+ Will merge to 'next'.
+
+
+* jk/repo-init-cleanup (2019-08-06) 3 commits
+ - config: stop checking whether the_repository is NULL
+ - common-main: delay trace2 initialization
+ - t1309: use short branch name in includeIf.onbranch test
+
+ Further clean-up of the initialization code.
+
+
 * cb/pcre2-chartables-leakfix (2019-08-06) 3 commits
  - grep: avoid leak of chartables in PCRE2
  - grep: make PCRE2 aware of custom allocator
@@ -201,27 +363,56 @@ of the repositories listed at
  WIP.
 
 
-* jh/trace2-pretty-output (2019-08-01) 3 commits
+* jh/trace2-pretty-output (2019-08-09) 7 commits
+ - trace2: cleanup whitespace in perf format
+ - trace2: cleanup whitespace in normal format
+ - quote: add sq_append_quote_argv_pretty()
+ - trace2: trim trailing whitespace in normal format error message
+ - trace2: remove dead code in maybe_add_string_va()
  - trace2: trim whitespace in region messages in perf target format
- - trace2: trim whitespace in start message in perf target format
  - trace2: cleanup column alignment in perf target format
+
+ Output from trace2 subsystem is formatted more prettily now.
+
+ Will merge to 'next'.
 
 
 * sc/pack-refs-deletion-racefix (2019-08-02) 1 commit
- - pack-refs: always refresh after taking the lock file
+  (merged to 'next' on 2019-08-09 at 6bd6c85fbb)
+ + pack-refs: always refresh after taking the lock file
+
+ "git pack-refs" can lose refs that are created while running, which
+ is getting corrected.
+
+ Will cook in 'next'.
 
 
 * vn/restore-empty-ita-corner-case-fix (2019-08-02) 2 commits
- - restore: add test for deleted ita files
- - checkout.c: unstage empty deleted ita files
+  (merged to 'next' on 2019-08-09 at ad2d7630d1)
+ + restore: add test for deleted ita files
+ + checkout.c: unstage empty deleted ita files
+
+ "git checkout" and "git restore" to re-populate the index from a
+ tree-ish (typically HEAD) did not work correctly for a path that
+ was removed and then added again with the intent-to-add bit, when
+ the corresponding working tree file was empty.  This has been
+ corrected.
+
+ Will cook in 'next'.
 
 
-* ds/feature-macros (2019-07-30) 5 commits
+* ds/feature-macros (2019-08-13) 6 commits
  - repo-settings: create feature.experimental setting
  - repo-settings: create feature.manyFiles setting
  - repo-settings: parse core.untrackedCache
- - repo-settings: add feature.manyCommits setting
+ - commit-graph: turn on commit-graph by default
+ - t6501: use 'git gc' in quiet mode
  - repo-settings: consolidate some config settings
+
+ A mechanism to affect the default setting for a (related) group of
+ configuration variables is introduced.
+
+ Will merge to 'next'.
 
 
 * mt/grep-submodules-working-tree (2019-07-30) 1 commit
@@ -281,8 +472,10 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* ra/rebase-i-more-options (2019-07-23) 4 commits
- - SQUASH???
+* ra/rebase-i-more-options (2019-08-13) 6 commits
+ - rebase: add --author-date-is-committer-date
+ - rebase -i: support --ignore-date
+ - sequencer: rename amend_author to author_to_rename
  - rebase -i: support --committer-date-is-author-date
  - sequencer: add NULL checks under read_author_script
  - rebase -i: add --ignore-whitespace flag
@@ -290,7 +483,7 @@ of the repositories listed at
  "git rebase -i" learned a few options that are known by "git
  rebase" proper.
 
- Needs a bit of fixups, at least.
+ Almost there.
 
 
 * js/rebase-r-strategy (2019-07-31) 16 commits
@@ -314,16 +507,7 @@ of the repositories listed at
  "git rebase --rebase-merges" learned to drive different merge
  strategies and pass strategy specific options to them.
 
-
-* js/trace2-json-schema (2019-07-25) 3 commits
- . ci: run trace2 schema validation in the CI suite
- . trace2: add a schema validator for trace2 events
- . trace2: add a JSON schema for trace2 events
-
- The JSON output produced by "trace2" subsystem now has JSON schema
- defined on it, to allow us validate the output and catch deviation.
-
- The CI integration may be a bit too heavy-handed.
+ Will merge to 'next'.
 
 
 * js/builtin-add-i (2019-07-18) 11 commits
@@ -341,11 +525,15 @@ of the repositories listed at
 
  The beginning of rewriting "git add -i" in C.
 
+ Expecting a response and possibly a reroll.
+ cf. <xmqqwofyozka.fsf@gitster-ct.c.googlers.com>
+ cf. <xmqqsgqmoyz1.fsf@gitster-ct.c.googlers.com>
 
-* es/walken-tutorial (2019-07-02) 1 commit
+
+* es/walken-tutorial (2019-08-07) 1 commit
  - documentation: add tutorial for revision walking
 
- Yet another revision walker tutorial.
+ A tutorial on object enumeration.
 
 
 * ab/no-kwset (2019-07-01) 10 commits
