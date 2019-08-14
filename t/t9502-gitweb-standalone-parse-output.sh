@@ -38,8 +38,11 @@ EOF
 list_snapshot () {
 	basename="`echo "$1" | sed 's,\/,\.,g'`"
 	echo "basename=$basename"
+	rm -f file_list
 	grep "filename=.*$basename.tar" gitweb.headers >/dev/null 2>&1 &&
-	"$TAR" tf gitweb.body >file_list
+	( "$TAR" tf gitweb.body >file_list )
+	# In case of grep error, no file_list as well as an error-code
+	# In case of tar error, there is a file_list but also an error-code
 }
 
 #
