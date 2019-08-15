@@ -7557,6 +7557,15 @@ sub git_snapshot {
 		}
 	}
 	if ( $retError ne "" ) {
+		if ($DEBUG) {
+			printf STDERR "Execute git-archive finally failed with exit-code $gitcode";
+			if ($giterr) {
+				printf STDERR ":\n" . $giterr . "\n";
+				if ($gitout) { printf STDERR "and stdout:\n" . $gitout . "\n"; }
+			} else {
+				printf STDERR "\n";
+			}
+		}
 		$retError = "<br/><pre>$retError</pre><br/>";
 	}
 
