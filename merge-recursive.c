@@ -1019,7 +1019,7 @@ static int merge_3way(struct merge_options *opt,
 {
 	mmfile_t orig, src1, src2;
 	struct ll_merge_options ll_opts = {0};
-	char *base_name, *name1, *name2;
+	char *base, *name1, *name2;
 	int merge_status;
 
 	ll_opts.renormalize = opt->renormalize;
@@ -1043,16 +1043,13 @@ static int merge_3way(struct merge_options *opt,
 		}
 	}
 
-	assert(a->path && b->path && o->path);
-	if (strcmp(a->path, b->path) ||
-	    (opt->ancestor != NULL && strcmp(a->path, o->path) != 0)) {
-		base_name = opt->ancestor == NULL ? NULL :
-			mkpathdup("%s:%s", opt->ancestor, o->path);
+	assert(a->path && b->path && o->path && opt->ancestor);
+	if (strcmp(a->path, b->path) || strcmp(a->path, o->path) != 0) {
+		base  = mkpathdup("%s:%s", opt->ancestor, o->path);
 		name1 = mkpathdup("%s:%s", branch1, a->path);
 		name2 = mkpathdup("%s:%s", branch2, b->path);
 	} else {
-		base_name = opt->ancestor == NULL ? NULL :
-			mkpathdup("%s", opt->ancestor);
+		base  = mkpathdup("%s", opt->ancestor);
 		name1 = mkpathdup("%s", branch1);
 		name2 = mkpathdup("%s", branch2);
 	}
@@ -1061,11 +1058,11 @@ static int merge_3way(struct merge_options *opt,
 	read_mmblob(&src1, &a->oid);
 	read_mmblob(&src2, &b->oid);
 
-	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
+	merge_status = ll_merge(result_buf, a->path, &orig, base,
 				&src1, name1, &src2, name2,
 				opt->repo->index, &ll_opts);
 
-	free(base_name);
+	free(base);
 	free(name1);
 	free(name2);
 	free(orig.ptr);
@@ -3389,6 +3386,8 @@ int merge_trees(struct merge_options *opt,
 	struct index_state *istate = opt->repo->index;
 	int code, clean;
 	struct strbuf sb = STRBUF_INIT;
+
+	assert(opt->ancestor != NULL);
 
 	if (!opt->call_depth && repo_index_has_changes(opt->repo, head, &sb)) {
 		err(opt, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
