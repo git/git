@@ -713,6 +713,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			struct tree *old_tree;
 			struct merge_options o;
 			struct strbuf sb = STRBUF_INIT;
+			struct strbuf old_commit_shortname = STRBUF_INIT;
 
 			if (!opts->merge)
 				return 1;
@@ -768,6 +769,12 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			if (ret)
 				return ret;
 			o.ancestor = old_branch_info->name;
+			if (old_branch_info->name == NULL) {
+				strbuf_add_unique_abbrev(&old_commit_shortname,
+							 &old_branch_info->commit->object.oid,
+							 DEFAULT_ABBREV);
+				o.ancestor = old_commit_shortname.buf;
+			}
 			o.branch1 = new_branch_info->name;
 			o.branch2 = "local";
 			ret = merge_trees(&o,
@@ -781,6 +788,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 					 opts, 0,
 					 writeout_error);
 			strbuf_release(&o.obuf);
+			strbuf_release(&old_commit_shortname);
 			if (ret)
 				return ret;
 		}
