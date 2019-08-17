@@ -220,8 +220,7 @@ build_tree() {
 test_expect_success 'tar archive with long paths' '
 	blob=$(echo foo | git hash-object -w --stdin) &&
 	tree=$(build_tree $blob | git mktree) &&
-	git archive -o long_paths.tar $tree 2>stderr &&
-	test_must_be_empty stderr
+	git archive -o long_paths.tar $tree
 '
 
 test_done

@@ -158,9 +158,9 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 	strbuf_addch(sb, '\n');
 
 	if (len != sb->len - orig_len)
-		warning("pax extended header length miscalculated as %"PRIuMAX
-			", should be %"PRIuMAX,
-			(uintmax_t)len, (uintmax_t)(sb->len - orig_len));
+		BUG("pax extended header length miscalculated as %"PRIuMAX
+		    ", should be %"PRIuMAX,
+		    (uintmax_t)len, (uintmax_t)(sb->len - orig_len));
 }
 
 /*
