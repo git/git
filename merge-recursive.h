@@ -68,10 +68,10 @@ struct collision_entry {
 	unsigned reported_already:1;
 };
 
-static inline int merge_detect_rename(struct merge_options *o)
+static inline int merge_detect_rename(struct merge_options *opt)
 {
-	return o->merge_detect_rename >= 0 ? o->merge_detect_rename :
-		o->diff_detect_rename >= 0 ? o->diff_detect_rename : 1;
+	return opt->merge_detect_rename >= 0 ? opt->merge_detect_rename :
+		opt->diff_detect_rename >= 0 ? opt->diff_detect_rename : 1;
 }
 
 /*
@@ -85,7 +85,7 @@ static inline int merge_detect_rename(struct merge_options *o)
  *       commit.  Also, merge_bases will be consumed (emptied) so make a
  *       copy if you need it.
  */
-int merge_recursive(struct merge_options *o,
+int merge_recursive(struct merge_options *opt,
 		    struct commit *h1,
 		    struct commit *h2,
 		    struct commit_list *merge_bases,
@@ -95,7 +95,7 @@ int merge_recursive(struct merge_options *o,
  * rename-detecting three-way merge, no recursion; result of merge is written
  * to opt->repo->index.
  */
-int merge_trees(struct merge_options *o,
+int merge_trees(struct merge_options *opt,
 		struct tree *head,
 		struct tree *merge,
 		struct tree *merge_base);
@@ -104,16 +104,16 @@ int merge_trees(struct merge_options *o,
  * "git-merge-recursive" can be fed trees; wrap them into
  * virtual commits and call merge_recursive() proper.
  */
-int merge_recursive_generic(struct merge_options *o,
+int merge_recursive_generic(struct merge_options *opt,
 			    const struct object_id *head,
 			    const struct object_id *merge,
 			    int num_merge_bases,
 			    const struct object_id **merge_bases,
 			    struct commit **result);
 
-void init_merge_options(struct merge_options *o,
+void init_merge_options(struct merge_options *opt,
 			struct repository *repo);
 
-int parse_merge_opt(struct merge_options *out, const char *s);
+int parse_merge_opt(struct merge_options *opt, const char *s);
 
 #endif
