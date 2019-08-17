@@ -412,37 +412,6 @@ static void unpack_trees_finish(struct merge_options *opt)
 	clear_unpack_trees_porcelain(&opt->unpack_opts);
 }
 
-struct tree *write_tree_from_memory(struct merge_options *opt)
-{
-	struct tree *result = NULL;
-	struct index_state *istate = opt->repo->index;
-
-	if (unmerged_index(istate)) {
-		int i;
-		fprintf(stderr, "BUG: There are unmerged index entries:\n");
-		for (i = 0; i < istate->cache_nr; i++) {
-			const struct cache_entry *ce = istate->cache[i];
-			if (ce_stage(ce))
-				fprintf(stderr, "BUG: %d %.*s\n", ce_stage(ce),
-					(int)ce_namelen(ce), ce->name);
-		}
-		BUG("unmerged index entries in merge-recursive.c");
-	}
-
-	if (!istate->cache_tree)
-		istate->cache_tree = cache_tree();
-
-	if (!cache_tree_fully_valid(istate->cache_tree) &&
-	    cache_tree_update(istate, 0) < 0) {
-		err(opt, _("error building trees"));
-		return NULL;
-	}
-
-	result = lookup_tree(opt->repo, &istate->cache_tree->oid);
-
-	return result;
-}
-
 static int save_files_dirs(const struct object_id *oid,
 			   struct strbuf *base, const char *path,
 			   unsigned int mode, int stage, void *context)
@@ -3472,7 +3441,8 @@ static int merge_trees_internal(struct merge_options *opt,
 
 	unpack_trees_finish(opt);
 
-	if (opt->call_depth && !(*result = write_tree_from_memory(opt)))
+	if (opt->call_depth &&
+	    !(*result = write_in_core_index_as_tree(opt->repo)))
 		return -1;
 
 	return clean;

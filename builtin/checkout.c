@@ -760,7 +760,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
-			work = write_tree_from_memory(&o);
+			work = write_in_core_index_as_tree(the_repository);
 
 			ret = reset_tree(new_tree,
 					 opts, 1,
