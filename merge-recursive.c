@@ -3598,9 +3598,6 @@ static int merge_recursive_internal(struct merge_options *opt,
 		commit_list_insert(h1, &(*result)->parents);
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
-	flush_output(opt);
-	if (!opt->call_depth && opt->buffer_output < 2)
-		strbuf_release(&opt->obuf);
 	return clean;
 }
 
@@ -3620,6 +3617,9 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 
 static void merge_finalize(struct merge_options *opt)
 {
+	flush_output(opt);
+	if (!opt->call_depth && opt->buffer_output < 2)
+		strbuf_release(&opt->obuf);
 	if (show(opt, 2))
 		diff_warn_rename_limit("merge.renamelimit",
 				       opt->needed_rename_limit, 0);

@@ -38,7 +38,8 @@ struct merge_options {
 	/* console output related options */
 	int verbosity;
 	unsigned buffer_output; /* 1: output at end, 2: keep buffered */
-	struct strbuf obuf;     /* output buffer */
+	struct strbuf obuf;     /* output buffer; if buffer_output == 2, caller
+				 * must handle and call strbuf_release */
 
 	/* miscellaneous control options */
 	const char *subtree_shift;
