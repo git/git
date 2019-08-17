@@ -149,7 +149,7 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 
 	/* "%u %s=%s\n" */
 	len = 1 + 1 + strlen(keyword) + 1 + valuelen + 1;
-	for (tmp = len; tmp > 9; tmp /= 10)
+	for (tmp = 1; len / 10 >= tmp; tmp *= 10)
 		len++;
 
 	strbuf_grow(sb, len);
