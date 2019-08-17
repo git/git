@@ -81,14 +81,14 @@ static inline int merge_detect_rename(struct merge_options *o)
  *
  * NOTE: empirically, about a decade ago it was determined that with more
  *       than two merge bases, optimal behavior was found when the
- *       ancestors were passed in the order of oldest merge base to newest
- *       one.  Also, ancestors will be consumed (emptied) so make a copy if
- *       you need it.
+ *       merge_bases were passed in the order of oldest commit to newest
+ *       commit.  Also, merge_bases will be consumed (emptied) so make a
+ *       copy if you need it.
  */
 int merge_recursive(struct merge_options *o,
 		    struct commit *h1,
 		    struct commit *h2,
-		    struct commit_list *ancestors,
+		    struct commit_list *merge_bases,
 		    struct commit **result);
 
 /*
@@ -98,7 +98,7 @@ int merge_recursive(struct merge_options *o,
 int merge_trees(struct merge_options *o,
 		struct tree *head,
 		struct tree *merge,
-		struct tree *common);
+		struct tree *merge_base);
 
 /*
  * "git-merge-recursive" can be fed trees; wrap them into
@@ -107,8 +107,8 @@ int merge_trees(struct merge_options *o,
 int merge_recursive_generic(struct merge_options *o,
 			    const struct object_id *head,
 			    const struct object_id *merge,
-			    int num_ca,
-			    const struct object_id **ca,
+			    int num_merge_bases,
+			    const struct object_id **merge_bases,
 			    struct commit **result);
 
 void init_merge_options(struct merge_options *o,

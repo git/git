@@ -3357,24 +3357,26 @@ static int process_entry(struct merge_options *opt,
 static int merge_trees_internal(struct merge_options *opt,
 				struct tree *head,
 				struct tree *merge,
-				struct tree *common,
+				struct tree *merge_base,
 				struct tree **result)
 {
 	struct index_state *istate = opt->repo->index;
 	int code, clean;
 
 	if (opt->subtree_shift) {
-		merge = shift_tree_object(opt->repo, head, merge, opt->subtree_shift);
-		common = shift_tree_object(opt->repo, head, common, opt->subtree_shift);
+		merge = shift_tree_object(opt->repo, head, merge,
+					  opt->subtree_shift);
+		merge_base = shift_tree_object(opt->repo, head, merge_base,
+					       opt->subtree_shift);
 	}
 
-	if (oid_eq(&common->object.oid, &merge->object.oid)) {
+	if (oid_eq(&merge_base->object.oid, &merge->object.oid)) {
 		output(opt, 0, _("Already up to date!"));
 		*result = head;
 		return 1;
 	}
 
-	code = unpack_trees_start(opt, common, head, merge);
+	code = unpack_trees_start(opt, merge_base, head, merge);
 
 	if (code != 0) {
 		if (show(opt, 4) || opt->call_depth)
@@ -3402,7 +3404,7 @@ static int merge_trees_internal(struct merge_options *opt,
 		get_files_dirs(opt, merge);
 
 		entries = get_unmerged(opt->repo->index);
-		clean = detect_and_process_renames(opt, common, head, merge,
+		clean = detect_and_process_renames(opt, merge_base, head, merge,
 						   entries, &re_info);
 		record_df_conflict_files(opt, entries);
 		if (clean < 0)
@@ -3470,11 +3472,11 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
 static int merge_recursive_internal(struct merge_options *opt,
 				    struct commit *h1,
 				    struct commit *h2,
-				    struct commit_list *ca,
+				    struct commit_list *merge_bases,
 				    struct commit **result)
 {
 	struct commit_list *iter;
-	struct commit *merged_common_ancestors;
+	struct commit *merged_merge_bases;
 	struct tree *mrtree;
 	int clean;
 	const char *ancestor_name;
@@ -3486,39 +3488,39 @@ static int merge_recursive_internal(struct merge_options *opt,
 		output_commit_title(opt, h2);
 	}
 
-	if (!ca) {
-		ca = get_merge_bases(h1, h2);
-		ca = reverse_commit_list(ca);
+	if (!merge_bases) {
+		merge_bases = get_merge_bases(h1, h2);
+		merge_bases = reverse_commit_list(merge_bases);
 	}
 
 	if (show(opt, 5)) {
-		unsigned cnt = commit_list_count(ca);
+		unsigned cnt = commit_list_count(merge_bases);
 
 		output(opt, 5, Q_("found %u common ancestor:",
 				"found %u common ancestors:", cnt), cnt);
-		for (iter = ca; iter; iter = iter->next)
+		for (iter = merge_bases; iter; iter = iter->next)
 			output_commit_title(opt, iter->item);
 	}
 
-	merged_common_ancestors = pop_commit(&ca);
-	if (merged_common_ancestors == NULL) {
+	merged_merge_bases = pop_commit(&merge_bases);
+	if (merged_merge_bases == NULL) {
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 
 		tree = lookup_tree(opt->repo, opt->repo->hash_algo->empty_tree);
-		merged_common_ancestors = make_virtual_commit(opt->repo,
-							      tree, "ancestor");
+		merged_merge_bases = make_virtual_commit(opt->repo, tree,
+							 "ancestor");
 		ancestor_name = "empty tree";
-	} else if (ca) {
+	} else if (merge_bases) {
 		ancestor_name = "merged common ancestors";
 	} else {
 		strbuf_add_unique_abbrev(&merge_base_abbrev,
-					 &merged_common_ancestors->object.oid,
+					 &merged_merge_bases->object.oid,
 					 DEFAULT_ABBREV);
 		ancestor_name = merge_base_abbrev.buf;
 	}
 
-	for (iter = ca; iter; iter = iter->next) {
+	for (iter = merge_bases; iter; iter = iter->next) {
 		const char *saved_b1, *saved_b2;
 		opt->call_depth++;
 		/*
@@ -3534,14 +3536,14 @@ static int merge_recursive_internal(struct merge_options *opt,
 		saved_b2 = opt->branch2;
 		opt->branch1 = "Temporary merge branch 1";
 		opt->branch2 = "Temporary merge branch 2";
-		if (merge_recursive_internal(opt, merged_common_ancestors, iter->item,
-				    NULL, &merged_common_ancestors) < 0)
+		if (merge_recursive_internal(opt, merged_merge_bases, iter->item,
+					     NULL, &merged_merge_bases) < 0)
 			return -1;
 		opt->branch1 = saved_b1;
 		opt->branch2 = saved_b2;
 		opt->call_depth--;
 
-		if (!merged_common_ancestors)
+		if (!merged_merge_bases)
 			return err(opt, _("merge returned no commit"));
 	}
 
@@ -3554,7 +3556,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 				     repo_get_commit_tree(opt->repo, h1),
 				     repo_get_commit_tree(opt->repo, h2),
 				     repo_get_commit_tree(opt->repo,
-							  merged_common_ancestors),
+							  merged_merge_bases),
 				     &mrtree);
 	strbuf_release(&merge_base_abbrev);
 	if (clean < 0) {
@@ -3597,7 +3599,7 @@ static void merge_finalize(struct merge_options *opt)
 int merge_trees(struct merge_options *opt,
 		struct tree *head,
 		struct tree *merge,
-		struct tree *common)
+		struct tree *merge_base)
 {
 	int clean;
 	struct tree *ignored;
@@ -3606,7 +3608,7 @@ int merge_trees(struct merge_options *opt,
 
 	if (merge_start(opt, head))
 		return -1;
-	clean = merge_trees_internal(opt, head, merge, common, &ignored);
+	clean = merge_trees_internal(opt, head, merge, merge_base, &ignored);
 	merge_finalize(opt);
 
 	return clean;
@@ -3615,7 +3617,7 @@ int merge_trees(struct merge_options *opt,
 int merge_recursive(struct merge_options *opt,
 		    struct commit *h1,
 		    struct commit *h2,
-		    struct commit_list *ca,
+		    struct commit_list *merge_bases,
 		    struct commit **result)
 {
 	int clean;
@@ -3624,7 +3626,7 @@ int merge_recursive(struct merge_options *opt,
 
 	if (merge_start(opt, repo_get_commit_tree(opt->repo, h1)))
 		return -1;
-	clean = merge_recursive_internal(opt, h1, h2, ca, result);
+	clean = merge_recursive_internal(opt, h1, h2, merge_bases, result);
 	merge_finalize(opt);
 
 	return clean;
@@ -3652,8 +3654,8 @@ static struct commit *get_ref(struct repository *repo,
 int merge_recursive_generic(struct merge_options *opt,
 			    const struct object_id *head,
 			    const struct object_id *merge,
-			    int num_base_list,
-			    const struct object_id **base_list,
+			    int num_merge_bases,
+			    const struct object_id **merge_bases,
 			    struct commit **result)
 {
 	int clean;
@@ -3662,14 +3664,14 @@ int merge_recursive_generic(struct merge_options *opt,
 	struct commit *next_commit = get_ref(opt->repo, merge, opt->branch2);
 	struct commit_list *ca = NULL;
 
-	if (base_list) {
+	if (merge_bases) {
 		int i;
-		for (i = 0; i < num_base_list; ++i) {
+		for (i = 0; i < num_merge_bases; ++i) {
 			struct commit *base;
-			if (!(base = get_ref(opt->repo, base_list[i],
-					     oid_to_hex(base_list[i]))))
+			if (!(base = get_ref(opt->repo, merge_bases[i],
+					     oid_to_hex(merge_bases[i]))))
 				return err(opt, _("Could not parse object '%s'"),
-					   oid_to_hex(base_list[i]));
+					   oid_to_hex(merge_bases[i]));
 			commit_list_insert(base, &ca);
 		}
 	}
