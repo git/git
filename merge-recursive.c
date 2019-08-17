@@ -681,7 +681,9 @@ static void add_flattened_path(struct strbuf *out, const char *s)
 			out->buf[i] = '_';
 }
 
-static char *unique_path(struct merge_options *opt, const char *path, const char *branch)
+static char *unique_path(struct merge_options *opt,
+			 const char *path,
+			 const char *branch)
 {
 	struct path_hashmap_entry *entry;
 	struct strbuf newpath = STRBUF_INIT;
@@ -915,7 +917,8 @@ static int update_file_flags(struct merge_options *opt,
 		}
 		if (S_ISREG(contents->mode)) {
 			struct strbuf strbuf = STRBUF_INIT;
-			if (convert_to_working_tree(opt->repo->index, path, buf, size, &strbuf)) {
+			if (convert_to_working_tree(opt->repo->index,
+						    path, buf, size, &strbuf)) {
 				free(buf);
 				size = strbuf.len;
 				buf = strbuf_detach(&strbuf, NULL);
@@ -3393,7 +3396,8 @@ static int merge_trees_internal(struct merge_options *opt,
 		 * opposed to decaring a local hashmap is for convenience
 		 * so that we don't have to pass it to around.
 		 */
-		hashmap_init(&opt->current_file_dir_set, path_hashmap_cmp, NULL, 512);
+		hashmap_init(&opt->current_file_dir_set, path_hashmap_cmp,
+			     NULL, 512);
 		get_files_dirs(opt, head);
 		get_files_dirs(opt, merge);
 
@@ -3502,7 +3506,8 @@ static int merge_recursive_internal(struct merge_options *opt,
 		struct tree *tree;
 
 		tree = lookup_tree(opt->repo, opt->repo->hash_algo->empty_tree);
-		merged_common_ancestors = make_virtual_commit(opt->repo, tree, "ancestor");
+		merged_common_ancestors = make_virtual_commit(opt->repo,
+							      tree, "ancestor");
 		ancestor_name = "empty tree";
 	} else if (ca) {
 		ancestor_name = "merged common ancestors";
@@ -3625,7 +3630,8 @@ int merge_recursive(struct merge_options *opt,
 	return clean;
 }
 
-static struct commit *get_ref(struct repository *repo, const struct object_id *oid,
+static struct commit *get_ref(struct repository *repo,
+			      const struct object_id *oid,
 			      const char *name)
 {
 	struct object *object;
@@ -3660,7 +3666,8 @@ int merge_recursive_generic(struct merge_options *opt,
 		int i;
 		for (i = 0; i < num_base_list; ++i) {
 			struct commit *base;
-			if (!(base = get_ref(opt->repo, base_list[i], oid_to_hex(base_list[i]))))
+			if (!(base = get_ref(opt->repo, base_list[i],
+					     oid_to_hex(base_list[i]))))
 				return err(opt, _("Could not parse object '%s'"),
 					   oid_to_hex(base_list[i]));
 			commit_list_insert(base, &ca);
