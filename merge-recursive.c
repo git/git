@@ -1045,10 +1045,10 @@ static int merge_3way(struct merge_options *opt,
 		ll_opts.variant = 0;
 	} else {
 		switch (opt->recursive_variant) {
-		case MERGE_RECURSIVE_OURS:
+		case MERGE_VARIANT_OURS:
 			ll_opts.variant = XDL_MERGE_FAVOR_OURS;
 			break;
-		case MERGE_RECURSIVE_THEIRS:
+		case MERGE_VARIANT_THEIRS:
 			ll_opts.variant = XDL_MERGE_FAVOR_THEIRS;
 			break;
 		default:
@@ -1355,15 +1355,15 @@ static int merge_mode_and_contents(struct merge_options *opt,
 							&b->oid);
 		} else if (S_ISLNK(a->mode)) {
 			switch (opt->recursive_variant) {
-			case MERGE_RECURSIVE_NORMAL:
+			case MERGE_VARIANT_NORMAL:
 				oidcpy(&result->blob.oid, &a->oid);
 				if (!oid_eq(&a->oid, &b->oid))
 					result->clean = 0;
 				break;
-			case MERGE_RECURSIVE_OURS:
+			case MERGE_VARIANT_OURS:
 				oidcpy(&result->blob.oid, &a->oid);
 				break;
-			case MERGE_RECURSIVE_THEIRS:
+			case MERGE_VARIANT_THEIRS:
 				oidcpy(&result->blob.oid, &b->oid);
 				break;
 			}
@@ -3795,9 +3795,9 @@ int parse_merge_opt(struct merge_options *opt, const char *s)
 	if (!s || !*s)
 		return -1;
 	if (!strcmp(s, "ours"))
-		opt->recursive_variant = MERGE_RECURSIVE_OURS;
+		opt->recursive_variant = MERGE_VARIANT_OURS;
 	else if (!strcmp(s, "theirs"))
-		opt->recursive_variant = MERGE_RECURSIVE_THEIRS;
+		opt->recursive_variant = MERGE_VARIANT_THEIRS;
 	else if (!strcmp(s, "subtree"))
 		opt->subtree_shift = "";
 	else if (skip_prefix(s, "subtree=", &arg))

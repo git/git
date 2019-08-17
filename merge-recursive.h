@@ -32,9 +32,9 @@ struct merge_options {
 	/* xdiff-related options (patience, ignore whitespace, ours/theirs) */
 	long xdl_opts;
 	enum {
-		MERGE_RECURSIVE_NORMAL = 0,
-		MERGE_RECURSIVE_OURS,
-		MERGE_RECURSIVE_THEIRS
+		MERGE_VARIANT_NORMAL = 0,
+		MERGE_VARIANT_OURS,
+		MERGE_VARIANT_THEIRS
 	} recursive_variant;
 
 	/* console output related options */
