@@ -385,8 +385,7 @@ static int add_cacheinfo(struct merge_options *opt,
 
 static inline int merge_detect_rename(struct merge_options *opt)
 {
-	return opt->merge_detect_rename >= 0 ? opt->merge_detect_rename :
-		opt->diff_detect_rename >= 0 ? opt->diff_detect_rename : 1;
+	return (opt->detect_renames >= 0) ? opt->detect_renames : 1;
 }
 
 static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
@@ -1883,9 +1882,7 @@ static struct diff_queue_struct *get_diffpairs(struct merge_options *opt,
 	 */
 	if (opts.detect_rename > DIFF_DETECT_RENAME)
 		opts.detect_rename = DIFF_DETECT_RENAME;
-	opts.rename_limit = opt->merge_rename_limit >= 0 ? opt->merge_rename_limit :
-			    opt->diff_rename_limit >= 0 ? opt->diff_rename_limit :
-			    1000;
+	opts.rename_limit = (opt->rename_limit >= 0) ? opt->rename_limit : 1000;
 	opts.rename_score = opt->rename_score;
 	opts.show_rename_progress = opt->show_rename_progress;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -3727,14 +3724,14 @@ static void merge_recursive_config(struct merge_options *opt)
 {
 	char *value = NULL;
 	git_config_get_int("merge.verbosity", &opt->verbosity);
-	git_config_get_int("diff.renamelimit", &opt->diff_rename_limit);
-	git_config_get_int("merge.renamelimit", &opt->merge_rename_limit);
+	git_config_get_int("diff.renamelimit", &opt->rename_limit);
+	git_config_get_int("merge.renamelimit", &opt->rename_limit);
 	if (!git_config_get_string("diff.renames", &value)) {
-		opt->diff_detect_rename = git_config_rename("diff.renames", value);
+		opt->detect_renames = git_config_rename("diff.renames", value);
 		free(value);
 	}
 	if (!git_config_get_string("merge.renames", &value)) {
-		opt->merge_detect_rename = git_config_rename("merge.renames", value);
+		opt->detect_renames = git_config_rename("merge.renames", value);
 		free(value);
 	}
 	if (!git_config_get_string("merge.directoryrenames", &value)) {
@@ -3760,11 +3757,9 @@ void init_merge_options(struct merge_options *opt,
 	opt->repo = repo;
 	opt->verbosity = 2;
 	opt->buffer_output = 1;
-	opt->diff_rename_limit = -1;
-	opt->merge_rename_limit = -1;
+	opt->rename_limit = -1;
 	opt->renormalize = 0;
-	opt->diff_detect_rename = -1;
-	opt->merge_detect_rename = -1;
+	opt->detect_renames = -1;
 	opt->detect_directory_renames = MERGE_DIRECTORY_RENAMES_CONFLICT;
 	merge_recursive_config(opt);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
@@ -3816,16 +3811,16 @@ int parse_merge_opt(struct merge_options *opt, const char *s)
 	else if (!strcmp(s, "no-renormalize"))
 		opt->renormalize = 0;
 	else if (!strcmp(s, "no-renames"))
-		opt->merge_detect_rename = 0;
+		opt->detect_renames = 0;
 	else if (!strcmp(s, "find-renames")) {
-		opt->merge_detect_rename = 1;
+		opt->detect_renames = 1;
 		opt->rename_score = 0;
 	}
 	else if (skip_prefix(s, "find-renames=", &arg) ||
 		 skip_prefix(s, "rename-threshold=", &arg)) {
 		if ((opt->rename_score = parse_rename_score(&arg)) == -1 || *arg != 0)
 			return -1;
-		opt->merge_detect_rename = 1;
+		opt->detect_renames = 1;
 	}
 	/*
 	 * Please update $__git_merge_strategy_options in

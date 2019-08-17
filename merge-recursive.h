@@ -27,10 +27,8 @@ struct merge_options {
 		MERGE_DIRECTORY_RENAMES_CONFLICT = 1,
 		MERGE_DIRECTORY_RENAMES_TRUE = 2
 	} detect_directory_renames;
-	int diff_detect_rename;
-	int merge_detect_rename;
-	int diff_rename_limit;
-	int merge_rename_limit;
+	int detect_renames;
+	int rename_limit;
 	int rename_score;
 	int needed_rename_limit;
 	int show_rename_progress;
