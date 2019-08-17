@@ -934,9 +934,11 @@ static int update_file_flags(struct merge_options *opt,
 		}
 
 		buf = read_object_file(&contents->oid, &type, &size);
-		if (!buf)
-			return err(opt, _("cannot read object %s '%s'"),
-				   oid_to_hex(&contents->oid), path);
+		if (!buf) {
+			ret = err(opt, _("cannot read object %s '%s'"),
+				  oid_to_hex(&contents->oid), path);
+			goto free_buf;
+		}
 		if (type != OBJ_BLOB) {
 			ret = err(opt, _("blob expected for %s '%s'"),
 				  oid_to_hex(&contents->oid), path);
