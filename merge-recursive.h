@@ -9,36 +9,48 @@ struct commit;
 struct repository;
 
 struct merge_options {
+	struct repository *repo;
+
+	/* ref names used in console messages and conflict markers */
 	const char *ancestor;
 	const char *branch1;
 	const char *branch2;
-	enum {
-		MERGE_RECURSIVE_NORMAL = 0,
-		MERGE_RECURSIVE_OURS,
-		MERGE_RECURSIVE_THEIRS
-	} recursive_variant;
-	const char *subtree_shift;
-	unsigned buffer_output; /* 1: output at end, 2: keep buffered */
-	unsigned renormalize : 1;
-	long xdl_opts;
-	int verbosity;
+
+	/* rename related options */
+	int detect_renames;
 	enum {
 		MERGE_DIRECTORY_RENAMES_NONE = 0,
 		MERGE_DIRECTORY_RENAMES_CONFLICT = 1,
 		MERGE_DIRECTORY_RENAMES_TRUE = 2
 	} detect_directory_renames;
-	int detect_renames;
 	int rename_limit;
 	int rename_score;
-	int needed_rename_limit;
 	int show_rename_progress;
+
+	/* xdiff-related options (patience, ignore whitespace, ours/theirs) */
+	long xdl_opts;
+	enum {
+		MERGE_RECURSIVE_NORMAL = 0,
+		MERGE_RECURSIVE_OURS,
+		MERGE_RECURSIVE_THEIRS
+	} recursive_variant;
+
+	/* console output related options */
+	int verbosity;
+	unsigned buffer_output; /* 1: output at end, 2: keep buffered */
+	struct strbuf obuf;     /* output buffer */
+
+	/* miscellaneous control options */
+	const char *subtree_shift;
+	unsigned renormalize : 1;
+
+	/* internal fields used by the implementation (do NOT set these) */
 	int call_depth;
-	struct strbuf obuf;
+	int needed_rename_limit;
 	struct hashmap current_file_dir_set;
 	struct string_list df_conflict_file_set;
 	struct unpack_trees_options unpack_opts;
 	struct index_state orig_index;
-	struct repository *repo;
 };
 
 void init_merge_options(struct merge_options *opt, struct repository *repo);

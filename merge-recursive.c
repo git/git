@@ -3754,21 +3754,27 @@ void init_merge_options(struct merge_options *opt,
 {
 	const char *merge_verbosity;
 	memset(opt, 0, sizeof(struct merge_options));
+
 	opt->repo = repo;
-	opt->verbosity = 2;
-	opt->buffer_output = 1;
-	opt->rename_limit = -1;
-	opt->renormalize = 0;
+
 	opt->detect_renames = -1;
 	opt->detect_directory_renames = MERGE_DIRECTORY_RENAMES_CONFLICT;
+	opt->rename_limit = -1;
+
+	opt->verbosity = 2;
+	opt->buffer_output = 1;
+	strbuf_init(&opt->obuf, 0);
+
+	opt->renormalize = 0;
+
+	string_list_init(&opt->df_conflict_file_set, 1);
+
 	merge_recursive_config(opt);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
 	if (merge_verbosity)
 		opt->verbosity = strtol(merge_verbosity, NULL, 10);
 	if (opt->verbosity >= 5)
 		opt->buffer_output = 0;
-	strbuf_init(&opt->obuf, 0);
-	string_list_init(&opt->df_conflict_file_set, 1);
 }
 
 int parse_merge_opt(struct merge_options *opt, const char *s)
