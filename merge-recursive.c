@@ -3595,9 +3595,6 @@ static int merge_recursive_internal(struct merge_options *opt,
 	flush_output(opt);
 	if (!opt->call_depth && opt->buffer_output < 2)
 		strbuf_release(&opt->obuf);
-	if (show(opt, 2))
-		diff_warn_rename_limit("merge.renamelimit",
-				       opt->needed_rename_limit, 0);
 	return clean;
 }
 
@@ -3617,7 +3614,9 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 
 static void merge_finalize(struct merge_options *opt)
 {
-	/* Common code for wrapping up merges will be added here later */
+	if (show(opt, 2))
+		diff_warn_rename_limit("merge.renamelimit",
+				       opt->needed_rename_limit, 0);
 }
 
 int merge_trees(struct merge_options *opt,
