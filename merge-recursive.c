@@ -3477,7 +3477,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 {
 	struct commit_list *iter;
 	struct commit *merged_merge_bases;
-	struct tree *mrtree;
+	struct tree *result_tree;
 	int clean;
 	const char *ancestor_name;
 	struct strbuf merge_base_abbrev = STRBUF_INIT;
@@ -3557,7 +3557,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 				     repo_get_commit_tree(opt->repo, h2),
 				     repo_get_commit_tree(opt->repo,
 							  merged_merge_bases),
-				     &mrtree);
+				     &result_tree);
 	strbuf_release(&merge_base_abbrev);
 	if (clean < 0) {
 		flush_output(opt);
@@ -3565,7 +3565,8 @@ static int merge_recursive_internal(struct merge_options *opt,
 	}
 
 	if (opt->call_depth) {
-		*result = make_virtual_commit(opt->repo, mrtree, "merged tree");
+		*result = make_virtual_commit(opt->repo, result_tree,
+					      "merged tree");
 		commit_list_insert(h1, &(*result)->parents);
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
