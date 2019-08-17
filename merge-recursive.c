@@ -54,6 +54,24 @@ static unsigned int path_hash(const char *path)
 	return ignore_case ? strihash(path) : strhash(path);
 }
 
+/*
+ * For dir_rename_entry, directory names are stored as a full path from the
+ * toplevel of the repository and do not include a trailing '/'.  Also:
+ *
+ *   dir:                original name of directory being renamed
+ *   non_unique_new_dir: if true, could not determine new_dir
+ *   new_dir:            final name of directory being renamed
+ *   possible_new_dirs:  temporary used to help determine new_dir; see comments
+ *                       in get_directory_renames() for details
+ */
+struct dir_rename_entry {
+	struct hashmap_entry ent; /* must be the first member! */
+	char *dir;
+	unsigned non_unique_new_dir:1;
+	struct strbuf new_dir;
+	struct string_list possible_new_dirs;
+};
+
 static struct dir_rename_entry *dir_rename_find_entry(struct hashmap *hashmap,
 						      char *dir)
 {
@@ -91,6 +109,13 @@ static void dir_rename_entry_init(struct dir_rename_entry *entry,
 	strbuf_init(&entry->new_dir, 0);
 	string_list_init(&entry->possible_new_dirs, 0);
 }
+
+struct collision_entry {
+	struct hashmap_entry ent; /* must be the first member! */
+	char *target_file;
+	struct string_list source_files;
+	unsigned reported_already:1;
+};
 
 static struct collision_entry *collision_find_entry(struct hashmap *hashmap,
 						    char *target_file)
@@ -356,6 +381,12 @@ static int add_cacheinfo(struct merge_options *opt,
 			ret = add_index_entry(istate, nce, options);
 	}
 	return ret;
+}
+
+static inline int merge_detect_rename(struct merge_options *opt)
+{
+	return opt->merge_detect_rename >= 0 ? opt->merge_detect_rename :
+		opt->diff_detect_rename >= 0 ? opt->diff_detect_rename : 1;
 }
 
 static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
