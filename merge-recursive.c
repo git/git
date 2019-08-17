@@ -3382,23 +3382,14 @@ static int process_entry(struct merge_options *opt,
 	return clean_merge;
 }
 
-int merge_trees(struct merge_options *opt,
-		struct tree *head,
-		struct tree *merge,
-		struct tree *common,
-		struct tree **result)
+static int merge_trees_internal(struct merge_options *opt,
+				struct tree *head,
+				struct tree *merge,
+				struct tree *common,
+				struct tree **result)
 {
 	struct index_state *istate = opt->repo->index;
 	int code, clean;
-	struct strbuf sb = STRBUF_INIT;
-
-	assert(opt->ancestor != NULL);
-
-	if (!opt->call_depth && repo_index_has_changes(opt->repo, head, &sb)) {
-		err(opt, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
-		    sb.buf);
-		return -1;
-	}
 
 	if (opt->subtree_shift) {
 		merge = shift_tree_object(opt->repo, head, merge, opt->subtree_shift);
@@ -3502,11 +3493,11 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
  * Merge the commits h1 and h2, return the resulting virtual
  * commit object and a flag indicating the cleanness of the merge.
  */
-int merge_recursive(struct merge_options *opt,
-		    struct commit *h1,
-		    struct commit *h2,
-		    struct commit_list *ca,
-		    struct commit **result)
+static int merge_recursive_internal(struct merge_options *opt,
+				    struct commit *h1,
+				    struct commit *h2,
+				    struct commit_list *ca,
+				    struct commit **result)
 {
 	struct commit_list *iter;
 	struct commit *merged_common_ancestors;
@@ -3514,9 +3505,6 @@ int merge_recursive(struct merge_options *opt,
 	int clean;
 	const char *ancestor_name;
 	struct strbuf merge_base_abbrev = STRBUF_INIT;
-
-	if (!opt->call_depth)
-		assert(opt->ancestor == NULL);
 
 	if (show(opt, 4)) {
 		output(opt, 4, _("Merging:"));
@@ -3571,7 +3559,7 @@ int merge_recursive(struct merge_options *opt,
 		saved_b2 = opt->branch2;
 		opt->branch1 = "Temporary merge branch 1";
 		opt->branch2 = "Temporary merge branch 2";
-		if (merge_recursive(opt, merged_common_ancestors, iter->item,
+		if (merge_recursive_internal(opt, merged_common_ancestors, iter->item,
 				    NULL, &merged_common_ancestors) < 0)
 			return -1;
 		opt->branch1 = saved_b1;
@@ -3587,12 +3575,12 @@ int merge_recursive(struct merge_options *opt,
 		repo_read_index(opt->repo);
 
 	opt->ancestor = ancestor_name;
-	clean = merge_trees(opt,
-			    repo_get_commit_tree(opt->repo, h1),
-			    repo_get_commit_tree(opt->repo, h2),
-			    repo_get_commit_tree(opt->repo,
-						 merged_common_ancestors),
-			    &mrtree);
+	clean = merge_trees_internal(opt,
+				     repo_get_commit_tree(opt->repo, h1),
+				     repo_get_commit_tree(opt->repo, h2),
+				     repo_get_commit_tree(opt->repo,
+							  merged_common_ancestors),
+				     &mrtree);
 	strbuf_release(&merge_base_abbrev);
 	if (clean < 0) {
 		flush_output(opt);
@@ -3610,6 +3598,61 @@ int merge_recursive(struct merge_options *opt,
 	if (show(opt, 2))
 		diff_warn_rename_limit("merge.renamelimit",
 				       opt->needed_rename_limit, 0);
+	return clean;
+}
+
+static int merge_start(struct merge_options *opt, struct tree *head)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	if (repo_index_has_changes(opt->repo, head, &sb)) {
+		err(opt, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
+		    sb.buf);
+		strbuf_release(&sb);
+		return -1;
+	}
+
+	return 0;
+}
+
+static void merge_finalize(struct merge_options *opt)
+{
+	/* Common code for wrapping up merges will be added here later */
+}
+
+int merge_trees(struct merge_options *opt,
+		struct tree *head,
+		struct tree *merge,
+		struct tree *common,
+		struct tree **result)
+{
+	int clean;
+
+	assert(opt->ancestor != NULL);
+
+	if (merge_start(opt, head))
+		return -1;
+	clean = merge_trees_internal(opt, head, merge, common, result);
+	merge_finalize(opt);
+
+	return clean;
+}
+
+int merge_recursive(struct merge_options *opt,
+		    struct commit *h1,
+		    struct commit *h2,
+		    struct commit_list *ca,
+		    struct commit **result)
+{
+	int clean;
+
+	assert(opt->ancestor == NULL);
+
+	if (merge_start(opt, repo_get_commit_tree(opt->repo, h1)))
+		return -1;
+	clean = merge_recursive_internal(opt, h1, h2, ca, result);
+	merge_finalize(opt);
+
 	return clean;
 }
 
