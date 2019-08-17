@@ -976,7 +976,7 @@ static const char *copy_name(const char *buf)
 		if (!strncmp(cp, " <", 2))
 			return xmemdupz(buf, cp - buf);
 	}
-	return "";
+	return xstrdup("");
 }
 
 static const char *copy_email(const char *buf)
@@ -984,10 +984,10 @@ static const char *copy_email(const char *buf)
 	const char *email = strchr(buf, '<');
 	const char *eoemail;
 	if (!email)
-		return "";
+		return xstrdup("");
 	eoemail = strchr(email, '>');
 	if (!eoemail)
-		return "";
+		return xstrdup("");
 	return xmemdupz(email, eoemail + 1 - email);
 }
 
