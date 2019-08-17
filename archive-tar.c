@@ -144,6 +144,7 @@ static int stream_blocked(const struct object_id *oid)
 static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 				     const char *value, unsigned int valuelen)
 {
+	size_t orig_len = sb->len;
 	int len, tmp;
 
 	/* "%u %s=%s\n" */
@@ -155,6 +156,11 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 	strbuf_addf(sb, "%u %s=", len, keyword);
 	strbuf_add(sb, value, valuelen);
 	strbuf_addch(sb, '\n');
+
+	if (len != sb->len - orig_len)
+		warning("pax extended header length miscalculated as %d"
+			", should be %"PRIuMAX,
+			len, (uintmax_t)(sb->len - orig_len));
 }
 
 /*
