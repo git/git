@@ -567,24 +567,31 @@ proc read_diff {fd conflict_size cont_info} {
 	}
 }
 
-proc apply_hunk {x y} {
+proc apply_or_revert_hunk {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
 	global ui_diff ui_index file_states
 
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
 
-	set apply_cmd {apply --cached --whitespace=nowarn}
+	set apply_cmd {apply --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected hunk."]
-		lappend apply_cmd --reverse
+		lappend apply_cmd --reverse --cached
 		if {[string index $mi 0] ne {M}} {
 			unlock_index
 			return
 		}
 	} else {
-		set failed_msg [mc "Failed to stage selected hunk."]
+		if {$revert} {
+			set failed_msg [mc "Failed to revert selected hunk."]
+			lappend apply_cmd --reverse
+		} else {
+			set failed_msg [mc "Failed to stage selected hunk."]
+			lappend apply_cmd --cached
+		}
+
 		if {[string index $mi 1] ne {M}} {
 			unlock_index
 			return
@@ -619,13 +626,17 @@ proc apply_hunk {x y} {
 	$ui_diff delete $s_lno $e_lno
 	$ui_diff conf -state disabled
 
+	# Check if the hunk was the last one in the file.
 	if {[$ui_diff get 1.0 end] eq "\n"} {
 		set o _
 	} else {
 		set o ?
 	}
 
-	if {$current_diff_side eq $ui_index} {
+	# Update the status flags.
+	if {$revert} {
+		set mi [string index $mi 0]$o
+	} elseif {$current_diff_side eq $ui_index} {
 		set mi ${o}M
 	} elseif {[string index $mi 0] eq {_}} {
 		set mi M$o
