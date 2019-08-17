@@ -3623,16 +3623,16 @@ static void merge_finalize(struct merge_options *opt)
 int merge_trees(struct merge_options *opt,
 		struct tree *head,
 		struct tree *merge,
-		struct tree *common,
-		struct tree **result)
+		struct tree *common)
 {
 	int clean;
+	struct tree *ignored;
 
 	assert(opt->ancestor != NULL);
 
 	if (merge_start(opt, head))
 		return -1;
-	clean = merge_trees_internal(opt, head, merge, common, result);
+	clean = merge_trees_internal(opt, head, merge, common, &ignored);
 	merge_finalize(opt);
 
 	return clean;

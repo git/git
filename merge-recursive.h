@@ -74,19 +74,31 @@ static inline int merge_detect_rename(struct merge_options *o)
 		o->diff_detect_rename >= 0 ? o->diff_detect_rename : 1;
 }
 
-/* merge_trees() but with recursive ancestor consolidation */
+/*
+ * merge_recursive is like merge_trees() but with recursive ancestor
+ * consolidation, and when successful, it creates an actual commit
+ * and writes its address to *result.
+ *
+ * NOTE: empirically, about a decade ago it was determined that with more
+ *       than two merge bases, optimal behavior was found when the
+ *       ancestors were passed in the order of oldest merge base to newest
+ *       one.  Also, ancestors will be consumed (emptied) so make a copy if
+ *       you need it.
+ */
 int merge_recursive(struct merge_options *o,
 		    struct commit *h1,
 		    struct commit *h2,
 		    struct commit_list *ancestors,
 		    struct commit **result);
 
-/* rename-detecting three-way merge, no recursion */
+/*
+ * rename-detecting three-way merge, no recursion; result of merge is written
+ * to opt->repo->index.
+ */
 int merge_trees(struct merge_options *o,
 		struct tree *head,
 		struct tree *merge,
-		struct tree *common,
-		struct tree **result);
+		struct tree *common);
 
 /*
  * "git-merge-recursive" can be fed trees; wrap them into
