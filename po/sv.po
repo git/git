@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.23.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-07-30 09:59+0800\n"
-"PO-Revision-Date: 2019-07-31 12:40+0200\n"
+"POT-Creation-Date: 2019-08-10 20:12+0800\n"
+"PO-Revision-Date: 2019-08-17 17:28+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.2\n"
+"X-Generator: Gtranslator 2.91.7\n"
 
 #: advice.c:109
 #, c-format
@@ -576,7 +576,7 @@ msgstr[1] "Tillämpade patchen %%s med %d refuserade..."
 msgid "truncating .rej filename to %.*s.rej"
 msgstr "trunkerar .rej-filnamnet till %.*s.rej"
 
-#: apply.c:4548 builtin/fetch.c:869 builtin/fetch.c:1161
+#: apply.c:4548 builtin/fetch.c:878 builtin/fetch.c:1168
 #, c-format
 msgid "cannot open %s"
 msgstr "kan inte öppna %s"
@@ -717,7 +717,7 @@ msgstr "se till att åtminstone <n> rader sammanhang är lika"
 
 #: apply.c:4984 builtin/am.c:2196 builtin/interpret-trailers.c:98
 #: builtin/interpret-trailers.c:100 builtin/interpret-trailers.c:102
-#: builtin/pack-objects.c:3319 builtin/rebase.c:1421
+#: builtin/pack-objects.c:3330 builtin/rebase.c:1421
 msgid "action"
 msgstr "åtgärd"
 
@@ -747,7 +747,7 @@ msgstr "tillåt överlappande stycken"
 
 #: apply.c:5001 builtin/add.c:291 builtin/check-ignore.c:22
 #: builtin/commit.c:1337 builtin/count-objects.c:98 builtin/fsck.c:786
-#: builtin/log.c:2085 builtin/mv.c:123 builtin/read-tree.c:128
+#: builtin/log.c:2068 builtin/mv.c:123 builtin/read-tree.c:128
 msgid "be verbose"
 msgstr "var pratsam"
 
@@ -818,7 +818,7 @@ msgstr "fmt"
 msgid "archive format"
 msgstr "arkivformat"
 
-#: archive.c:458 builtin/log.c:1597
+#: archive.c:458 builtin/log.c:1580
 msgid "prefix"
 msgstr "prefix"
 
@@ -941,7 +941,7 @@ msgstr "sökvägen är inte giltig UTF-8: %s"
 msgid "path too long (%d chars, SHA1: %s): %s"
 msgstr "sökvägen för lång (%d tecken, SHA1: %s): %s"
 
-#: archive-zip.c:474 builtin/pack-objects.c:226 builtin/pack-objects.c:229
+#: archive-zip.c:474 builtin/pack-objects.c:230 builtin/pack-objects.c:233
 #, c-format
 msgid "deflate error (%d)"
 msgstr "fel i deflate (%d)"
@@ -1104,9 +1104,9 @@ msgstr ""
 "incheckningen"
 
 #: blame.c:2741 bundle.c:167 ref-filter.c:2196 remote.c:1938 sequencer.c:2033
-#: sequencer.c:4348 builtin/commit.c:1020 builtin/log.c:404 builtin/log.c:980
-#: builtin/log.c:1468 builtin/log.c:1844 builtin/log.c:2134 builtin/merge.c:411
-#: builtin/pack-objects.c:3142 builtin/pack-objects.c:3157
+#: sequencer.c:4348 builtin/commit.c:1020 builtin/log.c:387 builtin/log.c:963
+#: builtin/log.c:1451 builtin/log.c:1827 builtin/log.c:2117 builtin/merge.c:411
+#: builtin/pack-objects.c:3148 builtin/pack-objects.c:3163
 #: builtin/shortlog.c:192
 msgid "revision walk setup failed"
 msgstr "misslyckades skapa revisionstraversering"
@@ -1334,7 +1334,7 @@ msgstr "rev-list dog"
 msgid "ref '%s' is excluded by the rev-list options"
 msgstr "referensen \"%s\" exkluderas av argumenten till rev-list"
 
-#: bundle.c:460 builtin/log.c:212 builtin/log.c:1749 builtin/shortlog.c:306
+#: bundle.c:460 builtin/log.c:202 builtin/log.c:1732 builtin/shortlog.c:306
 #, c-format
 msgid "unrecognized argument: %s"
 msgstr "okänt argument: %s"
@@ -1472,180 +1472,180 @@ msgstr "ogiltig incheckingsgrafkedja: rad \"%s\" är inte ett hash-värde"
 msgid "unable to find all commit-graph files"
 msgstr "kan inte hitta alla incheckingsgraffiler"
 
-#: commit-graph.c:553 commit-graph.c:613
+#: commit-graph.c:554 commit-graph.c:614
 msgid "invalid commit position. commit-graph is likely corrupt"
 msgstr "ogiltig incheckningsposition. incheckningsgrafen är troligtvis trasig"
 
-#: commit-graph.c:574
+#: commit-graph.c:575
 #, c-format
 msgid "could not find commit %s"
 msgstr "kunde inte hitta incheckningen %s"
 
-#: commit-graph.c:1001 builtin/pack-objects.c:2651
+#: commit-graph.c:1002 builtin/pack-objects.c:2657
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "kunde inte hämta typ för objektet %s"
 
-#: commit-graph.c:1033
+#: commit-graph.c:1034
 msgid "Loading known commits in commit graph"
 msgstr "Läser in kända incheckningar i incheckningsgraf"
 
-#: commit-graph.c:1050
+#: commit-graph.c:1051
 msgid "Expanding reachable commits in commit graph"
 msgstr "Expanderar nåbara incheckningar i incheckningsgraf"
 
-#: commit-graph.c:1069
+#: commit-graph.c:1070
 msgid "Clearing commit marks in commit graph"
 msgstr "Rensar incheckningsmärken i incheckningsgraf"
 
-#: commit-graph.c:1088
+#: commit-graph.c:1089
 msgid "Computing commit graph generation numbers"
 msgstr "Beräknar generationsvärden för incheckningsgraf"
 
-#: commit-graph.c:1162
+#: commit-graph.c:1163
 #, c-format
 msgid "Finding commits for commit graph in %d pack"
 msgid_plural "Finding commits for commit graph in %d packs"
 msgstr[0] "Söker incheckningar för incheckingsgraf i %d paket"
 msgstr[1] "Söker incheckningar för incheckingsgraf i %d paket"
 
-#: commit-graph.c:1175
+#: commit-graph.c:1176
 #, c-format
 msgid "error adding pack %s"
 msgstr "fel vid tillägg av paketet %s"
 
-#: commit-graph.c:1179
+#: commit-graph.c:1180
 #, c-format
 msgid "error opening index for %s"
 msgstr "fel vid öppning av indexet för %s"
 
-#: commit-graph.c:1203
+#: commit-graph.c:1204
 #, c-format
 msgid "Finding commits for commit graph from %d ref"
 msgid_plural "Finding commits for commit graph from %d refs"
 msgstr[0] "Söker incheckningar för incheckingsgraf från %d referens"
 msgstr[1] "Söker incheckningar för incheckingsgraf från %d referenser"
 
-#: commit-graph.c:1237
+#: commit-graph.c:1238
 msgid "Finding commits for commit graph among packed objects"
 msgstr "Söker incheckningar för incheckingsgraf i packade objekt"
 
-#: commit-graph.c:1252
+#: commit-graph.c:1253
 msgid "Counting distinct commits in commit graph"
 msgstr "Räknar olika incheckningar i incheckningsgraf"
 
-#: commit-graph.c:1283
+#: commit-graph.c:1284
 msgid "Finding extra edges in commit graph"
 msgstr "Söker ytterligare kanter i incheckingsgraf"
 
-#: commit-graph.c:1331
+#: commit-graph.c:1332
 msgid "failed to write correct number of base graph ids"
 msgstr "kunde inte skriva korrekt antal bas-graf-id:n"
 
-#: commit-graph.c:1364 midx.c:811
+#: commit-graph.c:1365 midx.c:811
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "kunde inte skapa inledande kataloger för %s"
 
-#: commit-graph.c:1376 builtin/index-pack.c:306 builtin/repack.c:251
+#: commit-graph.c:1377 builtin/index-pack.c:306 builtin/repack.c:240
 #, c-format
 msgid "unable to create '%s'"
 msgstr "kunde inte skapa \"%s\""
 
-#: commit-graph.c:1436
+#: commit-graph.c:1437
 #, c-format
 msgid "Writing out commit graph in %d pass"
 msgid_plural "Writing out commit graph in %d passes"
 msgstr[0] "Skriver ut incheckningsgraf i %d pass"
 msgstr[1] "Skriver ut incheckningsgraf i %d pass"
 
-#: commit-graph.c:1477
+#: commit-graph.c:1478
 msgid "unable to open commit-graph chain file"
 msgstr "Kunde inte öppna incheckningsgrafkedjefilen"
 
-#: commit-graph.c:1489
+#: commit-graph.c:1490
 msgid "failed to rename base commit-graph file"
 msgstr "kunde inte byta namn på bas-incheckingsgraffilen"
 
-#: commit-graph.c:1509
+#: commit-graph.c:1510
 msgid "failed to rename temporary commit-graph file"
 msgstr "kunde inte byta namn på temporär incheckningsgraffil"
 
-#: commit-graph.c:1620
+#: commit-graph.c:1621
 msgid "Scanning merged commits"
 msgstr "Söker sammanslagna incheckningar"
 
-#: commit-graph.c:1631
+#: commit-graph.c:1632
 #, c-format
 msgid "unexpected duplicate commit id %s"
 msgstr "oväntat duplicerat inchecknings-id %s"
 
-#: commit-graph.c:1656
+#: commit-graph.c:1657
 msgid "Merging commit-graph"
 msgstr "Slår ihop incheckningsgraf"
 
-#: commit-graph.c:1842
+#: commit-graph.c:1844
 #, c-format
 msgid "the commit graph format cannot write %d commits"
 msgstr "formatet på incheckningsgrafen kan inte visa %d incheckningar"
 
-#: commit-graph.c:1853
+#: commit-graph.c:1855
 msgid "too many commits to write graph"
 msgstr "för många incheckningar för att skriva graf"
 
-#: commit-graph.c:1943
+#: commit-graph.c:1945
 msgid "the commit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 "filen med incheckningsgraf har felaktig checksumma och är troligtvis trasig"
 
-#: commit-graph.c:1953
+#: commit-graph.c:1955
 #, c-format
 msgid "commit-graph has incorrect OID order: %s then %s"
 msgstr "incheckningsgrafen har felaktig OID-ordning: %s så %s"
 
-#: commit-graph.c:1963 commit-graph.c:1978
+#: commit-graph.c:1965 commit-graph.c:1980
 #, c-format
 msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr ""
 "incheckningsgrafen har felaktig utbredningsvärde: fanout[%d] = %u != %u"
 
-#: commit-graph.c:1970
+#: commit-graph.c:1972
 #, c-format
 msgid "failed to parse commit %s from commit-graph"
 msgstr "kunde inte tolka incheckning %s från incheckningsgraf"
 
-#: commit-graph.c:1987
+#: commit-graph.c:1989
 msgid "Verifying commits in commit graph"
 msgstr "Bekräftar incheckningar i incheckningsgrafen"
 
-#: commit-graph.c:2000
+#: commit-graph.c:2002
 #, c-format
 msgid "failed to parse commit %s from object database for commit-graph"
 msgstr ""
 "misslyckades tolka incheckning %s från objektdatabasen för incheckningsgraf"
 
-#: commit-graph.c:2007
+#: commit-graph.c:2009
 #, c-format
 msgid "root tree OID for commit %s in commit-graph is %s != %s"
 msgstr "rot-trädets OID för incheckningen %s i incheckningsgrafen är %s != %s"
 
-#: commit-graph.c:2017
+#: commit-graph.c:2019
 #, c-format
 msgid "commit-graph parent list for commit %s is too long"
 msgstr "incheckningsgrafens föräldralista för incheckningen %s är för lång"
 
-#: commit-graph.c:2026
+#: commit-graph.c:2028
 #, c-format
 msgid "commit-graph parent for %s is %s != %s"
 msgstr "incheckningsgrafens förälder för %s är %s != %s"
 
-#: commit-graph.c:2039
+#: commit-graph.c:2041
 #, c-format
 msgid "commit-graph parent list for commit %s terminates early"
 msgstr ""
 "incheckningsgrafens föräldralista för incheckningen %s avslutas för tidigt"
 
-#: commit-graph.c:2044
+#: commit-graph.c:2046
 #, c-format
 msgid ""
 "commit-graph has generation number zero for commit %s, but non-zero elsewhere"
@@ -1653,7 +1653,7 @@ msgstr ""
 "incheckningsgrafen har generationsnummer noll för incheckningen %s, men icke-"
 "noll på annan plats"
 
-#: commit-graph.c:2048
+#: commit-graph.c:2050
 #, c-format
 msgid ""
 "commit-graph has non-zero generation number for commit %s, but zero elsewhere"
@@ -1661,12 +1661,12 @@ msgstr ""
 "incheckningsgrafen har generationsnummer skilt från noll för incheckningen "
 "%s, men noll på annan plats"
 
-#: commit-graph.c:2063
+#: commit-graph.c:2065
 #, c-format
 msgid "commit-graph generation for commit %s is %u != %u"
 msgstr "incheckningsgrafens generation för incheckningen %s är %u != %u"
 
-#: commit-graph.c:2069
+#: commit-graph.c:2071
 #, c-format
 msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
@@ -1705,289 +1705,289 @@ msgstr "relativa konfigureringsinkluderingar måste komma från filer"
 msgid "relative config include conditionals must come from files"
 msgstr "relativa konfigureringsinkluderingsvillkor måste komma från filer"
 
-#: config.c:375
+#: config.c:376
 #, c-format
 msgid "key does not contain a section: %s"
 msgstr "nyckeln innehåller inte ett stycke: %s"
 
-#: config.c:381
+#: config.c:382
 #, c-format
 msgid "key does not contain variable name: %s"
 msgstr "nyckeln innehåller inte variabelnamn: %s"
 
-#: config.c:405 sequencer.c:2463
+#: config.c:406 sequencer.c:2463
 #, c-format
 msgid "invalid key: %s"
 msgstr "felaktig nyckel: %s"
 
-#: config.c:411
+#: config.c:412
 #, c-format
 msgid "invalid key (newline): %s"
 msgstr "ogiltig nyckel (nyradstecken): %s"
 
-#: config.c:447 config.c:459
+#: config.c:448 config.c:460
 #, c-format
 msgid "bogus config parameter: %s"
 msgstr "falsk konfigureringsparameter: %s"
 
-#: config.c:494
+#: config.c:495
 #, c-format
 msgid "bogus format in %s"
 msgstr "felaktigt format i %s"
 
-#: config.c:820
+#: config.c:821
 #, c-format
 msgid "bad config line %d in blob %s"
 msgstr "felaktig konfigurationsfil rad %d i blob:en %s"
 
-#: config.c:824
+#: config.c:825
 #, c-format
 msgid "bad config line %d in file %s"
 msgstr "felaktig konfigurationsfil rad %d i filen %s"
 
-#: config.c:828
+#: config.c:829
 #, c-format
 msgid "bad config line %d in standard input"
 msgstr "felaktig konfigurationsfil rad %d i standard in"
 
-#: config.c:832
+#: config.c:833
 #, c-format
 msgid "bad config line %d in submodule-blob %s"
 msgstr "felaktig konfigurationsfil rad %d i undermoduls-blob:en %s"
 
-#: config.c:836
+#: config.c:837
 #, c-format
 msgid "bad config line %d in command line %s"
 msgstr "felaktig konfigurationsfil rad %d i kommandoraden %s"
 
-#: config.c:840
+#: config.c:841
 #, c-format
 msgid "bad config line %d in %s"
 msgstr "felaktig konfigurationsfil rad %d i %s"
 
-#: config.c:977
+#: config.c:978
 msgid "out of range"
 msgstr "utanför intervallet"
 
-#: config.c:977
+#: config.c:978
 msgid "invalid unit"
 msgstr "ogiltig enhet"
 
-#: config.c:978
+#: config.c:979
 #, c-format
 msgid "bad numeric config value '%s' for '%s': %s"
 msgstr "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\": %s"
 
-#: config.c:997
+#: config.c:998
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in blob %s: %s"
 msgstr ""
 "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\" i blob:en %s: %s"
 
-#: config.c:1000
+#: config.c:1001
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in file %s: %s"
 msgstr ""
 "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\" i filen %s: %s"
 
-#: config.c:1003
+#: config.c:1004
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in standard input: %s"
 msgstr ""
 "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\" i standard in: %s"
 
-#: config.c:1006
+#: config.c:1007
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in submodule-blob %s: %s"
 msgstr ""
 "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\" i undermodul-blob:"
 "en %s: %s"
 
-#: config.c:1009
+#: config.c:1010
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in command line %s: %s"
 msgstr ""
 "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\" i kommandoraden "
 "%s: %s"
 
-#: config.c:1012
+#: config.c:1013
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in %s: %s"
 msgstr "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\" i %s: %s"
 
-#: config.c:1107
+#: config.c:1108
 #, c-format
 msgid "failed to expand user dir in: '%s'"
 msgstr "misslyckades expandera användarkatalog i: \"%s\""
 
-#: config.c:1116
+#: config.c:1117
 #, c-format
 msgid "'%s' for '%s' is not a valid timestamp"
 msgstr "\"%s\" för \"%s\" är inte en giltig tidsstämpel"
 
-#: config.c:1207
+#: config.c:1208
 #, c-format
 msgid "abbrev length out of range: %d"
 msgstr "förkortningslängd utanför intervallet: %d"
 
-#: config.c:1221 config.c:1232
+#: config.c:1222 config.c:1233
 #, c-format
 msgid "bad zlib compression level %d"
 msgstr "felaktigt zlib-komprimeringsgrad %d"
 
-#: config.c:1324
+#: config.c:1325
 msgid "core.commentChar should only be one character"
 msgstr "core.commentChar kan bara vara ett tecken"
 
-#: config.c:1357
+#: config.c:1358
 #, c-format
 msgid "invalid mode for object creation: %s"
 msgstr "felaktigt läge för skapande av objekt: %s"
 
-#: config.c:1429
+#: config.c:1430
 #, c-format
 msgid "malformed value for %s"
 msgstr "felformat värde för %s"
 
-#: config.c:1455
+#: config.c:1456
 #, c-format
 msgid "malformed value for %s: %s"
 msgstr "felformat värde för %s: %s"
 
-#: config.c:1456
+#: config.c:1457
 msgid "must be one of nothing, matching, simple, upstream or current"
 msgstr "måste vara en av nothing, matching, simple, upstream eller current"
 
-#: config.c:1517 builtin/pack-objects.c:3399
+#: config.c:1518 builtin/pack-objects.c:3410
 #, c-format
 msgid "bad pack compression level %d"
 msgstr "felaktig paketkomprimeringsgrad %d"
 
-#: config.c:1638
+#: config.c:1639
 #, c-format
 msgid "unable to load config blob object '%s'"
 msgstr "kunde inte läsa konfigurerings-blobobjektet \"%s\""
 
-#: config.c:1641
+#: config.c:1642
 #, c-format
 msgid "reference '%s' does not point to a blob"
 msgstr "referensen \"%s\" pekar inte på en blob"
 
-#: config.c:1658
+#: config.c:1659
 #, c-format
 msgid "unable to resolve config blob '%s'"
 msgstr "kan inte slå upp konfigurerings-bloben \"%s\""
 
-#: config.c:1688
+#: config.c:1689
 #, c-format
 msgid "failed to parse %s"
 msgstr "kunde inte tolka %s"
 
-#: config.c:1744
+#: config.c:1745
 msgid "unable to parse command-line config"
 msgstr "kan inte tolka kommandoradskonfiguration"
 
-#: config.c:2093
+#: config.c:2094
 msgid "unknown error occurred while reading the configuration files"
 msgstr "okänt fel uppstod vid läsning av konfigurationsfilerna"
 
-#: config.c:2263
+#: config.c:2264
 #, c-format
 msgid "Invalid %s: '%s'"
 msgstr "Felaktigt %s: \"%s\""
 
-#: config.c:2306
+#: config.c:2307
 #, c-format
 msgid "unknown core.untrackedCache value '%s'; using 'keep' default value"
 msgstr ""
 "okänt värde \"%s\" för core.untrackedCache; använder standardvärdet \"keep\""
 
-#: config.c:2332
+#: config.c:2333
 #, c-format
 msgid "splitIndex.maxPercentChange value '%d' should be between 0 and 100"
 msgstr "värdet \"%d\" för splitIndex.maxPercentage borde vara mellan 0 och 100"
 
-#: config.c:2378
+#: config.c:2379
 #, c-format
 msgid "unable to parse '%s' from command-line config"
 msgstr "kunde inte tolka värdet \"%s\" från kommandoradskonfiguration"
 
-#: config.c:2380
+#: config.c:2381
 #, c-format
 msgid "bad config variable '%s' in file '%s' at line %d"
 msgstr "felaktig konfigurationsvariabel \"%s\" i filen \"%s\" på rad %d"
 
-#: config.c:2461
+#: config.c:2462
 #, c-format
 msgid "invalid section name '%s'"
 msgstr "felaktigt sektionsnamn \"%s\""
 
-#: config.c:2493
+#: config.c:2494
 #, c-format
 msgid "%s has multiple values"
 msgstr "%s har flera värden"
 
-#: config.c:2522
+#: config.c:2523
 #, c-format
 msgid "failed to write new configuration file %s"
 msgstr "kan inte skriva nya konfigurationsfilen \"%s\""
 
-#: config.c:2774 config.c:3098
+#: config.c:2775 config.c:3099
 #, c-format
 msgid "could not lock config file %s"
 msgstr "kunde inte låsa konfigurationsfilen %s"
 
-#: config.c:2785
+#: config.c:2786
 #, c-format
 msgid "opening %s"
 msgstr "öppnar %s"
 
-#: config.c:2820 builtin/config.c:328
+#: config.c:2821 builtin/config.c:328
 #, c-format
 msgid "invalid pattern: %s"
 msgstr "ogiltigt mönster: %s"
 
-#: config.c:2845
+#: config.c:2846
 #, c-format
 msgid "invalid config file %s"
 msgstr "ogiltig konfigurationsfil: \"%s\""
 
-#: config.c:2858 config.c:3111
+#: config.c:2859 config.c:3112
 #, c-format
 msgid "fstat on %s failed"
 msgstr "fstat misslyckades på %s"
 
-#: config.c:2869
+#: config.c:2870
 #, c-format
 msgid "unable to mmap '%s'"
 msgstr "kunde inte utföra mmap på \"%s\""
 
-#: config.c:2878 config.c:3116
+#: config.c:2879 config.c:3117
 #, c-format
 msgid "chmod on %s failed"
 msgstr "chmod misslyckades på %s"
 
-#: config.c:2963 config.c:3213
+#: config.c:2964 config.c:3214
 #, c-format
 msgid "could not write config file %s"
 msgstr "kunde inte skriva konfigurationsfilen %s"
 
-#: config.c:2997
+#: config.c:2998
 #, c-format
 msgid "could not set '%s' to '%s'"
 msgstr "kunde inte ställa in \"%s\" till \"%s\""
 
-#: config.c:2999 builtin/remote.c:782
+#: config.c:3000 builtin/remote.c:782
 #, c-format
 msgid "could not unset '%s'"
 msgstr "kunde inte ta bort inställning för \"%s\""
 
-#: config.c:3089
+#: config.c:3090
 #, c-format
 msgid "invalid section name: %s"
 msgstr "felaktigt namn på stycke: %s"
 
-#: config.c:3256
+#: config.c:3257
 #, c-format
 msgid "missing value for '%s'"
 msgstr "värde saknas för \"%s\""
@@ -2563,7 +2563,7 @@ msgstr "Formatflaggor för diff-utdata"
 msgid "generate patch"
 msgstr "skapar patch"
 
-#: diff.c:5275 builtin/log.c:182
+#: diff.c:5275 builtin/log.c:172
 msgid "suppress diff output"
 msgstr "undertryck diff-utdata"
 
@@ -3812,7 +3812,7 @@ msgstr "namnbyte"
 msgid "renamed"
 msgstr "namnbytt"
 
-#: merge-recursive.c:1591 merge-recursive.c:2450 merge-recursive.c:3093
+#: merge-recursive.c:1591 merge-recursive.c:2450 merge-recursive.c:3094
 #, c-format
 msgid "Refusing to lose dirty file at %s"
 msgstr "Vägrar förlora lortig fil vid \"%s\""
@@ -3903,52 +3903,52 @@ msgstr ""
 "VARNING: Undviker att applicera namnändring %s -> %s på %s, då %s själv har "
 "bytt namn."
 
-#: merge-recursive.c:2937
+#: merge-recursive.c:2938
 #, c-format
 msgid "cannot read object %s"
 msgstr "kan inte läsa objektet %s"
 
-#: merge-recursive.c:2940
+#: merge-recursive.c:2941
 #, c-format
 msgid "object %s is not a blob"
 msgstr "objektet %s är inte en blob"
 
-#: merge-recursive.c:3004
+#: merge-recursive.c:3005
 msgid "modify"
 msgstr "ändra"
 
-#: merge-recursive.c:3004
+#: merge-recursive.c:3005
 msgid "modified"
 msgstr "ändrad"
 
-#: merge-recursive.c:3016
+#: merge-recursive.c:3017
 msgid "content"
 msgstr "innehåll"
 
-#: merge-recursive.c:3020
+#: merge-recursive.c:3021
 msgid "add/add"
 msgstr "tillägg/tillägg"
 
-#: merge-recursive.c:3043
+#: merge-recursive.c:3044
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr "Hoppade över %s (sammanslagen samma som befintlig)"
 
-#: merge-recursive.c:3065 git-submodule.sh:937
+#: merge-recursive.c:3066 git-submodule.sh:937
 msgid "submodule"
 msgstr "undermodul"
 
-#: merge-recursive.c:3066
+#: merge-recursive.c:3067
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "KONFLIKT (%s): Sammanslagningskonflikt i %s"
 
-#: merge-recursive.c:3096
+#: merge-recursive.c:3097
 #, c-format
 msgid "Adding as %s instead"
 msgstr "Lägger till som %s istället"
 
-#: merge-recursive.c:3178
+#: merge-recursive.c:3179
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
@@ -3957,7 +3957,7 @@ msgstr ""
 "Uppdaterad sökväg: %s lade till %s inuti en katalog som bytte namn i %s; "
 "flyttar den till %s."
 
-#: merge-recursive.c:3181
+#: merge-recursive.c:3182
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
@@ -3966,7 +3966,7 @@ msgstr ""
 "KONFLIKT (filplacering): %s lade till %s inuti en katalog som bytte namn i "
 "%s, föreslår att den bör flyttas till%s."
 
-#: merge-recursive.c:3185
+#: merge-recursive.c:3186
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
@@ -3975,7 +3975,7 @@ msgstr ""
 "Uppdaterad sökväg: %s bytte namn till %s i %s, inuti en katalog som bytte "
 "namn i %s; flyttar den till %s."
 
-#: merge-recursive.c:3188
+#: merge-recursive.c:3189
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
@@ -3984,36 +3984,36 @@ msgstr ""
 "KONFLIKT (filplacering): %s bytte namn till %s i %s, inuti en katalog som "
 "bytte namn i %s; flyttar den till %s."
 
-#: merge-recursive.c:3302
+#: merge-recursive.c:3303
 #, c-format
 msgid "Removing %s"
 msgstr "Tar bort %s"
 
-#: merge-recursive.c:3325
+#: merge-recursive.c:3326
 msgid "file/directory"
 msgstr "fil/katalog"
 
-#: merge-recursive.c:3330
+#: merge-recursive.c:3331
 msgid "directory/file"
 msgstr "katalog/fil"
 
-#: merge-recursive.c:3337
+#: merge-recursive.c:3338
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr ""
 "KONFLIKT (%s): Det finns en katalog med namnet %s i %s. Lägger till %s som %s"
 
-#: merge-recursive.c:3346
+#: merge-recursive.c:3347
 #, c-format
 msgid "Adding %s"
 msgstr "Lägger till %s"
 
-#: merge-recursive.c:3355
+#: merge-recursive.c:3356
 #, c-format
 msgid "CONFLICT (add/add): Merge conflict in %s"
 msgstr "KONFLIKT (tillägg/tillägg): Sammanslagningskonflikt i %s"
 
-#: merge-recursive.c:3393
+#: merge-recursive.c:3394
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
@@ -4023,36 +4023,36 @@ msgstr ""
 "sammanslagning:\n"
 "  %s"
 
-#: merge-recursive.c:3404
+#: merge-recursive.c:3405
 msgid "Already up to date!"
 msgstr "Redan à jour!"
 
-#: merge-recursive.c:3413
+#: merge-recursive.c:3414
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr "sammanslagning av träden %s och %s misslyckades"
 
-#: merge-recursive.c:3512
+#: merge-recursive.c:3513
 msgid "Merging:"
 msgstr "Slår ihop:"
 
-#: merge-recursive.c:3525
+#: merge-recursive.c:3526
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "hittade %u gemensam förfader:"
 msgstr[1] "hittade %u gemensamma förfäder:"
 
-#: merge-recursive.c:3564
+#: merge-recursive.c:3565
 msgid "merge returned no commit"
 msgstr "sammanslagningen returnerade ingen incheckning"
 
-#: merge-recursive.c:3630
+#: merge-recursive.c:3631
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "Kunde inte tolka objektet \"%s\""
 
-#: merge-recursive.c:3646 builtin/merge.c:698 builtin/merge.c:869
+#: merge-recursive.c:3647 builtin/merge.c:698 builtin/merge.c:869
 msgid "Unable to write index."
 msgstr "Kunde inte skriva indexet."
 
@@ -5610,7 +5610,7 @@ msgstr "kan inte ta bort lös länk \"%s\""
 msgid "Recorded preimage for '%s'"
 msgstr "Sparade förhandsbild för \"%s\""
 
-#: rerere.c:881 submodule.c:2023 builtin/log.c:1790
+#: rerere.c:881 submodule.c:2023 builtin/log.c:1773
 #: builtin/submodule--helper.c:1418 builtin/submodule--helper.c:1428
 #, c-format
 msgid "could not create directory '%s'"
@@ -6837,195 +6837,195 @@ msgstr "referensarkivet \"%s\" är ympat"
 msgid "invalid line while parsing alternate refs: %s"
 msgstr "felaktig rad vid tolkning av alternativa referenser: %s"
 
-#: sha1-file.c:943
+#: sha1-file.c:944
 #, c-format
 msgid "attempting to mmap %<PRIuMAX> over limit %<PRIuMAX>"
 msgstr "försök att utföra \"mmap\" på %<PRIuMAX> över gränsen %<PRIuMAX>"
 
-#: sha1-file.c:968
+#: sha1-file.c:969
 msgid "mmap failed"
 msgstr "mmap misslyckades"
 
-#: sha1-file.c:1132
+#: sha1-file.c:1133
 #, c-format
 msgid "object file %s is empty"
 msgstr "objektfilen %s är tom"
 
-#: sha1-file.c:1256 sha1-file.c:2395
+#: sha1-file.c:1257 sha1-file.c:2396
 #, c-format
 msgid "corrupt loose object '%s'"
 msgstr "trasigt löst objekt \"%s\""
 
-#: sha1-file.c:1258 sha1-file.c:2399
+#: sha1-file.c:1259 sha1-file.c:2400
 #, c-format
 msgid "garbage at end of loose object '%s'"
 msgstr "skräp i slutet av löst objekt \"%s\""
 
-#: sha1-file.c:1300
+#: sha1-file.c:1301
 msgid "invalid object type"
 msgstr "felaktig objekttyp"
 
-#: sha1-file.c:1384
+#: sha1-file.c:1385
 #, c-format
 msgid "unable to unpack %s header with --allow-unknown-type"
 msgstr "kan inte packa upp %s-huvud med --allow-unknown-type"
 
-#: sha1-file.c:1387
+#: sha1-file.c:1388
 #, c-format
 msgid "unable to unpack %s header"
 msgstr "kan inte packa upp %s-huvudet"
 
-#: sha1-file.c:1393
+#: sha1-file.c:1394
 #, c-format
 msgid "unable to parse %s header with --allow-unknown-type"
 msgstr "kan inte tolka %s-huvud med --allow-unknown-type"
 
-#: sha1-file.c:1396
+#: sha1-file.c:1397
 #, c-format
 msgid "unable to parse %s header"
 msgstr "kan inte tolka %s-huvud"
 
-#: sha1-file.c:1587
+#: sha1-file.c:1588
 #, c-format
 msgid "failed to read object %s"
 msgstr "misslyckades läsa objektet %s"
 
-#: sha1-file.c:1591
+#: sha1-file.c:1592
 #, c-format
 msgid "replacement %s not found for %s"
 msgstr "ersättningen %s hittades inte för %s"
 
-#: sha1-file.c:1595
+#: sha1-file.c:1596
 #, c-format
 msgid "loose object %s (stored in %s) is corrupt"
 msgstr "löst objekt %s (lagrat i %s) är trasigt"
 
-#: sha1-file.c:1599
+#: sha1-file.c:1600
 #, c-format
 msgid "packed object %s (stored in %s) is corrupt"
 msgstr "packat objekt %s (lagrat i %s) är trasigt"
 
-#: sha1-file.c:1702
+#: sha1-file.c:1703
 #, c-format
 msgid "unable to write file %s"
 msgstr "kunde inte skriva filen %s"
 
-#: sha1-file.c:1709
+#: sha1-file.c:1710
 #, c-format
 msgid "unable to set permission to '%s'"
 msgstr "kan inte sätta behörigheten till \"%s\""
 
-#: sha1-file.c:1716
+#: sha1-file.c:1717
 msgid "file write error"
 msgstr "fel vid skrivning av fil"
 
-#: sha1-file.c:1735
+#: sha1-file.c:1736
 msgid "error when closing loose object file"
 msgstr "fel vid stängning av fil för löst objekt"
 
-#: sha1-file.c:1800
+#: sha1-file.c:1801
 #, c-format
 msgid "insufficient permission for adding an object to repository database %s"
 msgstr ""
 "otillräcklig behörighet för att lägga till objekt till arkivdatabasen %s"
 
-#: sha1-file.c:1802
+#: sha1-file.c:1803
 msgid "unable to create temporary file"
 msgstr "kan inte skapa temporär fil"
 
-#: sha1-file.c:1826
+#: sha1-file.c:1827
 msgid "unable to write loose object file"
 msgstr "kunde inte skriva fil för löst objekt"
 
-#: sha1-file.c:1832
+#: sha1-file.c:1833
 #, c-format
 msgid "unable to deflate new object %s (%d)"
 msgstr "kan inte utföra \"deflate\" på nytt objekt %s (%d)"
 
-#: sha1-file.c:1836
+#: sha1-file.c:1837
 #, c-format
 msgid "deflateEnd on object %s failed (%d)"
 msgstr "\"deflateend\" på objektet %s misslyckades (%d)"
 
-#: sha1-file.c:1840
+#: sha1-file.c:1841
 #, c-format
 msgid "confused by unstable object source data for %s"
 msgstr "förvirrad av instabil objektkälldata för %s"
 
-#: sha1-file.c:1850 builtin/pack-objects.c:920
+#: sha1-file.c:1851 builtin/pack-objects.c:925
 #, c-format
 msgid "failed utime() on %s"
 msgstr "\"utime()\" misslyckades på %s"
 
-#: sha1-file.c:1925
+#: sha1-file.c:1926
 #, c-format
 msgid "cannot read object for %s"
 msgstr "kan inte läsa objekt för %s"
 
-#: sha1-file.c:1965
+#: sha1-file.c:1966
 msgid "corrupt commit"
 msgstr "trasik incheckning"
 
-#: sha1-file.c:1973
+#: sha1-file.c:1974
 msgid "corrupt tag"
 msgstr "trasig tagg"
 
-#: sha1-file.c:2072
+#: sha1-file.c:2073
 #, c-format
 msgid "read error while indexing %s"
 msgstr "läsfel vid indexering av %s"
 
-#: sha1-file.c:2075
+#: sha1-file.c:2076
 #, c-format
 msgid "short read while indexing %s"
 msgstr "för lite lästes vid indexering av %s"
 
-#: sha1-file.c:2148 sha1-file.c:2157
+#: sha1-file.c:2149 sha1-file.c:2158
 #, c-format
 msgid "%s: failed to insert into database"
 msgstr "%s: misslyckades lägga in i databasen"
 
-#: sha1-file.c:2163
+#: sha1-file.c:2164
 #, c-format
 msgid "%s: unsupported file type"
 msgstr "%s: filtypen stöds ej"
 
-#: sha1-file.c:2187
+#: sha1-file.c:2188
 #, c-format
 msgid "%s is not a valid object"
 msgstr "%s är inte ett giltigt objekt"
 
-#: sha1-file.c:2189
+#: sha1-file.c:2190
 #, c-format
 msgid "%s is not a valid '%s' object"
 msgstr "%s är inte ett giltigt \"%s\"-objekt"
 
-#: sha1-file.c:2216 builtin/index-pack.c:155
+#: sha1-file.c:2217 builtin/index-pack.c:155
 #, c-format
 msgid "unable to open %s"
 msgstr "kan inte öppna %s"
 
-#: sha1-file.c:2406 sha1-file.c:2458
+#: sha1-file.c:2407 sha1-file.c:2459
 #, c-format
 msgid "hash mismatch for %s (expected %s)"
 msgstr "hash stämmer inte för %s (förväntade %s)"
 
-#: sha1-file.c:2430
+#: sha1-file.c:2431
 #, c-format
 msgid "unable to mmap %s"
 msgstr "kan inte utföra \"mmap\" för %s"
 
-#: sha1-file.c:2435
+#: sha1-file.c:2436
 #, c-format
 msgid "unable to unpack header of %s"
 msgstr "kan inte packa upp huvud för %s"
 
-#: sha1-file.c:2441
+#: sha1-file.c:2442
 #, c-format
 msgid "unable to parse header of %s"
 msgstr "kan inte tolka huvud för %s"
 
-#: sha1-file.c:2452
+#: sha1-file.c:2453
 #, c-format
 msgid "unable to unpack contents of %s"
 msgstr "kan inte tolka innehåll i %s"
@@ -8836,7 +8836,7 @@ msgid "allow fall back on 3way merging if needed"
 msgstr "tillåt falla tillbaka på trevägssammanslagning om nödvändigt"
 
 #: builtin/am.c:2176 builtin/init-db.c:494 builtin/prune-packed.c:58
-#: builtin/repack.c:307 builtin/stash.c:806
+#: builtin/repack.c:296 builtin/stash.c:806
 msgid "be quiet"
 msgstr "var tyst"
 
@@ -8881,14 +8881,14 @@ msgstr "sänd det genom git-apply"
 #: builtin/am.c:2214 builtin/commit.c:1368 builtin/fmt-merge-msg.c:671
 #: builtin/fmt-merge-msg.c:674 builtin/grep.c:881 builtin/merge.c:249
 #: builtin/pull.c:159 builtin/pull.c:218 builtin/rebase.c:1418
-#: builtin/repack.c:318 builtin/repack.c:322 builtin/repack.c:324
+#: builtin/repack.c:307 builtin/repack.c:311 builtin/repack.c:313
 #: builtin/show-branch.c:650 builtin/show-ref.c:172 builtin/tag.c:403
 #: parse-options.h:141 parse-options.h:162 parse-options.h:312
 msgid "n"
 msgstr "n"
 
 #: builtin/am.c:2220 builtin/branch.c:661 builtin/for-each-ref.c:38
-#: builtin/replace.c:554 builtin/tag.c:437 builtin/verify-tag.c:39
+#: builtin/replace.c:554 builtin/tag.c:437 builtin/verify-tag.c:38
 msgid "format"
 msgstr "format"
 
@@ -9200,7 +9200,8 @@ msgstr "felaktigt HEAD - Jag behöver ett HEAD"
 #: builtin/bisect--helper.c:526
 #, c-format
 msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
-msgstr "misslyckades checka ut \"%s\". Försök \"git bisect reset <giltig_gren>\"."
+msgstr ""
+"misslyckades checka ut \"%s\". Försök \"git bisect reset <giltig_gren>\"."
 
 # cogito-relaterat
 #: builtin/bisect--helper.c:547
@@ -9387,7 +9388,7 @@ msgstr "Visa författarens e-post istället för namn (Standard: av)"
 msgid "Ignore whitespace differences"
 msgstr "Ignorera ändringar i blanksteg"
 
-#: builtin/blame.c:861 builtin/log.c:1646
+#: builtin/blame.c:861 builtin/log.c:1629
 msgid "rev"
 msgstr "rev"
 
@@ -9783,7 +9784,7 @@ msgid "sorting and filtering are case insensitive"
 msgstr "sortering och filtrering skiljer gemener och VERSALER"
 
 #: builtin/branch.c:661 builtin/for-each-ref.c:38 builtin/tag.c:438
-#: builtin/verify-tag.c:39
+#: builtin/verify-tag.c:38
 msgid "format to use for the output"
 msgstr "format att använda för utdata"
 
@@ -10460,7 +10461,7 @@ msgstr "tvinga förloppsrapportering"
 msgid "perform a 3-way merge with the new branch"
 msgstr "utför en 3-vägssammanslagning för den nya grenen"
 
-#: builtin/checkout.c:1439 builtin/log.c:1634 parse-options.h:318
+#: builtin/checkout.c:1439 builtin/log.c:1617 parse-options.h:318
 msgid "style"
 msgstr "stil"
 
@@ -10541,7 +10542,8 @@ msgstr "felaktig sökvägsangivelse"
 #: builtin/checkout.c:1638
 #, c-format
 msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
-msgstr "\"%s\" är inte en incheckning och grenen \"%s\" kan inte skapas från den"
+msgstr ""
+"\"%s\" är inte en incheckning och grenen \"%s\" kan inte skapas från den"
 
 #: builtin/checkout.c:1642
 #, c-format
@@ -10628,8 +10630,8 @@ msgid "throw away local modifications"
 msgstr "kasta bort lokala ändringar"
 
 #: builtin/checkout.c:1772
-msgid "where the checkout from"
-msgstr "källa till utcheckning"
+msgid "which tree-ish to checkout from"
+msgstr "vilken träd-igt att checka ut från"
 
 #: builtin/checkout.c:1774
 msgid "restore the index"
@@ -10802,7 +10804,7 @@ msgid "remove whole directories"
 msgstr "ta bort hela kataloger"
 
 #: builtin/clean.c:914 builtin/describe.c:546 builtin/describe.c:548
-#: builtin/grep.c:899 builtin/log.c:186 builtin/log.c:188
+#: builtin/grep.c:899 builtin/log.c:176 builtin/log.c:178
 #: builtin/ls-files.c:557 builtin/name-rev.c:413 builtin/name-rev.c:415
 #: builtin/show-ref.c:179
 msgid "pattern"
@@ -10899,7 +10901,7 @@ msgid "use --reference only while cloning"
 msgstr "använd --reference endast under kloningen"
 
 #: builtin/clone.c:119 builtin/column.c:27 builtin/merge-file.c:46
-#: builtin/pack-objects.c:3308 builtin/repack.c:330
+#: builtin/pack-objects.c:3314 builtin/repack.c:319
 msgid "name"
 msgstr "namn"
 
@@ -10924,7 +10926,7 @@ msgstr "djup"
 msgid "create a shallow clone of that depth"
 msgstr "skapa en grund klon på detta djup"
 
-#: builtin/clone.c:127 builtin/fetch.c:154 builtin/pack-objects.c:3297
+#: builtin/clone.c:127 builtin/fetch.c:154 builtin/pack-objects.c:3303
 msgid "time"
 msgstr "tid"
 
@@ -11106,7 +11108,7 @@ msgstr "flaggorna --bare och --separate-git-dir är inkompatibla."
 msgid "repository '%s' does not exist"
 msgstr "arkivet \"%s\" finns inte"
 
-#: builtin/clone.c:977 builtin/fetch.c:1653
+#: builtin/clone.c:977 builtin/fetch.c:1660
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "djupet %s är inte ett positivt tal"
@@ -11228,7 +11230,7 @@ msgstr ""
 msgid "duplicate parent %s ignored"
 msgstr "duplicerad förälder %s ignorerades"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:136 builtin/log.c:542
+#: builtin/commit-tree.c:56 builtin/commit-tree.c:136 builtin/log.c:525
 #, c-format
 msgid "not a valid object name %s"
 msgstr "objektnamnet är inte giltigt: %s"
@@ -11718,7 +11720,7 @@ msgstr ""
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr "jag är nu författare av incheckningen (används med -C/-c/--amend)"
 
-#: builtin/commit.c:1506 builtin/log.c:1581 builtin/merge.c:289
+#: builtin/commit.c:1506 builtin/log.c:1564 builtin/merge.c:289
 #: builtin/pull.c:163 builtin/revert.c:110
 msgid "add Signed-off-by:"
 msgstr "lägg till Signed-off-by:"
@@ -11840,7 +11842,7 @@ msgstr ""
 
 #: builtin/commit-graph.c:54 builtin/commit-graph.c:100
 #: builtin/commit-graph.c:161 builtin/commit-graph.c:237 builtin/fetch.c:163
-#: builtin/log.c:1601
+#: builtin/log.c:1584
 msgid "dir"
 msgstr "kat"
 
@@ -12591,7 +12593,7 @@ msgstr "Använd done-funktionen för att avsluta strömmen"
 msgid "Skip output of blob data"
 msgstr "Hoppa över skrivning av blob-data"
 
-#: builtin/fast-export.c:1145 builtin/log.c:1649
+#: builtin/fast-export.c:1145 builtin/log.c:1632
 msgid "refspec"
 msgstr "referensspecifikation"
 
@@ -12791,22 +12793,46 @@ msgstr "tvingad uppdatering"
 msgid "non-fast-forward"
 msgstr "ej snabbspolad"
 
-#: builtin/fetch.c:879
+#: builtin/fetch.c:854
+msgid ""
+"Fetch normally indicates which branches had a forced update,\n"
+"but that check has been disabled. To re-enable, use '--show-forced-updates'\n"
+"flag or run 'git config fetch.showForcedUpdates true'."
+msgstr ""
+"Fetch visar normalt vilka grenar som tvångsuppdaterats, men testet har "
+"slagits\n"
+"av. För att slå på igen, använd flaggan \"--show-forced-updates\" eller kör\n"
+"\"git config fetch.showForcedUpdates true\"."
+
+#: builtin/fetch.c:858
+#, c-format
+msgid ""
+"It took %.2f seconds to check forced updates. You can use\n"
+"'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates "
+"false'\n"
+" to avoid this check.\n"
+msgstr ""
+"Det tog %.2f sekunder att se efter tvångsuppdateringar. Du kan använda\n"
+"\"--no-show-forced-updates\" eller köra \"git config fetch."
+"showForcedUpdates\n"
+"false\" för att undvika testet.\n"
+
+#: builtin/fetch.c:888
 #, c-format
 msgid "%s did not send all necessary objects\n"
 msgstr "%s sände inte alla nödvändiga objekt\n"
 
-#: builtin/fetch.c:900
+#: builtin/fetch.c:909
 #, c-format
 msgid "reject %s because shallow roots are not allowed to be updated"
 msgstr "avvisa %s då grunda rötter inte kan uppdateras"
 
-#: builtin/fetch.c:991 builtin/fetch.c:1124
+#: builtin/fetch.c:1000 builtin/fetch.c:1131
 #, c-format
 msgid "From %.*s\n"
 msgstr "Från %.*s\n"
 
-#: builtin/fetch.c:1002
+#: builtin/fetch.c:1011
 #, c-format
 msgid ""
 "some local refs could not be updated; try running\n"
@@ -12815,81 +12841,50 @@ msgstr ""
 "vissa lokala referenser kunde inte uppdateras; testa att köra\n"
 " \"git remote prune %s\" för att ta bort gamla grenar som står i konflikt"
 
-#: builtin/fetch.c:1008
-msgid ""
-"Fetch normally indicates which branches had a forced update, but that check "
-"has been disabled."
-msgstr ""
-"Hämtning visar vanligtvis vilka grenar som har en tvingad uppdatering, men "
-"det testet har slagits av."
-
-#: builtin/fetch.c:1009
-msgid ""
-"To re-enable, use '--show-forced-updates' flag or run 'git config fetch."
-"showForcedUpdates true'."
-msgstr ""
-"För att slå på igen, använd flaggan \"--show-forced-updates\" eller kör "
-"\"git config fetch.showForcedUpdates true\"."
-
-#: builtin/fetch.c:1011
-#, c-format
-msgid ""
-"It took %.2f seconds to check forced updates. You can use '--no-show-forced-"
-"updates'\n"
-msgstr ""
-"Det tog %.2f sekunder att se efter tvingade uppdateringar. Du kan använda "
-"\"--no-show-forced-updates\"\n"
-
-#: builtin/fetch.c:1013
-msgid ""
-"or run 'git config fetch.showForcedUpdates false' to avoid this check.\n"
-msgstr ""
-"eller kör \"git config fetch.showForcedUpdates false\" för undvika testet.\n"
-
-#: builtin/fetch.c:1094
+#: builtin/fetch.c:1101
 #, c-format
 msgid "   (%s will become dangling)"
 msgstr "   (%s kommer bli dinglande)"
 
-#: builtin/fetch.c:1095
+#: builtin/fetch.c:1102
 #, c-format
 msgid "   (%s has become dangling)"
 msgstr "   (%s har blivit dinglande)"
 
-#: builtin/fetch.c:1127
+#: builtin/fetch.c:1134
 msgid "[deleted]"
 msgstr "[borttagen]"
 
-#: builtin/fetch.c:1128 builtin/remote.c:1036
+#: builtin/fetch.c:1135 builtin/remote.c:1036
 msgid "(none)"
 msgstr "(ingen)"
 
-#: builtin/fetch.c:1151
+#: builtin/fetch.c:1158
 #, c-format
 msgid "Refusing to fetch into current branch %s of non-bare repository"
 msgstr "Vägrar hämta till aktuell gren %s i ett icke-naket arkiv"
 
-#: builtin/fetch.c:1170
+#: builtin/fetch.c:1177
 #, c-format
 msgid "Option \"%s\" value \"%s\" is not valid for %s"
 msgstr "Flaggan \"%s\" och värdet \"%s\" är inte giltigt för %s"
 
-#: builtin/fetch.c:1173
+#: builtin/fetch.c:1180
 #, c-format
 msgid "Option \"%s\" is ignored for %s\n"
 msgstr "Flaggan \"%s\" ignoreras för %s\n"
 
-#: builtin/fetch.c:1477
+#: builtin/fetch.c:1484
 #, c-format
 msgid "Fetching %s\n"
 msgstr "Hämtar %s\n"
 
-#: builtin/fetch.c:1479 builtin/remote.c:100
+#: builtin/fetch.c:1486 builtin/remote.c:100
 #, c-format
 msgid "Could not fetch %s"
 msgstr "Kunde inte hämta %s"
 
-#: builtin/fetch.c:1525
+#: builtin/fetch.c:1532
 msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialClone"
@@ -12897,7 +12892,7 @@ msgstr ""
 "--filter kan endast användas med fjärren konfigurerad i extensions."
 "partialClone"
 
-#: builtin/fetch.c:1549
+#: builtin/fetch.c:1556
 msgid ""
 "No remote repository specified.  Please, specify either a URL or a\n"
 "remote name from which new revisions should be fetched."
@@ -12905,44 +12900,44 @@ msgstr ""
 "Inget fjärrarkiv angavs. Ange antingen en URL eller namnet på ett\n"
 "fjärrarkiv som nya incheckningar skall hämtas från."
 
-#: builtin/fetch.c:1586
+#: builtin/fetch.c:1593
 msgid "You need to specify a tag name."
 msgstr "Du måste ange namnet på en tagg."
 
-#: builtin/fetch.c:1637
+#: builtin/fetch.c:1644
 msgid "Negative depth in --deepen is not supported"
 msgstr "Negativa djup stöds inte i --deepen"
 
-#: builtin/fetch.c:1639
+#: builtin/fetch.c:1646
 msgid "--deepen and --depth are mutually exclusive"
 msgstr "--deepen och --depth är ömsesidigt uteslutande"
 
-#: builtin/fetch.c:1644
+#: builtin/fetch.c:1651
 msgid "--depth and --unshallow cannot be used together"
 msgstr "--depth och --unshallow kan inte användas samtidigt"
 
-#: builtin/fetch.c:1646
+#: builtin/fetch.c:1653
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "--unshallow kan inte användas på ett komplett arkiv"
 
-#: builtin/fetch.c:1662
+#: builtin/fetch.c:1669
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all tar inte namnet på ett arkiv som argument"
 
-#: builtin/fetch.c:1664
+#: builtin/fetch.c:1671
 msgid "fetch --all does not make sense with refspecs"
 msgstr "fetch --all kan inte anges med referensspecifikationer"
 
-#: builtin/fetch.c:1673
+#: builtin/fetch.c:1680
 #, c-format
 msgid "No such remote or remote group: %s"
 msgstr "Fjärren eller fjärrgruppen finns inte: %s"
 
-#: builtin/fetch.c:1680
+#: builtin/fetch.c:1687
 msgid "Fetching a group and specifying refspecs does not make sense"
 msgstr "Kan inte hämta från grupp och ange referensspecifikationer"
 
-#: builtin/fetch.c:1696
+#: builtin/fetch.c:1703
 msgid ""
 "--filter can only be used with the remote configured in extensions."
 "partialclone"
@@ -13402,7 +13397,7 @@ msgstr "felaktigt antal trådar angivet (%d) för %s"
 #. grep.threads
 #.
 #: builtin/grep.c:287 builtin/index-pack.c:1534 builtin/index-pack.c:1727
-#: builtin/pack-objects.c:2722
+#: builtin/pack-objects.c:2728
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "trådstöd saknas, ignorerar %s"
@@ -13627,11 +13622,11 @@ msgstr "kan inte slå upp revision: %s"
 msgid "invalid option combination, ignoring --threads"
 msgstr "ogiltig kombination av flaggor, ignorerar --threads"
 
-#: builtin/grep.c:1068 builtin/pack-objects.c:3405
+#: builtin/grep.c:1068 builtin/pack-objects.c:3416
 msgid "no threads support, ignoring --threads"
 msgstr "trådstöd saknas, ignorerar --threads"
 
-#: builtin/grep.c:1071 builtin/index-pack.c:1531 builtin/pack-objects.c:2719
+#: builtin/grep.c:1071 builtin/index-pack.c:1531 builtin/pack-objects.c:2725
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr "felaktigt antal trådar angivet (%d)"
@@ -13837,7 +13832,7 @@ msgstr "indataläsfel"
 msgid "used more bytes than were available"
 msgstr "använde fler byte än tillgängligt"
 
-#: builtin/index-pack.c:288 builtin/pack-objects.c:600
+#: builtin/index-pack.c:288 builtin/pack-objects.c:604
 msgid "pack too large for current definition of off_t"
 msgstr "paket för stort för nuvarande definition av off_t"
 
@@ -13903,8 +13898,8 @@ msgstr "allvarlig inflate-inkonsekvens"
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "SHA1-KOLLISION UPPTÄCKT VID %s !"
 
-#: builtin/index-pack.c:738 builtin/pack-objects.c:153
-#: builtin/pack-objects.c:213 builtin/pack-objects.c:307
+#: builtin/index-pack.c:738 builtin/pack-objects.c:157
+#: builtin/pack-objects.c:217 builtin/pack-objects.c:311
 #, c-format
 msgid "unable to read %s"
 msgstr "kunde inte läsa %s"
@@ -13965,7 +13960,7 @@ msgstr "förvirrad bortom vanvett i parse_pack_objects()"
 msgid "Resolving deltas"
 msgstr "Analyserar delta"
 
-#: builtin/index-pack.c:1205 builtin/pack-objects.c:2491
+#: builtin/index-pack.c:1205 builtin/pack-objects.c:2497
 #, c-format
 msgid "unable to create thread: %s"
 msgstr "kunde inte skapa tråd: %s"
@@ -14030,7 +14025,7 @@ msgstr "kan inte spara paketfil"
 msgid "cannot store index file"
 msgstr "kan inte spara indexfil"
 
-#: builtin/index-pack.c:1525 builtin/pack-objects.c:2730
+#: builtin/index-pack.c:1525 builtin/pack-objects.c:2736
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "felaktig pack.indexversion=%<PRIu32>"
@@ -14277,128 +14272,108 @@ msgstr "git show [<flaggor>] <objekt>..."
 msgid "invalid --decorate option: %s"
 msgstr "ogiltig flagga för --decorate: %s"
 
-#: builtin/log.c:160
-msgid ""
-"log.mailmap is not set; its implicit value will change in an\n"
-"upcoming release. To squelch this message and preserve current\n"
-"behaviour, set the log.mailmap configuration value to false.\n"
-"\n"
-"To squelch this message and adopt the new behaviour now, set the\n"
-"log.mailmap configuration value to true.\n"
-"\n"
-"See 'git help config' and search for 'log.mailmap' for further information."
-msgstr ""
-"log.mailmap har inte satts: förvalet kommer ändras i en kommande\n"
-"version. För att dölja det här meddelandet och behålla nuvarande\n"
-"beteende, sätt konfigurationsvariabeln log.mailmap till false.\n"
-"\n"
-"För att dölja det här meddelandet och använda det nya beteendet,\n"
-"sätt konfigurationsvariabeln log.mailmap till true.\n"
-"\n"
-"Se \"git help config\" och sök efter \"log.mailmap\" för mer information."
-
-#: builtin/log.c:183
+#: builtin/log.c:173
 msgid "show source"
 msgstr "visa källkod"
 
-#: builtin/log.c:184
+#: builtin/log.c:174
 msgid "Use mail map file"
 msgstr "Använd e-postmappningsfil"
 
-#: builtin/log.c:186
+#: builtin/log.c:176
 msgid "only decorate refs that match <pattern>"
 msgstr "dekorera endast referenser som motsvarar <mönster>"
 
-#: builtin/log.c:188
+#: builtin/log.c:178
 msgid "do not decorate refs that match <pattern>"
 msgstr "dekorera inte referenser som motsvarar <mönster>"
 
-#: builtin/log.c:189
+#: builtin/log.c:179
 msgid "decorate options"
 msgstr "dekoreringsflaggor"
 
-#: builtin/log.c:192
+#: builtin/log.c:182
 msgid "Process line range n,m in file, counting from 1"
 msgstr "Behandla radintervallet n,m i filen, med början på 1"
 
-#: builtin/log.c:297
+#: builtin/log.c:280
 #, c-format
 msgid "Final output: %d %s\n"
 msgstr "Slututdata: %d %s\n"
 
-#: builtin/log.c:551
+#: builtin/log.c:534
 #, c-format
 msgid "git show %s: bad file"
 msgstr "git show %s: felaktig fil"
 
-#: builtin/log.c:566 builtin/log.c:660
+#: builtin/log.c:549 builtin/log.c:643
 #, c-format
 msgid "could not read object %s"
 msgstr "kunde inte läsa objektet %s"
 
-#: builtin/log.c:685
+#: builtin/log.c:668
 #, c-format
 msgid "unknown type: %d"
 msgstr "okänd typ: %d"
 
-#: builtin/log.c:808
+#: builtin/log.c:791
 msgid "format.headers without value"
 msgstr "format.headers utan värde"
 
-#: builtin/log.c:925
+#: builtin/log.c:908
 msgid "name of output directory is too long"
 msgstr "namnet på utdatakatalogen är för långt"
 
-#: builtin/log.c:941
+#: builtin/log.c:924
 #, c-format
 msgid "cannot open patch file %s"
 msgstr "kan inte öppna patchfilen %s"
 
-#: builtin/log.c:958
+#: builtin/log.c:941
 msgid "need exactly one range"
 msgstr "behöver precis ett intervall"
 
-#: builtin/log.c:968
+#: builtin/log.c:951
 msgid "not a range"
 msgstr "inte ett intervall"
 
-#: builtin/log.c:1091
+#: builtin/log.c:1074
 msgid "cover letter needs email format"
 msgstr "omslagsbrevet behöver e-postformat"
 
-#: builtin/log.c:1097
+#: builtin/log.c:1080
 msgid "failed to create cover-letter file"
 msgstr "misslyckades skapa fil för omslagsbrev"
 
-#: builtin/log.c:1176
+#: builtin/log.c:1159
 #, c-format
 msgid "insane in-reply-to: %s"
 msgstr "tokigt in-reply-to: %s"
 
-#: builtin/log.c:1203
+#: builtin/log.c:1186
 msgid "git format-patch [<options>] [<since> | <revision-range>]"
 msgstr "git format-patch [<flaggor>] [<sedan> | <revisionsintervall>]"
 
-#: builtin/log.c:1261
+#: builtin/log.c:1244
 msgid "two output directories?"
 msgstr "två utdatakataloger?"
 
-#: builtin/log.c:1372 builtin/log.c:2116 builtin/log.c:2118 builtin/log.c:2130
+#: builtin/log.c:1355 builtin/log.c:2099 builtin/log.c:2101 builtin/log.c:2113
 #, c-format
 msgid "unknown commit %s"
 msgstr "okänd incheckning %s"
 
-#: builtin/log.c:1382 builtin/replace.c:58 builtin/replace.c:207
+#: builtin/log.c:1365 builtin/replace.c:58 builtin/replace.c:207
 #: builtin/replace.c:210
 #, c-format
 msgid "failed to resolve '%s' as a valid ref"
 msgstr "misslyckades slå upp \"%s\" som en giltig referens"
 
-#: builtin/log.c:1387
+#: builtin/log.c:1370
 msgid "could not find exact merge base"
 msgstr "kunde inte hitta exakt sammanslagningsbas"
 
-#: builtin/log.c:1391
+#: builtin/log.c:1374
 msgid ""
 "failed to get upstream, if you want to record base commit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
@@ -14408,267 +14383,267 @@ msgstr ""
 "använd git branch --set-upstream-to för att spåra en fjärrgren.\n"
 "Eller så kan du ange basincheckning med --base=<bas-inchecknings-id> manuellt"
 
-#: builtin/log.c:1411
+#: builtin/log.c:1394
 msgid "failed to find exact merge base"
 msgstr "kunde inte hitta exakt sammanslagningsbas"
 
-#: builtin/log.c:1422
+#: builtin/log.c:1405
 msgid "base commit should be the ancestor of revision list"
 msgstr "basincheckningen bör vara förfader till revisionslistan"
 
-#: builtin/log.c:1426
+#: builtin/log.c:1409
 msgid "base commit shouldn't be in revision list"
 msgstr "basincheckningen bör inte vara i revisionslistan"
 
-#: builtin/log.c:1479
+#: builtin/log.c:1462
 msgid "cannot get patch id"
 msgstr "kan inte hämta patch-id"
 
-#: builtin/log.c:1531
+#: builtin/log.c:1514
 msgid "failed to infer range-diff ranges"
 msgstr "misslyckades räkna ut intervall range-diff"
 
-#: builtin/log.c:1576
+#: builtin/log.c:1559
 msgid "use [PATCH n/m] even with a single patch"
 msgstr "använd [PATCH n/m] även för en ensam patch"
 
-#: builtin/log.c:1579
+#: builtin/log.c:1562
 msgid "use [PATCH] even with multiple patches"
 msgstr "använd [PATCH] även för flera patchar"
 
-#: builtin/log.c:1583
+#: builtin/log.c:1566
 msgid "print patches to standard out"
 msgstr "skriv patcharna på standard ut"
 
-#: builtin/log.c:1585
+#: builtin/log.c:1568
 msgid "generate a cover letter"
 msgstr "generera ett följebrev"
 
-#: builtin/log.c:1587
+#: builtin/log.c:1570
 msgid "use simple number sequence for output file names"
 msgstr "använd enkel nummersekvens för utdatafilnamn"
 
-#: builtin/log.c:1588
+#: builtin/log.c:1571
 msgid "sfx"
 msgstr "sfx"
 
-#: builtin/log.c:1589
+#: builtin/log.c:1572
 msgid "use <sfx> instead of '.patch'"
 msgstr "använd <sfx> istället för \".patch\""
 
-#: builtin/log.c:1591
+#: builtin/log.c:1574
 msgid "start numbering patches at <n> instead of 1"
 msgstr "börja numrera patchar på <n> istället för 1"
 
-#: builtin/log.c:1593
+#: builtin/log.c:1576
 msgid "mark the series as Nth re-roll"
 msgstr "markera serien som N:te försök"
 
-#: builtin/log.c:1595
+#: builtin/log.c:1578
 msgid "Use [RFC PATCH] instead of [PATCH]"
 msgstr "Använd  [RFC PATCH] istället för [PATCH]"
 
-#: builtin/log.c:1598
+#: builtin/log.c:1581
 msgid "Use [<prefix>] instead of [PATCH]"
 msgstr "Använd [<prefix>] istället för [PATCH]"
 
-#: builtin/log.c:1601
+#: builtin/log.c:1584
 msgid "store resulting files in <dir>"
 msgstr "spara filerna i <katalog>"
 
-#: builtin/log.c:1604
+#: builtin/log.c:1587
 msgid "don't strip/add [PATCH]"
 msgstr "ta inte bort eller lägg till [PATCH]"
 
-#: builtin/log.c:1607
+#: builtin/log.c:1590
 msgid "don't output binary diffs"
 msgstr "skriv inte binära diffar"
 
-#: builtin/log.c:1609
+#: builtin/log.c:1592
 msgid "output all-zero hash in From header"
 msgstr "använd hashvärde med nollor i From-huvud"
 
-#: builtin/log.c:1611
+#: builtin/log.c:1594
 msgid "don't include a patch matching a commit upstream"
 msgstr "ta inte med patchar som motsvarar en uppströmsincheckning"
 
-#: builtin/log.c:1613
+#: builtin/log.c:1596
 msgid "show patch format instead of default (patch + stat)"
 msgstr "visa patchformat istället för standard (patch + stat)"
 
-#: builtin/log.c:1615
+#: builtin/log.c:1598
 msgid "Messaging"
 msgstr "E-post"
 
-#: builtin/log.c:1616
+#: builtin/log.c:1599
 msgid "header"
 msgstr "huvud"
 
-#: builtin/log.c:1617
+#: builtin/log.c:1600
 msgid "add email header"
 msgstr "lägg till e-posthuvud"
 
-#: builtin/log.c:1618 builtin/log.c:1620
+#: builtin/log.c:1601 builtin/log.c:1603
 msgid "email"
 msgstr "epost"
 
-#: builtin/log.c:1618
+#: builtin/log.c:1601
 msgid "add To: header"
 msgstr "lägg till mottagarhuvud (\"To:\")"
 
-#: builtin/log.c:1620
+#: builtin/log.c:1603
 msgid "add Cc: header"
 msgstr "lägg till kopiehuvud (\"Cc:\")"
 
-#: builtin/log.c:1622
+#: builtin/log.c:1605
 msgid "ident"
 msgstr "ident"
 
-#: builtin/log.c:1623
+#: builtin/log.c:1606
 msgid "set From address to <ident> (or committer ident if absent)"
 msgstr "sätt Från-adress till <ident> (eller incheckare om ident saknas)"
 
-#: builtin/log.c:1625
+#: builtin/log.c:1608
 msgid "message-id"
 msgstr "meddelande-id"
 
-#: builtin/log.c:1626
+#: builtin/log.c:1609
 msgid "make first mail a reply to <message-id>"
 msgstr "gör det första brevet ett svar till <meddelande-id>"
 
-#: builtin/log.c:1627 builtin/log.c:1630
+#: builtin/log.c:1610 builtin/log.c:1613
 msgid "boundary"
 msgstr "gräns"
 
-#: builtin/log.c:1628
+#: builtin/log.c:1611
 msgid "attach the patch"
 msgstr "bifoga patchen"
 
-#: builtin/log.c:1631
+#: builtin/log.c:1614
 msgid "inline the patch"
 msgstr "gör patchen ett inline-objekt"
 
-#: builtin/log.c:1635
+#: builtin/log.c:1618
 msgid "enable message threading, styles: shallow, deep"
 msgstr "aktivera brevtrådning, typer: shallow, deep"
 
-#: builtin/log.c:1637
+#: builtin/log.c:1620
 msgid "signature"
 msgstr "signatur"
 
-#: builtin/log.c:1638
+#: builtin/log.c:1621
 msgid "add a signature"
 msgstr "lägg till signatur"
 
-#: builtin/log.c:1639
+#: builtin/log.c:1622
 msgid "base-commit"
 msgstr "basincheckning"
 
-#: builtin/log.c:1640
+#: builtin/log.c:1623
 msgid "add prerequisite tree info to the patch series"
 msgstr "lägg till förhandskrävd trädinfo i patchserien"
 
-#: builtin/log.c:1642
+#: builtin/log.c:1625
 msgid "add a signature from a file"
 msgstr "lägg till signatur från fil"
 
-#: builtin/log.c:1643
+#: builtin/log.c:1626
 msgid "don't print the patch filenames"
 msgstr "visa inte filnamn för patchar"
 
-#: builtin/log.c:1645
+#: builtin/log.c:1628
 msgid "show progress while generating patches"
 msgstr "visa förloppsindikator medan patchar skapas"
 
-#: builtin/log.c:1647
+#: builtin/log.c:1630
 msgid "show changes against <rev> in cover letter or single patch"
 msgstr "visa ändringar mot <rev> i omslagsbrev eller ensam patch"
 
-#: builtin/log.c:1650
+#: builtin/log.c:1633
 msgid "show changes against <refspec> in cover letter or single patch"
 msgstr "visa ändringar mot <refspec> i omslagsbrev eller ensam patch"
 
-#: builtin/log.c:1652
+#: builtin/log.c:1635
 msgid "percentage by which creation is weighted"
 msgstr "procent som skapelse vägs med"
 
-#: builtin/log.c:1727
+#: builtin/log.c:1710
 #, c-format
 msgid "invalid ident line: %s"
 msgstr "ogiltig ident-rad: %s"
 
-#: builtin/log.c:1742
+#: builtin/log.c:1725
 msgid "-n and -k are mutually exclusive"
 msgstr "-n och -k kan inte användas samtidigt"
 
-#: builtin/log.c:1744
+#: builtin/log.c:1727
 msgid "--subject-prefix/--rfc and -k are mutually exclusive"
 msgstr "--subject-prefix/--rfc och -k kan inte användas samtidigt"
 
-#: builtin/log.c:1752
+#: builtin/log.c:1735
 msgid "--name-only does not make sense"
 msgstr "kan inte använda --name-only"
 
-#: builtin/log.c:1754
+#: builtin/log.c:1737
 msgid "--name-status does not make sense"
 msgstr "kan inte använda --name-status"
 
-#: builtin/log.c:1756
+#: builtin/log.c:1739
 msgid "--check does not make sense"
 msgstr "kan inte använda --check"
 
-#: builtin/log.c:1788
+#: builtin/log.c:1771
 msgid "standard output, or directory, which one?"
 msgstr "standard ut, eller katalog, vilken skall det vara?"
 
-#: builtin/log.c:1877
+#: builtin/log.c:1860
 msgid "--interdiff requires --cover-letter or single patch"
 msgstr "--interdiff kräver --cover-letter eller ensam patch"
 
-#: builtin/log.c:1881
+#: builtin/log.c:1864
 msgid "Interdiff:"
 msgstr "Interdiff:"
 
-#: builtin/log.c:1882
+#: builtin/log.c:1865
 #, c-format
 msgid "Interdiff against v%d:"
 msgstr "Interdiff mot v%d:"
 
-#: builtin/log.c:1888
+#: builtin/log.c:1871
 msgid "--creation-factor requires --range-diff"
 msgstr "--creation-factor kräver --range-diff"
 
-#: builtin/log.c:1892
+#: builtin/log.c:1875
 msgid "--range-diff requires --cover-letter or single patch"
 msgstr "--range-diff kräver --cover-letter eller ensam patch"
 
-#: builtin/log.c:1900
+#: builtin/log.c:1883
 msgid "Range-diff:"
 msgstr "Intervall-diff:"
 
-#: builtin/log.c:1901
+#: builtin/log.c:1884
 #, c-format
 msgid "Range-diff against v%d:"
 msgstr "Intervall-diff mot v%d:"
 
-#: builtin/log.c:1912
+#: builtin/log.c:1895
 #, c-format
 msgid "unable to read signature file '%s'"
 msgstr "kunde inte läsa signaturfil \"%s\""
 
-#: builtin/log.c:1948
+#: builtin/log.c:1931
 msgid "Generating patches"
 msgstr "Skapar patchar"
 
-#: builtin/log.c:1992
+#: builtin/log.c:1975
 msgid "failed to create output files"
 msgstr "misslyckades skapa utdatafiler"
 
-#: builtin/log.c:2051
+#: builtin/log.c:2034
 msgid "git cherry [-v] [<upstream> [<head> [<limit>]]]"
 msgstr "git cherry [-v] [<uppström> [<huvud> [<gräns>]]]"
 
-#: builtin/log.c:2105
+#: builtin/log.c:2088
 #, c-format
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
@@ -15499,7 +15474,7 @@ msgstr "%s, källa=%s, mål=%s"
 msgid "Renaming %s to %s\n"
 msgstr "Byter namn på %s till %s\n"
 
-#: builtin/mv.c:277 builtin/remote.c:717 builtin/repack.c:520
+#: builtin/mv.c:277 builtin/remote.c:717 builtin/repack.c:510
 #, c-format
 msgid "renaming '%s' failed"
 msgstr "misslyckades byta namn på \"%s\""
@@ -15976,125 +15951,125 @@ msgid ""
 msgstr ""
 "git pack-objects [<flaggor>...] <basnamn> [< <reflista> | < <objektlista>]"
 
-#: builtin/pack-objects.c:424
+#: builtin/pack-objects.c:428
 #, c-format
 msgid "bad packed object CRC for %s"
 msgstr "felaktig CRC för packat objekt %s"
 
-#: builtin/pack-objects.c:435
+#: builtin/pack-objects.c:439
 #, c-format
 msgid "corrupt packed object for %s"
 msgstr "trasigt packat objekt för %s"
 
-#: builtin/pack-objects.c:566
+#: builtin/pack-objects.c:570
 #, c-format
 msgid "recursive delta detected for object %s"
 msgstr "rekursivt delta upptäcktes för objektet %s"
 
-#: builtin/pack-objects.c:777
+#: builtin/pack-objects.c:781
 #, c-format
 msgid "ordered %u objects, expected %<PRIu32>"
 msgstr "ordnade %u objekt, förväntade %<PRIu32>"
 
-#: builtin/pack-objects.c:790
+#: builtin/pack-objects.c:794
 #, c-format
 msgid "packfile is invalid: %s"
 msgstr "packfil är ogiltig: %s"
 
-#: builtin/pack-objects.c:794
+#: builtin/pack-objects.c:798
 #, c-format
 msgid "unable to open packfile for reuse: %s"
 msgstr "kan inte öppna packfil för återanvändning: %s"
 
-#: builtin/pack-objects.c:798
+#: builtin/pack-objects.c:802
 msgid "unable to seek in reused packfile"
 msgstr "kan inte söka i återanvänd packfil"
 
-#: builtin/pack-objects.c:809
+#: builtin/pack-objects.c:813
 msgid "unable to read from reused packfile"
 msgstr "kan inte läsa från återanvänd packfil"
 
-#: builtin/pack-objects.c:837
+#: builtin/pack-objects.c:841
 msgid "disabling bitmap writing, packs are split due to pack.packSizeLimit"
 msgstr ""
 "inaktiverar skrivning av bitkarta, paket delas på grund av pack.packSizeLimit"
 
-#: builtin/pack-objects.c:850
+#: builtin/pack-objects.c:854
 msgid "Writing objects"
 msgstr "Skriver objekt"
 
-#: builtin/pack-objects.c:912 builtin/update-index.c:89
+#: builtin/pack-objects.c:917 builtin/update-index.c:89
 #, c-format
 msgid "failed to stat %s"
 msgstr "misslyckades ta status på %s"
 
-#: builtin/pack-objects.c:965
+#: builtin/pack-objects.c:970
 #, c-format
 msgid "wrote %<PRIu32> objects while expecting %<PRIu32>"
 msgstr "skrev %<PRIu32> objekt medan %<PRIu32> förväntades"
 
-#: builtin/pack-objects.c:1161
+#: builtin/pack-objects.c:1166
 msgid "disabling bitmap writing, as some objects are not being packed"
 msgstr "inaktiverar skrivning av bitkarta då några objekt inte packas"
 
-#: builtin/pack-objects.c:1591
+#: builtin/pack-objects.c:1597
 #, c-format
 msgid "delta base offset overflow in pack for %s"
 msgstr "deltabasoffset utanför gränsen i pack för %s"
 
-#: builtin/pack-objects.c:1600
+#: builtin/pack-objects.c:1606
 #, c-format
 msgid "delta base offset out of bound for %s"
 msgstr "deltabasoffset utanför gränsvärden för %s"
 
-#: builtin/pack-objects.c:1869
+#: builtin/pack-objects.c:1875
 msgid "Counting objects"
 msgstr "Räknar objekt"
 
-#: builtin/pack-objects.c:1999
+#: builtin/pack-objects.c:2005
 #, c-format
 msgid "unable to get size of %s"
 msgstr "kan inte hämta storlek på %s"
 
-#: builtin/pack-objects.c:2014
+#: builtin/pack-objects.c:2020
 #, c-format
 msgid "unable to parse object header of %s"
 msgstr "kunde inte tolka objekthuvud för %s"
 
-#: builtin/pack-objects.c:2084 builtin/pack-objects.c:2100
-#: builtin/pack-objects.c:2110
+#: builtin/pack-objects.c:2090 builtin/pack-objects.c:2106
+#: builtin/pack-objects.c:2116
 #, c-format
 msgid "object %s cannot be read"
 msgstr "objektet %s kunde inte läsas"
 
-#: builtin/pack-objects.c:2087 builtin/pack-objects.c:2114
+#: builtin/pack-objects.c:2093 builtin/pack-objects.c:2120
 #, c-format
 msgid "object %s inconsistent object length (%<PRIuMAX> vs %<PRIuMAX>)"
 msgstr "objektet %s har inkonsistent objektlängd (%<PRIuMAX> mot %<PRIuMAX>)"
 
-#: builtin/pack-objects.c:2124
+#: builtin/pack-objects.c:2130
 msgid "suboptimal pack - out of memory"
 msgstr "icke-optimalt pack - minnet slut"
 
-#: builtin/pack-objects.c:2450
+#: builtin/pack-objects.c:2456
 #, c-format
 msgid "Delta compression using up to %d threads"
 msgstr "Deltakomprimering använder upp till %d trådar"
 
-#: builtin/pack-objects.c:2582
+#: builtin/pack-objects.c:2588
 #, c-format
 msgid "unable to pack objects reachable from tag %s"
 msgstr "kan inte packa objekt nåbara från taggen %s"
 
-#: builtin/pack-objects.c:2669
+#: builtin/pack-objects.c:2675
 msgid "Compressing objects"
 msgstr "Komprimerar objekt"
 
-#: builtin/pack-objects.c:2675
+#: builtin/pack-objects.c:2681
 msgid "inconsistency with delta count"
 msgstr "deltaräknaren är inkonsekvent"
 
-#: builtin/pack-objects.c:2756
+#: builtin/pack-objects.c:2762
 #, c-format
 msgid ""
 "expected edge object ID, got garbage:\n"
@@ -16103,7 +16078,7 @@ msgstr ""
 "förväntade kant-objekt-id, fick skräp:\n"
 " %s"
 
-#: builtin/pack-objects.c:2762
+#: builtin/pack-objects.c:2768
 #, c-format
 msgid ""
 "expected object ID, got garbage:\n"
@@ -16112,239 +16087,243 @@ msgstr ""
 "förväntade objekt-id, fick skräp:\n"
 " %s"
 
-#: builtin/pack-objects.c:2860
+#: builtin/pack-objects.c:2866
 msgid "invalid value for --missing"
 msgstr "ogiltigt värde för --missing"
 
-#: builtin/pack-objects.c:2919 builtin/pack-objects.c:3027
+#: builtin/pack-objects.c:2925 builtin/pack-objects.c:3033
 msgid "cannot open pack index"
 msgstr "kan inte öppna paketfilen"
 
-#: builtin/pack-objects.c:2950
+#: builtin/pack-objects.c:2956
 #, c-format
 msgid "loose object at %s could not be examined"
 msgstr "lösa objekt på %s kunde inte underökas"
 
-#: builtin/pack-objects.c:3035
+#: builtin/pack-objects.c:3041
 msgid "unable to force loose object"
 msgstr "kan inte tvinga lösa objekt"
 
-#: builtin/pack-objects.c:3127
+#: builtin/pack-objects.c:3133
 #, c-format
 msgid "not a rev '%s'"
 msgstr "inte en referens \"%s\""
 
-#: builtin/pack-objects.c:3130
+#: builtin/pack-objects.c:3136
 #, c-format
 msgid "bad revision '%s'"
 msgstr "felaktig revision \"%s\""
 
-#: builtin/pack-objects.c:3155
+#: builtin/pack-objects.c:3161
 msgid "unable to add recent objects"
 msgstr "kan inte lägga till nya objekt"
 
-#: builtin/pack-objects.c:3208
+#: builtin/pack-objects.c:3214
 #, c-format
 msgid "unsupported index version %s"
 msgstr "indexversionen %s stöds ej"
 
-#: builtin/pack-objects.c:3212
+#: builtin/pack-objects.c:3218
 #, c-format
 msgid "bad index version '%s'"
 msgstr "felaktig indexversion \"%s\""
 
-#: builtin/pack-objects.c:3242
+#: builtin/pack-objects.c:3248
 msgid "do not show progress meter"
 msgstr "visa inte förloppsindikator"
 
-#: builtin/pack-objects.c:3244
+#: builtin/pack-objects.c:3250
 msgid "show progress meter"
 msgstr "visa förloppsindikator"
 
-#: builtin/pack-objects.c:3246
+#: builtin/pack-objects.c:3252
 msgid "show progress meter during object writing phase"
 msgstr "visa förloppsindikator under objektskrivningsfasen"
 
-#: builtin/pack-objects.c:3249
+#: builtin/pack-objects.c:3255
 msgid "similar to --all-progress when progress meter is shown"
 msgstr "som --all-progress när förloppsindikatorn visas"
 
-#: builtin/pack-objects.c:3250
+#: builtin/pack-objects.c:3256
 msgid "<version>[,<offset>]"
 msgstr "<version>[,<offset>]"
 
-#: builtin/pack-objects.c:3251
+#: builtin/pack-objects.c:3257
 msgid "write the pack index file in the specified idx format version"
 msgstr "skriv paketindexfilen i angiven indexformatversion"
 
-#: builtin/pack-objects.c:3254
+#: builtin/pack-objects.c:3260
 msgid "maximum size of each output pack file"
 msgstr "maximal storlek på varje utdatapaketfil"
 
-#: builtin/pack-objects.c:3256
+#: builtin/pack-objects.c:3262
 msgid "ignore borrowed objects from alternate object store"
 msgstr "ignorera lånade objekt från alternativa objektlager"
 
-#: builtin/pack-objects.c:3258
+#: builtin/pack-objects.c:3264
 msgid "ignore packed objects"
 msgstr "ignorera packade objekt"
 
-#: builtin/pack-objects.c:3260
+#: builtin/pack-objects.c:3266
 msgid "limit pack window by objects"
 msgstr "begränsa paketfönster efter objekt"
 
-#: builtin/pack-objects.c:3262
+#: builtin/pack-objects.c:3268
 msgid "limit pack window by memory in addition to object limit"
 msgstr "begränsa paketfönster efter minne förutom objektgräns"
 
-#: builtin/pack-objects.c:3264
+#: builtin/pack-objects.c:3270
 msgid "maximum length of delta chain allowed in the resulting pack"
 msgstr "maximal längd på deltakedja tillåten i slutligt paket"
 
-#: builtin/pack-objects.c:3266
+#: builtin/pack-objects.c:3272
 msgid "reuse existing deltas"
 msgstr "återanvänd befintliga delta"
 
-#: builtin/pack-objects.c:3268
+#: builtin/pack-objects.c:3274
 msgid "reuse existing objects"
 msgstr "återanvänd befintliga objekt"
 
-#: builtin/pack-objects.c:3270
+#: builtin/pack-objects.c:3276
 msgid "use OFS_DELTA objects"
 msgstr "använd OFS_DELTA-objekt"
 
-#: builtin/pack-objects.c:3272
+#: builtin/pack-objects.c:3278
 msgid "use threads when searching for best delta matches"
 msgstr "använd trådar vid sökning efter bästa deltaträffar"
 
-#: builtin/pack-objects.c:3274
+#: builtin/pack-objects.c:3280
 msgid "do not create an empty pack output"
 msgstr "försök inte skapa tom paketutdata"
 
-#: builtin/pack-objects.c:3276
+#: builtin/pack-objects.c:3282
 msgid "read revision arguments from standard input"
 msgstr "läs revisionsargument från standard in"
 
-#: builtin/pack-objects.c:3278
+#: builtin/pack-objects.c:3284
 msgid "limit the objects to those that are not yet packed"
 msgstr "begränsa objekt till dem som ännu inte packats"
 
-#: builtin/pack-objects.c:3281
+#: builtin/pack-objects.c:3287
 msgid "include objects reachable from any reference"
 msgstr "inkludera objekt som kan nås från någon referens"
 
-#: builtin/pack-objects.c:3284
+#: builtin/pack-objects.c:3290
 msgid "include objects referred by reflog entries"
 msgstr "inkludera objekt som refereras från referensloggposter"
 
-#: builtin/pack-objects.c:3287
+#: builtin/pack-objects.c:3293
 msgid "include objects referred to by the index"
 msgstr "inkludera objekt som refereras från indexet"
 
-#: builtin/pack-objects.c:3290
+#: builtin/pack-objects.c:3296
 msgid "output pack to stdout"
 msgstr "skriv paket på standard ut"
 
-#: builtin/pack-objects.c:3292
+#: builtin/pack-objects.c:3298
 msgid "include tag objects that refer to objects to be packed"
 msgstr "inkludera taggobjekt som refererar objekt som skall packas"
 
-#: builtin/pack-objects.c:3294
+#: builtin/pack-objects.c:3300
 msgid "keep unreachable objects"
 msgstr "behåll onåbara objekt"
 
-#: builtin/pack-objects.c:3296
+#: builtin/pack-objects.c:3302
 msgid "pack loose unreachable objects"
 msgstr "packa lösa onåbara objekt"
 
-#: builtin/pack-objects.c:3298
+#: builtin/pack-objects.c:3304
 msgid "unpack unreachable objects newer than <time>"
 msgstr "packa upp onåbara objekt nyare än <tid>"
 
-#: builtin/pack-objects.c:3301
+#: builtin/pack-objects.c:3307
 msgid "use the sparse reachability algorithm"
 msgstr "använd gles-nåbarhetsalgoritmen"
 
-#: builtin/pack-objects.c:3303
+#: builtin/pack-objects.c:3309
 msgid "create thin packs"
 msgstr "skapa tunna paket"
 
-#: builtin/pack-objects.c:3305
+#: builtin/pack-objects.c:3311
 msgid "create packs suitable for shallow fetches"
 msgstr "skapa packfiler lämpade för grunda hämtningar"
 
-#: builtin/pack-objects.c:3307
+#: builtin/pack-objects.c:3313
 msgid "ignore packs that have companion .keep file"
 msgstr "ignorera paket som har tillhörande .keep-fil"
 
-#: builtin/pack-objects.c:3309
+#: builtin/pack-objects.c:3315
 msgid "ignore this pack"
 msgstr "ignorera detta paket"
 
-#: builtin/pack-objects.c:3311
+#: builtin/pack-objects.c:3317
 msgid "pack compression level"
 msgstr "komprimeringsgrad för paket"
 
-#: builtin/pack-objects.c:3313
+#: builtin/pack-objects.c:3319
 msgid "do not hide commits by grafts"
 msgstr "göm inte incheckningar med ympningar (\"grafts\")"
 
-#: builtin/pack-objects.c:3315
+#: builtin/pack-objects.c:3321
 msgid "use a bitmap index if available to speed up counting objects"
 msgstr "använd bitkartindex om tillgängligt för att räkna objekt snabbare"
 
-#: builtin/pack-objects.c:3317
+#: builtin/pack-objects.c:3323
 msgid "write a bitmap index together with the pack index"
 msgstr "använd bitkartindex tillsammans med packindexet"
 
-#: builtin/pack-objects.c:3320
+#: builtin/pack-objects.c:3327
+msgid "write a bitmap index if possible"
+msgstr "skriv bitkartindex om möjligt"
+
+#: builtin/pack-objects.c:3331
 msgid "handling for missing objects"
 msgstr "hantering av saknade objekt"
 
-#: builtin/pack-objects.c:3323
+#: builtin/pack-objects.c:3334
 msgid "do not pack objects in promisor packfiles"
 msgstr "packa inte objekt i kontraktspackfiler"
 
-#: builtin/pack-objects.c:3325
+#: builtin/pack-objects.c:3336
 msgid "respect islands during delta compression"
 msgstr "respektera öar under deltakomprimering"
 
-#: builtin/pack-objects.c:3350
+#: builtin/pack-objects.c:3361
 #, c-format
 msgid "delta chain depth %d is too deep, forcing %d"
 msgstr "deltakedjedjupet %d är för djupt, påtvingar %d"
 
-#: builtin/pack-objects.c:3355
+#: builtin/pack-objects.c:3366
 #, c-format
 msgid "pack.deltaCacheLimit is too high, forcing %d"
 msgstr "pack.deltaCacheLimit är för högt, påtvingar %d"
 
-#: builtin/pack-objects.c:3409
+#: builtin/pack-objects.c:3420
 msgid "--max-pack-size cannot be used to build a pack for transfer"
 msgstr ""
 "--max-pack-size kan inte användas för att bygga ett paket som skall överföras"
 
-#: builtin/pack-objects.c:3411
+#: builtin/pack-objects.c:3422
 msgid "minimum pack size limit is 1 MiB"
 msgstr "minsta packstorlek är 1 MiB"
 
-#: builtin/pack-objects.c:3416
+#: builtin/pack-objects.c:3427
 msgid "--thin cannot be used to build an indexable pack"
 msgstr "--thin kan inte användas för att bygga ett indexerbart paket"
 
-#: builtin/pack-objects.c:3419
+#: builtin/pack-objects.c:3430
 msgid "--keep-unreachable and --unpack-unreachable are incompatible"
 msgstr "--keep-unreachable och -unpack-unreachable kan inte användas samtidigt"
 
-#: builtin/pack-objects.c:3425
+#: builtin/pack-objects.c:3436
 msgid "cannot use --filter without --stdout"
 msgstr "kan inte använda --filter utan --stdout"
 
-#: builtin/pack-objects.c:3486
+#: builtin/pack-objects.c:3497
 msgid "Enumerating objects"
 msgstr "Räknar upp objekt"
 
-#: builtin/pack-objects.c:3516
+#: builtin/pack-objects.c:3527
 #, c-format
 msgid "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>)"
 msgstr ""
@@ -18264,112 +18243,112 @@ msgstr ""
 "Använd --no-write-bitmap-index eller inaktivera inställningen\n"
 "pack.writebitmaps"
 
-#: builtin/repack.c:201
+#: builtin/repack.c:190
 msgid "could not start pack-objects to repack promisor objects"
 msgstr "kunde inte starta pack-objects för att packa om kontraktsobjekt"
 
-#: builtin/repack.c:240 builtin/repack.c:418
+#: builtin/repack.c:229 builtin/repack.c:408
 msgid "repack: Expecting full hex object ID lines only from pack-objects."
 msgstr ""
 "repack: Förväntar kompletta hex-objekt-ID-rader endast från pack-objects."
 
-#: builtin/repack.c:257
+#: builtin/repack.c:246
 msgid "could not finish pack-objects to repack promisor objects"
 msgstr "kunde inte avsluta pack-objects för att packa om kontraktsobjekt"
 
-#: builtin/repack.c:295
+#: builtin/repack.c:284
 msgid "pack everything in a single pack"
 msgstr "packa allt i ett enda paket"
 
-#: builtin/repack.c:297
+#: builtin/repack.c:286
 msgid "same as -a, and turn unreachable objects loose"
 msgstr "samma som -a, och gör onåbara objekt lösa"
 
-#: builtin/repack.c:300
+#: builtin/repack.c:289
 msgid "remove redundant packs, and run git-prune-packed"
 msgstr "ta bort överflödiga paket, och kör git-prune-packed"
 
-#: builtin/repack.c:302
+#: builtin/repack.c:291
 msgid "pass --no-reuse-delta to git-pack-objects"
 msgstr "sänd --no-reuse-delta till git-pack-objects"
 
-#: builtin/repack.c:304
+#: builtin/repack.c:293
 msgid "pass --no-reuse-object to git-pack-objects"
 msgstr "sänd --no-reuse-object till git-pack-objects"
 
-#: builtin/repack.c:306
+#: builtin/repack.c:295
 msgid "do not run git-update-server-info"
 msgstr "kör inte git-update-server-info"
 
-#: builtin/repack.c:309
+#: builtin/repack.c:298
 msgid "pass --local to git-pack-objects"
 msgstr "sänd --local till git-pack-objects"
 
-#: builtin/repack.c:311
+#: builtin/repack.c:300
 msgid "write bitmap index"
 msgstr "skriv bitkartindex"
 
-#: builtin/repack.c:313
+#: builtin/repack.c:302
 msgid "pass --delta-islands to git-pack-objects"
 msgstr "sänd --delta-islands till git-pack-objects"
 
-#: builtin/repack.c:314
+#: builtin/repack.c:303
 msgid "approxidate"
 msgstr "cirkadatum"
 
-#: builtin/repack.c:315
+#: builtin/repack.c:304
 msgid "with -A, do not loosen objects older than this"
 msgstr "med -A, lös inte upp objekt äldre än detta"
 
-#: builtin/repack.c:317
+#: builtin/repack.c:306
 msgid "with -a, repack unreachable objects"
 msgstr "med -a, packa om onåbara objekt"
 
-#: builtin/repack.c:319
+#: builtin/repack.c:308
 msgid "size of the window used for delta compression"
 msgstr "storlek på fönster använt för deltakomprimering"
 
-#: builtin/repack.c:320 builtin/repack.c:326
+#: builtin/repack.c:309 builtin/repack.c:315
 msgid "bytes"
 msgstr "byte"
 
-#: builtin/repack.c:321
+#: builtin/repack.c:310
 msgid "same as the above, but limit memory size instead of entries count"
 msgstr "samma som ovan, men begränsa minnesstorleken istället för postantal"
 
-#: builtin/repack.c:323
+#: builtin/repack.c:312
 msgid "limits the maximum delta depth"
 msgstr "begränsa maximalt deltadjup"
 
-#: builtin/repack.c:325
+#: builtin/repack.c:314
 msgid "limits the maximum number of threads"
 msgstr "begränsar maximalt antal trådar"
 
-#: builtin/repack.c:327
+#: builtin/repack.c:316
 msgid "maximum size of each packfile"
 msgstr "maximal storlek på varje paketfil"
 
-#: builtin/repack.c:329
+#: builtin/repack.c:318
 msgid "repack objects in packs marked with .keep"
 msgstr "packa om objekt i paket märkta med .keep"
 
-#: builtin/repack.c:331
+#: builtin/repack.c:320
 msgid "do not repack this pack"
 msgstr "packa inte om detta paket"
 
-#: builtin/repack.c:341
+#: builtin/repack.c:330
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "kan inte ta bort paket i ett \"precious-objects\"-arkiv"
 
-#: builtin/repack.c:345
+#: builtin/repack.c:334
 msgid "--keep-unreachable and -A are incompatible"
 msgstr "--keep-unreachable och -A kan inte användas samtidigt"
 
-#: builtin/repack.c:427
+#: builtin/repack.c:417
 msgid "Nothing new to pack."
 msgstr "Inget nytt att packa."
 
-#: builtin/repack.c:488
+#: builtin/repack.c:478
 #, c-format
 msgid ""
 "WARNING: Some packs in use have been renamed by\n"
@@ -18388,7 +18367,7 @@ msgstr ""
 "VARNING: namnet misslyckades också.\n"
 "VARNING: Byt namn på dem i %s manuellt:\n"
 
-#: builtin/repack.c:536
+#: builtin/repack.c:526
 #, c-format
 msgid "failed to remove '%s'"
 msgstr "misslyckades ta bort \"%s\""
@@ -20471,15 +20450,15 @@ msgstr "testa inte <katalog>/.git/ om <katalog> inte är en Git-katalog"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "avbryt överföringen efter <n> sekunders inaktivitet"
 
-#: builtin/verify-commit.c:20
+#: builtin/verify-commit.c:19
 msgid "git verify-commit [-v | --verbose] <commit>..."
 msgstr "git verify-commit [-v | --verbose] <incheckning>..."
 
-#: builtin/verify-commit.c:69
+#: builtin/verify-commit.c:68
 msgid "print commit contents"
 msgstr "visa innehåll för incheckning"
 
-#: builtin/verify-commit.c:70 builtin/verify-tag.c:38
+#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "visa råa gpg-statusdata"
 
@@ -20495,11 +20474,11 @@ msgstr "pratsam"
 msgid "show statistics only"
 msgstr "visa endast statistik"
 
-#: builtin/verify-tag.c:19
+#: builtin/verify-tag.c:18
 msgid "git verify-tag [-v | --verbose] [--format=<format>] <tag>..."
 msgstr "git verify-tag [-v | --verbose] [--format=<format] <tagg>..."
 
-#: builtin/verify-tag.c:37
+#: builtin/verify-tag.c:36
 msgid "print tag contents"
 msgstr "visa innehåll för tag"
 
@@ -20940,17 +20919,17 @@ msgstr "okänt skrivfel på standard ut"
 msgid "close failed on standard output"
 msgstr "stäng misslyckades på standard ut"
 
-#: git.c:796
+#: git.c:793
 #, c-format
 msgid "alias loop detected: expansion of '%s' does not terminate:%s"
 msgstr "alias-slinga detekterades: expansionen av \"%s\" avslutas aldrig:%s"
 
-#: git.c:846
+#: git.c:843
 #, c-format
 msgid "cannot handle %s as a builtin"
 msgstr "kan inte hantera %s som inbyggd"
 
-#: git.c:859
+#: git.c:856
 #, c-format
 msgid ""
 "usage: %s\n"
@@ -20959,13 +20938,13 @@ msgstr ""
 "användning: %s\n"
 "\n"
 
-#: git.c:879
+#: git.c:876
 #, c-format
 msgid "expansion of alias '%s' failed; '%s' is not a git command\n"
 msgstr ""
 "expandering av alias \"%s\" misslyckades; \"%s\" är inte ett git-kommando\n"
 
-#: git.c:891
+#: git.c:888
 #, c-format
 msgid "failed to run command '%s': %s\n"
 msgstr "misslyckades köra kommandot \"%s\": %s\n"
@@ -21170,11 +21149,11 @@ msgstr "fältnamn att sortera på"
 msgid "update the index with reused conflict resolution if possible"
 msgstr "uppdatera indexet med återanvänd konfliktlösning om möjligt"
 
-#: wt-status.h:68
+#: wt-status.h:67
 msgid "HEAD detached at "
 msgstr "HEAD frånkopplad vid "
 
-#: wt-status.h:69
+#: wt-status.h:68
 msgid "HEAD detached from "
 msgstr "HEAD frånkopplad från "
 
@@ -23523,6 +23502,39 @@ msgstr ""
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
+
+#~ msgid ""
+#~ "Fetch normally indicates which branches had a forced update, but that "
+#~ "check has been disabled."
+#~ msgstr ""
+#~ "Hämtning visar vanligtvis vilka grenar som har en tvingad uppdatering, "
+#~ "men det testet har slagits av."
+
+#~ msgid ""
+#~ "or run 'git config fetch.showForcedUpdates false' to avoid this check.\n"
+#~ msgstr ""
+#~ "eller kör \"git config fetch.showForcedUpdates false\" för undvika "
+#~ "testet.\n"
+
+#~ msgid ""
+#~ "log.mailmap is not set; its implicit value will change in an\n"
+#~ "upcoming release. To squelch this message and preserve current\n"
+#~ "behaviour, set the log.mailmap configuration value to false.\n"
+#~ "\n"
+#~ "To squelch this message and adopt the new behaviour now, set the\n"
+#~ "log.mailmap configuration value to true.\n"
+#~ "\n"
+#~ "See 'git help config' and search for 'log.mailmap' for further "
+#~ "information."
+#~ msgstr ""
+#~ "log.mailmap har inte satts: förvalet kommer ändras i en kommande\n"
+#~ "version. För att dölja det här meddelandet och behålla nuvarande\n"
+#~ "beteende, sätt konfigurationsvariabeln log.mailmap till false.\n"
+#~ "\n"
+#~ "För att dölja det här meddelandet och använda det nya beteendet,\n"
+#~ "sätt konfigurationsvariabeln log.mailmap till true.\n"
+#~ "\n"
+#~ "Se \"git help config\" och sök efter \"log.mailmap\" för mer information."
 
 #~ msgid "Server supports multi_ack_detailed"
 #~ msgstr "Servern stöder \"multi_ack_detailed\""
