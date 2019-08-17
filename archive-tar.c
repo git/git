@@ -142,10 +142,10 @@ static int stream_blocked(const struct object_id *oid)
  * string and appends it to a struct strbuf.
  */
 static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
-				     const char *value, unsigned int valuelen)
+				     const char *value, size_t valuelen)
 {
 	size_t orig_len = sb->len;
-	int len, tmp;
+	size_t len, tmp;
 
 	/* "%u %s=%s\n" */
 	len = 1 + 1 + strlen(keyword) + 1 + valuelen + 1;
@@ -153,14 +153,14 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 		len++;
 
 	strbuf_grow(sb, len);
-	strbuf_addf(sb, "%u %s=", len, keyword);
+	strbuf_addf(sb, "%"PRIuMAX" %s=", (uintmax_t)len, keyword);
 	strbuf_add(sb, value, valuelen);
 	strbuf_addch(sb, '\n');
 
 	if (len != sb->len - orig_len)
-		warning("pax extended header length miscalculated as %d"
+		warning("pax extended header length miscalculated as %"PRIuMAX
 			", should be %"PRIuMAX,
-			len, (uintmax_t)(sb->len - orig_len));
+			(uintmax_t)len, (uintmax_t)(sb->len - orig_len));
 }
 
 /*
