@@ -3507,6 +3507,11 @@ int merge_recursive(struct merge_options *opt,
 	struct commit *merged_common_ancestors;
 	struct tree *mrtree;
 	int clean;
+	const char *ancestor_name;
+	struct strbuf merge_base_abbrev = STRBUF_INIT;
+
+	if (!opt->call_depth)
+		assert(opt->ancestor == NULL);
 
 	if (show(opt, 4)) {
 		output(opt, 4, _("Merging:"));
@@ -3535,6 +3540,14 @@ int merge_recursive(struct merge_options *opt,
 
 		tree = lookup_tree(opt->repo, opt->repo->hash_algo->empty_tree);
 		merged_common_ancestors = make_virtual_commit(opt->repo, tree, "ancestor");
+		ancestor_name = "empty tree";
+	} else if (ca) {
+		ancestor_name = "merged common ancestors";
+	} else {
+		strbuf_add_unique_abbrev(&merge_base_abbrev,
+					 &merged_common_ancestors->object.oid,
+					 DEFAULT_ABBREV);
+		ancestor_name = merge_base_abbrev.buf;
 	}
 
 	for (iter = ca; iter; iter = iter->next) {
@@ -3568,10 +3581,11 @@ int merge_recursive(struct merge_options *opt,
 	if (!opt->call_depth)
 		repo_read_index(opt->repo);
 
-	opt->ancestor = "merged common ancestors";
+	opt->ancestor = ancestor_name;
 	clean = merge_trees(opt, get_commit_tree(h1), get_commit_tree(h2),
 			    get_commit_tree(merged_common_ancestors),
 			    &mrtree);
+	strbuf_release(&merge_base_abbrev);
 	if (clean < 0) {
 		flush_output(opt);
 		return clean;
