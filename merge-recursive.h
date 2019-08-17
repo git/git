@@ -1,13 +1,15 @@
 #ifndef MERGE_RECURSIVE_H
 #define MERGE_RECURSIVE_H
 
-#include "string-list.h"
-#include "unpack-trees.h"
+#include "strbuf.h"
 
 struct commit;
-
+struct commit_list;
+struct object_id;
 struct repository;
+struct tree;
 
+struct merge_options_internal;
 struct merge_options {
 	struct repository *repo;
 
@@ -45,13 +47,8 @@ struct merge_options {
 	const char *subtree_shift;
 	unsigned renormalize : 1;
 
-	/* internal fields used by the implementation (do NOT set these) */
-	int call_depth;
-	int needed_rename_limit;
-	struct hashmap current_file_dir_set;
-	struct string_list df_conflict_file_set;
-	struct unpack_trees_options unpack_opts;
-	struct index_state orig_index;
+	/* internal fields used by the implementation */
+	struct merge_options_internal *priv;
 };
 
 void init_merge_options(struct merge_options *opt, struct repository *repo);
