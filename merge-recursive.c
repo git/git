@@ -1375,7 +1375,8 @@ static int handle_rename_via_dir(struct merge_options *opt,
 	const struct rename *ren = ci->ren1;
 	const struct diff_filespec *dest = ren->pair->two;
 	char *file_path = dest->path;
-	int mark_conflicted = (opt->detect_directory_renames == 1);
+	int mark_conflicted = (opt->detect_directory_renames ==
+			       MERGE_DIRECTORY_RENAMES_CONFLICT);
 	assert(ren->dir_rename_original_dest);
 
 	if (!opt->call_depth && would_lose_untracked(opt, dest->path)) {
@@ -2860,8 +2861,9 @@ static int detect_and_process_renames(struct merge_options *opt,
 	head_pairs = get_diffpairs(opt, common, head);
 	merge_pairs = get_diffpairs(opt, common, merge);
 
-	if ((opt->detect_directory_renames == 2) ||
-	    (opt->detect_directory_renames == 1 && !opt->call_depth)) {
+	if ((opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_TRUE) ||
+	    (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_CONFLICT &&
+	     !opt->call_depth)) {
 		dir_re_head = get_directory_renames(head_pairs);
 		dir_re_merge = get_directory_renames(merge_pairs);
 
@@ -3119,7 +3121,8 @@ static int handle_rename_normal(struct merge_options *opt,
 	clean = handle_content_merge(&mfi, opt, path, was_dirty(opt, path),
 				     o, a, b, ci);
 
-	if (clean && opt->detect_directory_renames == 1 &&
+	if (clean &&
+	    opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_CONFLICT &&
 	    ren->dir_rename_original_dest) {
 		if (update_stages(opt, path,
 				  NULL,
@@ -3164,12 +3167,12 @@ static int warn_about_dir_renamed_entries(struct merge_options *opt,
 		return clean;
 
 	/* Sanity checks */
-	assert(opt->detect_directory_renames > 0);
+	assert(opt->detect_directory_renames > MERGE_DIRECTORY_RENAMES_NONE);
 	assert(ren->dir_rename_original_type == 'A' ||
 	       ren->dir_rename_original_type == 'R');
 
 	/* Check whether to treat directory renames as a conflict */
-	clean = (opt->detect_directory_renames == 2);
+	clean = (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_TRUE);
 
 	is_add = (ren->dir_rename_original_type == 'A');
 	if (ren->dir_rename_original_type == 'A' && clean) {
@@ -3679,9 +3682,12 @@ static void merge_recursive_config(struct merge_options *opt)
 	if (!git_config_get_string("merge.directoryrenames", &value)) {
 		int boolval = git_parse_maybe_bool(value);
 		if (0 <= boolval) {
-			opt->detect_directory_renames = boolval ? 2 : 0;
+			opt->detect_directory_renames = boolval ?
+				MERGE_DIRECTORY_RENAMES_TRUE :
+				MERGE_DIRECTORY_RENAMES_NONE;
 		} else if (!strcasecmp(value, "conflict")) {
-			opt->detect_directory_renames = 1;
+			opt->detect_directory_renames =
+				MERGE_DIRECTORY_RENAMES_CONFLICT;
 		} /* avoid erroring on values from future versions of git */
 		free(value);
 	}
@@ -3701,7 +3707,7 @@ void init_merge_options(struct merge_options *opt,
 	opt->renormalize = 0;
 	opt->diff_detect_rename = -1;
 	opt->merge_detect_rename = -1;
-	opt->detect_directory_renames = 1;
+	opt->detect_directory_renames = MERGE_DIRECTORY_RENAMES_CONFLICT;
 	merge_recursive_config(opt);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
 	if (merge_verbosity)
