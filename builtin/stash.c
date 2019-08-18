@@ -937,7 +937,6 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 		ret = -1;
 	}
 
-done:
 	discard_index(&istate);
 	strbuf_release(&untracked_msg);
 	remove_path(stash_index_path.buf);
@@ -1053,7 +1052,6 @@ static int stash_working_tree(struct stash_info *info,
 	if (write_index_as_tree(&info->w_tree, &istate, stash_index_path.buf, 0,
 				NULL)) {
 		ret = -1;
-		goto done;
 	}
 
 done:
