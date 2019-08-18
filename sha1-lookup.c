@@ -50,7 +50,7 @@ static uint32_t take2(const unsigned char *sha1)
  * The sha1 of element i (between 0 and nr - 1) should be returned
  * by "fn(i, table)".
  */
-int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
+int sha1_pos(const unsigned char *hash, void *table, size_t nr,
 	     sha1_access_fn fn)
 {
 	size_t hi = nr;
@@ -63,10 +63,10 @@ int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
 	if (nr != 1) {
 		size_t lov, hiv, miv, ofs;
 
-		for (ofs = 0; ofs < 18; ofs += 2) {
+		for (ofs = 0; ofs < the_hash_algo->rawsz - 2; ofs += 2) {
 			lov = take2(fn(0, table) + ofs);
 			hiv = take2(fn(nr - 1, table) + ofs);
-			miv = take2(sha1 + ofs);
+			miv = take2(hash + ofs);
 			if (miv < lov)
 				return -1;
 			if (hiv < miv)
@@ -88,7 +88,7 @@ int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
 
 	do {
 		int cmp;
-		cmp = hashcmp(fn(mi, table), sha1);
+		cmp = hashcmp(fn(mi, table), hash);
 		if (!cmp)
 			return mi;
 		if (cmp > 0)
