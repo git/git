@@ -1,15 +1,16 @@
+#include "cache.h"
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
-	char name[50];
+	char name[GIT_MAX_HEXSZ + 1];
 
 	if (!patchlen)
 		return;
 
-	memcpy(name, oid_to_hex(id), GIT_SHA1_HEXSZ + 1);
+	memcpy(name, oid_to_hex(id), the_hash_algo->hexsz + 1);
 	printf("%s %s\n", oid_to_hex(result), name);
 }
 
@@ -60,9 +61,9 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 {
 	int patchlen = 0, found_next = 0;
 	int before = -1, after = -1;
-	git_SHA_CTX ctx;
+	git_hash_ctx ctx;
 
-	git_SHA1_Init(&ctx);
+	the_hash_algo->init_fn(&ctx);
 	oidclr(result);
 
 	while (strbuf_getwholeline(line_buf, stdin, '\n') != EOF) {
@@ -122,7 +123,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		/* Compute the sha without whitespace */
 		len = remove_space(line);
 		patchlen += len;
-		git_SHA1_Update(&ctx, line, len);
+		the_hash_algo->update_fn(&ctx, line, len);
 	}
 
 	if (!found_next)

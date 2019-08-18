@@ -5978,7 +5978,7 @@ static void diff_summary(struct diff_options *opt, struct diff_filepair *p)
 }
 
 struct patch_id_t {
-	git_SHA_CTX *ctx;
+	git_hash_ctx *ctx;
 	int patchlen;
 };
 
@@ -5995,16 +5995,16 @@ static int remove_space(char *line, int len)
 	return dst - line;
 }
 
-void flush_one_hunk(struct object_id *result, git_SHA_CTX *ctx)
+void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx)
 {
 	unsigned char hash[GIT_MAX_RAWSZ];
 	unsigned short carry = 0;
 	int i;
 
-	git_SHA1_Final(hash, ctx);
-	git_SHA1_Init(ctx);
+	the_hash_algo->final_fn(hash, ctx);
+	the_hash_algo->init_fn(ctx);
 	/* 20-byte sum, with carry */
-	for (i = 0; i < GIT_SHA1_RAWSZ; ++i) {
+	for (i = 0; i < the_hash_algo->rawsz; ++i) {
 		carry += result->hash[i] + hash[i];
 		result->hash[i] = carry;
 		carry >>= 8;
@@ -6018,21 +6018,21 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 
 	new_len = remove_space(line, len);
 
-	git_SHA1_Update(data->ctx, line, new_len);
+	the_hash_algo->update_fn(data->ctx, line, new_len);
 	data->patchlen += new_len;
 }
 
-static void patch_id_add_string(git_SHA_CTX *ctx, const char *str)
+static void patch_id_add_string(git_hash_ctx *ctx, const char *str)
 {
-	git_SHA1_Update(ctx, str, strlen(str));
+	the_hash_algo->update_fn(ctx, str, strlen(str));
 }
 
-static void patch_id_add_mode(git_SHA_CTX *ctx, unsigned mode)
+static void patch_id_add_mode(git_hash_ctx *ctx, unsigned mode)
 {
 	/* large enough for 2^32 in octal */
 	char buf[12];
 	int len = xsnprintf(buf, sizeof(buf), "%06o", mode);
-	git_SHA1_Update(ctx, buf, len);
+	the_hash_algo->update_fn(ctx, buf, len);
 }
 
 /* returns 0 upon success, and writes result into oid */
@@ -6040,10 +6040,10 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	git_SHA_CTX ctx;
+	git_hash_ctx ctx;
 	struct patch_id_t data;
 
-	git_SHA1_Init(&ctx);
+	the_hash_algo->init_fn(&ctx);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
 	oidclr(oid);
@@ -6076,27 +6076,27 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		len2 = remove_space(p->two->path, strlen(p->two->path));
 		patch_id_add_string(&ctx, "diff--git");
 		patch_id_add_string(&ctx, "a/");
-		git_SHA1_Update(&ctx, p->one->path, len1);
+		the_hash_algo->update_fn(&ctx, p->one->path, len1);
 		patch_id_add_string(&ctx, "b/");
-		git_SHA1_Update(&ctx, p->two->path, len2);
+		the_hash_algo->update_fn(&ctx, p->two->path, len2);
 
 		if (p->one->mode == 0) {
 			patch_id_add_string(&ctx, "newfilemode");
 			patch_id_add_mode(&ctx, p->two->mode);
 			patch_id_add_string(&ctx, "---/dev/null");
 			patch_id_add_string(&ctx, "+++b/");
-			git_SHA1_Update(&ctx, p->two->path, len2);
+			the_hash_algo->update_fn(&ctx, p->two->path, len2);
 		} else if (p->two->mode == 0) {
 			patch_id_add_string(&ctx, "deletedfilemode");
 			patch_id_add_mode(&ctx, p->one->mode);
 			patch_id_add_string(&ctx, "---a/");
-			git_SHA1_Update(&ctx, p->one->path, len1);
+			the_hash_algo->update_fn(&ctx, p->one->path, len1);
 			patch_id_add_string(&ctx, "+++/dev/null");
 		} else {
 			patch_id_add_string(&ctx, "---a/");
-			git_SHA1_Update(&ctx, p->one->path, len1);
+			the_hash_algo->update_fn(&ctx, p->one->path, len1);
 			patch_id_add_string(&ctx, "+++b/");
-			git_SHA1_Update(&ctx, p->two->path, len2);
+			the_hash_algo->update_fn(&ctx, p->two->path, len2);
 		}
 
 		if (diff_header_only)
@@ -6108,10 +6108,10 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 
 		if (diff_filespec_is_binary(options->repo, p->one) ||
 		    diff_filespec_is_binary(options->repo, p->two)) {
-			git_SHA1_Update(&ctx, oid_to_hex(&p->one->oid),
-					GIT_SHA1_HEXSZ);
-			git_SHA1_Update(&ctx, oid_to_hex(&p->two->oid),
-					GIT_SHA1_HEXSZ);
+			the_hash_algo->update_fn(&ctx, oid_to_hex(&p->one->oid),
+					the_hash_algo->hexsz);
+			the_hash_algo->update_fn(&ctx, oid_to_hex(&p->two->oid),
+					the_hash_algo->hexsz);
 			continue;
 		}
 
@@ -6128,7 +6128,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 	}
 
 	if (!stable)
-		git_SHA1_Final(oid->hash, &ctx);
+		the_hash_algo->final_fn(oid->hash, &ctx);
 
 	return 0;
 }
