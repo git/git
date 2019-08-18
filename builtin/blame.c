@@ -460,7 +460,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
-		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? GIT_SHA1_HEXSZ : abbrev;
+		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? the_hash_algo->hexsz : abbrev;
 
 		if (opt & OUTPUT_COLOR_LINE) {
 			if (cnt > 0) {
@@ -885,6 +885,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	struct range_set ranges;
 	unsigned int range_i;
 	long anchor;
+	const int hexsz = the_hash_algo->hexsz;
 
 	setup_default_color_by_age();
 	git_config(git_blame_config, &output_option);
@@ -931,11 +932,11 @@ parse_done:
 	} else if (show_progress < 0)
 		show_progress = isatty(2);
 
-	if (0 < abbrev && abbrev < GIT_SHA1_HEXSZ)
+	if (0 < abbrev && abbrev < hexsz)
 		/* one more abbrev length is needed for the boundary commit */
 		abbrev++;
 	else if (!abbrev)
-		abbrev = GIT_SHA1_HEXSZ;
+		abbrev = hexsz;
 
 	if (revs_file && read_ancestry(revs_file))
 		die_errno("reading graft file '%s' failed", revs_file);
