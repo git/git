@@ -16,7 +16,11 @@ test_expect_success setup '
 	git add file1 &&
 	test_tick &&
 	git commit -m "second" &&
-	git tag second
+	git tag second &&
+	test_oid_cache <<-EOF
+	cp_ff sha1:1df192cd8bc58a2b275d842cede4d221ad9000d1
+	cp_ff sha256:e70d6b7fc064bddb516b8d512c9057094b96ce6ff08e12080acc4fe7f1d60a1d
+	EOF
 '
 
 test_expect_success 'cherry-pick using --ff fast forwards' '
@@ -102,7 +106,7 @@ test_expect_success 'cherry pick a root commit with --ff' '
 	git add file2 &&
 	git commit --amend -m "file2" &&
 	git cherry-pick --ff first &&
-	test "$(git rev-parse --verify HEAD)" = "1df192cd8bc58a2b275d842cede4d221ad9000d1"
+	test "$(git rev-parse --verify HEAD)" = "$(test_oid cp_ff)"
 '
 
 test_expect_success 'cherry-pick --ff on unborn branch' '
