@@ -466,7 +466,7 @@ static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
 	strbuf_release(&buf);
 
 	/* RFC 2104 5. HMAC-SHA1-80 */
-	strbuf_addf(&buf, "%"PRItime"-%.*s", stamp, (int)the_hash_algo->hexsz, sha1_to_hex(hash));
+	strbuf_addf(&buf, "%"PRItime"-%.*s", stamp, (int)the_hash_algo->hexsz, hash_to_hex(hash));
 	return strbuf_detach(&buf, NULL);
 }
 
@@ -968,7 +968,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	if (run_command(&child))
 		return "Working directory has staged changes";
 
-	read_tree[3] = sha1_to_hex(sha1);
+	read_tree[3] = hash_to_hex(sha1);
 	child_process_init(&child);
 	child.argv = read_tree;
 	child.env = env->argv;
@@ -985,13 +985,13 @@ static const char *push_to_deploy(unsigned char *sha1,
 
 static const char *push_to_checkout_hook = "push-to-checkout";
 
-static const char *push_to_checkout(unsigned char *sha1,
+static const char *push_to_checkout(unsigned char *hash,
 				    struct argv_array *env,
 				    const char *work_tree)
 {
 	argv_array_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
 	if (run_hook_le(env->argv, push_to_checkout_hook,
-			sha1_to_hex(sha1), NULL))
+			hash_to_hex(hash), NULL))
 		return "push-to-checkout hook declined";
 	else
 		return NULL;
