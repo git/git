@@ -593,6 +593,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	const char *name = NULL;
 	struct object_context unused;
 	struct strbuf buf = STRBUF_INIT;
+	const int hexsz = the_hash_algo->hexsz;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -730,8 +731,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				abbrev = strtoul(arg, NULL, 10);
 				if (abbrev < MINIMUM_ABBREV)
 					abbrev = MINIMUM_ABBREV;
-				else if (40 <= abbrev)
-					abbrev = 40;
+				else if (hexsz <= abbrev)
+					abbrev = hexsz;
 				continue;
 			}
 			if (!strcmp(arg, "--sq")) {
