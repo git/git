@@ -282,7 +282,7 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs)
 		struct object *object = revs->pending.objects[i].item;
 		if (object->flags & UNINTERESTING)
 			write_or_die(pack_objects.in, "^", 1);
-		write_or_die(pack_objects.in, oid_to_hex(&object->oid), GIT_SHA1_HEXSZ);
+		write_or_die(pack_objects.in, oid_to_hex(&object->oid), the_hash_algo->hexsz);
 		write_or_die(pack_objects.in, "\n", 1);
 	}
 	close(pack_objects.in);
@@ -414,7 +414,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		}
 
 		ref_count++;
-		write_or_die(bundle_fd, oid_to_hex(&e->item->oid), 40);
+		write_or_die(bundle_fd, oid_to_hex(&e->item->oid), the_hash_algo->hexsz);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, display_ref, strlen(display_ref));
 		write_or_die(bundle_fd, "\n", 1);
