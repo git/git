@@ -394,6 +394,8 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 
 #ifdef GIT_PCRE1_USE_JIT
 	pcre_config(PCRE_CONFIG_JIT, &p->pcre1_jit_on);
+	if (opt->debug)
+		fprintf(stderr, "pcre1_jit_on=%d\n", p->pcre1_jit_on);
 #endif
 }
 
@@ -490,6 +492,8 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	}
 
 	pcre2_config(PCRE2_CONFIG_JIT, &p->pcre2_jit_on);
+	if (opt->debug)
+		fprintf(stderr, "pcre2_jit_on=%d\n", p->pcre2_jit_on);
 	if (p->pcre2_jit_on) {
 		jitret = pcre2_jit_compile(p->pcre2_pattern, PCRE2_JIT_COMPLETE);
 		if (jitret)
@@ -515,6 +519,9 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 			BUG("pcre2_pattern_info() failed: %d", patinforet);
 		if (jitsizearg == 0) {
 			p->pcre2_jit_on = 0;
+			if (opt->debug)
+				fprintf(stderr, "pcre2_jit_on=%d: (*NO_JIT) in regex\n",
+					p->pcre2_jit_on);
 			return;
 		}
 	}
