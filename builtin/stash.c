@@ -823,7 +823,6 @@ static void add_pathspecs(struct argv_array *args, const struct pathspec *ps)
 static int get_untracked_files(const struct pathspec *ps, int include_untracked,
 			       struct strbuf *untracked_files)
 {
-	int i;
 	int max_len;
 	int found = 0;
 	char *seen;
