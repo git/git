@@ -1092,8 +1092,6 @@ static int do_create_stash(const struct pathspec *ps,
 					     "the initial commit yet"));
 		ret = -1;
 		goto done;
-	} else {
-		head_commit = lookup_commit(the_repository, &info->b_commit);
 	}
 
 	if (!check_changes(ps, include_untracked, &untracked_files)) {
@@ -1104,6 +1102,7 @@ static int do_create_stash(const struct pathspec *ps,
 	branch_ref = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	if (flags & REF_ISSYMREF)
 		branch_name = strrchr(branch_ref, '/') + 1;
+	head_commit = lookup_commit(the_repository, &info->b_commit);
 	head_short_sha1 =
 		find_unique_abbrev(&head_commit->object.oid, DEFAULT_ABBREV);
 	strbuf_addf(&msg, "%s: %s ", branch_name, head_short_sha1);

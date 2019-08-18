@@ -20,37 +20,38 @@
 #include "refs.h"
 #include "commit-reach.h"
 
-static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
+static struct commit_extra_header *
+read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
 int save_commit_buffer = 1;
 
 const char *commit_type = "commit";
 
 struct commit *lookup_commit_reference_gently(struct repository *r,
-		const struct object_id *oid, int quiet)
+					      const struct object_id *oid,
+					      int quiet)
 {
-	struct object *obj = deref_tag(r,
-				       parse_object(r, oid),
-				       NULL, 0);
+	struct object *obj = deref_tag(r, parse_object(r, oid), NULL, 0);
 
 	if (!obj)
 		return NULL;
 	return object_as_type(r, obj, OBJ_COMMIT, quiet);
 }
 
-struct commit *lookup_commit_reference(struct repository *r, const struct object_id *oid)
+struct commit *lookup_commit_reference(struct repository *r,
+				       const struct object_id *oid)
 {
 	return lookup_commit_reference_gently(r, oid, 0);
 }
 
-struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name)
+struct commit *lookup_commit_or_die(const struct object_id *oid,
+				    const char *ref_name)
 {
 	struct commit *c = lookup_commit_reference(the_repository, oid);
 	if (!c)
 		die(_("could not parse %s"), ref_name);
 	if (!oideq(oid, &c->object.oid)) {
-		warning(_("%s %s is not a commit!"),
-			ref_name, oid_to_hex(oid));
+		warning(_("%s %s is not a commit!"), ref_name, oid_to_hex(oid));
 	}
 	return c;
 }
@@ -58,9 +59,10 @@ struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref
 struct commit *lookup_commit(struct repository *r, const struct object_id *oid)
 {
 	struct object *obj = lookup_object(r, oid);
-	if (!obj)
-		return create_object(r, oid, alloc_commit_node(r));
-	return object_as_type(r, obj, OBJ_COMMIT, 0);
+	if (obj)
+		return object_as_type(r, obj, OBJ_COMMIT, 0);
+	
+	return create_object(r, oid, alloc_commit_node(r));
 }
 
 struct commit *lookup_commit_reference_by_name(const char *name)
@@ -112,8 +114,7 @@ static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
 static int commit_graft_pos(struct repository *r, const unsigned char *sha1)
 {
 	return sha1_pos(sha1, r->parsed_objects->grafts,
-			r->parsed_objects->grafts_nr,
-			commit_graft_sha1_access);
+			r->parsed_objects->grafts_nr, commit_graft_sha1_access);
 }
 
 int register_commit_graft(struct repository *r, struct commit_graft *graft,
@@ -131,15 +132,14 @@ int register_commit_graft(struct repository *r, struct commit_graft *graft,
 		return 1;
 	}
 	pos = -pos - 1;
-	ALLOC_GROW(r->parsed_objects->grafts,
-		   r->parsed_objects->grafts_nr + 1,
+	ALLOC_GROW(r->parsed_objects->grafts, r->parsed_objects->grafts_nr + 1,
 		   r->parsed_objects->grafts_alloc);
 	r->parsed_objects->grafts_nr++;
 	if (pos < r->parsed_objects->grafts_nr)
 		memmove(r->parsed_objects->grafts + pos + 1,
 			r->parsed_objects->grafts + pos,
 			(r->parsed_objects->grafts_nr - pos - 1) *
-			sizeof(*r->parsed_objects->grafts));
+				sizeof(*r->parsed_objects->grafts));
 	r->parsed_objects->grafts[pos] = graft;
 	return 0;
 }
@@ -165,12 +165,14 @@ struct commit_graft *read_graft_line(struct strbuf *line)
 			goto bad_graft_data;
 		for (i = 0; *tail != '\0'; i++) {
 			oid = graft ? &graft->parent[i] : &dummy_oid;
-			if (!isspace(*tail++) || parse_oid_hex(tail, oid, &tail))
+			if (!isspace(*tail++) ||
+			    parse_oid_hex(tail, oid, &tail))
 				goto bad_graft_data;
 		}
 		if (!graft) {
-			graft = xmalloc(st_add(sizeof(*graft),
-					       st_mult(sizeof(struct object_id), i)));
+			graft = xmalloc(
+				st_add(sizeof(*graft),
+				       st_mult(sizeof(struct object_id), i)));
 			graft->nr_parent = i;
 		}
 	}
@@ -226,7 +228,8 @@ void prepare_commit_graft(struct repository *r)
 	r->parsed_objects->commit_graft_prepared = 1;
 }
 
-struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid)
+struct commit_graft *lookup_commit_graft(struct repository *r,
+					 const struct object_id *oid)
 {
 	int pos;
 	prepare_commit_graft(r);
@@ -239,7 +242,8 @@ struct commit_graft *lookup_commit_graft(struct repository *r, const struct obje
 int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 {
 	int i, ret;
-	for (i = ret = 0; i < the_repository->parsed_objects->grafts_nr && !ret; i++)
+	for (i = ret = 0; i < the_repository->parsed_objects->grafts_nr && !ret;
+	     i++)
 		ret = fn(the_repository->parsed_objects->grafts[i], cb_data);
 	return ret;
 }
@@ -276,18 +280,21 @@ void free_commit_buffer_slab(struct buffer_slab *bs)
 	free(bs);
 }
 
-void set_commit_buffer(struct repository *r, struct commit *commit, void *buffer, unsigned long size)
+void set_commit_buffer(struct repository *r, struct commit *commit,
+		       void *buffer, unsigned long size)
 {
-	struct commit_buffer *v = buffer_slab_at(
-		r->parsed_objects->buffer_slab, commit);
+	struct commit_buffer *v =
+		buffer_slab_at(r->parsed_objects->buffer_slab, commit);
 	v->buffer = buffer;
 	v->size = size;
 }
 
-const void *get_cached_commit_buffer(struct repository *r, const struct commit *commit, unsigned long *sizep)
+const void *get_cached_commit_buffer(struct repository *r,
+				     const struct commit *commit,
+				     unsigned long *sizep)
 {
-	struct commit_buffer *v = buffer_slab_peek(
-		r->parsed_objects->buffer_slab, commit);
+	struct commit_buffer *v =
+		buffer_slab_peek(r->parsed_objects->buffer_slab, commit);
 	if (!v) {
 		if (sizep)
 			*sizep = 0;
@@ -306,7 +313,8 @@ const void *repo_get_commit_buffer(struct repository *r,
 	if (!ret) {
 		enum object_type type;
 		unsigned long size;
-		ret = repo_read_object_file(r, &commit->object.oid, &type, &size);
+		ret = repo_read_object_file(r, &commit->object.oid, &type,
+					    &size);
 		if (!ret)
 			die("cannot read commit object %s",
 			    oid_to_hex(&commit->object.oid));
@@ -319,20 +327,18 @@ const void *repo_get_commit_buffer(struct repository *r,
 	return ret;
 }
 
-void repo_unuse_commit_buffer(struct repository *r,
-			      const struct commit *commit,
+void repo_unuse_commit_buffer(struct repository *r, const struct commit *commit,
 			      const void *buffer)
 {
-	struct commit_buffer *v = buffer_slab_peek(
-		r->parsed_objects->buffer_slab, commit);
+	struct commit_buffer *v =
+		buffer_slab_peek(r->parsed_objects->buffer_slab, commit);
 	if (!(v && v->buffer == buffer))
 		free((void *)buffer);
 }
 
 void free_commit_buffer(struct parsed_object_pool *pool, struct commit *commit)
 {
-	struct commit_buffer *v = buffer_slab_peek(
-		pool->buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_peek(pool->buffer_slab, commit);
 	if (v) {
 		FREE_AND_NULL(v->buffer);
 		v->size = 0;
@@ -391,7 +397,8 @@ const void *detach_commit_buffer(struct commit *commit, unsigned long *sizep)
 	return ret;
 }
 
-int parse_commit_buffer(struct repository *r, struct commit *item, const void *buffer, unsigned long size, int check_graph)
+int parse_commit_buffer(struct repository *r, struct commit *item,
+			const void *buffer, unsigned long size, int check_graph)
 {
 	const char *tail = buffer;
 	const char *bufptr = buffer;
@@ -406,8 +413,9 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	item->object.parsed = 1;
 	tail += size;
 	if (tail <= bufptr + tree_entry_len + 1 || memcmp(bufptr, "tree ", 5) ||
-			bufptr[tree_entry_len] != '\n')
-		return error("bogus commit object %s", oid_to_hex(&item->object.oid));
+	    bufptr[tree_entry_len] != '\n')
+		return error("bogus commit object %s",
+			     oid_to_hex(&item->object.oid));
 	if (get_oid_hex(bufptr + 5, &parent) < 0)
 		return error("bad tree pointer in commit %s",
 			     oid_to_hex(&item->object.oid));
@@ -416,13 +424,15 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	pptr = &item->parents;
 
 	graft = lookup_commit_graft(r, &item->object.oid);
-	while (bufptr + parent_entry_len < tail && !memcmp(bufptr, "parent ", 7)) {
+	while (bufptr + parent_entry_len < tail &&
+	       !memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 
 		if (tail <= bufptr + parent_entry_len + 1 ||
 		    get_oid_hex(bufptr + 7, &parent) ||
 		    bufptr[parent_entry_len] != '\n')
-			return error("bad parents in commit %s", oid_to_hex(&item->object.oid));
+			return error("bad parents in commit %s",
+				     oid_to_hex(&item->object.oid));
 		bufptr += parent_entry_len + 1;
 		/*
 		 * The clone is shallow if nr_parent < 0, and we must
@@ -438,8 +448,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 		int i;
 		struct commit *new_parent;
 		for (i = 0; i < graft->nr_parent; i++) {
-			new_parent = lookup_commit(r,
-						   &graft->parent[i]);
+			new_parent = lookup_commit(r, &graft->parent[i]);
 			if (!new_parent)
 				continue;
 			pptr = &commit_list_insert(new_parent, pptr)->next;
@@ -453,10 +462,8 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	return 0;
 }
 
-int repo_parse_commit_internal(struct repository *r,
-			       struct commit *item,
-			       int quiet_on_missing,
-			       int use_commit_graph)
+int repo_parse_commit_internal(struct repository *r, struct commit *item,
+			       int quiet_on_missing, int use_commit_graph)
 {
 	enum object_type type;
 	void *buffer;
@@ -472,8 +479,8 @@ int repo_parse_commit_internal(struct repository *r,
 	buffer = repo_read_object_file(r, &item->object.oid, &type, &size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
-			error("Could not read %s",
-			     oid_to_hex(&item->object.oid));
+					  error("Could not read %s",
+						oid_to_hex(&item->object.oid));
 	if (type != OBJ_COMMIT) {
 		free(buffer);
 		return error("Object %s not a commit",
@@ -489,8 +496,8 @@ int repo_parse_commit_internal(struct repository *r,
 	return ret;
 }
 
-int repo_parse_commit_gently(struct repository *r,
-			     struct commit *item, int quiet_on_missing)
+int repo_parse_commit_gently(struct repository *r, struct commit *item,
+			     int quiet_on_missing)
 {
 	return repo_parse_commit_internal(r, item, quiet_on_missing, 1);
 }
@@ -520,7 +527,8 @@ int find_commit_subject(const char *commit_buffer, const char **subject)
 	return eol - p;
 }
 
-struct commit_list *commit_list_insert(struct commit *item, struct commit_list **list_p)
+struct commit_list *commit_list_insert(struct commit *item,
+				       struct commit_list **list_p)
 {
 	struct commit_list *new_list = xmalloc(sizeof(struct commit_list));
 	new_list->item = item;
@@ -532,7 +540,7 @@ struct commit_list *commit_list_insert(struct commit *item, struct commit_list *
 unsigned commit_list_count(const struct commit_list *l)
 {
 	unsigned c = 0;
-	for (; l; l = l->next )
+	for (; l; l = l->next)
 		c++;
 	return c;
 }
@@ -554,7 +562,8 @@ void free_commit_list(struct commit_list *list)
 		pop_commit(&list);
 }
 
-struct commit_list * commit_list_insert_by_date(struct commit *item, struct commit_list **list)
+struct commit_list *commit_list_insert_by_date(struct commit *item,
+					       struct commit_list **list)
 {
 	struct commit_list **pp = list;
 	struct commit_list *p;
@@ -590,7 +599,8 @@ static void commit_list_set_next(void *a, void *next)
 
 void commit_list_sort_by_date(struct commit_list **list)
 {
-	*list = llist_mergesort(*list, commit_list_get_next, commit_list_set_next,
+	*list = llist_mergesort(*list, commit_list_get_next,
+				commit_list_set_next,
 				commit_list_compare_by_date);
 }
 
@@ -713,7 +723,8 @@ int compare_commits_by_author_date(const void *a_, const void *b_,
 	return 0;
 }
 
-int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused)
+int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_,
+					    void *unused)
 {
 	const struct commit *a = a_, *b = b_;
 
@@ -745,7 +756,8 @@ int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused)
 /*
  * Performs an in-place topological sort on the list supplied.
  */
-void sort_in_topological_order(struct commit_list **list, enum rev_sort_order sort_order)
+void sort_in_topological_order(struct commit_list **list,
+			       enum rev_sort_order sort_order)
 {
 	struct commit_list *next, *orig = *list;
 	struct commit_list **pptr;
@@ -826,7 +838,8 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 	while ((commit = prio_queue_get(&queue)) != NULL) {
 		struct commit_list *parents;
 
-		for (parents = commit->parents; parents ; parents = parents->next) {
+		for (parents = commit->parents; parents;
+		     parents = parents->next) {
 			struct commit *parent = parents->item;
 			int *pi = indegree_slab_at(&indegree, parent);
 
@@ -871,8 +884,7 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 		return;
 
 	commit = lookup_commit(the_repository, oid);
-	if (!commit ||
-	    (commit->object.flags & TMP_MARK) ||
+	if (!commit || (commit->object.flags & TMP_MARK) ||
 	    parse_commit(commit))
 		return;
 
@@ -881,9 +893,10 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 	commit->object.flags |= TMP_MARK;
 }
 
-static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				  const char *ident, timestamp_t timestamp,
-				  int tz, const char *message, void *cbdata)
+static int collect_one_reflog_ent(struct object_id *ooid,
+				  struct object_id *noid, const char *ident,
+				  timestamp_t timestamp, int tz,
+				  const char *message, void *cbdata)
 {
 	struct rev_collect *revs = cbdata;
 
@@ -959,13 +972,14 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 		return -1;
 	}
 
-	for (copypos = 0; sig.buf[copypos]; ) {
+	for (copypos = 0; sig.buf[copypos];) {
 		const char *bol = sig.buf + copypos;
 		const char *eol = strchrnul(bol, '\n');
 		int len = (eol - bol) + !!*eol;
 
 		if (!copypos) {
-			strbuf_insert(buf, inspos, gpg_sig_header, gpg_sig_header_len);
+			strbuf_insert(buf, inspos, gpg_sig_header,
+				      gpg_sig_header_len);
 			inspos += gpg_sig_header_len;
 		}
 		strbuf_insert(buf, inspos++, " ", 1);
@@ -977,10 +991,9 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 	return 0;
 }
 
-int parse_signed_commit(const struct commit *commit,
-			struct strbuf *payload, struct strbuf *signature)
+int parse_signed_commit(const struct commit *commit, struct strbuf *payload,
+			struct strbuf *signature)
 {
-
 	unsigned long size;
 	const char *buffer = get_commit_buffer(commit, &size);
 	int in_signature, saw_signature = -1;
@@ -1051,7 +1064,8 @@ int remove_signature(struct strbuf *buf)
 	return sig_start != NULL;
 }
 
-static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
+static void handle_signed_tag(struct commit *parent,
+			      struct commit_extra_header ***tail)
 {
 	struct merge_remote_desc *desc;
 	struct commit_extra_header *mergetag;
@@ -1091,7 +1105,8 @@ free_return:
 	free(buf);
 }
 
-int check_commit_signature(const struct commit *commit, struct signature_check *sigc)
+int check_commit_signature(const struct commit *commit,
+			   struct signature_check *sigc)
 {
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
@@ -1102,9 +1117,9 @@ int check_commit_signature(const struct commit *commit, struct signature_check *
 	if (parse_signed_commit(commit, &payload, &signature) <= 0)
 		goto out;
 	ret = check_signature(payload.buf, payload.len, signature.buf,
-		signature.len, sigc);
+			      signature.len, sigc);
 
- out:
+out:
 	strbuf_release(&payload);
 	strbuf_release(&signature);
 
@@ -1125,16 +1140,18 @@ void verify_merge_signature(struct commit *commit, int verbosity)
 		break;
 	case 'U':
 		die(_("Commit %s has an untrusted GPG signature, "
-		      "allegedly by %s."), hex, signature_check.signer);
+		      "allegedly by %s."),
+		    hex, signature_check.signer);
 	case 'B':
 		die(_("Commit %s has a bad GPG signature "
-		      "allegedly by %s."), hex, signature_check.signer);
+		      "allegedly by %s."),
+		    hex, signature_check.signer);
 	default: /* 'N' */
 		die(_("Commit %s does not have a GPG signature."), hex);
 	}
 	if (verbosity >= 0 && signature_check.result == 'G')
-		printf(_("Commit %s has a good GPG signature by %s\n"),
-		       hex, signature_check.signer);
+		printf(_("Commit %s has a good GPG signature by %s\n"), hex,
+		       signature_check.signer);
 
 	signature_check_clear(&signature_check);
 }
@@ -1194,7 +1211,8 @@ static inline int standard_header_field(const char *field, size_t len)
 		(len == 8 && !memcmp(field, "encoding", 8)));
 }
 
-static int excluded_header_field(const char *field, size_t len, const char **exclude)
+static int excluded_header_field(const char *field, size_t len,
+				 const char **exclude)
 {
 	if (!exclude)
 		return 0;
@@ -1208,16 +1226,15 @@ static int excluded_header_field(const char *field, size_t len, const char **exc
 	return 0;
 }
 
-static struct commit_extra_header *read_commit_extra_header_lines(
-	const char *buffer, size_t size,
-	const char **exclude)
+static struct commit_extra_header *
+read_commit_extra_header_lines(const char *buffer, size_t size,
+			       const char **exclude)
 {
 	struct commit_extra_header *extra = NULL, **tail = &extra, *it = NULL;
 	const char *line, *next, *eof, *eob;
 	struct strbuf buf = STRBUF_INIT;
 
-	for (line = buffer, eob = line + size;
-	     line < eob && *line != '\n';
+	for (line = buffer, eob = line + size; line < eob && *line != '\n';
 	     line = next) {
 		next = memchr(line, '\n', eob - line);
 		next = next ? next + 1 : eob;
@@ -1240,7 +1257,7 @@ static struct commit_extra_header *read_commit_extra_header_lines(
 			continue;
 
 		it = xcalloc(1, sizeof(*it));
-		it->key = xmemdupz(line, eof-line);
+		it->key = xmemdupz(line, eof - line);
 		*tail = it;
 		tail = &it->next;
 		if (eof + 1 < next)
@@ -1270,8 +1287,8 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	int result;
 
 	append_merge_tag_headers(parents, &tail);
-	result = commit_tree_extended(msg, msg_len, tree, parents, ret,
-				      author, sign_commit, extra);
+	result = commit_tree_extended(msg, msg_len, tree, parents, ret, author,
+				      sign_commit, extra);
 	free_commit_extra_headers(extra);
 	return result;
 }
@@ -1279,9 +1296,8 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 static int find_invalid_utf8(const char *buf, int len)
 {
 	int offset = 0;
-	static const unsigned int max_codepoint[] = {
-		0x7f, 0x7ff, 0xffff, 0x10ffff
-	};
+	static const unsigned int max_codepoint[] = { 0x7f, 0x7ff, 0xffff,
+						      0x10ffff };
 
 	while (len) {
 		unsigned char c = *buf++;
@@ -1296,7 +1312,7 @@ static int find_invalid_utf8(const char *buf, int len)
 		if (c < 0x80)
 			continue;
 
-		bad_offset = offset-1;
+		bad_offset = offset - 1;
 
 		/*
 		 * Count how many more high bits set: that's how
@@ -1309,8 +1325,9 @@ static int find_invalid_utf8(const char *buf, int len)
 		}
 
 		/*
-		 * Must be between 1 and 3 more bytes.  Longer sequences result in
-		 * codepoints beyond U+10FFFF, which are guaranteed never to exist.
+		 * Must be between 1 and 3 more bytes.  Longer sequences result
+		 * in codepoints beyond U+10FFFF, which are guaranteed never to
+		 * exist.
 		 */
 		if (bytes < 1 || 3 < bytes)
 			return bad_offset;
@@ -1320,11 +1337,11 @@ static int find_invalid_utf8(const char *buf, int len)
 			return bad_offset;
 
 		/*
-		 * Place the encoded bits at the bottom of the value and compute the
-		 * valid range.
+		 * Place the encoded bits at the bottom of the value and compute
+		 * the valid range.
 		 */
 		codepoint = (c & 0x7f) >> bytes;
-		min_val = max_codepoint[bytes-1] + 1;
+		min_val = max_codepoint[bytes - 1] + 1;
 		max_val = max_codepoint[bytes];
 
 		offset += bytes;
@@ -1338,10 +1355,12 @@ static int find_invalid_utf8(const char *buf, int len)
 				return bad_offset;
 		} while (--bytes);
 
-		/* Reject codepoints that are out of range for the sequence length. */
+		/* Reject codepoints that are out of range for the sequence
+		 * length. */
 		if (codepoint < min_val || codepoint > max_val)
 			return bad_offset;
-		/* Surrogates are only for UTF-16 and cannot be encoded in UTF-8. */
+		/* Surrogates are only for UTF-16 and cannot be encoded in
+		 * UTF-8. */
 		if ((codepoint & 0x1ff800) == 0xd800)
 			return bad_offset;
 		/* U+xxFFFE and U+xxFFFF are guaranteed non-characters. */
@@ -1386,10 +1405,10 @@ static int verify_utf8(struct strbuf *buf)
 	}
 }
 
-static const char commit_utf8_warn[] =
-N_("Warning: commit message did not conform to UTF-8.\n"
-   "You may want to amend it after fixing the message, or set the config\n"
-   "variable i18n.commitencoding to the encoding your project uses.\n");
+static const char commit_utf8_warn[] = N_(
+	"Warning: commit message did not conform to UTF-8.\n"
+	"You may want to amend it after fixing the message, or set the config\n"
+	"variable i18n.commitencoding to the encoding your project uses.\n");
 
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
@@ -1427,7 +1446,8 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	if (!author)
 		author = git_author_info(IDENT_STRICT);
 	strbuf_addf(&buffer, "author %s\n", author);
-	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_STRICT));
+	strbuf_addf(&buffer, "committer %s\n",
+		    git_committer_info(IDENT_STRICT));
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
 
@@ -1456,15 +1476,16 @@ out:
 }
 
 define_commit_slab(merge_desc_slab, struct merge_remote_desc *);
-static struct merge_desc_slab merge_desc_slab = COMMIT_SLAB_INIT(1, merge_desc_slab);
+static struct merge_desc_slab merge_desc_slab =
+	COMMIT_SLAB_INIT(1, merge_desc_slab);
 
 struct merge_remote_desc *merge_remote_util(struct commit *commit)
 {
 	return *merge_desc_slab_at(&merge_desc_slab, commit);
 }
 
-void set_merge_remote_desc(struct commit *commit,
-			   const char *name, struct object *obj)
+void set_merge_remote_desc(struct commit *commit, const char *name,
+			   struct object *obj)
 {
 	struct merge_remote_desc *desc;
 	FLEX_ALLOC_STR(desc, name, name);
@@ -1513,7 +1534,8 @@ struct commit_list **commit_list_append(struct commit *commit,
 	return &new_commit->next;
 }
 
-const char *find_commit_header(const char *msg, const char *key, size_t *out_len)
+const char *find_commit_header(const char *msg, const char *key,
+			       size_t *out_len)
 {
 	int key_len = strlen(key);
 	const char *line = msg;
@@ -1524,8 +1546,7 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
 		if (line == eol)
 			return NULL;
 
-		if (eol - line > key_len &&
-		    !strncmp(line, key, key_len) &&
+		if (eol - line > key_len && !strncmp(line, key, key_len) &&
 		    line[key_len] == ' ') {
 			*out_len = eol - line - key_len - 1;
 			return line + key_len + 1;
