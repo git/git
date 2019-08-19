@@ -488,6 +488,16 @@ proc parseviewrevs {view revs} {
     return $ret
 }
 
+# Escapes a list of filter paths to be passed to git log via stdin. Note that
+# paths must not be quoted.
+proc escape_filter_paths {paths} {
+	set escaped [list]
+	foreach path $paths {
+		lappend escaped [string map {\\ \\\\ "\ " "\\\ "} $path]
+	}
+	return $escaped
+}
+
 # Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
     global startmsecs commitidx viewcomplete curview
@@ -549,7 +559,8 @@ proc start_rev_list {view} {
     if {[catch {
         set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
                         --parents --boundary $args --stdin \
-                        "<<[join [concat $revs "--" $files] "\\n"]"] r]
+                        "<<[join [concat $revs "--" \
+                                [escape_filter_paths $files]] "\\n"]"] r]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return 0
@@ -703,7 +714,8 @@ proc updatecommits {} {
         set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
                         --parents --boundary $args --stdin \
                         "<<[join [concat $revs "--" \
-                                $vfilelimit($view)] "\\n"]"] r]
+                                [escape_filter_paths \
+                                        $vfilelimit($view)]] "\\n"]"] r]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return
