@@ -1773,7 +1773,7 @@ static int do_pick_commit(struct repository *r,
 			  enum todo_command command,
 			  struct commit *commit,
 			  struct replay_opts *opts,
-			  int final_fixup)
+			  int final_fixup, int *check_todo)
 {
 	unsigned int flags = opts->edit ? EDIT_MSG : 0;
 	const char *msg_file = opts->edit ? NULL : git_path_merge_msg(r);
@@ -1999,11 +1999,14 @@ static int do_pick_commit(struct repository *r,
 			res = do_commit(r, msg_file, author, opts, flags);
 		else
 			res = error(_("unable to parse commit author"));
-		if (!res && reword)
+		*check_todo = !!(flags & EDIT_MSG);
+		if (!res && reword) {
 fast_forward_edit:
 			res = run_git_commit(r, NULL, opts, EDIT_MSG |
 					     VERIFY_MSG | AMEND_MSG |
 					     (flags & ALLOW_EMPTY));
+			*check_todo = 1;
+		}
 	}
 
 
@@ -3711,6 +3714,7 @@ static int pick_commits(struct repository *r,
 	while (todo_list->current < todo_list->nr) {
 		struct todo_item *item = todo_list->items + todo_list->current;
 		const char *arg = todo_item_get_arg(todo_list, item);
+		int check_todo = 0;
 
 		if (save_todo(todo_list, opts))
 			return -1;
@@ -3749,7 +3753,8 @@ static int pick_commits(struct repository *r,
 					command_to_string(item->command), NULL),
 					1);
 			res = do_pick_commit(r, item->command, item->commit,
-					opts, is_final_fixup(todo_list));
+					     opts, is_final_fixup(todo_list),
+					     &check_todo);
 			if (is_rebase_i(opts) && res < 0) {
 				/* Reschedule */
 				advise(_(rescheduled_advice),
@@ -3806,7 +3811,6 @@ static int pick_commits(struct repository *r,
 		} else if (item->command == TODO_EXEC) {
 			char *end_of_arg = (char *)(arg + item->arg_len);
 			int saved = *end_of_arg;
-			struct stat st;
 
 			if (!opts->verbose)
 				term_clear_line();
@@ -3817,17 +3821,8 @@ static int pick_commits(struct repository *r,
 			if (res) {
 				if (opts->reschedule_failed_exec)
 					reschedule = 1;
-			} else if (stat(get_todo_path(opts), &st))
-				res = error_errno(_("could not stat '%s'"),
-						  get_todo_path(opts));
-			else if (match_stat_data(&todo_list->stat, &st)) {
-				/* Reread the todo file if it has changed. */
-				todo_list_release(todo_list);
-				if (read_populate_todo(r, todo_list, opts))
-					res = -1; /* message was printed */
-				/* `current` will be incremented below */
-				todo_list->current = -1;
 			}
+			check_todo = 1;
 		} else if (item->command == TODO_LABEL) {
 			if ((res = do_label(r, arg, item->arg_len)))
 				reschedule = 1;
@@ -3863,6 +3858,20 @@ static int pick_commits(struct repository *r,
 							item->commit,
 							arg, item->arg_len,
 							opts, res, 0);
+		} else if (check_todo && !res) {
+			struct stat st;
+
+			if (stat(get_todo_path(opts), &st)) {
+				res = error_errno(_("could not stat '%s'"),
+						  get_todo_path(opts));
+			} else if (match_stat_data(&todo_list->stat, &st)) {
+				/* Reread the todo file if it has changed. */
+				todo_list_release(todo_list);
+				if (read_populate_todo(r, todo_list, opts))
+					res = -1; /* message was printed */
+				/* `current` will be incremented below */
+				todo_list->current = -1;
+			}
 		}
 
 		todo_list->current++;
@@ -4189,9 +4198,12 @@ static int single_pick(struct repository *r,
 		       struct commit *cmit,
 		       struct replay_opts *opts)
 {
+	int check_todo;
+
 	setenv(GIT_REFLOG_ACTION, action_name(opts), 0);
 	return do_pick_commit(r, opts->action == REPLAY_PICK ?
-		TODO_PICK : TODO_REVERT, cmit, opts, 0);
+			      TODO_PICK : TODO_REVERT, cmit, opts, 0,
+			      &check_todo);
 }
 
 int sequencer_pick_revisions(struct repository *r,
