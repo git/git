@@ -869,34 +869,6 @@ static char *get_author(const char *message)
 	return NULL;
 }
 
-/* Read author-script and return an ident line (author <email> timestamp) */
-static const char *read_author_ident(struct strbuf *buf)
-{
-	struct strbuf out = STRBUF_INIT;
-	char *name, *email, *date;
-
-	if (read_author_script(rebase_path_author_script(),
-			       &name, &email, &date, 0))
-		return NULL;
-
-	/* validate date since fmt_ident() will die() on bad value */
-	if (parse_date(date, &out)){
-		warning(_("invalid date format '%s' in '%s'"),
-			date, rebase_path_author_script());
-		strbuf_release(&out);
-		return NULL;
-	}
-
-	strbuf_reset(&out);
-	strbuf_addstr(&out, fmt_ident(name, email, WANT_AUTHOR_IDENT, date, 0));
-	strbuf_swap(buf, &out);
-	strbuf_release(&out);
-	free(name);
-	free(email);
-	free(date);
-	return buf->buf;
-}
-
 static const char staged_changes_advice[] =
 N_("you have staged changes in your working tree\n"
 "If these changes are meant to be squashed into the previous commit, run:\n"
@@ -953,45 +925,6 @@ static int run_git_commit(struct repository *r,
 			  unsigned int flags)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
-
-	if ((flags & CREATE_ROOT_COMMIT) && !(flags & AMEND_MSG)) {
-		struct strbuf msg = STRBUF_INIT, script = STRBUF_INIT;
-		const char *author = NULL;
-		struct object_id root_commit, *cache_tree_oid;
-		int res = 0;
-
-		if (is_rebase_i(opts)) {
-			author = read_author_ident(&script);
-			if (!author) {
-				strbuf_release(&script);
-				return -1;
-			}
-		}
-
-		if (!defmsg)
-			BUG("root commit without message");
-
-		if (!(cache_tree_oid = get_cache_tree_oid(r->index)))
-			res = -1;
-
-		if (!res)
-			res = strbuf_read_file(&msg, defmsg, 0);
-
-		if (res <= 0)
-			res = error_errno(_("could not read '%s'"), defmsg);
-		else
-			res = commit_tree(msg.buf, msg.len, cache_tree_oid,
-					  NULL, &root_commit, author,
-					  opts->gpg_sign);
-
-		strbuf_release(&msg);
-		strbuf_release(&script);
-		if (!res)
-			res = update_ref(NULL, "HEAD", &root_commit, NULL, 0,
-					 UPDATE_REFS_MSG_ON_ERR);
-
-		return res < 0 ? error(_("writing root commit")) : 0;
-	}
 
 	cmd.git_cmd = 1;
 
@@ -1376,7 +1309,7 @@ static int try_to_commit(struct repository *r,
 			 struct object_id *oid)
 {
 	struct object_id tree;
-	struct commit *current_head;
+	struct commit *current_head = NULL;
 	struct commit_list *parents = NULL;
 	struct commit_extra_header *extra = NULL;
 	struct strbuf err = STRBUF_INIT;
@@ -1411,7 +1344,8 @@ static int try_to_commit(struct repository *r,
 		}
 		parents = copy_commit_list(current_head->parents);
 		extra = read_commit_extra_headers(current_head, exclude_gpgsig);
-	} else if (current_head) {
+	} else if (current_head &&
+		   (!(flags & CREATE_ROOT_COMMIT) || (flags & AMEND_MSG))) {
 		commit_list_insert(current_head, &parents);
 	}
 
@@ -1488,8 +1422,7 @@ static int do_commit(struct repository *r,
 {
 	int res = 1;
 
-	if (!(flags & EDIT_MSG) && !(flags & VERIFY_MSG) &&
-	    !(flags & CREATE_ROOT_COMMIT)) {
+	if (!(flags & EDIT_MSG) && !(flags & VERIFY_MSG)) {
 		struct object_id oid;
 		struct strbuf sb = STRBUF_INIT;
 
