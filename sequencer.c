@@ -986,12 +986,10 @@ static int run_git_commit(struct repository *r,
 
 		strbuf_release(&msg);
 		strbuf_release(&script);
-		if (!res) {
-			update_ref(NULL, "CHERRY_PICK_HEAD", &root_commit, NULL,
-				   REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR);
+		if (!res)
 			res = update_ref(NULL, "HEAD", &root_commit, NULL, 0,
 					 UPDATE_REFS_MSG_ON_ERR);
-		}
+
 		return res < 0 ? error(_("writing root commit")) : 0;
 	}
 
@@ -1785,7 +1783,7 @@ static int do_pick_commit(struct repository *r,
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
 	struct strbuf msgbuf = STRBUF_INIT;
-	int res, unborn = 0, allow;
+	int res, unborn = 0, reword = 0, allow;
 
 	if (opts->no_commit) {
 		/*
@@ -1855,7 +1853,7 @@ static int do_pick_commit(struct repository *r,
 			opts);
 		if (res || command != TODO_REWORD)
 			goto leave;
-		flags |= EDIT_MSG | AMEND_MSG | VERIFY_MSG;
+		reword = 1;
 		msg_file = NULL;
 		goto fast_forward_edit;
 	}
@@ -1913,7 +1911,7 @@ static int do_pick_commit(struct repository *r,
 	}
 
 	if (command == TODO_REWORD)
-		flags |= EDIT_MSG | VERIFY_MSG;
+		reword = 1;
 	else if (is_fixup(command)) {
 		if (update_squash_messages(r, command, commit, opts))
 			return -1;
@@ -1997,12 +1995,17 @@ static int do_pick_commit(struct repository *r,
 	} else if (allow)
 		flags |= ALLOW_EMPTY;
 	if (!opts->no_commit) {
-fast_forward_edit:
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
 			res = do_commit(r, msg_file, author, opts, flags);
 		else
 			res = error(_("unable to parse commit author"));
+		if (!res && reword)
+fast_forward_edit:
+			res = run_git_commit(r, NULL, opts, EDIT_MSG |
+					     VERIFY_MSG | AMEND_MSG |
+					     (flags & ALLOW_EMPTY));
 	}
+
 
 	if (!res && final_fixup) {
 		unlink(rebase_path_fixup_msg());

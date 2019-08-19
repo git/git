@@ -1016,13 +1016,23 @@ test_expect_success 'rebase -i --root fixup root commit' '
 	test 0 = $(git cat-file commit HEAD | grep -c ^parent\ )
 '
 
-test_expect_success 'rebase -i --root reword root commit' '
+test_expect_success 'rebase -i --root reword original root commit' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	git checkout -b reword-root-branch master &&
+	git checkout -b reword-original-root-branch master &&
 	set_fake_editor &&
 	FAKE_LINES="reword 1 2" FAKE_COMMIT_MESSAGE="A changed" \
 	git rebase -i --root &&
 	git show HEAD^ | grep "A changed" &&
+	test -z "$(git show -s --format=%p HEAD^)"
+'
+
+test_expect_success 'rebase -i --root reword new root commit' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git checkout -b reword-now-root-branch master &&
+	set_fake_editor &&
+	FAKE_LINES="reword 3 1" FAKE_COMMIT_MESSAGE="C changed" \
+	git rebase -i --root &&
+	git show HEAD^ | grep "C changed" &&
 	test -z "$(git show -s --format=%p HEAD^)"
 '
 
@@ -1054,7 +1064,7 @@ test_expect_success 'rebase -i --root reword root when root has untracked file c
 '
 
 test_expect_success C_LOCALE_OUTPUT 'rebase --edit-todo does not work on non-interactive rebase' '
-	git checkout reword-root-branch &&
+	git checkout reword-original-root-branch &&
 	git reset --hard &&
 	git checkout conflict-branch &&
 	set_fake_editor &&
