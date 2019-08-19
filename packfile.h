@@ -100,7 +100,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local);
  * Does not unlink if 'force_delete' is false and the pack-file is
  * marked as ".keep".
  */
-extern void unlink_pack_path(const char *pack_name, int force_delete);
+void unlink_pack_path(const char *pack_name, int force_delete);
 
 /*
  * Make sure that a pointer access into an mmap'd index file is within bounds,
