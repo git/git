@@ -23,6 +23,7 @@
 #include "packfile.h"
 #include "list-objects-filter-options.h"
 #include "commit-reach.h"
+#include "branch.h"
 
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 
@@ -50,7 +51,8 @@ static int fetch_prune_tags_config = -1; /* unspecified */
 static int prune_tags = -1; /* unspecified */
 #define PRUNE_TAGS_BY_DEFAULT 0 /* do we prune tags by default? */
 
-static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity, deepen_relative;
+static int all, append, dry_run, force, keep, multiple, update_head_ok;
+static int verbosity, deepen_relative, set_upstream;
 static int progress = -1;
 static int enable_auto_gc = 1;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
@@ -123,6 +125,8 @@ static struct option builtin_fetch_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOL(0, "all", &all,
 		 N_("fetch from all remotes")),
+	OPT_BOOL(0, "set-upstream", &set_upstream,
+		 N_("set upstream for git pull/fetch")),
 	OPT_BOOL('a', "append", &append,
 		 N_("append to .git/FETCH_HEAD instead of overwriting")),
 	OPT_STRING(0, "upload-pack", &upload_pack, N_("path"),
@@ -1367,6 +1371,51 @@ static int do_fetch(struct transport *transport,
 		retcode = 1;
 		goto cleanup;
 	}
+
+	if (set_upstream) {
+		struct branch *branch = branch_get("HEAD");
+		struct ref *rm;
+		struct ref *source_ref = NULL;
+
+		/*
+		 * We're setting the upstream configuration for the
+		 * current branch. The relevent upstream is the
+		 * fetched branch that is meant to be merged with the
+		 * current one, i.e. the one fetched to FETCH_HEAD.
+		 *
+		 * When there are several such branches, consider the
+		 * request ambiguous and err on the safe side by doing
+		 * nothing and just emit a warning.
+		 */
+		for (rm = ref_map; rm; rm = rm->next) {
+			if (!rm->peer_ref) {
+				if (source_ref) {
+					warning(_("multiple branch detected, incompatible with --set-upstream"));
+					goto skip;
+				} else {
+					source_ref = rm;
+				}
+			}
+		}
+		if (source_ref) {
+			if (!strcmp(source_ref->name, "HEAD") ||
+			    starts_with(source_ref->name, "refs/heads/"))
+				install_branch_config(0,
+						      branch->name,
+						      transport->remote->name,
+						      source_ref->name);
+			else if (starts_with(source_ref->name, "refs/remotes/"))
+				warning(_("not setting upstream for a remote remote-tracking branch"));
+			else if (starts_with(source_ref->name, "refs/tags/"))
+				warning(_("not setting upstream for a remote tag"));
+			else
+				warning(_("unknown branch type"));
+		} else {
+			warning(_("no source branch found.\n"
+				"you need to specify exactly one branch with the --set-upstream option."));
+		}
+	}
+ skip:
 	free_refs(ref_map);
 
 	/* if neither --no-tags nor --tags was specified, do automated tag
