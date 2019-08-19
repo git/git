@@ -810,6 +810,8 @@ patterns are available:
 
 - `css` suitable for cascading style sheets.
 
+- `dts` suitable for devicetree (DTS) files.
+
 - `fortran` suitable for source code in the Fortran language.
 
 - `fountain` suitable for Fountain documents.
