@@ -2457,7 +2457,8 @@ static int store_aux_event(enum config_event_t type,
 			return error(_("invalid section name '%s'"), cf->var.buf);
 
 		if (cf->subsection_case_sensitive)
-			cmpfn = strncasecmp;
+			/* Plan 9's strncasecmp is typed (char*, char*, int) */
+			cmpfn = (int (*)(const char*, const char*, size_t))strncasecmp;
 		else
 			cmpfn = strncmp;
 

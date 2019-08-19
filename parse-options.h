@@ -59,6 +59,15 @@ enum parse_opt_result {
 	PARSE_OPT_UNKNOWN
 };
 
+enum parse_opt_result {
+	PARSE_OPT_COMPLETE = -3,
+	PARSE_OPT_HELP = -2,
+	PARSE_OPT_ERROR = -1,	/* must be the same as error() */
+	PARSE_OPT_DONE = 0,	/* fixed so that "return 0" works */
+	PARSE_OPT_NON_OPTION,
+	PARSE_OPT_UNKNOWN
+};
+
 struct option;
 typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
 
