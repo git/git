@@ -1224,6 +1224,14 @@ int warn_on_fopen_errors(const char *path);
 # define SHELL_PATH "/bin/sh"
 #endif
 
+#ifndef HOME_ENVIRONMENT
+# define HOME_ENVIRONMENT "HOME"
+#endif
+
+#ifndef PATH_ENVIRONMENT
+# define PATH_ENVIRONMENT "PATH"
+#endif
+
 #ifndef _POSIX_THREAD_SAFE_FUNCTIONS
 #define flockfile(fh)
 #define funlockfile(fh)

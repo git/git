@@ -737,7 +737,7 @@ char *expand_user_path(const char *path, int real_home)
 		const char *username = path + 1;
 		size_t username_len = first_slash - username;
 		if (username_len == 0) {
-			const char *home = getenv("HOME");
+			const char *home = getenv(HOME_ENVIRONMENT);
 			if (!home)
 				goto return_null;
 			if (real_home)
@@ -1507,7 +1507,7 @@ char *xdg_config_home(const char *filename)
 	if (config_home && *config_home)
 		return mkpathdup("%s/git/%s", config_home, filename);
 
-	home = getenv("HOME");
+	home = getenv(HOME_ENVIRONMENT);
 	if (home)
 		return mkpathdup("%s/.config/git/%s", home, filename);
 	return NULL;
@@ -1522,7 +1522,7 @@ char *xdg_cache_home(const char *filename)
 	if (cache_home && *cache_home)
 		return mkpathdup("%s/git/%s", cache_home, filename);
 
-	home = getenv("HOME");
+	home = getenv(HOME_ENVIRONMENT);
 	if (home)
 		return mkpathdup("%s/.cache/git/%s", home, filename);
 	return NULL;
