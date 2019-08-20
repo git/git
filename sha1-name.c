@@ -403,9 +403,9 @@ static int repo_collect_ambiguous(struct repository *r,
 	return collect_ambiguous(oid, data);
 }
 
-static struct repository *sort_ambiguous_repo;
-static int sort_ambiguous(const void *a, const void *b)
+static int sort_ambiguous(const void *a, const void *b, void *ctx)
 {
+	struct repository *sort_ambiguous_repo = ctx;
 	int a_type = oid_object_info(sort_ambiguous_repo, a, NULL);
 	int b_type = oid_object_info(sort_ambiguous_repo, b, NULL);
 	int a_type_sort;
@@ -434,10 +434,7 @@ static int sort_ambiguous(const void *a, const void *b)
 
 static void sort_ambiguous_oid_array(struct repository *r, struct oid_array *a)
 {
-	/* mutex will be needed if this code is to be made thread safe */
-	sort_ambiguous_repo = r;
-	QSORT(a->oid, a->nr, sort_ambiguous);
-	sort_ambiguous_repo = NULL;
+	QSORT_S(a->oid, a->nr, sort_ambiguous, r);
 }
 
 static enum get_oid_result get_short_oid(struct repository *r,
