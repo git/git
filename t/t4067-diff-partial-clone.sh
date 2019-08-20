@@ -75,6 +75,37 @@ test_expect_success 'diff skips same-OID blobs' '
 	! grep "want $(cat hash-b)" trace
 '
 
+test_expect_success 'when fetching missing objects, diff skips GITLINKs' '
+	test_when_finished "rm -rf sub server client trace" &&
+
+	test_create_repo sub &&
+	test_commit -C sub first &&
+
+	test_create_repo server &&
+	echo a >server/a &&
+	git -C server add a &&
+	git -C server submodule add "file://$(pwd)/sub" &&
+	git -C server commit -m x &&
+
+	test_commit -C server/sub second &&
+	echo another-a >server/a &&
+	git -C server add a sub &&
+	git -C server commit -m x &&
+
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	git clone --bare --filter=blob:limit=0 "file://$(pwd)/server" client &&
+
+	echo a | git hash-object --stdin >hash-old-a &&
+	echo another-a | git hash-object --stdin >hash-new-a &&
+
+	# Ensure that a and another-a are fetched, and check (by successful
+	# execution of the diff) that no invalid OIDs are sent.
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client diff HEAD^ HEAD &&
+	grep "want $(cat hash-old-a)" trace &&
+	grep "want $(cat hash-new-a)" trace
+'
+
 test_expect_success 'diff with rename detection batches blobs' '
 	test_when_finished "rm -rf server client trace" &&
 
