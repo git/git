@@ -736,6 +736,22 @@ static struct line_log_data *lookup_line_range(struct rev_info *revs,
 	return ret;
 }
 
+static void parse_pathspec_from_ranges(struct pathspec *pathspec,
+				       struct line_log_data *range)
+{
+	struct line_log_data *r;
+	struct argv_array array = ARGV_ARRAY_INIT;
+	const char **paths;
+
+	for (r = range; r; r = r->next)
+		argv_array_push(&array, r->path);
+	paths = argv_array_detach(&array);
+
+	parse_pathspec(pathspec, 0, PATHSPEC_PREFER_FULL, "", paths);
+	/* strings are now owned by pathspec */
+	free(paths);
+}
+
 void line_log_init(struct rev_info *rev, const char *prefix, struct string_list *args)
 {
 	struct commit *commit = NULL;
@@ -745,20 +761,8 @@ void line_log_init(struct rev_info *rev, const char *prefix, struct string_list 
 	range = parse_lines(rev->diffopt.repo, commit, prefix, args);
 	add_line_range(rev, commit, range);
 
-	if (!rev->diffopt.detect_rename) {
-		struct line_log_data *r;
-		struct argv_array array = ARGV_ARRAY_INIT;
-		const char **paths;
-
-		for (r = range; r; r = r->next)
-			argv_array_push(&array, r->path);
-		paths = argv_array_detach(&array);
-
-		parse_pathspec(&rev->diffopt.pathspec, 0,
-			       PATHSPEC_PREFER_FULL, "", paths);
-		/* strings are now owned by pathspec */
-		free(paths);
-	}
+	if (!rev->diffopt.detect_rename)
+		parse_pathspec_from_ranges(&rev->diffopt.pathspec, range);
 }
 
 static void move_diff_queue(struct diff_queue_struct *dst,
