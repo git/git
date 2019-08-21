@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2019, #04; Wed, 14)
-X-master-at: ff66981f4593aec0f3b3eeace0eacb7dbe44fd8c
-X-next-at: e5444969c986fc1503282c63d33931021c78d991
+Subject: What's cooking in git.git (Aug 2019, #05; Wed, 21)
+X-master-at: 5fa0f5238b0cd46cfe7f6fa76c3f526ea98148d9
+X-next-at: 17f5b7556cbe9867bed85982f386e41d9db77e19
 
-What's cooking in git.git (Aug 2019, #04; Wed, 14)
+What's cooking in git.git (Aug 2019, #05; Wed, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,15 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-We have a handful of topics in 'next', but as far as I can tell,
-there is not anything that is so urgent and needs to go in the
-upcoming release.  Hence the upcoming 2.23 release would hopefully
-be pretty much the same as the tip of the 'master' as of today.
-
-Unless we find something else that is glaringly wrong there in the
-next few days, that is.  But in such a case it is likely we'd need
-to delay the release to deal with the issue.  Let's hope there isn't
-such a serious regression.
+The first batch of topics post 2.23 will be merged to 'master' and
+'next' will be rewound to become empty, soon.  After that, 'next'
+will grow merging only smaller fixes and cleanup topics first.
+Bigger stuff will then follow after the dust settles.  All of the
+above hopefully will happen before the end of the month.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -28,191 +24,263 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/hash-independent-tests-part-4 (2019-08-08) 2 commits
-  (merged to 'next' on 2019-08-08 at fd54f4fafc)
- + t0000: reword comments for "local" test
- + t: decrease nesting in test_oid_to_path
-
- Test fix.
-
-
-* ds/commit-graph-incremental (2019-08-07) 1 commit
-  (merged to 'next' on 2019-08-07 at 9094f5b305)
- + commit-graph: release strbufs after use
-
- Leakfix.
-
-
-* ds/commit-graph-octopus-fix (2019-08-05) 1 commit
-  (merged to 'next' on 2019-08-07 at 9f8eaf7c4e)
- + commit-graph: fix bug around octopus merges
-
- commit-graph did not handle commits with more than two parents
- correctly, which has been corrected.
-
-
-* en/disable-dir-rename-in-recursive-merge (2019-08-06) 1 commit
-  (merged to 'next' on 2019-08-07 at f1efcbfd99)
- + merge-recursive: avoid directory rename detection in recursive case
-
- "merge-recursive" hit a BUG() when building a virtual merge base
- detected a directory rename.
-
-
-* ja/l10n-fixes (2019-08-06) 1 commit
-  (merged to 'next' on 2019-08-07 at 24aa435a4b)
- + l10n: reformat some localized strings for v2.23.0
-
- A few messages have been updated to help localization better.
-
-
-* mr/doc-can-not-to-cannot (2019-08-05) 1 commit
-  (merged to 'next' on 2019-08-07 at 128135f4e4)
- + doc: typo: s/can not/cannot/ and s/is does/does/
-
- Docfix.
-
-
-* mt/dir-iterator-updates (2019-08-07) 2 commits
-  (merged to 'next' on 2019-08-07 at 68e9a16b4a)
- + test-dir-iterator: use path argument directly
- + dir-iterator: release strbuf after use
-
- Leakfix.
-
-
-* nd/switch-and-restore (2019-08-05) 1 commit
-  (merged to 'next' on 2019-08-07 at 6a047a8092)
- + restore: fix typo in docs
-
- Docfix.
-
-
-* rs/plug-strbuf-reak-in-read-alt-refs (2019-08-07) 1 commit
-  (merged to 'next' on 2019-08-07 at bd704faa3e)
- + sha1-file: release strbuf after use
-
- Leakfix.
-
---------------------------------------------------
 [New Topics]
 
-* py/git-gui-do-quit (2019-08-07) 2 commits
- - Merge branch 'py/call-do-quit-before-exit' of github.com:gitster/git-gui into py/git-gui-do-quit
- - git-gui: call do_quit before destroying the main window
+* cb/curl-use-xmalloc (2019-08-15) 1 commit
+ - http: use xmalloc with cURL
+ (this branch uses jk/drop-release-pack-memory.)
 
- "git gui" learned to call the clean-up procedure before exiting.
+ Tell cURL library to use the same malloc() implementation, with the
+ xmalloc() wrapper, as the rest of the system, for consistency.
 
  Will merge to 'next'.
 
 
-* rs/nedalloc-fixlets (2019-08-07) 2 commits
-  (merged to 'next' on 2019-08-09 at 0e9286fb70)
- + nedmalloc: avoid compiler warning about unused value
- + nedmalloc: do assignments only after the declaration section
+* sg/diff-indent-heuristic-non-experimental (2019-08-15) 1 commit
+ - diff: 'diff.indentHeuristic' is no longer experimental
+
+ We promoted the "indent heuristics" that decides where to split
+ diff hunks from experimental to the default a few years ago, but
+ some stale documentation still marked it as experimental, which has
+ been corrected.
+
+ Will merge to 'next'.
+
+
+* en/checkout-mismerge-fix (2019-08-16) 1 commit
+ - checkout: remove duplicate code
+
+ Fix a mismerge that happened in 2.22 timeframe.
+
+ Will merge to 'next'.
+
+
+* en/merge-recursive-cleanup (2019-08-19) 24 commits
+ - merge-recursive: alphabetize include list
+ - merge-recursive: add sanity checks for relevant merge_options
+ - merge-recursive: rename MERGE_RECURSIVE_* to MERGE_VARIANT_*
+ - merge-recursive: split internal fields into a separate struct
+ - merge-recursive: avoid losing output and leaking memory holding that output
+ - merge-recursive: comment and reorder the merge_options fields
+ - merge-recursive: consolidate unnecessary fields in merge_options
+ - merge-recursive: move some definitions around to clean up the header
+ - merge-recursive: rename merge_options argument to opt in header
+ - merge-recursive: rename 'mrtree' to 'result_tree', for clarity
+ - merge-recursive: use common name for ancestors/common/base_list
+ - merge-recursive: fix some overly long lines
+ - cache-tree: share code between functions writing an index as a tree
+ - merge-recursive: don't force external callers to do our logging
+ - merge-recursive: remove useless parameter in merge_trees()
+ - merge-recursive: exit early if index != head
+ - Ensure index matches head before invoking merge machinery, round N
+ - merge-recursive: remove another implicit dependency on the_repository
+ - merge-recursive: future-proof update_file_flags() against memory leaks
+ - merge-recursive: introduce an enum for detect_directory_renames values
+ - merge-recursive: provide a better label for diff3 common ancestor
+ - merge-recursive: enforce opt->ancestor != NULL when calling merge_trees()
+ - checkout: provide better conflict hunk description with detached HEAD
+ - merge-recursive: be consistent with assert
+
+ The merge-recursive machiery is one of the most complex parts of
+ the system that accumulated cruft over time.  This large series
+ cleans up the implementation quite a bit.
+
+ Will merge to 'next'.
+
+
+* bc/hash-independent-tests-part-5 (2019-08-20) 14 commits
+ - t4009: make hash size independent
+ - t4002: make hash independent
+ - t4000: make hash size independent
+ - t3903: abstract away SHA-1-specific constants
+ - t3800: make hash-size independent
+ - t3600: make hash size independent
+ - t3506: make hash independent
+ - t3430: avoid hard-coded object IDs
+ - t3404: abstract away SHA-1-specific constants
+ - t3306: abstract away SHA-1-specific constants
+ - t3305: make hash size independent
+ - t3301: abstract away SHA-1-specific constants
+ - t3206: abstract away hash size constants
+ - t3201: abstract away SHA-1-specific constants
+
+ Preparation for SHA-256 upgrade continues in the test department.
+
+ Expecting a reroll.
+ cf. <20190818203417.GG365197@genre.crustytoothpaste.net>
+
+
+* bc/object-id-part17 (2019-08-19) 26 commits
+ - midx: switch to using the_hash_algo
+ - builtin/show-index: replace sha1_to_hex
+ - rerere: replace sha1_to_hex
+ - builtin/receive-pack: replace sha1_to_hex
+ - builtin/index-pack: replace sha1_to_hex
+ - packfile: replace sha1_to_hex
+ - wt-status: convert struct wt_status to object_id
+ - cache: remove null_sha1
+ - builtin/worktree: switch null_sha1 to null_oid
+ - builtin/repack: write object IDs of the proper length
+ - pack-write: use hash_to_hex when writing checksums
+ - sequencer: convert to use the_hash_algo
+ - bisect: switch to using the_hash_algo
+ - sha1-lookup: switch hard-coded constants to the_hash_algo
+ - config: use the_hash_algo in abbrev comparison
+ - combine-diff: replace GIT_SHA1_HEXSZ with the_hash_algo
+ - bundle: switch to use the_hash_algo
+ - connected: switch GIT_SHA1_HEXSZ to the_hash_algo
+ - show-index: switch hard-coded constants to the_hash_algo
+ - blame: remove needless comparison with GIT_SHA1_HEXSZ
+ - builtin/rev-parse: switch to use the_hash_algo
+ - builtin/blame: switch uses of GIT_SHA1_HEXSZ to the_hash_algo
+ - builtin/receive-pack: switch to use the_hash_algo
+ - fetch-pack: use parse_oid_hex
+ - patch-id: convert to use the_hash_algo
+ - builtin/replace: make hash size independent
+
+ Preparation for SHA-256 upgrade continues.
+
+ Looked mostly OK, with a possible update.
+ cf. <20190820223606.GJ365197@genre.crustytoothpaste.net>
+
+
+* bm/repository-layout-typofix (2019-08-19) 1 commit
+ - repository-layout.txt: correct pluralization of 'object'
+
+ Typofix.
+
+ Will merge to 'next'.
+
+
+* bw/rebase-autostash-keep-current-branch (2019-08-21) 1 commit
+ - rebase.c: make sure the active branch isn't moved when autostashing
+
+ "git rebase --autostash <upstream> <branch>", when <branch> is
+ different from the current branch, incorrectly moved the tip of the
+ current branch, which has been corrected.
+
+
+* dl/format-patch-cover-letter-subject (2019-08-21) 1 commit
+ - format-patch: learn --infer-cover-subject option
+ (this branch uses dl/format-patch-doc-test-cleanup.)
+
+ "git format-patch --cover-letter" learned to optionally use the
+ first paragraph (typically a single-liner) of branch.*.description
+ as the subject of the cover letter.
+
+
+* dl/format-patch-doc-test-cleanup (2019-08-21) 14 commits
+ - config/format.txt: specify default value of format.coverLetter
+ - SQUASH???
+ - Doc: add more detail for git-format-patch
+ - SQUASH???
+ - t4014: stop losing return codes of git commands
+ - t4014: remove confusing pipe in check_threading()
+ - t4014: use test_line_count() where possible
+ - t4014: drop redirections to /dev/null
+ - t4014: use indentable here-docs
+ - t4014: remove spaces after redirect operators
+ - t4014: use sq for test case names
+ - t4014: move closing sq onto its own line
+ - t4014: s/expected/expect/
+ - t4014: drop unnecessary blank lines from test cases
+ (this branch is used by dl/format-patch-cover-letter-subject.)
+
+ The documentation and tests for "git format-patch" have been
+ cleaned up.
+
+
+* ds/midx-expire-repack (2019-08-20) 1 commit
+ - packfile.h: drop extern from function declaration
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* jt/diff-lazy-fetch-submodule-fix (2019-08-20) 1 commit
+ - diff: skip GITLINK when lazy fetching missing objs
+
+ On-demand object fetching in lazy clone incorrectly tried to fetch
+ commits from submodule projects, while still working in the
+ superproject, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* mp/for-each-ref-missing-name-or-email (2019-08-19) 1 commit
+ - ref-filter: initialize empty name or email fields
+
+ "for-each-ref" and friends that shows refs did not protect themselves
+ against ancient tags that did not record tagger names when asked to
+ show "%(taggername)", which have been corrected.
+
+ May want a test or two.
+
+
+* nd/diff-parseopt (2019-08-20) 1 commit
+ - parseopt: move definition of enum parse_opt_result up
 
  Compilation fix.
 
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
-* jk/perf-no-dups (2019-08-12) 1 commit
-  (merged to 'next' on 2019-08-14 at 3010a7d19f)
- + t/perf: rename duplicate-numbered test script
+* pw/rebase-i-show-HEAD-to-reword (2019-08-19) 3 commits
+ - sequencer: simplify root commit creation
+ - rebase -i: check for updated todo after squash and reword
+ - rebase -i: always update HEAD before rewording
 
- Test & perf scripts must use unique numeric prefix, but a pair
- shared the same number, which is fixed here.
+ "git rebase -i" showed a wrong HEAD while "reword" open the editor.
 
- Will cook in 'next'.
-
-
-* en/fast-import-merge-doc (2019-08-12) 1 commit
-  (merged to 'next' on 2019-08-14 at 65efc63345)
- + git-fast-import.txt: clarify that multiple merge commits are allowed
-
- Doc update.
-
- Will cook in 'next'.
+ May want to split out the last one into a separate topic.
+ Will merge to 'next'.
 
 
-* bc/reread-attributes-during-rebase (2019-08-13) 3 commits
- - SQUASH???
- - apply: reload .gitattributes after patching it
- - path: add a function to check for path suffix
+* rs/pax-extended-header-length-fix (2019-08-19) 4 commits
+ - archive-tar: turn length miscalculation warning into BUG
+ - archive-tar: use size_t in strbuf_append_ext_header()
+ - archive-tar: fix pax extended header length calculation
+ - archive-tar: report wrong pax extended header length
 
- The "git am" based backend of "git rebase" ignored the result of
- updating ".gitattributes" done in one step when replaying
- subsequent steps.
-
- Will squash the tip commit in and then merge to 'next'.
-
-
-* jk/drop-release-pack-memory (2019-08-13) 1 commit
- - packfile: drop release_pack_memory()
-
- xmalloc() used to have a mechanism to ditch memory and address
- space resources as the last resort upon seeing an allocation
- failure from the underlying malloc(), which made the code complex
- and thread-unsafe with dubious benefit, as major memory resource
- users already do limit their uses with various other mechanisms.
- It has been simplified away.
+ "git archive" recorded incorrect length in extended pax header in
+ some corner cases, which has been corrected.
 
  Will merge to 'next'.
 
 
-* sg/complete-configuration-variables (2019-08-13) 11 commits
- - completion: complete config variables and values for 'git clone --config='
- - completion: complete config variables names and values for 'git clone -c'
- - completion: complete values of configuration variables after 'git -c var='
- - completion: complete configuration sections and variable names for 'git -c'
- - completion: split _git_config()
- - completion: simplify inner 'case' pattern in __gitcomp()
- - completion: use 'sort -u' to deduplicate config variable names
- - completion: deduplicate configuration sections
- - completion: add tests for 'git config' completion
- - completion: complete more values of more 'color.*' configuration variables
- - completion: fix a typo in a comment
+* rs/sort-oid-array-thread-safe (2019-08-20) 1 commit
+ - sha1-name: make sort_ambiguous_oid_array() thread-safe
 
- Command line completion updates for "git -c var.name=val"
+ Prepare get_short_oid() codepath to be thread-safe.
 
  Will merge to 'next'.
 
 
-* sg/worktree-remove-errormsg (2019-08-13) 1 commit
-  (merged to 'next' on 2019-08-14 at e5444969c9)
- + worktree remove: clarify error message on dirty worktree
+* sb/userdiff-dts (2019-08-19) 1 commit
+ - userdiff: Add a builtin pattern for dts files
 
- Error message update/clarification.
+ Device-tree files learned their own userdiff patterns.
 
- Will cook in 'next'.
-
-
-* mt/threaded-grep-in-object-store (2019-08-13) 4 commits
- - grep: re-enable threads in some non-worktree cases
- - grep: disable grep_read_mutex when possible
- - grep: allow locks to be enabled individually
- - object-store: add lock to read_object_file_extended()
+ Will merge to 'next'.
 
 
-* pd/fetch-jobs (2019-08-13) 5 commits
- . fetch: make --jobs control submodules and remotes
- . fetch: add the --submodule-fetch-jobs option
- . fetch: add the fetch.jobs config key
- . fetch: add the "--fetch-jobs" option
- . fetch: rename max_children to max_children_for_submodules
+* sg/line-log-tree-diff-optim (2019-08-21) 2 commits
+ - line-log: avoid unnecessary full tree diffs
+ - line-log: extract pathspec parsing from line ranges into a helper function
 
- "git fetch --jobs" is getting taught to also run fetch jobs in
- parallel when fetching from multiple remote repositories.
+ Optimize unnecessary full-tree diff away from "git log -L" machinery.
+
+ Will merge to 'next'.
 
 
-* cb/fetch-set-upstream (2019-08-14) 1 commit
- - pull, fetch: add --set-upstream option
+* tg/t0021-racefix (2019-08-21) 1 commit
+ - t0021: make sure clean filter runs
 
- "git fetch" learned "--set-upstream" option to help those who first
- clone from their private fork they intend to push to, add the true
- upstream via "git remote add" and then "git fetch" from it.
+ A test fix.
+
+ Will merge to 'next'.
+
 
 --------------------------------------------------
 [Stalled]
@@ -298,6 +366,122 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* py/git-gui-do-quit (2019-08-07) 2 commits
+ - Merge branch 'py/call-do-quit-before-exit' of github.com:gitster/git-gui into py/git-gui-do-quit
+ - git-gui: call do_quit before destroying the main window
+
+ "git gui" learned to call the clean-up procedure before exiting.
+
+ Will merge to 'next'.
+
+
+* rs/nedalloc-fixlets (2019-08-07) 2 commits
+  (merged to 'next' on 2019-08-09 at 0e9286fb70)
+ + nedmalloc: avoid compiler warning about unused value
+ + nedmalloc: do assignments only after the declaration section
+
+ Compilation fix.
+
+ Will merge to 'master'.
+
+
+* jk/perf-no-dups (2019-08-12) 1 commit
+  (merged to 'next' on 2019-08-14 at 3010a7d19f)
+ + t/perf: rename duplicate-numbered test script
+
+ Test & perf scripts must use unique numeric prefix, but a pair
+ shared the same number, which is fixed here.
+
+ Will merge to 'master'.
+
+
+* en/fast-import-merge-doc (2019-08-12) 1 commit
+  (merged to 'next' on 2019-08-14 at 65efc63345)
+ + git-fast-import.txt: clarify that multiple merge commits are allowed
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* bc/reread-attributes-during-rebase (2019-08-19) 2 commits
+ - apply: reload .gitattributes after patching it
+ - path: add a function to check for path suffix
+
+ The "git am" based backend of "git rebase" ignored the result of
+ updating ".gitattributes" done in one step when replaying
+ subsequent steps.
+
+ Will merge to 'next'.
+
+
+* jk/drop-release-pack-memory (2019-08-13) 1 commit
+ - packfile: drop release_pack_memory()
+ (this branch is used by cb/curl-use-xmalloc.)
+
+ xmalloc() used to have a mechanism to ditch memory and address
+ space resources as the last resort upon seeing an allocation
+ failure from the underlying malloc(), which made the code complex
+ and thread-unsafe with dubious benefit, as major memory resource
+ users already do limit their uses with various other mechanisms.
+ It has been simplified away.
+
+ Will merge to 'next'.
+
+
+* sg/complete-configuration-variables (2019-08-13) 11 commits
+ - completion: complete config variables and values for 'git clone --config='
+ - completion: complete config variables names and values for 'git clone -c'
+ - completion: complete values of configuration variables after 'git -c var='
+ - completion: complete configuration sections and variable names for 'git -c'
+ - completion: split _git_config()
+ - completion: simplify inner 'case' pattern in __gitcomp()
+ - completion: use 'sort -u' to deduplicate config variable names
+ - completion: deduplicate configuration sections
+ - completion: add tests for 'git config' completion
+ - completion: complete more values of more 'color.*' configuration variables
+ - completion: fix a typo in a comment
+
+ Command line completion updates for "git -c var.name=val"
+
+ Will merge to 'next'.
+
+
+* sg/worktree-remove-errormsg (2019-08-13) 1 commit
+  (merged to 'next' on 2019-08-14 at e5444969c9)
+ + worktree remove: clarify error message on dirty worktree
+
+ Error message update/clarification.
+
+ Will merge to 'master'.
+
+
+* mt/threaded-grep-in-object-store (2019-08-13) 4 commits
+ - grep: re-enable threads in some non-worktree cases
+ - grep: disable grep_read_mutex when possible
+ - grep: allow locks to be enabled individually
+ - object-store: add lock to read_object_file_extended()
+
+
+* pd/fetch-jobs (2019-08-13) 5 commits
+ . fetch: make --jobs control submodules and remotes
+ . fetch: add the --submodule-fetch-jobs option
+ . fetch: add the fetch.jobs config key
+ . fetch: add the "--fetch-jobs" option
+ . fetch: rename max_children to max_children_for_submodules
+
+ "git fetch --jobs" is getting taught to also run fetch jobs in
+ parallel when fetching from multiple remote repositories.
+
+
+* cb/fetch-set-upstream (2019-08-19) 1 commit
+ - pull, fetch: add --set-upstream option
+
+ "git fetch" learned "--set-upstream" option to help those who first
+ clone from their private fork they intend to push to, add the true
+ upstream via "git remote add" and then "git fetch" from it.
+
+
 * sg/commit-graph-validate (2019-08-05) 3 commits
   (merged to 'next' on 2019-08-09 at 87f61abb73)
  + commit-graph: error out on invalid commit oids in 'write --stdin-commits'
@@ -307,7 +491,7 @@ of the repositories listed at
  The code to write commit-graph over given commit object names has
  been made a bit more robust.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sg/show-failed-test-names (2019-08-05) 2 commits
@@ -318,7 +502,7 @@ of the repositories listed at
  The first line of verbose output from each test piece now carries
  the test name and number to help scanning with eyeballs.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/pre-merge-commit-hook (2019-08-07) 4 commits
@@ -384,7 +568,10 @@ of the repositories listed at
  "git pack-refs" can lose refs that are created while running, which
  is getting corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
+ Performance impact unclear but let's let correctness take priority
+ for now.
+ cf. <20190816204906.GA29853@sigill.intra.peff.net>
 
 
 * vn/restore-empty-ita-corner-case-fix (2019-08-02) 2 commits
@@ -398,7 +585,7 @@ of the repositories listed at
  the corresponding working tree file was empty.  This has been
  corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ds/feature-macros (2019-08-13) 6 commits
@@ -423,7 +610,7 @@ of the repositories listed at
  files looked at the contents in the index in submodules, instead of
  files in the working tree.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/tree-walk-overflow (2019-08-01) 6 commits
@@ -438,7 +625,7 @@ of the repositories listed at
  Codepaths to walk tree objects have been audited for integer
  overflows and hardened.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sg/t5510-test-i18ngrep-fix (2019-07-31) 1 commit
@@ -448,7 +635,7 @@ of the repositories listed at
 
  Test fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sg/do-not-skip-non-httpd-tests (2019-08-02) 3 commits
@@ -460,7 +647,7 @@ of the repositories listed at
 
  Test fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * vn/reset-deleted-ita (2019-07-26) 1 commit
@@ -472,8 +659,8 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* ra/rebase-i-more-options (2019-08-13) 6 commits
- - rebase: add --author-date-is-committer-date
+* ra/rebase-i-more-options (2019-08-20) 6 commits
+ - rebase: add --reset-author-date
  - rebase -i: support --ignore-date
  - sequencer: rename amend_author to author_to_rename
  - rebase -i: support --committer-date-is-author-date
@@ -483,7 +670,7 @@ of the repositories listed at
  "git rebase -i" learned a few options that are known by "git
  rebase" proper.
 
- Almost there.
+ Looking good.
 
 
 * js/rebase-r-strategy (2019-07-31) 16 commits
@@ -536,27 +723,8 @@ of the repositories listed at
  A tutorial on object enumeration.
 
 
-* ab/no-kwset (2019-07-01) 10 commits
-  (merged to 'next' on 2019-07-15 at ed0479ce3d)
- + grep: use PCRE v2 for optimized fixed-string search
- + grep: remove the kwset optimization
- + grep: drop support for \0 in --fixed-strings <pattern>
- + grep: make the behavior for NUL-byte in patterns sane
- + grep tests: move binary pattern tests into their own file
- + grep tests: move "grep binary" alongside the rest
- + grep: inline the return value of a function call used only once
- + t4210: skip more command-line encoding tests on MinGW
- + grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
- + log tests: test regex backends in "--encode=<enc>" tests
- (this branch is used by ab/pcre-jit-fixes.)
-
- Retire use of kwset library, which is an optimization for looking
- for fixed strings, with use of pcre2 JIT.
-
- Kicked out of 'next' to give the topic a chance to get rebooted.
-
-
-* ab/pcre-jit-fixes (2019-07-26) 7 commits
+* ab/pcre-jit-fixes (2019-08-19) 8 commits
+ - grep: under --debug, show whether PCRE JIT is enabled
  - grep: do not enter PCRE2_UTF mode on fixed matching
  - grep: stess test PCRE v2 on invalid UTF-8 data
  - grep: create a "is_fixed" member in "grep_pat"
@@ -639,3 +807,26 @@ of the repositories listed at
  On hold.
  cf. <20190508001252.15752-1-avarab@gmail.com>
  cf. <20190719210156.GA9688@archbookpro.localdomain>
+
+
+--------------------------------------------------
+[Discarded]
+
+* ab/no-kwset (2019-07-01) 10 commits
+  (merged to 'next' on 2019-07-15 at ed0479ce3d)
+ + grep: use PCRE v2 for optimized fixed-string search
+ + grep: remove the kwset optimization
+ + grep: drop support for \0 in --fixed-strings <pattern>
+ + grep: make the behavior for NUL-byte in patterns sane
+ + grep tests: move binary pattern tests into their own file
+ + grep tests: move "grep binary" alongside the rest
+ + grep: inline the return value of a function call used only once
+ + t4210: skip more command-line encoding tests on MinGW
+ + grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
+ + log tests: test regex backends in "--encode=<enc>" tests
+ (this branch is used by ab/pcre-jit-fixes.)
+
+ Retire use of kwset library, which is an optimization for looking
+ for fixed strings, with use of pcre2 JIT.
+
+ Kicked out of 'next' to give the topic a chance to get rebooted.
