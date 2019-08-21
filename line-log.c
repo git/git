@@ -736,6 +736,22 @@ static struct line_log_data *lookup_line_range(struct rev_info *revs,
 	return ret;
 }
 
+static int same_paths_in_pathspec_and_range(struct pathspec *pathspec,
+					    struct line_log_data *range)
+{
+	int i;
+	struct line_log_data *r;
+
+	for (i = 0, r = range; i < pathspec->nr && r; i++, r = r->next)
+		if (strcmp(pathspec->items[i].match, r->path))
+			return 0;
+	if (i < pathspec->nr || r)
+		/* different number of pathspec items and ranges */
+		return 0;
+
+	return 1;
+}
+
 static void parse_pathspec_from_ranges(struct pathspec *pathspec,
 				       struct line_log_data *range)
 {
@@ -761,8 +777,7 @@ void line_log_init(struct rev_info *rev, const char *prefix, struct string_list 
 	range = parse_lines(rev->diffopt.repo, commit, prefix, args);
 	add_line_range(rev, commit, range);
 
-	if (!rev->diffopt.detect_rename)
-		parse_pathspec_from_ranges(&rev->diffopt.pathspec, range);
+	parse_pathspec_from_ranges(&rev->diffopt.pathspec, range);
 }
 
 static void move_diff_queue(struct diff_queue_struct *dst,
@@ -820,15 +835,29 @@ static void queue_diffs(struct line_log_data *range,
 			struct diff_queue_struct *queue,
 			struct commit *commit, struct commit *parent)
 {
+	struct object_id *tree_oid, *parent_tree_oid;
+
 	assert(commit);
 
+	tree_oid = get_commit_tree_oid(commit);
+	parent_tree_oid = parent ? get_commit_tree_oid(parent) : NULL;
+
+	if (opt->detect_rename &&
+	    !same_paths_in_pathspec_and_range(&opt->pathspec, range)) {
+		clear_pathspec(&opt->pathspec);
+		parse_pathspec_from_ranges(&opt->pathspec, range);
+	}
 	DIFF_QUEUE_CLEAR(&diff_queued_diff);
-	diff_tree_oid(parent ? get_commit_tree_oid(parent) : NULL,
-		      get_commit_tree_oid(commit), "", opt);
-	if (opt->detect_rename) {
+	diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
+	if (opt->detect_rename && diff_might_be_rename()) {
+		/* must look at the full tree diff to detect renames */
+		clear_pathspec(&opt->pathspec);
+		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+
+		diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
+
 		filter_diffs_for_paths(range, 1);
-		if (diff_might_be_rename())
-			diffcore_std(opt);
+		diffcore_std(opt);
 		filter_diffs_for_paths(range, 0);
 	}
 	move_diff_queue(queue, &diff_queued_diff);
