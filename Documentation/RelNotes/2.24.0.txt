@@ -1,0 +1,52 @@
+Git 2.24 Release Notes
+======================
+
+Updates since v2.23
+-------------------
+
+Backward compatibility note
+
+ * (no entry yet so far)
+
+
+UI, Workflows & Features
+
+ * (no entry yet so far)
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The code to write commit-graph over given commit object names has
+   been made a bit more robust.
+
+ * The first line of verbose output from each test piece now carries
+   the test name and number to help scanning with eyeballs.
+
+
+Fixes since v2.23
+-----------------
+
+ * "git grep --recurse-submodules" that looks at the working tree
+   files looked at the contents in the index in submodules, instead of
+   files in the working tree.
+   (merge 6a289d45c0 mt/grep-submodules-working-tree later to maint).
+
+ * Codepaths to walk tree objects have been audited for integer
+   overflows and hardened.
+   (merge 5aa02f9868 jk/tree-walk-overflow later to maint).
+
+ * "git pack-refs" can lose refs that are created while running, which
+   is getting corrected.
+   (merge a613d4f817 sc/pack-refs-deletion-racefix later to maint).
+
+ * "git checkout" and "git restore" to re-populate the index from a
+   tree-ish (typically HEAD) did not work correctly for a path that
+   was removed and then added again with the intent-to-add bit, when
+   the corresponding working tree file was empty.  This has been
+   corrected.
+
+ * Compilation fix.
+   (merge 70597e8386 rs/nedalloc-fixlets later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge d1387d3895 en/fast-import-merge-doc later to maint).
