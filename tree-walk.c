@@ -170,38 +170,59 @@ int tree_entry_gently(struct tree_desc *desc, struct name_entry *entry)
 
 void setup_traverse_info(struct traverse_info *info, const char *base)
 {
-	int pathlen = strlen(base);
+	size_t pathlen = strlen(base);
 	static struct traverse_info dummy;
 
 	memset(info, 0, sizeof(*info));
 	if (pathlen && base[pathlen-1] == '/')
 		pathlen--;
 	info->pathlen = pathlen ? pathlen + 1 : 0;
-	info->name.path = base;
-	info->name.pathlen = pathlen;
-	if (pathlen) {
-		hashcpy(info->name.oid.hash, (const unsigned char *)base + pathlen + 1);
+	info->name = base;
+	info->namelen = pathlen;
+	if (pathlen)
 		info->prev = &dummy;
-	}
 }
 
-char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n)
+char *make_traverse_path(char *path, size_t pathlen,
+			 const struct traverse_info *info,
+			 const char *name, size_t namelen)
 {
-	int len = tree_entry_len(n);
-	int pathlen = info->pathlen;
+	/* Always points to the end of the name we're about to add */
+	size_t pos = st_add(info->pathlen, namelen);
 
-	path[pathlen + len] = 0;
+	if (pos >= pathlen)
+		BUG("too small buffer passed to make_traverse_path");
+
+	path[pos] = 0;
 	for (;;) {
-		memcpy(path + pathlen, n->path, len);
-		if (!pathlen)
+		if (pos < namelen)
+			BUG("traverse_info pathlen does not match strings");
+		pos -= namelen;
+		memcpy(path + pos, name, namelen);
+
+		if (!pos)
 			break;
-		path[--pathlen] = '/';
-		n = &info->name;
-		len = tree_entry_len(n);
+		path[--pos] = '/';
+
+		if (!info)
+			BUG("traverse_info ran out of list items");
+		name = info->name;
+		namelen = info->namelen;
 		info = info->prev;
-		pathlen -= len;
 	}
 	return path;
+}
+
+void strbuf_make_traverse_path(struct strbuf *out,
+			       const struct traverse_info *info,
+			       const char *name, size_t namelen)
+{
+	size_t len = traverse_path_len(info, namelen);
+
+	strbuf_grow(out, len);
+	make_traverse_path(out->buf + out->len, out->alloc - out->len,
+			   info, name, namelen);
+	strbuf_setlen(out, out->len + len);
 }
 
 struct tree_desc_skip {
@@ -400,13 +421,12 @@ int traverse_trees(struct index_state *istate,
 		tx[i].d = t[i];
 
 	if (info->prev) {
-		strbuf_grow(&base, info->pathlen);
-		make_traverse_path(base.buf, info->prev, &info->name);
-		base.buf[info->pathlen-1] = '/';
-		strbuf_setlen(&base, info->pathlen);
-		traverse_path = xstrndup(base.buf, info->pathlen);
+		strbuf_make_traverse_path(&base, info->prev,
+					  info->name, info->namelen);
+		strbuf_addch(&base, '/');
+		traverse_path = xstrndup(base.buf, base.len);
 	} else {
-		traverse_path = xstrndup(info->name.path, info->pathlen);
+		traverse_path = xstrndup(info->name, info->pathlen);
 	}
 	info->traverse_path = traverse_path;
 	for (;;) {

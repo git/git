@@ -62,9 +62,7 @@ Initializing
 `setup_traverse_info`::
 
 	Initialize a `traverse_info` given the pathname of the tree to start
-	traversing from. The `base` argument is assumed to be the `path`
-	member of the `name_entry` being recursed into unless the tree is a
-	top-level tree in which case the empty string ("") is used.
+	traversing from.
 
 Walking
 -------
@@ -139,6 +137,10 @@ same in the next callback invocation.
 	Calculate the length of a pathname returned by `make_traverse_path`.
 	This utilizes the memory structure of a tree entry to avoid the
 	overhead of using a generic strlen().
+
+`strbuf_make_traverse_path`::
+
+	Convenience wrapper to `make_traverse_path` into a strbuf.
 
 Authors
 -------

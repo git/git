@@ -58,8 +58,11 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r, struct 
 struct traverse_info {
 	const char *traverse_path;
 	struct traverse_info *prev;
-	struct name_entry name;
-	int pathlen;
+	const char *name;
+	size_t namelen;
+	unsigned mode;
+
+	size_t pathlen;
 	struct pathspec *pathspec;
 
 	unsigned long df_conflicts;
@@ -69,12 +72,17 @@ struct traverse_info {
 };
 
 int get_tree_entry(struct repository *, const struct object_id *, const char *, struct object_id *, unsigned short *);
-char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n);
+char *make_traverse_path(char *path, size_t pathlen, const struct traverse_info *info,
+			 const char *name, size_t namelen);
+void strbuf_make_traverse_path(struct strbuf *out,
+			       const struct traverse_info *info,
+			       const char *name, size_t namelen);
 void setup_traverse_info(struct traverse_info *info, const char *base);
 
-static inline int traverse_path_len(const struct traverse_info *info, const struct name_entry *n)
+static inline size_t traverse_path_len(const struct traverse_info *info,
+				       size_t namelen)
 {
-	return info->pathlen + tree_entry_len(n);
+	return st_add(info->pathlen, namelen);
 }
 
 /* in general, positive means "kind of interesting" */
