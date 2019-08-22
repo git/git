@@ -126,6 +126,7 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 	if (pos >= 0) {
 		struct cache_entry *old = active_cache[pos];
 		if (ce->ce_mode == old->ce_mode &&
+		    !ce_intent_to_add(old) &&
 		    oideq(&ce->oid, &old->oid)) {
 			old->ce_flags |= CE_UPDATE;
 			discard_cache_entry(ce);
