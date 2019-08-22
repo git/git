@@ -391,7 +391,7 @@ change to the project.
 	('encoding' SP <encoding>)?
 	data
 	('from' SP <commit-ish> LF)?
-	('merge' SP <commit-ish> LF)?
+	('merge' SP <commit-ish> LF)*
 	(filemodify | filedelete | filecopy | filerename | filedeleteall | notemodify)*
 	LF?
 ....
