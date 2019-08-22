@@ -783,7 +783,8 @@ struct write_commit_graph_context {
 
 	unsigned append:1,
 		 report_progress:1,
-		 split:1;
+		 split:1,
+		 check_oids:1;
 
 	const struct split_commit_graph_opts *split_opts;
 };
@@ -1134,7 +1135,8 @@ static int add_ref_to_list(const char *refname,
 	return 0;
 }
 
-int write_commit_graph_reachable(const char *obj_dir, unsigned int flags,
+int write_commit_graph_reachable(const char *obj_dir,
+				 enum commit_graph_write_flags flags,
 				 const struct split_commit_graph_opts *split_opts)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
@@ -1193,8 +1195,8 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 	return 0;
 }
 
-static void fill_oids_from_commit_hex(struct write_commit_graph_context *ctx,
-				      struct string_list *commit_hex)
+static int fill_oids_from_commit_hex(struct write_commit_graph_context *ctx,
+				     struct string_list *commit_hex)
 {
 	uint32_t i;
 	struct strbuf progress_title = STRBUF_INIT;
@@ -1215,20 +1217,21 @@ static void fill_oids_from_commit_hex(struct write_commit_graph_context *ctx,
 		struct commit *result;
 
 		display_progress(ctx->progress, i + 1);
-		if (commit_hex->items[i].string &&
-		    parse_oid_hex(commit_hex->items[i].string, &oid, &end))
-			continue;
-
-		result = lookup_commit_reference_gently(ctx->r, &oid, 1);
-
-		if (result) {
+		if (!parse_oid_hex(commit_hex->items[i].string, &oid, &end) &&
+		    (result = lookup_commit_reference_gently(ctx->r, &oid, 1))) {
 			ALLOC_GROW(ctx->oids.list, ctx->oids.nr + 1, ctx->oids.alloc);
 			oidcpy(&ctx->oids.list[ctx->oids.nr], &(result->object.oid));
 			ctx->oids.nr++;
+		} else if (ctx->check_oids) {
+			error(_("invalid commit object id: %s"),
+			    commit_hex->items[i].string);
+			return -1;
 		}
 	}
 	stop_progress(&ctx->progress);
 	strbuf_release(&progress_title);
+
+	return 0;
 }
 
 static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
@@ -1752,7 +1755,7 @@ out:
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
-		       unsigned int flags,
+		       enum commit_graph_write_flags flags,
 		       const struct split_commit_graph_opts *split_opts)
 {
 	struct write_commit_graph_context *ctx;
@@ -1773,9 +1776,10 @@ int write_commit_graph(const char *obj_dir,
 	if (len && ctx->obj_dir[len - 1] == '/')
 		ctx->obj_dir[len - 1] = 0;
 
-	ctx->append = flags & COMMIT_GRAPH_APPEND ? 1 : 0;
-	ctx->report_progress = flags & COMMIT_GRAPH_PROGRESS ? 1 : 0;
-	ctx->split = flags & COMMIT_GRAPH_SPLIT ? 1 : 0;
+	ctx->append = flags & COMMIT_GRAPH_WRITE_APPEND ? 1 : 0;
+	ctx->report_progress = flags & COMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0;
+	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
+	ctx->check_oids = flags & COMMIT_GRAPH_WRITE_CHECK_OIDS ? 1 : 0;
 	ctx->split_opts = split_opts;
 
 	if (ctx->split) {
@@ -1830,8 +1834,10 @@ int write_commit_graph(const char *obj_dir,
 			goto cleanup;
 	}
 
-	if (commit_hex)
-		fill_oids_from_commit_hex(ctx, commit_hex);
+	if (commit_hex) {
+		if ((res = fill_oids_from_commit_hex(ctx, commit_hex)))
+			goto cleanup;
+	}
 
 	if (!pack_indexes && !commit_hex)
 		fill_oids_from_all_packs(ctx);

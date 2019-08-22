@@ -154,7 +154,7 @@ static int graph_write(int argc, const char **argv)
 	struct string_list *commit_hex = NULL;
 	struct string_list lines;
 	int result = 0;
-	unsigned int flags = COMMIT_GRAPH_PROGRESS;
+	enum commit_graph_write_flags flags = COMMIT_GRAPH_WRITE_PROGRESS;
 
 	static struct option builtin_commit_graph_write_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
@@ -192,9 +192,9 @@ static int graph_write(int argc, const char **argv)
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
 	if (opts.append)
-		flags |= COMMIT_GRAPH_APPEND;
+		flags |= COMMIT_GRAPH_WRITE_APPEND;
 	if (opts.split)
-		flags |= COMMIT_GRAPH_SPLIT;
+		flags |= COMMIT_GRAPH_WRITE_SPLIT;
 
 	read_replace_refs = 0;
 
@@ -213,8 +213,10 @@ static int graph_write(int argc, const char **argv)
 
 		if (opts.stdin_packs)
 			pack_indexes = &lines;
-		if (opts.stdin_commits)
+		if (opts.stdin_commits) {
 			commit_hex = &lines;
+			flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
+		}
 
 		UNLEAK(buf);
 	}

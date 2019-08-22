@@ -71,9 +71,13 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
  */
 int generation_numbers_enabled(struct repository *r);
 
-#define COMMIT_GRAPH_APPEND     (1 << 0)
-#define COMMIT_GRAPH_PROGRESS   (1 << 1)
-#define COMMIT_GRAPH_SPLIT      (1 << 2)
+enum commit_graph_write_flags {
+	COMMIT_GRAPH_WRITE_APPEND     = (1 << 0),
+	COMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
+	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
+	/* Make sure that each OID in the input is a valid commit OID. */
+	COMMIT_GRAPH_WRITE_CHECK_OIDS = (1 << 3)
+};
 
 struct split_commit_graph_opts {
 	int size_multiple;
@@ -87,12 +91,13 @@ struct split_commit_graph_opts {
  * is not compatible with the commit-graph feature, then the
  * methods will return 0 without writing a commit-graph.
  */
-int write_commit_graph_reachable(const char *obj_dir, unsigned int flags,
+int write_commit_graph_reachable(const char *obj_dir,
+				 enum commit_graph_write_flags flags,
 				 const struct split_commit_graph_opts *split_opts);
 int write_commit_graph(const char *obj_dir,
 		       struct string_list *pack_indexes,
 		       struct string_list *commit_hex,
-		       unsigned int flags,
+		       enum commit_graph_write_flags flags,
 		       const struct split_commit_graph_opts *split_opts);
 
 #define COMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
