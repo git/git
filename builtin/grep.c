@@ -403,7 +403,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 static int grep_submodule(struct grep_opt *opt,
 			  const struct pathspec *pathspec,
 			  const struct object_id *oid,
-			  const char *filename, const char *path)
+			  const char *filename, const char *path, int cached)
 {
 	struct repository subrepo;
 	struct repository *superproject = opt->repo;
@@ -475,7 +475,7 @@ static int grep_submodule(struct grep_opt *opt,
 		strbuf_release(&base);
 		free(data);
 	} else {
-		hit = grep_cache(&subopt, pathspec, 1);
+		hit = grep_cache(&subopt, pathspec, cached);
 	}
 
 	repo_clear(&subrepo);
@@ -523,7 +523,8 @@ static int grep_cache(struct grep_opt *opt,
 			}
 		} else if (recurse_submodules && S_ISGITLINK(ce->ce_mode) &&
 			   submodule_path_match(repo->index, pathspec, name.buf, NULL)) {
-			hit |= grep_submodule(opt, pathspec, NULL, ce->name, ce->name);
+			hit |= grep_submodule(opt, pathspec, NULL, ce->name,
+					      ce->name, cached);
 		} else {
 			continue;
 		}
@@ -598,7 +599,8 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			free(data);
 		} else if (recurse_submodules && S_ISGITLINK(entry.mode)) {
 			hit |= grep_submodule(opt, pathspec, &entry.oid,
-					      base->buf, base->buf + tn_len);
+					      base->buf, base->buf + tn_len,
+					      1); /* ignored */
 		}
 
 		strbuf_setlen(base, old_baselen);
