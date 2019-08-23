@@ -780,7 +780,8 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			continue;
 		}
 
-		if (!arg[2]) { /* "--" */
+		if (!arg[2] /* "--" */ ||
+		    !strcmp(arg + 2, "end-of-options")) {
 			if (!(ctx->flags & PARSE_OPT_KEEP_DASHDASH)) {
 				ctx->argc--;
 				ctx->argv++;
