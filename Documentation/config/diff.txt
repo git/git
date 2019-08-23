@@ -189,7 +189,7 @@ diff.guitool::
 include::../mergetools-diff.txt[]
 
 diff.indentHeuristic::
-	Set this option to `true` to enable experimental heuristics
+	Set this option to `false` to disable the default heuristics
 	that shift diff hunk boundaries to make patches easier to read.
 
 diff.algorithm::
