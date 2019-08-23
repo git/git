@@ -731,13 +731,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 				      "the following files:\n%s"), sb.buf);
 			strbuf_release(&sb);
 
-			if (repo_index_has_changes(the_repository,
-						   get_commit_tree(old_branch_info->commit),
-						   &sb))
-				warning(_("staged changes in the following files may be lost: %s"),
-					sb.buf);
-			strbuf_release(&sb);
-
 			/* Do more real merge */
 
 			/*
