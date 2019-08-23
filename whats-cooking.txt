@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2019, #05; Wed, 21)
-X-master-at: 5fa0f5238b0cd46cfe7f6fa76c3f526ea98148d9
-X-next-at: 17f5b7556cbe9867bed85982f386e41d9db77e19
+Subject: What's cooking in git.git (Aug 2019, #06; Fri, 23)
+X-master-at: 745f6812895b31c02b29bdfe4ae8e5498f776c26
+X-next-at: 0a3290393f27b805eda46be3998bd9e32518815d
 
-What's cooking in git.git (Aug 2019, #05; Wed, 21)
+What's cooking in git.git (Aug 2019, #06; Fri, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first batch of topics post 2.23 will be merged to 'master' and
-'next' will be rewound to become empty, soon.  After that, 'next'
-will grow merging only smaller fixes and cleanup topics first.
-Bigger stuff will then follow after the dust settles.  All of the
-above hopefully will happen before the end of the month.
+The tip of 'next' has been rewound.  A handful of topics that have
+been in the stalled state need to be woken up, now the release is
+over (or they can be dropped without prejudice, just to unclutter
+the tree).  As I said in an earlier message somewhere, I'd prefer to
+see the PCRE/JIT topics sorted out soonish.  Ævar?  Carlo?
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,7 +24,235 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* en/fast-import-merge-doc (2019-08-12) 1 commit
+  (merged to 'next' on 2019-08-14 at 65efc63345)
+ + git-fast-import.txt: clarify that multiple merge commits are allowed
+
+ Doc update.
+
+
+* jk/perf-no-dups (2019-08-12) 1 commit
+  (merged to 'next' on 2019-08-14 at 3010a7d19f)
+ + t/perf: rename duplicate-numbered test script
+
+ Test & perf scripts must use unique numeric prefix, but a pair
+ shared the same number, which is fixed here.
+
+
+* jk/tree-walk-overflow (2019-08-01) 6 commits
+  (merged to 'next' on 2019-08-02 at 116467c77a)
+ + tree-walk: harden make_traverse_path() length computations
+ + tree-walk: add a strbuf wrapper for make_traverse_path()
+ + tree-walk: accept a raw length for traverse_path_len()
+ + tree-walk: use size_t consistently
+ + tree-walk: drop oid from traverse_info
+ + setup_traverse_info(): stop copying oid
+
+ Codepaths to walk tree objects have been audited for integer
+ overflows and hardened.
+
+
+* mt/grep-submodules-working-tree (2019-07-30) 1 commit
+  (merged to 'next' on 2019-08-02 at e1a46a195f)
+ + grep: fix worktree case in submodules
+
+ "git grep --recurse-submodules" that looks at the working tree
+ files looked at the contents in the index in submodules, instead of
+ files in the working tree.
+
+
+* rs/nedalloc-fixlets (2019-08-07) 2 commits
+  (merged to 'next' on 2019-08-09 at 0e9286fb70)
+ + nedmalloc: avoid compiler warning about unused value
+ + nedmalloc: do assignments only after the declaration section
+
+ Compilation fix.
+
+
+* sc/pack-refs-deletion-racefix (2019-08-02) 1 commit
+  (merged to 'next' on 2019-08-09 at 6bd6c85fbb)
+ + pack-refs: always refresh after taking the lock file
+
+ "git pack-refs" can lose refs that are created while running, which
+ is getting corrected.
+ Performance impact unclear but let's let correctness take priority
+ for now.
+ cf. <20190816204906.GA29853@sigill.intra.peff.net>
+
+
+* sg/commit-graph-validate (2019-08-05) 3 commits
+  (merged to 'next' on 2019-08-09 at 87f61abb73)
+ + commit-graph: error out on invalid commit oids in 'write --stdin-commits'
+ + commit-graph: turn a group of write-related macro flags into an enum
+ + t5318-commit-graph: use 'test_expect_code'
+
+ The code to write commit-graph over given commit object names has
+ been made a bit more robust.
+
+
+* sg/do-not-skip-non-httpd-tests (2019-08-02) 3 commits
+  (merged to 'next' on 2019-08-02 at e700df0693)
+ + t: warn against adding non-httpd-specific tests after sourcing 'lib-httpd'
+ + t5703: run all non-httpd-specific tests before sourcing 'lib-httpd.sh'
+ + t5510-fetch: run non-httpd-specific test before sourcing 'lib-httpd.sh'
+ (this branch uses sg/t5510-test-i18ngrep-fix.)
+
+ Test fix.
+
+
+* sg/show-failed-test-names (2019-08-05) 2 commits
+  (merged to 'next' on 2019-08-09 at c49ece8a0d)
+ + tests: show the test name and number at the start of verbose output
+ + t0000-basic: use realistic test script names in the verbose tests
+
+ The first line of verbose output from each test piece now carries
+ the test name and number to help scanning with eyeballs.
+
+
+* sg/t5510-test-i18ngrep-fix (2019-07-31) 1 commit
+  (merged to 'next' on 2019-08-02 at 678564fda2)
+ + t5510-fetch: fix negated 'test_i18ngrep' invocation
+ (this branch is used by sg/do-not-skip-non-httpd-tests.)
+
+ Test fix.
+
+
+* sg/worktree-remove-errormsg (2019-08-13) 1 commit
+  (merged to 'next' on 2019-08-14 at e5444969c9)
+ + worktree remove: clarify error message on dirty worktree
+
+ Error message update/clarification.
+
+
+* vn/restore-empty-ita-corner-case-fix (2019-08-02) 2 commits
+  (merged to 'next' on 2019-08-09 at ad2d7630d1)
+ + restore: add test for deleted ita files
+ + checkout.c: unstage empty deleted ita files
+
+ "git checkout" and "git restore" to re-populate the index from a
+ tree-ish (typically HEAD) did not work correctly for a path that
+ was removed and then added again with the intent-to-add bit, when
+ the corresponding working tree file was empty.  This has been
+ corrected.
+
+--------------------------------------------------
 [New Topics]
+
+* jt/avoid-ls-refs-with-http (2019-08-22) 2 commits
+ - transport: teach all vtables to allow fetch first
+ - transport-helper: skip ls-refs if unnecessary
+
+ The http transport lacked some optimization the native transports
+ learned to avoid unnecessary ref advertisement, which has been
+ corrected.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* js/builtin-add-i (2019-07-18) 11 commits
+ - built-in add -i: implement the `help` command
+ - built-in add -i: use color in the main loop
+ - built-in add -i: support `?` (prompt help)
+ - built-in add -i: show unique prefixes of the commands
+ - Add a function to determine unique prefixes for a list of strings
+ - built-in add -i: implement the main loop
+ - built-in add -i: color the header in the `status` command
+ - built-in add -i: refresh the index before running `status`
+ - built-in add -i: implement the `status` command
+ - diff: export diffstat interface
+ - Start to implement a built-in version of `git add --interactive`
+
+ The beginning of rewriting "git add -i" in C.
+
+ Expecting a response and possibly a reroll.
+ cf. <xmqqwofyozka.fsf@gitster-ct.c.googlers.com>
+ cf. <xmqqsgqmoyz1.fsf@gitster-ct.c.googlers.com>
+
+
+* js/trace2-json-schema (2019-07-25) 3 commits
+ . ci: run trace2 schema validation in the CI suite
+ . trace2: add a schema validator for trace2 events
+ . trace2: add a JSON schema for trace2 events
+
+ The JSON output produced by "trace2" subsystem now has JSON schema
+ defined on it, to allow us validate the output and catch deviation.
+
+ The CI integration may be a bit too heavy-handed.
+
+
+* jn/unknown-index-extensions (2018-11-21) 2 commits
+ - index: offer advice for unknown index extensions
+ - index: do not warn about unrecognized extensions
+
+ A bit too alarming warning given when unknown index extensions
+ exist is getting revamped.
+
+ Expecting a reroll.
+
+
+* jc/format-patch-delay-message-id (2019-04-05) 1 commit
+ - format-patch: move message-id and related headers to the end
+
+ The location "git format-patch --thread" adds the Message-Id:
+ header in the series of header fields has been moved down, which
+ may help working around a suspected bug in GMail MSA, reported at
+ <CAHk-=whP1stFZNAaJiMi5eZ9rj0MRt20Y_yHVczZPH+O01d+sA@mail.gmail.com>
+
+ Waiting for feedback to see if it truly helps.
+ Needs tests.
+
+
+* jt/fetch-cdn-offload (2019-03-12) 9 commits
+ - SQUASH???
+ - upload-pack: send part of packfile response as uri
+ - fetch-pack: support more than one pack lockfile
+ - upload-pack: refactor reading of pack-objects out
+ - Documentation: add Packfile URIs design doc
+ - Documentation: order protocol v2 sections
+ - http-fetch: support fetching packfiles by URL
+ - http: improve documentation of http_pack_request
+ - http: use --stdin when getting dumb HTTP pack
+
+ WIP for allowing a response to "git fetch" to instruct the bulk of
+ the pack contents to be instead taken from elsewhere (aka CDN).
+
+
+* js/protocol-advertise-multi (2018-12-28) 1 commit
+ - protocol: advertise multiple supported versions
+
+ The transport layer has been updated so that the protocol version
+ used can be negotiated between the parties, by the initiator
+ listing the protocol versions it is willing to talk, and the other
+ side choosing from one of them.
+
+ Expecting a reroll.
+ cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+
+* dl/remote-save-to-push (2018-12-11) 1 commit
+ - remote: add --save-to-push option to git remote set-url
+
+ "git remote set-url" learned a new option that moves existing value
+ of the URL field to pushURL field of the remote before replacing
+ the URL field with a new value.
+
+ Anybody who wants to champion this topic?
+ I am personally not yet quite convinced if this is worth pursuing.
+
+--------------------------------------------------
+[Cooking]
 
 * cb/curl-use-xmalloc (2019-08-15) 1 commit
  - http: use xmalloc with cURL
@@ -37,22 +265,24 @@ of the repositories listed at
 
 
 * sg/diff-indent-heuristic-non-experimental (2019-08-15) 1 commit
- - diff: 'diff.indentHeuristic' is no longer experimental
+  (merged to 'next' on 2019-08-23 at faab5e2a1e)
+ + diff: 'diff.indentHeuristic' is no longer experimental
 
  We promoted the "indent heuristics" that decides where to split
  diff hunks from experimental to the default a few years ago, but
  some stale documentation still marked it as experimental, which has
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/checkout-mismerge-fix (2019-08-16) 1 commit
- - checkout: remove duplicate code
+  (merged to 'next' on 2019-08-23 at 8ecb69414a)
+ + checkout: remove duplicate code
 
  Fix a mismerge that happened in 2.22 timeframe.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/merge-recursive-cleanup (2019-08-19) 24 commits
@@ -145,11 +375,12 @@ of the repositories listed at
 
 
 * bm/repository-layout-typofix (2019-08-19) 1 commit
- - repository-layout.txt: correct pluralization of 'object'
+  (merged to 'next' on 2019-08-23 at 7b1fffbaea)
+ + repository-layout.txt: correct pluralization of 'object'
 
  Typofix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bw/rebase-autostash-keep-current-branch (2019-08-21) 1 commit
@@ -158,6 +389,9 @@ of the repositories listed at
  "git rebase --autostash <upstream> <branch>", when <branch> is
  different from the current branch, incorrectly moved the tip of the
  current branch, which has been corrected.
+
+ Getting there.
+ cf. <nycvar.QRO.7.76.6.1908221418540.46@tvgsbejvaqbjf.bet>
 
 
 * dl/format-patch-cover-letter-subject (2019-08-21) 1 commit
@@ -189,41 +423,47 @@ of the repositories listed at
  The documentation and tests for "git format-patch" have been
  cleaned up.
 
+ Excpecting a reroll.
+
 
 * ds/midx-expire-repack (2019-08-20) 1 commit
- - packfile.h: drop extern from function declaration
+  (merged to 'next' on 2019-08-23 at a998356b3b)
+ + packfile.h: drop extern from function declaration
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jt/diff-lazy-fetch-submodule-fix (2019-08-20) 1 commit
- - diff: skip GITLINK when lazy fetching missing objs
+  (merged to 'next' on 2019-08-23 at 16997cac26)
+ + diff: skip GITLINK when lazy fetching missing objs
 
  On-demand object fetching in lazy clone incorrectly tried to fetch
  commits from submodule projects, while still working in the
  superproject, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* mp/for-each-ref-missing-name-or-email (2019-08-19) 1 commit
- - ref-filter: initialize empty name or email fields
+* mp/for-each-ref-missing-name-or-email (2019-08-22) 1 commit
+  (merged to 'next' on 2019-08-23 at d257cb2138)
+ + ref-filter: initialize empty name or email fields
 
  "for-each-ref" and friends that shows refs did not protect themselves
  against ancient tags that did not record tagger names when asked to
  show "%(taggername)", which have been corrected.
 
- May want a test or two.
+ Will merge to 'master'.
 
 
 * nd/diff-parseopt (2019-08-20) 1 commit
- - parseopt: move definition of enum parse_opt_result up
+  (merged to 'next' on 2019-08-23 at d80a83b1e4)
+ + parseopt: move definition of enum parse_opt_result up
 
  Compilation fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pw/rebase-i-show-HEAD-to-reword (2019-08-19) 3 commits
@@ -238,31 +478,34 @@ of the repositories listed at
 
 
 * rs/pax-extended-header-length-fix (2019-08-19) 4 commits
- - archive-tar: turn length miscalculation warning into BUG
- - archive-tar: use size_t in strbuf_append_ext_header()
- - archive-tar: fix pax extended header length calculation
- - archive-tar: report wrong pax extended header length
+  (merged to 'next' on 2019-08-23 at de88e8e58a)
+ + archive-tar: turn length miscalculation warning into BUG
+ + archive-tar: use size_t in strbuf_append_ext_header()
+ + archive-tar: fix pax extended header length calculation
+ + archive-tar: report wrong pax extended header length
 
  "git archive" recorded incorrect length in extended pax header in
  some corner cases, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/sort-oid-array-thread-safe (2019-08-20) 1 commit
- - sha1-name: make sort_ambiguous_oid_array() thread-safe
+  (merged to 'next' on 2019-08-23 at 5ce3126af2)
+ + sha1-name: make sort_ambiguous_oid_array() thread-safe
 
  Prepare get_short_oid() codepath to be thread-safe.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sb/userdiff-dts (2019-08-19) 1 commit
- - userdiff: Add a builtin pattern for dts files
+* sb/userdiff-dts (2019-08-21) 1 commit
+  (merged to 'next' on 2019-08-23 at 2bce0b8f91)
+ + userdiff: add a builtin pattern for dts files
 
  Device-tree files learned their own userdiff patterns.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/line-log-tree-diff-optim (2019-08-21) 2 commits
@@ -274,145 +517,35 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* tg/t0021-racefix (2019-08-21) 1 commit
- - t0021: make sure clean filter runs
+* tg/t0021-racefix (2019-08-22) 1 commit
+  (merged to 'next' on 2019-08-23 at 0a3290393f)
+ + t0021: make sure clean filter runs
 
  A test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
-
---------------------------------------------------
-[Stalled]
-
-* js/trace2-json-schema (2019-07-25) 3 commits
- . ci: run trace2 schema validation in the CI suite
- . trace2: add a schema validator for trace2 events
- . trace2: add a JSON schema for trace2 events
-
- The JSON output produced by "trace2" subsystem now has JSON schema
- defined on it, to allow us validate the output and catch deviation.
-
- The CI integration may be a bit too heavy-handed.
-
-
-* jn/unknown-index-extensions (2018-11-21) 2 commits
- - index: offer advice for unknown index extensions
- - index: do not warn about unrecognized extensions
-
- A bit too alarming warning given when unknown index extensions
- exist is getting revamped.
-
- Expecting a reroll.
-
-
-* jc/format-patch-delay-message-id (2019-04-05) 1 commit
- - format-patch: move message-id and related headers to the end
-
- The location "git format-patch --thread" adds the Message-Id:
- header in the series of header fields has been moved down, which
- may help working around a suspected bug in GMail MSA, reported at
- <CAHk-=whP1stFZNAaJiMi5eZ9rj0MRt20Y_yHVczZPH+O01d+sA@mail.gmail.com>
-
- Waiting for feedback to see if it truly helps.
- Needs tests.
-
-
-* jt/fetch-cdn-offload (2019-03-12) 9 commits
- - SQUASH???
- - upload-pack: send part of packfile response as uri
- - fetch-pack: support more than one pack lockfile
- - upload-pack: refactor reading of pack-objects out
- - Documentation: add Packfile URIs design doc
- - Documentation: order protocol v2 sections
- - http-fetch: support fetching packfiles by URL
- - http: improve documentation of http_pack_request
- - http: use --stdin when getting dumb HTTP pack
-
- WIP for allowing a response to "git fetch" to instruct the bulk of
- the pack contents to be instead taken from elsewhere (aka CDN).
-
-
-* js/protocol-advertise-multi (2018-12-28) 1 commit
- - protocol: advertise multiple supported versions
-
- The transport layer has been updated so that the protocol version
- used can be negotiated between the parties, by the initiator
- listing the protocol versions it is willing to talk, and the other
- side choosing from one of them.
-
- Expecting a reroll.
- cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
-
-* dl/remote-save-to-push (2018-12-11) 1 commit
- - remote: add --save-to-push option to git remote set-url
-
- "git remote set-url" learned a new option that moves existing value
- of the URL field to pushURL field of the remote before replacing
- the URL field with a new value.
-
- Anybody who wants to champion this topic?
- I am personally not yet quite convinced if this is worth pursuing.
-
---------------------------------------------------
-[Cooking]
 
 * py/git-gui-do-quit (2019-08-07) 2 commits
- - Merge branch 'py/call-do-quit-before-exit' of github.com:gitster/git-gui into py/git-gui-do-quit
- - git-gui: call do_quit before destroying the main window
+  (merged to 'next' on 2019-08-23 at 6544c9dbb3)
+ + Merge branch 'py/call-do-quit-before-exit' of github.com:gitster/git-gui into py/git-gui-do-quit
+ + git-gui: call do_quit before destroying the main window
 
  "git gui" learned to call the clean-up procedure before exiting.
-
- Will merge to 'next'.
-
-
-* rs/nedalloc-fixlets (2019-08-07) 2 commits
-  (merged to 'next' on 2019-08-09 at 0e9286fb70)
- + nedmalloc: avoid compiler warning about unused value
- + nedmalloc: do assignments only after the declaration section
-
- Compilation fix.
-
- Will merge to 'master'.
-
-
-* jk/perf-no-dups (2019-08-12) 1 commit
-  (merged to 'next' on 2019-08-14 at 3010a7d19f)
- + t/perf: rename duplicate-numbered test script
-
- Test & perf scripts must use unique numeric prefix, but a pair
- shared the same number, which is fixed here.
-
- Will merge to 'master'.
-
-
-* en/fast-import-merge-doc (2019-08-12) 1 commit
-  (merged to 'next' on 2019-08-14 at 65efc63345)
- + git-fast-import.txt: clarify that multiple merge commits are allowed
-
- Doc update.
 
  Will merge to 'master'.
 
 
 * bc/reread-attributes-during-rebase (2019-08-19) 2 commits
- - apply: reload .gitattributes after patching it
- - path: add a function to check for path suffix
+  (merged to 'next' on 2019-08-23 at 14aaf533d6)
+ + apply: reload .gitattributes after patching it
+ + path: add a function to check for path suffix
 
  The "git am" based backend of "git rebase" ignored the result of
  updating ".gitattributes" done in one step when replaying
  subsequent steps.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/drop-release-pack-memory (2019-08-13) 1 commit
@@ -447,20 +580,17 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* sg/worktree-remove-errormsg (2019-08-13) 1 commit
-  (merged to 'next' on 2019-08-14 at e5444969c9)
- + worktree remove: clarify error message on dirty worktree
-
- Error message update/clarification.
-
- Will merge to 'master'.
-
-
 * mt/threaded-grep-in-object-store (2019-08-13) 4 commits
  - grep: re-enable threads in some non-worktree cases
  - grep: disable grep_read_mutex when possible
  - grep: allow locks to be enabled individually
  - object-store: add lock to read_object_file_extended()
+
+ Traditionally, we avoided threaded grep while searching in objects
+ (as opposed to files in the working tree) as accesses to the object
+ layer is not thread-safe.  This limitation is getting lifted.
+
+ cf. <cover.1565468806.git.matheus.bernardino@usp.br>
 
 
 * pd/fetch-jobs (2019-08-13) 5 commits
@@ -475,32 +605,12 @@ of the repositories listed at
 
 
 * cb/fetch-set-upstream (2019-08-19) 1 commit
- - pull, fetch: add --set-upstream option
+  (merged to 'next' on 2019-08-23 at cf8c2ea0a0)
+ + pull, fetch: add --set-upstream option
 
  "git fetch" learned "--set-upstream" option to help those who first
  clone from their private fork they intend to push to, add the true
  upstream via "git remote add" and then "git fetch" from it.
-
-
-* sg/commit-graph-validate (2019-08-05) 3 commits
-  (merged to 'next' on 2019-08-09 at 87f61abb73)
- + commit-graph: error out on invalid commit oids in 'write --stdin-commits'
- + commit-graph: turn a group of write-related macro flags into an enum
- + t5318-commit-graph: use 'test_expect_code'
-
- The code to write commit-graph over given commit object names has
- been made a bit more robust.
-
- Will merge to 'master'.
-
-
-* sg/show-failed-test-names (2019-08-05) 2 commits
-  (merged to 'next' on 2019-08-09 at c49ece8a0d)
- + tests: show the test name and number at the start of verbose output
- + t0000-basic: use realistic test script names in the verbose tests
-
- The first line of verbose output from each test piece now carries
- the test name and number to help scanning with eyeballs.
 
  Will merge to 'master'.
 
@@ -517,9 +627,10 @@ of the repositories listed at
 
 
 * jk/eoo (2019-08-06) 3 commits
- - gitcli: document --end-of-options
- - parse-options: allow --end-of-options as a synonym for "--"
- - revision: allow --end-of-options to end option parsing
+  (merged to 'next' on 2019-08-23 at 217e97127a)
+ + gitcli: document --end-of-options
+ + parse-options: allow --end-of-options as a synonym for "--"
+ + revision: allow --end-of-options to end option parsing
 
  The command line parser learned "--end-of-options" notation; the
  standard convention for scripters to have hardcoded set of options
@@ -528,15 +639,18 @@ of the repositories listed at
  that would not work for commands that use "--" as a delimiter
  between revs and pathspec.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/repo-init-cleanup (2019-08-06) 3 commits
- - config: stop checking whether the_repository is NULL
- - common-main: delay trace2 initialization
- - t1309: use short branch name in includeIf.onbranch test
+  (merged to 'next' on 2019-08-23 at 1a5e4c4f06)
+ + config: stop checking whether the_repository is NULL
+ + common-main: delay trace2 initialization
+ + t1309: use short branch name in includeIf.onbranch test
 
  Further clean-up of the initialization code.
+
+ Will merge to 'master'.
 
 
 * cb/pcre2-chartables-leakfix (2019-08-06) 3 commits
@@ -561,91 +675,17 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* sc/pack-refs-deletion-racefix (2019-08-02) 1 commit
-  (merged to 'next' on 2019-08-09 at 6bd6c85fbb)
- + pack-refs: always refresh after taking the lock file
-
- "git pack-refs" can lose refs that are created while running, which
- is getting corrected.
-
- Will merge to 'master'.
- Performance impact unclear but let's let correctness take priority
- for now.
- cf. <20190816204906.GA29853@sigill.intra.peff.net>
-
-
-* vn/restore-empty-ita-corner-case-fix (2019-08-02) 2 commits
-  (merged to 'next' on 2019-08-09 at ad2d7630d1)
- + restore: add test for deleted ita files
- + checkout.c: unstage empty deleted ita files
-
- "git checkout" and "git restore" to re-populate the index from a
- tree-ish (typically HEAD) did not work correctly for a path that
- was removed and then added again with the intent-to-add bit, when
- the corresponding working tree file was empty.  This has been
- corrected.
-
- Will merge to 'master'.
-
-
 * ds/feature-macros (2019-08-13) 6 commits
- - repo-settings: create feature.experimental setting
- - repo-settings: create feature.manyFiles setting
- - repo-settings: parse core.untrackedCache
- - commit-graph: turn on commit-graph by default
- - t6501: use 'git gc' in quiet mode
- - repo-settings: consolidate some config settings
+  (merged to 'next' on 2019-08-23 at 115f0c8df9)
+ + repo-settings: create feature.experimental setting
+ + repo-settings: create feature.manyFiles setting
+ + repo-settings: parse core.untrackedCache
+ + commit-graph: turn on commit-graph by default
+ + t6501: use 'git gc' in quiet mode
+ + repo-settings: consolidate some config settings
 
  A mechanism to affect the default setting for a (related) group of
  configuration variables is introduced.
-
- Will merge to 'next'.
-
-
-* mt/grep-submodules-working-tree (2019-07-30) 1 commit
-  (merged to 'next' on 2019-08-02 at e1a46a195f)
- + grep: fix worktree case in submodules
-
- "git grep --recurse-submodules" that looks at the working tree
- files looked at the contents in the index in submodules, instead of
- files in the working tree.
-
- Will merge to 'master'.
-
-
-* jk/tree-walk-overflow (2019-08-01) 6 commits
-  (merged to 'next' on 2019-08-02 at 116467c77a)
- + tree-walk: harden make_traverse_path() length computations
- + tree-walk: add a strbuf wrapper for make_traverse_path()
- + tree-walk: accept a raw length for traverse_path_len()
- + tree-walk: use size_t consistently
- + tree-walk: drop oid from traverse_info
- + setup_traverse_info(): stop copying oid
-
- Codepaths to walk tree objects have been audited for integer
- overflows and hardened.
-
- Will merge to 'master'.
-
-
-* sg/t5510-test-i18ngrep-fix (2019-07-31) 1 commit
-  (merged to 'next' on 2019-08-02 at 678564fda2)
- + t5510-fetch: fix negated 'test_i18ngrep' invocation
- (this branch is used by sg/do-not-skip-non-httpd-tests.)
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* sg/do-not-skip-non-httpd-tests (2019-08-02) 3 commits
-  (merged to 'next' on 2019-08-02 at e700df0693)
- + t: warn against adding non-httpd-specific tests after sourcing 'lib-httpd'
- + t5703: run all non-httpd-specific tests before sourcing 'lib-httpd.sh'
- + t5510-fetch: run non-httpd-specific test before sourcing 'lib-httpd.sh'
- (this branch uses sg/t5510-test-i18ngrep-fix.)
-
- Test fix.
 
  Will merge to 'master'.
 
@@ -697,33 +737,17 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* js/builtin-add-i (2019-07-18) 11 commits
- - built-in add -i: implement the `help` command
- - built-in add -i: use color in the main loop
- - built-in add -i: support `?` (prompt help)
- - built-in add -i: show unique prefixes of the commands
- - Add a function to determine unique prefixes for a list of strings
- - built-in add -i: implement the main loop
- - built-in add -i: color the header in the `status` command
- - built-in add -i: refresh the index before running `status`
- - built-in add -i: implement the `status` command
- - diff: export diffstat interface
- - Start to implement a built-in version of `git add --interactive`
-
- The beginning of rewriting "git add -i" in C.
-
- Expecting a response and possibly a reroll.
- cf. <xmqqwofyozka.fsf@gitster-ct.c.googlers.com>
- cf. <xmqqsgqmoyz1.fsf@gitster-ct.c.googlers.com>
-
-
 * es/walken-tutorial (2019-08-07) 1 commit
  - documentation: add tutorial for revision walking
 
  A tutorial on object enumeration.
 
+ Perhaps take the thing with as little tweaks as possible, retitling
+ it to "my first object enumeration" or something?
+ cf. <20190814183328.GA40797@google.com>
 
-* ab/pcre-jit-fixes (2019-08-19) 8 commits
+
+* ab/pcre-jit-fixes (2019-08-19) 18 commits
  - grep: under --debug, show whether PCRE JIT is enabled
  - grep: do not enter PCRE2_UTF mode on fixed matching
  - grep: stess test PCRE v2 on invalid UTF-8 data
@@ -732,7 +756,16 @@ of the repositories listed at
  - grep: stop using a custom JIT stack with PCRE v1
  - grep: stop "using" a custom JIT stack with PCRE v2
  - grep: remove overly paranoid BUG(...) code
- (this branch uses ab/no-kwset.)
+ - grep: use PCRE v2 for optimized fixed-string search
+ - grep: remove the kwset optimization
+ - grep: drop support for \0 in --fixed-strings <pattern>
+ - grep: make the behavior for NUL-byte in patterns sane
+ - grep tests: move binary pattern tests into their own file
+ - grep tests: move "grep binary" alongside the rest
+ - grep: inline the return value of a function call used only once
+ - t4210: skip more command-line encoding tests on MinGW
+ - grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
+ - log tests: test regex backends in "--encode=<enc>" tests
 
  A few simplification and bugfixes to PCRE interface.
 
@@ -807,26 +840,3 @@ of the repositories listed at
  On hold.
  cf. <20190508001252.15752-1-avarab@gmail.com>
  cf. <20190719210156.GA9688@archbookpro.localdomain>
-
-
---------------------------------------------------
-[Discarded]
-
-* ab/no-kwset (2019-07-01) 10 commits
-  (merged to 'next' on 2019-07-15 at ed0479ce3d)
- + grep: use PCRE v2 for optimized fixed-string search
- + grep: remove the kwset optimization
- + grep: drop support for \0 in --fixed-strings <pattern>
- + grep: make the behavior for NUL-byte in patterns sane
- + grep tests: move binary pattern tests into their own file
- + grep tests: move "grep binary" alongside the rest
- + grep: inline the return value of a function call used only once
- + t4210: skip more command-line encoding tests on MinGW
- + grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
- + log tests: test regex backends in "--encode=<enc>" tests
- (this branch is used by ab/pcre-jit-fixes.)
-
- Retire use of kwset library, which is an optimization for looking
- for fixed strings, with use of pcre2 JIT.
-
- Kicked out of 'next' to give the topic a chance to get rebooted.
