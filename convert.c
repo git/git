@@ -1293,10 +1293,11 @@ struct conv_attrs {
 	const char *working_tree_encoding; /* Supported encoding or default encoding if NULL */
 };
 
+static struct attr_check *check;
+
 static void convert_attrs(const struct index_state *istate,
 			  struct conv_attrs *ca, const char *path)
 {
-	static struct attr_check *check;
 	struct attr_check_item *ccheck = NULL;
 
 	if (!check) {
@@ -1337,6 +1338,12 @@ static void convert_attrs(const struct index_state *istate,
 		ca->crlf_action = CRLF_AUTO_CRLF;
 	if (ca->crlf_action == CRLF_UNDEFINED && auto_crlf == AUTO_CRLF_INPUT)
 		ca->crlf_action = CRLF_AUTO_INPUT;
+}
+
+void reset_parsed_attributes(void)
+{
+	attr_check_free(check);
+	check = NULL;
 }
 
 int would_convert_to_git_filter_fd(const struct index_state *istate, const char *path)
