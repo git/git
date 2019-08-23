@@ -303,6 +303,7 @@ test_language_driver bibtex
 test_language_driver cpp
 test_language_driver csharp
 test_language_driver css
+test_language_driver dts
 test_language_driver fortran
 test_language_driver html
 test_language_driver java

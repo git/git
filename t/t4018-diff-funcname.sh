@@ -31,6 +31,7 @@ diffpatterns="
 	cpp
 	csharp
 	css
+	dts
 	fortran
 	fountain
 	golang
