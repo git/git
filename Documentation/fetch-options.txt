@@ -169,6 +169,13 @@ ifndef::git-pull[]
 	Disable recursive fetching of submodules (this has the same effect as
 	using the `--recurse-submodules=no` option).
 
+--set-upstream::
+	If the remote is fetched successfully, pull and add upstream
+	(tracking) reference, used by argument-less
+	linkgit:git-pull[1] and other commands. For more information,
+	see `branch.<name>.merge` and `branch.<name>.remote` in
+	linkgit:git-config[1].
+
 --submodule-prefix=<path>::
 	Prepend <path> to paths printed in informative messages
 	such as "Fetching submodule foo".  This option is used
