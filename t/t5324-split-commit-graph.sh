@@ -8,6 +8,7 @@ GIT_TEST_COMMIT_GRAPH=0
 test_expect_success 'setup repo' '
 	git init &&
 	git config core.commitGraph true &&
+	git config gc.writeCommitGraph false &&
 	infodir=".git/objects/info" &&
 	graphdir="$infodir/commit-graphs" &&
 	test_oid_init
@@ -334,6 +335,7 @@ test_expect_success 'split across alternate where alternate is not split' '
 	git clone --no-hardlinks . alt-split &&
 	(
 		cd alt-split &&
+		rm -f .git/objects/info/commit-graph &&
 		echo "$(pwd)"/../.git/objects >.git/objects/info/alternates &&
 		test_commit 18 &&
 		git commit-graph write --reachable --split &&
