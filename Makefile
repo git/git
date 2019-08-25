@@ -34,13 +34,8 @@ all::
 # library. Support for version 1 will likely be removed in some future
 # release of Git, as upstream has all but abandoned it.
 #
-# When using USE_LIBPCRE1, define NO_LIBPCRE1_JIT if the PCRE v1
-# library is compiled without --enable-jit. We will auto-detect
-# whether the version of the PCRE v1 library in use has JIT support at
-# all, but we unfortunately can't auto-detect whether JIT support
-# hasn't been compiled in in an otherwise JIT-supporting version. If
-# you have link-time errors about a missing `pcre_jit_exec` define
-# this, or recompile PCRE v1 with --enable-jit.
+# When using USE_LIBPCRE1, define NO_LIBPCRE1_JIT if you want to
+# disable JIT even if supported by your library.
 #
 # Define LIBPCREDIR=/foo/bar if your PCRE header and library files are
 # in /foo/bar/include and /foo/bar/lib directories. Which version of

@@ -3,12 +3,10 @@
 #include "color.h"
 #ifdef USE_LIBPCRE1
 #include <pcre.h>
-#ifdef PCRE_CONFIG_JIT
-#if PCRE_MAJOR >= 8 && PCRE_MINOR >= 32
 #ifndef NO_LIBPCRE1_JIT
+#ifdef PCRE_CONFIG_JIT
 #define GIT_PCRE1_USE_JIT
 #define GIT_PCRE_STUDY_JIT_COMPILE PCRE_STUDY_JIT_COMPILE
-#endif
 #endif
 #endif
 #ifndef GIT_PCRE_STUDY_JIT_COMPILE
