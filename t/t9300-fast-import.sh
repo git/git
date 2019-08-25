@@ -3314,11 +3314,6 @@ test_expect_success 'X: handling encoding' '
 
 	printf "Pi: \360\nCOMMIT\n" >>input &&
 
-	for i in $(test_seq 100)
-	do
-		echo "M 644 $EMPTY_BLOB file-$i"
-	done >>input &&
-
 	git fast-import <input &&
 	git cat-file -p encoding | grep $(printf "\360") &&
 	git log -1 --format=%B encoding | grep $(printf "\317\200")
