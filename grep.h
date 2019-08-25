@@ -3,15 +3,6 @@
 #include "color.h"
 #ifdef USE_LIBPCRE1
 #include <pcre.h>
-#ifndef NO_LIBPCRE1_JIT
-#ifdef PCRE_CONFIG_JIT
-#define GIT_PCRE1_USE_JIT
-#define GIT_PCRE_STUDY_JIT_COMPILE PCRE_STUDY_JIT_COMPILE
-#endif
-#endif
-#ifndef GIT_PCRE_STUDY_JIT_COMPILE
-#define GIT_PCRE_STUDY_JIT_COMPILE 0
-#endif
 #else
 typedef int pcre;
 typedef int pcre_extra;

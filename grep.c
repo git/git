@@ -374,6 +374,7 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 	const char *error;
 	int erroffset;
 	int options = PCRE_MULTILINE;
+	int study_options = 0;
 
 	if (opt->ignore_case) {
 		if (!opt->ignore_locale && has_non_ascii(p->pattern))
@@ -388,15 +389,18 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 	if (!p->pcre1_regexp)
 		compile_regexp_failed(p, error);
 
-	p->pcre1_extra_info = pcre_study(p->pcre1_regexp, GIT_PCRE_STUDY_JIT_COMPILE, &error);
-	if (!p->pcre1_extra_info && error)
-		die("%s", error);
-
-#ifdef GIT_PCRE1_USE_JIT
+#if defined(PCRE_CONFIG_JIT) && !defined(NO_LIBPCRE1_JIT)
 	pcre_config(PCRE_CONFIG_JIT, &p->pcre1_jit_on);
 	if (opt->debug)
 		fprintf(stderr, "pcre1_jit_on=%d\n", p->pcre1_jit_on);
+
+	if (p->pcre1_jit_on)
+		study_options = PCRE_STUDY_JIT_COMPILE;
 #endif
+
+	p->pcre1_extra_info = pcre_study(p->pcre1_regexp, study_options, &error);
+	if (!p->pcre1_extra_info && error)
+		die("%s", error);
 }
 
 static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
@@ -425,7 +429,7 @@ static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
 static void free_pcre1_regexp(struct grep_pat *p)
 {
 	pcre_free(p->pcre1_regexp);
-#ifdef GIT_PCRE1_USE_JIT
+#ifdef PCRE_CONFIG_JIT
 	if (p->pcre1_jit_on)
 		pcre_free_study(p->pcre1_extra_info);
 	else
