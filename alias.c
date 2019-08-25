@@ -2,6 +2,7 @@
 #include "alias.h"
 #include "config.h"
 #include "string-list.h"
+#include<stdio.h>
 
 struct config_alias_data {
 	const char *alias;
