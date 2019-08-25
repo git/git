@@ -1110,8 +1110,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			strbuf_addf(&buf, "+/%s%s",
 					strcmp("less", pager) ? "" : "*",
 					opt.pattern_list->pattern);
-			string_list_append(&path_list, buf.buf);
-			strbuf_detach(&buf, NULL);
+			string_list_append(&path_list,
+					   strbuf_detach(&buf, NULL));
 		}
 	}
 
