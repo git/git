@@ -848,6 +848,8 @@ proc apply_or_revert_range_or_line {x y revert} {
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup "$failed_msg\n\n$err"
+		unlock_index
+		return
 	}
 
 	unlock_index
