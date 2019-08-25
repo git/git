@@ -3587,9 +3587,15 @@ set ui_diff_applyhunk [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
 $ctxm add command \
 	-label [mc "Apply/Reverse Line"] \
-	-command {apply_range_or_line $cursorX $cursorY; do_rescan}
+	-command {apply_or_revert_range_or_line $cursorX $cursorY 0; do_rescan}
 set ui_diff_applyline [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
+$ctxm add separator
+$ctxm add command \
+	-label [mc "Revert Line"] \
+	-command {apply_or_revert_range_or_line $cursorX $cursorY 1; do_rescan}
+set ui_diff_revertline [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_revertline -state]
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Show Less Context"] \
@@ -3687,15 +3693,19 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 			set l [mc "Unstage Hunk From Commit"]
 			if {$has_range} {
 				set t [mc "Unstage Lines From Commit"]
+				set r [mc "Revert Lines"]
 			} else {
 				set t [mc "Unstage Line From Commit"]
+				set r [mc "Revert Line"]
 			}
 		} else {
 			set l [mc "Stage Hunk For Commit"]
 			if {$has_range} {
 				set t [mc "Stage Lines For Commit"]
+				set r [mc "Revert Lines"]
 			} else {
 				set t [mc "Stage Line For Commit"]
+				set r [mc "Revert Line"]
 			}
 		}
 		if {$::is_3way_diff
@@ -3706,11 +3716,24 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 			|| [string match {T?} $state]
 			|| [has_textconv $current_diff_path]} {
 			set s disabled
+			set revert_state disabled
 		} else {
 			set s normal
+
+			# Only allow reverting changes in the working tree. If
+			# the user wants to revert changes in the index, they
+			# need to unstage those first.
+			if {$::ui_workdir eq $::current_diff_side} {
+				set revert_state normal
+			} else {
+				set revert_state disabled
+			}
 		}
+
 		$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
 		$ctxm entryconf $::ui_diff_applyline -state $s -label $t
+		$ctxm entryconf $::ui_diff_revertline -state $revert_state \
+			-label $r
 		tk_popup $ctxm $X $Y
 	}
 }

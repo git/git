@@ -55,7 +55,7 @@ proc reshow_diff {{after {}}} {
 
 proc force_diff_encoding {enc} {
 	global current_diff_path
-	
+
 	if {$current_diff_path ne {}} {
 		force_path_encoding $current_diff_path $enc
 		reshow_diff
@@ -640,7 +640,7 @@ proc apply_hunk {x y} {
 	}
 }
 
-proc apply_range_or_line {x y} {
+proc apply_or_revert_range_or_line {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
 	global ui_diff ui_index file_states
 
@@ -660,19 +660,27 @@ proc apply_range_or_line {x y} {
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
 
-	set apply_cmd {apply --cached --whitespace=nowarn}
+	set apply_cmd {apply --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected line."]
 		set to_context {+}
-		lappend apply_cmd --reverse
+		lappend apply_cmd --reverse --cached
 		if {[string index $mi 0] ne {M}} {
 			unlock_index
 			return
 		}
 	} else {
-		set failed_msg [mc "Failed to stage selected line."]
-		set to_context {-}
+		if {$revert} {
+			set failed_msg [mc "Failed to revert selected line."]
+			set to_context {+}
+			lappend apply_cmd --reverse
+		} else {
+			set failed_msg [mc "Failed to stage selected line."]
+			set to_context {-}
+			lappend apply_cmd --cached
+		}
+
 		if {[string index $mi 1] ne {M}} {
 			unlock_index
 			return
