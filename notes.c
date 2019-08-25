@@ -269,8 +269,10 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 		case PTR_TYPE_NOTE:
 			if (oideq(&l->key_oid, &entry->key_oid)) {
 				/* skip concatenation if l == entry */
-				if (oideq(&l->val_oid, &entry->val_oid))
+				if (oideq(&l->val_oid, &entry->val_oid)) {
+					free(entry);
 					return 0;
+				}
 
 				ret = combine_notes(&l->val_oid,
 						    &entry->val_oid);
