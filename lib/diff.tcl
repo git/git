@@ -569,7 +569,7 @@ proc read_diff {fd conflict_size cont_info} {
 
 proc apply_or_revert_hunk {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
-	global ui_diff ui_index file_states
+	global ui_diff ui_index file_states last_revert last_revert_enc
 
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
@@ -610,16 +610,23 @@ proc apply_or_revert_hunk {x y revert} {
 		set e_lno end
 	}
 
+	set wholepatch "$current_diff_header[$ui_diff get $s_lno $e_lno]"
+
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
 		set p [eval git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
-		puts -nonewline $p $current_diff_header
-		puts -nonewline $p [$ui_diff get $s_lno $e_lno]
+		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup "$failed_msg\n\n$err"
 		unlock_index
 		return
+	}
+
+	if {$revert} {
+		# Save a copy of this patch for undoing reverts.
+		set last_revert $wholepatch
+		set last_revert_enc $enc
 	}
 
 	$ui_diff conf -state normal
@@ -653,7 +660,7 @@ proc apply_or_revert_hunk {x y revert} {
 
 proc apply_or_revert_range_or_line {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
-	global ui_diff ui_index file_states
+	global ui_diff ui_index file_states last_revert
 
 	set selected [$ui_diff tag nextrange sel 0.0]
 
@@ -851,6 +858,44 @@ proc apply_or_revert_range_or_line {x y revert} {
 		unlock_index
 		return
 	}
+
+	if {$revert} {
+		# Save a copy of this patch for undoing reverts.
+		set last_revert $current_diff_header$wholepatch
+		set last_revert_enc $enc
+	}
+
+	unlock_index
+}
+
+# Undo the last line/hunk reverted. When hunks and lines are reverted, a copy
+# of the diff applied is saved. Re-apply that diff to undo the revert.
+#
+# Right now, we only use a single variable to hold the copy, and not a
+# stack/deque for simplicity, so multiple undos are not possible. Maybe this
+# can be added if the need for something like this is felt in the future.
+proc undo_last_revert {} {
+	global last_revert current_diff_path current_diff_header
+	global last_revert_enc
+
+	if {$last_revert eq {}} return
+	if {![lock_index apply_hunk]} return
+
+	set apply_cmd {apply --whitespace=nowarn}
+	set failed_msg [mc "Failed to undo last revert."]
+
+	if {[catch {
+		set enc $last_revert_enc
+		set p [eval git_write $apply_cmd]
+		fconfigure $p -translation binary -encoding $enc
+		puts -nonewline $p $last_revert
+		close $p} err]} {
+		error_popup "$failed_msg\n\n$err"
+		unlock_index
+		return
+	}
+
+	set last_revert {}
 
 	unlock_index
 }
