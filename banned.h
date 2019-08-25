@@ -26,7 +26,7 @@
 #define vsprintf(...) BANNED(vsprintf)
 #else
 #define sprintf(buf,fmt,arg) BANNED(sprintf)
-#define vsprintf(buf,fmt,arg) BANNED(sprintf)
+#define vsprintf(buf,fmt,arg) BANNED(vsprintf)
 #endif
 
 #endif /* BANNED_H */
