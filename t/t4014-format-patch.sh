@@ -790,11 +790,13 @@ test_expect_success 'options no longer allowed for format-patch' '
 	test_must_fail git format-patch --name-status 2> output &&
 	test_i18ncmp expect.name-status output &&
 	test_must_fail git format-patch --check 2> output &&
-	test_i18ncmp expect.check output'
+	test_i18ncmp expect.check output
+'
 
 test_expect_success 'format-patch --numstat should produce a patch' '
 	git format-patch --numstat --stdout master..side > output &&
-	test 5 = $(grep "^diff --git a/" output | wc -l)'
+	test 5 = $(grep "^diff --git a/" output | wc -l)
+'
 
 test_expect_success 'format-patch -- <path>' '
 	git format-patch master..side -- file 2>error &&
