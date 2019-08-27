@@ -319,7 +319,7 @@ test_expect_success 'reroll count (-v)' '
 check_threading () {
 	expect="$1" &&
 	shift &&
-	(git format-patch --stdout "$@"; echo $? >status.out) |
+	git format-patch --stdout "$@" >patch &&
 	# Prints everything between the Message-ID and In-Reply-To,
 	# and replaces all Message-ID-lookalikes by a sequence number
 	perl -ne '
@@ -334,8 +334,7 @@ check_threading () {
 			print;
 		}
 		print "---\n" if /^From /i;
-	' >actual &&
-	test 0 = "$(cat status.out)" &&
+	' <patch >actual &&
 	test_cmp "$expect" actual
 }
 
