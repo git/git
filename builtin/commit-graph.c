@@ -58,6 +58,8 @@ static int graph_verify(int argc, const char **argv)
 		OPT_END(),
 	};
 
+	trace2_cmd_mode("verify");
+
 	argc = parse_options(argc, argv, NULL,
 			     builtin_commit_graph_verify_options,
 			     builtin_commit_graph_verify_usage, 0);
@@ -101,6 +103,8 @@ static int graph_read(int argc, const char **argv)
 			N_("The object directory to store the graph")),
 		OPT_END(),
 	};
+
+	trace2_cmd_mode("read");
 
 	argc = parse_options(argc, argv, NULL,
 			     builtin_commit_graph_read_options,
@@ -182,6 +186,8 @@ static int graph_write(int argc, const char **argv)
 	split_opts.size_multiple = 2;
 	split_opts.max_commits = 0;
 	split_opts.expire_time = 0;
+
+	trace2_cmd_mode("write");
 
 	argc = parse_options(argc, argv, NULL,
 			     builtin_commit_graph_write_options,
