@@ -596,7 +596,7 @@ EOF
 
 test_expect_success 'shortlog of cover-letter wraps overly-long onelines' '
 	git format-patch --cover-letter -2 &&
-	sed -e "1,/A U Thor/d" -e "/^\$/q" <0000-cover-letter.patch >output &&
+	sed -e "1,/A U Thor/d" -e "/^\$/q" 0000-cover-letter.patch >output &&
 	test_cmp expect output
 '
 
@@ -635,7 +635,7 @@ EOF
 
 test_expect_success 'format-patch -p suppresses stat' '
 	git format-patch -p -2 &&
-	sed -e "1,/^\$/d" -e "/^+5/q" <0001-This-is-an-excessively-long-subject-line-for-a-messa.patch >output &&
+	sed -e "1,/^\$/d" -e "/^+5/q" 0001-This-is-an-excessively-long-subject-line-for-a-messa.patch >output &&
 	test_cmp expect output
 '
 
@@ -890,7 +890,7 @@ test_expect_success 'prepare mail-signature input' '
 test_expect_success '--signature-file=file works' '
 	git format-patch --stdout --signature-file=mail-signature -1 >output &&
 	check_patch output &&
-	sed -e "1,/^-- \$/d" <output >actual &&
+	sed -e "1,/^-- \$/d" output >actual &&
 	{
 		cat mail-signature && echo
 	} >expect &&
@@ -901,7 +901,7 @@ test_expect_success 'format.signaturefile works' '
 	test_config format.signaturefile mail-signature &&
 	git format-patch --stdout -1 >output &&
 	check_patch output &&
-	sed -e "1,/^-- \$/d" <output >actual &&
+	sed -e "1,/^-- \$/d" output >actual &&
 	{
 		cat mail-signature && echo
 	} >expect &&
@@ -923,7 +923,7 @@ test_expect_success '--signature-file overrides format.signaturefile' '
 	git format-patch --stdout \
 			--signature-file=other-mail-signature -1 >output &&
 	check_patch output &&
-	sed -e "1,/^-- \$/d" <output >actual &&
+	sed -e "1,/^-- \$/d" output >actual &&
 	{
 		cat other-mail-signature && echo
 	} >expect &&
@@ -992,7 +992,7 @@ test_expect_success 'format-patch wraps extremely long subject (ascii)' '
 	git add file &&
 	git commit -m "$M512" &&
 	git format-patch --stdout -1 >patch &&
-	sed -n "/^Subject/p; /^ /p; /^$/q" <patch >subject &&
+	sed -n "/^Subject/p; /^ /p; /^$/q" patch >subject &&
 	test_cmp expect subject
 '
 
@@ -1031,7 +1031,7 @@ test_expect_success 'format-patch wraps extremely long subject (rfc2047)' '
 	git add file &&
 	git commit -m "$M512" &&
 	git format-patch --stdout -1 >patch &&
-	sed -n "/^Subject/p; /^ /p; /^$/q" <patch >subject &&
+	sed -n "/^Subject/p; /^ /p; /^$/q" patch >subject &&
 	test_cmp expect subject
 '
 
@@ -1040,7 +1040,7 @@ check_author() {
 	git add file &&
 	GIT_AUTHOR_NAME=$1 git commit -m author-check &&
 	git format-patch --stdout -1 >patch &&
-	sed -n "/^From: /p; /^ /p; /^$/q" <patch >actual &&
+	sed -n "/^From: /p; /^ /p; /^$/q" patch >actual &&
 	test_cmp expect actual
 }
 
@@ -1160,7 +1160,7 @@ test_expect_success '--from=ident replaces author' '
 	From: A U Thor <author@example.com>
 
 	EOF
-	sed -ne "/^From:/p; /^$/p; /^---$/q" <patch >patch.head &&
+	sed -ne "/^From:/p; /^$/p; /^---$/q" patch >patch.head &&
 	test_cmp expect patch.head
 '
 
@@ -1172,7 +1172,7 @@ test_expect_success '--from uses committer ident' '
 	From: A U Thor <author@example.com>
 
 	EOF
-	sed -ne "/^From:/p; /^$/p; /^---$/q" <patch >patch.head &&
+	sed -ne "/^From:/p; /^$/p; /^---$/q" patch >patch.head &&
 	test_cmp expect patch.head
 '
 
@@ -1182,7 +1182,7 @@ test_expect_success '--from omits redundant in-body header' '
 	From: A U Thor <author@example.com>
 
 	EOF
-	sed -ne "/^From:/p; /^$/p; /^---$/q" <patch >patch.head &&
+	sed -ne "/^From:/p; /^$/p; /^---$/q" patch >patch.head &&
 	test_cmp expect patch.head
 '
 
@@ -1197,7 +1197,7 @@ test_expect_success 'in-body headers trigger content encoding' '
 	From: éxötìc <author@example.com>
 
 	EOF
-	sed -ne "/^From:/p; /^$/p; /^Content-Type/p; /^---$/q" <patch >patch.head &&
+	sed -ne "/^From:/p; /^$/p; /^Content-Type/p; /^---$/q" patch >patch.head &&
 	test_cmp expect patch.head
 '
 
@@ -1788,7 +1788,7 @@ test_expect_success 'interdiff: cover-letter' '
 	git format-patch --cover-letter --interdiff=boop~2 -1 boop &&
 	test_i18ngrep "^Interdiff:$" 0000-cover-letter.patch &&
 	test_i18ngrep ! "^Interdiff:$" 0001-fleep.patch &&
-	sed "1,/^@@ /d; /^-- $/q" <0000-cover-letter.patch >actual &&
+	sed "1,/^@@ /d; /^-- $/q" 0000-cover-letter.patch >actual &&
 	test_cmp expect actual
 '
 
@@ -1804,7 +1804,7 @@ test_expect_success 'interdiff: solo-patch' '
 	EOF
 	git format-patch --interdiff=boop~2 -1 boop &&
 	test_i18ngrep "^Interdiff:$" 0001-fleep.patch &&
-	sed "1,/^  @@ /d; /^$/q" <0001-fleep.patch >actual &&
+	sed "1,/^  @@ /d; /^$/q" 0001-fleep.patch >actual &&
 	test_cmp expect actual
 '
 
