@@ -60,23 +60,23 @@ test_expect_success setup '
 
 test_expect_success 'format-patch --ignore-if-in-upstream' '
 	git format-patch --stdout master..side >patch0 &&
-	cnt=$(grep "^From " patch0 | wc -l) &&
-	test $cnt = 3
+	grep "^From " patch0 >from0 &&
+	test_line_count = 3 from0
 '
 
 test_expect_success 'format-patch --ignore-if-in-upstream' '
 	git format-patch --stdout \
 		--ignore-if-in-upstream master..side >patch1 &&
-	cnt=$(grep "^From " patch1 | wc -l) &&
-	test $cnt = 2
+	grep "^From " patch1 >from1 &&
+	test_line_count = 2 from1
 '
 
 test_expect_success 'format-patch --ignore-if-in-upstream handles tags' '
 	git tag -a v1 -m tag side &&
 	git tag -a v2 -m tag master &&
 	git format-patch --stdout --ignore-if-in-upstream v2..v1 >patch1 &&
-	cnt=$(grep "^From " patch1 | wc -l) &&
-	test $cnt = 2
+	grep "^From " patch1 >from1 &&
+	test_line_count = 2 from1
 '
 
 test_expect_success "format-patch doesn't consider merge commits" '
@@ -90,22 +90,23 @@ test_expect_success "format-patch doesn't consider merge commits" '
 	git checkout -b merger master &&
 	test_tick &&
 	git merge --no-ff slave &&
-	cnt=$(git format-patch -3 --stdout | grep "^From " | wc -l) &&
-	test $cnt = 3
+	git format-patch -3 --stdout >patch &&
+	grep "^From " patch >from &&
+	test_line_count = 3 from
 '
 
 test_expect_success 'format-patch result applies' '
 	git checkout -b rebuild-0 master &&
 	git am -3 patch0 &&
-	cnt=$(git rev-list master.. | wc -l) &&
-	test $cnt = 2
+	git rev-list master.. >list &&
+	test_line_count = 2 list
 '
 
 test_expect_success 'format-patch --ignore-if-in-upstream result applies' '
 	git checkout -b rebuild-1 master &&
 	git am -3 patch1 &&
-	cnt=$(git rev-list master.. | wc -l) &&
-	test $cnt = 2
+	git rev-list master.. >list &&
+	test_line_count = 2 list
 '
 
 test_expect_success 'commit did not screw up the log message' '
@@ -795,7 +796,8 @@ test_expect_success 'options no longer allowed for format-patch' '
 
 test_expect_success 'format-patch --numstat should produce a patch' '
 	git format-patch --numstat --stdout master..side >output &&
-	test 5 = $(grep "^diff --git a/" output | wc -l)
+	grep "^diff --git a/" output >diff &&
+	test_line_count = 5 diff
 '
 
 test_expect_success 'format-patch -- <path>' '
@@ -852,8 +854,8 @@ test_expect_success 'format-patch --signature --cover-letter' '
 	git config --unset-all format.signature &&
 	git format-patch --stdout --signature="my sig" --cover-letter \
 		-1 >output &&
-	grep "my sig" output &&
-	test 2 = $(grep "my sig" output | wc -l)
+	grep "my sig" output >sig &&
+	test_line_count = 2 sig
 '
 
 test_expect_success 'format.signature="" suppresses signatures' '
@@ -1591,7 +1593,8 @@ test_expect_success 'format-patch format.outputDirectory option' '
 	test_config format.outputDirectory patches &&
 	rm -fr patches &&
 	git format-patch master..side &&
-	test $(git rev-list master..side | wc -l) -eq $(ls patches | wc -l)
+	git rev-list master..side >list &&
+	test_line_count = $(ls patches | wc -l) list
 '
 
 test_expect_success 'format-patch -o overrides format.outputDirectory' '
