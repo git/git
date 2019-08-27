@@ -58,20 +58,20 @@ test_expect_success setup '
 	git checkout master
 '
 
-test_expect_success "format-patch --ignore-if-in-upstream" '
+test_expect_success 'format-patch --ignore-if-in-upstream' '
 	git format-patch --stdout master..side >patch0 &&
 	cnt=$(grep "^From " patch0 | wc -l) &&
 	test $cnt = 3
 '
 
-test_expect_success "format-patch --ignore-if-in-upstream" '
+test_expect_success 'format-patch --ignore-if-in-upstream' '
 	git format-patch --stdout \
 		--ignore-if-in-upstream master..side >patch1 &&
 	cnt=$(grep "^From " patch1 | wc -l) &&
 	test $cnt = 2
 '
 
-test_expect_success "format-patch --ignore-if-in-upstream handles tags" '
+test_expect_success 'format-patch --ignore-if-in-upstream handles tags' '
 	git tag -a v1 -m tag side &&
 	git tag -a v2 -m tag master &&
 	git format-patch --stdout --ignore-if-in-upstream v2..v1 >patch1 &&
@@ -94,14 +94,14 @@ test_expect_success "format-patch doesn't consider merge commits" '
 	test $cnt = 3
 '
 
-test_expect_success "format-patch result applies" '
+test_expect_success 'format-patch result applies' '
 	git checkout -b rebuild-0 master &&
 	git am -3 patch0 &&
 	cnt=$(git rev-list master.. | wc -l) &&
 	test $cnt = 2
 '
 
-test_expect_success "format-patch --ignore-if-in-upstream result applies" '
+test_expect_success 'format-patch --ignore-if-in-upstream result applies' '
 	git checkout -b rebuild-1 master &&
 	git am -3 patch1 &&
 	cnt=$(git rev-list master.. | wc -l) &&
