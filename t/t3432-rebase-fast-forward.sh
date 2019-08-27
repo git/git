@@ -106,9 +106,9 @@ test_expect_success 'add work same to upstream' '
 changes='our and their changes'
 test_rebase_same_head success noop same success noop-force diff --onto B B
 test_rebase_same_head success noop same success noop-force diff --onto B... B
-test_rebase_same_head failure work same success work diff --onto master... master
+test_rebase_same_head success noop same success work diff --onto master... master
 test_rebase_same_head failure work same success work diff --fork-point --onto B B
 test_rebase_same_head failure work same success work diff --fork-point --onto B... B
-test_rebase_same_head failure work same success work diff --fork-point --onto master... master
+test_rebase_same_head success noop same success work diff --fork-point --onto master... master
 
 test_done
