@@ -1209,32 +1209,32 @@ append_signoff()
 
 test_expect_success 'signoff: commit with no body' '
 	append_signoff </dev/null >actual &&
-	cat <<\EOF | sed "s/EOL$//" >expected &&
+	cat <<\EOF | sed "s/EOL$//" >expect &&
 4:Subject: [PATCH] EOL
 8:
 9:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: commit with only subject' '
 	echo subject | append_signoff >actual &&
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 9:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: commit with only subject that does not end with NL' '
 	printf subject | append_signoff >actual &&
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 9:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: no existing signoffs' '
@@ -1243,24 +1243,24 @@ subject
 
 body
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: no existing signoffs and no trailing NL' '
 	printf "subject\n\nbody" | append_signoff >actual &&
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: some random signoff' '
@@ -1271,14 +1271,14 @@ body
 
 Signed-off-by: my@house
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 11:Signed-off-by: my@house
 12:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: misc conforming footer elements' '
@@ -1292,14 +1292,14 @@ Signed-off-by: my@house
 Tested-by: Some One <someone@example.com>
 Bug: 1234
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 11:Signed-off-by: my@house
 15:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: some random signoff-alike' '
@@ -1309,13 +1309,13 @@ subject
 body
 Fooled-by-me: my@house
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 11:
 12:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: not really a signoff' '
@@ -1324,14 +1324,14 @@ subject
 
 I want to mention about Signed-off-by: here.
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 9:I want to mention about Signed-off-by: here.
 10:
 11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: not really a signoff (2)' '
@@ -1341,13 +1341,13 @@ subject
 My unfortunate
 Signed-off-by: example happens to be wrapped here.
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:Signed-off-by: example happens to be wrapped here.
 11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: valid S-o-b paragraph in the middle' '
@@ -1359,7 +1359,7 @@ Signed-off-by: your@house
 
 A lot of houses.
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 9:Signed-off-by: my@house
@@ -1368,7 +1368,7 @@ EOF
 13:
 14:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: the same signoff at the end' '
@@ -1379,24 +1379,24 @@ body
 
 Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: the same signoff at the end, no trailing NL' '
 	printf "subject\n\nSigned-off-by: C O Mitter <committer@example.com>" |
 		append_signoff >actual &&
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 9:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: the same signoff NOT at the end' '
@@ -1408,14 +1408,14 @@ body
 Signed-off-by: C O Mitter <committer@example.com>
 Signed-off-by: my@house
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 11:Signed-off-by: C O Mitter <committer@example.com>
 12:Signed-off-by: my@house
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: tolerate garbage in conforming footer' '
@@ -1428,13 +1428,13 @@ Tested-by: my@house
 Some Trash
 Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 13:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: respect trailer config' '
@@ -1444,13 +1444,13 @@ subject
 Myfooter: x
 Some Trash
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 11:
 12:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual &&
+	test_cmp expect actual &&
 
 	test_config trailer.Myfooter.ifexists add &&
 	append_signoff <<\EOF >actual &&
@@ -1459,12 +1459,12 @@ subject
 Myfooter: x
 Some Trash
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'signoff: footer begins with non-signoff without @ sign' '
@@ -1479,13 +1479,13 @@ Change-id: Ideadbeef
 Signed-off-by: C O Mitter <committer@example.com>
 Bug: 1234
 EOF
-	cat >expected <<\EOF &&
+	cat >expect <<\EOF &&
 4:Subject: [PATCH] subject
 8:
 10:
 14:Signed-off-by: C O Mitter <committer@example.com>
 EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'format patch ignores color.ui' '
@@ -1604,13 +1604,13 @@ test_expect_success 'format-patch --base' '
 	git checkout patchid &&
 	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual1 &&
 	git format-patch --stdout --base=HEAD~3 HEAD~.. | tail -n 7 >actual2 &&
-	echo >expected &&
-	echo "base-commit: $(git rev-parse HEAD~3)" >>expected &&
-	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --stable | awk "{print \$1}")" >>expected &&
-	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expected &&
-	signature >> expected &&
-	test_cmp expected actual1 &&
-	test_cmp expected actual2 &&
+	echo >expect &&
+	echo "base-commit: $(git rev-parse HEAD~3)" >>expect &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --stable | awk "{print \$1}")" >>expect &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expect &&
+	signature >> expect &&
+	test_cmp expect actual1 &&
+	test_cmp expect actual2 &&
 	echo >fail &&
 	echo "base-commit: $(git rev-parse HEAD~3)" >>fail &&
 	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --unstable | awk "{print \$1}")" >>fail &&
@@ -1625,8 +1625,8 @@ test_expect_success 'format-patch --base errors out when base commit is in revis
 	test_must_fail git format-patch --base=HEAD~1 -2 &&
 	git format-patch --stdout --base=HEAD~2 -2 >patch &&
 	grep "^base-commit:" patch >actual &&
-	echo "base-commit: $(git rev-parse HEAD~2)" >expected &&
-	test_cmp expected actual
+	echo "base-commit: $(git rev-parse HEAD~2)" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'format-patch --base errors out when base commit is not ancestor of revision list' '
@@ -1652,8 +1652,8 @@ test_expect_success 'format-patch --base errors out when base commit is not ance
 	test_must_fail git format-patch --base=$(cat commit-id-Z) -3 &&
 	git format-patch --stdout --base=$(cat commit-id-base) -3 >patch &&
 	grep "^base-commit:" patch >actual &&
-	echo "base-commit: $(cat commit-id-base)" >expected &&
-	test_cmp expected actual
+	echo "base-commit: $(cat commit-id-base)" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'format-patch --base=auto' '
@@ -1664,8 +1664,8 @@ test_expect_success 'format-patch --base=auto' '
 	test_commit N2 &&
 	git format-patch --stdout --base=auto -2 >patch &&
 	grep "^base-commit:" patch >actual &&
-	echo "base-commit: $(git rev-parse upstream)" >expected &&
-	test_cmp expected actual
+	echo "base-commit: $(git rev-parse upstream)" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'format-patch errors out when history involves criss-cross' '
@@ -1701,8 +1701,8 @@ test_expect_success 'format-patch format.useAutoBaseoption' '
 	git config format.useAutoBase true &&
 	git format-patch --stdout -1 >patch &&
 	grep "^base-commit:" patch >actual &&
-	echo "base-commit: $(git rev-parse upstream)" >expected &&
-	test_cmp expected actual
+	echo "base-commit: $(git rev-parse upstream)" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'format-patch --base overrides format.useAutoBase' '
@@ -1710,8 +1710,8 @@ test_expect_success 'format-patch --base overrides format.useAutoBase' '
 	git config format.useAutoBase true &&
 	git format-patch --stdout --base=HEAD~1 -1 >patch &&
 	grep "^base-commit:" patch >actual &&
-	echo "base-commit: $(git rev-parse HEAD~1)" >expected &&
-	test_cmp expected actual
+	echo "base-commit: $(git rev-parse HEAD~1)" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'format-patch --base with --attach' '
