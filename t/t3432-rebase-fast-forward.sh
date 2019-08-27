@@ -70,32 +70,32 @@ test_rebase_same_head_ () {
 }
 
 changes='no changes'
-test_rebase_same_head success work same success work same
+test_rebase_same_head success noop same success work same
 test_rebase_same_head success noop same success noop-force same master
 test_rebase_same_head success noop same success noop-force diff --onto B B
 test_rebase_same_head success noop same success noop-force diff --onto B... B
 test_rebase_same_head success noop same success noop-force same --onto master... master
 test_rebase_same_head success noop same success noop-force same --no-fork-point
-test_rebase_same_head success work same success work same --fork-point master
-test_rebase_same_head failure noop same success work diff --fork-point --onto B B
-test_rebase_same_head failure work same success work diff --fork-point --onto B... B
-test_rebase_same_head success work same success work same --fork-point --onto master... master
+test_rebase_same_head success noop same success work same --fork-point master
+test_rebase_same_head success noop same success work diff --fork-point --onto B B
+test_rebase_same_head success noop same success work diff --fork-point --onto B... B
+test_rebase_same_head success noop same success work same --fork-point --onto master... master
 
 test_expect_success 'add work same to side' '
 	test_commit E
 '
 
 changes='our changes'
-test_rebase_same_head success work same success work same
+test_rebase_same_head success noop same success work same
 test_rebase_same_head success noop same success noop-force same master
 test_rebase_same_head success noop same success noop-force diff --onto B B
 test_rebase_same_head success noop same success noop-force diff --onto B... B
 test_rebase_same_head success noop same success noop-force same --onto master... master
 test_rebase_same_head success noop same success noop-force same --no-fork-point
-test_rebase_same_head success work same success work same --fork-point master
-test_rebase_same_head failure work same success work diff --fork-point --onto B B
-test_rebase_same_head failure work same success work diff --fork-point --onto B... B
-test_rebase_same_head success work same success work same --fork-point --onto master... master
+test_rebase_same_head success noop same success work same --fork-point master
+test_rebase_same_head success noop same success work diff --fork-point --onto B B
+test_rebase_same_head success noop same success work diff --fork-point --onto B... B
+test_rebase_same_head success noop same success work same --fork-point --onto master... master
 
 test_expect_success 'add work same to upstream' '
 	git checkout master &&
