@@ -1321,9 +1321,18 @@ static int only_spaces_and_periods(const char *path, size_t len, size_t skip)
  *   `.git` is the first item in a directory, therefore it will be associated
  *   with the short name `git~1` (unless short names are disabled).
  *
+ * - For yet other historical reasons, NTFS supports so-called "Alternate Data
+ *   Streams", i.e. metadata associated with a given file, referred to via
+ *   `<filename>:<stream-name>:<stream-type>`. There exists a default stream
+ *   type for directories, allowing `.git/` to be accessed via
+ *   `.git::$INDEX_ALLOCATION/`.
+ *
  * When this function returns 1, it indicates that the specified file/directory
  * name refers to a `.git` file or directory, or to any of these synonyms, and
  * Git should therefore not track it.
+ *
+ * For performance reasons, _all_ Alternate Data Streams of `.git/` are
+ * forbidden, not just `::$INDEX_ALLOCATION`.
  *
  * This function is intended to be used by `git fsck` even on platforms where
  * the backslash is a regular filename character, therefore it needs to handle
@@ -1335,7 +1344,8 @@ int is_ntfs_dotgit(const char *name)
 	size_t len;
 
 	for (len = 0; ; len++)
-		if (!name[len] || name[len] == '\\' || is_dir_sep(name[len])) {
+		if (!name[len] || name[len] == '\\' || is_dir_sep(name[len]) ||
+		    name[len] == ':') {
 			if (only_spaces_and_periods(name, len, 4) &&
 					!strncasecmp(name, ".git", 4))
 				return 1;
