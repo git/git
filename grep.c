@@ -421,7 +421,7 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
 		regmatch_t *match, int eflags)
 {
-	int ovector[30], ret, flags = 0;
+	int ovector[30], ret, flags = PCRE_NO_UTF8_CHECK;
 
 	if (eflags & REG_NOTBOL)
 		flags |= PCRE_NOTBOL;
