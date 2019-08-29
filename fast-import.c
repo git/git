@@ -1861,6 +1861,12 @@ static void dump_marks(void)
 	if (!export_marks_file || (import_marks_file && !import_marks_file_done))
 		return;
 
+	if (safe_create_leading_directories_const(export_marks_file)) {
+		failure |= error_errno("unable to create leading directories of %s",
+				       export_marks_file);
+		return;
+	}
+
 	if (hold_lock_file_for_update(&mark_lock, export_marks_file, 0) < 0) {
 		failure |= error_errno("Unable to write marks file %s",
 				       export_marks_file);
@@ -3268,7 +3274,6 @@ static void option_active_branches(const char *branches)
 static void option_export_marks(const char *marks)
 {
 	export_marks_file = make_fast_import_path(marks);
-	safe_create_leading_directories_const(export_marks_file);
 }
 
 static void option_cat_blob_fd(const char *fd)

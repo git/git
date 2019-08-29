@@ -2132,8 +2132,17 @@ test_expect_success 'R: export-marks feature results in a marks file being creat
 '
 
 test_expect_success 'R: export-marks options can be overridden by commandline options' '
-	git fast-import --export-marks=other.marks <input &&
-	grep :1 other.marks
+	cat >input <<-\EOF &&
+	feature export-marks=feature-sub/git.marks
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+	git fast-import --export-marks=cmdline-sub/other.marks <input &&
+	grep :1 cmdline-sub/other.marks &&
+	test_path_is_missing feature-sub
 '
 
 test_expect_success 'R: catch typo in marks file name' '
