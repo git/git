@@ -3344,8 +3344,10 @@ static int parse_one_feature(const char *feature, int from_stream)
 	if (skip_prefix(feature, "date-format=", &arg)) {
 		option_date_format(arg);
 	} else if (skip_prefix(feature, "import-marks=", &arg)) {
+		check_unsafe_feature("import-marks", from_stream);
 		option_import_marks(arg, from_stream, 0);
 	} else if (skip_prefix(feature, "import-marks-if-exists=", &arg)) {
+		check_unsafe_feature("import-marks-if-exists", from_stream);
 		option_import_marks(arg, from_stream, 1);
 	} else if (skip_prefix(feature, "export-marks=", &arg)) {
 		check_unsafe_feature(feature, from_stream);
