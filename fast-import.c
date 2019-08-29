@@ -3312,9 +3312,9 @@ static int parse_one_option(const char *option)
 		option_active_branches(option);
 	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
 		option_export_pack_edges(option);
-	} else if (starts_with(option, "quiet")) {
+	} else if (!strcmp(option, "quiet")) {
 		show_stats = 0;
-	} else if (starts_with(option, "stats")) {
+	} else if (!strcmp(option, "stats")) {
 		show_stats = 1;
 	} else {
 		return 0;
