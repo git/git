@@ -43,7 +43,7 @@ void list_commands(unsigned int colopts, struct cmdnames *main_cmds, struct cmdn
  * call this to die(), when it is suspected that the user mistyped a
  * ref to the command, to give suggested "correct" refs.
  */
-void help_unknown_ref(const char *ref, const char *cmd, const char *error);
+NORETURN void help_unknown_ref(const char *ref, const char *cmd, const char *error);
 
 static inline void list_config_item(struct string_list *list,
 				    const char *prefix,
