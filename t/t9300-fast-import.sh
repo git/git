@@ -2125,12 +2125,12 @@ test_expect_success 'R: export-marks feature results in a marks file being creat
 
 	EOF
 
-	cat input | git fast-import &&
+	git fast-import <input &&
 	grep :1 git.marks
 '
 
 test_expect_success 'R: export-marks options can be overridden by commandline options' '
-	cat input | git fast-import --export-marks=other.marks &&
+	git fast-import --export-marks=other.marks <input &&
 	grep :1 other.marks
 '
 
@@ -2242,7 +2242,7 @@ test_expect_success 'R: import to output marks works without any content' '
 	feature export-marks=marks.new
 	EOF
 
-	cat input | git fast-import &&
+	git fast-import <input &&
 	test_cmp marks.out marks.new
 '
 
@@ -2252,7 +2252,7 @@ test_expect_success 'R: import marks prefers commandline marks file over the str
 	feature export-marks=marks.new
 	EOF
 
-	cat input | git fast-import --import-marks=marks.out &&
+	git fast-import --import-marks=marks.out <input &&
 	test_cmp marks.out marks.new
 '
 
@@ -2560,7 +2560,7 @@ test_expect_success 'R: quiet option results in no stats being output' '
 
 	EOF
 
-	cat input | git fast-import 2> output &&
+	git fast-import 2>output <input &&
 	test_must_be_empty output
 '
 
