@@ -366,6 +366,7 @@ static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
 static int seen_data_command;
 static int require_explicit_termination;
+static int allow_unsafe_features;
 
 /* Signal handling */
 static volatile sig_atomic_t checkpoint_requested;
@@ -3320,11 +3321,20 @@ static int parse_one_option(const char *option)
 		show_stats = 0;
 	} else if (!strcmp(option, "stats")) {
 		show_stats = 1;
+	} else if (!strcmp(option, "allow-unsafe-features")) {
+		; /* already handled during early option parsing */
 	} else {
 		return 0;
 	}
 
 	return 1;
+}
+
+static void check_unsafe_feature(const char *feature, int from_stream)
+{
+	if (from_stream && !allow_unsafe_features)
+		die(_("feature '%s' forbidden in input without --allow-unsafe-features"),
+		    feature);
 }
 
 static int parse_one_feature(const char *feature, int from_stream)
@@ -3338,6 +3348,7 @@ static int parse_one_feature(const char *feature, int from_stream)
 	} else if (skip_prefix(feature, "import-marks-if-exists=", &arg)) {
 		option_import_marks(arg, from_stream, 1);
 	} else if (skip_prefix(feature, "export-marks=", &arg)) {
+		check_unsafe_feature(feature, from_stream);
 		option_export_marks(arg);
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
@@ -3463,6 +3474,20 @@ int cmd_main(int argc, const char **argv)
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
 	marks = pool_calloc(1, sizeof(struct mark_set));
+
+	/*
+	 * We don't parse most options until after we've seen the set of
+	 * "feature" lines at the start of the stream (which allows the command
+	 * line to override stream data). But we must do an early parse of any
+	 * command-line options that impact how we interpret the feature lines.
+	 */
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (*arg != '-' || !strcmp(arg, "--"))
+			break;
+		if (!strcmp(arg, "--allow-unsafe-features"))
+			allow_unsafe_features = 1;
+	}
 
 	global_argc = argc;
 	global_argv = argv;

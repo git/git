@@ -2117,6 +2117,11 @@ test_expect_success 'R: only one import-marks feature allowed per stream' '
 	test_must_fail git fast-import <input
 '
 
+test_expect_success 'R: export-marks feature forbidden by default' '
+	echo "feature export-marks=git.marks" >input &&
+	test_must_fail git fast-import <input
+'
+
 test_expect_success 'R: export-marks feature results in a marks file being created' '
 	cat >input <<-EOF &&
 	feature export-marks=git.marks
@@ -2127,7 +2132,7 @@ test_expect_success 'R: export-marks feature results in a marks file being creat
 
 	EOF
 
-	git fast-import <input &&
+	git fast-import --allow-unsafe-features <input &&
 	grep :1 git.marks
 '
 
@@ -2140,7 +2145,8 @@ test_expect_success 'R: export-marks options can be overridden by commandline op
 	hi
 
 	EOF
-	git fast-import --export-marks=cmdline-sub/other.marks <input &&
+	git fast-import --allow-unsafe-features \
+			--export-marks=cmdline-sub/other.marks <input &&
 	grep :1 cmdline-sub/other.marks &&
 	test_path_is_missing feature-sub
 '
@@ -2148,7 +2154,7 @@ test_expect_success 'R: export-marks options can be overridden by commandline op
 test_expect_success 'R: catch typo in marks file name' '
 	test_must_fail git fast-import --import-marks=nonexistent.marks </dev/null &&
 	echo "feature import-marks=nonexistent.marks" |
-	test_must_fail git fast-import
+	test_must_fail git fast-import --allow-unsafe-features
 '
 
 test_expect_success 'R: import and output marks can be the same file' '
@@ -2253,7 +2259,7 @@ test_expect_success 'R: import to output marks works without any content' '
 	feature export-marks=marks.new
 	EOF
 
-	git fast-import <input &&
+	git fast-import --allow-unsafe-features <input &&
 	test_cmp marks.out marks.new
 '
 
@@ -2263,7 +2269,7 @@ test_expect_success 'R: import marks prefers commandline marks file over the str
 	feature export-marks=marks.new
 	EOF
 
-	git fast-import --import-marks=marks.out <input &&
+	git fast-import --import-marks=marks.out --allow-unsafe-features <input &&
 	test_cmp marks.out marks.new
 '
 
@@ -2276,7 +2282,8 @@ test_expect_success 'R: multiple --import-marks= should be honoured' '
 
 	head -n2 marks.out > one.marks &&
 	tail -n +3 marks.out > two.marks &&
-	git fast-import --import-marks=one.marks --import-marks=two.marks <input &&
+	git fast-import --import-marks=one.marks --import-marks=two.marks \
+		--allow-unsafe-features <input &&
 	test_cmp marks.out combined.marks
 '
 
@@ -2289,7 +2296,7 @@ test_expect_success 'R: feature relative-marks should be honoured' '
 
 	mkdir -p .git/info/fast-import/ &&
 	cp marks.new .git/info/fast-import/relative.in &&
-	git fast-import <input &&
+	git fast-import --allow-unsafe-features <input &&
 	test_cmp marks.new .git/info/fast-import/relative.out
 '
 
@@ -2301,7 +2308,7 @@ test_expect_success 'R: feature no-relative-marks should be honoured' '
 	feature export-marks=non-relative.out
 	EOF
 
-	git fast-import <input &&
+	git fast-import --allow-unsafe-features <input &&
 	test_cmp marks.new non-relative.out
 '
 
