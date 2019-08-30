@@ -1968,9 +1968,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				state_dir_path("autostash", &options);
 			struct child_process stash = CHILD_PROCESS_INIT;
 			struct object_id oid;
-			struct commit *head =
-				lookup_commit_reference(the_repository,
-							&options.orig_head);
+			struct object_id head_oid;
+			struct commit *head;
+
+			if (get_oid("HEAD", &head_oid))
+				die(_("could not determine HEAD revision"));
+			head = lookup_commit_reference(the_repository, &head_oid);
 
 			argv_array_pushl(&stash.args,
 					 "stash", "create", "autostash", NULL);

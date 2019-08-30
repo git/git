@@ -306,4 +306,12 @@ test_expect_success 'branch is left alone when possible' '
 	test unchanged-branch = "$(git rev-parse --abbrev-ref HEAD)"
 '
 
+test_expect_success 'never change active branch' '
+	git checkout -b not-the-feature-branch unrelated-onto-branch &&
+	test_when_finished "git reset --hard && git checkout master" &&
+	echo changed >file0 &&
+	git rebase --autostash not-the-feature-branch feature-branch &&
+	test_cmp_rev not-the-feature-branch unrelated-onto-branch
+'
+
 test_done
