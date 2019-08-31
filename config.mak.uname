@@ -665,8 +665,7 @@ else
 		HAVE_LIBCHARSET_H = YesPlease
 		NO_GETTEXT =
 		USE_GETTEXT_SCHEME = fallthrough
-		USE_LIBPCRE= YesPlease
-		NO_LIBPCRE1_JIT = UnfortunatelyYes
+		USE_LIBPCRE = YesPlease
 		NO_CURL =
 		USE_NED_ALLOCATOR = YesPlease
 	else
