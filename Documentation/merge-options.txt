@@ -40,20 +40,24 @@ set to `no` at the beginning of them.
 	case of a merge conflict.
 
 --ff::
-	When the merge resolves as a fast-forward, only update the branch
-	pointer, without creating a merge commit.  This is the default
-	behavior.
-
 --no-ff::
-	Create a merge commit even when the merge resolves as a
-	fast-forward.  This is the default behaviour when merging an
-	annotated (and possibly signed) tag that is not stored in
-	its natural place in 'refs/tags/' hierarchy.
-
 --ff-only::
-	Refuse to merge and exit with a non-zero status unless the
-	current `HEAD` is already up to date or the merge can be
-	resolved as a fast-forward.
+	Specifies how a merge is handled when the merged-in history is
+	already a descendant of the current history.  `--ff` is the
+	default unless merging an annotated (and possibly signed) tag
+	that is not stored in its natural place in the `refs/tags/`
+	hierarchy, in which case `--no-ff` is assumed.
++
+With `--ff`, when possible resolve the merge as a fast-forward (only
+update the branch pointer to match the merged branch; do not create a
+merge commit).  When not possible (when the merged-in history is not a
+descendant of the current history), create a merge commit.
++
+With `--no-ff`, create a merge commit in all cases, even when the merge
+could instead be resolved as a fast-forward.
++
+With `--ff-only`, resolve the merge as a fast-forward when possible.
+When not possible, refuse to merge and exit with a non-zero status.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
