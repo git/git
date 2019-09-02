@@ -3001,7 +3001,7 @@ static int invalidate_one_component(struct untracked_cache *uc,
 	return uc->dir_flags & DIR_SHOW_OTHER_DIRECTORIES;
 }
 
-inline void untracked_cache_invalidate_path(struct index_state *istate,
+void untracked_cache_invalidate_path(struct index_state *istate,
 				     const char *path, int safe_path)
 {
 	if ((istate->untracked && istate->untracked->root) && (safe_path || verify_path(path, 0)))
