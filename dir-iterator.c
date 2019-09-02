@@ -191,7 +191,7 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 			warning_errno("error closing directory '%s'",
 				      iter->base.path.buf);
 		}
-		 iter->levels_nr--
+		 iter->levels_nr--;
 	}
 
 	free(iter->levels);
