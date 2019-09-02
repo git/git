@@ -918,7 +918,8 @@ def createOrUpdateBranchesFromOrigin(localRefPrefix = "refs/remotes/p4/", silent
         update = False
         if not gitBranchExists(remoteHead):
             if verbose:
-                print("creating %s" % remoteHead)
+                print ("creating %s" % (remoteHead))
+                
             update = True
         else:
             settings = extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
