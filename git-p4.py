@@ -36,8 +36,6 @@ except NameError:
     unicode = str
     bytes = bytes
     basestring = (str,bytes)
-    raw_input = input
-    from functools import reduce
 else:
     # 'unicode' exists, must be Python 2
     str = str
@@ -918,7 +916,7 @@ def createOrUpdateBranchesFromOrigin(localRefPrefix = "refs/remotes/p4/", silent
         update = False
         if not gitBranchExists(remoteHead):
             if verbose:
-                print("creating %s" % (remoteHead))
+                print("creating %s" % remoteHead)
             update = True
         else:
             settings = extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
@@ -1166,7 +1164,6 @@ class LargeFileSystem(object):
             zf = zipfile.ZipFile(compressedContentFile.name, mode='w')
             zf.write(contentTempFile, compress_type=zipfile.ZIP_DEFLATED)
             zf.close()
-            compressedContentFile.close()
             compressedContentsSize = zf.infolist()[0].compress_size
             os.remove(contentTempFile)
             os.remove(compressedContentFile.name)
@@ -1358,12 +1355,11 @@ class P4UserMap:
             return
         self.users = {}
         self.emails = {}
-        re_fullname = re.compile(r'^\s*([^<]+).*')
 
         for output in p4CmdList("users"):
             if "User" not in output:
                 continue
-            self.users[output["User"]] = re_fullname.search(output["FullName"]).group(1).strip() + " <" + output["Email"] + ">"
+            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
             self.emails[output["Email"]] = output["User"]
 
         mapUserConfigRegex = re.compile(r"^\s*(\S+)\s*=\s*(.+)\s*<(\S+)>\s*$", re.VERBOSE)
@@ -3047,7 +3043,7 @@ class P4Sync(Command, P4UserMap):
         if not files and not allow_empty:
             print('Ignoring revision {0} as it would produce an empty commit.'
                 .format(details['change']))
-            return False
+            return
 
         self.gitStream.write("commit %s\n" % branch)
         self.gitStream.write("mark :%s\n" % details["change"])
@@ -3113,8 +3109,6 @@ class P4Sync(Command, P4UserMap):
                 if not self.silent:
                     print("Tag %s does not match with change %s: file count is different."
                            % (labelDetails["label"], change))
-
-        return True
 
     # Build a dictionary of changelists and labels, for "detect-labels" option.
     def getLabels(self):
@@ -3463,10 +3457,10 @@ class P4Sync(Command, P4UserMap):
                             self.commit(description, filesForCommit, branch, parent)
                 else:
                     files = self.extractFilesFromCommit(description)
-                    if self.commit(description, files, self.branch,
-                                   self.initialParent):
-                        # only needed once, to connect to the previous commit
-                        self.initialParent = ""
+                    self.commit(description, files, self.branch,
+                                self.initialParent)
+                    # only needed once, to connect to the previous commit
+                    self.initialParent = ""
             except IOError:
                 print(self.gitError.read())
                 sys.exit(1)
@@ -3974,7 +3968,6 @@ class P4Unshelve(Command):
                 break
 
         if not found:
-            sync = P4Sync()
             sys.exit("gave up trying to rename existing branch {0}".format(sync.branch))
 
     def findLastP4Revision(self, starting_point):

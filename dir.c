@@ -658,38 +658,6 @@ void clear_exclude_list(struct exclude_list *el)
 	memset(el, 0, sizeof(*el));
 }
 
-static void trim_trailing_comments(char *buf)
-{
-	char *p, *last_octothorpe = NULL;
-	int escape_seq = 0;
-
-	for (p = buf; *p; p++)
-	{
-		if (!*p)
- 			return;
-		switch (*p) {
-		case '#':
-			if (escape_seq)
-			{
-				escape_seq = 0;
-				p++;
-				break;
-			}
-			if (!last_octothorpe)
-				last_octothorpe = p;
-			break;
-		case '\\':
-			escape_seq = 1;
-			break;
-		default:
-			escape_seq = 0;
-		}
-	}
-
-	if (last_octothorpe)
-		*last_octothorpe = '\0';
-}
-
 static void trim_trailing_spaces(char *buf)
 {
 	char *p, *last_space = NULL;
@@ -891,7 +859,6 @@ static int add_excludes_from_buffer(char *buf, size_t size,
 		if (buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
-				trim_trailing_comments(entry);
 				trim_trailing_spaces(entry);
 				add_exclude(entry, base, baselen, el, lineno);
 			}
