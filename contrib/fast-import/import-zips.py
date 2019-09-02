@@ -8,6 +8,7 @@
 ##  python import-zips.py *.zip
 ##  git log --stat import-zips
 
+from __future__ import print_function
 from os import popen, path
 from sys import argv, exit, hexversion, stderr
 from time import mktime
@@ -19,7 +20,7 @@ if hexversion < 0x01060000:
     exit(1)
 
 if len(argv) < 2:
-    print 'usage:', argv[0], '<zipfile>...'
+    print('usage:', argv[0], '<zipfile>...')
     exit(1)
 
 branch_ref = 'refs/heads/import-zips'
