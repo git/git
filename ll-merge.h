@@ -26,5 +26,6 @@ int ll_merge(mmbuffer_t *result_buf,
 	     const struct ll_merge_options *opts);
 
 int ll_merge_marker_size(struct index_state *istate, const char *path);
+void reset_merge_attributes(void);
 
 #endif
