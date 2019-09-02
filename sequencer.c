@@ -4635,8 +4635,18 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		else
 			strbuf_addbuf(&label, &oneline);
 
+		/*
+		 * Sanitize labels by replacing non-alpha-numeric characters
+		 * (including white-space ones) by dashes, as they might be
+		 * illegal in file names (and hence in ref names).
+		 *
+		 * Note that we retain non-ASCII UTF-8 characters (identified
+		 * via the most significant bit). They should be all acceptable
+		 * in file names. We do not validate the UTF-8 here, that's not
+		 * the job of this function.
+		 */
 		for (p1 = label.buf; *p1; p1++)
-			if (isspace(*p1))
+			if (!(*p1 & 0x80) && !isalnum(*p1))
 				*(char *)p1 = '-';
 
 		strbuf_reset(&buf);

@@ -441,4 +441,9 @@ test_expect_success '--continue after resolving conflicts after a merge' '
 	test_path_is_missing .git/MERGE_HEAD
 '
 
+test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
+	git checkout -b colon-in-label E &&
+	git merge -m "colon: this should work" G &&
+	git rebase --rebase-merges --force-rebase E
+'
 test_done
