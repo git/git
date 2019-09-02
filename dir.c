@@ -3004,8 +3004,7 @@ static int invalidate_one_component(struct untracked_cache *uc,
 inline void untracked_cache_invalidate_path(struct index_state *istate,
 				     const char *path, int safe_path)
 {
-	if (istate->untracked && istate->untracked->root) && (safe_path || verify_path(path, 0)))
-
+	if ((istate->untracked && istate->untracked->root) && (safe_path || verify_path(path, 0)))
 	invalidate_one_component(istate->untracked, istate->untracked->root,
 				 path, strlen(path));
 }
