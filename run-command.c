@@ -180,14 +180,14 @@ int is_executable(const char *name)
  */
 static char *locate_in_PATH(const char *file)
 {
-	const char *p = getenv(PATH_ENVIRONMENT);
+	const char *p = getenv("PATH");
 	struct strbuf buf = STRBUF_INIT;
 
 	if (!p || !*p)
 		return NULL;
 
 	while (1) {
-		const char *end = strchrnul(p, PATH_SEP);
+		const char *end = strchrnul(p, ':');
 
 		strbuf_reset(&buf);
 

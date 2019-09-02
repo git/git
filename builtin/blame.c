@@ -1051,10 +1051,10 @@ parse_done:
 		struct commit *head_commit;
 		struct object_id head_oid;
 
-		if (!(resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-					&head_oid, NULL) &&
-		    (head_commit = lookup_commit_reference_gently(revs.repo,
-							     &head_oid, 1))))
+		if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
+					&head_oid, NULL) ||
+		    !(head_commit = lookup_commit_reference_gently(revs.repo,
+							     &head_oid, 1)))
 			die("no such ref: HEAD");
 
 		add_pending_object(&revs, &head_commit->object, "HEAD");
@@ -1136,11 +1136,11 @@ parse_done:
 
 	stop_progress(&pi.progress);
 
-	if (incremental)
+	if (!incremental)
+		setup_pager();
+	else
 		return 0;
-	
-	setup_pager();
-		
+
 	blame_sort_final(&sb);
 
 	blame_coalesce(&sb);

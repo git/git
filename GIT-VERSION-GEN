@@ -26,7 +26,7 @@ else
 	VN="$DEF_VER"
 fi
 
-VN=${VN#v}
+VN=$(expr "$VN" : v*'\(.*\)')
 
 if test -r $GVF
 then

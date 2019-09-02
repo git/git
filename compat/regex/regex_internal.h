@@ -26,9 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef NEEDS_SYS_PARAM_H
-#include <sys/param.h>
-#endif
 #if defined HAVE_LANGINFO_H || defined HAVE_LANGINFO_CODESET || defined _LIBC
 # include <langinfo.h>
 #endif

@@ -304,7 +304,7 @@ static void add_path(struct strbuf *out, const char *path)
 void setup_path(void)
 {
 	const char *exec_path = git_exec_path();
-	const char *old_path = getenv(PATH_ENVIRONMENT);
+	const char *old_path = getenv("PATH");
 	struct strbuf new_path = STRBUF_INIT;
 
 	git_set_exec_path(exec_path);
@@ -315,7 +315,7 @@ void setup_path(void)
 	else
 		strbuf_addstr(&new_path, _PATH_DEFPATH);
 
-	setenv(PATH_ENVIRONMENT, new_path.buf, 1);
+	setenv("PATH", new_path.buf, 1);
 
 	strbuf_release(&new_path);
 }

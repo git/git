@@ -164,11 +164,7 @@
 #define GIT_WINDOWS_NATIVE
 #endif
 
-#include <sys/types.h>
 #include <unistd.h>
-#ifdef __PLAN9__
-#include <libv.h>
-#endif
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -184,6 +180,7 @@
 #ifdef NEEDS_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#include <sys/types.h>
 #include <dirent.h>
 #include <sys/time.h>
 #include <time.h>
@@ -283,10 +280,6 @@ struct itimerval {
 char *gitbasename(char *);
 #define dirname gitdirname
 char *gitdirname(char *);
-#endif
-
-#ifdef __PLAN9__
-#include <machine/endian.h>
 #endif
 
 #ifndef NO_ICONV
@@ -1243,14 +1236,6 @@ struct tm *git_gmtime_r(const time_t *, struct tm *);
 
 #ifndef SHELL_PATH
 # define SHELL_PATH "/bin/sh"
-#endif
-
-#ifndef HOME_ENVIRONMENT
-# define HOME_ENVIRONMENT "HOME"
-#endif
-
-#ifndef PATH_ENVIRONMENT
-# define PATH_ENVIRONMENT "PATH"
 #endif
 
 #ifndef _POSIX_THREAD_SAFE_FUNCTIONS

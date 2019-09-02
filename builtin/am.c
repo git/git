@@ -48,11 +48,9 @@ static int linelen(const char *msg)
  */
 static int str_isspace(const char *str)
 {
-	while (*str){
+	for (; *str; str++)
 		if (!isspace(*str))
 			return 0;
-		str++;
-	}
 
 	return 1;
 }
@@ -542,7 +540,9 @@ static int is_mail(FILE *fp)
 	if (regcomp(&regex, header_regex, REG_NOSUB | REG_EXTENDED))
 		die("invalid pattern: %s", header_regex);
 
-	while (!strbuf_getline(&sb, fp) && sb.len) {
+	while (!strbuf_getline(&sb, fp)) {
+		if (!sb.len)
+			break; /* End of header */
 
 		/* Ignore indented folded lines */
 		if (*sb.buf == '\t' || *sb.buf == ' ')
@@ -551,10 +551,11 @@ static int is_mail(FILE *fp)
 		/* It's a header if it matches header_regex */
 		if (regexec(&regex, sb.buf, 0, NULL, 0)) {
 			ret = 0;
-			break;
+			goto done;
 		}
 	}
 
+done:
 	regfree(&regex);
 	strbuf_release(&sb);
 	return ret;
@@ -618,9 +619,12 @@ static int detect_patch_format(const char **paths)
 		 starts_with(l3.buf, "Author:") ||
 		 starts_with(l3.buf, "Date:"))) {
 		ret = PATCH_FORMAT_STGIT;
+		goto done;
 	}
-	else if (l1.len && is_mail(fp)) {
+
+	if (l1.len && is_mail(fp)) {
 		ret = PATCH_FORMAT_MBOX;
+		goto done;
 	}
 
 done:

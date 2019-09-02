@@ -4,16 +4,8 @@ ifndef V
 	QUIET = @
 endif
 
-uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-
 INSTALL ?= install
 TAR ?= tar
-TAR_CF = $(TAR) cf
-TAR_XF = $(TAR) xof
-ifeq ($(uname_S),Plan9)
-	TAR_CF = $(TAR) cf
-	TAR_XF = $(TAR) xf
-endif
 RM ?= rm -f
 prefix ?= $(HOME)
 template_instdir ?= $(prefix)/share/git-core/templates
@@ -70,5 +62,5 @@ clean:
 
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_instdir_SQ)'
-	(cd blt && $(TAR_CF) - .) | \
-	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR_XF) -)
+	(cd blt && $(TAR) cf - .) | \
+	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR) xof -)
