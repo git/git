@@ -43,6 +43,10 @@ matrix:
       compiler:
       script: ci/test-documentation.sh
       after_failure:
+    - env: jobname=LintPython
+      language: python
+      before_install: pip install flake8
+      script: flake8 . --count --select=E9,F63,F72,F82 --show-source --statistics
 
 before_install: ci/install-dependencies.sh
 script: ci/run-build-and-tests.sh
