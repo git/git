@@ -138,7 +138,7 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 	}
 
 	/* Loop until we find an entry that we can give back to the caller. */
-	while (1) {
+	for(;;) {
 		struct dirent *de;
 		struct dir_iterator_level *level =
 			&iter->levels[iter->levels_nr - 1];
@@ -180,7 +180,7 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 {
 	struct dir_iterator_int *iter = (struct dir_iterator_int *)dir_iterator;
 
-	for (; iter->levels_nr; iter->levels_nr--) {
+	while (iter->levels_nr) {
 		struct dir_iterator_level *level =
 			&iter->levels[iter->levels_nr - 1];
 
@@ -191,6 +191,7 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 			warning_errno("error closing directory '%s'",
 				      iter->base.path.buf);
 		}
+		 iter->levels_nr--
 	}
 
 	free(iter->levels);

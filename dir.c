@@ -1024,11 +1024,9 @@ int match_pathname(const char *pathname, int pathlen,
 		 * if the non-wildcard part is longer than the
 		 * remaining pathname, surely it cannot match.
 		 */
-		if (prefix > namelen)
+		if (prefix > namelen || fspathncmp(pattern, name, prefix))
 			return 0;
 
-		if (fspathncmp(pattern, name, prefix))
-			return 0;
 		pattern += prefix;
 		patternlen -= prefix;
 		name    += prefix;
@@ -1039,7 +1037,7 @@ int match_pathname(const char *pathname, int pathlen,
 		 * then our prefix match is all we need; we
 		 * do not need to call fnmatch at all.
 		 */
-		if (!patternlen && !namelen)
+		if (!(patternlen || namelen))
 			return 1;
 	}
 
@@ -1245,14 +1243,14 @@ static void prep_exclude(struct dir_struct *dir,
 		     * this directory (i.e. valid_cached_dir() has
 		     * been executed and set untracked->valid) ..
 		     */
-		    (!untracked || !untracked->valid ||
+		    (!(untracked && untracked->valid &&
 		     /*
 		      * .. and .gitignore does not exist before
 		      * (i.e. null exclude_oid). Then we can skip
 		      * loading .gitignore, which would result in
 		      * ENOENT anyway.
 		      */
-		     !is_null_oid(&untracked->exclude_oid))) {
+		     is_null_oid(&untracked->exclude_oid)))) {
 			/*
 			 * dir->basebuf gets reused by the traversal, but we
 			 * need fname to remain unchanged to ensure the src
@@ -1534,7 +1532,7 @@ static int simplify_away(const char *path, int pathlen,
 {
 	int i;
 
-	if (!pathspec || !pathspec->nr)
+	if (!(pathspec && pathspec->nr))
 		return 0;
 
 	GUARD_PATHSPEC(pathspec,
@@ -1575,7 +1573,7 @@ static int exclude_matches_pathspec(const char *path, int pathlen,
 {
 	int i;
 
-	if (!pathspec || !pathspec->nr)
+	if (!(pathspec && pathspec->nr))
 		return 0;
 
 	GUARD_PATHSPEC(pathspec,
@@ -1878,18 +1876,18 @@ static int open_cached_dir(struct cached_dir *cdir,
 		invalidate_directory(dir->untracked, untracked);
 		dir->untracked->dir_opened++;
 	}
-	if (!cdir->fdir)
-		return -1;
-	return 0;
+	if (cdir->fdir)
+		return 0;
+	return -1;
 }
 
 static int read_cached_dir(struct cached_dir *cdir)
 {
 	if (cdir->fdir) {
 		cdir->de = readdir(cdir->fdir);
-		if (!cdir->de)
-			return -1;
-		return 0;
+		if (cdir->de)
+			return 0;
+		return -1;
 	}
 	while (cdir->nr_dirs < cdir->untracked->dirs_nr) {
 		struct untracked_cache_dir *d = cdir->untracked->dirs[cdir->nr_dirs];
@@ -2160,11 +2158,9 @@ void add_untracked_cache(struct index_state *istate)
 {
 	if (!istate->untracked) {
 		new_untracked_cache(istate);
-	} else {
-		if (!ident_in_untracked(istate->untracked)) {
+	} else if (!ident_in_untracked(istate->untracked)) {
 			free_untracked_cache(istate->untracked);
 			new_untracked_cache(istate);
-		}
 	}
 }
 
@@ -2495,7 +2491,7 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 	closedir(dir);
 
 	strbuf_setlen(path, original_len);
-	if (!ret && !keep_toplevel && !kept_down)
+	if (!(ret || keep_toplevel || kept_down))
 		ret = (!rmdir(path->buf) || errno == ENOENT) ? 0 : -1;
 	else if (kept_up)
 		/*
@@ -3005,13 +3001,11 @@ static int invalidate_one_component(struct untracked_cache *uc,
 	return uc->dir_flags & DIR_SHOW_OTHER_DIRECTORIES;
 }
 
-void untracked_cache_invalidate_path(struct index_state *istate,
+inline void untracked_cache_invalidate_path(struct index_state *istate,
 				     const char *path, int safe_path)
 {
-	if (!istate->untracked || !istate->untracked->root)
-		return;
-	if (!safe_path && !verify_path(path, 0))
-		return;
+	if (istate->untracked && istate->untracked->root) && (safe_path || verify_path(path, 0)))
+
 	invalidate_one_component(istate->untracked, istate->untracked->root,
 				 path, strlen(path));
 }
