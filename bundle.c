@@ -107,9 +107,7 @@ int is_bundle(const char *path, int quiet)
 
 static int list_refs(struct ref_list *r, int argc, const char **argv)
 {
-	int i;
-
-	for (i = 0; i < r->nr; i++) {
+	for (int i = 0; i < r->nr; i++) {
 		if (argc > 1) {
 			int j;
 			for (j = 1; j < argc; j++)
@@ -142,7 +140,7 @@ int verify_bundle(struct repository *r,
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
-	if (!r || !r->objects || !r->objects->odb)
+	if (!(r && r->objects && r->objects->odb))
 		return error(_("need a repository to verify a bundle"));
 
 	repo_init_revisions(r, &revs, NULL);
@@ -344,10 +342,9 @@ static int compute_and_write_prerequisites(int bundle_fd,
  */
 static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 {
-	int i;
 	int ref_count = 0;
 
-	for (i = 0; i < revs->pending.nr; i++) {
+	for (int i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *e = revs->pending.objects + i;
 		struct object_id oid;
 		char *ref;

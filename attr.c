@@ -460,17 +460,11 @@ static void attr_stack_free(struct attr_stack *e)
 	free(e->origin);
 	for (i = 0; i < e->num_matches; i++) {
 		struct match_attr *a = e->attrs[i];
-		int j;
-		for (j = 0; j < a->num_attr; j++) {
+		for (int j = 0; j < a->num_attr; j++) {
 			const char *setto = a->state[j].setto;
-			if (setto == ATTR__TRUE ||
-			    setto == ATTR__FALSE ||
-			    setto == ATTR__UNSET ||
-			    setto == ATTR__UNKNOWN)
-				;
-			else
-				free((char *) setto);
-		}
+            if (setto != ATTR__TRUE && setto != ATTR__FALSE && setto != ATTR__UNSET && setto != ATTR__UNKNOWN)
+                free((char *) setto);
+        }
 		free(a);
 	}
 	free(e->attrs);
@@ -531,8 +525,8 @@ static void check_vector_remove(struct attr_check *check)
 		BUG("no entry found");
 
 	/* shift entries over */
-	for (; i < check_vector.nr - 1; i++)
-		check_vector.checks[i] = check_vector.checks[i + 1];
+	while (i < check_vector.nr - 1)
+		check_vector.checks[i++] = check_vector.checks[i + 1];
 
 	check_vector.nr--;
 

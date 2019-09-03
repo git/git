@@ -90,13 +90,13 @@ static inline void weight_set(struct commit_list *elem, int weight)
 
 static int count_interesting_parents(struct commit *commit)
 {
-	struct commit_list *p;
-	int count;
+	struct commit_list *p = commit->parents;
+	int count = 0;
 
-	for (count = 0, p = commit->parents; p; p = p->next) {
-		if (p->item->object.flags & UNINTERESTING)
-			continue;
-		count++;
+	while (p) {
+		if (!(p->item->object.flags & UNINTERESTING))
+			count++;
+		p = p->next;
 	}
 	return count;
 }
@@ -224,17 +224,23 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 		cnt++;
 	}
 	QSORT(array, cnt, compare_commit_dist);
-	for (p = list, i = 0; i < cnt; i++) {
-		struct object *obj = &(array[i].commit->object);
 
-		strbuf_reset(&buf);
-		strbuf_addf(&buf, "dist=%d", array[i].distance);
-		add_name_decoration(DECORATION_NONE, buf.buf, obj);
+    p = list;
+    if (cnt > 0) {
+        i = 0;
+        goto in;
+        do  {
+            p = p->next;
+            in:
 
-		p->item = array[i].commit;
-		if (i < cnt - 1)
-			p = p->next;
-	}
+            struct object *obj = &(array[i].commit->object);
+
+            strbuf_reset(&buf);
+            strbuf_addf(&buf, "dist=%d", array[i].distance);
+            add_name_decoration(DECORATION_NONE, buf.buf, obj);
+            p->item = array[i++].commit;
+        } while (i < cnt);
+    }
 	if (p) {
 		free_commit_list(p->next);
 		p->next = NULL;
@@ -261,12 +267,11 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 					     int nr, int *weights,
 					     int find_all)
 {
-	int n, counted;
-	struct commit_list *p;
+	int n = 0, counted = 0;
+	struct commit_list *p = list;
 
-	counted = 0;
 
-	for (n = 0, p = list; p; p = p->next) {
+	for (p; p = p->next) {
 		struct commit *commit = p->item;
 		unsigned flags = commit->object.flags;
 
@@ -291,6 +296,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			weight_set(p, -2);
 			break;
 		}
+		p = p->next;
 	}
 
 	show_list("bisection 2 initialize", counted, nr, list);
@@ -363,10 +369,9 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 
 	show_list("bisection 2 counted all", counted, nr, list);
 
-	if (!find_all)
-		return best_bisection(list, nr);
-	else
-		return best_bisection_sorted(list, nr);
+    if (find_all)
+        return best_bisection_sorted(list, nr);
+    return best_bisection(list, nr);
 }
 
 void find_bisection(struct commit_list **commit_list, int *reaches,
@@ -662,16 +667,17 @@ static void bisect_common(struct rev_info *revs)
 }
 
 static void exit_if_skipped_commits(struct commit_list *tried,
-				    const struct object_id *bad)
-{
-	if (!tried)
-		return;
+				    const struct object_id *bad) {
+    if (!tried)
+        return;
 
-	printf("There are only 'skip'ped commits left to test.\n"
-	       "The first %s commit could be any of:\n", term_bad);
+    printf("There are only 'skip'ped commits left to test.\n"
+           "The first %s commit could be any of:\n", term_bad);
 
-	for ( ; tried; tried = tried->next)
-		printf("%s\n", oid_to_hex(&tried->item->object.oid));
+    do {
+        printf("%s\n", oid_to_hex(&tried->item->object.oid));
+        tried = tried->next;
+    } while (tried);
 
 	if (bad)
 		printf("%s\n", oid_to_hex(bad));
@@ -964,7 +970,7 @@ int bisect_next_all(struct repository *r, const char *prefix, int no_checkout)
 
 	bisect_common(&revs);
 
-	find_bisection(&revs.commits, &reaches, &all, !!skipped_revs.nr);
+	find_bisection(&revs.commits, &reaches, &all, skipped_revs.nr !=0);
 	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {
@@ -1019,8 +1025,10 @@ static inline int log2i(int n)
 {
 	int log2 = 0;
 
-	for (; n > 1; n >>= 1)
-		log2++;
+	while (n > 1) {
+        log2++;
+        n >>= 1;
+    }
 
 	return log2;
 }
@@ -1042,16 +1050,13 @@ static inline int exp2i(int n)
  */
 int estimate_bisect_steps(int all)
 {
-	int n, x, e;
+    if (all >=3) {
+        const int n = log2i(all), e = exp2i(n), x = all - e;
 
-	if (all < 3)
-		return 0;
+        return (e < 3 * x) ? n : n - 1;
+    }
 
-	n = log2i(all);
-	e = exp2i(n);
-	x = all - e;
-
-	return (e < 3 * x) ? n : n - 1;
+    return 0
 }
 
 static int mark_for_removal(const char *refname, const struct object_id *oid,
