@@ -224,23 +224,20 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 		cnt++;
 	}
 	QSORT(array, cnt, compare_commit_dist);
+i = 0;
+p = list;
+ while (i < cnt) {
+		struct object *obj = &(array[i].commit->object);
 
-    p = list;
-    if (cnt > 0) {
-        i = 0;
-        goto in;
-        do  {
-            p = p->next;
-            in:
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "dist=%d", array[i].distance);
+		add_name_decoration(DECORATION_NONE, buf.buf, obj);
 
-            struct object *obj = &(array[i].commit->object);
+		p->item = array[i++].commit;
+		if (i < cnt)
+			p = p->next;
+	}
 
-            strbuf_reset(&buf);
-            strbuf_addf(&buf, "dist=%d", array[i].distance);
-            add_name_decoration(DECORATION_NONE, buf.buf, obj);
-            p->item = array[i++].commit;
-        } while (i < cnt);
-    }
 	if (p) {
 		free_commit_list(p->next);
 		p->next = NULL;
@@ -1070,8 +1067,6 @@ static int mark_for_removal(const char *refname, const struct object_id *oid,
 
 int bisect_clean_state(void)
 {
-	int result = 0;
-
 	/* There may be some refs packed during bisection */
 	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
 	for_each_ref_in("refs/bisect", mark_for_removal, (void *) &refs_for_removal);
@@ -1093,5 +1088,5 @@ int bisect_clean_state(void)
 	 */
 	unlink_or_warn(git_path_bisect_start());
 
-	return result;
+	return 0;
 }
