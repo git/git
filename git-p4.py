@@ -1182,6 +1182,7 @@ class LargeFileSystem(object):
             zf = zipfile.ZipFile(compressedContentFile.name, mode='w')
             zf.write(contentTempFile, compress_type=zipfile.ZIP_DEFLATED)
             zf.close()
+            compressedContentFile.close()
             compressedContentsSize = zf.infolist()[0].compress_size
             os.remove(contentTempFile)
             os.remove(compressedContentFile.name)
