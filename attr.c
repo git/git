@@ -525,8 +525,10 @@ static void check_vector_remove(struct attr_check *check)
 		BUG("no entry found");
 
 	/* shift entries over */
-	while (i < check_vector.nr - 1)
-		check_vector.checks[i++] = check_vector.checks[i + 1];
+	while (i < check_vector.nr - 1){
+		check_vector.checks[i] = check_vector.checks[i + 1];
+		i++;
+	}
 
 	check_vector.nr--;
 
