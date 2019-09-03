@@ -41,7 +41,7 @@ static void stuff_change(struct diff_options *opt,
 {
 	struct diff_filespec *one, *two;
 
-	if (!is_null_oid(old_oid) && !is_null_oid(new_oid) &&
+	if (!(is_null_oid(old_oid) || is_null_oid(new_oid)) &&
 	    oideq(old_oid, new_oid) && (old_mode == new_mode))
 		return;
 
@@ -130,12 +130,12 @@ static int builtin_diff_index(struct rev_info *revs,
 	int cached = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
-		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
-			cached = 1;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
+        if (strcmp(arg, "--cached") && strcmp(arg, "--staged"))
+            usage(builtin_diff_usage);
+        else
+            cached = 1;
+        argv++; argc--;
+    }
 	/*
 	 * Make sure there is one revision (i.e. pending object),
 	 * and there is no revision filtering parameters.

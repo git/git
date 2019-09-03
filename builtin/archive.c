@@ -72,7 +72,7 @@ static int run_remote_archiver(int argc, const char **argv,
 	rv = recv_sideband("archive", fd[0], 1);
 	rv |= transport_disconnect(transport);
 
-	return !!rv;
+	return rv!=0;
 }
 
 #define PARSE_OPT_KEEP_ALL ( PARSE_OPT_KEEP_DASHDASH | 	\
