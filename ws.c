@@ -83,8 +83,7 @@ unsigned whitespace_rule(struct index_state *istate, const char *pathname)
 	if (ATTR_TRUE(value)) {
 		/* true (whitespace) */
 		unsigned all_rule = ws_tab_width(whitespace_rule_cfg);
-		int i;
-		for (i = 0; i < ARRAY_SIZE(whitespace_rule_names); i++)
+		for (int i = 0; i < ARRAY_SIZE(whitespace_rule_names); i++)
 			if (!whitespace_rule_names[i].loosens_error &&
 			    !whitespace_rule_names[i].exclude_default)
 				all_rule |= whitespace_rule_names[i].rule_bits;
@@ -291,13 +290,14 @@ void ws_fix_copy(struct strbuf *dst, const char *src, int len, unsigned ws_rule,
 			add_nl_to_tail = 1;
 			len--;
 			if (0 < len && src[len - 1] == '\r') {
-				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
+				add_cr_to_tail = (ws_rule & WS_CR_AT_EOL) !=0;
 				len--;
 			}
 		}
 		if (0 < len && isspace(src[len - 1])) {
-			while (0 < len && isspace(src[len-1]))
-				len--;
+			do {
+                len--;
+			} while (0 < len && isspace(src[len-1]));
 			fixed = 1;
 		}
 	}
