@@ -173,7 +173,8 @@ static size_t add_empty_word(struct ewah_bitmap *self, int v)
 		rlw_set_running_len(self->rlw, run_len + 1);
 		assert(rlw_get_running_len(self->rlw) == run_len + 1);
 		return 0;
-	} else {
+		}
+
 		buffer_push_rlw(self, 0);
 
 		assert(rlw_get_running_len(self->rlw) == 0);
@@ -187,7 +188,6 @@ static size_t add_empty_word(struct ewah_bitmap *self, int v)
 		assert(rlw_get_running_len(self->rlw) == 1);
 		assert(rlw_get_literal_words(self->rlw) == 0);
 		return 1;
-	}
 }
 
 size_t ewah_add(struct ewah_bitmap *self, eword_t word)
@@ -250,7 +250,7 @@ void ewah_each_bit(struct ewah_bitmap *self, void (*callback)(size_t, void*), vo
 		eword_t *word = &self->buffer[pointer];
 
 		if (rlw_get_run_bit(word)) {
-			size_t len = rlw_get_running_len(word) * BITS_IN_EWORD;
+			const size_t len = rlw_get_running_len(word) * BITS_IN_EWORD;
 			for (k = 0; k < len; ++k, ++pos)
 				callback(pos, payload);
 		} else {
@@ -260,10 +260,9 @@ void ewah_each_bit(struct ewah_bitmap *self, void (*callback)(size_t, void*), vo
 		++pointer;
 
 		for (k = 0; k < rlw_get_literal_words(word); ++k) {
-			int c;
 
 			/* todo: zero count optimization */
-			for (c = 0; c < BITS_IN_EWORD; ++c, ++pos) {
+			for (int c = 0; c < BITS_IN_EWORD; ++c, ++pos) {
 				if ((self->buffer[pointer] & ((eword_t)1 << c)) != 0)
 					callback(pos, payload);
 			}
@@ -332,6 +331,7 @@ static void read_new_rlw(struct ewah_iterator *it)
 			return;
 		}
 	}
+	
 }
 
 int ewah_iterator_next(eword_t *next, struct ewah_iterator *it)
@@ -419,9 +419,8 @@ void ewah_xor(
 			rlw_j.rlw.literal_words);
 
 		if (literals) {
-			size_t k;
 
-			for (k = 0; k < literals; ++k) {
+			for (size_t k = 0; k < literals; ++k) {
 				ewah_add(out,
 					rlw_i.buffer[rlw_i.literal_word_start + k] ^
 					rlw_j.buffer[rlw_j.literal_word_start + k]
