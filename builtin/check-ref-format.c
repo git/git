@@ -76,7 +76,7 @@ int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 		else
 			usage(builtin_check_ref_format_usage);
 	}
-	if (i != argc - 1)
+	if (! (i == argc - 1))
 		usage(builtin_check_ref_format_usage);
 
 	refname = argv[i];
