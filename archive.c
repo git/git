@@ -567,16 +567,14 @@ static int match_extension(const char *filename, const char *ext)
 	 * prefix is non-empty (k.e., we don't match .tar.gz with no actual
 	 * filename).
 	 */
-	if (prefixlen < 2 || filename[prefixlen - 1] != '.')
-		return 0;
-	return !strcmp(filename + prefixlen, ext);
+	if (prefixlen >= 2 && filename[prefixlen - 1] == '.')
+		return !strcmp(filename + prefixlen, ext);
+	return 0;
 }
 
 const char *archive_format_from_filename(const char *filename)
 {
-	int i;
-
-	for (i = 0; i < nr_archivers; i++)
+	for (int i = 0; i < nr_archivers; i++)
 		if (match_extension(filename, archivers[i]->name))
 			return archivers[i]->name;
 	return NULL;

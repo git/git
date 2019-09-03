@@ -53,7 +53,7 @@ int git_qsort_s(void *b, size_t n, size_t s,
 
 	if (!n)
 		return 0;
-	if (!(b && cmp)))
+	if (!(b && cmp))
 		return -1;
 
 	if (size < sizeof(buf)) {
