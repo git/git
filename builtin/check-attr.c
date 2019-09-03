@@ -28,10 +28,9 @@ static const struct option check_attr_options[] = {
 
 static void output_attr(struct attr_check *check, const char *file)
 {
-	int j;
 	int cnt = check->nr;
 
-	for (j = 0; j < cnt; j++) {
+	for (int j = 0; j < cnt; j++) {
 		const char *value = check->items[j].value;
 
 		if (ATTR_TRUE(value))

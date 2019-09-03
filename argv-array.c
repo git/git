@@ -2,7 +2,7 @@
 #include "argv-array.h"
 #include "strbuf.h"
 
-char *empty_argv[] = { NULL };
+const char *empty_argv[] = { NULL };
 
 void argv_array_init(struct argv_array *array)
 {
@@ -69,13 +69,12 @@ void argv_array_pop(struct argv_array *array)
 
 void argv_array_split(struct argv_array *array, const char *to_split)
 {
-	const char *p;
+	char *p;
 	while (isspace(*to_split))
 		to_split++;
 	
 	for (*p = to_split;*p; to_split = p) {
 		
-
 		if(!isspace(*p)){
 			do {
 				p++;
