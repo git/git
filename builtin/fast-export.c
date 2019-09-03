@@ -665,6 +665,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		switch(reencode_mode) {
 		case REENCODE_YES:
 			reencoded = reencode_string(message, "UTF-8", encoding);
+			break;
 		case REENCODE_NO:
 			break;
 		case REENCODE_ABORT:
@@ -895,7 +896,9 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 
 static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 {
-	for (int i = 0; i < info->nr; i++) {
+	int i;
+
+	for (i = 0; i < info->nr; i++) {
 		struct rev_cmdline_entry *e = info->rev + i;
 		struct object_id oid;
 		struct commit *commit;
@@ -954,8 +957,9 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 static void handle_tags_and_duplicates(struct string_list *extras)
 {
 	struct commit *commit;
+	int i;
 
-	for (int i = extras->nr - 1; i >= 0; i--) {
+	for (i = extras->nr - 1; i >= 0; i--) {
 		const char *name = extras->items[i].string;
 		struct object *object = extras->items[i].util;
 		int mark;

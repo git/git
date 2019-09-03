@@ -180,7 +180,7 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 {
 	struct dir_iterator_int *iter = (struct dir_iterator_int *)dir_iterator;
 
-	while (iter->levels_nr) {
+	for (; iter->levels_nr; iter->levels_nr--) {
 		struct dir_iterator_level *level =
 			&iter->levels[iter->levels_nr - 1];
 
@@ -191,7 +191,6 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 			warning_errno("error closing directory '%s'",
 				      iter->base.path.buf);
 		}
-		iter->levels_nr--;
 	}
 
 	free(iter->levels);
@@ -217,16 +216,19 @@ struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
 	 * Note: stat already checks for NULL or empty strings and
 	 * inexistent paths.
 	 */
-	if (stat(iter->base.path.buf, &iter->base.st) >= 0) {
-		if (S_ISDIR(iter->base.st.st_mode)) {
-			return dir_iterator;
-		}
-		saved_errno = ENOTDIR;
-	}
-	else{
+	if (stat(iter->base.path.buf, &iter->base.st) < 0) {
 		saved_errno = errno;
+		goto error_out;
 	}
 
+	if (!S_ISDIR(iter->base.st.st_mode)) {
+		saved_errno = ENOTDIR;
+		goto error_out;
+	}
+
+	return dir_iterator;
+
+error_out:
 	dir_iterator_abort(dir_iterator);
 	errno = saved_errno;
 	return NULL;

@@ -680,7 +680,7 @@ static void update_remote_refs(const struct ref *refs,
 
 		opt.transport = transport;
 		opt.progress = transport->progress;
-		opt.check_refs_only = check_refs_only != 0;
+		opt.check_refs_only = !!check_refs_only;
 
 		if (check_connected(iterate_ref_map, &rm, &opt))
 			die(_("remote did not send all necessary objects"));
@@ -825,7 +825,9 @@ static int write_one_config(const char *key, const char *value, void *data)
 
 static void write_config(struct string_list *config)
 {
-	for (int i = 0; i < config->nr; i++) {
+	int i;
+
+	for (i = 0; i < config->nr; i++) {
 		if (git_config_parse_parameter(config->items[i].string,
 					       write_one_config, NULL) < 0)
 			die(_("unable to write parameters to config file"));
@@ -1198,7 +1200,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				break;
 			}
 
-		if (!(is_local || complete_refs_before_fetch))
+		if (!is_local && !complete_refs_before_fetch)
 			transport_fetch_refs(transport, mapped_refs);
 
 		remote_head = find_ref_by_name(refs, "HEAD");
