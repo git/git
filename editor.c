@@ -21,12 +21,13 @@ const char *git_editor(void)
 
 	if(!editor){
 
-	if (editor_program)
+	if (editor_program){
 		return editor_program;
 	if (!terminal_is_dumb)
 		editor = getenv("VISUAL");
 	if (!editor)
 		editor = getenv("EDITOR");
+
 	if (!editor && terminal_is_dumb)
 		return NULL;
 
