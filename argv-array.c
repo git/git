@@ -69,21 +69,26 @@ void argv_array_pop(struct argv_array *array)
 
 void argv_array_split(struct argv_array *array, const char *to_split)
 {
-	char *p;
 	while (isspace(*to_split))
 		to_split++;
 	
-	for (*p = to_split;*p; to_split = p) {
+	for (;;) {	
+ 		const char *p = to_split;
+ 		
+		if (!*p)
+			break;
 		
-		if(!isspace(*p)){
-			do {
-				p++;
-			}while (*p && !isspace(*p));
-		} 
+		if (!isspace(*p)){
+		do{
+			p++;
+		} while (*p && !isspace(*p));
+	}
 		argv_array_push_nodup(array, xstrndup(to_split, p - to_split));
 
-		while (isspace(*p))
+
+ 		while (isspace(*p))	
 			p++;
+		to_split = p;
 	}
 }
 
