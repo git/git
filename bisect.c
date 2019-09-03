@@ -1067,6 +1067,7 @@ static int mark_for_removal(const char *refname, const struct object_id *oid,
 
 int bisect_clean_state(void)
 {
+	int result = 0;
 	/* There may be some refs packed during bisection */
 	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
 	for_each_ref_in("refs/bisect", mark_for_removal, (void *) &refs_for_removal);
@@ -1088,5 +1089,5 @@ int bisect_clean_state(void)
 	 */
 	unlink_or_warn(git_path_bisect_start());
 
-	return 0;
+	return result;
 }
