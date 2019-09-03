@@ -106,7 +106,7 @@ static int check_ignore(struct dir_struct *dir,
 		pattern = NULL;
 		if (!seen[i]) {
 			int dtype = DT_UNKNOWN;
-			pattern = last_exclude_matching(dir, &the_index,
+			pattern = last_matching_pattern(dir, &the_index,
 							full_path, &dtype);
 		}
 		if (!quiet && (pattern || show_non_matching))

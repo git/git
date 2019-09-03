@@ -482,7 +482,7 @@ static void filter_sparse_oid__init(
 	struct filter *filter)
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
-	if (add_excludes_from_blob_to_list(filter_options->sparse_oid_value,
+	if (add_patterns_from_blob_to_list(filter_options->sparse_oid_value,
 					   NULL, 0, &d->pl) < 0)
 		die("could not load filter specification");
 

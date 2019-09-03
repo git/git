@@ -18,7 +18,7 @@ struct dir_entry {
 
 struct path_pattern {
 	/*
-	 * This allows callers of last_exclude_matching() etc.
+	 * This allows callers of last_matching_pattern() etc.
 	 * to determine the origin of the matching pattern.
 	 */
 	struct pattern_list *pl;
@@ -248,26 +248,26 @@ int match_pathname(const char *, int,
 		   const char *, int,
 		   const char *, int, int, unsigned);
 
-struct path_pattern *last_exclude_matching(struct dir_struct *dir,
-				      struct index_state *istate,
-				      const char *name, int *dtype);
+struct path_pattern *last_matching_pattern(struct dir_struct *dir,
+					   struct index_state *istate,
+					   const char *name, int *dtype);
 
 int is_excluded(struct dir_struct *dir,
 		struct index_state *istate,
 		const char *name, int *dtype);
 
-struct pattern_list *add_exclude_list(struct dir_struct *dir,
+struct pattern_list *add_pattern_list(struct dir_struct *dir,
 				      int group_type, const char *src);
-int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
+int add_patterns_from_file_to_list(const char *fname, const char *base, int baselen,
 				   struct pattern_list *pl, struct  index_state *istate);
-void add_excludes_from_file(struct dir_struct *, const char *fname);
-int add_excludes_from_blob_to_list(struct object_id *oid,
+void add_patterns_from_file(struct dir_struct *, const char *fname);
+int add_patterns_from_blob_to_list(struct object_id *oid,
 				   const char *base, int baselen,
 				   struct pattern_list *pl);
-void parse_exclude_pattern(const char **string, int *patternlen, unsigned *flags, int *nowildcardlen);
-void add_exclude(const char *string, const char *base,
+void parse_path_pattern(const char **string, int *patternlen, unsigned *flags, int *nowildcardlen);
+void add_pattern(const char *string, const char *base,
 		 int baselen, struct pattern_list *pl, int srcpos);
-void clear_exclude_list(struct pattern_list *pl);
+void clear_pattern_list(struct pattern_list *pl);
 void clear_directory(struct dir_struct *dir);
 
 int repo_file_exists(struct repository *repo, const char *path);
