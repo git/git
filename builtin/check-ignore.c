@@ -34,8 +34,8 @@ static const struct option check_ignore_options[] = {
 
 static void output_pattern(const char *path, struct path_pattern *pattern)
 {
-	char *bang  = (pattern && pattern->flags & EXC_FLAG_NEGATIVE)  ? "!" : "";
-	char *slash = (pattern && pattern->flags & EXC_FLAG_MUSTBEDIR) ? "/" : "";
+	char *bang  = (pattern && pattern->flags & PATTERN_FLAG_NEGATIVE)  ? "!" : "";
+	char *slash = (pattern && pattern->flags & PATTERN_FLAG_MUSTBEDIR) ? "/" : "";
 	if (!nul_term_line) {
 		if (!verbose) {
 			write_name_quoted(path, stdout, '\n');

@@ -11,10 +11,10 @@ struct dir_entry {
 	char name[FLEX_ARRAY]; /* more */
 };
 
-#define EXC_FLAG_NODIR 1
-#define EXC_FLAG_ENDSWITH 4
-#define EXC_FLAG_MUSTBEDIR 8
-#define EXC_FLAG_NEGATIVE 16
+#define PATTERN_FLAG_NODIR 1
+#define PATTERN_FLAG_ENDSWITH 4
+#define PATTERN_FLAG_MUSTBEDIR 8
+#define PATTERN_FLAG_NEGATIVE 16
 
 struct path_pattern {
 	/*
@@ -28,7 +28,7 @@ struct path_pattern {
 	int nowildcardlen;
 	const char *base;
 	int baselen;
-	unsigned flags;		/* EXC_FLAG_* */
+	unsigned flags;		/* PATTERN_FLAG_* */
 
 	/*
 	 * Counting starts from 1 for line numbers in ignore files,

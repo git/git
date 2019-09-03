@@ -571,20 +571,20 @@ void parse_exclude_pattern(const char **pattern,
 
 	*flags = 0;
 	if (*p == '!') {
-		*flags |= EXC_FLAG_NEGATIVE;
+		*flags |= PATTERN_FLAG_NEGATIVE;
 		p++;
 	}
 	len = strlen(p);
 	if (len && p[len - 1] == '/') {
 		len--;
-		*flags |= EXC_FLAG_MUSTBEDIR;
+		*flags |= PATTERN_FLAG_MUSTBEDIR;
 	}
 	for (i = 0; i < len; i++) {
 		if (p[i] == '/')
 			break;
 	}
 	if (i == len)
-		*flags |= EXC_FLAG_NODIR;
+		*flags |= PATTERN_FLAG_NODIR;
 	*nowildcardlen = simple_length(p);
 	/*
 	 * we should have excluded the trailing slash from 'p' too,
@@ -594,7 +594,7 @@ void parse_exclude_pattern(const char **pattern,
 	if (*nowildcardlen > len)
 		*nowildcardlen = len;
 	if (*p == '*' && no_wildcard(p + 1))
-		*flags |= EXC_FLAG_ENDSWITH;
+		*flags |= PATTERN_FLAG_ENDSWITH;
 	*pattern = p;
 	*patternlen = len;
 }
@@ -608,7 +608,7 @@ void add_exclude(const char *string, const char *base,
 	int nowildcardlen;
 
 	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
-	if (flags & EXC_FLAG_MUSTBEDIR) {
+	if (flags & PATTERN_FLAG_MUSTBEDIR) {
 		FLEXPTR_ALLOC_MEM(pattern, pattern, string, patternlen);
 	} else {
 		pattern = xmalloc(sizeof(*pattern));
@@ -940,7 +940,7 @@ int match_basename(const char *basename, int basenamelen,
 		if (patternlen == basenamelen &&
 		    !fspathncmp(pattern, basename, basenamelen))
 			return 1;
-	} else if (flags & EXC_FLAG_ENDSWITH) {
+	} else if (flags & PATTERN_FLAG_ENDSWITH) {
 		/* "*literal" matching against "fooliteral" */
 		if (patternlen - 1 <= basenamelen &&
 		    !fspathncmp(pattern + 1,
@@ -1039,14 +1039,14 @@ static struct path_pattern *last_exclude_matching_from_list(const char *pathname
 		const char *exclude = pattern->pattern;
 		int prefix = pattern->nowildcardlen;
 
-		if (pattern->flags & EXC_FLAG_MUSTBEDIR) {
+		if (pattern->flags & PATTERN_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
 				*dtype = get_dtype(NULL, istate, pathname, pathlen);
 			if (*dtype != DT_DIR)
 				continue;
 		}
 
-		if (pattern->flags & EXC_FLAG_NODIR) {
+		if (pattern->flags & PATTERN_FLAG_NODIR) {
 			if (match_basename(basename,
 					   pathlen - (basename - pathname),
 					   exclude, prefix, pattern->patternlen,
@@ -1083,7 +1083,7 @@ int is_excluded_from_list(const char *pathname,
 	pattern = last_exclude_matching_from_list(pathname, pathlen, basename,
 						  dtype, pl, istate);
 	if (pattern)
-		return pattern->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
+		return pattern->flags & PATTERN_FLAG_NEGATIVE ? 0 : 1;
 	return -1; /* undecided */
 }
 
@@ -1198,7 +1198,7 @@ static void prep_exclude(struct dir_struct *dir,
 				dir->basebuf.buf + current, &dt);
 			dir->basebuf.buf[stk->baselen - 1] = '/';
 			if (dir->pattern &&
-			    dir->pattern->flags & EXC_FLAG_NEGATIVE)
+			    dir->pattern->flags & PATTERN_FLAG_NEGATIVE)
 				dir->pattern = NULL;
 			if (dir->pattern) {
 				dir->exclude_stack = stk;
@@ -1298,7 +1298,7 @@ int is_excluded(struct dir_struct *dir, struct index_state *istate,
 	struct path_pattern *pattern =
 		last_exclude_matching(dir, istate, pathname, dtype_p);
 	if (pattern)
-		return pattern->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
+		return pattern->flags & PATTERN_FLAG_NEGATIVE ? 0 : 1;
 	return 0;
 }
 
