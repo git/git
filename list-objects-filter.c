@@ -347,7 +347,7 @@ struct frame {
 };
 
 struct filter_sparse_data {
-	struct exclude_list el;
+	struct pattern_list pl;
 
 	size_t nr, alloc;
 	struct frame *array_frame;
@@ -374,7 +374,7 @@ static enum list_objects_filter_result filter_sparse(
 		assert(obj->type == OBJ_TREE);
 		dtype = DT_DIR;
 		val = is_excluded_from_list(pathname, strlen(pathname),
-					    filename, &dtype, &filter_data->el,
+					    filename, &dtype, &filter_data->pl,
 					    r->index);
 		if (val < 0)
 			val = filter_data->array_frame[filter_data->nr - 1].defval;
@@ -436,7 +436,7 @@ static enum list_objects_filter_result filter_sparse(
 
 		dtype = DT_REG;
 		val = is_excluded_from_list(pathname, strlen(pathname),
-					    filename, &dtype, &filter_data->el,
+					    filename, &dtype, &filter_data->pl,
 					    r->index);
 		if (val < 0)
 			val = frame->defval;
@@ -483,7 +483,7 @@ static void filter_sparse_oid__init(
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
 	if (add_excludes_from_blob_to_list(filter_options->sparse_oid_value,
-					   NULL, 0, &d->el) < 0)
+					   NULL, 0, &d->pl) < 0)
 		die("could not load filter specification");
 
 	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);

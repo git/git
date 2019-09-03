@@ -21,7 +21,7 @@ struct path_pattern {
 	 * This allows callers of last_exclude_matching() etc.
 	 * to determine the origin of the matching pattern.
 	 */
-	struct exclude_list *el;
+	struct pattern_list *pl;
 
 	const char *pattern;
 	int patternlen;
@@ -44,7 +44,7 @@ struct path_pattern {
  * can also be used to represent the list of --exclude values passed
  * via CLI args.
  */
-struct exclude_list {
+struct pattern_list {
 	int nr;
 	int alloc;
 
@@ -72,7 +72,7 @@ struct exclude_stack {
 
 struct exclude_list_group {
 	int nr, alloc;
-	struct exclude_list *el;
+	struct pattern_list *pl;
 };
 
 struct oid_stat {
@@ -232,7 +232,7 @@ int read_directory(struct dir_struct *, struct index_state *istate,
 
 int is_excluded_from_list(const char *pathname, int pathlen,
 			  const char *basename, int *dtype,
-			  struct exclude_list *el,
+			  struct pattern_list *pl,
 			  struct index_state *istate);
 struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 				  struct index_state *istate,
@@ -256,18 +256,18 @@ int is_excluded(struct dir_struct *dir,
 		struct index_state *istate,
 		const char *name, int *dtype);
 
-struct exclude_list *add_exclude_list(struct dir_struct *dir,
+struct pattern_list *add_exclude_list(struct dir_struct *dir,
 				      int group_type, const char *src);
 int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
-				   struct exclude_list *el, struct  index_state *istate);
+				   struct pattern_list *pl, struct  index_state *istate);
 void add_excludes_from_file(struct dir_struct *, const char *fname);
 int add_excludes_from_blob_to_list(struct object_id *oid,
 				   const char *base, int baselen,
-				   struct exclude_list *el);
+				   struct pattern_list *pl);
 void parse_exclude_pattern(const char **string, int *patternlen, unsigned *flags, int *nowildcardlen);
 void add_exclude(const char *string, const char *base,
-		 int baselen, struct exclude_list *el, int srcpos);
-void clear_exclude_list(struct exclude_list *el);
+		 int baselen, struct pattern_list *pl, int srcpos);
+void clear_exclude_list(struct pattern_list *pl);
 void clear_directory(struct dir_struct *dir);
 
 int repo_file_exists(struct repository *repo, const char *path);

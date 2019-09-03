@@ -41,7 +41,7 @@ static void output_pattern(const char *path, struct path_pattern *pattern)
 			write_name_quoted(path, stdout, '\n');
 		} else {
 			if (pattern) {
-				quote_c_style(pattern->el->src, NULL, stdout, 0);
+				quote_c_style(pattern->pl->src, NULL, stdout, 0);
 				printf(":%d:%s%s%s\t",
 				       pattern->srcpos,
 				       bang, pattern->pattern, slash);
@@ -58,7 +58,7 @@ static void output_pattern(const char *path, struct path_pattern *pattern)
 		} else {
 			if (pattern)
 				printf("%s%c%d%c%s%s%s%c%s%c",
-				       pattern->el->src, '\0',
+				       pattern->pl->src, '\0',
 				       pattern->srcpos, '\0',
 				       bang, pattern->pattern, slash, '\0',
 				       path, '\0');

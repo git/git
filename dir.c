@@ -600,7 +600,7 @@ void parse_exclude_pattern(const char **pattern,
 }
 
 void add_exclude(const char *string, const char *base,
-		 int baselen, struct exclude_list *el, int srcpos)
+		 int baselen, struct pattern_list *pl, int srcpos)
 {
 	struct path_pattern *pattern;
 	int patternlen;
@@ -620,9 +620,9 @@ void add_exclude(const char *string, const char *base,
 	pattern->baselen = baselen;
 	pattern->flags = flags;
 	pattern->srcpos = srcpos;
-	ALLOC_GROW(el->patterns, el->nr + 1, el->alloc);
-	el->patterns[el->nr++] = pattern;
-	pattern->el = el;
+	ALLOC_GROW(pl->patterns, pl->nr + 1, pl->alloc);
+	pl->patterns[pl->nr++] = pattern;
+	pattern->pl = pl;
 }
 
 static int read_skip_worktree_file_from_index(const struct index_state *istate,
@@ -643,19 +643,19 @@ static int read_skip_worktree_file_from_index(const struct index_state *istate,
 }
 
 /*
- * Frees memory within el which was allocated for exclude patterns and
- * the file buffer.  Does not free el itself.
+ * Frees memory within pl which was allocated for exclude patterns and
+ * the file buffer.  Does not free pl itself.
  */
-void clear_exclude_list(struct exclude_list *el)
+void clear_exclude_list(struct pattern_list *pl)
 {
 	int i;
 
-	for (i = 0; i < el->nr; i++)
-		free(el->patterns[i]);
-	free(el->patterns);
-	free(el->filebuf);
+	for (i = 0; i < pl->nr; i++)
+		free(pl->patterns[i]);
+	free(pl->patterns);
+	free(pl->filebuf);
 
-	memset(el, 0, sizeof(*el));
+	memset(pl, 0, sizeof(*pl));
 }
 
 static void trim_trailing_spaces(char *buf)
@@ -764,19 +764,19 @@ static void invalidate_directory(struct untracked_cache *uc,
 
 static int add_excludes_from_buffer(char *buf, size_t size,
 				    const char *base, int baselen,
-				    struct exclude_list *el);
+				    struct pattern_list *pl);
 
 /*
  * Given a file with name "fname", read it (either from disk, or from
  * an index if 'istate' is non-null), parse it and store the
- * exclude rules in "el".
+ * exclude rules in "pl".
  *
  * If "ss" is not NULL, compute SHA-1 of the exclude file and fill
  * stat data from disk (only valid if add_excludes returns zero). If
  * ss_valid is non-zero, "ss" must contain good value as input.
  */
 static int add_excludes(const char *fname, const char *base, int baselen,
-			struct exclude_list *el, struct index_state *istate,
+			struct pattern_list *pl, struct index_state *istate,
 			struct oid_stat *oid_stat)
 {
 	struct stat st;
@@ -837,21 +837,21 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		}
 	}
 
-	add_excludes_from_buffer(buf, size, base, baselen, el);
+	add_excludes_from_buffer(buf, size, base, baselen, pl);
 	return 0;
 }
 
 static int add_excludes_from_buffer(char *buf, size_t size,
 				    const char *base, int baselen,
-				    struct exclude_list *el)
+				    struct pattern_list *pl)
 {
 	int i, lineno = 1;
 	char *entry;
 
-	el->filebuf = buf;
+	pl->filebuf = buf;
 
 	if (skip_utf8_bom(&buf, size))
-		size -= buf - el->filebuf;
+		size -= buf - pl->filebuf;
 
 	entry = buf;
 
@@ -860,7 +860,7 @@ static int add_excludes_from_buffer(char *buf, size_t size,
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
 				trim_trailing_spaces(entry);
-				add_exclude(entry, base, baselen, el, lineno);
+				add_exclude(entry, base, baselen, pl, lineno);
 			}
 			lineno++;
 			entry = buf + i + 1;
@@ -870,16 +870,16 @@ static int add_excludes_from_buffer(char *buf, size_t size,
 }
 
 int add_excludes_from_file_to_list(const char *fname, const char *base,
-				   int baselen, struct exclude_list *el,
+				   int baselen, struct pattern_list *pl,
 				   struct index_state *istate)
 {
-	return add_excludes(fname, base, baselen, el, istate, NULL);
+	return add_excludes(fname, base, baselen, pl, istate, NULL);
 }
 
 int add_excludes_from_blob_to_list(
 	struct object_id *oid,
 	const char *base, int baselen,
-	struct exclude_list *el)
+	struct pattern_list *pl)
 {
 	char *buf;
 	size_t size;
@@ -889,22 +889,22 @@ int add_excludes_from_blob_to_list(
 	if (r != 1)
 		return r;
 
-	add_excludes_from_buffer(buf, size, base, baselen, el);
+	add_excludes_from_buffer(buf, size, base, baselen, pl);
 	return 0;
 }
 
-struct exclude_list *add_exclude_list(struct dir_struct *dir,
+struct pattern_list *add_exclude_list(struct dir_struct *dir,
 				      int group_type, const char *src)
 {
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	struct exclude_list_group *group;
 
 	group = &dir->exclude_list_group[group_type];
-	ALLOC_GROW(group->el, group->nr + 1, group->alloc);
-	el = &group->el[group->nr++];
-	memset(el, 0, sizeof(*el));
-	el->src = src;
-	return el;
+	ALLOC_GROW(group->pl, group->nr + 1, group->alloc);
+	pl = &group->pl[group->nr++];
+	memset(pl, 0, sizeof(*pl));
+	pl->src = src;
+	return pl;
 }
 
 /*
@@ -913,7 +913,7 @@ struct exclude_list *add_exclude_list(struct dir_struct *dir,
 static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
 				     struct oid_stat *oid_stat)
 {
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	/*
 	 * catch setup_standard_excludes() that's called before
 	 * dir->untracked is assigned. That function behaves
@@ -921,8 +921,8 @@ static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
 	 */
 	if (!dir->untracked)
 		dir->unmanaged_exclude_files++;
-	el = add_exclude_list(dir, EXC_FILE, fname);
-	if (add_excludes(fname, "", 0, el, NULL, oid_stat) < 0)
+	pl = add_exclude_list(dir, EXC_FILE, fname);
+	if (add_excludes(fname, "", 0, pl, NULL, oid_stat) < 0)
 		die(_("cannot use %s as an exclude file"), fname);
 }
 
@@ -1025,17 +1025,17 @@ static struct path_pattern *last_exclude_matching_from_list(const char *pathname
 						       int pathlen,
 						       const char *basename,
 						       int *dtype,
-						       struct exclude_list *el,
+						       struct pattern_list *pl,
 						       struct index_state *istate)
 {
 	struct path_pattern *res = NULL; /* undecided */
 	int i;
 
-	if (!el->nr)
+	if (!pl->nr)
 		return NULL;	/* undefined */
 
-	for (i = el->nr - 1; 0 <= i; i--) {
-		struct path_pattern *pattern = el->patterns[i];
+	for (i = pl->nr - 1; 0 <= i; i--) {
+		struct path_pattern *pattern = pl->patterns[i];
 		const char *exclude = pattern->pattern;
 		int prefix = pattern->nowildcardlen;
 
@@ -1077,11 +1077,11 @@ static struct path_pattern *last_exclude_matching_from_list(const char *pathname
  */
 int is_excluded_from_list(const char *pathname,
 			  int pathlen, const char *basename, int *dtype,
-			  struct exclude_list *el, struct index_state *istate)
+			  struct pattern_list *pl, struct index_state *istate)
 {
 	struct path_pattern *pattern;
 	pattern = last_exclude_matching_from_list(pathname, pathlen, basename,
-						  dtype, el, istate);
+						  dtype, pl, istate);
 	if (pattern)
 		return pattern->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return -1; /* undecided */
@@ -1100,7 +1100,7 @@ static struct path_pattern *last_exclude_matching_from_lists(
 		for (j = group->nr - 1; j >= 0; j--) {
 			pattern = last_exclude_matching_from_list(
 				pathname, pathlen, basename, dtype_p,
-				&group->el[j], istate);
+				&group->pl[j], istate);
 			if (pattern)
 				return pattern;
 		}
@@ -1117,7 +1117,7 @@ static void prep_exclude(struct dir_struct *dir,
 			 const char *base, int baselen)
 {
 	struct exclude_list_group *group;
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	struct exclude_stack *stk = NULL;
 	struct untracked_cache_dir *untracked;
 	int current;
@@ -1133,11 +1133,11 @@ static void prep_exclude(struct dir_struct *dir,
 		if (stk->baselen <= baselen &&
 		    !strncmp(dir->basebuf.buf, base, stk->baselen))
 			break;
-		el = &group->el[dir->exclude_stack->exclude_ix];
+		pl = &group->pl[dir->exclude_stack->exclude_ix];
 		dir->exclude_stack = stk->prev;
 		dir->pattern = NULL;
-		free((char *)el->src); /* see strbuf_detach() below */
-		clear_exclude_list(el);
+		free((char *)pl->src); /* see strbuf_detach() below */
+		clear_exclude_list(pl);
 		free(stk);
 		group->nr--;
 	}
@@ -1184,7 +1184,7 @@ static void prep_exclude(struct dir_struct *dir,
 		stk->baselen = cp - base;
 		stk->exclude_ix = group->nr;
 		stk->ucd = untracked;
-		el = add_exclude_list(dir, EXC_DIRS, NULL);
+		pl = add_exclude_list(dir, EXC_DIRS, NULL);
 		strbuf_add(&dir->basebuf, base + current, stk->baselen - current);
 		assert(stk->baselen == dir->basebuf.len);
 
@@ -1234,8 +1234,8 @@ static void prep_exclude(struct dir_struct *dir,
 			struct strbuf sb = STRBUF_INIT;
 			strbuf_addbuf(&sb, &dir->basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
-			el->src = strbuf_detach(&sb, NULL);
-			add_excludes(el->src, el->src, stk->baselen, el, istate,
+			pl->src = strbuf_detach(&sb, NULL);
+			add_excludes(pl->src, pl->src, stk->baselen, pl, istate,
 				     untracked ? &oid_stat : NULL);
 		}
 		/*
@@ -2530,18 +2530,18 @@ void clear_directory(struct dir_struct *dir)
 {
 	int i, j;
 	struct exclude_list_group *group;
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	struct exclude_stack *stk;
 
 	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
 		group = &dir->exclude_list_group[i];
 		for (j = 0; j < group->nr; j++) {
-			el = &group->el[j];
+			pl = &group->pl[j];
 			if (i == EXC_DIRS)
-				free((char *)el->src);
-			clear_exclude_list(el);
+				free((char *)pl->src);
+			clear_exclude_list(pl);
 		}
-		free(group->el);
+		free(group->pl);
 	}
 
 	stk = dir->exclude_stack;
