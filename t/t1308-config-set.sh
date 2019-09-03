@@ -166,14 +166,13 @@ test_expect_success 'find value with highest priority from a configset' '
 '
 
 test_expect_success 'find value_list for a key from a configset' '
-	cat >except <<-\EOF &&
-	sam
-	bat
-	hask
+	cat >expect <<-\EOF &&
 	lama
 	ball
+	bat
+	hask
 	EOF
-	test-tool config configset_get_value case.baz config2 .git/config >actual &&
+	test-tool config configset_get_value_multi case.baz config2 .git/config >actual &&
 	test_cmp expect actual
 '
 
