@@ -206,9 +206,7 @@ static void add_merge_config(struct ref **head,
 		           struct branch *branch,
 		           struct ref ***tail)
 {
-	int i;
-
-	for (i = 0; i < branch->merge_nr; i++) {
+	for (int i = 0; i < branch->merge_nr; i++) {
 		struct ref *rm, **old_tail = *tail;
 		struct refspec_item refspec;
 
@@ -632,8 +630,8 @@ static void prepare_format_display(struct ref *ref_map)
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->status == REF_STATUS_REJECT_SHALLOW ||
-		    !rm->peer_ref ||
-		    !strcmp(rm->name, "HEAD"))
+		    !(rm->peer_ref &&
+		    strcmp(rm->name, "HEAD")))
 			continue;
 
 		adjust_refcol_width(rm);
@@ -979,7 +977,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 					else
 						fputc(url[i], fp);
 				fputc('\n', fp);
-				break;
 			default:
 				/* do not write anything to FETCH_HEAD */
 				break;

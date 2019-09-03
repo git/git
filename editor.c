@@ -11,7 +11,7 @@
 int is_terminal_dumb(void)
 {
 	const char *terminal = getenv("TERM");
-	return !terminal || !strcmp(terminal, "dumb");
+	return !(terminal && strcmp(terminal, "dumb"));
 }
 
 const char *git_editor(void)
@@ -19,18 +19,23 @@ const char *git_editor(void)
 	const char *editor = getenv("GIT_EDITOR");
 	int terminal_is_dumb = is_terminal_dumb();
 
-	if (!editor && editor_program)
+	if (!editor){
+
+	if (editor_program)
 		editor = editor_program;
-	if (!editor && !terminal_is_dumb)
-		editor = getenv("VISUAL");
-	if (!editor)
-		editor = getenv("EDITOR");
-
-	if (!editor && terminal_is_dumb)
+	else if (terminal_is_dumb){
 		return NULL;
-
-	if (!editor)
+	}
+	else {
+		editor = getenv("VISUAL");
+		if (!editor)
+		editor = getenv("EDITOR");
+		if (!editor)
 		editor = DEFAULT_EDITOR;
+		
+	}
+	}
+
 
 	return editor;
 }
