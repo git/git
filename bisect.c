@@ -271,7 +271,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	struct commit_list *p = list;
 
 
-	for (p; p = p->next) {
+	while (p) {
 		struct commit *commit = p->item;
 		unsigned flags = commit->object.flags;
 
@@ -925,22 +925,22 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
 	const char *filename = git_path_bisect_terms();
 	FILE *fp = fopen(filename, "r");
 
-	if (!fp) {
-		if (errno == ENOENT) {
-			*read_bad = "bad";
-			*read_good = "good";
-			return;
-		} else {
-			die_errno(_("could not read file '%s'"), filename);
-		}
-	} else {
-		strbuf_getline_lf(&str, fp);
-		*read_bad = strbuf_detach(&str, NULL);
-		strbuf_getline_lf(&str, fp);
-		*read_good = strbuf_detach(&str, NULL);
-	}
-	strbuf_release(&str);
-	fclose(fp);
+    if (fp != NULL) {
+        strbuf_getline_lf(&str, fp);
+        *read_bad = strbuf_detach(&str, NULL);
+        strbuf_getline_lf(&str, fp);
+        *read_good = strbuf_detach(&str, NULL);
+    } else if (errno == ENOENT) {
+            *read_bad = "bad";
+            *read_good = "good";
+            return;
+        }
+    else {
+            die_errno(_("could not read file '%s'"), filename);
+        }
+
+    strbuf_release(&str);
+    fclose(fp);
 }
 
 /*
@@ -1056,7 +1056,7 @@ int estimate_bisect_steps(int all)
         return (e < 3 * x) ? n : n - 1;
     }
 
-    return 0
+    return 0;
 }
 
 static int mark_for_removal(const char *refname, const struct object_id *oid,
