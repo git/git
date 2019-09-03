@@ -247,9 +247,11 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 		revs->combine_merges = revs->dense_combined_merges = 1;
 
 	setup_work_tree();
-    if (read_cache_preload(&revs->diffopt.pathspec) >= 0) return run_diff_files(revs, options);
-    perror("read_cache_preload");
-    return -1;
+	if (read_cache_preload(&revs->diffopt.pathspec) < 0) {
+		perror("read_cache_preload");
+		return -1;
+	}
+	return run_diff_files(revs, options);
 }
 
 int cmd_diff(int argc, const char **argv, const char *prefix)

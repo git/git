@@ -351,7 +351,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		slot = commit_names_peek(&commit_names, c);
 		n = slot ? *slot : NULL;
 		if (n) {
-			if (!(tags || all) && n->prio < 2) {
+			if (!tags && !all && n->prio < 2) {
 				unannotated_cnt++;
 			} else if (match_cnt < max_candidates) {
 				struct possible_tag *t = &all_matches[match_cnt++];

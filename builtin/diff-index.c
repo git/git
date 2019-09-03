@@ -31,11 +31,11 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
-        if (strcmp(arg, "--cached"))
-            usage(diff_cache_usage);
-        else
-            cached = 1;
-    }
+		if (!strcmp(arg, "--cached"))
+			cached = 1;
+		else
+			usage(diff_cache_usage);
+	}
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
 
