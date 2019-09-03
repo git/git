@@ -620,7 +620,7 @@ static int detect_patch_format(const char **paths)
 	else if (l1.len && is_mail(fp)) {
 		ret = PATCH_FORMAT_MBOX;
 	}
-	
+done:
 	fclose(fp);
 	strbuf_release(&l1);
 	strbuf_release(&l2);
