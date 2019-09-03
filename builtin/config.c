@@ -390,10 +390,11 @@ static char *normalize_value(const char *key, const char *value)
 	if (type == TYPE_BOOL_OR_INT) {
 		int is_bool, v;
 		v = git_config_bool_or_int(key, value, &is_bool);
-        if (is_bool)
-            return xstrdup(v ? "true" : "false");
-        return xstrfmt("%d", v);
-    }
+		if (!is_bool)
+			return xstrfmt("%d", v);
+		else
+			return xstrdup(v ? "true" : "false");
+	}
 	if (type == TYPE_COLOR) {
 		char v[COLOR_MAXLEN];
 		if (git_config_color(v, key, value))

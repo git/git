@@ -843,7 +843,7 @@ static void interactive_main_loop(void)
 				FREE_AND_NULL(chosen);
 				if (!del_list.nr) {
 					clean_print_color(CLEAN_COLOR_ERROR);
-					printf_ln(_("No more files to clean; exiting."));
+					printf_ln(_("No more files to clean, exiting."));
 					clean_print_color(CLEAN_COLOR_RESET);
 					break;
 				}

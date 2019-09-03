@@ -2141,7 +2141,9 @@ enum resume_mode {
 
 static int git_am_config(const char *k, const char *v, void *cb)
 {
-	int status = git_gpg_config(k, v, NULL);
+	int status;
+
+	status = git_gpg_config(k, v, NULL);
 	if (status)
 		return status;
 

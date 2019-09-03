@@ -190,28 +190,28 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 	}
 
 	/* Is it annotated? */
-    if (!!peel_ref(path, &peeled)) {
-        oidcpy(&peeled, oid);
-        is_annotated = 0;
-    } else {
-        is_annotated = !oideq(oid, &peeled);
-    }
+	if (!peel_ref(path, &peeled)) {
+		is_annotated = !oideq(oid, &peeled);
+	} else {
+		oidcpy(&peeled, oid);
+		is_annotated = 0;
+	}
 
-    /*
-     * By default, we only use annotated tags, but with --tags
-     * we fall back to lightweight ones (even without --tags,
-     * we still remember lightweight ones, only to give hints
-     * in an error message).  --all allows any refs to be used.
-     */
-    if (is_annotated)
-        prio = 2;
-    else if (is_tag)
-        prio = 1;
-    else
-        prio = 0;
+	/*
+	 * By default, we only use annotated tags, but with --tags
+	 * we fall back to lightweight ones (even without --tags,
+	 * we still remember lightweight ones, only to give hints
+	 * in an error message).  --all allows any refs to be used.
+	 */
+	if (is_annotated)
+		prio = 2;
+	else if (is_tag)
+		prio = 1;
+	else
+		prio = 0;
 
-    add_to_known_names(all ? path + 5 : path + 10, &peeled, prio, oid);
-    return 0;
+	add_to_known_names(all ? path + 5 : path + 10, &peeled, prio, oid);
+	return 0;
 }
 
 struct possible_tag {
@@ -330,7 +330,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		struct commit_name *n;
 
 		init_commit_names(&commit_names);
-		for (n = hashmap_iter_first(&names, &iter); n; n = hashmap_iter_next(&iter)) {
+		n = hashmap_iter_first(&names, &iter);
+		for (; n; n = hashmap_iter_next(&iter)) {
 			c = lookup_commit_reference_gently(the_repository,
 							   &n->peeled, 1);
 			if (c)

@@ -118,10 +118,10 @@ static void get_ac_line(const char *inbuf, const char *what,
 		goto error_out;
 	tmp += strlen(what);
 	endp = strchr(tmp, '\n');
-	if (endp)
-		len = endp - tmp;
-	else
+	if (!endp)
 		len = strlen(tmp);
+	else
+		len = endp - tmp;
 
 	if (split_ident_line(&ident, tmp, len)) {
 	error_out:
@@ -602,7 +602,9 @@ static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
 	const char *uniq = find_unique_abbrev(&suspect->commit->object.oid,
 					      auto_abbrev);
 	int len = strlen(uniq);
-	return auto_abbrev < len ? len : auto_abbrev;
+	if (auto_abbrev < len)
+		return len;
+	return auto_abbrev;
 }
 
 /*
@@ -1134,10 +1136,10 @@ parse_done:
 
 	stop_progress(&pi.progress);
 
-	if (incremental)
+	if (!incremental)
+		setup_pager();
+	else
 		return 0;
-	
-	setup_pager();
 
 	blame_sort_final(&sb);
 
