@@ -693,7 +693,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	    filter.no_commit)
 		list = 1;
 
-	if (delete != 0 + rename != 0 + copy != 0 + new_upstream != 0 + show_current !=0 +
+	if (!!delete + !!rename + !!copy + !!new_upstream + !!show_current +
 	    list + unset_upstream > 1)
 		usage_with_options(builtin_branch_usage, options);
 
