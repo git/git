@@ -4653,8 +4653,8 @@ static int apply_patch(struct apply_state *state,
 		int nr;
 
 		patch = xcalloc(1, sizeof(*patch));
-		patch->inaccurate_eof = !!(options & APPLY_OPT_INACCURATE_EOF);
-		patch->recount =  !!(options & APPLY_OPT_RECOUNT);
+		patch->inaccurate_eof = (options & APPLY_OPT_INACCURATE_EOF) !=0;
+		patch->recount =  (options & APPLY_OPT_RECOUNT) !=0;
 		nr = parse_chunk(state, buf.buf + offset, buf.len - offset, patch);
 		if (nr < 0) {
 			free_patch(patch);
@@ -4834,12 +4834,11 @@ int apply_all_patches(struct apply_state *state,
 		      const char **argv,
 		      int options)
 {
-	int i;
 	int res;
 	int errs = 0;
 	int read_stdin = 1;
 
-	for (i = 0; i < argc; i++) {
+	for (int i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		char *to_free = NULL;
 		int fd;
@@ -4919,7 +4918,7 @@ int apply_all_patches(struct apply_state *state,
 		}
 	}
 
-	res = !!errs;
+	res = errs != 0;
 
 end:
 	rollback_lock_file(&state->lock_file);

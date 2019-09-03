@@ -33,13 +33,12 @@ static inline size_t max_size(size_t a, size_t b)
 static inline void buffer_grow(struct ewah_bitmap *self, size_t new_size)
 {
 
-	if (self->alloc_size >= new_size)
-		return;
-
+	if (self->alloc_size < new_size){
 	const size_t rlw_offset = (uint8_t *)self->rlw - (uint8_t *)self->buffer;
 	self->alloc_size = new_size;
 	REALLOC_ARRAY(self->buffer, self->alloc_size);
 	self->rlw = self->buffer + (rlw_offset / sizeof(eword_t));
+	}
 }
 
 static inline void buffer_push(struct ewah_bitmap *self, eword_t value)
