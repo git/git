@@ -550,11 +550,9 @@ static int is_mail(FILE *fp)
 		/* It's a header if it matches header_regex */
 		if (regexec(&regex, sb.buf, 0, NULL, 0)) {
 			ret = 0;
-			break
+			break;
 		}
 	}
-
-done:
 	regfree(&regex);
 	strbuf_release(&sb);
 	return ret;
@@ -618,14 +616,11 @@ static int detect_patch_format(const char **paths)
 		 starts_with(l3.buf, "Author:") ||
 		 starts_with(l3.buf, "Date:"))) {
 		ret = PATCH_FORMAT_STGIT;
-		goto done;
 	}
-
-	if (l1.len && is_mail(fp)) {
+	else if (l1.len && is_mail(fp)) {
 		ret = PATCH_FORMAT_MBOX;
 	}
-
-done:
+	
 	fclose(fp);
 	strbuf_release(&l1);
 	strbuf_release(&l2);
@@ -658,14 +653,16 @@ static int split_mail_mbox(struct am_state *state, const char **paths,
 
 	ret = capture_command(&cp, &last, 8);
 	if (ret)
-		goto exit;
+		{
+			strbuf_release(&last);
+			return -1;
+		}
 
 	state->cur = 1;
 	state->last = strtol(last.buf, NULL, 10);
 
-exit:
 	strbuf_release(&last);
-	return ret ? -1 : 0;
+	return 0;
 }
 
 /**
