@@ -16,7 +16,7 @@ struct dir_entry {
 #define EXC_FLAG_MUSTBEDIR 8
 #define EXC_FLAG_NEGATIVE 16
 
-struct exclude {
+struct path_pattern {
 	/*
 	 * This allows callers of last_exclude_matching() etc.
 	 * to determine the origin of the matching pattern.
@@ -54,7 +54,7 @@ struct exclude_list {
 	/* origin of list, e.g. path to filename, or descriptive string */
 	const char *src;
 
-	struct exclude **excludes;
+	struct path_pattern **patterns;
 };
 
 /*
@@ -191,7 +191,7 @@ struct dir_struct {
 	 * matching exclude struct if the directory is excluded.
 	 */
 	struct exclude_stack *exclude_stack;
-	struct exclude *exclude;
+	struct path_pattern *pattern;
 	struct strbuf basebuf;
 
 	/* Enable untracked file cache if set */
@@ -248,7 +248,7 @@ int match_pathname(const char *, int,
 		   const char *, int,
 		   const char *, int, int, unsigned);
 
-struct exclude *last_exclude_matching(struct dir_struct *dir,
+struct path_pattern *last_exclude_matching(struct dir_struct *dir,
 				      struct index_state *istate,
 				      const char *name, int *dtype);
 

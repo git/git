@@ -602,27 +602,27 @@ void parse_exclude_pattern(const char **pattern,
 void add_exclude(const char *string, const char *base,
 		 int baselen, struct exclude_list *el, int srcpos)
 {
-	struct exclude *x;
+	struct path_pattern *pattern;
 	int patternlen;
 	unsigned flags;
 	int nowildcardlen;
 
 	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
 	if (flags & EXC_FLAG_MUSTBEDIR) {
-		FLEXPTR_ALLOC_MEM(x, pattern, string, patternlen);
+		FLEXPTR_ALLOC_MEM(pattern, pattern, string, patternlen);
 	} else {
-		x = xmalloc(sizeof(*x));
-		x->pattern = string;
+		pattern = xmalloc(sizeof(*pattern));
+		pattern->pattern = string;
 	}
-	x->patternlen = patternlen;
-	x->nowildcardlen = nowildcardlen;
-	x->base = base;
-	x->baselen = baselen;
-	x->flags = flags;
-	x->srcpos = srcpos;
-	ALLOC_GROW(el->excludes, el->nr + 1, el->alloc);
-	el->excludes[el->nr++] = x;
-	x->el = el;
+	pattern->patternlen = patternlen;
+	pattern->nowildcardlen = nowildcardlen;
+	pattern->base = base;
+	pattern->baselen = baselen;
+	pattern->flags = flags;
+	pattern->srcpos = srcpos;
+	ALLOC_GROW(el->patterns, el->nr + 1, el->alloc);
+	el->patterns[el->nr++] = pattern;
+	pattern->el = el;
 }
 
 static int read_skip_worktree_file_from_index(const struct index_state *istate,
@@ -651,8 +651,8 @@ void clear_exclude_list(struct exclude_list *el)
 	int i;
 
 	for (i = 0; i < el->nr; i++)
-		free(el->excludes[i]);
-	free(el->excludes);
+		free(el->patterns[i]);
+	free(el->patterns);
 	free(el->filebuf);
 
 	memset(el, 0, sizeof(*el));
@@ -1021,51 +1021,54 @@ int match_pathname(const char *pathname, int pathlen,
  * any, determines the fate.  Returns the exclude_list element which
  * matched, or NULL for undecided.
  */
-static struct exclude *last_exclude_matching_from_list(const char *pathname,
+static struct path_pattern *last_exclude_matching_from_list(const char *pathname,
 						       int pathlen,
 						       const char *basename,
 						       int *dtype,
 						       struct exclude_list *el,
 						       struct index_state *istate)
 {
-	struct exclude *exc = NULL; /* undecided */
+	struct path_pattern *res = NULL; /* undecided */
 	int i;
 
 	if (!el->nr)
 		return NULL;	/* undefined */
 
 	for (i = el->nr - 1; 0 <= i; i--) {
-		struct exclude *x = el->excludes[i];
-		const char *exclude = x->pattern;
-		int prefix = x->nowildcardlen;
+		struct path_pattern *pattern = el->patterns[i];
+		const char *exclude = pattern->pattern;
+		int prefix = pattern->nowildcardlen;
 
-		if (x->flags & EXC_FLAG_MUSTBEDIR) {
+		if (pattern->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
 				*dtype = get_dtype(NULL, istate, pathname, pathlen);
 			if (*dtype != DT_DIR)
 				continue;
 		}
 
-		if (x->flags & EXC_FLAG_NODIR) {
+		if (pattern->flags & EXC_FLAG_NODIR) {
 			if (match_basename(basename,
 					   pathlen - (basename - pathname),
-					   exclude, prefix, x->patternlen,
-					   x->flags)) {
-				exc = x;
+					   exclude, prefix, pattern->patternlen,
+					   pattern->flags)) {
+				res = pattern;
 				break;
 			}
 			continue;
 		}
 
-		assert(x->baselen == 0 || x->base[x->baselen - 1] == '/');
+		assert(pattern->baselen == 0 ||
+		       pattern->base[pattern->baselen - 1] == '/');
 		if (match_pathname(pathname, pathlen,
-				   x->base, x->baselen ? x->baselen - 1 : 0,
-				   exclude, prefix, x->patternlen, x->flags)) {
-			exc = x;
+				   pattern->base,
+				   pattern->baselen ? pattern->baselen - 1 : 0,
+				   exclude, prefix, pattern->patternlen,
+				   pattern->flags)) {
+			res = pattern;
 			break;
 		}
 	}
-	return exc;
+	return res;
 }
 
 /*
@@ -1076,30 +1079,30 @@ int is_excluded_from_list(const char *pathname,
 			  int pathlen, const char *basename, int *dtype,
 			  struct exclude_list *el, struct index_state *istate)
 {
-	struct exclude *exclude;
-	exclude = last_exclude_matching_from_list(pathname, pathlen, basename,
+	struct path_pattern *pattern;
+	pattern = last_exclude_matching_from_list(pathname, pathlen, basename,
 						  dtype, el, istate);
-	if (exclude)
-		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
+	if (pattern)
+		return pattern->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return -1; /* undecided */
 }
 
-static struct exclude *last_exclude_matching_from_lists(struct dir_struct *dir,
-							struct index_state *istate,
-		const char *pathname, int pathlen, const char *basename,
-		int *dtype_p)
+static struct path_pattern *last_exclude_matching_from_lists(
+		struct dir_struct *dir, struct index_state *istate,
+		const char *pathname, int pathlen,
+		const char *basename, int *dtype_p)
 {
 	int i, j;
 	struct exclude_list_group *group;
-	struct exclude *exclude;
+	struct path_pattern *pattern;
 	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
 		group = &dir->exclude_list_group[i];
 		for (j = group->nr - 1; j >= 0; j--) {
-			exclude = last_exclude_matching_from_list(
+			pattern = last_exclude_matching_from_list(
 				pathname, pathlen, basename, dtype_p,
 				&group->el[j], istate);
-			if (exclude)
-				return exclude;
+			if (pattern)
+				return pattern;
 		}
 	}
 	return NULL;
@@ -1132,7 +1135,7 @@ static void prep_exclude(struct dir_struct *dir,
 			break;
 		el = &group->el[dir->exclude_stack->exclude_ix];
 		dir->exclude_stack = stk->prev;
-		dir->exclude = NULL;
+		dir->pattern = NULL;
 		free((char *)el->src); /* see strbuf_detach() below */
 		clear_exclude_list(el);
 		free(stk);
@@ -1140,7 +1143,7 @@ static void prep_exclude(struct dir_struct *dir,
 	}
 
 	/* Skip traversing into sub directories if the parent is excluded */
-	if (dir->exclude)
+	if (dir->pattern)
 		return;
 
 	/*
@@ -1189,15 +1192,15 @@ static void prep_exclude(struct dir_struct *dir,
 		if (stk->baselen) {
 			int dt = DT_DIR;
 			dir->basebuf.buf[stk->baselen - 1] = 0;
-			dir->exclude = last_exclude_matching_from_lists(dir,
+			dir->pattern = last_exclude_matching_from_lists(dir,
 									istate,
 				dir->basebuf.buf, stk->baselen - 1,
 				dir->basebuf.buf + current, &dt);
 			dir->basebuf.buf[stk->baselen - 1] = '/';
-			if (dir->exclude &&
-			    dir->exclude->flags & EXC_FLAG_NEGATIVE)
-				dir->exclude = NULL;
-			if (dir->exclude) {
+			if (dir->pattern &&
+			    dir->pattern->flags & EXC_FLAG_NEGATIVE)
+				dir->pattern = NULL;
+			if (dir->pattern) {
 				dir->exclude_stack = stk;
 				return;
 			}
@@ -1223,7 +1226,7 @@ static void prep_exclude(struct dir_struct *dir,
 			/*
 			 * dir->basebuf gets reused by the traversal, but we
 			 * need fname to remain unchanged to ensure the src
-			 * member of each struct exclude correctly
+			 * member of each struct path_pattern correctly
 			 * back-references its source file.  Other invocations
 			 * of add_exclude_list provide stable strings, so we
 			 * strbuf_detach() and free() here in the caller.
@@ -1266,7 +1269,7 @@ static void prep_exclude(struct dir_struct *dir,
  * Returns the exclude_list element which matched, or NULL for
  * undecided.
  */
-struct exclude *last_exclude_matching(struct dir_struct *dir,
+struct path_pattern *last_exclude_matching(struct dir_struct *dir,
 				      struct index_state *istate,
 				      const char *pathname,
 				      int *dtype_p)
@@ -1277,8 +1280,8 @@ struct exclude *last_exclude_matching(struct dir_struct *dir,
 
 	prep_exclude(dir, istate, pathname, basename-pathname);
 
-	if (dir->exclude)
-		return dir->exclude;
+	if (dir->pattern)
+		return dir->pattern;
 
 	return last_exclude_matching_from_lists(dir, istate, pathname, pathlen,
 			basename, dtype_p);
@@ -1292,10 +1295,10 @@ struct exclude *last_exclude_matching(struct dir_struct *dir,
 int is_excluded(struct dir_struct *dir, struct index_state *istate,
 		const char *pathname, int *dtype_p)
 {
-	struct exclude *exclude =
+	struct path_pattern *pattern =
 		last_exclude_matching(dir, istate, pathname, dtype_p);
-	if (exclude)
-		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
+	if (pattern)
+		return pattern->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return 0;
 }
 
