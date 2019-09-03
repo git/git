@@ -1265,7 +1265,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 			    struct cache_entry **cache, int nr,
 			    struct strbuf *prefix,
 			    int select_mask, int clear_mask,
-			    struct pattern_list *pl, int defval);
+			    struct pattern_list *pl,
+			    enum pattern_match_result default_match);
 
 /* Whole directory matching */
 static int clear_ce_flags_dir(struct index_state *istate,
@@ -1273,19 +1274,21 @@ static int clear_ce_flags_dir(struct index_state *istate,
 			      struct strbuf *prefix,
 			      char *basename,
 			      int select_mask, int clear_mask,
-			      struct pattern_list *pl, int defval)
+			      struct pattern_list *pl,
+			      enum pattern_match_result default_match)
 {
 	struct cache_entry **cache_end;
 	int dtype = DT_DIR;
-	int ret = is_excluded_from_list(prefix->buf, prefix->len,
-					basename, &dtype, pl, istate);
 	int rc;
+	enum pattern_match_result ret;
+	ret = path_matches_pattern_list(prefix->buf, prefix->len,
+					basename, &dtype, pl, istate);
 
 	strbuf_addch(prefix, '/');
 
 	/* If undecided, use matching result of parent dir in defval */
-	if (ret < 0)
-		ret = defval;
+	if (ret == UNDECIDED)
+		ret = default_match;
 
 	for (cache_end = cache; cache_end != cache + nr; cache_end++) {
 		struct cache_entry *ce = *cache_end;
@@ -1298,7 +1301,7 @@ static int clear_ce_flags_dir(struct index_state *istate,
 	 * with ret (iow, we know in advance the incl/excl
 	 * decision for the entire directory), clear flag here without
 	 * calling clear_ce_flags_1(). That function will call
-	 * the expensive is_excluded_from_list() on every entry.
+	 * the expensive path_matches_pattern_list() on every entry.
 	 */
 	rc = clear_ce_flags_1(istate, cache, cache_end - cache,
 			      prefix,
@@ -1327,7 +1330,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 			    struct cache_entry **cache, int nr,
 			    struct strbuf *prefix,
 			    int select_mask, int clear_mask,
-			    struct pattern_list *pl, int defval)
+			    struct pattern_list *pl,
+			    enum pattern_match_result default_match)
 {
 	struct cache_entry **cache_end = cache + nr;
 
@@ -1338,7 +1342,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 	while(cache != cache_end) {
 		struct cache_entry *ce = *cache;
 		const char *name, *slash;
-		int len, dtype, ret;
+		int len, dtype;
+		enum pattern_match_result ret;
 
 		if (select_mask && !(ce->ce_flags & select_mask)) {
 			cache++;
@@ -1362,7 +1367,7 @@ static int clear_ce_flags_1(struct index_state *istate,
 						       prefix,
 						       prefix->buf + prefix->len - len,
 						       select_mask, clear_mask,
-						       pl, defval);
+						       pl, default_match);
 
 			/* clear_c_f_dir eats a whole dir already? */
 			if (processed) {
@@ -1374,18 +1379,20 @@ static int clear_ce_flags_1(struct index_state *istate,
 			strbuf_addch(prefix, '/');
 			cache += clear_ce_flags_1(istate, cache, cache_end - cache,
 						  prefix,
-						  select_mask, clear_mask, pl, defval);
+						  select_mask, clear_mask, pl,
+						  default_match);
 			strbuf_setlen(prefix, prefix->len - len - 1);
 			continue;
 		}
 
 		/* Non-directory */
 		dtype = ce_to_dtype(ce);
-		ret = is_excluded_from_list(ce->name, ce_namelen(ce),
-					    name, &dtype, pl, istate);
-		if (ret < 0)
-			ret = defval;
-		if (ret > 0)
+		ret = path_matches_pattern_list(ce->name,
+						ce_namelen(ce),
+						name, &dtype, pl, istate);
+		if (ret == UNDECIDED)
+			ret = default_match;
+		if (ret == MATCHED)
 			ce->ce_flags &= ~clear_mask;
 		cache++;
 	}

@@ -1072,19 +1072,28 @@ static struct path_pattern *last_matching_pattern_from_list(const char *pathname
 }
 
 /*
- * Scan the list and let the last match determine the fate.
- * Return 1 for exclude, 0 for include and -1 for undecided.
+ * Scan the list of patterns to determine if the ordered list
+ * of patterns matches on 'pathname'.
+ *
+ * Return 1 for a match, 0 for not matched and -1 for undecided.
  */
-int is_excluded_from_list(const char *pathname,
-			  int pathlen, const char *basename, int *dtype,
-			  struct pattern_list *pl, struct index_state *istate)
+enum pattern_match_result path_matches_pattern_list(
+				const char *pathname, int pathlen,
+				const char *basename, int *dtype,
+				struct pattern_list *pl,
+				struct index_state *istate)
 {
 	struct path_pattern *pattern;
 	pattern = last_matching_pattern_from_list(pathname, pathlen, basename,
 						  dtype, pl, istate);
-	if (pattern)
-		return pattern->flags & PATTERN_FLAG_NEGATIVE ? 0 : 1;
-	return -1; /* undecided */
+	if (pattern) {
+		if (pattern->flags & PATTERN_FLAG_NEGATIVE)
+			return NOT_MATCHED;
+		else
+			return MATCHED;
+	}
+
+	return UNDECIDED;
 }
 
 static struct path_pattern *last_matching_pattern_from_lists(

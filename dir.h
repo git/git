@@ -230,10 +230,23 @@ int read_directory(struct dir_struct *, struct index_state *istate,
 		   const char *path, int len,
 		   const struct pathspec *pathspec);
 
-int is_excluded_from_list(const char *pathname, int pathlen,
-			  const char *basename, int *dtype,
-			  struct pattern_list *pl,
-			  struct index_state *istate);
+enum pattern_match_result {
+	UNDECIDED = -1,
+	NOT_MATCHED = 0,
+	MATCHED = 1,
+};
+
+/*
+ * Scan the list of patterns to determine if the ordered list
+ * of patterns matches on 'pathname'.
+ *
+ * Return 1 for a match, 0 for not matched and -1 for undecided.
+ */
+enum pattern_match_result path_matches_pattern_list(const char *pathname,
+				int pathlen,
+				const char *basename, int *dtype,
+				struct pattern_list *pl,
+				struct index_state *istate);
 struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 				  struct index_state *istate,
 				  const char *pathname, int len);
