@@ -30,15 +30,15 @@ static void strip_last_component(struct strbuf *path)
 /* get (and remove) the next component in 'remaining' and place it in 'next' */
 static void get_next_component(struct strbuf *next, struct strbuf *remaining)
 {
-	char *start = NULL;
+	char *start = remaining->buf;
 	char *end = NULL;
 
 	strbuf_reset(next);
 
 	/* look for the next component */
 	/* Skip sequences of multiple path-separators */
-	for (start = remaining->buf; is_dir_sep(*start); start++)
-		; /* nothing */
+	while (is_dir_sep(*start))
+		start++;
 	/* Find end of the path component */
 	for (end = start; *end && !is_dir_sep(*end); end++)
 		; /* nothing */
@@ -255,12 +255,12 @@ char *prefix_filename(const char *pfx, const char *arg)
 	struct strbuf path = STRBUF_INIT;
 	size_t pfx_len = pfx ? strlen(pfx) : 0;
 
-	if (!pfx_len)
-		; /* nothing to prefix */
-	else if (is_absolute_path(arg))
+	if (pfx_len){
+	if (is_absolute_path(arg))
 		pfx_len = 0;
 	else
 		strbuf_add(&path, pfx, pfx_len);
+	}
 
 	strbuf_addstr(&path, arg);
 #ifdef GIT_WINDOWS_NATIVE

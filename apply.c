@@ -72,9 +72,9 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 static int parse_ignorewhitespace_option(struct apply_state *state,
 						 const char *option)
 {
-	if (!option || !strcmp(option, "no") ||
-	    !strcmp(option, "false") || !strcmp(option, "never") ||
-	    !strcmp(option, "none")) {
+	if (!(option && strcmp(option, "no") &&
+	    strcmp(option, "false") && strcmp(option, "never") &&
+	    strcmp(option, "none"))) {
 		state->ws_ignore_action = ignore_ws_none;
 		return 0;
 	}
@@ -552,7 +552,7 @@ static size_t fractional_time_len(const char *line, size_t len)
 	size_t n;
 
 	/* Expected format: 19:41:17.620000023 */
-	if (!len || !isdigit(line[len - 1]))
+	if (!(len && isdigit(line[len - 1])))
 		return 0;
 	p = line + len - 1;
 

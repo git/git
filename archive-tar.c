@@ -401,9 +401,7 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 			ar->flags |= ARCHIVER_REMOTE;
 		else
 			ar->flags &= ~ARCHIVER_REMOTE;
-		return 0;
 	}
-
 	return 0;
 }
 

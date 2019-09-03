@@ -190,10 +190,10 @@ static int ask_yes_no_if_possible(const char *format, ...)
 		return !run_command_v_opt(retry_hook, 0);
 	}
 
-	if (!isatty(_fileno(stdin)) || !isatty(_fileno(stderr)))
+	if (!(isatty(_fileno(stdin)) && isatty(_fileno(stderr))))
 		return 0;
 
-	while (1) {
+	for(;;) {
 		int answer;
 		fprintf(stderr, "%s (y/n) ", question);
 

@@ -130,9 +130,10 @@ int git_default_advice_config(const char *var, const char *value)
 		int slot = parse_advise_color_slot(slot_name);
 		if (slot < 0)
 			return 0;
-		if (!value)
-			return config_error_nonbool(var);
-		return color_parse(value, advice_colors[slot]);
+		if (value)
+			return color_parse(value, advice_colors[slot]);
+		return config_error_nonbool(var);
+		
 	}
 
 	if (!skip_prefix(var, "advice.", &k))
