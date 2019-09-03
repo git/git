@@ -19,23 +19,21 @@ const char *git_editor(void)
 	const char *editor = getenv("GIT_EDITOR");
 	int terminal_is_dumb = is_terminal_dumb();
 
-	if (!editor){
+	if(!editor){
 
-	if (editor_program)
-		editor = editor_program;
-	else if (terminal_is_dumb){
-		return NULL;
-	}
-	else {
+	if (editor_program){
+		return editor_program;
+	if (!terminal_is_dumb)
 		editor = getenv("VISUAL");
-		if (!editor)
+	if (!editor)
 		editor = getenv("EDITOR");
-		if (!editor)
-		editor = DEFAULT_EDITOR;
-		
-	}
-	}
 
+	if (!editor && terminal_is_dumb)
+		return NULL;
+
+	if (!editor)
+		editor = DEFAULT_EDITOR;
+	}
 
 	return editor;
 }
