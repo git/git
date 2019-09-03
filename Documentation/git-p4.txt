@@ -642,6 +642,13 @@ git config --add git-p4.mapUser "p4user = First Last <mail@address.com>"
 A mapping will override any user information from P4. Mappings for
 multiple P4 user can be defined.
 
+git-p4.charset::
+	Perforce keeps the encoding of a submit log message as given on
+	set P4CHARSET. Git expects commit log message encoded as UTF-8.
+	Use this config to tell git-p4 what encoding Perforce had used
+	for the log messages. This encoding is used to transcode the log
+	messages to UTF-8.
+
 Submit variables
 ~~~~~~~~~~~~~~~~
 git-p4.detectRenames::
