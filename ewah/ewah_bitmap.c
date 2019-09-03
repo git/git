@@ -32,11 +32,11 @@ static inline size_t max_size(size_t a, size_t b)
 
 static inline void buffer_grow(struct ewah_bitmap *self, size_t new_size)
 {
-	size_t rlw_offset = (uint8_t *)self->rlw - (uint8_t *)self->buffer;
 
 	if (self->alloc_size >= new_size)
 		return;
 
+	const size_t rlw_offset = (uint8_t *)self->rlw - (uint8_t *)self->buffer;
 	self->alloc_size = new_size;
 	REALLOC_ARRAY(self->buffer, self->alloc_size);
 	self->rlw = self->buffer + (rlw_offset / sizeof(eword_t));
@@ -131,7 +131,7 @@ void ewah_add_dirty_words(
 {
 	size_t literals, can_add;
 
-	while (1) {
+	for(;;) {
 		literals = rlw_get_literal_words(self->rlw);
 		can_add = min_size(number, RLW_LARGEST_LITERAL_COUNT - literals);
 
@@ -141,8 +141,7 @@ void ewah_add_dirty_words(
 			buffer_grow(self, (self->buffer_size + can_add) * 3 / 2);
 
 		if (negate) {
-			size_t i;
-			for (i = 0; i < can_add; ++i)
+			for (size_t i = 0; i < can_add; ++i)
 				self->buffer[self->buffer_size++] = ~buffer[i];
 		} else {
 			memcpy(self->buffer + self->buffer_size,
@@ -152,7 +151,7 @@ void ewah_add_dirty_words(
 
 		self->bit_size += can_add * BITS_IN_EWORD;
 
-		if (number - can_add == 0)
+		if (number == can_add)
 			break;
 
 		buffer_push_rlw(self, 0);
@@ -318,7 +317,7 @@ static void read_new_rlw(struct ewah_iterator *it)
 	it->literals = 0;
 	it->compressed = 0;
 
-	while (1) {
+	for(;;) {
 		word = &it->buffer[it->pointer];
 
 		it->rl = rlw_get_running_len(word);
@@ -406,7 +405,7 @@ void ewah_xor(
 				predator = &rlw_i;
 			}
 
-			negate_words = !!predator->rlw.running_bit;
+			negate_words = predator->rlw.running_bit !=0;
 			index = rlwit_discharge(prey, out,
 				predator->rlw.running_len, negate_words);
 

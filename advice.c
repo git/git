@@ -127,7 +127,7 @@ int git_default_advice_config(const char *var, const char *value)
 	}
 
 	if (skip_prefix(var, "color.advice.", &slot_name)) {
-		int slot = parse_advise_color_slot(slot_name);
+		const int slot = parse_advise_color_slot(slot_name);
 		if (slot < 0)
 			return 0;
 		if (value)
@@ -140,11 +140,11 @@ int git_default_advice_config(const char *var, const char *value)
 		return 0;
 
 	for (i = 0; i < ARRAY_SIZE(advice_config); i++) {
-		if (strcasecmp(k, advice_config[i].name))
-			continue;
-		*advice_config[i].preference = git_config_bool(var, value);
-		return 0;
-	}
+        if (!strcasecmp(k, advice_config[i].name)) {
+            *advice_config[i].preference = git_config_bool(var, value);
+            return 0;
+        }
+    }
 
 	return 0;
 }

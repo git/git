@@ -501,11 +501,11 @@ static size_t tz_with_colon_len(const char *line, size_t len)
 	if (tz[0] != ' ' || (tz[1] != '+' && tz[1] != '-'))
 		return 0;
 	p = tz + 2;
-	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
-	    !isdigit(*p++) || !isdigit(*p++))
-		return 0;
+	if (isdigit(*p++) && isdigit(*p++) && *p++ == ':' &&
+	    isdigit(*p++) && isdigit(*p))
+        return line + len - tz;
 
-	return line + len - tz;
+	return 0;
 }
 
 static size_t date_len(const char *line, size_t len)

@@ -13,7 +13,7 @@ void gitunsetenv (const char *name)
 	  if (strlen(environ[src]) > nmln) {
                /* might match, and can test for '=' safely */
 	       if (0 == strncmp (environ[src], name, nmln)
-		   && '=' == environ[src][nmln]){
+		   && '=' == environ[src][nmln]) {
 		    ++src;
 		    continue;
 		   }

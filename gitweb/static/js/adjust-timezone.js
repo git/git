@@ -110,15 +110,10 @@ function addChangeTZ(tzSelected, tzCookieInfo, tzClassName) {
 		event = event || window.event;
 
 		//IE uses srcElement as the target
-		var target = event.target || event.srcElement;
+		const target = event.target || event.srcElement;
 
-		switch (target.className) {
-		case tzClassName:
-			// don't display timezone menu if it is already displayed
-			if (tzSelectFragment.childNodes.length > 0) {
-				displayChangeTZForm(target, tzSelectFragment);
-			}
-			break;
+		if (target.className === tzClassName && tzSelectFragment.childNodes.length > 0) {
+			displayChangeTZForm(target, tzSelectFragment);
 		} // end switch
 	};
 }
