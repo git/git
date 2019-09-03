@@ -36,7 +36,9 @@ static void finish_bulk_checkin(struct bulk_checkin_state *state)
 		close(state->f->fd);
 		unlink(state->pack_tmp_name);
 		goto clear_exit;
-	} else if (state->nr_written == 1) {
+	} 
+	
+	if (state->nr_written == 1) {
 		finalize_hashfile(state->f, oid.hash, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 	} else {
 		int fd = finalize_hashfile(state->f, oid.hash, 0);

@@ -60,7 +60,10 @@ int split_cmdline(char *cmdline, const char ***argv)
 
 	/* split alias_string */
 	(*argv)[count++] = cmdline;
-	for (src = dst = 0; cmdline[src];) {
+	src = 0; 
+	if (cmdline[0]){
+		dst = 0;
+	do {
 		char c = cmdline[src];
 		if (!quoted && isspace(c)) {
 			cmdline[dst++] = 0;
@@ -87,6 +90,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 			cmdline[dst++] = c;
 			src++;
 		}
+	} while (cmdline[src]);
 	}
 
 	cmdline[dst] = 0;

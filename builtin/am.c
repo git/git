@@ -48,9 +48,11 @@ static int linelen(const char *msg)
  */
 static int str_isspace(const char *str)
 {
-	for (; *str; str++)
-		if (!isspace(*str))
-			return 0;
+	while (*str) {
+        if (!isspace(*str))
+            return 0;
+        str++;
+    }
 
 	return 1;
 }
@@ -540,10 +542,7 @@ static int is_mail(FILE *fp)
 	if (regcomp(&regex, header_regex, REG_NOSUB | REG_EXTENDED))
 		die("invalid pattern: %s", header_regex);
 
-	while (!strbuf_getline(&sb, fp)) {
-		if (!sb.len)
-			break; /* End of header */
-
+	while (!strbuf_getline(&sb, fp) && sb.len) {
 		/* Ignore indented folded lines */
 		if (*sb.buf == '\t' || *sb.buf == ' ')
 			continue;
@@ -551,11 +550,9 @@ static int is_mail(FILE *fp)
 		/* It's a header if it matches header_regex */
 		if (regexec(&regex, sb.buf, 0, NULL, 0)) {
 			ret = 0;
-			goto done;
+			break;
 		}
 	}
-
-done:
 	regfree(&regex);
 	strbuf_release(&sb);
 	return ret;
@@ -577,7 +574,7 @@ static int detect_patch_format(const char **paths)
 	/*
 	 * We default to mbox format if input is from stdin and for directories
 	 */
-	if (!*paths || !strcmp(*paths, "-") || is_directory(*paths))
+	if (!(*paths && strcmp(*paths, "-")) || is_directory(*paths))
 		return PATCH_FORMAT_MBOX;
 
 	/*
@@ -619,14 +616,10 @@ static int detect_patch_format(const char **paths)
 		 starts_with(l3.buf, "Author:") ||
 		 starts_with(l3.buf, "Date:"))) {
 		ret = PATCH_FORMAT_STGIT;
-		goto done;
 	}
-
-	if (l1.len && is_mail(fp)) {
+	else if (l1.len && is_mail(fp)) {
 		ret = PATCH_FORMAT_MBOX;
-		goto done;
 	}
-
 done:
 	fclose(fp);
 	strbuf_release(&l1);
@@ -660,14 +653,16 @@ static int split_mail_mbox(struct am_state *state, const char **paths,
 
 	ret = capture_command(&cp, &last, 8);
 	if (ret)
-		goto exit;
+		{
+			strbuf_release(&last);
+			return -1;
+		}
 
 	state->cur = 1;
 	state->last = strtol(last.buf, NULL, 10);
 
-exit:
 	strbuf_release(&last);
-	return ret ? -1 : 0;
+	return 0;
 }
 
 /**

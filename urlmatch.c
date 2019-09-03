@@ -454,10 +454,10 @@ static size_t url_match_prefix(const char *url,
 	 * Passing NULL as url and/or url_prefix will always cause 0 to be
 	 * returned without causing any faults.
 	 */
-	if (!url || !url_prefix)
+	if (!(url && url_prefix))
 		return 0;
 	if (!url_prefix_len || (url_prefix_len == 1 && *url_prefix == '/'))
-		return (!*url || *url == '/') ? 1 : 0;
+		return (!*url || *url == '/');
 	if (url_prefix[url_prefix_len - 1] == '/')
 		url_prefix_len--;
 	if (strncmp(url, url_prefix, url_prefix_len))
@@ -491,7 +491,7 @@ static int match_urls(const struct url_info *url,
 	char usermatched = 0;
 	size_t pathmatchlen;
 
-	if (!url || !url_prefix || !url->url || !url_prefix->url)
+	if (!(url && url_prefix && url->url && url_prefix->url))
 		return 0;
 
 	/* check the scheme */
@@ -584,24 +584,24 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 		return 0;
 
 	item = string_list_insert(&collect->vars, key);
-	if (!item->util) {
-		item->util = xcalloc(1, sizeof(matched));
-	} else {
-		if (cmp_matches(&matched, item->util) < 0)
-			 /*
-			  * Our match is worse than the old one,
-			  * we cannot use it.
-			  */
-			return 0;
-		/* Otherwise, replace it with this one. */
-	}
+    if (item->util != NULL) {
+        if (cmp_matches(&matched, item->util) < 0)
+            /*
+             * Our match is worse than the old one,
+             * we cannot use it.
+             */
+            return 0;
+        /* Otherwise, replace it with this one. */
+    } else {
+        item->util = xcalloc(1, sizeof(matched));
+    }
 
-	memcpy(item->util, &matched, sizeof(matched));
-	strbuf_addstr(&synthkey, collect->section);
-	strbuf_addch(&synthkey, '.');
-	strbuf_addstr(&synthkey, key);
-	retval = collect->collect_fn(synthkey.buf, value, collect->cb);
+    memcpy(item->util, &matched, sizeof(matched));
+    strbuf_addstr(&synthkey, collect->section);
+    strbuf_addch(&synthkey, '.');
+    strbuf_addstr(&synthkey, key);
+    retval = collect->collect_fn(synthkey.buf, value, collect->cb);
 
-	strbuf_release(&synthkey);
-	return retval;
+    strbuf_release(&synthkey);
+    return retval;
 }

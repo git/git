@@ -2580,10 +2580,9 @@ static int prepare_lines(struct blame_scoreboard *sb)
 static struct commit *find_single_final(struct rev_info *revs,
 					const char **name_p)
 {
-	int i;
 	struct commit *found = NULL;
 	const char *name = NULL;
-
+	int i;
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *obj = revs->pending.objects[i].item;
 		if (obj->flags & UNINTERESTING)
@@ -2769,19 +2768,17 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		if (fill_blob_sha1_and_mode(sb->repo, o))
 			die(_("no such path %s in %s"), path, final_commit_name);
 
-		if (sb->revs->diffopt.flags.allow_textconv &&
-		    textconv_object(sb->repo, path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
-				    &sb->final_buf_size))
-			;
-		else
-			sb->final_buf = read_object_file(&o->blob_oid, &type,
-							 &sb->final_buf_size);
+        if (!(sb->revs->diffopt.flags.allow_textconv &&
+            textconv_object(sb->repo, path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
+                             &sb->final_buf_size)))
+            sb->final_buf = read_object_file(&o->blob_oid, &type,
+                                             &sb->final_buf_size);
 
-		if (!sb->final_buf)
-			die(_("cannot read blob %s for path %s"),
-			    oid_to_hex(&o->blob_oid),
-			    path);
-	}
+        if (!sb->final_buf)
+            die(_("cannot read blob %s for path %s"),
+                oid_to_hex(&o->blob_oid),
+                path);
+    }
 	sb->num_read_blob++;
 	prepare_lines(sb);
 

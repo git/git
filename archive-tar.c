@@ -99,7 +99,7 @@ static void write_blocked(const void *data, unsigned long size)
  */
 static void write_trailer(void)
 {
-	int tail = BLOCKSIZE - offset;
+	const int tail = BLOCKSIZE - offset;
 	memset(block + offset, 0, tail);
 	write_or_die(1, block, BLOCKSIZE);
 	if (tail < 2 * RECORDSIZE) {
@@ -165,9 +165,7 @@ static void strbuf_append_ext_header_uint(struct strbuf *sb,
 					  uintmax_t value)
 {
 	char buf[40]; /* big enough for 2^128 in decimal, plus NUL */
-	int len;
-
-	len = xsnprintf(buf, sizeof(buf), "%"PRIuMAX, value);
+	int len = xsnprintf(buf, sizeof(buf), "%"PRIuMAX, value);
 	strbuf_append_ext_header(sb, keyword, buf, len);
 }
 
@@ -363,7 +361,7 @@ static struct archiver *find_tar_filter(const char *name, int len)
 	int i;
 	for (i = 0; i < nr_tar_filters; i++) {
 		struct archiver *ar = tar_filters[i];
-		if (!strncmp(ar->name, name, len) && !ar->name[len])
+		if (!(strncmp(ar->name, name, len) || ar->name[len]))
 			return ar;
 	}
 	return NULL;
@@ -401,9 +399,7 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 			ar->flags |= ARCHIVER_REMOTE;
 		else
 			ar->flags &= ~ARCHIVER_REMOTE;
-		return 0;
 	}
-
 	return 0;
 }
 

@@ -72,9 +72,9 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 static int parse_ignorewhitespace_option(struct apply_state *state,
 						 const char *option)
 {
-	if (!option || !strcmp(option, "no") ||
-	    !strcmp(option, "false") || !strcmp(option, "never") ||
-	    !strcmp(option, "none")) {
+	if (!(option && strcmp(option, "no") &&
+	    strcmp(option, "false") && strcmp(option, "never") &&
+	    strcmp(option, "none"))) {
 		state->ws_ignore_action = ignore_ws_none;
 		return 0;
 	}
@@ -501,11 +501,11 @@ static size_t tz_with_colon_len(const char *line, size_t len)
 	if (tz[0] != ' ' || (tz[1] != '+' && tz[1] != '-'))
 		return 0;
 	p = tz + 2;
-	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
-	    !isdigit(*p++) || !isdigit(*p++))
-		return 0;
+	if (isdigit(*p++) && isdigit(*p++) && *p++ == ':' &&
+	    isdigit(*p++) && isdigit(*p))
+        return line + len - tz;
 
-	return line + len - tz;
+	return 0;
 }
 
 static size_t date_len(const char *line, size_t len)
@@ -552,7 +552,7 @@ static size_t fractional_time_len(const char *line, size_t len)
 	size_t n;
 
 	/* Expected format: 19:41:17.620000023 */
-	if (!len || !isdigit(line[len - 1]))
+	if (!(len && isdigit(line[len - 1])))
 		return 0;
 	p = line + len - 1;
 
@@ -579,11 +579,11 @@ static size_t trailing_spaces_len(const char *line, size_t len)
 		return 0;
 
 	p = line + len;
-	while (p != line) {
+	do {
 		p--;
 		if (*p != ' ')
 			return line + len - (p + 1);
-	}
+	} while (p != line);
 
 	/* All spaces! */
 	return len;
@@ -4653,8 +4653,8 @@ static int apply_patch(struct apply_state *state,
 		int nr;
 
 		patch = xcalloc(1, sizeof(*patch));
-		patch->inaccurate_eof = !!(options & APPLY_OPT_INACCURATE_EOF);
-		patch->recount =  !!(options & APPLY_OPT_RECOUNT);
+		patch->inaccurate_eof = (options & APPLY_OPT_INACCURATE_EOF) !=0;
+		patch->recount =  (options & APPLY_OPT_RECOUNT) !=0;
 		nr = parse_chunk(state, buf.buf + offset, buf.len - offset, patch);
 		if (nr < 0) {
 			free_patch(patch);
@@ -4834,11 +4834,10 @@ int apply_all_patches(struct apply_state *state,
 		      const char **argv,
 		      int options)
 {
-	int i;
 	int res;
 	int errs = 0;
 	int read_stdin = 1;
-
+	int i;
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		char *to_free = NULL;
@@ -4919,7 +4918,7 @@ int apply_all_patches(struct apply_state *state,
 		}
 	}
 
-	res = !!errs;
+	res = errs != 0;
 
 end:
 	rollback_lock_file(&state->lock_file);

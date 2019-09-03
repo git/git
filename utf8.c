@@ -681,7 +681,7 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding)
  */
 static ucs_char_t next_hfs_char(const char **in)
 {
-	while (1) {
+	for(;;) {
 		ucs_char_t out = pick_one_utf8_char(in, NULL);
 		/*
 		 * check for malformed utf8. Technically this
@@ -731,17 +731,17 @@ static int is_hfs_dot_generic(const char *path,
 	 * in HFS+, but this is enough to catch our fairly vanilla
 	 * hard-coded needles.
 	 */
-	for (; needle_len > 0; needle++, needle_len--) {
+	while (needle_len > 0) {
 		c = next_hfs_char(&path);
 
 		/*
 		 * We know our needles contain only ASCII, so we clamp here to
 		 * make the results of tolower() sane.
 		 */
-		if (c > 127)
+		if (c > 127 || tolower(c) != *needle)
 			return 0;
-		if (tolower(c) != *needle)
-			return 0;
+
+        needle++, needle_len--;
 	}
 
 	c = next_hfs_char(&path);
