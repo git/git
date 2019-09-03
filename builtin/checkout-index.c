@@ -137,17 +137,17 @@ static int option_parse_stage(const struct option *opt,
 {
 	BUG_ON_OPT_NEG(unset);
 
-	if (!strcmp(arg, "all")) {
-		to_tempfile = 1;
-		checkout_stage = CHECKOUT_ALL;
-	} else {
-		int ch = arg[0];
-		if ('1' <= ch && ch <= '3')
-			checkout_stage = arg[0] - '0';
-		else
-			die(_("stage should be between 1 and 3 or all"));
-	}
-	return 0;
+    if (strcmp(arg, "all")) {
+        int ch = arg[0];
+        if ('1' <= ch && ch <= '3')
+            checkout_stage = arg[0] - '0';
+        else
+            die(_("stage should be between 1 and 3 or all"));
+    } else {
+        to_tempfile = 1;
+        checkout_stage = CHECKOUT_ALL;
+    }
+    return 0;
 }
 
 int cmd_checkout_index(int argc, const char **argv, const char *prefix)
