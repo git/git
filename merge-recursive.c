@@ -3423,7 +3423,7 @@ int merge_trees(struct merge_options *opt,
 		record_df_conflict_files(opt, entries);
 		if (clean >= 0){
 		unsigned int i; 
-		if (entries > 0){
+		if (entries->nr > 0){
 			i = entries->nr;
 		do {
 			const char *path = entries->items[--i].string;
