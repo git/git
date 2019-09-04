@@ -2865,16 +2865,14 @@ static int detect_and_process_renames(struct merge_options *opt,
 					dir_re_merge, dir_re_head, head,
 					common, head, merge, entries,
 					&clean);
-	if (clean < 0)
-		goto cleanup;
+	if (clean >= 0){
 	ri->merge_renames = get_renames(opt, opt->branch2, merge_pairs,
 					dir_re_head, dir_re_merge, merge,
 					common, head, merge, entries,
 					&clean);
 	if (clean >= 0)
 		clean &= process_renames(opt, ri->head_renames, ri->merge_renames);
-
-cleanup:
+	}
 	/*
 	 * Some cleanup is deferred until cleanup_renames() because the
 	 * data structures are still needed and referenced in

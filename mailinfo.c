@@ -1111,15 +1111,14 @@ static void output_header_lines(FILE *fout, const char *hdr, const struct strbuf
 static void handle_info(struct mailinfo *mi)
 {
 	struct strbuf *hdr;
-	size_t i = 0;
-	for (header[i]) {
+	size_t i;
+	for (i = 0; header[i]; i++) {
 		/* only print inbody headers if we output a patch file */
 		if (mi->patch_lines && mi->s_hdr_data[i])
 			hdr = mi->s_hdr_data[i];
 		else if (mi->p_hdr_data[i])
 			hdr = mi->p_hdr_data[i];
 		else{
-			i++;
 			continue;
 		}
 
@@ -1138,7 +1137,6 @@ static void handle_info(struct mailinfo *mi)
 			cleanup_space(hdr);
 			fprintf(mi->output, "%s: %s\n", header[i], hdr->buf);
 		}
-		i++;
 	}
 	fprintf(mi->output, "\n");
 }
@@ -1195,7 +1193,6 @@ static int git_mailinfo_config(const char *var, const char *value, void *mi_)
 		return git_default_config(var, value, NULL);
 	if (!strcmp(var, "mailinfo.scissors")) {
 		mi->use_scissors = git_config_bool(var, value);
-		return 0;
 	}
 	/* perhaps others here */
 	return 0;
