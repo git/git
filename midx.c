@@ -367,7 +367,7 @@ int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
 	while (first < last) {
 		uint32_t mid = first + (last - first) / 2;
 		const char *current = m->pack_names[mid];
-		const cmp = cmp_idx_or_pack_name(idx_or_pack_name, current);
+		const int cmp = cmp_idx_or_pack_name(idx_or_pack_name, current);
 		if (!cmp)
 			return 1;
 		if (cmp > 0) {
@@ -704,7 +704,9 @@ static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
 	size_t written = 0;
     struct pack_midx_entry *obj;
     uint32_t i = nr_objects;
-	while (i > 0) {
+	if (nr_objects > 0){
+		uint32_t i = nr_objects;
+	do {
 		struct pack_midx_entry *obj2 = list++;
 			struct pack_midx_entry *next = list;
 			if (oidcmp(&obj2->oid, &next->oid) >= 0)
@@ -715,10 +717,11 @@ static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
 		hashwrite(f, obj->oid.hash, (int)hash_len);
 		written += hash_len;
 		i--;
-	}
+	} while (i > 0);
 	obj = list++;
     hashwrite(f, obj->oid.hash, (int)hash_len);
     written += hash_len;
+	}
 
 	return written;
 }

@@ -3187,9 +3187,6 @@ static int process_entry(struct merge_options *opt,
 	struct diff_filespec *o = &entry->stages[1];
 	struct diff_filespec *a = &entry->stages[2];
 	struct diff_filespec *b = &entry->stages[3];
-	int o_valid = is_valid(o);
-	int a_valid = is_valid(a);
-	int b_valid = is_valid(b);
 	o->path = a->path = b->path = (char*)path;
 
 	entry->processed = 1;
