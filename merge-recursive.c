@@ -3401,7 +3401,7 @@ int merge_trees(struct merge_options *opt,
 	if (unmerged_index(istate)) {
 		struct string_list *entries;
 		struct rename_info re_info;
-		int i;
+		unsigned i;
 		/*
 		 * Only need the hashmap while processing entries, so
 		 * initialize it here and free it when we are done running
@@ -3417,10 +3417,12 @@ int merge_trees(struct merge_options *opt,
 		clean = detect_and_process_renames(opt, common, head, merge,
 						   entries, &re_info);
 		record_df_conflict_files(opt, entries);
-		if (clean < 0)
-			goto cleanup;
-		for (i = entries->nr-1; 0 <= i; i--) {
-			const char *path = entries->items[i].string;
+		if (clean >= 0){
+		unsigned int i; 
+		if (entries > 0){
+			i = entries->nr;
+		do {
+			const char *path = entries->items[--i].string;
 			struct stage_data *e = entries->items[i].util;
 			if (!e->processed) {
 				int ret = process_entry(opt, path, e);
@@ -3431,6 +3433,7 @@ int merge_trees(struct merge_options *opt,
 					goto cleanup;
 				}
 			}
+		} while (i > 0);
 		}
 		for (i = 0; i < entries->nr; i++) {
 			struct stage_data *e = entries->items[i].util;
@@ -3438,7 +3441,7 @@ int merge_trees(struct merge_options *opt,
 				BUG("unprocessed path??? %s",
 				    entries->items[i].string);
 		}
-
+		}
 	cleanup:
 		final_cleanup_renames(&re_info);
 
