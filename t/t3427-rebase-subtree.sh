@@ -59,7 +59,10 @@ test_expect_success 'setup' '
 	test_commit files_subtree/master5 &&
 
 	git checkout -b to-rebase &&
-	git filter-branch --prune-empty -f --subdirectory-filter files_subtree &&
+	git fast-export --no-data HEAD -- files_subtree/ |
+		sed -e "s%\([0-9a-f]\{40\} \)files_subtree/%\1%" |
+		git fast-import --force --quiet &&
+	git reset --hard &&
 	git commit -m "Empty commit" --allow-empty
 '
 
