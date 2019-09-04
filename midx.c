@@ -702,8 +702,9 @@ static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
 	struct pack_midx_entry *list = objects;
 
 	size_t written = 0;
-    struct pack_midx_entry *obj;
+    
 	if (nr_objects > 0){
+		struct pack_midx_entry *obj;
 		uint32_t i = nr_objects;
 	do {
 		struct pack_midx_entry *obj2 = list++;
@@ -717,7 +718,7 @@ static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
 		written += hash_len;
 		i--;
 	} while (i > 0);
-	obj = list++;
+	obj = list;
     hashwrite(f, obj->oid.hash, (int)hash_len);
     written += hash_len;
 	}
