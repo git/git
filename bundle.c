@@ -303,7 +303,7 @@ static int compute_and_write_prerequisites(int bundle_fd,
 			 "rev-list", "--boundary", "--pretty=oneline",
 			 NULL);
 	i = 0;
-	for (i < argc)
+	while (i < argc)
 		argv_array_push(&rls.args, argv[i++]);
 	rls.out = -1;
 	rls.git_cmd = 1;
