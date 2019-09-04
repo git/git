@@ -224,7 +224,7 @@ static int traverse_reachable(void)
 		display_progress(progress, ++nr);
 	}
 	stop_progress(&progress);
-	return !!result;
+	return result != 0;
 }
 
 static int mark_used(struct object *obj, int type, void *data, struct fsck_options *options)

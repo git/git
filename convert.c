@@ -523,7 +523,7 @@ static int crlf_to_git(const struct index_state *istate,
 
 	gather_stats(src, len, &stats);
 	/* Optimization: No CRLF? Nothing to convert, regardless. */
-	convert_crlf_into_lf = !!stats.crlf;
+	convert_crlf_into_lf = stats.crlf != 0;
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 		if (convert_is_binary(&stats))

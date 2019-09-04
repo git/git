@@ -46,7 +46,7 @@ static void exclude_helpers_from_list(struct string_list *list)
 
 	while (i < list->nr) {
 		if (strstr(list->items[i].string, "--"))
-			unsorted_string_list_delete_item(list, i, 0);
+			unsorted_string_list_delete_item(list, i);
 		else
 			i++;
 	}

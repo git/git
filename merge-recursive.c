@@ -865,7 +865,7 @@ static int make_room_for_path(struct merge_options *opt, const char *path)
 			       df_path);
 			unlink(df_path);
 			unsorted_string_list_delete_item(&opt->df_conflict_file_set,
-							 i, 0);
+							 i);
 			break;
         }
 		i++;

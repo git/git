@@ -81,7 +81,7 @@ static int graph_verify(int argc, const char **argv)
 
 	/* Return failure if open_ok predicted success */
 	if (!graph)
-		return !!open_ok;
+		return open_ok != 0;
 
 	UNLEAK(graph);
 	return verify_commit_graph(the_repository, graph, flags);

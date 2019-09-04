@@ -523,7 +523,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 
 static int is_a_merge(const struct commit *current_head)
 {
-	return !!(current_head->parents && current_head->parents->next);
+	return current_head->parents && current_head->parents->next;
 }
 
 static void assert_split_ident(struct ident_split *id, const struct strbuf *buf)

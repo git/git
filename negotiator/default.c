@@ -148,7 +148,7 @@ static const struct object_id *next(struct fetch_negotiator *n)
 
 static int ack(struct fetch_negotiator *n, struct commit *c)
 {
-	int known_to_be_common = !!(c->object.flags & COMMON);
+	int known_to_be_common = (c->object.flags & COMMON) != 0;
 	mark_common(n->data, c, 0, 1);
 	return known_to_be_common;
 }
