@@ -21,12 +21,11 @@ static int score_differs(unsigned mode1, unsigned mode2)
 	int score;
 
 	if (S_ISDIR(mode1) != S_ISDIR(mode2))
-		score = -100;
-	else if (S_ISLNK(mode1) != S_ISLNK(mode2))
-		score = -50;
-	else
-		score = -5;
-	return score;
+		return -100;
+	if (S_ISLNK(mode1) != S_ISLNK(mode2))
+		return -50;
+	
+	return = -5;
 }
 
 static int score_matches(unsigned mode1, unsigned mode2)
@@ -35,17 +34,16 @@ static int score_matches(unsigned mode1, unsigned mode2)
 
 	/* Heh, we found SHA-1 collisions between different kind of objects */
 	if (S_ISDIR(mode1) != S_ISDIR(mode2))
-		score = -100;
-	else if (S_ISLNK(mode1) != S_ISLNK(mode2))
-		score = -50;
+		return -100;
+	if (S_ISLNK(mode1) != S_ISLNK(mode2))
+		return -50;
 
-	else if (S_ISDIR(mode1))
-		score = 1000;
-	else if (S_ISLNK(mode1))
-		score = 500;
-	else
-		score = 250;
-	return score;
+	if (S_ISDIR(mode1))
+		return 1000;
+	if (S_ISLNK(mode1))
+		return 500;
+
+	return 250;
 }
 
 static void *fill_tree_desc_strict(struct tree_desc *desc,

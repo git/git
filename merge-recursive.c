@@ -336,11 +336,9 @@ static int add_cacheinfo(struct merge_options *opt,
 			 const struct diff_filespec *blob,
 			 const char *path, int stage, int refresh, int options)
 {
-	struct index_state *istate = opt->repo->index;
-	struct cache_entry *ce;
 	int ret;
-
-	ce = make_cache_entry(istate, blob->mode, &blob->oid, path, stage, 0);
+	struct index_state *istate = opt->repo->index;
+	struct cache_entry *ce = make_cache_entry(istate, blob->mode, &blob->oid, path, stage, 0);
 	if (!ce)
 		return err(opt, _("add_cacheinfo failed for path '%s'; merge aborting."), path);
 
@@ -414,7 +412,6 @@ static void unpack_trees_finish(struct merge_options *opt)
 
 struct tree *write_tree_from_memory(struct merge_options *opt)
 {
-	struct tree *result = NULL;
 	struct index_state *istate = opt->repo->index;
 
 	if (unmerged_index(istate)) {
@@ -432,15 +429,13 @@ struct tree *write_tree_from_memory(struct merge_options *opt)
 	if (!istate->cache_tree)
 		istate->cache_tree = cache_tree();
 
-	if (!cache_tree_fully_valid(istate->cache_tree) &&
-	    cache_tree_update(istate, 0) < 0) {
+	if (cache_tree_fully_valid(istate->cache_tree) ||
+	    cache_tree_update(istate, 0) >= 0) {
 		err(opt, _("error building trees"));
-		return NULL;
+		lookup_tree(opt->repo, &istate->cache_tree->oid);
 	}
 
-	result = lookup_tree(opt->repo, &istate->cache_tree->oid);
-
-	return result;
+	return NULL;
 }
 
 static int save_files_dirs(const struct object_id *oid,
@@ -474,9 +469,7 @@ static int get_tree_entry_if_blob(struct repository *r,
 				  const char *path,
 				  struct diff_filespec *dfs)
 {
-	int ret;
-
-	ret = get_tree_entry(r, tree, path, &dfs->oid, &dfs->mode);
+	int ret = get_tree_entry(r, tree, path, &dfs->oid, &dfs->mode);
 	if (S_ISDIR(dfs->mode)) {
 		oidcpy(&dfs->oid, &null_oid);
 		dfs->mode = 0;
@@ -510,11 +503,10 @@ static struct stage_data *insert_stage_data(struct repository *r,
 static struct string_list *get_unmerged(struct index_state *istate)
 {
 	struct string_list *unmerged = xcalloc(1, sizeof(struct string_list));
-	int i;
 
 	unmerged->strdup_strings = 1;
 
-	for (i = 0; i < istate->cache_nr; i++) {
+	for (unsigned int i = 0; i < istate->cache_nr; i++) {
 		struct string_list_item *item;
 		struct stage_data *e;
 		const struct cache_entry *ce = istate->cache[i];

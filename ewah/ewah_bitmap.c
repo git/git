@@ -262,7 +262,8 @@ void ewah_each_bit(struct ewah_bitmap *self, void (*callback)(size_t, void*), vo
 		for (k = 0; k < rlw_get_literal_words(word); ++k) {
 
 			/* todo: zero count optimization */
-			for (int c = 0; c < BITS_IN_EWORD; ++c, ++pos) {
+			int c;
+			for (c = 0; c < BITS_IN_EWORD; ++c, ++pos) {
 				if ((self->buffer[pointer] & ((eword_t)1 << c)) != 0)
 					callback(pos, payload);
 			}
@@ -324,13 +325,13 @@ static void read_new_rlw(struct ewah_iterator *it)
 		if (it->rl || it->lw)
 			return;
 
-		if (it->pointer < it->buffer_size - 1) {
-			it->pointer++;
-		} else {
+		if (it->pointer >= it->buffer_size - 1) {
 			it->pointer = it->buffer_size;
 			return;
 		}
-	}
+		
+		it->pointer++;
+	} 
 	
 }
 

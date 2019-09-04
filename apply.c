@@ -4837,8 +4837,8 @@ int apply_all_patches(struct apply_state *state,
 	int res;
 	int errs = 0;
 	int read_stdin = 1;
-
-	for (int i = 0; i < argc; i++) {
+	int i;
+	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		char *to_free = NULL;
 		int fd;

@@ -128,8 +128,8 @@ int add_files_to_cache(const char *prefix,
 static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
 {
 	int retval = 0;
-
-	for (int i = 0; i < active_nr; i++) {
+	int i = 0;
+	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 
 		if (ce_stage(ce))

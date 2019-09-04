@@ -574,7 +574,8 @@ static int match_extension(const char *filename, const char *ext)
 
 const char *archive_format_from_filename(const char *filename)
 {
-	for (int i = 0; i < nr_archivers; i++)
+	int i;
+	for (i = 0; i < nr_archivers; i++)
 		if (match_extension(filename, archivers[i]->name))
 			return archivers[i]->name;
 	return NULL;

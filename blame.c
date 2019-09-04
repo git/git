@@ -2582,8 +2582,8 @@ static struct commit *find_single_final(struct rev_info *revs,
 {
 	struct commit *found = NULL;
 	const char *name = NULL;
-
-	for (int i = 0; i < revs->pending.nr; i++) {
+	int i;
+	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *obj = revs->pending.objects[i].item;
 		if (obj->flags & UNINTERESTING)
 			continue;

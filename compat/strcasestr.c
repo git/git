@@ -2,15 +2,20 @@
 
 char *gitstrcasestr(const char *haystack, const char *needle)
 {
-	int nlen = strlen(needle);
-	int hlen = strlen(haystack) - nlen + 1;
-
-	for (int i = 0; i < hlen; i++) {
-		for (int j = 0; j < nlen; j++) {
+	size_t nlen = strlen(needle);
+	size_t hlen = strlen(haystack) - nlen + 1;
+	size_t i = 0;
+	size_t j;
+	while (i < hlen) {
+		j = 0;
+		while (j < nlen) {
 			unsigned char c1 = haystack[i+j];
 			unsigned char c2 = needle[j];
-			if (toupper(c1) != toupper(c2))
+			if (toupper(c1) != toupper(c2)){
+				i++;
 				goto next;
+			}
+			j++;
 		}
 		return (char *) haystack + i;
 	next:

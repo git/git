@@ -69,7 +69,7 @@ void *merge_blobs(struct index_state *istate, const char *path,
 	 * proper warning about removing a file that got
 	 * modified in the other branch!
 	 */
-	if (!our || !their) {
+	if (!(our && their)) {
 		enum object_type type;
 		if (base)
 			return NULL;

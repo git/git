@@ -456,11 +456,11 @@ struct attr_stack {
 
 static void attr_stack_free(struct attr_stack *e)
 {
-	int i;
+	unsigned int i, j;
 	free(e->origin);
 	for (i = 0; i < e->num_matches; i++) {
 		struct match_attr *a = e->attrs[i];
-		for (int j = 0; j < a->num_attr; j++) {
+		for (j = 0; j < a->num_attr; j++) {
 			const char *setto = a->state[j].setto;
             if (setto != ATTR__TRUE && setto != ATTR__FALSE && setto != ATTR__UNSET && setto != ATTR__UNKNOWN)
                 free((char *) setto);
@@ -1029,10 +1029,9 @@ static int fill(const char *path, int pathlen, int basename_offset,
 		const struct attr_stack *stack,
 		struct all_attrs_item *all_attrs, int rem)
 {
-	for (; rem > 0 && stack; stack = stack->prev) {
-		int i;
+	while (rem > 0 && stack) {
 		const char *base = stack->origin ? stack->origin : "";
-
+		int i;
 		for (i = stack->num_matches - 1; 0 < rem && 0 <= i; i--) {
 			const struct match_attr *a = stack->attrs[i];
 			if (a->is_macro)
@@ -1041,6 +1040,7 @@ static int fill(const char *path, int pathlen, int basename_offset,
 					 &a->u.pat, base, stack->originlen))
 				rem = fill_one("fill", all_attrs, a, rem);
 		}
+		stack = stack->prev;
 	}
 
 	return rem;
@@ -1064,7 +1064,7 @@ static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem)
 static void determine_macros(struct all_attrs_item *all_attrs,
 			     const struct attr_stack *stack)
 {
-	for (; stack; stack = stack->prev) {
+	while (stack) {
 		int i;
 		for (i = stack->num_matches - 1; i >= 0; i--) {
 			const struct match_attr *ma = stack->attrs[i];
@@ -1075,6 +1075,7 @@ static void determine_macros(struct all_attrs_item *all_attrs,
 				}
 			}
 		}
+		stack = stack->prev;
 	}
 }
 

@@ -95,7 +95,8 @@ void argv_array_split(struct argv_array *array, const char *to_split)
 void argv_array_clear(struct argv_array *array)
 {
 	if (array->argv != empty_argv) {
-		for (int i = 0; i < array->argc; i++)
+		int i;
+		for (i = 0; i < array->argc; i++)
 			free((char *)array->argv[i]);
 		free(array->argv);
 	}
@@ -106,7 +107,7 @@ const char **argv_array_detach(struct argv_array *array)
 {
 	if (array->argv == empty_argv)
 		return xcalloc(1, sizeof(const char *));
-	else{
+	else {
 	const char **ret = array->argv;
 	argv_array_init(array);
 	return ret;
