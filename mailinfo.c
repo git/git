@@ -1111,14 +1111,17 @@ static void output_header_lines(FILE *fout, const char *hdr, const struct strbuf
 static void handle_info(struct mailinfo *mi)
 {
 	struct strbuf *hdr;
-	for (int i = 0; header[i]; i++) {
+	size_t i = 0;
+	for (header[i]) {
 		/* only print inbody headers if we output a patch file */
 		if (mi->patch_lines && mi->s_hdr_data[i])
 			hdr = mi->s_hdr_data[i];
 		else if (mi->p_hdr_data[i])
 			hdr = mi->p_hdr_data[i];
-		else
+		else{
+			i++;
 			continue;
+		}
 
 		if (!strcmp(header[i], "Subject")) {
 			if (!mi->keep_subject) {
@@ -1135,6 +1138,7 @@ static void handle_info(struct mailinfo *mi)
 			cleanup_space(hdr);
 			fprintf(mi->output, "%s: %s\n", header[i], hdr->buf);
 		}
+		i++;
 	}
 	fprintf(mi->output, "\n");
 }
@@ -1213,7 +1217,7 @@ void setup_mailinfo(struct mailinfo *mi)
 
 void clear_mailinfo(struct mailinfo *mi)
 {
-	int i;
+	size_t i;
 
 	strbuf_release(&mi->name);
 	strbuf_release(&mi->email);

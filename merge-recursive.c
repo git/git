@@ -571,8 +571,8 @@ static void record_df_conflict_files(struct merge_options *opt,
 	 */
 	struct string_list df_sorted_entries = STRING_LIST_INIT_NODUP;
 	const char *last_file = NULL;
-	int last_len = 0;
-	int i;
+	size_t last_len = 0;
+	unsigned int i;
 
 	/*
 	 * If we're merging merge-bases, we don't want to bother with
@@ -593,7 +593,7 @@ static void record_df_conflict_files(struct merge_options *opt,
 	string_list_clear(&opt->df_conflict_file_set, 1);
 	for (i = 0; i < df_sorted_entries.nr; i++) {
 		const char *path = df_sorted_entries.items[i].string;
-		int len = strlen(path);
+		size_t len = strlen(path);
 		struct stage_data *e = df_sorted_entries.items[i].util;
 
 		/*
@@ -639,10 +639,8 @@ static int update_stages(struct merge_options *opt, const char *path,
 	 * would_lose_untracked).  Instead, reverse the order of the calls
 	 * (executing update_file first and then update_stages).
 	 */
-	int clear = 1;
-	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_SKIP_DFCHECK;
-	if (clear)
-		if (remove_file_from_index(opt->repo->index, path))
+	const int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_SKIP_DFCHECK;
+	if (remove_file_from_index(opt->repo->index, path))
 			return -1;
 	if (o)
 		if (add_cacheinfo(opt, o, path, 1, 0, options))
@@ -673,8 +671,8 @@ static void update_entry(struct stage_data *entry,
 static int remove_file(struct merge_options *opt, int clean,
 		       const char *path, int no_wd)
 {
-	int update_cache = opt->call_depth || clean;
-	int update_working_directory = !opt->call_depth && !no_wd;
+	const int update_cache = opt->call_depth || clean;
+	const int update_working_directory = !(opt->call_depth || no_wd);
 
 	if (update_cache) {
 		if (remove_file_from_index(opt->repo->index, path))
@@ -699,9 +697,11 @@ static void add_flattened_path(struct strbuf *out, const char *s)
 {
 	size_t i = out->len;
 	strbuf_addstr(out, s);
-	for (; i < out->len; i++)
+	while (i < out->len){
 		if (out->buf[i] == '/')
 			out->buf[i] = '_';
+		i++;
+	}
 }
 
 static char *unique_path(struct merge_options *opt, const char *path, const char *branch)
@@ -766,16 +766,16 @@ static int dir_in_way(struct index_state *istate, const char *path,
 static int was_tracked_and_matches(struct merge_options *opt, const char *path,
 				   const struct diff_filespec *blob)
 {
-	int pos = index_name_pos(&opt->orig_index, path, strlen(path));
-	struct cache_entry *ce;
+	const int pos = index_name_pos(&opt->orig_index, path, strlen(path));
 
-	if (0 > pos)
+	if (0 <= pos){
+		/* See if the file we were tracking before matches */
+		struct cache_entry *ce = opt->orig_index.cache[pos];
+		return (oid_eq(&ce->oid, &blob->oid) && ce->ce_mode == blob->mode);
+	}
 		/* we were not tracking this path before the merge */
-		return 0;
-
-	/* See if the file we were tracking before matches */
-	ce = opt->orig_index.cache[pos];
-	return (oid_eq(&ce->oid, &blob->oid) && ce->ce_mode == blob->mode);
+	return 0;
+	
 }
 
 /*
@@ -783,13 +783,7 @@ static int was_tracked_and_matches(struct merge_options *opt, const char *path,
  */
 static int was_tracked(struct merge_options *opt, const char *path)
 {
-	int pos = index_name_pos(&opt->orig_index, path, strlen(path));
-
-	if (0 <= pos)
-		/* we were tracking this path before the merge */
-		return 1;
-
-	return 0;
+	return index_name_pos(&opt->orig_index, path, strlen(path)) >= 0;
 }
 
 static int would_lose_untracked(struct merge_options *opt, const char *path)
@@ -838,24 +832,23 @@ static int would_lose_untracked(struct merge_options *opt, const char *path)
 static int was_dirty(struct merge_options *opt, const char *path)
 {
 	struct cache_entry *ce;
-	int dirty = 1;
 
 	if (opt->call_depth || !was_tracked(opt, path))
-		return !dirty;
+		return 0;
 
 	ce = index_file_exists(opt->unpack_opts.src_index,
 			       path, strlen(path), ignore_case);
-	dirty = verify_uptodate(ce, &opt->unpack_opts) != 0;
-	return dirty;
+	return verify_uptodate(ce, &opt->unpack_opts) != 0;
 }
 
 static int make_room_for_path(struct merge_options *opt, const char *path)
 {
-	int status, i;
+	int status;
 	const char *msg = _("failed to create path '%s'%s");
 
 	/* Unlink any D/F conflict files that are in the way */
-	for (i = 0; i < opt->df_conflict_file_set.nr; i++) {
+	int i = 0;
+	for (i < opt->df_conflict_file_set.nr) {
 		const char *df_path = opt->df_conflict_file_set.items[i].string;
 		size_t pathlen = strlen(path);
 		size_t df_pathlen = strlen(df_path);
@@ -870,6 +863,7 @@ static int make_room_for_path(struct merge_options *opt, const char *path)
 							 i, 0);
 			break;
 		}
+		i++;
 	}
 
 	/* Make sure leading directories are created */
@@ -1070,7 +1064,7 @@ static int find_first_merges(struct repository *repo,
 			     struct object_array *result, const char *path,
 			     struct commit *a, struct commit *b)
 {
-	int i, j;
+	unsigned int i, j;
 	struct object_array merges = OBJECT_ARRAY_INIT;
 	struct commit *commit;
 	int contains_another;
@@ -1178,8 +1172,8 @@ static int merge_submodule(struct merge_options *opt,
 	}
 
 	/* check whether both changes are forward */
-	if (!in_merge_bases(commit_base, commit_a) ||
-	    !in_merge_bases(commit_base, commit_b)) {
+	if (!(in_merge_bases(commit_base, commit_a) &&
+	    in_merge_bases(commit_base, commit_b))) {
 		output(opt, 1, _("Failed to merge submodule %s (commits don't follow merge-base)"), path);
 		return 0;
 	}
@@ -1192,8 +1186,6 @@ static int merge_submodule(struct merge_options *opt,
 			output_commit_title(opt, commit_b);
 		} else if (show(opt, 2))
 			output(opt, 2, _("Fast-forwarding submodule %s"), path);
-		else
-			; /* no output */
 
 		return 1;
 	}
@@ -1204,8 +1196,6 @@ static int merge_submodule(struct merge_options *opt,
 			output_commit_title(opt, commit_a);
 		} else if (show(opt, 2))
 			output(opt, 2, _("Fast-forwarding submodule %s"), path);
-		else
-			; /* no output */
 
 		return 1;
 	}
@@ -1396,12 +1386,12 @@ static int handle_rename_via_dir(struct merge_options *opt,
 				  ren->branch == opt->branch1 ? NULL : dest))
 			return -1;
 		return 0; /* not clean, but conflicted */
-	} else {
+	} 
 		/* Update dest->path both in index and in worktree */
 		if (update_file(opt, 1, dest, dest->path))
 			return -1;
 		return 1; /* clean */
-	}
+	
 }
 
 static int handle_change_delete(struct merge_options *opt,
@@ -1916,7 +1906,7 @@ static char *apply_dir_rename(struct dir_rename_entry *entry,
 			      const char *old_path)
 {
 	struct strbuf new_path = STRBUF_INIT;
-	int oldlen, newlen;
+	size_t oldlen, newlen;
 
 	if (entry->non_unique_new_dir)
 		return NULL;
@@ -1988,11 +1978,10 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 static void remove_hashmap_entries(struct hashmap *dir_renames,
 				   struct string_list *items_to_remove)
 {
-	int i;
 	struct dir_rename_entry *entry;
-
-	for (i = 0; i < items_to_remove->nr; i++) {
-		entry = items_to_remove->items[i].util;
+	unsigned int i =0;
+	for (i < items_to_remove->nr) {
+		entry = items_to_remove->items[i++].util;
 		hashmap_remove(dir_renames, entry, NULL);
 	}
 	string_list_clear(items_to_remove, 0);
@@ -2201,7 +2190,7 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 	 */
 	dir_renames = xmalloc(sizeof(*dir_renames));
 	dir_rename_init(dir_renames);
-	for (i = 0; i < pairs->nr; ++i) {
+	for (i = 0; i < pairs->nr; i++) {
 		struct string_list_item *item;
 		int *count;
 		struct diff_filepair *pair = pairs->queue[i];
@@ -2251,8 +2240,9 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 		int max = 0;
 		int bad_max = 0;
 		char *best = NULL;
+		unsigned int i = 0;
 
-		for (i = 0; i < entry->possible_new_dirs.nr; i++) {
+		while (i < entry->possible_new_dirs.nr) {
 			int *count = entry->possible_new_dirs.items[i].util;
 
 			if (*count == max)
@@ -2261,6 +2251,7 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 				max = *count;
 				best = entry->possible_new_dirs.items[i].string;
 			}
+			i++;
 		}
 		if (bad_max == max)
 			entry->non_unique_new_dir = 1;
@@ -2617,7 +2608,8 @@ static int process_renames(struct merge_options *opt,
 			   struct string_list *a_renames,
 			   struct string_list *b_renames)
 {
-	int clean_merge = 1, i, j;
+	int clean_merge = 1;
+	unsigned int i, j;
 	struct string_list a_by_dst = STRING_LIST_INIT_NODUP;
 	struct string_list b_by_dst = STRING_LIST_INIT_NODUP;
 	const struct rename *sre;
@@ -2785,7 +2777,7 @@ static int process_renames(struct merge_options *opt,
 				try_merge = 1;
 
 			if (clean_merge < 0)
-				goto cleanup_and_return;
+				break;
 			if (try_merge) {
 				struct diff_filespec *o, *a, *b;
 				src_other.path = (char *)ren1_src;
@@ -2804,7 +2796,6 @@ static int process_renames(struct merge_options *opt,
 			}
 		}
 	}
-cleanup_and_return:
 	string_list_clear(&a_by_dst, 0);
 	string_list_clear(&b_by_dst, 0);
 
@@ -2880,9 +2871,8 @@ static int detect_and_process_renames(struct merge_options *opt,
 					dir_re_head, dir_re_merge, merge,
 					common, head, merge, entries,
 					&clean);
-	if (clean < 0)
-		goto cleanup;
-	clean &= process_renames(opt, ri->head_renames, ri->merge_renames);
+	if (clean >= 0)
+		clean &= process_renames(opt, ri->head_renames, ri->merge_renames);
 
 cleanup:
 	/*
@@ -2899,7 +2889,7 @@ cleanup:
 static void final_cleanup_rename(struct string_list *rename)
 {
 	const struct rename *re;
-	int i;
+	unsigned int i;
 
 	if (rename == NULL)
 		return;
@@ -3121,7 +3111,7 @@ static int handle_rename_normal(struct merge_options *opt,
 				  side == 2 ? &mfi.blob : NULL,
 				  side == 2 ? NULL : &mfi.blob))
 			return -1;
-		clean = 0; /* not clean, but conflicted */
+		return 0; /* not clean, but conflicted */
 	}
 	return clean;
 }
@@ -3301,8 +3291,7 @@ static int process_entry(struct merge_options *opt,
 			if (handle_modify_delete(opt, path, o, a, b))
 				clean_merge = -1;
 		}
-	} else if ((!o_valid && a_valid && !b_valid) ||
-		   (!o_valid && !a_valid && b_valid)) {
+	} else if ((!o_valid && !(a_valid && b_valid) && (a_valid || b_valid))) {
 		/* Case B: Added in one. */
 		/* [nothing|directory] -> ([nothing|directory], file) */
 
