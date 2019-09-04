@@ -474,7 +474,6 @@ static void read_bisect_paths(struct argv_array *array)
 static char *join_sha1_array_hex(struct oid_array *array, char delim)
 {
 	struct strbuf joined_hexs = STRBUF_INIT;
-	int i;
 
 if (array->nr > 0){
 	int i;
