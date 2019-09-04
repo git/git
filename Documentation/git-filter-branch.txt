@@ -16,6 +16,19 @@ SYNOPSIS
 	[--original <namespace>] [-d <directory>] [-f | --force]
 	[--state-branch <branch>] [--] [<rev-list options>...]
 
+WARNING
+-------
+'git filter-branch' has a plethora of pitfalls that can produce non-obvious
+manglings of the intended history rewrite (and can leave you with little
+time to investigate such problems since it has such abysmal performance).
+These safety and performance issues cannot be backward compatibly fixed and
+as such, its use is not recommended.  Please use an alternative history
+filtering tool such as https://github.com/newren/git-filter-repo/[git
+filter-repo].  If you still need to use 'git filter-branch', please
+carefully read <<SAFETY>> (and <<PERFORMANCE>>) to learn about the land
+mines of filter-branch, and then vigilantly avoid as many of the hazards
+listed there as reasonably possible.
+
 DESCRIPTION
 -----------
 Lets you rewrite Git revision history by rewriting the branches mentioned
@@ -445,36 +458,236 @@ warned.
   (or if your git-gc is not new enough to support arguments to
   `--prune`, use `git repack -ad; git prune` instead).
 
-NOTES
------
+[[PERFORMANCE]]
+PERFORMANCE
+-----------
 
-git-filter-branch allows you to make complex shell-scripted rewrites
-of your Git history, but you probably don't need this flexibility if
-you're simply _removing unwanted data_ like large files or passwords.
-For those operations you may want to consider
-http://rtyley.github.io/bfg-repo-cleaner/[The BFG Repo-Cleaner],
-a JVM-based alternative to git-filter-branch, typically at least
-10-50x faster for those use-cases, and with quite different
-characteristics:
+The performance of git-filter-branch is glacially slow; its design makes it
+impossible for a backward-compatible implementation to ever be fast:
 
-* Any particular version of a file is cleaned exactly _once_. The BFG,
-  unlike git-filter-branch, does not give you the opportunity to
-  handle a file differently based on where or when it was committed
-  within your history. This constraint gives the core performance
-  benefit of The BFG, and is well-suited to the task of cleansing bad
-  data - you don't care _where_ the bad data is, you just want it
-  _gone_.
+* In editing files, git-filter-branch by design checks out each and
+every commit as it existed in the original repo.  If your repo has 10\^5
+files and 10\^5 commits, but each commit only modifies 5 files, then
+git-filter-branch will make you do 10\^10 modifications, despite only
+having (at most) 5*10^5 unique blobs.
 
-* By default The BFG takes full advantage of multi-core machines,
-  cleansing commit file-trees in parallel. git-filter-branch cleans
-  commits sequentially (i.e. in a single-threaded manner), though it
-  _is_ possible to write filters that include their own parallelism,
-  in the scripts executed against each commit.
+* If you try and cheat and try to make git-filter-branch only work on
+files modified in a commit, then two things happen
 
-* The http://rtyley.github.io/bfg-repo-cleaner/#examples[command options]
-  are much more restrictive than git-filter branch, and dedicated just
-  to the tasks of removing unwanted data- e.g:
-  `--strip-blobs-bigger-than 1M`.
+  ** you run into problems with deletions whenever the user is simply
+     trying to rename files (because attempting to delete files that
+     don't exist looks like a no-op; it takes some chicanery to remap
+     deletes across file renames when the renames happen via arbitrary
+     user-provided shell)
+
+  ** even if you succeed at the map-deletes-for-renames chicanery, you
+     still technically violate backward compatibility because users are
+     allowed to filter files in ways that depend upon topology of
+     commits instead of filtering solely based on file contents or names
+     (though this has not been observed in the wild).
+
+* Even if you don't need to edit files but only want to e.g. rename or
+remove some and thus can avoid checking out each file (i.e. you can use
+--index-filter), you still are passing shell snippets for your filters.
+This means that for every commit, you have to have a prepared git repo
+where those filters can be run.  That's a significant setup.
+
+* Further, several additional files are created or updated per commit by
+git-filter-branch.  Some of these are for supporting the convenience
+functions provided by git-filter-branch (such as map()), while others
+are for keeping track of internal state (but could have also been
+accessed by user filters; one of git-filter-branch's regression tests
+does so).  This essentially amounts to using the filesystem as an IPC
+mechanism between git-filter-branch and the user-provided filters.
+Disks tend to be a slow IPC mechanism, and writing these files also
+effectively represents a forced synchronization point between separate
+processes that we hit with every commit.
+
+* The user-provided shell commands will likely involve a pipeline of
+commands, resulting in the creation of many processes per commit.
+Creating and running another process takes a widely varying amount of
+time between operating systems, but on any platform it is very slow
+relative to invoking a function.
+
+* git-filter-branch itself is written in shell, which is kind of slow.
+This is the one performance issue that could be backward-compatibly
+fixed, but compared to the above problems that are intrinsic to the
+design of git-filter-branch, the language of the tool itself is a
+relatively minor issue.
+
+  ** Side note: Unfortunately, people tend to fixate on the
+     written-in-shell aspect and periodically ask if git-filter-branch
+     could be rewritten in another language to fix the performance
+     issues.  Not only does that ignore the bigger intrinsic problems
+     with the design, it'd help less than you'd expect: if
+     git-filter-branch itself were not shell, then the convenience
+     functions (map(), skip_commit(), etc) and the `--setup` argument
+     could no longer be executed once at the beginning of the program
+     but would instead need to be prepended to every user filter (and
+     thus re-executed with every commit).
+
+The https://github.com/newren/git-filter-repo/[git filter-repo] tool is
+an alternative to git-filter-branch which does not suffer from these
+performance problems or the safety problems (mentioned below). For those
+with existing tooling which relies upon git-filter-branch, 'git
+repo-filter' also provides
+https://github.com/newren/git-filter-repo/blob/master/contrib/filter-repo-demos/filter-lamely[filter-lamely],
+a drop-in git-filter-branch replacement (with a few caveats).  While
+filter-lamely suffers from all the same safety issues as
+git-filter-branch, it at least ameloriates the performance issues a
+little.
+
+[[SAFETY]]
+SAFETY
+------
+
+git-filter-branch is riddled with gotchas resulting in various ways to
+easily corrupt repos or end up with a mess worse than what you started
+with:
+
+* Someone can have a set of "working and tested filters" which they
+document or provide to a coworker, who then runs them on a different OS
+where the same commands are not working/tested (some examples in the
+git-filter-branch manpage are also affected by this).  BSD vs. GNU
+userland differences can really bite.  If lucky, error messages are
+spewed.  But just as likely, the commands either don't do the filtering
+requested, or silently corrupt by making some unwanted change.  The
+unwanted change may only affect a few commits, so it's not necessarily
+obvious either.  (The fact that problems won't necessarily be obvious
+means they are likely to go unnoticed until the rewritten history is in
+use for quite a while, at which point it's really hard to justify
+another flag-day for another rewrite.)
+
+* Filenames with spaces are often mishandled by shell snippets since
+they cause problems for shell pipelines.  Not everyone is familiar with
+find -print0, xargs -0, git-ls-files -z, etc.  Even people who are
+familiar with these may assume such flags are not relevant because
+someone else renamed any such files in their repo back before the person
+doing the filtering joined the project.  And often, even those familiar
+with handling arguments with spaces may not do so just because they
+aren't in the mindset of thinking about everything that could possibly
+go wrong.
+
+* Non-ascii filenames can be silently removed despite being in a desired
+directory.  Keeping only wanted paths is often done using pipelines like
+`git ls-files | grep -v ^WANTED_DIR/ | xargs git rm`.  ls-files will
+only quote filenames if needed, so folks may not notice that one of the
+files didn't match the regex (at least not until it's much too late).
+Yes, someone who knows about core.quotePath can avoid this (unless they
+have other special characters like \t, \n, or "), and people who use
+ls-files -z with something other than grep can avoid this, but that
+doesn't mean they will.
+
+* Similarly, when moving files around, one can find that filenames with
+non-ascii or special characters end up in a different directory, one
+that includes a double quote character.  (This is technically the same
+issue as above with quoting, but perhaps an interesting different way
+that it can and has manifested as a problem.)
+
+* It's far too easy to accidentally mix up old and new history.  It's
+still possible with any tool, but git-filter-branch almost invites it.
+If lucky, the only downside is users getting frustrated that they don't
+know how to shrink their repo and remove the old stuff.  If unlucky,
+they merge old and new history and end up with multiple "copies" of each
+commit, some of which have unwanted or sensitive files and others which
+don't.  This comes about in multiple different ways:
+
+  ** the default to only doing a partial history rewrite ('--all' is not
+     the default and few examples show it)
+
+  ** the fact that there's no automatic post-run cleanup
+
+  ** the fact that --tag-name-filter (when used to rename tags) doesn't
+     remove the old tags but just adds new ones with the new name
+
+  ** the fact that little educational information is provided to inform
+     users of the ramifications of a rewrite and how to avoid mixing old
+     and new history.  For example, this man page discusses how users
+     need to understand that they need to rebase their changes for all
+     their branches on top of new history (or delete and reclone), but
+     that's only one of multiple concerns to consider.  See the
+     "DISCUSSION" section of the git filter-repo manual page for more
+     details.
+
+* Annotated tags can be accidentally converted to lightweight tags, due
+to either of two issues:
+
+  ** Someone can do a history rewrite, realize they messed up, restore
+     from the backups in refs/original/, and then redo their
+     git-filter-branch command.  (The backup in refs/original/ is not a
+     real backup; it dereferences tags first.)
+
+  ** Running git-filter-branch with either --tags or --all in your
+     <rev-list options>.  In order to retain annotated tags as
+     annotated, you must use --tag-name-filter (and must not have
+     restored from refs/original/ in a previously botched rewrite).
+
+* Any commit messages that specify an encoding will become corrupted
+by the rewrite; git-filter-branch ignores the encoding, takes the original
+bytes, and feeds it to commit-tree without telling it the proper
+encoding.  (This happens whether or not --msg-filter is used.)
+
+* Commit messages (even if they are all UTF-8) by default become
+corrupted due to not being updated -- any references to other commit
+hashes in commit messages will now refer to no-longer-extant commits.
+
+* There are no facilities for helping users find what unwanted crud they
+should delete, which means they are much more likely to have incomplete
+or partial cleanups that sometimes result in confusion and people
+wasting time trying to understand.  (For example, folks tend to just
+look for big files to delete instead of big directories or extensions,
+and once they do so, then sometime later folks using the new repository
+who are going through history will notice a build artifact directory
+that has some files but not others, or a cache of dependencies
+(node_modules or similar) which couldn't have ever been functional since
+it's missing some files.)
+
+* If --prune-empty isn't specified, then the filtering process can
+create hoards of confusing empty commits
+
+* If --prune-empty is specified, then intentionally placed empty
+commits from before the filtering operation are also pruned instead of
+just pruning commits that became empty due to filtering rules.
+
+* If --prune empty is specified, sometimes empty commits are missed
+and left around anyway (a somewhat rare bug, but it happens...)
+
+* A minor issue, but users who have a goal to update all names and
+emails in a repository may be led to --env-filter which will only update
+authors and committers, missing taggers.
+
+* If the user provides a --tag-name-filter that maps multiple tags to
+the same name, no warning or error is provided; git-filter-branch simply
+overwrites each tag in some undocumented pre-defined order resulting in
+only one tag at the end.  (A git-filter-branch regression test requires
+this surprising behavior.)
+
+Also, the poor performance of git-filter-branch often leads to safety
+issues:
+
+* Coming up with the correct shell snippet to do the filtering you want
+is sometimes difficult unless you're just doing a trivial modification
+such as deleting a couple files.  Unfortunately, people often learn if
+the snippet is right or wrong by trying it out, but the rightness or
+wrongness can vary depending on special circumstances (spaces in
+filenames, non-ascii filenames, funny author names or emails, invalid
+timezones, presence of grafts or replace objects, etc.), meaning they
+may have to wait a long time, hit an error, then restart.  The
+performance of git-filter-branch is so bad that this cycle is painful,
+reducing the time available to carefully re-check (to say nothing about
+what it does to the patience of the person doing the rewrite even if
+they do technically have more time available).  This problem is extra
+compounded because errors from broken filters may not be shown for a
+long time and/or get lost in a sea of output.  Even worse, broken
+filters often just result in silent incorrect rewrites.
+
+* To top it all off, even when users finally find working commands, they
+naturally want to share them.  But they may be unaware that their repo
+didn't have some special cases that someone else's does.  So, when
+someone else with a different repository runs the same commands, they
+get hit by the problems above.  Or, the user just runs commands that
+really were vetted for special cases, but they run it on a different OS
+where it doesn't work, as noted above.
 
 GIT
 ---
