@@ -85,7 +85,6 @@ void argv_array_split(struct argv_array *array, const char *to_split)
 	}
 		argv_array_push_nodup(array, xstrndup(to_split, p - to_split));
 
-
  		while (isspace(*p))	
 			p++;
 		to_split = p;
