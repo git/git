@@ -3295,7 +3295,7 @@ static int process_entry(struct merge_options *opt,
                 if (handle_modify_delete(opt, path, o, a, b))
                     clean_merge = -1;
             }
-        } else if (!(o_valid || (a_valid && b_valid)) && (a_valid || b_valid))) {
+        } else if (!(o_valid || (a_valid && b_valid)) && (a_valid || b_valid)) {
             /* Case B: Added in one. */
             /* [nothing|directory] -> ([nothing|directory], file) */
 
