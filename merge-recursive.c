@@ -860,11 +860,13 @@ static int make_room_for_path(struct merge_options *opt, const char *path)
                    df_path);
             unlink(df_path);
 
-            if (opt->df_conflict_file_set->strdup_strings)
-                free(opt->df_conflict_file_set->items[i].string);
-            opt->df_conflict_file_set->items[i] = opt->df_conflict_file_set->items[list->nr - 1];
-            opt->df_conflict_file_set->nr--;
-            break;
+            output(opt, 3,
+			       _("Removing %s to make room for subdirectory\n"),
+			       df_path);
+			unlink(df_path);
+			unsorted_string_list_delete_item(&opt->df_conflict_file_set,
+							 i, 0);
+			break;
         }
 		i++;
 	}
