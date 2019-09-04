@@ -3272,7 +3272,7 @@ static int process_entry(struct merge_options *opt,
 		}
 		if (path_clean < clean_merge)
 			clean_merge = path_clean;
-	} else if (o_valid && (!a_valid || !b_valid)) {
+	} else if (o_valid && !(a_valid && b_valid)) {
 		/* Case A: Deleted in one */
 		if ((!a_valid && !b_valid) ||
 		    (!b_valid && blob_unchanged(opt, o, a, normalize, path)) ||
