@@ -714,7 +714,7 @@ static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
 				    oid_to_hex(&obj2->oid),
 				    oid_to_hex(&next->oid));
 
-		hashwrite(f, obj->oid.hash, (int)hash_len);
+		hashwrite(f, obj2->oid.hash, (int)hash_len);
 		written += hash_len;
 		i--;
 	} while (i > 0);
