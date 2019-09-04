@@ -514,7 +514,7 @@ int generation_numbers_enabled(struct repository *r)
 	first_generation = get_be32(g->chunk_commit_data +
 				    g->hash_len + 8) >> 2;
 
-	return first_generation != 0;
+	return !!first_generation;
 }
 
 static void close_commit_graph_one(struct commit_graph *g)
