@@ -703,7 +703,6 @@ static size_t write_midx_oid_lookup(struct hashfile *f, unsigned char hash_len,
 
 	size_t written = 0;
     struct pack_midx_entry *obj;
-    uint32_t i = nr_objects;
 	if (nr_objects > 0){
 		uint32_t i = nr_objects;
 	do {
