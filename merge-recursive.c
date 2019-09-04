@@ -847,22 +847,25 @@ static int make_room_for_path(struct merge_options *opt, const char *path)
 	const char *msg = _("failed to create path '%s'%s");
 
 	/* Unlink any D/F conflict files that are in the way */
-	int i = 0;
-	for (i < opt->df_conflict_file_set.nr) {
+	unsigned int i = 0;
+	while (i < opt->df_conflict_file_set.nr) {
 		const char *df_path = opt->df_conflict_file_set.items[i].string;
 		size_t pathlen = strlen(path);
 		size_t df_pathlen = strlen(df_path);
 		if (df_pathlen < pathlen &&
 		    path[df_pathlen] == '/' &&
 		    strncmp(path, df_path, df_pathlen) == 0) {
-			output(opt, 3,
-			       _("Removing %s to make room for subdirectory\n"),
-			       df_path);
-			unlink(df_path);
-			unsorted_string_list_delete_item(&opt->df_conflict_file_set,
-							 i, 0);
-			break;
-		}
+            output(opt, 3,
+                   _("Removing %s to make room for subdirectory\n"),
+                   df_path);
+            unlink(df_path);
+
+            if (opt->df_conflict_file_set->strdup_strings)
+                free(opt->df_conflict_file_set->items[i].string);
+            opt->df_conflict_file_set->items[i] = opt->df_conflict_file_set->items[list->nr - 1];
+            opt->df_conflict_file_set->nr--;
+            break;
+        }
 		i++;
 	}
 
@@ -3608,13 +3611,14 @@ int merge_recursive_generic(struct merge_options *opt,
 	struct commit_list *ca = NULL;
 
 	if (base_list) {
-		int i;
-		for (i = 0; i < num_base_list; ++i) {
+		int i = 0;
+		while (i < num_base_list) {
 			struct commit *base;
 			if (!(base = get_ref(opt->repo, base_list[i], oid_to_hex(base_list[i]))))
 				return err(opt, _("Could not parse object '%s'"),
 					   oid_to_hex(base_list[i]));
 			commit_list_insert(base, &ca);
+			++i;
 		}
 	}
 
