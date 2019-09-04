@@ -225,6 +225,13 @@ int unsorted_string_list_has_string(struct string_list *list, const char *string
  */
 struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
 						     const char *string);
+/**
+ * Remove an item from a string_list. The `string` pointer of the
+ * items will be freed in case the `strdup_strings` member of the
+ * string_list is set. The third parameter controls if the `util`
+ * pointer of the items should be freed or not.
+ */
+void unsorted_string_list_delete_item(struct string_list *list, int i, int free_util);
 
 /**
  * Split string into substrings on character `delim` and append the

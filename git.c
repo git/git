@@ -42,15 +42,11 @@ static void list_builtins(struct string_list *list, unsigned int exclude_option)
 
 static void exclude_helpers_from_list(struct string_list *list)
 {
-	unsigned int i = 0;
+	int i = 0;
 
 	while (i < list->nr) {
-		if (strstr(list->items[i].string, "--")){
-			if (list->strdup_strings)
-		free(list->items[i].string);
-	list->items[i] = list->items[list->nr-1];
-	list->nr--;
-		}
+		if (strstr(list->items[i].string, "--"))
+			unsorted_string_list_delete_item(list, i, 0);
 		else
 			i++;
 	}
