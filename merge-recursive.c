@@ -3406,7 +3406,6 @@ int merge_trees(struct merge_options *opt,
 	if (unmerged_index(istate)) {
 		struct string_list *entries;
 		struct rename_info re_info;
-		unsigned i;
 		/*
 		 * Only need the hashmap while processing entries, so
 		 * initialize it here and free it when we are done running
