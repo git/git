@@ -1983,7 +1983,7 @@ static void remove_hashmap_entries(struct hashmap *dir_renames,
 {
 	struct dir_rename_entry *entry;
 	unsigned int i =0;
-	for (i < items_to_remove->nr) {
+	while (i < items_to_remove->nr) {
 		entry = items_to_remove->items[i++].util;
 		hashmap_remove(dir_renames, entry, NULL);
 	}
