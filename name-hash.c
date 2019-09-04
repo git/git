@@ -125,7 +125,7 @@ static int cache_entry_cmp(const void *unused_cmp_data,
 	 * index_file_exists, find all entries with matching hash code and
 	 * decide whether the entry matches in same_name.
 	 */
-	return remove ? !(ce1 == ce2) : 0;
+	return remove ? ce1 != ce2 : 0;
 }
 
 static int lazy_try_threaded = 1;
