@@ -680,7 +680,7 @@ static size_t write_midx_oid_fanout(struct hashfile *f,
 	* but we use a 256-entry lookup to be able to avoid
 	* having to do eight extra binary search iterations).
 	*/
-	for(i = 0; i < 256; i++)
+	for(i = 0; i < 256; i++){
 		struct pack_midx_entry *next = list;
 		while (next < last && next->oid.hash[0] == i) {
 			count++;

@@ -18,8 +18,8 @@
  * @param {String} tzClassName: denotes elements with date to be adjusted
  */
 function onloadTZSetup(tzDefault, tzCookieInfo, tzClassName) {
-	var tzCookieTZ = getCookie(tzCookieInfo.name, tzCookieInfo);
-	var tz = tzDefault;
+	const tzCookieTZ = getCookie(tzCookieInfo.name, tzCookieInfo);
+	let tz = tzDefault;
 
 	if (tzCookieTZ) {
 		// set timezone to value saved in a cookie
@@ -33,7 +33,7 @@ function onloadTZSetup(tzDefault, tzCookieInfo, tzClassName) {
 
 	// server-side of gitweb produces datetime in UTC,
 	// so if tz is 'utc' there is no need for changes
-	var nochange = tz === 'utc';
+	const nochange = tz === 'utc';
 
 	// adjust dates to use specified common timezone
 	fixDatetimeTZ(tz, tzClassName, nochange);
@@ -61,18 +61,17 @@ function fixDatetimeTZ(tz, tzClassName, nochange) {
 	tz = normalizeTimezoneInfo(tz);
 
 	// NOTE: result of getElementsByClassName should probably be cached
-	var classesFound = document.getElementsByClassName(tzClassName, "span");
-	for (var i = 0, len = classesFound.length; i < len; i++) {
-		var curElement = classesFound[i];
+	const classesFound = document.getElementsByClassName(tzClassName, "span");
+	let i = 0, len = classesFound.length;
+	while (i < len) {
+		const curElement = classesFound[i++];
 
 		curElement.title = 'Click to change timezone';
 		if (!nochange) {
 			// we use *.firstChild.data (W3C DOM) instead of *.innerHTML
 			// as the latter doesn't always work everywhere in every browser
-			var epoch = parseRFC2822Date(curElement.firstChild.data);
-			var adjusted = formatDateRFC2882(epoch, tz);
-
-			curElement.firstChild.data = adjusted;
+			const epoch = parseRFC2822Date(curElement.firstChild.data);
+			curElement.firstChild.data = formatDateRFC2882(epoch, tz);
 		}
 	}
 }
@@ -128,11 +127,11 @@ function addChangeTZ(tzSelected, tzCookieInfo, tzClassName) {
  * @returns {DocumentFragment}
  */
 function createChangeTZForm(documentFragment, tzSelected, tzCookieInfo, tzClassName) {
-	var div = document.createElement("div");
+	const div = document.createElement("div");
 	div.className = 'popup';
 
 	/* '<div class="close-button" title="(click on this box to close)">X</div>' */
-	var closeButton = document.createElement('div');
+	const closeButton = document.createElement('div');
 	closeButton.className = 'close-button';
 	closeButton.title = '(click on this box to close)';
 	closeButton.appendChild(document.createTextNode('X'));
@@ -141,7 +140,7 @@ function createChangeTZForm(documentFragment, tzSelected, tzCookieInfo, tzClassN
 
 	/* 'Select timezone: <br clear="all">' */
 	div.appendChild(document.createTextNode('Select timezone: '));
-	var br = document.createElement('br');
+	const br = document.createElement('br');
 	br.clear = 'all';
 	div.appendChild(br);
 
