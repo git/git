@@ -1101,16 +1101,14 @@ int verify_midx_file(struct repository *r, const char *object_dir)
 	}
 	stop_progress(&progress);
 
-	i = 0;
-	do {
+	for(i = 0; i < 255; i++){
 		uint32_t oid_fanout1 = ntohl(m->chunk_oid_fanout[i]);
 		uint32_t oid_fanout2 = ntohl(m->chunk_oid_fanout[i + 1]);
 
 		if (oid_fanout1 > oid_fanout2)
 			midx_report(_("oid fanout out of order: fanout[%d] = %"PRIx32" > %"PRIx32" = fanout[%d]"),
 				    i, oid_fanout1, oid_fanout2, i + 1);
-		i++;
-	} while (i < 255);
+	}
 
 	progress = start_sparse_progress(_("Verifying OID order in MIDX"),
 					 m->num_objects - 1);
@@ -1269,17 +1267,19 @@ static int fill_included_packs_batch(struct repository *r,
 				     unsigned char *include_pack,
 				     size_t batch_size)
 {
-	uint32_t i, packs_to_repack;
 	size_t total_size;
 	struct repack_info *pack_info = xcalloc(m->num_packs, sizeof(struct repack_info));
-
-	for (i = 0; i < m->num_packs; i++) {
+	uint32_t i = 0, packs_to_repack;
+	while(i < m->num_packs) {
 		pack_info[i].pack_int_id = i;
 
-		if (prepare_midx_pack(r, m, i))
+		if (prepare_midx_pack(r, m, i)){
+			i++;
 			continue;
+		}
 
 		pack_info[i].mtime = m->packs[i]->mtime;
+		i++;
 	}
 
 	for (i = 0; batch_size && i < m->num_objects; i++) {
@@ -1296,9 +1296,7 @@ static int fill_included_packs_batch(struct repository *r,
 		struct packed_git *p = m->packs[pack_int_id];
 		size_t expected_size;
 
-		if (!p)
-			continue;
-		if (open_pack_index(p) || !p->num_objects)
+		if (!p || open_pack_index(p) || !p->num_objects)
 			continue;
 
 		expected_size = (size_t)(p->pack_size
@@ -1336,10 +1334,16 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size)
 	include_pack = xcalloc(m->num_packs, sizeof(unsigned char));
 
 	if (batch_size) {
-		if (fill_included_packs_batch(r, m, include_pack, batch_size))
+		if (fill_included_packs_batch(r, m, include_pack, batch_size)){
+			if (m)
+			close_midx(m);
 			goto cleanup;
-	} else if (fill_included_packs_all(m, include_pack))
+		}
+	} else if (fill_included_packs_all(m, include_pack)){
+	if (m)
+			close_midx(m);
 		goto cleanup;
+	}
 
 	argv_array_push(&cmd.args, "pack-objects");
 
@@ -1354,6 +1358,8 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size)
 	if (start_command(&cmd)) {
 		error(_("could not start pack-objects"));
 		result = 1;
+		if (m)
+			close_midx(m);
 		goto cleanup;
 	}
 
@@ -1373,6 +1379,8 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size)
 	if (finish_command(&cmd)) {
 		error(_("could not finish pack-objects"));
 		result = 1;
+		if (m)
+			close_midx(m);
 		goto cleanup;
 	}
 
@@ -1380,8 +1388,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size)
 	m = NULL;
 
 cleanup:
-	if (m)
-		close_midx(m);
+	
 	free(include_pack);
 	return result;
 }
