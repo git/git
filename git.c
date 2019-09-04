@@ -42,7 +42,7 @@ static void list_builtins(struct string_list *list, unsigned int exclude_option)
 
 static void exclude_helpers_from_list(struct string_list *list)
 {
-	int i = 0;
+	unsigned int i = 0;
 
 	while (i < list->nr) {
 		if (strstr(list->items[i].string, "--"))
@@ -54,7 +54,7 @@ static void exclude_helpers_from_list(struct string_list *list)
 
 static int match_token(const char *spec, int len, const char *token)
 {
-	int token_len = strlen(token);
+	size_t token_len = strlen(token);
 
 	return len == token_len && !strncmp(spec, token, token_len);
 }
@@ -62,7 +62,7 @@ static int match_token(const char *spec, int len, const char *token)
 static int list_cmds(const char *spec)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
-	int i;
+	unsigned int i = 0;
 	int nongit;
 
 	/*
@@ -100,8 +100,8 @@ static int list_cmds(const char *spec)
 		if (*spec == ',')
 			spec++;
 	}
-	for (i = 0; i < list.nr; i++)
-		puts(list.items[i].string);
+	while (i < list.nr)
+		puts(list.items[i++].string);
 	string_list_clear(&list, 0);
 	return 0;
 }
@@ -114,7 +114,6 @@ static void commit_pager_choice(void)
 		break;
 	case 1:
 		setup_pager();
-		break;
 	default:
 		break;
 	}
@@ -658,11 +657,10 @@ static void handle_builtin(int argc, const char **argv)
 
 		argv[1] = argv[0];
 		argv[0] = cmd = "help";
-
-		for (i = 0; i < argc; i++) {
+		argv_array_push(&args, argv[0]);
+		argv_array_push(&args, "--exclude-guides");
+		for (i = 1; i < argc; i++) {
 			argv_array_push(&args, argv[i]);
-			if (!i)
-				argv_array_push(&args, "--exclude-guides");
 		}
 
 		argc++;
@@ -727,7 +725,7 @@ static int run_argv(int *argcp, const char ***argv)
 	struct string_list cmd_list = STRING_LIST_INIT_NODUP;
 	struct string_list_item *seen;
 
-	while (1) {
+	for(;;) {
 		/*
 		 * If we tried alias and futzed with our environment,
 		 * it no longer is safe to invoke builtins directly in
@@ -868,7 +866,7 @@ int cmd_main(int argc, const char **argv)
 	 */
 	setup_path();
 
-	while (1) {
+	for(;;) {
 		int was_alias = run_argv(&argc, &argv);
 		if (errno != ENOENT)
 			break;

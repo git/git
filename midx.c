@@ -673,14 +673,14 @@ static size_t write_midx_oid_fanout(struct hashfile *f,
 {
 	struct pack_midx_entry *list = objects;
 	struct pack_midx_entry *last = objects + nr_objects;
-	uint32_t count = 0, i = 0;
+	uint32_t count = 0, i;
 
 	/*
 	* Write the first-level table (the list is sorted,
 	* but we use a 256-entry lookup to be able to avoid
 	* having to do eight extra binary search iterations).
 	*/
-	do {
+	for(i = 0; i < 256; i++)
 		struct pack_midx_entry *next = list;
 		while (next < last && next->oid.hash[0] == i) {
 			count++;
@@ -689,8 +689,7 @@ static size_t write_midx_oid_fanout(struct hashfile *f,
 
 		hashwrite_be32(f, count);
 		list = next;
-		i++;
-	} while ( i < 256);
+	}
 
 	return MIDX_CHUNK_FANOUT_SIZE;
 }
