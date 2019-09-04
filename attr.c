@@ -1031,9 +1031,9 @@ static int fill(const char *path, int pathlen, int basename_offset,
 {
 	while (rem > 0 && stack) {
 		const char *base = stack->origin ? stack->origin : "";
-		int i;
-		for (i = stack->num_matches - 1; 0 < rem && 0 <= i; i--) {
-			const struct match_attr *a = stack->attrs[i];
+		unsigned int i = stack->num_matches;
+		while (0 < rem && 0 < i) {
+			const struct match_attr *a = stack->attrs[--i];
 			if (a->is_macro)
 				continue;
 			if (path_matches(path, pathlen, basename_offset,

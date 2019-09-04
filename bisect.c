@@ -90,13 +90,13 @@ static inline void weight_set(struct commit_list *elem, int weight)
 
 static int count_interesting_parents(struct commit *commit)
 {
-	struct commit_list *p = commit->parents;
+	struct commit_list *p;
 	int count = 0;
 
-	while (p) {
-		if (!(p->item->object.flags & UNINTERESTING))
-			count++;
-		p = p->next;
+	for (p = commit->parents; p; p = p->next) {
+		if (p->item->object.flags & UNINTERESTING)
+			continue;
+		count++;
 	}
 	return count;
 }
@@ -198,7 +198,7 @@ static int compare_commit_dist(const void *a_, const void *b_)
 
 	a = (struct commit_dist *)a_;
 	b = (struct commit_dist *)b_;
-	if (a->distance != b->distance)
+	if (a->distance == b->distance)
 		return b->distance - a->distance; /* desc sort */
 	return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
 }
@@ -224,20 +224,17 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 		cnt++;
 	}
 	QSORT(array, cnt, compare_commit_dist);
-i = 0;
-p = list;
- while (i < cnt) {
+	for (p = list, i = 0; i < cnt; i++) {
 		struct object *obj = &(array[i].commit->object);
 
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "dist=%d", array[i].distance);
 		add_name_decoration(DECORATION_NONE, buf.buf, obj);
 
-		p->item = array[i++].commit;
-		if (i < cnt)
+		p->item = array[i].commit;
+		if (i < cnt - 1)
 			p = p->next;
 	}
-
 	if (p) {
 		free_commit_list(p->next);
 		p->next = NULL;
@@ -265,10 +262,9 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 					     int find_all)
 {
 	int n = 0, counted = 0;
-	struct commit_list *p = list;
+	struct commit_list *p;
 
-
-	while (p) {
+	for (p = list; p; p = p->next) {
 		struct commit *commit = p->item;
 		unsigned flags = commit->object.flags;
 
@@ -293,7 +289,6 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			weight_set(p, -2);
 			break;
 		}
-		p = p->next;
 	}
 
 	show_list("bisection 2 initialize", counted, nr, list);
@@ -366,9 +361,10 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 
 	show_list("bisection 2 counted all", counted, nr, list);
 
-    if (find_all)
-        return best_bisection_sorted(list, nr);
-    return best_bisection(list, nr);
+	if (find_all)
+	return best_bisection_sorted(list, nr);
+
+	return best_bisection(list, nr);
 }
 
 void find_bisection(struct commit_list **commit_list, int *reaches,
@@ -480,11 +476,14 @@ static char *join_sha1_array_hex(struct oid_array *array, char delim)
 	struct strbuf joined_hexs = STRBUF_INIT;
 	int i;
 
-	for (i = 0; i < array->nr; i++) {
-		strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i));
-		if (i + 1 < array->nr)
-			strbuf_addch(&joined_hexs, delim);
+if (array->nr > 0){
+	int i;
+	for (i = 0; i < array->nr - 1; i++) {
+		strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i++));
+		strbuf_addch(&joined_hexs, delim);
 	}
+	strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i));
+}
 
 	return strbuf_detach(&joined_hexs, NULL);
 }
@@ -664,17 +663,18 @@ static void bisect_common(struct rev_info *revs)
 }
 
 static void exit_if_skipped_commits(struct commit_list *tried,
-				    const struct object_id *bad) {
-    if (!tried)
-        return;
+				    const struct object_id *bad)
+{
+	if (!tried)
+		return;
 
-    printf("There are only 'skip'ped commits left to test.\n"
-           "The first %s commit could be any of:\n", term_bad);
+	printf("There are only 'skip'ped commits left to test.\n"
+	       "The first %s commit could be any of:\n", term_bad);
 
-    do {
-        printf("%s\n", oid_to_hex(&tried->item->object.oid));
-        tried = tried->next;
-    } while (tried);
+	do {
+		printf("%s\n", oid_to_hex(&tried->item->object.oid));
+		tried = tried->next;
+	} while (tried);
 
 	if (bad)
 		printf("%s\n", oid_to_hex(bad));
@@ -922,22 +922,22 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
 	const char *filename = git_path_bisect_terms();
 	FILE *fp = fopen(filename, "r");
 
-    if (fp != NULL) {
-        strbuf_getline_lf(&str, fp);
-        *read_bad = strbuf_detach(&str, NULL);
-        strbuf_getline_lf(&str, fp);
-        *read_good = strbuf_detach(&str, NULL);
-    } else if (errno == ENOENT) {
-            *read_bad = "bad";
-            *read_good = "good";
-            return;
-        }
-    else {
-            die_errno(_("could not read file '%s'"), filename);
-        }
-
-    strbuf_release(&str);
-    fclose(fp);
+	if (!fp) {
+		if (errno == ENOENT) {
+			*read_bad = "bad";
+			*read_good = "good";
+			return;
+		} else {
+			die_errno(_("could not read file '%s'"), filename);
+		}
+	} else {
+		strbuf_getline_lf(&str, fp);
+		*read_bad = strbuf_detach(&str, NULL);
+		strbuf_getline_lf(&str, fp);
+		*read_good = strbuf_detach(&str, NULL);
+	}
+	strbuf_release(&str);
+	fclose(fp);
 }
 
 /*
@@ -967,7 +967,7 @@ int bisect_next_all(struct repository *r, const char *prefix, int no_checkout)
 
 	bisect_common(&revs);
 
-	find_bisection(&revs.commits, &reaches, &all, skipped_revs.nr !=0);
+	find_bisection(&revs.commits, &reaches, &all, !!skipped_revs.nr);
 	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {
@@ -1023,9 +1023,9 @@ static inline int log2i(int n)
 	int log2 = 0;
 
 	while (n > 1) {
-        log2++;
-        n >>= 1;
-    }
+		log2++;
+		n>>=1;
+	}
 
 	return log2;
 }
@@ -1047,13 +1047,16 @@ static inline int exp2i(int n)
  */
 int estimate_bisect_steps(int all)
 {
-    if (all >=3) {
-        const int n = log2i(all), e = exp2i(n), x = all - e;
+	int n, x, e;
 
-        return (e < 3 * x) ? n : n - 1;
-    }
+	if (all < 3)
+		return 0;
 
-    return 0;
+	n = log2i(all);
+	e = exp2i(n);
+	x = all - e;
+
+	return (e < 3 * x) ? n : n - 1;
 }
 
 static int mark_for_removal(const char *refname, const struct object_id *oid,
@@ -1068,6 +1071,7 @@ static int mark_for_removal(const char *refname, const struct object_id *oid,
 int bisect_clean_state(void)
 {
 	int result = 0;
+
 	/* There may be some refs packed during bisection */
 	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
 	for_each_ref_in("refs/bisect", mark_for_removal, (void *) &refs_for_removal);

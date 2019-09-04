@@ -30,13 +30,14 @@ static void strip_last_component(struct strbuf *path)
 /* get (and remove) the next component in 'remaining' and place it in 'next' */
 static void get_next_component(struct strbuf *next, struct strbuf *remaining)
 {
-	char *start = remaining->buf;
+	char *start = NULL;
 	char *end = NULL;
 
 	strbuf_reset(next);
 
 	/* look for the next component */
 	/* Skip sequences of multiple path-separators */
+	start = remaining->buf;
 	while (is_dir_sep(*start))
 		start++;
 	/* Find end of the path component */

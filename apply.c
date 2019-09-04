@@ -579,11 +579,11 @@ static size_t trailing_spaces_len(const char *line, size_t len)
 		return 0;
 
 	p = line + len;
-	while (p != line) {
+	do {
 		p--;
 		if (*p != ' ')
 			return line + len - (p + 1);
-	}
+	} while (p != line);
 
 	/* All spaces! */
 	return len;

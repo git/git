@@ -53,14 +53,17 @@ static const char *split_cmdline_errors[] = {
 
 int split_cmdline(char *cmdline, const char ***argv)
 {
-	int src = 0, dst = 0, count = 0, size = 16;
+	int src, dst, count = 0, size = 16;
 	char quoted = 0;
 
 	ALLOC_ARRAY(*argv, size);
 
 	/* split alias_string */
 	(*argv)[count++] = cmdline;
-	while (cmdline[src]) {
+	src = 0; 
+	if (cmdLine[0]){
+		dst = 0;
+	do {
 		char c = cmdline[src];
 		if (!quoted && isspace(c)) {
 			cmdline[dst++] = 0;
@@ -87,6 +90,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 			cmdline[dst++] = c;
 			src++;
 		}
+	} while (cmdline[src]);
 	}
 
 	cmdline[dst] = 0;

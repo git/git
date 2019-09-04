@@ -53,9 +53,10 @@ void argv_array_pushl(struct argv_array *array, ...)
 
 void argv_array_pushv(struct argv_array *array, const char **argv)
 {
-	while (*argv){
-		argv_array_push(array, *argv++);
-	}
+	while (*argv) {
+        argv_array_push(array, *argv);
+        argv++;
+    }
 }
 
 void argv_array_pop(struct argv_array *array)
@@ -71,24 +72,23 @@ void argv_array_split(struct argv_array *array, const char *to_split)
 {
 	while (isspace(*to_split))
 		to_split++;
-	
-	for (;;) {	
- 		const char *p = to_split;
- 		
-		if (!*p)
-			break;
-		
-		if (!isspace(*p)){
-		do{
-			p++;
-		} while (*p && !isspace(*p));
-	}
-		argv_array_push_nodup(array, xstrndup(to_split, p - to_split));
+	for (;;) {
+        const char *p = to_split;
 
- 		while (isspace(*p))	
-			p++;
-		to_split = p;
-	}
+        if (!*p)
+            break;
+
+        if (!isspace(*p)) {
+            do {
+                p++;
+            } while (*p && !isspace(*p));
+        }
+        argv_array_push_nodup(array, xstrndup(to_split, p - to_split));
+
+        while (isspace(*p))
+            p++;
+        to_split = p;
+    }
 }
 
 void argv_array_clear(struct argv_array *array)
@@ -107,8 +107,8 @@ const char **argv_array_detach(struct argv_array *array)
 	if (array->argv == empty_argv)
 		return xcalloc(1, sizeof(const char *));
 	else {
-	const char **ret = array->argv;
-	argv_array_init(array);
-	return ret;
-	}
+        const char **ret = array->argv;
+        argv_array_init(array);
+        return ret;
+    }
 }
