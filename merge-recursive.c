@@ -3272,90 +3272,94 @@ static int process_entry(struct merge_options *opt,
 		}
 		if (path_clean < clean_merge)
 			clean_merge = path_clean;
-	} else if (o_valid && !(a_valid && b_valid)) {
-		/* Case A: Deleted in one */
-		if ((!a_valid && !b_valid) ||
-		    (!b_valid && blob_unchanged(opt, o, a, normalize, path)) ||
-		    (!a_valid && blob_unchanged(opt, o, b, normalize, path))) {
-			/* Deleted in both or deleted in one and
-			 * unchanged in the other */
-			if (a_valid)
-				output(opt, 2, _("Removing %s"), path);
-			/* do not touch working file if it did not exist */
-			remove_file(opt, 1, path, !a_valid);
-		} else {
-			/* Modify/delete; deleted side may have put a directory in the way */
-			clean_merge = 0;
-			if (handle_modify_delete(opt, path, o, a, b))
-				clean_merge = -1;
-		}
-	} else if ((!o_valid && !(a_valid && b_valid) && (a_valid || b_valid))) {
-		/* Case B: Added in one. */
-		/* [nothing|directory] -> ([nothing|directory], file) */
+	} else {
+        int o_valid = is_valid(o);
+        int a_valid = is_valid(a);
+        int b_valid = is_valid(b);
+        if (o_valid && !(a_valid && b_valid)) {
+            /* Case A: Deleted in one */
+            if (!(a_valid || b_valid) ||
+                (!b_valid && blob_unchanged(opt, o, a, normalize, path)) ||
+                (!a_valid && blob_unchanged(opt, o, b, normalize, path))) {
+                /* Deleted in both or deleted in one and
+                * unchanged in the other */
+                if (a_valid)
+                    output(opt, 2, _("Removing %s"), path);
+                /* do not touch working file if it did not exist */
+                remove_file(opt, 1, path, !a_valid);
+            } else {
+                /* Modify/delete; deleted side may have put a directory in the way */
+                clean_merge = 0;
+                if (handle_modify_delete(opt, path, o, a, b))
+                    clean_merge = -1;
+            }
+        } else if (!(o_valid || (a_valid && b_valid)) && (a_valid || b_valid))) {
+            /* Case B: Added in one. */
+            /* [nothing|directory] -> ([nothing|directory], file) */
 
-		const char *add_branch;
-		const char *other_branch;
-		const char *conf;
-		const struct diff_filespec *contents;
+            const char *add_branch;
+            const char *other_branch;
+            const char *conf;
+            const struct diff_filespec *contents;
 
-		if (a_valid) {
-			add_branch = opt->branch1;
-			other_branch = opt->branch2;
-			contents = a;
-			conf = _("file/directory");
-		} else {
-			add_branch = opt->branch2;
-			other_branch = opt->branch1;
-			contents = b;
-			conf = _("directory/file");
-		}
-		if (dir_in_way(opt->repo->index, path,
-			       !opt->call_depth && !S_ISGITLINK(a->mode),
-			       0)) {
-			char *new_path = unique_path(opt, path, add_branch);
-			clean_merge = 0;
-			output(opt, 1, _("CONFLICT (%s): There is a directory with name %s in %s. "
-			       "Adding %s as %s"),
-			       conf, path, other_branch, path, new_path);
-			if (update_file(opt, 0, contents, new_path))
-				clean_merge = -1;
-			else if (opt->call_depth)
-				remove_file_from_index(opt->repo->index, path);
-			free(new_path);
-		} else {
-			output(opt, 2, _("Adding %s"), path);
-			/* do not overwrite file if already present */
-			if (update_file_flags(opt, contents, path, 1, !a_valid))
-				clean_merge = -1;
-		}
-	} else if (a_valid && b_valid) {
-		if (!o_valid) {
-			/* Case C: Added in both (check for same permissions) */
-			output(opt, 1,
-			       _("CONFLICT (add/add): Merge conflict in %s"),
-			       path);
-			clean_merge = handle_file_collision(opt,
-							    path, NULL, NULL,
-							    opt->branch1,
-							    opt->branch2,
-							    a, b);
-		} else {
-			/* case D: Modified in both, but differently. */
-			struct merge_file_info mfi;
-			int is_dirty = 0; /* unpack_trees would have bailed if dirty */
-			clean_merge = handle_content_merge(&mfi, opt, path,
-							   is_dirty,
-							   o, a, b, NULL);
-		}
-	} else if (!o_valid && !a_valid && !b_valid) {
-		/*
-		 * this entry was deleted altogether. a_mode == 0 means
-		 * we had that path and want to actively remove it.
-		 */
-		remove_file(opt, 1, path, !a->mode);
-	} else
-		BUG("fatal merge failure, shouldn't happen.");
-
+            if (a_valid) {
+                add_branch = opt->branch1;
+                other_branch = opt->branch2;
+                contents = a;
+                conf = _("file/directory");
+            } else {
+                add_branch = opt->branch2;
+                other_branch = opt->branch1;
+                contents = b;
+                conf = _("directory/file");
+            }
+            if (dir_in_way(opt->repo->index, path,
+                           !opt->call_depth && !S_ISGITLINK(a->mode),
+                           0)) {
+                char *new_path = unique_path(opt, path, add_branch);
+                clean_merge = 0;
+                output(opt, 1, _("CONFLICT (%s): There is a directory with name %s in %s. "
+                                 "Adding %s as %s"),
+                       conf, path, other_branch, path, new_path);
+                if (update_file(opt, 0, contents, new_path))
+                    clean_merge = -1;
+                else if (opt->call_depth)
+                    remove_file_from_index(opt->repo->index, path);
+                free(new_path);
+            } else {
+                output(opt, 2, _("Adding %s"), path);
+                /* do not overwrite file if already present */
+                if (update_file_flags(opt, contents, path, 1, !a_valid))
+                    clean_merge = -1;
+            }
+        } else if (a_valid && b_valid) {
+            if (!o_valid) {
+                /* Case C: Added in both (check for same permissions) */
+                output(opt, 1,
+                       _("CONFLICT (add/add): Merge conflict in %s"),
+                       path);
+                clean_merge = handle_file_collision(opt,
+                                                    path, NULL, NULL,
+                                                    opt->branch1,
+                                                    opt->branch2,
+                                                    a, b);
+            } else {
+                /* case D: Modified in both, but differently. */
+                struct merge_file_info mfi;
+                int is_dirty = 0; /* unpack_trees would have bailed if dirty */
+                clean_merge = handle_content_merge(&mfi, opt, path,
+                                                   is_dirty,
+                                                   o, a, b, NULL);
+            }
+        } else if (!(o_valid || a_valid || b_valid)) {
+            /*
+             * this entry was deleted altogether. a_mode == 0 means
+             * we had that path and want to actively remove it.
+             */
+            remove_file(opt, 1, path, !a->mode);
+        } else
+            BUG("fatal merge failure, shouldn't happen.");
+    }
 	return clean_merge;
 }
 
@@ -3456,10 +3460,11 @@ int merge_trees(struct merge_options *opt,
 
 	unpack_trees_finish(opt);
 
-	if (opt->call_depth && !(*result = write_tree_from_memory(opt)))
-		return -1;
+    if (!opt->call_depth || (*result = write_tree_from_memory(opt)))
+        return clean;
 
-	return clean;
+    return -1;
+
 }
 
 static struct commit_list *reverse_commit_list(struct commit_list *list)
@@ -3625,7 +3630,7 @@ int merge_recursive_generic(struct merge_options *opt,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		return err(opt, _("Unable to write index."));
 
-	return clean ? 0 : 1;
+    return !clean;
 }
 
 static void merge_recursive_config(struct merge_options *opt)
@@ -3682,7 +3687,7 @@ int parse_merge_opt(struct merge_options *opt, const char *s)
 {
 	const char *arg;
 
-	if (!s || !*s)
+	if (!(s && *s))
 		return -1;
 	if (!strcmp(s, "ours"))
 		opt->recursive_variant = MERGE_RECURSIVE_OURS;
