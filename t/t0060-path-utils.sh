@@ -165,6 +165,15 @@ test_expect_success 'absolute path rejects the empty string' '
 	test_must_fail test-path-utils absolute_path ""
 '
 
+test_expect_success MINGW '<drive-letter>:\\abc is an absolute path' '
+	for letter in : \" C Z 1 ä
+	do
+		path=$letter:\\abc &&
+		absolute="$(test-path-utils absolute_path "$path")" &&
+		test "$path" = "$absolute" || return 1
+	done
+'
+
 test_expect_success 'real path rejects the empty string' '
 	test_must_fail test-path-utils real_path ""
 '
