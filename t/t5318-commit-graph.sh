@@ -607,7 +607,7 @@ test_expect_success 'corrupt commit-graph write (broken parent)' '
 	)
 '
 
-test_expect_failure 'corrupt commit-graph write (missing tree)' '
+test_expect_success 'corrupt commit-graph write (missing tree)' '
 	rm -rf repo &&
 	git init repo &&
 	(
