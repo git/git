@@ -404,9 +404,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 		struct tag *tag = (struct tag *) object;
 		if (revs->tag_objects && !(flags & UNINTERESTING))
 			add_pending_object(revs, object, tag->tag);
-		if (!tag->tagged)
-			die("bad tag");
-		object = parse_object(revs->repo, &tag->tagged->oid);
+		object = parse_object(revs->repo, get_tagged_oid(tag));
 		if (!object) {
 			if (revs->ignore_missing_links || (flags & UNINTERESTING))
 				return NULL;
