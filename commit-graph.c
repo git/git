@@ -843,7 +843,9 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 		uint32_t packedDate[2];
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
-		parse_commit_no_graph(*list);
+		if (parse_commit_no_graph(*list))
+			die(_("unable to parse commit %s"),
+				oid_to_hex(&(*list)->object.oid));
 		hashwrite(f, get_commit_tree_oid(*list)->hash, hash_len);
 
 		parent = (*list)->parents;

@@ -585,7 +585,7 @@ test_expect_success 'get_commit_tree_in_graph works for non-the_repository' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'corrupt commit-graph write (broken parent)' '
+test_expect_success 'corrupt commit-graph write (broken parent)' '
 	rm -rf repo &&
 	git init repo &&
 	(
