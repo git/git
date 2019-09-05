@@ -183,7 +183,7 @@ static inline void packing_data_unlock(struct packing_data *pdata)
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,
-				    const unsigned char *sha1,
+				    const struct object_id *oid,
 				    uint32_t index_pos);
 
 struct object_entry *packlist_find(struct packing_data *pdata,

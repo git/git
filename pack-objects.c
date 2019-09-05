@@ -153,7 +153,7 @@ void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,
-				    const unsigned char *sha1,
+				    const struct object_id *oid,
 				    uint32_t index_pos)
 {
 	struct object_entry *new_entry;
@@ -177,7 +177,7 @@ struct object_entry *packlist_alloc(struct packing_data *pdata,
 	new_entry = pdata->objects + pdata->nr_objects++;
 
 	memset(new_entry, 0, sizeof(*new_entry));
-	hashcpy(new_entry->idx.oid.hash, sha1);
+	oidcpy(&new_entry->idx.oid, oid);
 
 	if (pdata->index_size * 3 <= pdata->nr_objects * 4)
 		rehash_objects(pdata);

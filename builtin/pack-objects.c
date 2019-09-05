@@ -1147,7 +1147,7 @@ static void create_object_entry(const struct object_id *oid,
 {
 	struct object_entry *entry;
 
-	entry = packlist_alloc(&to_pack, oid->hash, index_pos);
+	entry = packlist_alloc(&to_pack, oid, index_pos);
 	entry->hash = hash;
 	oe_set_type(entry, type);
 	if (exclude)
