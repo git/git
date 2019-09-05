@@ -28,8 +28,6 @@ test_expect_success 'setup' '
 	)
 '
 
-sq="'"
-
 full_name () {
 	(cd clone &&
 	 git rev-parse --symbolic-full-name "$@")
@@ -129,7 +127,7 @@ test_expect_success 'merge my-side@{u} records the correct name' '
 	git branch -t new my-side@{u} &&
 	git merge -s ours new@{u} &&
 	git show -s --pretty=tformat:%s >actual &&
-	echo "Merge remote-tracking branch ${sq}origin/side${sq}" >expect &&
+	echo "Merge remote-tracking branch ${SQ}origin/side${SQ}" >expect &&
 	test_cmp expect actual
 )
 '
@@ -156,7 +154,7 @@ test_expect_success 'branch@{u} works when tracking a local branch' '
 
 test_expect_success 'branch@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
-	fatal: no upstream configured for branch ${sq}non-tracking${sq}
+	fatal: no upstream configured for branch ${SQ}non-tracking${SQ}
 	EOF
 	error_message non-tracking@{u} &&
 	test_i18ncmp expect error
@@ -164,7 +162,7 @@ test_expect_success 'branch@{u} error message when no upstream' '
 
 test_expect_success '@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
-	fatal: no upstream configured for branch ${sq}master${sq}
+	fatal: no upstream configured for branch ${SQ}master${SQ}
 	EOF
 	test_must_fail git rev-parse --verify @{u} 2>actual &&
 	test_i18ncmp expect actual
@@ -172,7 +170,7 @@ test_expect_success '@{u} error message when no upstream' '
 
 test_expect_success 'branch@{u} error message with misspelt branch' '
 	cat >expect <<-EOF &&
-	fatal: no such branch: ${sq}no-such-branch${sq}
+	fatal: no such branch: ${SQ}no-such-branch${SQ}
 	EOF
 	error_message no-such-branch@{u} &&
 	test_i18ncmp expect error
@@ -189,7 +187,7 @@ test_expect_success '@{u} error message when not on a branch' '
 
 test_expect_success 'branch@{u} error message if upstream branch not fetched' '
 	cat >expect <<-EOF &&
-	fatal: upstream branch ${sq}refs/heads/side${sq} not stored as a remote-tracking branch
+	fatal: upstream branch ${SQ}refs/heads/side${SQ} not stored as a remote-tracking branch
 	EOF
 	error_message bad-upstream@{u} &&
 	test_i18ncmp expect error

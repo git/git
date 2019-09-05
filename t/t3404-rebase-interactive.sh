@@ -1419,7 +1419,6 @@ test_expect_success 'editor saves as CR/LF' '
 	)
 '
 
-SQ="'"
 test_expect_success 'rebase -i --gpg-sign=<key-id>' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	set_fake_editor &&
