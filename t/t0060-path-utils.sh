@@ -445,13 +445,15 @@ test_expect_success MINGW 'is_valid_path() on Windows' '
 		win32 \
 		"win32 x" \
 		../hello.txt \
+		C:\\git \
 		\
 		--not \
 		"win32 "  \
 		"win32 /x "  \
 		"win32."  \
 		"win32 . ." \
-		.../hello.txt
+		.../hello.txt \
+		colon:test
 '
 
 test_done
