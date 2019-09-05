@@ -461,10 +461,17 @@ char *mingw_query_user_email(void);
  *
  * - contain any of the reserved characters, e.g. `:`, `;`, `*`, etc
  *
+ * - correspond to reserved names (such as `AUX`, `PRN`, etc)
+ *
+ * The `allow_literal_nul` parameter controls whether the path `NUL` should
+ * be considered valid (this makes sense e.g. before opening files, as it is
+ * perfectly legitimate to open `NUL` on Windows, just as it is to open
+ * `/dev/null` on Unix/Linux).
+ *
  * Returns 1 upon success, otherwise 0.
  */
-int is_valid_win32_path(const char *path);
-#define is_valid_path(path) is_valid_win32_path(path)
+int is_valid_win32_path(const char *path, int allow_literal_nul);
+#define is_valid_path(path) is_valid_win32_path(path, 0)
 
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
