@@ -63,7 +63,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	if (cmdline[0]){
 		src = 0;
 		dst = 0;
-	do (src = dst = 0; cmdline[src];) {
+	do {
 		char c = cmdline[src];
 		if (!quoted && isspace(c)) {
 			cmdline[dst++] = 0;
@@ -93,7 +93,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	} while (cmdline[src]);
 		cmdline[dst] = 0;
 	}
-	else{
+	else {
 		cmdline[0] = 0;
 	}
 
