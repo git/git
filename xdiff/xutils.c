@@ -121,7 +121,8 @@ long xdl_guess_lines(mmfile_t *mf, long sample) {
     char const *data, *cur, *top;
 
     if ((cur = data = xdl_mmfile_first(mf, &size)) != NULL) {
-        for (top = data + size; nl < sample && cur < top;) {
+        char const *top = data + size;
+        while (nl < sample && cur < top) {
             nl++;
             if (!(cur = memchr(cur, '\n', top - cur)))
                 cur = top;

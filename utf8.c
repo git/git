@@ -733,7 +733,7 @@ static int is_hfs_dot_generic(const char *path,
 	 * in HFS+, but this is enough to catch our fairly vanilla
 	 * hard-coded needles.
 	 */
-	while (needle_len > 0;) {
+	while (needle_len > 0) {
 		c = next_hfs_char(&path);
 
 		/*
