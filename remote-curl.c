@@ -768,7 +768,7 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 	 * chunked encoding mess.
 	 */
 	if (!flush_received) {
-		do {
+		for (;;)
 			size_t n;
 			enum packet_read_status status;
 
@@ -777,7 +777,9 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 				use_gzip = 0;
 				break;
 			}
-		} while (status != PACKET_READ_FLUSH);
+			if (status != PACKET_READ_FLUSH)
+				break;
+		}
 	}
 
 	if (large_request) {
