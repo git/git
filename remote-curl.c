@@ -777,7 +777,7 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 				use_gzip = 0;
 				break;
 			}
-		} while (status != PACKET_READ_FLUSH)
+		} while (status != PACKET_READ_FLUSH);
 	}
 
 	if (large_request) {
@@ -912,7 +912,7 @@ retry:
 	if (err != HTTP_OK)
 		err = -1;
 
-	if (!rpc->any_written)
+	else if (!rpc->any_written)
 		err = -1;
 
 	curl_slist_free_all(headers);
@@ -974,8 +974,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 		strbuf_read(rpc_result, client.out, 0);
 	} else {
 		char buf[4096];
-		while (xread(client.out, buf, sizeof(buf)) > 0)
-			;
+		while (xread(client.out, buf, sizeof(buf)) > 0);
 	}
 
 	close(client.out);
