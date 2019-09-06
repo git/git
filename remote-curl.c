@@ -1242,6 +1242,7 @@ static void parse_push(struct strbuf *buf)
 
 		strbuf_reset(buf);
 		if (strbuf_getline_lf(buf, stdin) == EOF) {
+			int i;
 			for (i = 0; i < nr_spec; i++)
 				free(specs[i]);
 			free(specs);
