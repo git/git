@@ -94,7 +94,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 		cmdline[dst] = 0;
 	}
 	else{
-		cmdline[0] = 0
+		cmdline[0] = 0;
 	}
 
 	if (quoted) {
