@@ -1443,7 +1443,6 @@ static void recount_diff(const char *line, int size, struct fragment *fragment)
 			continue;
 		case '+':
 			newlines++;
-			continue;
 		case '\\':
 			continue;
 		case '@':
@@ -1473,16 +1472,14 @@ static void recount_diff(const char *line, int size, struct fragment *fragment)
  */
 static int parse_fragment_header(const char *line, int len, struct fragment *fragment)
 {
-	int offset;
-
-	if (!len || line[len-1] != '\n')
-		return -1;
-
+	if (len && line[len-1] == '\n'){
 	/* Figure out the number of lines in a fragment */
-	offset = parse_range(line, len, 4, " +", &fragment->oldpos, &fragment->oldlines);
+	int offset = parse_range(line, len, 4, " +", &fragment->oldpos, &fragment->oldlines);
 	offset = parse_range(line, len, offset, " @@", &fragment->newpos, &fragment->newlines);
 
 	return offset;
+	}
+	return -1;
 }
 
 /*
@@ -2916,7 +2913,6 @@ static int apply_one_fragment(struct apply_state *state,
 			    (ws_rule & WS_BLANK_AT_EOF) &&
 			    ws_blank_line(patch + 1, plen, ws_rule))
 				added_blank_line = 1;
-			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
 			break;
@@ -2931,10 +2927,9 @@ static int apply_one_fragment(struct apply_state *state,
 				found_new_blank_lines_at_end = hunk_linenr;
 			new_blank_lines_at_end++;
 		}
-		else if (is_blank_context)
-			;
-		else
+		else if (!is_blank_context)
 			new_blank_lines_at_end = 0;
+		
 		patch += len;
 		size -= len;
 		hunk_linenr++;

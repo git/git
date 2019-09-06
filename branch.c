@@ -37,6 +37,7 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 static int should_setup_rebase(const char *origin)
 {
 	switch (autorebase) {
+	default:
 	case AUTOREBASE_NEVER:
 		return 0;
 	case AUTOREBASE_LOCAL:
@@ -46,7 +47,6 @@ static int should_setup_rebase(const char *origin)
 	case AUTOREBASE_ALWAYS:
 		return 1;
 	}
-	return 0;
 }
 
 static const char tracking_advice[] =
