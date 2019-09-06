@@ -150,7 +150,7 @@ void ewah_add_dirty_words(
 
 		self->bit_size += can_add * BITS_IN_EWORD;
 
-		if (number - can_add == 0)
+		if (number == can_add)
 			break;
 
 		buffer_push_rlw(self, 0);

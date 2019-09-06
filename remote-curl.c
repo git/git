@@ -348,7 +348,7 @@ static void check_smart_http(struct discovery *d, const char *service,
 		 */
 		do {
 			packet_reader_read(&reader);
-		} while (reader.pktlen > 0)
+		} while (reader.pktlen > 0);
 
 			/*
 			 * v0 smart http; callers expect us to soak up the
