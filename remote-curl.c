@@ -785,7 +785,7 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 	 * chunked encoding mess.
 	 */
 	if (!flush_received) {
-		while (1) {
+		for (;;) {
 			size_t n;
 			enum packet_read_status status;
 
@@ -1142,7 +1142,7 @@ static void parse_fetch(struct strbuf *buf)
 			return;
 		if (!*buf->buf)
 			break;
-	} while (1);
+	} for (;;);
 
 	if (fetch(nr_heads, to_fetch))
 		exit(128); /* error already reported */
@@ -1256,7 +1256,7 @@ static void parse_push(struct strbuf *buf)
 			goto free_specs;
 		if (!*buf->buf)
 			break;
-	} while (1);
+	} for (;;);
 
 	ret = push(nr_spec, specs);
 	printf("\n");
@@ -1324,7 +1324,7 @@ static int stateless_connect(const char *service_name)
 	write_or_die(rpc.in, discover->buf, discover->len);
 
 	/* Until we see EOF keep sending POSTs */
-	while (1) {
+	for (;;) {
 		size_t avail;
 		enum packet_read_status status;
 
@@ -1440,7 +1440,7 @@ int cmd_main(int argc, const char **argv)
 			return 1;
 		}
 		strbuf_reset(&buf);
-	} while (1);
+	} for (;;);
 
 	http_cleanup();
 

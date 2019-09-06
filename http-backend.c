@@ -298,7 +298,7 @@ static ssize_t read_request_eof(int fd, unsigned char **out)
 	if (max_request_buffer < alloc)
 		max_request_buffer = alloc;
 
-	while (1) {
+	for (;;) {
 		ssize_t cnt;
 
 		cnt = read_in_full(fd, buf + len, alloc - len);
@@ -379,7 +379,7 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 	memset(&stream, 0, sizeof(stream));
 	git_inflate_init_gzip_only(&stream);
 
-	while (1) {
+	for (;;) {
 		ssize_t n;
 
 		if (buffer_input) {

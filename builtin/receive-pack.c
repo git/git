@@ -364,7 +364,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 	if (use_keepalive == KEEPALIVE_ALWAYS)
 		keepalive_active = 1;
 
-	while (1) {
+	for (;;) {
 		ssize_t sz;
 
 		if (keepalive_active) {
@@ -730,7 +730,7 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	while (1) {
+	for (;;) {
 		const char *buf;
 		size_t n;
 		if (feed(feed_state, &buf, &n))
@@ -1653,7 +1653,7 @@ static struct command *read_head_info(struct packet_reader *reader,
 static void read_push_options(struct packet_reader *reader,
 			      struct string_list *options)
 {
-	while (1) {
+	for (;;) {
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 

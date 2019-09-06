@@ -1283,7 +1283,7 @@ static int count_messages(struct strbuf *all_msgs)
 	int count = 0;
 	char *p = all_msgs->buf;
 
-	while (1) {
+	for (;;) {
 		if (starts_with(p, "From ")) {
 			p = strstr(p+5, "\nFrom: ");
 			if (!p) break;
@@ -1386,7 +1386,7 @@ static int append_msgs_to_imap(struct imap_server_conf *server,
 	ctx->name = server->folder;
 
 	fprintf(stderr, "sending %d message%s\n", total, (total != 1) ? "s" : "");
-	while (1) {
+	for (;;) {
 		unsigned percent = n * 100 / total;
 
 		fprintf(stderr, "%4u%% (%d/%d) done\r", percent, n, total);
@@ -1484,7 +1484,7 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 	curl_easy_setopt(curl, CURLOPT_READDATA, &msgbuf);
 
 	fprintf(stderr, "sending %d message%s\n", total, (total != 1) ? "s" : "");
-	while (1) {
+	for (;;) {
 		unsigned percent = n * 100 / total;
 		int prev_len;
 

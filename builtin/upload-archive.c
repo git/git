@@ -101,7 +101,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 	packet_write_fmt(1, "ACK\n");
 	packet_flush(1);
 
-	while (1) {
+	for (;;) {
 		struct pollfd pfd[2];
 
 		pfd[0].fd = writer.out;

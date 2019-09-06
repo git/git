@@ -808,7 +808,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 	group_init(xdf, &g);
 	group_init(xdfo, &go);
 
-	while (1) {
+	for (;;) {
 		/* If the group is empty in the to-be-compacted file, skip it: */
 		if (g.end == g.start)
 			goto next;
@@ -843,7 +843,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 				end_matching_other = g.end;
 
 			/* Now shift the group forward as far as possible: */
-			while (1) {
+			for (;;) {
 				if (group_slide_down(xdf, &g, flags))
 					break;
 				if (group_next(xdfo, &go))

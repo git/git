@@ -130,7 +130,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 				/* the slash is consumed by the top-level for loop */
 				break;
 			}
-			while (1) {
+			for (;;) {
 				if (t_ch == '\0')
 					break;
 				/*

@@ -449,7 +449,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 	struct strbuf scratch = STRBUF_INIT;
 	enum sideband_type sideband_type;
 
-	while (1) {
+	for (;;) {
 		len = packet_read(in_stream, NULL, NULL, buf, LARGE_PACKET_MAX,
 				  0);
 		if (!demultiplex_sideband(me, buf, len, 0, &scratch,
@@ -494,7 +494,7 @@ enum packet_read_status packet_reader_read(struct packet_reader *reader)
 	 * Consume all progress packets until a primary payload packet is
 	 * received
 	 */
-	while (1) {
+	for (;;) {
 		enum sideband_type sideband_type;
 		reader->status = packet_read_with_status(reader->fd,
 							 &reader->src_buffer,

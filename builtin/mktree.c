@@ -161,7 +161,7 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 	getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
 
 	while (!got_eof) {
-		while (1) {
+		for (;;) {
 			if (getline_fn(&sb, stdin) == EOF) {
 				got_eof = 1;
 				break;

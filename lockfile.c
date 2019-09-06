@@ -117,7 +117,7 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 	if (timeout_ms > 0)
 		remaining_ms = timeout_ms;
 
-	while (1) {
+	for (;;) {
 		long backoff_ms, wait_ms;
 		int fd;
 

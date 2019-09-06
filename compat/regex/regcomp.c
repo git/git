@@ -3120,7 +3120,7 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
   if (token->type == OP_CLOSE_BRACKET)
     token->type = CHARACTER;
 
-  while (1)
+  for (;;)
     {
       bracket_elem_t start_elem, end_elem;
       unsigned char start_name_buf[BRACKET_NAME_BUF_SIZE];
@@ -3729,7 +3729,7 @@ fetch_number (re_string_t *input, re_token_t *token, reg_syntax_t syntax)
 {
   int num = -1;
   unsigned char c;
-  while (1)
+  for (;;)
     {
       fetch_token (token, input, syntax);
       c = token->opr.c;

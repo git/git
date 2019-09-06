@@ -25,7 +25,7 @@ static void command_loop(int input_fd, int output_fd)
 {
 	char buffer[MAXCOMMAND];
 
-	while (1) {
+	for (;;) {
 		size_t i;
 		if (!fgets(buffer, MAXCOMMAND - 1, stdin)) {
 			if (ferror(stdin))

@@ -93,7 +93,7 @@ re_string_construct (re_string_t *pstr, const char *str, int len,
 #ifdef RE_ENABLE_I18N
       if (dfa->mb_cur_max > 1)
 	{
-	  while (1)
+	  for (;;)
 	    {
 	      ret = build_wcs_upper_buffer (pstr);
 	      if (BE (ret != REG_NOERROR, 0))

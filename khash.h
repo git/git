@@ -145,7 +145,7 @@ static const double __ac_HASH_UPPER = 0.77;
 					new_mask = new_n_buckets - 1; 						\
 					if (kh_is_map) val = h->vals[j];					\
 					__ac_set_isdel_true(h->flags, j);					\
-					while (1) { /* kick-out process; sort of like in Cuckoo hashing */ \
+					for (;;) { /* kick-out process; sort of like in Cuckoo hashing */ \
 						khint_t k, i, step = 0; \
 						k = __hash_func(key);							\
 						i = k & new_mask;								\

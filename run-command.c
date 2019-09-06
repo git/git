@@ -186,7 +186,7 @@ static char *locate_in_PATH(const char *file)
 	if (!p || !*p)
 		return NULL;
 
-	while (1) {
+	for (;;) {
 		const char *end = strchrnul(p, ':');
 
 		strbuf_reset(&buf);
@@ -1817,7 +1817,7 @@ int run_processes_parallel(int n,
 	struct parallel_processes pp;
 
 	pp_init(&pp, n, get_next_task, start_failure, task_finished, pp_cb);
-	while (1) {
+	for (;;) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
 		    pp.nr_processes < pp.max_processes;

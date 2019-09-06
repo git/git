@@ -1596,7 +1596,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 	}
 	if (get_oid_committish(arg, &oid))
 		return 0;
-	while (1) {
+	for (;;) {
 		it = get_reference(revs, arg, &oid, 0);
 		if (!it && revs->ignore_missing)
 			return 0;
@@ -3703,7 +3703,7 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 
 static struct commit *get_revision_1(struct rev_info *revs)
 {
-	while (1) {
+	for (;;) {
 		struct commit *commit;
 
 		if (revs->reflog_info)

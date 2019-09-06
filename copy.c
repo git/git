@@ -2,7 +2,7 @@
 
 int copy_fd(int ifd, int ofd)
 {
-	while (1) {
+	for (;;) {
 		char buffer[8192];
 		ssize_t len = xread(ifd, buffer, sizeof(buffer));
 		if (!len)

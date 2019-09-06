@@ -2002,7 +2002,7 @@ static void clr_hit_marker(struct grep_expr *x)
 	/* All-hit markers are meaningful only at the very top level
 	 * OR node.
 	 */
-	while (1) {
+	for (;;) {
 		x->hit = 0;
 		if (x->node != GREP_NODE_OR)
 			return;
@@ -2014,7 +2014,7 @@ static void clr_hit_marker(struct grep_expr *x)
 static int chk_hit_marker(struct grep_expr *x)
 {
 	/* Top level nodes have hit markers.  See if they all are hits */
-	while (1) {
+	for (;;) {
 		if (x->node != GREP_NODE_OR)
 			return x->hit;
 		if (!x->u.binary.left->hit)

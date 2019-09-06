@@ -277,7 +277,7 @@ static int cmp_packed_ref_records(const void *v1, const void *v2)
 	const char *r1 = e1->start + the_hash_algo->hexsz + 1;
 	const char *r2 = e2->start + the_hash_algo->hexsz + 1;
 
-	while (1) {
+	for (;;) {
 		if (*r1 == '\n')
 			return *r2 == '\n' ? 0 : -1;
 		if (*r1 != *r2) {
@@ -300,7 +300,7 @@ static int cmp_record_to_refname(const char *rec, const char *refname)
 	const char *r1 = rec + the_hash_algo->hexsz + 1;
 	const char *r2 = refname;
 
-	while (1) {
+	for (;;) {
 		if (*r1 == '\n')
 			return *r2 ? -1 : 0;
 		if (!*r2)

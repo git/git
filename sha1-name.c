@@ -1000,7 +1000,7 @@ struct object *repo_peel_to_type(struct repository *r, const char *name, int nam
 {
 	if (name && !namelen)
 		namelen = strlen(name);
-	while (1) {
+	for (;;) {
 		if (!o || (!o->parsed && !parse_object(r, &o->oid)))
 			return NULL;
 		if (expected_type == OBJ_ANY || o->type == expected_type)

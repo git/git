@@ -1038,7 +1038,7 @@ handle_body_out:
 static void output_header_lines(FILE *fout, const char *hdr, const struct strbuf *data)
 {
 	const char *sp = data->buf;
-	while (1) {
+	for (;;) {
 		char *ep = strchr(sp, '\n');
 		int len;
 		if (!ep)

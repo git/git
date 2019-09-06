@@ -1190,7 +1190,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 
 	/* Are we supposed to look at the index too? */
 	if (o->merge) {
-		while (1) {
+		for (;;) {
 			int cmp;
 			struct cache_entry *ce;
 
@@ -1524,7 +1524,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			 * prefix the tree is spliced into.  Note that o->merge
 			 * is always true in this case.
 			 */
-			while (1) {
+			for (;;) {
 				struct cache_entry *ce = next_cache_entry(o);
 				if (!ce)
 					break;
@@ -1544,7 +1544,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	/* Any left-over entries in the index? */
 	if (o->merge) {
-		while (1) {
+		for (;;) {
 			struct cache_entry *ce = next_cache_entry(o);
 			if (!ce)
 				break;

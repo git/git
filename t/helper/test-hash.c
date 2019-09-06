@@ -29,7 +29,7 @@ int cmd_hash_impl(int ac, const char **av, int algo)
 
 	algop->init_fn(&ctx);
 
-	while (1) {
+	for (;;) {
 		ssize_t sz, this_sz;
 		char *cp = buffer;
 		unsigned room = bufsz;

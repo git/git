@@ -476,9 +476,9 @@ static size_t sane_tz_len(const char *line, size_t len)
 {
 	const char *tz, *p;
 
-	if (len < strlen(" +0500") || line[len-strlen(" +0500")] != ' ')
+	if (len < 6 || line[len-6] != ' ')
 		return 0;
-	tz = line + len - strlen(" +0500");
+	tz = line + len - 6;
 
 	if (tz[1] != '+' && tz[1] != '-')
 		return 0;
@@ -494,9 +494,9 @@ static size_t tz_with_colon_len(const char *line, size_t len)
 {
 	const char *tz, *p;
 
-	if (len < strlen(" +08:00") || line[len - strlen(":00")] != ':')
+	if (len < 7 || line[len - 3] != ':')
 		return 0;
-	tz = line + len - strlen(" +08:00");
+	tz = line + len - 7;
 
 	if (tz[0] != ' ' || (tz[1] != '+' && tz[1] != '-'))
 		return 0;
@@ -512,18 +512,18 @@ static size_t date_len(const char *line, size_t len)
 {
 	const char *date, *p;
 
-	if (len < strlen("72-02-05") || line[len-strlen("-05")] != '-')
+	if (len < 8 || line[len-3] != '-')
 		return 0;
-	p = date = line + len - strlen("72-02-05");
+	p = date = line + len - 8;
 
 	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != '-' ||
 	    !isdigit(*p++) || !isdigit(*p++) || *p++ != '-' ||
-	    !isdigit(*p++) || !isdigit(*p++))	/* Not a date. */
+	    !isdigit(*p++) || !isdigit(*p))	/* Not a date. */
 		return 0;
 
-	if (date - line >= strlen("19") &&
+	if (date - line >= 2 &&
 	    isdigit(date[-1]) && isdigit(date[-2]))	/* 4-digit year */
-		date -= strlen("19");
+		date -= 2;
 
 	return line + len - date;
 }
@@ -532,15 +532,15 @@ static size_t short_time_len(const char *line, size_t len)
 {
 	const char *time, *p;
 
-	if (len < strlen(" 07:01:32") || line[len-strlen(":32")] != ':')
+	if (len < 9 || line[len-3] != ':')
 		return 0;
-	p = time = line + len - strlen(" 07:01:32");
+	p = time = line + len - 9;
 
 	/* Permit 1-digit hours? */
 	if (*p++ != ' ' ||
 	    !isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
 	    !isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
-	    !isdigit(*p++) || !isdigit(*p++))	/* Not a time. */
+	    !isdigit(*p++) || !isdigit(*p))	/* Not a time. */
 		return 0;
 
 	return line + len - time;
@@ -1917,7 +1917,7 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 
 	state->linenr++;
 	buffer += llen;
-	while (1) {
+	for (;;) {
 		int byte_length, max_byte_length, newsize;
 		llen = linelen(buffer, size);
 		used += llen;
@@ -3833,7 +3833,7 @@ static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *na
 			if (!lstat(name->buf, &st) && S_ISLNK(st.st_mode))
 				return 1;
 		}
-	} while (1);
+	} for (;;);
 	return 0;
 }
 
@@ -4002,8 +4002,7 @@ static int read_apply_cache(struct apply_state *state)
 	if (state->index_file)
 		return read_index_from(state->repo->index, state->index_file,
 				       get_git_dir());
-	else
-		return repo_read_index(state->repo);
+	return repo_read_index(state->repo);
 }
 
 /* This function tries to read the object name from the current index */
@@ -4131,7 +4130,7 @@ static void stat_patch_list(struct apply_state *state, struct patch *patch)
 static void numstat_patch_list(struct apply_state *state,
 			       struct patch *patch)
 {
-	for ( ; patch; patch = patch->next) {
+	while (patch) {
 		const char *name;
 		name = patch->new_name ? patch->new_name : patch->old_name;
 		if (patch->is_binary)
@@ -4139,6 +4138,7 @@ static void numstat_patch_list(struct apply_state *state,
 		else
 			printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
 		write_name_quoted(name, stdout, state->line_termination);
+		patch = patch->next;
 	}
 }
 
@@ -4170,7 +4170,7 @@ static void show_rename_copy(struct patch *p)
 	/* Find common prefix */
 	old_name = p->old_name;
 	new_name = p->new_name;
-	while (1) {
+	for (;;) {
 		const char *slash_old, *slash_new;
 		slash_old = strchr(old_name, '/');
 		slash_new = strchr(new_name, '/');

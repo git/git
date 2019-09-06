@@ -167,7 +167,7 @@ static int command_loop(const char *child)
 {
 	char buffer[MAXCOMMAND];
 
-	while (1) {
+	for (;;) {
 		size_t i;
 		if (!fgets(buffer, MAXCOMMAND - 1, stdin)) {
 			if (ferror(stdin))

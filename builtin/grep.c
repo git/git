@@ -173,7 +173,7 @@ static void *run(void *arg)
 	int hit = 0;
 	struct grep_opt *opt = arg;
 
-	while (1) {
+	for (;;) {
 		struct work_item *w = get_work();
 		if (!w)
 			break;

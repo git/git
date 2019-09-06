@@ -122,7 +122,7 @@ static void analyze_run(void)
 	discard_cache();
 
 	nr = analyze;
-	while (1) {
+	for (;;) {
 		uint64_t sum_single = 0;
 		uint64_t sum_multi = 0;
 		uint64_t avg_single;

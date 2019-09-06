@@ -152,7 +152,7 @@ static struct child_process *get_helper(struct transport *transport)
 
 	write_constant(helper->in, "capabilities\n");
 
-	while (1) {
+	for (;;) {
 		const char *capname, *arg;
 		int mandatory = 0;
 		if (recvline(data, &buf))
@@ -393,7 +393,7 @@ static int fetch_with_fetch(struct transport *transport,
 	strbuf_addch(&buf, '\n');
 	sendline(data, &buf);
 
-	while (1) {
+	for (;;) {
 		if (recvline(data, &buf))
 			exit(128);
 
@@ -1078,7 +1078,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push,
 	else
 		write_str_in_full(helper->in, "list\n");
 
-	while (1) {
+	for (;;) {
 		char *eov, *eon;
 		if (recvline(data, &buf))
 			exit(128);

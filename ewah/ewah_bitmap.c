@@ -131,7 +131,7 @@ void ewah_add_dirty_words(
 {
 	size_t literals, can_add;
 
-	while (1) {
+	for (;;) {
 		literals = rlw_get_literal_words(self->rlw);
 		can_add = min_size(number, RLW_LARGEST_LITERAL_COUNT - literals);
 
@@ -318,7 +318,7 @@ static void read_new_rlw(struct ewah_iterator *it)
 	it->literals = 0;
 	it->compressed = 0;
 
-	while (1) {
+	for (;;) {
 		word = &it->buffer[it->pointer];
 
 		it->rl = rlw_get_running_len(word);

@@ -345,7 +345,7 @@ static DWORD WINAPI console_thread(LPVOID unused)
 	int start, end = 0, c, parampos = 0, state = TEXT;
 	int params[MAX_PARAMS];
 
-	while (1) {
+	for (;;) {
 		/* read next chunk of bytes from the pipe */
 		if (!ReadFile(hread, buffer + end, BUFFER_SIZE - end, &bytes,
 				NULL)) {

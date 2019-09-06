@@ -1938,7 +1938,7 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 		die(_("revision walk setup failed"));
 
 	/* ... and count the commits on each side. */
-	while (1) {
+	for (;;) {
 		struct commit *c = get_revision(&revs);
 		if (!c)
 			break;

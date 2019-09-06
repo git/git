@@ -272,7 +272,7 @@ void load_command_list(const char *prefix,
 	if (env_path) {
 		char *paths, *path, *colon;
 		path = paths = xstrdup(env_path);
-		while (1) {
+		for (;;) {
 			if ((colon = strchr(path, PATH_SEP)))
 				*colon = 0;
 			if (!exec_path || strcmp(path, exec_path))

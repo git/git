@@ -1456,7 +1456,7 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 		}
 	}
 
-	while (1) {
+	for (;;) {
 		if (find_pack_entry(r, real, &e))
 			break;
 
@@ -1616,7 +1616,7 @@ void *read_object_with_reference(struct repository *r,
 
 	required_type = type_from_string(required_type_name);
 	oidcpy(&actual_oid, oid);
-	while (1) {
+	for (;;) {
 		int ref_length = -1;
 		const char *ref_type = NULL;
 

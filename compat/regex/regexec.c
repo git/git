@@ -969,7 +969,7 @@ prune_impossible_nodes (re_match_context_t *mctx)
 	  ret = REG_ESPACE;
 	  goto free_return;
 	}
-      while (1)
+      for (;;)
 	{
 	  memset (lim_states, '\0',
 		  sizeof (re_dfastate_t *) * (match_last + 1));

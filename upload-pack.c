@@ -185,7 +185,7 @@ static void create_pack_file(const struct object_array *have_obj,
 	 * progress bar, and pack_objects.out to capture the pack data.
 	 */
 
-	while (1) {
+	for (;;) {
 		struct pollfd pfd[2];
 		int pe, pu, pollsize;
 		int ret;

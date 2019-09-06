@@ -173,7 +173,7 @@ static int check_or_sanitize_refname(const char *refname, int flags,
 			return -1;
 	}
 
-	while (1) {
+	for (;;) {
 		if (sanitized && sanitized->len)
 			strbuf_complete(sanitized, '/');
 

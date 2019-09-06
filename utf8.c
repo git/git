@@ -488,7 +488,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
 	outpos = out + bom_len;
 	cp = (iconv_ibp)in;
 
-	while (1) {
+	for (;;) {
 		size_t cnt = iconv(conv, &cp, &insz, &outpos, &outsz);
 
 		if (cnt == (size_t) -1) {
@@ -681,7 +681,7 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding)
  */
 static ucs_char_t next_hfs_char(const char **in)
 {
-	while (1) {
+	for (;;) {
 		ucs_char_t out = pick_one_utf8_char(in, NULL);
 		/*
 		 * check for malformed utf8. Technically this

@@ -215,7 +215,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 
 	already_hashed_to = 0;
 
-	while (1) {
+	for (;;) {
 		prepare_to_stream(state, flags);
 		if (idx) {
 			hashfile_checkpoint(state->f, &checkpoint);

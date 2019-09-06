@@ -222,7 +222,7 @@ int walker_targets_stdin(char ***target, const char ***write_ref)
 	int targets = 0, targets_alloc = 0;
 	struct strbuf buf = STRBUF_INIT;
 	*target = NULL; *write_ref = NULL;
-	while (1) {
+	for (;;) {
 		char *rf_one = NULL;
 		char *tg_one;
 

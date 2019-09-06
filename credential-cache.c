@@ -20,7 +20,7 @@ static int send_request(const char *socket, const struct strbuf *out)
 		die_errno("unable to write to cache daemon");
 	shutdown(fd, SHUT_WR);
 
-	while (1) {
+	for (;;) {
 		char in[1024];
 		int r;
 

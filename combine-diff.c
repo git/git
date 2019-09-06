@@ -769,7 +769,7 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 	if (result_deleted)
 		return; /* result deleted */
 
-	while (1) {
+	for (;;) {
 		unsigned long hunk_end;
 		unsigned long rlines;
 		const char *hunk_comment = NULL;

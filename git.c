@@ -727,7 +727,7 @@ static int run_argv(int *argcp, const char ***argv)
 	struct string_list cmd_list = STRING_LIST_INIT_NODUP;
 	struct string_list_item *seen;
 
-	while (1) {
+	for (;;) {
 		/*
 		 * If we tried alias and futzed with our environment,
 		 * it no longer is safe to invoke builtins directly in
@@ -868,7 +868,7 @@ int cmd_main(int argc, const char **argv)
 	 */
 	setup_path();
 
-	while (1) {
+	for (;;) {
 		int was_alias = run_argv(&argc, &argv);
 		if (errno != ENOENT)
 			break;

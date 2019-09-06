@@ -313,7 +313,7 @@ static void extended_entry_extract(struct tree_desc_x *t,
 	 * Extract the first entry from the tree_desc, but skip the
 	 * ones that we already returned in earlier rounds.
 	 */
-	while (1) {
+	for (;;) {
 		if (!t->d.size) {
 			entry_clear(a);
 			break; /* not found */
@@ -631,7 +631,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 	strbuf_addstr(&namebuf, name);
 	oidcpy(&current_tree_oid, tree_oid);
 
-	while (1) {
+	for (;;) {
 		int find_result;
 		char *first_slash;
 		char *remainder = NULL;

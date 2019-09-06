@@ -51,7 +51,7 @@ int cmd__windows_named_pipe(int argc, const char **argv)
 		return err;
 	}
 
-	while (1) {
+	for (;;) {
 		DWORD nbr;
 		BOOL success = ReadFile(h, buf, TEST_BUFSIZE, &nbr, NULL);
 		if (!success || nbr == 0)

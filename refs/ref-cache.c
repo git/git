@@ -442,7 +442,7 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	struct cache_ref_iterator *iter =
 		(struct cache_ref_iterator *)ref_iterator;
 
-	while (1) {
+	for (;;) {
 		struct cache_ref_iterator_level *level =
 			&iter->levels[iter->levels_nr - 1];
 		struct ref_dir *dir = level->dir;

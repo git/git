@@ -138,7 +138,7 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 	}
 
 	/* Loop until we find an entry that we can give back to the caller. */
-	while (1) {
+	for (;;) {
 		struct dirent *de;
 		struct dir_iterator_level *level =
 			&iter->levels[iter->levels_nr - 1];

@@ -337,7 +337,7 @@ static const char *find_digit_prefix(const char *s, int *v)
 
 static int version_cmp(const char *a, const char *b)
 {
-	while (1) {
+	for (;;) {
 		int va, vb;
 
 		a = find_digit_prefix(a, &va);
@@ -345,7 +345,7 @@ static int version_cmp(const char *a, const char *b)
 		if (va != vb)
 			return va - vb;
 
-		while (1) {
+		for (;;) {
 			int ca = *a;
 			int cb = *b;
 			if ('0' <= ca && ca <= '9')

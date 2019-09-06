@@ -193,7 +193,7 @@ static int ask_yes_no_if_possible(const char *format, ...)
 	if (!isatty(_fileno(stdin)) || !isatty(_fileno(stderr)))
 		return 0;
 
-	while (1) {
+	for (;;) {
 		int answer;
 		fprintf(stderr, "%s (y/n) ", question);
 
@@ -519,7 +519,7 @@ int mingw_fgetc(FILE *stream)
 		return fgetc(stream);
 
 	SetConsoleCtrlHandler(ctrl_ignore, TRUE);
-	while (1) {
+	for (;;) {
 		ch = fgetc(stream);
 		if (ch != EOF || GetLastError() != ERROR_OPERATION_ABORTED)
 			break;

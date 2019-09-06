@@ -2048,7 +2048,7 @@ static int treat_leading_path(struct dir_struct *dir,
 		return 1;
 	baselen = 0;
 	dir->flags &= ~DIR_SHOW_OTHER_DIRECTORIES;
-	while (1) {
+	for (;;) {
 		cp = path + baselen + !!baselen;
 		cp = memchr(cp, '/', path + len - cp);
 		if (!cp)

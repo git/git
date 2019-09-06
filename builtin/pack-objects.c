@@ -2583,7 +2583,7 @@ static void add_tag_chain(const struct object_id *oid)
 		return;
 
 	tag = lookup_tag(the_repository, oid);
-	while (1) {
+	for (;;) {
 		if (!tag || parse_tag(tag) || !tag->tagged)
 			die(_("unable to pack objects reachable from tag %s"),
 			    oid_to_hex(oid));

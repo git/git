@@ -1439,7 +1439,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		occupied += c->pretty_ctx->graph_width;
 		padding = (-padding) - occupied;
 	}
-	while (1) {
+	for (;;) {
 		int modifier = *placeholder == 'C';
 		int consumed = format_commit_one(&local_sb, placeholder, c);
 		total_consumed += consumed;

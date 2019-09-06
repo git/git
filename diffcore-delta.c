@@ -64,7 +64,7 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 		if (!o->cnt)
 			continue;
 		bucket = o->hashval & (sz - 1);
-		while (1) {
+		for (;;) {
 			struct spanhash *h = &(new_spanhash->data[bucket++]);
 			if (!h->cnt) {
 				h->hashval = o->hashval;
@@ -88,7 +88,7 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
 
 	lim = (1 << top->alloc_log2);
 	bucket = hashval & (lim - 1);
-	while (1) {
+	for (;;) {
 		h = &(top->data[bucket++]);
 		if (!h->cnt) {
 			h->hashval = hashval;

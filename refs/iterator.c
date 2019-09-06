@@ -129,7 +129,7 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	}
 
 	/* Loop until we find an entry that we can yield. */
-	while (1) {
+	for (;;) {
 		struct ref_iterator **secondary;
 		enum iterator_selection selection =
 			iter->select(iter->iter0, iter->iter1, iter->cb_data);

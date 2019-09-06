@@ -316,7 +316,7 @@ int cmd_main(int argc, const char **argv)
 		get_git_dir(), remote->name);
 	marksfilename = marksfilename_sb.buf;
 
-	while (1) {
+	for (;;) {
 		if (strbuf_getline_lf(&buf, stdin) == EOF) {
 			if (ferror(stdin))
 				die("Error reading command stream");

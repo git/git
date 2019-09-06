@@ -107,7 +107,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struc
 
 	if (args->stateless_rpc) {
 		char *buf = xmalloc(LARGE_PACKET_MAX);
-		while (1) {
+		for (;;) {
 			ssize_t n = xread(po.out, buf, LARGE_PACKET_MAX);
 			if (n <= 0)
 				break;
@@ -153,7 +153,7 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 
 	hint = NULL;
 	ret = receive_unpack_status(reader);
-	while (1) {
+	for (;;) {
 		const char *refname;
 		char *msg;
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)

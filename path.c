@@ -1266,7 +1266,7 @@ int daemon_avoid_alias(const char *p)
 	sl = 1; ndot = 0;
 	p++;
 
-	while (1) {
+	for (;;) {
 		char ch = *p++;
 		if (sl) {
 			if (ch == '.')
