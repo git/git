@@ -29,17 +29,11 @@ struct options {
 	struct string_list deepen_not;
 	struct string_list push_options;
 	char *filter;
-	unsigned progress : 1,
-		check_self_contained_and_connected : 1,
-		cloning : 1,
-		update_shallow : 1,
-		followtags : 1,
-		dry_run : 1,
+	unsigned progress : 1, check_self_contained_and_connected : 1,
+		cloning : 1, update_shallow : 1, followtags : 1, dry_run : 1,
 		thin : 1,
 		/* One of the SEND_PACK_PUSH_CERT_* constants. */
-		push_cert : 2,
-		deepen_relative : 1,
-		from_promisor : 1,
+		push_cert : 2, deepen_relative : 1, from_promisor : 1,
 		no_dependents : 1;
 };
 static struct options options;
@@ -54,8 +48,7 @@ static int set_option(const char *name, const char *value)
 			return -1;
 		options.verbosity = v;
 		return 0;
-	}
-	else if (!strcmp(name, "progress")) {
+	} else if (!strcmp(name, "progress")) {
 		if (!strcmp(value, "true"))
 			options.progress = 1;
 		else if (!strcmp(value, "false"))
@@ -63,24 +56,20 @@ static int set_option(const char *name, const char *value)
 		else
 			return -1;
 		return 0;
-	}
-	else if (!strcmp(name, "depth")) {
+	} else if (!strcmp(name, "depth")) {
 		char *end;
 		unsigned long v = strtoul(value, &end, 10);
 		if (value == end || *end)
 			return -1;
 		options.depth = v;
 		return 0;
-	}
-	else if (!strcmp(name, "deepen-since")) {
+	} else if (!strcmp(name, "deepen-since")) {
 		options.deepen_since = xstrdup(value);
 		return 0;
-	}
-	else if (!strcmp(name, "deepen-not")) {
+	} else if (!strcmp(name, "deepen-not")) {
 		string_list_append(&options.deepen_not, value);
 		return 0;
-	}
-	else if (!strcmp(name, "deepen-relative")) {
+	} else if (!strcmp(name, "deepen-relative")) {
 		if (!strcmp(value, "true"))
 			options.deepen_relative = 1;
 		else if (!strcmp(value, "false"))
@@ -88,8 +77,7 @@ static int set_option(const char *name, const char *value)
 		else
 			return -1;
 		return 0;
-	}
-	else if (!strcmp(name, "followtags")) {
+	} else if (!strcmp(name, "followtags")) {
 		if (!strcmp(value, "true"))
 			options.followtags = 1;
 		else if (!strcmp(value, "false"))
@@ -97,8 +85,7 @@ static int set_option(const char *name, const char *value)
 		else
 			return -1;
 		return 0;
-	}
-	else if (!strcmp(name, "dry-run")) {
+	} else if (!strcmp(name, "dry-run")) {
 		if (!strcmp(value, "true"))
 			options.dry_run = 1;
 		else if (!strcmp(value, "false"))
@@ -106,8 +93,7 @@ static int set_option(const char *name, const char *value)
 		else
 			return -1;
 		return 0;
-	}
-	else if (!strcmp(name, "check-connectivity")) {
+	} else if (!strcmp(name, "check-connectivity")) {
 		if (!strcmp(value, "true"))
 			options.check_self_contained_and_connected = 1;
 		else if (!strcmp(value, "false"))
@@ -115,8 +101,7 @@ static int set_option(const char *name, const char *value)
 		else
 			return -1;
 		return 0;
-	}
-	else if (!strcmp(name, "cas")) {
+	} else if (!strcmp(name, "cas")) {
 		struct strbuf val = STRBUF_INIT;
 		strbuf_addf(&val, "--" CAS_OPT_NAME "=%s", value);
 		string_list_append(&cas_options, val.buf);
@@ -154,9 +139,11 @@ static int set_option(const char *name, const char *value)
 		else {
 			struct strbuf unquoted = STRBUF_INIT;
 			if (unquote_c_style(&unquoted, value, NULL) < 0)
-				die(_("invalid quoting in push-option value: '%s'"), value);
+				die(_("invalid quoting in push-option value: '%s'"),
+				    value);
 			string_list_append_nodup(&options.push_options,
-						 strbuf_detach(&unquoted, NULL));
+						 strbuf_detach(&unquoted,
+							       NULL));
 		}
 		return 0;
 
@@ -205,8 +192,8 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 
 	packet_reader_init(&reader, -1, heads->buf, heads->len,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+				   PACKET_READ_GENTLE_ON_EOF |
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	heads->version = discover_version(&reader);
 	switch (heads->version) {
@@ -315,7 +302,7 @@ static int show_http_message(struct strbuf *type, struct strbuf *charset,
 		eol = strchrnul(p, '\n');
 		fprintf(stderr, "remote: %.*s\n", (int)(eol - p), p);
 		p = eol + 1;
-	} while(*eol);
+	} while (*eol);
 	return 0;
 }
 
@@ -344,13 +331,12 @@ static void check_smart_http(struct discovery *d, const char *service,
 	 * violations are hard errors.
 	 */
 	if (!skip_prefix(type->buf, "application/x-", &p) ||
-	    !skip_prefix(p, service, &p) ||
-	    strcmp(p, "-advertisement"))
+	    !skip_prefix(p, service, &p) || strcmp(p, "-advertisement"))
 		return;
 
 	packet_reader_init(&reader, -1, d->buf, d->len,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 	if (packet_reader_read(&reader) != PACKET_READ_NORMAL)
 		die(_("invalid server response; expected service, got flush packet"));
 
@@ -360,18 +346,15 @@ static void check_smart_http(struct discovery *d, const char *service,
 		 * until a packet flush marker.  Ignore these now, but
 		 * in the future we might start to scan them.
 		 */
-		for (;;) {
+		do {
 			packet_reader_read(&reader);
-			if (reader.pktlen <= 0) {
-				break;
-			}
-		}
+		} while (reader.pktlen > 0)
 
-		/*
-		 * v0 smart http; callers expect us to soak up the
-		 * service and header packets
-		 */
-		d->buf = reader.src_buffer;
+			/*
+			 * v0 smart http; callers expect us to soak up the
+			 * service and header packets
+			 */
+			d->buf = reader.src_buffer;
 		d->len = reader.src_len;
 		d->proto_git = 1;
 
@@ -406,8 +389,9 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	free_discovery(last);
 
 	strbuf_addf(&refs_url, "%sinfo/refs", url.buf);
-	if ((starts_with(url.buf, "http://") || starts_with(url.buf, "https://")) &&
-	     git_env_bool("GIT_SMART_HTTP", 1)) {
+	if ((starts_with(url.buf, "http://") ||
+	     starts_with(url.buf, "https://")) &&
+	    git_env_bool("GIT_SMART_HTTP", 1)) {
 		maybe_smart = 1;
 		if (!strchr(url.buf, '?'))
 			strbuf_addch(&refs_url, '?');
@@ -461,7 +445,7 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		free(u);
 	}
 
-	last= xcalloc(1, sizeof(*last_discovery));
+	last = xcalloc(1, sizeof(*last_discovery));
 	last->service = xstrdup(service);
 	last->buf_alloc = strbuf_detach(&buffer, &last->len);
 	last->buf = last->buf_alloc;
@@ -504,7 +488,8 @@ static void output_refs(struct ref *refs)
 		if (posn->symref)
 			printf("@%s %s\n", posn->symref, posn->name);
 		else
-			printf("%s %s\n", oid_to_hex(&posn->old_oid), posn->name);
+			printf("%s %s\n", oid_to_hex(&posn->old_oid),
+			       posn->name);
 	}
 	printf("\n");
 	fflush(stdout);
@@ -553,8 +538,8 @@ struct rpc_state {
  * Writes the total number of bytes appended into appended.
  */
 static int rpc_read_from_out(struct rpc_state *rpc, int options,
-			     size_t *appended,
-			     enum packet_read_status *status) {
+			     size_t *appended, enum packet_read_status *status)
+{
 	size_t left;
 	char *buf;
 	int pktlen_raw;
@@ -570,8 +555,8 @@ static int rpc_read_from_out(struct rpc_state *rpc, int options,
 	if (left < LARGE_PACKET_MAX)
 		return 0;
 
-	*status = packet_read_with_status(rpc->out, NULL, NULL, buf,
-			left, &pktlen_raw, options);
+	*status = packet_read_with_status(rpc->out, NULL, NULL, buf, left,
+					  &pktlen_raw, options);
 	if (*status != PACKET_READ_EOF) {
 		*appended = pktlen_raw + (rpc->write_line_lengths ? 4 : 0);
 		rpc->len += *appended;
@@ -598,8 +583,7 @@ static int rpc_read_from_out(struct rpc_state *rpc, int options,
 	return 1;
 }
 
-static size_t rpc_out(void *ptr, size_t eltsize,
-		size_t nmemb, void *buffer_)
+static size_t rpc_out(void *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
 	size_t max = eltsize * nmemb;
 	struct rpc_state *rpc = buffer_;
@@ -679,8 +663,7 @@ struct rpc_in_data {
  * A callback for CURLOPT_WRITEFUNCTION. The return value is the bytes consumed
  * from ptr.
  */
-static size_t rpc_in(char *ptr, size_t eltsize,
-		size_t nmemb, void *buffer_)
+static size_t rpc_in(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
 	size_t size = eltsize * nmemb;
 	struct rpc_in_data *data = buffer_;
@@ -785,7 +768,7 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 	 * chunked encoding mess.
 	 */
 	if (!flush_received) {
-		for (;;) {
+		do {
 			size_t n;
 			enum packet_read_status status;
 
@@ -794,9 +777,7 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 				use_gzip = 0;
 				break;
 			}
-			if (status == PACKET_READ_FLUSH)
-				break;
-		}
+		} while (status != PACKET_READ_FLUSH)
 	}
 
 	if (large_request) {
@@ -817,7 +798,8 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 	headers = curl_slist_append(headers, rpc->hdr_content_type);
 	headers = curl_slist_append(headers, rpc->hdr_accept);
 	headers = curl_slist_append(headers, needs_100_continue ?
-		"Expect: 100-continue" : "Expect:");
+						     "Expect: 100-continue" :
+						     "Expect:");
 
 	/* Add the extra Git-Protocol header */
 	if (rpc->protocol_header)
@@ -835,7 +817,8 @@ retry:
 		/* The request body is large and the size cannot be predicted.
 		 * We must use chunked encoding to send it.
 		 */
-		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
+		headers = curl_slist_append(headers,
+					    "Transfer-Encoding: chunked");
 		rpc->initial_buffer = 1;
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, rpc_out);
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, rpc);
@@ -844,7 +827,8 @@ retry:
 		curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, rpc);
 #endif
 		if (options.verbosity > 1) {
-			fprintf(stderr, "POST %s (chunked)\n", rpc->service_name);
+			fprintf(stderr, "POST %s (chunked)\n",
+				rpc->service_name);
 			fflush(stderr);
 		}
 
@@ -855,7 +839,8 @@ retry:
 		 * and we just need to send it.
 		 */
 		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, gzip_body);
-		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE_LARGE, xcurl_off_t(gzip_size));
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE_LARGE,
+				 xcurl_off_t(gzip_size));
 
 	} else if (use_gzip && 1024 < rpc->len) {
 		/* The client backend isn't giving us compressed data so
@@ -876,22 +861,25 @@ retry:
 
 		ret = git_deflate(&stream, Z_FINISH);
 		if (ret != Z_STREAM_END)
-			die(_("cannot deflate request; zlib deflate error %d"), ret);
+			die(_("cannot deflate request; zlib deflate error %d"),
+			    ret);
 
 		ret = git_deflate_end_gently(&stream);
 		if (ret != Z_OK)
-			die(_("cannot deflate request; zlib end error %d"), ret);
+			die(_("cannot deflate request; zlib end error %d"),
+			    ret);
 
 		gzip_size = stream.total_out;
 
 		headers = curl_slist_append(headers, "Content-Encoding: gzip");
 		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, gzip_body);
-		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE_LARGE, xcurl_off_t(gzip_size));
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE_LARGE,
+				 xcurl_off_t(gzip_size));
 
 		if (options.verbosity > 1) {
 			fprintf(stderr, "POST %s (gzip %lu to %lu bytes)\n",
-				rpc->service_name,
-				(unsigned long)rpc->len, (unsigned long)gzip_size);
+				rpc->service_name, (unsigned long)rpc->len,
+				(unsigned long)gzip_size);
 			fflush(stderr);
 		}
 	} else {
@@ -899,7 +887,8 @@ retry:
 		 * more normal Content-Length approach.
 		 */
 		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, rpc->buf);
-		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE_LARGE, xcurl_off_t(rpc->len));
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE_LARGE,
+				 xcurl_off_t(rpc->len));
 		if (options.verbosity > 1) {
 			fprintf(stderr, "POST %s (%lu bytes)\n",
 				rpc->service_name, (unsigned long)rpc->len);
@@ -913,7 +902,6 @@ retry:
 	rpc_in_data.slot = slot;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &rpc_in_data);
 	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
-
 
 	rpc->any_written = 0;
 	err = run_slot(slot, NULL);
@@ -971,7 +959,8 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 		rpc->protocol_header = NULL;
 
 	while (!err) {
-		int n = packet_read(rpc->out, NULL, NULL, rpc->buf, rpc->alloc, 0);
+		int n = packet_read(rpc->out, NULL, NULL, rpc->buf, rpc->alloc,
+				    0);
 		if (!n)
 			break;
 		rpc->pos = 0;
@@ -985,9 +974,8 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads,
 		strbuf_read(rpc_result, client.out, 0);
 	} else {
 		char buf[4096];
-		for (;;)
-			if (xread(client.out, buf, sizeof(buf)) <= 0)
-				break;
+		while (xread(client.out, buf, sizeof(buf)) > 0)
+			;
 	}
 
 	close(client.out);
@@ -1028,8 +1016,8 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 	return ret ? error(_("fetch failed.")) : 0;
 }
 
-static int fetch_git(struct discovery *heads,
-	int nr_heads, struct ref **to_fetch)
+static int fetch_git(struct discovery *heads, int nr_heads,
+		     struct ref **to_fetch)
 {
 	struct rpc_state rpc;
 	struct strbuf preamble = STRBUF_INIT;
@@ -1037,8 +1025,8 @@ static int fetch_git(struct discovery *heads,
 	struct argv_array args = ARGV_ARRAY_INIT;
 	struct strbuf rpc_result = STRBUF_INIT;
 
-	argv_array_pushl(&args, "fetch-pack", "--stateless-rpc",
-			 "--stdin", "--lock-pack", NULL);
+	argv_array_pushl(&args, "fetch-pack", "--stateless-rpc", "--stdin",
+			 "--lock-pack", NULL);
 	if (options.followtags)
 		argv_array_push(&args, "--include-tag");
 	if (options.thin)
@@ -1056,7 +1044,8 @@ static int fetch_git(struct discovery *heads,
 	if (options.depth)
 		argv_array_pushf(&args, "--depth=%lu", options.depth);
 	if (options.deepen_since)
-		argv_array_pushf(&args, "--shallow-since=%s", options.deepen_since);
+		argv_array_pushf(&args, "--shallow-since=%s",
+				 options.deepen_since);
 	for (i = 0; i < options.deepen_not.nr; i++)
 		argv_array_pushf(&args, "--shallow-exclude=%s",
 				 options.deepen_not.items[i].string);
@@ -1080,8 +1069,7 @@ static int fetch_git(struct discovery *heads,
 	packet_buf_flush(&preamble);
 
 	memset(&rpc, 0, sizeof(rpc));
-	rpc.service_name = "git-upload-pack",
-	rpc.gzip_request = 1;
+	rpc.service_name = "git-upload-pack", rpc.gzip_request = 1;
 
 	err = rpc_service(&rpc, heads, args.argv, &preamble, &rpc_result);
 	if (rpc_result.len)
@@ -1117,13 +1105,15 @@ static void parse_fetch(struct strbuf *buf)
 			const char *q;
 
 			if (parse_oid_hex(p, &old_oid, &q))
-				die(_("protocol error: expected sha/ref, got '%s'"), p);
+				die(_("protocol error: expected sha/ref, got '%s'"),
+				    p);
 			if (*q == ' ')
 				name = q + 1;
 			else if (!*q)
 				name = "";
 			else
-				die(_("protocol error: expected sha/ref, got '%s'"), p);
+				die(_("protocol error: expected sha/ref, got '%s'"),
+				    p);
 
 			ref = alloc_ref(name);
 			oidcpy(&ref->old_oid, &old_oid);
@@ -1133,16 +1123,14 @@ static void parse_fetch(struct strbuf *buf)
 
 			ALLOC_GROW(to_fetch, nr_heads + 1, alloc_heads);
 			to_fetch[nr_heads++] = ref;
-		}
-		else
+		} else
 			die(_("http transport does not support %s"), buf->buf);
 
 		strbuf_reset(buf);
 		if (strbuf_getline_lf(buf, stdin) == EOF)
 			return;
-		if (!*buf->buf)
-			break;
-	} for (;;);
+
+	} while (*buf->buf);
 
 	if (fetch(nr_heads, to_fetch))
 		exit(128); /* error already reported */
@@ -1185,8 +1173,8 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 	struct strbuf rpc_result = STRBUF_INIT;
 
 	argv_array_init(&args);
-	argv_array_pushl(&args, "send-pack", "--stateless-rpc", "--helper-status",
-			 NULL);
+	argv_array_pushl(&args, "send-pack", "--stateless-rpc",
+			 "--helper-status", NULL);
 
 	if (options.thin)
 		argv_array_push(&args, "--thin");
@@ -1203,8 +1191,9 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 	for (i = 0; i < options.push_options.nr; i++)
 		argv_array_pushf(&args, "--push-option=%s",
 				 options.push_options.items[i].string);
-	argv_array_push(&args, options.progress ? "--progress" : "--no-progress");
-	for_each_string_list_item(cas_option, &cas_options)
+	argv_array_push(&args,
+			options.progress ? "--progress" : "--no-progress");
+	for_each_string_list_item (cas_option, &cas_options)
 		argv_array_push(&args, cas_option->string);
 	argv_array_push(&args, url.buf);
 
@@ -1241,34 +1230,32 @@ static int push(int nr_spec, char **specs)
 static void parse_push(struct strbuf *buf)
 {
 	char **specs = NULL;
-	int alloc_spec = 0, nr_spec = 0, i, ret;
+	int alloc_spec = 0, nr_spec = 0, i;
 
-	do {
+	for (;;)
 		if (starts_with(buf->buf, "push ")) {
 			ALLOC_GROW(specs, nr_spec + 1, alloc_spec);
 			specs[nr_spec++] = xstrdup(buf->buf + 5);
-		}
-		else
+		} else
 			die(_("http transport does not support %s"), buf->buf);
 
-		strbuf_reset(buf);
-		if (strbuf_getline_lf(buf, stdin) == EOF)
-			goto free_specs;
-		if (!*buf->buf)
-			break;
-	} for (;;);
+	strbuf_reset(buf);
+	if (strbuf_getline_lf(buf, stdin) == EOF)
+		break;
+	if (!*buf->buf) {
+		int ret = push(nr_spec, specs);
+		printf("\n");
+		fflush(stdout);
 
-	ret = push(nr_spec, specs);
-	printf("\n");
-	fflush(stdout);
+		if (ret) {
+			exit(128); /* error already reported */
+		}
+		break;
+	}
+}
 
-	if (ret)
-		exit(128); /* error already reported */
-
- free_specs:
-	for (i = 0; i < nr_spec; i++)
-		free(specs[i]);
-	free(specs);
+for (i = 0; i < nr_spec; i++) free(specs[i]);
+free(specs);
 }
 
 static int stateless_connect(const char *service_name)
@@ -1297,8 +1284,10 @@ static int stateless_connect(const char *service_name)
 
 	rpc.service_name = service_name;
 	rpc.service_url = xstrfmt("%s%s", url.buf, rpc.service_name);
-	rpc.hdr_content_type = xstrfmt("Content-Type: application/x-%s-request", rpc.service_name);
-	rpc.hdr_accept = xstrfmt("Accept: application/x-%s-result", rpc.service_name);
+	rpc.hdr_content_type = xstrfmt("Content-Type: application/x-%s-request",
+				       rpc.service_name);
+	rpc.hdr_accept =
+		xstrfmt("Accept: application/x-%s-result", rpc.service_name);
 	if (get_protocol_http_header(discover->version, &buf)) {
 		rpc.protocol_header = strbuf_detach(&buf, NULL);
 	} else {
@@ -1384,7 +1373,7 @@ int cmd_main(int argc, const char **argv)
 
 	http_init(remote, url.buf, 0);
 
-	do {
+	for(;;)
 		const char *arg;
 
 		if (strbuf_getline_lf(&buf, stdin) == EOF) {
@@ -1399,7 +1388,8 @@ int cmd_main(int argc, const char **argv)
 				die(_("remote-curl: fetch attempted without a local repo"));
 			parse_fetch(&buf);
 
-		} else if (!strcmp(buf.buf, "list") || starts_with(buf.buf, "list ")) {
+		} else if (!strcmp(buf.buf, "list") ||
+			   starts_with(buf.buf, "list ")) {
 			int for_push = !!strstr(buf.buf + 4, "for-push");
 			output_refs(get_refs(for_push));
 
@@ -1436,11 +1426,12 @@ int cmd_main(int argc, const char **argv)
 			if (!stateless_connect(arg))
 				break;
 		} else {
-			error(_("remote-curl: unknown command '%s' from git"), buf.buf);
+			error(_("remote-curl: unknown command '%s' from git"),
+			      buf.buf);
 			return 1;
 		}
 		strbuf_reset(&buf);
-	} for (;;);
+	}
 
 	http_cleanup();
 

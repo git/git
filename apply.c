@@ -3802,13 +3802,11 @@ static void prepare_symlink_changes(struct apply_state *state, struct patch *pat
 
 static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *name)
 {
-	do {
-		unsigned int change;
-
-		while (--name->len && name->buf[name->len] != '/')
-			; /* scan backwards */
+	unsigned int change;
+	for(;;) {
+		while (--name->len && name->buf[name->len] != '/'); /* scan backwards */
 		if (!name->len)
-			break;
+			return 0;
 		name->buf[name->len] = '\0';
 		change = check_symlink_changes(state, name->buf);
 		if (change & APPLY_SYMLINK_IN_RESULT)
@@ -3833,8 +3831,7 @@ static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *na
 			if (!lstat(name->buf, &st) && S_ISLNK(st.st_mode))
 				return 1;
 		}
-	} for (;;);
-	return 0;
+	}
 }
 
 static int path_is_beyond_symlink(struct apply_state *state, const char *name_)
@@ -3921,7 +3918,6 @@ static int check_patch(struct apply_state *state, struct patch *patch)
 			break; /* happy */
 		case EXISTS_IN_INDEX:
 			return error(_("%s: already exists in index"), new_name);
-			break;
 		case EXISTS_IN_WORKTREE:
 			return error(_("%s: already exists in working directory"),
 				     new_name);
