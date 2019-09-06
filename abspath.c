@@ -102,7 +102,8 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 		/* relative path; can use CWD as the initial resolved path */
 		if (strbuf_getcwd(resolved)) {
 			if (die_on_error)
-				die_errno("unable to get current working directory");
+				die_errno(
+					"unable to get current working directory");
 			else
 				goto error_out;
 		}
@@ -145,7 +146,8 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 
 				if (die_on_error)
 					die("More than %d nested symlinks "
-					    "on path '%s'", MAXSYMLINKS, path);
+					    "on path '%s'",
+					    MAXSYMLINKS, path);
 				else
 					goto error_out;
 			}
@@ -255,12 +257,12 @@ char *prefix_filename(const char *pfx, const char *arg)
 	struct strbuf path = STRBUF_INIT;
 	size_t pfx_len = pfx ? strlen(pfx) : 0;
 
-	if (!pfx_len)
-		; /* nothing to prefix */
-	else if (is_absolute_path(arg))
-		pfx_len = 0;
-	else
-		strbuf_add(&path, pfx, pfx_len);
+	if (pfx_len) {
+		if (is_absolute_path(arg))
+			pfx_len = 0;
+		else
+			strbuf_add(&path, pfx, pfx_len);
+	}
 
 	strbuf_addstr(&path, arg);
 #ifdef GIT_WINDOWS_NATIVE
