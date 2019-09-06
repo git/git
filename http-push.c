@@ -387,8 +387,7 @@ static void start_put(struct transfer_request *request)
 	/* Then the data itself.. */
 	stream.next_in = unpacked;
 	stream.avail_in = len;
-	while (git_deflate(&stream, Z_FINISH) == Z_OK)
-		; /* nothing */
+	while (git_deflate(&stream, Z_FINISH) == Z_OK); /* nothing */
 	git_deflate_end(&stream);
 	free(unpacked);
 
@@ -702,7 +701,6 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 
 static int fetch_indices(void)
 {
-	int ret;
 
 	if (push_verbosely)
 		fprintf(stderr, "Getting pack list\n");
@@ -710,13 +708,10 @@ static int fetch_indices(void)
 	switch (http_get_info_packs(repo->url, &repo->packs)) {
 	case HTTP_OK:
 	case HTTP_MISSING_TARGET:
-		ret = 0;
-		break;
+		return 0
 	default:
-		ret = -1;
+		return -1;
 	}
-
-	return ret;
 }
 
 static void one_remote_object(const struct object_id *oid)
@@ -1318,7 +1313,6 @@ static struct object_list **process_tree(struct tree *tree,
 		case OBJ_BLOB:
 			p = process_blob(lookup_blob(the_repository, &entry.oid),
 					 p);
-			break;
 		default:
 			/* Subproject commit - not in this repository */
 			break;
@@ -1663,15 +1657,14 @@ static int delete_remote_branch(const char *pattern, int force)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		free(url);
-		if (results.curl_result != CURLE_OK)
-			return error("DELETE request failed (%d/%ld)",
+		if (results.curl_result == CURLE_OK)
+			return 0;
+		return error("DELETE request failed (%d/%ld)",
 				     results.curl_result, results.http_code);
-	} else {
-		free(url);
-		return error("Unable to start DELETE request");
+					
 	}
-
-	return 0;
+	free(url);
+	return error("Unable to start DELETE request");
 }
 
 static void run_request_queue(void)

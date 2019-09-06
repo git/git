@@ -386,7 +386,10 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 		old = src;
 		n = utf8_width((const char**)&src, NULL);
 		if (!src) 	/* broken utf-8, do nothing */
-			goto out;
+		{
+			strbuf_release(&sb_dst);
+			return;
+		}
 		if (n && w >= pos && w < pos + width) {
 			if (subst) {
 				memcpy(dst, subst, subst_len);
@@ -402,7 +405,6 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 	}
 	strbuf_setlen(&sb_dst, dst - sb_dst.buf);
 	strbuf_swap(sb_src, &sb_dst);
-out:
 	strbuf_release(&sb_dst);
 }
 
@@ -731,17 +733,16 @@ static int is_hfs_dot_generic(const char *path,
 	 * in HFS+, but this is enough to catch our fairly vanilla
 	 * hard-coded needles.
 	 */
-	for (; needle_len > 0; needle++, needle_len--) {
+	while (needle_len > 0;) {
 		c = next_hfs_char(&path);
 
 		/*
 		 * We know our needles contain only ASCII, so we clamp here to
 		 * make the results of tolower() sane.
 		 */
-		if (c > 127)
+		if (c > 127 || tolower(c) != *needle)
 			return 0;
-		if (tolower(c) != *needle)
-			return 0;
+		needle++, needle_len--;
 	}
 
 	c = next_hfs_char(&path);

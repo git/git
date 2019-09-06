@@ -78,7 +78,7 @@ char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash,
 {
 	static const char hex[] = "0123456789abcdef";
 	char *buf = buffer;
-	int i;
+	size_t i;
 
 	for (i = 0; i < algop->rawsz; i++) {
 		unsigned int val = *hash++;

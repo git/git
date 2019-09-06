@@ -418,15 +418,14 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 			write_to_child(out, out_buf, stream.total_out - cnt, prog_name);
 			cnt = stream.total_out;
 
-			if (ret == Z_STREAM_END)
-				goto done;
+			if (ret == Z_STREAM_END){
+				git_inflate_end(&stream);
+				close(out);
+				free(full_request);
+				return;
+			}
 		}
 	}
-
-done:
-	git_inflate_end(&stream);
-	close(out);
-	free(full_request);
 }
 
 static void copy_request(const char *prog_name, int out, ssize_t req_len)

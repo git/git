@@ -5,47 +5,35 @@
 
 static int score_missing(unsigned mode)
 {
-	int score;
-
 	if (S_ISDIR(mode))
-		score = -1000;
-	else if (S_ISLNK(mode))
-		score = -500;
-	else
-		score = -50;
-	return score;
+		return -1000;
+	if (S_ISLNK(mode))
+		return -500;
+	return -50;
 }
 
 static int score_differs(unsigned mode1, unsigned mode2)
 {
-	int score;
-
 	if (S_ISDIR(mode1) != S_ISDIR(mode2))
-		score = -100;
-	else if (S_ISLNK(mode1) != S_ISLNK(mode2))
-		score = -50;
-	else
-		score = -5;
-	return score;
+		return -100;
+	if (S_ISLNK(mode1) != S_ISLNK(mode2))
+		return -50;
+	return -5;
 }
 
 static int score_matches(unsigned mode1, unsigned mode2)
 {
-	int score;
-
 	/* Heh, we found SHA-1 collisions between different kind of objects */
 	if (S_ISDIR(mode1) != S_ISDIR(mode2))
-		score = -100;
-	else if (S_ISLNK(mode1) != S_ISLNK(mode2))
-		score = -50;
+		return -100;
+	if (S_ISLNK(mode1) != S_ISLNK(mode2))
+		return -50;
 
-	else if (S_ISDIR(mode1))
-		score = 1000;
-	else if (S_ISLNK(mode1))
-		score = 500;
-	else
-		score = 250;
-	return score;
+	if (S_ISDIR(mode1))
+		return 1000;
+	if (S_ISLNK(mode1))
+		return 500;
+	return 250;
 }
 
 static void *fill_tree_desc_strict(struct tree_desc *desc,
@@ -67,14 +55,15 @@ static void *fill_tree_desc_strict(struct tree_desc *desc,
 static int base_name_entries_compare(const struct name_entry *a,
 				     const struct name_entry *b)
 {
-	return base_name_compare(a->path, tree_entry_len(a), a->mode,
-				 b->path, tree_entry_len(b), b->mode);
+	return base_name_compare(a->path, tree_entry_len(a), a->mode, b->path,
+				 tree_entry_len(b), b->mode);
 }
 
 /*
  * Inspect two trees, and give a score that tells how similar they are.
  */
-static int score_trees(const struct object_id *hash1, const struct object_id *hash2)
+static int score_trees(const struct object_id *hash1,
+		       const struct object_id *hash2)
 {
 	struct tree_desc one;
 	struct tree_desc two;
@@ -93,8 +82,11 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
 		else if (two.size)
 			/* two has more entries */
 			cmp = 1;
-		else
-			break;
+		else {
+			free(one_buf);
+			free(two_buf);
+			return score;
+		}
 
 		if (cmp < 0) {
 			/* path1 does not appear in two */
@@ -119,20 +111,14 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
 			update_tree_entry(&two);
 		}
 	}
-	free(one_buf);
-	free(two_buf);
-	return score;
 }
 
 /*
  * Match one itself and its subtrees with two and pick the best match.
  */
 static void match_trees(const struct object_id *hash1,
-			const struct object_id *hash2,
-			int *best_score,
-			char **best_match,
-			const char *base,
-			int recurse_limit)
+			const struct object_id *hash2, int *best_score,
+			char **best_match, const char *base, int recurse_limit)
 {
 	struct tree_desc one;
 	void *one_buf = fill_tree_desc_strict(&one, hash1);
@@ -141,25 +127,22 @@ static void match_trees(const struct object_id *hash1,
 		const char *path;
 		const struct object_id *elem;
 		unsigned short mode;
-		int score;
 
 		elem = tree_entry_extract(&one, &path, &mode);
-		if (!S_ISDIR(mode))
-			goto next;
-		score = score_trees(elem, hash2);
-		if (*best_score < score) {
-			free(*best_match);
-			*best_match = xstrfmt("%s%s", base, path);
-			*best_score = score;
+		if (S_ISDIR(mode)) {
+			int score = score_trees(elem, hash2);
+			if (*best_score < score) {
+				free(*best_match);
+				*best_match = xstrfmt("%s%s", base, path);
+				*best_score = score;
+			}
+			if (recurse_limit) {
+				char *newbase = xstrfmt("%s%s/", base, path);
+				match_trees(elem, hash2, best_score, best_match,
+					    newbase, recurse_limit - 1);
+				free(newbase);
+			}
 		}
-		if (recurse_limit) {
-			char *newbase = xstrfmt("%s%s/", base, path);
-			match_trees(elem, hash2, best_score, best_match,
-				    newbase, recurse_limit - 1);
-			free(newbase);
-		}
-
-	next:
 		update_tree_entry(&one);
 	}
 	free(one_buf);
@@ -199,8 +182,7 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 		unsigned short mode;
 
 		tree_entry_extract(&desc, &name, &mode);
-		if (strlen(name) == toplen &&
-		    !memcmp(name, prefix, toplen)) {
+		if (strlen(name) == toplen && !memcmp(name, prefix, toplen)) {
 			if (!S_ISDIR(mode))
 				die("entry %s in tree %s is not a tree", name,
 				    oid_to_hex(oid1));
@@ -214,9 +196,9 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 			 *   - to discard the "const"; this is OK because we
 			 *     know it points into our non-const "buf"
 			 */
-			rewrite_here = (unsigned char *)(desc.entry.path +
-							 strlen(desc.entry.path) +
-							 1);
+			rewrite_here =
+				(unsigned char *)(desc.entry.path +
+						  strlen(desc.entry.path) + 1);
 			break;
 		}
 		update_tree_entry(&desc);
@@ -248,10 +230,8 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
  * other hand, it could cover tree one and we might need to pick a
  * subtree of it.
  */
-void shift_tree(struct repository *r,
-		const struct object_id *hash1,
-		const struct object_id *hash2,
-		struct object_id *shifted,
+void shift_tree(struct repository *r, const struct object_id *hash1,
+		const struct object_id *hash2, struct object_id *shifted,
 		int depth_limit)
 {
 	char *add_prefix;
@@ -292,8 +272,8 @@ void shift_tree(struct repository *r,
 			return;
 
 		if (get_tree_entry(r, hash2, del_prefix, shifted, &mode))
-			die("cannot find path %s in tree %s",
-			    del_prefix, oid_to_hex(hash2));
+			die("cannot find path %s in tree %s", del_prefix,
+			    oid_to_hex(hash2));
 		return;
 	}
 
@@ -308,10 +288,8 @@ void shift_tree(struct repository *r,
  * Unfortunately we cannot fundamentally tell which one to
  * be prefixed, as recursive merge can work in either direction.
  */
-void shift_tree_by(struct repository *r,
-		   const struct object_id *hash1,
-		   const struct object_id *hash2,
-		   struct object_id *shifted,
+void shift_tree_by(struct repository *r, const struct object_id *hash1,
+		   const struct object_id *hash2, struct object_id *shifted,
 		   const char *shift_prefix)
 {
 	struct object_id sub1, sub2;

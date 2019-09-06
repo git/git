@@ -249,9 +249,8 @@ static void wt_longstatus_print_other_header(struct wt_status *s,
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 	status_printf_ln(s, c, "%s:", what);
-	if (!s->hints)
-		return;
-	status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be committed)"), how);
+	if (s->hints)
+		status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be committed)"), how);
 }
 
 static void wt_longstatus_print_trailer(struct wt_status *s)

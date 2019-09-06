@@ -296,8 +296,9 @@ void ws_fix_copy(struct strbuf *dst, const char *src, int len, unsigned ws_rule,
 			}
 		}
 		if (0 < len && isspace(src[len - 1])) {
-			while (0 < len && isspace(src[len-1]))
-				len--;
+			do {
+                len--;
+			} while (0 < len && isspace(src[len-1]));
 			fixed = 1;
 		}
 	}

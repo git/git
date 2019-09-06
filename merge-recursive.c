@@ -940,7 +940,8 @@ static int update_file_flags(struct merge_options *opt,
 		if (type != OBJ_BLOB) {
 			ret = err(opt, _("blob expected for %s '%s'"),
 				  oid_to_hex(&contents->oid), path);
-			goto free_buf;
+			free(buf);
+			goto update_index;
 		}
 		if (S_ISREG(contents->mode)) {
 			struct strbuf strbuf = STRBUF_INIT;
@@ -953,21 +954,20 @@ static int update_file_flags(struct merge_options *opt,
 
 		if (make_room_for_path(opt, path) < 0) {
 			update_wd = 0;
-			goto free_buf;
 		}
-		if (S_ISREG(contents->mode) ||
+		else if (S_ISREG(contents->mode) ||
 		    (!has_symlinks && S_ISLNK(contents->mode))) {
-			int fd;
 			int mode = (contents->mode & 0100 ? 0777 : 0666);
 
-			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
+			int fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 			if (fd < 0) {
 				ret = err(opt, _("failed to open '%s': %s"),
 					  path, strerror(errno));
-				goto free_buf;
 			}
+			else {
 			write_in_full(fd, buf, size);
 			close(fd);
+			}
 		} else if (S_ISLNK(contents->mode)) {
 			char *lnk = xmemdupz(buf, size);
 			safe_create_leading_directories_const(path);
@@ -980,7 +980,6 @@ static int update_file_flags(struct merge_options *opt,
 			ret = err(opt,
 				  _("do not know what to do with %06o %s '%s'"),
 				  contents->mode, oid_to_hex(&contents->oid), path);
-	free_buf:
 		free(buf);
 	}
 update_index:
