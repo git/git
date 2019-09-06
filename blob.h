@@ -6,7 +6,7 @@
 extern const char *blob_type;
 
 struct blob {
-	struct object object;
+    struct object object;
 };
 
 struct blob *lookup_blob(struct repository *r, const struct object_id *oid);

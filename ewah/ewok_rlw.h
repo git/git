@@ -31,84 +31,76 @@
 
 #define RLW_RUNNING_LEN_PLUS_BIT (((eword_t)1 << (RLW_RUNNING_BITS + 1)) - 1)
 
-static inline int rlw_get_run_bit(const eword_t *word)
-{
-	return *word & (eword_t)1;
+static inline int rlw_get_run_bit(const eword_t *word) {
+    return *word & (eword_t) 1;
 }
 
-static inline void rlw_set_run_bit(eword_t *word, int b)
-{
-	if (b) {
-		*word |= (eword_t)1;
-	} else {
-		*word &= (eword_t)(~1);
-	}
+static inline void rlw_set_run_bit(eword_t *word, int b) {
+    if (b) {
+        *word |= (eword_t) 1;
+    } else {
+        *word &= (eword_t) (~1);
+    }
 }
 
-static inline void rlw_xor_run_bit(eword_t *word)
-{
-	if (*word & 1) {
-		*word &= (eword_t)(~1);
-	} else {
-		*word |= (eword_t)1;
-	}
+static inline void rlw_xor_run_bit(eword_t *word) {
+    if (*word & 1) {
+        *word &= (eword_t) (~1);
+    } else {
+        *word |= (eword_t) 1;
+    }
 }
 
-static inline void rlw_set_running_len(eword_t *word, eword_t l)
-{
-	*word |= RLW_LARGEST_RUNNING_COUNT_SHIFT;
-	*word &= (l << 1) | (~RLW_LARGEST_RUNNING_COUNT_SHIFT);
+static inline void rlw_set_running_len(eword_t *word, eword_t l) {
+    *word |= RLW_LARGEST_RUNNING_COUNT_SHIFT;
+    *word &= (l << 1) | (~RLW_LARGEST_RUNNING_COUNT_SHIFT);
 }
 
-static inline eword_t rlw_get_running_len(const eword_t *word)
-{
-	return (*word >> 1) & RLW_LARGEST_RUNNING_COUNT;
+static inline eword_t rlw_get_running_len(const eword_t *word) {
+    return (*word >> 1) & RLW_LARGEST_RUNNING_COUNT;
 }
 
-static inline eword_t rlw_get_literal_words(const eword_t *word)
-{
-	return *word >> (1 + RLW_RUNNING_BITS);
+static inline eword_t rlw_get_literal_words(const eword_t *word) {
+    return *word >> (1 + RLW_RUNNING_BITS);
 }
 
-static inline void rlw_set_literal_words(eword_t *word, eword_t l)
-{
-	*word |= ~RLW_RUNNING_LEN_PLUS_BIT;
-	*word &= (l << (RLW_RUNNING_BITS + 1)) | RLW_RUNNING_LEN_PLUS_BIT;
+static inline void rlw_set_literal_words(eword_t *word, eword_t l) {
+    *word |= ~RLW_RUNNING_LEN_PLUS_BIT;
+    *word &= (l << (RLW_RUNNING_BITS + 1)) | RLW_RUNNING_LEN_PLUS_BIT;
 }
 
-static inline eword_t rlw_size(const eword_t *self)
-{
-	return rlw_get_running_len(self) + rlw_get_literal_words(self);
+static inline eword_t rlw_size(const eword_t *self) {
+    return rlw_get_running_len(self) + rlw_get_literal_words(self);
 }
 
 struct rlw_iterator {
-	const eword_t *buffer;
-	size_t size;
-	size_t pointer;
-	size_t literal_word_start;
+    const eword_t *buffer;
+    size_t size;
+    size_t pointer;
+    size_t literal_word_start;
 
-	struct {
-		const eword_t *word;
-		int literal_words;
-		int running_len;
-		int literal_word_offset;
-		int running_bit;
-	} rlw;
+    struct {
+        const eword_t *word;
+        int literal_words;
+        int running_len;
+        int literal_word_offset;
+        int running_bit;
+    } rlw;
 };
 
 void rlwit_init(struct rlw_iterator *it, struct ewah_bitmap *bitmap);
-void rlwit_discard_first_words(struct rlw_iterator *it, size_t x);
-size_t rlwit_discharge(
-	struct rlw_iterator *it, struct ewah_bitmap *out, size_t max, int negate);
 
-static inline size_t rlwit_word_size(struct rlw_iterator *it)
-{
-	return it->rlw.running_len + it->rlw.literal_words;
+void rlwit_discard_first_words(struct rlw_iterator *it, size_t x);
+
+size_t rlwit_discharge(
+        struct rlw_iterator *it, struct ewah_bitmap *out, size_t max, int negate);
+
+static inline size_t rlwit_word_size(struct rlw_iterator *it) {
+    return it->rlw.running_len + it->rlw.literal_words;
 }
 
-static inline size_t rlwit_literal_words(struct rlw_iterator *it)
-{
-	return it->pointer - it->rlw.literal_words;
+static inline size_t rlwit_literal_words(struct rlw_iterator *it) {
+    return it->pointer - it->rlw.literal_words;
 }
 
 #endif

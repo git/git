@@ -1,7 +1,7 @@
 
-static int dummy(void)	// Begin of dummy
+static int dummy(void)    // Begin of dummy
 {
-	int rc = 0;
+    int rc = 0;
 
-	return rc;
-}	// End of dummy
+    return rc;
+}    // End of dummy

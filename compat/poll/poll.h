@@ -48,16 +48,15 @@
 #define POLLWRNORM  0x0100
 #define POLLWRBAND  0x0200
 
-struct pollfd
-{
-  int fd;                       /* which file descriptor to poll */
-  short events;                 /* events we are interested in   */
-  short revents;                /* events found on return        */
+struct pollfd {
+    int fd;                       /* which file descriptor to poll */
+    short events;                 /* events we are interested in   */
+    short revents;                /* events found on return        */
 };
 
 typedef unsigned long nfds_t;
 
-extern int poll (struct pollfd *pfd, nfds_t nfd, int timeout);
+extern int poll(struct pollfd *pfd, nfds_t nfd, int timeout);
 
 /* Define INFTIM only if doing so conforms to POSIX.  */
 #if !defined (_POSIX_C_SOURCE) && !defined (_XOPEN_SOURCE)
