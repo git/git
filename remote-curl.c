@@ -1230,32 +1230,38 @@ static int push(int nr_spec, char **specs)
 static void parse_push(struct strbuf *buf)
 {
 	char **specs = NULL;
-	int alloc_spec = 0, nr_spec = 0, i;
+	int alloc_spec = 0, nr_spec = 0;
 
-	for (;;)
+	for (;;) {
 		if (starts_with(buf->buf, "push ")) {
 			ALLOC_GROW(specs, nr_spec + 1, alloc_spec);
 			specs[nr_spec++] = xstrdup(buf->buf + 5);
 		} else
 			die(_("http transport does not support %s"), buf->buf);
 
-	strbuf_reset(buf);
-	if (strbuf_getline_lf(buf, stdin) == EOF)
-		break;
-	if (!*buf->buf) {
-		int ret = push(nr_spec, specs);
-		printf("\n");
-		fflush(stdout);
+		strbuf_reset(buf);
+		if (strbuf_getline_lf(buf, stdin) == EOF) {
+			for (i = 0; i < nr_spec; i++)
+				free(specs[i]);
+			free(specs);
 
-		if (ret) {
-			exit(128); /* error already reported */
+			return;
 		}
-		break;
-	}
-}
+		if (!*buf->buf) {
+			int i;
+			int ret = push(nr_spec, specs);
+			printf("\n");
+			fflush(stdout);
 
-for (i = 0; i < nr_spec; i++) free(specs[i]);
-free(specs);
+			if (ret) {
+				exit(128); /* error already reported */
+			}
+			for (i = 0; i < nr_spec; i++)
+				free(specs[i]);
+			free(specs);
+			return;
+		}
+	}
 }
 
 static int stateless_connect(const char *service_name)
@@ -1276,11 +1282,10 @@ static int stateless_connect(const char *service_name)
 		printf("fallback\n");
 		fflush(stdout);
 		return -1;
-	} else {
-		/* Stateless Connection established */
-		printf("\n");
-		fflush(stdout);
 	}
+	/* Stateless Connection established */
+	printf("\n");
+	fflush(stdout);
 
 	rpc.service_name = service_name;
 	rpc.service_url = xstrfmt("%s%s", url.buf, rpc.service_name);
@@ -1373,7 +1378,7 @@ int cmd_main(int argc, const char **argv)
 
 	http_init(remote, url.buf, 0);
 
-	for(;;)
+	for (;;) {
 		const char *arg;
 
 		if (strbuf_getline_lf(&buf, stdin) == EOF) {
