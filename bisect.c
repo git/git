@@ -91,9 +91,9 @@ static inline void weight_set(struct commit_list *elem, int weight)
 static int count_interesting_parents(struct commit *commit)
 {
 	struct commit_list *p;
-	int count;
+	int count = 0;
 
-	for (count = 0, p = commit->parents; p; p = p->next) {
+	for (p = commit->parents; p; p = p->next) {
 		if (p->item->object.flags & UNINTERESTING)
 			continue;
 		count++;

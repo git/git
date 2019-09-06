@@ -53,8 +53,10 @@ void argv_array_pushl(struct argv_array *array, ...)
 
 void argv_array_pushv(struct argv_array *array, const char **argv)
 {
-	for (; *argv; argv++)
-		argv_array_push(array, *argv);
+	while (*argv) {
+        argv_array_push(array, *argv);
+        argv++;
+    }
 }
 
 void argv_array_pop(struct argv_array *array)

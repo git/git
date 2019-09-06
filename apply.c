@@ -502,7 +502,7 @@ static size_t tz_with_colon_len(const char *line, size_t len)
 		return 0;
 	p = tz + 2;
 	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
-	    !isdigit(*p++) || !isdigit(*p++))
+	    !isdigit(*p++) || !isdigit(*p))
 		return 0;
 
 	return line + len - tz;
