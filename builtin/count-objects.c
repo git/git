@@ -124,9 +124,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		struct strbuf garbage_buf = STRBUF_INIT;
 
 		for (p = get_all_packs(the_repository); p; p = p->next) {
-			if (!p->pack_local)
-				continue;
-			if (open_pack_index(p))
+			if (!p->pack_local || open_pack_index(p))
 				continue;
 			packed += p->num_objects;
 			size_pack += p->pack_size + p->index_size;
