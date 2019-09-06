@@ -1518,7 +1518,7 @@ int repo_interpret_branch_name(struct repository *r, const char *name,
 	if (!allowed || (allowed & INTERPRET_BRANCH_LOCAL)) {
 		len = interpret_nth_prior_checkout(r, name, namelen, buf);
 		if (!len) {
-			return len; /* syntax Ok, not enough switches */
+			return 0; /* syntax Ok, not enough switches */
 		}
 		if (len > 0) {
 			if (len == namelen)
