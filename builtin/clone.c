@@ -680,7 +680,7 @@ static void update_remote_refs(const struct ref *refs,
 
 		opt.transport = transport;
 		opt.progress = transport->progress;
-		opt.check_refs_only = check_refs_only != 0;
+		opt.check_refs_only = !!check_refs_only;
 
 		if (check_connected(iterate_ref_map, &rm, &opt))
 			die(_("remote did not send all necessary objects"));

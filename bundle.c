@@ -108,6 +108,7 @@ int is_bundle(const char *path, int quiet)
 static int list_refs(struct ref_list *r, int argc, const char **argv)
 {
 	int i;
+
 	for (i = 0; i < r->nr; i++) {
 		if (argc > 1) {
 			int j;
@@ -141,7 +142,7 @@ int verify_bundle(struct repository *r,
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
-	if (!(r && r->objects && r->objects->odb))
+	if (!r || !r->objects || !r->objects->odb)
 		return error(_("need a repository to verify a bundle"));
 
 	repo_init_revisions(r, &revs, NULL);
@@ -276,9 +277,9 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs)
 
 	if (start_command(&pack_objects))
 		return error(_("Could not spawn pack-objects"));
-	i = 0;
-	while (i < revs->pending.nr) {
-		struct object *object = revs->pending.objects[i++].item;
+
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object *object = revs->pending.objects[i].item;
 		if (object->flags & UNINTERESTING)
 			write_or_die(pack_objects.in, "^", 1);
 		write_or_die(pack_objects.in, oid_to_hex(&object->oid), GIT_SHA1_HEXSZ);
@@ -302,9 +303,8 @@ static int compute_and_write_prerequisites(int bundle_fd,
 	argv_array_pushl(&rls.args,
 			 "rev-list", "--boundary", "--pretty=oneline",
 			 NULL);
-	i = 0;
-	while (i < argc)
-		argv_array_push(&rls.args, argv[i++]);
+	for (i = 1; i < argc; i++)
+		argv_array_push(&rls.args, argv[i]);
 	rls.out = -1;
 	rls.git_cmd = 1;
 	if (start_command(&rls))
@@ -344,19 +344,18 @@ static int compute_and_write_prerequisites(int bundle_fd,
  */
 static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 {
+	int i;
 	int ref_count = 0;
-	unsigned int i = 0;
-	while(i < revs->pending.nr) {
+
+	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *e = revs->pending.objects + i;
 		struct object_id oid;
 		char *ref;
 		const char *display_ref;
 		int flag;
 
-		if (e->item->flags & UNINTERESTING){
-			i++;
+		if (e->item->flags & UNINTERESTING)
 			continue;
-		}
 		if (dwim_ref(e->name, strlen(e->name), &oid, &ref) != 1)
 			goto skip_write_ref;
 		if (read_ref_full(e->name, RESOLVE_REF_READING, &oid, &flag))
@@ -421,7 +420,6 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		write_or_die(bundle_fd, "\n", 1);
  skip_write_ref:
 		free(ref);
-		i++;
 	}
 
 	/* end header */
@@ -434,10 +432,11 @@ int create_bundle(struct repository *r, const char *path,
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;
+	int bundle_to_stdout;
 	int ref_count = 0;
 	struct rev_info revs;
 
-	int bundle_to_stdout = !strcmp(path, "-");
+	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
 		bundle_fd = 1;
 	else

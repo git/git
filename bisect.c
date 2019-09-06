@@ -91,9 +91,9 @@ static inline void weight_set(struct commit_list *elem, int weight)
 static int count_interesting_parents(struct commit *commit)
 {
 	struct commit_list *p;
-	int count = 0;
+	int count;
 
-	for (p = commit->parents; p; p = p->next) {
+	for (count = 0, p = commit->parents; p; p = p->next) {
 		if (p->item->object.flags & UNINTERESTING)
 			continue;
 		count++;
@@ -198,9 +198,9 @@ static int compare_commit_dist(const void *a_, const void *b_)
 
 	a = (struct commit_dist *)a_;
 	b = (struct commit_dist *)b_;
-	if (a->distance == b->distance)
-		return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
-	return b->distance - a->distance; /* desc sort */
+	if (a->distance != b->distance)
+		return b->distance - a->distance; /* desc sort */
+	return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
 }
 
 static struct commit_list *best_bisection_sorted(struct commit_list *list, int nr)
@@ -261,10 +261,12 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 					     int nr, int *weights,
 					     int find_all)
 {
-	int n = 0, counted = 0;
+	int n, counted;
 	struct commit_list *p;
 
-	for (p = list; p; p = p->next) {
+	counted = 0;
+
+	for (n = 0, p = list; p; p = p->next) {
 		struct commit *commit = p->item;
 		unsigned flags = commit->object.flags;
 
@@ -361,10 +363,10 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 
 	show_list("bisection 2 counted all", counted, nr, list);
 
-	if (find_all)
-	return best_bisection_sorted(list, nr);
-
-	return best_bisection(list, nr);
+	if (!find_all)
+		return best_bisection(list, nr);
+	else
+		return best_bisection_sorted(list, nr);
 }
 
 void find_bisection(struct commit_list **commit_list, int *reaches,
@@ -474,15 +476,13 @@ static void read_bisect_paths(struct argv_array *array)
 static char *join_sha1_array_hex(struct oid_array *array, char delim)
 {
 	struct strbuf joined_hexs = STRBUF_INIT;
-
-if (array->nr > 0){
 	int i;
-	for (i = 0; i < array->nr - 1; i++) {
-		strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i++));
-		strbuf_addch(&joined_hexs, delim);
+
+	for (i = 0; i < array->nr; i++) {
+		strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i));
+		if (i + 1 < array->nr)
+			strbuf_addch(&joined_hexs, delim);
 	}
-	strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i));
-}
 
 	return strbuf_detach(&joined_hexs, NULL);
 }
@@ -670,10 +670,8 @@ static void exit_if_skipped_commits(struct commit_list *tried,
 	printf("There are only 'skip'ped commits left to test.\n"
 	       "The first %s commit could be any of:\n", term_bad);
 
-	do {
+	for ( ; tried; tried = tried->next)
 		printf("%s\n", oid_to_hex(&tried->item->object.oid));
-		tried = tried->next;
-	} while (tried);
 
 	if (bad)
 		printf("%s\n", oid_to_hex(bad));
@@ -1021,10 +1019,8 @@ static inline int log2i(int n)
 {
 	int log2 = 0;
 
-	while (n > 1) {
+	for (; n > 1; n >>= 1)
 		log2++;
-		n>>=1;
-	}
 
 	return log2;
 }

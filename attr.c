@@ -456,15 +456,21 @@ struct attr_stack {
 
 static void attr_stack_free(struct attr_stack *e)
 {
-	unsigned int i, j;
+	int i;
 	free(e->origin);
 	for (i = 0; i < e->num_matches; i++) {
 		struct match_attr *a = e->attrs[i];
+		int j;
 		for (j = 0; j < a->num_attr; j++) {
 			const char *setto = a->state[j].setto;
-            if (setto != ATTR__TRUE && setto != ATTR__FALSE && setto != ATTR__UNSET && setto != ATTR__UNKNOWN)
-                free((char *) setto);
-        }
+			if (setto == ATTR__TRUE ||
+			    setto == ATTR__FALSE ||
+			    setto == ATTR__UNSET ||
+			    setto == ATTR__UNKNOWN)
+				;
+			else
+				free((char *) setto);
+		}
 		free(a);
 	}
 	free(e->attrs);
@@ -525,10 +531,8 @@ static void check_vector_remove(struct attr_check *check)
 		BUG("no entry found");
 
 	/* shift entries over */
-	while (i < check_vector.nr - 1){
+	for (; i < check_vector.nr - 1; i++)
 		check_vector.checks[i] = check_vector.checks[i + 1];
-		i++;
-	}
 
 	check_vector.nr--;
 
@@ -1029,18 +1033,18 @@ static int fill(const char *path, int pathlen, int basename_offset,
 		const struct attr_stack *stack,
 		struct all_attrs_item *all_attrs, int rem)
 {
-	while (rem > 0 && stack) {
+	for (; rem > 0 && stack; stack = stack->prev) {
+		int i;
 		const char *base = stack->origin ? stack->origin : "";
-		unsigned int i = stack->num_matches;
-		while (0 < rem && 0 < i) {
-			const struct match_attr *a = stack->attrs[--i];
+
+		for (i = stack->num_matches - 1; 0 < rem && 0 <= i; i--) {
+			const struct match_attr *a = stack->attrs[i];
 			if (a->is_macro)
 				continue;
 			if (path_matches(path, pathlen, basename_offset,
 					 &a->u.pat, base, stack->originlen))
 				rem = fill_one("fill", all_attrs, a, rem);
 		}
-		stack = stack->prev;
 	}
 
 	return rem;
@@ -1064,7 +1068,7 @@ static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem)
 static void determine_macros(struct all_attrs_item *all_attrs,
 			     const struct attr_stack *stack)
 {
-	while (stack) {
+	for (; stack; stack = stack->prev) {
 		int i;
 		for (i = stack->num_matches - 1; i >= 0; i--) {
 			const struct match_attr *ma = stack->attrs[i];
@@ -1075,7 +1079,6 @@ static void determine_macros(struct all_attrs_item *all_attrs,
 				}
 			}
 		}
-		stack = stack->prev;
 	}
 }
 

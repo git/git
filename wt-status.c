@@ -193,15 +193,15 @@ static void wt_longstatus_print_unmerged_header(struct wt_status *s)
 		status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
 
 	if (!both_deleted) {
-        if (del_mod_conflict)
-            status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
-        else
-            status_printf_ln(s, c, _("  (use \"git add <file>...\" to mark resolution)"));
-    } else if (del_mod_conflict || not_deleted) {
-        status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
-    } else {
-        status_printf_ln(s, c, _("  (use \"git rm <file>...\" to mark resolution)"));
-    }
+		if (!del_mod_conflict)
+			status_printf_ln(s, c, _("  (use \"git add <file>...\" to mark resolution)"));
+		else
+			status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
+	} else if (!del_mod_conflict && !not_deleted) {
+		status_printf_ln(s, c, _("  (use \"git rm <file>...\" to mark resolution)"));
+	} else {
+		status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
+	}
 }
 
 static void wt_longstatus_print_cached_header(struct wt_status *s)

@@ -18,8 +18,8 @@
  * @param {String} tzClassName: denotes elements with date to be adjusted
  */
 function onloadTZSetup(tzDefault, tzCookieInfo, tzClassName) {
-	const tzCookieTZ = getCookie(tzCookieInfo.name, tzCookieInfo);
-	let tz = tzDefault;
+	var tzCookieTZ = getCookie(tzCookieInfo.name, tzCookieInfo);
+	var tz = tzDefault;
 
 	if (tzCookieTZ) {
 		// set timezone to value saved in a cookie
@@ -33,7 +33,7 @@ function onloadTZSetup(tzDefault, tzCookieInfo, tzClassName) {
 
 	// server-side of gitweb produces datetime in UTC,
 	// so if tz is 'utc' there is no need for changes
-	const nochange = tz === 'utc';
+	var nochange = tz === 'utc';
 
 	// adjust dates to use specified common timezone
 	fixDatetimeTZ(tz, tzClassName, nochange);
@@ -61,17 +61,18 @@ function fixDatetimeTZ(tz, tzClassName, nochange) {
 	tz = normalizeTimezoneInfo(tz);
 
 	// NOTE: result of getElementsByClassName should probably be cached
-	const classesFound = document.getElementsByClassName(tzClassName, "span");
-	let i = 0, len = classesFound.length;
-	while (i < len) {
-		const curElement = classesFound[i++];
+	var classesFound = document.getElementsByClassName(tzClassName, "span");
+	for (var i = 0, len = classesFound.length; i < len; i++) {
+		var curElement = classesFound[i];
 
 		curElement.title = 'Click to change timezone';
 		if (!nochange) {
 			// we use *.firstChild.data (W3C DOM) instead of *.innerHTML
 			// as the latter doesn't always work everywhere in every browser
-			const epoch = parseRFC2822Date(curElement.firstChild.data);
-			curElement.firstChild.data = formatDateRFC2882(epoch, tz);
+			var epoch = parseRFC2822Date(curElement.firstChild.data);
+			var adjusted = formatDateRFC2882(epoch, tz);
+
+			curElement.firstChild.data = adjusted;
 		}
 	}
 }
@@ -109,10 +110,15 @@ function addChangeTZ(tzSelected, tzCookieInfo, tzClassName) {
 		event = event || window.event;
 
 		//IE uses srcElement as the target
-		const target = event.target || event.srcElement;
+		var target = event.target || event.srcElement;
 
-		if (target.className === tzClassName && tzSelectFragment.childNodes.length > 0) {
-			displayChangeTZForm(target, tzSelectFragment);
+		switch (target.className) {
+		case tzClassName:
+			// don't display timezone menu if it is already displayed
+			if (tzSelectFragment.childNodes.length > 0) {
+				displayChangeTZForm(target, tzSelectFragment);
+			}
+			break;
 		} // end switch
 	};
 }
@@ -127,11 +133,11 @@ function addChangeTZ(tzSelected, tzCookieInfo, tzClassName) {
  * @returns {DocumentFragment}
  */
 function createChangeTZForm(documentFragment, tzSelected, tzCookieInfo, tzClassName) {
-	const div = document.createElement("div");
+	var div = document.createElement("div");
 	div.className = 'popup';
 
 	/* '<div class="close-button" title="(click on this box to close)">X</div>' */
-	const closeButton = document.createElement('div');
+	var closeButton = document.createElement('div');
 	closeButton.className = 'close-button';
 	closeButton.title = '(click on this box to close)';
 	closeButton.appendChild(document.createTextNode('X'));
@@ -140,7 +146,7 @@ function createChangeTZForm(documentFragment, tzSelected, tzCookieInfo, tzClassN
 
 	/* 'Select timezone: <br clear="all">' */
 	div.appendChild(document.createTextNode('Select timezone: '));
-	const br = document.createElement('br');
+	var br = document.createElement('br');
 	br.clear = 'all';
 	div.appendChild(br);
 

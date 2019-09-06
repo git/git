@@ -62,9 +62,8 @@ int ppc_SHA1_Final(unsigned char *hash, ppc_SHA_CTX *c)
 			memset(&c->buf.b[cnt], 0, 64 - cnt);
 		ppc_sha1_core(c->hash, c->buf.b, 1);
 		cnt = 0;
-        memset(&c->buf.b[0], 0, 56);
 	}
-	else if (cnt < 56)
+	if (cnt < 56)
 		memset(&c->buf.b[cnt], 0, 56 - cnt);
 	c->buf.l[7] = c->len;
 	ppc_sha1_core(c->hash, c->buf.b, 1);

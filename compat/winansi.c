@@ -210,13 +210,16 @@ static void set_attr(char func, const int *params, int paramlen)
 			case 2:  /* faint */
 			case 22: /* normal */
 				attr &= ~FOREGROUND_INTENSITY;
+				break;
 			case 3:  /* italic */
 				/* Unsupported */
+				break;
 			case 4:  /* underline */
 			case 21: /* double underline */
 				/* Wikipedia says this flag does nothing */
 				/* Furthermore, mingw doesn't define this flag
 				attr |= COMMON_LVB_UNDERSCORE; */
+				break;
 			case 24: /* no underline */
 				/* attr &= ~COMMON_LVB_UNDERSCORE; */
 				break;
@@ -234,6 +237,7 @@ static void set_attr(char func, const int *params, int paramlen)
 				break;
 			case 27: /* positive */
 				negative = 0;
+				break;
 			case 8:  /* conceal */
 			case 28: /* reveal */
 				/* Unsupported */
@@ -269,6 +273,7 @@ static void set_attr(char func, const int *params, int paramlen)
 				attr |= FOREGROUND_RED |
 					FOREGROUND_GREEN |
 					FOREGROUND_BLUE;
+				break;
 			case 38: /* Unknown */
 				break;
 			case 39: /* reset */
@@ -306,11 +311,13 @@ static void set_attr(char func, const int *params, int paramlen)
 				attr |= BACKGROUND_RED |
 					BACKGROUND_GREEN |
 					BACKGROUND_BLUE;
+				break;
 			case 48: /* Unknown */
 				break;
 			case 49: /* reset */
 				attr &= ~BACKGROUND_ALL;
 				attr |= (plain_attr & BACKGROUND_ALL);
+				break;
 			default:
 				/* Unsupported code */
 				break;
@@ -320,6 +327,7 @@ static void set_attr(char func, const int *params, int paramlen)
 		break;
 	case 'K':
 		erase_in_line();
+		break;
 	default:
 		/* Unsupported code */
 		break;
@@ -599,17 +607,17 @@ int winansi_isatty(int fd)
 
 void winansi_init(void)
 {
-	
+	int con1, con2;
+	wchar_t name[32];
 
 	/* check if either stdout or stderr is a console output screen buffer */
-	int con1 = is_console(1);
-	int con2 = is_console(2);
-	wchar_t name[32];
+	con1 = is_console(1);
+	con2 = is_console(2);
 
 	/* Also compute console bit for fd 0 even though we don't need the result here. */
 	is_console(0);
 
-	if (!(con1 || con2)) {
+	if (!con1 && !con2) {
 #ifdef DETECT_MSYS_TTY
 		/* check if stdin / stdout / stderr are MSYS2 pty pipes */
 		detect_msys_tty(0);

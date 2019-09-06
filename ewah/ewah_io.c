@@ -71,7 +71,7 @@ int ewah_serialize_to(struct ewah_bitmap *self,
 	if (write_fun(data, &rlw_pos, 4) != 4)
 		return -1;
 
-	return (12) + (self->buffer_size * 8);
+	return (3 * 4) + (self->buffer_size * 8);
 }
 
 static int write_strbuf(void *user_data, const void *data, size_t len)

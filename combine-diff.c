@@ -531,11 +531,13 @@ static unsigned long find_next(struct sline *sline,
 	 * lines that are not interesting to interesting() function
 	 * that are surrounded by interesting() ones.
 	 */
-	while (i <= cnt) {
-        if ((look_for_uninteresting) == !(sline[i].flag & mark))
-            return i;
-        i++;
-    }
+	while (i <= cnt)
+		if (look_for_uninteresting
+		    ? !(sline[i].flag & mark)
+		    : (sline[i].flag & mark))
+			return i;
+		else
+			i++;
 	return i;
 }
 
@@ -799,7 +801,8 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 			 * with all blank context markers in such a
 			 * case.  Compensate.
 			 */
-			for (unsigned long j = lno; j < hunk_end; j++)
+			unsigned long j;
+			for (j = lno; j < hunk_end; j++)
 				if (!(sline[j].flag & (mark-1)))
 					null_context++;
 			rlines -= null_context;
@@ -853,7 +856,7 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 			fputs(line_prefix, stdout);
 			if (!(sl->flag & (mark-1))) {
 				/*
-				 * This line was here to hang the
+				 * This sline was here to hang the
 				 * lost lines in front of it.
 				 */
 				if (!context)
@@ -1464,7 +1467,7 @@ void diff_tree_combined(const struct object_id *oid,
 	if (!num_parent)
 		return;
 
-	show_log_first = rev->loginfo != NULL && !rev->no_commit_id;
+	show_log_first = !!rev->loginfo && !rev->no_commit_id;
 	needsep = 0;
 	if (show_log_first) {
 		show_log(rev);

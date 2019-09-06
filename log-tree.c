@@ -449,19 +449,20 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
 	struct strbuf gpg_output = STRBUF_INIT;
+	int status;
 
-	if (parse_signed_commit(commit, &payload, &signature) > 0)
-	{
+	if (parse_signed_commit(commit, &payload, &signature) <= 0)
+		goto out;
 
-	int status = verify_signed_buffer(payload.buf, payload.len,
+	status = verify_signed_buffer(payload.buf, payload.len,
 				      signature.buf, signature.len,
 				      &gpg_output, NULL);
 	if (status && !gpg_output.len)
 		strbuf_addstr(&gpg_output, "No signature\n");
 
 	show_sig_lines(opt, status, gpg_output.buf);
-	}
 
+ out:
 	strbuf_release(&gpg_output);
 	strbuf_release(&payload);
 	strbuf_release(&signature);
@@ -469,9 +470,9 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 
 static int which_parent(const struct object_id *oid, const struct commit *commit)
 {
-	
-	const struct commit_list *parent;
 	int nth;
+	const struct commit_list *parent;
+
 	for (nth = 0, parent = commit->parents; parent; parent = parent->next) {
 		if (oideq(&parent->item->object.oid, oid))
 			return nth;

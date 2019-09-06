@@ -63,7 +63,7 @@ var div_progress_info;
  * @returns {Number|String} Number of lines in file, or string '...'
  */
 function countLines() {
-	const table =
+	var table =
 		document.getElementById('blame_table') ||
 		document.getElementsByTagName('table')[0];
 
@@ -90,7 +90,7 @@ function updateProgressInfo() {
 		return;
 	}
 
-	const percentage = Math.floor(100.0 * blamedLines / totalLines);
+	var percentage = Math.floor(100.0*blamedLines/totalLines);
 
 	if (div_progress_info) {
 		div_progress_info.firstChild.data  = blamedLines + ' / ' + totalLines +
@@ -114,16 +114,16 @@ var t0 = new Date();
  * @globals t0, t_interval_server, cmds_server
  */
 function writeTimeInterval() {
-	let info_time = document.getElementById('generating_time');
+	var info_time = document.getElementById('generating_time');
 	if (!info_time || !t_interval_server) {
 		return;
 	}
-	const t1 = new Date();
+	var t1 = new Date();
 	info_time.firstChild.data += ' + (' +
 		t_interval_server + ' sec server blame_data / ' +
 		(t1.getTime() - t0.getTime())/1000 + ' sec client JavaScript)';
 
-	let info_cmds = document.getElementById('generating_cmd');
+	var info_cmds = document.getElementById('generating_cmd');
 	if (!info_time || !cmds_server) {
 		return;
 	}

@@ -678,7 +678,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	case BISECT_RESET:
 		if (argc > 1)
 			return error(_("--bisect-reset requires either no argument or a commit"));
-		return bisect_reset(argc ? argv[0] : NULL) != 0;
+		return !!bisect_reset(argc ? argv[0] : NULL);
 	case BISECT_WRITE:
 		if (argc != 4 && argc != 5)
 			return error(_("--bisect-write requires either 4 or 5 arguments"));
@@ -710,5 +710,5 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		return error("BUG: unknown subcommand '%d'", cmdmode);
 	}
 	free_terms(&terms);
-	return res !=0;
+	return !!res;
 }

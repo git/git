@@ -55,10 +55,10 @@ int bitmap_get(struct bitmap *self, size_t pos)
 struct ewah_bitmap *bitmap_to_ewah(struct bitmap *bitmap)
 {
 	struct ewah_bitmap *ewah = ewah_new();
-	size_t running_empty_words = 0;
+	size_t i, running_empty_words = 0;
 	eword_t last_word = 0;
 
-	for (size_t i = 0; i < bitmap->word_alloc; ++i) {
+	for (i = 0; i < bitmap->word_alloc; ++i) {
 		if (bitmap->words[i] == 0) {
 			running_empty_words++;
 			continue;
@@ -102,8 +102,9 @@ void bitmap_and_not(struct bitmap *self, struct bitmap *other)
 	const size_t count = (self->word_alloc < other->word_alloc) ?
 		self->word_alloc : other->word_alloc;
 
+	size_t i;
 
-	for (size_t i = 0; i < count; ++i)
+	for (i = 0; i < count; ++i)
 		self->words[i] &= ~other->words[i];
 }
 
@@ -130,9 +131,9 @@ void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 
 size_t bitmap_popcount(struct bitmap *self)
 {
-	size_t count = 0;
+	size_t i, count = 0;
 
-	for (size_t i = 0; i < self->word_alloc; ++i)
+	for (i = 0; i < self->word_alloc; ++i)
 		count += ewah_bit_popcount64(self->words[i]);
 
 	return count;
@@ -156,10 +157,9 @@ int bitmap_equals(struct bitmap *self, struct bitmap *other)
 			return 0;
 	}
 
-	while (i < big->word_alloc) {
+	for (; i < big->word_alloc; ++i) {
 		if (big->words[i] != 0)
 			return 0;
-		++i;
 	}
 
 	return 1;

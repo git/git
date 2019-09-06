@@ -227,7 +227,7 @@ struct expand_data {
 
 static int is_atom(const char *atom, const char *s, int slen)
 {
-	const size_t alen = strlen(atom);
+	int alen = strlen(atom);
 	return alen == slen && !memcmp(atom, s, alen);
 }
 
