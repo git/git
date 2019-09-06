@@ -144,7 +144,7 @@ static inline void reset_all_seen(void)
 
 static uint32_t find_object_pos(const struct object_id *oid)
 {
-	struct object_entry *entry = packlist_find(writer.to_pack, oid, NULL);
+	struct object_entry *entry = packlist_find(writer.to_pack, oid);
 
 	if (!entry) {
 		die("Failed to write bitmap index. Packfile doesn't have full closure "
