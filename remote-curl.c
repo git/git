@@ -768,7 +768,7 @@ static int post_rpc(struct rpc_state *rpc, int flush_received)
 	 * chunked encoding mess.
 	 */
 	if (!flush_received) {
-		for (;;)
+		for (;;){
 			size_t n;
 			enum packet_read_status status;
 
