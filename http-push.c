@@ -709,6 +709,8 @@ static int fetch_indices(void)
 	case HTTP_OK:
 	case HTTP_MISSING_TARGET:
 		return 0;
+	default:
+		break;
 	}
 	return -1;
 }
