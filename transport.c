@@ -122,6 +122,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 struct bundle_transport_data {
 	int fd;
 	struct bundle_header header;
+	unsigned get_refs_from_bundle_called : 1;
 };
 
 static struct ref *get_refs_from_bundle(struct transport *transport,
@@ -134,6 +135,8 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 
 	if (for_push)
 		return NULL;
+
+	data->get_refs_from_bundle_called = 1;
 
 	if (data->fd > 0)
 		close(data->fd);
@@ -154,6 +157,9 @@ static int fetch_refs_from_bundle(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	struct bundle_transport_data *data = transport->data;
+
+	if (!data->get_refs_from_bundle_called)
+		get_refs_from_bundle(transport, 0, NULL);
 	return unbundle(the_repository, &data->header, data->fd,
 			transport->progress ? BUNDLE_VERBOSE : 0);
 }
@@ -743,7 +749,6 @@ static int disconnect_git(struct transport *transport)
 }
 
 static struct transport_vtable taken_over_vtable = {
-	1,
 	NULL,
 	get_refs_via_connect,
 	fetch_refs_via_pack,
@@ -893,7 +898,6 @@ void transport_check_allowed(const char *type)
 }
 
 static struct transport_vtable bundle_vtable = {
-	0,
 	NULL,
 	get_refs_from_bundle,
 	fetch_refs_from_bundle,
@@ -903,7 +907,6 @@ static struct transport_vtable bundle_vtable = {
 };
 
 static struct transport_vtable builtin_smart_vtable = {
-	1,
 	NULL,
 	get_refs_via_connect,
 	fetch_refs_via_pack,
@@ -1285,15 +1288,6 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 	int nr_heads = 0, nr_alloc = 0, nr_refs = 0;
 	struct ref **heads = NULL;
 	struct ref *rm;
-
-	if (!transport->vtable->fetch_without_list)
-		/*
-		 * Some transports (e.g. the built-in bundle transport and the
-		 * transport helper interface) do not work when fetching is
-		 * done immediately after transport creation. List the remote
-		 * refs anyway (if not already listed) as a workaround.
-		 */
-		transport_get_remote_refs(transport, NULL);
 
 	for (rm = refs; rm; rm = rm->next) {
 		nr_refs++;
