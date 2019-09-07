@@ -25,8 +25,12 @@
 #if LIBCURL_VERSION_NUM < 0x070704
 #define curl_global_cleanup() do { /* nothing */ } while (0)
 #endif
+
 #if LIBCURL_VERSION_NUM < 0x070800
 #define curl_global_init(a) do { /* nothing */ } while (0)
+#elif LIBCURL_VERSION_NUM >= 0x070c00
+#define curl_global_init(a) curl_global_init_mem(a, xmalloc, free, \
+						xrealloc, xstrdup, xcalloc)
 #endif
 
 #if (LIBCURL_VERSION_NUM < 0x070c04) || (LIBCURL_VERSION_NUM == 0x071000)
