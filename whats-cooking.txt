@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2019, #06; Fri, 23)
+Subject: What's cooking in git.git (Sep 2019, #01; Sat, 7)
 X-master-at: 745f6812895b31c02b29bdfe4ae8e5498f776c26
-X-next-at: 0a3290393f27b805eda46be3998bd9e32518815d
+X-next-at: c6a4ce50a0d24c7b512b564eacb00d0bf92b22e4
 
-What's cooking in git.git (Aug 2019, #06; Fri, 23)
+What's cooking in git.git (Sep 2019, #01; Sat, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,153 +24,425 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* en/fast-import-merge-doc (2019-08-12) 1 commit
-  (merged to 'next' on 2019-08-14 at 65efc63345)
- + git-fast-import.txt: clarify that multiple merge commits are allowed
+* ar/mingw-run-external-with-non-ascii-path (2019-08-26) 1 commit
+ - mingw: fix launching of externals from Unicode paths
+
+ Windows update.
+
+ Will merge to 'next'.
+
+
+* cb/pcre1-cleanup (2019-08-26) 2 commits
+ - grep: refactor and simplify PCRE1 support
+ - grep: make sure NO_LIBPCRE1_JIT disable JIT in PCRE1
+ (this branch uses ab/pcre-jit-fixes.)
+
+ PCRE fixes.
+
+
+* dl/complete-cherry-pick-revert-skip (2019-08-27) 3 commits
+ - status: mention --skip for revert and cherry-pick
+ - completion: add --skip for cherry-pick and revert
+ - completion: merge options for cherry-pick and revert
+
+ The command line completion support (in contrib/) learned about the
+ "--skip" option of "git revert" and "git cherry-pick".
+
+ Will merge to 'next'.
+
+
+* ew/hashmap (2019-08-26) 11 commits
+ - hashmap_get_next returns "struct hashmap_entry *"
+ - introduce container_of macro
+ - hashmap_put takes "struct hashmap_entry *"
+ - hashmap_remove takes "const struct hashmap_entry *"
+ - hashmap_get takes "const struct hashmap_entry *"
+ - hashmap_add takes "struct hashmap_entry *"
+ - hashmap_get_next takes "const struct hashmap_entry *"
+ - hashmap_entry: detect improper initialization
+ - hashmap_entry_init takes "struct hashmap_entry *"
+ - packfile: use hashmap_entry in delta_base_cache_entry
+ - diff: use hashmap_entry_init on moved_entry.ent
+
+ Code clean-up of the hashmap API, both users and implementation.
+
+ Will merge to 'next'.
+
+
+* jk/fast-import-history-bugfix (2019-08-27) 2 commits
+ - fast-import: duplicate into history rather than passing ownership
+ - fast-import: duplicate parsed encoding string
+
+ The memory ownership model of the "git fast-import" got
+ straightened out.
+
+ Will merge to 'next'.
+
+
+* js/gitdir-at-unc-root (2019-08-26) 3 commits
+ - setup_git_directory(): handle UNC root paths correctly
+ - Fix .git/ discovery at the root of UNC shares
+ - setup_git_directory(): handle UNC paths correctly
+
+ On Windows, the root level of UNC share is now allowed to be used
+ just like any other directory.
+
+ Will merge to 'next'.
+
+
+* js/honor-cflags-in-hdr-check (2019-08-26) 1 commit
+ - hdr-check: make it work on Windows
+
+ Build fix to make sure hdr-check is run with the same preprocessor
+ macros predefined by the $(MAKE) procedure.
+
+ Will merge to 'next'.
+
+
+* mh/http-urlmatch-cleanup (2019-08-26) 1 commit
+ - http: don't leak urlmatch_config.vars
+
+ Leakfix.
+
+ Will merge to 'next'.
+
+
+* mh/notes-duplicate-entries (2019-08-26) 2 commits
+ - notes: avoid potential use-after-free during insertion
+ - notes: avoid leaking duplicate entries
+
+ A few implementation fixes in the notes API.
+
+ Will merge to 'next'.
+
+
+* mh/release-commit-memory-fix (2019-08-26) 1 commit
+ - commit: free the right buffer in release_commit_memory
+
+ Leakfix.
+
+ Will merge to 'next'.
+
+
+* rs/strbuf-detach (2019-08-26) 2 commits
+ - grep: use return value of strbuf_detach()
+ - log-tree: always use return value of strbuf_detach()
+
+ Straighten out the use of strbuf_detach() API function.
+
+ Will merge to 'next'.
+
+
+* rs/trace2-dst-warning (2019-08-26) 1 commit
+ - trace2: use warning() directly in tr2_dst_malformed_warning()
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* sg/clean-nested-repo-with-ignored (2019-08-26) 1 commit
+ - t7300-clean: demonstrate deleting nested repo with an ignored file breakage
+
+ A bug documentation.
+
+ Will merge to 'next'.
+
+
+* tb/banned-vsprintf-namefix (2019-08-26) 1 commit
+ - banned.h: fix vsprintf()'s ban message
+
+ Error message fix.
+
+ Will merge to 'next'.
+
+
+* tb/file-url-to-unc-path (2019-08-26) 1 commit
+ - mingw: support UNC in git clone file://server/share/repo
+
+ Windows update.
+
+ Will merge to 'next'.
+
+
+* dl/compat-cleanup (2019-09-05) 2 commits
+ - compat/*.[ch]: remove extern from function declarations using spatch
+ - mingw: apply array.cocci rule
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* dl/use-sq-from-test-lib (2019-09-06) 1 commit
+ - t: use common $SQ variable
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* ds/commit-graph-on-fetch (2019-09-03) 1 commit
+ - fetch: add fetch.writeCommitGraph config setting
+ (this branch uses ds/feature-macros.)
+
+ A configuration variable tells "git fetch" to write the commit
+ graph after finishing.
+
+ Will merge to 'next'.
+
+
+* ds/include-exclude (2019-09-05) 5 commits
+ - unpack-trees: rename 'is_excluded_from_list()'
+ - treewide: rename 'exclude' methods to 'pattern'
+ - treewide: rename 'EXCL_FLAG_' to 'PATTERN_FLAG_'
+ - treewide: rename 'struct exclude_list' to 'struct pattern_list'
+ - treewide: rename 'struct exclude' to 'struct path_pattern'
+ (this branch uses md/list-objects-filter-combo.)
+
+ The internal code originally invented for ".gitignore" processing
+ got reshuffled and renamed to make it less tied to "excluding" and
+ stress more that it is about "matching", as it has been reused for
+ things like sparse checkout specification that want to check if a
+ path is "included".
+
+ Will merge to 'next'.
+
+
+* dt/remote-helper-doc-re-lock-option (2019-08-30) 1 commit
+ - clarify documentation for remote helpers
 
  Doc update.
 
-
-* jk/perf-no-dups (2019-08-12) 1 commit
-  (merged to 'next' on 2019-08-14 at 3010a7d19f)
- + t/perf: rename duplicate-numbered test script
-
- Test & perf scripts must use unique numeric prefix, but a pair
- shared the same number, which is fixed here.
+ Will merge to 'next'.
 
 
-* jk/tree-walk-overflow (2019-08-01) 6 commits
-  (merged to 'next' on 2019-08-02 at 116467c77a)
- + tree-walk: harden make_traverse_path() length computations
- + tree-walk: add a strbuf wrapper for make_traverse_path()
- + tree-walk: accept a raw length for traverse_path_len()
- + tree-walk: use size_t consistently
- + tree-walk: drop oid from traverse_info
- + setup_traverse_info(): stop copying oid
+* en/filter-branch-deprecation (2019-09-05) 3 commits
+ - t9902: use a non-deprecated command for testing
+ - Recommend git-filter-repo instead of git-filter-branch
+ - t6006: simplify, fix, and optimize empty message test
 
- Codepaths to walk tree objects have been audited for integer
- overflows and hardened.
-
-
-* mt/grep-submodules-working-tree (2019-07-30) 1 commit
-  (merged to 'next' on 2019-08-02 at e1a46a195f)
- + grep: fix worktree case in submodules
-
- "git grep --recurse-submodules" that looks at the working tree
- files looked at the contents in the index in submodules, instead of
- files in the working tree.
-
-
-* rs/nedalloc-fixlets (2019-08-07) 2 commits
-  (merged to 'next' on 2019-08-09 at 0e9286fb70)
- + nedmalloc: avoid compiler warning about unused value
- + nedmalloc: do assignments only after the declaration section
-
- Compilation fix.
-
-
-* sc/pack-refs-deletion-racefix (2019-08-02) 1 commit
-  (merged to 'next' on 2019-08-09 at 6bd6c85fbb)
- + pack-refs: always refresh after taking the lock file
-
- "git pack-refs" can lose refs that are created while running, which
- is getting corrected.
- Performance impact unclear but let's let correctness take priority
- for now.
- cf. <20190816204906.GA29853@sigill.intra.peff.net>
-
-
-* sg/commit-graph-validate (2019-08-05) 3 commits
-  (merged to 'next' on 2019-08-09 at 87f61abb73)
- + commit-graph: error out on invalid commit oids in 'write --stdin-commits'
- + commit-graph: turn a group of write-related macro flags into an enum
- + t5318-commit-graph: use 'test_expect_code'
-
- The code to write commit-graph over given commit object names has
- been made a bit more robust.
-
-
-* sg/do-not-skip-non-httpd-tests (2019-08-02) 3 commits
-  (merged to 'next' on 2019-08-02 at e700df0693)
- + t: warn against adding non-httpd-specific tests after sourcing 'lib-httpd'
- + t5703: run all non-httpd-specific tests before sourcing 'lib-httpd.sh'
- + t5510-fetch: run non-httpd-specific test before sourcing 'lib-httpd.sh'
- (this branch uses sg/t5510-test-i18ngrep-fix.)
-
- Test fix.
-
-
-* sg/show-failed-test-names (2019-08-05) 2 commits
-  (merged to 'next' on 2019-08-09 at c49ece8a0d)
- + tests: show the test name and number at the start of verbose output
- + t0000-basic: use realistic test script names in the verbose tests
-
- The first line of verbose output from each test piece now carries
- the test name and number to help scanning with eyeballs.
-
-
-* sg/t5510-test-i18ngrep-fix (2019-07-31) 1 commit
-  (merged to 'next' on 2019-08-02 at 678564fda2)
- + t5510-fetch: fix negated 'test_i18ngrep' invocation
- (this branch is used by sg/do-not-skip-non-httpd-tests.)
-
- Test fix.
-
-
-* sg/worktree-remove-errormsg (2019-08-13) 1 commit
-  (merged to 'next' on 2019-08-14 at e5444969c9)
- + worktree remove: clarify error message on dirty worktree
-
- Error message update/clarification.
-
-
-* vn/restore-empty-ita-corner-case-fix (2019-08-02) 2 commits
-  (merged to 'next' on 2019-08-09 at ad2d7630d1)
- + restore: add test for deleted ita files
- + checkout.c: unstage empty deleted ita files
-
- "git checkout" and "git restore" to re-populate the index from a
- tree-ish (typically HEAD) did not work correctly for a path that
- was removed and then added again with the intent-to-add bit, when
- the corresponding working tree file was empty.  This has been
- corrected.
-
---------------------------------------------------
-[New Topics]
-
-* jt/avoid-ls-refs-with-http (2019-08-22) 2 commits
- - transport: teach all vtables to allow fetch first
- - transport-helper: skip ls-refs if unnecessary
-
- The http transport lacked some optimization the native transports
- learned to avoid unnecessary ref advertisement, which has been
- corrected.
+ Start discouraging the use of "git filter-branch".
 
  Will merge to 'next'.
+
+
+* en/merge-options-ff-and-friends (2019-09-01) 1 commit
+ - merge-options.txt: clarify meaning of various ff-related options
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jc/test-cleanup (2019-09-05) 2 commits
+ - t3005: remove unused variable
+ - t: use LF variable defined in the test harness
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* jk/misc-uninitialized-fixes (2019-09-06) 6 commits
+ - pack-objects: drop packlist index_pos optimization
+ - test-read-cache: drop namelen variable
+ - diff-delta: set size out-parameter to 0 for NULL delta
+ - bulk-checkin: zero-initialize hashfile_checkpoint
+ - pack-objects: use object_id in packlist_alloc()
+ - git-am: handle missing "author" when parsing commit
+
+ Various fixes to codepaths gcc 9 had trouble following dataflow.
+
+ Will merge to 'next'.
+
+
+* js/partial-clone-sparse-blob (2019-08-30) 2 commits
+ - list-objects-filter: handle unresolved sparse filter OID
+ - list-objects-filter: only parse sparse OID when 'have_git_dir'
+
+ Band-aid on "git clone --sparse:oid=X" that would hit BUG().
+
+ Will merge to 'next'.
+
+
+* js/visual-studio (2019-09-05) 1 commit
+ - .gitignore: stop ignoring `.manifest` files
+
+ Adjust .gitignore to unignore a path that we started to track.
+
+ Will merge to 'next'.
+
+
+* jt/cache-tree-avoid-lazy-fetch-during-merge (2019-09-03) 1 commit
+ - cache-tree: do not lazy-fetch merge tree
+
+ The cache-tree code has been taught to be less aggressive in
+ attempting to see if a tree object it computed already exists in
+ the repository.
+
+ Expecting a clearified log message.
+
+
+* ma/asciidoctor-refmiscinfo (2019-09-03) 2 commits
+ - doc-diff: replace --cut-header-footer with --cut-footer
+ - asciidoctor-extensions: provide `<refmiscinfo/>`
+
+ Update support for Asciidoctor documentation toolchain.
+
+ Will merge to 'next'.
+
+
+* nd/switch-and-restore (2019-08-30) 1 commit
+ - checkout: add simple check for 'git checkout -b'
+
+ Resurrect a performance hack.
+
+ Will merge to 'next'.
+
+
+* rs/get-tagged-oid (2019-09-05) 2 commits
+ - use get_tagged_oid()
+ - tag: factor out get_tagged_oid()
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* rs/help-unknown-ref-does-not-return (2019-08-30) 1 commit
+ - help: make help_unknown_ref() NORETURN
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* rs/parse-tree-indirect (2019-09-03) 1 commit
+ - tree: simplify parse_tree_indirect()
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* sg/git-test-boolean (2019-09-06) 2 commits
+ - ci: restore running httpd tests
+ - t/lib-git-svn.sh: check GIT_TEST_SVN_HTTPD when running SVN HTTP tests
+
+ Fix an earlier regression in the test suite, which mistakenly
+ stopped running HTTPD tests.
+
+ Will merge to 'next'.
+
+
+* tg/push-all-in-mirror-forbidden (2019-09-03) 1 commit
+ - push: disallow --all and refspecs when remote.<name>.mirror is set
+
+ Fix an earlier regression to "git push --all" which should have
+ been forbidden when the target remote repository is set to be a
+ mirror.
+
+ Will merge to 'next'.
+
+
+* tg/stash-refresh-index (2019-09-05) 3 commits
+ - stash: make sure to write refreshed cache
+ - merge: use refresh_and_write_cache
+ - factor out refresh_and_write_cache function
+
+ "git stash" learned to write refreshed index back to disk.
+
+ Needs coordination with js/builtin-add-i topic, as they both wants
+ the same kind of enhancement to the same API function.
 
 --------------------------------------------------
 [Stalled]
 
-* js/builtin-add-i (2019-07-18) 11 commits
- - built-in add -i: implement the `help` command
- - built-in add -i: use color in the main loop
- - built-in add -i: support `?` (prompt help)
- - built-in add -i: show unique prefixes of the commands
- - Add a function to determine unique prefixes for a list of strings
- - built-in add -i: implement the main loop
- - built-in add -i: color the header in the `status` command
- - built-in add -i: refresh the index before running `status`
- - built-in add -i: implement the `status` command
- - diff: export diffstat interface
- - Start to implement a built-in version of `git add --interactive`
+* es/walken-tutorial (2019-08-07) 1 commit
+ - documentation: add tutorial for revision walking
 
- The beginning of rewriting "git add -i" in C.
+ A tutorial on object enumeration.
 
- Expecting a response and possibly a reroll.
- cf. <xmqqwofyozka.fsf@gitster-ct.c.googlers.com>
- cf. <xmqqsgqmoyz1.fsf@gitster-ct.c.googlers.com>
+ Perhaps take the thing with as little tweaks as possible, retitling
+ it to "my first object enumeration" or something?
+ cf. <20190814183328.GA40797@google.com>
+
+
+* dl/format-patch-cover-letter-subject (2019-09-05) 1 commit
+ - format-patch: learn --infer-cover-subject option
+ (this branch uses dl/format-patch-doc-test-cleanup.)
+
+ "git format-patch --cover-letter" learned to optionally use the
+ first paragraph (typically a single-liner) of branch.*.description
+ as the subject of the cover letter.
+
+ Reroll with a redesign with less emphasis on "subject" coming?
+
+
+* bc/object-id-part17 (2019-08-19) 26 commits
+ - midx: switch to using the_hash_algo
+ - builtin/show-index: replace sha1_to_hex
+ - rerere: replace sha1_to_hex
+ - builtin/receive-pack: replace sha1_to_hex
+ - builtin/index-pack: replace sha1_to_hex
+ - packfile: replace sha1_to_hex
+ - wt-status: convert struct wt_status to object_id
+ - cache: remove null_sha1
+ - builtin/worktree: switch null_sha1 to null_oid
+ - builtin/repack: write object IDs of the proper length
+ - pack-write: use hash_to_hex when writing checksums
+ - sequencer: convert to use the_hash_algo
+ - bisect: switch to using the_hash_algo
+ - sha1-lookup: switch hard-coded constants to the_hash_algo
+ - config: use the_hash_algo in abbrev comparison
+ - combine-diff: replace GIT_SHA1_HEXSZ with the_hash_algo
+ - bundle: switch to use the_hash_algo
+ - connected: switch GIT_SHA1_HEXSZ to the_hash_algo
+ - show-index: switch hard-coded constants to the_hash_algo
+ - blame: remove needless comparison with GIT_SHA1_HEXSZ
+ - builtin/rev-parse: switch to use the_hash_algo
+ - builtin/blame: switch uses of GIT_SHA1_HEXSZ to the_hash_algo
+ - builtin/receive-pack: switch to use the_hash_algo
+ - fetch-pack: use parse_oid_hex
+ - patch-id: convert to use the_hash_algo
+ - builtin/replace: make hash size independent
+
+ Preparation for SHA-256 upgrade continues.
+
+ Looked mostly OK, with a possible update.
+ cf. <20190820223606.GJ365197@genre.crustytoothpaste.net>
+
+
+* mt/threaded-grep-in-object-store (2019-08-13) 4 commits
+ - grep: re-enable threads in some non-worktree cases
+ - grep: disable grep_read_mutex when possible
+ - grep: allow locks to be enabled individually
+ - object-store: add lock to read_object_file_extended()
+
+ Traditionally, we avoided threaded grep while searching in objects
+ (as opposed to files in the working tree) as accesses to the object
+ layer is not thread-safe.  This limitation is getting lifted.
+
+ Comments?
+ cf. <cover.1565468806.git.matheus.bernardino@usp.br>
+
+
+
+
+* pd/fetch-jobs (2019-08-13) 5 commits
+ . fetch: make --jobs control submodules and remotes
+ . fetch: add the --submodule-fetch-jobs option
+ . fetch: add the fetch.jobs config key
+ . fetch: add the "--fetch-jobs" option
+ . fetch: rename max_children to max_children_for_submodules
+
+ "git fetch --jobs" is getting taught to also run fetch jobs in
+ parallel when fetching from multiple remote repositories.
+
+ Comments?
 
 
 * js/trace2-json-schema (2019-07-25) 3 commits
@@ -254,14 +526,45 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* js/builtin-add-i (2019-08-30) 11 commits
+ . built-in add -i: implement the `help` command
+ . built-in add -i: use color in the main loop
+ . built-in add -i: support `?` (prompt help)
+ . built-in add -i: show unique prefixes of the commands
+ . Add a function to determine unique prefixes for a list of strings
+ . built-in add -i: implement the main loop
+ . built-in add -i: color the header in the `status` command
+ . built-in add -i: refresh the index before running `status`
+ . built-in add -i: implement the `status` command
+ . diff: export diffstat interface
+ . Start to implement a built-in version of `git add --interactive`
+
+ The beginning of rewriting "git add -i" in C.
+
+ On hold, waiting for tg/stash-refresh-index to work well with this.
+
+
+* jt/avoid-ls-refs-with-http (2019-08-22) 2 commits
+  (merged to 'next' on 2019-09-07 at c6a4ce50a0)
+ + transport: teach all vtables to allow fetch first
+ + transport-helper: skip ls-refs if unnecessary
+
+ The http transport lacked some optimization the native transports
+ learned to avoid unnecessary ref advertisement, which has been
+ corrected.
+
+ Will merge to 'master'.
+
+
 * cb/curl-use-xmalloc (2019-08-15) 1 commit
- - http: use xmalloc with cURL
+  (merged to 'next' on 2019-09-07 at 07da24f51c)
+ + http: use xmalloc with cURL
  (this branch uses jk/drop-release-pack-memory.)
 
  Tell cURL library to use the same malloc() implementation, with the
  xmalloc() wrapper, as the rest of the system, for consistency.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/diff-indent-heuristic-non-experimental (2019-08-15) 1 commit
@@ -318,7 +621,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* bc/hash-independent-tests-part-5 (2019-08-20) 14 commits
+* bc/hash-independent-tests-part-5 (2019-08-26) 14 commits
  - t4009: make hash size independent
  - t4002: make hash independent
  - t4000: make hash size independent
@@ -336,42 +639,7 @@ of the repositories listed at
 
  Preparation for SHA-256 upgrade continues in the test department.
 
- Expecting a reroll.
- cf. <20190818203417.GG365197@genre.crustytoothpaste.net>
-
-
-* bc/object-id-part17 (2019-08-19) 26 commits
- - midx: switch to using the_hash_algo
- - builtin/show-index: replace sha1_to_hex
- - rerere: replace sha1_to_hex
- - builtin/receive-pack: replace sha1_to_hex
- - builtin/index-pack: replace sha1_to_hex
- - packfile: replace sha1_to_hex
- - wt-status: convert struct wt_status to object_id
- - cache: remove null_sha1
- - builtin/worktree: switch null_sha1 to null_oid
- - builtin/repack: write object IDs of the proper length
- - pack-write: use hash_to_hex when writing checksums
- - sequencer: convert to use the_hash_algo
- - bisect: switch to using the_hash_algo
- - sha1-lookup: switch hard-coded constants to the_hash_algo
- - config: use the_hash_algo in abbrev comparison
- - combine-diff: replace GIT_SHA1_HEXSZ with the_hash_algo
- - bundle: switch to use the_hash_algo
- - connected: switch GIT_SHA1_HEXSZ to the_hash_algo
- - show-index: switch hard-coded constants to the_hash_algo
- - blame: remove needless comparison with GIT_SHA1_HEXSZ
- - builtin/rev-parse: switch to use the_hash_algo
- - builtin/blame: switch uses of GIT_SHA1_HEXSZ to the_hash_algo
- - builtin/receive-pack: switch to use the_hash_algo
- - fetch-pack: use parse_oid_hex
- - patch-id: convert to use the_hash_algo
- - builtin/replace: make hash size independent
-
- Preparation for SHA-256 upgrade continues.
-
- Looked mostly OK, with a possible update.
- cf. <20190820223606.GJ365197@genre.crustytoothpaste.net>
+ Will merge to 'next'.
 
 
 * bm/repository-layout-typofix (2019-08-19) 1 commit
@@ -383,34 +651,24 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* bw/rebase-autostash-keep-current-branch (2019-08-21) 1 commit
- - rebase.c: make sure the active branch isn't moved when autostashing
+* bw/rebase-autostash-keep-current-branch (2019-09-07) 2 commits
+ - builtin/rebase.c: Remove pointless message
+ - builtin/rebase.c: make sure the active branch isn't moved when autostashing
 
  "git rebase --autostash <upstream> <branch>", when <branch> is
  different from the current branch, incorrectly moved the tip of the
  current branch, which has been corrected.
 
- Getting there.
- cf. <nycvar.QRO.7.76.6.1908221418540.46@tvgsbejvaqbjf.bet>
+ Will merge to 'next'.
 
 
-* dl/format-patch-cover-letter-subject (2019-08-21) 1 commit
- - format-patch: learn --infer-cover-subject option
- (this branch uses dl/format-patch-doc-test-cleanup.)
-
- "git format-patch --cover-letter" learned to optionally use the
- first paragraph (typically a single-liner) of branch.*.description
- as the subject of the cover letter.
-
-
-* dl/format-patch-doc-test-cleanup (2019-08-21) 14 commits
+* dl/format-patch-doc-test-cleanup (2019-09-05) 13 commits
  - config/format.txt: specify default value of format.coverLetter
- - SQUASH???
  - Doc: add more detail for git-format-patch
- - SQUASH???
  - t4014: stop losing return codes of git commands
  - t4014: remove confusing pipe in check_threading()
  - t4014: use test_line_count() where possible
+ - t4014: let sed open its own files
  - t4014: drop redirections to /dev/null
  - t4014: use indentable here-docs
  - t4014: remove spaces after redirect operators
@@ -423,7 +681,7 @@ of the repositories listed at
  The documentation and tests for "git format-patch" have been
  cleaned up.
 
- Excpecting a reroll.
+ Will merge to 'next'.
 
 
 * ds/midx-expire-repack (2019-08-20) 1 commit
@@ -509,12 +767,13 @@ of the repositories listed at
 
 
 * sg/line-log-tree-diff-optim (2019-08-21) 2 commits
- - line-log: avoid unnecessary full tree diffs
- - line-log: extract pathspec parsing from line ranges into a helper function
+  (merged to 'next' on 2019-09-07 at 8d5b7053fd)
+ + line-log: avoid unnecessary full tree diffs
+ + line-log: extract pathspec parsing from line ranges into a helper function
 
  Optimize unnecessary full-tree diff away from "git log -L" machinery.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tg/t0021-racefix (2019-08-22) 1 commit
@@ -536,9 +795,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* bc/reread-attributes-during-rebase (2019-08-19) 2 commits
-  (merged to 'next' on 2019-08-23 at 14aaf533d6)
- + apply: reload .gitattributes after patching it
+* bc/reread-attributes-during-rebase (2019-09-03) 2 commits
+  (merged to 'next' on 2019-09-07 at 9f5e5db0b0)
+ + am: reload .gitattributes after patching it
  + path: add a function to check for path suffix
 
  The "git am" based backend of "git rebase" ignored the result of
@@ -549,7 +808,8 @@ of the repositories listed at
 
 
 * jk/drop-release-pack-memory (2019-08-13) 1 commit
- - packfile: drop release_pack_memory()
+  (merged to 'next' on 2019-09-07 at 30f841c42d)
+ + packfile: drop release_pack_memory()
  (this branch is used by cb/curl-use-xmalloc.)
 
  xmalloc() used to have a mechanism to ditch memory and address
@@ -559,49 +819,26 @@ of the repositories listed at
  users already do limit their uses with various other mechanisms.
  It has been simplified away.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/complete-configuration-variables (2019-08-13) 11 commits
- - completion: complete config variables and values for 'git clone --config='
- - completion: complete config variables names and values for 'git clone -c'
- - completion: complete values of configuration variables after 'git -c var='
- - completion: complete configuration sections and variable names for 'git -c'
- - completion: split _git_config()
- - completion: simplify inner 'case' pattern in __gitcomp()
- - completion: use 'sort -u' to deduplicate config variable names
- - completion: deduplicate configuration sections
- - completion: add tests for 'git config' completion
- - completion: complete more values of more 'color.*' configuration variables
- - completion: fix a typo in a comment
+  (merged to 'next' on 2019-09-07 at 9921f0e536)
+ + completion: complete config variables and values for 'git clone --config='
+ + completion: complete config variables names and values for 'git clone -c'
+ + completion: complete values of configuration variables after 'git -c var='
+ + completion: complete configuration sections and variable names for 'git -c'
+ + completion: split _git_config()
+ + completion: simplify inner 'case' pattern in __gitcomp()
+ + completion: use 'sort -u' to deduplicate config variable names
+ + completion: deduplicate configuration sections
+ + completion: add tests for 'git config' completion
+ + completion: complete more values of more 'color.*' configuration variables
+ + completion: fix a typo in a comment
 
  Command line completion updates for "git -c var.name=val"
 
- Will merge to 'next'.
-
-
-* mt/threaded-grep-in-object-store (2019-08-13) 4 commits
- - grep: re-enable threads in some non-worktree cases
- - grep: disable grep_read_mutex when possible
- - grep: allow locks to be enabled individually
- - object-store: add lock to read_object_file_extended()
-
- Traditionally, we avoided threaded grep while searching in objects
- (as opposed to files in the working tree) as accesses to the object
- layer is not thread-safe.  This limitation is getting lifted.
-
- cf. <cover.1565468806.git.matheus.bernardino@usp.br>
-
-
-* pd/fetch-jobs (2019-08-13) 5 commits
- . fetch: make --jobs control submodules and remotes
- . fetch: add the --submodule-fetch-jobs option
- . fetch: add the fetch.jobs config key
- . fetch: add the "--fetch-jobs" option
- . fetch: rename max_children to max_children_for_submodules
-
- "git fetch --jobs" is getting taught to also run fetch jobs in
- parallel when fetching from multiple remote repositories.
+ Will merge to 'master'.
 
 
 * cb/fetch-set-upstream (2019-08-19) 1 commit
@@ -616,14 +853,15 @@ of the repositories listed at
 
 
 * js/pre-merge-commit-hook (2019-08-07) 4 commits
- - merge: --no-verify to bypass pre-merge-commit hook
- - git-merge: honor pre-merge-commit hook
- - merge: do no-verify like commit
- - t7503: verify proper hook execution
+  (merged to 'next' on 2019-09-07 at 0c9f25399c)
+ + merge: --no-verify to bypass pre-merge-commit hook
+ + git-merge: honor pre-merge-commit hook
+ + merge: do no-verify like commit
+ + t7503: verify proper hook execution
 
  A new "pre-merge-commit" hook has been introduced.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/eoo (2019-08-06) 3 commits
@@ -683,6 +921,7 @@ of the repositories listed at
  + commit-graph: turn on commit-graph by default
  + t6501: use 'git gc' in quiet mode
  + repo-settings: consolidate some config settings
+ (this branch is used by ds/commit-graph-on-fetch.)
 
  A mechanism to affect the default setting for a (related) group of
  configuration variables is introduced.
@@ -713,38 +952,30 @@ of the repositories listed at
  Looking good.
 
 
-* js/rebase-r-strategy (2019-07-31) 16 commits
- - rebase -r: do not (re-)generate root commits with `--root` *and* `--onto`
- - t3418: test `rebase -r` with merge strategies
- - t/lib-rebase: prepare for testing `git rebase --rebase-merges`
- - rebase -r: support merge strategies other than `recursive`
- - t3427: fix another incorrect assumption
- - t3427: accommodate for the `rebase --merge` backend having been replaced
- - t3427: fix erroneous assumption
- - t3427: condense the unnecessarily repetitive test cases into three
- - t3427: move the `filter-branch` invocation into the `setup` case
- - t3427: simplify the `setup` test case significantly
- - t3427: add a clarifying comment
- - rebase: fold git-rebase--common into the -p backend
- - sequencer: the `am` and `rebase--interactive` scripts are gone
- - .gitignore: there is no longer a built-in `git-rebase--interactive`
- - t3400: stop referring to the scripted rebase
- - Drop unused git-rebase--am.sh
+* js/rebase-r-strategy (2019-09-05) 17 commits
+  (merged to 'next' on 2019-09-07 at 71e2451f6c)
+ + t3427: accelerate this test by using fast-export and fast-import
+ + rebase -r: do not (re-)generate root commits with `--root` *and* `--onto`
+ + t3418: test `rebase -r` with merge strategies
+ + t/lib-rebase: prepare for testing `git rebase --rebase-merges`
+ + rebase -r: support merge strategies other than `recursive`
+ + t3427: fix another incorrect assumption
+ + t3427: accommodate for the `rebase --merge` backend having been replaced
+ + t3427: fix erroneous assumption
+ + t3427: condense the unnecessarily repetitive test cases into three
+ + t3427: move the `filter-branch` invocation into the `setup` case
+ + t3427: simplify the `setup` test case significantly
+ + t3427: add a clarifying comment
+ + rebase: fold git-rebase--common into the -p backend
+ + sequencer: the `am` and `rebase--interactive` scripts are gone
+ + .gitignore: there is no longer a built-in `git-rebase--interactive`
+ + t3400: stop referring to the scripted rebase
+ + Drop unused git-rebase--am.sh
 
  "git rebase --rebase-merges" learned to drive different merge
  strategies and pass strategy specific options to them.
 
- Will merge to 'next'.
-
-
-* es/walken-tutorial (2019-08-07) 1 commit
- - documentation: add tutorial for revision walking
-
- A tutorial on object enumeration.
-
- Perhaps take the thing with as little tweaks as possible, retitling
- it to "my first object enumeration" or something?
- cf. <20190814183328.GA40797@google.com>
+ Will merge to 'master'.
 
 
 * ab/pcre-jit-fixes (2019-08-19) 18 commits
@@ -766,48 +997,74 @@ of the repositories listed at
  - t4210: skip more command-line encoding tests on MinGW
  - grep: don't use PCRE2?_UTF8 with "log --encoding=<non-utf8>"
  - log tests: test regex backends in "--encode=<enc>" tests
+ (this branch is used by cb/pcre1-cleanup.)
 
  A few simplification and bugfixes to PCRE interface.
 
 
 * md/list-objects-filter-combo (2019-06-28) 10 commits
- - list-objects-filter-options: make parser void
- - list-objects-filter-options: clean up use of ALLOC_GROW
- - list-objects-filter-options: allow mult. --filter
- - strbuf: give URL-encoding API a char predicate fn
- - list-objects-filter-options: make filter_spec a string_list
- - list-objects-filter-options: move error check up
- - list-objects-filter: implement composite filters
- - list-objects-filter-options: always supply *errbuf
- - list-objects-filter: put omits set in filter struct
- - list-objects-filter: encapsulate filter components
+  (merged to 'next' on 2019-09-07 at 076a48aa57)
+ + list-objects-filter-options: make parser void
+ + list-objects-filter-options: clean up use of ALLOC_GROW
+ + list-objects-filter-options: allow mult. --filter
+ + strbuf: give URL-encoding API a char predicate fn
+ + list-objects-filter-options: make filter_spec a string_list
+ + list-objects-filter-options: move error check up
+ + list-objects-filter: implement composite filters
+ + list-objects-filter-options: always supply *errbuf
+ + list-objects-filter: put omits set in filter struct
+ + list-objects-filter: encapsulate filter components
+ (this branch is used by ds/include-exclude.)
 
  The list-objects-filter API (used to create a sparse/lazy clone)
  learned to take a combined filter specification.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * cc/multi-promisor (2019-06-25) 15 commits
- - Move core_partial_clone_filter_default to promisor-remote.c
- - Move repository_format_partial_clone to promisor-remote.c
- - Remove fetch-object.{c,h} in favor of promisor-remote.{c,h}
- - remote: add promisor and partial clone config to the doc
- - partial-clone: add multiple remotes in the doc
- - t0410: test fetching from many promisor remotes
- - builtin/fetch: remove unique promisor remote limitation
- - promisor-remote: parse remote.*.partialclonefilter
- - Use promisor_remote_get_direct() and has_promisor_remote()
- - promisor-remote: use repository_format_partial_clone
- - promisor-remote: add promisor_remote_reinit()
- - promisor-remote: implement promisor_remote_get_direct()
- - Add initial support for many promisor remotes
- - fetch-object: make functions return an error code
- - t0410: remove pipes after git commands
+  (merged to 'next' on 2019-09-07 at 46faa86955)
+ + Move core_partial_clone_filter_default to promisor-remote.c
+ + Move repository_format_partial_clone to promisor-remote.c
+ + Remove fetch-object.{c,h} in favor of promisor-remote.{c,h}
+ + remote: add promisor and partial clone config to the doc
+ + partial-clone: add multiple remotes in the doc
+ + t0410: test fetching from many promisor remotes
+ + builtin/fetch: remove unique promisor remote limitation
+ + promisor-remote: parse remote.*.partialclonefilter
+ + Use promisor_remote_get_direct() and has_promisor_remote()
+ + promisor-remote: use repository_format_partial_clone
+ + promisor-remote: add promisor_remote_reinit()
+ + promisor-remote: implement promisor_remote_get_direct()
+ + Add initial support for many promisor remotes
+ + fetch-object: make functions return an error code
+ + t0410: remove pipes after git commands
 
  Teach the lazy clone machinery that there can be more than one
  promisor remote and consult them in order when downloading missing
  objects on demand.
+
+ Will merge to 'master'.
+
+
+* dl/rebase-i-keep-base (2019-08-27) 9 commits
+ - rebase: teach rebase --keep-base
+ - rebase tests: test linear branch topology
+ - rebase: fast-forward --fork-point in more cases
+ - rebase: fast-forward --onto in more cases
+ - rebase: refactor can_fast_forward into goto tower
+ - t3432: test for --no-ff's interaction with fast-forward
+ - t3432: distinguish "noop-same" v.s. "work-same" in "same head" tests
+ - t3432: test rebase fast-forward behavior
+ - t3431: add rebase --fork-point tests
+
+ "git rebase --keep-base <upstream>" tries to find the original base
+ of the topic being rebased and rebase on top of that same base,
+ which is useful when running the "git rebase -i" (and its limited
+ variant "git rebase -x").
+
+ The command also has learned to fast-forward in more cases where it
+ can instead of replaying to recreate identical commits.
 
  Will merge to 'next'.
 
@@ -821,22 +1078,3 @@ of the repositories listed at
  Will discard.
 
 
-* dl/rebase-i-keep-base (2019-04-25) 6 commits
- - rebase: teach rebase --keep-base
- - rebase: fast-forward --fork-point in more cases
- - rebase: fast-forward --onto in more cases
- - rebase: refactor can_fast_forward into goto tower
- - t3432: test rebase fast-forward behavior
- - t3431: add rebase --fork-point tests
-
- "git rebase --keep-base <upstream>" tries to find the original base
- of the topic being rebased and rebase on top of that same base,
- which is useful when running the "git rebase -i" (and its limited
- variant "git rebase -x").
-
- The command also has learned to fast-forward in more cases where it
- can instead of replaying to recreate identical commits.
-
- On hold.
- cf. <20190508001252.15752-1-avarab@gmail.com>
- cf. <20190719210156.GA9688@archbookpro.localdomain>
