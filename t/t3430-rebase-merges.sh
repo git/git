@@ -441,4 +441,25 @@ test_expect_success '--continue after resolving conflicts after a merge' '
 	test_path_is_missing .git/MERGE_HEAD
 '
 
+test_expect_success '--rebase-merges with strategies' '
+	git checkout -b with-a-strategy F &&
+	test_tick &&
+	git merge -m "Merge conflicting-G" conflicting-G &&
+
+	: first, test with a merge strategy option &&
+	git rebase -ir -Xtheirs G &&
+	echo conflicting-G >expect &&
+	test_cmp expect G.t &&
+
+	: now, try with a merge strategy other than recursive &&
+	git reset --hard @{1} &&
+	write_script git-merge-override <<-\EOF &&
+	echo overridden$1 >>G.t
+	git add G.t
+	EOF
+	PATH="$PWD:$PATH" git rebase -ir -s override -Xxopt G &&
+	test_write_lines G overridden--xopt >expect &&
+	test_cmp expect G.t
+'
+
 test_done
