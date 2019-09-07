@@ -118,7 +118,7 @@ void *xdl_cha_alloc(chastore_t *cha) {
 
 long xdl_guess_lines(mmfile_t *mf, long sample) {
     long nl = 0, size, tsize = 0;
-    char const *data, *cur, *top;
+    char const *data, *cur;
 
     if ((cur = data = xdl_mmfile_first(mf, &size)) != NULL) {
         char const *top = data + size;
