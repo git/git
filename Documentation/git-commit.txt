@@ -282,18 +282,20 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 --untracked-files[=<mode>]::
 	Show untracked files.
 +
+--
 The mode parameter is optional (defaults to 'all'), and is used to
 specify the handling of untracked files; when -u is not used, the
 default is 'normal', i.e. show untracked files and directories.
-+
+
 The possible options are:
-+
+
 	- 'no'     - Show no untracked files
 	- 'normal' - Shows untracked files and directories
 	- 'all'    - Also shows individual files in untracked directories.
-+
+
 The default can be changed using the status.showUntrackedFiles
 configuration variable documented in linkgit:git-config[1].
+--
 
 -v::
 --verbose::
