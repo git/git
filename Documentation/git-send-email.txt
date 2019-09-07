@@ -486,11 +486,13 @@ Use gmail as the smtp server
 To use 'git send-email' to send your patches through the GMail SMTP server,
 edit ~/.gitconfig to specify your account settings:
 
-	[sendemail]
-		smtpEncryption = tls
-		smtpServer = smtp.gmail.com
-		smtpUser = yourname@gmail.com
-		smtpServerPort = 587
+----
+[sendemail]
+	smtpEncryption = tls
+	smtpServer = smtp.gmail.com
+	smtpUser = yourname@gmail.com
+	smtpServerPort = 587
+----
 
 If you have multifactor authentication setup on your gmail account, you will
 need to generate an app-specific password for use with 'git send-email'. Visit
