@@ -198,9 +198,9 @@ static int compare_commit_dist(const void *a_, const void *b_)
 
 	a = (struct commit_dist *)a_;
 	b = (struct commit_dist *)b_;
-	if (a->distance != b->distance)
-		return b->distance - a->distance; /* desc sort */
-	return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
+    if (a->distance == b->distance)
+        return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
+    return b->distance - a->distance; /* desc sort */
 }
 
 static struct commit_list *best_bisection_sorted(struct commit_list *list, int nr)
