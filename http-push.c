@@ -708,7 +708,7 @@ static int fetch_indices(void)
 	switch (http_get_info_packs(repo->url, &repo->packs)) {
 	case HTTP_OK:
 	case HTTP_MISSING_TARGET:
-		return 0
+		return 0;
 	}
 	return -1;
 }
