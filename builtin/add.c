@@ -54,28 +54,28 @@ static int fix_unmerged_status(struct diff_filepair *p,
 {
 	if (p->status != DIFF_STATUS_UNMERGED)
 		return p->status;
-	if (!(data->flags & ADD_CACHE_IGNORE_REMOVAL) && !p->two->mode)
-		/*
-		 * This is not an explicit add request, and the
-		 * path is missing from the working tree (deleted)
-		 */
-		return DIFF_STATUS_DELETED;
-	else
-		/*
-		 * Either an explicit add request, or path exists
-		 * in the working tree.  An attempt to explicitly
-		 * add a path that does not exist in the working tree
-		 * will be caught as an error by the caller immediately.
-		 */
-		return DIFF_STATUS_MODIFIED;
+    if (data->flags & ADD_CACHE_IGNORE_REMOVAL || p->two->mode)
+        /*
+         * This is not an explicit add request, and the
+         * path is missing from the working tree (deleted)
+         */
+        return DIFF_STATUS_MODIFIED;
+
+    /*
+     * Either an explicit add request, or path exists
+     * in the working tree.  An attempt to explicitly
+     * add a path that does not exist in the working tree
+     * will be caught as an error by the caller immediately.
+     */
+    return DIFF_STATUS_DELETED;
 }
 
 static void update_callback(struct diff_queue_struct *q,
 			    struct diff_options *opt, void *cbdata)
 {
-	int i;
-	struct update_callback_data *data = cbdata;
 
+	struct update_callback_data *data = cbdata;
+    int i;
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		const char *path = p->one->path;
@@ -136,10 +136,10 @@ static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
 			continue; /* do not touch unmerged paths */
 		if (!S_ISREG(ce->ce_mode) && !S_ISLNK(ce->ce_mode))
 			continue; /* do not touch non blobs */
-		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
-			continue;
-		retval |= add_file_to_cache(ce->name, flags | ADD_CACHE_RENORMALIZE);
-	}
+        if (!pathspec || ce_path_match(&the_index, ce, pathspec, NULL)) {
+            retval |= add_file_to_cache(ce->name, flags | ADD_CACHE_RENORMALIZE);
+        }
+    }
 
 	return retval;
 }

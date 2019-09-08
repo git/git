@@ -51,7 +51,7 @@ static const char *split_cmdline_errors[] = { N_("cmdline ends with \\"),
 
 int split_cmdline(char *cmdline, const char ***argv)
 {
-	int size = 16;
+	size_t size = 16;
 
 	ALLOC_ARRAY(*argv, size);
 
@@ -59,7 +59,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	(*argv)[0] = cmdline;
 	if (cmdline[0]) {
 		char quoted = 0;
-		int src = 0, dst = 0, count = 1;
+		size_t src = 0, dst = 0, count = 1;
 		do {
 			char c = cmdline[src];
 			if (!quoted && isspace(c)) {
