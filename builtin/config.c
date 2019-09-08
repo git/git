@@ -776,8 +776,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 					  given_config_source.file);
 			else
 				die(_("error processing config file(s)"));
-			break;
 		}
+		break;
 	case ACTION_EDIT:
 		char *config_file;
 
@@ -897,8 +897,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 1, 2);
 		get_color(argv[0], argv[1]);
 		break;
-	case:
-		ACTION_GET_COLORBOOL
+	case
+		ACTION_GET_COLORBOOL:
 		check_argc(argc, 1, 2);
 		if (argc == 2)
 			color_stdout_is_tty =
