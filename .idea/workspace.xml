@@ -9,14 +9,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/clone.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/clone.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/commit.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/commit.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/config.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/config.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/describe.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/describe.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/fast-export.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/fast-export.c" afterDir="false" />
-    </list>
+    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +60,7 @@
       <workItem from="1567811301012" duration="1380000" />
       <workItem from="1567816291068" duration="565000" />
       <workItem from="1567911257500" duration="4692000" />
-      <workItem from="1567975248805" duration="1977000" />
+      <workItem from="1567975248805" duration="2254000" />
     </task>
     <servers />
   </component>

@@ -524,7 +524,7 @@ static int get_colorbool(const char *var, int print)
 		return 0;
 	}
 
-	return get_colorbool_found ? 0 : 1;
+	return !get_colorbool_found;
 }
 
 static void check_write(void)

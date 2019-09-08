@@ -47,7 +47,7 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 	if (argc)
 		usage_with_options(builtin_column_usage, options);
 	if (real_command || command) {
-		if (!(real_command && command) || strcmp(real_command, command)))
+		if (!(real_command && command) || strcmp(real_command, command))
 			die(_("--command must be the first argument"));
 	}
 	finalize_colopts(&colopts, -1);
