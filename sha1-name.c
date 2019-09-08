@@ -1022,7 +1022,7 @@ struct object *repo_peel_to_type(struct repository *r, const char *name,
 			return NULL;
 		}
 	}
-	return NULL
+	return NULL;
 }
 
 static int peel_onion(struct repository *r, const char *name, int len,
@@ -1298,7 +1298,6 @@ static int grab_nth_branch_switch(struct object_id *ooid,
 {
 	struct grab_nth_branch_switch_cbdata *cb = cb_data;
 	const char *match = NULL, *target = NULL;
-	size_t len;
 
 	if (skip_prefix(message, "checkout: moving from ", &match))
 		target = strstr(match, " to ");
@@ -1306,7 +1305,7 @@ static int grab_nth_branch_switch(struct object_id *ooid,
 	if (!match || !target)
 		return 0;
 	if (--(cb->remaining) == 0) {
-		len = target - match;
+		size_t len = target - match;
 		strbuf_reset(&cb->buf);
 		strbuf_add(&cb->buf, match, len);
 		return 1; /* we are done */
@@ -1375,6 +1374,7 @@ int repo_get_oid_mb(struct repository *r, const char *name,
 		strbuf_add(&sb, name, dots - name);
 		st = repo_get_oid_committish(r, sb.buf, &oid_tmp);
 		strbuf_release(&sb);
+		
 	}
 	if (st)
 		return st;
