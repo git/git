@@ -1374,7 +1374,6 @@ int repo_get_oid_mb(struct repository *r, const char *name,
 		strbuf_add(&sb, name, dots - name);
 		st = repo_get_oid_committish(r, sb.buf, &oid_tmp);
 		strbuf_release(&sb);
-		
 	}
 	if (st)
 		return st;
@@ -1518,18 +1517,12 @@ int repo_interpret_branch_name(struct repository *r, const char *name,
 	if (!allowed || (allowed & INTERPRET_BRANCH_LOCAL)) {
 		len = interpret_nth_prior_checkout(r, name, namelen, buf);
 		if (!len) {
-<<<<<<< HEAD
 			return 0; /* syntax Ok, not enough switches */
 		}
 		if (len > 0) {
-=======
-			return len; /* syntax Ok, not enough switches */
-		} else if (len > 0) {
->>>>>>> parent of efe84d7530... OH
 			if (len == namelen)
 				return len; /* consumed all */
-				return reinterpret(r, name, namelen, len, buf,
-						   allowed);
+			return reinterpret(r, name, namelen, len, buf, allowed);
 		}
 	}
 
