@@ -1019,8 +1019,7 @@ static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
 
 	if (hex_to_bytes(oid->hash, path, 1))
 		return -1;
-	path += 2;
-	path++; /* skip '/' */
+	path += 3;
 
 	return hex_to_bytes(oid->hash + 1, path, the_hash_algo->rawsz - 1);
 }
