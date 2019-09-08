@@ -779,7 +779,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 		break;
 	case ACTION_EDIT:
-		char *config_file;
+		char *configfileOpen;
 		check_argc(argc, 0, 0);
 		if (!given_config_source.file && nongit)
 			die(_("not in a git directory"));
@@ -788,11 +788,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (given_config_source.blob)
 			die(_("editing blobs is not supported"));
 		git_config(git_default_config, NULL);
-		config_file = given_config_source.file ?
+		configfileOpen = given_config_source.file ?
 				      xstrdup(given_config_source.file) :
 				      git_pathdup("config");
 		if (use_global_config) {
-			int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY,
+			int fd = open(configfileOpen, O_CREAT | O_EXCL | O_WRONLY,
 				      0666);
 			if (fd >= 0) {
 				char *content = default_user_config();
@@ -802,10 +802,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			} else if (errno != EEXIST)
 				die_errno(
 					_("cannot create configuration file %s"),
-					config_file);
+					configfileOpen);
 		}
-		launch_editor(config_file, NULL, NULL);
-		free(config_file);
+		launch_editor(configfileOpen, NULL, NULL);
+		free(configfileOpen);
 		break;
 	case ACTION_SET:
 		check_write();
