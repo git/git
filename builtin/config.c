@@ -77,6 +77,7 @@ static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
 {
 	int new_type, *to_type;
+	char *configfileOpen;
 
 	if (unset) {
 		*((int *)opt->value) = 0;
@@ -779,7 +780,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 		break;
 	case ACTION_EDIT:
-		char *configfileOpen;
+		
 		check_argc(argc, 0, 0);
 		if (!given_config_source.file && nongit)
 			die(_("not in a git directory"));
