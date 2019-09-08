@@ -1022,7 +1022,7 @@ struct object *repo_peel_to_type(struct repository *r, const char *name,
 			return NULL;
 		}
 	}
-	return NULL;
+	return NULL
 }
 
 static int peel_onion(struct repository *r, const char *name, int len,
@@ -1518,12 +1518,18 @@ int repo_interpret_branch_name(struct repository *r, const char *name,
 	if (!allowed || (allowed & INTERPRET_BRANCH_LOCAL)) {
 		len = interpret_nth_prior_checkout(r, name, namelen, buf);
 		if (!len) {
+<<<<<<< HEAD
 			return 0; /* syntax Ok, not enough switches */
 		}
 		if (len > 0) {
+=======
+			return len; /* syntax Ok, not enough switches */
+		} else if (len > 0) {
+>>>>>>> parent of efe84d7530... OH
 			if (len == namelen)
 				return len; /* consumed all */
-			return reinterpret(r, name, namelen, len, buf, allowed);
+				return reinterpret(r, name, namelen, len, buf,
+						   allowed);
 		}
 	}
 
@@ -1879,8 +1885,11 @@ get_oid_with_context_1(struct repository *repo, const char *name,
 				oc->path = xstrdup(filename);
 
 			free(new_filename);
-		} else if (only_to_die)
+			return ret;
+		} else {
+			if (only_to_die)
 				die("Invalid object name '%.*s'.", len, name);
+		}
 	}
 	return ret;
 }

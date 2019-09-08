@@ -15,7 +15,6 @@
 #define LOG_DAEMON  (3<<3)
 
 void openlog(const char *ident, int logopt, int facility);
-
 void syslog(int priority, const char *fmt, ...);
 
 #endif /* SYSLOG_H */

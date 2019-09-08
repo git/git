@@ -32,32 +32,28 @@ extern const char git_attr__false[];
  * Unset one is returned as NULL.
  */
 struct attr_check_item {
-    const struct git_attr *attr;
-    const char *value;
+	const struct git_attr *attr;
+	const char *value;
 };
 
 struct attr_check {
-    int nr;
-    int alloc;
-    struct attr_check_item *items;
-    int all_attrs_nr;
-    struct all_attrs_item *all_attrs;
-    struct attr_stack *stack;
+	int nr;
+	int alloc;
+	struct attr_check_item *items;
+	int all_attrs_nr;
+	struct all_attrs_item *all_attrs;
+	struct attr_stack *stack;
 };
 
 struct attr_check *attr_check_alloc(void);
-
 struct attr_check *attr_check_initl(const char *, ...);
-
 struct attr_check *attr_check_dup(const struct attr_check *check);
 
 struct attr_check_item *attr_check_append(struct attr_check *check,
-                                          const struct git_attr *attr);
+					  const struct git_attr *attr);
 
 void attr_check_reset(struct attr_check *check);
-
 void attr_check_clear(struct attr_check *check);
-
 void attr_check_free(struct attr_check *check);
 
 /*
@@ -68,21 +64,20 @@ void attr_check_free(struct attr_check *check);
 const char *git_attr_name(const struct git_attr *);
 
 void git_check_attr(const struct index_state *istate,
-                    const char *path, struct attr_check *check);
+		    const char *path, struct attr_check *check);
 
 /*
  * Retrieve all attributes that apply to the specified path.
  * check holds the attributes and their values.
  */
 void git_all_attrs(const struct index_state *istate,
-                   const char *path, struct attr_check *check);
+		   const char *path, struct attr_check *check);
 
 enum git_attr_direction {
-    GIT_ATTR_CHECKIN,
-    GIT_ATTR_CHECKOUT,
-    GIT_ATTR_INDEX
+	GIT_ATTR_CHECKIN,
+	GIT_ATTR_CHECKOUT,
+	GIT_ATTR_INDEX
 };
-
 void git_attr_set_direction(enum git_attr_direction new_direction);
 
 void attr_start(void);

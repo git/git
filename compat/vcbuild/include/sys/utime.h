@@ -1,5 +1,5 @@
-#ifndef    _UTIME_H_
-#define    _UTIME_H_
+#ifndef	_UTIME_H_
+#define	_UTIME_H_
 /*
  * UTIME.H
  * This file has no copyright assigned and is placed in the Public Domain.
@@ -16,17 +16,19 @@
 /*
  * Structure used by _utime function.
  */
-struct _utimbuf {
-    time_t actime;        /* Access time */
-    time_t modtime;    /* Modification time */
+struct _utimbuf
+{
+	time_t	actime;		/* Access time */
+	time_t	modtime;	/* Modification time */
 };
 
-#ifndef    _NO_OLDNAMES
+#ifndef	_NO_OLDNAMES
 /* NOTE: Must be the same as _utimbuf above. */
-struct utimbuf {
-    time_t actime;
-    time_t modtime;
+struct utimbuf
+{
+	time_t	actime;
+	time_t	modtime;
 };
-#endif    /* Not _NO_OLDNAMES */
+#endif	/* Not _NO_OLDNAMES */
 
 #endif
