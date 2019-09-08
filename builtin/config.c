@@ -744,7 +744,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			usage_builtin_config();
 		}
 	if (omit_values && actions != ACTION_LIST &&
-	    actions != ACTION_GET_REGEXP))
+	    actions != ACTION_GET_REGEXP)
 		{
 			error(_("--name-only is only applicable to --list or --get-regexp"));
 			usage_builtin_config();
