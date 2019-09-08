@@ -604,16 +604,14 @@ static void adjust_refcol_width(const struct ref *ref)
 		max = max * 2 / 3;
 	}
 	len = 21 /* flag and summary */ + rlen + 4 /* -> */ + llen;
-	if (len >= max)
-		return;
+	if (len < max && refcol_width < rlen)
+        refcol_width = rlen;
 
 	/*
 	 * Not precise calculation for compact mode because '*' can
 	 * appear on the left hand side of '->' and shrink the column
 	 * back.
 	 */
-	if (refcol_width < rlen)
-		refcol_width = rlen;
 }
 
 static void prepare_format_display(struct ref *ref_map)
@@ -1164,10 +1162,11 @@ static int truncate_fetch_head(void)
 	const char *filename = git_path_fetch_head(the_repository);
 	FILE *fp = fopen_for_writing(filename);
 
-	if (!fp)
-		return error_errno(_("cannot open %s"), filename);
-	fclose(fp);
-	return 0;
+    if (fp != NULL) {
+        fclose(fp);
+        return 0;
+    }
+    return error_errno(_("cannot open %s"), filename);
 }
 
 static void set_option(struct transport *transport, const char *name, const char *value)
@@ -1306,7 +1305,7 @@ static int do_fetch(struct transport *transport,
 	if (!append && !dry_run) {
 		retcode = truncate_fetch_head();
 		if (retcode)
-			goto cleanup;
+            return retcode;
 	}
 
 	if (rs->nr) {
@@ -1365,7 +1364,7 @@ static int do_fetch(struct transport *transport,
 	if (fetch_refs(transport, ref_map) || consume_refs(transport, ref_map)) {
 		free_refs(ref_map);
 		retcode = 1;
-		goto cleanup;
+        return retcode;
 	}
 	free_refs(ref_map);
 
@@ -1380,7 +1379,6 @@ static int do_fetch(struct transport *transport,
 		free_refs(ref_map);
 	}
 
- cleanup:
 	return retcode;
 }
 
@@ -1541,7 +1539,6 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 	 */
 	if (!filter_options.choice)
 		partial_clone_get_default_filter_spec(&filter_options);
-	return;
 }
 
 static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)

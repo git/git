@@ -486,8 +486,9 @@ static int get_colorbool(const char *var, int print)
 	if (print) {
 		printf("%s\n", get_colorbool_found ? "true" : "false");
 		return 0;
-	} else
-		return get_colorbool_found ? 0 : 1;
+	}
+
+	return get_colorbool_found ? 0 : 1;
 }
 
 static void check_write(void)

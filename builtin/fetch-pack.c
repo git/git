@@ -19,16 +19,16 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 	const char *p;
 
 	if (!parse_oid_hex(name, &oid, &p)) {
-		if (*p == ' ') {
-			/* <oid> <ref>, find refname */
-			name = p + 1;
-		} else if (*p == '\0') {
-			; /* <oid>, leave oid as name */
-		} else {
-			/* <ref>, clear cruft from oid */
-			oidclr(&oid);
-		}
-	} else {
+        if (*p != ' ') {
+            if (*p != '\0') {
+                /* <ref>, clear cruft from oid */
+                oidclr(&oid);
+            }
+        } else {
+            /* <oid> <ref>, find refname */
+            name = p + 1;
+        }
+    } else {
 		/* <ref>, clear cruft from get_oid_hex */
 		oidclr(&oid);
 	}
