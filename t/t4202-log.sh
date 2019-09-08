@@ -837,7 +837,7 @@ test_expect_success 'decorate-refs and decorate-refs-exclude' '
 	test_cmp expect.decorate actual
 '
 
-test_expect_failure 'decorate-refs-exclude and simplify-by-decoration' '
+test_expect_success 'decorate-refs-exclude and simplify-by-decoration' '
 	cat >expect.decorate <<-\EOF &&
 	Merge-tag-reach (HEAD -> master)
 	reach (tag: reach, reach)

@@ -77,6 +77,7 @@ void add_name_decoration(enum decoration_type type, const char *name, struct obj
 
 const struct name_decoration *get_name_decoration(const struct object *obj)
 {
+	load_ref_decorations(NULL, DECORATE_SHORT_REFS);
 	return lookup_decoration(&name_decoration, obj);
 }
 
