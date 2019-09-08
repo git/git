@@ -52,13 +52,13 @@ static const char *split_cmdline_errors[] = { N_("cmdline ends with \\"),
 int split_cmdline(char *cmdline, const char ***argv)
 {
 	int size = 16;
-	char quoted = 0;
 
 	ALLOC_ARRAY(*argv, size);
 
 	/* split alias_string */
 	(*argv)[0] = cmdline;
 	if (cmdline[0]) {
+		char quoted = 0;
 		int src = 0, dst = 0, count = 1;
 		do {
 			char c = cmdline[src];
@@ -90,6 +90,11 @@ int split_cmdline(char *cmdline, const char ***argv)
 
 		cmdline[dst] = 0;
 
+		if (quoted) {
+			FREE_AND_NULL(*argv);
+			return -SPLIT_CMDLINE_UNCLOSED_QUOTE;
+		}
+
 		ALLOC_GROW(*argv, count + 1, size);
 		(*argv)[count] = NULL;
 
@@ -97,10 +102,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	}
 
 	cmdline[0] = 0;
-	if (quoted) {
-		FREE_AND_NULL(*argv);
-		return -SPLIT_CMDLINE_UNCLOSED_QUOTE;
-	}
+
 	ALLOC_GROW(*argv, 2, size);
 	(*argv)[1] = NULL;
 	return 1;
