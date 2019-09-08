@@ -1032,7 +1032,7 @@ static const char *find_author_by_nickname(const char *name)
 
 static void handle_ignored_arg(struct wt_status *s)
 {
-	if (ignored_arg)
+	if (!ignored_arg)
 		return;
 	if (!strcmp(ignored_arg, "traditional"))
 		s->show_ignored_mode = SHOW_TRADITIONAL_IGNORED;
@@ -1046,7 +1046,7 @@ static void handle_ignored_arg(struct wt_status *s)
 
 static void handle_untracked_files_arg(struct wt_status *s)
 {
-	if (untracked_files_arg)
+	if (!untracked_files_arg)
 		return;
 	if (!strcmp(untracked_files_arg, "no"))
 		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
