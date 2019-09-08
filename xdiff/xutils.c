@@ -119,7 +119,6 @@ void *xdl_cha_alloc(chastore_t *cha) {
 }
 
 long xdl_guess_lines(mmfile_t *mf, long sample) {
-<<<<<<< HEAD
     long nl = 0, size, tsize = 0;
     char const *data, *cur;
 
@@ -139,26 +138,6 @@ long xdl_guess_lines(mmfile_t *mf, long sample) {
         nl = xdl_mmfile_size(mf) / (tsize / nl);
 
     return nl + 1;
-=======
-	long nl = 0, size, tsize = 0;
-	char const *data, *cur, *top;
-
-	if ((cur = data = xdl_mmfile_first(mf, &size)) != NULL) {
-		for (top = data + size; nl < sample && cur < top; ) {
-			nl++;
-			if (!(cur = memchr(cur, '\n', top - cur)))
-				cur = top;
-			else
-				cur++;
-		}
-		tsize += (long) (cur - data);
-	}
-
-	if (nl && tsize)
-		nl = xdl_mmfile_size(mf) / (tsize / nl);
-
-	return nl + 1;
->>>>>>> parent of efe84d7530... OH
 }
 
 int xdl_blankline(const char *line, long size, long flags)
