@@ -289,10 +289,9 @@ static int format_config(struct strbuf *buf, const char *key_,
 			strbuf_addstr(buf, v);
 		} else if (value_) {
 			strbuf_addstr(buf, value_);
-		} else {
-			/* Just show the key name; back out delimiter */
-			if (show_keys)
-				strbuf_setlen(buf, buf->len - 1);
+		} else if (show_keys){
+			/* Just show the key name; back out delimiter */				
+			strbuf_setlen(buf, buf->len - 1);
 		}
 	}
 	strbuf_addch(buf, term);
@@ -744,11 +743,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		default:
 			usage_builtin_config();
 		}
-	if (omit_values &&
-	    !(actions == ACTION_LIST || actions == ACTION_GET_REGEXP)) {
-		error(_("--name-only is only applicable to --list or --get-regexp"));
-		usage_builtin_config();
-	}
+	if (omit_values && actions != ACTION_LIST &&
+	    actions != ACTION_GET_REGEXP))
+		{
+			error(_("--name-only is only applicable to --list or --get-regexp"));
+			usage_builtin_config();
+		}
 
 	if (show_origin && !(actions & (ACTION_GET | ACTION_GET_ALL |
 					ACTION_GET_REGEXP | ACTION_LIST))) {
@@ -845,13 +845,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		UNLEAK(value);
 		return git_config_set_multivar_in_file_gently(
 			given_config_source.file, argv[0], value, argv[2], 1);
-	case ACTION_GET:
-		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1]);
-	case ACTION_GET_REGEXP show_keys = 1; use_key_regexp = 1;
-		case (ACTION_GET_ALL):
-
+	case ACTION_GET_REGEXP:
+		show_keys = 1;
+		use_key_regexp = 1;
+	case ACTION_GET_ALL:
 		do_all = 1;
+	case ACTION_GET:
 		check_argc(argc, 1, 2);
 		return get_value(argv[0], argv[1]);
 	case ACTION_GET_URLMATCH:
@@ -882,7 +881,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (ret == 0)
 			die(_("no such section: %s"), argv[0]);
 		break;
-	case ACTION_REMOVE_SECTION):
+	case ACTION_REMOVE_SECTION:
 		int ret;
 		check_write();
 		check_argc(argc, 1, 1);
@@ -897,8 +896,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 1, 2);
 		get_color(argv[0], argv[1]);
 		break;
-	case
-		ACTION_GET_COLORBOOL:
+	case ACTION_GET_COLORBOOL:
 		check_argc(argc, 1, 2);
 		if (argc == 2)
 			color_stdout_is_tty =
