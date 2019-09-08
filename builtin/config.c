@@ -634,7 +634,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = !startup_info->have_repository;
 	char *value;
-
+	int ret;
 	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
 
 	argc = parse_options(argc, argv, prefix, builtin_config_options,
@@ -780,7 +780,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		break;
 	case ACTION_EDIT:
 		char *config_file;
-
 		check_argc(argc, 0, 0);
 		if (!given_config_source.file && nongit)
 			die(_("not in a git directory"));
@@ -809,7 +808,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		free(config_file);
 		break;
 	case ACTION_SET:
-		int ret;
 		check_write();
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
@@ -871,7 +869,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		return git_config_set_multivar_in_file_gently(
 			given_config_source.file, argv[0], NULL, argv[1], 1);
 	case ACTION_RENAME_SECTION):
-		int ret;
 		check_write();
 		check_argc(argc, 2, 2);
 		ret = git_config_rename_section_in_file(
@@ -882,7 +879,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			die(_("no such section: %s"), argv[0]);
 		break;
 	case ACTION_REMOVE_SECTION:
-		int ret;
 		check_write();
 		check_argc(argc, 1, 1);
 		ret = git_config_rename_section_in_file(
