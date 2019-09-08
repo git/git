@@ -192,15 +192,15 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 	 * while we have both sides to compare.
 	 */
 	if (flags & XDF_IGNORE_WHITESPACE) {
-		goto skip_ws;
-		while (i1 < s1 && i2 < s2) {
-			if (l1[i1++] != l2[i2++])
-				return 0;
-		skip_ws:
+		for(;;) {
 			while (i1 < s1 && XDL_ISSPACE(l1[i1]))
 				i1++;
 			while (i2 < s2 && XDL_ISSPACE(l2[i2]))
 				i2++;
+			if (i1 >= s1 || i2 >= s2)
+				break;
+			if (l1[i1++] != l2[i2++])
+				return 0;
 		}
 	} else if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
 		while (i1 < s1 && i2 < s2) {
@@ -253,10 +253,10 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 static unsigned long xdl_hash_record_with_whitespace(char const **data,
 		char const *top, long flags) {
 	unsigned long ha = 5381;
-	char const *ptr = *data;
+	char const *ptr;
 	int cr_at_eol_only = (flags & XDF_WHITESPACE_FLAGS) == XDF_IGNORE_CR_AT_EOL;
 
-	for (; ptr < top && *ptr != '\n'; ptr++) {
+	for (ptr = *data; ptr < top && *ptr != '\n'; ptr++) {
 		if (cr_at_eol_only) {
 			/* do not ignore CR at the end of an incomplete line */
 			if (*ptr == '\r' &&
@@ -271,7 +271,7 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 				ptr++;
 			at_eol = (top <= ptr + 1 || ptr[1] == '\n');
 			if (flags & XDF_IGNORE_WHITESPACE)
-				; /* already handled */
+				continue; /* already handled */
 			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
 				 && !at_eol) {
 				ha += (ha << 5);
@@ -296,13 +296,13 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 }
 
 unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
-	unsigned long ha = 5381;
+	unsigned long ha;
 	char const *ptr = *data;
 
 	if (flags & XDF_WHITESPACE_FLAGS)
 		return xdl_hash_record_with_whitespace(data, top, flags);
 
-	for (; ptr < top && *ptr != '\n'; ptr++) {
+	for (ha = 5381; ptr < top && *ptr != '\n'; ptr++) {
 		ha += (ha << 5);
 		ha ^= (unsigned long) *ptr;
 	}
@@ -312,10 +312,15 @@ unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 }
 
 unsigned int xdl_hashbits(unsigned int size) {
-	unsigned int val = 1, bits = 0;
 
-	for (; val < size && bits < CHAR_BIT * sizeof(unsigned int); val <<= 1, bits++);
-	return bits ? bits: 1;
+	if (size >= 1){
+		unsigned int val = 1, bits = 0;
+		do {
+			val <<= 1, bits++;
+		} while (val < size && bits < CHAR_BIT * sizeof(unsigned int));
+		return bits;
+	}
+	return 1;
 }
 
 

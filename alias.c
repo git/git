@@ -19,8 +19,8 @@ static int config_alias_cb(const char *key, const char *value, void *d)
 
 	if (data->alias) {
 		if (!strcasecmp(p, data->alias))
-			return git_config_string((const char **)&data->v,
-						 key, value);
+			return git_config_string((const char **)&data->v, key,
+						 value);
 	} else if (data->list) {
 		string_list_append(data->list, p);
 	}
@@ -46,10 +46,8 @@ void list_aliases(struct string_list *list)
 
 #define SPLIT_CMDLINE_BAD_ENDING 1
 #define SPLIT_CMDLINE_UNCLOSED_QUOTE 2
-static const char *split_cmdline_errors[] = {
-	N_("cmdline ends with \\"),
-	N_("unclosed quote")
-};
+static const char *split_cmdline_errors[] = { N_("cmdline ends with \\"),
+					      N_("unclosed quote") };
 
 int split_cmdline(char *cmdline, const char ***argv)
 {
@@ -60,44 +58,42 @@ int split_cmdline(char *cmdline, const char ***argv)
 
 	/* split alias_string */
 	(*argv)[0] = cmdline;
-	if (cmdline[0]){
+	if (cmdline[0]) {
 		int src = 0, dst = 0;
-	do {
-		char c = cmdline[src];
-		if (!quoted && isspace(c)) {
-			cmdline[dst++] = 0;
-			while (cmdline[++src]
-					&& isspace(cmdline[src]))
-				; /* skip */
-			ALLOC_GROW(*argv, count + 1, size);
-			(*argv)[count++] = cmdline + dst;
-		} else if (!quoted && (c == '\'' || c == '"')) {
-			quoted = c;
-			src++;
-		} else if (c == quoted) {
-			quoted = 0;
-			src++;
-		} else {
-			if (c == '\\' && quoted != '\'') {
+		do {
+			char c = cmdline[src];
+			if (!quoted && isspace(c)) {
+				cmdline[dst++] = 0;
+				while (cmdline[++src] && isspace(cmdline[src]))
+					; /* skip */
+				ALLOC_GROW(*argv, count + 1, size);
+				(*argv)[count++] = cmdline + dst;
+			} else if (!quoted && (c == '\'' || c == '"')) {
+				quoted = c;
 				src++;
-				c = cmdline[src];
-				if (!c) {
-					FREE_AND_NULL(*argv);
-					return -SPLIT_CMDLINE_BAD_ENDING;
+			} else if (c == quoted) {
+				quoted = 0;
+				src++;
+			} else {
+				if (c == '\\' && quoted != '\'') {
+					src++;
+					c = cmdline[src];
+					if (!c) {
+						FREE_AND_NULL(*argv);
+						return -SPLIT_CMDLINE_BAD_ENDING;
+					}
 				}
+				cmdline[dst++] = c;
+				src++;
 			}
-			cmdline[dst++] = c;
-			src++;
-		}
-	} while (cmdline[src]);
+		} while (cmdline[src]);
 		cmdline[dst] = 0;
-	}
-	else {
+	} else {
 		cmdline[0] = 0;
 		if (quoted) {
-		FREE_AND_NULL(*argv);
-		return -SPLIT_CMDLINE_UNCLOSED_QUOTE;
-	}
+			FREE_AND_NULL(*argv);
+			return -SPLIT_CMDLINE_UNCLOSED_QUOTE;
+		}
 		ALLOC_GROW(*argv, 2, size);
 		(*argv)[1] = NULL;
 		return 1;
