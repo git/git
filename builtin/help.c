@@ -132,7 +132,7 @@ static int check_emacsclient_version(void)
 
 static void exec_woman_emacs(const char *path, const char *page)
 {
-    if (check_emacsclient_version() != 0) return;
+    if (check_emacsclient_version() == 0){
     /* This works only with emacsclient version >= 22. */
     struct strbuf man_page = STRBUF_INIT;
 
@@ -142,6 +142,7 @@ static void exec_woman_emacs(const char *path, const char *page)
     execlp(path, "emacsclient", "-e", man_page.buf, (char *)NULL);
     warning_errno(_("failed to exec '%s'"), path);
     strbuf_release(&man_page);
+	}
 }
 
 static void exec_man_konqueror(const char *path, const char *page)
