@@ -790,11 +790,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			die(_("editing blobs is not supported"));
 		git_config(git_default_config, NULL);
 		if (use_global_config) {
+			int fd;
 			char *configfileOpen;
 			configfileOpen = given_config_source.file ?
 				      xstrdup(given_config_source.file) :
 				      git_pathdup("config");
-			int fd = open(configfileOpen, O_CREAT | O_EXCL | O_WRONLY,
+			fd = open(configfileOpen, O_CREAT | O_EXCL | O_WRONLY,
 				      0666);
 			if (fd >= 0) {
 				char *content = default_user_config();
@@ -880,7 +881,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 1, 2);
 		return git_config_set_multivar_in_file_gently(
 			given_config_source.file, argv[0], NULL, argv[1], 1);
-	case ACTION_RENAME_SECTION):
+	case ACTION_RENAME_SECTION:
 		check_write();
 		check_argc(argc, 2, 2);
 		ret = git_config_rename_section_in_file(
