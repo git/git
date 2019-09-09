@@ -19,5 +19,6 @@ struct object *deref_tag(struct repository *r, struct object *, const char *, in
 struct object *deref_tag_noverify(struct object *);
 int gpg_verify_tag(const struct object_id *oid,
 		   const char *name_to_report, unsigned flags);
+struct object_id *get_tagged_oid(struct tag *tag);
 
 #endif /* TAG_H */

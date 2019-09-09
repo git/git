@@ -421,7 +421,7 @@ static int check_one_mergetag(struct commit *commit,
 		if (get_oid(mergetag_data->argv[i], &oid) < 0)
 			return error(_("not a valid object name: '%s'"),
 				     mergetag_data->argv[i]);
-		if (oideq(&tag->tagged->oid, &oid))
+		if (oideq(get_tagged_oid(tag), &oid))
 			return 0; /* found */
 	}
 

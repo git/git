@@ -709,9 +709,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 			else
 				object_list_insert(object, &wants);
 
-			if (!tag->tagged)
-				die("bad tag");
-			object = parse_object_or_die(&tag->tagged->oid, NULL);
+			object = parse_object_or_die(get_tagged_oid(tag), NULL);
 		}
 
 		if (object->flags & UNINTERESTING)

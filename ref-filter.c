@@ -1766,7 +1766,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	 * If it is a tag object, see if we use a value that derefs
 	 * the object, and if we do grab the object it refers to.
 	 */
-	oi_deref.oid = ((struct tag *)obj)->tagged->oid;
+	oi_deref.oid = *get_tagged_oid((struct tag *)obj);
 
 	/*
 	 * NEEDSWORK: This derefs tag only once, which
@@ -1997,7 +1997,7 @@ static const struct object_id *match_points_at(struct oid_array *points_at,
 	if (!obj)
 		die(_("malformed object at '%s'"), refname);
 	if (obj->type == OBJ_TAG)
-		tagged_oid = &((struct tag *)obj)->tagged->oid;
+		tagged_oid = get_tagged_oid((struct tag *)obj);
 	if (tagged_oid && oid_array_lookup(points_at, tagged_oid) >= 0)
 		return tagged_oid;
 	return NULL;

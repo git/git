@@ -212,3 +212,10 @@ int parse_tag(struct tag *item)
 	free(data);
 	return ret;
 }
+
+struct object_id *get_tagged_oid(struct tag *tag)
+{
+	if (!tag->tagged)
+		die("bad tag");
+	return &tag->tagged->oid;
+}
