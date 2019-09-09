@@ -2,6 +2,7 @@
 #define FETCH_NEGOTIATOR_H
 
 struct commit;
+struct repository;
 
 /*
  * An object that supplies the information needed to negotiate the contents of
@@ -52,7 +53,7 @@ struct fetch_negotiator {
 	void *data;
 };
 
-void fetch_negotiator_init(struct fetch_negotiator *negotiator,
-			   const char *algorithm);
+void fetch_negotiator_init(struct repository *r,
+			   struct fetch_negotiator *negotiator);
 
 #endif

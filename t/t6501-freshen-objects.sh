@@ -137,7 +137,7 @@ test_expect_success 'do not complain about existing broken links (commit)' '
 	some message
 	EOF
 	commit=$(git hash-object -t commit -w broken-commit) &&
-	git gc 2>stderr &&
+	git gc -q 2>stderr &&
 	verbose git cat-file -e $commit &&
 	test_must_be_empty stderr
 '
@@ -147,7 +147,7 @@ test_expect_success 'do not complain about existing broken links (tree)' '
 	100644 blob 0000000000000000000000000000000000000003	foo
 	EOF
 	tree=$(git mktree --missing <broken-tree) &&
-	git gc 2>stderr &&
+	git gc -q 2>stderr &&
 	git cat-file -e $tree &&
 	test_must_be_empty stderr
 '
@@ -162,7 +162,7 @@ test_expect_success 'do not complain about existing broken links (tag)' '
 	this is a broken tag
 	EOF
 	tag=$(git hash-object -t tag -w broken-tag) &&
-	git gc 2>stderr &&
+	git gc -q 2>stderr &&
 	git cat-file -e $tag &&
 	test_must_be_empty stderr
 '
