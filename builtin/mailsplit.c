@@ -230,7 +230,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 	else {
         do {
             char *name = xstrfmt("%s/%0*d", dir, nr_prec, ++skip);
-            file_done = split_one(f, name, allow_bare);
+            int file_done = split_one(f, name, allow_bare);
             free(name);
         } while  (!file_done);
     }
