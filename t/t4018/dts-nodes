@@ -1,0 +1,8 @@
+/ {
+	label_1: node1@ff00 {
+		RIGHT@deadf00,4000 {
+			#size-cells = <1>;
+			ChangeMe = <0xffeedd00>;
+		};
+	};
+};
