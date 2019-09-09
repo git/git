@@ -11,7 +11,22 @@ Backward compatibility note
 
 UI, Workflows & Features
 
- * (no entry yet so far)
+ * The command line parser learned "--end-of-options" notation; the
+   standard convention for scripters to have hardcoded set of options
+   first on the command line, and force the command to treat end-user
+   input as non-options, has been to use "--" as the delimiter, but
+   that would not work for commands that use "--" as a delimiter
+   between revs and pathspec.
+
+ * A mechanism to affect the default setting for a (related) group of
+   configuration variables is introduced.
+
+ * "git fetch" learned "--set-upstream" option to help those who first
+   clone from their private fork they intend to push to, add the true
+   upstream via "git remote add" and then "git fetch" from it.
+
+ * Device-tree files learned their own userdiff patterns.
+   (merge 3c81760bc6 sb/userdiff-dts later to maint).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -21,6 +36,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * The first line of verbose output from each test piece now carries
    the test name and number to help scanning with eyeballs.
+
+ * Further clean-up of the initialization code.
 
 
 Fixes since v2.23
@@ -48,5 +65,43 @@ Fixes since v2.23
  * Compilation fix.
    (merge 70597e8386 rs/nedalloc-fixlets later to maint).
 
+ * "git gui" learned to call the clean-up procedure before exiting.
+   (merge 0d88f3d2c5 py/git-gui-do-quit later to maint).
+
+ * We promoted the "indent heuristics" that decides where to split
+   diff hunks from experimental to the default a few years ago, but
+   some stale documentation still marked it as experimental, which has
+   been corrected.
+   (merge 64e5e1fba1 sg/diff-indent-heuristic-non-experimental later to maint).
+
+ * Fix a mismerge that happened in 2.22 timeframe.
+   (merge acb7da05ac en/checkout-mismerge-fix later to maint).
+
+ * "git archive" recorded incorrect length in extended pax header in
+   some corner cases, which has been corrected.
+   (merge 71d41ff651 rs/pax-extended-header-length-fix later to maint).
+
+ * On-demand object fetching in lazy clone incorrectly tried to fetch
+   commits from submodule projects, while still working in the
+   superproject, which has been corrected.
+   (merge a63694f523 jt/diff-lazy-fetch-submodule-fix later to maint).
+
+ * Prepare get_short_oid() codepath to be thread-safe.
+   (merge 7cfcb16b0e rs/sort-oid-array-thread-safe later to maint).
+
+ * "for-each-ref" and friends that show refs did not protect themselves
+   against ancient tags that did not record tagger names when asked to
+   show "%(taggername)", which have been corrected.
+   (merge 8b3f33ef11 mp/for-each-ref-missing-name-or-email later to maint).
+
+ * The "git am" based backend of "git rebase" ignored the result of
+   updating ".gitattributes" done in one step when replaying
+   subsequent steps.
+   (merge 2c65d90f75 bc/reread-attributes-during-rebase later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
+   (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
+   (merge 415b770b88 ds/midx-expire-repack later to maint).
+   (merge 19800bdc3f nd/diff-parseopt later to maint).
+   (merge 58166c2e9d tg/t0021-racefix later to maint).
