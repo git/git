@@ -136,8 +136,7 @@ static void work_done(struct work_item *w)
 
 	grep_lock();
 	w->done = 1;
-	old_done = todo_done;
-	for(; todo[todo_done].done && todo_done != todo_start;
+	for(old_done = todo_done; todo[todo_done].done && todo_done != todo_start;
 	    todo_done = (todo_done+1) % ARRAY_SIZE(todo)) {
 		w = &todo[todo_done];
 		if (w->out.len) {
@@ -360,9 +359,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		add_work(opt, &gs);
 		return 0;
 	} else {
-		int hit;
-
-		hit = grep_source(opt, &gs);
+		int hit = grep_source(opt, &gs);
 
 		grep_source_clear(&gs);
 		return hit;
@@ -373,9 +370,9 @@ static void append_path(struct grep_opt *opt, const void *data, size_t len)
 {
 	struct string_list *path_list = opt->output_priv;
 
-	if (len == 1 && *(const char *)data == '\0')
-		return;
-	string_list_append(path_list, xstrndup(data, len));
+    if (len != 1 || *(const char *) data != '\0') {
+        string_list_append(path_list, xstrndup(data, len));
+    }
 }
 
 static void run_pager(struct grep_opt *opt, const char *prefix)
@@ -669,9 +666,9 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 		}
 		if (grep_object(opt, pathspec, real_obj, list->objects[i].name,
 				list->objects[i].path)) {
-			hit = 1;
 			if (opt->status_only)
-				break;
+				return 1;
+			hit = 1;
 		}
 	}
 	return hit;

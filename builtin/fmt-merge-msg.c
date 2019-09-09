@@ -570,11 +570,11 @@ static void find_merge_parents(struct merge_parents *result,
 		 */
 		obj = parse_object(the_repository, &oid);
 		parent = (struct commit *)peel_to_type(NULL, 0, obj, OBJ_COMMIT);
-		if (!parent)
-			continue;
-		commit_list_insert(parent, &parents);
-		add_merge_parent(result, &obj->oid, &parent->object.oid);
-	}
+        if (parent != NULL) {
+            commit_list_insert(parent, &parents);
+            add_merge_parent(result, &obj->oid, &parent->object.oid);
+        }
+    }
 	head_commit = lookup_commit(the_repository, head);
 	if (head_commit)
 		commit_list_insert(head_commit, &parents);
