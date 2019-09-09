@@ -73,7 +73,7 @@ enum log_refs_config log_all_ref_updates = LOG_REFS_UNSET;
 int protect_hfs = PROTECT_HFS_DEFAULT;
 
 #ifndef PROTECT_NTFS_DEFAULT
-#define PROTECT_NTFS_DEFAULT 0
+#define PROTECT_NTFS_DEFAULT 1
 #endif
 int protect_ntfs = PROTECT_NTFS_DEFAULT;
 
