@@ -399,4 +399,11 @@ test_expect_success 'GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS works' '
 		test-tool parse-options --ye
 '
 
+test_expect_success '--end-of-options treats remainder as args' '
+	test-tool parse-options \
+	    --expect="verbose: -1" \
+	    --expect="arg 00: --verbose" \
+	    --end-of-options --verbose
+'
+
 test_done

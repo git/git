@@ -4601,6 +4601,7 @@ static int apply_patch(struct apply_state *state, int fd, const char *filename,
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 	int res = 0;
+	int flush_attributes = 0;
 
 	state->patch_input_file = filename;
 	if (read_patch_file(&buf, fd) < 0)
@@ -4629,7 +4630,17 @@ static int apply_patch(struct apply_state *state, int fd, const char *filename,
 			patch_stats(state, patch);
 			*listp = patch;
 			listp = &patch->next;
-		} else {
+
+
+			if ((patch->new_name &&
+			     ends_with_path_components(patch->new_name,
+						       GITATTRIBUTES_FILE)) ||
+			    (patch->old_name &&
+			     ends_with_path_components(patch->old_name,
+						       GITATTRIBUTES_FILE)))
+				flush_attributes = 1;
+		}
+		else {
 			if (state->apply_verbosity > verbosity_normal)
 				say_patch_name(stderr, _("Skipped patch '%s'."),
 					       patch);
@@ -4706,6 +4717,8 @@ static int apply_patch(struct apply_state *state, int fd, const char *filename,
 	if (state->summary && state->apply_verbosity > verbosity_silent)
 		summary_patch_list(list);
 
+	if (flush_attributes)
+		reset_parsed_attributes();
 end:
 	free_patch_list(list);
 	strbuf_release(&buf);

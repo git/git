@@ -275,7 +275,7 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	int flags;
 	int ret;
 	struct strbuf pattern = STRBUF_INIT;
-	const char *refname = !the_repository || !the_repository->gitdir ?
+	const char *refname = !the_repository->gitdir ?
 		NULL : resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	const char *shortname;
 
@@ -2286,30 +2286,6 @@ int git_config_get_expiry_in_days(const char *key, timestamp_t *expiry, timestam
 		return 0;
 	}
 	return -1; /* thing exists but cannot be parsed */
-}
-
-int git_config_get_untracked_cache(void)
-{
-	int val = -1;
-	const char *v;
-
-	/* Hack for test programs like test-dump-untracked-cache */
-	if (ignore_untracked_cache_config)
-		return -1;
-
-	if (!git_config_get_maybe_bool("core.untrackedcache", &val))
-		return val;
-
-	if (!git_config_get_value("core.untrackedcache", &v)) {
-		if (!strcasecmp(v, "keep"))
-			return -1;
-
-		error(_("unknown core.untrackedCache value '%s'; "
-			"using 'keep' default value"), v);
-		return -1;
-	}
-
-	return -1; /* default value */
 }
 
 int git_config_get_split_index(void)

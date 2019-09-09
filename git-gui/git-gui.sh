@@ -3030,8 +3030,23 @@ unset doc_path doc_url
 wm protocol . WM_DELETE_WINDOW do_quit
 bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
-bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
-bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
+
+set m1b_w_script {
+	set toplvl_win [winfo toplevel %W]
+
+	# If we are destroying the main window, we should call do_quit to take
+	# care of cleanup before exiting the program.
+	if {$toplvl_win eq "."} {
+		do_quit
+	} else {
+		destroy $toplvl_win
+	}
+}
+
+bind all <$M1B-Key-w> $m1b_w_script
+bind all <$M1B-Key-W> $m1b_w_script
+
+unset m1b_w_script
 
 set subcommand_args {}
 proc usage {} {

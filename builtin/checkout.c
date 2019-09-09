@@ -737,13 +737,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 				return 1;
 			old_tree = get_commit_tree(old_branch_info->commit);
 
-			if (repo_index_has_changes(the_repository, old_tree,
-						   &sb))
-				die(_("cannot continue with staged changes in "
-				      "the following files:\n%s"),
-				    sb.buf);
-			strbuf_release(&sb);
-
 			if (repo_index_has_changes(
 				    the_repository,
 				    get_commit_tree(old_branch_info->commit),

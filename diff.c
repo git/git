@@ -6512,6 +6512,7 @@ static void add_if_missing(struct repository *r,
 			   const struct diff_filespec *filespec)
 {
 	if (filespec && filespec->oid_valid &&
+	    !S_ISGITLINK(filespec->mode) &&
 	    oid_object_info_extended(r, &filespec->oid, NULL,
 				     OBJECT_INFO_FOR_PREFETCH))
 		oid_array_append(to_fetch, &filespec->oid);

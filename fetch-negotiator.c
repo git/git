@@ -2,19 +2,20 @@
 #include "fetch-negotiator.h"
 #include "negotiator/default.h"
 #include "negotiator/skipping.h"
+#include "repository.h"
 
-void fetch_negotiator_init(struct fetch_negotiator *negotiator,
-			   const char *algorithm)
+void fetch_negotiator_init(struct repository *r,
+			   struct fetch_negotiator *negotiator)
 {
-	if (algorithm) {
-		if (!strcmp(algorithm, "skipping")) {
-			skipping_negotiator_init(negotiator);
-			return;
-		} else if (!strcmp(algorithm, "default")) {
-			/* Fall through to default initialization */
-		} else {
-			die("unknown fetch negotiation algorithm '%s'", algorithm);
-		}
+	prepare_repo_settings(r);
+	switch(r->settings.fetch_negotiation_algorithm) {
+	case FETCH_NEGOTIATION_SKIPPING:
+		skipping_negotiator_init(negotiator);
+		return;
+
+	case FETCH_NEGOTIATION_DEFAULT:
+	default:
+		default_negotiator_init(negotiator);
+		return;
 	}
-	default_negotiator_init(negotiator);
 }

@@ -46,6 +46,15 @@ enum parse_opt_option_flags {
 	PARSE_OPT_COMP_ARG = 1024
 };
 
+enum parse_opt_result {
+	PARSE_OPT_COMPLETE = -3,
+	PARSE_OPT_HELP = -2,
+	PARSE_OPT_ERROR = -1,	/* must be the same as error() */
+	PARSE_OPT_DONE = 0,	/* fixed so that "return 0" works */
+	PARSE_OPT_NON_OPTION,
+	PARSE_OPT_UNKNOWN
+};
+
 struct option;
 typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
 
@@ -240,15 +249,6 @@ const char *optname(const struct option *opt, int flags);
 } while(0)
 
 /*----- incremental advanced APIs -----*/
-
-enum parse_opt_result {
-	PARSE_OPT_COMPLETE = -3,
-	PARSE_OPT_HELP = -2,
-	PARSE_OPT_ERROR = -1,	/* must be the same as error() */
-	PARSE_OPT_DONE = 0,	/* fixed so that "return 0" works */
-	PARSE_OPT_NON_OPTION,
-	PARSE_OPT_UNKNOWN
-};
 
 /*
  * It's okay for the caller to consume argv/argc in the usual way.

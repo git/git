@@ -345,6 +345,8 @@ include::config/difftool.txt[]
 
 include::config/fastimport.txt[]
 
+include::config/feature.txt[]
+
 include::config/fetch.txt[]
 
 include::config/format.txt[]
