@@ -68,8 +68,7 @@ static void rehash_objects(struct packing_data *pdata)
 }
 
 struct object_entry *packlist_find(struct packing_data *pdata,
-				   const struct object_id *oid,
-				   uint32_t *index_pos)
+				   const struct object_id *oid)
 {
 	uint32_t i;
 	int found;
@@ -78,9 +77,6 @@ struct object_entry *packlist_find(struct packing_data *pdata,
 		return NULL;
 
 	i = locate_object_entry_hash(pdata, oid, &found);
-
-	if (index_pos)
-		*index_pos = i;
 
 	if (!found)
 		return NULL;
@@ -153,8 +149,7 @@ void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,
-				    const unsigned char *sha1,
-				    uint32_t index_pos)
+				    const struct object_id *oid)
 {
 	struct object_entry *new_entry;
 
@@ -177,12 +172,19 @@ struct object_entry *packlist_alloc(struct packing_data *pdata,
 	new_entry = pdata->objects + pdata->nr_objects++;
 
 	memset(new_entry, 0, sizeof(*new_entry));
-	hashcpy(new_entry->idx.oid.hash, sha1);
+	oidcpy(&new_entry->idx.oid, oid);
 
 	if (pdata->index_size * 3 <= pdata->nr_objects * 4)
 		rehash_objects(pdata);
-	else
-		pdata->index[index_pos] = pdata->nr_objects;
+	else {
+		int found;
+		uint32_t pos = locate_object_entry_hash(pdata,
+							&new_entry->idx.oid,
+							&found);
+		if (found)
+			BUG("duplicate object inserted into hash");
+		pdata->index[pos] = pdata->nr_objects;
+	}
 
 	if (pdata->in_pack)
 		pdata->in_pack[pdata->nr_objects - 1] = NULL;

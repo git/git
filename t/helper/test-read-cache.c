@@ -4,11 +4,10 @@
 
 int cmd__read_cache(int argc, const char **argv)
 {
-	int i, cnt = 1, namelen;
+	int i, cnt = 1;
 	const char *name = NULL;
 
 	if (argc > 1 && skip_prefix(argv[1], "--print-and-refresh=", &name)) {
-		namelen = strlen(name);
 		argc--;
 		argv++;
 	}
@@ -24,7 +23,7 @@ int cmd__read_cache(int argc, const char **argv)
 
 			refresh_index(&the_index, REFRESH_QUIET,
 				      NULL, NULL, NULL);
-			pos = index_name_pos(&the_index, name, namelen);
+			pos = index_name_pos(&the_index, name, strlen(name));
 			if (pos < 0)
 				die("%s not in index", name);
 			printf("%s is%s up to date\n", name,

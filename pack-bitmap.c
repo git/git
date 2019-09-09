@@ -1061,7 +1061,7 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 
 		entry = &bitmap_git->pack->revindex[i];
 		nth_packed_object_oid(&oid, bitmap_git->pack, entry->nr);
-		oe = packlist_find(mapping, &oid, NULL);
+		oe = packlist_find(mapping, &oid);
 
 		if (oe)
 			reposition[i] = oe_in_pack_pos(mapping, oe) + 1;
