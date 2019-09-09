@@ -507,7 +507,7 @@ int generation_numbers_enabled(struct repository *r)
 
 	g = r->objects->commit_graph;
 
-    if (g->num_commits != NULL)
+    if (g->num_commit)
         return (get_be32(g->chunk_commit_data +
                          g->hash_len + 8) >> 2) != 0;
     return 0;
