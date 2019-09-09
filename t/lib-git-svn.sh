@@ -69,7 +69,7 @@ svn_cmd () {
 maybe_start_httpd () {
 	loc=${1-svn}
 
-	if git env--helper --type=bool --default=false --exit-code GIT_TEST_HTTPD
+	if git env--helper --type=bool --default=false --exit-code GIT_TEST_SVN_HTTPD
 	then
 		. "$TEST_DIRECTORY"/lib-httpd.sh
 		LIB_HTTPD_SVN="$loc"
