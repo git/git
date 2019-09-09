@@ -3541,7 +3541,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 				     (char *)message, strlen(message));
 	strbuf_release(&buf);
 	unuse_commit_buffer(commit, message);
-	return opt->invert_grep != 0 == !retval;
+	return (opt->invert_grep != 0) == !retval;
 }
 
 static inline int want_ancestry(const struct rev_info *revs)
