@@ -347,19 +347,17 @@ static int cmp_remaining_objects(const void *a, const void *b)
 	struct pack_list *pl_b = *((struct pack_list **)b);
 
 	if (pl_a->remaining_objects->size == pl_b->remaining_objects->size) {
-		/* have the same remaining_objects, big pack first */
-		if (pl_a->all_objects_size == pl_b->all_objects_size)
-			return 0;
-		else if (pl_a->all_objects_size < pl_b->all_objects_size)
-			return 1;
-		else
-			return -1;
-	} else if (pl_a->remaining_objects->size < pl_b->remaining_objects->size) {
-		/* sort by remaining objects, more objects first */
-		return 1;
-	} else {
-		return -1;
-	}
+        /* have the same remaining_objects, big pack first */
+        if (pl_a->all_objects_size == pl_b->all_objects_size)
+            return 0;
+        else if (pl_a->all_objects_size < pl_b->all_objects_size)
+            return 1;
+
+    } else if (pl_a->remaining_objects->size < pl_b->remaining_objects->size) {
+        /* sort by remaining objects, more objects first */
+        return 1;
+    }
+	return -1;
 }
 
 /* Sort pack_list, greater size of remaining_objects first */
@@ -522,8 +520,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 	l.unique_objects = NULL;
 	if (p->pack_local)
 		return pack_list_insert(&local_packs, &l);
-	else
-		return pack_list_insert(&altodb_packs, &l);
+	return pack_list_insert(&altodb_packs, &l);
 }
 
 static struct pack_list * add_pack_file(const char *filename)

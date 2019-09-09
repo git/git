@@ -530,10 +530,10 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		int slot = parse_push_color_slot(slot_name);
 		if (slot < 0)
 			return 0;
-		if (!v)
-			return config_error_nonbool(k);
-		return color_parse(v, push_colors[slot]);
-	}
+        if (v)
+            return color_parse(v, push_colors[slot]);
+        return config_error_nonbool(k);
+    }
 
 	return git_default_config(k, v, NULL);
 }

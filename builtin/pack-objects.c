@@ -701,29 +701,29 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
 	/*
 	 * Then fill all the tagged tips.
 	 */
-	for (; i < to_pack.nr_objects; i++) {
+	while (i < to_pack.nr_objects) {
 		if (objects[i].tagged)
 			add_to_write_order(wo, wo_end, &objects[i]);
+		i++;
 	}
 
 	/*
 	 * And then all remaining commits and tags.
 	 */
 	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (oe_type(&objects[i]) != OBJ_COMMIT &&
-		    oe_type(&objects[i]) != OBJ_TAG)
-			continue;
-		add_to_write_order(wo, wo_end, &objects[i]);
-	}
+        if (oe_type(&objects[i]) == OBJ_COMMIT || oe_type(&objects[i]) == OBJ_TAG) {
+            add_to_write_order(wo, wo_end, &objects[i]);
+        }
+    }
 
 	/*
 	 * And then all the trees.
 	 */
 	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (oe_type(&objects[i]) != OBJ_TREE)
-			continue;
-		add_to_write_order(wo, wo_end, &objects[i]);
-	}
+        if (oe_type(&objects[i]) == OBJ_TREE) {
+            add_to_write_order(wo, wo_end, &objects[i]);
+        }
+    }
 
 	/*
 	 * Finally all the rest in really tight order
@@ -756,12 +756,12 @@ static struct object_entry **compute_write_order(void)
 	 */
 	for (i = to_pack.nr_objects; i > 0;) {
 		struct object_entry *e = &objects[--i];
-		if (!DELTA(e))
-			continue;
-		/* Mark me as the first child */
-		e->delta_sibling_idx = DELTA(e)->delta_child_idx;
-		SET_DELTA_CHILD(DELTA(e), e);
-	}
+        if (DELTA(e)) {
+            /* Mark me as the first child */
+            e->delta_sibling_idx = DELTA(e)->delta_child_idx;
+            SET_DELTA_CHILD(DELTA(e), e);
+        }
+    }
 
 	/*
 	 * Mark objects that are at the tip of tags.
@@ -774,8 +774,10 @@ static struct object_entry **compute_write_order(void)
 	ALLOC_ARRAY(wo, to_pack.nr_objects);
 	wo_end = 0;
 
-	for (; write_layer < max_layers; ++write_layer)
-		compute_layer_order(wo, &wo_end);
+	while (write_layer < max_layers) {
+        compute_layer_order(wo, &wo_end);
+        ++write_layer;
+    }
 
 	if (wo_end != to_pack.nr_objects)
 		die(_("ordered %u objects, expected %"PRIu32),

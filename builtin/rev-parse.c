@@ -169,12 +169,10 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 /* Output a flag, only if filter allows it. */
 static int show_flag(const char *arg)
 {
-	if (!(filter & DO_FLAGS))
-		return 0;
-	if (filter & (is_rev_argument(arg) ? DO_REVS : DO_NOREV)) {
-		show(arg);
-		return 1;
-	}
+	if (filter & DO_FLAGS && filter & (is_rev_argument(arg) ? DO_REVS : DO_NOREV)) {
+        show(arg);
+        return 1;
+    }
 	return 0;
 }
 
@@ -216,14 +214,16 @@ static int show_abbrev(const struct object_id *oid, void *cb_data)
 
 static void show_datestring(const char *flag, const char *datestr)
 {
-	char *buffer;
+
 
 	/* date handling requires both flags and revs */
-	if ((filter & (DO_FLAGS | DO_REVS)) != (DO_FLAGS | DO_REVS))
-		return;
-	buffer = xstrfmt("%s%"PRItime, flag, approxidate(datestr));
-	show(buffer);
-	free(buffer);
+    if ((filter & (DO_FLAGS | DO_REVS)) == (DO_FLAGS | DO_REVS)) {
+        char *buffer;
+        buffer = xstrfmt("%s%"
+        PRItime, flag, approxidate(datestr));
+        show(buffer);
+        free(buffer);
+    }
 }
 
 static int show_file(const char *arg, int output_prefix)
@@ -947,10 +947,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (has_dashdash)
 			die("bad revision '%s'", arg);
 		as_is = 1;
-		if (!show_file(arg, output_prefix))
-			continue;
-		verify_filename(prefix, arg, 1);
-	}
+        if (show_file(arg, output_prefix) != 0) {
+            verify_filename(prefix, arg, 1);
+        }
+    }
 	strbuf_release(&buf);
 	if (verify) {
 		if (revs_count == 1) {

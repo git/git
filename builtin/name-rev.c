@@ -284,21 +284,20 @@ static const unsigned char *nth_tip_table_ent(size_t ix, void *table_)
 
 static const char *get_exact_ref_match(const struct object *o)
 {
-	int found;
 
-	if (!tip_table.table || !tip_table.nr)
-		return NULL;
+    if (tip_table.table && tip_table.nr) {
+        int found;
+        if (!tip_table.sorted) {
+            QSORT(tip_table.table, tip_table.nr, tipcmp);
+            tip_table.sorted = 1;
+        }
 
-	if (!tip_table.sorted) {
-		QSORT(tip_table.table, tip_table.nr, tipcmp);
-		tip_table.sorted = 1;
-	}
-
-	found = sha1_pos(o->oid.hash, tip_table.table, tip_table.nr,
-			 nth_tip_table_ent);
-	if (0 <= found)
-		return tip_table.table[found].refname;
-	return NULL;
+        found = sha1_pos(o->oid.hash, tip_table.table, tip_table.nr,
+                         nth_tip_table_ent);
+        if (0 <= found)
+            return tip_table.table[found].refname;
+    }
+        return NULL;
 }
 
 /* may return a constant string or use "buf" as scratch space */
@@ -314,16 +313,15 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 	if (!n)
 		return NULL;
 
-	if (!n->generation)
-		return n->tip_name;
-	else {
-		int len = strlen(n->tip_name);
-		if (len > 2 && !strcmp(n->tip_name + len - 2, "^0"))
-			len -= 2;
-		strbuf_reset(buf);
-		strbuf_addf(buf, "%.*s~%d", len, n->tip_name, n->generation);
-		return buf->buf;
-	}
+    if (n->generation) {
+        int len = strlen(n->tip_name);
+        if (len > 2 && !strcmp(n->tip_name + len - 2, "^0"))
+            len -= 2;
+        strbuf_reset(buf);
+        strbuf_addf(buf, "%.*s~%d", len, n->tip_name, n->generation);
+        return buf->buf;
+    }
+    return n->tip_name;
 }
 
 static void show_name(const struct object *obj,
@@ -363,11 +361,11 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 	const unsigned hexsz = the_hash_algo->hexsz;
 
 	for (p_start = p; *p; p++) {
-#define ishex(x) (isdigit((x)) || ((x) >= 'a' && (x) <= 'f'))
-		if (!ishex(*p))
+#define ishex(x) (!isdigit((x)) && ((x) < 'a' || (x) > 'f'))
+		if (ishex(*p))
 			counter = 0;
 		else if (++counter == hexsz &&
-			 !ishex(*(p+1))) {
+			 ishex(*(p+1))) {
 			struct object_id oid;
 			const char *name = NULL;
 			char c = *(p+1);

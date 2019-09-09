@@ -275,10 +275,10 @@ static int reset_refs(const char *rev, const struct object_id *oid)
 
 static int git_reset_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "submodule.recurse"))
-		return git_default_submodule_config(var, value, cb);
+    if (strcmp(var, "submodule.recurse"))
+        return git_default_config(var, value, cb);
+    return git_default_submodule_config(var, value, cb);
 
-	return git_default_config(var, value, cb);
 }
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
@@ -412,7 +412,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			die(_("Could not write new index file."));
 	}
 
-	if (!pathspec.nr && !unborn) {
+	if (!(pathspec.nr || unborn)) {
 		/* Any resets without paths update HEAD to the head being
 		 * switched to, saving the previous head in ORIG_HEAD before. */
 		update_ref_status = reset_refs(rev, &oid);

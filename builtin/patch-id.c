@@ -4,13 +4,13 @@
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
-	char name[50];
 
-	if (!patchlen)
-		return;
 
-	memcpy(name, oid_to_hex(id), GIT_SHA1_HEXSZ + 1);
-	printf("%s %s\n", oid_to_hex(result), name);
+    if (patchlen != 0) {
+        char name[50];
+        memcpy(name, oid_to_hex(id), GIT_SHA1_HEXSZ + 1);
+        printf("%s %s\n", oid_to_hex(result), name);
+    }
 }
 
 static int remove_space(char *line)
@@ -152,14 +152,13 @@ static const char patch_id_usage[] = "git patch-id [--stable | --unstable]";
 
 static int git_patch_id_config(const char *var, const char *value, void *cb)
 {
-	int *stable = cb;
+	int *stable;
 
-	if (!strcmp(var, "patchid.stable")) {
-		*stable = git_config_bool(var, value);
-		return 0;
-	}
+    if (strcmp(var, "patchid.stable"))
+        return git_default_config(var, value, cb);
+    *stable = git_config_bool(var, value);
+    return 0;
 
-	return git_default_config(var, value, cb);
 }
 
 int cmd_patch_id(int argc, const char **argv, const char *prefix)

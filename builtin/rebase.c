@@ -2067,14 +2067,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				       branch_name);
 			ret = finish_rebase(&options) != 0;
 			goto cleanup;
-		} else if (!(options.flags & REBASE_NO_QUIET))
-			; /* be quiet */
-		else if (!strcmp(branch_name, "HEAD") &&
-			 resolve_ref_unsafe("HEAD", 0, NULL, &flag))
-			puts(_("HEAD is up to date, rebase forced."));
-		else
-			printf(_("Current branch %s is up to date, rebase "
-				 "forced.\n"), branch_name);
+		} else if ((options.flags & REBASE_NO_QUIET)) {
+            if (strcmp(branch_name, "HEAD") || !resolve_ref_unsafe("HEAD", 0, NULL, &flag))
+                printf(_("Current branch %s is up to date, rebase "
+                         "forced.\n"), branch_name);
+            else
+                puts(_("HEAD is up to date, rebase forced."));
+        }
 	}
 
 	/* If a hook exists, give it a chance to interrupt*/

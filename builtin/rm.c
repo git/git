@@ -77,8 +77,8 @@ static void submodules_absorb_gitdir_if_needed(void)
 		}
 		ce = active_cache[pos];
 
-		if (!S_ISGITLINK(ce->ce_mode) ||
-		    !file_exists(ce->name) ||
+		if (!(S_ISGITLINK(ce->ce_mode) &&
+		    file_exists(ce->name)) ||
 		    is_empty_dir(name))
 			continue;
 

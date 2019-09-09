@@ -663,6 +663,7 @@ static int find_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 		*pos = item->graph_pos;
 		return 1;
 	}
+	else{
 		struct commit_graph *cur_g = g;
 		uint32_t lex_index;
 
@@ -695,9 +696,9 @@ static int parse_commit_in_graph_one(struct repository *r,
 
 int parse_commit_in_graph(struct repository *r, struct commit *item)
 {
-	if (!prepare_commit_graph(r))
-		return 0;
-	return parse_commit_in_graph_one(r, r->objects->commit_graph, item);
+    if (prepare_commit_graph(r))
+        return parse_commit_in_graph_one(r, r->objects->commit_graph, item);
+    return 0;
 }
 
 void load_commit_graph_info(struct repository *r, struct commit *item)

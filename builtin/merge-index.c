@@ -60,10 +60,10 @@ static void merge_all(void)
 	int i;
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
-		if (!ce_stage(ce))
-			continue;
-		i += merge_entry(i, ce->name)-1;
-	}
+        if (ce_stage(ce)) {
+            i += merge_entry(i, ce->name) - 1;
+        }
+    }
 }
 
 int cmd_merge_index(int argc, const char **argv, const char *prefix)
@@ -89,8 +89,8 @@ int cmd_merge_index(int argc, const char **argv, const char *prefix)
 		quiet = 1;
 		i++;
 	}
-	pgm = argv[i++];
-	for (; i < argc; i++) {
+	pgm = argv[i];
+	for (++i; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!force_file && *arg == '-') {
 			if (!strcmp(arg, "--")) {

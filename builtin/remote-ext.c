@@ -154,11 +154,11 @@ static int run_child(const char *arg, const char *service)
 		send_git_request(child.in, service, git_req, git_req_vhost);
 
 	r = bidirectional_transfer_loop(child.out, child.in);
-	if (!r)
-		r = finish_command(&child);
-	else
-		finish_command(&child);
-	return r;
+    if (r != 0)
+        finish_command(&child);
+    else
+        r = finish_command(&child);
+    return r;
 }
 
 #define MAXCOMMAND 4096

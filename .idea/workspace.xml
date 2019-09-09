@@ -9,7 +9,30 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="" />
+    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/merge-file.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/merge-file.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/merge-index.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/merge-index.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/merge-recursive.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/merge-recursive.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/mktree.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/mktree.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/mv.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/mv.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/name-rev.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/name-rev.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/notes.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/notes.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/pack-objects.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/pack-objects.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/pack-redundant.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/pack-redundant.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/patch-id.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/patch-id.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/prune-packed.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/prune-packed.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/push.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/push.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/rebase.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/rebase.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/remote-ext.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/remote-ext.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/repack.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/repack.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/reset.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/reset.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/rev-parse.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/rev-parse.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/revert.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/revert.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/rm.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/rm.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/shortlog.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/shortlog.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/commit-graph.c" beforeDir="false" afterPath="$PROJECT_DIR$/commit-graph.c" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +94,7 @@
       <workItem from="1567816291068" duration="565000" />
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
-      <workItem from="1568031520248" duration="12637000" />
+      <workItem from="1568031520248" duration="16561000" />
     </task>
     <servers />
   </component>

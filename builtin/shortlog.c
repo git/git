@@ -312,7 +312,7 @@ parse_done:
 	log.file = rev.diffopt.file;
 
 	/* assume HEAD if from a tty */
-	if (!nongit && !rev.pending.nr && isatty(0))
+	if (!(nongit || rev.pending.nr) && isatty(0))
 		add_head_to_pending(&rev);
 	if (rev.pending.nr == 0) {
 		if (isatty(0))

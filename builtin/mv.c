@@ -284,13 +284,11 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 							      submodule_gitfile[i],
 							      1);
 		}
-
-		if (mode == WORKING_DIRECTORY)
-			continue;
-
-		pos = cache_name_pos(src, strlen(src));
-		assert(pos >= 0);
-		rename_cache_entry_at(pos, dst);
+		if (mode != WORKING_DIRECTORY) {
+            pos = cache_name_pos(src, strlen(src));
+            assert(pos >= 0);
+            rename_cache_entry_at(pos, dst);
+        }
 	}
 
 	if (gitmodules_modified)

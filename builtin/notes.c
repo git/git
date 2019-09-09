@@ -674,15 +674,14 @@ static int show(int argc, const char **argv, const char *prefix)
 	t = init_notes_check("show", 0);
 	note = get_note(t, &object);
 
-	if (!note)
-		retval = error(_("no note found for object %s."),
-			       oid_to_hex(&object));
-	else {
-		const char *show_args[3] = {"show", oid_to_hex(note), NULL};
-		retval = execv_git_cmd(show_args);
-	}
-	free_notes(t);
-	return retval;
+    if (note != NULL) {
+        const char *show_args[3] = {"show", oid_to_hex(note), NULL};
+        retval = execv_git_cmd(show_args);
+    } else
+        retval = error(_("no note found for object %s."),
+                       oid_to_hex(&object));
+    free_notes(t);
+    return retval;
 }
 
 static int merge_abort(struct notes_merge_options *o)
@@ -1035,5 +1034,5 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_usage, options);
 	}
 
-	return result ? 1 : 0;
+	return (result != 0);
 }

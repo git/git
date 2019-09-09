@@ -119,22 +119,18 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 	/* Check the type of object identified by sha1 */
 	obj_type = oid_object_info(the_repository, &oid, NULL);
 	if (obj_type < 0) {
-		if (allow_missing) {
-			; /* no problem - missing objects are presumed to be of the right type */
-		} else {
-			die("entry '%s' object %s is unavailable", path, oid_to_hex(&oid));
-		}
-	} else {
-		if (obj_type != mode_type) {
-			/*
-			 * The object exists but is of the wrong type.
-			 * This is a problem regardless of allow_missing
-			 * because the new tree entry will never be correct.
-			 */
-			die("entry '%s' object %s is a %s but specified type was (%s)",
-				path, oid_to_hex(&oid), type_name(obj_type), type_name(mode_type));
-		}
-	}
+        if (!allow_missing) {
+            die("entry '%s' object %s is unavailable", path, oid_to_hex(&oid));
+        }
+    } else if (obj_type != mode_type) {
+        /*
+         * The object exists but is of the wrong type.
+         * This is a problem regardless of allow_missing
+         * because the new tree entry will never be correct.
+         */
+        die("entry '%s' object %s is a %s but specified type was (%s)",
+            path, oid_to_hex(&oid), type_name(obj_type), type_name(mode_type));
+    }
 
 	append_to_tree(mode, &oid, path);
 	free(to_free);
@@ -174,20 +170,13 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 			}
 			mktree_line(sb.buf, nul_term_line, allow_missing);
 		}
-		if (is_batch_mode && got_eof && used < 1) {
-			/*
-			 * Execution gets here if the last tree entry is terminated with a
-			 * new-line.  The final new-line has been made optional to be
-			 * consistent with the original non-batch behaviour of mktree.
-			 */
-			; /* skip creating an empty tree */
-		} else {
-			write_tree(&oid);
-			puts(oid_to_hex(&oid));
-			fflush(stdout);
-		}
-		used=0; /* reset tree entry buffer for re-use in batch mode */
-	}
+        if (!(is_batch_mode && got_eof) || used >= 1) {
+            write_tree(&oid);
+            puts(oid_to_hex(&oid));
+            fflush(stdout);
+        }
+        used=0; /* reset tree entry buffer for re-use in batch mode */
+    }
 	strbuf_release(&sb);
 	exit(0);
 }

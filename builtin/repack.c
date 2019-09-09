@@ -119,11 +119,11 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list,
 
 		fname = xmemdupz(e->d_name, len);
 
-		if (!file_exists(mkpath("%s/%s.keep", packdir, fname)))
-			string_list_append_nodup(fname_list, fname);
-		else
-			free(fname);
-	}
+        if (file_exists(mkpath("%s/%s.keep", packdir, fname)))
+            free(fname);
+        else
+            string_list_append_nodup(fname_list, fname);
+    }
 	closedir(dir);
 }
 
