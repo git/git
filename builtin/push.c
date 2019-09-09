@@ -385,29 +385,13 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 }
 
 static int do_push(const char *repo, int flags,
-		   const struct string_list *push_options)
+		   const struct string_list *push_options,
+		   struct remote *remote)
 {
 	int i, errs;
-	struct remote *remote = pushremote_get(repo);
 	const char **url;
 	int url_nr;
 	struct refspec *push_refspec = &rs;
-
-	if (!remote) {
-		if (repo)
-			die(_("bad repository '%s'"), repo);
-		die(_("No configured push destination.\n"
-		    "Either specify the URL from the command-line or configure a remote repository using\n"
-		    "\n"
-		    "    git remote add <name> <url>\n"
-		    "\n"
-		    "and then push using the remote name\n"
-		    "\n"
-		    "    git push <name>\n"));
-	}
-
-	if (remote->mirror)
-		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
 
 	if (push_options->nr)
 		flags |= TRANSPORT_PUSH_OPTIONS;
@@ -548,6 +532,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	struct string_list push_options_cmdline = STRING_LIST_INIT_DUP;
 	struct string_list *push_options;
 	const struct string_list_item *item;
+	struct remote *remote;
 
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -602,20 +587,6 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		die(_("--delete is incompatible with --all, --mirror and --tags"));
 	if (deleterefs && argc < 2)
 		die(_("--delete doesn't make sense without any refs"));
-	if (flags & TRANSPORT_PUSH_ALL) {
-		if (tags)
-			die(_("--all and --tags are incompatible"));
-		if (argc >= 2)
-			die(_("--all can't be combined with refspecs"));
-	}
-	if (flags & TRANSPORT_PUSH_MIRROR) {
-		if (tags)
-			die(_("--mirror and --tags are incompatible"));
-		if (argc >= 2)
-			die(_("--mirror can't be combined with refspecs"));
-	}
-	if ((flags & TRANSPORT_PUSH_ALL) && (flags & TRANSPORT_PUSH_MIRROR))
-		die(_("--all and --mirror are incompatible"));
 
 	if (recurse_submodules == RECURSE_SUBMODULES_CHECK)
 		flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
@@ -632,11 +603,43 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		set_refspecs(argv + 1, argc - 1, repo);
 	}
 
+	remote = pushremote_get(repo);
+	if (!remote) {
+		if (repo)
+			die(_("bad repository '%s'"), repo);
+		die(_("No configured push destination.\n"
+		    "Either specify the URL from the command-line or configure a remote repository using\n"
+		    "\n"
+		    "    git remote add <name> <url>\n"
+		    "\n"
+		    "and then push using the remote name\n"
+		    "\n"
+		    "    git push <name>\n"));
+	}
+
+	if (remote->mirror)
+		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
+
+	if (flags & TRANSPORT_PUSH_ALL) {
+		if (tags)
+			die(_("--all and --tags are incompatible"));
+		if (argc >= 2)
+			die(_("--all can't be combined with refspecs"));
+	}
+	if (flags & TRANSPORT_PUSH_MIRROR) {
+		if (tags)
+			die(_("--mirror and --tags are incompatible"));
+		if (argc >= 2)
+			die(_("--mirror can't be combined with refspecs"));
+	}
+	if ((flags & TRANSPORT_PUSH_ALL) && (flags & TRANSPORT_PUSH_MIRROR))
+		die(_("--all and --mirror are incompatible"));
+
 	for_each_string_list_item(item, push_options)
 		if (strchr(item->string, '\n'))
 			die(_("push options must not have new line characters"));
 
-	rc = do_push(repo, flags, push_options);
+	rc = do_push(repo, flags, push_options, remote);
 	string_list_clear(&push_options_cmdline, 0);
 	string_list_clear(&push_options_config, 0);
 	if (rc == -1)
