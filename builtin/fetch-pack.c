@@ -173,7 +173,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	if (i < argc) {
         dest = argv[i++];
         while (i < argc)
-            add_sought_entry(&sought, &nr_sought, &alloc_sought, argv[i++])
+            add_sought_entry(&sought, &nr_sought, &alloc_sought, argv[i++]);
     }
 	else
 		usage(fetch_pack_usage);

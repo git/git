@@ -9,9 +9,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/builtin/checkout.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/checkout.c" afterDir="false" />
-    </list>
+    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +61,7 @@
       <workItem from="1567816291068" duration="565000" />
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
-      <workItem from="1568031520248" duration="7598000" />
+      <workItem from="1568031520248" duration="7602000" />
     </task>
     <servers />
   </component>
