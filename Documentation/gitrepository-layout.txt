@@ -59,7 +59,7 @@ objects/[0-9a-f][0-9a-f]::
 	here are often called 'unpacked' (or 'loose') objects.
 
 objects/pack::
-	Packs (files that store many object in compressed form,
+	Packs (files that store many objects in compressed form,
 	along with index files to allow them to be randomly
 	accessed) are found in this directory.
 
