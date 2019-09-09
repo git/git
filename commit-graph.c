@@ -511,19 +511,17 @@ int generation_numbers_enabled(struct repository *r)
 	if (!g->num_commits)
 		return 0;
 
-	first_generation = get_be32(g->chunk_commit_data +
-				    g->hash_len + 8) >> 2;
-
-	return first_generation != NULL;
+	return (get_be32(g->chunk_commit_data +
+				    g->hash_len + 8) >> 2) != 0;
 }
 
 static void close_commit_graph_one(struct commit_graph *g)
 {
-	if (!g)
-		return;
+	if (g) {
 
-	close_commit_graph_one(g->base_graph);
-	free_commit_graph(g);
+        close_commit_graph_one(g->base_graph);
+        free_commit_graph(g);
+    }
 }
 
 void close_commit_graph(struct raw_object_store *o)

@@ -11,57 +11,8 @@
   <component name="ChangeListManager">
     <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apply.c" beforeDir="false" afterPath="$PROJECT_DIR$/apply.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bisect.c" beforeDir="false" afterPath="$PROJECT_DIR$/bisect.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/add.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/add.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/archive.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/archive.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/bisect--helper.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/bisect--helper.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/blame.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/blame.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/fsck.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/fsck.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/grep.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/grep.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/hash-object.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/hash-object.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/help.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/help.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/index-pack.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/index-pack.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/interpret-trailers.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/interpret-trailers.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/ls-files.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/ls-files.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/mailsplit.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/mailsplit.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/name-rev.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/name-rev.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/push.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/push.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/rebase.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/rebase.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/replace.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/replace.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/show-branch.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/show-branch.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/stash.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/stash.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/combine-diff.c" beforeDir="false" afterPath="$PROJECT_DIR$/combine-diff.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/commit-graph.c" beforeDir="false" afterPath="$PROJECT_DIR$/commit-graph.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.c" beforeDir="false" afterPath="$PROJECT_DIR$/config.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/connect.c" beforeDir="false" afterPath="$PROJECT_DIR$/connect.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/credential.c" beforeDir="false" afterPath="$PROJECT_DIR$/credential.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/diff.c" beforeDir="false" afterPath="$PROJECT_DIR$/diff.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ewah/ewah_bitmap.c" beforeDir="false" afterPath="$PROJECT_DIR$/ewah/ewah_bitmap.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/git.c" beforeDir="false" afterPath="$PROJECT_DIR$/git.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gpg-interface.c" beforeDir="false" afterPath="$PROJECT_DIR$/gpg-interface.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/grep.c" beforeDir="false" afterPath="$PROJECT_DIR$/grep.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kwset.c" beforeDir="false" afterPath="$PROJECT_DIR$/kwset.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/name-hash.c" beforeDir="false" afterPath="$PROJECT_DIR$/name-hash.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/negotiator/default.c" beforeDir="false" afterPath="$PROJECT_DIR$/negotiator/default.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/negotiator/skipping.c" beforeDir="false" afterPath="$PROJECT_DIR$/negotiator/skipping.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packfile.c" beforeDir="false" afterPath="$PROJECT_DIR$/packfile.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/read-cache.c" beforeDir="false" afterPath="$PROJECT_DIR$/read-cache.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ref-filter.c" beforeDir="false" afterPath="$PROJECT_DIR$/ref-filter.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/refs.c" beforeDir="false" afterPath="$PROJECT_DIR$/refs.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/refs/files-backend.c" beforeDir="false" afterPath="$PROJECT_DIR$/refs/files-backend.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/refs/iterator.c" beforeDir="false" afterPath="$PROJECT_DIR$/refs/iterator.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/remote.c" beforeDir="false" afterPath="$PROJECT_DIR$/remote.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rerere.c" beforeDir="false" afterPath="$PROJECT_DIR$/rerere.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/revision.c" beforeDir="false" afterPath="$PROJECT_DIR$/revision.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sequencer.c" beforeDir="false" afterPath="$PROJECT_DIR$/sequencer.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sha1-name.c" beforeDir="false" afterPath="$PROJECT_DIR$/sha1-name.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/t/helper/test-path-utils.c" beforeDir="false" afterPath="$PROJECT_DIR$/t/helper/test-path-utils.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trace.c" beforeDir="false" afterPath="$PROJECT_DIR$/trace.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trace2/tr2_dst.c" beforeDir="false" afterPath="$PROJECT_DIR$/trace2/tr2_dst.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/transport.c" beforeDir="false" afterPath="$PROJECT_DIR$/transport.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/unpack-trees.c" beforeDir="false" afterPath="$PROJECT_DIR$/unpack-trees.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ws.c" beforeDir="false" afterPath="$PROJECT_DIR$/ws.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -124,7 +75,7 @@
       <workItem from="1567816291068" duration="565000" />
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
-      <workItem from="1568031520248" duration="11662000" />
+      <workItem from="1568031520248" duration="12205000" />
     </task>
     <servers />
   </component>

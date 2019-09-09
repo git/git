@@ -532,7 +532,7 @@ static unsigned long find_next(struct sline *sline,
 	 * that are surrounded by interesting() ones.
 	 */
 	while (i <= cnt)
-		if (look_for_uninteresting != 0 == !(sline[i].flag & mark))
+		if ((look_for_uninteresting != 0) == !(sline[i].flag & mark))
 			return i;
 		else
 			i++;
