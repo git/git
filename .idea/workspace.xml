@@ -10,8 +10,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/merge-base.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/merge-base.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/checkout.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/checkout.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
