@@ -170,8 +170,11 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	if (deepen_not.nr)
 		args.deepen_not = &deepen_not;
 
-	if (i < argc)
-		dest = argv[i++];
+	if (i < argc) {
+        dest = argv[i++];
+        while (i < argc)
+            add_sought_entry(&sought, &nr_sought, &alloc_sought, argv[i++])
+    }
 	else
 		usage(fetch_pack_usage);
 
@@ -179,8 +182,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	 * Copy refs from cmdline to growable list, then append any
 	 * refs from the standard input:
 	 */
-	for (; i < argc; i++)
-		add_sought_entry(&sought, &nr_sought, &alloc_sought, argv[i]);
+
 	if (args.stdin_refs) {
 		if (args.stateless_rpc) {
 			/* in stateless RPC mode we use pkt-line to read

@@ -210,8 +210,8 @@ static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
 	}
 	if (stage == 2)
 		return error(_("path '%s' does not have our version"), ce->name);
-	else
-		return error(_("path '%s' does not have their version"), ce->name);
+
+	return error(_("path '%s' does not have their version"), ce->name);
 }
 
 static int checkout_merged(int pos, const struct checkout *state, int *nr_checkouts)
@@ -904,7 +904,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	remove_branch_state(the_repository, !opts->quiet);
 	strbuf_release(&msg);
 	if (!opts->quiet &&
-	    (new_branch_info->path || (!opts->force_detach && !strcmp(new_branch_info->name, "HEAD"))))
+	    (new_branch_info->path || (!(opts->force_detach || strcmp(new_branch_info->name, "HEAD")))))
 		report_tracking(new_branch_info);
 }
 
@@ -1105,13 +1105,13 @@ static void setup_new_branch_info_and_source_tree(
 		new_branch_info->path = NULL; /* not an existing branch */
 
 	new_branch_info->commit = lookup_commit_reference_gently(the_repository, rev, 1);
-	if (!new_branch_info->commit) {
-		/* not a commit */
-		*source_tree = parse_tree_indirect(rev);
-	} else {
-		parse_commit_or_die(new_branch_info->commit);
-		*source_tree = get_commit_tree(new_branch_info->commit);
-	}
+    if (new_branch_info->commit != NULL) {
+        parse_commit_or_die(new_branch_info->commit);
+        *source_tree = get_commit_tree(new_branch_info->commit);
+    } else {
+        /* not a commit */
+        *source_tree = parse_tree_indirect(rev);
+    }
 }
 
 static int parse_branchname_arg(int argc, const char **argv,
@@ -1395,19 +1395,14 @@ static int checkout_branch(struct checkout_opts *opts,
 	    !opts->force_detach)
 		die(_("missing branch or commit argument"));
 
-	if (!opts->implicit_detach &&
-	    !opts->force_detach &&
-	    !opts->new_branch &&
-	    !opts->new_branch_force &&
-	    new_branch_info->name &&
-	    !new_branch_info->path)
+	if (!(opts->implicit_detach || opts->force_detach || opts->new_branch || opts->new_branch_force ||
+            new_branch_info->path) && new_branch_info->name))
 		die_expecting_a_branch(new_branch_info);
 
 	if (!opts->can_switch_when_in_progress)
 		die_if_some_operation_in_progress();
 
-	if (new_branch_info->path && !opts->force_detach && !opts->new_branch &&
-	    !opts->ignore_other_worktrees) {
+	if (new_branch_info->path && !(opts->force_detach || opts->new_branch || opts->ignore_other_worktrees)) {
 		int flag;
 		char *head_ref = resolve_refdup("HEAD", 0, NULL, &flag);
 		if (head_ref &&
@@ -1570,12 +1565,12 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	/* --track without -b/-B/--orphan should DWIM */
 	if (opts->track != BRANCH_TRACK_UNSPECIFIED && !opts->new_branch) {
 		const char *argv0 = argv[0];
-		if (!argc || !strcmp(argv0, "--"))
+		if (!(argc && strcmp(argv0, "--")))
 			die(_("--track needs a branch name"));
 		skip_prefix(argv0, "refs/", &argv0);
 		skip_prefix(argv0, "remotes/", &argv0);
 		argv0 = strchr(argv0, '/');
-		if (!argv0 || !argv0[1])
+		if (!(argv0 && argv0[1]))
 			die(_("missing branch name; try -b"));
 		opts->new_branch = argv0 + 1;
 	}
@@ -1679,9 +1674,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			       argv[0],
 			       dwim_remotes_matched);
 		return ret;
-	} else {
-		return checkout_branch(opts, &new_branch_info);
 	}
+
+	return checkout_branch(opts, &new_branch_info);
 }
 
 int cmd_checkout(int argc, const char **argv, const char *prefix)

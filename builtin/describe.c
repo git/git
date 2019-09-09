@@ -470,13 +470,14 @@ static void process_object(struct object *obj, const char *path, void *data)
 {
 	struct process_commit_data *pcd = data;
 
-	if (oideq(&pcd->looking_for, &obj->oid) && !pcd->dst->len) {
-		reset_revision_walk();
-		describe_commit(&pcd->current_commit, pcd->dst);
-		strbuf_addf(pcd->dst, ":%s", path);
-		free_commit_list(pcd->revs->commits);
-		pcd->revs->commits = NULL;
-	}
+    if (!oideq(&pcd->looking_for, &obj->oid) || pcd->dst->len)
+        return;
+
+    reset_revision_walk();
+    describe_commit(&pcd->current_commit, pcd->dst);
+    strbuf_addf(pcd->dst, ":%s", path);
+    free_commit_list(pcd->revs->commits);
+    pcd->revs->commits = NULL;
 }
 
 static void describe_blob(struct object_id oid, struct strbuf *dst)

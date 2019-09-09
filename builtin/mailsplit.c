@@ -21,26 +21,26 @@ static int is_from_line(const char *line, int len)
 
 	colon = line + len - 2;
 	line += 5;
-	for (;;) {
+	do
 		if (colon < line)
 			return 0;
-		if (*--colon == ':')
-			break;
-	}
+	} while (*--colon != ':');
 
-	if (!isdigit(colon[-4]) ||
-	    !isdigit(colon[-2]) ||
-	    !isdigit(colon[-1]) ||
-	    !isdigit(colon[ 1]) ||
-	    !isdigit(colon[ 2]))
+	if (!(isdigit(colon[-4]) &&
+	    isdigit(colon[-2]) &&
+	    isdigit(colon[-1]) &&
+	    isdigit(colon[ 1]) &&
+	    && isdigit(colon[ 2])))
 		return 0;
 
 	/* year */
-	if (strtol(colon+3, NULL, 10) <= 90)
-		return 0;
+	if (strtol(colon+3, NULL, 10) > 90)
+/* Ok, close enough */
+return 1;
 
-	/* Ok, close enough */
-	return 1;
+return 0;
+
+
 }
 
 static struct strbuf buf = STRBUF_INIT;
@@ -49,14 +49,13 @@ static int mboxrd;
 
 static int is_gtfrom(const struct strbuf *buf)
 {
-	size_t min = strlen(">From ");
-	size_t ngt;
 
-	if (buf->len < min)
-		return 0;
+	if (buf->len >= 6){
 
-	ngt = strspn(buf->buf, ">");
-	return ngt && starts_with(buf->buf + ngt, "From ");
+        size_t ngt = strspn(buf->buf, ">");
+        return ngt && starts_with(buf->buf + ngt, "From ");
+    }
+	return 0;
 }
 
 /* Called with the first line (potentially partial)
@@ -83,7 +82,7 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	/* Copy it out, while searching for a line that begins with
 	 * "From " and having something that looks like a date format.
 	 */
-	for (;;) {
+	do{
 		if (!keep_cr && buf.len > 1 && buf.buf[buf.len-1] == '\n' &&
 			buf.buf[buf.len-2] == '\r') {
 			strbuf_setlen(&buf, buf.len-2);
@@ -103,9 +102,8 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 			}
 			die_errno("cannot read mbox");
 		}
-		if (!is_bare && is_from_line(buf.buf, buf.len))
-			break; /* done with one message */
-	}
+
+	} while (is_bare || !is_from_line(buf.buf, buf.len)); //Done with one message
 	fclose(output);
 	return status;
 }
@@ -117,7 +115,6 @@ static int populate_maildir_list(struct string_list *list, const char *path)
 	char *name = NULL;
 	char *subs[] = { "cur", "new", NULL };
 	char **sub;
-	int ret = -1;
 
 	for (sub = subs; *sub; ++sub) {
 		free(name);
@@ -126,7 +123,8 @@ static int populate_maildir_list(struct string_list *list, const char *path)
 			if (errno == ENOENT)
 				continue;
 			error_errno("cannot opendir %s", name);
-			goto out;
+            free(name);
+            return -1;
 		}
 
 		while ((dent = readdir(dir)) != NULL) {
@@ -139,12 +137,8 @@ static int populate_maildir_list(struct string_list *list, const char *path)
 
 		closedir(dir);
 	}
-
-	ret = 0;
-
-out:
 	free(name);
-	return ret;
+	return 0;
 }
 
 static int maildir_filename_cmp(const char *a, const char *b)
@@ -219,7 +213,6 @@ out:
 static int split_mbox(const char *file, const char *dir, int allow_bare,
 		      int nr_prec, int skip)
 {
-	int ret = -1;
 	int peek;
 
 	FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
@@ -227,20 +220,19 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 
 	if (!f) {
 		error_errno("cannot open mbox %s", file);
-		goto out;
+		return -1;
 	}
 
 	do {
 		peek = fgetc(f);
 		if (peek == EOF) {
-			if (f == stdin)
-				/* empty stdin is OK */
-				ret = skip;
-			else {
-				fclose(f);
-				error(_("empty mbox: '%s'"), file);
-			}
-			goto out;
+			if (f == stdin) {
+                /* empty stdin is OK */
+               return skip;
+            }
+			fclose(f);
+			error(_("empty mbox: '%s'"), file);
+			return -1;
 		}
 	} while (isspace(peek));
 	ungetc(peek, f);
@@ -249,7 +241,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 		/* empty stdin is OK */
 		if (f != stdin) {
 			error("cannot read mbox %s", file);
-			goto out;
+			return -1;
 		}
 		file_done = 1;
 	}
@@ -263,9 +255,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 	if (f != stdin)
 		fclose(f);
 
-	ret = skip;
-out:
-	return ret;
+	return skip;
 }
 
 int cmd_mailsplit(int argc, const char **argv, const char *prefix)
@@ -323,11 +313,8 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 		default:
 			usage(git_mailsplit_usage);
 		}
-	} else {
-		/* New usage: if no more argument, parse stdin */
-		if ( !*argp )
-			argp = stdin_only;
-	}
+	} else if ( !*argp )
+        argp = stdin_only;
 
 	while (*argp) {
 		const char *arg = *argp++;

@@ -587,10 +587,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			die_errno (_("Cannot access work tree '%s'"),
 				   get_git_work_tree());
 	}
-	else {
-		if (work_tree)
-			set_git_work_tree(work_tree);
-	}
+	else if (work_tree)
+        set_git_work_tree(work_tree);
 
 	UNLEAK(real_git_dir);
 	UNLEAK(git_dir);

@@ -50,14 +50,9 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 		len = strlen(pathname);
 		spec += baselen;
 		speclen = strlen(spec);
-		if (speclen <= len)
-			continue;
-		if (spec[len] && spec[len] != '/')
-			continue;
-		if (memcmp(pathname, spec, len))
-			continue;
-		return 1;
-	}
+        if (speclen > len && (!spec[len]|| spec[len] == '/') && !memcmp(pathname, spec, len))
+            return 1;
+    }
 	return 0;
 }
 

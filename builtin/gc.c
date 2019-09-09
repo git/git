@@ -121,12 +121,10 @@ static int gc_config_is_timestamp_never(const char *var)
 	const char *value;
 	timestamp_t expire;
 
-	if (!git_config_get_value(var, &value) && value) {
-		if (parse_expiry_date(value, &expire))
-			die(_("failed to parse '%s' value '%s'"), var, value);
-		return expire == 0;
-	}
-	return 0;
+    if (git_config_get_value(var, &value) || !value) return 0;
+    if (parse_expiry_date(value, &expire))
+        die(_("failed to parse '%s' value '%s'"), var, value);
+    return expire == 0;
 }
 
 static void gc_config(void)
@@ -273,7 +271,7 @@ static uint64_t estimate_repack_memory(struct packed_git *pack)
 	unsigned long nr_objects = approximate_object_count();
 	size_t os_cache, heap;
 
-	if (!pack || !nr_objects)
+	if (!(pack && nr_objects))
 		return 0;
 
 	/*

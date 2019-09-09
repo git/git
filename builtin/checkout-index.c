@@ -22,17 +22,26 @@ static struct checkout state = CHECKOUT_INIT;
 
 static void write_tempfile_record(const char *name, const char *prefix)
 {
-	int i;
 
 	if (CHECKOUT_ALL == checkout_stage) {
-		for (i = 1; i < 4; i++) {
-			if (i > 1)
-				putchar(' ');
-			if (topath[i][0])
-				fputs(topath[i], stdout);
+        if (topath[1][0])
+            fputs(topath[1], stdout);
+        else
+            putchar('.');
+
+
+		    putchar(' ');
+			if (topath[2][0])
+				fputs(topath[2], stdout);
 			else
 				putchar('.');
-		}
+
+        putchar(' ');
+        if (topath[3][0])
+            fputs(topath[3], stdout);
+        else
+            putchar('.');
+
 	} else
 		fputs(topath[checkout_stage], stdout);
 
@@ -40,9 +49,10 @@ static void write_tempfile_record(const char *name, const char *prefix)
 	write_name_quoted_relative(name, prefix, stdout,
 				   nul_term_line ? '\0' : '\n');
 
-	for (i = 0; i < 4; i++) {
-		topath[i][0] = 0;
-	}
+		topath[0][0] = 0;
+    topath[1][0] = 0;
+    topath[2][0] = 0;
+    topath[3][0] = 0;
 }
 
 static int checkout_file(const char *name, const char *prefix)
@@ -190,8 +200,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	prefix_length = prefix ? strlen(prefix) : 0;
 
 	if (read_cache() < 0) {
-		die("invalid cache");
-	}
+        die("invalid cache");
+    }
 
 	argc = parse_options(argc, argv, prefix, builtin_checkout_index_options,
 			builtin_checkout_index_usage, 0);
@@ -215,17 +225,17 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 	/* Check out named files first */
 	for (i = 0; i < argc; i++) {
-		const char *arg = argv[i];
-		char *p;
+        const char *arg = argv[i];
+        char *p;
 
-		if (all)
-			die("git checkout-index: don't mix '--all' and explicit filenames");
-		if (read_from_stdin)
-			die("git checkout-index: don't mix '--stdin' and explicit filenames");
-		p = prefix_path(prefix, prefix_length, arg);
-		checkout_file(p, prefix);
-		free(p);
-	}
+        if (all)
+            die("git checkout-index: don't mix '--all' and explicit filenames");
+        if (read_from_stdin)
+            die("git checkout-index: don't mix '--stdin' and explicit filenames");
+        p = prefix_path(prefix, prefix_length, arg);
+        checkout_file(p, prefix);
+        free(p);
+    }
 
 	if (read_from_stdin) {
 		struct strbuf buf = STRBUF_INIT;

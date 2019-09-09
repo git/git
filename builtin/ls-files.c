@@ -270,12 +270,12 @@ static void show_ru_info(const struct index_state *istate)
 				    max_prefix_len, ps_matched, 0))
 			continue; /* uninterested */
 		for (i = 0; i < 3; i++) {
-			if (!ui->mode[i])
-				continue;
-			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-			       find_unique_abbrev(&ui->oid[i], abbrev),
-			       i + 1);
-			write_name(path);
+			if (ui->mode[i]) {
+                printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
+                       find_unique_abbrev(&ui->oid[i], abbrev),
+                       i + 1);
+                write_name(path);
+            }
 		}
 	}
 }

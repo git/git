@@ -244,7 +244,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		}
 	}
 
-	if (!*dir_gone && !quiet) {
+	if (!(*dir_gone || quiet)) {
 		int i;
 		for (i = 0; i < dels.nr; i++)
 			printf(dry_run ?  _(msg_would_remove) : _(msg_remove), dels.items[i].string);
@@ -481,15 +481,15 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 		is_number = 1;
 		for (p = (*ptr)->buf; *p; p++) {
 			if ('-' == *p) {
-				if (!is_range) {
-					is_range = 1;
-					is_number = 0;
-				} else {
-					is_number = 0;
-					is_range = 0;
-					break;
-				}
-			} else if (!isdigit(*p)) {
+                if (is_range) {
+                    is_number = 0;
+                    is_range = 0;
+                    break;
+                } else {
+                    is_range = 1;
+                    is_number = 0;
+                }
+            } else if (!isdigit(*p)) {
 				is_number = 0;
 				is_range = 0;
 				break;
@@ -732,7 +732,6 @@ static int select_by_numbers_cmd(void)
 		} else if (i == chosen[j]) {
 			/* delete selected item */
 			j++;
-			continue;
 		} else {
 			/* end of chosen (chosen[j] == EOF), won't delete */
 			*(items[i].string) = '\0';

@@ -468,11 +468,10 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (grep_config(var, value, cb) < 0)
-		return -1;
-	if (git_gpg_config(var, value, cb) < 0)
-		return -1;
-	return git_diff_ui_config(var, value, cb);
+    if (grep_config(var, value, cb) >= 0 && git_gpg_config(var, value, cb) >= 0)
+        return git_diff_ui_config(var, value, cb);
+
+    return -1;
 }
 
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
@@ -801,13 +800,14 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "format.cc")) {
-		if (!value)
-			return config_error_nonbool(var);
-		string_list_append(&extra_cc, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff") ||
-	    !strcmp(var, "color.ui") || !strcmp(var, "diff.submodule")) {
+        if (value != NULL) {
+            string_list_append(&extra_cc, value);
+            return 0;
+        }
+        return config_error_nonbool(var);
+    }
+	if (!(strcmp(var, "diff.color") && strcmp(var, "color.diff") && strcmp(var, "color.ui") &&
+          strcmp(var, "diff.submodule"))) {
 		return 0;
 	}
 	if (!strcmp(var, "format.numbered")) {
@@ -920,14 +920,14 @@ static int open_next_file(struct commit *commit, const char *subject,
 	if (!quiet)
 		printf("%s\n", filename.buf + outdir_offset);
 
-	if ((rev->diffopt.file = fopen(filename.buf, "w")) == NULL) {
-		error_errno(_("cannot open patch file %s"), filename.buf);
-		strbuf_release(&filename);
-		return -1;
-	}
+    if ((rev->diffopt.file = fopen(filename.buf, "w")) != NULL) {
 
-	strbuf_release(&filename);
-	return 0;
+        strbuf_release(&filename);
+        return 0;
+    }
+        error_errno(_("cannot open patch file %s"), filename.buf);
+        strbuf_release(&filename);
+        return -1;
 }
 
 static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
@@ -984,27 +984,27 @@ static void gen_message_id(struct rev_info *info, char *base)
 
 static void print_signature(FILE *file)
 {
-	if (!signature || !*signature)
-		return;
+    if (signature && *signature) {
 
-	fprintf(file, "-- \n%s", signature);
-	if (signature[strlen(signature)-1] != '\n')
-		putc('\n', file);
-	putc('\n', file);
+        fprintf(file, "-- \n%s", signature);
+        if (signature[strlen(signature) - 1] != '\n')
+            putc('\n', file);
+        putc('\n', file);
+    }
 }
 
 static void add_branch_description(struct strbuf *buf, const char *branch_name)
 {
-	struct strbuf desc = STRBUF_INIT;
-	if (!branch_name || !*branch_name)
-		return;
-	read_branch_desc(&desc, branch_name);
-	if (desc.len) {
-		strbuf_addch(buf, '\n');
-		strbuf_addbuf(buf, &desc);
-		strbuf_addch(buf, '\n');
-	}
-	strbuf_release(&desc);
+    if (branch_name && *branch_name) {
+        struct strbuf desc = STRBUF_INIT;
+        read_branch_desc(&desc, branch_name);
+        if (desc.len) {
+            strbuf_addch(buf, '\n');
+            strbuf_addbuf(buf, &desc);
+            strbuf_addch(buf, '\n');
+        }
+        strbuf_release(&desc);
+    }
 }
 
 static char *find_branch_name(struct rev_info *rev)

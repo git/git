@@ -229,10 +229,11 @@ static int traverse_reachable(void)
 
 static int mark_used(struct object *obj, int type, void *data, struct fsck_options *options)
 {
-	if (!obj)
-		return 1;
-	obj->flags |= USED;
-	return 0;
+    if (obj != NULL) {
+        obj->flags |= USED;
+        return 0;
+    }
+    return 1;
 }
 
 static void mark_unreachable_referents(const struct object_id *oid)
@@ -287,16 +288,14 @@ static void check_reachable_object(struct object *obj)
 	 * except if it was in a pack-file and we didn't
 	 * do a full fsck
 	 */
-	if (!(obj->flags & HAS_OBJ)) {
-		if (is_promisor_object(&obj->oid))
-			return;
-		if (has_object_pack(&obj->oid))
-			return; /* it is in pack - forget about it */
-		printf_ln(_("missing %s %s"), printable_type(obj),
-			  describe_object(obj));
-		errors_found |= ERROR_REACHABLE;
-		return;
-	}
+    if (!!(obj->flags & HAS_OBJ)) return;
+    if (is_promisor_object(&obj->oid))
+        return;
+    if (has_object_pack(&obj->oid))
+        return; /* it is in pack - forget about it */
+    printf_ln(_("missing %s %s"), printable_type(obj),
+          describe_object(obj));
+    errors_found |= ERROR_REACHABLE;
 }
 
 /*
@@ -881,13 +880,13 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			struct object *obj = lookup_object(the_repository,
 							   &oid);
 
-			if (!obj || !(obj->flags & HAS_OBJ)) {
-				if (is_promisor_object(&oid))
-					continue;
-				error(_("%s: object missing"), oid_to_hex(&oid));
-				errors_found |= ERROR_OBJECT;
-				continue;
-			}
+			if (!(obj && (obj->flags & HAS_OBJ))) {
+                if (!is_promisor_object(&oid)) {
+                    error(_("%s: object missing"), oid_to_hex(&oid));
+                    errors_found |= ERROR_OBJECT;
+                }
+                continue;
+            }
 
 			obj->flags |= USED;
 			if (name_objects)

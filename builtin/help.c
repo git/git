@@ -132,17 +132,16 @@ static int check_emacsclient_version(void)
 
 static void exec_woman_emacs(const char *path, const char *page)
 {
-	if (!check_emacsclient_version()) {
-		/* This works only with emacsclient version >= 22. */
-		struct strbuf man_page = STRBUF_INIT;
+    if (check_emacsclient_version() != 0) return;
+    /* This works only with emacsclient version >= 22. */
+    struct strbuf man_page = STRBUF_INIT;
 
-		if (!path)
-			path = "emacsclient";
-		strbuf_addf(&man_page, "(woman \"%s\")", page);
-		execlp(path, "emacsclient", "-e", man_page.buf, (char *)NULL);
-		warning_errno(_("failed to exec '%s'"), path);
-		strbuf_release(&man_page);
-	}
+    if (!path)
+        path = "emacsclient";
+    strbuf_addf(&man_page, "(woman \"%s\")", page);
+    execlp(path, "emacsclient", "-e", man_page.buf, (char *)NULL);
+    warning_errno(_("failed to exec '%s'"), path);
+    strbuf_release(&man_page);
 }
 
 static void exec_man_konqueror(const char *path, const char *page)
@@ -248,15 +247,15 @@ static int add_man_viewer_info(const char *var, const char *value)
 		return 0;
 
 	if (!strcmp(subkey, "path")) {
-		if (!value)
-			return config_error_nonbool(var);
-		return add_man_viewer_path(name, namelen, value);
-	}
+        if (value != NULL)
+            return add_man_viewer_path(name, namelen, value);
+        return config_error_nonbool(var);
+    }
 	if (!strcmp(subkey, "cmd")) {
-		if (!value)
-			return config_error_nonbool(var);
-		return add_man_viewer_cmd(name, namelen, value);
-	}
+        if (value != NULL)
+            return add_man_viewer_cmd(name, namelen, value);
+        return config_error_nonbool(var);
+    }
 
 	return 0;
 }
@@ -266,23 +265,26 @@ static int git_help_config(const char *var, const char *value, void *cb)
 	if (starts_with(var, "column."))
 		return git_column_config(var, value, "help", &colopts);
 	if (!strcmp(var, "help.format")) {
-		if (!value)
-			return config_error_nonbool(var);
-		help_format = parse_help_format(value);
-		return 0;
-	}
+        if (value != NULL) {
+            help_format = parse_help_format(value);
+            return 0;
+        }
+        return config_error_nonbool(var);
+    }
 	if (!strcmp(var, "help.htmlpath")) {
-		if (!value)
-			return config_error_nonbool(var);
-		html_path = xstrdup(value);
-		return 0;
-	}
+        if (value != NULL) {
+            html_path = xstrdup(value);
+            return 0;
+        }
+        return config_error_nonbool(var);
+    }
 	if (!strcmp(var, "man.viewer")) {
-		if (!value)
-			return config_error_nonbool(var);
-		add_man_viewer(value);
-		return 0;
-	}
+        if (value != NULL) {
+            add_man_viewer(value);
+            return 0;
+        }
+        return config_error_nonbool(var);
+    }
 	if (starts_with(var, "man."))
 		return add_man_viewer_info(var, value);
 
@@ -305,12 +307,12 @@ static const char *cmd_to_page(const char *git_cmd)
 {
 	if (!git_cmd)
 		return "git";
-	else if (starts_with(git_cmd, "git"))
+	if (starts_with(git_cmd, "git"))
 		return git_cmd;
-	else if (is_git_command(git_cmd))
+	if (is_git_command(git_cmd))
 		return xstrfmt("git-%s", git_cmd);
-	else
-		return xstrfmt("git%s", git_cmd);
+
+	return xstrfmt("git%s", git_cmd);
 }
 
 static void setup_man_path(void)
