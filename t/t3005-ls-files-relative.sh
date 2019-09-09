@@ -7,8 +7,6 @@ This test runs git ls-files with various relative path arguments.
 
 . ./test-lib.sh
 
-new_line='
-'
 sq=\'
 
 test_expect_success 'prepare' '

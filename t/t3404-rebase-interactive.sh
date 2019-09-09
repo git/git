@@ -155,8 +155,6 @@ test_expect_success 'rebase -x with empty command fails' '
 	test_i18ncmp expected actual
 '
 
-LF='
-'
 test_expect_success 'rebase -x with newline in command fails' '
 	test_when_finished "git rebase --abort ||:" &&
 	test_must_fail env git rebase -x "a${LF}b" @ 2>actual &&
