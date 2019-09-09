@@ -10,8 +10,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/combine-diff.c" beforeDir="false" afterPath="$PROJECT_DIR$/combine-diff.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/commit-graph.c" beforeDir="false" afterPath="$PROJECT_DIR$/commit-graph.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -75,7 +73,7 @@
       <workItem from="1567816291068" duration="565000" />
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
-      <workItem from="1568031520248" duration="12205000" />
+      <workItem from="1568031520248" duration="12414000" />
     </task>
     <servers />
   </component>

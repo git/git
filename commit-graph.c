@@ -501,18 +501,17 @@ static int prepare_commit_graph(struct repository *r)
 
 int generation_numbers_enabled(struct repository *r)
 {
-	uint32_t first_generation;
 	struct commit_graph *g;
 	if (!prepare_commit_graph(r))
 	       return 0;
 
 	g = r->objects->commit_graph;
 
-	if (!g->num_commits)
-		return 0;
+    if (g->num_commits != NULL)
+        return (get_be32(g->chunk_commit_data +
+                         g->hash_len + 8) >> 2) != 0;
+    return 0;
 
-	return (get_be32(g->chunk_commit_data +
-				    g->hash_len + 8) >> 2) != 0;
 }
 
 static void close_commit_graph_one(struct commit_graph *g)
