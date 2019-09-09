@@ -26,7 +26,7 @@ static int is_from_line(const char *line, int len) {
     } while (*--colon != ':');
 
     return ((isdigit(colon[-4]) && isdigit(colon[-2])) && (isdigit(colon[-1]) && isdigit(colon[1])) &&
-            (isdigit(colon[2]) && strtol(colon + 3, NULL, 10) > 90))
+            (isdigit(colon[2]) && strtol(colon + 3, NULL, 10) > 90));
 }
 
 static struct strbuf buf = STRBUF_INIT;

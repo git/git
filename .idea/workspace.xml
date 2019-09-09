@@ -9,13 +9,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/fmt-merge-msg.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/fmt-merge-msg.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/grep.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/grep.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/help.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/help.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/mailsplit.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/mailsplit.c" afterDir="false" />
-    </list>
+    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,6 +25,7 @@
   <component name="ProjectId" id="1QU3LylgK9XIko9NIRlT8Bczh8p" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="node.js.detected.package.eslint" value="true" />
@@ -67,7 +62,7 @@
       <workItem from="1567816291068" duration="565000" />
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
-      <workItem from="1568031520248" duration="8839000" />
+      <workItem from="1568031520248" duration="9200000" />
     </task>
     <servers />
   </component>
