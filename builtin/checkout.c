@@ -1396,7 +1396,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		die(_("missing branch or commit argument"));
 
 	if (!(opts->implicit_detach || opts->force_detach || opts->new_branch || opts->new_branch_force ||
-            new_branch_info->path) && new_branch_info->name))
+            new_branch_info->path) && new_branch_info->name)
 		die_expecting_a_branch(new_branch_info);
 
 	if (!opts->can_switch_when_in_progress)

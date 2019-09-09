@@ -105,10 +105,7 @@ static int handle_is_ancestor(int argc, const char **argv)
 		die("--is-ancestor takes exactly two commits");
 	one = get_commit_reference(argv[0]);
 	two = get_commit_reference(argv[1]);
-	if (in_merge_bases(one, two))
-		return 0;
-	else
-		return 1;
+	return !in_merge_bases(one, two);
 }
 
 static int handle_fork_point(int argc, const char **argv)
@@ -135,11 +132,12 @@ static int handle_fork_point(int argc, const char **argv)
 
 	fork_point = get_fork_point(refname, derived);
 
-	if (!fork_point)
-		return 1;
+    if (fork_point != NULL) {
 
-	printf("%s\n", oid_to_hex(&fork_point->object.oid));
-	return 0;
+        printf("%s\n", oid_to_hex(&fork_point->object.oid));
+        return 0;
+    }
+    return 1;
 }
 
 int cmd_merge_base(int argc, const char **argv, const char *prefix)

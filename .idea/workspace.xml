@@ -10,26 +10,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/checkout-index.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/checkout-index.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/checkout.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/checkout.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/clean.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/clean.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/commit-graph.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/commit-graph.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/describe.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/describe.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/diff-files.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/diff-files.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/diff-index.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/diff-index.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/fetch-pack.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/fetch-pack.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/fsck.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/fsck.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/gc.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/gc.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/help.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/help.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/init-db.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/init-db.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/log.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/log.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/ls-files.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/ls-files.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/ls-remote.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/ls-remote.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/ls-tree.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/ls-tree.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/mailsplit.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/mailsplit.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin/merge.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/merge.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/merge-base.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/merge-base.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -82,7 +64,7 @@
       <workItem from="1567816291068" duration="565000" />
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
-      <workItem from="1568031520248" duration="7065000" />
+      <workItem from="1568031520248" duration="7598000" />
     </task>
     <servers />
   </component>
