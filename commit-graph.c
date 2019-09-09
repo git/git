@@ -507,7 +507,7 @@ int generation_numbers_enabled(struct repository *r)
 
 	g = r->objects->commit_graph;
 
-    if (g->num_commit)
+    if (g->num_commits)
         return (get_be32(g->chunk_commit_data +
                          g->hash_len + 8) >> 2) != 0;
     return 0;
@@ -662,7 +662,7 @@ static int find_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 	if (item->graph_pos != COMMIT_NOT_FROM_GRAPH) {
 		*pos = item->graph_pos;
 		return 1;
-	} else {
+	}
 		struct commit_graph *cur_g = g;
 		uint32_t lex_index;
 
@@ -702,11 +702,11 @@ int parse_commit_in_graph(struct repository *r, struct commit *item)
 
 void load_commit_graph_info(struct repository *r, struct commit *item)
 {
-	uint32_t pos;
-	if (!prepare_commit_graph(r))
-		return;
-	if (find_commit_in_graph(item, r->objects->commit_graph, &pos))
-		fill_commit_graph_info(item, r->objects->commit_graph, pos);
+	if (prepare_commit_graph(r)) {
+        uint32_t pos;
+        if (find_commit_in_graph(item, r->objects->commit_graph, &pos))
+            fill_commit_graph_info(item, r->objects->commit_graph, pos);
+    }
 }
 
 static struct tree *load_tree_for_commit(struct repository *r,
