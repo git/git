@@ -231,7 +231,6 @@
 *.ipdb
 *.dll
 .vs/
-*.manifest
 Debug/
 Release/
 /UpgradeLog*.htm
