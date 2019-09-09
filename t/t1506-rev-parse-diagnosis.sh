@@ -8,10 +8,9 @@ exec </dev/null
 
 test_did_you_mean ()
 {
-	sq="'" &&
 	cat >expected <<-EOF &&
-	fatal: Path '$2$3' $4, but not ${5:-$sq$3$sq}.
-	Did you mean '$1:$2$3'${2:+ aka $sq$1:./$3$sq}?
+	fatal: Path '$2$3' $4, but not ${5:-$SQ$3$SQ}.
+	Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
 	EOF
 	test_cmp expected error
 }

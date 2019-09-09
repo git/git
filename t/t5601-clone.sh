@@ -434,7 +434,6 @@ test_expect_success 'double quoted plink.exe in GIT_SSH_COMMAND' '
 	expect_ssh "-v -P 123" myhost src
 '
 
-SQ="'"
 test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
 	GIT_SSH_COMMAND="$SQ$TRASH_DIRECTORY/plink.exe$SQ -v" \

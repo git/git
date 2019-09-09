@@ -158,7 +158,6 @@ test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	test_path_is_file .git/rebase-merge/patch
 '
 
-SQ="'"
 test_expect_success 'failed `merge <branch>` does not crash' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout conflicting-G &&

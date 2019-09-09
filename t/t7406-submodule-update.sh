@@ -158,7 +158,6 @@ test_expect_success 'submodule update --init from and of subdirectory' '
 	test_i18ncmp expect2 actual2
 '
 
-apos="'";
 test_expect_success 'submodule update does not fetch already present commits' '
 	(cd submodule &&
 	  echo line3 >> file &&
@@ -168,7 +167,7 @@ test_expect_success 'submodule update does not fetch already present commits' '
 	) &&
 	(cd super/submodule &&
 	  head=$(git rev-parse --verify HEAD) &&
-	  echo "Submodule path ${apos}submodule$apos: checked out $apos$head$apos" > ../../expected &&
+	  echo "Submodule path ${SQ}submodule$SQ: checked out $SQ$head$SQ" > ../../expected &&
 	  git reset --hard HEAD~1
 	) &&
 	(cd super &&

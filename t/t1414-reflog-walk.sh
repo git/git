@@ -18,10 +18,9 @@ do_walk () {
 	git log -g --format="%gd %gs" "$@"
 }
 
-sq="'"
 test_expect_success 'set up expected reflog' '
 	cat >expect.all <<-EOF
-	HEAD@{0} commit (merge): Merge branch ${sq}master${sq} into side
+	HEAD@{0} commit (merge): Merge branch ${SQ}master${SQ} into side
 	HEAD@{1} commit: three
 	HEAD@{2} checkout: moving from master to side
 	HEAD@{3} commit: two
