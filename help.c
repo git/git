@@ -774,7 +774,8 @@ static struct string_list guess_refs(const char *ref)
 	return similar_refs;
 }
 
-void help_unknown_ref(const char *ref, const char *cmd, const char *error)
+NORETURN void help_unknown_ref(const char *ref, const char *cmd,
+			       const char *error)
 {
 	int i;
 	struct string_list suggested_refs = guess_refs(ref);
