@@ -204,4 +204,23 @@ test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 	grep $size big.lst
 '
 
+build_tree() {
+	perl -e '
+		my $hash = $ARGV[0];
+		foreach my $order (2..6) {
+			$first = 10 ** $order;
+			foreach my $i (-13..-9) {
+				my $name = "a" x ($first + $i);
+				print "100644 blob $hash\t$name\n"
+			}
+		}
+	' "$1"
+}
+
+test_expect_success 'tar archive with long paths' '
+	blob=$(echo foo | git hash-object -w --stdin) &&
+	tree=$(build_tree $blob | git mktree) &&
+	git archive -o long_paths.tar $tree
+'
+
 test_done
