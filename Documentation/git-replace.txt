@@ -123,10 +123,10 @@ The following format are available:
 CREATING REPLACEMENT OBJECTS
 ----------------------------
 
-linkgit:git-filter-branch[1], linkgit:git-hash-object[1] and
-linkgit:git-rebase[1], among other git commands, can be used to create
-replacement objects from existing objects. The `--edit` option can
-also be used with 'git replace' to create a replacement object by
+linkgit:git-hash-object[1], linkgit:git-rebase[1], and
+https://github.com/newren/git-filter-repo[git-filter-repo], among other git commands, can be used to
+create replacement objects from existing objects. The `--edit` option
+can also be used with 'git replace' to create a replacement object by
 editing an existing object.
 
 If you want to replace many blobs, trees or commits that are part of a
@@ -148,13 +148,13 @@ pending objects.
 SEE ALSO
 --------
 linkgit:git-hash-object[1]
-linkgit:git-filter-branch[1]
 linkgit:git-rebase[1]
 linkgit:git-tag[1]
 linkgit:git-branch[1]
 linkgit:git-commit[1]
 linkgit:git-var[1]
 linkgit:git[1]
+https://github.com/newren/git-filter-repo[git-filter-repo]
 
 GIT
 ---
