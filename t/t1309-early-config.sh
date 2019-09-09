@@ -91,7 +91,12 @@ test_expect_failure 'ignore .git/ with invalid config' '
 
 test_expect_success 'early config and onbranch' '
 	echo "[broken" >broken &&
-	test_with_config "[includeif \"onbranch:refs/heads/master\"]path=../broken"
+	test_with_config "[includeif \"onbranch:master\"]path=../broken"
+'
+
+test_expect_success 'onbranch config outside of git repo' '
+	test_config_global includeIf.onbranch:master.path non-existent &&
+	nongit git help
 '
 
 test_done
