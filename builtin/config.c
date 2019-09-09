@@ -77,7 +77,7 @@ static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
 {
 	int new_type, *to_type;
-	char *configfileOpen;
+	
 
 	if (unset) {
 		*((int *)opt->value) = 0;
@@ -789,10 +789,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (given_config_source.blob)
 			die(_("editing blobs is not supported"));
 		git_config(git_default_config, NULL);
-		configfileOpen = given_config_source.file ?
+		if (use_global_config) {
+			char *configfileOpen;
+			configfileOpen = given_config_source.file ?
 				      xstrdup(given_config_source.file) :
 				      git_pathdup("config");
-		if (use_global_config) {
 			int fd = open(configfileOpen, O_CREAT | O_EXCL | O_WRONLY,
 				      0666);
 			if (fd >= 0) {
@@ -804,9 +805,17 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 				die_errno(
 					_("cannot create configuration file %s"),
 					configfileOpen);
+			launch_editor(configfileOpen, NULL, NULL);
+		free(configfileOpen);
 		}
+		else{
+			char *configfileOpen;
+			configfileOpen = given_config_source.file ?
+				      xstrdup(given_config_source.file) :
+				      git_pathdup("config");
 		launch_editor(configfileOpen, NULL, NULL);
 		free(configfileOpen);
+		}
 		break;
 	case ACTION_SET:
 		check_write();
@@ -847,8 +856,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	case ACTION_GET_REGEXP:
 		show_keys = 1;
 		use_key_regexp = 1;
+		/* fallthrough */
 	case ACTION_GET_ALL:
 		do_all = 1;
+		/* fallthrough */
 	case ACTION_GET:
 		check_argc(argc, 1, 2);
 		return get_value(argv[0], argv[1]);
