@@ -679,12 +679,11 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		show_ru_info(the_repository->index);
 
 	if (ps_matched) {
-		int bad = report_path_error(ps_matched, &pathspec);
 		if (report_path_error(ps_matched, &pathspec)) {
             fprintf(stderr, "Did you forget to 'git add'?\n");
             return 1;
         }
-		return 0
+		return 0;
 	}
 
 	UNLEAK(dir);
