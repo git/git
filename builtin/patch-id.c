@@ -152,11 +152,10 @@ static const char patch_id_usage[] = "git patch-id [--stable | --unstable]";
 
 static int git_patch_id_config(const char *var, const char *value, void *cb)
 {
-	int *stable;
 
     if (strcmp(var, "patchid.stable"))
         return git_default_config(var, value, cb);
-    *stable = git_config_bool(var, value);
+    git_config_bool(var, value);
     return 0;
 
 }
