@@ -195,9 +195,7 @@ static void add_man_viewer(const char *name)
 
 static int supported_man_viewer(const char *name, size_t len)
 {
-	return (!strncasecmp("man", name, len) ||
-		!strncasecmp("woman", name, len) ||
-		!strncasecmp("konqueror", name, len));
+	return (!(strncasecmp("man", name, len) && strncasecmp("woman", name, len) && strncasecmp("konqueror", name, len)));
 }
 
 static void do_add_man_viewer_info(const char *name,

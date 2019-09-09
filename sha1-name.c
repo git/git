@@ -445,7 +445,7 @@ static enum get_oid_result get_short_oid(struct repository *r, const char *name,
 {
 	int status;
 	struct disambiguate_state ds;
-	int quietly = !!(flags & GET_OID_QUIETLY);
+	int quietly = (flags & GET_OID_QUIETLY) != 0;
 
 	if (init_object_disambiguation(r, name, len, &ds) < 0)
 		return -1;

@@ -291,7 +291,7 @@ void ws_fix_copy(struct strbuf *dst, const char *src, int len, unsigned ws_rule,
 			add_nl_to_tail = 1;
 			len--;
 			if (0 < len && src[len - 1] == '\r') {
-				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
+				add_cr_to_tail = (ws_rule & WS_CR_AT_EOL) != 0;
 				len--;
 			}
 		}

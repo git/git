@@ -1571,29 +1571,29 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 		    (uintmax_t)pid);
 
 	if (!argc)
-		return !!push_stash(0, NULL, prefix);
+		return push_stash(0, NULL, prefix) != 0;
 	else if (!strcmp(argv[0], "apply"))
-		return !!apply_stash(argc, argv, prefix);
+		return apply_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "clear"))
-		return !!clear_stash(argc, argv, prefix);
+		return clear_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "drop"))
-		return !!drop_stash(argc, argv, prefix);
+		return drop_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "pop"))
-		return !!pop_stash(argc, argv, prefix);
+		return pop_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "branch"))
-		return !!branch_stash(argc, argv, prefix);
+		return branch_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "list"))
-		return !!list_stash(argc, argv, prefix);
+		return list_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "show"))
-		return !!show_stash(argc, argv, prefix);
+		return show_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "store"))
-		return !!store_stash(argc, argv, prefix);
+		return store_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "create"))
-		return !!create_stash(argc, argv, prefix);
+		return create_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "push"))
-		return !!push_stash(argc, argv, prefix);
+		return push_stash(argc, argv, prefix) != 0;
 	else if (!strcmp(argv[0], "save"))
-		return !!save_stash(argc, argv, prefix);
+		return save_stash(argc, argv, prefix) != 0;
 	else if (*argv[0] != '-')
 		usage_msg_opt(xstrfmt(_("unknown subcommand: %s"), argv[0]),
 			      git_stash_usage, options);
@@ -1631,5 +1631,5 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 
 	argv_array_push(&args, "push");
 	argv_array_pushv(&args, argv);
-	return !!push_stash(args.argc, args.argv, prefix);
+	return push_stash(args.argc, args.argv, prefix) != 0;
 }

@@ -122,7 +122,7 @@ int add_files_to_cache(const char *prefix,
 	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 	clear_pathspec(&rev.prune_data);
-	return !!data.add_errors;
+	return data.add_errors != 0;
 }
 
 static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)

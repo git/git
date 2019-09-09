@@ -362,7 +362,7 @@ hasevery (register struct tree const *a, register struct tree const *b)
       a = a->llink;
     else
       a = a->rlink;
-  return !!a;
+  return a != NULL;
 }
 
 /* Compute a vector, indexed by character code, of the trie nodes

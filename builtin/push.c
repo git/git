@@ -437,7 +437,7 @@ static int do_push(const char *repo, int flags,
 		if (push_with_options(transport, push_refspec, flags))
 			errs++;
 	}
-	return !!errs;
+	return errs != 0;
 }
 
 static int option_parse_recurse_submodules(const struct option *opt,

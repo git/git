@@ -944,9 +944,9 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 		resolve_flags |= RESOLVE_REF_ALLOW_BAD_NAME;
 
 	files_ref_path(refs, &ref_file, refname);
-	resolved = !!refs_resolve_ref_unsafe(&refs->base,
-					     refname, resolve_flags,
-					     &lock->old_oid, type);
+	resolved = refs_resolve_ref_unsafe(&refs->base,
+                                       refname, resolve_flags,
+                                       &lock->old_oid, type) != NULL;
 	if (!resolved && errno == EISDIR) {
 		/*
 		 * we are trying to lock foo but we used to
@@ -963,9 +963,9 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 					    refname);
 			goto error_return;
 		}
-		resolved = !!refs_resolve_ref_unsafe(&refs->base,
-						     refname, resolve_flags,
-						     &lock->old_oid, type);
+		resolved = refs_resolve_ref_unsafe(&refs->base,
+                                           refname, resolve_flags,
+                                           &lock->old_oid, type) != NULL;
 	}
 	if (!resolved) {
 		last_errno = errno;

@@ -2415,7 +2415,7 @@ int repo_index_has_changes(struct repository *repo,
 				strbuf_addch(sb, ' ');
 			strbuf_addstr(sb, istate->cache[i]->name);
 		}
-		return !!istate->cache_nr;
+		return istate->cache_nr != 0;
 	}
 }
 

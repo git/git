@@ -219,7 +219,7 @@ static const struct object_id *next(struct fetch_negotiator *n)
 
 static int ack(struct fetch_negotiator *n, struct commit *c)
 {
-	int known_to_be_common = !!(c->object.flags & COMMON);
+	int known_to_be_common = (c->object.flags & COMMON) != 0;
 	if (!(c->object.flags & SEEN))
 		die("received ack for commit %s not sent as 'have'\n",
 		    oid_to_hex(&c->object.oid));

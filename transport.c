@@ -187,16 +187,16 @@ static int set_git_option(struct git_transport_options *opts,
 		opts->receivepack = value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_THIN)) {
-		opts->thin = !!value;
+		opts->thin = value != NULL;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_FOLLOWTAGS)) {
-		opts->followtags = !!value;
+		opts->followtags = value != NULL;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_KEEP)) {
-		opts->keep = !!value;
+		opts->keep = value != NULL;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_UPDATE_SHALLOW)) {
-		opts->update_shallow = !!value;
+		opts->update_shallow = value != NULL;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_DEPTH)) {
 		if (!value)
@@ -215,13 +215,13 @@ static int set_git_option(struct git_transport_options *opts,
 		opts->deepen_not = (const struct string_list *)value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_DEEPEN_RELATIVE)) {
-		opts->deepen_relative = !!value;
+		opts->deepen_relative = value != NULL;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_FROM_PROMISOR)) {
-		opts->from_promisor = !!value;
+		opts->from_promisor = value != NULL;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_NO_DEPENDENTS)) {
-		opts->no_dependents = !!value;
+		opts->no_dependents = value != NULL;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_LIST_OBJECTS_FILTER)) {
 		parse_list_objects_filter(&opts->filter_options, value);
@@ -674,15 +674,15 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		get_refs_via_connect(transport, 1, NULL);
 
 	memset(&args, 0, sizeof(args));
-	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
-	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
+	args.send_mirror = (flags & TRANSPORT_PUSH_MIRROR) != 0;
+	args.force_update = (flags & TRANSPORT_PUSH_FORCE) != 0;
 	args.use_thin_pack = data->options.thin;
 	args.verbose = (transport->verbose > 0);
 	args.quiet = (transport->verbose < 0);
 	args.progress = transport->progress;
-	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
-	args.porcelain = !!(flags & TRANSPORT_PUSH_PORCELAIN);
-	args.atomic = !!(flags & TRANSPORT_PUSH_ATOMIC);
+	args.dry_run = (flags & TRANSPORT_PUSH_DRY_RUN) != 0;
+	args.porcelain = (flags & TRANSPORT_PUSH_PORCELAIN) != 0;
+	args.atomic = (flags & TRANSPORT_PUSH_ATOMIC) != 0;
 	args.push_options = transport->push_options;
 	args.url = transport->url;
 
@@ -1028,7 +1028,7 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 	 *   . Report progress if isatty(2) is 1.
 	 **/
 	if (force_progress >= 0)
-		transport->progress = !!force_progress;
+		transport->progress = force_progress != 0;
 	else
 		transport->progress = verbosity >= 0 && isatty(2);
 }

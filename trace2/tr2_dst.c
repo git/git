@@ -272,7 +272,7 @@ int tr2_dst_get_trace_fd(struct tr2_dst *dst)
 
 int tr2_dst_trace_want(struct tr2_dst *dst)
 {
-	return !!tr2_dst_get_trace_fd(dst);
+	return tr2_dst_get_trace_fd(dst) != 0;
 }
 
 void tr2_dst_write_line(struct tr2_dst *dst, struct strbuf *buf_line)

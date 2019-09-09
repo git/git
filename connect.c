@@ -486,7 +486,7 @@ static const char *parse_feature_value(const char *feature_list, const char *fea
 
 int parse_feature_request(const char *feature_list, const char *feature)
 {
-	return !!parse_feature_value(feature_list, feature, NULL);
+	return parse_feature_value(feature_list, feature, NULL) != NULL;
 }
 
 const char *server_feature_value(const char *feature, int *len)
@@ -496,7 +496,7 @@ const char *server_feature_value(const char *feature, int *len)
 
 int server_supports(const char *feature)
 {
-	return !!server_feature_value(feature, NULL);
+	return server_feature_value(feature, NULL) != NULL;
 }
 
 enum protocol {

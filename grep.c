@@ -1590,7 +1590,7 @@ static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
 			     char *bol, char *end, unsigned lno)
 {
 	unsigned cur = lno, from = 1, funcname_lno = 0, orig_from;
-	int funcname_needed = !!opt->funcname, comment_needed = 0;
+	int funcname_needed = opt->funcname != 0, comment_needed = 0;
 
 	if (opt->pre_context < lno)
 		from = lno - opt->pre_context;
@@ -1994,7 +1994,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		opt->output(opt, buf, strlen(buf));
 		return 1;
 	}
-	return !!last_hit;
+	return last_hit != 0;
 }
 
 static void clr_hit_marker(struct grep_expr *x)

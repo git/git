@@ -1070,7 +1070,7 @@ int git_parse_maybe_bool(const char *value)
 	if (0 <= v)
 		return v;
 	if (git_parse_int(value, &v))
-		return !!v;
+		return v != 0;
 	return -1;
 }
 
@@ -1088,7 +1088,7 @@ int git_config_bool_or_int(const char *name, const char *value, int *is_bool)
 int git_config_bool(const char *name, const char *value)
 {
 	int discard;
-	return !!git_config_bool_or_int(name, value, &discard);
+	return git_config_bool_or_int(name, value, &discard) != 0;
 }
 
 int git_config_string(const char **dest, const char *var, const char *value)

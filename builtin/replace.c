@@ -608,7 +608,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		if (argc != 0)
 			usage_msg_opt(_("--convert-graft-file takes no argument"),
 				      git_replace_usage, options);
-		return !!convert_graft_file(force);
+		return convert_graft_file(force) != 0;
 
 	case MODE_LIST:
 		if (argc > 1)

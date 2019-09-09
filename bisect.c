@@ -964,7 +964,7 @@ int bisect_next_all(struct repository *r, const char *prefix, int no_checkout)
 
 	bisect_common(&revs);
 
-	find_bisection(&revs.commits, &reaches, &all, !!skipped_revs.nr);
+	find_bisection(&revs.commits, &reaches, &all, skipped_revs.nr != 0);
 	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {

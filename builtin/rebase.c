@@ -518,7 +518,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		warning(_("--[no-]rebase-cousins has no effect without "
 			  "--rebase-merges"));
 
-	return !!run_rebase_interactive(&opts, command);
+	return run_rebase_interactive(&opts, command) != 0;
 }
 
 static int is_interactive(struct rebase_options *opts)
@@ -1628,7 +1628,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		remove_branch_state(the_repository, 0);
-		ret = !!finish_rebase(&options);
+		ret = finish_rebase(&options) != 0;
 		goto cleanup;
 	}
 	case ACTION_QUIT: {
@@ -2065,7 +2065,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			else
 				printf(_("Current branch %s is up to date.\n"),
 				       branch_name);
-			ret = !!finish_rebase(&options);
+			ret = finish_rebase(&options) != 0;
 			goto cleanup;
 		} else if (!(options.flags & REBASE_NO_QUIET))
 			; /* be quiet */
@@ -2142,7 +2142,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		reset_head(NULL, "Fast-forwarded", options.head_name,
 			   RESET_HEAD_REFS_ONLY, "HEAD", msg.buf);
 		strbuf_release(&msg);
-		ret = !!finish_rebase(&options);
+		ret = finish_rebase(&options) != 0;
 		goto cleanup;
 	}
 
@@ -2156,7 +2156,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	options.revisions = revisions.buf;
 
 run_rebase:
-	ret = !!run_specific_rebase(&options, action);
+	ret = run_specific_rebase(&options, action) != 0;
 
 cleanup:
 	strbuf_release(&buf);

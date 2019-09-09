@@ -296,7 +296,7 @@ int cmd__path_utils(int argc, const char **argv)
 			else
 				fprintf(stderr, "ok: '%s' is %s.gitmodules\n",
 					argv[i], expect ? "" : "not ");
-		return !!res;
+		return res != 0;
 	}
 
 	if (argc > 2 && !strcmp(argv[1], "file-size")) {
@@ -308,7 +308,7 @@ int cmd__path_utils(int argc, const char **argv)
 				res = error_errno("Cannot stat '%s'", argv[i]);
 			else
 				printf("%"PRIuMAX"\n", (uintmax_t)st.st_size);
-		return !!res;
+		return res != 0;
 	}
 
 	if (argc == 4 && !strcmp(argv[1], "skip-n-bytes")) {
@@ -352,7 +352,7 @@ int cmd__path_utils(int argc, const char **argv)
 		for (i = offset; i < list.nr; i+= stride)
 			printf("%s\n", list.items[i].string);
 
-		return !!res;
+		return res != 0;
 	}
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],

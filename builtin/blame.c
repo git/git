@@ -444,7 +444,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	struct blame_origin *suspect = ent->suspect;
 	struct commit_info ci;
 	char hex[GIT_MAX_HEXSZ + 1];
-	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
+	int show_raw_time = (opt & OUTPUT_RAW_TIMESTAMP) != 0;
 	const char *default_color = NULL, *color = NULL, *reset = NULL;
 
 	get_commit_info(suspect->commit, &ci, 1);

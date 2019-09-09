@@ -210,7 +210,7 @@ int check_signature(const char *payload, size_t plen, const char *signature,
 	strbuf_release(&gpg_status);
 	strbuf_release(&gpg_output);
 
-	return !!status;
+	return status != 0;
 }
 
 void print_signature_buffer(const struct signature_check *sigc, unsigned flags)

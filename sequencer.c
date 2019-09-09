@@ -829,7 +829,7 @@ int read_author_script(const char *path, char **name, char **email, char **date,
 	*date = kv.items[date_i].util;
 	retval = 0;
 finish:
-	string_list_clear(&kv, !!retval);
+	string_list_clear(&kv, retval != 0);
 	strbuf_release(&buf);
 	return retval;
 }
@@ -3617,8 +3617,8 @@ static int do_merge(struct repository *r,
 		 * command needs to be rescheduled).
 		 */
 	fast_forward_edit:
-		ret = !!run_git_commit(r, git_path_merge_msg(r), opts,
-				       run_commit_flags);
+		ret = run_git_commit(r, git_path_merge_msg(r), opts,
+                             run_commit_flags) != 0;
 
 leave_merge:
 	strbuf_release(&ref_name);

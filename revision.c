@@ -706,7 +706,7 @@ static int compact_treesame(struct rev_info *revs, struct commit *commit, unsign
 		 */
 		if (nth_parent != 0)
 			die("compact_treesame %u", nth_parent);
-		old_same = !!(commit->object.flags & TREESAME);
+		old_same = (commit->object.flags & TREESAME) != 0;
 		if (rev_same_tree_as_empty(revs, commit))
 			commit->object.flags |= TREESAME;
 		else
@@ -1044,7 +1044,7 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		 * commits on the right branch in this loop.  If we have
 		 * fewer right, we skip the left ones.
 		 */
-		if (left_first != !!(flags & SYMMETRIC_LEFT))
+		if (left_first != ((flags & SYMMETRIC_LEFT) != 0))
 			continue;
 		add_commit_patch_id(commit, &ids);
 	}
@@ -1064,7 +1064,7 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		 * If we have fewer left, left_first is set and we omit
 		 * commits on the left branch in this loop.
 		 */
-		if (left_first == !!(flags & SYMMETRIC_LEFT))
+		if (left_first == ((flags & SYMMETRIC_LEFT) != 0))
 			continue;
 
 		/*
@@ -3541,7 +3541,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 				     (char *)message, strlen(message));
 	strbuf_release(&buf);
 	unuse_commit_buffer(commit, message);
-	return opt->invert_grep ? !retval : retval;
+	return opt->invert_grep != 0 == !retval;
 }
 
 static inline int want_ancestry(const struct rev_info *revs)
@@ -3917,7 +3917,7 @@ struct commit *get_revision(struct rev_info *revs)
 	if (revs->reverse_output_stage) {
 		c = pop_commit(&revs->commits);
 		if (revs->track_linear)
-			revs->linear = !!(c && c->object.flags & TRACK_LINEAR);
+			revs->linear = c && c->object.flags & TRACK_LINEAR;
 		return c;
 	}
 

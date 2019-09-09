@@ -891,7 +891,7 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 		return -1;
 
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
-		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
+		rerere_autoupdate = (flags & RERERE_AUTOUPDATE) != 0;
 	if (flags & RERERE_READONLY)
 		fd = 0;
 	else

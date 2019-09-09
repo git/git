@@ -1057,7 +1057,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		       prefix, argv + i);
 	pathspec.max_depth = opt.max_depth;
 	pathspec.recursive = 1;
-	pathspec.recurse_submodules = !!recurse_submodules;
+	pathspec.recurse_submodules = recurse_submodules != 0;
 
 	if (list.nr || cached || show_in_pager) {
 		if (num_threads > 1)
@@ -1115,14 +1115,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (recurse_submodules && (!use_index || untracked))
 		die(_("option not supported with --recurse-submodules"));
 
-	if (!show_in_pager && !opt.status_only)
+	if (!(show_in_pager || opt.status_only))
 		setup_pager();
 
 	if (!use_index && (untracked || cached))
 		die(_("--cached or --untracked cannot be used with --no-index"));
 
 	if (!use_index || untracked) {
-		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
+		int use_exclude = (opt_exclude < 0) ? use_index : opt_exclude != 0;
 		hit = grep_directory(&opt, &pathspec, use_exclude, use_index);
 	} else if (0 <= opt_exclude) {
 		die(_("--[no-]exclude-standard cannot be used for tracked contents"));

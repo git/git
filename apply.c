@@ -4611,8 +4611,8 @@ static int apply_patch(struct apply_state *state, int fd, const char *filename,
 		int nr;
 
 		patch = xcalloc(1, sizeof(*patch));
-		patch->inaccurate_eof = !!(options & APPLY_OPT_INACCURATE_EOF);
-		patch->recount = !!(options & APPLY_OPT_RECOUNT);
+		patch->inaccurate_eof = (options & APPLY_OPT_INACCURATE_EOF) != 0;
+		patch->recount = (options & APPLY_OPT_RECOUNT) != 0;
 		nr = parse_chunk(state, buf.buf + offset, buf.len - offset,
 				 patch);
 		if (nr < 0) {
@@ -4878,7 +4878,7 @@ int apply_all_patches(struct apply_state *state, int argc, const char **argv,
 		}
 	}
 
-	res = !!errs;
+	res = errs != 0;
 
 end:
 	rollback_lock_file(&state->lock_file);

@@ -51,7 +51,7 @@ static struct rewrites rewrites_push;
 
 static int valid_remote(const struct remote *remote)
 {
-	return (!!remote->url) || (!!remote->foreign_vcs);
+	return remote->url != NULL || remote->foreign_vcs != NULL;
 }
 
 static const char *alias_url(const char *url, struct rewrites *r)
@@ -584,7 +584,7 @@ int remote_is_configured(struct remote *remote, int in_repo)
 		return 0;
 	if (in_repo)
 		return remote->configured_in_repo;
-	return !!remote->origin;
+	return remote->origin != 0;
 }
 
 int for_each_remote(each_remote_fn fn, void *priv)
@@ -1594,7 +1594,7 @@ struct branch *branch_get(const char *name)
 
 int branch_has_merge_config(struct branch *branch)
 {
-	return branch && !!branch->merge;
+	return branch && branch->merge != NULL;
 }
 
 int branch_merge_matches(struct branch *branch,

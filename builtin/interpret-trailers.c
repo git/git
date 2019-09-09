@@ -62,16 +62,18 @@ static int option_parse_trailer(const struct option *opt,
 		return 0;
 	}
 
-	if (!arg)
-		return -1;
+    if (arg != NULL) {
+        struct new_trailer_item *item;
+        item = xmalloc(sizeof(*item));
+        item->text = arg;
+        item->where = where;
+        item->if_exists = if_exists;
+        item->if_missing = if_missing;
+        list_add_tail(&item->list, trailers);
+        return 0;
+    }
 
-	item = xmalloc(sizeof(*item));
-	item->text = arg;
-	item->where = where;
-	item->if_exists = if_exists;
-	item->if_missing = if_missing;
-	list_add_tail(&item->list, trailers);
-	return 0;
+    return -1;
 }
 
 static int parse_opt_parse(const struct option *opt, const char *arg,

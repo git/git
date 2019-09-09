@@ -178,7 +178,7 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "url")) {
 			credential_from_url(c, value);
 		} else if (!strcmp(key, "quit")) {
-			c->quit = !!git_config_bool("quit", value);
+			c->quit = git_config_bool("quit", value) != 0;
 		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but

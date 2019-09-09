@@ -617,7 +617,7 @@ static struct cmd_struct *get_builtin(const char *s)
 
 int is_builtin(const char *s)
 {
-	return !!get_builtin(s);
+	return get_builtin(s) != NULL;
 }
 
 static void list_builtins(struct string_list *out, unsigned int exclude_option)

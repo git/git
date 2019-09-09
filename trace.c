@@ -385,7 +385,7 @@ void trace_repo_setup(const char *prefix)
 
 int trace_want(struct trace_key *key)
 {
-	return !!get_trace_fd(key);
+	return get_trace_fd(key) != 0;
 }
 
 #if defined(HAVE_CLOCK_GETTIME) && defined(HAVE_CLOCK_MONOTONIC)

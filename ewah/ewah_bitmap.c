@@ -404,7 +404,7 @@ void ewah_xor(
 				predator = &rlw_i;
 			}
 
-			negate_words = !!predator->rlw.running_bit;
+			negate_words = predator->rlw.running_bit != 0;
 			index = rlwit_discharge(prey, out,
 				predator->rlw.running_len, negate_words);
 

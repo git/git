@@ -29,7 +29,7 @@ void base_ref_iterator_init(struct ref_iterator *iter,
 			    int ordered)
 {
 	iter->vtable = vtable;
-	iter->ordered = !!ordered;
+	iter->ordered = ordered != 0;
 	iter->refname = NULL;
 	iter->oid = NULL;
 	iter->flags = 0;

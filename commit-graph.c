@@ -474,7 +474,7 @@ static int prepare_commit_graph(struct repository *r)
 		    GIT_TEST_COMMIT_GRAPH_DIE_ON_LOAD);
 
 	if (r->objects->commit_graph_attempted)
-		return !!r->objects->commit_graph;
+		return r->objects->commit_graph != NULL;
 	r->objects->commit_graph_attempted = 1;
 
 	if (!git_env_bool(GIT_TEST_COMMIT_GRAPH, 0) &&
@@ -496,7 +496,7 @@ static int prepare_commit_graph(struct repository *r)
 	     !r->objects->commit_graph && odb;
 	     odb = odb->next)
 		prepare_commit_graph_one(r, odb->path);
-	return !!r->objects->commit_graph;
+	return r->objects->commit_graph != NULL;
 }
 
 int generation_numbers_enabled(struct repository *r)
@@ -514,7 +514,7 @@ int generation_numbers_enabled(struct repository *r)
 	first_generation = get_be32(g->chunk_commit_data +
 				    g->hash_len + 8) >> 2;
 
-	return !!first_generation;
+	return first_generation != NULL;
 }
 
 static void close_commit_graph_one(struct commit_graph *g)

@@ -521,7 +521,7 @@ static void *unpack_raw_entry(struct object_entry *obj,
 		*ofs_offset = obj->idx.offset - base_offset;
 		if (*ofs_offset <= 0 || *ofs_offset >= obj->idx.offset)
 			bad_object(obj->idx.offset, _("delta base offset is out of bound"));
-		break;
+		/*fallthrough*/
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
@@ -1090,14 +1090,13 @@ static void *threaded_second_pass(void *data)
 			nr_dispatched++;
 		if (nr_dispatched >= nr_objects) {
 			work_unlock();
-			break;
+			return NULL;
 		}
 		i = nr_dispatched++;
 		work_unlock();
 
 		resolve_base(&objects[i]);
 	}
-	return NULL;
 }
 
 /*
@@ -1184,7 +1183,7 @@ static void resolve_deltas(void)
 {
 	int i;
 
-	if (!nr_ofs_deltas && !nr_ref_deltas)
+	if (!(nr_ofs_deltas || nr_ref_deltas))
 		return;
 
 	/* Sort deltas by base SHA1/offset for fast searching */
@@ -1821,29 +1820,29 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	curr_index = write_idx_file(index_name, idx_objects, nr_objects, &opts, pack_hash);
 	free(idx_objects);
 
-	if (!verify)
-		final(pack_name, curr_pack,
-		      index_name, curr_index,
-		      keep_msg, promisor_msg,
-		      pack_hash);
-	else
-		close(input_fd);
+    if (verify)
+        close(input_fd);
+    else
+        final(pack_name, curr_pack,
+              index_name, curr_index,
+              keep_msg, promisor_msg,
+              pack_hash);
 
-	if (do_fsck_object && fsck_finish(&fsck_options))
-		die(_("fsck error in pack objects"));
+    if (do_fsck_object && fsck_finish(&fsck_options))
+        die(_("fsck error in pack objects"));
 
-	free(objects);
-	strbuf_release(&index_name_buf);
-	if (pack_name == NULL)
-		free((void *) curr_pack);
-	if (index_name == NULL)
-		free((void *) curr_index);
+    free(objects);
+    strbuf_release(&index_name_buf);
+    if (pack_name == NULL)
+        free((void *) curr_pack);
+    if (index_name == NULL)
+        free((void *) curr_index);
 
-	/*
-	 * Let the caller know this pack is not self contained
-	 */
-	if (check_self_contained_and_connected && foreign_nr)
-		return 1;
+    /*
+     * Let the caller know this pack is not self contained
+     */
+    if (check_self_contained_and_connected && foreign_nr)
+        return 1;
 
-	return 0;
+    return 0;
 }

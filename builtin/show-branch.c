@@ -220,7 +220,7 @@ static void join_revs(struct commit_list **list_p,
 
 	while (*list_p) {
 		struct commit_list *parents;
-		int still_interesting = !!interesting(*list_p);
+		int still_interesting = interesting(*list_p) != NULL;
 		struct commit *commit = pop_commit(list_p);
 		int flags = commit->object.flags & all_mask;
 

@@ -532,9 +532,7 @@ static unsigned long find_next(struct sline *sline,
 	 * that are surrounded by interesting() ones.
 	 */
 	while (i <= cnt)
-		if (look_for_uninteresting
-		    ? !(sline[i].flag & mark)
-		    : (sline[i].flag & mark))
+		if (look_for_uninteresting != 0 == !(sline[i].flag & mark))
 			return i;
 		else
 			i++;
@@ -1467,7 +1465,7 @@ void diff_tree_combined(const struct object_id *oid,
 	if (!num_parent)
 		return;
 
-	show_log_first = !!rev->loginfo && !rev->no_commit_id;
+	show_log_first = rev->loginfo != NULL && !rev->no_commit_id;
 	needsep = 0;
 	if (show_log_first) {
 		show_log(rev);
