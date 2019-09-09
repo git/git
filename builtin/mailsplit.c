@@ -228,9 +228,10 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 		}
 	}
 	else {
+		int file_done;
         do {
             char *name = xstrfmt("%s/%0*d", dir, nr_prec, ++skip);
-            int file_done = split_one(f, name, allow_bare);
+           	file_done = split_one(f, name, allow_bare);
             free(name);
         } while  (!file_done);
     }
