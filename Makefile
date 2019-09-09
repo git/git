@@ -2773,7 +2773,7 @@ CHK_HDRS = $(filter-out $(EXCEPT_HDRS),$(patsubst ./%,%,$(LIB_H)))
 HCO = $(patsubst %.h,%.hco,$(CHK_HDRS))
 
 $(HCO): %.hco: %.h FORCE
-	$(QUIET_HDR)$(CC) -include git-compat-util.h -I. -o /dev/null -c -xc $<
+	$(QUIET_HDR)$(CC) $(ALL_CFLAGS) -include git-compat-util.h -I. -o /dev/null -c -xc $<
 
 .PHONY: hdr-check $(HCO)
 hdr-check: $(HCO)
