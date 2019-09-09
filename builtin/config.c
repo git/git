@@ -778,7 +778,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			else
 				die(_("error processing config file(s)"));
 		}
-		break;
+		return 0;
 	case ACTION_EDIT:
 		
 		check_argc(argc, 0, 0);
@@ -816,7 +816,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		launch_editor(configfileOpen, NULL, NULL);
 		free(configfileOpen);
 		}
-		break;
+		return 0;
 	case ACTION_SET:
 		check_write();
 		check_argc(argc, 2, 2);
@@ -889,7 +889,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			return ret;
 		if (ret == 0)
 			die(_("no such section: %s"), argv[0]);
-		break;
+		return 0;
 	case ACTION_REMOVE_SECTION:
 		check_write();
 		check_argc(argc, 1, 1);
@@ -899,19 +899,17 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			return ret;
 		if (ret == 0)
 			die(_("no such section: %s"), argv[0]);
-		break;
+		return 0;
 	case ACTION_GET_COLOR:
 		check_argc(argc, 1, 2);
 		get_color(argv[0], argv[1]);
-		break;
+		return 0;
 	case ACTION_GET_COLORBOOL:
 		check_argc(argc, 1, 2);
 		if (argc == 2)
 			color_stdout_is_tty =
 				git_config_bool("command line", argv[1]);
 		return get_colorbool(argv[0], argc == 2);
-	default:
-		break;
 	}
 
 	return 0;
