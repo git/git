@@ -10,32 +10,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/entry.c" beforeDir="false" afterPath="$PROJECT_DIR$/entry.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment.c" beforeDir="false" afterPath="$PROJECT_DIR$/environment.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fetch-pack.c" beforeDir="false" afterPath="$PROJECT_DIR$/fetch-pack.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fsck.c" beforeDir="false" afterPath="$PROJECT_DIR$/fsck.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fsmonitor.c" beforeDir="false" afterPath="$PROJECT_DIR$/fsmonitor.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gettext.c" beforeDir="false" afterPath="$PROJECT_DIR$/gettext.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/git.c" beforeDir="false" afterPath="$PROJECT_DIR$/git.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/graph.c" beforeDir="false" afterPath="$PROJECT_DIR$/graph.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/grep.c" beforeDir="false" afterPath="$PROJECT_DIR$/grep.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hashmap.c" beforeDir="false" afterPath="$PROJECT_DIR$/hashmap.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log-tree.c" beforeDir="false" afterPath="$PROJECT_DIR$/log-tree.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mailinfo.c" beforeDir="false" afterPath="$PROJECT_DIR$/mailinfo.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notes-merge.c" beforeDir="false" afterPath="$PROJECT_DIR$/notes-merge.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notes-utils.c" beforeDir="false" afterPath="$PROJECT_DIR$/notes-utils.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notes.c" beforeDir="false" afterPath="$PROJECT_DIR$/notes.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/oidmap.c" beforeDir="false" afterPath="$PROJECT_DIR$/oidmap.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/oidset.c" beforeDir="false" afterPath="$PROJECT_DIR$/oidset.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pack-bitmap.c" beforeDir="false" afterPath="$PROJECT_DIR$/pack-bitmap.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pack-write.c" beforeDir="false" afterPath="$PROJECT_DIR$/pack-write.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pager.c" beforeDir="false" afterPath="$PROJECT_DIR$/pager.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parse-options.c" beforeDir="false" afterPath="$PROJECT_DIR$/parse-options.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rerere.c" beforeDir="false" afterPath="$PROJECT_DIR$/rerere.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resolve-undo.c" beforeDir="false" afterPath="$PROJECT_DIR$/resolve-undo.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/revision.c" beforeDir="false" afterPath="$PROJECT_DIR$/revision.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run-command.c" beforeDir="false" afterPath="$PROJECT_DIR$/run-command.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sequencer.c" beforeDir="false" afterPath="$PROJECT_DIR$/sequencer.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -100,7 +74,7 @@
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
       <workItem from="1568031520248" duration="19678000" />
-      <workItem from="1568115321407" duration="14301000" />
+      <workItem from="1568115321407" duration="14538000" />
     </task>
     <servers />
   </component>
