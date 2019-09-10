@@ -366,7 +366,8 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 			/* If this happens, the changes are identical. */
 			xdl_free_env(&xe);
 			m->mode = 4;
-			m = m->next continue;
+			m = m->next;
+			continue;
 		}
 		x = xscr;
 		m->i1 = xscr->i1 + i1;
