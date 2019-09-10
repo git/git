@@ -554,7 +554,7 @@ static size_t fractional_time_len(const char *line, size_t len)
 	size_t n;
 
 	/* Expected format: 19:41:17.620000023 */
-	if (!len || !isdigit(line[len - 1]))
+	if (!(len && isdigit(line[len - 1])))
 		return 0;
 	p = line + len - 1;
 
@@ -566,10 +566,10 @@ static size_t fractional_time_len(const char *line, size_t len)
 
 	/* Hours, minutes, and whole seconds. */
 	n = short_time_len(line, p - line);
-	if (!n)
-		return 0;
+    if (n)
+        return line + len - p + n;
+    return 0;
 
-	return line + len - p + n;
 }
 
 static size_t trailing_spaces_len(const char *line, size_t len)
@@ -4122,13 +4122,18 @@ static void show_rename_copy(struct patch *p)
 
 	/* Find common prefix */
 	const char *slash_old, *slash_new;
-	for (old_name = p->old_name, new_name = p->new_name;
-	     slash_old && slash_new &&
-	     slash_old - old_name == slash_new - new_name &&
-	     !memcmp(old_name, new_name, slash_new - new_name);
-	     old_name = slash_old + 1, new_name = slash_new + 1) {
+	old_name = p->old_name;
+	new_name = p->new_name;
+	for (;;) {
+		const char *slash_old, *slash_new;
 		slash_old = strchr(old_name, '/');
 		slash_new = strchr(new_name, '/');
+		if (!(slash_old && slash_new) ||
+		    slash_old - old_name != slash_new - new_name ||
+		    memcmp(old_name, new_name, slash_new - new_name))
+			break;
+		old_name = slash_old + 1;
+		new_name = slash_new + 1;
 	}
 	/* p->old_name thru old_name is the common prefix, and old_name and
 	 * new_name through the end of names are renames
@@ -4262,9 +4267,7 @@ static int try_create_file(struct apply_state *state, const char *path,
 
 	if (S_ISGITLINK(mode)) {
 		struct stat st;
-		if (lstat(path, &st) || !S_ISDIR(st.st_mode))
-			return mkdir(path, 0777) != 0;
-		return 0;
+		return ((lstat(path, &st) || !S_ISDIR(st.st_mode)) && mkdir(path, 0777) != 0);
 	}
 
 	if (has_symlinks && S_ISLNK(mode))
@@ -4289,11 +4292,10 @@ static int try_create_file(struct apply_state *state, const char *path,
 		error_errno(_("failed to write to '%s'"), path);
 	strbuf_release(&nbuf);
 
-	if (close(fd) >= 0)
-		return res ? -1 : 0;
-	if (res)
-		return -1;
-	return error_errno(_("closing file '%s'"), path);
+    if (close(fd) >= 0) return res ? -1 : 0;
+    if (res)
+        return -1;
+    return error_errno(_("closing file '%s'"), path);
 }
 
 /*
@@ -4320,14 +4322,14 @@ static int create_one_file(struct apply_state *state, char *path, unsigned mode,
 		return 0;
 
 	if (errno == ENOENT) {
-		if (safe_create_leading_directories(path))
-			return 0;
-		res = try_create_file(state, path, mode, buf, size);
-		if (res < 0)
-			return -1;
-		if (!res)
-			return 0;
-	}
+        if (safe_create_leading_directories(path))
+            return 0;
+        res = try_create_file(state, path, mode, buf, size);
+        if (res < 0)
+            return -1;
+        if (!res)
+            return 0;
+    }
 
 	if (errno == EEXIST || errno == EACCES) {
 		/* We may be trying to create a file where a directory
