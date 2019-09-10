@@ -1616,7 +1616,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 		if (read_basic_state(&options))
 			exit(1);
-		goto run_rebase;
+		ret = run_specific_rebase(&options, action) != 0;
+		goto cleanup;
 	}
 	case ACTION_SKIP: {
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
@@ -1633,7 +1634,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		remove_branch_state(the_repository, 0);
 		if (read_basic_state(&options))
 			exit(1);
-		goto run_rebase;
+		ret = run_specific_rebase(&options, action) != 0;
+		goto cleanup;
 	}
 	case ACTION_ABORT: {
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
@@ -1672,11 +1674,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	case ACTION_EDIT_TODO:
 		options.action = "edit-todo";
 		options.dont_finish_rebase = 1;
-		goto run_rebase;
+		ret = run_specific_rebase(&options, action) != 0;
+		goto cleanup;
 	case ACTION_SHOW_CURRENT_PATCH:
 		options.action = "show-current-patch";
 		options.dont_finish_rebase = 1;
-		goto run_rebase;
+		ret = run_specific_rebase(&options, action) != 0;
+		goto cleanup;
 	case ACTION_NONE:
 		break;
 	default:
