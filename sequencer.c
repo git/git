@@ -5274,7 +5274,7 @@ if (rearranged) {
 		if (!is_fixup(command)) {
 			int cur;
 
-			for (cur = i; cur >= 0; cur = next[cur];) {
+			for (cur = i; cur >= 0; cur = next[cur]) {
 				ALLOC_GROW(items, nr + 1, alloc);
 				items[nr++] = todo_list->items[cur];
 				cur = next[cur];
