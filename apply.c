@@ -4121,7 +4121,6 @@ static void show_rename_copy(struct patch *p)
 	const char *old_name, *new_name;
 
 	/* Find common prefix */
-	const char *slash_old, *slash_new;
 	old_name = p->old_name;
 	new_name = p->new_name;
 	for (;;) {
