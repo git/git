@@ -5,11 +5,9 @@
 #include "notes-utils.h"
 #include "repository.h"
 
-void create_notes_commit(struct repository *r,
-			 struct notes_tree *t,
-			 struct commit_list *parents,
-			 const char *msg, size_t msg_len,
-			 struct object_id *result_oid)
+void create_notes_commit(struct repository *r, struct notes_tree *t,
+			 struct commit_list *parents, const char *msg,
+			 size_t msg_len, struct object_id *result_oid)
 {
 	struct object_id tree_oid;
 
@@ -44,19 +42,20 @@ void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
 		t = &default_notes_tree;
 	if (!(t->initialized && t->update_ref && *t->update_ref))
 		die(_("Cannot commit uninitialized/unreferenced notes tree"));
-    if (t->dirty) { /* don't have to commit an unchanged tree */
+	if (t->dirty) { /* don't have to commit an unchanged tree */
 
-        /* Prepare commit message and reflog message */
-        strbuf_addstr(&buf, msg);
-        strbuf_complete_line(&buf);
+		/* Prepare commit message and reflog message */
+		strbuf_addstr(&buf, msg);
+		strbuf_complete_line(&buf);
 
-        create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
-        strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts at index 7 */
-        update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
-                   UPDATE_REFS_DIE_ON_ERR);
+		create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
+		strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts
+							 at index 7 */
+		update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
+			   UPDATE_REFS_DIE_ON_ERR);
 
-        strbuf_release(&buf);
-    }
+		strbuf_release(&buf);
+	}
 }
 
 int parse_notes_merge_strategy(const char *v, enum notes_merge_strategy *s)
@@ -81,19 +80,19 @@ static combine_notes_fn parse_combine_notes_fn(const char *v)
 {
 	if (!strcasecmp(v, "overwrite"))
 		return combine_notes_overwrite;
-	else if (!strcasecmp(v, "ignore"))
+	if (!strcasecmp(v, "ignore"))
 		return combine_notes_ignore;
-	else if (!strcasecmp(v, "concatenate"))
+	if (!strcasecmp(v, "concatenate"))
 		return combine_notes_concatenate;
-	else if (!strcasecmp(v, "cat_sort_uniq"))
+	if (!strcasecmp(v, "cat_sort_uniq"))
 		return combine_notes_cat_sort_uniq;
-		return NULL;
+	return NULL;
 }
 
 static int notes_rewrite_config(const char *k, const char *v, void *cb)
 {
 	struct notes_rewrite_cfg *c = cb;
-	if (starts_with(k, "notes.rewrite.") && !strcmp(k+14, c->cmd)) {
+	if (starts_with(k, "notes.rewrite.") && !strcmp(k + 14, c->cmd)) {
 		c->enabled = git_config_bool(k, v);
 	} else if (!c->mode_from_env && !strcmp(k, "notes.rewritemode")) {
 		if (!v)
@@ -110,17 +109,19 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 			string_list_add_refs_by_glob(c->refs, v);
 		else
 			warning(_("Refusing to rewrite notes in %s"
-				" (outside of refs/notes/)"), v);
+				  " (outside of refs/notes/)"),
+				v);
 	}
 	return 0;
 }
 
-
 struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 {
 	struct notes_rewrite_cfg *c = xmalloc(sizeof(struct notes_rewrite_cfg));
-	const char *rewrite_mode_env = getenv(GIT_NOTES_REWRITE_MODE_ENVIRONMENT);
-	const char *rewrite_refs_env = getenv(GIT_NOTES_REWRITE_REF_ENVIRONMENT);
+	const char *rewrite_mode_env =
+		getenv(GIT_NOTES_REWRITE_MODE_ENVIRONMENT);
+	const char *rewrite_refs_env =
+		getenv(GIT_NOTES_REWRITE_REF_ENVIRONMENT);
 	c->cmd = cmd;
 	c->enabled = 1;
 	c->combine = combine_notes_concatenate;
@@ -137,8 +138,9 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 			 * the environment variable, the second %s is
 			 * its value.
 			 */
-			error(_("Bad %s value: '%s'"), GIT_NOTES_REWRITE_MODE_ENVIRONMENT,
-					rewrite_mode_env);
+			error(_("Bad %s value: '%s'"),
+			      GIT_NOTES_REWRITE_MODE_ENVIRONMENT,
+			      rewrite_mode_env);
 	}
 	if (rewrite_refs_env) {
 		c->refs_from_env = 1;
@@ -158,18 +160,19 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 }
 
 int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
-			  const struct object_id *from_obj, const struct object_id *to_obj)
+			  const struct object_id *from_obj,
+			  const struct object_id *to_obj)
 {
 	int ret = 0;
 	int i;
 	for (i = 0; c->trees[i]; i++)
-		ret = copy_note(c->trees[i], from_obj, to_obj, 1, c->combine) || ret;
+		ret = copy_note(c->trees[i], from_obj, to_obj, 1, c->combine) ||
+		      ret;
 	return ret;
 }
 
 void finish_copy_notes_for_rewrite(struct repository *r,
-				   struct notes_rewrite_cfg *c,
-				   const char *msg)
+				   struct notes_rewrite_cfg *c, const char *msg)
 {
 	int i;
 	for (i = 0; c->trees[i]; i++) {

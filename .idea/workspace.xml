@@ -9,7 +9,19 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="" />
+    <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/argv-array.c" beforeDir="false" afterPath="$PROJECT_DIR$/argv-array.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/help.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/help.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/mailsplit.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/mailsplit.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/builtin/patch-id.c" beforeDir="false" afterPath="$PROJECT_DIR$/builtin/patch-id.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notes-utils.c" beforeDir="false" afterPath="$PROJECT_DIR$/notes-utils.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/parse-options.c" beforeDir="false" afterPath="$PROJECT_DIR$/parse-options.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rerere.c" beforeDir="false" afterPath="$PROJECT_DIR$/rerere.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run-command.c" beforeDir="false" afterPath="$PROJECT_DIR$/run-command.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/send-pack.c" beforeDir="false" afterPath="$PROJECT_DIR$/send-pack.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sequencer.c" beforeDir="false" afterPath="$PROJECT_DIR$/sequencer.c" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,7 +84,7 @@
       <workItem from="1567911257500" duration="4692000" />
       <workItem from="1567975248805" duration="2630000" />
       <workItem from="1568031520248" duration="19678000" />
-      <workItem from="1568115321407" duration="15412000" />
+      <workItem from="1568115321407" duration="15846000" />
     </task>
     <servers />
   </component>

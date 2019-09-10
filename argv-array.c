@@ -91,11 +91,11 @@ void argv_array_split(struct argv_array *array, const char *to_split)
 void argv_array_clear(struct argv_array *array)
 {
 	if (array->argv != empty_argv) {
-		int i;
-		for (i = 0; i < array->argc; i++)
-			free((char *)array->argv[i]);
-		free(array->argv);
-	}
+        int i;
+        for (i = 0; i < array->argc; i++)
+            free((char *) array->argv[i]);
+        free(array->argv);
+    }
 	argv_array_init(array);
 }
 

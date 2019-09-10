@@ -5235,14 +5235,14 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			i2 = *commit_todo_item_at(&commit_todo, commit2) -
 			     todo_list->items;
 		else {
-			/* copy can be a prefix of the commit subject */
-			for (i2 = 0; i2 < i; i2++)
-				if (subjects[i2] &&
-				    starts_with(subjects[i2], p))
-					break;
-			if (i2 == i)
-				i2 = -1;
-		}
+            /* copy can be a prefix of the commit subject */
+            for (i2 = 0; i2 < i; i2++)
+                if (subjects[i2] &&
+                    starts_with(subjects[i2], p))
+                    break;
+            if (i2 == i)
+                i2 = -1;
+        }
 	}
 	if (i2 >= 0) {
 		rearranged = 1;

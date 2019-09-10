@@ -1780,31 +1780,31 @@ static int pp_collect_finished(struct parallel_processes *pp)
 		pp->pfd[i].fd = -1;
 		child_process_init(&pp->children[i].process);
 
-		if (i != pp->output_owner) {
-			strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
-			strbuf_reset(&pp->children[i].err);
-		} else {
-			strbuf_write(&pp->children[i].err, stderr);
-			strbuf_reset(&pp->children[i].err);
+        if (i == pp->output_owner) {
+            strbuf_write(&pp->children[i].err, stderr);
+            strbuf_reset(&pp->children[i].err);
 
-			/* Output all other finished child processes */
-			strbuf_write(&pp->buffered_output, stderr);
-			strbuf_reset(&pp->buffered_output);
+            /* Output all other finished child processes */
+            strbuf_write(&pp->buffered_output, stderr);
+            strbuf_reset(&pp->buffered_output);
 
-			/*
-			 * Pick next process to output live.
-			 * NEEDSWORK:
-			 * For now we pick it randomly by doing a round
-			 * robin. Later we may want to pick the one with
-			 * the most output or the longest or shortest
-			 * running process time.
-			 */
-			for (i = 0; i < n; i++)
-				if (pp->children[(pp->output_owner + i) % n].state == GIT_CP_WORKING)
-					break;
-			pp->output_owner = (pp->output_owner + i) % n;
-		}
-	}
+            /*
+             * Pick next process to output live.
+             * NEEDSWORK:
+             * For now we pick it randomly by doing a round
+             * robin. Later we may want to pick the one with
+             * the most output or the longest or shortest
+             * running process time.
+             */
+            for (i = 0; i < n; i++)
+                if (pp->children[(pp->output_owner + i) % n].state == GIT_CP_WORKING)
+                    break;
+            pp->output_owner = (pp->output_owner + i) % n;
+        } else {
+            strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
+            strbuf_reset(&pp->children[i].err);
+        }
+    }
 	return result;
 }
 
@@ -1821,30 +1821,30 @@ int run_processes_parallel(int n,
 
 	pp_init(&pp, n, get_next_task, start_failure, task_finished, pp_cb);
 	for (;;) {
-		for (i = 0;
-		    i < spawn_cap && !pp.shutdown &&
-		    pp.nr_processes < pp.max_processes;
-		    i++) {
-			code = pp_start_one(&pp);
-			if (!code)
-				continue;
-			if (code < 0) {
-				pp.shutdown = 1;
-				kill_children(&pp, -code);
-			}
-			break;
-		}
-		if (!pp.nr_processes)
-			break;
-		pp_buffer_stderr(&pp, output_timeout);
-		pp_output(&pp);
-		code = pp_collect_finished(&pp);
-		if (code) {
-			pp.shutdown = 1;
-			if (code < 0)
-				kill_children(&pp, -code);
-		}
-	}
+        for (i = 0;
+             i < spawn_cap && !pp.shutdown &&
+             pp.nr_processes < pp.max_processes;
+             i++) {
+            code = pp_start_one(&pp);
+            if (!code)
+                continue;
+            if (code < 0) {
+                pp.shutdown = 1;
+                kill_children(&pp, -code);
+            }
+            break;
+        }
+        if (!pp.nr_processes)
+            break;
+        pp_buffer_stderr(&pp, output_timeout);
+        pp_output(&pp);
+        code = pp_collect_finished(&pp);
+        if (code) {
+            pp.shutdown = 1;
+            if (code < 0)
+                kill_children(&pp, -code);
+        }
+    }
 
 	pp_cleanup(&pp);
 	return 0;

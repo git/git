@@ -659,25 +659,25 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 			BUG("An alias must have long option name");
 
 		for (j = 0; j < nr; j++) {
-			const char *name = options[j].long_name;
+            const char *name = options[j].long_name;
 
-			if (!name || strcmp(name, source))
-				continue;
+            if (!name || strcmp(name, source))
+                continue;
 
-			if (options[j].type == OPTION_ALIAS)
-				BUG("No please. Nested aliases are not supported.");
+            if (options[j].type == OPTION_ALIAS)
+                BUG("No please. Nested aliases are not supported.");
 
-			/*
-			 * NEEDSWORK: this is a bit inconsistent because
-			 * usage_with_options() on the original options[] will print
-			 * help string as "alias of %s" but "git cmd -h" will
-			 * print the original help string.
-			 */
-			memcpy(newopt + i, options + j, sizeof(*newopt));
-			newopt[i].short_name = short_name;
-			newopt[i].long_name = long_name;
-			break;
-		}
+            /*
+             * NEEDSWORK: this is a bit inconsistent because
+             * usage_with_options() on the original options[] will print
+             * help string as "alias of %s" but "git cmd -h" will
+             * print the original help string.
+             */
+            memcpy(newopt + i, options + j, sizeof(*newopt));
+            newopt[i].short_name = short_name;
+            newopt[i].long_name = long_name;
+            break;
+        }
 
 		if (j == nr)
 			BUG("could not find source option '%s' of alias '%s'",
@@ -729,51 +729,51 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			return show_gitcomp(options);
 
 		if (arg[1] != '-') {
-			ctx->opt = arg + 1;
-			switch (parse_short_opt(ctx, options)) {
-			case PARSE_OPT_ERROR:
-				return PARSE_OPT_ERROR;
-			case PARSE_OPT_UNKNOWN:
-				if (ctx->opt)
-					check_typos(arg + 1, options);
-				if (internal_help && *ctx->opt == 'h')
-					goto show_usage;
-				goto unknown;
-			case PARSE_OPT_NON_OPTION:
-			case PARSE_OPT_HELP:
-			case PARSE_OPT_COMPLETE:
-				BUG("parse_short_opt() cannot return these");
-			case PARSE_OPT_DONE:
-				break;
-			}
-			if (ctx->opt)
-				check_typos(arg + 1, options);
-			while (ctx->opt) {
-				switch (parse_short_opt(ctx, options)) {
-				case PARSE_OPT_ERROR:
-					return PARSE_OPT_ERROR;
-				case PARSE_OPT_UNKNOWN:
-					if (internal_help && *ctx->opt == 'h')
-						goto show_usage;
+            ctx->opt = arg + 1;
+            switch (parse_short_opt(ctx, options)) {
+                case PARSE_OPT_ERROR:
+                    return PARSE_OPT_ERROR;
+                case PARSE_OPT_UNKNOWN:
+                    if (ctx->opt)
+                        check_typos(arg + 1, options);
+                    if (internal_help && *ctx->opt == 'h')
+                        goto show_usage;
+                    goto unknown;
+                case PARSE_OPT_NON_OPTION:
+                case PARSE_OPT_HELP:
+                case PARSE_OPT_COMPLETE:
+                    BUG("parse_short_opt() cannot return these");
+                case PARSE_OPT_DONE:
+                    break;
+            }
+            if (ctx->opt)
+                check_typos(arg + 1, options);
+            while (ctx->opt) {
+                switch (parse_short_opt(ctx, options)) {
+                    case PARSE_OPT_ERROR:
+                        return PARSE_OPT_ERROR;
+                    case PARSE_OPT_UNKNOWN:
+                        if (internal_help && *ctx->opt == 'h')
+                            goto show_usage;
 
-					/* fake a short option thing to hide the fact that we may have
-					 * started to parse aggregated stuff
-					 *
-					 * This is leaky, too bad.
-					 */
-					ctx->argv[0] = xstrdup(ctx->opt - 1);
-					*(char *)ctx->argv[0] = '-';
-					goto unknown;
-				case PARSE_OPT_NON_OPTION:
-				case PARSE_OPT_COMPLETE:
-				case PARSE_OPT_HELP:
-					BUG("parse_short_opt() cannot return these");
-				case PARSE_OPT_DONE:
-					break;
-				}
-			}
-			continue;
-		}
+                        /* fake a short option thing to hide the fact that we may have
+                         * started to parse aggregated stuff
+                         *
+                         * This is leaky, too bad.
+                         */
+                        ctx->argv[0] = xstrdup(ctx->opt - 1);
+                        *(char *) ctx->argv[0] = '-';
+                        goto unknown;
+                    case PARSE_OPT_NON_OPTION:
+                    case PARSE_OPT_COMPLETE:
+                    case PARSE_OPT_HELP:
+                        BUG("parse_short_opt() cannot return these");
+                    case PARSE_OPT_DONE:
+                        break;
+                }
+            }
+            continue;
+        }
 
 		if (!arg[2] /* "--" */ ||
 		    !strcmp(arg + 2, "end-of-options")) {

@@ -12,21 +12,23 @@
 static const char git_mailsplit_usage[] =
 	"git mailsplit [-d<prec>] [-f<n>] [-b] [--keep-cr] -o<directory> [(<mbox>|<Maildir>)...]";
 
-static int is_from_line(const char *line, int len) {
-    const char *colon;
+static int is_from_line(const char *line, int len)
+{
+	const char *colon;
 
-    if (len < 20 || memcmp("From ", line, 5))
-        return 0;
+	if (len < 20 || memcmp("From ", line, 5))
+		return 0;
 
-    colon = line + len - 2;
-    line += 5;
-    do {
-        if (colon < line)
-            return 0;
-    } while (*--colon != ':');
+	colon = line + len - 2;
+	line += 5;
+	do {
+		if (colon < line)
+			return 0;
+	} while (*--colon != ':');
 
-    return ((isdigit(colon[-4]) && isdigit(colon[-2])) && (isdigit(colon[-1]) && isdigit(colon[1])) &&
-            (isdigit(colon[2]) && strtol(colon + 3, NULL, 10) > 90));
+	return ((isdigit(colon[-4]) && isdigit(colon[-2])) &&
+		(isdigit(colon[-1]) && isdigit(colon[1])) &&
+		(isdigit(colon[2]) && strtol(colon + 3, NULL, 10) > 90));
 }
 
 static struct strbuf buf = STRBUF_INIT;
@@ -226,15 +228,14 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 			error("cannot read mbox %s", file);
 			return -1;
 		}
-	}
-	else {
+	} else {
 		int file_done;
-        do {
-            char *name = xstrfmt("%s/%0*d", dir, nr_prec, ++skip);
-           	file_done = split_one(f, name, allow_bare);
-            free(name);
-        } while  (!file_done);
-    }
+		do {
+			char *name = xstrfmt("%s/%0*d", dir, nr_prec, ++skip);
+			file_done = split_one(f, name, allow_bare);
+			free(name);
+		} while (!file_done);
+	}
 
 	if (f != stdin)
 		fclose(f);

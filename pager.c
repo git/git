@@ -225,9 +225,9 @@ static int pager_command_config(const char *var, const char *value, void *vdata)
 		if (b >= 0)
 			data->want = b;
 		else {
-			data->want = 1;
-			data->value = xstrdup(value);
-		}
+            data->want = 1;
+            data->value = xstrdup(value);
+        }
 	}
 
 	return 0;

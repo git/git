@@ -615,13 +615,13 @@ int send_pack(struct send_pack_args *args,
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		switch (ref->status) {
-		case REF_STATUS_NONE:
-		case REF_STATUS_UPTODATE:
-		case REF_STATUS_OK:
-			break;
-		default:
-			return -1;
-		}
+            case REF_STATUS_NONE:
+            case REF_STATUS_UPTODATE:
+            case REF_STATUS_OK:
+                break;
+            default:
+                return -1;
+        }
 	}
 	return 0;
 }

@@ -240,3 +240,4 @@ Release/
 *.dSYM
 *.pbxproj
 *.plist
+.idea/workspace.xml
