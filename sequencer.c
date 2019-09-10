@@ -5216,13 +5216,13 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 		     skip_prefix(subject, "squash! ", &p))) {
 			struct commit *commit2;
 
-			do
+			do {
 				while (isspace(*p))
 					p++;
+
+			} while (skip_prefix(p, "fixup! ", &p) ||
+				 skip_prefix(p, "squash! ", &p));
 		}
-		while (skip_prefix(p, "fixup! ", &p) ||
-		       skip_prefix(p, "squash! ", &p))
-			;
 
 		if ((entry = hashmap_get_from_hash(&subject2item, strhash(p),
 						   p)))
@@ -5235,14 +5235,14 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			i2 = *commit_todo_item_at(&commit_todo, commit2) -
 			     todo_list->items;
 		else {
-            /* copy can be a prefix of the commit subject */
-            for (i2 = 0; i2 < i; i2++)
-                if (subjects[i2] &&
-                    starts_with(subjects[i2], p))
-                    break;
-            if (i2 == i)
-                i2 = -1;
-        }
+			/* copy can be a prefix of the commit subject */
+			for (i2 = 0; i2 < i; i2++)
+				if (subjects[i2] &&
+				    starts_with(subjects[i2], p))
+					break;
+			if (i2 == i)
+				i2 = -1;
+		}
 	}
 	if (i2 >= 0) {
 		rearranged = 1;
