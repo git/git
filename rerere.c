@@ -409,7 +409,7 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 		} else if (hunk == RR_SIDE_1) {
             strbuf_addbuf(&one, &buf);
         }
-		else if (hunk == RR_SIDE_2)) {
+		else if (hunk == RR_SIDE_2) {
                 strbuf_addbuf(&two, &buf);
         } /* discard */
 	}
@@ -441,16 +441,16 @@ static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_siz
 		the_hash_algo->init_fn(&ctx);
 
 	while (!io->getline(&buf, io)) {
-		if (is_cmarker(buf.buf, '<', marker_size)) {
-			has_conflicts = handle_conflict(&out, io, marker_size,
-							hash ? &ctx : NULL);
-			if (has_conflicts < 0)
-				break;
-			rerere_io_putmem(out.buf, out.len, io);
-			strbuf_reset(&out);
-		} else
-			rerere_io_putstr(buf.buf, io);
-	}
+        if (is_cmarker(buf.buf, '<', marker_size)) {
+            has_conflicts = handle_conflict(&out, io, marker_size,
+                                            hash ? &ctx : NULL);
+            if (has_conflicts < 0)
+                break;
+            rerere_io_putmem(out.buf, out.len, io);
+            strbuf_reset(&out);
+        } else
+            rerere_io_putstr(buf.buf, io);
+    }
 	strbuf_release(&buf);
 	strbuf_release(&out);
 
