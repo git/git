@@ -3043,7 +3043,7 @@ static int section_name_is_ok(const char *name) {
     while(*name != '.') {
         if (*name != '-' && !isalnum(*name))
             return 0;
-        name++
+        name++;
         if (!*name)
             break;
     }
