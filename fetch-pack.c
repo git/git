@@ -747,10 +747,10 @@ static int everything_local(struct fetch_pack_args *args, struct ref **refs)
 			print_verbose(args, _("already have %s (%s)"),
 				      oid_to_hex(remote), ref->name);
 		} else {
-            retval = 0;
-            print_verbose(args, "want %s (%s)", oid_to_hex(remote),
-                          ref->name);
-        }
+			retval = 0;
+			print_verbose(args, "want %s (%s)", oid_to_hex(remote),
+				      ref->name);
+		}
 	}
 
 	return retval;

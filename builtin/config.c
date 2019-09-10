@@ -77,7 +77,6 @@ static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
 {
 	int new_type, *to_type;
-	
 
 	if (unset) {
 		*((int *)opt->value) = 0;
@@ -290,8 +289,8 @@ static int format_config(struct strbuf *buf, const char *key_,
 			strbuf_addstr(buf, v);
 		} else if (value_) {
 			strbuf_addstr(buf, value_);
-		} else if (show_keys){
-			/* Just show the key name; back out delimiter */				
+		} else if (show_keys) {
+			/* Just show the key name; back out delimiter */
 			strbuf_setlen(buf, buf->len - 1);
 		}
 	}
@@ -745,11 +744,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			usage_builtin_config();
 		}
 	if (omit_values && actions != ACTION_LIST &&
-	    actions != ACTION_GET_REGEXP)
-		{
-			error(_("--name-only is only applicable to --list or --get-regexp"));
-			usage_builtin_config();
-		}
+	    actions != ACTION_GET_REGEXP) {
+		error(_("--name-only is only applicable to --list or --get-regexp"));
+		usage_builtin_config();
+	}
 
 	if (show_origin && !(actions & (ACTION_GET | ACTION_GET_ALL |
 					ACTION_GET_REGEXP | ACTION_LIST))) {
@@ -780,7 +778,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 		return 0;
 	case ACTION_EDIT:
-		
+
 		check_argc(argc, 0, 0);
 		if (!given_config_source.file && nongit)
 			die(_("not in a git directory"));
@@ -792,11 +790,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (use_global_config) {
 			int fd;
 			char *configfileOpen;
-			configfileOpen = given_config_source.file ?
-				      xstrdup(given_config_source.file) :
-				      git_pathdup("config");
+			configfileOpen =
+				given_config_source.file ?
+					xstrdup(given_config_source.file) :
+					git_pathdup("config");
 			fd = open(configfileOpen, O_CREAT | O_EXCL | O_WRONLY,
-				      0666);
+				  0666);
 			if (fd >= 0) {
 				char *content = default_user_config();
 				write_str_in_full(fd, content);
@@ -807,15 +806,15 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 					_("cannot create configuration file %s"),
 					configfileOpen);
 			launch_editor(configfileOpen, NULL, NULL);
-		free(configfileOpen);
-		}
-		else{
+			free(configfileOpen);
+		} else {
 			char *configfileOpen;
-			configfileOpen = given_config_source.file ?
-				      xstrdup(given_config_source.file) :
-				      git_pathdup("config");
-		launch_editor(configfileOpen, NULL, NULL);
-		free(configfileOpen);
+			configfileOpen =
+				given_config_source.file ?
+					xstrdup(given_config_source.file) :
+					git_pathdup("config");
+			launch_editor(configfileOpen, NULL, NULL);
+			free(configfileOpen);
 		}
 		return 0;
 	case ACTION_SET:

@@ -153,13 +153,13 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 		len++;
 
 	strbuf_grow(sb, len);
-	strbuf_addf(sb, "%"PRIuMAX" %s=", (uintmax_t)len, keyword);
+	strbuf_addf(sb, "%" PRIuMAX " %s=", (uintmax_t)len, keyword);
 	strbuf_add(sb, value, valuelen);
 	strbuf_addch(sb, '\n');
 
 	if (len != sb->len - orig_len)
-		BUG("pax extended header length miscalculated as %"PRIuMAX
-		    ", should be %"PRIuMAX,
+		BUG("pax extended header length miscalculated as %" PRIuMAX
+		    ", should be %" PRIuMAX,
 		    (uintmax_t)len, (uintmax_t)(sb->len - orig_len));
 }
 
@@ -336,7 +336,6 @@ static void write_global_extended_header(struct archiver_args *args)
 	const struct object_id *oid = args->commit_oid;
 	struct strbuf ext_header = STRBUF_INIT;
 
-
 	if (oid)
 		strbuf_append_ext_header(&ext_header, "comment",
 					 oid_to_hex(oid), the_hash_algo->hexsz);
@@ -346,16 +345,16 @@ static void write_global_extended_header(struct archiver_args *args)
 	}
 
 	if (ext_header.len) {
-        unsigned int mode = 0100666
-        struct ustar_header header;
-        memset(&header, 0, sizeof(header));
-        *header.typeflag = TYPEFLAG_GLOBAL_HEADER;
-        xsnprintf(header.name, sizeof(header.name), "pax_global_header");
-        prepare_header(args, &header, mode, ext_header.len);
-        write_blocked(&header, sizeof(header));
-        write_blocked(ext_header.buf, ext_header.len);
-        strbuf_release(&ext_header);
-    }
+		struct ustar_header header;
+		memset(&header, 0, sizeof(header));
+		*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
+		xsnprintf(header.name, sizeof(header.name),
+			  "pax_global_header");
+		prepare_header(args, &header, 0100666, ext_header.len);
+		write_blocked(&header, sizeof(header));
+		write_blocked(ext_header.buf, ext_header.len);
+		strbuf_release(&ext_header);
+	}
 }
 
 static struct archiver **tar_filters;
@@ -375,39 +374,38 @@ static struct archiver *find_tar_filter(const char *name, int len)
 
 static int tar_filter_config(const char *var, const char *value, void *data)
 {
-
 	const char *name;
 	const char *type;
 	int namelen;
 
-    if (parse_config_key(var, "tar", &name, &namelen, &type) >= 0 && name) {
-        struct archiver *ar;
-        ar = find_tar_filter(name, namelen);
-        if (!ar) {
-            ar = xcalloc(1, sizeof(*ar));
-            ar->name = xmemdupz(name, namelen);
-            ar->write_archive = write_tar_filter_archive;
-            ar->flags = ARCHIVER_WANT_COMPRESSION_LEVELS;
-            ALLOC_GROW(tar_filters, nr_tar_filters + 1, alloc_tar_filters);
-            tar_filters[nr_tar_filters++] = ar;
-        }
+	if (parse_config_key(var, "tar", &name, &namelen, &type) >= 0 && name) {
+		struct archiver *ar;
+		ar = find_tar_filter(name, namelen);
+		if (!ar) {
+			ar = xcalloc(1, sizeof(*ar));
+			ar->name = xmemdupz(name, namelen);
+			ar->write_archive = write_tar_filter_archive;
+			ar->flags = ARCHIVER_WANT_COMPRESSION_LEVELS;
+			ALLOC_GROW(tar_filters, nr_tar_filters + 1,
+				   alloc_tar_filters);
+			tar_filters[nr_tar_filters++] = ar;
+		}
 
-        if (!strcmp(type, "command")) {
-            if (!value)
-                return config_error_nonbool(var);
-            free(ar->data);
-            ar->data = xstrdup(value);
-            return 0;
-        }
-        if (!strcmp(type, "remote")) {
-            if (git_config_bool(var, value))
-                ar->flags |= ARCHIVER_REMOTE;
-            else
-                ar->flags &= ~ARCHIVER_REMOTE;
-        }
-
-    }
-    return 0;
+		if (!strcmp(type, "command")) {
+			if (!value)
+				return config_error_nonbool(var);
+			free(ar->data);
+			ar->data = xstrdup(value);
+			return 0;
+		}
+		if (!strcmp(type, "remote")) {
+			if (git_config_bool(var, value))
+				ar->flags |= ARCHIVER_REMOTE;
+			else
+				ar->flags &= ~ARCHIVER_REMOTE;
+		}
+	}
+	return 0;
 }
 
 static int git_tar_config(const char *var, const char *value, void *cb)
