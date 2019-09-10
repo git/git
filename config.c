@@ -3296,7 +3296,7 @@ int parse_config_key(const char *var, const char *section,
 		}
 		return 0;
 	}
-	if (subection) {
+	if (subsection) {
 		*subsection = var + 1;
 		*subsection_len = dot - *subsection;
 		return 0;
