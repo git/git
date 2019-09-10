@@ -23,25 +23,25 @@ static int decoration_loaded;
 static int decoration_flags;
 
 static char decoration_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_BOLD_GREEN,	/* REF_LOCAL */
-	GIT_COLOR_BOLD_RED,	/* REF_REMOTE */
-	GIT_COLOR_BOLD_YELLOW,	/* REF_TAG */
-	GIT_COLOR_BOLD_MAGENTA,	/* REF_STASH */
-	GIT_COLOR_BOLD_CYAN,	/* REF_HEAD */
-	GIT_COLOR_BOLD_BLUE,	/* GRAFTED */
+	GIT_COLOR_RESET,	GIT_COLOR_BOLD_GREEN, /* REF_LOCAL */
+	GIT_COLOR_BOLD_RED, /* REF_REMOTE */
+	GIT_COLOR_BOLD_YELLOW, /* REF_TAG */
+	GIT_COLOR_BOLD_MAGENTA, /* REF_STASH */
+	GIT_COLOR_BOLD_CYAN, /* REF_HEAD */
+	GIT_COLOR_BOLD_BLUE, /* GRAFTED */
 };
 
 static const char *color_decorate_slots[] = {
-	[DECORATION_REF_LOCAL]	= "branch",
+	[DECORATION_REF_LOCAL] = "branch",
 	[DECORATION_REF_REMOTE] = "remoteBranch",
-	[DECORATION_REF_TAG]	= "tag",
-	[DECORATION_REF_STASH]	= "stash",
-	[DECORATION_REF_HEAD]	= "HEAD",
-	[DECORATION_GRAFTED]	= "grafted",
+	[DECORATION_REF_TAG] = "tag",
+	[DECORATION_REF_STASH] = "stash",
+	[DECORATION_REF_HEAD] = "HEAD",
+	[DECORATION_GRAFTED] = "grafted",
 };
 
-static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
+static const char *decorate_get_color(int decorate_use_color,
+				      enum decoration_type ix)
 {
 	if (want_color(decorate_use_color))
 		return decoration_colors[ix];
@@ -50,24 +50,25 @@ static const char *decorate_get_color(int decorate_use_color, enum decoration_ty
 
 define_list_config_array(color_decorate_slots);
 
-int parse_decorate_color_config(const char *var, const char *slot_name, const char *value)
+int parse_decorate_color_config(const char *var, const char *slot_name,
+				const char *value)
 {
 	int slot = LOOKUP_CONFIG(color_decorate_slots, slot_name);
 	if (slot < 0)
 		return 0;
-    if (value)
-        return color_parse(value, decoration_colors[slot]);
-    return config_error_nonbool(var);
+	if (value)
+		return color_parse(value, decoration_colors[slot]);
+	return config_error_nonbool(var);
 }
 
 /*
  * log-tree.c uses DIFF_OPT_TST for determining whether to use color
  * for showing the commit sha1, use the same check for --decorate
  */
-#define decorate_get_color_opt(o, ix) \
-	decorate_get_color((o)->use_color, ix)
+#define decorate_get_color_opt(o, ix) decorate_get_color((o)->use_color, ix)
 
-void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
+void add_name_decoration(enum decoration_type type, const char *name,
+			 struct object *obj)
 {
 	struct name_decoration *res;
 	FLEX_ALLOC_STR(res, name, name);
@@ -87,9 +88,8 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 	enum decoration_type type = DECORATION_NONE;
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
 
-	if (filter && !ref_filter_match(refname,
-			      filter->include_ref_pattern,
-			      filter->exclude_ref_pattern))
+	if (filter && !ref_filter_match(refname, filter->include_ref_pattern,
+					filter->exclude_ref_pattern))
 		return 0;
 
 	if (starts_with(refname, git_replace_ref_base)) {
@@ -103,7 +103,8 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		}
 		obj = parse_object(the_repository, &original_oid);
 		if (obj)
-			add_name_decoration(DECORATION_GRAFTED, "replaced", obj);
+			add_name_decoration(DECORATION_GRAFTED, "replaced",
+					    obj);
 		return 0;
 	}
 
@@ -148,10 +149,12 @@ void load_ref_decorations(struct decoration_filter *filter, int flags)
 	if (!decoration_loaded) {
 		if (filter) {
 			struct string_list_item *item;
-			for_each_string_list_item(item, filter->exclude_ref_pattern) {
+			for_each_string_list_item (
+				item, filter->exclude_ref_pattern) {
 				normalize_glob_ref(item, NULL, item->string);
 			}
-			for_each_string_list_item(item, filter->include_ref_pattern) {
+			for_each_string_list_item (
+				item, filter->include_ref_pattern) {
 				normalize_glob_ref(item, NULL, item->string);
 			}
 		}
@@ -166,18 +169,22 @@ void load_ref_decorations(struct decoration_filter *filter, int flags)
 static void show_parents(struct commit *commit, int abbrev, FILE *file)
 {
 	struct commit_list *p;
-	for (p = commit->parents; p ; p = p->next) {
+	for (p = commit->parents; p; p = p->next) {
 		struct commit *parent = p->item;
-		fprintf(file, " %s", find_unique_abbrev(&parent->object.oid, abbrev));
+		fprintf(file, " %s",
+			find_unique_abbrev(&parent->object.oid, abbrev));
 	}
 }
 
-static void show_children(struct rev_info *opt, struct commit *commit, int abbrev)
+static void show_children(struct rev_info *opt, struct commit *commit,
+			  int abbrev)
 {
-	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
+	struct commit_list *p =
+		lookup_decoration(&opt->children, &commit->object);
 	while (p) {
-		fprintf(opt->diffopt.file, " %s", find_unique_abbrev(&p->item->object.oid, abbrev));
-        p = p->next;
+		fprintf(opt->diffopt.file, " %s",
+			find_unique_abbrev(&p->item->object.oid, abbrev));
+		p = p->next;
 	}
 }
 
@@ -185,7 +192,8 @@ static void show_children(struct rev_info *opt, struct commit *commit, int abbre
  * Do we have HEAD in the output, and also the branch it points at?
  * If so, find that decoration entry for that current branch.
  */
-static const struct name_decoration *current_pointed_by_HEAD(const struct name_decoration *decoration)
+static const struct name_decoration *
+current_pointed_by_HEAD(const struct name_decoration *decoration)
 {
 	const struct name_decoration *list, *head = NULL;
 	const char *branch_name = NULL;
@@ -202,21 +210,20 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 
 	/* Now resolve and find the matching current branch */
 	branch_name = resolve_ref_unsafe("HEAD", 0, NULL, &rru_flags);
-    if (branch_name || (rru_flags & REF_ISSYMREF) && starts_with(branch_name, "refs/")) {
-
-        /* OK, do we have that ref in the list? */
-        for (list = decoration; list; list = list->next)
-            if ((list->type == DECORATION_REF_LOCAL) &&
-                !strcmp(branch_name, list->name)) {
-                return list;
-            }
-
-
-    }
-    return NULL;
+	if (branch_name && (rru_flags & REF_ISSYMREF) &&
+	    starts_with(branch_name, "refs/")) {
+		/* OK, do we have that ref in the list? */
+		for (list = decoration; list; list = list->next)
+			if ((list->type == DECORATION_REF_LOCAL) &&
+			    !strcmp(branch_name, list->name)) {
+				return list;
+			}
+	}
+	return NULL;
 }
 
-static void show_name(struct strbuf *sb, const struct name_decoration *decoration)
+static void show_name(struct strbuf *sb,
+		      const struct name_decoration *decoration)
 {
 	if (decoration_flags == DECORATE_SHORT_REFS)
 		strbuf_addstr(sb, prettify_refname(decoration->name));
@@ -228,17 +235,13 @@ static void show_name(struct strbuf *sb, const struct name_decoration *decoratio
  * The caller makes sure there is no funny color before calling.
  * format_decorations_extended makes sure the same after return.
  */
-void format_decorations_extended(struct strbuf *sb,
-			const struct commit *commit,
-			int use_color,
-			const char *prefix,
-			const char *separator,
-			const char *suffix)
+void format_decorations_extended(struct strbuf *sb, const struct commit *commit,
+				 int use_color, const char *prefix,
+				 const char *separator, const char *suffix)
 {
 	const struct name_decoration *decoration;
 	const struct name_decoration *current_and_HEAD;
-	const char *color_commit =
-		diff_get_color(use_color, DIFF_COMMIT);
+	const char *color_commit = diff_get_color(use_color, DIFF_COMMIT);
 	const char *color_reset =
 		decorate_get_color(use_color, DECORATION_NONE);
 
@@ -247,7 +250,7 @@ void format_decorations_extended(struct strbuf *sb,
 		return;
 
 	current_and_HEAD = current_pointed_by_HEAD(decoration);
-	do{
+	do {
 		/*
 		 * When both current and HEAD are there, only
 		 * show HEAD->current where HEAD would have
@@ -257,7 +260,8 @@ void format_decorations_extended(struct strbuf *sb,
 			strbuf_addstr(sb, color_commit);
 			strbuf_addstr(sb, prefix);
 			strbuf_addstr(sb, color_reset);
-			strbuf_addstr(sb, decorate_get_color(use_color, decoration->type));
+			strbuf_addstr(sb, decorate_get_color(use_color,
+							     decoration->type));
 			if (decoration->type == DECORATION_REF_TAG)
 				strbuf_addstr(sb, "tag: ");
 
@@ -267,7 +271,10 @@ void format_decorations_extended(struct strbuf *sb,
 			    decoration->type == DECORATION_REF_HEAD) {
 				strbuf_addstr(sb, " -> ");
 				strbuf_addstr(sb, color_reset);
-				strbuf_addstr(sb, decorate_get_color(use_color, current_and_HEAD->type));
+				strbuf_addstr(sb,
+					      decorate_get_color(
+						      use_color,
+						      current_and_HEAD->type));
 				show_name(sb, current_and_HEAD);
 			}
 			strbuf_addstr(sb, color_reset);
@@ -291,11 +298,11 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 		if (slot && *slot)
 			fprintf(opt->diffopt.file, "\t%s", *slot);
 	}
-    if (opt->show_decorations) {
-        format_decorations(&sb, commit, opt->diffopt.use_color);
-        fputs(sb.buf, opt->diffopt.file);
-        strbuf_release(&sb);
-    }
+	if (opt->show_decorations) {
+		format_decorations(&sb, commit, opt->diffopt.use_color);
+		fputs(sb.buf, opt->diffopt.file);
+		strbuf_release(&sb);
+	}
 }
 
 static unsigned int digits_in_number(unsigned int number)
@@ -308,8 +315,7 @@ static unsigned int digits_in_number(unsigned int number)
 	return result;
 }
 
-void fmt_output_subject(struct strbuf *filename,
-			const char *subject,
+void fmt_output_subject(struct strbuf *filename, const char *subject,
 			struct rev_info *info)
 {
 	const char *suffix = info->patch_suffix;
@@ -326,11 +332,10 @@ void fmt_output_subject(struct strbuf *filename,
 	strbuf_addstr(filename, suffix);
 }
 
-void fmt_output_commit(struct strbuf *filename,
-		       struct commit *commit,
+void fmt_output_commit(struct strbuf *filename, struct commit *commit,
 		       struct rev_info *info)
 {
-	struct pretty_print_context ctx = {0};
+	struct pretty_print_context ctx = { 0 };
 	struct strbuf subject = STRBUF_INIT;
 
 	format_commit_message(commit, "%f", &subject, &ctx);
@@ -341,69 +346,69 @@ void fmt_output_commit(struct strbuf *filename,
 void fmt_output_email_subject(struct strbuf *sb, struct rev_info *opt)
 {
 	if (opt->total > 0) {
-		strbuf_addf(sb, "Subject: [%s%s%0*d/%d] ",
-			    opt->subject_prefix,
+		strbuf_addf(sb, "Subject: [%s%s%0*d/%d] ", opt->subject_prefix,
 			    *opt->subject_prefix ? " " : "",
-			    digits_in_number(opt->total),
-			    opt->nr, opt->total);
-	} else if (opt->total == 0 && opt->subject_prefix && *opt->subject_prefix) {
-		strbuf_addf(sb, "Subject: [%s] ",
-			    opt->subject_prefix);
+			    digits_in_number(opt->total), opt->nr, opt->total);
+	} else if (opt->total == 0 && opt->subject_prefix &&
+		   *opt->subject_prefix) {
+		strbuf_addf(sb, "Subject: [%s] ", opt->subject_prefix);
 	} else {
 		strbuf_addstr(sb, "Subject: ");
 	}
 }
 
 void log_write_email_headers(struct rev_info *opt, struct commit *commit,
-			     const char **extra_headers_p,
-			     int *need_8bit_cte_p,
+			     const char **extra_headers_p, int *need_8bit_cte_p,
 			     int maybe_multipart)
 {
 	const char *extra_headers = opt->extra_headers;
-	const char *name = oid_to_hex(opt->zero_commit ?
-				      &null_oid : &commit->object.oid);
+	const char *name =
+		oid_to_hex(opt->zero_commit ? &null_oid : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 
 	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
 	graph_show_oneline(opt->graph);
 	if (opt->message_id) {
-		fprintf(opt->diffopt.file, "Message-Id: <%s>\n", opt->message_id);
+		fprintf(opt->diffopt.file, "Message-Id: <%s>\n",
+			opt->message_id);
 		graph_show_oneline(opt->graph);
 	}
 	if (opt->ref_message_ids && opt->ref_message_ids->nr > 0) {
 		int i, n;
 		n = opt->ref_message_ids->nr;
-		fprintf(opt->diffopt.file, "In-Reply-To: <%s>\n", opt->ref_message_ids->items[n-1].string);
+		fprintf(opt->diffopt.file, "In-Reply-To: <%s>\n",
+			opt->ref_message_ids->items[n - 1].string);
 		for (i = 0; i < n; i++)
-			fprintf(opt->diffopt.file, "%s<%s>\n", (i > 0 ? "\t" : "References: "),
-			       opt->ref_message_ids->items[i].string);
+			fprintf(opt->diffopt.file, "%s<%s>\n",
+				(i > 0 ? "\t" : "References: "),
+				opt->ref_message_ids->items[i].string);
 		graph_show_oneline(opt->graph);
 	}
 	if (opt->mime_boundary && maybe_multipart) {
 		static struct strbuf subject_buffer = STRBUF_INIT;
 		static struct strbuf buffer = STRBUF_INIT;
-		struct strbuf filename =  STRBUF_INIT;
+		struct strbuf filename = STRBUF_INIT;
 		*need_8bit_cte_p = -1; /* NEVER */
 
 		strbuf_reset(&subject_buffer);
 		strbuf_reset(&buffer);
 
 		strbuf_addf(&subject_buffer,
-			 "%s"
-			 "MIME-Version: 1.0\n"
-			 "Content-Type: multipart/mixed;"
-			 " boundary=\"%s%s\"\n"
-			 "\n"
-			 "This is a multi-part message in MIME "
-			 "format.\n"
-			 "--%s%s\n"
-			 "Content-Type: text/plain; "
-			 "charset=UTF-8; format=fixed\n"
-			 "Content-Transfer-Encoding: 8bit\n\n",
-			 extra_headers ? extra_headers : "",
-			 mime_boundary_leader, opt->mime_boundary,
-			 mime_boundary_leader, opt->mime_boundary);
+			    "%s"
+			    "MIME-Version: 1.0\n"
+			    "Content-Type: multipart/mixed;"
+			    " boundary=\"%s%s\"\n"
+			    "\n"
+			    "This is a multi-part message in MIME "
+			    "format.\n"
+			    "--%s%s\n"
+			    "Content-Type: text/plain; "
+			    "charset=UTF-8; format=fixed\n"
+			    "Content-Transfer-Encoding: 8bit\n\n",
+			    extra_headers ? extra_headers : "",
+			    mime_boundary_leader, opt->mime_boundary,
+			    mime_boundary_leader, opt->mime_boundary);
 		extra_headers = subject_buffer.buf;
 
 		if (opt->numbered_files)
@@ -411,16 +416,16 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		else
 			fmt_output_commit(&filename, commit, opt);
 		strbuf_addf(&buffer,
-			 "\n--%s%s\n"
-			 "Content-Type: text/x-patch;"
-			 " name=\"%s\"\n"
-			 "Content-Transfer-Encoding: 8bit\n"
-			 "Content-Disposition: %s;"
-			 " filename=\"%s\"\n\n",
-			 mime_boundary_leader, opt->mime_boundary,
-			 filename.buf,
-			 opt->no_inline ? "attachment" : "inline",
-			 filename.buf);
+			    "\n--%s%s\n"
+			    "Content-Type: text/x-patch;"
+			    " name=\"%s\"\n"
+			    "Content-Transfer-Encoding: 8bit\n"
+			    "Content-Disposition: %s;"
+			    " filename=\"%s\"\n\n",
+			    mime_boundary_leader, opt->mime_boundary,
+			    filename.buf,
+			    opt->no_inline ? "attachment" : "inline",
+			    filename.buf);
 		opt->diffopt.stat_sep = buffer.buf;
 		strbuf_release(&filename);
 	}
@@ -436,8 +441,8 @@ static void show_sig_lines(struct rev_info *opt, int status, const char *bol)
 	reset = diff_get_color_opt(&opt->diffopt, DIFF_RESET);
 	while (*bol) {
 		eol = strchrnul(bol, '\n');
-		fprintf(opt->diffopt.file, "%s%.*s%s%s", color, (int)(eol - bol), bol, reset,
-		       *eol ? "\n" : "");
+		fprintf(opt->diffopt.file, "%s%.*s%s%s", color,
+			(int)(eol - bol), bol, reset, *eol ? "\n" : "");
 		graph_show_oneline(opt->graph);
 		bol = (*eol) ? (eol + 1) : eol;
 	}
@@ -450,22 +455,21 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	struct strbuf gpg_output = STRBUF_INIT;
 
 	if (parse_signed_commit(commit, &payload, &signature) > 0) {
+		int status = verify_signed_buffer(payload.buf, payload.len,
+						  signature.buf, signature.len,
+						  &gpg_output, NULL);
+		if (status && !gpg_output.len)
+			strbuf_addstr(&gpg_output, "No signature\n");
 
-        int status = verify_signed_buffer(payload.buf, payload.len,
-                                      signature.buf, signature.len,
-                                      &gpg_output, NULL);
-        if (status && !gpg_output.len)
-            strbuf_addstr(&gpg_output, "No signature\n");
-
-        show_sig_lines(opt, status, gpg_output.buf);
-
-    }
+		show_sig_lines(opt, status, gpg_output.buf);
+	}
 	strbuf_release(&gpg_output);
 	strbuf_release(&payload);
 	strbuf_release(&signature);
 }
 
-static int which_parent(const struct object_id *oid, const struct commit *commit)
+static int which_parent(const struct object_id *oid,
+			const struct commit *commit)
 {
 	int nth;
 	const struct commit_list *parent;
@@ -480,14 +484,12 @@ static int which_parent(const struct object_id *oid, const struct commit *commit
 
 static int is_common_merge(const struct commit *commit)
 {
-	return (commit->parents
-		&& commit->parents->next
-		&& !commit->parents->next->next);
+	return (commit->parents && commit->parents->next &&
+		!commit->parents->next->next);
 }
 
 static int show_one_mergetag(struct commit *commit,
-			     struct commit_extra_header *extra,
-			     void *data)
+			     struct commit_extra_header *extra, void *data)
 {
 	struct rev_info *opt = (struct rev_info *)data;
 	struct object_id oid;
@@ -507,14 +509,13 @@ static int show_one_mergetag(struct commit *commit,
 	else if (is_common_merge(commit) &&
 		 oideq(&tag->tagged->oid,
 		       &commit->parents->next->item->object.oid))
-		strbuf_addf(&verify_message,
-			    "merged tag '%s'\n", tag->tag);
+		strbuf_addf(&verify_message, "merged tag '%s'\n", tag->tag);
 	else if ((nth = which_parent(&tag->tagged->oid, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
-				    tag->tag, tag->tagged->oid.hash);
+			    tag->tag, tag->tagged->oid.hash);
 	else
-		strbuf_addf(&verify_message,
-			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
+		strbuf_addf(&verify_message, "parent #%d, tagged '%s'\n",
+			    nth + 1, tag->tag);
 	gpg_message_offset = verify_message.len;
 
 	payload_size = parse_signature(extra->value, extra->len);
@@ -556,9 +557,10 @@ void show_log(struct rev_info *opt)
 	struct strbuf msgbuf = STRBUF_INIT;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
-	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : the_hash_algo->hexsz;
+	int abbrev_commit = opt->abbrev_commit ? opt->abbrev :
+						 the_hash_algo->hexsz;
 	const char *extra_headers = opt->extra_headers;
-	struct pretty_print_context ctx = {0};
+	struct pretty_print_context ctx = { 0 };
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
@@ -566,7 +568,8 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(&commit->object.oid, abbrev_commit), opt->diffopt.file);
+		fputs(find_unique_abbrev(&commit->object.oid, abbrev_commit),
+		      opt->diffopt.file);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit, opt->diffopt.file);
 		if (opt->children.name)
@@ -622,14 +625,14 @@ void show_log(struct rev_info *opt)
 		ctx.rev = opt;
 		ctx.print_email_subject = 1;
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
-		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), opt->diffopt.file);
+		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT),
+		      opt->diffopt.file);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
 			fputs("commit ", opt->diffopt.file);
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(&commit->object.oid,
-					 abbrev_commit),
+		fputs(find_unique_abbrev(&commit->object.oid, abbrev_commit),
 		      opt->diffopt.file);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit, opt->diffopt.file);
@@ -637,8 +640,10 @@ void show_log(struct rev_info *opt)
 			show_children(opt, commit, abbrev_commit);
 		if (parent)
 			fprintf(opt->diffopt.file, " (from %s)",
-			       find_unique_abbrev(&parent->object.oid, abbrev_commit));
-		fputs(diff_get_color_opt(&opt->diffopt, DIFF_RESET), opt->diffopt.file);
+				find_unique_abbrev(&parent->object.oid,
+						   abbrev_commit));
+		fputs(diff_get_color_opt(&opt->diffopt, DIFF_RESET),
+		      opt->diffopt.file);
 		show_decorations(opt, commit);
 		if (opt->commit_format == CMIT_FMT_ONELINE) {
 			putc(' ', opt->diffopt.file);
@@ -653,10 +658,10 @@ void show_log(struct rev_info *opt)
 			 * so we don't need to worry about printing the
 			 * graph info here.
 			 */
-			show_reflog_message(opt->reflog_info,
-					    opt->commit_format == CMIT_FMT_ONELINE,
-					    &opt->date_mode,
-					    opt->date_mode_explicit);
+			show_reflog_message(
+				opt->reflog_info,
+				opt->commit_format == CMIT_FMT_ONELINE,
+				&opt->date_mode, opt->date_mode_explicit);
 			if (opt->commit_format == CMIT_FMT_ONELINE)
 				return;
 		}
@@ -674,9 +679,9 @@ void show_log(struct rev_info *opt)
 		raw = (opt->commit_format == CMIT_FMT_USERFORMAT);
 		format_display_notes(&commit->object.oid, &notebuf,
 				     get_log_output_encoding(), raw);
-		ctx.notes_message = notebuf.len
-			? strbuf_detach(&notebuf, NULL)
-			: xcalloc(1, 1);
+		ctx.notes_message = notebuf.len ?
+					    strbuf_detach(&notebuf, NULL) :
+					    xcalloc(1, 1);
 	}
 
 	/*
@@ -706,8 +711,8 @@ void show_log(struct rev_info *opt)
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, 0, APPEND_SIGNOFF_DEDUP);
 
-	if ((ctx.fmt != CMIT_FMT_USERFORMAT) &&
-	    ctx.notes_message && *ctx.notes_message) {
+	if ((ctx.fmt != CMIT_FMT_USERFORMAT) && ctx.notes_message &&
+	    *ctx.notes_message) {
 		if (cmit_fmt_is_mail(ctx.fmt))
 			next_commentary_block(opt, &msgbuf);
 		strbuf_addstr(&msgbuf, ctx.notes_message);
@@ -728,7 +733,8 @@ void show_log(struct rev_info *opt)
 		opt->missing_newline = 0;
 
 	graph_show_commit_msg(opt->graph, opt->diffopt.file, &msgbuf);
-	if (opt->use_terminator && !commit_format_is_empty(opt->commit_format)) {
+	if (opt->use_terminator &&
+	    !commit_format_is_empty(opt->commit_format)) {
 		if (!opt->missing_newline)
 			graph_show_padding(opt->graph);
 		putc(opt->diffopt.line_termination, opt->diffopt.file);
@@ -767,8 +773,8 @@ void show_log(struct rev_info *opt)
 		opts.file = opt->diffopt.file;
 		opts.use_color = opt->diffopt.use_color;
 		diff_setup_done(&opts);
-		show_range_diff(opt->rdiff1, opt->rdiff2,
-				opt->creation_factor, 1, &opts);
+		show_range_diff(opt->rdiff1, opt->rdiff2, opt->creation_factor,
+				1, &opts);
 
 		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
 	}
@@ -802,9 +808,11 @@ int log_tree_diff_flush(struct rev_info *opt)
 			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 			if (opt->diffopt.output_prefix) {
 				struct strbuf *msg = NULL;
-				msg = opt->diffopt.output_prefix(&opt->diffopt,
+				msg = opt->diffopt.output_prefix(
+					&opt->diffopt,
 					opt->diffopt.output_prefix_data);
-				fwrite(msg->buf, msg->len, 1, opt->diffopt.file);
+				fwrite(msg->buf, msg->len, 1,
+				       opt->diffopt.file);
 			}
 
 			/*
@@ -839,7 +847,8 @@ static int do_diff_combined(struct rev_info *opt, struct commit *commit)
  *
  * Return true if we printed any log info messages
  */
-static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log_info *log)
+static int log_tree_diff(struct rev_info *opt, struct commit *commit,
+			 struct log_info *log)
 {
 	int showed_log;
 	struct commit_list *parents;
@@ -874,8 +883,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			 * we merged _in_.
 			 */
 			parse_commit_or_die(parents->item);
-			diff_tree_oid(get_commit_tree_oid(parents->item),
-				      oid, "", &opt->diffopt);
+			diff_tree_oid(get_commit_tree_oid(parents->item), oid,
+				      "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 			return !opt->loginfo;
 		}
@@ -889,8 +898,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		struct commit *parent = parents->item;
 
 		parse_commit_or_die(parent);
-		diff_tree_oid(get_commit_tree_oid(parent),
-			      oid, "", &opt->diffopt);
+		diff_tree_oid(get_commit_tree_oid(parent), oid, "",
+			      &opt->diffopt);
 		log_tree_diff_flush(opt);
 
 		showed_log |= !opt->loginfo;
