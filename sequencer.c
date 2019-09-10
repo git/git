@@ -5236,14 +5236,14 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 							  commit2) -
 				     todo_list->items;
 			else {
-				/* copy can be a prefix of the commit subject */
-				for (i2 = 0; i2 < i; i2++)
-					if (subjects[i2] &&
-					    starts_with(subjects[i2], p))
-						break;
-				if (i2 == i)
-					i2 = -1;
-			}
+                /* copy can be a prefix of the commit subject */
+                for (i2 = 0; i2 < i; i2++)
+                    if (subjects[i2] &&
+                        starts_with(subjects[i2], p))
+                        break;
+                if (i2 == i)
+                    i2 = -1;
+            }
 		}
 		if (i2 >= 0) {
 			rearranged = 1;
@@ -5276,7 +5276,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 				if (!is_fixup(command)) {
 					int cur;
 
-					for (cur = i; cur >= 0;
+					for (cur = i; cur >= 0; cur = next[cur]){
 					     cur = next[cur]) {
 						ALLOC_GROW(items, nr + 1,
 							   alloc);
@@ -5291,7 +5291,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			todo_list->items = items;
 			todo_list->nr = nr;
 			todo_list->alloc = alloc;
-		}
+            }
 
 		free(next);
 		free(tail);
@@ -5303,5 +5303,5 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 		clear_commit_todo_item(&commit_todo);
 
 		return 0;
-	}
+
 }
