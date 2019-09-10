@@ -275,7 +275,7 @@ void format_decorations_extended(struct strbuf *sb,
 			prefix = separator;
 		}
 		decoration = decoration->next;
-	} while (decoration)
+	} while (decoration);
 	strbuf_addstr(sb, color_commit);
 	strbuf_addstr(sb, suffix);
 	strbuf_addstr(sb, color_reset);
