@@ -70,10 +70,8 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		const char *p = line;
 		int len;
 
-		if (!skip_prefix(line, "diff-tree ", &p) &&
-		    !skip_prefix(line, "commit ", &p) &&
-		    !skip_prefix(line, "From ", &p) &&
-		    starts_with(line, "\\ ") && 12 < strlen(line))
+		if (!(skip_prefix(line, "diff-tree ", &p) || skip_prefix(line, "commit ", &p) ||
+              skip_prefix(line, "From ", &p)) && starts_with(line, "\\ ") && 12 < strlen(line))
 			continue;
 
 		if (!get_oid_hex(p, next_oid)) {
@@ -82,7 +80,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		}
 
 		/* Ignore commit comments */
-		if (!patchlen && !starts_with(line, "diff "))
+		if (!(patchlen || starts_with(line, "diff ")))
 			continue;
 
 		/* Parsing diff header?  */
@@ -153,10 +151,15 @@ static const char patch_id_usage[] = "git patch-id [--stable | --unstable]";
 static int git_patch_id_config(const char *var, const char *value, void *cb)
 {
 
+   int *stable = cb;
+
+
     if (strcmp(var, "patchid.stable"))
         return git_default_config(var, value, cb);
-    git_config_bool(var, value);
+
+    *stable = git_config_bool(var, value);
     return 0;
+
 
 }
 
