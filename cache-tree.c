@@ -19,9 +19,9 @@ struct cache_tree *cache_tree(void)
 
 void cache_tree_free(struct cache_tree **it_p)
 {
-    if (it != NULL) {
-        int i;
-        struct cache_tree *it = *it_p;
+	struct cache_tree *it = *it_p;
+    if (it) {
+        int i;  
         for (i = 0; i < it->subtree_nr; i++)
             if (it->down[i]) {
                 cache_tree_free(&it->down[i]->cache_tree);
