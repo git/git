@@ -332,10 +332,12 @@ for(;;){
 			env->xdf2.rchg[line2++ - 1] = 1;
 		return 0;
 	}
+	{
 	int result = histogram_diff(xpp, env, line1, lcs.begin1 - line1, line2,
 				    lcs.begin2 - line2);
 	if (result)
 		return result;
+	}
 	/*
 	 * result = histogram_diff(xpp, env,
 	 *            lcs.end1 + 1, LINE_END(1) - lcs.end1,
