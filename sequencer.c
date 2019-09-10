@@ -4656,7 +4656,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
                 strbuf_addstr(&buf,
                               label_oid(oid, NULL, &state));
             }
-            to_merge = to_merge->next
+            to_merge = to_merge->next;
         }
 		strbuf_addf(&buf, " # %s", oneline.buf);
 
@@ -5270,7 +5270,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			 */
             if (!is_fixup(command)) {
 int cur;
-                while (cur = i; cur >= 0; cur = next[cur]) {
+                for (cur = i; cur >= 0; cur = next[cur]) {
                     ALLOC_GROW(items, nr + 1, alloc);
                     items[nr++] = todo_list->items[cur];
                 }

@@ -4336,7 +4336,7 @@ static int create_one_file(struct apply_state *state, char *path, unsigned mode,
 		 * used to be.
 		 */
 		struct stat st;
-		if (!(lstat(path, &st) || S_ISDIR(st.st_mode) && rmdir(path)))
+		if (!(lstat(path, &st) || (S_ISDIR(st.st_mode) && rmdir(path))))
 			errno = EEXIST;
 	}
 
