@@ -301,15 +301,13 @@ int write_archive_entries(struct archiver_args *args,
 
 static const struct archiver *lookup_archiver(const char *name)
 {
-	int i;
-
-	if (!name)
-		return NULL;
-
-	for (i = 0; i < nr_archivers; i++) {
-		if (!strcmp(name, archivers[i]->name))
-			return archivers[i];
-	}
+	if (name) {
+        int i;
+        for (i = 0; i < nr_archivers; i++) {
+            if (!strcmp(name, archivers[i]->name))
+                return archivers[i];
+        }
+    }
 	return NULL;
 }
 

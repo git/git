@@ -22,10 +22,10 @@ static void get_sane_name(struct strbuf *out, struct strbuf *name, struct strbuf
 	if (name->len < 3 || 60 < name->len || strchr(name->buf, '@') ||
 		strchr(name->buf, '<') || strchr(name->buf, '>'))
 		src = email;
-	else if (name == out)
-		return;
-	strbuf_reset(out);
-	strbuf_addbuf(out, src);
+	else if (name != out) {
+        strbuf_reset(out);
+        strbuf_addbuf(out, src);
+    }
 }
 
 static void parse_bogus_from(struct mailinfo *mi, const struct strbuf *line)
@@ -865,11 +865,9 @@ static int is_rfc2822_header(const struct strbuf *line)
 	while ((ch = *cp++)) {
 		if (ch == ':')
 			return 1;
-		if ((33 <= ch && ch <= 57) ||
-		    (59 <= ch && ch <= 126))
-			continue;
-		break;
-	}
+        if ((33 > ch || ch > 57) && (59 > ch && ch > 126))
+            break;
+    }
 	return 0;
 }
 
@@ -886,7 +884,7 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 	 * If so, stop here, and return false ("not a header")
 	 */
 	strbuf_rtrim(line);
-	if (!line->len || !is_rfc2822_header(line)) {
+	if (!(line->len && is_rfc2822_header(line))) {
 		/* Re-add the newline */
 		strbuf_addch(line, '\n');
 		return 0;

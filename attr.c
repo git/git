@@ -193,14 +193,14 @@ static int attr_name_valid(const char *name, size_t namelen)
 	 */
 	if (namelen <= 0 || *name == '-')
 		return 0;
-	while (namelen--) {
-		char ch = *name++;
-		if (! (ch == '-' || ch == '.' || ch == '_' ||
-		       ('0' <= ch && ch <= '9') ||
-		       ('a' <= ch && ch <= 'z') ||
-		       ('A' <= ch && ch <= 'Z')) )
-			return 0;
-	}
+	do {
+        char ch = *name++;
+        if (ch != '-' && ch != '.' && ch != '_' &&
+            ('0' > ch || ch > '9') &&
+            ('a' > ch || ch > 'z') &&
+            ('A' > ch || ch > 'Z'))
+            return 0;
+    } while (--namelen);
 	return 1;
 }
 
@@ -354,77 +354,77 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		return NULL;
 	name = cp;
 
-	if (*cp == '"' && !unquote_c_style(&pattern, name, &states)) {
-		name = pattern.buf;
-		namelen = pattern.len;
-	} else {
-		namelen = strcspn(name, blank);
-		states = name + namelen;
-	}
+    if (*cp != '"' || unquote_c_style(&pattern, name, &states)) {
+        namelen = strcspn(name, blank);
+        states = name + namelen;
+    } else {
+        name = pattern.buf;
+        namelen = pattern.len;
+    }
 
-	if (strlen(ATTRIBUTE_MACRO_PREFIX) < namelen &&
-	    starts_with(name, ATTRIBUTE_MACRO_PREFIX)) {
-		if (!macro_ok) {
-			fprintf_ln(stderr, _("%s not allowed: %s:%d"),
-				   name, src, lineno);
-			goto fail_return;
-		}
-		is_macro = 1;
-		name += strlen(ATTRIBUTE_MACRO_PREFIX);
-		name += strspn(name, blank);
-		namelen = strcspn(name, blank);
-		if (!attr_name_valid(name, namelen)) {
-			report_invalid_attr(name, namelen, src, lineno);
-			goto fail_return;
-		}
-	}
-	else
-		is_macro = 0;
+    if (strlen(ATTRIBUTE_MACRO_PREFIX) < namelen &&
+        starts_with(name, ATTRIBUTE_MACRO_PREFIX)) {
+        if (!macro_ok) {
+            fprintf_ln(stderr, _("%s not allowed: %s:%d"),
+                       name, src, lineno);
+            goto fail_return;
+        }
+        is_macro = 1;
+        name += strlen(ATTRIBUTE_MACRO_PREFIX);
+        name += strspn(name, blank);
+        namelen = strcspn(name, blank);
+        if (!attr_name_valid(name, namelen)) {
+            report_invalid_attr(name, namelen, src, lineno);
+            goto fail_return;
+        }
+    }
+    else
+        is_macro = 0;
 
-	states += strspn(states, blank);
+    states += strspn(states, blank);
 
-	/* First pass to count the attr_states */
-	for (cp = states, num_attr = 0; *cp; num_attr++) {
-		cp = parse_attr(src, lineno, cp, NULL);
-		if (!cp)
-			goto fail_return;
-	}
+    /* First pass to count the attr_states */
+    for (cp = states, num_attr = 0; *cp; num_attr++) {
+        cp = parse_attr(src, lineno, cp, NULL);
+        if (!cp)
+            goto fail_return;
+    }
 
-	res = xcalloc(1,
-		      sizeof(*res) +
-		      sizeof(struct attr_state) * num_attr +
-		      (is_macro ? 0 : namelen + 1));
-	if (is_macro) {
-		res->u.attr = git_attr_internal(name, namelen);
-	} else {
-		char *p = (char *)&(res->state[num_attr]);
-		memcpy(p, name, namelen);
-		res->u.pat.pattern = p;
-		parse_exclude_pattern(&res->u.pat.pattern,
-				      &res->u.pat.patternlen,
-				      &res->u.pat.flags,
-				      &res->u.pat.nowildcardlen);
-		if (res->u.pat.flags & EXC_FLAG_NEGATIVE) {
-			warning(_("Negative patterns are ignored in git attributes\n"
-				  "Use '\\!' for literal leading exclamation."));
-			goto fail_return;
-		}
-	}
-	res->is_macro = is_macro;
-	res->num_attr = num_attr;
+    res = xcalloc(1,
+                  sizeof(*res) +
+                  sizeof(struct attr_state) * num_attr +
+                  (is_macro ? 0 : namelen + 1));
+    if (is_macro) {
+        res->u.attr = git_attr_internal(name, namelen);
+    } else {
+        char *p = (char *)&(res->state[num_attr]);
+        memcpy(p, name, namelen);
+        res->u.pat.pattern = p;
+        parse_exclude_pattern(&res->u.pat.pattern,
+                              &res->u.pat.patternlen,
+                              &res->u.pat.flags,
+                              &res->u.pat.nowildcardlen);
+        if (res->u.pat.flags & EXC_FLAG_NEGATIVE) {
+            warning(_("Negative patterns are ignored in git attributes\n"
+                      "Use '\\!' for literal leading exclamation."));
+            goto fail_return;
+        }
+    }
+    res->is_macro = is_macro;
+    res->num_attr = num_attr;
 
-	/* Second pass to fill the attr_states */
-	for (cp = states, i = 0; *cp; i++) {
-		cp = parse_attr(src, lineno, cp, &(res->state[i]));
-	}
+    /* Second pass to fill the attr_states */
+    for (cp = states, i = 0; *cp; i++) {
+        cp = parse_attr(src, lineno, cp, &(res->state[i]));
+    }
 
-	strbuf_release(&pattern);
-	return res;
+    strbuf_release(&pattern);
+    return res;
 
-fail_return:
-	strbuf_release(&pattern);
-	free(res);
-	return NULL;
+    fail_return:
+    strbuf_release(&pattern);
+    free(res);
+    return NULL;
 }
 
 /*
@@ -463,14 +463,9 @@ static void attr_stack_free(struct attr_stack *e)
 		int j;
 		for (j = 0; j < a->num_attr; j++) {
 			const char *setto = a->state[j].setto;
-			if (setto == ATTR__TRUE ||
-			    setto == ATTR__FALSE ||
-			    setto == ATTR__UNSET ||
-			    setto == ATTR__UNKNOWN)
-				;
-			else
-				free((char *) setto);
-		}
+            if (setto != ATTR__TRUE && setto != ATTR__FALSE && setto != ATTR__UNSET && setto != ATTR__UNKNOWN)
+                free((char *) setto);
+        }
 		free(a);
 	}
 	free(e->attrs);
@@ -531,8 +526,10 @@ static void check_vector_remove(struct attr_check *check)
 		BUG("no entry found");
 
 	/* shift entries over */
-	for (; i < check_vector.nr - 1; i++)
-		check_vector.checks[i] = check_vector.checks[i + 1];
+	while (i < check_vector.nr - 1) {
+        check_vector.checks[i] = check_vector.checks[i + 1];
+        i++;
+    }
 
 	check_vector.nr--;
 
@@ -667,10 +664,10 @@ static void handle_attr_line(struct attr_stack *res,
 	struct match_attr *a;
 
 	a = parse_attr_line(line, src, lineno, macro_ok);
-	if (!a)
-		return;
-	ALLOC_GROW(res->attrs, res->num_matches + 1, res->alloc);
-	res->attrs[res->num_matches++] = a;
+    if (a != NULL) {
+        ALLOC_GROW(res->attrs, res->num_matches + 1, res->alloc);
+        res->attrs[res->num_matches++] = a;
+    }
 }
 
 static struct attr_stack *read_attr_from_array(const char **list)
@@ -1056,7 +1053,6 @@ static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem)
 
 	if (item->macro && item->value == ATTR__TRUE)
 		return fill_one("expand", all_attrs, item->macro, rem);
-	else
 		return rem;
 }
 
@@ -1068,7 +1064,7 @@ static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem)
 static void determine_macros(struct all_attrs_item *all_attrs,
 			     const struct attr_stack *stack)
 {
-	for (; stack; stack = stack->prev) {
+	while(stack) {
 		int i;
 		for (i = stack->num_matches - 1; i >= 0; i--) {
 			const struct match_attr *ma = stack->attrs[i];
@@ -1079,6 +1075,7 @@ static void determine_macros(struct all_attrs_item *all_attrs,
 				}
 			}
 		}
+		stack = stack -> prev;
 	}
 }
 

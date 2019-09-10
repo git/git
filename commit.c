@@ -212,18 +212,16 @@ static int read_graft_file(struct repository *r, const char *graft_file)
 
 void prepare_commit_graft(struct repository *r)
 {
-	char *graft_file;
 
-	if (r->parsed_objects->commit_graft_prepared)
-		return;
-	if (!startup_info->have_repository)
-		return;
 
-	graft_file = get_graft_file(r);
-	read_graft_file(r, graft_file);
-	/* make sure shallows are read */
-	is_repository_shallow(r);
-	r->parsed_objects->commit_graft_prepared = 1;
+    if (!r->parsed_objects->commit_graft_prepared && startup_info->have_repository) {
+        char *graft_file;
+        graft_file = get_graft_file(r);
+        read_graft_file(r, graft_file);
+        /* make sure shallows are read */
+        is_repository_shallow(r);
+        r->parsed_objects->commit_graft_prepared = 1;
+    }
 }
 
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid)
@@ -231,9 +229,9 @@ struct commit_graft *lookup_commit_graft(struct repository *r, const struct obje
 	int pos;
 	prepare_commit_graft(r);
 	pos = commit_graft_pos(r, oid->hash);
-	if (pos < 0)
-		return NULL;
-	return r->parsed_objects->grafts[pos];
+    if (pos >= 0)
+        return r->parsed_objects->grafts[pos];
+    return NULL;
 }
 
 int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
@@ -532,8 +530,8 @@ struct commit_list *commit_list_insert(struct commit *item, struct commit_list *
 unsigned commit_list_count(const struct commit_list *l)
 {
 	unsigned c = 0;
-	for (; l; l = l->next )
-		c++;
+	while( l)
+		c++, l = l->next;
 	return c;
 }
 
@@ -952,7 +950,7 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 	else
 		inspos = eoh - buf->buf + 1;
 
-	if (!keyid || !*keyid)
+	if (!(keyid && *keyid))
 		keyid = get_signing_key();
 	if (sign_buffer(buf, &sig, keyid)) {
 		strbuf_release(&sig);
@@ -1054,41 +1052,42 @@ int remove_signature(struct strbuf *buf)
 static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
 {
 	struct merge_remote_desc *desc;
-	struct commit_extra_header *mergetag;
-	char *buf;
-	unsigned long size, len;
-	enum object_type type;
+
 
 	desc = merge_remote_util(parent);
-	if (!desc || !desc->obj)
-		return;
-	buf = read_object_file(&desc->obj->oid, &type, &size);
-	if (!buf || type != OBJ_TAG)
-		goto free_return;
-	len = parse_signature(buf, size);
-	if (size == len)
-		goto free_return;
-	/*
-	 * We could verify this signature and either omit the tag when
-	 * it does not validate, but the integrator may not have the
-	 * public key of the signer of the tag he is merging, while a
-	 * later auditor may have it while auditing, so let's not run
-	 * verify-signed-buffer here for now...
-	 *
-	 * if (verify_signed_buffer(buf, len, buf + len, size - len, ...))
-	 *	warn("warning: signed tag unverified.");
-	 */
-	mergetag = xcalloc(1, sizeof(*mergetag));
-	mergetag->key = xstrdup("mergetag");
-	mergetag->value = buf;
-	mergetag->len = size;
+    if (desc && desc->obj) {
+        struct commit_extra_header *mergetag;
+        char *buf;
+        unsigned long size, len;
+        enum object_type type;
+        buf = read_object_file(&desc->obj->oid, &type, &size);
+        if (!buf || type != OBJ_TAG){
+            free(buf);
+            return;
+        }
+        len = parse_signature(buf, size);
+        if (size == len){
+            free(buf);
+            return;
+        }
+        /*
+         * We could verify this signature and either omit the tag when
+         * it does not validate, but the integrator may not have the
+         * public key of the signer of the tag he is merging, while a
+         * later auditor may have it while auditing, so let's not run
+         * verify-signed-buffer here for now...
+         *
+         * if (verify_signed_buffer(buf, len, buf + len, size - len, ...))
+         *	warn("warning: signed tag unverified.");
+         */
+        mergetag = xcalloc(1, sizeof(*mergetag));
+        mergetag->key = xstrdup("mergetag");
+        mergetag->value = buf;
+        mergetag->len = size;
 
-	**tail = mergetag;
-	*tail = &mergetag->next;
-	return;
-
-free_return:
-	free(buf);
+        **tail = mergetag;
+        *tail = &mergetag->next;
+    }
 }
 
 int check_commit_signature(const struct commit *commit, struct signature_check *sigc)
@@ -1099,12 +1098,10 @@ int check_commit_signature(const struct commit *commit, struct signature_check *
 
 	sigc->result = 'N';
 
-	if (parse_signed_commit(commit, &payload, &signature) <= 0)
-		goto out;
+	if (parse_signed_commit(commit, &payload, &signature) > 0)
 	ret = check_signature(payload.buf, payload.len, signature.buf,
 		signature.len, sigc);
 
- out:
 	strbuf_release(&payload);
 	strbuf_release(&signature);
 
@@ -1397,7 +1394,6 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 			 const char *author, const char *sign_commit,
 			 struct commit_extra_header *extra)
 {
-	int result;
 	int encoding_is_utf8;
 	struct strbuf buffer;
 
@@ -1445,14 +1441,15 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		fprintf(stderr, _(commit_utf8_warn));
 
 	if (sign_commit && do_sign_commit(&buffer, sign_commit)) {
-		result = -1;
-		goto out;
+        strbuf_release(&buffer);
+		return -1;
 	}
+	else {
 
-	result = write_object_file(buffer.buf, buffer.len, commit_type, ret);
-out:
-	strbuf_release(&buffer);
-	return result;
+        int result = write_object_file(buffer.buf, buffer.len, commit_type, ret);
+        strbuf_release(&buffer);
+        return result;
+    }
 }
 
 define_commit_slab(merge_desc_slab, struct merge_remote_desc *);
@@ -1569,9 +1566,7 @@ size_t ignore_non_trailer(const char *buf, size_t len)
 			in_old_conflicts_block = 1;
 			if (!boc)
 				boc = bol;
-		} else if (in_old_conflicts_block && buf[bol] == '\t') {
-			; /* a pathname in the conflicts block */
-		} else if (boc) {
+		} else if (in_old_conflicts_block && buf[bol] != '\t' && boc) {
 			/* the previous was not trailing comment */
 			boc = 0;
 			in_old_conflicts_block = 0;

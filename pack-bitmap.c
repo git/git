@@ -292,14 +292,12 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 	bitmap_git->map_pos = 0;
 	close(fd);
 
-	if (load_bitmap_header(bitmap_git) < 0) {
-		munmap(bitmap_git->map, bitmap_git->map_size);
-		bitmap_git->map = NULL;
-		bitmap_git->map_size = 0;
-		return -1;
-	}
+    if (load_bitmap_header(bitmap_git) >= 0) return 0;
+    munmap(bitmap_git->map, bitmap_git->map_size);
+    bitmap_git->map = NULL;
+    bitmap_git->map_size = 0;
+    return -1;
 
-	return 0;
 }
 
 static int load_pack_bitmap(struct bitmap_index *bitmap_git)
@@ -308,25 +306,15 @@ static int load_pack_bitmap(struct bitmap_index *bitmap_git)
 
 	bitmap_git->bitmaps = kh_init_oid_map();
 	bitmap_git->ext_index.positions = kh_init_oid_pos();
-	if (load_pack_revindex(bitmap_git->pack))
-		goto failed;
 
-	if (!(bitmap_git->commits = read_bitmap_1(bitmap_git)) ||
-		!(bitmap_git->trees = read_bitmap_1(bitmap_git)) ||
-		!(bitmap_git->blobs = read_bitmap_1(bitmap_git)) ||
-		!(bitmap_git->tags = read_bitmap_1(bitmap_git)))
-		goto failed;
-
-	if (load_bitmap_entries_v1(bitmap_git) < 0)
-		goto failed;
-
-	return 0;
-
-failed:
-	munmap(bitmap_git->map, bitmap_git->map_size);
-	bitmap_git->map = NULL;
-	bitmap_git->map_size = 0;
-	return -1;
+    if (!load_pack_revindex(bitmap_git->pack) && (bitmap_git->commits = read_bitmap_1(bitmap_git)) &&
+        (bitmap_git->trees = read_bitmap_1(bitmap_git)) && (bitmap_git->blobs = read_bitmap_1(bitmap_git)) &&
+        (bitmap_git->tags = read_bitmap_1(bitmap_git)) && load_bitmap_entries_v1(bitmap_git) >= 0)
+        return 0;
+        munmap(bitmap_git->map, bitmap_git->map_size);
+        bitmap_git->map = NULL;
+        bitmap_git->map_size = 0;
+        return -1;
 }
 
 static int open_pack_bitmap(struct repository *r,
@@ -480,19 +468,18 @@ static int should_include(struct commit *commit, void *_data)
 						  (struct object *)commit,
 						  NULL);
 
-	if (!add_to_include_set(data->bitmap_git, data, &commit->object.oid,
-				bitmap_pos)) {
-		struct commit_list *parent = commit->parents;
+    if (add_to_include_set(data->bitmap_git, data, &commit->object.oid,
+                           bitmap_pos))
+        return 1;
+    struct commit_list *parent = commit->parents;
 
-		while (parent) {
-			parent->item->object.flags |= SEEN;
-			parent = parent->next;
-		}
+    while (parent) {
+        parent->item->object.flags |= SEEN;
+        parent = parent->next;
+    }
 
-		return 0;
-	}
+    return 0;
 
-	return 1;
 }
 
 static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
@@ -606,13 +593,11 @@ static void show_extended_objects(struct bitmap_index *bitmap_git,
 	uint32_t i;
 
 	for (i = 0; i < eindex->count; ++i) {
-		struct object *obj;
-
-		if (!bitmap_get(objects, bitmap_git->pack->num_objects + i))
-			continue;
-
-		obj = eindex->objects[i];
-		show_reach(&obj->oid, obj->type, 0, eindex->hashes[i], NULL, 0);
+		if (bitmap_get(objects, bitmap_git->pack->num_objects + i)) {
+            struct object *obj;
+            obj = eindex->objects[i];
+            show_reach(&obj->oid, obj->type, 0, eindex->hashes[i], NULL, 0);
+        }
 	}
 }
 

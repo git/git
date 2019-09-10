@@ -19,19 +19,18 @@ struct cache_tree *cache_tree(void)
 
 void cache_tree_free(struct cache_tree **it_p)
 {
-	int i;
-	struct cache_tree *it = *it_p;
-
-	if (!it)
-		return;
-	for (i = 0; i < it->subtree_nr; i++)
-		if (it->down[i]) {
-			cache_tree_free(&it->down[i]->cache_tree);
-			free(it->down[i]);
-		}
-	free(it->down);
-	free(it);
-	*it_p = NULL;
+    if (it != NULL) {
+        int i;
+        struct cache_tree *it = *it_p;
+        for (i = 0; i < it->subtree_nr; i++)
+            if (it->down[i]) {
+                cache_tree_free(&it->down[i]->cache_tree);
+                free(it->down[i]);
+            }
+        free(it->down);
+        free(it);
+        *it_p = NULL;
+    }
 }
 
 static int subtree_name_cmp(const char *one, int onelen,
@@ -799,10 +798,9 @@ static void verify_one(struct repository *r,
 
 void cache_tree_verify(struct repository *r, struct index_state *istate)
 {
-	struct strbuf path = STRBUF_INIT;
-
-	if (!istate->cache_tree)
-		return;
-	verify_one(r, istate, istate->cache_tree, &path);
-	strbuf_release(&path);
+    if (istate->cache_tree) {
+        struct strbuf path = STRBUF_INIT;
+        verify_one(r, istate, istate->cache_tree, &path);
+        strbuf_release(&path);
+    }
 }

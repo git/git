@@ -80,9 +80,8 @@ static int parse_color(struct color *out, const char *name, int len)
 
 	/* Try a 24-bit RGB value */
 	if (len == 7 && name[0] == '#') {
-		if (!get_hex_color(name + 1, &out->red) &&
-		    !get_hex_color(name + 3, &out->green) &&
-		    !get_hex_color(name + 5, &out->blue)) {
+		if (!(get_hex_color(name + 1, &out->red) || get_hex_color(name + 3, &out->green) ||
+              get_hex_color(name + 5, &out->blue))) {
 			out->type = COLOR_RGB;
 			return 0;
 		}
@@ -105,7 +104,7 @@ static int parse_color(struct color *out, const char *name, int len)
 		 * numbers are bogus.
 		 */
 		if (val < -1)
-			; /* fall through to error */
+			return -1;
 		else if (val < 0) {
 			out->type = COLOR_NORMAL;
 			return 0;
@@ -312,11 +311,11 @@ int git_config_colorbool(const char *var, const char *value)
 		return -1;
 
 	/* Missing or explicit false to turn off colorization */
-	if (!git_config_bool(var, value))
-		return 0;
+    if (git_config_bool(var, value) != 0)
+        return GIT_COLOR_AUTO;
+    return 0;
 
-	/* any normal truth value defaults to 'auto' */
-	return GIT_COLOR_AUTO;
+    /* any normal truth value defaults to 'auto' */
 }
 
 static int check_auto_color(int fd)
@@ -361,18 +360,16 @@ int git_color_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "color.ui")) {
 		git_use_color_default = git_config_colorbool(var, value);
-		return 0;
 	}
-
 	return 0;
 }
 
 int git_color_default_config(const char *var, const char *value, void *cb)
 {
-	if (git_color_config(var, value, cb) < 0)
-		return -1;
+    if (git_color_config(var, value, cb) >= 0)
+        return git_default_config(var, value, cb);
+    return -1;
 
-	return git_default_config(var, value, cb);
 }
 
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)

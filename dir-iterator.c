@@ -217,18 +217,14 @@ struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
 	 * inexistent paths.
 	 */
 	if (stat(iter->base.path.buf, &iter->base.st) < 0) {
-		saved_errno = errno;
-		goto error_out;
-	}
-
-	if (!S_ISDIR(iter->base.st.st_mode)) {
+        saved_errno = errno;
+    }
+	else if (!S_ISDIR(iter->base.st.st_mode)) {
 		saved_errno = ENOTDIR;
-		goto error_out;
 	}
-
-	return dir_iterator;
-
-error_out:
+	else {
+        return dir_iterator;
+    }
 	dir_iterator_abort(dir_iterator);
 	errno = saved_errno;
 	return NULL;

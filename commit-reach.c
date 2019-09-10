@@ -438,9 +438,11 @@ struct contains_stack {
 
 static int in_commit_list(const struct commit_list *want, struct commit *c)
 {
-	for (; want; want = want->next)
-		if (oideq(&want->item->object.oid, &c->object.oid))
-			return 1;
+	while (want) {
+        if (oideq(&want->item->object.oid, &c->object.oid))
+            return 1;
+        want = want->next;
+    }
 	return 0;
 }
 

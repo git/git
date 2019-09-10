@@ -86,16 +86,16 @@ static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
 	memset(cf->rchash, 0, cf->hsize * sizeof(xdlclass_t *));
 
 	cf->alloc = size;
-	if (!(cf->rcrecs = (xdlclass_t **) xdl_malloc(cf->alloc * sizeof(xdlclass_t *)))) {
+    if ((cf->rcrecs = (xdlclass_t **) xdl_malloc(cf->alloc * sizeof(xdlclass_t *))) != NULL) {
 
-		xdl_free(cf->rchash);
-		xdl_cha_free(&cf->ncha);
-		return -1;
-	}
+        cf->count = 0;
 
-	cf->count = 0;
+        return 0;
+    }
 
-	return 0;
+        xdl_free(cf->rchash);
+        xdl_cha_free(&cf->ncha);
+        return -1;
 }
 
 
@@ -473,11 +473,8 @@ static int xdl_trim_ends(xdfile_t *xdf1, xdfile_t *xdf2) {
 
 static int xdl_optimize_ctxs(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xdf2) {
 
-	if (xdl_trim_ends(xdf1, xdf2) < 0 ||
-	    xdl_cleanup_records(cf, xdf1, xdf2) < 0) {
+    if (xdl_trim_ends(xdf1, xdf2) >= 0 && xdl_cleanup_records(cf, xdf1, xdf2) >= 0) return 0;
 
-		return -1;
-	}
+    return -1;
 
-	return 0;
 }

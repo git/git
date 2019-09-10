@@ -422,19 +422,18 @@ static int write_zip_entry(struct archiver_args *args,
 
 	if (stream && method == 0) {
 		unsigned char buf[STREAM_BUFFER_SIZE];
-		ssize_t readlen;
+		ssize_t readlen = read_istream(stream, buf, sizeof(buf));
 
-		for (;;) {
-			readlen = read_istream(stream, buf, sizeof(buf));
-			if (readlen <= 0)
-				break;
+		while (readlen > 0) {
 			crc = crc32(crc, buf, readlen);
 			if (is_binary == -1)
 				is_binary = entry_is_binary(args->repo->index,
 							    path_without_prefix,
 							    buf, readlen);
 			write_or_die(1, buf, readlen);
+			readlen = read_istream(stream, buf, sizeof(buf));
 		}
+		
 		close_istream(stream);
 		if (readlen)
 			return readlen;
@@ -456,11 +455,8 @@ static int write_zip_entry(struct archiver_args *args,
 		compressed_size = 0;
 		zstream.next_out = compressed;
 		zstream.avail_out = sizeof(compressed);
-
-		for (;;) {
-			readlen = read_istream(stream, buf, sizeof(buf));
-			if (readlen <= 0)
-				break;
+		readlen = read_istream(stream, buf, sizeof(buf));
+		while (readlen > 0) {
 			crc = crc32(crc, buf, readlen);
 			if (is_binary == -1)
 				is_binary = entry_is_binary(args->repo->index,
@@ -480,6 +476,7 @@ static int write_zip_entry(struct archiver_args *args,
 				zstream.next_out = compressed;
 				zstream.avail_out = sizeof(compressed);
 			}
+			readlen = read_istream(stream, buf, sizeof(buf));
 
 		}
 		close_istream(stream);

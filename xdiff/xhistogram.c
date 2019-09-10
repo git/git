@@ -162,24 +162,23 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
 	int line1, int count1, int line2, int count2)
 {
 	unsigned int b_next = b_ptr + 1;
-	struct record *rec = index->records[TABLE_HASH(index, 2, b_ptr)];
-	unsigned int as, ae, bs, be, np, rc;
-	int should_break;
 
-	for (; rec; rec = rec->next) {
+	unsigned int as, ae, bs, be, np, rc;
+
+
+	for (struct record *rec = index->records[TABLE_HASH(index, 2, b_ptr)]; rec; rec = rec->next) {
 		if (rec->cnt > index->cnt) {
-			if (!index->has_common)
-				index->has_common = CMP(index, 1, rec->ptr, 2, b_ptr);
-			continue;
-		}
+            if (!index->has_common)
+                index->has_common = CMP(index, 1, rec->ptr, 2, b_ptr);
+            continue;
+        }
 
 		as = rec->ptr;
 		if (!CMP(index, 1, as, 2, b_ptr))
 			continue;
 
-		index->has_common = 1;
-		for (;;) {
-			should_break = 0;
+        int should_break = 0;
+		for (index->has_common = 1;!should_break;as=np) {
 			np = NEXT_PTR(index, as);
 			bs = b_ptr;
 			ae = as;
@@ -217,15 +216,10 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
 			while (np <= ae) {
 				np = NEXT_PTR(index, np);
 				if (np == 0) {
-					should_break = 1;
-					break;
-				}
+                    should_break = 1;
+                    break;
+                }
 			}
-
-			if (should_break)
-				break;
-
-			as = np;
 		}
 	}
 	return b_next;
@@ -301,10 +295,7 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 	for (b_ptr = line2; b_ptr <= LINE_END(2); )
 		b_ptr = try_lcs(&index, lcs, b_ptr, line1, count1, line2, count2);
 
-	if (index.has_common && index.max_chain_length < index.cnt)
-		ret = 1;
-	else
-		ret = 0;
+	ret =  (index.has_common && index.max_chain_length < index.cnt)
 
 cleanup:
 	free_index(&index);
@@ -342,43 +333,40 @@ redo:
 		goto out;
 	else if (lcs_found)
 		result = fall_back_to_classic_diff(xpp, env, line1, count1, line2, count2);
-	else {
-		if (lcs.begin1 == 0 && lcs.begin2 == 0) {
-			while (count1--)
-				env->xdf1.rchg[line1++ - 1] = 1;
-			while (count2--)
-				env->xdf2.rchg[line2++ - 1] = 1;
-			result = 0;
-		} else {
-			result = histogram_diff(xpp, env,
-						line1, lcs.begin1 - line1,
-						line2, lcs.begin2 - line2);
-			if (result)
-				goto out;
-			/*
-			 * result = histogram_diff(xpp, env,
-			 *            lcs.end1 + 1, LINE_END(1) - lcs.end1,
-			 *            lcs.end2 + 1, LINE_END(2) - lcs.end2);
-			 * but let's optimize tail recursion ourself:
-			*/
-			count1 = LINE_END(1) - lcs.end1;
-			line1 = lcs.end1 + 1;
-			count2 = LINE_END(2) - lcs.end2;
-			line2 = lcs.end2 + 1;
-			goto redo;
-		}
-	}
-out:
+	else if (lcs.begin1 == 0 && lcs.begin2 == 0) {
+        while (count1--)
+            env->xdf1.rchg[line1++ - 1] = 1;
+        while (count2--)
+            env->xdf2.rchg[line2++ - 1] = 1;
+        result = 0;
+    } else {
+        result = histogram_diff(xpp, env,
+                    line1, lcs.begin1 - line1,
+                    line2, lcs.begin2 - line2);
+        if (result)
+            return result;
+        /*
+         * result = histogram_diff(xpp, env,
+         *            lcs.end1 + 1, LINE_END(1) - lcs.end1,
+         *            lcs.end2 + 1, LINE_END(2) - lcs.end2);
+         * but let's optimize tail recursion ourself:
+        */
+        count1 = LINE_END(1) - lcs.end1;
+        line1 = lcs.end1 + 1;
+        count2 = LINE_END(2) - lcs.end2;
+        line2 = lcs.end2 + 1;
+        goto redo;
+    }
 	return result;
 }
 
 int xdl_do_histogram_diff(mmfile_t *file1, mmfile_t *file2,
 	xpparam_t const *xpp, xdfenv_t *env)
 {
-	if (xdl_prepare_env(file1, file2, xpp, env) < 0)
-		return -1;
+    if (xdl_prepare_env(file1, file2, xpp, env) >= 0)
+        return histogram_diff(xpp, env,
+                              env->xdf1.dstart + 1, env->xdf1.dend - env->xdf1.dstart + 1,
+                              env->xdf2.dstart + 1, env->xdf2.dend - env->xdf2.dstart + 1);
+    return -1;
 
-	return histogram_diff(xpp, env,
-		env->xdf1.dstart + 1, env->xdf1.dend - env->xdf1.dstart + 1,
-		env->xdf2.dstart + 1, env->xdf2.dend - env->xdf2.dstart + 1);
 }

@@ -531,11 +531,9 @@ static unsigned long find_next(struct sline *sline,
 	 * lines that are not interesting to interesting() function
 	 * that are surrounded by interesting() ones.
 	 */
-	while (i <= cnt)
-		if ((look_for_uninteresting != 0) == !(sline[i].flag & mark))
-			return i;
-		else
-			i++;
+	while (i <= cnt && (!look_for_uninteresting != (sline[i].flag & mark)) ) {
+        i++;
+    }
 	return i;
 }
 
@@ -576,7 +574,7 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 		 */
 		j = find_next(sline, mark, i, cnt, 1);
 		if (cnt < j)
-			break; /* the rest are all interesting */
+			return 1; /* the rest are all interesting */
 
 		/* lookahead context lines */
 		k = find_next(sline, mark, j, cnt, 0);

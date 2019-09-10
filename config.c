@@ -147,7 +147,7 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	if (!is_absolute_path(path)) {
 		char *slash;
 
-		if (!cf || !cf->path)
+		if (!(cf && cf->path))
 			return error(_("relative config includes must come from files"));
 
 		slash = find_last_dir_sep(cf->path);
@@ -193,7 +193,7 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 	if (pat->buf[0] == '.' && is_dir_sep(pat->buf[1])) {
 		const char *slash;
 
-		if (!cf || !cf->path)
+		if (!(cf && cf->path))
 			return error(_("relative config include "
 				       "conditionals must come from files"));
 
@@ -697,7 +697,7 @@ static int do_event(enum config_event_t type, struct parse_event_data *data)
 {
 	size_t offset;
 
-	if (!data->opts || !data->opts->event_fn)
+	if (!(data->opts && data->opts->event_fn))
 		return 0;
 
 	if (type == CONFIG_EVENT_WHITESPACE &&
@@ -1053,13 +1053,9 @@ static int git_parse_maybe_bool_text(const char *value)
 		return 1;
 	if (!*value)
 		return 0;
-	if (!strcasecmp(value, "true")
-	    || !strcasecmp(value, "yes")
-	    || !strcasecmp(value, "on"))
+	if (!(strcasecmp(value, "true") && strcasecmp(value, "yes") && strcasecmp(value, "on")))
 		return 1;
-	if (!strcasecmp(value, "false")
-	    || !strcasecmp(value, "no")
-	    || !strcasecmp(value, "off"))
+	if (!(strcasecmp(value, "false") && strcasecmp(value, "no") && strcasecmp(value, "off")))
 		return 0;
 	return -1;
 }
@@ -2772,8 +2768,10 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		free(store.key);
 		store.key = xstrdup(key);
 		if (write_section(fd, key, &store) < 0 ||
-		    write_pair(fd, key, value, &store) < 0)
-			goto write_err_out;
+		    write_pair(fd, key, value, &store) < 0){
+            ret = write_error(get_lock_file_path(&lock));
+            goto out_free;
+		}
 	} else {
 		struct stat st;
 		size_t copy_begin, copy_end;
@@ -2892,13 +2890,11 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 				 * line.
 				 */
 				while (copy_end > 0 ) {
-					char c = contents[copy_end - 1];
+					char c = contents[--copy_end];
 
-					if (isspace(c) && c != '\n')
-						copy_end--;
-					else
-						break;
-				}
+                    if (!isspace(c) || c == '\n')
+                        break;
+                }
 			}
 
 			if (copy_end > 0 && contents[copy_end-1] != '\n')
@@ -2908,10 +2904,15 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			if (copy_end > copy_begin) {
 				if (write_in_full(fd, contents + copy_begin,
 						  copy_end - copy_begin) < 0)
-					goto write_err_out;
+					{ret = write_error(get_lock_file_path(&lock));
+                        goto out_free;
+					}
 				if (new_line &&
 				    write_str_in_full(fd, "\n") < 0)
-					goto write_err_out;
+					{
+                        ret = write_error(get_lock_file_path(&lock));
+                        goto out_free;
+					}
 			}
 			copy_begin = replace_end;
 		}
@@ -2919,18 +2920,24 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		/* write the pair (value == NULL means unset) */
 		if (value != NULL) {
 			if (!store.section_seen) {
-				if (write_section(fd, key, &store) < 0)
-					goto write_err_out;
+                if (write_section(fd, key, &store) < 0){
+                    ret = write_error(get_lock_file_path(&lock));
+                goto out_free;
+            }
 			}
-			if (write_pair(fd, key, value, &store) < 0)
-				goto write_err_out;
+			if (write_pair(fd, key, value, &store) < 0) {
+                ret = write_error(get_lock_file_path(&lock));
+                goto out_free;
+            }
 		}
 
 		/* write the rest of the config */
 		if (copy_begin < contents_sz)
 			if (write_in_full(fd, contents + copy_begin,
-					  contents_sz - copy_begin) < 0)
-				goto write_err_out;
+					  contents_sz - copy_begin) < 0) {
+                ret = write_error(get_lock_file_path(&lock));
+                goto out_free;
+            }
 
 		munmap(contents, contents_sz);
 		contents = NULL;
@@ -2956,10 +2963,6 @@ out_free:
 		close(in_fd);
 	config_store_data_clear(&store);
 	return ret;
-
-write_err_out:
-	ret = write_error(get_lock_file_path(&lock));
-	goto out_free;
 
 }
 
@@ -3029,19 +3032,21 @@ static int section_name_match (const char *buf, const char *name)
 	return 0;
 }
 
-static int section_name_is_ok(const char *name)
-{
-	/* Empty section names are bogus. */
-	if (!*name)
-		return 0;
-
-	/*
-	 * Before a dot, we must be alphanumeric or dash. After the first dot,
-	 * anything goes, so we can stop checking.
-	 */
-	for (; *name && *name != '.'; name++)
-		if (*name != '-' && !isalnum(*name))
-			return 0;
+static int section_name_is_ok(const char *name) {
+    /* Empty section names are bogus. */
+    if (!*name)
+        return 0;
+    /*
+     * Before a dot, we must be alphanumeric or dash. After the first dot,
+     * anything goes, so we can stop checking.
+     */
+    while(*name != '.') {
+        if (*name != '-' && !isalnum(*name))
+            return 0;
+        name++
+        if (!*name)
+            break;
+    }
 	return 1;
 }
 

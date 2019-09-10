@@ -268,9 +268,11 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		/*
 		 * Emit pre-context.
 		 */
-		for (; s2 < xch->i2; s2++)
-			if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
-				return -1;
+		while (s2 < xch->i2) {
+            if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
+                return -1;
+            s2++;
+        }
 
 		for (s1 = xch->i1, s2 = xch->i2;; xch = xch->next) {
 			/*

@@ -947,15 +947,12 @@ int async_query_available_blobs(const char *cmd, struct string_list *available_p
 		const char *path;
 		if (skip_prefix(line, "pathname=", &path))
 			string_list_insert(available_paths, xstrdup(path));
-		else
-			; /* ignore unknown keys */
+
 	}
 
 	err = subprocess_read_status(process->out, &filter_status);
-	if (err)
-		goto done;
-
-	err = strcmp(filter_status.buf, "success");
+	if (!err)
+		err = strcmp(filter_status.buf, "success");
 
 done:
 	sigchain_pop(SIGPIPE);
@@ -1043,7 +1040,6 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp("required", key)) {
 		drv->required = git_config_bool(var, value);
-		return 0;
 	}
 
 	return 0;
@@ -1258,10 +1254,10 @@ static enum eol git_path_check_eol(struct attr_check_item *check)
 	const char *value = check->value;
 
 	if (ATTR_UNSET(value))
-		;
-	else if (!strcmp(value, "lf"))
+		return EOL_UNSET;
+	if (!strcmp(value, "lf"))
 		return EOL_LF;
-	else if (!strcmp(value, "crlf"))
+	if (!strcmp(value, "crlf"))
 		return EOL_CRLF;
 	return EOL_UNSET;
 }
@@ -1547,18 +1543,16 @@ static int null_filter_fn(struct stream_filter *filter,
 			  const char *input, size_t *isize_p,
 			  char *output, size_t *osize_p)
 {
-	size_t count;
-
-	if (!input)
-		return 0; /* we do not keep any states */
-	count = *isize_p;
-	if (*osize_p < count)
-		count = *osize_p;
-	if (count) {
-		memmove(output, input, count);
-		*isize_p -= count;
-		*osize_p -= count;
-	}
+	if (input) {
+        size_t count = *isize_p;
+        if (*osize_p < count)
+            count = *osize_p;
+        if (count) {
+            memmove(output, input, count);
+            *isize_p -= count;
+            *osize_p -= count;
+        }
+    }
 	return 0;
 }
 
@@ -1809,15 +1803,15 @@ struct ident_filter {
 
 static int is_foreign_ident(const char *str)
 {
-	int i;
+	if (skip_prefix(str, "$Id: ", &str)) {
+        int i;
+        for (i = 0; str[i]; i++) {
+            if (isspace(str[i]) && str[i + 1] != '$')
+                return 1;
+        }
+    }
+        return 0;
 
-	if (!skip_prefix(str, "$Id: ", &str))
-		return 0;
-	for (i = 0; str[i]; i++) {
-		if (isspace(str[i]) && str[i+1] != '$')
-			return 1;
-	}
-	return 0;
 }
 
 static void ident_drain(struct ident_filter *ident, char **output_p, size_t *osize_p)

@@ -27,20 +27,20 @@ static void reparent_cb(const char *name,
 			const char *new_cwd,
 			void *data)
 {
-	char **path = data;
+
 	char *tmp = *path;
 
-	if (!tmp)
-		return;
+    if (tmp) {
+        char **path = data;
+        *path = reparent_relative_path(old_cwd, new_cwd, tmp);
+        free(tmp);
 
-	*path = reparent_relative_path(old_cwd, new_cwd, tmp);
-	free(tmp);
-
-	if (name) {
-		trace_printf_key(&trace_setup_key,
-				 "setup: reparent %s to '%s'",
-				 name, *path);
-	}
+        if (name) {
+            trace_printf_key(&trace_setup_key,
+                             "setup: reparent %s to '%s'",
+                             name, *path);
+        }
+    }
 }
 
 void chdir_notify_reparent(const char *name, char **path)

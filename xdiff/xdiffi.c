@@ -256,8 +256,9 @@ int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 	/*
 	 * Shrink the box by walking through each diagonal snake (SW and NE).
 	 */
-	for (; off1 < lim1 && off2 < lim2 && ha1[off1] == ha2[off2]; off1++, off2++);
-	for (; off1 < lim1 && off2 < lim2 && ha1[lim1 - 1] == ha2[lim2 - 1]; lim1--, lim2--);
+	while(off1 < lim1 && off2 < lim2 && ha1[off1] == ha2[off2]){ off1++, off2++;
+    }
+	while (off1 < lim1 && off2 < lim2 && ha1[lim1 - 1] == ha2[lim2 - 1]) lim1--, lim2--;
 
 	/*
 	 * If one dimension is empty, then all records on the other one must
@@ -267,14 +268,14 @@ int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 		char *rchg2 = dd2->rchg;
 		long *rindex2 = dd2->rindex;
 
-		for (; off2 < lim2; off2++)
-			rchg2[rindex2[off2]] = 1;
+		while (off2 < lim2)
+			rchg2[rindex2[off2++]] = 1;
 	} else if (off2 == lim2) {
 		char *rchg1 = dd1->rchg;
 		long *rindex1 = dd1->rindex;
 
-		for (; off1 < lim1; off1++)
-			rchg1[rindex1[off1]] = 1;
+		while(off1 < lim1)
+			rchg1[rindex1[off1++]] = 1;
 	} else {
 		xdpsplit_t spl;
 		spl.i1 = spl.i2 = 0;
@@ -369,17 +370,18 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 static xdchange_t *xdl_add_change(xdchange_t *xscr, long i1, long i2, long chg1, long chg2) {
 	xdchange_t *xch;
 
-	if (!(xch = (xdchange_t *) xdl_malloc(sizeof(xdchange_t))))
-		return NULL;
+    if (xch = (xdchange_t *) xdl_malloc(sizeof(xdchange_t))) {
 
-	xch->next = xscr;
-	xch->i1 = i1;
-	xch->i2 = i2;
-	xch->chg1 = chg1;
-	xch->chg2 = chg2;
-	xch->ignore = 0;
+        xch->next = xscr;
+        xch->i1 = i1;
+        xch->i2 = i2;
+        xch->chg1 = chg1;
+        xch->chg2 = chg2;
+        xch->ignore = 0;
 
-	return xch;
+        return xch;
+    }
+    return NULL;
 }
 
 
@@ -624,47 +626,39 @@ static void score_add_split(const struct split_measurement *m, struct split_scor
 	/* Note that the effective indent is -1 at the end of the file: */
 	s->effective_indent += indent;
 
-	if (indent == -1) {
-		/* No additional adjustments needed. */
-	} else if (m->pre_indent == -1) {
-		/* No additional adjustments needed. */
-	} else if (indent > m->pre_indent) {
-		/*
-		 * The line is indented more than its predecessor.
-		 */
-		s->penalty += any_blanks ?
-			RELATIVE_INDENT_WITH_BLANK_PENALTY :
-			RELATIVE_INDENT_PENALTY;
-	} else if (indent == m->pre_indent) {
-		/*
-		 * The line has the same indentation level as its predecessor.
-		 * No additional adjustments needed.
-		 */
-	} else {
-		/*
-		 * The line is indented less than its predecessor. It could be
-		 * the block terminator of the previous block, but it could
-		 * also be the start of a new block (e.g., an "else" block, or
-		 * maybe the previous block didn't have a block terminator).
-		 * Try to distinguish those cases based on what comes next:
-		 */
-		if (m->post_indent != -1 && m->post_indent > indent) {
-			/*
-			 * The following line is indented more. So it is likely
-			 * that this line is the start of a block.
-			 */
-			s->penalty += any_blanks ?
-				RELATIVE_OUTDENT_WITH_BLANK_PENALTY :
-				RELATIVE_OUTDENT_PENALTY;
-		} else {
-			/*
-			 * That was probably the end of a block.
-			 */
-			s->penalty += any_blanks ?
-				RELATIVE_DEDENT_WITH_BLANK_PENALTY :
-				RELATIVE_DEDENT_PENALTY;
-		}
-	}
+    if (indent != -1 && m->pre_indent != -1) {
+    if (indent > m->pre_indent) {
+        /*
+         * The line is indented more than its predecessor.
+         */
+        s->penalty += any_blanks ?
+                      RELATIVE_INDENT_WITH_BLANK_PENALTY :
+                      RELATIVE_INDENT_PENALTY;
+    } else if (indent != m->pre_indent) {
+        /*
+         * The line is indented less than its predecessor. It could be
+         * the block terminator of the previous block, but it could
+         * also be the start of a new block (e.g., an "else" block, or
+         * maybe the previous block didn't have a block terminator).
+         * Try to distinguish those cases based on what comes next:
+         */
+        if (m->post_indent != -1 && m->post_indent > indent) {
+            /*
+             * The following line is indented more. So it is likely
+             * that this line is the start of a block.
+             */
+            s->penalty += any_blanks ?
+                          RELATIVE_OUTDENT_WITH_BLANK_PENALTY :
+                          RELATIVE_OUTDENT_PENALTY;
+        } else {
+            /*
+             * That was probably the end of a block.
+             */
+            s->penalty += any_blanks ?
+                          RELATIVE_DEDENT_WITH_BLANK_PENALTY :
+                          RELATIVE_DEDENT_PENALTY;
+        }
+    } }
 }
 
 static int score_cmp(struct split_score *s1, struct split_score *s2)
@@ -763,9 +757,8 @@ static int group_slide_down(xdfile_t *xdf, struct xdlgroup *g, long flags)
 			g->end++;
 
 		return 0;
-	} else {
-		return -1;
 	}
+		return -1;
 }
 
 /*
@@ -784,9 +777,8 @@ static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g, long flags)
 			g->start--;
 
 		return 0;
-	} else {
-		return -1;
 	}
+		return -1;
 }
 
 static void xdl_bug(const char *msg)
@@ -843,15 +835,13 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 				end_matching_other = g.end;
 
 			/* Now shift the group forward as far as possible: */
-			for (;;) {
-				if (group_slide_down(xdf, &g, flags))
-					break;
-				if (group_next(xdfo, &go))
-					xdl_bug("group sync broken sliding down");
+			while (!group_slide_down(xdf, &g, flags)) {
+                if (group_next(xdfo, &go))
+                    xdl_bug("group sync broken sliding down");
 
-				if (go.end > go.start)
-					end_matching_other = g.end;
-			}
+                if (go.end > go.start)
+                    end_matching_other = g.end;
+            }
 		} while (groupsize != g.end - g.start);
 
 		/*
@@ -862,63 +852,65 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 		 * heuristics below only have to handle upwards shifts.
 		 */
 
-		if (g.end == earliest_end) {
-			/* no shifting was possible */
-		} else if (end_matching_other != -1) {
-			/*
-			 * Move the possibly merged group of changes back to line
-			 * up with the last group of changes from the other file
-			 * that it can align with.
-			 */
-			while (go.end == go.start) {
-				if (group_slide_up(xdf, &g, flags))
-					xdl_bug("match disappeared");
-				if (group_previous(xdfo, &go))
-					xdl_bug("group sync broken sliding to match");
-			}
-		} else if (flags & XDF_INDENT_HEURISTIC) {
-			/*
-			 * Indent heuristic: a group of pure add/delete lines
-			 * implies two splits, one between the end of the "before"
-			 * context and the start of the group, and another between
-			 * the end of the group and the beginning of the "after"
-			 * context. Some splits are aesthetically better and some
-			 * are worse. We compute a badness "score" for each split,
-			 * and add the scores for the two splits to define a
-			 * "score" for each position that the group can be shifted
-			 * to. Then we pick the shift with the lowest score.
-			 */
-			long shift, best_shift = -1;
-			struct split_score best_score;
+		if (g.end != earliest_end) {
+            /* no shifting was possible */
+            if (end_matching_other != -1) {
+                /*
+                 * Move the possibly merged group of changes back to line
+                 * up with the last group of changes from the other file
+                 * that it can align with.
+                 */
+                while (go.end == go.start) {
+                    if (group_slide_up(xdf, &g, flags))
+                        xdl_bug("match disappeared");
+                    if (group_previous(xdfo, &go))
+                        xdl_bug("group sync broken sliding to match");
+                }
+            } else if (flags & XDF_INDENT_HEURISTIC) {
+                /*
+                 * Indent heuristic: a group of pure add/delete lines
+                 * implies two splits, one between the end of the "before"
+                 * context and the start of the group, and another between
+                 * the end of the group and the beginning of the "after"
+                 * context. Some splits are aesthetically better and some
+                 * are worse. We compute a badness "score" for each split,
+                 * and add the scores for the two splits to define a
+                 * "score" for each position that the group can be shifted
+                 * to. Then we pick the shift with the lowest score.
+                 */
+                long shift, best_shift = -1;
+                struct split_score best_score;
 
-			shift = earliest_end;
-			if (g.end - groupsize - 1 > shift)
-				shift = g.end - groupsize - 1;
-			if (g.end - INDENT_HEURISTIC_MAX_SLIDING > shift)
-				shift = g.end - INDENT_HEURISTIC_MAX_SLIDING;
-			for (; shift <= g.end; shift++) {
-				struct split_measurement m;
-				struct split_score score = {0, 0};
+                shift = earliest_end;
+                if (g.end - groupsize > shift + 1)
+                    shift = g.end - groupsize - 1;
+                if (g.end - INDENT_HEURISTIC_MAX_SLIDING > shift)
+                    shift = g.end - INDENT_HEURISTIC_MAX_SLIDING;
+                while (shift <= g.end {)
+                    struct split_measurement m;
+                    struct split_score score = {0, 0};
 
-				measure_split(xdf, shift, &m);
-				score_add_split(&m, &score);
-				measure_split(xdf, shift - groupsize, &m);
-				score_add_split(&m, &score);
-				if (best_shift == -1 ||
-				    score_cmp(&score, &best_score) <= 0) {
-					best_score.effective_indent = score.effective_indent;
-					best_score.penalty = score.penalty;
-					best_shift = shift;
-				}
-			}
+                    measure_split(xdf, shift, &m);
+                    score_add_split(&m, &score);
+                    measure_split(xdf, shift - groupsize, &m);
+                    score_add_split(&m, &score);
+                    if (best_shift == -1 ||
+                        score_cmp(&score, &best_score) <= 0) {
+                        best_score.effective_indent = score.effective_indent;
+                        best_score.penalty = score.penalty;
+                        best_shift = shift;
+                    }
+                    shift++;
+                }
 
-			while (g.end > best_shift) {
-				if (group_slide_up(xdf, &g, flags))
-					xdl_bug("best shift unreached");
-				if (group_previous(xdfo, &go))
-					xdl_bug("group sync broken sliding to blank line");
-			}
-		}
+                while (g.end > best_shift) {
+                    if (group_slide_up(xdf, &g, flags))
+                        xdl_bug("best shift unreached");
+                    if (group_previous(xdfo, &go))
+                        xdl_bug("group sync broken sliding to blank line");
+                }
+            }
+        }
 
 	next:
 		/* Move past the just-processed group: */
@@ -978,7 +970,7 @@ static int xdl_call_hunk_func(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	for (xch = xscr; xch; xch = xche->next) {
 		xche = xdl_get_hunk(&xch, xecfg);
 		if (!xch)
-			break;
+			return 0;
 		if (xecfg->hunk_func(xch->i1, xche->i1 + xche->chg1 - xch->i1,
 				     xch->i2, xche->i2 + xche->chg2 - xch->i2,
 				     ecb->priv) < 0)

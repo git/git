@@ -179,11 +179,9 @@ struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 	uint32_t graph_signature;
 	unsigned char graph_version, hash_version;
 
-	if (!graph_map)
+	if (!graph_map || graph_size < GRAPH_MIN_SIZE)
 		return NULL;
 
-	if (graph_size < GRAPH_MIN_SIZE)
-		return NULL;
 
 	data = (const unsigned char *)graph_map;
 
@@ -501,17 +499,17 @@ static int prepare_commit_graph(struct repository *r)
 
 int generation_numbers_enabled(struct repository *r)
 {
-	struct commit_graph *g;
-	if (!prepare_commit_graph(r))
-	       return 0;
+    if (prepare_commit_graph(r) != 0) {
+        struct commit_graph *g;
 
-	g = r->objects->commit_graph;
+        g = r->objects->commit_graph;
 
-    if (g->num_commits)
-        return (get_be32(g->chunk_commit_data +
-                         g->hash_len + 8) >> 2) != 0;
+        if (g->num_commits)
+            return (get_be32(g->chunk_commit_data +
+                             g->hash_len + 8) >> 2) != 0;
+
+    }
     return 0;
-
 }
 
 static void close_commit_graph_one(struct commit_graph *g)
@@ -1715,38 +1713,36 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	strbuf_addstr(&path, "/info/commit-graphs");
 	dir = opendir(path.buf);
 
-	if (!dir)
-		goto out;
+	if (dir) {
 
-	strbuf_addch(&path, '/');
-	dirnamelen = path.len;
-	while ((de = readdir(dir)) != NULL) {
-		struct stat st;
-		uint32_t i, found = 0;
+        strbuf_addch(&path, '/');
+        dirnamelen = path.len;
+        while ((de = readdir(dir)) != NULL) {
+            struct stat st;
+            uint32_t i, found = 0;
 
-		strbuf_setlen(&path, dirnamelen);
-		strbuf_addstr(&path, de->d_name);
+            strbuf_setlen(&path, dirnamelen);
+            strbuf_addstr(&path, de->d_name);
 
-		stat(path.buf, &st);
+            stat(path.buf, &st);
 
-		if (st.st_mtime > expire_time)
-			continue;
-		if (path.len < 6 || strcmp(path.buf + path.len - 6, ".graph"))
-			continue;
+            if (st.st_mtime > expire_time)
+                continue;
+            if (path.len < 6 || strcmp(path.buf + path.len - 6, ".graph"))
+                continue;
 
-		for (i = 0; i < ctx->num_commit_graphs_after; i++) {
-			if (!strcmp(ctx->commit_graph_filenames_after[i],
-				    path.buf)) {
-				found = 1;
-				break;
-			}
-		}
+            for (i = 0; i < ctx->num_commit_graphs_after; i++) {
+                if (!strcmp(ctx->commit_graph_filenames_after[i],
+                            path.buf)) {
+                    found = 1;
+                    break;
+                }
+            }
 
-		if (!found)
-			unlink(path.buf);
-	}
-
-out:
+            if (!found)
+                unlink(path.buf);
+        }
+    }
 	strbuf_release(&path);
 }
 

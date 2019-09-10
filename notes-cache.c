@@ -52,20 +52,19 @@ int notes_cache_write(struct notes_cache *c)
 {
 	struct object_id tree_oid, commit_oid;
 
-	if (!c || !c->tree.initialized || !c->tree.update_ref ||
-	    !*c->tree.update_ref)
+	if (!(c && c->tree.initialized && c->tree.update_ref && *c->tree.update_ref))
 		return -1;
-	if (!c->tree.dirty)
-		return 0;
+	if (c->tree.dirty) {
 
-	if (write_notes_tree(&c->tree, &tree_oid))
-		return -1;
-	if (commit_tree(c->validity, strlen(c->validity), &tree_oid, NULL,
-			&commit_oid, NULL, NULL) < 0)
-		return -1;
-	if (update_ref("update notes cache", c->tree.update_ref, &commit_oid,
-		       NULL, 0, UPDATE_REFS_QUIET_ON_ERR) < 0)
-		return -1;
+        if (write_notes_tree(&c->tree, &tree_oid))
+            return -1;
+        if (commit_tree(c->validity, strlen(c->validity), &tree_oid, NULL,
+                        &commit_oid, NULL, NULL) < 0)
+            return -1;
+        if (update_ref("update notes cache", c->tree.update_ref, &commit_oid,
+                       NULL, 0, UPDATE_REFS_QUIET_ON_ERR) < 0)
+            return -1;
+    }
 
 	return 0;
 }
@@ -79,12 +78,13 @@ char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
 	unsigned long size;
 
 	value_oid = get_note(&c->tree, key_oid);
-	if (!value_oid)
-		return NULL;
-	value = read_object_file(value_oid, &type, &size);
+    if (value_oid) {
+        value = read_object_file(value_oid, &type, &size);
 
-	*outsize = size;
-	return value;
+        *outsize = size;
+        return value;
+    }
+    return NULL;
 }
 
 int notes_cache_put(struct notes_cache *c, struct object_id *key_oid,
@@ -92,7 +92,7 @@ int notes_cache_put(struct notes_cache *c, struct object_id *key_oid,
 {
 	struct object_id value_oid;
 
-	if (write_object_file(data, size, "blob", &value_oid) < 0)
-		return -1;
-	return add_note(&c->tree, key_oid, &value_oid, NULL);
+    if (write_object_file(data, size, "blob", &value_oid) >= 0)
+        return add_note(&c->tree, key_oid, &value_oid, NULL);
+    return -1;
 }

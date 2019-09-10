@@ -58,8 +58,8 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		 * followed by SP and subject line.
 		 */
 		if (parse_oid_hex(buf.buf, &oid, &p) ||
-		    (*p && !isspace(*p)) ||
-		    (!is_prereq && !*p)) {
+		    !(*p && isspace(*p)) &&
+		    (!is_prereq && *p)) {
 			if (report_path)
 				error(_("unrecognized header: %s%s (%d)"),
 				      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
@@ -86,9 +86,9 @@ int read_bundle_header(const char *path, struct bundle_header *header)
 {
 	int fd = open(path, O_RDONLY);
 
-	if (fd < 0)
-		return error(_("could not open '%s'"), path);
-	return parse_bundle_header(fd, header, path);
+    if (fd >= 0)
+        return parse_bundle_header(fd, header, path);
+    return error(_("could not open '%s'"), path);
 }
 
 int is_bundle(const char *path, int quiet)
@@ -142,7 +142,7 @@ int verify_bundle(struct repository *r,
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
-	if (!r || !r->objects || !r->objects->odb)
+	if (!(r && r->objects && r->objects->odb))
 		return error(_("need a repository to verify a bundle"));
 
 	repo_init_revisions(r, &revs, NULL);
