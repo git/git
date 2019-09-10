@@ -36,9 +36,9 @@ static int path_to_oid(const char *path, struct object_id *oid)
 			hex_oid[i++] = *path;
 		path++;
 	}
-	if (*path || i != the_hash_algo->hexsz)
-		return -1;
-	return get_oid_hex(hex_oid, oid);
+    if (!*path && i == the_hash_algo->hexsz)
+        return get_oid_hex(hex_oid, oid);
+    return -1;
 }
 
 static int verify_notes_filepair(struct diff_filepair *p, struct object_id *oid)

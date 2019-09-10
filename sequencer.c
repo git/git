@@ -469,16 +469,16 @@ static int error_dirty_index(struct repository *repo, struct replay_opts *opts)
 
 static void update_abort_safety_file(void)
 {
-	struct object_id head;
+
 
 	/* Do nothing on a single-pick */
-	if (!file_exists(git_path_seq_dir()))
-		return;
-
-	if (!get_oid("HEAD", &head))
-		write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
-	else
-		write_file(git_path_abort_safety_file(), "%s", "");
+    if (file_exists(git_path_seq_dir())) {
+        struct object_id head;
+        if (get_oid("HEAD", &head) != 0)
+            write_file(git_path_abort_safety_file(), "%s", "");
+        else
+            write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
+    }
 }
 
 static int fast_forward_to(struct repository *r,
@@ -1490,8 +1490,7 @@ static int do_commit(struct repository *r,
 {
 	int res = 1;
 
-	if (!(flags & EDIT_MSG) && !(flags & VERIFY_MSG) &&
-	    !(flags & CREATE_ROOT_COMMIT)) {
+	if (!(flags & EDIT_MSG || flags & VERIFY_MSG || flags & CREATE_ROOT_COMMIT)) {
 		struct object_id oid;
 		struct strbuf sb = STRBUF_INIT;
 
@@ -1572,10 +1571,7 @@ static int allow_empty(struct repository *r,
 	empty_commit = is_original_commit_empty(commit);
 	if (empty_commit < 0)
 		return empty_commit;
-	if (!empty_commit)
-		return 0;
-	else
-		return 1;
+    return (empty_commit != 0);
 }
 
 static struct {
@@ -5209,13 +5205,10 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 		     skip_prefix(subject, "squash! ", &p))) {
 			struct commit *commit2;
 
-			for (;;) {
+			do
 				while (isspace(*p))
 					p++;
-				if (!skip_prefix(p, "fixup! ", &p) &&
-				    !skip_prefix(p, "squash! ", &p))
-					break;
-			}
+        } while (skip_prefix(p, "fixup! ", &p) || skip_prefix(p, "squash! ", &p));
 
 			if ((entry = hashmap_get_from_hash(&subject2item,
 							   strhash(p), p)))

@@ -2098,7 +2098,6 @@ void grep_source_clear_data(struct grep_source *gs)
 	case GREP_SOURCE_OID:
 		FREE_AND_NULL(gs->buf);
 		gs->size = 0;
-		break;
 	case GREP_SOURCE_BUF:
 		/* leave user-provided buf intact */
 		break;

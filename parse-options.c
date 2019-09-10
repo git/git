@@ -41,10 +41,9 @@ static enum parse_opt_result get_arg(struct parse_opt_ctx_t *p,
 
 static void fix_filename(const char *prefix, const char **file)
 {
-	if (!file || !*file || !prefix || is_absolute_path(*file)
-	    || !strcmp("-", *file))
-		return;
-	*file = prefix_filename(prefix, *file);
+    if (file && *file && prefix && !is_absolute_path(*file) && strcmp("-", *file)) {
+        *file = prefix_filename(prefix, *file);
+    }
 }
 
 static enum parse_opt_result opt_command_mode_error(
@@ -278,19 +277,16 @@ static int is_alias(struct parse_opt_ctx_t *ctx,
 {
 	const char **group;
 
-	if (!ctx->alias_groups)
-		return 0;
-
-	if (!one_opt->long_name || !another_opt->long_name)
-		return 0;
-
-	for (group = ctx->alias_groups; *group; group += 3) {
-		/* it and other are from the same family? */
-		if (has_string(one_opt->long_name, group) &&
-		    has_string(another_opt->long_name, group))
-			return 1;
-	}
-	return 0;
+    if (one_opt->long_name && another_opt->long_name && ctx->alias_groups) {
+        const char **group;
+        for (group = ctx->alias_groups; *group; group += 3) {
+            /* it and other are from the same family? */
+            if (has_string(one_opt->long_name, group) &&
+                has_string(another_opt->long_name, group))
+                return 1;
+        }
+    }
+    return 0;
 }
 
 static enum parse_opt_result parse_long_opt(
@@ -424,14 +420,13 @@ static void check_typos(const char *arg, const struct option *options)
 		exit(129);
 	}
 
-	for (; options->type != OPTION_END; options++) {
-		if (!options->long_name)
-			continue;
-		if (starts_with(options->long_name, arg)) {
-			error(_("did you mean `--%s` (with two dashes ?)"), arg);
-			exit(129);
-		}
-	}
+	while (options->type != OPTION_END) {
+        if (options->long_name != NULL && starts_with(options->long_name, arg)) {
+            error(_("did you mean `--%s` (with two dashes ?)"), arg);
+            exit(129);
+        }
+        options++;
+    }
 }
 
 static void parse_options_check(const struct option *opts)
@@ -440,7 +435,7 @@ static void parse_options_check(const struct option *opts)
 	char short_opts[128];
 
 	memset(short_opts, '\0', sizeof(short_opts));
-	for (; opts->type != OPTION_END; opts++) {
+	while (opts->type != OPTION_END) {
 		if ((opts->flags & PARSE_OPT_LASTARG_DEFAULT) &&
 		    (opts->flags & PARSE_OPT_OPTARG))
 			err |= optbug(opts, "uses incompatible flags "
@@ -485,11 +480,12 @@ static void parse_options_check(const struct option *opts)
 			    "Are you using parse_options_step() directly?\n"
 			    "That case is not supported yet.");
 		default:
-			; /* ok. (usually accepts an argument) */
+			break;
 		}
 		if (opts->argh &&
 		    strcspn(opts->argh, " _") != strlen(opts->argh))
 			err |= optbug(opts, "multi-word argh should use dash to separate words");
+        opts++
 	}
 	if (err)
 		exit(128);
@@ -530,9 +526,9 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 
 static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
 {
-	int printed_dashdash = 0;
+	int printed_dashdash;
 
-	for (; opts->type != OPTION_END; opts++) {
+	for (printed_dashdash = 0; opts->type != OPTION_END; opts++) {
 		int has_unset_form = 0;
 		const char *name;
 

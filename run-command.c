@@ -620,20 +620,23 @@ static void trace_add_env(struct strbuf *dst, const char *const *deltaenv)
 
 	/* ... followed by "A=B C=D ..." */
 	for (i = 0; i < envs.nr; i++) {
-		const char *var = envs.items[i].string;
+
 		const char *val = envs.items[i].util;
-		const char *oldval;
 
-		if (!val)
-			continue;
 
-		oldval = getenv(var);
-		if (oldval && !strcmp(val, oldval))
-			continue;
+        if (val) {
+            const char *oldval;
+            const char *var = envs.items[i].string;
 
-		strbuf_addf(dst, " %s=", var);
-		sq_quote_buf_pretty(dst, val);
-	}
+
+            oldval = getenv(var);
+            if (!oldval || strcmp(val, oldval)) {
+
+                strbuf_addf(dst, " %s=", var);
+                sq_quote_buf_pretty(dst, val);
+            }
+        }
+    }
 	string_list_clear(&envs, 0);
 }
 
@@ -1523,13 +1526,13 @@ int pipe_command(struct child_process *cmd,
 		io[nr].u.in.hint = err_hint;
 		nr++;
 	}
-
-	if (pump_io(io, nr) < 0) {
-		finish_command(cmd); /* throw away exit code */
-		return -1;
-	}
-
-	return finish_command(cmd);
+    {
+        const int finishcommand = finish_command(cmd);
+        if (pump_io(io, nr) >= 0)
+            return finishcommand;
+        /* throw away exit code */
+        return -1;
+    }
 }
 
 enum child_state {

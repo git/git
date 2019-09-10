@@ -183,18 +183,15 @@ void git_setup_gettext(void)
 
 	use_gettext_poison(); /* getenv() reentrancy paranoia */
 
-	if (!is_directory(podir)) {
-		free(p);
-		return;
-	}
+	if (is_directory(podir)) {
+        bindtextdomain("git", podir);
+        setlocale(LC_MESSAGES, "");
+        setlocale(LC_TIME, "");
+        init_gettext_charset("git");
+        textdomain("git");
 
-	bindtextdomain("git", podir);
-	setlocale(LC_MESSAGES, "");
-	setlocale(LC_TIME, "");
-	init_gettext_charset("git");
-	textdomain("git");
-
-	free(p);
+        free(p);
+    }
 }
 
 /* return the number of columns of string 's' in current locale */

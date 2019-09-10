@@ -96,18 +96,19 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
  */
 static int query_fsmonitor(int version, uint64_t last_update, struct strbuf *query_result)
 {
-	struct child_process cp = CHILD_PROCESS_INIT;
 
-	if (!core_fsmonitor)
-		return -1;
 
-	argv_array_push(&cp.args, core_fsmonitor);
-	argv_array_pushf(&cp.args, "%d", version);
-	argv_array_pushf(&cp.args, "%" PRIuMAX, (uintmax_t)last_update);
-	cp.use_shell = 1;
-	cp.dir = get_git_work_tree();
+    if (core_fsmonitor) {
+        struct child_process cp = CHILD_PROCESS_INIT;
+        argv_array_push(&cp.args, core_fsmonitor);
+        argv_array_pushf(&cp.args, "%d", version);
+        argv_array_pushf(&cp.args, "%" PRIuMAX, (uintmax_t) last_update);
+        cp.use_shell = 1;
+        cp.dir = get_git_work_tree();
 
-	return capture_command(&cp, query_result, 1024);
+        return capture_command(&cp, query_result, 1024);
+    }
+    return -1;
 }
 
 static void fsmonitor_refresh_callback(struct index_state *istate, const char *name)
@@ -225,12 +226,13 @@ void remove_fsmonitor(struct index_state *istate)
 
 void tweak_fsmonitor(struct index_state *istate)
 {
-	unsigned int i;
+
 	int fsmonitor_enabled = git_config_get_fsmonitor();
 
 	if (istate->fsmonitor_dirty) {
 		if (fsmonitor_enabled) {
 			/* Mark all entries valid */
+            unsigned int i;
 			for (i = 0; i < istate->cache_nr; i++) {
 				istate->cache[i]->ce_flags |= CE_FSMONITOR_VALID;
 			}
@@ -248,6 +250,7 @@ void tweak_fsmonitor(struct index_state *istate)
 	}
 
 	switch (fsmonitor_enabled) {
+        default:
 	case -1: /* keep: do nothing */
 		break;
 	case 0: /* false */
@@ -255,8 +258,6 @@ void tweak_fsmonitor(struct index_state *istate)
 		break;
 	case 1: /* true */
 		add_fsmonitor(istate);
-		break;
-	default: /* unknown value: do nothing */
 		break;
 	}
 }

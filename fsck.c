@@ -318,27 +318,28 @@ static int report(struct fsck_options *options, struct object *object,
 
 static char *get_object_name(struct fsck_options *options, struct object *obj)
 {
-	if (!options->object_names)
-		return NULL;
-	return lookup_decoration(options->object_names, obj);
+    if (options->object_names)
+        return lookup_decoration(options->object_names, obj);
+    return NULL;
 }
 
 static void put_object_name(struct fsck_options *options, struct object *obj,
 	const char *fmt, ...)
 {
-	va_list ap;
-	struct strbuf buf = STRBUF_INIT;
-	char *existing;
 
-	if (!options->object_names)
-		return;
-	existing = lookup_decoration(options->object_names, obj);
-	if (existing)
-		return;
-	va_start(ap, fmt);
-	strbuf_vaddf(&buf, fmt, ap);
-	add_decoration(options->object_names, obj, strbuf_detach(&buf, NULL));
-	va_end(ap);
+
+    if (options->object_names) {
+        va_list ap;
+        struct strbuf buf = STRBUF_INIT;
+        char *existing;
+        existing = lookup_decoration(options->object_names, obj);
+        if (existing)
+            return;
+        va_start(ap, fmt);
+        strbuf_vaddf(&buf, fmt, ap);
+        add_decoration(options->object_names, obj, strbuf_detach(&buf, NULL));
+        va_end(ap);
+    }
 }
 
 static const char *describe_object(struct fsck_options *o, struct object *obj)
@@ -529,7 +530,7 @@ static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, con
 	 */
 	c1 = name1[len];
 	c2 = name2[len];
-	if (!c1 && !c2)
+	if (!(c1 || c2))
 		/*
 		 * git-write-tree used to write out a nonsense tree that has
 		 * entries with the same name, one blob and one tree.  Make
@@ -904,19 +905,16 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 	}
 	buffer = eol + 1;
 
-	if (!skip_prefix(buffer, "tagger ", &buffer)) {
-		/* early tags do not contain 'tagger' lines; warn only */
-		ret = report(options, &tag->object, FSCK_MSG_MISSING_TAGGER_ENTRY, "invalid format - expected 'tagger' line");
-		if (ret)
-			goto done;
-	}
-	else
-		ret = fsck_ident(&buffer, &tag->object, options);
+    if (skip_prefix(buffer, "tagger ", &buffer)) ret = fsck_ident(&buffer, &tag->object, options);
+    else {
+        /* early tags do not contain 'tagger' lines; warn only */
+        ret = report(options, &tag->object, FSCK_MSG_MISSING_TAGGER_ENTRY, "invalid format - expected 'tagger' line");
+    }
 
-done:
-	strbuf_release(&sb);
-	free(to_free);
-	return ret;
+    done:
+    strbuf_release(&sb);
+    free(to_free);
+    return ret;
 }
 
 static int fsck_tag(struct tag *tag, const char *data,
@@ -924,10 +922,10 @@ static int fsck_tag(struct tag *tag, const char *data,
 {
 	struct object *tagged = tag->tagged;
 
-	if (!tagged)
-		return report(options, &tag->object, FSCK_MSG_BAD_TAG_OBJECT, "could not load tagged object");
+    if (tagged)
+        return fsck_tag_buffer(tag, data, size, options);
+    return report(options, &tag->object, FSCK_MSG_BAD_TAG_OBJECT, "could not load tagged object");
 
-	return fsck_tag_buffer(tag, data, size, options);
 }
 
 struct fsck_gitmodules_data {

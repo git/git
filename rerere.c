@@ -170,12 +170,14 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 
 static int has_rerere_resolution(const struct rerere_id *id)
 {
-	const int both = RR_HAS_POSTIMAGE|RR_HAS_PREIMAGE;
-	int variant = id->variant;
 
-	if (variant < 0)
-		return 0;
-	return ((id->collection->status[variant] & both) == both);
+	const int variant = id->variant;
+
+    if (variant >= 0) {
+        const int both = RR_HAS_POSTIMAGE | RR_HAS_PREIMAGE;
+        return ((id->collection->status[variant] & both) == both);
+    }
+    return 0;
 }
 
 static struct rerere_id *new_rerere_id_hex(char *hex)
@@ -200,40 +202,40 @@ static struct rerere_id *new_rerere_id(unsigned char *sha1)
  */
 static void read_rr(struct repository *r, struct string_list *rr)
 {
-	struct strbuf buf = STRBUF_INIT;
 	FILE *in = fopen_or_warn(git_path_merge_rr(r), "r");
 
-	if (!in)
-		return;
-	while (!strbuf_getwholeline(&buf, in, '\0')) {
-		char *path;
-		unsigned char hash[GIT_MAX_RAWSZ];
-		struct rerere_id *id;
-		int variant;
-		const unsigned hexsz = the_hash_algo->hexsz;
+    if (in) {
+        struct strbuf buf = STRBUF_INIT;
+        while (!strbuf_getwholeline(&buf, in, '\0')) {
+            char *path;
+            unsigned char hash[GIT_MAX_RAWSZ];
+            struct rerere_id *id;
+            int variant;
+            const unsigned hexsz = the_hash_algo->hexsz;
 
-		/* There has to be the hash, tab, path and then NUL */
-		if (buf.len < hexsz + 2 || get_sha1_hex(buf.buf, hash))
-			die(_("corrupt MERGE_RR"));
+            /* There has to be the hash, tab, path and then NUL */
+            if (buf.len < hexsz + 2 || get_sha1_hex(buf.buf, hash))
+                die(_("corrupt MERGE_RR"));
 
-		if (buf.buf[hexsz] != '.') {
-			variant = 0;
-			path = buf.buf + hexsz;
-		} else {
-			errno = 0;
-			variant = strtol(buf.buf + hexsz + 1, &path, 10);
-			if (errno)
-				die(_("corrupt MERGE_RR"));
-		}
-		if (*(path++) != '\t')
-			die(_("corrupt MERGE_RR"));
-		buf.buf[hexsz] = '\0';
-		id = new_rerere_id_hex(buf.buf);
-		id->variant = variant;
-		string_list_insert(rr, path)->util = id;
-	}
-	strbuf_release(&buf);
-	fclose(in);
+            if (buf.buf[hexsz] != '.') {
+                variant = 0;
+                path = buf.buf + hexsz;
+            } else {
+                errno = 0;
+                variant = strtol(buf.buf + hexsz + 1, &path, 10);
+                if (errno)
+                    die(_("corrupt MERGE_RR"));
+            }
+            if (*(path++) != '\t')
+                die(_("corrupt MERGE_RR"));
+            buf.buf[hexsz] = '\0';
+            id = new_rerere_id_hex(buf.buf);
+            id->variant = variant;
+            string_list_insert(rr, path)->util = id;
+        }
+        strbuf_release(&buf);
+        fclose(in);
+    }
 }
 
 static struct lock_file write_lock;
@@ -287,10 +289,7 @@ struct rerere_io {
 
 static void ferr_write(const void *p, size_t count, FILE *fp, int *err)
 {
-	if (!count || *err)
-		return;
-	if (fwrite(p, count, 1, fp) != 1)
-		*err = errno;
+    if (count && !*err && fwrite(p, count, 1, fp) != 1) *err = errno;
 }
 
 static inline void ferr_puts(const char *s, FILE *fp, int *err)
@@ -407,12 +406,12 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 							 two.len + 1);
 			}
 			break;
-		} else if (hunk == RR_SIDE_1)
-			strbuf_addbuf(&one, &buf);
-		else if (hunk == RR_ORIGINAL)
-			; /* discard */
-		else if (hunk == RR_SIDE_2)
-			strbuf_addbuf(&two, &buf);
+		} else if (hunk == RR_SIDE_1) {
+            strbuf_addbuf(&one, &buf);
+        }
+		else if (hunk == RR_SIDE_2)) {
+                strbuf_addbuf(&two, &buf);
+        } /* discard */
 	}
 	strbuf_release(&one);
 	strbuf_release(&two);
@@ -1238,18 +1237,17 @@ void rerere_gc(struct repository *r, struct string_list *rr)
  */
 void rerere_clear(struct repository *r, struct string_list *merge_rr)
 {
-	int i;
 
-	if (setup_rerere(r, merge_rr, 0) < 0)
-		return;
-
-	for (i = 0; i < merge_rr->nr; i++) {
-		struct rerere_id *id = merge_rr->items[i].util;
-		if (!has_rerere_resolution(id)) {
-			unlink_rr_item(id);
-			rmdir(rerere_path(id, NULL));
-		}
-	}
-	unlink_or_warn(git_path_merge_rr(r));
-	rollback_lock_file(&write_lock);
+    if (setup_rerere(r, merge_rr, 0) >= 0) {
+        int i;
+        for (i = 0; i < merge_rr->nr; i++) {
+            struct rerere_id *id = merge_rr->items[i].util;
+            if (!has_rerere_resolution(id)) {
+                unlink_rr_item(id);
+                rmdir(rerere_path(id, NULL));
+            }
+        }
+        unlink_or_warn(git_path_merge_rr(r));
+        rollback_lock_file(&write_lock);
+    }
 }

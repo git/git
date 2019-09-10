@@ -29,21 +29,10 @@ static void create_directories(const char *path, int path_len,
 		 * we test the path components of the prefix with the
 		 * stat() function instead of the lstat() function.
 		 */
-		if (has_dirs_only_path(buf, len, state->base_dir_len))
-			continue; /* ok, it is already a directory. */
-
-		/*
-		 * If this mkdir() would fail, it could be that there
-		 * is already a symlink or something else exists
-		 * there, therefore we then try to unlink it and try
-		 * one more time to create the directory.
-		 */
-		if (mkdir(buf, 0777)) {
-			if (errno == EEXIST && state->force &&
-			    !unlink_or_warn(buf) && !mkdir(buf, 0777))
-				continue;
-			die_errno("cannot create directory at '%s'", buf);
-		}
+		if (!has_dirs_only_path(buf, len, state->base_dir_len) && mkdir(buf, 0777) &&
+            (errno != EEXIST || !state->force || unlink_or_warn(buf) || mkdir(buf, 0777))) {
+                        die_errno("cannot create directory at '%s'", buf);
+                    }
 	}
 	free(buf);
 }
@@ -318,7 +307,7 @@ static int write_entry(struct cache_entry *ce,
 							    size, &buf, dco);
 			if (ret && string_list_has_string(&dco->paths, ce->name)) {
 				free(new_blob);
-				goto delayed;
+				return 0;
 			}
 		} else
 			ret = convert_to_working_tree(state->istate, ce->name, new_blob, size, &buf);
@@ -378,7 +367,6 @@ finish:
 		mark_fsmonitor_invalid(state->istate, ce);
 		state->istate->cache_changed |= CE_ENTRY_CHANGED;
 	}
-delayed:
 	return 0;
 }
 
@@ -530,9 +518,6 @@ void unlink_entry(const struct cache_entry *ce)
 		submodule_move_head(ce->name, "HEAD", NULL,
 				    SUBMODULE_MOVE_HEAD_FORCE);
 	}
-	if (!check_leading_path(ce->name, ce_namelen(ce)))
-		return;
-	if (remove_or_warn(ce->ce_mode, ce->name))
-		return;
-	schedule_dir_for_removal(ce->name, ce_namelen(ce));
+	if (check_leading_path(ce->name, ce_namelen(ce)) && !remove_or_warn(ce->ce_mode, ce->name))
+        schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }

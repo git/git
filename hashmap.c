@@ -173,17 +173,17 @@ void hashmap_init(struct hashmap *map, hashmap_cmp_fn equals_function,
 
 void hashmap_free(struct hashmap *map, int free_entries)
 {
-	if (!map || !map->table)
-		return;
-	if (free_entries) {
-		struct hashmap_iter iter;
-		struct hashmap_entry *e;
-		hashmap_iter_init(map, &iter);
-		while ((e = hashmap_iter_next(&iter)))
-			free(e);
-	}
-	free(map->table);
-	memset(map, 0, sizeof(*map));
+    if (map && map->table) {
+        if (free_entries) {
+            struct hashmap_iter iter;
+            struct hashmap_entry *e;
+            hashmap_iter_init(map, &iter);
+            while ((e = hashmap_iter_next(&iter)))
+                free(e);
+        }
+        free(map->table);
+        memset(map, 0, sizeof(*map));
+    }
 }
 
 void *hashmap_get(const struct hashmap *map, const void *key, const void *keydata)
@@ -194,9 +194,11 @@ void *hashmap_get(const struct hashmap *map, const void *key, const void *keydat
 void *hashmap_get_next(const struct hashmap *map, const void *entry)
 {
 	struct hashmap_entry *e = ((struct hashmap_entry *) entry)->next;
-	for (; e; e = e->next)
-		if (entry_equals(map, entry, e, NULL))
-			return e;
+	while(e) {
+        if (entry_equals(map, entry, e, NULL))
+            return e;
+        e = e->next;
+    }
 	return NULL;
 }
 

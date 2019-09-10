@@ -114,7 +114,6 @@ static void commit_pager_choice(void)
 		break;
 	case 1:
 		setup_pager();
-		break;
 	default:
 		break;
 	}
@@ -624,11 +623,10 @@ static void list_builtins(struct string_list *out, unsigned int exclude_option)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
-		if (exclude_option &&
-		    (commands[i].option & exclude_option))
-			continue;
-		string_list_append(out, commands[i].cmd);
-	}
+        if (!(exclude_option && (commands[i].option & exclude_option))) {
+            string_list_append(out, commands[i].cmd);
+        }
+    }
 }
 
 #ifdef STRIP_EXTENSION

@@ -40,9 +40,9 @@ static void wait_for_pager_signal(int signo)
 
 static int core_pager_config(const char *var, const char *value, void *data)
 {
-	if (!strcmp(var, "core.pager"))
-		return git_config_string(&pager_program, var, value);
-	return 0;
+    if (strcmp(var, "core.pager"))
+        return 0;
+    return git_config_string(&pager_program, var, value);
 }
 
 const char *git_pager(int stdout_is_tty)

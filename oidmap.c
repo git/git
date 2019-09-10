@@ -19,17 +19,17 @@ void oidmap_init(struct oidmap *map, size_t initial_size)
 
 void oidmap_free(struct oidmap *map, int free_entries)
 {
-	if (!map)
-		return;
-	hashmap_free(&map->map, free_entries);
+    if (map) {
+        hashmap_free(&map->map, free_entries);
+    }
 }
 
 void *oidmap_get(const struct oidmap *map, const struct object_id *key)
 {
-	if (!map->map.cmpfn)
-		return NULL;
+    if (map->map.cmpfn)
+        return hashmap_get_from_hash(&map->map, oidhash(key), key);
+    return NULL;
 
-	return hashmap_get_from_hash(&map->map, oidhash(key), key);
 }
 
 void *oidmap_remove(struct oidmap *map, const struct object_id *key)

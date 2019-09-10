@@ -865,7 +865,7 @@ static int is_rfc2822_header(const struct strbuf *line)
 	while ((ch = *cp++)) {
 		if (ch == ':')
 			return 1;
-        if ((33 > ch || ch > 57) && (59 > ch && ch > 126))
+        if ((33 > ch || ch > 57) && (59 > ch || ch > 126))
             break;
     }
 	return 0;
@@ -895,9 +895,7 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 	 * Yuck, 2822 header "folding"
 	 */
 	for (;;) {
-		int peek;
-
-		peek = fgetc(in);
+		int peek = fgetc(in);
 		if (peek == EOF)
 			break;
 		ungetc(peek, in);
@@ -1021,76 +1019,73 @@ static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
 
 static void handle_body(struct mailinfo *mi, struct strbuf *line)
 {
-	struct strbuf prev = STRBUF_INIT;
 
 	/* Skip up to the first boundary */
-	if (*(mi->content_top)) {
-		if (!find_boundary(mi, line))
-			goto handle_body_out;
-	}
+    if (!*(mi->content_top) || find_boundary(mi, line)) {
+        struct strbuf prev = STRBUF_INIT;
+        do {
+            /* process any boundary lines */
+            if (*(mi->content_top) && is_multipart_boundary(mi, line)) {
+                /* flush any leftover */
+                if (prev.len) {
+                    handle_filter(mi, &prev);
+                    strbuf_reset(&prev);
+                }
+                if (!handle_boundary(mi, line)) {
+                    strbuf_release(&prev);
+                    return;
+                }
+            }
 
-	do {
-		/* process any boundary lines */
-		if (*(mi->content_top) && is_multipart_boundary(mi, line)) {
-			/* flush any leftover */
-			if (prev.len) {
-				handle_filter(mi, &prev);
-				strbuf_reset(&prev);
-			}
-			if (!handle_boundary(mi, line))
-				goto handle_body_out;
-		}
+            /* Unwrap transfer encoding */
+            decode_transfer_encoding(mi, line);
 
-		/* Unwrap transfer encoding */
-		decode_transfer_encoding(mi, line);
+            switch (mi->transfer_encoding) {
+                case TE_BASE64:
+                case TE_QP: {
+                    struct strbuf **lines, **it, *sb;
 
-		switch (mi->transfer_encoding) {
-		case TE_BASE64:
-		case TE_QP:
-		{
-			struct strbuf **lines, **it, *sb;
+                    /* Prepend any previous partial lines */
+                    strbuf_insert(line, 0, prev.buf, prev.len);
+                    strbuf_reset(&prev);
 
-			/* Prepend any previous partial lines */
-			strbuf_insert(line, 0, prev.buf, prev.len);
-			strbuf_reset(&prev);
+                    /*
+                     * This is a decoded line that may contain
+                     * multiple new lines.  Pass only one chunk
+                     * at a time to handle_filter()
+                     */
+                    lines = strbuf_split(line, '\n');
+                    for (it = lines; (sb = *it); it++) {
+                        if (*(it + 1) == NULL) /* The last line */
+                            if (sb->buf[sb->len - 1] != '\n') {
+                                /* Partial line, save it for later. */
+                                strbuf_addbuf(&prev, sb);
+                                break;
+                            }
+                        handle_filter_flowed(mi, sb, &prev);
+                    }
+                    /*
+                     * The partial chunk is saved in "prev" and will be
+                     * appended by the next iteration of read_line_with_nul().
+                     */
+                    strbuf_list_free(lines);
+                    break;
+                }
+                default:
+                    handle_filter_flowed(mi, line, &prev);
+            }
 
-			/*
-			 * This is a decoded line that may contain
-			 * multiple new lines.  Pass only one chunk
-			 * at a time to handle_filter()
-			 */
-			lines = strbuf_split(line, '\n');
-			for (it = lines; (sb = *it); it++) {
-				if (*(it + 1) == NULL) /* The last line */
-					if (sb->buf[sb->len - 1] != '\n') {
-						/* Partial line, save it for later. */
-						strbuf_addbuf(&prev, sb);
-						break;
-					}
-				handle_filter_flowed(mi, sb, &prev);
-			}
-			/*
-			 * The partial chunk is saved in "prev" and will be
-			 * appended by the next iteration of read_line_with_nul().
-			 */
-			strbuf_list_free(lines);
-			break;
-		}
-		default:
-			handle_filter_flowed(mi, line, &prev);
-		}
+            if (mi->input_error)
+                break;
+        } while (!strbuf_getwholeline(line, mi->input, '\n'));
 
-		if (mi->input_error)
-			break;
-	} while (!strbuf_getwholeline(line, mi->input, '\n'));
+        if (prev.len)
+            handle_filter(mi, &prev);
 
-	if (prev.len)
-		handle_filter(mi, &prev);
+        flush_inbody_header_accum(mi);
+        strbuf_release(&prev);
+    }
 
-	flush_inbody_header_accum(mi);
-
-handle_body_out:
-	strbuf_release(&prev);
 }
 
 static void output_header_lines(FILE *fout, const char *hdr, const struct strbuf *data)

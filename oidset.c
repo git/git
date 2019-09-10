@@ -58,13 +58,12 @@ void oidset_parse_file(struct oidset *set, const char *path)
 		if (name)
 			strbuf_setlen(&sb, name - sb.buf);
 		strbuf_trim(&sb);
-		if (!sb.len)
-			continue;
-
-		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
-			die("invalid object name: %s", sb.buf);
-		oidset_insert(set, &oid);
-	}
+        if (sb.len) {
+            if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
+                die("invalid object name: %s", sb.buf);
+            oidset_insert(set, &oid);
+        }
+    }
 	if (ferror(fp))
 		die_errno("Could not read '%s'", path);
 	fclose(fp);

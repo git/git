@@ -6,26 +6,26 @@
 /* The only error case is to run out of memory in string-list */
 void record_resolve_undo(struct index_state *istate, struct cache_entry *ce)
 {
-	struct string_list_item *lost;
-	struct resolve_undo_info *ui;
-	struct string_list *resolve_undo;
-	int stage = ce_stage(ce);
 
-	if (!stage)
-		return;
+	const int stage = ce_stage(ce);
 
-	if (!istate->resolve_undo) {
-		resolve_undo = xcalloc(1, sizeof(*resolve_undo));
-		resolve_undo->strdup_strings = 1;
-		istate->resolve_undo = resolve_undo;
-	}
-	resolve_undo = istate->resolve_undo;
-	lost = string_list_insert(resolve_undo, ce->name);
-	if (!lost->util)
-		lost->util = xcalloc(1, sizeof(*ui));
-	ui = lost->util;
-	oidcpy(&ui->oid[stage - 1], &ce->oid);
-	ui->mode[stage - 1] = ce->ce_mode;
+	if (stage) {
+        struct string_list_item *lost;
+        struct resolve_undo_info *ui;
+        struct string_list *resolve_undo;
+        if (!istate->resolve_undo) {
+            resolve_undo = xcalloc(1, sizeof(*resolve_undo));
+            resolve_undo->strdup_strings = 1;
+            istate->resolve_undo = resolve_undo;
+        }
+        resolve_undo = istate->resolve_undo;
+        lost = string_list_insert(resolve_undo, ce->name);
+        if (!lost->util)
+            lost->util = xcalloc(1, sizeof(*ui));
+        ui = lost->util;
+        oidcpy(&ui->oid[stage - 1], &ce->oid);
+        ui->mode[stage - 1] = ce->ce_mode;
+    }
 }
 
 void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
@@ -167,16 +167,15 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 
 void unmerge_marked_index(struct index_state *istate)
 {
-	int i;
 
-	if (!istate->resolve_undo)
-		return;
-
-	for (i = 0; i < istate->cache_nr; i++) {
-		const struct cache_entry *ce = istate->cache[i];
-		if (ce->ce_flags & CE_MATCHED)
-			i = unmerge_index_entry_at(istate, i);
-	}
+    if (istate->resolve_undo) {
+        int i;
+        for (i = 0; i < istate->cache_nr; i++) {
+            const struct cache_entry *ce = istate->cache[i];
+            if (ce->ce_flags & CE_MATCHED)
+                i = unmerge_index_entry_at(istate, i);
+        }
+    }
 }
 
 void unmerge_index(struct index_state *istate, const struct pathspec *pathspec)

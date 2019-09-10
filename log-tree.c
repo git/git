@@ -55,9 +55,9 @@ int parse_decorate_color_config(const char *var, const char *slot_name, const ch
 	int slot = LOOKUP_CONFIG(color_decorate_slots, slot_name);
 	if (slot < 0)
 		return 0;
-	if (!value)
-		return config_error_nonbool(var);
-	return color_parse(value, decoration_colors[slot]);
+    if (value)
+        return color_parse(value, decoration_colors[slot]);
+    return config_error_nonbool(var);
 }
 
 /*
@@ -175,8 +175,9 @@ static void show_parents(struct commit *commit, int abbrev, FILE *file)
 static void show_children(struct rev_info *opt, struct commit *commit, int abbrev)
 {
 	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
-	for ( ; p; p = p->next) {
+	while (p) {
 		fprintf(opt->diffopt.file, " %s", find_unique_abbrev(&p->item->object.oid, abbrev));
+        p = p->next;
 	}
 }
 
@@ -201,20 +202,18 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 
 	/* Now resolve and find the matching current branch */
 	branch_name = resolve_ref_unsafe("HEAD", 0, NULL, &rru_flags);
-	if (!branch_name || !(rru_flags & REF_ISSYMREF))
-		return NULL;
+    if (branch_name || (rru_flags & REF_ISSYMREF) && starts_with(branch_name, "refs/")) {
 
-	if (!starts_with(branch_name, "refs/"))
-		return NULL;
+        /* OK, do we have that ref in the list? */
+        for (list = decoration; list; list = list->next)
+            if ((list->type == DECORATION_REF_LOCAL) &&
+                !strcmp(branch_name, list->name)) {
+                return list;
+            }
 
-	/* OK, do we have that ref in the list? */
-	for (list = decoration; list; list = list->next)
-		if ((list->type == DECORATION_REF_LOCAL) &&
-		    !strcmp(branch_name, list->name)) {
-			return list;
-		}
 
-	return NULL;
+    }
+    return NULL;
 }
 
 static void show_name(struct strbuf *sb, const struct name_decoration *decoration)
@@ -248,7 +247,7 @@ void format_decorations_extended(struct strbuf *sb,
 		return;
 
 	current_and_HEAD = current_pointed_by_HEAD(decoration);
-	while (decoration) {
+	do{
 		/*
 		 * When both current and HEAD are there, only
 		 * show HEAD->current where HEAD would have
@@ -276,7 +275,7 @@ void format_decorations_extended(struct strbuf *sb,
 			prefix = separator;
 		}
 		decoration = decoration->next;
-	}
+	} while (decoration)
 	strbuf_addstr(sb, color_commit);
 	strbuf_addstr(sb, suffix);
 	strbuf_addstr(sb, color_reset);
@@ -292,11 +291,11 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 		if (slot && *slot)
 			fprintf(opt->diffopt.file, "\t%s", *slot);
 	}
-	if (!opt->show_decorations)
-		return;
-	format_decorations(&sb, commit, opt->diffopt.use_color);
-	fputs(sb.buf, opt->diffopt.file);
-	strbuf_release(&sb);
+    if (opt->show_decorations) {
+        format_decorations(&sb, commit, opt->diffopt.use_color);
+        fputs(sb.buf, opt->diffopt.file);
+        strbuf_release(&sb);
+    }
 }
 
 static unsigned int digits_in_number(unsigned int number)
@@ -449,20 +448,18 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
 	struct strbuf gpg_output = STRBUF_INIT;
-	int status;
 
-	if (parse_signed_commit(commit, &payload, &signature) <= 0)
-		goto out;
+	if (parse_signed_commit(commit, &payload, &signature) > 0) {
 
-	status = verify_signed_buffer(payload.buf, payload.len,
-				      signature.buf, signature.len,
-				      &gpg_output, NULL);
-	if (status && !gpg_output.len)
-		strbuf_addstr(&gpg_output, "No signature\n");
+        int status = verify_signed_buffer(payload.buf, payload.len,
+                                      signature.buf, signature.len,
+                                      &gpg_output, NULL);
+        if (status && !gpg_output.len)
+            strbuf_addstr(&gpg_output, "No signature\n");
 
-	show_sig_lines(opt, status, gpg_output.buf);
+        show_sig_lines(opt, status, gpg_output.buf);
 
- out:
+    }
 	strbuf_release(&gpg_output);
 	strbuf_release(&payload);
 	strbuf_release(&signature);
@@ -848,7 +845,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	struct commit_list *parents;
 	struct object_id *oid;
 
-	if (!opt->diff && !opt->diffopt.flags.exit_with_status)
+	if (!(opt->diff || opt->diffopt.flags.exit_with_status))
 		return 0;
 
 	parse_commit_or_die(commit);

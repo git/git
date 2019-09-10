@@ -42,21 +42,21 @@ void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
 
 	if (!t)
 		t = &default_notes_tree;
-	if (!t->initialized || !t->update_ref || !*t->update_ref)
+	if (!(t->initialized && t->update_ref && *t->update_ref))
 		die(_("Cannot commit uninitialized/unreferenced notes tree"));
-	if (!t->dirty)
-		return; /* don't have to commit an unchanged tree */
+    if (t->dirty) { /* don't have to commit an unchanged tree */
 
-	/* Prepare commit message and reflog message */
-	strbuf_addstr(&buf, msg);
-	strbuf_complete_line(&buf);
+        /* Prepare commit message and reflog message */
+        strbuf_addstr(&buf, msg);
+        strbuf_complete_line(&buf);
 
-	create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
-	strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts at index 7 */
-	update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
-		   UPDATE_REFS_DIE_ON_ERR);
+        create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
+        strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts at index 7 */
+        update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
+                   UPDATE_REFS_DIE_ON_ERR);
 
-	strbuf_release(&buf);
+        strbuf_release(&buf);
+    }
 }
 
 int parse_notes_merge_strategy(const char *v, enum notes_merge_strategy *s)
@@ -87,7 +87,6 @@ static combine_notes_fn parse_combine_notes_fn(const char *v)
 		return combine_notes_concatenate;
 	else if (!strcasecmp(v, "cat_sort_uniq"))
 		return combine_notes_cat_sort_uniq;
-	else
 		return NULL;
 }
 
@@ -96,7 +95,6 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 	struct notes_rewrite_cfg *c = cb;
 	if (starts_with(k, "notes.rewrite.") && !strcmp(k+14, c->cmd)) {
 		c->enabled = git_config_bool(k, v);
-		return 0;
 	} else if (!c->mode_from_env && !strcmp(k, "notes.rewritemode")) {
 		if (!v)
 			return config_error_nonbool(k);
@@ -105,7 +103,6 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 			error(_("Bad notes.rewriteMode value: '%s'"), v);
 			return 1;
 		}
-		return 0;
 	} else if (!c->refs_from_env && !strcmp(k, "notes.rewriteref")) {
 		/* note that a refs/ prefix is implied in the
 		 * underlying for_each_glob_ref */
@@ -114,9 +111,7 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 		else
 			warning(_("Refusing to rewrite notes in %s"
 				" (outside of refs/notes/)"), v);
-		return 0;
 	}
-
 	return 0;
 }
 

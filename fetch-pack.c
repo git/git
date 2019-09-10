@@ -213,12 +213,10 @@ static int next_flush(int stateless_rpc, int count)
 			count <<= 1;
 		else
 			count = count * 11 / 10;
-	} else {
-		if (count < PIPESAFE_FLUSH)
-			count <<= 1;
-		else
-			count += PIPESAFE_FLUSH;
-	}
+	} else if (count < PIPESAFE_FLUSH)
+        count <<= 1;
+    else
+        count += PIPESAFE_FLUSH;
 	return count;
 }
 
@@ -235,7 +233,6 @@ static void mark_tips(struct fetch_negotiator *negotiator,
 	for (i = 0; i < negotiation_tips->nr; i++)
 		rev_list_insert_ref(negotiator, NULL,
 				    &negotiation_tips->oid[i]);
-	return;
 }
 
 static int find_common(struct fetch_negotiator *negotiator,
@@ -265,8 +262,8 @@ static int find_common(struct fetch_negotiator *negotiator,
 		for_each_cached_alternate(negotiator, insert_one_alternate_object);
 	}
 
-	fetching = 0;
-	for ( ; refs ; refs = refs->next) {
+
+	for (fetching = 0; refs ; refs = refs->next) {
 		struct object_id *remote = &refs->old_oid;
 		const char *remote_hex;
 		struct object *o;
@@ -539,8 +536,10 @@ static void mark_recent_complete_commits(struct fetch_pack_args *args,
 
 static void add_refs_to_oidset(struct oidset *oids, struct ref *refs)
 {
-	for (; refs; refs = refs->next)
-		oidset_insert(oids, &refs->old_oid);
+	while (refs) {
+        oidset_insert(oids, &refs->old_oid);
+        refs = refs->next;
+    }
 }
 
 static int is_unmatched_ref(const struct ref *ref)
@@ -562,11 +561,10 @@ static void filter_refs(struct fetch_pack_args *args,
 	struct ref *unmatched = NULL;
 	struct ref *ref, *next;
 	struct oidset tip_oids = OIDSET_INIT;
-	int i;
+
 	int strict = !(allow_unadvertised_object_request &
 		       (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
-
-	i = 0;
+    int i = 0;
 	for (ref = *refs; ref; ref = next) {
 		int keep = 0;
 		next = ref->next;
@@ -609,13 +607,13 @@ static void filter_refs(struct fetch_pack_args *args,
 	if (strict) {
 		for (i = 0; i < nr_sought; i++) {
 			ref = sought[i];
-			if (!is_unmatched_ref(ref))
-				continue;
+            if (is_unmatched_ref(ref)) {
 
-			add_refs_to_oidset(&tip_oids, unmatched);
-			add_refs_to_oidset(&tip_oids, newlist);
-			break;
-		}
+                add_refs_to_oidset(&tip_oids, unmatched);
+                add_refs_to_oidset(&tip_oids, newlist);
+                break;
+            }
+        }
 	}
 
 	/* Append unmatched requests to the list */
@@ -734,15 +732,15 @@ static int everything_local(struct fetch_pack_args *args,
 		struct object *o;
 
 		o = lookup_object(the_repository, remote);
-		if (!o || !(o->flags & COMPLETE)) {
-			retval = 0;
-			print_verbose(args, "want %s (%s)", oid_to_hex(remote),
-				      ref->name);
-			continue;
-		}
-		print_verbose(args, _("already have %s (%s)"), oid_to_hex(remote),
-			      ref->name);
-	}
+        if (o && o->flags & COMPLETE) {
+            print_verbose(args, _("already have %s (%s)"), oid_to_hex(remote),
+                          ref->name);
+        } else {
+            retval = 0;
+            print_verbose(args, "want %s (%s)", oid_to_hex(remote),
+                          ref->name);
+        }
+    }
 
 	return retval;
 }

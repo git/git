@@ -112,24 +112,22 @@ static char *super_prefix;
 /*
  * Repository-local GIT_* environment variables; see cache.h for details.
  */
-const char * const local_repo_env[] = {
-	ALTERNATE_DB_ENVIRONMENT,
-	CONFIG_ENVIRONMENT,
-	CONFIG_DATA_ENVIRONMENT,
-	DB_ENVIRONMENT,
-	GIT_DIR_ENVIRONMENT,
-	GIT_WORK_TREE_ENVIRONMENT,
-	GIT_IMPLICIT_WORK_TREE_ENVIRONMENT,
-	GRAFT_ENVIRONMENT,
-	INDEX_ENVIRONMENT,
-	NO_REPLACE_OBJECTS_ENVIRONMENT,
-	GIT_REPLACE_REF_BASE_ENVIRONMENT,
-	GIT_PREFIX_ENVIRONMENT,
-	GIT_SUPER_PREFIX_ENVIRONMENT,
-	GIT_SHALLOW_FILE_ENVIRONMENT,
-	GIT_COMMON_DIR_ENVIRONMENT,
-	NULL
-};
+const char *const local_repo_env[] = { ALTERNATE_DB_ENVIRONMENT,
+				       CONFIG_ENVIRONMENT,
+				       CONFIG_DATA_ENVIRONMENT,
+				       DB_ENVIRONMENT,
+				       GIT_DIR_ENVIRONMENT,
+				       GIT_WORK_TREE_ENVIRONMENT,
+				       GIT_IMPLICIT_WORK_TREE_ENVIRONMENT,
+				       GRAFT_ENVIRONMENT,
+				       INDEX_ENVIRONMENT,
+				       NO_REPLACE_OBJECTS_ENVIRONMENT,
+				       GIT_REPLACE_REF_BASE_ENVIRONMENT,
+				       GIT_PREFIX_ENVIRONMENT,
+				       GIT_SUPER_PREFIX_ENVIRONMENT,
+				       GIT_SHALLOW_FILE_ENVIRONMENT,
+				       GIT_COMMON_DIR_ENVIRONMENT,
+				       NULL };
 
 static char *expand_namespace(const char *raw_namespace)
 {
@@ -186,8 +184,8 @@ void setup_git_env(const char *git_dir)
 		read_replace_refs = 0;
 	replace_ref_base = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
 	free(git_replace_ref_base);
-	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
-							  : "refs/replace/");
+	git_replace_ref_base =
+		xstrdup(replace_ref_base ? replace_ref_base : "refs/replace/");
 	free(git_namespace);
 	git_namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
 	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
@@ -203,8 +201,7 @@ int is_bare_repository(void)
 
 int have_git_dir(void)
 {
-	return startup_info->have_repository
-		|| the_repository->gitdir;
+	return startup_info->have_repository || the_repository->gitdir;
 }
 
 const char *get_git_dir(void)
@@ -240,7 +237,8 @@ const char *get_super_prefix(void)
 {
 	static int initialized;
 	if (!initialized) {
-		super_prefix = xstrdup_or_null(getenv(GIT_SUPER_PREFIX_ENVIRONMENT));
+		super_prefix =
+			xstrdup_or_null(getenv(GIT_SUPER_PREFIX_ENVIRONMENT));
 		initialized = 1;
 	}
 	return super_prefix;
@@ -261,10 +259,10 @@ void set_git_work_tree(const char *new_work_tree)
 			die("internal error: work tree has already been set\n"
 			    "Current worktree: %s\nNew worktree: %s",
 			    the_repository->worktree, new_work_tree);
-		return;
+	} else {
+		git_work_tree_initialized = 1;
+		repo_set_worktree(the_repository, new_work_tree);
 	}
-	git_work_tree_initialized = 1;
-	repo_set_worktree(the_repository, new_work_tree);
 }
 
 const char *get_git_work_tree(void)
@@ -301,15 +299,13 @@ int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
 
 int odb_pack_keep(const char *name)
 {
-	int fd;
-
-	fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
+	int fd = open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (0 <= fd)
 		return fd;
 
 	/* slow path */
 	safe_create_leading_directories_const(name);
-	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
+	return open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
 }
 
 char *get_index_file(void)
@@ -333,14 +329,11 @@ static void set_git_dir_1(const char *path)
 	setup_git_env(path);
 }
 
-static void update_relative_gitdir(const char *name,
-				   const char *old_cwd,
-				   const char *new_cwd,
-				   void *data)
+static void update_relative_gitdir(const char *name, const char *old_cwd,
+				   const char *new_cwd, void *data)
 {
 	char *path = reparent_relative_path(old_cwd, new_cwd, get_git_dir());
-	trace_printf_key(&trace_setup_key,
-			 "setup: move $GIT_DIR to '%s'",
+	trace_printf_key(&trace_setup_key, "setup: move $GIT_DIR to '%s'",
 			 path);
 	set_git_dir_1(path);
 	free(path);
@@ -355,8 +348,8 @@ void set_git_dir(const char *path)
 
 const char *get_log_output_encoding(void)
 {
-	return git_log_output_encoding ? git_log_output_encoding
-		: get_commit_output_encoding();
+	return git_log_output_encoding ? git_log_output_encoding :
+					 get_commit_output_encoding();
 }
 
 const char *get_commit_output_encoding(void)

@@ -904,16 +904,17 @@ int combine_notes_cat_sort_uniq(struct object_id *cur_oid,
 	string_list_remove_duplicates(&sort_uniq_list, 0);
 
 	/* create a new blob object from sort_uniq_list */
-	if (for_each_string_list(&sort_uniq_list,
-				 string_list_join_lines_helper, &buf))
-		goto out;
+    if (!for_each_string_list(&sort_uniq_list,
+                              string_list_join_lines_helper, &buf)) {
 
-	ret = write_object_file(buf.buf, buf.len, blob_type, cur_oid);
+        ret = write_object_file(buf.buf, buf.len, blob_type, cur_oid);
 
-out:
-	strbuf_release(&buf);
-	string_list_clear(&sort_uniq_list, 0);
-	return ret;
+
+    }
+    out:
+    strbuf_release(&buf);
+    string_list_clear(&sort_uniq_list, 0);
+    return ret;
 }
 
 static int string_list_add_one_ref(const char *refname, const struct object_id *oid,
@@ -1239,16 +1240,16 @@ static void format_note(struct notes_tree *t, const struct object_id *object_oid
 
 	if (!raw) {
 		const char *ref = t->ref;
-		if (!ref || !strcmp(ref, GIT_NOTES_DEFAULT_REF)) {
-			strbuf_addstr(sb, "\nNotes:\n");
-		} else {
-			if (starts_with(ref, "refs/"))
-				ref += 5;
-			if (starts_with(ref, "notes/"))
-				ref += 6;
-			strbuf_addf(sb, "\nNotes (%s):\n", ref);
-		}
-	}
+        if (ref && strcmp(ref, GIT_NOTES_DEFAULT_REF)) {
+            if (starts_with(ref, "refs/"))
+                ref += 5;
+            if (starts_with(ref, "notes/"))
+                ref += 6;
+            strbuf_addf(sb, "\nNotes (%s):\n", ref);
+        } else {
+            strbuf_addstr(sb, "\nNotes:\n");
+        }
+    }
 
 	for (msg_p = msg; msg_p < msg + msglen; msg_p += linelen + 1) {
 		linelen = strchrnul(msg_p, '\n') - msg_p;
@@ -1284,7 +1285,7 @@ int copy_note(struct notes_tree *t,
 
 	if (note)
 		return add_note(t, to_obj, note, combine_notes);
-	else if (existing_note)
+	if (existing_note)
 		return add_note(t, to_obj, &null_oid, combine_notes);
 
 	return 0;
@@ -1294,7 +1295,8 @@ void expand_notes_ref(struct strbuf *sb)
 {
 	if (starts_with(sb->buf, "refs/notes/"))
 		return; /* we're happy */
-	else if (starts_with(sb->buf, "notes/"))
+
+	if (starts_with(sb->buf, "notes/"))
 		strbuf_insert(sb, 0, "refs/", 5);
 	else
 		strbuf_insert(sb, 0, "refs/notes/", 11);
