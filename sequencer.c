@@ -5222,80 +5222,85 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 
 			} while (skip_prefix(p, "fixup! ", &p) ||
 				 skip_prefix(p, "squash! ", &p));
-		}
 
-		if ((entry = hashmap_get_from_hash(&subject2item, strhash(p),
-						   p)))
-			/* found by title */
-			i2 = entry->i;
-		else if (!strchr(p, ' ') &&
-			 (commit2 = lookup_commit_reference_by_name(p)) &&
-			 *commit_todo_item_at(&commit_todo, commit2))
-			/* found by commit name */
-			i2 = *commit_todo_item_at(&commit_todo, commit2) -
-			     todo_list->items;
-		else {
-			/* copy can be a prefix of the commit subject */
-			for (i2 = 0; i2 < i; i2++)
-				if (subjects[i2] &&
-				    starts_with(subjects[i2], p))
-					break;
-			if (i2 == i)
-				i2 = -1;
-		}
-	}
-	if (i2 >= 0) {
-		rearranged = 1;
-		todo_list->items[i].command = starts_with(subject, "fixup!") ?
-						      TODO_FIXUP :
-						      TODO_SQUASH;
-		if (next[i2] < 0)
-			next[i2] = i;
-		else
-			next[tail[i2]] = i;
-		tail[i2] = i;
-	} else if (!hashmap_get_from_hash(&subject2item, strhash(subject),
-					  subject)) {
-		FLEX_ALLOC_MEM(entry, subject, subject, subject_len);
-		entry->i = i;
-		hashmap_entry_init(entry, strhash(entry->subject));
-		hashmap_put(&subject2item, entry);
-	}
-}
-
-if (rearranged) {
-	for (i = 0; i < todo_list->nr; i++) {
-		enum todo_command command = todo_list->items[i].command;
-
-		/*
-		 * Initially, all commands are 'pick's. If it is a
-		 * fixup or a squash now, we have rearranged it.
-		 */
-		if (!is_fixup(command)) {
-			int cur;
-
-			for (cur = i; cur >= 0; cur = next[cur]) {
-				ALLOC_GROW(items, nr + 1, alloc);
-				items[nr++] = todo_list->items[cur];
-				cur = next[cur];
+			if ((entry = hashmap_get_from_hash(&subject2item,
+							   strhash(p), p)))
+				/* found by title */
+				i2 = entry->i;
+			else if (!strchr(p, ' ') &&
+				 (commit2 =
+					  lookup_commit_reference_by_name(p)) &&
+				 *commit_todo_item_at(&commit_todo, commit2))
+				/* found by commit name */
+				i2 = *commit_todo_item_at(&commit_todo,
+							  commit2) -
+				     todo_list->items;
+			else {
+				/* copy can be a prefix of the commit subject */
+				for (i2 = 0; i2 < i; i2++)
+					if (subjects[i2] &&
+					    starts_with(subjects[i2], p))
+						break;
+				if (i2 == i)
+					i2 = -1;
 			}
 		}
+		if (i2 >= 0) {
+			rearranged = 1;
+			todo_list->items[i].command =
+				starts_with(subject, "fixup!") ? TODO_FIXUP :
+								 TODO_SQUASH;
+			if (next[i2] < 0)
+				next[i2] = i;
+			else
+				next[tail[i2]] = i;
+			tail[i2] = i;
+		} else if (!hashmap_get_from_hash(&subject2item,
+						  strhash(subject), subject)) {
+			FLEX_ALLOC_MEM(entry, subject, subject, subject_len);
+			entry->i = i;
+			hashmap_entry_init(entry, strhash(entry->subject));
+			hashmap_put(&subject2item, entry);
+		}
+
+		if (rearranged) {
+			for (i = 0; i < todo_list->nr; i++) {
+				enum todo_command command =
+					todo_list->items[i].command;
+
+				/*
+				 * Initially, all commands are 'pick's. If it is
+				 * a fixup or a squash now, we have rearranged
+				 * it.
+				 */
+				if (!is_fixup(command)) {
+					int cur;
+
+					for (cur = i; cur >= 0;
+					     cur = next[cur]) {
+						ALLOC_GROW(items, nr + 1,
+							   alloc);
+						items[nr++] =
+							todo_list->items[cur];
+						cur = next[cur];
+					}
+				}
+			}
+
+			FREE_AND_NULL(todo_list->items);
+			todo_list->items = items;
+			todo_list->nr = nr;
+			todo_list->alloc = alloc;
+		}
+
+		free(next);
+		free(tail);
+		for (i = 0; i < todo_list->nr; i++)
+			free(subjects[i]);
+		free(subjects);
+		hashmap_free(&subject2item, 1);
+
+		clear_commit_todo_item(&commit_todo);
+
+		return 0;
 	}
-
-	FREE_AND_NULL(todo_list->items);
-	todo_list->items = items;
-	todo_list->nr = nr;
-	todo_list->alloc = alloc;
-}
-
-free(next);
-free(tail);
-for (i = 0; i < todo_list->nr; i++)
-	free(subjects[i]);
-free(subjects);
-hashmap_free(&subject2item, 1);
-
-clear_commit_todo_item(&commit_todo);
-
-return 0;
-}
