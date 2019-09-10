@@ -816,8 +816,13 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags)
 	for (;;) {
 		/* If the group is empty in the to-be-compacted file, skip it:
 		 */
-		if (g.end == g.start)
-			goto next;
+		if (g.end == g.start) {
+			if (group_next(xdf, &g))
+				break;
+			if (group_next(xdfo, &go))
+				xdl_bug("group sync broken moving to next group");
+			continue;
+		}
 
 		/*
 		 * Now shift the change up and then down as far as possible in
@@ -936,8 +941,6 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags)
 				}
 			}
 		}
-
-	next:
 		/* Move past the just-processed group: */
 		if (group_next(xdf, &g))
 			break;
@@ -1032,32 +1035,33 @@ static void xdl_mark_ignorable(xdchange_t *xscr, xdfenv_t *xe, long flags)
 }
 
 int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
-	     xdemitconf_t const *xecfg, xdemitcb_t *ecb) {
-    xdchange_t *xscr;
-    xdfenv_t xe;
-    emit_func_t ef = xecfg->hunk_func ? xdl_call_hunk_func : xdl_emit_diff;
+	     xdemitconf_t const *xecfg, xdemitcb_t *ecb)
+{
+	xdchange_t *xscr;
+	xdfenv_t xe;
+	emit_func_t ef = xecfg->hunk_func ? xdl_call_hunk_func : xdl_emit_diff;
 
-    if (xdl_do_diff(mf1, mf2, xpp, &xe) < 0) {
-        return -1;
-    }
-    if (xdl_change_compact(&xe.xdf1, &xe.xdf2, xpp->flags) < 0 ||
-        xdl_change_compact(&xe.xdf2, &xe.xdf1, xpp->flags) < 0 ||
-        xdl_build_script(&xe, &xscr) < 0) {
-        xdl_free_env(&xe);
-        return -1;
-    }
-    if (xscr) {
-        if (xpp->flags & XDF_IGNORE_BLANK_LINES)
-            xdl_mark_ignorable(xscr, &xe, xpp->flags);
+	if (xdl_do_diff(mf1, mf2, xpp, &xe) < 0) {
+		return -1;
+	}
+	if (xdl_change_compact(&xe.xdf1, &xe.xdf2, xpp->flags) < 0 ||
+	    xdl_change_compact(&xe.xdf2, &xe.xdf1, xpp->flags) < 0 ||
+	    xdl_build_script(&xe, &xscr) < 0) {
+		xdl_free_env(&xe);
+		return -1;
+	}
+	if (xscr) {
+		if (xpp->flags & XDF_IGNORE_BLANK_LINES)
+			xdl_mark_ignorable(xscr, &xe, xpp->flags);
 
-        if (ef(&xe, xscr, ecb, xecfg) < 0) {
-            xdl_free_script(xscr);
-            xdl_free_env(&xe);
-            return -1;
-        }
-        xdl_free_script(xscr);
-    }
-    xdl_free_env(&xe);
+		if (ef(&xe, xscr, ecb, xecfg) < 0) {
+			xdl_free_script(xscr);
+			xdl_free_env(&xe);
+			return -1;
+		}
+		xdl_free_script(xscr);
+	}
+	xdl_free_env(&xe);
 
-    return 0;
+	return 0;
 }
