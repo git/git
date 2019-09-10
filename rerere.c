@@ -667,9 +667,9 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
 	 */
 	if ((handle_file(istate, path, NULL, rerere_path(id, "thisimage")) < 0) ||
 	    read_mmfile(&cur, rerere_path(id, "thisimage"))) {
-		ret = 1;
-		goto out;
-	}
+        ret = 1;
+        goto out;
+    }
 
 	ret = try_merge(istate, id, path, &cur, &result);
 	if (ret)
