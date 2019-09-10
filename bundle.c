@@ -58,8 +58,8 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		 * followed by SP and subject line.
 		 */
 		if (parse_oid_hex(buf.buf, &oid, &p) ||
-		    !(*p && isspace(*p)) &&
-		    (!is_prereq && *p)) {
+		    (!(*p && isspace(*p)) &&
+		    (!is_prereq && *p))) {
 			if (report_path)
 				error(_("unrecognized header: %s%s (%d)"),
 				      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
