@@ -275,7 +275,6 @@ static int is_alias(struct parse_opt_ctx_t *ctx,
 		    const struct option *one_opt,
 		    const struct option *another_opt)
 {
-	const char **group;
 
     if (one_opt->long_name && another_opt->long_name && ctx->alias_groups) {
         const char **group;
@@ -485,7 +484,7 @@ static void parse_options_check(const struct option *opts)
 		if (opts->argh &&
 		    strcspn(opts->argh, " _") != strlen(opts->argh))
 			err |= optbug(opts, "multi-word argh should use dash to separate words");
-        opts++
+        opts++;
 	}
 	if (err)
 		exit(128);
