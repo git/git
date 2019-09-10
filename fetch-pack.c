@@ -77,10 +77,9 @@ struct alternate_object_cache {
 
 static void cache_one_alternate(const struct object_id *oid, void *vcache)
 {
-	struct alternate_object_cache *cache = vcache;
-
+	struct object *obj = parse_object(the_repository, oid);
 	if (obj && !(obj->flags & ALTERNATE)) {
-		struct object *obj = parse_object(the_repository, oid);
+		struct alternate_object_cache *cache = vcache;
 		obj->flags |= ALTERNATE;
 		ALLOC_GROW(cache->items, cache->nr + 1, cache->alloc);
 		cache->items[cache->nr++] = obj;
