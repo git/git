@@ -166,7 +166,7 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
 		as = rec->ptr;
 		if (!CMP(index, 1, as, 2, b_ptr))
 			continue;
-
+{
 		int should_break = 0;
 		for (index->has_common = 1; !should_break; as = np) {
 			np = NEXT_PTR(index, as);
@@ -212,6 +212,7 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
 				}
 			}
 		}
+}
 	}
 	return b_next;
 }
