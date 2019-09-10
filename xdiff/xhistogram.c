@@ -287,9 +287,10 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env, struct region *lcs,
 		b_ptr = try_lcs(&index, lcs, b_ptr, line1, count1, line2,
 				count2);
 
-	ret = (index.has_common && index.max_chain_length < index.cnt)
+	ret = (index.has_common && index.max_chain_length < index.cnt);
 
-		cleanup : free_index(&index);
+	cleanup: 
+		free_index(&index);
 	return ret;
 }
 
