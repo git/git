@@ -5304,3 +5304,4 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 
 		return 0;
 	}
+}
