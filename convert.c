@@ -1218,7 +1218,7 @@ static const char *git_path_check_encoding(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
-	if (ATTR_UNSET(value) || !strlen(value))
+	if (ATTR_UNSET(value) || *value == '\0')
 		return NULL;
 
 	if (ATTR_TRUE(value) || ATTR_FALSE(value)) {
