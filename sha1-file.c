@@ -304,23 +304,22 @@ enum scld_error safe_create_leading_directories(char *path)
 				ret = SCLD_EXISTS;
 			}
 		} else if (mkdir(path, 0777)) {
-			if (errno == EEXIST &&
-			    !stat(path, &st) && S_ISDIR(st.st_mode))
-				; /* somebody created it since we checked */
-			else if (errno == ENOENT)
-				/*
-				 * Either mkdir() failed because
-				 * somebody just pruned the containing
-				 * directory, or stat() failed because
-				 * the file that was in our way was
-				 * just removed.  Either way, inform
-				 * the caller that it might be worth
-				 * trying again:
-				 */
-				ret = SCLD_VANISHED;
-			else
-				ret = SCLD_FAILED;
-		} else if (adjust_shared_perm(path)) {
+            if (errno != EEXIST || stat(path, &st) || !S_ISDIR(st.st_mode)) {
+                if (errno == ENOENT)
+                    /*
+                     * Either mkdir() failed because
+                     * somebody just pruned the containing
+                     * directory, or stat() failed because
+                     * the file that was in our way was
+                     * just removed.  Either way, inform
+                     * the caller that it might be worth
+                     * trying again:
+                     */
+                    ret = SCLD_VANISHED;
+                else
+                    ret = SCLD_FAILED;
+            } /* somebody created it since we checked */
+        } else if (adjust_shared_perm(path)) {
 			ret = SCLD_PERMS;
 		}
 		*slash = slash_character;
@@ -545,18 +544,11 @@ static const char *parse_alt_odb_entry(const char *string,
 	if (*string == '#') {
 		/* comment; consume up to next separator */
 		end = strchrnul(string, sep);
-	} else if (*string == '"' && !unquote_c_style(out, string, &end)) {
-		/*
-		 * quoted path; unquote_c_style has copied the
-		 * data for us and set "end". Broken quoting (e.g.,
-		 * an entry that doesn't end with a quote) falls
-		 * back to the unquoted case below.
-		 */
-	} else {
-		/* normal, unquoted path */
-		end = strchrnul(string, sep);
-		strbuf_add(out, string, end - string);
-	}
+	} else if (*string != '"' || unquote_c_style(out, string, &end)) {
+        /* normal, unquoted path */
+        end = strchrnul(string, sep);
+        strbuf_add(out, string, end - string);
+    }
 
 	if (*end)
 		end++;
@@ -566,32 +558,31 @@ static const char *parse_alt_odb_entry(const char *string,
 static void link_alt_odb_entries(struct repository *r, const char *alt,
 				 int sep, const char *relative_base, int depth)
 {
-	struct strbuf objdirbuf = STRBUF_INIT;
-	struct strbuf entry = STRBUF_INIT;
+    if (alt && *alt) {
+        struct strbuf objdirbuf = STRBUF_INIT;
+        struct strbuf entry = STRBUF_INIT;
 
-	if (!alt || !*alt)
-		return;
+        if (depth > 5) {
+            error(_("%s: ignoring alternate object stores, nesting too deep"),
+                  relative_base);
+            return;
+        }
 
-	if (depth > 5) {
-		error(_("%s: ignoring alternate object stores, nesting too deep"),
-				relative_base);
-		return;
-	}
+        strbuf_add_absolute_path(&objdirbuf, r->objects->odb->path);
+        if (strbuf_normalize_path(&objdirbuf) < 0)
+            die(_("unable to normalize object directory: %s"),
+                objdirbuf.buf);
 
-	strbuf_add_absolute_path(&objdirbuf, r->objects->odb->path);
-	if (strbuf_normalize_path(&objdirbuf) < 0)
-		die(_("unable to normalize object directory: %s"),
-		    objdirbuf.buf);
-
-	while (*alt) {
-		alt = parse_alt_odb_entry(alt, sep, &entry);
-		if (!entry.len)
-			continue;
-		link_alt_odb_entry(r, entry.buf,
-				   relative_base, depth, objdirbuf.buf);
-	}
-	strbuf_release(&entry);
-	strbuf_release(&objdirbuf);
+        while (*alt) {
+            alt = parse_alt_odb_entry(alt, sep, &entry);
+            if (!entry.len)
+                continue;
+            link_alt_odb_entry(r, entry.buf,
+                               relative_base, depth, objdirbuf.buf);
+        }
+        strbuf_release(&entry);
+        strbuf_release(&objdirbuf);
+    }
 }
 
 static void read_info_alternates(struct repository *r,
@@ -717,22 +708,17 @@ char *compute_alternate_path(const char *path, struct strbuf *err)
 
 		strbuf_addf(err, _("reference repository '%s' is not a "
 					"local repository."), path);
-		goto out;
 	}
-
-	if (!access(mkpath("%s/shallow", ref_git), F_OK)) {
+	else if (!access(mkpath("%s/shallow", ref_git), F_OK)) {
 		strbuf_addf(err, _("reference repository '%s' is shallow"),
 			    path);
 		seen_error = 1;
-		goto out;
 	}
-
-	if (!access(mkpath("%s/info/grafts", ref_git), F_OK)) {
+	else if (!access(mkpath("%s/info/grafts", ref_git), F_OK)) {
 		strbuf_addf(err,
 			    _("reference repository '%s' is grafted"),
 			    path);
 		seen_error = 1;
-		goto out;
 	}
 
 out:
@@ -811,26 +797,21 @@ static int refs_from_alternate_cb(struct object_directory *e,
 				  void *data)
 {
 	struct strbuf path = STRBUF_INIT;
-	size_t base_len;
-	struct alternate_refs_data *cb = data;
 
-	if (!strbuf_realpath(&path, e->path, 0))
-		goto out;
-	if (!strbuf_strip_suffix(&path, "/objects"))
-		goto out;
-	base_len = path.len;
 
-	/* Is this a git repository with refs? */
-	strbuf_addstr(&path, "/refs");
-	if (!is_directory(path.buf))
-		goto out;
-	strbuf_setlen(&path, base_len);
+    if (strbuf_realpath(&path, e->path, 0) && strbuf_strip_suffix(&path, "/objects")) {
+        size_t base_len = path.len;
+        struct alternate_refs_data *cb = data;
+        /* Is this a git repository with refs? */
+        strbuf_addstr(&path, "/refs");
+        if (is_directory(path.buf)) {
+            strbuf_setlen(&path, base_len);
 
-	read_alternate_refs(path.buf, cb->fn, cb->data);
-
-out:
-	strbuf_release(&path);
-	return 0;
+            read_alternate_refs(path.buf, cb->fn, cb->data);
+        }
+    }
+    strbuf_release(&path);
+    return 0;
 }
 
 void for_each_alternate_ref(alternate_ref_fn fn, void *data)
@@ -883,11 +864,7 @@ static int freshen_file(const char *fn)
  */
 int check_and_freshen_file(const char *fn, int freshen)
 {
-	if (access(fn, F_OK))
-		return 0;
-	if (freshen && !freshen_file(fn))
-		return 0;
-	return 1;
+    return (!access(fn, F_OK) && (!freshen || freshen_file(fn)));
 }
 
 static int check_and_freshen_odb(struct object_directory *odb,
@@ -2450,10 +2427,10 @@ int read_loose_object(const char *path,
 	} else {
 		*contents = unpack_loose_rest(&stream, hdr, *size, expected_oid);
 		if (!*contents) {
-			error(_("unable to unpack contents of %s"), path);
-			git_inflate_end(&stream);
-			goto out;
-		}
+            error(_("unable to unpack contents of %s"), path);
+            git_inflate_end(&stream);
+            goto out;
+        }
 		if (check_object_signature(expected_oid, *contents,
 					 *size, type_name(*type))) {
 			error(_("hash mismatch for %s (expected %s)"), path,
