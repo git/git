@@ -396,7 +396,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	const struct object_id *bases[1];
 
 	read_cache_preload(NULL);
-	if (refresh_cache(REFRESH_QUIET))
+	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0))
 		return -1;
 
 	if (write_cache_as_tree(&c_tree, 0, NULL))
@@ -485,7 +485,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	}
 
 	if (quiet) {
-		if (refresh_cache(REFRESH_QUIET))
+		if (refresh_and_write_cache(REFRESH_QUIET, 0, 0))
 			warning("could not refresh index");
 	} else {
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -1129,7 +1129,10 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	prepare_fallback_ident("git stash", "git@stash");
 
 	read_cache_preload(NULL);
-	refresh_cache(REFRESH_QUIET);
+	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0) < 0) {
+		ret = -1;
+		goto done;
+	}
 
 	if (get_oid("HEAD", &info->b_commit)) {
 		if (!quiet)
@@ -1290,7 +1293,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		free(ps_matched);
 	}
 
-	if (refresh_cache(REFRESH_QUIET)) {
+	if (refresh_and_write_cache(REFRESH_QUIET, 0, 0)) {
 		ret = -1;
 		goto done;
 	}
