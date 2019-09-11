@@ -208,7 +208,7 @@ endif::git-rev-list[]
 '%GP':: show the fingerprint of the primary key whose subkey was used
 	to sign a signed commit
 '%gD':: reflog selector, e.g., `refs/stash@{1}` or `refs/stash@{2
-	minutes ago`}; the format follows the rules described for the
+	minutes ago}`; the format follows the rules described for the
 	`-g` option. The portion before the `@` is the refname as
 	given on the command line (so `git log -g refs/heads/master`
 	would yield `refs/heads/master@{0}`).
