@@ -193,23 +193,22 @@ int git_config_rename(const char *var, const char *value)
 	return git_config_bool(var,value) ? DIFF_DETECT_RENAME : 0;
 }
 
-long parse_algorithm_value(const char *value)
-{
-	if (!value)
-		return -1;
-	else if (!strcasecmp(value, "myers") || !strcasecmp(value, "default"))
-		return 0;
-	else if (!strcasecmp(value, "minimal"))
-		return XDF_NEED_MINIMAL;
-	else if (!strcasecmp(value, "patience"))
-		return XDF_PATIENCE_DIFF;
-	else if (!strcasecmp(value, "histogram"))
-		return XDF_HISTOGRAM_DIFF;
-	/*
-	 * Please update $__git_diff_algorithms in git-completion.bash
-	 * when you add new algorithms.
-	 */
-	return -1;
+long parse_algorithm_value(const char *value) {
+    if (!value)
+        return -1;
+    if (!(strcasecmp(value, "myers") && strcasecmp(value, "default")))
+        return 0;
+    if (!strcasecmp(value, "minimal"))
+        return XDF_NEED_MINIMAL;
+    if (!strcasecmp(value, "patience"))
+        return XDF_PATIENCE_DIFF;
+    if (!strcasecmp(value, "histogram"))
+        return XDF_HISTOGRAM_DIFF;
+    /*
+     * Please update $__git_diff_algorithms in git-completion.bash
+     * when you add new algorithms.
+     */
+    return -1;
 }
 
 static int parse_one_token(const char **arg, const char *token)
@@ -260,11 +259,10 @@ void init_diff_ui_defaults(void)
 	diff_detect_rename_default = DIFF_DETECT_RENAME;
 }
 
-int git_diff_heuristic_config(const char *var, const char *value, void *cb)
-{
-	if (!strcmp(var, "diff.indentheuristic"))
-		diff_indent_heuristic = git_config_bool(var, value);
-	return 0;
+int git_diff_heuristic_config(const char *var, const char *value, void *cb) {
+    if (!strcmp(var, "diff.indentheuristic"))
+        diff_indent_heuristic = git_config_bool(var, value);
+    return 0;
 }
 
 static int parse_color_moved(const char *arg)
@@ -280,19 +278,18 @@ static int parse_color_moved(const char *arg)
 
 	if (!strcmp(arg, "no"))
 		return COLOR_MOVED_NO;
-	else if (!strcmp(arg, "plain"))
+	if (!strcmp(arg, "plain"))
 		return COLOR_MOVED_PLAIN;
-	else if (!strcmp(arg, "blocks"))
+	if (!strcmp(arg, "blocks"))
 		return COLOR_MOVED_BLOCKS;
-	else if (!strcmp(arg, "zebra"))
+	if (!strcmp(arg, "zebra"))
 		return COLOR_MOVED_ZEBRA;
-	else if (!strcmp(arg, "default"))
+	if (!strcmp(arg, "default"))
 		return COLOR_MOVED_DEFAULT;
-	else if (!strcmp(arg, "dimmed-zebra"))
+	if (!strcmp(arg, "dimmed-zebra"))
 		return COLOR_MOVED_ZEBRA_DIM;
-	else if (!strcmp(arg, "dimmed_zebra"))
+	if (!strcmp(arg, "dimmed_zebra"))
 		return COLOR_MOVED_ZEBRA_DIM;
-	else
 		return error(_("color moved setting must be one of 'no', 'default', 'blocks', 'zebra', 'dimmed-zebra', 'plain'"));
 }
 
@@ -340,7 +337,7 @@ static unsigned parse_color_moved_ws(const char *arg)
 
 int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
+	if (!(strcmp(var, "diff.color") && strcmp(var, "color.diff"))) {
 		diff_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
@@ -408,11 +405,11 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "diff.algorithm")) {
-		diff_algorithm = parse_algorithm_value(value);
-		if (diff_algorithm < 0)
-			return -1;
-		return 0;
-	}
+        diff_algorithm = parse_algorithm_value(value);
+        if (diff_algorithm < 0)
+            return -1;
+        return 0;
+    }
 
 	if (!strcmp(var, "diff.wserrorhighlight")) {
 		int val = parse_ws_error_highlight(value);

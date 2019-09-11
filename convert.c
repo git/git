@@ -1241,7 +1241,7 @@ static enum crlf_action git_path_check_crlf(struct attr_check_item *check)
 	else if (ATTR_FALSE(value))
 		return CRLF_BINARY;
 	else if (ATTR_UNSET(value))
-		;
+		return CRLF_UNDEFINED;
 	else if (!strcmp(value, "input"))
 		return CRLF_TEXT_INPUT;
 	else if (!strcmp(value, "auto"))
