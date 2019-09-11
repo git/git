@@ -104,8 +104,8 @@ static int use_wt_file(const char *workdir, const char *name,
 		struct object_id wt_oid;
 		int fd = open(buf.buf, O_RDONLY);
 
-		if (fd >= 0 &&
-		    !index_fd(&the_index, &wt_oid, fd, &st, OBJ_BLOB, name, 0)) {
+		if (fd >= 0 && !index_fd(&the_index, &wt_oid, fd, &st, OBJ_BLOB,
+					 name, 0)) {
 			if (is_null_oid(oid)) {
 				oidcpy(oid, &wt_oid);
 				use = 1;
@@ -125,8 +125,7 @@ struct working_tree_entry {
 };
 
 static int working_tree_entry_cmp(const void *unused_cmp_data,
-				  const void *entry,
-				  const void *entry_or_key,
+				  const void *entry, const void *entry_or_key,
 				  const void *unused_keydata)
 {
 	const struct working_tree_entry *a = entry;
@@ -144,10 +143,8 @@ struct pair_entry {
 	const char path[FLEX_ARRAY];
 };
 
-static int pair_cmp(const void *unused_cmp_data,
-		    const void *entry,
-		    const void *entry_or_key,
-		    const void *unused_keydata)
+static int pair_cmp(const void *unused_cmp_data, const void *entry,
+		    const void *entry_or_key, const void *unused_keydata)
 {
 	const struct pair_entry *a = entry;
 	const struct pair_entry *b = entry_or_key;
@@ -178,10 +175,8 @@ struct path_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int path_entry_cmp(const void *unused_cmp_data,
-			  const void *entry,
-			  const void *entry_or_key,
-			  const void *key)
+static int path_entry_cmp(const void *unused_cmp_data, const void *entry,
+			  const void *entry_or_key, const void *key)
 {
 	const struct path_entry *a = entry;
 	const struct path_entry *b = entry_or_key;
@@ -195,18 +190,16 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	struct child_process update_index = CHILD_PROCESS_INIT;
 	struct child_process diff_files = CHILD_PROCESS_INIT;
 	struct strbuf index_env = STRBUF_INIT, buf = STRBUF_INIT;
-	const char *git_dir = absolute_path(get_git_dir()), *env[] = {
-		NULL, NULL
-	};
+	const char *git_dir = absolute_path(get_git_dir()),
+		   *env[] = { NULL, NULL };
 	FILE *fp;
 
 	strbuf_addf(&index_env, "GIT_INDEX_FILE=%s", index_path);
 	env[0] = index_env.buf;
 
-	argv_array_pushl(&update_index.args,
-			 "--git-dir", git_dir, "--work-tree", workdir,
-			 "update-index", "--really-refresh", "-q",
-			 "--unmerged", NULL);
+	argv_array_pushl(&update_index.args, "--git-dir", git_dir,
+			 "--work-tree", workdir, "update-index",
+			 "--really-refresh", "-q", "--unmerged", NULL);
 	update_index.no_stdin = 1;
 	update_index.no_stdout = 1;
 	update_index.no_stderr = 1;
@@ -218,9 +211,8 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	/* Ignore any errors of update-index */
 	run_command(&update_index);
 
-	argv_array_pushl(&diff_files.args,
-			 "--git-dir", git_dir, "--work-tree", workdir,
-			 "diff-files", "--name-only", "-z", NULL);
+	argv_array_pushl(&diff_files.args, "--git-dir", git_dir, "--work-tree",
+			 workdir, "diff-files", "--name-only", "-z", NULL);
 	diff_files.no_stdin = 1;
 	diff_files.git_cmd = 1;
 	diff_files.use_shell = 0;
@@ -257,12 +249,13 @@ static NORETURN void exit_cleanup(const char *tmpdir, int exit_code)
 static int ensure_leading_directories(char *path)
 {
 	switch (safe_create_leading_directories(path)) {
-		case SCLD_OK:
-		case SCLD_EXISTS:
-			return 0;
-		default:
-			return error(_("could not create leading directories "
-				       "of '%s'"), path);
+	case SCLD_OK:
+	case SCLD_EXISTS:
+		return 0;
+	default:
+		return error(_("could not create leading directories "
+			       "of '%s'"),
+			     path);
 	}
 }
 
@@ -303,14 +296,14 @@ static char *get_symlink(const struct object_id *oid, const char *path)
 		data = read_object_file(oid, &type, &size);
 		if (!data)
 			die(_("could not read object %s for symlink %s"),
-				oid_to_hex(oid), path);
+			    oid_to_hex(oid), path);
 	}
 
 	return data;
 }
 
-static int checkout_path(unsigned mode, struct object_id *oid,
-			 const char *path, const struct checkout *state)
+static int checkout_path(unsigned mode, struct object_id *oid, const char *path,
+			 const struct checkout *state)
 {
 	struct cache_entry *ce;
 	int ret;
@@ -350,7 +343,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 
 	/* Setup temp directories */
 	tmp = getenv("TMPDIR");
-	xsnprintf(tmpdir, sizeof(tmpdir), "%s/git-difftool.XXXXXX", tmp ? tmp : "/tmp");
+	xsnprintf(tmpdir, sizeof(tmpdir), "%s/git-difftool.XXXXXX",
+		  tmp ? tmp : "/tmp");
 	if (!mkdtemp(tmpdir))
 		return error("could not create '%s'", tmpdir);
 	strbuf_addf(&ldir, "%s/left/", tmpdir);
@@ -481,9 +475,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 				 * treatment since they are not part of the
 				 * index.
 				 */
-				struct cache_entry *ce2 =
-					make_cache_entry(&wtindex, rmode, &roid,
-							 dst_path, 0, 0);
+				struct cache_entry *ce2 = make_cache_entry(
+					&wtindex, rmode, &roid, dst_path, 0, 0);
 
 				add_index_entry(&wtindex, ce2,
 						ADD_CACHE_JUST_APPEND);
@@ -498,7 +491,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 				add_path(&wtdir, wtdir_len, dst_path);
 				if (symlinks) {
 					if (symlink(wtdir.buf, rdir.buf)) {
-						ret = error_errno("could not symlink '%s' to '%s'", wtdir.buf, rdir.buf);
+						ret = error_errno(
+							"could not symlink '%s' to '%s'",
+							wtdir.buf, rdir.buf);
 						goto finish;
 					}
 				} else {
@@ -507,7 +502,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 						st.st_mode = 0644;
 					if (copy_file(rdir.buf, wtdir.buf,
 						      st.st_mode)) {
-						ret = error("could not copy '%s' to '%s'", wtdir.buf, rdir.buf);
+						ret = error(
+							"could not copy '%s' to '%s'",
+							wtdir.buf, rdir.buf);
 						goto finish;
 					}
 				}
@@ -656,21 +653,19 @@ finish:
 	return ret;
 }
 
-static int run_file_diff(int prompt, const char *prefix,
-			 int argc, const char **argv)
+static int run_file_diff(int prompt, const char *prefix, int argc,
+			 const char **argv)
 {
 	struct argv_array args = ARGV_ARRAY_INIT;
-	const char *env[] = {
-		"GIT_PAGER=", "GIT_EXTERNAL_DIFF=git-difftool--helper", NULL,
-		NULL
-	};
+	const char *env[] = { "GIT_PAGER=",
+			      "GIT_EXTERNAL_DIFF=git-difftool--helper", NULL,
+			      NULL };
 	int ret = 0, i;
 
 	if (prompt > 0)
 		env[2] = "GIT_DIFFTOOL_PROMPT=true";
 	else if (!prompt)
 		env[2] = "GIT_DIFFTOOL_NO_PROMPT=true";
-
 
 	argv_array_push(&args, "diff");
 	for (i = 0; i < argc; i++)
@@ -690,10 +685,10 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('d', "dir-diff", &dir_diff,
 			 N_("perform a full-directory diff")),
 		OPT_SET_INT_F('y', "no-prompt", &prompt,
-			N_("do not prompt before launching a diff tool"),
-			0, PARSE_OPT_NONEG),
-		OPT_SET_INT_F(0, "prompt", &prompt, NULL,
-			1, PARSE_OPT_NONEG | PARSE_OPT_HIDDEN),
+			      N_("do not prompt before launching a diff tool"),
+			      0, PARSE_OPT_NONEG),
+		OPT_SET_INT_F(0, "prompt", &prompt, NULL, 1,
+			      PARSE_OPT_NONEG | PARSE_OPT_HIDDEN),
 		OPT_BOOL(0, "symlinks", &symlinks,
 			 N_("use symlinks in dir-diff mode")),
 		OPT_STRING('t', "tool", &difftool_cmd, N_("tool"),
@@ -714,8 +709,8 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	symlinks = has_symlinks;
 
 	argc = parse_options(argc, argv, prefix, builtin_difftool_options,
-			     builtin_difftool_usage, PARSE_OPT_KEEP_UNKNOWN |
-			     PARSE_OPT_KEEP_DASHDASH);
+			     builtin_difftool_usage,
+			     PARSE_OPT_KEEP_UNKNOWN | PARSE_OPT_KEEP_DASHDASH);
 
 	if (tool_help)
 		return print_tool_help();
@@ -723,10 +718,11 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
 	if (!no_index && !startup_info->have_repository)
 		die(_("difftool requires worktree or --no-index"));
 
-	if (!no_index){
+	if (!no_index) {
 		setup_work_tree();
 		setenv(GIT_DIR_ENVIRONMENT, absolute_path(get_git_dir()), 1);
-		setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(get_git_work_tree()), 1);
+		setenv(GIT_WORK_TREE_ENVIRONMENT,
+		       absolute_path(get_git_work_tree()), 1);
 	} else if (dir_diff)
 		die(_("--dir-diff is incompatible with --no-index"));
 

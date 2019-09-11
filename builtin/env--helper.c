@@ -2,15 +2,11 @@
 #include "config.h"
 #include "parse-options.h"
 
-static char const * const env__helper_usage[] = {
-	N_("git env--helper --type=[bool|ulong] <options> <env-var>"),
-	NULL
+static char const *const env__helper_usage[] = {
+	N_("git env--helper --type=[bool|ulong] <options> <env-var>"), NULL
 };
 
-static enum {
-	ENV_HELPER_TYPE_BOOL = 1,
-	ENV_HELPER_TYPE_ULONG
-} cmdmode = 0;
+static enum { ENV_HELPER_TYPE_BOOL = 1, ENV_HELPER_TYPE_ULONG } cmdmode = 0;
 
 static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
