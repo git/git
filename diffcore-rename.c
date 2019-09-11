@@ -13,7 +13,7 @@
 static struct diff_rename_dst {
 	struct diff_filespec *two;
 	struct diff_filepair *pair;
-} *rename_dst;
+} * rename_dst;
 static int rename_dst_nr, rename_dst_alloc;
 
 static int find_rename_dst(struct diff_filespec *two)
@@ -32,7 +32,7 @@ static int find_rename_dst(struct diff_filespec *two)
 			last = next;
 			continue;
 		}
-		first = next+1;
+		first = next + 1;
 	}
 	return -first - 1;
 }
@@ -71,7 +71,7 @@ static int add_rename_dst(struct diff_filespec *two)
 static struct diff_rename_src {
 	struct diff_filepair *p;
 	unsigned short score; /* to remember the break score */
-} *rename_src;
+} * rename_src;
 static int rename_src_nr, rename_src_alloc;
 
 static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
@@ -92,7 +92,7 @@ static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
 			last = next;
 			continue;
 		}
-		first = next+1;
+		first = next + 1;
 	}
 
 	/* insert to make it at "first" */
@@ -118,7 +118,7 @@ static int basename_same(struct diff_filespec *src, struct diff_filespec *dst)
 			return 1;
 	}
 	return (!src_len || src->path[src_len - 1] == '/') &&
-		(!dst_len || dst->path[dst_len - 1] == '/');
+	       (!dst_len || dst->path[dst_len - 1] == '/');
 }
 
 struct diff_score {
@@ -128,10 +128,8 @@ struct diff_score {
 	short name_score;
 };
 
-static int estimate_similarity(struct repository *r,
-			       struct diff_filespec *src,
-			       struct diff_filespec *dst,
-			       int minimum_score)
+static int estimate_similarity(struct repository *r, struct diff_filespec *src,
+			       struct diff_filespec *dst, int minimum_score)
 {
 	/* src points at a file that existed in the original tree (or
 	 * optionally a file in the destination tree) and dst points
@@ -146,7 +144,8 @@ static int estimate_similarity(struct repository *r,
 	 * match than anything else; the destination does not even
 	 * call into this function in that case.
 	 */
-	unsigned long max_size, delta_size, base_size, src_copied, literal_added;
+	unsigned long max_size, delta_size, base_size, src_copied,
+		literal_added;
 
 	/* We deal only with regular files.  Symlink renames are handled
 	 * only when they are exact matches --- in other words, no edits
@@ -164,11 +163,9 @@ static int estimate_similarity(struct repository *r,
 	 * is a possible size - we really should have a flag to
 	 * say whether the size is valid or not!)
 	 */
-	if (!src->cnt_data &&
-	    diff_populate_filespec(r, src, CHECK_SIZE_ONLY))
+	if (!src->cnt_data && diff_populate_filespec(r, src, CHECK_SIZE_ONLY))
 		return 0;
-	if (!dst->cnt_data &&
-	    diff_populate_filespec(r, dst, CHECK_SIZE_ONLY))
+	if (!dst->cnt_data && diff_populate_filespec(r, dst, CHECK_SIZE_ONLY))
 		return 0;
 
 	max_size = ((src->size > dst->size) ? src->size : dst->size);
@@ -183,7 +180,7 @@ static int estimate_similarity(struct repository *r,
 	 * and the final score computation below would not have a
 	 * divide-by-zero issue.
 	 */
-	if (max_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
+	if (max_size * (MAX_SCORE - minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
 	if (!src->cnt_data && diff_populate_filespec(r, src, 0))
@@ -191,8 +188,7 @@ static int estimate_similarity(struct repository *r,
 	if (!dst->cnt_data && diff_populate_filespec(r, dst, 0))
 		return 0;
 
-	if (diffcore_count_changes(r, src, dst,
-				   &src->cnt_data, &dst->cnt_data,
+	if (diffcore_count_changes(r, src, dst, &src->cnt_data, &dst->cnt_data,
 				   &src_copied, &literal_added))
 		return 0;
 
@@ -200,10 +196,10 @@ static int estimate_similarity(struct repository *r,
 	 * what percentage of material in dst are from source?
 	 */
 
-
-    if (dst->size != 0)
-        return (src_copied * MAX_SCORE / max_size); /* should not happen */
-        return 0; /* should not happen */
+	if (dst->size != 0)
+		return (src_copied * MAX_SCORE / max_size); /* should not happen
+							     */
+	return 0; /* should not happen */
 }
 
 static void record_rename_pair(int dst_index, int src_index, int score)
@@ -268,8 +264,7 @@ static unsigned int hash_filespec(struct repository *r,
 	return oidhash(&filespec->oid);
 }
 
-static int find_identical_files(struct hashmap *srcs,
-				int dst_index,
+static int find_identical_files(struct hashmap *srcs, int dst_index,
 				struct diff_options *options)
 {
 	int renames = 0;
@@ -281,9 +276,9 @@ static int find_identical_files(struct hashmap *srcs,
 	/*
 	 * Find the best source match for specified destination.
 	 */
-	for (p = hashmap_get_from_hash(srcs,
-                                   hash_filespec(options->repo, target),
-                                   NULL); p; p = hashmap_get_next(srcs, p)) {
+	for (p = hashmap_get_from_hash(
+		     srcs, hash_filespec(options->repo, target), NULL);
+	     p; p = hashmap_get_next(srcs, p)) {
 		int score;
 		struct diff_filespec *source = p->filespec;
 
@@ -291,10 +286,14 @@ static int find_identical_files(struct hashmap *srcs,
 		if (!oideq(&source->oid, &target->oid))
 			continue;
 		/* Non-regular files? If so, the modes must match! */
-		if (!(S_ISREG(source->mode) && S_ISREG(target->mode)) && source->mode != target->mode) continue;
-		/* Give higher scores to sources that haven't been used already */
+		if (!(S_ISREG(source->mode) && S_ISREG(target->mode)) &&
+		    source->mode != target->mode)
+			continue;
+		/* Give higher scores to sources that haven't been used already
+		 */
 		score = !source->rename_used;
-		if (source->rename_used && options->detect_rename != DIFF_DETECT_COPY)
+		if (source->rename_used &&
+		    options->detect_rename != DIFF_DETECT_COPY)
 			continue;
 		score += basename_same(source, target);
 		if (score > best_score) {
@@ -315,9 +314,8 @@ static int find_identical_files(struct hashmap *srcs,
 	return renames;
 }
 
-static void insert_file_table(struct repository *r,
-			      struct hashmap *table, int index,
-			      struct diff_filespec *filespec)
+static void insert_file_table(struct repository *r, struct hashmap *table,
+			      int index, struct diff_filespec *filespec)
 {
 	struct file_similarity *entry = xmalloc(sizeof(*entry));
 
@@ -344,9 +342,8 @@ static int find_exact_renames(struct diff_options *options)
 	 * later on they will be retrieved in LIFO order.
 	 */
 	hashmap_init(&file_table, NULL, NULL, rename_src_nr);
-	for (i = rename_src_nr-1; i >= 0; i--)
-		insert_file_table(options->repo,
-				  &file_table, i,
+	for (i = rename_src_nr - 1; i >= 0; i--)
+		insert_file_table(options->repo, &file_table, i,
 				  rename_src[i].p->one);
 
 	/* Walk the destinations and find best source match */
@@ -398,40 +395,40 @@ static int too_many_rename_candidates(int num_create,
 	if (rename_limit <= 0)
 		rename_limit = 32767;
 	if ((num_create <= rename_limit || num_src <= rename_limit) &&
-	    ((uint64_t)num_create * (uint64_t)num_src
-	     <= (uint64_t)rename_limit * (uint64_t)rename_limit))
+	    ((uint64_t)num_create * (uint64_t)num_src <=
+	     (uint64_t)rename_limit * (uint64_t)rename_limit))
 		return 0;
 
-	options->needed_rename_limit =
-		num_src > num_create ? num_src : num_create;
+	options->needed_rename_limit = num_src > num_create ? num_src :
+							      num_create;
 
 	/* Are we running under -C -C? */
-    if (options->flags.find_copies_harder) {
-        register int i;
-        /* Would we bust the limit if we were running under -C? */
-        for (num_src = i = 0; i < rename_src_nr; i++) {
-            if (diff_unmodified_pair(rename_src[i].p))
-                continue;
-            num_src++;
-        }
-        if ((num_create <= rename_limit || num_src <= rename_limit) &&
-            ((uint64_t) num_create * (uint64_t) num_src
-             <= (uint64_t) rename_limit * (uint64_t) rename_limit))
-            return 2;
-    }
-    return 1;
+	if (options->flags.find_copies_harder) {
+		register int i;
+		/* Would we bust the limit if we were running under -C? */
+		for (num_src = i = 0; i < rename_src_nr; i++) {
+			if (diff_unmodified_pair(rename_src[i].p))
+				continue;
+			num_src++;
+		}
+		if ((num_create <= rename_limit || num_src <= rename_limit) &&
+		    ((uint64_t)num_create * (uint64_t)num_src <=
+		     (uint64_t)rename_limit * (uint64_t)rename_limit))
+			return 2;
+	}
+	return 1;
 }
 
-static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, int copies)
+static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score,
+			int copies)
 {
 	int count = 0, i;
 
 	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
 		struct diff_rename_dst *dst;
 
-		if ((mx[i].dst < 0) ||
-		    (mx[i].score < minimum_score))
-			return count;/* there is no more usable pair. */
+		if ((mx[i].dst < 0) || (mx[i].score < minimum_score))
+			return count; /* there is no more usable pair. */
 		dst = &rename_dst[mx[i].dst];
 		if (dst->pair)
 			continue; /* already done, either exact or fuzzy. */
@@ -474,9 +471,8 @@ void diffcore_rename(struct diff_options *options)
 					p->two->path);
 				goto cleanup;
 			}
-		}
-		else if (!options->flags.rename_empty &&
-			 is_empty_blob_oid(&p->one->oid))
+		} else if (!options->flags.rename_empty &&
+			   is_empty_blob_oid(&p->one->oid))
 			continue;
 		else if (!DIFF_PAIR_UNMERGED(p) && !DIFF_FILE_VALID(p->two)) {
 			/*
@@ -489,8 +485,7 @@ void diffcore_rename(struct diff_options *options)
 			if (p->broken_pair && !p->score)
 				p->one->rename_used++;
 			register_rename_src(p);
-		}
-		else if (detect_rename == DIFF_DETECT_COPY) {
+		} else if (detect_rename == DIFF_DETECT_COPY) {
 			/*
 			 * Increment the "rename_used" score by
 			 * one, to indicate ourselves as a user.
@@ -535,8 +530,8 @@ void diffcore_rename(struct diff_options *options)
 
 	if (options->show_rename_progress) {
 		progress = start_delayed_progress(
-				_("Performing inexact rename detection"),
-				(uint64_t)rename_dst_nr * (uint64_t)rename_src_nr);
+			_("Performing inexact rename detection"),
+			(uint64_t)rename_dst_nr * (uint64_t)rename_src_nr);
 	}
 
 	mx = xcalloc(st_mult(NUM_CANDIDATE_PER_DST, num_create), sizeof(*mx));
@@ -559,9 +554,8 @@ void diffcore_rename(struct diff_options *options)
 			    diff_unmodified_pair(rename_src[j].p))
 				continue;
 
-			this_src.score = estimate_similarity(options->repo,
-							     one, two,
-							     minimum_score);
+			this_src.score = estimate_similarity(
+				options->repo, one, two, minimum_score);
 			this_src.name_score = basename_same(one, two);
 			this_src.dst = i;
 			this_src.src = j;
@@ -574,7 +568,8 @@ void diffcore_rename(struct diff_options *options)
 			diff_free_filespec_blob(two);
 		}
 		dst_cnt++;
-		display_progress(progress, (uint64_t)(i+1)*(uint64_t)rename_src_nr);
+		display_progress(progress,
+				 (uint64_t)(i + 1) * (uint64_t)rename_src_nr);
 	}
 	stop_progress(&progress);
 
@@ -586,7 +581,7 @@ void diffcore_rename(struct diff_options *options)
 		rename_count += find_renames(mx, dst_cnt, minimum_score, 1);
 	free(mx);
 
- cleanup:
+cleanup:
 	/* At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
@@ -597,8 +592,8 @@ void diffcore_rename(struct diff_options *options)
 
 		if (DIFF_PAIR_UNMERGED(p)) {
 			diff_q(&outq, p);
-		}
-		else if (!DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
+		} else if (!DIFF_FILE_VALID(p->one) &&
+			   DIFF_FILE_VALID(p->two)) {
 			/*
 			 * Creation
 			 *
@@ -609,14 +604,13 @@ void diffcore_rename(struct diff_options *options)
 			if (dst && dst->pair) {
 				diff_q(&outq, dst->pair);
 				pair_to_free = p;
-			}
-			else
+			} else
 				/* no matching rename/copy source, so
 				 * record this as a creation.
 				 */
 				diff_q(&outq, p);
-		}
-		else if (DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two)) {
+		} else if (DIFF_FILE_VALID(p->one) &&
+			   !DIFF_FILE_VALID(p->two)) {
 			/*
 			 * Deletion
 			 *
@@ -635,19 +629,18 @@ void diffcore_rename(struct diff_options *options)
 			 */
 			if (DIFF_PAIR_BROKEN(p)) {
 				/* broken delete */
-				struct diff_rename_dst *dst = locate_rename_dst(p->one);
+				struct diff_rename_dst *dst =
+					locate_rename_dst(p->one);
 				if (dst && dst->pair)
 					/* counterpart is now rename/copy */
 					pair_to_free = p;
-			}
-			else if (p->one->rename_used)
-                /* this path remains */
-                pair_to_free = p;
+			} else if (p->one->rename_used)
+				/* this path remains */
+				pair_to_free = p;
 
-            if (!pair_to_free)
-                diff_q(&outq, p);
-        }
-		else if (!diff_unmodified_pair(p))
+			if (!pair_to_free)
+				diff_q(&outq, p);
+		} else if (!diff_unmodified_pair(p))
 			/* all the usual ones need to be kept */
 			diff_q(&outq, p);
 		else
