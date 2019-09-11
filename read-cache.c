@@ -1472,6 +1472,27 @@ static void show_file(const char * fmt, const char * name, int in_porcelain,
 	printf(fmt, name);
 }
 
+int repo_refresh_and_write_index(struct repository *repo,
+				 unsigned int refresh_flags,
+				 unsigned int write_flags,
+				 int gentle,
+				 const struct pathspec *pathspec,
+				 char *seen, const char *header_msg)
+{
+	struct lock_file lock_file = LOCK_INIT;
+	int fd, ret = 0;
+
+	fd = repo_hold_locked_index(repo, &lock_file, 0);
+	if (!gentle && fd < 0)
+		return -1;
+	if (refresh_index(repo->index, refresh_flags, pathspec, seen, header_msg))
+		ret = 1;
+	if (0 <= fd && write_locked_index(repo->index, &lock_file, COMMIT_LOCK | write_flags))
+		ret = -1;
+	return ret;
+}
+
+
 int refresh_index(struct index_state *istate, unsigned int flags,
 		  const struct pathspec *pathspec,
 		  char *seen, const char *header_msg)
