@@ -573,7 +573,8 @@ static int fill_mmfile(struct repository *r, mmfile_t *mf,
 		mf->size = 0;
 		return 0;
 	}
-	else if (diff_populate_filespec(r, one, 0))
+
+	if (diff_populate_filespec(r, one, 0))
 		return -1;
 
 	mf->ptr = one->data;
@@ -585,10 +586,11 @@ static int fill_mmfile(struct repository *r, mmfile_t *mf,
 static unsigned long diff_filespec_size(struct repository *r,
 					struct diff_filespec *one)
 {
-	if (!DIFF_FILE_VALID(one))
-		return 0;
-	diff_populate_filespec(r, one, CHECK_SIZE_ONLY);
-	return one->size;
+    if (DIFF_FILE_VALID(one)) {
+        diff_populate_filespec(r, one, CHECK_SIZE_ONLY);
+        return one->size;
+    }
+    return 0;
 }
 
 static int count_trailing_blank(mmfile_t *mf, unsigned ws_rule)
@@ -600,21 +602,19 @@ static int count_trailing_blank(mmfile_t *mf, unsigned ws_rule)
 	if (!size)
 		return cnt;
 	ptr += size - 1; /* pointing at the very end */
-	if (*ptr != '\n')
-		; /* incomplete line */
-	else
-		ptr--; /* skip the last LF */
-	while (mf->ptr < ptr) {
-		char *prev_eol;
-		for (prev_eol = ptr; mf->ptr <= prev_eol; prev_eol--)
-			if (*prev_eol == '\n')
-				break;
-		if (!ws_blank_line(prev_eol + 1, ptr - prev_eol, ws_rule))
-			break;
-		cnt++;
-		ptr = prev_eol - 1;
-	}
-	return cnt;
+    if (*ptr == '\n')
+        ptr--; /* incomplete line */
+    while (mf->ptr < ptr) {
+        char *prev_eol;
+        for (prev_eol = ptr; mf->ptr <= prev_eol; prev_eol--)
+            if (*prev_eol == '\n')
+                break;
+        if (!ws_blank_line(prev_eol + 1, ptr - prev_eol, ws_rule))
+            break;
+        cnt++;
+        ptr = prev_eol - 1;
+    }
+    return cnt;
 }
 
 static void check_blank_at_eof(mmfile_t *mf1, mmfile_t *mf2,

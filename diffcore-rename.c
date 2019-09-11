@@ -147,13 +147,12 @@ static int estimate_similarity(struct repository *r,
 	 * call into this function in that case.
 	 */
 	unsigned long max_size, delta_size, base_size, src_copied, literal_added;
-	int score;
 
 	/* We deal only with regular files.  Symlink renames are handled
 	 * only when they are exact matches --- in other words, no edits
 	 * after renaming.
 	 */
-	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
+	if (!(S_ISREG(src->mode) && S_ISREG(dst->mode)))
 		return 0;
 
 	/*
@@ -200,11 +199,11 @@ static int estimate_similarity(struct repository *r,
 	/* How similar are they?
 	 * what percentage of material in dst are from source?
 	 */
-	if (!dst->size)
-		score = 0; /* should not happen */
-	else
-		score = (int)(src_copied * MAX_SCORE / max_size);
-	return score;
+
+
+    if (dst->size != 0)
+        return (src_copied * MAX_SCORE / max_size); /* should not happen */
+        return 0; /* should not happen */
 }
 
 static void record_rename_pair(int dst_index, int src_index, int score)
@@ -242,7 +241,7 @@ static int score_compare(const void *a_, const void *b_)
 	/* sink the unused ones to the bottom */
 	if (a->dst < 0)
 		return (0 <= b->dst);
-	else if (b->dst < 0)
+	if (b->dst < 0)
 		return -1;
 
 	if (a->score == b->score)
@@ -282,10 +281,9 @@ static int find_identical_files(struct hashmap *srcs,
 	/*
 	 * Find the best source match for specified destination.
 	 */
-	p = hashmap_get_from_hash(srcs,
-				  hash_filespec(options->repo, target),
-				  NULL);
-	for (; p; p = hashmap_get_next(srcs, p)) {
+	for (p = hashmap_get_from_hash(srcs,
+                                   hash_filespec(options->repo, target),
+                                   NULL); p; p = hashmap_get_next(srcs, p)) {
 		int score;
 		struct diff_filespec *source = p->filespec;
 
@@ -293,10 +291,7 @@ static int find_identical_files(struct hashmap *srcs,
 		if (!oideq(&source->oid, &target->oid))
 			continue;
 		/* Non-regular files? If so, the modes must match! */
-		if (!S_ISREG(source->mode) || !S_ISREG(target->mode)) {
-			if (source->mode != target->mode)
-				continue;
-		}
+		if (!(S_ISREG(source->mode) && S_ISREG(target->mode)) && source->mode != target->mode) continue;
 		/* Give higher scores to sources that haven't been used already */
 		score = !source->rename_used;
 		if (source->rename_used && options->detect_rename != DIFF_DETECT_COPY)
@@ -391,7 +386,6 @@ static int too_many_rename_candidates(int num_create,
 {
 	int rename_limit = options->rename_limit;
 	int num_src = rename_src_nr;
-	int i;
 
 	options->needed_rename_limit = 0;
 
@@ -412,20 +406,20 @@ static int too_many_rename_candidates(int num_create,
 		num_src > num_create ? num_src : num_create;
 
 	/* Are we running under -C -C? */
-	if (!options->flags.find_copies_harder)
-		return 1;
-
-	/* Would we bust the limit if we were running under -C? */
-	for (num_src = i = 0; i < rename_src_nr; i++) {
-		if (diff_unmodified_pair(rename_src[i].p))
-			continue;
-		num_src++;
-	}
-	if ((num_create <= rename_limit || num_src <= rename_limit) &&
-	    ((uint64_t)num_create * (uint64_t)num_src
-	     <= (uint64_t)rename_limit * (uint64_t)rename_limit))
-		return 2;
-	return 1;
+    if (options->flags.find_copies_harder) {
+        register int i;
+        /* Would we bust the limit if we were running under -C? */
+        for (num_src = i = 0; i < rename_src_nr; i++) {
+            if (diff_unmodified_pair(rename_src[i].p))
+                continue;
+            num_src++;
+        }
+        if ((num_create <= rename_limit || num_src <= rename_limit) &&
+            ((uint64_t) num_create * (uint64_t) num_src
+             <= (uint64_t) rename_limit * (uint64_t) rename_limit))
+            return 2;
+    }
+    return 1;
 }
 
 static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, int copies)
@@ -437,7 +431,7 @@ static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, i
 
 		if ((mx[i].dst < 0) ||
 		    (mx[i].score < minimum_score))
-			break; /* there is no more usable pair. */
+			return count;/* there is no more usable pair. */
 		dst = &rename_dst[mx[i].dst];
 		if (dst->pair)
 			continue; /* already done, either exact or fuzzy. */
@@ -534,7 +528,7 @@ void diffcore_rename(struct diff_options *options)
 	case 2:
 		options->degraded_cc_to_c = 1;
 		skip_unmodified = 1;
-		break;
+		/*Fallthrough*/
 	default:
 		break;
 	}
@@ -646,17 +640,13 @@ void diffcore_rename(struct diff_options *options)
 					/* counterpart is now rename/copy */
 					pair_to_free = p;
 			}
-			else {
-				if (p->one->rename_used)
-					/* this path remains */
-					pair_to_free = p;
-			}
+			else if (p->one->rename_used)
+                /* this path remains */
+                pair_to_free = p;
 
-			if (pair_to_free)
-				;
-			else
-				diff_q(&outq, p);
-		}
+            if (!pair_to_free)
+                diff_q(&outq, p);
+        }
 		else if (!diff_unmodified_pair(p))
 			/* all the usual ones need to be kept */
 			diff_q(&outq, p);
