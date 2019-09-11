@@ -3134,8 +3134,7 @@ git_config_copy_or_rename_section_in_file(const char *config_filename,
 		int length;
 		int is_section = 0;
 		char *output = buf;
-		for (i = 0; buf[i] && isspace(buf[i]); i++)
-			; /* do nothing */
+		for (i = 0; buf[i] && isspace(buf[i]); i++); /* do nothing */
 		if (buf[i] == '[') {
 			/* it's a section */
 			int offset;

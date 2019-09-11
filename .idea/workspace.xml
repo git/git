@@ -11,10 +11,7 @@
   <component name="ChangeListManager">
     <list default="true" id="d4f6b2ac-bba0-48aa-aefc-f88235980536" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apply.c" beforeDir="false" afterPath="$PROJECT_DIR$/apply.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.c" beforeDir="false" afterPath="$PROJECT_DIR$/config.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/connect.c" beforeDir="false" afterPath="$PROJECT_DIR$/connect.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sha1-file.c" beforeDir="false" afterPath="$PROJECT_DIR$/sha1-file.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -79,7 +76,8 @@
       <workItem from="1567975248805" duration="2630000" />
       <workItem from="1568031520248" duration="19678000" />
       <workItem from="1568115321407" duration="19887000" />
-      <workItem from="1568164085688" duration="3265000" />
+      <workItem from="1568164085688" duration="3436000" />
+      <workItem from="1568193832098" duration="85000" />
     </task>
     <servers />
   </component>

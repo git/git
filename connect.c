@@ -1319,7 +1319,7 @@ int finish_connect(struct child_process *conn)
 {
     if (conn && !git_connection_is_socket(conn)) {
 
-        int code = finish_command(conn);
+        const int code = finish_command(conn);
         free(conn);
         return code;
     }

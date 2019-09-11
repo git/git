@@ -405,7 +405,7 @@ static unsigned long linelen(const char *buffer, unsigned long size)
 	while (size--) {
 		len++;
 		if (*buffer++ == '\n')
-			return len;
+			break;
 	}
 	return len;
 }
@@ -1719,6 +1719,10 @@ static int parse_fragment(struct apply_state *state, const char *line,
 	if (12 < size && !memcmp(line, "\\ ", 2))
 		offset += linelen(line, size);
 
+	if (0 < patch->is_new && oldlines)
+		return error(_("new file depends on old contents"));
+	if (0 < patch->is_delete && newlines)
+		return error(_("deleted file still has contents"));
 	patch->lines_added += added;
 	patch->lines_deleted += deleted;
 
