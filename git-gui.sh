@@ -1350,6 +1350,8 @@ set is_submodule_diff 0
 set is_conflict_diff 0
 set selected_commit_type new
 set diff_empty_count 0
+set last_revert {}
+set last_revert_enc {}
 
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
@@ -3604,14 +3606,30 @@ set ctxm .vpane.lower.diff.body.ctxm
 menu $ctxm -tearoff 0
 $ctxm add command \
 	-label [mc "Apply/Reverse Hunk"] \
-	-command {apply_hunk $cursorX $cursorY}
+	-command {apply_or_revert_hunk $cursorX $cursorY 0}
 set ui_diff_applyhunk [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
 $ctxm add command \
 	-label [mc "Apply/Reverse Line"] \
-	-command {apply_range_or_line $cursorX $cursorY; do_rescan}
+	-command {apply_or_revert_range_or_line $cursorX $cursorY 0; do_rescan}
 set ui_diff_applyline [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
+$ctxm add separator
+$ctxm add command \
+	-label [mc "Revert Hunk"] \
+	-command {apply_or_revert_hunk $cursorX $cursorY 1}
+set ui_diff_reverthunk [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_reverthunk -state]
+$ctxm add command \
+	-label [mc "Revert Line"] \
+	-command {apply_or_revert_range_or_line $cursorX $cursorY 1; do_rescan}
+set ui_diff_revertline [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_revertline -state]
+$ctxm add command \
+	-label [mc "Undo Last Revert"] \
+	-command {undo_last_revert; do_rescan}
+set ui_diff_undorevert [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_undorevert -state]
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Show Less Context"] \
@@ -3691,7 +3709,7 @@ proc has_textconv {path} {
 }
 
 proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
-	global current_diff_path file_states
+	global current_diff_path file_states last_revert
 	set ::cursorX $x
 	set ::cursorY $y
 	if {[info exists file_states($current_diff_path)]} {
@@ -3705,19 +3723,28 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 		tk_popup $ctxmsm $X $Y
 	} else {
 		set has_range [expr {[$::ui_diff tag nextrange sel 0.0] != {}}]
+		set u [mc "Undo Last Revert"]
 		if {$::ui_index eq $::current_diff_side} {
 			set l [mc "Unstage Hunk From Commit"]
+			set h [mc "Revert Hunk"]
+
 			if {$has_range} {
 				set t [mc "Unstage Lines From Commit"]
+				set r [mc "Revert Lines"]
 			} else {
 				set t [mc "Unstage Line From Commit"]
+				set r [mc "Revert Line"]
 			}
 		} else {
 			set l [mc "Stage Hunk For Commit"]
+			set h [mc "Revert Hunk"]
+
 			if {$has_range} {
 				set t [mc "Stage Lines For Commit"]
+				set r [mc "Revert Lines"]
 			} else {
 				set t [mc "Stage Line For Commit"]
+				set r [mc "Revert Line"]
 			}
 		}
 		if {$::is_3way_diff
@@ -3728,11 +3755,35 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 			|| [string match {T?} $state]
 			|| [has_textconv $current_diff_path]} {
 			set s disabled
+			set revert_state disabled
 		} else {
 			set s normal
+
+			# Only allow reverting changes in the working tree. If
+			# the user wants to revert changes in the index, they
+			# need to unstage those first.
+			if {$::ui_workdir eq $::current_diff_side} {
+				set revert_state normal
+			} else {
+				set revert_state disabled
+			}
 		}
+
+		if {$last_revert eq {}} {
+			set undo_state disabled
+		} else {
+			set undo_state normal
+		}
+
 		$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
 		$ctxm entryconf $::ui_diff_applyline -state $s -label $t
+		$ctxm entryconf $::ui_diff_revertline -state $revert_state \
+			-label $r
+		$ctxm entryconf $::ui_diff_reverthunk -state $revert_state \
+			-label $h
+		$ctxm entryconf $::ui_diff_undorevert -state $undo_state \
+			-label $u
+
 		tk_popup $ctxm $X $Y
 	}
 }
