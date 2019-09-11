@@ -7473,12 +7473,23 @@ sub git_snapshot {
 		"--prefix=$prefix/",
 		"$hash"
 		) );
+
+	my @file_names = ();
 	if ($file_name) {
 		# To fetch several pathnames use space-separation, e.g.
 		# "...git-web?p=proj.git;a=snapshot;f=file1%20file2"
 		# To fetch pathnames with spaces, escape them, e.g.
 		# "...git-web?p=proj.git;a=snapshot;f=file\%20name"
-		push (@cmd, ( "$file_name" ) );
+		foreach my $file_name_item (split( '(?<!\\\\) ' , "$file_name" )) {
+			$file_name_item =~ s/\\ / /g;
+			push (@file_names, ($file_name_item) );
+			printf STDERR "Would add to git-archive a file_name_item: '$file_name_item'\n" if $DEBUG;
+		}
+	}
+
+	if (@file_names) {
+		push (@cmd, ( '--' ) );
+		push (@cmd, @file_names);
 	}
 
 	$filename =~ s/(["\\])/\\$1/g;
