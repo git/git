@@ -7491,6 +7491,7 @@ sub git_snapshot {
 	my $gitout;
 	my $giterr;
 	my $gitcode;
+	my $readSize = -1;
 
 	# Note: run() returns TRUE if exit-code is 0, FALSE otherwise,
 	# and raises exceptions for worse conditions with die()
@@ -7501,17 +7502,23 @@ sub git_snapshot {
 			run \@cmd, '>', \$gitout, '2>', \$giterr;
 		}
 		$gitcode = $?;
-		 1;  # always return true to indicate success
+		$readSize = length $gitout if ($gitout);
+		if (! defined ($readSize) ) { $readSize = -1; }
+		1;  # always return true to indicate success
 	}
 	or do {
 		$gitcode = $?;
+		$readSize = length $gitout if ($gitout);
+		if (! defined ($readSize) ) { $readSize = -1; }
 		my $error = $@ || 'Unknown failure';
 		print $cgi->header(-status => '500 Execute git-archive failed');
 		if ($DEBUG) {
 			printf STDERR "Execute git-archive failed with exit-code $gitcode (" + $error + ")";
 			if ($giterr) {
 				printf STDERR ":\n" . $giterr . "\n";
-				if ($gitout) { printf STDERR "and stdout:\n" . $gitout . "\n"; }
+				# Assume smaller stdouts do not carry a tarball, may be compressed...
+				# TODO: check so (magic data? file prog? ascii-only content?)
+				if ($readSize > 0 && $readSize < 1000) { printf STDERR "and stdout:\n" . $gitout . "\n"; }
 			} else {
 				printf STDERR "\n";
 			}
@@ -7522,7 +7529,6 @@ sub git_snapshot {
 
 	printf STDERR "Started git-archive...\n" if $DEBUG;
 	my $tempByte;
-	my $readSize = length $gitout;
 	my $retCode = 200;
 	if ( defined $readSize ) {
 		if ( $readSize > 0 ) {
