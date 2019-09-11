@@ -7566,9 +7566,9 @@ sub git_snapshot {
 	}
 
 	my $retError = "" ;
-	if ( ($gitcode >> 8) != 0 ) {
+	if ( ($gitcode >> 8) != 0 ) { # e.g. 128
 		$retCode = 500;
-		if ( $readSize == 0 ) {
+		if ( $readSize <= 0 ) {
 			printf STDERR "We had an empty read - re-inspect stderr\n" if $DEBUG;
 			$retError = $giterr;
 			if ( $retError =~ /did not match any/ ) {
