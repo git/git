@@ -575,9 +575,8 @@ static void link_alt_odb_entries(struct repository *r, const char *alt,
 
         while (*alt) {
             alt = parse_alt_odb_entry(alt, sep, &entry);
-            if (!entry.len)
-                continue;
-            link_alt_odb_entry(r, entry.buf,
+            if (entry.len)
+                link_alt_odb_entry(r, entry.buf,
                                relative_base, depth, objdirbuf.buf);
         }
         strbuf_release(&entry);

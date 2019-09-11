@@ -250,7 +250,7 @@ again:
 	ret = !wildmatch(pattern.buf + prefix, text.buf + prefix,
 			 WM_PATHNAME | (icase ? WM_CASEFOLD : 0));
 
-	if (!ret && !already_tried_absolute) {
+	if (!(ret || already_tried_absolute)) {
 		/*
 		 * We've tried e.g. matching gitdir:~/work, but if
 		 * ~/work is a symlink to /mnt/storage/work
@@ -276,20 +276,20 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	int ret;
 	struct strbuf pattern = STRBUF_INIT;
 	const char *refname =
-		!the_repository->gitdir ?
-			NULL :
-			resolve_ref_unsafe("HEAD", 0, NULL, &flags);
+		the_repository->gitdir ?
+        resolve_ref_unsafe("HEAD", 0, NULL, &flags) : NULL;
+
 	const char *shortname;
 
-	if (!refname || !(flags & REF_ISSYMREF) ||
-	    !skip_prefix(refname, "refs/heads/", &shortname))
-		return 0;
+    if (refname && flags & REF_ISSYMREF && skip_prefix(refname, "refs/heads/", &shortname)) {
 
-	strbuf_add(&pattern, cond, cond_len);
-	add_trailing_starstar_for_dir(&pattern);
-	ret = !wildmatch(pattern.buf, shortname, WM_PATHNAME);
-	strbuf_release(&pattern);
-	return ret;
+        strbuf_add(&pattern, cond, cond_len);
+        add_trailing_starstar_for_dir(&pattern);
+        ret = !wildmatch(pattern.buf, shortname, WM_PATHNAME);
+        strbuf_release(&pattern);
+        return ret;
+    }
+    return 0;
 }
 
 static int include_condition_is_true(const struct config_options *opts,
@@ -297,9 +297,9 @@ static int include_condition_is_true(const struct config_options *opts,
 {
 	if (skip_prefix_mem(cond, cond_len, "gitdir:", &cond, &cond_len))
 		return include_by_gitdir(opts, cond, cond_len, 0);
-	else if (skip_prefix_mem(cond, cond_len, "gitdir/i:", &cond, &cond_len))
+	if (skip_prefix_mem(cond, cond_len, "gitdir/i:", &cond, &cond_len))
 		return include_by_gitdir(opts, cond, cond_len, 1);
-	else if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
+	if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
 		return include_by_branch(cond, cond_len);
 
 	/* unknown conditionals are always false */
@@ -561,8 +561,10 @@ static char *parse_value(void)
 				continue;
 			}
 		}
-		for (; space; space--)
-			strbuf_addch(&cf->value, ' ');
+		while (space) {
+            strbuf_addch(&cf->value, ' ');
+            space--;
+        }
 		if (c == '\\') {
 			c = get_next_char();
 			switch (c) {
@@ -576,7 +578,7 @@ static char *parse_value(void)
 				break;
 			case 'n':
 				c = '\n';
-				break;
+/*fallthrough*/
 			/* Some characters escape as themselves */
 			case '\\':
 			case '"':
@@ -590,9 +592,10 @@ static char *parse_value(void)
 		}
 		if (c == '"') {
 			quote = 1 - quote;
-			continue;
 		}
-		strbuf_addch(&cf->value, c);
+		else {
+            strbuf_addch(&cf->value, c);
+        }
 	}
 }
 
@@ -1320,7 +1323,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "core.commentchar")) {
 		if (!value)
 			return config_error_nonbool(var);
-		else if (!strcasecmp(value, "auto"))
+		if (!strcasecmp(value, "auto"))
 			auto_comment_line_char = 1;
 		else if (value[0] && !value[1]) {
 			comment_line_char = value[0];
@@ -1423,7 +1426,7 @@ static int git_default_branch_config(const char *var, const char *value)
 	if (!strcmp(var, "branch.autosetuprebase")) {
 		if (!value)
 			return config_error_nonbool(var);
-		else if (!strcmp(value, "never"))
+		if (!strcmp(value, "never"))
 			autorebase = AUTOREBASE_NEVER;
 		else if (!strcmp(value, "local"))
 			autorebase = AUTOREBASE_LOCAL;
@@ -1433,7 +1436,6 @@ static int git_default_branch_config(const char *var, const char *value)
 			autorebase = AUTOREBASE_ALWAYS;
 		else
 			return error(_("malformed value for %s"), var);
-		return 0;
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
@@ -2910,9 +2912,11 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 				 * line.
 				 */
 				while (copy_end > 0) {
-					char c = contents[--copy_end];
+					char c = contents[copy_end - 1];
 
-					if (!isspace(c) || c == '\n')
+					if (isspace(c) && c != '\n')
+						copy_end--;
+					else
 						break;
 				}
 			}

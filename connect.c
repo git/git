@@ -1317,11 +1317,11 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 int finish_connect(struct child_process *conn)
 {
-	int code;
-	if (!conn || git_connection_is_socket(conn))
-		return 0;
+    if (conn && !git_connection_is_socket(conn)) {
 
-	code = finish_command(conn);
-	free(conn);
-	return code;
+        int code = finish_command(conn);
+        free(conn);
+        return code;
+    }
+    return 0;
 }

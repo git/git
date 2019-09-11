@@ -566,10 +566,9 @@ static size_t fractional_time_len(const char *line, size_t len)
 
 	/* Hours, minutes, and whole seconds. */
 	n = short_time_len(line, p - line);
-    if (n)
-        return line + len - p + n;
-    return 0;
-
+	if (n)
+		return line + len - p + n;
+	return 0;
 }
 
 static size_t trailing_spaces_len(const char *line, size_t len)
@@ -2003,18 +2002,18 @@ static int parse_binary(struct apply_state *state, char *buffer,
 static void prefix_one(struct apply_state *state, char **name)
 {
 	char *old_name = *name;
-	if (!old_name)
-		return;
-	*name = prefix_filename(state->prefix, *name);
-	free(old_name);
+	if (old_name) {
+		*name = prefix_filename(state->prefix, *name);
+		free(old_name);
+	}
 }
 
 static void prefix_patch(struct apply_state *state, struct patch *p)
 {
-	if (!state->prefix || p->is_toplevel_relative)
-		return;
-	prefix_one(state, &p->new_name);
-	prefix_one(state, &p->old_name);
+	if (state->prefix && !p->is_toplevel_relative) {
+		prefix_one(state, &p->new_name);
+		prefix_one(state, &p->old_name);
+	}
 }
 
 /*
@@ -4266,7 +4265,8 @@ static int try_create_file(struct apply_state *state, const char *path,
 
 	if (S_ISGITLINK(mode)) {
 		struct stat st;
-		return ((lstat(path, &st) || !S_ISDIR(st.st_mode)) && mkdir(path, 0777) != 0);
+		return ((lstat(path, &st) || !S_ISDIR(st.st_mode)) &&
+			mkdir(path, 0777) != 0);
 	}
 
 	if (has_symlinks && S_ISLNK(mode))
@@ -4291,10 +4291,11 @@ static int try_create_file(struct apply_state *state, const char *path,
 		error_errno(_("failed to write to '%s'"), path);
 	strbuf_release(&nbuf);
 
-    if (close(fd) >= 0) return res ? -1 : 0;
-    if (res)
-        return -1;
-    return error_errno(_("closing file '%s'"), path);
+	if (close(fd) >= 0)
+		return res ? -1 : 0;
+	if (res)
+		return -1;
+	return error_errno(_("closing file '%s'"), path);
 }
 
 /*
@@ -4321,14 +4322,14 @@ static int create_one_file(struct apply_state *state, char *path, unsigned mode,
 		return 0;
 
 	if (errno == ENOENT) {
-        if (safe_create_leading_directories(path))
-            return 0;
-        res = try_create_file(state, path, mode, buf, size);
-        if (res < 0)
-            return -1;
-        if (!res)
-            return 0;
-    }
+		if (safe_create_leading_directories(path))
+			return 0;
+		res = try_create_file(state, path, mode, buf, size);
+		if (res < 0)
+			return -1;
+		if (!res)
+			return 0;
+	}
 
 	if (errno == EEXIST || errno == EACCES) {
 		/* We may be trying to create a file where a directory
@@ -4446,9 +4447,8 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 	struct strbuf sb = STRBUF_INIT;
 
 	for (cnt = 0, frag = patch->fragments; frag; frag = frag->next) {
-		if (!frag->rejected)
-			continue;
-		cnt++;
+		if (frag->rejected)
+			cnt++;
 	}
 
 	if (!cnt) {
@@ -4746,10 +4746,7 @@ static int apply_option_parse_space_change(const struct option *opt,
 
 	BUG_ON_OPT_ARG(arg);
 
-	if (unset)
-		state->ws_ignore_action = ignore_ws_none;
-	else
-		state->ws_ignore_action = ignore_ws_change;
+	state->ws_ignore_action = unset ? ignore_ws_none : ignore_ws_change;
 	return 0;
 }
 
