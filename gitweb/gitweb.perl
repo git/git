@@ -7538,11 +7538,12 @@ sub git_snapshot {
 		return;
 	};
 
-	printf STDERR "Started git-archive...\n" if $DEBUG;
+	printf STDERR "Started git-archive with exit-code " . $gitcode . " (" . ($gitcode >> 8) . ")...\n" if $DEBUG;
 	my $tempByte;
 	my $retCode = 200;
 	if ( defined $readSize ) {
 		if ( $readSize > 0 ) {
+			printf STDERR "Started git-archive and got some output...\n" if $DEBUG;
 			print $cgi->header(
 				-type => $known_snapshot_formats{$format}{'type'},
 				-content_disposition => 'inline; filename="' . $filename . '"',
@@ -7555,9 +7556,11 @@ sub git_snapshot {
 			}
 			binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 		} else {
+			printf STDERR "Started git-archive and got no output (readSize==" . $readSize . ")...\n" if $DEBUG;
 			$retCode = 404;
 		}
 	} else {
+		printf STDERR "Started git-archive and got undefined readSize...\n" if $DEBUG;
 		$readSize = -1;
 		$retCode = 500;
 	}
@@ -7566,7 +7569,7 @@ sub git_snapshot {
 	if ( ($gitcode >> 8) != 0 ) {
 		$retCode = 500;
 		if ( $readSize == 0 ) {
-			# We had empty but not failed read - re-inspect stderr
+			printf STDERR "We had an empty read - re-inspect stderr\n" if $DEBUG;
 			$retError = $giterr;
 			if ( $retError =~ /did not match any/ ) {
 				$retCode = 404;
@@ -7575,7 +7578,7 @@ sub git_snapshot {
 	}
 	if ( $retError ne "" ) {
 		if ($DEBUG) {
-			printf STDERR "Execute git-archive finally failed with exit-code $gitcode";
+			printf STDERR "Execute git-archive finally failed with exit-code $gitcode and HTTP code $retCode";
 			if ($giterr) {
 				printf STDERR ":\n" . $giterr . "\n";
 				if ($gitout) { printf STDERR "and stdout:\n" . $gitout . "\n"; }
