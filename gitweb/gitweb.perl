@@ -10,6 +10,15 @@
 use 5.008;
 use strict;
 use warnings;
+
+# Append path to the script so it can find co-bundled modules.
+# Note however that "use lib" always pre-pends given list into @INC
+# so we must reset and redefine it to give our bundle least priority
+# (use co-bundled modules only if none are provided by the OS distro).
+use FindBin;
+no lib;
+use lib (@lib::ORIG_INC, "$FindBin::Bin");
+
 # handle ACL in file access tests
 use filetest 'access';
 use CGI qw(:standard :escapeHTML -nosticky);

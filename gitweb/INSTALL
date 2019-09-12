@@ -33,6 +33,9 @@ Requirements
  - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename, IPC::Run.
  - web server
 
+A copy of IPC::Run is co-bundled with gitweb and should get used if your
+perl deployment does not include its more preferable version.
+
 The following optional Perl modules are required for extra features
  - CGI::Fast and FCGI - for running gitweb as FastCGI script
  - HTML::TagCloud - for fancy tag cloud in project list view
