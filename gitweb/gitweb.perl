@@ -7427,6 +7427,8 @@ sub git_snapshot_ls_check {
 	my $tempfilename;
 	my $old_GIT_INDEX_FILE;
 	if ( defined $ENV{'GIT_INDEX_FILE'} ) { $old_GIT_INDEX_FILE = $ENV{'GIT_INDEX_FILE'} ; }
+	my $old_GIT_TEST_GETTEXT_POISON;
+	if ( $DEBUG && defined $ENV{'GIT_TEST_GETTEXT_POISON'} ) { $old_GIT_TEST_GETTEXT_POISON = $ENV{'GIT_TEST_GETTEXT_POISON'} ; }
 	if ( defined($file_name_item) && $file_name_item ne "") {
 		# TODO: This wizardry can be refactored if someone uses
 		# many filename patterns as arguments. For one, check if
@@ -7436,6 +7438,7 @@ sub git_snapshot_ls_check {
 		($tempfh, $tempfilename) = tempfile( ) or die "Can not create a tmp file for git_snapshot_ls_check()";
 		$ENV{'GIT_INDEX_FILE'} = $tempfilename;
 		system ("@cmdls read-tree $hash") or die "Can not populate a tmp file for git_snapshot_ls_check()"; # Populate GIT_INDEX_FILE
+		undef $ENV{'GIT_TEST_GETTEXT_POISON'} if $DEBUG;
 		push( @cmdls, (
 			'ls-files', '--abbrev',
 			'--',
@@ -7490,6 +7493,9 @@ sub git_snapshot_ls_check {
 		$ENV{'GIT_INDEX_FILE'} = $old_GIT_INDEX_FILE;
 	} else {
 		undef $ENV{'GIT_INDEX_FILE'};
+	}
+	if ( $DEBUG && defined ($old_GIT_TEST_GETTEXT_POISON) ) {
+		$ENV{'GIT_TEST_GETTEXT_POISON'} = $old_GIT_TEST_GETTEXT_POISON;
 	}
 	if ( defined($tempfh) ) { close $tempfh; } # This should also remove the tempfile
 
