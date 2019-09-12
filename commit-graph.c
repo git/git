@@ -468,6 +468,13 @@ static int prepare_commit_graph(struct repository *r)
 {
 	struct object_directory *odb;
 
+	/*
+	 * This must come before the "already attempted?" check below, because
+	 * we want to disable even an already-loaded graph file.
+	 */
+	if (r->commit_graph_disabled)
+		return 0;
+
 	if (r->objects->commit_graph_attempted)
 		return !!r->objects->commit_graph;
 	r->objects->commit_graph_attempted = 1;
@@ -2100,4 +2107,9 @@ void free_commit_graph(struct commit_graph *g)
 	}
 	free(g->filename);
 	free(g);
+}
+
+void disable_commit_graph(struct repository *r)
+{
+	r->commit_graph_disabled = 1;
 }

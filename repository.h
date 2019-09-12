@@ -124,6 +124,9 @@ struct repository {
 	/* A unique-id for tracing purposes. */
 	int trace2_repo_id;
 
+	/* True if commit-graph has been disabled within this process. */
+	int commit_graph_disabled;
+
 	/* Configurations */
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
