@@ -7410,6 +7410,7 @@ sub git_snapshot_ls_check {
 	# Note, for a directory (or no argument for whole repo) this looks
 	# at list of all items under it, if any.
 	my ($hash, $file_name_item) = @_;
+	my $retCode = -1;
 
 	my @cmdls = git_cmd();
 	# Potentially we have a choice of "git ls-tree" that has good
@@ -7448,7 +7449,7 @@ sub git_snapshot_ls_check {
 			) );
 	}
 
-	printf STDERR "Starting git-ls-files: @cmdls\n" if $DEBUG;
+	printf STDERR "Starting git-ls*: @cmdls\n" if $DEBUG;
 	my $gitlsout;
 	my $gitlserr;
 	my $gitlscode;
@@ -7460,33 +7461,39 @@ sub git_snapshot_ls_check {
 		if (! defined ($readSizels) ) { $readSizels = -1; }
 		if ( ($gitlscode >> 8) == 0 ) {
 			if ($readSizels <= 0) {
-				printf STDERR "Call to git-ls-files succeeded with empty output (indeed no matches for request)\n" if $DEBUG;
-				return 404 << 8; # Become compatible with what Run() returns
+				printf STDERR "Call to git-ls* succeeded with empty output (indeed no matches for request)\n" if $DEBUG;
+				$retCode = 404;
 			} else {
-				printf STDERR "Call to git-ls-files succeeded with non-empty output (something matched in repo, but archive produced nothing)\n" if $DEBUG;
-				return 0;
+				printf STDERR "Call to git-ls* succeeded with non-empty output (something matched in repo, but archive produced nothing)\n" if $DEBUG;
+				$retCode = 0;
 			}
 		} else {
 			my $errorls = $@ || 'Unknown failure';
-			printf STDERR "Call to git-ls-files failed with exit-code $gitlscode (" . ($gitlscode >> 8) . ") : $errorls\n" if $DEBUG;
-			return 500 << 8;
+			printf STDERR "Call to git-ls* failed with readSizels==$readSizels and exit-code $gitlscode (" . ($gitlscode >> 8) . ") : $errorls: $gitlserr\n" if $DEBUG;
+			$retCode = 500;
 		}
 		1;  # always return true to indicate success
 	}
 	or do {
-		$gitlscode = $?;
-		if ( (($gitlscode >> 8) > 0) && (($gitlscode >> 8) < 256) ) {
-			my $errorls = $@ || 'Unknown failure';
-			printf STDERR "Execute git-ls-files failed with exit-code $gitlscode (" . ($gitlscode >> 8) . ") : $errorls\n" if $DEBUG;
+		if ( $retCode == -1 ) {
+			$gitlscode = $?;
+			if ( $gitlscode ) {
+				my $errorls = $@ || 'Unknown failure';
+				printf STDERR "Execute git-ls* failed with exit-code $gitlscode (" . ($gitlscode >> 8) . ") : $errorls\n" if $DEBUG;
+			}
+			$retCode = ($gitlscode >> 8);
 		}
-		if ( defined($old_GIT_INDEX_FILE) ) {
-			$ENV{'GIT_INDEX_FILE'} = $old_GIT_INDEX_FILE;
-		} else {
-			undef $ENV{'GIT_INDEX_FILE'};
-		}
-		if (defined($tempfh)) { close $tempfh; } # This should also remove the tempfile
-		return ($gitlscode >> 8);
+	} ;
+
+	# Restore status-quo
+	if ( defined ($old_GIT_INDEX_FILE) ) {
+		$ENV{'GIT_INDEX_FILE'} = $old_GIT_INDEX_FILE;
+	} else {
+		undef $ENV{'GIT_INDEX_FILE'};
 	}
+	if ( defined($tempfh) ) { close $tempfh; } # This should also remove the tempfile
+
+	return $retCode;
 }
 
 sub git_snapshot {
