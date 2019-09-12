@@ -1250,10 +1250,7 @@ _git_archive ()
 		return
 		;;
 	--*)
-		__gitcomp "
-			--format= --list --verbose
-			--prefix= --remote= --exec= --output
-			"
+		__gitcomp_builtin archive "--format= --list --verbose --prefix= --worktree-attributes"
 		return
 		;;
 	esac
