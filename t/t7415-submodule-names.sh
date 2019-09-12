@@ -73,4 +73,35 @@ test_expect_success 'clone evil superproject' '
 	! grep "RUNNING POST CHECKOUT" output
 '
 
+test_expect_success MINGW 'prevent git~1 squatting on Windows' '
+	git init squatting &&
+	(
+		cd squatting &&
+		mkdir a &&
+		touch a/..git &&
+		git add a/..git &&
+		test_tick &&
+		git commit -m initial &&
+
+		modules="$(test_write_lines \
+			"[submodule \"b.\"]" "url = ." "path = c" \
+			"[submodule \"b\"]" "url = ." "path = d\\\\a" |
+			git hash-object -w --stdin)" &&
+		rev="$(git rev-parse --verify HEAD)" &&
+		hash="$(echo x | git hash-object -w --stdin)" &&
+		git update-index --add \
+			--cacheinfo 100644,$modules,.gitmodules \
+			--cacheinfo 160000,$rev,c \
+			--cacheinfo 160000,$rev,d\\a \
+			--cacheinfo 100644,$hash,d./a/x \
+			--cacheinfo 100644,$hash,d./a/..git &&
+		test_tick &&
+		git commit -m "module"
+	) &&
+	test_must_fail git \
+		clone --recurse-submodules squatting squatting-clone 2>err &&
+	test_i18ngrep "directory not empty" err &&
+	! grep gitdir squatting-clone/d/a/git~2
+'
+
 test_done
