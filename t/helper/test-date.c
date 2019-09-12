@@ -104,7 +104,6 @@ static void getnanos(const char **argv)
 int cmd__date(int argc, const char **argv)
 {
 	const char *x;
-	x = getenv("GIT_TEST_DATE_NOW");
 
 	argv++;
 	if (!*argv)
