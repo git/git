@@ -30,7 +30,7 @@ Requirements
 
  - Core git tools
  - Perl 5.8
- - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename.
+ - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename, IPC::Run.
  - web server
 
 The following optional Perl modules are required for extra features

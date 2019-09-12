@@ -1,4 +1,6 @@
-language: c
+language:
+  - c
+  - perl
 
 cache:
   directories:
@@ -20,6 +22,9 @@ matrix:
       os: linux
       compiler:
       addons:
+        apt:
+          packages:
+          - libipc-run-perl
       before_install:
     - env: jobname=linux-gcc-4.8
       os: linux
