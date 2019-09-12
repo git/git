@@ -89,16 +89,18 @@ test_expect_success MINGW 'prevent git~1 squatting on Windows' '
 			git hash-object -w --stdin)" &&
 		rev="$(git rev-parse --verify HEAD)" &&
 		hash="$(echo x | git hash-object -w --stdin)" &&
-		git update-index --add \
+		git -c core.protectNTFS=false update-index --add \
 			--cacheinfo 100644,$modules,.gitmodules \
 			--cacheinfo 160000,$rev,c \
 			--cacheinfo 160000,$rev,d\\a \
 			--cacheinfo 100644,$hash,d./a/x \
 			--cacheinfo 100644,$hash,d./a/..git &&
 		test_tick &&
-		git commit -m "module"
+		git -c core.protectNTFS=false commit -m "module" &&
+		test_must_fail git show HEAD: 2>err &&
+		test_i18ngrep backslash err
 	) &&
-	test_must_fail git \
+	test_must_fail git -c core.protectNTFS=false \
 		clone --recurse-submodules squatting squatting-clone 2>err &&
 	test_i18ngrep "directory not empty" err &&
 	! grep gitdir squatting-clone/d/a/git~2
