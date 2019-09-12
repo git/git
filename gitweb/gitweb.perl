@@ -19,6 +19,7 @@ use Encode;
 use Fcntl ':mode';
 use File::Find qw();
 use File::Basename qw(basename);
+use File::Temp qw(tempfile);
 use Time::HiRes qw(gettimeofday tv_interval);
 use Digest::MD5 qw(md5_hex);
 use IPC::Run qw(run start finish);
@@ -7402,6 +7403,92 @@ sub exit_if_unmodified_since {
 	}
 }
 
+sub git_snapshot_ls_check {
+	# A helper for git_snapshot() error-classification as defined below
+	# Returns shell exit-code of "git ls" (if under 256) or HTTP code
+	# (404, 500), or 0 for no errors listing this requested pattern.
+	# Note, for a directory (or no argument for whole repo) this looks
+	# at list of all items under it, if any.
+	my ($hash, $file_name_item) = @_;
+
+	my @cmdls = git_cmd();
+	# Potentially we have a choice of "git ls-tree" that has good
+	# support for listing whatever a tree-ish object references,
+	# but lacks direct shell-glob support for filenames like '*.c',
+	# or the "git ls-files" which shows the current workspace (even
+	# if called with "--with-tree=$hash") but supports shell globs.
+	# For our purposes, "git archive" supports simple wildcard globs
+	# (asterisk, but not braced lists or question mark), so we need
+	# to too. There are certain somewhat clumsy workarounds for
+	# each approach (git-ls-tree everything and filter the output,
+	# or use a temporary GIT_INDEX_FILE for git-ls-files)...
+	my $tempfh;
+	my $tempfilename;
+	my $old_GIT_INDEX_FILE;
+	if ( defined $ENV{'GIT_INDEX_FILE'} ) { $old_GIT_INDEX_FILE = $ENV{'GIT_INDEX_FILE'} ; }
+	if ( defined($file_name_item) && $file_name_item ne "") {
+		# TODO: This wizardry can be refactored if someone uses
+		# many filename patterns as arguments. For one, check if
+		# any wildcard chars are used in this $file_name_item;
+		# for another, set up the GIT_INDEX_FILE once (if needed)
+		# and run the whole loop against it.
+		($tempfh, $tempfilename) = tempfile( ) or die "Can not create a tmp file for git_snapshot_ls_check()";
+		$ENV{'GIT_INDEX_FILE'} = $tempfilename;
+		system ("@cmdls read-tree $hash") or die "Can not populate a tmp file for git_snapshot_ls_check()"; # Populate GIT_INDEX_FILE
+		push( @cmdls, (
+			'ls-files', '--abbrev',
+			'--',
+			"$file_name_item"
+			) );
+	} else {
+		# Ignore the globs hassle, just "git-ls-tree" the $hash
+		push( @cmdls, (
+			'ls-tree', '--abbrev', '--name-only',
+			"$hash"
+			) );
+	}
+
+	printf STDERR "Starting git-ls-files: @cmdls\n" if $DEBUG;
+	my $gitlsout;
+	my $gitlserr;
+	my $gitlscode;
+	my $readSizels = -1;
+	eval {
+		run \@cmdls, '>', \$gitlsout, '2>', \$gitlserr;
+		$gitlscode = $?;
+		$readSizels = length $gitlsout if ($gitlsout);
+		if (! defined ($readSizels) ) { $readSizels = -1; }
+		if ( ($gitlscode >> 8) == 0 ) {
+			if ($readSizels <= 0) {
+				printf STDERR "Call to git-ls-files succeeded with empty output (indeed no matches for request)\n" if $DEBUG;
+				return 404 << 8; # Become compatible with what Run() returns
+			} else {
+				printf STDERR "Call to git-ls-files succeeded with non-empty output (something matched in repo, but archive produced nothing)\n" if $DEBUG;
+				return 0;
+			}
+		} else {
+			my $errorls = $@ || 'Unknown failure';
+			printf STDERR "Call to git-ls-files failed with exit-code $gitlscode (" . ($gitlscode >> 8) . ") : $errorls\n" if $DEBUG;
+			return 500 << 8;
+		}
+		1;  # always return true to indicate success
+	}
+	or do {
+		$gitlscode = $?;
+		if ( (($gitlscode >> 8) > 0) && (($gitlscode >> 8) < 256) ) {
+			my $errorls = $@ || 'Unknown failure';
+			printf STDERR "Execute git-ls-files failed with exit-code $gitlscode (" . ($gitlscode >> 8) . ") : $errorls\n" if $DEBUG;
+		}
+		if ( defined($old_GIT_INDEX_FILE) ) {
+			$ENV{'GIT_INDEX_FILE'} = $old_GIT_INDEX_FILE;
+		} else {
+			undef $ENV{'GIT_INDEX_FILE'};
+		}
+		if (defined($tempfh)) { close $tempfh; } # This should also remove the tempfile
+		return ($gitlscode >> 8);
+	}
+}
+
 sub git_snapshot {
 	my $format = $input_params{'snapshot_format'};
 	if (!@snapshot_fmts) {
@@ -7573,6 +7660,25 @@ sub git_snapshot {
 			$retError = $giterr;
 			if ( $retError =~ /did not match any/ ) {
 				$retCode = 404;
+			} else {
+				# In case of unsupported locale, or say a
+				# poisoned gettext, fall back to checking
+				# with "git ls-files" for each pattern
+				if (@file_names) {
+					foreach my $file_name_item (@file_names) {
+						my $retCodels = git_snapshot_ls_check($hash, $file_name_item);
+						printf STDERR "Got retCodels=$retCodels from git_snapshot_ls_check('$hash', '$file_name_item')\n" if $DEBUG;
+						next if ($retCodels == 0);
+						$retCode = $retCodels;
+						last if ($retCodels != 404);
+					}
+				} else {
+					my $retCodels = git_snapshot_ls_check($hash, undef);
+					printf STDERR "Got retCodels=$retCodels from git_snapshot_ls_check('$hash', undef)\n" if $DEBUG;
+					if ($retCodels > 0) {
+						$retCode = $retCodels;
+					} # else keep HTTP-500 for weird behavior
+				}
 			}
 		}
 	}
