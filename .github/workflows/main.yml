@@ -6,7 +6,10 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+        strategy:
+      max-parallel: [4,8,12,16,20,24]
+      matrix:
+
     steps:
     - uses: actions/checkout@v1
     - name: Run a one-line script
