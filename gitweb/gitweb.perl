@@ -7437,8 +7437,11 @@ sub git_snapshot_ls_check {
 		# and run the whole loop against it.
 		($tempfh, $tempfilename) = tempfile( ) or die "Can not create a tmp file for git_snapshot_ls_check()";
 		$ENV{'GIT_INDEX_FILE'} = $tempfilename;
-		system ("@cmdls read-tree $hash") or die "Can not populate a tmp file for git_snapshot_ls_check()"; # Populate GIT_INDEX_FILE
 		undef $ENV{'GIT_TEST_GETTEXT_POISON'} if $DEBUG;
+		printf STDERR "Using GIT_INDEX_FILE='$tempfilename'\n" if $DEBUG;
+		my @cmdtmp = @cmdls;
+		push( @cmdtmp, ( 'read-tree', "$hash" ) );
+		run \@cmdtmp or die "Can not populate a tmp file for git_snapshot_ls_check()"; # Populate GIT_INDEX_FILE
 		push( @cmdls, (
 			'ls-files', '--abbrev',
 			'--',
