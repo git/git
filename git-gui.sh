@@ -1341,6 +1341,7 @@ set HEAD {}
 set PARENT {}
 set MERGE_HEAD [list]
 set commit_type {}
+set commit_type_is_amend 0
 set empty_tree {}
 set current_branch {}
 set is_detached 0
@@ -1348,7 +1349,6 @@ set current_diff_path {}
 set is_3way_diff 0
 set is_submodule_diff 0
 set is_conflict_diff 0
-set selected_commit_type new
 set diff_empty_count 0
 set last_revert {}
 set last_revert_enc {}
@@ -1437,7 +1437,7 @@ proc PARENT {} {
 }
 
 proc force_amend {} {
-	global selected_commit_type
+	global commit_type_is_amend
 	global HEAD PARENT MERGE_HEAD commit_type
 
 	repository_state newType newHEAD newMERGE_HEAD
@@ -1446,7 +1446,7 @@ proc force_amend {} {
 	set MERGE_HEAD $newMERGE_HEAD
 	set commit_type $newType
 
-	set selected_commit_type amend
+	set commit_type_is_amend 1
 	do_select_commit_type
 }
 
@@ -2852,19 +2852,10 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	menu .mbar.commit
 
 	if {![is_enabled nocommit]} {
-		.mbar.commit add radiobutton \
-			-label [mc "New Commit"] \
-			-command do_select_commit_type \
-			-variable selected_commit_type \
-			-value new
-		lappend disable_on_lock \
-			[list .mbar.commit entryconf [.mbar.commit index last] -state]
-
-		.mbar.commit add radiobutton \
+		.mbar.commit add checkbutton \
 			-label [mc "Amend Last Commit"] \
-			-command do_select_commit_type \
-			-variable selected_commit_type \
-			-value amend
+			-variable commit_type_is_amend \
+			-command do_select_commit_type
 		lappend disable_on_lock \
 			[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
@@ -3337,18 +3328,10 @@ set ui_comm .vpane.lower.commarea.buffer.frame.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
 if {![is_enabled nocommit]} {
-	${NS}::radiobutton .vpane.lower.commarea.buffer.header.new \
-		-text [mc "New Commit"] \
-		-command do_select_commit_type \
-		-variable selected_commit_type \
-		-value new
-	lappend disable_on_lock \
-		[list .vpane.lower.commarea.buffer.header.new conf -state]
-	${NS}::radiobutton .vpane.lower.commarea.buffer.header.amend \
+	${NS}::checkbutton .vpane.lower.commarea.buffer.header.amend \
 		-text [mc "Amend Last Commit"] \
-		-command do_select_commit_type \
-		-variable selected_commit_type \
-		-value amend
+		-variable commit_type_is_amend \
+		-command do_select_commit_type
 	lappend disable_on_lock \
 		[list .vpane.lower.commarea.buffer.header.amend conf -state]
 }
@@ -3373,7 +3356,6 @@ pack $ui_coml -side left -fill x
 
 if {![is_enabled nocommit]} {
 	pack .vpane.lower.commarea.buffer.header.amend -side right
-	pack .vpane.lower.commarea.buffer.header.new -side right
 }
 
 textframe .vpane.lower.commarea.buffer.frame
