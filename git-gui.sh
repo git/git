@@ -3369,10 +3369,16 @@ ttext $ui_comm -background white -foreground black \
 	-relief sunken \
 	-width $repo_config(gui.commitmsgwidth) -height 9 -wrap none \
 	-font font_diff \
+	-xscrollcommand {.vpane.lower.commarea.buffer.frame.sbx set} \
 	-yscrollcommand {.vpane.lower.commarea.buffer.frame.sby set}
+${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sbx \
+	-orient horizontal \
+	-command [list $ui_comm xview]
 ${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sby \
+	-orient vertical \
 	-command [list $ui_comm yview]
 
+pack .vpane.lower.commarea.buffer.frame.sbx -side bottom -fill x
 pack .vpane.lower.commarea.buffer.frame.sby -side right -fill y
 pack $ui_comm -side left -fill y
 pack .vpane.lower.commarea.buffer.header -side top -fill x
