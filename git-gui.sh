@@ -2664,6 +2664,12 @@ proc focus_widget {widget} {
 	}
 }
 
+proc toggle_commit_type {} {
+	global commit_type_is_amend
+	set commit_type_is_amend [expr !$commit_type_is_amend]
+	do_select_commit_type
+}
+
 ######################################################################
 ##
 ## ui construction
@@ -2854,6 +2860,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	if {![is_enabled nocommit]} {
 		.mbar.commit add checkbutton \
 			-label [mc "Amend Last Commit"] \
+			-accelerator $M1T-E \
 			-variable commit_type_is_amend \
 			-command do_select_commit_type
 		lappend disable_on_lock \
@@ -3892,6 +3899,8 @@ bind .   <$M1B-Key-j> do_revert_selection
 bind .   <$M1B-Key-J> do_revert_selection
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
+bind .   <$M1B-Key-e> toggle_commit_type
+bind .   <$M1B-Key-E> toggle_commit_type
 bind .   <$M1B-Key-minus> {show_less_context;break}
 bind .   <$M1B-Key-KP_Subtract> {show_less_context;break}
 bind .   <$M1B-Key-equal> {show_more_context;break}
