@@ -472,7 +472,7 @@ static void *filter_sparse_oid__init(
 		die(_("unable to access sparse blob in '%s'"),
 		    filter_options->sparse_oid_name);
 	d->omits = omitted;
-	if (add_excludes_from_blob_to_list(&sparse_oid, NULL, 0, &d->el) < 0)
+	if (add_excludes_from_blob_to_list(&sparse_oid, "", 0, &d->el) < 0)
 		die(_("unable to parse sparse filter data in %s"),
 		    oid_to_hex(&sparse_oid));
 
