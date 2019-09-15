@@ -252,7 +252,7 @@ test_expect_success 'setup src repo for sparse filter' '
 	git -C sparse-src commit -m "add sparse checkout files"
 '
 
-test_expect_failure 'partial clone with sparse filter succeeds' '
+test_expect_success 'partial clone with sparse filter succeeds' '
 	rm -rf dst.git &&
 	git clone --no-local --bare \
 		  --filter=sparse:oid=master:only-one \
@@ -265,7 +265,7 @@ test_expect_failure 'partial clone with sparse filter succeeds' '
 	)
 '
 
-test_expect_failure 'partial clone with unresolvable sparse filter fails cleanly' '
+test_expect_success 'partial clone with unresolvable sparse filter fails cleanly' '
 	rm -rf dst.git &&
 	test_must_fail git clone --no-local --bare \
 				 --filter=sparse:oid=master:no-such-name \

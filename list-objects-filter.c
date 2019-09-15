@@ -463,9 +463,16 @@ static void *filter_sparse_oid__init(
 	filter_free_fn *filter_free_fn)
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
+	struct object_context oc;
+	struct object_id sparse_oid;
+
+	if (get_oid_with_context(the_repository,
+				 filter_options->sparse_oid_name,
+				 GET_OID_BLOB, &sparse_oid, &oc))
+		die("unable to access sparse blob in '%s'",
+		    filter_options->sparse_oid_name);
 	d->omits = omitted;
-	if (add_excludes_from_blob_to_list(filter_options->sparse_oid_value,
-					   NULL, 0, &d->el) < 0)
+	if (add_excludes_from_blob_to_list(&sparse_oid, NULL, 0, &d->el) < 0)
 		die("could not load filter specification");
 
 	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
