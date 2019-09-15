@@ -469,11 +469,12 @@ static void *filter_sparse_oid__init(
 	if (get_oid_with_context(the_repository,
 				 filter_options->sparse_oid_name,
 				 GET_OID_BLOB, &sparse_oid, &oc))
-		die("unable to access sparse blob in '%s'",
+		die(_("unable to access sparse blob in '%s'"),
 		    filter_options->sparse_oid_name);
 	d->omits = omitted;
 	if (add_excludes_from_blob_to_list(&sparse_oid, NULL, 0, &d->el) < 0)
-		die("could not load filter specification");
+		die(_("unable to parse sparse filter data in %s"),
+		    oid_to_hex(&sparse_oid));
 
 	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
 	d->array_frame[d->nr].defval = 0; /* default to include */

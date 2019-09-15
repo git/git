@@ -274,7 +274,7 @@ test_expect_success 'partial clone with unresolvable sparse filter fails cleanly
 	test_must_fail git clone --no-local --bare \
 				 --filter=sparse:oid=master \
 				 sparse-src dst.git 2>err &&
-	test_i18ngrep "could not load filter specification" err
+	test_i18ngrep "unable to parse sparse filter data in" err
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
