@@ -8,6 +8,8 @@
 filter_log () {
 	sed -e '/^GIT_VERSION = /d' \
 	    -e '/^    \* new asciidoc flags$/d' \
+	    -e '/stripped namespace before processing/d' \
+	    -e '/Attributed.*IDs for element/d' \
 	    "$1"
 }
 
