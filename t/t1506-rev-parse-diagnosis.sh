@@ -215,11 +215,11 @@ test_expect_success 'arg before dashdash must be a revision (ambiguous)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'reject Nth parent if N is too high' '
+test_expect_success 'reject Nth parent if N is too high' '
 	test_must_fail git rev-parse HEAD^100000000000000000000000000000000
 '
 
-test_expect_failure 'reject Nth ancestor if N is too high' '
+test_expect_success 'reject Nth ancestor if N is too high' '
 	test_must_fail git rev-parse HEAD~100000000000000000000000000000000
 '
 
