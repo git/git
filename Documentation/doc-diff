@@ -21,7 +21,7 @@ asciidoc		use asciidoc with both commits
 to-asciidoc		use asciidoc with the 'to'-commit
 to-asciidoctor		use asciidoctor with the 'to'-commit
 asciidoctor		use asciidoctor with both commits
-cut-header-footer	cut away header and footer
+cut-footer		cut away footer
 "
 SUBDIRECTORY_OK=1
 . "$(git --exec-path)/git-sh-setup"
@@ -31,7 +31,7 @@ force=
 clean=
 from_program=
 to_program=
-cut_header_footer=
+cut_footer=
 while test $# -gt 0
 do
 	case "$1" in
@@ -55,8 +55,8 @@ do
 	--asciidoc)
 		from_program=-asciidoc
 		to_program=-asciidoc ;;
-	--cut-header-footer)
-		cut_header_footer=-cut-header-footer ;;
+	--cut-footer)
+		cut_footer=-cut-footer ;;
 	--)
 		shift; break ;;
 	*)
@@ -118,8 +118,8 @@ construct_makemanflags () {
 from_makemanflags=$(construct_makemanflags "$from_program") &&
 to_makemanflags=$(construct_makemanflags "$to_program") &&
 
-from_dir=$from_oid$from_program$cut_header_footer &&
-to_dir=$to_oid$to_program$cut_header_footer &&
+from_dir=$from_oid$from_program$cut_footer &&
+to_dir=$to_oid$to_program$cut_footer &&
 
 # generate_render_makefile <srcdir> <dstdir>
 generate_render_makefile () {
@@ -169,12 +169,11 @@ render_tree () {
 		make -j$parallel -f - &&
 		mv "$tmp/rendered/$dname+" "$tmp/rendered/$dname"
 
-		if test "$cut_header_footer" = "-cut-header-footer"
+		if test "$cut_footer" = "-cut-footer"
 		then
 			for f in $(find "$tmp/rendered/$dname" -type f)
 			do
-				tail -n +3 "$f" | head -n -2 |
-				sed -e '1{/^$/d}' -e '${/^$/d}' >"$f+" &&
+				head -n -2 "$f" | sed -e '${/^$/d}' >"$f+" &&
 				mv "$f+" "$f" ||
 				return 1
 			done
