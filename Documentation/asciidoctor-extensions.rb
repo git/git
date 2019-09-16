@@ -20,9 +20,26 @@ module Git
         end
       end
     end
+
+    class DocumentPostProcessor < Asciidoctor::Extensions::Postprocessor
+      def process document, output
+        if document.basebackend? 'docbook'
+          mansource = document.attributes['mansource']
+          manversion = document.attributes['manversion']
+          manmanual = document.attributes['manmanual']
+          new_tags = "" \
+            "<refmiscinfo class=\"source\">#{mansource}</refmiscinfo>\n" \
+            "<refmiscinfo class=\"version\">#{manversion}</refmiscinfo>\n" \
+            "<refmiscinfo class=\"manual\">#{manmanual}</refmiscinfo>\n"
+          output = output.sub(/<\/refmeta>/, new_tags + "</refmeta>")
+        end
+        output
+      end
+    end
   end
 end
 
 Asciidoctor::Extensions.register do
   inline_macro Git::Documentation::LinkGitProcessor, :linkgit
+  postprocessor Git::Documentation::DocumentPostProcessor
 end
