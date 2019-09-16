@@ -1989,6 +1989,30 @@ pid_t waitpid(pid_t pid, int *status, int options)
 	return -1;
 }
 
+int mingw_has_dos_drive_prefix(const char *path)
+{
+	int i;
+
+	/*
+	 * Does it start with an ASCII letter (i.e. highest bit not set),
+	 * followed by a colon?
+	 */
+	if (!(0x80 & (unsigned char)*path))
+		return *path && path[1] == ':' ? 2 : 0;
+
+	/*
+	 * While drive letters must be letters of the English alphabet, it is
+	 * possible to assign virtually _any_ Unicode character via `subst` as
+	 * a drive letter to "virtual drives". Even `1`, or `ä`. Or fun stuff
+	 * like this:
+	 *
+	 *      subst ֍: %USERPROFILE%\Desktop
+	 */
+	for (i = 1; i < 4 && (0x80 & (unsigned char)path[i]); i++)
+		; /* skip first UTF-8 character */
+	return path[i] == ':' ? i + 1 : 0;
+}
+
 int mingw_skip_dos_drive_prefix(char **path)
 {
 	int ret = has_dos_drive_prefix(*path);
@@ -2137,6 +2161,8 @@ int is_valid_win32_path(const char *path)
 	if (!protect_ntfs)
 		return 1;
 
+	skip_dos_drive_prefix((char **)&path);
+
 	for (;;) {
 		char c = *(path++);
 		switch (c) {
@@ -2158,6 +2184,14 @@ int is_valid_win32_path(const char *path)
 			preceding_space_or_period = 1;
 			i++;
 			continue;
+		case ':': /* DOS drive prefix was already skipped */
+		case '<': case '>': case '"': case '|': case '?': case '*':
+			/* illegal character */
+			return 0;
+		default:
+			if (c > '\0' && c < '\x20')
+				/* illegal character */
+				return 0;
 		}
 		preceding_space_or_period = 0;
 		i++;
