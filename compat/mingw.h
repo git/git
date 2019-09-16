@@ -429,6 +429,17 @@ int mingw_offset_1st_component(const char *path);
 #endif
 
 /**
+ * Verifies that the given path is a valid one on Windows.
+ *
+ * In particular, path segments are disallowed which end in a period or a
+ * space (except the special directories `.` and `..`).
+ *
+ * Returns 1 upon success, otherwise 0.
+ */
+int is_valid_win32_path(const char *path);
+#define is_valid_path(path) is_valid_win32_path(path)
+
+/**
  * Converts UTF-8 encoded string to UTF-16LE.
  *
  * To support repositories with legacy-encoded file names, invalid UTF-8 bytes

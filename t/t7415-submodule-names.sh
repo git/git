@@ -102,7 +102,7 @@ test_expect_success MINGW 'prevent git~1 squatting on Windows' '
 	) &&
 	test_must_fail git -c core.protectNTFS=false \
 		clone --recurse-submodules squatting squatting-clone 2>err &&
-	test_i18ngrep "directory not empty" err &&
+	test_i18ngrep -e "directory not empty" -e "not an empty directory" err &&
 	! grep gitdir squatting-clone/d/a/git~2
 '
 

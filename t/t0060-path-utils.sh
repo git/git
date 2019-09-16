@@ -440,4 +440,18 @@ test_expect_success 'match .gitmodules' '
 		.gitmodules,:\$DATA
 '
 
+test_expect_success MINGW 'is_valid_path() on Windows' '
+       test-path-utils is_valid_path \
+		win32 \
+		"win32 x" \
+		../hello.txt \
+		\
+		--not \
+		"win32 "  \
+		"win32 /x "  \
+		"win32."  \
+		"win32 . ." \
+		.../hello.txt
+'
+
 test_done

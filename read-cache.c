@@ -847,6 +847,9 @@ int verify_path(const char *path, unsigned mode)
 	if (has_dos_drive_prefix(path))
 		return 0;
 
+	if (!is_valid_path(path))
+		return 0;
+
 	goto inside;
 	for (;;) {
 		if (!c)

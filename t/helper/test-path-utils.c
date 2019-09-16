@@ -386,6 +386,23 @@ int cmd_main(int argc, const char **argv)
 	if (argc > 1 && !strcmp(argv[1], "protect_ntfs_hfs"))
 		return !!protect_ntfs_hfs_benchmark(argc - 1, argv + 1);
 
+	if (argc > 1 && !strcmp(argv[1], "is_valid_path")) {
+		int res = 0, expect = 1, i;
+
+		for (i = 2; i < argc; i++)
+			if (!strcmp("--not", argv[i]))
+				expect = 0;
+			else if (expect != is_valid_path(argv[i]))
+				res = error("'%s' is%s a valid path",
+					    argv[i], expect ? " not" : "");
+			else
+				fprintf(stderr,
+					"'%s' is%s a valid path\n",
+					argv[i], expect ? "" : " not");
+
+		return !!res;
+	}
+
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");
 	return 1;
