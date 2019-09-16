@@ -2807,12 +2807,8 @@ check: command-list.h
 		exit 1; \
 	fi
 
-C_SOURCES = $(patsubst %.o,%.c,$(C_OBJ))
-ifdef DC_SHA1_SUBMODULE
-COCCI_SOURCES = $(filter-out sha1collisiondetection/%,$(C_SOURCES))
-else
-COCCI_SOURCES = $(filter-out sha1dc/%,$(C_SOURCES))
-endif
+FOUND_C_SOURCES = $(filter %.c,$(shell $(FIND_SOURCE_FILES)))
+COCCI_SOURCES = $(filter-out $(THIRD_PARTY_SOURCES),$(FOUND_C_SOURCES))
 
 %.cocci.patch: %.cocci $(COCCI_SOURCES)
 	@echo '    ' SPATCH $<; \
