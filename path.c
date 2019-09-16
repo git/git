@@ -1288,20 +1288,6 @@ int daemon_avoid_alias(const char *p)
 	}
 }
 
-static int only_spaces_and_periods(const char *path, size_t len, size_t skip)
-{
-	if (len < skip)
-		return 0;
-	len -= skip;
-	path += skip;
-	while (len-- > 0) {
-		char c = *(path++);
-		if (c != ' ' && c != '.')
-			return 0;
-	}
-	return 1;
-}
-
 /*
  * On NTFS, we need to be careful to disallow certain synonyms of the `.git/`
  * directory:
@@ -1341,19 +1327,38 @@ static int only_spaces_and_periods(const char *path, size_t len, size_t skip)
  */
 int is_ntfs_dotgit(const char *name)
 {
-	size_t len;
+	char c;
 
-	for (len = 0; ; len++)
-		if (!name[len] || name[len] == '\\' || is_dir_sep(name[len]) ||
-		    name[len] == ':') {
-			if (only_spaces_and_periods(name, len, 4) &&
-					!strncasecmp(name, ".git", 4))
-				return 1;
-			if (only_spaces_and_periods(name, len, 5) &&
-					!strncasecmp(name, "git~1", 5))
-				return 1;
+	/*
+	 * Note that when we don't find `.git` or `git~1` we end up with `name`
+	 * advanced partway through the string. That's okay, though, as we
+	 * return immediately in those cases, without looking at `name` any
+	 * further.
+	 */
+	c = *(name++);
+	if (c == '.') {
+		/* .git */
+		if (((c = *(name++)) != 'g' && c != 'G') ||
+		    ((c = *(name++)) != 'i' && c != 'I') ||
+		    ((c = *(name++)) != 't' && c != 'T'))
 			return 0;
-		}
+	} else if (c == 'g' || c == 'G') {
+		/* git ~1 */
+		if (((c = *(name++)) != 'i' && c != 'I') ||
+		    ((c = *(name++)) != 't' && c != 'T') ||
+		    *(name++) != '~' ||
+		    *(name++) != '1')
+			return 0;
+	} else
+		return 0;
+
+	for (;;) {
+		c = *(name++);
+		if (!c || c == '\\' || c == '/' || c == ':')
+			return 1;
+		if (c != '.' && c != ' ')
+			return 0;
+	}
 }
 
 static int is_ntfs_dot_generic(const char *name,
