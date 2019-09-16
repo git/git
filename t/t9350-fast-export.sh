@@ -421,6 +421,7 @@ test_expect_success 'directory becomes symlink'        '
 
 test_expect_success 'fast-export quotes pathnames' '
 	git init crazy-paths &&
+	test_config -C crazy-paths core.protectNTFS false &&
 	(cd crazy-paths &&
 	 blob=$(echo foo | git hash-object -w --stdin) &&
 	 git update-index --add \
