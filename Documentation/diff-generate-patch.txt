@@ -1,11 +1,15 @@
-Generating patches with -p
---------------------------
+Generating patch text with -p
+-----------------------------
 
-When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
-with a `-p` option, "git diff" without the `--raw` option, or
-"git log" with the "-p" option, they
-do not produce the output described above; instead they produce a
-patch file.  You can customize the creation of such patches via the
+Running
+linkgit:git-diff[1],
+linkgit:git-log[1],
+linkgit:git-show[1],
+linkgit:git-diff-index[1],
+linkgit:git-diff-tree[1], or
+linkgit:git-diff-files[1]
+with the `-p` option produces patch text.
+You can customize the creation of patch text via the
 `GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables.
 
 What the -p option produces is slightly different from the traditional
