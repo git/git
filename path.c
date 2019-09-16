@@ -1302,6 +1302,34 @@ static int only_spaces_and_periods(const char *path, size_t len, size_t skip)
 	return 1;
 }
 
+/*
+ * On NTFS, we need to be careful to disallow certain synonyms of the `.git/`
+ * directory:
+ *
+ * - For historical reasons, file names that end in spaces or periods are
+ *   automatically trimmed. Therefore, `.git . . ./` is a valid way to refer
+ *   to `.git/`.
+ *
+ * - For other historical reasons, file names that do not conform to the 8.3
+ *   format (up to eight characters for the basename, three for the file
+ *   extension, certain characters not allowed such as `+`, etc) are associated
+ *   with a so-called "short name", at least on the `C:` drive by default.
+ *   Which means that `git~1/` is a valid way to refer to `.git/`.
+ *
+ *   Note: Technically, `.git/` could receive the short name `git~2` if the
+ *   short name `git~1` were already used. In Git, however, we guarantee that
+ *   `.git` is the first item in a directory, therefore it will be associated
+ *   with the short name `git~1` (unless short names are disabled).
+ *
+ * When this function returns 1, it indicates that the specified file/directory
+ * name refers to a `.git` file or directory, or to any of these synonyms, and
+ * Git should therefore not track it.
+ *
+ * This function is intended to be used by `git fsck` even on platforms where
+ * the backslash is a regular filename character, therefore it needs to handle
+ * backlash characters in the provided `name` specially: they are interpreted
+ * as directory separators.
+ */
 int is_ntfs_dotgit(const char *name)
 {
 	size_t len;
