@@ -5,7 +5,10 @@ struct alloc_state;
 struct tree;
 struct commit;
 struct tag;
-struct repository;
+struct repository
+{
+    int fetch_if_missing;
+}repo;
 
 void *alloc_blob_node(struct repository *r);
 void *alloc_tree_node(struct repository *r);
