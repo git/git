@@ -691,7 +691,7 @@ test_expect_failure 'git clean -d skips nested repo containing ignored files' '
 	test_path_is_file nested-repo-with-ignored-file/file
 '
 
-test_expect_failure 'git clean handles being told what to clean' '
+test_expect_success 'git clean handles being told what to clean' '
 	mkdir -p d1 d2 &&
 	touch d1/ut d2/ut &&
 	git clean -f */ut &&
@@ -707,7 +707,7 @@ test_expect_success 'git clean handles being told what to clean, with -d' '
 	test_path_is_missing d2/ut
 '
 
-test_expect_failure 'git clean works if a glob is passed without -d' '
+test_expect_success 'git clean works if a glob is passed without -d' '
 	mkdir -p d1 d2 &&
 	touch d1/ut d2/ut &&
 	git clean -f "*ut" &&
