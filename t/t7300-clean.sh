@@ -699,7 +699,7 @@ test_expect_failure 'git clean handles being told what to clean' '
 	test_path_is_missing d2/ut
 '
 
-test_expect_failure 'git clean handles being told what to clean, with -d' '
+test_expect_success 'git clean handles being told what to clean, with -d' '
 	mkdir -p d1 d2 &&
 	touch d1/ut d2/ut &&
 	git clean -ffd */ut &&
@@ -715,7 +715,7 @@ test_expect_failure 'git clean works if a glob is passed without -d' '
 	test_path_is_missing d2/ut
 '
 
-test_expect_failure 'git clean works if a glob is passed with -d' '
+test_expect_success 'git clean works if a glob is passed with -d' '
 	mkdir -p d1 d2 &&
 	touch d1/ut d2/ut &&
 	git clean -ffd "*ut" &&
