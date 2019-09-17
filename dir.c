@@ -1451,6 +1451,16 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return path_none;
 
 	case index_nonexistent:
+		if (dir->flags & DIR_SKIP_NESTED_GIT) {
+			int nested_repo;
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addstr(&sb, dirname);
+			nested_repo = is_nonbare_repository_dir(&sb);
+			strbuf_release(&sb);
+			if (nested_repo)
+				return path_none;
+		}
+
 		if (dir->flags & DIR_SHOW_OTHER_DIRECTORIES)
 			break;
 		if (exclude &&
