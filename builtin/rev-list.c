@@ -346,19 +346,19 @@ static inline int parse_missing_action_value(const char *value)
 
 	if (!strcmp(value, "allow-any")) {
 		arg_missing_action = MA_ALLOW_ANY;
-		fetch_if_missing = 0;
+		repo.fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "print")) {
 		arg_missing_action = MA_PRINT;
-		fetch_if_missing = 0;
+		repo.fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "allow-promisor")) {
 		arg_missing_action = MA_ALLOW_PROMISOR;
-		fetch_if_missing = 0;
+		repo.fetch_if_missing = 0;
 		return 1;
 	}
 
@@ -400,7 +400,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
-			fetch_if_missing = 0;
+			repo.fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
 			break;
 		}

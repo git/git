@@ -1669,7 +1669,7 @@ int odb_pack_keep(const char *name);
  *
  * Its default value is 1.
  */
-extern int fetch_if_missing;
+//extern int fetch_if_missing;
 
 /* Dumb servers support */
 int update_server_info(int);

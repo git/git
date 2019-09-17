@@ -806,7 +806,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	struct object_directory *odb;
 
 	/* fsck knows how to handle missing promisor objects */
-	fetch_if_missing = 0;
+	repo.fetch_if_missing = 0;
 
 	errors_found = 0;
 	read_replace_refs = 0;

@@ -1675,7 +1675,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	 * accesses the repo to do hash collision checks and to check which
 	 * REF_DELTA bases need to be fetched.
 	 */
-	fetch_if_missing = 0;
+	repo.fetch_if_missing = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(index_pack_usage);

@@ -1675,7 +1675,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("fetch");
 
-	fetch_if_missing = 0;
+	repo.fetch_if_missing = 0;
 
 	/* Record the command line for the reflog */
 	strbuf_addstr(&default_rla, "fetch");

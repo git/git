@@ -165,7 +165,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	if (show_progress == -1)
 		show_progress = isatty(2);
 	if (exclude_promisor_objects) {
-		fetch_if_missing = 0;
+		repo.fetch_if_missing = 0;
 		revs.exclude_promisor_objects = 1;
 	}
 
