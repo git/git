@@ -356,8 +356,9 @@ static int match_pathspec_item(const struct index_state *istate,
 	/* Perform checks to see if "name" is a super set of the pathspec */
 	if (flags & DO_MATCH_SUBMODULE) {
 		/* name is a literal prefix of the pathspec */
+		int offset = name[namelen-1] == '/' ? 1 : 0;
 		if ((namelen < matchlen) &&
-		    (match[namelen] == '/') &&
+		    (match[namelen-offset] == '/') &&
 		    !ps_strncmp(item, match, name, namelen))
 			return MATCHED_RECURSIVELY;
 
