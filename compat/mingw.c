@@ -3300,6 +3300,40 @@ int uname(struct utsname *buf)
 }
 
 /*
+ * Determines whether the SID refers to an administrator or the current user.
+ *
+ * For convenience, the `info` parameter allows avoiding multiple calls to
+ * `OpenProcessToken()` if this function is called more than once. The initial
+ * value of `*info` is expected to be `NULL`, and it needs to be released via
+ * `free()` after the last call to this function.
+ *
+ * Returns 0 if the SID indicates a dubious owner of system files, otherwise 1.
+ */
+static int is_valid_system_file_owner(PSID sid, TOKEN_USER **info)
+{
+	HANDLE token;
+	DWORD len;
+
+	if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) ||
+	    IsWellKnownSid(sid, WinLocalSystemSid))
+		return 1;
+
+	/* Obtain current user's SID */
+	if (!*info &&
+	    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
+		if (!GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
+			*info = xmalloc((size_t)len);
+			if (!GetTokenInformation(token, TokenUser, *info, len,
+						 &len))
+				FREE_AND_NULL(*info);
+		}
+		CloseHandle(token);
+	}
+
+	return *info && EqualSid(sid, (*info)->User.Sid) ? 1 : 0;
+}
+
+/*
  * Verify that the file in question is owned by an administrator or system
  * account, or at least by the current user.
  *
@@ -3309,11 +3343,10 @@ int uname(struct utsname *buf)
 static int validate_system_file_ownership(const char *path)
 {
 	WCHAR wpath[MAX_LONG_PATH];
-	PSID owner_sid = NULL;
+	PSID owner_sid = NULL, problem_sid = NULL;
 	PSECURITY_DESCRIPTOR descriptor = NULL;
-	HANDLE token;
 	TOKEN_USER* info = NULL;
-	DWORD err, len;
+	DWORD err;
 	int ret;
 
 	if (xutftowcs_long_path(wpath, path) < 0)
@@ -3325,63 +3358,37 @@ static int validate_system_file_ownership(const char *path)
 				    &owner_sid, NULL, NULL, NULL, &descriptor);
 
 	/* if the file does not exist, it does not have a valid owner */
-	if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND) {
+	if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND)
 		ret = 0;
-		owner_sid = NULL;
-		goto finish_validation;
-	}
-
-	if (err != ERROR_SUCCESS) {
+	else if (err != ERROR_SUCCESS)
 		ret = error(_("failed to validate '%s' (%ld)"), path, err);
-		owner_sid = NULL;
-		goto finish_validation;
-	}
-
-	if (!IsValidSid(owner_sid)) {
+	else if (!IsValidSid(owner_sid))
 		ret = error(_("invalid owner: '%s'"), path);
-		goto finish_validation;
-	}
-
-	if (IsWellKnownSid(owner_sid, WinBuiltinAdministratorsSid) ||
-	    IsWellKnownSid(owner_sid, WinLocalSystemSid)) {
+	else if (is_valid_system_file_owner(owner_sid, &info))
 		ret = 1;
-		goto finish_validation;
-	}
-
-	/* Obtain current user's SID */
-	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) &&
-	    !GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
-		info = xmalloc((size_t)len);
-		if (!GetTokenInformation(token, TokenUser, info, len, &len))
-			FREE_AND_NULL(info);
-	}
-
-	if (!info)
-		ret = 0;
 	else {
-		ret = EqualSid(owner_sid, info->User.Sid) ? 1 : 0;
-		free(info);
+		ret = 0;
+		problem_sid = owner_sid;
 	}
 
-finish_validation:
-	if (!ret && owner_sid) {
+	if (!ret && problem_sid) {
 #define MAX_NAME_OR_DOMAIN 256
-		wchar_t owner_name[MAX_NAME_OR_DOMAIN];
-		wchar_t owner_domain[MAX_NAME_OR_DOMAIN];
+		wchar_t name[MAX_NAME_OR_DOMAIN];
+		wchar_t domain[MAX_NAME_OR_DOMAIN];
 		wchar_t *p = NULL;
 		DWORD size = MAX_NAME_OR_DOMAIN;
 		SID_NAME_USE type;
-		char name[3 * MAX_NAME_OR_DOMAIN + 1];
+		char utf[3 * MAX_NAME_OR_DOMAIN + 1];
 
-		if (!LookupAccountSidW(NULL, owner_sid, owner_name, &size,
-				       owner_domain, &size, &type) ||
-		    xwcstoutf(name, owner_name, ARRAY_SIZE(name)) < 0) {
-			if (!ConvertSidToStringSidW(owner_sid, &p))
-				strlcpy(name, "(unknown)", ARRAY_SIZE(name));
+		if (!LookupAccountSidW(NULL, problem_sid, name, &size,
+				       domain, &size, &type) ||
+		    xwcstoutf(utf, name, ARRAY_SIZE(utf)) < 0) {
+			if (!ConvertSidToStringSidW(problem_sid, &p))
+				strlcpy(utf, "(unknown)", ARRAY_SIZE(utf));
 			else {
-				if (xwcstoutf(name, p, ARRAY_SIZE(name)) < 0)
-					strlcpy(name, "(some user)",
-						ARRAY_SIZE(name));
+				if (xwcstoutf(utf, p, ARRAY_SIZE(utf)) < 0)
+					strlcpy(utf, "(some user)",
+						ARRAY_SIZE(utf));
 				LocalFree(p);
 			}
 		}
@@ -3390,11 +3397,12 @@ finish_validation:
 			  "For security reasons, it is therefore ignored.\n"
 			  "To fix this, please transfer ownership to an "
 			  "admininstrator."),
-			path, name);
+			path, utf);
 	}
 
 	if (descriptor)
 		LocalFree(descriptor);
+	free(info);
 
 	return ret;
 }
