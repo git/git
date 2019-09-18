@@ -25,6 +25,7 @@
 #include "commit-reach.h"
 #include "branch.h"
 #include "promisor-remote.h"
+#include "commit-graph.h"
 
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 
@@ -1758,6 +1759,20 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	string_list_clear(&list, 0);
+
+	prepare_repo_settings(the_repository);
+	if (the_repository->settings.fetch_write_commit_graph) {
+		int commit_graph_flags = COMMIT_GRAPH_WRITE_SPLIT;
+		struct split_commit_graph_opts split_opts;
+		memset(&split_opts, 0, sizeof(struct split_commit_graph_opts));
+
+		if (progress)
+			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
+
+		write_commit_graph_reachable(get_object_directory(),
+					     commit_graph_flags,
+					     &split_opts);
+	}
 
 	close_object_store(the_repository->objects);
 
