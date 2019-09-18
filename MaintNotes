@@ -238,9 +238,9 @@ and enhancements in contrib/ area to the primary contributors of them.
 Although the following are included in git.git repository, they have their
 own authoritative repository and maintainers:
 
- - git-gui/ comes from git-gui project, maintained by Pat Thoyts:
+ - git-gui/ comes from git-gui project, maintained by Pratyush Yadav:
 
-        git://repo.or.cz/git-gui.git
+        https://github.com/prati0100/git-gui.git
 
  - gitk-git/ comes from Paul Mackerras's gitk project:
 
