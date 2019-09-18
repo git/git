@@ -55,7 +55,7 @@ proc reshow_diff {{after {}}} {
 
 proc force_diff_encoding {enc} {
 	global current_diff_path
-	
+
 	if {$current_diff_path ne {}} {
 		force_path_encoding $current_diff_path $enc
 		reshow_diff
@@ -567,24 +567,31 @@ proc read_diff {fd conflict_size cont_info} {
 	}
 }
 
-proc apply_hunk {x y} {
+proc apply_or_revert_hunk {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
-	global ui_diff ui_index file_states
+	global ui_diff ui_index file_states last_revert last_revert_enc
 
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
 
-	set apply_cmd {apply --cached --whitespace=nowarn}
+	set apply_cmd {apply --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected hunk."]
-		lappend apply_cmd --reverse
+		lappend apply_cmd --reverse --cached
 		if {[string index $mi 0] ne {M}} {
 			unlock_index
 			return
 		}
 	} else {
-		set failed_msg [mc "Failed to stage selected hunk."]
+		if {$revert} {
+			set failed_msg [mc "Failed to revert selected hunk."]
+			lappend apply_cmd --reverse
+		} else {
+			set failed_msg [mc "Failed to stage selected hunk."]
+			lappend apply_cmd --cached
+		}
+
 		if {[string index $mi 1] ne {M}} {
 			unlock_index
 			return
@@ -603,29 +610,40 @@ proc apply_hunk {x y} {
 		set e_lno end
 	}
 
+	set wholepatch "$current_diff_header[$ui_diff get $s_lno $e_lno]"
+
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
 		set p [eval git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
-		puts -nonewline $p $current_diff_header
-		puts -nonewline $p [$ui_diff get $s_lno $e_lno]
+		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup "$failed_msg\n\n$err"
 		unlock_index
 		return
 	}
 
+	if {$revert} {
+		# Save a copy of this patch for undoing reverts.
+		set last_revert $wholepatch
+		set last_revert_enc $enc
+	}
+
 	$ui_diff conf -state normal
 	$ui_diff delete $s_lno $e_lno
 	$ui_diff conf -state disabled
 
+	# Check if the hunk was the last one in the file.
 	if {[$ui_diff get 1.0 end] eq "\n"} {
 		set o _
 	} else {
 		set o ?
 	}
 
-	if {$current_diff_side eq $ui_index} {
+	# Update the status flags.
+	if {$revert} {
+		set mi [string index $mi 0]$o
+	} elseif {$current_diff_side eq $ui_index} {
 		set mi ${o}M
 	} elseif {[string index $mi 0] eq {_}} {
 		set mi M$o
@@ -640,9 +658,9 @@ proc apply_hunk {x y} {
 	}
 }
 
-proc apply_range_or_line {x y} {
+proc apply_or_revert_range_or_line {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
-	global ui_diff ui_index file_states
+	global ui_diff ui_index file_states last_revert
 
 	set selected [$ui_diff tag nextrange sel 0.0]
 
@@ -660,19 +678,27 @@ proc apply_range_or_line {x y} {
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
 
-	set apply_cmd {apply --cached --whitespace=nowarn}
+	set apply_cmd {apply --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected line."]
 		set to_context {+}
-		lappend apply_cmd --reverse
+		lappend apply_cmd --reverse --cached
 		if {[string index $mi 0] ne {M}} {
 			unlock_index
 			return
 		}
 	} else {
-		set failed_msg [mc "Failed to stage selected line."]
-		set to_context {-}
+		if {$revert} {
+			set failed_msg [mc "Failed to revert selected line."]
+			set to_context {+}
+			lappend apply_cmd --reverse
+		} else {
+			set failed_msg [mc "Failed to stage selected line."]
+			set to_context {-}
+			lappend apply_cmd --cached
+		}
+
 		if {[string index $mi 1] ne {M}} {
 			unlock_index
 			return
@@ -830,7 +856,47 @@ proc apply_range_or_line {x y} {
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup "$failed_msg\n\n$err"
+		unlock_index
+		return
 	}
+
+	if {$revert} {
+		# Save a copy of this patch for undoing reverts.
+		set last_revert $current_diff_header$wholepatch
+		set last_revert_enc $enc
+	}
+
+	unlock_index
+}
+
+# Undo the last line/hunk reverted. When hunks and lines are reverted, a copy
+# of the diff applied is saved. Re-apply that diff to undo the revert.
+#
+# Right now, we only use a single variable to hold the copy, and not a
+# stack/deque for simplicity, so multiple undos are not possible. Maybe this
+# can be added if the need for something like this is felt in the future.
+proc undo_last_revert {} {
+	global last_revert current_diff_path current_diff_header
+	global last_revert_enc
+
+	if {$last_revert eq {}} return
+	if {![lock_index apply_hunk]} return
+
+	set apply_cmd {apply --whitespace=nowarn}
+	set failed_msg [mc "Failed to undo last revert."]
+
+	if {[catch {
+		set enc $last_revert_enc
+		set p [eval git_write $apply_cmd]
+		fconfigure $p -translation binary -encoding $enc
+		puts -nonewline $p $last_revert
+		close $p} err]} {
+		error_popup "$failed_msg\n\n$err"
+		unlock_index
+		return
+	}
+
+	set last_revert {}
 
 	unlock_index
 }
