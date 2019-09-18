@@ -11,6 +11,9 @@ Backward compatibility note
 
 UI, Workflows & Features
 
+ * We now have an active interim maintainer for the Git-Gui part of
+   the system.  Praise and thank Pratyush Yadav for volunteering.
+
  * The command line parser learned "--end-of-options" notation; the
    standard convention for scripters to have hardcoded set of options
    first on the command line, and force the command to treat end-user
@@ -28,6 +31,21 @@ UI, Workflows & Features
  * Device-tree files learned their own userdiff patterns.
    (merge 3c81760bc6 sb/userdiff-dts later to maint).
 
+ * "git rebase --rebase-merges" learned to drive different merge
+   strategies and pass strategy specific options to them.
+
+ * A new "pre-merge-commit" hook has been introduced.
+
+ * Command line completion updates for "git -c var.name=val" have been
+   added.
+
+ * The lazy clone machinery has been taught that there can be more
+   than one promisor remote and consult them in order when downloading
+   missing objects on demand.
+
+ * The list-objects-filter API (used to create a sparse/lazy clone)
+   learned to take a combined filter specification.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -38,6 +56,20 @@ Performance, Internal Implementation, Development Support etc.
    the test name and number to help scanning with eyeballs.
 
  * Further clean-up of the initialization code.
+
+ * xmalloc() used to have a mechanism to ditch memory and address
+   space resources as the last resort upon seeing an allocation
+   failure from the underlying malloc(), which made the code complex
+   and thread-unsafe with dubious benefit, as major memory resource
+   users already do limit their uses with various other mechanisms.
+   It has been simplified away.
+
+ * Unnecessary full-tree diff in "git log -L" machinery has been
+   optimized away.
+
+ * The http transport lacked some optimization the native transports
+   learned to avoid unnecessary ref advertisement, which has been
+   corrected.
 
 
 Fixes since v2.23
@@ -98,6 +130,10 @@ Fixes since v2.23
    updating ".gitattributes" done in one step when replaying
    subsequent steps.
    (merge 2c65d90f75 bc/reread-attributes-during-rebase later to maint).
+
+ * Tell cURL library to use the same malloc() implementation, with the
+   xmalloc() wrapper, as the rest of the system, for consistency.
+   (merge 93b980e58f cb/curl-use-xmalloc later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
