@@ -1,3 +1,4 @@
+#include "cache.h"
 #include "builtin.h"
 #include "commit.h"
 #include "tag.h"
@@ -62,6 +63,9 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 	}
 	if (argc - i != 3) /* "--" "<head>" "<remote>" */
 		die(_("not handling anything other than two heads merge."));
+
+	if (repo_read_index_unmerged(the_repository))
+		die_resolve_conflict("merge");
 
 	o.branch1 = argv[++i];
 	o.branch2 = argv[++i];
