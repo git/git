@@ -543,8 +543,6 @@ In addition, the following pairs of options are incompatible:
  * --preserve-merges and --interactive
  * --preserve-merges and --signoff
  * --preserve-merges and --rebase-merges
- * --rebase-merges and --strategy
- * --rebase-merges and --strategy-option
 
 BEHAVIORAL DIFFERENCES
 -----------------------
