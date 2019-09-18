@@ -42,7 +42,7 @@ hgnewcsets = 0
 
 def usage():
 
-        print """\
+        print("""\
 %s: [OPTIONS] <hgprj>
 
 options:
@@ -54,7 +54,7 @@ options:
 
 required:
     hgprj:  name of the HG project to import (directory)
-""" % sys.argv[0]
+""" % sys.argv[0])
 
 #------------------------------------------------------------------------------
 
@@ -104,22 +104,22 @@ os.chdir(hgprj)
 if state:
     if os.path.exists(state):
         if verbose:
-            print 'State does exist, reading'
+            print('State does exist, reading')
         f = open(state, 'r')
         hgvers = pickle.load(f)
     else:
-        print 'State does not exist, first run'
+        print('State does not exist, first run')
 
 sock = os.popen('hg tip --template "{rev}"')
 tip = sock.read()
 if sock.close():
     sys.exit(1)
 if verbose:
-    print 'tip is', tip
+    print('tip is', tip)
 
 # Calculate the branches
 if verbose:
-    print 'analysing the branches...'
+    print('analysing the branches...')
 hgchildren["0"] = ()
 hgparents["0"] = (None, None)
 hgbranch["0"] = "master"
@@ -154,15 +154,15 @@ for cset in range(1, int(tip) + 1):
         else:
             hgbranch[str(cset)] = "branch-" + str(cset)
 
-if not hgvers.has_key("0"):
-    print 'creating repository'
+if "0" not in hgvers:
+    print('creating repository')
     os.system('git init')
 
 # loop through every hg changeset
 for cset in range(int(tip) + 1):
 
     # incremental, already seen
-    if hgvers.has_key(str(cset)):
+    if str(cset) in hgvers:
         continue
     hgnewcsets += 1
 
@@ -180,27 +180,27 @@ for cset in range(int(tip) + 1):
     os.write(fdcomment, csetcomment)
     os.close(fdcomment)
 
-    print '-----------------------------------------'
-    print 'cset:', cset
-    print 'branch:', hgbranch[str(cset)]
-    print 'user:', user
-    print 'date:', date
-    print 'comment:', csetcomment
+    print('-----------------------------------------')
+    print('cset:', cset)
+    print('branch:', hgbranch[str(cset)])
+    print('user:', user)
+    print('date:', date)
+    print('comment:', csetcomment)
     if parent:
-	print 'parent:', parent
+        print('parent:', parent)
     if mparent:
-        print 'mparent:', mparent
+        print('mparent:', mparent)
     if tag:
-        print 'tag:', tag
-    print '-----------------------------------------'
+        print('tag:', tag)
+    print('-----------------------------------------')
 
     # checkout the parent if necessary
     if cset != 0:
         if hgbranch[str(cset)] == "branch-" + str(cset):
-            print 'creating new branch', hgbranch[str(cset)]
+            print('creating new branch', hgbranch[str(cset)])
             os.system('git checkout -b %s %s' % (hgbranch[str(cset)], hgvers[parent]))
         else:
-            print 'checking out branch', hgbranch[str(cset)]
+            print('checking out branch', hgbranch[str(cset)])
             os.system('git checkout %s' % hgbranch[str(cset)])
 
     # merge
@@ -209,7 +209,7 @@ for cset in range(int(tip) + 1):
             otherbranch = hgbranch[mparent]
         else:
             otherbranch = hgbranch[parent]
-        print 'merging', otherbranch, 'into', hgbranch[str(cset)]
+        print('merging', otherbranch, 'into', hgbranch[str(cset)])
         os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
 
     # remove everything except .git and .hg directories
@@ -233,12 +233,12 @@ for cset in range(int(tip) + 1):
 
     # delete branch if not used anymore...
     if mparent and len(hgchildren[str(cset)]):
-        print "Deleting unused branch:", otherbranch
+        print("Deleting unused branch:", otherbranch)
         os.system('git branch -d %s' % otherbranch)
 
     # retrieve and record the version
     vvv = os.popen('git show --quiet --pretty=format:%H').read()
-    print 'record', cset, '->', vvv
+    print('record', cset, '->', vvv)
     hgvers[str(cset)] = vvv
 
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
@@ -247,7 +247,7 @@ if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
 # write the state for incrementals
 if state:
     if verbose:
-        print 'Writing state'
+        print('Writing state')
     f = open(state, 'w')
     pickle.dump(hgvers, f)
 
