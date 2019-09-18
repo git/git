@@ -452,6 +452,34 @@ test_expect_success 'merge-recursive d/f conflict result' '
 
 '
 
+test_expect_success SYMLINKS 'dir in working tree with symlink ancestor does not produce d/f conflict' '
+	git init sym &&
+	(
+		cd sym &&
+		ln -s . foo &&
+		mkdir bar &&
+		>bar/file &&
+		git add foo bar/file &&
+		git commit -m "foo symlink" &&
+
+		git checkout -b branch1 &&
+		git commit --allow-empty -m "empty commit" &&
+
+		git checkout master &&
+		git rm foo &&
+		mkdir foo &&
+		>foo/bar &&
+		git add foo/bar &&
+		git commit -m "replace foo symlink with real foo dir and foo/bar file" &&
+
+		git checkout branch1 &&
+
+		git cherry-pick master &&
+		test_path_is_dir foo &&
+		test_path_is_file foo/bar
+	)
+'
+
 test_expect_success 'reset and 3-way merge' '
 
 	git reset --hard "$c2" &&
