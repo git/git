@@ -45,7 +45,7 @@ $ cd git
 Use + to indicate fixed-width here; couldn't get ` to work nicely with the
 quotes around "Pony Saying 'Um, Hello'".
 ////
-In this tutorial, we will add a new command, +git psuh+, short for ``Pony Saying
+In this tutorial, we will add a new command, +git push+, short for ``Pony Saying
 `Um, Hello''' - a feature which has gone unimplemented despite a high frequency
 of invocation during users' typical daily workflow.
 
@@ -61,11 +61,11 @@ it's fine to base your work on `master`. However, in the future for bugfixes,
 etc., you should check that document and base it on the appropriate branch.
 
 For the purposes of this document, we will base all our work on the `master`
-branch of the upstream project. Create the `psuh` branch you will use for
+branch of the upstream project. Create the `push` branch you will use for
 development like so:
 
 ----
-$ git checkout -b psuh origin/master
+$ git checkout -b push origin/master
 ----
 
 We'll make a number of commits here in order to demonstrate how to send a topic
@@ -75,36 +75,36 @@ with multiple patches up for review simultaneously.
 == Code It Up!
 
 NOTE: A reference implementation can be found at
-https://github.com/nasamuffin/git/tree/psuh.
+https://github.com/nasamuffin/git/tree/push.
 
 [[add-new-command]]
 === Adding a New Command
 
 Lots of the subcommands are written as builtins, which means they are
 implemented in C and compiled into the main `git` executable. Implementing the
-very simple `psuh` command as a built-in will demonstrate the structure of the
+very simple `push` command as a built-in will demonstrate the structure of the
 codebase, the internal API, and the process of working together as a contributor
 with the reviewers and maintainer to integrate this change into the system.
 
 Built-in subcommands are typically implemented in a function named "cmd_"
 followed by the name of the subcommand, in a source file named after the
 subcommand and contained within `builtin/`. So it makes sense to implement your
-command in `builtin/psuh.c`. Create that file, and within it, write the entry
+command in `builtin/push.c`. Create that file, and within it, write the entry
 point for your command in a function matching the style and signature:
 
 ----
-int cmd_psuh(int argc, const char **argv, const char *prefix)
+int cmd_push(int argc, const char **argv, const char *prefix)
 ----
 
-We'll also need to add the declaration of psuh; open up `builtin.h`, find the
-declaration for `cmd_push`, and add a new line for `psuh` immediately before it,
+We'll also need to add the declaration of push; open up `builtin.h`, find the
+declaration for `cmd_push`, and add a new line for `push` immediately before it,
 in order to keep the declarations sorted:
 
 ----
-int cmd_psuh(int argc, const char **argv, const char *prefix);
+int cmd_push(int argc, const char **argv, const char *prefix);
 ----
 
-Be sure to `#include "builtin.h"` in your `psuh.c`.
+Be sure to `#include "builtin.h"` in your `push.c`.
 
 Go ahead and add some throwaway printf to that function. This is a decent
 starting point as we can now add build rules and register the command.
@@ -116,7 +116,7 @@ Throughout the tutorial, we will mark strings for translation as necessary; you
 should also do so when writing your user-facing commands in the future.
 
 ----
-int cmd_psuh(int argc, const char **argv, const char *prefix)
+int cmd_push(int argc, const char **argv, const char *prefix)
 {
 	printf(_("Pony saying hello goes here.\n"));
 	return 0;
@@ -124,7 +124,7 @@ int cmd_psuh(int argc, const char **argv, const char *prefix)
 ----
 
 Let's try to build it.  Open `Makefile`, find where `builtin/push.o` is added
-to `BUILTIN_OBJS`, and add `builtin/psuh.o` in the same way next to it in
+to `BUILTIN_OBJS`, and add `builtin/push.o` in the same way next to it in
 alphabetical order. Once you've done so, move to the top-level directory and
 build simply with `make`. Also add the `DEVELOPER=1` variable to turn on
 some additional warnings:
@@ -148,7 +148,7 @@ The list of commands lives in `git.c`. We can register a new command by adding
 a `cmd_struct` to the `commands[]` array. `struct cmd_struct` takes a string
 with the command name, a function pointer to the command implementation, and a
 setup option flag. For now, let's keep mimicking `push`. Find the line where
-`cmd_push` is registered, copy it, and modify it for `cmd_psuh`, placing the new
+`cmd_push` is registered, copy it, and modify it for `cmd_push`, placing the new
 line in alphabetical order.
 
 The options are documented in `builtin.h` under "Adding a new built-in." Since
@@ -160,20 +160,20 @@ and see if it works. There's a binary you can use to test with in the
 `bin-wrappers` directory.
 
 ----
-$ ./bin-wrappers/git psuh
+$ ./bin-wrappers/git push
 ----
 
 Check it out! You've got a command! Nice work! Let's commit this.
 
 `git status` reveals modified `Makefile`, `builtin.h`, and `git.c` as well as
-untracked `builtin/psuh.c` and `git-psuh`. First, let's take care of the binary,
+untracked `builtin/push.c` and `git-push`. First, let's take care of the binary,
 which should be ignored. Open `.gitignore` in your editor, find `/git-push`, and
 add an entry for your new command in alphabetical order:
 
 ----
 ...
 /git-prune-packed
-/git-psuh
+/git-push
 /git-pull
 /git-push
 /git-quiltimport
@@ -181,12 +181,12 @@ add an entry for your new command in alphabetical order:
 ...
 ----
 
-Checking `git status` again should show that `git-psuh` has been removed from
+Checking `git status` again should show that `git-push` has been removed from
 the untracked list and `.gitignore` has been added to the modified list. Now we
 can stage and commit:
 
 ----
-$ git add Makefile builtin.h builtin/psuh.c git.c .gitignore
+$ git add Makefile builtin.h builtin/push.c git.c .gitignore
 $ git commit -s
 ----
 
@@ -199,12 +199,12 @@ couldn't easily be understood from your diff. When editing your commit message,
 don't remove the Signed-off-by line which was added by `-s` above.
 
 ----
-psuh: add a built-in by popular demand
+push: add a built-in by popular demand
 
 Internal metrics indicate this is a command many users expect to be
 present. So here's an implementation to help drive customer
 satisfaction and engagement: a pony which doubtfully greets the user,
-or, a Pony Saying "Um, Hello" (PSUH).
+or, a Pony Saying "Um, Hello" (push).
 
 This commit message is intentionally formatted to 72 columns per line,
 starts with a single line as "commit message subject" that is written as
@@ -216,8 +216,8 @@ such as answering the question "why?".
 Signed-off-by: A U Thor <author@example.com>
 ----
 
-Go ahead and inspect your new commit with `git show`. "psuh:" indicates you
-have modified mainly the `psuh` command. The subject line gives readers an idea
+Go ahead and inspect your new commit with `git show`. "push:" indicates you
+have modified mainly the `push` command. The subject line gives readers an idea
 of what you've changed. The sign-off line (`-s`) indicates that you agree to
 the Developer's Certificate of Origin 1.1 (see the
 `Documentation/SubmittingPatches` +++[[dco]]+++ header).
@@ -232,7 +232,7 @@ on the reference implementation linked at the top of this document.
 It's probably useful to do at least something besides printing out a string.
 Let's start by having a look at everything we get.
 
-Modify your `cmd_psuh` implementation to dump the args you're passed, keeping
+Modify your `cmd_push` implementation to dump the args you're passed, keeping
 existing `printf()` calls in place:
 
 ----
@@ -254,7 +254,7 @@ existing `printf()` calls in place:
 
 Build and try it. As you may expect, there's pretty much just whatever we give
 on the command line, including the name of our command. (If `prefix` is empty
-for you, try `cd Documentation/ && ../bin-wrappers/git psuh`). That's not so
+for you, try `cd Documentation/ && ../bin-wrappers/git push`). That's not so
 helpful. So what other context can we get?
 
 Add a line to `#include "config.h"`. Then, add the following bits to the
@@ -288,8 +288,8 @@ Great! Now we know how to check for values in the Git config. Let's commit this
 too, so we don't lose our progress.
 
 ----
-$ git add builtin/psuh.c
-$ git commit -sm "psuh: show parameters & config opts"
+$ git add builtin/push.c
+$ git commit -sm "push: show parameters & config opts"
 ----
 
 NOTE: Again, the above is for sake of brevity in this tutorial. In a real change
@@ -316,7 +316,7 @@ Be sure to include the header to allow you to use `struct wt_status`:
 #include "wt-status.h"
 ----
 
-Then modify your `cmd_psuh` implementation to declare your `struct wt_status`,
+Then modify your `cmd_push` implementation to declare your `struct wt_status`,
 prepare it, and print its contents:
 
 ----
@@ -337,8 +337,8 @@ Run it again. Check it out - here's the (verbose) name of your current branch!
 Let's commit this as well.
 
 ----
-$ git add builtin/psuh.c
-$ git commit -sm "psuh: print the current branch"
+$ git add builtin/push.c
+$ git commit -sm "push: print the current branch"
 ----
 
 Now let's see if we can get some info about a specific commit.
@@ -355,7 +355,7 @@ Add the following includes:
 #include "pretty.h"
 ----
 
-Then, add the following lines within your implementation of `cmd_psuh()` near
+Then, add the following lines within your implementation of `cmd_push()` near
 the declarations and the logic, respectively.
 
 ----
@@ -389,8 +389,8 @@ see the subject line of the most recent commit in `origin/master` that you know
 about. Neat! Let's commit that as well.
 
 ----
-$ git add builtin/psuh.c
-$ git commit -sm "psuh: display the top of origin/master"
+$ git add builtin/push.c
+$ git commit -sm "push: display the top of origin/master"
 ----
 
 [[add-documentation]]
@@ -401,7 +401,7 @@ community. But hang on just a minute - this isn't very user-friendly. Run the
 following:
 
 ----
-$ ./bin-wrappers/git help psuh
+$ ./bin-wrappers/git help push
 ----
 
 Your new command is undocumented! Let's fix that.
@@ -409,7 +409,7 @@ Your new command is undocumented! Let's fix that.
 Take a look at `Documentation/git-*.txt`. These are the manpages for the
 subcommands that Git knows about. You can open these up and take a look to get
 acquainted with the format, but then go ahead and make a new file
-`Documentation/git-psuh.txt`. Like with most of the documentation in the Git
+`Documentation/git-push.txt`. Like with most of the documentation in the Git
 project, help pages are written with AsciiDoc (see CodingGuidelines, "Writing
 Documentation" section). Use the following template to fill out your own
 manpage:
@@ -417,18 +417,18 @@ manpage:
 // Surprisingly difficult to embed AsciiDoc source within AsciiDoc.
 [listing]
 ....
-git-psuh(1)
+git-push(1)
 ===========
 
 NAME
 ----
-git-psuh - Delight users' typo with a shy horse
+git-push - Delight users' typo with a shy horse
 
 
 SYNOPSIS
 --------
 [verse]
-'git-psuh [<arg>...]'
+'git-push [<arg>...]'
 
 DESCRIPTION
 -----------
@@ -459,14 +459,14 @@ convert your AsciiDoc to troff which is man-readable like so:
 
 ----
 $ make all doc
-$ man Documentation/git-psuh.1
+$ man Documentation/git-push.1
 ----
 
 or
 
 ----
-$ make -C Documentation/ git-psuh.1
-$ man Documentation/git-psuh.1
+$ make -C Documentation/ git-push.1
+$ man Documentation/git-push.1
 ----
 
 NOTE: You may need to install the package `asciidoc` to get this to work.
@@ -483,7 +483,7 @@ Go ahead and commit your new documentation change.
 [[add-usage]]
 === Adding Usage Text
 
-Try and run `./bin-wrappers/git psuh -h`. Your command should crash at the end.
+Try and run `./bin-wrappers/git push -h`. Your command should crash at the end.
 That's because `-h` is a special case which your command should handle by
 printing usage.
 
@@ -492,20 +492,20 @@ tool for pulling out options you need to be able to handle, and it takes a
 usage string.
 
 In order to use it, we'll need to prepare a NULL-terminated array of usage
-strings and a `builtin_psuh_options` array.
+strings and a `builtin_push_options` array.
 
 Add a line to `#include "parse-options.h"`.
 
 At global scope, add your array of usage strings:
 
 ----
-static const char * const psuh_usage[] = {
-	N_("git psuh [<arg>...]"),
+static const char * const push_usage[] = {
+	N_("git push [<arg>...]"),
 	NULL,
 };
 ----
 
-Then, within your `cmd_psuh()` implementation, we can declare and populate our
+Then, within your `cmd_push()` implementation, we can declare and populate our
 `option` struct. Ours is pretty boring but you can add more to it if you want to
 explore `parse_options()` in more detail:
 
@@ -519,7 +519,7 @@ Finally, before you print your args and prefix, add the call to
 `parse-options()`:
 
 ----
-	argc = parse_options(argc, argv, prefix, options, psuh_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 ----
 
 This call will modify your `argv` parameter. It will strip the options you
@@ -568,26 +568,26 @@ as many of the family/subcmd combinations are full, best practice seems to be
 to find a command close enough to the one you've added and share its naming
 space.
 
-Create a new file `t/t9999-psuh-tutorial.sh`. Begin with the header as so (see
+Create a new file `t/t9999-push-tutorial.sh`. Begin with the header as so (see
 "Writing Tests" and "Source 'test-lib.sh'" in `t/README`):
 
 ----
 #!/bin/sh
 
-test_description='git-psuh test
+test_description='git-push test
 
-This test runs git-psuh and makes sure it does not crash.'
+This test runs git-push and makes sure it does not crash.'
 
 . ./test-lib.sh
 ----
 
 Tests are framed inside of a `test_expect_success` in order to output TAP
-formatted results. Let's make sure that `git psuh` doesn't exit poorly and does
+formatted results. Let's make sure that `git push` doesn't exit poorly and does
 mention the right animal somewhere:
 
 ----
 test_expect_success 'runs correctly with no args and good output' '
-	git psuh >actual &&
+	git push >actual &&
 	test_i18ngrep Pony actual
 '
 ----
@@ -602,7 +602,7 @@ test_done
 Make sure you mark your test script executable:
 
 ----
-$ chmod +x t/t9999-psuh-tutorial.sh
+$ chmod +x t/t9999-push-tutorial.sh
 ----
 
 You can get an idea of whether you created your new test script successfully
@@ -616,10 +616,10 @@ Let's try and run locally:
 
 ----
 $ make
-$ cd t/ && prove t9999-psuh-tutorial.sh
+$ cd t/ && prove t9999-push-tutorial.sh
 ----
 
-You can run the full test suite and ensure `git-psuh` didn't break anything:
+You can run the full test suite and ensure `git-push` didn't break anything:
 
 ----
 $ cd t/
@@ -711,14 +711,14 @@ workflow.
 ----
 $ git checkout master
 $ git pull -r
-$ git rebase master psuh
+$ git rebase master push
 ----
 
 Finally, you're ready to push your new topic branch! (Due to our branch and
 command name choices, be careful when you type the command below.)
 
 ----
-$ git push remotename psuh
+$ git push remotename push
 ----
 
 Now you should be able to go and check out your newly created branch on GitHub.
@@ -750,7 +750,7 @@ If the CI fails, you can update your changes with `git rebase -i` and push your
 branch again:
 
 ----
-$ git push -f remotename psuh
+$ git push -f remotename push
 ----
 
 In fact, you should continue to make changes this way up until the point when
@@ -781,7 +781,7 @@ Once you have your branch again in the shape you want following all review
 comments, you can submit again:
 
 ----
-$ git push -f remotename psuh
+$ git push -f remotename push
 ----
 
 Next, go look at your pull request against GitGitGadget; you should see the CI
@@ -821,19 +821,19 @@ Sending emails with Git is a two-part process; before you can prepare the emails
 themselves, you'll need to prepare the patches. Luckily, this is pretty simple:
 
 ----
-$ git format-patch --cover-letter -o psuh/ master..psuh
+$ git format-patch --cover-letter -o push/ master..push
 ----
 
 The `--cover-letter` parameter tells `format-patch` to create a cover letter
 template for you. You will need to fill in the template before you're ready
 to send - but for now, the template will be next to your other patches.
 
-The `-o psuh/` parameter tells `format-patch` to place the patch files into a
+The `-o push/` parameter tells `format-patch` to place the patch files into a
 directory. This is useful because `git send-email` can take a directory and
 send out all the patches from there.
 
-`master..psuh` tells `format-patch` to generate patches for the difference
-between `master` and `psuh`. It will make one patch file per commit. After you
+`master..push` tells `format-patch` to generate patches for the difference
+between `master` and `push`. It will make one patch file per commit. After you
 run, you can go have a look at each of the patches with your favorite text
 editor and make sure everything looks alright; however, it's not recommended to
 make code fixups via the patch file. It's a better idea to make the change the
@@ -867,7 +867,7 @@ header is correct. Then modify your `Subject:` to something which succinctly
 covers the purpose of your entire topic branch, for example:
 
 ----
-Subject: [PATCH 0/7] adding the 'psuh' command
+Subject: [PATCH 0/7] adding the 'push' command
 ----
 
 Make sure you retain the ``[PATCH 0/X]'' part; that's what indicates to the Git
@@ -883,14 +883,14 @@ what you're trying to do, and why, in a way that's more apparent than just
 looking at your diff. Be sure to explain anything your diff doesn't make clear
 on its own.
 
-Here's an example body for `psuh`:
+Here's an example body for `push`:
 
 ----
 Our internal metrics indicate widespread interest in the command
-git-psuh - that is, many users are trying to use it, but finding it is
+git-push - that is, many users are trying to use it, but finding it is
 unavailable, using some unknown workaround instead.
 
-The following handful of patches add the psuh command and implement some
+The following handful of patches add the push command and implement some
 handy features on top of it.
 
 This patchset is part of the MyFirstContribution tutorial and should not
@@ -899,19 +899,19 @@ be merged.
 
 The template created by `git format-patch --cover-letter` includes a diffstat.
 This gives reviewers a summary of what they're in for when reviewing your topic.
-The one generated for `psuh` from the sample implementation looks like this:
+The one generated for `push` from the sample implementation looks like this:
 
 ----
- Documentation/git-psuh.txt | 40 +++++++++++++++++++++
+ Documentation/git-push.txt | 40 +++++++++++++++++++++
  Makefile                   |  1 +
  builtin.h                  |  1 +
- builtin/psuh.c             | 73 ++++++++++++++++++++++++++++++++++++++
+ builtin/push.c             | 73 ++++++++++++++++++++++++++++++++++++++
  git.c                      |  1 +
- t/t9999-psuh-tutorial.sh   | 12 +++++++
+ t/t9999-push-tutorial.sh   | 12 +++++++
  6 files changed, 128 insertions(+)
- create mode 100644 Documentation/git-psuh.txt
- create mode 100644 builtin/psuh.c
- create mode 100755 t/t9999-psuh-tutorial.sh
+ create mode 100644 Documentation/git-push.txt
+ create mode 100644 builtin/push.c
+ create mode 100755 t/t9999-push-tutorial.sh
 ----
 
 Finally, the letter will include the version of Git used to generate the
@@ -920,11 +920,11 @@ patches. You can leave that string alone.
 [[sending-git-send-email]]
 === Sending Email
 
-At this point you should have a directory `psuh/` which is filled with your
+At this point you should have a directory `push/` which is filled with your
 patches and a cover letter. Time to mail it out! You can send it like this:
 
 ----
-$ git send-email --to=target@example.com psuh/*.patch
+$ git send-email --to=target@example.com push/*.patch
 ----
 
 NOTE: Check `git help send-email` for some other options which you may find
@@ -955,11 +955,11 @@ similar.
 First, generate your v2 patches again:
 
 ----
-$ git format-patch -v2 --cover-letter -o psuh/ master..psuh
+$ git format-patch -v2 --cover-letter -o push/ master..push
 ----
 
 This will add your v2 patches, all named like `v2-000n-my-commit-subject.patch`,
-to the `psuh/` directory. You may notice that they are sitting alongside the v1
+to the `push/` directory. You may notice that they are sitting alongside the v1
 patches; that's fine, but be careful when you are ready to send them.
 
 Edit your cover letter again. Now is a good time to mention what's different
@@ -998,7 +998,7 @@ to the command:
 ----
 $ git send-email --to=target@example.com
 		 --in-reply-to="<foo.12345.author@example.com>"
-		 psuh/v2*
+		 push/v2*
 ----
 
 [[single-patch]]
