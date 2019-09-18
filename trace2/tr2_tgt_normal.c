@@ -87,7 +87,7 @@ static void fn_start_fl(const char *file, int line,
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	strbuf_addstr(&buf_payload, "start ");
-	sq_quote_argv_pretty(&buf_payload, argv);
+	sq_append_quote_argv_pretty(&buf_payload, argv);
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
@@ -135,11 +135,6 @@ static void maybe_append_string_va(struct strbuf *buf, const char *fmt,
 		va_end(copy_ap);
 		return;
 	}
-
-	if (fmt && *fmt) {
-		strbuf_addstr(buf, fmt);
-		return;
-	}
 }
 
 static void fn_error_va_fl(const char *file, int line, const char *fmt,
@@ -147,8 +142,11 @@ static void fn_error_va_fl(const char *file, int line, const char *fmt,
 {
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addstr(&buf_payload, "error ");
-	maybe_append_string_va(&buf_payload, fmt, ap);
+	strbuf_addstr(&buf_payload, "error");
+	if (fmt && *fmt) {
+		strbuf_addch(&buf_payload, ' ');
+		maybe_append_string_va(&buf_payload, fmt, ap);
+	}
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
@@ -188,8 +186,8 @@ static void fn_alias_fl(const char *file, int line, const char *alias,
 {
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addf(&buf_payload, "alias %s ->", alias);
-	sq_quote_argv_pretty(&buf_payload, argv);
+	strbuf_addf(&buf_payload, "alias %s -> ", alias);
+	sq_append_quote_argv_pretty(&buf_payload, argv);
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
@@ -200,12 +198,12 @@ static void fn_child_start_fl(const char *file, int line,
 {
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addf(&buf_payload, "child_start[%d] ", cmd->trace2_child_id);
+	strbuf_addf(&buf_payload, "child_start[%d]", cmd->trace2_child_id);
 
 	if (cmd->dir) {
-		strbuf_addstr(&buf_payload, " cd");
+		strbuf_addstr(&buf_payload, " cd ");
 		sq_quote_buf_pretty(&buf_payload, cmd->dir);
-		strbuf_addstr(&buf_payload, "; ");
+		strbuf_addstr(&buf_payload, ";");
 	}
 
 	/*
@@ -213,9 +211,10 @@ static void fn_child_start_fl(const char *file, int line,
 	 * See trace_add_env() in run-command.c as used by original trace.c
 	 */
 
+	strbuf_addch(&buf_payload, ' ');
 	if (cmd->git_cmd)
-		strbuf_addstr(&buf_payload, "git");
-	sq_quote_argv_pretty(&buf_payload, cmd->argv);
+		strbuf_addstr(&buf_payload, "git ");
+	sq_append_quote_argv_pretty(&buf_payload, cmd->argv);
 
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
@@ -240,9 +239,11 @@ static void fn_exec_fl(const char *file, int line, uint64_t us_elapsed_absolute,
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	strbuf_addf(&buf_payload, "exec[%d] ", exec_id);
-	if (exe)
+	if (exe) {
 		strbuf_addstr(&buf_payload, exe);
-	sq_quote_argv_pretty(&buf_payload, argv);
+		strbuf_addch(&buf_payload, ' ');
+	}
+	sq_append_quote_argv_pretty(&buf_payload, argv);
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }

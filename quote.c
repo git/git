@@ -84,12 +84,28 @@ void sq_quote_argv(struct strbuf *dst, const char **argv)
 	}
 }
 
+/*
+ * Legacy function to append each argv value, quoted as necessasry,
+ * with whitespace before each value.  This results in a leading
+ * space in the result.
+ */
 void sq_quote_argv_pretty(struct strbuf *dst, const char **argv)
+{
+	if (argv[0])
+		strbuf_addch(dst, ' ');
+	sq_append_quote_argv_pretty(dst, argv);
+}
+
+/*
+ * Append each argv value, quoted as necessary, with whitespace between them.
+ */
+void sq_append_quote_argv_pretty(struct strbuf *dst, const char **argv)
 {
 	int i;
 
 	for (i = 0; argv[i]; i++) {
-		strbuf_addch(dst, ' ');
+		if (i > 0)
+			strbuf_addch(dst, ' ');
 		sq_quote_buf_pretty(dst, argv[i]);
 	}
 }
