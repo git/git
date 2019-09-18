@@ -287,13 +287,6 @@ static int unuse_one_window(struct packed_git *current)
 	return 0;
 }
 
-void release_pack_memory(size_t need)
-{
-	size_t cur = pack_mapped;
-	while (need >= (cur - pack_mapped) && unuse_one_window(NULL))
-		; /* nothing */
-}
-
 void close_pack_windows(struct packed_git *p)
 {
 	while (p->windows) {
@@ -710,22 +703,11 @@ void unuse_pack(struct pack_window **w_cursor)
 	}
 }
 
-static void try_to_free_pack_memory(size_t size)
-{
-	release_pack_memory(size);
-}
-
 struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 {
-	static int have_set_try_to_free_routine;
 	struct stat st;
 	size_t alloc;
 	struct packed_git *p;
-
-	if (!have_set_try_to_free_routine) {
-		have_set_try_to_free_routine = 1;
-		set_try_to_free_routine(try_to_free_pack_memory);
-	}
 
 	/*
 	 * Make sure a corresponding .pack file exists and that

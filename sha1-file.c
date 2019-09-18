@@ -952,12 +952,8 @@ void *xmmap_gently(void *start, size_t length,
 
 	mmap_limit_check(length);
 	ret = mmap(start, length, prot, flags, fd, offset);
-	if (ret == MAP_FAILED) {
-		if (!length)
-			return NULL;
-		release_pack_memory(length);
-		ret = mmap(start, length, prot, flags, fd, offset);
-	}
+	if (ret == MAP_FAILED && !length)
+		ret = NULL;
 	return ret;
 }
 

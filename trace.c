@@ -88,8 +88,6 @@ static int prepare_trace_line(const char *file, int line,
 	if (!trace_want(key))
 		return 0;
 
-	set_try_to_free_routine(NULL);	/* is never reset */
-
 	/* unit tests may want to disable additional trace output */
 	if (trace_want(&trace_bare))
 		return 1;
