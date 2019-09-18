@@ -132,4 +132,86 @@ test_expect_success '--raw is forbidden' '
 	test_must_fail git log -L1,24:b.c --raw
 '
 
+test_expect_success 'setup for checking fancy rename following' '
+	git checkout --orphan moves-start &&
+	git reset --hard &&
+
+	printf "%s\n"    12 13 14 15      b c d e   >file-1 &&
+	printf "%s\n"    22 23 24 25      B C D E   >file-2 &&
+	git add file-1 file-2 &&
+	test_tick &&
+	git commit -m "Add file-1 and file-2" &&
+	oid_add_f1_f2=$(git rev-parse --short HEAD) &&
+
+	git checkout -b moves-main &&
+	printf "%s\n" 11 12 13 14 15      b c d e   >file-1 &&
+	git commit -a -m "Modify file-1 on main" &&
+	oid_mod_f1_main=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n" 21 22 23 24 25      B C D E   >file-2 &&
+	git commit -a -m "Modify file-2 on main #1" &&
+	oid_mod_f2_main_1=$(git rev-parse --short HEAD) &&
+
+	git mv file-1 renamed-1 &&
+	git commit -m "Rename file-1 to renamed-1 on main" &&
+
+	printf "%s\n" 11 12 13 14 15      b c d e f >renamed-1 &&
+	git commit -a -m "Modify renamed-1 on main" &&
+	oid_mod_r1_main=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n" 21 22 23 24 25      B C D E F >file-2 &&
+	git commit -a -m "Modify file-2 on main #2" &&
+	oid_mod_f2_main_2=$(git rev-parse --short HEAD) &&
+
+	git checkout -b moves-side moves-start &&
+	printf "%s\n"    12 13 14 15 16   b c d e   >file-1 &&
+	git commit -a -m "Modify file-1 on side #1" &&
+	oid_mod_f1_side_1=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n"    22 23 24 25 26   B C D E   >file-2 &&
+	git commit -a -m "Modify file-2 on side" &&
+	oid_mod_f2_side=$(git rev-parse --short HEAD) &&
+
+	git mv file-2 renamed-2 &&
+	git commit -m "Rename file-2 to renamed-2 on side" &&
+
+	printf "%s\n"    12 13 14 15 16 a b c d e   >file-1 &&
+	git commit -a -m "Modify file-1 on side #2" &&
+	oid_mod_f1_side_2=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n"    22 23 24 25 26 A B C D E   >renamed-2 &&
+	git commit -a -m "Modify renamed-2 on side" &&
+	oid_mod_r2_side=$(git rev-parse --short HEAD) &&
+
+	git checkout moves-main &&
+	git merge moves-side &&
+	oid_merge=$(git rev-parse --short HEAD)
+'
+
+test_expect_success 'fancy rename following #1' '
+	cat >expect <<-EOF &&
+	$oid_merge Merge branch '\''moves-side'\'' into moves-main
+	$oid_mod_f1_side_2 Modify file-1 on side #2
+	$oid_mod_f1_side_1 Modify file-1 on side #1
+	$oid_mod_r1_main Modify renamed-1 on main
+	$oid_mod_f1_main Modify file-1 on main
+	$oid_add_f1_f2 Add file-1 and file-2
+	EOF
+	git log -L1:renamed-1 --oneline --no-patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fancy rename following #2' '
+	cat >expect <<-EOF &&
+	$oid_merge Merge branch '\''moves-side'\'' into moves-main
+	$oid_mod_r2_side Modify renamed-2 on side
+	$oid_mod_f2_side Modify file-2 on side
+	$oid_mod_f2_main_2 Modify file-2 on main #2
+	$oid_mod_f2_main_1 Modify file-2 on main #1
+	$oid_add_f1_f2 Add file-1 and file-2
+	EOF
+	git log -L1:renamed-2 --oneline --no-patch >actual &&
+	test_cmp expect actual
+'
+
 test_done
