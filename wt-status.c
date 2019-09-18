@@ -1434,6 +1434,8 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git cherry-pick --continue\")"));
 		status_printf_ln(s, color,
+			_("  (use \"git cherry-pick --skip\" to skip this patch)"));
+		status_printf_ln(s, color,
 			_("  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"));
 	}
 	wt_longstatus_print_trailer(s);
@@ -1460,6 +1462,8 @@ static void show_revert_in_progress(struct wt_status *s,
 		else
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git revert --continue\")"));
+		status_printf_ln(s, color,
+			_("  (use \"git revert --skip\" to skip this patch)"));
 		status_printf_ln(s, color,
 			_("  (use \"git revert --abort\" to cancel the revert operation)"));
 	}

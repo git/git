@@ -733,6 +733,7 @@ test_expect_success 'status when cherry-picking before resolving conflicts' '
 On branch cherry_branch
 You are currently cherry-picking commit $TO_CHERRY_PICK.
   (fix conflicts and run "git cherry-pick --continue")
+  (use "git cherry-pick --skip" to skip this patch)
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
 Unmerged paths:
@@ -757,6 +758,7 @@ test_expect_success 'status when cherry-picking after resolving conflicts' '
 On branch cherry_branch
 You are currently cherry-picking commit $TO_CHERRY_PICK.
   (all conflicts fixed: run "git cherry-pick --continue")
+  (use "git cherry-pick --skip" to skip this patch)
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
 Changes to be committed:
@@ -778,6 +780,7 @@ test_expect_success 'status when cherry-picking after committing conflict resolu
 On branch cherry_branch
 Cherry-pick currently in progress.
   (run "git cherry-pick --continue" to continue)
+  (use "git cherry-pick --skip" to skip this patch)
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
 nothing to commit (use -u to show untracked files)
@@ -835,6 +838,7 @@ test_expect_success 'status while reverting commit (conflicts)' '
 On branch master
 You are currently reverting commit $TO_REVERT.
   (fix conflicts and run "git revert --continue")
+  (use "git revert --skip" to skip this patch)
   (use "git revert --abort" to cancel the revert operation)
 
 Unmerged paths:
@@ -855,6 +859,7 @@ test_expect_success 'status while reverting commit (conflicts resolved)' '
 On branch master
 You are currently reverting commit $TO_REVERT.
   (all conflicts fixed: run "git revert --continue")
+  (use "git revert --skip" to skip this patch)
   (use "git revert --abort" to cancel the revert operation)
 
 Changes to be committed:
@@ -887,6 +892,7 @@ test_expect_success 'status while reverting after committing conflict resolution
 On branch master
 Revert currently in progress.
   (run "git revert --continue" to continue)
+  (use "git revert --skip" to skip this patch)
   (use "git revert --abort" to cancel the revert operation)
 
 nothing to commit (use -u to show untracked files)
