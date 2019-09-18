@@ -3313,6 +3313,7 @@ static int is_valid_system_file_owner(PSID sid, TOKEN_USER **info)
 {
 	HANDLE token;
 	DWORD len;
+	char builtin_administrators_sid[SECURITY_MAX_SID_SIZE];
 
 	if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) ||
 	    IsWellKnownSid(sid, WinLocalSystemSid))
@@ -3330,7 +3331,63 @@ static int is_valid_system_file_owner(PSID sid, TOKEN_USER **info)
 		CloseHandle(token);
 	}
 
-	return *info && EqualSid(sid, (*info)->User.Sid) ? 1 : 0;
+	if (*info && EqualSid(sid, (*info)->User.Sid))
+		return 1;
+
+	/* Is the owner at least a member of BUILTIN\Administrators? */
+	len = ARRAY_SIZE(builtin_administrators_sid);
+	if (CreateWellKnownSid(WinBuiltinAdministratorsSid, NULL,
+			       builtin_administrators_sid, &len)) {
+		wchar_t name[256], domain[256];
+		DWORD name_size = ARRAY_SIZE(name);
+		DWORD domain_size = ARRAY_SIZE(domain);
+		SID_NAME_USE type;
+		PSID *members;
+		DWORD dummy, i;
+		/*
+		 * We avoid including the `lm.h` header and linking to
+		 * `netapi32.dll` directly, in favor of lazy-loading that DLL
+		 * when, and _only_ when, needed.
+		 */
+		DECLARE_PROC_ADDR(netapi32.dll, DWORD,
+				  NetLocalGroupGetMembers, LPCWSTR,
+				  LPCWSTR, DWORD, LPVOID, DWORD,
+				  LPDWORD, LPDWORD, PDWORD_PTR);
+		DECLARE_PROC_ADDR(netapi32.dll, DWORD,
+				  NetApiBufferFree, LPVOID);
+
+		if (LookupAccountSidW(NULL, builtin_administrators_sid,
+				      name, &name_size, domain, &domain_size,
+				      &type) &&
+		    INIT_PROC_ADDR(NetLocalGroupGetMembers) &&
+		    /*
+		     * Technically, `NetLocalGroupGetMembers()` wants to assign
+		     * an array of type `LOCALGROUP_MEMBERS_INFO_0`, which
+		     * however contains only one field of type `PSID`,
+		     * therefore we can pretend that it is an array over the
+		     * type `PSID`.
+		     *
+		     * Also, we simply ignore the condition where
+		     * `ERROR_MORE_DATA` is returned; This should not happen
+		     * anyway, as we are passing `-1` as `prefmaxlen`
+		     * parameter, which is equivalent to the constant
+		     * `MAX_PREFERRED_LENGTH`.
+		     */
+		    !NetLocalGroupGetMembers(NULL, name, 0, &members, -1,
+					     &len, &dummy, NULL)) {
+			for (i = 0; i < len; i++)
+				if (EqualSid(sid, members[i]))
+					break;
+
+			if (INIT_PROC_ADDR(NetApiBufferFree))
+				NetApiBufferFree(members);
+
+			/* Did we find the `sid` in the members? */
+			return i < len;
+		}
+	}
+
+	return 0;
 }
 
 /*
