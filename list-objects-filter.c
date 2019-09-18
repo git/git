@@ -328,12 +328,12 @@ static void filter_blobs_limit__init(
  */
 struct frame {
 	/*
-	 * defval is the usual default include/exclude value that
+	 * default_match is the usual default include/exclude value that
 	 * should be inherited as we recurse into directories based
 	 * upon pattern matching of the directory itself or of a
 	 * containing directory.
 	 */
-	int defval;
+	enum pattern_match_result default_match;
 
 	/*
 	 * 1 if the directory (recursively) contains any provisionally
@@ -347,7 +347,7 @@ struct frame {
 };
 
 struct filter_sparse_data {
-	struct exclude_list el;
+	struct pattern_list pl;
 
 	size_t nr, alloc;
 	struct frame *array_frame;
@@ -363,8 +363,9 @@ static enum list_objects_filter_result filter_sparse(
 	void *filter_data_)
 {
 	struct filter_sparse_data *filter_data = filter_data_;
-	int val, dtype;
+	int dtype;
 	struct frame *frame;
+	enum pattern_match_result match;
 
 	switch (filter_situation) {
 	default:
@@ -373,15 +374,15 @@ static enum list_objects_filter_result filter_sparse(
 	case LOFS_BEGIN_TREE:
 		assert(obj->type == OBJ_TREE);
 		dtype = DT_DIR;
-		val = is_excluded_from_list(pathname, strlen(pathname),
-					    filename, &dtype, &filter_data->el,
-					    r->index);
-		if (val < 0)
-			val = filter_data->array_frame[filter_data->nr - 1].defval;
+		match = path_matches_pattern_list(pathname, strlen(pathname),
+						  filename, &dtype, &filter_data->pl,
+						  r->index);
+		if (match == UNDECIDED)
+			match = filter_data->array_frame[filter_data->nr - 1].default_match;
 
 		ALLOC_GROW(filter_data->array_frame, filter_data->nr + 1,
 			   filter_data->alloc);
-		filter_data->array_frame[filter_data->nr].defval = val;
+		filter_data->array_frame[filter_data->nr].default_match = match;
 		filter_data->array_frame[filter_data->nr].child_prov_omit = 0;
 		filter_data->nr++;
 
@@ -435,12 +436,12 @@ static enum list_objects_filter_result filter_sparse(
 		frame = &filter_data->array_frame[filter_data->nr - 1];
 
 		dtype = DT_REG;
-		val = is_excluded_from_list(pathname, strlen(pathname),
-					    filename, &dtype, &filter_data->el,
+		match = path_matches_pattern_list(pathname, strlen(pathname),
+					    filename, &dtype, &filter_data->pl,
 					    r->index);
-		if (val < 0)
-			val = frame->defval;
-		if (val > 0) {
+		if (match == UNDECIDED)
+			match = frame->default_match;
+		if (match == MATCHED) {
 			if (omits)
 				oidset_remove(omits, &obj->oid);
 			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
@@ -482,12 +483,12 @@ static void filter_sparse_oid__init(
 	struct filter *filter)
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
-	if (add_excludes_from_blob_to_list(filter_options->sparse_oid_value,
-					   NULL, 0, &d->el) < 0)
+	if (add_patterns_from_blob_to_list(filter_options->sparse_oid_value,
+					   NULL, 0, &d->pl) < 0)
 		die("could not load filter specification");
 
 	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
-	d->array_frame[d->nr].defval = 0; /* default to include */
+	d->array_frame[d->nr].default_match = 0; /* default to include */
 	d->array_frame[d->nr].child_prov_omit = 0;
 	d->nr++;
 

@@ -10,7 +10,7 @@
 
 struct cache_entry;
 struct unpack_trees_options;
-struct exclude_list;
+struct pattern_list;
 
 typedef int (*merge_fn_t)(const struct cache_entry * const *src,
 		struct unpack_trees_options *options);
@@ -83,7 +83,7 @@ struct unpack_trees_options {
 	struct index_state *src_index;
 	struct index_state result;
 
-	struct exclude_list *el; /* for internal use */
+	struct pattern_list *pl; /* for internal use */
 };
 
 int unpack_trees(unsigned n, struct tree_desc *t,
