@@ -669,6 +669,28 @@ test_expect_success 'git clean -d skips untracked dirs containing ignored files'
 	test_path_is_missing foo/b/bb
 '
 
+test_expect_failure 'git clean -d skips nested repo containing ignored files' '
+	test_when_finished "rm -rf nested-repo-with-ignored-file" &&
+
+	git init nested-repo-with-ignored-file &&
+	(
+		cd nested-repo-with-ignored-file &&
+		>file &&
+		git add file &&
+		git commit -m Initial &&
+
+		# This file is ignored by a .gitignore rule in the outer repo
+		# added in the previous test.
+		>ignoreme
+	) &&
+
+	git clean -fd &&
+
+	test_path_is_file nested-repo-with-ignored-file/.git/index &&
+	test_path_is_file nested-repo-with-ignored-file/ignoreme &&
+	test_path_is_file nested-repo-with-ignored-file/file
+'
+
 test_expect_success MINGW 'handle clean & core.longpaths = false nicely' '
 	test_config core.longpaths false &&
 	a50=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
