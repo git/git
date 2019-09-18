@@ -340,7 +340,7 @@ __gitcomp ()
 			c="$c${4-}"
 			if [[ $c == "$cur_"* ]]; then
 				case $c in
-				--*=*|*.) ;;
+				--*=|*.) ;;
 				*) c="$c " ;;
 				esac
 				COMPREPLY[i++]="${2-}$c"
@@ -360,7 +360,7 @@ __gitcomp ()
 			c="$c${4-}"
 			if [[ $c == "$cur_"* ]]; then
 				case $c in
-				--*=*|*.) ;;
+				*=|*.) ;;
 				*) c="$c " ;;
 				esac
 				COMPREPLY[i++]="${2-}$c"
@@ -524,7 +524,7 @@ __git_index_files ()
 			# Even when a directory name itself does not contain
 			# any special characters, it will still be quoted if
 			# any of its (stripped) trailing path components do.
-			# Because of this we may have seen the same direcory
+			# Because of this we may have seen the same directory
 			# both quoted and unquoted.
 			if (p in paths)
 				# We have seen the same directory unquoted,
@@ -1399,7 +1399,18 @@ _git_clean ()
 
 _git_clone ()
 {
+	case "$prev" in
+	-c|--config)
+		__git_complete_config_variable_name_and_value
+		return
+		;;
+	esac
 	case "$cur" in
+	--config=*)
+		__git_complete_config_variable_name_and_value \
+			--cur="${cur##--config=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin clone
 		return
@@ -2225,181 +2236,282 @@ __git_config_vars=
 __git_compute_config_vars ()
 {
 	test -n "$__git_config_vars" ||
-	__git_config_vars="$(git help --config-for-completion | sort | uniq)"
+	__git_config_vars="$(git help --config-for-completion | sort -u)"
 }
 
-_git_config ()
+# Completes possible values of various configuration variables.
+#
+# Usage: __git_complete_config_variable_value [<option>]...
+# --varname=<word>: The name of the configuration variable whose value is
+#                   to be completed.  Defaults to the previous word on the
+#                   command line.
+# --cur=<word>: The current value to be completed.  Defaults to the current
+#               word to be completed.
+__git_complete_config_variable_value ()
 {
-	local varname
+	local varname="$prev" cur_="$cur"
+
+	while test $# != 0; do
+		case "$1" in
+		--varname=*)	varname="${1##--varname=}" ;;
+		--cur=*)	cur_="${1##--cur=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
 
 	if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
-		varname="${prev,,}"
+		varname="${varname,,}"
 	else
-		varname="$(echo "$prev" |tr A-Z a-z)"
+		varname="$(echo "$varname" |tr A-Z a-z)"
 	fi
 
 	case "$varname" in
 	branch.*.remote|branch.*.pushremote)
-		__gitcomp_nl "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)" "" "$cur_"
 		return
 		;;
 	branch.*.merge)
-		__git_complete_refs
+		__git_complete_refs --cur="$cur_"
 		return
 		;;
 	branch.*.rebase)
-		__gitcomp "false true merges preserve interactive"
+		__gitcomp "false true merges preserve interactive" "" "$cur_"
 		return
 		;;
 	remote.pushdefault)
-		__gitcomp_nl "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)" "" "$cur_"
 		return
 		;;
 	remote.*.fetch)
-		local remote="${prev#remote.}"
+		local remote="${varname#remote.}"
 		remote="${remote%.fetch}"
-		if [ -z "$cur" ]; then
+		if [ -z "$cur_" ]; then
 			__gitcomp_nl "refs/heads/" "" "" ""
 			return
 		fi
-		__gitcomp_nl "$(__git_refs_remotes "$remote")"
+		__gitcomp_nl "$(__git_refs_remotes "$remote")" "" "$cur_"
 		return
 		;;
 	remote.*.push)
-		local remote="${prev#remote.}"
+		local remote="${varname#remote.}"
 		remote="${remote%.push}"
 		__gitcomp_nl "$(__git for-each-ref \
-			--format='%(refname):%(refname)' refs/heads)"
+			--format='%(refname):%(refname)' refs/heads)" "" "$cur_"
 		return
 		;;
 	pull.twohead|pull.octopus)
 		__git_compute_merge_strategies
-		__gitcomp "$__git_merge_strategies"
-		return
-		;;
-	color.branch|color.diff|color.interactive|\
-	color.showbranch|color.status|color.ui)
-		__gitcomp "always never auto"
+		__gitcomp "$__git_merge_strategies" "" "$cur_"
 		return
 		;;
 	color.pager)
-		__gitcomp "false true"
+		__gitcomp "false true" "" "$cur_"
 		return
 		;;
 	color.*.*)
 		__gitcomp "
 			normal black red green yellow blue magenta cyan white
 			bold dim ul blink reverse
-			"
+			" "" "$cur_"
+		return
+		;;
+	color.*)
+		__gitcomp "false true always never auto" "" "$cur_"
 		return
 		;;
 	diff.submodule)
-		__gitcomp "$__git_diff_submodule_formats"
+		__gitcomp "$__git_diff_submodule_formats" "" "$cur_"
 		return
 		;;
 	help.format)
-		__gitcomp "man info web html"
+		__gitcomp "man info web html" "" "$cur_"
 		return
 		;;
 	log.date)
-		__gitcomp "$__git_log_date_formats"
+		__gitcomp "$__git_log_date_formats" "" "$cur_"
 		return
 		;;
 	sendemail.aliasfiletype)
-		__gitcomp "mutt mailrc pine elm gnus"
+		__gitcomp "mutt mailrc pine elm gnus" "" "$cur_"
 		return
 		;;
 	sendemail.confirm)
-		__gitcomp "$__git_send_email_confirm_options"
+		__gitcomp "$__git_send_email_confirm_options" "" "$cur_"
 		return
 		;;
 	sendemail.suppresscc)
-		__gitcomp "$__git_send_email_suppresscc_options"
+		__gitcomp "$__git_send_email_suppresscc_options" "" "$cur_"
 		return
 		;;
 	sendemail.transferencoding)
-		__gitcomp "7bit 8bit quoted-printable base64"
-		return
-		;;
-	--get|--get-all|--unset|--unset-all)
-		__gitcomp_nl "$(__git_config_get_set_variables)"
+		__gitcomp "7bit 8bit quoted-printable base64" "" "$cur_"
 		return
 		;;
 	*.*)
 		return
 		;;
 	esac
-	case "$cur" in
-	--*)
-		__gitcomp_builtin config
-		return
-		;;
+}
+
+# Completes configuration sections, subsections, variable names.
+#
+# Usage: __git_complete_config_variable_name [<option>]...
+# --cur=<word>: The current configuration section/variable name to be
+#               completed.  Defaults to the current word to be completed.
+# --sfx=<suffix>: A suffix to be appended to each fully completed
+#                 configuration variable name (but not to sections or
+#                 subsections) instead of the default space.
+__git_complete_config_variable_name ()
+{
+	local cur_="$cur" sfx
+
+	while test $# != 0; do
+		case "$1" in
+		--cur=*)	cur_="${1##--cur=}" ;;
+		--sfx=*)	sfx="${1##--sfx=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+
+	case "$cur_" in
 	branch.*.*)
-		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_"
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
+		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	branch.*)
-		local pfx="${cur%.*}." cur_="${cur#*.}"
+		local pfx="${cur%.*}."
+		cur_="${cur#*.}"
 		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
-		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_"
+		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	guitool.*.*)
-		local pfx="${cur%.*}." cur_="${cur##*.}"
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
 		__gitcomp "
 			argPrompt cmd confirm needsFile noConsole noRescan
 			prompt revPrompt revUnmerged title
-			" "$pfx" "$cur_"
+			" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	difftool.*.*)
-		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_"
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	man.*.*)
-		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_"
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	mergetool.*.*)
-		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_"
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
+		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	pager.*)
-		local pfx="${cur%.*}." cur_="${cur#*.}"
+		local pfx="${cur_%.*}."
+		cur_="${cur_#*.}"
 		__git_compute_all_commands
-		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_"
+		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	remote.*.*)
-		local pfx="${cur%.*}." cur_="${cur##*.}"
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
 			receivepack uploadpack tagOpt pushurl
-			" "$pfx" "$cur_"
+			" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	remote.*)
-		local pfx="${cur%.*}." cur_="${cur#*.}"
+		local pfx="${cur_%.*}."
+		cur_="${cur_#*.}"
 		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
-		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_"
+		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	url.*.*)
-		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_"
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
+		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	*.*)
 		__git_compute_config_vars
-		__gitcomp "$__git_config_vars"
+		__gitcomp "$__git_config_vars" "" "$cur_" "$sfx"
 		;;
 	*)
 		__git_compute_config_vars
-		__gitcomp "$(echo "$__git_config_vars" | sed 's/\.[^ ]*/./g')"
+		__gitcomp "$(echo "$__git_config_vars" |
+				awk -F . '{
+					sections[$1] = 1
+				}
+				END {
+					for (s in sections)
+						print s "."
+				}
+				')" "" "$cur_"
+		;;
+	esac
+}
+
+# Completes '='-separated configuration sections/variable names and values
+# for 'git -c section.name=value'.
+#
+# Usage: __git_complete_config_variable_name_and_value [<option>]...
+# --cur=<word>: The current configuration section/variable name/value to be
+#               completed. Defaults to the current word to be completed.
+__git_complete_config_variable_name_and_value ()
+{
+	local cur_="$cur"
+
+	while test $# != 0; do
+		case "$1" in
+		--cur=*)	cur_="${1##--cur=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+
+	case "$cur_" in
+	*=*)
+		__git_complete_config_variable_value \
+			--varname="${cur_%%=*}" --cur="${cur_#*=}"
+		;;
+	*)
+		__git_complete_config_variable_name --cur="$cur_" --sfx='='
+		;;
+	esac
+}
+
+_git_config ()
+{
+	case "$prev" in
+	--get|--get-all|--unset|--unset-all)
+		__gitcomp_nl "$(__git_config_get_set_variables)"
+		return
+		;;
+	*.*)
+		__git_complete_config_variable_value
+		return
+		;;
+	esac
+	case "$cur" in
+	--*)
+		__gitcomp_builtin config
+		;;
+	*)
+		__git_complete_config_variable_name
+		;;
 	esac
 }
 
@@ -2956,7 +3068,11 @@ __git_main ()
 			# Bash filename completion
 			return
 			;;
-		-c|--namespace)
+		-c)
+			__git_complete_config_variable_name_and_value
+			return
+			;;
+		--namespace)
 			# we don't support completing these options' arguments
 			return
 			;;
