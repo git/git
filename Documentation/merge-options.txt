@@ -105,6 +105,10 @@ option can be used to override --squash.
 +
 With --squash, --commit is not allowed, and will fail.
 
+--no-verify::
+	This option bypasses the pre-merge and commit-msg hooks.
+	See also linkgit:githooks[5].
+
 -s <strategy>::
 --strategy=<strategy>::
 	Use the given merge strategy; can be supplied more than

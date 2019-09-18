@@ -103,6 +103,28 @@ The default 'pre-commit' hook, when enabled--and with the
 `hooks.allownonascii` config option unset or set to false--prevents
 the use of non-ASCII filenames.
 
+pre-merge-commit
+~~~~~~~~~~~~~~~~
+
+This hook is invoked by linkgit:git-merge[1], and can be bypassed
+with the `--no-verify` option.  It takes no parameters, and is
+invoked after the merge has been carried out successfully and before
+obtaining the proposed commit log message to
+make a commit.  Exiting with a non-zero status from this script
+causes the `git merge` command to abort before creating a commit.
+
+The default 'pre-merge-commit' hook, when enabled, runs the
+'pre-commit' hook, if the latter is enabled.
+
+This hook is invoked with the environment variable
+`GIT_EDITOR=:` if the command will not bring up an editor
+to modify the commit message.
+
+If the merge cannot be carried out automatically, the conflicts
+need to be resolved and the result committed separately (see
+linkgit:git-merge[1]). At that point, this hook will not be executed,
+but the 'pre-commit' hook will, if it is enabled.
+
 prepare-commit-msg
 ~~~~~~~~~~~~~~~~~~
 
