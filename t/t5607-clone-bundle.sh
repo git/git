@@ -83,4 +83,15 @@ test_expect_success 'failed bundle creation does not leave cruft' '
 	test_path_is_missing fail.bundle.lock
 '
 
+test_expect_success 'fetch SHA-1 from bundle' '
+	test_create_repo foo &&
+	test_commit -C foo x &&
+	git -C foo bundle create tip.bundle -1 master &&
+	git -C foo rev-parse HEAD >hash &&
+
+	# Exercise to ensure that fetching a SHA-1 from a bundle works with no
+	# errors
+	git fetch --no-tags foo/tip.bundle "$(cat hash)"
+'
+
 test_done

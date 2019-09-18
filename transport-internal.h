@@ -7,12 +7,6 @@ struct argv_array;
 
 struct transport_vtable {
 	/**
-	 * This transport supports the fetch() function being called
-	 * without get_refs_list() first being called.
-	 */
-	unsigned fetch_without_list : 1;
-
-	/**
 	 * Returns 0 if successful, positive if the option is not
 	 * recognized or is inapplicable, and negative if the option
 	 * is applicable but the value is invalid.
