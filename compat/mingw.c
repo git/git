@@ -1391,7 +1391,10 @@ static inline int match_last_path_component(const char *path, size_t *len,
 
 static int is_msys2_sh(const char *cmd)
 {
-	if (cmd && !strcmp(cmd, "sh")) {
+	if (!cmd)
+		return 0;
+
+	if (!strcmp(cmd, "sh")) {
 		static int ret = -1;
 		char *p;
 
@@ -1411,6 +1414,16 @@ static int is_msys2_sh(const char *cmd)
 		}
 		return ret;
 	}
+
+	if (ends_with(cmd, "\\sh.exe")) {
+		static char *sh;
+
+		if (!sh)
+			sh = path_lookup("sh", 0);
+
+		return !fspathcmp(cmd, sh);
+	}
+
 	return 0;
 }
 
