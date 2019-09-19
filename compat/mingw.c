@@ -1120,13 +1120,14 @@ static const char *quote_arg_msys2(const char *arg)
 
 	for (p = arg; *p; p++) {
 		int ws = isspace(*p);
-		if (!ws && *p != '\\' && *p != '"' && *p != '{')
+		if (!ws && *p != '\\' && *p != '"' && *p != '{' && *p != '\'' &&
+		    *p != '?' && *p != '*' && *p != '~')
 			continue;
 		if (!buf.len)
 			strbuf_addch(&buf, '"');
 		if (p != p2)
 			strbuf_add(&buf, p2, p - p2);
-		if (!ws && *p != '{')
+		if (*p == '\\' || *p == '"')
 			strbuf_addch(&buf, '\\');
 		p2 = p;
 	}
