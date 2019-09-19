@@ -67,11 +67,12 @@ static int quote_stress_test(int argc, const char **argv)
 	 * were passed in.
 	 */
 	char special[] = ".?*\\^_\"'`{}()[]<>@~&+:;$%"; // \t\r\n\a";
-	int i, j, k, trials = 100;
+	int i, j, k, trials = 100, skip = 0;
 	struct strbuf out = STRBUF_INIT;
 	struct argv_array args = ARGV_ARRAY_INIT;
 	struct option options[] = {
 		OPT_INTEGER('n', "trials", &trials, "Number of trials"),
+		OPT_INTEGER('s', "skip", &skip, "Skip <n> trials"),
 		OPT_END()
 	};
 	const char * const usage[] = {
@@ -112,6 +113,9 @@ static int quote_stress_test(int argc, const char **argv)
 				argv_array_push(&args, buf);
 			}
 		}
+
+		if (i < skip)
+			continue;
 
 		cp.argv = args.argv;
 		strbuf_reset(&out);
