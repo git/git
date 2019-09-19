@@ -67,12 +67,13 @@ static int quote_stress_test(int argc, const char **argv)
 	 * were passed in.
 	 */
 	char special[] = ".?*\\^_\"'`{}()[]<>@~&+:;$%"; // \t\r\n\a";
-	int i, j, k, trials = 100, skip = 0;
+	int i, j, k, trials = 100, skip = 0, msys2 = 0;
 	struct strbuf out = STRBUF_INIT;
 	struct argv_array args = ARGV_ARRAY_INIT;
 	struct option options[] = {
 		OPT_INTEGER('n', "trials", &trials, "Number of trials"),
 		OPT_INTEGER('s', "skip", &skip, "Skip <n> trials"),
+		OPT_BOOL('m', "msys2", &msys2, "Test quoting for MSYS2's sh"),
 		OPT_END()
 	};
 	const char * const usage[] = {
@@ -82,14 +83,20 @@ static int quote_stress_test(int argc, const char **argv)
 
 	argc = parse_options(argc, argv, NULL, options, usage, 0);
 
+	setenv("MSYS_NO_PATHCONV", "1", 0);
+
 	for (i = 0; i < trials; i++) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		size_t arg_count, arg_offset;
 		int ret = 0;
 
 		argv_array_clear(&args);
-		argv_array_pushl(&args, "test-run-command",
-				 "quote-echo", NULL);
+		if (msys2)
+			argv_array_pushl(&args, "sh", "-c",
+					 "printf %s\\\\0 \"$@\"", "skip", NULL);
+		else
+			argv_array_pushl(&args, "test-run-command",
+					 "quote-echo", NULL);
 		arg_offset = args.argc;
 
 		if (argc > 0) {
