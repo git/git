@@ -1136,7 +1136,7 @@ static const char *quote_arg_msys2(const char *arg)
 	else if (!buf.len)
 		return arg;
 	else
-		strbuf_add(&buf, p2, p - p2),
+		strbuf_add(&buf, p2, p - p2);
 
 	strbuf_addch(&buf, '"');
 	return strbuf_detach(&buf, 0);
