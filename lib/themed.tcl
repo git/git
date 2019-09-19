@@ -1,6 +1,14 @@
 # Functions for supporting the use of themed Tk widgets in git-gui.
 # Copyright (C) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
 
+proc ttk_get_current_theme {} {
+	# Handle either current Tk or older versions of 8.5
+	if {[catch {set theme [ttk::style theme use]}]} {
+		set theme  $::ttk::currentTheme
+	}
+	return $theme
+}
+
 proc InitTheme {} {
 	# Create a color label style (bg can be overridden by widget option)
 	ttk::style layout Color.TLabel {
@@ -28,10 +36,7 @@ proc InitTheme {} {
 		}
 	}
 
-	# Handle either current Tk or older versions of 8.5
-	if {[catch {set theme [ttk::style theme use]}]} {
-		set theme  $::ttk::currentTheme
-	}
+	set theme [ttk_get_current_theme]
 
 	if {[lsearch -exact {default alt classic clam} $theme] != -1} {
 		# Simple override of standard ttk::entry to change the field
@@ -248,7 +253,7 @@ proc tspinbox {w args} {
 proc ttext {w args} {
 	global use_ttk
 	if {$use_ttk} {
-		switch -- [ttk::style theme use] {
+		switch -- [ttk_get_current_theme] {
 			"vista" - "xpnative" {
 				lappend args -highlightthickness 0 -borderwidth 0
 			}
