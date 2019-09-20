@@ -509,7 +509,7 @@ test_expect_success FUNNYNAMES '--combined-all-paths and --raw and funny names' 
 test_expect_success FUNNYNAMES '--combined-all-paths and --raw -and -z and funny names' '
 	printf "aaf8087c3cbd4db8e185a2d074cf27c53cfb75d7\0::100644 100644 100644 f00c965d8307308469e537302baa73048488f162 088bd5d92c2a8e0203ca8e7e4c2a5c692f6ae3f7 333b9c62519f285e1854830ade0fe1ef1d40ee1b RR\0file\twith\ttabs\0i\tam\ttabbed\0fickle\tnaming\0" >expect &&
 	git diff-tree -c -M --raw --combined-all-paths -z HEAD >actual &&
-	test_cmp -a expect actual
+	test_cmp expect actual
 '
 
 test_expect_success FUNNYNAMES '--combined-all-paths and --cc and funny names' '
