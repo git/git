@@ -83,25 +83,34 @@ static int quote_stress_test(int argc, const char **argv)
 
 	for (i = 0; i < trials; i++) {
 		struct child_process cp = CHILD_PROCESS_INIT;
-		size_t arg_count = 1 + (my_random() % 5), arg_offset;
+		size_t arg_count, arg_offset;
 		int ret = 0;
 
 		argv_array_clear(&args);
 		argv_array_pushl(&args, "test-run-command",
 				 "quote-echo", NULL);
 		arg_offset = args.argc;
-		for (j = 0; j < arg_count; j++) {
-			char buf[20];
-			size_t min_len = 1;
-			size_t arg_len = min_len +
-				(my_random() % (ARRAY_SIZE(buf) - min_len));
 
-			for (k = 0; k < arg_len; k++)
-				buf[k] = special[my_random() %
-					ARRAY_SIZE(special)];
-			buf[arg_len] = '\0';
+		if (argc > 0) {
+			trials = 1;
+			arg_count = argc;
+			for (j = 0; j < arg_count; j++)
+				argv_array_push(&args, argv[j]);
+		} else {
+			arg_count = 1 + (my_random() % 5);
+			for (j = 0; j < arg_count; j++) {
+				char buf[20];
+				size_t min_len = 1;
+				size_t arg_len = min_len +
+					(my_random() % (ARRAY_SIZE(buf) - min_len));
 
-			argv_array_push(&args, buf);
+				for (k = 0; k < arg_len; k++)
+					buf[k] = special[my_random() %
+						ARRAY_SIZE(special)];
+				buf[arg_len] = '\0';
+
+				argv_array_push(&args, buf);
+			}
 		}
 
 		cp.argv = args.argv;
