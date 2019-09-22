@@ -1831,15 +1831,17 @@ pull from that repository.  So the flow of changes, in a situation
 where there is one other developer with a public repository, looks
 like this:
 
-                        you push
-  your personal repo ------------------> your public repo
-	^                                     |
-	|                                     |
-	| you pull                            | they pull
-	|                                     |
-	|                                     |
-        |               they push             V
-  their public repo <------------------- their repo
+....
+		      you push
+your personal repo ------------------> your public repo
+      ^                                     |
+      |                                     |
+      | you pull                            | they pull
+      |                                     |
+      |                                     |
+      |               they push             V
+their public repo <------------------- their repo
+....
 
 We explain how to do this in the following sections.
 
