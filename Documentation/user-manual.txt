@@ -3698,6 +3698,7 @@ $ git push
 You have to run `git submodule update` after `git pull` if you want to update
 submodules, too.
 
+[[pitfalls-with-submodules]]
 Pitfalls with submodules
 ------------------------
 
