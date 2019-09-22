@@ -9,8 +9,11 @@ module Git
       named :chrome
 
       def process(parent, target, attrs)
-        if parent.document.basebackend? 'html'
-          prefix = parent.document.attr('git-relative-html-prefix')
+        prefix = parent.document.attr('git-relative-html-prefix')
+        if parent.document.doctype == 'book'
+          "<ulink url=\"#{prefix}#{target}.html\">" \
+          "#{target}(#{attrs[1]})</ulink>"
+        elsif parent.document.basebackend? 'html'
           %(<a href="#{prefix}#{target}.html">#{target}(#{attrs[1]})</a>)
         elsif parent.document.basebackend? 'docbook'
           "<citerefentry>\n" \
