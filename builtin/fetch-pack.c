@@ -5,6 +5,7 @@
 #include "connect.h"
 #include "sha1-array.h"
 #include "protocol.h"
+#include "alloc.h"
 
 static const char fetch_pack_usage[] =
 "git fetch-pack [--all] [--stdin] [--quiet | -q] [--keep | -k] [--thin] "

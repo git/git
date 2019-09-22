@@ -32,6 +32,7 @@
 #include "packfile.h"
 #include "fetch-object.h"
 #include "object-store.h"
+#include "alloc.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32

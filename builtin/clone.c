@@ -33,6 +33,7 @@
 #include "packfile.h"
 #include "list-objects-filter-options.h"
 #include "object-store.h"
+#include "alloc.h"
 
 /*
  * Overall FIXMEs:

@@ -4,6 +4,7 @@
 #include "strbuf.h"
 #include "transport.h"
 #include "fetch-object.h"
+#include "alloc.h"
 
 static void fetch_refs(const char *remote_name, struct ref *ref)
 {

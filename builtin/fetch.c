@@ -24,6 +24,7 @@
 #include "list-objects-filter-options.h"
 #include "commit-reach.h"
 #include "branch.h"
+#include "alloc.h"
 
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 

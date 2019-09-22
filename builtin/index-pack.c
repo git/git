@@ -15,6 +15,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "fetch-object.h"
+#include "alloc.h"
 
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";

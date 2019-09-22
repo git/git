@@ -28,6 +28,7 @@
 #include "commit-graph.h"
 #include "prio-queue.h"
 #include "hashmap.h"
+#include "alloc.h"
 
 volatile show_early_output_fn_t show_early_output;
 
