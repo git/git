@@ -1342,10 +1342,7 @@ int is_ntfs_dotgit(const char *name)
 			if (only_spaces_and_periods(name, len, 5) &&
 					!strncasecmp(name, "git~1", 5))
 				return 1;
-			if (name[len] != '\\')
-				return 0;
-			name += len + 1;
-			len = -1;
+			return 0;
 		}
 }
 
