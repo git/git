@@ -24,8 +24,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}]
+along with this program; if not, see <http://www.gnu.org/licenses/>.}]
 
 ######################################################################
 ##
@@ -2504,9 +2503,28 @@ proc toggle_or_diff {mode w args} {
 		set pos [split [$w index @$x,$y] .]
 		foreach {lno col} $pos break
 	} else {
+		if {$mode eq "toggle"} {
+			if {$w eq $ui_workdir} {
+				do_add_selection
+				set last_clicked {}
+				return
+			}
+			if {$w eq $ui_index} {
+				do_unstage_selection
+				set last_clicked {}
+				return
+			}
+		}
+
 		if {$last_clicked ne {}} {
 			set lno [lindex $last_clicked 1]
 		} else {
+			if {![info exists file_lists]
+				|| ![info exists file_lists($w)]
+				|| [llength $file_lists($w)] == 0} {
+				set last_clicked {}
+				return
+			}
 			set lno [expr {int([lindex [$w tag ranges in_diff] 0])}]
 		}
 		if {$mode eq "toggle"} {
@@ -2517,7 +2535,13 @@ proc toggle_or_diff {mode w args} {
 		}
 	}
 
-	set path [lindex $file_lists($w) [expr {$lno - 1}]]
+	if {![info exists file_lists]
+		|| ![info exists file_lists($w)]
+		|| [llength $file_lists($w)] < $lno - 1} {
+		set path {}
+	} else {
+		set path [lindex $file_lists($w) [expr {$lno - 1}]]
+	}
 	if {$path eq {}} {
 		set last_clicked {}
 		return
@@ -3028,8 +3052,23 @@ unset doc_path doc_url
 wm protocol . WM_DELETE_WINDOW do_quit
 bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
-bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
-bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
+
+set m1b_w_script {
+	set toplvl_win [winfo toplevel %W]
+
+	# If we are destroying the main window, we should call do_quit to take
+	# care of cleanup before exiting the program.
+	if {$toplvl_win eq "."} {
+		do_quit
+	} else {
+		destroy $toplvl_win
+	}
+}
+
+bind all <$M1B-Key-w> $m1b_w_script
+bind all <$M1B-Key-W> $m1b_w_script
+
+unset m1b_w_script
 
 set subcommand_args {}
 proc usage {} {
@@ -3913,6 +3952,7 @@ bind .   <$M1B-Key-equal> {show_more_context;break}
 bind .   <$M1B-Key-plus> {show_more_context;break}
 bind .   <$M1B-Key-KP_Add> {show_more_context;break}
 bind .   <$M1B-Key-Return> do_commit
+bind .   <$M1B-Key-KP_Enter> do_commit
 foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       { toggle_or_diff click %W %x %y; break }
 	bind $i <$M1B-Button-1>  { add_one_to_selection %W %x %y; break }
