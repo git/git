@@ -40,7 +40,7 @@ test_expect_success 'setup test files' '
 	printf "$text" | write_utf16 >test.utf16.raw &&
 	printf "$text" | write_utf32 >test.utf32.raw &&
 	printf "\377\376"                         >test.utf16lebom.raw &&
-	printf "$text" | iconv -f UTF-8 -t UTF-32LE >>test.utf16lebom.raw &&
+	printf "$text" | iconv -f UTF-8 -t UTF-16LE >>test.utf16lebom.raw &&
 
 	# Line ending tests
 	printf "one\ntwo\nthree\n" >lf.utf8.raw &&
