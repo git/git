@@ -1082,8 +1082,9 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	}
 
 	cp_upd_index.git_cmd = 1;
-	argv_array_pushl(&cp_upd_index.args, "update-index", "-z", "--add",
-			 "--remove", "--stdin", NULL);
+	argv_array_pushl(&cp_upd_index.args, "update-index",
+			 "--ignore-skip-worktree-entries",
+			 "-z", "--add", "--remove", "--stdin", NULL);
 	argv_array_pushf(&cp_upd_index.env_array, "GIT_INDEX_FILE=%s",
 			 stash_index_path.buf);
 

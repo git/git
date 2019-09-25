@@ -1257,4 +1257,15 @@ test_expect_success 'stash apply should succeed with unmodified file' '
 	git stash apply
 '
 
+test_expect_success 'stash handles skip-worktree entries nicely' '
+	test_commit A &&
+	echo changed >A.t &&
+	git add A.t &&
+	git update-index --skip-worktree A.t &&
+	rm A.t &&
+	git stash &&
+
+	git rev-parse --verify refs/stash:A.t
+'
+
 test_done
