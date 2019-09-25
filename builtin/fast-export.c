@@ -860,7 +860,12 @@ static void handle_tag(const char *name, struct tag *tag)
 
 	if (starts_with(name, "refs/tags/"))
 		name += 10;
-	printf("tag %s\nfrom :%d\n", name, tagged_mark);
+	printf("tag %s\n", name);
+	if (tagged_mark)
+		printf("from :%d\n", tagged_mark);
+	else
+		printf("from %s\n", oid_to_hex(&tagged->oid));
+
 	if (show_original_ids)
 		printf("original-oid %s\n", oid_to_hex(&tag->object.oid));
 	printf("%.*s%sdata %d\n%.*s\n",

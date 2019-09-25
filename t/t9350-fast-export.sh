@@ -53,6 +53,19 @@ test_expect_success 'fast-export | fast-import' '
 
 '
 
+test_expect_success 'fast-export ^muss^{commit} muss' '
+	git fast-export --tag-of-filtered-object=rewrite ^muss^{commit} muss >actual &&
+	cat >expected <<-EOF &&
+	tag muss
+	from $(git rev-parse --verify muss^{commit})
+	$(git cat-file tag muss | grep tagger)
+	data 9
+	valentin
+
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'fast-export master~2..master' '
 
 	git fast-export master~2..master >actual &&
