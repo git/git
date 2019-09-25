@@ -16,6 +16,7 @@ SYNOPSIS
 	     [--chmod=(+|-)x]
 	     [--[no-]assume-unchanged]
 	     [--[no-]skip-worktree]
+	     [--[no-]ignore-skip-worktree-entries]
 	     [--[no-]fsmonitor-valid]
 	     [--ignore-submodules]
 	     [--[no-]split-index]
@@ -112,6 +113,11 @@ you will need to handle the situation manually.
 	for the paths are not updated. Instead, these options
 	set and unset the "skip-worktree" bit for the paths. See
 	section "Skip-worktree bit" below for more information.
+
+
+--[no-]ignore-skip-worktree-entries::
+	Do not remove skip-worktree (AKA "index-only") entries even when
+	the `--remove` option was specified.
 
 --[no-]fsmonitor-valid::
 	When one of these flags is specified, the object name recorded
