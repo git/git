@@ -35,6 +35,7 @@ static int verbose;
 static int mark_valid_only;
 static int mark_skip_worktree_only;
 static int mark_fsmonitor_only;
+static int ignore_skip_worktree_entries;
 #define MARK_FLAG 1
 #define UNMARK_FLAG 2
 static struct strbuf mtime_dir = STRBUF_INIT;
@@ -381,7 +382,8 @@ static int process_path(const char *path, struct stat *st, int stat_errno)
 		 * so updating it does not make sense.
 		 * On the other hand, removing it from index should work
 		 */
-		if (allow_remove && remove_file_from_cache(path))
+		if (!ignore_skip_worktree_entries && allow_remove &&
+		    remove_file_from_cache(path))
 			return error("%s: cannot remove from the index", path);
 		return 0;
 	}
@@ -1013,6 +1015,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		{OPTION_SET_INT, 0, "no-skip-worktree", &mark_skip_worktree_only, NULL,
 			N_("clear skip-worktree bit"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, UNMARK_FLAG},
+		OPT_BOOL(0, "ignore-skip-worktree-entries", &ignore_skip_worktree_entries,
+			 N_("do not touch index-only entries")),
 		OPT_SET_INT(0, "info-only", &info_only,
 			N_("add to index only; do not add content to object database"), 1),
 		OPT_SET_INT(0, "force-remove", &force_remove,
