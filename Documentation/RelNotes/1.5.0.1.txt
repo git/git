@@ -40,3 +40,4 @@ Fixes since v1.5.0
   - sliding mmap() inefficiently mmaped the same region of a
     packfile with an access pattern that used objects in the
     reverse order.  This has been made more efficient.
+DCB_ASSOCIATION:Y3890K46GRAMUMH1U9A284VCJF4QDJ8MG
