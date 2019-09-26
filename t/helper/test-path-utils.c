@@ -1,5 +1,7 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "string-list.h"
+#include "utf8.h"
 
 /*
  * A "string_list_each_func_t" function that normalizes an entry from
@@ -37,6 +39,20 @@ struct test_data {
 	const char *to;    /* output: ... to this.            */
 	const char *alternative; /* output: ... or this.      */
 };
+
+/*
+ * Compatibility wrappers for OpenBSD, whose basename(3) and dirname(3)
+ * have const parameters.
+ */
+static char *posix_basename(char *path)
+{
+	return basename(path);
+}
+
+static char *posix_dirname(char *path)
+{
+	return dirname(path);
+}
 
 static int test_function(struct test_data *data, char *(*func)(char *input),
 	const char *funcname)
@@ -156,7 +172,20 @@ static struct test_data dirname_data[] = {
 	{ NULL,              NULL     }
 };
 
-int cmd_main(int argc, const char **argv)
+static int is_dotgitmodules(const char *path)
+{
+	return is_hfs_dotgitmodules(path) || is_ntfs_dotgitmodules(path);
+}
+
+static int cmp_by_st_size(const void *a, const void *b)
+{
+	intptr_t x = (intptr_t)((struct string_list_item *)a)->util;
+	intptr_t y = (intptr_t)((struct string_list_item *)b)->util;
+
+	return x > y ? -1 : (x < y ? +1 : 0);
+}
+
+int cmd__path_utils(int argc, const char **argv)
 {
 	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
 		char *buf = xmallocz(strlen(argv[2]));
@@ -251,10 +280,80 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	if (argc == 2 && !strcmp(argv[1], "basename"))
-		return test_function(basename_data, basename, argv[1]);
+		return test_function(basename_data, posix_basename, argv[1]);
 
 	if (argc == 2 && !strcmp(argv[1], "dirname"))
-		return test_function(dirname_data, dirname, argv[1]);
+		return test_function(dirname_data, posix_dirname, argv[1]);
+
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitmodules")) {
+		int res = 0, expect = 1, i;
+		for (i = 2; i < argc; i++)
+			if (!strcmp("--not", argv[i]))
+				expect = !expect;
+			else if (expect != is_dotgitmodules(argv[i]))
+				res = error("'%s' is %s.gitmodules", argv[i],
+					    expect ? "not " : "");
+			else
+				fprintf(stderr, "ok: '%s' is %s.gitmodules\n",
+					argv[i], expect ? "" : "not ");
+		return !!res;
+	}
+
+	if (argc > 2 && !strcmp(argv[1], "file-size")) {
+		int res = 0, i;
+		struct stat st;
+
+		for (i = 2; i < argc; i++)
+			if (stat(argv[i], &st))
+				res = error_errno("Cannot stat '%s'", argv[i]);
+			else
+				printf("%"PRIuMAX"\n", (uintmax_t)st.st_size);
+		return !!res;
+	}
+
+	if (argc == 4 && !strcmp(argv[1], "skip-n-bytes")) {
+		int fd = open(argv[2], O_RDONLY), offset = atoi(argv[3]);
+		char buffer[65536];
+
+		if (fd < 0)
+			die_errno("could not open '%s'", argv[2]);
+		if (lseek(fd, offset, SEEK_SET) < 0)
+			die_errno("could not skip %d bytes", offset);
+		for (;;) {
+			ssize_t count = read(fd, buffer, sizeof(buffer));
+			if (count < 0)
+				die_errno("could not read '%s'", argv[2]);
+			if (!count)
+				break;
+			if (write(1, buffer, count) < 0)
+				die_errno("could not write to stdout");
+		}
+		close(fd);
+		return 0;
+	}
+
+	if (argc > 5 && !strcmp(argv[1], "slice-tests")) {
+		int res = 0;
+		long offset, stride, i;
+		struct string_list list = STRING_LIST_INIT_NODUP;
+		struct stat st;
+
+		offset = strtol(argv[2], NULL, 10);
+		stride = strtol(argv[3], NULL, 10);
+		if (stride < 1)
+			stride = 1;
+		for (i = 4; i < argc; i++)
+			if (stat(argv[i], &st))
+				res = error_errno("Cannot stat '%s'", argv[i]);
+			else
+				string_list_append(&list, argv[i])->util =
+					(void *)(intptr_t)st.st_size;
+		QSORT(list.items, list.nr, cmp_by_st_size);
+		for (i = offset; i < list.nr; i+= stride)
+			printf("%s\n", list.items[i].string);
+
+		return !!res;
+	}
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");

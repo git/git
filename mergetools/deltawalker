@@ -16,6 +16,10 @@ merge_cmd () {
 	fi >/dev/null 2>&1
 }
 
-translate_merge_tool_path() {
+translate_merge_tool_path () {
 	echo DeltaWalker
+}
+
+exit_code_trustable () {
+	true
 }

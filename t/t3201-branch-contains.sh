@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='branch --contains <commit>, --merged, and --no-merged'
+test_description='branch --contains <commit>, --no-contains <commit> --merged, and --no-merged'
 
 . ./test-lib.sh
 
@@ -45,11 +45,35 @@ test_expect_success 'branch --contains master' '
 
 '
 
+test_expect_success 'branch --no-contains=master' '
+
+	git branch --no-contains=master >actual &&
+	test_must_be_empty actual
+
+'
+
+test_expect_success 'branch --no-contains master' '
+
+	git branch --no-contains master >actual &&
+	test_must_be_empty actual
+
+'
+
 test_expect_success 'branch --contains=side' '
 
 	git branch --contains=side >actual &&
 	{
 		echo "* side"
+	} >expect &&
+	test_cmp expect actual
+
+'
+
+test_expect_success 'branch --no-contains=side' '
+
+	git branch --no-contains=side >actual &&
+	{
+		echo "  master"
 	} >expect &&
 	test_cmp expect actual
 
@@ -62,6 +86,13 @@ test_expect_success 'branch --contains with pattern implies --list' '
 		echo "  master"
 	} >expect &&
 	test_cmp expect actual
+
+'
+
+test_expect_success 'branch --no-contains with pattern implies --list' '
+
+	git branch --no-contains=master master >actual &&
+	test_must_be_empty actual
 
 '
 
@@ -89,8 +120,7 @@ test_expect_success 'branch --merged with pattern implies --list' '
 test_expect_success 'side: branch --no-merged' '
 
 	git branch --no-merged >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -118,16 +148,27 @@ test_expect_success 'master: branch --no-merged' '
 test_expect_success 'branch --no-merged with pattern implies --list' '
 
 	git branch --no-merged=master master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
 test_expect_success 'implicit --list conflicts with modification options' '
 
 	test_must_fail git branch --contains=master -d &&
-	test_must_fail git branch --contains=master -m foo
+	test_must_fail git branch --contains=master -m foo &&
+	test_must_fail git branch --no-contains=master -d &&
+	test_must_fail git branch --no-contains=master -m foo
 
+'
+
+test_expect_success 'Assert that --contains only works on commits, not trees & blobs' '
+	test_must_fail git branch --contains master^{tree} &&
+	blob=$(git hash-object -w --stdin <<-\EOF
+	Some blob
+	EOF
+	) &&
+	test_must_fail git branch --contains $blob &&
+	test_must_fail git branch --no-contains $blob
 '
 
 # We want to set up a case where the walk for the tracking info
@@ -157,6 +198,17 @@ test_expect_success 'branch --merged with --verbose' '
 	  zzz    c77a0a9 second on master
 	EOF
 	test_i18ncmp expect actual
+'
+
+test_expect_success 'branch --contains combined with --no-contains' '
+	git branch --contains zzz --no-contains topic >actual &&
+	cat >expect <<-\EOF &&
+	  master
+	  side
+	  zzz
+	EOF
+	test_cmp expect actual
+
 '
 
 test_done

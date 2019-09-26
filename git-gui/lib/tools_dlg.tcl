@@ -19,7 +19,7 @@ constructor dialog {} {
 	global repo_config use_ttk NS
 
 	make_dialog top w
-	wm title $top [append "[appname] ([reponame]): " [mc "Add Tool"]]
+	wm title $top [mc "%s (%s): Add Tool" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		wm transient $top .
@@ -184,7 +184,7 @@ constructor dialog {} {
 	load_config 1
 
 	make_dialog top w
-	wm title $top [append "[appname] ([reponame]): " [mc "Remove Tool"]]
+	wm title $top [mc "%s (%s): Remove Tool" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		wm transient $top .
@@ -280,7 +280,7 @@ constructor dialog {fullname} {
 	}
 
 	make_dialog top w -autodelete 0
-	wm title $top [append "[appname] ([reponame]): " $title]
+	wm title $top "[mc "%s (%s):" [appname] [reponame]] $title"
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		wm transient $top .

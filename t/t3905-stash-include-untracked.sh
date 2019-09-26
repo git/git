@@ -35,24 +35,26 @@ test_expect_success 'stash save --include-untracked cleaned the untracked files'
 	test_cmp expect actual
 '
 
+tracked=$(git rev-parse --short $(echo 1 | git hash-object --stdin))
+untracked=$(git rev-parse --short $(echo untracked | git hash-object --stdin))
 cat > expect.diff <<EOF
 diff --git a/HEAD b/HEAD
 new file mode 100644
-index 0000000..d00491f
+index 0000000..$tracked
 --- /dev/null
 +++ b/HEAD
 @@ -0,0 +1 @@
 +1
 diff --git a/file2 b/file2
 new file mode 100644
-index 0000000..d00491f
+index 0000000..$tracked
 --- /dev/null
 +++ b/file2
 @@ -0,0 +1 @@
 +1
 diff --git a/untracked/untracked b/untracked/untracked
 new file mode 100644
-index 0000000..5a72eb2
+index 0000000..$untracked
 --- /dev/null
 +++ b/untracked/untracked
 @@ -0,0 +1 @@
@@ -109,10 +111,11 @@ test_expect_success 'stash save -u dirty index' '
 	git stash -u
 '
 
+blob=$(git rev-parse --short $(echo 4 | git hash-object --stdin))
 cat > expect <<EOF
 diff --git a/file3 b/file3
 new file mode 100644
-index 0000000..b8626c4
+index 0000000..$blob
 --- /dev/null
 +++ b/file3
 @@ -0,0 +1 @@
@@ -139,7 +142,7 @@ test_expect_success 'stash save --include-untracked removed files' '
 	rm -f file &&
 	git stash save --include-untracked &&
 	echo 1 > expect &&
-	test_cmp file expect
+	test_cmp expect file
 '
 
 rm -f expect
@@ -183,6 +186,107 @@ test_expect_success 'stash save --all is stash poppable' '
 	test -s ignored &&
 	test -s ignored.d/untracked &&
 	test -s .gitignore
+'
+
+test_expect_success 'stash push --include-untracked with pathspec' '
+	>foo &&
+	>bar &&
+	git stash push --include-untracked -- foo &&
+	test_path_is_file bar &&
+	test_path_is_missing foo &&
+	git stash pop &&
+	test_path_is_file bar &&
+	test_path_is_file foo
+'
+
+test_expect_success 'stash push with $IFS character' '
+	>"foo bar" &&
+	>foo &&
+	>bar &&
+	git add foo* &&
+	git stash push --include-untracked -- "foo b*" &&
+	test_path_is_missing "foo bar" &&
+	test_path_is_file foo &&
+	test_path_is_file bar &&
+	git stash pop &&
+	test_path_is_file "foo bar" &&
+	test_path_is_file foo &&
+	test_path_is_file bar
+'
+
+cat > .gitignore <<EOF
+ignored
+ignored.d/*
+EOF
+
+test_expect_success 'stash previously ignored file' '
+	git reset HEAD &&
+	git add .gitignore &&
+	git commit -m "Add .gitignore" &&
+	>ignored.d/foo &&
+	echo "!ignored.d/foo" >> .gitignore &&
+	git stash save --include-untracked &&
+	test_path_is_missing ignored.d/foo &&
+	git stash pop &&
+	test_path_is_file ignored.d/foo
+'
+
+test_expect_success 'stash -u -- <untracked> doesnt print error' '
+	>untracked &&
+	git stash push -u -- untracked 2>actual &&
+	test_path_is_missing untracked &&
+	test_line_count = 0 actual
+'
+
+test_expect_success 'stash -u -- <untracked> leaves rest of working tree in place' '
+	>tracked &&
+	git add tracked &&
+	>untracked &&
+	git stash push -u -- untracked &&
+	test_path_is_missing untracked &&
+	test_path_is_file tracked
+'
+
+test_expect_success 'stash -u -- <tracked> <untracked> clears changes in both' '
+	>tracked &&
+	git add tracked &&
+	>untracked &&
+	git stash push -u -- tracked untracked &&
+	test_path_is_missing tracked &&
+	test_path_is_missing untracked
+'
+
+test_expect_success 'stash --all -- <ignored> stashes ignored file' '
+	>ignored.d/bar &&
+	git stash push --all -- ignored.d/bar &&
+	test_path_is_missing ignored.d/bar
+'
+
+test_expect_success 'stash --all -- <tracked> <ignored> clears changes in both' '
+	>tracked &&
+	git add tracked &&
+	>ignored.d/bar &&
+	git stash push --all -- tracked ignored.d/bar &&
+	test_path_is_missing tracked &&
+	test_path_is_missing ignored.d/bar
+'
+
+test_expect_success 'stash -u -- <ignored> leaves ignored file alone' '
+	>ignored.d/bar &&
+	git stash push -u -- ignored.d/bar &&
+	test_path_is_file ignored.d/bar
+'
+
+test_expect_success 'stash -u -- <non-existant> shows no changes when there are none' '
+	git stash push -u -- non-existant >actual &&
+	echo "No local changes to save" >expect &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'stash -u with globs' '
+	>untracked.txt &&
+	git stash -u -- ":(glob)**/*.txt" &&
+	test_path_is_missing untracked.txt
 '
 
 test_done

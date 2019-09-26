@@ -84,8 +84,28 @@ Issues of note:
 
 	GIT_EXEC_PATH=`pwd`
 	PATH=`pwd`:$PATH
-	GITPERLLIB=`pwd`/perl/blib/lib
+	GITPERLLIB=`pwd`/perl/build/lib
 	export GIT_EXEC_PATH PATH GITPERLLIB
+
+ - By default (unless NO_PERL is provided) Git will ship various perl
+   scripts. However, for simplicity it doesn't use the
+   ExtUtils::MakeMaker toolchain to decide where to place the perl
+   libraries. Depending on the system this can result in the perl
+   libraries not being where you'd like them if they're expected to be
+   used by things other than Git itself.
+
+   Manually supplying a perllibdir prefix should fix this, if this is
+   a problem you care about, e.g.:
+
+       prefix=/usr perllibdir=/usr/$(/usr/bin/perl -MConfig -wle 'print substr $Config{installsitelib}, 1 + length $Config{siteprefixexp}')
+
+   Will result in e.g. perllibdir=/usr/share/perl/5.26.1 on Debian,
+   perllibdir=/usr/share/perl5 (which we'd use by default) on CentOS.
+
+ - Unless NO_PERL is provided Git will ship various perl libraries it
+   needs. Distributors of Git will usually want to set
+   NO_PERL_CPAN_FALLBACKS if NO_PERL is not provided to use their own
+   copies of the CPAN modules Git needs.
 
  - Git is reasonably self-sufficient, but does depend on a few external
    programs and libraries.  Git can be used without most of them by adding
@@ -106,7 +126,8 @@ Issues of note:
 	  Redhat/Fedora are reported to ship Perl binary package with some
 	  core modules stripped away (see http://lwn.net/Articles/477234/),
 	  so you might need to install additional packages other than Perl
-	  itself, e.g. Time::HiRes.
+	  itself, e.g. Digest::MD5, File::Spec, File::Temp, Net::Domain,
+	  Net::SMTP, and Time::HiRes.
 
 	- git-imap-send needs the OpenSSL library to talk IMAP over SSL if
 	  you are using libcurl older than 7.34.0.  Otherwise you can use

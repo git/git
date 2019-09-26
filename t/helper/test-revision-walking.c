@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include "test-tool.h"
 #include "cache.h"
 #include "commit.h"
 #include "diff.h"
@@ -31,7 +32,7 @@ static int run_revision_walk(void)
 	int argc = ARRAY_SIZE(argv) - 1;
 	int got_revision = 0;
 
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	setup_revisions(argc, argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
@@ -45,7 +46,7 @@ static int run_revision_walk(void)
 	return got_revision;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__revision_walking(int argc, const char **argv)
 {
 	if (argc < 2)
 		return 1;

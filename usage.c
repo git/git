@@ -6,38 +6,64 @@
 #include "git-compat-util.h"
 #include "cache.h"
 
-static FILE *error_handle;
-static int tweaked_error_buffering;
-
 void vreportf(const char *prefix, const char *err, va_list params)
 {
-	FILE *fh = error_handle ? error_handle : stderr;
+	char msg[4096];
+	char *p;
 
-	fflush(fh);
-	if (!tweaked_error_buffering) {
-		setvbuf(fh, NULL, _IOLBF, 0);
-		tweaked_error_buffering = 1;
+	vsnprintf(msg, sizeof(msg), err, params);
+	for (p = msg; *p; p++) {
+		if (iscntrl(*p) && *p != '\t' && *p != '\n')
+			*p = '?';
 	}
-
-	fputs(prefix, fh);
-	vfprintf(fh, err, params);
-	fputc('\n', fh);
+	fprintf(stderr, "%s%s\n", prefix, msg);
 }
 
 static NORETURN void usage_builtin(const char *err, va_list params)
 {
 	vreportf("usage: ", err, params);
+
+	/*
+	 * When we detect a usage error *before* the command dispatch in
+	 * cmd_main(), we don't know what verb to report.  Force it to this
+	 * to facilitate post-processing.
+	 */
+	trace2_cmd_name("_usage_");
+
+	/*
+	 * Currently, the (err, params) are usually just the static usage
+	 * string which isn't very useful here.  Usually, the call site
+	 * manually calls fprintf(stderr,...) with the actual detailed
+	 * syntax error before calling usage().
+	 *
+	 * TODO It would be nice to update the call sites to pass both
+	 * the static usage string and the detailed error message.
+	 */
+
 	exit(129);
 }
 
 static NORETURN void die_builtin(const char *err, va_list params)
 {
+	/*
+	 * We call this trace2 function first and expect it to va_copy 'params'
+	 * before using it (because an 'ap' can only be walked once).
+	 */
+	trace2_cmd_error_va(err, params);
+
 	vreportf("fatal: ", err, params);
+
 	exit(128);
 }
 
 static void error_builtin(const char *err, va_list params)
 {
+	/*
+	 * We call this trace2 function first and expect it to va_copy 'params'
+	 * before using it (because an 'ap' can only be walked once).
+	 */
+	trace2_cmd_error_va(err, params);
+
 	vreportf("error: ", err, params);
 }
 
@@ -49,7 +75,23 @@ static void warn_builtin(const char *warn, va_list params)
 static int die_is_recursing_builtin(void)
 {
 	static int dying;
-	return dying++;
+	/*
+	 * Just an arbitrary number X where "a < x < b" where "a" is
+	 * "maximum number of pthreads we'll ever plausibly spawn" and
+	 * "b" is "something less than Inf", since the point is to
+	 * prevent infinite recursion.
+	 */
+	static const int recursion_limit = 1024;
+
+	dying++;
+	if (dying > recursion_limit) {
+		return 1;
+	} else if (dying == 2) {
+		warning("die() called many times. Recursion error or racy threaded death!");
+		return 0;
+	} else {
+		return 0;
+	}
 }
 
 /* If we are in a dlopen()ed .so write to a global variable would segfault
@@ -88,12 +130,6 @@ void (*get_warn_routine(void))(const char *warn, va_list params)
 void set_die_is_recursing_routine(int (*routine)(void))
 {
 	die_is_recursing = routine;
-}
-
-void set_error_handle(FILE *fh)
-{
-	error_handle = fh;
-	tweaked_error_buffering = 0;
 }
 
 void NORETURN usagef(const char *err, ...)
@@ -143,6 +179,7 @@ static const char *fmt_with_err(char *buf, int n, const char *fmt)
 		}
 	}
 	str_error[j] = 0;
+	/* Truncation is acceptable here */
 	snprintf(buf, n, "%s: %s", fmt, str_error);
 	return buf;
 }
@@ -204,3 +241,55 @@ void warning(const char *warn, ...)
 	warn_routine(warn, params);
 	va_end(params);
 }
+
+/* Only set this, ever, from t/helper/, when verifying that bugs are caught. */
+int BUG_exit_code;
+
+static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
+{
+	char prefix[256];
+
+	/* truncation via snprintf is OK here */
+	if (file)
+		snprintf(prefix, sizeof(prefix), "BUG: %s:%d: ", file, line);
+	else
+		snprintf(prefix, sizeof(prefix), "BUG: ");
+
+	vreportf(prefix, fmt, params);
+	if (BUG_exit_code)
+		exit(BUG_exit_code);
+	abort();
+}
+
+#ifdef HAVE_VARIADIC_MACROS
+NORETURN void BUG_fl(const char *file, int line, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	BUG_vfl(file, line, fmt, ap);
+	va_end(ap);
+}
+#else
+NORETURN void BUG(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	BUG_vfl(NULL, 0, fmt, ap);
+	va_end(ap);
+}
+#endif
+
+#ifdef SUPPRESS_ANNOTATED_LEAKS
+void unleak_memory(const void *ptr, size_t len)
+{
+	static struct suppressed_leak_root {
+		struct suppressed_leak_root *next;
+		char data[FLEX_ARRAY];
+	} *suppressed_leaks;
+	struct suppressed_leak_root *root;
+
+	FLEX_ALLOC_MEM(root, data, ptr, len);
+	root->next = suppressed_leaks;
+	suppressed_leaks = root;
+}
+#endif

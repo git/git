@@ -3,11 +3,12 @@
 
 repository=${1?repository}
 destdir=${2?destination}
+GIT_MAN_REF=${3?master}
 
-head=master GIT_DIR=
+GIT_DIR=
 for d in "$repository/.git" "$repository"
 do
-	if GIT_DIR="$d" git rev-parse refs/heads/master >/dev/null 2>&1
+	if GIT_DIR="$d" git rev-parse "$GIT_MAN_REF" >/dev/null 2>&1
 	then
 		GIT_DIR="$d"
 		export GIT_DIR
@@ -27,12 +28,12 @@ export GIT_INDEX_FILE GIT_WORK_TREE
 rm -f "$GIT_INDEX_FILE"
 trap 'rm -f "$GIT_INDEX_FILE"' 0
 
-git read-tree $head
+git read-tree "$GIT_MAN_REF"
 git checkout-index -a -f --prefix="$destdir"/
 
 if test -n "$GZ"
 then
-	git ls-tree -r --name-only $head |
+	git ls-tree -r --name-only "$GIT_MAN_REF" |
 	xargs printf "$destdir/%s\n" |
 	xargs gzip -f
 fi

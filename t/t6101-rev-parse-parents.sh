@@ -83,9 +83,21 @@ test_expect_success 'final^1^@ = final^1^1 final^1^2' '
 	test_cmp expect actual
 '
 
+test_expect_success 'symbolic final^1^@ = final^1^1 final^1^2' '
+	git rev-parse --symbolic final^1^1 final^1^2 >expect &&
+	git rev-parse --symbolic final^1^@ >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'final^1^! = final^1 ^final^1^1 ^final^1^2' '
 	git rev-parse final^1 ^final^1^1 ^final^1^2 >expect &&
 	git rev-parse final^1^! >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic final^1^! = final^1 ^final^1^1 ^final^1^2' '
+	git rev-parse --symbolic final^1 ^final^1^1 ^final^1^2 >expect &&
+	git rev-parse --symbolic final^1^! >actual &&
 	test_cmp expect actual
 '
 
@@ -100,6 +112,114 @@ test_expect_success 'repack for next test' '
 test_expect_success 'short SHA-1 works' '
 	start=$(git rev-parse --verify start) &&
 	test_cmp_rev_output start "git rev-parse ${start%?}"
+'
+
+# rev^- tests; we can use a simpler setup for these
+
+test_expect_success 'setup for rev^- tests' '
+	test_commit one &&
+	test_commit two &&
+	test_commit three &&
+
+	# Merge in a branch for testing rev^-
+	git checkout -b branch &&
+	git checkout HEAD^^ &&
+	git merge -m merge --no-edit --no-ff branch &&
+	git checkout -b merge
+'
+
+# The merged branch has 2 commits + the merge
+test_expect_success 'rev-list --count merge^- = merge^..merge' '
+	git rev-list --count merge^..merge >expect &&
+	echo 3 >actual &&
+	test_cmp expect actual
+'
+
+# All rev^- rev-parse tests
+
+test_expect_success 'rev-parse merge^- = merge^..merge' '
+	git rev-parse merge^..merge >expect &&
+	git rev-parse merge^- >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse merge^-1 = merge^..merge' '
+	git rev-parse merge^1..merge >expect &&
+	git rev-parse merge^-1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse merge^-2 = merge^2..merge' '
+	git rev-parse merge^2..merge >expect &&
+	git rev-parse merge^-2 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic merge^-1 = merge^1..merge' '
+	git rev-parse --symbolic merge^1..merge >expect &&
+	git rev-parse --symbolic merge^-1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse merge^-0 (invalid parent)' '
+	test_must_fail git rev-parse merge^-0
+'
+
+test_expect_success 'rev-parse merge^-3 (invalid parent)' '
+	test_must_fail git rev-parse merge^-3
+'
+
+test_expect_success 'rev-parse merge^-^ (garbage after ^-)' '
+	test_must_fail git rev-parse merge^-^
+'
+
+test_expect_success 'rev-parse merge^-1x (garbage after ^-1)' '
+	test_must_fail git rev-parse merge^-1x
+'
+
+# All rev^- rev-list tests (should be mostly the same as rev-parse; the reason
+# for the duplication is that rev-parse and rev-list use different parsers).
+
+test_expect_success 'rev-list merge^- = merge^..merge' '
+	git rev-list merge^..merge >expect &&
+	git rev-list merge^- >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list merge^-1 = merge^1..merge' '
+	git rev-list merge^1..merge >expect &&
+	git rev-list merge^-1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list merge^-2 = merge^2..merge' '
+	git rev-list merge^2..merge >expect &&
+	git rev-list merge^-2 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list merge^-0 (invalid parent)' '
+	test_must_fail git rev-list merge^-0
+'
+
+test_expect_success 'rev-list merge^-3 (invalid parent)' '
+	test_must_fail git rev-list merge^-3
+'
+
+test_expect_success 'rev-list merge^-^ (garbage after ^-)' '
+	test_must_fail git rev-list merge^-^
+'
+
+test_expect_success 'rev-list merge^-1x (garbage after ^-1)' '
+	test_must_fail git rev-list merge^-1x
+'
+
+test_expect_success 'rev-parse $garbage^@ does not segfault' '
+	test_must_fail git rev-parse $EMPTY_TREE^@
+'
+
+test_expect_success 'rev-parse $garbage...$garbage does not segfault' '
+	test_must_fail git rev-parse $EMPTY_TREE...$EMPTY_BLOB
 '
 
 test_done

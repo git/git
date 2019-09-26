@@ -18,7 +18,7 @@ SYNOPSIS
 'git notes' merge --commit [-v | -q]
 'git notes' merge --abort [-v | -q]
 'git notes' remove [--ignore-missing] [--stdin] [<object>...]
-'git notes' prune [-n | -v]
+'git notes' prune [-n] [-v]
 'git notes' get-ref
 
 
@@ -146,7 +146,7 @@ OPTIONS
 
 -C <object>::
 --reuse-message=<object>::
-	Take the given blob object (for	example, another note) as the
+	Take the given blob object (for example, another note) as the
 	note message. (Use `git notes copy <object>` instead to
 	copy notes between objects.)
 
@@ -171,7 +171,7 @@ OPTIONS
 	object that does not have notes attached to it.
 
 --stdin::
-	Also read the object names to remove notes from from the standard
+	Also read the object names to remove notes from the standard
 	input (there is no reason you cannot combine this with object
 	names from the command line).
 
@@ -199,7 +199,7 @@ OPTIONS
 	.git/NOTES_MERGE_REF symref is updated to the resulting commit.
 
 --abort::
-	Abort/reset a in-progress 'git notes merge', i.e. a notes merge
+	Abort/reset an in-progress 'git notes merge', i.e. a notes merge
 	with conflicts. This simply removes all files related to the
 	notes merge.
 

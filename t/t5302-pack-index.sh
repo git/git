@@ -15,17 +15,17 @@ test_expect_success \
      while test $i -le 100
      do
          iii=$(printf '%03i' $i)
-         test-genrandom "bar" 200 > wide_delta_$iii &&
-         test-genrandom "baz $iii" 50 >> wide_delta_$iii &&
-         test-genrandom "foo"$i 100 > deep_delta_$iii &&
-         test-genrandom "foo"$(expr $i + 1) 100 >> deep_delta_$iii &&
-         test-genrandom "foo"$(expr $i + 2) 100 >> deep_delta_$iii &&
+	 test-tool genrandom "bar" 200 > wide_delta_$iii &&
+	 test-tool genrandom "baz $iii" 50 >> wide_delta_$iii &&
+	 test-tool genrandom "foo"$i 100 > deep_delta_$iii &&
+	 test-tool genrandom "foo"$(expr $i + 1) 100 >> deep_delta_$iii &&
+	 test-tool genrandom "foo"$(expr $i + 2) 100 >> deep_delta_$iii &&
          echo $iii >file_$iii &&
-         test-genrandom "$iii" 8192 >>file_$iii &&
+	 test-tool genrandom "$iii" 8192 >>file_$iii &&
          git update-index --add file_$iii deep_delta_$iii wide_delta_$iii &&
          i=$(expr $i + 1) || return 1
      done &&
-     { echo 101 && test-genrandom 100 8192; } >file_101 &&
+     { echo 101 && test-tool genrandom 100 8192; } >file_101 &&
      git update-index --add file_101 &&
      tree=$(git write-tree) &&
      commit=$(git commit-tree $tree </dev/null) && {
@@ -237,7 +237,7 @@ test_expect_success 'running index-pack in the object store' '
     rm -f .git/objects/pack/* &&
     cp test-1-${pack1}.pack .git/objects/pack/pack-${pack1}.pack &&
     (
-	cd .git/objects/pack
+	cd .git/objects/pack &&
 	git index-pack pack-${pack1}.pack
     ) &&
     test -f .git/objects/pack/pack-${pack1}.idx
@@ -259,6 +259,11 @@ EOF
     thirtyeight=${tag#??} &&
     rm -f .git/objects/${tag%$thirtyeight}/$thirtyeight &&
     git index-pack --strict tag-test-${pack1}.pack 2>err &&
+    grep "^warning:.* expected .tagger. line" err
+'
+
+test_expect_success 'index-pack --fsck-objects also warns upon missing tagger in tag' '
+    git index-pack --fsck-objects tag-test-${pack1}.pack 2>err &&
     grep "^warning:.* expected .tagger. line" err
 '
 

@@ -30,21 +30,19 @@
  *     `fdopen_tempfile()` has been called on the object
  *   - `owner` holds the PID of the process that created the file
  *
- * - Active, file closed (after successful `close_tempfile()`). Same
+ * - Active, file closed (after `close_tempfile_gently()`). Same
  *   as the previous state, except that the temporary file is closed,
  *   `fd` is -1, and `fp` is `NULL`.
  *
- * - Inactive (after `delete_tempfile()`, `rename_tempfile()`, a
- *   failed attempt to create a temporary file, or a failed
- *   `close_tempfile()`). In this state:
+ * - Inactive (after `delete_tempfile()`, `rename_tempfile()`, or a
+ *   failed attempt to create a temporary file). In this state:
  *
  *   - `active` is unset
  *   - `filename` is empty (usually, though there are transitory
  *     states in which this condition doesn't hold). Client code should
  *     *not* rely on the filename being empty in this state.
  *   - `fd` is -1 and `fp` is `NULL`
- *   - the object is left registered in the `tempfile_list`, and
- *     `on_list` is set.
+ *   - the object is removed from `tempfile_list` (but could be used again)
  *
  * A temporary file is owned by the process that created it. The
  * `tempfile` has an `owner` field that records the owner's PID. This
@@ -56,20 +54,28 @@
 #include "tempfile.h"
 #include "sigchain.h"
 
-static struct tempfile *volatile tempfile_list;
+static VOLATILE_LIST_HEAD(tempfile_list);
 
-static void remove_tempfiles(int skip_fclose)
+static void remove_tempfiles(int in_signal_handler)
 {
 	pid_t me = getpid();
+	volatile struct volatile_list_head *pos;
 
-	while (tempfile_list) {
-		if (tempfile_list->owner == me) {
-			/* fclose() is not safe to call in a signal handler */
-			if (skip_fclose)
-				tempfile_list->fp = NULL;
-			delete_tempfile(tempfile_list);
-		}
-		tempfile_list = tempfile_list->next;
+	list_for_each(pos, &tempfile_list) {
+		struct tempfile *p = list_entry(pos, struct tempfile, list);
+
+		if (!is_tempfile_active(p) || p->owner != me)
+			continue;
+
+		if (p->fd >= 0)
+			close(p->fd);
+
+		if (in_signal_handler)
+			unlink(p->filename.buf);
+		else
+			unlink_or_warn(p->filename.buf);
+
+		p->active = 0;
 	}
 }
 
@@ -85,39 +91,48 @@ static void remove_tempfiles_on_signal(int signo)
 	raise(signo);
 }
 
-/*
- * Initialize *tempfile if necessary and add it to tempfile_list.
- */
-static void prepare_tempfile_object(struct tempfile *tempfile)
+static struct tempfile *new_tempfile(void)
 {
-	if (!tempfile_list) {
-		/* One-time initialization */
+	struct tempfile *tempfile = xmalloc(sizeof(*tempfile));
+	tempfile->fd = -1;
+	tempfile->fp = NULL;
+	tempfile->active = 0;
+	tempfile->owner = 0;
+	INIT_LIST_HEAD(&tempfile->list);
+	strbuf_init(&tempfile->filename, 0);
+	return tempfile;
+}
+
+static void activate_tempfile(struct tempfile *tempfile)
+{
+	static int initialized;
+
+	if (is_tempfile_active(tempfile))
+		BUG("activate_tempfile called for active object");
+
+	if (!initialized) {
 		sigchain_push_common(remove_tempfiles_on_signal);
 		atexit(remove_tempfiles_on_exit);
+		initialized = 1;
 	}
 
-	if (tempfile->active)
-		die("BUG: prepare_tempfile_object called for active object");
-	if (!tempfile->on_list) {
-		/* Initialize *tempfile and add it to tempfile_list: */
-		tempfile->fd = -1;
-		tempfile->fp = NULL;
-		tempfile->active = 0;
-		tempfile->owner = 0;
-		strbuf_init(&tempfile->filename, 0);
-		tempfile->next = tempfile_list;
-		tempfile_list = tempfile;
-		tempfile->on_list = 1;
-	} else if (tempfile->filename.len) {
-		/* This shouldn't happen, but better safe than sorry. */
-		die("BUG: prepare_tempfile_object called for improperly-reset object");
-	}
+	volatile_list_add(&tempfile->list, &tempfile_list);
+	tempfile->owner = getpid();
+	tempfile->active = 1;
+}
+
+static void deactivate_tempfile(struct tempfile *tempfile)
+{
+	tempfile->active = 0;
+	strbuf_release(&tempfile->filename);
+	volatile_list_del(&tempfile->list);
+	free(tempfile);
 }
 
 /* Make sure errno contains a meaningful value on error */
-int create_tempfile(struct tempfile *tempfile, const char *path)
+struct tempfile *create_tempfile(const char *path)
 {
-	prepare_tempfile_object(tempfile);
+	struct tempfile *tempfile = new_tempfile();
 
 	strbuf_add_absolute_path(&tempfile->filename, path);
 	tempfile->fd = open(tempfile->filename.buf,
@@ -127,88 +142,83 @@ int create_tempfile(struct tempfile *tempfile, const char *path)
 		tempfile->fd = open(tempfile->filename.buf,
 				    O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (tempfile->fd < 0) {
-		strbuf_reset(&tempfile->filename);
-		return -1;
+		deactivate_tempfile(tempfile);
+		return NULL;
 	}
-	tempfile->owner = getpid();
-	tempfile->active = 1;
+	activate_tempfile(tempfile);
 	if (adjust_shared_perm(tempfile->filename.buf)) {
 		int save_errno = errno;
 		error("cannot fix permission bits on %s", tempfile->filename.buf);
-		delete_tempfile(tempfile);
+		delete_tempfile(&tempfile);
 		errno = save_errno;
-		return -1;
+		return NULL;
 	}
-	return tempfile->fd;
+
+	return tempfile;
 }
 
-void register_tempfile(struct tempfile *tempfile, const char *path)
+struct tempfile *register_tempfile(const char *path)
 {
-	prepare_tempfile_object(tempfile);
+	struct tempfile *tempfile = new_tempfile();
 	strbuf_add_absolute_path(&tempfile->filename, path);
-	tempfile->owner = getpid();
-	tempfile->active = 1;
+	activate_tempfile(tempfile);
+	return tempfile;
 }
 
-int mks_tempfile_sm(struct tempfile *tempfile,
-		    const char *template, int suffixlen, int mode)
+struct tempfile *mks_tempfile_sm(const char *filename_template, int suffixlen, int mode)
 {
-	prepare_tempfile_object(tempfile);
+	struct tempfile *tempfile = new_tempfile();
 
-	strbuf_add_absolute_path(&tempfile->filename, template);
+	strbuf_add_absolute_path(&tempfile->filename, filename_template);
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
-		strbuf_reset(&tempfile->filename);
-		return -1;
+		deactivate_tempfile(tempfile);
+		return NULL;
 	}
-	tempfile->owner = getpid();
-	tempfile->active = 1;
-	return tempfile->fd;
+	activate_tempfile(tempfile);
+	return tempfile;
 }
 
-int mks_tempfile_tsm(struct tempfile *tempfile,
-		     const char *template, int suffixlen, int mode)
+struct tempfile *mks_tempfile_tsm(const char *filename_template, int suffixlen, int mode)
 {
+	struct tempfile *tempfile = new_tempfile();
 	const char *tmpdir;
-
-	prepare_tempfile_object(tempfile);
 
 	tmpdir = getenv("TMPDIR");
 	if (!tmpdir)
 		tmpdir = "/tmp";
 
-	strbuf_addf(&tempfile->filename, "%s/%s", tmpdir, template);
+	strbuf_addf(&tempfile->filename, "%s/%s", tmpdir, filename_template);
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
-		strbuf_reset(&tempfile->filename);
-		return -1;
+		deactivate_tempfile(tempfile);
+		return NULL;
 	}
-	tempfile->owner = getpid();
-	tempfile->active = 1;
-	return tempfile->fd;
+	activate_tempfile(tempfile);
+	return tempfile;
 }
 
-int xmks_tempfile_m(struct tempfile *tempfile, const char *template, int mode)
+struct tempfile *xmks_tempfile_m(const char *filename_template, int mode)
 {
-	int fd;
+	struct tempfile *tempfile;
 	struct strbuf full_template = STRBUF_INIT;
 
-	strbuf_add_absolute_path(&full_template, template);
-	fd = mks_tempfile_m(tempfile, full_template.buf, mode);
-	if (fd < 0)
+	strbuf_add_absolute_path(&full_template, filename_template);
+	tempfile = mks_tempfile_m(full_template.buf, mode);
+	if (!tempfile)
 		die_errno("Unable to create temporary file '%s'",
 			  full_template.buf);
 
 	strbuf_release(&full_template);
-	return fd;
+	return tempfile;
 }
 
 FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 {
-	if (!tempfile->active)
-		die("BUG: fdopen_tempfile() called for inactive object");
+	if (!is_tempfile_active(tempfile))
+		BUG("fdopen_tempfile() called for inactive object");
 	if (tempfile->fp)
-		die("BUG: fdopen_tempfile() called for open object");
+		BUG("fdopen_tempfile() called for open object");
 
 	tempfile->fp = fdopen(tempfile->fd, mode);
 	return tempfile->fp;
@@ -216,95 +226,96 @@ FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 
 const char *get_tempfile_path(struct tempfile *tempfile)
 {
-	if (!tempfile->active)
-		die("BUG: get_tempfile_path() called for inactive object");
+	if (!is_tempfile_active(tempfile))
+		BUG("get_tempfile_path() called for inactive object");
 	return tempfile->filename.buf;
 }
 
 int get_tempfile_fd(struct tempfile *tempfile)
 {
-	if (!tempfile->active)
-		die("BUG: get_tempfile_fd() called for inactive object");
+	if (!is_tempfile_active(tempfile))
+		BUG("get_tempfile_fd() called for inactive object");
 	return tempfile->fd;
 }
 
 FILE *get_tempfile_fp(struct tempfile *tempfile)
 {
-	if (!tempfile->active)
-		die("BUG: get_tempfile_fp() called for inactive object");
+	if (!is_tempfile_active(tempfile))
+		BUG("get_tempfile_fp() called for inactive object");
 	return tempfile->fp;
 }
 
-int close_tempfile(struct tempfile *tempfile)
+int close_tempfile_gently(struct tempfile *tempfile)
 {
-	int fd = tempfile->fd;
-	FILE *fp = tempfile->fp;
+	int fd;
+	FILE *fp;
 	int err;
 
-	if (fd < 0)
+	if (!is_tempfile_active(tempfile) || tempfile->fd < 0)
 		return 0;
 
+	fd = tempfile->fd;
+	fp = tempfile->fp;
 	tempfile->fd = -1;
 	if (fp) {
 		tempfile->fp = NULL;
-
-		/*
-		 * Note: no short-circuiting here; we want to fclose()
-		 * in any case!
-		 */
-		err = ferror(fp) | fclose(fp);
+		if (ferror(fp)) {
+			err = -1;
+			if (!fclose(fp))
+				errno = EIO;
+		} else {
+			err = fclose(fp);
+		}
 	} else {
 		err = close(fd);
 	}
 
-	if (err) {
-		int save_errno = errno;
-		delete_tempfile(tempfile);
-		errno = save_errno;
-		return -1;
-	}
-
-	return 0;
+	return err ? -1 : 0;
 }
 
 int reopen_tempfile(struct tempfile *tempfile)
 {
+	if (!is_tempfile_active(tempfile))
+		BUG("reopen_tempfile called for an inactive object");
 	if (0 <= tempfile->fd)
-		die("BUG: reopen_tempfile called for an open object");
-	if (!tempfile->active)
-		die("BUG: reopen_tempfile called for an inactive object");
-	tempfile->fd = open(tempfile->filename.buf, O_WRONLY);
+		BUG("reopen_tempfile called for an open object");
+	tempfile->fd = open(tempfile->filename.buf, O_WRONLY|O_TRUNC);
 	return tempfile->fd;
 }
 
-int rename_tempfile(struct tempfile *tempfile, const char *path)
+int rename_tempfile(struct tempfile **tempfile_p, const char *path)
 {
-	if (!tempfile->active)
-		die("BUG: rename_tempfile called for inactive object");
+	struct tempfile *tempfile = *tempfile_p;
 
-	if (close_tempfile(tempfile))
+	if (!is_tempfile_active(tempfile))
+		BUG("rename_tempfile called for inactive object");
+
+	if (close_tempfile_gently(tempfile)) {
+		delete_tempfile(tempfile_p);
 		return -1;
+	}
 
 	if (rename(tempfile->filename.buf, path)) {
 		int save_errno = errno;
-		delete_tempfile(tempfile);
+		delete_tempfile(tempfile_p);
 		errno = save_errno;
 		return -1;
 	}
 
-	tempfile->active = 0;
-	strbuf_reset(&tempfile->filename);
+	deactivate_tempfile(tempfile);
+	*tempfile_p = NULL;
 	return 0;
 }
 
-void delete_tempfile(struct tempfile *tempfile)
+void delete_tempfile(struct tempfile **tempfile_p)
 {
-	if (!tempfile->active)
+	struct tempfile *tempfile = *tempfile_p;
+
+	if (!is_tempfile_active(tempfile))
 		return;
 
-	if (!close_tempfile(tempfile)) {
-		unlink_or_warn(tempfile->filename.buf);
-		tempfile->active = 0;
-		strbuf_reset(&tempfile->filename);
-	}
+	close_tempfile_gently(tempfile);
+	unlink_or_warn(tempfile->filename.buf);
+	deactivate_tempfile(tempfile);
+	*tempfile_p = NULL;
 }

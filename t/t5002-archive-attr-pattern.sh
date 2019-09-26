@@ -76,7 +76,7 @@ test_expect_missing	archive/deep/and/slashless/ &&
 test_expect_missing	archive/deep/and/slashless/foo &&
 test_expect_missing	archive/deep/with/wildcard/ &&
 test_expect_missing	archive/deep/with/wildcard/foo &&
-test_expect_exists	archive/one-level-lower/
+test_expect_missing	archive/one-level-lower/
 test_expect_missing	archive/one-level-lower/two-levels-lower/ignored-only-if-dir/
 test_expect_missing	archive/one-level-lower/two-levels-lower/ignored-ony-if-dir/ignored-by-ignored-dir
 

@@ -59,10 +59,14 @@ test_format () {
 }
 
 # Feed to --format to provide predictable colored sequences.
+BASIC_COLOR='%Credfoo%Creset'
+COLOR='%C(red)foo%C(reset)'
 AUTO_COLOR='%C(auto,red)foo%C(auto,reset)'
+ALWAYS_COLOR='%C(always,red)foo%C(always,reset)'
 has_color () {
-	printf '\033[31mfoo\033[m\n' >expect &&
-	test_cmp expect "$1"
+	test_decode_color <"$1" >decoded &&
+	echo "<RED>foo<RESET>" >expect &&
+	test_cmp expect decoded
 }
 
 has_no_color () {
@@ -170,68 +174,104 @@ $added
 
 EOF
 
-test_format colors %Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy <<EOF
-commit $head2
-[31mfoo[32mbar[34mbaz[mxyzzy
-commit $head1
-[31mfoo[32mbar[34mbaz[mxyzzy
-EOF
-
-test_format advanced-colors '%C(red yellow bold)foo%C(reset)' <<EOF
-commit $head2
-[1;31;43mfoo[m
-commit $head1
-[1;31;43mfoo[m
-EOF
-
-test_expect_success '%C(auto,...) does not enable color by default' '
-	git log --format=$AUTO_COLOR -1 >actual &&
-	has_no_color actual
+test_expect_success 'basic colors' '
+	cat >expect <<-EOF &&
+	commit $head2
+	<RED>foo<GREEN>bar<BLUE>baz<RESET>xyzzy
+	EOF
+	format="%Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy" &&
+	git rev-list --color --format="$format" -1 master >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
 '
 
-test_expect_success '%C(auto,...) enables colors for color.diff' '
-	git -c color.diff=always log --format=$AUTO_COLOR -1 >actual &&
-	has_color actual
+test_expect_success '%S is not a placeholder for rev-list yet' '
+	git rev-list --format="%S" -1 master | grep "%S"
 '
 
-test_expect_success '%C(auto,...) enables colors for color.ui' '
-	git -c color.ui=always log --format=$AUTO_COLOR -1 >actual &&
-	has_color actual
+test_expect_success 'advanced colors' '
+	cat >expect <<-EOF &&
+	commit $head2
+	<BOLD;RED;BYELLOW>foo<RESET>
+	EOF
+	format="%C(red yellow bold)foo%C(reset)" &&
+	git rev-list --color --format="$format" -1 master >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
 '
 
-test_expect_success '%C(auto,...) respects --color' '
-	git log --format=$AUTO_COLOR -1 --color >actual &&
-	has_color actual
-'
-
-test_expect_success '%C(auto,...) respects --no-color' '
-	git -c color.ui=always log --format=$AUTO_COLOR -1 --no-color >actual &&
-	has_no_color actual
-'
-
-test_expect_success TTY '%C(auto,...) respects --color=auto (stdout is tty)' '
-	test_terminal env TERM=vt100 \
-		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
-	has_color actual
-'
-
-test_expect_success '%C(auto,...) respects --color=auto (stdout not tty)' '
-	(
-		TERM=vt100 && export TERM &&
-		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
+for spec in \
+	"%Cred:$BASIC_COLOR" \
+	"%C(...):$COLOR" \
+	"%C(auto,...):$AUTO_COLOR"
+do
+	desc=${spec%%:*}
+	color=${spec#*:}
+	test_expect_success "$desc does not enable color by default" '
+		git log --format=$color -1 >actual &&
 		has_no_color actual
-	)
+	'
+
+	test_expect_success "$desc enables colors for color.diff" '
+		git -c color.diff=always log --format=$color -1 >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc enables colors for color.ui" '
+		git -c color.ui=always log --format=$color -1 >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc respects --color" '
+		git log --format=$color -1 --color >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc respects --no-color" '
+		git -c color.ui=always log --format=$color -1 --no-color >actual &&
+		has_no_color actual
+	'
+
+	test_expect_success TTY "$desc respects --color=auto (stdout is tty)" '
+		test_terminal git log --format=$color -1 --color=auto >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc respects --color=auto (stdout not tty)" '
+		(
+			TERM=vt100 && export TERM &&
+			git log --format=$color -1 --color=auto >actual &&
+			has_no_color actual
+		)
+	'
+done
+
+test_expect_success '%C(always,...) enables color even without tty' '
+	git log --format=$ALWAYS_COLOR -1 >actual &&
+	has_color actual
 '
 
 test_expect_success '%C(auto) respects --color' '
-	git log --color --format="%C(auto)%H" -1 >actual &&
-	printf "\\033[33m%s\\033[m\\n" $(git rev-parse HEAD) >expect &&
+	git log --color --format="%C(auto)%H" -1 >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	echo "<YELLOW>$(git rev-parse HEAD)<RESET>" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success '%C(auto) respects --no-color' '
 	git log --no-color --format="%C(auto)%H" -1 >actual &&
 	git rev-parse HEAD >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list %C(auto,...) respects --color' '
+	git rev-list --color --format="%C(auto,green)foo%C(auto,reset)" \
+		-1 HEAD >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	cat >expect <<-EOF &&
+	commit $(git rev-parse HEAD)
+	<GREEN>foo<RESET>
+	EOF
 	test_cmp expect actual
 '
 
@@ -411,8 +451,8 @@ test_expect_success '--abbrev' '
 	git log -1 --format="%h %h %h" HEAD >actual1 &&
 	git log -1 --abbrev=5 --format="%h %h %h" HEAD >actual2 &&
 	git log -1 --abbrev=5 --format="%H %H %H" HEAD >actual3 &&
-	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
-	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
+	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
+	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
 	test_cmp expect2 fuzzy2 &&
 	test_cmp expect3 fuzzy3 &&
 	! test_cmp actual1 actual2

@@ -1,0 +1,4 @@
+type RIGHT struct {
+	a Type
+	b ChangeMe
+}

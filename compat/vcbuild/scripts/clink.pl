@@ -12,32 +12,62 @@
 use strict;
 my @args = ();
 my @cflags = ();
+my @lflags = ();
 my $is_linking = 0;
+my $is_debug = 0;
 while (@ARGV) {
 	my $arg = shift @ARGV;
-	if ("$arg" =~ /^-[DIMGO]/) {
+	if ("$arg" eq "-DDEBUG") {
+	    # Some vcpkg-based libraries have different names for release
+	    # and debug versions.  This hack assumes that -DDEBUG comes
+	    # before any "-l*" flags.
+	    $is_debug = 1;
+	}
+	if ("$arg" =~ /^-[DIMGOZ]/) {
 		push(@cflags, $arg);
 	} elsif ("$arg" eq "-o") {
 		my $file_out = shift @ARGV;
 		if ("$file_out" =~ /exe$/) {
 			$is_linking = 1;
+			# Create foo.exe and foo.pdb
 			push(@args, "-OUT:$file_out");
 		} else {
+			# Create foo.o and foo.o.pdb
 			push(@args, "-Fo$file_out");
+			push(@args, "-Fd$file_out.pdb");
 		}
 	} elsif ("$arg" eq "-lz") {
+	    if ($is_debug) {
+		push(@args, "zlibd.lib");
+	    } else{
 		push(@args, "zlib.lib");
+	    }
 	} elsif ("$arg" eq "-liconv") {
-		push(@args, "iconv.lib");
+		push(@args, "libiconv.lib");
 	} elsif ("$arg" eq "-lcrypto") {
 		push(@args, "libeay32.lib");
 	} elsif ("$arg" eq "-lssl") {
 		push(@args, "ssleay32.lib");
 	} elsif ("$arg" eq "-lcurl") {
-		push(@args, "libcurl.lib");
+		my $lib = "";
+		# Newer vcpkg definitions call this libcurl_imp.lib; Do we
+		# need to use that instead?
+		foreach my $flag (@lflags) {
+			if ($flag =~ /^-LIBPATH:(.*)/) {
+				foreach my $l ("libcurl_imp.lib", "libcurl.lib") {
+					if (-f "$1/$l") {
+						$lib = $l;
+						last;
+					}
+				}
+			}
+		}
+		push(@args, $lib);
+	} elsif ("$arg" eq "-lexpat") {
+		push(@args, "expat.lib");
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
 		$arg =~ s/^-L/-LIBPATH:/;
-		push(@args, $arg);
+		push(@lflags, $arg);
 	} elsif ("$arg" =~ /^-R/) {
 		# eat
 	} else {
@@ -45,10 +75,11 @@ while (@ARGV) {
 	}
 }
 if ($is_linking) {
+	push(@args, @lflags);
 	unshift(@args, "link.exe");
 } else {
 	unshift(@args, "cl.exe");
 	push(@args, @cflags);
 }
-#printf("**** @args\n");
+printf(STDERR "**** @args\n\n\n") if (!defined($ENV{'QUIET_GEN'}));
 exit (system(@args) != 0);

@@ -3,7 +3,9 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "refs.h"
 #include "quote.h"
@@ -12,6 +14,8 @@
 #include "diff.h"
 #include "revision.h"
 #include "split-index.h"
+#include "submodule.h"
+#include "commit-reach.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -120,7 +124,7 @@ static void show_with_type(int type, const char *arg)
 }
 
 /* Output a revision, only if filter allows it */
-static void show_rev(int type, const unsigned char *sha1, const char *name)
+static void show_rev(int type, const struct object_id *oid, const char *name)
 {
 	if (!(filter & DO_REVS))
 		return;
@@ -128,10 +132,10 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 
 	if ((symbolic || abbrev_ref) && name) {
 		if (symbolic == SHOW_SYMBOLIC_FULL || abbrev_ref) {
-			unsigned char discard[20];
+			struct object_id discard;
 			char *full;
 
-			switch (dwim_ref(name, strlen(name), discard, &full)) {
+			switch (dwim_ref(name, strlen(name), &discard, &full)) {
 			case 0:
 				/*
 				 * Not found -- not a ref.  We could
@@ -157,9 +161,9 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 		}
 	}
 	else if (abbrev)
-		show_with_type(type, find_unique_abbrev(sha1, abbrev));
+		show_with_type(type, find_unique_abbrev(oid, abbrev));
 	else
-		show_with_type(type, sha1_to_hex(sha1));
+		show_with_type(type, oid_to_hex(oid));
 }
 
 /* Output a flag, only if filter allows it. */
@@ -179,11 +183,11 @@ static int show_default(void)
 	const char *s = def;
 
 	if (s) {
-		unsigned char sha1[20];
+		struct object_id oid;
 
 		def = NULL;
-		if (!get_sha1(s, sha1)) {
-			show_rev(NORMAL, sha1, s);
+		if (!get_oid(s, &oid)) {
+			show_rev(NORMAL, &oid, s);
 			return 1;
 		}
 	}
@@ -194,31 +198,32 @@ static int show_reference(const char *refname, const struct object_id *oid, int 
 {
 	if (ref_excluded(ref_excludes, refname))
 		return 0;
-	show_rev(NORMAL, oid->hash, refname);
+	show_rev(NORMAL, oid, refname);
 	return 0;
 }
 
 static int anti_reference(const char *refname, const struct object_id *oid, int flag, void *cb_data)
 {
-	show_rev(REVERSED, oid->hash, refname);
+	show_rev(REVERSED, oid, refname);
 	return 0;
 }
 
-static int show_abbrev(const unsigned char *sha1, void *cb_data)
+static int show_abbrev(const struct object_id *oid, void *cb_data)
 {
-	show_rev(NORMAL, sha1, NULL);
+	show_rev(NORMAL, oid, NULL);
 	return 0;
 }
 
 static void show_datestring(const char *flag, const char *datestr)
 {
-	static char buffer[100];
+	char *buffer;
 
 	/* date handling requires both flags and revs */
 	if ((filter & (DO_FLAGS | DO_REVS)) != (DO_FLAGS | DO_REVS))
 		return;
-	snprintf(buffer, sizeof(buffer), "%s%lu", flag, approxidate(datestr));
+	buffer = xstrfmt("%s%"PRItime, flag, approxidate(datestr));
 	show(buffer);
+	free(buffer);
 }
 
 static int show_file(const char *arg, int output_prefix)
@@ -227,9 +232,9 @@ static int show_file(const char *arg, int output_prefix)
 	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV)) {
 		if (output_prefix) {
 			const char *prefix = startup_info->prefix;
-			show(prefix_filename(prefix,
-					     prefix ? strlen(prefix) : 0,
-					     arg));
+			char *fname = prefix_filename(prefix, arg);
+			show(fname);
+			free(fname);
 		} else
 			show(arg);
 		return 1;
@@ -240,28 +245,28 @@ static int show_file(const char *arg, int output_prefix)
 static int try_difference(const char *arg)
 {
 	char *dotdot;
-	unsigned char sha1[20];
-	unsigned char end[20];
-	const char *next;
-	const char *this;
+	struct object_id start_oid;
+	struct object_id end_oid;
+	const char *end;
+	const char *start;
 	int symmetric;
 	static const char head_by_default[] = "HEAD";
 
 	if (!(dotdot = strstr(arg, "..")))
 		return 0;
-	next = dotdot + 2;
-	this = arg;
-	symmetric = (*next == '.');
+	end = dotdot + 2;
+	start = arg;
+	symmetric = (*end == '.');
 
 	*dotdot = 0;
-	next += symmetric;
+	end += symmetric;
 
-	if (!*next)
-		next = head_by_default;
+	if (!*end)
+		end = head_by_default;
 	if (dotdot == arg)
-		this = head_by_default;
+		start = head_by_default;
 
-	if (this == head_by_default && next == head_by_default &&
+	if (start == head_by_default && end == head_by_default &&
 	    !symmetric) {
 		/*
 		 * Just ".."?  That is not a range but the
@@ -271,18 +276,22 @@ static int try_difference(const char *arg)
 		return 0;
 	}
 
-	if (!get_sha1_committish(this, sha1) && !get_sha1_committish(next, end)) {
-		show_rev(NORMAL, end, next);
-		show_rev(symmetric ? NORMAL : REVERSED, sha1, this);
+	if (!get_oid_committish(start, &start_oid) && !get_oid_committish(end, &end_oid)) {
+		show_rev(NORMAL, &end_oid, end);
+		show_rev(symmetric ? NORMAL : REVERSED, &start_oid, start);
 		if (symmetric) {
 			struct commit_list *exclude;
 			struct commit *a, *b;
-			a = lookup_commit_reference(sha1);
-			b = lookup_commit_reference(end);
+			a = lookup_commit_reference(the_repository, &start_oid);
+			b = lookup_commit_reference(the_repository, &end_oid);
+			if (!a || !b) {
+				*dotdot = '.';
+				return 0;
+			}
 			exclude = get_merge_bases(a, b);
 			while (exclude) {
 				struct commit *commit = pop_commit(&exclude);
-				show_rev(REVERSED, commit->object.oid.hash, NULL);
+				show_rev(REVERSED, &commit->object.oid, NULL);
 			}
 		}
 		*dotdot = '.';
@@ -295,31 +304,64 @@ static int try_difference(const char *arg)
 static int try_parent_shorthands(const char *arg)
 {
 	char *dotdot;
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct commit *commit;
 	struct commit_list *parents;
-	int parents_only;
+	int parent_number;
+	int include_rev = 0;
+	int include_parents = 0;
+	int exclude_parent = 0;
 
-	if ((dotdot = strstr(arg, "^!")))
-		parents_only = 0;
-	else if ((dotdot = strstr(arg, "^@")))
-		parents_only = 1;
+	if ((dotdot = strstr(arg, "^!"))) {
+		include_rev = 1;
+		if (dotdot[2])
+			return 0;
+	} else if ((dotdot = strstr(arg, "^@"))) {
+		include_parents = 1;
+		if (dotdot[2])
+			return 0;
+	} else if ((dotdot = strstr(arg, "^-"))) {
+		include_rev = 1;
+		exclude_parent = 1;
 
-	if (!dotdot || dotdot[2])
+		if (dotdot[2]) {
+			char *end;
+			exclude_parent = strtoul(dotdot + 2, &end, 10);
+			if (*end != '\0' || !exclude_parent)
+				return 0;
+		}
+	} else
 		return 0;
 
 	*dotdot = 0;
-	if (get_sha1_committish(arg, sha1)) {
+	if (get_oid_committish(arg, &oid) ||
+	    !(commit = lookup_commit_reference(the_repository, &oid))) {
 		*dotdot = '^';
 		return 0;
 	}
 
-	if (!parents_only)
-		show_rev(NORMAL, sha1, arg);
-	commit = lookup_commit_reference(sha1);
-	for (parents = commit->parents; parents; parents = parents->next)
-		show_rev(parents_only ? NORMAL : REVERSED,
-				parents->item->object.oid.hash, arg);
+	if (exclude_parent &&
+	    exclude_parent > commit_list_count(commit->parents)) {
+		*dotdot = '^';
+		return 0;
+	}
+
+	if (include_rev)
+		show_rev(NORMAL, &oid, arg);
+	for (parents = commit->parents, parent_number = 1;
+	     parents;
+	     parents = parents->next, parent_number++) {
+		char *name = NULL;
+
+		if (exclude_parent && parent_number != exclude_parent)
+			continue;
+
+		if (symbolic)
+			name = xstrfmt("%s^%d", arg, parent_number);
+		show_rev(include_parents ? NORMAL : REVERSED,
+			 &parents->item->object.oid, name);
+		free(name);
+	}
 
 	*dotdot = '^';
 	return 1;
@@ -349,6 +391,14 @@ static const char *skipspaces(const char *s)
 	while (isspace(*s))
 		s++;
 	return s;
+}
+
+static char *findspace(const char *s)
+{
+	for (; *s; s++)
+		if (isspace(*s))
+			return (char*)s;
+	return NULL;
 }
 
 static int cmd_parseopt(int argc, const char **argv, const char *prefix)
@@ -398,7 +448,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	/* parse: (<short>|<short>,<long>|<long>)[*=?!]*<arghint>? SP+ <help> */
 	while (strbuf_getline(&sb, stdin) != EOF) {
 		const char *s;
-		const char *help;
+		char *help;
 		struct option *o;
 
 		if (!sb.len)
@@ -408,15 +458,17 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		memset(opts + onb, 0, sizeof(opts[onb]));
 
 		o = &opts[onb++];
-		help = strchr(sb.buf, ' ');
-		if (!help || *sb.buf == ' ') {
+		help = findspace(sb.buf);
+		if (!help || sb.buf == help) {
 			o->type = OPTION_GROUP;
 			o->help = xstrdup(skipspaces(sb.buf));
 			continue;
 		}
 
+		*help = '\0';
+
 		o->type = OPTION_CALLBACK;
-		o->help = xstrdup(skipspaces(help));
+		o->help = xstrdup(skipspaces(help+1));
 		o->value = &parsed;
 		o->flags = PARSE_OPT_NOARG;
 		o->callback = &parseopt_dump;
@@ -470,7 +522,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_SHELL_EVAL);
 
 	strbuf_addstr(&parsed, " --");
-	sq_quote_argv(&parsed, argv, 0);
+	sq_quote_argv(&parsed, argv);
 	puts(parsed.buf);
 	return 0;
 }
@@ -480,7 +532,7 @@ static int cmd_sq_quote(int argc, const char **argv)
 	struct strbuf buf = STRBUF_INIT;
 
 	if (argc)
-		sq_quote_argv(&buf, argv, 0);
+		sq_quote_argv(&buf, argv);
 	printf("%s\n", buf.buf);
 	strbuf_release(&buf);
 
@@ -502,16 +554,45 @@ N_("git rev-parse --parseopt [<options>] -- [<args>...]\n"
    "\n"
    "Run \"git rev-parse --parseopt -h\" for more information on the first usage.");
 
+/*
+ * Parse "opt" or "opt=<value>", setting value respectively to either
+ * NULL or the string after "=".
+ */
+static int opt_with_value(const char *arg, const char *opt, const char **value)
+{
+	if (skip_prefix(arg, opt, &arg)) {
+		if (!*arg) {
+			*value = NULL;
+			return 1;
+		}
+		if (*arg++ == '=') {
+			*value = arg;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static void handle_ref_opt(const char *pattern, const char *prefix)
+{
+	if (pattern)
+		for_each_glob_ref_in(show_reference, pattern, prefix, NULL);
+	else
+		for_each_ref_in(prefix, show_reference, NULL);
+	clear_ref_exclusion(&ref_excludes);
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
 	int did_repo_setup = 0;
 	int has_dashdash = 0;
 	int output_prefix = 0;
-	unsigned char sha1[20];
+	struct object_id oid;
 	unsigned int flags = 0;
 	const char *name = NULL;
 	struct object_context unused;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -566,7 +647,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--git-path")) {
 			if (!argv[i + 1])
 				die("--git-path requires an argument");
-			puts(git_path("%s", argv[i + 1]));
+			strbuf_reset(&buf);
+			puts(relative_path(git_path("%s", argv[i + 1]),
+					   prefix, &buf));
 			i++;
 			continue;
 		}
@@ -635,16 +718,16 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
 				quiet = 1;
-				flags |= GET_SHA1_QUIETLY;
+				flags |= GET_OID_QUIETLY;
 				continue;
 			}
-			if (!strcmp(arg, "--short") ||
-			    starts_with(arg, "--short=")) {
+			if (opt_with_value(arg, "--short", &arg)) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
 				verify = 1;
 				abbrev = DEFAULT_ABBREV;
-				if (arg[7] == '=')
-					abbrev = strtoul(arg + 8, NULL, 10);
+				if (!arg)
+					continue;
+				abbrev = strtoul(arg, NULL, 10);
 				if (abbrev < MINIMUM_ABBREV)
 					abbrev = MINIMUM_ABBREV;
 				else if (40 <= abbrev)
@@ -667,79 +750,64 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				symbolic = SHOW_SYMBOLIC_FULL;
 				continue;
 			}
-			if (starts_with(arg, "--abbrev-ref") &&
-			    (!arg[12] || arg[12] == '=')) {
+			if (opt_with_value(arg, "--abbrev-ref", &arg)) {
 				abbrev_ref = 1;
 				abbrev_ref_strict = warn_ambiguous_refs;
-				if (arg[12] == '=') {
-					if (!strcmp(arg + 13, "strict"))
+				if (arg) {
+					if (!strcmp(arg, "strict"))
 						abbrev_ref_strict = 1;
-					else if (!strcmp(arg + 13, "loose"))
+					else if (!strcmp(arg, "loose"))
 						abbrev_ref_strict = 0;
 					else
-						die("unknown mode for %s", arg);
+						die("unknown mode for --abbrev-ref: %s",
+						    arg);
 				}
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
 				for_each_ref(show_reference, NULL);
+				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
-			if (starts_with(arg, "--disambiguate=")) {
-				for_each_abbrev(arg + 15, show_abbrev, NULL);
+			if (skip_prefix(arg, "--disambiguate=", &arg)) {
+				for_each_abbrev(arg, show_abbrev, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				for_each_ref_in("refs/bisect/bad", show_reference, NULL);
-				for_each_ref_in("refs/bisect/good", anti_reference, NULL);
+				for_each_fullref_in("refs/bisect/bad", show_reference, NULL, 0);
+				for_each_fullref_in("refs/bisect/good", anti_reference, NULL, 0);
 				continue;
 			}
-			if (starts_with(arg, "--branches=")) {
-				for_each_glob_ref_in(show_reference, arg + 11,
-					"refs/heads/", NULL);
-				clear_ref_exclusion(&ref_excludes);
+			if (opt_with_value(arg, "--branches", &arg)) {
+				handle_ref_opt(arg, "refs/heads/");
 				continue;
 			}
-			if (!strcmp(arg, "--branches")) {
-				for_each_branch_ref(show_reference, NULL);
-				clear_ref_exclusion(&ref_excludes);
+			if (opt_with_value(arg, "--tags", &arg)) {
+				handle_ref_opt(arg, "refs/tags/");
 				continue;
 			}
-			if (starts_with(arg, "--tags=")) {
-				for_each_glob_ref_in(show_reference, arg + 7,
-					"refs/tags/", NULL);
-				clear_ref_exclusion(&ref_excludes);
+			if (skip_prefix(arg, "--glob=", &arg)) {
+				handle_ref_opt(arg, NULL);
 				continue;
 			}
-			if (!strcmp(arg, "--tags")) {
-				for_each_tag_ref(show_reference, NULL);
-				clear_ref_exclusion(&ref_excludes);
+			if (opt_with_value(arg, "--remotes", &arg)) {
+				handle_ref_opt(arg, "refs/remotes/");
 				continue;
 			}
-			if (starts_with(arg, "--glob=")) {
-				for_each_glob_ref(show_reference, arg + 7, NULL);
-				clear_ref_exclusion(&ref_excludes);
-				continue;
-			}
-			if (starts_with(arg, "--remotes=")) {
-				for_each_glob_ref_in(show_reference, arg + 10,
-					"refs/remotes/", NULL);
-				clear_ref_exclusion(&ref_excludes);
-				continue;
-			}
-			if (!strcmp(arg, "--remotes")) {
-				for_each_remote_ref(show_reference, NULL);
-				clear_ref_exclusion(&ref_excludes);
-				continue;
-			}
-			if (starts_with(arg, "--exclude=")) {
-				add_ref_exclusion(&ref_excludes, arg + 10);
+			if (skip_prefix(arg, "--exclude=", &arg)) {
+				add_ref_exclusion(&ref_excludes, arg);
 				continue;
 			}
 			if (!strcmp(arg, "--show-toplevel")) {
 				const char *work_tree = get_git_work_tree();
 				if (work_tree)
 					puts(work_tree);
+				continue;
+			}
+			if (!strcmp(arg, "--show-superproject-working-tree")) {
+				const char *superproject = get_superproject_working_tree();
+				if (superproject)
+					puts(superproject);
 				continue;
 			}
 			if (!strcmp(arg, "--show-prefix")) {
@@ -768,17 +836,27 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				putchar('\n');
 				continue;
 			}
-			if (!strcmp(arg, "--git-dir")) {
+			if (!strcmp(arg, "--git-dir") ||
+			    !strcmp(arg, "--absolute-git-dir")) {
 				const char *gitdir = getenv(GIT_DIR_ENVIRONMENT);
 				char *cwd;
 				int len;
-				if (gitdir) {
-					puts(gitdir);
-					continue;
-				}
-				if (!prefix) {
-					puts(".git");
-					continue;
+				if (arg[2] == 'g') {	/* --git-dir */
+					if (gitdir) {
+						puts(gitdir);
+						continue;
+					}
+					if (!prefix) {
+						puts(".git");
+						continue;
+					}
+				} else {		/* --absolute-git-dir */
+					if (!gitdir && !prefix)
+						gitdir = ".git";
+					if (gitdir) {
+						puts(real_path(gitdir));
+						continue;
+					}
 				}
 				cwd = xgetcwd();
 				len = strlen(cwd);
@@ -787,8 +865,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--git-common-dir")) {
-				const char *pfx = prefix ? prefix : "";
-				puts(prefix_filename(pfx, strlen(pfx), get_git_common_dir()));
+				strbuf_reset(&buf);
+				puts(relative_path(get_git_common_dir(),
+						   prefix, &buf));
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {
@@ -806,29 +885,37 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 						: "false");
 				continue;
 			}
+			if (!strcmp(arg, "--is-shallow-repository")) {
+				printf("%s\n",
+						is_repository_shallow(the_repository) ? "true"
+						: "false");
+				continue;
+			}
 			if (!strcmp(arg, "--shared-index-path")) {
 				if (read_cache() < 0)
 					die(_("Could not read the index"));
 				if (the_index.split_index) {
-					const unsigned char *sha1 = the_index.split_index->base_sha1;
-					puts(git_path("sharedindex.%s", sha1_to_hex(sha1)));
+					const struct object_id *oid = &the_index.split_index->base_oid;
+					const char *path = git_path("sharedindex.%s", oid_to_hex(oid));
+					strbuf_reset(&buf);
+					puts(relative_path(path, prefix, &buf));
 				}
 				continue;
 			}
-			if (starts_with(arg, "--since=")) {
-				show_datestring("--max-age=", arg+8);
+			if (skip_prefix(arg, "--since=", &arg)) {
+				show_datestring("--max-age=", arg);
 				continue;
 			}
-			if (starts_with(arg, "--after=")) {
-				show_datestring("--max-age=", arg+8);
+			if (skip_prefix(arg, "--after=", &arg)) {
+				show_datestring("--max-age=", arg);
 				continue;
 			}
-			if (starts_with(arg, "--before=")) {
-				show_datestring("--min-age=", arg+9);
+			if (skip_prefix(arg, "--before=", &arg)) {
+				show_datestring("--min-age=", arg);
 				continue;
 			}
-			if (starts_with(arg, "--until=")) {
-				show_datestring("--min-age=", arg+8);
+			if (skip_prefix(arg, "--until=", &arg)) {
+				show_datestring("--min-age=", arg);
 				continue;
 			}
 			if (show_flag(arg) && verify)
@@ -847,11 +934,12 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			name++;
 			type = REVERSED;
 		}
-		if (!get_sha1_with_context(name, flags, sha1, &unused)) {
+		if (!get_oid_with_context(the_repository, name,
+					  flags, &oid, &unused)) {
 			if (verify)
 				revs_count++;
 			else
-				show_rev(type, sha1, name);
+				show_rev(type, &oid, name);
 			continue;
 		}
 		if (verify)
@@ -863,9 +951,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			continue;
 		verify_filename(prefix, arg, 1);
 	}
+	strbuf_release(&buf);
 	if (verify) {
 		if (revs_count == 1) {
-			show_rev(type, sha1, name);
+			show_rev(type, &oid, name);
 			return 0;
 		} else if (revs_count == 0 && show_default())
 			return 0;

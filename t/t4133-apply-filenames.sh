@@ -35,4 +35,28 @@ test_expect_success 'apply diff with inconsistent filenames in headers' '
 	test_i18ngrep "inconsistent old filename" err
 '
 
+test_expect_success 'apply diff with new filename missing from headers' '
+	cat >missing_new_filename.diff <<-\EOF &&
+	diff --git a/f b/f
+	index 0000000..d00491f
+	--- a/f
+	@@ -0,0 +1 @@
+	+1
+	EOF
+	test_must_fail git apply missing_new_filename.diff 2>err &&
+	test_i18ngrep "lacks filename information" err
+'
+
+test_expect_success 'apply diff with old filename missing from headers' '
+	cat >missing_old_filename.diff <<-\EOF &&
+	diff --git a/f b/f
+	index d00491f..0000000
+	+++ b/f
+	@@ -1 +0,0 @@
+	-1
+	EOF
+	test_must_fail git apply missing_old_filename.diff 2>err &&
+	test_i18ngrep "lacks filename information" err
+'
+
 test_done

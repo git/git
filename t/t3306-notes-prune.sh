@@ -22,7 +22,7 @@ test_expect_success 'setup: create a few commits with notes' '
 	git commit -m 3rd &&
 	COMMIT_FILE=.git/objects/5e/e1c35e83ea47cd3cc4f8cbee0568915fbbbd29 &&
 	test -f $COMMIT_FILE &&
-	test-chmtime =+0 $COMMIT_FILE &&
+	test-tool chmtime =+0 $COMMIT_FILE &&
 	git notes add -m "Note #3"
 '
 

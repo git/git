@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 #include "cache.h"
 #include "refs.h"
 #include "parse-options.h"
@@ -11,9 +12,8 @@ static const char * const git_symbolic_ref_usage[] = {
 
 static int check_symref(const char *HEAD, int quiet, int shorten, int print)
 {
-	unsigned char sha1[20];
 	int flag;
-	const char *refname = resolve_ref_unsafe(HEAD, 0, sha1, &flag);
+	const char *refname = resolve_ref_unsafe(HEAD, 0, NULL, &flag);
 
 	if (!refname)
 		die("No such ref: %s", HEAD);
@@ -58,7 +58,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 			die("Cannot delete %s, not a symbolic ref", argv[0]);
 		if (!strcmp(argv[0], "HEAD"))
 			die("deleting '%s' is not allowed", argv[0]);
-		return delete_ref(argv[0], NULL, REF_NODEREF);
+		return delete_ref(NULL, argv[0], NULL, REF_NO_DEREF);
 	}
 
 	switch (argc) {

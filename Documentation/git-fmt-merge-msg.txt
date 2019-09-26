@@ -51,19 +51,19 @@ OPTIONS
 
 CONFIGURATION
 -------------
-include::fmt-merge-msg-config.txt[]
+include::config/fmt-merge-msg.txt[]
 
 merge.summary::
 	Synonym to `merge.log`; this is deprecated and will be removed in
 	the future.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
---
+---------
 $ git fetch origin master
 $ git fmt-merge-msg --log <$GIT_DIR/FETCH_HEAD
---
+---------
 
 Print a log message describing a merge of the "master" branch from
 the "origin" remote.

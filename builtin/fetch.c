@@ -2,7 +2,11 @@
  * "git fetch"
  */
 #include "cache.h"
+#include "config.h"
+#include "repository.h"
 #include "refs.h"
+#include "refspec.h"
+#include "object-store.h"
 #include "commit.h"
 #include "builtin.h"
 #include "string-list.h"
@@ -16,6 +20,13 @@
 #include "connected.h"
 #include "argv-array.h"
 #include "utf8.h"
+#include "packfile.h"
+#include "list-objects-filter-options.h"
+#include "commit-reach.h"
+#include "branch.h"
+#include "promisor-remote.h"
+
+#define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 
 static const char * const builtin_fetch_usage[] = {
 	N_("git fetch [<options>] [<repository> [<refspec>...]]"),
@@ -32,38 +43,37 @@ enum {
 };
 
 static int fetch_prune_config = -1; /* unspecified */
+static int fetch_show_forced_updates = 1;
+static uint64_t forced_updates_ms = 0;
 static int prune = -1; /* unspecified */
 #define PRUNE_BY_DEFAULT 0 /* do we prune by default? */
 
-static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity;
-static int progress = -1, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
-static int tags = TAGS_DEFAULT, unshallow, update_shallow;
-static int max_children = -1;
+static int fetch_prune_tags_config = -1; /* unspecified */
+static int prune_tags = -1; /* unspecified */
+#define PRUNE_TAGS_BY_DEFAULT 0 /* do we prune tags by default? */
+
+static int all, append, dry_run, force, keep, multiple, update_head_ok;
+static int verbosity, deepen_relative, set_upstream;
+static int progress = -1;
+static int enable_auto_gc = 1;
+static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
+static int max_children = 1;
 static enum transport_family family;
 static const char *depth;
+static const char *deepen_since;
 static const char *upload_pack;
+static struct string_list deepen_not = STRING_LIST_INIT_NODUP;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
 static struct transport *gsecondary;
 static const char *submodule_prefix = "";
-static const char *recurse_submodules_default;
+static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
+static int recurse_submodules_default = RECURSE_SUBMODULES_ON_DEMAND;
 static int shown_url = 0;
-static int refmap_alloc, refmap_nr;
-static const char **refmap_array;
-
-static int option_parse_recurse_submodules(const struct option *opt,
-				   const char *arg, int unset)
-{
-	if (unset) {
-		recurse_submodules = RECURSE_SUBMODULES_OFF;
-	} else {
-		if (arg)
-			recurse_submodules = parse_fetch_recurse_submodules_arg(opt->long_name, arg);
-		else
-			recurse_submodules = RECURSE_SUBMODULES_ON;
-	}
-	return 0;
-}
+static struct refspec refmap = REFSPEC_INIT_FETCH;
+static struct list_objects_filter_options filter_options;
+static struct string_list server_options = STRING_LIST_INIT_DUP;
+static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
@@ -71,19 +81,44 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		fetch_prune_config = git_config_bool(k, v);
 		return 0;
 	}
+
+	if (!strcmp(k, "fetch.prunetags")) {
+		fetch_prune_tags_config = git_config_bool(k, v);
+		return 0;
+	}
+
+	if (!strcmp(k, "fetch.showforcedupdates")) {
+		fetch_show_forced_updates = git_config_bool(k, v);
+		return 0;
+	}
+
+	if (!strcmp(k, "submodule.recurse")) {
+		int r = git_config_bool(k, v) ?
+			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+		recurse_submodules = r;
+	}
+
+	if (!strcmp(k, "submodule.fetchjobs")) {
+		max_children = parse_submodule_fetchjobs(k, v);
+		return 0;
+	} else if (!strcmp(k, "fetch.recursesubmodules")) {
+		recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
+		return 0;
+	}
+
 	return git_default_config(k, v, cb);
 }
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
 {
-	ALLOC_GROW(refmap_array, refmap_nr + 1, refmap_alloc);
+	BUG_ON_OPT_NEG(unset);
 
 	/*
 	 * "git fetch --refmap='' origin foo"
 	 * can be used to tell the command not to store anywhere
 	 */
-	if (*arg)
-		refmap_array[refmap_nr++] = arg;
+	refspec_append(&refmap, arg);
+
 	return 0;
 }
 
@@ -91,11 +126,13 @@ static struct option builtin_fetch_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOL(0, "all", &all,
 		 N_("fetch from all remotes")),
+	OPT_BOOL(0, "set-upstream", &set_upstream,
+		 N_("set upstream for git pull/fetch")),
 	OPT_BOOL('a', "append", &append,
 		 N_("append to .git/FETCH_HEAD instead of overwriting")),
 	OPT_STRING(0, "upload-pack", &upload_pack, N_("path"),
 		   N_("path to upload pack on remote end")),
-	OPT__FORCE(&force, N_("force overwrite of local branch")),
+	OPT__FORCE(&force, N_("force overwrite of local reference"), 0),
 	OPT_BOOL('m', "multiple", &multiple,
 		 N_("fetch from multiple remotes")),
 	OPT_SET_INT('t', "tags", &tags,
@@ -106,9 +143,11 @@ static struct option builtin_fetch_options[] = {
 		    N_("number of submodules fetched in parallel")),
 	OPT_BOOL('p', "prune", &prune,
 		 N_("prune remote-tracking branches no longer on remote")),
-	{ OPTION_CALLBACK, 0, "recurse-submodules", NULL, N_("on-demand"),
+	OPT_BOOL('P', "prune-tags", &prune_tags,
+		 N_("prune local tags no longer on remote and clobber changed tags")),
+	{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, N_("on-demand"),
 		    N_("control recursive fetching of submodules"),
-		    PARSE_OPT_OPTARG, option_parse_recurse_submodules },
+		    PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules },
 	OPT_BOOL(0, "dry-run", &dry_run,
 		 N_("dry run")),
 	OPT_BOOL('k', "keep", &keep, N_("keep downloaded pack")),
@@ -117,22 +156,38 @@ static struct option builtin_fetch_options[] = {
 	OPT_BOOL(0, "progress", &progress, N_("force progress reporting")),
 	OPT_STRING(0, "depth", &depth, N_("depth"),
 		   N_("deepen history of shallow clone")),
-	{ OPTION_SET_INT, 0, "unshallow", &unshallow, NULL,
-		   N_("convert to a complete repository"),
-		   PARSE_OPT_NONEG | PARSE_OPT_NOARG, NULL, 1 },
+	OPT_STRING(0, "shallow-since", &deepen_since, N_("time"),
+		   N_("deepen history of shallow repository based on time")),
+	OPT_STRING_LIST(0, "shallow-exclude", &deepen_not, N_("revision"),
+			N_("deepen history of shallow clone, excluding rev")),
+	OPT_INTEGER(0, "deepen", &deepen_relative,
+		    N_("deepen history of shallow clone")),
+	OPT_SET_INT_F(0, "unshallow", &unshallow,
+		      N_("convert to a complete repository"),
+		      1, PARSE_OPT_NONEG),
 	{ OPTION_STRING, 0, "submodule-prefix", &submodule_prefix, N_("dir"),
 		   N_("prepend this to submodule path output"), PARSE_OPT_HIDDEN },
-	{ OPTION_STRING, 0, "recurse-submodules-default",
-		   &recurse_submodules_default, NULL,
-		   N_("default mode for recursion"), PARSE_OPT_HIDDEN },
+	{ OPTION_CALLBACK, 0, "recurse-submodules-default",
+		   &recurse_submodules_default, N_("on-demand"),
+		   N_("default for recursive fetching of submodules "
+		      "(lower priority than config files)"),
+		   PARSE_OPT_HIDDEN, option_fetch_parse_recurse_submodules },
 	OPT_BOOL(0, "update-shallow", &update_shallow,
 		 N_("accept refs that update .git/shallow")),
 	{ OPTION_CALLBACK, 0, "refmap", NULL, N_("refmap"),
 	  N_("specify fetch refmap"), PARSE_OPT_NONEG, parse_refmap_arg },
+	OPT_STRING_LIST('o', "server-option", &server_options, N_("server-specific"), N_("option to transmit")),
 	OPT_SET_INT('4', "ipv4", &family, N_("use IPv4 addresses only"),
 			TRANSPORT_FAMILY_IPV4),
 	OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
 			TRANSPORT_FAMILY_IPV6),
+	OPT_STRING_LIST(0, "negotiation-tip", &negotiation_tip, N_("revision"),
+			N_("report that we have only objects reachable from this object")),
+	OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+	OPT_BOOL(0, "auto-gc", &enable_auto_gc,
+		 N_("run 'gc --auto' after fetching")),
+	OPT_BOOL(0, "show-forced-updates", &fetch_show_forced_updates,
+		 N_("check for forced-updates on all updated branches")),
 	OPT_END()
 };
 
@@ -160,7 +215,7 @@ static void add_merge_config(struct ref **head,
 
 	for (i = 0; i < branch->merge_nr; i++) {
 		struct ref *rm, **old_tail = *tail;
-		struct refspec refspec;
+		struct refspec_item refspec;
 
 		for (rm = *head; rm; rm = rm->next) {
 			if (branch_merge_matches(branch, i, rm->name)) {
@@ -189,40 +244,90 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
-static int add_existing(const char *refname, const struct object_id *oid,
-			int flag, void *cbdata)
-{
-	struct string_list *list = (struct string_list *)cbdata;
-	struct string_list_item *item = string_list_insert(list, refname);
-	struct object_id *old_oid = xmalloc(sizeof(*old_oid));
-
-	oidcpy(old_oid, oid);
-	item->util = old_oid;
-	return 0;
-}
-
 static int will_fetch(struct ref **head, const unsigned char *sha1)
 {
 	struct ref *rm = *head;
 	while (rm) {
-		if (!hashcmp(rm->old_oid.hash, sha1))
+		if (hasheq(rm->old_oid.hash, sha1))
 			return 1;
 		rm = rm->next;
 	}
 	return 0;
 }
 
-static void find_non_local_tags(struct transport *transport,
-			struct ref **head,
-			struct ref ***tail)
-{
-	struct string_list existing_refs = STRING_LIST_INIT_DUP;
-	struct string_list remote_refs = STRING_LIST_INIT_NODUP;
-	const struct ref *ref;
-	struct string_list_item *item = NULL;
+struct refname_hash_entry {
+	struct hashmap_entry ent; /* must be the first member */
+	struct object_id oid;
+	int ignore;
+	char refname[FLEX_ARRAY];
+};
 
-	for_each_ref(add_existing, &existing_refs);
-	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
+static int refname_hash_entry_cmp(const void *hashmap_cmp_fn_data,
+				  const void *e1_,
+				  const void *e2_,
+				  const void *keydata)
+{
+	const struct refname_hash_entry *e1 = e1_;
+	const struct refname_hash_entry *e2 = e2_;
+
+	return strcmp(e1->refname, keydata ? keydata : e2->refname);
+}
+
+static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
+						   const char *refname,
+						   const struct object_id *oid)
+{
+	struct refname_hash_entry *ent;
+	size_t len = strlen(refname);
+
+	FLEX_ALLOC_MEM(ent, refname, refname, len);
+	hashmap_entry_init(ent, strhash(refname));
+	oidcpy(&ent->oid, oid);
+	hashmap_add(map, ent);
+	return ent;
+}
+
+static int add_one_refname(const char *refname,
+			   const struct object_id *oid,
+			   int flag, void *cbdata)
+{
+	struct hashmap *refname_map = cbdata;
+
+	(void) refname_hash_add(refname_map, refname, oid);
+	return 0;
+}
+
+static void refname_hash_init(struct hashmap *map)
+{
+	hashmap_init(map, refname_hash_entry_cmp, NULL, 0);
+}
+
+static int refname_hash_exists(struct hashmap *map, const char *refname)
+{
+	return !!hashmap_get_from_hash(map, strhash(refname), refname);
+}
+
+static void clear_item(struct refname_hash_entry *item)
+{
+	item->ignore = 1;
+}
+
+static void find_non_local_tags(const struct ref *refs,
+				struct ref **head,
+				struct ref ***tail)
+{
+	struct hashmap existing_refs;
+	struct hashmap remote_refs;
+	struct string_list remote_refs_list = STRING_LIST_INIT_NODUP;
+	struct string_list_item *remote_ref_item;
+	const struct ref *ref;
+	struct refname_hash_entry *item = NULL;
+
+	refname_hash_init(&existing_refs);
+	refname_hash_init(&remote_refs);
+
+	for_each_ref(add_one_refname, &existing_refs);
+	for (ref = refs; ref; ref = ref->next) {
 		if (!starts_with(ref->name, "refs/tags/"))
 			continue;
 
@@ -233,11 +338,13 @@ static void find_non_local_tags(struct transport *transport,
 		 * as one to ignore by setting util to NULL.
 		 */
 		if (ends_with(ref->name, "^{}")) {
-			if (item && !has_object_file(&ref->old_oid) &&
+			if (item &&
+			    !has_object_file_with_flags(&ref->old_oid,
+							OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, ref->old_oid.hash) &&
-			    !has_sha1_file(item->util) &&
-			    !will_fetch(head, item->util))
-				item->util = NULL;
+			    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
+			    !will_fetch(head, item->oid.hash))
+				clear_item(item);
 			item = NULL;
 			continue;
 		}
@@ -248,51 +355,61 @@ static void find_non_local_tags(struct transport *transport,
 		 * to check if it is a lightweight tag that we want to
 		 * fetch.
 		 */
-		if (item && !has_sha1_file(item->util) &&
-		    !will_fetch(head, item->util))
-			item->util = NULL;
+		if (item &&
+		    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
+		    !will_fetch(head, item->oid.hash))
+			clear_item(item);
 
 		item = NULL;
 
 		/* skip duplicates and refs that we already have */
-		if (string_list_has_string(&remote_refs, ref->name) ||
-		    string_list_has_string(&existing_refs, ref->name))
+		if (refname_hash_exists(&remote_refs, ref->name) ||
+		    refname_hash_exists(&existing_refs, ref->name))
 			continue;
 
-		item = string_list_insert(&remote_refs, ref->name);
-		item->util = (void *)&ref->old_oid;
+		item = refname_hash_add(&remote_refs, ref->name, &ref->old_oid);
+		string_list_insert(&remote_refs_list, ref->name);
 	}
-	string_list_clear(&existing_refs, 1);
+	hashmap_free(&existing_refs, 1);
 
 	/*
 	 * We may have a final lightweight tag that needs to be
 	 * checked to see if it needs fetching.
 	 */
-	if (item && !has_sha1_file(item->util) &&
-	    !will_fetch(head, item->util))
-		item->util = NULL;
+	if (item &&
+	    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
+	    !will_fetch(head, item->oid.hash))
+		clear_item(item);
 
 	/*
-	 * For all the tags in the remote_refs string list,
+	 * For all the tags in the remote_refs_list,
 	 * add them to the list of refs to be fetched
 	 */
-	for_each_string_list_item(item, &remote_refs) {
-		/* Unless we have already decided to ignore this item... */
-		if (item->util)
-		{
-			struct ref *rm = alloc_ref(item->string);
-			rm->peer_ref = alloc_ref(item->string);
-			oidcpy(&rm->old_oid, item->util);
-			**tail = rm;
-			*tail = &rm->next;
-		}
-	}
+	for_each_string_list_item(remote_ref_item, &remote_refs_list) {
+		const char *refname = remote_ref_item->string;
+		struct ref *rm;
 
-	string_list_clear(&remote_refs, 0);
+		item = hashmap_get_from_hash(&remote_refs, strhash(refname), refname);
+		if (!item)
+			BUG("unseen remote ref?");
+
+		/* Unless we have already decided to ignore this item... */
+		if (item->ignore)
+			continue;
+
+		rm = alloc_ref(item->refname);
+		rm->peer_ref = alloc_ref(item->refname);
+		oidcpy(&rm->old_oid, &item->oid);
+		**tail = rm;
+		*tail = &rm->next;
+	}
+	hashmap_free(&remote_refs, 1);
+	string_list_clear(&remote_refs_list, 0);
 }
 
-static struct ref *get_ref_map(struct transport *transport,
-			       struct refspec *refspecs, int refspec_count,
+static struct ref *get_ref_map(struct remote *remote,
+			       const struct ref *remote_refs,
+			       struct refspec *rs,
 			       int tags, int *autotags)
 {
 	int i;
@@ -303,15 +420,14 @@ static struct ref *get_ref_map(struct transport *transport,
 	/* opportunistically-updated references: */
 	struct ref *orefs = NULL, **oref_tail = &orefs;
 
-	const struct ref *remote_refs = transport_get_remote_refs(transport);
+	struct hashmap existing_refs;
 
-	if (refspec_count) {
+	if (rs->nr) {
 		struct refspec *fetch_refspec;
-		int fetch_refspec_nr;
 
-		for (i = 0; i < refspec_count; i++) {
-			get_fetch_map(remote_refs, &refspecs[i], &tail, 0);
-			if (refspecs[i].dst && refspecs[i].dst[0])
+		for (i = 0; i < rs->nr; i++) {
+			get_fetch_map(remote_refs, &rs->items[i], &tail, 0);
+			if (rs->items[i].dst && rs->items[i].dst[0])
 				*autotags = 1;
 		}
 		/* Merge everything on the command line (but not --tags) */
@@ -338,37 +454,30 @@ static struct ref *get_ref_map(struct transport *transport,
 		 * by ref_remove_duplicates() in favor of one of these
 		 * opportunistic entries with FETCH_HEAD_IGNORE.
 		 */
-		if (refmap_array) {
-			fetch_refspec = parse_fetch_refspec(refmap_nr, refmap_array);
-			fetch_refspec_nr = refmap_nr;
-		} else {
-			fetch_refspec = transport->remote->fetch;
-			fetch_refspec_nr = transport->remote->fetch_refspec_nr;
-		}
+		if (refmap.nr)
+			fetch_refspec = &refmap;
+		else
+			fetch_refspec = &remote->fetch;
 
-		for (i = 0; i < fetch_refspec_nr; i++)
-			get_fetch_map(ref_map, &fetch_refspec[i], &oref_tail, 1);
-
-		if (tags == TAGS_SET)
-			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
-	} else if (refmap_array) {
+		for (i = 0; i < fetch_refspec->nr; i++)
+			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
+	} else if (refmap.nr) {
 		die("--refmap option is only meaningful with command-line refspec(s).");
 	} else {
 		/* Use the defaults */
-		struct remote *remote = transport->remote;
 		struct branch *branch = branch_get(NULL);
 		int has_merge = branch_has_merge_config(branch);
 		if (remote &&
-		    (remote->fetch_refspec_nr ||
+		    (remote->fetch.nr ||
 		     /* Note: has_merge implies non-NULL branch->remote_name */
 		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
-			for (i = 0; i < remote->fetch_refspec_nr; i++) {
-				get_fetch_map(remote_refs, &remote->fetch[i], &tail, 0);
-				if (remote->fetch[i].dst &&
-				    remote->fetch[i].dst[0])
+			for (i = 0; i < remote->fetch.nr; i++) {
+				get_fetch_map(remote_refs, &remote->fetch.items[i], &tail, 0);
+				if (remote->fetch.items[i].dst &&
+				    remote->fetch.items[i].dst[0])
 					*autotags = 1;
 				if (!i && !has_merge && ref_map &&
-				    !remote->fetch[0].pattern)
+				    !remote->fetch.items[0].pattern)
 					ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			}
 			/*
@@ -394,7 +503,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		/* also fetch all tags */
 		get_fetch_map(remote_refs, tag_refspec, &tail, 0);
 	else if (tags == TAGS_DEFAULT && *autotags)
-		find_non_local_tags(transport, &ref_map, &tail);
+		find_non_local_tags(remote_refs, &ref_map, &tail);
 
 	/* Now append any refs to be updated opportunistically: */
 	*tail = orefs;
@@ -403,7 +512,28 @@ static struct ref *get_ref_map(struct transport *transport,
 		tail = &rm->next;
 	}
 
-	return ref_remove_duplicates(ref_map);
+	ref_map = ref_remove_duplicates(ref_map);
+
+	refname_hash_init(&existing_refs);
+	for_each_ref(add_one_refname, &existing_refs);
+
+	for (rm = ref_map; rm; rm = rm->next) {
+		if (rm->peer_ref) {
+			const char *refname = rm->peer_ref->name;
+			struct refname_hash_entry *peer_item;
+
+			peer_item = hashmap_get_from_hash(&existing_refs,
+							  strhash(refname),
+							  refname);
+			if (peer_item) {
+				struct object_id *old_oid = &peer_item->oid;
+				oidcpy(&rm->peer_ref->old_oid, old_oid);
+			}
+		}
+	}
+	hashmap_free(&existing_refs, 1);
+
+	return ref_map;
 }
 
 #define STORE_REF_ERROR_OTHER 1
@@ -413,7 +543,7 @@ static int s_update_ref(const char *action,
 			struct ref *ref,
 			int check_old)
 {
-	char msg[1024];
+	char *msg;
 	char *rla = getenv("GIT_REFLOG_ACTION");
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
@@ -423,13 +553,13 @@ static int s_update_ref(const char *action,
 		return 0;
 	if (!rla)
 		rla = default_rla.buf;
-	snprintf(msg, sizeof(msg), "%s: %s", rla, action);
+	msg = xstrfmt("%s: %s", rla, action);
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref->name,
-				   ref->new_oid.hash,
-				   check_old ? ref->old_oid.hash : NULL,
+				   &ref->new_oid,
+				   check_old ? &ref->old_oid : NULL,
 				   0, msg, &err))
 		goto fail;
 
@@ -441,11 +571,13 @@ static int s_update_ref(const char *action,
 
 	ref_transaction_free(transaction);
 	strbuf_release(&err);
+	free(msg);
 	return 0;
 fail:
 	ref_transaction_free(transaction);
 	error("%s", err.buf);
 	strbuf_release(&err);
+	free(msg);
 	return df_conflict ? STORE_REF_ERROR_DF_CONFLICT
 			   : STORE_REF_ERROR_OTHER;
 }
@@ -458,7 +590,7 @@ static void adjust_refcol_width(const struct ref *ref)
 	int max, rlen, llen, len;
 
 	/* uptodate lines are only shown on high verbosity level */
-	if (!verbosity && !oidcmp(&ref->peer_ref->old_oid, &ref->old_oid))
+	if (!verbosity && oideq(&ref->peer_ref->old_oid, &ref->old_oid))
 		return;
 
 	max    = term_columns();
@@ -523,9 +655,14 @@ static int find_and_replace(struct strbuf *haystack,
 			    const char *needle,
 			    const char *placeholder)
 {
-	const char *p = strstr(haystack->buf, needle);
+	const char *p = NULL;
 	int plen, nlen;
 
+	nlen = strlen(needle);
+	if (ends_with(haystack->buf, needle))
+		p = haystack->buf + haystack->len - nlen;
+	else
+		p = strstr(haystack->buf, needle);
 	if (!p)
 		return 0;
 
@@ -533,7 +670,6 @@ static int find_and_replace(struct strbuf *haystack,
 		return 0;
 
 	plen = strlen(p);
-	nlen = strlen(needle);
 	if (plen > nlen && p[nlen] != '/')
 		return 0;
 
@@ -566,9 +702,12 @@ static void print_compact(struct strbuf *display,
 
 static void format_display(struct strbuf *display, char code,
 			   const char *summary, const char *error,
-			   const char *remote, const char *local)
+			   const char *remote, const char *local,
+			   int summary_width)
 {
-	strbuf_addf(display, "%c %-*s ", code, TRANSPORT_SUMMARY(summary));
+	int width = (summary_width + strlen(summary) - gettext_width(summary));
+
+	strbuf_addf(display, "%c %-*s ", code, width, summary);
 	if (!compact_format)
 		print_remote_to_local(display, remote, local);
 	else
@@ -580,21 +719,23 @@ static void format_display(struct strbuf *display, char code,
 static int update_local_ref(struct ref *ref,
 			    const char *remote,
 			    const struct ref *remote_ref,
-			    struct strbuf *display)
+			    struct strbuf *display,
+			    int summary_width)
 {
 	struct commit *current = NULL, *updated;
 	enum object_type type;
 	struct branch *current_branch = branch_get(NULL);
 	const char *pretty_ref = prettify_refname(ref->name);
+	int fast_forward = 0;
 
-	type = sha1_object_info(ref->new_oid.hash, NULL);
+	type = oid_object_info(the_repository, &ref->new_oid, NULL);
 	if (type < 0)
 		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
-	if (!oidcmp(&ref->old_oid, &ref->new_oid)) {
+	if (oideq(&ref->old_oid, &ref->new_oid)) {
 		if (verbosity > 0)
 			format_display(display, '=', _("[up to date]"), NULL,
-				       remote, pretty_ref);
+				       remote, pretty_ref, summary_width);
 		return 0;
 	}
 
@@ -608,22 +749,30 @@ static int update_local_ref(struct ref *ref,
 		 */
 		format_display(display, '!', _("[rejected]"),
 			       _("can't fetch in current branch"),
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		return 1;
 	}
 
 	if (!is_null_oid(&ref->old_oid) &&
 	    starts_with(ref->name, "refs/tags/")) {
-		int r;
-		r = s_update_ref("updating tag", ref, 0);
-		format_display(display, r ? '!' : 't', _("[tag update]"),
-			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref);
-		return r;
+		if (force || ref->force) {
+			int r;
+			r = s_update_ref("updating tag", ref, 0);
+			format_display(display, r ? '!' : 't', _("[tag update]"),
+				       r ? _("unable to update local ref") : NULL,
+				       remote, pretty_ref, summary_width);
+			return r;
+		} else {
+			format_display(display, '!', _("[rejected]"), _("would clobber existing tag"),
+				       remote, pretty_ref, summary_width);
+			return 1;
+		}
 	}
 
-	current = lookup_commit_reference_gently(ref->old_oid.hash, 1);
-	updated = lookup_commit_reference_gently(ref->new_oid.hash, 1);
+	current = lookup_commit_reference_gently(the_repository,
+						 &ref->old_oid, 1);
+	updated = lookup_commit_reference_gently(the_repository,
+						 &ref->new_oid, 1);
 	if (!current || !updated) {
 		const char *msg;
 		const char *what;
@@ -645,54 +794,54 @@ static int update_local_ref(struct ref *ref,
 			what = _("[new ref]");
 		}
 
-		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
-		    (recurse_submodules != RECURSE_SUBMODULES_ON))
-			check_for_new_submodule_commits(ref->new_oid.hash);
 		r = s_update_ref(msg, ref, 0);
 		format_display(display, r ? '!' : '*', what,
 			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		return r;
 	}
 
-	if (in_merge_bases(current, updated)) {
+	if (fetch_show_forced_updates) {
+		uint64_t t_before = getnanotime();
+		fast_forward = in_merge_bases(current, updated);
+		forced_updates_ms += (getnanotime() - t_before) / 1000000;
+	} else {
+		fast_forward = 1;
+	}
+
+	if (fast_forward) {
 		struct strbuf quickref = STRBUF_INIT;
 		int r;
-		strbuf_add_unique_abbrev(&quickref, current->object.oid.hash, DEFAULT_ABBREV);
+
+		strbuf_add_unique_abbrev(&quickref, &current->object.oid, DEFAULT_ABBREV);
 		strbuf_addstr(&quickref, "..");
-		strbuf_add_unique_abbrev(&quickref, ref->new_oid.hash, DEFAULT_ABBREV);
-		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
-		    (recurse_submodules != RECURSE_SUBMODULES_ON))
-			check_for_new_submodule_commits(ref->new_oid.hash);
+		strbuf_add_unique_abbrev(&quickref, &ref->new_oid, DEFAULT_ABBREV);
 		r = s_update_ref("fast-forward", ref, 1);
 		format_display(display, r ? '!' : ' ', quickref.buf,
 			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		strbuf_release(&quickref);
 		return r;
 	} else if (force || ref->force) {
 		struct strbuf quickref = STRBUF_INIT;
 		int r;
-		strbuf_add_unique_abbrev(&quickref, current->object.oid.hash, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&quickref, &current->object.oid, DEFAULT_ABBREV);
 		strbuf_addstr(&quickref, "...");
-		strbuf_add_unique_abbrev(&quickref, ref->new_oid.hash, DEFAULT_ABBREV);
-		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
-		    (recurse_submodules != RECURSE_SUBMODULES_ON))
-			check_for_new_submodule_commits(ref->new_oid.hash);
+		strbuf_add_unique_abbrev(&quickref, &ref->new_oid, DEFAULT_ABBREV);
 		r = s_update_ref("forced-update", ref, 1);
 		format_display(display, r ? '!' : '+', quickref.buf,
 			       r ? _("unable to update local ref") : _("forced update"),
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		strbuf_release(&quickref);
 		return r;
 	} else {
 		format_display(display, '!', _("[rejected]"), _("non-fast-forward"),
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		return 1;
 	}
 }
 
-static int iterate_ref_map(void *cb_data, unsigned char sha1[20])
+static int iterate_ref_map(void *cb_data, struct object_id *oid)
 {
 	struct ref **rm = cb_data;
 	struct ref *ref = *rm;
@@ -702,12 +851,21 @@ static int iterate_ref_map(void *cb_data, unsigned char sha1[20])
 	if (!ref)
 		return -1; /* end of the list */
 	*rm = ref->next;
-	hashcpy(sha1, ref->old_oid.hash);
+	oidcpy(oid, &ref->old_oid);
 	return 0;
 }
 
+static const char warn_show_forced_updates[] =
+N_("Fetch normally indicates which branches had a forced update,\n"
+   "but that check has been disabled. To re-enable, use '--show-forced-updates'\n"
+   "flag or run 'git config fetch.showForcedUpdates true'.");
+static const char warn_time_show_forced_updates[] =
+N_("It took %.2f seconds to check forced updates. You can use\n"
+   "'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates false'\n"
+   " to avoid this check.\n");
+
 static int store_updated_refs(const char *raw_url, const char *remote_name,
-		struct ref *ref_map)
+			      int connectivity_checked, struct ref *ref_map)
 {
 	FILE *fp;
 	struct commit *commit;
@@ -716,8 +874,9 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	const char *what, *kind;
 	struct ref *rm;
 	char *url;
-	const char *filename = dry_run ? "/dev/null" : git_path_fetch_head();
+	const char *filename = dry_run ? "/dev/null" : git_path_fetch_head(the_repository);
 	int want_status;
+	int summary_width = transport_summary_width(ref_map);
 
 	fp = fopen(filename, "a");
 	if (!fp)
@@ -728,10 +887,12 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	else
 		url = xstrdup("foreign");
 
-	rm = ref_map;
-	if (check_connected(iterate_ref_map, &rm, NULL)) {
-		rc = error(_("%s did not send all necessary objects\n"), url);
-		goto abort;
+	if (!connectivity_checked) {
+		rm = ref_map;
+		if (check_connected(iterate_ref_map, &rm, NULL)) {
+			rc = error(_("%s did not send all necessary objects\n"), url);
+			goto abort;
+		}
 	}
 
 	prepare_format_display(ref_map);
@@ -755,7 +916,9 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				continue;
 			}
 
-			commit = lookup_commit_reference_gently(rm->old_oid.hash, 1);
+			commit = lookup_commit_reference_gently(the_repository,
+								&rm->old_oid,
+								1);
 			if (!commit)
 				rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
 
@@ -769,6 +932,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				ref->force = rm->peer_ref->force;
 			}
 
+			if (recurse_submodules != RECURSE_SUBMODULES_OFF)
+				check_for_new_submodule_commits(&rm->old_oid);
 
 			if (!strcmp(rm->name, "HEAD")) {
 				kind = "";
@@ -827,13 +992,14 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			strbuf_reset(&note);
 			if (ref) {
-				rc |= update_local_ref(ref, what, rm, &note);
+				rc |= update_local_ref(ref, what, rm, &note,
+						       summary_width);
 				free(ref);
 			} else
 				format_display(&note, '*',
 					       *kind ? kind : "branch", NULL,
 					       *what ? what : "HEAD",
-					       "FETCH_HEAD");
+					       "FETCH_HEAD", summary_width);
 			if (note.len) {
 				if (verbosity >= 0 && !shown_url) {
 					fprintf(stderr, _("From %.*s\n"),
@@ -851,6 +1017,15 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		      " 'git remote prune %s' to remove any old, conflicting "
 		      "branches"), remote_name);
 
+	if (advice_fetch_show_forced_updates) {
+		if (!fetch_show_forced_updates) {
+			warning(_(warn_show_forced_updates));
+		} else if (forced_updates_ms > FORCED_UPDATES_DELAY_WARNING_IN_MS) {
+			warning(_(warn_time_show_forced_updates),
+				forced_updates_ms / 1000.0);
+		}
+	}
+
  abort:
 	strbuf_release(&note);
 	free(url);
@@ -863,10 +1038,11 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
  * everything we are going to fetch already exists and is connected
  * locally.
  */
-static int quickfetch(struct ref *ref_map)
+static int check_exist_and_connected(struct ref *ref_map)
 {
 	struct ref *rm = ref_map;
 	struct check_connected_options opt = CHECK_CONNECTED_INIT;
+	struct ref *r;
 
 	/*
 	 * If we are deepening a shallow clone we already have these
@@ -875,31 +1051,57 @@ static int quickfetch(struct ref *ref_map)
 	 * really need to perform.  Claiming failure now will ensure
 	 * we perform the network exchange to deepen our history.
 	 */
-	if (depth)
+	if (deepen)
 		return -1;
+
+	/*
+	 * check_connected() allows objects to merely be promised, but
+	 * we need all direct targets to exist.
+	 */
+	for (r = rm; r; r = r->next) {
+		if (!has_object_file(&r->old_oid))
+			return -1;
+	}
+
 	opt.quiet = 1;
 	return check_connected(iterate_ref_map, &rm, &opt);
 }
 
 static int fetch_refs(struct transport *transport, struct ref *ref_map)
 {
-	int ret = quickfetch(ref_map);
+	int ret = check_exist_and_connected(ref_map);
 	if (ret)
 		ret = transport_fetch_refs(transport, ref_map);
 	if (!ret)
-		ret |= store_updated_refs(transport->url,
-				transport->remote->name,
-				ref_map);
+		/*
+		 * Keep the new pack's ".keep" file around to allow the caller
+		 * time to update refs to reference the new objects.
+		 */
+		return 0;
 	transport_unlock_pack(transport);
 	return ret;
 }
 
-static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
-		const char *raw_url)
+/* Update local refs based on the ref values fetched from a remote */
+static int consume_refs(struct transport *transport, struct ref *ref_map)
+{
+	int connectivity_checked = transport->smart_options
+		? transport->smart_options->connectivity_checked : 0;
+	int ret = store_updated_refs(transport->url,
+				     transport->remote->name,
+				     connectivity_checked,
+				     ref_map);
+	transport_unlock_pack(transport);
+	return ret;
+}
+
+static int prune_refs(struct refspec *rs, struct ref *ref_map,
+		      const char *raw_url)
 {
 	int url_len, i, result = 0;
-	struct ref *ref, *stale_refs = get_stale_heads(refs, ref_count, ref_map);
+	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
 	char *url;
+	int summary_width = transport_summary_width(stale_refs);
 	const char *dangling_msg = dry_run
 		? _("   (%s will become dangling)")
 		: _("   (%s has become dangling)");
@@ -923,7 +1125,7 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 		for (ref = stale_refs; ref; ref = ref->next)
 			string_list_append(&refnames, ref->name);
 
-		result = delete_refs(&refnames, 0);
+		result = delete_refs("fetch: prune", &refnames, 0);
 		string_list_clear(&refnames, 0);
 	}
 
@@ -935,7 +1137,8 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 				shown_url = 1;
 			}
 			format_display(&sb, '-', _("[deleted]"), NULL,
-				       _("(none)"), prettify_refname(ref->name));
+				       _("(none)"), prettify_refname(ref->name),
+				       summary_width);
 			fprintf(stderr, " %s\n",sb.buf);
 			strbuf_release(&sb);
 			warn_dangling_symref(stderr, dangling_msg, ref->name);
@@ -963,7 +1166,7 @@ static void check_not_current_branch(struct ref *ref_map)
 
 static int truncate_fetch_head(void)
 {
-	const char *filename = git_path_fetch_head();
+	const char *filename = git_path_fetch_head(the_repository);
 	FILE *fp = fopen_for_writing(filename);
 
 	if (!fp)
@@ -983,9 +1186,44 @@ static void set_option(struct transport *transport, const char *name, const char
 			name, transport->url);
 }
 
-static struct transport *prepare_transport(struct remote *remote)
+
+static int add_oid(const char *refname, const struct object_id *oid, int flags,
+		   void *cb_data)
+{
+	struct oid_array *oids = cb_data;
+
+	oid_array_append(oids, oid);
+	return 0;
+}
+
+static void add_negotiation_tips(struct git_transport_options *smart_options)
+{
+	struct oid_array *oids = xcalloc(1, sizeof(*oids));
+	int i;
+
+	for (i = 0; i < negotiation_tip.nr; i++) {
+		const char *s = negotiation_tip.items[i].string;
+		int old_nr;
+		if (!has_glob_specials(s)) {
+			struct object_id oid;
+			if (get_oid(s, &oid))
+				die("%s is not a valid object", s);
+			oid_array_append(oids, &oid);
+			continue;
+		}
+		old_nr = oids->nr;
+		for_each_glob_ref(add_oid, s, oids);
+		if (old_nr == oids->nr)
+			warning("Ignoring --negotiation-tip=%s because it does not match any refs",
+				s);
+	}
+	smart_options->negotiation_tips = oids;
+}
+
+static struct transport *prepare_transport(struct remote *remote, int deepen)
 {
 	struct transport *transport;
+
 	transport = transport_get(remote, NULL);
 	transport_set_verbosity(transport, verbosity, progress);
 	transport->family = family;
@@ -995,21 +1233,53 @@ static struct transport *prepare_transport(struct remote *remote)
 		set_option(transport, TRANS_OPT_KEEP, "yes");
 	if (depth)
 		set_option(transport, TRANS_OPT_DEPTH, depth);
+	if (deepen && deepen_since)
+		set_option(transport, TRANS_OPT_DEEPEN_SINCE, deepen_since);
+	if (deepen && deepen_not.nr)
+		set_option(transport, TRANS_OPT_DEEPEN_NOT,
+			   (const char *)&deepen_not);
+	if (deepen_relative)
+		set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, "yes");
 	if (update_shallow)
 		set_option(transport, TRANS_OPT_UPDATE_SHALLOW, "yes");
+	if (filter_options.choice) {
+		const char *spec =
+			expand_list_objects_filter_spec(&filter_options);
+		set_option(transport, TRANS_OPT_LIST_OBJECTS_FILTER, spec);
+		set_option(transport, TRANS_OPT_FROM_PROMISOR, "1");
+	}
+	if (negotiation_tip.nr) {
+		if (transport->smart_options)
+			add_negotiation_tips(transport->smart_options);
+		else
+			warning("Ignoring --negotiation-tip because the protocol does not support it.");
+	}
 	return transport;
 }
 
 static void backfill_tags(struct transport *transport, struct ref *ref_map)
 {
-	if (transport->cannot_reuse) {
-		gsecondary = prepare_transport(transport->remote);
+	int cannot_reuse;
+
+	/*
+	 * Once we have set TRANS_OPT_DEEPEN_SINCE, we can't unset it
+	 * when remote helper is used (setting it to an empty string
+	 * is not unsetting). We could extend the remote helper
+	 * protocol for that, but for now, just force a new connection
+	 * without deepen-since. Similar story for deepen-not.
+	 */
+	cannot_reuse = transport->cannot_reuse ||
+		deepen_since || deepen_not.nr;
+	if (cannot_reuse) {
+		gsecondary = prepare_transport(transport->remote, 0);
 		transport = gsecondary;
 	}
 
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
-	fetch_refs(transport, ref_map);
+	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
+	if (!fetch_refs(transport, ref_map))
+		consume_refs(transport, ref_map);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1018,15 +1288,14 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 }
 
 static int do_fetch(struct transport *transport,
-		    struct refspec *refs, int ref_count)
+		    struct refspec *rs)
 {
-	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	struct ref *ref_map;
-	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
 	int retcode = 0;
-
-	for_each_ref(add_existing, &existing_refs);
+	const struct ref *remote_refs;
+	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+	int must_list_refs = 1;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1035,9 +1304,6 @@ static int do_fetch(struct transport *transport,
 			tags = TAGS_UNSET;
 	}
 
-	if (!transport->get_refs_list || !transport->fetch)
-		die(_("Don't know how to fetch from %s"), transport->url);
-
 	/* if not appending, truncate FETCH_HEAD */
 	if (!append && !dry_run) {
 		retcode = truncate_fetch_head();
@@ -1045,21 +1311,42 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 	}
 
-	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
-	if (!update_head_ok)
-		check_not_current_branch(ref_map);
+	if (rs->nr) {
+		int i;
 
-	for (rm = ref_map; rm; rm = rm->next) {
-		if (rm->peer_ref) {
-			struct string_list_item *peer_item =
-				string_list_lookup(&existing_refs,
-						   rm->peer_ref->name);
-			if (peer_item) {
-				struct object_id *old_oid = peer_item->util;
-				oidcpy(&rm->peer_ref->old_oid, old_oid);
+		refspec_ref_prefixes(rs, &ref_prefixes);
+
+		/*
+		 * We can avoid listing refs if all of them are exact
+		 * OIDs
+		 */
+		must_list_refs = 0;
+		for (i = 0; i < rs->nr; i++) {
+			if (!rs->items[i].exact_sha1) {
+				must_list_refs = 1;
+				break;
 			}
 		}
+	} else if (transport->remote && transport->remote->fetch.nr)
+		refspec_ref_prefixes(&transport->remote->fetch, &ref_prefixes);
+
+	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {
+		must_list_refs = 1;
+		if (ref_prefixes.argc)
+			argv_array_push(&ref_prefixes, "refs/tags/");
 	}
+
+	if (must_list_refs)
+		remote_refs = transport_get_remote_refs(transport, &ref_prefixes);
+	else
+		remote_refs = NULL;
+
+	argv_array_clear(&ref_prefixes);
+
+	ref_map = get_ref_map(transport->remote, remote_refs, rs,
+			      tags, &autotags);
+	if (!update_head_ok)
+		check_not_current_branch(ref_map);
 
 	if (tags == TAGS_DEFAULT && autotags)
 		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
@@ -1069,20 +1356,64 @@ static int do_fetch(struct transport *transport,
 		 * explicitly (via command line or configuration); we
 		 * don't care whether --tags was specified.
 		 */
-		if (ref_count) {
-			prune_refs(refs, ref_count, ref_map, transport->url);
+		if (rs->nr) {
+			prune_refs(rs, ref_map, transport->url);
 		} else {
-			prune_refs(transport->remote->fetch,
-				   transport->remote->fetch_refspec_nr,
+			prune_refs(&transport->remote->fetch,
 				   ref_map,
 				   transport->url);
 		}
 	}
-	if (fetch_refs(transport, ref_map)) {
+	if (fetch_refs(transport, ref_map) || consume_refs(transport, ref_map)) {
 		free_refs(ref_map);
 		retcode = 1;
 		goto cleanup;
 	}
+
+	if (set_upstream) {
+		struct branch *branch = branch_get("HEAD");
+		struct ref *rm;
+		struct ref *source_ref = NULL;
+
+		/*
+		 * We're setting the upstream configuration for the
+		 * current branch. The relevent upstream is the
+		 * fetched branch that is meant to be merged with the
+		 * current one, i.e. the one fetched to FETCH_HEAD.
+		 *
+		 * When there are several such branches, consider the
+		 * request ambiguous and err on the safe side by doing
+		 * nothing and just emit a warning.
+		 */
+		for (rm = ref_map; rm; rm = rm->next) {
+			if (!rm->peer_ref) {
+				if (source_ref) {
+					warning(_("multiple branch detected, incompatible with --set-upstream"));
+					goto skip;
+				} else {
+					source_ref = rm;
+				}
+			}
+		}
+		if (source_ref) {
+			if (!strcmp(source_ref->name, "HEAD") ||
+			    starts_with(source_ref->name, "refs/heads/"))
+				install_branch_config(0,
+						      branch->name,
+						      transport->remote->name,
+						      source_ref->name);
+			else if (starts_with(source_ref->name, "refs/remotes/"))
+				warning(_("not setting upstream for a remote remote-tracking branch"));
+			else if (starts_with(source_ref->name, "refs/tags/"))
+				warning(_("not setting upstream for a remote tag"));
+			else
+				warning(_("unknown branch type"));
+		} else {
+			warning(_("no source branch found.\n"
+				"you need to specify exactly one branch with the --set-upstream option."));
+		}
+	}
+ skip:
 	free_refs(ref_map);
 
 	/* if neither --no-tags nor --tags was specified, do automated tag
@@ -1090,14 +1421,13 @@ static int do_fetch(struct transport *transport,
 	if (tags == TAGS_DEFAULT && autotags) {
 		struct ref **tail = &ref_map;
 		ref_map = NULL;
-		find_non_local_tags(transport, &ref_map, &tail);
+		find_non_local_tags(remote_refs, &ref_map, &tail);
 		if (ref_map)
 			backfill_tags(transport, ref_map);
 		free_refs(ref_map);
 	}
 
  cleanup:
-	string_list_clear(&existing_refs, 1);
 	return retcode;
 }
 
@@ -1142,7 +1472,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 	git_config(get_remote_group, &g);
 	if (list->nr == prev_nr) {
 		struct remote *remote = remote_get(name);
-		if (!remote_is_configured(remote))
+		if (!remote_is_configured(remote, 0))
 			return 0;
 		string_list_append(list, remote->name);
 	}
@@ -1155,6 +1485,8 @@ static void add_options_to_argv(struct argv_array *argv)
 		argv_array_push(argv, "--dry-run");
 	if (prune != -1)
 		argv_array_push(argv, prune ? "--prune" : "--no-prune");
+	if (prune_tags != -1)
+		argv_array_push(argv, prune_tags ? "--prune-tags" : "--no-prune-tags");
 	if (update_head_ok)
 		argv_array_push(argv, "--update-head-ok");
 	if (force)
@@ -1189,7 +1521,7 @@ static int fetch_multiple(struct string_list *list)
 			return errcode;
 	}
 
-	argv_array_pushl(&argv, "fetch", "--append", NULL);
+	argv_array_pushl(&argv, "fetch", "--append", "--no-auto-gc", NULL);
 	add_options_to_argv(&argv);
 
 	for (i = 0; i < list->nr; i++) {
@@ -1208,52 +1540,113 @@ static int fetch_multiple(struct string_list *list)
 	return result;
 }
 
-static int fetch_one(struct remote *remote, int argc, const char **argv)
+/*
+ * Fetching from the promisor remote should use the given filter-spec
+ * or inherit the default filter-spec from the config.
+ */
+static inline void fetch_one_setup_partial(struct remote *remote)
 {
-	static const char **refs = NULL;
-	struct refspec *refspec;
-	int ref_nr = 0;
+	/*
+	 * Explicit --no-filter argument overrides everything, regardless
+	 * of any prior partial clones and fetches.
+	 */
+	if (filter_options.no_filter)
+		return;
+
+	/*
+	 * If no prior partial clone/fetch and the current fetch DID NOT
+	 * request a partial-fetch, do a normal fetch.
+	 */
+	if (!has_promisor_remote() && !filter_options.choice)
+		return;
+
+	/*
+	 * If this is a partial-fetch request, we enable partial on
+	 * this repo if not already enabled and remember the given
+	 * filter-spec as the default for subsequent fetches to this
+	 * remote.
+	 */
+	if (filter_options.choice) {
+		partial_clone_register(remote->name, &filter_options);
+		return;
+	}
+
+	/*
+	 * Do a partial-fetch from the promisor remote using either the
+	 * explicitly given filter-spec or inherit the filter-spec from
+	 * the config.
+	 */
+	if (!filter_options.choice)
+		partial_clone_get_default_filter_spec(&filter_options, remote->name);
+	return;
+}
+
+static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)
+{
+	struct refspec rs = REFSPEC_INIT_FETCH;
+	int i;
 	int exit_code;
+	int maybe_prune_tags;
+	int remote_via_config = remote_is_configured(remote, 0);
 
 	if (!remote)
 		die(_("No remote repository specified.  Please, specify either a URL or a\n"
 		    "remote name from which new revisions should be fetched."));
 
-	gtransport = prepare_transport(remote);
+	gtransport = prepare_transport(remote, 1);
 
 	if (prune < 0) {
 		/* no command line request */
-		if (0 <= gtransport->remote->prune)
-			prune = gtransport->remote->prune;
+		if (0 <= remote->prune)
+			prune = remote->prune;
 		else if (0 <= fetch_prune_config)
 			prune = fetch_prune_config;
 		else
 			prune = PRUNE_BY_DEFAULT;
 	}
 
-	if (argc > 0) {
-		int j = 0;
-		int i;
-		refs = xcalloc(st_add(argc, 1), sizeof(const char *));
-		for (i = 0; i < argc; i++) {
-			if (!strcmp(argv[i], "tag")) {
-				i++;
-				if (i >= argc)
-					die(_("You need to specify a tag name."));
-				refs[j++] = xstrfmt("refs/tags/%s:refs/tags/%s",
-						    argv[i], argv[i]);
-			} else
-				refs[j++] = argv[i];
-		}
-		refs[j] = NULL;
-		ref_nr = j;
+	if (prune_tags < 0) {
+		/* no command line request */
+		if (0 <= remote->prune_tags)
+			prune_tags = remote->prune_tags;
+		else if (0 <= fetch_prune_tags_config)
+			prune_tags = fetch_prune_tags_config;
+		else
+			prune_tags = PRUNE_TAGS_BY_DEFAULT;
 	}
+
+	maybe_prune_tags = prune_tags_ok && prune_tags;
+	if (maybe_prune_tags && remote_via_config)
+		refspec_append(&remote->fetch, TAG_REFSPEC);
+
+	if (maybe_prune_tags && (argc || !remote_via_config))
+		refspec_append(&rs, TAG_REFSPEC);
+
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "tag")) {
+			char *tag;
+			i++;
+			if (i >= argc)
+				die(_("You need to specify a tag name."));
+
+			tag = xstrfmt("refs/tags/%s:refs/tags/%s",
+				      argv[i], argv[i]);
+			refspec_append(&rs, tag);
+			free(tag);
+		} else {
+			refspec_append(&rs, argv[i]);
+		}
+	}
+
+	if (server_options.nr)
+		gtransport->server_options = &server_options;
 
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);
-	refspec = parse_fetch_refspec(ref_nr, refs);
-	exit_code = do_fetch(gtransport, refspec, ref_nr);
-	free_refspec(ref_nr, refspec);
+	sigchain_push(SIGPIPE, SIG_IGN);
+	exit_code = do_fetch(gtransport, &rs);
+	sigchain_pop(SIGPIPE);
+	refspec_clear(&rs);
 	transport_disconnect(gtransport);
 	gtransport = NULL;
 	return exit_code;
@@ -1263,26 +1656,37 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct string_list list = STRING_LIST_INIT_DUP;
-	struct remote *remote;
+	struct remote *remote = NULL;
 	int result = 0;
+	int prune_tags_ok = 1;
 	struct argv_array argv_gc_auto = ARGV_ARRAY_INIT;
 
 	packet_trace_identity("fetch");
+
+	fetch_if_missing = 0;
 
 	/* Record the command line for the reflog */
 	strbuf_addstr(&default_rla, "fetch");
 	for (i = 1; i < argc; i++)
 		strbuf_addf(&default_rla, " %s", argv[i]);
 
+	fetch_config_from_gitmodules(&max_children, &recurse_submodules);
 	git_config(git_fetch_config, NULL);
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_fetch_options, builtin_fetch_usage, 0);
 
+	if (deepen_relative) {
+		if (deepen_relative < 0)
+			die(_("Negative depth in --deepen is not supported"));
+		if (depth)
+			die(_("--deepen and --depth are mutually exclusive"));
+		depth = xstrfmt("%d", deepen_relative);
+	}
 	if (unshallow) {
 		if (depth)
 			die(_("--depth and --unshallow cannot be used together"));
-		else if (!is_repository_shallow())
+		else if (!is_repository_shallow(the_repository))
 			die(_("--unshallow on a complete repository does not make sense"));
 		else
 			depth = xstrfmt("%d", INFINITE_DEPTH);
@@ -1291,15 +1695,11 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	/* no need to be strict, transport_set_option() will validate it again */
 	if (depth && atoi(depth) < 1)
 		die(_("depth %s is not a positive number"), depth);
+	if (depth || deepen_since || deepen_not.nr)
+		deepen = 1;
 
-	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
-		if (recurse_submodules_default) {
-			int arg = parse_fetch_recurse_submodules_arg("--recurse-submodules-default", recurse_submodules_default);
-			set_config_fetch_recurse_submodules(arg);
-		}
-		gitmodules_config();
-		git_config(submodule_config, NULL);
-	}
+	if (filter_options.choice && !has_promisor_remote())
+		die("--filter can only be used when extensions.partialClone is set");
 
 	if (all) {
 		if (argc == 1)
@@ -1307,17 +1707,14 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		else if (argc > 1)
 			die(_("fetch --all does not make sense with refspecs"));
 		(void) for_each_remote(get_one_remote_for_fetch, &list);
-		result = fetch_multiple(&list);
 	} else if (argc == 0) {
 		/* No arguments -- use default remote */
 		remote = remote_get(NULL);
-		result = fetch_one(remote, argc, argv);
 	} else if (multiple) {
 		/* All arguments are assumed to be remotes or groups */
 		for (i = 0; i < argc; i++)
 			if (!add_remote_or_group(argv[i], &list))
 				die(_("No such remote or remote group: %s"), argv[i]);
-		result = fetch_multiple(&list);
 	} else {
 		/* Single remote or group */
 		(void) add_remote_or_group(argv[0], &list);
@@ -1325,21 +1722,36 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			/* More than one remote */
 			if (argc > 1)
 				die(_("Fetching a group and specifying refspecs does not make sense"));
-			result = fetch_multiple(&list);
 		} else {
 			/* Zero or one remotes */
 			remote = remote_get(argv[0]);
-			result = fetch_one(remote, argc-1, argv+1);
+			prune_tags_ok = (argc == 1);
+			argc--;
+			argv++;
 		}
+	}
+
+	if (remote) {
+		if (filter_options.choice || has_promisor_remote())
+			fetch_one_setup_partial(remote);
+		result = fetch_one(remote, argc, argv, prune_tags_ok);
+	} else {
+		if (filter_options.choice)
+			die(_("--filter can only be used with the remote "
+			      "configured in extensions.partialclone"));
+		/* TODO should this also die if we have a previous partial-clone? */
+		result = fetch_multiple(&list);
 	}
 
 	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		struct argv_array options = ARGV_ARRAY_INIT;
 
 		add_options_to_argv(&options);
-		result = fetch_populated_submodules(&options,
+		result = fetch_populated_submodules(the_repository,
+						    &options,
 						    submodule_prefix,
 						    recurse_submodules,
+						    recurse_submodules_default,
 						    verbosity < 0,
 						    max_children);
 		argv_array_clear(&options);
@@ -1347,13 +1759,15 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	string_list_clear(&list, 0);
 
-	close_all_packs();
+	close_object_store(the_repository->objects);
 
-	argv_array_pushl(&argv_gc_auto, "gc", "--auto", NULL);
-	if (verbosity < 0)
-		argv_array_push(&argv_gc_auto, "--quiet");
-	run_command_v_opt(argv_gc_auto.argv, RUN_GIT_CMD);
-	argv_array_clear(&argv_gc_auto);
+	if (enable_auto_gc) {
+		argv_array_pushl(&argv_gc_auto, "gc", "--auto", NULL);
+		if (verbosity < 0)
+			argv_array_push(&argv_gc_auto, "--quiet");
+		run_command_v_opt(argv_gc_auto.argv, RUN_GIT_CMD);
+		argv_array_clear(&argv_gc_auto);
+	}
 
 	return result;
 }

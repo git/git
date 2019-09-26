@@ -1,7 +1,7 @@
 #!/bin/sh
 
 dd if=/dev/zero bs=1048576 count=100 2>/dev/null |
-/usr/bin/time t/helper/test-sha1 >/dev/null
+/usr/bin/time t/helper/test-tool sha1 >/dev/null
 
 while read expect cnt pfx
 do
@@ -11,7 +11,7 @@ do
 			test -z "$pfx" || echo "$pfx"
 			dd if=/dev/zero bs=1048576 count=$cnt 2>/dev/null |
 			perl -pe 'y/\000/g/'
-		} | ./t/helper/test-sha1 $cnt
+		} | ./t/helper/test-tool sha1 $cnt
 	)
 	if test "$expect" = "$actual"
 	then

@@ -71,7 +71,7 @@ test_expect_success 'push mirror force updates existing branches' '
 		git push --mirror up &&
 		echo two >foo && git add foo && git commit -m two &&
 		git push --mirror up &&
-		git reset --hard HEAD^
+		git reset --hard HEAD^ &&
 		git push --mirror up
 	) &&
 	master_master=$(cd master && git show-ref -s --verify refs/heads/master) &&
@@ -88,7 +88,7 @@ test_expect_success 'push mirror removes branches' '
 		echo one >foo && git add foo && git commit -m one &&
 		git branch remove master &&
 		git push --mirror up &&
-		git branch -D remove
+		git branch -D remove &&
 		git push --mirror up
 	) &&
 	(
@@ -170,7 +170,7 @@ test_expect_success 'push mirror force updates existing tags' '
 		echo two >foo && git add foo && git commit -m two &&
 		git tag -f tmaster master &&
 		git push --mirror up &&
-		git reset --hard HEAD^
+		git reset --hard HEAD^ &&
 		git tag -f tmaster master &&
 		git push --mirror up
 	) &&
@@ -188,7 +188,7 @@ test_expect_success 'push mirror removes tags' '
 		echo one >foo && git add foo && git commit -m one &&
 		git tag -f tremove master &&
 		git push --mirror up &&
-		git tag -d tremove
+		git tag -d tremove &&
 		git push --mirror up
 	) &&
 	(
@@ -235,7 +235,7 @@ test_expect_success 'remote.foo.mirror adds and removes branches' '
 		git branch keep master &&
 		git branch remove master &&
 		git push up &&
-		git branch -D remove
+		git branch -D remove &&
 		git push up
 	) &&
 	(

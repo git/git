@@ -79,6 +79,7 @@ proc tools_populate_one {fullname} {
 proc tools_exec {fullname} {
 	global repo_config env current_diff_path
 	global current_branch is_detached
+	global selected_paths
 
 	if {[is_config_true "guitool.$fullname.needsfile"]} {
 		if {$current_diff_path eq {}} {
@@ -110,6 +111,7 @@ proc tools_exec {fullname} {
 
 	set env(GIT_GUITOOL) $fullname
 	set env(FILENAME) $current_diff_path
+	set env(FILENAMES) [join [array names selected_paths] \n]
 	if {$is_detached} {
 		set env(CUR_BRANCH) ""
 	} else {
@@ -131,6 +133,7 @@ proc tools_exec {fullname} {
 
 	unset env(GIT_GUITOOL)
 	unset env(FILENAME)
+	unset env(FILENAMES)
 	unset env(CUR_BRANCH)
 	catch { unset env(ARGS) }
 	catch { unset env(REVISION) }

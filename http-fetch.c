@@ -1,5 +1,6 @@
 #include "cache.h"
-#include "exec_cmd.h"
+#include "config.h"
+#include "exec-cmd.h"
 #include "http.h"
 #include "walker.h"
 
@@ -16,21 +17,13 @@ int cmd_main(int argc, const char **argv)
 	char *url = NULL;
 	int arg = 1;
 	int rc = 0;
-	int get_tree = 0;
-	int get_history = 0;
-	int get_all = 0;
 	int get_verbosely = 0;
 	int get_recover = 0;
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
-			get_tree = 1;
 		} else if (argv[arg][1] == 'c') {
-			get_history = 1;
 		} else if (argv[arg][1] == 'a') {
-			get_all = 1;
-			get_tree = 1;
-			get_history = 1;
 		} else if (argv[arg][1] == 'v') {
 			get_verbosely = 1;
 		} else if (argv[arg][1] == 'w') {
@@ -54,10 +47,6 @@ int cmd_main(int argc, const char **argv)
 		commits = 1;
 	}
 
-	if (get_all == 0)
-		warning("http-fetch: use without -a is deprecated.\n"
-			"In a future release, -a will become the default.");
-
 	if (argv[arg])
 		str_end_url_with_slash(argv[arg], &url);
 
@@ -67,9 +56,6 @@ int cmd_main(int argc, const char **argv)
 
 	http_init(NULL, url, 0);
 	walker = get_http_walker(url);
-	walker->get_tree = get_tree;
-	walker->get_history = get_history;
-	walker->get_all = get_all;
 	walker->get_verbosely = get_verbosely;
 	walker->get_recover = get_recover;
 

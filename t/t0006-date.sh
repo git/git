@@ -4,13 +4,13 @@ test_description='test date parsing and printing'
 . ./test-lib.sh
 
 # arbitrary reference time: 2009-08-30 19:20:00
-TEST_DATE_NOW=1251660000; export TEST_DATE_NOW
+GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 
 check_relative() {
-	t=$(($TEST_DATE_NOW - $1))
+	t=$(($GIT_TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
-	test-date relative $t >actual &&
+	test-tool date relative $t >actual &&
 	test_i18ncmp expect actual
 	"
 }
@@ -31,9 +31,11 @@ check_show () {
 	format=$1
 	time=$2
 	expect=$3
-	test_expect_success $4 "show date ($format:$time)" '
+	prereqs=$4
+	zone=$5
+	test_expect_success $prereqs "show date ($format:$time)" '
 		echo "$time -> $expect" >expect &&
-		test-date show:$format "$time" >actual &&
+		TZ=${zone:-$TZ} test-tool date show:"$format" "$time" >actual &&
 		test_cmp expect actual
 	'
 }
@@ -51,15 +53,25 @@ check_show iso-local "$TIME" '2016-06-15 14:13:20 +0000'
 check_show raw-local "$TIME" '1466000000 +0000'
 check_show unix-local "$TIME" '1466000000'
 
+check_show 'format:%z' "$TIME" '+0200'
+check_show 'format-local:%z' "$TIME" '+0000'
+check_show 'format:%Z' "$TIME" ''
+check_show 'format-local:%Z' "$TIME" 'UTC'
+check_show 'format:%%z' "$TIME" '%z'
+check_show 'format-local:%%z' "$TIME" '%z'
+
+check_show 'format:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 16:13:20'
+check_show 'format-local:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 09:13:20' '' EST5
+
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
-check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" LONG_IS_64BIT
-check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" LONG_IS_64BIT
+check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" TIME_IS_64BIT,TIME_T_IS_64BIT
+check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" TIME_IS_64BIT,TIME_T_IS_64BIT
 
 check_parse() {
 	echo "$1 -> $2" >expect
 	test_expect_${4:-success} "parse date ($1${3:+ TZ=$3})" "
-	TZ=${3:-$TZ} test-date parse '$1' >actual &&
+	TZ=${3:-$TZ} test-tool date parse '$1' >actual &&
 	test_cmp expect actual
 	"
 }
@@ -80,7 +92,7 @@ check_parse '2008-02-14 20:30:45' '2008-02-14 20:30:45 -0500' EST5
 check_approxidate() {
 	echo "$1 -> $2 +0000" >expect
 	test_expect_${3:-success} "parse approxidate ($1)" "
-	test-date approxidate '$1' >actual &&
+	test-tool date approxidate '$1' >actual &&
 	test_cmp expect actual
 	"
 }
@@ -101,6 +113,8 @@ check_approxidate '3:00' '2009-08-30 03:00:00'
 check_approxidate '15:00' '2009-08-30 15:00:00'
 check_approxidate 'noon today' '2009-08-30 12:00:00'
 check_approxidate 'noon yesterday' '2009-08-29 12:00:00'
+check_approxidate 'January 5th noon pm' '2009-01-05 12:00:00'
+check_approxidate '10am noon' '2009-08-29 12:00:00'
 
 check_approxidate 'last tuesday' '2009-08-25 19:20:00'
 check_approxidate 'July 5th' '2009-07-05 19:20:00'
@@ -113,5 +127,23 @@ check_approxidate '6AM, June 7, 2009' '2009-06-07 06:00:00'
 
 check_approxidate '2008-12-01' '2008-12-01 19:20:00'
 check_approxidate '2009-12-01' '2009-12-01 19:20:00'
+
+check_date_format_human() {
+	t=$(($GIT_TEST_DATE_NOW - $1))
+	echo "$t -> $2" >expect
+	test_expect_success "human date $t" '
+		test-tool date human $t >actual &&
+		test_i18ncmp expect actual
+'
+}
+
+check_date_format_human 18000 "5 hours ago" # 5 hours ago
+check_date_format_human 432000 "Tue Aug 25 19:20" # 5 days ago
+check_date_format_human 1728000 "Mon Aug 10 19:20" # 3 weeks ago
+check_date_format_human 13000000 "Thu Apr 2 08:13" # 5 months ago
+check_date_format_human 31449600 "Aug 31 2008" # 12 months ago
+check_date_format_human 37500000 "Jun 22 2008" # 1 year, 2 months ago
+check_date_format_human 55188000 "Dec 1 2007" # 1 year, 9 months ago
+check_date_format_human 630000000 "Sep 13 1989" # 20 years ago
 
 test_done

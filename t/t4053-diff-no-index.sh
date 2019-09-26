@@ -50,8 +50,7 @@ test_expect_success 'git diff --no-index executed outside repo gives correct err
 		export GIT_CEILING_DIRECTORIES &&
 		cd non/git &&
 		test_must_fail git diff --no-index a 2>actual.err &&
-		echo "usage: git diff --no-index <path> <path>" >expect.err &&
-		test_cmp expect.err actual.err
+		test_i18ngrep "usage: git diff --no-index" actual.err
 	)
 '
 
@@ -125,6 +124,24 @@ test_expect_success 'diff --no-index from repo subdir respects config (implicit)
 		diff ../../non/git/a ../../non/git/b >actual &&
 	head -n 1 <actual >actual.head &&
 	test_cmp expect actual.head
+'
+
+test_expect_success 'diff --no-index from repo subdir with absolute paths' '
+	cat <<-EOF >expect &&
+	1	1	$(pwd)/non/git/{a => b}
+	EOF
+	test_expect_code 1 \
+		git -C repo/sub diff --numstat \
+		"$(pwd)/non/git/a" "$(pwd)/non/git/b" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'diff --no-index allows external diff' '
+	test_expect_code 1 \
+		env GIT_EXTERNAL_DIFF="echo external ;:" \
+		git diff --no-index non/git/a non/git/b >actual &&
+	echo external >expect &&
+	test_cmp expect actual
 '
 
 test_done

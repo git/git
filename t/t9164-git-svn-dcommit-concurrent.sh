@@ -12,7 +12,7 @@ test_expect_success 'setup svn repository' '
 	svn_cmd checkout "$svnrepo" work.svn &&
 	(
 		cd work.svn &&
-		echo >file && echo > auto_updated_file
+		echo >file && echo > auto_updated_file &&
 		svn_cmd add file auto_updated_file &&
 		svn_cmd commit -m "initial commit"
 	) &&

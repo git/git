@@ -4,6 +4,11 @@
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
+static const char utf16_be_bom[] = {'\xFE', '\xFF'};
+static const char utf16_le_bom[] = {'\xFF', '\xFE'};
+static const char utf32_be_bom[] = {'\0', '\0', '\xFE', '\xFF'};
+static const char utf32_le_bom[] = {'\xFF', '\xFE', '\0', '\0'};
+
 struct interval {
 	ucs_char_t first;
 	ucs_char_t last;
@@ -32,7 +37,7 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
 	if (ucs < table[0].first || ucs > table[max].last)
 		return 0;
 	while (max >= min) {
-		mid = (min + max) / 2;
+		mid = min + (max - min) / 2;
 		if (ucs > table[mid].last)
 			min = mid + 1;
 		else if (ucs < table[mid].first)
@@ -81,7 +86,7 @@ static int git_wcwidth(ucs_char_t ch)
 	/*
 	 * Sorted list of non-overlapping intervals of non-spacing characters,
 	 */
-#include "unicode_width.h"
+#include "unicode-width.h"
 
 	/* test for 8-bit control characters */
 	if (ch == 0)
@@ -381,7 +386,7 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 		old = src;
 		n = utf8_width((const char**)&src, NULL);
 		if (!src) 	/* broken utf-8, do nothing */
-			return;
+			goto out;
 		if (n && w >= pos && w < pos + width) {
 			if (subst) {
 				memcpy(dst, subst, subst_len);
@@ -397,21 +402,44 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 	}
 	strbuf_setlen(&sb_dst, dst - sb_dst.buf);
 	strbuf_swap(sb_src, &sb_dst);
+out:
 	strbuf_release(&sb_dst);
+}
+
+/*
+ * Returns true (1) if the src encoding name matches the dst encoding
+ * name directly or one of its alternative names. E.g. UTF-16BE is the
+ * same as UTF16BE.
+ */
+static int same_utf_encoding(const char *src, const char *dst)
+{
+	if (istarts_with(src, "utf") && istarts_with(dst, "utf")) {
+		/* src[3] or dst[3] might be '\0' */
+		int i = (src[3] == '-' ? 4 : 3);
+		int j = (dst[3] == '-' ? 4 : 3);
+		return !strcasecmp(src+i, dst+j);
+	}
+	return 0;
 }
 
 int is_encoding_utf8(const char *name)
 {
 	if (!name)
 		return 1;
-	if (!strcasecmp(name, "utf-8") || !strcasecmp(name, "utf8"))
+	if (same_utf_encoding("utf-8", name))
 		return 1;
 	return 0;
 }
 
 int same_encoding(const char *src, const char *dst)
 {
-	if (is_encoding_utf8(src) && is_encoding_utf8(dst))
+	static const char utf8[] = "UTF-8";
+
+	if (!src)
+		src = utf8;
+	if (!dst)
+		dst = utf8;
+	if (same_utf_encoding(src, dst))
 		return 1;
 	return !strcasecmp(src, dst);
 }
@@ -447,16 +475,17 @@ int utf8_fprintf(FILE *stream, const char *format, ...)
 #else
 	typedef char * iconv_ibp;
 #endif
-char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outsz_p)
+char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
+			    size_t bom_len, size_t *outsz_p)
 {
 	size_t outsz, outalloc;
 	char *out, *outpos;
 	iconv_ibp cp;
 
 	outsz = insz;
-	outalloc = outsz + 1; /* for terminating NUL */
+	outalloc = st_add(outsz, 1 + bom_len); /* for terminating NUL */
 	out = xmalloc(outalloc);
-	outpos = out;
+	outpos = out + bom_len;
 	cp = (iconv_ibp)in;
 
 	while (1) {
@@ -474,7 +503,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 			 * converting the rest.
 			 */
 			sofar = outpos - out;
-			outalloc = sofar + insz * 2 + 32;
+			outalloc = st_add3(sofar, st_mult(insz, 2), 32);
 			out = xrealloc(out, outalloc);
 			outpos = out + sofar;
 			outsz = outalloc - sofar - 1;
@@ -489,39 +518,122 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 	return out;
 }
 
-char *reencode_string_len(const char *in, int insz,
+static const char *fallback_encoding(const char *name)
+{
+	/*
+	 * Some platforms do not have the variously spelled variants of
+	 * UTF-8, so let's fall back to trying the most official
+	 * spelling. We do so only as a fallback in case the platform
+	 * does understand the user's spelling, but not our official
+	 * one.
+	 */
+	if (is_encoding_utf8(name))
+		return "UTF-8";
+
+	/*
+	 * Even though latin-1 is still seen in e-mail
+	 * headers, some platforms only install ISO-8859-1.
+	 */
+	if (!strcasecmp(name, "latin-1"))
+		return "ISO-8859-1";
+
+	return name;
+}
+
+char *reencode_string_len(const char *in, size_t insz,
 			  const char *out_encoding, const char *in_encoding,
-			  int *outsz)
+			  size_t *outsz)
 {
 	iconv_t conv;
 	char *out;
+	const char *bom_str = NULL;
+	size_t bom_len = 0;
 
 	if (!in_encoding)
 		return NULL;
 
+	/* UTF-16LE-BOM is the same as UTF-16 for reading */
+	if (same_utf_encoding("UTF-16LE-BOM", in_encoding))
+		in_encoding = "UTF-16";
+
+	/*
+	 * For writing, UTF-16 iconv typically creates "UTF-16BE-BOM"
+	 * Some users under Windows want the little endian version
+	 *
+	 * We handle UTF-16 and UTF-32 ourselves only if the platform does not
+	 * provide a BOM (which we require), since we want to match the behavior
+	 * of the system tools and libc as much as possible.
+	 */
+	if (same_utf_encoding("UTF-16LE-BOM", out_encoding)) {
+		bom_str = utf16_le_bom;
+		bom_len = sizeof(utf16_le_bom);
+		out_encoding = "UTF-16LE";
+	} else if (same_utf_encoding("UTF-16BE-BOM", out_encoding)) {
+		bom_str = utf16_be_bom;
+		bom_len = sizeof(utf16_be_bom);
+		out_encoding = "UTF-16BE";
+#ifdef ICONV_OMITS_BOM
+	} else if (same_utf_encoding("UTF-16", out_encoding)) {
+		bom_str = utf16_be_bom;
+		bom_len = sizeof(utf16_be_bom);
+		out_encoding = "UTF-16BE";
+	} else if (same_utf_encoding("UTF-32", out_encoding)) {
+		bom_str = utf32_be_bom;
+		bom_len = sizeof(utf32_be_bom);
+		out_encoding = "UTF-32BE";
+#endif
+	}
+
 	conv = iconv_open(out_encoding, in_encoding);
 	if (conv == (iconv_t) -1) {
-		/*
-		 * Some platforms do not have the variously spelled variants of
-		 * UTF-8, so let's fall back to trying the most official
-		 * spelling. We do so only as a fallback in case the platform
-		 * does understand the user's spelling, but not our official
-		 * one.
-		 */
-		if (is_encoding_utf8(in_encoding))
-			in_encoding = "UTF-8";
-		if (is_encoding_utf8(out_encoding))
-			out_encoding = "UTF-8";
+		in_encoding = fallback_encoding(in_encoding);
+		out_encoding = fallback_encoding(out_encoding);
+
 		conv = iconv_open(out_encoding, in_encoding);
 		if (conv == (iconv_t) -1)
 			return NULL;
 	}
-
-	out = reencode_string_iconv(in, insz, conv, outsz);
+	out = reencode_string_iconv(in, insz, conv, bom_len, outsz);
 	iconv_close(conv);
+	if (out && bom_str && bom_len)
+		memcpy(out, bom_str, bom_len);
 	return out;
 }
 #endif
+
+static int has_bom_prefix(const char *data, size_t len,
+			  const char *bom, size_t bom_len)
+{
+	return data && bom && (len >= bom_len) && !memcmp(data, bom, bom_len);
+}
+
+int has_prohibited_utf_bom(const char *enc, const char *data, size_t len)
+{
+	return (
+	  (same_utf_encoding("UTF-16BE", enc) ||
+	   same_utf_encoding("UTF-16LE", enc)) &&
+	  (has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom)) ||
+	   has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom)))
+	) || (
+	  (same_utf_encoding("UTF-32BE",  enc) ||
+	   same_utf_encoding("UTF-32LE", enc)) &&
+	  (has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
+	   has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom)))
+	);
+}
+
+int is_missing_required_utf_bom(const char *enc, const char *data, size_t len)
+{
+	return (
+	   (same_utf_encoding(enc, "UTF-16")) &&
+	   !(has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom)) ||
+	     has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom)))
+	) || (
+	   (same_utf_encoding(enc, "UTF-32")) &&
+	   !(has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
+	     has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom)))
+	);
+}
 
 /*
  * Returns first character length in bytes for multi-byte `text` according to
@@ -605,33 +717,67 @@ static ucs_char_t next_hfs_char(const char **in)
 	}
 }
 
-int is_hfs_dotgit(const char *path)
+static int is_hfs_dot_generic(const char *path,
+			      const char *needle, size_t needle_len)
 {
 	ucs_char_t c;
 
 	c = next_hfs_char(&path);
 	if (c != '.')
 		return 0;
-	c = next_hfs_char(&path);
 
 	/*
 	 * there's a great deal of other case-folding that occurs
-	 * in HFS+, but this is enough to catch anything that will
-	 * convert to ".git"
+	 * in HFS+, but this is enough to catch our fairly vanilla
+	 * hard-coded needles.
 	 */
-	if (c != 'g' && c != 'G')
-		return 0;
-	c = next_hfs_char(&path);
-	if (c != 'i' && c != 'I')
-		return 0;
-	c = next_hfs_char(&path);
-	if (c != 't' && c != 'T')
-		return 0;
+	for (; needle_len > 0; needle++, needle_len--) {
+		c = next_hfs_char(&path);
+
+		/*
+		 * We know our needles contain only ASCII, so we clamp here to
+		 * make the results of tolower() sane.
+		 */
+		if (c > 127)
+			return 0;
+		if (tolower(c) != *needle)
+			return 0;
+	}
+
 	c = next_hfs_char(&path);
 	if (c && !is_dir_sep(c))
 		return 0;
 
 	return 1;
+}
+
+/*
+ * Inline wrapper to make sure the compiler resolves strlen() on literals at
+ * compile time.
+ */
+static inline int is_hfs_dot_str(const char *path, const char *needle)
+{
+	return is_hfs_dot_generic(path, needle, strlen(needle));
+}
+
+int is_hfs_dotgit(const char *path)
+{
+	return is_hfs_dot_str(path, "git");
+}
+
+int is_hfs_dotgitmodules(const char *path)
+{
+	return is_hfs_dot_str(path, "gitmodules");
+}
+
+int is_hfs_dotgitignore(const char *path)
+{
+	return is_hfs_dot_str(path, "gitignore");
+}
+
+int is_hfs_dotgitattributes(const char *path)
+{
+	return is_hfs_dot_str(path, "gitattributes");
 }
 
 const char utf8_bom[] = "\357\273\277";

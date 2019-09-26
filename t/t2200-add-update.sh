@@ -88,9 +88,8 @@ test_expect_success 'non-qualified update in subdir updates from the root' '
 		echo even more >>sub2 &&
 		git add -u
 	) &&
-	: >expect &&
 	git diff-files --name-only >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'replace a file with a symlink' '

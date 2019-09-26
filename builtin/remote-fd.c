@@ -1,6 +1,9 @@
 #include "builtin.h"
 #include "transport.h"
 
+static const char usage_msg[] =
+	"git remote-fd <remote> <url>";
+
 /*
  * URL syntax:
  *	'fd::<inoutfd>[/<anything>]'		Read/write socket pair
@@ -57,7 +60,7 @@ int cmd_remote_fd(int argc, const char **argv, const char *prefix)
 	char *end;
 
 	if (argc != 3)
-		die("Expected two arguments");
+		usage(usage_msg);
 
 	input_fd = (int)strtoul(argv[2], &end, 10);
 

@@ -2,12 +2,14 @@
  * Builtin help command
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "column.h"
 #include "help.h"
+#include "alias.h"
 
 #ifndef DEFAULT_HELP_FORMAT
 #define DEFAULT_HELP_FORMAT "man"
@@ -35,6 +37,8 @@ static const char *html_path;
 
 static int show_all = 0;
 static int show_guides = 0;
+static int show_config;
+static int verbose = 1;
 static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;
@@ -42,11 +46,14 @@ static struct option builtin_help_options[] = {
 	OPT_BOOL('a', "all", &show_all, N_("print all available commands")),
 	OPT_HIDDEN_BOOL(0, "exclude-guides", &exclude_guides, N_("exclude guides")),
 	OPT_BOOL('g', "guides", &show_guides, N_("print list of useful guides")),
+	OPT_BOOL('c', "config", &show_config, N_("print all configuration variable names")),
+	OPT_SET_INT_F(0, "config-for-completion", &show_config, "", 2, PARSE_OPT_HIDDEN),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
 			HELP_FORMAT_WEB),
 	OPT_SET_INT('i', "info", &help_format, N_("show info page"),
 			HELP_FORMAT_INFO),
+	OPT__VERBOSE(&verbose, N_("print command description")),
 	OPT_END(),
 };
 
@@ -63,6 +70,10 @@ static enum help_format parse_help_format(const char *format)
 		return HELP_FORMAT_INFO;
 	if (!strcmp(format, "web") || !strcmp(format, "html"))
 		return HELP_FORMAT_WEB;
+	/*
+	 * Please update _git_config() in git-completion.bash when you
+	 * add new help formats.
+	 */
 	die(_("unrecognized help format '%s'"), format);
 }
 
@@ -130,6 +141,7 @@ static void exec_woman_emacs(const char *path, const char *page)
 		strbuf_addf(&man_page, "(woman \"%s\")", page);
 		execlp(path, "emacsclient", "-e", man_page.buf, (char *)NULL);
 		warning_errno(_("failed to exec '%s'"), path);
+		strbuf_release(&man_page);
 	}
 }
 
@@ -151,6 +163,7 @@ static void exec_man_konqueror(const char *path, const char *page)
 		strbuf_addf(&man_page, "man:%s(1)", page);
 		execlp(path, filename, "newTab", man_page.buf, (char *)NULL);
 		warning_errno(_("failed to exec '%s'"), path);
+		strbuf_release(&man_page);
 	}
 }
 
@@ -168,6 +181,7 @@ static void exec_man_cmd(const char *cmd, const char *page)
 	strbuf_addf(&shell_cmd, "%s %s", cmd, page);
 	execl(SHELL_PATH, SHELL_PATH, "-c", shell_cmd.buf, (char *)NULL);
 	warning(_("failed to exec '%s'"), cmd);
+	strbuf_release(&shell_cmd);
 }
 
 static void add_man_viewer(const char *name)
@@ -190,11 +204,11 @@ static void do_add_man_viewer_info(const char *name,
 				   size_t len,
 				   const char *value)
 {
-	struct man_viewer_info_list *new;
-	FLEX_ALLOC_MEM(new, name, name, len);
-	new->info = xstrdup(value);
-	new->next = man_viewer_info_list;
-	man_viewer_info_list = new;
+	struct man_viewer_info_list *new_man_viewer;
+	FLEX_ALLOC_MEM(new_man_viewer, name, name, len);
+	new_man_viewer->info = xstrdup(value);
+	new_man_viewer->next = man_viewer_info_list;
+	man_viewer_info_list = new_man_viewer;
 }
 
 static int add_man_viewer_path(const char *name,
@@ -396,38 +410,6 @@ static void show_html_page(const char *git_cmd)
 	open_html(page_path.buf);
 }
 
-static struct {
-	const char *name;
-	const char *help;
-} common_guides[] = {
-	{ "attributes", N_("Defining attributes per path") },
-	{ "everyday", N_("Everyday Git With 20 Commands Or So") },
-	{ "glossary", N_("A Git glossary") },
-	{ "ignore", N_("Specifies intentionally untracked files to ignore") },
-	{ "modules", N_("Defining submodule properties") },
-	{ "revisions", N_("Specifying revisions and ranges for Git") },
-	{ "tutorial", N_("A tutorial introduction to Git (for version 1.5.1 or newer)") },
-	{ "workflows", N_("An overview of recommended workflows with Git") },
-};
-
-static void list_common_guides_help(void)
-{
-	int i, longest = 0;
-
-	for (i = 0; i < ARRAY_SIZE(common_guides); i++) {
-		if (longest < strlen(common_guides[i].name))
-			longest = strlen(common_guides[i].name);
-	}
-
-	puts(_("The common Git guides are:\n"));
-	for (i = 0; i < ARRAY_SIZE(common_guides); i++) {
-		printf("   %s   ", common_guides[i].name);
-		mput_char(' ', longest - strlen(common_guides[i].name));
-		puts(_(common_guides[i].help));
-	}
-	putchar('\n');
-}
-
 static const char *check_git_cmd(const char* cmd)
 {
 	char *alias;
@@ -437,9 +419,37 @@ static const char *check_git_cmd(const char* cmd)
 
 	alias = alias_lookup(cmd);
 	if (alias) {
-		printf_ln(_("`git %s' is aliased to `%s'"), cmd, alias);
-		free(alias);
-		exit(0);
+		const char **argv;
+		int count;
+
+		/*
+		 * handle_builtin() in git.c rewrites "git cmd --help"
+		 * to "git help --exclude-guides cmd", so we can use
+		 * exclude_guides to distinguish "git cmd --help" from
+		 * "git help cmd". In the latter case, or if cmd is an
+		 * alias for a shell command, just print the alias
+		 * definition.
+		 */
+		if (!exclude_guides || alias[0] == '!') {
+			printf_ln(_("'%s' is aliased to '%s'"), cmd, alias);
+			free(alias);
+			exit(0);
+		}
+		/*
+		 * Otherwise, we pretend that the command was "git
+		 * word0 --help". We use split_cmdline() to get the
+		 * first word of the alias, to ensure that we use the
+		 * same rules as when the alias is actually
+		 * used. split_cmdline() modifies alias in-place.
+		 */
+		fprintf_ln(stderr, _("'%s' is aliased to '%s'"), cmd, alias);
+		count = split_cmdline(alias, &argv);
+		if (count < 0)
+			die(_("bad alias.%s string: %s"), cmd,
+			    split_cmdline_strerror(count));
+		free(argv);
+		UNLEAK(alias);
+		return alias;
 	}
 
 	if (exclude_guides)
@@ -459,9 +469,27 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 
 	if (show_all) {
 		git_config(git_help_config, NULL);
+		if (verbose) {
+			setup_pager();
+			list_all_cmds_help();
+			return 0;
+		}
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
 		load_command_list("git-", &main_cmds, &other_cmds);
 		list_commands(colopts, &main_cmds, &other_cmds);
+	}
+
+	if (show_config) {
+		int for_human = show_config == 1;
+
+		if (!for_human) {
+			list_config_help(for_human);
+			return 0;
+		}
+		setup_pager();
+		list_config_help(for_human);
+		printf("\n%s\n", _("'git help config' for more information"));
+		return 0;
 	}
 
 	if (show_guides)

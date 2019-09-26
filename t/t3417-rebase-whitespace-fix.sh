@@ -55,7 +55,7 @@ test_expect_success 'blank line at end of file; extend at end of file' '
 	git add file &&	git commit -m second &&
 	git rebase --whitespace=fix HEAD^^ &&
 	git diff --exit-code HEAD^:file expect-first &&
-	test_cmp file expect-second
+	test_cmp expect-second file
 '
 
 # prepare third revision of "file"
@@ -82,7 +82,7 @@ test_expect_success 'two blanks line at end of file; extend at end of file' '
 	cp third file && git add file && git commit -m third &&
 	git rebase --whitespace=fix HEAD^^ &&
 	git diff --exit-code HEAD^:file expect-second &&
-	test_cmp file expect-third
+	test_cmp expect-third file
 '
 
 test_expect_success 'same, but do not remove trailing spaces' '
@@ -120,7 +120,7 @@ test_expect_success 'at beginning of file' '
 	done >> file &&
 	git commit -m more file	&&
 	git rebase --whitespace=fix HEAD^^ &&
-	test_cmp file expect-beginning
+	test_cmp expect-beginning file
 '
 
 test_done

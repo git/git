@@ -214,10 +214,16 @@ smart server reply:
    S: Cache-Control: no-cache
    S:
    S: 001e# service=git-upload-pack\n
+   S: 0000
    S: 004895dcfa3633004da0049d3d0fa03f80589cbcaf31 refs/heads/maint\0multi_ack\n
    S: 0042d049f6c27a2244e12041955e262a404c7faba355 refs/heads/master\n
    S: 003c2cb58b79488a98d2721cea644875a8dd0026b115 refs/tags/v1.0\n
    S: 003fa3c2e2402b99163d1d59756e5f207ae21cccba4c refs/tags/v1.0^{}\n
+   S: 0000
+
+The client may send Extra Parameters (see
+Documentation/technical/pack-protocol.txt) as a colon-separated string
+in the Git-Protocol HTTP header.
 
 Dumb Server Response
 ^^^^^^^^^^^^^^^^^^^^
@@ -269,7 +275,12 @@ the C locale ordering.  The stream SHOULD include the default ref
 named `HEAD` as the first ref.  The stream MUST include capability
 declarations behind a NUL on the first ref.
 
+The returned response contains "version 1" if "version=1" was sent as an
+Extra Parameter.
+
   smart_reply     =  PKT-LINE("# service=$servicename" LF)
+		     "0000"
+		     *1("version 1")
 		     ref_list
 		     "0000"
   ref_list        =  empty_list / non_empty_list
@@ -327,11 +338,11 @@ server advertises capability `allow-tip-sha1-in-want` or
 		       request_end
   request_end       =  "0000" / "done"
 
-  want_list         =  PKT-LINE(want NUL cap_list LF)
+  want_list         =  PKT-LINE(want SP cap_list LF)
 		       *(want_pkt)
   want_pkt          =  PKT-LINE(want LF)
   want              =  "want" SP id
-  cap_list          =  *(SP capability) SP
+  cap_list          =  capability *(SP capability)
 
   have_list         =  *PKT-LINE("have" SP id LF)
 

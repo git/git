@@ -2,9 +2,6 @@
 # to set up some variables pointing at the normal git directories and
 # a few helper shell functions.
 
-# Source git-sh-i18n for gettext support.
-. git-sh-i18n
-
 # Having this variable in your environment would break scripts because
 # you would cause "cd" to be taken to unexpected places.  If you
 # like CDPATH, define it for your interactive shell sessions without
@@ -45,6 +42,9 @@ git_broken_path_fix () {
 }
 
 # @@BROKEN_PATH_FIX@@
+
+# Source git-sh-i18n for gettext support.
+. "$(git --exec-path)/git-sh-i18n"
 
 die () {
 	die_with_status 1 "$@"
@@ -101,6 +101,7 @@ $LONG_USAGE")"
 	case "$1" in
 		-h)
 		echo "$LONG_USAGE"
+		case "$0" in *git-legacy-stash) exit 129;; esac
 		exit
 	esac
 fi
@@ -196,14 +197,14 @@ require_work_tree_exists () {
 	if test "z$(git rev-parse --is-bare-repository)" != zfalse
 	then
 		program_name=$0
-		die "$(gettext "fatal: \$program_name cannot be used without a working tree.")"
+		die "$(eval_gettext "fatal: \$program_name cannot be used without a working tree.")"
 	fi
 }
 
 require_work_tree () {
 	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true || {
 		program_name=$0
-		die "$(gettext "fatal: \$program_name cannot be used without a working tree.")"
+		die "$(eval_gettext "fatal: \$program_name cannot be used without a working tree.")"
 	}
 }
 

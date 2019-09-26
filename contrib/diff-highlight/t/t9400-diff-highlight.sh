@@ -52,15 +52,17 @@ test_strip_patch_header () {
 # dh_test_setup_history generates a contrived graph such that we have at least
 # 1 nesting (E) and 2 nestings (F).
 #
-#	      A branch
-#	     /
-#	D---E---F master
+#	  A---B master
+#	 /
+#	D---E---F branch
 #
 #	git log --all --graph
 #	* commit
-#	|    A
+#	|    B
 #	| * commit
 #	| |    F
+#	* | commit
+#	| |    A
 #	| * commit
 #	|/
 #	|    E
@@ -68,24 +70,30 @@ test_strip_patch_header () {
 #	     D
 #
 dh_test_setup_history () {
-	echo "file1" >file1 &&
-	echo "file2" >file2 &&
-	echo "file3" >file3 &&
-
-	cat file1 >file &&
+	echo file1 >file &&
 	git add file &&
+	test_tick &&
 	git commit -m "D" &&
 
 	git checkout -b branch &&
-	cat file2 >file &&
-	git commit -a -m "A" &&
-
-	git checkout master &&
-	cat file2 >file &&
+	echo file2 >file &&
+	test_tick &&
 	git commit -a -m "E" &&
 
-	cat file3 >file &&
-	git commit -a -m "F"
+	git checkout master &&
+	echo file2 >file &&
+	test_tick &&
+	git commit -a -m "A" &&
+
+	git checkout branch &&
+	echo file3 >file &&
+	test_tick &&
+	git commit -a -m "F" &&
+
+	git checkout master &&
+	echo file3 >file &&
+	test_tick &&
+	git commit -a -m "B"
 }
 
 left_trim () {
@@ -246,14 +254,23 @@ test_expect_failure 'diff-highlight treats combining code points as a unit' '
 test_expect_success 'diff-highlight works with the --graph option' '
 	dh_test_setup_history &&
 
-	# topo-order so that the order of the commits is the same as with --graph
+	# date-order so that the commits are interleaved for both
 	# trim graph elements so we can do a diff
 	# trim leading space because our trim_graph is not perfect
-	git log --branches -p --topo-order |
+	git log --branches -p --date-order |
 		"$DIFF_HIGHLIGHT" | left_trim >graph.exp &&
-	git log --branches -p --graph |
+	git log --branches -p --date-order --graph |
 		"$DIFF_HIGHLIGHT" | trim_graph | left_trim >graph.act &&
 	test_cmp graph.exp graph.act
+'
+
+# Just reuse the previous graph test, but with --color.  Our trimming
+# doesn't know about color, so just sanity check that something got
+# highlighted.
+test_expect_success 'diff-highlight works with color graph' '
+	git log --branches -p --date-order --graph --color |
+		"$DIFF_HIGHLIGHT" | trim_graph | left_trim >graph &&
+	grep "\[7m" graph
 '
 
 # Most combined diffs won't meet diff-highlight's line-number filter. So we
@@ -290,6 +307,34 @@ test_expect_success 'diff-highlight ignores combined diffs' '
 
 	git show -c | "$DIFF_HIGHLIGHT" >actual.raw &&
 	sed -n "/^---/,\$p" <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'diff-highlight handles --graph with leading dash' '
+	cat >file <<-\EOF &&
+	before
+	the old line
+	-leading dash
+	EOF
+	git add file &&
+	git commit -m before &&
+
+	sed s/old/new/ <file >file.tmp &&
+	mv file.tmp file &&
+	git add file &&
+	git commit -m after &&
+
+	cat >expect <<-EOF &&
+	--- a/file
+	+++ b/file
+	@@ -1,3 +1,3 @@
+	 before
+	-the ${CW}old${CR} line
+	+the ${CW}new${CR} line
+	 -leading dash
+	EOF
+	git log --graph -p -1 | "$DIFF_HIGHLIGHT" >actual.raw &&
+	trim_graph <actual.raw | sed -n "/^---/,\$p" >actual &&
 	test_cmp expect actual
 '
 

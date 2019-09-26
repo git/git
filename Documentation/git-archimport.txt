@@ -3,7 +3,7 @@ git-archimport(1)
 
 NAME
 ----
-git-archimport - Import an Arch repository into Git
+git-archimport - Import a GNU Arch repository into Git
 
 
 SYNOPSIS
@@ -14,7 +14,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Imports a project from one or more Arch repositories. It will follow branches
+Imports a project from one or more GNU Arch repositories.
+It will follow branches
 and repositories within the namespaces defined by the <archive/branch>
 parameters supplied. If it cannot find the remote branch a merge comes from
 it will just import it as a regular commit. If it can find it, it will mark it
@@ -96,7 +97,7 @@ OPTIONS
 	pruned.
 
 -a::
-	Attempt to auto-register archives at http://mirrors.sourcecontrol.net
+	Attempt to auto-register archives at `http://mirrors.sourcecontrol.net`
 	This is particularly useful with the -D option.
 
 -t <tmpdir>::

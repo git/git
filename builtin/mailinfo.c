@@ -16,10 +16,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	const char *def_charset;
 	struct mailinfo mi;
 	int status;
+	char *msgfile, *patchfile;
 
-	/* NEEDSWORK: might want to do the optional .git/ directory
-	 * discovery
-	 */
 	setup_mailinfo(&mi);
 
 	def_charset = get_commit_output_encoding();
@@ -54,8 +52,14 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 
 	mi.input = stdin;
 	mi.output = stdout;
-	status = !!mailinfo(&mi, argv[1], argv[2]);
+
+	msgfile = prefix_filename(prefix, argv[1]);
+	patchfile = prefix_filename(prefix, argv[2]);
+
+	status = !!mailinfo(&mi, msgfile, patchfile);
 	clear_mailinfo(&mi);
 
+	free(msgfile);
+	free(patchfile);
 	return status;
 }

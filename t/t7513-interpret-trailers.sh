@@ -126,6 +126,305 @@ test_expect_success 'with multiline title in the message' '
 	test_cmp expected actual
 '
 
+test_expect_success 'with non-trailer lines mixed with Signed-off-by' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		Signed-off-by: a <a@example.com>
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		Signed-off-by: a <a@example.com>
+		this is not a trailer
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines mixed with cherry picked from' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		(cherry picked from commit x)
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		(cherry picked from commit x)
+		this is not a trailer
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines mixed with a configured trailer' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		My-trailer: x
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		My-trailer: x
+		this is not a trailer
+		token: value
+	EOF
+	test_config trailer.my.key "My-trailer: " &&
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines mixed with a non-configured trailer' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		I-am-not-configured: x
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		I-am-not-configured: x
+		this is not a trailer
+
+		token: value
+	EOF
+	test_config trailer.my.key "My-trailer: " &&
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with all non-configured trailers' '
+	cat >patch <<-\EOF &&
+
+		I-am-not-configured: x
+		I-am-also-not-configured: x
+	EOF
+	cat >expected <<-\EOF &&
+
+		I-am-not-configured: x
+		I-am-also-not-configured: x
+		token: value
+	EOF
+	test_config trailer.my.key "My-trailer: " &&
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines only' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'line with leading whitespace is not trailer' '
+	q_to_tab >patch <<-\EOF &&
+
+		Qtoken: value
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		Qtoken: value
+
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'multiline field treated as one trailer for 25% check' '
+	q_to_tab >patch <<-\EOF &&
+
+		Signed-off-by: a <a@example.com>
+		name: value on
+		Qmultiple lines
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		Signed-off-by: a <a@example.com>
+		name: value on
+		Qmultiple lines
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+		this is not a trailer
+		name: value
+	EOF
+	git interpret-trailers --trailer "name: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'multiline field treated as atomic for placement' '
+	q_to_tab >patch <<-\EOF &&
+
+		another: trailer
+		name: value on
+		Qmultiple lines
+		another: trailer
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		another: trailer
+		name: value on
+		Qmultiple lines
+		name: value
+		another: trailer
+	EOF
+	test_config trailer.name.where after &&
+	git interpret-trailers --trailer "name: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'multiline field treated as atomic for replacement' '
+	q_to_tab >patch <<-\EOF &&
+
+		another: trailer
+		name: value on
+		Qmultiple lines
+		another: trailer
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		another: trailer
+		another: trailer
+		name: value
+	EOF
+	test_config trailer.name.ifexists replace &&
+	git interpret-trailers --trailer "name: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'multiline field treated as atomic for difference check' '
+	q_to_tab >patch <<-\EOF &&
+
+		another: trailer
+		name: first line
+		Qsecond line
+		another: trailer
+	EOF
+	test_config trailer.name.ifexists addIfDifferent &&
+
+	q_to_tab >trailer <<-\EOF &&
+		name: first line
+		Qsecond line
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		another: trailer
+		name: first line
+		Qsecond line
+		another: trailer
+	EOF
+	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	test_cmp expected actual &&
+
+	q_to_tab >trailer <<-\EOF &&
+		name: first line
+		QQQQQsecond line
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		another: trailer
+		name: first line
+		Qsecond line
+		another: trailer
+		name: first line
+		QQQQQsecond line
+	EOF
+	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	test_cmp expected actual &&
+
+	q_to_tab >trailer <<-\EOF &&
+		name: first line *DIFFERENT*
+		Qsecond line
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		another: trailer
+		name: first line
+		Qsecond line
+		another: trailer
+		name: first line *DIFFERENT*
+		Qsecond line
+	EOF
+	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'multiline field treated as atomic for neighbor check' '
+	q_to_tab >patch <<-\EOF &&
+
+		another: trailer
+		name: first line
+		Qsecond line
+		another: trailer
+	EOF
+	test_config trailer.name.where after &&
+	test_config trailer.name.ifexists addIfDifferentNeighbor &&
+
+	q_to_tab >trailer <<-\EOF &&
+		name: first line
+		Qsecond line
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		another: trailer
+		name: first line
+		Qsecond line
+		another: trailer
+	EOF
+	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	test_cmp expected actual &&
+
+	q_to_tab >trailer <<-\EOF &&
+		name: first line
+		QQQQQsecond line
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		another: trailer
+		name: first line
+		Qsecond line
+		name: first line
+		QQQQQsecond line
+		another: trailer
+	EOF
+	git interpret-trailers --trailer "$(cat trailer)" patch >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'with config setup' '
 	git config trailer.ack.key "Acked-by: " &&
 	cat >expected <<-\EOF &&
@@ -239,33 +538,50 @@ test_expect_success 'with 2 files arguments' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with message that has comments' '
-	cat basic_message >message_with_comments &&
-	sed -e "s/ Z\$/ /" >>message_with_comments <<-\EOF &&
-		# comment
+# Cover multiple comment characters with the same test input.
+for char in "#" ";"
+do
+	case "$char" in
+	"#")
+		# This is the default, so let's explicitly _not_
+		# set any config to make sure it behaves as we expect.
+		;;
+	*)
+		config="-c core.commentChar=$char"
+		;;
+	esac
 
-		# other comment
-		Cc: Z
-		# yet another comment
-		Reviewed-by: Johan
-		Reviewed-by: Z
-		# last comment
+	test_expect_success "with message that has comments ($char)" '
+		cat basic_message >message_with_comments &&
+		sed -e "s/ Z\$/ /" \
+		    -e "s/#/$char/g" >>message_with_comments <<-EOF &&
+			# comment
 
-	EOF
-	cat basic_patch >>message_with_comments &&
-	cat basic_message >expected &&
-	cat >>expected <<-\EOF &&
-		# comment
+			# other comment
+			Cc: Z
+			# yet another comment
+			Reviewed-by: Johan
+			Reviewed-by: Z
+			# last comment
 
-		Reviewed-by: Johan
-		Cc: Peff
-		# last comment
+		EOF
+		cat basic_patch >>message_with_comments &&
+		cat basic_message >expected &&
+		sed -e "s/#/$char/g" >>expected <<-\EOF &&
+			# comment
 
-	EOF
-	cat basic_patch >>expected &&
-	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
-	test_cmp expected actual
-'
+			Reviewed-by: Johan
+			Cc: Peff
+			# last comment
+
+		EOF
+		cat basic_patch >>expected &&
+		git $config interpret-trailers \
+			--trim-empty --trailer "Cc: Peff" \
+			message_with_comments >actual &&
+		test_cmp expected actual
+	'
+done
 
 test_expect_success 'with message that has an old style conflict block' '
 	cat basic_message >message_with_comments &&
@@ -378,6 +694,36 @@ test_expect_success 'using "where = before"' '
 		Acked-by= Peff
 	EOF
 	git interpret-trailers --trailer "ack: Peff" \
+		--trailer "bug: 42" complex_message >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'overriding configuration with "--where after"' '
+	git config trailer.ack.where "before" &&
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Fixes: Z
+		Acked-by= Z
+		Acked-by= Peff
+		Reviewed-by: Z
+		Signed-off-by: Z
+	EOF
+	git interpret-trailers --where after --trailer "ack: Peff" \
+		complex_message >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'using "where = before" with "--no-where"' '
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Bug #42
+		Fixes: Z
+		Acked-by= Peff
+		Acked-by= Z
+		Reviewed-by: Z
+		Signed-off-by: Z
+	EOF
+	git interpret-trailers --where after --no-where --trailer "ack: Peff" \
 		--trailer "bug: 42" complex_message >actual &&
 	test_cmp expected actual
 '
@@ -648,6 +994,23 @@ test_expect_success 'using "ifExists = add" with "where = after"' '
 	test_cmp expected actual
 '
 
+test_expect_success 'overriding configuration with "--if-exists replace"' '
+	git config trailer.fix.key "Fixes: " &&
+	git config trailer.fix.ifExists "add" &&
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Bug #42
+		Acked-by= Z
+		Reviewed-by:
+		Signed-off-by: Z
+		Fixes: 22
+	EOF
+	git interpret-trailers --if-exists replace --trailer "review:" \
+		--trailer "fix=53" --trailer "fix=22" --trailer "bug: 42" \
+		<complex_message >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'using "ifExists = replace"' '
 	git config trailer.fix.key "Fixes: " &&
 	git config trailer.fix.ifExists "replace" &&
@@ -721,6 +1084,25 @@ test_expect_success 'the default is "ifMissing = add"' '
 		Signed-off-by: Z
 	EOF
 	git interpret-trailers --trailer "review:" --trailer "fix=53" \
+		--trailer "cc=Linus" --trailer "ack: Junio" \
+		--trailer "fix=22" --trailer "bug: 42" --trailer "ack: Peff" \
+		<complex_message >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'overriding configuration with "--if-missing doNothing"' '
+	git config trailer.ifmissing "add" &&
+	cat complex_message_body >expected &&
+	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
+		Fixes: Z
+		Acked-by= Z
+		Acked-by= Junio
+		Acked-by= Peff
+		Reviewed-by:
+		Signed-off-by: Z
+	EOF
+	git interpret-trailers --if-missing doNothing \
+		--trailer "review:" --trailer "fix=53" \
 		--trailer "cc=Linus" --trailer "ack: Junio" \
 		--trailer "fix=22" --trailer "bug: 42" --trailer "ack: Peff" \
 		<complex_message >actual &&
@@ -956,6 +1338,141 @@ test_expect_success 'with no command and no key' '
 	EOF
 	git interpret-trailers --trailer "review:Junio" >actual <<-EOF &&
 	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'with cut line' '
+	cat >expected <<-\EOF &&
+		my subject
+
+		review: Brian
+		sign: A U Thor <author@example.com>
+		# ------------------------ >8 ------------------------
+		ignore this
+	EOF
+	git interpret-trailers --trailer review:Brian >actual <<-\EOF &&
+		my subject
+		# ------------------------ >8 ------------------------
+		ignore this
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'only trailers' '
+	git config trailer.sign.command "echo config-value" &&
+	cat >expected <<-\EOF &&
+		existing: existing-value
+		sign: config-value
+		added: added-value
+	EOF
+	git interpret-trailers \
+		--trailer added:added-value \
+		--only-trailers >actual <<-\EOF &&
+		my subject
+
+		my body
+
+		existing: existing-value
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'only-trailers omits non-trailer in middle of block' '
+	git config trailer.sign.command "echo config-value" &&
+	cat >expected <<-\EOF &&
+		Signed-off-by: nobody <nobody@nowhere>
+		Signed-off-by: somebody <somebody@somewhere>
+		sign: config-value
+	EOF
+	git interpret-trailers --only-trailers >actual <<-\EOF &&
+		subject
+
+		it is important that the trailers below are signed-off-by
+		so that they meet the "25% trailers Git knows about" heuristic
+
+		Signed-off-by: nobody <nobody@nowhere>
+		this is not a trailer
+		Signed-off-by: somebody <somebody@somewhere>
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'only input' '
+	git config trailer.sign.command "echo config-value" &&
+	cat >expected <<-\EOF &&
+		existing: existing-value
+	EOF
+	git interpret-trailers \
+		--only-trailers --only-input >actual <<-\EOF &&
+		my subject
+
+		my body
+
+		existing: existing-value
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'unfold' '
+	cat >expected <<-\EOF &&
+		foo: continued across several lines
+	EOF
+	# pass through tr to make leading and trailing whitespace more obvious
+	tr _ " " <<-\EOF |
+		my subject
+
+		my body
+
+		foo:_
+		__continued
+		___across
+		____several
+		_____lines
+		___
+	EOF
+	git interpret-trailers --only-trailers --only-input --unfold >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'handling of --- lines in input' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse >actual <<-\EOF &&
+	subject
+
+	body
+
+	not-a-trailer: too soon
+	------ this is just a line in the commit message with a bunch of
+	------ dashes; it does not have any syntactic meaning.
+
+	real-trailer: just right
+	---
+	below the dashed line may be a patch, etc.
+
+	not-a-trailer: too late
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success 'suppress --- handling' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
+	subject
+
+	This commit message has a "---" in it, but because we tell
+	interpret-trailers not to respect that, it has no effect.
+
+	not-a-trailer: too soon
+	---
+
+	This is still the commit message body.
+
+	real-trailer: just right
+	EOF
+
 	test_cmp expected actual
 '
 

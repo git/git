@@ -38,7 +38,7 @@ test_expect_success setup '
 	test_commit "$msg" &&
 	echo "$msg" >expect &&
 	git show -s --format=%s > actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 
 '
 
@@ -85,7 +85,7 @@ do
 		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
-		test_cmp actual expect
+		test_cmp expect actual
 	'
 done
 
@@ -107,18 +107,12 @@ do
 		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
-		test_cmp actual expect
+		test_cmp expect actual
 	'
 done
 
-if echo 'echo space > "$1"' > "e space.sh"
-then
-	# FS supports spaces in filenames
-	test_set_prereq SPACES_IN_FILENAMES
-fi
-
-test_expect_success SPACES_IN_FILENAMES 'editor with a space' '
-
+test_expect_success 'editor with a space' '
+	echo "echo space >\"\$1\"" >"e space.sh" &&
 	chmod a+x "e space.sh" &&
 	GIT_EDITOR="./e\ space.sh" git commit --amend &&
 	test space = "$(git show -s --pretty=format:%s)"
@@ -126,7 +120,7 @@ test_expect_success SPACES_IN_FILENAMES 'editor with a space' '
 '
 
 unset GIT_EDITOR
-test_expect_success SPACES_IN_FILENAMES 'core.editor with a space' '
+test_expect_success 'core.editor with a space' '
 
 	git config core.editor \"./e\ space.sh\" &&
 	git commit --amend &&

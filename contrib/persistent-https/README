@@ -35,6 +35,16 @@ to use persistent-https:
 [url "persistent-http"]
 	insteadof = http
 
+You may also want to allow the use of the persistent-https helper for
+submodule URLs (since any https URLs pointing to submodules will be
+rewritten, and Git's out-of-the-box defaults forbid submodules from
+using unknown remote helpers):
+
+[protocol "persistent-https"]
+	allow = always
+[protocol "persistent-http"]
+	allow = always
+
 
 #####################################################################
 # BUILDING FROM SOURCE

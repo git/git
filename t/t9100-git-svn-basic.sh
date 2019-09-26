@@ -17,25 +17,12 @@ case "$GIT_SVN_LC_ALL" in
 	;;
 esac
 
-deepdir=nothing-above
-ceiling=$PWD
-
 test_expect_success 'git svn --version works anywhere' '
-	mkdir -p "$deepdir" && (
-		GIT_CEILING_DIRECTORIES="$ceiling" &&
-		export GIT_CEILING_DIRECTORIES &&
-		cd "$deepdir" &&
-		git svn --version
-	)
+	nongit git svn --version
 '
 
 test_expect_success 'git svn help works anywhere' '
-	mkdir -p "$deepdir" && (
-		GIT_CEILING_DIRECTORIES="$ceiling" &&
-		export GIT_CEILING_DIRECTORIES &&
-		cd "$deepdir" &&
-		git svn help
-	)
+	nongit git svn help
 '
 
 test_expect_success \
@@ -44,7 +31,7 @@ test_expect_success \
 	(
 		cd import &&
 		echo foo >foo &&
-		ln -s foo foo.link
+		ln -s foo foo.link &&
 		mkdir -p dir/a/b/c/d/e &&
 		echo "deep dir" >dir/a/b/c/d/e/file &&
 		mkdir bar &&
@@ -234,7 +221,7 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp a expected"
+test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp expected a"
 
 test_expect_success 'exit if remote refs are ambigious' '
         git config --add svn-remote.svn.fetch \
@@ -301,12 +288,12 @@ test_expect_success 'able to dcommit to a subdirectory' '
 
 test_expect_success 'dcommit should not fail with a touched file' '
 	test_commit "commit-new-file-foo2" foo2 &&
-	test-chmtime =-60 foo &&
+	test-tool chmtime =-60 foo &&
 	git svn dcommit
 '
 
 test_expect_success 'rebase should not fail with a touched file' '
-	test-chmtime =-60 foo &&
+	test-tool chmtime =-60 foo &&
 	git svn rebase
 '
 

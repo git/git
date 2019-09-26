@@ -6,10 +6,11 @@
 test_description='Test diff/status color escape codes'
 . ./test-lib.sh
 
+ESC=$(printf '\033')
 color()
 {
 	actual=$(git config --get-color no.such.slot "$1") &&
-	test "$actual" = "$2"
+	test "$actual" = "${2:+$ESC}$2"
 }
 
 invalid_color()
@@ -19,6 +20,10 @@ invalid_color()
 
 test_expect_success 'reset' '
 	color "reset" "[m"
+'
+
+test_expect_success 'empty color is empty' '
+	color "" ""
 '
 
 test_expect_success 'attribute before color name' '

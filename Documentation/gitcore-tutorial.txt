@@ -25,7 +25,7 @@ you want to understand Git's internals.
 The core Git is often called "plumbing", with the prettier user
 interfaces on top of it called "porcelain". You may not want to use the
 plumbing directly very often, but it can be good to know what the
-plumbing does for when the porcelain isn't flushing.
+plumbing does when the porcelain isn't flushing.
 
 Back when this document was originally written, many porcelain
 commands were shell scripts. For simplicity, it still uses them as
@@ -631,7 +631,7 @@ So after you do a `cp -a` to create a new copy, you'll want to do
 $ git update-index --refresh
 ----------------
 +
-in the new repository to make sure that the index file is up-to-date.
+in the new repository to make sure that the index file is up to date.
 
 Note that the second point is true even across machines. You can
 duplicate a remote Git repository with *any* regular copy mechanism, be it
@@ -701,7 +701,7 @@ $ git checkout-index -u -a
 ----------------
 
 where the `-u` flag means that you want the checkout to keep the index
-up-to-date (so that you don't have to refresh it afterward), and the
+up to date (so that you don't have to refresh it afterward), and the
 `-a` flag means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the `-f`
 flag first, to tell 'git checkout-index' to *force* overwriting of any old
@@ -741,7 +741,7 @@ used earlier, and create a branch in it. You do that by simply just
 saying that you want to check out a new branch:
 
 ------------
-$ git checkout -b mybranch
+$ git switch -c mybranch
 ------------
 
 will create a new branch based at the current `HEAD` position, and switch
@@ -755,7 +755,7 @@ just telling 'git checkout' what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
 ------------
-$ git checkout -b mybranch earlier-commit
+$ git switch -c mybranch earlier-commit
 ------------
 
 and it would create the new branch `mybranch` at the earlier commit,
@@ -765,7 +765,7 @@ and check out the state at that time.
 You can always just jump back to your original `master` branch by doing
 
 ------------
-$ git checkout master
+$ git switch master
 ------------
 
 (or any other branch-name, for that matter) and if you forget which
@@ -794,7 +794,7 @@ $ git branch <branchname> [startingpoint]
 
 which will simply _create_ the branch, but will not do anything further.
 You can then later -- once you decide that you want to actually develop
-on that branch -- switch to that branch with a regular 'git checkout'
+on that branch -- switch to that branch with a regular 'git switch'
 with the branchname as the argument.
 
 
@@ -808,7 +808,7 @@ being the same as the original `master` branch, let's make sure we're in
 that branch, and do some work there.
 
 ------------------------------------------------
-$ git checkout mybranch
+$ git switch mybranch
 $ echo "Work, work, work" >>hello
 $ git commit -m "Some work." -i hello
 ------------------------------------------------
@@ -825,7 +825,7 @@ does some work in the original branch, and simulate that by going back
 to the master branch, and editing the same file differently there:
 
 ------------
-$ git checkout master
+$ git switch master
 ------------
 
 Here, take a moment to look at the contents of `hello`, and notice how they
@@ -958,7 +958,7 @@ to the `master` branch. Let's go back to `mybranch`, and run
 'git merge' to get the "upstream changes" back to your branch.
 
 ------------
-$ git checkout mybranch
+$ git switch mybranch
 $ git merge -m "Merge upstream changes." master
 ------------
 
@@ -1133,9 +1133,8 @@ Remember, before running 'git merge', our `master` head was at
 work." commit.
 
 ------------
-$ git checkout mybranch
-$ git reset --hard master^2
-$ git checkout master
+$ git switch -C mybranch master^2
+$ git switch master
 $ git reset --hard master^
 ------------
 
@@ -1283,7 +1282,7 @@ run a single command, 'git-receive-pack'.
 
 First, you need to create an empty repository on the remote
 machine that will house your public repository. This empty
-repository will be populated and be kept up-to-date by pushing
+repository will be populated and be kept up to date by pushing
 into it later. Obviously, this repository creation needs to be
 done only once.
 
@@ -1368,7 +1367,7 @@ $ git repack
 will do it for you. If you followed the tutorial examples, you
 would have accumulated about 17 objects in `.git/objects/??/`
 directories by now. 'git repack' tells you how many objects it
-packed, and stores the packed file in `.git/objects/pack`
+packed, and stores the packed file in the `.git/objects/pack`
 directory.
 
 [NOTE]
@@ -1429,7 +1428,7 @@ Although Git is a truly distributed system, it is often
 convenient to organize your project with an informal hierarchy
 of developers. Linux kernel development is run this way. There
 is a nice illustration (page 17, "Merges to Mainline") in
-http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf[Randy Dunlap's presentation].
+https://web.archive.org/web/20120915203609/http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf[Randy Dunlap's presentation].
 
 It should be stressed that this hierarchy is purely *informal*.
 There is nothing fundamental in Git that enforces the "chain of
@@ -1450,7 +1449,7 @@ transport protocols (HTTP), you need to keep this repository
 would contain a call to 'git update-server-info'
 but you need to manually enable the hook with
 `mv post-update.sample post-update`.  This makes sure
-'git update-server-info' keeps the necessary files up-to-date.
+'git update-server-info' keeps the necessary files up to date.
 
 3. Push into the public repository from your primary
    repository.
@@ -1478,7 +1477,7 @@ You can repack this private repository whenever you feel like.
 A recommended work cycle for a "subsystem maintainer" who works
 on that project and has an own "public repository" goes like this:
 
-1. Prepare your work repository, by 'git clone' the public
+1. Prepare your work repository, by running 'git clone' on the public
    repository of the "project lead". The URL used for the
    initial cloning is stored in the remote.origin.url
    configuration variable.
@@ -1543,9 +1542,9 @@ like this:
 Working with Others, Shared Repository Style
 --------------------------------------------
 
-If you are coming from CVS background, the style of cooperation
+If you are coming from a CVS background, the style of cooperation
 suggested in the previous section may be new to you. You do not
-have to worry. Git supports "shared public repository" style of
+have to worry. Git supports the "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
 See linkgit:gitcvs-migration[7] for the details.
@@ -1635,7 +1634,7 @@ $ git show-branch
 ++* [master~2] Pretty-print messages.
 ------------
 
-Note that you should not do Octopus because you can.  An octopus
+Note that you should not do Octopus just because you can.  An octopus
 is a valid thing to do and often makes it easier to view the
 commit history if you are merging more than two independent
 changes at the same time.  However, if you have merge conflicts
@@ -1658,4 +1657,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

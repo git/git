@@ -25,6 +25,13 @@ git-jump will feed this to the editor:
 foo.c:2: printf("hello word!\n");
 -----------------------------------
 
+Or, when running 'git jump grep', column numbers will also be emitted,
+e.g. `git jump grep "hello"` would return:
+
+-----------------------------------
+foo.c:2:9: printf("hello word!\n");
+-----------------------------------
+
 Obviously this trivial case isn't that interesting; you could just open
 `foo.c` yourself. But when you have many changes scattered across a
 project, you can use the editor's support to "jump" from point to point.
@@ -35,7 +42,8 @@ Git-jump can generate four types of interesting lists:
 
   2. The beginning of any merge conflict markers.
 
-  3. Any grep matches.
+  3. Any grep matches, including the column of the first match on a
+     line.
 
   4. Any whitespace errors detected by `git diff --check`.
 
@@ -63,6 +71,9 @@ git jump grep foo_bar
 # same as above, but case-insensitive; you can give
 # arbitrary grep options
 git jump grep -i foo_bar
+
+# use the silver searcher for git jump grep
+git config jump.grepCmd "ag --column"
 --------------------------------------------------
 
 
@@ -79,7 +90,7 @@ which does something similar to `git jump grep`. However, it is limited
 to positioning the cursor to the correct line in only the first file,
 leaving you to locate subsequent hits in that file or other files using
 the editor or pager. By contrast, git-jump provides the editor with a
-complete list of files and line numbers for each match.
+complete list of files, lines, and a column number for each match.
 
 
 Limitations
@@ -92,3 +103,10 @@ how to activate it.
 
 The shell snippets to generate the quickfix lines will almost certainly
 choke on filenames with exotic characters (like newlines).
+
+Contributing
+------------
+
+Bug fixes, bug reports, and feature requests should be discussed on the
+Git mailing list <git@vger.kernel.org>, and cc'd to the git-jump
+maintainer, Jeff King <peff@peff.net>.

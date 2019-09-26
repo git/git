@@ -28,12 +28,13 @@ include::line-range-format.txt[]
 -S <revs-file>::
 	Use revisions from revs-file instead of calling linkgit:git-rev-list[1].
 
---reverse::
+--reverse <rev>..<rev>::
 	Walk history forward instead of backward. Instead of showing
 	the revision in which a line appeared, this shows the last
 	revision in which a line has existed. This requires a range of
 	revision like START..END where the path to blame exists in
-	START.
+	START.  `git blame --reverse START` is taken as `git blame
+	--reverse START..HEAD` for convenience.
 
 -p::
 --porcelain::
@@ -76,7 +77,7 @@ include::line-range-format.txt[]
 	terminal. Can't use `--progress` together with `--porcelain`
 	or `--incremental`.
 
--M|<num>|::
+-M[<num>]::
 	Detect moved or copied lines within a file. When a commit
 	moves or copies a block of lines (e.g. the original file
 	has A and then B, and the commit changes it to B and then
@@ -92,7 +93,7 @@ alphanumeric characters that Git must detect as moving/copying
 within a file for it to associate those lines with the parent
 commit. The default value is 20.
 
--C|<num>|::
+-C[<num>]::
 	In addition to `-M`, detect lines moved or copied from other
 	files that were modified in the same commit.  This is
 	useful when you reorganize your program and move code
@@ -108,6 +109,25 @@ between files for it to associate those lines with the parent
 commit. And the default value is 40. If there are more than one
 `-C` options given, the <num> argument of the last `-C` will
 take effect.
+
+--ignore-rev <rev>::
+	Ignore changes made by the revision when assigning blame, as if the
+	change never happened.  Lines that were changed or added by an ignored
+	commit will be blamed on the previous commit that changed that line or
+	nearby lines.  This option may be specified multiple times to ignore
+	more than one revision.  If the `blame.markIgnoredLines` config option
+	is set, then lines that were changed by an ignored commit and attributed to
+	another commit will be marked with a `?` in the blame output.  If the
+	`blame.markUnblamableLines` config option is set, then those lines touched
+	by an ignored commit that we could not attribute to another revision are
+	marked with a '*'.
+
+--ignore-revs-file <file>::
+	Ignore revisions listed in `file`, which must be in the same format as an
+	`fsck.skipList`.  This option may be repeated, and these files will be
+	processed after any files specified with the `blame.ignoreRevsFile` config
+	option.  An empty file name, `""`, will clear the list of revs from
+	previously processed files.
 
 -h::
 	Show help message.

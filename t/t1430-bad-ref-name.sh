@@ -122,7 +122,7 @@ test_expect_success 'push cannot create a badly named ref' '
 	! grep -e "broken\.\.\.ref" output
 '
 
-test_expect_failure 'push --mirror can delete badly named ref' '
+test_expect_failure C_LOCALE_OUTPUT 'push --mirror can delete badly named ref' '
 	top=$(pwd) &&
 	git init src &&
 	git init dest &&
@@ -329,6 +329,49 @@ test_expect_success 'update-ref --stdin -z fails delete with bad ref name' '
 	printf "%s\0" "delete ~a" refs/heads/master >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: invalid ref format: ~a" err
+'
+
+test_expect_success 'branch rejects HEAD as a branch name' '
+	test_must_fail git branch HEAD HEAD^ &&
+	test_must_fail git show-ref refs/heads/HEAD
+'
+
+test_expect_success 'checkout -b rejects HEAD as a branch name' '
+	test_must_fail git checkout -B HEAD HEAD^ &&
+	test_must_fail git show-ref refs/heads/HEAD
+'
+
+test_expect_success 'update-ref can operate on refs/heads/HEAD' '
+	git update-ref refs/heads/HEAD HEAD^ &&
+	git show-ref refs/heads/HEAD &&
+	git update-ref -d refs/heads/HEAD &&
+	test_must_fail git show-ref refs/heads/HEAD
+'
+
+test_expect_success 'branch -d can remove refs/heads/HEAD' '
+	git update-ref refs/heads/HEAD HEAD^ &&
+	git branch -d HEAD &&
+	test_must_fail git show-ref refs/heads/HEAD
+'
+
+test_expect_success 'branch -m can rename refs/heads/HEAD' '
+	git update-ref refs/heads/HEAD HEAD^ &&
+	git branch -m HEAD tail &&
+	test_must_fail git show-ref refs/heads/HEAD &&
+	git show-ref refs/heads/tail
+'
+
+test_expect_success 'branch -d can remove refs/heads/-dash' '
+	git update-ref refs/heads/-dash HEAD^ &&
+	git branch -d -- -dash &&
+	test_must_fail git show-ref refs/heads/-dash
+'
+
+test_expect_success 'branch -m can rename refs/heads/-dash' '
+	git update-ref refs/heads/-dash HEAD^ &&
+	git branch -m -- -dash dash &&
+	test_must_fail git show-ref refs/heads/-dash &&
+	git show-ref refs/heads/dash
 '
 
 test_done

@@ -490,7 +490,7 @@ sub refname {
 	#
 	# Additionally, % must be escaped because it is used for escaping
 	# and we want our escaped refname to be reversible
-	$refname =~ s{([ \%~\^:\?\*\[\t])}{sprintf('%%%02X',ord($1))}eg;
+	$refname =~ s{([ \%~\^:\?\*\[\t\\])}{sprintf('%%%02X',ord($1))}eg;
 
 	# no slash-separated component can begin with a dot .
 	# /.* becomes /%2E*
@@ -807,10 +807,15 @@ sub get_fetch_range {
 	(++$min, $max);
 }
 
+sub svn_dir {
+	command_oneline(qw(rev-parse --git-path svn));
+}
+
 sub tmp_config {
 	my (@args) = @_;
-	my $old_def_config = "$ENV{GIT_DIR}/svn/config";
-	my $config = "$ENV{GIT_DIR}/svn/.metadata";
+	my $svn_dir = svn_dir();
+	my $old_def_config = "$svn_dir/config";
+	my $config = "$svn_dir/.metadata";
 	if (! -f $config && -f $old_def_config) {
 		rename $old_def_config, $config or
 		       die "Failed rename $old_def_config => $config: $!\n";
@@ -1400,7 +1405,7 @@ sub parse_svn_date {
 		$ENV{TZ} = 'UTC';
 
 		my $epoch_in_UTC =
-		    Time::Local::timelocal($S, $M, $H, $d, $m - 1, $Y - 1900);
+		    Time::Local::timelocal($S, $M, $H, $d, $m - 1, $Y);
 
 		# Determine our local timezone (including DST) at the
 		# time of $epoch_in_UTC.  $Git::SVN::Log::TZ stored the
@@ -1411,7 +1416,7 @@ sub parse_svn_date {
 			delete $ENV{TZ};
 		}
 
-		my $our_TZ = get_tz_offset();
+		my $our_TZ = get_tz_offset($epoch_in_UTC);
 
 		# This converts $epoch_in_UTC into our local timezone.
 		my ($sec, $min, $hour, $mday, $mon, $year,
@@ -1477,7 +1482,6 @@ sub call_authors_prog {
 	}
 	if ($author =~ /^\s*(.+?)\s*<(.*)>\s*$/) {
 		my ($name, $email) = ($1, $2);
-		$email = undef if length $2 == 0;
 		return [$name, $email];
 	} else {
 		die "Author: $orig_author: $::_authors_prog returned "
@@ -1658,7 +1662,17 @@ sub tie_for_persistent_memoization {
 	if ($memo_backend > 0) {
 		tie %$hash => 'Git::SVN::Memoize::YAML', "$path.yaml";
 	} else {
-		tie %$hash => 'Memoize::Storable', "$path.db", 'nstore';
+		# first verify that any existing file can actually be loaded
+		# (it may have been saved by an incompatible version)
+		my $db = "$path.db";
+		if (-e $db) {
+			use Storable qw(retrieve);
+
+			if (!eval { retrieve($db); 1 }) {
+				unlink $db or die "unlink $db failed: $!";
+			}
+		}
+		tie %$hash => 'Memoize::Storable', $db, 'nstore';
 	}
 }
 
@@ -1671,7 +1685,7 @@ sub tie_for_persistent_memoization {
 		return if $memoized;
 		$memoized = 1;
 
-		my $cache_path = "$ENV{GIT_DIR}/svn/.caches/";
+		my $cache_path = svn_dir() . '/.caches/';
 		mkpath([$cache_path]) unless -d $cache_path;
 
 		my %lookup_svn_merge_cache;
@@ -1712,7 +1726,7 @@ sub tie_for_persistent_memoization {
 	sub clear_memoized_mergeinfo_caches {
 		die "Only call this method in non-memoized context" if ($memoized);
 
-		my $cache_path = "$ENV{GIT_DIR}/svn/.caches/";
+		my $cache_path = svn_dir() . '/.caches/';
 		return unless -d $cache_path;
 
 		for my $cache_file (("$cache_path/lookup_svn_merge",
@@ -2005,8 +2019,8 @@ sub make_log_entry {
 		remove_username($full_url);
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
-		$email ||= "$author\@$uuid";
-		$commit_email ||= "$author\@$uuid";
+		$email = "$author\@$uuid" unless defined $email;
+		$commit_email = "$author\@$uuid" unless defined $commit_email;
 	} elsif ($self->use_svnsync_props) {
 		my $full_url = canonicalize_url(
 			add_path_to_url( $self->svnsync->{url}, $self->path )
@@ -2014,15 +2028,15 @@ sub make_log_entry {
 		remove_username($full_url);
 		my $uuid = $self->svnsync->{uuid};
 		$log_entry{metadata} = "$full_url\@$rev $uuid";
-		$email ||= "$author\@$uuid";
-		$commit_email ||= "$author\@$uuid";
+		$email = "$author\@$uuid" unless defined $email;
+		$commit_email = "$author\@$uuid" unless defined $commit_email;
 	} else {
 		my $url = $self->metadata_url;
 		remove_username($url);
 		my $uuid = $self->rewrite_uuid || $self->ra->get_uuid;
 		$log_entry{metadata} = "$url\@$rev " . $uuid;
-		$email ||= "$author\@" . $uuid;
-		$commit_email ||= "$author\@" . $uuid;
+		$email = "$author\@$uuid" unless defined $email;
+		$commit_email = "$author\@$uuid" unless defined $commit_email;
 	}
 	$log_entry{name} = $name;
 	$log_entry{email} = $email;
@@ -2446,12 +2460,13 @@ sub _new {
 		             "refs/remotes/$prefix$default_ref_id";
 	}
 	$_[1] = $repo_id;
-	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
+	my $svn_dir = svn_dir();
+	my $dir = "$svn_dir/$ref_id";
 
-	# Older repos imported by us used $GIT_DIR/svn/foo instead of
-	# $GIT_DIR/svn/refs/remotes/foo when tracking refs/remotes/foo
+	# Older repos imported by us used $svn_dir/foo instead of
+	# $svn_dir/refs/remotes/foo when tracking refs/remotes/foo
 	if ($ref_id =~ m{^refs/remotes/(.+)}) {
-		my $old_dir = "$ENV{GIT_DIR}/svn/$1";
+		my $old_dir = "$svn_dir/$1";
 		if (-d $old_dir && ! -d $dir) {
 			$dir = $old_dir;
 		}
@@ -2461,7 +2476,7 @@ sub _new {
 	mkpath([$dir]);
 	my $obj = bless {
 		ref_id => $ref_id, dir => $dir, index => "$dir/index",
-	        config => "$ENV{GIT_DIR}/svn/config",
+	        config => "$svn_dir/config",
 	        map_root => "$dir/.rev_map", repo_id => $repo_id }, $class;
 
 	# Ensure it gets canonicalized

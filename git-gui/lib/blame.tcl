@@ -70,7 +70,7 @@ constructor new {i_commit i_path i_jump} {
 	set path   $i_path
 
 	make_toplevel top w
-	wm title $top [append "[appname] ([reponame]): " [mc "File Viewer"]]
+	wm title $top [mc "%s (%s): File Viewer" [appname] [reponame]]
 
 	set font_w [font measure font_diff "0"]
 

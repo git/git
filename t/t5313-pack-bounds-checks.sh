@@ -90,9 +90,8 @@ test_expect_success 'matched bogus object count' '
 
 	# Unlike above, we should notice early that the .idx is totally
 	# bogus, and not even enumerate its contents.
-	>expect &&
 	git cat-file --batch-all-objects --batch-check >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	# But as before, we can do the same object-access checks.
 	test_must_fail git cat-file blob $object &&
@@ -139,7 +138,13 @@ test_expect_success 'bogus offset into v2 extended table' '
 test_expect_success 'bogus offset inside v2 extended table' '
 	# We need two objects here, so we can plausibly require
 	# an extended table (if the first object were larger than 2^31).
-	do_pack "$object $(git rev-parse HEAD)" --index-version=2 &&
+	#
+	# Note that the value is important here. We want $object as
+	# the second entry in sorted-sha1 order. The sha1 of 1485 starts
+	# with "000", which sorts before that of $object (which starts
+	# with "fff").
+	second=$(echo 1485 | git hash-object -w --stdin) &&
+	do_pack "$object $second" --index-version=2 &&
 
 	# We have to make extra room for the table, so we cannot
 	# just munge in place as usual.
@@ -157,8 +162,8 @@ test_expect_success 'bogus offset inside v2 extended table' '
 
 test_expect_success 'bogus OFS_DELTA in packfile' '
 	# Generate a pack with a delta in it.
-	base=$(test-genrandom foo 3000 | git hash-object --stdin -w) &&
-	delta=$(test-genrandom foo 2000 | git hash-object --stdin -w) &&
+	base=$(test-tool genrandom foo 3000 | git hash-object --stdin -w) &&
+	delta=$(test-tool genrandom foo 2000 | git hash-object --stdin -w) &&
 	do_pack "$base $delta" --delta-base-offset &&
 	rm -f .git/objects/??/* &&
 

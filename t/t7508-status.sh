@@ -6,6 +6,7 @@
 test_description='git status'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'status -h in broken repository' '
 	git config --global advice.statusuoption false &&
@@ -32,6 +33,17 @@ test_expect_success 'commit -h in broken repository' '
 	test_i18ngrep "[Uu]sage" broken/usage
 '
 
+test_expect_success 'create upstream branch' '
+	git checkout -b upstream &&
+	test_commit upstream1 &&
+	test_commit upstream2 &&
+	# leave the first commit on master as root because several
+	# tests depend on this case; for our upstream we only
+	# care about commit counts anyway, so a totally divergent
+	# history is OK
+	git checkout --orphan master
+'
+
 test_expect_success 'setup' '
 	: >tracked &&
 	: >modified &&
@@ -53,7 +65,9 @@ test_expect_success 'setup' '
 	echo 1 >dir1/modified &&
 	echo 2 >dir2/modified &&
 	echo 3 >dir2/added &&
-	git add dir2/added
+	git add dir2/added &&
+
+	git branch --set-upstream-to=upstream
 '
 
 test_expect_success 'status (1)' '
@@ -75,20 +89,21 @@ EOF
 test_expect_success 'status --column' '
 	cat >expect <<\EOF &&
 # On branch master
-# Changes to be committed:
-#   (use "git reset HEAD <file>..." to unstage)
+# Your branch and '\''upstream'\'' have diverged,
+# and have 1 and 2 different commits each, respectively.
+#   (use "git pull" to merge the remote branch into yours)
 #
+# Changes to be committed:
+#   (use "git restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
 # Changes not staged for commit:
 #   (use "git add <file>..." to update what will be committed)
-#   (use "git checkout -- <file>..." to discard changes in working directory)
-#
+#   (use "git restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
 #   (use "git add <file>..." to include in what will be committed)
-#
 #	dir1/untracked dir2/untracked
 #	dir2/modified  untracked
 #
@@ -105,20 +120,21 @@ test_expect_success 'status --column status.displayCommentPrefix=false' '
 
 cat >expect <<\EOF
 # On branch master
-# Changes to be committed:
-#   (use "git reset HEAD <file>..." to unstage)
+# Your branch and 'upstream' have diverged,
+# and have 1 and 2 different commits each, respectively.
+#   (use "git pull" to merge the remote branch into yours)
 #
+# Changes to be committed:
+#   (use "git restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
 # Changes not staged for commit:
 #   (use "git add <file>..." to update what will be committed)
-#   (use "git checkout -- <file>..." to discard changes in working directory)
-#
+#   (use "git restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
 #   (use "git add <file>..." to include in what will be committed)
-#
 #	dir1/untracked
 #	dir2/modified
 #	dir2/untracked
@@ -178,6 +194,9 @@ test_expect_success 'commit ignores status.displayCommentPrefix=false in COMMIT_
 
 cat >expect <<\EOF
 On branch master
+Your branch and 'upstream' have diverged,
+and have 1 and 2 different commits each, respectively.
+
 Changes to be committed:
 	new file:   dir2/added
 
@@ -248,25 +267,25 @@ test_expect_success 'status with gitignore' '
 
 	cat >expect <<\EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir2/modified
 
 Ignored files:
   (use "git add -f <file>..." to include in what will be committed)
-
 	.gitignore
 	dir1/untracked
 	dir2/untracked
@@ -313,20 +332,21 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 
 	cat >expect <<\EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Ignored files:
   (use "git add -f <file>..." to include in what will be committed)
-
 	.gitignore
 	dir1/untracked
 	dir2/modified
@@ -348,7 +368,7 @@ output*
 EOF
 
 cat >expect <<\EOF
-## master
+## master...upstream [ahead 1, behind 2]
  M dir1/modified
 A  dir2/added
 ?? dir1/untracked
@@ -360,7 +380,7 @@ EOF
 test_expect_success 'status -s -b' '
 
 	git status -s -b >output &&
-	test_cmp expect output
+	test_i18ncmp expect output
 
 '
 
@@ -370,7 +390,7 @@ test_expect_success 'status -s -z -b' '
 	git status -s -z -b >output &&
 	nul_to_q <output >output.q &&
 	mv output.q output &&
-	test_cmp expect output
+	test_i18ncmp expect output
 '
 
 test_expect_success 'setup dir3' '
@@ -382,15 +402,17 @@ test_expect_success 'setup dir3' '
 test_expect_success 'status -uno' '
 	cat >expect <<EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)
@@ -408,6 +430,9 @@ test_expect_success 'status (status.showUntrackedFiles no)' '
 test_expect_success 'status -uno (advice.statusHints false)' '
 	cat >expect <<EOF &&
 On branch master
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+
 Changes to be committed:
 	new file:   dir2/added
 
@@ -439,20 +464,21 @@ test_expect_success 'status -s (status.showUntrackedFiles no)' '
 test_expect_success 'status -unormal' '
 	cat >expect <<EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -493,20 +519,21 @@ test_expect_success 'status -s (status.showUntrackedFiles normal)' '
 test_expect_success 'status -uall' '
 	cat >expect <<EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -552,20 +579,21 @@ test_expect_success 'status -s (status.showUntrackedFiles all)' '
 test_expect_success 'status with relative paths' '
 	cat >expect <<\EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   ../dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	untracked
 	../dir2/modified
 	../dir2/untracked
@@ -610,41 +638,44 @@ test_expect_success 'status --porcelain ignores relative paths setting' '
 test_expect_success 'setup unique colors' '
 
 	git config status.color.untracked blue &&
-	git config status.color.branch green
+	git config status.color.branch green &&
+	git config status.color.localBranch yellow &&
+	git config status.color.remoteBranch cyan
 
 '
 
-test_expect_success 'status with color.ui' '
+test_expect_success TTY 'status with color.ui' '
 	cat >expect <<\EOF &&
 On branch <GREEN>master<RESET>
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	<GREEN>new file:   dir2/added<RESET>
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	<RED>modified:   dir1/modified<RESET>
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	<BLUE>dir1/untracked<RESET>
 	<BLUE>dir2/modified<RESET>
 	<BLUE>dir2/untracked<RESET>
 	<BLUE>untracked<RESET>
 
 EOF
-	test_config color.ui always &&
-	git status | test_decode_color >output &&
+	test_config color.ui auto &&
+	test_terminal git status | test_decode_color >output &&
 	test_i18ncmp expect output
 '
 
-test_expect_success 'status with color.status' '
-	test_config color.status always &&
-	git status | test_decode_color >output &&
+test_expect_success TTY 'status with color.status' '
+	test_config color.status auto &&
+	test_terminal git status | test_decode_color >output &&
 	test_i18ncmp expect output
 '
 
@@ -657,25 +688,25 @@ cat >expect <<\EOF
 <BLUE>??<RESET> untracked
 EOF
 
-test_expect_success 'status -s with color.ui' '
+test_expect_success TTY 'status -s with color.ui' '
 
-	git config color.ui always &&
-	git status -s | test_decode_color >output &&
+	git config color.ui auto &&
+	test_terminal git status -s | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
-test_expect_success 'status -s with color.status' '
+test_expect_success TTY 'status -s with color.status' '
 
 	git config --unset color.ui &&
-	git config color.status always &&
-	git status -s | test_decode_color >output &&
+	git config color.status auto &&
+	test_terminal git status -s | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
 cat >expect <<\EOF
-## <GREEN>master<RESET>
+## <YELLOW>master<RESET>...<CYAN>upstream<RESET> [ahead <YELLOW>1<RESET>, behind <CYAN>2<RESET>]
  <RED>M<RESET> dir1/modified
 <GREEN>A<RESET>  dir2/added
 <BLUE>??<RESET> dir1/untracked
@@ -684,10 +715,10 @@ cat >expect <<\EOF
 <BLUE>??<RESET> untracked
 EOF
 
-test_expect_success 'status -s -b with color.status' '
+test_expect_success TTY 'status -s -b with color.status' '
 
-	git status -s -b | test_decode_color >output &&
-	test_cmp expect output
+	test_terminal git status -s -b | test_decode_color >output &&
+	test_i18ncmp expect output
 
 '
 
@@ -700,20 +731,20 @@ A  dir2/added
 ?? untracked
 EOF
 
-test_expect_success 'status --porcelain ignores color.ui' '
+test_expect_success TTY 'status --porcelain ignores color.ui' '
 
 	git config --unset color.status &&
-	git config color.ui always &&
-	git status --porcelain | test_decode_color >output &&
+	git config color.ui auto &&
+	test_terminal git status --porcelain | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
-test_expect_success 'status --porcelain ignores color.status' '
+test_expect_success TTY 'status --porcelain ignores color.status' '
 
 	git config --unset color.ui &&
-	git config color.status always &&
-	git status --porcelain | test_decode_color >output &&
+	git config color.status auto &&
+	test_terminal git status --porcelain | test_decode_color >output &&
 	test_cmp expect output
 
 '
@@ -726,7 +757,7 @@ test_expect_success 'status --porcelain respects -b' '
 
 	git status --porcelain -b >output &&
 	{
-		echo "## master" &&
+		echo "## master...upstream [ahead 1, behind 2]" &&
 		cat expect
 	} >tmp &&
 	mv tmp expect &&
@@ -739,20 +770,21 @@ test_expect_success 'status --porcelain respects -b' '
 test_expect_success 'status without relative paths' '
 	cat >expect <<\EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -785,14 +817,16 @@ test_expect_success 'status -s without relative paths' '
 test_expect_success 'dry-run of partial commit excluding new file in index' '
 	cat >expect <<EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/
 	untracked
@@ -825,21 +859,22 @@ test_expect_success 'setup status submodule summary' '
 test_expect_success 'status submodule summary is disabled by default' '
 	cat >expect <<EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -881,16 +916,18 @@ head=$(cd sm && git rev-parse --short=7 --verify HEAD)
 test_expect_success 'status submodule summary' '
 	cat >expect <<EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be committed:
@@ -900,7 +937,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -939,15 +975,17 @@ test_expect_success 'status -s submodule summary' '
 test_expect_success 'status submodule summary (clean submodule): commit' '
 	cat >expect <<EOF &&
 On branch master
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -985,16 +1023,18 @@ test_expect_success 'status -z implies porcelain' '
 test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	cat >expect <<EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD^1 <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --source=HEAD^1 --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be committed:
@@ -1004,7 +1044,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1017,6 +1056,7 @@ EOF
 '
 
 test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository' '
+	test_when_finished "chmod 775 .git" &&
 	(
 		chmod a-w .git &&
 		# make dir1/tracked stat-dirty
@@ -1026,9 +1066,6 @@ test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository'
 		# make sure "status" succeeded without writing index out
 		git diff-files | grep dir1/tracked
 	)
-	status=$?
-	chmod 775 .git
-	(exit $status)
 '
 
 (cd sm && echo > bar && git add bar && git commit -q -m 'Add bar') && git add sm
@@ -1038,15 +1075,17 @@ touch .gitmodules
 test_expect_success '--ignore-submodules=untracked suppresses submodules with untracked content' '
 	cat > expect << EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Submodule changes to be committed:
@@ -1056,7 +1095,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1146,16 +1184,18 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with modifie
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodules with modified content" '
 	cat > expect << EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
+  (use "git restore <file>..." to discard changes in working directory)
   (commit or discard the untracked or modified content in submodules)
-
 	modified:   dir1/modified
 	modified:   sm (modified content)
 
@@ -1166,7 +1206,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1202,15 +1241,17 @@ head2=$(cd sm && git commit -q -m "2nd commit" foo && git rev-parse --short=7 --
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodule summary" '
 	cat > expect << EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 	modified:   sm (new commits)
 
@@ -1226,7 +1267,6 @@ Submodules changed but not updated:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1282,15 +1322,17 @@ test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary
 
 cat > expect << EOF
 ; On branch master
-; Changes to be committed:
-;   (use "git reset HEAD <file>..." to unstage)
+; Your branch and 'upstream' have diverged,
+; and have 2 and 2 different commits each, respectively.
+;   (use "git pull" to merge the remote branch into yours)
 ;
+; Changes to be committed:
+;   (use "git restore --staged <file>..." to unstage)
 ;	modified:   sm
 ;
 ; Changes not staged for commit:
 ;   (use "git add <file>..." to update what will be committed)
-;   (use "git checkout -- <file>..." to discard changes in working directory)
-;
+;   (use "git restore <file>..." to discard changes in working directory)
 ;	modified:   dir1/modified
 ;	modified:   sm (new commits)
 ;
@@ -1306,7 +1348,6 @@ cat > expect << EOF
 ;
 ; Untracked files:
 ;   (use "git add <file>..." to include in what will be committed)
-;
 ;	.gitmodules
 ;	dir1/untracked
 ;	dir2/modified
@@ -1329,15 +1370,17 @@ test_expect_success "status (core.commentchar with two chars with submodule summ
 test_expect_success "--ignore-submodules=all suppresses submodule summary" '
 	cat > expect << EOF &&
 On branch master
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1353,20 +1396,21 @@ EOF
 test_expect_success '.gitmodules ignore=all suppresses unstaged submodule summary' '
 	cat > expect << EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1472,15 +1516,17 @@ test_expect_success 'git commit --dry-run will show a staged but ignored submodu
 	git add sm &&
 	cat >expect << EOF &&
 On branch master
-Changes to be committed:
-  (use "git reset HEAD <file>..." to unstage)
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
 
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
+  (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)
@@ -1494,9 +1540,81 @@ EOF
 test_expect_success 'git commit -m will commit a staged but ignored submodule' '
 	git commit -uno -m message &&
 	git status -s --ignore-submodules=dirty >output &&
-	 test_i18ngrep ! "^M. sm" output &&
+	test_i18ngrep ! "^M. sm" output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
+'
+
+test_expect_success 'show stash info with "--show-stash"' '
+	git reset --hard &&
+	git stash clear &&
+	echo 1 >file &&
+	git add file &&
+	git stash &&
+	git status >expected_default &&
+	git status --show-stash >expected_with_stash &&
+	test_i18ngrep "^Your stash currently has 1 entry$" expected_with_stash
+'
+
+test_expect_success 'no stash info with "--show-stash --no-show-stash"' '
+	git status --show-stash --no-show-stash >expected_without_stash &&
+	test_cmp expected_default expected_without_stash
+'
+
+test_expect_success '"status.showStash=false" weaker than "--show-stash"' '
+	git -c status.showStash=false status --show-stash >actual &&
+	test_cmp expected_with_stash actual
+'
+
+test_expect_success '"status.showStash=true" weaker than "--no-show-stash"' '
+	git -c status.showStash=true status --no-show-stash >actual &&
+	test_cmp expected_without_stash actual
+'
+
+test_expect_success 'no additionnal info if no stash entries' '
+	git stash clear &&
+	git -c status.showStash=true status >actual &&
+	test_cmp expected_without_stash actual
+'
+
+test_expect_success '"No commits yet" should be noted in status output' '
+	git checkout --orphan empty-branch-1 &&
+	git status >output &&
+	test_i18ngrep "No commits yet" output
+'
+
+test_expect_success '"No commits yet" should not be noted in status output' '
+	git checkout --orphan empty-branch-2 &&
+	test_commit test-commit-1 &&
+	git status >output &&
+	test_i18ngrep ! "No commits yet" output
+'
+
+test_expect_success '"Initial commit" should be noted in commit template' '
+	git checkout --orphan empty-branch-3 &&
+	touch to_be_committed_1 &&
+	git add to_be_committed_1 &&
+	git commit --dry-run >output &&
+	test_i18ngrep "Initial commit" output
+'
+
+test_expect_success '"Initial commit" should not be noted in commit template' '
+	git checkout --orphan empty-branch-4 &&
+	test_commit test-commit-2 &&
+	touch to_be_committed_2 &&
+	git add to_be_committed_2 &&
+	git commit --dry-run >output &&
+	test_i18ngrep ! "Initial commit" output
+'
+
+test_expect_success '--no-optional-locks prevents index update' '
+	test-tool chmtime =1234567890 .git/index &&
+	git --no-optional-locks status &&
+	test-tool chmtime --get .git/index >out &&
+	grep ^1234567890 out &&
+	git status &&
+	test-tool chmtime --get .git/index >out &&
+	! grep ^1234567890 out
 '
 
 test_done

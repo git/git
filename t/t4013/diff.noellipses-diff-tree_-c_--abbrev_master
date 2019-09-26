@@ -1,0 +1,5 @@
+$ git diff-tree -c --abbrev master
+59d314ad6f356dd08601a4cd5e530381da3e3c64
+::100644 100644 100644 cead32e 7289e35 992913c MM	dir/sub
+::100644 100644 100644 b414108 f4615da 10a8a9f MM	file0
+$

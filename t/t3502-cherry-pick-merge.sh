@@ -31,12 +31,21 @@ test_expect_success setup '
 
 '
 
-test_expect_success 'cherry-pick a non-merge with -m should fail' '
+test_expect_success 'cherry-pick -m complains of bogus numbers' '
+	# expect 129 here to distinguish between cases where
+	# there was nothing to cherry-pick
+	test_expect_code 129 git cherry-pick -m &&
+	test_expect_code 129 git cherry-pick -m foo b &&
+	test_expect_code 129 git cherry-pick -m -1 b &&
+	test_expect_code 129 git cherry-pick -m 0 b
+'
+
+test_expect_success 'cherry-pick explicit first parent of a non-merge' '
 
 	git reset --hard &&
 	git checkout a^0 &&
-	test_expect_code 128 git cherry-pick -m 1 b &&
-	git diff --exit-code a --
+	git cherry-pick -m 1 b &&
+	git diff --exit-code c --
 
 '
 
@@ -75,12 +84,12 @@ test_expect_success 'cherry pick a merge relative to nonexistent parent should f
 
 '
 
-test_expect_success 'revert a non-merge with -m should fail' '
+test_expect_success 'revert explicit first parent of a non-merge' '
 
 	git reset --hard &&
 	git checkout c^0 &&
-	test_must_fail git revert -m 1 b &&
-	git diff --exit-code c
+	git revert -m 1 b &&
+	git diff --exit-code a --
 
 '
 

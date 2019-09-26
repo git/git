@@ -95,7 +95,7 @@ test_expect_success 'submodule not initialized in new clone' '
 	git clone . sm3 &&
 	git -C sm3 diff-tree -p --no-commit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
-	Submodule sm1 $smhead1...$smhead2 (not initialized)
+	Submodule sm1 $smhead1...$smhead2 (commits not present)
 	EOF
 	test_cmp expected actual
 '

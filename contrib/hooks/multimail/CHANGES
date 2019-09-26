@@ -1,3 +1,59 @@
+Release 1.5.0
+=============
+
+Backward-incompatible change
+----------------------------
+
+The name of classes for environment was misnamed as `*Environement`.
+It is now `*Environment`.
+
+New features
+------------
+
+* A Thread-Index header is now added to each email sent (except for
+  combined emails where it would not make sense), so that MS Outlook
+  properly groups messages by threads even though they have a
+  different subject line. Unfortunately, even adding this header the
+  threading still seems to be unreliable, but it is unclear whether
+  this is an issue on our side or on MS Outlook's side (see discussion
+  here: https://github.com/git-multimail/git-multimail/pull/194).
+
+* A new variable multimailhook.ExcludeMergeRevisions was added to send
+  notification emails only for non-merge commits.
+
+* For gitolite environment, it is now possible to specify the mail map
+  in a separate file in addition to gitolite.conf, using the variable
+  multimailhook.MailaddressMap.
+
+Internal changes
+----------------
+
+* The testsuite now uses GIT_PRINT_SHA1_ELLIPSIS where needed for
+  compatibility with recent Git versions. Only tests are affected.
+
+* We don't try to install pyflakes in the continuous integration job
+  for old Python versions where it's no longer available.
+
+* Stop using the deprecated cgi.escape in Python 3.
+
+* New flake8 warnings have been fixed.
+
+* Python 3.6 is now tested against on Travis-CI.
+
+* A bunch of lgtm.com warnings have been fixed.
+
+Bug fixes
+---------
+
+* SMTPMailer logs in only once now. It used to re-login for each email
+  sent which triggered errors for some SMTP servers.
+
+* migrate-mailhook-config was broken by internal refactoring, it
+  should now work again.
+
+This version was tested with Python 2.6 to 3.7. It was tested with Git
+1.7.10.406.gdc801, 2.15.1 and 2.20.1.98.gecbdaf0.
+
 Release 1.4.0
 =============
 

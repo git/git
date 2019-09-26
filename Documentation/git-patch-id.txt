@@ -56,9 +56,6 @@ OPTIONS
 
 	This is the default.
 
-<patch>::
-	The diff to create the ID of.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

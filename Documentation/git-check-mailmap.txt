@@ -9,7 +9,7 @@ git-check-mailmap - Show canonical names and email addresses of contacts
 SYNOPSIS
 --------
 [verse]
-'git check-mailmap' [options] <contact>...
+'git check-mailmap' [<options>] <contact>...
 
 
 DESCRIPTION

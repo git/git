@@ -86,7 +86,7 @@ test_expect_success 'cherry-pick on stat-dirty working tree' '
 	(
 		cd copy &&
 		git checkout initial &&
-		test-chmtime +40 oops &&
+		test-tool chmtime +40 oops &&
 		git cherry-pick added
 	)
 '
@@ -96,7 +96,7 @@ test_expect_success 'revert forbidden on dirty working tree' '
 	echo content >extra_file &&
 	git add extra_file &&
 	test_must_fail git revert HEAD 2>errors &&
-	test_i18ngrep "Your local changes would be overwritten by " errors
+	test_i18ngrep "your local changes would be overwritten by " errors
 
 '
 
@@ -139,6 +139,20 @@ test_expect_success 'cherry-pick "-" works with arguments' '
 	test_cmp expect signoff &&
 	echo change >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick works with dirty renamed file' '
+	test_commit to-rename &&
+	git checkout -b unrelated &&
+	test_commit unrelated &&
+	git checkout @{-1} &&
+	git mv to-rename.t renamed &&
+	test_tick &&
+	git commit -m renamed &&
+	echo modified >renamed &&
+	git cherry-pick refs/heads/unrelated >out &&
+	test $(git rev-parse :0:renamed) = $(git rev-parse HEAD~2:to-rename.t) &&
+	grep -q "^modified$" renamed
 '
 
 test_done

@@ -11,7 +11,7 @@ test_expect_success GETTEXT_ISO_LOCALE 'setup' '
 	export LC_ALL
 '
 
-test_expect_success GETTEXT_ISO_LOCALE,LIBPCRE 'grep pcre string' '
+test_expect_success GETTEXT_ISO_LOCALE,PCRE 'grep pcre string' '
 	git grep --perl-regexp -i "TILRAUN: H.lló Heimur!" &&
 	git grep --perl-regexp -i "TILRAUN: H.LLÓ HEIMUR!"
 '

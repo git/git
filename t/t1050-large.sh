@@ -5,6 +5,12 @@ test_description='adding and checking out large blobs'
 
 . ./test-lib.sh
 
+# This should be moved to test-lib.sh together with the
+# copy in t0021 after both topics have graduated to 'master'.
+file_size () {
+	test-tool path-utils file-size "$1"
+}
+
 test_expect_success setup '
 	# clone does not allow us to pass core.bigfilethreshold to
 	# new repos, so set core.bigfilethreshold globally
@@ -16,6 +22,29 @@ test_expect_success setup '
 	GIT_ALLOC_LIMIT=1500k &&
 	export GIT_ALLOC_LIMIT
 '
+
+# add a large file with different settings
+while read expect config
+do
+	test_expect_success "add with $config" '
+		test_when_finished "rm -f .git/objects/pack/pack-*.* .git/index" &&
+		git $config add large1 &&
+		sz=$(file_size .git/objects/pack/pack-*.pack) &&
+		case "$expect" in
+		small) test "$sz" -le 100000 ;;
+		large) test "$sz" -ge 100000 ;;
+		esac
+	'
+done <<\EOF
+large -c core.compression=0
+small -c core.compression=9
+large -c core.compression=0 -c pack.compression=0
+large -c core.compression=9 -c pack.compression=0
+small -c core.compression=0 -c pack.compression=9
+small -c core.compression=9 -c pack.compression=9
+large -c pack.compression=0
+small -c pack.compression=9
+EOF
 
 test_expect_success 'add a large file or two' '
 	git add large1 huge large2 &&
@@ -74,12 +103,12 @@ test_expect_success 'packsize limit' '
 		# mid1 and mid2 will fit within 256k limit but
 		# appending mid3 will bust the limit and will
 		# result in a separate packfile.
-		test-genrandom "a" $(( 66 * 1024 )) >mid1 &&
-		test-genrandom "b" $(( 80 * 1024 )) >mid2 &&
-		test-genrandom "c" $(( 128 * 1024 )) >mid3 &&
+		test-tool genrandom "a" $(( 66 * 1024 )) >mid1 &&
+		test-tool genrandom "b" $(( 80 * 1024 )) >mid2 &&
+		test-tool genrandom "c" $(( 128 * 1024 )) >mid3 &&
 		git add mid1 mid2 mid3 &&
 
-		count=0
+		count=0 &&
 		for pi in .git/objects/pack/pack-*.idx
 		do
 			test -f "$pi" && count=$(( $count + 1 ))
@@ -87,8 +116,8 @@ test_expect_success 'packsize limit' '
 		test $count = 2 &&
 
 		(
-			git hash-object --stdin <mid1
-			git hash-object --stdin <mid2
+			git hash-object --stdin <mid1 &&
+			git hash-object --stdin <mid2 &&
 			git hash-object --stdin <mid3
 		) |
 		sort >expect &&

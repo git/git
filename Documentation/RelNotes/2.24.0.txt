@@ -1,0 +1,143 @@
+Git 2.24 Release Notes
+======================
+
+Updates since v2.23
+-------------------
+
+Backward compatibility note
+
+ * (no entry yet so far)
+
+
+UI, Workflows & Features
+
+ * We now have an active interim maintainer for the Git-Gui part of
+   the system.  Praise and thank Pratyush Yadav for volunteering.
+
+ * The command line parser learned "--end-of-options" notation; the
+   standard convention for scripters to have hardcoded set of options
+   first on the command line, and force the command to treat end-user
+   input as non-options, has been to use "--" as the delimiter, but
+   that would not work for commands that use "--" as a delimiter
+   between revs and pathspec.
+
+ * A mechanism to affect the default setting for a (related) group of
+   configuration variables is introduced.
+
+ * "git fetch" learned "--set-upstream" option to help those who first
+   clone from their private fork they intend to push to, add the true
+   upstream via "git remote add" and then "git fetch" from it.
+
+ * Device-tree files learned their own userdiff patterns.
+   (merge 3c81760bc6 sb/userdiff-dts later to maint).
+
+ * "git rebase --rebase-merges" learned to drive different merge
+   strategies and pass strategy specific options to them.
+
+ * A new "pre-merge-commit" hook has been introduced.
+
+ * Command line completion updates for "git -c var.name=val" have been
+   added.
+
+ * The lazy clone machinery has been taught that there can be more
+   than one promisor remote and consult them in order when downloading
+   missing objects on demand.
+
+ * The list-objects-filter API (used to create a sparse/lazy clone)
+   learned to take a combined filter specification.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The code to write commit-graph over given commit object names has
+   been made a bit more robust.
+
+ * The first line of verbose output from each test piece now carries
+   the test name and number to help scanning with eyeballs.
+
+ * Further clean-up of the initialization code.
+
+ * xmalloc() used to have a mechanism to ditch memory and address
+   space resources as the last resort upon seeing an allocation
+   failure from the underlying malloc(), which made the code complex
+   and thread-unsafe with dubious benefit, as major memory resource
+   users already do limit their uses with various other mechanisms.
+   It has been simplified away.
+
+ * Unnecessary full-tree diff in "git log -L" machinery has been
+   optimized away.
+
+ * The http transport lacked some optimization the native transports
+   learned to avoid unnecessary ref advertisement, which has been
+   corrected.
+
+
+Fixes since v2.23
+-----------------
+
+ * "git grep --recurse-submodules" that looks at the working tree
+   files looked at the contents in the index in submodules, instead of
+   files in the working tree.
+   (merge 6a289d45c0 mt/grep-submodules-working-tree later to maint).
+
+ * Codepaths to walk tree objects have been audited for integer
+   overflows and hardened.
+   (merge 5aa02f9868 jk/tree-walk-overflow later to maint).
+
+ * "git pack-refs" can lose refs that are created while running, which
+   is getting corrected.
+   (merge a613d4f817 sc/pack-refs-deletion-racefix later to maint).
+
+ * "git checkout" and "git restore" to re-populate the index from a
+   tree-ish (typically HEAD) did not work correctly for a path that
+   was removed and then added again with the intent-to-add bit, when
+   the corresponding working tree file was empty.  This has been
+   corrected.
+
+ * Compilation fix.
+   (merge 70597e8386 rs/nedalloc-fixlets later to maint).
+
+ * "git gui" learned to call the clean-up procedure before exiting.
+   (merge 0d88f3d2c5 py/git-gui-do-quit later to maint).
+
+ * We promoted the "indent heuristics" that decides where to split
+   diff hunks from experimental to the default a few years ago, but
+   some stale documentation still marked it as experimental, which has
+   been corrected.
+   (merge 64e5e1fba1 sg/diff-indent-heuristic-non-experimental later to maint).
+
+ * Fix a mismerge that happened in 2.22 timeframe.
+   (merge acb7da05ac en/checkout-mismerge-fix later to maint).
+
+ * "git archive" recorded incorrect length in extended pax header in
+   some corner cases, which has been corrected.
+   (merge 71d41ff651 rs/pax-extended-header-length-fix later to maint).
+
+ * On-demand object fetching in lazy clone incorrectly tried to fetch
+   commits from submodule projects, while still working in the
+   superproject, which has been corrected.
+   (merge a63694f523 jt/diff-lazy-fetch-submodule-fix later to maint).
+
+ * Prepare get_short_oid() codepath to be thread-safe.
+   (merge 7cfcb16b0e rs/sort-oid-array-thread-safe later to maint).
+
+ * "for-each-ref" and friends that show refs did not protect themselves
+   against ancient tags that did not record tagger names when asked to
+   show "%(taggername)", which have been corrected.
+   (merge 8b3f33ef11 mp/for-each-ref-missing-name-or-email later to maint).
+
+ * The "git am" based backend of "git rebase" ignored the result of
+   updating ".gitattributes" done in one step when replaying
+   subsequent steps.
+   (merge 2c65d90f75 bc/reread-attributes-during-rebase later to maint).
+
+ * Tell cURL library to use the same malloc() implementation, with the
+   xmalloc() wrapper, as the rest of the system, for consistency.
+   (merge 93b980e58f cb/curl-use-xmalloc later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge d1387d3895 en/fast-import-merge-doc later to maint).
+   (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
+   (merge 415b770b88 ds/midx-expire-repack later to maint).
+   (merge 19800bdc3f nd/diff-parseopt later to maint).
+   (merge 58166c2e9d tg/t0021-racefix later to maint).

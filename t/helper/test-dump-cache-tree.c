@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "tree.h"
 #include "cache-tree.h"
@@ -10,7 +11,7 @@ static void dump_one(struct cache_tree *it, const char *pfx, const char *x)
 		       "invalid", x, pfx, it->subtree_nr);
 	else
 		printf("%s %s%s (%d entries, %d subtrees)\n",
-		       sha1_to_hex(it->sha1), x, pfx,
+		       oid_to_hex(&it->oid), x, pfx,
 		       it->entry_count, it->subtree_nr);
 }
 
@@ -32,7 +33,7 @@ static int dump_cache_tree(struct cache_tree *it,
 	}
 	else {
 		dump_one(it, pfx, "");
-		if (hashcmp(it->sha1, ref->sha1) ||
+		if (!oideq(&it->oid, &ref->oid) ||
 		    ref->entry_count != it->entry_count ||
 		    ref->subtree_nr != it->subtree_nr) {
 			/* claims to be valid but is lying */
@@ -54,10 +55,11 @@ static int dump_cache_tree(struct cache_tree *it,
 	return errs;
 }
 
-int cmd_main(int ac, const char **av)
+int cmd__dump_cache_tree(int ac, const char **av)
 {
 	struct index_state istate;
 	struct cache_tree *another = cache_tree();
+	setup_git_directory();
 	if (read_cache() < 0)
 		die("unable to read index file");
 	istate = the_index;

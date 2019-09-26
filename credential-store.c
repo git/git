@@ -72,15 +72,16 @@ static void store_credential_file(const char *fn, struct credential *c)
 	struct strbuf buf = STRBUF_INIT;
 
 	strbuf_addf(&buf, "%s://", c->protocol);
-	strbuf_addstr_urlencode(&buf, c->username, 1);
+	strbuf_addstr_urlencode(&buf, c->username, is_rfc3986_unreserved);
 	strbuf_addch(&buf, ':');
-	strbuf_addstr_urlencode(&buf, c->password, 1);
+	strbuf_addstr_urlencode(&buf, c->password, is_rfc3986_unreserved);
 	strbuf_addch(&buf, '@');
 	if (c->host)
-		strbuf_addstr_urlencode(&buf, c->host, 1);
+		strbuf_addstr_urlencode(&buf, c->host, is_rfc3986_unreserved);
 	if (c->path) {
 		strbuf_addch(&buf, '/');
-		strbuf_addstr_urlencode(&buf, c->path, 0);
+		strbuf_addstr_urlencode(&buf, c->path,
+					is_rfc3986_reserved_or_unreserved);
 	}
 
 	rewrite_credential_file(fn, c, &buf);
@@ -168,7 +169,7 @@ int cmd_main(int argc, const char **argv)
 	if (file) {
 		string_list_append(&fns, file);
 	} else {
-		if ((file = expand_user_path("~/.git-credentials")))
+		if ((file = expand_user_path("~/.git-credentials", 0)))
 			string_list_append_nodup(&fns, file);
 		file = xdg_config_home("credentials");
 		if (file)

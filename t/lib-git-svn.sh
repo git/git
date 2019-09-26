@@ -13,12 +13,13 @@ fi
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
+test_set_port SVNSERVE_PORT
 
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-    skip_all='skipping git svn tests, svn not found'
-    test_done
+	skip_all='skipping git svn tests, svn not found'
+	test_done
 fi
 
 svnrepo=$PWD/svnrepo
@@ -49,7 +50,7 @@ rawsvnrepo="$svnrepo"
 svnrepo="file://$svnrepo"
 
 poke() {
-	test-chmtime +1 "$1"
+	test-tool chmtime +1 "$1"
 }
 
 # We need this, because we should pass empty configuration directory to
@@ -68,19 +69,12 @@ svn_cmd () {
 maybe_start_httpd () {
 	loc=${1-svn}
 
-	test_tristate GIT_SVN_TEST_HTTPD
-	case $GIT_SVN_TEST_HTTPD in
-	true)
+	if git env--helper --type=bool --default=false --exit-code GIT_TEST_HTTPD
+	then
 		. "$TEST_DIRECTORY"/lib-httpd.sh
 		LIB_HTTPD_SVN="$loc"
 		start_httpd
-		;;
-	*)
-		stop_httpd () {
-			: noop
-		}
-		;;
-	esac
+	fi
 }
 
 convert_to_rev_db () {
@@ -110,18 +104,18 @@ EOF
 }
 
 require_svnserve () {
-    if test -z "$SVNSERVE_PORT"
-    then
-	skip_all='skipping svnserve test. (set $SVNSERVE_PORT to enable)'
-        test_done
-    fi
+	if ! git env--helper --type=bool --default=false --exit-code GIT_TEST_SVNSERVE
+	then
+		skip_all='skipping svnserve test. (set $GIT_TEST_SVNSERVE to enable)'
+		test_done
+	fi
 }
 
 start_svnserve () {
-    svnserve --listen-port $SVNSERVE_PORT \
-             --root "$rawsvnrepo" \
-             --listen-once \
-             --listen-host 127.0.0.1 &
+	svnserve --listen-port $SVNSERVE_PORT \
+		 --root "$rawsvnrepo" \
+		 --listen-once \
+		 --listen-host 127.0.0.1 &
 }
 
 prepare_a_utf8_locale () {

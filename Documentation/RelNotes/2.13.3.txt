@@ -1,0 +1,62 @@
+Git v2.13.3 Release Notes
+=========================
+
+Fixes since v2.13.2
+-------------------
+
+ * The "collision detecting" SHA-1 implementation shipped with 2.13.2
+   was still broken on some platforms.  Update to the upstream code
+   again to take their fix.
+
+ * The 'diff-highlight' program (in contrib/) has been restructured
+   for easier reuse by an external project 'diff-so-fancy'.
+
+ * "git mergetool" learned to work around a wrapper MacOS X adds
+   around underlying meld.
+
+ * An example in documentation that does not work in multi worktree
+   configuration has been corrected.
+
+ * The pretty-format specifiers like '%h', '%t', etc. had an
+   optimization that no longer works correctly.  In preparation/hope
+   of getting it correctly implemented, first discard the optimization
+   that is broken.
+
+ * The code to pick up and execute command alias definition from the
+   configuration used to switch to the top of the working tree and
+   then come back when the expanded alias was executed, which was
+   unnecessarilyl complex.  Attempt to simplify the logic by using the
+   early-config mechanism that does not chdir around.
+
+ * "git add -p" were updated in 2.12 timeframe to cope with custom
+   core.commentchar but the implementation was buggy and a
+   metacharacter like $ and * did not work.
+
+ * Fix a recent regression to "git rebase -i" and add tests that would
+   have caught it and others.
+
+ * An unaligned 32-bit access in pack-bitmap code ahs been corrected.
+
+ * Tighten error checks for invalid "git apply" input.
+
+ * The split index code did not honor core.sharedrepository setting
+   correctly.
+
+ * The Makefile rule in contrib/subtree for building documentation
+   learned to honour USE_ASCIIDOCTOR just like the main documentation
+   set does.
+
+ * A few tests that tried to verify the contents of push certificates
+   did not use 'git rev-parse' to formulate the line to look for in
+   the certificate correctly.
+
+ * After "git branch --move" of the currently checked out branch, the
+   code to walk the reflog of HEAD via "log -g" and friends
+   incorrectly stopped at the reflog entry that records the renaming
+   of the branch.
+
+ * The rewrite of "git branch --list" using for-each-ref's internals
+   that happened in v2.13 regressed its handling of color.branch.local;
+   this has been fixed.
+
+Also contains various documentation updates and code clean-ups.

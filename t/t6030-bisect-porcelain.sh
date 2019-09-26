@@ -407,7 +407,7 @@ test_expect_success 'good merge base when good and bad are siblings' '
 	test_i18ngrep "merge base must be tested" my_bisect_log.txt &&
 	grep $HASH4 my_bisect_log.txt &&
 	git bisect good > my_bisect_log.txt &&
-	test_must_fail grep "merge base must be tested" my_bisect_log.txt &&
+	! grep "merge base must be tested" my_bisect_log.txt &&
 	grep $HASH6 my_bisect_log.txt &&
 	git bisect reset
 '
@@ -615,6 +615,7 @@ test_expect_success 'broken branch creation' '
 	git add missing/MISSING &&
 	git commit -m "6(broken): Added file that will be deleted" &&
 	git tag BROKEN_HASH6 &&
+	deleted=$(git rev-parse --verify HEAD:missing) &&
 	add_line_into_file "7(broken): second line on a broken branch" hello2 &&
 	git tag BROKEN_HASH7 &&
 	add_line_into_file "8(broken): third line on a broken branch" hello2 &&
@@ -622,12 +623,12 @@ test_expect_success 'broken branch creation' '
 	git rm missing/MISSING &&
 	git commit -m "9(broken): Remove missing file" &&
 	git tag BROKEN_HASH9 &&
-	rm .git/objects/39/f7e61a724187ab767d2e08442d9b6b9dab587d
+	rm .git/objects/$(test_oid_to_path $deleted)
 '
 
 echo "" > expected.ok
 cat > expected.missing-tree.default <<EOF
-fatal: unable to read tree 39f7e61a724187ab767d2e08442d9b6b9dab587d
+fatal: unable to read tree $deleted
 EOF
 
 test_expect_success 'bisect fails if tree is broken on start commit' '
@@ -681,7 +682,7 @@ test_expect_success 'bisect: --no-checkout - target in breakage' '
 	check_same BROKEN_HASH6 BISECT_HEAD &&
 	git bisect bad BISECT_HEAD &&
 	check_same BROKEN_HASH5 BISECT_HEAD &&
-	git bisect good BISECT_HEAD &&
+	test_must_fail git bisect good BISECT_HEAD &&
 	check_same BROKEN_HASH6 bisect/bad &&
 	git bisect reset
 '
@@ -692,7 +693,7 @@ test_expect_success 'bisect: --no-checkout - target after breakage' '
 	check_same BROKEN_HASH6 BISECT_HEAD &&
 	git bisect good BISECT_HEAD &&
 	check_same BROKEN_HASH8 BISECT_HEAD &&
-	git bisect good BISECT_HEAD &&
+	test_must_fail git bisect good BISECT_HEAD &&
 	check_same BROKEN_HASH9 bisect/bad &&
 	git bisect reset
 '
@@ -701,7 +702,7 @@ test_expect_success 'bisect: demonstrate identification of damage boundary' "
 	git bisect reset &&
 	git checkout broken &&
 	git bisect start broken master --no-checkout &&
-	git bisect run \"\$SHELL_PATH\" -c '
+	test_must_fail git bisect run \"\$SHELL_PATH\" -c '
 		GOOD=\$(git for-each-ref \"--format=%(objectname)\" refs/bisect/good-*) &&
 		git rev-list --objects BISECT_HEAD --not \$GOOD >tmp.\$\$ &&
 		git pack-objects --stdout >/dev/null < tmp.\$\$
@@ -713,12 +714,12 @@ test_expect_success 'bisect: demonstrate identification of damage boundary' "
 "
 
 cat > expected.bisect-log <<EOF
-# bad: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
-# good: [7b7f204a749c3125d5224ed61ea2ae1187ad046f] Add <2: A new day for git> into <hello>.
-git bisect start '32a594a3fdac2d57cf6d02987e30eec68511498c' '7b7f204a749c3125d5224ed61ea2ae1187ad046f'
-# good: [3de952f2416b6084f557ec417709eac740c6818c] Add <3: Another new day for git> into <hello>.
-git bisect good 3de952f2416b6084f557ec417709eac740c6818c
-# first bad commit: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
+# bad: [$HASH4] Add <4: Ciao for now> into <hello>.
+# good: [$HASH2] Add <2: A new day for git> into <hello>.
+git bisect start '$HASH4' '$HASH2'
+# good: [$HASH3] Add <3: Another new day for git> into <hello>.
+git bisect good $HASH3
+# first bad commit: [$HASH4] Add <4: Ciao for now> into <hello>.
 EOF
 
 test_expect_success 'bisect log: successful result' '
@@ -731,14 +732,14 @@ test_expect_success 'bisect log: successful result' '
 '
 
 cat > expected.bisect-skip-log <<EOF
-# bad: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
-# good: [7b7f204a749c3125d5224ed61ea2ae1187ad046f] Add <2: A new day for git> into <hello>.
-git bisect start '32a594a3fdac2d57cf6d02987e30eec68511498c' '7b7f204a749c3125d5224ed61ea2ae1187ad046f'
-# skip: [3de952f2416b6084f557ec417709eac740c6818c] Add <3: Another new day for git> into <hello>.
-git bisect skip 3de952f2416b6084f557ec417709eac740c6818c
+# bad: [$HASH4] Add <4: Ciao for now> into <hello>.
+# good: [$HASH2] Add <2: A new day for git> into <hello>.
+git bisect start '$HASH4' '$HASH2'
+# skip: [$HASH3] Add <3: Another new day for git> into <hello>.
+git bisect skip $HASH3
 # only skipped commits left to test
-# possible first bad commit: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
-# possible first bad commit: [3de952f2416b6084f557ec417709eac740c6818c] Add <3: Another new day for git> into <hello>.
+# possible first bad commit: [$HASH4] Add <4: Ciao for now> into <hello>.
+# possible first bad commit: [$HASH3] Add <3: Another new day for git> into <hello>.
 EOF
 
 test_expect_success 'bisect log: only skip commits left' '
@@ -802,7 +803,7 @@ test_expect_success 'bisect terms needs 0 or 1 argument' '
 	test_must_fail git bisect terms only-one &&
 	test_must_fail git bisect terms 1 2 &&
 	test_must_fail git bisect terms 2>actual &&
-	echo "no terms defined" >expected &&
+	echo "error: no terms defined" >expected &&
 	test_i18ncmp expected actual
 '
 
@@ -892,6 +893,23 @@ test_expect_success 'bisect start takes options and revs in any order' '
 	(git bisect terms --term-bad && git bisect terms --term-good) >actual &&
 	printf "%s\n%s\n" bad-term three >expected &&
 	test_cmp expected actual
+'
+
+test_expect_success 'git bisect reset cleans bisection state properly' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	git bisect reset &&
+	test -z "$(git for-each-ref "refs/bisect/*")" &&
+	test_path_is_missing "$GIT_DIR/BISECT_EXPECTED_REV" &&
+	test_path_is_missing "$GIT_DIR/BISECT_ANCESTORS_OK" &&
+	test_path_is_missing "$GIT_DIR/BISECT_LOG" &&
+	test_path_is_missing "$GIT_DIR/BISECT_RUN" &&
+	test_path_is_missing "$GIT_DIR/BISECT_TERMS" &&
+	test_path_is_missing "$GIT_DIR/head-name" &&
+	test_path_is_missing "$GIT_DIR/BISECT_HEAD" &&
+	test_path_is_missing "$GIT_DIR/BISECT_START"
 '
 
 test_done

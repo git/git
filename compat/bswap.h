@@ -1,3 +1,6 @@
+#ifndef COMPAT_BSWAP_H
+#define COMPAT_BSWAP_H
+
 /*
  * Let's make sure we always have a sane definition for ntohl()/htonl().
  * Some libraries define those as a function call, just to perform byte
@@ -158,23 +161,57 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 #define get_be16(p)	ntohs(*(unsigned short *)(p))
 #define get_be32(p)	ntohl(*(unsigned int *)(p))
+#define get_be64(p)	ntohll(*(uint64_t *)(p))
 #define put_be32(p, v)	do { *(unsigned int *)(p) = htonl(v); } while (0)
+#define put_be64(p, v)	do { *(uint64_t *)(p) = htonll(v); } while (0)
 
 #else
 
-#define get_be16(p)	( \
-	(*((unsigned char *)(p) + 0) << 8) | \
-	(*((unsigned char *)(p) + 1) << 0) )
-#define get_be32(p)	( \
-	(*((unsigned char *)(p) + 0) << 24) | \
-	(*((unsigned char *)(p) + 1) << 16) | \
-	(*((unsigned char *)(p) + 2) <<  8) | \
-	(*((unsigned char *)(p) + 3) <<  0) )
-#define put_be32(p, v)	do { \
-	unsigned int __v = (v); \
-	*((unsigned char *)(p) + 0) = __v >> 24; \
-	*((unsigned char *)(p) + 1) = __v >> 16; \
-	*((unsigned char *)(p) + 2) = __v >>  8; \
-	*((unsigned char *)(p) + 3) = __v >>  0; } while (0)
+static inline uint16_t get_be16(const void *ptr)
+{
+	const unsigned char *p = ptr;
+	return	(uint16_t)p[0] << 8 |
+		(uint16_t)p[1] << 0;
+}
+
+static inline uint32_t get_be32(const void *ptr)
+{
+	const unsigned char *p = ptr;
+	return	(uint32_t)p[0] << 24 |
+		(uint32_t)p[1] << 16 |
+		(uint32_t)p[2] <<  8 |
+		(uint32_t)p[3] <<  0;
+}
+
+static inline uint64_t get_be64(const void *ptr)
+{
+	const unsigned char *p = ptr;
+	return	(uint64_t)get_be32(&p[0]) << 32 |
+		(uint64_t)get_be32(&p[4]) <<  0;
+}
+
+static inline void put_be32(void *ptr, uint32_t value)
+{
+	unsigned char *p = ptr;
+	p[0] = value >> 24;
+	p[1] = value >> 16;
+	p[2] = value >>  8;
+	p[3] = value >>  0;
+}
+
+static inline void put_be64(void *ptr, uint64_t value)
+{
+	unsigned char *p = ptr;
+	p[0] = value >> 56;
+	p[1] = value >> 48;
+	p[2] = value >> 40;
+	p[3] = value >> 32;
+	p[4] = value >> 24;
+	p[5] = value >> 16;
+	p[6] = value >>  8;
+	p[7] = value >>  0;
+}
 
 #endif
+
+#endif /* COMPAT_BSWAP_H */

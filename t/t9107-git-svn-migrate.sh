@@ -28,7 +28,7 @@ test_expect_success 'git-svn-HEAD is a real HEAD' '
 	git rev-parse --verify refs/heads/git-svn-HEAD^0
 '
 
-svnrepo_escaped=$(echo $svnrepo | sed 's/ /%20/')
+svnrepo_escaped=$(echo $svnrepo | sed 's/ /%20/g')
 
 test_expect_success 'initialize old-style (v0) git svn layout' '
 	mkdir -p "$GIT_DIR"/git-svn/info "$GIT_DIR"/svn/info &&

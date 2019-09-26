@@ -26,7 +26,7 @@ constructor dialog {} {
 	global all_remotes M1B use_ttk NS
 
 	make_dialog top w
-	wm title $top [append "[appname] ([reponame]): " [mc "Delete Branch Remotely"]]
+	wm title $top [mc "%s (%s): Delete Branch Remotely" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}

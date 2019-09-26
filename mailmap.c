@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "string-list.h"
 #include "mailmap.h"
+#include "object-store.h"
 
 #define DEBUG_MAILMAP 0
 #if DEBUG_MAILMAP
@@ -103,10 +104,8 @@ static void add_mapping(struct string_list *map,
 	} else {
 		struct mailmap_info *mi = xcalloc(1, sizeof(struct mailmap_info));
 		debug_mm("mailmap: adding (complex) entry for '%s'\n", old_email);
-		if (new_name)
-			mi->name = xstrdup(new_name);
-		if (new_email)
-			mi->email = xstrdup(new_email);
+		mi->name = xstrdup_or_null(new_name);
+		mi->email = xstrdup_or_null(new_email);
 		string_list_insert(&me->namemap, old_name)->util = mi;
 	}
 
@@ -216,17 +215,17 @@ static int read_mailmap_blob(struct string_list *map,
 			     const char *name,
 			     char **repo_abbrev)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	char *buf;
 	unsigned long size;
 	enum object_type type;
 
 	if (!name)
 		return 0;
-	if (get_sha1(name, sha1) < 0)
+	if (get_oid(name, &oid) < 0)
 		return 0;
 
-	buf = read_sha1_file(sha1, &type, &size);
+	buf = read_object_file(&oid, &type, &size);
 	if (!buf)
 		return error("unable to read mailmap object at %s", name);
 	if (type != OBJ_BLOB)

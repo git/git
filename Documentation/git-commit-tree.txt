@@ -23,6 +23,10 @@ Creates a new commit object based on the provided tree object and
 emits the new commit object id on stdout. The log message is read
 from the standard input, unless `-m` or `-F` options are given.
 
+The `-m` and `-F` options can be given any number of times, in any
+order. The commit log message will be composed in the order in which
+the options are given.
+
 A commit object may have any number of parents. With exactly one
 parent, it is an ordinary commit. Having more than one parent makes
 the commit a merge between several lines of history. Initial (root)
@@ -41,7 +45,7 @@ state was.
 OPTIONS
 -------
 <tree>::
-	An existing tree object
+	An existing tree object.
 
 -p <parent>::
 	Each `-p` indicates the id of a parent commit object.
@@ -52,7 +56,8 @@ OPTIONS
 
 -F <file>::
 	Read the commit log message from the given file. Use `-` to read
-	from the standard input.
+	from the standard input. This can be given more than once and the
+	content of each file becomes its own paragraph.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::

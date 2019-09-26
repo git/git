@@ -9,7 +9,7 @@ git-apply - Apply a patch to files and/or to the index
 SYNOPSIS
 --------
 [verse]
-'git apply' [--stat] [--numstat] [--summary] [--check] [--index] [--3way]
+'git apply' [--stat] [--numstat] [--summary] [--check] [--index | --intent-to-add] [--3way]
 	  [--apply] [--no-add] [--build-fake-ancestor=<file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-p<n>] [-C<n>] [--inaccurate-eof] [--recount] [--cached]
@@ -66,13 +66,21 @@ OPTIONS
 	disables it is in effect), make sure the patch is
 	applicable to what the current index file records.  If
 	the file to be patched in the working tree is not
-	up-to-date, it is flagged as an error.  This flag also
+	up to date, it is flagged as an error.  This flag also
 	causes the index file to be updated.
 
 --cached::
 	Apply a patch without touching the working tree. Instead take the
 	cached data, apply the patch, and store the result in the index
 	without using the working tree. This implies `--index`.
+
+--intent-to-add::
+	When applying the patch only to the working tree, mark new
+	files to be added to the index later (see `--intent-to-add`
+	option in linkgit:git-add[1]). This option is ignored unless
+	running in a Git repository and `--index` is not specified.
+	Note that `--index` could be implied by other options such
+	as `--cached` or `--3way`.
 
 -3::
 --3way::
@@ -108,14 +116,15 @@ the information is read from the current index instead.
 	When `--numstat` has been given, do not munge pathnames,
 	but use a NUL-terminated machine-readable format.
 +
-Without this option, each pathname output will have TAB, LF, double quotes,
-and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
-respectively, and the pathname will be enclosed in double quotes if
-any of those replacements occurred.
+Without this option, pathnames with "unusual" characters are quoted as
+explained for the configuration variable `core.quotePath` (see
+linkgit:git-config[1]).
 
 -p<n>::
-	Remove <n> leading slashes from traditional diff paths. The
-	default is 1.
+	Remove <n> leading path components (separated by slashes) from
+	traditional diff paths. E.g., with `-p2`, a patch against
+	`a/dir/file` will be applied directly to `file`. The default is
+	1.
 
 -C<n>::
 	Ensure at least <n> lines of surrounding context match before
@@ -241,7 +250,7 @@ When `git apply` is used as a "better GNU patch", the user can pass
 the `--unsafe-paths` option to override this safety check.  This option
 has no effect when `--index` or `--cached` is in use.
 
-Configuration
+CONFIGURATION
 -------------
 
 apply.ignoreWhitespace::
@@ -252,7 +261,7 @@ apply.whitespace::
 	When no `--whitespace` flag is given from the command
 	line, this configuration item is used as the default.
 
-Submodules
+SUBMODULES
 ----------
 If the patch contains any changes to submodules then 'git apply'
 treats these changes as follows.
@@ -260,7 +269,7 @@ treats these changes as follows.
 If `--index` is specified (explicitly or implicitly), then the submodule
 commits must match the index exactly for the patch to apply.  If any
 of the submodules are checked-out, then these check-outs are completely
-ignored, i.e., they are not required to be up-to-date or clean and they
+ignored, i.e., they are not required to be up to date or clean and they
 are not updated.
 
 If `--index` is not specified, then the submodule commits in the patch

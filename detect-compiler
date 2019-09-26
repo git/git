@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# Probe the compiler for vintage, version, etc. This is used for setting
+# optional make knobs under the DEVELOPER knob.
+
+CC="$*"
+
+# we get something like (this is at least true for gcc and clang)
+#
+# FreeBSD clang version 3.4.1 (tags/RELEASE...)
+get_version_line() {
+	$CC -v 2>&1 | grep ' version '
+}
+
+get_family() {
+	get_version_line | sed 's/^\(.*\) version [0-9][^ ]* .*/\1/'
+}
+
+get_version() {
+	get_version_line | sed 's/^.* version \([0-9][^ ]*\) .*/\1/'
+}
+
+print_flags() {
+	family=$1
+	version=$(get_version | cut -f 1 -d .)
+
+	# Print a feature flag not only for the current version, but also
+	# for any prior versions we encompass. This avoids needing to do
+	# numeric comparisons in make, which are awkward.
+	while test "$version" -gt 0
+	do
+		echo $family$version
+		version=$((version - 1))
+	done
+}
+
+case "$(get_family)" in
+gcc)
+	print_flags gcc
+	;;
+clang)
+	print_flags clang
+	;;
+"FreeBSD clang")
+	print_flags clang
+	;;
+"Apple LLVM")
+	print_flags clang
+	;;
+*)
+	: unknown compiler family
+	;;
+esac

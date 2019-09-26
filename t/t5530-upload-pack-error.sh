@@ -57,13 +57,25 @@ test_expect_success 'upload-pack fails due to error in rev-list' '
 	grep "bad tree object" output.err
 '
 
-test_expect_success 'upload-pack error message when bad ref requested' '
+test_expect_success 'upload-pack fails due to bad want (no object)' '
 
 	printf "0045want %s multi_ack_detailed\n00000009done\n0000" \
 		"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef" >input &&
 	test_must_fail git upload-pack . <input >output 2>output.err &&
-	grep -q "not our ref" output.err &&
-	! grep -q multi_ack_detailed output.err
+	grep "not our ref" output.err &&
+	grep "ERR" output &&
+	! grep multi_ack_detailed output.err
+'
+
+test_expect_success 'upload-pack fails due to bad want (not tip)' '
+
+	oid=$(echo an object we have | git hash-object -w --stdin) &&
+	printf "0045want %s multi_ack_detailed\n00000009done\n0000" \
+		"$oid" >input &&
+	test_must_fail git upload-pack . <input >output 2>output.err &&
+	grep "not our ref" output.err &&
+	grep "ERR" output &&
+	! grep multi_ack_detailed output.err
 '
 
 test_expect_success 'upload-pack fails due to error in pack-objects enumeration' '

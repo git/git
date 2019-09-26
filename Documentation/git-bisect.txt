@@ -18,12 +18,12 @@ on the subcommand:
 
  git bisect start [--term-{old,good}=<term> --term-{new,bad}=<term>]
 		  [--no-checkout] [<bad> [<good>...]] [--] [<paths>...]
- git bisect (bad|new) [<rev>]
- git bisect (good|old) [<rev>...]
+ git bisect (bad|new|<term-new>) [<rev>]
+ git bisect (good|old|<term-old>) [<rev>...]
  git bisect terms [--term-good | --term-bad]
  git bisect skip [(<rev>|<range>)...]
  git bisect reset [<commit>]
- git bisect visualize
+ git bisect (visualize|view)
  git bisect replay <logfile>
  git bisect log
  git bisect run <cmd>...
@@ -137,7 +137,7 @@ respectively, in place of "good" and "bad". (But note that you cannot
 mix "good" and "bad" with "old" and "new" in a single session.)
 
 In this more general usage, you provide `git bisect` with a "new"
-commit has some property and an "old" commit that doesn't have that
+commit that has some property and an "old" commit that doesn't have that
 property. Each time `git bisect` checks out a commit, you test if that
 commit has the property. If it does, mark the commit as "new";
 otherwise, mark it as "old". When the bisection is done, `git bisect`
@@ -165,8 +165,8 @@ To get a reminder of the currently used terms, use
 git bisect terms
 ------------------------------------------------
 
-You can get just the old (respectively new) term with `git bisect term
---term-old` or `git bisect term --term-good`.
+You can get just the old (respectively new) term with `git bisect terms
+--term-old` or `git bisect terms --term-good`.
 
 If you would like to use your own terms instead of "bad"/"good" or
 "new"/"old", you can choose any names you like (except existing bisect
@@ -193,24 +193,23 @@ git bisect start --term-new fixed --term-old broken
 Then, use `git bisect <term-old>` and `git bisect <term-new>` instead
 of `git bisect good` and `git bisect bad` to mark commits.
 
-Bisect visualize
-~~~~~~~~~~~~~~~~
+Bisect visualize/view
+~~~~~~~~~~~~~~~~~~~~~
 
 To see the currently remaining suspects in 'gitk', issue the following
-command during the bisection process:
+command during the bisection process (the subcommand `view` can be used
+as an alternative to `visualize`):
 
 ------------
 $ git bisect visualize
 ------------
-
-`view` may also be used as a synonym for `visualize`.
 
 If the `DISPLAY` environment variable is not set, 'git log' is used
 instead.  You can also give command-line options such as `-p` and
 `--stat`.
 
 ------------
-$ git bisect view --stat
+$ git bisect visualize --stat
 ------------
 
 Bisect log and bisect replay

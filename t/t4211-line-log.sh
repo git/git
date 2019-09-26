@@ -25,7 +25,7 @@ canned_test_failure () {
 test_bad_opts () {
 	test_expect_success "invalid args: $1" "
 		test_must_fail git log $1 2>errors &&
-		grep '$2' errors
+		test_i18ngrep '$2' errors
 	"
 }
 
@@ -60,7 +60,6 @@ test_bad_opts "-L 1:nonexistent" "There is no path"
 test_bad_opts "-L 1:simple" "There is no path"
 test_bad_opts "-L '/foo:b.c'" "argument not .start,end:file"
 test_bad_opts "-L 1000:b.c" "has only.*lines"
-test_bad_opts "-L 1,1000:b.c" "has only.*lines"
 test_bad_opts "-L :b.c" "argument not .start,end:file"
 test_bad_opts "-L :foo:b.c" "no match"
 
@@ -86,12 +85,12 @@ test_expect_success '-L ,Y (Y == nlines)' '
 
 test_expect_success '-L ,Y (Y == nlines + 1)' '
 	n=$(expr $(wc -l <b.c) + 1) &&
-	test_must_fail git log -L ,$n:b.c
+	git log -L ,$n:b.c
 '
 
 test_expect_success '-L ,Y (Y == nlines + 2)' '
 	n=$(expr $(wc -l <b.c) + 2) &&
-	test_must_fail git log -L ,$n:b.c
+	git log -L ,$n:b.c
 '
 
 test_expect_success '-L with --first-parent and a merge' '
@@ -102,8 +101,117 @@ test_expect_success '-L with --first-parent and a merge' '
 test_expect_success '-L with --output' '
 	git checkout parallel-change &&
 	git log --output=log -L :main:b.c >output &&
-	test ! -s output &&
+	test_must_be_empty output &&
 	test_line_count = 70 log
+'
+
+test_expect_success 'range_set_union' '
+	test_seq 500 > c.c &&
+	git add c.c &&
+	git commit -m "many lines" &&
+	test_seq 1000 > c.c &&
+	git add c.c &&
+	git commit -m "modify many lines" &&
+	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c; done)
+'
+
+test_expect_success '-s shows only line-log commits' '
+	git log --format="commit %s" -L1,24:b.c >expect.raw &&
+	grep ^commit expect.raw >expect &&
+	git log --format="commit %s" -L1,24:b.c -s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '-p shows the default patch output' '
+	git log -L1,24:b.c >expect &&
+	git log -L1,24:b.c -p >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--raw is forbidden' '
+	test_must_fail git log -L1,24:b.c --raw
+'
+
+test_expect_success 'setup for checking fancy rename following' '
+	git checkout --orphan moves-start &&
+	git reset --hard &&
+
+	printf "%s\n"    12 13 14 15      b c d e   >file-1 &&
+	printf "%s\n"    22 23 24 25      B C D E   >file-2 &&
+	git add file-1 file-2 &&
+	test_tick &&
+	git commit -m "Add file-1 and file-2" &&
+	oid_add_f1_f2=$(git rev-parse --short HEAD) &&
+
+	git checkout -b moves-main &&
+	printf "%s\n" 11 12 13 14 15      b c d e   >file-1 &&
+	git commit -a -m "Modify file-1 on main" &&
+	oid_mod_f1_main=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n" 21 22 23 24 25      B C D E   >file-2 &&
+	git commit -a -m "Modify file-2 on main #1" &&
+	oid_mod_f2_main_1=$(git rev-parse --short HEAD) &&
+
+	git mv file-1 renamed-1 &&
+	git commit -m "Rename file-1 to renamed-1 on main" &&
+
+	printf "%s\n" 11 12 13 14 15      b c d e f >renamed-1 &&
+	git commit -a -m "Modify renamed-1 on main" &&
+	oid_mod_r1_main=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n" 21 22 23 24 25      B C D E F >file-2 &&
+	git commit -a -m "Modify file-2 on main #2" &&
+	oid_mod_f2_main_2=$(git rev-parse --short HEAD) &&
+
+	git checkout -b moves-side moves-start &&
+	printf "%s\n"    12 13 14 15 16   b c d e   >file-1 &&
+	git commit -a -m "Modify file-1 on side #1" &&
+	oid_mod_f1_side_1=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n"    22 23 24 25 26   B C D E   >file-2 &&
+	git commit -a -m "Modify file-2 on side" &&
+	oid_mod_f2_side=$(git rev-parse --short HEAD) &&
+
+	git mv file-2 renamed-2 &&
+	git commit -m "Rename file-2 to renamed-2 on side" &&
+
+	printf "%s\n"    12 13 14 15 16 a b c d e   >file-1 &&
+	git commit -a -m "Modify file-1 on side #2" &&
+	oid_mod_f1_side_2=$(git rev-parse --short HEAD) &&
+
+	printf "%s\n"    22 23 24 25 26 A B C D E   >renamed-2 &&
+	git commit -a -m "Modify renamed-2 on side" &&
+	oid_mod_r2_side=$(git rev-parse --short HEAD) &&
+
+	git checkout moves-main &&
+	git merge moves-side &&
+	oid_merge=$(git rev-parse --short HEAD)
+'
+
+test_expect_success 'fancy rename following #1' '
+	cat >expect <<-EOF &&
+	$oid_merge Merge branch '\''moves-side'\'' into moves-main
+	$oid_mod_f1_side_2 Modify file-1 on side #2
+	$oid_mod_f1_side_1 Modify file-1 on side #1
+	$oid_mod_r1_main Modify renamed-1 on main
+	$oid_mod_f1_main Modify file-1 on main
+	$oid_add_f1_f2 Add file-1 and file-2
+	EOF
+	git log -L1:renamed-1 --oneline --no-patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fancy rename following #2' '
+	cat >expect <<-EOF &&
+	$oid_merge Merge branch '\''moves-side'\'' into moves-main
+	$oid_mod_r2_side Modify renamed-2 on side
+	$oid_mod_f2_side Modify file-2 on side
+	$oid_mod_f2_main_2 Modify file-2 on main #2
+	$oid_mod_f2_main_1 Modify file-2 on main #1
+	$oid_add_f1_f2 Add file-1 and file-2
+	EOF
+	git log -L1:renamed-2 --oneline --no-patch >actual &&
+	test_cmp expect actual
 '
 
 test_done

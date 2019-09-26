@@ -9,6 +9,7 @@ test_description='git shortlog
 . ./test-lib.sh
 
 test_expect_success 'setup' '
+	test_tick &&
 	echo 1 >a1 &&
 	git add a1 &&
 	tree=$(git write-tree) &&
@@ -58,8 +59,8 @@ test_expect_success 'setup' '
 fuzz() {
 	file=$1 &&
 	sed "
-			s/$_x40/OBJECT_NAME/g
-			s/$_x05/OBJID/g
+			s/$OID_REGEX/OBJECT_NAME/g
+			s/$_x35/OBJID/g
 			s/^ \{6\}[CTa].*/      SUBJECT/g
 			s/^ \{8\}[^ ].*/        CONTINUATION/g
 		" <"$file" >"$file.fuzzy" &&
@@ -81,7 +82,7 @@ test_expect_success 'pretty format' '
 
 test_expect_success '--abbrev' '
 	sed s/SUBJECT/OBJID/ expect.template >expect &&
-	git shortlog --format="%h" --abbrev=5 HEAD >log &&
+	git shortlog --format="%h" --abbrev=35 HEAD >log &&
 	fuzz log >log.predictable &&
 	test_cmp expect log.predictable
 '
@@ -124,6 +125,11 @@ test_expect_success !MINGW 'shortlog can read --format=raw output' '
 	git log --format=raw HEAD >log &&
 	GIT_DIR=non-existing git shortlog -w <log >out &&
 	test_cmp expect out
+'
+
+test_expect_success 'shortlog from non-git directory refuses extra arguments' '
+	test_must_fail env GIT_DIR=non-existing git shortlog foo 2>out &&
+	test_i18ngrep "too many arguments" out
 '
 
 test_expect_success 'shortlog should add newline when input line matches wraplen' '
@@ -186,8 +192,27 @@ test_expect_success 'shortlog with revision pseudo options' '
 
 test_expect_success 'shortlog with --output=<file>' '
 	git shortlog --output=shortlog -1 master >output &&
-	test ! -s output &&
+	test_must_be_empty output &&
 	test_line_count = 3 shortlog
+'
+
+test_expect_success 'shortlog --committer (internal)' '
+	git checkout --orphan side &&
+	git commit --allow-empty -m one &&
+	git commit --allow-empty -m two &&
+	GIT_COMMITTER_NAME="Sin Nombre" git commit --allow-empty -m three &&
+
+	cat >expect <<-\EOF &&
+	     2	C O Mitter
+	     1	Sin Nombre
+	EOF
+	git shortlog -nsc HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog --committer (external)' '
+	git log --format=full | git shortlog -nsc >actual &&
+	test_cmp expect actual
 '
 
 test_done

@@ -455,20 +455,20 @@ test_expect_success 'cvs up -r $(git rev-parse v1)' '
 '
 
 test_expect_success 'cvs diff -r v1 -u' '
-	( cd cvswork && cvs -f diff -r v1 -u ) >cvsDiff.out 2>cvs.log &&
+	( cd cvswork && cvs -f diff -r v1 -u >../cvsDiff.out 2>../cvs.log ) &&
 	test_must_be_empty cvsDiff.out &&
 	test_must_be_empty cvs.log
 '
 
 test_expect_success 'cvs diff -N -r v2 -u' '
-	( cd cvswork && ! cvs -f diff -N -r v2 -u ) >cvsDiff.out 2>cvs.log &&
+	( cd cvswork && ! cvs -f diff -N -r v2 -u >../cvsDiff.out 2>../cvs.log ) &&
 	test_must_be_empty cvs.log &&
 	test -s cvsDiff.out &&
 	check_diff cvsDiff.out v2 v1 >check_diff.out 2>&1
 '
 
 test_expect_success 'cvs diff -N -r v2 -r v1.2' '
-	( cd cvswork && ! cvs -f diff -N -r v2 -r v1.2 -u ) >cvsDiff.out 2>cvs.log &&
+	( cd cvswork && ! cvs -f diff -N -r v2 -r v1.2 -u >../cvsDiff.out 2>../cvs.log ) &&
 	test_must_be_empty cvs.log &&
 	test -s cvsDiff.out &&
 	check_diff cvsDiff.out v2 v1.2 >check_diff.out 2>&1
@@ -487,7 +487,7 @@ test_expect_success 'apply early [cvswork3] diff to b3' '
 '
 
 test_expect_success 'check [cvswork3] diff' '
-	( cd cvswork3 && ! cvs -f diff -N -u ) >"$WORKDIR/cvsDiff.out" 2>cvs.log &&
+	( cd cvswork3 && ! cvs -f diff -N -u >"$WORKDIR/cvsDiff.out" 2>../cvs.log ) &&
 	test_must_be_empty cvs.log &&
 	test -s cvsDiff.out &&
 	test $(grep Index: cvsDiff.out | wc -l) = 3 &&

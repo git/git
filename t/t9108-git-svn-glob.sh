@@ -47,8 +47,8 @@ test_expect_success 'test refspec globbing' '
 	git config --add svn-remote.svn.tags\
 	                 "tags/*/src/a:refs/remotes/tags/*" &&
 	git svn multi-fetch &&
-	git log --pretty=oneline refs/remotes/tags/end | \
-	    sed -e "s/^.\{41\}//" > output.end &&
+	git log --pretty=oneline refs/remotes/tags/end >actual &&
+	sed -e "s/^.\{41\}//" actual >output.end &&
 	test_cmp expect.end output.end &&
 	test "$(git rev-parse refs/remotes/tags/end~1)" = \
 		"$(git rev-parse refs/remotes/branches/start)" &&
@@ -75,14 +75,16 @@ test_expect_success 'test left-hand-side only globbing' '
 		svn_cmd commit -m "try to try"
 	) &&
 	git svn fetch two &&
-	test $(git rev-list refs/remotes/two/tags/end | wc -l) -eq 6 &&
-	test $(git rev-list refs/remotes/two/branches/start | wc -l) -eq 3 &&
+	git rev-list refs/remotes/two/tags/end >actual &&
+	test_line_count = 6 actual &&
+	git rev-list refs/remotes/two/branches/start >actual &&
+	test_line_count = 3 actual &&
 	test $(git rev-parse refs/remotes/two/branches/start~2) = \
 	     $(git rev-parse refs/remotes/two/trunk) &&
 	test $(git rev-parse refs/remotes/two/tags/end~3) = \
 	     $(git rev-parse refs/remotes/two/branches/start) &&
-	git log --pretty=oneline refs/remotes/two/tags/end | \
-	    sed -e "s/^.\{41\}//" > output.two &&
+	git log --pretty=oneline refs/remotes/two/tags/end >actual &&
+	sed -e "s/^.\{41\}//" actual >output.two &&
 	test_cmp expect.two output.two
 	'
 
