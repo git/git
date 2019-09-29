@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2019, #02; Wed, 18)
+Subject: What's cooking in git.git (Sep 2019, #03; Sun, 29)
 X-master-at: 4c86140027f4a0d2caaa3ab4bd8bfc5ce3c11c8a
-X-next-at: 18eeb5a2650ef4d662f5c9bb888cac8694753ba5
+X-next-at: 8ccfaed27d6c89e154e3108c800de8de15b1981d
 
-What's cooking in git.git (Sep 2019, #02; Wed, 18)
+What's cooking in git.git (Sep 2019, #03; Sun, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-We have a new maintainer for git-gui now.  Thanks Pratyush for
-volunteering.
+I've been offline for a week or so, and have been trying to process
+the backlog, but I am sure there are still things to be picked up.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,300 +21,293 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* bc/reread-attributes-during-rebase (2019-09-03) 2 commits
-  (merged to 'next' on 2019-09-07 at 9f5e5db0b0)
- + am: reload .gitattributes after patching it
- + path: add a function to check for path suffix
+* jt/merge-recursive-symlink-is-not-a-dir-in-way (2019-09-20) 1 commit
+ - merge-recursive: symlink's descendants not in way
 
- The "git am" based backend of "git rebase" ignored the result of
- updating ".gitattributes" done in one step when replaying
- subsequent steps.
+ A bug in merge-recursive code that triggers when a branch with a
+ symbolic link is merged with a branch that replaces it with a
+ directory has been fixed.
 
-
-* bm/repository-layout-typofix (2019-08-19) 1 commit
-  (merged to 'next' on 2019-08-23 at 7b1fffbaea)
- + repository-layout.txt: correct pluralization of 'object'
-
- Typofix.
+ Will merge to 'next'.
 
 
-* cb/curl-use-xmalloc (2019-08-15) 1 commit
-  (merged to 'next' on 2019-09-07 at 07da24f51c)
- + http: use xmalloc with cURL
- (this branch uses jk/drop-release-pack-memory.)
+* ps/my-first-contribution-alphasort (2019-09-28) 1 commit
+ - doc: MyFirstContribution: fix cmd placement instructions
 
- Tell cURL library to use the same malloc() implementation, with the
- xmalloc() wrapper, as the rest of the system, for consistency.
+ Docfix.
 
-
-* cb/fetch-set-upstream (2019-08-19) 1 commit
-  (merged to 'next' on 2019-08-23 at cf8c2ea0a0)
- + pull, fetch: add --set-upstream option
-
- "git fetch" learned "--set-upstream" option to help those who first
- clone from their private fork they intend to push to, add the true
- upstream via "git remote add" and then "git fetch" from it.
+ Will merge to 'next'.
 
 
-* cc/multi-promisor (2019-06-25) 15 commits
-  (merged to 'next' on 2019-09-07 at 46faa86955)
- + Move core_partial_clone_filter_default to promisor-remote.c
- + Move repository_format_partial_clone to promisor-remote.c
- + Remove fetch-object.{c,h} in favor of promisor-remote.{c,h}
- + remote: add promisor and partial clone config to the doc
- + partial-clone: add multiple remotes in the doc
- + t0410: test fetching from many promisor remotes
- + builtin/fetch: remove unique promisor remote limitation
- + promisor-remote: parse remote.*.partialclonefilter
- + Use promisor_remote_get_direct() and has_promisor_remote()
- + promisor-remote: use repository_format_partial_clone
- + promisor-remote: add promisor_remote_reinit()
- + promisor-remote: implement promisor_remote_get_direct()
- + Add initial support for many promisor remotes
- + fetch-object: make functions return an error code
- + t0410: remove pipes after git commands
-
- Teach the lazy clone machinery that there can be more than one
- promisor remote and consult them in order when downloading missing
- objects on demand.
-
-
-* ds/feature-macros (2019-08-13) 6 commits
-  (merged to 'next' on 2019-08-23 at 115f0c8df9)
- + repo-settings: create feature.experimental setting
- + repo-settings: create feature.manyFiles setting
- + repo-settings: parse core.untrackedCache
- + commit-graph: turn on commit-graph by default
- + t6501: use 'git gc' in quiet mode
- + repo-settings: consolidate some config settings
- (this branch is used by ds/commit-graph-on-fetch.)
-
- A mechanism to affect the default setting for a (related) group of
- configuration variables is introduced.
-
-
-* ds/midx-expire-repack (2019-08-20) 1 commit
-  (merged to 'next' on 2019-08-23 at a998356b3b)
- + packfile.h: drop extern from function declaration
+* rs/alias-use-copy-array (2019-09-20) 1 commit
+ - git: use COPY_ARRAY and MOVE_ARRAY in handle_alias()
 
  Code cleanup.
 
-
-* en/checkout-mismerge-fix (2019-08-16) 1 commit
-  (merged to 'next' on 2019-08-23 at 8ecb69414a)
- + checkout: remove duplicate code
-
- Fix a mismerge that happened in 2.22 timeframe.
+ Will merge to 'next'.
 
 
-* jk/drop-release-pack-memory (2019-08-13) 1 commit
-  (merged to 'next' on 2019-09-07 at 30f841c42d)
- + packfile: drop release_pack_memory()
- (this branch is used by cb/curl-use-xmalloc.)
+* sg/t-helper-gitignore (2019-09-20) 1 commit
+ - t/helper: ignore only executable files
 
- xmalloc() used to have a mechanism to ditch memory and address
- space resources as the last resort upon seeing an allocation
- failure from the underlying malloc(), which made the code complex
- and thread-unsafe with dubious benefit, as major memory resource
- users already do limit their uses with various other mechanisms.
- It has been simplified away.
+ Update the way build artifacts in t/helper/ directory are ignored.
+
+ Will merge to 'next'.
 
 
-* jk/eoo (2019-08-06) 3 commits
-  (merged to 'next' on 2019-08-23 at 217e97127a)
- + gitcli: document --end-of-options
- + parse-options: allow --end-of-options as a synonym for "--"
- + revision: allow --end-of-options to end option parsing
+* sg/travis-help-debug (2019-09-28) 1 commit
+ - travis-ci: do not skip successfully tested trees in debug mode
 
- The command line parser learned "--end-of-options" notation; the
- standard convention for scripters to have hardcoded set of options
- first on the command line, and force the command to treat end-user
- input as non-options, has been to use "--" as the delimiter, but
- that would not work for commands that use "--" as a delimiter
- between revs and pathspec.
+ Dev support update.
+
+ Will merge to 'next'.
 
 
-* jk/repo-init-cleanup (2019-08-06) 3 commits
-  (merged to 'next' on 2019-08-23 at 1a5e4c4f06)
- + config: stop checking whether the_repository is NULL
- + common-main: delay trace2 initialization
- + t1309: use short branch name in includeIf.onbranch test
+* am/mailmap-andrey-mazo (2019-09-20) 1 commit
+ - .mailmap: update email address of Andrey Mazo
 
- Further clean-up of the initialization code.
+ Will merge to 'next'.
 
 
-* js/partial-clone-sparse-blob (2019-08-30) 2 commits
- - list-objects-filter: handle unresolved sparse filter OID
- - list-objects-filter: only parse sparse OID when 'have_git_dir'
+* am/t0028-utf16-tests (2019-09-28) 2 commits
+ - t0028: add more tests
+ - t0028: fix test for UTF-16-LE-BOM
 
- Band-aid on "git clone --sparse:oid=X" that would hit BUG().
-
-
-* js/pre-merge-commit-hook (2019-08-07) 4 commits
-  (merged to 'next' on 2019-09-07 at 0c9f25399c)
- + merge: --no-verify to bypass pre-merge-commit hook
- + git-merge: honor pre-merge-commit hook
- + merge: do no-verify like commit
- + t7503: verify proper hook execution
-
- A new "pre-merge-commit" hook has been introduced.
+ Test fixes.
 
 
-* js/rebase-r-strategy (2019-09-05) 17 commits
-  (merged to 'next' on 2019-09-07 at 71e2451f6c)
- + t3427: accelerate this test by using fast-export and fast-import
- + rebase -r: do not (re-)generate root commits with `--root` *and* `--onto`
- + t3418: test `rebase -r` with merge strategies
- + t/lib-rebase: prepare for testing `git rebase --rebase-merges`
- + rebase -r: support merge strategies other than `recursive`
- + t3427: fix another incorrect assumption
- + t3427: accommodate for the `rebase --merge` backend having been replaced
- + t3427: fix erroneous assumption
- + t3427: condense the unnecessarily repetitive test cases into three
- + t3427: move the `filter-branch` invocation into the `setup` case
- + t3427: simplify the `setup` test case significantly
- + t3427: add a clarifying comment
- + rebase: fold git-rebase--common into the -p backend
- + sequencer: the `am` and `rebase--interactive` scripts are gone
- + .gitignore: there is no longer a built-in `git-rebase--interactive`
- + t3400: stop referring to the scripted rebase
- + Drop unused git-rebase--am.sh
+* am/visual-studio-config-fix (2019-09-28) 1 commit
+ - contrib/buildsystems: fix Visual Studio Debug configuration
 
- "git rebase --rebase-merges" learned to drive different merge
- strategies and pass strategy specific options to them.
+ Dev support.
+
+ Will merge to 'next'.
 
 
-* jt/avoid-ls-refs-with-http (2019-08-22) 2 commits
-  (merged to 'next' on 2019-09-07 at c6a4ce50a0)
- + transport: teach all vtables to allow fetch first
- + transport-helper: skip ls-refs if unnecessary
+* cb/do-not-use-test-cmp-with-a (2019-09-28) 1 commit
+ - t4038: Remove non-portable '-a' option passed to test_cmp
 
- The http transport lacked some optimization the native transports
- learned to avoid unnecessary ref advertisement, which has been
- corrected.
+ Test portability fix.
+
+ Will merge to 'next'.
 
 
-* jt/diff-lazy-fetch-submodule-fix (2019-08-20) 1 commit
-  (merged to 'next' on 2019-08-23 at 16997cac26)
- + diff: skip GITLINK when lazy fetching missing objs
+* cc/multi-promisor (2019-09-28) 1 commit
+ - promisor-remote.h: drop extern from function declaration
 
- On-demand object fetching in lazy clone incorrectly tried to fetch
- commits from submodule projects, while still working in the
- superproject, which has been corrected.
+ Cleanup.
 
-
-* md/list-objects-filter-combo (2019-06-28) 10 commits
-  (merged to 'next' on 2019-09-07 at 076a48aa57)
- + list-objects-filter-options: make parser void
- + list-objects-filter-options: clean up use of ALLOC_GROW
- + list-objects-filter-options: allow mult. --filter
- + strbuf: give URL-encoding API a char predicate fn
- + list-objects-filter-options: make filter_spec a string_list
- + list-objects-filter-options: move error check up
- + list-objects-filter: implement composite filters
- + list-objects-filter-options: always supply *errbuf
- + list-objects-filter: put omits set in filter struct
- + list-objects-filter: encapsulate filter components
- (this branch is used by ds/include-exclude.)
-
- The list-objects-filter API (used to create a sparse/lazy clone)
- learned to take a combined filter specification.
+ Will merge to 'next'.
 
 
-* mp/for-each-ref-missing-name-or-email (2019-08-22) 1 commit
-  (merged to 'next' on 2019-08-23 at d257cb2138)
- + ref-filter: initialize empty name or email fields
+* dl/honor-cflags-in-hdr-check (2019-09-28) 4 commits
+ - Makefile: emulate compile in $(HCO) target better
+ - pack-bitmap.h: remove magic number
+ - promisor-remote.h: include missing header
+ - apply.h: include missing header
 
- "for-each-ref" and friends that shows refs did not protect themselves
- against ancient tags that did not record tagger names when asked to
- show "%(taggername)", which have been corrected.
+ Dev support.
 
-
-* nd/diff-parseopt (2019-08-20) 1 commit
-  (merged to 'next' on 2019-08-23 at d80a83b1e4)
- + parseopt: move definition of enum parse_opt_result up
-
- Compilation fix.
+ Will merge to 'next'.
 
 
-* py/git-gui-do-quit (2019-08-07) 2 commits
-  (merged to 'next' on 2019-08-23 at 6544c9dbb3)
- + Merge branch 'py/call-do-quit-before-exit' of github.com:gitster/git-gui into py/git-gui-do-quit
- + git-gui: call do_quit before destroying the main window
+* en/fast-imexport-nested-tags (2019-09-28) 8 commits
+ . fast-export: handle nested tags
+ . t9350: add tests for tags of things other than a commit
+ . fast-export: allow user to request tags be marked with --mark-tags
+ . fast-export: add support for --import-marks-if-exists
+ . fast-import: add support for new 'alias' command
+ . fast-import: allow tags to be identified by mark labels
+ . fast-import: fix handling of deleted tags
+ . fast-export: fix exporting a tag and nothing else
 
- "git gui" learned to call the clean-up procedure before exiting.
+ Updates to fast-import/export.
 
-
-* rs/pax-extended-header-length-fix (2019-08-19) 4 commits
-  (merged to 'next' on 2019-08-23 at de88e8e58a)
- + archive-tar: turn length miscalculation warning into BUG
- + archive-tar: use size_t in strbuf_append_ext_header()
- + archive-tar: fix pax extended header length calculation
- + archive-tar: report wrong pax extended header length
-
- "git archive" recorded incorrect length in extended pax header in
- some corner cases, which has been corrected.
+ Seems to break t9300 when merged to 'pu'.
 
 
-* rs/sort-oid-array-thread-safe (2019-08-20) 1 commit
-  (merged to 'next' on 2019-08-23 at 5ce3126af2)
- + sha1-name: make sort_ambiguous_oid_array() thread-safe
+* js/diff-rename-force-stable-sort (2019-09-28) 2 commits
+ - diffcore_rename(): use a stable sort
+ - Move git_sort(), a stable sort, into into libgit.a
 
- Prepare get_short_oid() codepath to be thread-safe.
+ The rename detection logic sorts a list of rename source candidates
+ by similarity to pick the best candidate, which means that a tie
+ between sources with the same similarity is broken by the original
+ location in the original canidate list (which is sorted by path).
+ Force the sorting by similarity done with a stable sort, which is
+ not promised by system supplied qsort(3), to ensure consistent
+ results across platforms.
 
-
-* sb/userdiff-dts (2019-08-21) 1 commit
-  (merged to 'next' on 2019-08-23 at 2bce0b8f91)
- + userdiff: add a builtin pattern for dts files
-
- Device-tree files learned their own userdiff patterns.
-
-
-* sg/complete-configuration-variables (2019-08-13) 11 commits
-  (merged to 'next' on 2019-09-07 at 9921f0e536)
- + completion: complete config variables and values for 'git clone --config='
- + completion: complete config variables names and values for 'git clone -c'
- + completion: complete values of configuration variables after 'git -c var='
- + completion: complete configuration sections and variable names for 'git -c'
- + completion: split _git_config()
- + completion: simplify inner 'case' pattern in __gitcomp()
- + completion: use 'sort -u' to deduplicate config variable names
- + completion: deduplicate configuration sections
- + completion: add tests for 'git config' completion
- + completion: complete more values of more 'color.*' configuration variables
- + completion: fix a typo in a comment
-
- Command line completion updates for "git -c var.name=val"
+ Except for a minor nit, this looked OK.
 
 
-* sg/diff-indent-heuristic-non-experimental (2019-08-15) 1 commit
-  (merged to 'next' on 2019-08-23 at faab5e2a1e)
- + diff: 'diff.indentHeuristic' is no longer experimental
+* ma/user-manual-markup-update (2019-09-28) 4 commits
+ - user-manual.txt: render ASCII art correctly under Asciidoctor
+ - asciidoctor-extensions.rb: handle "book" doctype in linkgit
+ - user-manual.txt: change header notation
+ - user-manual.txt: add missing section label
 
- We promoted the "indent heuristics" that decides where to split
- diff hunks from experimental to the default a few years ago, but
- some stale documentation still marked it as experimental, which has
- been corrected.
+ The markup used in user-manual has been updated to work better with
+ asciidoctor.
 
-
-* sg/line-log-tree-diff-optim (2019-08-21) 2 commits
-  (merged to 'next' on 2019-09-07 at 8d5b7053fd)
- + line-log: avoid unnecessary full tree diffs
- + line-log: extract pathspec parsing from line ranges into a helper function
-
- Optimize unnecessary full-tree diff away from "git log -L" machinery.
+ Will merge to 'next'.
 
 
-* tg/t0021-racefix (2019-08-22) 1 commit
-  (merged to 'next' on 2019-08-23 at 0a3290393f)
- + t0021: make sure clean filter runs
+* sg/name-rev-cutoff-underflow-fix (2019-09-28) 1 commit
+ - name-rev: avoid cutoff timestamp underflow
 
- A test fix.
+ Integer arith fix.
+
+ Will merge to 'next'.
+
+
+* tk/git-svn-trim-author-name (2019-09-28) 1 commit
+ - git-svn: trim leading and trailing whitespaces in author name
+
+ The author names taken from SVN repositories may have extra leading
+ or trailing whitespaces, which are now munged away.
+
+ Will merge to 'next'.
+
+
+* bw/submodule-helper-usage-fix (2019-09-29) 1 commit
+ - builtin/submodule--helper: fix usage string for 'update-clone'
+
+ Typofix.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* es/walken-tutorial (2019-08-07) 1 commit
+ - documentation: add tutorial for revision walking
+
+ A tutorial on object enumeration.
+
+ Perhaps take the thing with as little tweaks as possible, retitling
+ it to "my first object enumeration" or something?
+ cf. <20190814183328.GA40797@google.com>
+
+
+* dl/format-patch-cover-letter-subject (2019-09-05) 1 commit
+ - format-patch: learn --infer-cover-subject option
+ (this branch uses dl/format-patch-doc-test-cleanup.)
+
+ "git format-patch --cover-letter" learned to optionally use the
+ first paragraph (typically a single-liner) of branch.*.description
+ as the subject of the cover letter.
+
+ Reroll with a redesign with less emphasis on "subject" coming?
+
+
+* mt/threaded-grep-in-object-store (2019-08-13) 4 commits
+ - grep: re-enable threads in some non-worktree cases
+ - grep: disable grep_read_mutex when possible
+ - grep: allow locks to be enabled individually
+ - object-store: add lock to read_object_file_extended()
+
+ Traditionally, we avoided threaded grep while searching in objects
+ (as opposed to files in the working tree) as accesses to the object
+ layer is not thread-safe.  This limitation is getting lifted.
+
+ Expecting a reroll.
+ cf. <CAHd-oW4LZTFcoPvqd+FU03+64y7MzesMurCT7tUFQrF_z9ocnQ@mail.gmail.com>
+
+
+* jn/unknown-index-extensions (2018-11-21) 2 commits
+ - index: offer advice for unknown index extensions
+ - index: do not warn about unrecognized extensions
+
+ A bit too alarming warning given when unknown index extensions
+ exist is getting revamped.
+
+ Expecting a reroll.
+
+
+* jc/format-patch-delay-message-id (2019-04-05) 1 commit
+ - format-patch: move message-id and related headers to the end
+
+ The location "git format-patch --thread" adds the Message-Id:
+ header in the series of header fields has been moved down, which
+ may help working around a suspected bug in GMail MSA, reported at
+ <CAHk-=whP1stFZNAaJiMi5eZ9rj0MRt20Y_yHVczZPH+O01d+sA@mail.gmail.com>
+
+ Waiting for feedback to see if it truly helps.
+ Needs tests.
+
+
+* jt/fetch-cdn-offload (2019-03-12) 9 commits
+ - SQUASH???
+ - upload-pack: send part of packfile response as uri
+ - fetch-pack: support more than one pack lockfile
+ - upload-pack: refactor reading of pack-objects out
+ - Documentation: add Packfile URIs design doc
+ - Documentation: order protocol v2 sections
+ - http-fetch: support fetching packfiles by URL
+ - http: improve documentation of http_pack_request
+ - http: use --stdin when getting dumb HTTP pack
+
+ WIP for allowing a response to "git fetch" to instruct the bulk of
+ the pack contents to be instead taken from elsewhere (aka CDN).
+
+
+* js/protocol-advertise-multi (2018-12-28) 1 commit
+ - protocol: advertise multiple supported versions
+
+ The transport layer has been updated so that the protocol version
+ used can be negotiated between the parties, by the initiator
+ listing the protocol versions it is willing to talk, and the other
+ side choosing from one of them.
+
+ Expecting a reroll.
+ cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
+
+* bc/object-id-part17 (2019-08-19) 26 commits
+ - midx: switch to using the_hash_algo
+ - builtin/show-index: replace sha1_to_hex
+ - rerere: replace sha1_to_hex
+ - builtin/receive-pack: replace sha1_to_hex
+ - builtin/index-pack: replace sha1_to_hex
+ - packfile: replace sha1_to_hex
+ - wt-status: convert struct wt_status to object_id
+ - cache: remove null_sha1
+ - builtin/worktree: switch null_sha1 to null_oid
+ - builtin/repack: write object IDs of the proper length
+ - pack-write: use hash_to_hex when writing checksums
+ - sequencer: convert to use the_hash_algo
+ - bisect: switch to using the_hash_algo
+ - sha1-lookup: switch hard-coded constants to the_hash_algo
+ - config: use the_hash_algo in abbrev comparison
+ - combine-diff: replace GIT_SHA1_HEXSZ with the_hash_algo
+ - bundle: switch to use the_hash_algo
+ - connected: switch GIT_SHA1_HEXSZ to the_hash_algo
+ - show-index: switch hard-coded constants to the_hash_algo
+ - blame: remove needless comparison with GIT_SHA1_HEXSZ
+ - builtin/rev-parse: switch to use the_hash_algo
+ - builtin/blame: switch uses of GIT_SHA1_HEXSZ to the_hash_algo
+ - builtin/receive-pack: switch to use the_hash_algo
+ - fetch-pack: use parse_oid_hex
+ - patch-id: convert to use the_hash_algo
+ - builtin/replace: make hash size independent
+
+ Preparation for SHA-256 upgrade continues.
+
+ Will merge to 'next'.
+
 
 * cb/skip-utf8-check-with-pcre1 (2019-09-09) 1 commit
  - grep: skip UTF8 checks explicitly
@@ -518,6 +511,8 @@ of the repositories listed at
  The way "git pack-objects" reuses objects stored in existing pack
  to generate its result has been improved.
 
+ Will merge to 'next'.
+
 
 * jk/partial-clone-sparse-blob (2019-09-16) 4 commits
  - list-objects-filter: use empty string instead of NULL for sparse "base"
@@ -587,136 +582,8 @@ of the repositories listed at
 * jc/git-gui-has-maintainer (2019-09-18) 1 commit
  - SubmittingPatches: git-gui has a new maintainer
 
---------------------------------------------------
-[Stalled]
+ Will merge to 'next'.
 
-* es/walken-tutorial (2019-08-07) 1 commit
- - documentation: add tutorial for revision walking
-
- A tutorial on object enumeration.
-
- Perhaps take the thing with as little tweaks as possible, retitling
- it to "my first object enumeration" or something?
- cf. <20190814183328.GA40797@google.com>
-
-
-* dl/format-patch-cover-letter-subject (2019-09-05) 1 commit
- - format-patch: learn --infer-cover-subject option
- (this branch uses dl/format-patch-doc-test-cleanup.)
-
- "git format-patch --cover-letter" learned to optionally use the
- first paragraph (typically a single-liner) of branch.*.description
- as the subject of the cover letter.
-
- Reroll with a redesign with less emphasis on "subject" coming?
-
-
-* bc/object-id-part17 (2019-08-19) 26 commits
- - midx: switch to using the_hash_algo
- - builtin/show-index: replace sha1_to_hex
- - rerere: replace sha1_to_hex
- - builtin/receive-pack: replace sha1_to_hex
- - builtin/index-pack: replace sha1_to_hex
- - packfile: replace sha1_to_hex
- - wt-status: convert struct wt_status to object_id
- - cache: remove null_sha1
- - builtin/worktree: switch null_sha1 to null_oid
- - builtin/repack: write object IDs of the proper length
- - pack-write: use hash_to_hex when writing checksums
- - sequencer: convert to use the_hash_algo
- - bisect: switch to using the_hash_algo
- - sha1-lookup: switch hard-coded constants to the_hash_algo
- - config: use the_hash_algo in abbrev comparison
- - combine-diff: replace GIT_SHA1_HEXSZ with the_hash_algo
- - bundle: switch to use the_hash_algo
- - connected: switch GIT_SHA1_HEXSZ to the_hash_algo
- - show-index: switch hard-coded constants to the_hash_algo
- - blame: remove needless comparison with GIT_SHA1_HEXSZ
- - builtin/rev-parse: switch to use the_hash_algo
- - builtin/blame: switch uses of GIT_SHA1_HEXSZ to the_hash_algo
- - builtin/receive-pack: switch to use the_hash_algo
- - fetch-pack: use parse_oid_hex
- - patch-id: convert to use the_hash_algo
- - builtin/replace: make hash size independent
-
- Preparation for SHA-256 upgrade continues.
-
- Looked mostly OK, with a possible update.
- cf. <20190820223606.GJ365197@genre.crustytoothpaste.net>
-
-
-* mt/threaded-grep-in-object-store (2019-08-13) 4 commits
- - grep: re-enable threads in some non-worktree cases
- - grep: disable grep_read_mutex when possible
- - grep: allow locks to be enabled individually
- - object-store: add lock to read_object_file_extended()
-
- Traditionally, we avoided threaded grep while searching in objects
- (as opposed to files in the working tree) as accesses to the object
- layer is not thread-safe.  This limitation is getting lifted.
-
- Expecting a reroll.
- cf. <CAHd-oW4LZTFcoPvqd+FU03+64y7MzesMurCT7tUFQrF_z9ocnQ@mail.gmail.com>
-
-
-* jn/unknown-index-extensions (2018-11-21) 2 commits
- - index: offer advice for unknown index extensions
- - index: do not warn about unrecognized extensions
-
- A bit too alarming warning given when unknown index extensions
- exist is getting revamped.
-
- Expecting a reroll.
-
-
-* jc/format-patch-delay-message-id (2019-04-05) 1 commit
- - format-patch: move message-id and related headers to the end
-
- The location "git format-patch --thread" adds the Message-Id:
- header in the series of header fields has been moved down, which
- may help working around a suspected bug in GMail MSA, reported at
- <CAHk-=whP1stFZNAaJiMi5eZ9rj0MRt20Y_yHVczZPH+O01d+sA@mail.gmail.com>
-
- Waiting for feedback to see if it truly helps.
- Needs tests.
-
-
-* jt/fetch-cdn-offload (2019-03-12) 9 commits
- - SQUASH???
- - upload-pack: send part of packfile response as uri
- - fetch-pack: support more than one pack lockfile
- - upload-pack: refactor reading of pack-objects out
- - Documentation: add Packfile URIs design doc
- - Documentation: order protocol v2 sections
- - http-fetch: support fetching packfiles by URL
- - http: improve documentation of http_pack_request
- - http: use --stdin when getting dumb HTTP pack
-
- WIP for allowing a response to "git fetch" to instruct the bulk of
- the pack contents to be instead taken from elsewhere (aka CDN).
-
-
-* js/protocol-advertise-multi (2018-12-28) 1 commit
- - protocol: advertise multiple supported versions
-
- The transport layer has been updated so that the protocol version
- used can be negotiated between the parties, by the initiator
- listing the protocol versions it is willing to talk, and the other
- side choosing from one of them.
-
- Expecting a reroll.
- cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
 
 * ar/mingw-run-external-with-non-ascii-path (2019-08-26) 1 commit
   (merged to 'next' on 2019-09-09 at 1973826628)
@@ -734,6 +601,8 @@ of the repositories listed at
 
  PCRE fixes.
 
+ Will merge to 'next'?
+
 
 * dl/complete-cherry-pick-revert-skip (2019-08-27) 3 commits
   (merged to 'next' on 2019-09-18 at 7dd173f824)
@@ -747,7 +616,15 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ew/hashmap (2019-08-26) 11 commits
+* ew/hashmap (2019-09-28) 19 commits
+ - hashmap: remove type arg from hashmap_{get,put,remove}_entry
+ - OFFSETOF_VAR macro to simplify hashmap iterators
+ - hashmap: introduce hashmap_free_entries
+ - hashmap: hashmap_{put,remove} return hashmap_entry *
+ - hashmap: use *_entry APIs for iteration
+ - hashmap_cmp_fn takes hashmap_entry params
+ - hashmap_get{,_from_hash} return "struct hashmap_entry *"
+ - hashmap: use *_entry APIs to wrap container_of
  - hashmap_get_next returns "struct hashmap_entry *"
  - introduce container_of macro
  - hashmap_put takes "struct hashmap_entry *"
@@ -755,15 +632,15 @@ of the repositories listed at
  - hashmap_get takes "const struct hashmap_entry *"
  - hashmap_add takes "struct hashmap_entry *"
  - hashmap_get_next takes "const struct hashmap_entry *"
- - hashmap_entry: detect improper initialization
  - hashmap_entry_init takes "struct hashmap_entry *"
  - packfile: use hashmap_entry in delta_base_cache_entry
+ - coccicheck: detect hashmap_entry.hash assignment
  - diff: use hashmap_entry_init on moved_entry.ent
 
  Code clean-up of the hashmap API, both users and implementation.
 
- Expecting a reroll.
- cf. <20190908074953.kux7zz4y7iolqko4@whir>
+ clang seems to be unhappy, even though gcc seems to be fine.
+ cf. <xmqqy2y7ihih.fsf@gitster-ct.c.googlers.com>
 
 
 * jk/fast-import-history-bugfix (2019-08-27) 2 commits
@@ -785,16 +662,6 @@ of the repositories listed at
 
  On Windows, the root level of UNC share is now allowed to be used
  just like any other directory.
-
- Will merge to 'master'.
-
-
-* js/honor-cflags-in-hdr-check (2019-08-26) 1 commit
-  (merged to 'next' on 2019-09-09 at fcd9ee9f1b)
- + hdr-check: make it work on Windows
-
- Build fix to make sure hdr-check is run with the same preprocessor
- macros predefined by the $(MAKE) procedure.
 
  Will merge to 'master'.
 
@@ -990,7 +857,7 @@ of the repositories listed at
  attempting to see if a tree object it computed already exists in
  the repository.
 
- Waiting for a response to an updated log message.
+ Will merge to 'next'.
 
 
 * ma/asciidoctor-refmiscinfo (2019-09-16) 3 commits
@@ -1000,8 +867,7 @@ of the repositories listed at
 
  Update support for Asciidoctor documentation toolchain.
 
- Expecting a reroll.
- cf. <CAN0heSq9B8NSr7-Bcqpiags6wyMm_3KUGeo+7GZA85nd7GnG=w@mail.gmail.com>
+ Will merge to 'next'.
 
 
 * nd/switch-and-restore (2019-08-30) 1 commit
@@ -1063,15 +929,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* tg/stash-refresh-index (2019-09-05) 3 commits
+* tg/stash-refresh-index (2019-09-20) 3 commits
  - stash: make sure to write refreshed cache
  - merge: use refresh_and_write_cache
  - factor out refresh_and_write_cache function
 
  "git stash" learned to write refreshed index back to disk.
 
- Needs coordination with js/builtin-add-i topic, as they both wants
- the same kind of enhancement to the same API function.
+ Will merge to 'next'.
 
 
 * js/builtin-add-i (2019-08-30) 11 commits
@@ -1191,7 +1056,6 @@ of the repositories listed at
 
  "git rebase -i" showed a wrong HEAD while "reword" open the editor.
 
- May want to split out the last one into a separate topic.
  Will merge to 'next'.
 
 
@@ -1239,7 +1103,7 @@ of the repositories listed at
  "git rebase -i" learned a few options that are known by "git
  rebase" proper.
 
- Looking good.
+ Is this ready for 'next'?
 
 
 * ab/pcre-jit-fixes (2019-08-19) 18 commits
@@ -1264,6 +1128,8 @@ of the repositories listed at
  (this branch is used by cb/pcre1-cleanup.)
 
  A few simplification and bugfixes to PCRE interface.
+
+ Will merge to 'next'?
 
 
 * dl/rebase-i-keep-base (2019-08-27) 9 commits
@@ -1334,3 +1200,13 @@ of the repositories listed at
  parallel when fetching from multiple remote repositories.
 
  cf. <nycvar.QRO.7.76.6.1909111359150.5377@tvgsbejvaqbjf.bet>
+
+
+* js/honor-cflags-in-hdr-check (2019-08-26) 1 commit
+  (merged to 'next' on 2019-09-09 at fcd9ee9f1b)
+ + hdr-check: make it work on Windows
+
+ Build fix to make sure hdr-check is run with the same preprocessor
+ macros predefined by the $(MAKE) procedure.
+
+ Superseded by dl/honor-cflags-in-hdr-check series.
