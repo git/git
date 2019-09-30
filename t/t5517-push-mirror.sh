@@ -265,4 +265,14 @@ test_expect_success 'remote.foo.mirror=no has no effect' '
 
 '
 
+test_expect_success 'push to mirrored repository with refspec fails' '
+	mk_repo_pair &&
+	(
+		cd master &&
+		echo one >foo && git add foo && git commit -m one &&
+		git config --add remote.up.mirror true &&
+		test_must_fail git push up master
+	)
+'
+
 test_done
