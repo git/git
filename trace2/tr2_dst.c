@@ -215,13 +215,8 @@ connected:
 static void tr2_dst_malformed_warning(struct tr2_dst *dst,
 				      const char *tgt_value)
 {
-	struct strbuf buf = STRBUF_INIT;
-
-	strbuf_addf(&buf, "trace2: unknown value for '%s': '%s'",
-		    tr2_sysenv_display_name(dst->sysenv_var), tgt_value);
-	warning("%s", buf.buf);
-
-	strbuf_release(&buf);
+	warning("trace2: unknown value for '%s': '%s'",
+		tr2_sysenv_display_name(dst->sysenv_var), tgt_value);
 }
 
 int tr2_dst_get_trace_fd(struct tr2_dst *dst)
