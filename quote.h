@@ -40,6 +40,7 @@ void sq_quotef(struct strbuf *, const char *fmt, ...);
  */
 void sq_quote_buf_pretty(struct strbuf *, const char *src);
 void sq_quote_argv_pretty(struct strbuf *, const char **argv);
+void sq_append_quote_argv_pretty(struct strbuf *dst, const char **argv);
 
 /* This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have

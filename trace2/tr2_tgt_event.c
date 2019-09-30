@@ -205,11 +205,6 @@ static void maybe_add_string_va(struct json_writer *jw, const char *field_name,
 		strbuf_release(&buf);
 		return;
 	}
-
-	if (fmt && *fmt) {
-		jw_object_string(jw, field_name, fmt);
-		return;
-	}
 }
 
 static void fn_error_va_fl(const char *file, int line, const char *fmt,

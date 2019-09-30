@@ -21,10 +21,10 @@ static struct tr2_dst tr2dst_perf = { TR2_SYSENV_PERF, 0, 0, 0 };
  */
 static int tr2env_perf_be_brief;
 
-#define TR2FMT_PERF_FL_WIDTH (50)
+#define TR2FMT_PERF_FL_WIDTH (28)
 #define TR2FMT_PERF_MAX_EVENT_NAME (12)
-#define TR2FMT_PERF_REPO_WIDTH (4)
-#define TR2FMT_PERF_CATEGORY_WIDTH (10)
+#define TR2FMT_PERF_REPO_WIDTH (3)
+#define TR2FMT_PERF_CATEGORY_WIDTH (12)
 
 #define TR2_DOTS_BUFFER_SIZE (100)
 #define TR2_INDENT (2)
@@ -79,17 +79,36 @@ static void perf_fmt_prepare(const char *event_name,
 
 	if (!tr2env_perf_be_brief) {
 		struct tr2_tbuf tb_now;
+		size_t fl_end_col;
 
 		tr2_tbuf_local_time(&tb_now);
 		strbuf_addstr(buf, tb_now.buf);
 		strbuf_addch(buf, ' ');
 
-		if (file && *file)
-			strbuf_addf(buf, "%s:%d ", file, line);
-		while (buf->len < TR2FMT_PERF_FL_WIDTH)
+		fl_end_col = buf->len + TR2FMT_PERF_FL_WIDTH;
+
+		if (file && *file) {
+			struct strbuf buf_fl = STRBUF_INIT;
+
+			strbuf_addf(&buf_fl, "%s:%d", file, line);
+
+			if (buf_fl.len <= TR2FMT_PERF_FL_WIDTH)
+				strbuf_addbuf(buf, &buf_fl);
+			else {
+				size_t avail = TR2FMT_PERF_FL_WIDTH - 3;
+				strbuf_addstr(buf, "...");
+				strbuf_add(buf,
+					   &buf_fl.buf[buf_fl.len - avail],
+					   avail);
+			}
+
+			strbuf_release(&buf_fl);
+		}
+
+		while (buf->len < fl_end_col)
 			strbuf_addch(buf, ' ');
 
-		strbuf_addstr(buf, "| ");
+		strbuf_addstr(buf, " | ");
 	}
 
 	strbuf_addf(buf, "d%d | ", tr2_sid_depth());
@@ -102,7 +121,7 @@ static void perf_fmt_prepare(const char *event_name,
 		strbuf_addf(buf, "r%d ", repo->trace2_repo_id);
 	while (buf->len < len)
 		strbuf_addch(buf, ' ');
-	strbuf_addstr(buf, "| ");
+	strbuf_addstr(buf, " | ");
 
 	if (p_us_elapsed_absolute)
 		strbuf_addf(buf, "%9.6f | ",
@@ -116,8 +135,8 @@ static void perf_fmt_prepare(const char *event_name,
 	else
 		strbuf_addf(buf, "%9s | ", " ");
 
-	strbuf_addf(buf, "%-*s | ", TR2FMT_PERF_CATEGORY_WIDTH,
-		    (category ? category : ""));
+	strbuf_addf(buf, "%-*.*s | ", TR2FMT_PERF_CATEGORY_WIDTH,
+		    TR2FMT_PERF_CATEGORY_WIDTH, (category ? category : ""));
 
 	if (ctx->nr_open_regions > 0) {
 		int len_indent = TR2_INDENT_LENGTH(ctx);
@@ -165,7 +184,7 @@ static void fn_start_fl(const char *file, int line,
 	const char *event_name = "start";
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	sq_quote_argv_pretty(&buf_payload, argv);
+	sq_append_quote_argv_pretty(&buf_payload, argv);
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 NULL, NULL, &buf_payload);
@@ -218,11 +237,6 @@ static void maybe_append_string_va(struct strbuf *buf, const char *fmt,
 		va_copy(copy_ap, ap);
 		strbuf_vaddf(buf, fmt, copy_ap);
 		va_end(copy_ap);
-		return;
-	}
-
-	if (fmt && *fmt) {
-		strbuf_addstr(buf, fmt);
 		return;
 	}
 }
@@ -285,8 +299,9 @@ static void fn_alias_fl(const char *file, int line, const char *alias,
 	const char *event_name = "alias";
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addf(&buf_payload, "alias:%s argv:", alias);
-	sq_quote_argv_pretty(&buf_payload, argv);
+	strbuf_addf(&buf_payload, "alias:%s argv:[", alias);
+	sq_append_quote_argv_pretty(&buf_payload, argv);
+	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL, NULL,
 			 &buf_payload);
@@ -315,10 +330,14 @@ static void fn_child_start_fl(const char *file, int line,
 		sq_quote_buf_pretty(&buf_payload, cmd->dir);
 	}
 
-	strbuf_addstr(&buf_payload, " argv:");
-	if (cmd->git_cmd)
-		strbuf_addstr(&buf_payload, " git");
-	sq_quote_argv_pretty(&buf_payload, cmd->argv);
+	strbuf_addstr(&buf_payload, " argv:[");
+	if (cmd->git_cmd) {
+		strbuf_addstr(&buf_payload, "git");
+		if (cmd->argv[0])
+			strbuf_addch(&buf_payload, ' ');
+	}
+	sq_append_quote_argv_pretty(&buf_payload, cmd->argv);
+	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 NULL, NULL, &buf_payload);
@@ -369,10 +388,14 @@ static void fn_exec_fl(const char *file, int line, uint64_t us_elapsed_absolute,
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	strbuf_addf(&buf_payload, "id:%d ", exec_id);
-	strbuf_addstr(&buf_payload, "argv:");
-	if (exe)
-		strbuf_addf(&buf_payload, " %s", exe);
-	sq_quote_argv_pretty(&buf_payload, argv);
+	strbuf_addstr(&buf_payload, "argv:[");
+	if (exe) {
+		strbuf_addstr(&buf_payload, exe);
+		if (argv[0])
+			strbuf_addch(&buf_payload, ' ');
+	}
+	sq_append_quote_argv_pretty(&buf_payload, argv);
+	strbuf_addch(&buf_payload, ']');
 
 	perf_io_write_fl(file, line, event_name, NULL, &us_elapsed_absolute,
 			 NULL, NULL, &buf_payload);
@@ -433,8 +456,11 @@ static void fn_region_enter_printf_va_fl(const char *file, int line,
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	if (label)
-		strbuf_addf(&buf_payload, "label:%s ", label);
-	maybe_append_string_va(&buf_payload, fmt, ap);
+		strbuf_addf(&buf_payload, "label:%s", label);
+	if (fmt && *fmt) {
+		strbuf_addch(&buf_payload, ' ');
+		maybe_append_string_va(&buf_payload, fmt, ap);
+	}
 
 	perf_io_write_fl(file, line, event_name, repo, &us_elapsed_absolute,
 			 NULL, category, &buf_payload);
@@ -450,8 +476,11 @@ static void fn_region_leave_printf_va_fl(
 	struct strbuf buf_payload = STRBUF_INIT;
 
 	if (label)
-		strbuf_addf(&buf_payload, "label:%s ", label);
-	maybe_append_string_va(&buf_payload, fmt, ap);
+		strbuf_addf(&buf_payload, "label:%s", label);
+	if (fmt && *fmt) {
+		strbuf_addch(&buf_payload, ' ' );
+		maybe_append_string_va(&buf_payload, fmt, ap);
+	}
 
 	perf_io_write_fl(file, line, event_name, repo, &us_elapsed_absolute,
 			 &us_elapsed_region, category, &buf_payload);
