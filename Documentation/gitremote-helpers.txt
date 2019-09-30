@@ -297,9 +297,13 @@ Supported if the helper has the "option" capability.
 	same batch are complete. Only objects which were reported
 	in the output of 'list' with a sha1 may be fetched this way.
 +
-Optionally may output a 'lock <file>' line indicating a file under
-GIT_DIR/objects/pack which is keeping a pack until refs can be
-suitably updated.
+Optionally may output a 'lock <file>' line indicating the full path of
+a file under `$GIT_DIR/objects/pack` which is keeping a pack until
+refs can be suitably updated.  The path must end with `.keep`. This is
+a mechanism to name a <pack,idx,keep> tuple by giving only the keep
+component.  The kept pack will not be deleted by a concurrent repack,
+even though its objects may not be referenced until the fetch completes.
+The `.keep` file will be deleted at the conclusion of the fetch.
 +
 If option 'check-connectivity' is requested, the helper must output
 'connectivity-ok' if the clone is self-contained and connected.
