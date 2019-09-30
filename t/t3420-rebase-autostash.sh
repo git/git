@@ -37,7 +37,6 @@ test_expect_success setup '
 create_expected_success_am () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
 	First, rewinding head to replay your work on top of it...
 	Applying: second commit
 	Applying: third commit
@@ -48,7 +47,6 @@ create_expected_success_am () {
 create_expected_success_interactive () {
 	q_to_cr >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
 	Applied autostash.
 	Successfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
@@ -57,7 +55,6 @@ create_expected_success_interactive () {
 create_expected_failure_am () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
 	First, rewinding head to replay your work on top of it...
 	Applying: second commit
 	Applying: third commit
@@ -70,7 +67,6 @@ create_expected_failure_am () {
 create_expected_failure_interactive () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	HEAD is now at $(git rev-parse --short feature-branch) third commit
 	Applying autostash resulted in conflicts.
 	Your changes are safe in the stash.
 	You can run "git stash pop" or "git stash drop" at any time.
@@ -304,6 +300,14 @@ test_expect_success 'branch is left alone when possible' '
 	git rebase --autostash unchanged-branch &&
 	test changed = "$(cat file0)" &&
 	test unchanged-branch = "$(git rev-parse --abbrev-ref HEAD)"
+'
+
+test_expect_success 'never change active branch' '
+	git checkout -b not-the-feature-branch unrelated-onto-branch &&
+	test_when_finished "git reset --hard && git checkout master" &&
+	echo changed >file0 &&
+	git rebase --autostash not-the-feature-branch feature-branch &&
+	test_cmp_rev not-the-feature-branch unrelated-onto-branch
 '
 
 test_done
