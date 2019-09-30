@@ -6,8 +6,10 @@ Updates since v2.23
 
 Backward compatibility note
 
- * (no entry yet so far)
-
+ * Although it is not officially deprecated, "filter-branch" is
+   showing its age and alternatives are available.  From this release,
+   we started to discourage its uses and hint people about
+   filter-repo.
 
 UI, Workflows & Features
 
@@ -46,6 +48,26 @@ UI, Workflows & Features
  * The list-objects-filter API (used to create a sparse/lazy clone)
    learned to take a combined filter specification.
 
+ * The documentation and tests for "git format-patch" have been
+   cleaned up.
+
+ * On Windows, the root level of UNC share is now allowed to be used
+   just like any other directory.
+
+ * The command line completion support (in contrib/) learned about the
+   "--skip" option of "git revert" and "git cherry-pick".
+
+ * "git rebase --keep-base <upstream>" tries to find the original base
+   of the topic being rebased and rebase on top of that same base,
+   which is useful when running the "git rebase -i" (and its limited
+   variant "git rebase -x").
+
+   The command also has learned to fast-forward in more cases where it
+   can instead of replaying to recreate identical commits.
+
+ * A configuration variable tells "git fetch" to write the commit
+   graph after finishing.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -70,6 +92,21 @@ Performance, Internal Implementation, Development Support etc.
  * The http transport lacked some optimization the native transports
    learned to avoid unnecessary ref advertisement, which has been
    corrected.
+
+ * Preparation for SHA-256 upgrade continues in the test department.
+   (merge 0c37c41d13 bc/hash-independent-tests-part-5 later to maint).
+
+ * The memory ownership model of the "git fast-import" got
+   straightened out.
+
+ * Output from trace2 subsystem is formatted more prettily now.
+
+ * The internal code originally invented for ".gitignore" processing
+   got reshuffled and renamed to make it less tied to "excluding" and
+   stress more that it is about "matching", as it has been reused for
+   things like sparse checkout specification that want to check if a
+   path is "included".
+
 
 
 Fixes since v2.23
@@ -135,9 +172,39 @@ Fixes since v2.23
    xmalloc() wrapper, as the rest of the system, for consistency.
    (merge 93b980e58f cb/curl-use-xmalloc later to maint).
 
+ * Build fix to adjust .gitignore to unignore a path that we started to track.
+   (merge aac6ff7b5b js/visual-studio later to maint).
+
+ * A few implementation fixes in the notes API.
+   (merge 60fe477a0b mh/notes-duplicate-entries later to maint).
+
+ * Fix an earlier regression to "git push --all" which should have
+   been forbidden when the target remote repository is set to be a
+   mirror.
+   (merge 8e4c8af058 tg/push-all-in-mirror-forbidden later to maint).
+
+ * Fix an earlier regression in the test suite, which mistakenly
+   stopped running HTTPD tests.
+   (merge 3960290675 sg/git-test-boolean later to maint).
+
+ * "git rebase --autostash <upstream> <branch>", when <branch> is
+   different from the current branch, incorrectly moved the tip of the
+   current branch, which has been corrected.
+   (merge bf1e28e0ad bw/rebase-autostash-keep-current-branch later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
    (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
    (merge 415b770b88 ds/midx-expire-repack later to maint).
    (merge 19800bdc3f nd/diff-parseopt later to maint).
    (merge 58166c2e9d tg/t0021-racefix later to maint).
+   (merge 7027f508c7 dl/compat-cleanup later to maint).
+   (merge e770fbfeff jc/test-cleanup later to maint).
+   (merge 1fd881d404 rs/trace2-dst-warning later to maint).
+   (merge 7e92756751 mh/http-urlmatch-cleanup later to maint).
+   (merge 9784f97321 mh/release-commit-memory-fix later to maint).
+   (merge 60d198d022 tb/banned-vsprintf-namefix later to maint).
+   (merge 80e3658647 rs/help-unknown-ref-does-not-return later to maint).
+   (merge 0a8bc7068f dt/remote-helper-doc-re-lock-option later to maint).
+   (merge 27fd1e4ea7 en/merge-options-ff-and-friends later to maint).
+   (merge 502c386ff9 sg/clean-nested-repo-with-ignored later to maint).
