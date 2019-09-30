@@ -17,6 +17,14 @@ which can improve `git push` performance in repos with many files.
 +
 * `fetch.negotiationAlgorithm=skipping` may improve fetch negotiation times by
 skipping more commits at a time, reducing the number of round trips.
++
+* `fetch.writeCommitGraph=true` writes a commit-graph after every `git fetch`
+command that downloads a pack-file from a remote. Using the `--split` option,
+most executions will create a very small commit-graph file on top of the
+existing commit-graph file(s). Occasionally, these files will merge and the
+write may take longer. Having an updated commit-graph file helps performance
+of many Git commands, including `git merge-base`, `git push -f`, and
+`git log --graph`.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the

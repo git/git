@@ -570,6 +570,19 @@ test_expect_success 'LHS of refspec follows ref disambiguation rules' '
 	)
 '
 
+test_expect_success 'fetch.writeCommitGraph' '
+	git clone three write &&
+	(
+		cd three &&
+		test_commit new
+	) &&
+	(
+		cd write &&
+		git -c fetch.writeCommitGraph fetch origin &&
+		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain
+	)
+'
+
 # configured prune tests
 
 set_config_tristate () {
