@@ -561,7 +561,7 @@ int no_wildcard(const char *string)
 	return string[simple_length(string)] == '\0';
 }
 
-void parse_exclude_pattern(const char **pattern,
+void parse_path_pattern(const char **pattern,
 			   int *patternlen,
 			   unsigned *flags,
 			   int *nowildcardlen)
@@ -571,20 +571,20 @@ void parse_exclude_pattern(const char **pattern,
 
 	*flags = 0;
 	if (*p == '!') {
-		*flags |= EXC_FLAG_NEGATIVE;
+		*flags |= PATTERN_FLAG_NEGATIVE;
 		p++;
 	}
 	len = strlen(p);
 	if (len && p[len - 1] == '/') {
 		len--;
-		*flags |= EXC_FLAG_MUSTBEDIR;
+		*flags |= PATTERN_FLAG_MUSTBEDIR;
 	}
 	for (i = 0; i < len; i++) {
 		if (p[i] == '/')
 			break;
 	}
 	if (i == len)
-		*flags |= EXC_FLAG_NODIR;
+		*flags |= PATTERN_FLAG_NODIR;
 	*nowildcardlen = simple_length(p);
 	/*
 	 * we should have excluded the trailing slash from 'p' too,
@@ -594,35 +594,35 @@ void parse_exclude_pattern(const char **pattern,
 	if (*nowildcardlen > len)
 		*nowildcardlen = len;
 	if (*p == '*' && no_wildcard(p + 1))
-		*flags |= EXC_FLAG_ENDSWITH;
+		*flags |= PATTERN_FLAG_ENDSWITH;
 	*pattern = p;
 	*patternlen = len;
 }
 
-void add_exclude(const char *string, const char *base,
-		 int baselen, struct exclude_list *el, int srcpos)
+void add_pattern(const char *string, const char *base,
+		 int baselen, struct pattern_list *pl, int srcpos)
 {
-	struct exclude *x;
+	struct path_pattern *pattern;
 	int patternlen;
 	unsigned flags;
 	int nowildcardlen;
 
-	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
-	if (flags & EXC_FLAG_MUSTBEDIR) {
-		FLEXPTR_ALLOC_MEM(x, pattern, string, patternlen);
+	parse_path_pattern(&string, &patternlen, &flags, &nowildcardlen);
+	if (flags & PATTERN_FLAG_MUSTBEDIR) {
+		FLEXPTR_ALLOC_MEM(pattern, pattern, string, patternlen);
 	} else {
-		x = xmalloc(sizeof(*x));
-		x->pattern = string;
+		pattern = xmalloc(sizeof(*pattern));
+		pattern->pattern = string;
 	}
-	x->patternlen = patternlen;
-	x->nowildcardlen = nowildcardlen;
-	x->base = base;
-	x->baselen = baselen;
-	x->flags = flags;
-	x->srcpos = srcpos;
-	ALLOC_GROW(el->excludes, el->nr + 1, el->alloc);
-	el->excludes[el->nr++] = x;
-	x->el = el;
+	pattern->patternlen = patternlen;
+	pattern->nowildcardlen = nowildcardlen;
+	pattern->base = base;
+	pattern->baselen = baselen;
+	pattern->flags = flags;
+	pattern->srcpos = srcpos;
+	ALLOC_GROW(pl->patterns, pl->nr + 1, pl->alloc);
+	pl->patterns[pl->nr++] = pattern;
+	pattern->pl = pl;
 }
 
 static int read_skip_worktree_file_from_index(const struct index_state *istate,
@@ -643,19 +643,19 @@ static int read_skip_worktree_file_from_index(const struct index_state *istate,
 }
 
 /*
- * Frees memory within el which was allocated for exclude patterns and
- * the file buffer.  Does not free el itself.
+ * Frees memory within pl which was allocated for exclude patterns and
+ * the file buffer.  Does not free pl itself.
  */
-void clear_exclude_list(struct exclude_list *el)
+void clear_pattern_list(struct pattern_list *pl)
 {
 	int i;
 
-	for (i = 0; i < el->nr; i++)
-		free(el->excludes[i]);
-	free(el->excludes);
-	free(el->filebuf);
+	for (i = 0; i < pl->nr; i++)
+		free(pl->patterns[i]);
+	free(pl->patterns);
+	free(pl->filebuf);
 
-	memset(el, 0, sizeof(*el));
+	memset(pl, 0, sizeof(*pl));
 }
 
 static void trim_trailing_spaces(char *buf)
@@ -762,21 +762,21 @@ static void invalidate_directory(struct untracked_cache *uc,
 		dir->dirs[i]->recurse = 0;
 }
 
-static int add_excludes_from_buffer(char *buf, size_t size,
+static int add_patterns_from_buffer(char *buf, size_t size,
 				    const char *base, int baselen,
-				    struct exclude_list *el);
+				    struct pattern_list *pl);
 
 /*
  * Given a file with name "fname", read it (either from disk, or from
  * an index if 'istate' is non-null), parse it and store the
- * exclude rules in "el".
+ * exclude rules in "pl".
  *
  * If "ss" is not NULL, compute SHA-1 of the exclude file and fill
- * stat data from disk (only valid if add_excludes returns zero). If
+ * stat data from disk (only valid if add_patterns returns zero). If
  * ss_valid is non-zero, "ss" must contain good value as input.
  */
-static int add_excludes(const char *fname, const char *base, int baselen,
-			struct exclude_list *el, struct index_state *istate,
+static int add_patterns(const char *fname, const char *base, int baselen,
+			struct pattern_list *pl, struct index_state *istate,
 			struct oid_stat *oid_stat)
 {
 	struct stat st;
@@ -837,21 +837,21 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		}
 	}
 
-	add_excludes_from_buffer(buf, size, base, baselen, el);
+	add_patterns_from_buffer(buf, size, base, baselen, pl);
 	return 0;
 }
 
-static int add_excludes_from_buffer(char *buf, size_t size,
+static int add_patterns_from_buffer(char *buf, size_t size,
 				    const char *base, int baselen,
-				    struct exclude_list *el)
+				    struct pattern_list *pl)
 {
 	int i, lineno = 1;
 	char *entry;
 
-	el->filebuf = buf;
+	pl->filebuf = buf;
 
 	if (skip_utf8_bom(&buf, size))
-		size -= buf - el->filebuf;
+		size -= buf - pl->filebuf;
 
 	entry = buf;
 
@@ -860,7 +860,7 @@ static int add_excludes_from_buffer(char *buf, size_t size,
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
 				trim_trailing_spaces(entry);
-				add_exclude(entry, base, baselen, el, lineno);
+				add_pattern(entry, base, baselen, pl, lineno);
 			}
 			lineno++;
 			entry = buf + i + 1;
@@ -869,17 +869,17 @@ static int add_excludes_from_buffer(char *buf, size_t size,
 	return 0;
 }
 
-int add_excludes_from_file_to_list(const char *fname, const char *base,
-				   int baselen, struct exclude_list *el,
+int add_patterns_from_file_to_list(const char *fname, const char *base,
+				   int baselen, struct pattern_list *pl,
 				   struct index_state *istate)
 {
-	return add_excludes(fname, base, baselen, el, istate, NULL);
+	return add_patterns(fname, base, baselen, pl, istate, NULL);
 }
 
-int add_excludes_from_blob_to_list(
+int add_patterns_from_blob_to_list(
 	struct object_id *oid,
 	const char *base, int baselen,
-	struct exclude_list *el)
+	struct pattern_list *pl)
 {
 	char *buf;
 	size_t size;
@@ -889,31 +889,31 @@ int add_excludes_from_blob_to_list(
 	if (r != 1)
 		return r;
 
-	add_excludes_from_buffer(buf, size, base, baselen, el);
+	add_patterns_from_buffer(buf, size, base, baselen, pl);
 	return 0;
 }
 
-struct exclude_list *add_exclude_list(struct dir_struct *dir,
+struct pattern_list *add_pattern_list(struct dir_struct *dir,
 				      int group_type, const char *src)
 {
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	struct exclude_list_group *group;
 
 	group = &dir->exclude_list_group[group_type];
-	ALLOC_GROW(group->el, group->nr + 1, group->alloc);
-	el = &group->el[group->nr++];
-	memset(el, 0, sizeof(*el));
-	el->src = src;
-	return el;
+	ALLOC_GROW(group->pl, group->nr + 1, group->alloc);
+	pl = &group->pl[group->nr++];
+	memset(pl, 0, sizeof(*pl));
+	pl->src = src;
+	return pl;
 }
 
 /*
  * Used to set up core.excludesfile and .git/info/exclude lists.
  */
-static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
+static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
 				     struct oid_stat *oid_stat)
 {
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	/*
 	 * catch setup_standard_excludes() that's called before
 	 * dir->untracked is assigned. That function behaves
@@ -921,15 +921,15 @@ static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
 	 */
 	if (!dir->untracked)
 		dir->unmanaged_exclude_files++;
-	el = add_exclude_list(dir, EXC_FILE, fname);
-	if (add_excludes(fname, "", 0, el, NULL, oid_stat) < 0)
+	pl = add_pattern_list(dir, EXC_FILE, fname);
+	if (add_patterns(fname, "", 0, pl, NULL, oid_stat) < 0)
 		die(_("cannot use %s as an exclude file"), fname);
 }
 
-void add_excludes_from_file(struct dir_struct *dir, const char *fname)
+void add_patterns_from_file(struct dir_struct *dir, const char *fname)
 {
 	dir->unmanaged_exclude_files++; /* see validate_untracked_cache() */
-	add_excludes_from_file_1(dir, fname, NULL);
+	add_patterns_from_file_1(dir, fname, NULL);
 }
 
 int match_basename(const char *basename, int basenamelen,
@@ -940,7 +940,7 @@ int match_basename(const char *basename, int basenamelen,
 		if (patternlen == basenamelen &&
 		    !fspathncmp(pattern, basename, basenamelen))
 			return 1;
-	} else if (flags & EXC_FLAG_ENDSWITH) {
+	} else if (flags & PATTERN_FLAG_ENDSWITH) {
 		/* "*literal" matching against "fooliteral" */
 		if (patternlen - 1 <= basenamelen &&
 		    !fspathncmp(pattern + 1,
@@ -1021,85 +1021,97 @@ int match_pathname(const char *pathname, int pathlen,
  * any, determines the fate.  Returns the exclude_list element which
  * matched, or NULL for undecided.
  */
-static struct exclude *last_exclude_matching_from_list(const char *pathname,
+static struct path_pattern *last_matching_pattern_from_list(const char *pathname,
 						       int pathlen,
 						       const char *basename,
 						       int *dtype,
-						       struct exclude_list *el,
+						       struct pattern_list *pl,
 						       struct index_state *istate)
 {
-	struct exclude *exc = NULL; /* undecided */
+	struct path_pattern *res = NULL; /* undecided */
 	int i;
 
-	if (!el->nr)
+	if (!pl->nr)
 		return NULL;	/* undefined */
 
-	for (i = el->nr - 1; 0 <= i; i--) {
-		struct exclude *x = el->excludes[i];
-		const char *exclude = x->pattern;
-		int prefix = x->nowildcardlen;
+	for (i = pl->nr - 1; 0 <= i; i--) {
+		struct path_pattern *pattern = pl->patterns[i];
+		const char *exclude = pattern->pattern;
+		int prefix = pattern->nowildcardlen;
 
-		if (x->flags & EXC_FLAG_MUSTBEDIR) {
+		if (pattern->flags & PATTERN_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
 				*dtype = get_dtype(NULL, istate, pathname, pathlen);
 			if (*dtype != DT_DIR)
 				continue;
 		}
 
-		if (x->flags & EXC_FLAG_NODIR) {
+		if (pattern->flags & PATTERN_FLAG_NODIR) {
 			if (match_basename(basename,
 					   pathlen - (basename - pathname),
-					   exclude, prefix, x->patternlen,
-					   x->flags)) {
-				exc = x;
+					   exclude, prefix, pattern->patternlen,
+					   pattern->flags)) {
+				res = pattern;
 				break;
 			}
 			continue;
 		}
 
-		assert(x->baselen == 0 || x->base[x->baselen - 1] == '/');
+		assert(pattern->baselen == 0 ||
+		       pattern->base[pattern->baselen - 1] == '/');
 		if (match_pathname(pathname, pathlen,
-				   x->base, x->baselen ? x->baselen - 1 : 0,
-				   exclude, prefix, x->patternlen, x->flags)) {
-			exc = x;
+				   pattern->base,
+				   pattern->baselen ? pattern->baselen - 1 : 0,
+				   exclude, prefix, pattern->patternlen,
+				   pattern->flags)) {
+			res = pattern;
 			break;
 		}
 	}
-	return exc;
+	return res;
 }
 
 /*
- * Scan the list and let the last match determine the fate.
- * Return 1 for exclude, 0 for include and -1 for undecided.
+ * Scan the list of patterns to determine if the ordered list
+ * of patterns matches on 'pathname'.
+ *
+ * Return 1 for a match, 0 for not matched and -1 for undecided.
  */
-int is_excluded_from_list(const char *pathname,
-			  int pathlen, const char *basename, int *dtype,
-			  struct exclude_list *el, struct index_state *istate)
+enum pattern_match_result path_matches_pattern_list(
+				const char *pathname, int pathlen,
+				const char *basename, int *dtype,
+				struct pattern_list *pl,
+				struct index_state *istate)
 {
-	struct exclude *exclude;
-	exclude = last_exclude_matching_from_list(pathname, pathlen, basename,
-						  dtype, el, istate);
-	if (exclude)
-		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
-	return -1; /* undecided */
+	struct path_pattern *pattern;
+	pattern = last_matching_pattern_from_list(pathname, pathlen, basename,
+						  dtype, pl, istate);
+	if (pattern) {
+		if (pattern->flags & PATTERN_FLAG_NEGATIVE)
+			return NOT_MATCHED;
+		else
+			return MATCHED;
+	}
+
+	return UNDECIDED;
 }
 
-static struct exclude *last_exclude_matching_from_lists(struct dir_struct *dir,
-							struct index_state *istate,
-		const char *pathname, int pathlen, const char *basename,
-		int *dtype_p)
+static struct path_pattern *last_matching_pattern_from_lists(
+		struct dir_struct *dir, struct index_state *istate,
+		const char *pathname, int pathlen,
+		const char *basename, int *dtype_p)
 {
 	int i, j;
 	struct exclude_list_group *group;
-	struct exclude *exclude;
+	struct path_pattern *pattern;
 	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
 		group = &dir->exclude_list_group[i];
 		for (j = group->nr - 1; j >= 0; j--) {
-			exclude = last_exclude_matching_from_list(
+			pattern = last_matching_pattern_from_list(
 				pathname, pathlen, basename, dtype_p,
-				&group->el[j], istate);
-			if (exclude)
-				return exclude;
+				&group->pl[j], istate);
+			if (pattern)
+				return pattern;
 		}
 	}
 	return NULL;
@@ -1114,7 +1126,7 @@ static void prep_exclude(struct dir_struct *dir,
 			 const char *base, int baselen)
 {
 	struct exclude_list_group *group;
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	struct exclude_stack *stk = NULL;
 	struct untracked_cache_dir *untracked;
 	int current;
@@ -1130,17 +1142,17 @@ static void prep_exclude(struct dir_struct *dir,
 		if (stk->baselen <= baselen &&
 		    !strncmp(dir->basebuf.buf, base, stk->baselen))
 			break;
-		el = &group->el[dir->exclude_stack->exclude_ix];
+		pl = &group->pl[dir->exclude_stack->exclude_ix];
 		dir->exclude_stack = stk->prev;
-		dir->exclude = NULL;
-		free((char *)el->src); /* see strbuf_detach() below */
-		clear_exclude_list(el);
+		dir->pattern = NULL;
+		free((char *)pl->src); /* see strbuf_detach() below */
+		clear_pattern_list(pl);
 		free(stk);
 		group->nr--;
 	}
 
 	/* Skip traversing into sub directories if the parent is excluded */
-	if (dir->exclude)
+	if (dir->pattern)
 		return;
 
 	/*
@@ -1181,7 +1193,7 @@ static void prep_exclude(struct dir_struct *dir,
 		stk->baselen = cp - base;
 		stk->exclude_ix = group->nr;
 		stk->ucd = untracked;
-		el = add_exclude_list(dir, EXC_DIRS, NULL);
+		pl = add_pattern_list(dir, EXC_DIRS, NULL);
 		strbuf_add(&dir->basebuf, base + current, stk->baselen - current);
 		assert(stk->baselen == dir->basebuf.len);
 
@@ -1189,15 +1201,15 @@ static void prep_exclude(struct dir_struct *dir,
 		if (stk->baselen) {
 			int dt = DT_DIR;
 			dir->basebuf.buf[stk->baselen - 1] = 0;
-			dir->exclude = last_exclude_matching_from_lists(dir,
+			dir->pattern = last_matching_pattern_from_lists(dir,
 									istate,
 				dir->basebuf.buf, stk->baselen - 1,
 				dir->basebuf.buf + current, &dt);
 			dir->basebuf.buf[stk->baselen - 1] = '/';
-			if (dir->exclude &&
-			    dir->exclude->flags & EXC_FLAG_NEGATIVE)
-				dir->exclude = NULL;
-			if (dir->exclude) {
+			if (dir->pattern &&
+			    dir->pattern->flags & PATTERN_FLAG_NEGATIVE)
+				dir->pattern = NULL;
+			if (dir->pattern) {
 				dir->exclude_stack = stk;
 				return;
 			}
@@ -1223,30 +1235,30 @@ static void prep_exclude(struct dir_struct *dir,
 			/*
 			 * dir->basebuf gets reused by the traversal, but we
 			 * need fname to remain unchanged to ensure the src
-			 * member of each struct exclude correctly
+			 * member of each struct path_pattern correctly
 			 * back-references its source file.  Other invocations
-			 * of add_exclude_list provide stable strings, so we
+			 * of add_pattern_list provide stable strings, so we
 			 * strbuf_detach() and free() here in the caller.
 			 */
 			struct strbuf sb = STRBUF_INIT;
 			strbuf_addbuf(&sb, &dir->basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
-			el->src = strbuf_detach(&sb, NULL);
-			add_excludes(el->src, el->src, stk->baselen, el, istate,
+			pl->src = strbuf_detach(&sb, NULL);
+			add_patterns(pl->src, pl->src, stk->baselen, pl, istate,
 				     untracked ? &oid_stat : NULL);
 		}
 		/*
 		 * NEEDSWORK: when untracked cache is enabled, prep_exclude()
 		 * will first be called in valid_cached_dir() then maybe many
-		 * times more in last_exclude_matching(). When the cache is
-		 * used, last_exclude_matching() will not be called and
+		 * times more in last_matching_pattern(). When the cache is
+		 * used, last_matching_pattern() will not be called and
 		 * reading .gitignore content will be a waste.
 		 *
 		 * So when it's called by valid_cached_dir() and we can get
 		 * .gitignore SHA-1 from the index (i.e. .gitignore is not
 		 * modified on work tree), we could delay reading the
 		 * .gitignore content until we absolutely need it in
-		 * last_exclude_matching(). Be careful about ignore rule
+		 * last_matching_pattern(). Be careful about ignore rule
 		 * order, though, if you do that.
 		 */
 		if (untracked &&
@@ -1266,7 +1278,7 @@ static void prep_exclude(struct dir_struct *dir,
  * Returns the exclude_list element which matched, or NULL for
  * undecided.
  */
-struct exclude *last_exclude_matching(struct dir_struct *dir,
+struct path_pattern *last_matching_pattern(struct dir_struct *dir,
 				      struct index_state *istate,
 				      const char *pathname,
 				      int *dtype_p)
@@ -1277,10 +1289,10 @@ struct exclude *last_exclude_matching(struct dir_struct *dir,
 
 	prep_exclude(dir, istate, pathname, basename-pathname);
 
-	if (dir->exclude)
-		return dir->exclude;
+	if (dir->pattern)
+		return dir->pattern;
 
-	return last_exclude_matching_from_lists(dir, istate, pathname, pathlen,
+	return last_matching_pattern_from_lists(dir, istate, pathname, pathlen,
 			basename, dtype_p);
 }
 
@@ -1292,10 +1304,10 @@ struct exclude *last_exclude_matching(struct dir_struct *dir,
 int is_excluded(struct dir_struct *dir, struct index_state *istate,
 		const char *pathname, int *dtype_p)
 {
-	struct exclude *exclude =
-		last_exclude_matching(dir, istate, pathname, dtype_p);
-	if (exclude)
-		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
+	struct path_pattern *pattern =
+		last_matching_pattern(dir, istate, pathname, dtype_p);
+	if (pattern)
+		return pattern->flags & PATTERN_FLAG_NEGATIVE ? 0 : 1;
 	return 0;
 }
 
@@ -1808,7 +1820,7 @@ static int valid_cached_dir(struct dir_struct *dir,
 
 	/*
 	 * prep_exclude will be called eventually on this directory,
-	 * but it's called much later in last_exclude_matching(). We
+	 * but it's called much later in last_matching_pattern(). We
 	 * need it now to determine the validity of the cache for this
 	 * path. The next calls will be nearly no-op, the way
 	 * prep_exclude() is designed.
@@ -2488,14 +2500,14 @@ void setup_standard_excludes(struct dir_struct *dir)
 	if (!excludes_file)
 		excludes_file = xdg_config_home("ignore");
 	if (excludes_file && !access_or_warn(excludes_file, R_OK, 0))
-		add_excludes_from_file_1(dir, excludes_file,
+		add_patterns_from_file_1(dir, excludes_file,
 					 dir->untracked ? &dir->ss_excludes_file : NULL);
 
 	/* per repository user preference */
 	if (startup_info->have_repository) {
 		const char *path = git_path_info_exclude();
 		if (!access_or_warn(path, R_OK, 0))
-			add_excludes_from_file_1(dir, path,
+			add_patterns_from_file_1(dir, path,
 						 dir->untracked ? &dir->ss_info_exclude : NULL);
 	}
 }
@@ -2527,18 +2539,18 @@ void clear_directory(struct dir_struct *dir)
 {
 	int i, j;
 	struct exclude_list_group *group;
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	struct exclude_stack *stk;
 
 	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
 		group = &dir->exclude_list_group[i];
 		for (j = 0; j < group->nr; j++) {
-			el = &group->el[j];
+			pl = &group->pl[j];
 			if (i == EXC_DIRS)
-				free((char *)el->src);
-			clear_exclude_list(el);
+				free((char *)pl->src);
+			clear_pattern_list(pl);
 		}
-		free(group->el);
+		free(group->pl);
 	}
 
 	stk = dir->exclude_stack;

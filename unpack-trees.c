@@ -1269,7 +1269,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 			    struct cache_entry **cache, int nr,
 			    struct strbuf *prefix,
 			    int select_mask, int clear_mask,
-			    struct exclude_list *el, int defval);
+			    struct pattern_list *pl,
+			    enum pattern_match_result default_match);
 
 /* Whole directory matching */
 static int clear_ce_flags_dir(struct index_state *istate,
@@ -1277,19 +1278,21 @@ static int clear_ce_flags_dir(struct index_state *istate,
 			      struct strbuf *prefix,
 			      char *basename,
 			      int select_mask, int clear_mask,
-			      struct exclude_list *el, int defval)
+			      struct pattern_list *pl,
+			      enum pattern_match_result default_match)
 {
 	struct cache_entry **cache_end;
 	int dtype = DT_DIR;
-	int ret = is_excluded_from_list(prefix->buf, prefix->len,
-					basename, &dtype, el, istate);
 	int rc;
+	enum pattern_match_result ret;
+	ret = path_matches_pattern_list(prefix->buf, prefix->len,
+					basename, &dtype, pl, istate);
 
 	strbuf_addch(prefix, '/');
 
 	/* If undecided, use matching result of parent dir in defval */
-	if (ret < 0)
-		ret = defval;
+	if (ret == UNDECIDED)
+		ret = default_match;
 
 	for (cache_end = cache; cache_end != cache + nr; cache_end++) {
 		struct cache_entry *ce = *cache_end;
@@ -1298,23 +1301,23 @@ static int clear_ce_flags_dir(struct index_state *istate,
 	}
 
 	/*
-	 * TODO: check el, if there are no patterns that may conflict
+	 * TODO: check pl, if there are no patterns that may conflict
 	 * with ret (iow, we know in advance the incl/excl
 	 * decision for the entire directory), clear flag here without
 	 * calling clear_ce_flags_1(). That function will call
-	 * the expensive is_excluded_from_list() on every entry.
+	 * the expensive path_matches_pattern_list() on every entry.
 	 */
 	rc = clear_ce_flags_1(istate, cache, cache_end - cache,
 			      prefix,
 			      select_mask, clear_mask,
-			      el, ret);
+			      pl, ret);
 	strbuf_setlen(prefix, prefix->len - 1);
 	return rc;
 }
 
 /*
  * Traverse the index, find every entry that matches according to
- * o->el. Do "ce_flags &= ~clear_mask" on those entries. Return the
+ * o->pl. Do "ce_flags &= ~clear_mask" on those entries. Return the
  * number of traversed entries.
  *
  * If select_mask is non-zero, only entries whose ce_flags has on of
@@ -1331,7 +1334,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 			    struct cache_entry **cache, int nr,
 			    struct strbuf *prefix,
 			    int select_mask, int clear_mask,
-			    struct exclude_list *el, int defval)
+			    struct pattern_list *pl,
+			    enum pattern_match_result default_match)
 {
 	struct cache_entry **cache_end = cache + nr;
 
@@ -1342,7 +1346,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 	while(cache != cache_end) {
 		struct cache_entry *ce = *cache;
 		const char *name, *slash;
-		int len, dtype, ret;
+		int len, dtype;
+		enum pattern_match_result ret;
 
 		if (select_mask && !(ce->ce_flags & select_mask)) {
 			cache++;
@@ -1366,7 +1371,7 @@ static int clear_ce_flags_1(struct index_state *istate,
 						       prefix,
 						       prefix->buf + prefix->len - len,
 						       select_mask, clear_mask,
-						       el, defval);
+						       pl, default_match);
 
 			/* clear_c_f_dir eats a whole dir already? */
 			if (processed) {
@@ -1378,18 +1383,20 @@ static int clear_ce_flags_1(struct index_state *istate,
 			strbuf_addch(prefix, '/');
 			cache += clear_ce_flags_1(istate, cache, cache_end - cache,
 						  prefix,
-						  select_mask, clear_mask, el, defval);
+						  select_mask, clear_mask, pl,
+						  default_match);
 			strbuf_setlen(prefix, prefix->len - len - 1);
 			continue;
 		}
 
 		/* Non-directory */
 		dtype = ce_to_dtype(ce);
-		ret = is_excluded_from_list(ce->name, ce_namelen(ce),
-					    name, &dtype, el, istate);
-		if (ret < 0)
-			ret = defval;
-		if (ret > 0)
+		ret = path_matches_pattern_list(ce->name,
+						ce_namelen(ce),
+						name, &dtype, pl, istate);
+		if (ret == UNDECIDED)
+			ret = default_match;
+		if (ret == MATCHED)
 			ce->ce_flags &= ~clear_mask;
 		cache++;
 	}
@@ -1398,7 +1405,7 @@ static int clear_ce_flags_1(struct index_state *istate,
 
 static int clear_ce_flags(struct index_state *istate,
 			  int select_mask, int clear_mask,
-			  struct exclude_list *el)
+			  struct pattern_list *pl)
 {
 	static struct strbuf prefix = STRBUF_INIT;
 
@@ -1409,13 +1416,13 @@ static int clear_ce_flags(struct index_state *istate,
 				istate->cache_nr,
 				&prefix,
 				select_mask, clear_mask,
-				el, 0);
+				pl, 0);
 }
 
 /*
  * Set/Clear CE_NEW_SKIP_WORKTREE according to $GIT_DIR/info/sparse-checkout
  */
-static void mark_new_skip_worktree(struct exclude_list *el,
+static void mark_new_skip_worktree(struct pattern_list *pl,
 				   struct index_state *istate,
 				   int select_flag, int skip_wt_flag)
 {
@@ -1441,7 +1448,7 @@ static void mark_new_skip_worktree(struct exclude_list *el,
 	 * 2. Widen worktree according to sparse-checkout file.
 	 * Matched entries will have skip_wt_flag cleared (i.e. "in")
 	 */
-	clear_ce_flags(istate, select_flag, skip_wt_flag, el);
+	clear_ce_flags(istate, select_flag, skip_wt_flag, pl);
 }
 
 static int verify_absent(const struct cache_entry *,
@@ -1457,21 +1464,21 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 {
 	int i, ret;
 	static struct cache_entry *dfc;
-	struct exclude_list el;
+	struct pattern_list pl;
 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 
 	trace_performance_enter();
-	memset(&el, 0, sizeof(el));
+	memset(&pl, 0, sizeof(pl));
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout) {
 		char *sparse = git_pathdup("info/sparse-checkout");
-		if (add_excludes_from_file_to_list(sparse, "", 0, &el, NULL) < 0)
+		if (add_patterns_from_file_to_list(sparse, "", 0, &pl, NULL) < 0)
 			o->skip_sparse_checkout = 1;
 		else
-			o->el = &el;
+			o->pl = &pl;
 		free(sparse);
 	}
 
@@ -1502,7 +1509,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	 * Sparse checkout loop #1: set NEW_SKIP_WORKTREE on existing entries
 	 */
 	if (!o->skip_sparse_checkout)
-		mark_new_skip_worktree(o->el, o->src_index, 0, CE_NEW_SKIP_WORKTREE);
+		mark_new_skip_worktree(o->pl, o->src_index, 0, CE_NEW_SKIP_WORKTREE);
 
 	if (!dfc)
 		dfc = xcalloc(1, cache_entry_size(0));
@@ -1567,7 +1574,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		 * If the will have NEW_SKIP_WORKTREE, also set CE_SKIP_WORKTREE
 		 * so apply_sparse_checkout() won't attempt to remove it from worktree
 		 */
-		mark_new_skip_worktree(o->el, &o->result, CE_ADDED, CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
+		mark_new_skip_worktree(o->pl, &o->result, CE_ADDED, CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
 
 		ret = 0;
 		for (i = 0; i < o->result.cache_nr; i++) {
@@ -1635,7 +1642,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 done:
 	trace_performance_leave("unpack_trees");
-	clear_exclude_list(&el);
+	clear_pattern_list(&pl);
 	return ret;
 
 return_failed:

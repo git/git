@@ -492,7 +492,7 @@ static int option_parse_exclude_from(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 
 	exc_given = 1;
-	add_excludes_from_file(dir, arg);
+	add_patterns_from_file(dir, arg);
 
 	return 0;
 }
@@ -516,7 +516,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	int require_work_tree = 0, show_tag = 0, i;
 	const char *max_prefix;
 	struct dir_struct dir;
-	struct exclude_list *el;
+	struct pattern_list *pl;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct option builtin_ls_files_options[] = {
 		/* Think twice before adding "--nul" synonym to this */
@@ -594,9 +594,9 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
 			ls_files_usage, 0);
-	el = add_exclude_list(&dir, EXC_CMDL, "--exclude option");
+	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++) {
-		add_exclude(exclude_list.items[i].string, "", 0, el, --exclude_args);
+		add_pattern(exclude_list.items[i].string, "", 0, pl, --exclude_args);
 	}
 	if (show_tag || show_valid_bit || show_fsmonitor_bit) {
 		tag_cached = "H ";

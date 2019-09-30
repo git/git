@@ -259,7 +259,7 @@ struct pattern {
 	const char *pattern;
 	int patternlen;
 	int nowildcardlen;
-	unsigned flags;		/* EXC_FLAG_* */
+	unsigned flags;		/* PATTERN_FLAG_* */
 };
 
 /*
@@ -400,11 +400,11 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		char *p = (char *)&(res->state[num_attr]);
 		memcpy(p, name, namelen);
 		res->u.pat.pattern = p;
-		parse_exclude_pattern(&res->u.pat.pattern,
+		parse_path_pattern(&res->u.pat.pattern,
 				      &res->u.pat.patternlen,
 				      &res->u.pat.flags,
 				      &res->u.pat.nowildcardlen);
-		if (res->u.pat.flags & EXC_FLAG_NEGATIVE) {
+		if (res->u.pat.flags & PATTERN_FLAG_NEGATIVE) {
 			warning(_("Negative patterns are ignored in git attributes\n"
 				  "Use '\\!' for literal leading exclamation."));
 			goto fail_return;
@@ -991,10 +991,10 @@ static int path_matches(const char *pathname, int pathlen,
 	int prefix = pat->nowildcardlen;
 	int isdir = (pathlen && pathname[pathlen - 1] == '/');
 
-	if ((pat->flags & EXC_FLAG_MUSTBEDIR) && !isdir)
+	if ((pat->flags & PATTERN_FLAG_MUSTBEDIR) && !isdir)
 		return 0;
 
-	if (pat->flags & EXC_FLAG_NODIR) {
+	if (pat->flags & PATTERN_FLAG_NODIR) {
 		return match_basename(pathname + basename_offset,
 				      pathlen - basename_offset - isdir,
 				      pattern, prefix,
