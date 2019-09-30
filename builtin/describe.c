@@ -313,7 +313,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		 */
 		append_name(n, dst);
 		if (longformat)
-			append_suffix(0, n->tag ? &n->tag->tagged->oid : oid, dst);
+			append_suffix(0, n->tag ? get_tagged_oid(n->tag) : oid, dst);
 		if (suffix)
 			strbuf_addstr(dst, suffix);
 		return;

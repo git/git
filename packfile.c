@@ -2122,7 +2122,7 @@ static int add_promisor_object(const struct object_id *oid,
 			oidset_insert(set, &parents->item->object.oid);
 	} else if (obj->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *) obj;
-		oidset_insert(set, &tag->tagged->oid);
+		oidset_insert(set, get_tagged_oid(tag));
 	}
 	return 0;
 }

@@ -627,6 +627,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			break;
 		case OBJ_TAG: {
 			struct tag *t = (struct tag *)o;
+			struct object_id *oid = get_tagged_oid(t);
 
 			if (rev.shown_one)
 				putchar('\n');
@@ -638,10 +639,10 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			rev.shown_one = 1;
 			if (ret)
 				break;
-			o = parse_object(the_repository, &t->tagged->oid);
+			o = parse_object(the_repository, oid);
 			if (!o)
 				ret = error(_("could not read object %s"),
-					    oid_to_hex(&t->tagged->oid));
+					    oid_to_hex(oid));
 			objects[i].item = o;
 			i--;
 			break;
