@@ -1763,7 +1763,6 @@ static int read_next_command(void)
 		} else {
 			struct recent_command *rc;
 
-			strbuf_detach(&command_buf, NULL);
 			stdin_eof = strbuf_getline_lf(&command_buf, stdin);
 			if (stdin_eof)
 				return EOF;
@@ -1784,7 +1783,7 @@ static int read_next_command(void)
 				free(rc->buf);
 			}
 
-			rc->buf = command_buf.buf;
+			rc->buf = xstrdup(command_buf.buf);
 			rc->prev = cmd_tail;
 			rc->next = cmd_hist.prev;
 			rc->prev->next = rc;
@@ -1833,7 +1832,6 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 		char *term = xstrdup(data);
 		size_t term_len = command_buf.len - (data - command_buf.buf);
 
-		strbuf_detach(&command_buf, NULL);
 		for (;;) {
 			if (strbuf_getline_lf(&command_buf, stdin) == EOF)
 				die("EOF in data (terminator '%s' not found)", term);
@@ -2588,7 +2586,7 @@ static void parse_new_commit(const char *arg)
 	struct branch *b;
 	char *author = NULL;
 	char *committer = NULL;
-	const char *encoding = NULL;
+	char *encoding = NULL;
 	struct hash_list *merge_list = NULL;
 	unsigned int merge_count;
 	unsigned char prev_fanout, new_fanout;
@@ -2611,8 +2609,10 @@ static void parse_new_commit(const char *arg)
 	}
 	if (!committer)
 		die("Expected committer but didn't get one");
-	if (skip_prefix(command_buf.buf, "encoding ", &encoding))
+	if (skip_prefix(command_buf.buf, "encoding ", &v)) {
+		encoding = xstrdup(v);
 		read_next_command();
+	}
 	parse_data(&msg, 0, NULL);
 	read_next_command();
 	parse_from(b);
@@ -2686,6 +2686,7 @@ static void parse_new_commit(const char *arg)
 	strbuf_addbuf(&new_data, &msg);
 	free(author);
 	free(committer);
+	free(encoding);
 
 	if (!store_object(OBJ_COMMIT, &new_data, NULL, &b->oid, next_mark))
 		b->pack_id = pack_id;
