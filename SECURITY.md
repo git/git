@@ -18,6 +18,30 @@ As Git for Windows bundles more than just Git (such as Bash, OpenSSL, OpenSSH, G
 
 Every Git for Windows version is tagged using a name that starts with the Git version on which it is based, with the suffix `.windows.<patchlevel>` appended. For example, Git for Windows v2.17.1' source code is tagged as [`v2.17.1.windows.1`](https://github.com/git-for-windows/git/releases/tag/v2.17.1.windows.1) (the patch level is always at least 1, given that Git for Windows always has patches on top of Git). Likewise, Git for Windows v2.17.1(2)' source code is tagged as [`v2.17.1.windows.2`](https://github.com/git-for-windows/git/releases/tag/v2.17.1.windows.2).
 
+## Release Candidate (rc) versions
+
+As a friendly fork of Git (the "upstream" project), Git for Windows is closely corelated to that project.
+
+Consequently, Git for Windows publishes versions based on Git's release candidates (for upcoming "`.0`" versions, see [Git's release schedule](https://tinyurl.com/gitCal)). These versions end in `-rc<n>`, starting with `-rc0` for a very early preview of what is to come, and as with regular versions, Git for Windows tries to follow Git's releases as quickly as possible.
+
+Note: there is currently a bug in the "Check daily for updates" code, where it mistakes the final version as a downgrade from release candidates. Example: if you installed Git for Windows v2.23.0-rc3 and enabled the auto-updater, it would ask you whether you want to "downgrade" to v2.23.0 when that version was available.
+
+[All releases](https://github.com/git-for-windows/git/releases/), including release candidates, are listed via a link at the footer of the [Git for Windows](https://gitforwindows.org/) home page.
+
+## Snapshot versions ('nightly builds')
+
+Git for Windows also provides snapshots (these are not releases) of the the current development as per git-for-Windows/git's `master` branch at the [Snapshots](https://wingit.blob.core.windows.net/files/index.html) page. This link is also listed in the footer of the [Git for Windows](https://gitforwindows.org/) home page.
+
+Note: even if those builds are not exactly "nightly", they are sometimes referred to as "nightly builds" to keep with other projects' nomenclature.
+
+## Following upstream's developments
+
+The [gitforwindows/git repository](https://github.com/git-for-windows/git) also provides the `shears/*` and `vs/master` branches. The `shears/*` branches reflect Git for Windows' patches, rebased onto the upstream integration branches, [updated (mostly) via automated CI builds](https://dev.azure.com/git-for-windows/git/_build?definitionId=25).
+
+# Other special branches
+
+Currently, there is only one other special-purpose branch in Git for Windows: the `vs/master` branch. It adds a commit on top of git-for-Windows/git's `master`, providing the project files ready to build Git in Visual Studio using the MSVC tool chain, [also updated via automated builds](https://dev.azure.com/git-for-windows/git/_build?definitionId=27).
+
 ## Reporting a Vulnerability
 
 Please send a mail to git-security@googlegroups.com when you found a security issue in Git or in Git for Windows, even when you are not 100% certain that it is _actually_ a security issue. Typically, you will receive an answer within a day or even within a few hours.
