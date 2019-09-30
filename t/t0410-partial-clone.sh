@@ -429,6 +429,19 @@ test_expect_success 'rev-list dies for missing objects on cmd line' '
 	done
 '
 
+test_expect_success 'single promisor remote can be re-initialized gracefully' '
+	# ensure one promisor is in the promisors list
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_create_repo other &&
+	git -C repo remote add foo "file://$(pwd)/other" &&
+	git -C repo config remote.foo.promisor true &&
+	git -C repo config extensions.partialclone foo &&
+
+	# reinitialize the promisors list
+	git -C repo fetch --filter=blob:none foo
+'
+
 test_expect_success 'gc repacks promisor objects separately from non-promisor objects' '
 	rm -rf repo &&
 	test_create_repo repo &&

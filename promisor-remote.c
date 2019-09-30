@@ -89,6 +89,9 @@ static struct promisor_remote *promisor_remote_lookup(const char *remote_name,
 static void promisor_remote_move_to_tail(struct promisor_remote *r,
 					 struct promisor_remote *previous)
 {
+	if (r->next == NULL)
+		return;
+
 	if (previous)
 		previous->next = r->next;
 	else
