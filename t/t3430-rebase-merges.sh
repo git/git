@@ -37,20 +37,27 @@ test_expect_success 'setup' '
 	test_commit A &&
 	git checkout -b first &&
 	test_commit B &&
+	b=$(git rev-parse --short HEAD) &&
 	git checkout master &&
 	test_commit C &&
+	c=$(git rev-parse --short HEAD) &&
 	test_commit D &&
+	d=$(git rev-parse --short HEAD) &&
 	git merge --no-commit B &&
 	test_tick &&
 	git commit -m E &&
 	git tag -m E E &&
+	e=$(git rev-parse --short HEAD) &&
 	git checkout -b second C &&
 	test_commit F &&
+	f=$(git rev-parse --short HEAD) &&
 	test_commit G &&
+	g=$(git rev-parse --short HEAD) &&
 	git checkout master &&
 	git merge --no-commit G &&
 	test_tick &&
 	git commit -m H &&
+	h=$(git rev-parse --short HEAD) &&
 	git tag -m H H &&
 	git checkout A &&
 	test_commit conflicting-G G.t
@@ -93,24 +100,24 @@ test_expect_success 'create completely different structure' '
 '
 
 test_expect_success 'generate correct todo list' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 	label onto
 
 	reset onto
-	pick d9df450 B
+	pick $b B
 	label E
 
 	reset onto
-	pick 5dee784 C
+	pick $c C
 	label branch-point
-	pick ca2c861 F
-	pick 088b00a G
+	pick $f F
+	pick $g G
 	label H
 
 	reset branch-point # C
-	pick 12bd07b D
-	merge -C 2051b56 E # E
-	merge -C 233d48a H # H
+	pick $d D
+	merge -C $e E # E
+	merge -C $h H # H
 
 	EOF
 

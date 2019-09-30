@@ -11,23 +11,26 @@ test_expect_success 'setup: create a few commits with notes' '
 	test_tick &&
 	git commit -m 1st &&
 	git notes add -m "Note #1" &&
+	first=$(git rev-parse HEAD) &&
 	: > file2 &&
 	git add file2 &&
 	test_tick &&
 	git commit -m 2nd &&
 	git notes add -m "Note #2" &&
+	second=$(git rev-parse HEAD) &&
 	: > file3 &&
 	git add file3 &&
 	test_tick &&
 	git commit -m 3rd &&
-	COMMIT_FILE=.git/objects/5e/e1c35e83ea47cd3cc4f8cbee0568915fbbbd29 &&
+	third=$(git rev-parse HEAD) &&
+	COMMIT_FILE=$(echo $third | sed "s!^..!.git/objects/&/!") &&
 	test -f $COMMIT_FILE &&
 	test-tool chmtime =+0 $COMMIT_FILE &&
 	git notes add -m "Note #3"
 '
 
 cat > expect <<END_OF_LOG
-commit 5ee1c35e83ea47cd3cc4f8cbee0568915fbbbd29
+commit $third
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:15:13 2005 -0700
 
@@ -36,7 +39,7 @@ Date:   Thu Apr 7 15:15:13 2005 -0700
 Notes:
     Note #3
 
-commit 08341ad9e94faa089d60fd3f523affb25c6da189
+commit $second
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:14:13 2005 -0700
 
@@ -45,7 +48,7 @@ Date:   Thu Apr 7 15:14:13 2005 -0700
 Notes:
     Note #2
 
-commit ab5f302035f2e7aaf04265f08b42034c23256e1f
+commit $first
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:13:13 2005 -0700
 
@@ -70,16 +73,16 @@ test_expect_success 'remove some commits' '
 
 test_expect_success 'verify that commits are gone' '
 
-	test_must_fail git cat-file -p 5ee1c35e83ea47cd3cc4f8cbee0568915fbbbd29 &&
-	git cat-file -p 08341ad9e94faa089d60fd3f523affb25c6da189 &&
-	git cat-file -p ab5f302035f2e7aaf04265f08b42034c23256e1f
+	test_must_fail git cat-file -p $third &&
+	git cat-file -p $second &&
+	git cat-file -p $first
 '
 
 test_expect_success 'verify that notes are still present' '
 
-	git notes show 5ee1c35e83ea47cd3cc4f8cbee0568915fbbbd29 &&
-	git notes show 08341ad9e94faa089d60fd3f523affb25c6da189 &&
-	git notes show ab5f302035f2e7aaf04265f08b42034c23256e1f
+	git notes show $third &&
+	git notes show $second &&
+	git notes show $first
 '
 
 test_expect_success 'prune -n does not remove notes' '
@@ -90,13 +93,10 @@ test_expect_success 'prune -n does not remove notes' '
 	test_cmp expect actual
 '
 
-cat > expect <<EOF
-5ee1c35e83ea47cd3cc4f8cbee0568915fbbbd29
-EOF
 
 test_expect_success 'prune -n lists prunable notes' '
 
-
+	echo $third >expect &&
 	git notes prune -n > actual &&
 	test_cmp expect actual
 '
@@ -109,9 +109,9 @@ test_expect_success 'prune notes' '
 
 test_expect_success 'verify that notes are gone' '
 
-	test_must_fail git notes show 5ee1c35e83ea47cd3cc4f8cbee0568915fbbbd29 &&
-	git notes show 08341ad9e94faa089d60fd3f523affb25c6da189 &&
-	git notes show ab5f302035f2e7aaf04265f08b42034c23256e1f
+	test_must_fail git notes show $third &&
+	git notes show $second &&
+	git notes show $first
 '
 
 test_expect_success 'remove some commits' '
@@ -121,21 +121,18 @@ test_expect_success 'remove some commits' '
 	git gc --prune=now
 '
 
-cat > expect <<EOF
-08341ad9e94faa089d60fd3f523affb25c6da189
-EOF
-
 test_expect_success 'prune -v notes' '
 
+	echo $second >expect &&
 	git notes prune -v > actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'verify that notes are gone' '
 
-	test_must_fail git notes show 5ee1c35e83ea47cd3cc4f8cbee0568915fbbbd29 &&
-	test_must_fail git notes show 08341ad9e94faa089d60fd3f523affb25c6da189 &&
-	git notes show ab5f302035f2e7aaf04265f08b42034c23256e1f
+	test_must_fail git notes show $third &&
+	test_must_fail git notes show $second &&
+	git notes show $first
 '
 
 test_done
