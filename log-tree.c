@@ -677,9 +677,7 @@ void show_log(struct rev_info *opt)
 		raw = (opt->commit_format == CMIT_FMT_USERFORMAT);
 		format_display_notes(&commit->object.oid, &notebuf,
 				     get_log_output_encoding(), raw);
-		ctx.notes_message = notebuf.len
-			? strbuf_detach(&notebuf, NULL)
-			: xcalloc(1, 1);
+		ctx.notes_message = strbuf_detach(&notebuf, NULL);
 	}
 
 	/*
