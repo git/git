@@ -830,7 +830,8 @@ Hard case: The changes are not the same.::
 	This happens if the 'subsystem' rebase had conflicts, or used
 	`--interactive` to omit, edit, squash, or fixup commits; or
 	if the upstream used one of `commit --amend`, `reset`, or
-	`filter-branch`.
+	a full history rewriting command like
+	https://github.com/newren/git-filter-repo[`filter-repo`].
 
 
 The easy case

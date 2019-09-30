@@ -447,10 +447,12 @@ post-rewrite
 
 This hook is invoked by commands that rewrite commits
 (linkgit:git-commit[1] when called with `--amend` and
-linkgit:git-rebase[1]; currently `git filter-branch` does 'not' call
-it!).  Its first argument denotes the command it was invoked by:
-currently one of `amend` or `rebase`.  Further command-dependent
-arguments may be passed in the future.
+linkgit:git-rebase[1]; however, full-history (re)writing tools like
+linkgit:git-fast-import[1] or
+https://github.com/newren/git-filter-repo[git-filter-repo] typically
+do not call it!).  Its first argument denotes the command it was
+invoked by: currently one of `amend` or `rebase`.  Further
+command-dependent arguments may be passed in the future.
 
 The hook receives a list of the rewritten commits on stdin, in the
 format

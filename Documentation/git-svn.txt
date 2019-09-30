@@ -769,11 +769,11 @@ option for (hopefully) obvious reasons.
 +
 This option is NOT recommended as it makes it difficult to track down
 old references to SVN revision numbers in existing documentation, bug
-reports and archives.  If you plan to eventually migrate from SVN to Git
-and are certain about dropping SVN history, consider
-linkgit:git-filter-branch[1] instead.  filter-branch also allows
-reformatting of metadata for ease-of-reading and rewriting authorship
-info for non-"svn.authorsFile" users.
+reports, and archives.  If you plan to eventually migrate from SVN to
+Git and are certain about dropping SVN history, consider
+https://github.com/newren/git-filter-repo[git-filter-repo] instead.
+filter-repo also allows reformatting of metadata for ease-of-reading
+and rewriting authorship info for non-"svn.authorsFile" users.
 
 svn.useSvmProps::
 svn-remote.<name>.useSvmProps::

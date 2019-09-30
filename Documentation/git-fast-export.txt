@@ -17,9 +17,9 @@ This program dumps the given revisions in a form suitable to be piped
 into 'git fast-import'.
 
 You can use it as a human-readable bundle replacement (see
-linkgit:git-bundle[1]), or as a kind of an interactive
-'git filter-branch'.
-
+linkgit:git-bundle[1]), or as a format that can be edited before being
+fed to 'git fast-import' in order to do history rewrites (an ability
+relied on by tools like 'git filter-repo').
 
 OPTIONS
 -------
