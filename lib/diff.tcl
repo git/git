@@ -270,19 +270,6 @@ proc show_other_diff {path w m cont_info} {
 	}
 }
 
-proc get_conflict_marker_size {path} {
-	set size 7
-	catch {
-		set fd_rc [eval [list git_read check-attr "conflict-marker-size" -- $path]]
-		set ret [gets $fd_rc line]
-		close $fd_rc
-		if {$ret > 0} {
-			regexp {.*: conflict-marker-size: (\d+)$} $line line size
-		}
-	}
-	return $size
-}
-
 proc start_show_diff {cont_info {add_opts {}}} {
 	global file_states file_lists
 	global is_3way_diff is_submodule_diff diff_active repo_config
@@ -298,7 +285,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	set is_submodule_diff 0
 	set diff_active 1
 	set current_diff_header {}
-	set conflict_size [get_conflict_marker_size $path]
+	set conflict_size [gitattr $path conflict-marker-size 7]
 
 	set cmd [list]
 	if {$w eq $ui_index} {
