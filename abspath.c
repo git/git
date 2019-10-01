@@ -85,7 +85,7 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 	struct strbuf next = STRBUF_INIT;
 	struct strbuf symlink = STRBUF_INIT;
 	char *retval = NULL;
-	int num_symlinks = 0;
+	int num_symlinks = 10;
 	struct stat st;
 
 	if (!*path) {
