@@ -506,13 +506,12 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	filename_template = &pattern[len - 6 - suffix_len];
 	for (count = 0; count < TMP_MAX; ++count) {
 		uint64_t v = value;
+		int i;
 		/* Fill in the random bits. */
-		filename_template[0] = letters[v % num_letters]; v /= num_letters;
-		filename_template[1] = letters[v % num_letters]; v /= num_letters;
-		filename_template[2] = letters[v % num_letters]; v /= num_letters;
-		filename_template[3] = letters[v % num_letters]; v /= num_letters;
-		filename_template[4] = letters[v % num_letters]; v /= num_letters;
-		filename_template[5] = letters[v % num_letters]; v /= num_letters;
+		for (i = 0; i < 6; i++) {
+			filename_template[i] = letters[v % num_letters];
+			v /= num_letters;
+		}
 
 		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
 		if (fd >= 0)
