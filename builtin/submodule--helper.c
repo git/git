@@ -678,6 +678,10 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	} else
 		path = xstrdup(path);
 
+	if (validate_submodule_git_dir(sm_gitdir, name) < 0)
+		die(_("refusing to create/use '%s' in another submodule's "
+			"git dir"), sm_gitdir);
+
 	if (!file_exists(sm_gitdir)) {
 		if (safe_create_leading_directories_const(sm_gitdir) < 0)
 			die(_("could not create directory '%s'"), sm_gitdir);
