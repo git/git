@@ -53,7 +53,7 @@ static const char *split_cmdline_errors[] = {
 
 int split_cmdline(char *cmdline, const char ***argv)
 {
-	int src, dst, count = 0, size = 16;
+	int src, dst, count = 0, size = 10;
 	char quoted = 0;
 
 	ALLOC_ARRAY(*argv, size);
