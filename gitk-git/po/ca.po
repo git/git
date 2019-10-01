@@ -1,5 +1,5 @@
 # Translation of gitk
-# Copyright (C) 2005-2014 Paul Mackerras
+# Copyright (C) 2005-2016 Paul Mackerras
 # This file is distributed under the same license as the gitk package.
 # Alex Henrie <alexhenrie24@gmail.com>, 2015.
 #
@@ -365,14 +365,14 @@ msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
 "\n"
-"Copyright © 2005-2014 Paul Mackerras\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
 "Gitk - visualitzador de comissions per al git\n"
 "\n"
-"Copyright © 2005-2014 Paul Mackerras\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Useu-lo i redistribuïu-lo sota els termes de la Llicència Pública General GNU"
 

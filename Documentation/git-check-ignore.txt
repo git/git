@@ -9,8 +9,8 @@ git-check-ignore - Debug gitignore / exclude files
 SYNOPSIS
 --------
 [verse]
-'git check-ignore' [options] pathname...
-'git check-ignore' [options] --stdin
+'git check-ignore' [<options>] <pathname>...
+'git check-ignore' [<options>] --stdin
 
 DESCRIPTION
 -----------

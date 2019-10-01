@@ -8,8 +8,8 @@ git-shortlog - Summarize 'git log' output
 SYNOPSIS
 --------
 [verse]
+'git shortlog' [<options>] [<revision range>] [[--] <path>...]
 git log --pretty=short | 'git shortlog' [<options>]
-'git shortlog' [<options>] [<revision range>] [[\--] <path>...]
 
 DESCRIPTION
 -----------
@@ -47,6 +47,10 @@ OPTIONS
 
 	Each pretty-printed commit will be rewrapped before it is shown.
 
+-c::
+--committer::
+	Collect and show committer identities instead of authors.
+
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first
 	line of each entry is indented by `indent1` spaces, and the second
@@ -65,11 +69,11 @@ them.
 	ways to spell <revision range>, see the "Specifying Ranges"
 	section of linkgit:gitrevisions[7].
 
-[\--] <path>...::
+[--] <path>...::
 	Consider only commits that are enough to explain how the files
 	that match the specified paths came to be.
 +
-Paths may need to be prefixed with "\-- " to separate them from
+Paths may need to be prefixed with `--` to separate them from
 options or the revision range, when confusion arises.
 
 MAPPING AUTHORS

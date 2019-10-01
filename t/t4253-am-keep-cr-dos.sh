@@ -51,14 +51,16 @@ test_expect_success 'am with dos files without --keep-cr' '
 
 test_expect_success 'am with dos files with --keep-cr' '
 	git checkout -b dosfiles-keep-cr initial &&
-	git format-patch -k --stdout initial..master | git am --keep-cr -k -3 &&
+	git format-patch -k --stdout initial..master >output &&
+	git am --keep-cr -k -3 output &&
 	git diff --exit-code master
 '
 
 test_expect_success 'am with dos files config am.keepcr' '
 	git config am.keepcr 1 &&
 	git checkout -b dosfiles-conf-keepcr initial &&
-	git format-patch -k --stdout initial..master | git am -k -3 &&
+	git format-patch -k --stdout initial..master >output &&
+	git am -k -3 output &&
 	git diff --exit-code master
 '
 

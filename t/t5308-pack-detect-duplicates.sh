@@ -4,6 +4,12 @@ test_description='handling of duplicate objects in incoming packfiles'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
 
+if ! test_have_prereq SHA1
+then
+       skip_all='not using SHA-1 for objects'
+       test_done
+fi
+
 # The sha1s we have in our pack. It's important that these have the same
 # starting byte, so that they end up in the same fanout section of the index.
 # That lets us make sure we are exercising the binary search with both sets.
@@ -56,17 +62,8 @@ test_expect_success 'create batch-check test vectors' '
 	EOF
 '
 
-test_expect_success 'lookup in duplicated pack (binary search)' '
+test_expect_success 'lookup in duplicated pack' '
 	git cat-file --batch-check <input >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'lookup in duplicated pack (GIT_USE_LOOKUP)' '
-	(
-		GIT_USE_LOOKUP=1 &&
-		export GIT_USE_LOOKUP &&
-		git cat-file --batch-check <input >actual
-	) &&
 	test_cmp expect actual
 '
 

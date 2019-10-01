@@ -307,7 +307,7 @@ test_expect_success_multi 'needs work tree' '' '
 		cd .git &&
 		test_check_ignore "foo" 128
 	) &&
-	stderr_contains "fatal: This operation must be run in a work tree"
+	stderr_contains "fatal: this operation must be run in a work tree"
 '
 
 ############################################################################
@@ -775,6 +775,26 @@ test_expect_success PIPE 'streaming support for --stdin' '
 	echo "$response" | grep "^::	two"
 '
 
+test_expect_success 'existing file and directory' '
+	test_when_finished "rm one" &&
+	test_when_finished "rmdir top-level-dir" &&
+	>one &&
+	mkdir top-level-dir &&
+	git check-ignore one top-level-dir >actual &&
+	grep one actual &&
+	grep top-level-dir actual
+'
+
+test_expect_success 'existing directory and file' '
+	test_when_finished "rm one" &&
+	test_when_finished "rmdir top-level-dir" &&
+	>one &&
+	mkdir top-level-dir &&
+	git check-ignore top-level-dir one >actual &&
+	grep one actual &&
+	grep top-level-dir actual
+'
+
 ############################################################################
 #
 # test whitespace handling
@@ -787,10 +807,9 @@ test_expect_success 'trailing whitespace is ignored' '
 	cat >expect <<EOF &&
 whitespace/untracked
 EOF
-	: >err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success !MINGW 'quoting allows trailing whitespace' '
@@ -800,10 +819,9 @@ test_expect_success !MINGW 'quoting allows trailing whitespace' '
 	>whitespace/untracked &&
 	echo "whitespace/trailing\\ \\ " >ignore &&
 	echo whitespace/untracked >expect &&
-	: >err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
@@ -825,10 +843,9 @@ test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
 	whitespace/trailing 6 \\a\\Z
 	EOF
 	echo whitespace/untracked >expect &&
-	>err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success 'info/exclude trumps core.excludesfile' '

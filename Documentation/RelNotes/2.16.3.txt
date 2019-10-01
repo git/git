@@ -1,0 +1,49 @@
+Git v2.16.3 Release Notes
+=========================
+
+Fixes since v2.16.2
+-------------------
+
+ * "git status" after moving a path in the working tree (hence making
+   it appear "removed") and then adding with the -N option (hence
+   making that appear "added") detected it as a rename, but did not
+   report the  old and new pathnames correctly.
+
+ * "git commit --fixup" did not allow "-m<message>" option to be used
+   at the same time; allow it to annotate resulting commit with more
+   text.
+
+ * When resetting the working tree files recursively, the working tree
+   of submodules are now also reset to match.
+
+ * Fix for a commented-out code to adjust it to a rather old API change
+   around object ID.
+
+ * When there are too many changed paths, "git diff" showed a warning
+   message but in the middle of a line.
+
+ * The http tracing code, often used to debug connection issues,
+   learned to redact potentially sensitive information from its output
+   so that it can be more safely sharable.
+
+ * Crash fix for a corner case where an error codepath tried to unlock
+   what it did not acquire lock on.
+
+ * The split-index mode had a few corner case bugs fixed.
+
+ * Assorted fixes to "git daemon".
+
+ * Completion of "git merge -s<strategy>" (in contrib/) did not work
+   well in non-C locale.
+
+ * Workaround for segfault with more recent versions of SVN.
+
+ * Recently introduced leaks in fsck have been plugged.
+
+ * Travis CI integration now builds the executable in 'script' phase
+   to follow the established practice, rather than during
+   'before_script' phase.  This allows the CI categorize the failures
+   better ('failed' is project's fault, 'errored' is build
+   environment's).
+
+Also contains various documentation updates and code clean-ups.

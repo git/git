@@ -72,7 +72,6 @@ static void resolve_symlink(struct strbuf *path)
 /* Make sure errno contains a meaningful value on error */
 static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
-	int fd;
 	struct strbuf filename = STRBUF_INIT;
 
 	strbuf_addstr(&filename, path);
@@ -80,9 +79,9 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 		resolve_symlink(&filename);
 
 	strbuf_addstr(&filename, LOCK_SUFFIX);
-	fd = create_tempfile(&lk->tempfile, filename.buf);
+	lk->tempfile = create_tempfile(filename.buf);
 	strbuf_release(&filename);
-	return fd;
+	return lk->tempfile ? lk->tempfile->fd : -1;
 }
 
 /*
@@ -174,8 +173,16 @@ int hold_lock_file_for_update_timeout(struct lock_file *lk, const char *path,
 				      int flags, long timeout_ms)
 {
 	int fd = lock_file_timeout(lk, path, flags, timeout_ms);
-	if (fd < 0 && (flags & LOCK_DIE_ON_ERROR))
-		unable_to_lock_die(path, errno);
+	if (fd < 0) {
+		if (flags & LOCK_DIE_ON_ERROR)
+			unable_to_lock_die(path, errno);
+		if (flags & LOCK_REPORT_ON_ERROR) {
+			struct strbuf buf = STRBUF_INIT;
+			unable_to_lock_message(path, errno, &buf);
+			error("%s", buf.buf);
+			strbuf_release(&buf);
+		}
+	}
 	return fd;
 }
 
@@ -183,10 +190,10 @@ char *get_locked_file_path(struct lock_file *lk)
 {
 	struct strbuf ret = STRBUF_INIT;
 
-	strbuf_addstr(&ret, get_tempfile_path(&lk->tempfile));
+	strbuf_addstr(&ret, get_tempfile_path(lk->tempfile));
 	if (ret.len <= LOCK_SUFFIX_LEN ||
 	    strcmp(ret.buf + ret.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
-		die("BUG: get_locked_file_path() called for malformed lock object");
+		BUG("get_locked_file_path() called for malformed lock object");
 	/* remove ".lock": */
 	strbuf_setlen(&ret, ret.len - LOCK_SUFFIX_LEN);
 	return strbuf_detach(&ret, NULL);

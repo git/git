@@ -30,7 +30,7 @@ do
 	esac
 done
 
-# Reject if this is not an Octopus -- resolve should be used instead.
+# Reject if this is not an octopus -- resolve should be used instead.
 case "$remotes" in
 ?*' '?*)
 	;;
@@ -59,7 +59,7 @@ do
 		# conflicts.  Last round failed and we still had
 		# a head to merge.
 		gettextln "Automated merge did not work."
-		gettextln "Should not be doing an Octopus."
+		gettextln "Should not be doing an octopus."
 		exit 2
 	esac
 
@@ -74,7 +74,7 @@ do
 
 	case "$LF$common$LF" in
 	*"$LF$SHA1$LF"*)
-		eval_gettextln "Already up-to-date with \$pretty_name"
+		eval_gettextln "Already up to date with \$pretty_name"
 		continue
 		;;
 	esac
@@ -100,7 +100,7 @@ do
 	if test $? -ne 0
 	then
 		gettextln "Simple merge did not work, trying automatic merge."
-		git-merge-index -o git-merge-one-file -a ||
+		git merge-index -o git-merge-one-file -a ||
 		OCTOPUS_FAILURE=1
 		next=$(git write-tree 2>/dev/null)
 	fi

@@ -4,7 +4,6 @@ diff_cmd () {
 }
 
 merge_cmd () {
-	touch "$BACKUP"
 	case "$1" in
 	gvimdiff|vimdiff)
 		if $base_present
@@ -31,7 +30,6 @@ merge_cmd () {
 		fi
 		;;
 	esac
-	check_unchanged
 }
 
 translate_merge_tool_path() {
@@ -43,4 +41,8 @@ translate_merge_tool_path() {
 		echo vim
 		;;
 	esac
+}
+
+exit_code_trustable () {
+	true
 }

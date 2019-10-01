@@ -18,7 +18,7 @@ check_config () {
 	then
 		printf "%s\n" "$@"
 	fi >expect &&
-	test_expect_code $expect_code test-config "$op" "$key" >actual &&
+	test_expect_code $expect_code test-tool config "$op" "$key" >actual &&
 	test_cmp expect actual
 }
 
@@ -125,7 +125,7 @@ test_expect_success 'find string value for a key' '
 '
 
 test_expect_success 'check line error when NULL string is queried' '
-	test_expect_code 128 test-config get_string case.foo 2>result &&
+	test_expect_code 128 test-tool config get_string case.foo 2>result &&
 	test_i18ngrep "fatal: .*case\.foo.*\.git/config.*line 7" result
 '
 
@@ -155,13 +155,13 @@ test_expect_success 'find value from a configset' '
 		baz = ball
 	EOF
 	echo silk >expect &&
-	test-config configset_get_value my.new config2 .git/config >actual &&
+	test-tool config configset_get_value my.new config2 .git/config >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'find value with highest priority from a configset' '
 	echo hask >expect &&
-	test-config configset_get_value case.baz config2 .git/config >actual &&
+	test-tool config configset_get_value case.baz config2 .git/config >actual &&
 	test_cmp expect actual
 '
 
@@ -173,13 +173,22 @@ test_expect_success 'find value_list for a key from a configset' '
 	lama
 	ball
 	EOF
-	test-config configset_get_value case.baz config2 .git/config >actual &&
+	test-tool config configset_get_value case.baz config2 .git/config >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'proper error on non-existent files' '
 	echo "Error (-1) reading configuration file non-existent-file." >expect &&
-	test_expect_code 2 test-config configset_get_value foo.bar non-existent-file 2>actual &&
+	test_expect_code 2 test-tool config configset_get_value foo.bar non-existent-file 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'proper error on directory "files"' '
+	echo "Error (-1) reading configuration file a-directory." >expect &&
+	mkdir a-directory &&
+	test_expect_code 2 test-tool config configset_get_value foo.bar a-directory 2>output &&
+	grep "^warning:" output &&
+	grep "^Error" output >actual &&
 	test_cmp expect actual
 '
 
@@ -187,7 +196,9 @@ test_expect_success POSIXPERM,SANITY 'proper error on non-accessible files' '
 	chmod -r .git/config &&
 	test_when_finished "chmod +r .git/config" &&
 	echo "Error (-1) reading configuration file .git/config." >expect &&
-	test_expect_code 2 test-config configset_get_value foo.bar .git/config 2>actual &&
+	test_expect_code 2 test-tool config configset_get_value foo.bar .git/config 2>output &&
+	grep "^warning:" output &&
+	grep "^Error" output >actual &&
 	test_cmp expect actual
 '
 
@@ -196,14 +207,14 @@ test_expect_success 'proper error on error in default config files' '
 	test_when_finished "mv .git/config.old .git/config" &&
 	echo "[" >>.git/config &&
 	echo "fatal: bad config line 34 in file .git/config" >expect &&
-	test_expect_code 128 test-config get_value foo.bar 2>actual &&
+	test_expect_code 128 test-tool config get_value foo.bar 2>actual &&
 	test_i18ncmp expect actual
 '
 
 test_expect_success 'proper error on error in custom config files' '
 	echo "[" >>syntax-error &&
 	echo "fatal: bad config line 1 in file syntax-error" >expect &&
-	test_expect_code 128 test-config configset_get_value foo.bar syntax-error 2>actual &&
+	test_expect_code 128 test-tool config configset_get_value foo.bar syntax-error 2>actual &&
 	test_i18ncmp expect actual
 '
 
@@ -215,18 +226,14 @@ test_expect_success 'check line errors for malformed values' '
 		br
 	EOF
 	test_expect_code 128 git br 2>result &&
-	test_i18ngrep "fatal: .*alias\.br.*\.git/config.*line 2" result
+	test_i18ngrep "missing value for .alias\.br" result &&
+	test_i18ngrep "fatal: .*\.git/config" result &&
+	test_i18ngrep "fatal: .*line 2" result
 '
 
 test_expect_success 'error on modifying repo config without repo' '
-	mkdir no-repo &&
-	(
-		GIT_CEILING_DIRECTORIES=$(pwd) &&
-		export GIT_CEILING_DIRECTORIES &&
-		cd no-repo &&
-		test_must_fail git config a.b c 2>err &&
-		grep "not in a git directory" err
-	)
+	nongit test_must_fail git config a.b c 2>err &&
+	test_i18ngrep "not in a git directory" err
 '
 
 cmdline_config="'foo.bar=from-cmdline'"
@@ -260,7 +267,7 @@ test_expect_success 'iteration shows correct origins' '
 	name=
 	scope=cmdline
 	EOF
-	GIT_CONFIG_PARAMETERS=$cmdline_config test-config iterate >actual &&
+	GIT_CONFIG_PARAMETERS=$cmdline_config test-tool config iterate >actual &&
 	test_cmp expect actual
 '
 

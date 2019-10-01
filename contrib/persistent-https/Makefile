@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BUILD_LABEL=$(shell date +"%s")
+BUILD_LABEL=$(shell cut -d" " -f3 ../../GIT-VERSION-FILE)
 TAR_OUT=$(shell go env GOOS)_$(shell go env GOARCH).tar.gz
 
 all: git-remote-persistent-https git-remote-persistent-https--proxy \
@@ -25,8 +25,10 @@ git-remote-persistent-http: git-remote-persistent-https
 	ln -f -s git-remote-persistent-https git-remote-persistent-http
 
 git-remote-persistent-https:
+	case $$(go version) in \
+	"go version go"1.[0-5].*) EQ=" " ;; *) EQ="=" ;; esac && \
 	go build -o git-remote-persistent-https \
-		-ldflags "-X main._BUILD_EMBED_LABEL $(BUILD_LABEL)"
+		-ldflags "-X main._BUILD_EMBED_LABEL$${EQ}$(BUILD_LABEL)"
 
 clean:
 	rm -f git-remote-persistent-http* *.tar.gz

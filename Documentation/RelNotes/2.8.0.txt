@@ -270,7 +270,7 @@ notes for details).
    setting GIT_WORK_TREE environment themselves.
 
  * The "exclude_list" structure has the usual "alloc, nr" pair of
-   fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
+   fields to be used by ALLOC_GROW(), but clear_pattern_list() forgot
    to reset 'alloc' to 0 when it cleared 'nr' to discard the managed
    array.
 

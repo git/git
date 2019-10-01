@@ -7,6 +7,9 @@
 */
 
 #include "builtin.h"
+#include "repository.h"
+#include "packfile.h"
+#include "object-store.h"
 
 #define BLKSIZE 512
 
@@ -17,7 +20,7 @@ static int load_all_packs, verbose, alt_odb;
 
 struct llist_item {
 	struct llist_item *next;
-	const unsigned char *sha1;
+	const struct object_id *oid;
 };
 static struct llist {
 	struct llist_item *front;
@@ -29,13 +32,9 @@ static struct pack_list {
 	struct pack_list *next;
 	struct packed_git *pack;
 	struct llist *unique_objects;
-	struct llist *all_objects;
+	struct llist *remaining_objects;
+	size_t all_objects_size;
 } *local_packs = NULL, *altodb_packs = NULL;
-
-struct pll {
-	struct pll *next;
-	struct pack_list *pl;
-};
 
 static struct llist_item *free_nodes;
 
@@ -47,26 +46,17 @@ static inline void llist_item_put(struct llist_item *item)
 
 static inline struct llist_item *llist_item_get(void)
 {
-	struct llist_item *new;
+	struct llist_item *new_item;
 	if ( free_nodes ) {
-		new = free_nodes;
+		new_item = free_nodes;
 		free_nodes = free_nodes->next;
 	} else {
 		int i = 1;
-		ALLOC_ARRAY(new, BLKSIZE);
+		ALLOC_ARRAY(new_item, BLKSIZE);
 		for (; i < BLKSIZE; i++)
-			llist_item_put(&new[i]);
+			llist_item_put(&new_item[i]);
 	}
-	return new;
-}
-
-static void llist_free(struct llist *list)
-{
-	while ((list->back = list->front)) {
-		list->front = list->front->next;
-		llist_item_put(list->back);
-	}
-	free(list);
+	return new_item;
 }
 
 static inline void llist_init(struct llist **list)
@@ -79,70 +69,70 @@ static inline void llist_init(struct llist **list)
 static struct llist * llist_copy(struct llist *list)
 {
 	struct llist *ret;
-	struct llist_item *new, *old, *prev;
+	struct llist_item *new_item, *old_item, *prev;
 
 	llist_init(&ret);
 
 	if ((ret->size = list->size) == 0)
 		return ret;
 
-	new = ret->front = llist_item_get();
-	new->sha1 = list->front->sha1;
+	new_item = ret->front = llist_item_get();
+	new_item->oid = list->front->oid;
 
-	old = list->front->next;
-	while (old) {
-		prev = new;
-		new = llist_item_get();
-		prev->next = new;
-		new->sha1 = old->sha1;
-		old = old->next;
+	old_item = list->front->next;
+	while (old_item) {
+		prev = new_item;
+		new_item = llist_item_get();
+		prev->next = new_item;
+		new_item->oid = old_item->oid;
+		old_item = old_item->next;
 	}
-	new->next = NULL;
-	ret->back = new;
+	new_item->next = NULL;
+	ret->back = new_item;
 
 	return ret;
 }
 
 static inline struct llist_item *llist_insert(struct llist *list,
 					      struct llist_item *after,
-					       const unsigned char *sha1)
+					      const struct object_id *oid)
 {
-	struct llist_item *new = llist_item_get();
-	new->sha1 = sha1;
-	new->next = NULL;
+	struct llist_item *new_item = llist_item_get();
+	new_item->oid = oid;
+	new_item->next = NULL;
 
 	if (after != NULL) {
-		new->next = after->next;
-		after->next = new;
+		new_item->next = after->next;
+		after->next = new_item;
 		if (after == list->back)
-			list->back = new;
+			list->back = new_item;
 	} else {/* insert in front */
 		if (list->size == 0)
-			list->back = new;
+			list->back = new_item;
 		else
-			new->next = list->front;
-		list->front = new;
+			new_item->next = list->front;
+		list->front = new_item;
 	}
 	list->size++;
-	return new;
+	return new_item;
 }
 
 static inline struct llist_item *llist_insert_back(struct llist *list,
-						   const unsigned char *sha1)
+						   const struct object_id *oid)
 {
-	return llist_insert(list, list->back, sha1);
+	return llist_insert(list, list->back, oid);
 }
 
 static inline struct llist_item *llist_insert_sorted_unique(struct llist *list,
-			const unsigned char *sha1, struct llist_item *hint)
+			const struct object_id *oid, struct llist_item *hint)
 {
 	struct llist_item *prev = NULL, *l;
 
 	l = (hint == NULL) ? list->front : hint;
 	while (l) {
-		int cmp = hashcmp(l->sha1, sha1);
+		int cmp = oidcmp(l->oid, oid);
 		if (cmp > 0) { /* we insert before this entry */
-			return llist_insert(list, prev, sha1);
+			return llist_insert(list, prev, oid);
 		}
 		if (!cmp) { /* already exists */
 			return l;
@@ -151,11 +141,11 @@ static inline struct llist_item *llist_insert_sorted_unique(struct llist *list,
 		l = l->next;
 	}
 	/* insert at the end */
-	return llist_insert_back(list, sha1);
+	return llist_insert_back(list, oid);
 }
 
 /* returns a pointer to an item in front of sha1 */
-static inline struct llist_item * llist_sorted_remove(struct llist *list, const unsigned char *sha1, struct llist_item *hint)
+static inline struct llist_item * llist_sorted_remove(struct llist *list, const struct object_id *oid, struct llist_item *hint)
 {
 	struct llist_item *prev, *l;
 
@@ -163,7 +153,7 @@ redo_from_start:
 	l = (hint == NULL) ? list->front : hint;
 	prev = NULL;
 	while (l) {
-		int cmp = hashcmp(l->sha1, sha1);
+		const int cmp = oidcmp(l->oid, oid);
 		if (cmp > 0) /* not in list, since sorted */
 			return prev;
 		if (!cmp) { /* found */
@@ -198,7 +188,7 @@ static void llist_sorted_difference_inplace(struct llist *A,
 	b = B->front;
 
 	while (b) {
-		hint = llist_sorted_remove(A, b->sha1, hint);
+		hint = llist_sorted_remove(A, b->oid, hint);
 		b = b->next;
 	}
 }
@@ -249,24 +239,32 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
+	const unsigned int hashsz = the_hash_algo->rawsz;
+
+	if (!p1->unique_objects)
+		p1->unique_objects = llist_copy(p1->remaining_objects);
+	if (!p2->unique_objects)
+		p2->unique_objects = llist_copy(p2->remaining_objects);
 
 	p1_base = p1->pack->index_data;
 	p2_base = p2->pack->index_data;
 	p1_base += 256 * 4 + ((p1->pack->index_version < 2) ? 4 : 8);
 	p2_base += 256 * 4 + ((p2->pack->index_version < 2) ? 4 : 8);
-	p1_step = (p1->pack->index_version < 2) ? 24 : 20;
-	p2_step = (p2->pack->index_version < 2) ? 24 : 20;
+	p1_step = hashsz + ((p1->pack->index_version < 2) ? 4 : 0);
+	p2_step = hashsz + ((p2->pack->index_version < 2) ? 4 : 0);
 
 	while (p1_off < p1->pack->num_objects * p1_step &&
 	       p2_off < p2->pack->num_objects * p2_step)
 	{
-		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
+		const int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			p1_hint = llist_sorted_remove(p1->unique_objects,
-					p1_base + p1_off, p1_hint);
+					(const struct object_id *)(p1_base + p1_off),
+					p1_hint);
 			p2_hint = llist_sorted_remove(p2->unique_objects,
-					p1_base + p1_off, p2_hint);
+					(const struct object_id *)(p1_base + p1_off),
+					p2_hint);
 			p1_off += p1_step;
 			p2_off += p2_step;
 			continue;
@@ -279,90 +277,19 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	}
 }
 
-static void pll_free(struct pll *l)
-{
-	struct pll *old;
-	struct pack_list *opl;
-
-	while (l) {
-		old = l;
-		while (l->pl) {
-			opl = l->pl;
-			l->pl = opl->next;
-			free(opl);
-		}
-		l = l->next;
-		free(old);
-	}
-}
-
-/* all the permutations have to be free()d at the same time,
- * since they refer to each other
- */
-static struct pll * get_permutations(struct pack_list *list, int n)
-{
-	struct pll *subset, *ret = NULL, *new_pll = NULL;
-
-	if (list == NULL || pack_list_size(list) < n || n == 0)
-		return NULL;
-
-	if (n == 1) {
-		while (list) {
-			new_pll = xmalloc(sizeof(*new_pll));
-			new_pll->pl = NULL;
-			pack_list_insert(&new_pll->pl, list);
-			new_pll->next = ret;
-			ret = new_pll;
-			list = list->next;
-		}
-		return ret;
-	}
-
-	while (list->next) {
-		subset = get_permutations(list->next, n - 1);
-		while (subset) {
-			new_pll = xmalloc(sizeof(*new_pll));
-			new_pll->pl = subset->pl;
-			pack_list_insert(&new_pll->pl, list);
-			new_pll->next = ret;
-			ret = new_pll;
-			subset = subset->next;
-		}
-		list = list->next;
-	}
-	return ret;
-}
-
-static int is_superset(struct pack_list *pl, struct llist *list)
-{
-	struct llist *diff;
-
-	diff = llist_copy(list);
-
-	while (pl) {
-		llist_sorted_difference_inplace(diff, pl->all_objects);
-		if (diff->size == 0) { /* we're done */
-			llist_free(diff);
-			return 1;
-		}
-		pl = pl->next;
-	}
-	llist_free(diff);
-	return 0;
-}
-
 static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
 	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
+	const unsigned int hashsz = the_hash_algo->rawsz;
 
 	p1_base = p1->index_data;
 	p2_base = p2->index_data;
 	p1_base += 256 * 4 + ((p1->index_version < 2) ? 4 : 8);
 	p2_base += 256 * 4 + ((p2->index_version < 2) ? 4 : 8);
-	p1_step = (p1->index_version < 2) ? 24 : 20;
-	p2_step = (p2->index_version < 2) ? 24 : 20;
+	p1_step = hashsz + ((p1->index_version < 2) ? 4 : 0);
+	p2_step = hashsz + ((p2->index_version < 2) ? 4 : 0);
 
 	while (p1_off < p1->num_objects * p1_step &&
 	       p2_off < p2->num_objects * p2_step)
@@ -414,14 +341,58 @@ static inline off_t pack_set_bytecount(struct pack_list *pl)
 	return ret;
 }
 
+static int cmp_remaining_objects(const void *a, const void *b)
+{
+	struct pack_list *pl_a = *((struct pack_list **)a);
+	struct pack_list *pl_b = *((struct pack_list **)b);
+
+	if (pl_a->remaining_objects->size == pl_b->remaining_objects->size) {
+		/* have the same remaining_objects, big pack first */
+		if (pl_a->all_objects_size == pl_b->all_objects_size)
+			return 0;
+		else if (pl_a->all_objects_size < pl_b->all_objects_size)
+			return 1;
+		else
+			return -1;
+	} else if (pl_a->remaining_objects->size < pl_b->remaining_objects->size) {
+		/* sort by remaining objects, more objects first */
+		return 1;
+	} else {
+		return -1;
+	}
+}
+
+/* Sort pack_list, greater size of remaining_objects first */
+static void sort_pack_list(struct pack_list **pl)
+{
+	struct pack_list **ary, *p;
+	int i;
+	size_t n = pack_list_size(*pl);
+
+	if (n < 2)
+		return;
+
+	/* prepare an array of packed_list for easier sorting */
+	ary = xcalloc(n, sizeof(struct pack_list *));
+	for (n = 0, p = *pl; p; p = p->next)
+		ary[n++] = p;
+
+	QSORT(ary, n, cmp_remaining_objects);
+
+	/* link them back again */
+	for (i = 0; i < n - 1; i++)
+		ary[i]->next = ary[i + 1];
+	ary[n - 1]->next = NULL;
+	*pl = ary[0];
+
+	free(ary);
+}
+
+
 static void minimize(struct pack_list **min)
 {
-	struct pack_list *pl, *unique = NULL,
-		*non_unique = NULL, *min_perm = NULL;
-	struct pll *perm, *perm_all, *perm_ok = NULL, *new_perm;
-	struct llist *missing;
-	off_t min_perm_size = 0, perm_size;
-	int n;
+	struct pack_list *pl, *unique = NULL, *non_unique = NULL;
+	struct llist *missing, *unique_pack_objects;
 
 	pl = local_packs;
 	while (pl) {
@@ -435,51 +406,40 @@ static void minimize(struct pack_list **min)
 	missing = llist_copy(all_objects);
 	pl = unique;
 	while (pl) {
-		llist_sorted_difference_inplace(missing, pl->all_objects);
+		llist_sorted_difference_inplace(missing, pl->remaining_objects);
 		pl = pl->next;
 	}
+
+	*min = unique;
 
 	/* return if there are no objects missing from the unique set */
 	if (missing->size == 0) {
-		*min = unique;
+		free(missing);
 		return;
 	}
 
-	/* find the permutations which contain all missing objects */
-	for (n = 1; n <= pack_list_size(non_unique) && !perm_ok; n++) {
-		perm_all = perm = get_permutations(non_unique, n);
-		while (perm) {
-			if (is_superset(perm->pl, missing)) {
-				new_perm = xmalloc(sizeof(struct pll));
-				memcpy(new_perm, perm, sizeof(struct pll));
-				new_perm->next = perm_ok;
-				perm_ok = new_perm;
-			}
-			perm = perm->next;
-		}
-		if (perm_ok)
-			break;
-		pll_free(perm_all);
-	}
-	if (perm_ok == NULL)
-		die("Internal error: No complete sets found!");
+	unique_pack_objects = llist_copy(all_objects);
+	llist_sorted_difference_inplace(unique_pack_objects, missing);
 
-	/* find the permutation with the smallest size */
-	perm = perm_ok;
-	while (perm) {
-		perm_size = pack_set_bytecount(perm->pl);
-		if (!min_perm_size || min_perm_size > perm_size) {
-			min_perm_size = perm_size;
-			min_perm = perm->pl;
-		}
-		perm = perm->next;
-	}
-	*min = min_perm;
-	/* add the unique packs to the list */
-	pl = unique;
+	/* remove unique pack objects from the non_unique packs */
+	pl = non_unique;
 	while (pl) {
-		pack_list_insert(min, pl);
+		llist_sorted_difference_inplace(pl->remaining_objects, unique_pack_objects);
 		pl = pl->next;
+	}
+
+	while (non_unique) {
+		/* sort the non_unique packs, greater size of remaining_objects first */
+		sort_pack_list(&non_unique);
+		if (non_unique->remaining_objects->size == 0)
+			break;
+
+		pack_list_insert(min, non_unique);
+
+		for (pl = non_unique->next; pl && pl->remaining_objects->size > 0;  pl = pl->next)
+			llist_sorted_difference_inplace(pl->remaining_objects, non_unique->remaining_objects);
+
+		non_unique = non_unique->next;
 	}
 }
 
@@ -492,10 +452,10 @@ static void load_all_objects(void)
 
 	while (pl) {
 		hint = NULL;
-		l = pl->all_objects->front;
+		l = pl->remaining_objects->front;
 		while (l) {
 			hint = llist_insert_sorted_unique(all_objects,
-							  l->sha1, hint);
+							  l->oid, hint);
 			l = l->next;
 		}
 		pl = pl->next;
@@ -503,7 +463,7 @@ static void load_all_objects(void)
 	/* remove objects present in remote packs */
 	pl = altodb_packs;
 	while (pl) {
-		llist_sorted_difference_inplace(all_objects, pl->all_objects);
+		llist_sorted_difference_inplace(all_objects, pl->remaining_objects);
 		pl = pl->next;
 	}
 }
@@ -528,11 +488,10 @@ static void scan_alt_odb_packs(void)
 	while (alt) {
 		local = local_packs;
 		while (local) {
-			llist_sorted_difference_inplace(local->unique_objects,
-							alt->all_objects);
+			llist_sorted_difference_inplace(local->remaining_objects,
+							alt->remaining_objects);
 			local = local->next;
 		}
-		llist_sorted_difference_inplace(all_objects, alt->all_objects);
 		alt = alt->next;
 	}
 }
@@ -547,20 +506,20 @@ static struct pack_list * add_pack(struct packed_git *p)
 		return NULL;
 
 	l.pack = p;
-	llist_init(&l.all_objects);
+	llist_init(&l.remaining_objects);
 
 	if (open_pack_index(p))
 		return NULL;
 
 	base = p->index_data;
 	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
-	step = (p->index_version < 2) ? 24 : 20;
+	step = the_hash_algo->rawsz + ((p->index_version < 2) ? 4 : 0);
 	while (off < p->num_objects * step) {
-		llist_insert_back(l.all_objects, base + off);
+		llist_insert_back(l.remaining_objects, (const struct object_id *)(base + off));
 		off += step;
 	}
-	/* this list will be pruned in cmp_two_packs later */
-	l.unique_objects = llist_copy(l.all_objects);
+	l.all_objects_size = l.remaining_objects->size;
+	l.unique_objects = NULL;
 	if (p->pack_local)
 		return pack_list_insert(&local_packs, &l);
 	else
@@ -569,7 +528,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 
 static struct pack_list * add_pack_file(const char *filename)
 {
-	struct packed_git *p = packed_git;
+	struct packed_git *p = get_all_packs(the_repository);
 
 	if (strlen(filename) < 40)
 		die("Bad pack filename: %s", filename);
@@ -584,7 +543,7 @@ static struct pack_list * add_pack_file(const char *filename)
 
 static void load_all(void)
 {
-	struct packed_git *p = packed_git;
+	struct packed_git *p = get_all_packs(the_repository);
 
 	while (p) {
 		add_pack(p);
@@ -595,10 +554,10 @@ static void load_all(void)
 int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	struct pack_list *min, *red, *pl;
+	struct pack_list *min = NULL, *red, *pl;
 	struct llist *ignore;
-	unsigned char *sha1;
-	char buf[42]; /* 40 byte sha1 + \n + \0 */
+	struct object_id *oid;
+	char buf[GIT_MAX_HEXSZ + 2]; /* hex hash + \n + \0 */
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(pack_redundant_usage);
@@ -627,8 +586,6 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 			break;
 	}
 
-	prepare_packed_git();
-
 	if (load_all_packs)
 		load_all();
 	else
@@ -640,7 +597,6 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 
 	load_all_objects();
 
-	cmp_local_packs();
 	if (alt_odb)
 		scan_alt_odb_packs();
 
@@ -648,18 +604,20 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 	llist_init(&ignore);
 	if (!isatty(0)) {
 		while (fgets(buf, sizeof(buf), stdin)) {
-			sha1 = xmalloc(20);
-			if (get_sha1_hex(buf, sha1))
-				die("Bad sha1 on stdin: %s", buf);
-			llist_insert_sorted_unique(ignore, sha1, NULL);
+			oid = xmalloc(sizeof(*oid));
+			if (get_oid_hex(buf, oid))
+				die("Bad object ID on stdin: %s", buf);
+			llist_insert_sorted_unique(ignore, oid, NULL);
 		}
 	}
 	llist_sorted_difference_inplace(all_objects, ignore);
 	pl = local_packs;
 	while (pl) {
-		llist_sorted_difference_inplace(pl->unique_objects, ignore);
+		llist_sorted_difference_inplace(pl->remaining_objects, ignore);
 		pl = pl->next;
 	}
+
+	cmp_local_packs();
 
 	minimize(&min);
 
@@ -683,7 +641,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 	pl = red = pack_list_difference(local_packs, min);
 	while (pl) {
 		printf("%s\n%s\n",
-		       sha1_pack_index_name(pl->pack->sha1),
+		       sha1_pack_index_name(pl->pack->hash),
 		       pl->pack->pack_name);
 		pl = pl->next;
 	}

@@ -1,6 +1,12 @@
 #ifndef SEND_PACK_H
 #define SEND_PACK_H
 
+#include "string-list.h"
+
+struct child_process;
+struct oid_array;
+struct ref;
+
 /* Possible values for push_cert field in send_pack_args. */
 #define SEND_PACK_PUSH_CERT_NEVER 0
 #define SEND_PACK_PUSH_CERT_IF_ASKED 1
@@ -21,6 +27,7 @@ struct send_pack_args {
 		push_cert:2,
 		stateless_rpc:1,
 		atomic:1;
+	const struct string_list *push_options;
 };
 
 struct option;
@@ -29,6 +36,6 @@ int option_parse_push_signed(const struct option *opt,
 
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
-	      struct ref *remote_refs, struct sha1_array *extra_have);
+	      struct ref *remote_refs, struct oid_array *extra_have);
 
 #endif

@@ -45,7 +45,7 @@ call the aggregation script to summarize the results:
 
     $ ./p0001-rev-list.sh
     [...]
-    $ GIT_BUILD_DIR=/path/to/other/git ./p0001-rev-list.sh
+    $ ./run /path/to/other/git -- ./p0001-rev-list.sh
     [...]
     $ ./aggregate.perl . /path/to/other/git ./p0001-rev-list.sh
 
@@ -60,7 +60,22 @@ You can set the following variables (also in your config.mak):
 
     GIT_PERF_MAKE_OPTS
 	Options to use when automatically building a git tree for
-	performance testing.  E.g., -j6 would be useful.
+	performance testing. E.g., -j6 would be useful. Passed
+	directly to make as "make $GIT_PERF_MAKE_OPTS".
+
+    GIT_PERF_MAKE_COMMAND
+	An arbitrary command that'll be run in place of the make
+	command, if set the GIT_PERF_MAKE_OPTS variable is
+	ignored. Useful in cases where source tree changes might
+	require issuing a different make command to different
+	revisions.
+
+	This can be (ab)used to monkeypatch or otherwise change the
+	tree about to be built. Note that the build directory can be
+	re-used for subsequent runs so the make command might get
+	executed multiple times on the same tree, but don't count on
+	any of that, that's an implementation detail that might change
+	in the future.
 
     GIT_PERF_REPO
     GIT_PERF_LARGE_REPO
@@ -106,6 +121,7 @@ sources perf-lib.sh:
 
 After that you will want to use some of the following:
 
+	test_perf_fresh_repo    # sets up an empty repository
 	test_perf_default_repo  # sets up a "normal" repository
 	test_perf_large_repo    # sets up a "large" repository
 
@@ -152,3 +168,28 @@ that
   While we have tried to make sure that it can cope with embedded
   whitespace and other special characters, it will not work with
   multi-line data.
+
+Rather than tracking the performance by run-time as `test_perf` does, you
+may also track output size by using `test_size`. The stdout of the
+function should be a single numeric value, which will be captured and
+shown in the aggregated output. For example:
+
+	test_perf 'time foo' '
+		./foo >foo.out
+	'
+
+	test_size 'output size'
+		wc -c <foo.out
+	'
+
+might produce output like:
+
+	Test                origin           HEAD
+	-------------------------------------------------------------
+	1234.1 time foo     0.37(0.79+0.02)  0.26(0.51+0.02) -29.7%
+	1234.2 output size             4.3M             3.6M -14.7%
+
+The item being measured (and its units) is up to the test; the context
+and the test title should make it clear to the user whether bigger or
+smaller numbers are better. Unlike test_perf, the test code will only be
+run once, since output sizes tend to be more deterministic than timings.

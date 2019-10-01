@@ -92,12 +92,15 @@ test_expect_success 'will not overwrite removed file with staged changes' '
 	test_cmp important c1.c
 '
 
-test_expect_failure 'will not overwrite unstaged changes in renamed file' '
+test_expect_success 'will not overwrite unstaged changes in renamed file' '
 	git reset --hard c1 &&
 	git mv c1.c other.c &&
 	git commit -m rename &&
 	cp important other.c &&
-	git merge c1a &&
+	test_must_fail git merge c1a >out &&
+	test_i18ngrep "Refusing to lose dirty file at other.c" out &&
+	test_path_is_file other.c~HEAD &&
+	test $(git hash-object other.c~HEAD) = $(git rev-parse c1a:c1.c) &&
 	test_cmp important other.c
 '
 

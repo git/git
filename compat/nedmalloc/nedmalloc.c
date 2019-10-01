@@ -938,32 +938,15 @@ void **nedpindependent_comalloc(nedpool *p, size_t elems, size_t *sizes, void **
 	void **ret;
 	threadcache *tc;
 	int mymspace;
-    size_t i, *adjustedsizes=(size_t *) alloca(elems*sizeof(size_t));
-    if(!adjustedsizes) return 0;
-    for(i=0; i<elems; i++)
-	adjustedsizes[i]=sizes[i]<sizeof(threadcacheblk) ? sizeof(threadcacheblk) : sizes[i];
+	size_t i, *adjustedsizes=(size_t *) alloca(elems*sizeof(size_t));
+	if(!adjustedsizes) return 0;
+	for(i=0; i<elems; i++)
+		adjustedsizes[i]=sizes[i]<sizeof(threadcacheblk) ? sizeof(threadcacheblk) : sizes[i];
 	GetThreadCache(&p, &tc, &mymspace, 0);
 	GETMSPACE(m, p, tc, mymspace, 0,
 	      ret=mspace_independent_comalloc(m, elems, adjustedsizes, chunks));
 	return ret;
 }
-
-#ifdef OVERRIDE_STRDUP
-/*
- * This implementation is purely there to override the libc version, to
- * avoid a crash due to allocation and free on different 'heaps'.
- */
-char *strdup(const char *s1)
-{
-	char *s2 = 0;
-	if (s1) {
-		size_t len = strlen(s1) + 1;
-		s2 = malloc(len);
-		memcpy(s2, s1, len);
-	}
-	return s2;
-}
-#endif
 
 #if defined(__cplusplus)
 }

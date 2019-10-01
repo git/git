@@ -9,7 +9,7 @@ struct blob {
 	struct object object;
 };
 
-struct blob *lookup_blob(const unsigned char *sha1);
+struct blob *lookup_blob(struct repository *r, const struct object_id *oid);
 
 int parse_blob_buffer(struct blob *item, void *buffer, unsigned long size);
 

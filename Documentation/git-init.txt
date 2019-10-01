@@ -38,8 +38,6 @@ the repository to another place if --separate-git-dir is given).
 OPTIONS
 -------
 
---
-
 -q::
 --quiet::
 
@@ -111,13 +109,11 @@ into it.
 If you provide a 'directory', the command is run inside it. If this directory
 does not exist, it will be created.
 
---
-
 TEMPLATE DIRECTORY
 ------------------
 
-The template directory contains files and directories that will be copied to
-the `$GIT_DIR` after it is created.
+Files and directories in the template directory whose name do not start with a
+dot will be copied to the `$GIT_DIR` after it is created.
 
 The template directory will be one of the following (in order):
 
@@ -132,7 +128,7 @@ The template directory will be one of the following (in order):
 The default template directory includes some directory structure, suggested
 "exclude patterns" (see linkgit:gitignore[5]), and sample hook files.
 
-The sample hooks are all disabled by default, To enable one of the
+The sample hooks are all disabled by default. To enable one of the
 sample hooks rename it by removing its `.sample` suffix.
 
 See linkgit:githooks[5] for more general info on hook execution.

@@ -653,4 +653,54 @@ test_expect_success 'git clean -d respects pathspecs (pathspec is prefix of dir)
 	test_path_is_dir foobar
 '
 
+test_expect_success 'git clean -d skips untracked dirs containing ignored files' '
+	echo /foo/bar >.gitignore &&
+	echo ignoreme >>.gitignore &&
+	rm -rf foo &&
+	mkdir -p foo/a/aa/aaa foo/b/bb/bbb &&
+	touch foo/bar foo/baz foo/a/aa/ignoreme foo/b/ignoreme foo/b/bb/1 foo/b/bb/2 &&
+	git clean -df &&
+	test_path_is_dir foo &&
+	test_path_is_file foo/bar &&
+	test_path_is_missing foo/baz &&
+	test_path_is_file foo/a/aa/ignoreme &&
+	test_path_is_missing foo/a/aa/aaa &&
+	test_path_is_file foo/b/ignoreme &&
+	test_path_is_missing foo/b/bb
+'
+
+test_expect_failure 'git clean -d skips nested repo containing ignored files' '
+	test_when_finished "rm -rf nested-repo-with-ignored-file" &&
+
+	git init nested-repo-with-ignored-file &&
+	(
+		cd nested-repo-with-ignored-file &&
+		>file &&
+		git add file &&
+		git commit -m Initial &&
+
+		# This file is ignored by a .gitignore rule in the outer repo
+		# added in the previous test.
+		>ignoreme
+	) &&
+
+	git clean -fd &&
+
+	test_path_is_file nested-repo-with-ignored-file/.git/index &&
+	test_path_is_file nested-repo-with-ignored-file/ignoreme &&
+	test_path_is_file nested-repo-with-ignored-file/file
+'
+
+test_expect_success MINGW 'handle clean & core.longpaths = false nicely' '
+	test_config core.longpaths false &&
+	a50=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
+	mkdir -p $a50$a50/$a50$a50/$a50$a50 &&
+	: >"$a50$a50/test.txt" 2>"$a50$a50/$a50$a50/$a50$a50/test.txt" &&
+	# create a temporary outside the working tree to hide from "git clean"
+	test_must_fail git clean -xdf 2>.git/err &&
+	# grepping for a strerror string is unportable but it is OK here with
+	# MINGW prereq
+	test_i18ngrep "too long" .git/err
+'
+
 test_done

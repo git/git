@@ -4,7 +4,7 @@ submodule config cache API
 The submodule config cache API allows to read submodule
 configurations/information from specified revisions. Internally
 information is lazily read into a cache that is used to avoid
-unnecessary parsing of the same .gitmodule files. Lookups can be done by
+unnecessary parsing of the same .gitmodules files. Lookups can be done by
 submodule path or name.
 
 Usage
@@ -38,7 +38,7 @@ Data Structures
 Functions
 ---------
 
-`void submodule_free()`::
+`void submodule_free(struct repository *r)`::
 
 	Use these to free the internally cached values.
 
@@ -47,16 +47,20 @@ Functions
 	Can be passed to the config parsing infrastructure to parse
 	local (worktree) submodule configurations.
 
-`const struct submodule *submodule_from_path(const unsigned char *commit_sha1, const char *path)`::
+`const struct submodule *submodule_from_path(const unsigned char *treeish_name, const char *path)`::
 
-	Lookup values for one submodule by its commit_sha1 and path.
+	Given a tree-ish in the superproject and a path, return the
+	submodule that is bound at the path in the named tree.
 
-`const struct submodule *submodule_from_name(const unsigned char *commit_sha1, const char *name)`::
+`const struct submodule *submodule_from_name(const unsigned char *treeish_name, const char *name)`::
 
 	The same as above but lookup by name.
 
-If given the null_sha1 as commit_sha1 the local configuration of a
-submodule will be returned (e.g. consolidated values from local git
+Whenever a submodule configuration is parsed in `parse_submodule_config_option`
+via e.g. `gitmodules_config()`, it will overwrite the null_sha1 entry.
+So in the normal case, when HEAD:.gitmodules is parsed first and then overlayed
+with the repository configuration, the null_sha1 entry contains the local
+configuration of a submodule (e.g. consolidated values from local git
 configuration and the .gitmodules file in the worktree).
 
 For an example usage see test-submodule-config.c.

@@ -56,5 +56,13 @@ test_expect_success 'merge @{-100} before checking out that many branches yet' '
 	test_must_fail git merge @{-100}
 '
 
+test_expect_success 'log -g @{-1}' '
+	git checkout -b last_branch &&
+	git checkout -b new_branch &&
+	echo "last_branch@{0}" >expect &&
+	git log -g --format=%gd @{-1} >actual &&
+	test_cmp expect actual
+'
+
 test_done
 

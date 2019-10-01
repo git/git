@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "cache.h"
 #include "ewok.h"
@@ -44,14 +43,6 @@ void bitmap_set(struct bitmap *self, size_t pos)
 	}
 
 	self->words[block] |= EWAH_MASK(pos);
-}
-
-void bitmap_clear(struct bitmap *self, size_t pos)
-{
-	size_t block = EWAH_BLOCK(pos);
-
-	if (block < self->word_alloc)
-		self->words[block] &= ~EWAH_MASK(pos);
 }
 
 int bitmap_get(struct bitmap *self, size_t pos)
@@ -136,30 +127,6 @@ void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 
 	while (ewah_iterator_next(&word, &it))
 		self->words[i++] |= word;
-}
-
-void bitmap_each_bit(struct bitmap *self, ewah_callback callback, void *data)
-{
-	size_t pos = 0, i;
-
-	for (i = 0; i < self->word_alloc; ++i) {
-		eword_t word = self->words[i];
-		uint32_t offset;
-
-		if (word == (eword_t)~0) {
-			for (offset = 0; offset < BITS_IN_EWORD; ++offset)
-				callback(pos++, data);
-		} else {
-			for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
-				if ((word >> offset) == 0)
-					break;
-
-				offset += ewah_bit_ctz64(word >> offset);
-				callback(pos + offset, data);
-			}
-			pos += BITS_IN_EWORD;
-		}
-	}
 }
 
 size_t bitmap_popcount(struct bitmap *self)

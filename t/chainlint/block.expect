@@ -1,0 +1,12 @@
+(
+	foo &&
+	{
+		echo a
+		echo b
+	} &&
+	bar &&
+	{
+		echo c
+?!AMP?!	}
+	baz
+>)

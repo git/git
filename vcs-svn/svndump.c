@@ -8,7 +8,6 @@
  */
 
 #include "cache.h"
-#include "repo_tree.h"
 #include "fast_export.h"
 #include "line_buffer.h"
 #include "strbuf.h"
@@ -47,7 +46,7 @@ static struct {
 
 static struct {
 	uint32_t revision;
-	unsigned long timestamp;
+	timestamp_t timestamp;
 	struct strbuf log, author, note;
 } rev_ctx;
 
@@ -134,13 +133,13 @@ static void handle_property(const struct strbuf *key_buf,
 			die("invalid dump: sets type twice");
 		}
 		if (!val) {
-			node_ctx.type = REPO_MODE_BLB;
+			node_ctx.type = S_IFREG | 0644;
 			return;
 		}
 		*type_set = 1;
 		node_ctx.type = keylen == strlen("svn:executable") ?
-				REPO_MODE_EXE :
-				REPO_MODE_LNK;
+				(S_IFREG | 0755) :
+				S_IFLNK;
 	}
 }
 
@@ -219,45 +218,45 @@ static void handle_node(void)
 	 */
 	static const char *const empty_blob = "::empty::";
 	const char *old_data = NULL;
-	uint32_t old_mode = REPO_MODE_BLB;
+	uint32_t old_mode = S_IFREG | 0644;
 
 	if (node_ctx.action == NODEACT_DELETE) {
 		if (have_text || have_props || node_ctx.srcRev)
 			die("invalid dump: deletion node has "
 				"copyfrom info, text, or properties");
-		repo_delete(node_ctx.dst.buf);
+		fast_export_delete(node_ctx.dst.buf);
 		return;
 	}
 	if (node_ctx.action == NODEACT_REPLACE) {
-		repo_delete(node_ctx.dst.buf);
+		fast_export_delete(node_ctx.dst.buf);
 		node_ctx.action = NODEACT_ADD;
 	}
 	if (node_ctx.srcRev) {
-		repo_copy(node_ctx.srcRev, node_ctx.src.buf, node_ctx.dst.buf);
+		fast_export_copy(node_ctx.srcRev, node_ctx.src.buf, node_ctx.dst.buf);
 		if (node_ctx.action == NODEACT_ADD)
 			node_ctx.action = NODEACT_CHANGE;
 	}
-	if (have_text && type == REPO_MODE_DIR)
+	if (have_text && type == S_IFDIR)
 		die("invalid dump: directories cannot have text attached");
 
 	/*
 	 * Find old content (old_data) and decide on the new mode.
 	 */
 	if (node_ctx.action == NODEACT_CHANGE && !*node_ctx.dst.buf) {
-		if (type != REPO_MODE_DIR)
+		if (type != S_IFDIR)
 			die("invalid dump: root of tree is not a regular file");
 		old_data = NULL;
 	} else if (node_ctx.action == NODEACT_CHANGE) {
 		uint32_t mode;
-		old_data = repo_read_path(node_ctx.dst.buf, &mode);
-		if (mode == REPO_MODE_DIR && type != REPO_MODE_DIR)
+		old_data = fast_export_read_path(node_ctx.dst.buf, &mode);
+		if (mode == S_IFDIR && type != S_IFDIR)
 			die("invalid dump: cannot modify a directory into a file");
-		if (mode != REPO_MODE_DIR && type == REPO_MODE_DIR)
+		if (mode != S_IFDIR && type == S_IFDIR)
 			die("invalid dump: cannot modify a file into a directory");
 		node_ctx.type = mode;
 		old_mode = mode;
 	} else if (node_ctx.action == NODEACT_ADD) {
-		if (type == REPO_MODE_DIR)
+		if (type == S_IFDIR)
 			old_data = NULL;
 		else if (have_text)
 			old_data = empty_blob;
@@ -280,7 +279,7 @@ static void handle_node(void)
 	/*
 	 * Save the result.
 	 */
-	if (type == REPO_MODE_DIR)	/* directories are not tracked. */
+	if (type == S_IFDIR)	/* directories are not tracked. */
 		return;
 	assert(old_data);
 	if (old_data == empty_blob)
@@ -319,6 +318,7 @@ static void end_revision(const char *note_ref)
 		strbuf_addf(&mark, ":%"PRIu32, rev_ctx.revision);
 		fast_export_note(mark.buf, "inline");
 		fast_export_buf_to_data(&rev_ctx.note);
+		strbuf_release(&mark);
 	}
 }
 
@@ -385,9 +385,9 @@ void svndump_read(const char *url, const char *local_ref, const char *notes_ref)
 				continue;
 			strbuf_addf(&rev_ctx.note, "%s\n", t);
 			if (!strcmp(val, "dir"))
-				node_ctx.type = REPO_MODE_DIR;
+				node_ctx.type = S_IFDIR;
 			else if (!strcmp(val, "file"))
-				node_ctx.type = REPO_MODE_BLB;
+				node_ctx.type = S_IFREG | 0644;
 			else
 				fprintf(stderr, "Unknown node-kind: %s\n", val);
 			break;

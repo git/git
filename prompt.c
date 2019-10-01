@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "prompt.h"

@@ -1,0 +1,4 @@
+func RIGHT() {
+	a := 5
+	b := ChangeMe
+}

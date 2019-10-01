@@ -71,7 +71,7 @@ then
 	then
 		merge_tool="$GIT_DIFF_TOOL"
 	else
-		merge_tool="$(get_merge_tool)" || exit
+		merge_tool="$(get_merge_tool)"
 	fi
 fi
 
@@ -86,6 +86,13 @@ else
 	do
 		launch_merge_tool "$1" "$2" "$5"
 		status=$?
+		if test $status -ge 126
+		then
+			# Command not found (127), not executable (126) or
+			# exited via a signal (>= 128).
+			exit $status
+		fi
+
 		if test "$status" != 0 &&
 			test "$GIT_DIFFTOOL_TRUST_EXIT_CODE" = true
 		then

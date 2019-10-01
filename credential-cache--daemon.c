@@ -1,14 +1,13 @@
 #include "cache.h"
+#include "config.h"
 #include "tempfile.h"
 #include "credential.h"
 #include "unix-socket.h"
 #include "parse-options.h"
 
-static struct tempfile socket_file;
-
 struct credential_cache_entry {
 	struct credential item;
-	unsigned long expiration;
+	timestamp_t expiration;
 };
 static struct credential_cache_entry *entries;
 static int entries_nr;
@@ -47,12 +46,12 @@ static void remove_credential(const struct credential *c)
 		e->expiration = 0;
 }
 
-static int check_expirations(void)
+static timestamp_t check_expirations(void)
 {
-	static unsigned long wait_for_entry_until;
+	static timestamp_t wait_for_entry_until;
 	int i = 0;
-	unsigned long now = time(NULL);
-	unsigned long next = (unsigned long)-1;
+	timestamp_t now = time(NULL);
+	timestamp_t next = TIME_MAX;
 
 	/*
 	 * Initially give the client 30 seconds to actually contact us
@@ -92,7 +91,8 @@ static int check_expirations(void)
 }
 
 static int read_request(FILE *fh, struct credential *c,
-			struct strbuf *action, int *timeout) {
+			struct strbuf *action, int *timeout)
+{
 	static struct strbuf item = STRBUF_INIT;
 	const char *p;
 
@@ -159,7 +159,7 @@ static void serve_one_client(FILE *in, FILE *out)
 static int serve_cache_loop(int fd)
 {
 	struct pollfd pfd;
-	unsigned long wakeup;
+	timestamp_t wakeup;
 
 	wakeup = check_expirations();
 	if (!wakeup)
@@ -219,11 +219,11 @@ static void serve_cache(const char *socket_path, int debug)
 	close(fd);
 }
 
-static const char permissions_advice[] =
+static const char permissions_advice[] = N_(
 "The permissions on your socket directory are too loose; other\n"
 "users may be able to read your cached credentials. Consider running:\n"
 "\n"
-"	chmod 0700 %s";
+"	chmod 0700 %s");
 static void init_socket_directory(const char *path)
 {
 	struct stat st;
@@ -232,7 +232,7 @@ static void init_socket_directory(const char *path)
 
 	if (!stat(dir, &st)) {
 		if (st.st_mode & 077)
-			die(permissions_advice, dir);
+			die(_(permissions_advice), dir);
 	} else {
 		/*
 		 * We must be sure to create the directory with the correct mode,
@@ -259,6 +259,7 @@ static void init_socket_directory(const char *path)
 
 int cmd_main(int argc, const char **argv)
 {
+	struct tempfile *socket_file;
 	const char *socket_path;
 	int ignore_sighup = 0;
 	static const char *usage[] = {
@@ -284,7 +285,7 @@ int cmd_main(int argc, const char **argv)
 		die("socket directory must be an absolute path");
 
 	init_socket_directory(socket_path);
-	register_tempfile(&socket_file, socket_path);
+	socket_file = register_tempfile(socket_path);
 
 	if (ignore_sighup)
 		signal(SIGHUP, SIG_IGN);

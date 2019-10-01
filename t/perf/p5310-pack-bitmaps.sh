@@ -12,8 +12,7 @@ test_perf_large_repo
 # We intentionally use the deprecated pack.writebitmaps
 # config so that we can test against older versions of git.
 test_expect_success 'setup bitmap config' '
-	git config pack.writebitmaps true &&
-	git config pack.writebitmaphashcache true
+	git config pack.writebitmaps true
 '
 
 test_perf 'repack to disk' '
@@ -30,6 +29,14 @@ test_perf 'simulated fetch' '
 		echo HEAD &&
 		echo ^$have
 	} | git pack-objects --revs --stdout >/dev/null
+'
+
+test_perf 'pack to file' '
+	git pack-objects --all pack1 </dev/null >/dev/null
+'
+
+test_perf 'pack to file (bitmap)' '
+	git pack-objects --use-bitmap-index --all pack1b </dev/null >/dev/null
 '
 
 test_expect_success 'create partial bitmap state' '
@@ -53,8 +60,12 @@ test_expect_success 'create partial bitmap state' '
 	git update-ref HEAD $orig_tip
 '
 
-test_perf 'partial bitmap' '
+test_perf 'clone (partial bitmap)' '
 	git pack-objects --stdout --all </dev/null >/dev/null
+'
+
+test_perf 'pack to file (partial bitmap)' '
+	git pack-objects --use-bitmap-index --all pack2b </dev/null >/dev/null
 '
 
 test_done

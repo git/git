@@ -8,9 +8,10 @@ test_description='git svn dcommit can commit renames of files with ugly names'
 . ./lib-git-svn.sh
 
 test_expect_success 'load repository with strange names' '
-	svnadmin load -q "$rawsvnrepo" < "$TEST_DIRECTORY"/t9115/funky-names.dump &&
-	start_httpd gtk+
-	'
+	svnadmin load -q "$rawsvnrepo" <"$TEST_DIRECTORY"/t9115/funky-names.dump
+'
+
+maybe_start_httpd gtk+
 
 test_expect_success 'init and fetch repository' '
 	git svn init "$svnrepo" &&
@@ -118,7 +119,5 @@ test_expect_success !MINGW,!UTF8_NFD_TO_NFC 'svn.pathnameencoding=cp932 rename o
 	git commit -m "inf rename" &&
 	git svn dcommit
 '
-
-stop_httpd
 
 test_done

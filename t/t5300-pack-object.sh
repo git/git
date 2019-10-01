@@ -16,8 +16,8 @@ test_expect_success \
      perl -e "print \"a\" x 4096;" > a &&
      perl -e "print \"b\" x 4096;" > b &&
      perl -e "print \"c\" x 4096;" > c &&
-     test-genrandom "seed a" 2097152 > a_big &&
-     test-genrandom "seed b" 2097152 > b_big &&
+     test-tool genrandom "seed a" 2097152 > a_big &&
+     test-tool genrandom "seed b" 2097152 > b_big &&
      git update-index --add a a_big b b_big c &&
      cat c >d && echo foo >>d && git update-index --add d &&
      tree=$(git write-tree) &&
@@ -191,7 +191,7 @@ test_expect_success 'survive missing objects/pack directory' '
 		mkdir missing-pack &&
 		cd missing-pack &&
 		git init &&
-		GOP=.git/objects/pack
+		GOP=.git/objects/pack &&
 		rm -fr $GOP &&
 		git index-pack --stdin --keep=test <../test-3-${packname_3}.pack &&
 		test -f $GOP/pack-${packname_3}.pack &&
@@ -311,8 +311,8 @@ test_expect_success 'unpacking with --strict' '
 	rm -f .git/index &&
 	tail -n 10 LIST | git update-index --index-info &&
 	ST=$(git write-tree) &&
-	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
-		git pack-objects test-5 ) &&
+	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
+	PACK5=$( git pack-objects test-5 <actual ) &&
 	PACK6=$( (
 			echo "$LIST"
 			echo "$LI"
@@ -358,8 +358,8 @@ test_expect_success 'index-pack with --strict' '
 	rm -f .git/index &&
 	tail -n 10 LIST | git update-index --index-info &&
 	ST=$(git write-tree) &&
-	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
-		git pack-objects test-5 ) &&
+	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
+	PACK5=$( git pack-objects test-5 <actual ) &&
 	PACK6=$( (
 			echo "$LIST"
 			echo "$LI"
@@ -406,27 +406,94 @@ test_expect_success 'verify resulting packs' '
 	git verify-pack test-11-*.pack
 '
 
-#
-# WARNING!
-#
-# The following test is destructive.  Please keep the next
-# two tests at the end of this file.
-#
+test_expect_success 'set up pack for non-repo tests' '
+	# make sure we have a pack with no matching index file
+	cp test-1-*.pack foo.pack
+'
 
-test_expect_success \
-    'fake a SHA1 hash collision' \
-    'test -f	.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67 &&
-     cp -f	.git/objects/9d/235ed07cd19811a6ceb342de82f190e49c9f68 \
-		.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67'
+test_expect_success 'index-pack --stdin complains of non-repo' '
+	nongit test_must_fail git index-pack --stdin <foo.pack &&
+	test_path_is_missing non-repo/.git
+'
 
-test_expect_success \
-    'make sure index-pack detects the SHA1 collision' \
-    'test_must_fail git index-pack -o bad.idx test-3.pack 2>msg &&
-     test_i18ngrep "SHA1 COLLISION FOUND" msg'
+test_expect_success 'index-pack <pack> works in non-repo' '
+	nongit git index-pack ../foo.pack &&
+	test_path_is_file foo.idx
+'
 
-test_expect_success \
-    'make sure index-pack detects the SHA1 collision (large blobs)' \
-    'test_must_fail git -c core.bigfilethreshold=1 index-pack -o bad.idx test-3.pack 2>msg &&
-     test_i18ngrep "SHA1 COLLISION FOUND" msg'
+test_expect_success 'index-pack --strict <pack> works in non-repo' '
+	rm -f foo.idx &&
+	nongit git index-pack --strict ../foo.pack &&
+	test_path_is_file foo.idx
+'
+
+test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'index-pack --threads=N or pack.threads=N warns when no pthreads' '
+	test_must_fail git index-pack --threads=2 2>err &&
+	grep ^warning: err >warnings &&
+	test_line_count = 1 warnings &&
+	grep -F "no threads support, ignoring --threads=2" err &&
+
+	test_must_fail git -c pack.threads=2 index-pack 2>err &&
+	grep ^warning: err >warnings &&
+	test_line_count = 1 warnings &&
+	grep -F "no threads support, ignoring pack.threads" err &&
+
+	test_must_fail git -c pack.threads=2 index-pack --threads=4 2>err &&
+	grep ^warning: err >warnings &&
+	test_line_count = 2 warnings &&
+	grep -F "no threads support, ignoring --threads=4" err &&
+	grep -F "no threads support, ignoring pack.threads" err
+'
+
+test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'pack-objects --threads=N or pack.threads=N warns when no pthreads' '
+	git pack-objects --threads=2 --stdout --all </dev/null >/dev/null 2>err &&
+	grep ^warning: err >warnings &&
+	test_line_count = 1 warnings &&
+	grep -F "no threads support, ignoring --threads" err &&
+
+	git -c pack.threads=2 pack-objects --stdout --all </dev/null >/dev/null 2>err &&
+	grep ^warning: err >warnings &&
+	test_line_count = 1 warnings &&
+	grep -F "no threads support, ignoring pack.threads" err &&
+
+	git -c pack.threads=2 pack-objects --threads=4 --stdout --all </dev/null >/dev/null 2>err &&
+	grep ^warning: err >warnings &&
+	test_line_count = 2 warnings &&
+	grep -F "no threads support, ignoring --threads" err &&
+	grep -F "no threads support, ignoring pack.threads" err
+'
+
+test_expect_success 'pack-objects in too-many-packs mode' '
+	GIT_TEST_FULL_IN_PACK_ARRAY=1 git repack -ad &&
+	git fsck
+'
+
+test_expect_success 'setup: fake a SHA1 hash collision' '
+	git init corrupt &&
+	(
+		cd corrupt &&
+		long_a=$(git hash-object -w ../a | sed -e "s!^..!&/!") &&
+		long_b=$(git hash-object -w ../b | sed -e "s!^..!&/!") &&
+		test -f	.git/objects/$long_b &&
+		cp -f	.git/objects/$long_a \
+			.git/objects/$long_b
+	)
+'
+
+test_expect_success 'make sure index-pack detects the SHA1 collision' '
+	(
+		cd corrupt &&
+		test_must_fail git index-pack -o ../bad.idx ../test-3.pack 2>msg &&
+		test_i18ngrep "SHA1 COLLISION FOUND" msg
+	)
+'
+
+test_expect_success 'make sure index-pack detects the SHA1 collision (large blobs)' '
+	(
+		cd corrupt &&
+		test_must_fail git -c core.bigfilethreshold=1 index-pack -o ../bad.idx ../test-3.pack 2>msg &&
+		test_i18ngrep "SHA1 COLLISION FOUND" msg
+	)
+'
 
 test_done

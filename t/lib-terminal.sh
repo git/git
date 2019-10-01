@@ -9,8 +9,8 @@ test_terminal () {
 		echo >&4 "test_terminal: need to declare TTY prerequisite"
 		return 127
 	fi
-	perl "$TEST_DIRECTORY"/test-terminal.perl "$@"
-}
+	perl "$TEST_DIRECTORY"/test-terminal.perl "$@" 2>&7
+} 7>&2 2>&4
 
 test_lazy_prereq TTY '
 	test_have_prereq PERL &&

@@ -1,5 +1,8 @@
+# The default target of this Makefile is...
+all::
+
 test:
-	./test.pl
+	./t-git-credential-netrc.sh
 
 testverbose:
-	./test.pl -d -v
+	./t-git-credential-netrc.sh -d -v

@@ -12,3 +12,7 @@ merge_cmd () {
 			--result="$MERGED" "$LOCAL" "$REMOTE"
 	fi
 }
+
+exit_code_trustable () {
+	true
+}

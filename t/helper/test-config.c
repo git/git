@@ -1,4 +1,6 @@
+#include "test-tool.h"
 #include "cache.h"
+#include "config.h"
 #include "string-list.h"
 
 /*
@@ -31,7 +33,7 @@
  * Examples:
  *
  * To print the value with highest priority for key "foo.bAr Baz.rock":
- * 	test-config get_value "foo.bAr Baz.rock"
+ * 	test-tool config get_value "foo.bAr Baz.rock"
  *
  */
 
@@ -66,12 +68,30 @@ static int iterate_cb(const char *var, const char *value, void *data)
 	return 0;
 }
 
-int cmd_main(int argc, const char **argv)
+static int early_config_cb(const char *var, const char *value, void *vdata)
+{
+	const char *key = vdata;
+
+	if (!strcmp(key, var))
+		printf("%s\n", value);
+
+	return 0;
+}
+
+int cmd__config(int argc, const char **argv)
 {
 	int i, val;
 	const char *v;
 	const struct string_list *strptr;
 	struct config_set cs;
+
+	if (argc == 3 && !strcmp(argv[1], "read_early_config")) {
+		read_early_config(early_config_cb, (void *)argv[2]);
+		return 0;
+	}
+
+	setup_git_directory();
+
 	git_configset_init(&cs);
 
 	if (argc < 2) {

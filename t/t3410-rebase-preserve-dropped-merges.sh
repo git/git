@@ -11,6 +11,11 @@ rewritten.
 '
 . ./test-lib.sh
 
+if ! test_have_prereq REBASE_P; then
+	skip_all='skipping git rebase -p tests, as asked for'
+	test_done
+fi
+
 # set up two branches like this:
 #
 # A - B - C - D - E

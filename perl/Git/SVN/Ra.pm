@@ -606,7 +606,7 @@ sub minimize_url {
 			my $latest = $ra->get_latest_revnum;
 			$ra->get_log("", $latest, 0, 1, 0, 1, sub {});
 		};
-	} while ($@ && ($c = shift @components));
+	} while ($@ && defined($c = shift @components));
 
 	return canonicalize_url($url);
 }

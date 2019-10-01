@@ -83,8 +83,4 @@ test_expect_success SYMLINKS 'p4 client root symlink should stay symbolic' '
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done

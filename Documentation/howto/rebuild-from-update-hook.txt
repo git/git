@@ -4,13 +4,13 @@ From: Junio C Hamano <gitster@pobox.com>
 Date: Fri, 26 Aug 2005 18:19:10 -0700
 Abstract: In this how-to article, JC talks about how he
  uses the post-update hook to automate Git documentation page
- shown at http://www.kernel.org/pub/software/scm/git/docs/.
+ shown at https://www.kernel.org/pub/software/scm/git/docs/.
 Content-type: text/asciidoc
 
 How to rebuild from update hook
 ===============================
 
-The pages under http://www.kernel.org/pub/software/scm/git/docs/
+The pages under https://www.kernel.org/pub/software/scm/git/docs/
 are built from Documentation/ directory of the git.git project
 and needed to be kept up-to-date.  The www.kernel.org/ servers
 are mirrored and I was told that the origin of the mirror is on

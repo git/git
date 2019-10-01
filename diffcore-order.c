@@ -67,7 +67,7 @@ static int match_order(const char *path)
 		strbuf_addstr(&p, path);
 		while (p.buf[0]) {
 			char *cp;
-			if (!wildmatch(order[i], p.buf, 0, NULL))
+			if (!wildmatch(order[i], p.buf, 0))
 				return i;
 			cp = strrchr(p.buf, '/');
 			if (!cp)
@@ -101,7 +101,7 @@ void order_objects(const char *orderfile, obj_path_fn_t obj_path,
 		objs[i].orig_order = i;
 		objs[i].order = match_order(obj_path(objs[i].obj));
 	}
-	qsort(objs, nr, sizeof(*objs), compare_objs_order);
+	QSORT(objs, nr, compare_objs_order);
 }
 
 static const char *pair_pathtwo(void *obj)

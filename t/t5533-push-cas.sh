@@ -142,9 +142,8 @@ test_expect_success 'push to delete (protected, forced)' '
 		cd dst &&
 		git push --force --force-with-lease=master:master^ origin :master
 	) &&
-	>expect &&
 	git ls-remote src refs/heads/master >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'push to delete (allowed)' '
@@ -154,9 +153,8 @@ test_expect_success 'push to delete (allowed)' '
 		git push --force-with-lease=master origin :master 2>err &&
 		grep deleted err
 	) &&
-	>expect &&
 	git ls-remote src refs/heads/master >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'cover everything with default force-with-lease (protected)' '
@@ -189,6 +187,73 @@ test_expect_success 'cover everything with default force-with-lease (allowed)' '
 	sed -e "s/master/naster/" >expect &&
 	git ls-remote src refs/heads/naster >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'new branch covered by force-with-lease' '
+	setup_srcdst_basic &&
+	(
+		cd dst &&
+		git branch branch master &&
+		git push --force-with-lease=branch origin branch
+	) &&
+	git ls-remote dst refs/heads/branch >expect &&
+	git ls-remote src refs/heads/branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'new branch covered by force-with-lease (explicit)' '
+	setup_srcdst_basic &&
+	(
+		cd dst &&
+		git branch branch master &&
+		git push --force-with-lease=branch: origin branch
+	) &&
+	git ls-remote dst refs/heads/branch >expect &&
+	git ls-remote src refs/heads/branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'new branch already exists' '
+	setup_srcdst_basic &&
+	(
+		cd src &&
+		git checkout -b branch master &&
+		test_commit F
+	) &&
+	(
+		cd dst &&
+		git branch branch master &&
+		test_must_fail git push --force-with-lease=branch: origin branch
+	)
+'
+
+test_expect_success 'background updates of REMOTE can be mitigated with a non-updated REMOTE-push' '
+	rm -rf src dst &&
+	git init --bare src.bare &&
+	test_when_finished "rm -rf src.bare" &&
+	git clone --no-local src.bare dst &&
+	test_when_finished "rm -rf dst" &&
+	(
+		cd dst &&
+		test_commit G &&
+		git remote add origin-push ../src.bare &&
+		git push origin-push master:master
+	) &&
+	git clone --no-local src.bare dst2 &&
+	test_when_finished "rm -rf dst2" &&
+	(
+		cd dst2 &&
+		test_commit H &&
+		git push
+	) &&
+	(
+		cd dst &&
+		test_commit I &&
+		git fetch origin &&
+		test_must_fail git push --force-with-lease origin-push &&
+		git fetch origin-push &&
+		git push --force-with-lease origin-push
+	)
 '
 
 test_done

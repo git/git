@@ -1,6 +1,6 @@
 :
 
-sanitize_diff_raw='/^:/s/ '"\($_x40\)"' '"\($_x40\)"' \([A-Z]\)[0-9]*	/ \1 \2 \3#	/'
+sanitize_diff_raw='/^:/s/ '"\($OID_REGEX\)"' '"\($OID_REGEX\)"' \([A-Z]\)[0-9]*	/ \1 \2 \3#	/'
 compare_diff_raw () {
     # When heuristics are improved, the score numbers would change.
     # Ignore them while comparing.
@@ -12,7 +12,7 @@ compare_diff_raw () {
     test_cmp .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
 }
 
-sanitize_diff_raw_z='/^:/s/ '"$_x40"' '"$_x40"' \([A-Z]\)[0-9]*$/ X X \1#/'
+sanitize_diff_raw_z='/^:/s/ '"$OID_REGEX"' '"$OID_REGEX"' \([A-Z]\)[0-9]*$/ X X \1#/'
 compare_diff_raw_z () {
     # When heuristics are improved, the score numbers would change.
     # Ignore them while comparing.

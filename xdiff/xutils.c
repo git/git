@@ -13,18 +13,14 @@
  *  Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  License along with this library; if not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  *
  */
 
-#include <limits.h>
-#include <assert.h>
 #include "xinclude.h"
-
-
 
 
 long xdl_bogosqrt(long n) {
@@ -54,7 +50,7 @@ int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 		mb[2].size = strlen(mb[2].ptr);
 		i++;
 	}
-	if (ecb->outf(ecb->priv, mb, i) < 0) {
+	if (ecb->out_line(ecb->priv, mb, i) < 0) {
 
 		return -1;
 	}
@@ -156,6 +152,24 @@ int xdl_blankline(const char *line, long size, long flags)
 	return (i == size);
 }
 
+/*
+ * Have we eaten everything on the line, except for an optional
+ * CR at the very end?
+ */
+static int ends_with_optional_cr(const char *l, long s, long i)
+{
+	int complete = s && l[s-1] == '\n';
+
+	if (complete)
+		s--;
+	if (s == i)
+		return 1;
+	/* do not ignore CR at the end of an incomplete line */
+	if (complete && s == i + 1 && l[i] == '\r')
+		return 1;
+	return 0;
+}
+
 int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 {
 	int i1, i2;
@@ -170,7 +184,8 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 
 	/*
 	 * -w matches everything that matches with -b, and -b in turn
-	 * matches everything that matches with --ignore-space-at-eol.
+	 * matches everything that matches with --ignore-space-at-eol,
+	 * which in turn matches everything that matches with --ignore-cr-at-eol.
 	 *
 	 * Each flavor of ignoring needs different logic to skip whitespaces
 	 * while we have both sides to compare.
@@ -204,6 +219,14 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 			i1++;
 			i2++;
 		}
+	} else if (flags & XDF_IGNORE_CR_AT_EOL) {
+		/* Find the first difference and see how the line ends */
+		while (i1 < s1 && i2 < s2 && l1[i1] == l2[i2]) {
+			i1++;
+			i2++;
+		}
+		return (ends_with_optional_cr(l1, s1, i1) &&
+			ends_with_optional_cr(l2, s2, i2));
 	}
 
 	/*
@@ -230,9 +253,16 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 		char const *top, long flags) {
 	unsigned long ha = 5381;
 	char const *ptr = *data;
+	int cr_at_eol_only = (flags & XDF_WHITESPACE_FLAGS) == XDF_IGNORE_CR_AT_EOL;
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
-		if (XDL_ISSPACE(*ptr)) {
+		if (cr_at_eol_only) {
+			/* do not ignore CR at the end of an incomplete line */
+			if (*ptr == '\r' &&
+			    (ptr + 1 < top && ptr[1] == '\n'))
+				continue;
+		}
+		else if (XDL_ISSPACE(*ptr)) {
 			const char *ptr2 = ptr;
 			int at_eol;
 			while (ptr + 1 < top && XDL_ISSPACE(ptr[1])
@@ -264,110 +294,6 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 	return ha;
 }
 
-#ifdef XDL_FAST_HASH
-
-#define REPEAT_BYTE(x)  ((~0ul / 0xff) * (x))
-
-#define ONEBYTES	REPEAT_BYTE(0x01)
-#define NEWLINEBYTES	REPEAT_BYTE(0x0a)
-#define HIGHBITS	REPEAT_BYTE(0x80)
-
-/* Return the high bit set in the first byte that is a zero */
-static inline unsigned long has_zero(unsigned long a)
-{
-	return ((a - ONEBYTES) & ~a) & HIGHBITS;
-}
-
-static inline long count_masked_bytes(unsigned long mask)
-{
-	if (sizeof(long) == 8) {
-		/*
-		 * Jan Achrenius on G+: microoptimized version of
-		 * the simpler "(mask & ONEBYTES) * ONEBYTES >> 56"
-		 * that works for the bytemasks without having to
-		 * mask them first.
-		 */
-		/*
-		 * return mask * 0x0001020304050608 >> 56;
-		 *
-		 * Doing it like this avoids warnings on 32-bit machines.
-		 */
-		long a = (REPEAT_BYTE(0x01) / 0xff + 1);
-		return mask * a >> (sizeof(long) * 7);
-	} else {
-		/* Carl Chatfield / Jan Achrenius G+ version for 32-bit */
-		/* (000000 0000ff 00ffff ffffff) -> ( 1 1 2 3 ) */
-		long a = (0x0ff0001 + mask) >> 23;
-		/* Fix the 1 for 00 case */
-		return a & mask;
-	}
-}
-
-unsigned long xdl_hash_record(char const **data, char const *top, long flags)
-{
-	unsigned long hash = 5381;
-	unsigned long a = 0, mask = 0;
-	char const *ptr = *data;
-	char const *end = top - sizeof(unsigned long) + 1;
-
-	if (flags & XDF_WHITESPACE_FLAGS)
-		return xdl_hash_record_with_whitespace(data, top, flags);
-
-	ptr -= sizeof(unsigned long);
-	do {
-		hash += hash << 5;
-		hash ^= a;
-		ptr += sizeof(unsigned long);
-		if (ptr >= end)
-			break;
-		a = *(unsigned long *)ptr;
-		/* Do we have any '\n' bytes in this word? */
-		mask = has_zero(a ^ NEWLINEBYTES);
-	} while (!mask);
-
-	if (ptr >= end) {
-		/*
-		 * There is only a partial word left at the end of the
-		 * buffer. Because we may work with a memory mapping,
-		 * we have to grab the rest byte by byte instead of
-		 * blindly reading it.
-		 *
-		 * To avoid problems with masking in a signed value,
-		 * we use an unsigned char here.
-		 */
-		const char *p;
-		for (p = top - 1; p >= ptr; p--)
-			a = (a << 8) + *((const unsigned char *)p);
-		mask = has_zero(a ^ NEWLINEBYTES);
-		if (!mask)
-			/*
-			 * No '\n' found in the partial word.  Make a
-			 * mask that matches what we read.
-			 */
-			mask = 1UL << (8 * (top - ptr) + 7);
-	}
-
-	/* The mask *below* the first high bit set */
-	mask = (mask - 1) & ~mask;
-	mask >>= 7;
-	hash += hash << 5;
-	hash ^= a & mask;
-
-	/* Advance past the last (possibly partial) word */
-	ptr += count_masked_bytes(mask);
-
-	if (ptr < top) {
-		assert(*ptr == '\n');
-		ptr++;
-	}
-
-	*data = ptr;
-
-	return hash;
-}
-
-#else /* XDL_FAST_HASH */
-
 unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 	unsigned long ha = 5381;
 	char const *ptr = *data;
@@ -383,8 +309,6 @@ unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 
 	return ha;
 }
-
-#endif /* XDL_FAST_HASH */
 
 unsigned int xdl_hashbits(unsigned int size) {
 	unsigned int val = 1, bits = 0;
@@ -416,8 +340,9 @@ int xdl_num_out(char *out, long val) {
 	return str - out;
 }
 
-int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
-		      const char *func, long funclen, xdemitcb_t *ecb) {
+static int xdl_format_hunk_hdr(long s1, long c1, long s2, long c2,
+			       const char *func, long funclen,
+			       xdemitcb_t *ecb) {
 	int nb = 0;
 	mmbuffer_t mb;
 	char buf[128];
@@ -459,9 +384,21 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 
 	mb.ptr = buf;
 	mb.size = nb;
-	if (ecb->outf(ecb->priv, &mb, 1) < 0)
+	if (ecb->out_line(ecb->priv, &mb, 1) < 0)
 		return -1;
+	return 0;
+}
 
+int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
+		      const char *func, long funclen,
+		      xdemitcb_t *ecb) {
+	if (!ecb->out_hunk)
+		return xdl_format_hunk_hdr(s1, c1, s2, c2, func, funclen, ecb);
+	if (ecb->out_hunk(ecb->priv,
+			  c1 ? s1 : s1 - 1, c1,
+			  c2 ? s2 : s2 - 1, c2,
+			  func, funclen) < 0)
+		return -1;
 	return 0;
 }
 

@@ -3,7 +3,7 @@ gitrevisions(7)
 
 NAME
 ----
-gitrevisions - specifying revisions and ranges for Git
+gitrevisions - Specifying revisions and ranges for Git
 
 SYNOPSIS
 --------
@@ -15,13 +15,14 @@ DESCRIPTION
 
 Many Git commands take revision parameters as arguments. Depending on
 the command, they denote a specific commit or, for commands which
-walk the revision graph (such as linkgit:git-log[1]), all commits which can
-be reached from that commit. In the latter case one can also specify a
-range of revisions explicitly.
+walk the revision graph (such as linkgit:git-log[1]), all commits which are
+reachable from that commit. For commands that walk the revision graph one can
+also specify a range of revisions explicitly.
 
-In addition, some Git commands (such as linkgit:git-show[1]) also take
-revision parameters which denote other objects than commits, e.g. blobs
-("files") or trees ("directories of files").
+In addition, some Git commands (such as linkgit:git-show[1] and
+linkgit:git-push[1]) can also take revision parameters which denote
+other objects than commits, e.g. blobs ("files") or trees
+("directories of files").
 
 include::revisions.txt[]
 

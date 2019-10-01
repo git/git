@@ -9,18 +9,22 @@ git-cat-file - Provide content or type and size information for repository objec
 SYNOPSIS
 --------
 [verse]
-'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv ) <object>
-'git cat-file' (--batch | --batch-check) [--follow-symlinks]
+'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv | --filters ) [--path=<path>] <object>
+'git cat-file' (--batch | --batch-check) [ --textconv | --filters ] [--follow-symlinks]
 
 DESCRIPTION
 -----------
 In its first form, the command provides the content or the type of an object in
 the repository. The type is required unless `-t` or `-p` is used to find the
-object type, or `-s` is used to find the object size, or `--textconv` is used
-(which implies type "blob").
+object type, or `-s` is used to find the object size, or `--textconv` or
+`--filters` is used (which imply type "blob").
 
 In the second form, a list of objects (separated by linefeeds) is provided on
-stdin, and the SHA-1, type, and size of each object is printed on stdout.
+stdin, and the SHA-1, type, and size of each object is printed on stdout. The
+output format can be overridden using the optional `<format>` argument. If
+either `--textconv` or `--filters` was specified, the input is expected to
+list the object names followed by the path name, separated by a single
+whitespace, so that the appropriate drivers can be determined.
 
 OPTIONS
 -------
@@ -38,8 +42,9 @@ OPTIONS
 	<object>.
 
 -e::
-	Suppress all output; instead exit with zero status if <object>
-	exists and is a valid object.
+	Exit with zero status if <object> exists and is a valid
+	object. If <object> is of an invalid format exit with non-zero and
+	emits an error on stderr.
 
 -p::
 	Pretty-print the contents of <object> based on its type.
@@ -54,19 +59,35 @@ OPTIONS
 
 --textconv::
 	Show the content as transformed by a textconv filter. In this case,
-	<object> has be of the form <tree-ish>:<path>, or :<path> in order
-	to apply the filter to the content recorded in the index at <path>.
+	<object> has to be of the form <tree-ish>:<path>, or :<path> in
+	order to apply the filter to the content recorded in the index at
+	<path>.
+
+--filters::
+	Show the content as converted by the filters configured in
+	the current working tree for the given <path> (i.e. smudge filters,
+	end-of-line conversion, etc). In this case, <object> has to be of
+	the form <tree-ish>:<path>, or :<path>.
+
+--path=<path>::
+	For use with --textconv or --filters, to allow specifying an object
+	name and a path separately, e.g. when it is difficult to figure out
+	the revision from which the blob came.
 
 --batch::
 --batch=<format>::
 	Print object information and contents for each object provided
-	on stdin.  May not be combined with any other options or arguments.
-	See the section `BATCH OUTPUT` below for details.
+	on stdin.  May not be combined with any other options or arguments
+	except `--textconv` or `--filters`, in which case the input lines
+	also need to specify the path, separated by whitespace.  See the
+	section `BATCH OUTPUT` below for details.
 
 --batch-check::
 --batch-check=<format>::
 	Print object information for each object provided on stdin.  May
-	not be combined with any other options or arguments.  See the
+	not be combined with any other options or arguments except
+	`--textconv` or `--filters`, in which case the input lines also
+	need to specify the path, separated by whitespace.  See the
 	section `BATCH OUTPUT` below for details.
 
 --batch-all-objects::
@@ -82,6 +103,16 @@ OPTIONS
 	`cat-file`. With this option, the output uses normal stdio
 	buffering; this is much more efficient when invoking
 	`--batch-check` on a large number of objects.
+
+--unordered::
+	When `--batch-all-objects` is in use, visit objects in an
+	order which may be more efficient for accessing the object
+	contents than hash order. The exact details of the order are
+	unspecified, but if you do not require a specific order, this
+	should generally result in faster output, especially with
+	`--batch`.  Note that `cat-file` will still show each object
+	only once, even if it is stored multiple times in the
+	repository.
 
 --allow-unknown-type::
 	Allow -s or -t to query broken/corrupt objects of unknown type.
@@ -148,7 +179,7 @@ If `-t` is specified, one of the <type>.
 
 If `-s` is specified, the size of the <object> in bytes.
 
-If `-e` is specified, no output.
+If `-e` is specified, no output, unless the <object> is malformed.
 
 If `-p` is specified, the contents of <object> are pretty-printed.
 
@@ -172,7 +203,7 @@ newline. The available atoms are:
 	The 40-hex object name of the object.
 
 `objecttype`::
-	The type of of the object (the same as `cat-file -t` reports).
+	The type of the object (the same as `cat-file -t` reports).
 
 `objectsize`::
 	The size, in bytes, of the object (the same as `cat-file -s`
@@ -219,6 +250,12 @@ the repository, then `cat-file` will ignore any custom format and print:
 
 ------------
 <object> SP missing LF
+------------
+
+If a name is specified that might refer to more than one object (an ambiguous short sha), then `cat-file` will ignore any custom format and print:
+
+------------
+<object> SP ambiguous LF
 ------------
 
 If --follow-symlinks is used, and a symlink in the repository points

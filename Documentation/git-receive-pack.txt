@@ -33,12 +33,15 @@ post-update hooks found in the Documentation/howto directory.
 option, which tells it if updates to a ref should be denied if they
 are not fast-forwards.
 
+A number of other receive.* config options are available to tweak
+its behavior, see linkgit:git-config[1].
+
 OPTIONS
 -------
 <directory>::
 	The repository to sync into.
 
-pre-receive Hook
+PRE-RECEIVE HOOK
 ----------------
 Before any ref is updated, if $GIT_DIR/hooks/pre-receive file exists
 and is executable, it will be invoked once with no parameters.  The
@@ -111,7 +114,9 @@ will be performed, and the update, post-receive and post-update
 hooks will not be invoked either.  This can be useful to quickly
 bail out if the update is not to be supported.
 
-update Hook
+See the notes on the quarantine environment below.
+
+UPDATE HOOK
 -----------
 Before each ref is updated, if $GIT_DIR/hooks/update file exists
 and is executable, it is invoked once per ref, with three parameters:
@@ -133,7 +138,7 @@ ensure the ref will actually be updated, it is only a prerequisite.
 As such it is not a good idea to send notices (e.g. email) from
 this hook.  Consider using the post-receive hook instead.
 
-post-receive Hook
+POST-RECEIVE HOOK
 -----------------
 After all refs were updated (or attempted to be updated), if any
 ref update was successful, and if $GIT_DIR/hooks/post-receive
@@ -193,7 +198,7 @@ after it was updated by 'git-receive-pack', but before the hook was able
 to evaluate it.  It is recommended that hooks rely on sha1-new
 rather than the current value of refname.
 
-post-update Hook
+POST-UPDATE HOOK
 ----------------
 After all other processing, if at least one ref was updated, and
 if $GIT_DIR/hooks/post-update file exists and is executable, then
@@ -209,6 +214,33 @@ if the repository is packed and is served via a dumb transport.
 
 	#!/bin/sh
 	exec git update-server-info
+
+
+QUARANTINE ENVIRONMENT
+----------------------
+
+When `receive-pack` takes in objects, they are placed into a temporary
+"quarantine" directory within the `$GIT_DIR/objects` directory and
+migrated into the main object store only after the `pre-receive` hook
+has completed. If the push fails before then, the temporary directory is
+removed entirely.
+
+This has a few user-visible effects and caveats:
+
+  1. Pushes which fail due to problems with the incoming pack, missing
+     objects, or due to the `pre-receive` hook will not leave any
+     on-disk data. This is usually helpful to prevent repeated failed
+     pushes from filling up your disk, but can make debugging more
+     challenging.
+
+  2. Any objects created by the `pre-receive` hook will be created in
+     the quarantine directory (and migrated only if it succeeds).
+
+  3. The `pre-receive` hook MUST NOT update any refs to point to
+     quarantined objects. Other programs accessing the repository will
+     not be able to see the objects (and if the pre-receive hook fails,
+     those refs would become corrupted). For safety, any ref updates
+     from within `pre-receive` are automatically rejected.
 
 
 SEE ALSO

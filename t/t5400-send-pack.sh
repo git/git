@@ -86,7 +86,7 @@ test_expect_success 'push can be used to delete a ref' '
 test_expect_success 'refuse deleting push with denyDeletes' '
 	(
 	    cd victim &&
-	    ( git branch -D extra || : ) &&
+	    test_might_fail git branch -D extra &&
 	    git config receive.denyDeletes true &&
 	    git branch extra master
 	) &&
@@ -119,7 +119,7 @@ test_expect_success 'override denyDeletes with git -c receive-pack' '
 test_expect_success 'denyNonFastforwards trumps --force' '
 	(
 	    cd victim &&
-	    ( git branch -D extra || : ) &&
+	    test_might_fail git branch -D extra &&
 	    git config receive.denyNonFastforwards true
 	) &&
 	victim_orig=$(cd victim && git rev-parse --verify master) &&
@@ -180,7 +180,7 @@ test_expect_success 'receive-pack runs auto-gc in remote repo' '
 	    # And create a file that follows the temporary object naming
 	    # convention for the auto-gc to remove
 	    : >.git/objects/tmp_test_object &&
-	    test-chmtime =-1209601 .git/objects/tmp_test_object
+	    test-tool chmtime =-1209601 .git/objects/tmp_test_object
 	) &&
 	(
 	    cd parent &&
@@ -253,6 +253,47 @@ test_expect_success 'deny pushing to delete current branch' '
 	    cd child &&
 	    test_must_fail git send-pack ../parent :refs/heads/master 2>errs
 	)
+'
+
+extract_ref_advertisement () {
+	perl -lne '
+		# \\ is there to skip capabilities after \0
+		/push< ([^\\]+)/ or next;
+		exit 0 if $1 eq "0000";
+		print $1;
+	'
+}
+
+test_expect_success 'receive-pack de-dupes .have lines' '
+	git init shared &&
+	git -C shared commit --allow-empty -m both &&
+	git clone -s shared fork &&
+	(
+		cd shared &&
+		git checkout -b only-shared &&
+		git commit --allow-empty -m only-shared &&
+		git update-ref refs/heads/foo HEAD
+	) &&
+
+	# Notable things in this expectation:
+	#  - local refs are not de-duped
+	#  - .have does not duplicate locals
+	#  - .have does not duplicate itself
+	local=$(git -C fork rev-parse HEAD) &&
+	shared=$(git -C shared rev-parse only-shared) &&
+	cat >expect <<-EOF &&
+	$local refs/heads/master
+	$local refs/remotes/origin/HEAD
+	$local refs/remotes/origin/master
+	$shared .have
+	EOF
+
+	GIT_TRACE_PACKET=$(pwd)/trace GIT_TEST_PROTOCOL_VERSION= \
+	    git push \
+		--receive-pack="unset GIT_TRACE_PACKET; git-receive-pack" \
+		fork HEAD:foo &&
+	extract_ref_advertisement <trace >refs &&
+	test_cmp expect refs
 '
 
 test_done

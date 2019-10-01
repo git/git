@@ -7,11 +7,15 @@ test_description='git archive attribute tests'
 SUBSTFORMAT='%H (%h)%n'
 
 test_expect_exists() {
-	test_expect_success " $1 exists" "test -e $1"
+	test_expect_${2:-success} " $1 exists" "test -e $1"
 }
 
 test_expect_missing() {
-	test_expect_success " $1 does not exist" "test ! -e $1"
+	test_expect_${2:-success} " $1 does not exist" "test ! -e $1"
+}
+
+extract_tar_to_dir () {
+	(mkdir "$1" && cd "$1" && "$TAR" xf -) <"$1.tar"
 }
 
 test_expect_success 'setup' '
@@ -21,11 +25,18 @@ test_expect_success 'setup' '
 
 	echo ignored by tree >ignored-by-tree &&
 	echo ignored-by-tree export-ignore >.gitattributes &&
-	git add ignored-by-tree .gitattributes &&
+	mkdir ignored-by-tree.d &&
+	>ignored-by-tree.d/file &&
+	echo ignored-by-tree.d export-ignore >>.gitattributes &&
+	git add ignored-by-tree ignored-by-tree.d .gitattributes &&
 
 	echo ignored by worktree >ignored-by-worktree &&
 	echo ignored-by-worktree export-ignore >.gitattributes &&
 	git add ignored-by-worktree &&
+
+	mkdir excluded-by-pathspec.d &&
+	>excluded-by-pathspec.d/file &&
+	git add excluded-by-pathspec.d &&
 
 	printf "A\$Format:%s\$O" "$SUBSTFORMAT" >nosubstfile &&
 	printf "A\$Format:%s\$O" "$SUBSTFORMAT" >substfile1 &&
@@ -46,7 +57,37 @@ test_expect_success 'git archive' '
 
 test_expect_missing	archive/ignored
 test_expect_missing	archive/ignored-by-tree
+test_expect_missing	archive/ignored-by-tree.d
+test_expect_missing	archive/ignored-by-tree.d/file
 test_expect_exists	archive/ignored-by-worktree
+test_expect_exists	archive/excluded-by-pathspec.d
+test_expect_exists	archive/excluded-by-pathspec.d/file
+
+test_expect_success 'git archive with pathspec' '
+	git archive HEAD ":!excluded-by-pathspec.d" >archive-pathspec.tar &&
+	extract_tar_to_dir archive-pathspec
+'
+
+test_expect_missing	archive-pathspec/ignored
+test_expect_missing	archive-pathspec/ignored-by-tree
+test_expect_missing	archive-pathspec/ignored-by-tree.d
+test_expect_missing	archive-pathspec/ignored-by-tree.d/file
+test_expect_exists	archive-pathspec/ignored-by-worktree
+test_expect_missing	archive-pathspec/excluded-by-pathspec.d
+test_expect_missing	archive-pathspec/excluded-by-pathspec.d/file
+
+test_expect_success 'git archive with wildcard pathspec' '
+	git archive HEAD ":!excluded-by-p*" >archive-pathspec-wildcard.tar &&
+	extract_tar_to_dir archive-pathspec-wildcard
+'
+
+test_expect_missing	archive-pathspec-wildcard/ignored
+test_expect_missing	archive-pathspec-wildcard/ignored-by-tree
+test_expect_missing	archive-pathspec-wildcard/ignored-by-tree.d
+test_expect_missing	archive-pathspec-wildcard/ignored-by-tree.d/file
+test_expect_exists	archive-pathspec-wildcard/ignored-by-worktree
+test_expect_missing	archive-pathspec-wildcard/excluded-by-pathspec.d
+test_expect_missing	archive-pathspec-wildcard/excluded-by-pathspec.d/file
 
 test_expect_success 'git archive with worktree attributes' '
 	git archive --worktree-attributes HEAD >worktree.tar &&

@@ -107,6 +107,21 @@ test_expect_success 'test that the directory was renamed' '
 	test dir/D = "$(cat diroh/D.t)"
 '
 
+V=$(git rev-parse HEAD)
+
+test_expect_success 'populate --state-branch' '
+	git filter-branch --state-branch state -f --tree-filter "touch file || :" HEAD
+'
+
+W=$(git rev-parse HEAD)
+
+test_expect_success 'using --state-branch to skip already rewritten commits' '
+	test_when_finished git reset --hard $V &&
+	git reset --hard $V &&
+	git filter-branch --state-branch state -f --tree-filter "touch file || :" HEAD &&
+	test_cmp_rev $W HEAD
+'
+
 git tag oldD HEAD~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
 	git branch modD oldD &&
@@ -187,7 +202,8 @@ test_expect_success 'author information is preserved' '
 			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
 		preserved-author) &&
-	test 1 = $(git rev-list --author="B V Uips" preserved-author | wc -l)
+	git rev-list --author="B V Uips" preserved-author >actual &&
+	test_line_count = 1 actual
 '
 
 test_expect_success "remove a certain author's commits" '
@@ -205,7 +221,8 @@ test_expect_success "remove a certain author's commits" '
 	cnt1=$(git rev-list master | wc -l) &&
 	cnt2=$(git rev-list removed-author | wc -l) &&
 	test $cnt1 -eq $(($cnt2 + 1)) &&
-	test 0 = $(git rev-list --author="B V Uips" removed-author | wc -l)
+	git rev-list --author="B V Uips" removed-author >actual &&
+	test_line_count = 0 actual
 '
 
 test_expect_success 'barf on invalid name' '
@@ -258,7 +275,8 @@ test_expect_success 'Subdirectory filter with disappearing trees' '
 	git commit -m "Re-adding foo" &&
 
 	git filter-branch -f --subdirectory-filter foo &&
-	test $(git rev-list master | wc -l) = 3
+	git rev-list master >actual &&
+	test_line_count = 3 actual
 '
 
 test_expect_success 'Tag name filtering retains tag message' '
@@ -313,6 +331,27 @@ test_expect_success 'Tag name filtering allows slashes in tag names' '
 	git cat-file tag X/2 > actual &&
 	test_cmp expect actual
 '
+test_expect_success 'setup --prune-empty comparisons' '
+	git checkout --orphan master-no-a &&
+	git rm -rf . &&
+	unset test_tick &&
+	test_tick &&
+	GIT_COMMITTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
+	test_commit --notick B B.t B Bx &&
+	git checkout -b branch-no-a Bx &&
+	test_commit D D.t D Dx &&
+	mkdir dir &&
+	test_commit dir/D dir/D.t dir/D dir/Dx &&
+	test_commit E E.t E Ex &&
+	git checkout master-no-a &&
+	test_commit C C.t C Cx &&
+	git checkout branch-no-a &&
+	git merge Cx -m "Merge tag '\''C'\'' into branch" &&
+	git tag Fx &&
+	test_commit G G.t G Gx &&
+	test_commit H H.t H Hx &&
+	git checkout branch
+'
 
 test_expect_success 'Prune empty commits' '
 	git rev-list HEAD > expect &&
@@ -339,6 +378,22 @@ test_expect_success 'prune empty works even without index/tree filters' '
 	git filter-branch -f --prune-empty HEAD &&
 	git rev-list HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--prune-empty is able to prune root commit' '
+	git rev-list branch-no-a >expect &&
+	git branch testing H &&
+	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t" testing &&
+	git rev-list testing >actual &&
+	git branch -D testing &&
+	test_cmp expect actual
+'
+
+test_expect_success '--prune-empty is able to prune entire branch' '
+	git branch prune-entire B &&
+	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t B.t" prune-entire &&
+	test_path_is_missing .git/refs/heads/prune-entire &&
+	test_must_fail git reflog exists refs/heads/prune-entire
 '
 
 test_expect_success '--remap-to-ancestor with filename filters' '
@@ -431,6 +486,20 @@ test_expect_success 'tree-filter deals with object name vs pathname ambiguity' '
 	ambiguous=$(git rev-list -1 HEAD) &&
 	git filter-branch --tree-filter "mv file.t $ambiguous" HEAD^.. &&
 	git show HEAD:$ambiguous
+'
+
+test_expect_success 'rewrite repository including refs that point at non-commit object' '
+	test_when_finished "git reset --hard original" &&
+	tree=$(git rev-parse HEAD^{tree}) &&
+	test_when_finished "git replace -d $tree" &&
+	echo A >new &&
+	git add new &&
+	new_tree=$(git write-tree) &&
+	git replace $tree $new_tree &&
+	git tag -a -m "tag to a tree" treetag $new_tree &&
+	git reset --hard HEAD &&
+	git filter-branch -f -- --all >filter-output 2>&1 &&
+	! fgrep fatal filter-output
 '
 
 test_done

@@ -14,13 +14,27 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Read the idx file for a Git packfile created with
-'git pack-objects' command from the standard input, and
-dump its contents.
+Read the `.idx` file for a Git packfile (created with
+linkgit:git-pack-objects[1] or linkgit:git-index-pack[1]) from the
+standard input, and dump its contents. The output consists of one object
+per line, with each line containing two or three space-separated
+columns:
 
-The information it outputs is subset of what you can get from
-'git verify-pack -v'; this command only shows the packfile
-offset and SHA-1 of each object.
+  - the first column is the offset in bytes of the object within the
+    corresponding packfile
+
+  - the second column is the object id of the object
+
+  - if the index version is 2 or higher, the third column contains the
+    CRC32 of the object data
+
+The objects are output in the order in which they are found in the index
+file, which should be (in a correctly constructed file) sorted by object
+id.
+
+Note that you can get more information on a packfile by calling
+linkgit:git-verify-pack[1]. However, as this command considers only the
+index file itself, it's both faster and more flexible.
 
 GIT
 ---

@@ -21,12 +21,13 @@ static void argv_array_push_nodup(struct argv_array *array, const char *value)
 	array->argv[array->argc] = NULL;
 }
 
-void argv_array_push(struct argv_array *array, const char *value)
+const char *argv_array_push(struct argv_array *array, const char *value)
 {
 	argv_array_push_nodup(array, xstrdup(value));
+	return array->argv[array->argc - 1];
 }
 
-void argv_array_pushf(struct argv_array *array, const char *fmt, ...)
+const char *argv_array_pushf(struct argv_array *array, const char *fmt, ...)
 {
 	va_list ap;
 	struct strbuf v = STRBUF_INIT;
@@ -36,6 +37,7 @@ void argv_array_pushf(struct argv_array *array, const char *fmt, ...)
 	va_end(ap);
 
 	argv_array_push_nodup(array, strbuf_detach(&v, NULL));
+	return array->argv[array->argc - 1];
 }
 
 void argv_array_pushl(struct argv_array *array, ...)
@@ -62,6 +64,26 @@ void argv_array_pop(struct argv_array *array)
 	free((char *)array->argv[array->argc - 1]);
 	array->argv[array->argc - 1] = NULL;
 	array->argc--;
+}
+
+void argv_array_split(struct argv_array *array, const char *to_split)
+{
+	while (isspace(*to_split))
+		to_split++;
+	for (;;) {
+		const char *p = to_split;
+
+		if (!*p)
+			break;
+
+		while (*p && !isspace(*p))
+			p++;
+		argv_array_push_nodup(array, xstrndup(to_split, p - to_split));
+
+		while (isspace(*p))
+			p++;
+		to_split = p;
+	}
 }
 
 void argv_array_clear(struct argv_array *array)

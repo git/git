@@ -1755,10 +1755,10 @@ static FORCEINLINE void pthread_release_lock (MLOCK_T *sl) {
   assert(sl->l != 0);
   assert(sl->threadid == CURRENT_THREAD);
   if (--sl->c == 0) {
-    sl->threadid = 0;
     volatile unsigned int* lp = &sl->l;
     int prev = 0;
     int ret;
+    sl->threadid = 0;
     __asm__ __volatile__ ("lock; xchgl %0, %1"
 			  : "=r" (ret)
 			  : "m" (*(lp)), "0"(prev)
@@ -3066,7 +3066,7 @@ static int init_mparams(void) {
 #if !ONLY_MSPACES
     /* Set up lock for main malloc area */
     gm->mflags = mparams.default_mflags;
-    INITIAL_LOCK(&gm->mutex);
+    (void)INITIAL_LOCK(&gm->mutex);
 #endif
 
 #if (FOOTERS && !INSECURE)
@@ -5017,7 +5017,7 @@ static mstate init_user_mstate(char* tbase, size_t tsize) {
   mchunkptr msp = align_as_chunk(tbase);
   mstate m = (mstate)(chunk2mem(msp));
   memset(m, 0, msize);
-  INITIAL_LOCK(&m->mutex);
+  (void)INITIAL_LOCK(&m->mutex);
   msp->head = (msize|PINUSE_BIT|CINUSE_BIT);
   m->seg.base = m->least_addr = tbase;
   m->seg.size = m->footprint = m->max_footprint = tsize;

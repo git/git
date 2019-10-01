@@ -2,58 +2,95 @@
 #include "sha1-array.h"
 #include "sha1-lookup.h"
 
-void sha1_array_append(struct sha1_array *array, const unsigned char *sha1)
+void oid_array_append(struct oid_array *array, const struct object_id *oid)
 {
-	ALLOC_GROW(array->sha1, array->nr + 1, array->alloc);
-	hashcpy(array->sha1[array->nr++], sha1);
+	ALLOC_GROW(array->oid, array->nr + 1, array->alloc);
+	oidcpy(&array->oid[array->nr++], oid);
 	array->sorted = 0;
 }
 
 static int void_hashcmp(const void *a, const void *b)
 {
-	return hashcmp(a, b);
+	return oidcmp(a, b);
 }
 
-static void sha1_array_sort(struct sha1_array *array)
+static void oid_array_sort(struct oid_array *array)
 {
-	qsort(array->sha1, array->nr, sizeof(*array->sha1), void_hashcmp);
+	QSORT(array->oid, array->nr, void_hashcmp);
 	array->sorted = 1;
 }
 
 static const unsigned char *sha1_access(size_t index, void *table)
 {
-	unsigned char (*array)[20] = table;
-	return array[index];
+	struct object_id *array = table;
+	return array[index].hash;
 }
 
-int sha1_array_lookup(struct sha1_array *array, const unsigned char *sha1)
+int oid_array_lookup(struct oid_array *array, const struct object_id *oid)
 {
 	if (!array->sorted)
-		sha1_array_sort(array);
-	return sha1_pos(sha1, array->sha1, array->nr, sha1_access);
+		oid_array_sort(array);
+	return sha1_pos(oid->hash, array->oid, array->nr, sha1_access);
 }
 
-void sha1_array_clear(struct sha1_array *array)
+void oid_array_clear(struct oid_array *array)
 {
-	free(array->sha1);
-	array->sha1 = NULL;
+	FREE_AND_NULL(array->oid);
 	array->nr = 0;
 	array->alloc = 0;
 	array->sorted = 0;
 }
 
-void sha1_array_for_each_unique(struct sha1_array *array,
-				for_each_sha1_fn fn,
-				void *data)
+
+int oid_array_for_each(struct oid_array *array,
+		       for_each_oid_fn fn,
+		       void *data)
+{
+	int i;
+
+	/* No oid_array_sort() here! See the api-oid-array.txt docs! */
+
+	for (i = 0; i < array->nr; i++) {
+		int ret = fn(array->oid + i, data);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
+
+int oid_array_for_each_unique(struct oid_array *array,
+			      for_each_oid_fn fn,
+			      void *data)
 {
 	int i;
 
 	if (!array->sorted)
-		sha1_array_sort(array);
+		oid_array_sort(array);
 
 	for (i = 0; i < array->nr; i++) {
-		if (i > 0 && !hashcmp(array->sha1[i], array->sha1[i-1]))
+		int ret;
+		if (i > 0 && oideq(array->oid + i, array->oid + i - 1))
 			continue;
-		fn(array->sha1[i], data);
+		ret = fn(array->oid + i, data);
+		if (ret)
+			return ret;
 	}
+	return 0;
+}
+
+void oid_array_filter(struct oid_array *array,
+		      for_each_oid_fn want,
+		      void *cb_data)
+{
+	unsigned nr = array->nr, src, dst;
+	struct object_id *oids = array->oid;
+
+	for (src = dst = 0; src < nr; src++) {
+		if (want(&oids[src], cb_data)) {
+			if (src != dst)
+				oidcpy(&oids[dst], &oids[src]);
+			dst++;
+		}
+	}
+	array->nr = dst;
 }

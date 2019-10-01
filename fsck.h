@@ -1,11 +1,14 @@
 #ifndef GIT_FSCK_H
 #define GIT_FSCK_H
 
+#include "oidset.h"
+
 #define FSCK_ERROR 1
 #define FSCK_WARN 2
 #define FSCK_IGNORE 3
 
 struct fsck_options;
+struct object;
 
 void fsck_set_msg_type(struct fsck_options *options,
 		const char *msg_id, const char *msg_type);
@@ -34,12 +37,12 @@ struct fsck_options {
 	fsck_error error_func;
 	unsigned strict:1;
 	int *msg_type;
-	struct sha1_array *skiplist;
+	struct oidset skiplist;
 	struct decoration *object_names;
 };
 
-#define FSCK_OPTIONS_DEFAULT { NULL, fsck_error_function, 0, NULL }
-#define FSCK_OPTIONS_STRICT { NULL, fsck_error_function, 1, NULL }
+#define FSCK_OPTIONS_DEFAULT { NULL, fsck_error_function, 0, NULL, OIDSET_INIT }
+#define FSCK_OPTIONS_STRICT { NULL, fsck_error_function, 1, NULL, OIDSET_INIT }
 
 /* descend in all linked child objects
  * the return value is:
@@ -52,5 +55,12 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
 /* If NULL is passed for data, we assume the object is local and read it. */
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options);
+
+/*
+ * Some fsck checks are context-dependent, and may end up queued; run this
+ * after completing all fsck_object() calls in order to resolve any remaining
+ * checks.
+ */
+int fsck_finish(struct fsck_options *options);
 
 #endif

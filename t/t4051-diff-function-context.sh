@@ -67,6 +67,16 @@ test_expect_success 'setup' '
 	commit_and_tag long_common_tail file.c &&
 
 	git checkout initial &&
+	cat "$dir/hello.c" "$dir/dummy.c" >file.c &&
+	commit_and_tag hello_dummy file.c &&
+
+	# overlap function context of 1st change and -u context of 2nd change
+	grep -v "delete me from hello" <"$dir/hello.c" >file.c &&
+	sed "2a\\
+	     extra line" <"$dir/dummy.c" >>file.c &&
+	commit_and_tag changed_hello_dummy file.c &&
+
+	git checkout initial &&
 	grep -v "delete me from hello" <file.c >file.c.new &&
 	mv file.c.new file.c &&
 	cat "$dir/appended1.c" >>file.c &&
@@ -74,6 +84,10 @@ test_expect_success 'setup' '
 '
 
 check_diff changed_hello 'changed function'
+
+test_expect_success ' context includes comment' '
+	grep "^ .*Hello comment" changed_hello.diff
+'
 
 test_expect_success ' context includes begin' '
 	grep "^ .*Begin of hello" changed_hello.diff
@@ -160,7 +174,7 @@ test_expect_success ' context does not include other functions' '
 '
 
 test_expect_success ' context does not include preceding empty lines' '
-	test "$(first_context_line <long_common_tail.diff.diff)" != " "
+	test "$(first_context_line <long_common_tail.diff)" != " "
 '
 
 check_diff changed_hello_appended 'changed function plus appended function'
@@ -177,6 +191,22 @@ test_expect_success ' context includes end' '
 
 test_expect_success ' context does not include other functions' '
 	test $(grep -c "^[ +-].*Begin" changed_hello_appended.diff) -le 2
+'
+
+check_diff changed_hello_dummy 'changed two consecutive functions'
+
+test_expect_success ' context includes begin' '
+	grep "^ .*Begin of hello" changed_hello_dummy.diff &&
+	grep "^ .*Begin of dummy" changed_hello_dummy.diff
+'
+
+test_expect_success ' context includes end' '
+	grep "^ .*End of hello" changed_hello_dummy.diff &&
+	grep "^ .*End of dummy" changed_hello_dummy.diff
+'
+
+test_expect_success ' overlapping hunks are merged' '
+	test $(grep -c "^@@" changed_hello_dummy.diff) -eq 1
 '
 
 test_done

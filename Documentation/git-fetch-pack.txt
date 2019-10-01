@@ -87,6 +87,20 @@ be in a separate packet, and the list must end with a flush packet.
 	'git-upload-pack' treats the special depth 2147483647 as
 	infinite even if there is an ancestor-chain that long.
 
+--shallow-since=<date>::
+	Deepen or shorten the history of a shallow repository to
+	include all reachable commits after <date>.
+
+--shallow-exclude=<revision>::
+	Deepen or shorten the history of a shallow repository to
+	exclude commits reachable from a specified remote branch or tag.
+	This option can be specified multiple times.
+
+--deepen-relative::
+	Argument --depth specifies the number of commits from the
+	current shallow boundary instead of from the tip of each
+	remote branch history.
+
 --no-progress::
 	Do not show the progress.
 
@@ -105,9 +119,9 @@ be in a separate packet, and the list must end with a flush packet.
 	$GIT_DIR (e.g. "HEAD", "refs/heads/master").  When
 	unspecified, update from all heads the remote side has.
 +
-If the remote has enabled the options `uploadpack.allowTipSHA1InWant` or
-`uploadpack.allowReachableSHA1InWant`, they may alternatively be 40-hex
-sha1s present on the remote.
+If the remote has enabled the options `uploadpack.allowTipSHA1InWant`,
+`uploadpack.allowReachableSHA1InWant`, or `uploadpack.allowAnySHA1InWant`,
+they may alternatively be 40-hex sha1s present on the remote.
 
 SEE ALSO
 --------

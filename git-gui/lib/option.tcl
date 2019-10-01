@@ -179,7 +179,7 @@ proc do_options {} {
 			i-* {
 				regexp -- {-(\d+)\.\.(\d+)$} $type _junk min max
 				${NS}::frame $w.$f.$optid
-				${NS}::label $w.$f.$optid.l -text "$text:"
+				${NS}::label $w.$f.$optid.l -text [mc "%s:" $text]
 				pack $w.$f.$optid.l -side left -anchor w -fill x
 				tspinbox $w.$f.$optid.v \
 					-textvariable ${f}_config_new($name) \
@@ -194,7 +194,7 @@ proc do_options {} {
 			c -
 			t {
 				${NS}::frame $w.$f.$optid
-				${NS}::label $w.$f.$optid.l -text "$text:"
+				${NS}::label $w.$f.$optid.l -text [mc "%s:" $text]
 				${NS}::entry $w.$f.$optid.v \
 					-width 20 \
 					-textvariable ${f}_config_new($name)
@@ -217,7 +217,7 @@ proc do_options {} {
 			s {
 				set opts [eval [lindex $option 3]]
 				${NS}::frame $w.$f.$optid
-				${NS}::label $w.$f.$optid.l -text "$text:"
+				${NS}::label $w.$f.$optid.l -text [mc "%s:" $text]
 				if {$use_ttk} {
 					ttk::combobox $w.$f.$optid.v \
 						-textvariable ${f}_config_new($name) \
@@ -279,7 +279,7 @@ proc do_options {} {
 			[font configure $font -size]
 
 		${NS}::frame $w.global.$name
-		${NS}::label $w.global.$name.l -text "$text:"
+		${NS}::label $w.global.$name.l -text [mc "%s:" $text]
 		${NS}::button $w.global.$name.b \
 			-text [mc "Change Font"] \
 			-command [list \

@@ -1,3 +1,5 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#include "test-tool.h"
 #include "cache.h"
 #include "dir.h"
 
@@ -18,14 +20,12 @@ static int compare_dir(const void *a_, const void *b_)
 static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 {
 	int i, len;
-	qsort(ucd->untracked, ucd->untracked_nr, sizeof(*ucd->untracked),
-	      compare_untracked);
-	qsort(ucd->dirs, ucd->dirs_nr, sizeof(*ucd->dirs),
-	      compare_dir);
+	QSORT(ucd->untracked, ucd->untracked_nr, compare_untracked);
+	QSORT(ucd->dirs, ucd->dirs_nr, compare_dir);
 	len = base->len;
 	strbuf_addf(base, "%s/", ucd->name);
 	printf("%s %s", base->buf,
-	       sha1_to_hex(ucd->exclude_sha1));
+	       oid_to_hex(&ucd->exclude_oid));
 	if (ucd->recurse)
 		fputs(" recurse", stdout);
 	if (ucd->check_only)
@@ -40,7 +40,7 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	strbuf_setlen(base, len);
 }
 
-int cmd_main(int ac, const char **av)
+int cmd__dump_untracked_cache(int ac, const char **av)
 {
 	struct untracked_cache *uc;
 	struct strbuf base = STRBUF_INIT;
@@ -56,8 +56,8 @@ int cmd_main(int ac, const char **av)
 		printf("no untracked cache\n");
 		return 0;
 	}
-	printf("info/exclude %s\n", sha1_to_hex(uc->ss_info_exclude.sha1));
-	printf("core.excludesfile %s\n", sha1_to_hex(uc->ss_excludes_file.sha1));
+	printf("info/exclude %s\n", oid_to_hex(&uc->ss_info_exclude.oid));
+	printf("core.excludesfile %s\n", oid_to_hex(&uc->ss_excludes_file.oid));
 	printf("exclude_per_dir %s\n", uc->exclude_per_dir);
 	printf("flags %08x\n", uc->dir_flags);
 	if (uc->root)

@@ -23,19 +23,50 @@ ifdef::git-pull[]
 endif::git-pull[]
 +
 The format of a <refspec> parameter is an optional plus
-`+`, followed by the source ref <src>, followed
+`+`, followed by the source <src>, followed
 by a colon `:`, followed by the destination ref <dst>.
-The colon can be omitted when <dst> is empty.
+The colon can be omitted when <dst> is empty.  <src> is
+typically a ref, but it can also be a fully spelled hex object
+name.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
 it requests fetching everything up to the given tag.
 +
 The remote ref that matches <src>
-is fetched, and if <dst> is not empty string, the local
-ref that matches it is fast-forwarded using <src>.
-If the optional plus `+` is used, the local ref
-is updated even if it does not result in a fast-forward
-update.
+is fetched, and if <dst> is not an empty string, an attempt
+is made to update the local ref that matches it.
++
+Whether that update is allowed without `--force` depends on the ref
+namespace it's being fetched to, the type of object being fetched, and
+whether the update is considered to be a fast-forward. Generally, the
+same rules apply for fetching as when pushing, see the `<refspec>...`
+section of linkgit:git-push[1] for what those are. Exceptions to those
+rules particular to 'git fetch' are noted below.
++
+Until Git version 2.20, and unlike when pushing with
+linkgit:git-push[1], any updates to `refs/tags/*` would be accepted
+without `+` in the refspec (or `--force`). When fetching, we promiscuously
+considered all tag updates from a remote to be forced fetches.  Since
+Git version 2.20, fetching to update `refs/tags/*` works the same way
+as when pushing. I.e. any updates will be rejected without `+` in the
+refspec (or `--force`).
++
+Unlike when pushing with linkgit:git-push[1], any updates outside of
+`refs/{tags,heads}/*` will be accepted without `+` in the refspec (or
+`--force`), whether that's swapping e.g. a tree object for a blob, or
+a commit for another commit that's doesn't have the previous commit as
+an ancestor etc.
++
+Unlike when pushing with linkgit:git-push[1], there is no
+configuration which'll amend these rules, and nothing like a
+`pre-fetch` hook analogous to the `pre-receive` hook.
++
+As with pushing with linkgit:git-push[1], all of the rules described
+above about what's not allowed as an update can be overridden by
+adding an the optional leading `+` to a refspec (or using `--force`
+command line option). The only exception to this is that no amount of
+forcing will make the `refs/heads/*` namespace accept a non-commit
+object.
 +
 [NOTE]
 When the remote branch you want to fetch is known to

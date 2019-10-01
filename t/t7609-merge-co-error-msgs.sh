@@ -105,7 +105,7 @@ test_expect_success 'not uptodate file porcelain checkout error' '
 '
 
 cat >expect <<\EOF
-error: Updating the following directories would lose untracked files in it:
+error: Updating the following directories would lose untracked files in them:
 	rep
 	rep2
 

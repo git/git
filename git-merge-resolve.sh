@@ -45,7 +45,7 @@ then
 	exit 0
 else
 	echo "Simple merge failed, trying Automatic merge."
-	if git-merge-index -o git-merge-one-file -a
+	if git merge-index -o git-merge-one-file -a
 	then
 		exit 0
 	else

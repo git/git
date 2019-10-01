@@ -134,11 +134,27 @@ test_expect_success 'favour same basenames over different ones' '
 	git rm path1 &&
 	mkdir subdir &&
 	git mv another-path subdir/path1 &&
-	git status | test_i18ngrep "renamed: .*path1 -> subdir/path1"'
+	git status >out &&
+	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+'
+
+test_expect_success 'test diff.renames=true for git status' '
+	git -c diff.renames=true status >out &&
+	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+'
+
+test_expect_success 'test diff.renames=false for git status' '
+	git -c diff.renames=false status >out &&
+	test_i18ngrep ! "renamed: .*path1 -> subdir/path1" out &&
+	test_i18ngrep "new file: .*subdir/path1" out &&
+	test_i18ngrep "deleted: .*[^/]path1" out
+'
 
 test_expect_success 'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
-	git status | test_i18ngrep "renamed: .*path1 -> subdir/path1"'
+	git status >out &&
+	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+'
 
 test_expect_success 'two files with same basename and same content' '
 	git reset --hard &&
@@ -148,7 +164,8 @@ test_expect_success 'two files with same basename and same content' '
 	git add dir &&
 	git commit -m 2 &&
 	git mv dir other-dir &&
-	git status | test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file"
+	git status >out &&
+	test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file" out
 '
 
 test_expect_success 'setup for many rename source candidates' '
@@ -163,7 +180,7 @@ test_expect_success 'setup for many rename source candidates' '
 	git add "path??" &&
 	test_tick &&
 	git commit -m "hundred" &&
-	(cat path1; echo new) >new-path &&
+	(cat path1 && echo new) >new-path &&
 	echo old >>path1 &&
 	git add new-path path1 &&
 	git diff -l 4 -C -C --cached --name-status >actual 2>actual.err &&
@@ -228,6 +245,21 @@ test_expect_success 'rename pretty print common prefix and suffix overlap' '
 	test_i18ngrep " d/f/{ => f}/e " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
 	test_i18ngrep " d/f/{ => f}/e " output
+'
+
+test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '
+	test_write_lines line1 line2 line3 >myfile &&
+	git add myfile &&
+	git commit -m x &&
+
+	test_write_lines line1 line2 line4 >myotherfile &&
+	git rm myfile &&
+	git add myotherfile &&
+	git commit -m x &&
+
+	git diff-tree -M -l0 HEAD HEAD^ >actual &&
+	# Verify that a rename from myotherfile to myfile was detected
+	grep "myotherfile.*myfile" actual
 '
 
 test_done

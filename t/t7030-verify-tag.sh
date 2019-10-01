@@ -41,6 +41,13 @@ test_expect_success GPG 'create signed tags' '
 	git tag -uB7227189 -m eighth eighth-signed-alt
 '
 
+test_expect_success GPGSM 'create signed tags x509 ' '
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	echo 9 >file && test_tick && git commit -a -m "nineth gpgsm-signed" &&
+	git tag -s -m nineth nineth-signed-x509
+'
+
 test_expect_success GPG 'verify and show signatures' '
 	(
 		for tag in initial second merge fourth-signed sixth-signed seventh-signed
@@ -72,9 +79,16 @@ test_expect_success GPG 'verify and show signatures' '
 	)
 '
 
+test_expect_success GPGSM 'verify and show signatures x509' '
+	git verify-tag nineth-signed-x509 2>actual &&
+	grep "Good signature from" actual &&
+	! grep "BAD signature from" actual &&
+	echo nineth-signed-x509 OK
+'
+
 test_expect_success GPG 'detect fudged signature' '
 	git cat-file tag seventh-signed >raw &&
-	sed -e "s/seventh/7th forged/" raw >forged1 &&
+	sed -e "/^tag / s/seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t tag forged1 >forged1.tag &&
 	test_must_fail git verify-tag $(cat forged1.tag) 2>actual1 &&
 	grep "BAD signature from" actual1 &&
@@ -112,6 +126,13 @@ test_expect_success GPG 'verify signatures with --raw' '
 	)
 '
 
+test_expect_success GPGSM 'verify signatures with --raw x509' '
+	git verify-tag --raw nineth-signed-x509 2>actual &&
+	grep "GOODSIG" actual &&
+	! grep "BADSIG" actual &&
+	echo nineth-signed-x509 OK
+'
+
 test_expect_success GPG 'verify multiple tags' '
 	tags="fourth-signed sixth-signed seventh-signed" &&
 	for i in $tags
@@ -123,6 +144,32 @@ test_expect_success GPG 'verify multiple tags' '
 	grep "^.GNUPG:." <actual.stderr.1 >actual.stderr &&
 	test_cmp expect.stdout actual.stdout &&
 	test_cmp expect.stderr actual.stderr
+'
+
+test_expect_success GPGSM 'verify multiple tags x509' '
+	tags="seventh-signed nineth-signed-x509" &&
+	for i in $tags
+	do
+		git verify-tag -v --raw $i || return 1
+	done >expect.stdout 2>expect.stderr.1 &&
+	grep "^.GNUPG:." <expect.stderr.1 >expect.stderr &&
+	git verify-tag -v --raw $tags >actual.stdout 2>actual.stderr.1 &&
+	grep "^.GNUPG:." <actual.stderr.1 >actual.stderr &&
+	test_cmp expect.stdout actual.stdout &&
+	test_cmp expect.stderr actual.stderr
+'
+
+test_expect_success GPG 'verifying tag with --format' '
+	cat >expect <<-\EOF &&
+	tagname : fourth-signed
+	EOF
+	git verify-tag --format="tagname : %(tag)" "fourth-signed" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'verifying a forged tag with --format should fail silently' '
+	test_must_fail git verify-tag --format="tagname : %(tag)" $(cat forged1.tag) >actual-forged &&
+	test_must_be_empty actual-forged
 '
 
 test_done

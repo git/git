@@ -34,10 +34,10 @@ test_expect_success 'M/D conflict does not segfault' '
 On branch side
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
-
 	deleted by us:   foo
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -138,10 +138,10 @@ test_expect_success 'status when conflicts with add and rm advice (deleted by th
 On branch master
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
-
 	both added:      conflict.txt
 	deleted by them: main.txt
 
@@ -171,10 +171,10 @@ test_expect_success 'status when conflicts with add and rm advice (both deleted)
 On branch conflict_second
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
-
 	both deleted:    main.txt
 	added by them:   sub_master.txt
 	added by us:     sub_second.txt
@@ -195,14 +195,13 @@ test_expect_success 'status when conflicts with only rm advice (both deleted)' '
 On branch conflict_second
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Changes to be committed:
-
 	new file:   sub_master.txt
 
 Unmerged paths:
   (use "git rm <file>..." to mark resolution)
-
 	both deleted:    main.txt
 
 Untracked files not listed (use -u option to show untracked files)
@@ -226,6 +225,27 @@ test_expect_success 'status --branch with detached HEAD' '
 	?? mdconflict/
 	EOF
 	test_i18ncmp expected actual
+'
+
+## Duplicate the above test and verify --porcelain=v1 arg parsing.
+test_expect_success 'status --porcelain=v1 --branch with detached HEAD' '
+	git reset --hard &&
+	git checkout master^0 &&
+	git status --branch --porcelain=v1 >actual &&
+	cat >expected <<-EOF &&
+	## HEAD (no branch)
+	?? .gitconfig
+	?? actual
+	?? expect
+	?? expected
+	?? mdconflict/
+	EOF
+	test_i18ncmp expected actual
+'
+
+## Verify parser error on invalid --porcelain argument.
+test_expect_success 'status --porcelain=bogus' '
+	test_must_fail git status --porcelain=bogus
 '
 
 test_done

@@ -13,23 +13,14 @@
  *  Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  License along with this library; if not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  *
  */
 
 #include "xinclude.h"
-
-
-
-
-static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec);
-static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *ecb);
-
-
-
 
 static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec) {
 
@@ -130,6 +121,12 @@ static long match_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri,
 	return xecfg->find_func(rec, len, buf, sz, xecfg->find_func_priv);
 }
 
+static int is_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri)
+{
+	char dummy[1];
+	return match_func_rec(xdf, xecfg, ri, dummy, sizeof(dummy)) >= 0;
+}
+
 struct func_line {
 	long len;
 	char buf[80];
@@ -187,21 +184,17 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 
 			/* Appended chunk? */
 			if (i1 >= xe->xdf1.nrec) {
-				char dummy[1];
 				long i2 = xch->i2;
 
 				/*
 				 * We don't need additional context if
-				 * a whole function was added, possibly
-				 * starting with empty lines.
+				 * a whole function was added.
 				 */
-				while (i2 < xe->xdf2.nrec &&
-				       is_empty_rec(&xe->xdf2, i2))
+				while (i2 < xe->xdf2.nrec) {
+					if (is_func_rec(&xe->xdf2, xecfg, i2))
+						goto post_context_calculation;
 					i2++;
-				if (i2 < xe->xdf2.nrec &&
-				    match_func_rec(&xe->xdf2, xecfg, i2,
-						   dummy, sizeof(dummy)) >= 0)
-					goto post_context_calculation;
+				}
 
 				/*
 				 * Otherwise get more context from the
@@ -211,10 +204,13 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			}
 
 			fs1 = get_func_line(xe, xecfg, NULL, i1, -1);
+			while (fs1 > 0 && !is_empty_rec(&xe->xdf1, fs1 - 1) &&
+			       !is_func_rec(&xe->xdf1, xecfg, fs1 - 1))
+				fs1--;
 			if (fs1 < 0)
 				fs1 = 0;
 			if (fs1 < s1) {
-				s2 -= s1 - fs1;
+				s2 = XDL_MAX(s2 - (s1 - fs1), 0);
 				s1 = fs1;
 			}
 		}
@@ -236,7 +232,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			if (fe1 < 0)
 				fe1 = xe->xdf1.nrec;
 			if (fe1 > e1) {
-				e2 += fe1 - e1;
+				e2 = XDL_MIN(e2 + (fe1 - e1), xe->xdf2.nrec);
 				e1 = fe1;
 			}
 
@@ -248,7 +244,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			if (xche->next) {
 				long l = XDL_MIN(xche->next->i1,
 						 xe->xdf1.nrec - 1);
-				if (l <= e1 ||
+				if (l - xecfg->ctxlen <= e1 ||
 				    get_func_line(xe, xecfg, NULL, l, e1) < 0) {
 					xche = xche->next;
 					goto post_context_calculation;

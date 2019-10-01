@@ -1,0 +1,32 @@
+/ {
+	HANDLE_2: new-node@eeda {
+		compatible = "vendor,compat";
+		string-prop = end: "hello world?" start: ;
+		#address-cells = <0+40>;
+		reg = <0xeeda>;
+		prop = <(1)>;
+		prop = <(-1e10)>;
+		prop = <(!1)>;
+		prop = <(~1)>;
+		prop = <(1*2)>;
+		prop = <(1&2)>;
+		prop = <(1*2)>;
+		prop = <(1/2)>;
+		prop = <(1%2)>;
+		prop = <(1+2)>;
+		prop = <(1-2)>;
+		prop = /bits/ 32 <(1<<2)>;
+		prop = <(1>>2)>;
+		prop = <(1&2)>;
+		prop = <(1^2)>;
+		prop = <(1|2)>;
+		prop = <(1&&2)>;
+		prop = <(1||2)>;
+		prop = <(1?2:3)>;
+		list = <&HANDLE_2>, <0 0 0 1>;
+	};
+
+	&phandle2 {
+		prop_handle = <&HANDLE_2>;
+	};
+};

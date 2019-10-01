@@ -33,18 +33,25 @@ test_expect_success 'symbolic-ref refuses bare sha1' '
 '
 reset_to_sane
 
-test_expect_success 'symbolic-ref deletes HEAD' '
-	git symbolic-ref -d HEAD &&
+test_expect_success 'HEAD cannot be removed' '
+	test_must_fail git symbolic-ref -d HEAD
+'
+
+reset_to_sane
+
+test_expect_success 'symbolic-ref can be deleted' '
+	git symbolic-ref NOTHEAD refs/heads/foo &&
+	git symbolic-ref -d NOTHEAD &&
 	test_path_is_file .git/refs/heads/foo &&
-	test_path_is_missing .git/HEAD
+	test_path_is_missing .git/NOTHEAD
 '
 reset_to_sane
 
-test_expect_success 'symbolic-ref deletes dangling HEAD' '
-	git symbolic-ref HEAD refs/heads/missing &&
-	git symbolic-ref -d HEAD &&
+test_expect_success 'symbolic-ref can delete dangling symref' '
+	git symbolic-ref NOTHEAD refs/heads/missing &&
+	git symbolic-ref -d NOTHEAD &&
 	test_path_is_missing .git/refs/heads/missing &&
-	test_path_is_missing .git/HEAD
+	test_path_is_missing .git/NOTHEAD
 '
 reset_to_sane
 
@@ -58,7 +65,7 @@ reset_to_sane
 test_expect_success 'symbolic-ref fails to delete real ref' '
 	echo "fatal: Cannot delete refs/heads/foo, not a symbolic ref" >expect &&
 	test_must_fail git symbolic-ref -d refs/heads/foo >actual 2>&1 &&
-	test_path_is_file .git/refs/heads/foo &&
+	git rev-parse --verify refs/heads/foo &&
 	test_cmp expect actual
 '
 reset_to_sane
@@ -122,11 +129,35 @@ test_expect_success 'symbolic-ref does not create ref d/f conflicts' '
 	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df
 '
 
-test_expect_success 'symbolic-ref handles existing pointer to invalid name' '
+test_expect_success 'symbolic-ref can overwrite pointer to invalid name' '
+	test_when_finished reset_to_sane &&
 	head=$(git rev-parse HEAD) &&
 	git symbolic-ref HEAD refs/heads/outer &&
+	test_when_finished "git update-ref -d refs/heads/outer/inner" &&
 	git update-ref refs/heads/outer/inner $head &&
 	git symbolic-ref HEAD refs/heads/unrelated
+'
+
+test_expect_success 'symbolic-ref can resolve d/f name (EISDIR)' '
+	test_when_finished reset_to_sane &&
+	head=$(git rev-parse HEAD) &&
+	git symbolic-ref HEAD refs/heads/outer/inner &&
+	test_when_finished "git update-ref -d refs/heads/outer" &&
+	git update-ref refs/heads/outer $head &&
+	echo refs/heads/outer/inner >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref can resolve d/f name (ENOTDIR)' '
+	test_when_finished reset_to_sane &&
+	head=$(git rev-parse HEAD) &&
+	git symbolic-ref HEAD refs/heads/outer &&
+	test_when_finished "git update-ref -d refs/heads/outer/inner" &&
+	git update-ref refs/heads/outer/inner $head &&
+	echo refs/heads/outer >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_done

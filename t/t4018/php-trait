@@ -1,0 +1,7 @@
+trait RIGHT
+{
+    public function foo($ChangeMe)
+    {
+        return 'foo';
+    }
+}

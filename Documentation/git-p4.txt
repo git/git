@@ -29,8 +29,8 @@ Submit Git changes back to p4 using 'git p4 submit'.  The command
 the updated p4 remote branch.
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 * Clone a repository:
 +
 ------------
@@ -71,12 +71,12 @@ $ git p4 clone //depot/path/project
 ------------
 This:
 
-1.   Creates an empty Git repository in a subdirectory called 'project'.
+1. Creates an empty Git repository in a subdirectory called 'project'.
 +
-2.   Imports the full contents of the head revision from the given p4
-depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
+2. Imports the full contents of the head revision from the given p4
+   depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
 +
-3.   Creates a local branch, 'master' from this remote and checks it out.
+3. Creates a local branch, 'master' from this remote and checks it out.
 
 To reproduce the entire p4 history in Git, use the '@all' modifier on
 the depot path:
@@ -149,6 +149,12 @@ To specify a branch other than the current one, use:
 $ git p4 submit topicbranch
 ------------
 
+To specify a single commit or a range of commits, use:
+------------
+$ git p4 submit --commit <sha1>
+$ git p4 submit --commit <sha1..sha1>
+------------
+
 The upstream reference is generally 'refs/remotes/p4/master', but can
 be overridden using the `--origin=` command-line option.
 
@@ -157,6 +163,37 @@ The p4 changes will be created as the user invoking 'git p4 submit'. The
 according to the author of the Git commit.  This option requires admin
 privileges in p4, which can be granted using 'p4 protect'.
 
+To shelve changes instead of submitting, use `--shelve` and `--update-shelve`:
+
+----
+$ git p4 submit --shelve
+$ git p4 submit --update-shelve 1234 --update-shelve 2345
+----
+
+
+Unshelve
+~~~~~~~~
+Unshelving will take a shelved P4 changelist, and produce the equivalent git commit
+in the branch refs/remotes/p4-unshelved/<changelist>.
+
+The git commit is created relative to the current origin revision (HEAD by default).
+A parent commit is created based on the origin, and then the unshelve commit is
+created based on that.
+
+The origin revision can be changed with the "--origin" option.
+
+If the target branch in refs/remotes/p4-unshelved already exists, the old one will
+be renamed.
+
+----
+$ git p4 sync
+$ git p4 unshelve 12345
+$ git show p4-unshelved/12345
+<submit more changes via p4 to the same files>
+$ git p4 unshelve 12345
+<refuses to unshelve until git is in sync with p4 again>
+
+----
 
 OPTIONS
 -------
@@ -303,6 +340,15 @@ These options can be used to modify 'git p4 submit' behavior.
 	submit manually or revert.  This option always stops after the
 	first (oldest) commit.  Git tags are not exported to p4.
 
+--shelve::
+	Instead of submitting create a series of shelved changelists.
+	After creating each shelve, the relevant files are reverted/deleted.
+	If you have multiple commits pending multiple shelves will be created.
+
+--update-shelve CHANGELIST::
+	Update an existing shelved changelist with this commit. Implies
+	--shelve. Repeat for multiple shelved changelists.
+
 --conflict=(ask|skip|quit)::
 	Conflicts can occur when applying a commit to p4.  When this
 	happens, the default behavior ("ask") is to prompt whether to
@@ -315,12 +361,40 @@ These options can be used to modify 'git p4 submit' behavior.
 	p4/master.  See the "Sync options" section above for more
 	information.
 
+--commit <sha1>|<sha1..sha1>::
+    Submit only the specified commit or range of commits, instead of the full
+    list of changes that are in the current Git branch.
+
+--disable-rebase::
+    Disable the automatic rebase after all commits have been successfully
+    submitted. Can also be set with git-p4.disableRebase.
+
+--disable-p4sync::
+    Disable the automatic sync of p4/master from Perforce after commits have
+    been submitted. Implies --disable-rebase. Can also be set with
+    git-p4.disableP4Sync. Sync with origin/master still goes ahead if possible.
+
+Hook for submit
+~~~~~~~~~~~~~~~
+The `p4-pre-submit` hook is executed if it exists and is executable.
+The hook takes no parameters and nothing from standard input. Exiting with
+non-zero status from this script prevents `git-p4 submit` from launching.
+
+One usage scenario is to run unit tests in the hook.
+
 Rebase options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 rebase' behavior.
 
 --import-labels::
 	Import p4 labels.
+
+Unshelve options
+~~~~~~~~~~~~~~~~
+
+--origin::
+    Sets the git refspec against which the shelved P4 changelist is compared.
+    Defaults to p4/master.
 
 DEPOT PATH SYNTAX
 -----------------
@@ -377,7 +451,7 @@ dedicating a client spec just for 'git p4'.
 The name of the client can be given to 'git p4' in multiple ways.  The
 variable 'git-p4.client' takes precedence if it exists.  Otherwise,
 normal p4 mechanisms of determining the client are used:  environment
-variable P4CLIENT, a file referenced by P4CONFIG, or the local host name.
+variable `P4CLIENT`, a file referenced by `P4CONFIG`, or the local host name.
 
 
 BRANCH DETECTION
@@ -446,26 +520,32 @@ General variables
 ~~~~~~~~~~~~~~~~~
 git-p4.user::
 	User specified as an option to all p4 commands, with '-u <user>'.
-	The environment variable 'P4USER' can be used instead.
+	The environment variable `P4USER` can be used instead.
 
 git-p4.password::
 	Password specified as an option to all p4 commands, with
 	'-P <password>'.
-	The environment variable 'P4PASS' can be used instead.
+	The environment variable `P4PASS` can be used instead.
 
 git-p4.port::
 	Port specified as an option to all p4 commands, with
 	'-p <port>'.
-	The environment variable 'P4PORT' can be used instead.
+	The environment variable `P4PORT` can be used instead.
 
 git-p4.host::
 	Host specified as an option to all p4 commands, with
 	'-h <host>'.
-	The environment variable 'P4HOST' can be used instead.
+	The environment variable `P4HOST` can be used instead.
 
 git-p4.client::
 	Client specified as an option to all p4 commands, with
 	'-c <client>', including the client spec.
+
+git-p4.retries::
+	Specifies the number of times to retry a p4 command (notably,
+	'p4 sync') if the network times out. The default value is 3.
+	Set the value to 0 to disable retries or if your p4 version
+	does not support retries (pre 2012.2).
 
 Clone and sync variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -622,6 +702,12 @@ git-p4.labelExportRegexp::
 git-p4.conflict::
 	Specify submit behavior when a conflict with p4 is found, as per
 	--conflict.  The default behavior is 'ask'.
+
+git-p4.disableRebase::
+    Do not rebase the tree against p4/master following a submit.
+
+git-p4.disableP4Sync::
+    Do not sync p4/master with Perforce following a submit. Implies git-p4.disableRebase.
 
 IMPLEMENTATION DETAILS
 ----------------------

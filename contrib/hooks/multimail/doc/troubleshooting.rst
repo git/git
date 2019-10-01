@@ -1,6 +1,40 @@
 Troubleshooting issues with git-multimail: a FAQ
 ================================================
 
+How to check that git-multimail is properly set up?
+---------------------------------------------------
+
+Since version 1.4.0, git-multimail allows a simple self-checking of
+its configuration: run it with the environment variable
+``GIT_MULTIMAIL_CHECK_SETUP`` set to a non-empty string. You should
+get something like this::
+
+  $ GIT_MULTIMAIL_CHECK_SETUP=true /home/moy/dev/git-multimail/git-multimail/git_multimail.py
+  Environment values:
+      administrator : 'the administrator of this repository'
+      charset : 'utf-8'
+      emailprefix : '[git-multimail] '
+      fqdn : 'anie'
+      projectdesc : 'UNNAMED PROJECT'
+      pusher : 'moy'
+      repo_path : '/home/moy/dev/git-multimail'
+      repo_shortname : 'git-multimail'
+
+  Now, checking that git-multimail's standard input is properly set ...
+  Please type some text and then press Return
+  foo
+  You have just entered:
+  foo
+  git-multimail seems properly set up.
+
+If you forgot to set an important variable, you may get instead::
+
+  $ GIT_MULTIMAIL_CHECK_SETUP=true /home/moy/dev/git-multimail/git-multimail/git_multimail.py
+  No email recipients configured!
+
+Do not set ``$GIT_MULTIMAIL_CHECK_SETUP`` other than for testing your
+configuration: it would disable the hook completely.
+
 Git is not using the right address in the From/To/Reply-To field
 ----------------------------------------------------------------
 

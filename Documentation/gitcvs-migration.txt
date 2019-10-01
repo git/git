@@ -116,8 +116,12 @@ they create are writable and searchable by other group members.
 Importing a CVS archive
 -----------------------
 
+NOTE: These instructions use the `git-cvsimport` script which ships with
+git, but other importers may provide better results. See the note in
+linkgit:git-cvsimport[1] for other options.
+
 First, install version 2.1 or higher of cvsps from
-http://www.cobite.com/cvsps/[http://www.cobite.com/cvsps/] and make
+https://github.com/andreyvit/cvsps[https://github.com/andreyvit/cvsps] and make
 sure it is in your path.  Then cd to a checked out CVS working directory
 of the project you are interested in and run linkgit:git-cvsimport[1]:
 
@@ -199,4 +203,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

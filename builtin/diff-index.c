@@ -1,4 +1,6 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "diff.h"
 #include "commit.h"
 #include "revision.h"
@@ -17,9 +19,11 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	int i;
 	int result;
 
-	init_revisions(&rev, prefix);
-	gitmodules_config();
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(diff_cache_usage);
+
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	repo_init_revisions(the_repository, &rev, prefix);
 	rev.abbrev = 0;
 	precompose_argv(argc, argv);
 
@@ -53,5 +57,6 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 		return -1;
 	}
 	result = run_diff_index(&rev, cached);
+	UNLEAK(rev);
 	return diff_result_code(&rev.diffopt, result);
 }

@@ -1,0 +1,113 @@
+push.default::
+	Defines the action `git push` should take if no refspec is
+	explicitly given.  Different values are well-suited for
+	specific workflows; for instance, in a purely central workflow
+	(i.e. the fetch source is equal to the push destination),
+	`upstream` is probably what you want.  Possible values are:
++
+--
+
+* `nothing` - do not push anything (error out) unless a refspec is
+  explicitly given. This is primarily meant for people who want to
+  avoid mistakes by always being explicit.
+
+* `current` - push the current branch to update a branch with the same
+  name on the receiving end.  Works in both central and non-central
+  workflows.
+
+* `upstream` - push the current branch back to the branch whose
+  changes are usually integrated into the current branch (which is
+  called `@{upstream}`).  This mode only makes sense if you are
+  pushing to the same repository you would normally pull from
+  (i.e. central workflow).
+
+* `tracking` - This is a deprecated synonym for `upstream`.
+
+* `simple` - in centralized workflow, work like `upstream` with an
+  added safety to refuse to push if the upstream branch's name is
+  different from the local one.
++
+When pushing to a remote that is different from the remote you normally
+pull from, work as `current`.  This is the safest option and is suited
+for beginners.
++
+This mode has become the default in Git 2.0.
+
+* `matching` - push all branches having the same name on both ends.
+  This makes the repository you are pushing to remember the set of
+  branches that will be pushed out (e.g. if you always push 'maint'
+  and 'master' there and no other branches, the repository you push
+  to will have these two branches, and your local 'maint' and
+  'master' will be pushed there).
++
+To use this mode effectively, you have to make sure _all_ the
+branches you would push out are ready to be pushed out before
+running 'git push', as the whole point of this mode is to allow you
+to push all of the branches in one go.  If you usually finish work
+on only one branch and push out the result, while other branches are
+unfinished, this mode is not for you.  Also this mode is not
+suitable for pushing into a shared central repository, as other
+people may add new branches there, or update the tip of existing
+branches outside your control.
++
+This used to be the default, but not since Git 2.0 (`simple` is the
+new default).
+
+--
+
+push.followTags::
+	If set to true enable `--follow-tags` option by default.  You
+	may override this configuration at time of push by specifying
+	`--no-follow-tags`.
+
+push.gpgSign::
+	May be set to a boolean value, or the string 'if-asked'. A true
+	value causes all pushes to be GPG signed, as if `--signed` is
+	passed to linkgit:git-push[1]. The string 'if-asked' causes
+	pushes to be signed if the server supports it, as if
+	`--signed=if-asked` is passed to 'git push'. A false value may
+	override a value from a lower-priority config file. An explicit
+	command-line flag always overrides this config option.
+
+push.pushOption::
+	When no `--push-option=<option>` argument is given from the
+	command line, `git push` behaves as if each <value> of
+	this variable is given as `--push-option=<value>`.
++
+This is a multi-valued variable, and an empty value can be used in a
+higher priority configuration file (e.g. `.git/config` in a
+repository) to clear the values inherited from a lower priority
+configuration files (e.g. `$HOME/.gitconfig`).
++
+--
+
+Example:
+
+/etc/gitconfig
+  push.pushoption = a
+  push.pushoption = b
+
+~/.gitconfig
+  push.pushoption = c
+
+repo/.git/config
+  push.pushoption =
+  push.pushoption = b
+
+This will result in only b (a and c are cleared).
+
+--
+
+push.recurseSubmodules::
+	Make sure all submodule commits used by the revisions to be pushed
+	are available on a remote-tracking branch. If the value is 'check'
+	then Git will verify that all submodule commits that changed in the
+	revisions to be pushed are available on at least one remote of the
+	submodule. If any commits are missing, the push will be aborted and
+	exit with non-zero status. If the value is 'on-demand' then all
+	submodules that changed in the revisions to be pushed will be
+	pushed. If on-demand was not able to push all necessary revisions
+	it will also be aborted and exit with non-zero status. If the value
+	is 'no' then default behavior of ignoring submodules when pushing
+	is retained. You may override this configuration at time of push by
+	specifying '--recurse-submodules=check|on-demand|no'.

@@ -7,15 +7,14 @@ merge_cmd () {
 	then
 		check_meld_for_output_version
 	fi
-	touch "$BACKUP"
+
 	if test "$meld_has_output_option" = true
 	then
-		"$merge_tool_path" --output "$MERGED" \
+		"$merge_tool_path" --output="$MERGED" \
 			"$LOCAL" "$BASE" "$REMOTE"
 	else
 		"$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
 	fi
-	check_unchanged
 }
 
 # Check whether we should use 'meld --output <file>'

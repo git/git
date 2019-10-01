@@ -18,6 +18,11 @@ then
     test_done
 fi
 
+if ! test_have_prereq NOT_ROOT; then
+	skip_all='When cvs is compiled with CVS_BADROOT commits as root fail'
+	test_done
+fi
+
 CVSROOT=$PWD/tmpcvsroot
 CVSWORK=$PWD/cvswork
 GIT_DIR=$PWD/.git
@@ -38,11 +43,11 @@ check_entries () {
 	sed -ne '/^\//p' "$1/CVS/Entries" | sort | cut -d/ -f2,3,5 >actual
 	if test -z "$2"
 	then
-		>expected
+		test_must_be_empty actual
 	else
 		printf '%s\n' "$2" | tr '|' '\012' >expected
+		test_cmp expected actual
 	fi
-	test_cmp expected actual
 }
 
 test_expect_success \
@@ -182,7 +187,7 @@ test_expect_success \
       git commit -a -m "Update with spaces" &&
       id=$(git rev-list --max-count=1 HEAD) &&
       (cd "$CVSWORK" &&
-      git cvsexportcommit -c $id
+      git cvsexportcommit -c $id &&
       check_entries "G g" "with spaces.png/1.2/-kb|with spaces.txt/1.2/"
       )'
 
@@ -240,7 +245,7 @@ test_expect_success FILEMODE \
       git add G/off &&
       git commit -a -m "Execute test" &&
       (cd "$CVSWORK" &&
-      git cvsexportcommit -c HEAD
+      git cvsexportcommit -c HEAD &&
       test -x G/on &&
       ! test -x G/off
       )'
@@ -298,7 +303,7 @@ test_expect_success 're-commit a removed filename which remains in CVS attic' '
     git add attic_gremlin &&
     git commit -m "Added attic_gremlin" &&
 	git cvsexportcommit -w "$CVSWORK" -c HEAD &&
-    (cd "$CVSWORK"; cvs -Q update -d) &&
+    (cd "$CVSWORK" && cvs -Q update -d) &&
     test -f "$CVSWORK/attic_gremlin"
 '
 

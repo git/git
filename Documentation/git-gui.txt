@@ -35,7 +35,7 @@ blame::
 
 browser::
 	Start a tree browser showing all files in the specified
-	commit (or `HEAD` by default).  Files selected through the
+	commit.  Files selected through the
 	browser are opened in the blame viewer.
 
 citool::

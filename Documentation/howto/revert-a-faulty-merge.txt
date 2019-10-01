@@ -30,7 +30,7 @@ The history immediately after the "revert of the merge" would look like
 this:
 
  ---o---o---o---M---x---x---W
-	       /
+               /
        ---A---B
 
 where A and B are on the side development that was not so good, M is the
@@ -47,7 +47,7 @@ After the developers of the side branch fix their mistakes, the history
 may look like this:
 
  ---o---o---o---M---x---x---W---x
-	       /
+               /
        ---A---B-------------------C---D
 
 where C and D are to fix what was broken in A and B, and you may already
@@ -81,7 +81,7 @@ In such a situation, you would want to first revert the previous revert,
 which would make the history look like this:
 
  ---o---o---o---M---x---x---W---x---Y
-	       /
+               /
        ---A---B-------------------C---D
 
 where Y is the revert of W.  Such a "revert of the revert" can be done
@@ -93,14 +93,14 @@ This history would (ignoring possible conflicts between what W and W..Y
 changed) be equivalent to not having W or Y at all in the history:
 
  ---o---o---o---M---x---x-------x----
-	       /
+               /
        ---A---B-------------------C---D
 
 and merging the side branch again will not have conflict arising from an
 earlier revert and revert of the revert.
 
  ---o---o---o---M---x---x-------x-------*
-	       /                       /
+               /                       /
        ---A---B-------------------C---D
 
 Of course the changes made in C and D still can conflict with what was
@@ -111,13 +111,13 @@ faulty A and B, and redone the changes on top of the updated mainline
 after the revert, the history would have looked like this:
 
  ---o---o---o---M---x---x---W---x---x
-	       /                 \
+               /                 \
        ---A---B                   A'--B'--C'
 
 If you reverted the revert in such a case as in the previous example:
 
  ---o---o---o---M---x---x---W---x---x---Y---*
-	       /                 \         /
+               /                 \         /
        ---A---B                   A'--B'--C'
 
 where Y is the revert of W, A' and B' are rerolled A and B, and there may
@@ -129,7 +129,7 @@ lot of overlapping changes that result in conflicts.  So do not do "revert
 of revert" blindly without thinking..
 
  ---o---o---o---M---x---x---W---x---x
-	       /                 \
+               /                 \
        ---A---B                   A'--B'--C'
 
 In the history with rebased side branch, W (and M) are behind the merge
