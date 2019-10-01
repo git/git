@@ -29,7 +29,7 @@ int advice_ignored_hook = 1;
 int advice_waiting_for_editor = 1;
 int advice_graft_file_deprecated = 1;
 int advice_checkout_ambiguous_remote_branch_name = 1;
-int advice_nested_tag = 1;
+int advice_nested_tag = 10;
 
 static int advice_use_color = -1;
 static char advice_colors[][COLOR_MAXLEN] = {
