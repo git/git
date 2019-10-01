@@ -1962,8 +1962,9 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 			((state == path_untracked) &&
 			 (get_dtype(cdir.de, istate, path.buf, path.len) == DT_DIR) &&
 			 ((dir->flags & DIR_SHOW_IGNORED_TOO) ||
-			  do_match_pathspec(istate, pathspec, path.buf, path.len,
-					    baselen, NULL, DO_MATCH_LEADING_PATHSPEC) == MATCHED_RECURSIVELY_LEADING_PATHSPEC))) {
+			  (pathspec &&
+			   do_match_pathspec(istate, pathspec, path.buf, path.len,
+					     baselen, NULL, DO_MATCH_LEADING_PATHSPEC) == MATCHED_RECURSIVELY_LEADING_PATHSPEC)))) {
 			struct untracked_cache_dir *ud;
 			ud = lookup_untracked(dir->untracked, untracked,
 					      path.buf + baselen,
@@ -1975,7 +1976,8 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 			if (subdir_state > dir_state)
 				dir_state = subdir_state;
 
-			if (!match_pathspec(istate, pathspec, path.buf, path.len,
+			if (pathspec &&
+			    !match_pathspec(istate, pathspec, path.buf, path.len,
 					    0 /* prefix */, NULL,
 					    0 /* do NOT special case dirs */))
 				state = path_none;
