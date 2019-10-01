@@ -186,4 +186,17 @@ test_expect_success 'check multiple merge bases' '
 	)
 '
 
+test_expect_success 'rebase describes fake ancestor base' '
+	test_create_repo rebase &&
+	(
+		cd rebase &&
+		test_commit base file &&
+		test_commit master file &&
+		git checkout -b side HEAD^ &&
+		test_commit side file &&
+		test_must_fail git -c merge.conflictstyle=diff3 rebase master &&
+		grep "||||||| constructed merge base" file
+	)
+'
+
 test_done

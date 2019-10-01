@@ -3550,6 +3550,8 @@ static int merge_recursive_internal(struct merge_options *opt,
 		merged_merge_bases = make_virtual_commit(opt->repo, tree,
 							 "ancestor");
 		ancestor_name = "empty tree";
+	} else if (opt->ancestor) {
+		ancestor_name = opt->ancestor;
 	} else if (merge_bases) {
 		ancestor_name = "merged common ancestors";
 	} else {
@@ -3689,7 +3691,8 @@ int merge_recursive(struct merge_options *opt,
 {
 	int clean;
 
-	assert(opt->ancestor == NULL);
+	assert(opt->ancestor == NULL ||
+	       !strcmp(opt->ancestor, "constructed merge base"));
 
 	if (merge_start(opt, repo_get_commit_tree(opt->repo, h1)))
 		return -1;
@@ -3741,6 +3744,8 @@ int merge_recursive_generic(struct merge_options *opt,
 					   oid_to_hex(merge_bases[i]));
 			commit_list_insert(base, &ca);
 		}
+		if (num_merge_bases == 1)
+			opt->ancestor = "constructed merge base";
 	}
 
 	repo_hold_locked_index(opt->repo, &lock, LOCK_DIE_ON_ERROR);
