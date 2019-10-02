@@ -61,14 +61,13 @@ proc tools_populate_one {fullname} {
 		}
 	}
 
-	if {[info exists repo_config(guitool.$fullname.accelerator)] && [info exists repo_config(guitool.$fullname.accelerator-label)]} {
-		set accele_key $repo_config(guitool.$fullname.accelerator)
-		set accel_label $repo_config(guitool.$fullname.accelerator-label)
+	if {[info exists repo_config(guitool.$fullname.gitgui-shortcut)]} {
+		set gitgui_shortcut $repo_config(guitool.$fullname.gitgui-shortcut)
 		tools_create_item $parent command \
 		-label [lindex $names end] \
 		-command [list tools_exec $fullname] \
-		-accelerator $accel_label
-		bind . $accele_key [list tools_exec $fullname]
+		-accelerator $gitgui_shortcut
+		bind . <$gitgui_shortcut> [list tools_exec $fullname]
 	} else {
 		tools_create_item $parent command \
 			-label [lindex $names end] \

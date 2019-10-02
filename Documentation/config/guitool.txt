@@ -48,3 +48,18 @@ guitool.<name>.prompt::
 	Specifies the general prompt string to display at the top of
 	the dialog, before subsections for 'argPrompt' and 'revPrompt'.
 	The default value includes the actual command.
+
+guitool.<name>.gitgui-shortcut
+	Specifies a keyboard shortcut for the custom tool in the git-gui
+	application. The value must be a valid string ( without "<" , ">" wrapper )
+	understood by the TCL/TK 's bind command.See https://www.tcl.tk/man/tcl8.4/TkCmd/bind.htm
+	for more details about the supported values. Avoid creating shortcuts that
+	conflict with existing built-in `git gui` shortcuts.
+	Example:
+		[guitool "Terminal"]
+			cmd = gnome-terminal -e zsh
+			noconsole = yes
+			gitgui-shortcut = "Control-y"
+		[guitool "Sync"]
+			cmd = "git pull; git push"
+			gitgui-shortcut = "Alt-s"
