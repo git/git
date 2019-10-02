@@ -1842,6 +1842,47 @@ int parallel_submodules(void)
 	return parallel_jobs;
 }
 
+int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
+{
+	size_t len = strlen(git_dir), suffix_len = strlen(submodule_name);
+	char *p;
+	int ret = 0;
+
+	if (len <= suffix_len || (p = git_dir + len - suffix_len)[-1] != '/' ||
+	    strcmp(p, submodule_name))
+		BUG("submodule name '%s' not a suffix of git dir '%s'",
+		    submodule_name, git_dir);
+
+	/*
+	 * We prevent the contents of sibling submodules' git directories to
+	 * clash.
+	 *
+	 * Example: having a submodule named `hippo` and another one named
+	 * `hippo/hooks` would result in the git directories
+	 * `.git/modules/hippo/` and `.git/modules/hippo/hooks/`, respectively,
+	 * but the latter directory is already designated to contain the hooks
+	 * of the former.
+	 */
+	for (; *p; p++) {
+		if (is_dir_sep(*p)) {
+			char c = *p;
+
+			*p = '\0';
+			if (is_git_directory(git_dir))
+				ret = -1;
+			*p = c;
+
+			if (ret < 0)
+				return error(_("submodule git dir '%s' is "
+					       "inside git dir '%.*s'"),
+					     git_dir,
+					     (int)(p - git_dir), git_dir);
+		}
+	}
+
+	return 0;
+}
+
 /*
  * Embeds a single submodules git directory into the superprojects git dir,
  * non recursively.
@@ -1850,7 +1891,7 @@ static void relocate_single_git_dir_into_superproject(const char *prefix,
 						      const char *path)
 {
 	char *old_git_dir = NULL, *real_old_git_dir = NULL, *real_new_git_dir = NULL;
-	const char *new_git_dir;
+	char *new_git_dir;
 	const struct submodule *sub;
 
 	if (submodule_uses_worktrees(path))
@@ -1868,10 +1909,14 @@ static void relocate_single_git_dir_into_superproject(const char *prefix,
 	if (!sub)
 		die(_("could not lookup name for submodule '%s'"), path);
 
-	new_git_dir = git_path("modules/%s", sub->name);
+	new_git_dir = git_pathdup("modules/%s", sub->name);
+	if (validate_submodule_git_dir(new_git_dir, sub->name) < 0)
+		die(_("refusing to move '%s' into an existing git dir"),
+		    real_old_git_dir);
 	if (safe_create_leading_directories_const(new_git_dir) < 0)
 		die(_("could not create directory '%s'"), new_git_dir);
 	real_new_git_dir = real_pathdup(new_git_dir, 1);
+	free(new_git_dir);
 
 	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
 		get_super_prefix_or_empty(), path,

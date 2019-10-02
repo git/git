@@ -106,4 +106,27 @@ test_expect_success MINGW 'prevent git~1 squatting on Windows' '
 	! grep gitdir squatting-clone/d/a/git~2
 '
 
+test_expect_success 'git dirs of sibling submodules must not be nested' '
+	git init nested &&
+	test_commit -C nested nested &&
+	(
+		cd nested &&
+		cat >.gitmodules <<-EOF &&
+		[submodule "hippo"]
+			url = .
+			path = thing1
+		[submodule "hippo/hooks"]
+			url = .
+			path = thing2
+		EOF
+		git clone . thing1 &&
+		git clone . thing2 &&
+		git add .gitmodules thing1 thing2 &&
+		test_tick &&
+		git commit -m nested
+	) &&
+	test_must_fail git clone --recurse-submodules nested clone 2>err &&
+	test_i18ngrep "is inside git dir" err
+'
+
 test_done
