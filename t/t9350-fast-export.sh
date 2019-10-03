@@ -567,7 +567,7 @@ test_expect_success 'handling tags of blobs' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'handling nested tags' '
+test_expect_success 'handling nested tags' '
 	git tag -a -m "This is a nested tag" nested muss &&
 	git fast-export --mark-tags nested >output &&
 	grep "^from $ZERO_OID$" output &&
