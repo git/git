@@ -540,9 +540,40 @@ test_expect_success 'tree_tag'        '
 '
 
 # NEEDSWORK: not just check return status, but validate the output
+# Note that these tests DO NOTHING other than print a warning that
+# they are ommitting the one tag we asked them to export (because the
+# tags resolve to a tree).  They exist just to make sure we do not
+# abort but instead just warn.
 test_expect_success 'tree_tag-obj'    'git fast-export tree_tag-obj'
 test_expect_success 'tag-obj_tag'     'git fast-export tag-obj_tag'
 test_expect_success 'tag-obj_tag-obj' 'git fast-export tag-obj_tag-obj'
+
+test_expect_success 'handling tags of blobs' '
+	git tag -a -m "Tag of a blob" blobtag $(git rev-parse master:file) &&
+	git fast-export blobtag >actual &&
+	cat >expect <<-EOF &&
+	blob
+	mark :1
+	data 9
+	die Luft
+
+	tag blobtag
+	from :1
+	tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data 14
+	Tag of a blob
+
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_failure 'handling nested tags' '
+	git tag -a -m "This is a nested tag" nested muss &&
+	git fast-export --mark-tags nested >output &&
+	grep "^from $ZERO_OID$" output &&
+	grep "^tag nested$" output >tag_lines &&
+	test_line_count = 2 tag_lines
+'
 
 test_expect_success 'directory becomes symlink'        '
 	git init dirtosymlink &&
