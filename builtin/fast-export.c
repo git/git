@@ -1052,11 +1052,16 @@ static void export_marks(char *file)
 		error("Unable to write marks file %s.", file);
 }
 
-static void import_marks(char *input_file)
+static void import_marks(char *input_file, int check_exists)
 {
 	char line[512];
-	FILE *f = xfopen(input_file, "r");
+	FILE *f;
+	struct stat sb;
 
+	if (check_exists && stat(input_file, &sb))
+		return;
+
+	f = xfopen(input_file, "r");
 	while (fgets(line, sizeof(line), f)) {
 		uint32_t mark;
 		char *line_end, *mark_end;
@@ -1120,7 +1125,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	struct rev_info revs;
 	struct object_array commits = OBJECT_ARRAY_INIT;
 	struct commit *commit;
-	char *export_filename = NULL, *import_filename = NULL;
+	char *export_filename = NULL,
+	     *import_filename = NULL,
+	     *import_filename_if_exists = NULL;
 	uint32_t lastimportid;
 	struct string_list refspecs_list = STRING_LIST_INIT_NODUP;
 	struct string_list paths_of_changed_objects = STRING_LIST_INIT_DUP;
@@ -1140,6 +1147,10 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			     N_("Dump marks to this file")),
 		OPT_STRING(0, "import-marks", &import_filename, N_("file"),
 			     N_("Import marks from this file")),
+		OPT_STRING(0, "import-marks-if-exists",
+			     &import_filename_if_exists,
+			     N_("file"),
+			     N_("Import marks from this file if it exists")),
 		OPT_BOOL(0, "fake-missing-tagger", &fake_missing_tagger,
 			 N_("Fake a tagger when tags lack one")),
 		OPT_BOOL(0, "full-tree", &full_tree,
@@ -1187,8 +1198,12 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	if (use_done_feature)
 		printf("feature done\n");
 
+	if (import_filename && import_filename_if_exists)
+		die(_("Cannot pass both --import-marks and --import-marks-if-exists"));
 	if (import_filename)
-		import_marks(import_filename);
+		import_marks(import_filename, 0);
+	else if (import_filename_if_exists)
+		import_marks(import_filename_if_exists, 1);
 	lastimportid = last_idnum;
 
 	if (import_filename && revs.prune_data.nr)

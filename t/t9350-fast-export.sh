@@ -580,17 +580,15 @@ test_expect_success 'fast-export quotes pathnames' '
 '
 
 test_expect_success 'test bidirectionality' '
-	>marks-cur &&
-	>marks-new &&
 	git init marks-test &&
-	git fast-export --export-marks=marks-cur --import-marks=marks-cur --branches | \
-	git --git-dir=marks-test/.git fast-import --export-marks=marks-new --import-marks=marks-new &&
+	git fast-export --export-marks=marks-cur --import-marks-if-exists=marks-cur --branches | \
+	git --git-dir=marks-test/.git fast-import --export-marks=marks-new --import-marks-if-exists=marks-new &&
 	(cd marks-test &&
 	git reset --hard &&
 	echo Wohlauf > file &&
 	git commit -a -m "back in time") &&
-	git --git-dir=marks-test/.git fast-export --export-marks=marks-new --import-marks=marks-new --branches | \
-	git fast-import --export-marks=marks-cur --import-marks=marks-cur
+	git --git-dir=marks-test/.git fast-export --export-marks=marks-new --import-marks-if-exists=marks-new --branches | \
+	git fast-import --export-marks=marks-cur --import-marks-if-exists=marks-cur
 '
 
 cat > expected << EOF
