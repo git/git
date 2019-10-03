@@ -24,7 +24,6 @@
 #include "sequencer.h"
 #include "revision.h"
 #include "merge-recursive.h"
-#include "revision.h"
 #include "log-tree.h"
 #include "notes-utils.h"
 #include "rerere.h"

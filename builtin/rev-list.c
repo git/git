@@ -18,7 +18,6 @@
 #include "reflog-walk.h"
 #include "oidset.h"
 #include "packfile.h"
-#include "object-store.h"
 
 static const char rev_list_usage[] =
 "git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"

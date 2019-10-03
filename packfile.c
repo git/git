@@ -6,7 +6,6 @@
 #include "mergesort.h"
 #include "packfile.h"
 #include "delta.h"
-#include "list.h"
 #include "streaming.h"
 #include "sha1-lookup.h"
 #include "commit.h"

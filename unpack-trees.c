@@ -11,7 +11,6 @@
 #include "refs.h"
 #include "attr.h"
 #include "split-index.h"
-#include "dir.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "fsmonitor.h"

@@ -7,7 +7,6 @@
 #include "commit.h"
 #include "tag.h"
 #include "alloc.h"
-#include "object-store.h"
 #include "packfile.h"
 #include "commit-graph.h"
 

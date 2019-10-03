@@ -10,7 +10,6 @@
 #include "run-command.h"
 #include "sigchain.h"
 #include "submodule.h"
-#include "refs.h"
 #include "utf8.h"
 #include "worktree.h"
 

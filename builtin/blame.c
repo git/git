@@ -26,7 +26,6 @@
 #include "progress.h"
 #include "object-store.h"
 #include "blame.h"
-#include "string-list.h"
 #include "refs.h"
 
 static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
