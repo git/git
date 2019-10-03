@@ -142,10 +142,9 @@ system or global config value to one of the following:
 
 include::../trace2-target-values.txt[]
 
-If the target already exists and is a directory, the traces will be
-written to files (one per process) underneath the given directory. They
-will be named according to the last component of the SID (optionally
-followed by a counter to avoid filename collisions).
+When trace files are written to a target directory, they will be named according
+to the last component of the SID (optionally followed by a counter to avoid
+filename collisions).
 
 == Trace2 API
 
