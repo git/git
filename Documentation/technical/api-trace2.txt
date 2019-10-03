@@ -604,7 +604,13 @@ only present on the "start" and "atexit" events.
 ==== Event-Specific Key/Value Pairs
 
 `"version"`::
-	This event gives the version of the executable and the EVENT format.
+	This event gives the version of the executable and the EVENT format. It
+	should always be the first event in a trace session. The EVENT format
+	version will be incremented if new event types are added, if existing
+	fields are removed, or if there are significant changes in
+	interpretation of existing events or fields. Smaller changes, such as
+	adding a new field to an existing event, will not require an increment
+	to the EVENT format version.
 +
 ------------
 {
