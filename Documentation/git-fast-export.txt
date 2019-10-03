@@ -75,11 +75,20 @@ produced incorrect results if you gave these options.
 	Before processing any input, load the marks specified in
 	<file>.  The input file must exist, must be readable, and
 	must use the same format as produced by --export-marks.
+
+--mark-tags::
+	In addition to labelling blobs and commits with mark ids, also
+	label tags.  This is useful in conjunction with
+	`--export-marks` and `--import-marks`, and is also useful (and
+	necessary) for exporting of nested tags.  It does not hurt
+	other cases and would be the default, but many fast-import
+	frontends are not prepared to accept tags with mark
+	identifiers.
 +
-Any commits that have already been marked will not be exported again.
-If the backend uses a similar --import-marks file, this allows for
-incremental bidirectional exporting of the repository by keeping the
-marks the same across runs.
+Any commits (or tags) that have already been marked will not be
+exported again.  If the backend uses a similar --import-marks file,
+this allows for incremental bidirectional exporting of the repository
+by keeping the marks the same across runs.
 
 --fake-missing-tagger::
 	Some old repositories have tags without a tagger.  The

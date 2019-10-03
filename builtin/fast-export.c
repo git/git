@@ -40,6 +40,7 @@ static int no_data;
 static int full_tree;
 static int reference_excluded_commits;
 static int show_original_ids;
+static int mark_tags;
 static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
@@ -861,6 +862,10 @@ static void handle_tag(const char *name, struct tag *tag)
 	if (starts_with(name, "refs/tags/"))
 		name += 10;
 	printf("tag %s\n", name);
+	if (mark_tags) {
+		mark_next_object(&tag->object);
+		printf("mark :%"PRIu32"\n", last_idnum);
+	}
 	if (tagged_mark)
 		printf("from :%d\n", tagged_mark);
 	else
@@ -1165,6 +1170,8 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			 &reference_excluded_commits, N_("Reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
 			    N_("Show original object ids of blobs/commits")),
+		OPT_BOOL(0, "mark-tags", &mark_tags,
+			    N_("Label tags with mark ids")),
 
 		OPT_END()
 	};
