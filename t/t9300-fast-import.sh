@@ -85,6 +85,15 @@ test_expect_success 'A: create pack from stdin' '
 	An annotated tag that annotates a blob.
 	EOF
 
+	tag to-be-deleted
+	from :3
+	data <<EOF
+	Another annotated tag that annotates a blob.
+	EOF
+
+	reset refs/tags/to-be-deleted
+	from 0000000000000000000000000000000000000000
+
 	INPUT_END
 	git fast-import --export-marks=marks.out <input &&
 	git whatchanged master
@@ -155,6 +164,10 @@ test_expect_success 'A: verify tag/series-A-blob' '
 	EOF
 	git cat-file tag tags/series-A-blob >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'A: verify tag deletion is successful' '
+	test_must_fail git rev-parse --verify refs/tags/to-be-deleted
 '
 
 test_expect_success 'A: verify marks output' '
