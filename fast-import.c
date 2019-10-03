@@ -2491,18 +2491,14 @@ static void parse_from_existing(struct branch *b)
 	}
 }
 
-static int parse_from(struct branch *b)
+static int parse_objectish(struct branch *b, const char *objectish)
 {
-	const char *from;
 	struct branch *s;
 	struct object_id oid;
 
-	if (!skip_prefix(command_buf.buf, "from ", &from))
-		return 0;
-
 	oidcpy(&oid, &b->branch_tree.versions[1].oid);
 
-	s = lookup_branch(from);
+	s = lookup_branch(objectish);
 	if (b == s)
 		die("Can't create a branch from itself: %s", b->name);
 	else if (s) {
@@ -2510,8 +2506,8 @@ static int parse_from(struct branch *b)
 		oidcpy(&b->oid, &s->oid);
 		oidcpy(&b->branch_tree.versions[0].oid, t);
 		oidcpy(&b->branch_tree.versions[1].oid, t);
-	} else if (*from == ':') {
-		uintmax_t idnum = parse_mark_ref_eol(from);
+	} else if (*objectish == ':') {
+		uintmax_t idnum = parse_mark_ref_eol(objectish);
 		struct object_entry *oe = find_mark(idnum);
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", idnum);
@@ -2525,13 +2521,13 @@ static int parse_from(struct branch *b)
 			} else
 				parse_from_existing(b);
 		}
-	} else if (!get_oid(from, &b->oid)) {
+	} else if (!get_oid(objectish, &b->oid)) {
 		parse_from_existing(b);
 		if (is_null_oid(&b->oid))
 			b->delete = 1;
 	}
 	else
-		die("Invalid ref name or SHA1 expression: %s", from);
+		die("Invalid ref name or SHA1 expression: %s", objectish);
 
 	if (b->branch_tree.tree && !oideq(&oid, &b->branch_tree.versions[1].oid)) {
 		release_tree_content_recursive(b->branch_tree.tree);
@@ -2540,6 +2536,26 @@ static int parse_from(struct branch *b)
 
 	read_next_command();
 	return 1;
+}
+
+static int parse_from(struct branch *b)
+{
+	const char *from;
+
+	if (!skip_prefix(command_buf.buf, "from ", &from))
+		return 0;
+
+	return parse_objectish(b, from);
+}
+
+static int parse_objectish_with_prefix(struct branch *b, const char *prefix)
+{
+	const char *base;
+
+	if (!skip_prefix(command_buf.buf, prefix, &base))
+		return 0;
+
+	return parse_objectish(b, base);
 }
 
 static struct hash_list *parse_merge(unsigned int *count)
@@ -3087,6 +3103,28 @@ static void parse_progress(void)
 	skip_optional_lf();
 }
 
+static void parse_alias(void)
+{
+	struct object_entry *e;
+	struct branch b;
+
+	skip_optional_lf();
+	read_next_command();
+
+	/* mark ... */
+	parse_mark();
+	if (!next_mark)
+		die(_("Expected 'mark' command, got %s"), command_buf.buf);
+
+	/* to ... */
+	memset(&b, 0, sizeof(b));
+	if (!parse_objectish_with_prefix(&b, "to "))
+		die(_("Expected 'to' command, got %s"), command_buf.buf);
+	e = find_object(&b.oid);
+	assert(e);
+	insert_mark(next_mark, e);
+}
+
 static char* make_fast_import_path(const char *path)
 {
 	if (!relative_marks_paths || is_absolute_path(path))
@@ -3214,6 +3252,8 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_import_marks(arg, from_stream, 1);
 	} else if (skip_prefix(feature, "export-marks=", &arg)) {
 		option_export_marks(arg);
+	} else if (!strcmp(feature, "alias")) {
+		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "cat-blob")) {
@@ -3370,6 +3410,8 @@ int cmd_main(int argc, const char **argv)
 			parse_checkpoint();
 		else if (!strcmp("done", command_buf.buf))
 			break;
+		else if (!strcmp("alias", command_buf.buf))
+			parse_alias();
 		else if (starts_with(command_buf.buf, "progress "))
 			parse_progress();
 		else if (skip_prefix(command_buf.buf, "feature ", &v))

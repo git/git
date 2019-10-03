@@ -111,6 +111,10 @@ test_expect_success 'A: create pack from stdin' '
 	Tag of tag of our lovely commit
 	EOF
 
+	alias
+	mark :8
+	to :5
+
 	INPUT_END
 	git fast-import --export-marks=marks.out <input &&
 	git whatchanged master
@@ -195,6 +199,7 @@ test_expect_success 'A: verify marks output' '
 	:5 $(git rev-parse --verify master^0)
 	:6 $(git cat-file tag nested | grep object | cut -d" " -f 2)
 	:7 $(git rev-parse --verify nested)
+	:8 $(git rev-parse --verify master^0)
 	EOF
 	test_cmp expect marks.out
 '
