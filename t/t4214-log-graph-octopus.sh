@@ -5,6 +5,20 @@ test_description='git log --graph of skewed left octopus merge.'
 . ./test-lib.sh
 
 test_expect_success 'set up merge history' '
+	test_commit initial &&
+	for i in 1 2 3 4 ; do
+		git checkout master -b $i || return $?
+		# Make tag name different from branch name, to avoid
+		# ambiguity error when calling checkout.
+		test_commit $i $i $i tag$i || return $?
+	done &&
+	git checkout 1 -b merge &&
+	test_merge octopus-merge 1 2 3 4 &&
+	git checkout 1 -b L &&
+	test_commit left
+'
+
+test_expect_success 'log --graph with tricky octopus merge, no color' '
 	cat >expect.uncolored <<-\EOF &&
 	* left
 	| *---.   octopus-merge
@@ -19,6 +33,13 @@ test_expect_success 'set up merge history' '
 	|/
 	* initial
 	EOF
+	git log --color=never --graph --date-order --pretty=tformat:%s --all >actual.raw &&
+	sed "s/ *\$//" actual.raw >actual &&
+	test_cmp expect.uncolored actual
+'
+
+test_expect_success 'log --graph with tricky octopus merge with colors' '
+	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* left
 	<RED>|<RESET> *<BLUE>-<RESET><BLUE>-<RESET><MAGENTA>-<RESET><MAGENTA>.<RESET>   octopus-merge
@@ -33,30 +54,9 @@ test_expect_success 'set up merge history' '
 	<MAGENTA>|<RESET><MAGENTA>/<RESET>
 	* initial
 	EOF
-	test_commit initial &&
-	for i in 1 2 3 4 ; do
-		git checkout master -b $i || return $?
-		# Make tag name different from branch name, to avoid
-		# ambiguity error when calling checkout.
-		test_commit $i $i $i tag$i || return $?
-	done &&
-	git checkout 1 -b merge &&
-	test_merge octopus-merge 1 2 3 4 &&
-	git checkout 1 -b L &&
-	test_commit left
-'
-
-test_expect_success 'log --graph with tricky octopus merge with colors' '
-	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	git log --color=always --graph --date-order --pretty=tformat:%s --all >actual.colors.raw &&
 	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
 	test_cmp expect.colors actual.colors
-'
-
-test_expect_success 'log --graph with tricky octopus merge, no color' '
-	git log --color=never --graph --date-order --pretty=tformat:%s --all >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 # Repeat the previous two tests with "normal" octopus merge (i.e.,
