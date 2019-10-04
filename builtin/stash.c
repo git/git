@@ -497,6 +497,10 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		 */
 		cp.git_cmd = 1;
 		cp.dir = prefix;
+		argv_array_pushf(&cp.env_array, GIT_WORK_TREE_ENVIRONMENT"=%s",
+				 absolute_path(get_git_work_tree()));
+		argv_array_pushf(&cp.env_array, GIT_DIR_ENVIRONMENT"=%s",
+				 absolute_path(get_git_dir()));
 		argv_array_push(&cp.args, "status");
 		run_command(&cp);
 	}
