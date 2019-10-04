@@ -228,9 +228,11 @@ test_commit () {
 # can be a tag pointing to the commit-to-merge.
 
 test_merge () {
+	label="$1" &&
+	shift &&
 	test_tick &&
-	git merge -m "$1" "$2" &&
-	git tag "$1"
+	git merge -m "$label" "$@" &&
+	git tag "$label"
 }
 
 # Efficiently create <nr> commits, each with a unique number (from 1 to <nr>
