@@ -41,8 +41,7 @@ test_expect_success 'set up merge history' '
 		test_commit $i $i $i tag$i || return $?
 	done &&
 	git checkout 1 -b merge &&
-	test_tick &&
-	git merge -m octopus-merge 1 2 3 4 &&
+	test_merge octopus-merge 1 2 3 4 &&
 	git checkout 1 -b L &&
 	test_commit left
 '
