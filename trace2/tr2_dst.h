@@ -9,6 +9,7 @@ struct tr2_dst {
 	int fd;
 	unsigned int initialized : 1;
 	unsigned int need_close : 1;
+	unsigned int too_many_files : 1;
 };
 
 /*

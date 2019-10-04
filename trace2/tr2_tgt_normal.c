@@ -9,7 +9,7 @@
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 
-static struct tr2_dst tr2dst_normal = { TR2_SYSENV_NORMAL, 0, 0, 0 };
+static struct tr2_dst tr2dst_normal = { TR2_SYSENV_NORMAL, 0, 0, 0, 0 };
 
 /*
  * Use the TR2_SYSENV_NORMAL_BRIEF setting to omit the "<time> <file>:<line>"

@@ -48,15 +48,19 @@ void tr2_dst_trace_disable(struct tr2_dst *dst)
 /*
  * Check to make sure we're not overloading the target directory with too many
  * files. First get the threshold (if present) from the config or envvar. If
- * it's zero or unset, disable this check.  Next check for the presence of a
- * sentinel file, then check file count. If we are overloaded, create the
- * sentinel file if it doesn't already exist.
+ * it's zero or unset, disable this check. Next check for the presence of a
+ * sentinel file, then check file count.
+ *
+ * Returns 0 if tracing should proceed as normal. Returns 1 if the sentinel file
+ * already exists, which means tracing should be disabled. Returns -1 if there
+ * are too many files but there was no sentinel file, which means we have
+ * created and should write traces to the sentinel file.
  *
  * We expect that some trace processing system is gradually collecting files
  * from the target directory; after it removes the sentinel file we'll start
  * writing traces again.
  */
-static int tr2_dst_too_many_files(const char *tgt_prefix)
+static int tr2_dst_too_many_files(struct tr2_dst *dst, const char *tgt_prefix)
 {
 	int file_count = 0, max_files = 0, ret = 0;
 	const char *max_files_var;
@@ -95,8 +99,9 @@ static int tr2_dst_too_many_files(const char *tgt_prefix)
 		closedir(dirp);
 
 	if (file_count >= tr2env_max_files) {
-		creat(sentinel_path.buf, 0666);
-		ret = 1;
+		dst->too_many_files = 1;
+		dst->fd = open(sentinel_path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
+		ret = -1;
 		goto cleanup;
 	}
 
@@ -108,7 +113,7 @@ cleanup:
 
 static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 {
-	int fd;
+	int too_many_files;
 	const char *last_slash, *sid = tr2_sid_get();
 	struct strbuf path = STRBUF_INIT;
 	size_t base_path_len;
@@ -124,7 +129,19 @@ static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 	strbuf_addstr(&path, sid);
 	base_path_len = path.len;
 
-	if (tr2_dst_too_many_files(tgt_prefix)) {
+	too_many_files = tr2_dst_too_many_files(dst, tgt_prefix);
+	if (!too_many_files) {
+		for (attempt_count = 0; attempt_count < MAX_AUTO_ATTEMPTS; attempt_count++) {
+			if (attempt_count > 0) {
+				strbuf_setlen(&path, base_path_len);
+				strbuf_addf(&path, ".%d", attempt_count);
+			}
+
+			dst->fd = open(path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
+			if (dst->fd != -1)
+				break;
+		}
+	} else if (too_many_files == 1) {
 		strbuf_release(&path);
 		if (tr2_dst_want_warning())
 			warning("trace2: not opening %s trace file due to too "
@@ -134,18 +151,7 @@ static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 		return 0;
 	}
 
-	for (attempt_count = 0; attempt_count < MAX_AUTO_ATTEMPTS; attempt_count++) {
-		if (attempt_count > 0) {
-			strbuf_setlen(&path, base_path_len);
-			strbuf_addf(&path, ".%d", attempt_count);
-		}
-
-		fd = open(path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
-		if (fd != -1)
-			break;
-	}
-
-	if (fd == -1) {
+	if (dst->fd == -1) {
 		if (tr2_dst_want_warning())
 			warning("trace2: could not open '%.*s' for '%s' tracing: %s",
 				(int) base_path_len, path.buf,
@@ -159,7 +165,6 @@ static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 
 	strbuf_release(&path);
 
-	dst->fd = fd;
 	dst->need_close = 1;
 	dst->initialized = 1;
 
