@@ -8,6 +8,19 @@
  */
 #define MAX_AUTO_ATTEMPTS 10
 
+/*
+ * Sentinel file used to detect when we should discard new traces to avoid
+ * writing too many trace files to a directory.
+ */
+#define DISCARD_SENTINEL_NAME "git-trace2-discard"
+
+/*
+ * When set to zero, disables directory file count checks. Otherwise, controls
+ * how many files we can write to a directory before entering discard mode.
+ * This can be overridden via the TR2_SYSENV_MAX_FILES setting.
+ */
+static int tr2env_max_files = 0;
+
 static int tr2_dst_want_warning(void)
 {
 	static int tr2env_dst_debug = -1;
@@ -32,6 +45,67 @@ void tr2_dst_trace_disable(struct tr2_dst *dst)
 	dst->need_close = 0;
 }
 
+/*
+ * Check to make sure we're not overloading the target directory with too many
+ * files. First get the threshold (if present) from the config or envvar. If
+ * it's zero or unset, disable this check.  Next check for the presence of a
+ * sentinel file, then check file count. If we are overloaded, create the
+ * sentinel file if it doesn't already exist.
+ *
+ * We expect that some trace processing system is gradually collecting files
+ * from the target directory; after it removes the sentinel file we'll start
+ * writing traces again.
+ */
+static int tr2_dst_too_many_files(const char *tgt_prefix)
+{
+	int file_count = 0, max_files = 0, ret = 0;
+	const char *max_files_var;
+	DIR *dirp;
+	struct strbuf path = STRBUF_INIT, sentinel_path = STRBUF_INIT;
+	struct stat statbuf;
+
+	/* Get the config or envvar and decide if we should continue this check */
+	max_files_var = tr2_sysenv_get(TR2_SYSENV_MAX_FILES);
+	if (max_files_var && *max_files_var && ((max_files = atoi(max_files_var)) >= 0))
+		tr2env_max_files = max_files;
+
+	if (!tr2env_max_files) {
+		ret = 0;
+		goto cleanup;
+	}
+
+	strbuf_addstr(&path, tgt_prefix);
+	if (!is_dir_sep(path.buf[path.len - 1])) {
+		strbuf_addch(&path, '/');
+	}
+
+	/* check sentinel */
+	strbuf_addbuf(&sentinel_path, &path);
+	strbuf_addstr(&sentinel_path, DISCARD_SENTINEL_NAME);
+	if (!stat(sentinel_path.buf, &statbuf)) {
+		ret = 1;
+		goto cleanup;
+	}
+
+	/* check file count */
+	dirp = opendir(path.buf);
+	while (file_count < tr2env_max_files && dirp && readdir(dirp))
+		file_count++;
+	if (dirp)
+		closedir(dirp);
+
+	if (file_count >= tr2env_max_files) {
+		creat(sentinel_path.buf, 0666);
+		ret = 1;
+		goto cleanup;
+	}
+
+cleanup:
+	strbuf_release(&path);
+	strbuf_release(&sentinel_path);
+	return ret;
+}
+
 static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 {
 	int fd;
@@ -49,6 +123,16 @@ static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 		strbuf_addch(&path, '/');
 	strbuf_addstr(&path, sid);
 	base_path_len = path.len;
+
+	if (tr2_dst_too_many_files(tgt_prefix)) {
+		strbuf_release(&path);
+		if (tr2_dst_want_warning())
+			warning("trace2: not opening %s trace file due to too "
+				"many files in target directory %s",
+				tr2_sysenv_display_name(dst->sysenv_var),
+				tgt_prefix);
+		return 0;
+	}
 
 	for (attempt_count = 0; attempt_count < MAX_AUTO_ATTEMPTS; attempt_count++) {
 		if (attempt_count > 0) {
