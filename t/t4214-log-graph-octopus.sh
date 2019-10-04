@@ -33,7 +33,7 @@ test_expect_success 'log --graph with tricky octopus merge, no color' '
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s --all >actual.raw &&
+	git log --color=never --graph --date-order --pretty=tformat:%s left octopus-merge >actual.raw &&
 	sed "s/ *\$//" actual.raw >actual &&
 	test_cmp expect.uncolored actual
 '
@@ -54,7 +54,7 @@ test_expect_success 'log --graph with tricky octopus merge with colors' '
 	<MAGENTA>|<RESET><MAGENTA>/<RESET>
 	* initial
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s --all >actual.colors.raw &&
+	git log --color=always --graph --date-order --pretty=tformat:%s left octopus-merge >actual.colors.raw &&
 	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
 	test_cmp expect.colors actual.colors
 '
@@ -75,7 +75,7 @@ test_expect_success 'log --graph with normal octopus merge, no color' '
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s merge >actual.raw &&
+	git log --color=never --graph --date-order --pretty=tformat:%s octopus-merge >actual.raw &&
 	sed "s/ *\$//" actual.raw >actual &&
 	test_cmp expect.uncolored actual
 '
@@ -94,7 +94,7 @@ test_expect_success 'log --graph with normal octopus merge with colors' '
 	* initial
 	EOF
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
-	git log --color=always --graph --date-order --pretty=tformat:%s merge >actual.colors.raw &&
+	git log --color=always --graph --date-order --pretty=tformat:%s octopus-merge >actual.colors.raw &&
 	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
 	test_cmp expect.colors actual.colors
 '
