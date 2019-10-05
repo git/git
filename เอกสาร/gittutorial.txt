@@ -1,7 +1,7 @@
 gittutorial(7)
 ==============
 
-NAME
+ekkarat.w@gmail.com
 ----
 gittutorial - A tutorial introduction to Git
 
@@ -41,8 +41,8 @@ public email address before doing any operation.  The easiest
 way to do so is:
 
 ------------------------------------------------
-$ git config --global user.name "Your Name Comes Here"
-$ git config --global user.email you@yourdomain.example.com
+$ git config --global user.name "Ekkarat304"
+$ git config --global user.email "ekkarat.w@gmail.com"
 ------------------------------------------------
 
 
