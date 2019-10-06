@@ -166,7 +166,8 @@ static const struct submodule *cache_lookup_path(struct submodule_cache *cache,
 	hashmap_entry_init(&key.ent, hash);
 	key.config = &key_config;
 
-	entry = hashmap_get(&cache->for_path, &key.ent, NULL);
+	entry = hashmap_get_entry(&cache->for_path, &key, NULL,
+				struct submodule_entry, ent);
 	if (entry)
 		return entry->config;
 	return NULL;
@@ -186,7 +187,8 @@ static struct submodule *cache_lookup_name(struct submodule_cache *cache,
 	hashmap_entry_init(&key.ent, hash);
 	key.config = &key_config;
 
-	entry = hashmap_get(&cache->for_name, &key.ent, NULL);
+	entry = hashmap_get_entry(&cache->for_name, &key, NULL,
+				struct submodule_entry, ent);
 	if (entry)
 		return entry->config;
 	return NULL;

@@ -186,8 +186,9 @@ void hashmap_free(struct hashmap *map, int free_entries)
 	memset(map, 0, sizeof(*map));
 }
 
-void *hashmap_get(const struct hashmap *map, const struct hashmap_entry *key,
-		const void *keydata)
+struct hashmap_entry *hashmap_get(const struct hashmap *map,
+				const struct hashmap_entry *key,
+				const void *keydata)
 {
 	return *find_entry_ptr(map, key, keydata);
 }
@@ -298,7 +299,7 @@ const void *memintern(const void *data, size_t len)
 	/* lookup interned string in pool */
 	hashmap_entry_init(&key.ent, memhash(data, len));
 	key.len = len;
-	e = hashmap_get(&map, &key.ent, data);
+	e = hashmap_get_entry(&map, &key, data, struct pool_entry, ent);
 	if (!e) {
 		/* not found: create it */
 		FLEX_ALLOC_MEM(e, data, data, len);

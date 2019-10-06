@@ -76,7 +76,8 @@ static int commit_name_neq(const void *unused_cmp_data,
 
 static inline struct commit_name *find_commit_name(const struct object_id *peeled)
 {
-	return hashmap_get_from_hash(&names, oidhash(peeled), peeled);
+	return hashmap_get_entry_from_hash(&names, oidhash(peeled), peeled,
+						struct commit_name, entry);
 }
 
 static int replace_name(struct commit_name *e,

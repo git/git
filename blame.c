@@ -419,7 +419,8 @@ static void get_fingerprint(struct fingerprint *result,
 			continue;
 		hashmap_entry_init(&entry->entry, hash);
 
-		found_entry = hashmap_get(&result->map, &entry->entry, NULL);
+		found_entry = hashmap_get_entry(&result->map, entry, NULL,
+					struct fingerprint_entry, entry);
 		if (found_entry) {
 			found_entry->count += 1;
 		} else {
@@ -452,7 +453,9 @@ static int fingerprint_similarity(struct fingerprint *a, struct fingerprint *b)
 	hashmap_iter_init(&b->map, &iter);
 
 	while ((entry_b = hashmap_iter_next(&iter))) {
-		if ((entry_a = hashmap_get(&a->map, &entry_b->entry, NULL))) {
+		entry_a = hashmap_get_entry(&a->map, entry_b, NULL,
+					struct fingerprint_entry, entry);
+		if (entry_a) {
 			intersection += entry_a->count < entry_b->count ?
 					entry_a->count : entry_b->count;
 		}
@@ -471,7 +474,9 @@ static void fingerprint_subtract(struct fingerprint *a, struct fingerprint *b)
 	hashmap_iter_init(&b->map, &iter);
 
 	while ((entry_b = hashmap_iter_next(&iter))) {
-		if ((entry_a = hashmap_get(&a->map, &entry_b->entry, NULL))) {
+		entry_a = hashmap_get_entry(&a->map, entry_b, NULL,
+					struct fingerprint_entry, entry);
+		if (entry_a) {
 			if (entry_a->count <= entry_b->count)
 				hashmap_remove(&a->map, &entry_b->entry, NULL);
 			else

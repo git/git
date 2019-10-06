@@ -1585,18 +1585,20 @@ static void lazy_init_worktree_map(void)
 
 static char *get_worktree_path(const struct used_atom *atom, const struct ref_array_item *ref)
 {
-	struct hashmap_entry entry;
+	struct hashmap_entry entry, *e;
 	struct ref_to_worktree_entry *lookup_result;
 
 	lazy_init_worktree_map();
 
 	hashmap_entry_init(&entry, strhash(ref->refname));
-	lookup_result = hashmap_get(&(ref_to_worktree_map.map), &entry, ref->refname);
+	e = hashmap_get(&(ref_to_worktree_map.map), &entry, ref->refname);
 
-	if (lookup_result)
-		return xstrdup(lookup_result->wt->path);
-	else
+	if (!e)
 		return xstrdup("");
+
+	lookup_result = container_of(e, struct ref_to_worktree_entry, ent);
+
+	return xstrdup(lookup_result->wt->path);
 }
 
 /*

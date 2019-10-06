@@ -5217,8 +5217,11 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 					break;
 			}
 
-			if ((entry = hashmap_get_from_hash(&subject2item,
-							   strhash(p), p)))
+			entry = hashmap_get_entry_from_hash(&subject2item,
+						strhash(p), p,
+						struct subject2item_entry,
+						entry);
+			if (entry)
 				/* found by title */
 				i2 = entry->i;
 			else if (!strchr(p, ' ') &&

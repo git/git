@@ -1815,12 +1815,15 @@ static struct ref_store *lookup_ref_store_map(struct hashmap *map,
 					      const char *name)
 {
 	struct ref_store_hash_entry *entry;
+	unsigned int hash;
 
 	if (!map->tablesize)
 		/* It's initialized on demand in register_ref_store(). */
 		return NULL;
 
-	entry = hashmap_get_from_hash(map, strhash(name), name);
+	hash = strhash(name);
+	entry = hashmap_get_entry_from_hash(map, hash, name,
+					struct ref_store_hash_entry, ent);
 	return entry ? entry->refs : NULL;
 }
 

@@ -22,7 +22,8 @@ struct subprocess_entry *subprocess_find_entry(struct hashmap *hashmap, const ch
 
 	hashmap_entry_init(&key.ent, strhash(cmd));
 	key.cmd = cmd;
-	return hashmap_get(hashmap, &key.ent, NULL);
+	return hashmap_get_entry(hashmap, &key, NULL,
+				struct subprocess_entry, ent);
 }
 
 int subprocess_read_status(int fd, struct strbuf *status)

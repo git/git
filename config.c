@@ -1863,7 +1863,8 @@ static struct config_set_element *configset_find_element(struct config_set *cs, 
 
 	hashmap_entry_init(&k.ent, strhash(normalized_key));
 	k.key = normalized_key;
-	found_entry = hashmap_get(&cs->config_hash, &k.ent, NULL);
+	found_entry = hashmap_get_entry(&cs->config_hash, &k, NULL,
+				struct config_set_element, ent);
 	free(normalized_key);
 	return found_entry;
 }

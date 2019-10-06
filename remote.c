@@ -135,7 +135,7 @@ static struct remote *make_remote(const char *name, int len)
 {
 	struct remote *ret, *replaced;
 	struct remotes_hash_key lookup;
-	struct hashmap_entry lookup_entry;
+	struct hashmap_entry lookup_entry, *e;
 
 	if (!len)
 		len = strlen(name);
@@ -145,8 +145,9 @@ static struct remote *make_remote(const char *name, int len)
 	lookup.len = len;
 	hashmap_entry_init(&lookup_entry, memhash(name, len));
 
-	if ((ret = hashmap_get(&remotes_hash, &lookup_entry, &lookup)) != NULL)
-		return ret;
+	e = hashmap_get(&remotes_hash, &lookup_entry, &lookup);
+	if (e)
+		return container_of(e, struct remote, ent);
 
 	ret = xcalloc(1, sizeof(struct remote));
 	ret->prune = -1;  /* unspecified */

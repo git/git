@@ -1381,7 +1381,7 @@ static unsigned int pack_entry_hash(struct packed_git *p, off_t base_offset)
 static struct delta_base_cache_entry *
 get_delta_base_cache_entry(struct packed_git *p, off_t base_offset)
 {
-	struct hashmap_entry entry;
+	struct hashmap_entry entry, *e;
 	struct delta_base_cache_key key;
 
 	if (!delta_base_cache.cmpfn)
@@ -1390,7 +1390,8 @@ get_delta_base_cache_entry(struct packed_git *p, off_t base_offset)
 	hashmap_entry_init(&entry, pack_entry_hash(p, base_offset));
 	key.p = p;
 	key.base_offset = base_offset;
-	return hashmap_get(&delta_base_cache, &entry, &key);
+	e = hashmap_get(&delta_base_cache, &entry, &key);
+	return e ? container_of(e, struct delta_base_cache_entry, ent) : NULL;
 }
 
 static int delta_base_cache_key_eq(const struct delta_base_cache_key *a,
