@@ -17,13 +17,15 @@ struct dir_entry {
 };
 
 static int dir_entry_cmp(const void *unused_cmp_data,
-			 const void *entry,
-			 const void *entry_or_key,
+			 const struct hashmap_entry *eptr,
+			 const struct hashmap_entry *entry_or_key,
 			 const void *keydata)
 {
-	const struct dir_entry *e1 = entry;
-	const struct dir_entry *e2 = entry_or_key;
+	const struct dir_entry *e1, *e2;
 	const char *name = keydata;
+
+	e1 = container_of(eptr, const struct dir_entry, ent);
+	e2 = container_of(entry_or_key, const struct dir_entry, ent);
 
 	return e1->namelen != e2->namelen || strncasecmp(e1->name,
 			name ? name : e2->name, e1->namelen);
@@ -115,12 +117,15 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 }
 
 static int cache_entry_cmp(const void *unused_cmp_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *remove)
 {
-	const struct cache_entry *ce1 = entry;
-	const struct cache_entry *ce2 = entry_or_key;
+	const struct cache_entry *ce1, *ce2;
+
+	ce1 = container_of(eptr, const struct cache_entry, ent);
+	ce2 = container_of(entry_or_key, const struct cache_entry, ent);
+
 	/*
 	 * For remove_name_hash, find the exact entry (pointer equality); for
 	 * index_file_exists, find all entries with matching hash code and

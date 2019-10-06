@@ -35,13 +35,15 @@ struct path_hashmap_entry {
 };
 
 static int path_hashmap_cmp(const void *cmp_data,
-			    const void *entry,
-			    const void *entry_or_key,
+			    const struct hashmap_entry *eptr,
+			    const struct hashmap_entry *entry_or_key,
 			    const void *keydata)
 {
-	const struct path_hashmap_entry *a = entry;
-	const struct path_hashmap_entry *b = entry_or_key;
+	const struct path_hashmap_entry *a, *b;
 	const char *key = keydata;
+
+	a = container_of(eptr, const struct path_hashmap_entry, e);
+	b = container_of(entry_or_key, const struct path_hashmap_entry, e);
 
 	if (ignore_case)
 		return strcasecmp(a->path, key ? key : b->path);
@@ -68,12 +70,14 @@ static struct dir_rename_entry *dir_rename_find_entry(struct hashmap *hashmap,
 }
 
 static int dir_rename_cmp(const void *unused_cmp_data,
-			  const void *entry,
-			  const void *entry_or_key,
+			  const struct hashmap_entry *eptr,
+			  const struct hashmap_entry *entry_or_key,
 			  const void *unused_keydata)
 {
-	const struct dir_rename_entry *e1 = entry;
-	const struct dir_rename_entry *e2 = entry_or_key;
+	const struct dir_rename_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct dir_rename_entry, ent);
+	e2 = container_of(entry_or_key, const struct dir_rename_entry, ent);
 
 	return strcmp(e1->dir, e2->dir);
 }
@@ -104,17 +108,22 @@ static struct collision_entry *collision_find_entry(struct hashmap *hashmap,
 				struct collision_entry, ent);
 }
 
-static int collision_cmp(void *unused_cmp_data,
-			 const struct collision_entry *e1,
-			 const struct collision_entry *e2,
+static int collision_cmp(const void *unused_cmp_data,
+			 const struct hashmap_entry *eptr,
+			 const struct hashmap_entry *entry_or_key,
 			 const void *unused_keydata)
 {
+	const struct collision_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct collision_entry, ent);
+	e2 = container_of(entry_or_key, const struct collision_entry, ent);
+
 	return strcmp(e1->target_file, e2->target_file);
 }
 
 static void collision_init(struct hashmap *map)
 {
-	hashmap_init(map, (hashmap_cmp_fn) collision_cmp, NULL, 0);
+	hashmap_init(map, collision_cmp, NULL, 0);
 }
 
 static void flush_output(struct merge_options *opt)

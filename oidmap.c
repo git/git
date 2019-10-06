@@ -2,14 +2,18 @@
 #include "oidmap.h"
 
 static int oidmap_neq(const void *hashmap_cmp_fn_data,
-		      const void *entry, const void *entry_or_key,
+		      const struct hashmap_entry *e1,
+		      const struct hashmap_entry *e2,
 		      const void *keydata)
 {
-	const struct oidmap_entry *entry_ = entry;
+	const struct oidmap_entry *a, *b;
+
+	a = container_of(e1, const struct oidmap_entry, internal_entry);
+	b = container_of(e2, const struct oidmap_entry, internal_entry);
+
 	if (keydata)
-		return !oideq(&entry_->oid, (const struct object_id *) keydata);
-	return !oideq(&entry_->oid,
-		      &((const struct oidmap_entry *) entry_or_key)->oid);
+		return !oideq(&a->oid, (const struct object_id *) keydata);
+	return !oideq(&a->oid, &b->oid);
 }
 
 void oidmap_init(struct oidmap *map, size_t initial_size)

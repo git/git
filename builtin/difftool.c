@@ -125,12 +125,15 @@ struct working_tree_entry {
 };
 
 static int working_tree_entry_cmp(const void *unused_cmp_data,
-				  const void *entry,
-				  const void *entry_or_key,
+				  const struct hashmap_entry *eptr,
+				  const struct hashmap_entry *entry_or_key,
 				  const void *unused_keydata)
 {
-	const struct working_tree_entry *a = entry;
-	const struct working_tree_entry *b = entry_or_key;
+	const struct working_tree_entry *a, *b;
+
+	a = container_of(eptr, const struct working_tree_entry, entry);
+	b = container_of(entry_or_key, const struct working_tree_entry, entry);
+
 	return strcmp(a->path, b->path);
 }
 
@@ -145,12 +148,14 @@ struct pair_entry {
 };
 
 static int pair_cmp(const void *unused_cmp_data,
-		    const void *entry,
-		    const void *entry_or_key,
+		    const struct hashmap_entry *eptr,
+		    const struct hashmap_entry *entry_or_key,
 		    const void *unused_keydata)
 {
-	const struct pair_entry *a = entry;
-	const struct pair_entry *b = entry_or_key;
+	const struct pair_entry *a, *b;
+
+	a = container_of(eptr, const struct pair_entry, entry);
+	b = container_of(entry_or_key, const struct pair_entry, entry);
 
 	return strcmp(a->path, b->path);
 }
@@ -179,12 +184,14 @@ struct path_entry {
 };
 
 static int path_entry_cmp(const void *unused_cmp_data,
-			  const void *entry,
-			  const void *entry_or_key,
+			  const struct hashmap_entry *eptr,
+			  const struct hashmap_entry *entry_or_key,
 			  const void *key)
 {
-	const struct path_entry *a = entry;
-	const struct path_entry *b = entry_or_key;
+	const struct path_entry *a, *b;
+
+	a = container_of(eptr, const struct path_entry, entry);
+	b = container_of(entry_or_key, const struct path_entry, entry);
 
 	return strcmp(a->path, key ? key : b->path);
 }

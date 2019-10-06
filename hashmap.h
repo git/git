@@ -21,12 +21,16 @@
  * #define COMPARE_VALUE 1
  *
  * static int long2string_cmp(const void *hashmap_cmp_fn_data,
- *                            const struct long2string *e1,
- *                            const struct long2string *e2,
+ *                            const struct hashmap_entry *eptr,
+ *                            const struct hashmap_entry *entry_or_key,
  *                            const void *keydata)
  * {
  *     const char *string = keydata;
  *     unsigned flags = *(unsigned *)hashmap_cmp_fn_data;
+ *     const struct long2string *e1, *e2;
+ *
+ *     e1 = container_of(eptr, const struct long2string, ent);
+ *     e2 = container_of(entry_or_key, const struct long2string, ent);
  *
  *     if (flags & COMPARE_VALUE)
  *         return e1->key != e2->key ||
@@ -41,7 +45,7 @@
  *     char value[255], action[32];
  *     unsigned flags = 0;
  *
- *     hashmap_init(&map, (hashmap_cmp_fn) long2string_cmp, &flags, 0);
+ *     hashmap_init(&map, long2string_cmp, &flags, 0);
  *
  *     while (scanf("%s %ld %s", action, &key, value)) {
  *
@@ -172,7 +176,8 @@ struct hashmap_entry {
  * The `hashmap_cmp_fn_data` entry is the pointer given in the init function.
  */
 typedef int (*hashmap_cmp_fn)(const void *hashmap_cmp_fn_data,
-			      const void *entry, const void *entry_or_key,
+			      const struct hashmap_entry *entry,
+			      const struct hashmap_entry *entry_or_key,
 			      const void *keydata);
 
 /*

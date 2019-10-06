@@ -111,13 +111,15 @@ struct remotes_hash_key {
 };
 
 static int remotes_hash_cmp(const void *unused_cmp_data,
-			    const void *entry,
-			    const void *entry_or_key,
+			    const struct hashmap_entry *eptr,
+			    const struct hashmap_entry *entry_or_key,
 			    const void *keydata)
 {
-	const struct remote *a = entry;
-	const struct remote *b = entry_or_key;
+	const struct remote *a, *b;
 	const struct remotes_hash_key *key = keydata;
+
+	a = container_of(eptr, const struct remote, ent);
+	b = container_of(entry_or_key, const struct remote, ent);
 
 	if (key)
 		return strncmp(a->name, key->str, key->len) || a->name[key->len];

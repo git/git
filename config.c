@@ -1914,12 +1914,14 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 }
 
 static int config_set_element_cmp(const void *unused_cmp_data,
-				  const void *entry,
-				  const void *entry_or_key,
+				  const struct hashmap_entry *eptr,
+				  const struct hashmap_entry *entry_or_key,
 				  const void *unused_keydata)
 {
-	const struct config_set_element *e1 = entry;
-	const struct config_set_element *e2 = entry_or_key;
+	const struct config_set_element *e1, *e2;
+
+	e1 = container_of(eptr, const struct config_set_element, ent);
+	e2 = container_of(entry_or_key, const struct config_set_element, ent);
 
 	return strcmp(e1->key, e2->key);
 }

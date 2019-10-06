@@ -140,8 +140,8 @@ static inline struct hashmap_entry **find_entry_ptr(const struct hashmap *map,
 }
 
 static int always_equal(const void *unused_cmp_data,
-			const void *unused1,
-			const void *unused2,
+			const struct hashmap_entry *unused1,
+			const struct hashmap_entry *unused2,
 			const void *unused_keydata)
 {
 	return 0;
@@ -279,10 +279,15 @@ struct pool_entry {
 };
 
 static int pool_entry_cmp(const void *unused_cmp_data,
-			  const struct pool_entry *e1,
-			  const struct pool_entry *e2,
-			  const unsigned char *keydata)
+			  const struct hashmap_entry *eptr,
+			  const struct hashmap_entry *entry_or_key,
+			  const void *keydata)
 {
+	const struct pool_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct pool_entry, ent);
+	e2 = container_of(entry_or_key, const struct pool_entry, ent);
+
 	return e1->data != keydata &&
 	       (e1->len != e2->len || memcmp(e1->data, keydata, e1->len));
 }
@@ -294,7 +299,7 @@ const void *memintern(const void *data, size_t len)
 
 	/* initialize string pool hashmap */
 	if (!map.tablesize)
-		hashmap_init(&map, (hashmap_cmp_fn) pool_entry_cmp, NULL, 0);
+		hashmap_init(&map, pool_entry_cmp, NULL, 0);
 
 	/* lookup interned string in pool */
 	hashmap_entry_init(&key.ent, memhash(data, len));

@@ -38,24 +38,28 @@ enum lookup_type {
 };
 
 static int config_path_cmp(const void *unused_cmp_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *unused_keydata)
 {
-	const struct submodule_entry *a = entry;
-	const struct submodule_entry *b = entry_or_key;
+	const struct submodule_entry *a, *b;
+
+	a = container_of(eptr, const struct submodule_entry, ent);
+	b = container_of(entry_or_key, const struct submodule_entry, ent);
 
 	return strcmp(a->config->path, b->config->path) ||
 	       !oideq(&a->config->gitmodules_oid, &b->config->gitmodules_oid);
 }
 
 static int config_name_cmp(const void *unused_cmp_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *unused_keydata)
 {
-	const struct submodule_entry *a = entry;
-	const struct submodule_entry *b = entry_or_key;
+	const struct submodule_entry *a, *b;
+
+	a = container_of(eptr, const struct submodule_entry, ent);
+	b = container_of(entry_or_key, const struct submodule_entry, ent);
 
 	return strcmp(a->config->name, b->config->name) ||
 	       !oideq(&a->config->gitmodules_oid, &b->config->gitmodules_oid);

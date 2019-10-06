@@ -84,12 +84,15 @@ struct ref_to_worktree_entry {
 };
 
 static int ref_to_worktree_map_cmpfnc(const void *unused_lookupdata,
-				      const void *existing_hashmap_entry_to_test,
-				      const void *key,
+				      const struct hashmap_entry *eptr,
+				      const struct hashmap_entry *kptr,
 				      const void *keydata_aka_refname)
 {
-	const struct ref_to_worktree_entry *e = existing_hashmap_entry_to_test;
-	const struct ref_to_worktree_entry *k = key;
+	const struct ref_to_worktree_entry *e, *k;
+
+	e = container_of(eptr, const struct ref_to_worktree_entry, ent);
+	k = container_of(kptr, const struct ref_to_worktree_entry, ent);
+
 	return strcmp(e->wt->head_ref,
 		keydata_aka_refname ? keydata_aka_refname : k->wt->head_ref);
 }

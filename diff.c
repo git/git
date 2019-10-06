@@ -933,15 +933,17 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 }
 
 static int moved_entry_cmp(const void *hashmap_cmp_fn_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *keydata)
 {
 	const struct diff_options *diffopt = hashmap_cmp_fn_data;
-	const struct moved_entry *a = entry;
-	const struct moved_entry *b = entry_or_key;
+	const struct moved_entry *a, *b;
 	unsigned flags = diffopt->color_moved_ws_handling
 			 & XDF_WHITESPACE_FLAGS;
+
+	a = container_of(eptr, const struct moved_entry, ent);
+	b = container_of(entry_or_key, const struct moved_entry, ent);
 
 	if (diffopt->color_moved_ws_handling &
 	    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
@@ -1019,7 +1021,7 @@ static void pmb_advance_or_null(struct diff_options *o,
 		struct moved_entry *prev = pmb[i].match;
 		struct moved_entry *cur = (prev && prev->next_line) ?
 				prev->next_line : NULL;
-		if (cur && !hm->cmpfn(o, cur, match, NULL)) {
+		if (cur && !hm->cmpfn(o, &cur->ent, &match->ent, NULL)) {
 			pmb[i].match = cur;
 		} else {
 			pmb[i].match = NULL;

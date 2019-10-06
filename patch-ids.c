@@ -36,14 +36,16 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
  * any significance; only that it is non-zero matters.
  */
 static int patch_id_neq(const void *cmpfn_data,
-			const void *entry,
-			const void *entry_or_key,
+			const struct hashmap_entry *eptr,
+			const struct hashmap_entry *entry_or_key,
 			const void *unused_keydata)
 {
 	/* NEEDSWORK: const correctness? */
 	struct diff_options *opt = (void *)cmpfn_data;
-	struct patch_id *a = (void *)entry;
-	struct patch_id *b = (void *)entry_or_key;
+	struct patch_id *a, *b;
+
+	a = container_of(eptr, struct patch_id, ent);
+	b = container_of(entry_or_key, struct patch_id, ent);
 
 	if (is_null_oid(&a->patch_id) &&
 	    commit_patch_id(a->commit, opt, &a->patch_id, 0, 0))

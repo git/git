@@ -4440,9 +4440,14 @@ struct labels_entry {
 	char label[FLEX_ARRAY];
 };
 
-static int labels_cmp(const void *fndata, const struct labels_entry *a,
-		      const struct labels_entry *b, const void *key)
+static int labels_cmp(const void *fndata, const struct hashmap_entry *eptr,
+		      const struct hashmap_entry *entry_or_key, const void *key)
 {
+	const struct labels_entry *a, *b;
+
+	a = container_of(eptr, const struct labels_entry, entry);
+	b = container_of(entry_or_key, const struct labels_entry, entry);
+
 	return key ? strcmp(a->label, key) : strcmp(a->label, b->label);
 }
 
@@ -4573,7 +4578,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 
 	oidmap_init(&commit2todo, 0);
 	oidmap_init(&state.commit2label, 0);
-	hashmap_init(&state.labels, (hashmap_cmp_fn) labels_cmp, NULL, 0);
+	hashmap_init(&state.labels, labels_cmp, NULL, 0);
 	strbuf_init(&state.buf, 32);
 
 	if (revs->cmdline.nr && (revs->cmdline.rev[0].flags & BOTTOM)) {
@@ -5138,9 +5143,15 @@ struct subject2item_entry {
 };
 
 static int subject2item_cmp(const void *fndata,
-			    const struct subject2item_entry *a,
-			    const struct subject2item_entry *b, const void *key)
+			    const struct hashmap_entry *eptr,
+			    const struct hashmap_entry *entry_or_key,
+			    const void *key)
 {
+	const struct subject2item_entry *a, *b;
+
+	a = container_of(eptr, const struct subject2item_entry, entry);
+	b = container_of(entry_or_key, const struct subject2item_entry, entry);
+
 	return key ? strcmp(a->subject, key) : strcmp(a->subject, b->subject);
 }
 
@@ -5173,8 +5184,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	 * In that case, last[i] will indicate the index of the latest item to
 	 * be moved to appear after the i'th.
 	 */
-	hashmap_init(&subject2item, (hashmap_cmp_fn) subject2item_cmp,
-		     NULL, todo_list->nr);
+	hashmap_init(&subject2item, subject2item_cmp, NULL, todo_list->nr);
 	ALLOC_ARRAY(next, todo_list->nr);
 	ALLOC_ARRAY(tail, todo_list->nr);
 	ALLOC_ARRAY(subjects, todo_list->nr);

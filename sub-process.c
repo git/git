@@ -6,12 +6,14 @@
 #include "pkt-line.h"
 
 int cmd2process_cmp(const void *unused_cmp_data,
-		    const void *entry,
-		    const void *entry_or_key,
+		    const struct hashmap_entry *eptr,
+		    const struct hashmap_entry *entry_or_key,
 		    const void *unused_keydata)
 {
-	const struct subprocess_entry *e1 = entry;
-	const struct subprocess_entry *e2 = entry_or_key;
+	const struct subprocess_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct subprocess_entry, ent);
+	e2 = container_of(entry_or_key, const struct subprocess_entry, ent);
 
 	return strcmp(e1->cmd, e2->cmd);
 }

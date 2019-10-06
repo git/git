@@ -64,12 +64,14 @@ static const char *prio_names[] = {
 };
 
 static int commit_name_neq(const void *unused_cmp_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *peeled)
 {
-	const struct commit_name *cn1 = entry;
-	const struct commit_name *cn2 = entry_or_key;
+	const struct commit_name *cn1, *cn2;
+
+	cn1 = container_of(eptr, const struct commit_name, entry);
+	cn2 = container_of(entry_or_key, const struct commit_name, entry);
 
 	return !oideq(&cn1->peeled, peeled ? peeled : &cn2->peeled);
 }

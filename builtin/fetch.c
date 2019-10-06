@@ -258,13 +258,14 @@ struct refname_hash_entry {
 };
 
 static int refname_hash_entry_cmp(const void *hashmap_cmp_fn_data,
-				  const void *e1_,
-				  const void *e2_,
+				  const struct hashmap_entry *eptr,
+				  const struct hashmap_entry *entry_or_key,
 				  const void *keydata)
 {
-	const struct refname_hash_entry *e1 = e1_;
-	const struct refname_hash_entry *e2 = e2_;
+	const struct refname_hash_entry *e1, *e2;
 
+	e1 = container_of(eptr, const struct refname_hash_entry, ent);
+	e2 = container_of(entry_or_key, const struct refname_hash_entry, ent);
 	return strcmp(e1->refname, keydata ? keydata : e2->refname);
 }
 

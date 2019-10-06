@@ -16,14 +16,16 @@ static const char *get_value(const struct test_entry *e)
 }
 
 static int test_entry_cmp(const void *cmp_data,
-			  const void *entry,
-			  const void *entry_or_key,
+			  const struct hashmap_entry *eptr,
+			  const struct hashmap_entry *entry_or_key,
 			  const void *keydata)
 {
 	const int ignore_case = cmp_data ? *((int *)cmp_data) : 0;
-	const struct test_entry *e1 = entry;
-	const struct test_entry *e2 = entry_or_key;
+	const struct test_entry *e1, *e2;
 	const char *key = keydata;
+
+	e1 = container_of(eptr, const struct test_entry, ent);
+	e2 = container_of(entry_or_key, const struct test_entry, ent);
 
 	if (ignore_case)
 		return strcasecmp(e1->key, key ? key : e2->key);

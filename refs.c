@@ -1781,11 +1781,16 @@ struct ref_store_hash_entry
 };
 
 static int ref_store_hash_cmp(const void *unused_cmp_data,
-			      const void *entry, const void *entry_or_key,
+			      const struct hashmap_entry *eptr,
+			      const struct hashmap_entry *entry_or_key,
 			      const void *keydata)
 {
-	const struct ref_store_hash_entry *e1 = entry, *e2 = entry_or_key;
-	const char *name = keydata ? keydata : e2->name;
+	const struct ref_store_hash_entry *e1, *e2;
+	const char *name;
+
+	e1 = container_of(eptr, const struct ref_store_hash_entry, ent);
+	e2 = container_of(entry_or_key, const struct ref_store_hash_entry, ent);
+	name = keydata ? keydata : e2->name;
 
 	return strcmp(e1->name, name);
 }

@@ -126,10 +126,15 @@ struct anonymized_entry {
 };
 
 static int anonymized_entry_cmp(const void *unused_cmp_data,
-				const void *va, const void *vb,
+				const struct hashmap_entry *eptr,
+				const struct hashmap_entry *entry_or_key,
 				const void *unused_keydata)
 {
-	const struct anonymized_entry *a = va, *b = vb;
+	const struct anonymized_entry *a, *b;
+
+	a = container_of(eptr, const struct anonymized_entry, hash);
+	b = container_of(entry_or_key, const struct anonymized_entry, hash);
+
 	return a->orig_len != b->orig_len ||
 		memcmp(a->orig, b->orig, a->orig_len);
 }

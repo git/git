@@ -107,16 +107,21 @@ struct path_and_oids_entry {
 };
 
 static int path_and_oids_cmp(const void *hashmap_cmp_fn_data,
-			     const struct path_and_oids_entry *e1,
-			     const struct path_and_oids_entry *e2,
+			     const struct hashmap_entry *eptr,
+			     const struct hashmap_entry *entry_or_key,
 			     const void *keydata)
 {
+	const struct path_and_oids_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct path_and_oids_entry, ent);
+	e2 = container_of(entry_or_key, const struct path_and_oids_entry, ent);
+
 	return strcmp(e1->path, e2->path);
 }
 
 static void paths_and_oids_init(struct hashmap *map)
 {
-	hashmap_init(map, (hashmap_cmp_fn) path_and_oids_cmp, NULL, 0);
+	hashmap_init(map, path_and_oids_cmp, NULL, 0);
 }
 
 static void paths_and_oids_clear(struct hashmap *map)

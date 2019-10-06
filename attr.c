@@ -70,12 +70,14 @@ struct attr_hash_entry {
 
 /* attr_hashmap comparison function */
 static int attr_hash_entry_cmp(const void *unused_cmp_data,
-			       const void *entry,
-			       const void *entry_or_key,
+			       const struct hashmap_entry *eptr,
+			       const struct hashmap_entry *entry_or_key,
 			       const void *unused_keydata)
 {
-	const struct attr_hash_entry *a = entry;
-	const struct attr_hash_entry *b = entry_or_key;
+	const struct attr_hash_entry *a, *b;
+
+	a = container_of(eptr, const struct attr_hash_entry, ent);
+	b = container_of(entry_or_key, const struct attr_hash_entry, ent);
 	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
 }
 
