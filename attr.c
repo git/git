@@ -168,7 +168,6 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 		check->all_attrs_nr = size;
 
 		hashmap_for_each_entry(&map->map, &iter, e,
-					struct attr_hash_entry,
 					ent /* member name */) {
 			const struct git_attr *a = e->value;
 			check->all_attrs[a->attr_nr].attr = a;

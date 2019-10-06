@@ -714,8 +714,7 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
 
 	ce = hashmap_get_entry_from_hash(&istate->name_hash, hash, NULL,
 					 struct cache_entry, ent);
-	hashmap_for_each_entry_from(&istate->name_hash, ce,
-					struct cache_entry, ent) {
+	hashmap_for_each_entry_from(&istate->name_hash, ce, ent) {
 		if (same_name(ce, name, namelen, icase))
 			return ce;
 	}

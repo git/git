@@ -42,11 +42,11 @@ static void dump_run(void)
 	}
 
 	hashmap_for_each_entry(&the_index.dir_hash, &iter_dir, dir,
-				struct dir_entry, ent /* member name */)
+				ent /* member name */)
 		printf("dir %08x %7d %s\n", dir->ent.hash, dir->nr, dir->name);
 
 	hashmap_for_each_entry(&the_index.name_hash, &iter_cache, ce,
-				struct cache_entry, ent /* member name */)
+				ent /* member name */)
 		printf("name %08x %s\n", ce->ent.hash, ce->name);
 
 	discard_cache();

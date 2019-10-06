@@ -1943,7 +1943,6 @@ void git_configset_clear(struct config_set *cs)
 		return;
 
 	hashmap_for_each_entry(&cs->config_hash, &iter, entry,
-				struct config_set_element,
 				ent /* member name */) {
 		free(entry->key);
 		string_list_clear(&entry->value_list, 1);

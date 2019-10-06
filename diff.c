@@ -1038,7 +1038,7 @@ static void pmb_advance_or_null_multi_match(struct diff_options *o,
 	int i;
 	char *got_match = xcalloc(1, pmb_nr);
 
-	hashmap_for_each_entry_from(hm, match, struct moved_entry, ent) {
+	hashmap_for_each_entry_from(hm, match, ent) {
 		for (i = 0; i < pmb_nr; i++) {
 			struct moved_entry *prev = pmb[i].match;
 			struct moved_entry *cur = (prev && prev->next_line) ?
@@ -1193,8 +1193,7 @@ static void mark_color_as_moved(struct diff_options *o,
 			 * The current line is the start of a new block.
 			 * Setup the set of potential blocks.
 			 */
-			hashmap_for_each_entry_from(hm, match,
-						struct moved_entry, ent) {
+			hashmap_for_each_entry_from(hm, match, ent) {
 				ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
 				if (o->color_moved_ws_handling &
 				    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {

@@ -205,10 +205,8 @@ int cmd__hashmap(int argc, const char **argv)
 			/* print result */
 			if (!entry)
 				puts("NULL");
-			hashmap_for_each_entry_from(&map, entry,
-						struct test_entry, ent) {
+			hashmap_for_each_entry_from(&map, entry, ent)
 				puts(get_value(entry));
-			}
 
 		} else if (!strcmp("remove", cmd) && p1) {
 
@@ -230,7 +228,6 @@ int cmd__hashmap(int argc, const char **argv)
 			struct hashmap_iter iter;
 
 			hashmap_for_each_entry(&map, &iter, entry,
-						struct test_entry,
 						ent /* member name */)
 				printf("%s %s\n", entry->key, get_value(entry));
 

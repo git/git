@@ -284,7 +284,7 @@ static int find_identical_files(struct hashmap *srcs,
 	 */
 	p = hashmap_get_entry_from_hash(srcs, hash, NULL,
 					struct file_similarity, entry);
-	hashmap_for_each_entry_from(srcs, p, struct file_similarity, entry) {
+	hashmap_for_each_entry_from(srcs, p, entry) {
 		int score;
 		struct diff_filespec *source = p->filespec;
 

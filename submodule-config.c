@@ -100,7 +100,7 @@ static void submodule_cache_clear(struct submodule_cache *cache)
 	 * their .gitmodules blob sha1 and submodule name.
 	 */
 	hashmap_for_each_entry(&cache->for_name, &iter, entry,
-				struct submodule_entry, ent /* member name */)
+				ent /* member name */)
 		free_one_config(entry);
 
 	hashmap_free_entries(&cache->for_path, struct submodule_entry, ent);

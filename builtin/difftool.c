@@ -539,7 +539,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * change in the recorded SHA1 for the submodule.
 	 */
 	hashmap_for_each_entry(&submodules, &iter, entry,
-				struct pair_entry, entry /* member name */) {
+				entry /* member name */) {
 		if (*entry->left) {
 			add_path(&ldir, ldir_len, entry->path);
 			ensure_leading_directories(ldir.buf);
@@ -558,7 +558,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * This loop replicates that behavior.
 	 */
 	hashmap_for_each_entry(&symlinks2, &iter, entry,
-				struct pair_entry, entry /* member name */) {
+				entry /* member name */) {
 		if (*entry->left) {
 			add_path(&ldir, ldir_len, entry->path);
 			ensure_leading_directories(ldir.buf);
