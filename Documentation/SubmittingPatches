@@ -372,9 +372,9 @@ such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
 Some parts of the system have dedicated maintainers with their own
 repositories.
 
-- `git-gui/` comes from git-gui project, maintained by Pat Thoyts:
+- `git-gui/` comes from git-gui project, maintained by Pratyush Yadav:
 
-	git://repo.or.cz/git-gui.git
+	https://github.com/prati0100/git-gui.git
 
 - `gitk-git/` comes from Paul Mackerras's gitk project:
 
