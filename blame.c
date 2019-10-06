@@ -417,7 +417,7 @@ static void get_fingerprint(struct fingerprint *result,
 		/* Ignore whitespace pairs */
 		if (hash == 0)
 			continue;
-		hashmap_entry_init(entry, hash);
+		hashmap_entry_init(&entry->entry, hash);
 
 		found_entry = hashmap_get(&result->map, entry, NULL);
 		if (found_entry) {

@@ -217,7 +217,7 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 		util->i = i;
 		util->patch = a->items[i].string;
 		util->diff = util->patch + util->diff_offset;
-		hashmap_entry_init(util, strhash(util->diff));
+		hashmap_entry_init(&util->e, strhash(util->diff));
 		hashmap_add(&map, util);
 	}
 
@@ -228,7 +228,7 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 		util->i = i;
 		util->patch = b->items[i].string;
 		util->diff = util->patch + util->diff_offset;
-		hashmap_entry_init(util, strhash(util->diff));
+		hashmap_entry_init(&util->e, strhash(util->diff));
 		other = hashmap_remove(&map, util, NULL);
 		if (other) {
 			if (other->matching >= 0)

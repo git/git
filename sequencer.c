@@ -4538,7 +4538,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	}
 
 	FLEX_ALLOC_STR(labels_entry, label, label);
-	hashmap_entry_init(labels_entry, strihash(label));
+	hashmap_entry_init(&labels_entry->entry, strihash(label));
 	hashmap_add(&state->labels, labels_entry);
 
 	FLEX_ALLOC_STR(string_entry, string, label);
@@ -5252,7 +5252,8 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 						strhash(subject), subject)) {
 			FLEX_ALLOC_MEM(entry, subject, subject, subject_len);
 			entry->i = i;
-			hashmap_entry_init(entry, strhash(entry->subject));
+			hashmap_entry_init(&entry->entry,
+					strhash(entry->subject));
 			hashmap_put(&subject2item, entry);
 		}
 	}

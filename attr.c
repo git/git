@@ -98,7 +98,7 @@ static void *attr_hashmap_get(struct attr_hashmap *map,
 	if (!map->map.tablesize)
 		attr_hashmap_init(map);
 
-	hashmap_entry_init(&k, memhash(key, keylen));
+	hashmap_entry_init(&k.ent, memhash(key, keylen));
 	k.key = key;
 	k.keylen = keylen;
 	e = hashmap_get(&map->map, &k, NULL);
@@ -117,7 +117,7 @@ static void attr_hashmap_add(struct attr_hashmap *map,
 		attr_hashmap_init(map);
 
 	e = xmalloc(sizeof(struct attr_hash_entry));
-	hashmap_entry_init(e, memhash(key, keylen));
+	hashmap_entry_init(&e->ent, memhash(key, keylen));
 	e->key = key;
 	e->keylen = keylen;
 	e->value = value;

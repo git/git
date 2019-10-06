@@ -148,7 +148,7 @@ static const void *anonymize_mem(struct hashmap *map,
 	if (!map->cmpfn)
 		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
 
-	hashmap_entry_init(&key, memhash(orig, *len));
+	hashmap_entry_init(&key.hash, memhash(orig, *len));
 	key.orig = orig;
 	key.orig_len = *len;
 	ret = hashmap_get(map, &key, NULL);

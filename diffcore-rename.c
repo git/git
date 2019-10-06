@@ -329,7 +329,7 @@ static void insert_file_table(struct repository *r,
 	entry->index = index;
 	entry->filespec = filespec;
 
-	hashmap_entry_init(entry, hash_filespec(r, filespec));
+	hashmap_entry_init(&entry->entry, hash_filespec(r, filespec));
 	hashmap_add(table, entry);
 }
 

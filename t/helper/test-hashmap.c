@@ -37,7 +37,7 @@ static struct test_entry *alloc_test_entry(unsigned int hash,
 	size_t klen = strlen(key);
 	size_t vlen = strlen(value);
 	struct test_entry *entry = xmalloc(st_add4(sizeof(*entry), klen, vlen, 2));
-	hashmap_entry_init(entry, hash);
+	hashmap_entry_init(&entry->ent, hash);
 	memcpy(entry->key, key, klen + 1);
 	memcpy(entry->key + klen + 1, value, vlen + 1);
 	return entry;
@@ -103,7 +103,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 
 			/* add entries */
 			for (i = 0; i < TEST_SIZE; i++) {
-				hashmap_entry_init(entries[i], hashes[i]);
+				hashmap_entry_init(&entries[i]->ent, hashes[i]);
 				hashmap_add(&map, entries[i]);
 			}
 
@@ -116,7 +116,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 		/* fill the map (sparsely if specified) */
 		j = (method & TEST_SPARSE) ? TEST_SIZE / 10 : TEST_SIZE;
 		for (i = 0; i < j; i++) {
-			hashmap_entry_init(entries[i], hashes[i]);
+			hashmap_entry_init(&entries[i]->ent, hashes[i]);
 			hashmap_add(&map, entries[i]);
 		}
 

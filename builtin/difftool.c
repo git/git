@@ -161,7 +161,7 @@ static void add_left_or_right(struct hashmap *map, const char *path,
 	struct pair_entry *e, *existing;
 
 	FLEX_ALLOC_STR(e, path, path);
-	hashmap_entry_init(e, strhash(path));
+	hashmap_entry_init(&e->entry, strhash(path));
 	existing = hashmap_get(map, e, NULL);
 	if (existing) {
 		free(e);
@@ -234,7 +234,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	while (!strbuf_getline_nul(&buf, fp)) {
 		struct path_entry *entry;
 		FLEX_ALLOC_STR(entry, path, buf.buf);
-		hashmap_entry_init(entry, strhash(buf.buf));
+		hashmap_entry_init(&entry->entry, strhash(buf.buf));
 		hashmap_add(result, entry);
 	}
 	fclose(fp);
@@ -461,7 +461,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 
 			/* Avoid duplicate working_tree entries */
 			FLEX_ALLOC_STR(entry, path, dst_path);
-			hashmap_entry_init(entry, strhash(dst_path));
+			hashmap_entry_init(&entry->entry, strhash(dst_path));
 			if (hashmap_get(&working_tree_dups, entry, NULL)) {
 				free(entry);
 				continue;

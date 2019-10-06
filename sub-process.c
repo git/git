@@ -20,7 +20,7 @@ struct subprocess_entry *subprocess_find_entry(struct hashmap *hashmap, const ch
 {
 	struct subprocess_entry key;
 
-	hashmap_entry_init(&key, strhash(cmd));
+	hashmap_entry_init(&key.ent, strhash(cmd));
 	key.cmd = cmd;
 	return hashmap_get(hashmap, &key, NULL);
 }
@@ -96,7 +96,7 @@ int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, co
 		return err;
 	}
 
-	hashmap_entry_init(entry, strhash(cmd));
+	hashmap_entry_init(&entry->ent, strhash(cmd));
 
 	err = startfn(entry);
 	if (err) {

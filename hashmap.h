@@ -48,14 +48,14 @@
  *         if (!strcmp("add", action)) {
  *             struct long2string *e;
  *             FLEX_ALLOC_STR(e, value, value);
- *             hashmap_entry_init(e, memhash(&key, sizeof(long)));
+ *             hashmap_entry_init(&e->ent, memhash(&key, sizeof(long)));
  *             e->key = key;
  *             hashmap_add(&map, e);
  *         }
  *
  *         if (!strcmp("print_all_by_key", action)) {
  *             struct long2string k, *e;
- *             hashmap_entry_init(&k, memhash(&key, sizeof(long)));
+ *             hashmap_entry_init(&k->ent, memhash(&key, sizeof(long)));
  *             k.key = key;
  *
  *             flags &= ~COMPARE_VALUE;
@@ -70,7 +70,7 @@
  *         if (!strcmp("has_exact_match", action)) {
  *             struct long2string *e;
  *             FLEX_ALLOC_STR(e, value, value);
- *             hashmap_entry_init(e, memhash(&key, sizeof(long)));
+ *             hashmap_entry_init(&e->ent, memhash(&key, sizeof(long)));
  *             e->key = key;
  *
  *             flags |= COMPARE_VALUE;
@@ -80,7 +80,7 @@
  *
  *         if (!strcmp("has_exact_match_no_heap_alloc", action)) {
  *             struct long2string k;
- *             hashmap_entry_init(&k, memhash(&key, sizeof(long)));
+ *             hashmap_entry_init(&k->ent, memhash(&key, sizeof(long)));
  *             k.key = key;
  *
  *             flags |= COMPARE_VALUE;
@@ -244,9 +244,9 @@ void hashmap_free(struct hashmap *map, int free_entries);
  * your structure was allocated with xmalloc(), you can just free(3) it,
  * and if it is on stack, you can just let it go out of scope).
  */
-static inline void hashmap_entry_init(void *entry, unsigned int hash)
+static inline void hashmap_entry_init(struct hashmap_entry *e,
+					unsigned int hash)
 {
-	struct hashmap_entry *e = entry;
 	e->hash = hash;
 	e->next = NULL;
 }

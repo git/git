@@ -1565,7 +1565,8 @@ static void populate_worktree_map(struct hashmap *map, struct worktree **worktre
 			struct ref_to_worktree_entry *entry;
 			entry = xmalloc(sizeof(*entry));
 			entry->wt = worktrees[i];
-			hashmap_entry_init(entry, strhash(worktrees[i]->head_ref));
+			hashmap_entry_init(&entry->ent,
+					strhash(worktrees[i]->head_ref));
 
 			hashmap_add(map, entry);
 		}

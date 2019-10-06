@@ -33,7 +33,7 @@ static struct dir_entry *find_dir_entry__hash(struct index_state *istate,
 		const char *name, unsigned int namelen, unsigned int hash)
 {
 	struct dir_entry key;
-	hashmap_entry_init(&key, hash);
+	hashmap_entry_init(&key.ent, hash);
 	key.namelen = namelen;
 	return hashmap_get(&istate->dir_hash, &key, name);
 }
@@ -68,7 +68,7 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	if (!dir) {
 		/* not found, create it and add to hash table */
 		FLEX_ALLOC_MEM(dir, name, ce->name, namelen);
-		hashmap_entry_init(dir, memihash(ce->name, namelen));
+		hashmap_entry_init(&dir->ent, memihash(ce->name, namelen));
 		dir->namelen = namelen;
 		hashmap_add(&istate->dir_hash, dir);
 
@@ -106,7 +106,7 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 	if (ce->ce_flags & CE_HASHED)
 		return;
 	ce->ce_flags |= CE_HASHED;
-	hashmap_entry_init(ce, memihash(ce->name, ce_namelen(ce)));
+	hashmap_entry_init(&ce->ent, memihash(ce->name, ce_namelen(ce)));
 	hashmap_add(&istate->name_hash, ce);
 
 	if (ignore_case)
@@ -280,7 +280,7 @@ static struct dir_entry *hash_dir_entry_with_parent_and_prefix(
 	dir = find_dir_entry__hash(istate, prefix->buf, prefix->len, hash);
 	if (!dir) {
 		FLEX_ALLOC_MEM(dir, name, prefix->buf, prefix->len);
-		hashmap_entry_init(dir, hash);
+		hashmap_entry_init(&dir->ent, hash);
 		dir->namelen = prefix->len;
 		dir->parent = parent;
 		hashmap_add(&istate->dir_hash, dir);
@@ -472,7 +472,7 @@ static void *lazy_name_thread_proc(void *_data)
 	for (k = 0; k < d->istate->cache_nr; k++) {
 		struct cache_entry *ce_k = d->istate->cache[k];
 		ce_k->ce_flags |= CE_HASHED;
-		hashmap_entry_init(ce_k, d->lazy_entries[k].hash_name);
+		hashmap_entry_init(&ce_k->ent, d->lazy_entries[k].hash_name);
 		hashmap_add(&d->istate->name_hash, ce_k);
 	}
 
