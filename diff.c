@@ -1003,7 +1003,7 @@ static void add_lines_to_move_detection(struct diff_options *o,
 		if (prev_line && prev_line->es->s == o->emitted_symbols->buf[n].s)
 			prev_line->next_line = key;
 
-		hashmap_add(hm, key);
+		hashmap_add(hm, &key->ent);
 		prev_line = key;
 	}
 }

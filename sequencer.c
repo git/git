@@ -4539,7 +4539,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 
 	FLEX_ALLOC_STR(labels_entry, label, label);
 	hashmap_entry_init(&labels_entry->entry, strihash(label));
-	hashmap_add(&state->labels, labels_entry);
+	hashmap_add(&state->labels, &labels_entry->entry);
 
 	FLEX_ALLOC_STR(string_entry, string, label);
 	oidcpy(&string_entry->entry.oid, oid);

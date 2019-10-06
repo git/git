@@ -104,7 +104,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 			/* add entries */
 			for (i = 0; i < TEST_SIZE; i++) {
 				hashmap_entry_init(&entries[i]->ent, hashes[i]);
-				hashmap_add(&map, entries[i]);
+				hashmap_add(&map, &entries[i]->ent);
 			}
 
 			hashmap_free(&map, 0);
@@ -117,7 +117,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 		j = (method & TEST_SPARSE) ? TEST_SIZE / 10 : TEST_SIZE;
 		for (i = 0; i < j; i++) {
 			hashmap_entry_init(&entries[i]->ent, hashes[i]);
-			hashmap_add(&map, entries[i]);
+			hashmap_add(&map, &entries[i]->ent);
 		}
 
 		for (j = 0; j < rounds; j++) {
@@ -179,7 +179,7 @@ int cmd__hashmap(int argc, const char **argv)
 			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add to hashmap */
-			hashmap_add(&map, entry);
+			hashmap_add(&map, &entry->ent);
 
 		} else if (!strcmp("put", cmd) && p1 && p2) {
 

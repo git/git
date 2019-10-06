@@ -1488,7 +1488,7 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	if (!delta_base_cache.cmpfn)
 		hashmap_init(&delta_base_cache, delta_base_cache_hash_cmp, NULL, 0);
 	hashmap_entry_init(&ent->ent, pack_entry_hash(p, base_offset));
-	hashmap_add(&delta_base_cache, ent);
+	hashmap_add(&delta_base_cache, &ent->ent);
 }
 
 int packed_object_info(struct repository *r, struct packed_git *p,

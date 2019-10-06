@@ -278,7 +278,7 @@ static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
 	FLEX_ALLOC_MEM(ent, refname, refname, len);
 	hashmap_entry_init(&ent->ent, strhash(refname));
 	oidcpy(&ent->oid, oid);
-	hashmap_add(map, ent);
+	hashmap_add(map, &ent->ent);
 	return ent;
 }
 

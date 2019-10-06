@@ -218,7 +218,7 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 		util->patch = a->items[i].string;
 		util->diff = util->patch + util->diff_offset;
 		hashmap_entry_init(&util->e, strhash(util->diff));
-		hashmap_add(&map, util);
+		hashmap_add(&map, &util->e);
 	}
 
 	/* Now try to find exact matches in b */

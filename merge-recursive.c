@@ -455,7 +455,7 @@ static int save_files_dirs(const struct object_id *oid,
 
 	FLEX_ALLOC_MEM(entry, path, base->buf, base->len);
 	hashmap_entry_init(&entry->e, path_hash(entry->path));
-	hashmap_add(&opt->current_file_dir_set, entry);
+	hashmap_add(&opt->current_file_dir_set, &entry->e);
 
 	strbuf_setlen(base, baselen);
 	return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -732,7 +732,7 @@ static char *unique_path(struct merge_options *opt, const char *path, const char
 
 	FLEX_ALLOC_MEM(entry, path, newpath.buf, newpath.len);
 	hashmap_entry_init(&entry->e, path_hash(entry->path));
-	hashmap_add(&opt->current_file_dir_set, entry);
+	hashmap_add(&opt->current_file_dir_set, &entry->e);
 	return strbuf_detach(&newpath, NULL);
 }
 

@@ -201,12 +201,12 @@ void *hashmap_get_next(const struct hashmap *map,
 	return NULL;
 }
 
-void hashmap_add(struct hashmap *map, void *entry)
+void hashmap_add(struct hashmap *map, struct hashmap_entry *entry)
 {
 	unsigned int b = bucket(map, entry);
 
 	/* add entry */
-	((struct hashmap_entry *) entry)->next = map->table[b];
+	entry->next = map->table[b];
 	map->table[b] = entry;
 
 	/* fix size and rehash if appropriate */
@@ -302,7 +302,7 @@ const void *memintern(const void *data, size_t len)
 		FLEX_ALLOC_MEM(e, data, data, len);
 		hashmap_entry_init(&e->ent, key.ent.hash);
 		e->len = len;
-		hashmap_add(&map, e);
+		hashmap_add(&map, &e->ent);
 	}
 	return e->data;
 }

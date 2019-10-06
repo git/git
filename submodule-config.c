@@ -149,7 +149,7 @@ static void cache_add(struct submodule_cache *cache,
 	struct submodule_entry *e = xmalloc(sizeof(*e));
 	hashmap_entry_init(&e->ent, hash);
 	e->config = submodule;
-	hashmap_add(&cache->for_name, e);
+	hashmap_add(&cache->for_name, &e->ent);
 }
 
 static const struct submodule *cache_lookup_path(struct submodule_cache *cache,

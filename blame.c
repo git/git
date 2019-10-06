@@ -424,7 +424,7 @@ static void get_fingerprint(struct fingerprint *result,
 			found_entry->count += 1;
 		} else {
 			entry->count = 1;
-			hashmap_add(&result->map, entry);
+			hashmap_add(&result->map, &entry->entry);
 			++entry;
 		}
 	}

@@ -116,6 +116,6 @@ struct patch_id *add_commit_patch_id(struct commit *commit,
 		return NULL;
 	}
 
-	hashmap_add(&ids->patches, key);
+	hashmap_add(&ids->patches, &key->ent);
 	return key;
 }

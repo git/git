@@ -105,7 +105,7 @@ int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, co
 		return err;
 	}
 
-	hashmap_add(hashmap, entry);
+	hashmap_add(hashmap, &entry->ent);
 	return 0;
 }
 

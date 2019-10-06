@@ -330,7 +330,7 @@ static void insert_file_table(struct repository *r,
 	entry->filespec = filespec;
 
 	hashmap_entry_init(&entry->entry, hash_filespec(r, filespec));
-	hashmap_add(table, entry);
+	hashmap_add(table, &entry->entry);
 }
 
 /*

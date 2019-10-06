@@ -122,7 +122,7 @@ static void attr_hashmap_add(struct attr_hashmap *map,
 	e->keylen = keylen;
 	e->value = value;
 
-	hashmap_add(&map->map, e);
+	hashmap_add(&map->map, &e->ent);
 }
 
 struct all_attrs_item {

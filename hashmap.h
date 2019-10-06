@@ -50,7 +50,7 @@
  *             FLEX_ALLOC_STR(e, value, value);
  *             hashmap_entry_init(&e->ent, memhash(&key, sizeof(long)));
  *             e->key = key;
- *             hashmap_add(&map, e);
+ *             hashmap_add(&map, &e->ent);
  *         }
  *
  *         if (!strcmp("print_all_by_key", action)) {
@@ -328,7 +328,7 @@ void *hashmap_get_next(const struct hashmap *map,
  * `map` is the hashmap structure.
  * `entry` is the entry to add.
  */
-void hashmap_add(struct hashmap *map, void *entry);
+void hashmap_add(struct hashmap *map, struct hashmap_entry *entry);
 
 /*
  * Adds or replaces a hashmap entry. If the hashmap contains duplicate

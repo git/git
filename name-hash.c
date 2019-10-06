@@ -70,7 +70,7 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 		FLEX_ALLOC_MEM(dir, name, ce->name, namelen);
 		hashmap_entry_init(&dir->ent, memihash(ce->name, namelen));
 		dir->namelen = namelen;
-		hashmap_add(&istate->dir_hash, dir);
+		hashmap_add(&istate->dir_hash, &dir->ent);
 
 		/* recursively add missing parent directories */
 		dir->parent = hash_dir_entry(istate, ce, namelen);
@@ -107,7 +107,7 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 		return;
 	ce->ce_flags |= CE_HASHED;
 	hashmap_entry_init(&ce->ent, memihash(ce->name, ce_namelen(ce)));
-	hashmap_add(&istate->name_hash, ce);
+	hashmap_add(&istate->name_hash, &ce->ent);
 
 	if (ignore_case)
 		add_dir_entry(istate, ce);
@@ -283,7 +283,7 @@ static struct dir_entry *hash_dir_entry_with_parent_and_prefix(
 		hashmap_entry_init(&dir->ent, hash);
 		dir->namelen = prefix->len;
 		dir->parent = parent;
-		hashmap_add(&istate->dir_hash, dir);
+		hashmap_add(&istate->dir_hash, &dir->ent);
 
 		if (parent) {
 			unlock_dir_mutex(lock_nr);
@@ -473,7 +473,7 @@ static void *lazy_name_thread_proc(void *_data)
 		struct cache_entry *ce_k = d->istate->cache[k];
 		ce_k->ce_flags |= CE_HASHED;
 		hashmap_entry_init(&ce_k->ent, d->lazy_entries[k].hash_name);
-		hashmap_add(&d->istate->name_hash, ce_k);
+		hashmap_add(&d->istate->name_hash, &ce_k->ent);
 	}
 
 	return NULL;
