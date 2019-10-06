@@ -80,6 +80,12 @@ REM ================================================================
 :sub__install_one
 	echo     Installing package %1...
 
+	REM vcpkg may not be reliable on slow, intermittent or proxy
+	REM connections, see e.g.
+	REM https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/4a8f7be5-5e15-4213-a7bb-ddf424a954e6/winhttpsendrequest-ends-with-12002-errorhttptimeout-after-21-seconds-no-matter-what-timeout?forum=windowssdk
+	REM which explains the hidden 21 second timeout
+	REM (last post by Dave : Microsoft - Windows Networking team)
+
 	.\vcpkg.exe install %1:%arch%
 	IF ERRORLEVEL 1 ( EXIT /B 1 )
 
