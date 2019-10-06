@@ -1146,15 +1146,13 @@ static void mark_color_as_moved(struct diff_options *o,
 		case DIFF_SYMBOL_PLUS:
 			hm = del_lines;
 			key = prepare_entry(o, n);
-			match = hashmap_get_entry(hm, key, NULL,
-						struct moved_entry, ent);
+			match = hashmap_get_entry(hm, key, ent, NULL);
 			free(key);
 			break;
 		case DIFF_SYMBOL_MINUS:
 			hm = add_lines;
 			key = prepare_entry(o, n);
-			match = hashmap_get_entry(hm, key, NULL,
-						struct moved_entry, ent);
+			match = hashmap_get_entry(hm, key, ent, NULL);
 			free(key);
 			break;
 		default:

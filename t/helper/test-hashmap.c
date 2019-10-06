@@ -189,9 +189,7 @@ int cmd__hashmap(int argc, const char **argv)
 			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add / replace entry */
-			entry = hashmap_put_entry(&map, entry,
-						struct test_entry,
-						ent /* member name */);
+			entry = hashmap_put_entry(&map, entry, ent);
 
 			/* print and free replaced entry, if any */
 			puts(entry ? get_value(entry) : "NULL");

@@ -167,7 +167,7 @@ static void add_left_or_right(struct hashmap *map, const char *path,
 
 	FLEX_ALLOC_STR(e, path, path);
 	hashmap_entry_init(&e->entry, strhash(path));
-	existing = hashmap_get_entry(map, e, NULL, struct pair_entry, entry);
+	existing = hashmap_get_entry(map, e, entry, NULL);
 	if (existing) {
 		free(e);
 		e = existing;

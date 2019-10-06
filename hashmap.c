@@ -311,7 +311,7 @@ const void *memintern(const void *data, size_t len)
 	/* lookup interned string in pool */
 	hashmap_entry_init(&key.ent, memhash(data, len));
 	key.len = len;
-	e = hashmap_get_entry(&map, &key, data, struct pool_entry, ent);
+	e = hashmap_get_entry(&map, &key, ent, data);
 	if (!e) {
 		/* not found: create it */
 		FLEX_ALLOC_MEM(e, data, data, len);

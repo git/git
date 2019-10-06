@@ -63,7 +63,7 @@
  *             k.key = key;
  *
  *             flags &= ~COMPARE_VALUE;
- *             e = hashmap_get_entry(&map, &k, NULL, struct long2string, ent);
+ *             e = hashmap_get_entry(&map, &k, ent, NULL);
  *             if (e) {
  *                 printf("first: %ld %s\n", e->key, e->value);
  *                 while ((e = hashmap_get_next_entry(&map, e,
@@ -359,8 +359,17 @@ void hashmap_add(struct hashmap *map, struct hashmap_entry *entry);
 struct hashmap_entry *hashmap_put(struct hashmap *map,
 				struct hashmap_entry *entry);
 
-#define hashmap_put_entry(map, keyvar, type, member) \
-	container_of_or_null(hashmap_put(map, &(keyvar)->member), type, member)
+/*
+ * Adds or replaces a hashmap entry contained within @keyvar,
+ * where @keyvar is a pointer to a struct containing a
+ * "struct hashmap_entry" @member.
+ *
+ * Returns the replaced pointer which is of the same type as @keyvar,
+ * or NULL if not found.
+ */
+#define hashmap_put_entry(map, keyvar, member) \
+	container_of_or_null_offset(hashmap_put(map, &(keyvar)->member), \
+				OFFSETOF_VAR(keyvar, member))
 
 /*
  * Removes a hashmap entry matching the specified key. If the hashmap contains
@@ -373,9 +382,20 @@ struct hashmap_entry *hashmap_remove(struct hashmap *map,
 					const struct hashmap_entry *key,
 					const void *keydata);
 
-#define hashmap_remove_entry(map, keyvar, keydata, type, member) \
-	container_of_or_null(hashmap_remove(map, &(keyvar)->member, keydata), \
-				type, member)
+/*
+ * Removes a hashmap entry contained within @keyvar,
+ * where @keyvar is a pointer to a struct containing a
+ * "struct hashmap_entry" @member.
+ *
+ * See `hashmap_get` for an explanation of @keydata
+ *
+ * Returns the replaced pointer which is of the same type as @keyvar,
+ * or NULL if not found.
+ */
+#define hashmap_remove_entry(map, keyvar, member, keydata) \
+	container_of_or_null_offset( \
+			hashmap_remove(map, &(keyvar)->member, keydata), \
+			OFFSETOF_VAR(keyvar, member))
 
 /*
  * Returns the `bucket` an entry is stored in.
@@ -436,13 +456,14 @@ static inline struct hashmap_entry *hashmap_iter_first(struct hashmap *map,
 						OFFSETOF_VAR(var, member)))
 
 /*
- * returns a @pointer of @type matching @keyvar, or NULL if nothing found.
- * @keyvar is a pointer of @type
- * @member is the name of the "struct hashmap_entry" field in @type
+ * returns a pointer of type matching @keyvar, or NULL if nothing found.
+ * @keyvar is a pointer to a struct containing a
+ * "struct hashmap_entry" @member.
  */
-#define hashmap_get_entry(map, keyvar, keydata, type, member) \
-	container_of_or_null(hashmap_get(map, &(keyvar)->member, keydata), \
-				type, member)
+#define hashmap_get_entry(map, keyvar, member, keydata) \
+	container_of_or_null_offset( \
+				hashmap_get(map, &(keyvar)->member, keydata), \
+				OFFSETOF_VAR(keyvar, member))
 
 #define hashmap_get_entry_from_hash(map, hash, keydata, type, member) \
 	container_of_or_null(hashmap_get_from_hash(map, hash, keydata), \

@@ -229,9 +229,7 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 		util->patch = b->items[i].string;
 		util->diff = util->patch + util->diff_offset;
 		hashmap_entry_init(&util->e, strhash(util->diff));
-		other = hashmap_remove_entry(&map, util, NULL,
-					struct patch_util,
-					e /* member name */);
+		other = hashmap_remove_entry(&map, util, e, NULL);
 		if (other) {
 			if (other->matching >= 0)
 				BUG("already assigned!");

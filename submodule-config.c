@@ -141,9 +141,7 @@ static void cache_remove_path(struct submodule_cache *cache,
 	struct submodule_entry *removed;
 	hashmap_entry_init(&e.ent, hash);
 	e.config = submodule;
-	removed = hashmap_remove_entry(&cache->for_path, &e, NULL,
-					struct submodule_entry,
-					ent /* member name */);
+	removed = hashmap_remove_entry(&cache->for_path, &e, ent, NULL);
 	free(removed);
 }
 
@@ -172,8 +170,7 @@ static const struct submodule *cache_lookup_path(struct submodule_cache *cache,
 	hashmap_entry_init(&key.ent, hash);
 	key.config = &key_config;
 
-	entry = hashmap_get_entry(&cache->for_path, &key, NULL,
-				struct submodule_entry, ent);
+	entry = hashmap_get_entry(&cache->for_path, &key, ent, NULL);
 	if (entry)
 		return entry->config;
 	return NULL;
@@ -193,8 +190,7 @@ static struct submodule *cache_lookup_name(struct submodule_cache *cache,
 	hashmap_entry_init(&key.ent, hash);
 	key.config = &key_config;
 
-	entry = hashmap_get_entry(&cache->for_name, &key, NULL,
-				struct submodule_entry, ent);
+	entry = hashmap_get_entry(&cache->for_name, &key, ent, NULL);
 	if (entry)
 		return entry->config;
 	return NULL;
