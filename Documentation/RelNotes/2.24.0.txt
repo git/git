@@ -192,6 +192,21 @@ Fixes since v2.23
    current branch, which has been corrected.
    (merge bf1e28e0ad bw/rebase-autostash-keep-current-branch later to maint).
 
+ * Update support for Asciidoctor documentation toolchain.
+   (merge 83b0b8953e ma/asciidoctor-refmiscinfo later to maint).
+
+ * Start using DocBook 5 (instead of DocBook 4.5) as Asciidoctor 2.0
+   no longer works with the older one.
+   (merge f6461b82b9 bc/doc-use-docbook-5 later to maint).
+
+ * The markup used in user-manual has been updated to work better with
+   asciidoctor.
+   (merge c4d2f6143a ma/user-manual-markup-update later to maint).
+
+ * Make sure the grep machinery does not abort when seeing a payload
+   that is not UTF-8 even when JIT is not in use with PCRE1.
+   (merge ad7c543e3b cb/skip-utf8-check-with-pcre1 later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
    (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
@@ -208,3 +223,4 @@ Fixes since v2.23
    (merge 0a8bc7068f dt/remote-helper-doc-re-lock-option later to maint).
    (merge 27fd1e4ea7 en/merge-options-ff-and-friends later to maint).
    (merge 502c386ff9 sg/clean-nested-repo-with-ignored later to maint).
+   (merge 26e3d1cbea am/mailmap-andrey-mazo later to maint).
