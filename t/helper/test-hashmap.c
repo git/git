@@ -189,7 +189,9 @@ int cmd__hashmap(int argc, const char **argv)
 			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add / replace entry */
-			entry = hashmap_put(&map, &entry->ent);
+			entry = hashmap_put_entry(&map, entry,
+						struct test_entry,
+						ent /* member name */);
 
 			/* print and free replaced entry, if any */
 			puts(entry ? get_value(entry) : "NULL");
@@ -212,10 +214,13 @@ int cmd__hashmap(int argc, const char **argv)
 
 			/* setup static key */
 			struct hashmap_entry key;
+			struct hashmap_entry *rm;
 			hashmap_entry_init(&key, hash);
 
 			/* remove entry from hashmap */
-			entry = hashmap_remove(&map, &key, p1);
+			rm = hashmap_remove(&map, &key, p1);
+			entry = rm ? container_of(rm, struct test_entry, ent)
+					: NULL;
 
 			/* print result and free entry*/
 			puts(entry ? get_value(entry) : "NULL");

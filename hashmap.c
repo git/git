@@ -219,8 +219,9 @@ void hashmap_add(struct hashmap *map, struct hashmap_entry *entry)
 	}
 }
 
-void *hashmap_remove(struct hashmap *map, const struct hashmap_entry *key,
-		const void *keydata)
+struct hashmap_entry *hashmap_remove(struct hashmap *map,
+					const struct hashmap_entry *key,
+					const void *keydata)
 {
 	struct hashmap_entry *old;
 	struct hashmap_entry **e = find_entry_ptr(map, key, keydata);
@@ -242,7 +243,8 @@ void *hashmap_remove(struct hashmap *map, const struct hashmap_entry *key,
 	return old;
 }
 
-void *hashmap_put(struct hashmap *map, struct hashmap_entry *entry)
+struct hashmap_entry *hashmap_put(struct hashmap *map,
+				struct hashmap_entry *entry)
 {
 	struct hashmap_entry *old = hashmap_remove(map, entry, NULL);
 	hashmap_add(map, entry);

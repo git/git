@@ -162,7 +162,8 @@ static struct remote *make_remote(const char *name, int len)
 	remotes[remotes_nr++] = ret;
 
 	hashmap_entry_init(&ret->ent, lookup_entry.hash);
-	replaced = hashmap_put(&remotes_hash, &ret->ent);
+	replaced = hashmap_put_entry(&remotes_hash, ret, struct remote,
+					ent /* member name */);
 	assert(replaced == NULL);  /* no previous entry overwritten */
 	return ret;
 }

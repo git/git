@@ -349,7 +349,11 @@ void hashmap_add(struct hashmap *map, struct hashmap_entry *entry);
  * `entry` is the entry to add or replace.
  * Returns the replaced entry, or NULL if not found (i.e. the entry was added).
  */
-void *hashmap_put(struct hashmap *map, struct hashmap_entry *entry);
+struct hashmap_entry *hashmap_put(struct hashmap *map,
+				struct hashmap_entry *entry);
+
+#define hashmap_put_entry(map, keyvar, type, member) \
+	container_of_or_null(hashmap_put(map, &(keyvar)->member), type, member)
 
 /*
  * Removes a hashmap entry matching the specified key. If the hashmap contains
@@ -358,8 +362,13 @@ void *hashmap_put(struct hashmap *map, struct hashmap_entry *entry);
  *
  * Argument explanation is the same as in `hashmap_get`.
  */
-void *hashmap_remove(struct hashmap *map, const struct hashmap_entry *key,
-		const void *keydata);
+struct hashmap_entry *hashmap_remove(struct hashmap *map,
+					const struct hashmap_entry *key,
+					const void *keydata);
+
+#define hashmap_remove_entry(map, keyvar, keydata, type, member) \
+	container_of_or_null(hashmap_remove(map, &(keyvar)->member, keydata), \
+				type, member)
 
 /*
  * Returns the `bucket` an entry is stored in.
