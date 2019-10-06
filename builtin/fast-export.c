@@ -151,7 +151,7 @@ static const void *anonymize_mem(struct hashmap *map,
 	hashmap_entry_init(&key.hash, memhash(orig, *len));
 	key.orig = orig;
 	key.orig_len = *len;
-	ret = hashmap_get(map, &key, NULL);
+	ret = hashmap_get(map, &key.hash, NULL);
 
 	if (!ret) {
 		ret = xmalloc(sizeof(*ret));

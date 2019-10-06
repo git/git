@@ -74,7 +74,8 @@
  *             e->key = key;
  *
  *             flags |= COMPARE_VALUE;
- *             printf("%sfound\n", hashmap_get(&map, e, NULL) ? "" : "not ");
+ *             printf("%sfound\n",
+ *                    hashmap_get(&map, &e->ent, NULL) ? "" : "not ");
  *             free(e);
  *         }
  *
@@ -84,7 +85,8 @@
  *             k.key = key;
  *
  *             flags |= COMPARE_VALUE;
- *             printf("%sfound\n", hashmap_get(&map, &k, value) ? "" : "not ");
+ *             printf("%sfound\n",
+ *                    hashmap_get(&map, &k->ent, value) ? "" : "not ");
  *         }
  *
  *         if (!strcmp("end", action)) {
@@ -286,7 +288,7 @@ static inline unsigned int hashmap_get_size(struct hashmap *map)
  * If an entry with matching hash code is found, `key` and `keydata` are passed
  * to `hashmap_cmp_fn` to decide whether the entry matches the key.
  */
-void *hashmap_get(const struct hashmap *map, const void *key,
+void *hashmap_get(const struct hashmap *map, const struct hashmap_entry *key,
 			 const void *keydata);
 
 /*

@@ -99,7 +99,7 @@ struct patch_id *has_commit_patch_id(struct commit *commit,
 	if (init_patch_id_entry(&patch, commit, ids))
 		return NULL;
 
-	return hashmap_get(&ids->patches, &patch, NULL);
+	return hashmap_get(&ids->patches, &patch.ent, NULL);
 }
 
 struct patch_id *add_commit_patch_id(struct commit *commit,

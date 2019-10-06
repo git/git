@@ -101,7 +101,7 @@ static void *attr_hashmap_get(struct attr_hashmap *map,
 	hashmap_entry_init(&k.ent, memhash(key, keylen));
 	k.key = key;
 	k.keylen = keylen;
-	e = hashmap_get(&map->map, &k, NULL);
+	e = hashmap_get(&map->map, &k.ent, NULL);
 
 	return e ? e->value : NULL;
 }

@@ -162,7 +162,7 @@ static void add_left_or_right(struct hashmap *map, const char *path,
 
 	FLEX_ALLOC_STR(e, path, path);
 	hashmap_entry_init(&e->entry, strhash(path));
-	existing = hashmap_get(map, e, NULL);
+	existing = hashmap_get(map, &e->entry, NULL);
 	if (existing) {
 		free(e);
 		e = existing;
@@ -462,7 +462,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			/* Avoid duplicate working_tree entries */
 			FLEX_ALLOC_STR(entry, path, dst_path);
 			hashmap_entry_init(&entry->entry, strhash(dst_path));
-			if (hashmap_get(&working_tree_dups, entry, NULL)) {
+			if (hashmap_get(&working_tree_dups, &entry->entry,
+					NULL)) {
 				free(entry);
 				continue;
 			}

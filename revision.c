@@ -147,7 +147,8 @@ static void paths_and_oids_insert(struct hashmap *map,
 	key.path = (char *)path;
 	oidset_init(&key.trees, 0);
 
-	if (!(entry = (struct path_and_oids_entry *)hashmap_get(map, &key, NULL))) {
+	entry = hashmap_get(map, &key.ent, NULL);
+	if (!entry) {
 		entry = xcalloc(1, sizeof(struct path_and_oids_entry));
 		hashmap_entry_init(&entry->ent, hash);
 		entry->path = xstrdup(key.path);

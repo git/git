@@ -35,7 +35,7 @@ static struct dir_entry *find_dir_entry__hash(struct index_state *istate,
 	struct dir_entry key;
 	hashmap_entry_init(&key.ent, hash);
 	key.namelen = namelen;
-	return hashmap_get(&istate->dir_hash, &key, name);
+	return hashmap_get(&istate->dir_hash, &key.ent, name);
 }
 
 static struct dir_entry *find_dir_entry(struct index_state *istate,

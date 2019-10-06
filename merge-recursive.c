@@ -63,7 +63,7 @@ static struct dir_rename_entry *dir_rename_find_entry(struct hashmap *hashmap,
 		return NULL;
 	hashmap_entry_init(&key.ent, strhash(dir));
 	key.dir = dir;
-	return hashmap_get(hashmap, &key, NULL);
+	return hashmap_get(hashmap, &key.ent, NULL);
 }
 
 static int dir_rename_cmp(const void *unused_cmp_data,
@@ -99,7 +99,7 @@ static struct collision_entry *collision_find_entry(struct hashmap *hashmap,
 
 	hashmap_entry_init(&key.ent, strhash(target_file));
 	key.target_file = target_file;
-	return hashmap_get(hashmap, &key, NULL);
+	return hashmap_get(hashmap, &key.ent, NULL);
 }
 
 static int collision_cmp(void *unused_cmp_data,
