@@ -433,7 +433,7 @@ static void get_fingerprint(struct fingerprint *result,
 
 static void free_fingerprint(struct fingerprint *f)
 {
-	hashmap_free(&f->map, 0);
+	hashmap_free(&f->map);
 	free(f->entries);
 }
 

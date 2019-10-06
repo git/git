@@ -96,7 +96,7 @@
  *         }
  *
  *         if (!strcmp("end", action)) {
- *             hashmap_free(&map, 1);
+ *             hashmap_free_entries(&map, struct long2string, ent);
  *             break;
  *         }
  *     }
@@ -232,13 +232,20 @@ void hashmap_init(struct hashmap *map,
 			 const void *equals_function_data,
 			 size_t initial_size);
 
+/* internal function for freeing hashmap */
+void hashmap_free_(struct hashmap *map, ssize_t offset);
+
 /*
- * Frees a hashmap structure and allocated memory.
- *
- * If `free_entries` is true, each hashmap_entry in the map is freed as well
- * using stdlibs free().
+ * Frees a hashmap structure and allocated memory, leaves entries undisturbed
  */
-void hashmap_free(struct hashmap *map, int free_entries);
+#define hashmap_free(map) hashmap_free_(map, -1)
+
+/*
+ * Frees @map and all entries.  @type is the struct type of the entry
+ * where @member is the hashmap_entry struct used to associate with @map
+ */
+#define hashmap_free_entries(map, type, member) \
+	hashmap_free_(map, offsetof(type, member));
 
 /* hashmap_entry functions */
 

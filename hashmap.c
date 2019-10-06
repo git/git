@@ -171,16 +171,21 @@ void hashmap_init(struct hashmap *map, hashmap_cmp_fn equals_function,
 	map->do_count_items = 1;
 }
 
-void hashmap_free(struct hashmap *map, int free_entries)
+void hashmap_free_(struct hashmap *map, ssize_t entry_offset)
 {
 	if (!map || !map->table)
 		return;
-	if (free_entries) {
+	if (entry_offset >= 0) { /* called by hashmap_free_entries */
 		struct hashmap_iter iter;
 		struct hashmap_entry *e;
+
 		hashmap_iter_init(map, &iter);
 		while ((e = hashmap_iter_next(&iter)))
-			free(e);
+			/*
+			 * like container_of, but using caller-calculated
+			 * offset (caller being hashmap_free_entries)
+			 */
+			free((char *)e - entry_offset);
 	}
 	free(map->table);
 	memset(map, 0, sizeof(*map));

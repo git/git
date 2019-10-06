@@ -25,7 +25,9 @@ void oidmap_free(struct oidmap *map, int free_entries)
 {
 	if (!map)
 		return;
-	hashmap_free(&map->map, free_entries);
+
+	/* TODO: make oidmap itself not depend on struct layouts */
+	hashmap_free_(&map->map, free_entries ? 0 : -1);
 }
 
 void *oidmap_get(const struct oidmap *map, const struct object_id *key)

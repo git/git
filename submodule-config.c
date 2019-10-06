@@ -103,8 +103,8 @@ static void submodule_cache_clear(struct submodule_cache *cache)
 				struct submodule_entry, ent /* member name */)
 		free_one_config(entry);
 
-	hashmap_free(&cache->for_path, 1);
-	hashmap_free(&cache->for_name, 1);
+	hashmap_free_entries(&cache->for_path, struct submodule_entry, ent);
+	hashmap_free_entries(&cache->for_name, struct submodule_entry, ent);
 	cache->initialized = 0;
 	cache->gitmodules_read = 0;
 }

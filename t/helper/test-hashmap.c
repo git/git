@@ -109,7 +109,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 				hashmap_add(&map, &entries[i]->ent);
 			}
 
-			hashmap_free(&map, 0);
+			hashmap_free(&map);
 		}
 	} else {
 		/* test map lookups */
@@ -129,7 +129,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 			}
 		}
 
-		hashmap_free(&map, 0);
+		hashmap_free(&map);
 	}
 }
 
@@ -266,6 +266,6 @@ int cmd__hashmap(int argc, const char **argv)
 	}
 
 	strbuf_release(&line);
-	hashmap_free(&map, 1);
+	hashmap_free_entries(&map, struct test_entry, ent);
 	return 0;
 }

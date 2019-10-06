@@ -358,7 +358,7 @@ static int find_exact_renames(struct diff_options *options)
 		renames += find_identical_files(&file_table, i, options);
 
 	/* Free the hash data structure and entries */
-	hashmap_free(&file_table, 1);
+	hashmap_free_entries(&file_table, struct file_similarity, entry);
 
 	return renames;
 }
