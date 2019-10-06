@@ -59,16 +59,17 @@ This is optional and defaults to the original version 'v1' format.
 --untracked-files[=<mode>]::
 	Show untracked files.
 +
+--
 The mode parameter is used to specify the handling of untracked files.
 It is optional: it defaults to 'all', and if specified, it must be
 stuck to the option (e.g. `-uno`, but not `-u no`).
-+
+
 The possible options are:
-+
+
 	- 'no'     - Show no untracked files.
 	- 'normal' - Shows untracked files and directories.
 	- 'all'    - Also shows individual files in untracked directories.
-+
+
 When `-u` option is not used, untracked files and directories are
 shown (i.e. the same as specifying `normal`), to help you avoid
 forgetting to add newly created files.  Because it takes extra work
@@ -78,9 +79,10 @@ Consider enabling untracked cache and split index if supported (see
 `git update-index --untracked-cache` and `git update-index
 --split-index`), Otherwise you can use `no` to have `git status`
 return more quickly without showing untracked files.
-+
+
 The default can be changed using the status.showUntrackedFiles
 configuration variable documented in linkgit:git-config[1].
+--
 
 --ignore-submodules[=<when>]::
 	Ignore changes to submodules when looking for changes. <when> can be
@@ -100,11 +102,12 @@ configuration variable documented in linkgit:git-config[1].
 --ignored[=<mode>]::
 	Show ignored files as well.
 +
+--
 The mode parameter is used to specify the handling of ignored files.
 It is optional: it defaults to 'traditional'.
-+
+
 The possible options are:
-+
+
 	- 'traditional' - Shows ignored files and directories, unless
 			  --untracked-files=all is specified, in which case
 			  individual files in ignored directories are
@@ -112,12 +115,13 @@ The possible options are:
 	- 'no'	        - Show no ignored files.
 	- 'matching'    - Shows ignored files and directories matching an
 			  ignore pattern.
-+
+
 When 'matching' mode is specified, paths that explicitly match an
 ignored pattern are shown. If a directory matches an ignore pattern,
 then it is shown, but not paths contained in the ignored directory. If
 a directory does not match an ignore pattern, but all contents are
 ignored, then the directory is not shown, but all contents are shown.
+--
 
 -z::
 	Terminate entries with NUL, instead of LF.  This implies

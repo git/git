@@ -54,20 +54,24 @@ original is first. But the argument order to the 3-way merge program
 
 Examples:
 
-  torvalds@ppc970:~/merge-test> git merge-index cat MM
-  This is MM from the original tree.			# original
-  This is modified MM in the branch A.			# merge1
-  This is modified MM in the branch B.			# merge2
-  This is modified MM in the branch B.			# current contents
+----
+torvalds@ppc970:~/merge-test> git merge-index cat MM
+This is MM from the original tree.		# original
+This is modified MM in the branch A.		# merge1
+This is modified MM in the branch B.		# merge2
+This is modified MM in the branch B.		# current contents
+----
 
 or
 
-  torvalds@ppc970:~/merge-test> git merge-index cat AA MM
-  cat: : No such file or directory
-  This is added AA in the branch A.
-  This is added AA in the branch B.
-  This is added AA in the branch B.
-  fatal: merge program failed
+----
+torvalds@ppc970:~/merge-test> git merge-index cat AA MM
+cat: : No such file or directory
+This is added AA in the branch A.
+This is added AA in the branch B.
+This is added AA in the branch B.
+fatal: merge program failed
+----
 
 where the latter example shows how 'git merge-index' will stop trying to
 merge once anything has returned an error (i.e., `cat` returned an error

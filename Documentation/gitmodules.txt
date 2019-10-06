@@ -105,14 +105,15 @@ EXAMPLES
 
 Consider the following .gitmodules file:
 
-	[submodule "libfoo"]
-		path = include/foo
-		url = git://foo.com/git/lib.git
+----
+[submodule "libfoo"]
+	path = include/foo
+	url = git://foo.com/git/lib.git
 
-	[submodule "libbar"]
-		path = include/bar
-		url = git://bar.com/git/lib.git
-
+[submodule "libbar"]
+	path = include/bar
+	url = git://bar.com/git/lib.git
+----
 
 This defines two submodules, `libfoo` and `libbar`. These are expected to
 be checked out in the paths `include/foo` and `include/bar`, and for both

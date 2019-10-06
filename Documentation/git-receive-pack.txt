@@ -165,29 +165,31 @@ ref listing the commits pushed to the repository, and logs the push
 certificates of signed pushes with good signatures to a logger
 service:
 
-	#!/bin/sh
-	# mail out commit update information.
-	while read oval nval ref
-	do
-		if expr "$oval" : '0*$' >/dev/null
-		then
-			echo "Created a new ref, with the following commits:"
-			git rev-list --pretty "$nval"
-		else
-			echo "New commits:"
-			git rev-list --pretty "$nval" "^$oval"
-		fi |
-		mail -s "Changes to ref $ref" commit-list@mydomain
-	done
-	# log signed push certificate, if any
-	if test -n "${GIT_PUSH_CERT-}" && test ${GIT_PUSH_CERT_STATUS} = G
+----
+#!/bin/sh
+# mail out commit update information.
+while read oval nval ref
+do
+	if expr "$oval" : '0*$' >/dev/null
 	then
-		(
-			echo expected nonce is ${GIT_PUSH_NONCE}
-			git cat-file blob ${GIT_PUSH_CERT}
-		) | mail -s "push certificate from $GIT_PUSH_CERT_SIGNER" push-log@mydomain
-	fi
-	exit 0
+		echo "Created a new ref, with the following commits:"
+		git rev-list --pretty "$nval"
+	else
+		echo "New commits:"
+		git rev-list --pretty "$nval" "^$oval"
+	fi |
+	mail -s "Changes to ref $ref" commit-list@mydomain
+done
+# log signed push certificate, if any
+if test -n "${GIT_PUSH_CERT-}" && test ${GIT_PUSH_CERT_STATUS} = G
+then
+	(
+		echo expected nonce is ${GIT_PUSH_NONCE}
+		git cat-file blob ${GIT_PUSH_CERT}
+	) | mail -s "push certificate from $GIT_PUSH_CERT_SIGNER" push-log@mydomain
+fi
+exit 0
+----
 
 The exit code from this hook invocation is ignored, however a
 non-zero exit code will generate an error message.
@@ -212,8 +214,10 @@ anyway.
 This hook can be used, for example, to run `git update-server-info`
 if the repository is packed and is served via a dumb transport.
 
-	#!/bin/sh
-	exec git update-server-info
+----
+#!/bin/sh
+exec git update-server-info
+----
 
 
 QUARANTINE ENVIRONMENT

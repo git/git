@@ -80,9 +80,11 @@ which is reachable from both 'A' and 'B' through the parent relationship.
 
 For example, with this topology:
 
-	         o---o---o---B
-	        /
-	---o---1---o---o---o---A
+....
+	 o---o---o---B
+	/
+---o---1---o---o---o---A
+....
 
 the merge base between 'A' and 'B' is '1'.
 
@@ -90,21 +92,25 @@ Given three commits 'A', 'B' and 'C', `git merge-base A B C` will compute the
 merge base between 'A' and a hypothetical commit 'M', which is a merge
 between 'B' and 'C'.  For example, with this topology:
 
-	       o---o---o---o---C
-	      /
-	     /   o---o---o---B
-	    /   /
-	---2---1---o---o---o---A
+....
+       o---o---o---o---C
+      /
+     /   o---o---o---B
+    /   /
+---2---1---o---o---o---A
+....
 
 the result of `git merge-base A B C` is '1'.  This is because the
 equivalent topology with a merge commit 'M' between 'B' and 'C' is:
 
 
-	       o---o---o---o---o
-	      /                 \
-	     /   o---o---o---o---M
-	    /   /
-	---2---1---o---o---o---A
+....
+       o---o---o---o---o
+      /                 \
+     /   o---o---o---o---M
+    /   /
+---2---1---o---o---o---A
+....
 
 and the result of `git merge-base A M` is '1'.  Commit '2' is also a
 common ancestor between 'A' and 'M', but '1' is a better common ancestor,
@@ -116,11 +122,13 @@ the best common ancestor of all commits.
 When the history involves criss-cross merges, there can be more than one
 'best' common ancestor for two commits.  For example, with this topology:
 
-	---1---o---A
-	    \ /
-	     X
-	    / \
-	---2---o---o---B
+....
+---1---o---A
+    \ /
+     X
+    / \
+---2---o---o---B
+....
 
 both '1' and '2' are merge-bases of A and B.  Neither one is better than
 the other (both are 'best' merge bases).  When the `--all` option is not given,
@@ -131,18 +139,22 @@ and B is (or at least used to be) to compute the merge base between
 A and B, and check if it is the same as A, in which case, A is an
 ancestor of B.  You will see this idiom used often in older scripts.
 
-	A=$(git rev-parse --verify A)
-	if test "$A" = "$(git merge-base A B)"
-	then
-		... A is an ancestor of B ...
-	fi
+....
+A=$(git rev-parse --verify A)
+if test "$A" = "$(git merge-base A B)"
+then
+	... A is an ancestor of B ...
+fi
+....
 
 In modern git, you can say this in a more direct way:
 
-	if git merge-base --is-ancestor A B
-	then
-		... A is an ancestor of B ...
-	fi
+....
+if git merge-base --is-ancestor A B
+then
+	... A is an ancestor of B ...
+fi
+....
 
 instead.
 
@@ -154,13 +166,15 @@ topic origin/master`, the history of remote-tracking branch
 `origin/master` may have been rewound and rebuilt, leading to a
 history of this shape:
 
-	                 o---B2
-	                /
-	---o---o---B1--o---o---o---B (origin/master)
-	        \
-	         B0
-	          \
-	           D0---D1---D (topic)
+....
+		 o---B2
+		/
+---o---o---B1--o---o---o---B (origin/master)
+	\
+	 B0
+	  \
+	   D0---D1---D (topic)
+....
 
 where `origin/master` used to point at commits B0, B1, B2 and now it
 points at B, and your `topic` branch was started on top of it back
@@ -193,13 +207,15 @@ will find B0, and
 will replay D0, D1 and D on top of B to create a new history of this
 shape:
 
-			 o---B2
-			/
-	---o---o---B1--o---o---o---B (origin/master)
-		\                   \
-		 B0                  D0'--D1'--D' (topic - updated)
-		  \
-		   D0---D1---D (topic - old)
+....
+		 o---B2
+		/
+---o---o---B1--o---o---o---B (origin/master)
+	\                   \
+	 B0                  D0'--D1'--D' (topic - updated)
+	  \
+	   D0---D1---D (topic - old)
+....
 
 A caveat is that older reflog entries in your repository may be
 expired by `git gc`.  If B0 no longer appears in the reflog of the

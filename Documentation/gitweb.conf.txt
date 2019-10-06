@@ -786,9 +786,9 @@ forks::
 	subdirectories of project root (basename) to be forks of existing
 	projects.  For each project +$projname.git+, projects in the
 	+$projname/+ directory and its subdirectories will not be
-	shown in the main projects list.  Instead, a \'\+' mark is shown
-	next to +$projname+, which links to a "forks" view that lists all
-	the forks (all projects in +$projname/+ subdirectory).  Additionally
+	shown in the main projects list.  Instead, a \'+' mark is shown
+	next to `$projname`, which links to a "forks" view that lists all
+	the forks (all projects in `$projname/` subdirectory).  Additionally
 	a "forks" view for a project is linked from project summary page.
 +
 If the project list is taken from a file (+$projects_list+ points to a
