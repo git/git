@@ -2229,7 +2229,7 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 		if (!entry) {
 			entry = xmalloc(sizeof(*entry));
 			dir_rename_entry_init(entry, old_dir);
-			hashmap_put(dir_renames, entry);
+			hashmap_put(dir_renames, &entry->ent);
 		} else {
 			free(old_dir);
 		}
@@ -2360,7 +2360,7 @@ static void compute_collisions(struct hashmap *collisions,
 						sizeof(struct collision_entry));
 			hashmap_entry_init(&collision_ent->ent,
 						strhash(new_path));
-			hashmap_put(collisions, collision_ent);
+			hashmap_put(collisions, &collision_ent->ent);
 			collision_ent->target_file = new_path;
 		} else {
 			free(new_path);

@@ -153,7 +153,7 @@ static void paths_and_oids_insert(struct hashmap *map,
 		hashmap_entry_init(&entry->ent, hash);
 		entry->path = xstrdup(key.path);
 		oidset_init(&entry->trees, 16);
-		hashmap_put(map, entry);
+		hashmap_put(map, &entry->ent);
 	}
 
 	oidset_insert(&entry->trees, oid);

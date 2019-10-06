@@ -340,7 +340,7 @@ void hashmap_add(struct hashmap *map, struct hashmap_entry *entry);
  * `entry` is the entry to add or replace.
  * Returns the replaced entry, or NULL if not found (i.e. the entry was added).
  */
-void *hashmap_put(struct hashmap *map, void *entry);
+void *hashmap_put(struct hashmap *map, struct hashmap_entry *entry);
 
 /*
  * Removes a hashmap entry matching the specified key. If the hashmap contains

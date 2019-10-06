@@ -187,7 +187,7 @@ int cmd__hashmap(int argc, const char **argv)
 			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add / replace entry */
-			entry = hashmap_put(&map, entry);
+			entry = hashmap_put(&map, &entry->ent);
 
 			/* print and free replaced entry, if any */
 			puts(entry ? get_value(entry) : "NULL");

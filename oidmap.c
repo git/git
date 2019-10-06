@@ -51,5 +51,5 @@ void *oidmap_put(struct oidmap *map, void *entry)
 		oidmap_init(map, 0);
 
 	hashmap_entry_init(&to_put->internal_entry, oidhash(&to_put->oid));
-	return hashmap_put(&map->map, to_put);
+	return hashmap_put(&map->map, &to_put->internal_entry);
 }

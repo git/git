@@ -5254,7 +5254,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 			entry->i = i;
 			hashmap_entry_init(&entry->entry,
 					strhash(entry->subject));
-			hashmap_put(&subject2item, entry);
+			hashmap_put(&subject2item, &entry->entry);
 		}
 	}
 

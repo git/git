@@ -160,7 +160,7 @@ static const void *anonymize_mem(struct hashmap *map,
 		ret->orig_len = *len;
 		ret->anon = generate(orig, len);
 		ret->anon_len = *len;
-		hashmap_put(map, ret);
+		hashmap_put(map, &ret->hash);
 	}
 
 	*len = ret->anon_len;

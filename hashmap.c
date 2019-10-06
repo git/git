@@ -241,7 +241,7 @@ void *hashmap_remove(struct hashmap *map, const struct hashmap_entry *key,
 	return old;
 }
 
-void *hashmap_put(struct hashmap *map, void *entry)
+void *hashmap_put(struct hashmap *map, struct hashmap_entry *entry)
 {
 	struct hashmap_entry *old = hashmap_remove(map, entry, NULL);
 	hashmap_add(map, entry);

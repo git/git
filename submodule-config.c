@@ -125,7 +125,7 @@ static void cache_put_path(struct submodule_cache *cache,
 	struct submodule_entry *e = xmalloc(sizeof(*e));
 	hashmap_entry_init(&e->ent, hash);
 	e->config = submodule;
-	hashmap_put(&cache->for_path, e);
+	hashmap_put(&cache->for_path, &e->ent);
 }
 
 static void cache_remove_path(struct submodule_cache *cache,
