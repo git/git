@@ -5,6 +5,7 @@
 
 struct test_entry
 {
+	int padding; /* hashmap entry no longer needs to be the first member */
 	struct hashmap_entry ent;
 	/* key and value as two \0-terminated strings */
 	char key[FLEX_ARRAY];

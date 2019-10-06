@@ -1772,7 +1772,7 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 
 struct ref_store_hash_entry
 {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 
 	struct ref_store *refs;
 

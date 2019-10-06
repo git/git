@@ -251,7 +251,7 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 }
 
 struct refname_hash_entry {
-	struct hashmap_entry ent; /* must be the first member */
+	struct hashmap_entry ent;
 	struct object_id oid;
 	int ignore;
 	char refname[FLEX_ARRAY];

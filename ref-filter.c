@@ -79,7 +79,7 @@ static struct expand_data {
 } oi, oi_deref;
 
 struct ref_to_worktree_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	struct worktree *wt; /* key is wt->head_ref */
 };
 

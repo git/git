@@ -50,7 +50,7 @@ struct merge_options {
  *                       in get_directory_renames() for details
  */
 struct dir_rename_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	char *dir;
 	unsigned non_unique_new_dir:1;
 	struct strbuf new_dir;
@@ -58,7 +58,7 @@ struct dir_rename_entry {
 };
 
 struct collision_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	char *target_file;
 	struct string_list source_files;
 	unsigned reported_already:1;

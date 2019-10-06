@@ -62,7 +62,7 @@ static struct attr_hashmap g_attr_hashmap;
 
 /* The container for objects stored in "struct attr_hashmap" */
 struct attr_hash_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	const char *key; /* the key; memory should be owned by value */
 	size_t keylen; /* length of the key */
 	void *value; /* the stored value */

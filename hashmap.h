@@ -13,7 +13,7 @@
  *
  * struct hashmap map;
  * struct long2string {
- *     struct hashmap_entry ent; // must be the first member!
+ *     struct hashmap_entry ent;
  *     long key;
  *     char value[FLEX_ARRAY];   // be careful with allocating on stack!
  * };
@@ -141,7 +141,7 @@ static inline unsigned int oidhash(const struct object_id *oid)
 
 /*
  * struct hashmap_entry is an opaque structure representing an entry in the
- * hash table, which must be used as first member of user data structures.
+ * hash table.
  * Ideally it should be followed by an int-sized member to prevent unused
  * memory on 64-bit systems due to alignment.
  */

@@ -24,7 +24,7 @@
 
 /* Members should not be accessed directly. */
 struct subprocess_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	const char *cmd;
 	struct child_process process;
 };
