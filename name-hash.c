@@ -702,17 +702,16 @@ void adjust_dirname_case(struct index_state *istate, char *name)
 struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int icase)
 {
 	struct cache_entry *ce;
-	struct hashmap_entry *ent;
+	unsigned int hash = memihash(name, namelen);
 
 	lazy_init_name_hash(istate);
 
-	ent = hashmap_get_from_hash(&istate->name_hash,
-				   memihash(name, namelen), NULL);
-	while (ent) {
-		ce = container_of(ent, struct cache_entry, ent);
+	ce = hashmap_get_entry_from_hash(&istate->name_hash, hash, NULL,
+					 struct cache_entry, ent);
+	hashmap_for_each_entry_from(&istate->name_hash, ce,
+					struct cache_entry, ent) {
 		if (same_name(ce, name, namelen, icase))
 			return ce;
-		ent = hashmap_get_next(&istate->name_hash, ent);
 	}
 	return NULL;
 }

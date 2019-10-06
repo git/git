@@ -55,17 +55,15 @@
  *
  *         if (!strcmp("print_all_by_key", action)) {
  *             struct long2string k, *e;
- *             struct hashmap_entry *ent;
  *             hashmap_entry_init(&k->ent, memhash(&key, sizeof(long)));
  *             k.key = key;
  *
  *             flags &= ~COMPARE_VALUE;
- *             ent = hashmap_get(&map, &k, NULL);
- *             if (ent) {
- *                 e = container_of(ent, struct long2string, ent);
+ *             e = hashmap_get_entry(&map, &k, NULL, struct long2string, ent);
+ *             if (e) {
  *                 printf("first: %ld %s\n", e->key, e->value);
- *                 while ((ent = hashmap_get_next(&map, ent))) {
- *                     e = container_of(ent, struct long2string, ent);
+ *                 while ((e = hashmap_get_next_entry(&map, e,
+ *                                              struct long2string, ent))) {
  *                     printf("found more: %ld %s\n", e->key, e->value);
  *                 }
  *             }
@@ -386,6 +384,36 @@ static inline void *hashmap_iter_first(struct hashmap *map,
 	hashmap_iter_init(map, iter);
 	return hashmap_iter_next(iter);
 }
+
+/*
+ * returns a @pointer of @type matching @keyvar, or NULL if nothing found.
+ * @keyvar is a pointer of @type
+ * @member is the name of the "struct hashmap_entry" field in @type
+ */
+#define hashmap_get_entry(map, keyvar, keydata, type, member) \
+	container_of_or_null(hashmap_get(map, &(keyvar)->member, keydata), \
+				type, member)
+
+#define hashmap_get_entry_from_hash(map, hash, keydata, type, member) \
+	container_of_or_null(hashmap_get_from_hash(map, hash, keydata), \
+				type, member)
+/*
+ * returns the next equal @type pointer to @var, or NULL if not found.
+ * @var is a pointer of @type
+ * @member is the name of the "struct hashmap_entry" field in @type
+ */
+#define hashmap_get_next_entry(map, var, type, member) \
+	container_of_or_null(hashmap_get_next(map, &(var)->member), \
+				type, member)
+
+/*
+ * iterate @map starting from @var, where @var is a pointer of @type
+ * and @member is the name of the "struct hashmap_entry" field in @type
+ */
+#define hashmap_for_each_entry_from(map, var, type, member) \
+	for (; \
+		var; \
+		var = hashmap_get_next_entry(map, var, type, member))
 
 /*
  * Disable item counting and automatic rehashing when adding/removing items.

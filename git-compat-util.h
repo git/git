@@ -1322,4 +1322,19 @@ void unleak_memory(const void *ptr, size_t len);
 #define container_of(ptr, type, member) \
 	((type *) ((char *)(ptr) - offsetof(type, member)))
 
+/*
+ * helper function for `container_of_or_null' to avoid multiple
+ * evaluation of @ptr
+ */
+static inline void *container_of_or_null_offset(void *ptr, size_t offset)
+{
+	return ptr ? (char *)ptr - offset : NULL;
+}
+
+/*
+ * like `container_of', but allows returned value to be NULL
+ */
+#define container_of_or_null(ptr, type, member) \
+	(type *)container_of_or_null_offset(ptr, offsetof(type, member))
+
 #endif

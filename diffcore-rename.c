@@ -274,23 +274,19 @@ static int find_identical_files(struct hashmap *srcs,
 				struct diff_options *options)
 {
 	int renames = 0;
-	struct hashmap_entry *ent;
 	struct diff_filespec *target = rename_dst[dst_index].two;
 	struct file_similarity *p, *best = NULL;
 	int i = 100, best_score = -1;
+	unsigned int hash = hash_filespec(options->repo, target);
 
 	/*
 	 * Find the best source match for specified destination.
 	 */
-	ent = hashmap_get_from_hash(srcs,
-				  hash_filespec(options->repo, target),
-				  NULL);
-	for (; ent; ent = hashmap_get_next(srcs, ent)) {
+	p = hashmap_get_entry_from_hash(srcs, hash, NULL,
+					struct file_similarity, entry);
+	hashmap_for_each_entry_from(srcs, p, struct file_similarity, entry) {
 		int score;
-		struct diff_filespec *source;
-
-		p = container_of(ent, struct file_similarity, entry);
-		source = p->filespec;
+		struct diff_filespec *source = p->filespec;
 
 		/* False hash collision? */
 		if (!oideq(&source->oid, &target->oid))

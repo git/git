@@ -1035,10 +1035,8 @@ static void pmb_advance_or_null_multi_match(struct diff_options *o,
 {
 	int i;
 	char *got_match = xcalloc(1, pmb_nr);
-	struct hashmap_entry *ent;
 
-	for (ent = &match->ent; ent; ent = hashmap_get_next(hm, ent)) {
-		match = container_of(ent, struct moved_entry, ent);
+	hashmap_for_each_entry_from(hm, match, struct moved_entry, ent) {
 		for (i = 0; i < pmb_nr; i++) {
 			struct moved_entry *prev = pmb[i].match;
 			struct moved_entry *cur = (prev && prev->next_line) ?
@@ -1137,9 +1135,8 @@ static void mark_color_as_moved(struct diff_options *o,
 
 	for (n = 0; n < o->emitted_symbols->nr; n++) {
 		struct hashmap *hm = NULL;
-		struct hashmap_entry *ent = NULL;
 		struct moved_entry *key;
-		struct moved_entry *match;
+		struct moved_entry *match = NULL;
 		struct emitted_diff_symbol *l = &o->emitted_symbols->buf[n];
 		enum diff_symbol last_symbol = 0;
 
@@ -1147,20 +1144,22 @@ static void mark_color_as_moved(struct diff_options *o,
 		case DIFF_SYMBOL_PLUS:
 			hm = del_lines;
 			key = prepare_entry(o, n);
-			ent = hashmap_get(hm, &key->ent, NULL);
+			match = hashmap_get_entry(hm, key, NULL,
+						struct moved_entry, ent);
 			free(key);
 			break;
 		case DIFF_SYMBOL_MINUS:
 			hm = add_lines;
 			key = prepare_entry(o, n);
-			ent = hashmap_get(hm, &key->ent, NULL);
+			match = hashmap_get_entry(hm, key, NULL,
+						struct moved_entry, ent);
 			free(key);
 			break;
 		default:
 			flipped_block = 0;
 		}
 
-		if (!ent) {
+		if (!match) {
 			int i;
 
 			adjust_last_block(o, n, block_length);
@@ -1172,7 +1171,6 @@ static void mark_color_as_moved(struct diff_options *o,
 			last_symbol = l->s;
 			continue;
 		}
-		match = container_of(ent, struct moved_entry, ent);
 
 		if (o->color_moved == COLOR_MOVED_PLAIN) {
 			last_symbol = l->s;
@@ -1193,9 +1191,8 @@ static void mark_color_as_moved(struct diff_options *o,
 			 * The current line is the start of a new block.
 			 * Setup the set of potential blocks.
 			 */
-			for (; ent; ent = hashmap_get_next(hm, ent)) {
-				match = container_of(ent, struct moved_entry,
-							ent);
+			hashmap_for_each_entry_from(hm, match,
+						struct moved_entry, ent) {
 				ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
 				if (o->color_moved_ws_handling &
 				    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {

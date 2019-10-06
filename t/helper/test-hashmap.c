@@ -194,18 +194,16 @@ int cmd__hashmap(int argc, const char **argv)
 			free(entry);
 
 		} else if (!strcmp("get", cmd) && p1) {
-			struct hashmap_entry *e;
-
 			/* lookup entry in hashmap */
-			e = hashmap_get_from_hash(&map, hash, p1);
+			entry = hashmap_get_entry_from_hash(&map, hash, p1,
+							struct test_entry, ent);
 
 			/* print result */
-			if (!e)
+			if (!entry)
 				puts("NULL");
-			while (e) {
-				entry = container_of(e, struct test_entry, ent);
+			hashmap_for_each_entry_from(&map, entry,
+						struct test_entry, ent) {
 				puts(get_value(entry));
-				e = hashmap_get_next(&map, e);
 			}
 
 		} else if (!strcmp("remove", cmd) && p1) {
