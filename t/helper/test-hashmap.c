@@ -222,10 +222,11 @@ int cmd__hashmap(int argc, const char **argv)
 			free(entry);
 
 		} else if (!strcmp("iterate", cmd)) {
-
 			struct hashmap_iter iter;
-			hashmap_iter_init(&map, &iter);
-			while ((entry = hashmap_iter_next(&iter)))
+
+			hashmap_for_each_entry(&map, &iter, entry,
+						struct test_entry,
+						ent /* member name */)
 				printf("%s %s\n", entry->key, get_value(entry));
 
 		} else if (!strcmp("size", cmd)) {

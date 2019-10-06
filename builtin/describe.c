@@ -333,8 +333,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		struct commit_name *n;
 
 		init_commit_names(&commit_names);
-		n = hashmap_iter_first(&names, &iter);
-		for (; n; n = hashmap_iter_next(&iter)) {
+		hashmap_for_each_entry(&names, &iter, n, struct commit_name,
+					entry /* member name */) {
 			c = lookup_commit_reference_gently(the_repository,
 							   &n->peeled, 1);
 			if (c)

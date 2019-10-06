@@ -2135,8 +2135,9 @@ static void handle_directory_level_conflicts(struct merge_options *opt,
 	struct string_list remove_from_head = STRING_LIST_INIT_NODUP;
 	struct string_list remove_from_merge = STRING_LIST_INIT_NODUP;
 
-	hashmap_iter_init(dir_re_head, &iter);
-	while ((head_ent = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_re_head, &iter, head_ent,
+				struct dir_rename_entry,
+				ent /* member name */) {
 		merge_ent = dir_rename_find_entry(dir_re_merge, head_ent->dir);
 		if (merge_ent &&
 		    !head_ent->non_unique_new_dir &&
@@ -2160,8 +2161,9 @@ static void handle_directory_level_conflicts(struct merge_options *opt,
 	remove_hashmap_entries(dir_re_head, &remove_from_head);
 	remove_hashmap_entries(dir_re_merge, &remove_from_merge);
 
-	hashmap_iter_init(dir_re_merge, &iter);
-	while ((merge_ent = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_re_merge, &iter, merge_ent,
+				struct dir_rename_entry,
+				ent /* member name */) {
 		head_ent = dir_rename_find_entry(dir_re_head, merge_ent->dir);
 		if (tree_has_path(opt->repo, merge, merge_ent->dir)) {
 			/* 2. This wasn't a directory rename after all */
@@ -2265,8 +2267,9 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 	 * we set non_unique_new_dir.  Once we've determined the winner (or
 	 * that there is no winner), we no longer need possible_new_dirs.
 	 */
-	hashmap_iter_init(dir_renames, &iter);
-	while ((entry = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_renames, &iter, entry,
+				struct dir_rename_entry,
+				ent /* member name */) {
 		int max = 0;
 		int bad_max = 0;
 		char *best = NULL;
@@ -2624,8 +2627,9 @@ static struct string_list *get_renames(struct merge_options *opt,
 							     entries);
 	}
 
-	hashmap_iter_init(&collisions, &iter);
-	while ((e = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(&collisions, &iter, e,
+				struct collision_entry,
+				ent /* member name */) {
 		free(e->target_file);
 		string_list_clear(&e->source_files, 0);
 	}
@@ -2842,8 +2846,9 @@ static void initial_cleanup_rename(struct diff_queue_struct *pairs,
 	struct hashmap_iter iter;
 	struct dir_rename_entry *e;
 
-	hashmap_iter_init(dir_renames, &iter);
-	while ((e = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_renames, &iter, e,
+				struct dir_rename_entry,
+				ent /* member name */) {
 		free(e->dir);
 		strbuf_release(&e->new_dir);
 		/* possible_new_dirs already cleared in get_directory_renames */

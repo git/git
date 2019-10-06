@@ -256,7 +256,7 @@ void hashmap_iter_init(struct hashmap *map, struct hashmap_iter *iter)
 	iter->next = NULL;
 }
 
-void *hashmap_iter_next(struct hashmap_iter *iter)
+struct hashmap_entry *hashmap_iter_next(struct hashmap_iter *iter)
 {
 	struct hashmap_entry *current = iter->next;
 	for (;;) {

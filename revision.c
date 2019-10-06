@@ -128,9 +128,10 @@ static void paths_and_oids_clear(struct hashmap *map)
 {
 	struct hashmap_iter iter;
 	struct path_and_oids_entry *entry;
-	hashmap_iter_init(map, &iter);
 
-	while ((entry = (struct path_and_oids_entry *)hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(map, &iter, entry,
+				struct path_and_oids_entry,
+				ent /* member name */) {
 		oidset_clear(&entry->trees);
 		free(entry->path);
 	}
@@ -242,8 +243,9 @@ void mark_trees_uninteresting_sparse(struct repository *r,
 		add_children_by_path(r, tree, &map);
 	}
 
-	hashmap_iter_init(&map, &map_iter);
-	while ((entry = hashmap_iter_next(&map_iter)))
+	hashmap_for_each_entry(&map, &map_iter, entry,
+				struct path_and_oids_entry,
+				ent /* member name */)
 		mark_trees_uninteresting_sparse(r, &entry->trees);
 
 	paths_and_oids_clear(&map);

@@ -163,12 +163,13 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 	if (size != check->all_attrs_nr) {
 		struct attr_hash_entry *e;
 		struct hashmap_iter iter;
-		hashmap_iter_init(&map->map, &iter);
 
 		REALLOC_ARRAY(check->all_attrs, size);
 		check->all_attrs_nr = size;
 
-		while ((e = hashmap_iter_next(&iter))) {
+		hashmap_for_each_entry(&map->map, &iter, e,
+					struct attr_hash_entry,
+					ent /* member name */) {
 			const struct git_attr *a = e->value;
 			check->all_attrs[a->attr_nr].attr = a;
 		}

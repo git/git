@@ -99,8 +99,8 @@ static void submodule_cache_clear(struct submodule_cache *cache)
 	 * allocation of struct submodule entries. Each is allocated by
 	 * their .gitmodules blob sha1 and submodule name.
 	 */
-	hashmap_iter_init(&cache->for_name, &iter);
-	while ((entry = hashmap_iter_next(&iter)))
+	hashmap_for_each_entry(&cache->for_name, &iter, entry,
+				struct submodule_entry, ent /* member name */)
 		free_one_config(entry);
 
 	hashmap_free(&cache->for_path, 1);
@@ -556,7 +556,9 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		struct hashmap_iter iter;
 		struct submodule_entry *entry;
 
-		entry = hashmap_iter_first(&cache->for_name, &iter);
+		entry = hashmap_iter_first_entry(&cache->for_name, &iter,
+						struct submodule_entry,
+						ent /* member name */);
 		if (!entry)
 			return NULL;
 		return entry->config;

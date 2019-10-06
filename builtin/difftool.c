@@ -538,8 +538,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * temporary file to both the left and right directories to show the
 	 * change in the recorded SHA1 for the submodule.
 	 */
-	hashmap_iter_init(&submodules, &iter);
-	while ((entry = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(&submodules, &iter, entry,
+				struct pair_entry, entry /* member name */) {
 		if (*entry->left) {
 			add_path(&ldir, ldir_len, entry->path);
 			ensure_leading_directories(ldir.buf);
@@ -557,8 +557,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * shows only the link itself, not the contents of the link target.
 	 * This loop replicates that behavior.
 	 */
-	hashmap_iter_init(&symlinks2, &iter);
-	while ((entry = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(&symlinks2, &iter, entry,
+				struct pair_entry, entry /* member name */) {
 		if (*entry->left) {
 			add_path(&ldir, ldir_len, entry->path);
 			ensure_leading_directories(ldir.buf);

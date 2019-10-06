@@ -1942,8 +1942,9 @@ void git_configset_clear(struct config_set *cs)
 	if (!cs->hash_initialized)
 		return;
 
-	hashmap_iter_init(&cs->config_hash, &iter);
-	while ((entry = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(&cs->config_hash, &iter, entry,
+				struct config_set_element,
+				ent /* member name */) {
 		free(entry->key);
 		string_list_clear(&entry->value_list, 1);
 	}

@@ -382,15 +382,26 @@ struct hashmap_iter {
 void hashmap_iter_init(struct hashmap *map, struct hashmap_iter *iter);
 
 /* Returns the next hashmap_entry, or NULL if there are no more entries. */
-void *hashmap_iter_next(struct hashmap_iter *iter);
+struct hashmap_entry *hashmap_iter_next(struct hashmap_iter *iter);
 
 /* Initializes the iterator and returns the first entry, if any. */
-static inline void *hashmap_iter_first(struct hashmap *map,
+static inline struct hashmap_entry *hashmap_iter_first(struct hashmap *map,
 		struct hashmap_iter *iter)
 {
 	hashmap_iter_init(map, iter);
 	return hashmap_iter_next(iter);
 }
+
+#define hashmap_iter_next_entry(iter, type, member) \
+	container_of_or_null(hashmap_iter_next(iter), type, member)
+
+#define hashmap_iter_first_entry(map, iter, type, member) \
+	container_of_or_null(hashmap_iter_first(map, iter), type, member)
+
+#define hashmap_for_each_entry(map, iter, var, type, member) \
+	for (var = hashmap_iter_first_entry(map, iter, type, member); \
+		var; \
+		var = hashmap_iter_next_entry(iter, type, member))
 
 /*
  * returns a @pointer of @type matching @keyvar, or NULL if nothing found.
