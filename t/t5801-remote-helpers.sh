@@ -247,7 +247,6 @@ clean_mark () {
 test_expect_success 'proper failure checks for fetching' '
 	(cd local &&
 	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git fetch 2>error &&
-	cat error &&
 	test_i18ngrep -q "error while running fast-import" error
 	)
 '

@@ -527,7 +527,6 @@ test_expect_success 'update --init' '
 	test_must_fail git config submodule.example.url &&
 
 	git submodule update init 2> update.out &&
-	cat update.out &&
 	test_i18ngrep "not initialized" update.out &&
 	test_must_fail git rev-parse --resolve-git-dir init/.git &&
 
@@ -545,7 +544,6 @@ test_expect_success 'update --init from subdirectory' '
 	(
 		cd sub &&
 		git submodule update ../init 2>update.out &&
-		cat update.out &&
 		test_i18ngrep "not initialized" update.out &&
 		test_must_fail git rev-parse --resolve-git-dir ../init/.git &&
 
