@@ -1035,8 +1035,10 @@ static void pmb_advance_or_null_multi_match(struct diff_options *o,
 {
 	int i;
 	char *got_match = xcalloc(1, pmb_nr);
+	struct hashmap_entry *ent;
 
-	for (; match; match = hashmap_get_next(hm, &match->ent)) {
+	for (ent = &match->ent; ent; ent = hashmap_get_next(hm, ent)) {
+		match = container_of(ent, struct moved_entry, ent);
 		for (i = 0; i < pmb_nr; i++) {
 			struct moved_entry *prev = pmb[i].match;
 			struct moved_entry *cur = (prev && prev->next_line) ?
@@ -1135,8 +1137,9 @@ static void mark_color_as_moved(struct diff_options *o,
 
 	for (n = 0; n < o->emitted_symbols->nr; n++) {
 		struct hashmap *hm = NULL;
+		struct hashmap_entry *ent = NULL;
 		struct moved_entry *key;
-		struct moved_entry *match = NULL;
+		struct moved_entry *match;
 		struct emitted_diff_symbol *l = &o->emitted_symbols->buf[n];
 		enum diff_symbol last_symbol = 0;
 
@@ -1144,20 +1147,20 @@ static void mark_color_as_moved(struct diff_options *o,
 		case DIFF_SYMBOL_PLUS:
 			hm = del_lines;
 			key = prepare_entry(o, n);
-			match = hashmap_get(hm, &key->ent, NULL);
+			ent = hashmap_get(hm, &key->ent, NULL);
 			free(key);
 			break;
 		case DIFF_SYMBOL_MINUS:
 			hm = add_lines;
 			key = prepare_entry(o, n);
-			match = hashmap_get(hm, &key->ent, NULL);
+			ent = hashmap_get(hm, &key->ent, NULL);
 			free(key);
 			break;
 		default:
 			flipped_block = 0;
 		}
 
-		if (!match) {
+		if (!ent) {
 			int i;
 
 			adjust_last_block(o, n, block_length);
@@ -1169,6 +1172,7 @@ static void mark_color_as_moved(struct diff_options *o,
 			last_symbol = l->s;
 			continue;
 		}
+		match = container_of(ent, struct moved_entry, ent);
 
 		if (o->color_moved == COLOR_MOVED_PLAIN) {
 			last_symbol = l->s;
@@ -1189,8 +1193,9 @@ static void mark_color_as_moved(struct diff_options *o,
 			 * The current line is the start of a new block.
 			 * Setup the set of potential blocks.
 			 */
-			for (; match; match = hashmap_get_next(hm,
-								&match->ent)) {
+			for (; ent; ent = hashmap_get_next(hm, ent)) {
+				match = container_of(ent, struct moved_entry,
+							ent);
 				ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
 				if (o->color_moved_ws_handling &
 				    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {

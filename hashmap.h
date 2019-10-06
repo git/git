@@ -55,15 +55,19 @@
  *
  *         if (!strcmp("print_all_by_key", action)) {
  *             struct long2string k, *e;
+ *             struct hashmap_entry *ent;
  *             hashmap_entry_init(&k->ent, memhash(&key, sizeof(long)));
  *             k.key = key;
  *
  *             flags &= ~COMPARE_VALUE;
- *             e = hashmap_get(&map, &k, NULL);
- *             if (e) {
+ *             ent = hashmap_get(&map, &k, NULL);
+ *             if (ent) {
+ *                 e = container_of(ent, struct long2string, ent);
  *                 printf("first: %ld %s\n", e->key, e->value);
- *                 while ((e = hashmap_get_next(&map, e)))
+ *                 while ((ent = hashmap_get_next(&map, ent))) {
+ *                     e = container_of(ent, struct long2string, ent);
  *                     printf("found more: %ld %s\n", e->key, e->value);
+ *                 }
  *             }
  *         }
  *
@@ -320,7 +324,7 @@ static inline void *hashmap_get_from_hash(const struct hashmap *map,
  * `entry` is the hashmap_entry to start the search from, obtained via a previous
  * call to `hashmap_get` or `hashmap_get_next`.
  */
-void *hashmap_get_next(const struct hashmap *map,
+struct hashmap_entry *hashmap_get_next(const struct hashmap *map,
 			const struct hashmap_entry *entry);
 
 /*

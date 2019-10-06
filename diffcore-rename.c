@@ -274,7 +274,7 @@ static int find_identical_files(struct hashmap *srcs,
 				struct diff_options *options)
 {
 	int renames = 0;
-
+	struct hashmap_entry *ent;
 	struct diff_filespec *target = rename_dst[dst_index].two;
 	struct file_similarity *p, *best = NULL;
 	int i = 100, best_score = -1;
@@ -282,12 +282,15 @@ static int find_identical_files(struct hashmap *srcs,
 	/*
 	 * Find the best source match for specified destination.
 	 */
-	p = hashmap_get_from_hash(srcs,
+	ent = hashmap_get_from_hash(srcs,
 				  hash_filespec(options->repo, target),
 				  NULL);
-	for (; p; p = hashmap_get_next(srcs, &p->entry)) {
+	for (; ent; ent = hashmap_get_next(srcs, ent)) {
 		int score;
-		struct diff_filespec *source = p->filespec;
+		struct diff_filespec *source;
+
+		p = container_of(ent, struct file_similarity, entry);
+		source = p->filespec;
 
 		/* False hash collision? */
 		if (!oideq(&source->oid, &target->oid))
