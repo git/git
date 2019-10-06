@@ -1312,4 +1312,14 @@ void unleak_memory(const void *ptr, size_t len);
  */
 #include "banned.h"
 
+/*
+ * container_of - Get the address of an object containing a field.
+ *
+ * @ptr: pointer to the field.
+ * @type: type of the object.
+ * @member: name of the field within the object.
+ */
+#define container_of(ptr, type, member) \
+	((type *) ((char *)(ptr) - offsetof(type, member)))
+
 #endif
