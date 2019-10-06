@@ -318,7 +318,8 @@ static inline void *hashmap_get_from_hash(const struct hashmap *map,
  * `entry` is the hashmap_entry to start the search from, obtained via a previous
  * call to `hashmap_get` or `hashmap_get_next`.
  */
-void *hashmap_get_next(const struct hashmap *map, const void *entry);
+void *hashmap_get_next(const struct hashmap *map,
+			const struct hashmap_entry *entry);
 
 /*
  * Adds a hashmap entry. This allows to add duplicate entries (i.e.

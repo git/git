@@ -710,7 +710,7 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
 	while (ce) {
 		if (same_name(ce, name, namelen, icase))
 			return ce;
-		ce = hashmap_get_next(&istate->name_hash, ce);
+		ce = hashmap_get_next(&istate->name_hash, &ce->ent);
 	}
 	return NULL;
 }
