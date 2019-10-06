@@ -95,7 +95,7 @@ static void remove_dir_entry(struct index_state *istate, struct cache_entry *ce)
 	struct dir_entry *dir = hash_dir_entry(istate, ce, ce_namelen(ce));
 	while (dir && !(--dir->nr)) {
 		struct dir_entry *parent = dir->parent;
-		hashmap_remove(&istate->dir_hash, dir, NULL);
+		hashmap_remove(&istate->dir_hash, &dir->ent, NULL);
 		free(dir);
 		dir = parent;
 	}
@@ -625,7 +625,7 @@ void remove_name_hash(struct index_state *istate, struct cache_entry *ce)
 	if (!istate->name_hash_initialized || !(ce->ce_flags & CE_HASHED))
 		return;
 	ce->ce_flags &= ~CE_HASHED;
-	hashmap_remove(&istate->name_hash, ce, ce);
+	hashmap_remove(&istate->name_hash, &ce->ent, ce);
 
 	if (ignore_case)
 		remove_dir_entry(istate, ce);

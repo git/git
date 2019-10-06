@@ -58,7 +58,7 @@ void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry)
 	kill(entry->process.pid, SIGTERM);
 	finish_command(&entry->process);
 
-	hashmap_remove(hashmap, entry, NULL);
+	hashmap_remove(hashmap, &entry->ent, NULL);
 }
 
 static void subprocess_exit_handler(struct child_process *process)

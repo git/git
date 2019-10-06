@@ -137,7 +137,7 @@ static void cache_remove_path(struct submodule_cache *cache,
 	struct submodule_entry *removed;
 	hashmap_entry_init(&e.ent, hash);
 	e.config = submodule;
-	removed = hashmap_remove(&cache->for_path, &e, NULL);
+	removed = hashmap_remove(&cache->for_path, &e.ent, NULL);
 	free(removed);
 }
 

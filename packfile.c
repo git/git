@@ -1423,7 +1423,7 @@ static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
  */
 static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 {
-	hashmap_remove(&delta_base_cache, ent, &ent->key);
+	hashmap_remove(&delta_base_cache, &ent->ent, &ent->key);
 	list_del(&ent->lru);
 	delta_base_cached -= ent->size;
 	free(ent);

@@ -2001,7 +2001,7 @@ static void remove_hashmap_entries(struct hashmap *dir_renames,
 
 	for (i = 0; i < items_to_remove->nr; i++) {
 		entry = items_to_remove->items[i].util;
-		hashmap_remove(dir_renames, entry, NULL);
+		hashmap_remove(dir_renames, &entry->ent, NULL);
 	}
 	string_list_clear(items_to_remove, 0);
 }

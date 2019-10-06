@@ -349,7 +349,7 @@ void *hashmap_put(struct hashmap *map, void *entry);
  *
  * Argument explanation is the same as in `hashmap_get`.
  */
-void *hashmap_remove(struct hashmap *map, const void *key,
+void *hashmap_remove(struct hashmap *map, const struct hashmap_entry *key,
 		const void *keydata);
 
 /*

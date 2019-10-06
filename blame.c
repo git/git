@@ -473,7 +473,7 @@ static void fingerprint_subtract(struct fingerprint *a, struct fingerprint *b)
 	while ((entry_b = hashmap_iter_next(&iter))) {
 		if ((entry_a = hashmap_get(&a->map, &entry_b->entry, NULL))) {
 			if (entry_a->count <= entry_b->count)
-				hashmap_remove(&a->map, entry_b, NULL);
+				hashmap_remove(&a->map, &entry_b->entry, NULL);
 			else
 				entry_a->count -= entry_b->count;
 		}
