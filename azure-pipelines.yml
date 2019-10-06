@@ -374,7 +374,7 @@ jobs:
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
-       sudo apt-get install -y asciidoc xmlto asciidoctor &&
+       sudo apt-get install -y asciidoc xmlto asciidoctor docbook-xsl-ns &&
 
        export ALREADY_HAVE_ASCIIDOCTOR=yes. &&
        export jobname=Documentation &&
