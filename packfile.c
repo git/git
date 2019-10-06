@@ -1361,7 +1361,7 @@ struct delta_base_cache_key {
 };
 
 struct delta_base_cache_entry {
-	struct hashmap hash;
+	struct hashmap_entry ent;
 	struct delta_base_cache_key key;
 	struct list_head lru;
 	void *data;
