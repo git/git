@@ -964,8 +964,9 @@ static struct moved_entry *prepare_entry(struct diff_options *o,
 	struct moved_entry *ret = xmalloc(sizeof(*ret));
 	struct emitted_diff_symbol *l = &o->emitted_symbols->buf[line_no];
 	unsigned flags = o->color_moved_ws_handling & XDF_WHITESPACE_FLAGS;
+	unsigned int hash = xdiff_hash_string(l->line, l->len, flags);
 
-	ret->ent.hash = xdiff_hash_string(l->line, l->len, flags);
+	hashmap_entry_init(&ret->ent, hash);
 	ret->es = l;
 	ret->next_line = NULL;
 
