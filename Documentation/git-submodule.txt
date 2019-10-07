@@ -173,7 +173,8 @@ submodule with the `--init` option.
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
 --
-set-branch ((-d|--default)|(-b|--branch <branch>)) [--] <path>::
+set-branch (-b|--branch) <branch> [--] <path>::
+set-branch (-d|--default) [--] <path>::
 	Sets the default remote tracking branch for the submodule. The
 	`--branch` option allows the remote branch to be specified. The
 	`--default` option removes the submodule.<name>.branch configuration
