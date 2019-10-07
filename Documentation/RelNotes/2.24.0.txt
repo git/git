@@ -107,6 +107,21 @@ Performance, Internal Implementation, Development Support etc.
    things like sparse checkout specification that want to check if a
    path is "included".
 
+ * "git stash" learned to write refreshed index back to disk.
+
+ * Coccinelle checks are done on more source files than before now.
+
+ * The cache-tree code has been taught to be less aggressive in
+   attempting to see if a tree object it computed already exists in
+   the repository.
+
+ * The code to parse and use the commit-graph file has been made more
+   robust against corrupted input.
+
+ * The hg-to-git script (in contrib/) has been updated to work with
+   Python 3.
+
+ * Update the way build artifacts in t/helper/ directory are ignored.
 
 
 Fixes since v2.23
@@ -207,6 +222,38 @@ Fixes since v2.23
    that is not UTF-8 even when JIT is not in use with PCRE1.
    (merge ad7c543e3b cb/skip-utf8-check-with-pcre1 later to maint).
 
+ * The name of the blob object that stores the filter specification
+   for sparse cloning/fetching was interpreted in a wrong place in the
+   code, causing Git to abort.
+
+ * "git log --decorate-refs-exclude=<pattern>" was incorrectly
+   overruled when the "--simplify-by-decoration" option is used, which
+   has been corrected.
+   (merge 0cc7380d88 rs/simplify-by-deco-with-deco-refs-exclude later to maint).
+
+ * The "upload-pack" (the counterpart of "git fetch") needs to disable
+   commit-graph when responding to a shallow clone/fetch request, but
+   the way this was done made Git panic, which has been corrected.
+
+ * The object traversal machinery has been optimized not to load tree
+   objects when we are only interested in commit history.
+   (merge 72ed80c784 jk/list-objects-optim-wo-trees later to maint).
+
+ * The object name parser for "Nth parent" syntax has been made more
+   robust against integer overflows.
+   (merge 59fa5f5a25 rs/nth-parent-parse later to maint).
+
+ * The code used in following tags in "git fetch" has been optimized.
+   (merge b7e2d8bca5 ms/fetch-follow-tag-optim later to maint).
+
+ * Regression fix for progress output.
+   (merge 2bb74b53a4 sg/progress-fix later to maint).
+
+ * A bug in merge-recursive code that triggers when a branch with a
+   symbolic link is merged with a branch that replaces it with a
+   directory has been fixed.
+   (merge 83e3ad3b12 jt/merge-recursive-symlink-is-not-a-dir-in-way later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
    (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
@@ -224,3 +271,17 @@ Fixes since v2.23
    (merge 27fd1e4ea7 en/merge-options-ff-and-friends later to maint).
    (merge 502c386ff9 sg/clean-nested-repo-with-ignored later to maint).
    (merge 26e3d1cbea am/mailmap-andrey-mazo later to maint).
+   (merge 47b27c96fa ss/get-time-cleanup later to maint).
+   (merge dd2e50a84e jk/commit-graph-cleanup later to maint).
+   (merge 4fd39c76e6 cs/pretty-formats-doc-typofix later to maint).
+   (merge 40e747e89d dl/submodule-set-branch later to maint).
+   (merge 689a146c91 rs/commit-graph-use-list-count later to maint).
+   (merge 0eb7c37a8a js/doc-patch-text later to maint).
+   (merge 4b3aa170d1 rs/nth-switch-code-simplification later to maint).
+   (merge 0d4304c124 ah/doc-submodule-ignore-submodules later to maint).
+   (merge af78249463 cc/svn-fe-py-shebang later to maint).
+   (merge 7bd97d6dff rs/alias-use-copy-array later to maint).
+   (merge c46ebc2496 sg/travis-help-debug later to maint).
+   (merge 24c681794f ps/my-first-contribution-alphasort later to maint).
+   (merge 75b2c15435 cb/do-not-use-test-cmp-with-a later to maint).
+   (merge cda0d497e3 bw/submodule-helper-usage-fix later to maint).
