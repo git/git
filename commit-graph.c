@@ -1994,8 +1994,10 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 	if (verify_commit_graph_error & ~VERIFY_COMMIT_GRAPH_ERROR_HASH)
 		return verify_commit_graph_error;
 
-	progress = start_progress(_("Verifying commits in commit graph"),
-				  g->num_commits);
+	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
+		progress = start_progress(_("Verifying commits in commit graph"),
+					g->num_commits);
+
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit, *odb_commit;
 		struct commit_list *graph_parents, *odb_parents;
