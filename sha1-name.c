@@ -1160,13 +1160,22 @@ static enum get_oid_result get_oid_1(struct repository *r,
 	}
 
 	if (has_suffix) {
-		int num = 0;
+		unsigned int num = 0;
 		int len1 = cp - name;
 		cp++;
-		while (cp < name + len)
-			num = num * 10 + *cp++ - '0';
+		while (cp < name + len) {
+			unsigned int digit = *cp++ - '0';
+			if (unsigned_mult_overflows(num, 10))
+				return MISSING_OBJECT;
+			num *= 10;
+			if (unsigned_add_overflows(num, digit))
+				return MISSING_OBJECT;
+			num += digit;
+		}
 		if (!num && len1 == len - 1)
 			num = 1;
+		else if (num > INT_MAX)
+			return MISSING_OBJECT;
 		if (has_suffix == '^')
 			return get_parent(r, name, len1, oid, num);
 		/* else if (has_suffix == '~') -- goes without saying */
