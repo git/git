@@ -1,11 +1,15 @@
-Generating patches with -p
---------------------------
+Generating patch text with -p
+-----------------------------
 
-When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
-with a `-p` option, "git diff" without the `--raw` option, or
-"git log" with the "-p" option, they
-do not produce the output described above; instead they produce a
-patch file.  You can customize the creation of such patches via the
+Running
+linkgit:git-diff[1],
+linkgit:git-log[1],
+linkgit:git-show[1],
+linkgit:git-diff-index[1],
+linkgit:git-diff-tree[1], or
+linkgit:git-diff-files[1]
+with the `-p` option produces patch text.
+You can customize the creation of patch text via the
 `GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables.
 
 What the -p option produces is slightly different from the traditional
@@ -49,7 +53,7 @@ similarity index value of 100% is thus reserved for two equal
 files, while 100% dissimilarity means that no line from the old
 file made it into the new one.
 +
-The index line includes the SHA-1 checksum before and after the change.
+The index line includes the blob object names before and after the change.
 The <mode> is included if the file mode does not change; otherwise,
 separate lines indicate the old and the new mode.
 
@@ -70,7 +74,7 @@ separate lines indicate the old and the new mode.
       rename to a
 
 
-combined diff format
+Combined diff format
 --------------------
 
 Any diff-generating command can take the `-c` or `--cc` option to
@@ -80,7 +84,7 @@ linkgit:git-show[1]. Note also that you can give the `-m` option to any
 of these commands to force generation of diffs with individual parents
 of a merge.
 
-A 'combined diff' format looks like this:
+A "combined diff" format looks like this:
 
 ------------
 diff --combined describe.c
@@ -113,11 +117,11 @@ index fabadb8,cc95eb0..4866510
 ------------
 
 1.   It is preceded with a "git diff" header, that looks like
-     this (when `-c` option is used):
+     this (when the `-c` option is used):
 
        diff --combined file
 +
-or like this (when `--cc` option is used):
+or like this (when the `--cc` option is used):
 
        diff --cc file
 
@@ -160,7 +164,7 @@ parents.
 4.   Chunk header format is modified to prevent people from
      accidentally feeding it to `patch -p1`. Combined diff format
      was created for review of merge commit changes, and was not
-     meant for apply. The change is similar to the change in the
+     meant to be applied. The change is similar to the change in the
      extended 'index' header:
 
        @@@ <from-file-range> <from-file-range> <to-file-range> @@@
