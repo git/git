@@ -1250,10 +1250,7 @@ _git_archive ()
 		return
 		;;
 	--*)
-		__gitcomp "
-			--format= --list --verbose
-			--prefix= --remote= --exec= --output
-			"
+		__gitcomp_builtin archive "--format= --list --verbose --prefix= --worktree-attributes"
 		return
 		;;
 	esac
@@ -2017,15 +2014,18 @@ _git_range_diff ()
 	__git_complete_revlist
 }
 
+__git_rebase_inprogress_options="--continue --skip --abort --quit --show-current-patch"
+__git_rebase_interactive_inprogress_options="$__git_rebase_inprogress_options --edit-todo"
+
 _git_rebase ()
 {
 	__git_find_repo_path
 	if [ -f "$__git_repo_path"/rebase-merge/interactive ]; then
-		__gitcomp "--continue --skip --abort --quit --edit-todo --show-current-patch"
+		__gitcomp "$__git_rebase_interactive_inprogress_options"
 		return
 	elif [ -d "$__git_repo_path"/rebase-apply ] || \
 	     [ -d "$__git_repo_path"/rebase-merge ]; then
-		__gitcomp "--continue --skip --abort --quit --show-current-patch"
+		__gitcomp "$__git_rebase_inprogress_options"
 		return
 	fi
 	__git_complete_strategy && return
@@ -2035,19 +2035,8 @@ _git_rebase ()
 		return
 		;;
 	--*)
-		__gitcomp "
-			--onto --merge --strategy --interactive
-			--rebase-merges --preserve-merges --stat --no-stat
-			--committer-date-is-author-date --ignore-date
-			--ignore-whitespace --whitespace=
-			--autosquash --no-autosquash
-			--fork-point --no-fork-point
-			--autostash --no-autostash
-			--verify --no-verify --keep-base
-			--keep-empty --root --force-rebase --no-ff
-			--rerere-autoupdate
-			--exec
-			"
+		__gitcomp_builtin rebase "" \
+			"$__git_rebase_interactive_inprogress_options"
 
 		return
 	esac
