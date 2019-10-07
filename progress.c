@@ -45,6 +45,19 @@ struct progress {
 
 static volatile sig_atomic_t progress_update;
 
+/*
+ * These are only intended for testing the progress output, i.e. exclusively
+ * for 'test-tool progress'.
+ */
+int progress_testing;
+uint64_t progress_test_ns = 0;
+void progress_test_force_update(void); /* To silence -Wmissing-prototypes */
+void progress_test_force_update(void)
+{
+	progress_update = 1;
+}
+
+
 static void progress_interval(int signum)
 {
 	progress_update = 1;
@@ -54,6 +67,9 @@ static void set_progress_signal(void)
 {
 	struct sigaction sa;
 	struct itimerval v;
+
+	if (progress_testing)
+		return;
 
 	progress_update = 0;
 
@@ -72,6 +88,10 @@ static void set_progress_signal(void)
 static void clear_progress_signal(void)
 {
 	struct itimerval v = {{0,},};
+
+	if (progress_testing)
+		return;
+
 	setitimer(ITIMER_REAL, &v, NULL);
 	signal(SIGALRM, SIG_IGN);
 	progress_update = 0;
@@ -88,6 +108,7 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 	const char *tp;
 	struct strbuf *counters_sb = &progress->counters_sb;
 	int show_update = 0;
+	int last_count_len = counters_sb->len;
 
 	if (progress->delay && (!progress_update || --progress->delay))
 		return;
@@ -115,21 +136,27 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 	if (show_update) {
 		if (is_foreground_fd(fileno(stderr)) || done) {
 			const char *eol = done ? done : "\r";
+			size_t clear_len = counters_sb->len < last_count_len ?
+					last_count_len - counters_sb->len + 1 :
+					0;
+			/* The "+ 2" accounts for the ": ". */
+			size_t progress_line_len = progress->title_len +
+						counters_sb->len + 2;
+			int cols = term_columns();
 
-			term_clear_line();
 			if (progress->split) {
-				fprintf(stderr, "  %s%s", counters_sb->buf,
-					eol);
-			} else if (!done &&
-				   /* The "+ 2" accounts for the ": ". */
-				   term_columns() < progress->title_len +
-						    counters_sb->len + 2) {
-				fprintf(stderr, "%s:\n  %s%s",
-					progress->title, counters_sb->buf, eol);
+				fprintf(stderr, "  %s%*s", counters_sb->buf,
+					(int) clear_len, eol);
+			} else if (!done && cols < progress_line_len) {
+				clear_len = progress->title_len + 1 < cols ?
+					    cols - progress->title_len - 1 : 0;
+				fprintf(stderr, "%s:%*s\n  %s%s",
+					progress->title, (int) clear_len, "",
+					counters_sb->buf, eol);
 				progress->split = 1;
 			} else {
-				fprintf(stderr, "%s: %s%s", progress->title,
-					counters_sb->buf, eol);
+				fprintf(stderr, "%s: %s%*s", progress->title,
+					counters_sb->buf, (int) clear_len, eol);
 			}
 			fflush(stderr);
 		}
@@ -147,6 +174,14 @@ static void throughput_string(struct strbuf *buf, uint64_t total,
 	strbuf_humanise_rate(buf, rate * 1024);
 }
 
+static uint64_t progress_getnanotime(struct progress *progress)
+{
+	if (progress_testing)
+		return progress->start_ns + progress_test_ns;
+	else
+		return getnanotime();
+}
+
 void display_throughput(struct progress *progress, uint64_t total)
 {
 	struct throughput *tp;
@@ -157,7 +192,7 @@ void display_throughput(struct progress *progress, uint64_t total)
 		return;
 	tp = progress->throughput;
 
-	now_ns = getnanotime();
+	now_ns = progress_getnanotime(progress);
 
 	if (!tp) {
 		progress->throughput = tp = xcalloc(1, sizeof(*tp));
@@ -289,7 +324,7 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
 		struct throughput *tp = progress->throughput;
 
 		if (tp) {
-			uint64_t now_ns = getnanotime();
+			uint64_t now_ns = progress_getnanotime(progress);
 			unsigned int misecs, rate;
 			misecs = ((now_ns - progress->start_ns) * 4398) >> 32;
 			rate = tp->curr_total / (misecs ? misecs : 1);
