@@ -36,6 +36,13 @@ REM ================================================================
 
 	dir vcpkg\vcpkg.exe >nul 2>nul && GOTO :install_libraries
 
+	git.exe version 2>nul
+	IF ERRORLEVEL 1 (
+	echo "***"
+	echo "Git not found. Please adjust your CMD path or Git install option."
+	echo "***"
+	EXIT /B 1 )
+
 	echo Fetching vcpkg in %cwd%vcpkg
 	git.exe clone https://github.com/Microsoft/vcpkg vcpkg
 	IF ERRORLEVEL 1 ( EXIT /B 1 )
@@ -72,6 +79,12 @@ REM ================================================================
 
 :sub__install_one
 	echo     Installing package %1...
+
+	REM vcpkg may not be reliable on slow, intermittent or proxy
+	REM connections, see e.g.
+	REM https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/4a8f7be5-5e15-4213-a7bb-ddf424a954e6/winhttpsendrequest-ends-with-12002-errorhttptimeout-after-21-seconds-no-matter-what-timeout?forum=windowssdk
+	REM which explains the hidden 21 second timeout
+	REM (last post by Dave : Microsoft - Windows Networking team)
 
 	.\vcpkg.exe install %1:%arch%
 	IF ERRORLEVEL 1 ( EXIT /B 1 )
