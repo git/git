@@ -128,16 +128,17 @@ static void get_time(struct timeval *now)
 		gettimeofday(now, NULL);
 }
 
-void show_date_relative(timestamp_t time,
-			const struct timeval *now,
-			struct strbuf *timebuf)
+void show_date_relative(timestamp_t time, struct strbuf *timebuf)
 {
+	struct timeval now;
 	timestamp_t diff;
-	if (now->tv_sec < time) {
+
+	get_time(&now);
+	if (now.tv_sec < time) {
 		strbuf_addstr(timebuf, _("in the future"));
 		return;
 	}
-	diff = now->tv_sec - time;
+	diff = now.tv_sec - time;
 	if (diff < 90) {
 		strbuf_addf(timebuf,
 			 Q_("%"PRItime" second ago", "%"PRItime" seconds ago", diff), diff);
@@ -240,9 +241,7 @@ static void show_date_normal(struct strbuf *buf, timestamp_t time, struct tm *tm
 
 	/* Show "today" times as just relative times */
 	if (hide.wday) {
-		struct timeval now;
-		get_time(&now);
-		show_date_relative(time, &now, buf);
+		show_date_relative(time, buf);
 		return;
 	}
 
@@ -313,11 +312,8 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 	}
 
 	if (mode->type == DATE_RELATIVE) {
-		struct timeval now;
-
 		strbuf_reset(&timebuf);
-		get_time(&now);
-		show_date_relative(time, &now, &timebuf);
+		show_date_relative(time, &timebuf);
 		return timebuf.buf;
 	}
 
@@ -1288,15 +1284,18 @@ static timestamp_t approxidate_str(const char *date,
 	return (timestamp_t)update_tm(&tm, &now, 0);
 }
 
-timestamp_t approxidate_relative(const char *date, const struct timeval *tv)
+timestamp_t approxidate_relative(const char *date)
 {
+	struct timeval tv;
 	timestamp_t timestamp;
 	int offset;
 	int errors = 0;
 
 	if (!parse_date_basic(date, &timestamp, &offset))
 		return timestamp;
-	return approxidate_str(date, tv, &errors);
+
+	get_time(&tv);
+	return approxidate_str(date, (const struct timeval *) &tv, &errors);
 }
 
 timestamp_t approxidate_careful(const char *date, int *error_ret)
