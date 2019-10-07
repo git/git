@@ -1295,7 +1295,7 @@ static int get_oid_oneline(struct repository *r,
 
 struct grab_nth_branch_switch_cbdata {
 	int remaining;
-	struct strbuf buf;
+	struct strbuf *sb;
 };
 
 static int grab_nth_branch_switch(struct object_id *ooid, struct object_id *noid,
@@ -1313,8 +1313,8 @@ static int grab_nth_branch_switch(struct object_id *ooid, struct object_id *noid
 		return 0;
 	if (--(cb->remaining) == 0) {
 		len = target - match;
-		strbuf_reset(&cb->buf);
-		strbuf_add(&cb->buf, match, len);
+		strbuf_reset(cb->sb);
+		strbuf_add(cb->sb, match, len);
 		return 1; /* we are done */
 	}
 	return 0;
@@ -1347,18 +1347,15 @@ static int interpret_nth_prior_checkout(struct repository *r,
 	if (nth <= 0)
 		return -1;
 	cb.remaining = nth;
-	strbuf_init(&cb.buf, 20);
+	cb.sb = buf;
 
 	retval = refs_for_each_reflog_ent_reverse(get_main_ref_store(r),
 			"HEAD", grab_nth_branch_switch, &cb);
 	if (0 < retval) {
-		strbuf_reset(buf);
-		strbuf_addbuf(buf, &cb.buf);
 		retval = brace - name + 1;
 	} else
 		retval = 0;
 
-	strbuf_release(&cb.buf);
 	return retval;
 }
 
