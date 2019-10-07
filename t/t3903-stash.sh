@@ -1253,4 +1253,20 @@ test_expect_success 'stash --keep-index with file deleted in index does not resu
 	test_path_is_missing to-remove
 '
 
+test_expect_success 'stash apply should succeed with unmodified file' '
+	echo base >file &&
+	git add file &&
+	git commit -m base &&
+
+	# now stash a modification
+	echo modified >file &&
+	git stash &&
+
+	# make the file stat dirty
+	cp file other &&
+	mv other file &&
+
+	git stash apply
+'
+
 test_done
