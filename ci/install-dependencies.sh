@@ -49,7 +49,8 @@ osx-clang|osx-gcc)
 	;;
 StaticAnalysis)
 	sudo apt-get -q update
-	sudo apt-get -q -y install coccinelle
+	sudo apt-get -q -y install coccinelle libcurl4-openssl-dev libssl-dev \
+		libexpat-dev gettext
 	;;
 Documentation)
 	sudo apt-get -q update

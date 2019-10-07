@@ -216,6 +216,7 @@
 /tags
 /TAGS
 /cscope*
+*.hcc
 *.obj
 *.lib
 *.res

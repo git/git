@@ -9,15 +9,15 @@ struct commit;
 struct repository;
 struct rev_info;
 
+static const char BITMAP_IDX_SIGNATURE[] = {'B', 'I', 'T', 'M'};
+
 struct bitmap_disk_header {
-	char magic[4];
+	char magic[ARRAY_SIZE(BITMAP_IDX_SIGNATURE)];
 	uint16_t version;
 	uint16_t options;
 	uint32_t entry_count;
 	unsigned char checksum[GIT_MAX_RAWSZ];
 };
-
-static const char BITMAP_IDX_SIGNATURE[] = {'B', 'I', 'T', 'M'};
 
 #define NEEDS_BITMAP (1u<<22)
 

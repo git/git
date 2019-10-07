@@ -26,4 +26,7 @@ then
 	exit 1
 fi
 
+make hdr-check ||
+exit 1
+
 save_good_tree
