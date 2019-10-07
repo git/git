@@ -1050,7 +1050,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
 					_("Expanding reachable commits in commit graph"),
-					ctx->oids.nr);
+					0);
 	for (i = 0; i < ctx->oids.nr; i++) {
 		display_progress(ctx->progress, i + 1);
 		commit = lookup_commit(ctx->r, &ctx->oids.list[i]);
