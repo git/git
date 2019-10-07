@@ -7,6 +7,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
+#include "oidset.h"
 #include "commit.h"
 #include "builtin.h"
 #include "string-list.h"
@@ -245,15 +246,13 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
-static int will_fetch(struct ref **head, const unsigned char *sha1)
+static void create_fetch_oidset(struct ref **head, struct oidset *out)
 {
 	struct ref *rm = *head;
 	while (rm) {
-		if (hasheq(rm->old_oid.hash, sha1))
-			return 1;
+		oidset_insert(out, &rm->old_oid);
 		rm = rm->next;
 	}
-	return 0;
 }
 
 struct refname_hash_entry {
@@ -319,6 +318,7 @@ static void find_non_local_tags(const struct ref *refs,
 {
 	struct hashmap existing_refs;
 	struct hashmap remote_refs;
+	struct oidset fetch_oids = OIDSET_INIT;
 	struct string_list remote_refs_list = STRING_LIST_INIT_NODUP;
 	struct string_list_item *remote_ref_item;
 	const struct ref *ref;
@@ -326,6 +326,7 @@ static void find_non_local_tags(const struct ref *refs,
 
 	refname_hash_init(&existing_refs);
 	refname_hash_init(&remote_refs);
+	create_fetch_oidset(head, &fetch_oids);
 
 	for_each_ref(add_one_refname, &existing_refs);
 	for (ref = refs; ref; ref = ref->next) {
@@ -342,9 +343,9 @@ static void find_non_local_tags(const struct ref *refs,
 			if (item &&
 			    !has_object_file_with_flags(&ref->old_oid,
 							OBJECT_INFO_QUICK) &&
-			    !will_fetch(head, ref->old_oid.hash) &&
+			    !oidset_contains(&fetch_oids, &ref->old_oid) &&
 			    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
-			    !will_fetch(head, item->oid.hash))
+			    !oidset_contains(&fetch_oids, &item->oid))
 				clear_item(item);
 			item = NULL;
 			continue;
@@ -358,7 +359,7 @@ static void find_non_local_tags(const struct ref *refs,
 		 */
 		if (item &&
 		    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
-		    !will_fetch(head, item->oid.hash))
+		    !oidset_contains(&fetch_oids, &item->oid))
 			clear_item(item);
 
 		item = NULL;
@@ -379,7 +380,7 @@ static void find_non_local_tags(const struct ref *refs,
 	 */
 	if (item &&
 	    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
-	    !will_fetch(head, item->oid.hash))
+	    !oidset_contains(&fetch_oids, &item->oid))
 		clear_item(item);
 
 	/*
@@ -406,6 +407,7 @@ static void find_non_local_tags(const struct ref *refs,
 	}
 	hashmap_free(&remote_refs, 1);
 	string_list_clear(&remote_refs_list, 0);
+	oidset_clear(&fetch_oids);
 }
 
 static struct ref *get_ref_map(struct remote *remote,
