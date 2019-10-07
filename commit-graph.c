@@ -846,12 +846,19 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 
 	while (list < last) {
 		struct commit_list *parent;
+		struct object_id *tree;
 		int edge_value;
 		uint32_t packedDate[2];
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
-		parse_commit_no_graph(*list);
-		hashwrite(f, get_commit_tree_oid(*list)->hash, hash_len);
+		if (parse_commit_no_graph(*list))
+			die(_("unable to parse commit %s"),
+				oid_to_hex(&(*list)->object.oid));
+		tree = get_commit_tree_oid(*list);
+		if (!tree)
+			die(_("unable to get tree for %s"),
+				oid_to_hex(&(*list)->object.oid));
+		hashwrite(f, tree->hash, hash_len);
 
 		parent = (*list)->parents;
 

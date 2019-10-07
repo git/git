@@ -621,4 +621,47 @@ test_expect_success 'get_commit_tree_in_graph works for non-the_repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'corrupt commit-graph write (broken parent)' '
+	rm -rf repo &&
+	git init repo &&
+	(
+		cd repo &&
+		empty="$(git mktree </dev/null)" &&
+		cat >broken <<-EOF &&
+		tree $empty
+		parent 0000000000000000000000000000000000000000
+		author whatever <whatever@example.com> 1234 -0000
+		committer whatever <whatever@example.com> 1234 -0000
+
+		broken commit
+		EOF
+		broken="$(git hash-object -w -t commit --literally broken)" &&
+		git commit-tree -p "$broken" -m "good commit" "$empty" >good &&
+		test_must_fail git commit-graph write --stdin-commits \
+			<good 2>test_err &&
+		test_i18ngrep "unable to parse commit" test_err
+	)
+'
+
+test_expect_success 'corrupt commit-graph write (missing tree)' '
+	rm -rf repo &&
+	git init repo &&
+	(
+		cd repo &&
+		tree="$(git mktree </dev/null)" &&
+		cat >broken <<-EOF &&
+		parent 0000000000000000000000000000000000000000
+		author whatever <whatever@example.com> 1234 -0000
+		committer whatever <whatever@example.com> 1234 -0000
+
+		broken commit
+		EOF
+		broken="$(git hash-object -w -t commit --literally broken)" &&
+		git commit-tree -p "$broken" -m "good" "$tree" >good &&
+		test_must_fail git commit-graph write --stdin-commits \
+			<good 2>test_err &&
+		test_i18ngrep "unable to get tree for" test_err
+	)
+'
+
 test_done
