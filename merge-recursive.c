@@ -764,7 +764,8 @@ static int dir_in_way(struct index_state *istate, const char *path,
 
 	strbuf_release(&dirpath);
 	return check_working_copy && !lstat(path, &st) && S_ISDIR(st.st_mode) &&
-		!(empty_ok && is_empty_dir(path));
+		!(empty_ok && is_empty_dir(path)) &&
+		!has_symlink_leading_path(path, strlen(path));
 }
 
 /*
