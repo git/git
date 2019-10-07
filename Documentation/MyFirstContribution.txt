@@ -97,8 +97,8 @@ int cmd_psuh(int argc, const char **argv, const char *prefix)
 ----
 
 We'll also need to add the declaration of psuh; open up `builtin.h`, find the
-declaration for `cmd_push`, and add a new line for `psuh` immediately before it,
-in order to keep the declarations sorted:
+declaration for `cmd_pull`, and add a new line for `psuh` immediately before it,
+in order to keep the declarations alphabetically sorted:
 
 ----
 int cmd_psuh(int argc, const char **argv, const char *prefix);
@@ -123,7 +123,7 @@ int cmd_psuh(int argc, const char **argv, const char *prefix)
 }
 ----
 
-Let's try to build it.  Open `Makefile`, find where `builtin/push.o` is added
+Let's try to build it.  Open `Makefile`, find where `builtin/pull.o` is added
 to `BUILTIN_OBJS`, and add `builtin/psuh.o` in the same way next to it in
 alphabetical order. Once you've done so, move to the top-level directory and
 build simply with `make`. Also add the `DEVELOPER=1` variable to turn on
@@ -149,7 +149,7 @@ a `cmd_struct` to the `commands[]` array. `struct cmd_struct` takes a string
 with the command name, a function pointer to the command implementation, and a
 setup option flag. For now, let's keep mimicking `push`. Find the line where
 `cmd_push` is registered, copy it, and modify it for `cmd_psuh`, placing the new
-line in alphabetical order.
+line in alphabetical order (immediately before `cmd_pull`).
 
 The options are documented in `builtin.h` under "Adding a new built-in." Since
 we hope to print some data about the user's current workspace context later,
@@ -167,7 +167,7 @@ Check it out! You've got a command! Nice work! Let's commit this.
 
 `git status` reveals modified `Makefile`, `builtin.h`, and `git.c` as well as
 untracked `builtin/psuh.c` and `git-psuh`. First, let's take care of the binary,
-which should be ignored. Open `.gitignore` in your editor, find `/git-push`, and
+which should be ignored. Open `.gitignore` in your editor, find `/git-pull`, and
 add an entry for your new command in alphabetical order:
 
 ----
