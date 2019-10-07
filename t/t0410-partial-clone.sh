@@ -540,6 +540,20 @@ test_expect_success 'gc stops traversal when a missing but promised object is re
 	! grep "$TREE_HASH" out
 '
 
+test_expect_success 'do not fetch when checking existence of tree we construct ourselves' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo base &&
+	test_commit -C repo side1 &&
+	git -C repo checkout base &&
+	test_commit -C repo side2 &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+
+	git -C repo cherry-pick side1
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
