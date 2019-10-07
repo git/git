@@ -62,17 +62,7 @@ static int gently_parse_list_objects_filter(
 		return 0;
 
 	} else if (skip_prefix(arg, "sparse:oid=", &v0)) {
-		struct object_context oc;
-		struct object_id sparse_oid;
-
-		/*
-		 * Try to parse <oid-expression> into an OID for the current
-		 * command, but DO NOT complain if we don't have the blob or
-		 * ref locally.
-		 */
-		if (!get_oid_with_context(the_repository, v0, GET_OID_BLOB,
-					  &sparse_oid, &oc))
-			filter_options->sparse_oid_value = oiddup(&sparse_oid);
+		filter_options->sparse_oid_name = xstrdup(v0);
 		filter_options->choice = LOFC_SPARSE_OID;
 		return 0;
 
@@ -320,7 +310,7 @@ void list_objects_filter_release(
 	if (!filter_options)
 		return;
 	string_list_clear(&filter_options->filter_spec, /*free_util=*/0);
-	free(filter_options->sparse_oid_value);
+	free(filter_options->sparse_oid_name);
 	for (sub = 0; sub < filter_options->sub_nr; sub++)
 		list_objects_filter_release(&filter_options->sub[sub]);
 	free(filter_options->sub);

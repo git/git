@@ -260,6 +260,42 @@ test_expect_success 'fetch what is specified on CLI even if already promised' '
 	! grep "?$(cat blob)" missing_after
 '
 
+test_expect_success 'setup src repo for sparse filter' '
+	git init sparse-src &&
+	git -C sparse-src config --local uploadpack.allowfilter 1 &&
+	git -C sparse-src config --local uploadpack.allowanysha1inwant 1 &&
+	test_commit -C sparse-src one &&
+	test_commit -C sparse-src two &&
+	echo /one.t >sparse-src/only-one &&
+	git -C sparse-src add . &&
+	git -C sparse-src commit -m "add sparse checkout files"
+'
+
+test_expect_success 'partial clone with sparse filter succeeds' '
+	rm -rf dst.git &&
+	git clone --no-local --bare \
+		  --filter=sparse:oid=master:only-one \
+		  sparse-src dst.git &&
+	(
+		cd dst.git &&
+		git rev-list --objects --missing=print HEAD >out &&
+		grep "^$(git rev-parse HEAD:one.t)" out &&
+		grep "^?$(git rev-parse HEAD:two.t)" out
+	)
+'
+
+test_expect_success 'partial clone with unresolvable sparse filter fails cleanly' '
+	rm -rf dst.git &&
+	test_must_fail git clone --no-local --bare \
+				 --filter=sparse:oid=master:no-such-name \
+				 sparse-src dst.git 2>err &&
+	test_i18ngrep "unable to access sparse blob in .master:no-such-name" err &&
+	test_must_fail git clone --no-local --bare \
+				 --filter=sparse:oid=master \
+				 sparse-src dst.git 2>err &&
+	test_i18ngrep "unable to parse sparse filter data in" err
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 

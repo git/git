@@ -483,9 +483,17 @@ static void filter_sparse_oid__init(
 	struct filter *filter)
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
-	if (add_patterns_from_blob_to_list(filter_options->sparse_oid_value,
-					   NULL, 0, &d->pl) < 0)
-		die("could not load filter specification");
+	struct object_context oc;
+	struct object_id sparse_oid;
+
+	if (get_oid_with_context(the_repository,
+				 filter_options->sparse_oid_name,
+				 GET_OID_BLOB, &sparse_oid, &oc))
+		die(_("unable to access sparse blob in '%s'"),
+		    filter_options->sparse_oid_name);
+	if (add_patterns_from_blob_to_list(&sparse_oid, "", 0, &d->pl) < 0)
+		die(_("unable to parse sparse filter data in %s"),
+		    oid_to_hex(&sparse_oid));
 
 	ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
 	d->array_frame[d->nr].default_match = 0; /* default to include */

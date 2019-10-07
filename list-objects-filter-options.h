@@ -45,7 +45,7 @@ struct list_objects_filter_options {
 	 * some values will be defined for any given choice.
 	 */
 
-	struct object_id *sparse_oid_value;
+	char *sparse_oid_name;
 	unsigned long blob_limit_value;
 	unsigned long tree_exclude_depth;
 
