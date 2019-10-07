@@ -1286,7 +1286,6 @@ static uint32_t count_distinct_commits(struct write_commit_graph_context *ctx)
 static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 {
 	uint32_t i;
-	struct commit_list *parent;
 
 	ctx->num_extra_edges = 0;
 	if (ctx->report_progress)
@@ -1294,7 +1293,8 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 			_("Finding extra edges in commit graph"),
 			ctx->oids.nr);
 	for (i = 0; i < ctx->oids.nr; i++) {
-		int num_parents = 0;
+		unsigned int num_parents;
+
 		display_progress(ctx->progress, i + 1);
 		if (i > 0 && oideq(&ctx->oids.list[i - 1], &ctx->oids.list[i]))
 			continue;
@@ -1308,10 +1308,7 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 
 		parse_commit_no_graph(ctx->commits.list[ctx->commits.nr]);
 
-		for (parent = ctx->commits.list[ctx->commits.nr]->parents;
-		     parent; parent = parent->next)
-			num_parents++;
-
+		num_parents = commit_list_count(ctx->commits.list[ctx->commits.nr]->parents);
 		if (num_parents > 2)
 			ctx->num_extra_edges += num_parents - 1;
 
@@ -1623,8 +1620,7 @@ static int commit_compare(const void *_a, const void *_b)
 
 static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 {
-	uint32_t i, num_parents;
-	struct commit_list *parent;
+	uint32_t i;
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
@@ -1642,10 +1638,9 @@ static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 			die(_("unexpected duplicate commit id %s"),
 			    oid_to_hex(&ctx->commits.list[i]->object.oid));
 		} else {
-			num_parents = 0;
-			for (parent = ctx->commits.list[i]->parents; parent; parent = parent->next)
-				num_parents++;
+			unsigned int num_parents;
 
+			num_parents = commit_list_count(ctx->commits.list[i]->parents);
 			if (num_parents > 2)
 				ctx->num_extra_edges += num_parents - 1;
 		}
