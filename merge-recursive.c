@@ -3550,7 +3550,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 		merged_merge_bases = make_virtual_commit(opt->repo, tree,
 							 "ancestor");
 		ancestor_name = "empty tree";
-	} else if (opt->ancestor) {
+	} else if (opt->ancestor && !opt->priv->call_depth) {
 		ancestor_name = opt->ancestor;
 	} else if (merge_bases) {
 		ancestor_name = "merged common ancestors";
@@ -3600,6 +3600,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 							  merged_merge_bases),
 				     &result_tree);
 	strbuf_release(&merge_base_abbrev);
+	opt->ancestor = NULL;  /* avoid accidental re-use of opt->ancestor */
 	if (clean < 0) {
 		flush_output(opt);
 		return clean;
