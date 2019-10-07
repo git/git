@@ -792,6 +792,44 @@ test_expect_success 'clone shallow since selects no commits' '
 	)
 '
 
+# A few subtle things about the request in this test:
+#
+#  - the server must have commit-graphs present and enabled
+#
+#  - the history is such that our want/have share a common ancestor ("base"
+#    here)
+#
+#  - we send only a single have, which is fewer than a normal client would
+#    send. This ensures that we don't parse "base" up front with
+#    parse_object(), but rather traverse to it as a parent while deciding if we
+#    can stop the "have" negotiation, and call parse_commit(). The former
+#    sees the actual object data and so always loads the three oid, whereas the
+#    latter will try to load it lazily.
+#
+#  - we must use protocol v2, because it handles the "have" negotiation before
+#    processing the shallow directives
+#
+test_expect_success 'shallow since with commit graph and already-seen commit' '
+	test_create_repo shallow-since-graph &&
+	(
+	cd shallow-since-graph &&
+	test_commit base &&
+	test_commit master &&
+	git checkout -b other HEAD^ &&
+	test_commit other &&
+	git commit-graph write --reachable &&
+	git config core.commitGraph true &&
+
+	GIT_PROTOCOL=version=2 git upload-pack . <<-EOF >/dev/null
+	0012command=fetch
+	00010013deepen-since 1
+	0032want $(git rev-parse other)
+	0032have $(git rev-parse master)
+	0000
+	EOF
+	)
+'
+
 test_expect_success 'shallow clone exclude tag two' '
 	test_create_repo shallow-exclude &&
 	(

@@ -107,4 +107,10 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 void close_commit_graph(struct raw_object_store *);
 void free_commit_graph(struct commit_graph *);
 
+/*
+ * Disable further use of the commit graph in this process when parsing a
+ * "struct commit".
+ */
+void disable_commit_graph(struct repository *r);
+
 #endif
