@@ -1145,10 +1145,10 @@ int transport_push(struct repository *r,
 
 		refspec_ref_prefixes(rs, &ref_prefixes);
 
-		trace2_region_enter("transport_push", "get_refs_list", the_repository);
+		trace2_region_enter("transport_push", "get_refs_list", r);
 		remote_refs = transport->vtable->get_refs_list(transport, 1,
 							       &ref_prefixes);
-		trace2_region_leave("transport_push", "get_refs_list", the_repository);
+		trace2_region_leave("transport_push", "get_refs_list", r);
 
 		argv_array_clear(&ref_prefixes);
 
@@ -1184,7 +1184,7 @@ int transport_push(struct repository *r,
 			struct ref *ref = remote_refs;
 			struct oid_array commits = OID_ARRAY_INIT;
 
-			trace2_region_enter("transport_push", "push_submodules", the_repository);
+			trace2_region_enter("transport_push", "push_submodules", r);
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
 					oid_array_append(&commits,
@@ -1197,11 +1197,11 @@ int transport_push(struct repository *r,
 						      transport->push_options,
 						      pretend)) {
 				oid_array_clear(&commits);
-				trace2_region_leave("transport_push", "push_submodules", the_repository);
+				trace2_region_leave("transport_push", "push_submodules", r);
 				die(_("failed to push all needed submodules"));
 			}
 			oid_array_clear(&commits);
-			trace2_region_leave("transport_push", "push_submodules", the_repository);
+			trace2_region_leave("transport_push", "push_submodules", r);
 		}
 
 		if (((flags & TRANSPORT_RECURSE_SUBMODULES_CHECK) ||
@@ -1212,7 +1212,7 @@ int transport_push(struct repository *r,
 			struct string_list needs_pushing = STRING_LIST_INIT_DUP;
 			struct oid_array commits = OID_ARRAY_INIT;
 
-			trace2_region_enter("transport_push", "check_submodules", the_repository);
+			trace2_region_enter("transport_push", "check_submodules", r);
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
 					oid_array_append(&commits,
@@ -1223,18 +1223,18 @@ int transport_push(struct repository *r,
 						     transport->remote->name,
 						     &needs_pushing)) {
 				oid_array_clear(&commits);
-				trace2_region_leave("transport_push", "check_submodules", the_repository);
+				trace2_region_leave("transport_push", "check_submodules", r);
 				die_with_unpushed_submodules(&needs_pushing);
 			}
 			string_list_clear(&needs_pushing, 0);
 			oid_array_clear(&commits);
-			trace2_region_leave("transport_push", "check_submodules", the_repository);
+			trace2_region_leave("transport_push", "check_submodules", r);
 		}
 
 		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY)) {
-			trace2_region_enter("transport_push", "push_refs", the_repository);
+			trace2_region_enter("transport_push", "push_refs", r);
 			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
-			trace2_region_leave("transport_push", "push_refs", the_repository);
+			trace2_region_leave("transport_push", "push_refs", r);
 		} else
 			push_ret = 0;
 		err = push_had_errors(remote_refs);
