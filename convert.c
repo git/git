@@ -290,8 +290,8 @@ static int validate_encoding(const char *path, const char *enc,
 			const char *stripped = NULL;
 			char *upper = xstrdup_toupper(enc);
 			upper[strlen(upper)-2] = '\0';
-			if (!skip_prefix(upper, "UTF-", &stripped))
-				skip_prefix(stripped, "UTF", &stripped);
+			if (skip_prefix(upper, "UTF", &stripped))
+				skip_prefix(stripped, "-", &stripped);
 			advise(advise_msg, path, stripped);
 			free(upper);
 			if (die_on_error)
@@ -310,8 +310,8 @@ static int validate_encoding(const char *path, const char *enc,
 				"working-tree-encoding.");
 			const char *stripped = NULL;
 			char *upper = xstrdup_toupper(enc);
-			if (!skip_prefix(upper, "UTF-", &stripped))
-				skip_prefix(stripped, "UTF", &stripped);
+			if (skip_prefix(upper, "UTF", &stripped))
+				skip_prefix(stripped, "-", &stripped);
 			advise(advise_msg, path, stripped, stripped);
 			free(upper);
 			if (die_on_error)
