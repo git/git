@@ -424,4 +424,19 @@ test_expect_success 'describe complains about missing object' '
 	test_must_fail git describe $ZERO_OID
 '
 
+test_expect_success 'name-rev a rev shortly after epoch' '
+	test_when_finished "git checkout master" &&
+
+	git checkout --orphan no-timestamp-underflow &&
+	# Any date closer to epoch than the CUTOFF_DATE_SLOP constant
+	# in builtin/name-rev.c.
+	GIT_COMMITTER_DATE="@1234 +0000" \
+	git commit -m "committer date shortly after epoch" &&
+	old_commit_oid=$(git rev-parse HEAD) &&
+
+	echo "$old_commit_oid no-timestamp-underflow" >expect &&
+	git name-rev $old_commit_oid >actual &&
+	test_cmp expect actual
+'
+
 test_done
