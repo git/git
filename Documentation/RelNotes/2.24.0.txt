@@ -254,6 +254,20 @@ Fixes since v2.23
    directory has been fixed.
    (merge 83e3ad3b12 jt/merge-recursive-symlink-is-not-a-dir-in-way later to maint).
 
+ * The rename detection logic sorts a list of rename source candidates
+   by similarity to pick the best candidate, which means that a tie
+   between sources with the same similarity is broken by the original
+   location in the original candidate list (which is sorted by path).
+   Force the sorting by similarity done with a stable sort, which is
+   not promised by system supplied qsort(3), to ensure consistent
+   results across platforms.
+   (merge 2049b8dc65 js/diff-rename-force-stable-sort later to maint).
+
+ * The code to skip "UTF" and "UTF-" prefix, when computing an advice
+   message, did not work correctly when the prefix was "UTF", which
+   has been fixed.
+   (merge b181676ce9 rs/convert-fix-utf-without-dash later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
    (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
@@ -285,3 +299,9 @@ Fixes since v2.23
    (merge 24c681794f ps/my-first-contribution-alphasort later to maint).
    (merge 75b2c15435 cb/do-not-use-test-cmp-with-a later to maint).
    (merge cda0d497e3 bw/submodule-helper-usage-fix later to maint).
+   (merge fe0ed5d5e9 am/visual-studio-config-fix later to maint).
+   (merge 2e09c01232 sg/name-rev-cutoff-underflow-fix later to maint).
+   (merge ddb3c856f3 as/shallow-slab-use-fix later to maint).
+   (merge 71f4960b91 js/mingw-spawn-with-spaces-in-path later to maint).
+   (merge 53d687bf5f ah/cleanups later to maint).
+   (merge f537485fa5 rs/test-remove-useless-debugging-cat later to maint).
