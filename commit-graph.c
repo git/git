@@ -1533,8 +1533,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 
 static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 {
-	struct commit_graph *g = ctx->r->objects->commit_graph;
-	uint32_t num_commits = ctx->commits.nr;
+	struct commit_graph *g;
+	uint32_t num_commits;
 	uint32_t i;
 
 	int max_commits = 0;
@@ -1546,6 +1546,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 	}
 
 	g = ctx->r->objects->commit_graph;
+	num_commits = ctx->commits.nr;
 	ctx->num_commit_graphs_after = ctx->num_commit_graphs_before + 1;
 
 	while (g && (g->num_commits <= size_mult * num_commits ||

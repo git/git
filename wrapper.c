@@ -441,7 +441,9 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 		"abcdefghijklmnopqrstuvwxyz"
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"0123456789";
-	static const int num_letters = 62;
+	static const int num_letters = ARRAY_SIZE(letters) - 1;
+	static const char x_pattern[] = "XXXXXX";
+	static const int num_x = ARRAY_SIZE(x_pattern) - 1;
 	uint64_t value;
 	struct timeval tv;
 	char *filename_template;
@@ -450,12 +452,12 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 
 	len = strlen(pattern);
 
-	if (len < 6 + suffix_len) {
+	if (len < num_x + suffix_len) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (strncmp(&pattern[len - 6 - suffix_len], "XXXXXX", 6)) {
+	if (strncmp(&pattern[len - num_x - suffix_len], x_pattern, num_x)) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -466,16 +468,15 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	 */
 	gettimeofday(&tv, NULL);
 	value = ((uint64_t)tv.tv_usec << 16) ^ tv.tv_sec ^ getpid();
-	filename_template = &pattern[len - 6 - suffix_len];
+	filename_template = &pattern[len - num_x - suffix_len];
 	for (count = 0; count < TMP_MAX; ++count) {
 		uint64_t v = value;
+		int i;
 		/* Fill in the random bits. */
-		filename_template[0] = letters[v % num_letters]; v /= num_letters;
-		filename_template[1] = letters[v % num_letters]; v /= num_letters;
-		filename_template[2] = letters[v % num_letters]; v /= num_letters;
-		filename_template[3] = letters[v % num_letters]; v /= num_letters;
-		filename_template[4] = letters[v % num_letters]; v /= num_letters;
-		filename_template[5] = letters[v % num_letters]; v /= num_letters;
+		for (i = 0; i < num_x; i++) {
+			filename_template[i] = letters[v % num_letters];
+			v /= num_letters;
+		}
 
 		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
 		if (fd >= 0)

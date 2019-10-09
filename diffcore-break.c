@@ -286,17 +286,17 @@ void diffcore_merge_broken(void)
 					/* Peer survived.  Merge them */
 					merge_broken(p, pp, &outq);
 					q->queue[j] = NULL;
-					break;
+					goto next;
 				}
 			}
-			if (q->nr <= j)
-				/* The peer did not survive, so we keep
-				 * it in the output.
-				 */
-				diff_q(&outq, p);
+			/* The peer did not survive, so we keep
+			 * it in the output.
+			 */
+			diff_q(&outq, p);
 		}
 		else
 			diff_q(&outq, p);
+next:;
 	}
 	free(q->queue);
 	*q = outq;
