@@ -3,7 +3,7 @@
  is concerned is _this_ particular version of the license (ie v2, not
  v2.2 or v3.x or whatever), unless explicitly otherwise stated.
 
- HOWEVER, in order to allow a migration to GPLv3 if that seems like
+ However, in order to allow a migration to GPLv3 if that seems like
  a good idea, I also ask that people involved with the project make
  their preferences known. In particular, if you trust me to make that
  decision, you might note so in your copyright message, ie something
@@ -124,7 +124,7 @@ above, provided that you also meet all of these conditions:
     c) If the modified program normally reads commands interactively
     when run, you must cause it, when started running for such
     interactive use in the most ordinary way, to print or display an
-    announcement including an appropriate copyright notice and a
+    announcement including appropriate copyright notice and a
     notice that there is no warranty (or else, saying that you provide
     a warranty) and that users may redistribute the program under
     these conditions, and telling the user how to view a copy of this
@@ -198,7 +198,7 @@ However, parties who have received copies, or rights, from you under
 this License will not have their licenses terminated so long as such
 parties remain in full compliance.
 
-  5. You are not required to accept this License, since you have not
+  5. You are not required to accept this License since you have not
 signed it.  However, nothing else grants you permission to modify or
 distribute the Program or its derivative works.  These actions are
 prohibited by law if you do not accept this License.  Therefore, by
