@@ -156,6 +156,8 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 	for (i = 0; i < depths.slab_count; i++) {
 		int j;
 
+		if (!depths.slab[i])
+			continue;
 		for (j = 0; j < depths.slab_size; j++)
 			free(depths.slab[i][j]);
 	}
