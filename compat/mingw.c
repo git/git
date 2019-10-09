@@ -1236,11 +1236,6 @@ static int wenvcmp(const void *a, const void *b)
 	return _wcsnicmp(p, q, p_len);
 }
 
-/* We need a stable sort to convert the environment between UTF-16 <-> UTF-8 */
-#ifndef INTERNAL_QSORT
-#include "qsort.c"
-#endif
-
 /*
  * Build an environment block combining the inherited environment
  * merged with the given list of settings.
@@ -1279,8 +1274,8 @@ static wchar_t *make_environment_block(char **deltaenv)
 
 	/*
 	 * If there is a deltaenv, let's accumulate all keys into `array`,
-	 * sort them using the stable git_qsort() and then copy, skipping
-	 * duplicate keys
+	 * sort them using the stable git_stable_qsort() and then copy,
+	 * skipping duplicate keys
 	 */
 	for (p = wenv; p && *p; ) {
 		ALLOC_GROW(array, nr + 1, alloc);
@@ -1303,7 +1298,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 		p += wlen + 1;
 	}
 
-	git_qsort(array, nr, sizeof(*array), wenvcmp);
+	git_stable_qsort(array, nr, sizeof(*array), wenvcmp);
 	ALLOC_ARRAY(result, size + delta_size);
 
 	for (p = result, i = 0; i < nr; i++) {

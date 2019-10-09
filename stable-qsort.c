@@ -1,4 +1,4 @@
-#include "../git-compat-util.h"
+#include "git-compat-util.h"
 
 /*
  * A merge sort implementation, simplified from the qsort implementation
@@ -44,8 +44,8 @@ static void msort_with_tmp(void *b, size_t n, size_t s,
 	memcpy(b, t, (n - n2) * s);
 }
 
-void git_qsort(void *b, size_t n, size_t s,
-	       int (*cmp)(const void *, const void *))
+void git_stable_qsort(void *b, size_t n, size_t s,
+		      int (*cmp)(const void *, const void *))
 {
 	const size_t size = st_mult(n, s);
 	char buf[1024];
