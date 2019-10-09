@@ -70,7 +70,6 @@ test_expect_success 'object with bad sha1' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "$sha.*corrupt" out
 '
 
@@ -78,7 +77,6 @@ test_expect_success 'branch pointing to non-commit' '
 	git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
 	test_when_finished "git update-ref -d refs/heads/invalid" &&
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "not a commit" out
 '
 
@@ -88,7 +86,6 @@ test_expect_success 'HEAD link pointing at a funny object' '
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "detached HEAD points" out
 '
 
@@ -98,7 +95,6 @@ test_expect_success 'HEAD link pointing at a funny place' '
 	echo "ref: refs/funny/place" >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "HEAD points to something strange" out
 '
 
@@ -157,7 +153,6 @@ test_expect_success 'email with embedded > is not okay' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "error in commit $new" out
 '
 
@@ -169,7 +164,6 @@ test_expect_success 'missing < email delimiter is reported nicely' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "error in commit $new.* - bad name" out
 '
 
@@ -181,7 +175,6 @@ test_expect_success 'missing email is reported nicely' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "error in commit $new.* - missing email" out
 '
 
@@ -193,7 +186,6 @@ test_expect_success '> in name is reported' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "error in commit $new" out
 '
 
@@ -207,7 +199,6 @@ test_expect_success 'integer overflow in timestamps is reported' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "error in commit $new.*integer overflow" out
 '
 
@@ -219,7 +210,6 @@ test_expect_success 'commit with NUL in header' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	cat out &&
 	test_i18ngrep "error in commit $new.*unterminated header: NUL at offset" out
 '
 
@@ -297,7 +287,6 @@ test_expect_success 'tag pointing to nonexistent' '
 	echo $tag >.git/refs/tags/invalid &&
 	test_when_finished "git update-ref -d refs/tags/invalid" &&
 	test_must_fail git fsck --tags >out &&
-	cat out &&
 	test_i18ngrep "broken link" out
 '
 
@@ -378,7 +367,6 @@ test_expect_success 'tag with NUL in header' '
 	echo $tag >.git/refs/tags/wrong &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
-	cat out &&
 	test_i18ngrep "error in tag $tag.*unterminated header: NUL at offset" out
 '
 
@@ -409,7 +397,6 @@ test_expect_success 'rev-list --verify-objects with bad sha1' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 
 	test_might_fail git rev-list --verify-objects refs/heads/bogus >/dev/null 2>out &&
-	cat out &&
 	test_i18ngrep -q "error: hash mismatch $(dirname $new)$(test_oid ff_2)" out
 '
 
@@ -433,7 +420,6 @@ test_expect_success 'fsck notices blob entry pointing to null sha1' '
 	 sha=$(printf "100644 file$_bz$_bzoid" |
 	       git hash-object -w --stdin -t tree) &&
 	  git fsck 2>out &&
-	  cat out &&
 	  test_i18ngrep "warning.*null sha1" out
 	)
 '
@@ -444,7 +430,6 @@ test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	 sha=$(printf "160000 submodule$_bz$_bzoid" |
 	       git hash-object -w --stdin -t tree) &&
 	  git fsck 2>out &&
-	  cat out &&
 	  test_i18ngrep "warning.*null sha1" out
 	)
 '
@@ -465,7 +450,6 @@ while read name path pretty; do
 			printf "$mode $type %s\t%s" "$value" "$path" >bad &&
 			bad_tree=$(git mktree <bad) &&
 			git fsck 2>out &&
-			cat out &&
 			test_i18ngrep "warning.*tree $bad_tree" out
 		)'
 	done <<-\EOF
