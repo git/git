@@ -6,6 +6,9 @@
 #include "help.h"
 #include "compat/compiler.h"
 #include "run-command.h"
+#include "config.h"
+#include "bugreport-config-safelist.h"
+#include "khash.h"
 
 static void get_git_remote_https_version_info(struct strbuf *version_info)
 {
@@ -52,6 +55,29 @@ static void get_system_info(struct strbuf *sys_info)
 	strbuf_complete_line(sys_info);
 }
 
+static void get_safelisted_config(struct strbuf *config_info)
+{
+	size_t idx;
+	struct string_list_item *it = NULL;
+	struct key_value_info *kv_info = NULL;
+
+	for (idx = 0; idx < ARRAY_SIZE(bugreport_config_safelist); idx++) {
+		const struct string_list *list =
+			git_config_get_value_multi(bugreport_config_safelist[idx]);
+
+		if (!list)
+			continue;
+
+		strbuf_addf(config_info, "%s:\n", bugreport_config_safelist[idx]);
+		for_each_string_list_item(it, list) {
+			kv_info = it->util;
+			strbuf_addf(config_info, "  %s (%s)\n", it->string,
+				    kv_info ? config_scope_name(kv_info->scope)
+					    : "source unknown");
+		}
+	}
+}
+
 static const char * const bugreport_usage[] = {
 	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
 	NULL
@@ -94,6 +120,7 @@ int cmd_main(int argc, const char **argv)
 	char *option_output = NULL;
 	char *option_suffix = "%F-%H%M";
 	struct stat statbuf;
+	int nongit_ok = 0;
 
 	const struct option bugreport_options[] = {
 		OPT_STRING('o', "output-directory", &option_output, N_("path"),
@@ -102,6 +129,10 @@ int cmd_main(int argc, const char **argv)
 			   N_("specify a strftime format suffix for the filename")),
 		OPT_END()
 	};
+
+	/* Prerequisite for hooks and config checks */
+	setup_git_directory_gently(&nongit_ok);
+
 	argc = parse_options(argc, argv, "", bugreport_options,
 			     bugreport_usage, 0);
 
@@ -131,6 +162,9 @@ int cmd_main(int argc, const char **argv)
 
 	get_header(&buffer, "System Info");
 	get_system_info(&buffer);
+
+	get_header(&buffer, "Safelisted Config Info");
+	get_safelisted_config(&buffer);
 
 	report = fopen_for_writing(report_path.buf);
 
