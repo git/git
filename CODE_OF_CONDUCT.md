@@ -1,9 +1,9 @@
-# Git Code of Conduct
+# Git for Windows Code of Conduct
 
 This code of conduct outlines our expectations for participants within
-the Git community, as well as steps for reporting unacceptable behavior.
-We are committed to providing a welcoming and inspiring community for
-all and expect our code of conduct to be honored. Anyone who violates
+the **Git for Windows** community, as well as steps for reporting unacceptable
+behavior. We are committed to providing a welcoming and inspiring community
+for all and expect our code of conduct to be honored. Anyone who violates
 this code of conduct may be banned from the community.
 
 ## Our Pledge
@@ -63,18 +63,19 @@ maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at git@sfconservancy.org. All
-complaints will be reviewed and investigated and will result in a response
-that is deemed necessary and appropriate to the circumstances. The project
-team is obligated to maintain confidentiality with regard to the reporter of
-an incident. Further details of specific enforcement policies may be posted
-separately.
+reported by contacting the Git for Windows maintainer or Git's project team
+at git@sfconservancy.org. All complaints will be reviewed and investigated
+and will result in a response that is deemed necessary and appropriate to the
+circumstances. The project team is obligated to maintain confidentiality with
+regard to the reporter of an incident. Further details of specific
+enforcement policies may be posted separately.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good
 faith may face temporary or permanent repercussions as determined by other
 members of the project's leadership.
 
-The project leadership team can be contacted by email as a whole at
+The Git for Windows maintainer can be contacted at johannes.schindelin@gmx.de,
+and the Git project leadership team can be contacted by email as a whole at
 git@sfconservancy.org, or individually:
 
   - Ævar Arnfjörð Bjarmason <avarab@gmail.com>
