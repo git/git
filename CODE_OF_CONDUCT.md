@@ -1,9 +1,9 @@
-# Git Code of Conduct
+# Git for Windows Code of Conduct
 
 This code of conduct outlines our expectations for participants within
-the Git community, as well as steps for reporting unacceptable behavior.
-We are committed to providing a welcoming and inspiring community for
-all and expect our code of conduct to be honored. Anyone who violates
+the **Git for Windows** community, as well as steps for reporting unacceptable
+behavior. We are committed to providing a welcoming and inspiring community
+for all and expect our code of conduct to be honored. Anyone who violates
 this code of conduct may be banned from the community.
 
 ## Our Pledge
@@ -65,8 +65,8 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-git@sfconservancy.org, or individually:
+reported by contacting the Git for Windows maintainer or the community leaders
+responsible for enforcement at git@sfconservancy.org, or individually:
 
   - Ævar Arnfjörð Bjarmason <avarab@gmail.com>
   - Christian Couder <christian.couder@gmail.com>
