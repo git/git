@@ -1490,11 +1490,11 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	}
 
 	if (!from_stdin) {
-		printf("%s\n", sha1_to_hex(hash));
+		printf("%s\n", hash_to_hex(hash));
 	} else {
 		struct strbuf buf = STRBUF_INIT;
 
-		strbuf_addf(&buf, "%s\t%s\n", report, sha1_to_hex(hash));
+		strbuf_addf(&buf, "%s\t%s\n", report, hash_to_hex(hash));
 		write_or_die(1, buf.buf, buf.len);
 		strbuf_release(&buf);
 

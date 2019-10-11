@@ -19,8 +19,7 @@
 #define MIDX_BYTE_NUM_PACKS 8
 #define MIDX_HASH_VERSION 1
 #define MIDX_HEADER_SIZE 12
-#define MIDX_HASH_LEN 20
-#define MIDX_MIN_SIZE (MIDX_HEADER_SIZE + MIDX_HASH_LEN)
+#define MIDX_MIN_SIZE (MIDX_HEADER_SIZE + the_hash_algo->rawsz)
 
 #define MIDX_MAX_CHUNKS 5
 #define MIDX_CHUNK_ALIGNMENT 4
@@ -93,7 +92,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	hash_version = m->data[MIDX_BYTE_HASH_VERSION];
 	if (hash_version != MIDX_HASH_VERSION)
 		die(_("hash version %u does not match"), hash_version);
-	m->hash_len = MIDX_HASH_LEN;
+	m->hash_len = the_hash_algo->rawsz;
 
 	m->num_chunks = m->data[MIDX_BYTE_NUM_CHUNKS];
 
@@ -234,7 +233,7 @@ int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t
 int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32_t *result)
 {
 	return bsearch_hash(oid->hash, m->chunk_oid_fanout, m->chunk_oid_lookup,
-			    MIDX_HASH_LEN, result);
+			    the_hash_algo->rawsz, result);
 }
 
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
@@ -928,7 +927,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 
 	cur_chunk++;
 	chunk_ids[cur_chunk] = MIDX_CHUNKID_OBJECTOFFSETS;
-	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + nr_entries * MIDX_HASH_LEN;
+	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + nr_entries * the_hash_algo->rawsz;
 
 	cur_chunk++;
 	chunk_offsets[cur_chunk] = chunk_offsets[cur_chunk - 1] + nr_entries * MIDX_CHUNK_OFFSET_WIDTH;
@@ -976,7 +975,7 @@ static int write_midx_internal(const char *object_dir, struct multi_pack_index *
 				break;
 
 			case MIDX_CHUNKID_OIDLOOKUP:
-				written += write_midx_oid_lookup(f, MIDX_HASH_LEN, entries, nr_entries);
+				written += write_midx_oid_lookup(f, the_hash_algo->rawsz, entries, nr_entries);
 				break;
 
 			case MIDX_CHUNKID_OBJECTOFFSETS:

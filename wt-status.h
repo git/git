@@ -116,7 +116,7 @@ struct wt_status {
 	int rename_limit;
 	enum wt_status_format status_format;
 	struct wt_status_state state;
-	unsigned char sha1_commit[GIT_MAX_RAWSZ]; /* when not Initial */
+	struct object_id oid_commit; /* when not Initial */
 
 	/* These are computed during processing of the individual sections */
 	int committable;

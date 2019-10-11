@@ -144,7 +144,7 @@ static void append_merge_parents(struct repository *r,
 
 	while (!strbuf_getwholeline_fd(&line, merge_head, '\n')) {
 		struct object_id oid;
-		if (line.len < GIT_SHA1_HEXSZ || get_oid_hex(line.buf, &oid))
+		if (get_oid_hex(line.buf, &oid))
 			die("unknown line in '%s': %s",
 			    git_path_merge_head(r), line.buf);
 		tail = append_parent(r, tail, &oid);

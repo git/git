@@ -29,6 +29,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 	struct packed_git *new_pack = NULL;
 	struct transport *transport;
 	size_t base_len;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (!opt)
 		opt = &defaults;
@@ -100,7 +101,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	commit[GIT_SHA1_HEXSZ] = '\n';
+	commit[hexsz] = '\n';
 	do {
 		/*
 		 * If index-pack already checked that:
@@ -113,8 +114,8 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		if (new_pack && find_pack_entry_one(oid.hash, new_pack))
 			continue;
 
-		memcpy(commit, oid_to_hex(&oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(rev_list.in, commit, GIT_SHA1_HEXSZ + 1) < 0) {
+		memcpy(commit, oid_to_hex(&oid), hexsz);
+		if (write_in_full(rev_list.in, commit, hexsz + 1) < 0) {
 			if (errno != EPIPE && errno != EINVAL)
 				error_errno(_("failed write to rev-list"));
 			err = -1;

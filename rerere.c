@@ -52,7 +52,7 @@ static void free_rerere_id(struct string_list_item *item)
 
 static const char *rerere_id_hex(const struct rerere_id *id)
 {
-	return sha1_to_hex(id->collection->hash);
+	return hash_to_hex(id->collection->hash);
 }
 
 static void fit_variant(struct rerere_dir *rr_dir, int variant)
@@ -115,7 +115,7 @@ static int is_rr_file(const char *name, const char *filename, int *variant)
 static void scan_rerere_dir(struct rerere_dir *rr_dir)
 {
 	struct dirent *de;
-	DIR *dir = opendir(git_path("rr-cache/%s", sha1_to_hex(rr_dir->hash)));
+	DIR *dir = opendir(git_path("rr-cache/%s", hash_to_hex(rr_dir->hash)));
 
 	if (!dir)
 		return;
@@ -186,9 +186,9 @@ static struct rerere_id *new_rerere_id_hex(char *hex)
 	return id;
 }
 
-static struct rerere_id *new_rerere_id(unsigned char *sha1)
+static struct rerere_id *new_rerere_id(unsigned char *hash)
 {
-	return new_rerere_id_hex(sha1_to_hex(sha1));
+	return new_rerere_id_hex(hash_to_hex(hash));
 }
 
 /*

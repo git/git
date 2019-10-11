@@ -1067,7 +1067,6 @@ const char *repo_find_unique_abbrev(struct repository *r, const struct object_id
 int repo_find_unique_abbrev_r(struct repository *r, char *hex, const struct object_id *oid, int len);
 #define find_unique_abbrev_r(hex, oid, len) repo_find_unique_abbrev_r(the_repository, hex, oid, len)
 
-extern const unsigned char null_sha1[GIT_MAX_RAWSZ];
 extern const struct object_id null_oid;
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
@@ -1102,14 +1101,9 @@ static inline int oideq(const struct object_id *oid1, const struct object_id *oi
 	return hasheq(oid1->hash, oid2->hash);
 }
 
-static inline int is_null_sha1(const unsigned char *sha1)
-{
-	return hasheq(sha1, null_sha1);
-}
-
 static inline int is_null_oid(const struct object_id *oid)
 {
-	return hasheq(oid->hash, null_sha1);
+	return oideq(oid, &null_oid);
 }
 
 static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)

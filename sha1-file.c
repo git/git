@@ -55,7 +55,6 @@
 	"\x6f\xe1\x41\xf7\x74\x91\x20\xa3\x03\x72" \
 	"\x18\x13"
 
-const unsigned char null_sha1[GIT_MAX_RAWSZ];
 const struct object_id null_oid;
 static const struct object_id empty_tree_oid = {
 	EMPTY_TREE_SHA1_BIN_LITERAL

@@ -272,7 +272,7 @@ static int import_object(struct object_id *oid, enum object_type type,
 			return error(_("unable to spawn mktree"));
 		}
 
-		if (strbuf_read(&result, cmd.out, 41) < 0) {
+		if (strbuf_read(&result, cmd.out, the_hash_algo->hexsz + 1) < 0) {
 			error_errno(_("unable to read from mktree"));
 			close(fd);
 			close(cmd.out);
@@ -358,14 +358,15 @@ static int replace_parents(struct strbuf *buf, int argc, const char **argv)
 	struct strbuf new_parents = STRBUF_INIT;
 	const char *parent_start, *parent_end;
 	int i;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	/* find existing parents */
 	parent_start = buf->buf;
-	parent_start += GIT_SHA1_HEXSZ + 6; /* "tree " + "hex sha1" + "\n" */
+	parent_start += hexsz + 6; /* "tree " + "hex sha1" + "\n" */
 	parent_end = parent_start;
 
 	while (starts_with(parent_end, "parent "))
-		parent_end += 48; /* "parent " + "hex sha1" + "\n" */
+		parent_end += hexsz + 8; /* "parent " + "hex sha1" + "\n" */
 
 	/* prepare new parents */
 	for (i = 0; i < argc; i++) {

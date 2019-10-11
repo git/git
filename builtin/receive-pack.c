@@ -417,24 +417,22 @@ static int copy_to_sideband(int in, int out, void *arg)
 	return 0;
 }
 
-#define HMAC_BLOCK_SIZE 64
-
-static void hmac_sha1(unsigned char *out,
+static void hmac(unsigned char *out,
 		      const char *key_in, size_t key_len,
 		      const char *text, size_t text_len)
 {
-	unsigned char key[HMAC_BLOCK_SIZE];
-	unsigned char k_ipad[HMAC_BLOCK_SIZE];
-	unsigned char k_opad[HMAC_BLOCK_SIZE];
+	unsigned char key[GIT_MAX_BLKSZ];
+	unsigned char k_ipad[GIT_MAX_BLKSZ];
+	unsigned char k_opad[GIT_MAX_BLKSZ];
 	int i;
-	git_SHA_CTX ctx;
+	git_hash_ctx ctx;
 
 	/* RFC 2104 2. (1) */
-	memset(key, '\0', HMAC_BLOCK_SIZE);
-	if (HMAC_BLOCK_SIZE < key_len) {
-		git_SHA1_Init(&ctx);
-		git_SHA1_Update(&ctx, key_in, key_len);
-		git_SHA1_Final(key, &ctx);
+	memset(key, '\0', GIT_MAX_BLKSZ);
+	if (the_hash_algo->blksz < key_len) {
+		the_hash_algo->init_fn(&ctx);
+		the_hash_algo->update_fn(&ctx, key_in, key_len);
+		the_hash_algo->final_fn(key, &ctx);
 	} else {
 		memcpy(key, key_in, key_len);
 	}
@@ -446,29 +444,29 @@ static void hmac_sha1(unsigned char *out,
 	}
 
 	/* RFC 2104 2. (3) & (4) */
-	git_SHA1_Init(&ctx);
-	git_SHA1_Update(&ctx, k_ipad, sizeof(k_ipad));
-	git_SHA1_Update(&ctx, text, text_len);
-	git_SHA1_Final(out, &ctx);
+	the_hash_algo->init_fn(&ctx);
+	the_hash_algo->update_fn(&ctx, k_ipad, sizeof(k_ipad));
+	the_hash_algo->update_fn(&ctx, text, text_len);
+	the_hash_algo->final_fn(out, &ctx);
 
 	/* RFC 2104 2. (6) & (7) */
-	git_SHA1_Init(&ctx);
-	git_SHA1_Update(&ctx, k_opad, sizeof(k_opad));
-	git_SHA1_Update(&ctx, out, GIT_SHA1_RAWSZ);
-	git_SHA1_Final(out, &ctx);
+	the_hash_algo->init_fn(&ctx);
+	the_hash_algo->update_fn(&ctx, k_opad, sizeof(k_opad));
+	the_hash_algo->update_fn(&ctx, out, the_hash_algo->rawsz);
+	the_hash_algo->final_fn(out, &ctx);
 }
 
 static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
 {
 	struct strbuf buf = STRBUF_INIT;
-	unsigned char sha1[GIT_SHA1_RAWSZ];
+	unsigned char hash[GIT_MAX_RAWSZ];
 
 	strbuf_addf(&buf, "%s:%"PRItime, path, stamp);
-	hmac_sha1(sha1, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
+	hmac(hash, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));
 	strbuf_release(&buf);
 
 	/* RFC 2104 5. HMAC-SHA1-80 */
-	strbuf_addf(&buf, "%"PRItime"-%.*s", stamp, GIT_SHA1_HEXSZ, sha1_to_hex(sha1));
+	strbuf_addf(&buf, "%"PRItime"-%.*s", stamp, (int)the_hash_algo->hexsz, hash_to_hex(hash));
 	return strbuf_detach(&buf, NULL);
 }
 
@@ -970,7 +968,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	if (run_command(&child))
 		return "Working directory has staged changes";
 
-	read_tree[3] = sha1_to_hex(sha1);
+	read_tree[3] = hash_to_hex(sha1);
 	child_process_init(&child);
 	child.argv = read_tree;
 	child.env = env->argv;
@@ -987,13 +985,13 @@ static const char *push_to_deploy(unsigned char *sha1,
 
 static const char *push_to_checkout_hook = "push-to-checkout";
 
-static const char *push_to_checkout(unsigned char *sha1,
+static const char *push_to_checkout(unsigned char *hash,
 				    struct argv_array *env,
 				    const char *work_tree)
 {
 	argv_array_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
 	if (run_hook_le(env->argv, push_to_checkout_hook,
-			sha1_to_hex(sha1), NULL))
+			hash_to_hex(hash), NULL))
 		return "push-to-checkout hook declined";
 	else
 		return NULL;

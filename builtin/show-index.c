@@ -11,6 +11,7 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 	unsigned nr;
 	unsigned int version;
 	static unsigned int top_index[256];
+	const unsigned hashsz = the_hash_algo->rawsz;
 
 	if (argc != 1)
 		usage(show_index_usage);
@@ -36,23 +37,23 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 	}
 	if (version == 1) {
 		for (i = 0; i < nr; i++) {
-			unsigned int offset, entry[6];
+			unsigned int offset, entry[(GIT_MAX_RAWSZ + 4) / sizeof(unsigned int)];
 
-			if (fread(entry, 4 + 20, 1, stdin) != 1)
+			if (fread(entry, 4 + hashsz, 1, stdin) != 1)
 				die("unable to read entry %u/%u", i, nr);
 			offset = ntohl(entry[0]);
-			printf("%u %s\n", offset, sha1_to_hex((void *)(entry+1)));
+			printf("%u %s\n", offset, hash_to_hex((void *)(entry+1)));
 		}
 	} else {
 		unsigned off64_nr = 0;
 		struct {
-			unsigned char sha1[20];
+			struct object_id oid;
 			uint32_t crc;
 			uint32_t off;
 		} *entries;
 		ALLOC_ARRAY(entries, nr);
 		for (i = 0; i < nr; i++)
-			if (fread(entries[i].sha1, 20, 1, stdin) != 1)
+			if (fread(entries[i].oid.hash, hashsz, 1, stdin) != 1)
 				die("unable to read sha1 %u/%u", i, nr);
 		for (i = 0; i < nr; i++)
 			if (fread(&entries[i].crc, 4, 1, stdin) != 1)
@@ -77,7 +78,7 @@ int cmd_show_index(int argc, const char **argv, const char *prefix)
 			}
 			printf("%" PRIuMAX " %s (%08"PRIx32")\n",
 			       (uintmax_t) offset,
-			       sha1_to_hex(entries[i].sha1),
+			       oid_to_hex(&entries[i].oid),
 			       ntohl(entries[i].crc));
 		}
 		free(entries);

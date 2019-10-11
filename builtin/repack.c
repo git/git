@@ -191,7 +191,7 @@ static int write_oid(const struct object_id *oid, struct packed_git *pack,
 			die(_("could not start pack-objects to repack promisor objects"));
 	}
 
-	xwrite(cmd->in, oid_to_hex(oid), GIT_SHA1_HEXSZ);
+	xwrite(cmd->in, oid_to_hex(oid), the_hash_algo->hexsz);
 	xwrite(cmd->in, "\n", 1);
 	return 0;
 }
