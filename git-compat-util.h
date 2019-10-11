@@ -77,7 +77,7 @@
 #endif
 /*
  * ARRAY_SIZE - get the number of elements in a visible array
- *  <at> x: the array whose size you want.
+ * @x: the array whose size you want.
  *
  * This does not work on pointers, or arrays declared as [], or
  * function parameters.  With correct compiler support, such usage
