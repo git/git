@@ -139,7 +139,7 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 	 * ":(icase)path" is treated as a pathspec full of
 	 * wildcard. In other words, only prefix is considered common
 	 * prefix. If the pathspec is abc/foo abc/bar, running in
-	 * subdir xyz, the common prefix is still xyz, not xuz/abc as
+	 * subdir xyz, the common prefix is still xyz, not xyz/abc as
 	 * in non-:(icase).
 	 */
 	GUARD_PATHSPEC(pathspec,
@@ -273,19 +273,30 @@ static int do_read_blob(const struct object_id *oid, struct oid_stat *oid_stat,
 
 #define DO_MATCH_EXCLUDE   (1<<0)
 #define DO_MATCH_DIRECTORY (1<<1)
-#define DO_MATCH_SUBMODULE (1<<2)
+#define DO_MATCH_LEADING_PATHSPEC (1<<2)
 
 /*
- * Does 'match' match the given name?
- * A match is found if
+ * Does the given pathspec match the given name?  A match is found if
  *
- * (1) the 'match' string is leading directory of 'name', or
- * (2) the 'match' string is a wildcard and matches 'name', or
- * (3) the 'match' string is exactly the same as 'name'.
+ * (1) the pathspec string is leading directory of 'name' ("RECURSIVELY"), or
+ * (2) the pathspec string has a leading part matching 'name' ("LEADING"), or
+ * (3) the pathspec string is a wildcard and matches 'name' ("WILDCARD"), or
+ * (4) the pathspec string is exactly the same as 'name' ("EXACT").
  *
- * and the return value tells which case it was.
+ * Return value tells which case it was (1-4), or 0 when there is no match.
  *
- * It returns 0 when there is no match.
+ * It may be instructive to look at a small table of concrete examples
+ * to understand the differences between 1, 2, and 4:
+ *
+ *                              Pathspecs
+ *                |    a/b    |   a/b/    |   a/b/c
+ *          ------+-----------+-----------+------------
+ *          a/b   |  EXACT    |  EXACT[1] | LEADING[2]
+ *  Names   a/b/  | RECURSIVE |   EXACT   | LEADING[2]
+ *          a/b/c | RECURSIVE | RECURSIVE |   EXACT
+ *
+ * [1] Only if DO_MATCH_DIRECTORY is passed; otherwise, this is NOT a match.
+ * [2] Only if DO_MATCH_LEADING_PATHSPEC is passed; otherwise, not a match.
  */
 static int match_pathspec_item(const struct index_state *istate,
 			       const struct pathspec_item *item, int prefix,
@@ -353,13 +364,14 @@ static int match_pathspec_item(const struct index_state *istate,
 			 item->nowildcard_len - prefix))
 		return MATCHED_FNMATCH;
 
-	/* Perform checks to see if "name" is a super set of the pathspec */
-	if (flags & DO_MATCH_SUBMODULE) {
+	/* Perform checks to see if "name" is a leading string of the pathspec */
+	if (flags & DO_MATCH_LEADING_PATHSPEC) {
 		/* name is a literal prefix of the pathspec */
+		int offset = name[namelen-1] == '/' ? 1 : 0;
 		if ((namelen < matchlen) &&
-		    (match[namelen] == '/') &&
+		    (match[namelen-offset] == '/') &&
 		    !ps_strncmp(item, match, name, namelen))
-			return MATCHED_RECURSIVELY;
+			return MATCHED_RECURSIVELY_LEADING_PATHSPEC;
 
 		/* name" doesn't match up to the first wild character */
 		if (item->nowildcard_len < item->len &&
@@ -376,7 +388,7 @@ static int match_pathspec_item(const struct index_state *istate,
 		 * The submodules themselves will be able to perform more
 		 * accurate matching to determine if the pathspec matches.
 		 */
-		return MATCHED_RECURSIVELY;
+		return MATCHED_RECURSIVELY_LEADING_PATHSPEC;
 	}
 
 	return 0;
@@ -497,7 +509,7 @@ int submodule_path_match(const struct index_state *istate,
 					strlen(submodule_name),
 					0, seen,
 					DO_MATCH_DIRECTORY |
-					DO_MATCH_SUBMODULE);
+					DO_MATCH_LEADING_PATHSPEC);
 	return matched;
 }
 
@@ -1451,6 +1463,16 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return path_none;
 
 	case index_nonexistent:
+		if (dir->flags & DIR_SKIP_NESTED_GIT) {
+			int nested_repo;
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addstr(&sb, dirname);
+			nested_repo = is_nonbare_repository_dir(&sb);
+			strbuf_release(&sb);
+			if (nested_repo)
+				return path_none;
+		}
+
 		if (dir->flags & DIR_SHOW_OTHER_DIRECTORIES)
 			break;
 		if (exclude &&
@@ -1950,8 +1972,11 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 		/* recurse into subdir if instructed by treat_path */
 		if ((state == path_recurse) ||
 			((state == path_untracked) &&
-			 (dir->flags & DIR_SHOW_IGNORED_TOO) &&
-			 (get_dtype(cdir.de, istate, path.buf, path.len) == DT_DIR))) {
+			 (get_dtype(cdir.de, istate, path.buf, path.len) == DT_DIR) &&
+			 ((dir->flags & DIR_SHOW_IGNORED_TOO) ||
+			  (pathspec &&
+			   do_match_pathspec(istate, pathspec, path.buf, path.len,
+					     baselen, NULL, DO_MATCH_LEADING_PATHSPEC) == MATCHED_RECURSIVELY_LEADING_PATHSPEC)))) {
 			struct untracked_cache_dir *ud;
 			ud = lookup_untracked(dir->untracked, untracked,
 					      path.buf + baselen,
@@ -1962,6 +1987,12 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 							 check_only, stop_at_first_file, pathspec);
 			if (subdir_state > dir_state)
 				dir_state = subdir_state;
+
+			if (pathspec &&
+			    !match_pathspec(istate, pathspec, path.buf, path.len,
+					    0 /* prefix */, NULL,
+					    0 /* do NOT special case dirs */))
+				state = path_none;
 		}
 
 		if (check_only) {

@@ -158,7 +158,8 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 
 	*dir_gone = 1;
 
-	if ((force_flag & REMOVE_DIR_KEEP_NESTED_GIT) && is_nonbare_repository_dir(path)) {
+	if ((force_flag & REMOVE_DIR_KEEP_NESTED_GIT) &&
+	    is_nonbare_repository_dir(path)) {
 		if (!quiet) {
 			quote_path_relative(path->buf, prefix, &quoted);
 			printf(dry_run ?  _(msg_would_skip_git_dir) : _(msg_skip_git_dir),
@@ -946,8 +947,18 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	if (force > 1)
 		rm_flags = 0;
+	else
+		dir.flags |= DIR_SKIP_NESTED_GIT;
 
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
+
+	if (argc) {
+		/*
+		 * Remaining args implies pathspecs specified, and we should
+		 * recurse within those.
+		 */
+		remove_directories = 1;
+	}
 
 	if (remove_directories)
 		dir.flags |= DIR_SHOW_IGNORED_TOO | DIR_KEEP_UNTRACKED_CONTENTS;
@@ -1007,6 +1018,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	for_each_string_list_item(item, &del_list) {
 		struct stat st;
 
+		strbuf_reset(&abs_path);
 		if (prefix)
 			strbuf_addstr(&abs_path, prefix);
 
@@ -1040,7 +1052,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				printf(dry_run ? _(msg_would_remove) : _(msg_remove), qname);
 			}
 		}
-		strbuf_reset(&abs_path);
 	}
 
 	strbuf_release(&abs_path);

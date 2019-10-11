@@ -156,7 +156,8 @@ struct dir_struct {
 		DIR_SHOW_IGNORED_TOO = 1<<5,
 		DIR_COLLECT_KILLED_ONLY = 1<<6,
 		DIR_KEEP_UNTRACKED_CONTENTS = 1<<7,
-		DIR_SHOW_IGNORED_TOO_MODE_MATCHING = 1<<8
+		DIR_SHOW_IGNORED_TOO_MODE_MATCHING = 1<<8,
+		DIR_SKIP_NESTED_GIT = 1<<9
 	} flags;
 	struct dir_entry **entries;
 	struct dir_entry **ignored;
@@ -211,8 +212,9 @@ int count_slashes(const char *s);
  * when populating the seen[] array.
  */
 #define MATCHED_RECURSIVELY 1
-#define MATCHED_FNMATCH 2
-#define MATCHED_EXACTLY 3
+#define MATCHED_RECURSIVELY_LEADING_PATHSPEC 2
+#define MATCHED_FNMATCH 3
+#define MATCHED_EXACTLY 4
 int simple_length(const char *match);
 int no_wildcard(const char *string);
 char *common_prefix(const struct pathspec *pathspec);
