@@ -6,17 +6,6 @@
 #ifndef PCRE_NO_UTF8_CHECK
 #define PCRE_NO_UTF8_CHECK 0
 #endif
-#ifdef PCRE_CONFIG_JIT
-#if PCRE_MAJOR >= 8 && PCRE_MINOR >= 32
-#ifndef NO_LIBPCRE1_JIT
-#define GIT_PCRE1_USE_JIT
-#define GIT_PCRE_STUDY_JIT_COMPILE PCRE_STUDY_JIT_COMPILE
-#endif
-#endif
-#endif
-#ifndef GIT_PCRE_STUDY_JIT_COMPILE
-#define GIT_PCRE_STUDY_JIT_COMPILE 0
-#endif
 #else
 typedef int pcre;
 typedef int pcre_extra;
