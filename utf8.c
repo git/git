@@ -95,13 +95,11 @@ static int git_wcwidth(ucs_char_t ch)
 		return -1;
 
 	/* binary search in table of non-spacing characters */
-	if (bisearch(ch, zero_width, sizeof(zero_width)
-				/ sizeof(struct interval) - 1))
+	if (bisearch(ch, zero_width, ARRAY_SIZE(zero_width) - 1))
 		return 0;
 
 	/* binary search in table of double width characters */
-	if (bisearch(ch, double_width, sizeof(double_width)
-				/ sizeof(struct interval) - 1))
+	if (bisearch(ch, double_width, ARRAY_SIZE(double_width) - 1))
 		return 2;
 
 	return 1;
