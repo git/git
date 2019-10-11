@@ -68,6 +68,9 @@ UI, Workflows & Features
  * A configuration variable tells "git fetch" to write the commit
    graph after finishing.
 
+ * "git add -i" has been taught to show the total number of hunks and
+   the hunks that has been processed so far when showing prompts.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -122,6 +125,8 @@ Performance, Internal Implementation, Development Support etc.
    Python 3.
 
  * Update the way build artifacts in t/helper/ directory are ignored.
+
+ * Preparation for SHA-256 upgrade continues.
 
 
 Fixes since v2.23
@@ -268,6 +273,30 @@ Fixes since v2.23
    has been fixed.
    (merge b181676ce9 rs/convert-fix-utf-without-dash later to maint).
 
+ * The author names taken from SVN repositories may have extra leading
+   or trailing whitespaces, which are now munged away.
+   (merge 4ddd4bddb1 tk/git-svn-trim-author-name later to maint).
+
+ * "git rebase -i" showed a wrong HEAD while "reword" open the editor.
+   (merge b0a3186140 pw/rebase-i-show-HEAD-to-reword later to maint).
+
+ * A few simplification and bugfixes to PCRE interface.
+   (merge c581e4a749 ab/pcre-jit-fixes later to maint).
+
+ * PCRE fixes.
+   (merge ff61681b46 cb/pcre1-cleanup later to maint).
+
+ * "git range-diff" segfaulted when diff.noprefix configuration was
+   used, as it blindly expected the patch it internally generates to
+   have the standard a/ and b/ prefixes.  The command now forces the
+   internal patch to be built without any prefix, not to be affected
+   by any end-user configuration.
+   (merge 937b76ed49 js/range-diff-noprefix later to maint).
+
+ * "git stash apply" in a subdirectory of a secondary worktree failed
+   to access the worktree correctly, which has been corrected.
+   (merge dfd557c978 js/stash-apply-in-secondary-worktree later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
    (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
@@ -305,3 +334,4 @@ Fixes since v2.23
    (merge 71f4960b91 js/mingw-spawn-with-spaces-in-path later to maint).
    (merge 53d687bf5f ah/cleanups later to maint).
    (merge f537485fa5 rs/test-remove-useless-debugging-cat later to maint).
+   (merge 11a3d3aadd dl/rev-list-doc-cleanup later to maint).
