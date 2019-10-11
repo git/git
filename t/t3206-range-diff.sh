@@ -461,4 +461,8 @@ test_expect_success 'format-patch --range-diff as commentary' '
 	grep "> 1: .* new message" 0001-*
 '
 
+test_expect_success 'range-diff overrides diff.noprefix internally' '
+	git -c diff.noprefix=true range-diff HEAD^...
+'
+
 test_done
