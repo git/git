@@ -354,4 +354,21 @@ test_expect_success 'discard_index() also discards fsmonitor info' '
 	test_cmp expect actual
 '
 
+# Test staging/unstaging files that appear at the end of the index.  Test
+# file names begin with 'z' so that they are sorted to the end of the index.
+test_expect_success 'status succeeds after staging/unstaging ' '
+	test_create_repo fsmonitor-stage-unstage &&
+	(
+		cd fsmonitor-stage-unstage &&
+		test_commit initial &&
+		git update-index --fsmonitor &&
+		removed=$(test_seq 1 100 | sed "s/^/z/") &&
+		touch $removed &&
+		git add $removed &&
+		git config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-env" &&
+		FSMONITOR_LIST="$removed" git restore -S $removed &&
+		FSMONITOR_LIST="$removed" git status
+	)
+'
+
 test_done
