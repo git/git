@@ -15,7 +15,6 @@
 #include "argv-array.h"
 #include "run-command.h"
 #include "object-store.h"
-#include "revision.h"
 #include "list-objects.h"
 #include "commit-slab.h"
 
