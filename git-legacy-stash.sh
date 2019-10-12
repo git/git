@@ -370,7 +370,7 @@ push_stash () {
 			git diff-index -p --cached --binary HEAD -- "$@" |
 			git apply --index -R
 		else
-			git reset --hard -q
+			git reset --hard -q --no-recurse-submodules
 		fi
 
 		if test "$keep_index" = "t" && test -n "$i_tree"
