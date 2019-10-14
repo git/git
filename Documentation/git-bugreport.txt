@@ -31,6 +31,7 @@ The following information is captured automatically:
  - 'git remote-https --build-info'
  - $SHELL
  - Selected config values
+ - A list of enabled hooks
 
 This tool is invoked via the typical Git setup process, which means that in some
 cases, it might not be able to launch - for example, if a relevant config file
