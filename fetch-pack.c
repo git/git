@@ -382,6 +382,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 		state_len = 0;
 	}
 
+	trace2_region_enter("fetch-pack", "negotiation_v0_v1", the_repository);
 	flushes = 0;
 	retval = -1;
 	if (args->no_dependents)
@@ -466,6 +467,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 		}
 	}
 done:
+	trace2_region_leave("fetch-pack", "negotiation_v0_v1", the_repository);
 	if (!got_ready || !no_done) {
 		packet_buf_write(&req_buf, "done\n");
 		send_request(args, fd[1], &req_buf);
@@ -1378,7 +1380,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	enum fetch_state state = FETCH_CHECK_LOCAL;
 	struct oidset common = OIDSET_INIT;
 	struct packet_reader reader;
-	int in_vain = 0;
+	int in_vain = 0, negotiation_started = 0;
 	int haves_to_send = INITIAL_FLUSH;
 	struct fetch_negotiator negotiator;
 	fetch_negotiator_init(r, &negotiator);
@@ -1421,6 +1423,12 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			}
 			break;
 		case FETCH_SEND_REQUEST:
+			if (!negotiation_started) {
+				negotiation_started = 1;
+				trace2_region_enter("fetch-pack",
+						    "negotiation_v2",
+						    the_repository);
+			}
 			if (send_fetch_request(&negotiator, fd[1], args, ref,
 					       &common,
 					       &haves_to_send, &in_vain,
@@ -1444,6 +1452,9 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			}
 			break;
 		case FETCH_GET_PACK:
+			trace2_region_leave("fetch-pack",
+					    "negotiation_v2",
+					    the_repository);
 			/* Check for shallow-info section */
 			if (process_section_header(&reader, "shallow-info", 1))
 				receive_shallow_info(args, &reader, shallows, si);

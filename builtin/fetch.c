@@ -1085,8 +1085,11 @@ static int check_exist_and_connected(struct ref *ref_map)
 static int fetch_refs(struct transport *transport, struct ref *ref_map)
 {
 	int ret = check_exist_and_connected(ref_map);
-	if (ret)
+	if (ret) {
+		trace2_region_enter("fetch", "fetch_refs", the_repository);
 		ret = transport_fetch_refs(transport, ref_map);
+		trace2_region_leave("fetch", "fetch_refs", the_repository);
+	}
 	if (!ret)
 		/*
 		 * Keep the new pack's ".keep" file around to allow the caller
@@ -1102,11 +1105,14 @@ static int consume_refs(struct transport *transport, struct ref *ref_map)
 {
 	int connectivity_checked = transport->smart_options
 		? transport->smart_options->connectivity_checked : 0;
-	int ret = store_updated_refs(transport->url,
-				     transport->remote->name,
-				     connectivity_checked,
-				     ref_map);
+	int ret;
+	trace2_region_enter("fetch", "consume_refs", the_repository);
+	ret = store_updated_refs(transport->url,
+				 transport->remote->name,
+				 connectivity_checked,
+				 ref_map);
 	transport_unlock_pack(transport);
+	trace2_region_leave("fetch", "consume_refs", the_repository);
 	return ret;
 }
 
@@ -1351,9 +1357,11 @@ static int do_fetch(struct transport *transport,
 			argv_array_push(&ref_prefixes, "refs/tags/");
 	}
 
-	if (must_list_refs)
+	if (must_list_refs) {
+		trace2_region_enter("fetch", "remote_refs", the_repository);
 		remote_refs = transport_get_remote_refs(transport, &ref_prefixes);
-	else
+		trace2_region_leave("fetch", "remote_refs", the_repository);
+	} else
 		remote_refs = NULL;
 
 	argv_array_clear(&ref_prefixes);
