@@ -764,23 +764,27 @@ static void add_header(const char *value)
 	item->string[len] = '\0';
 }
 
-#define THREAD_SHALLOW 1
-#define THREAD_DEEP 2
-static int thread;
-static int do_signoff;
-static int base_auto;
-static char *from;
-static const char *signature = git_version_string;
-static const char *signature_file;
-static int config_cover_letter;
-static const char *config_output_directory;
-
-enum {
+enum cover_setting {
 	COVER_UNSET,
 	COVER_OFF,
 	COVER_ON,
 	COVER_AUTO
 };
+
+enum thread_level {
+	THREAD_UNSET,
+	THREAD_SHALLOW,
+	THREAD_DEEP
+};
+
+static enum thread_level thread;
+static int do_signoff;
+static int base_auto;
+static char *from;
+static const char *signature = git_version_string;
+static const char *signature_file;
+static enum cover_setting config_cover_letter;
+static const char *config_output_directory;
 
 static int git_format_config(const char *var, const char *value, void *cb)
 {
@@ -1248,9 +1252,9 @@ static int output_directory_callback(const struct option *opt, const char *arg,
 
 static int thread_callback(const struct option *opt, const char *arg, int unset)
 {
-	int *thread = (int *)opt->value;
+	enum thread_level *thread = (enum thread_level *)opt->value;
 	if (unset)
-		*thread = 0;
+		*thread = THREAD_UNSET;
 	else if (!arg || !strcmp(arg, "shallow"))
 		*thread = THREAD_SHALLOW;
 	else if (!strcmp(arg, "deep"))
