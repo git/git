@@ -2530,9 +2530,9 @@ proc makewindow {} {
             bind %W <Map> {}
             %W sashpos 0 $::geometry(botwidth)
         }
+	bind .pwbottom <Configure> {resizecdetpanes %W %w}
     }
 
-    bind .pwbottom <Configure> {resizecdetpanes %W %w}
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
     #bindall <B1-Motion> {selcanvline %W %x %y}
