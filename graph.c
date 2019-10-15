@@ -259,7 +259,7 @@ struct git_graph {
 	/*
 	 * The maximum number of columns that can be stored in the columns
 	 * and new_columns arrays.  This is also half the number of entries
-	 * that can be stored in the mapping and new_mapping arrays.
+	 * that can be stored in the mapping and old_mapping arrays.
 	 */
 	int column_capacity;
 	/*
@@ -302,7 +302,7 @@ struct git_graph {
 	 * of the git_graph simply so we don't have to allocate a new
 	 * temporary array each time we have to output a collapsing line.
 	 */
-	int *new_mapping;
+	int *old_mapping;
 	/*
 	 * The current default column color being used.  This is
 	 * stored as an index into the array column_colors.
@@ -388,7 +388,7 @@ struct git_graph *graph_init(struct rev_info *opt)
 	ALLOC_ARRAY(graph->columns, graph->column_capacity);
 	ALLOC_ARRAY(graph->new_columns, graph->column_capacity);
 	ALLOC_ARRAY(graph->mapping, 2 * graph->column_capacity);
-	ALLOC_ARRAY(graph->new_mapping, 2 * graph->column_capacity);
+	ALLOC_ARRAY(graph->old_mapping, 2 * graph->column_capacity);
 
 	/*
 	 * The diff output prefix callback, with this we can make
@@ -418,7 +418,7 @@ static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
 	REALLOC_ARRAY(graph->columns, graph->column_capacity);
 	REALLOC_ARRAY(graph->new_columns, graph->column_capacity);
 	REALLOC_ARRAY(graph->mapping, graph->column_capacity * 2);
-	REALLOC_ARRAY(graph->new_mapping, graph->column_capacity * 2);
+	REALLOC_ARRAY(graph->old_mapping, graph->column_capacity * 2);
 }
 
 /*
@@ -1116,13 +1116,18 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 	int horizontal_edge_target = -1;
 
 	/*
-	 * Clear out the new_mapping array
+	 * Swap the mapping and old_mapping arrays
+	 */
+	SWAP(graph->mapping, graph->old_mapping);
+
+	/*
+	 * Clear out the mapping array
 	 */
 	for (i = 0; i < graph->mapping_size; i++)
-		graph->new_mapping[i] = -1;
+		graph->mapping[i] = -1;
 
 	for (i = 0; i < graph->mapping_size; i++) {
-		int target = graph->mapping[i];
+		int target = graph->old_mapping[i];
 		if (target < 0)
 			continue;
 
@@ -1143,14 +1148,14 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 * This column is already in the
 			 * correct place
 			 */
-			assert(graph->new_mapping[i] == -1);
-			graph->new_mapping[i] = target;
-		} else if (graph->new_mapping[i - 1] < 0) {
+			assert(graph->mapping[i] == -1);
+			graph->mapping[i] = target;
+		} else if (graph->mapping[i - 1] < 0) {
 			/*
 			 * Nothing is to the left.
 			 * Move to the left by one
 			 */
-			graph->new_mapping[i - 1] = target;
+			graph->mapping[i - 1] = target;
 			/*
 			 * If there isn't already an edge moving horizontally
 			 * select this one.
@@ -1166,9 +1171,9 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 				 * line.
 				 */
 				for (j = (target * 2)+3; j < (i - 2); j += 2)
-					graph->new_mapping[j] = target;
+					graph->mapping[j] = target;
 			}
-		} else if (graph->new_mapping[i - 1] == target) {
+		} else if (graph->mapping[i - 1] == target) {
 			/*
 			 * There is a branch line to our left
 			 * already, and it is our target.  We
@@ -1176,7 +1181,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 * the same parent commit.
 			 *
 			 * We don't have to add anything to the
-			 * output or new_mapping, since the
+			 * output or mapping, since the
 			 * existing branch line has already taken
 			 * care of it.
 			 */
@@ -1192,10 +1197,10 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 * The branch to the left of that space
 			 * should be our eventual target.
 			 */
-			assert(graph->new_mapping[i - 1] > target);
-			assert(graph->new_mapping[i - 2] < 0);
-			assert(graph->new_mapping[i - 3] == target);
-			graph->new_mapping[i - 2] = target;
+			assert(graph->mapping[i - 1] > target);
+			assert(graph->mapping[i - 2] < 0);
+			assert(graph->mapping[i - 3] == target);
+			graph->mapping[i - 2] = target;
 			/*
 			 * Mark this branch as the horizontal edge to
 			 * prevent any other edges from moving
@@ -1209,14 +1214,14 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 	/*
 	 * The new mapping may be 1 smaller than the old mapping
 	 */
-	if (graph->new_mapping[graph->mapping_size - 1] < 0)
+	if (graph->mapping[graph->mapping_size - 1] < 0)
 		graph->mapping_size--;
 
 	/*
 	 * Output out a line based on the new mapping info
 	 */
 	for (i = 0; i < graph->mapping_size; i++) {
-		int target = graph->new_mapping[i];
+		int target = graph->mapping[i];
 		if (target < 0)
 			graph_line_addch(line, ' ');
 		else if (target * 2 == i)
@@ -1229,21 +1234,16 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 				 * won't continue into the next line.
 				 */
 				if (i != (target * 2)+3)
-					graph->new_mapping[i] = -1;
+					graph->mapping[i] = -1;
 				used_horizontal = 1;
 			graph_line_write_column(line, &graph->new_columns[target], '_');
 		} else {
 			if (used_horizontal && i < horizontal_edge)
-				graph->new_mapping[i] = -1;
+				graph->mapping[i] = -1;
 			graph_line_write_column(line, &graph->new_columns[target], '/');
 
 		}
 	}
-
-	/*
-	 * Swap mapping and new_mapping
-	 */
-	SWAP(graph->mapping, graph->new_mapping);
 
 	/*
 	 * If graph->mapping indicates that all of the branch lines
