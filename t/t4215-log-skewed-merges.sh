@@ -11,9 +11,8 @@ test_expect_success 'log --graph with merge fusing with its left and right neigh
 	| *   G
 	| |\
 	| | * F
-	| * |   E
-	|/|\ \
-	| | |/
+	| * | E
+	|/|\|
 	| | * D
 	| * | C
 	| |/
@@ -43,9 +42,9 @@ test_expect_success 'log --graph with left-skewed merge' '
 	| | | | * 0_G
 	| |_|_|/|
 	|/| | | |
-	| | | * |   0_F
-	| |_|/|\ \
-	|/| | | |/
+	| | | * | 0_F
+	| |_|/|\|
+	|/| | | |
 	| | | | * 0_E
 	| |_|_|/
 	|/| | |
@@ -153,9 +152,8 @@ test_expect_success 'log --graph with nested right-skewed merge following left-s
 	| | * 3_G
 	| * | 3_F
 	|/| |
-	| * |   3_E
-	| |\ \
-	| | |/
+	| * | 3_E
+	| |\|
 	| | * 3_D
 	| * | 3_C
 	| |/
@@ -213,6 +211,46 @@ test_expect_success 'log --graph with right-skewed merge following a left-skewed
 	git checkout @^^ && git merge --no-ff 4_s -m 4_H &&
 
 	git log --graph --date-order --pretty=tformat:%s | sed "s/ *$//" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --graph with octopus merge with column joining its penultimate parent' '
+	cat >expect <<-\EOF &&
+	*   5_H
+	|\
+	| *-.   5_G
+	| |\ \
+	| | | * 5_F
+	| | * |   5_E
+	| |/|\ \
+	| |_|/ /
+	|/| | /
+	| | |/
+	* | | 5_D
+	| | * 5_C
+	| |/
+	|/|
+	| * 5_B
+	|/
+	* 5_A
+	EOF
+
+	git checkout --orphan 5_p &&
+	test_commit 5_A &&
+	git branch 5_q &&
+	git branch 5_r &&
+	test_commit 5_B &&
+	git checkout 5_q && test_commit 5_C &&
+	git checkout 5_r && test_commit 5_D &&
+	git checkout 5_p &&
+	git merge --no-ff 5_q 5_r -m 5_E &&
+	git checkout 5_q && test_commit 5_F &&
+	git checkout -b 5_s 5_p^ &&
+	git merge --no-ff 5_p 5_q -m 5_G &&
+	git checkout 5_r &&
+	git merge --no-ff 5_s -m 5_H &&
+
+	git log --graph --pretty=tformat:%s | sed "s/ *$//" >actual &&
 	test_cmp expect actual
 '
 

@@ -557,8 +557,24 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 		shift = (dist > 1) ? 2 * dist - 3 : 1;
 
 		graph->merge_layout = (dist > 0) ? 0 : 1;
+		graph->edges_added = graph->num_parents + graph->merge_layout  - 2;
+
 		mapping_idx = graph->width + (graph->merge_layout - 1) * shift;
 		graph->width += 2 * graph->merge_layout;
+
+	} else if (graph->edges_added > 0 && i == graph->mapping[graph->width - 2]) {
+		/*
+		 * If some columns have been added by a merge, but this commit
+		 * was found in the last existing column, then adjust the
+		 * numbers so that the two edges immediately join, i.e.:
+		 *
+		 *		* |		* |
+		 *		|\ \	=>	|\|
+		 *		| |/		| *
+		 *		| *
+		 */
+		mapping_idx = graph->width - 2;
+		graph->edges_added = -1;
 	} else {
 		mapping_idx = graph->width;
 		graph->width += 2;
@@ -604,6 +620,8 @@ static void graph_update_columns(struct git_graph *graph)
 		graph->mapping[i] = -1;
 
 	graph->width = 0;
+	graph->prev_edges_added = graph->edges_added;
+	graph->edges_added = 0;
 
 	/*
 	 * Populate graph->new_columns and graph->mapping
@@ -730,9 +748,6 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	 * columns, new_columns, and mapping.
 	 */
 	graph_update_columns(graph);
-
-	graph->prev_edges_added = graph->edges_added;
-	graph->edges_added = graph->num_parents + graph->merge_layout - 2;
 
 	graph->expansion_row = 0;
 
@@ -1041,7 +1056,7 @@ const char merge_chars[] = {'/', '|', '\\'};
 static void graph_output_post_merge_line(struct git_graph *graph, struct graph_line *line)
 {
 	int seen_this = 0;
-	int i;
+	int i, j;
 
 	struct commit_list *first_parent = first_interesting_parent(graph);
 	int seen_parent = 0;
@@ -1073,16 +1088,19 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 			char c;
 			seen_this = 1;
 
-			for (; parents; parents = next_interesting_parent(graph, parents)) {
+			for (j = 0; j < graph->num_parents; j++) {
 				par_column = graph_find_new_column_by_commit(graph, parents->item);
 				assert(par_column >= 0);
 
 				c = merge_chars[idx];
 				graph_line_write_column(line, &graph->new_columns[par_column], c);
-				if (idx == 2)
-					graph_line_addch(line, ' ');
-				else
+				if (idx == 2) {
+					if (graph->edges_added > 0 || j < graph->num_parents - 1)
+						graph_line_addch(line, ' ');
+				} else {
 					idx++;
+				}
+				parents = next_interesting_parent(graph, parents);
 			}
 			if (graph->edges_added == 0)
 				graph_line_addch(line, ' ');
