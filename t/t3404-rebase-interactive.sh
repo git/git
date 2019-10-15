@@ -945,10 +945,8 @@ test_expect_success C_LOCALE_OUTPUT 'rebase -ix with --autosquash' '
 	git add bis.txt &&
 	git commit -m "fixup! two_exec" &&
 	set_fake_editor &&
-	(
-		git checkout -b autosquash_actual &&
-		git rebase -i --exec "git show HEAD" --autosquash HEAD~4 >actual
-	) &&
+	git checkout -b autosquash_actual &&
+	git rebase -i --exec "git show HEAD" --autosquash HEAD~4 >actual &&
 	git checkout autosquash &&
 	(
 		git checkout -b autosquash_expected &&
