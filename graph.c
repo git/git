@@ -472,8 +472,7 @@ static int graph_find_new_column_by_commit(struct git_graph *graph,
 }
 
 static void graph_insert_into_new_columns(struct git_graph *graph,
-					  struct commit *commit,
-					  int *mapping_index)
+					  struct commit *commit)
 {
 	int i = graph_find_new_column_by_commit(graph, commit);
 
@@ -487,50 +486,14 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 		graph->new_columns[i].color = graph_find_commit_color(graph, commit);
 	}
 
-	graph->mapping[*mapping_index] = i;
-	*mapping_index += 2;
-}
-
-static void graph_update_width(struct git_graph *graph,
-			       int is_commit_in_existing_columns)
-{
-	/*
-	 * Compute the width needed to display the graph for this commit.
-	 * This is the maximum width needed for any row.  All other rows
-	 * will be padded to this width.
-	 *
-	 * Compute the number of columns in the widest row:
-	 * Count each existing column (graph->num_columns), and each new
-	 * column added by this commit.
-	 */
-	int max_cols = graph->num_columns + graph->num_parents;
-
-	/*
-	 * Even if the current commit has no parents to be printed, it
-	 * still takes up a column for itself.
-	 */
-	if (graph->num_parents < 1)
-		max_cols++;
-
-	/*
-	 * We added a column for the current commit as part of
-	 * graph->num_parents.  If the current commit was already in
-	 * graph->columns, then we have double counted it.
-	 */
-	if (is_commit_in_existing_columns)
-		max_cols--;
-
-	/*
-	 * Each column takes up 2 spaces
-	 */
-	graph->width = max_cols * 2;
+	graph->mapping[graph->width] = i;
+	graph->width += 2;
 }
 
 static void graph_update_columns(struct git_graph *graph)
 {
 	struct commit_list *parent;
 	int max_new_columns;
-	int mapping_idx;
 	int i, seen_this, is_commit_in_columns;
 
 	/*
@@ -563,6 +526,8 @@ static void graph_update_columns(struct git_graph *graph)
 	for (i = 0; i < graph->mapping_size; i++)
 		graph->mapping[i] = -1;
 
+	graph->width = 0;
+
 	/*
 	 * Populate graph->new_columns and graph->mapping
 	 *
@@ -573,7 +538,6 @@ static void graph_update_columns(struct git_graph *graph)
 	 * supposed to end up after the collapsing is performed.
 	 */
 	seen_this = 0;
-	mapping_idx = 0;
 	is_commit_in_columns = 1;
 	for (i = 0; i <= graph->num_columns; i++) {
 		struct commit *col_commit;
@@ -587,7 +551,6 @@ static void graph_update_columns(struct git_graph *graph)
 		}
 
 		if (col_commit == graph->commit) {
-			int old_mapping_idx = mapping_idx;
 			seen_this = 1;
 			graph->commit_index = i;
 			for (parent = first_interesting_parent(graph);
@@ -602,21 +565,18 @@ static void graph_update_columns(struct git_graph *graph)
 				    !is_commit_in_columns) {
 					graph_increment_column_color(graph);
 				}
-				graph_insert_into_new_columns(graph,
-							      parent->item,
-							      &mapping_idx);
+				graph_insert_into_new_columns(graph, parent->item);
 			}
 			/*
-			 * We always need to increment mapping_idx by at
+			 * We always need to increment graph->width by at
 			 * least 2, even if it has no interesting parents.
 			 * The current commit always takes up at least 2
 			 * spaces.
 			 */
-			if (mapping_idx == old_mapping_idx)
-				mapping_idx += 2;
+			if (graph->num_parents == 0)
+				graph->width += 2;
 		} else {
-			graph_insert_into_new_columns(graph, col_commit,
-						      &mapping_idx);
+			graph_insert_into_new_columns(graph, col_commit);
 		}
 	}
 
@@ -626,11 +586,6 @@ static void graph_update_columns(struct git_graph *graph)
 	while (graph->mapping_size > 1 &&
 	       graph->mapping[graph->mapping_size - 1] < 0)
 		graph->mapping_size--;
-
-	/*
-	 * Compute graph->width for this commit
-	 */
-	graph_update_width(graph, is_commit_in_columns);
 }
 
 void graph_update(struct git_graph *graph, struct commit *commit)
