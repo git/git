@@ -1583,6 +1583,25 @@ test_expect_success 'valid author header when author contains single quote' '
 	test_cmp expected actual
 '
 
+test_expect_success 'post-commit hook is called' '
+	test_when_finished "rm -f .git/hooks/post-commit" &&
+	>actual &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-commit <<-\EOS &&
+	git rev-parse HEAD >>actual
+	EOS
+	(
+		set_fake_editor &&
+		FAKE_LINES="edit 4 1 reword 2 fixup 3" git rebase -i A E &&
+		echo x>file3 &&
+		git add file3 &&
+		FAKE_COMMIT_MESSAGE=edited git rebase --continue
+	) &&
+	git rev-parse HEAD@{5} HEAD@{4} HEAD@{3} HEAD@{2} HEAD@{1} HEAD \
+		>expect &&
+	test_cmp expect actual
+'
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged
