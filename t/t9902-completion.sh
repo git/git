@@ -1548,7 +1548,10 @@ test_expect_success 'complete tree filename with metacharacters' '
 '
 
 test_expect_success PERL 'send-email' '
-	test_completion "git send-email --cov" "--cover-letter " &&
+	test_completion "git send-email --cov" <<-\EOF &&
+	--cover-from-description=Z
+	--cover-letter Z
+	EOF
 	test_completion "git send-email ma" "master "
 '
 
