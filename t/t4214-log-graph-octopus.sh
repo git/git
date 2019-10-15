@@ -121,7 +121,7 @@ test_expect_success 'log --graph with normal octopus merge and child, no color' 
 	test_cmp expect.uncolored actual
 '
 
-test_expect_failure 'log --graph with normal octopus and child merge with colors' '
+test_expect_success 'log --graph with normal octopus and child merge with colors' '
 	cat >expect.colors <<-\EOF &&
 	* after-merge
 	*<BLUE>-<RESET><BLUE>-<RESET><MAGENTA>-<RESET><MAGENTA>.<RESET>   octopus-merge
@@ -161,7 +161,7 @@ test_expect_success 'log --graph with tricky octopus merge and its child, no col
 	test_cmp expect.uncolored actual
 '
 
-test_expect_failure 'log --graph with tricky octopus merge and its child with colors' '
+test_expect_success 'log --graph with tricky octopus merge and its child with colors' '
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* left
@@ -205,7 +205,7 @@ test_expect_success 'log --graph with crossover in octopus merge, no color' '
 	test_cmp expect.uncolored actual
 '
 
-test_expect_failure 'log --graph with crossover in octopus merge with colors' '
+test_expect_success 'log --graph with crossover in octopus merge with colors' '
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* after-4
@@ -253,7 +253,7 @@ test_expect_success 'log --graph with crossover in octopus merge and its child, 
 	test_cmp expect.uncolored actual
 '
 
-test_expect_failure 'log --graph with crossover in octopus merge and its child with colors' '
+test_expect_success 'log --graph with crossover in octopus merge and its child with colors' '
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* after-4
@@ -349,7 +349,7 @@ test_expect_success 'log --graph with unrelated commit and octopus child, no col
 	test_cmp expect.uncolored actual
 '
 
-test_expect_failure 'log --graph with unrelated commit and octopus child with colors' '
+test_expect_success 'log --graph with unrelated commit and octopus child with colors' '
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* after-initial

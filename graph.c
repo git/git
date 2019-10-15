@@ -684,6 +684,11 @@ static void graph_update_columns(struct git_graph *graph)
 		graph->mapping_size--;
 }
 
+static int graph_num_dashed_parents(struct git_graph *graph)
+{
+	return graph->num_parents + graph->merge_layout - 3;
+}
+
 static int graph_num_expansion_rows(struct git_graph *graph)
 {
 	/*
@@ -706,7 +711,7 @@ static int graph_num_expansion_rows(struct git_graph *graph)
 	 * 		| * \
 	 * 		|/|\ \
 	 */
-	return (graph->num_parents + graph->merge_layout - 3) * 2;
+	return graph_num_dashed_parents(graph) * 2;
 }
 
 static int graph_needs_pre_commit_line(struct git_graph *graph)
@@ -934,47 +939,45 @@ static void graph_output_commit_char(struct git_graph *graph, struct graph_line 
 static void graph_draw_octopus_merge(struct git_graph *graph, struct graph_line *line)
 {
 	/*
-	 * Here dashless_parents represents the number of parents which don't
-	 * need to have dashes (the edges labeled "0" and "1").  And
-	 * dashful_parents are the remaining ones.
+	 * The parents of a merge commit can be arbitrarily reordered as they
+	 * are mapped onto display columns, for example this is a valid merge:
 	 *
-	 * | *---.
-	 * | |\ \ \
-	 * | | | | |
-	 * x 0 1 2 3
+	 *	| | *---.
+	 *	| | |\ \ \
+	 *	| | |/ / /
+	 *	| |/| | /
+	 *	| |_|_|/
+	 *	|/| | |
+	 *	3 1 0 2
 	 *
+	 * The numbers denote which parent of the merge each visual column
+	 * corresponds to; we can't assume that the parents will initially
+	 * display in the order given by new_columns.
+	 *
+	 * To find the right color for each dash, we need to consult the
+	 * mapping array, starting from the column 2 places to the right of the
+	 * merge commit, and use that to find out which logical column each
+	 * edge will collapse to.
+	 *
+	 * Commits are rendered once all edges have collapsed to their correct
+	 * logcial column, so commit_index gives us the right visual offset for
+	 * the merge commit.
 	 */
-	const int dashless_parents = 3 - graph->merge_layout;
-	int dashful_parents = graph->num_parents - dashless_parents;
 
-	/*
-	 * Usually, we add one new column for each parent (like the diagram
-	 * above) but sometimes the first parent goes into an existing column,
-	 * like this:
-	 *
-	 * | *-.
-	 * |/|\ \
-	 * | | | |
-	 * x 0 1 2
-	 *
-	 * In which case the number of parents will be one greater than the
-	 * number of added columns.
-	 */
-	int added_cols = (graph->num_new_columns - graph->num_columns);
-	int parent_in_old_cols = graph->num_parents - added_cols;
+	int i, j;
+	struct column *col;
 
-	/*
-	 * In both cases, commit_index corresponds to the edge labeled "0".
-	 */
-	int first_col = graph->commit_index + dashless_parents
-	    - parent_in_old_cols;
+	int dashed_parents = graph_num_dashed_parents(graph);
 
-	int i;
-	for (i = 0; i < dashful_parents; i++) {
-		graph_line_write_column(line, &graph->new_columns[i+first_col], '-');
-		graph_line_write_column(line, &graph->new_columns[i+first_col],
-					  i == dashful_parents-1 ? '.' : '-');
+	for (i = 0; i < dashed_parents; i++) {
+		j = graph->mapping[(graph->commit_index + i + 2) * 2];
+		col = &graph->new_columns[j];
+
+		graph_line_write_column(line, col, '-');
+		graph_line_write_column(line, col, (i == dashed_parents - 1) ? '.' : '-');
 	}
+
+	return;
 }
 
 static void graph_output_commit_line(struct git_graph *graph, struct graph_line *line)
