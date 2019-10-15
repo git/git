@@ -733,24 +733,12 @@ static void graph_output_padding_line(struct git_graph *graph,
 	int i;
 
 	/*
-	 * We could conceivable be called with a NULL commit
-	 * if our caller has a bug, and invokes graph_next_line()
-	 * immediately after graph_init(), without first calling
-	 * graph_update().  Return without outputting anything in this
-	 * case.
-	 */
-	if (!graph->commit)
-		return;
-
-	/*
 	 * Output a padding row, that leaves all branch lines unchanged
 	 */
 	for (i = 0; i < graph->num_new_columns; i++) {
 		graph_line_write_column(line, &graph->new_columns[i], '|');
 		graph_line_addch(line, ' ');
 	}
-
-	graph_pad_horizontally(graph, line);
 }
 
 
@@ -767,7 +755,6 @@ static void graph_output_skip_line(struct git_graph *graph, struct graph_line *l
 	 * of the graph is missing.
 	 */
 	graph_line_addstr(line, "...");
-	graph_pad_horizontally(graph, line);
 
 	if (graph->num_parents >= 3 &&
 	    graph->commit_index < (graph->num_columns - 1))
@@ -831,8 +818,6 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 		}
 		graph_line_addch(line, ' ');
 	}
-
-	graph_pad_horizontally(graph, line);
 
 	/*
 	 * Increment graph->expansion_row,
@@ -967,8 +952,6 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 		graph_line_addch(line, ' ');
 	}
 
-	graph_pad_horizontally(graph, line);
-
 	/*
 	 * Update graph->state
 	 */
@@ -1042,8 +1025,6 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 			graph_line_addch(line, ' ');
 		}
 	}
-
-	graph_pad_horizontally(graph, line);
 
 	/*
 	 * Update graph->state
@@ -1186,8 +1167,6 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 		}
 	}
 
-	graph_pad_horizontally(graph, line);
-
 	/*
 	 * Swap mapping and new_mapping
 	 */
@@ -1204,31 +1183,43 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 
 int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 {
+	int shown_commit_line = 0;
 	struct graph_line line = { .buf = sb, .width = 0 };
+
+	/*
+	 * We could conceivable be called with a NULL commit
+	 * if our caller has a bug, and invokes graph_next_line()
+	 * immediately after graph_init(), without first calling
+	 * graph_update().  Return without outputting anything in this
+	 * case.
+	 */
+	if (!graph->commit)
+		return -1;
 
 	switch (graph->state) {
 	case GRAPH_PADDING:
 		graph_output_padding_line(graph, &line);
-		return 0;
+		break;
 	case GRAPH_SKIP:
 		graph_output_skip_line(graph, &line);
-		return 0;
+		break;
 	case GRAPH_PRE_COMMIT:
 		graph_output_pre_commit_line(graph, &line);
-		return 0;
+		break;
 	case GRAPH_COMMIT:
 		graph_output_commit_line(graph, &line);
-		return 1;
+		shown_commit_line = 1;
+		break;
 	case GRAPH_POST_MERGE:
 		graph_output_post_merge_line(graph, &line);
-		return 0;
+		break;
 	case GRAPH_COLLAPSING:
 		graph_output_collapsing_line(graph, &line);
-		return 0;
+		break;
 	}
 
-	assert(0);
-	return 0;
+	graph_pad_horizontally(graph, &line);
+	return shown_commit_line;
 }
 
 static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
