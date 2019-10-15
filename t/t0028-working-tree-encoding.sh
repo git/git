@@ -40,7 +40,7 @@ test_expect_success 'setup test files' '
 	printf "$text" | write_utf16 >test.utf16.raw &&
 	printf "$text" | write_utf32 >test.utf32.raw &&
 	printf "\377\376"                         >test.utf16lebom.raw &&
-	printf "$text" | iconv -f UTF-8 -t UTF-32LE >>test.utf16lebom.raw &&
+	printf "$text" | iconv -f UTF-8 -t UTF-16LE >>test.utf16lebom.raw &&
 
 	# Line ending tests
 	printf "one\ntwo\nthree\n" >lf.utf8.raw &&
@@ -279,5 +279,44 @@ test_expect_success ICONV_SHIFT_JIS 'check roundtrip encoding' '
 		grep "Checking roundtrip encoding for utf-16" &&
 	git reset
 '
+
+# $1: checkout encoding
+# $2: test string
+# $3: binary test string in checkout encoding
+test_commit_utf8_checkout_other () {
+	encoding="$1"
+	orig_string="$2"
+	expect_bytes="$3"
+
+	test_expect_success "Commit UTF-8, checkout $encoding" '
+		test_when_finished "git checkout HEAD -- .gitattributes" &&
+
+		test_ext="commit_utf8_checkout_$encoding" &&
+		test_file="test.$test_ext" &&
+
+		# Commit as UTF-8
+		echo "*.$test_ext text working-tree-encoding=UTF-8" >.gitattributes &&
+		printf "$orig_string" >$test_file &&
+		git add $test_file &&
+		git commit -m "Test data" &&
+
+		# Checkout in tested encoding
+		rm $test_file &&
+		echo "*.$test_ext text working-tree-encoding=$encoding" >.gitattributes &&
+		git checkout HEAD -- $test_file &&
+
+		# Test
+		printf $expect_bytes >$test_file.raw &&
+		test_cmp_bin $test_file.raw $test_file
+	'
+}
+
+test_commit_utf8_checkout_other "UTF-8"        "Test Тест" "\124\145\163\164\040\320\242\320\265\321\201\321\202"
+test_commit_utf8_checkout_other "UTF-16LE"     "Test Тест" "\124\000\145\000\163\000\164\000\040\000\042\004\065\004\101\004\102\004"
+test_commit_utf8_checkout_other "UTF-16BE"     "Test Тест" "\000\124\000\145\000\163\000\164\000\040\004\042\004\065\004\101\004\102"
+test_commit_utf8_checkout_other "UTF-16LE-BOM" "Test Тест" "\377\376\124\000\145\000\163\000\164\000\040\000\042\004\065\004\101\004\102\004"
+test_commit_utf8_checkout_other "UTF-16BE-BOM" "Test Тест" "\376\377\000\124\000\145\000\163\000\164\000\040\004\042\004\065\004\101\004\102"
+test_commit_utf8_checkout_other "UTF-32LE"     "Test Тест" "\124\000\000\000\145\000\000\000\163\000\000\000\164\000\000\000\040\000\000\000\042\004\000\000\065\004\000\000\101\004\000\000\102\004\000\000"
+test_commit_utf8_checkout_other "UTF-32BE"     "Test Тест" "\000\000\000\124\000\000\000\145\000\000\000\163\000\000\000\164\000\000\000\040\000\000\004\042\000\000\004\065\000\000\004\101\000\000\004\102"
 
 test_done
