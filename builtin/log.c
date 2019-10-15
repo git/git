@@ -835,7 +835,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			thread = THREAD_SHALLOW;
 			return 0;
 		}
-		thread = git_config_bool(var, value) && THREAD_SHALLOW;
+		thread = git_config_bool(var, value) ? THREAD_SHALLOW : THREAD_UNSET;
 		return 0;
 	}
 	if (!strcmp(var, "format.signoff")) {
