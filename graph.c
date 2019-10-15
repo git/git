@@ -588,6 +588,12 @@ static void graph_update_columns(struct git_graph *graph)
 		graph->mapping_size--;
 }
 
+static int graph_needs_pre_commit_line(struct git_graph *graph)
+{
+	return graph->num_parents >= 3 &&
+	       graph->commit_index < (graph->num_columns - 1);
+}
+
 void graph_update(struct git_graph *graph, struct commit *commit)
 {
 	struct commit_list *parent;
@@ -643,8 +649,7 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	 */
 	if (graph->state != GRAPH_PADDING)
 		graph->state = GRAPH_SKIP;
-	else if (graph->num_parents >= 3 &&
-		 graph->commit_index < (graph->num_columns - 1))
+	else if (graph_needs_pre_commit_line(graph))
 		graph->state = GRAPH_PRE_COMMIT;
 	else
 		graph->state = GRAPH_COMMIT;
@@ -714,8 +719,7 @@ static void graph_output_skip_line(struct git_graph *graph, struct graph_line *l
 	 */
 	graph_line_addstr(line, "...");
 
-	if (graph->num_parents >= 3 &&
-	    graph->commit_index < (graph->num_columns - 1))
+	if (graph_needs_pre_commit_line(graph))
 		graph_update_state(graph, GRAPH_PRE_COMMIT);
 	else
 		graph_update_state(graph, GRAPH_COMMIT);
