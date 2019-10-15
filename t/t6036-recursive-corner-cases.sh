@@ -1562,6 +1562,7 @@ test_expect_success 'check nested conflicts' '
 		cd nested_conflicts &&
 
 		git clean -f &&
+		MASTER=$(git rev-parse --short master) &&
 		git checkout L2^0 &&
 
 		# Merge must fail; there is a conflict
@@ -1582,7 +1583,7 @@ test_expect_success 'check nested conflicts' '
 		git cat-file -p R1:a >theirs &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "merged common ancestors"  \
+			-L "$MASTER"  \
 			-L "Temporary merge branch 2" \
 			ours  \
 			base  \
@@ -1594,7 +1595,7 @@ test_expect_success 'check nested conflicts' '
 		git cat-file -p R1:b >theirs &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "merged common ancestors"  \
+			-L "$MASTER"  \
 			-L "Temporary merge branch 2" \
 			ours  \
 			base  \
@@ -1732,6 +1733,7 @@ test_expect_success 'check virtual merge base with nested conflicts' '
 	(
 		cd virtual_merge_base_has_nested_conflicts &&
 
+		MASTER=$(git rev-parse --short master) &&
 		git checkout L3^0 &&
 
 		# Merge must fail; there is a conflict
@@ -1760,7 +1762,7 @@ test_expect_success 'check virtual merge base with nested conflicts' '
 		cp left merged-once &&
 		test_must_fail git merge-file --diff3 \
 			-L "Temporary merge branch 1" \
-			-L "merged common ancestors"  \
+			-L "$MASTER"  \
 			-L "Temporary merge branch 2" \
 			merged-once \
 			base        \

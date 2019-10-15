@@ -709,11 +709,11 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 * give up or do a real merge, depending on
 			 * whether the merge flag was used.
 			 */
-			struct tree *result;
 			struct tree *work;
 			struct tree *old_tree;
 			struct merge_options o;
 			struct strbuf sb = STRBUF_INIT;
+			struct strbuf old_commit_shortname = STRBUF_INIT;
 
 			if (!opts->merge)
 				return 1;
@@ -754,7 +754,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 */
 			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
-			work = write_tree_from_memory(&o);
+			work = write_in_core_index_as_tree(the_repository);
 
 			ret = reset_tree(new_tree,
 					 opts, 1,
@@ -762,19 +762,25 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			if (ret)
 				return ret;
 			o.ancestor = old_branch_info->name;
+			if (old_branch_info->name == NULL) {
+				strbuf_add_unique_abbrev(&old_commit_shortname,
+							 &old_branch_info->commit->object.oid,
+							 DEFAULT_ABBREV);
+				o.ancestor = old_commit_shortname.buf;
+			}
 			o.branch1 = new_branch_info->name;
 			o.branch2 = "local";
 			ret = merge_trees(&o,
 					  new_tree,
 					  work,
-					  old_tree,
-					  &result);
+					  old_tree);
 			if (ret < 0)
 				exit(128);
 			ret = reset_tree(new_tree,
 					 opts, 0,
 					 writeout_error);
 			strbuf_release(&o.obuf);
+			strbuf_release(&old_commit_shortname);
 			if (ret)
 				return ret;
 		}
