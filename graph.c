@@ -478,23 +478,17 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	int i = graph_find_new_column_by_commit(graph, commit);
 
 	/*
-	 * If the commit is already in the new_columns list, we don't need to
-	 * add it.  Just update the mapping correctly.
+	 * If the commit is not already in the new_columns array, then add it
+	 * and record it as being in the final column.
 	 */
-	if (i >= 0) {
-		graph->mapping[*mapping_index] = i;
-		*mapping_index += 2;
-		return;
+	if (i < 0) {
+		i = graph->num_new_columns++;
+		graph->new_columns[i].commit = commit;
+		graph->new_columns[i].color = graph_find_commit_color(graph, commit);
 	}
 
-	/*
-	 * This commit isn't already in new_columns.  Add it.
-	 */
-	graph->new_columns[graph->num_new_columns].commit = commit;
-	graph->new_columns[graph->num_new_columns].color = graph_find_commit_color(graph, commit);
-	graph->mapping[*mapping_index] = graph->num_new_columns;
+	graph->mapping[*mapping_index] = i;
 	*mapping_index += 2;
-	graph->num_new_columns++;
 }
 
 static void graph_update_width(struct git_graph *graph,
