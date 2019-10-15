@@ -26,9 +26,8 @@ test_expect_success 'set up merge history' '
 test_expect_success 'log --graph with tricky octopus merge, no color' '
 	cat >expect.uncolored <<-\EOF &&
 	* left
-	| *---.   octopus-merge
-	| |\ \ \
-	|/ / / /
+	| *-.   octopus-merge
+	|/|\ \
 	| | | * 4
 	| | * | 3
 	| | |/
@@ -47,9 +46,8 @@ test_expect_success 'log --graph with tricky octopus merge with colors' '
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* left
-	<RED>|<RESET> *<BLUE>-<RESET><BLUE>-<RESET><MAGENTA>-<RESET><MAGENTA>.<RESET>   octopus-merge
-	<RED>|<RESET> <RED>|<RESET><YELLOW>\<RESET> <BLUE>\<RESET> <MAGENTA>\<RESET>
-	<RED>|<RESET><RED>/<RESET> <YELLOW>/<RESET> <BLUE>/<RESET> <MAGENTA>/<RESET>
+	<RED>|<RESET> *<MAGENTA>-<RESET><MAGENTA>.<RESET>   octopus-merge
+	<RED>|<RESET><RED>/<RESET><YELLOW>|<RESET><BLUE>\<RESET> <MAGENTA>\<RESET>
 	<RED>|<RESET> <YELLOW>|<RESET> <BLUE>|<RESET> * 4
 	<RED>|<RESET> <YELLOW>|<RESET> * <MAGENTA>|<RESET> 3
 	<RED>|<RESET> <YELLOW>|<RESET> <MAGENTA>|<RESET><MAGENTA>/<RESET>
@@ -147,9 +145,8 @@ test_expect_success 'log --graph with tricky octopus merge and its child, no col
 	cat >expect.uncolored <<-\EOF &&
 	* left
 	| * after-merge
-	| *---.   octopus-merge
-	| |\ \ \
-	|/ / / /
+	| *-.   octopus-merge
+	|/|\ \
 	| | | * 4
 	| | * | 3
 	| | |/
@@ -169,9 +166,8 @@ test_expect_failure 'log --graph with tricky octopus merge and its child with co
 	cat >expect.colors <<-\EOF &&
 	* left
 	<RED>|<RESET> * after-merge
-	<RED>|<RESET> *<MAGENTA>-<RESET><MAGENTA>-<RESET><CYAN>-<RESET><CYAN>.<RESET>   octopus-merge
-	<RED>|<RESET> <RED>|<RESET><BLUE>\<RESET> <MAGENTA>\<RESET> <CYAN>\<RESET>
-	<RED>|<RESET><RED>/<RESET> <BLUE>/<RESET> <MAGENTA>/<RESET> <CYAN>/<RESET>
+	<RED>|<RESET> *<CYAN>-<RESET><CYAN>.<RESET>   octopus-merge
+	<RED>|<RESET><RED>/<RESET><BLUE>|<RESET><MAGENTA>\<RESET> <CYAN>\<RESET>
 	<RED>|<RESET> <BLUE>|<RESET> <MAGENTA>|<RESET> * 4
 	<RED>|<RESET> <BLUE>|<RESET> * <CYAN>|<RESET> 3
 	<RED>|<RESET> <BLUE>|<RESET> <CYAN>|<RESET><CYAN>/<RESET>
