@@ -1,19 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2019, #03; Fri, 11)
-X-master-at: 08da6496b61341ec45eac36afcc8f94242763468
-X-next-at: b869b98d4c7f0f91d905d76a6c8ba9b8799289b6
+Subject: What's cooking in git.git (Oct 2019, #04; Tue, 15)
+X-master-at: 108b97dc372828f0e72e56bbb40cae8e1e83ece6
+X-next-at: 75c0f4853af2bb694809b26e5840ced649a83e49
 
-What's cooking in git.git (Oct 2019, #03; Fri, 11)
+What's cooking in git.git (Oct 2019, #04; Tue, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-I've been offline for a week or so, and have been trying to process
-the backlog, but I am sure there are still things to be picked up.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -56,6 +53,14 @@ of the repositories listed at
  + commit-graph: remove a duplicate assignment
 
  Miscellaneous code clean-ups.
+
+
+* am/t0028-utf16-tests (2019-09-28) 2 commits
+  (merged to 'next' on 2019-10-09 at 453900a4e8)
+ + t0028: add more tests
+ + t0028: fix test for UTF-16-LE-BOM
+
+ Test fixes.
 
 
 * am/visual-studio-config-fix (2019-09-28) 1 commit
@@ -114,11 +119,39 @@ of the repositories listed at
  PCRE fixes.
 
 
+* dl/format-patch-doc-test-cleanup (2019-10-09) 1 commit
+  (merged to 'next' on 2019-10-11 at 992da06f37)
+ + t4014: treat rev-list output as the expected value
+ (this branch is used by dl/format-patch-cover-from-desc.)
+
+ test cleanup.
+
+
+* dl/octopus-graph-bug (2019-10-04) 5 commits
+  (merged to 'next' on 2019-10-07 at c6bc2fe4a0)
+ + t4214: demonstrate octopus graph coloring failure
+ + t4214: explicitly list tags in log
+ + t4214: generate expect in their own test cases
+ + t4214: use test_merge
+ + test-lib: let test_merge() perform octopus merges
+
+ "git log --graph" for an octopus merge is sometimes colored
+ incorrectly, which is demonstrated and documented but not yet
+ fixed.
+
+
 * dl/rev-list-doc-cleanup (2019-10-06) 1 commit
   (merged to 'next' on 2019-10-07 at 712594feb1)
  + git-rev-list.txt: prune options in synopsis
 
  Doc update.
+
+
+* dl/t0000-skip-test-test (2019-10-09) 1 commit
+  (merged to 'next' on 2019-10-11 at b210c1d1fa)
+ + t0000: cover GIT_SKIP_TESTS blindspots
+
+ test update.
 
 
 * en/clean-nested-with-ignored (2019-10-02) 13 commits
@@ -141,6 +174,125 @@ of the repositories listed at
  "git clean" fixes.
 
 
+* en/fast-imexport-nested-tags (2019-10-04) 8 commits
+  (merged to 'next' on 2019-10-07 at 3e75779e10)
+ + fast-export: handle nested tags
+ + t9350: add tests for tags of things other than a commit
+ + fast-export: allow user to request tags be marked with --mark-tags
+ + fast-export: add support for --import-marks-if-exists
+ + fast-import: add support for new 'alias' command
+ + fast-import: allow tags to be identified by mark labels
+ + fast-import: fix handling of deleted tags
+ + fast-export: fix exporting a tag and nothing else
+
+ Updates to fast-import/export.
+
+
+* en/merge-recursive-cleanup (2019-10-08) 26 commits
+  (merged to 'next' on 2019-10-09 at aab23cae2e)
+ + merge-recursive: fix the fix to the diff3 common ancestor label
+  (merged to 'next' on 2019-10-03 at 7b5a32726b)
+ + merge-recursive: fix the diff3 common ancestor label for virtual commits
+  (merged to 'next' on 2019-09-18 at f52cb08a14)
+ + merge-recursive: alphabetize include list
+ + merge-recursive: add sanity checks for relevant merge_options
+ + merge-recursive: rename MERGE_RECURSIVE_* to MERGE_VARIANT_*
+ + merge-recursive: split internal fields into a separate struct
+ + merge-recursive: avoid losing output and leaking memory holding that output
+ + merge-recursive: comment and reorder the merge_options fields
+ + merge-recursive: consolidate unnecessary fields in merge_options
+ + merge-recursive: move some definitions around to clean up the header
+ + merge-recursive: rename merge_options argument to opt in header
+ + merge-recursive: rename 'mrtree' to 'result_tree', for clarity
+ + merge-recursive: use common name for ancestors/common/base_list
+ + merge-recursive: fix some overly long lines
+ + cache-tree: share code between functions writing an index as a tree
+ + merge-recursive: don't force external callers to do our logging
+ + merge-recursive: remove useless parameter in merge_trees()
+ + merge-recursive: exit early if index != head
+ + Ensure index matches head before invoking merge machinery, round N
+ + merge-recursive: remove another implicit dependency on the_repository
+ + merge-recursive: future-proof update_file_flags() against memory leaks
+ + merge-recursive: introduce an enum for detect_directory_renames values
+ + merge-recursive: provide a better label for diff3 common ancestor
+ + merge-recursive: enforce opt->ancestor != NULL when calling merge_trees()
+ + checkout: provide better conflict hunk description with detached HEAD
+ + merge-recursive: be consistent with assert
+
+ The merge-recursive machiery is one of the most complex parts of
+ the system that accumulated cruft over time.  This large series
+ cleans up the implementation quite a bit.
+
+
+* ew/hashmap (2019-10-07) 20 commits
+  (merged to 'next' on 2019-10-09 at 9b75b4ce73)
+ + hashmap_entry: remove first member requirement from docs
+ + hashmap: remove type arg from hashmap_{get,put,remove}_entry
+ + OFFSETOF_VAR macro to simplify hashmap iterators
+ + hashmap: introduce hashmap_free_entries
+ + hashmap: hashmap_{put,remove} return hashmap_entry *
+ + hashmap: use *_entry APIs for iteration
+ + hashmap_cmp_fn takes hashmap_entry params
+ + hashmap_get{,_from_hash} return "struct hashmap_entry *"
+ + hashmap: use *_entry APIs to wrap container_of
+ + hashmap_get_next returns "struct hashmap_entry *"
+ + introduce container_of macro
+ + hashmap_put takes "struct hashmap_entry *"
+ + hashmap_remove takes "const struct hashmap_entry *"
+ + hashmap_get takes "const struct hashmap_entry *"
+ + hashmap_add takes "struct hashmap_entry *"
+ + hashmap_get_next takes "const struct hashmap_entry *"
+ + hashmap_entry_init takes "struct hashmap_entry *"
+ + packfile: use hashmap_entry in delta_base_cache_entry
+ + coccicheck: detect hashmap_entry.hash assignment
+ + diff: use hashmap_entry_init on moved_entry.ent
+
+ Code clean-up of the hashmap API, both users and implementation.
+
+
+* gs/commit-graph-trace-with-cmd (2019-10-02) 1 commit
+  (merged to 'next' on 2019-10-07 at 369df0e5cd)
+ + commit-graph: emit trace2 cmd_mode for each sub-command
+
+ Dev support.
+
+
+* gs/sq-quote-buf-pretty (2019-10-08) 1 commit
+  (merged to 'next' on 2019-10-11 at 2f7c00612b)
+ + sq_quote_buf_pretty: don't drop empty arguments
+
+ Pretty-printed command line formatter (used in e.g. reporting the
+ command being run by the tracing API) had a bug that lost an
+ argument that is an empty string, which has been corrected.
+
+
+* jk/coc (2019-10-10) 2 commits
+  (merged to 'next' on 2019-10-11 at 9765fd29c3)
+ + CODE_OF_CONDUCT: mention individual project-leader emails
+ + add a Code of Conduct document
+
+ Code-of-conduct document.
+
+
+* js/azure-pipelines-msvc (2019-10-06) 13 commits
+  (merged to 'next' on 2019-10-07 at d5a3604dc6)
+ + ci: also build and test with MS Visual Studio on Azure Pipelines
+ + ci: really use shallow clones on Azure Pipelines
+ + tests: let --immediate and --write-junit-xml play well together
+ + test-tool run-command: learn to run (parts of) the testsuite
+ + vcxproj: include more generated files
+ + vcxproj: only copy `git-remote-http.exe` once it was built
+ + msvc: work around a bug in GetEnvironmentVariable()
+ + msvc: handle DEVELOPER=1
+ + msvc: ignore some libraries when linking
+ + compat/win32/path-utils.h: add #include guards
+ + winansi: use FLEX_ARRAY to avoid compiler warning
+ + msvc: avoid using minus operator on unsigned types
+ + push: do not pretend to return `int` from `die_push_simple()`
+
+ CI updates.
+
+
 * js/diff-rename-force-stable-sort (2019-10-02) 2 commits
   (merged to 'next' on 2019-10-04 at e02d882510)
  + diffcore_rename(): use a stable sort
@@ -153,6 +305,15 @@ of the repositories listed at
  Force the sorting by similarity done with a stable sort, which is
  not promised by system supplied qsort(3), to ensure consistent
  results across platforms.
+
+
+* js/fetch-jobs (2019-10-06) 1 commit
+  (merged to 'next' on 2019-10-07 at e798bac35d)
+ + fetch: let --jobs=<n> parallelize --multiple, too
+
+ "git fetch --jobs=<n>" allowed <n> parallel jobs when fetching
+ submodules, but this did not apply to "git fetch --multiple" that
+ fetches from multiple remote repositories.  It now does.
 
 
 * js/mingw-spawn-with-spaces-in-path (2019-10-02) 1 commit
@@ -179,6 +340,43 @@ of the repositories listed at
 
  "git stash apply" in a subdirectory of a secondary worktree failed
  to access the worktree correctly, which has been corrected.
+
+
+* js/trace2-cap-max-output-files (2019-10-05) 4 commits
+  (merged to 'next' on 2019-10-09 at e8a126d880)
+ + trace2: write discard message to sentinel files
+ + trace2: discard new traces if target directory has too many files
+ + docs: clarify trace2 version invariants
+ + docs: mention trace2 target-dir mode in git-config
+
+ The trace2 output, when sending them to files in a designated
+ directory, can populate the directory with too many files; a
+ mechanism is introduced to set the maximum number of files and
+ discard further logs when the maximum is reached.
+
+
+* js/trace2-fetch-push (2019-10-08) 3 commits
+  (merged to 'next' on 2019-10-11 at 3a2bb143f8)
+ + transport: push codepath can take arbitrary repository
+  (merged to 'next' on 2019-10-04 at 1d63701064)
+ + push: add trace2 instrumentation
+ + fetch: add trace2 instrumentation
+
+ Dev support.
+
+
+* js/xdiffi-comment-updates (2019-10-09) 1 commit
+  (merged to 'next' on 2019-10-11 at 157226cf3a)
+ + xdiffi: fix typos and touch up comments
+
+ Comment update.
+
+
+* jt/push-avoid-lazy-fetch (2019-10-09) 1 commit
+  (merged to 'next' on 2019-10-11 at b5efe1634a)
+ + send-pack: never fetch when checking exclusions
+
+ Performance hack.
 
 
 * kt/add-i-progress (2019-10-04) 1 commit
@@ -241,6 +439,14 @@ of the repositories listed at
  Integer arithmetic fix.
 
 
+* tg/range-diff-output-update (2019-10-09) 1 commit
+  (merged to 'next' on 2019-10-11 at fd8c5d7ec5)
+ + range-diff: don't segfault with mode-only changes
+
+ "git range-diff" failed to handle mode-only change, which has been
+ corrected.
+
+
 * tk/git-svn-trim-author-name (2019-09-28) 1 commit
   (merged to 'next' on 2019-10-04 at c1c619f7c4)
  + git-svn: trim leading and trailing whitespaces in author name
@@ -252,132 +458,186 @@ of the repositories listed at
 [New Topics]
 
 * ds/sparse-cone (2019-10-08) 17 commits
- - sparse-checkout: cone mode should not interact with .gitignore
- - sparse-checkout: write using lockfile
- - sparse-checkout: update working directory in-process
- - sparse-checkout: sanitize for nested folders
- - read-tree: show progress by default
- - unpack-trees: add progress to clear_ce_flags()
- - unpack-trees: hash less in cone mode
- - sparse-checkout: init and set in cone mode
- - sparse-checkout: use hashmaps for cone patterns
- - sparse-checkout: add 'cone' mode
- - trace2: add region in clear_ce_flags
- - sparse-checkout: create 'disable' subcommand
- - sparse-checkout: add '--stdin' option to set subcommand
- - sparse-checkout: 'set' subcommand
- - clone: add --sparse mode
- - sparse-checkout: create 'init' subcommand
- - sparse-checkout: create builtin with 'list' subcommand
+ . sparse-checkout: cone mode should not interact with .gitignore
+ . sparse-checkout: write using lockfile
+ . sparse-checkout: update working directory in-process
+ . sparse-checkout: sanitize for nested folders
+ . read-tree: show progress by default
+ . unpack-trees: add progress to clear_ce_flags()
+ . unpack-trees: hash less in cone mode
+ . sparse-checkout: init and set in cone mode
+ . sparse-checkout: use hashmaps for cone patterns
+ . sparse-checkout: add 'cone' mode
+ . trace2: add region in clear_ce_flags
+ . sparse-checkout: create 'disable' subcommand
+ . sparse-checkout: add '--stdin' option to set subcommand
+ . sparse-checkout: 'set' subcommand
+ . clone: add --sparse mode
+ . sparse-checkout: create 'init' subcommand
+ . sparse-checkout: create builtin with 'list' subcommand
 
  Management of sparsely checked-out working tree has gained a
  dedicated "sparse-checkout" command.
 
- Seems not to play well with the hashmap updates.
+ Expecting a reroll on top of we/hashmap.
+ The use of hashmap API does not work well with ew/hashmap updates
+ and breaks build.
 
 
-* dl/format-patch-doc-test-cleanup (2019-10-09) 1 commit
-  (merged to 'next' on 2019-10-11 at 992da06f37)
- + t4014: treat rev-list output as the expected value
+* wb/fsmonitor-bitmap-fix (2019-10-12) 1 commit
+  (merged to 'next' on 2019-10-15 at 1cc4091346)
+ + fsmonitor: don't fill bitmap with entries to be removed
 
- test cleanup.
-
- Will merge to 'master'.
-
-
-* dl/t0000-skip-test-test (2019-10-09) 1 commit
-  (merged to 'next' on 2019-10-11 at b210c1d1fa)
- + t0000: cover GIT_SKIP_TESTS blindspots
-
- test update.
+ A segfault fix.
 
  Will merge to 'master'.
 
 
-* gs/sq-quote-buf-pretty (2019-10-08) 1 commit
-  (merged to 'next' on 2019-10-11 at 2f7c00612b)
- + sq_quote_buf_pretty: don't drop empty arguments
+* dl/compat-cleanup (2019-10-11) 1 commit
+  (merged to 'next' on 2019-10-15 at 1ed99770ba)
+ + pthread.h: manually align parameter lists
 
- Pretty-printed command line formatter (used in e.g. reporting the
- command being run by the tracing API) had a bug that lost an
- argument that is an empty string, which has been corrected.
+ Code formatting micronit fix.
 
  Will merge to 'master'.
 
 
-* jk/coc (2019-10-10) 2 commits
-  (merged to 'next' on 2019-10-11 at 9765fd29c3)
- + CODE_OF_CONDUCT: mention individual project-leader emails
- + add a Code of Conduct document
+* jj/stash-reset-only-toplevel (2019-10-15) 1 commit
+  (merged to 'next' on 2019-10-15 at 28f398daab)
+ + stash: avoid recursive hard reset on submodules
 
- Code-of-conduct document.
-
- Will merge to 'master'.
-
-
-* js/xdiffi-comment-updates (2019-10-09) 1 commit
-  (merged to 'next' on 2019-10-11 at 157226cf3a)
- + xdiffi: fix typos and touch up comments
-
- Comment update.
-
- Will merge to 'master'.
-
-
-* jt/push-avoid-lazy-fetch (2019-10-09) 1 commit
-  (merged to 'next' on 2019-10-11 at b5efe1634a)
- + send-pack: never fetch when checking exclusions
-
- Performance hack.
-
- Will merge to 'master'.
-
-
-* tg/range-diff-output-update (2019-10-09) 1 commit
-  (merged to 'next' on 2019-10-11 at fd8c5d7ec5)
- + range-diff: don't segfault with mode-only changes
-
- "git range-diff" failed to handle mode-only change, which has been
+ "git stash save" lost local changes to submodules, which has been
  corrected.
 
  Will merge to 'master'.
 
 
-* wb/fsmonitor-bitmap-fix (2019-10-10) 1 commit
- - fsmonitor: don't fill bitmap with entries to be removed
-
- A segfault fix.
-
- Perhaps an update to the test script may be worth doing?
- cf. <20191010110732.GJ29845@szeder.dev>
-
-
-* dl/compat-cleanup (2019-10-11) 1 commit
- - pthread.h: manually align parameter lists
-
- Code formatting micronit fix.
-
- Will merge to 'next'.
-
-
-* jj/stash-reset-only-toplevel (2019-10-11) 1 commit
- - stash: avoid recursive hard reset on submodules
-
-
 * js/doc-stash-save (2019-10-11) 1 commit
- - doc(stash): clarify the description of `save`
+  (merged to 'next' on 2019-10-15 at e588bff32c)
+ + doc(stash): clarify the description of `save`
 
  Doc clarification.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ta/t1308-typofix (2019-10-11) 1 commit
- - t1308-config-set: fix a test that has a typo
+  (merged to 'next' on 2019-10-15 at 0228b44688)
+ + t1308-config-set: fix a test that has a typo
 
  Test fix.
 
+ Will merge to 'master'.
+
+
+* bb/compat-util-comment-fix (2019-10-12) 1 commit
+  (merged to 'next' on 2019-10-15 at c15e45fe28)
+ + git-compat-util: fix documentation syntax
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* bb/utf8-wcwidth-cleanup (2019-10-12) 1 commit
+  (merged to 'next' on 2019-10-15 at 92ba59e1d6)
+ + utf8: use ARRAY_SIZE() in git_wcwidth()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* bc/smart-http-atomic-push (2019-10-15) 1 commit
+  (merged to 'next' on 2019-10-15 at effe020c20)
+ + remote-curl: pass on atomic capability to remote side
+
+ The atomic push over smart HTTP transport did not work, which has
+ been corrected.
+
+ Will merge to 'master'.
+
+
+* dl/allow-running-cocci-verbosely (2019-10-12) 1 commit
+  (merged to 'next' on 2019-10-15 at 474dc9f86e)
+ + Makefile: respect $(V) in %.cocci.patch target
+
+ Dev support update.
+
+ Will merge to 'master'.
+
+
+* dl/format-patch-cover-from-desc (2019-10-15) 3 commits
+ - format-patch: teach --cover-from-description option
+ - format-patch: use enum variables
+ - format-patch: change erroneous and condition
+
+ The branch description ("git branch --edit-description") has been
+ used to fill the body of the cover letters by the format-patch
+ command; this has been enhanced so that the subject can also be
+ filled.
+
+ Expecting a reroll.
+
+
+* en/merge-recursive-directory-rename-fixes (2019-10-12) 2 commits
+  (merged to 'next' on 2019-10-15 at ebfdc3ff7b)
+ + merge-recursive: fix merging a subdirectory into the root directory
+ + merge-recursive: clean up get_renamed_dir_portion()
+
+ A few glitches in the heuristic in merge-recursive to infer file
+ movements based on movements of other files in the same directory
+ have been corrected.
+
+ Will merge to 'master'.
+
+
+* jt/fetch-pack-record-refs-in-the-dot-promisor (2019-10-15) 1 commit
+ - fetch-pack: write fetched refs to .promisor
+
+ Debugging support for lazy cloning has been a bit improved.
+
  Will merge to 'next'.
+
+
+* mb/clarify-zsh-completion-doc (2019-10-12) 1 commit
+ - doc: Change zsh git completion file name
+
+ The installation instruction for zsh completion script (in
+ contrib/) has been a bit improved.
+
+ Expecting a reroll.
+
+
+* rs/column-use-utf8-strnwidth (2019-10-15) 1 commit
+  (merged to 'next' on 2019-10-15 at 3be15b4478)
+ + column: use utf8_strnwidth() to strip out ANSI color escapes
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rs/http-push-simplify (2019-10-15) 1 commit
+  (merged to 'next' on 2019-10-15 at 4abc29286c)
+ + http-push: simplify deleting a list item
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rs/remote-curl-use-argv-array (2019-10-15) 1 commit
+  (merged to 'next' on 2019-10-15 at 8d0375a874)
+ + remote-curl: use argv_array in parse_push()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* nr/diff-highlight-indent-fix (2019-10-15) 1 commit
+ - diff-highlight: fix a whitespace nit
 
 --------------------------------------------------
 [Stalled]
@@ -390,24 +650,6 @@ of the repositories listed at
  WIP (this is v3 which is rather old, where the last message in the
  discussion talks about v6 that has never been sent to the list).
  cf. <CAPUEspjJNSrJQT7xV2fsdp2t5odW5fzzPdDxuar_5x_JPUtf6Q@mail.gmail.com>
-
-
-* es/walken-tutorial (2019-10-11) 2 commits
- - SQUASH???
- - documentation: add tutorial for object walking
-
- A tutorial on object enumeration.
-
-
-
-* dl/format-patch-cover-letter-subject (2019-09-05) 1 commit
- - format-patch: learn --infer-cover-subject option
-
- "git format-patch --cover-letter" learned to optionally use the
- first paragraph (typically a single-liner) of branch.*.description
- as the subject of the cover letter.
-
- Reroll with a redesign with less emphasis on "subject" coming?
 
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
@@ -432,21 +674,6 @@ of the repositories listed at
  Needs tests.
 
 
-* jt/fetch-cdn-offload (2019-03-12) 9 commits
- - SQUASH???
- - upload-pack: send part of packfile response as uri
- - fetch-pack: support more than one pack lockfile
- - upload-pack: refactor reading of pack-objects out
- - Documentation: add Packfile URIs design doc
- - Documentation: order protocol v2 sections
- - http-fetch: support fetching packfiles by URL
- - http: improve documentation of http_pack_request
- - http: use --stdin when getting dumb HTTP pack
-
- WIP for allowing a response to "git fetch" to instruct the bulk of
- the pack contents to be instead taken from elsewhere (aka CDN).
-
-
 * js/protocol-advertise-multi (2018-12-28) 1 commit
  - protocol: advertise multiple supported versions
 
@@ -469,55 +696,12 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* dl/octopus-graph-bug (2019-10-04) 5 commits
-  (merged to 'next' on 2019-10-07 at c6bc2fe4a0)
- + t4214: demonstrate octopus graph coloring failure
- + t4214: explicitly list tags in log
- + t4214: generate expect in their own test cases
- + t4214: use test_merge
- + test-lib: let test_merge() perform octopus merges
+* es/walken-tutorial (2019-10-12) 1 commit
+ - documentation: add tutorial for object walking
 
- "git log --graph" for an octopus merge is sometimes colored
- incorrectly, which is demonstrated and documented but not yet
- fixed.
+ A tutorial on object enumeration.
 
- Will merge to 'master'.
-
-
-* js/azure-pipelines-msvc (2019-10-06) 13 commits
-  (merged to 'next' on 2019-10-07 at d5a3604dc6)
- + ci: also build and test with MS Visual Studio on Azure Pipelines
- + ci: really use shallow clones on Azure Pipelines
- + tests: let --immediate and --write-junit-xml play well together
- + test-tool run-command: learn to run (parts of) the testsuite
- + vcxproj: include more generated files
- + vcxproj: only copy `git-remote-http.exe` once it was built
- + msvc: work around a bug in GetEnvironmentVariable()
- + msvc: handle DEVELOPER=1
- + msvc: ignore some libraries when linking
- + compat/win32/path-utils.h: add #include guards
- + winansi: use FLEX_ARRAY to avoid compiler warning
- + msvc: avoid using minus operator on unsigned types
- + push: do not pretend to return `int` from `die_push_simple()`
-
- CI updates.
-
- Will merge to 'master'.
-
-
-* js/trace2-cap-max-output-files (2019-10-05) 4 commits
-  (merged to 'next' on 2019-10-09 at e8a126d880)
- + trace2: write discard message to sentinel files
- + trace2: discard new traces if target directory has too many files
- + docs: clarify trace2 version invariants
- + docs: mention trace2 target-dir mode in git-config
-
- The trace2 output, when sending them to files in a designated
- directory, can populate the directory with too many files; a
- mechanism is introduced to set the maximum number of files and
- discard further logs when the maximum is reached.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * bc/hash-independent-tests-part-6 (2019-10-06) 15 commits
@@ -543,14 +727,14 @@ of the repositories listed at
  cf. <20191008194012.4s35pbwbh25rblhb@camp.crustytoothpaste.net>
 
 
-* bw/format-patch-o-create-leading-dirs (2019-10-06) 1 commit
- - format-patch: create leading components of output directory
+* bw/format-patch-o-create-leading-dirs (2019-10-12) 1 commit
+  (merged to 'next' on 2019-10-15 at 93c9949b6a)
+ + format-patch: create leading components of output directory
 
  "git format-patch -o <outdir>" did an equivalent of "mkdir <outdir>"
  not "mkdir -p <outdir>", which is being corrected.
 
- Use of adjust shared perm on the leading directory may have
- security implictions.
+ Will merge to 'master'.
 
 
 * ag/sequencer-todo-updates (2019-10-08) 5 commits
@@ -564,38 +748,6 @@ of the repositories listed at
  during sequener operation.
 
  Will merge to 'next'.
-
-
-* js/fetch-jobs (2019-10-06) 1 commit
-  (merged to 'next' on 2019-10-07 at e798bac35d)
- + fetch: let --jobs=<n> parallelize --multiple, too
-
- "git fetch --jobs=<n>" allowed <n> parallel jobs when fetching
- submodules, but this did not apply to "git fetch --multiple" that
- fetches from multiple remote repositories.  It now does.
-
- Will merge to 'master'.
-
-
-* gs/commit-graph-trace-with-cmd (2019-10-02) 1 commit
-  (merged to 'next' on 2019-10-07 at 369df0e5cd)
- + commit-graph: emit trace2 cmd_mode for each sub-command
-
- Dev support.
-
- Will merge to 'master'.
-
-
-* js/trace2-fetch-push (2019-10-08) 3 commits
-  (merged to 'next' on 2019-10-11 at 3a2bb143f8)
- + transport: push codepath can take arbitrary repository
-  (merged to 'next' on 2019-10-04 at 1d63701064)
- + push: add trace2 instrumentation
- + fetch: add trace2 instrumentation
-
- Dev support.
-
- Will merge to 'master'.
 
 
 * mt/threaded-grep-in-object-store (2019-10-02) 11 commits
@@ -614,32 +766,6 @@ of the repositories listed at
  Traditionally, we avoided threaded grep while searching in objects
  (as opposed to files in the working tree) as accesses to the object
  layer is not thread-safe.  This limitation is getting lifted.
-
-
-* am/t0028-utf16-tests (2019-09-28) 2 commits
-  (merged to 'next' on 2019-10-09 at 453900a4e8)
- + t0028: add more tests
- + t0028: fix test for UTF-16-LE-BOM
-
- Test fixes.
-
- Will merge to 'master'.
-
-
-* en/fast-imexport-nested-tags (2019-10-04) 8 commits
-  (merged to 'next' on 2019-10-07 at 3e75779e10)
- + fast-export: handle nested tags
- + t9350: add tests for tags of things other than a commit
- + fast-export: allow user to request tags be marked with --mark-tags
- + fast-export: add support for --import-marks-if-exists
- + fast-import: add support for new 'alias' command
- + fast-import: allow tags to be identified by mark labels
- + fast-import: fix handling of deleted tags
- + fast-export: fix exporting a tag and nothing else
-
- Updates to fast-import/export.
-
- Will merge to 'master'.
 
 
 * jk/packfile-reuse-cleanup (2019-09-13) 10 commits
@@ -662,34 +788,6 @@ of the repositories listed at
  cf. <20191002155721.GD6116@sigill.intra.peff.net>
 
 
-* ew/hashmap (2019-10-07) 20 commits
-  (merged to 'next' on 2019-10-09 at 9b75b4ce73)
- + hashmap_entry: remove first member requirement from docs
- + hashmap: remove type arg from hashmap_{get,put,remove}_entry
- + OFFSETOF_VAR macro to simplify hashmap iterators
- + hashmap: introduce hashmap_free_entries
- + hashmap: hashmap_{put,remove} return hashmap_entry *
- + hashmap: use *_entry APIs for iteration
- + hashmap_cmp_fn takes hashmap_entry params
- + hashmap_get{,_from_hash} return "struct hashmap_entry *"
- + hashmap: use *_entry APIs to wrap container_of
- + hashmap_get_next returns "struct hashmap_entry *"
- + introduce container_of macro
- + hashmap_put takes "struct hashmap_entry *"
- + hashmap_remove takes "const struct hashmap_entry *"
- + hashmap_get takes "const struct hashmap_entry *"
- + hashmap_add takes "struct hashmap_entry *"
- + hashmap_get_next takes "const struct hashmap_entry *"
- + hashmap_entry_init takes "struct hashmap_entry *"
- + packfile: use hashmap_entry in delta_base_cache_entry
- + coccicheck: detect hashmap_entry.hash assignment
- + diff: use hashmap_entry_init on moved_entry.ent
-
- Code clean-up of the hashmap API, both users and implementation.
-
- Will merge to 'master'.
-
-
 * js/builtin-add-i (2019-08-30) 11 commits
  . built-in add -i: implement the `help` command
  . built-in add -i: use color in the main loop
@@ -706,44 +804,6 @@ of the repositories listed at
  The beginning of rewriting "git add -i" in C.
 
  On hold, waiting for tg/stash-refresh-index to work well with this.
-
-
-* en/merge-recursive-cleanup (2019-10-08) 26 commits
-  (merged to 'next' on 2019-10-09 at aab23cae2e)
- + merge-recursive: fix the fix to the diff3 common ancestor label
-  (merged to 'next' on 2019-10-03 at 7b5a32726b)
- + merge-recursive: fix the diff3 common ancestor label for virtual commits
-  (merged to 'next' on 2019-09-18 at f52cb08a14)
- + merge-recursive: alphabetize include list
- + merge-recursive: add sanity checks for relevant merge_options
- + merge-recursive: rename MERGE_RECURSIVE_* to MERGE_VARIANT_*
- + merge-recursive: split internal fields into a separate struct
- + merge-recursive: avoid losing output and leaking memory holding that output
- + merge-recursive: comment and reorder the merge_options fields
- + merge-recursive: consolidate unnecessary fields in merge_options
- + merge-recursive: move some definitions around to clean up the header
- + merge-recursive: rename merge_options argument to opt in header
- + merge-recursive: rename 'mrtree' to 'result_tree', for clarity
- + merge-recursive: use common name for ancestors/common/base_list
- + merge-recursive: fix some overly long lines
- + cache-tree: share code between functions writing an index as a tree
- + merge-recursive: don't force external callers to do our logging
- + merge-recursive: remove useless parameter in merge_trees()
- + merge-recursive: exit early if index != head
- + Ensure index matches head before invoking merge machinery, round N
- + merge-recursive: remove another implicit dependency on the_repository
- + merge-recursive: future-proof update_file_flags() against memory leaks
- + merge-recursive: introduce an enum for detect_directory_renames values
- + merge-recursive: provide a better label for diff3 common ancestor
- + merge-recursive: enforce opt->ancestor != NULL when calling merge_trees()
- + checkout: provide better conflict hunk description with detached HEAD
- + merge-recursive: be consistent with assert
-
- The merge-recursive machiery is one of the most complex parts of
- the system that accumulated cruft over time.  This large series
- cleans up the implementation quite a bit.
-
- Will merge to 'master'.
 
 
 * vn/reset-deleted-ita (2019-07-26) 1 commit
@@ -768,15 +828,6 @@ of the repositories listed at
 
  Needs to consider existing GIT_COMMITTER_DATE environment, etc.
  cf. <5adde732-173b-d24d-d23f-bb4d043076d7@gmail.com>
-
-
-* jc/format-patch-noclobber (2019-02-22) 1 commit
- - format-patch: --no-clobber refrains from overwriting output files
-
- "git format-patch" used to overwrite an existing patch/cover-letter
- file.  A new "--no-clobber" option stops it.
-
- Will discard.
 
 --------------------------------------------------
 [Discarded]
@@ -825,3 +876,35 @@ of the repositories listed at
  macros predefined by the $(MAKE) procedure.
 
  Superseded by dl/honor-cflags-in-hdr-check series.
+
+
+* dl/format-patch-cover-letter-subject (2019-09-05) 1 commit
+ . format-patch: learn --infer-cover-subject option
+
+ "git format-patch --cover-letter" learned to optionally use the
+ first paragraph (typically a single-liner) of branch.*.description
+ as the subject of the cover letter.
+
+ Superseded by the dl/format-patch-cover-from desc topic.
+
+
+* jt/fetch-cdn-offload (2019-03-12) 9 commits
+ . SQUASH???
+ . upload-pack: send part of packfile response as uri
+ . fetch-pack: support more than one pack lockfile
+ . upload-pack: refactor reading of pack-objects out
+ . Documentation: add Packfile URIs design doc
+ . Documentation: order protocol v2 sections
+ . http-fetch: support fetching packfiles by URL
+ . http: improve documentation of http_pack_request
+ . http: use --stdin when getting dumb HTTP pack
+
+ WIP for allowing a response to "git fetch" to instruct the bulk of
+ the pack contents to be instead taken from elsewhere (aka CDN).
+
+
+* jc/format-patch-noclobber (2019-02-22) 1 commit
+ . format-patch: --no-clobber refrains from overwriting output files
+
+ "git format-patch" used to overwrite an existing patch/cover-letter
+ file.  A new "--no-clobber" option stops it.
