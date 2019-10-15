@@ -41,17 +41,13 @@ static void dump_run(void)
 			die("non-threaded code path used");
 	}
 
-	dir = hashmap_iter_first(&the_index.dir_hash, &iter_dir);
-	while (dir) {
+	hashmap_for_each_entry(&the_index.dir_hash, &iter_dir, dir,
+				ent /* member name */)
 		printf("dir %08x %7d %s\n", dir->ent.hash, dir->nr, dir->name);
-		dir = hashmap_iter_next(&iter_dir);
-	}
 
-	ce = hashmap_iter_first(&the_index.name_hash, &iter_cache);
-	while (ce) {
+	hashmap_for_each_entry(&the_index.name_hash, &iter_cache, ce,
+				ent /* member name */)
 		printf("name %08x %s\n", ce->ent.hash, ce->name);
-		ce = hashmap_iter_next(&iter_cache);
-	}
 
 	discard_cache();
 }

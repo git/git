@@ -2,14 +2,18 @@
 #include "oidmap.h"
 
 static int oidmap_neq(const void *hashmap_cmp_fn_data,
-		      const void *entry, const void *entry_or_key,
+		      const struct hashmap_entry *e1,
+		      const struct hashmap_entry *e2,
 		      const void *keydata)
 {
-	const struct oidmap_entry *entry_ = entry;
+	const struct oidmap_entry *a, *b;
+
+	a = container_of(e1, const struct oidmap_entry, internal_entry);
+	b = container_of(e2, const struct oidmap_entry, internal_entry);
+
 	if (keydata)
-		return !oideq(&entry_->oid, (const struct object_id *) keydata);
-	return !oideq(&entry_->oid,
-		      &((const struct oidmap_entry *) entry_or_key)->oid);
+		return !oideq(&a->oid, (const struct object_id *) keydata);
+	return !oideq(&a->oid, &b->oid);
 }
 
 void oidmap_init(struct oidmap *map, size_t initial_size)
@@ -21,7 +25,9 @@ void oidmap_free(struct oidmap *map, int free_entries)
 {
 	if (!map)
 		return;
-	hashmap_free(&map->map, free_entries);
+
+	/* TODO: make oidmap itself not depend on struct layouts */
+	hashmap_free_(&map->map, free_entries ? 0 : -1);
 }
 
 void *oidmap_get(const struct oidmap *map, const struct object_id *key)
@@ -51,5 +57,5 @@ void *oidmap_put(struct oidmap *map, void *entry)
 		oidmap_init(map, 0);
 
 	hashmap_entry_init(&to_put->internal_entry, oidhash(&to_put->oid));
-	return hashmap_put(&map->map, to_put);
+	return hashmap_put(&map->map, &to_put->internal_entry);
 }

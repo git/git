@@ -933,15 +933,17 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 }
 
 static int moved_entry_cmp(const void *hashmap_cmp_fn_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *keydata)
 {
 	const struct diff_options *diffopt = hashmap_cmp_fn_data;
-	const struct moved_entry *a = entry;
-	const struct moved_entry *b = entry_or_key;
+	const struct moved_entry *a, *b;
 	unsigned flags = diffopt->color_moved_ws_handling
 			 & XDF_WHITESPACE_FLAGS;
+
+	a = container_of(eptr, const struct moved_entry, ent);
+	b = container_of(entry_or_key, const struct moved_entry, ent);
 
 	if (diffopt->color_moved_ws_handling &
 	    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
@@ -964,8 +966,9 @@ static struct moved_entry *prepare_entry(struct diff_options *o,
 	struct moved_entry *ret = xmalloc(sizeof(*ret));
 	struct emitted_diff_symbol *l = &o->emitted_symbols->buf[line_no];
 	unsigned flags = o->color_moved_ws_handling & XDF_WHITESPACE_FLAGS;
+	unsigned int hash = xdiff_hash_string(l->line, l->len, flags);
 
-	ret->ent.hash = xdiff_hash_string(l->line, l->len, flags);
+	hashmap_entry_init(&ret->ent, hash);
 	ret->es = l;
 	ret->next_line = NULL;
 
@@ -1002,7 +1005,7 @@ static void add_lines_to_move_detection(struct diff_options *o,
 		if (prev_line && prev_line->es->s == o->emitted_symbols->buf[n].s)
 			prev_line->next_line = key;
 
-		hashmap_add(hm, key);
+		hashmap_add(hm, &key->ent);
 		prev_line = key;
 	}
 }
@@ -1018,7 +1021,7 @@ static void pmb_advance_or_null(struct diff_options *o,
 		struct moved_entry *prev = pmb[i].match;
 		struct moved_entry *cur = (prev && prev->next_line) ?
 				prev->next_line : NULL;
-		if (cur && !hm->cmpfn(o, cur, match, NULL)) {
+		if (cur && !hm->cmpfn(o, &cur->ent, &match->ent, NULL)) {
 			pmb[i].match = cur;
 		} else {
 			pmb[i].match = NULL;
@@ -1035,7 +1038,7 @@ static void pmb_advance_or_null_multi_match(struct diff_options *o,
 	int i;
 	char *got_match = xcalloc(1, pmb_nr);
 
-	for (; match; match = hashmap_get_next(hm, match)) {
+	hashmap_for_each_entry_from(hm, match, ent) {
 		for (i = 0; i < pmb_nr; i++) {
 			struct moved_entry *prev = pmb[i].match;
 			struct moved_entry *cur = (prev && prev->next_line) ?
@@ -1143,13 +1146,13 @@ static void mark_color_as_moved(struct diff_options *o,
 		case DIFF_SYMBOL_PLUS:
 			hm = del_lines;
 			key = prepare_entry(o, n);
-			match = hashmap_get(hm, key, NULL);
+			match = hashmap_get_entry(hm, key, ent, NULL);
 			free(key);
 			break;
 		case DIFF_SYMBOL_MINUS:
 			hm = add_lines;
 			key = prepare_entry(o, n);
-			match = hashmap_get(hm, key, NULL);
+			match = hashmap_get_entry(hm, key, ent, NULL);
 			free(key);
 			break;
 		default:
@@ -1188,7 +1191,7 @@ static void mark_color_as_moved(struct diff_options *o,
 			 * The current line is the start of a new block.
 			 * Setup the set of potential blocks.
 			 */
-			for (; match; match = hashmap_get_next(hm, match)) {
+			hashmap_for_each_entry_from(hm, match, ent) {
 				ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
 				if (o->color_moved_ws_handling &
 				    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {
@@ -6230,8 +6233,10 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 			if (o->color_moved == COLOR_MOVED_ZEBRA_DIM)
 				dim_moved_lines(o);
 
-			hashmap_free(&add_lines, 1);
-			hashmap_free(&del_lines, 1);
+			hashmap_free_entries(&add_lines, struct moved_entry,
+						ent);
+			hashmap_free_entries(&del_lines, struct moved_entry,
+						ent);
 		}
 
 		for (i = 0; i < esm.nr; i++)

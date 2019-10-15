@@ -1313,4 +1313,42 @@ void unleak_memory(const void *ptr, size_t len);
  */
 #include "banned.h"
 
+/*
+ * container_of - Get the address of an object containing a field.
+ *
+ * @ptr: pointer to the field.
+ * @type: type of the object.
+ * @member: name of the field within the object.
+ */
+#define container_of(ptr, type, member) \
+	((type *) ((char *)(ptr) - offsetof(type, member)))
+
+/*
+ * helper function for `container_of_or_null' to avoid multiple
+ * evaluation of @ptr
+ */
+static inline void *container_of_or_null_offset(void *ptr, size_t offset)
+{
+	return ptr ? (char *)ptr - offset : NULL;
+}
+
+/*
+ * like `container_of', but allows returned value to be NULL
+ */
+#define container_of_or_null(ptr, type, member) \
+	(type *)container_of_or_null_offset(ptr, offsetof(type, member))
+
+/*
+ * like offsetof(), but takes a pointer to a a variable of type which
+ * contains @member, instead of a specified type.
+ * @ptr is subject to multiple evaluation since we can't rely on __typeof__
+ * everywhere.
+ */
+#if defined(__GNUC__) /* clang sets this, too */
+#define OFFSETOF_VAR(ptr, member) offsetof(__typeof__(*ptr), member)
+#else /* !__GNUC__ */
+#define OFFSETOF_VAR(ptr, member) \
+	((uintptr_t)&(ptr)->member - (uintptr_t)(ptr))
+#endif /* !__GNUC__ */
+
 #endif

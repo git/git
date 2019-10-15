@@ -62,7 +62,7 @@ static struct attr_hashmap g_attr_hashmap;
 
 /* The container for objects stored in "struct attr_hashmap" */
 struct attr_hash_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	const char *key; /* the key; memory should be owned by value */
 	size_t keylen; /* length of the key */
 	void *value; /* the stored value */
@@ -70,12 +70,14 @@ struct attr_hash_entry {
 
 /* attr_hashmap comparison function */
 static int attr_hash_entry_cmp(const void *unused_cmp_data,
-			       const void *entry,
-			       const void *entry_or_key,
+			       const struct hashmap_entry *eptr,
+			       const struct hashmap_entry *entry_or_key,
 			       const void *unused_keydata)
 {
-	const struct attr_hash_entry *a = entry;
-	const struct attr_hash_entry *b = entry_or_key;
+	const struct attr_hash_entry *a, *b;
+
+	a = container_of(eptr, const struct attr_hash_entry, ent);
+	b = container_of(entry_or_key, const struct attr_hash_entry, ent);
 	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
 }
 
@@ -98,10 +100,10 @@ static void *attr_hashmap_get(struct attr_hashmap *map,
 	if (!map->map.tablesize)
 		attr_hashmap_init(map);
 
-	hashmap_entry_init(&k, memhash(key, keylen));
+	hashmap_entry_init(&k.ent, memhash(key, keylen));
 	k.key = key;
 	k.keylen = keylen;
-	e = hashmap_get(&map->map, &k, NULL);
+	e = hashmap_get_entry(&map->map, &k, ent, NULL);
 
 	return e ? e->value : NULL;
 }
@@ -117,12 +119,12 @@ static void attr_hashmap_add(struct attr_hashmap *map,
 		attr_hashmap_init(map);
 
 	e = xmalloc(sizeof(struct attr_hash_entry));
-	hashmap_entry_init(e, memhash(key, keylen));
+	hashmap_entry_init(&e->ent, memhash(key, keylen));
 	e->key = key;
 	e->keylen = keylen;
 	e->value = value;
 
-	hashmap_add(&map->map, e);
+	hashmap_add(&map->map, &e->ent);
 }
 
 struct all_attrs_item {
@@ -161,12 +163,12 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 	if (size != check->all_attrs_nr) {
 		struct attr_hash_entry *e;
 		struct hashmap_iter iter;
-		hashmap_iter_init(&map->map, &iter);
 
 		REALLOC_ARRAY(check->all_attrs, size);
 		check->all_attrs_nr = size;
 
-		while ((e = hashmap_iter_next(&iter))) {
+		hashmap_for_each_entry(&map->map, &iter, e,
+					ent /* member name */) {
 			const struct git_attr *a = e->value;
 			check->all_attrs[a->attr_nr].attr = a;
 		}

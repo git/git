@@ -63,19 +63,22 @@ static const char *prio_names[] = {
 };
 
 static int commit_name_neq(const void *unused_cmp_data,
-			   const void *entry,
-			   const void *entry_or_key,
+			   const struct hashmap_entry *eptr,
+			   const struct hashmap_entry *entry_or_key,
 			   const void *peeled)
 {
-	const struct commit_name *cn1 = entry;
-	const struct commit_name *cn2 = entry_or_key;
+	const struct commit_name *cn1, *cn2;
+
+	cn1 = container_of(eptr, const struct commit_name, entry);
+	cn2 = container_of(entry_or_key, const struct commit_name, entry);
 
 	return !oideq(&cn1->peeled, peeled ? peeled : &cn2->peeled);
 }
 
 static inline struct commit_name *find_commit_name(const struct object_id *peeled)
 {
-	return hashmap_get_from_hash(&names, oidhash(peeled), peeled);
+	return hashmap_get_entry_from_hash(&names, oidhash(peeled), peeled,
+						struct commit_name, entry);
 }
 
 static int replace_name(struct commit_name *e,
@@ -122,8 +125,8 @@ static void add_to_known_names(const char *path,
 		if (!e) {
 			e = xmalloc(sizeof(struct commit_name));
 			oidcpy(&e->peeled, peeled);
-			hashmap_entry_init(e, oidhash(peeled));
-			hashmap_add(&names, e);
+			hashmap_entry_init(&e->entry, oidhash(peeled));
+			hashmap_add(&names, &e->entry);
 			e->path = NULL;
 		}
 		e->tag = tag;
@@ -329,8 +332,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		struct commit_name *n;
 
 		init_commit_names(&commit_names);
-		n = hashmap_iter_first(&names, &iter);
-		for (; n; n = hashmap_iter_next(&iter)) {
+		hashmap_for_each_entry(&names, &iter, n,
+					entry /* member name */) {
 			c = lookup_commit_reference_gently(the_repository,
 							   &n->peeled, 1);
 			if (c)

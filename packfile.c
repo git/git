@@ -1343,7 +1343,7 @@ struct delta_base_cache_key {
 };
 
 struct delta_base_cache_entry {
-	struct hashmap hash;
+	struct hashmap_entry ent;
 	struct delta_base_cache_key key;
 	struct list_head lru;
 	void *data;
@@ -1363,7 +1363,7 @@ static unsigned int pack_entry_hash(struct packed_git *p, off_t base_offset)
 static struct delta_base_cache_entry *
 get_delta_base_cache_entry(struct packed_git *p, off_t base_offset)
 {
-	struct hashmap_entry entry;
+	struct hashmap_entry entry, *e;
 	struct delta_base_cache_key key;
 
 	if (!delta_base_cache.cmpfn)
@@ -1372,7 +1372,8 @@ get_delta_base_cache_entry(struct packed_git *p, off_t base_offset)
 	hashmap_entry_init(&entry, pack_entry_hash(p, base_offset));
 	key.p = p;
 	key.base_offset = base_offset;
-	return hashmap_get(&delta_base_cache, &entry, &key);
+	e = hashmap_get(&delta_base_cache, &entry, &key);
+	return e ? container_of(e, struct delta_base_cache_entry, ent) : NULL;
 }
 
 static int delta_base_cache_key_eq(const struct delta_base_cache_key *a,
@@ -1382,11 +1383,16 @@ static int delta_base_cache_key_eq(const struct delta_base_cache_key *a,
 }
 
 static int delta_base_cache_hash_cmp(const void *unused_cmp_data,
-				     const void *va, const void *vb,
+				     const struct hashmap_entry *va,
+				     const struct hashmap_entry *vb,
 				     const void *vkey)
 {
-	const struct delta_base_cache_entry *a = va, *b = vb;
+	const struct delta_base_cache_entry *a, *b;
 	const struct delta_base_cache_key *key = vkey;
+
+	a = container_of(va, const struct delta_base_cache_entry, ent);
+	b = container_of(vb, const struct delta_base_cache_entry, ent);
+
 	if (key)
 		return !delta_base_cache_key_eq(&a->key, key);
 	else
@@ -1405,7 +1411,7 @@ static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
  */
 static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 {
-	hashmap_remove(&delta_base_cache, ent, &ent->key);
+	hashmap_remove(&delta_base_cache, &ent->ent, &ent->key);
 	list_del(&ent->lru);
 	delta_base_cached -= ent->size;
 	free(ent);
@@ -1469,8 +1475,8 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 
 	if (!delta_base_cache.cmpfn)
 		hashmap_init(&delta_base_cache, delta_base_cache_hash_cmp, NULL, 0);
-	hashmap_entry_init(ent, pack_entry_hash(p, base_offset));
-	hashmap_add(&delta_base_cache, ent);
+	hashmap_entry_init(&ent->ent, pack_entry_hash(p, base_offset));
+	hashmap_add(&delta_base_cache, &ent->ent);
 }
 
 int packed_object_info(struct repository *r, struct packed_git *p,

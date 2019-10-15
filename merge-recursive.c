@@ -45,13 +45,15 @@ struct path_hashmap_entry {
 };
 
 static int path_hashmap_cmp(const void *cmp_data,
-			    const void *entry,
-			    const void *entry_or_key,
+			    const struct hashmap_entry *eptr,
+			    const struct hashmap_entry *entry_or_key,
 			    const void *keydata)
 {
-	const struct path_hashmap_entry *a = entry;
-	const struct path_hashmap_entry *b = entry_or_key;
+	const struct path_hashmap_entry *a, *b;
 	const char *key = keydata;
+
+	a = container_of(eptr, const struct path_hashmap_entry, e);
+	b = container_of(entry_or_key, const struct path_hashmap_entry, e);
 
 	if (ignore_case)
 		return strcasecmp(a->path, key ? key : b->path);
@@ -75,7 +77,7 @@ static unsigned int path_hash(const char *path)
  *                       in get_directory_renames() for details
  */
 struct dir_rename_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	char *dir;
 	unsigned non_unique_new_dir:1;
 	struct strbuf new_dir;
@@ -89,18 +91,20 @@ static struct dir_rename_entry *dir_rename_find_entry(struct hashmap *hashmap,
 
 	if (dir == NULL)
 		return NULL;
-	hashmap_entry_init(&key, strhash(dir));
+	hashmap_entry_init(&key.ent, strhash(dir));
 	key.dir = dir;
-	return hashmap_get(hashmap, &key, NULL);
+	return hashmap_get_entry(hashmap, &key, ent, NULL);
 }
 
 static int dir_rename_cmp(const void *unused_cmp_data,
-			  const void *entry,
-			  const void *entry_or_key,
+			  const struct hashmap_entry *eptr,
+			  const struct hashmap_entry *entry_or_key,
 			  const void *unused_keydata)
 {
-	const struct dir_rename_entry *e1 = entry;
-	const struct dir_rename_entry *e2 = entry_or_key;
+	const struct dir_rename_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct dir_rename_entry, ent);
+	e2 = container_of(entry_or_key, const struct dir_rename_entry, ent);
 
 	return strcmp(e1->dir, e2->dir);
 }
@@ -113,7 +117,7 @@ static void dir_rename_init(struct hashmap *map)
 static void dir_rename_entry_init(struct dir_rename_entry *entry,
 				  char *directory)
 {
-	hashmap_entry_init(entry, strhash(directory));
+	hashmap_entry_init(&entry->ent, strhash(directory));
 	entry->dir = directory;
 	entry->non_unique_new_dir = 0;
 	strbuf_init(&entry->new_dir, 0);
@@ -121,7 +125,7 @@ static void dir_rename_entry_init(struct dir_rename_entry *entry,
 }
 
 struct collision_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	char *target_file;
 	struct string_list source_files;
 	unsigned reported_already:1;
@@ -132,22 +136,27 @@ static struct collision_entry *collision_find_entry(struct hashmap *hashmap,
 {
 	struct collision_entry key;
 
-	hashmap_entry_init(&key, strhash(target_file));
+	hashmap_entry_init(&key.ent, strhash(target_file));
 	key.target_file = target_file;
-	return hashmap_get(hashmap, &key, NULL);
+	return hashmap_get_entry(hashmap, &key, ent, NULL);
 }
 
-static int collision_cmp(void *unused_cmp_data,
-			 const struct collision_entry *e1,
-			 const struct collision_entry *e2,
+static int collision_cmp(const void *unused_cmp_data,
+			 const struct hashmap_entry *eptr,
+			 const struct hashmap_entry *entry_or_key,
 			 const void *unused_keydata)
 {
+	const struct collision_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct collision_entry, ent);
+	e2 = container_of(entry_or_key, const struct collision_entry, ent);
+
 	return strcmp(e1->target_file, e2->target_file);
 }
 
 static void collision_init(struct hashmap *map)
 {
-	hashmap_init(map, (hashmap_cmp_fn) collision_cmp, NULL, 0);
+	hashmap_init(map, collision_cmp, NULL, 0);
 }
 
 static void flush_output(struct merge_options *opt)
@@ -464,8 +473,8 @@ static int save_files_dirs(const struct object_id *oid,
 	strbuf_addstr(base, path);
 
 	FLEX_ALLOC_MEM(entry, path, base->buf, base->len);
-	hashmap_entry_init(entry, path_hash(entry->path));
-	hashmap_add(&opt->priv->current_file_dir_set, entry);
+	hashmap_entry_init(&entry->e, path_hash(entry->path));
+	hashmap_add(&opt->priv->current_file_dir_set, &entry->e);
 
 	strbuf_setlen(base, baselen);
 	return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -743,8 +752,8 @@ static char *unique_path(struct merge_options *opt,
 	}
 
 	FLEX_ALLOC_MEM(entry, path, newpath.buf, newpath.len);
-	hashmap_entry_init(entry, path_hash(entry->path));
-	hashmap_add(&opt->priv->current_file_dir_set, entry);
+	hashmap_entry_init(&entry->e, path_hash(entry->path));
+	hashmap_add(&opt->priv->current_file_dir_set, &entry->e);
 	return strbuf_detach(&newpath, NULL);
 }
 
@@ -2013,7 +2022,7 @@ static void remove_hashmap_entries(struct hashmap *dir_renames,
 
 	for (i = 0; i < items_to_remove->nr; i++) {
 		entry = items_to_remove->items[i].util;
-		hashmap_remove(dir_renames, entry, NULL);
+		hashmap_remove(dir_renames, &entry->ent, NULL);
 	}
 	string_list_clear(items_to_remove, 0);
 }
@@ -2136,8 +2145,8 @@ static void handle_directory_level_conflicts(struct merge_options *opt,
 	struct string_list remove_from_head = STRING_LIST_INIT_NODUP;
 	struct string_list remove_from_merge = STRING_LIST_INIT_NODUP;
 
-	hashmap_iter_init(dir_re_head, &iter);
-	while ((head_ent = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_re_head, &iter, head_ent,
+				ent /* member name */) {
 		merge_ent = dir_rename_find_entry(dir_re_merge, head_ent->dir);
 		if (merge_ent &&
 		    !head_ent->non_unique_new_dir &&
@@ -2161,8 +2170,8 @@ static void handle_directory_level_conflicts(struct merge_options *opt,
 	remove_hashmap_entries(dir_re_head, &remove_from_head);
 	remove_hashmap_entries(dir_re_merge, &remove_from_merge);
 
-	hashmap_iter_init(dir_re_merge, &iter);
-	while ((merge_ent = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_re_merge, &iter, merge_ent,
+				ent /* member name */) {
 		head_ent = dir_rename_find_entry(dir_re_head, merge_ent->dir);
 		if (tree_has_path(opt->repo, merge, merge_ent->dir)) {
 			/* 2. This wasn't a directory rename after all */
@@ -2241,7 +2250,7 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 		if (!entry) {
 			entry = xmalloc(sizeof(*entry));
 			dir_rename_entry_init(entry, old_dir);
-			hashmap_put(dir_renames, entry);
+			hashmap_put(dir_renames, &entry->ent);
 		} else {
 			free(old_dir);
 		}
@@ -2266,8 +2275,8 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs)
 	 * we set non_unique_new_dir.  Once we've determined the winner (or
 	 * that there is no winner), we no longer need possible_new_dirs.
 	 */
-	hashmap_iter_init(dir_renames, &iter);
-	while ((entry = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_renames, &iter, entry,
+				ent /* member name */) {
 		int max = 0;
 		int bad_max = 0;
 		char *best = NULL;
@@ -2370,8 +2379,9 @@ static void compute_collisions(struct hashmap *collisions,
 		if (!collision_ent) {
 			collision_ent = xcalloc(1,
 						sizeof(struct collision_entry));
-			hashmap_entry_init(collision_ent, strhash(new_path));
-			hashmap_put(collisions, collision_ent);
+			hashmap_entry_init(&collision_ent->ent,
+						strhash(new_path));
+			hashmap_put(collisions, &collision_ent->ent);
 			collision_ent->target_file = new_path;
 		} else {
 			free(new_path);
@@ -2624,12 +2634,12 @@ static struct string_list *get_renames(struct merge_options *opt,
 							     entries);
 	}
 
-	hashmap_iter_init(&collisions, &iter);
-	while ((e = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(&collisions, &iter, e,
+				ent /* member name */) {
 		free(e->target_file);
 		string_list_clear(&e->source_files, 0);
 	}
-	hashmap_free(&collisions, 1);
+	hashmap_free_entries(&collisions, struct collision_entry, ent);
 	return renames;
 }
 
@@ -2842,13 +2852,13 @@ static void initial_cleanup_rename(struct diff_queue_struct *pairs,
 	struct hashmap_iter iter;
 	struct dir_rename_entry *e;
 
-	hashmap_iter_init(dir_renames, &iter);
-	while ((e = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(dir_renames, &iter, e,
+				ent /* member name */) {
 		free(e->dir);
 		strbuf_release(&e->new_dir);
 		/* possible_new_dirs already cleared in get_directory_renames */
 	}
-	hashmap_free(dir_renames, 1);
+	hashmap_free_entries(dir_renames, struct dir_rename_entry, ent);
 	free(dir_renames);
 
 	free(pairs->queue);
@@ -3475,7 +3485,8 @@ static int merge_trees_internal(struct merge_options *opt,
 		string_list_clear(entries, 1);
 		free(entries);
 
-		hashmap_free(&opt->priv->current_file_dir_set, 1);
+		hashmap_free_entries(&opt->priv->current_file_dir_set,
+					struct path_hashmap_entry, e);
 
 		if (clean < 0) {
 			unpack_trees_finish(opt);

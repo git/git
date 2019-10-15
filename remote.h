@@ -14,7 +14,7 @@ enum {
 };
 
 struct remote {
-	struct hashmap_entry ent;  /* must be first */
+	struct hashmap_entry ent;
 
 	const char *name;
 	int origin, configured_in_repo;

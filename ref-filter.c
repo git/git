@@ -79,17 +79,20 @@ static struct expand_data {
 } oi, oi_deref;
 
 struct ref_to_worktree_entry {
-	struct hashmap_entry ent; /* must be the first member! */
+	struct hashmap_entry ent;
 	struct worktree *wt; /* key is wt->head_ref */
 };
 
 static int ref_to_worktree_map_cmpfnc(const void *unused_lookupdata,
-				      const void *existing_hashmap_entry_to_test,
-				      const void *key,
+				      const struct hashmap_entry *eptr,
+				      const struct hashmap_entry *kptr,
 				      const void *keydata_aka_refname)
 {
-	const struct ref_to_worktree_entry *e = existing_hashmap_entry_to_test;
-	const struct ref_to_worktree_entry *k = key;
+	const struct ref_to_worktree_entry *e, *k;
+
+	e = container_of(eptr, const struct ref_to_worktree_entry, ent);
+	k = container_of(kptr, const struct ref_to_worktree_entry, ent);
+
 	return strcmp(e->wt->head_ref,
 		keydata_aka_refname ? keydata_aka_refname : k->wt->head_ref);
 }
@@ -1565,9 +1568,10 @@ static void populate_worktree_map(struct hashmap *map, struct worktree **worktre
 			struct ref_to_worktree_entry *entry;
 			entry = xmalloc(sizeof(*entry));
 			entry->wt = worktrees[i];
-			hashmap_entry_init(entry, strhash(worktrees[i]->head_ref));
+			hashmap_entry_init(&entry->ent,
+					strhash(worktrees[i]->head_ref));
 
-			hashmap_add(map, entry);
+			hashmap_add(map, &entry->ent);
 		}
 	}
 }
@@ -1584,18 +1588,20 @@ static void lazy_init_worktree_map(void)
 
 static char *get_worktree_path(const struct used_atom *atom, const struct ref_array_item *ref)
 {
-	struct hashmap_entry entry;
+	struct hashmap_entry entry, *e;
 	struct ref_to_worktree_entry *lookup_result;
 
 	lazy_init_worktree_map();
 
 	hashmap_entry_init(&entry, strhash(ref->refname));
-	lookup_result = hashmap_get(&(ref_to_worktree_map.map), &entry, ref->refname);
+	e = hashmap_get(&(ref_to_worktree_map.map), &entry, ref->refname);
 
-	if (lookup_result)
-		return xstrdup(lookup_result->wt->path);
-	else
+	if (!e)
 		return xstrdup("");
+
+	lookup_result = container_of(e, struct ref_to_worktree_entry, ent);
+
+	return xstrdup(lookup_result->wt->path);
 }
 
 /*
@@ -2166,7 +2172,8 @@ void ref_array_clear(struct ref_array *array)
 	used_atom_cnt = 0;
 
 	if (ref_to_worktree_map.worktrees) {
-		hashmap_free(&(ref_to_worktree_map.map), 1);
+		hashmap_free_entries(&(ref_to_worktree_map.map),
+					struct ref_to_worktree_entry, ent);
 		free_worktrees(ref_to_worktree_map.worktrees);
 		ref_to_worktree_map.worktrees = NULL;
 	}

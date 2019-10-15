@@ -36,14 +36,16 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
  * any significance; only that it is non-zero matters.
  */
 static int patch_id_neq(const void *cmpfn_data,
-			const void *entry,
-			const void *entry_or_key,
+			const struct hashmap_entry *eptr,
+			const struct hashmap_entry *entry_or_key,
 			const void *unused_keydata)
 {
 	/* NEEDSWORK: const correctness? */
 	struct diff_options *opt = (void *)cmpfn_data;
-	struct patch_id *a = (void *)entry;
-	struct patch_id *b = (void *)entry_or_key;
+	struct patch_id *a, *b;
+
+	a = container_of(eptr, struct patch_id, ent);
+	b = container_of(entry_or_key, struct patch_id, ent);
 
 	if (is_null_oid(&a->patch_id) &&
 	    commit_patch_id(a->commit, opt, &a->patch_id, 0, 0))
@@ -69,7 +71,7 @@ int init_patch_ids(struct repository *r, struct patch_ids *ids)
 
 int free_patch_ids(struct patch_ids *ids)
 {
-	hashmap_free(&ids->patches, 1);
+	hashmap_free_entries(&ids->patches, struct patch_id, ent);
 	return 0;
 }
 
@@ -83,7 +85,7 @@ static int init_patch_id_entry(struct patch_id *patch,
 	if (commit_patch_id(commit, &ids->diffopts, &header_only_patch_id, 1, 0))
 		return -1;
 
-	hashmap_entry_init(patch, oidhash(&header_only_patch_id));
+	hashmap_entry_init(&patch->ent, oidhash(&header_only_patch_id));
 	return 0;
 }
 
@@ -99,7 +101,7 @@ struct patch_id *has_commit_patch_id(struct commit *commit,
 	if (init_patch_id_entry(&patch, commit, ids))
 		return NULL;
 
-	return hashmap_get(&ids->patches, &patch, NULL);
+	return hashmap_get_entry(&ids->patches, &patch, ent, NULL);
 }
 
 struct patch_id *add_commit_patch_id(struct commit *commit,
@@ -116,6 +118,6 @@ struct patch_id *add_commit_patch_id(struct commit *commit,
 		return NULL;
 	}
 
-	hashmap_add(&ids->patches, key);
+	hashmap_add(&ids->patches, &key->ent);
 	return key;
 }

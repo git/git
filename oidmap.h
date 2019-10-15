@@ -78,14 +78,16 @@ static inline void oidmap_iter_init(struct oidmap *map, struct oidmap_iter *iter
 
 static inline void *oidmap_iter_next(struct oidmap_iter *iter)
 {
-	return hashmap_iter_next(&iter->h_iter);
+	/* TODO: this API could be reworked to do compile-time type checks */
+	return (void *)hashmap_iter_next(&iter->h_iter);
 }
 
 static inline void *oidmap_iter_first(struct oidmap *map,
 				      struct oidmap_iter *iter)
 {
 	oidmap_iter_init(map, iter);
-	return oidmap_iter_next(iter);
+	/* TODO: this API could be reworked to do compile-time type checks */
+	return (void *)oidmap_iter_next(iter);
 }
 
 #endif

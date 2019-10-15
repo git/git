@@ -111,13 +111,15 @@ struct remotes_hash_key {
 };
 
 static int remotes_hash_cmp(const void *unused_cmp_data,
-			    const void *entry,
-			    const void *entry_or_key,
+			    const struct hashmap_entry *eptr,
+			    const struct hashmap_entry *entry_or_key,
 			    const void *keydata)
 {
-	const struct remote *a = entry;
-	const struct remote *b = entry_or_key;
+	const struct remote *a, *b;
 	const struct remotes_hash_key *key = keydata;
+
+	a = container_of(eptr, const struct remote, ent);
+	b = container_of(entry_or_key, const struct remote, ent);
 
 	if (key)
 		return strncmp(a->name, key->str, key->len) || a->name[key->len];
@@ -135,7 +137,7 @@ static struct remote *make_remote(const char *name, int len)
 {
 	struct remote *ret, *replaced;
 	struct remotes_hash_key lookup;
-	struct hashmap_entry lookup_entry;
+	struct hashmap_entry lookup_entry, *e;
 
 	if (!len)
 		len = strlen(name);
@@ -145,8 +147,9 @@ static struct remote *make_remote(const char *name, int len)
 	lookup.len = len;
 	hashmap_entry_init(&lookup_entry, memhash(name, len));
 
-	if ((ret = hashmap_get(&remotes_hash, &lookup_entry, &lookup)) != NULL)
-		return ret;
+	e = hashmap_get(&remotes_hash, &lookup_entry, &lookup);
+	if (e)
+		return container_of(e, struct remote, ent);
 
 	ret = xcalloc(1, sizeof(struct remote));
 	ret->prune = -1;  /* unspecified */
@@ -158,8 +161,8 @@ static struct remote *make_remote(const char *name, int len)
 	ALLOC_GROW(remotes, remotes_nr + 1, remotes_alloc);
 	remotes[remotes_nr++] = ret;
 
-	hashmap_entry_init(ret, lookup_entry.hash);
-	replaced = hashmap_put(&remotes_hash, ret);
+	hashmap_entry_init(&ret->ent, lookup_entry.hash);
+	replaced = hashmap_put_entry(&remotes_hash, ret, ent);
 	assert(replaced == NULL);  /* no previous entry overwritten */
 	return ret;
 }

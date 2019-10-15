@@ -5,6 +5,7 @@
 
 struct test_entry
 {
+	int padding; /* hashmap entry no longer needs to be the first member */
 	struct hashmap_entry ent;
 	/* key and value as two \0-terminated strings */
 	char key[FLEX_ARRAY];
@@ -16,14 +17,16 @@ static const char *get_value(const struct test_entry *e)
 }
 
 static int test_entry_cmp(const void *cmp_data,
-			  const void *entry,
-			  const void *entry_or_key,
+			  const struct hashmap_entry *eptr,
+			  const struct hashmap_entry *entry_or_key,
 			  const void *keydata)
 {
 	const int ignore_case = cmp_data ? *((int *)cmp_data) : 0;
-	const struct test_entry *e1 = entry;
-	const struct test_entry *e2 = entry_or_key;
+	const struct test_entry *e1, *e2;
 	const char *key = keydata;
+
+	e1 = container_of(eptr, const struct test_entry, ent);
+	e2 = container_of(entry_or_key, const struct test_entry, ent);
 
 	if (ignore_case)
 		return strcasecmp(e1->key, key ? key : e2->key);
@@ -37,7 +40,7 @@ static struct test_entry *alloc_test_entry(unsigned int hash,
 	size_t klen = strlen(key);
 	size_t vlen = strlen(value);
 	struct test_entry *entry = xmalloc(st_add4(sizeof(*entry), klen, vlen, 2));
-	hashmap_entry_init(entry, hash);
+	hashmap_entry_init(&entry->ent, hash);
 	memcpy(entry->key, key, klen + 1);
 	memcpy(entry->key + klen + 1, value, vlen + 1);
 	return entry;
@@ -103,11 +106,11 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 
 			/* add entries */
 			for (i = 0; i < TEST_SIZE; i++) {
-				hashmap_entry_init(entries[i], hashes[i]);
-				hashmap_add(&map, entries[i]);
+				hashmap_entry_init(&entries[i]->ent, hashes[i]);
+				hashmap_add(&map, &entries[i]->ent);
 			}
 
-			hashmap_free(&map, 0);
+			hashmap_free(&map);
 		}
 	} else {
 		/* test map lookups */
@@ -116,8 +119,8 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 		/* fill the map (sparsely if specified) */
 		j = (method & TEST_SPARSE) ? TEST_SIZE / 10 : TEST_SIZE;
 		for (i = 0; i < j; i++) {
-			hashmap_entry_init(entries[i], hashes[i]);
-			hashmap_add(&map, entries[i]);
+			hashmap_entry_init(&entries[i]->ent, hashes[i]);
+			hashmap_add(&map, &entries[i]->ent);
 		}
 
 		for (j = 0; j < rounds; j++) {
@@ -127,7 +130,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 			}
 		}
 
-		hashmap_free(&map, 0);
+		hashmap_free(&map);
 	}
 }
 
@@ -179,7 +182,7 @@ int cmd__hashmap(int argc, const char **argv)
 			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add to hashmap */
-			hashmap_add(&map, entry);
+			hashmap_add(&map, &entry->ent);
 
 		} else if (!strcmp("put", cmd) && p1 && p2) {
 
@@ -187,43 +190,44 @@ int cmd__hashmap(int argc, const char **argv)
 			entry = alloc_test_entry(hash, p1, p2);
 
 			/* add / replace entry */
-			entry = hashmap_put(&map, entry);
+			entry = hashmap_put_entry(&map, entry, ent);
 
 			/* print and free replaced entry, if any */
 			puts(entry ? get_value(entry) : "NULL");
 			free(entry);
 
 		} else if (!strcmp("get", cmd) && p1) {
-
 			/* lookup entry in hashmap */
-			entry = hashmap_get_from_hash(&map, hash, p1);
+			entry = hashmap_get_entry_from_hash(&map, hash, p1,
+							struct test_entry, ent);
 
 			/* print result */
 			if (!entry)
 				puts("NULL");
-			while (entry) {
+			hashmap_for_each_entry_from(&map, entry, ent)
 				puts(get_value(entry));
-				entry = hashmap_get_next(&map, entry);
-			}
 
 		} else if (!strcmp("remove", cmd) && p1) {
 
 			/* setup static key */
 			struct hashmap_entry key;
+			struct hashmap_entry *rm;
 			hashmap_entry_init(&key, hash);
 
 			/* remove entry from hashmap */
-			entry = hashmap_remove(&map, &key, p1);
+			rm = hashmap_remove(&map, &key, p1);
+			entry = rm ? container_of(rm, struct test_entry, ent)
+					: NULL;
 
 			/* print result and free entry*/
 			puts(entry ? get_value(entry) : "NULL");
 			free(entry);
 
 		} else if (!strcmp("iterate", cmd)) {
-
 			struct hashmap_iter iter;
-			hashmap_iter_init(&map, &iter);
-			while ((entry = hashmap_iter_next(&iter)))
+
+			hashmap_for_each_entry(&map, &iter, entry,
+						ent /* member name */)
 				printf("%s %s\n", entry->key, get_value(entry));
 
 		} else if (!strcmp("size", cmd)) {
@@ -258,6 +262,6 @@ int cmd__hashmap(int argc, const char **argv)
 	}
 
 	strbuf_release(&line);
-	hashmap_free(&map, 1);
+	hashmap_free_entries(&map, struct test_entry, ent);
 	return 0;
 }

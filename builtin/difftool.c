@@ -125,12 +125,15 @@ struct working_tree_entry {
 };
 
 static int working_tree_entry_cmp(const void *unused_cmp_data,
-				  const void *entry,
-				  const void *entry_or_key,
+				  const struct hashmap_entry *eptr,
+				  const struct hashmap_entry *entry_or_key,
 				  const void *unused_keydata)
 {
-	const struct working_tree_entry *a = entry;
-	const struct working_tree_entry *b = entry_or_key;
+	const struct working_tree_entry *a, *b;
+
+	a = container_of(eptr, const struct working_tree_entry, entry);
+	b = container_of(entry_or_key, const struct working_tree_entry, entry);
+
 	return strcmp(a->path, b->path);
 }
 
@@ -145,12 +148,14 @@ struct pair_entry {
 };
 
 static int pair_cmp(const void *unused_cmp_data,
-		    const void *entry,
-		    const void *entry_or_key,
+		    const struct hashmap_entry *eptr,
+		    const struct hashmap_entry *entry_or_key,
 		    const void *unused_keydata)
 {
-	const struct pair_entry *a = entry;
-	const struct pair_entry *b = entry_or_key;
+	const struct pair_entry *a, *b;
+
+	a = container_of(eptr, const struct pair_entry, entry);
+	b = container_of(entry_or_key, const struct pair_entry, entry);
 
 	return strcmp(a->path, b->path);
 }
@@ -161,14 +166,14 @@ static void add_left_or_right(struct hashmap *map, const char *path,
 	struct pair_entry *e, *existing;
 
 	FLEX_ALLOC_STR(e, path, path);
-	hashmap_entry_init(e, strhash(path));
-	existing = hashmap_get(map, e, NULL);
+	hashmap_entry_init(&e->entry, strhash(path));
+	existing = hashmap_get_entry(map, e, entry, NULL);
 	if (existing) {
 		free(e);
 		e = existing;
 	} else {
 		e->left[0] = e->right[0] = '\0';
-		hashmap_add(map, e);
+		hashmap_add(map, &e->entry);
 	}
 	strlcpy(is_right ? e->right : e->left, content, PATH_MAX);
 }
@@ -179,12 +184,14 @@ struct path_entry {
 };
 
 static int path_entry_cmp(const void *unused_cmp_data,
-			  const void *entry,
-			  const void *entry_or_key,
+			  const struct hashmap_entry *eptr,
+			  const struct hashmap_entry *entry_or_key,
 			  const void *key)
 {
-	const struct path_entry *a = entry;
-	const struct path_entry *b = entry_or_key;
+	const struct path_entry *a, *b;
+
+	a = container_of(eptr, const struct path_entry, entry);
+	b = container_of(entry_or_key, const struct path_entry, entry);
 
 	return strcmp(a->path, key ? key : b->path);
 }
@@ -234,8 +241,8 @@ static void changed_files(struct hashmap *result, const char *index_path,
 	while (!strbuf_getline_nul(&buf, fp)) {
 		struct path_entry *entry;
 		FLEX_ALLOC_STR(entry, path, buf.buf);
-		hashmap_entry_init(entry, strhash(buf.buf));
-		hashmap_add(result, entry);
+		hashmap_entry_init(&entry->entry, strhash(buf.buf));
+		hashmap_add(result, &entry->entry);
 	}
 	fclose(fp);
 	if (finish_command(&diff_files))
@@ -461,12 +468,13 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 
 			/* Avoid duplicate working_tree entries */
 			FLEX_ALLOC_STR(entry, path, dst_path);
-			hashmap_entry_init(entry, strhash(dst_path));
-			if (hashmap_get(&working_tree_dups, entry, NULL)) {
+			hashmap_entry_init(&entry->entry, strhash(dst_path));
+			if (hashmap_get(&working_tree_dups, &entry->entry,
+					NULL)) {
 				free(entry);
 				continue;
 			}
-			hashmap_add(&working_tree_dups, entry);
+			hashmap_add(&working_tree_dups, &entry->entry);
 
 			if (!use_wt_file(workdir, dst_path, &roid)) {
 				if (checkout_path(rmode, &roid, dst_path,
@@ -530,8 +538,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * temporary file to both the left and right directories to show the
 	 * change in the recorded SHA1 for the submodule.
 	 */
-	hashmap_iter_init(&submodules, &iter);
-	while ((entry = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(&submodules, &iter, entry,
+				entry /* member name */) {
 		if (*entry->left) {
 			add_path(&ldir, ldir_len, entry->path);
 			ensure_leading_directories(ldir.buf);
@@ -549,8 +557,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * shows only the link itself, not the contents of the link target.
 	 * This loop replicates that behavior.
 	 */
-	hashmap_iter_init(&symlinks2, &iter);
-	while ((entry = hashmap_iter_next(&iter))) {
+	hashmap_for_each_entry(&symlinks2, &iter, entry,
+				entry /* member name */) {
 		if (*entry->left) {
 			add_path(&ldir, ldir_len, entry->path);
 			ensure_leading_directories(ldir.buf);

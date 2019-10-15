@@ -264,20 +264,21 @@ static void create_fetch_oidset(struct ref **head, struct oidset *out)
 }
 
 struct refname_hash_entry {
-	struct hashmap_entry ent; /* must be the first member */
+	struct hashmap_entry ent;
 	struct object_id oid;
 	int ignore;
 	char refname[FLEX_ARRAY];
 };
 
 static int refname_hash_entry_cmp(const void *hashmap_cmp_fn_data,
-				  const void *e1_,
-				  const void *e2_,
+				  const struct hashmap_entry *eptr,
+				  const struct hashmap_entry *entry_or_key,
 				  const void *keydata)
 {
-	const struct refname_hash_entry *e1 = e1_;
-	const struct refname_hash_entry *e2 = e2_;
+	const struct refname_hash_entry *e1, *e2;
 
+	e1 = container_of(eptr, const struct refname_hash_entry, ent);
+	e2 = container_of(entry_or_key, const struct refname_hash_entry, ent);
 	return strcmp(e1->refname, keydata ? keydata : e2->refname);
 }
 
@@ -289,9 +290,9 @@ static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
 	size_t len = strlen(refname);
 
 	FLEX_ALLOC_MEM(ent, refname, refname, len);
-	hashmap_entry_init(ent, strhash(refname));
+	hashmap_entry_init(&ent->ent, strhash(refname));
 	oidcpy(&ent->oid, oid);
-	hashmap_add(map, ent);
+	hashmap_add(map, &ent->ent);
 	return ent;
 }
 
@@ -380,7 +381,7 @@ static void find_non_local_tags(const struct ref *refs,
 		item = refname_hash_add(&remote_refs, ref->name, &ref->old_oid);
 		string_list_insert(&remote_refs_list, ref->name);
 	}
-	hashmap_free(&existing_refs, 1);
+	hashmap_free_entries(&existing_refs, struct refname_hash_entry, ent);
 
 	/*
 	 * We may have a final lightweight tag that needs to be
@@ -398,8 +399,10 @@ static void find_non_local_tags(const struct ref *refs,
 	for_each_string_list_item(remote_ref_item, &remote_refs_list) {
 		const char *refname = remote_ref_item->string;
 		struct ref *rm;
+		unsigned int hash = strhash(refname);
 
-		item = hashmap_get_from_hash(&remote_refs, strhash(refname), refname);
+		item = hashmap_get_entry_from_hash(&remote_refs, hash, refname,
+					struct refname_hash_entry, ent);
 		if (!item)
 			BUG("unseen remote ref?");
 
@@ -413,7 +416,7 @@ static void find_non_local_tags(const struct ref *refs,
 		**tail = rm;
 		*tail = &rm->next;
 	}
-	hashmap_free(&remote_refs, 1);
+	hashmap_free_entries(&remote_refs, struct refname_hash_entry, ent);
 	string_list_clear(&remote_refs_list, 0);
 	oidset_clear(&fetch_oids);
 }
@@ -532,17 +535,18 @@ static struct ref *get_ref_map(struct remote *remote,
 		if (rm->peer_ref) {
 			const char *refname = rm->peer_ref->name;
 			struct refname_hash_entry *peer_item;
+			unsigned int hash = strhash(refname);
 
-			peer_item = hashmap_get_from_hash(&existing_refs,
-							  strhash(refname),
-							  refname);
+			peer_item = hashmap_get_entry_from_hash(&existing_refs,
+						hash, refname,
+						struct refname_hash_entry, ent);
 			if (peer_item) {
 				struct object_id *old_oid = &peer_item->oid;
 				oidcpy(&rm->peer_ref->old_oid, old_oid);
 			}
 		}
 	}
-	hashmap_free(&existing_refs, 1);
+	hashmap_free_entries(&existing_refs, struct refname_hash_entry, ent);
 
 	return ref_map;
 }
