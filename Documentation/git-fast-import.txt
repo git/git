@@ -337,6 +337,13 @@ and control the current import process.  More detailed discussion
 	`commit` command.  This command is optional and is not
 	needed to perform an import.
 
+`alias`::
+	Record that a mark refers to a given object without first
+	creating any new object.  Using --import-marks and referring
+	to missing marks will cause fast-import to fail, so aliases
+	can provide a way to set otherwise pruned commits to a valid
+	value (e.g. the nearest non-pruned ancestor).
+
 `checkpoint`::
 	Forces fast-import to close the current packfile, generate its
 	unique SHA-1 checksum and index, and start a new packfile.
@@ -774,6 +781,7 @@ lightweight (non-annotated) tags see the `reset` command below.
 
 ....
 	'tag' SP <name> LF
+	mark?
 	'from' SP <commit-ish> LF
 	original-oid?
 	'tagger' (SP <name>)? SP LT <email> GT SP <when> LF
@@ -912,6 +920,21 @@ the limitations of the delimited format, it is impossible to supply
 a data chunk which does not have an LF as its last byte.
 +
 The `LF` after `<delim> LF` is optional (it used to be required).
+
+`alias`
+~~~~~~~
+Record that a mark refers to a given object without first creating any
+new object.
+
+....
+	'alias' LF
+	mark
+	'to' SP <commit-ish> LF
+	LF?
+....
+
+For a detailed description of `<commit-ish>` see above under `from`.
+
 
 `checkpoint`
 ~~~~~~~~~~~~
