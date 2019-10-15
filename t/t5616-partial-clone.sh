@@ -46,6 +46,14 @@ test_expect_success 'do partial clone 1' '
 	test "$(git -C pc1 config --local remote.origin.partialclonefilter)" = "blob:none"
 '
 
+test_expect_success 'verify that .promisor file contains refs fetched' '
+	ls pc1/.git/objects/pack/pack-*.promisor >promisorlist &&
+	test_line_count = 1 promisorlist &&
+	git -C srv.bare rev-list HEAD >headhash &&
+	grep "$(cat headhash) HEAD" $(cat promisorlist) &&
+	grep "$(cat headhash) refs/heads/master" $(cat promisorlist)
+'
+
 # checkout master to force dynamic object fetch of blobs at HEAD.
 test_expect_success 'verify checkout with dynamic object fetch' '
 	git -C pc1 rev-list --quiet --objects --missing=print HEAD >observed &&
