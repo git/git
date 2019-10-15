@@ -748,6 +748,19 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
  */
 int index_name_pos(const struct index_state *, const char *name, int namelen);
 
+/*
+ * Some functions return the negative complement of an insert position when a
+ * precise match was not found but a position was found where the entry would
+ * need to be inserted. This helper protects that logic from any integer
+ * underflow.
+ */
+static inline int index_pos_to_insert_pos(uintmax_t pos)
+{
+	if (pos > INT_MAX)
+		die("overflow: -1 - %"PRIuMAX, pos);
+	return -1 - (int)pos;
+}
+
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */

@@ -1,6 +1,5 @@
-resources:
-- repo: self
-  fetchDepth: 1
+variables:
+  Agent.Source.Git.ShallowFetchDepth: 1
 
 jobs:
 - job: windows_build
@@ -130,6 +129,165 @@ jobs:
     inputs:
       PathtoPublish: t/failed-test-artifacts
       ArtifactName: failed-test-artifacts
+
+- job: vs_build
+  displayName: Visual Studio Build
+  condition: succeeded()
+  pool: Hosted VS2017
+  timeoutInMinutes: 240
+  steps:
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
+        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
+      }
+    displayName: 'Mount test-cache'
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+  - powershell: |
+      $urlbase = "https://dev.azure.com/git-for-windows/git/_apis/build/builds"
+      $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=22&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
+      $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[1].resource.downloadUrl
+      (New-Object Net.WebClient).DownloadFile($downloadUrl,"git-sdk-64-minimal.zip")
+      Expand-Archive git-sdk-64-minimal.zip -DestinationPath . -Force
+      Remove-Item git-sdk-64-minimal.zip
+
+      # Let Git ignore the SDK and the test-cache
+      "/git-sdk-64-minimal/`n/test-cache/`n" | Out-File -NoNewLine -Encoding ascii -Append "$(Build.SourcesDirectory)\.git\info\exclude"
+    displayName: 'Download git-sdk-64-minimal'
+  - powershell: |
+      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
+        make vcxproj
+      "@
+      if (!$?) { exit(1) }
+    displayName: Generate Visual Studio Solution
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      DEVELOPER: 1
+      NO_PERL: 1
+      GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
+  - powershell: |
+      $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
+      $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
+      $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
+      (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
+      Expand-Archive compat.zip -DestinationPath . -Force
+      Remove-Item compat.zip
+    displayName: 'Download vcpkg artifacts'
+  - task: MSBuild@1
+    inputs:
+      solution: git.sln
+      platform: x64
+      configuration: Release
+      maximumCpuCount: 4
+  - powershell: |
+      & compat\vcbuild\vcpkg_copy_dlls.bat release
+      if (!$?) { exit(1) }
+      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
+        mkdir -p artifacts &&
+        eval \"`$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts | grep ^tar)\"
+      "@
+      if (!$?) { exit(1) }
+    displayName: Bundle artifact tar
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      DEVELOPER: 1
+      NO_PERL: 1
+      MSVC: 1
+      VCPKG_ROOT: $(Build.SourcesDirectory)\compat\vcbuild\vcpkg
+  - powershell: |
+      $tag = (Invoke-WebRequest -UseBasicParsing "https://gitforwindows.org/latest-tag.txt").content
+      $version = (Invoke-WebRequest -UseBasicParsing "https://gitforwindows.org/latest-version.txt").content
+      $url = "https://github.com/git-for-windows/git/releases/download/${tag}/PortableGit-${version}-64-bit.7z.exe"
+      (New-Object Net.WebClient).DownloadFile($url,"PortableGit.exe")
+      & .\PortableGit.exe -y -oartifacts\PortableGit
+      # Wait until it is unpacked
+      while (-not @(Remove-Item -ErrorAction SilentlyContinue PortableGit.exe; $?)) { sleep 1 }
+    displayName: Download & extract portable Git
+  - task: PublishPipelineArtifact@0
+    displayName: 'Publish Pipeline Artifact: MSVC test artifacts'
+    inputs:
+      artifactName: 'vs-artifacts'
+      targetPath: '$(Build.SourcesDirectory)\artifacts'
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
+      }
+    displayName: 'Unmount test-cache'
+    condition: true
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+
+- job: vs_test
+  displayName: Visual Studio Test
+  dependsOn: vs_build
+  condition: succeeded()
+  pool: Hosted
+  timeoutInMinutes: 240
+  strategy:
+    parallel: 10
+  steps:
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
+        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
+      }
+    displayName: 'Mount test-cache'
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Pipeline Artifact: VS test artifacts'
+    inputs:
+      artifactName: 'vs-artifacts'
+      targetPath: '$(Build.SourcesDirectory)'
+  - powershell: |
+      & PortableGit\git-cmd.exe --command=usr\bin\bash.exe -lc @"
+        test -f artifacts.tar.gz || {
+          echo No test artifacts found\; skipping >&2
+          exit 0
+        }
+        tar xf artifacts.tar.gz || exit 1
+
+        # Let Git ignore the SDK and the test-cache
+        printf '%s\n' /PortableGit/ /test-cache/ >>.git/info/exclude
+
+        cd t &&
+        PATH=\"`$PWD/helper:`$PATH\" &&
+        test-tool.exe run-command testsuite -V -x --write-junit-xml \
+                `$(test-tool.exe path-utils slice-tests \
+                        `$SYSTEM_JOBPOSITIONINPHASE `$SYSTEM_TOTALJOBSINPHASE t[0-9]*.sh)
+      "@
+      if (!$?) { exit(1) }
+    displayName: 'Test (parallel)'
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      NO_SVN_TESTS: 1
+      GIT_TEST_SKIP_REBASE_P: 1
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
+      }
+    displayName: 'Unmount test-cache'
+    condition: true
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'vs'
+      platform: Windows
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish trash directories of failed tests'
+    condition: failed()
+    inputs:
+      PathtoPublish: t/failed-test-artifacts
+      ArtifactName: failed-vs-test-artifacts
 
 - job: linux_clang
   displayName: linux-clang

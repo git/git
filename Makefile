@@ -3042,6 +3042,10 @@ rpm::
 	@false
 .PHONY: rpm
 
+ifneq ($(INCLUDE_DLLS_IN_ARTIFACTS),)
+OTHER_PROGRAMS += $(shell echo *.dll t/helper/*.dll)
+endif
+
 artifacts-tar:: $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS) \
 		GIT-BUILD-OPTIONS $(TEST_PROGRAMS) $(test_bindir_programs) \
 		$(MOFILES)

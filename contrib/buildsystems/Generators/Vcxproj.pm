@@ -278,6 +278,9 @@ EOM
     if ($target eq 'git') {
       print F "  <Import Project=\"LinkOrCopyBuiltins.targets\" />\n";
     }
+    if ($target eq 'git-remote-http') {
+      print F "  <Import Project=\"LinkOrCopyRemoteHttp.targets\" />\n";
+    }
     print F << "EOM";
 </Project>
 EOM

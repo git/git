@@ -70,7 +70,7 @@ int sha1_pos(const unsigned char *hash, void *table, size_t nr,
 			if (miv < lov)
 				return -1;
 			if (hiv < miv)
-				return -1 - nr;
+				return index_pos_to_insert_pos(nr);
 			if (lov != hiv) {
 				/*
 				 * At this point miv could be equal
@@ -97,7 +97,7 @@ int sha1_pos(const unsigned char *hash, void *table, size_t nr,
 			lo = mi + 1;
 		mi = lo + (hi - lo) / 2;
 	} while (lo < hi);
-	return -lo-1;
+	return index_pos_to_insert_pos(lo);
 }
 
 int bsearch_hash(const unsigned char *sha1, const uint32_t *fanout_nbo,
