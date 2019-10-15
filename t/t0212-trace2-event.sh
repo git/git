@@ -265,4 +265,23 @@ test_expect_success JSON_PP 'using global config, event stream, error event' '
 	test_cmp expect actual
 '
 
+test_expect_success 'discard traces when there are too many files' '
+	mkdir trace_target_dir &&
+	test_when_finished "rm -r trace_target_dir" &&
+	(
+		GIT_TRACE2_MAX_FILES=5 &&
+		export GIT_TRACE2_MAX_FILES &&
+		cd trace_target_dir &&
+		test_seq $GIT_TRACE2_MAX_FILES >../expected_filenames.txt &&
+		xargs touch <../expected_filenames.txt &&
+		cd .. &&
+		GIT_TRACE2_EVENT="$(pwd)/trace_target_dir" test-tool trace2 001return 0
+	) &&
+	echo git-trace2-discard >>expected_filenames.txt &&
+	ls trace_target_dir >ls_output.txt &&
+	test_cmp expected_filenames.txt ls_output.txt &&
+	head -n1 trace_target_dir/git-trace2-discard | grep \"event\":\"version\" &&
+	head -n2 trace_target_dir/git-trace2-discard | tail -n1 | grep \"event\":\"too_many_files\"
+'
+
 test_done

@@ -11,7 +11,7 @@
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 
-static struct tr2_dst tr2dst_perf = { TR2_SYSENV_PERF, 0, 0, 0 };
+static struct tr2_dst tr2dst_perf = { TR2_SYSENV_PERF, 0, 0, 0, 0 };
 
 /*
  * Use TR2_SYSENV_PERF_BRIEF to omit the "<time> <file>:<line>"

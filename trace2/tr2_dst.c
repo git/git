@@ -8,6 +8,19 @@
  */
 #define MAX_AUTO_ATTEMPTS 10
 
+/*
+ * Sentinel file used to detect when we should discard new traces to avoid
+ * writing too many trace files to a directory.
+ */
+#define DISCARD_SENTINEL_NAME "git-trace2-discard"
+
+/*
+ * When set to zero, disables directory file count checks. Otherwise, controls
+ * how many files we can write to a directory before entering discard mode.
+ * This can be overridden via the TR2_SYSENV_MAX_FILES setting.
+ */
+static int tr2env_max_files = 0;
+
 static int tr2_dst_want_warning(void)
 {
 	static int tr2env_dst_debug = -1;
@@ -32,9 +45,75 @@ void tr2_dst_trace_disable(struct tr2_dst *dst)
 	dst->need_close = 0;
 }
 
+/*
+ * Check to make sure we're not overloading the target directory with too many
+ * files. First get the threshold (if present) from the config or envvar. If
+ * it's zero or unset, disable this check. Next check for the presence of a
+ * sentinel file, then check file count.
+ *
+ * Returns 0 if tracing should proceed as normal. Returns 1 if the sentinel file
+ * already exists, which means tracing should be disabled. Returns -1 if there
+ * are too many files but there was no sentinel file, which means we have
+ * created and should write traces to the sentinel file.
+ *
+ * We expect that some trace processing system is gradually collecting files
+ * from the target directory; after it removes the sentinel file we'll start
+ * writing traces again.
+ */
+static int tr2_dst_too_many_files(struct tr2_dst *dst, const char *tgt_prefix)
+{
+	int file_count = 0, max_files = 0, ret = 0;
+	const char *max_files_var;
+	DIR *dirp;
+	struct strbuf path = STRBUF_INIT, sentinel_path = STRBUF_INIT;
+	struct stat statbuf;
+
+	/* Get the config or envvar and decide if we should continue this check */
+	max_files_var = tr2_sysenv_get(TR2_SYSENV_MAX_FILES);
+	if (max_files_var && *max_files_var && ((max_files = atoi(max_files_var)) >= 0))
+		tr2env_max_files = max_files;
+
+	if (!tr2env_max_files) {
+		ret = 0;
+		goto cleanup;
+	}
+
+	strbuf_addstr(&path, tgt_prefix);
+	if (!is_dir_sep(path.buf[path.len - 1])) {
+		strbuf_addch(&path, '/');
+	}
+
+	/* check sentinel */
+	strbuf_addbuf(&sentinel_path, &path);
+	strbuf_addstr(&sentinel_path, DISCARD_SENTINEL_NAME);
+	if (!stat(sentinel_path.buf, &statbuf)) {
+		ret = 1;
+		goto cleanup;
+	}
+
+	/* check file count */
+	dirp = opendir(path.buf);
+	while (file_count < tr2env_max_files && dirp && readdir(dirp))
+		file_count++;
+	if (dirp)
+		closedir(dirp);
+
+	if (file_count >= tr2env_max_files) {
+		dst->too_many_files = 1;
+		dst->fd = open(sentinel_path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
+		ret = -1;
+		goto cleanup;
+	}
+
+cleanup:
+	strbuf_release(&path);
+	strbuf_release(&sentinel_path);
+	return ret;
+}
+
 static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 {
-	int fd;
+	int too_many_files;
 	const char *last_slash, *sid = tr2_sid_get();
 	struct strbuf path = STRBUF_INIT;
 	size_t base_path_len;
@@ -50,18 +129,29 @@ static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 	strbuf_addstr(&path, sid);
 	base_path_len = path.len;
 
-	for (attempt_count = 0; attempt_count < MAX_AUTO_ATTEMPTS; attempt_count++) {
-		if (attempt_count > 0) {
-			strbuf_setlen(&path, base_path_len);
-			strbuf_addf(&path, ".%d", attempt_count);
-		}
+	too_many_files = tr2_dst_too_many_files(dst, tgt_prefix);
+	if (!too_many_files) {
+		for (attempt_count = 0; attempt_count < MAX_AUTO_ATTEMPTS; attempt_count++) {
+			if (attempt_count > 0) {
+				strbuf_setlen(&path, base_path_len);
+				strbuf_addf(&path, ".%d", attempt_count);
+			}
 
-		fd = open(path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
-		if (fd != -1)
-			break;
+			dst->fd = open(path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
+			if (dst->fd != -1)
+				break;
+		}
+	} else if (too_many_files == 1) {
+		strbuf_release(&path);
+		if (tr2_dst_want_warning())
+			warning("trace2: not opening %s trace file due to too "
+				"many files in target directory %s",
+				tr2_sysenv_display_name(dst->sysenv_var),
+				tgt_prefix);
+		return 0;
 	}
 
-	if (fd == -1) {
+	if (dst->fd == -1) {
 		if (tr2_dst_want_warning())
 			warning("trace2: could not open '%.*s' for '%s' tracing: %s",
 				(int) base_path_len, path.buf,
@@ -75,7 +165,6 @@ static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 
 	strbuf_release(&path);
 
-	dst->fd = fd;
 	dst->need_close = 1;
 	dst->initialized = 1;
 

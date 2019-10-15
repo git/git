@@ -54,3 +54,9 @@ trace2.destinationDebug::
 	By default, these errors are suppressed and tracing is
 	silently disabled.  May be overridden by the
 	`GIT_TRACE2_DST_DEBUG` environment variable.
+
+trace2.maxFiles::
+	Integer.  When writing trace files to a target directory, do not
+	write additional traces if we would exceed this many files. Instead,
+	write a sentinel file that will block further tracing to this
+	directory. Defaults to 0, which disables this check.

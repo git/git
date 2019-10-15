@@ -49,6 +49,9 @@ static struct tr2_sysenv_entry tr2_sysenv_settings[] = {
 				       "trace2.perftarget" },
 	[TR2_SYSENV_PERF_BRIEF]    = { "GIT_TRACE2_PERF_BRIEF",
 				       "trace2.perfbrief" },
+
+	[TR2_SYSENV_MAX_FILES]     = { "GIT_TRACE2_MAX_FILES",
+				       "trace2.maxfiles" },
 };
 /* clang-format on */
 
