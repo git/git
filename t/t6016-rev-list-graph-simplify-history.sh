@@ -154,7 +154,7 @@ test_expect_success '--graph --full-history -- bar.txt' '
 	echo "* |   $A4" >> expected &&
 	echo "|\\ \\  " >> expected &&
 	echo "| |/  " >> expected &&
-	echo "* | $A3" >> expected &&
+	echo "* / $A3" >> expected &&
 	echo "|/  " >> expected &&
 	echo "* $A2" >> expected &&
 	git rev-list --graph --full-history --all -- bar.txt > actual &&
@@ -255,7 +255,7 @@ test_expect_success '--graph --boundary ^C3' '
 	echo "* | | | $A3" >> expected &&
 	echo "o | | | $A2" >> expected &&
 	echo "|/ / /  " >> expected &&
-	echo "o | | $A1" >> expected &&
+	echo "o / / $A1" >> expected &&
 	echo " / /  " >> expected &&
 	echo "| o $C3" >> expected &&
 	echo "|/  " >> expected &&

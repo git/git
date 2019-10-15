@@ -17,7 +17,7 @@ test_expect_success 'log --graph with merge fusing with its left and right neigh
 	| | * D
 	| * | C
 	| |/
-	* | B
+	* / B
 	|/
 	* A
 	EOF
@@ -85,7 +85,7 @@ test_expect_success 'log --graph with nested left-skewed merge' '
 	| * | 1_D
 	* | | 1_C
 	|/ /
-	* | 1_B
+	* / 1_B
 	|/
 	* 1_A
 	EOF

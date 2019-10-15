@@ -297,10 +297,10 @@ struct git_graph {
 	 */
 	int *mapping;
 	/*
-	 * A temporary array for computing the next mapping state
-	 * while we are outputting a mapping line.  This is stored as part
-	 * of the git_graph simply so we don't have to allocate a new
-	 * temporary array each time we have to output a collapsing line.
+	 * A copy of the contents of the mapping array from the last commit,
+	 * which we use to improve the display of columns that are tracking
+	 * from right to left through a commit line.  We also use this to
+	 * avoid allocating a fresh array when we compute the next mapping.
 	 */
 	int *old_mapping;
 	/*
@@ -1015,6 +1015,10 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 				graph_line_write_column(line, col, '\\');
 			else
 				graph_line_write_column(line, col, '|');
+		} else if (graph->prev_state == GRAPH_COLLAPSING &&
+			   graph->old_mapping[2 * i + 1] == i &&
+			   graph->mapping[2 * i] < i) {
+			graph_line_write_column(line, col, '/');
 		} else {
 			graph_line_write_column(line, col, '|');
 		}
@@ -1210,6 +1214,11 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 				horizontal_edge = i;
 		}
 	}
+
+	/*
+	 * Copy the current mapping array into old_mapping
+	 */
+	COPY_ARRAY(graph->old_mapping, graph->mapping, graph->mapping_size);
 
 	/*
 	 * The new mapping may be 1 smaller than the old mapping
