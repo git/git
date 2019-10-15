@@ -71,6 +71,10 @@ UI, Workflows & Features
  * "git add -i" has been taught to show the total number of hunks and
    the hunks that has been processed so far when showing prompts.
 
+ * "git fetch --jobs=<n>" allowed <n> parallel jobs when fetching
+   submodules, but this did not apply to "git fetch --multiple" that
+   fetches from multiple remote repositories.  It now does.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -127,6 +131,18 @@ Performance, Internal Implementation, Development Support etc.
  * Update the way build artifacts in t/helper/ directory are ignored.
 
  * Preparation for SHA-256 upgrade continues.
+
+ * "git log --graph" for an octopus merge is sometimes colored
+   incorrectly, which is demonstrated and documented but not yet
+   fixed.
+
+ * The trace2 output, when sending them to files in a designated
+   directory, can populate the directory with too many files; a
+   mechanism is introduced to set the maximum number of files and
+   discard further logs when the maximum is reached.
+
+ * We have adopted a Code-of-conduct document.
+   (merge 3f9ef874a7 jk/coc later to maint).
 
 
 Fixes since v2.23
@@ -297,6 +313,20 @@ Fixes since v2.23
    to access the worktree correctly, which has been corrected.
    (merge dfd557c978 js/stash-apply-in-secondary-worktree later to maint).
 
+ * The merge-recursive machiery is one of the most complex parts of
+   the system that accumulated cruft over time.  This large series
+   cleans up the implementation quite a bit.
+   (merge b657047719 en/merge-recursive-cleanup later to maint).
+
+ * Pretty-printed command line formatter (used in e.g. reporting the
+   command being run by the tracing API) had a bug that lost an
+   argument that is an empty string, which has been corrected.
+   (merge ce2d7ed2fd gs/sq-quote-buf-pretty later to maint).
+
+ * "git range-diff" failed to handle mode-only change, which has been
+   corrected.
+   (merge 2b6a9b13ca tg/range-diff-output-update later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
    (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
@@ -335,3 +365,6 @@ Fixes since v2.23
    (merge 53d687bf5f ah/cleanups later to maint).
    (merge f537485fa5 rs/test-remove-useless-debugging-cat later to maint).
    (merge 11a3d3aadd dl/rev-list-doc-cleanup later to maint).
+   (merge d928a8388a am/t0028-utf16-tests later to maint).
+   (merge b05b40930e dl/t0000-skip-test-test later to maint).
+   (merge 03d3b1297c js/xdiffi-comment-updates later to maint).
