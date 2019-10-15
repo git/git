@@ -55,7 +55,7 @@ A
 19
 20
 
-commit refs/heads/topic
+commit refs/heads/mode-only-change
 mark :4
 author Thomas Rast <trast@inf.ethz.ch> 1374485014 +0200
 committer Thomas Rast <trast@inf.ethz.ch> 1374485014 +0200
@@ -677,4 +677,33 @@ data 8
 s/12/B/
 from :55
 M 100644 :9 renamed-file
+
+commit refs/heads/mode-only-change
+mark :57
+author Thomas Rast <trast@inf.ethz.ch> 1374485024 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1570473767 +0100
+data 24
+s/4/A/ + add other-file
+from :4
+M 100644 :5 file
+M 100644 :49 other-file
+
+commit refs/heads/mode-only-change
+mark :58
+author Thomas Rast <trast@inf.ethz.ch> 1374485036 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1570473768 +0100
+data 33
+s/11/B/ + mode change other-file
+from :57
+M 100644 :7 file
+M 100755 :49 other-file
+
+commit refs/heads/mode-only-change
+mark :59
+author Thomas Rast <trast@inf.ethz.ch> 1374485044 +0200
+committer Thomas Gummerer <t.gummerer@gmail.com> 1570473768 +0100
+data 8
+s/12/B/
+from :58
+M 100644 :9 file
 

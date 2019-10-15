@@ -333,6 +333,46 @@ test_expect_success 'renamed file' '
 	test_cmp expected actual
 '
 
+test_expect_success 'file with mode only change' '
+	git range-diff --no-color --submodule=log topic...mode-only-change >actual &&
+	sed s/Z/\ /g >expected <<-EOF &&
+	1:  fccce22 ! 1:  4d39cb3 s/4/A/
+	    @@ Metadata
+	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
+	    Z
+	    Z ## Commit message ##
+	    -    s/4/A/
+	    +    s/4/A/ + add other-file
+	    Z
+	    Z ## file ##
+	    Z@@
+	    @@ file
+	    Z A
+	    Z 6
+	    Z 7
+	    +
+	    + ## other-file (new) ##
+	2:  147e64e ! 2:  26c107f s/11/B/
+	    @@ Metadata
+	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
+	    Z
+	    Z ## Commit message ##
+	    -    s/11/B/
+	    +    s/11/B/ + mode change other-file
+	    Z
+	    Z ## file ##
+	    Z@@ file: A
+	    @@ file: A
+	    Z 12
+	    Z 13
+	    Z 14
+	    +
+	    + ## other-file (mode change 100644 => 100755) ##
+	3:  a63e992 = 3:  4c1e0f5 s/12/B/
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'file added and later removed' '
 	git range-diff --no-color --submodule=log topic...added-removed >actual &&
 	sed s/Z/\ /g >expected <<-EOF &&
