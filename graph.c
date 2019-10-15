@@ -217,6 +217,46 @@ struct git_graph {
 	 */
 	int merge_layout;
 	/*
+	 * The number of columns added to the graph by the current commit. For
+	 * 2-way and octopus merges, this is is usually one less than the
+	 * number of parents:
+	 *
+	 * 		| | |			| |    \
+	 *		| * |			| *---. \
+	 *		| |\ \			| |\ \ \ \
+	 *		| | | |         	| | | | | |
+	 *
+	 *		num_parents: 2		num_parents: 4
+	 *		edges_added: 1		edges_added: 3
+	 *
+	 * For left-skewed merges, the first parent fuses with its neighbor and
+	 * so one less column is added:
+	 *
+	 *		| | |			| |  \
+	 *		| * |			| *-. \
+	 *		|/| |			|/|\ \ \
+	 *		| | |			| | | | |
+	 *
+	 *		num_parents: 2		num_parents: 4
+	 *		edges_added: 0		edges_added: 2
+	 *
+	 * This number determines how edges to the right of the merge are
+	 * displayed in commit and post-merge lines; if no columns have been
+	 * added then a vertical line should be used where a right-tracking
+	 * line would otherwise be used.
+	 *
+	 *		| * \			| * |
+	 *		| |\ \			|/| |
+	 *		| | * \			| * |
+	 */
+	int edges_added;
+	/*
+	 * The number of columns added by the previous commit, which is used to
+	 * smooth edges appearing to the right of a commit in a commit line
+	 * following a post-merge line.
+	 */
+	int prev_edges_added;
+	/*
 	 * The maximum number of columns that can be stored in the columns
 	 * and new_columns arrays.  This is also half the number of entries
 	 * that can be stored in the mapping and new_mapping arrays.
@@ -328,6 +368,8 @@ struct git_graph *graph_init(struct rev_info *opt)
 	graph->commit_index = 0;
 	graph->prev_commit_index = 0;
 	graph->merge_layout = 0;
+	graph->edges_added = 0;
+	graph->prev_edges_added = 0;
 	graph->num_columns = 0;
 	graph->num_new_columns = 0;
 	graph->mapping_size = 0;
@@ -689,6 +731,9 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	 */
 	graph_update_columns(graph);
 
+	graph->prev_edges_added = graph->edges_added;
+	graph->edges_added = graph->num_parents + graph->merge_layout - 2;
+
 	graph->expansion_row = 0;
 
 	/*
@@ -947,12 +992,13 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 
 			if (graph->num_parents > 2)
 				graph_draw_octopus_merge(graph, line);
-		} else if (seen_this && (graph->num_parents > 2)) {
+		} else if (seen_this && (graph->edges_added > 1)) {
 			graph_line_write_column(line, col, '\\');
-		} else if (seen_this && (graph->num_parents == 2)) {
+		} else if (seen_this && (graph->edges_added == 1)) {
 			/*
-			 * This is a 2-way merge commit.
-			 * There is no GRAPH_PRE_COMMIT stage for 2-way
+			 * This is either a right-skewed 2-way merge
+			 * commit, or a left-skewed 3-way merge.
+			 * There is no GRAPH_PRE_COMMIT stage for such
 			 * merges, so this is the first line of output
 			 * for this commit.  Check to see what the previous
 			 * line of output was.
@@ -964,6 +1010,7 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 			 * makes the output look nicer.
 			 */
 			if (graph->prev_state == GRAPH_POST_MERGE &&
+			    graph->prev_edges_added > 0 &&
 			    graph->prev_commit_index < i)
 				graph_line_write_column(line, col, '\\');
 			else
@@ -1033,8 +1080,14 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 				else
 					idx++;
 			}
+			if (graph->edges_added == 0)
+				graph_line_addch(line, ' ');
+
 		} else if (seen_this) {
-			graph_line_write_column(line, col, '\\');
+			if (graph->edges_added > 0)
+				graph_line_write_column(line, col, '\\');
+			else
+				graph_line_write_column(line, col, '|');
 			graph_line_addch(line, ' ');
 		} else {
 			graph_line_write_column(line, col, '|');
