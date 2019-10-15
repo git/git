@@ -37,4 +37,11 @@ test_expect_success 'looping aliases - internal execution' '
 #	test_i18ngrep "^fatal: alias loop detected: expansion of" output
 #'
 
+test_expect_success 'run-command formats empty args properly' '
+    GIT_TRACE=1 git frotz a "" b " " c 2>&1 |
+    sed -ne "/run_command:/s/.*trace: run_command: //p" >actual &&
+    echo "git-frotz a '\'''\'' b '\'' '\'' c" >expect &&
+    test_cmp expect actual
+'
+
 test_done
