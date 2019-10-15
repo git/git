@@ -59,7 +59,8 @@ static int verbosity, deepen_relative, set_upstream;
 static int progress = -1;
 static int enable_auto_gc = 1;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
-static int max_children = 1;
+static int max_jobs = -1, submodule_fetch_jobs_config = -1;
+static int fetch_parallel_config = 1;
 static enum transport_family family;
 static const char *depth;
 static const char *deepen_since;
@@ -101,10 +102,17 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 	}
 
 	if (!strcmp(k, "submodule.fetchjobs")) {
-		max_children = parse_submodule_fetchjobs(k, v);
+		submodule_fetch_jobs_config = parse_submodule_fetchjobs(k, v);
 		return 0;
 	} else if (!strcmp(k, "fetch.recursesubmodules")) {
 		recurse_submodules = parse_fetch_recurse_submodules_arg(k, v);
+		return 0;
+	}
+
+	if (!strcmp(k, "fetch.parallel")) {
+		fetch_parallel_config = git_config_int(k, v);
+		if (fetch_parallel_config < 0)
+			die(_("fetch.parallel cannot be negative"));
 		return 0;
 	}
 
@@ -141,7 +149,7 @@ static struct option builtin_fetch_options[] = {
 		    N_("fetch all tags and associated objects"), TAGS_SET),
 	OPT_SET_INT('n', NULL, &tags,
 		    N_("do not fetch all tags (--no-tags)"), TAGS_UNSET),
-	OPT_INTEGER('j', "jobs", &max_children,
+	OPT_INTEGER('j', "jobs", &max_jobs,
 		    N_("number of submodules fetched in parallel")),
 	OPT_BOOL('p', "prune", &prune,
 		 N_("prune remote-tracking branches no longer on remote")),
@@ -1513,7 +1521,62 @@ static void add_options_to_argv(struct argv_array *argv)
 
 }
 
-static int fetch_multiple(struct string_list *list)
+/* Fetch multiple remotes in parallel */
+
+struct parallel_fetch_state {
+	const char **argv;
+	struct string_list *remotes;
+	int next, result;
+};
+
+static int fetch_next_remote(struct child_process *cp, struct strbuf *out,
+			     void *cb, void **task_cb)
+{
+	struct parallel_fetch_state *state = cb;
+	char *remote;
+
+	if (state->next < 0 || state->next >= state->remotes->nr)
+		return 0;
+
+	remote = state->remotes->items[state->next++].string;
+	*task_cb = remote;
+
+	argv_array_pushv(&cp->args, state->argv);
+	argv_array_push(&cp->args, remote);
+	cp->git_cmd = 1;
+
+	if (verbosity >= 0)
+		printf(_("Fetching %s\n"), remote);
+
+	return 1;
+}
+
+static int fetch_failed_to_start(struct strbuf *out, void *cb, void *task_cb)
+{
+	struct parallel_fetch_state *state = cb;
+	const char *remote = task_cb;
+
+	state->result = error(_("Could not fetch %s"), remote);
+
+	return 0;
+}
+
+static int fetch_finished(int result, struct strbuf *out,
+			  void *cb, void *task_cb)
+{
+	struct parallel_fetch_state *state = cb;
+	const char *remote = task_cb;
+
+	if (result) {
+		strbuf_addf(out, _("could not fetch '%s' (exit code: %d)\n"),
+			    remote, result);
+		state->result = -1;
+	}
+
+	return 0;
+}
+
+static int fetch_multiple(struct string_list *list, int max_children)
 {
 	int i, result = 0;
 	struct argv_array argv = ARGV_ARRAY_INIT;
@@ -1527,20 +1590,34 @@ static int fetch_multiple(struct string_list *list)
 	argv_array_pushl(&argv, "fetch", "--append", "--no-auto-gc", NULL);
 	add_options_to_argv(&argv);
 
-	for (i = 0; i < list->nr; i++) {
-		const char *name = list->items[i].string;
-		argv_array_push(&argv, name);
-		if (verbosity >= 0)
-			printf(_("Fetching %s\n"), name);
-		if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
-			error(_("Could not fetch %s"), name);
-			result = 1;
+	if (max_children != 1 && list->nr != 1) {
+		struct parallel_fetch_state state = { argv.argv, list, 0, 0 };
+
+		argv_array_push(&argv, "--end-of-options");
+		result = run_processes_parallel_tr2(max_children,
+						    &fetch_next_remote,
+						    &fetch_failed_to_start,
+						    &fetch_finished,
+						    &state,
+						    "fetch", "parallel/fetch");
+
+		if (!result)
+			result = state.result;
+	} else
+		for (i = 0; i < list->nr; i++) {
+			const char *name = list->items[i].string;
+			argv_array_push(&argv, name);
+			if (verbosity >= 0)
+				printf(_("Fetching %s\n"), name);
+			if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+				error(_("Could not fetch %s"), name);
+				result = 1;
+			}
+			argv_array_pop(&argv);
 		}
-		argv_array_pop(&argv);
-	}
 
 	argv_array_clear(&argv);
-	return result;
+	return !!result;
 }
 
 /*
@@ -1673,7 +1750,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++)
 		strbuf_addf(&default_rla, " %s", argv[i]);
 
-	fetch_config_from_gitmodules(&max_children, &recurse_submodules);
+	fetch_config_from_gitmodules(&submodule_fetch_jobs_config,
+				     &recurse_submodules);
 	git_config(git_fetch_config, NULL);
 
 	argc = parse_options(argc, argv, prefix,
@@ -1739,15 +1817,27 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			fetch_one_setup_partial(remote);
 		result = fetch_one(remote, argc, argv, prune_tags_ok);
 	} else {
+		int max_children = max_jobs;
+
 		if (filter_options.choice)
 			die(_("--filter can only be used with the remote "
 			      "configured in extensions.partialclone"));
+
+		if (max_children < 0)
+			max_children = fetch_parallel_config;
+
 		/* TODO should this also die if we have a previous partial-clone? */
-		result = fetch_multiple(&list);
+		result = fetch_multiple(&list, max_children);
 	}
 
 	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		struct argv_array options = ARGV_ARRAY_INIT;
+		int max_children = max_jobs;
+
+		if (max_children < 0)
+			max_children = submodule_fetch_jobs_config;
+		if (max_children < 0)
+			max_children = fetch_parallel_config;
 
 		add_options_to_argv(&options);
 		result = fetch_populated_submodules(the_repository,

@@ -70,6 +70,16 @@ fetch.showForcedUpdates::
 	linkgit:git-fetch[1] and linkgit:git-pull[1] commands.
 	Defaults to true.
 
+fetch.parallel::
+	Specifies the maximal number of fetch operations to be run in parallel
+	at a time (submodules, or remotes when the `--multiple` option of
+	linkgit:git-fetch[1] is in effect).
++
+A value of 0 will give some reasonable default. If unset, it defaults to 1.
++
+For submodules, this setting can be overridden using the `submodule.fetchJobs`
+config setting.
+
 fetch.writeCommitGraph::
 	Set to true to write a commit-graph after every `git fetch` command
 	that downloads a pack-file from a remote. Using the `--split` option,

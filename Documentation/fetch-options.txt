@@ -160,10 +160,15 @@ ifndef::git-pull[]
 
 -j::
 --jobs=<n>::
-	Number of parallel children to be used for fetching submodules.
-	Each will fetch from different submodules, such that fetching many
-	submodules will be faster. By default submodules will be fetched
-	one at a time.
+	Number of parallel children to be used for all forms of fetching.
++
+If the `--multiple` option was specified, the different remotes will be fetched
+in parallel. If multiple submodules are fetched, they will be fetched in
+parallel. To control them independently, use the config settings
+`fetch.parallel` and `submodule.fetchJobs` (see linkgit:git-config[1]).
++
+Typically, parallel recursive and multi-remote fetches will be faster. By
+default fetches are performed sequentially, not in parallel.
 
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as
