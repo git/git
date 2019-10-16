@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git notes' [list [<object>]]
 'git notes' add [-f] [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
-'git notes' copy [-f] ( --stdin | <from-object> <to-object> )
+'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
 'git notes' append [--allow-empty] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [--allow-empty] [<object>]
 'git notes' show [<object>]
@@ -68,8 +68,8 @@ add::
 	subcommand).
 
 copy::
-	Copy the notes for the first object onto the second object.
-	Abort if the second object already has notes, or if the first
+	Copy the notes for the first object onto the second object (defaults to
+	HEAD). Abort if the second object already has notes, or if the first
 	object has none (use -f to overwrite existing notes to the
 	second object). This subcommand is equivalent to:
 	`git notes add [-f] -C $(git notes list <from-object>) <to-object>`
