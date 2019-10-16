@@ -354,9 +354,11 @@ test_expect_success 'discard_index() also discards fsmonitor info' '
 	test_cmp expect actual
 '
 
-# Test staging/unstaging files that appear at the end of the index.  Test
-# file names begin with 'z' so that they are sorted to the end of the index.
-test_expect_success 'status succeeds after staging/unstaging ' '
+# Test unstaging entries that:
+#  - Are not flagged with CE_FSMONITOR_VALID
+#  - Have a position in the index >= the number of entries present in the index
+#    after unstaging.
+test_expect_success 'status succeeds after staging/unstaging' '
 	test_create_repo fsmonitor-stage-unstage &&
 	(
 		cd fsmonitor-stage-unstage &&
