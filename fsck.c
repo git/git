@@ -1013,7 +1013,6 @@ int fsck_finish(struct fsck_options *options)
 
 	oidset_iter_init(&gitmodules_found, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
-		struct blob *blob;
 		enum object_type type;
 		unsigned long size;
 		char *buf;
@@ -1021,31 +1020,22 @@ int fsck_finish(struct fsck_options *options)
 		if (oidset_contains(&gitmodules_done, oid))
 			continue;
 
-		blob = lookup_blob(the_repository, oid);
-		if (!blob) {
-			struct object *obj = lookup_unknown_object(oid);
-			ret |= report(options, &obj->oid, obj->type,
-				      FSCK_MSG_GITMODULES_BLOB,
-				      "non-blob found at .gitmodules");
-			continue;
-		}
-
 		buf = read_object_file(oid, &type, &size);
 		if (!buf) {
-			if (is_promisor_object(&blob->object.oid))
+			if (is_promisor_object(oid))
 				continue;
 			ret |= report(options,
-				      &blob->object.oid, blob->object.type,
+				      oid, OBJ_BLOB,
 				      FSCK_MSG_GITMODULES_MISSING,
 				      "unable to read .gitmodules blob");
 			continue;
 		}
 
 		if (type == OBJ_BLOB)
-			ret |= fsck_blob(&blob->object.oid, buf, size, options);
+			ret |= fsck_blob(oid, buf, size, options);
 		else
 			ret |= report(options,
-				      &blob->object.oid, blob->object.type,
+				      oid, type,
 				      FSCK_MSG_GITMODULES_BLOB,
 				      "non-blob found at .gitmodules");
 		free(buf);
