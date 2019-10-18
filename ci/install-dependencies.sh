@@ -40,6 +40,11 @@ osx-clang|osx-gcc)
 	test -z "$BREW_INSTALL_PACKAGES" ||
 	brew install $BREW_INSTALL_PACKAGES
 	brew link --force gettext
+	brew cask install perforce || {
+		# Update the definitions and try again
+		git -C "$(brew --repository)"/Library/Taps/homebrew/homebrew-cask pull &&
+		brew cask install perforce
+	} ||
 	brew install caskroom/cask/perforce
 	case "$jobname" in
 	osx-gcc)
