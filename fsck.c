@@ -764,8 +764,9 @@ static int fsck_ident(const char **ident,
 	return 0;
 }
 
-static int fsck_commit(struct commit *commit, const char *buffer,
-		       unsigned long size, struct fsck_options *options)
+static int fsck_commit(const struct object_id *oid,
+		       const char *buffer, unsigned long size,
+		       struct fsck_options *options)
 {
 	struct object_id tree_oid, parent_oid;
 	unsigned author_count;
@@ -773,21 +774,20 @@ static int fsck_commit(struct commit *commit, const char *buffer,
 	const char *buffer_begin = buffer;
 	const char *p;
 
-	if (verify_headers(buffer, size, &commit->object.oid,
-			   commit->object.type, options))
+	if (verify_headers(buffer, size, oid, OBJ_COMMIT, options))
 		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
-		return report(options, &commit->object.oid, commit->object.type, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
+		return report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
 	if (parse_oid_hex(buffer, &tree_oid, &p) || *p != '\n') {
-		err = report(options, &commit->object.oid, commit->object.type, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
+		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
 		if (err)
 			return err;
 	}
 	buffer = p + 1;
 	while (skip_prefix(buffer, "parent ", &buffer)) {
 		if (parse_oid_hex(buffer, &parent_oid, &p) || *p != '\n') {
-			err = report(options, &commit->object.oid, commit->object.type, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
+			err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
 			if (err)
 				return err;
 		}
@@ -796,23 +796,23 @@ static int fsck_commit(struct commit *commit, const char *buffer,
 	author_count = 0;
 	while (skip_prefix(buffer, "author ", &buffer)) {
 		author_count++;
-		err = fsck_ident(&buffer, &commit->object.oid, commit->object.type, options);
+		err = fsck_ident(&buffer, oid, OBJ_COMMIT, options);
 		if (err)
 			return err;
 	}
 	if (author_count < 1)
-		err = report(options, &commit->object.oid, commit->object.type, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
+		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
 	else if (author_count > 1)
-		err = report(options, &commit->object.oid, commit->object.type, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
+		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
 	if (err)
 		return err;
 	if (!skip_prefix(buffer, "committer ", &buffer))
-		return report(options, &commit->object.oid, commit->object.type, FSCK_MSG_MISSING_COMMITTER, "invalid format - expected 'committer' line");
-	err = fsck_ident(&buffer, &commit->object.oid, commit->object.type, options);
+		return report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_COMMITTER, "invalid format - expected 'committer' line");
+	err = fsck_ident(&buffer, oid, OBJ_COMMIT, options);
 	if (err)
 		return err;
 	if (memchr(buffer_begin, '\0', size)) {
-		err = report(options, &commit->object.oid, commit->object.type, FSCK_MSG_NUL_IN_COMMIT,
+		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_NUL_IN_COMMIT,
 			     "NUL byte in the commit object body");
 		if (err)
 			return err;
@@ -984,8 +984,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 	if (obj->type == OBJ_TREE)
 		return fsck_tree((struct tree *) obj, data, size, options);
 	if (obj->type == OBJ_COMMIT)
-		return fsck_commit((struct commit *) obj, (const char *) data,
-			size, options);
+		return fsck_commit(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TAG)
 		return fsck_tag(&obj->oid, data, size, options);
 
