@@ -52,7 +52,7 @@ test_expect_success 'traverse unexpected non-commit parent (lone)' '
 '
 
 test_expect_success 'traverse unexpected non-commit parent (seen)' '
-	test_must_fail git rev-list --objects $commit $broken_commit \
+	test_must_fail git rev-list --objects $blob $broken_commit \
 		>output 2>&1 &&
 	test_i18ngrep "not a commit" output
 '
