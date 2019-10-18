@@ -43,10 +43,8 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(MISSING_AUTHOR, ERROR) \
 	FUNC(MISSING_COMMITTER, ERROR) \
 	FUNC(MISSING_EMAIL, ERROR) \
-	FUNC(MISSING_GRAFT, ERROR) \
 	FUNC(MISSING_NAME_BEFORE_EMAIL, ERROR) \
 	FUNC(MISSING_OBJECT, ERROR) \
-	FUNC(MISSING_PARENT, ERROR) \
 	FUNC(MISSING_SPACE_BEFORE_DATE, ERROR) \
 	FUNC(MISSING_SPACE_BEFORE_EMAIL, ERROR) \
 	FUNC(MISSING_TAG, ERROR) \
@@ -739,8 +737,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	unsigned long size, struct fsck_options *options)
 {
 	struct object_id tree_oid, oid;
-	struct commit_graft *graft;
-	unsigned parent_count, parent_line_count = 0, author_count;
+	unsigned author_count;
 	int err;
 	const char *buffer_begin = buffer;
 	const char *p;
@@ -763,24 +760,6 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 				return err;
 		}
 		buffer = p + 1;
-		parent_line_count++;
-	}
-	graft = lookup_commit_graft(the_repository, &commit->object.oid);
-	parent_count = commit_list_count(commit->parents);
-	if (graft) {
-		if (graft->nr_parent == -1 && !parent_count)
-			; /* shallow commit */
-		else if (graft->nr_parent != parent_count) {
-			err = report(options, &commit->object, FSCK_MSG_MISSING_GRAFT, "graft objects missing");
-			if (err)
-				return err;
-		}
-	} else {
-		if (parent_count != parent_line_count) {
-			err = report(options, &commit->object, FSCK_MSG_MISSING_PARENT, "parent objects missing");
-			if (err)
-				return err;
-		}
 	}
 	author_count = 0;
 	while (skip_prefix(buffer, "author ", &buffer)) {
