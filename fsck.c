@@ -351,10 +351,7 @@ const char *fsck_describe_object(struct fsck_options *options,
 	};
 	static int b = 0;
 	struct strbuf *buf;
-	char *name = NULL;
-
-	if (options->object_names)
-		name = lookup_decoration(options->object_names, obj);
+	const char *name = fsck_get_object_name(options, obj);
 
 	buf = bufs + b;
 	b = (b + 1) % ARRAY_SIZE(bufs);
