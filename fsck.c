@@ -890,7 +890,7 @@ done:
 }
 
 struct fsck_gitmodules_data {
-	struct object *obj;
+	const struct object_id *oid;
 	struct fsck_options *options;
 	int ret;
 };
@@ -909,21 +909,21 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 	name = xmemdupz(subsection, subsection_len);
 	if (check_submodule_name(name) < 0)
 		data->ret |= report(data->options,
-				    &data->obj->oid, data->obj->type,
+				    data->oid, OBJ_BLOB,
 				    FSCK_MSG_GITMODULES_NAME,
 				    "disallowed submodule name: %s",
 				    name);
 	if (!strcmp(key, "url") && value &&
 	    looks_like_command_line_option(value))
 		data->ret |= report(data->options,
-				    &data->obj->oid, data->obj->type,
+				    data->oid, OBJ_BLOB,
 				    FSCK_MSG_GITMODULES_URL,
 				    "disallowed submodule url: %s",
 				    value);
 	if (!strcmp(key, "path") && value &&
 	    looks_like_command_line_option(value))
 		data->ret |= report(data->options,
-				    &data->obj->oid, data->obj->type,
+				    data->oid, OBJ_BLOB,
 				    FSCK_MSG_GITMODULES_PATH,
 				    "disallowed submodule path: %s",
 				    value);
@@ -932,17 +932,17 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 	return 0;
 }
 
-static int fsck_blob(struct blob *blob, const char *buf,
+static int fsck_blob(const struct object_id *oid, const char *buf,
 		     unsigned long size, struct fsck_options *options)
 {
 	struct fsck_gitmodules_data data;
 	struct config_options config_opts = { 0 };
 
-	if (!oidset_contains(&gitmodules_found, &blob->object.oid))
+	if (!oidset_contains(&gitmodules_found, oid))
 		return 0;
-	oidset_insert(&gitmodules_done, &blob->object.oid);
+	oidset_insert(&gitmodules_done, oid);
 
-	if (object_on_skiplist(options, &blob->object.oid))
+	if (object_on_skiplist(options, oid))
 		return 0;
 
 	if (!buf) {
@@ -951,18 +951,18 @@ static int fsck_blob(struct blob *blob, const char *buf,
 		 * blob too gigantic to load into memory. Let's just consider
 		 * that an error.
 		 */
-		return report(options, &blob->object.oid, blob->object.type,
+		return report(options, oid, OBJ_BLOB,
 			      FSCK_MSG_GITMODULES_LARGE,
 			      ".gitmodules too large to parse");
 	}
 
-	data.obj = &blob->object;
+	data.oid = oid;
 	data.options = options;
 	data.ret = 0;
 	config_opts.error_action = CONFIG_ERROR_SILENT;
 	if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
 				".gitmodules", buf, size, &data, &config_opts))
-		data.ret |= report(options, &blob->object.oid, blob->object.type,
+		data.ret |= report(options, oid, OBJ_BLOB,
 				   FSCK_MSG_GITMODULES_PARSE,
 				   "could not parse gitmodules blob");
 
@@ -976,7 +976,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 		return report(options, NULL, OBJ_NONE, FSCK_MSG_BAD_OBJECT_SHA1, "no valid object to fsck");
 
 	if (obj->type == OBJ_BLOB)
-		return fsck_blob((struct blob *)obj, data, size, options);
+		return fsck_blob(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TREE)
 		return fsck_tree((struct tree *) obj, data, size, options);
 	if (obj->type == OBJ_COMMIT)
@@ -1042,7 +1042,7 @@ int fsck_finish(struct fsck_options *options)
 		}
 
 		if (type == OBJ_BLOB)
-			ret |= fsck_blob(blob, buf, size, options);
+			ret |= fsck_blob(&blob->object.oid, buf, size, options);
 		else
 			ret |= report(options,
 				      &blob->object.oid, blob->object.type,
