@@ -1766,10 +1766,26 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		setup_pager();
 
 	if (output_directory) {
+		int saved;
 		if (rev.diffopt.use_color != GIT_COLOR_ALWAYS)
 			rev.diffopt.use_color = GIT_COLOR_NEVER;
 		if (use_stdout)
 			die(_("standard output, or directory, which one?"));
+		/*
+		 * We consider <outdir> as 'outside of gitdir', therefore avoid
+		 * applying adjust_shared_perm in s-c-l-d.
+		 */
+		saved = get_shared_repository();
+		set_shared_repository(0);
+		switch (safe_create_leading_directories_const(output_directory)) {
+		case SCLD_OK:
+		case SCLD_EXISTS:
+			break;
+		default:
+			die(_("could not create leading directories "
+			      "of '%s'"), output_directory);
+		}
+		set_shared_repository(saved);
 		if (mkdir(output_directory, 0777) < 0 && errno != EEXIST)
 			die_errno(_("could not create directory '%s'"),
 				  output_directory);
