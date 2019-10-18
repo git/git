@@ -52,24 +52,7 @@ static int name_objects;
 
 static const char *describe_object(struct object *obj)
 {
-	static struct strbuf bufs[] = {
-		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
-	};
-	static int b = 0;
-	struct strbuf *buf;
-	char *name = NULL;
-
-	if (name_objects)
-		name = lookup_decoration(fsck_walk_options.object_names, obj);
-
-	buf = bufs + b;
-	b = (b + 1) % ARRAY_SIZE(bufs);
-	strbuf_reset(buf);
-	strbuf_addstr(buf, oid_to_hex(&obj->oid));
-	if (name)
-		strbuf_addf(buf, " (%s)", name);
-
-	return buf->buf;
+	return fsck_describe_object(&fsck_walk_options, obj);
 }
 
 static const char *printable_type(struct object *obj)
@@ -499,10 +482,10 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 	if (!is_null_oid(oid)) {
 		obj = lookup_object(the_repository, oid);
 		if (obj && (obj->flags & HAS_OBJ)) {
-			if (timestamp && name_objects)
-				add_decoration(fsck_walk_options.object_names,
-					obj,
-					xstrfmt("%s@{%"PRItime"}", refname, timestamp));
+			if (timestamp)
+				fsck_put_object_name(&fsck_walk_options, obj,
+						     "%s@{%"PRItime"}",
+						     refname, timestamp);
 			obj->flags |= USED;
 			mark_object_reachable(obj);
 		} else if (!is_promisor_object(oid)) {
@@ -566,9 +549,8 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 	}
 	default_refs++;
 	obj->flags |= USED;
-	if (name_objects)
-		add_decoration(fsck_walk_options.object_names,
-			obj, xstrdup(refname));
+	fsck_put_object_name(&fsck_walk_options,
+			     obj, "%s", refname);
 	mark_object_reachable(obj);
 
 	return 0;
@@ -742,9 +724,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 			return 1;
 		}
 		obj->flags |= USED;
-		if (name_objects)
-			add_decoration(fsck_walk_options.object_names,
-				obj, xstrdup(":"));
+		fsck_put_object_name(&fsck_walk_options, obj, ":");
 		mark_object_reachable(obj);
 		if (obj->type != OBJ_TREE)
 			err |= objerror(obj, _("non-tree in cache-tree"));
@@ -830,8 +810,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	if (name_objects)
-		fsck_walk_options.object_names =
-			xcalloc(1, sizeof(struct decoration));
+		fsck_enable_object_names(&fsck_walk_options);
 
 	git_config(fsck_config, NULL);
 
@@ -890,9 +869,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			}
 
 			obj->flags |= USED;
-			if (name_objects)
-				add_decoration(fsck_walk_options.object_names,
-					obj, xstrdup(arg));
+			fsck_put_object_name(&fsck_walk_options, obj,
+					     "%s", arg);
 			mark_object_reachable(obj);
 			continue;
 		}
@@ -928,10 +906,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				continue;
 			obj = &blob->object;
 			obj->flags |= USED;
-			if (name_objects)
-				add_decoration(fsck_walk_options.object_names,
-					obj,
-					xstrfmt(":%s", active_cache[i]->name));
+			fsck_put_object_name(&fsck_walk_options, obj,
+					     ":%s", active_cache[i]->name);
 			mark_object_reachable(obj);
 		}
 		if (active_cache_tree)

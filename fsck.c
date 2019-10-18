@@ -312,15 +312,21 @@ static int report(struct fsck_options *options, struct object *object,
 	return result;
 }
 
-static char *get_object_name(struct fsck_options *options, struct object *obj)
+void fsck_enable_object_names(struct fsck_options *options)
+{
+	if (!options->object_names)
+		options->object_names = xcalloc(1, sizeof(struct decoration));
+}
+
+const char *fsck_get_object_name(struct fsck_options *options, struct object *obj)
 {
 	if (!options->object_names)
 		return NULL;
 	return lookup_decoration(options->object_names, obj);
 }
 
-static void put_object_name(struct fsck_options *options, struct object *obj,
-	const char *fmt, ...)
+void fsck_put_object_name(struct fsck_options *options, struct object *obj,
+			  const char *fmt, ...)
 {
 	va_list ap;
 	struct strbuf buf = STRBUF_INIT;
@@ -337,17 +343,27 @@ static void put_object_name(struct fsck_options *options, struct object *obj,
 	va_end(ap);
 }
 
-static const char *describe_object(struct fsck_options *o, struct object *obj)
+const char *fsck_describe_object(struct fsck_options *options,
+				 struct object *obj)
 {
-	static struct strbuf buf = STRBUF_INIT;
-	char *name;
+	static struct strbuf bufs[] = {
+		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
+	};
+	static int b = 0;
+	struct strbuf *buf;
+	char *name = NULL;
 
-	strbuf_reset(&buf);
-	strbuf_addstr(&buf, oid_to_hex(&obj->oid));
-	if (o->object_names && (name = lookup_decoration(o->object_names, obj)))
-		strbuf_addf(&buf, " (%s)", name);
+	if (options->object_names)
+		name = lookup_decoration(options->object_names, obj);
 
-	return buf.buf;
+	buf = bufs + b;
+	b = (b + 1) % ARRAY_SIZE(bufs);
+	strbuf_reset(buf);
+	strbuf_addstr(buf, oid_to_hex(&obj->oid));
+	if (name)
+		strbuf_addf(buf, " (%s)", name);
+
+	return buf->buf;
 }
 
 static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *options)
@@ -360,7 +376,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 	if (parse_tree(tree))
 		return -1;
 
-	name = get_object_name(options, &tree->object);
+	name = fsck_get_object_name(options, &tree->object);
 	if (init_tree_desc_gently(&desc, tree->buffer, tree->size))
 		return -1;
 	while (tree_entry_gently(&desc, &entry)) {
@@ -373,20 +389,21 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 		if (S_ISDIR(entry.mode)) {
 			obj = (struct object *)lookup_tree(the_repository, &entry.oid);
 			if (name && obj)
-				put_object_name(options, obj, "%s%s/", name,
-					entry.path);
+				fsck_put_object_name(options, obj, "%s%s/",
+						     name, entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
 			obj = (struct object *)lookup_blob(the_repository, &entry.oid);
 			if (name && obj)
-				put_object_name(options, obj, "%s%s", name,
-					entry.path);
+				fsck_put_object_name(options, obj, "%s%s",
+						     name, entry.path);
 			result = options->walk(obj, OBJ_BLOB, data, options);
 		}
 		else {
 			result = error("in tree %s: entry %s has bad mode %.6o",
-					describe_object(options, &tree->object), entry.path, entry.mode);
+				       fsck_describe_object(options, &tree->object),
+				       entry.path, entry.mode);
 		}
 		if (result < 0)
 			return result;
@@ -407,10 +424,10 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 	if (parse_commit(commit))
 		return -1;
 
-	name = get_object_name(options, &commit->object);
+	name = fsck_get_object_name(options, &commit->object);
 	if (name)
-		put_object_name(options, &get_commit_tree(commit)->object,
-				"%s:", name);
+		fsck_put_object_name(options, &get_commit_tree(commit)->object,
+				     "%s:", name);
 
 	result = options->walk((struct object *)get_commit_tree(commit),
 			       OBJ_TREE, data, options);
@@ -441,13 +458,15 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 			struct object *obj = &parents->item->object;
 
 			if (counter++)
-				put_object_name(options, obj, "%s^%d",
-					name, counter);
+				fsck_put_object_name(options, obj, "%s^%d",
+						     name, counter);
 			else if (generation > 0)
-				put_object_name(options, obj, "%.*s~%d",
-					name_prefix_len, name, generation + 1);
+				fsck_put_object_name(options, obj, "%.*s~%d",
+						     name_prefix_len, name,
+						     generation + 1);
 			else
-				put_object_name(options, obj, "%s^", name);
+				fsck_put_object_name(options, obj, "%s^",
+						     name);
 		}
 		result = options->walk((struct object *)parents->item, OBJ_COMMIT, data, options);
 		if (result < 0)
@@ -461,12 +480,12 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 
 static int fsck_walk_tag(struct tag *tag, void *data, struct fsck_options *options)
 {
-	char *name = get_object_name(options, &tag->object);
+	const char *name = fsck_get_object_name(options, &tag->object);
 
 	if (parse_tag(tag))
 		return -1;
 	if (name)
-		put_object_name(options, tag->tagged, "%s", name);
+		fsck_put_object_name(options, tag->tagged, "%s", name);
 	return options->walk(tag->tagged, OBJ_ANY, data, options);
 }
 
@@ -488,7 +507,8 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 	case OBJ_TAG:
 		return fsck_walk_tag((struct tag *)obj, data, options);
 	default:
-		error("Unknown object type for %s", describe_object(options, obj));
+		error("Unknown object type for %s",
+		      fsck_describe_object(options, obj));
 		return -1;
 	}
 }
@@ -962,10 +982,10 @@ int fsck_error_function(struct fsck_options *o,
 	struct object *obj, int msg_type, const char *message)
 {
 	if (msg_type == FSCK_WARN) {
-		warning("object %s: %s", describe_object(o, obj), message);
+		warning("object %s: %s", fsck_describe_object(o, obj), message);
 		return 0;
 	}
-	error("object %s: %s", describe_object(o, obj), message);
+	error("object %s: %s", fsck_describe_object(o, obj), message);
 	return 1;
 }
 

@@ -67,4 +67,28 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
  */
 int fsck_finish(struct fsck_options *options);
 
+/*
+ * Subsystem for storing human-readable names for each object.
+ *
+ * If fsck_enable_object_names() has not been called, all other functions are
+ * noops.
+ *
+ * Use fsck_put_object_name() to seed initial names (e.g. from refnames); the
+ * fsck code will extend that while walking trees, etc.
+ *
+ * Use fsck_get_object_name() to get a single name (or NULL if none). Or the
+ * more convenient describe_object(), which always produces an output string
+ * with the oid combined with the name (if any). Note that the return value
+ * points to a rotating array of static buffers, and may be invalidated by a
+ * subsequent call.
+ */
+void fsck_enable_object_names(struct fsck_options *options);
+const char *fsck_get_object_name(struct fsck_options *options,
+				 struct object *obj);
+__attribute__((format (printf,3,4)))
+void fsck_put_object_name(struct fsck_options *options, struct object *obj,
+			  const char *fmt, ...);
+const char *fsck_describe_object(struct fsck_options *options,
+				 struct object *obj);
+
 #endif
