@@ -501,10 +501,10 @@ static void release_request(struct transfer_request *request)
 	if (request == request_queue_head) {
 		request_queue_head = request->next;
 	} else {
-		while (entry->next != NULL && entry->next != request)
+		while (entry && entry->next != request)
 			entry = entry->next;
-		if (entry->next == request)
-			entry->next = entry->next->next;
+		if (entry)
+			entry->next = request->next;
 	}
 
 	free(request->url);
@@ -981,7 +981,7 @@ static int unlock_remote(struct remote_lock *lock)
 		while (prev && prev->next != lock)
 			prev = prev->next;
 		if (prev)
-			prev->next = prev->next->next;
+			prev->next = lock->next;
 	}
 
 	free(lock->owner);
