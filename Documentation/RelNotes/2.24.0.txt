@@ -327,6 +327,16 @@ Fixes since v2.23
    corrected.
    (merge 2b6a9b13ca tg/range-diff-output-update later to maint).
 
+ * Dev support update.
+   (merge 4f3c1dc5d6 dl/allow-running-cocci-verbosely later to maint).
+
+ * "git format-patch -o <outdir>" did an equivalent of "mkdir <outdir>"
+   not "mkdir -p <outdir>", which was corrected.
+
+ * "git stash save" lost local changes to submodules, which has been
+   corrected.
+   (merge 556895d0c8 jj/stash-reset-only-toplevel later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d1387d3895 en/fast-import-merge-doc later to maint).
    (merge 1c24a54ea4 bm/repository-layout-typofix later to maint).
@@ -368,3 +378,10 @@ Fixes since v2.23
    (merge d928a8388a am/t0028-utf16-tests later to maint).
    (merge b05b40930e dl/t0000-skip-test-test later to maint).
    (merge 03d3b1297c js/xdiffi-comment-updates later to maint).
+   (merge 57d8f4b4c7 js/doc-stash-save later to maint).
+   (merge 8c1cfd58e3 ta/t1308-typofix later to maint).
+   (merge fa364ad790 bb/utf8-wcwidth-cleanup later to maint).
+   (merge 68b69211b2 bb/compat-util-comment-fix later to maint).
+   (merge 5cc6a4be11 rs/http-push-simplify later to maint).
+   (merge a81e42d235 rs/column-use-utf8-strnwidth later to maint).
+   (merge 062a309d36 rs/remote-curl-use-argv-array later to maint).
