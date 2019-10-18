@@ -27,10 +27,12 @@ typedef int (*fsck_walk_func)(struct object *obj, int type, void *data, struct f
 
 /* callback for fsck_object, type is FSCK_ERROR or FSCK_WARN */
 typedef int (*fsck_error)(struct fsck_options *o,
-	struct object *obj, int type, const char *message);
+			  const struct object_id *oid, enum object_type object_type,
+			  int msg_type, const char *message);
 
 int fsck_error_function(struct fsck_options *o,
-	struct object *obj, int type, const char *message);
+			const struct object_id *oid, enum object_type object_type,
+			int msg_type, const char *message);
 
 struct fsck_options {
 	fsck_walk_func walk;

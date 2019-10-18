@@ -104,23 +104,26 @@ static int objerror(struct object *obj, const char *err)
 }
 
 static int fsck_error_func(struct fsck_options *o,
-	struct object *obj, int type, const char *message)
+			   const struct object_id *oid,
+			   enum object_type object_type,
+			   int msg_type, const char *message)
 {
-	switch (type) {
+	switch (msg_type) {
 	case FSCK_WARN:
 		/* TRANSLATORS: e.g. warning in tree 01bfda: <more explanation> */
 		fprintf_ln(stderr, _("warning in %s %s: %s"),
-			   printable_type(&obj->oid, obj->type),
-			   describe_object(&obj->oid), message);
+			   printable_type(oid, object_type),
+			   describe_object(oid), message);
 		return 0;
 	case FSCK_ERROR:
 		/* TRANSLATORS: e.g. error in tree 01bfda: <more explanation> */
 		fprintf_ln(stderr, _("error in %s %s: %s"),
-			   printable_type(&obj->oid, obj->type),
-			   describe_object(&obj->oid), message);
+			   printable_type(oid, object_type),
+			   describe_object(oid), message);
 		return 1;
 	default:
-		BUG("%d (FSCK_IGNORE?) should never trigger this callback", type);
+		BUG("%d (FSCK_IGNORE?) should never trigger this callback",
+		    msg_type);
 	}
 }
 

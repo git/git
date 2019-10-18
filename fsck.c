@@ -305,7 +305,8 @@ static int report(struct fsck_options *options, struct object *object,
 
 	va_start(ap, fmt);
 	strbuf_vaddf(&sb, fmt, ap);
-	result = options->error_func(options, object, msg_type, sb.buf);
+	result = options->error_func(options, &object->oid, object->type,
+				     msg_type, sb.buf);
 	strbuf_release(&sb);
 	va_end(ap);
 
@@ -983,13 +984,15 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 }
 
 int fsck_error_function(struct fsck_options *o,
-	struct object *obj, int msg_type, const char *message)
+			const struct object_id *oid,
+			enum object_type object_type,
+			int msg_type, const char *message)
 {
 	if (msg_type == FSCK_WARN) {
-		warning("object %s: %s", fsck_describe_object(o, &obj->oid), message);
+		warning("object %s: %s", fsck_describe_object(o, oid), message);
 		return 0;
 	}
-	error("object %s: %s", fsck_describe_object(o, &obj->oid), message);
+	error("object %s: %s", fsck_describe_object(o, oid), message);
 	return 1;
 }
 
