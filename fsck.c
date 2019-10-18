@@ -566,7 +566,7 @@ static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, con
 	return c1 < c2 ? 0 : TREE_UNORDERED;
 }
 
-static int fsck_tree(struct tree *item,
+static int fsck_tree(const struct object_id *oid,
 		     const char *buffer, unsigned long size,
 		     struct fsck_options *options)
 {
@@ -586,7 +586,7 @@ static int fsck_tree(struct tree *item,
 	const char *o_name;
 
 	if (init_tree_desc_gently(&desc, buffer, size)) {
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
 		return retval;
 	}
 
@@ -613,13 +613,13 @@ static int fsck_tree(struct tree *item,
 				oidset_insert(&gitmodules_found, oid);
 			else
 				retval += report(options,
-						 &item->object.oid, item->object.type,
+						 oid, OBJ_TREE,
 						 FSCK_MSG_GITMODULES_SYMLINK,
 						 ".gitmodules is a symbolic link");
 		}
 
 		if (update_tree_entry_gently(&desc)) {
-			retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
+			retval += report(options, oid, OBJ_TREE, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
 			break;
 		}
 
@@ -664,25 +664,25 @@ static int fsck_tree(struct tree *item,
 	}
 
 	if (has_null_sha1)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_NULL_SHA1, "contains entries pointing to null sha1");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_NULL_SHA1, "contains entries pointing to null sha1");
 	if (has_full_path)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_FULL_PATHNAME, "contains full pathnames");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_FULL_PATHNAME, "contains full pathnames");
 	if (has_empty_name)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_EMPTY_NAME, "contains empty pathname");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_EMPTY_NAME, "contains empty pathname");
 	if (has_dot)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_HAS_DOT, "contains '.'");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_HAS_DOT, "contains '.'");
 	if (has_dotdot)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_HAS_DOTDOT, "contains '..'");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_HAS_DOTDOT, "contains '..'");
 	if (has_dotgit)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_HAS_DOTGIT, "contains '.git'");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_HAS_DOTGIT, "contains '.git'");
 	if (has_zero_pad)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_ZERO_PADDED_FILEMODE, "contains zero-padded file modes");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_ZERO_PADDED_FILEMODE, "contains zero-padded file modes");
 	if (has_bad_modes)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_BAD_FILEMODE, "contains bad file modes");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_BAD_FILEMODE, "contains bad file modes");
 	if (has_dup_entries)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_DUPLICATE_ENTRIES, "contains duplicate file entries");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_DUPLICATE_ENTRIES, "contains duplicate file entries");
 	if (not_properly_sorted)
-		retval += report(options, &item->object.oid, item->object.type, FSCK_MSG_TREE_NOT_SORTED, "not properly sorted");
+		retval += report(options, oid, OBJ_TREE, FSCK_MSG_TREE_NOT_SORTED, "not properly sorted");
 	return retval;
 }
 
@@ -982,7 +982,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 	if (obj->type == OBJ_BLOB)
 		return fsck_blob(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TREE)
-		return fsck_tree((struct tree *) obj, data, size, options);
+		return fsck_tree(&obj->oid, data, size, options);
 	if (obj->type == OBJ_COMMIT)
 		return fsck_commit(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TAG)
