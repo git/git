@@ -87,8 +87,9 @@ The `--patch` option implies `--keep-index`.  You can use
 save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
 
 	This option is deprecated in favour of 'git stash push'.  It
-	differs from "stash push" in that it cannot take pathspecs,
-	and any non-option arguments form the message.
+	differs from "stash push" in that it cannot take pathspecs.
+	Instead, all non-option arguments are concatenated to form the stash
+	message.
 
 list [<options>]::
 
