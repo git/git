@@ -433,6 +433,11 @@ ifeq ($(uname_S),Windows)
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	NATIVE_CRLF = YesPlease
 	DEFAULT_HELP_FORMAT = html
+ifeq (/mingw64,$(subst 32,64,$(prefix)))
+	# Move system config into top-level /etc/
+	ETC_GITCONFIG = ../etc/gitconfig
+	ETC_GITATTRIBUTES = ../etc/gitattributes
+endif
 
 	CC = compat/vcbuild/scripts/clink.pl
 	AR = compat/vcbuild/scripts/lib.pl
@@ -677,6 +682,11 @@ else
 		USE_LIBPCRE = YesPlease
 		NO_CURL =
 		USE_NED_ALLOCATOR = YesPlease
+		ifeq (/mingw64,$(subst 32,64,$(prefix)))
+			# Move system config into top-level /etc/
+			ETC_GITCONFIG = ../etc/gitconfig
+			ETC_GITATTRIBUTES = ../etc/gitattributes
+		endif
 	else
 		COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO
 		NO_CURL = YesPlease
