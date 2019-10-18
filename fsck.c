@@ -798,8 +798,8 @@ static int fsck_commit(struct commit *commit, const char *data,
 	return ret;
 }
 
-static int fsck_tag_buffer(struct tag *tag, const char *data,
-	unsigned long size, struct fsck_options *options)
+static int fsck_tag(struct tag *tag, const char *data,
+		    unsigned long size, struct fsck_options *options)
 {
 	struct object_id oid;
 	int ret = 0;
@@ -891,17 +891,6 @@ done:
 	strbuf_release(&sb);
 	free(to_free);
 	return ret;
-}
-
-static int fsck_tag(struct tag *tag, const char *data,
-	unsigned long size, struct fsck_options *options)
-{
-	struct object *tagged = tag->tagged;
-
-	if (!tagged)
-		return report(options, &tag->object, FSCK_MSG_BAD_TAG_OBJECT, "could not load tagged object");
-
-	return fsck_tag_buffer(tag, data, size, options);
 }
 
 struct fsck_gitmodules_data {
