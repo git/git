@@ -687,7 +687,8 @@ static int fsck_tree(struct tree *item,
 }
 
 static int verify_headers(const void *data, unsigned long size,
-			  struct object *obj, struct fsck_options *options)
+			  const struct object_id *oid, enum object_type type,
+			  struct fsck_options *options)
 {
 	const char *buffer = (const char *)data;
 	unsigned long i;
@@ -695,7 +696,7 @@ static int verify_headers(const void *data, unsigned long size,
 	for (i = 0; i < size; i++) {
 		switch (buffer[i]) {
 		case '\0':
-			return report(options, &obj->oid, obj->type,
+			return report(options, oid, type,
 				FSCK_MSG_NUL_IN_HEADER,
 				"unterminated header: NUL at offset %ld", i);
 		case '\n':
@@ -713,7 +714,7 @@ static int verify_headers(const void *data, unsigned long size,
 	if (size && buffer[size - 1] == '\n')
 		return 0;
 
-	return report(options, &obj->oid, obj->type,
+	return report(options, oid, type,
 		FSCK_MSG_UNTERMINATED_HEADER, "unterminated header");
 }
 
@@ -772,7 +773,8 @@ static int fsck_commit(struct commit *commit, const char *buffer,
 	const char *buffer_begin = buffer;
 	const char *p;
 
-	if (verify_headers(buffer, size, &commit->object, options))
+	if (verify_headers(buffer, size, &commit->object.oid,
+			   commit->object.type, options))
 		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
@@ -827,7 +829,7 @@ static int fsck_tag(struct tag *tag, const char *buffer,
 	struct strbuf sb = STRBUF_INIT;
 	const char *p;
 
-	ret = verify_headers(buffer, size, &tag->object, options);
+	ret = verify_headers(buffer, size, &tag->object.oid, tag->object.type, options);
 	if (ret)
 		goto done;
 
