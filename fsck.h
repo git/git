@@ -52,7 +52,11 @@ struct fsck_options {
  *    0		everything OK
  */
 int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
-/* If NULL is passed for data, we assume the object is local and read it. */
+
+/*
+ * Blob objects my pass a NULL data pointer, which indicates they are too large
+ * to fit in memory. All other types must pass a real buffer.
+ */
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options);
 

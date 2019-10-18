@@ -49,13 +49,11 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(MISSING_SPACE_BEFORE_EMAIL, ERROR) \
 	FUNC(MISSING_TAG, ERROR) \
 	FUNC(MISSING_TAG_ENTRY, ERROR) \
-	FUNC(MISSING_TAG_OBJECT, ERROR) \
 	FUNC(MISSING_TREE, ERROR) \
 	FUNC(MISSING_TREE_OBJECT, ERROR) \
 	FUNC(MISSING_TYPE, ERROR) \
 	FUNC(MISSING_TYPE_ENTRY, ERROR) \
 	FUNC(MULTIPLE_AUTHORS, ERROR) \
-	FUNC(TAG_OBJECT_NOT_TAG, ERROR) \
 	FUNC(TREE_NOT_SORTED, ERROR) \
 	FUNC(UNKNOWN_TYPE, ERROR) \
 	FUNC(ZERO_PADDED_DATE, ERROR) \
@@ -541,7 +539,9 @@ static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, con
 	return c1 < c2 ? 0 : TREE_UNORDERED;
 }
 
-static int fsck_tree(struct tree *item, struct fsck_options *options)
+static int fsck_tree(struct tree *item,
+		     const char *buffer, unsigned long size,
+		     struct fsck_options *options)
 {
 	int retval = 0;
 	int has_null_sha1 = 0;
@@ -558,7 +558,7 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 	unsigned o_mode;
 	const char *o_name;
 
-	if (init_tree_desc_gently(&desc, item->buffer, item->size)) {
+	if (init_tree_desc_gently(&desc, buffer, size)) {
 		retval += report(options, &item->object, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
 		return retval;
 	}
@@ -733,8 +733,8 @@ static int fsck_ident(const char **ident, struct object *obj, struct fsck_option
 	return 0;
 }
 
-static int fsck_commit_buffer(struct commit *commit, const char *buffer,
-	unsigned long size, struct fsck_options *options)
+static int fsck_commit(struct commit *commit, const char *buffer,
+		       unsigned long size, struct fsck_options *options)
 {
 	struct object_id tree_oid, oid;
 	unsigned author_count;
@@ -788,46 +788,14 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	return 0;
 }
 
-static int fsck_commit(struct commit *commit, const char *data,
-	unsigned long size, struct fsck_options *options)
-{
-	const char *buffer = data ?  data : get_commit_buffer(commit, &size);
-	int ret = fsck_commit_buffer(commit, buffer, size, options);
-	if (!data)
-		unuse_commit_buffer(commit, buffer);
-	return ret;
-}
-
-static int fsck_tag(struct tag *tag, const char *data,
+static int fsck_tag(struct tag *tag, const char *buffer,
 		    unsigned long size, struct fsck_options *options)
 {
 	struct object_id oid;
 	int ret = 0;
-	const char *buffer;
-	char *to_free = NULL, *eol;
+	char *eol;
 	struct strbuf sb = STRBUF_INIT;
 	const char *p;
-
-	if (data)
-		buffer = data;
-	else {
-		enum object_type type;
-
-		buffer = to_free =
-			read_object_file(&tag->object.oid, &type, &size);
-		if (!buffer)
-			return report(options, &tag->object,
-				FSCK_MSG_MISSING_TAG_OBJECT,
-				"cannot read tag object");
-
-		if (type != OBJ_TAG) {
-			ret = report(options, &tag->object,
-				FSCK_MSG_TAG_OBJECT_NOT_TAG,
-				"expected tag got %s",
-			    type_name(type));
-			goto done;
-		}
-	}
 
 	ret = verify_headers(buffer, size, &tag->object, options);
 	if (ret)
@@ -889,7 +857,6 @@ static int fsck_tag(struct tag *tag, const char *data,
 
 done:
 	strbuf_release(&sb);
-	free(to_free);
 	return ret;
 }
 
@@ -979,7 +946,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 	if (obj->type == OBJ_BLOB)
 		return fsck_blob((struct blob *)obj, data, size, options);
 	if (obj->type == OBJ_TREE)
-		return fsck_tree((struct tree *) obj, options);
+		return fsck_tree((struct tree *) obj, data, size, options);
 	if (obj->type == OBJ_COMMIT)
 		return fsck_commit((struct commit *) obj, (const char *) data,
 			size, options);
