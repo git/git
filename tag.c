@@ -167,9 +167,14 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 	} else if (!strcmp(type, tag_type)) {
 		item->tagged = (struct object *)lookup_tag(r, &oid);
 	} else {
-		error("Unknown type %s", type);
-		item->tagged = NULL;
+		return error("unknown tag type '%s' in %s",
+			     type, oid_to_hex(&item->object.oid));
 	}
+
+	if (!item->tagged)
+		return error("bad tag pointer to %s in %s",
+			     oid_to_hex(&oid),
+			     oid_to_hex(&item->object.oid));
 
 	if (bufptr + 4 < tail && starts_with(bufptr, "tag "))
 		; 		/* good */
