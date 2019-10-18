@@ -800,11 +800,6 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	err = fsck_ident(&buffer, &commit->object, options);
 	if (err)
 		return err;
-	if (!get_commit_tree(commit)) {
-		err = report(options, &commit->object, FSCK_MSG_BAD_TREE, "could not load commit's tree %s", oid_to_hex(&tree_oid));
-		if (err)
-			return err;
-	}
 	if (memchr(buffer_begin, '\0', size)) {
 		err = report(options, &commit->object, FSCK_MSG_NUL_IN_COMMIT,
 			     "NUL byte in the commit object body");
