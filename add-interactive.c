@@ -1058,6 +1058,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 		{ "add untracked", run_add_untracked },
 		{ "patch", run_patch },
 		{ "diff", run_diff },
+		{ "quit", NULL },
 		{ "help", run_help },
 	};
 	struct prefix_item_list commands = PREFIX_ITEM_LIST_INIT;
@@ -1109,17 +1110,22 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	res = run_status(&s, ps, &files, &opts);
 
 	for (;;) {
+		struct command_item *util;
+
 		i = list_and_choose(&s, &commands, &main_loop_opts);
-		if (i == LIST_AND_CHOOSE_QUIT) {
+		if (i < 0 || i >= commands.items.nr)
+			util = NULL;
+		else
+			util = commands.items.items[i].util;
+
+		if (i == LIST_AND_CHOOSE_QUIT || (util && !util->command)) {
 			printf(_("Bye.\n"));
 			res = 0;
 			break;
 		}
-		if (i != LIST_AND_CHOOSE_ERROR) {
-			struct command_item *util =
-				commands.items.items[i].util;
+
+		if (util)
 			res = util->command(&s, ps, &files, &opts);
-		}
 	}
 
 	prefix_item_list_clear(&files);
