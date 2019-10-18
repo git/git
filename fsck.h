@@ -38,7 +38,7 @@ struct fsck_options {
 	unsigned strict:1;
 	int *msg_type;
 	struct oidset skiplist;
-	struct decoration *object_names;
+	kh_oid_map_t *object_names;
 };
 
 #define FSCK_OPTIONS_DEFAULT { NULL, fsck_error_function, 0, NULL, OIDSET_INIT }
@@ -84,11 +84,12 @@ int fsck_finish(struct fsck_options *options);
  */
 void fsck_enable_object_names(struct fsck_options *options);
 const char *fsck_get_object_name(struct fsck_options *options,
-				 struct object *obj);
+				 const struct object_id *oid);
 __attribute__((format (printf,3,4)))
-void fsck_put_object_name(struct fsck_options *options, struct object *obj,
+void fsck_put_object_name(struct fsck_options *options,
+			  const struct object_id *oid,
 			  const char *fmt, ...);
 const char *fsck_describe_object(struct fsck_options *options,
-				 struct object *obj);
+				 const struct object_id *oid);
 
 #endif

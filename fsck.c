@@ -315,48 +315,56 @@ static int report(struct fsck_options *options, struct object *object,
 void fsck_enable_object_names(struct fsck_options *options)
 {
 	if (!options->object_names)
-		options->object_names = xcalloc(1, sizeof(struct decoration));
+		options->object_names = kh_init_oid_map();
 }
 
-const char *fsck_get_object_name(struct fsck_options *options, struct object *obj)
+const char *fsck_get_object_name(struct fsck_options *options,
+				 const struct object_id *oid)
 {
+	khiter_t pos;
 	if (!options->object_names)
 		return NULL;
-	return lookup_decoration(options->object_names, obj);
+	pos = kh_get_oid_map(options->object_names, *oid);
+	if (pos >= kh_end(options->object_names))
+		return NULL;
+	return kh_value(options->object_names, pos);
 }
 
-void fsck_put_object_name(struct fsck_options *options, struct object *obj,
+void fsck_put_object_name(struct fsck_options *options,
+			  const struct object_id *oid,
 			  const char *fmt, ...)
 {
 	va_list ap;
 	struct strbuf buf = STRBUF_INIT;
-	char *existing;
+	khiter_t pos;
+	int hashret;
 
 	if (!options->object_names)
 		return;
-	existing = lookup_decoration(options->object_names, obj);
-	if (existing)
+
+	pos = kh_put_oid_map(options->object_names, *oid, &hashret);
+	if (!hashret)
 		return;
 	va_start(ap, fmt);
 	strbuf_vaddf(&buf, fmt, ap);
-	add_decoration(options->object_names, obj, strbuf_detach(&buf, NULL));
+	kh_value(options->object_names, pos) = strbuf_detach(&buf, NULL);
 	va_end(ap);
 }
 
 const char *fsck_describe_object(struct fsck_options *options,
-				 struct object *obj)
+				 const struct object_id *oid)
 {
 	static struct strbuf bufs[] = {
 		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
 	};
 	static int b = 0;
 	struct strbuf *buf;
-	const char *name = fsck_get_object_name(options, obj);
+	const char *name = fsck_get_object_name(options, oid);
 
 	buf = bufs + b;
 	b = (b + 1) % ARRAY_SIZE(bufs);
 	strbuf_reset(buf);
-	strbuf_addstr(buf, oid_to_hex(&obj->oid));
+	strbuf_addstr(buf, oid_to_hex(oid));
 	if (name)
 		strbuf_addf(buf, " (%s)", name);
 
@@ -373,7 +381,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 	if (parse_tree(tree))
 		return -1;
 
-	name = fsck_get_object_name(options, &tree->object);
+	name = fsck_get_object_name(options, &tree->object.oid);
 	if (init_tree_desc_gently(&desc, tree->buffer, tree->size))
 		return -1;
 	while (tree_entry_gently(&desc, &entry)) {
@@ -386,20 +394,20 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 		if (S_ISDIR(entry.mode)) {
 			obj = (struct object *)lookup_tree(the_repository, &entry.oid);
 			if (name && obj)
-				fsck_put_object_name(options, obj, "%s%s/",
+				fsck_put_object_name(options, &entry.oid, "%s%s/",
 						     name, entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
 			obj = (struct object *)lookup_blob(the_repository, &entry.oid);
 			if (name && obj)
-				fsck_put_object_name(options, obj, "%s%s",
+				fsck_put_object_name(options, &entry.oid, "%s%s",
 						     name, entry.path);
 			result = options->walk(obj, OBJ_BLOB, data, options);
 		}
 		else {
 			result = error("in tree %s: entry %s has bad mode %.6o",
-				       fsck_describe_object(options, &tree->object),
+				       fsck_describe_object(options, &tree->object.oid),
 				       entry.path, entry.mode);
 		}
 		if (result < 0)
@@ -421,9 +429,9 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 	if (parse_commit(commit))
 		return -1;
 
-	name = fsck_get_object_name(options, &commit->object);
+	name = fsck_get_object_name(options, &commit->object.oid);
 	if (name)
-		fsck_put_object_name(options, &get_commit_tree(commit)->object,
+		fsck_put_object_name(options, get_commit_tree_oid(commit),
 				     "%s:", name);
 
 	result = options->walk((struct object *)get_commit_tree(commit),
@@ -452,18 +460,17 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 
 	while (parents) {
 		if (name) {
-			struct object *obj = &parents->item->object;
+			struct object_id *oid = &parents->item->object.oid;
 
 			if (counter++)
-				fsck_put_object_name(options, obj, "%s^%d",
+				fsck_put_object_name(options, oid, "%s^%d",
 						     name, counter);
 			else if (generation > 0)
-				fsck_put_object_name(options, obj, "%.*s~%d",
+				fsck_put_object_name(options, oid, "%.*s~%d",
 						     name_prefix_len, name,
 						     generation + 1);
 			else
-				fsck_put_object_name(options, obj, "%s^",
-						     name);
+				fsck_put_object_name(options, oid, "%s^", name);
 		}
 		result = options->walk((struct object *)parents->item, OBJ_COMMIT, data, options);
 		if (result < 0)
@@ -477,12 +484,12 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 
 static int fsck_walk_tag(struct tag *tag, void *data, struct fsck_options *options)
 {
-	const char *name = fsck_get_object_name(options, &tag->object);
+	const char *name = fsck_get_object_name(options, &tag->object.oid);
 
 	if (parse_tag(tag))
 		return -1;
 	if (name)
-		fsck_put_object_name(options, tag->tagged, "%s", name);
+		fsck_put_object_name(options, &tag->tagged->oid, "%s", name);
 	return options->walk(tag->tagged, OBJ_ANY, data, options);
 }
 
@@ -505,7 +512,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 		return fsck_walk_tag((struct tag *)obj, data, options);
 	default:
 		error("Unknown object type for %s",
-		      fsck_describe_object(options, obj));
+		      fsck_describe_object(options, &obj->oid));
 		return -1;
 	}
 }
@@ -979,10 +986,10 @@ int fsck_error_function(struct fsck_options *o,
 	struct object *obj, int msg_type, const char *message)
 {
 	if (msg_type == FSCK_WARN) {
-		warning("object %s: %s", fsck_describe_object(o, obj), message);
+		warning("object %s: %s", fsck_describe_object(o, &obj->oid), message);
 		return 0;
 	}
-	error("object %s: %s", fsck_describe_object(o, obj), message);
+	error("object %s: %s", fsck_describe_object(o, &obj->oid), message);
 	return 1;
 }
 
