@@ -25,8 +25,9 @@ IPATTERN("ada",
 	 "|=>|\\.\\.|\\*\\*|:=|/=|>=|<=|<<|>>|<>"),
 PATTERNS("dts",
 	 "!;\n"
+	 "!=\n"
 	 /* lines beginning with a word optionally preceded by '&' or the root */
-	 "^[ \t]*((/|&?[a-zA-Z_]).*)",
+	 "^[ \t]*((/[ \t]*\\{|&?[a-zA-Z_]).*)",
 	 /* -- */
 	 /* Property names and math operators */
 	 "[a-zA-Z0-9,._+?#-]+"

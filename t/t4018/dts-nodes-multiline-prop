@@ -1,0 +1,13 @@
+/ {
+	label_1: node1@ff00 {
+		RIGHT@deadf00,4000 {
+			multilineprop = <3>,
+					<4>,
+					<5>,
+					<6>,
+					<7>;
+
+			ChangeMe = <0xffeedd00>;
+		};
+	};
+};
