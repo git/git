@@ -2848,14 +2848,14 @@ static int option_parse_missing_action(const struct option *opt,
 
 	if (!strcmp(arg, "allow-any")) {
 		arg_missing_action = MA_ALLOW_ANY;
-		repo.fetch_if_missing = 0;
+		the_repository->fetch_if_missing = 0;
 		fn_show_object = show_object__ma_allow_any;
 		return 0;
 	}
 
 	if (!strcmp(arg, "allow-promisor")) {
 		arg_missing_action = MA_ALLOW_PROMISOR;
-		repo.fetch_if_missing = 0;
+		the_repository->fetch_if_missing = 0;
 		fn_show_object = show_object__ma_allow_promisor;
 		return 0;
 	}
@@ -3397,7 +3397,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (exclude_promisor_objects) {
 		use_internal_rev_list = 1;
-		repo.fetch_if_missing = 0;
+		the_repository->fetch_if_missing = 0;
 		argv_array_push(&rp, "--exclude-promisor-objects");
 	}
 	if (unpack_unreachable || keep_unreachable || pack_loose_unreachable)

@@ -128,6 +128,8 @@ struct repository {
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;
+
+	int fetch_if_missing;
 };
 
 extern struct repository *the_repository;

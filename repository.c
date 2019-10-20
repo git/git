@@ -159,6 +159,7 @@ int repo_init(struct repository *repo,
 {
 	struct repository_format format = REPOSITORY_FORMAT_INIT;
 	memset(repo, 0, sizeof(*repo));
+	repo->fetch_if_missing = 1;
 
 	repo->objects = raw_object_store_new();
 	repo->parsed_objects = parsed_object_pool_new();
