@@ -20,11 +20,14 @@ DESCRIPTION
 Some workflows require that one or more branches of development on one
 machine be replicated on another machine, but the two machines cannot
 be directly connected, and therefore the interactive Git protocols (git,
-ssh, http) cannot be used.  This command provides support for
-'git fetch' and 'git pull' to operate by packaging objects and references
-in an archive at the originating machine, then importing those into
-another repository using 'git fetch' and 'git pull'
-after moving the archive by some means (e.g., by sneakernet).  As no
+ssh, http) cannot be used.
+
+The 'git bundle' command packages objects and references in an archive
+at the originating machine, which can then be imported into another
+repository using 'git fetch', 'git pull', or 'git clone',
+after moving the archive by some means (e.g., by sneakernet).
+
+As no
 direct connection between the repositories exists, the user must specify a
 basis for the bundle that is held by the destination repository: the
 bundle assumes that all objects in the basis are already in the
@@ -35,7 +38,7 @@ OPTIONS
 
 create <file>::
 	Used to create a bundle named 'file'.  This requires the
-	'git-rev-list-args' arguments to define the bundle contents.
+	'<git-rev-list-args>' arguments to define the bundle contents.
 
 verify <file>::
 	Used to check that a bundle file is valid and will apply
@@ -91,6 +94,14 @@ It is very important that the basis used be held by the destination.
 It is okay to err on the side of caution, causing the bundle file
 to contain objects already in the destination, as these are ignored
 when unpacking at the destination.
+
+`git clone` can use any bundle created without negative refspecs
+(e.g., `new`, but not `old..new`).
+If you want to match `git clone --mirror`, which would include your
+refs such as `refs/remotes/*`, use `--all`.
+If you want to provide the same set of refs that a clone directly
+from the source repository would get, use `--branches --tags` for
+the `<git-rev-list-args>`.
 
 EXAMPLES
 --------
