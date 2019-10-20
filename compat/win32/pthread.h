@@ -50,8 +50,9 @@ typedef struct {
 	DWORD tid;
 } pthread_t;
 
-int pthread_create(pthread_t *thread, const void *unused,
-		   void *(*start_routine)(void*), void *arg);
+int win32_pthread_create(pthread_t *thread, const void *unused,
+			 void *(*start_routine)(void*), void *arg);
+#define pthread_create win32_pthread_create
 
 /*
  * To avoid the need of copying a struct, we use small macro wrapper to pass
@@ -62,7 +63,8 @@ int pthread_create(pthread_t *thread, const void *unused,
 int win32_pthread_join(pthread_t *thread, void **value_ptr);
 
 #define pthread_equal(t1, t2) ((t1).tid == (t2).tid)
-pthread_t pthread_self(void);
+pthread_t win32_pthread_self(void);
+#define pthread_self win32_pthread_self
 
 static inline void NORETURN pthread_exit(void *ret)
 {
