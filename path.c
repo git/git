@@ -101,36 +101,36 @@ struct common_dir {
 	/* Not considered garbage for report_linked_checkout_garbage */
 	unsigned ignore_garbage:1;
 	unsigned is_dir:1;
-	/* Not common even though its parent is */
-	unsigned exclude:1;
-	const char *dirname;
+	/* Belongs to the common dir, though it may contain paths that don't */
+	unsigned is_common:1;
+	const char *path;
 };
 
 static struct common_dir common_list[] = {
-	{ 0, 1, 0, "branches" },
-	{ 0, 1, 0, "common" },
-	{ 0, 1, 0, "hooks" },
-	{ 0, 1, 0, "info" },
-	{ 0, 0, 1, "info/sparse-checkout" },
-	{ 1, 1, 0, "logs" },
-	{ 1, 0, 1, "logs/HEAD" },
-	{ 0, 1, 1, "logs/refs/bisect" },
-	{ 0, 1, 1, "logs/refs/rewritten" },
-	{ 0, 1, 1, "logs/refs/worktree" },
-	{ 0, 1, 0, "lost-found" },
-	{ 0, 1, 0, "objects" },
-	{ 0, 1, 0, "refs" },
-	{ 0, 1, 1, "refs/bisect" },
-	{ 0, 1, 1, "refs/rewritten" },
-	{ 0, 1, 1, "refs/worktree" },
-	{ 0, 1, 0, "remotes" },
-	{ 0, 1, 0, "worktrees" },
-	{ 0, 1, 0, "rr-cache" },
-	{ 0, 1, 0, "svn" },
-	{ 0, 0, 0, "config" },
-	{ 1, 0, 0, "gc.pid" },
-	{ 0, 0, 0, "packed-refs" },
-	{ 0, 0, 0, "shallow" },
+	{ 0, 1, 1, "branches" },
+	{ 0, 1, 1, "common" },
+	{ 0, 1, 1, "hooks" },
+	{ 0, 1, 1, "info" },
+	{ 0, 0, 0, "info/sparse-checkout" },
+	{ 1, 1, 1, "logs" },
+	{ 1, 0, 0, "logs/HEAD" },
+	{ 0, 1, 0, "logs/refs/bisect" },
+	{ 0, 1, 0, "logs/refs/rewritten" },
+	{ 0, 1, 0, "logs/refs/worktree" },
+	{ 0, 1, 1, "lost-found" },
+	{ 0, 1, 1, "objects" },
+	{ 0, 1, 1, "refs" },
+	{ 0, 1, 0, "refs/bisect" },
+	{ 0, 1, 0, "refs/rewritten" },
+	{ 0, 1, 0, "refs/worktree" },
+	{ 0, 1, 1, "remotes" },
+	{ 0, 1, 1, "worktrees" },
+	{ 0, 1, 1, "rr-cache" },
+	{ 0, 1, 1, "svn" },
+	{ 0, 0, 1, "config" },
+	{ 1, 0, 1, "gc.pid" },
+	{ 0, 0, 1, "packed-refs" },
+	{ 0, 0, 1, "shallow" },
 	{ 0, 0, 0, NULL }
 };
 
@@ -331,8 +331,8 @@ static void init_common_trie(void)
 	if (common_trie_done_setup)
 		return;
 
-	for (p = common_list; p->dirname; p++)
-		add_to_trie(&common_trie, p->dirname, p);
+	for (p = common_list; p->path; p++)
+		add_to_trie(&common_trie, p->path, p);
 
 	common_trie_done_setup = 1;
 }
@@ -349,10 +349,10 @@ static int check_common(const char *unmatched, void *value, void *baton)
 		return 0;
 
 	if (dir->is_dir && (unmatched[0] == 0 || unmatched[0] == '/'))
-		return !dir->exclude;
+		return dir->is_common;
 
 	if (!dir->is_dir && unmatched[0] == 0)
-		return !dir->exclude;
+		return dir->is_common;
 
 	return 0;
 }
@@ -376,8 +376,8 @@ void report_linked_checkout_garbage(void)
 		return;
 	strbuf_addf(&sb, "%s/", get_git_dir());
 	len = sb.len;
-	for (p = common_list; p->dirname; p++) {
-		const char *path = p->dirname;
+	for (p = common_list; p->path; p++) {
+		const char *path = p->path;
 		if (p->ignore_garbage)
 			continue;
 		strbuf_setlen(&sb, len);
