@@ -1615,17 +1615,20 @@ test_expect_success 'format-patch -o with no leading directories' '
 '
 
 test_expect_success 'format-patch -o with leading existing directories' '
-	git format-patch -o patches/side master..side &&
+	rm -rf existing-dir &&
+	mkdir existing-dir &&
+	git format-patch -o existing-dir/patches master..side &&
 	count=$(git rev-list --count master..side) &&
-	ls patches/side >list &&
+	ls existing-dir/patches >list &&
 	test_line_count = $count list
 '
 
 test_expect_success 'format-patch -o with leading non-existing directories' '
-	rm -fr patches &&
-	git format-patch -o patches/side master..side &&
+	rm -rf non-existing-dir &&
+	git format-patch -o non-existing-dir/patches master..side &&
 	count=$(git rev-list --count master..side) &&
-	ls patches/side >list &&
+	test_path_is_dir non-existing-dir &&
+	ls non-existing-dir/patches >list &&
 	test_line_count = $count list
 '
 
