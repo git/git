@@ -113,7 +113,7 @@ static struct common_dir common_list[] = {
 	{ 0, 1, 0, "info" },
 	{ 0, 0, 1, "info/sparse-checkout" },
 	{ 1, 1, 0, "logs" },
-	{ 1, 1, 1, "logs/HEAD" },
+	{ 1, 0, 1, "logs/HEAD" },
 	{ 0, 1, 1, "logs/refs/bisect" },
 	{ 0, 1, 1, "logs/refs/rewritten" },
 	{ 0, 1, 1, "logs/refs/worktree" },
