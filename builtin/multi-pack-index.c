@@ -47,16 +47,16 @@ int cmd_multi_pack_index(int argc, const char **argv,
 	trace2_cmd_mode(argv[0]);
 
 	if (!strcmp(argv[0], "repack"))
-		return midx_repack(the_repository, opts.object_dir, (size_t)opts.batch_size);
+		return midx_repack(the_repository, opts.object_dir, (size_t)opts.batch_size, 0);
 	if (opts.batch_size)
 		die(_("--batch-size option is only for 'repack' subcommand"));
 
 	if (!strcmp(argv[0], "write"))
-		return write_midx_file(opts.object_dir);
+		return write_midx_file(opts.object_dir, 0);
 	if (!strcmp(argv[0], "verify"))
-		return verify_midx_file(the_repository, opts.object_dir);
+		return verify_midx_file(the_repository, opts.object_dir, 0);
 	if (!strcmp(argv[0], "expire"))
-		return expire_midx_packs(the_repository, opts.object_dir);
+		return expire_midx_packs(the_repository, opts.object_dir, 0);
 
 	die(_("unrecognized subcommand: %s"), argv[0]);
 }
