@@ -1205,18 +1205,29 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	uint32_t i, *count, result = 0;
 	struct string_list packs_to_drop = STRING_LIST_INIT_DUP;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct progress *progress = NULL;
 
 	if (!m)
 		return 0;
 
 	count = xcalloc(m->num_packs, sizeof(uint32_t));
+
+	if (flags & MIDX_PROGRESS)
+		progress = start_progress(_("Counting referenced objects"),
+					  m->num_objects);
 	for (i = 0; i < m->num_objects; i++) {
 		int pack_int_id = nth_midxed_pack_int_id(m, i);
 		count[pack_int_id]++;
+		display_progress(progress, i + 1);
 	}
+	stop_progress(&progress);
 
+	if (flags & MIDX_PROGRESS)
+		progress = start_progress(_("Finding and deleting unreferenced packfiles"),
+					  m->num_packs);
 	for (i = 0; i < m->num_packs; i++) {
 		char *pack_name;
+		display_progress(progress, i + 1);
 
 		if (count[i])
 			continue;
@@ -1234,6 +1245,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 		unlink_pack_path(pack_name, 0);
 		free(pack_name);
 	}
+	stop_progress(&progress);
 
 	free(count);
 
