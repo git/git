@@ -299,9 +299,13 @@ static int trie_find(struct trie *root, const char *key, match_fn fn,
 
 	/* Matched the entire compressed section */
 	key += i;
-	if (!*key)
+	if (!*key) {
 		/* End of key */
-		return fn(key, root->value, baton);
+		if (root->value)
+			return fn(key, root->value, baton);
+		else
+			return -1;
+	}
 
 	/* Partial path normalization: skip consecutive slashes */
 	while (key[0] == '/' && key[1] == '/')
@@ -344,9 +348,6 @@ static void init_common_trie(void)
 static int check_common(const char *unmatched, void *value, void *baton)
 {
 	struct common_dir *dir = value;
-
-	if (!dir)
-		return 0;
 
 	if (dir->is_dir && (unmatched[0] == 0 || unmatched[0] == '/'))
 		return dir->is_common;
