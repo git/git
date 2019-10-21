@@ -236,30 +236,41 @@ static void *add_to_trie(struct trie *root, const char *key, void *value)
 	return old;
 }
 
-typedef int (*match_fn)(const char *unmatched, void *data, void *baton);
+typedef int (*match_fn)(const char *unmatched, void *value, void *baton);
 
 /*
  * Search a trie for some key.  Find the longest /-or-\0-terminated
- * prefix of the key for which the trie contains a value.  Call fn
- * with the unmatched portion of the key and the found value, and
- * return its return value.  If there is no such prefix, return -1.
+ * prefix of the key for which the trie contains a value.  If there is
+ * no such prefix, return -1.  Otherwise call fn with the unmatched
+ * portion of the key and the found value.  If fn returns 0 or
+ * positive, then return its return value.  If fn returns negative,
+ * then call fn with the next-longest /-terminated prefix of the key
+ * (i.e. a parent directory) for which the trie contains a value, and
+ * handle its return value the same way.  If there is no shorter
+ * /-terminated prefix with a value left, then return the negative
+ * return value of the most recent fn invocation.
  *
  * The key is partially normalized: consecutive slashes are skipped.
  *
- * For example, consider the trie containing only [refs,
- * refs/worktree] (both with values).
+ * For example, consider the trie containing only [logs,
+ * logs/refs/bisect], both with values, but not logs/refs.
  *
- * | key             | unmatched  | val from node | return value |
- * |-----------------|------------|---------------|--------------|
- * | a               | not called | n/a           | -1           |
- * | refs            | \0         | refs          | as per fn    |
- * | refs/           | /          | refs          | as per fn    |
- * | refs/w          | /w         | refs          | as per fn    |
- * | refs/worktree   | \0         | refs/worktree | as per fn    |
- * | refs/worktree/  | /          | refs/worktree | as per fn    |
- * | refs/worktree/a | /a         | refs/worktree | as per fn    |
- * |-----------------|------------|---------------|--------------|
- *
+ * | key                | unmatched      | prefix to node   | return value |
+ * |--------------------|----------------|------------------|--------------|
+ * | a                  | not called     | n/a              | -1           |
+ * | logstore           | not called     | n/a              | -1           |
+ * | logs               | \0             | logs             | as per fn    |
+ * | logs/              | /              | logs             | as per fn    |
+ * | logs/refs          | /refs          | logs             | as per fn    |
+ * | logs/refs/         | /refs/         | logs             | as per fn    |
+ * | logs/refs/b        | /refs/b        | logs             | as per fn    |
+ * | logs/refs/bisected | /refs/bisected | logs             | as per fn    |
+ * | logs/refs/bisect   | \0             | logs/refs/bisect | as per fn    |
+ * | logs/refs/bisect/  | /              | logs/refs/bisect | as per fn    |
+ * | logs/refs/bisect/a | /a             | logs/refs/bisect | as per fn    |
+ * | (If fn in the previous line returns -1, then fn is called once more:) |
+ * | logs/refs/bisect/a | /refs/bisect/a | logs             | as per fn    |
+ * |--------------------|----------------|------------------|--------------|
  */
 static int trie_find(struct trie *root, const char *key, match_fn fn,
 		     void *baton)
