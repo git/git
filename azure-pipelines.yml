@@ -255,7 +255,7 @@ jobs:
 
         cd t &&
         PATH=\"`$PWD/helper:`$PATH\" &&
-        test-tool.exe run-command testsuite -V -x --write-junit-xml \
+        test-tool.exe run-command testsuite --jobs=10 -V -x --write-junit-xml \
                 `$(test-tool.exe path-utils slice-tests \
                         `$SYSTEM_JOBPOSITIONINPHASE `$SYSTEM_TOTALJOBSINPHASE t[0-9]*.sh)
       "@
