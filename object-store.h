@@ -7,6 +7,7 @@
 #include "sha1-array.h"
 #include "strbuf.h"
 #include "thread-utils.h"
+#include "packfile.h"
 
 struct object_directory {
 	struct object_directory *next;
@@ -446,5 +447,10 @@ int for_each_object_in_pack(struct packed_git *p,
 			    enum for_each_object_flags flags);
 int for_each_packed_object(each_packed_object_fn, void *,
 			   enum for_each_object_flags flags);
+
+#define for_each_pack(repo, pack) 		\
+		for (pack = get_all_packs(repo);\
+		     pack;			\
+		     pack = pack->next)
 
 #endif /* OBJECT_STORE_H */

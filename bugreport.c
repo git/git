@@ -177,6 +177,33 @@ static void get_loose_object_summary(struct strbuf *obj_info, int nongit) {
 		    total_count_questionable ? " (problem during count)" : "");
 }
 
+static void get_packed_object_summary(struct strbuf *obj_info, int nongit)
+{
+	struct packed_git *pack = NULL;
+	int pack_count = 0;
+	int object_count = 0;
+
+	if (nongit) {
+		strbuf_addstr(obj_info,
+			"not run from a git repository - no objects to show\n");
+		return;
+	}
+
+	for_each_pack(the_repository, pack) {
+		pack_count++;
+		/*
+		 * To accurately count how many objects are packed, look inside
+		 * the packfile's index.
+		 */
+		open_pack_index(pack);
+		object_count += pack->num_objects;
+	}
+
+	strbuf_addf(obj_info, "%d total packs (%d objects)\n", pack_count,
+		    object_count);
+
+}
+
 static const char * const bugreport_usage[] = {
 	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
 	NULL
@@ -270,6 +297,9 @@ int cmd_main(int argc, const char **argv)
 
 	get_header(&buffer, "Loose Object Counts");
 	get_loose_object_summary(&buffer, nongit_ok);
+
+	get_header(&buffer, "Packed Object Summary");
+	get_packed_object_summary(&buffer, nongit_ok);
 
 	report = fopen_for_writing(report_path.buf);
 
