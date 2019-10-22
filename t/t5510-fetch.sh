@@ -583,7 +583,7 @@ test_expect_success 'fetch.writeCommitGraph' '
 	)
 '
 
-test_expect_failure 'fetch.writeCommitGraph with submodules' '
+test_expect_success 'fetch.writeCommitGraph with submodules' '
 	git clone dups super &&
 	(
 		cd super &&
