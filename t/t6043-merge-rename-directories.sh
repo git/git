@@ -4051,6 +4051,120 @@ test_expect_success '12c-check: Moving one directory hierarchy into another w/ c
 	)
 '
 
+# Testcase 12d, Rename/merge of subdirectory into the root
+#   Commit O: a/b/subdir/foo
+#   Commit A: subdir/foo
+#   Commit B: a/b/subdir/foo, a/b/bar
+#   Expected: subdir/foo, bar
+
+test_expect_success '12d-setup: Rename/merge subdir into the root, variant 1' '
+	test_create_repo 12d &&
+	(
+		cd 12d &&
+
+		mkdir -p a/b/subdir &&
+		test_commit a/b/subdir/foo &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		mkdir subdir &&
+		git mv a/b/subdir/foo.t subdir/foo.t &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		test_commit a/b/bar
+	)
+'
+
+test_expect_success '12d-check: Rename/merge subdir into the root, variant 1' '
+	(
+		cd 12d &&
+
+		git checkout A^0 &&
+
+		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+
+		git rev-parse >actual \
+			HEAD:subdir/foo.t   HEAD:bar.t &&
+		git rev-parse >expect \
+			O:a/b/subdir/foo.t  B:a/b/bar.t &&
+		test_cmp expect actual &&
+
+		git hash-object bar.t >actual &&
+		git rev-parse B:a/b/bar.t >expect &&
+		test_cmp expect actual &&
+
+		test_must_fail git rev-parse HEAD:a/b/subdir/foo.t &&
+		test_must_fail git rev-parse HEAD:a/b/bar.t &&
+		test_path_is_missing a/ &&
+		test_path_is_file bar.t
+	)
+'
+
+# Testcase 12e, Rename/merge of subdirectory into the root
+#   Commit O: a/b/foo
+#   Commit A: foo
+#   Commit B: a/b/foo, a/b/bar
+#   Expected: foo, bar
+
+test_expect_success '12e-setup: Rename/merge subdir into the root, variant 2' '
+	test_create_repo 12e &&
+	(
+		cd 12e &&
+
+		mkdir -p a/b &&
+		test_commit a/b/foo &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		mkdir subdir &&
+		git mv a/b/foo.t foo.t &&
+		test_tick &&
+		git commit -m "A" &&
+
+		git checkout B &&
+		test_commit a/b/bar
+	)
+'
+
+test_expect_success '12e-check: Rename/merge subdir into the root, variant 2' '
+	(
+		cd 12e &&
+
+		git checkout A^0 &&
+
+		git -c merge.directoryRenames=true merge -s recursive B^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+
+		git rev-parse >actual \
+			HEAD:foo.t   HEAD:bar.t &&
+		git rev-parse >expect \
+			O:a/b/foo.t  B:a/b/bar.t &&
+		test_cmp expect actual &&
+
+		git hash-object bar.t >actual &&
+		git rev-parse B:a/b/bar.t >expect &&
+		test_cmp expect actual &&
+
+		test_must_fail git rev-parse HEAD:a/b/foo.t &&
+		test_must_fail git rev-parse HEAD:a/b/bar.t &&
+		test_path_is_missing a/ &&
+		test_path_is_file bar.t
+	)
+'
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #

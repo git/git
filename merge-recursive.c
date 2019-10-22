@@ -1931,6 +1931,16 @@ static char *apply_dir_rename(struct dir_rename_entry *entry,
 		return NULL;
 
 	oldlen = strlen(entry->dir);
+	if (entry->new_dir.len == 0)
+		/*
+		 * If someone renamed/merged a subdirectory into the root
+		 * directory (e.g. 'some/subdir' -> ''), then we want to
+		 * avoid returning
+		 *     '' + '/filename'
+		 * as the rename; we need to make old_path + oldlen advance
+		 * past the '/' character.
+		 */
+		oldlen++;
 	newlen = entry->new_dir.len + (strlen(old_path) - oldlen) + 1;
 	strbuf_grow(&new_path, newlen);
 	strbuf_addbuf(&new_path, &entry->new_dir);
@@ -1963,8 +1973,26 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 	 */
 	end_of_old = strrchr(old_path, '/');
 	end_of_new = strrchr(new_path, '/');
-	if (end_of_old == NULL || end_of_new == NULL)
-		return; /* We haven't modified *old_dir or *new_dir yet. */
+
+	/*
+	 * If end_of_old is NULL, old_path wasn't in a directory, so there
+	 * could not be a directory rename (our rule elsewhere that a
+	 * directory which still exists is not considered to have been
+	 * renamed means the root directory can never be renamed -- because
+	 * the root directory always exists).
+	 */
+	if (end_of_old == NULL)
+		return; /* Note: *old_dir and *new_dir are still NULL */
+
+	/*
+	 * If new_path contains no directory (end_of_new is NULL), then we
+	 * have a rename of old_path's directory to the root directory.
+	 */
+	if (end_of_new == NULL) {
+		*old_dir = xstrndup(old_path, end_of_old - old_path);
+		*new_dir = xstrdup("");
+		return;
+	}
 
 	/* Find the first non-matching character traversing backwards */
 	while (*--end_of_new == *--end_of_old &&
@@ -1978,7 +2006,25 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 	 */
 	if (end_of_old == old_path && end_of_new == new_path &&
 	    *end_of_old == *end_of_new)
-		return; /* We haven't modified *old_dir or *new_dir yet. */
+		return; /* Note: *old_dir and *new_dir are still NULL */
+
+	/*
+	 * If end_of_new got back to the beginning of its string, and
+	 * end_of_old got back to the beginning of some subdirectory, then
+	 * we have a rename/merge of a subdirectory into the root, which
+	 * needs slightly special handling.
+	 *
+	 * Note: There is no need to consider the opposite case, with a
+	 * rename/merge of the root directory into some subdirectory
+	 * because as noted above the root directory always exists so it
+	 * cannot be considered to be renamed.
+	 */
+	if (end_of_new == new_path &&
+	    end_of_old != old_path && end_of_old[-1] == '/') {
+		*old_dir = xstrndup(old_path, --end_of_old - old_path);
+		*new_dir = xstrdup("");
+		return;
+	}
 
 	/*
 	 * We've found the first non-matching character in the directory
