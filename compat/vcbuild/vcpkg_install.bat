@@ -39,7 +39,7 @@ REM ================================================================
 	git.exe version 2>nul
 	IF ERRORLEVEL 1 (
 	echo "***"
-	echo "Git not found. Please adjust you CMD path or Git install option."
+	echo "Git not found. Please adjust your CMD path or Git install option."
 	echo "***"
 	EXIT /B 1 )
 
