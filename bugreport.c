@@ -204,6 +204,57 @@ static void get_packed_object_summary(struct strbuf *obj_info, int nongit)
 
 }
 
+static void list_contents_of_dir_recursively(struct strbuf *contents,
+					     struct strbuf *dirpath)
+{
+	struct dirent *d;
+	DIR *dir;
+	size_t path_len;
+
+	dir = opendir(dirpath->buf);
+	if (!dir)
+		return;
+
+	strbuf_complete(dirpath, '/');
+	path_len = dirpath->len;
+
+	while ((d = readdir(dir))) {
+		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+			continue;
+
+		strbuf_addbuf(contents, dirpath);
+		strbuf_addstr(contents, d->d_name);
+		strbuf_complete_line(contents);
+
+		if (d->d_type == DT_DIR) {
+			strbuf_addstr(dirpath, d->d_name);
+			list_contents_of_dir_recursively(contents, dirpath);
+		}
+		strbuf_setlen(dirpath, path_len);
+	}
+
+	closedir(dir);
+}
+
+static void get_object_info_summary(struct strbuf *obj_info, int nongit)
+{
+	struct strbuf dirpath = STRBUF_INIT;
+
+	if (nongit) {
+		strbuf_addstr(obj_info,
+			"not run from a git repository - object info unavailable\n");
+		return;
+	}
+
+	strbuf_addstr(&dirpath, get_object_directory());
+	strbuf_complete(&dirpath, '/');
+	strbuf_addstr(&dirpath, "info/");
+
+	list_contents_of_dir_recursively(obj_info, &dirpath);
+
+	strbuf_release(&dirpath);
+}
+
 static const char * const bugreport_usage[] = {
 	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
 	NULL
@@ -300,6 +351,9 @@ int cmd_main(int argc, const char **argv)
 
 	get_header(&buffer, "Packed Object Summary");
 	get_packed_object_summary(&buffer, nongit_ok);
+
+	get_header(&buffer, "Object Info Summary");
+	get_object_info_summary(&buffer, nongit_ok);
 
 	report = fopen_for_writing(report_path.buf);
 
