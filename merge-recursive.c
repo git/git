@@ -1943,8 +1943,8 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 				    char **old_dir, char **new_dir)
 {
 	char *end_of_old, *end_of_new;
-	int old_len, new_len;
 
+	/* Default return values: NULL, meaning no rename */
 	*old_dir = NULL;
 	*new_dir = NULL;
 
@@ -1955,43 +1955,55 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 	 *    "a/b/c/d" was renamed to "a/b/some/thing/else"
 	 * so, for this example, this function returns "a/b/c/d" in
 	 * *old_dir and "a/b/some/thing/else" in *new_dir.
-	 *
-	 * Also, if the basename of the file changed, we don't care.  We
-	 * want to know which portion of the directory, if any, changed.
+	 */
+
+	/*
+	 * If the basename of the file changed, we don't care.  We want
+	 * to know which portion of the directory, if any, changed.
 	 */
 	end_of_old = strrchr(old_path, '/');
 	end_of_new = strrchr(new_path, '/');
-
 	if (end_of_old == NULL || end_of_new == NULL)
-		return;
+		return; /* We haven't modified *old_dir or *new_dir yet. */
+
+	/* Find the first non-matching character traversing backwards */
 	while (*--end_of_new == *--end_of_old &&
 	       end_of_old != old_path &&
 	       end_of_new != new_path)
 		; /* Do nothing; all in the while loop */
+
+	/*
+	 * If both got back to the beginning of their strings, then the
+	 * directory didn't change at all, only the basename did.
+	 */
+	if (end_of_old == old_path && end_of_new == new_path &&
+	    *end_of_old == *end_of_new)
+		return; /* We haven't modified *old_dir or *new_dir yet. */
+
 	/*
 	 * We've found the first non-matching character in the directory
-	 * paths.  That means the current directory we were comparing
-	 * represents the rename.  Move end_of_old and end_of_new back
-	 * to the full directory name.
+	 * paths.  That means the current characters we were looking at
+	 * were part of the first non-matching subdir name going back from
+	 * the end of the strings.  Get the whole name by advancing both
+	 * end_of_old and end_of_new to the NEXT '/' character.  That will
+	 * represent the entire directory rename.
+	 *
+	 * The reason for the increment is cases like
+	 *    a/b/star/foo/whatever.c -> a/b/tar/foo/random.c
+	 * After dropping the basename and going back to the first
+	 * non-matching character, we're now comparing:
+	 *    a/b/s          and         a/b/
+	 * and we want to be comparing:
+	 *    a/b/star/      and         a/b/tar/
+	 * but without the pre-increment, the one on the right would stay
+	 * a/b/.
 	 */
-	if (*end_of_old == '/')
-		end_of_old++;
-	if (*end_of_old != '/')
-		end_of_new++;
-	end_of_old = strchr(end_of_old, '/');
-	end_of_new = strchr(end_of_new, '/');
+	end_of_old = strchr(++end_of_old, '/');
+	end_of_new = strchr(++end_of_new, '/');
 
-	/*
-	 * It may have been the case that old_path and new_path were the same
-	 * directory all along.  Don't claim a rename if they're the same.
-	 */
-	old_len = end_of_old - old_path;
-	new_len = end_of_new - new_path;
-
-	if (old_len != new_len || strncmp(old_path, new_path, old_len)) {
-		*old_dir = xstrndup(old_path, old_len);
-		*new_dir = xstrndup(new_path, new_len);
-	}
+	/* Copy the old and new directories into *old_dir and *new_dir. */
+	*old_dir = xstrndup(old_path, end_of_old - old_path);
+	*new_dir = xstrndup(new_path, end_of_new - new_path);
 }
 
 static void remove_hashmap_entries(struct hashmap *dir_renames,
