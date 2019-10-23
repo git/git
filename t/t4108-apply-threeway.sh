@@ -8,7 +8,7 @@ print_sanitized_conflicted_diff () {
 	git diff HEAD >diff.raw &&
 	sed -e '
 		/^index /d
-		s/^\(+[<>][<>][<>][<>]*\) .*/\1/
+		s/^\(+[<>|][<>|][<>|][<>|]*\) .*/\1/
 	' diff.raw
 }
 
@@ -46,7 +46,7 @@ test_expect_success 'apply without --3way' '
 	git diff-index --exit-code --cached HEAD
 '
 
-test_expect_success 'apply with --3way' '
+test_apply_with_3way () {
 	# Merging side should be similar to applying this patch
 	git diff ...side >P.diff &&
 
@@ -67,6 +67,15 @@ test_expect_success 'apply with --3way' '
 	# The result should resemble the corresponding merge
 	test_cmp expect.ls actual.ls &&
 	test_cmp expect.diff actual.diff
+}
+
+test_expect_success 'apply with --3way' '
+	test_apply_with_3way
+'
+
+test_expect_failure 'apply with --3way with merge.conflictStyle = diff3' '
+	test_config merge.conflictStyle diff3 &&
+	test_apply_with_3way
 '
 
 test_expect_success 'apply with --3way with rerere enabled' '
