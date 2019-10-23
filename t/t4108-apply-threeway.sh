@@ -73,7 +73,7 @@ test_expect_success 'apply with --3way' '
 	test_apply_with_3way
 '
 
-test_expect_failure 'apply with --3way with merge.conflictStyle = diff3' '
+test_expect_success 'apply with --3way with merge.conflictStyle = diff3' '
 	test_config merge.conflictStyle diff3 &&
 	test_apply_with_3way
 '
