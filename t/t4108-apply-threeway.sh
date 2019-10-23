@@ -70,7 +70,7 @@ test_expect_success 'apply with --3way' '
 '
 
 test_expect_success 'apply with --3way with rerere enabled' '
-	git config rerere.enabled true &&
+	test_config rerere.enabled true &&
 
 	# Merging side should be similar to applying this patch
 	git diff ...side >P.diff &&
