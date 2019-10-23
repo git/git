@@ -11,8 +11,9 @@
 #
 #  zstyle ':completion:*:*:git:*' script ~/.git-completion.zsh
 #
-# The recommended way to install this script is to copy to '~/.zsh/_git', and
-# then add the following to your ~/.zshrc file:
+# The recommended way to install this script is to make a copy of it in
+# ~/.zsh/ directory as ~/.zsh/git-completion.zsh and then add the following
+# to your ~/.zshrc file:
 #
 #  fpath=(~/.zsh $fpath)
 
