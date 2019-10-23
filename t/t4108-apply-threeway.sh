@@ -4,13 +4,6 @@ test_description='git apply --3way'
 
 . ./test-lib.sh
 
-create_file () {
-	for i
-	do
-		echo "$i"
-	done
-}
-
 sanitize_conflicted_diff () {
 	sed -e '
 		/^index /d
@@ -20,7 +13,7 @@ sanitize_conflicted_diff () {
 
 test_expect_success setup '
 	test_tick &&
-	create_file >one 1 2 3 4 5 6 7 &&
+	test_write_lines 1 2 3 4 5 6 7 >one &&
 	cat one >two &&
 	git add one two &&
 	git commit -m initial &&
@@ -28,13 +21,13 @@ test_expect_success setup '
 	git branch side &&
 
 	test_tick &&
-	create_file >one 1 two 3 4 5 six 7 &&
-	create_file >two 1 two 3 4 5 6 7 &&
+	test_write_lines 1 two 3 4 5 six 7 >one &&
+	test_write_lines 1 two 3 4 5 6 7 >two &&
 	git commit -a -m master &&
 
 	git checkout side &&
-	create_file >one 1 2 3 4 five 6 7 &&
-	create_file >two 1 2 3 4 five 6 7 &&
+	test_write_lines 1 2 3 4 five 6 7 >one &&
+	test_write_lines 1 2 3 4 five 6 7 >two &&
 	git commit -a -m side &&
 
 	git checkout master
@@ -87,7 +80,7 @@ test_expect_success 'apply with --3way with rerere enabled' '
 	test_must_fail git merge --no-commit side &&
 
 	# Manually resolve and record the resolution
-	create_file 1 two 3 4 five six 7 >one &&
+	test_write_lines 1 two 3 4 five six 7 >one &&
 	git rerere &&
 	cat one >expect &&
 
@@ -104,14 +97,14 @@ test_expect_success 'apply -3 with add/add conflict setup' '
 	git reset --hard &&
 
 	git checkout -b adder &&
-	create_file 1 2 3 4 5 6 7 >three &&
-	create_file 1 2 3 4 5 6 7 >four &&
+	test_write_lines 1 2 3 4 5 6 7 >three &&
+	test_write_lines 1 2 3 4 5 6 7 >four &&
 	git add three four &&
 	git commit -m "add three and four" &&
 
 	git checkout -b another adder^ &&
-	create_file 1 2 3 4 5 6 7 >three &&
-	create_file 1 2 3 four 5 6 7 >four &&
+	test_write_lines 1 2 3 4 5 6 7 >three &&
+	test_write_lines 1 2 3 four 5 6 7 >four &&
 	git add three four &&
 	git commit -m "add three and four" &&
 
