@@ -40,7 +40,8 @@ struct options {
 		push_cert : 2,
 		deepen_relative : 1,
 		from_promisor : 1,
-		no_dependents : 1;
+		no_dependents : 1,
+		atomic : 1;
 };
 static struct options options;
 static struct string_list cas_options = STRING_LIST_INIT_DUP;
@@ -145,6 +146,14 @@ static int set_option(const char *name, const char *value)
 			options.push_cert = SEND_PACK_PUSH_CERT_NEVER;
 		else if (!strcmp(value, "if-asked"))
 			options.push_cert = SEND_PACK_PUSH_CERT_IF_ASKED;
+		else
+			return -1;
+		return 0;
+	} else if (!strcmp(name, "atomic")) {
+		if (!strcmp(value, "true"))
+			options.atomic = 1;
+		else if (!strcmp(value, "false"))
+			options.atomic = 0;
 		else
 			return -1;
 		return 0;
@@ -1196,6 +1205,8 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 		argv_array_push(&args, "--signed=yes");
 	else if (options.push_cert == SEND_PACK_PUSH_CERT_IF_ASKED)
 		argv_array_push(&args, "--signed=if-asked");
+	if (options.atomic)
+		argv_array_push(&args, "--atomic");
 	if (options.verbosity == 0)
 		argv_array_push(&args, "--quiet");
 	else if (options.verbosity > 1)

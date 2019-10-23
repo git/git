@@ -184,11 +184,12 @@ test_expect_success 'push --atomic also prevents branch creation, reports collat
 	test_config -C "$d" http.receivepack true &&
 	up="$HTTPD_URL"/smart/atomic-branches.git &&
 
-	# Tell "$up" about two branches for now
+	# Tell "$up" about three branches for now
 	test_commit atomic1 &&
 	test_commit atomic2 &&
 	git branch collateral &&
-	git push "$up" master collateral &&
+	git branch other &&
+	git push "$up" master collateral other &&
 
 	# collateral is a valid push, but should be failed by atomic push
 	git checkout collateral &&
@@ -224,6 +225,41 @@ test_expect_success 'push --atomic also prevents branch creation, reports collat
 	# the collateral failure refs should be indicated to the user
 	grep "^ ! .*rejected.* atomic -> atomic .*atomic push failed" output &&
 	grep "^ ! .*rejected.* collateral -> collateral .*atomic push failed" output
+'
+
+test_expect_success 'push --atomic fails on server-side errors' '
+	# Use previously set up repository
+	d=$HTTPD_DOCUMENT_ROOT_PATH/atomic-branches.git &&
+	test_config -C "$d" http.receivepack true &&
+	up="$HTTPD_URL"/smart/atomic-branches.git &&
+
+	# break ref updates for other on the remote site
+	mkdir "$d/refs/heads/other.lock" &&
+
+	# add the new commit to other
+	git branch -f other collateral &&
+
+	# --atomic should cause entire push to be rejected
+	test_must_fail git push --atomic "$up" atomic other 2>output  &&
+
+	# the new branch should not have been created upstream
+	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+
+	# upstream should still reflect atomic2, the last thing we pushed
+	# successfully
+	git rev-parse atomic2 >expected &&
+	# ...to other.
+	git -C "$d" rev-parse refs/heads/other >actual &&
+	test_cmp expected actual &&
+
+	# the new branch should not have been created upstream
+	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+
+	# the failed refs should be indicated to the user
+	grep "^ ! .*rejected.* other -> other .*atomic transaction failed" output &&
+
+	# the collateral failure refs should be indicated to the user
+	grep "^ ! .*rejected.* atomic -> atomic .*atomic transaction failed" output
 '
 
 test_expect_success 'push --all can push to empty repo' '

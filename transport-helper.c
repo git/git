@@ -854,6 +854,10 @@ static void set_common_push_options(struct transport *transport,
 			die(_("helper %s does not support --signed=if-asked"), name);
 	}
 
+	if (flags & TRANSPORT_PUSH_ATOMIC)
+		if (set_helper_option(transport, TRANS_OPT_ATOMIC, "true") != 0)
+			die(_("helper %s does not support --atomic"), name);
+
 	if (flags & TRANSPORT_PUSH_OPTIONS) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, transport->push_options)
