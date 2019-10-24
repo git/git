@@ -857,6 +857,10 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 		if (!ch)
 			BUG("buffer overrun while splitting hunks");
 
+		/*
+		 * Is this the first context line after a chain of +/- lines?
+		 * Then record the start of the next split hunk.
+		 */
 		if ((marker == '-' || marker == '+') && ch == ' ') {
 			first = 0;
 			hunk[1].start = current;
@@ -865,6 +869,16 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 			context_line_count = 0;
 		}
 
+		/*
+		 * Was the previous line a +/- one? Alternatively, is this the
+		 * first line (and not a +/- one)?
+		 *
+		 * Then just increment the appropriate counter and continue
+		 * with the next line.
+		 *
+		 * Otherwise this is the first of a chain of +/- lines.
+		 * neither the first of a chain of context lines?
+		 */
 		if (marker != ' ' || (ch != '-' && ch != '+')) {
 next_hunk_line:
 			/* Comment lines are attached to the previous line */
