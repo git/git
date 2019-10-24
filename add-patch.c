@@ -853,6 +853,10 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 
 	while (splittable_into > 1) {
 		ch = s->plain.buf[current];
+
+		if (!ch)
+			BUG("buffer overrun while splitting hunks");
+
 		if ((marker == '-' || marker == '+') && ch == ' ') {
 			first = 0;
 			hunk[1].start = current;
