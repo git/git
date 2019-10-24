@@ -1662,9 +1662,11 @@ static int git_config_from_blob_ref(config_fn_t fn,
 
 const char *git_etc_gitconfig(void)
 {
-	static const char *system_wide;
-	if (!system_wide)
+	static char *system_wide;
+	if (!system_wide) {
 		system_wide = system_path(ETC_GITCONFIG);
+		normalize_path_copy(system_wide, system_wide);
+	}
 	return system_wide;
 }
 
