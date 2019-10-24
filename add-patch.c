@@ -867,6 +867,10 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 
 		if (marker != ' ' || (ch != '-' && ch != '+')) {
 next_hunk_line:
+			/* Comment lines are attached to the previous line */
+			if (ch == '\\')
+				ch = marker ? marker : ' ';
+
 			/* current hunk not done yet */
 			if (ch == ' ')
 				context_line_count++;
