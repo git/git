@@ -511,10 +511,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			    (int)(eol - (plain->buf + file_diff->head.start)),
 			    plain->buf + file_diff->head.start);
 
-		if ((marker == '-' || marker == '+') &&
-		    (*p == ' ' || *p == '\\'))
+		if ((marker == '-' || marker == '+') && *p == ' ')
 			hunk->splittable_into++;
-		if (marker)
+		if (marker && *p != '\\')
 			marker = *p;
 
 		p = eol == pend ? pend : eol + 1;
