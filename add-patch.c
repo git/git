@@ -562,8 +562,13 @@ mismatched_output:
 
 static size_t find_next_line(struct strbuf *sb, size_t offset)
 {
-	char *eol = memchr(sb->buf + offset, '\n', sb->len - offset);
+	char *eol;
 
+	if (offset >= sb->len)
+		BUG("looking for next line beyond buffer (%d >= %d)\n%s",
+		    (int)offset, (int)sb->len, sb->buf);
+
+	eol = memchr(sb->buf + offset, '\n', sb->len - offset);
 	if (!eol)
 		return sb->len;
 	return eol - sb->buf + 1;
