@@ -1,16 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2019, #05; Fri, 18)
-X-master-at: d966095db01190a2196e31195ea6fa0c722aa732
-X-next-at: 954a862665455a25876e1113bd865d43a26facce
+Subject: What's cooking in git.git (Oct 2019, #06; Thu, 24)
+X-master-at: 566a1439f6f56c2171b8853ddbca0ad3f5098770
+X-next-at: b1bccd3e3df55f279f5b5f202ffa7149543587de
 
-What's cooking in git.git (Oct 2019, #05; Fri, 18)
+What's cooking in git.git (Oct 2019, #06; Thu, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+The first release candidate has been tagged on the 'master' front.
+We probably would want to include ds/commit-graph-on-fetch fixup
+(which is not in 'next' yet) in the upcoming release, but other than
+that, this should be very close to the final one, I hope ;-)
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,152 +25,247 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bb/compat-util-comment-fix (2019-10-12) 1 commit
-  (merged to 'next' on 2019-10-15 at c15e45fe28)
- + git-compat-util: fix documentation syntax
+* bc/smart-http-atomic-push (2019-10-17) 1 commit
+  (merged to 'next' on 2019-10-18 at 7729d13f51)
+ + remote-curl: pass on atomic capability to remote side
 
- Code cleanup.
-
-
-* bb/utf8-wcwidth-cleanup (2019-10-12) 1 commit
-  (merged to 'next' on 2019-10-15 at 92ba59e1d6)
- + utf8: use ARRAY_SIZE() in git_wcwidth()
-
- Code cleanup.
+ The atomic push over smart HTTP transport did not work, which has
+ been corrected.
 
 
-* bw/format-patch-o-create-leading-dirs (2019-10-12) 1 commit
-  (merged to 'next' on 2019-10-15 at 93c9949b6a)
- + format-patch: create leading components of output directory
+* bw/format-patch-o-create-leading-dirs (2019-10-23) 1 commit
+  (merged to 'next' on 2019-10-23 at 9204e1b2b9)
+ + t4014: make output-directory tests self-contained
 
- "git format-patch -o <outdir>" did an equivalent of "mkdir <outdir>"
- not "mkdir -p <outdir>", which got corrected.
-
-
-* dl/allow-running-cocci-verbosely (2019-10-12) 1 commit
-  (merged to 'next' on 2019-10-15 at 474dc9f86e)
- + Makefile: respect $(V) in %.cocci.patch target
-
- Dev support update.
+ Test update.
 
 
-* dl/compat-cleanup (2019-10-11) 1 commit
-  (merged to 'next' on 2019-10-15 at 1ed99770ba)
- + pthread.h: manually align parameter lists
+* cb/pcre2-chartables-leakfix (2019-10-18) 3 commits
+  (merged to 'next' on 2019-10-18 at 5bc67c64fd)
+ + grep: avoid leak of chartables in PCRE2
+ + grep: make PCRE2 aware of custom allocator
+ + grep: make PCRE1 aware of custom allocator
 
- Code formatting micronit fix.
-
-
-* jj/stash-reset-only-toplevel (2019-10-15) 1 commit
-  (merged to 'next' on 2019-10-15 at 28f398daab)
- + stash: avoid recursive hard reset on submodules
-
- "git stash save" lost local changes to submodules, which has been
- corrected.
+ Leakfix.
 
 
-* js/doc-stash-save (2019-10-11) 1 commit
-  (merged to 'next' on 2019-10-15 at e588bff32c)
- + doc(stash): clarify the description of `save`
+* dl/submodule-set-branch (2019-10-23) 1 commit
+  (merged to 'next' on 2019-10-23 at bb485c040f)
+ + t7419: change test_must_fail to ! for grep
 
- Doc clarification.
-
-
-* rs/column-use-utf8-strnwidth (2019-10-15) 1 commit
-  (merged to 'next' on 2019-10-15 at 3be15b4478)
- + column: use utf8_strnwidth() to strip out ANSI color escapes
-
- Code cleanup.
+ Test update.
 
 
-* rs/http-push-simplify (2019-10-15) 1 commit
-  (merged to 'next' on 2019-10-15 at 4abc29286c)
- + http-push: simplify deleting a list item
+* ds/feature-macros (2019-10-24) 1 commit
+  (merged to 'next' on 2019-10-24 at 9c74bfb14c)
+ + repo-settings: read an int for index.version
 
- Code cleanup.
-
-
-* rs/remote-curl-use-argv-array (2019-10-15) 1 commit
-  (merged to 'next' on 2019-10-15 at 8d0375a874)
- + remote-curl: use argv_array in parse_push()
-
- Code cleanup.
+ The codepath that reads the index.version configuration was broken
+ with a recent update, which has been corrected.
 
 
-* ta/t1308-typofix (2019-10-11) 1 commit
-  (merged to 'next' on 2019-10-15 at 0228b44688)
- + t1308-config-set: fix a test that has a typo
-
- Test fix.
-
---------------------------------------------------
-[New Topics]
-
-* dd/notes-copy-default-dst-to-head (2019-10-18) 2 commits
-  (merged to 'next' on 2019-10-18 at 2588a175ec)
- + notes: fix minimum number of parameters to "copy" subcommand
- + t3301: test diagnose messages for too few/many paramters
-
- "git notes copy $original" ought to copy the notes attached to the
- original object to HEAD, but a mistaken tightening to command line
- parameter validation made earlier disabled that feature by mistake.
-
- Will cook in 'next'.
- No need for rush, as this is a fix for an ancient regression.
-
-
-* jc/log-graph-simplify (2019-10-16) 13 commits
- - graph: fix coloring of octopus dashes
- - graph: flatten edges that fuse with their right neighbor
- - graph: smooth appearance of collapsing edges on commit lines
- - graph: rename `new_mapping` to `old_mapping`
- - graph: commit and post-merge lines for left-skewed merges
- - graph: tidy up display of left-skewed merges
- - graph: example of graph output that can be simplified
- - graph: extract logic for moving to GRAPH_PRE_COMMIT state
- - graph: remove `mapping_idx` and `graph_update_width()`
- - graph: reduce duplication in `graph_insert_into_new_columns()`
- - graph: reuse `find_new_column_by_commit()`
- - graph: handle line padding in `graph_next_line()`
- - graph: automatically track display width of graph lines
-
- The implementation of "git log --graph" got refactored and then its
- output got simplified.
-
- Will merge to 'next'.
-
-
-* js/azure-ci-osx-fix (2019-10-18) 1 commit
-  (merged to 'next' on 2019-10-18 at bc6a502f6e)
+* js/azure-ci-osx-fix (2019-10-23) 1 commit
+  (merged to 'next' on 2019-10-23 at c7fcd4f8b6)
  + ci(osx): use new location of the `perforce` cask
 
  Update installation procedure for Perforce on MacOS in the CI jobs
  running on Azure pipelines, which was failing.
 
- Will merge to 'master'.
+
+* mb/clarify-zsh-completion-doc (2019-10-18) 1 commit
+  (merged to 'next' on 2019-10-21 at 21a4eb2fe8)
+ + completion: clarify installation instruction for zsh
+
+ The installation instruction for zsh completion script (in
+ contrib/) has been a bit improved.
 
 
-* js/git-path-head-dot-lock-fix (2019-10-18) 2 commits
- - git_path(): handle `.lock` files correctly
- - t1400: wrap setup code in test case
+* nr/diff-highlight-indent-fix (2019-10-15) 1 commit
+  (merged to 'next' on 2019-10-21 at 8ce6000ec5)
+ + diff-highlight: fix a whitespace nit
 
- "git rev-parse --git-path HEAD.lock" did not give the right path
- when run in a secondary worktree.
+ Code cleanup.
 
 
-* pw/post-commit-from-sequencer (2019-10-16) 6 commits
-  (merged to 'next' on 2019-10-18 at 15b41a097d)
- + sequencer: run post-commit hook
- + move run_commit_hook() to libgit and use it there
- + sequencer.h fix placement of #endif
- + t3404: remove uneeded calls to set_fake_editor
- + t3404: set $EDITOR in subshell
- + t3404: remove unnecessary subshell
+* sb/userdiff-dts (2019-10-21) 1 commit
+  (merged to 'next' on 2019-10-21 at eafa01fb62)
+ + userdiff: fix some corner cases in dts regex
 
- "rebase -i" ceased to run post-commit hook by mistake in an earlier
- update, which has been corrected.
+ Tweak userdiff patterns for dts.
+ As adding finishing touches to the new feature in the upcoming
+ release, this is fast-tracked.
 
- Will merge to 'master'.
+
+* sg/ci-osx-gcc8-fix (2019-10-24) 1 commit
+  (merged to 'next' on 2019-10-24 at 58039e24ec)
+ + ci: fix GCC install in the Travis CI GCC OSX job
+
+ CI build fix.
+
+
+* sg/progress-fix (2019-10-21) 1 commit
+  (merged to 'next' on 2019-10-21 at 678e344b22)
+ + test-progress: fix test failures on big-endian systems
+
+ Byte-order fix the recent update to progress display code.
+ The breakage being fixed is a regression since the last relesae.
+
+
+* wb/fsmonitor-bitmap-fix (2019-10-12) 1 commit
+  (merged to 'next' on 2019-10-15 at 1cc4091346)
+ + fsmonitor: don't fill bitmap with entries to be removed
+
+ A segfault fix.
+
+--------------------------------------------------
+[New Topics]
+
+* hv/bitshift-constants-in-blame (2019-10-21) 1 commit
+  (merged to 'next' on 2019-10-24 at bc84aae4d4)
+ + builtin/blame.c: constants into bit shift format
+
+ Move the definition of a set of bitmask constants from 0ctal
+ literal to (1U<<count) notation.
+
+ Will cook in 'next'.
+
+
+* jk/cleanup-object-parsing-and-fsck (2019-10-21) 23 commits
+ - fsck: accept an oid instead of a "struct tree" for fsck_tree()
+ - fsck: accept an oid instead of a "struct commit" for fsck_commit()
+ - fsck: accept an oid instead of a "struct tag" for fsck_tag()
+ - fsck: rename vague "oid" local variables
+ - fsck: don't require an object struct in verify_headers()
+ - fsck: don't require an object struct for fsck_ident()
+ - fsck: drop blob struct from fsck_finish()
+ - fsck: accept an oid instead of a "struct blob" for fsck_blob()
+ - fsck: don't require an object struct for report()
+ - fsck: only require an oid for skiplist functions
+ - fsck: only provide oid/type in fsck_error callback
+ - fsck: don't require object structs for display functions
+ - fsck: use oids rather than objects for object_name API
+ - fsck_describe_object(): build on our get_object_name() primitive
+ - fsck: unify object-name code
+ - fsck: require an actual buffer for non-blobs
+ - fsck: stop checking tag->tagged
+ - fsck: stop checking commit->parent counts
+ - fsck: stop checking commit->tree value
+ - remember commit/tag parse failures
+ - parse_tag_buffer(): treat NULL tag pointer as parse error
+ - parse_commit_buffer(): treat lookup_tree() failure as parse error
+ - parse_commit_buffer(): treat lookup_commit() failure as parse error
+
+ Crufty code and logic accumulated over time around the object
+ parsing and low-level object access used in "git fsck" have been
+ cleaned up.
+
+
+* js/rebase-deprecate-preserve-merges (2019-10-21) 1 commit
+  (merged to 'next' on 2019-10-24 at 82fa49bbf2)
+ + rebase: hide --preserve-merges option
+
+ "git rebase --preserve-merges" has been marked as deprecated; this
+ release stops advertising it in the "git rebase -h" output.
+
+ Will cook in 'next'.
+
+
+* po/bundle-doc-clonable (2019-10-21) 1 commit
+ - Doc: Bundle file usage
+
+ Doc update.
+
+ Expecting a reroll.
+
+
+* ds/commit-graph-on-fetch (2019-10-24) 2 commits
+ - commit-graph: fix writing first commit-graph during fetch
+ - t5510-fetch.sh: demonstrate fetch.writeCommitGraph bug
+
+ "git commit-grph write" hit BUG() in corner cases.
+
+ Expecting a final fix-up.
+ cf. <a9ba6007-aeb9-96b4-9436-8e956798be59@gmail.com> <20191023150402.GB26017@szeder.dev>
+
+
+* jc/am-show-current-patch-docfix (2019-10-23) 1 commit
+  (merged to 'next' on 2019-10-24 at 31fa6081f2)
+ + doc: am --show-current-patch gives an entire e-mail message
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* js/advise-rebase-skip (2019-10-23) 3 commits
+  (merged to 'next' on 2019-10-24 at e2edd2df2d)
+ + commit: give correct advice for empty commit during a rebase
+ + sequencer: export the function to get the path of `.git/rebase-merge/`
+ + cherry-pick: add test for `--skip` advice in `git commit`
+
+ The logic used in "git commit" to give hints and errors depending
+ on what operation was in progress learned to distinguish rebase and
+ cherry-pick better.
+
+ Will cook in 'next'.
+
+
+* sg/dir-trie-fixes (2019-10-23) 5 commits
+  (merged to 'next' on 2019-10-24 at 06d60a7fb0)
+ + path.c: don't call the match function without value in trie_find()
+ + path.c: clarify two field names in 'struct common_dir'
+ + path.c: mark 'logs/HEAD' in 'common_list' as file
+ + path.c: clarify trie_find()'s in-code comment
+ + Documentation: mention more worktree-specific exceptions
+
+ Code clean-up and a bugfix in the logic used to tell worktree local
+ and repository global refs apart.
+
+ Will cook in 'next'.
+
+
+* wb/midx-progress (2019-10-23) 6 commits
+  (merged to 'next' on 2019-10-24 at 95c3e3ab3a)
+ + multi-pack-index: add [--[no-]progress] option.
+ + midx: honor the MIDX_PROGRESS flag in midx_repack
+ + midx: honor the MIDX_PROGRESS flag in verify_midx_file
+ + midx: add progress to expire_midx_packs
+ + midx: add progress to write_midx_file
+ + midx: add MIDX_PROGRESS flag
+
+ The code to generate multi-pack index learned to show (or not to
+ show) progress indicators.
+
+ Will cook in 'next'.
+
+
+* dl/apply-3way-diff3 (2019-10-24) 5 commits
+  (merged to 'next' on 2019-10-24 at 84e27d28b6)
+ + apply: respect merge.conflictStyle in --3way
+ + t4108: demonstrate bug in apply
+ + t4108: use `test_config` instead of `git config`
+ + t4108: remove git command upstream of pipe
+ + t4108: replace create_file with test_write_lines
+
+ "git apply --3way" learned to honor merge.conflictsStyle
+ configuration variable, like merges would.
+
+ Will cook in 'next'.
+
+
+* hw/config-doc-in-header (2019-10-24) 1 commit
+ - config: move documentation to config.h
+
+ Follow recent push to move API docs from Documentation/ to header
+ files and update config.h
+
+ Will merge to 'next'.
+
+
+* jt/delay-fetch-if-missing (2019-10-24) 1 commit
+ - fetch: delay fetch_if_missing=0 until after config
+
+ Work-around a lazy fetch glitch.
 
 --------------------------------------------------
 [Stalled]
@@ -238,18 +338,67 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* cb/pcre2-chartables-leakfix (2019-10-18) 3 commits
-  (merged to 'next' on 2019-10-18 at 5bc67c64fd)
- + grep: avoid leak of chartables in PCRE2
- + grep: make PCRE2 aware of custom allocator
- + grep: make PCRE1 aware of custom allocator
+* dd/notes-copy-default-dst-to-head (2019-10-18) 2 commits
+  (merged to 'next' on 2019-10-18 at 2588a175ec)
+ + notes: fix minimum number of parameters to "copy" subcommand
+ + t3301: test diagnose messages for too few/many paramters
 
- Leakfix.
+ "git notes copy $original" ought to copy the notes attached to the
+ original object to HEAD, but a mistaken tightening to command line
+ parameter validation made earlier disabled that feature by mistake.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* ds/sparse-cone (2019-10-16) 17 commits
+* jc/log-graph-simplify (2019-10-16) 13 commits
+  (merged to 'next' on 2019-10-24 at 190b88709e)
+ + graph: fix coloring of octopus dashes
+ + graph: flatten edges that fuse with their right neighbor
+ + graph: smooth appearance of collapsing edges on commit lines
+ + graph: rename `new_mapping` to `old_mapping`
+ + graph: commit and post-merge lines for left-skewed merges
+ + graph: tidy up display of left-skewed merges
+ + graph: example of graph output that can be simplified
+ + graph: extract logic for moving to GRAPH_PRE_COMMIT state
+ + graph: remove `mapping_idx` and `graph_update_width()`
+ + graph: reduce duplication in `graph_insert_into_new_columns()`
+ + graph: reuse `find_new_column_by_commit()`
+ + graph: handle line padding in `graph_next_line()`
+ + graph: automatically track display width of graph lines
+
+ The implementation of "git log --graph" got refactored and then its
+ output got simplified.
+
+ Will cook in 'next'.
+
+
+* js/git-path-head-dot-lock-fix (2019-10-24) 2 commits
+  (merged to 'next' on 2019-10-24 at 3a7533c171)
+ + git_path(): handle `.lock` files correctly
+ + t1400: wrap setup code in test case
+
+ "git rev-parse --git-path HEAD.lock" did not give the right path
+ when run in a secondary worktree.
+
+ Will cook in 'next'.
+
+
+* pw/post-commit-from-sequencer (2019-10-16) 6 commits
+  (merged to 'next' on 2019-10-18 at 15b41a097d)
+ + sequencer: run post-commit hook
+ + move run_commit_hook() to libgit and use it there
+ + sequencer.h fix placement of #endif
+ + t3404: remove uneeded calls to set_fake_editor
+ + t3404: set $EDITOR in subshell
+ + t3404: remove unnecessary subshell
+
+ "rebase -i" ceased to run post-commit hook by mistake in an earlier
+ update, which has been corrected.
+
+ Will cook in 'next'.
+
+
+* ds/sparse-cone (2019-10-23) 17 commits
  - sparse-checkout: cone mode should not interact with .gitignore
  - sparse-checkout: write using lockfile
  - sparse-checkout: update working directory in-process
@@ -274,25 +423,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* wb/fsmonitor-bitmap-fix (2019-10-12) 1 commit
-  (merged to 'next' on 2019-10-15 at 1cc4091346)
- + fsmonitor: don't fill bitmap with entries to be removed
-
- A segfault fix.
-
- Will merge to 'master'.
-
-
-* bc/smart-http-atomic-push (2019-10-17) 1 commit
-  (merged to 'next' on 2019-10-18 at 7729d13f51)
- + remote-curl: pass on atomic capability to remote side
-
- The atomic push over smart HTTP transport did not work, which has
- been corrected.
-
- Will merge to 'master'.
-
-
 * dl/format-patch-cover-from-desc (2019-10-16) 3 commits
   (merged to 'next' on 2019-10-18 at 40e992b6f5)
  + format-patch: teach --cover-from-description option
@@ -308,8 +438,9 @@ of the repositories listed at
  No need for rush, as this is a new feature.
 
 
-* en/merge-recursive-directory-rename-fixes (2019-10-12) 2 commits
-  (merged to 'next' on 2019-10-15 at ebfdc3ff7b)
+* en/merge-recursive-directory-rename-fixes (2019-10-23) 3 commits
+  (merged to 'next' on 2019-10-24 at 82e64029a8)
+ + t604[236]: do not run setup in separate tests
  + merge-recursive: fix merging a subdirectory into the root directory
  + merge-recursive: clean up get_renamed_dir_portion()
 
@@ -318,7 +449,7 @@ of the repositories listed at
  as a rename/merge of the subdirectory to the root directory, which has
  been corrected.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jt/fetch-pack-record-refs-in-the-dot-promisor (2019-10-16) 1 commit
@@ -329,23 +460,6 @@ of the repositories listed at
 
  Will cook in 'next'.
  No need for rush, as this is a new feature.
-
-
-* mb/clarify-zsh-completion-doc (2019-10-12) 1 commit
- - completion: clarify installation instruction for zsh
-
- The installation instruction for zsh completion script (in
- contrib/) has been a bit improved.
-
- Will merge to 'next' and then to 'master'.
-
-
-* nr/diff-highlight-indent-fix (2019-10-15) 1 commit
- - diff-highlight: fix a whitespace nit
-
- Code cleanup.
-
- Will merge to 'next' and then to 'master'.
 
 
 * es/walken-tutorial (2019-10-12) 1 commit
@@ -413,24 +527,19 @@ of the repositories listed at
  layer is not thread-safe.  This limitation is getting lifted.
 
 
-* jk/packfile-reuse-cleanup (2019-09-13) 10 commits
-  (merged to 'next' on 2019-09-30 at dc60b31833)
- + pack-objects: improve partial packfile reuse
- + builtin/pack-objects: introduce obj_is_packed()
- + pack-objects: introduce pack.allowPackReuse
- + csum-file: introduce hashfile_total()
- + pack-bitmap: introduce bitmap_walk_contains()
- + pack-bitmap: don't rely on bitmap_git->reuse_objects
- + ewah/bitmap: always allocate 2 more words
- + ewah/bitmap: introduce bitmap_word_alloc()
+* jk/packfile-reuse-cleanup (2019-10-23) 9 commits
+ - pack-objects: improve partial packfile reuse
+ - builtin/pack-objects: introduce obj_is_packed()
+ - pack-objects: introduce pack.allowPackReuse
+ - csum-file: introduce hashfile_total()
+ - pack-bitmap: introduce bitmap_walk_contains()
+ - pack-bitmap: don't rely on bitmap_git->reuse_objects
+ - ewah/bitmap: introduce bitmap_word_alloc()
  + packfile: expose get_delta_base()
  + builtin/pack-objects: report reused packfile objects
 
  The way "git pack-objects" reuses objects stored in existing pack
  to generate its result has been improved.
-
- On hold until we give it a more thorough review.
- cf. <20191002155721.GD6116@sigill.intra.peff.net>
 
 
 * js/builtin-add-i (2019-08-30) 11 commits
@@ -451,83 +560,3 @@ of the repositories listed at
  Expecting a reroll on top of a base with the tg/stash-refresh-index
  topic that defines an updated repo_refresh_and_write_index() helper.
  cf. <20190911175201.GA11444@cat>
-
---------------------------------------------------
-[Discarded]
-
-* dl/remote-save-to-push (2018-12-11) 1 commit
- . remote: add --save-to-push option to git remote set-url
-
- "git remote set-url" learned a new option that moves existing value
- of the URL field to pushURL field of the remote before replacing
- the URL field with a new value.
-
- Anybody who wants to champion this topic?
- I am personally not yet quite convinced if this is worth pursuing.
-
-
-* js/trace2-json-schema (2019-07-25) 3 commits
- . ci: run trace2 schema validation in the CI suite
- . trace2: add a schema validator for trace2 events
- . trace2: add a JSON schema for trace2 events
-
- The JSON output produced by "trace2" subsystem now has JSON schema
- defined on it, to allow us validate the output and catch deviation.
-
- Abandoned, at least for now.
- cf. <20190910182305.GA11186@google.com>
-
-
-* pd/fetch-jobs (2019-08-13) 5 commits
- . fetch: make --jobs control submodules and remotes
- . fetch: add the --submodule-fetch-jobs option
- . fetch: add the fetch.jobs config key
- . fetch: add the "--fetch-jobs" option
- . fetch: rename max_children to max_children_for_submodules
-
- "git fetch --jobs" is getting taught to also run fetch jobs in
- parallel when fetching from multiple remote repositories.
-
- cf. <nycvar.QRO.7.76.6.1909111359150.5377@tvgsbejvaqbjf.bet>
-
-
-* js/honor-cflags-in-hdr-check (2019-08-26) 1 commit
-  (merged to 'next' on 2019-09-09 at fcd9ee9f1b)
- + hdr-check: make it work on Windows
-
- Build fix to make sure hdr-check is run with the same preprocessor
- macros predefined by the $(MAKE) procedure.
-
- Superseded by dl/honor-cflags-in-hdr-check series.
-
-
-* dl/format-patch-cover-letter-subject (2019-09-05) 1 commit
- . format-patch: learn --infer-cover-subject option
-
- "git format-patch --cover-letter" learned to optionally use the
- first paragraph (typically a single-liner) of branch.*.description
- as the subject of the cover letter.
-
- Superseded by the dl/format-patch-cover-from desc topic.
-
-
-* jt/fetch-cdn-offload (2019-03-12) 9 commits
- . SQUASH???
- . upload-pack: send part of packfile response as uri
- . fetch-pack: support more than one pack lockfile
- . upload-pack: refactor reading of pack-objects out
- . Documentation: add Packfile URIs design doc
- . Documentation: order protocol v2 sections
- . http-fetch: support fetching packfiles by URL
- . http: improve documentation of http_pack_request
- . http: use --stdin when getting dumb HTTP pack
-
- WIP for allowing a response to "git fetch" to instruct the bulk of
- the pack contents to be instead taken from elsewhere (aka CDN).
-
-
-* jc/format-patch-noclobber (2019-02-22) 1 commit
- . format-patch: --no-clobber refrains from overwriting output files
-
- "git format-patch" used to overwrite an existing patch/cover-letter
- file.  A new "--no-clobber" option stops it.
