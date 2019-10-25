@@ -363,6 +363,8 @@ static inline int needs_hiding(const char *path)
 			/* ignore trailing slashes */
 			if (*path)
 				basename = path;
+			else
+				break;
 		}
 
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE)
