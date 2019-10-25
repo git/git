@@ -255,6 +255,48 @@ static void get_object_info_summary(struct strbuf *obj_info, int nongit)
 	strbuf_release(&dirpath);
 }
 
+static void get_alternates_summary(struct strbuf *alternates_info, int nongit)
+{
+	struct strbuf alternates_path = STRBUF_INIT;
+	struct strbuf alternate = STRBUF_INIT;
+	FILE *file;
+	size_t exists = 0, broken = 0;
+
+	if (nongit) {
+		strbuf_addstr(alternates_info,
+			"not run from a git repository - alternates unavailable\n");
+		return;
+	}
+
+	strbuf_addstr(&alternates_path, get_object_directory());
+	strbuf_complete(&alternates_path, '/');
+	strbuf_addstr(&alternates_path, "info/alternates");
+
+	file = fopen(alternates_path.buf, "r");
+	if (!file) {
+		strbuf_addstr(alternates_info, "No alternates file found.\n");
+		strbuf_release(&alternates_path);
+		return;
+	}
+
+	while (strbuf_getline(&alternate, file) != EOF) {
+		if (!access(alternate.buf, F_OK))
+			exists++;
+		else
+			broken++;
+	}
+
+	strbuf_addf(alternates_info,
+		    "%zd alternates found (%zd working, %zd broken)\n",
+		    exists + broken,
+		    exists,
+		    broken);
+
+	fclose(file);
+	strbuf_release(&alternate);
+	strbuf_release(&alternates_path);
+}
+
 static const char * const bugreport_usage[] = {
 	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
 	NULL
@@ -354,6 +396,9 @@ int cmd_main(int argc, const char **argv)
 
 	get_header(&buffer, "Object Info Summary");
 	get_object_info_summary(&buffer, nongit_ok);
+
+	get_header(&buffer, "Alternates");
+	get_alternates_summary(&buffer, nongit_ok);
 
 	report = fopen_for_writing(report_path.buf);
 
