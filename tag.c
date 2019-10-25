@@ -141,7 +141,16 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 
 	if (item->object.parsed)
 		return 0;
-	item->object.parsed = 1;
+
+	if (item->tag) {
+		/*
+		 * Presumably left over from a previous failed parse;
+		 * clear it out in preparation for re-parsing (we'll probably
+		 * hit the same error, which lets us tell our current caller
+		 * about the problem).
+		 */
+		FREE_AND_NULL(item->tag);
+	}
 
 	if (size < the_hash_algo->hexsz + 24)
 		return -1;
@@ -192,6 +201,7 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 	else
 		item->date = 0;
 
+	item->object.parsed = 1;
 	return 0;
 }
 

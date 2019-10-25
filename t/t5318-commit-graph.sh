@@ -660,7 +660,7 @@ test_expect_success 'corrupt commit-graph write (missing tree)' '
 		git commit-tree -p "$broken" -m "good" "$tree" >good &&
 		test_must_fail git commit-graph write --stdin-commits \
 			<good 2>test_err &&
-		test_i18ngrep "unable to get tree for" test_err
+		test_i18ngrep "unable to parse commit" test_err
 	)
 '
 
