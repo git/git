@@ -72,7 +72,7 @@ sub handle_line {
 	      (?:$COLOR?\|$COLOR?[ ])* # zero or more trailing "|"
 	                         [ ]*  # trailing whitespace for merges
 	    /x) {
-	        my $graph_prefix = $&;
+		my $graph_prefix = $&;
 
 		# We must flush before setting graph indent, since the
 		# new commit may be indented differently from what we

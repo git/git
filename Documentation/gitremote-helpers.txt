@@ -509,6 +509,11 @@ set by Git if the remote helper has the 'option' capability.
 	Indicate that only the objects wanted need to be fetched, not
 	their dependents.
 
+'option atomic' {'true'|'false'}::
+	When pushing, request the remote server to update refs in a single atomic
+	transaction.  If successful, all refs will be updated, or none will.  If the
+	remote side does not support this capability, the push will fail.
+
 SEE ALSO
 --------
 linkgit:git-remote[1]

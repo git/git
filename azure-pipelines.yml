@@ -157,7 +157,7 @@ jobs:
     displayName: 'Download git-sdk-64-minimal'
   - powershell: |
       & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-        make vcxproj
+        make NDEBUG=1 DEVELOPER=1 vcxproj
       "@
       if (!$?) { exit(1) }
     displayName: Generate Visual Studio Solution
@@ -255,7 +255,7 @@ jobs:
 
         cd t &&
         PATH=\"`$PWD/helper:`$PATH\" &&
-        test-tool.exe run-command testsuite -V -x --write-junit-xml \
+        test-tool.exe run-command testsuite --jobs=10 -V -x --write-junit-xml \
                 `$(test-tool.exe path-utils slice-tests \
                         `$SYSTEM_JOBPOSITIONINPHASE `$SYSTEM_TOTALJOBSINPHASE t[0-9]*.sh)
       "@

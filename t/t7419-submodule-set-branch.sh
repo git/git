@@ -34,7 +34,7 @@ test_expect_success 'submodule config cache setup' '
 
 test_expect_success 'ensure submodule branch is unset' '
 	(cd super &&
-		test_must_fail grep branch .gitmodules
+		! grep branch .gitmodules
 	)
 '
 
@@ -54,7 +54,7 @@ test_expect_success 'test submodule set-branch --branch' '
 test_expect_success 'test submodule set-branch --default' '
 	(cd super &&
 		git submodule set-branch --default submodule &&
-		test_must_fail grep branch .gitmodules &&
+		! grep branch .gitmodules &&
 		git submodule update --remote &&
 		cat <<-\EOF >expect &&
 		a
@@ -80,7 +80,7 @@ test_expect_success 'test submodule set-branch -b' '
 test_expect_success 'test submodule set-branch -d' '
 	(cd super &&
 		git submodule set-branch -d submodule &&
-		test_must_fail grep branch .gitmodules &&
+		! grep branch .gitmodules &&
 		git submodule update --remote &&
 		cat <<-\EOF >expect &&
 		a

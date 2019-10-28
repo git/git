@@ -29,7 +29,7 @@ void progress_test_force_update(void);
 
 int cmd__progress(int argc, const char **argv)
 {
-	uint64_t total = 0;
+	int total = 0;
 	const char *title;
 	struct strbuf line = STRBUF_INIT;
 	struct progress *progress;

@@ -87,6 +87,10 @@ test_index_version () {
 }
 
 test_expect_success 'index version config precedence' '
+	test_index_version 0 false 0 2 &&
+	test_index_version 2 false 0 2 &&
+	test_index_version 3 false 0 2 &&
+	test_index_version 4 false 0 4 &&
 	test_index_version 2 false 4 4 &&
 	test_index_version 2 true 0 2 &&
 	test_index_version 0 true 0 4 &&
