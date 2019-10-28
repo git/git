@@ -203,6 +203,7 @@ gitmodules                              guide
 gitnamespaces                           guide
 gitrepository-layout                    guide
 gitrevisions                            guide
+gitsubmodules                           guide
 gittutorial-2                           guide
 gittutorial                             guide
 gitworkflows                            guide

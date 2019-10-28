@@ -3,7 +3,7 @@ gitsubmodules(7)
 
 NAME
 ----
-gitsubmodules - mounting one repository inside another
+gitsubmodules - Mounting one repository inside another
 
 SYNOPSIS
 --------
