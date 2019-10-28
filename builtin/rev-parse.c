@@ -918,6 +918,17 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				show_datestring("--min-age=", arg);
 				continue;
 			}
+			if (opt_with_value(arg, "--show-object-format", &arg)) {
+				const char *val = arg ? arg : "storage";
+
+				if (strcmp(val, "storage") &&
+				    strcmp(val, "input") &&
+				    strcmp(val, "output"))
+					die("unknown mode for --show-object-format: %s",
+					    arg);
+				puts(the_hash_algo->name);
+				continue;
+			}
 			if (show_flag(arg) && verify)
 				die_no_single_rev(quiet);
 			continue;
