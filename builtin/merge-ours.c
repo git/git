@@ -11,6 +11,11 @@
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "diff.h"
+#include "parse-options.h"
+
+/* parse-options.h added to initiate replacement of manual option parsing
+ * with parse-options. 
+ */
 
 static const char builtin_merge_ours_usage[] =
 	"git merge-ours <base>... -- HEAD <remote>...";
