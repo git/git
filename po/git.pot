@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-10-21 19:55+0800\n"
+"POT-Creation-Date: 2019-10-28 13:19+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3145,24 +3145,24 @@ msgstr ""
 msgid "ignore invalid color '%.*s' in log.graphColors"
 msgstr ""
 
-#: grep.c:627
+#: grep.c:668
 msgid ""
 "given pattern contains NULL byte (via -f <file>). This is only supported "
 "with -P under PCRE v2"
 msgstr ""
 
-#: grep.c:2083
+#: grep.c:2124
 #, c-format
 msgid "'%s': unable to read %s"
 msgstr ""
 
-#: grep.c:2100 setup.c:165 builtin/clone.c:408 builtin/diff.c:82
+#: grep.c:2141 setup.c:165 builtin/clone.c:408 builtin/diff.c:82
 #: builtin/rm.c:135
 #, c-format
 msgid "failed to stat '%s'"
 msgstr ""
 
-#: grep.c:2111
+#: grep.c:2152
 #, c-format
 msgid "'%s': short read"
 msgstr ""
@@ -6990,7 +6990,7 @@ msgstr ""
 msgid "error while running fast-import"
 msgstr ""
 
-#: transport-helper.c:543 transport-helper.c:1128
+#: transport-helper.c:543 transport-helper.c:1132
 #, c-format
 msgid "could not read ref %s"
 msgstr ""
@@ -7038,76 +7038,81 @@ msgstr ""
 msgid "helper %s does not support --signed=if-asked"
 msgstr ""
 
-#: transport-helper.c:861
+#: transport-helper.c:859
+#, c-format
+msgid "helper %s does not support --atomic"
+msgstr ""
+
+#: transport-helper.c:865
 #, c-format
 msgid "helper %s does not support 'push-option'"
 msgstr ""
 
-#: transport-helper.c:959
+#: transport-helper.c:963
 msgid "remote-helper doesn't support push; refspec needed"
 msgstr ""
 
-#: transport-helper.c:964
+#: transport-helper.c:968
 #, c-format
 msgid "helper %s does not support 'force'"
 msgstr ""
 
-#: transport-helper.c:1011
+#: transport-helper.c:1015
 msgid "couldn't run fast-export"
 msgstr ""
 
-#: transport-helper.c:1016
+#: transport-helper.c:1020
 msgid "error while running fast-export"
 msgstr ""
 
-#: transport-helper.c:1041
+#: transport-helper.c:1045
 #, c-format
 msgid ""
 "No refs in common and none specified; doing nothing.\n"
 "Perhaps you should specify a branch such as 'master'.\n"
 msgstr ""
 
-#: transport-helper.c:1114
+#: transport-helper.c:1118
 #, c-format
 msgid "malformed response in ref list: %s"
 msgstr ""
 
-#: transport-helper.c:1266
+#: transport-helper.c:1270
 #, c-format
 msgid "read(%s) failed"
 msgstr ""
 
-#: transport-helper.c:1293
+#: transport-helper.c:1297
 #, c-format
 msgid "write(%s) failed"
 msgstr ""
 
-#: transport-helper.c:1342
+#: transport-helper.c:1346
 #, c-format
 msgid "%s thread failed"
 msgstr ""
 
-#: transport-helper.c:1346
+#: transport-helper.c:1350
 #, c-format
 msgid "%s thread failed to join: %s"
 msgstr ""
 
-#: transport-helper.c:1365 transport-helper.c:1369
+#: transport-helper.c:1369 transport-helper.c:1373
 #, c-format
 msgid "can't start thread for copying data: %s"
 msgstr ""
 
-#: transport-helper.c:1406
+#: transport-helper.c:1410
 #, c-format
 msgid "%s process failed to wait"
 msgstr ""
 
-#: transport-helper.c:1410
+#: transport-helper.c:1414
 #, c-format
 msgid "%s process failed"
 msgstr ""
 
-#: transport-helper.c:1428 transport-helper.c:1437
+#: transport-helper.c:1432 transport-helper.c:1441
 msgid "can't start thread for copying data"
 msgstr ""
 
@@ -19863,111 +19868,111 @@ msgid ""
 "   redirect: %s"
 msgstr ""
 
-#: remote-curl.c:157
+#: remote-curl.c:166
 #, c-format
 msgid "invalid quoting in push-option value: '%s'"
 msgstr ""
 
-#: remote-curl.c:254
+#: remote-curl.c:263
 #, c-format
 msgid "%sinfo/refs not valid: is this a git repository?"
 msgstr ""
 
-#: remote-curl.c:355
+#: remote-curl.c:364
 msgid "invalid server response; expected service, got flush packet"
 msgstr ""
 
-#: remote-curl.c:386
+#: remote-curl.c:395
 #, c-format
 msgid "invalid server response; got '%s'"
 msgstr ""
 
-#: remote-curl.c:446
+#: remote-curl.c:455
 #, c-format
 msgid "repository '%s' not found"
 msgstr ""
 
-#: remote-curl.c:450
+#: remote-curl.c:459
 #, c-format
 msgid "Authentication failed for '%s'"
 msgstr ""
 
-#: remote-curl.c:454
+#: remote-curl.c:463
 #, c-format
 msgid "unable to access '%s': %s"
 msgstr ""
 
-#: remote-curl.c:460
+#: remote-curl.c:469
 #, c-format
 msgid "redirecting to %s"
 msgstr ""
 
-#: remote-curl.c:584
+#: remote-curl.c:593
 msgid "shouldn't have EOF when not gentle on EOF"
 msgstr ""
 
-#: remote-curl.c:664
+#: remote-curl.c:673
 msgid "unable to rewind rpc post data - try increasing http.postBuffer"
 msgstr ""
 
-#: remote-curl.c:724
+#: remote-curl.c:733
 #, c-format
 msgid "RPC failed; %s"
 msgstr ""
 
-#: remote-curl.c:764
+#: remote-curl.c:773
 msgid "cannot handle pushes this big"
 msgstr ""
 
-#: remote-curl.c:879
+#: remote-curl.c:888
 #, c-format
 msgid "cannot deflate request; zlib deflate error %d"
 msgstr ""
 
-#: remote-curl.c:883
+#: remote-curl.c:892
 #, c-format
 msgid "cannot deflate request; zlib end error %d"
 msgstr ""
 
-#: remote-curl.c:1014
+#: remote-curl.c:1023
 msgid "dumb http transport does not support shallow capabilities"
 msgstr ""
 
-#: remote-curl.c:1028
+#: remote-curl.c:1037
 msgid "fetch failed."
 msgstr ""
 
-#: remote-curl.c:1076
+#: remote-curl.c:1085
 msgid "cannot fetch by sha1 over smart http"
 msgstr ""
 
-#: remote-curl.c:1120 remote-curl.c:1126
+#: remote-curl.c:1129 remote-curl.c:1135
 #, c-format
 msgid "protocol error: expected sha/ref, got '%s'"
 msgstr ""
 
-#: remote-curl.c:1138 remote-curl.c:1250
+#: remote-curl.c:1147 remote-curl.c:1261
 #, c-format
 msgid "http transport does not support %s"
 msgstr ""
 
-#: remote-curl.c:1174
+#: remote-curl.c:1183
 msgid "git-http-push failed"
 msgstr ""
 
-#: remote-curl.c:1356
+#: remote-curl.c:1367
 msgid "remote-curl: usage: git remote-curl <remote> [<url>]"
 msgstr ""
 
-#: remote-curl.c:1388
+#: remote-curl.c:1399
 msgid "remote-curl: error reading command stream from git"
 msgstr ""
 
-#: remote-curl.c:1395
+#: remote-curl.c:1406
 msgid "remote-curl: fetch attempted without a local repo"
 msgstr ""
 
-#: remote-curl.c:1435
+#: remote-curl.c:1446
 #, c-format
 msgid "remote-curl: unknown command '%s' from git"
 msgstr ""
