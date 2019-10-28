@@ -6,6 +6,7 @@ test_description='difference in submodules'
 . "$TEST_DIRECTORY"/diff-lib.sh
 
 test_expect_success setup '
+	test_oid_init &&
 	test_tick &&
 	test_create_repo sub &&
 	(
@@ -36,7 +37,8 @@ test_expect_success setup '
 '
 
 test_expect_success 'git diff --raw HEAD' '
-	git diff --raw --abbrev=40 HEAD >actual &&
+	hexsz=$(test_oid hexsz) &&
+	git diff --raw --abbrev=$hexsz HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -245,23 +247,21 @@ test_expect_success 'git diff (empty submodule dir)' '
 '
 
 test_expect_success 'conflicted submodule setup' '
-
-	# 39 efs
-	c=fffffffffffffffffffffffffffffffffffffff &&
+	c=$(test_oid ff_1) &&
 	(
 		echo "000000 $ZERO_OID 0	sub" &&
 		echo "160000 1$c 1	sub" &&
 		echo "160000 2$c 2	sub" &&
 		echo "160000 3$c 3	sub"
 	) | git update-index --index-info &&
-	echo >expect.nosub '\''diff --cc sub
+	echo >expect.nosub "diff --cc sub
 index 2ffffff,3ffffff..0000000
 --- a/sub
 +++ b/sub
 @@@ -1,1 -1,1 +1,1 @@@
-- Subproject commit 2fffffffffffffffffffffffffffffffffffffff
- -Subproject commit 3fffffffffffffffffffffffffffffffffffffff
-++Subproject commit 0000000000000000000000000000000000000000'\'' &&
+- Subproject commit 2$c
+ -Subproject commit 3$c
+++Subproject commit $ZERO_OID" &&
 
 	hh=$(git rev-parse HEAD) &&
 	sed -e "s/$ZERO_OID/$hh/" expect.nosub >expect.withsub
