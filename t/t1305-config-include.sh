@@ -63,7 +63,7 @@ test_expect_success 'listing includes option and expansion' '
 	test.one=1
 	EOF
 	git config --list >actual.full &&
-	grep -v ^core actual.full >actual &&
+	grep -v -e ^core -e ^extensions actual.full >actual &&
 	test_cmp expect actual
 '
 
