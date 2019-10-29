@@ -696,13 +696,20 @@ static size_t format_person_part(struct strbuf *sb, char part,
 	mail = s.mail_begin;
 	maillen = s.mail_end - s.mail_begin;
 
-	if (part == 'N' || part == 'E') /* mailmap lookup */
+	if (part == 'N' || part == 'E' || part == 'L') /* mailmap lookup */
 		mailmap_name(&mail, &maillen, &name, &namelen);
 	if (part == 'n' || part == 'N') {	/* name */
 		strbuf_add(sb, name, namelen);
 		return placeholder_len;
 	}
 	if (part == 'e' || part == 'E') {	/* email */
+		strbuf_add(sb, mail, maillen);
+		return placeholder_len;
+	}
+	if (part == 'l' || part == 'L') {	/* local-part */
+		const char *at = memchr(mail, '@', maillen);
+		if (at)
+			maillen = at - mail;
 		strbuf_add(sb, mail, maillen);
 		return placeholder_len;
 	}

@@ -109,31 +109,35 @@ commit $head1
 EOF
 
 # we don't test relative here
-test_format author %an%n%ae%n%ad%n%aD%n%at <<EOF
+test_format author %an%n%ae%n%al%n%ad%n%aD%n%at <<EOF
 commit $head2
 $GIT_AUTHOR_NAME
 $GIT_AUTHOR_EMAIL
+$TEST_AUTHOR_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 commit $head1
 $GIT_AUTHOR_NAME
 $GIT_AUTHOR_EMAIL
+$TEST_AUTHOR_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 EOF
 
-test_format committer %cn%n%ce%n%cd%n%cD%n%ct <<EOF
+test_format committer %cn%n%ce%n%cl%n%cd%n%cD%n%ct <<EOF
 commit $head2
 $GIT_COMMITTER_NAME
 $GIT_COMMITTER_EMAIL
+$TEST_COMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 commit $head1
 $GIT_COMMITTER_NAME
 $GIT_COMMITTER_EMAIL
+$TEST_COMMITTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993

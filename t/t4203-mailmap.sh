@@ -413,6 +413,34 @@ test_expect_success 'Log output (complex mapping)' '
 '
 
 cat >expect << EOF
+Author email cto@coompany.xx has local-part cto
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email me@company.xx has local-part me
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email me@company.xx has local-part me
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email nick2@company.xx has local-part nick2
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email bugs@company.xx has local-part bugs
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email bugs@company.xx has local-part bugs
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email author@example.com has local-part author
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+EOF
+
+test_expect_success 'Log output (local-part email address)' '
+	git log --pretty=format:"Author email %ae has local-part %al%nCommitter email %ce has local-part %cl%n" >actual &&
+	test_cmp expect actual
+'
+
+cat >expect << EOF
 Author: CTO <cto@company.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
