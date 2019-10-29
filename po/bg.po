@@ -157,8 +157,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.24\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2019-10-19 09:17+0200\n"
-"PO-Revision-Date: 2019-10-19 12:20+0200\n"
+"POT-Creation-Date: 2019-10-28 13:19+0800\n"
+"PO-Revision-Date: 2019-10-29 11:35+0100\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -3531,7 +3531,7 @@ msgstr "Програмата не успя да запише самостоят�
 msgid "ignore invalid color '%.*s' in log.graphColors"
 msgstr "прескачане на неправилния цвят „%.*s“ в „log.graphColors“"
 
-#: grep.c:627
+#: grep.c:668
 msgid ""
 "given pattern contains NULL byte (via -f <file>). This is only supported "
 "with -P under PCRE v2"
@@ -3539,18 +3539,18 @@ msgstr ""
 "зададеният шаблон съдържа нулев знак (идва от -f „ФАЙЛ“).  Това се поддържа "
 "в комбинация с „-P“ само при ползването на „PCRE v2“"
 
-#: grep.c:2083
+#: grep.c:2124
 #, c-format
 msgid "'%s': unable to read %s"
 msgstr "„%s“: файлът сочен от „%s“ не може да бъде прочетен"
 
-#: grep.c:2100 setup.c:165 builtin/clone.c:408 builtin/diff.c:82
+#: grep.c:2141 setup.c:165 builtin/clone.c:408 builtin/diff.c:82
 #: builtin/rm.c:135
 #, c-format
 msgid "failed to stat '%s'"
 msgstr "не може да бъде получена информация чрез „stat“ за „%s“"
 
-#: grep.c:2111
+#: grep.c:2152
 #, c-format
 msgid "'%s': short read"
 msgstr "„%s“: изчитането върна по-малко байтове от очакваното"
@@ -7785,7 +7785,7 @@ msgstr "неуспешно изпълнение на бързо внасяне"
 msgid "error while running fast-import"
 msgstr "грешка при изпълнението на бързо внасяне"
 
-#: transport-helper.c:543 transport-helper.c:1128
+#: transport-helper.c:543 transport-helper.c:1132
 #, c-format
 msgid "could not read ref %s"
 msgstr "указателят „%s“ не може да се прочете"
@@ -7835,32 +7835,37 @@ msgid "helper %s does not support --signed=if-asked"
 msgstr ""
 "насрещната помощна програма „%s“ не поддържа опцията „--signed=if-asked“"
 
-#: transport-helper.c:861
+#: transport-helper.c:859
+#, c-format
+msgid "helper %s does not support --atomic"
+msgstr "насрещната помощна програма „%s“ не поддържа опцията „--atomic“"
+
+#: transport-helper.c:865
 #, c-format
 msgid "helper %s does not support 'push-option'"
 msgstr "насрещната помощна програма „%s“ не поддържа опции за изтласкване"
 
-#: transport-helper.c:959
+#: transport-helper.c:963
 msgid "remote-helper doesn't support push; refspec needed"
 msgstr ""
 "насрещната помощна програма не поддържа изтласкване.  Необходимо е "
 "изброяване на указателите"
 
-#: transport-helper.c:964
+#: transport-helper.c:968
 #, c-format
 msgid "helper %s does not support 'force'"
 msgstr ""
 "насрещната помощна програма не поддържа „%s“ поддържа опцията „--force“"
 
-#: transport-helper.c:1011
+#: transport-helper.c:1015
 msgid "couldn't run fast-export"
 msgstr "не може да се извърши бързо изнасяне"
 
-#: transport-helper.c:1016
+#: transport-helper.c:1020
 msgid "error while running fast-export"
 msgstr "грешка при изпълнението на командата за бързо изнасяне"
 
-#: transport-helper.c:1041
+#: transport-helper.c:1045
 #, c-format
 msgid ""
 "No refs in common and none specified; doing nothing.\n"
@@ -7869,47 +7874,47 @@ msgstr ""
 "Няма общи указатели, не са указани никакви указатели — нищо няма да бъде\n"
 "направено.  Пробвайте да укажете клон, напр. “master“.\n"
 
-#: transport-helper.c:1114
+#: transport-helper.c:1118
 #, c-format
 msgid "malformed response in ref list: %s"
 msgstr "неправилен отговор в списъка с указатели: „%s“"
 
-#: transport-helper.c:1266
+#: transport-helper.c:1270
 #, c-format
 msgid "read(%s) failed"
 msgstr "неуспешно четене на „%s“"
 
-#: transport-helper.c:1293
+#: transport-helper.c:1297
 #, c-format
 msgid "write(%s) failed"
 msgstr "неуспешен запис в „%s“"
 
-#: transport-helper.c:1342
+#: transport-helper.c:1346
 #, c-format
 msgid "%s thread failed"
 msgstr "неуспешно изпълнение на нишката „%s“"
 
-#: transport-helper.c:1346
+#: transport-helper.c:1350
 #, c-format
 msgid "%s thread failed to join: %s"
 msgstr "завършването на нишката „%s“ не може да се изчака: „%s“"
 
-#: transport-helper.c:1365 transport-helper.c:1369
+#: transport-helper.c:1369 transport-helper.c:1373
 #, c-format
 msgid "can't start thread for copying data: %s"
 msgstr "неуспешно стартиране на нишка за копиране на данните: „%s“"
 
-#: transport-helper.c:1406
+#: transport-helper.c:1410
 #, c-format
 msgid "%s process failed to wait"
 msgstr "процесът на „%s“ не успя да изчака чрез „waitpid“"
 
-#: transport-helper.c:1410
+#: transport-helper.c:1414
 #, c-format
 msgid "%s process failed"
 msgstr "неуспешно изпълнение на „%s“"
 
-#: transport-helper.c:1428 transport-helper.c:1437
+#: transport-helper.c:1432 transport-helper.c:1441
 msgid "can't start thread for copying data"
 msgstr "неуспешно стартиране на нишка за копиране на данните"
 
@@ -21797,120 +21802,120 @@ msgstr ""
 "    ● заявен адрес: %s\n"
 "    ● пренасочване: %s"
 
-#: remote-curl.c:157
+#: remote-curl.c:166
 #, c-format
 msgid "invalid quoting in push-option value: '%s'"
 msgstr ""
 "неправилно екраниране или цитиране в стойността към опция за изтласкване: "
 "„%s“"
 
-#: remote-curl.c:254
+#: remote-curl.c:263
 #, c-format
 msgid "%sinfo/refs not valid: is this a git repository?"
 msgstr "„%sinfo/refs“ е неизползваемо, проверете дали е хранилище на git"
 
-#: remote-curl.c:355
+#: remote-curl.c:364
 msgid "invalid server response; expected service, got flush packet"
 msgstr ""
 "неправилен отговор от сървъра: очакваше се услуга, а бе получен изчистващ "
 "пакет „flush“"
 
-#: remote-curl.c:386
+#: remote-curl.c:395
 #, c-format
 msgid "invalid server response; got '%s'"
 msgstr "неправилен отговор от сървъра, бе получено: „%s“"
 
-#: remote-curl.c:446
+#: remote-curl.c:455
 #, c-format
 msgid "repository '%s' not found"
 msgstr "хранилището „%s“ липсва"
 
-#: remote-curl.c:450
+#: remote-curl.c:459
 #, c-format
 msgid "Authentication failed for '%s'"
 msgstr "Неуспешна идентификация към „%s“"
 
-#: remote-curl.c:454
+#: remote-curl.c:463
 #, c-format
 msgid "unable to access '%s': %s"
 msgstr "няма достъп до „%s“: %s"
 
-#: remote-curl.c:460
+#: remote-curl.c:469
 #, c-format
 msgid "redirecting to %s"
 msgstr "пренасочване към „%s“"
 
-#: remote-curl.c:584
+#: remote-curl.c:593
 msgid "shouldn't have EOF when not gentle on EOF"
 msgstr "получен е EOF, в режим без поддръжка за това"
 
-#: remote-curl.c:664
+#: remote-curl.c:673
 msgid "unable to rewind rpc post data - try increasing http.postBuffer"
 msgstr ""
 "данните за POST не могат да се прочетат наново, пробвайте да увеличите "
 "настройката „http.postBuffer“"
 
-#: remote-curl.c:724
+#: remote-curl.c:733
 #, c-format
 msgid "RPC failed; %s"
 msgstr "Неуспешно отдалечено извикване.  %s"
 
-#: remote-curl.c:764
+#: remote-curl.c:773
 msgid "cannot handle pushes this big"
 msgstr "толкова големи изтласквания не може да се изпълнят"
 
-#: remote-curl.c:879
+#: remote-curl.c:888
 #, c-format
 msgid "cannot deflate request; zlib deflate error %d"
 msgstr ""
 "заявката не може да бъде декомпресирана, грешка от „zlib“ при "
 "декомпресиране: %d"
 
-#: remote-curl.c:883
+#: remote-curl.c:892
 #, c-format
 msgid "cannot deflate request; zlib end error %d"
 msgstr ""
 "заявката не може да бъде декомпресирана; грешка от „zlib“ при завършване: %d<"
 
-#: remote-curl.c:1014
+#: remote-curl.c:1023
 msgid "dumb http transport does not support shallow capabilities"
 msgstr "опростеният транспорт по http не поддържа плитки клиенти"
 
-#: remote-curl.c:1028
+#: remote-curl.c:1037
 msgid "fetch failed."
 msgstr "неуспешно доставяне."
 
-#: remote-curl.c:1076
+#: remote-curl.c:1085
 msgid "cannot fetch by sha1 over smart http"
 msgstr "умният вариант на http не може да доставя по SHA1"
 
-#: remote-curl.c:1120 remote-curl.c:1126
+#: remote-curl.c:1129 remote-curl.c:1135
 #, c-format
 msgid "protocol error: expected sha/ref, got '%s'"
 msgstr "протоколна грешка: очаква се SHA1 или указател, а бе получено: „%s“"
 
-#: remote-curl.c:1138 remote-curl.c:1250
+#: remote-curl.c:1147 remote-curl.c:1261
 #, c-format
 msgid "http transport does not support %s"
 msgstr "транспортът по http не поддържа „%s“"
 
-#: remote-curl.c:1174
+#: remote-curl.c:1183
 msgid "git-http-push failed"
 msgstr "неуспешно изпълнение на „git-http-push“"
 
-#: remote-curl.c:1356
+#: remote-curl.c:1367
 msgid "remote-curl: usage: git remote-curl <remote> [<url>]"
 msgstr "remote-curl: употреба: git remote-curl ХРАНИЛИЩЕ [АДРЕС]"
 
-#: remote-curl.c:1388
+#: remote-curl.c:1399
 msgid "remote-curl: error reading command stream from git"
 msgstr "remote-curl: грешка при изчитането на потока команди от git"
 
-#: remote-curl.c:1395
+#: remote-curl.c:1406
 msgid "remote-curl: fetch attempted without a local repo"
 msgstr "remote-curl: опит за доставяне без локално хранилище"
 
-#: remote-curl.c:1435
+#: remote-curl.c:1446
 #, c-format
 msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl: непозната команда „%s“ от git"
@@ -24405,44 +24410,3 @@ msgstr "„%s“ се пропуска, защото е с разширение 
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Наистина ли искате да изпратите „%s“? [y|N]: "
-
-#, c-format
-#~ msgid "unknown core.untrackedCache value '%s'; using 'keep' default value"
-#~ msgstr ""
-#~ "непозната стойност „%s“ за настройката „core.untrackedCache“.  Ще се "
-#~ "ползва стандартната стойност „keep“ (запазване)"
-
-#~ msgid "cannot change partial clone promisor remote"
-#~ msgstr "не може да промените хранилището-гарант на непълно хранилище"
-
-#~ msgid "error building trees"
-#~ msgstr "грешка при изграждане на дърветата"
-
-#, c-format
-#~ msgid "invalid date format '%s' in '%s'"
-#~ msgstr "неправилен формат на дата „%s“ в „%s“"
-
-#~ msgid "writing root commit"
-#~ msgstr "запазване на начално подаване"
-
-#, c-format
-#~ msgid "staged changes in the following files may be lost: %s"
-#~ msgstr "локалните промени в тези файлове ще се презапишат: %s"
-
-#~ msgid ""
-#~ "--filter can only be used with the remote configured in extensions."
-#~ "partialClone"
-#~ msgstr ""
-#~ "опцията „--filter“ може да се ползва само с отдалеченото хранилище "
-#~ "указано в настройката „extensions.partialClone“"
-
-#~ msgid "verify commit-msg hook"
-#~ msgstr ""
-#~ "проверка на куката при промяна на съобщението при подаване (commit-msg)"
-
-#~ msgid "cannot combine '--rebase-merges' with '--strategy-option'"
-#~ msgstr "опциите „--rebase-merges“ и „--strategy-option“ са несъвместими"
-
-#, c-format
-#~ msgid "invalid sparse value '%s'"
-#~ msgstr "неправилна частична стойност: %s"
