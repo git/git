@@ -193,7 +193,8 @@ create_stash () {
 			GIT_INDEX_FILE="$TMPindex" &&
 			export GIT_INDEX_FILE &&
 			git diff-index --name-only -z HEAD -- "$@" >"$TMP-stagenames" &&
-			git update-index -z --add --remove --stdin <"$TMP-stagenames" &&
+			git update-index --ignore-skip-worktree-entries \
+				-z --add --remove --stdin <"$TMP-stagenames" &&
 			git write-tree &&
 			rm -f "$TMPindex"
 		) ) ||
