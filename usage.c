@@ -9,14 +9,26 @@
 void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
-	char *p;
+	char *p, *pend = msg + sizeof(msg);
+	size_t prefix_len = strlen(prefix);
 
-	vsnprintf(msg, sizeof(msg), err, params);
-	for (p = msg; *p; p++) {
+	if (sizeof(msg) <= prefix_len) {
+		fprintf(stderr, "BUG!!! too long a prefix '%s'\n", prefix);
+		abort();
+	}
+	memcpy(msg, prefix, prefix_len);
+	p = msg + prefix_len;
+	if (vsnprintf(p, pend - p, err, params) < 0)
+		*p = '\0'; /* vsnprintf() failed, clip at prefix */
+
+	for (; p != pend - 1 && *p; p++) {
 		if (iscntrl(*p) && *p != '\t' && *p != '\n')
 			*p = '?';
 	}
-	fprintf(stderr, "%s%s\n", prefix, msg);
+
+	*(p++) = '\n'; /* we no longer need a NUL */
+	fflush(stderr);
+	write_in_full(2, msg, p - msg);
 }
 
 static NORETURN void usage_builtin(const char *err, va_list params)
