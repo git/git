@@ -1,0 +1,5 @@
+sendpack.sideband::
+	Allows to disable the side-band-64k capability for send-pack even
+	when it is advertised by the server. Makes it possible to work
+	around a limitation in the git for windows implementation together
+	with the dump git protocol. Defaults to true.
