@@ -1241,4 +1241,15 @@ test_expect_success 'stash --keep-index with file deleted in index does not resu
 	test_path_is_missing to-remove
 '
 
+test_expect_success 'stash handles skip-worktree entries nicely' '
+	test_commit A &&
+	echo changed >A.t &&
+	git add A.t &&
+	git update-index --skip-worktree A.t &&
+	rm A.t &&
+	git stash &&
+
+	git rev-parse --verify refs/stash:A.t
+'
+
 test_done
