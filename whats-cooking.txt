@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2019, #06; Thu, 24)
-X-master-at: 566a1439f6f56c2171b8853ddbca0ad3f5098770
-X-next-at: b1bccd3e3df55f279f5b5f202ffa7149543587de
+Subject: What's cooking in git.git (Oct 2019, #07; Wed, 30)
+X-master-at: f21f8f5d35b09ecdd1a0112f114436fd2eda7df2
+X-next-at: 50e10028f102536c1a9ac2647d3aae9cc8a7c5d7
 
-What's cooking in git.git (Oct 2019, #06; Thu, 24)
+What's cooking in git.git (Oct 2019, #07; Wed, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first release candidate has been tagged on the 'master' front.
-We probably would want to include ds/commit-graph-on-fetch fixup
-(which is not in 'next' yet) in the upcoming release, but other than
-that, this should be very close to the final one, I hope ;-)
+There is the v2.24.0-rc2 tag now; the contents of the release
+candidate hasn't changed much since the -rc1; hopefully we can see
+the final thing real soon now.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,247 +24,144 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/smart-http-atomic-push (2019-10-17) 1 commit
-  (merged to 'next' on 2019-10-18 at 7729d13f51)
- + remote-curl: pass on atomic capability to remote side
+* js/mingw-needs-hiding-fix (2019-10-28) 1 commit
+  (merged to 'next' on 2019-10-28 at d41210960f)
+ + mingw: avoid a buffer overrun in `needs_hiding()`
 
- The atomic push over smart HTTP transport did not work, which has
- been corrected.
-
-
-* bw/format-patch-o-create-leading-dirs (2019-10-23) 1 commit
-  (merged to 'next' on 2019-10-23 at 9204e1b2b9)
- + t4014: make output-directory tests self-contained
-
- Test update.
+ Fix for a (rather old) buffer-overrun bug.
 
 
-* cb/pcre2-chartables-leakfix (2019-10-18) 3 commits
-  (merged to 'next' on 2019-10-18 at 5bc67c64fd)
- + grep: avoid leak of chartables in PCRE2
- + grep: make PCRE2 aware of custom allocator
- + grep: make PCRE1 aware of custom allocator
+* rl/gitweb-blame-prev-fix (2019-10-28) 1 commit
+  (merged to 'next' on 2019-10-28 at 876152daa8)
+ + gitweb: correctly store previous rev in javascript-actions mode
 
- Leakfix.
-
-
-* dl/submodule-set-branch (2019-10-23) 1 commit
-  (merged to 'next' on 2019-10-23 at bb485c040f)
- + t7419: change test_must_fail to ! for grep
-
- Test update.
+ Fix a rather old bug in gitweb---incremental blame output in
+ javascript actions mode never worked.
 
 
-* ds/feature-macros (2019-10-24) 1 commit
-  (merged to 'next' on 2019-10-24 at 9c74bfb14c)
- + repo-settings: read an int for index.version
+* wb/fsmonitor-bitmap-fix (2019-10-30) 1 commit
+  (merged to 'next' on 2019-10-30 at f63ada9e8d)
+ + t7519-status-fsmonitor: improve comments
 
- The codepath that reads the index.version configuration was broken
- with a recent update, which has been corrected.
-
-
-* js/azure-ci-osx-fix (2019-10-23) 1 commit
-  (merged to 'next' on 2019-10-23 at c7fcd4f8b6)
- + ci(osx): use new location of the `perforce` cask
-
- Update installation procedure for Perforce on MacOS in the CI jobs
- running on Azure pipelines, which was failing.
-
-
-* mb/clarify-zsh-completion-doc (2019-10-18) 1 commit
-  (merged to 'next' on 2019-10-21 at 21a4eb2fe8)
- + completion: clarify installation instruction for zsh
-
- The installation instruction for zsh completion script (in
- contrib/) has been a bit improved.
-
-
-* nr/diff-highlight-indent-fix (2019-10-15) 1 commit
-  (merged to 'next' on 2019-10-21 at 8ce6000ec5)
- + diff-highlight: fix a whitespace nit
-
- Code cleanup.
-
-
-* sb/userdiff-dts (2019-10-21) 1 commit
-  (merged to 'next' on 2019-10-21 at eafa01fb62)
- + userdiff: fix some corner cases in dts regex
-
- Tweak userdiff patterns for dts.
- As adding finishing touches to the new feature in the upcoming
- release, this is fast-tracked.
-
-
-* sg/ci-osx-gcc8-fix (2019-10-24) 1 commit
-  (merged to 'next' on 2019-10-24 at 58039e24ec)
- + ci: fix GCC install in the Travis CI GCC OSX job
-
- CI build fix.
-
-
-* sg/progress-fix (2019-10-21) 1 commit
-  (merged to 'next' on 2019-10-21 at 678e344b22)
- + test-progress: fix test failures on big-endian systems
-
- Byte-order fix the recent update to progress display code.
- The breakage being fixed is a regression since the last relesae.
-
-
-* wb/fsmonitor-bitmap-fix (2019-10-12) 1 commit
-  (merged to 'next' on 2019-10-15 at 1cc4091346)
- + fsmonitor: don't fill bitmap with entries to be removed
-
- A segfault fix.
+ Comment update.
 
 --------------------------------------------------
 [New Topics]
 
-* hv/bitshift-constants-in-blame (2019-10-21) 1 commit
-  (merged to 'next' on 2019-10-24 at bc84aae4d4)
- + builtin/blame.c: constants into bit shift format
+* en/doc-typofix (2019-10-25) 1 commit
+  (merged to 'next' on 2019-10-30 at 8405cac984)
+ + Documentation: fix a bunch of typos, both old and new
 
- Move the definition of a set of bitmask constants from 0ctal
- literal to (1U<<count) notation.
-
- Will cook in 'next'.
-
-
-* jk/cleanup-object-parsing-and-fsck (2019-10-21) 23 commits
- - fsck: accept an oid instead of a "struct tree" for fsck_tree()
- - fsck: accept an oid instead of a "struct commit" for fsck_commit()
- - fsck: accept an oid instead of a "struct tag" for fsck_tag()
- - fsck: rename vague "oid" local variables
- - fsck: don't require an object struct in verify_headers()
- - fsck: don't require an object struct for fsck_ident()
- - fsck: drop blob struct from fsck_finish()
- - fsck: accept an oid instead of a "struct blob" for fsck_blob()
- - fsck: don't require an object struct for report()
- - fsck: only require an oid for skiplist functions
- - fsck: only provide oid/type in fsck_error callback
- - fsck: don't require object structs for display functions
- - fsck: use oids rather than objects for object_name API
- - fsck_describe_object(): build on our get_object_name() primitive
- - fsck: unify object-name code
- - fsck: require an actual buffer for non-blobs
- - fsck: stop checking tag->tagged
- - fsck: stop checking commit->parent counts
- - fsck: stop checking commit->tree value
- - remember commit/tag parse failures
- - parse_tag_buffer(): treat NULL tag pointer as parse error
- - parse_commit_buffer(): treat lookup_tree() failure as parse error
- - parse_commit_buffer(): treat lookup_commit() failure as parse error
-
- Crufty code and logic accumulated over time around the object
- parsing and low-level object access used in "git fsck" have been
- cleaned up.
-
-
-* js/rebase-deprecate-preserve-merges (2019-10-21) 1 commit
-  (merged to 'next' on 2019-10-24 at 82fa49bbf2)
- + rebase: hide --preserve-merges option
-
- "git rebase --preserve-merges" has been marked as deprecated; this
- release stops advertising it in the "git rebase -h" output.
+ Docfix.
 
  Will cook in 'next'.
 
 
-* po/bundle-doc-clonable (2019-10-21) 1 commit
- - Doc: Bundle file usage
+* hw/remove-api-docs-placeholder (2019-10-25) 1 commit
+  (merged to 'next' on 2019-10-30 at c99fe16682)
+ + documentation: remove empty doc files
 
- Doc update.
-
- Expecting a reroll.
-
-
-* ds/commit-graph-on-fetch (2019-10-24) 2 commits
- - commit-graph: fix writing first commit-graph during fetch
- - t5510-fetch.sh: demonstrate fetch.writeCommitGraph bug
-
- "git commit-grph write" hit BUG() in corner cases.
-
- Expecting a final fix-up.
- cf. <a9ba6007-aeb9-96b4-9436-8e956798be59@gmail.com> <20191023150402.GB26017@szeder.dev>
-
-
-* jc/am-show-current-patch-docfix (2019-10-23) 1 commit
-  (merged to 'next' on 2019-10-24 at 31fa6081f2)
- + doc: am --show-current-patch gives an entire e-mail message
-
- Doc update.
+ Docfix.
 
  Will cook in 'next'.
 
 
-* js/advise-rebase-skip (2019-10-23) 3 commits
-  (merged to 'next' on 2019-10-24 at e2edd2df2d)
- + commit: give correct advice for empty commit during a rebase
- + sequencer: export the function to get the path of `.git/rebase-merge/`
- + cherry-pick: add test for `--skip` advice in `git commit`
+* js/update-index-ignore-removal-for-skip-worktree (2019-10-29) 2 commits
+  (merged to 'next' on 2019-10-30 at 5c7c7a6055)
+ + stash: handle staged changes in skip-worktree files correctly
+ + update-index: optionally leave skip-worktree entries alone
 
- The logic used in "git commit" to give hints and errors depending
- on what operation was in progress learned to distinguish rebase and
- cherry-pick better.
+ "git stash save" in a working tree that is sparsely checked out
+ mistakenly removed paths that are outside the area of interest.
 
  Will cook in 'next'.
 
 
-* sg/dir-trie-fixes (2019-10-23) 5 commits
-  (merged to 'next' on 2019-10-24 at 06d60a7fb0)
- + path.c: don't call the match function without value in trie_find()
- + path.c: clarify two field names in 'struct common_dir'
- + path.c: mark 'logs/HEAD' in 'common_list' as file
- + path.c: clarify trie_find()'s in-code comment
- + Documentation: mention more worktree-specific exceptions
+* pb/pretty-email-without-domain-part (2019-10-30) 3 commits
+  (merged to 'next' on 2019-10-30 at 06f719efa5)
+ + pretty: add "%aL" etc. to show local-part of email addresses
+ + t4203: use test-lib.sh definitions
+ + t6006: use test-lib.sh definitions
 
- Code clean-up and a bugfix in the logic used to tell worktree local
- and repository global refs apart.
-
- Will cook in 'next'.
-
-
-* wb/midx-progress (2019-10-23) 6 commits
-  (merged to 'next' on 2019-10-24 at 95c3e3ab3a)
- + multi-pack-index: add [--[no-]progress] option.
- + midx: honor the MIDX_PROGRESS flag in midx_repack
- + midx: honor the MIDX_PROGRESS flag in verify_midx_file
- + midx: add progress to expire_midx_packs
- + midx: add progress to write_midx_file
- + midx: add MIDX_PROGRESS flag
-
- The code to generate multi-pack index learned to show (or not to
- show) progress indicators.
+ The custom format for "git log --format=<format>" learned the l/L
+ placeholder that is similar to e/E that fills in the e-mail
+ address, but only the local part on the left side of '@'.
 
  Will cook in 'next'.
 
 
-* dl/apply-3way-diff3 (2019-10-24) 5 commits
-  (merged to 'next' on 2019-10-24 at 84e27d28b6)
- + apply: respect merge.conflictStyle in --3way
- + t4108: demonstrate bug in apply
- + t4108: use `test_config` instead of `git config`
- + t4108: remove git command upstream of pipe
- + t4108: replace create_file with test_write_lines
+* sg/commit-graph-usage-fix (2019-10-28) 1 commit
+  (merged to 'next' on 2019-10-28 at 13d01506dd)
+ + builtin/commit-graph.c: remove subcommand-less usage string
 
- "git apply --3way" learned to honor merge.conflictsStyle
- configuration variable, like merges would.
-
- Will cook in 'next'.
-
-
-* hw/config-doc-in-header (2019-10-24) 1 commit
- - config: move documentation to config.h
-
- Follow recent push to move API docs from Documentation/ to header
- files and update config.h
+ Message fix.
 
  Will merge to 'next'.
 
 
-* jt/delay-fetch-if-missing (2019-10-24) 1 commit
- - fetch: delay fetch_if_missing=0 until after config
+* dl/doc-diff-no-index-implies-exit-code (2019-10-30) 1 commit
+ - git-diff.txt: document return code of `--no-index`
 
- Work-around a lazy fetch glitch.
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* dl/submodule-set-url (2019-10-30) 1 commit
+ - submodule: teach set-url subcommand
+
+ "git submodule" learned a subcommand "set-url".
+
+
+* js/vreportf-wo-buffering (2019-10-30) 1 commit
+ - vreportf(): avoid relying on stdio buffering
+
+ Messages from die() etc. can be mixed up from multiple processes
+ without even line buffering on Windows, which has been worked
+ around.
+
+
+* ma/bisect-doc-sample-update (2019-10-29) 1 commit
+ - Documentation/git-bisect.txt: add --no-ff to merge command
+
+ "git merge --no-commit" needs "--no-ff" if you do not want to move
+ HEAD, which has been corrected in the manual page for "git bisect".
+
+ Will merge to 'next'.
+
+
+* mr/clone-dir-exists-to-path-exists (2019-10-29) 1 commit
+ - clone: rename static function `dir_exists()`.
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* pb/help-list-gitsubmodules-among-guides (2019-10-29) 1 commit
+ - help: add gitsubmodules to the list of guides
+
+ Help update.
+
+ Will merge to 'next'.
+
+
+* pb/no-recursive-reset-hard-in-worktree-add (2019-10-30) 1 commit
+ - worktree: teach "add" to ignore submodule.recurse config
+
+ "git worktree add" internally calls "reset --hard" that should not
+ descend into submodules, even when submodule.recurse configuration
+ is set, but it was affected.  This has been correct.
+
+ Will merge to 'next'.
+
+
+* sg/blame-indent-heuristics-is-now-the-default (2019-10-29) 1 commit
+ - builtin/blame.c: remove '--indent-heuristic' from usage string
+
+ Message update.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -338,6 +234,161 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* hv/bitshift-constants-in-blame (2019-10-21) 1 commit
+  (merged to 'next' on 2019-10-24 at bc84aae4d4)
+ + builtin/blame.c: constants into bit shift format
+
+ Move the definition of a set of bitmask constants from 0ctal
+ literal to (1U<<count) notation.
+
+ Will cook in 'next'.
+
+
+* jk/cleanup-object-parsing-and-fsck (2019-10-28) 23 commits
+  (merged to 'next' on 2019-10-30 at 6e8b84557e)
+ + fsck: accept an oid instead of a "struct tree" for fsck_tree()
+ + fsck: accept an oid instead of a "struct commit" for fsck_commit()
+ + fsck: accept an oid instead of a "struct tag" for fsck_tag()
+ + fsck: rename vague "oid" local variables
+ + fsck: don't require an object struct in verify_headers()
+ + fsck: don't require an object struct for fsck_ident()
+ + fsck: drop blob struct from fsck_finish()
+ + fsck: accept an oid instead of a "struct blob" for fsck_blob()
+ + fsck: don't require an object struct for report()
+ + fsck: only require an oid for skiplist functions
+ + fsck: only provide oid/type in fsck_error callback
+ + fsck: don't require object structs for display functions
+ + fsck: use oids rather than objects for object_name API
+ + fsck_describe_object(): build on our get_object_name() primitive
+ + fsck: unify object-name code
+ + fsck: require an actual buffer for non-blobs
+ + fsck: stop checking tag->tagged
+ + fsck: stop checking commit->parent counts
+ + fsck: stop checking commit->tree value
+ + commit, tag: don't set parsed bit for parse failures
+ + parse_tag_buffer(): treat NULL tag pointer as parse error
+ + parse_commit_buffer(): treat lookup_tree() failure as parse error
+ + parse_commit_buffer(): treat lookup_commit() failure as parse error
+
+ Crufty code and logic accumulated over time around the object
+ parsing and low-level object access used in "git fsck" have been
+ cleaned up.
+
+ Will cook in 'next'.
+
+
+* js/rebase-deprecate-preserve-merges (2019-10-21) 1 commit
+  (merged to 'next' on 2019-10-24 at 82fa49bbf2)
+ + rebase: hide --preserve-merges option
+
+ "git rebase --preserve-merges" has been marked as deprecated; this
+ release stops advertising it in the "git rebase -h" output.
+
+ Will cook in 'next'.
+
+
+* po/bundle-doc-clonable (2019-10-21) 1 commit
+ - Doc: Bundle file usage
+
+ Doc update.
+
+ Expecting a reroll.
+
+
+* ds/commit-graph-on-fetch (2019-10-25) 2 commits
+  (merged to 'next' on 2019-10-30 at 3ca711f743)
+ + commit-graph: fix writing first commit-graph during fetch
+ + t5510-fetch.sh: demonstrate fetch.writeCommitGraph bug
+
+ "git commit-grph write" hit BUG() in corner cases.
+
+ Will cook in 'next'.
+
+
+* jc/am-show-current-patch-docfix (2019-10-23) 1 commit
+  (merged to 'next' on 2019-10-24 at 31fa6081f2)
+ + doc: am --show-current-patch gives an entire e-mail message
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* js/advise-rebase-skip (2019-10-23) 3 commits
+  (merged to 'next' on 2019-10-24 at e2edd2df2d)
+ + commit: give correct advice for empty commit during a rebase
+ + sequencer: export the function to get the path of `.git/rebase-merge/`
+ + cherry-pick: add test for `--skip` advice in `git commit`
+
+ The logic used in "git commit" to give hints and errors depending
+ on what operation was in progress learned to distinguish rebase and
+ cherry-pick better.
+
+ Will cook in 'next'.
+ cf. <9d550cd9-08a2-eee5-7d7f-63678285accc@gmail.com>
+
+
+* sg/dir-trie-fixes (2019-10-23) 5 commits
+  (merged to 'next' on 2019-10-24 at 06d60a7fb0)
+ + path.c: don't call the match function without value in trie_find()
+ + path.c: clarify two field names in 'struct common_dir'
+ + path.c: mark 'logs/HEAD' in 'common_list' as file
+ + path.c: clarify trie_find()'s in-code comment
+ + Documentation: mention more worktree-specific exceptions
+
+ Code clean-up and a bugfix in the logic used to tell worktree local
+ and repository global refs apart.
+
+ Will cook in 'next'.
+
+
+* wb/midx-progress (2019-10-23) 6 commits
+  (merged to 'next' on 2019-10-24 at 95c3e3ab3a)
+ + multi-pack-index: add [--[no-]progress] option.
+ + midx: honor the MIDX_PROGRESS flag in midx_repack
+ + midx: honor the MIDX_PROGRESS flag in verify_midx_file
+ + midx: add progress to expire_midx_packs
+ + midx: add progress to write_midx_file
+ + midx: add MIDX_PROGRESS flag
+
+ The code to generate multi-pack index learned to show (or not to
+ show) progress indicators.
+
+ Will cook in 'next'.
+
+
+* dl/apply-3way-diff3 (2019-10-24) 5 commits
+  (merged to 'next' on 2019-10-24 at 84e27d28b6)
+ + apply: respect merge.conflictStyle in --3way
+ + t4108: demonstrate bug in apply
+ + t4108: use `test_config` instead of `git config`
+ + t4108: remove git command upstream of pipe
+ + t4108: replace create_file with test_write_lines
+
+ "git apply --3way" learned to honor merge.conflictStyle
+ configuration variable, like merges would.
+
+ Will cook in 'next'.
+
+
+* hw/config-doc-in-header (2019-10-24) 1 commit
+ - config: move documentation to config.h
+
+ Follow recent push to move API docs from Documentation/ to header
+ files and update config.h
+
+ Will merge to 'next'.
+
+
+* jt/delay-fetch-if-missing (2019-10-24) 1 commit
+  (merged to 'next' on 2019-10-30 at 6c884f3267)
+ + fetch: delay fetch_if_missing=0 until after config
+
+ Work-around a lazy fetch glitch.
+
+ Will cook in 'next'.
+
+
 * dd/notes-copy-default-dst-to-head (2019-10-18) 2 commits
   (merged to 'next' on 2019-10-18 at 2588a175ec)
  + notes: fix minimum number of parameters to "copy" subcommand
@@ -372,15 +423,14 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* js/git-path-head-dot-lock-fix (2019-10-24) 2 commits
-  (merged to 'next' on 2019-10-24 at 3a7533c171)
- + git_path(): handle `.lock` files correctly
- + t1400: wrap setup code in test case
+* js/git-path-head-dot-lock-fix (2019-10-29) 2 commits
+ - git_path(): handle `.lock` files correctly
+ - t1400: wrap setup code in test case
 
  "git rev-parse --git-path HEAD.lock" did not give the right path
  when run in a secondary worktree.
 
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
 * pw/post-commit-from-sequencer (2019-10-16) 6 commits
@@ -471,30 +521,32 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* bc/hash-independent-tests-part-6 (2019-10-06) 15 commits
- - t4048: abstract away SHA-1-specific constants
- - t4045: make hash-size independent
- - t4044: update test to work with SHA-256
- - t4039: abstract away SHA-1-specific constants
- - t4038: abstract away SHA-1 specific constants
- - t4034: abstract away SHA-1-specific constants
- - t4027: make hash-size independent
- - t4015: abstract away SHA-1-specific constants
- - t4011: abstract away SHA-1-specific constants
- - t4010: abstract away SHA-1-specific constants
- - t3429: remove SHA1 annotation
- - t1305: avoid comparing extensions
- - rev-parse: add an --object-format option
- - t/oid-info: add empty tree and empty blob values
- - t/oid-info: allow looking up hash algorithm name
+* bc/hash-independent-tests-part-6 (2019-10-28) 15 commits
+  (merged to 'next' on 2019-10-30 at 70037a3839)
+ + t4048: abstract away SHA-1-specific constants
+ + t4045: make hash-size independent
+ + t4044: update test to work with SHA-256
+ + t4039: abstract away SHA-1-specific constants
+ + t4038: abstract away SHA-1 specific constants
+ + t4034: abstract away SHA-1-specific constants
+ + t4027: make hash-size independent
+ + t4015: abstract away SHA-1-specific constants
+ + t4011: abstract away SHA-1-specific constants
+ + t4010: abstract away SHA-1-specific constants
+ + t3429: remove SHA1 annotation
+ + t1305: avoid comparing extensions
+ + rev-parse: add a --show-object-format option
+ + t/oid-info: add empty tree and empty blob values
+ + t/oid-info: allow looking up hash algorithm name
 
  Test updates to prepare for SHA-2 transition continues.
 
- May be rerolled.
- cf. <20191008194012.4s35pbwbh25rblhb@camp.crustytoothpaste.net>
+ Will cook in 'next'.
 
 
-* ag/sequencer-todo-updates (2019-10-08) 5 commits
+* ag/sequencer-todo-updates (2019-10-28) 6 commits
+  (merged to 'next' on 2019-10-28 at 85f694d9d3)
+ + SQUASH??? tentative leakfix
   (merged to 'next' on 2019-10-18 at 8dac803e49)
  + sequencer: directly call pick_commits() from complete_action()
  + rebase: fill `squash_onto' in get_replay_opts()
@@ -506,7 +558,6 @@ of the repositories listed at
  during sequener operation.
 
  Will cook in 'next'.
- No need for rush, as this does not fix anything nor adds any new feature.
 
 
 * mt/threaded-grep-in-object-store (2019-10-02) 11 commits
