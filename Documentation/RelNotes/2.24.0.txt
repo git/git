@@ -316,7 +316,7 @@ Fixes since v2.23
    to access the worktree correctly, which has been corrected.
    (merge dfd557c978 js/stash-apply-in-secondary-worktree later to maint).
 
- * The merge-recursive machiery is one of the most complex parts of
+ * The merge-recursive machinery is one of the most complex parts of
    the system that accumulated cruft over time.  This large series
    cleans up the implementation quite a bit.
    (merge b657047719 en/merge-recursive-cleanup later to maint).
