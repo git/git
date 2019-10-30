@@ -6,10 +6,9 @@ Updates since v2.23
 
 Backward compatibility note
 
- * Although it is not officially deprecated, "filter-branch" is
-   showing its age and alternatives are available.  From this release,
-   we started to discourage its uses and hint people about
-   filter-repo.
+ * "filter-branch" is showing its age and alternatives are available.
+   From this release, we started to discourage its use and hint
+   people about filter-repo.
 
 UI, Workflows & Features
 
