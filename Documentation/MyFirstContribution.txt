@@ -534,6 +534,28 @@ you want to pass as a parameter something which would usually be interpreted as
 a flag.) `parse_options()` will terminate parsing when it reaches `--` and give
 you the rest of the options afterwards, untouched.
 
+Now that you have a usage hint, you can teach Git how to show it in the general
+command list shown by `git help git` or `git help -a`, which is generated from
+`command-list.txt`. Find the line for 'git-pull' so you can add your 'git-psuh'
+line above it in alphabetical order. Now, we can add some attributes about the
+command which impacts where it shows up in the aforementioned help commands. The
+top of `command-list.txt` shares some information about what each attribute
+means; in those help pages, the commands are sorted according to these
+attributes. `git psuh` is user-facing, or porcelain - so we will mark it as
+"mainporcelain". For "mainporcelain" commands, the comments at the top of
+`command-list.txt` indicate we can also optionally add an attribute from another
+list; since `git psuh` shows some information about the user's workspace but
+doesn't modify anything, let's mark it as "info". Make sure to keep your
+attributes in the same style as the rest of `command-list.txt` using spaces to
+align and delineate them:
+
+----
+git-prune-packed                        plumbingmanipulators
+git-psuh                                mainporcelain		info
+git-pull                                mainporcelain           remote
+git-push                                mainporcelain           remote
+----
+
 Build again. Now, when you run with `-h`, you should see your usage printed and
 your command terminated before anything else interesting happens. Great!
 
