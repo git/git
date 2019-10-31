@@ -785,6 +785,14 @@ will automatically run your PRs through the CI even without the permission given
 but you will not be able to `/submit` your changes until someone allows you to
 use the tool.
 
+NOTE: You can typically find someone who can `/allow` you on GitGitGadget by
+either examining recent pull requests where someone has been granted `/allow`
+(https://github.com/gitgitgadget/git/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+%22%2Fallow%22[Search:
+is:pr is:open "/allow"]), in which case both the author and the person who
+granted the `/allow` can now `/allow` you, or by inquiring on the
+https://webchat.freenode.net/#git-devel[#git-devel] IRC channel on Freenode
+linking your pull request and asking for someone to `/allow` you.
+
 If the CI fails, you can update your changes with `git rebase -i` and push your
 branch again:
 
