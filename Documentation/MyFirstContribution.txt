@@ -38,6 +38,26 @@ $ git clone https://github.com/git/git git
 $ cd git
 ----
 
+[[dependencies]]
+=== Installing Dependencies
+
+To build Git from source, you need to have a handful of dependencies installed
+on your system. For a hint of what's needed, you can take a look at
+`INSTALL`, paying close attention to the section about Git's dependencies on
+external programs and libraries. That document mentions a way to "test-drive"
+our freshly built Git without installing; that's the method we'll be using in
+this tutorial.
+
+Make sure that your environment has everything you need by building your brand
+new clone of Git from the above step:
+
+----
+$ make
+----
+
+NOTE: The Git build is parallelizable. `-j#` is not included above but you can
+use it as you prefer, here and elsewhere.
+
 [[identify-problem]]
 === Identify Problem to Solve
 
@@ -137,9 +157,6 @@ $ make
 NOTE: When you are developing the Git project, it's preferred that you use the
 `DEVELOPER` flag; if there's some reason it doesn't work for you, you can turn
 it off, but it's a good idea to mention the problem to the mailing list.
-
-NOTE: The Git build is parallelizable. `-j#` is not included above but you can
-use it as you prefer, here and elsewhere.
 
 Great, now your new command builds happily on its own. But nobody invokes it.
 Let's change that.
