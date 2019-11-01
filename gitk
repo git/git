@@ -8150,6 +8150,8 @@ proc parseblobdiffline {ids line} {
 	}
 	# start of a new file
 	set diffinhdr 1
+	set currdiffsubmod ""
+
 	$ctext insert end "\n"
 	set curdiffstart [$ctext index "end - 1c"]
 	lappend ctext_file_names ""
@@ -8233,11 +8235,9 @@ proc parseblobdiffline {ids line} {
 	    $ctext insert end "$line\n" filesep
 	}
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  >" $line]} {
-	set $currdiffsubmod ""
 	set line [encoding convertfrom $diffencoding $line]
 	$ctext insert end "$line\n" dresult
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  <" $line]} {
-	set $currdiffsubmod ""
 	set line [encoding convertfrom $diffencoding $line]
 	$ctext insert end "$line\n" d0
     } elseif {$diffinhdr} {
