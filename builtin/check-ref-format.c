@@ -59,7 +59,6 @@ int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 	enum {
 		CHECK_REF_FORMAT_BRANCH,
 	};
-
 	int i = 0;
 	int verbose;
 	int normalize;
