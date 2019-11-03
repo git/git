@@ -1602,7 +1602,8 @@ static int fetch_multiple(struct string_list *list, int max_children)
 			return errcode;
 	}
 
-	argv_array_pushl(&argv, "fetch", "--append", "--no-auto-gc", NULL);
+	argv_array_pushl(&argv, "fetch", "--append", "--no-auto-gc",
+			"--no-write-commit-graph", NULL);
 	add_options_to_argv(&argv);
 
 	if (max_children != 1 && list->nr != 1) {
