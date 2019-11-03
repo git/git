@@ -6,10 +6,13 @@
 #include "refs.h"
 #include "builtin.h"
 #include "strbuf.h"
+#include "parse-options.h"
 
-static const char builtin_check_ref_format_usage[] =
-"git check-ref-format [--normalize] [<options>] <refname>\n"
-"   or: git check-ref-format --branch <branchname-shorthand>";
+static const char * const builtin_check_ref_format_usage[] = {
+	N_("git check-ref-format [--normalize] [<options>] <refname>\n"),
+	N_("   or: git check-ref-format --branch <branchname-shorthand>"),
+	NULL,
+};
 
 /*
  * Return a copy of refname but with leading slashes removed and runs
@@ -53,31 +56,29 @@ static int check_ref_format_branch(const char *arg)
 
 int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 {
-	int i;
-	int normalize = 0;
+	enum {
+		CHECK_REF_FORMAT_BRANCH,
+	};
+
+	int i = 0;
+	int verbose;
+	int normalize;
+	int allow_onelevel;
+	int refspec_pattern;
 	int flags = 0;
 	const char *refname;
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(builtin_check_ref_format_usage);
+	struct option options[] = {
+		OPT__VERBOSE(&verbose, N_("be verbose")),
+		OPT_GROUP(""),
+		OPT_CMDMODE( 0 , "branch", &check_ref_format_branch, N_("branch"), CHECK_REF_FORMAT_BRANCH),
+		OPT_BOOL( 0 , "normalize", &normalize, N_("normalize tracked files")),
+		OPT_BOOL( 0 , "allow-onelevel", &allow_onelevel, N_("allow one level")),
+		OPT_BOOL( 0 , "refspec-pattern", &refspec_pattern, N_("refspec pattern")),
+		OPT_END(),
+	};
 
-	if (argc == 3 && !strcmp(argv[1], "--branch"))
-		return check_ref_format_branch(argv[2]);
-
-	for (i = 1; i < argc && argv[i][0] == '-'; i++) {
-		if (!strcmp(argv[i], "--normalize") || !strcmp(argv[i], "--print"))
-			normalize = 1;
-		else if (!strcmp(argv[i], "--allow-onelevel"))
-			flags |= REFNAME_ALLOW_ONELEVEL;
-		else if (!strcmp(argv[i], "--no-allow-onelevel"))
-			flags &= ~REFNAME_ALLOW_ONELEVEL;
-		else if (!strcmp(argv[i], "--refspec-pattern"))
-			flags |= REFNAME_REFSPEC_PATTERN;
-		else
-			usage(builtin_check_ref_format_usage);
-	}
-	if (! (i == argc - 1))
-		usage(builtin_check_ref_format_usage);
+	argc = parse_options(argc, argv, prefix, options, builtin_check_ref_format_usage, PARSE_OPT_KEEP_ARGV0);
 
 	refname = argv[i];
 	if (normalize)
