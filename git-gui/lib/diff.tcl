@@ -270,19 +270,6 @@ proc show_other_diff {path w m cont_info} {
 	}
 }
 
-proc get_conflict_marker_size {path} {
-	set size 7
-	catch {
-		set fd_rc [eval [list git_read check-attr "conflict-marker-size" -- $path]]
-		set ret [gets $fd_rc line]
-		close $fd_rc
-		if {$ret > 0} {
-			regexp {.*: conflict-marker-size: (\d+)$} $line line size
-		}
-	}
-	return $size
-}
-
 proc start_show_diff {cont_info {add_opts {}}} {
 	global file_states file_lists
 	global is_3way_diff is_submodule_diff diff_active repo_config
@@ -298,7 +285,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	set is_submodule_diff 0
 	set diff_active 1
 	set current_diff_header {}
-	set conflict_size [get_conflict_marker_size $path]
+	set conflict_size [gitattr $path conflict-marker-size 7]
 
 	set cmd [list]
 	if {$w eq $ui_index} {
@@ -360,6 +347,10 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	}
 
 	set ::current_diff_inheader 1
+	# Detect pre-image lines of the diff3 conflict-style. They are just
+	# '++' lines which is not bijective. Thus, we need to maintain a state
+	# across lines.
+	set ::conflict_in_pre_image 0
 	fconfigure $fd \
 		-blocking 0 \
 		-encoding [get_path_encoding $path] \
@@ -462,11 +453,23 @@ proc read_diff {fd conflict_size cont_info} {
 			{--} {set tags d_--}
 			{++} {
 				set regexp [string map [list %conflict_size $conflict_size]\
-								{^\+\+([<>=]){%conflict_size}(?: |$)}]
+								{^\+\+([<>=|]){%conflict_size}(?: |$)}]
 				if {[regexp $regexp $line _g op]} {
 					set is_conflict_diff 1
 					set line [string replace $line 0 1 {  }]
 					set tags d$op
+
+					# The ||| conflict-marker marks the start of the pre-image.
+					# All those lines are also prefixed with '++'. Thus we need
+					# to maintain this state.
+					set ::conflict_in_pre_image [expr {$op eq {|}}]
+				} elseif {$::conflict_in_pre_image} {
+					# This is a pre-image line. It is the one which both sides
+					# are based on. As it has also the '++' line start, it is
+					# normally shown as 'added'. Invert this to '--' to make
+					# it a 'removed' line.
+					set line [string replace $line 0 1 {--}]
+					set tags d_--
 				} else {
 					set tags d_++
 				}

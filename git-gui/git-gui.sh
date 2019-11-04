@@ -2736,10 +2736,18 @@ if {![is_bare]} {
 }
 
 if {[is_Windows]} {
+	# Use /git-bash.exe if available
+	set normalized [file normalize $::argv0]
+	regsub "/mingw../libexec/git-core/git-gui$" \
+		$normalized "/git-bash.exe" cmdLine
+	if {$cmdLine != $normalized && [file exists $cmdLine]} {
+		set cmdLine [list "Git Bash" $cmdLine &]
+	} else {
+		set cmdLine [list "Git Bash" bash --login -l &]
+	}
 	.mbar.repository add command \
 		-label [mc "Git Bash"] \
-		-command {eval exec [auto_execok start] \
-					  [list "Git Bash" bash --login -l &]}
+		-command {eval exec [auto_execok start] $cmdLine}
 }
 
 if {[is_Windows] || ![is_bare]} {
@@ -3579,6 +3587,9 @@ $ui_diff tag conf d_s- \
 	-background ivory1
 
 $ui_diff tag conf d< \
+	-foreground orange \
+	-font font_diffbold
+$ui_diff tag conf d| \
 	-foreground orange \
 	-font font_diffbold
 $ui_diff tag conf d= \
