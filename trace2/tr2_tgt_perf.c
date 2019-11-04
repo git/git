@@ -26,11 +26,8 @@ static int tr2env_perf_be_brief;
 #define TR2FMT_PERF_REPO_WIDTH (3)
 #define TR2FMT_PERF_CATEGORY_WIDTH (12)
 
-#define TR2_DOTS_BUFFER_SIZE (100)
 #define TR2_INDENT (2)
 #define TR2_INDENT_LENGTH(ctx) (((ctx)->nr_open_regions - 1) * TR2_INDENT)
-
-static struct strbuf dots = STRBUF_INIT;
 
 static int fn_init(void)
 {
@@ -40,8 +37,6 @@ static int fn_init(void)
 
 	if (!want)
 		return want;
-
-	strbuf_addchars(&dots, '.', TR2_DOTS_BUFFER_SIZE);
 
 	brief = tr2_sysenv_get(TR2_SYSENV_PERF_BRIEF);
 	if (brief && *brief &&
@@ -54,8 +49,6 @@ static int fn_init(void)
 static void fn_term(void)
 {
 	tr2_dst_trace_disable(&tr2dst_perf);
-
-	strbuf_release(&dots);
 }
 
 /*
@@ -138,14 +131,8 @@ static void perf_fmt_prepare(const char *event_name,
 	strbuf_addf(buf, "%-*.*s | ", TR2FMT_PERF_CATEGORY_WIDTH,
 		    TR2FMT_PERF_CATEGORY_WIDTH, (category ? category : ""));
 
-	if (ctx->nr_open_regions > 0) {
-		int len_indent = TR2_INDENT_LENGTH(ctx);
-		while (len_indent > dots.len) {
-			strbuf_addbuf(buf, &dots);
-			len_indent -= dots.len;
-		}
-		strbuf_addf(buf, "%.*s", len_indent, dots.buf);
-	}
+	if (ctx->nr_open_regions > 0)
+		strbuf_addchars(buf, '.', TR2_INDENT_LENGTH(ctx));
 }
 
 static void perf_io_write_fl(const char *file, int line, const char *event_name,
