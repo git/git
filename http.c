@@ -1064,6 +1064,9 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	char *normalized_url;
 	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
 
+	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
+		die("curl_global_init failed");
+
 	config.section = "http";
 	config.key = NULL;
 	config.collect_fn = http_options;
@@ -1103,9 +1106,6 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 		}
 	}
 #endif
-
-	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
-		die("curl_global_init failed");
 
 	http_proactive_auth = proactive_auth;
 
