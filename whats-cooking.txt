@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2019, #07; Wed, 30)
-X-master-at: f21f8f5d35b09ecdd1a0112f114436fd2eda7df2
-X-next-at: 50e10028f102536c1a9ac2647d3aae9cc8a7c5d7
+Subject: What's cooking in git.git (Nov 2019, #01; Mon, 4)
+X-master-at: da72936f544fec5a335e66432610e4cef4430991
+X-next-at: 9d3f5f5b63cc3ed44eec3428f9e8874fb34f9cc0
 
-What's cooking in git.git (Oct 2019, #07; Wed, 30)
+What's cooking in git.git (Nov 2019, #01; Mon, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,13 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-There is the v2.24.0-rc2 tag now; the contents of the release
-candidate hasn't changed much since the -rc1; hopefully we can see
-the final thing real soon now.
+Git 2.24 has been tagged.  Hopefully there needs no immediate brown
+paper bag fixes needed for the 'master' branch. The next cycle will
+start perhaps early next week by first rewinding the 'next' branch,
+after the dust settles. Topics marked as "will cook in next" can be
+given a fresh start by ejecting them from 'next' and queueing a new
+version (please just ask). Topics currently not in 'next' will then
+start getting merged down after all that.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,162 +28,50 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* js/mingw-needs-hiding-fix (2019-10-28) 1 commit
-  (merged to 'next' on 2019-10-28 at d41210960f)
- + mingw: avoid a buffer overrun in `needs_hiding()`
+* bc/doc-use-docbook-5 (2019-11-02) 1 commit
+  (merged to 'next' on 2019-11-02 at 68e379d0b0)
+ + manpage-bold-literal.xsl: match for namespaced "d:literal" in template
 
- Fix for a (rather old) buffer-overrun bug.
-
-
-* rl/gitweb-blame-prev-fix (2019-10-28) 1 commit
-  (merged to 'next' on 2019-10-28 at 876152daa8)
- + gitweb: correctly store previous rev in javascript-actions mode
-
- Fix a rather old bug in gitweb---incremental blame output in
- javascript actions mode never worked.
+ Finishing touches to the recent update to the build procedure for
+ the documentation.
 
 
-* wb/fsmonitor-bitmap-fix (2019-10-30) 1 commit
-  (merged to 'next' on 2019-10-30 at f63ada9e8d)
- + t7519-status-fsmonitor: improve comments
+* ds/commit-graph-on-fetch (2019-10-25) 2 commits
+  (merged to 'next' on 2019-10-30 at 3ca711f743)
+ + commit-graph: fix writing first commit-graph during fetch
+ + t5510-fetch.sh: demonstrate fetch.writeCommitGraph bug
 
- Comment update.
+ Regression fix.
+
+
+* jt/delay-fetch-if-missing (2019-10-24) 1 commit
+  (merged to 'next' on 2019-10-30 at 6c884f3267)
+ + fetch: delay fetch_if_missing=0 until after config
+
+ Work-around a lazy fetch glitch.
 
 --------------------------------------------------
 [New Topics]
 
-* en/doc-typofix (2019-10-25) 1 commit
-  (merged to 'next' on 2019-10-30 at 8405cac984)
- + Documentation: fix a bunch of typos, both old and new
+* es/myfirstcontrib-updates (2019-11-02) 3 commits
+ - myfirstcontrib: hint to find gitgitgadget allower
+ - myfirstcontrib: add dependency installation step
+ - myfirstcontrib: add 'psuh' to command-list.txt
 
- Docfix.
-
- Will cook in 'next'.
-
-
-* hw/remove-api-docs-placeholder (2019-10-25) 1 commit
-  (merged to 'next' on 2019-10-30 at c99fe16682)
- + documentation: remove empty doc files
-
- Docfix.
-
- Will cook in 'next'.
-
-
-* js/update-index-ignore-removal-for-skip-worktree (2019-10-29) 2 commits
-  (merged to 'next' on 2019-10-30 at 5c7c7a6055)
- + stash: handle staged changes in skip-worktree files correctly
- + update-index: optionally leave skip-worktree entries alone
-
- "git stash save" in a working tree that is sparsely checked out
- mistakenly removed paths that are outside the area of interest.
-
- Will cook in 'next'.
-
-
-* pb/pretty-email-without-domain-part (2019-10-30) 3 commits
-  (merged to 'next' on 2019-10-30 at 06f719efa5)
- + pretty: add "%aL" etc. to show local-part of email addresses
- + t4203: use test-lib.sh definitions
- + t6006: use test-lib.sh definitions
-
- The custom format for "git log --format=<format>" learned the l/L
- placeholder that is similar to e/E that fills in the e-mail
- address, but only the local part on the left side of '@'.
-
- Will cook in 'next'.
-
-
-* sg/commit-graph-usage-fix (2019-10-28) 1 commit
-  (merged to 'next' on 2019-10-28 at 13d01506dd)
- + builtin/commit-graph.c: remove subcommand-less usage string
-
- Message fix.
+ Doc updates.
 
  Will merge to 'next'.
 
 
-* dl/doc-diff-no-index-implies-exit-code (2019-10-30) 1 commit
- - git-diff.txt: document return code of `--no-index`
+* rt/fetch-message-fix (2019-11-02) 1 commit
+ - fetch.c: fix typo in a warning message
 
- Doc update.
-
- Will merge to 'next'.
-
-
-* dl/submodule-set-url (2019-10-30) 1 commit
- - submodule: teach set-url subcommand
-
- "git submodule" learned a subcommand "set-url".
-
-
-* js/vreportf-wo-buffering (2019-10-30) 1 commit
- - vreportf(): avoid relying on stdio buffering
-
- Messages from die() etc. can be mixed up from multiple processes
- without even line buffering on Windows, which has been worked
- around.
-
-
-* ma/bisect-doc-sample-update (2019-10-29) 1 commit
- - Documentation/git-bisect.txt: add --no-ff to merge command
-
- "git merge --no-commit" needs "--no-ff" if you do not want to move
- HEAD, which has been corrected in the manual page for "git bisect".
-
- Will merge to 'next'.
-
-
-* mr/clone-dir-exists-to-path-exists (2019-10-29) 1 commit
- - clone: rename static function `dir_exists()`.
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* pb/help-list-gitsubmodules-among-guides (2019-10-29) 1 commit
- - help: add gitsubmodules to the list of guides
-
- Help update.
-
- Will merge to 'next'.
-
-
-* pb/no-recursive-reset-hard-in-worktree-add (2019-10-30) 1 commit
- - worktree: teach "add" to ignore submodule.recurse config
-
- "git worktree add" internally calls "reset --hard" that should not
- descend into submodules, even when submodule.recurse configuration
- is set, but it was affected.  This has been correct.
-
- Will merge to 'next'.
-
-
-* sg/blame-indent-heuristics-is-now-the-default (2019-10-29) 1 commit
- - builtin/blame.c: remove '--indent-heuristic' from usage string
-
- Message update.
+ A small message update.
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* ra/rebase-i-more-options (2019-09-09) 6 commits
- - rebase: add --reset-author-date
- - rebase -i: support --ignore-date
- - sequencer: rename amend_author to author_to_rename
- - rebase -i: support --committer-date-is-author-date
- - sequencer: allow callers of read_author_script() to ignore fields
- - rebase -i: add --ignore-whitespace flag
-
- "git rebase -i" learned a few options that are known by "git
- rebase" proper.
-
- Needs to consider existing GIT_COMMITTER_DATE environment, etc.
- cf. <5adde732-173b-d24d-d23f-bb4d043076d7@gmail.com>
-
 
 * vn/reset-deleted-ita (2019-07-26) 1 commit
  - reset: unstage empty deleted ita files
@@ -233,6 +125,136 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* ra/rebase-i-more-options (2019-11-02) 6 commits
+ - rebase: add --reset-author-date
+ - rebase -i: support --ignore-date
+ - sequencer: rename amend_author to author_to_rename
+ - rebase -i: support --committer-date-is-author-date
+ - sequencer: allow callers of read_author_script() to ignore fields
+ - rebase -i: add --ignore-whitespace flag
+
+ "git rebase -i" learned a few options that are known by "git
+ rebase" proper.
+
+
+* en/doc-typofix (2019-10-25) 1 commit
+  (merged to 'next' on 2019-10-30 at 8405cac984)
+ + Documentation: fix a bunch of typos, both old and new
+
+ Docfix.
+
+ Will cook in 'next'.
+
+
+* hw/remove-api-docs-placeholder (2019-10-25) 1 commit
+  (merged to 'next' on 2019-10-30 at c99fe16682)
+ + documentation: remove empty doc files
+
+ Docfix.
+
+ Will cook in 'next'.
+
+
+* js/update-index-ignore-removal-for-skip-worktree (2019-11-02) 2 commits
+  (merged to 'next' on 2019-11-02 at 57f7fb885f)
+ + stash: handle staged changes in skip-worktree files correctly
+ + update-index: optionally leave skip-worktree entries alone
+
+ "git stash save" in a working tree that is sparsely checked out
+ mistakenly removed paths that are outside the area of interest.
+
+ Will cook in 'next'.
+
+
+* pb/pretty-email-without-domain-part (2019-10-30) 3 commits
+  (merged to 'next' on 2019-10-30 at 06f719efa5)
+ + pretty: add "%aL" etc. to show local-part of email addresses
+ + t4203: use test-lib.sh definitions
+ + t6006: use test-lib.sh definitions
+
+ The custom format for "git log --format=<format>" learned the l/L
+ placeholder that is similar to e/E that fills in the e-mail
+ address, but only the local part on the left side of '@'.
+
+ Will cook in 'next'.
+
+
+* sg/commit-graph-usage-fix (2019-10-28) 1 commit
+  (merged to 'next' on 2019-10-28 at 13d01506dd)
+ + builtin/commit-graph.c: remove subcommand-less usage string
+
+ Message fix.
+
+ Will merge to 'next'.
+
+
+* dl/doc-diff-no-index-implies-exit-code (2019-11-02) 1 commit
+ - git-diff.txt: document return code of `--no-index`
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* dl/submodule-set-url (2019-10-30) 1 commit
+ - submodule: teach set-url subcommand
+
+ "git submodule" learned a subcommand "set-url".
+
+
+* js/vreportf-wo-buffering (2019-11-02) 1 commit
+ - vreportf(): avoid relying on stdio buffering
+
+ Messages from die() etc. can be mixed up from multiple processes
+ without even line buffering on Windows, which has been worked
+ around.
+
+ Will merge to 'next'.
+
+
+* ma/bisect-doc-sample-update (2019-10-29) 1 commit
+ - Documentation/git-bisect.txt: add --no-ff to merge command
+
+ "git merge --no-commit" needs "--no-ff" if you do not want to move
+ HEAD, which has been corrected in the manual page for "git bisect".
+
+ Will merge to 'next'.
+
+
+* mr/clone-dir-exists-to-path-exists (2019-10-29) 1 commit
+ - clone: rename static function `dir_exists()`.
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* pb/help-list-gitsubmodules-among-guides (2019-10-29) 1 commit
+ - help: add gitsubmodules to the list of guides
+
+ Help update.
+
+ Will merge to 'next'.
+
+
+* pb/no-recursive-reset-hard-in-worktree-add (2019-10-30) 1 commit
+ - worktree: teach "add" to ignore submodule.recurse config
+
+ "git worktree add" internally calls "reset --hard" that should not
+ descend into submodules, even when submodule.recurse configuration
+ is set, but it was affected.  This has been correct.
+
+ Will merge to 'next'.
+
+
+* sg/blame-indent-heuristics-is-now-the-default (2019-10-29) 1 commit
+ - builtin/blame.c: remove '--indent-heuristic' from usage string
+
+ Message update.
+
+ Will merge to 'next'.
+
 
 * hv/bitshift-constants-in-blame (2019-10-21) 1 commit
   (merged to 'next' on 2019-10-24 at bc84aae4d4)
@@ -293,16 +315,6 @@ of the repositories listed at
  Doc update.
 
  Expecting a reroll.
-
-
-* ds/commit-graph-on-fetch (2019-10-25) 2 commits
-  (merged to 'next' on 2019-10-30 at 3ca711f743)
- + commit-graph: fix writing first commit-graph during fetch
- + t5510-fetch.sh: demonstrate fetch.writeCommitGraph bug
-
- "git commit-grph write" hit BUG() in corner cases.
-
- Will cook in 'next'.
 
 
 * jc/am-show-current-patch-docfix (2019-10-23) 1 commit
@@ -378,15 +390,6 @@ of the repositories listed at
  files and update config.h
 
  Will merge to 'next'.
-
-
-* jt/delay-fetch-if-missing (2019-10-24) 1 commit
-  (merged to 'next' on 2019-10-30 at 6c884f3267)
- + fetch: delay fetch_if_missing=0 until after config
-
- Work-around a lazy fetch glitch.
-
- Will cook in 'next'.
 
 
 * dd/notes-copy-default-dst-to-head (2019-10-18) 2 commits
