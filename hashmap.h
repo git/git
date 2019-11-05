@@ -59,7 +59,7 @@
  *
  *         if (!strcmp("print_all_by_key", action)) {
  *             struct long2string k, *e;
- *             hashmap_entry_init(&k->ent, memhash(&key, sizeof(long)));
+ *             hashmap_entry_init(&k.ent, memhash(&key, sizeof(long)));
  *             k.key = key;
  *
  *             flags &= ~COMPARE_VALUE;
@@ -87,12 +87,12 @@
  *
  *         if (!strcmp("has_exact_match_no_heap_alloc", action)) {
  *             struct long2string k;
- *             hashmap_entry_init(&k->ent, memhash(&key, sizeof(long)));
+ *             hashmap_entry_init(&k.ent, memhash(&key, sizeof(long)));
  *             k.key = key;
  *
  *             flags |= COMPARE_VALUE;
  *             printf("%sfound\n",
- *                    hashmap_get(&map, &k->ent, value) ? "" : "not ");
+ *                    hashmap_get(&map, &k.ent, value) ? "" : "not ");
  *         }
  *
  *         if (!strcmp("end", action)) {
