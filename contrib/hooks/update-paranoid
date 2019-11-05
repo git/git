@@ -49,7 +49,7 @@ opcode.
 Repository sections are matched on the basename of the repository
 (after removing the .git suffix).
 
-The opcode abbrevations are:
+The opcode abbreviations are:
 
   C: create new ref
   D: delete existing ref

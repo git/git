@@ -109,7 +109,7 @@ Issues of note:
 
  - Git is reasonably self-sufficient, but does depend on a few external
    programs and libraries.  Git can be used without most of them by adding
-   the approriate "NO_<LIBRARY>=YesPlease" to the make command line or
+   the appropriate "NO_<LIBRARY>=YesPlease" to the make command line or
    config.mak file.
 
 	- "zlib", the compression library. Git won't build without it.

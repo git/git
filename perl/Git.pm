@@ -563,7 +563,7 @@ sub get_record {
 Query user C<PROMPT> and return answer from user.
 
 Honours GIT_ASKPASS and SSH_ASKPASS environment variables for querying
-the user. If no *_ASKPASS variable is set or an error occoured,
+the user. If no *_ASKPASS variable is set or an error occurred,
 the terminal is tried as a fallback.
 If C<ISPASSWORD> is set and true, the terminal disables echo.
 
