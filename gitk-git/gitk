@@ -580,7 +580,7 @@ proc updatecommits {} {
 	set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
 			--parents --boundary $args --stdin \
 			"<<[join [concat $revs "--" \
-				[escape_filter_paths
+				[escape_filter_paths \
 					$vfilelimit($view)]] "\\n"]"] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
