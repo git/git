@@ -644,7 +644,7 @@ update was successful, or 'ng [refname] [error]' if the update was not.
   command-ok        = PKT-LINE("ok" SP refname)
   command-fail      = PKT-LINE("ng" SP refname SP error-msg)
 
-  error-msg         = 1*(OCTECT) ; where not "ok"
+  error-msg         = 1*(OCTET) ; where not "ok"
 ----
 
 Updates can be unsuccessful for a number of reasons.  The reference can have

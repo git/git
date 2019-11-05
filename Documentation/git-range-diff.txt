@@ -242,7 +242,7 @@ corresponding.
 
 The overall time needed to compute this algorithm is the time needed to
 compute n+m commit diffs and then n*m diffs of patches, plus the time
-needed to compute the least-cost assigment between n and m diffs. Git
+needed to compute the least-cost assignment between n and m diffs. Git
 uses an implementation of the Jonker-Volgenant algorithm to solve the
 assignment problem, which has cubic runtime complexity. The matching
 found in this case will look like this:

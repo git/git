@@ -86,7 +86,7 @@ Fixes since v2.10.1
    by refusing to check out a branch that is already checked out in
    another worktree.  However, this also prevented checking out a
    branch, which is designated as the primary branch of a bare
-   reopsitory, in a worktree that is connected to the bare
+   repository, in a worktree that is connected to the bare
    repository.  The check has been corrected to allow it.
 
  * "git rebase" immediately after "git clone" failed to find the fork

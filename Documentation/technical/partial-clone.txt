@@ -32,7 +32,7 @@ if/when needed.
 
 A remote that can later provide the missing objects is called a
 promisor remote, as it promises to send the objects when
-requested. Initialy Git supported only one promisor remote, the origin
+requested. Initially Git supported only one promisor remote, the origin
 remote from which the user cloned and that was configured in the
 "extensions.partialClone" config option. Later support for more than
 one promisor remote has been implemented.

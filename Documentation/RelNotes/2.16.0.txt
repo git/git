@@ -407,7 +407,7 @@ Fixes since v2.15
    (merge eef3df5a93 bw/pathspec-match-submodule-boundary later to maint).
 
  * Amending commits in git-gui broke the author name that is non-ascii
-   due to incorrect enconding conversion.
+   due to incorrect encoding conversion.
 
  * Recent update to the submodule configuration code broke "diff-tree"
    by accidentally stopping to read from the index upfront.

@@ -10,7 +10,7 @@ Fixes since v1.6.5.3
 
  * "git prune-packed" gave progress output even when its standard error is
    not connected to a terminal; this caused cron jobs that run it to
-   produce crufts.
+   produce cruft.
 
  * "git pack-objects --all-progress" is an option to ask progress output
    from write-object phase _if_ progress output were to be produced, and

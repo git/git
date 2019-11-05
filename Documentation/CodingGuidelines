@@ -75,7 +75,7 @@ For shell scripts specifically (not exhaustive):
 
  - If you want to find out if a command is available on the user's
    $PATH, you should use 'type <command>', instead of 'which <command>'.
-   The output of 'which' is not machine parseable and its exit code
+   The output of 'which' is not machine parsable and its exit code
    is not reliable across platforms.
 
  - We use POSIX compliant parameter substitutions and avoid bashisms;
@@ -203,7 +203,7 @@ For C programs:
    . since early 2012 with e1327023ea, we have been using an enum
      definition whose last element is followed by a comma.  This, like
      an array initializer that ends with a trailing comma, can be used
-     to reduce the patch noise when adding a new identifer at the end.
+     to reduce the patch noise when adding a new identifier at the end.
 
    . since mid 2017 with cbc0f81d, we have been using designated
      initializers for struct (e.g. "struct t v = { .val = 'a' };").

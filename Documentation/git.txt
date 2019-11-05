@@ -271,8 +271,8 @@ In general, the interrogate commands do not touch the files in
 the working tree.
 
 
-Synching repositories
-~~~~~~~~~~~~~~~~~~~~~
+Syncing repositories
+~~~~~~~~~~~~~~~~~~~~
 
 include::cmds-synchingrepositories.txt[]
 

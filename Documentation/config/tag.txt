@@ -13,7 +13,7 @@ tag.gpgSign::
 	Use of this option when running in an automated script can
 	result in a large number of tags being signed. It is therefore
 	convenient to use an agent to avoid typing your gpg passphrase
-	several times. Note that this option doesn't affects tag signing
+	several times. Note that this option doesn't affect tag signing
 	behavior enabled by "-u <keyid>" or "--local-user=<keyid>" options.
 
 tar.umask::

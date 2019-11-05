@@ -22,7 +22,7 @@ Fixes since v1.7.5.2
  * "git log --stdin path" with an input that has additional pathspec
    used to corrupt memory.
 
- * "git send-pack" (hence "git push") over smalt-HTTP protocol could
+ * "git send-pack" (hence "git push") over smart-HTTP protocol could
    deadlock when the client side pack-object died early.
 
  * Compressed tarball gitweb generates used to be made with the timestamp

@@ -531,7 +531,7 @@ Until Git protocol gains SHA-256 support, using SHA-256 based storage
 on public-facing Git servers is strongly discouraged. Once Git
 protocol gains SHA-256 support, SHA-256 based servers are likely not
 to support SHA-1 compatibility, to avoid what may be a very expensive
-hash reencode during clone and to encourage peers to modernize.
+hash re-encode during clone and to encourage peers to modernize.
 
 The design described here allows fetches by SHA-1 clients of a
 personal SHA-256 repository because it's not much more difficult than
@@ -602,7 +602,7 @@ git --output-format=sha1 log abac87a^{sha1}..f787cac^{sha256}
 
 Choice of Hash
 --------------
-In early 2005, around the time that Git was written,  Xiaoyun Wang,
+In early 2005, around the time that Git was written, Xiaoyun Wang,
 Yiqun Lisa Yin, and Hongbo Yu announced an attack finding SHA-1
 collisions in 2^69 operations. In August they published details.
 Luckily, no practical demonstrations of a collision in full SHA-1 were

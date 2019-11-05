@@ -25,7 +25,7 @@ Fixes since v1.7.12.2
    its Accept-Encoding header.
 
  * "git receive-pack" (the counterpart to "git push") did not give
-   progress output while processing objects it received to the puser
+   progress output while processing objects it received to the user
    when run over the smart-http protocol.
 
  * "git status" honored the ignore=dirty settings in .gitmodules but
