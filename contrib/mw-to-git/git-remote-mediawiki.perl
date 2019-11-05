@@ -79,7 +79,7 @@ chomp($export_media);
 $export_media = !($export_media eq 'false');
 
 my $wiki_login = run_git("config --get remote.${remotename}.mwLogin");
-# Note: mwPassword is discourraged. Use the credential system instead.
+# Note: mwPassword is discouraged. Use the credential system instead.
 my $wiki_passwd = run_git("config --get remote.${remotename}.mwPassword");
 my $wiki_domain = run_git("config --get remote.${remotename}.mwDomain");
 chomp($wiki_login);

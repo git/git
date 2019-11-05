@@ -1564,7 +1564,7 @@ static FORCEINLINE void* win32direct_mmap(size_t size) {
   return (ptr != 0)? ptr: MFAIL;
 }
 
-/* This function supports releasing coalesed segments */
+/* This function supports releasing coalesced segments */
 static FORCEINLINE int win32munmap(void* ptr, size_t size) {
   MEMORY_BASIC_INFORMATION minfo;
   char* cptr = (char*)ptr;
@@ -1655,7 +1655,7 @@ static FORCEINLINE int win32munmap(void* ptr, size_t size) {
     #define CALL_MREMAP(addr, osz, nsz, mv)     MFAIL
 #endif /* HAVE_MMAP && HAVE_MREMAP */
 
-/* mstate bit set if continguous morecore disabled or failed */
+/* mstate bit set if contiguous morecore disabled or failed */
 #define USE_NONCONTIGUOUS_BIT (4U)
 
 /* segment bit set in create_mspace_with_base */
@@ -2485,7 +2485,7 @@ typedef struct malloc_segment* msegmentptr;
 
   Trim support
     Fields holding the amount of unused topmost memory that should trigger
-    timming, and a counter to force periodic scanning to release unused
+    timing, and a counter to force periodic scanning to release unused
     non-topmost segments.
 
   Locking
