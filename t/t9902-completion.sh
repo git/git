@@ -1257,7 +1257,7 @@ test_path_completion ()
 		# In the following tests calling this function we only
 		# care about how __git_complete_index_file() deals with
 		# unusual characters in path names.  By requesting only
-		# untracked files we dont have to bother adding any
+		# untracked files we do not have to bother adding any
 		# paths to the index in those tests.
 		__git_complete_index_file --others &&
 		print_comp

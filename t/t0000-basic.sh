@@ -126,7 +126,7 @@ check_sub_test_lib_test () {
 
 check_sub_test_lib_test_err () {
 	name="$1" # stdin is the expected output from the test
-	# expected error output is in descriptior 3
+	# expected error output is in descriptor 3
 	(
 		cd "$name" &&
 		sed -e 's/^> //' -e 's/Z$//' >expect.out &&

@@ -294,7 +294,7 @@ do
 	done
 done
 
-# test that splitting the index dosn't interfere
+# test that splitting the index doesn't interfere
 test_expect_success 'splitting the index results in the same state' '
 	write_integration_script &&
 	dirty_repo &&

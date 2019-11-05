@@ -682,9 +682,9 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s client_branch >expect &&
 	test_cmp expect actual &&
 
-	# Client didnt request to use protocol v2
+	# Client did not request to use protocol v2
 	! grep "Git-Protocol: version=2" log &&
-	# Server didnt respond using protocol v2
+	# Server did not respond using protocol v2
 	! grep "git< version 2" log
 '
 

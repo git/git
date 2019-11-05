@@ -211,7 +211,7 @@ dissimilarity index 82%
 -
 -		/* If this is an exact directory match, we may have
 -		 * directory files following this path. Match on them.
--		 * Otherwise, we're at a pach subcomponent, and we need
+-		 * Otherwise, we're at a patch subcomponent, and we need
 -		 * to try to match again.
 -		 */
 -		if (mtype == 0)
