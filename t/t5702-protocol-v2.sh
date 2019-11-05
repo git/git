@@ -32,7 +32,7 @@ test_expect_success 'list refs with git:// using protocol v2' '
 	test_cmp expect actual
 '
 
-test_expect_success 'ref advertisment is filtered with ls-remote using protocol v2' '
+test_expect_success 'ref advertisement is filtered with ls-remote using protocol v2' '
 	test_when_finished "rm -f log" &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -c protocol.version=2 \
@@ -154,7 +154,7 @@ test_expect_success 'list refs with file:// using protocol v2' '
 	test_cmp expect actual
 '
 
-test_expect_success 'ref advertisment is filtered with ls-remote using protocol v2' '
+test_expect_success 'ref advertisement is filtered with ls-remote using protocol v2' '
 	test_when_finished "rm -f log" &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -c protocol.version=2 \
@@ -225,7 +225,7 @@ test_expect_success 'fetch with file:// using protocol v2' '
 	grep "fetch< version 2" log
 '
 
-test_expect_success 'ref advertisment is filtered during fetch using protocol v2' '
+test_expect_success 'ref advertisement is filtered during fetch using protocol v2' '
 	test_when_finished "rm -f log" &&
 
 	test_commit -C file_parent three &&

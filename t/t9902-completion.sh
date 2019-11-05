@@ -378,7 +378,7 @@ test_expect_success '__gitdir - finds repo' '
 '
 
 
-test_expect_success '__gitdir - returns error when cant find repo' '
+test_expect_success '__gitdir - returns error when cannot find repo' '
 	(
 		__git_dir="non-existing" &&
 		test_must_fail __gitdir >"$actual"
@@ -945,7 +945,7 @@ test_expect_success 'setup for filtering matching refs' '
 	rm -f .git/FETCH_HEAD
 '
 
-test_expect_success '__git_refs - dont filter refs unless told so' '
+test_expect_success '__git_refs - do not filter refs unless told so' '
 	cat >expected <<-EOF &&
 	HEAD
 	master

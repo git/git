@@ -275,7 +275,7 @@ $whitespace
     third note for first commit
 EXPECT_END
 
-test_expect_success 'add concatentation notes with M command' '
+test_expect_success 'add concatenation notes with M command' '
 
 	git fast-import <input &&
 	GIT_NOTES_REF=refs/notes/test git log | grep "^    " > actual &&

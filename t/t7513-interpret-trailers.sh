@@ -1234,7 +1234,7 @@ test_expect_success 'with simple command' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with command using commiter information' '
+test_expect_success 'with command using committer information' '
 	git config trailer.sign.ifExists "addIfDifferent" &&
 	git config trailer.sign.command "echo \"\$GIT_COMMITTER_NAME <\$GIT_COMMITTER_EMAIL>\"" &&
 	cat complex_message_body >expected &&

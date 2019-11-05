@@ -194,15 +194,15 @@ test_expect_success 'pack-objects with large loose object' '
 	test_cmp huge actual
 '
 
-test_expect_success 'tar achiving' '
+test_expect_success 'tar archiving' '
 	git archive --format=tar HEAD >/dev/null
 '
 
-test_expect_success 'zip achiving, store only' '
+test_expect_success 'zip archiving, store only' '
 	git archive --format=zip -0 HEAD >/dev/null
 '
 
-test_expect_success 'zip achiving, deflate' '
+test_expect_success 'zip archiving, deflate' '
 	git archive --format=zip HEAD >/dev/null
 '
 

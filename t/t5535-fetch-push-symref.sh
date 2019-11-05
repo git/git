@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='avoiding conflicting update thru symref aliasing'
+test_description='avoiding conflicting update through symref aliasing'
 
 . ./test-lib.sh
 

@@ -33,7 +33,7 @@ test_expect_success 'trivial merge - combine-diff empty' '
 '
 
 
-test_expect_success 'only one trully conflicting path' '
+test_expect_success 'only one truly conflicting path' '
 	git checkout side &&
 	for i in $(test_seq 2 9)
 	do

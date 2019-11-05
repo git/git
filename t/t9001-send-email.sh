@@ -1260,7 +1260,7 @@ test_expect_success $PREREQ 'sendemail.identity: --no-identity clears previous i
 	grep "To: default@example.com" stdout
 '
 
-test_expect_success $PREREQ 'sendemail.identity: bool identity variable existance overrides' '
+test_expect_success $PREREQ 'sendemail.identity: bool identity variable existence overrides' '
 	git -c sendemail.identity=cloud \
 		-c sendemail.xmailer=true \
 		-c sendemail.cloud.xmailer=false \

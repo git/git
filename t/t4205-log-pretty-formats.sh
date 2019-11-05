@@ -640,7 +640,7 @@ test_expect_success 'pretty format %(trailers:key=foo) multiple keys' '
 	test_cmp expect actual
 '
 
-test_expect_success '%(trailers:key=nonexistant) becomes empty' '
+test_expect_success '%(trailers:key=nonexistent) becomes empty' '
 	git log --no-walk --pretty="x%(trailers:key=Nacked-by)x" >actual &&
 	echo "xx" >expect &&
 	test_cmp expect actual
