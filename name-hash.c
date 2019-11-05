@@ -218,7 +218,7 @@ static int lookup_lazy_params(struct index_state *istate)
  * However, the hashmap is going to put items into bucket
  * chains based on their hash values.  Use that to create n
  * mutexes and lock on mutex[bucket(hash) % n].  This will
- * decrease the collision rate by (hopefully) by a factor of n.
+ * decrease the collision rate by (hopefully) a factor of n.
  */
 static void init_dir_mutex(void)
 {
