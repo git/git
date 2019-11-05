@@ -1790,7 +1790,7 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 		const unsigned char *cp = (const unsigned char *)name;
 		size_t strip_len, previous_len;
 
-		/* If we're at the begining of a block, ignore the previous name */
+		/* If we're at the beginning of a block, ignore the previous name */
 		strip_len = decode_varint(&cp);
 		if (previous_ce) {
 			previous_len = previous_ce->ce_namelen;

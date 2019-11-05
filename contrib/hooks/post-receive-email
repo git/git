@@ -329,7 +329,7 @@ generate_update_branch_email()
 	#
 	#  git rev-parse --not --all | grep -v $(git rev-parse $refname)
 	#
-	# Get's us to something pretty safe (apart from the small time
+	# Gets us to something pretty safe (apart from the small time
 	# between refname being read, and git rev-parse running - for that,
 	# I give up)
 	#

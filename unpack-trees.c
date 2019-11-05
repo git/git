@@ -275,9 +275,9 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 }
 
 /*
- * Preform the loading of the repository's gitmodules file.  This function is
+ * Perform the loading of the repository's gitmodules file.  This function is
  * used by 'check_update()' to perform loading of the gitmodules file in two
- * differnt situations:
+ * different situations:
  * (1) before removing entries from the working tree if the gitmodules file has
  *     been marked for removal.  This situation is specified by 'state' == NULL.
  * (2) before checking out entries to the working tree if the gitmodules file

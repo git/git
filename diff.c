@@ -2551,7 +2551,7 @@ static int scale_linear(int it, int width, int max_change)
 	/*
 	 * make sure that at least one '-' or '+' is printed if
 	 * there is any change to this path. The easiest way is to
-	 * scale linearly as if the alloted width is one column shorter
+	 * scale linearly as if the allotted width is one column shorter
 	 * than it is, and then add 1 to the result.
 	 */
 	return 1 + (it * (width - 1) / max_change);
@@ -3196,7 +3196,7 @@ static int is_conflict_marker(const char *line, int marker_size, unsigned long l
 	for (cnt = 1; cnt < marker_size; cnt++)
 		if (line[cnt] != firstchar)
 			return 0;
-	/* line[1] thru line[marker_size-1] are same as firstchar */
+	/* line[1] through line[marker_size-1] are same as firstchar */
 	if (len < marker_size + 1 || !isspace(line[marker_size]))
 		return 0;
 	return 1;

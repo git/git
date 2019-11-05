@@ -1400,7 +1400,7 @@ static int do_fetch(struct transport *transport,
 
 		/*
 		 * We're setting the upstream configuration for the
-		 * current branch. The relevent upstream is the
+		 * current branch. The relevant upstream is the
 		 * fetched branch that is meant to be merged with the
 		 * current one, i.e. the one fetched to FETCH_HEAD.
 		 *

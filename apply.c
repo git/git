@@ -4183,8 +4183,8 @@ static void show_rename_copy(struct patch *p)
 		old_name = slash_old + 1;
 		new_name = slash_new + 1;
 	}
-	/* p->old_name thru old_name is the common prefix, and old_name and new_name
-	 * through the end of names are renames
+	/* p->old_name through old_name is the common prefix, and old_name and
+	 * new_name through the end of names are renames
 	 */
 	if (old_name != p->old_name)
 		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,

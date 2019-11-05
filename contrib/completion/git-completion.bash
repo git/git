@@ -550,7 +550,7 @@ __git_index_files ()
 						 esc_idx, 1)
 			} else if (esc == "n") {
 				# Uh-oh, a newline character.
-				# We cant reliably put a pathname
+				# We cannot reliably put a pathname
 				# containing a newline into COMPREPLY,
 				# and the newline would create a mess.
 				# Skip this path.
@@ -565,7 +565,7 @@ __git_index_files ()
 			}
 		}
 		# Drop closing double quote, if there is one.
-		# (There isnt any if this is a directory, as it was
+		# (There is not any if this is a directory, as it was
 		# already stripped with the trailing path components.)
 		if (substr(p, length(p), 1) == "\"")
 			out = out substr(p, 1, length(p) - 1)

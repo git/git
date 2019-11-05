@@ -19,7 +19,7 @@ static int tr2sid_nr_git_parents;
  *    "H<first_8_chars_of_sha1_of_hostname>"
  *    "Localhost" when no hostname.
  *
- * where <process> is a 9 character string containing the least signifcant
+ * where <process> is a 9 character string containing the least significant
  * 32 bits in the process-id.
  *    "P<pid>"
  * (This is an abribrary choice.  On most systems pid_t is a 32 bit value,

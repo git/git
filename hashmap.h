@@ -502,7 +502,7 @@ static inline void hashmap_disable_item_counting(struct hashmap *map)
 }
 
 /*
- * Re-enable item couting when adding/removing items.
+ * Re-enable item counting when adding/removing items.
  * If counting is currently disabled, it will force count them.
  * It WILL NOT automatically rehash them.
  */

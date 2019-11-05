@@ -6,7 +6,7 @@
 #define RANGE_DIFF_CREATION_FACTOR_DEFAULT 60
 
 /*
- * Compare series of commmits in RANGE1 and RANGE2, and emit to the
+ * Compare series of commits in RANGE1 and RANGE2, and emit to the
  * standard output.  NULL can be passed to DIFFOPT to use the built-in
  * default.
  */

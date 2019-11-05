@@ -18,7 +18,7 @@ REM and MAKE, we must blend these two different worlds.  This script
 REM attempts to do that.
 REM ================================================================
 REM This BAT file starts in a plain (non-developer) command prompt,
-REM searches for the "best" commmand prompt setup script, installs
+REM searches for the "best" command prompt setup script, installs
 REM it into the current CMD process, and exports the various MSVC
 REM environment variables for use by MAKE.
 REM
