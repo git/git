@@ -72,7 +72,7 @@
 /* Not under GCC-alike or glibc */
 #elif defined(_BYTE_ORDER) && defined(_BIG_ENDIAN) && defined(_LITTLE_ENDIAN)
 /*
- * *BSD and newlib (embeded linux, cygwin, etc).
+ * *BSD and newlib (embedded linux, cygwin, etc).
  * the defined(_BIG_ENDIAN) && defined(_LITTLE_ENDIAN) part prevents
  * this condition from matching with Solaris/sparc.
  * (Solaris defines only one endian macro)
