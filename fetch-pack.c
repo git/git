@@ -673,7 +673,8 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		struct object *o;
 
 		if (!has_object_file_with_flags(&ref->old_oid,
-						OBJECT_INFO_QUICK))
+						OBJECT_INFO_QUICK |
+							OBJECT_INFO_SKIP_FETCH_OBJECT))
 			continue;
 		o = parse_object(the_repository, &ref->old_oid);
 		if (!o)
