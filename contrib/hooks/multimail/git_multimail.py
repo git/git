@@ -95,7 +95,7 @@ if PYTHON3:
     unicode = str
 
     def write_str(f, msg):
-        # Try outputing with the default encoding. If it fails,
+        # Try outputting with the default encoding. If it fails,
         # try UTF-8.
         try:
             f.buffer.write(msg.encode(sys.getdefaultencoding()))
@@ -2129,7 +2129,7 @@ class SMTPMailer(Mailer):
                 # equivalent to
                 #     self.smtp.ehlo()
                 #     self.smtp.starttls()
-                # with acces to the ssl layer
+                # with access to the ssl layer
                 self.smtp.ehlo()
                 if not self.smtp.has_extn("starttls"):
                     raise smtplib.SMTPException("STARTTLS extension not supported by server")
@@ -2148,7 +2148,7 @@ class SMTPMailer(Mailer):
                         cert_reqs=ssl.CERT_NONE
                         )
                     self.environment.get_logger().error(
-                        '*** Warning, the server certificat is not verified (smtp) ***\n'
+                        '*** Warning, the server certificate is not verified (smtp) ***\n'
                         '***          set the option smtpCACerts                   ***\n'
                         )
                 if not hasattr(self.smtp.sock, "read"):
@@ -3189,7 +3189,7 @@ class ProjectdescEnvironmentMixin(Environment):
         self.COMPUTED_KEYS += ['projectdesc']
 
     def get_projectdesc(self):
-        """Return a one-line descripition of the project."""
+        """Return a one-line description of the project."""
 
         git_dir = get_git_dir()
         try:
