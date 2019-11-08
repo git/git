@@ -209,7 +209,7 @@ test_commit_autosquash_multi_encoding () {
 	old=$2
 	new=$3
 	msg=$4
-	test_expect_failure "commit --$flag into $old from $new" '
+	test_expect_success "commit --$flag into $old from $new" '
 		git checkout -b $flag-$old-$new C0 &&
 		git config i18n.commitencoding $old &&
 		echo $old >>F &&
