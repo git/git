@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2019, #01; Mon, 4)
+Subject: What's cooking in git.git (Nov 2019, #02; Fri, 8)
 X-master-at: da72936f544fec5a335e66432610e4cef4430991
-X-next-at: 9d3f5f5b63cc3ed44eec3428f9e8874fb34f9cc0
+X-next-at: 68dc17040922b37729d89a2dbc01e41fbefdea8f
 
-What's cooking in git.git (Nov 2019, #01; Mon, 4)
+What's cooking in git.git (Nov 2019, #02; Fri, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -26,49 +26,178 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/doc-use-docbook-5 (2019-11-02) 1 commit
-  (merged to 'next' on 2019-11-02 at 68e379d0b0)
- + manpage-bold-literal.xsl: match for namespaced "d:literal" in template
-
- Finishing touches to the recent update to the build procedure for
- the documentation.
-
-
-* ds/commit-graph-on-fetch (2019-10-25) 2 commits
-  (merged to 'next' on 2019-10-30 at 3ca711f743)
- + commit-graph: fix writing first commit-graph during fetch
- + t5510-fetch.sh: demonstrate fetch.writeCommitGraph bug
-
- Regression fix.
-
-
-* jt/delay-fetch-if-missing (2019-10-24) 1 commit
-  (merged to 'next' on 2019-10-30 at 6c884f3267)
- + fetch: delay fetch_if_missing=0 until after config
-
- Work-around a lazy fetch glitch.
-
---------------------------------------------------
 [New Topics]
 
-* es/myfirstcontrib-updates (2019-11-02) 3 commits
- - myfirstcontrib: hint to find gitgitgadget allower
- - myfirstcontrib: add dependency installation step
- - myfirstcontrib: add 'psuh' to command-list.txt
+* am/pathspec-from-file (2019-11-07) 6 commits
+ - commit: support the --pathspec-from-file option
+ - doc: commit: unify <pathspec> description
+ - reset: support the `--pathspec-from-file` option
+ - doc: reset: unify <pathspec> description
+ - pathspec: add new function to parse file
+ - parse-options.h: add new options `--pathspec-from-file`, `--pathspec-file-nul`
 
- Doc updates.
+ A few commands learned to take the pathspec from the
+ standard input or a named file, instead of taking it as the command
+ line arguments.
+
+ Will merge to 'next'.
+
+
+* cb/curl-use-xmalloc (2019-11-07) 1 commit
+ - remote-curl: unbreak http.extraHeader with custom allocators
+
+ HTTP transport had possible allocator/deallocator mismatch, which
+ has been corrected.
 
  Will merge to 'next'.
 
 
-* rt/fetch-message-fix (2019-11-02) 1 commit
- - fetch.c: fix typo in a warning message
+* ds/commit-graph-delay-gen-progress (2019-11-07) 1 commit
+ - commit-graph: use start_delayed_progress()
 
- A small message update.
+ One kind of progress messages were always given during commit-graph
+ generation, instead of following the "if it takes more than two
+ seconds, show progress" pattern, which has been corrected.
 
  Will merge to 'next'.
+
+
+* ec/fetch-mark-common-refs-trace2 (2019-11-07) 1 commit
+ - fetch: add trace2 instrumentation
+
+ Trace2 annotation.
+
+ Expecting a response to review.
+
+
+* en/misc-doc-fixes (2019-11-07) 3 commits
+ - name-hash.c: remove duplicate word in comment
+ - hashmap: fix documentation misuses of -> versus .
+ - git-filter-branch.txt: correct argument name typo
+
+ Misc doc fixes.
+
+ Will merge to 'next'.
+
+
+* en/t6024-style (2019-11-07) 1 commit
+ - t6024: modernize style
+
+ Test updates.
+
+ Will merge to 'next'.
+
+
+* ep/guard-kset-tar-headers (2019-11-07) 1 commit
+ - kset.h, tar.h: add missing header guard to prevent multiple inclusion
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* js/fetch-multi-lockfix (2019-11-06) 2 commits
+ - fetch: avoid locking issues between fetch.jobs/fetch.writeCommitGraph
+ - fetch: add the command-line option `--write-commit-graph`
+
+ Fetching from multiple remotes into the same repository in parallel
+ had a bad interaction with the recent change to (optionally) update
+ the commit-graph after a fetch job finishes, as these parallel
+ fetches compete with each other.  Which has been corrected.
+
+ Will merge to 'next'.
+
+
+* jt/fetch-remove-lazy-fetch-plugging (2019-11-06) 1 commit
+ - fetch: remove fetch_if_missing=0
+
+ "git fetch" codepath had a big "do not lazily fetch missing objects
+ when I ask if something exists" switch.  This has been corrected by
+ marking the "does this thing exist?" calls with "if not please do not
+ lazily fetch it" flag.
+
+ Will merge to 'next'.
+
+
+* kw/fsmonitor-watchman-fix (2019-11-06) 1 commit
+ - fsmonitor: fix watchman integration
+
+ The watchman integration for fsmonitor was racy, which has been
+ corrected to be more conservative.
+
+ Will merge to 'next'.
+
+
+* ln/userdiff-elixir (2019-11-08) 1 commit
+ - userdiff: add Elixir to supported languages
+
+ The patterns to detect function boundary for Elixir language has
+ been added.
+
+ Will merge to 'next'.
+
+
+* ns/test-desc-typofix (2019-11-07) 1 commit
+ - t: fix typo in test descriptions
+
+ Typofix.
+
+ Will merge to 'next'.
+
+
+* py/shortlog-list-options-for-log (2019-11-06) 1 commit
+ - git-shortlog.txt: include commit limiting options
+
+ Documentation pages for "git shortlog" now lists commit limiting
+ options explicitly.
+
+ Expecting a reroll.  
+ It excludes too much (e.g. the section for pathspec based history
+ simplification) in a way that makes future shuffling of sections
+ in rev-list-options.txt error prone.
+
+
+* rs/trace2-dots (2019-11-06) 1 commit
+ - trace2: add dots directly to strbuf in perf_fmt_prepare()
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* dd/sequencer-utf8 (2019-11-07) 8 commits
+ - sequencer: reencode commit message for am/rebase --show-current-patch
+ - sequencer: reencode old merge-commit message
+ - sequencer: reencode squashing commit's message
+ - sequencer: reencode revert/cherry-pick's todo list
+ - sequencer: reencode to utf-8 before arrange rebase's todo list
+ - t3900: demonstrate git-rebase problem with multi encoding
+ - configure.ac: define ICONV_OMITS_BOM if necessary
+ - t0028: eliminate non-standard usage of printf
+
+ Handling of commit objects that use non UTF-8 encoding during
+ "rebase -i" has been improved.
+
+
+* dl/t5520-cleanup (2019-11-08) 14 commits
+ - t5520: replace `! git` with `test_must_fail git`
+ - t5520: remove redundant lines in test cases
+ - t5520: replace subshell cat comparison with test_cmp
+ - t5520: don't put git in upstream of pipe
+ - t5520: test single-line files by git with test_cmp
+ - t5520: use test_cmp_rev where possible
+ - t5520: replace test -{n,z} with test-lib functions
+ - t5520: use test_line_count where possible
+ - t5520: remove spaces after redirect operator
+ - t5520: replace test -f with test-lib functions
+ - t5520: let sed open its own input
+ - t5520: use sq for test case names
+ - t5520: improve test style
+ - t: teach test_cmp_rev to accept ! for not-equals
+
+ Test cleanup.
+
+ Expecting a response to review.
 
 --------------------------------------------------
 [Stalled]
@@ -126,6 +255,38 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* js/builtin-add-i (2019-11-08) 9 commits
+ - built-in add -i: implement the `help` command
+ - built-in add -i: use color in the main loop
+ - built-in add -i: support `?` (prompt help)
+ - built-in add -i: show unique prefixes of the commands
+ - built-in add -i: implement the main loop
+ - built-in add -i: color the header in the `status` command
+ - built-in add -i: implement the `status` command
+ - diff: export diffstat interface
+ - Start to implement a built-in version of `git add --interactive`
+
+ The beginning of rewriting "git add -i" in C.
+
+
+* es/myfirstcontrib-updates (2019-11-02) 3 commits
+ - myfirstcontrib: hint to find gitgitgadget allower
+ - myfirstcontrib: add dependency installation step
+ - myfirstcontrib: add 'psuh' to command-list.txt
+
+ Doc updates.
+
+ Will merge to 'next'.
+
+
+* rt/fetch-message-fix (2019-11-02) 1 commit
+ - fetch.c: fix typo in a warning message
+
+ A small message update.
+
+ Will merge to 'next'.
+
+
 * ra/rebase-i-more-options (2019-11-02) 6 commits
  - rebase: add --reset-author-date
  - rebase -i: support --ignore-date
@@ -138,13 +299,22 @@ of the repositories listed at
  rebase" proper.
 
 
-* en/doc-typofix (2019-10-25) 1 commit
-  (merged to 'next' on 2019-10-30 at 8405cac984)
- + Documentation: fix a bunch of typos, both old and new
+* en/doc-typofix (2019-11-07) 11 commits
+ - Fix spelling errors in no-longer-updated-from-upstream modules
+ - multimail: fix a few simple spelling errors
+ - sha1dc: fix trivial comment spelling error
+ - Fix spelling errors in test commands
+ - Fix spelling errors in messages shown to users
+ - Fix spelling errors in names of tests
+ - Fix spelling errors in comments of testcases
+ - Fix spelling errors in code comments
+ - Prefer 'up-to-date' spelling
+ - Fix spelling errors in documentation outside of Documentation/
+ - Documentation: fix a bunch of typos, both old and new
 
  Docfix.
 
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
 * hw/remove-api-docs-placeholder (2019-10-25) 1 commit
@@ -153,7 +323,7 @@ of the repositories listed at
 
  Docfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/update-index-ignore-removal-for-skip-worktree (2019-11-02) 2 commits
@@ -164,7 +334,7 @@ of the repositories listed at
  "git stash save" in a working tree that is sparsely checked out
  mistakenly removed paths that are outside the area of interest.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pb/pretty-email-without-domain-part (2019-10-30) 3 commits
@@ -177,7 +347,7 @@ of the repositories listed at
  placeholder that is similar to e/E that fills in the e-mail
  address, but only the local part on the left side of '@'.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sg/commit-graph-usage-fix (2019-10-28) 1 commit
@@ -186,7 +356,7 @@ of the repositories listed at
 
  Message fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dl/doc-diff-no-index-implies-exit-code (2019-11-02) 1 commit
@@ -263,7 +433,7 @@ of the repositories listed at
  Move the definition of a set of bitmask constants from 0ctal
  literal to (1U<<count) notation.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/cleanup-object-parsing-and-fsck (2019-10-28) 23 commits
@@ -306,7 +476,7 @@ of the repositories listed at
  "git rebase --preserve-merges" has been marked as deprecated; this
  release stops advertising it in the "git rebase -h" output.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * po/bundle-doc-clonable (2019-10-21) 1 commit
@@ -323,7 +493,7 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * js/advise-rebase-skip (2019-10-23) 3 commits
@@ -336,7 +506,7 @@ of the repositories listed at
  on what operation was in progress learned to distinguish rebase and
  cherry-pick better.
 
- Will cook in 'next'.
+ Perhaps discard and expect a reroll.
  cf. <9d550cd9-08a2-eee5-7d7f-63678285accc@gmail.com>
 
 
@@ -351,7 +521,7 @@ of the repositories listed at
  Code clean-up and a bugfix in the logic used to tell worktree local
  and repository global refs apart.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * wb/midx-progress (2019-10-23) 6 commits
@@ -366,7 +536,7 @@ of the repositories listed at
  The code to generate multi-pack index learned to show (or not to
  show) progress indicators.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * dl/apply-3way-diff3 (2019-10-24) 5 commits
@@ -380,7 +550,7 @@ of the repositories listed at
  "git apply --3way" learned to honor merge.conflictStyle
  configuration variable, like merges would.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * hw/config-doc-in-header (2019-10-24) 1 commit
@@ -401,7 +571,7 @@ of the repositories listed at
  original object to HEAD, but a mistaken tightening to command line
  parameter validation made earlier disabled that feature by mistake.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/log-graph-simplify (2019-10-16) 13 commits
@@ -448,7 +618,7 @@ of the repositories listed at
  "rebase -i" ceased to run post-commit hook by mistake in an earlier
  update, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ds/sparse-cone (2019-10-23) 17 commits
@@ -487,8 +657,7 @@ of the repositories listed at
  command; this has been enhanced so that the subject can also be
  filled.
 
- Will cook in 'next'.
- No need for rush, as this is a new feature.
+ Will merge to 'master'.
 
 
 * en/merge-recursive-directory-rename-fixes (2019-10-23) 3 commits
@@ -502,7 +671,7 @@ of the repositories listed at
  as a rename/merge of the subdirectory to the root directory, which has
  been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jt/fetch-pack-record-refs-in-the-dot-promisor (2019-10-16) 1 commit
@@ -511,8 +680,7 @@ of the repositories listed at
 
  Debugging support for lazy cloning has been a bit improved.
 
- Will cook in 'next'.
- No need for rush, as this is a new feature.
+ Will merge to 'master'.
 
 
 * es/walken-tutorial (2019-10-12) 1 commit
@@ -521,7 +689,7 @@ of the repositories listed at
 
  A tutorial on object enumeration.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * bc/hash-independent-tests-part-6 (2019-10-28) 15 commits
@@ -544,7 +712,7 @@ of the repositories listed at
 
  Test updates to prepare for SHA-2 transition continues.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ag/sequencer-todo-updates (2019-10-28) 6 commits
@@ -560,7 +728,7 @@ of the repositories listed at
  Reduce unnecessary reading of state variables back from the disk
  during sequener operation.
 
- Will cook in 'next'.
+ Kick back to 'pu' before squashing the leakfix.
 
 
 * mt/threaded-grep-in-object-store (2019-10-02) 11 commits
@@ -580,6 +748,8 @@ of the repositories listed at
  (as opposed to files in the working tree) as accesses to the object
  layer is not thread-safe.  This limitation is getting lifted.
 
+ What's the current status of this one?
+
 
 * jk/packfile-reuse-cleanup (2019-10-23) 9 commits
  - pack-objects: improve partial packfile reuse
@@ -595,22 +765,4 @@ of the repositories listed at
  The way "git pack-objects" reuses objects stored in existing pack
  to generate its result has been improved.
 
-
-* js/builtin-add-i (2019-08-30) 11 commits
- . built-in add -i: implement the `help` command
- . built-in add -i: use color in the main loop
- . built-in add -i: support `?` (prompt help)
- . built-in add -i: show unique prefixes of the commands
- . Add a function to determine unique prefixes for a list of strings
- . built-in add -i: implement the main loop
- . built-in add -i: color the header in the `status` command
- . built-in add -i: refresh the index before running `status`
- . built-in add -i: implement the `status` command
- . diff: export diffstat interface
- . Start to implement a built-in version of `git add --interactive`
-
- The beginning of rewriting "git add -i" in C.
-
- Expecting a reroll on top of a base with the tg/stash-refresh-index
- topic that defines an updated repo_refresh_and_write_index() helper.
- cf. <20190911175201.GA11444@cat>
+ Will merge to 'next'.
