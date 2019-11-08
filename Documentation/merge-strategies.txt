@@ -32,7 +32,7 @@ The 'recursive' strategy can take the following options:
 ours;;
 	This option forces conflicting hunks to be auto-resolved cleanly by
 	favoring 'our' version.  Changes from the other tree that do not
-	conflict with our side are reflected to the merge result.
+	conflict with our side are reflected in the merge result.
 	For a binary file, the entire contents are taken from our side.
 +
 This should not be confused with the 'ours' merge strategy, which does not
