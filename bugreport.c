@@ -1,8 +1,17 @@
-#include "builtin.h"
+#include "cache.h"
 #include "parse-options.h"
 #include "stdio.h"
 #include "strbuf.h"
 #include "time.h"
+#include "help.h"
+
+static void get_system_info(struct strbuf *sys_info)
+{
+	/* get git version from native cmd */
+	strbuf_addstr(sys_info, "git version:\n");
+	get_version_info(sys_info, 1);
+	strbuf_complete_line(sys_info);
+}
 
 static const char * const bugreport_usage[] = {
 	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
@@ -30,6 +39,11 @@ static int get_bug_template(struct strbuf *template)
 
 	strbuf_addstr(template, template_text);
 	return 0;
+}
+
+static void get_header(struct strbuf *buf, const char *title)
+{
+	strbuf_addf(buf, "\n\n[%s]\n", title);
 }
 
 int cmd_main(int argc, const char **argv)
@@ -75,6 +89,9 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	get_bug_template(&buffer);
+
+	get_header(&buffer, "System Info");
+	get_system_info(&buffer);
 
 	report = fopen_for_writing(report_path.buf);
 
