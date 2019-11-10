@@ -756,8 +756,33 @@ static int sideband_demux(int in, int out, void *data)
 	return ret;
 }
 
+static void write_promisor_file(const char *keep_name,
+				struct ref **sought, int nr_sought)
+{
+	struct strbuf promisor_name = STRBUF_INIT;
+	int suffix_stripped;
+	FILE *output;
+	int i;
+
+	strbuf_addstr(&promisor_name, keep_name);
+	suffix_stripped = strbuf_strip_suffix(&promisor_name, ".keep");
+	if (!suffix_stripped)
+		BUG("name of pack lockfile should end with .keep (was '%s')",
+		    keep_name);
+	strbuf_addstr(&promisor_name, ".promisor");
+
+	output = xfopen(promisor_name.buf, "w");
+	for (i = 0; i < nr_sought; i++)
+		fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
+			sought[i]->name);
+	fclose(output);
+
+	strbuf_release(&promisor_name);
+}
+
 static int get_pack(struct fetch_pack_args *args,
-		    int xd[2], char **pack_lockfile)
+		    int xd[2], char **pack_lockfile,
+		    struct ref **sought, int nr_sought)
 {
 	struct async demux;
 	int do_keep = args->keep_pack;
@@ -819,7 +844,13 @@ static int get_pack(struct fetch_pack_args *args,
 		}
 		if (args->check_self_contained_and_connected)
 			argv_array_push(&cmd.args, "--check-self-contained-and-connected");
-		if (args->from_promisor)
+		/*
+		 * If we're obtaining the filename of a lockfile, we'll use
+		 * that filename to write a .promisor file with more
+		 * information below. If not, we need index-pack to do it for
+		 * us.
+		 */
+		if (!(do_keep && pack_lockfile) && args->from_promisor)
 			argv_array_push(&cmd.args, "--promisor");
 	}
 	else {
@@ -873,6 +904,14 @@ static int get_pack(struct fetch_pack_args *args,
 		die(_("%s failed"), cmd_name);
 	if (use_sideband && finish_async(&demux))
 		die(_("error in sideband demultiplexer"));
+
+	/*
+	 * Now that index-pack has succeeded, write the promisor file using the
+	 * obtained .keep filename if necessary
+	 */
+	if (do_keep && pack_lockfile && args->from_promisor)
+		write_promisor_file(*pack_lockfile, sought, nr_sought);
+
 	return 0;
 }
 
@@ -1008,7 +1047,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	else
 		alternate_shallow_file = NULL;
-	if (get_pack(args, fd, pack_lockfile))
+	if (get_pack(args, fd, pack_lockfile, sought, nr_sought))
 		die(_("git fetch-pack: fetch failed."));
 
  all_done:
@@ -1464,7 +1503,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 			/* get the pack */
 			process_section_header(&reader, "packfile", 0);
-			if (get_pack(args, fd, pack_lockfile))
+			if (get_pack(args, fd, pack_lockfile, sought, nr_sought))
 				die(_("git fetch-pack: fetch failed."));
 
 			state = FETCH_DONE;

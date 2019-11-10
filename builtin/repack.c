@@ -233,6 +233,13 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 		/*
 		 * pack-objects creates the .pack and .idx files, but not the
 		 * .promisor file. Create the .promisor file, which is empty.
+		 *
+		 * NEEDSWORK: fetch-pack sometimes generates non-empty
+		 * .promisor files containing the ref names and associated
+		 * hashes at the point of generation of the corresponding
+		 * packfile, but this would not preserve their contents. Maybe
+		 * concatenate the contents of all .promisor files instead of
+		 * just creating a new empty file.
 		 */
 		promisor_name = mkpathdup("%s-%s.promisor", packtmp,
 					  line.buf);
