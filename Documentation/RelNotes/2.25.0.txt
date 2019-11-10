@@ -1,0 +1,68 @@
+Git 2.25 Release Notes
+======================
+
+Updates since v2.24
+-------------------
+
+Backward compatibility notes
+
+
+UI, Workflows & Features
+
+ * A tutorial on object enumeration has been added.
+
+ * The branch description ("git branch --edit-description") has been
+   used to fill the body of the cover letters by the format-patch
+   command; this has been enhanced so that the subject can also be
+   filled.
+
+ * "git rebase --preserve-merges" has been marked as deprecated; this
+   release stops advertising it in the "git rebase -h" output.
+
+ * The code to generate multi-pack index learned to show (or not to
+   show) progress indicators.
+
+ * "git apply --3way" learned to honor merge.conflictStyle
+   configuration variable, like merges would.
+
+ * The custom format for "git log --format=<format>" learned the l/L
+   placeholder that is similar to e/E that fills in the e-mail
+   address, but only the local part on the left side of '@'.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Debugging support for lazy cloning has been a bit improved.
+
+ * Move the definition of a set of bitmask constants from 0ctal
+   literal to (1U<<count) notation.
+
+ * Test updates to prepare for SHA-2 transition continues.
+
+
+Fixes since v2.24
+-----------------
+
+ * "rebase -i" ceased to run post-commit hook by mistake in an earlier
+   update, which has been corrected.
+
+ * "git notes copy $original" ought to copy the notes attached to the
+   original object to HEAD, but a mistaken tightening to command line
+   parameter validation made earlier disabled that feature by mistake.
+
+ * When all files from some subdirectory were renamed to the root
+   directory, the directory rename heuristics would fail to detect that
+   as a rename/merge of the subdirectory to the root directory, which has
+   been corrected.
+
+ * Code clean-up and a bugfix in the logic used to tell worktree local
+   and repository global refs apart.
+   (merge f45f88b2e4 sg/dir-trie-fixes later to maint).
+
+ * "git stash save" in a working tree that is sparsely checked out
+   mistakenly removed paths that are outside the area of interest.
+   (merge 4a58c3d7f7 js/update-index-ignore-removal-for-skip-worktree later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
+   (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
