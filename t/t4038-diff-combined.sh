@@ -440,11 +440,13 @@ test_expect_success 'setup for --combined-all-paths' '
 	git branch side2c &&
 	git checkout side1c &&
 	test_seq 1 10 >filename-side1c &&
+	side1cf=$(git hash-object filename-side1c) &&
 	git add filename-side1c &&
 	git commit -m with &&
 	git checkout side2c &&
 	test_seq 1 9 >filename-side2c &&
 	echo ten >>filename-side2c &&
+	side2cf=$(git hash-object filename-side2c) &&
 	git add filename-side2c &&
 	git commit -m iam &&
 	git checkout -b mergery side1c &&
@@ -452,13 +454,14 @@ test_expect_success 'setup for --combined-all-paths' '
 	git rm filename-side1c &&
 	echo eleven >>filename-side2c &&
 	git mv filename-side2c filename-merged &&
+	mergedf=$(git hash-object filename-merged) &&
 	git add filename-merged &&
 	git commit
 '
 
 test_expect_success '--combined-all-paths and --raw' '
-	cat <<-\EOF >expect &&
-	::100644 100644 100644 f00c965d8307308469e537302baa73048488f162 088bd5d92c2a8e0203ca8e7e4c2a5c692f6ae3f7 333b9c62519f285e1854830ade0fe1ef1d40ee1b RR	filename-side1c	filename-side2c	filename-merged
+	cat <<-EOF >expect &&
+	::100644 100644 100644 $side1cf $side2cf $mergedf RR	filename-side1c	filename-side2c	filename-merged
 	EOF
 	git diff-tree -c -M --raw --combined-all-paths HEAD >actual.tmp &&
 	sed 1d <actual.tmp >actual &&
@@ -482,11 +485,13 @@ test_expect_success FUNNYNAMES 'setup for --combined-all-paths with funny names'
 	git checkout side1d &&
 	test_seq 1 10 >"$(printf "file\twith\ttabs")" &&
 	git add file* &&
+	side1df=$(git hash-object *tabs) &&
 	git commit -m with &&
 	git checkout side2d &&
 	test_seq 1 9 >"$(printf "i\tam\ttabbed")" &&
 	echo ten >>"$(printf "i\tam\ttabbed")" &&
 	git add *tabbed &&
+	side2df=$(git hash-object *tabbed) &&
 	git commit -m iam &&
 	git checkout -b funny-names-mergery side1d &&
 	git merge --no-commit side2d &&
@@ -494,12 +499,14 @@ test_expect_success FUNNYNAMES 'setup for --combined-all-paths with funny names'
 	echo eleven >>"$(printf "i\tam\ttabbed")" &&
 	git mv "$(printf "i\tam\ttabbed")" "$(printf "fickle\tnaming")" &&
 	git add fickle* &&
-	git commit
+	headf=$(git hash-object fickle*) &&
+	git commit &&
+	head=$(git rev-parse HEAD)
 '
 
 test_expect_success FUNNYNAMES '--combined-all-paths and --raw and funny names' '
-	cat <<-\EOF >expect &&
-	::100644 100644 100644 f00c965d8307308469e537302baa73048488f162 088bd5d92c2a8e0203ca8e7e4c2a5c692f6ae3f7 333b9c62519f285e1854830ade0fe1ef1d40ee1b RR	"file\twith\ttabs"	"i\tam\ttabbed"	"fickle\tnaming"
+	cat <<-EOF >expect &&
+	::100644 100644 100644 $side1df $side2df $headf RR	"file\twith\ttabs"	"i\tam\ttabbed"	"fickle\tnaming"
 	EOF
 	git diff-tree -c -M --raw --combined-all-paths HEAD >actual.tmp &&
 	sed 1d <actual.tmp >actual &&
@@ -507,7 +514,7 @@ test_expect_success FUNNYNAMES '--combined-all-paths and --raw and funny names' 
 '
 
 test_expect_success FUNNYNAMES '--combined-all-paths and --raw -and -z and funny names' '
-	printf "aaf8087c3cbd4db8e185a2d074cf27c53cfb75d7\0::100644 100644 100644 f00c965d8307308469e537302baa73048488f162 088bd5d92c2a8e0203ca8e7e4c2a5c692f6ae3f7 333b9c62519f285e1854830ade0fe1ef1d40ee1b RR\0file\twith\ttabs\0i\tam\ttabbed\0fickle\tnaming\0" >expect &&
+	printf "$head\0::100644 100644 100644 $side1df $side2df $headf RR\0file\twith\ttabs\0i\tam\ttabbed\0fickle\tnaming\0" >expect &&
 	git diff-tree -c -M --raw --combined-all-paths -z HEAD >actual &&
 	test_cmp expect actual
 '

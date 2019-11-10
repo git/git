@@ -59,6 +59,7 @@ test_rev_parse () {
 ROOT=$(pwd)
 
 test_expect_success 'setup' '
+	test_oid_init &&
 	mkdir -p sub/dir work &&
 	cp -R .git repo.git
 '
@@ -129,6 +130,20 @@ test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
 	echo false >expect &&
 	git rev-parse --is-shallow-repository >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --show-object-format in repo' '
+	echo "$(test_oid algo)" >expect &&
+	git rev-parse --show-object-format >actual &&
+	test_cmp expect actual &&
+	git rev-parse --show-object-format=storage >actual &&
+	test_cmp expect actual &&
+	git rev-parse --show-object-format=input >actual &&
+	test_cmp expect actual &&
+	git rev-parse --show-object-format=output >actual &&
+	test_cmp expect actual &&
+	test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
+	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
 test_expect_success 'showing the superproject correctly' '
