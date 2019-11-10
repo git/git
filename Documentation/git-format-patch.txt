@@ -19,6 +19,7 @@ SYNOPSIS
 		   [--start-number <n>] [--numbered-files]
 		   [--in-reply-to=<message id>] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
+		   [--cover-from-description=<mode>]
 		   [--rfc] [--subject-prefix=<subject prefix>]
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
@@ -171,6 +172,26 @@ will want to ensure that threading is disabled for `git send-email`.
 	from <since> but not from <until> and compare them with the
 	patches being generated, and any patch that matches is
 	ignored.
+
+--cover-from-description=<mode>::
+	Controls which parts of the cover letter will be automatically
+	populated using the branch's description.
++
+If `<mode>` is `message` or `default`, the cover letter subject will be
+populated with placeholder text. The body of the cover letter will be
+populated with the branch's description. This is the default mode when
+no configuration nor command line option is specified.
++
+If `<mode>` is `subject`, the first paragraph of the branch description will
+populate the cover letter subject. The remainder of the description will
+populate the body of the cover letter.
++
+If `<mode>` is `auto`, if the first paragraph of the branch description
+is greater than 100 bytes, then the mode will be `message`, otherwise
+`subject` will be used.
++
+If `<mode>` is `none`, both the cover letter subject and body will be
+populated with placeholder text.
 
 --subject-prefix=<subject prefix>::
 	Instead of the standard '[PATCH]' prefix in the subject
@@ -348,6 +369,7 @@ with configuration variables.
 	signOff = true
 	outputDirectory = <directory>
 	coverLetter = auto
+	coverFromDescription = auto
 ------------
 
 
