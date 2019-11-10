@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "argv-array.h"
 #include "parse-options.h"
 #include "cache.h"
 #include "bundle.h"
@@ -11,7 +12,7 @@
  */
 
 static const char * const builtin_bundle_usage[] = {
-  N_("git bundle create <file> <git-rev-list args>"),
+  N_("git bundle create [<options>] <file> <git-rev-list args>"),
   N_("git bundle verify <file>"),
   N_("git bundle list-heads <file> [<refname>...]"),
   N_("git bundle unbundle <file> [<refname>...]"),
@@ -19,7 +20,7 @@ static const char * const builtin_bundle_usage[] = {
 };
 
 static const char * const builtin_bundle_create_usage[] = {
-  N_("git bundle create <file> <git-rev-list args>"),
+  N_("git bundle create [<options>] <file> <git-rev-list args>"),
   NULL
 };
 
@@ -56,7 +57,20 @@ static int parse_options_cmd_bundle(int argc,
 }
 
 static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
+	int all_progress_implied = 0;
+	int progress = isatty(STDERR_FILENO);
+	struct argv_array pack_opts;
+
 	struct option options[] = {
+		OPT_SET_INT('q', "quiet", &progress,
+			    N_("do not show progress meter"), 0),
+		OPT_SET_INT(0, "progress", &progress,
+			    N_("show progress meter"), 1),
+		OPT_SET_INT(0, "all-progress", &progress,
+			    N_("show progress meter during object writing phase"), 2),
+		OPT_BOOL(0, "all-progress-implied",
+			 &all_progress_implied,
+			 N_("similar to --all-progress when progress meter is shown")),
 		OPT_END()
 	};
 	const char* bundle_file;
@@ -65,9 +79,19 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 			builtin_bundle_create_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
+	argv_array_init(&pack_opts);
+	if (progress == 0)
+		argv_array_push(&pack_opts, "--quiet");
+	else if (progress == 1)
+		argv_array_push(&pack_opts, "--progress");
+	else if (progress == 2)
+		argv_array_push(&pack_opts, "--all-progress");
+	if (progress && all_progress_implied)
+		argv_array_push(&pack_opts, "--all-progress-implied");
+
 	if (!startup_info->have_repository)
 		die(_("Need a repository to create a bundle."));
-	return !!create_bundle(the_repository, bundle_file, argc, argv);
+	return !!create_bundle(the_repository, bundle_file, argc, argv, &pack_opts);
 }
 
 static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
