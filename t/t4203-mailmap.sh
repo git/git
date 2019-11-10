@@ -13,8 +13,8 @@ fuzz_blame () {
 }
 
 test_expect_success setup '
-	cat >contacts <<-\EOF &&
-	A U Thor <author@example.com>
+	cat >contacts <<- EOF &&
+	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
 
@@ -33,19 +33,19 @@ test_expect_success 'check-mailmap no arguments' '
 '
 
 test_expect_success 'check-mailmap arguments' '
-	cat >expect <<-\EOF &&
-	A U Thor <author@example.com>
+	cat >expect <<- EOF &&
+	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
 	git check-mailmap \
-		"A U Thor <author@example.com>" \
+		"$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" \
 		"nick1 <bugs@company.xx>" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'check-mailmap --stdin' '
-	cat >expect <<-\EOF &&
-	A U Thor <author@example.com>
+	cat >expect <<- EOF &&
+	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	nick1 <bugs@company.xx>
 	EOF
 	git check-mailmap --stdin <contacts >actual &&
@@ -66,8 +66,8 @@ test_expect_success 'check-mailmap bogus contact' '
 	test_must_fail git check-mailmap bogus
 '
 
-cat >expect <<\EOF
-A U Thor (1):
+cat >expect << EOF
+$GIT_AUTHOR_NAME (1):
       initial
 
 nick1 (1):
@@ -90,7 +90,7 @@ nick1 (1):
 EOF
 
 test_expect_success 'default .mailmap' '
-	echo "Repo Guy <author@example.com>" > .mailmap &&
+	echo "Repo Guy <$GIT_AUTHOR_EMAIL>" > .mailmap &&
 	git shortlog HEAD >actual &&
 	test_cmp expect actual
 '
@@ -122,7 +122,7 @@ Internal Guy (1):
 
 EOF
 test_expect_success 'mailmap.file override' '
-	echo "External Guy <author@example.com>" >> internal_mailmap/.mailmap &&
+	echo "External Guy <$GIT_AUTHOR_EMAIL>" >> internal_mailmap/.mailmap &&
 	git config mailmap.file internal_mailmap/.mailmap &&
 	git shortlog HEAD >actual &&
 	test_cmp expect actual
@@ -178,8 +178,8 @@ test_expect_success 'name entry after email entry, case-insensitive' '
 	test_cmp expect actual
 '
 
-cat >expect <<\EOF
-A U Thor (1):
+cat >expect << EOF
+$GIT_AUTHOR_NAME (1):
       initial
 
 nick1 (1):
@@ -195,18 +195,18 @@ test_expect_success 'No mailmap files, but configured' '
 test_expect_success 'setup mailmap blob tests' '
 	git checkout -b map &&
 	test_when_finished "git checkout master" &&
-	cat >just-bugs <<-\EOF &&
+	cat >just-bugs <<- EOF &&
 	Blob Guy <bugs@company.xx>
 	EOF
-	cat >both <<-\EOF &&
-	Blob Guy <author@example.com>
+	cat >both <<- EOF &&
+	Blob Guy <$GIT_AUTHOR_EMAIL>
 	Blob Guy <bugs@company.xx>
 	EOF
-	printf "Tricky Guy <author@example.com>" >no-newline &&
+	printf "Tricky Guy <$GIT_AUTHOR_EMAIL>" >no-newline &&
 	git add just-bugs both no-newline &&
 	git commit -m "my mailmaps" &&
-	echo "Repo Guy <author@example.com>" >.mailmap &&
-	echo "Internal Guy <author@example.com>" >internal.map
+	echo "Repo Guy <$GIT_AUTHOR_EMAIL>" >.mailmap &&
+	echo "Internal Guy <$GIT_AUTHOR_EMAIL>" >internal.map
 '
 
 test_expect_success 'mailmap.blob set' '
@@ -266,12 +266,12 @@ test_expect_success 'mailmap.blob defaults to off in non-bare repo' '
 	git init non-bare &&
 	(
 		cd non-bare &&
-		test_commit one .mailmap "Fake Name <author@example.com>" &&
+		test_commit one .mailmap "Fake Name <$GIT_AUTHOR_EMAIL>" &&
 		echo "     1	Fake Name" >expect &&
 		git shortlog -ns HEAD >actual &&
 		test_cmp expect actual &&
 		rm .mailmap &&
-		echo "     1	A U Thor" >expect &&
+		echo "     1	$GIT_AUTHOR_NAME" >expect &&
 		git shortlog -ns HEAD >actual &&
 		test_cmp expect actual
 	)
@@ -305,26 +305,26 @@ test_expect_success 'cleanup after mailmap.blob tests' '
 '
 
 test_expect_success 'single-character name' '
-	echo "     1	A <author@example.com>" >expect &&
+	echo "     1	A <$GIT_AUTHOR_EMAIL>" >expect &&
 	echo "     1	nick1 <bugs@company.xx>" >>expect &&
-	echo "A <author@example.com>" >.mailmap &&
+	echo "A <$GIT_AUTHOR_EMAIL>" >.mailmap &&
 	test_when_finished "rm .mailmap" &&
 	git shortlog -es HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'preserve canonical email case' '
-	echo "     1	A U Thor <AUTHOR@example.com>" >expect &&
+	echo "     1	$GIT_AUTHOR_NAME <AUTHOR@example.com>" >expect &&
 	echo "     1	nick1 <bugs@company.xx>" >>expect &&
-	echo "<AUTHOR@example.com> <author@example.com>" >.mailmap &&
+	echo "<AUTHOR@example.com> <$GIT_AUTHOR_EMAIL>" >.mailmap &&
 	test_when_finished "rm .mailmap" &&
 	git shortlog -es HEAD >actual &&
 	test_cmp expect actual
 '
 
 # Extended mailmap configurations should give us the following output for shortlog
-cat >expect <<\EOF
-A U Thor <author@example.com> (1):
+cat >expect << EOF
+$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> (1):
       initial
 
 CTO <cto@company.xx> (1):
@@ -370,7 +370,7 @@ test_expect_success 'Shortlog output (complex mapping)' '
 	git commit --author "CTO <cto@coompany.xx>" -m seventh &&
 
 	mkdir -p internal_mailmap &&
-	echo "Committed <committer@example.com>" > internal_mailmap/.mailmap &&
+	echo "Committed <$GIT_COMMITTER_EMAIL>" > internal_mailmap/.mailmap &&
 	echo "<cto@company.xx>                       <cto@coompany.xx>" >> internal_mailmap/.mailmap &&
 	echo "Some Dude <some@dude.xx>         nick1 <bugs@company.xx>" >> internal_mailmap/.mailmap &&
 	echo "Other Author <other@author.xx>   nick2 <bugs@company.xx>" >> internal_mailmap/.mailmap &&
@@ -384,27 +384,27 @@ test_expect_success 'Shortlog output (complex mapping)' '
 '
 
 # git log with --pretty format which uses the name and email mailmap placemarkers
-cat >expect <<\EOF
+cat >expect << EOF
 Author CTO <cto@coompany.xx> maps to CTO <cto@company.xx>
-Committer C O Mitter <committer@example.com> maps to Committed <committer@example.com>
+Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
 
 Author claus <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-Committer C O Mitter <committer@example.com> maps to Committed <committer@example.com>
+Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
 
 Author santa <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-Committer C O Mitter <committer@example.com> maps to Committed <committer@example.com>
+Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
 
 Author nick2 <nick2@company.xx> maps to Other Author <other@author.xx>
-Committer C O Mitter <committer@example.com> maps to Committed <committer@example.com>
+Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
 
 Author nick2 <bugs@company.xx> maps to Other Author <other@author.xx>
-Committer C O Mitter <committer@example.com> maps to Committed <committer@example.com>
+Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
 
 Author nick1 <bugs@company.xx> maps to Some Dude <some@dude.xx>
-Committer C O Mitter <committer@example.com> maps to Committed <committer@example.com>
+Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
 
-Author A U Thor <author@example.com> maps to A U Thor <author@example.com>
-Committer C O Mitter <committer@example.com> maps to Committed <committer@example.com>
+Author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> maps to $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
+Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
 EOF
 
 test_expect_success 'Log output (complex mapping)' '
@@ -412,14 +412,42 @@ test_expect_success 'Log output (complex mapping)' '
 	test_cmp expect actual
 '
 
-cat >expect <<\EOF
+cat >expect << EOF
+Author email cto@coompany.xx has local-part cto
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email me@company.xx has local-part me
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email me@company.xx has local-part me
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email nick2@company.xx has local-part nick2
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email bugs@company.xx has local-part bugs
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email bugs@company.xx has local-part bugs
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+
+Author email author@example.com has local-part author
+Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+EOF
+
+test_expect_success 'Log output (local-part email address)' '
+	git log --pretty=format:"Author email %ae has local-part %al%nCommitter email %ce has local-part %cl%n" >actual &&
+	test_cmp expect actual
+'
+
+cat >expect << EOF
 Author: CTO <cto@company.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
 Author: Other Author <other@author.xx>
 Author: Other Author <other@author.xx>
 Author: Some Dude <some@dude.xx>
-Author: A U Thor <author@example.com>
+Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 EOF
 
 test_expect_success 'Log output with --use-mailmap' '
@@ -427,14 +455,14 @@ test_expect_success 'Log output with --use-mailmap' '
 	test_cmp expect actual
 '
 
-cat >expect <<\EOF
+cat >expect << EOF
 Author: CTO <cto@company.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
 Author: Santa Claus <santa.claus@northpole.xx>
 Author: Other Author <other@author.xx>
 Author: Other Author <other@author.xx>
 Author: Some Dude <some@dude.xx>
-Author: A U Thor <author@example.com>
+Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 EOF
 
 test_expect_success 'Log output with log.mailmap' '
@@ -443,28 +471,28 @@ test_expect_success 'Log output with log.mailmap' '
 '
 
 test_expect_success 'log.mailmap=false disables mailmap' '
-	cat >expect <<-\EOF &&
+	cat >expect <<- EOF &&
 	Author: CTO <cto@coompany.xx>
 	Author: claus <me@company.xx>
 	Author: santa <me@company.xx>
 	Author: nick2 <nick2@company.xx>
 	Author: nick2 <bugs@company.xx>
 	Author: nick1 <bugs@company.xx>
-	Author: A U Thor <author@example.com>
+	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	EOF
 	git -c log.mailmap=False log | grep Author > actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--no-use-mailmap disables mailmap' '
-	cat >expect <<-\EOF &&
+	cat >expect <<- EOF &&
 	Author: CTO <cto@coompany.xx>
 	Author: claus <me@company.xx>
 	Author: santa <me@company.xx>
 	Author: nick2 <nick2@company.xx>
 	Author: nick2 <bugs@company.xx>
 	Author: nick1 <bugs@company.xx>
-	Author: A U Thor <author@example.com>
+	Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 	EOF
 	git log --no-use-mailmap | grep Author > actual &&
 	test_cmp expect actual
@@ -500,8 +528,8 @@ test_expect_success 'Only grep replaced author with --use-mailmap' '
 '
 
 # git blame
-cat >expect <<\EOF
-^OBJI (A U Thor     DATE 1) one
+cat >expect <<EOF
+^OBJI ($GIT_AUTHOR_NAME     DATE 1) one
 OBJID (Some Dude    DATE 2) two
 OBJID (Other Author DATE 3) three
 OBJID (Other Author DATE 4) four
