@@ -13,7 +13,7 @@
 
 static const char * const builtin_bundle_usage[] = {
   N_("git bundle create [<options>] <file> <git-rev-list args>"),
-  N_("git bundle verify <file>"),
+  N_("git bundle verify [<options>] <file>"),
   N_("git bundle list-heads <file> [<refname>...]"),
   N_("git bundle unbundle <file> [<refname>...]"),
   NULL
@@ -25,7 +25,7 @@ static const char * const builtin_bundle_create_usage[] = {
 };
 
 static const char * const builtin_bundle_verify_usage[] = {
-  N_("git bundle verify <file>"),
+  N_("git bundle verify [<options>] <file>"),
   NULL
 };
 
@@ -97,8 +97,11 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
 static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 	struct bundle_header header;
 	int bundle_fd = -1;
+	int quiet = 0;
 
 	struct option options[] = {
+		OPT_BOOL('q', "quiet", &quiet,
+			    N_("do not show bundle details")),
 		OPT_END()
 	};
 	const char* bundle_file;
@@ -111,7 +114,7 @@ static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 	if ((bundle_fd = read_bundle_header(bundle_file, &header)) < 0)
 		return 1;
 	close(bundle_fd);
-	if (verify_bundle(the_repository, &header, 1))
+	if (verify_bundle(the_repository, &header, !quiet))
 		return 1;
 	fprintf(stderr, _("%s is okay\n"), bundle_file);
 	return 0;
