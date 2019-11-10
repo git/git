@@ -1126,25 +1126,22 @@ static int run_prepare_commit_msg_hook(struct repository *r,
 				       struct strbuf *msg,
 				       const char *commit)
 {
-	struct argv_array hook_env = ARGV_ARRAY_INIT;
-	int ret;
-	const char *name;
+	int ret = 0;
+	const char *name, *arg1 = NULL, *arg2 = NULL;
 
 	name = git_path_commit_editmsg();
 	if (write_message(msg->buf, msg->len, name, 0))
 		return -1;
 
-	argv_array_pushf(&hook_env, "GIT_INDEX_FILE=%s", r->index_file);
-	argv_array_push(&hook_env, "GIT_EDITOR=:");
-	if (commit)
-		ret = run_hook_le(hook_env.argv, "prepare-commit-msg", name,
-				  "commit", commit, NULL);
-	else
-		ret = run_hook_le(hook_env.argv, "prepare-commit-msg", name,
-				  "message", NULL);
-	if (ret)
+	if (commit) {
+		arg1 = "commit";
+		arg2 = commit;
+	} else {
+		arg1 = "message";
+	}
+	if (run_commit_hook(0, r->index_file, "prepare-commit-msg", name,
+			    arg1, arg2, NULL))
 		ret = error(_("'prepare-commit-msg' hook failed"));
-	argv_array_clear(&hook_env);
 
 	return ret;
 }
@@ -1403,6 +1400,7 @@ static int try_to_commit(struct repository *r,
 		goto out;
 	}
 
+	run_commit_hook(0, r->index_file, "post-commit", NULL);
 	if (flags & AMEND_MSG)
 		commit_post_rewrite(r, current_head, oid);
 
