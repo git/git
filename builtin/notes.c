@@ -513,7 +513,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (argc < 2) {
+	if (argc < 1) {
 		error(_("too few parameters"));
 		usage_with_options(git_notes_copy_usage, options);
 	}

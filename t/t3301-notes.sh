@@ -864,6 +864,24 @@ test_expect_success 'append to note from other note with "git notes append -c"' 
 '
 
 test_expect_success 'copy note with "git notes copy"' '
+	commit=$(git rev-parse 4th) &&
+	cat >expect <<-EOF &&
+		commit $commit
+		Author: A U Thor <author@example.com>
+		Date:   Thu Apr 7 15:16:13 2005 -0700
+
+		${indent}4th
+
+		Notes:
+		${indent}This is a blob object
+	EOF
+	git notes copy 8th 4th &&
+	git log 3rd..4th >actual &&
+	test_cmp expect actual &&
+	test "$(git note list 4th)" = "$(git note list 8th)"
+'
+
+test_expect_success 'copy note with "git notes copy" with default' '
 	test_commit 11th &&
 	commit=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
@@ -878,7 +896,7 @@ test_expect_success 'copy note with "git notes copy"' '
 		${indent}
 		${indent}yet another note
 	EOF
-	git notes copy HEAD^ HEAD &&
+	git notes copy HEAD^ &&
 	git log -1 >actual &&
 	test_cmp expect actual &&
 	test "$(git notes list HEAD)" = "$(git notes list HEAD^)"
@@ -901,11 +919,29 @@ test_expect_success 'allow overwrite with "git notes copy -f"' '
 		${indent}11th
 
 		Notes:
+		${indent}This is a blob object
+	EOF
+	git notes copy -f HEAD~3 HEAD &&
+	git log -1 >actual &&
+	test_cmp expect actual &&
+	test "$(git notes list HEAD)" = "$(git notes list HEAD~3)"
+'
+
+test_expect_success 'allow overwrite with "git notes copy -f" with default' '
+	commit=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
+		commit $commit
+		Author: A U Thor <author@example.com>
+		Date:   Thu Apr 7 15:23:13 2005 -0700
+
+		${indent}11th
+
+		Notes:
 		${indent}yet another note
 		${indent}
 		${indent}yet another note
 	EOF
-	git notes copy -f HEAD~2 HEAD &&
+	git notes copy -f HEAD~2 &&
 	git log -1 >actual &&
 	test_cmp expect actual &&
 	test "$(git notes list HEAD)" = "$(git notes list HEAD~2)"
@@ -1167,8 +1203,10 @@ test_expect_success 'GIT_NOTES_REWRITE_REF overrides config' '
 '
 
 test_expect_success 'git notes copy diagnoses too many or too few parameters' '
-	test_must_fail git notes copy &&
-	test_must_fail git notes copy one two three
+	test_must_fail git notes copy 2>error &&
+	test_i18ngrep "too few parameters" error &&
+	test_must_fail git notes copy one two three 2>error &&
+	test_i18ngrep "too many parameters" error
 '
 
 test_expect_success 'git notes get-ref expands refs/heads/master to refs/notes/refs/heads/master' '
