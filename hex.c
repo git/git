@@ -90,11 +90,6 @@ char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash,
 	return buffer;
 }
 
-char *sha1_to_hex_r(char *buffer, const unsigned char *sha1)
-{
-	return hash_to_hex_algop_r(buffer, sha1, &hash_algos[GIT_HASH_SHA1]);
-}
-
 char *oid_to_hex_r(char *buffer, const struct object_id *oid)
 {
 	return hash_to_hex_algop_r(buffer, oid->hash, the_hash_algo);

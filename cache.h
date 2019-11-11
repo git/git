@@ -1462,7 +1462,6 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
  *   printf("%s -> %s", sha1_to_hex(one), sha1_to_hex(two));
  */
 char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
-char *sha1_to_hex_r(char *out, const unsigned char *sha1);
 char *oid_to_hex_r(char *out, const struct object_id *oid);
 char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
 char *sha1_to_hex(const unsigned char *sha1);						/* same static buffer */

@@ -26,23 +26,6 @@ struct object_id *OIDPTR;
   ...>}
 
 @@
-expression E;
-struct object_id OID;
-@@
-- sha1_to_hex_r(E, OID.hash)
-+ oid_to_hex_r(E, &OID)
-
-@@
-identifier f != oid_to_hex_r;
-expression E;
-struct object_id *OIDPTR;
-@@
-   f(...) {<...
-- sha1_to_hex_r(E, OIDPTR->hash)
-+ oid_to_hex_r(E, OIDPTR)
-  ...>}
-
-@@
 struct object_id OID;
 @@
 - hashclr(OID.hash)
