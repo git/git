@@ -103,11 +103,6 @@ char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *a
 	return hash_to_hex_algop_r(hexbuffer[bufno], hash, algop);
 }
 
-char *sha1_to_hex(const unsigned char *sha1)
-{
-	return hash_to_hex_algop(sha1, &hash_algos[GIT_HASH_SHA1]);
-}
-
 char *hash_to_hex(const unsigned char *hash)
 {
 	return hash_to_hex_algop(hash, the_hash_algo);
