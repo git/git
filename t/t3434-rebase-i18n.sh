@@ -54,4 +54,31 @@ test_expect_failure 'rebase --rebase-merges update encoding eucJP to ISO-2022-JP
 	compare_msg eucJP.txt eucJP ISO-2022-JP
 '
 
+test_rebase_continue_update_encode () {
+	old=$1
+	new=$2
+	msgfile=$3
+	test_expect_success "rebase --continue update from $old to $new" '
+		(git rebase --abort || : abort current git-rebase failure) &&
+		git switch -c conflict-$old-$new one &&
+		echo for-conflict >two.t &&
+		git add two.t &&
+		git config i18n.commitencoding $old &&
+		git commit -F "$TEST_DIRECTORY/t3434/$msgfile" &&
+		git config i18n.commitencoding $new &&
+		test_must_fail git rebase -m master &&
+		test -f .git/rebase-merge/message &&
+		git stripspace <.git/rebase-merge/message >two.t &&
+		git add two.t &&
+		git rebase --continue &&
+		compare_msg $msgfile $old $new &&
+		: git-commit assume invalid utf-8 is latin1 &&
+		test_cmp expect two.t
+	'
+}
+
+test_rebase_continue_update_encode ISO-8859-1 UTF-8 ISO8859-1.txt
+test_rebase_continue_update_encode eucJP UTF-8 eucJP.txt
+test_rebase_continue_update_encode eucJP ISO-2022-JP eucJP.txt
+
 test_done

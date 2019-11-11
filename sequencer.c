@@ -2972,7 +2972,8 @@ static int make_patch(struct repository *r,
 
 	strbuf_addf(&buf, "%s/message", get_dir(opts));
 	if (!file_exists(buf.buf)) {
-		const char *commit_buffer = get_commit_buffer(commit, NULL);
+		const char *encoding = get_commit_output_encoding();
+		const char *commit_buffer = logmsg_reencode(commit, NULL, encoding);
 		find_commit_subject(commit_buffer, &subject);
 		res |= write_message(subject, strlen(subject), buf.buf, 1);
 		unuse_commit_buffer(commit, commit_buffer);
