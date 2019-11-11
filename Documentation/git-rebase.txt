@@ -443,8 +443,8 @@ the `rebase-cousins` mode is turned on, such commits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
 The `--rebase-merges` mode is similar in spirit to the deprecated
-`--preserve-merges`, but in contrast to that option works well in interactive
-rebases: commits can be reordered, inserted and dropped at will.
+`--preserve-merges` but works with interactive rebases,
+where commits can be reordered, inserted and dropped at will.
 +
 It is currently only possible to recreate the merge commits using the
 `recursive` merge strategy; Different merge strategies can be used only via
