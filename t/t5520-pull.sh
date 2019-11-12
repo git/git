@@ -15,8 +15,10 @@ test_pull_autostash () {
 	git add new_file &&
 	git pull "$@" . copy &&
 	test_cmp_rev HEAD^ copy &&
-	test "$(cat new_file)" = dirty &&
-	test "$(cat file)" = "modified again"
+	echo dirty >expect &&
+	test_cmp expect new_file &&
+	echo "modified again" >expect &&
+	test_cmp expect file
 }
 
 test_pull_autostash_fail () {
@@ -110,9 +112,11 @@ test_expect_success 'test . as a remote' '
 	echo updated >file &&
 	git commit -a -m updated &&
 	git checkout copy &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	git pull &&
-	test "$(cat file)" = updated &&
+	echo updated >expect &&
+	test_cmp expect file &&
 	git reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull: Fast-forward" >reflog.expected &&
@@ -125,9 +129,11 @@ test_expect_success 'the default remote . should not break explicit pull' '
 	git commit -a -m modified &&
 	git checkout copy &&
 	git reset --hard HEAD^ &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	git pull . second &&
-	test "$(cat file)" = modified &&
+	echo modified >expect &&
+	test_cmp expect file &&
 	git reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull . second: Fast-forward" >reflog.expected &&
@@ -137,10 +143,12 @@ test_expect_success 'the default remote . should not break explicit pull' '
 test_expect_success 'fail if wildcard spec does not match any refs' '
 	git checkout -b test copy^ &&
 	test_when_finished "git checkout -f copy && git branch -D test" &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	test_must_fail git pull . "refs/nonexisting1/*:refs/nonexisting2/*" 2>err &&
 	test_i18ngrep "no candidates for merging" err &&
-	test "$(cat file)" = file
+	echo file >expect &&
+	test_cmp expect file
 '
 
 test_expect_success 'fail if no branches specified with non-default remote' '
@@ -148,11 +156,13 @@ test_expect_success 'fail if no branches specified with non-default remote' '
 	test_when_finished "git remote remove test_remote" &&
 	git checkout -b test copy^ &&
 	test_when_finished "git checkout -f copy && git branch -D test" &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	test_config branch.test.remote origin &&
 	test_must_fail git pull test_remote 2>err &&
 	test_i18ngrep "specify a branch on the command line" err &&
-	test "$(cat file)" = file
+	echo file >expect &&
+	test_cmp expect file
 '
 
 test_expect_success 'fail if not on a branch' '
@@ -160,10 +170,12 @@ test_expect_success 'fail if not on a branch' '
 	test_when_finished "git remote remove origin" &&
 	git checkout HEAD^ &&
 	test_when_finished "git checkout -f copy" &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	test_must_fail git pull 2>err &&
 	test_i18ngrep "not currently on a branch" err &&
-	test "$(cat file)" = file
+	echo file >expect &&
+	test_cmp expect file
 '
 
 test_expect_success 'fail if no configuration for current branch' '
@@ -172,10 +184,12 @@ test_expect_success 'fail if no configuration for current branch' '
 	git checkout -b test copy^ &&
 	test_when_finished "git checkout -f copy && git branch -D test" &&
 	test_config branch.test.remote test_remote &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	test_must_fail git pull 2>err &&
 	test_i18ngrep "no tracking information" err &&
-	test "$(cat file)" = file
+	echo file >expect &&
+	test_cmp expect file
 '
 
 test_expect_success 'pull --all: fail if no configuration for current branch' '
@@ -184,10 +198,12 @@ test_expect_success 'pull --all: fail if no configuration for current branch' '
 	git checkout -b test copy^ &&
 	test_when_finished "git checkout -f copy && git branch -D test" &&
 	test_config branch.test.remote test_remote &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	test_must_fail git pull --all 2>err &&
 	test_i18ngrep "There is no tracking information" err &&
-	test "$(cat file)" = file
+	echo file >expect &&
+	test_cmp expect file
 '
 
 test_expect_success 'fail if upstream branch does not exist' '
@@ -195,16 +211,19 @@ test_expect_success 'fail if upstream branch does not exist' '
 	test_when_finished "git checkout -f copy && git branch -D test" &&
 	test_config branch.test.remote . &&
 	test_config branch.test.merge refs/heads/nonexisting &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	test_must_fail git pull 2>err &&
 	test_i18ngrep "no such ref was fetched" err &&
-	test "$(cat file)" = file
+	echo file >expect &&
+	test_cmp expect file
 '
 
 test_expect_success 'fail if the index has unresolved entries' '
 	git checkout -b third second^ &&
 	test_when_finished "git checkout -f copy && git branch -D third" &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	test_commit modified2 file &&
 	git ls-files -u >unmerged &&
 	test_must_be_empty unmerged &&
@@ -226,21 +245,25 @@ test_expect_success 'fail if the index has unresolved entries' '
 test_expect_success 'fast-forwards working tree if branch head is updated' '
 	git checkout -b third second^ &&
 	test_when_finished "git checkout -f copy && git branch -D third" &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	git pull . second:third 2>err &&
 	test_i18ngrep "fetch updated the current branch head" err &&
-	test "$(cat file)" = modified &&
+	echo modified >expect &&
+	test_cmp expect file &&
 	test_cmp_rev third second
 '
 
 test_expect_success 'fast-forward fails with conflicting work tree' '
 	git checkout -b third second^ &&
 	test_when_finished "git checkout -f copy && git branch -D third" &&
-	test "$(cat file)" = file &&
+	echo file >expect &&
+	test_cmp expect file &&
 	echo conflict >file &&
 	test_must_fail git pull . second:third 2>err &&
 	test_i18ngrep "Cannot fast-forward your working tree" err &&
-	test "$(cat file)" = conflict &&
+	echo conflict >expect &&
+	test_cmp expect file &&
 	test_cmp_rev third second
 '
 
@@ -501,7 +524,8 @@ test_expect_success 'pull.rebase=interactive' '
 	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
 	test_when_finished "test_might_fail git rebase --abort" &&
 	test_must_fail git pull --rebase=interactive . copy &&
-	test "I was here" = "$(cat fake.out)"
+	echo "I was here" >expect &&
+	test_cmp expect fake.out
 '
 
 test_expect_success 'pull --rebase=i' '
@@ -512,7 +536,8 @@ test_expect_success 'pull --rebase=i' '
 	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
 	test_when_finished "test_might_fail git rebase --abort" &&
 	test_must_fail git pull --rebase=i . copy &&
-	test "I was here, too" = "$(cat fake.out)"
+	echo "I was here, too" >expect &&
+	test_cmp expect fake.out
 '
 
 test_expect_success 'pull.rebase=invalid fails' '
@@ -578,16 +603,20 @@ test_expect_success '--rebase with rebased upstream' '
 	git commit -m to-rebase file2 &&
 	git tag to-rebase-orig &&
 	git pull --rebase me copy &&
-	test "conflicting modification" = "$(cat file)" &&
-	test file = "$(cat file2)"
+	echo "conflicting modification" >expect &&
+	test_cmp expect file &&
+	echo file >expect &&
+	test_cmp expect file2
 '
 
 test_expect_success '--rebase -f with rebased upstream' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git reset --hard to-rebase-orig &&
 	git pull --rebase -f me copy &&
-	test "conflicting modification" = "$(cat file)" &&
-	test file = "$(cat file2)"
+	echo "conflicting modification" >expect &&
+	test_cmp expect file &&
+	echo file >expect &&
+	test_cmp expect file2
 '
 
 test_expect_success '--rebase with rebased default upstream' '
@@ -595,8 +624,10 @@ test_expect_success '--rebase with rebased default upstream' '
 	git checkout --track -b to-rebase2 me/copy &&
 	git reset --hard to-rebase-orig &&
 	git pull --rebase &&
-	test "conflicting modification" = "$(cat file)" &&
-	test file = "$(cat file2)"
+	echo "conflicting modification" >expect &&
+	test_cmp expect file &&
+	echo file >expect &&
+	test_cmp expect file2
 '
 
 test_expect_success 'rebased upstream + fetch + pull --rebase' '
@@ -607,8 +638,10 @@ test_expect_success 'rebased upstream + fetch + pull --rebase' '
 	git reset --hard to-rebase-orig &&
 	git fetch &&
 	git pull --rebase &&
-	test "conflicting modification" = "$(cat file)" &&
-	test file = "$(cat file2)"
+	echo "conflicting modification" >expect &&
+	test_cmp expect file &&
+	echo file >expect &&
+	test_cmp expect file2
 
 '
 
@@ -744,8 +777,10 @@ test_expect_success 'git pull --rebase does not reapply old patches' '
 test_expect_success 'git pull --rebase against local branch' '
 	git checkout -b copy2 to-rebase-orig &&
 	git pull --rebase . to-rebase &&
-	test "conflicting modification" = "$(cat file)" &&
-	test file = "$(cat file2)"
+	echo "conflicting modification" >expect &&
+	test_cmp expect file &&
+	echo file >expect &&
+	test_cmp expect file2
 '
 
 test_done
