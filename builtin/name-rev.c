@@ -111,14 +111,12 @@ static void name_rev(struct commit *commit,
 	struct commit_list *parents;
 	int parent_number = 1;
 
-	if (!create_or_update_name(commit, tip_name, taggerdate, generation,
-				   distance, from_tag))
-		return;
-
 	for (parents = commit->parents;
 			parents;
 			parents = parents->next, parent_number++) {
 		struct commit *parent = parents->item;
+		const char *new_name;
+		int new_generation, new_distance;
 
 		parse_commit(parent);
 		if (parent->date < cutoff)
@@ -126,7 +124,6 @@ static void name_rev(struct commit *commit,
 
 		if (parent_number > 1) {
 			size_t len;
-			char *new_name;
 
 			strip_suffix(tip_name, "^0", &len);
 			if (generation > 0)
@@ -135,15 +132,19 @@ static void name_rev(struct commit *commit,
 			else
 				new_name = xstrfmt("%.*s^%d", (int)len, tip_name,
 						   parent_number);
-
-			name_rev(parent, new_name, taggerdate, 0,
-				 distance + MERGE_TRAVERSAL_WEIGHT,
-				 from_tag);
+			new_generation = 0;
+			new_distance = distance + MERGE_TRAVERSAL_WEIGHT;
 		} else {
-			name_rev(parent, tip_name, taggerdate,
-				 generation + 1, distance + 1,
-				 from_tag);
+			new_name = tip_name;
+			new_generation = generation + 1;
+			new_distance = distance + 1;
 		}
+
+		if (create_or_update_name(parent, new_name, taggerdate,
+					  new_generation, new_distance,
+					  from_tag))
+			name_rev(parent, new_name, taggerdate,
+				 new_generation, new_distance, from_tag);
 	}
 }
 
@@ -280,11 +281,17 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		path = name_ref_abbrev(path, can_abbreviate_output);
 		if (commit->date >= cutoff) {
 			const char *tip_name;
+			char *to_free = NULL;
 			if (deref)
-				tip_name = xstrfmt("%s^0", path);
+				tip_name = to_free = xstrfmt("%s^0", path);
 			else
 				tip_name = xstrdup(path);
-			name_rev(commit, tip_name, taggerdate, 0, 0, from_tag);
+			if (create_or_update_name(commit, tip_name, taggerdate,
+						  0, 0, from_tag))
+				name_rev(commit, tip_name, taggerdate, 0, 0,
+					 from_tag);
+			else
+				free(to_free);
 		}
 	}
 	return 0;
