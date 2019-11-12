@@ -16,14 +16,12 @@ test_description='test describe'
 check_describe () {
 	expect="$1"
 	shift
-	R=$(git describe "$@" 2>err.actual)
-	S=$?
-	cat err.actual >&3
-	test_expect_success "describe $*" '
-	test $S = 0 &&
+	describe_opts="$@"
+	test_expect_success "describe $describe_opts" '
+	R=$(git describe $describe_opts 2>err.actual) &&
 	case "$R" in
 	$expect)	echo happy ;;
-	*)	echo "Oops - $R is not $expect";
+	*)	echo "Oops - $R is not $expect" &&
 		false ;;
 	esac
 	'
