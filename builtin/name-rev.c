@@ -321,11 +321,10 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 	if (!n->generation)
 		return n->tip_name;
 	else {
-		int len = strlen(n->tip_name);
-		if (len > 2 && !strcmp(n->tip_name + len - 2, "^0"))
-			len -= 2;
 		strbuf_reset(buf);
-		strbuf_addf(buf, "%.*s~%d", len, n->tip_name, n->generation);
+		strbuf_addstr(buf, n->tip_name);
+		strbuf_strip_suffix(buf, "^0");
+		strbuf_addf(buf, "~%d", n->generation);
 		return buf->buf;
 	}
 }
