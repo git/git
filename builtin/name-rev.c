@@ -79,12 +79,36 @@ static int is_better_name(struct rev_name *name,
 	return 0;
 }
 
+static struct rev_name *create_or_update_name(struct commit *commit,
+					      const char *tip_name,
+					      timestamp_t taggerdate,
+					      int generation, int distance,
+					      int from_tag)
+{
+	struct rev_name *name = get_commit_rev_name(commit);
+
+	if (name == NULL) {
+		name = xmalloc(sizeof(*name));
+		set_commit_rev_name(commit, name);
+		goto copy_data;
+	} else if (is_better_name(name, taggerdate, distance, from_tag)) {
+copy_data:
+		name->tip_name = tip_name;
+		name->taggerdate = taggerdate;
+		name->generation = generation;
+		name->distance = distance;
+		name->from_tag = from_tag;
+
+		return name;
+	} else
+		return NULL;
+}
+
 static void name_rev(struct commit *commit,
 		const char *tip_name, timestamp_t taggerdate,
 		int generation, int distance, int from_tag,
 		int deref)
 {
-	struct rev_name *name = get_commit_rev_name(commit);
 	struct commit_list *parents;
 	int parent_number = 1;
 	char *to_free = NULL;
@@ -101,18 +125,8 @@ static void name_rev(struct commit *commit,
 			die("generation: %d, but deref?", generation);
 	}
 
-	if (name == NULL) {
-		name = xmalloc(sizeof(*name));
-		set_commit_rev_name(commit, name);
-		goto copy_data;
-	} else if (is_better_name(name, taggerdate, distance, from_tag)) {
-copy_data:
-		name->tip_name = tip_name;
-		name->taggerdate = taggerdate;
-		name->generation = generation;
-		name->distance = distance;
-		name->from_tag = from_tag;
-	} else {
+	if (!create_or_update_name(commit, tip_name, taggerdate, generation,
+				   distance, from_tag)) {
 		free(to_free);
 		return;
 	}
