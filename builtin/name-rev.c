@@ -106,8 +106,9 @@ copy_data:
 
 static void name_rev(struct commit *commit,
 		const char *tip_name, timestamp_t taggerdate,
-		int generation, int distance, int from_tag)
+		int from_tag)
 {
+	struct rev_name *name = get_commit_rev_name(commit);
 	struct commit_list *parents;
 	int parent_number = 1;
 
@@ -116,7 +117,7 @@ static void name_rev(struct commit *commit,
 			parents = parents->next, parent_number++) {
 		struct commit *parent = parents->item;
 		const char *new_name;
-		int new_generation, new_distance;
+		int generation, distance;
 
 		parse_commit(parent);
 		if (parent->date < cutoff)
@@ -126,25 +127,25 @@ static void name_rev(struct commit *commit,
 			size_t len;
 
 			strip_suffix(tip_name, "^0", &len);
-			if (generation > 0)
+			if (name->generation > 0)
 				new_name = xstrfmt("%.*s~%d^%d", (int)len, tip_name,
-						   generation, parent_number);
+						   name->generation,
+						   parent_number);
 			else
 				new_name = xstrfmt("%.*s^%d", (int)len, tip_name,
 						   parent_number);
-			new_generation = 0;
-			new_distance = distance + MERGE_TRAVERSAL_WEIGHT;
+			generation = 0;
+			distance = name->distance + MERGE_TRAVERSAL_WEIGHT;
 		} else {
 			new_name = tip_name;
-			new_generation = generation + 1;
-			new_distance = distance + 1;
+			generation = name->generation + 1;
+			distance = name->distance + 1;
 		}
 
 		if (create_or_update_name(parent, new_name, taggerdate,
-					  new_generation, new_distance,
+					  generation, distance,
 					  from_tag))
-			name_rev(parent, new_name, taggerdate,
-				 new_generation, new_distance, from_tag);
+			name_rev(parent, new_name, taggerdate, from_tag);
 	}
 }
 
@@ -288,7 +289,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 				tip_name = xstrdup(path);
 			if (create_or_update_name(commit, tip_name, taggerdate,
 						  0, 0, from_tag))
-				name_rev(commit, tip_name, taggerdate, 0, 0,
+				name_rev(commit, tip_name, taggerdate,
 					 from_tag);
 			else
 				free(to_free);
