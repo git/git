@@ -438,4 +438,45 @@ test_expect_success 'name-rev a rev shortly after epoch' '
 	test_cmp expect actual
 '
 
+# A--------------master
+#  \            /
+#   \----------M2
+#    \        /
+#     \---M1-C
+#      \ /
+#       B
+test_expect_success 'name-rev covers all conditions while looking at parents' '
+	git init repo &&
+	(
+		cd repo &&
+
+		echo A >file &&
+		git add file &&
+		git commit -m A &&
+		A=$(git rev-parse HEAD) &&
+
+		git checkout --detach &&
+		echo B >file &&
+		git commit -m B file &&
+		B=$(git rev-parse HEAD) &&
+
+		git checkout $A &&
+		git merge --no-ff $B &&  # M1
+
+		echo C >file &&
+		git commit -m C file &&
+
+		git checkout $A &&
+		git merge --no-ff HEAD@{1} && # M2
+
+		git checkout master &&
+		git merge --no-ff HEAD@{1} &&
+
+		echo "$B master^2^2~1^2" >expect &&
+		git name-rev $B >actual &&
+
+		test_cmp expect actual
+	)
+'
+
 test_done
