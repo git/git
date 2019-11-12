@@ -1,15 +1,16 @@
 #!/bin/sh
 
-test_description='test describe
+test_description='test describe'
 
-                       B
-        .--------------o----o----o----x
-       /                   /    /
- o----o----o----o----o----.    /
-       \        A    c        /
-        .------------o---o---o
-                   D,R   e
-'
+#  o---o-----o----o----o-------o----x
+#       \   D,R   e           /
+#        \---o-------------o-'
+#         \  B            /
+#          `-o----o----o-'
+#                 A    c
+#
+# First parent of a merge commit is on the same line, second parent below.
+
 . ./test-lib.sh
 
 check_describe () {
