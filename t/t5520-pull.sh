@@ -255,7 +255,9 @@ test_expect_success '--rebase' '
 	git tag before-rebase &&
 	git pull --rebase . copy &&
 	test_cmp_rev HEAD^ copy &&
-	test new = "$(git show HEAD:file2)"
+	echo new >expect &&
+	git show HEAD:file2 >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '--rebase fast forward' '
@@ -330,7 +332,9 @@ test_expect_success '--rebase fails with multiple branches' '
 	test_must_fail git pull --rebase . copy master 2>err &&
 	test_cmp_rev HEAD before-rebase &&
 	test_i18ngrep "Cannot rebase onto multiple branches" err &&
-	test modified = "$(git show HEAD:file)"
+	echo modified >expect &&
+	git show HEAD:file >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'pull --rebase succeeds with dirty working directory and rebase.autostash set' '
@@ -381,7 +385,9 @@ test_expect_success 'pull.rebase' '
 	test_config pull.rebase true &&
 	git pull . copy &&
 	test_cmp_rev HEAD^ copy &&
-	test new = "$(git show HEAD:file2)"
+	echo new >expect &&
+	git show HEAD:file2 >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'pull --autostash & pull.rebase=true' '
@@ -399,7 +405,9 @@ test_expect_success 'branch.to-rebase.rebase' '
 	test_config branch.to-rebase.rebase true &&
 	git pull . copy &&
 	test_cmp_rev HEAD^ copy &&
-	test new = "$(git show HEAD:file2)"
+	echo new >expect &&
+	git show HEAD:file2 >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
@@ -408,14 +416,18 @@ test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
 	test_config branch.to-rebase.rebase false &&
 	git pull . copy &&
 	test_cmp_rev ! HEAD^ copy &&
-	test new = "$(git show HEAD:file2)"
+	echo new >expect &&
+	git show HEAD:file2 >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'pull --rebase warns on --verify-signatures' '
 	git reset --hard before-rebase &&
 	git pull --rebase --verify-signatures . copy 2>err &&
 	test_cmp_rev HEAD^ copy &&
-	test new = "$(git show HEAD:file2)" &&
+	echo new >expect &&
+	git show HEAD:file2 >actual &&
+	test_cmp expect actual &&
 	test_i18ngrep "ignoring --verify-signatures for rebase" err
 '
 
@@ -423,7 +435,9 @@ test_expect_success 'pull --rebase does not warn on --no-verify-signatures' '
 	git reset --hard before-rebase &&
 	git pull --rebase --no-verify-signatures . copy 2>err &&
 	test_cmp_rev HEAD^ copy &&
-	test new = "$(git show HEAD:file2)" &&
+	echo new >expect &&
+	git show HEAD:file2 >actual &&
+	test_cmp expect actual &&
 	test_i18ngrep ! "verify-signatures" err
 '
 
@@ -445,7 +459,9 @@ test_expect_success 'pull.rebase=false create a new merge commit' '
 	git pull . copy &&
 	test_cmp_rev HEAD^1 before-preserve-rebase &&
 	test_cmp_rev HEAD^2 copy &&
-	test file3 = "$(git show HEAD:file3.t)"
+	echo file3 >expect &&
+	git show HEAD:file3.t >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'pull.rebase=true flattens keep-merge' '
@@ -453,7 +469,9 @@ test_expect_success 'pull.rebase=true flattens keep-merge' '
 	test_config pull.rebase true &&
 	git pull . copy &&
 	test_cmp_rev HEAD^^ copy &&
-	test file3 = "$(git show HEAD:file3.t)"
+	echo file3 >expect &&
+	git show HEAD:file3.t >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'pull.rebase=1 is treated as true and flattens keep-merge' '
@@ -461,7 +479,9 @@ test_expect_success 'pull.rebase=1 is treated as true and flattens keep-merge' '
 	test_config pull.rebase 1 &&
 	git pull . copy &&
 	test_cmp_rev HEAD^^ copy &&
-	test file3 = "$(git show HEAD:file3.t)"
+	echo file3 >expect &&
+	git show HEAD:file3.t >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success REBASE_P \
@@ -507,7 +527,9 @@ test_expect_success '--rebase=false create a new merge commit' '
 	git pull --rebase=false . copy &&
 	test_cmp_rev HEAD^1 before-preserve-rebase &&
 	test_cmp_rev HEAD^2 copy &&
-	test file3 = "$(git show HEAD:file3.t)"
+	echo file3 >expect &&
+	git show HEAD:file3.t >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '--rebase=true rebases and flattens keep-merge' '
@@ -515,7 +537,9 @@ test_expect_success '--rebase=true rebases and flattens keep-merge' '
 	test_config pull.rebase preserve &&
 	git pull --rebase=true . copy &&
 	test_cmp_rev HEAD^^ copy &&
-	test file3 = "$(git show HEAD:file3.t)"
+	echo file3 >expect &&
+	git show HEAD:file3.t >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success REBASE_P \
@@ -537,7 +561,9 @@ test_expect_success '--rebase overrides pull.rebase=preserve and flattens keep-m
 	test_config pull.rebase preserve &&
 	git pull --rebase . copy &&
 	test_cmp_rev HEAD^^ copy &&
-	test file3 = "$(git show HEAD:file3.t)"
+	echo file3 >expect &&
+	git show HEAD:file3.t >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '--rebase with rebased upstream' '
@@ -622,10 +648,16 @@ test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
 		cd empty_repo2 &&
 		echo staged-file >staged-file &&
 		git add staged-file &&
-		test "$(git ls-files)" = staged-file &&
+		echo staged-file >expect &&
+		git ls-files >actual &&
+		test_cmp expect actual &&
 		test_must_fail git pull --rebase .. master 2>err &&
-		test "$(git ls-files)" = staged-file &&
-		test "$(git show :staged-file)" = staged-file &&
+		echo staged-file >expect &&
+		git ls-files >actual &&
+		test_cmp expect actual &&
+		echo staged-file >expect &&
+		git show :staged-file >actual &&
+		test_cmp expect actual &&
 		test_i18ngrep "unborn branch with changes added to the index" err
 	)
 '
