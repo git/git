@@ -106,30 +106,19 @@ copy_data:
 
 static void name_rev(struct commit *commit,
 		const char *tip_name, timestamp_t taggerdate,
-		int generation, int distance, int from_tag,
-		int deref)
+		int generation, int distance, int from_tag)
 {
 	struct commit_list *parents;
 	int parent_number = 1;
-	char *to_free = NULL;
 
 	parse_commit(commit);
 
 	if (commit->date < cutoff)
 		return;
 
-	if (deref) {
-		tip_name = to_free = xstrfmt("%s^0", tip_name);
-
-		if (generation)
-			die("generation: %d, but deref?", generation);
-	}
-
 	if (!create_or_update_name(commit, tip_name, taggerdate, generation,
-				   distance, from_tag)) {
-		free(to_free);
+				   distance, from_tag))
 		return;
-	}
 
 	for (parents = commit->parents;
 			parents;
@@ -148,11 +137,11 @@ static void name_rev(struct commit *commit,
 
 			name_rev(parents->item, new_name, taggerdate, 0,
 				 distance + MERGE_TRAVERSAL_WEIGHT,
-				 from_tag, 0);
+				 from_tag);
 		} else {
 			name_rev(parents->item, tip_name, taggerdate,
 				 generation + 1, distance + 1,
-				 from_tag, 0);
+				 from_tag);
 		}
 	}
 }
@@ -284,12 +273,16 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 		int from_tag = starts_with(path, "refs/tags/");
+		const char *tip_name;
 
 		if (taggerdate == TIME_MAX)
 			taggerdate = commit->date;
 		path = name_ref_abbrev(path, can_abbreviate_output);
-		name_rev(commit, xstrdup(path), taggerdate, 0, 0,
-			 from_tag, deref);
+		if (deref)
+			tip_name = xstrfmt("%s^0", path);
+		else
+			tip_name = xstrdup(path);
+		name_rev(commit, tip_name, taggerdate, 0, 0, from_tag);
 	}
 	return 0;
 }
