@@ -16,10 +16,8 @@ static int fetch_refs(const char *remote_name, struct ref *ref)
 {
 	struct remote *remote;
 	struct transport *transport;
-	int original_fetch_if_missing = fetch_if_missing;
 	int res;
 
-	fetch_if_missing = 0;
 	remote = remote_get(remote_name);
 	if (!remote->url[0])
 		die(_("Remote with no URL"));
@@ -28,7 +26,6 @@ static int fetch_refs(const char *remote_name, struct ref *ref)
 	transport_set_option(transport, TRANS_OPT_FROM_PROMISOR, "1");
 	transport_set_option(transport, TRANS_OPT_NO_DEPENDENTS, "1");
 	res = transport_fetch_refs(transport, ref);
-	fetch_if_missing = original_fetch_if_missing;
 
 	return res;
 }
