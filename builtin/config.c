@@ -14,12 +14,15 @@ static const char *const builtin_config_usage[] = {
 
 static char *key;
 static regex_t *key_regexp;
-static regex_t *regexp;
+static struct {
+	enum { none, regexp } mode;
+	regex_t *regexp;
+	int do_not_match; /* used with `regexp` */
+} cmd_line_value;
 static int show_keys;
 static int omit_values;
 static int use_key_regexp;
 static int do_all;
-static int do_not_match;
 static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
@@ -270,8 +273,10 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
-	if (regexp != NULL &&
-	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+	if (cmd_line_value.mode == regexp &&
+	    (cmd_line_value.do_not_match ^
+	     !!regexec(cmd_line_value.regexp, value_ ? value_ : "",
+		       0, NULL, 0)))
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
@@ -283,19 +288,21 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 static int handle_value_regex(const char *regex_)
 {
 	if (!regex_) {
-		regexp = NULL;
+		cmd_line_value.mode = none;
 		return 0;
 	}
 
+	cmd_line_value.mode = regexp;
+
 	if (regex_[0] == '!') {
-		do_not_match = 1;
+		cmd_line_value.do_not_match = 1;
 		regex_++;
 	}
 
-	regexp = (regex_t*)xmalloc(sizeof(regex_t));
-	if (regcomp(regexp, regex_, REG_EXTENDED)) {
+	cmd_line_value.regexp = xmalloc(sizeof(*cmd_line_value.regexp));
+	if (regcomp(cmd_line_value.regexp, regex_, REG_EXTENDED)) {
 		error(_("invalid pattern: %s"), regex_);
-		FREE_AND_NULL(regexp);
+		FREE_AND_NULL(cmd_line_value.regexp);
 		return CONFIG_INVALID_PATTERN;
 	}
 
@@ -372,9 +379,9 @@ free_strings:
 		regfree(key_regexp);
 		free(key_regexp);
 	}
-	if (regexp) {
-		regfree(regexp);
-		free(regexp);
+	if (cmd_line_value.regexp) {
+		regfree(cmd_line_value.regexp);
+		free(cmd_line_value.regexp);
 	}
 
 	return ret;
