@@ -305,6 +305,15 @@ static int handle_value_regex(const char *regex_)
 		}
 	}
 
+	if (type == TYPE_BOOL_OR_INT) {
+		int boolval = git_parse_maybe_bool_text(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
+	}
+
 	cmd_line_value.mode = regexp;
 
 	if (regex_[0] == '!') {

@@ -472,6 +472,26 @@ test_expect_success '--type=bool with "non-bool" value_regex' '
 	test_must_be_empty output
 '
 
+test_expect_success '--type=bool-or-int with boolean value_regex' '
+	echo true >expect &&
+	git config --type=bool-or-int --get foo.y2 true >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--type=bool-or-int with integer value_regex' '
+	test_must_fail git config --type=bool-or-int --get foo.y2 1 >output &&
+	test_must_be_empty output &&
+	echo 1 >expect &&
+	git config --type=bool-or-int --get foo.y5 1 >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--type=bool-or-int with regex value_regex' '
+	echo true >expect &&
+	git config --type=bool-or-int --get foo.y4 "t.*" >output &&
+	test_cmp expect output
+'
+
 test_expect_success 'setup simple config file' '
 	q_to_tab >.git/config <<-\EOF
 	[a.b]
