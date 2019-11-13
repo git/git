@@ -280,6 +280,28 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	return format_config(&values->items[values->nr++], key_, value_);
 }
 
+static int handle_value_regex(const char *regex_)
+{
+	if (!regex_) {
+		regexp = NULL;
+		return 0;
+	}
+
+	if (regex_[0] == '!') {
+		do_not_match = 1;
+		regex_++;
+	}
+
+	regexp = (regex_t*)xmalloc(sizeof(regex_t));
+	if (regcomp(regexp, regex_, REG_EXTENDED)) {
+		error(_("invalid pattern: %s"), regex_);
+		FREE_AND_NULL(regexp);
+		return CONFIG_INVALID_PATTERN;
+	}
+
+	return 0;
+}
+
 static int get_value(const char *key_, const char *regex_)
 {
 	int ret = CONFIG_GENERIC_ERROR;
@@ -317,20 +339,9 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	if (regex_) {
-		if (regex_[0] == '!') {
-			do_not_match = 1;
-			regex_++;
-		}
-
-		regexp = (regex_t*)xmalloc(sizeof(regex_t));
-		if (regcomp(regexp, regex_, REG_EXTENDED)) {
-			error(_("invalid pattern: %s"), regex_);
-			FREE_AND_NULL(regexp);
-			ret = CONFIG_INVALID_PATTERN;
-			goto free_strings;
-		}
-	}
+	ret = handle_value_regex(regex_);
+	if (ret)
+		goto free_strings;
 
 	config_with_options(collect_config, &values,
 			    &given_config_source, &config_options);
