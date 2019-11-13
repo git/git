@@ -927,8 +927,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
-	fetch_if_missing = 0;
-
 	packet_trace_identity("clone");
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
@@ -1265,7 +1263,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	junk_mode = JUNK_LEAVE_REPO;
-	fetch_if_missing = 1;
 	err = checkout(submodule_progress);
 
 	strbuf_release(&reflog_msg);
