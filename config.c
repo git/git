@@ -1047,7 +1047,7 @@ ssize_t git_config_ssize_t(const char *name, const char *value)
 	return ret;
 }
 
-static int git_parse_maybe_bool_text(const char *value)
+int git_parse_maybe_bool_text(const char *value)
 {
 	if (!value)
 		return 1;

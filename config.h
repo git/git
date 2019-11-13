@@ -95,6 +95,13 @@ int config_with_options(config_fn_t fn, void *,
 int git_parse_ssize_t(const char *, ssize_t *);
 int git_parse_ulong(const char *, unsigned long *);
 int git_parse_maybe_bool(const char *);
+
+/**
+ * Same as `git_parse_maybe_bool`, except that it does not handle
+ * integer values, i.e., those cause this function to return -1.
+ */
+int git_parse_maybe_bool_text(const char *);
+
 int git_config_int(const char *, const char *);
 int64_t git_config_int64(const char *, const char *);
 unsigned long git_config_ulong(const char *, const char *);
