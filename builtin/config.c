@@ -15,9 +15,10 @@ static const char *const builtin_config_usage[] = {
 static char *key;
 static regex_t *key_regexp;
 static struct {
-	enum { none, regexp } mode;
+	enum { none, regexp, boolean } mode;
 	regex_t *regexp;
 	int do_not_match; /* used with `regexp` */
+	int boolean;
 } cmd_line_value;
 static int show_keys;
 static int omit_values;
@@ -278,6 +279,9 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 	     !!regexec(cmd_line_value.regexp, value_ ? value_ : "",
 		       0, NULL, 0)))
 		return 0;
+	if (cmd_line_value.mode == boolean &&
+	    git_parse_maybe_bool(value_) != cmd_line_value.boolean)
+		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
 	strbuf_init(&values->items[values->nr], 0);
@@ -290,6 +294,15 @@ static int handle_value_regex(const char *regex_)
 	if (!regex_) {
 		cmd_line_value.mode = none;
 		return 0;
+	}
+
+	if (type == TYPE_BOOL) {
+		int boolval = git_parse_maybe_bool(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
 	}
 
 	cmd_line_value.mode = regexp;

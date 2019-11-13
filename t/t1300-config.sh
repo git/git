@@ -427,6 +427,51 @@ test_expect_success 'no arguments, but no crash' '
 	test_i18ngrep usage output
 '
 
+test_expect_success 'setup config file with several boolean values' '
+	cat >.git/config <<-\EOF
+	[foo]
+		n1 = no
+		n2 = NO
+		n3 = off
+		n4 = false
+		n5 = 0
+		n6 =
+		y1 = yes
+		y2 = YES
+		y3 = on
+		y4 = true
+		y5 = 1
+		y6 = 42
+		y7
+	EOF
+'
+
+test_expect_success '--get-regexp canonicalizes value_regex with --type=bool (false)' '
+	git config --type=bool --get-regexp "foo\..*" OFF >output &&
+	test_line_count = 6 output &&
+	! grep -v "^foo.n" output
+'
+
+test_expect_success '--get-regexp canonicalizes value_regex with --type=bool (true)' '
+	git config --type=bool --get-regexp "foo\..*" ON >output &&
+	test_line_count = 7 output &&
+	! grep -v "^foo.y" output
+'
+
+test_expect_success '--get canonicalizes integer value_regex with --type=bool' '
+	echo true >expect &&
+	git config --type=bool --get foo.y2 1 >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--type=bool with "non-bool" value_regex' '
+	echo true >expect &&
+	git config --type=bool --get foo.y4 "t.*" >output &&
+	test_cmp expect output &&
+	test_must_fail git config --type=bool --get foo.y4 "T.*" >output &&
+	test_must_be_empty output
+'
+
 test_expect_success 'setup simple config file' '
 	q_to_tab >.git/config <<-\EOF
 	[a.b]
