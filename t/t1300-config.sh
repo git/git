@@ -465,11 +465,8 @@ test_expect_success '--get canonicalizes integer value_regex with --type=bool' '
 '
 
 test_expect_success '--type=bool with "non-bool" value_regex' '
-	echo true >expect &&
-	git config --type=bool --get foo.y4 "t.*" >output 2>err &&
-	test_cmp expect output &&
+	test_must_fail git config --type=bool --get foo.y4 t >output 2>err &&
 	test_i18ngrep "cannot be canonicalized" err &&
-	test_must_fail git config --type=bool --get foo.y4 "T.*" >output &&
 	test_must_be_empty output
 '
 
