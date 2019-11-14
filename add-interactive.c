@@ -331,7 +331,15 @@ static ssize_t list_and_choose(struct add_i_state *s,
 				to = items->items.nr;
 			} else if (isdigit(*p)) {
 				char *endp;
-				/* A range can be specified like 5-7 or 5-. */
+				/*
+				 * A range can be specified like 5-7 or 5-.
+				 *
+				 * Note: `from` is 0-based while the user input
+				 * is 1-based, hence we have to decrement by
+				 * one. We do not have to decrement `to` even
+				 * if it is 0-based because it is an exclusive
+				 * boundary.
+				 */
 				from = strtoul(p, &endp, 10) - 1;
 				if (endp == p + sep)
 					to = from + 1;
