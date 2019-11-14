@@ -829,7 +829,7 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 	end = hunk->end;
 	colored_end = hunk->colored_end;
 
-	memcpy(&remaining, &hunk->header, sizeof(remaining));
+	remaining = hunk->header;
 
 	file_diff->hunk_nr += splittable_into - 1;
 	ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr, file_diff->hunk_alloc);
