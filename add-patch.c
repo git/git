@@ -688,6 +688,10 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 		    < next->new_offset + merged->delta)
 			break;
 
+		/*
+		 * If the hunks were not edited, and overlap, we can simply
+		 * extend the line range.
+		 */
 		if (merged->start < hunk->start && merged->end > hunk->start) {
 			merged->end = hunk->end;
 			merged->colored_end = hunk->colored_end;
@@ -699,16 +703,17 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 				- next->new_offset;
 			size_t overlap_end = hunk->start;
 			size_t overlap_start = overlap_end;
-			size_t overlap_next, len, i;
+			size_t overlap_next, len, j;
 
 			/*
-			 * One of the hunks was edited; let's ensure that at
-			 * least the last context line of the first hunk
-			 * overlaps with the corresponding line of the second
-			 * hunk, and then merge.
+			 * One of the hunks was edited: the modified hunk was
+			 * appended to the strbuf `s->plain`.
+			 *
+			 * Let's ensure that at least the last context line of
+			 * the first hunk overlaps with the corresponding line
+			 * of the second hunk, and then merge.
 			 */
-
-			for (i = 0; i < overlapping_line_count; i++) {
+			for (j = 0; j < overlapping_line_count; j++) {
 				overlap_next = find_next_line(&s->plain,
 							      overlap_end);
 
@@ -722,7 +727,7 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 				if (plain[overlap_end] != ' ')
 					return error(_("expected context line "
 						       "#%d in\n%.*s"),
-						     (int)(i + 1),
+						     (int)(j + 1),
 						     (int)(hunk->end
 							   - hunk->start),
 						     plain + hunk->start);
@@ -1004,21 +1009,13 @@ static void recolor_hunk(struct add_p_state *s, struct hunk *hunk)
 
 static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 {
-	char *path = xstrdup(git_path("addp-hunk-edit.diff"));
-	int fd = xopen(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	struct strbuf buf = STRBUF_INIT;
-	size_t i, j;
-	int res, copy;
+	size_t i;
 
-	if (fd < 0) {
-		res = error_errno(_("could not open '%s' for writing"), path);
-		goto edit_hunk_manually_finish;
-	}
-
-	strbuf_commented_addf(&buf, _("Manual hunk edit mode -- see bottom for "
+	strbuf_reset(&s->buf);
+	strbuf_commented_addf(&s->buf, _("Manual hunk edit mode -- see bottom for "
 				      "a quick guide.\n"));
-	render_hunk(s, hunk, 0, 0, &buf);
-	strbuf_commented_addf(&buf,
+	render_hunk(s, hunk, 0, 0, &s->buf);
+	strbuf_commented_addf(&s->buf,
 			      _("---\n"
 				"To remove '%c' lines, make them ' ' lines "
 				"(context).\n"
@@ -1027,63 +1024,51 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 			      s->mode->is_reverse ? '+' : '-',
 			      s->mode->is_reverse ? '-' : '+',
 			      comment_line_char);
-	strbuf_commented_addf(&buf, "%s", _(s->mode->edit_hunk_hint));
+	strbuf_commented_addf(&s->buf, "%s", _(s->mode->edit_hunk_hint));
 	/*
 	 * TRANSLATORS: 'it' refers to the patch mentioned in the previous
 	 * messages.
 	 */
-	strbuf_commented_addf(&buf,
+	strbuf_commented_addf(&s->buf,
 			      _("If it does not apply cleanly, you will be "
 				"given an opportunity to\n"
 				"edit again.  If all lines of the hunk are "
 				"removed, then the edit is\n"
 				"aborted and the hunk is left unchanged.\n"));
-	if (write_in_full(fd, buf.buf, buf.len) < 0) {
-		res = error_errno(_("could not write to '%s'"), path);
-		goto edit_hunk_manually_finish;
-	}
 
-	res = close(fd);
-	fd = -1;
-	if (res < 0)
-		goto edit_hunk_manually_finish;
-
-	hunk->start = s->plain.len;
-	if (launch_editor(path, &s->plain, NULL) < 0) {
-		res = error_errno(_("could not edit '%s'"), path);
-		goto edit_hunk_manually_finish;
-	}
-	unlink(path);
+	if (strbuf_edit_interactively(&s->buf, "addp-hunk-edit.diff", NULL) < 0)
+		return -1;
 
 	/* strip out commented lines */
-	copy = s->plain.buf[hunk->start] != comment_line_char;
-	for (i = j = hunk->start; i < s->plain.len; ) {
-		if (copy)
-			s->plain.buf[j++] = s->plain.buf[i];
-		if (s->plain.buf[i++] == '\n')
-			copy = s->plain.buf[i] != comment_line_char;
+	hunk->start = s->plain.len;
+	for (i = 0; i < s->buf.len; ) {
+		const char *bol = s->buf.buf + i;
+		size_t rest = s->buf.len - i;
+		const char *eol = memchr(bol, '\n', rest);
+		size_t len = eol ? eol + 1 - bol : rest;
+
+		if (*bol != comment_line_char)
+			strbuf_add(&s->plain, bol, len);
+		i += len;
 	}
 
-	if (j == hunk->start)
-		/* User aborted by deleting everything */
-		goto edit_hunk_manually_finish;
+	hunk->end = s->plain.len;
+	if (hunk->end == hunk->start)
+		/* The user aborted editing by deleting everything */
+		return 0;
 
-	res = 1;
-	strbuf_setlen(&s->plain, j);
-	hunk->end = j;
 	recolor_hunk(s, hunk);
+
+	/*
+	 * If the hunk header is intact, parse it, otherwise simply use the
+	 * hunk header prior to editing (which will adjust `hunk->start` to
+	 * skip the hunk header).
+	 */
 	if (s->plain.buf[hunk->start] == '@' &&
-	    /* If the hunk header was deleted, simply use the original one. */
 	    parse_hunk_header(s, hunk) < 0)
-		res = -1;
+		return error(_("could not parse hunk header"));
 
-edit_hunk_manually_finish:
-	if (fd >= 0)
-		close(fd);
-	free(path);
-	strbuf_release(&buf);
-
-	return res;
+	return 1;
 }
 
 static ssize_t recount_edited_hunk(struct add_p_state *s, struct hunk *hunk,
@@ -1165,13 +1150,13 @@ static int edit_hunk_loop(struct add_p_state *s,
 	size_t plain_len = s->plain.len, colored_len = s->colored.len;
 	struct hunk backup;
 
-	memcpy(&backup, hunk, sizeof(backup));
+	backup = *hunk;
 
 	for (;;) {
 		int res = edit_hunk_manually(s, hunk);
 		if (res == 0) {
 			/* abandonded */
-			memcpy(hunk, &backup, sizeof(backup));
+			*hunk = backup;
 			return -1;
 		}
 
@@ -1187,7 +1172,7 @@ static int edit_hunk_loop(struct add_p_state *s,
 		/* Drop edits (they were appended to s->plain) */
 		strbuf_setlen(&s->plain, plain_len);
 		strbuf_setlen(&s->colored, colored_len);
-		memcpy(hunk, &backup, sizeof(backup));
+		*hunk = backup;
 
 		/*
 		 * TRANSLATORS: do not translate [y/n]
