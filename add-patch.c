@@ -658,37 +658,44 @@ static void render_diff_header(struct add_p_state *s,
 
 /* Coalesce hunks again that were split */
 static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
-		       size_t *hunk_index, int use_all, struct hunk *temp)
+		       size_t *hunk_index, int use_all, struct hunk *merged)
 {
 	size_t i = *hunk_index, delta;
 	struct hunk *hunk = file_diff->hunk + i;
-	struct hunk_header *header = &temp->header, *next;
+	/* `header` corresponds to the merged hunk */
+	struct hunk_header *header = &merged->header, *next;
 
 	if (!use_all && hunk->use != USE_HUNK)
 		return 0;
 
-	memcpy(temp, hunk, sizeof(*temp));
+	*merged = *hunk;
 	/* We simply skip the colored part (if any) when merging hunks */
-	temp->colored_start = temp->colored_end = 0;
+	merged->colored_start = merged->colored_end = 0;
 
 	for (; i + 1 < file_diff->hunk_nr; i++) {
 		hunk++;
 		next = &hunk->header;
 
+		/*
+		 * Stop merging hunks when:
+		 *
+		 * - the hunk is not selected for use, or
+		 * - the hunk does not overlap with the already-merged hunk(s)
+		 */
 		if ((!use_all && hunk->use != USE_HUNK) ||
-		    header->new_offset >= next->new_offset + temp->delta ||
+		    header->new_offset >= next->new_offset + merged->delta ||
 		    header->new_offset + header->new_count
-		    < next->new_offset + temp->delta)
+		    < next->new_offset + merged->delta)
 			break;
 
-		if (temp->start < hunk->start && temp->end > hunk->start) {
-			temp->end = hunk->end;
-			temp->colored_end = hunk->colored_end;
+		if (merged->start < hunk->start && merged->end > hunk->start) {
+			merged->end = hunk->end;
+			merged->colored_end = hunk->colored_end;
 			delta = 0;
 		} else {
 			const char *plain = s->plain.buf;
 			size_t  overlapping_line_count = header->new_offset
-				+ header->new_count - temp->delta
+				+ header->new_count - merged->delta
 				- next->new_offset;
 			size_t overlap_end = hunk->start;
 			size_t overlap_start = overlap_end;
@@ -725,13 +732,13 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 			}
 			len = overlap_end - overlap_start;
 
-			if (len > temp->end - temp->start ||
-			    memcmp(plain + temp->end - len,
+			if (len > merged->end - merged->start ||
+			    memcmp(plain + merged->end - len,
 				   plain + overlap_start, len))
 				return error(_("hunks do not overlap:\n%.*s\n"
 					       "\tdoes not end with:\n%.*s"),
-					     (int)(temp->end - temp->start),
-					     plain + temp->start,
+					     (int)(merged->end - merged->start),
+					     plain + merged->start,
 					     (int)len, plain + overlap_start);
 
 			/*
@@ -740,23 +747,23 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 			 * address that, we temporarily append the union of the
 			 * lines to the `plain` strbuf.
 			 */
-			if (temp->end != s->plain.len) {
+			if (merged->end != s->plain.len) {
 				size_t start = s->plain.len;
 
-				strbuf_add(&s->plain, plain + temp->start,
-					   temp->end - temp->start);
+				strbuf_add(&s->plain, plain + merged->start,
+					   merged->end - merged->start);
 				plain = s->plain.buf;
-				temp->start = start;
-				temp->end = s->plain.len;
+				merged->start = start;
+				merged->end = s->plain.len;
 			}
 
 			strbuf_add(&s->plain,
 				   plain + overlap_end,
 				   hunk->end - overlap_end);
-			temp->end = s->plain.len;
-			temp->splittable_into += hunk->splittable_into;
-			delta = temp->delta;
-			temp->delta += hunk->delta;
+			merged->end = s->plain.len;
+			merged->splittable_into += hunk->splittable_into;
+			delta = merged->delta;
+			merged->delta += hunk->delta;
 		}
 
 		header->old_count = next->old_offset + next->old_count
@@ -783,7 +790,7 @@ static void reassemble_patch(struct add_p_state *s,
 	render_diff_header(s, file_diff, 0, out);
 
 	for (i = file_diff->mode_change; i < file_diff->hunk_nr; i++) {
-		struct hunk temp = { 0 };
+		struct hunk merged = { 0 };
 
 		hunk = file_diff->hunk + i;
 		if (!use_all && hunk->use != USE_HUNK)
@@ -791,8 +798,8 @@ static void reassemble_patch(struct add_p_state *s,
 				- hunk->header.new_count;
 		else {
 			/* merge overlapping hunks into a temporary hunk */
-			if (merge_hunks(s, file_diff, &i, use_all, &temp))
-				hunk = &temp;
+			if (merge_hunks(s, file_diff, &i, use_all, &merged))
+				hunk = &merged;
 
 			render_hunk(s, hunk, delta, 0, out);
 
