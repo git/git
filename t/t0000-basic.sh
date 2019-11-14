@@ -20,9 +20,9 @@ modification *should* take notice and update the test vectors here.
 
 . ./test-lib.sh
 
-try_local_x () {
-	local x="local" &&
-	echo "$x"
+try_local_xy () {
+	local x="local" y="alsolocal" &&
+	echo "$x $y"
 }
 
 # Check whether the shell supports the "local" keyword. "local" is not
@@ -35,11 +35,12 @@ try_local_x () {
 # relying on "local".
 test_expect_success 'verify that the running shell supports "local"' '
 	x="notlocal" &&
-	echo "local" >expected1 &&
-	try_local_x >actual1 &&
+	y="alsonotlocal" &&
+	echo "local alsolocal" >expected1 &&
+	try_local_xy >actual1 &&
 	test_cmp expected1 actual1 &&
-	echo "notlocal" >expected2 &&
-	echo "$x" >actual2 &&
+	echo "notlocal alsonotlocal" >expected2 &&
+	echo "$x $y" >actual2 &&
 	test_cmp expected2 actual2
 '
 
