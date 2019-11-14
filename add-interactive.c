@@ -981,7 +981,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 
 static int run_help(struct add_i_state *s, const struct pathspec *unused_ps,
 		    struct prefix_item_list *unused_files,
-		    struct list_and_choose_options *opts)
+		    struct list_and_choose_options *unused_opts)
 {
 	color_fprintf_ln(stdout, s->help_color, "status        - %s",
 			 _("show paths with changes"));
