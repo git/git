@@ -4048,7 +4048,7 @@ sub print_feed_meta {
 
 			$href_params{'extra_options'} = undef;
 			$href_params{'action'} = $type;
-			$link_attr{'-href'} = href(%href_params);
+			$link_attr{'-href'} = esc_attr(href(%href_params));
 			print "<link ".
 			      "rel=\"$link_attr{'-rel'}\" ".
 			      "title=\"$link_attr{'-title'}\" ".
@@ -4057,7 +4057,7 @@ sub print_feed_meta {
 			      "/>\n";
 
 			$href_params{'extra_options'} = '--no-merges';
-			$link_attr{'-href'} = href(%href_params);
+			$link_attr{'-href'} = esc_attr(href(%href_params));
 			$link_attr{'-title'} .= ' (no merges)';
 			print "<link ".
 			      "rel=\"$link_attr{'-rel'}\" ".
@@ -4070,10 +4070,12 @@ sub print_feed_meta {
 	} else {
 		printf('<link rel="alternate" title="%s projects list" '.
 		       'href="%s" type="text/plain; charset=utf-8" />'."\n",
-		       esc_attr($site_name), href(project=>undef, action=>"project_index"));
+		       esc_attr($site_name),
+		       esc_attr(href(project=>undef, action=>"project_index")));
 		printf('<link rel="alternate" title="%s projects feeds" '.
 		       'href="%s" type="text/x-opml" />'."\n",
-		       esc_attr($site_name), href(project=>undef, action=>"opml"));
+		       esc_attr($site_name),
+		       esc_attr(href(project=>undef, action=>"opml")));
 	}
 }
 
@@ -4287,8 +4289,8 @@ sub git_footer_html {
 	if (defined $action &&
 	    $action eq 'blame_incremental') {
 		print qq!<script type="text/javascript">\n!.
-		      qq!startBlame("!. href(action=>"blame_data", -replay=>1) .qq!",\n!.
-		      qq!           "!. href() .qq!");\n!.
+		      qq!startBlame("!. esc_attr(href(action=>"blame_data", -replay=>1)) .qq!",\n!.
+		      qq!           "!. esc_attr(href()) .qq!");\n!.
 		      qq!</script>\n!;
 	} else {
 		my ($jstimezone, $tz_cookie, $datetime_class) =
@@ -7155,8 +7157,8 @@ sub git_blob {
 			print qq! alt="!.esc_attr($file_name).qq!" title="!.esc_attr($file_name).qq!"!;
 		}
 		print qq! src="! .
-		      href(action=>"blob_plain", hash=>$hash,
-		           hash_base=>$hash_base, file_name=>$file_name) .
+		      esc_attr(href(action=>"blob_plain", hash=>$hash,
+		           hash_base=>$hash_base, file_name=>$file_name)) .
 		      qq!" />\n!;
 	} else {
 		my $nr;
@@ -8239,6 +8241,7 @@ sub git_feed {
 	} else {
 		$alt_url = href(-full=>1, action=>"summary");
 	}
+	$alt_url = esc_attr($alt_url);
 	print qq!<?xml version="1.0" encoding="utf-8"?>\n!;
 	if ($format eq 'rss') {
 		print <<XML;
@@ -8276,7 +8279,7 @@ XML
 		      $alt_url . '" />' . "\n" .
 		      '<link rel="self" type="' . $content_type . '" href="' .
 		      $cgi->self_url() . '" />' . "\n" .
-		      "<id>" . href(-full=>1) . "</id>\n" .
+		      "<id>" . esc_url(href(-full=>1)) . "</id>\n" .
 		      # use project owner for feed author
 		      "<author><name>$owner</name></author>\n";
 		if (defined $favicon) {
@@ -8322,7 +8325,7 @@ XML
 			      "<author>" . esc_html($co{'author'}) . "</author>\n" .
 			      "<pubDate>$cd{'rfc2822'}</pubDate>\n" .
 			      "<guid isPermaLink=\"true\">$co_url</guid>\n" .
-			      "<link>$co_url</link>\n" .
+			      "<link>" . esc_html($co_url) . "</link>\n" .
 			      "<description>" . esc_html($co{'title'}) . "</description>\n" .
 			      "<content:encoded>" .
 			      "<![CDATA[\n";
@@ -8344,8 +8347,8 @@ XML
 			}
 			print "</contributor>\n" .
 			      "<published>$cd{'iso-8601'}</published>\n" .
-			      "<link rel=\"alternate\" type=\"text/html\" href=\"$co_url\" />\n" .
-			      "<id>$co_url</id>\n" .
+			      "<link rel=\"alternate\" type=\"text/html\" href=\"" . esc_attr($co_url) . "\" />\n" .
+			      "<id>" . esc_html($co_url) . "</id>\n" .
 			      "<content type=\"xhtml\" xml:base=\"" . esc_url($my_url) . "\">\n" .
 			      "<div xmlns=\"http://www.w3.org/1999/xhtml\">\n";
 		}
@@ -8452,8 +8455,8 @@ XML
 		}
 
 		my $path = esc_html(chop_str($proj{'path'}, 25, 5));
-		my $rss  = href('project' => $proj{'path'}, 'action' => 'rss', -full => 1);
-		my $html = href('project' => $proj{'path'}, 'action' => 'summary', -full => 1);
+		my $rss  = esc_attr(href('project' => $proj{'path'}, 'action' => 'rss', -full => 1));
+		my $html = esc_attr(href('project' => $proj{'path'}, 'action' => 'summary', -full => 1));
 		print "<outline type=\"rss\" text=\"$path\" title=\"$path\" xmlUrl=\"$rss\" htmlUrl=\"$html\"/>\n";
 	}
 	print <<XML;

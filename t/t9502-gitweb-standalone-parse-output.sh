@@ -200,7 +200,8 @@ xss() {
 test_expect_success 'xss checks' '
 	TAG="<magic-xss-tag>" &&
 	xss "a=rss&p=$TAG" &&
-	xss "a=rss&p=foo.git&f=$TAG"
+	xss "a=rss&p=foo.git&f=$TAG" &&
+	xss "" "$TAG+"
 '
 
 test_done
