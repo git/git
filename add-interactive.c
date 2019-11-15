@@ -279,7 +279,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 	find_unique_prefixes(items);
 
 	for (;;) {
-		char *p, *endp;
+		char *p;
 
 		strbuf_reset(&input);
 
@@ -330,7 +330,16 @@ static ssize_t list_and_choose(struct add_i_state *s,
 				from = 0;
 				to = items->items.nr;
 			} else if (isdigit(*p)) {
-				/* A range can be specified like 5-7 or 5-. */
+				char *endp;
+				/*
+				 * A range can be specified like 5-7 or 5-.
+				 *
+				 * Note: `from` is 0-based while the user input
+				 * is 1-based, hence we have to decrement by
+				 * one. We do not have to decrement `to` even
+				 * if it is 0-based because it is an exclusive
+				 * boundary.
+				 */
 				from = strtoul(p, &endp, 10) - 1;
 				if (endp == p + sep)
 					to = from + 1;
@@ -342,7 +351,8 @@ static ssize_t list_and_choose(struct add_i_state *s,
 				}
 			}
 
-			p[sep] = '\0';
+			if (p[sep])
+				p[sep++] = '\0';
 			if (from < 0) {
 				from = find_unique(p, items);
 				if (from >= 0)
@@ -368,7 +378,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 					res += choose ? +1 : -1;
 				}
 
-			p += sep + 1;
+			p += sep;
 		}
 
 		if ((immediate && res != LIST_AND_CHOOSE_ERROR) ||
@@ -980,7 +990,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 
 static int run_help(struct add_i_state *s, const struct pathspec *unused_ps,
 		    struct prefix_item_list *unused_files,
-		    struct list_and_choose_options *opts)
+		    struct list_and_choose_options *unused_opts)
 {
 	color_fprintf_ln(stdout, s->help_color, "status        - %s",
 			 _("show paths with changes"));

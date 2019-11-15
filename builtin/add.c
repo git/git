@@ -191,9 +191,6 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	struct argv_array argv = ARGV_ARRAY_INIT;
 	int use_builtin_add_i =
 		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
-	if (use_builtin_add_i < 0)
-		git_config_get_bool("add.interactive.usebuiltin",
-				    &use_builtin_add_i);
 
 	if (use_builtin_add_i == 1) {
 		enum add_p_mode mode;
