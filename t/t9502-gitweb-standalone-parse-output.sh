@@ -188,8 +188,8 @@ test_expect_success 'forks: project_index lists all projects (incl. forks)' '
 '
 
 xss() {
-	echo >&2 "Checking $1..." &&
-	gitweb_run "$1" &&
+	echo >&2 "Checking $*..." &&
+	gitweb_run "$@" &&
 	if grep "$TAG" gitweb.body; then
 		echo >&2 "xss: $TAG should have been quoted in output"
 		return 1
