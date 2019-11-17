@@ -6,6 +6,14 @@
 #include "hashmap.h"
 #include "refspec.h"
 
+/**
+ * The API gives access to the configuration related to remotes. It handles
+ * all three configuration mechanisms historically and currently used by Git,
+ * and presents the information in a uniform fashion. Note that the code also
+ * handles plain URLs without any configuration, giving them just the default
+ * information.
+ */
+
 enum {
 	REMOTE_UNCONFIGURED = 0,
 	REMOTE_CONFIG,
@@ -16,16 +24,22 @@ enum {
 struct remote {
 	struct hashmap_entry ent;
 
+	/* The user's nickname for the remote */
 	const char *name;
+
 	int origin, configured_in_repo;
 
 	const char *foreign_vcs;
 
+	/* An array of all of the url_nr URLs configured for the remote */
 	const char **url;
+
 	int url_nr;
 	int url_alloc;
 
+	/* An array of all of the pushurl_nr push URLs configured for the remote */
 	const char **pushurl;
+
 	int pushurl_nr;
 	int pushurl_alloc;
 
@@ -34,32 +48,47 @@ struct remote {
 	struct refspec fetch;
 
 	/*
+	 * The setting for whether to fetch tags (as a separate rule from the
+	 * configured refspecs);
 	 * -1 to never fetch tags
 	 * 0 to auto-follow tags on heuristic (default)
 	 * 1 to always auto-follow tags
 	 * 2 to always fetch tags
 	 */
 	int fetch_tags;
+
 	int skip_default_update;
 	int mirror;
 	int prune;
 	int prune_tags;
 
+	/**
+	 * The configured helper programs to run on the remote side, for
+	 * Git-native protocols.
+	 */
 	const char *receivepack;
 	const char *uploadpack;
 
-	/*
-	 * for curl remotes only
-	 */
+	/* The proxy to use for curl (http, https, ftp, etc.) URLs. */
 	char *http_proxy;
+
+	/* The method used for authenticating against `http_proxy`. */
 	char *http_proxy_authmethod;
 };
 
+/**
+ * struct remotes can be found by name with remote_get().
+ * remote_get(NULL) will return the default remote, given the current branch
+ * and configuration.
+ */
 struct remote *remote_get(const char *name);
+
 struct remote *pushremote_get(const char *name);
 int remote_is_configured(struct remote *remote, int in_repo);
 
 typedef int each_remote_fn(struct remote *remote, void *priv);
+
+/* iterate through struct remotes */
 int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);
@@ -194,16 +223,36 @@ struct ref *get_remote_ref(const struct ref *remote_refs, const char *name);
  */
 int remote_find_tracking(struct remote *remote, struct refspec_item *refspec);
 
+/**
+ * struct branch holds the configuration for a branch. It can be looked up with
+ * branch_get(name) for "refs/heads/{name}", or with branch_get(NULL) for HEAD.
+ */
 struct branch {
+
+	/* The short name of the branch. */
 	const char *name;
+
+	/* The full path for the branch ref. */
 	const char *refname;
 
+	/* The name of the remote listed in the configuration. */
 	const char *remote_name;
+
 	const char *pushremote_name;
 
+	/* An array of the "merge" lines in the configuration. */
 	const char **merge_name;
+
+	/**
+	 * An array of the struct refspecs used for the merge lines. That is,
+	 * merge[i]->dst is a local tracking ref which should be merged into this
+	 * branch by default.
+	 */
 	struct refspec_item **merge;
+
+	/* The number of merge configurations */
 	int merge_nr;
+
 	int merge_alloc;
 
 	const char *push_tracking_ref;
@@ -215,7 +264,9 @@ const char *pushremote_for_branch(struct branch *branch, int *explicit);
 const char *remote_ref_for_branch(struct branch *branch, int for_push,
 				  int *explicit);
 
+/* returns true if the given branch has merge configuration given. */
 int branch_has_merge_config(struct branch *branch);
+
 int branch_merge_matches(struct branch *, int n, const char *);
 
 /**

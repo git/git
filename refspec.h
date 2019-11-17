@@ -20,6 +20,22 @@ struct refspec_item {
 #define REFSPEC_INIT_FETCH { .fetch = REFSPEC_FETCH }
 #define REFSPEC_INIT_PUSH { .fetch = REFSPEC_PUSH }
 
+/**
+ * A struct refspec holds the parsed interpretation of a refspec.  If it will
+ * force updates (starts with a '+'), force is true.  If it is a pattern
+ * (sides end with '*') pattern is true.  src and dest are the two sides
+ * (including '*' characters if present); if there is only one side, it is src,
+ * and dst is NULL; if sides exist but are empty (i.e., the refspec either
+ * starts or ends with ':'), the corresponding side is "".
+ *
+ * An array of strings can be parsed into an array of struct refspecs using
+ * parse_fetch_refspec() or parse_push_refspec().
+ *
+ * remote_find_tracking(), given a remote and a struct refspec with either src
+ * or dst filled out, will fill out the other such that the result is in the
+ * "fetch" specification for the remote (note that this evaluates patterns and
+ * returns a single result).
+ */
 struct refspec {
 	struct refspec_item *items;
 	int alloc;
