@@ -1,10 +1,43 @@
 #ifndef DIR_H
 #define DIR_H
 
-/* See Documentation/technical/api-directory-listing.txt */
-
 #include "cache.h"
 #include "strbuf.h"
+
+/**
+ * The directory listing API is used to enumerate paths in the work tree,
+ * optionally taking `.git/info/exclude` and `.gitignore` files per directory
+ * into account.
+ */
+
+/**
+ * Calling sequence
+ * ----------------
+ *
+ * Note: The index may be checked for .gitignore files that are
+ * CE_SKIP_WORKTREE marked. If you want to exclude files, make sure you have
+ * loaded the index first.
+ *
+ * - Prepare `struct dir_struct dir` and clear it with `memset(&dir, 0,
+ * sizeof(dir))`.
+ *
+ * - To add single exclude pattern, call `add_pattern_list()` and then
+ *   `add_pattern()`.
+ *
+ * - To add patterns from a file (e.g. `.git/info/exclude`), call
+ *   `add_patterns_from_file()` , and/or set `dir.exclude_per_dir`.  A
+ *   short-hand function `setup_standard_excludes()` can be used to set
+ *   up the standard set of exclude settings.
+ *
+ * - Set options described in the Data Structure section above.
+ *
+ * - Call `read_directory()`.
+ *
+ * - Use `dir.entries[]`.
+ *
+ * - Call `clear_directory()` when none of the contained elements are no longer in use.
+ *
+ */
 
 struct dir_entry {
 	unsigned int len;
@@ -144,25 +177,101 @@ struct untracked_cache {
 	unsigned int use_fsmonitor : 1;
 };
 
+/**
+ * structure is used to pass directory traversal options to the library and to
+ * record the paths discovered. A single `struct dir_struct` is used regardless
+ * of whether or not the traversal recursively descends into subdirectories.
+ */
 struct dir_struct {
-	int nr, alloc;
-	int ignored_nr, ignored_alloc;
+
+	/* The number of members in `entries[]` array. */
+	int nr;
+
+	/* Internal use; keeps track of allocation of `entries[]` array.*/
+	int alloc;
+
+	/* The number of members in `ignored[]` array. */
+	int ignored_nr;
+
+	int ignored_alloc;
+
+	/* bit-field of options */
 	enum {
+
+		/**
+		 * Return just ignored files in `entries[]`, not untracked files.
+		 * This flag is mutually exclusive with `DIR_SHOW_IGNORED_TOO`.
+		 */
 		DIR_SHOW_IGNORED = 1<<0,
+
+		/* Include a directory that is not tracked. */
 		DIR_SHOW_OTHER_DIRECTORIES = 1<<1,
+
+		/* Do not include a directory that is not tracked and is empty. */
 		DIR_HIDE_EMPTY_DIRECTORIES = 1<<2,
+
+		/**
+		 * If set, recurse into a directory that looks like a Git directory.
+		 * Otherwise it is shown as a directory.
+		 */
 		DIR_NO_GITLINKS = 1<<3,
+
+		/**
+		 * Special mode for git-add. Return ignored files in `ignored[]` and
+		 * untracked files in `entries[]`. Only returns ignored files that match
+		 * pathspec exactly (no wildcards). Does not recurse into ignored
+		 * directories.
+		 */
 		DIR_COLLECT_IGNORED = 1<<4,
+
+		/**
+		 * Similar to `DIR_SHOW_IGNORED`, but return ignored files in
+		 * `ignored[]` in addition to untracked files in `entries[]`.
+		 * This flag is mutually exclusive with `DIR_SHOW_IGNORED`.
+		 */
 		DIR_SHOW_IGNORED_TOO = 1<<5,
+
 		DIR_COLLECT_KILLED_ONLY = 1<<6,
+
+		/**
+		 * Only has meaning if `DIR_SHOW_IGNORED_TOO` is also set; if this is
+		 * set, the untracked contents of untracked directories are also
+		 * returned in `entries[]`.
+		 */
 		DIR_KEEP_UNTRACKED_CONTENTS = 1<<7,
+
+		/**
+		 * Only has meaning if `DIR_SHOW_IGNORED_TOO` is also set; if this is
+		 * set, returns ignored files and directories that match an exclude
+		 * pattern. If a directory matches an exclude pattern, then the
+		 * directory is returned and the contained paths are not. A directory
+		 * that does not match an exclude pattern will not be returned even if
+		 * all of its contents are ignored. In this case, the contents are
+		 * returned as individual entries.
+		 *
+		 * If this is set, files and directories that explicitly match an ignore
+		 * pattern are reported. Implicitly ignored directories (directories that
+		 * do not match an ignore pattern, but whose contents are all ignored)
+		 * are not reported, instead all of the contents are reported.
+		 */
 		DIR_SHOW_IGNORED_TOO_MODE_MATCHING = 1<<8,
+
 		DIR_SKIP_NESTED_GIT = 1<<9
 	} flags;
+
+	/* An array of `struct dir_entry`, each element of which describes a path. */
 	struct dir_entry **entries;
+
+	/**
+	 * used for ignored paths with the `DIR_SHOW_IGNORED_TOO` and
+	 * `DIR_COLLECT_IGNORED` flags.
+	 */
 	struct dir_entry **ignored;
 
-	/* Exclude info */
+	/**
+	 * The name of the file to be read in each directory for excluded files
+	 * (typically `.gitignore`).
+	 */
 	const char *exclude_per_dir;
 
 	/*
