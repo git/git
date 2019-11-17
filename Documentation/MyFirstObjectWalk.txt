@@ -119,9 +119,8 @@ parameters provided by the user over the CLI.
 
 `nr` represents the number of `rev_cmdline_entry` present in the array.
 
-`alloc` is used by the `ALLOC_GROW` macro. Check
-`Documentation/technical/api-allocation-growing.txt` - this variable is used to
-track the allocated size of the list.
+`alloc` is used by the `ALLOC_GROW` macro. Check `cache.h` - this variable is
+used to track the allocated size of the list.
 
 Per entry, we find:
 
