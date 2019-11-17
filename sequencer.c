@@ -4423,7 +4423,6 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	struct labels_entry *labels_entry;
 	struct string_entry *string_entry;
 	struct object_id dummy;
-	size_t len;
 	int i;
 
 	string_entry = oidmap_get(&state->commit2label, oid);
@@ -4443,10 +4442,10 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	 * abbreviation for any uninteresting commit's names that does not
 	 * clash with any other label.
 	 */
+	strbuf_reset(&state->buf);
 	if (!label) {
 		char *p;
 
-		strbuf_reset(&state->buf);
 		strbuf_grow(&state->buf, GIT_MAX_HEXSZ);
 		label = p = state->buf.buf;
 
@@ -4469,32 +4468,37 @@ static const char *label_oid(struct object_id *oid, const char *label,
 				p[i] = save;
 			}
 		}
-	} else if (((len = strlen(label)) == the_hash_algo->hexsz &&
-		    !get_oid_hex(label, &dummy)) ||
-		   (len == 1 && *label == '#') ||
-		   hashmap_get_from_hash(&state->labels,
-					 strihash(label), label)) {
-		/*
-		 * If the label already exists, or if the label is a valid full
-		 * OID, or the label is a '#' (which we use as a separator
-		 * between merge heads and oneline), we append a dash and a
-		 * number to make it unique.
-		 */
+	} else {
 		struct strbuf *buf = &state->buf;
 
-		strbuf_reset(buf);
-		strbuf_add(buf, label, len);
-
-		for (i = 2; ; i++) {
-			strbuf_setlen(buf, len);
-			strbuf_addf(buf, "-%d", i);
-			if (!hashmap_get_from_hash(&state->labels,
-						   strihash(buf->buf),
-						   buf->buf))
-				break;
-		}
-
+		for (; *label; label++)
+			strbuf_addch(buf, isspace(*label) ? '-' : *label);
 		label = buf->buf;
+
+		if ((buf->len == the_hash_algo->hexsz &&
+		     !get_oid_hex(label, &dummy)) ||
+		    (buf->len == 1 && *label == '#') ||
+		    hashmap_get_from_hash(&state->labels,
+					  strihash(label), label)) {
+			/*
+			 * If the label already exists, or if the label is a
+			 * valid full OID, or the label is a '#' (which we use
+			 * as a separator between merge heads and oneline), we
+			 * append a dash and a number to make it unique.
+			 */
+			size_t len = buf->len;
+
+			for (i = 2; ; i++) {
+				strbuf_setlen(buf, len);
+				strbuf_addf(buf, "-%d", i);
+				if (!hashmap_get_from_hash(&state->labels,
+							   strihash(buf->buf),
+							   buf->buf))
+					break;
+			}
+
+			label = buf->buf;
+		}
 	}
 
 	FLEX_ALLOC_STR(labels_entry, label, label);
@@ -4595,10 +4599,6 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			strbuf_addstr(&label, p1 + strlen(" from "));
 		else
 			strbuf_addbuf(&label, &oneline);
-
-		for (p1 = label.buf; *p1; p1++)
-			if (isspace(*p1))
-				*(char *)p1 = '-';
 
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%s -C %s",
