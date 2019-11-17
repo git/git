@@ -17,7 +17,7 @@ revision walk is used for operations like `git log`.
 
 - `Documentation/user-manual.txt` under "Hacking Git" contains some coverage of
   the revision walker in its various incarnations.
-- `Documentation/technical/api-revision-walking.txt`
+- `revision.h`
 - https://eagain.net/articles/git-for-computer-scientists/[Git for Computer Scientists]
   gives a good overview of the types of objects in Git and what your object
   walk is really describing.
