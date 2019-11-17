@@ -4471,8 +4471,26 @@ static const char *label_oid(struct object_id *oid, const char *label,
 	} else {
 		struct strbuf *buf = &state->buf;
 
+		/*
+		 * Sanitize labels by replacing non-alpha-numeric characters
+		 * (including white-space ones) by dashes, as they might be
+		 * illegal in file names (and hence in ref names).
+		 *
+		 * Note that we retain non-ASCII UTF-8 characters (identified
+		 * via the most significant bit). They should be all acceptable
+		 * in file names. We do not validate the UTF-8 here, that's not
+		 * the job of this function.
+		 */
 		for (; *label; label++)
-			strbuf_addch(buf, isspace(*label) ? '-' : *label);
+			if ((*label & 0x80) || isalnum(*label))
+				strbuf_addch(buf, *label);
+			/* avoid leading dash and double-dashes */
+			else if (buf->len && buf->buf[buf->len - 1] != '-')
+				strbuf_addch(buf, '-');
+		if (!buf->len) {
+			strbuf_addstr(buf, "rev-");
+			strbuf_add_unique_abbrev(buf, oid, default_abbrev);
+		}
 		label = buf->buf;
 
 		if ((buf->len == the_hash_algo->hexsz &&
