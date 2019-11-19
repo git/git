@@ -146,6 +146,16 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
+test_expect_success '--show-toplevel from subdir of working tree' '
+	pwd >expect &&
+	git -C sub/dir rev-parse --show-toplevel >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--show-toplevel from inside .git' '
+	test_must_fail git -C .git rev-parse --show-toplevel
+'
+
 test_expect_success 'showing the superproject correctly' '
 	git rev-parse --show-superproject-working-tree >out &&
 	test_must_be_empty out &&
