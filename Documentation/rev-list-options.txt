@@ -58,7 +58,7 @@ endif::git-rev-list[]
 	`--all-match`).
 ifndef::git-rev-list[]
 +
-When `--show-notes` is in effect, the message from the notes is
+When `--notes` is in effect, the message from the notes is
 matched as if it were part of the log message.
 endif::git-rev-list[]
 
