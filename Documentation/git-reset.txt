@@ -8,8 +8,8 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git reset' [-q] [<tree-ish>] [--] <paths>...
-'git reset' (--patch | -p) [<tree-ish>] [--] [<paths>...]
+'git reset' [-q] [<tree-ish>] [--] <pathspec>...
+'git reset' (--patch | -p) [<tree-ish>] [--] [<pathspec>...]
 'git reset' [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<commit>]
 
 DESCRIPTION
@@ -19,23 +19,23 @@ In the third form, set the current branch head (`HEAD`) to `<commit>`,
 optionally modifying index and working tree to match.
 The `<tree-ish>`/`<commit>` defaults to `HEAD` in all forms.
 
-'git reset' [-q] [<tree-ish>] [--] <paths>...::
-	This form resets the index entries for all `<paths>` to their
-	state at `<tree-ish>`.  (It does not affect the working tree or
-	the current branch.)
+'git reset' [-q] [<tree-ish>] [--] <pathspec>...::
+	This form resets the index entries for all paths that match the
+	`<pathspec>` to their state at `<tree-ish>`.  (It does not affect
+	the working tree or the current branch.)
 +
-This means that `git reset <paths>` is the opposite of `git add
-<paths>`. This command is equivalent to
-`git restore [--source=<tree-ish>] --staged <paths>...`.
+This means that `git reset <pathspec>` is the opposite of `git add
+<pathspec>`. This command is equivalent to
+`git restore [--source=<tree-ish>] --staged <pathspec>...`.
 +
-After running `git reset <paths>` to update the index entry, you can
+After running `git reset <pathspec>` to update the index entry, you can
 use linkgit:git-restore[1] to check the contents out of the index to
 the working tree. Alternatively, using linkgit:git-restore[1]
 and specifying a commit with `--source`, you
 can copy the contents of a path out of a commit to the index and to the
 working tree in one go.
 
-'git reset' (--patch | -p) [<tree-ish>] [--] [<paths>...]::
+'git reset' (--patch | -p) [<tree-ish>] [--] [<pathspec>...]::
 	Interactively select hunks in the difference between the index
 	and `<tree-ish>` (defaults to `HEAD`).  The chosen hunks are applied
 	in reverse to the index.
@@ -101,6 +101,13 @@ OPTIONS
 	`reset.quiet` config option. `--quiet` and `--no-quiet` will
 	override the default behavior.
 
+\--::
+	Do not interpret any more arguments as options.
+
+<pathspec>...::
+	Limits the paths affected by the operation.
++
+For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
 EXAMPLES
 --------

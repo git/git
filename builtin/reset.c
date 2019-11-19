@@ -30,8 +30,8 @@
 
 static const char * const git_reset_usage[] = {
 	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"),
-	N_("git reset [-q] [<tree-ish>] [--] <paths>..."),
-	N_("git reset --patch [<tree-ish>] [--] [<paths>...]"),
+	N_("git reset [-q] [<tree-ish>] [--] <pathspec>..."),
+	N_("git reset --patch [<tree-ish>] [--] [<pathspec>...]"),
 	NULL
 };
 
