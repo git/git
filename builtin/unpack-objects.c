@@ -24,6 +24,7 @@ static off_t consumed_bytes;
 static off_t max_input_size;
 static git_hash_ctx ctx;
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
+static struct progress *progress;
 
 /*
  * When running under --strict mode, objects whose reachability are
@@ -92,6 +93,7 @@ static void use(int bytes)
 	consumed_bytes += bytes;
 	if (max_input_size && consumed_bytes > max_input_size)
 		die(_("pack exceeds maximum allowed size"));
+	display_throughput(progress, consumed_bytes);
 }
 
 static void *get_data(unsigned long size)
@@ -484,7 +486,6 @@ static void unpack_one(unsigned nr)
 static void unpack_all(void)
 {
 	int i;
-	struct progress *progress = NULL;
 	struct pack_header *hdr = fill(sizeof(struct pack_header));
 
 	nr_objects = ntohl(hdr->hdr_entries);
