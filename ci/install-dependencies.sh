@@ -42,7 +42,8 @@ osx-clang|osx-gcc)
 	brew link --force gettext
 	brew cask install perforce || {
 		# Update the definitions and try again
-		git -C "$(brew --repository)"/Library/Taps/homebrew/homebrew-cask pull &&
+		cask_repo="$(brew --repository)"/Library/Taps/homebrew/homebrew-cask &&
+		git -C "$cask_repo" pull --no-stat &&
 		brew cask install perforce
 	} ||
 	brew install caskroom/cask/perforce
