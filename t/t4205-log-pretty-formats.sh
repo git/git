@@ -134,6 +134,36 @@ test_expect_failure C_LOCALE_OUTPUT 'NUL termination with --stat' '
 	test_cmp expected actual
 '
 
+for p in short medium full fuller email raw
+do
+	test_expect_success "NUL termination with --reflog --pretty=$p" '
+		revs="$(git rev-list --reflog)" &&
+		for r in $revs
+		do
+			git show -s "$r" --pretty="$p" &&
+			printf "\0" || return 1
+		done >expect &&
+		{
+			git log -z --reflog --pretty="$p" &&
+			printf "\0"
+		} >actual &&
+		test_cmp expect actual
+	'
+done
+
+test_expect_success 'NUL termination with --reflog --pretty=oneline' '
+	revs="$(git rev-list --reflog)" &&
+	for r in $revs
+	do
+		git show -s --pretty=oneline "$r" >raw &&
+		cat raw | lf_to_nul || exit 1
+	done >expect &&
+	# the trailing NUL is already produced so we do not need to
+	# output another one
+	git log -z --pretty=oneline --reflog >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup more commits' '
 	test_commit "message one" one one message-one &&
 	test_commit "message two" two two message-two &&
