@@ -516,10 +516,10 @@ test_expect_success 'range-diff compares notes by default' '
 	2:  $(test_oid t2) = 2:  $(test_oid u2) s/4/A/
 	3:  $(test_oid t3) = 3:  $(test_oid u3) s/11/B/
 	4:  $(test_oid t4) ! 4:  $(test_oid u4) s/12/B/
-	    @@ Metadata
+	    @@ Commit message
 	    Z
-	    Z ## Commit message ##
-	    Z    s/12/B/
+	    Z
+	    Z ## Notes ##
 	    -    topic note
 	    +    unmodified note
 	    Z
@@ -543,17 +543,17 @@ test_expect_success 'format-patch --range-diff compares notes by default' '
 	grep "= 3: .* s/11/B" 0000-* &&
 	grep "! 4: .* s/12/B" 0000-* &&
 	sed s/Z/\ /g >expect <<-EOF &&
-	    @@ Metadata
+	    @@ Commit message
 	    Z
-	    Z ## Commit message ##
-	    Z    s/12/B/
+	    Z
+	    Z ## Notes ##
 	    -    topic note
 	    +    unmodified note
 	    Z
 	    Z ## file ##
 	    Z@@ file: A
 	EOF
-	sed "/@@ Metadata/,/@@ file: A/!d" 0000-* >actual &&
+	sed "/@@ Commit message/,/@@ file: A/!d" 0000-* >actual &&
 	test_cmp expect actual
 '
 

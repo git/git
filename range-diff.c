@@ -144,6 +144,12 @@ static int read_patches(const char *range, struct string_list *list)
 				strbuf_addstr(&buf, line);
 				strbuf_addstr(&buf, "\n\n");
 				strbuf_addstr(&buf, " ## Commit message ##\n");
+			} else if (starts_with(line, "Notes") &&
+				   line[strlen(line) - 1] == ':') {
+				strbuf_addstr(&buf, "\n\n");
+				/* strip the trailing colon */
+				strbuf_addf(&buf, " ## %.*s ##\n",
+					    (int)(strlen(line) - 1), line);
 			} else if (starts_with(line, "    ")) {
 				p = line + len - 2;
 				while (isspace(*p) && p >= line)
