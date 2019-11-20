@@ -20,6 +20,7 @@ static struct cmt_fmt_map {
 	int is_tformat;
 	int expand_tabs_in_log;
 	int is_alias;
+	enum date_mode_type default_date_mode_type;
 	const char *user_format;
 } *commit_formats;
 static size_t builtin_formats_len;
@@ -181,6 +182,8 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 	rev->commit_format = commit_format->format;
 	rev->use_terminator = commit_format->is_tformat;
 	rev->expand_tabs_in_log_default = commit_format->expand_tabs_in_log;
+	if (!rev->date_mode_explicit && commit_format->default_date_mode_type)
+		rev->date_mode.type = commit_format->default_date_mode_type;
 	if (commit_format->format == CMIT_FMT_USERFORMAT) {
 		save_user_format(rev, commit_format->user_format,
 				 commit_format->is_tformat);
