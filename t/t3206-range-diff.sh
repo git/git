@@ -8,7 +8,7 @@ test_description='range-diff tests'
 # harm than good.  We need some real history.
 
 test_expect_success 'setup' '
-	git fast-import < "$TEST_DIRECTORY"/t3206/history.export &&
+	git fast-import <"$TEST_DIRECTORY"/t3206/history.export &&
 	test_oid_cache <<-EOF
 	# topic
 	t1 sha1:4de457d
