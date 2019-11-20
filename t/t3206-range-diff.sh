@@ -576,10 +576,73 @@ test_expect_success 'range-diff with multiple --notes' '
 	test_cmp expect actual
 '
 
-test_expect_success 'format-patch --range-diff compares notes by default' '
+test_expect_success 'format-patch --range-diff does not compare notes by default' '
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
 	test_when_finished git notes remove topic unmodified &&
+	git format-patch --cover-letter --range-diff=$prev \
+		master..unmodified >actual &&
+	test_when_finished "rm 000?-*" &&
+	test_line_count = 5 actual &&
+	test_i18ngrep "^Range-diff:$" 0000-* &&
+	grep "= 1: .* s/5/A" 0000-* &&
+	grep "= 2: .* s/4/A" 0000-* &&
+	grep "= 3: .* s/11/B" 0000-* &&
+	grep "= 4: .* s/12/B" 0000-* &&
+	! grep "Notes" 0000-* &&
+	! grep "note" 0000-*
+'
+
+test_expect_success 'format-patch --range-diff with --no-notes' '
+	git notes add -m "topic note" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	git format-patch --no-notes --cover-letter --range-diff=$prev \
+		master..unmodified >actual &&
+	test_when_finished "rm 000?-*" &&
+	test_line_count = 5 actual &&
+	test_i18ngrep "^Range-diff:$" 0000-* &&
+	grep "= 1: .* s/5/A" 0000-* &&
+	grep "= 2: .* s/4/A" 0000-* &&
+	grep "= 3: .* s/11/B" 0000-* &&
+	grep "= 4: .* s/12/B" 0000-* &&
+	! grep "Notes" 0000-* &&
+	! grep "note" 0000-*
+'
+
+test_expect_success 'format-patch --range-diff with --notes' '
+	git notes add -m "topic note" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	git format-patch --notes --cover-letter --range-diff=$prev \
+		master..unmodified >actual &&
+	test_when_finished "rm 000?-*" &&
+	test_line_count = 5 actual &&
+	test_i18ngrep "^Range-diff:$" 0000-* &&
+	grep "= 1: .* s/5/A" 0000-* &&
+	grep "= 2: .* s/4/A" 0000-* &&
+	grep "= 3: .* s/11/B" 0000-* &&
+	grep "! 4: .* s/12/B" 0000-* &&
+	sed s/Z/\ /g >expect <<-EOF &&
+	    @@ Commit message
+	    Z
+	    Z
+	    Z ## Notes ##
+	    -    topic note
+	    +    unmodified note
+	    Z
+	    Z ## file ##
+	    Z@@ file: A
+	EOF
+	sed "/@@ Commit message/,/@@ file: A/!d" 0000-* >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format-patch --range-diff with --notes' '
+	git notes add -m "topic note" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	test_config format.notes true &&
 	git format-patch --cover-letter --range-diff=$prev \
 		master..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
@@ -596,6 +659,42 @@ test_expect_success 'format-patch --range-diff compares notes by default' '
 	    Z ## Notes ##
 	    -    topic note
 	    +    unmodified note
+	    Z
+	    Z ## file ##
+	    Z@@ file: A
+	EOF
+	sed "/@@ Commit message/,/@@ file: A/!d" 0000-* >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format-patch --range-diff with multiple notes' '
+	git notes --ref=note1 add -m "topic note1" topic &&
+	git notes --ref=note1 add -m "unmodified note1" unmodified &&
+	test_when_finished git notes --ref=note1 remove topic unmodified &&
+	git notes --ref=note2 add -m "topic note2" topic &&
+	git notes --ref=note2 add -m "unmodified note2" unmodified &&
+	test_when_finished git notes --ref=note2 remove topic unmodified &&
+	git format-patch --notes=note1 --notes=note2 --cover-letter --range-diff=$prev \
+		master..unmodified >actual &&
+	test_when_finished "rm 000?-*" &&
+	test_line_count = 5 actual &&
+	test_i18ngrep "^Range-diff:$" 0000-* &&
+	grep "= 1: .* s/5/A" 0000-* &&
+	grep "= 2: .* s/4/A" 0000-* &&
+	grep "= 3: .* s/11/B" 0000-* &&
+	grep "! 4: .* s/12/B" 0000-* &&
+	sed s/Z/\ /g >expect <<-EOF &&
+	    @@ Commit message
+	    Z
+	    Z
+	    Z ## Notes (note1) ##
+	    -    topic note1
+	    +    unmodified note1
+	    Z
+	    Z
+	    Z ## Notes (note2) ##
+	    -    topic note2
+	    +    unmodified note2
 	    Z
 	    Z ## file ##
 	    Z@@ file: A
