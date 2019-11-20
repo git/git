@@ -142,7 +142,7 @@ archive, summarize the relevant points of the discussion.
 
 [[commit-reference]]
 If you want to reference a previous commit in the history of a stable
-branch, use the format "abbreviated sha1 (subject, date)",
+branch, use the format "abbreviated hash (subject, date)",
 with the subject enclosed in a pair of double-quotes, like this:
 
 ....
