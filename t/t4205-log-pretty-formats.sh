@@ -824,4 +824,47 @@ test_expect_success '%S in git log --format works with other placeholders (part 
 	test_cmp expect actual
 '
 
+test_expect_success 'log --pretty=reference' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference with log.date is overridden by short date' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	test_config log.date rfc &&
+	git log --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference with explicit date overrides short date' '
+	git log --date=rfc --pretty="tformat:%h (%s, %ad)" >expect &&
+	git log --date=rfc --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference is never unabbreviated' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --no-abbrev-commit --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference is never decorated' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --decorate=short --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference does not output reflog info' '
+	git log --walk-reflogs --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --walk-reflogs --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference is colored appropriately' '
+	git log --color=always --pretty="tformat:%C(auto)%h (%s, %as)" >expect &&
+	git log --color=always --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
 test_done

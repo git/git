@@ -63,6 +63,17 @@ This is designed to be as compact as possible.
 
 	       <full commit message>
 
+* 'reference'
+
+	  <abbrev hash> (<title line>, <short author date>)
++
+This format is used to refer to another commit in a commit message and
+is the same as `--pretty='format:%C(auto)%h (%s, %ad)'`.  By default,
+the date is formatted with `--date=short` unless another `--date` option
+is explicitly specified.  As with any `format:` with format
+placeholders, its output is not affected by other options like
+`--decorate` and `--walk-reflogs`.
+
 * 'email'
 
 	  From <hash> <date>
