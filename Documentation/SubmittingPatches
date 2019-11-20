@@ -142,19 +142,19 @@ archive, summarize the relevant points of the discussion.
 
 [[commit-reference]]
 If you want to reference a previous commit in the history of a stable
-branch, use the format "abbreviated hash (subject, date)",
-with the subject enclosed in a pair of double-quotes, like this:
+branch, use the format "abbreviated hash (subject, date)", like this:
 
 ....
-	Commit f86a374 ("pack-bitmap.c: fix a memleak", 2015-03-30)
+	Commit f86a374 (pack-bitmap.c: fix a memleak, 2015-03-30)
 	noticed that ...
 ....
 
 The "Copy commit summary" command of gitk can be used to obtain this
-format, or this invocation of `git show`:
+format (with the subject enclosed in a pair of double-quotes), or this
+invocation of `git show`:
 
 ....
-	git show -s --date=short --pretty='format:%h ("%s", %ad)' <commit>
+	git show -s --date=short --pretty='format:%h (%s, %ad)' <commit>
 ....
 
 [[git-tools]]
