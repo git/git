@@ -533,6 +533,12 @@ test_expect_success 'ISO and ISO-strict date formats display the same values' '
 	test_cmp expected actual
 '
 
+test_expect_success 'short date' '
+	git log --format=%ad%n%cd --date=short >expected &&
+	git log --format=%as%n%cs >actual &&
+	test_cmp expected actual
+'
+
 # get new digests (with no abbreviations)
 test_expect_success 'set up log decoration tests' '
 	head1=$(git rev-parse --verify HEAD~0) &&
