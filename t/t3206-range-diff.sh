@@ -9,7 +9,7 @@ test_description='range-diff tests'
 
 test_expect_success 'setup' '
 	git fast-import <"$TEST_DIRECTORY"/t3206/history.export &&
-	test_oid_cache <<-EOF
+	test_oid_cache <<-\EOF
 	# topic
 	t1 sha1:4de457d
 	t2 sha1:fccce22
