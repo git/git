@@ -121,88 +121,88 @@ test_expect_success 'setup' '
 test_expect_success 'simple A..B A..C (unmodified)' '
 	git range-diff --no-color master..topic master..unmodified \
 		>actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid u1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid u2) s/4/A/
 	3:  $(test_oid t3) = 3:  $(test_oid u3) s/11/B/
 	4:  $(test_oid t4) = 4:  $(test_oid u4) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'simple B...C (unmodified)' '
 	git range-diff --no-color topic...unmodified >actual &&
-	# same "expected" as above
-	test_cmp expected actual
+	# same "expect" as above
+	test_cmp expect actual
 '
 
 test_expect_success 'simple A B C (unmodified)' '
 	git range-diff --no-color master topic unmodified >actual &&
-	# same "expected" as above
-	test_cmp expected actual
+	# same "expect" as above
+	test_cmp expect actual
 '
 
 test_expect_success 'trivial reordering' '
 	git range-diff --no-color master topic reordered >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid r1) s/5/A/
 	3:  $(test_oid t3) = 2:  $(test_oid r2) s/11/B/
 	4:  $(test_oid t4) = 3:  $(test_oid r3) s/12/B/
 	2:  $(test_oid t2) = 4:  $(test_oid r4) s/4/A/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'removed a commit' '
 	git range-diff --no-color master topic removed >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid d1) s/5/A/
 	2:  $(test_oid t2) < -:  $(test_oid __) s/4/A/
 	3:  $(test_oid t3) = 2:  $(test_oid d2) s/11/B/
 	4:  $(test_oid t4) = 3:  $(test_oid d3) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'added a commit' '
 	git range-diff --no-color master topic added >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid a1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid a2) s/4/A/
 	-:  $(test_oid __) > 3:  $(test_oid a3) s/6/A/
 	3:  $(test_oid t3) = 4:  $(test_oid a4) s/11/B/
 	4:  $(test_oid t4) = 5:  $(test_oid a5) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'new base, A B C' '
 	git range-diff --no-color master topic rebased >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid b1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid b2) s/4/A/
 	3:  $(test_oid t3) = 3:  $(test_oid b3) s/11/B/
 	4:  $(test_oid t4) = 4:  $(test_oid b4) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'new base, B...C' '
 	# this syntax includes the commits from master!
 	git range-diff --no-color topic...rebased >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	-:  $(test_oid __) > 1:  $(test_oid b5) unrelated
 	1:  $(test_oid t1) = 2:  $(test_oid b1) s/5/A/
 	2:  $(test_oid t2) = 3:  $(test_oid b2) s/4/A/
 	3:  $(test_oid t3) = 4:  $(test_oid b3) s/11/B/
 	4:  $(test_oid t4) = 5:  $(test_oid b4) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'changed commit' '
 	git range-diff --no-color topic...changed >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid c2) s/4/A/
 	3:  $(test_oid t3) ! 3:  $(test_oid c3) s/11/B/
@@ -226,23 +226,23 @@ test_expect_success 'changed commit' '
 	     +B
 	      13
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'changed commit with --no-patch diff option' '
 	git range-diff --no-color --no-patch topic...changed >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid c2) s/4/A/
 	3:  $(test_oid t3) ! 3:  $(test_oid c3) s/11/B/
 	4:  $(test_oid t4) ! 4:  $(test_oid c4) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'changed commit with --stat diff option' '
 	git range-diff --no-color --stat topic...changed >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	     a => b | 0
 	     1 file changed, 0 insertions(+), 0 deletions(-)
@@ -256,12 +256,12 @@ test_expect_success 'changed commit with --stat diff option' '
 	     a => b | 0
 	     1 file changed, 0 insertions(+), 0 deletions(-)
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'changed commit with sm config' '
 	git range-diff --no-color --submodule=log topic...changed >actual &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
 	2:  $(test_oid t2) = 2:  $(test_oid c2) s/4/A/
 	3:  $(test_oid t3) ! 3:  $(test_oid c3) s/11/B/
@@ -285,12 +285,12 @@ test_expect_success 'changed commit with sm config' '
 	     +B
 	      13
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'renamed file' '
 	git range-diff --no-color --submodule=log topic...renamed-file >actual &&
-	sed s/Z/\ /g >expected <<-EOF &&
+	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid n1) s/5/A/
 	2:  $(test_oid t2) ! 2:  $(test_oid n2) s/4/A/
 	    @@ Metadata
@@ -330,12 +330,12 @@ test_expect_success 'renamed file' '
 	    Z 10
 	    Z B
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'file with mode only change' '
 	git range-diff --no-color --submodule=log topic...mode-only-change >actual &&
-	sed s/Z/\ /g >expected <<-EOF &&
+	sed s/Z/\ /g >expect <<-EOF &&
 	1:  fccce22 ! 1:  4d39cb3 s/4/A/
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
@@ -370,12 +370,12 @@ test_expect_success 'file with mode only change' '
 	    + ## other-file (mode change 100644 => 100755) ##
 	3:  a63e992 = 3:  4c1e0f5 s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'file added and later removed' '
 	git range-diff --no-color --submodule=log topic...added-removed >actual &&
-	sed s/Z/\ /g >expected <<-EOF &&
+	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid s1) s/5/A/
 	2:  $(test_oid t2) ! 2:  $(test_oid s2) s/4/A/
 	    @@ Metadata
@@ -411,7 +411,7 @@ test_expect_success 'file added and later removed' '
 	    + ## new-file (deleted) ##
 	4:  $(test_oid t4) = 4:  $(test_oid s4) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'no commits on one side' '
@@ -421,7 +421,7 @@ test_expect_success 'no commits on one side' '
 
 test_expect_success 'changed message' '
 	git range-diff --no-color topic...changed-message >actual &&
-	sed s/Z/\ /g >expected <<-EOF &&
+	sed s/Z/\ /g >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid m1) s/5/A/
 	2:  $(test_oid t2) ! 2:  $(test_oid m2) s/4/A/
 	    @@ Metadata
@@ -436,7 +436,7 @@ test_expect_success 'changed message' '
 	3:  $(test_oid t3) = 3:  $(test_oid m3) s/11/B/
 	4:  $(test_oid t4) = 4:  $(test_oid m4) s/12/B/
 	EOF
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'dual-coloring' '
