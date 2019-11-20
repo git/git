@@ -529,6 +529,53 @@ test_expect_success 'range-diff compares notes by default' '
 	test_cmp expect actual
 '
 
+test_expect_success 'range-diff with --no-notes' '
+	git notes add -m "topic note" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	git range-diff --no-color --no-notes master..topic master..unmodified \
+		>actual &&
+	cat >expect <<-EOF &&
+	1:  $(test_oid t1) = 1:  $(test_oid u1) s/5/A/
+	2:  $(test_oid t2) = 2:  $(test_oid u2) s/4/A/
+	3:  $(test_oid t3) = 3:  $(test_oid u3) s/11/B/
+	4:  $(test_oid t4) = 4:  $(test_oid u4) s/12/B/
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'range-diff with multiple --notes' '
+	git notes --ref=note1 add -m "topic note1" topic &&
+	git notes --ref=note1 add -m "unmodified note1" unmodified &&
+	test_when_finished git notes --ref=note1 remove topic unmodified &&
+	git notes --ref=note2 add -m "topic note2" topic &&
+	git notes --ref=note2 add -m "unmodified note2" unmodified &&
+	test_when_finished git notes --ref=note2 remove topic unmodified &&
+	git range-diff --no-color --notes=note1 --notes=note2 master..topic master..unmodified \
+		>actual &&
+	sed s/Z/\ /g >expect <<-EOF &&
+	1:  $(test_oid t1) = 1:  $(test_oid u1) s/5/A/
+	2:  $(test_oid t2) = 2:  $(test_oid u2) s/4/A/
+	3:  $(test_oid t3) = 3:  $(test_oid u3) s/11/B/
+	4:  $(test_oid t4) ! 4:  $(test_oid u4) s/12/B/
+	    @@ Commit message
+	    Z
+	    Z
+	    Z ## Notes (note1) ##
+	    -    topic note1
+	    +    unmodified note1
+	    Z
+	    Z
+	    Z ## Notes (note2) ##
+	    -    topic note2
+	    +    unmodified note2
+	    Z
+	    Z ## file ##
+	    Z@@ file: A
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'format-patch --range-diff compares notes by default' '
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&

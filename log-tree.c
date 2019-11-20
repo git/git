@@ -770,7 +770,7 @@ void show_log(struct rev_info *opt)
 		opts.use_color = opt->diffopt.use_color;
 		diff_setup_done(&opts);
 		show_range_diff(opt->rdiff1, opt->rdiff2,
-				opt->creation_factor, 1, &opts);
+				opt->creation_factor, 1, &opts, NULL);
 
 		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
 	}

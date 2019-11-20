@@ -57,6 +57,10 @@ to revert to color all lines according to the outer diff markers
 	See the ``Algorithm`` section below for an explanation why this is
 	needed.
 
+--[no-]notes[=<ref>]::
+	This flag is passed to the `git log` program
+	(see linkgit:git-log[1]) that generates the patches.
+
 <range1> <range2>::
 	Compare the commits specified by the two ranges, where
 	`<range1>` is considered an older version of `<range2>`.
@@ -75,7 +79,7 @@ to revert to color all lines according to the outer diff markers
 linkgit:git-diff[1]), most notably the `--color=[<when>]` and
 `--no-color` options. These options are used when generating the "diff
 between patches", i.e. to compare the author, commit message and diff of
-corresponding old/new commits. There is currently no means to tweak the
+corresponding old/new commits. There is currently no means to tweak most of the
 diff options passed to `git log` when generating those patches.
 
 OUTPUT STABILITY
