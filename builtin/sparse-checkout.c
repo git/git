@@ -12,6 +12,7 @@
 #include "lockfile.h"
 #include "resolve-undo.h"
 #include "unpack-trees.h"
+#include "wt-status.h"
 
 static const char *empty_base = "";
 
@@ -256,6 +257,10 @@ static int sparse_checkout_init(int argc, const char **argv)
 		OPT_END(),
 	};
 
+	repo_read_index(the_repository);
+	require_clean_work_tree(the_repository,
+				N_("initialize sparse-checkout"), NULL, 1, 0);
+
 	argc = parse_options(argc, argv, NULL,
 			     builtin_sparse_checkout_init_options,
 			     builtin_sparse_checkout_init_usage, 0);
@@ -368,6 +373,10 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
+	repo_read_index(the_repository);
+	require_clean_work_tree(the_repository,
+				N_("set sparse-checkout patterns"), NULL, 1, 0);
+
 	memset(&pl, 0, sizeof(pl));
 
 	argc = parse_options(argc, argv, prefix,
@@ -426,6 +435,10 @@ static int sparse_checkout_disable(int argc, const char **argv)
 {
 	struct pattern_list pl;
 	struct strbuf match_all = STRBUF_INIT;
+
+	repo_read_index(the_repository);
+	require_clean_work_tree(the_repository,
+				N_("disable sparse-checkout"), NULL, 1, 0);
 
 	memset(&pl, 0, sizeof(pl));
 	hashmap_init(&pl.recursive_hashmap, pl_hashmap_cmp, NULL, 0);
