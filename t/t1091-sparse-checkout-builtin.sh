@@ -284,4 +284,11 @@ test_expect_success 'fail when lock is taken' '
 	test_i18ngrep "File exists" err
 '
 
+test_expect_success '.gitignore should not warn about cone mode' '
+	git -C repo config --worktree core.sparseCheckoutCone true &&
+	echo "**/bin/*" >repo/.gitignore &&
+	git -C repo reset --hard 2>err &&
+	test_i18ngrep ! "disabling cone patterns" err
+'
+
 test_done
