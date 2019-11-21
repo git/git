@@ -81,9 +81,17 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 	struct pattern_entry *pe;
 	struct hashmap_iter iter;
 	struct string_list sl = STRING_LIST_INIT_DUP;
+	struct strbuf parent_pattern = STRBUF_INIT;
 
-	hashmap_for_each_entry(&pl->parent_hashmap, &iter, pe, ent)
-		string_list_insert(&sl, pe->pattern);
+	hashmap_for_each_entry(&pl->parent_hashmap, &iter, pe, ent) {
+		if (hashmap_get_entry(&pl->recursive_hashmap, pe, ent, NULL))
+			continue;
+
+		if (!hashmap_contains_parent(&pl->recursive_hashmap,
+					     pe->pattern,
+					     &parent_pattern))
+			string_list_insert(&sl, pe->pattern);
+	}
 
 	string_list_sort(&sl);
 	string_list_remove_duplicates(&sl, 0);
@@ -99,8 +107,14 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 
 	string_list_clear(&sl, 0);
 
-	hashmap_for_each_entry(&pl->recursive_hashmap, &iter, pe, ent)
-		string_list_insert(&sl, pe->pattern);
+	hashmap_for_each_entry(&pl->recursive_hashmap, &iter, pe, ent) {
+		if (!hashmap_contains_parent(&pl->recursive_hashmap,
+					     pe->pattern,
+					     &parent_pattern))
+			string_list_insert(&sl, pe->pattern);
+	}
+
+	strbuf_release(&parent_pattern);
 
 	string_list_sort(&sl);
 	string_list_remove_duplicates(&sl, 0);

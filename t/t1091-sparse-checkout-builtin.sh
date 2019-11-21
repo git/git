@@ -237,4 +237,15 @@ test_expect_success 'cone mode: init and set' '
 	test_cmp expect dir
 '
 
+test_expect_success 'cone mode: set with nested folders' '
+	git -C repo sparse-checkout set deep deep/deeper1/deepest 2>err &&
+	test_line_count = 0 err &&
+	cat >expect <<-EOF &&
+		/*
+		!/*/
+		/deep/
+	EOF
+	test_cmp repo/.git/info/sparse-checkout expect
+'
+
 test_done
