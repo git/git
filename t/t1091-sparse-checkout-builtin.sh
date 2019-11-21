@@ -172,8 +172,9 @@ test_expect_success 'cone mode: warn on bad pattern' '
 '
 
 test_expect_success 'sparse-checkout disable' '
+	test_when_finished rm -rf repo/.git/info/sparse-checkout &&
 	git -C repo sparse-checkout disable &&
-	test_path_is_missing repo/.git/info/sparse-checkout &&
+	test_path_is_file repo/.git/info/sparse-checkout &&
 	git -C repo config --list >config &&
 	test_must_fail git config core.sparseCheckout &&
 	ls repo >dir &&

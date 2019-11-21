@@ -52,8 +52,10 @@ When the `--stdin` option is provided, the patterns are read from
 standard in as a newline-delimited list instead of from the arguments.
 
 'disable'::
-	Remove the sparse-checkout file, set `core.sparseCheckout` to
-	`false`, and restore the working directory to include all files.
+	Disable the `core.sparseCheckout` config setting, and restore the
+	working directory to include all files. Leaves the sparse-checkout
+	file intact so a later 'git sparse-checkout init' command may
+	return the working directory to the same state.
 
 SPARSE CHECKOUT
 ---------------

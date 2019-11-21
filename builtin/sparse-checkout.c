@@ -412,24 +412,23 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 
 static int sparse_checkout_disable(int argc, const char **argv)
 {
-	char *sparse_filename;
-	FILE *fp;
+	static const char *empty_base = "";
+	struct pattern_list pl;
+	struct strbuf match_all = STRBUF_INIT;
 
-	if (set_config(MODE_ALL_PATTERNS))
-		die(_("failed to change config"));
-
-	sparse_filename = get_sparse_checkout_filename();
-	fp = xfopen(sparse_filename, "w");
-	fprintf(fp, "/*\n");
-	fclose(fp);
-
+	memset(&pl, 0, sizeof(pl));
+	hashmap_init(&pl.recursive_hashmap, pl_hashmap_cmp, NULL, 0);
+	hashmap_init(&pl.parent_hashmap, pl_hashmap_cmp, NULL, 0);
+	pl.use_cone_patterns = 0;
 	core_apply_sparse_checkout = 1;
-	if (update_working_directory(NULL))
+
+	strbuf_addstr(&match_all, "/*");
+	add_pattern(strbuf_detach(&match_all, NULL), empty_base, 0, &pl, 0);
+
+	if (update_working_directory(&pl))
 		die(_("error while refreshing working directory"));
 
-	unlink(sparse_filename);
-	free(sparse_filename);
-
+	clear_pattern_list(&pl);
 	return set_config(MODE_NO_PATTERNS);
 }
 
