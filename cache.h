@@ -918,11 +918,13 @@ extern char *git_replace_ref_base;
 
 extern int fsync_object_files;
 extern int core_preload_index;
-extern int core_apply_sparse_checkout;
 extern int precomposed_unicode;
 extern int protect_hfs;
 extern int protect_ntfs;
 extern const char *core_fsmonitor;
+
+int core_apply_sparse_checkout;
+int core_sparse_checkout_cone;
 
 /*
  * Include broken refs in all ref iterations, which will

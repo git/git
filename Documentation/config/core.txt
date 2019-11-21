@@ -593,8 +593,14 @@ core.multiPackIndex::
 	multi-pack-index design document].
 
 core.sparseCheckout::
-	Enable "sparse checkout" feature. See section "Sparse checkout" in
-	linkgit:git-read-tree[1] for more information.
+	Enable "sparse checkout" feature. See linkgit:git-sparse-checkout[1]
+	for more information.
+
+core.sparseCheckoutCone::
+	Enables the "cone mode" of the sparse checkout feature. When the
+	sparse-checkout file contains a limited set of patterns, then this
+	mode provides significant performance advantages. See
+	linkgit:git-sparse-checkout[1] for more information.
 
 core.abbrev::
 	Set the length object names are abbreviated to.  If
