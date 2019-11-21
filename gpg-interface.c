@@ -105,6 +105,16 @@ static struct {
 	{ 0, "VALIDSIG ", GPG_STATUS_FINGERPRINT },
 };
 
+static void replace_cstring(char **field, const char *line, const char *next)
+{
+	free(*field);
+
+	if (line && next)
+		*field = xmemdupz(line, next - line);
+	else
+		*field = NULL;
+}
+
 static void parse_gpg_output(struct signature_check *sigc)
 {
 	const char *buf = sigc->gpg_status;
@@ -136,21 +146,18 @@ static void parse_gpg_output(struct signature_check *sigc)
 				/* Do we have key information? */
 				if (sigcheck_gpg_status[i].flags & GPG_STATUS_KEYID) {
 					next = strchrnul(line, ' ');
-					free(sigc->key);
-					sigc->key = xmemdupz(line, next - line);
+					replace_cstring(&sigc->key, line, next);
 					/* Do we have signer information? */
 					if (*next && (sigcheck_gpg_status[i].flags & GPG_STATUS_UID)) {
 						line = next + 1;
 						next = strchrnul(line, '\n');
-						free(sigc->signer);
-						sigc->signer = xmemdupz(line, next - line);
+						replace_cstring(&sigc->signer, line, next);
 					}
 				}
 				/* Do we have fingerprint? */
 				if (sigcheck_gpg_status[i].flags & GPG_STATUS_FINGERPRINT) {
 					next = strchrnul(line, ' ');
-					free(sigc->fingerprint);
-					sigc->fingerprint = xmemdupz(line, next - line);
+					replace_cstring(&sigc->fingerprint, line, next);
 
 					/* Skip interim fields */
 					for (j = 9; j > 0; j--) {
@@ -162,7 +169,8 @@ static void parse_gpg_output(struct signature_check *sigc)
 
 					next = strchrnul(line, '\n');
 					free(sigc->primary_key_fingerprint);
-					sigc->primary_key_fingerprint = xmemdupz(line, next - line);
+					replace_cstring(&sigc->primary_key_fingerprint,
+							line, next);
 				}
 
 				break;
