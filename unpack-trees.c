@@ -1269,7 +1269,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 			    struct strbuf *prefix,
 			    int select_mask, int clear_mask,
 			    struct pattern_list *pl,
-			    enum pattern_match_result default_match);
+			    enum pattern_match_result default_match,
+			    int progress_nr);
 
 /* Whole directory matching */
 static int clear_ce_flags_dir(struct index_state *istate,
@@ -1278,7 +1279,8 @@ static int clear_ce_flags_dir(struct index_state *istate,
 			      char *basename,
 			      int select_mask, int clear_mask,
 			      struct pattern_list *pl,
-			      enum pattern_match_result default_match)
+			      enum pattern_match_result default_match,
+			      int progress_nr)
 {
 	struct cache_entry **cache_end;
 	int dtype = DT_DIR;
@@ -1315,7 +1317,8 @@ static int clear_ce_flags_dir(struct index_state *istate,
 		rc = clear_ce_flags_1(istate, cache, cache_end - cache,
 				      prefix,
 				      select_mask, clear_mask,
-				      pl, ret);
+				      pl, ret,
+				      progress_nr);
 	}
 
 	strbuf_setlen(prefix, prefix->len - 1);
@@ -1342,7 +1345,8 @@ static int clear_ce_flags_1(struct index_state *istate,
 			    struct strbuf *prefix,
 			    int select_mask, int clear_mask,
 			    struct pattern_list *pl,
-			    enum pattern_match_result default_match)
+			    enum pattern_match_result default_match,
+			    int progress_nr)
 {
 	struct cache_entry **cache_end = cache + nr;
 
@@ -1356,8 +1360,11 @@ static int clear_ce_flags_1(struct index_state *istate,
 		int len, dtype;
 		enum pattern_match_result ret;
 
+		display_progress(istate->progress, progress_nr);
+
 		if (select_mask && !(ce->ce_flags & select_mask)) {
 			cache++;
+			progress_nr++;
 			continue;
 		}
 
@@ -1378,20 +1385,26 @@ static int clear_ce_flags_1(struct index_state *istate,
 						       prefix,
 						       prefix->buf + prefix->len - len,
 						       select_mask, clear_mask,
-						       pl, default_match);
+						       pl, default_match,
+						       progress_nr);
 
 			/* clear_c_f_dir eats a whole dir already? */
 			if (processed) {
 				cache += processed;
+				progress_nr += processed;
 				strbuf_setlen(prefix, prefix->len - len);
 				continue;
 			}
 
 			strbuf_addch(prefix, '/');
-			cache += clear_ce_flags_1(istate, cache, cache_end - cache,
-						  prefix,
-						  select_mask, clear_mask, pl,
-						  default_match);
+			processed = clear_ce_flags_1(istate, cache, cache_end - cache,
+						     prefix,
+						     select_mask, clear_mask, pl,
+						     default_match, progress_nr);
+
+			cache += processed;
+			progress_nr += processed;
+
 			strbuf_setlen(prefix, prefix->len - len - 1);
 			continue;
 		}
@@ -1406,19 +1419,27 @@ static int clear_ce_flags_1(struct index_state *istate,
 		if (ret == MATCHED)
 			ce->ce_flags &= ~clear_mask;
 		cache++;
+		progress_nr++;
 	}
+
+	display_progress(istate->progress, progress_nr);
 	return nr - (cache_end - cache);
 }
 
 static int clear_ce_flags(struct index_state *istate,
 			  int select_mask, int clear_mask,
-			  struct pattern_list *pl)
+			  struct pattern_list *pl,
+			  int show_progress)
 {
 	static struct strbuf prefix = STRBUF_INIT;
 	char label[100];
 	int rval;
 
 	strbuf_reset(&prefix);
+	if (show_progress)
+		istate->progress = start_delayed_progress(
+					_("Updating index flags"),
+					istate->cache_nr);
 
 	xsnprintf(label, sizeof(label), "clear_ce_flags(0x%08lx,0x%08lx)",
 		  (unsigned long)select_mask, (unsigned long)clear_mask);
@@ -1428,9 +1449,10 @@ static int clear_ce_flags(struct index_state *istate,
 				istate->cache_nr,
 				&prefix,
 				select_mask, clear_mask,
-				pl, 0);
+				pl, 0, 0);
 	trace2_region_leave("unpack_trees", label, the_repository);
 
+	stop_progress(&istate->progress);
 	return rval;
 }
 
@@ -1439,7 +1461,8 @@ static int clear_ce_flags(struct index_state *istate,
  */
 static void mark_new_skip_worktree(struct pattern_list *pl,
 				   struct index_state *istate,
-				   int select_flag, int skip_wt_flag)
+				   int select_flag, int skip_wt_flag,
+				   int show_progress)
 {
 	int i;
 
@@ -1463,7 +1486,7 @@ static void mark_new_skip_worktree(struct pattern_list *pl,
 	 * 2. Widen worktree according to sparse-checkout file.
 	 * Matched entries will have skip_wt_flag cleared (i.e. "in")
 	 */
-	clear_ce_flags(istate, select_flag, skip_wt_flag, pl);
+	clear_ce_flags(istate, select_flag, skip_wt_flag, pl, show_progress);
 }
 
 static int verify_absent(const struct cache_entry *,
@@ -1525,7 +1548,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	 * Sparse checkout loop #1: set NEW_SKIP_WORKTREE on existing entries
 	 */
 	if (!o->skip_sparse_checkout)
-		mark_new_skip_worktree(o->pl, o->src_index, 0, CE_NEW_SKIP_WORKTREE);
+		mark_new_skip_worktree(o->pl, o->src_index, 0,
+				       CE_NEW_SKIP_WORKTREE, o->verbose_update);
 
 	if (!dfc)
 		dfc = xcalloc(1, cache_entry_size(0));
@@ -1590,7 +1614,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		 * If the will have NEW_SKIP_WORKTREE, also set CE_SKIP_WORKTREE
 		 * so apply_sparse_checkout() won't attempt to remove it from worktree
 		 */
-		mark_new_skip_worktree(o->pl, &o->result, CE_ADDED, CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
+		mark_new_skip_worktree(o->pl, &o->result,
+				       CE_ADDED, CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE,
+				       o->verbose_update);
 
 		ret = 0;
 		for (i = 0; i < o->result.cache_nr; i++) {

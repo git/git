@@ -304,6 +304,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 
 struct split_index;
 struct untracked_cache;
+struct progress;
 
 struct index_state {
 	struct cache_entry **cache;
@@ -326,6 +327,7 @@ struct index_state {
 	uint64_t fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
 	struct mem_pool *ce_mem_pool;
+	struct progress *progress;
 };
 
 /* Name hashing */
