@@ -13,6 +13,8 @@
 #include "resolve-undo.h"
 #include "unpack-trees.h"
 
+static const char *empty_base = "";
+
 static char const * const builtin_sparse_checkout_usage[] = {
 	N_("git sparse-checkout (init|list|set|disable) <options>"),
 	NULL
@@ -243,10 +245,10 @@ static int sparse_checkout_init(int argc, const char **argv)
 {
 	struct pattern_list pl;
 	char *sparse_filename;
-	FILE *fp;
 	int res;
 	struct object_id oid;
 	int mode;
+	struct strbuf pattern = STRBUF_INIT;
 
 	static struct option builtin_sparse_checkout_init_options[] = {
 		OPT_BOOL(0, "cone", &init_opts.cone_mode,
@@ -275,26 +277,30 @@ static int sparse_checkout_init(int argc, const char **argv)
 	/* If we already have a sparse-checkout file, use it. */
 	if (res >= 0) {
 		free(sparse_filename);
-		goto reset_dir;
+		core_apply_sparse_checkout = 1;
+		return update_working_directory(NULL);
 	}
 
-	/* initial mode: all blobs at root */
-	fp = xfopen(sparse_filename, "w");
-	if (!fp)
-		die(_("failed to open '%s'"), sparse_filename);
-
-	free(sparse_filename);
-	fprintf(fp, "/*\n!/*/\n");
-	fclose(fp);
-
 	if (get_oid("HEAD", &oid)) {
-		/* assume we are in a fresh repo */
+		FILE *fp;
+
+		/* assume we are in a fresh repo, but update the sparse-checkout file */
+		fp = xfopen(sparse_filename, "w");
+		if (!fp)
+			die(_("failed to open '%s'"), sparse_filename);
+
+		free(sparse_filename);
+		fprintf(fp, "/*\n!/*/\n");
+		fclose(fp);
 		return 0;
 	}
 
-reset_dir:
-	core_apply_sparse_checkout = 1;
-	return update_working_directory(NULL);
+	strbuf_addstr(&pattern, "/*");
+	add_pattern(strbuf_detach(&pattern, NULL), empty_base, 0, &pl, 0);
+	strbuf_addstr(&pattern, "!/*/");
+	add_pattern(strbuf_detach(&pattern, NULL), empty_base, 0, &pl, 0);
+
+	return write_patterns_and_update(&pl);
 }
 
 static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *path)
@@ -351,7 +357,6 @@ static struct sparse_checkout_set_opts {
 
 static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 {
-	static const char *empty_base = "";
 	int i;
 	struct pattern_list pl;
 	int result;
@@ -419,7 +424,6 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 
 static int sparse_checkout_disable(int argc, const char **argv)
 {
-	static const char *empty_base = "";
 	struct pattern_list pl;
 	struct strbuf match_all = STRBUF_INIT;
 
