@@ -1270,7 +1270,7 @@ enum pattern_match_result path_matches_pattern_list(
 
 	if (hashmap_contains_path(&pl->recursive_hashmap,
 				  &parent_pathname)) {
-		result = MATCHED;
+		result = MATCHED_RECURSIVE;
 		goto done;
 	}
 
@@ -1292,7 +1292,7 @@ enum pattern_match_result path_matches_pattern_list(
 	if (hashmap_contains_parent(&pl->recursive_hashmap,
 				    pathname,
 				    &parent_pathname))
-		result = MATCHED;
+		result = MATCHED_RECURSIVE;
 
 done:
 	strbuf_release(&parent_pathname);
