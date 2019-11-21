@@ -95,4 +95,37 @@ test_expect_success 'clone --sparse' '
 	test_cmp expect dir
 '
 
+test_expect_success 'set enables config' '
+	git init empty-config &&
+	(
+		cd empty-config &&
+		test_commit test file &&
+		test_path_is_missing .git/config.worktree &&
+		test_must_fail git sparse-checkout set nothing &&
+		test_path_is_file .git/config.worktree &&
+		test_must_fail git config core.sparseCheckout &&
+		git sparse-checkout set "/*" &&
+		test_cmp_config true core.sparseCheckout
+	)
+'
+
+test_expect_success 'set sparse-checkout using builtin' '
+	git -C repo sparse-checkout set "/*" "!/*/" "*folder*" &&
+	cat >expect <<-EOF &&
+		/*
+		!/*/
+		*folder*
+	EOF
+	git -C repo sparse-checkout list >actual &&
+	test_cmp expect actual &&
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	ls repo >dir  &&
+	cat >expect <<-EOF &&
+		a
+		folder1
+		folder2
+	EOF
+	test_cmp expect dir
+'
+
 test_done
