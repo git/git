@@ -47,6 +47,9 @@ To avoid interfering with other worktrees, it first enables the
 	a list of arguments following the 'set' subcommand. Update the
 	working directory to match the new patterns. Enable the
 	core.sparseCheckout config setting if it is not already enabled.
++
+When the `--stdin` option is provided, the patterns are read from
+standard in as a newline-delimited list instead of from the arguments.
 
 SPARSE CHECKOUT
 ---------------
