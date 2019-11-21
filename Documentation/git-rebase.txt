@@ -392,8 +392,10 @@ See also INCOMPATIBLE OPTIONS below.
 
 --ignore-date::
 --reset-author-date::
-	Instead of using the given author date, reset it to the
-	current time. This implies --force-rebase.
+	By default, the author date of the original commit is used
+	as the author date for the resulting commit.  This option
+	tells Git to use the current timestamp instead and implies
+	`--force-rebase`.
 +
 See also INCOMPATIBLE OPTIONS below.
 
