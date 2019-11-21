@@ -1511,7 +1511,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	memset(&pl, 0, sizeof(pl));
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
-	if (!o->skip_sparse_checkout) {
+	if (!o->skip_sparse_checkout && !o->pl) {
 		char *sparse = git_pathdup("info/sparse-checkout");
 		pl.use_cone_patterns = core_sparse_checkout_cone;
 		if (add_patterns_from_file_to_list(sparse, "", 0, &pl, NULL) < 0)
@@ -1684,7 +1684,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 done:
 	trace_performance_leave("unpack_trees");
-	clear_pattern_list(&pl);
+	if (!o->keep_pattern_list)
+		clear_pattern_list(&pl);
 	return ret;
 
 return_failed:

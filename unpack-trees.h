@@ -59,7 +59,8 @@ struct unpack_trees_options {
 		     quiet,
 		     exiting_early,
 		     show_all_errors,
-		     dry_run;
+		     dry_run,
+		     keep_pattern_list;
 	const char *prefix;
 	int cache_bottom;
 	struct dir_struct *dir;

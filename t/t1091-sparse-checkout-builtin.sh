@@ -248,4 +248,32 @@ test_expect_success 'cone mode: set with nested folders' '
 	test_cmp repo/.git/info/sparse-checkout expect
 '
 
+test_expect_success 'revert to old sparse-checkout on bad update' '
+	echo update >repo/deep/deeper2/a &&
+	cp repo/.git/info/sparse-checkout expect &&
+	test_must_fail git -C repo sparse-checkout set deep/deeper1 2>err &&
+	test_i18ngrep "Cannot update sparse checkout" err &&
+	test_cmp repo/.git/info/sparse-checkout expect &&
+	ls repo/deep >dir &&
+	cat >expect <<-EOF &&
+		a
+		deeper1
+		deeper2
+	EOF
+	test_cmp dir expect
+'
+
+test_expect_success 'revert to old sparse-checkout on empty update' '
+	git init empty-test &&
+	(
+		echo >file &&
+		git add file &&
+		git commit -m "test" &&
+		test_must_fail git sparse-checkout set nothing 2>err &&
+		test_i18ngrep "Sparse checkout leaves no entry on working directory" err &&
+		test_i18ngrep ! ".git/index.lock" err &&
+		git sparse-checkout set file
+	)
+'
+
 test_done
