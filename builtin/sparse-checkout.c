@@ -170,25 +170,32 @@ static int write_patterns_and_update(struct pattern_list *pl)
 {
 	char *sparse_filename;
 	FILE *fp;
+	int fd;
+	struct lock_file lk = LOCK_INIT;
 	int result;
 
-	result = update_working_directory(pl);
+	sparse_filename = get_sparse_checkout_filename();
+	fd = hold_lock_file_for_update(&lk, sparse_filename,
+				      LOCK_DIE_ON_ERROR);
 
+	result = update_working_directory(pl);
 	if (result) {
+		rollback_lock_file(&lk);
+		free(sparse_filename);
 		clear_pattern_list(pl);
 		update_working_directory(NULL);
 		return result;
 	}
 
-	sparse_filename = get_sparse_checkout_filename();
-	fp = fopen(sparse_filename, "w");
+	fp = xfdopen(fd, "w");
 
 	if (core_sparse_checkout_cone)
 		write_cone_to_file(fp, pl);
 	else
 		write_patterns_to_file(fp, pl);
 
-	fclose(fp);
+	fflush(fp);
+	commit_lock_file(&lk);
 
 	free(sparse_filename);
 	clear_pattern_list(pl);
