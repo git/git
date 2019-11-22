@@ -1555,6 +1555,14 @@ test_expect_success GPG 'setup signed branch' '
 	git commit -S -m signed_commit
 '
 
+test_expect_success GPG 'setup signed branch with subkey' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b signed-subkey master &&
+	echo foo >foo &&
+	git add foo &&
+	git commit -SB7227189 -m signed_commit
+'
+
 test_expect_success GPGSM 'setup signed branch x509' '
 	test_when_finished "git reset --hard && git checkout master" &&
 	git checkout -b signed-x509 master &&
@@ -1563,6 +1571,18 @@ test_expect_success GPGSM 'setup signed branch x509' '
 	test_config gpg.format x509 &&
 	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
 	git commit -S -m signed_commit
+'
+
+test_expect_success GPGSM 'log x509 fingerprint' '
+	echo "F8BF62E0693D0694816377099909C779FA23FD65 | " >expect &&
+	git log -n1 --format="%GF | %GP" signed-x509 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPGSM 'log OpenPGP fingerprint' '
+	echo "D4BE22311AD3131E5EDA29A461092E85B7227189" > expect &&
+	git log -n1 --format="%GP" signed-subkey >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success GPG 'log --graph --show-signature' '
