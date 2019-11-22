@@ -1351,11 +1351,27 @@ static int try_to_commit(struct repository *r,
 		goto out;
 	}
 
-	if (!(flags & ALLOW_EMPTY) && oideq(current_head ?
-					    get_commit_tree_oid(current_head) :
-					    the_hash_algo->empty_tree, &tree)) {
-		res = 1; /* run 'git commit' to display error message */
-		goto out;
+	if (!(flags & ALLOW_EMPTY)) {
+		struct commit *first_parent = current_head;
+
+		if (flags & AMEND_MSG) {
+			if (current_head->parents) {
+				first_parent = current_head->parents->item;
+				if (repo_parse_commit(r, first_parent)) {
+					res = error(_("could not parse HEAD commit"));
+					goto out;
+				}
+			} else {
+				first_parent = NULL;
+			}
+		}
+		if (oideq(first_parent
+			  ? get_commit_tree_oid(first_parent)
+			  : the_hash_algo->empty_tree,
+			  &tree)) {
+			res = 1; /* run 'git commit' to display error message */
+			goto out;
+		}
 	}
 
 	if (find_hook("prepare-commit-msg")) {
