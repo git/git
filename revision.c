@@ -3201,10 +3201,26 @@ static void compute_indegrees_to_depth(struct rev_info *revs,
 		indegree_walk_step(revs);
 }
 
+static void reset_topo_walk(struct rev_info *revs)
+{
+	struct topo_walk_info *info = revs->topo_walk_info;
+
+	clear_prio_queue(&info->explore_queue);
+	clear_prio_queue(&info->indegree_queue);
+	clear_prio_queue(&info->topo_queue);
+	clear_indegree_slab(&info->indegree);
+	clear_author_date_slab(&info->author_date);
+
+	FREE_AND_NULL(revs->topo_walk_info);
+}
+
 static void init_topo_walk(struct rev_info *revs)
 {
 	struct topo_walk_info *info;
 	struct commit_list *list;
+	if (revs->topo_walk_info)
+		reset_topo_walk(revs);
+
 	revs->topo_walk_info = xmalloc(sizeof(struct topo_walk_info));
 	info = revs->topo_walk_info;
 	memset(info, 0, sizeof(struct topo_walk_info));
