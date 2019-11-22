@@ -41,7 +41,7 @@ then
 	test_done
 fi
 
-if ! git env--helper --type=bool --default=true --exit-code GIT_TEST_HTTPD
+if ! test_bool_env GIT_TEST_HTTPD true
 then
 	skip_all="Network testing disabled (unset GIT_TEST_HTTPD to enable)"
 	test_done

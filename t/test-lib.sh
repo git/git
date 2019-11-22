@@ -1406,19 +1406,19 @@ yes () {
 # The GIT_TEST_FAIL_PREREQS code hooks into test_set_prereq(), and
 # thus needs to be set up really early, and set an internal variable
 # for convenience so the hot test_set_prereq() codepath doesn't need
-# to call "git env--helper". Only do that work if needed by seeing if
-# GIT_TEST_FAIL_PREREQS is set at all.
+# to call "git env--helper" (via test_bool_env). Only do that work
+# if needed by seeing if GIT_TEST_FAIL_PREREQS is set at all.
 GIT_TEST_FAIL_PREREQS_INTERNAL=
 if test -n "$GIT_TEST_FAIL_PREREQS"
 then
-	if git env--helper --type=bool --default=0 --exit-code GIT_TEST_FAIL_PREREQS
+	if test_bool_env GIT_TEST_FAIL_PREREQS false
 	then
 		GIT_TEST_FAIL_PREREQS_INTERNAL=true
 		test_set_prereq FAIL_PREREQS
 	fi
 else
 	test_lazy_prereq FAIL_PREREQS '
-		git env--helper --type=bool --default=0 --exit-code GIT_TEST_FAIL_PREREQS
+		test_bool_env GIT_TEST_FAIL_PREREQS false
 	'
 fi
 
@@ -1477,7 +1477,7 @@ then
 fi
 
 test_lazy_prereq C_LOCALE_OUTPUT '
-	! git env--helper --type=bool --default=0 --exit-code GIT_TEST_GETTEXT_POISON
+	! test_bool_env GIT_TEST_GETTEXT_POISON false
 '
 
 if test -z "$GIT_TEST_CHECK_CACHE_TREE"
