@@ -52,4 +52,34 @@ test_expect_success 'todo is re-read after reword and squash' '
 	test_cmp expected actual
 '
 
+test_expect_success 're-reading todo doesnt interfere with revert --edit' '
+	git reset --hard third &&
+
+	git revert --edit third second &&
+
+	cat >expect <<-\EOF &&
+	Revert "second"
+	Revert "third"
+	third
+	second
+	first
+	EOF
+	git log --format="%s" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-reading todo doesnt interfere with cherry-pick --edit' '
+	git reset --hard first &&
+
+	git cherry-pick --edit second third &&
+
+	cat >expect <<-\EOF &&
+	third
+	second
+	first
+	EOF
+	git log --format="%s" >actual &&
+	test_cmp expect actual
+'
+
 test_done
