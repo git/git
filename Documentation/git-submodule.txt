@@ -80,6 +80,9 @@ status [--cached] [--recursive] [--] [<path>...]::
 	does not match the SHA-1 found in the index of the containing
 	repository and `U` if the submodule has merge conflicts.
 +
+If `--cached` is specified, this command will instead print the SHA-1
+recorded in the superproject for each submodule.
++
 If `--recursive` is specified, this command will recurse into nested
 submodules, and show their status as well.
 +
