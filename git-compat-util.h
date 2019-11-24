@@ -320,26 +320,6 @@ char *gitdirname(char *);
 #define PATH_MAX 4096
 #endif
 
-#ifndef PRIuMAX
-#define PRIuMAX "llu"
-#endif
-
-#ifndef SCNuMAX
-#define SCNuMAX PRIuMAX
-#endif
-
-#ifndef PRIu32
-#define PRIu32 "u"
-#endif
-
-#ifndef PRIx32
-#define PRIx32 "x"
-#endif
-
-#ifndef PRIo32
-#define PRIo32 "o"
-#endif
-
 typedef uintmax_t timestamp_t;
 #define PRItime PRIuMAX
 #define parse_timestamp strtoumax
