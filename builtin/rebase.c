@@ -117,6 +117,11 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	if (opts->strategy_opts)
 		parse_strategy_opts(&replay, opts->strategy_opts);
 
+	if (opts->squash_onto) {
+		oidcpy(&replay.squash_onto, opts->squash_onto);
+		replay.have_squash_onto = 1;
+	}
+
 	return replay;
 }
 
