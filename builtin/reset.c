@@ -320,7 +320,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (unborn) {
 		/* reset on unborn branch: treat as reset to empty tree */
 		oidcpy(&oid, the_hash_algo->empty_tree);
-	} else if (!pathspec.nr) {
+	} else if (!pathspec.nr && !patch_mode) {
 		struct commit *commit;
 		if (get_oid_committish(rev, &oid))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
