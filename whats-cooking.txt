@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2019, #03; Tue, 19)
+Subject: What's cooking in git.git (Nov 2019, #04; Mon, 25)
 X-master-at: d9f6f3b6195a0ca35642561e530798ad1469bd41
-X-next-at: 69ef04c0130f4b0b2f74006aac01f51233c7f246
+X-next-at: 34dc348eaf04483f062911e310f14c9f4e8ddf1e
 
-What's cooking in git.git (Nov 2019, #03; Tue, 19)
+What's cooking in git.git (Nov 2019, #04; Mon, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-A bunch of topics, mostly the ones that were in 'next' before the
-latest release, have been merged to 'master'.  Also, quite a lot of
-topics now have started cooking in 'next'.  It will hopefully become
-a short and productive cycle ;-)
+Quite a many topics are now marked to be merged to 'master', which
+may happen sometime next week (I'll be mostly offline this week).
+Please stop me if I mistakenly marked some that are not quite ready.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,185 +22,361 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* bc/hash-independent-tests-part-6 (2019-10-28) 15 commits
-  (merged to 'next' on 2019-10-30 at 70037a3839)
- + t4048: abstract away SHA-1-specific constants
- + t4045: make hash-size independent
- + t4044: update test to work with SHA-256
- + t4039: abstract away SHA-1-specific constants
- + t4038: abstract away SHA-1 specific constants
- + t4034: abstract away SHA-1-specific constants
- + t4027: make hash-size independent
- + t4015: abstract away SHA-1-specific constants
- + t4011: abstract away SHA-1-specific constants
- + t4010: abstract away SHA-1-specific constants
- + t3429: remove SHA1 annotation
- + t1305: avoid comparing extensions
- + rev-parse: add a --show-object-format option
- + t/oid-info: add empty tree and empty blob values
- + t/oid-info: allow looking up hash algorithm name
+* ds/commit-graph-delay-gen-progress (2019-11-22) 2 commits
+ - commit-graph: use start_delayed_progress()
+ - progress: create GIT_PROGRESS_DELAY
 
- Test updates to prepare for SHA-2 transition continues.
+ One kind of progress messages were always given during commit-graph
+ generation, instead of following the "if it takes more than two
+ seconds, show progress" pattern, which has been corrected.
 
 
-* dd/notes-copy-default-dst-to-head (2019-10-18) 2 commits
-  (merged to 'next' on 2019-10-18 at 2588a175ec)
- + notes: fix minimum number of parameters to "copy" subcommand
- + t3301: test diagnose messages for too few/many paramters
+* ds/sparse-cone (2019-11-22) 19 commits
+ - sparse-checkout: check for dirty status
+ - sparse-checkout: update working directory in-process for 'init'
+ - sparse-checkout: cone mode should not interact with .gitignore
+ - sparse-checkout: write using lockfile
+ - sparse-checkout: use in-process update for disable subcommand
+ - sparse-checkout: update working directory in-process
+ - sparse-checkout: sanitize for nested folders
+ - unpack-trees: add progress to clear_ce_flags()
+ - unpack-trees: hash less in cone mode
+ - sparse-checkout: init and set in cone mode
+ - sparse-checkout: use hashmaps for cone patterns
+ - sparse-checkout: add 'cone' mode
+ - trace2: add region in clear_ce_flags
+ - sparse-checkout: create 'disable' subcommand
+ - sparse-checkout: add '--stdin' option to set subcommand
+ - sparse-checkout: 'set' subcommand
+ - clone: add --sparse mode
+ - sparse-checkout: create 'init' subcommand
+ - sparse-checkout: create builtin with 'list' subcommand
 
- "git notes copy $original" ought to copy the notes attached to the
- original object to HEAD, but a mistaken tightening to command line
- parameter validation made earlier disabled that feature by mistake.
-
-
-* dl/apply-3way-diff3 (2019-10-24) 5 commits
-  (merged to 'next' on 2019-10-24 at 84e27d28b6)
- + apply: respect merge.conflictStyle in --3way
- + t4108: demonstrate bug in apply
- + t4108: use `test_config` instead of `git config`
- + t4108: remove git command upstream of pipe
- + t4108: replace create_file with test_write_lines
-
- "git apply --3way" learned to honor merge.conflictStyle
- configuration variable, like merges would.
-
-
-* dl/format-patch-cover-from-desc (2019-10-16) 3 commits
-  (merged to 'next' on 2019-10-18 at 40e992b6f5)
- + format-patch: teach --cover-from-description option
- + format-patch: use enum variables
- + format-patch: replace erroneous and condition
-
- The branch description ("git branch --edit-description") has been
- used to fill the body of the cover letters by the format-patch
- command; this has been enhanced so that the subject can also be
- filled.
+ Management of sparsely checked-out working tree has gained a
+ dedicated "sparse-checkout" command.
 
 
-* en/merge-recursive-directory-rename-fixes (2019-10-23) 3 commits
-  (merged to 'next' on 2019-10-24 at 82e64029a8)
- + t604[236]: do not run setup in separate tests
- + merge-recursive: fix merging a subdirectory into the root directory
- + merge-recursive: clean up get_renamed_dir_portion()
+* dl/range-diff-with-notes (2019-11-21) 10 commits
+  (merged to 'next' on 2019-11-25 at dd6dad97c1)
+ + format-patch: pass notes configuration to range-diff
+ + range-diff: pass through --notes to `git log`
+ + range-diff: output `## Notes ##` header
+ + t3206: range-diff compares logs with commit notes
+ + t3206: s/expected/expect/
+ + t3206: disable parameter substitution in heredoc
+ + t3206: remove spaces after redirect operators
+ + pretty-options.txt: --notes accepts a ref instead of treeish
+ + rev-list-options.txt: remove reference to --show-notes
+ + argv-array: add space after `while`
 
- When all files from some subdirectory were renamed to the root
- directory, the directory rename heuristics would fail to detect that
- as a rename/merge of the subdirectory to the root directory, which has
- been corrected.
+ "git range-diff" learned to take the "--notes=<ref>" and the
+ "--no-notes" options to control the commit notes included in the
+ log message that gets compared.
 
-
-* es/walken-tutorial (2019-10-12) 1 commit
-  (merged to 'next' on 2019-10-18 at 59160e59e9)
- + documentation: add tutorial for object walking
-
- A tutorial on object enumeration.
-
-
-* hv/bitshift-constants-in-blame (2019-10-21) 1 commit
-  (merged to 'next' on 2019-10-24 at bc84aae4d4)
- + builtin/blame.c: constants into bit shift format
-
- Move the definition of a set of bitmask constants from 0ctal
- literal to (1U<<count) notation.
+ Will merge to 'master'.
 
 
-* hw/remove-api-docs-placeholder (2019-10-25) 1 commit
-  (merged to 'next' on 2019-10-30 at c99fe16682)
- + documentation: remove empty doc files
+* jc/azure-ci-osx-fix-fix (2019-11-20) 1 commit
+  (merged to 'next' on 2019-11-25 at 7de6356e67)
+ + ci(osx): update homebrew-cask repository with less noise
 
- Docfix.
+ CI jobs for macOS has been made less chatty when updating perforce
+ package used during testing.
+
+ Will merge to 'master'.
 
 
-* jc/am-show-current-patch-docfix (2019-10-23) 1 commit
-  (merged to 'next' on 2019-10-24 at 31fa6081f2)
- + doc: am --show-current-patch gives an entire e-mail message
+* jk/fail-show-toplevel-outside-working-tree (2019-11-20) 1 commit
+  (merged to 'next' on 2019-11-25 at cd97ae38bc)
+ + rev-parse: make --show-toplevel without a worktree an error
+
+ "git rev-parse --show-toplevel" run outside of any working tree did
+ not error out, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* pb/submodule-update-fetches (2019-11-24) 1 commit
+  (merged to 'next' on 2019-11-25 at 7736f98351)
+ + doc: mention that 'git submodule update' fetches missing commits
 
  Doc update.
 
-
-* js/rebase-deprecate-preserve-merges (2019-10-21) 1 commit
-  (merged to 'next' on 2019-10-24 at 82fa49bbf2)
- + rebase: hide --preserve-merges option
-
- "git rebase --preserve-merges" has been marked as deprecated; this
- release stops advertising it in the "git rebase -h" output.
+ Will merge to 'master'.
 
 
-* js/update-index-ignore-removal-for-skip-worktree (2019-11-02) 2 commits
-  (merged to 'next' on 2019-11-02 at 57f7fb885f)
- + stash: handle staged changes in skip-worktree files correctly
- + update-index: optionally leave skip-worktree entries alone
+* sg/unpack-progress-throughput (2019-11-20) 1 commit
+  (merged to 'next' on 2019-11-25 at 0418db6a27)
+ + builtin/unpack-objects.c: show throughput progress
 
- "git stash save" in a working tree that is sparsely checked out
- mistakenly removed paths that are outside the area of interest.
+ "git unpack-objects" used to show progress based only on the number
+ of received and unpacked objects, which stalled when it has to
+ handle an unusually large object.  It now shows the throughput as
+ well.
 
-
-* jt/fetch-pack-record-refs-in-the-dot-promisor (2019-10-16) 1 commit
-  (merged to 'next' on 2019-10-18 at 4ead52e59a)
- + fetch-pack: write fetched refs to .promisor
-
- Debugging support for lazy cloning has been a bit improved.
+ Will merge to 'master'.
 
 
-* pb/pretty-email-without-domain-part (2019-10-30) 3 commits
-  (merged to 'next' on 2019-10-30 at 06f719efa5)
- + pretty: add "%aL" etc. to show local-part of email addresses
- + t4203: use test-lib.sh definitions
- + t6006: use test-lib.sh definitions
+* dl/test-cleanup (2019-11-23) 22 commits
+ - t7700: stop losing return codes of git commands
+ - t7700: s/test -f/test_path_is_file/
+ - t7700: move keywords onto their own line
+ - t7700: remove spaces after redirect operators
+ - t7700: drop redirections to /dev/null
+ - t7501: stop losing return codes of git commands
+ - t7501: remove spaces after redirect operators
+ - t5703: stop losing return codes of git commands
+ - t5703: simplify one-time-sed generation logic
+ - t5317: use ! grep to check for no matching lines
+ - t5317: stop losing return codes of git commands
+ - t4138: stop losing return codes of git commands
+ - t4015: use test_write_lines()
+ - t4015: stop losing return codes of git commands
+ - t3600: comment on inducing SIGPIPE in `git rm`
+ - t3600: stop losing return codes of git commands
+ - t3600: use test_line_count() where possible
+ - t3301: stop losing return codes of git commands
+ - t0090: stop losing return codes of git commands
+ - t0014: remove git command upstream of pipe
+ - apply-one-time-sed.sh: modernize style
+ - lib-bash.sh: move `then` onto its own line
 
- The custom format for "git log --format=<format>" learned the l/L
- placeholder that is similar to e/E that fills in the e-mail
- address, but only the local part on the left side of '@'.
+ Test cleanup.
 
-
-* pw/post-commit-from-sequencer (2019-10-16) 6 commits
-  (merged to 'next' on 2019-10-18 at 15b41a097d)
- + sequencer: run post-commit hook
- + move run_commit_hook() to libgit and use it there
- + sequencer.h fix placement of #endif
- + t3404: remove uneeded calls to set_fake_editor
- + t3404: set $EDITOR in subshell
- + t3404: remove unnecessary subshell
-
- "rebase -i" ceased to run post-commit hook by mistake in an earlier
- update, which has been corrected.
-
-
-* sg/commit-graph-usage-fix (2019-10-28) 1 commit
-  (merged to 'next' on 2019-10-28 at 13d01506dd)
- + builtin/commit-graph.c: remove subcommand-less usage string
-
- Message fix.
+ Will merge to 'next'.
 
 
-* sg/dir-trie-fixes (2019-10-23) 5 commits
-  (merged to 'next' on 2019-10-24 at 06d60a7fb0)
- + path.c: don't call the match function without value in trie_find()
- + path.c: clarify two field names in 'struct common_dir'
- + path.c: mark 'logs/HEAD' in 'common_list' as file
- + path.c: clarify trie_find()'s in-code comment
- + Documentation: mention more worktree-specific exceptions
+* tg/perf-remove-stale-result (2019-11-21) 1 commit
+ - perf-lib: remove old result files before running tests
 
- Code clean-up and a bugfix in the logic used to tell worktree local
- and repository global refs apart.
+ PerfTest cleanup.
+
+ Expecting a reroll.
+ cf. <20191122081108.GA38815@cat>
 
 
-* wb/midx-progress (2019-10-23) 6 commits
-  (merged to 'next' on 2019-10-24 at 95c3e3ab3a)
- + multi-pack-index: add [--[no-]progress] option.
- + midx: honor the MIDX_PROGRESS flag in midx_repack
- + midx: honor the MIDX_PROGRESS flag in verify_midx_file
- + midx: add progress to expire_midx_packs
- + midx: add progress to write_midx_file
- + midx: add MIDX_PROGRESS flag
+* us/unpack-trees-fsmonitor (2019-11-21) 1 commit
+ - unpack-trees: skip stat on fsmonitor-valid files
+ (this branch uses jc/fsmonitor-sanity-fix.)
 
- The code to generate multi-pack index learned to show (or not to
- show) progress indicators.
+ Users of oneway_merge() (like "reset --hard") learned to take
+ advantage of fsmonitor to avoid unnecessary lstat(2) calls.
+
+ Will merge to 'next'.
+
+
+* ds/fsmonitor-testing (2019-11-22) 11 commits
+ - test-lib: clear watchman watches at test completion
+ - t7519: disable external GIT_TEST_FSMONITOR variable
+ - t7063: disable fsmonitor with status cache
+ - tests: disable fsmonitor in submodule tests
+ - t3600-rm.sh: disable fsmonitor when deleting populated submodule
+ - t3030-merge-recursive.sh: disable fsmonitor when tweaking GIT_WORK_TREE
+ - fsmonitor: disable fsmonitor with worktrees
+ - t1510-repo-setup.sh: disable fsmonitor if no .git dir
+ - t1301-shared-repo.sh: disable FSMONITOR
+ - fsmonitor: do not output to stderr for tests
+ - fsmonitor: disable in a bare repo
+
+ Updates around testing fsmoitor integration.
+
+ Will merge to 'next'.
+
+
+* hi/gpg-optional-pkfp-fix (2019-11-23) 2 commits
+  (merged to 'next' on 2019-11-25 at b0d668176f)
+ + gpg-interface: limit search for primary key fingerprint
+ + gpg-interface: refactor the free-and-xmemdupz pattern
+
+ The code to parse GPG output used to assume incorrectly that the
+ finterprint for the primary key would always be present for a valid
+ signature, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* hv/assume-priumax-is-available-anywhere (2019-11-25) 1 commit
+ - git-compat-util.h: drop the `PRIuMAX` and other fallback definitions
+
+ We have had compatibility fallback macro definitions for "PRIuMAX",
+ "PRIu32", etc. but did not for "PRIdMAX", while the code used the
+ last one apparently without any hiccup reported recently.  The
+ fallback macro definitions for these <inttypes.h> macros that must
+ appear in C99 systems have been removed.
+
+ Will merge to 'next'.
+
+
+* js/git-svn-use-rebase-merges (2019-11-23) 1 commit
+  (merged to 'next' on 2019-11-25 at 9585fe30f8)
+ + git svn: stop using `rebase --preserve-merges`
+
+ Prepare further for "rebase --preserve-merges" deprecation.
+
+ Will merge to 'master'.
+
+
+* js/mingw-inherit-only-std-handles (2019-11-23) 4 commits
+ - mingw: restrict file handle inheritance only on Windows 7 and later
+ - mingw: spawned processes need to inherit only standard handles
+ - mingw: work around incorrect standard handles
+ - mingw: demonstrate that all file handles are inherited by child processes
+
+ Work around a issue where a FD that is left open when spawning a
+ child process and is kept open in the child can interfere with the
+ operation in the parent process on Windows.
+
+ Will merge to 'next'.
+
+
+* mg/doc-submodule-status-cached (2019-11-24) 1 commit
+  (merged to 'next' on 2019-11-25 at fa833392a3)
+ + doc: document 'git submodule status --cached'
+
+ "git submodule status" and "git submodule status --cached" show
+ different things, but the documentation did not cover them
+ correctly, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* mg/submodule-status-from-a-subdirectory (2019-11-25) 1 commit
+ - submodule: fix 'submodule status' when called from a subdirectory
+
+ "git submodule status" that is run from a subdirectory of the
+ superproject did not work well, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* mh/clear-topo-walk-upon-reset (2019-11-25) 2 commits
+ - revision: free topo_walk_info before creating a new one in init_topo_walk
+ - revision: clear the topo-walk flags in reset_revision_walk
+
+ The revision walking machinery uses resources like per-object flag
+ bits that need to be reset before a new iteration of walking
+ begins, but the resources related to topological walk were not
+ cleared correctly, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* nl/reset-patch-takes-a-tree (2019-11-25) 1 commit
+  (merged to 'next' on 2019-11-25 at 34dc348eaf)
+ + reset: parse rev as tree-ish in patch mode
+
+ "git reset --patch $object" without any pathspec should allow a
+ tree object to be given, but incorrectly required a committish,
+ which has been corrected.
+
+ Will merge to 'master'.
+
+
+* pw/sequencer-compare-with-right-parent-to-check-empty-commits (2019-11-23) 1 commit
+  (merged to 'next' on 2019-11-25 at a4e4f06286)
+ + sequencer: fix empty commit check when amending
+
+ The sequencer machinery compared the HEAD and the state it is
+ attempting to commit to decide if the result would be a no-op
+ commit, even when amending a commit, which was incorrect, and
+ has been corrected.
+
+ Will merge to 'master'.
+
+
+* sg/assume-no-todo-update-in-cherry-pick (2019-11-24) 1 commit
+ - sequencer: don't re-read todo for revert and cherry-pick
+
+ While running "revert" or "cherry-pick --edit" for multiple
+ commits, a recent regression incorrectly detected "nothing to
+ commit, working tree clean", instead of replaying the commits,
+ which has been corrected.
+
+ Will merge to 'next'.
+
+
+* sg/test-bool-env (2019-11-23) 2 commits
+ - t5608-clone-2gb.sh: turn GIT_TEST_CLONE_2GB into a bool
+ - tests: add 'test_bool_env' to catch non-bool GIT_TEST_* values
+
+ Recently we have declared that GIT_TEST_* variables take the
+ usual boolean values (it used to be that some used "non-empty
+ means true" and taking GIT_TEST_VAR=YesPlease as true); make
+ sure we notice and fail when non-bool strings are given to
+ these variables.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* js/advise-rebase-skip (2019-10-23) 3 commits
+ - commit: give correct advice for empty commit during a rebase
+ - sequencer: export the function to get the path of `.git/rebase-merge/`
+ - cherry-pick: add test for `--skip` advice in `git commit`
+
+ The logic used in "git commit" to give hints and errors depending
+ on what operation was in progress learned to distinguish rebase and
+ cherry-pick better.
+
+ Kicked back to 'pu'.
+ cf. <nycvar.QRO.7.76.6.1911081508560.46@tvgsbejvaqbjf.bet>
+
+
+* vn/reset-deleted-ita (2019-07-26) 1 commit
+ - reset: unstage empty deleted ita files
+
+ "git reset HEAD [<pathspec>]" did not reset an empty file that was
+ added with the intent-to-add bit.
+
+ Expecting a reroll.
+
+
+* jn/unknown-index-extensions (2018-11-21) 2 commits
+ - index: offer advice for unknown index extensions
+ - index: do not warn about unrecognized extensions
+
+ A bit too alarming warning given when unknown index extensions
+ exist is getting revamped.
+
+ Expecting a reroll.
+
+
+* jc/format-patch-delay-message-id (2019-04-05) 1 commit
+ - format-patch: move message-id and related headers to the end
+
+ The location "git format-patch --thread" adds the Message-Id:
+ header in the series of header fields has been moved down, which
+ may help working around a suspected bug in GMail MSA, reported at
+ <CAHk-=whP1stFZNAaJiMi5eZ9rj0MRt20Y_yHVczZPH+O01d+sA@mail.gmail.com>
+
+ Waiting for feedback to see if it truly helps.
+ Needs tests.
+
+
+* js/protocol-advertise-multi (2018-12-28) 1 commit
+ - protocol: advertise multiple supported versions
+
+ The transport layer has been updated so that the protocol version
+ used can be negotiated between the parties, by the initiator
+ listing the protocol versions it is willing to talk, and the other
+ side choosing from one of them.
+
+ Expecting a reroll.
+ cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+--------------------------------------------------
+[Cooking]
 
 * rs/skip-iprefix (2019-11-10) 2 commits
   (merged to 'next' on 2019-11-19 at c87ae31b14)
@@ -222,14 +397,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jh/userdiff-python-async (2019-11-11) 1 commit
- - userdiff: support Python async functions
+* jh/userdiff-python-async (2019-11-20) 1 commit
+  (merged to 'next' on 2019-11-25 at 74e4a4ed9f)
+ + userdiff: support Python async functions
 
  The userdiff machinery has been taught that "async def" is another
  way to begin a "function" in Python.
 
- Waiting for a response to review.
- cf. <f8a729c6-7b27-cac8-815e-b5c02a5c7b44@kdbg.org>
+ Will merge to 'master'.
 
 
 * rj/bundle-ui-updates (2019-11-11) 3 commits
@@ -265,10 +440,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dl/pretty-reference (2019-11-19) 11 commits
- - squash! pretty: implement 'reference' format
+* dl/pretty-reference (2019-11-20) 11 commits
  - SubmittingPatches: use `--pretty=reference`
  - pretty: implement 'reference' format
+ - pretty: add struct cmt_fmt_map::default_date_mode_type
  - pretty: provide short date format
  - t4205: cover `git log --reflog -z` blindspot
  - pretty.c: inline initalize format_context
@@ -282,8 +457,7 @@ of the repositories listed at
  commit in the format that is often used to refer to it in log
  messages.
 
- Expecting finishing touches to the data handling.
- Other than that, this is reasonably well done, I think.
+ Willl merge to 'next'.
 
 
 * ds/test-read-graph (2019-11-13) 1 commit
@@ -321,6 +495,7 @@ of the repositories listed at
 * jc/fsmonitor-sanity-fix (2019-11-13) 1 commit
   (merged to 'next' on 2019-11-19 at 1fceb9b55b)
  + fsmonitor: do not compare bitmap size with size of split index
+ (this branch is used by us/unpack-trees-fsmonitor.)
 
  Remove an incorrect BUG() that should not trigger.
 
@@ -395,8 +570,9 @@ of the repositories listed at
 
 
 * js/rebase-r-safer-label (2019-11-18) 2 commits
- - rebase -r: let `label` generate safer labels
- - rebase-merges: move labels' whitespace mangling into `label_oid()`
+  (merged to 'next' on 2019-11-21 at 791d51b0d7)
+ + rebase -r: let `label` generate safer labels
+ + rebase-merges: move labels' whitespace mangling into `label_oid()`
  (this branch is used by dd/rebase-merge-reserves-onto-label.)
 
  A label used in the todo list that are generated by "git rebase
@@ -404,11 +580,12 @@ of the repositories listed at
  up with the label has been tightened to avoid names that cannot be
  used as such.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* dd/rebase-merge-reserves-onto-label (2019-11-19) 1 commit
- - sequencer: handle rebase-merge for "onto" message
+* dd/rebase-merge-reserves-onto-label (2019-11-20) 1 commit
+  (merged to 'next' on 2019-11-21 at a6e4e5af0a)
+ + sequencer: handle rebase-merges for "onto" message
  (this branch uses js/rebase-r-safer-label.)
 
  The logic to avoid duplicate label names generated by "git rebase
@@ -416,7 +593,7 @@ of the repositories listed at
  label name, which must be avoided by auto-generated labels, which
  has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ma/config-bool-valex (2019-11-14) 8 commits
@@ -500,80 +677,12 @@ of the repositories listed at
 
  Will merge to 'master'.
 
---------------------------------------------------
-[Stalled]
 
-* js/advise-rebase-skip (2019-10-23) 3 commits
- - commit: give correct advice for empty commit during a rebase
- - sequencer: export the function to get the path of `.git/rebase-merge/`
- - cherry-pick: add test for `--skip` advice in `git commit`
-
- The logic used in "git commit" to give hints and errors depending
- on what operation was in progress learned to distinguish rebase and
- cherry-pick better.
-
- Kicked back to 'pu'.
- cf. <nycvar.QRO.7.76.6.1911081508560.46@tvgsbejvaqbjf.bet>
-
-
-* vn/reset-deleted-ita (2019-07-26) 1 commit
- - reset: unstage empty deleted ita files
-
- "git reset HEAD [<pathspec>]" did not reset an empty file that was
- added with the intent-to-add bit.
-
- Expecting a reroll.
-
-
-* jn/unknown-index-extensions (2018-11-21) 2 commits
- - index: offer advice for unknown index extensions
- - index: do not warn about unrecognized extensions
-
- A bit too alarming warning given when unknown index extensions
- exist is getting revamped.
-
- Expecting a reroll.
-
-
-* jc/format-patch-delay-message-id (2019-04-05) 1 commit
- - format-patch: move message-id and related headers to the end
-
- The location "git format-patch --thread" adds the Message-Id:
- header in the series of header fields has been moved down, which
- may help working around a suspected bug in GMail MSA, reported at
- <CAHk-=whP1stFZNAaJiMi5eZ9rj0MRt20Y_yHVczZPH+O01d+sA@mail.gmail.com>
-
- Waiting for feedback to see if it truly helps.
- Needs tests.
-
-
-* js/protocol-advertise-multi (2018-12-28) 1 commit
- - protocol: advertise multiple supported versions
-
- The transport layer has been updated so that the protocol version
- used can be negotiated between the parties, by the initiator
- listing the protocol versions it is willing to talk, and the other
- side choosing from one of them.
-
- Expecting a reroll.
- cf. <CANq=j3u-zdb_FvNJGPCmygNMScseav63GhVvBX3NcVS4f7TejA@mail.gmail.com>
-
-
-* mk/use-size-t-in-zlib (2018-10-15) 1 commit
- - zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
---------------------------------------------------
-[Cooking]
-
-* am/pathspec-from-file (2019-11-07) 6 commits
+* am/pathspec-from-file (2019-11-20) 6 commits
  - commit: support the --pathspec-from-file option
- - doc: commit: unify <pathspec> description
+ - doc: commit: synchronize <pathspec> description
  - reset: support the `--pathspec-from-file` option
- - doc: reset: unify <pathspec> description
+ - doc: reset: synchronize <pathspec> description
  - pathspec: add new function to parse file
  - parse-options.h: add new options `--pathspec-from-file`, `--pathspec-file-nul`
 
@@ -581,8 +690,7 @@ of the repositories listed at
  standard input or a named file, instead of taking it as the command
  line arguments.
 
- Expecting a response to review.
- This smells more or less done.
+ Will merge to 'next'.
 
 
 * cb/curl-use-xmalloc (2019-11-07) 1 commit
@@ -595,23 +703,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ds/commit-graph-delay-gen-progress (2019-11-07) 1 commit
-  (merged to 'next' on 2019-11-19 at afa7c921be)
- + commit-graph: use start_delayed_progress()
-
- One kind of progress messages were always given during commit-graph
- generation, instead of following the "if it takes more than two
- seconds, show progress" pattern, which has been corrected.
-
- Will merge to 'master'.
-
-
-* ec/fetch-mark-common-refs-trace2 (2019-11-07) 1 commit
- - fetch: add trace2 instrumentation
+* ec/fetch-mark-common-refs-trace2 (2019-11-20) 1 commit
+  (merged to 'next' on 2019-11-25 at c2b8e1546c)
+ + fetch: add trace2 instrumentation
 
  Trace2 annotation.
 
- Expecting a response to review.
+ Will merge to 'master'.
 
 
 * en/misc-doc-fixes (2019-11-07) 3 commits
@@ -635,11 +733,12 @@ of the repositories listed at
 
 
 * ep/guard-kset-tar-headers (2019-11-07) 1 commit
- - kset.h, tar.h: add missing header guard to prevent multiple inclusion
+  (merged to 'next' on 2019-11-21 at 6c9574b01d)
+ + kset.h, tar.h: add missing header guard to prevent multiple inclusion
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/fetch-multi-lockfix (2019-11-06) 2 commits
@@ -734,7 +833,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dl/t5520-cleanup (2019-11-19) 14 commits
+* dl/t5520-cleanup (2019-11-21) 15 commits
  - t5520: replace `! git` with `test_must_fail git`
  - t5520: remove redundant lines in test cases
  - t5520: replace $(cat ...) comparison with test_cmp
@@ -749,6 +848,7 @@ of the repositories listed at
  - t5520: use sq for test case names
  - t5520: improve test style
  - t: teach test_cmp_rev to accept ! for not-equals
+ - t0000: test multiple local assignment
 
  Test cleanup.
 
@@ -756,20 +856,21 @@ of the repositories listed at
 
 
 * js/builtin-add-i (2019-11-18) 9 commits
- - built-in add -i: implement the `help` command
- - built-in add -i: use color in the main loop
- - built-in add -i: support `?` (prompt help)
- - built-in add -i: show unique prefixes of the commands
- - built-in add -i: implement the main loop
- - built-in add -i: color the header in the `status` command
- - built-in add -i: implement the `status` command
- - diff: export diffstat interface
- - Start to implement a built-in version of `git add --interactive`
+  (merged to 'next' on 2019-11-21 at caefa55b89)
+ + built-in add -i: implement the `help` command
+ + built-in add -i: use color in the main loop
+ + built-in add -i: support `?` (prompt help)
+ + built-in add -i: show unique prefixes of the commands
+ + built-in add -i: implement the main loop
+ + built-in add -i: color the header in the `status` command
+ + built-in add -i: implement the `status` command
+ + diff: export diffstat interface
+ + Start to implement a built-in version of `git add --interactive`
  (this branch is used by js/builtin-add-i-cmds.)
 
  The beginning of rewriting "git add -i" in C.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/myfirstcontrib-updates (2019-11-02) 3 commits
@@ -792,7 +893,8 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ra/rebase-i-more-options (2019-11-02) 6 commits
+* ra/rebase-i-more-options (2019-11-25) 7 commits
+ - rebase -i: finishing touches to --reset-author-date
  - rebase: add --reset-author-date
  - rebase -i: support --ignore-date
  - sequencer: rename amend_author to author_to_rename
@@ -802,6 +904,8 @@ of the repositories listed at
 
  "git rebase -i" learned a few options that are known by "git
  rebase" proper.
+
+ Will merge to 'next'.
 
 
 * en/doc-typofix (2019-11-10) 10 commits
@@ -882,7 +986,7 @@ of the repositories listed at
 
  "git worktree add" internally calls "reset --hard" that should not
  descend into submodules, even when submodule.recurse configuration
- is set, but it was affected.  This has been correct.
+ is set, but it was affected.  This has been corrected.
 
  Will merge to 'master'.
 
@@ -984,34 +1088,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ds/sparse-cone (2019-10-23) 17 commits
-  (merged to 'next' on 2019-11-19 at 1eb4b3a012)
- + sparse-checkout: cone mode should not interact with .gitignore
- + sparse-checkout: write using lockfile
- + sparse-checkout: update working directory in-process
- + sparse-checkout: sanitize for nested folders
- + read-tree: show progress by default
- + unpack-trees: add progress to clear_ce_flags()
- + unpack-trees: hash less in cone mode
- + sparse-checkout: init and set in cone mode
- + sparse-checkout: use hashmaps for cone patterns
- + sparse-checkout: add 'cone' mode
- + trace2: add region in clear_ce_flags
- + sparse-checkout: create 'disable' subcommand
- + sparse-checkout: add '--stdin' option to set subcommand
- + sparse-checkout: 'set' subcommand
- + clone: add --sparse mode
- + sparse-checkout: create 'init' subcommand
- + sparse-checkout: create builtin with 'list' subcommand
-
- Management of sparsely checked-out working tree has gained a
- dedicated "sparse-checkout" command.
-
- Will merge to 'master'.
-
-
-* ag/sequencer-todo-updates (2019-10-28) 6 commits
- - SQUASH??? tentative leakfix
+* ag/sequencer-todo-updates (2019-11-25) 5 commits
  - sequencer: directly call pick_commits() from complete_action()
  - rebase: fill `squash_onto' in get_replay_opts()
  - sequencer: move the code writing total_nr on the disk to a new function
@@ -1021,8 +1098,7 @@ of the repositories listed at
  Reduce unnecessary reading of state variables back from the disk
  during sequener operation.
 
- Is the leakfix patch at the tip the only thing that needs to
- prepare the topic ready for 'next'?
+ Will merge to 'next'.
 
 
 * mt/threaded-grep-in-object-store (2019-10-02) 11 commits
@@ -1061,4 +1137,5 @@ of the repositories listed at
  The way "git pack-objects" reuses objects stored in existing pack
  to generate its result has been improved.
 
- Will merge to 'master'.
+ Hold.  There is an update to these patches that currently are on 'next'.
+ cf. <20191115180319.113991-1-jonathantanmy@google.com>
