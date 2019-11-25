@@ -23,14 +23,6 @@ cache_symlink () {
 	git update-index --add --cacheinfo 120000,$sha,"$2"
 }
 
-# MSYS2 is very forgiving, it will resolve symlinks even if the
-# symlink type isn't correct. To make this test meaningful, try
-# them with a native, non-MSYS executable.
-cat_native () {
-	filename=$(cygpath -w "$1") &&
-	cmd.exe /c "type \"$filename\""
-}
-
 test_expect_success 'checkout symlinks with attr' '
 	cache_symlink file1 file-link &&
 	cache_symlink dir dir-link &&
@@ -41,11 +33,14 @@ test_expect_success 'checkout symlinks with attr' '
 	git checkout . &&
 
 	mkdir dir &&
-	echo "contents1" >file1 &&
-	echo "contents2" >dir/file2 &&
+	echo "[a]b=c" >file1 &&
+	echo "[x]y=z" >dir/file2 &&
 
-	test "$(cat_native file-link)" = "contents1" &&
-	test "$(cat_native dir-link/file2)" = "contents2"
+	# MSYS2 is very forgiving, it will resolve symlinks even if the
+	# symlink type is incorrect. To make this test meaningful, try
+	# them with a native, non-MSYS executable, such as `git config`.
+	test "$(git config -f file-link a.b)" = "c" &&
+	test "$(git config -f dir-link/file2 x.y)" = "z"
 '
 
 test_done
