@@ -378,13 +378,13 @@ test_expect_success 'Query "master@{May 26 2005 23:32:00}" (exactly history star
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
 	test $C = $(cat o) &&
-	test "" = "$(cat e)"
+	test_must_be_empty e
 '
 test_expect_success 'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
 	test $A = $(cat o) &&
-	test "" = "$(cat e)"
+	test_must_be_empty e
 '
 test_expect_success 'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' '
 	test_when_finished "rm -f o e" &&
@@ -396,13 +396,13 @@ test_expect_success 'Query "master@{2005-05-26 23:38:00}" (middle of history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
 	test $Z = $(cat o) &&
-	test "" = "$(cat e)"
+	test_must_be_empty e
 '
 test_expect_success 'Query "master@{2005-05-26 23:43:00}" (exact end of history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
 	test $E = $(cat o) &&
-	test "" = "$(cat e)"
+	test_must_be_empty e
 '
 test_expect_success 'Query "master@{2005-05-28}" (past end of history)' '
 	test_when_finished "rm -f o e" &&
