@@ -16,10 +16,10 @@ static int do_generic_cmd(const char *me, char *arg)
 	setup_path();
 	if (!arg || !(arg = sq_dequote(arg)) || *arg == '-')
 		die("bad argument");
-	if (!starts_with(me, "git-"))
+	if (!skip_prefix(me, "git-", &me))
 		die("bad command");
 
-	my_argv[0] = me + 4;
+	my_argv[0] = me;
 	my_argv[1] = arg;
 	my_argv[2] = NULL;
 
