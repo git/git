@@ -299,26 +299,26 @@ Related Links
 [0] https://crbug.com/git/2
     Bug#2: Partial Clone
 
-[1] https://public-inbox.org/git/20170113155253.1644-1-benpeart@microsoft.com/ +
+[1] https://lore.kernel.org/git/20170113155253.1644-1-benpeart@microsoft.com/ +
     Subject: [RFC] Add support for downloading blobs on demand +
     Date: Fri, 13 Jan 2017 10:52:53 -0500
 
-[2] https://public-inbox.org/git/cover.1506714999.git.jonathantanmy@google.com/ +
+[2] https://lore.kernel.org/git/cover.1506714999.git.jonathantanmy@google.com/ +
     Subject: [PATCH 00/18] Partial clone (from clone to lazy fetch in 18 patches) +
     Date: Fri, 29 Sep 2017 13:11:36 -0700
 
-[3] https://public-inbox.org/git/20170426221346.25337-1-jonathantanmy@google.com/ +
+[3] https://lore.kernel.org/git/20170426221346.25337-1-jonathantanmy@google.com/ +
     Subject: Proposal for missing blob support in Git repos +
     Date: Wed, 26 Apr 2017 15:13:46 -0700
 
-[4] https://public-inbox.org/git/1488999039-37631-1-git-send-email-git@jeffhostetler.com/ +
+[4] https://lore.kernel.org/git/1488999039-37631-1-git-send-email-git@jeffhostetler.com/ +
     Subject: [PATCH 00/10] RFC Partial Clone and Fetch +
     Date: Wed,  8 Mar 2017 18:50:29 +0000
 
-[5] https://public-inbox.org/git/20170505152802.6724-1-benpeart@microsoft.com/ +
+[5] https://lore.kernel.org/git/20170505152802.6724-1-benpeart@microsoft.com/ +
     Subject: [PATCH v7 00/10] refactor the filter process code into a reusable module +
     Date: Fri,  5 May 2017 11:27:52 -0400
 
-[6] https://public-inbox.org/git/20170714132651.170708-1-benpeart@microsoft.com/ +
+[6] https://lore.kernel.org/git/20170714132651.170708-1-benpeart@microsoft.com/ +
     Subject: [RFC/PATCH v2 0/1] Add support for downloading blobs on demand +
     Date: Fri, 14 Jul 2017 09:26:50 -0400

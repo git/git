@@ -323,14 +323,14 @@ Related Links
 [0] https://bugs.chromium.org/p/git/issues/detail?id=8
     Chromium work item for: Serialized Commit Graph
 
-[1] https://public-inbox.org/git/20110713070517.GC18566@sigill.intra.peff.net/
+[1] https://lore.kernel.org/git/20110713070517.GC18566@sigill.intra.peff.net/
     An abandoned patch that introduced generation numbers.
 
-[2] https://public-inbox.org/git/20170908033403.q7e6dj7benasrjes@sigill.intra.peff.net/
+[2] https://lore.kernel.org/git/20170908033403.q7e6dj7benasrjes@sigill.intra.peff.net/
     Discussion about generation numbers on commits and how they interact
     with fsck.
 
-[3] https://public-inbox.org/git/20170908034739.4op3w4f2ma5s65ku@sigill.intra.peff.net/
+[3] https://lore.kernel.org/git/20170908034739.4op3w4f2ma5s65ku@sigill.intra.peff.net/
     More discussion about generation numbers and not storing them inside
     commit objects. A valuable quote:
 
@@ -342,9 +342,9 @@ Related Links
      commit objects (i.e., packv4 or something like the "metapacks" I
      proposed a few years ago)."
 
-[4] https://public-inbox.org/git/20180108154822.54829-1-git@jeffhostetler.com/T/#u
+[4] https://lore.kernel.org/git/20180108154822.54829-1-git@jeffhostetler.com/T/#u
     A patch to remove the ahead-behind calculation from 'status'.
 
-[5] https://public-inbox.org/git/f27db281-abad-5043-6d71-cbb083b1c877@gmail.com/
+[5] https://lore.kernel.org/git/f27db281-abad-5043-6d71-cbb083b1c877@gmail.com/
     A discussion of a "two-dimensional graph position" that can allow reading
     multiple commit-graph chains at the same time.
