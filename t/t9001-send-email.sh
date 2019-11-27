@@ -2066,7 +2066,7 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 	TO1=$(echo "QTo 1 <to1@example.com>" | q_to_tab) &&
 	TO2=$(echo "QZto2" | qz_to_tab_space) &&
 	CC1=$(echo "cc1" | append_cr) &&
-	BCC1=$(echo "Q bcc1@example.com Q" | q_to_nul) &&
+	BCC1=$(echo " bcc1@example.com Q" | q_to_nul) &&
 	git send-email \
 	--dry-run \
 	--from="	Example <from@example.com>" \
