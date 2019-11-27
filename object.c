@@ -479,6 +479,7 @@ struct raw_object_store *raw_object_store_new(void)
 
 	memset(o, 0, sizeof(*o));
 	INIT_LIST_HEAD(&o->packed_git_mru);
+	hashmap_init(&o->pack_map, pack_map_entry_cmp, NULL, 0);
 	return o;
 }
 
@@ -518,6 +519,8 @@ void raw_object_store_clear(struct raw_object_store *o)
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_object_store(o);
 	o->packed_git = NULL;
+
+	hashmap_free(&o->pack_map);
 }
 
 void parsed_object_pool_clear(struct parsed_object_pool *o)

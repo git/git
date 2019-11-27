@@ -60,6 +60,7 @@ struct oid_array *odb_loose_cache(struct object_directory *odb,
 void odb_clear_loose_cache(struct object_directory *odb);
 
 struct packed_git {
+	struct hashmap_entry packmap_ent;
 	struct packed_git *next;
 	struct list_head mru;
 	struct pack_window *windows;
@@ -87,6 +88,20 @@ struct packed_git {
 };
 
 struct multi_pack_index;
+
+static inline int pack_map_entry_cmp(const void *unused_cmp_data,
+				     const struct hashmap_entry *entry,
+				     const struct hashmap_entry *entry2,
+				     const void *keydata)
+{
+	const char *key = keydata;
+	const struct packed_git *pg1, *pg2;
+
+	pg1 = container_of(entry, const struct packed_git, packmap_ent);
+	pg2 = container_of(entry2, const struct packed_git, packmap_ent);
+
+	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
+}
 
 struct raw_object_store {
 	/*
@@ -130,6 +145,12 @@ struct raw_object_store {
 	struct packed_git *packed_git;
 	/* A most-recently-used ordered version of the packed_git list. */
 	struct list_head packed_git_mru;
+
+	/*
+	 * A map of packfiles to packed_git structs for tracking which
+	 * packs have been loaded already.
+	 */
+	struct hashmap pack_map;
 
 	/*
 	 * A fast, rough count of the number of objects in the repository.
