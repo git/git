@@ -5,7 +5,7 @@ test_description='git repack works correctly'
 . ./test-lib.sh
 
 commit_and_pack() {
-	test_commit "$@" >/dev/null &&
+	test_commit "$@" 1>&2 &&
 	SHA1=$(git pack-objects --all --unpacked --incremental .git/objects/pack/pack </dev/null) &&
 	echo pack-${SHA1}.pack
 }
@@ -19,7 +19,7 @@ test_expect_success 'objects in packs marked .keep are not repacked' '
 	# Create two packs
 	# The first pack will contain all of the objects except one
 	git rev-list --objects --all | grep -v file2 |
-		git pack-objects pack > /dev/null &&
+		git pack-objects pack &&
 	# The second pack will contain the excluded object
 	packsha1=$(git rev-list --objects --all | grep file2 |
 		git pack-objects pack) &&
@@ -235,7 +235,7 @@ test_expect_success 'incremental repack does not complain' '
 
 test_expect_success 'bitmaps can be disabled on bare repos' '
 	git -c repack.writeBitmaps=false -C bare.git repack -ad &&
-	bitmap=$(ls bare.git/objects/pack/*.bitmap 2>/dev/null || :) &&
+	bitmap=$(ls bare.git/objects/pack/*.bitmap || :) &&
 	test -z "$bitmap"
 '
 
