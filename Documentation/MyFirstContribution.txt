@@ -970,7 +970,7 @@ reviewers the changes you've made that may not be as visible.
 You will also need to go and find the Message-Id of your previous cover letter.
 You can either note it when you send the first series, from the output of `git
 send-email`, or you can look it up on the
-https://public-inbox.org/git[mailing list]. Find your cover letter in the
+https://lore.kernel.org/git[mailing list]. Find your cover letter in the
 archives, click on it, then click "permalink" or "raw" to reveal the Message-Id
 header. It should match:
 
