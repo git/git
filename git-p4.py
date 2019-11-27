@@ -198,10 +198,12 @@ def read_pipe_full(c):
     (out, err) = p.communicate()
     return (p.returncode, out, decode_text_stream(err))
 
-def read_pipe(c, ignore_error=False):
+def read_pipe(c, ignore_error=False, raw=False):
     """ Read output from  command. Returns the output text on
         success. On failure, terminates execution, unless
         ignore_error is True, when it returns an empty string.
+
+        If raw is True, do not attempt to decode output text.
     """
     (retcode, out, err) = read_pipe_full(c)
     if retcode != 0:
@@ -209,6 +211,8 @@ def read_pipe(c, ignore_error=False):
             out = ""
         else:
             die('Command failed: %s\nError: %s' % (str(c), err))
+    if not raw:
+        out = decode_text_stream(out)
     return out
 
 def read_pipe_text(c):
@@ -235,7 +239,6 @@ def read_pipe_lines(c):
     val = [decode_text_stream(line) for line in pipe.readlines()]
     if pipe.close() or p.wait():
         die('Command failed: %s' % str(c))
-
     return val
 
 def p4_read_pipe_lines(c):
@@ -631,7 +634,8 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
             stdin_file.write(stdin)
         else:
             for i in stdin:
-                stdin_file.write(i + '\n')
+                stdin_file.write(encode_text_stream(i))
+                stdin_file.write(b'\n')
         stdin_file.flush()
         stdin_file.seek(0)
 
@@ -1260,7 +1264,7 @@ class GitLFS(LargeFileSystem):
             ['git', 'lfs', 'pointer', '--file=' + contentFile],
             stdout=subprocess.PIPE
         )
-        pointerFile = pointerProcess.stdout.read()
+        pointerFile = decode_text_stream(pointerProcess.stdout.read())
         if pointerProcess.wait():
             os.remove(contentFile)
             die('git-lfs pointer command failed. Did you install the extension?')
@@ -3548,6 +3552,15 @@ class P4Sync(Command, P4UserMap):
         self.gitOutput = self.importProcess.stdout
         self.gitStream = self.importProcess.stdin
         self.gitError = self.importProcess.stderr
+
+        if bytes is not str:
+            # Wrap gitStream.write() so that it can be called using `str` arguments
+            def make_encoded_write(write):
+                def encoded_write(s):
+                    return write(s.encode() if isinstance(s, str) else s)
+                return encoded_write
+
+            self.gitStream.write = make_encoded_write(self.gitStream.write)
 
     def closeStreams(self):
         self.gitStream.close()
