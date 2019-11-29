@@ -435,6 +435,9 @@ static int get_modified_files(struct repository *r, struct string_list *files,
 			rev.diffopt.flags.ignore_dirty_submodules = 1;
 			run_diff_files(&rev, 0);
 		}
+
+		if (ps)
+			clear_pathspec(&rev.prune_data);
 	}
 	hashmap_free_entries(&s.file_map, struct pathname_entry, ent);
 
