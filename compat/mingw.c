@@ -1423,6 +1423,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	const char *(*quote_arg)(const char *arg) =
 		is_msys2_sh(*argv) ? quote_arg_msys2 : quote_arg_msvc;
 
+	/* Make sure to override previous errors, if any */
+	errno = 0;
+
 	if (restrict_handle_inheritance < 0)
 		restrict_handle_inheritance = core_restrict_inherited_handles;
 	/*
@@ -1580,8 +1583,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
 				     TRUE, flags, wenvblk, dir ? wdir : NULL,
 				     &si.StartupInfo, &pi);
-		if (ret && buf.len) {
+		if (!ret)
 			errno = err_win_to_posix(GetLastError());
+		if (ret && buf.len) {
 			warning("failed to restrict file handles (%ld)\n\n%s",
 				err, buf.buf);
 		}
