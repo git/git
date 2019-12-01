@@ -77,6 +77,7 @@ static struct refspec refmap = REFSPEC_INIT_FETCH;
 static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
+static int fetch_write_commit_graph = -1;
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
@@ -198,6 +199,8 @@ static struct option builtin_fetch_options[] = {
 		 N_("run 'gc --auto' after fetching")),
 	OPT_BOOL(0, "show-forced-updates", &fetch_show_forced_updates,
 		 N_("check for forced-updates on all updated branches")),
+	OPT_BOOL(0, "write-commit-graph", &fetch_write_commit_graph,
+		 N_("write the commit-graph after fetching")),
 	OPT_END()
 };
 
@@ -1599,7 +1602,8 @@ static int fetch_multiple(struct string_list *list, int max_children)
 			return errcode;
 	}
 
-	argv_array_pushl(&argv, "fetch", "--append", "--no-auto-gc", NULL);
+	argv_array_pushl(&argv, "fetch", "--append", "--no-auto-gc",
+			"--no-write-commit-graph", NULL);
 	add_options_to_argv(&argv);
 
 	if (max_children != 1 && list->nr != 1) {
@@ -1865,7 +1869,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	string_list_clear(&list, 0);
 
 	prepare_repo_settings(the_repository);
-	if (the_repository->settings.fetch_write_commit_graph) {
+	if (fetch_write_commit_graph > 0 ||
+	    (fetch_write_commit_graph < 0 &&
+	     the_repository->settings.fetch_write_commit_graph)) {
 		int commit_graph_flags = COMMIT_GRAPH_WRITE_SPLIT;
 		struct split_commit_graph_opts split_opts;
 		memset(&split_opts, 0, sizeof(struct split_commit_graph_opts));
