@@ -2847,6 +2847,7 @@ _git_svn ()
 			--log-window-size= --no-checkout --quiet
 			--repack-flags --use-log-author --localtime
 			--add-author-from
+			--recursive
 			--ignore-paths= --include-paths= $remote_opts
 			"
 		local init_opts="
