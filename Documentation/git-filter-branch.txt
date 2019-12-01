@@ -649,7 +649,7 @@ create hoards of confusing empty commits
 commits from before the filtering operation are also pruned instead of
 just pruning commits that became empty due to filtering rules.
 
-* If --prune empty is specified, sometimes empty commits are missed
+* If --prune-empty is specified, sometimes empty commits are missed
 and left around anyway (a somewhat rare bug, but it happens...)
 
 * A minor issue, but users who have a goal to update all names and
