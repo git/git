@@ -38,6 +38,26 @@ $ git clone https://github.com/git/git git
 $ cd git
 ----
 
+[[dependencies]]
+=== Installing Dependencies
+
+To build Git from source, you need to have a handful of dependencies installed
+on your system. For a hint of what's needed, you can take a look at
+`INSTALL`, paying close attention to the section about Git's dependencies on
+external programs and libraries. That document mentions a way to "test-drive"
+our freshly built Git without installing; that's the method we'll be using in
+this tutorial.
+
+Make sure that your environment has everything you need by building your brand
+new clone of Git from the above step:
+
+----
+$ make
+----
+
+NOTE: The Git build is parallelizable. `-j#` is not included above but you can
+use it as you prefer, here and elsewhere.
+
 [[identify-problem]]
 === Identify Problem to Solve
 
@@ -137,9 +157,6 @@ $ make
 NOTE: When you are developing the Git project, it's preferred that you use the
 `DEVELOPER` flag; if there's some reason it doesn't work for you, you can turn
 it off, but it's a good idea to mention the problem to the mailing list.
-
-NOTE: The Git build is parallelizable. `-j#` is not included above but you can
-use it as you prefer, here and elsewhere.
 
 Great, now your new command builds happily on its own. But nobody invokes it.
 Let's change that.
@@ -534,6 +551,28 @@ you want to pass as a parameter something which would usually be interpreted as
 a flag.) `parse_options()` will terminate parsing when it reaches `--` and give
 you the rest of the options afterwards, untouched.
 
+Now that you have a usage hint, you can teach Git how to show it in the general
+command list shown by `git help git` or `git help -a`, which is generated from
+`command-list.txt`. Find the line for 'git-pull' so you can add your 'git-psuh'
+line above it in alphabetical order. Now, we can add some attributes about the
+command which impacts where it shows up in the aforementioned help commands. The
+top of `command-list.txt` shares some information about what each attribute
+means; in those help pages, the commands are sorted according to these
+attributes. `git psuh` is user-facing, or porcelain - so we will mark it as
+"mainporcelain". For "mainporcelain" commands, the comments at the top of
+`command-list.txt` indicate we can also optionally add an attribute from another
+list; since `git psuh` shows some information about the user's workspace but
+doesn't modify anything, let's mark it as "info". Make sure to keep your
+attributes in the same style as the rest of `command-list.txt` using spaces to
+align and delineate them:
+
+----
+git-prune-packed                        plumbingmanipulators
+git-psuh                                mainporcelain		info
+git-pull                                mainporcelain           remote
+git-push                                mainporcelain           remote
+----
+
 Build again. Now, when you run with `-h`, you should see your usage printed and
 your command terminated before anything else interesting happens. Great!
 
@@ -745,6 +784,14 @@ already uses it to comment on your PR with `/allow <username>`. GitGitGadget
 will automatically run your PRs through the CI even without the permission given
 but you will not be able to `/submit` your changes until someone allows you to
 use the tool.
+
+NOTE: You can typically find someone who can `/allow` you on GitGitGadget by
+either examining recent pull requests where someone has been granted `/allow`
+(https://github.com/gitgitgadget/git/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+%22%2Fallow%22[Search:
+is:pr is:open "/allow"]), in which case both the author and the person who
+granted the `/allow` can now `/allow` you, or by inquiring on the
+https://webchat.freenode.net/#git-devel[#git-devel] IRC channel on Freenode
+linking your pull request and asking for someone to `/allow` you.
 
 If the CI fails, you can update your changes with `git rebase -i` and push your
 branch again:
