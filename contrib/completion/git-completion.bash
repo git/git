@@ -2043,6 +2043,10 @@ _git_rebase ()
 		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
 		return
 		;;
+	--onto=*)
+		__git_complete_refs --cur="${cur##--onto=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin rebase "" \
 			"$__git_rebase_interactive_inprogress_options"
