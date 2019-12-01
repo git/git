@@ -2136,7 +2136,7 @@ static int git_am_config(const char *k, const char *v, void *cb)
 	if (status)
 		return status;
 
-	return git_default_config(k, v, NULL);
+	return git_diff_ui_config(k, v, NULL);
 }
 
 int cmd_am(int argc, const char **argv, const char *prefix)
