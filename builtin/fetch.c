@@ -1411,7 +1411,7 @@ static int do_fetch(struct transport *transport,
 		for (rm = ref_map; rm; rm = rm->next) {
 			if (!rm->peer_ref) {
 				if (source_ref) {
-					warning(_("multiple branch detected, incompatible with --set-upstream"));
+					warning(_("multiple branches detected, incompatible with --set-upstream"));
 					goto skip;
 				} else {
 					source_ref = rm;
