@@ -1077,7 +1077,8 @@ static int check_exist_and_connected(struct ref *ref_map)
 	 * we need all direct targets to exist.
 	 */
 	for (r = rm; r; r = r->next) {
-		if (!has_object_file(&r->old_oid))
+		if (!has_object_file_with_flags(&r->old_oid,
+						OBJECT_INFO_SKIP_FETCH_OBJECT))
 			return -1;
 	}
 
@@ -1825,8 +1826,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			argv++;
 		}
 	}
-
-	fetch_if_missing = 0;
 
 	if (remote) {
 		if (filter_options.choice || has_promisor_remote())
