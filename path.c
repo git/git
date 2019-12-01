@@ -11,6 +11,7 @@
 #include "path.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "lockfile.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {
@@ -362,9 +363,14 @@ static void update_common_dir(struct strbuf *buf, int git_dir_len,
 			      const char *common_dir)
 {
 	char *base = buf->buf + git_dir_len;
+	int has_lock_suffix = strbuf_strip_suffix(buf, LOCK_SUFFIX);
+
 	init_common_trie();
 	if (trie_find(&common_trie, base, check_common, NULL) > 0)
 		replace_dir(buf, git_dir_len, common_dir);
+
+	if (has_lock_suffix)
+		strbuf_addstr(buf, LOCK_SUFFIX);
 }
 
 void report_linked_checkout_garbage(void)
