@@ -249,15 +249,16 @@ out:
 
 
 /* Write the pack data to bundle_fd */
-static int write_pack_data(int bundle_fd, struct rev_info *revs)
+static int write_pack_data(int bundle_fd, struct rev_info *revs, struct argv_array *pack_options)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
 	int i;
 
 	argv_array_pushl(&pack_objects.args,
-			 "pack-objects", "--all-progress-implied",
+			 "pack-objects",
 			 "--stdout", "--thin", "--delta-base-offset",
 			 NULL);
+	argv_array_pushv(&pack_objects.args, pack_options->argv);
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
 	pack_objects.git_cmd = 1;
@@ -428,7 +429,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 }
 
 int create_bundle(struct repository *r, const char *path,
-		  int argc, const char **argv)
+		  int argc, const char **argv, struct argv_array *pack_options)
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;
@@ -470,7 +471,7 @@ int create_bundle(struct repository *r, const char *path,
 		goto err;
 
 	/* write pack */
-	if (write_pack_data(bundle_fd, &revs))
+	if (write_pack_data(bundle_fd, &revs, pack_options))
 		goto err;
 
 	if (!bundle_to_stdout) {
