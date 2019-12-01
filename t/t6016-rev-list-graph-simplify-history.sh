@@ -67,11 +67,10 @@ test_expect_success '--graph --all' '
 	echo "| * $C4" >> expected &&
 	echo "| * $C3" >> expected &&
 	echo "* | $A5" >> expected &&
-	echo "| |     " >> expected &&
-	echo "|  \\    " >> expected &&
-	echo "*-. \\   $A4" >> expected &&
-	echo "|\\ \\ \\  " >> expected &&
-	echo "| | |/  " >> expected &&
+	echo "| |   " >> expected &&
+	echo "|  \\  " >> expected &&
+	echo "*-. | $A4" >> expected &&
+	echo "|\\ \\| " >> expected &&
 	echo "| | * $C2" >> expected &&
 	echo "| | * $C1" >> expected &&
 	echo "| * | $B2" >> expected &&
@@ -97,11 +96,10 @@ test_expect_success '--graph --simplify-by-decoration' '
 	echo "| * $C4" >> expected &&
 	echo "| * $C3" >> expected &&
 	echo "* | $A5" >> expected &&
-	echo "| |     " >> expected &&
-	echo "|  \\    " >> expected &&
-	echo "*-. \\   $A4" >> expected &&
-	echo "|\\ \\ \\  " >> expected &&
-	echo "| | |/  " >> expected &&
+	echo "| |   " >> expected &&
+	echo "|  \\  " >> expected &&
+	echo "*-. | $A4" >> expected &&
+	echo "|\\ \\| " >> expected &&
 	echo "| | * $C2" >> expected &&
 	echo "| | * $C1" >> expected &&
 	echo "| * | $B2" >> expected &&
@@ -131,9 +129,8 @@ test_expect_success '--graph --simplify-by-decoration prune branch B' '
 	echo "| * $C4" >> expected &&
 	echo "| * $C3" >> expected &&
 	echo "* | $A5" >> expected &&
-	echo "* |   $A4" >> expected &&
-	echo "|\\ \\  " >> expected &&
-	echo "| |/  " >> expected &&
+	echo "* | $A4" >> expected &&
+	echo "|\\| " >> expected &&
 	echo "| * $C2" >> expected &&
 	echo "| * $C1" >> expected &&
 	echo "* | $A3" >> expected &&
@@ -151,9 +148,8 @@ test_expect_success '--graph --full-history -- bar.txt' '
 	echo "|\\  " >> expected &&
 	echo "| * $C4" >> expected &&
 	echo "* | $A5" >> expected &&
-	echo "* |   $A4" >> expected &&
-	echo "|\\ \\  " >> expected &&
-	echo "| |/  " >> expected &&
+	echo "* | $A4" >> expected &&
+	echo "|\\| " >> expected &&
 	echo "* | $A3" >> expected &&
 	echo "|/  " >> expected &&
 	echo "* $A2" >> expected &&
@@ -255,7 +251,7 @@ test_expect_success '--graph --boundary ^C3' '
 	echo "* | | | $A3" >> expected &&
 	echo "o | | | $A2" >> expected &&
 	echo "|/ / /  " >> expected &&
-	echo "o | | $A1" >> expected &&
+	echo "o / / $A1" >> expected &&
 	echo " / /  " >> expected &&
 	echo "| o $C3" >> expected &&
 	echo "|/  " >> expected &&

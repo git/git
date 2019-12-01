@@ -667,7 +667,7 @@ cat > expect <<\EOF
 * | | fifth
 * | | fourth
 |/ /
-* | third
+* / third
 |/
 * second
 * initial
