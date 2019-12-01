@@ -541,7 +541,7 @@ test_expect_success 'tree_tag'        '
 
 # NEEDSWORK: not just check return status, but validate the output
 # Note that these tests DO NOTHING other than print a warning that
-# they are ommitting the one tag we asked them to export (because the
+# they are omitting the one tag we asked them to export (because the
 # tags resolve to a tree).  They exist just to make sure we do not
 # abort but instead just warn.
 test_expect_success 'tree_tag-obj'    'git fast-export tree_tag-obj'

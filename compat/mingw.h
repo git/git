@@ -558,7 +558,7 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen);
 
 /*
  * A critical section used in the implementation of the spawn
- * functions (mingw_spawnv[p]e()) and waitpid(). Intialised in
+ * functions (mingw_spawnv[p]e()) and waitpid(). Initialised in
  * the replacement main() macro below.
  */
 extern CRITICAL_SECTION pinfo_cs;

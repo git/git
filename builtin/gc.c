@@ -458,7 +458,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 /*
  * Returns 0 if there was no previous error and gc can proceed, 1 if
  * gc should not proceed due to an error in the last run. Prints a
- * message and returns -1 if an error occured while reading gc.log
+ * message and returns -1 if an error occurred while reading gc.log
  */
 static int report_last_gc_error(void)
 {
@@ -601,7 +601,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		if (detach_auto) {
 			int ret = report_last_gc_error();
 			if (ret < 0)
-				/* an I/O error occured, already reported */
+				/* an I/O error occurred, already reported */
 				exit(128);
 			if (ret == 1)
 				/* Last gc --auto failed. Skip this one. */

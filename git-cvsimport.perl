@@ -600,7 +600,7 @@ my $cvs = CVSconn->new($opt_d, $cvs_tree);
 sub pdate($) {
 	my ($d) = @_;
 	m#(\d{2,4})/(\d\d)/(\d\d)\s(\d\d):(\d\d)(?::(\d\d))?#
-		or die "Unparseable date: $d\n";
+		or die "Unparsable date: $d\n";
 	my $y=$1;
 	$y+=100 if $y<70;
 	$y+=1900 if $y<1000;

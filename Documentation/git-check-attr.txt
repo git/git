@@ -32,7 +32,7 @@ OPTIONS
 	instead of from the command-line.
 
 -z::
-	The output format is modified to be machine-parseable.
+	The output format is modified to be machine-parsable.
 	If `--stdin` is also given, input paths are separated
 	with a NUL character instead of a linefeed character.
 

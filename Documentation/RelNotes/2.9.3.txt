@@ -36,7 +36,7 @@ Fixes since v2.9.2
  * One part of "git am" had an oddball helper function that called
    stuff from outside "his" as opposed to calling what we have "ours",
    which was not gender-neutral and also inconsistent with the rest of
-   the system where outside stuff is usuall called "theirs" in
+   the system where outside stuff is usually called "theirs" in
    contrast to "ours".
 
  * The test framework learned a new helper test_match_signal to

@@ -252,7 +252,7 @@ A `fetch` request can take the following arguments:
     ofs-delta
 	Indicate that the client understands PACKv2 with delta referring
 	to its base by position in pack rather than by an oid.  That is,
-	they can read OBJ_OFS_DELTA (ake type 6) in a packfile.
+	they can read OBJ_OFS_DELTA (aka type 6) in a packfile.
 
 If the 'shallow' feature is advertised the following arguments can be
 included in the clients request as well as the potential addition of the

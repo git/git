@@ -407,7 +407,7 @@ test_expect_success 'reinit depot' '
 '
 
 #
-# What happens when two files of the same name are overlayed together?
+# What happens when two files of the same name are overlaid together?
 # The last-listed file should take preference.
 #
 # //depot

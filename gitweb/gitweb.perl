@@ -1657,15 +1657,15 @@ sub quot_cec {
 	my $cntrl = shift;
 	my %opts = @_;
 	my %es = ( # character escape codes, aka escape sequences
-		"\t" => '\t',   # tab            (HT)
-		"\n" => '\n',   # line feed      (LF)
-		"\r" => '\r',   # carrige return (CR)
-		"\f" => '\f',   # form feed      (FF)
-		"\b" => '\b',   # backspace      (BS)
-		"\a" => '\a',   # alarm (bell)   (BEL)
-		"\e" => '\e',   # escape         (ESC)
-		"\013" => '\v', # vertical tab   (VT)
-		"\000" => '\0', # nul character  (NUL)
+		"\t" => '\t',   # tab             (HT)
+		"\n" => '\n',   # line feed       (LF)
+		"\r" => '\r',   # carriage return (CR)
+		"\f" => '\f',   # form feed       (FF)
+		"\b" => '\b',   # backspace       (BS)
+		"\a" => '\a',   # alarm (bell)    (BEL)
+		"\e" => '\e',   # escape          (ESC)
+		"\013" => '\v', # vertical tab    (VT)
+		"\000" => '\0', # nul character   (NUL)
 	);
 	my $chr = ( (exists $es{$cntrl})
 		    ? $es{$cntrl}

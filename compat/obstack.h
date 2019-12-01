@@ -79,7 +79,7 @@ change its address during its lifetime.
 When the chars burst over a chunk boundary, we allocate a larger
 chunk, and then copy the partly formed object from the end of the old
 chunk to the beginning of the new larger chunk.  We then carry on
-accreting characters to the end of the object as we normally would.
+accrediting characters to the end of the object as we normally would.
 
 A special macro is provided to add a single char at a time to a
 growing object.  This allows the use of register variables, which

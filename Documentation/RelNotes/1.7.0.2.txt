@@ -34,7 +34,7 @@ Fixes since v1.7.0.1
  * "git status" in 1.7.0 lacked the optimization we used to have in 1.6.X series
    to speed up scanning of large working tree.
 
- * "gitweb" did not diagnose parsing errors properly while reading tis configuration
+ * "gitweb" did not diagnose parsing errors properly while reading its configuration
    file.
 
 And other minor fixes and documentation updates.

@@ -81,7 +81,7 @@ submodule.<name>.ignore::
 	    Committed differences and modifications to tracked files will show
 	    up.
 
-	none;; No modifiations to submodules are ignored, all of committed
+	none;; No modifications to submodules are ignored, all of committed
 	    differences, and modifications to tracked and untracked files are
 	    shown. This is the default option.
 

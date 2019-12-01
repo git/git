@@ -754,7 +754,7 @@ test_expect_success '3b: Avoid implicit rename if involved as source on current 
 #
 # What if we were to attempt to do directory rename detection when someone
 # "mostly" moved a directory but still left some files around, or,
-# equivalently, fully renamed a directory in one commmit and then recreated
+# equivalently, fully renamed a directory in one commit and then recreated
 # that directory in a later commit adding some new files and then tried to
 # merge?
 #
@@ -953,7 +953,7 @@ test_expect_success '5a: Merge directories, other side adds files to original an
 #   Commit B: z/{b,c,d_1,e}, y/d_3
 #   Expected: y/{b,c,e}, CONFLICT(add/add: y/d_2 vs. y/d_3)
 #   NOTE: If z/d_1 in commit B were to be involved in dir rename detection, as
-#         we normaly would since z/ is being renamed to y/, then this would be
+#         we normally would since z/ is being renamed to y/, then this would be
 #         a rename/delete (z/d_1 -> y/d_1 vs. deleted) AND an add/add/add
 #         conflict of y/d_1 vs. y/d_2 vs. y/d_3.  Add/add/add is not
 #         representable in the index, so the existence of y/d_3 needs to
@@ -2116,7 +2116,7 @@ test_expect_success '8b: Dual-directory rename, one into the others way, with co
 #
 #   Note: It could easily be argued that the correct resolution here is
 #         y/{b,c,e}, CONFLICT(rename/delete: z/d -> y/d vs deleted)
-#         and that the modifed version of d should be present in y/ after
+#         and that the modified version of d should be present in y/ after
 #         the merge, just marked as conflicted.  Indeed, I previously did
 #         argue that.  But applying directory renames to the side of
 #         history where a file is merely modified results in spurious

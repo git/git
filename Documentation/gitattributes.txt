@@ -293,10 +293,10 @@ web front ends do not visualize the contents of these files by default.
 
 In these cases you can tell Git the encoding of a file in the working
 directory with the `working-tree-encoding` attribute. If a file with this
-attribute is added to Git, then Git reencodes the content from the
+attribute is added to Git, then Git re-encodes the content from the
 specified encoding to UTF-8. Finally, Git stores the UTF-8 encoded
 content in its internal data structure (called "the index"). On checkout
-the content is reencoded back to the specified encoding.
+the content is re-encoded back to the specified encoding.
 
 Please note that using the `working-tree-encoding` attribute may have a
 number of pitfalls:
@@ -498,7 +498,7 @@ command. This is achieved by using the long-running process protocol
 When Git encounters the first file that needs to be cleaned or smudged,
 it starts the filter and performs the handshake. In the handshake, the
 welcome message sent by Git is "git-filter-client", only version 2 is
-suppported, and the supported capabilities are "clean", "smudge", and
+supported, and the supported capabilities are "clean", "smudge", and
 "delay".
 
 Afterwards Git sends a list of "key=value" pairs terminated with

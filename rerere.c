@@ -431,7 +431,7 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
  * and NUL concatenated together.
  *
  * Return 1 if conflict hunks are found, 0 if there are no conflict
- * hunks and -1 if an error occured.
+ * hunks and -1 if an error occurred.
  */
 static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_size)
 {

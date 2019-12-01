@@ -158,7 +158,7 @@ Test suites are very nice. But when they are used alone, they are
 supposed to be used so that all the tests are checked after each
 commit. This means that they are not very efficient, because many
 tests are run for no interesting result, and they suffer from
-combinational explosion.
+combinatorial explosion.
 
 In fact the problem is that big software often has many different
 configuration options and that each test case should pass for each

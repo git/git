@@ -418,7 +418,7 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
 	if (!dst) {
 		/*
 		 * We could add the blob "as-is" to Git. However, on checkout
-		 * we would try to reencode to the original encoding. This
+		 * we would try to re-encode to the original encoding. This
 		 * would fail and we would leave the user with a messed-up
 		 * working tree. Let's try to avoid this by screaming loud.
 		 */

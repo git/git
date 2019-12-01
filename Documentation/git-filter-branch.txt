@@ -534,7 +534,7 @@ repo-filter' also provides
 https://github.com/newren/git-filter-repo/blob/master/contrib/filter-repo-demos/filter-lamely[filter-lamely],
 a drop-in git-filter-branch replacement (with a few caveats).  While
 filter-lamely suffers from all the same safety issues as
-git-filter-branch, it at least ameloriates the performance issues a
+git-filter-branch, it at least ameliorates the performance issues a
 little.
 
 [[SAFETY]]

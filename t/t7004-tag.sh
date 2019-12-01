@@ -1420,7 +1420,7 @@ test_expect_success \
 get_tag_header reuse $commit commit $time >expect
 echo "An annotation to be reused" >> expect
 test_expect_success \
-	'overwriting an annoted tag should use its previous body' '
+	'overwriting an annotated tag should use its previous body' '
 	git tag -a -m "An annotation to be reused" reuse &&
 	GIT_EDITOR=true git tag -f -a reuse &&
 	get_tag_msg reuse >actual &&

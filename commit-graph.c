@@ -464,7 +464,7 @@ static void prepare_commit_graph_one(struct repository *r, const char *obj_dir)
 /*
  * Return 1 if commit_graph is non-NULL, and 0 otherwise.
  *
- * On the first invocation, this function attemps to load the commit
+ * On the first invocation, this function attempts to load the commit
  * graph if the_repository is configured to have one.
  */
 static int prepare_commit_graph(struct repository *r)

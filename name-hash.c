@@ -138,7 +138,7 @@ static int lazy_nr_dir_threads;
 
 /*
  * Set a minimum number of cache_entries that we will handle per
- * thread and use that to decide how many threads to run (upto
+ * thread and use that to decide how many threads to run (up to
  * the number on the system).
  *
  * For guidance setting the lower per-thread bound, see:

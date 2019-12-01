@@ -294,7 +294,7 @@ In `dbDriver` and `dbUser` you can use the following variables:
 	Git directory name
 %g::
 	Git directory name, where all characters except for
-	alpha-numeric ones, `.`, and `-` are replaced with
+	alphanumeric ones, `.`, and `-` are replaced with
 	`_` (this should make it easier to use the directory
 	name in a filename if wanted)
 %m::

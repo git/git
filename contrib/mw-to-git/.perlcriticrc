@@ -14,7 +14,7 @@
 
 # This rule states that each system call should have its return value checked
 # The problem is that it includes the print call. Checking every print call's
-# return value would be harmful to the code readabilty.
+# return value would be harmful to the code readability.
 # This configuration keeps all default function but print.
 [InputOutput::RequireCheckedSyscalls]
 functions = open say close

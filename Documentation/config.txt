@@ -142,7 +142,7 @@ refer to linkgit:gitignore[5] for details. For convenience:
 
 `gitdir/i`::
 	This is the same as `gitdir` except that matching is done
-	case-insensitively (e.g. on case-insensitive file sytems)
+	case-insensitively (e.g. on case-insensitive file systems)
 
 `onbranch`::
 	The data that follows the keyword `onbranch:` is taken to be a

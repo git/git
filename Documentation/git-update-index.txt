@@ -432,7 +432,7 @@ specified by the splitIndex.sharedIndexExpire config variable (see
 linkgit:git-config[1]).
 
 To avoid deleting a shared index file that is still used, its
-modification time is updated to the current time everytime a new split
+modification time is updated to the current time every time a new split
 index based on the shared index file is either created or read from.
 
 UNTRACKED CACHE

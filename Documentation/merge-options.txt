@@ -34,7 +34,7 @@ set to `no` at the beginning of them.
 
 --cleanup=<mode>::
 	This option determines how the merge message will be cleaned up before
-	commiting. See linkgit:git-commit[1] for more details. In addition, if
+	committing. See linkgit:git-commit[1] for more details. In addition, if
 	the '<mode>' is given a value of `scissors`, scissors will be appended
 	to `MERGE_MSG` before being passed on to the commit machinery in the
 	case of a merge conflict.

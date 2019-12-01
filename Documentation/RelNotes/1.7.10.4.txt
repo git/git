@@ -7,7 +7,7 @@ Fixes since v1.7.10.3
  * The message file for Swedish translation has been updated a bit.
 
  * A name taken from mailmap was copied into an internal buffer
-   incorrectly and could overun the buffer if it is too long.
+   incorrectly and could overrun the buffer if it is too long.
 
  * A malformed commit object that has a header line chomped in the
    middle could kill git with a NULL pointer dereference.

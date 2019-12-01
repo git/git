@@ -131,7 +131,7 @@ static GIT_PATH_FUNC(rebase_path_rewritten_pending,
 	"rebase-merge/rewritten-pending")
 
 /*
- * The path of the file containig the OID of the "squash onto" commit, i.e.
+ * The path of the file containing the OID of the "squash onto" commit, i.e.
  * the dummy commit used for `reset [new root]`.
  */
 static GIT_PATH_FUNC(rebase_path_squash_onto, "rebase-merge/squash-onto")
@@ -4642,7 +4642,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				label_oid(oid, "branch-point", &state);
 		}
 
-		/* Add HEAD as implict "tip of branch" */
+		/* Add HEAD as implicit "tip of branch" */
 		if (!iter->next)
 			tips_tail = &commit_list_insert(iter->item,
 							tips_tail)->next;
@@ -4824,7 +4824,7 @@ void todo_list_add_exec_commands(struct todo_list *todo_list,
 	 * are considered part of the pick, so we insert the commands *after*
 	 * those chains if there are any.
 	 *
-	 * As we insert the exec commands immediatly after rearranging
+	 * As we insert the exec commands immediately after rearranging
 	 * any fixups and before the user edits the list, a fixup chain
 	 * can never contain comments (any comments are empty picks that
 	 * have been commented out because the user did not specify

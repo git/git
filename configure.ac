@@ -85,7 +85,7 @@ AC_DEFUN([GIT_PARSE_WITH],
 
 # GIT_PARSE_WITH_SET_MAKE_VAR(WITHNAME, VAR, HELP_TEXT)
 # -----------------------------------------------------
-# Set VAR to the value specied by --with-WITHNAME.
+# Set VAR to the value specified by --with-WITHNAME.
 # No verification of arguments is performed, but warnings are issued
 # if either 'yes' or 'no' is specified.
 # HELP_TEXT is presented when --help is called.

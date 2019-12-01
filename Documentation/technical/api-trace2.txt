@@ -178,7 +178,7 @@ describe the simplified forms.
 
 == Public API
 
-All Trace2 API functions send a messsage to all of the active
+All Trace2 API functions send a message to all of the active
 Trace2 Targets.  This section describes the set of available
 messages.
 
@@ -377,7 +377,7 @@ of `pthread_create()`.
 	and the thread elapsed time.
 +
 This function must be called by the thread-proc before it returns
-(so that the coorect TLS data is used and cleaned up.  It should
+(so that the correct TLS data is used and cleaned up).  It should
 not be called by the caller of `pthread_join()`.
 
 === Region and Data Messages
@@ -406,7 +406,7 @@ The `label` field is an arbitrary label used to describe the activity
 being started, such as "read_recursive" or "do_read_index".
 +
 The `repo` field, if set, will be used to get the "repo-id", so that
-recursive oerations can be attributed to the correct repository.
+recursive operations can be attributed to the correct repository.
 
 `void trace2_region_leave(const char *category, const char *label, const struct repository *repo)`::
 
@@ -421,7 +421,7 @@ This function pops the region nesting stack on the current thread
 and reports the elapsed time of the stack frame.
 +
 The `category`, `label`, and `repo` fields are the same as above.
-The `category` and `label` do not need to match the correpsonding
+The `category` and `label` do not need to match the corresponding
 "region_enter" message, but it makes the data stream easier to
 understand.
 
@@ -816,7 +816,7 @@ with "?".
 Note that the session-id of the child process is not available to
 the current/spawning process, so the child's PID is reported here as
 a hint for post-processing.  (But it is only a hint because the child
-proces may be a shell script which doesn't have a session-id.)
+process may be a shell script which doesn't have a session-id.)
 +
 Note that the `t_rel` field contains the observed run time in seconds
 for the child process (starting before the fork/exec/spawn and
@@ -1176,7 +1176,7 @@ d0 | main                     | atexit       |     |  0.028809 |           |    
 +
 Regions may be nested.  This causes messages to be indented in the
 PERF target, for example.
-Elapsed times are relative to the start of the correpsonding nesting
+Elapsed times are relative to the start of the corresponding nesting
 level as expected.  For example, if we add region message to:
 +
 ----------------
@@ -1371,7 +1371,7 @@ d0 | main                     | atexit       |     |  0.030027 |           |    
 In this example, the preload region took 0.009122 seconds.  The 7 threads
 took between 0.006069 and 0.008947 seconds to work on their portion of
 the index.  Thread "th01" worked on 508 items at offset 0.  Thread "th02"
-worked on 508 items at offset 2032.  Thread "th04" worked on 508 itemts
+worked on 508 items at offset 2032.  Thread "th04" worked on 508 items
 at offset 508.
 +
 This example also shows that thread names are assigned in a racy manner

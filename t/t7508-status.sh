@@ -1571,7 +1571,7 @@ test_expect_success '"status.showStash=true" weaker than "--no-show-stash"' '
 	test_cmp expected_without_stash actual
 '
 
-test_expect_success 'no additionnal info if no stash entries' '
+test_expect_success 'no additional info if no stash entries' '
 	git stash clear &&
 	git -c status.showStash=true status >actual &&
 	test_cmp expected_without_stash actual
