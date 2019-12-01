@@ -36,7 +36,7 @@ two blob objects, or changes between two files on disk.
 	running the command in a working tree controlled by Git and
 	at least one of the paths points outside the working tree,
 	or when running the command outside a working tree
-	controlled by Git.
+	controlled by Git. This form implies `--exit-code`.
 
 'git diff' [<options>] --cached [<commit>] [--] [<path>...]::
 
