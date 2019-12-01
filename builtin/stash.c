@@ -483,13 +483,12 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		if (ret)
 			return -1;
 
+		/* read back the result of update_index() back from the disk */
 		discard_cache();
+		read_cache();
 	}
 
-	if (quiet) {
-		if (refresh_and_write_cache(REFRESH_QUIET, 0, 0))
-			warning("could not refresh index");
-	} else {
+	if (!quiet) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 
 		/*
