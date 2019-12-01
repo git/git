@@ -227,10 +227,10 @@ test_expect_success \
 test_expect_success \
 	'trying to delete two tags, existing and not, should fail in the 2nd' '
 	tag_exists mytag &&
-	! tag_exists myhead &&
-	test_must_fail git tag -d mytag anothertag &&
+	! tag_exists nonexistingtag &&
+	test_must_fail git tag -d mytag nonexistingtag &&
 	! tag_exists mytag &&
-	! tag_exists myhead
+	! tag_exists nonexistingtag
 '
 
 test_expect_success 'trying to delete an already deleted tag should fail' \
