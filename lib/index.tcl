@@ -45,13 +45,13 @@ proc _close_updateindex {fd after} {
 		wm deiconify $w
 		tkwait window $w
 
-		$::main_status stop
+		$::main_status stop_all
 		unlock_index
 		rescan $after 0
 		return
 	}
 
-	$::main_status stop
+	$::main_status stop_all
 	unlock_index
 	uplevel #0 $after
 }
@@ -67,7 +67,7 @@ proc update_indexinfo {msg path_list after} {
 	set batch [expr {int($total_cnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	$::main_status start $msg [mc "files"]
+	set status_bar_operation [$::main_status start $msg [mc "files"]]
 	set fd [git_write update-index -z --index-info]
 	fconfigure $fd \
 		-blocking 0 \
@@ -81,15 +81,18 @@ proc update_indexinfo {msg path_list after} {
 		$path_list \
 		$total_cnt \
 		$batch \
+		$status_bar_operation \
 		$after \
 		]
 }
 
-proc write_update_indexinfo {fd path_list total_cnt batch after} {
+proc write_update_indexinfo {fd path_list total_cnt batch status_bar_operation \
+	after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $total_cnt} {
+		$status_bar_operation stop
 		_close_updateindex $fd $after
 		return
 	}
@@ -119,7 +122,7 @@ proc write_update_indexinfo {fd path_list total_cnt batch after} {
 		display_file $path $new
 	}
 
-	$::main_status update $update_index_cp $total_cnt
+	$status_bar_operation update $update_index_cp $total_cnt
 }
 
 proc update_index {msg path_list after} {
@@ -133,7 +136,7 @@ proc update_index {msg path_list after} {
 	set batch [expr {int($total_cnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	$::main_status start $msg [mc "files"]
+	set status_bar_operation [$::main_status start $msg [mc "files"]]
 	set fd [git_write update-index --add --remove -z --stdin]
 	fconfigure $fd \
 		-blocking 0 \
@@ -147,15 +150,18 @@ proc update_index {msg path_list after} {
 		$path_list \
 		$total_cnt \
 		$batch \
+		$status_bar_operation \
 		$after \
 		]
 }
 
-proc write_update_index {fd path_list total_cnt batch after} {
+proc write_update_index {fd path_list total_cnt batch status_bar_operation \
+	after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $total_cnt} {
+		$status_bar_operation stop
 		_close_updateindex $fd $after
 		return
 	}
@@ -190,7 +196,7 @@ proc write_update_index {fd path_list total_cnt batch after} {
 		display_file $path $new
 	}
 
-	$::main_status update $update_index_cp $total_cnt
+	$status_bar_operation update $update_index_cp $total_cnt
 }
 
 proc checkout_index {msg path_list after} {
@@ -204,7 +210,7 @@ proc checkout_index {msg path_list after} {
 	set batch [expr {int($total_cnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	$::main_status start $msg [mc "files"]
+	set status_bar_operation [$::main_status start $msg [mc "files"]]
 	set fd [git_write checkout-index \
 		--index \
 		--quiet \
@@ -224,15 +230,18 @@ proc checkout_index {msg path_list after} {
 		$path_list \
 		$total_cnt \
 		$batch \
+		$status_bar_operation \
 		$after \
 		]
 }
 
-proc write_checkout_index {fd path_list total_cnt batch after} {
+proc write_checkout_index {fd path_list total_cnt batch status_bar_operation \
+	after} {
 	global update_index_cp
 	global file_states current_diff_path
 
 	if {$update_index_cp >= $total_cnt} {
+		$status_bar_operation stop
 		_close_updateindex $fd $after
 		return
 	}
@@ -253,7 +262,7 @@ proc write_checkout_index {fd path_list total_cnt batch after} {
 		}
 	}
 
-	$::main_status update $update_index_cp $total_cnt
+	$status_bar_operation update $update_index_cp $total_cnt
 }
 
 proc unstage_helper {txt paths} {
