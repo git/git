@@ -32,6 +32,7 @@ diffpatterns="
 	csharp
 	css
 	dts
+	elixir
 	fortran
 	fountain
 	golang

@@ -812,6 +812,8 @@ patterns are available:
 
 - `dts` suitable for devicetree (DTS) files.
 
+- `elixir` suitable for source code in the Elixir language.
+
 - `fortran` suitable for source code in the Fortran language.
 
 - `fountain` suitable for Fountain documents.
