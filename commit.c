@@ -402,10 +402,22 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	struct commit_graft *graft;
 	const int tree_entry_len = the_hash_algo->hexsz + 5;
 	const int parent_entry_len = the_hash_algo->hexsz + 7;
+	struct tree *tree;
 
 	if (item->object.parsed)
 		return 0;
-	item->object.parsed = 1;
+
+	if (item->parents) {
+		/*
+		 * Presumably this is leftover from an earlier failed parse;
+		 * clear it out in preparation for us re-parsing (we'll hit the
+		 * same error, but that's good, since it lets our caller know
+		 * the result cannot be trusted.
+		 */
+		free_commit_list(item->parents);
+		item->parents = NULL;
+	}
+
 	tail += size;
 	if (tail <= bufptr + tree_entry_len + 1 || memcmp(bufptr, "tree ", 5) ||
 			bufptr[tree_entry_len] != '\n')
@@ -413,7 +425,12 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	if (get_oid_hex(bufptr + 5, &parent) < 0)
 		return error("bad tree pointer in commit %s",
 			     oid_to_hex(&item->object.oid));
-	set_commit_tree(item, lookup_tree(r, &parent));
+	tree = lookup_tree(r, &parent);
+	if (!tree)
+		return error("bad tree pointer %s in commit %s",
+			     oid_to_hex(&parent),
+			     oid_to_hex(&item->object.oid));
+	set_commit_tree(item, tree);
 	bufptr += tree_entry_len + 1; /* "tree " + "hex sha1" + "\n" */
 	pptr = &item->parents;
 
@@ -433,8 +450,11 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 		if (graft && (graft->nr_parent < 0 || grafts_replace_parents))
 			continue;
 		new_parent = lookup_commit(r, &parent);
-		if (new_parent)
-			pptr = &commit_list_insert(new_parent, pptr)->next;
+		if (!new_parent)
+			return error("bad parent %s in commit %s",
+				     oid_to_hex(&parent),
+				     oid_to_hex(&item->object.oid));
+		pptr = &commit_list_insert(new_parent, pptr)->next;
 	}
 	if (graft) {
 		int i;
@@ -443,7 +463,9 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 			new_parent = lookup_commit(r,
 						   &graft->parent[i]);
 			if (!new_parent)
-				continue;
+				return error("bad graft parent %s in commit %s",
+					     oid_to_hex(&graft->parent[i]),
+					     oid_to_hex(&item->object.oid));
 			pptr = &commit_list_insert(new_parent, pptr)->next;
 		}
 	}
@@ -452,6 +474,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	if (check_graph)
 		load_commit_graph_info(r, item);
 
+	item->object.parsed = 1;
 	return 0;
 }
 

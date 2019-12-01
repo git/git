@@ -858,9 +858,6 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 			die(_("unable to parse commit %s"),
 				oid_to_hex(&(*list)->object.oid));
 		tree = get_commit_tree_oid(*list);
-		if (!tree)
-			die(_("unable to get tree for %s"),
-				oid_to_hex(&(*list)->object.oid));
 		hashwrite(f, tree->hash, hash_len);
 
 		parent = (*list)->parents;
