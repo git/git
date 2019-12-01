@@ -8,7 +8,6 @@
 #include "object-store.h"
 
 static char const * const builtin_commit_graph_usage[] = {
-	N_("git commit-graph read [--object-dir <objdir>]"),
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
 	N_("git commit-graph write [--object-dir <objdir>] [--append|--split] [--reachable|--stdin-packs|--stdin-commits] [--[no-]progress] <split options>"),
 	NULL
@@ -16,11 +15,6 @@ static char const * const builtin_commit_graph_usage[] = {
 
 static const char * const builtin_commit_graph_verify_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
-	NULL
-};
-
-static const char * const builtin_commit_graph_read_usage[] = {
-	N_("git commit-graph read [--object-dir <objdir>]"),
 	NULL
 };
 
@@ -91,66 +85,6 @@ static int graph_verify(int argc, const char **argv)
 
 	UNLEAK(graph);
 	return verify_commit_graph(the_repository, graph, flags);
-}
-
-static int graph_read(int argc, const char **argv)
-{
-	struct commit_graph *graph = NULL;
-	char *graph_name;
-	int open_ok;
-	int fd;
-	struct stat st;
-
-	static struct option builtin_commit_graph_read_options[] = {
-		OPT_STRING(0, "object-dir", &opts.obj_dir,
-			N_("dir"),
-			N_("The object directory to store the graph")),
-		OPT_END(),
-	};
-
-	trace2_cmd_mode("read");
-
-	argc = parse_options(argc, argv, NULL,
-			     builtin_commit_graph_read_options,
-			     builtin_commit_graph_read_usage, 0);
-
-	if (!opts.obj_dir)
-		opts.obj_dir = get_object_directory();
-
-	graph_name = get_commit_graph_filename(opts.obj_dir);
-
-	open_ok = open_commit_graph(graph_name, &fd, &st);
-	if (!open_ok)
-		die_errno(_("Could not open commit-graph '%s'"), graph_name);
-
-	graph = load_commit_graph_one_fd_st(fd, &st);
-	if (!graph)
-		return 1;
-
-	FREE_AND_NULL(graph_name);
-
-	printf("header: %08x %d %d %d %d\n",
-		ntohl(*(uint32_t*)graph->data),
-		*(unsigned char*)(graph->data + 4),
-		*(unsigned char*)(graph->data + 5),
-		*(unsigned char*)(graph->data + 6),
-		*(unsigned char*)(graph->data + 7));
-	printf("num_commits: %u\n", graph->num_commits);
-	printf("chunks:");
-
-	if (graph->chunk_oid_fanout)
-		printf(" oid_fanout");
-	if (graph->chunk_oid_lookup)
-		printf(" oid_lookup");
-	if (graph->chunk_commit_data)
-		printf(" commit_metadata");
-	if (graph->chunk_extra_edges)
-		printf(" extra_edges");
-	printf("\n");
-
-	UNLEAK(graph);
-
-	return 0;
 }
 
 extern int read_replace_refs;
@@ -268,8 +202,6 @@ int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 	save_commit_buffer = 0;
 
 	if (argc > 0) {
-		if (!strcmp(argv[0], "read"))
-			return graph_read(argc, argv);
 		if (!strcmp(argv[0], "verify"))
 			return graph_verify(argc, argv);
 		if (!strcmp(argv[0], "write"))
