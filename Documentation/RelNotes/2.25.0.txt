@@ -29,6 +29,16 @@ UI, Workflows & Features
    placeholder that is similar to e/E that fills in the e-mail
    address, but only the local part on the left side of '@'.
 
+ * Documentation pages for "git shortlog" now list commit limiting
+   options explicitly.
+
+ * The patterns to detect function boundary for Elixir language has
+   been added.
+
+ * The completion script (in contrib/) learned that the "--onto"
+   option of "git rebase" can take its argument as the value of the
+   option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -38,6 +48,23 @@ Performance, Internal Implementation, Development Support etc.
    literal to (1U<<count) notation.
 
  * Test updates to prepare for SHA-2 transition continues.
+
+ * Crufty code and logic accumulated over time around the object
+   parsing and low-level object access used in "git fsck" have been
+   cleaned up.
+
+ * The implementation of "git log --graph" got refactored and then its
+   output got simplified.
+
+ * Follow recent push to move API docs from Documentation/ to header
+   files and update config.h
+
+ * "git bundle" has been taught to use the parse options API.  "git
+   bundle verify" learned "--quiet" and "git bundle create" learned
+   options to control the progress output.
+
+ * Handling of commit objects that use non UTF-8 encoding during
+   "rebase -i" has been improved.
 
 
 Fixes since v2.24
@@ -63,6 +90,66 @@ Fixes since v2.24
    mistakenly removed paths that are outside the area of interest.
    (merge 4a58c3d7f7 js/update-index-ignore-removal-for-skip-worktree later to maint).
 
+ * "git rev-parse --git-path HEAD.lock" did not give the right path
+   when run in a secondary worktree.
+   (merge 76a53d640f js/git-path-head-dot-lock-fix later to maint).
+
+ * "git merge --no-commit" needs "--no-ff" if you do not want to move
+   HEAD, which has been corrected in the manual page for "git bisect".
+   (merge 8dd327b246 ma/bisect-doc-sample-update later to maint).
+
+ * "git worktree add" internally calls "reset --hard" that should not
+   descend into submodules, even when submodule.recurse configuration
+   is set, but it was affected.  This has been corrected.
+   (merge 4782cf2ab6 pb/no-recursive-reset-hard-in-worktree-add later to maint).
+
+ * Messages from die() etc. can be mixed up from multiple processes
+   without even line buffering on Windows, which has been worked
+   around.
+   (merge 116d1fa6c6 js/vreportf-wo-buffering later to maint).
+
+ * HTTP transport had possible allocator/deallocator mismatch, which
+   has been corrected.
+
+ * The watchman integration for fsmonitor was racy, which has been
+   corrected to be more conservative.
+   (merge dd0b61f577 kw/fsmonitor-watchman-fix later to maint).
+
+ * Fetching from multiple remotes into the same repository in parallel
+   had a bad interaction with the recent change to (optionally) update
+   the commit-graph after a fetch job finishes, as these parallel
+   fetches compete with each other.  Which has been corrected.
+
+ * Recent update to "git stash pop" made the command empty the index
+   when run with the "--quiet" option, which has been corrected.
+
+ * "git fetch" codepath had a big "do not lazily fetch missing objects
+   when I ask if something exists" switch.  This has been corrected by
+   marking the "does this thing exist?" calls with "if not please do not
+   lazily fetch it" flag.
+
+ * Test update to avoid wasted cycles.
+   (merge e0316695ec sg/skip-skipped-prereq later to maint).
+
+ * Error handling after "git push" finishes sending the packdata and
+   waits for the response to the remote side has been improved.
+   (merge ad7a403268 jk/send-pack-remote-failure later to maint).
+
+ * Some codepaths in "gitweb" that forgot to escape URLs generated
+   based on end-user input have been corrected.
+   (merge a376e37b2c jk/gitweb-anti-xss later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
+   (merge 6c02042139 mr/clone-dir-exists-to-path-exists later to maint).
+   (merge 44ae131e38 sg/blame-indent-heuristics-is-now-the-default later to maint).
+   (merge 0115e5d929 dl/doc-diff-no-index-implies-exit-code later to maint).
+   (merge 270de6acbe en/t6024-style later to maint).
+   (merge 14c4776d75 ns/test-desc-typofix later to maint).
+   (merge 68d40f30c4 dj/typofix-merge-strat later to maint).
+   (merge f66e0401ab jk/optim-in-pack-idx-conversion later to maint).
+   (merge 169bed7421 rs/parse-options-dup-null-fix later to maint).
+   (merge 51bd6be32d rs/use-copy-array-in-mingw-shell-command-preparation later to maint).
+   (merge b018719927 ma/t7004 later to maint).
+   (merge 932757b0cc ar/install-doc-update-cmds-needing-the-shell later to maint).
