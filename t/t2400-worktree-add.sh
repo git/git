@@ -587,4 +587,28 @@ test_expect_success '"add" should not fail because of another bad worktree' '
 	)
 '
 
+test_expect_success '"add" with uninitialized submodule, with submodule.recurse unset' '
+	test_create_repo submodule &&
+	test_commit -C submodule first &&
+	test_create_repo project &&
+	git -C project submodule add ../submodule &&
+	git -C project add submodule &&
+	test_tick &&
+	git -C project commit -m add_sub &&
+	git clone project project-clone &&
+	git -C project-clone worktree add ../project-2
+'
+test_expect_success '"add" with uninitialized submodule, with submodule.recurse set' '
+	git -C project-clone -c submodule.recurse worktree add ../project-3
+'
+
+test_expect_success '"add" with initialized submodule, with submodule.recurse unset' '
+	git -C project-clone submodule update --init &&
+	git -C project-clone worktree add ../project-4
+'
+
+test_expect_success '"add" with initialized submodule, with submodule.recurse set' '
+	git -C project-clone -c submodule.recurse worktree add ../project-5
+'
+
 test_done

@@ -376,7 +376,7 @@ static int add_worktree(const char *path, const char *refname,
 	if (opts->checkout) {
 		cp.argv = NULL;
 		argv_array_clear(&cp.args);
-		argv_array_pushl(&cp.args, "reset", "--hard", NULL);
+		argv_array_pushl(&cp.args, "reset", "--hard", "--no-recurse-submodules", NULL);
 		if (opts->quiet)
 			argv_array_push(&cp.args, "--quiet");
 		cp.env = child_env.argv;
