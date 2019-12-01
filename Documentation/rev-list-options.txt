@@ -579,6 +579,7 @@ above) if (1) they are referenced by tags, or (2) they change the
 contents of the paths given on the command line.  All other
 commits are marked as TREESAME (subject to be simplified away).
 
+ifndef::git-shortlog[]
 ifdef::git-rev-list[]
 Bisection Helpers
 ~~~~~~~~~~~~~~~~~
@@ -634,8 +635,9 @@ This option can be used along with `--bisect-vars`, in this case,
 after all the sorted commit objects, there will be the same text as if
 `--bisect-vars` had been used alone.
 endif::git-rev-list[]
+endif::git-shortlog[]
 
-
+ifndef::git-shortlog[]
 Commit Ordering
 ~~~~~~~~~~~~~~~
 
@@ -677,7 +679,9 @@ together.
 	Output the commits chosen to be shown (see Commit Limiting
 	section above) in reverse order. Cannot be combined with
 	`--walk-reflogs`.
+endif::git-shortlog[]
 
+ifndef::git-shortlog[]
 Object Traversal
 ~~~~~~~~~~~~~~~~
 
@@ -817,7 +821,9 @@ endif::git-rev-list[]
 
 --do-walk::
 	Overrides a previous `--no-walk`.
+endif::git-shortlog[]
 
+ifndef::git-shortlog[]
 Commit Formatting
 ~~~~~~~~~~~~~~~~~
 
@@ -973,7 +979,9 @@ ifdef::git-rev-list[]
 	counts and print the count for equivalent commits separated
 	by a tab.
 endif::git-rev-list[]
+endif::git-shortlog[]
 
+ifndef::git-shortlog[]
 ifndef::git-rev-list[]
 Diff Formatting
 ~~~~~~~~~~~~~~~
@@ -1016,3 +1024,4 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 -t::
 	Show the tree objects in the diff output. This implies `-r`.
 endif::git-rev-list[]
+endif::git-shortlog[]
