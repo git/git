@@ -77,6 +77,7 @@ do
 	# actual pack generation, without smudging the on-disk setup
 	# between trials.
 	test_perf "repack ($nr_packs)" '
+		GIT_TEST_FULL_IN_PACK_ARRAY=1 \
 		git pack-objects --keep-true-parents \
 		  --honor-pack-keep --non-empty --all \
 		  --reflog --indexed-objects --delta-base-offset \

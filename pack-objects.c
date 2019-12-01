@@ -119,7 +119,10 @@ void oe_map_new_pack(struct packing_data *pack)
 {
 	uint32_t i;
 
-	REALLOC_ARRAY(pack->in_pack, pack->nr_alloc);
+	if (pack->in_pack)
+		BUG("packing_data has already been converted to pack array");
+
+	ALLOC_ARRAY(pack->in_pack, pack->nr_alloc);
 
 	for (i = 0; i < pack->nr_objects; i++)
 		pack->in_pack[i] = oe_in_pack(pack, pack->objects + i);
