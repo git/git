@@ -1004,6 +1004,12 @@ test_skip () {
 		to_skip=t
 		skipped_reason="GIT_SKIP_TESTS"
 	fi
+	if test -z "$to_skip" && test -n "$run_list" &&
+	   ! match_test_selector_list '--run' $test_count "$run_list"
+	then
+		to_skip=t
+		skipped_reason="--run"
+	fi
 	if test -z "$to_skip" && test -n "$test_prereq" &&
 	   ! test_have_prereq "$test_prereq"
 	then
@@ -1015,12 +1021,6 @@ test_skip () {
 			of_prereq=" of $test_prereq"
 		fi
 		skipped_reason="missing $missing_prereq${of_prereq}"
-	fi
-	if test -z "$to_skip" && test -n "$run_list" &&
-		! match_test_selector_list '--run' $test_count "$run_list"
-	then
-		to_skip=t
-		skipped_reason="--run"
 	fi
 
 	case "$to_skip" in
