@@ -90,11 +90,6 @@ char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash,
 	return buffer;
 }
 
-char *sha1_to_hex_r(char *buffer, const unsigned char *sha1)
-{
-	return hash_to_hex_algop_r(buffer, sha1, &hash_algos[GIT_HASH_SHA1]);
-}
-
 char *oid_to_hex_r(char *buffer, const struct object_id *oid)
 {
 	return hash_to_hex_algop_r(buffer, oid->hash, the_hash_algo);
@@ -106,11 +101,6 @@ char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *a
 	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
 	return hash_to_hex_algop_r(hexbuffer[bufno], hash, algop);
-}
-
-char *sha1_to_hex(const unsigned char *sha1)
-{
-	return hash_to_hex_algop(sha1, &hash_algos[GIT_HASH_SHA1]);
 }
 
 char *hash_to_hex(const unsigned char *hash)

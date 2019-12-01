@@ -1451,7 +1451,8 @@ int get_oid_hex(const char *hex, struct object_id *sha1);
 int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
 
 /*
- * Convert a binary hash to its hex equivalent. The `_r` variant is reentrant,
+ * Convert a binary hash in "unsigned char []" or an object name in
+ * "struct object_id *" to its hex equivalent. The `_r` variant is reentrant,
  * and writes the NUL-terminated output to the buffer `out`, which must be at
  * least `GIT_MAX_HEXSZ + 1` bytes, and returns a pointer to out for
  * convenience.
@@ -1459,13 +1460,12 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
  * The non-`_r` variant returns a static buffer, but uses a ring of 4
  * buffers, making it safe to make multiple calls for a single statement, like:
  *
- *   printf("%s -> %s", sha1_to_hex(one), sha1_to_hex(two));
+ *   printf("%s -> %s", hash_to_hex(one), hash_to_hex(two));
+ *   printf("%s -> %s", oid_to_hex(one), oid_to_hex(two));
  */
 char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
-char *sha1_to_hex_r(char *out, const unsigned char *sha1);
 char *oid_to_hex_r(char *out, const struct object_id *oid);
 char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
-char *sha1_to_hex(const unsigned char *sha1);						/* same static buffer */
 char *hash_to_hex(const unsigned char *hash);						/* same static buffer */
 char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
 
