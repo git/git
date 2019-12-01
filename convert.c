@@ -270,8 +270,12 @@ static int will_convert_lf_to_crlf(struct text_stat *stats,
 static int validate_encoding(const char *path, const char *enc,
 		      const char *data, size_t len, int die_on_error)
 {
+	const char *stripped;
+
 	/* We only check for UTF here as UTF?? can be an alias for UTF-?? */
-	if (istarts_with(enc, "UTF")) {
+	if (skip_iprefix(enc, "UTF", &stripped)) {
+		skip_prefix(stripped, "-", &stripped);
+
 		/*
 		 * Check for detectable errors in UTF encodings
 		 */
@@ -285,15 +289,10 @@ static int validate_encoding(const char *path, const char *enc,
 			 */
 			const char *advise_msg = _(
 				"The file '%s' contains a byte order "
-				"mark (BOM). Please use UTF-%s as "
+				"mark (BOM). Please use UTF-%.*s as "
 				"working-tree-encoding.");
-			const char *stripped = NULL;
-			char *upper = xstrdup_toupper(enc);
-			upper[strlen(upper)-2] = '\0';
-			if (skip_prefix(upper, "UTF", &stripped))
-				skip_prefix(stripped, "-", &stripped);
-			advise(advise_msg, path, stripped);
-			free(upper);
+			int stripped_len = strlen(stripped) - strlen("BE");
+			advise(advise_msg, path, stripped_len, stripped);
 			if (die_on_error)
 				die(error_msg, path, enc);
 			else {
@@ -308,12 +307,7 @@ static int validate_encoding(const char *path, const char *enc,
 				"mark (BOM). Please use UTF-%sBE or UTF-%sLE "
 				"(depending on the byte order) as "
 				"working-tree-encoding.");
-			const char *stripped = NULL;
-			char *upper = xstrdup_toupper(enc);
-			if (skip_prefix(upper, "UTF", &stripped))
-				skip_prefix(stripped, "-", &stripped);
 			advise(advise_msg, path, stripped, stripped);
-			free(upper);
 			if (die_on_error)
 				die(error_msg, path, enc);
 			else {
