@@ -4271,8 +4271,20 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 	if (read_populate_opts(opts))
 		return -1;
 	if (is_rebase_i(opts)) {
+		struct todo_list backup = TODO_LIST_INIT;
+
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
+
+		if (strbuf_read_file(&backup.buf, rebase_path_todo_backup(), 0) > 0) {
+			todo_list_parse_insn_buffer(r, backup.buf.buf, &backup);
+			res = todo_list_check(&backup, &todo_list);
+			todo_list_release(&backup);
+
+			if (res)
+				goto release_todo_list;
+		}
+
 		if (commit_staged_changes(r, opts, &todo_list))
 			return -1;
 	} else if (!file_exists(get_todo_path(opts)))
@@ -4986,12 +4998,6 @@ int todo_list_write_to_file(struct repository *r, struct todo_list *todo_list,
 	return res;
 }
 
-static const char edit_todo_list_advice[] =
-N_("You can fix this with 'git rebase --edit-todo' "
-"and then run 'git rebase --continue'.\n"
-"Or you can abort the rebase with 'git rebase"
-" --abort'.\n");
-
 /* skip picking commits whose parents are unchanged */
 static int skip_unnecessary_picks(struct repository *r,
 				  struct todo_list *todo_list,
@@ -5089,11 +5095,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		todo_list_release(&new_todo);
 
 		return error(_("nothing to do"));
-	}
-
-	if (todo_list_parse_insn_buffer(r, new_todo.buf.buf, &new_todo) ||
-	    todo_list_check(todo_list, &new_todo)) {
-		fprintf(stderr, _(edit_todo_list_advice));
+	} else if (res == -4) {
 		checkout_onto(r, opts, onto_name, &onto->object.oid, orig_head);
 		todo_list_release(&new_todo);
 

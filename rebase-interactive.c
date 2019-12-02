@@ -97,7 +97,8 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 		   struct todo_list *new_todo, const char *shortrevisions,
 		   const char *shortonto, unsigned flags)
 {
-	const char *todo_file = rebase_path_todo();
+	const char *todo_file = rebase_path_todo(),
+		*todo_backup = rebase_path_todo_backup();
 	unsigned initial = shortrevisions && shortonto;
 
 	/* If the user is editing the todo list, we first try to parse
@@ -110,9 +111,9 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 				    -1, flags | TODO_LIST_SHORTEN_IDS | TODO_LIST_APPEND_TODO_HELP))
 		return error_errno(_("could not write '%s'"), todo_file);
 
-	if (initial && copy_file(rebase_path_todo_backup(), todo_file, 0666))
-		return error(_("could not copy '%s' to '%s'."), todo_file,
-			     rebase_path_todo_backup());
+	unlink(todo_backup);
+	if (copy_file(todo_backup, todo_file, 0666))
+		return error(_("could not copy '%s' to '%s'."), todo_file, todo_backup);
 
 	if (launch_sequence_editor(todo_file, &new_todo->buf, NULL))
 		return -2;
@@ -121,10 +122,13 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 	if (initial && new_todo->buf.len == 0)
 		return -3;
 
-	/* For the initial edit, the todo list gets parsed in
-	 * complete_action(). */
-	if (!initial)
-		return todo_list_parse_insn_buffer(r, new_todo->buf.buf, new_todo);
+	if (todo_list_parse_insn_buffer(r, new_todo->buf.buf, new_todo)) {
+		fprintf(stderr, _(edit_todo_list_advice));
+		return -4;
+	}
+
+	if (todo_list_check(todo_list, new_todo))
+		return -4;
 
 	return 0;
 }
@@ -188,6 +192,8 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 		"Use 'git config rebase.missingCommitsCheck' to change "
 		"the level of warnings.\n"
 		"The possible behaviours are: ignore, warn, error.\n\n"));
+
+	fprintf(stderr, _(edit_todo_list_advice));
 
 leave_check:
 	clear_commit_seen(&commit_seen);
