@@ -114,6 +114,7 @@ int err_win_to_posix(DWORD winerr)
 	case ERROR_SHARING_BUFFER_EXCEEDED: error = ENFILE; break;
 	case ERROR_SHARING_VIOLATION: error = EACCES; break;
 	case ERROR_STACK_OVERFLOW: error = ENOMEM; break;
+	case ERROR_SUCCESS: BUG("err_win_to_posix() called without an error!");
 	case ERROR_SWAPERROR: error = ENOENT; break;
 	case ERROR_TOO_MANY_MODULES: error = EMFILE; break;
 	case ERROR_TOO_MANY_OPEN_FILES: error = EMFILE; break;
