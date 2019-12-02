@@ -19,6 +19,7 @@
 #include "diffcore.h"
 #include "diff.h"
 #include "object-store.h"
+#include "advice.h"
 
 #define OPT_QUIET (1 << 0)
 #define OPT_CACHED (1 << 1)
@@ -1268,6 +1269,13 @@ struct submodule_alternate_setup {
 #define SUBMODULE_ALTERNATE_SETUP_INIT { NULL, \
 	SUBMODULE_ALTERNATE_ERROR_IGNORE, NULL }
 
+static const char alternate_error_advice[] = N_(
+"An alternate computed from a superproject's alternate is invalid.\n"
+"To allow Git to clone without an alternate in such a case, set\n"
+"submodule.alternateErrorStrategy to 'info' or, equivalently, clone with\n"
+"'--reference-if-able' instead of '--reference'."
+);
+
 static int add_possible_reference_from_superproject(
 		struct object_directory *odb, void *sas_cb)
 {
@@ -1299,6 +1307,8 @@ static int add_possible_reference_from_superproject(
 		} else {
 			switch (sas->error_mode) {
 			case SUBMODULE_ALTERNATE_ERROR_DIE:
+				if (advice_submodule_alternate_error_strategy_die)
+					advise(_(alternate_error_advice));
 				die(_("submodule '%s' cannot add alternate: %s"),
 				    sas->submodule_name, err.buf);
 			case SUBMODULE_ALTERNATE_ERROR_INFO:
