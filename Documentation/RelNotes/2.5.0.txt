@@ -172,7 +172,8 @@ Performance, Internal Implementation, Development Support etc.
    incorrect patch text to "git apply".  Add tests to demonstrate
    this.
 
-   I have a slight suspicion that this may be $gmane/87202 coming back
+   I have a slight suspicion that this may be
+   cf. <7vtzf77wjp.fsf@gitster.siamese.dyndns.org> coming back
    and biting us (I seem to have said "let's run with this and see
    what happens" back then).
 
