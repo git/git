@@ -26,6 +26,9 @@ import zipfile
 import zlib
 import ctypes
 import errno
+import os.path
+import codecs
+import io
 
 # support basestring in Python 3
 try:
@@ -639,7 +642,7 @@ def parseDiffTreeEntry(entry):
 
     If the pattern is not matched, None is returned."""
 
-    match = diffTreePattern().next().match(entry)
+    match = next(diffTreePattern()).match(entry)
     if match:
         return {
             'src_mode': match.group(1),
@@ -980,7 +983,7 @@ def findUpstreamBranchPoint(head = "HEAD"):
     branches = p4BranchesInGit()
     # map from depot-path to branch name
     branchByDepotPath = {}
-    for branch in branches.keys():
+    for branch in list(branches.keys()):
         tip = branches[branch]
         log = extractLogMessageFromGitCommit(tip)
         settings = extractSettingsGitLog(log)
@@ -1174,7 +1177,7 @@ def getClientSpec():
     client_name = entry["Client"]
 
     # just the keys that start with "View"
-    view_keys = [ k for k in entry.keys() if k.startswith("View") ]
+    view_keys = [ k for k in list(entry.keys()) if k.startswith("View") ]
 
     # hold this new View
     view = View(client_name)
@@ -1416,7 +1419,7 @@ class GitLFS(LargeFileSystem):
         else:
             return LargeFileSystem.processContent(self, git_mode, relPath, contents)
 
-class Command:
+class Command(object):
     delete_actions = ( "delete", "move/delete", "purge" )
     add_actions = ( "add", "branch", "move/add" )
 
@@ -1431,7 +1434,7 @@ class Command:
             setattr(self, attr, value)
         return getattr(self, attr)
 
-class P4UserMap:
+class P4UserMap(object):
     def __init__(self):
         self.userMapFromPerforceServer = False
         self.myP4UserId = None
@@ -1482,7 +1485,7 @@ class P4UserMap:
                 self.emails[email] = user
 
         s = ''
-        for (key, val) in self.users.items():
+        for (key, val) in list(self.users.items()):
             s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
 
         open(self.getUserCacheFilename(), "wb").write(s)
@@ -1833,7 +1836,7 @@ class P4Submit(Command, P4UserMap):
                 break
         if not change_entry:
             die('Failed to decode output of p4 change -o')
-        for key, value in change_entry.iteritems():
+        for key, value in list(change_entry.items()):
             if key.startswith('File'):
                 if 'depot-paths' in settings:
                     if not [p for p in settings['depot-paths']
@@ -2077,7 +2080,7 @@ class P4Submit(Command, P4UserMap):
             p4_delete(f)
 
         # Set/clear executable bits
-        for f in filesToChangeExecBit.keys():
+        for f in list(filesToChangeExecBit.keys()):
             mode = filesToChangeExecBit[f]
             setP4ExecBit(f, mode)
 
@@ -2330,7 +2333,7 @@ class P4Submit(Command, P4UserMap):
             self.clientSpecDirs = getClientSpec()
 
         # Check for the existence of P4 branches
-        branchesDetected = (len(p4BranchesInGit().keys()) > 1)
+        branchesDetected = (len(list(p4BranchesInGit().keys())) > 1)
 
         if self.useClientSpec and not branchesDetected:
             # all files are relative to the client spec
@@ -2721,7 +2724,7 @@ class P4Sync(Command, P4UserMap):
         self.knownBranches = {}
         self.initialParents = {}
 
-        self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
+        self.tz = "%+03d%02d" % (- time.timezone // 3600, ((- time.timezone % 3600) // 60))
         self.labels = {}
 
     # Force a checkpoint in fast-import and wait for it to finish
@@ -2838,7 +2841,7 @@ class P4Sync(Command, P4UserMap):
             else:
                 relPath = self.stripRepoPath(path, self.depotPaths)
 
-            for branch in self.knownBranches.keys():
+            for branch in list(self.knownBranches.keys()):
                 # add a trailing slash so that a commit into qt/4.2foo
                 # doesn't end up in qt/4.2, e.g.
                 if p4PathStartsWith(relPath, branch + "/"):
@@ -2867,7 +2870,7 @@ class P4Sync(Command, P4UserMap):
                 size = int(self.stream_file['fileSize'])
             else:
                 size = 0 # deleted files don't get a fileSize apparently
-            sys.stdout.write('\r%s --> %s (%i MB)\n' % (file['depotFile'], relPath, size/1024/1024))
+            sys.stdout.write('\r%s --> %s (%i MB)\n' % (file['depotFile'], relPath, size//1024//1024))
             sys.stdout.flush()
 
         (type_base, type_mods) = split_p4_type(file["type"])
@@ -2967,7 +2970,7 @@ class P4Sync(Command, P4UserMap):
             required_bytes = int((4 * int(self.stream_file["fileSize"])) - calcDiskFree())
             if required_bytes > 0:
                 err = 'Not enough space left on %s! Free at least %i MB.' % (
-                    os.getcwd(), required_bytes/1024/1024
+                    os.getcwd(), required_bytes//1024//1024
                 )
 
         if err:
@@ -2996,7 +2999,7 @@ class P4Sync(Command, P4UserMap):
 
         # pick up the new file information... for the
         # 'data' field we need to append to our array
-        for k in marshalled.keys():
+        for k in list(marshalled.keys()):
             if k == 'data':
                 if 'streamContentSize' not in self.stream_file:
                     self.stream_file['streamContentSize'] = 0
@@ -3011,8 +3014,8 @@ class P4Sync(Command, P4UserMap):
             'depotFile' in self.stream_file):
             size = int(self.stream_file["fileSize"])
             if size > 0:
-                progress = 100*self.stream_file['streamContentSize']/size
-                sys.stdout.write('\r%s %d%% (%i MB)' % (self.stream_file['depotFile'], progress, int(size/1024/1024)))
+                progress = 100.0*self.stream_file['streamContentSize']/size
+                sys.stdout.write('\r%s %4.1f%% (%i MB)' % (self.stream_file['depotFile'], progress, int(size//1024//1024)))
                 sys.stdout.flush()
 
         self.stream_have_file_info = True
@@ -3093,7 +3096,7 @@ class P4Sync(Command, P4UserMap):
 
         gitStream.write("tagger %s\n" % tagger)
 
-        print("labelDetails=",labelDetails)
+        print(("labelDetails=",labelDetails))
         if 'Description' in labelDetails:
             description = labelDetails['Description']
         else:
@@ -3232,7 +3235,7 @@ class P4Sync(Command, P4UserMap):
             self.labels[newestChange] = [output, revisions]
 
         if self.verbose:
-            print("Label changes: %s" % self.labels.keys())
+            print("Label changes: %s" % list(self.labels.keys()))
 
     # Import p4 labels as git tags. A direct mapping does not
     # exist, so assume that if all the files are at the same revision
@@ -3375,7 +3378,7 @@ class P4Sync(Command, P4UserMap):
 
     def getBranchMappingFromGitBranches(self):
         branches = p4BranchesInGit(self.importIntoRemotes)
-        for branch in branches.keys():
+        for branch in list(branches.keys()):
             if branch == "master":
                 branch = "main"
             else:
@@ -3487,14 +3490,14 @@ class P4Sync(Command, P4UserMap):
             self.updateOptionDict(description)
 
             if not self.silent:
-                sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+                sys.stdout.write("\rImporting revision %s (%4.1f%%)" % (change, cnt * 100 / len(changes)))
                 sys.stdout.flush()
             cnt = cnt + 1
 
             try:
                 if self.detectBranches:
                     branches = self.splitFilesIntoBranches(description)
-                    for branch in branches.keys():
+                    for branch in list(branches.keys()):
                         ## HACK  --hwn
                         branchPrefix = self.depotPaths[0] + branch + "/"
                         self.branchPrefixes = [ branchPrefix ]
@@ -3683,13 +3686,13 @@ class P4Sync(Command, P4UserMap):
                 if short in branches:
                     self.p4BranchesInGit = [ short ]
             else:
-                self.p4BranchesInGit = branches.keys()
+                self.p4BranchesInGit = list(branches.keys())
 
             if len(self.p4BranchesInGit) > 1:
                 if not self.silent:
                     print("Importing from/into multiple branches")
                 self.detectBranches = True
-                for branch in branches.keys():
+                for branch in list(branches.keys()):
                     self.initialParents[self.refPrefix + branch] = \
                         branches[branch]
 
@@ -4073,7 +4076,7 @@ class P4Unshelve(Command):
             to find the P4 commit we are based on, and the depot-paths.
         """
 
-        for parent in (range(65535)):
+        for parent in (list(range(65535))):
             log = extractLogMessageFromGitCommit("{0}^{1}".format(starting_point, parent))
             settings = extractSettingsGitLog(log)
             if 'change' in settings:
@@ -4212,7 +4215,7 @@ commands = {
 
 def main():
     if len(sys.argv[1:]) == 0:
-        printUsage(commands.keys())
+        printUsage(list(commands.keys()))
         sys.exit(2)
 
     cmdName = sys.argv[1]
@@ -4222,7 +4225,7 @@ def main():
     except KeyError:
         print("unknown command %s" % cmdName)
         print("")
-        printUsage(commands.keys())
+        printUsage(list(commands.keys()))
         sys.exit(2)
 
     options = cmd.options
