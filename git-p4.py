@@ -75,7 +75,10 @@ def p4_build_cmd(cmd):
     location. It means that hooking into the environment, or other configuration
     can be done more easily.
     """
-    real_cmd = ["p4"]
+    if (platform.system() == "Windows"):
+        real_cmd = ["p4.exe"]
+    else:
+        real_cmd = ["p4"]
 
     user = gitConfig("git-p4.user")
     if len(user) > 0:
