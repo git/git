@@ -4,7 +4,7 @@ variables:
 jobs:
 - job: windows_build
   displayName: Windows Build
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted
   timeoutInMinutes: 240
   steps:
@@ -132,7 +132,7 @@ jobs:
 
 - job: vs_build
   displayName: Visual Studio Build
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted VS2017
   timeoutInMinutes: 240
   steps:
@@ -291,7 +291,7 @@ jobs:
 
 - job: linux_clang
   displayName: linux-clang
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted Ubuntu 1604
   steps:
   - bash: |
@@ -331,7 +331,18 @@ jobs:
   displayName: linux-gcc
   condition: succeeded()
   pool: Hosted Ubuntu 1604
+  strategy:
+    matrix:
+      python27:
+        python.version: '2.7'
+      python35:
+        python.version: '3.5'
   steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - bash: |
+      echo "##vso[task.setvariable variable=python_path]$(which python)"
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
@@ -366,9 +377,12 @@ jobs:
 
 - job: osx_clang
   displayName: osx-clang
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted macOS
   steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
@@ -401,7 +415,7 @@ jobs:
 
 - job: osx_gcc
   displayName: osx-gcc
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted macOS
   steps:
   - bash: |
@@ -434,7 +448,7 @@ jobs:
 
 - job: gettext_poison
   displayName: GETTEXT_POISON
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted Ubuntu 1604
   steps:
   - bash: |
@@ -471,7 +485,7 @@ jobs:
 
 - job: linux32
   displayName: Linux32
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted Ubuntu 1604
   steps:
   - bash: |
@@ -505,7 +519,7 @@ jobs:
 
 - job: static_analysis
   displayName: StaticAnalysis
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted Ubuntu 1604
   steps:
   - bash: |
@@ -525,7 +539,7 @@ jobs:
 
 - job: documentation
   displayName: Documentation
-  condition: succeeded()
+  condition: and(false, succeeded())
   pool: Hosted Ubuntu 1604
   steps:
   - bash: |
