@@ -32,16 +32,84 @@ try:
     unicode = unicode
 except NameError:
     # 'unicode' is undefined, must be Python 3
-    str = str
+    #
+    # For Python 3 which is natively unicode, we will use
+    # unicode for internal information but all P4 Data
+    # will remain in bytes
+    isunicode = True
     unicode = str
     bytes = bytes
-    basestring = (str,bytes)
+
+    def as_string(text):
+        """ Return a byte array as a unicode string
+        """
+        if text is None:
+            return None
+        if isinstance(text, bytes):
+            return unicode(text, "utf-8")
+        else:
+            return text
+
+    def as_bytes(text):
+        """ Return a Unicode string as a byte array
+        """
+        if text is None:
+            return None
+        if isinstance(text, bytes):
+            return text
+        else:
+            return bytes(text, "utf-8")
+
+    def to_unicode(text):
+        """ Return a byte array as a unicode string
+        """
+        return as_string(text)
+
+    def path_as_string(path):
+        """ Converts a path to the UTF8 encoded string
+        """
+        if isinstance(path, unicode):
+            return path
+        return encodeWithUTF8(path).decode('utf-8')
+
 else:
     # 'unicode' exists, must be Python 2
-    str = str
+    #
+    # We will treat the data as:
+    #   str   -> str
+    #   bytes -> str
+    # So for Python 2 these functions are no-ops
+    # and will leave the data in the ambiguious
+    # string/bytes state
+    isunicode = False
     unicode = unicode
     bytes = str
-    basestring = basestring
+
+    def as_string(text):
+        """ Return text unaltered (for Python 3 support)
+        """
+        return text
+
+    def as_bytes(text):
+        """ Return text unaltered (for Python 3 support)
+        """
+        return text
+
+    def to_unicode(text):
+        """ Return a string as a unicode string
+        """
+        return text.decode('utf-8')
+
+    def path_as_string(path):
+        """ Converts a path to the UTF8 encoded bytes
+        """
+        return encodeWithUTF8(path)
+
+# Check for raw_input support
+try:
+    raw_input
+except NameError:
+    raw_input = input
 
 try:
     from subprocess import CalledProcessError
@@ -740,7 +808,7 @@ def p4Where(depotPath):
             if data[:space] == depotPath:
                 output = entry
                 break
-    if output == None:
+    if output is None:
         return ""
     if output["code"] == "error":
         return ""
@@ -4175,7 +4243,7 @@ def main():
     global verbose
     verbose = cmd.verbose
     if cmd.needsGit:
-        if cmd.gitdir == None:
+        if cmd.gitdir is None:
             cmd.gitdir = os.path.abspath(".git")
             if not isValidGitDir(cmd.gitdir):
                 # "rev-parse --git-dir" without arguments will try $PWD/.git
