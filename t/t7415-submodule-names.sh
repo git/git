@@ -244,7 +244,7 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 		git commit -m nested
 	) &&
 	test_must_fail git clone --recurse-submodules nested clone 2>err &&
-	test_i18ngrep "is inside git dir" err
+	test_i18ngrep -E "(is inside git dir|hippo already exists|not a git repository: .*/hippo)" err
 '
 
 test_done
