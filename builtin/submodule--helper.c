@@ -18,6 +18,7 @@
 #include "diffcore.h"
 #include "diff.h"
 #include "object-store.h"
+#include "dir.h"
 
 #define OPT_QUIET (1 << 0)
 #define OPT_CACHED (1 << 1)
@@ -1354,7 +1355,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	char *p, *path = NULL, *sm_gitdir;
 	struct strbuf sb = STRBUF_INIT;
 	struct string_list reference = STRING_LIST_INIT_NODUP;
-	int dissociate = 0;
+	int dissociate = 0, require_init = 0;
 	char *sm_alternate = NULL, *error_strategy = NULL;
 
 	struct option module_clone_options[] = {
@@ -1381,6 +1382,8 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&quiet, "Suppress output for cloning a submodule"),
 		OPT_BOOL(0, "progress", &progress,
 			   N_("force cloning progress")),
+		OPT_BOOL(0, "require-init", &require_init,
+			   N_("disallow cloning into non-empty directory")),
 		OPT_END()
 	};
 
@@ -1408,6 +1411,10 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	} else
 		path = xstrdup(path);
 
+	if (validate_submodule_git_dir(sm_gitdir, name) < 0)
+		die(_("refusing to create/use '%s' in another submodule's "
+			"git dir"), sm_gitdir);
+
 	if (!file_exists(sm_gitdir)) {
 		if (safe_create_leading_directories_const(sm_gitdir) < 0)
 			die(_("could not create directory '%s'"), sm_gitdir);
@@ -1419,6 +1426,8 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			die(_("clone of '%s' into submodule path '%s' failed"),
 			    url, path);
 	} else {
+		if (require_init && !access(path, X_OK) && !is_empty_dir(path))
+			die(_("directory not empty: '%s'"), path);
 		if (safe_create_leading_directories_const(path) < 0)
 			die(_("could not create directory '%s'"), path);
 		strbuf_addf(&sb, "%s/index", sm_gitdir);
@@ -1531,6 +1540,7 @@ struct submodule_update_clone {
 	int recommend_shallow;
 	struct string_list references;
 	int dissociate;
+	unsigned require_init;
 	const char *depth;
 	const char *recursive_prefix;
 	const char *prefix;
@@ -1549,7 +1559,7 @@ struct submodule_update_clone {
 	int max_jobs;
 };
 #define SUBMODULE_UPDATE_CLONE_INIT {0, MODULE_LIST_INIT, 0, \
-	SUBMODULE_UPDATE_STRATEGY_INIT, 0, 0, -1, STRING_LIST_INIT_DUP, 0, \
+	SUBMODULE_UPDATE_STRATEGY_INIT, 0, 0, -1, STRING_LIST_INIT_DUP, 0, 0, \
 	NULL, NULL, NULL, \
 	NULL, 0, 0, 0, NULL, 0, 0, 0}
 
@@ -1676,6 +1686,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		argv_array_pushl(&child->args, "--prefix", suc->prefix, NULL);
 	if (suc->recommend_shallow && sub->recommend_shallow == 1)
 		argv_array_push(&child->args, "--depth=1");
+	if (suc->require_init)
+		argv_array_push(&child->args, "--require-init");
 	argv_array_pushl(&child->args, "--path", sub->path, NULL);
 	argv_array_pushl(&child->args, "--name", sub->name, NULL);
 	argv_array_pushl(&child->args, "--url", url, NULL);
@@ -1866,6 +1878,8 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&suc.quiet, N_("don't print cloning progress")),
 		OPT_BOOL(0, "progress", &suc.progress,
 			    N_("force cloning progress")),
+		OPT_BOOL(0, "require-init", &suc.require_init,
+			   N_("disallow cloning into non-empty directory")),
 		OPT_END()
 	};
 

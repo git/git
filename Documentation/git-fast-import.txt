@@ -50,6 +50,21 @@ OPTIONS
 	memory used by fast-import during this run.  Showing this output
 	is currently the default, but can be disabled with --quiet.
 
+--allow-unsafe-features::
+	Many command-line options can be provided as part of the
+	fast-import stream itself by using the `feature` or `option`
+	commands. However, some of these options are unsafe (e.g.,
+	allowing fast-import to access the filesystem outside of the
+	repository). These options are disabled by default, but can be
+	allowed by providing this option on the command line.  This
+	currently impacts only the `export-marks`, `import-marks`, and
+	`import-marks-if-exists` feature commands.
++
+	Only enable this option if you trust the program generating the
+	fast-import stream! This option is enabled automatically for
+	remote-helpers that use the `import` capability, as they are
+	already trusted to run their own code.
+
 Options for Frontends
 ~~~~~~~~~~~~~~~~~~~~~
 

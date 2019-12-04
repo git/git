@@ -389,6 +389,12 @@ int mingw_mkdir(const char *path, int mode)
 {
 	int ret;
 	wchar_t wpath[MAX_PATH];
+
+	if (!is_valid_win32_path(path)) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	if (xutftowcs_path(wpath, path) < 0)
 		return -1;
 	ret = _wmkdir(wpath);
@@ -462,13 +468,18 @@ int mingw_open (const char *filename, int oflags, ...)
 	typedef int (*open_fn_t)(wchar_t const *wfilename, int oflags, ...);
 	va_list args;
 	unsigned mode;
-	int fd;
+	int fd, create = (oflags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL);
 	wchar_t wfilename[MAX_PATH];
 	open_fn_t open_fn;
 
 	va_start(args, oflags);
 	mode = va_arg(args, int);
 	va_end(args);
+
+	if (!is_valid_win32_path(filename)) {
+		errno = create ? EINVAL : ENOENT;
+		return -1;
+	}
 
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
@@ -536,6 +547,11 @@ FILE *mingw_fopen (const char *filename, const char *otype)
 	int hide = needs_hiding(filename);
 	FILE *file;
 	wchar_t wfilename[MAX_PATH], wotype[4];
+	if (!is_valid_win32_path(filename)) {
+		int create = otype && strchr(otype, 'w');
+		errno = create ? EINVAL : ENOENT;
+		return NULL;
+	}
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 	if (xutftowcs_path(wfilename, filename) < 0 ||
@@ -558,6 +574,11 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 	int hide = needs_hiding(filename);
 	FILE *file;
 	wchar_t wfilename[MAX_PATH], wotype[4];
+	if (!is_valid_win32_path(filename)) {
+		int create = otype && strchr(otype, 'w');
+		errno = create ? EINVAL : ENOENT;
+		return NULL;
+	}
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 	if (xutftowcs_path(wfilename, filename) < 0 ||
@@ -1051,7 +1072,7 @@ static const char *quote_arg(const char *arg)
 				p++;
 				len++;
 			}
-			if (*p == '"')
+			if (*p == '"' || !*p)
 				n += count*2 + 1;
 			continue;
 		}
@@ -1073,16 +1094,19 @@ static const char *quote_arg(const char *arg)
 				count++;
 				*d++ = *arg++;
 			}
-			if (*arg == '"') {
+			if (*arg == '"' || !*arg) {
 				while (count-- > 0)
 					*d++ = '\\';
+				/* don't escape the surrounding end quote */
+				if (!*arg)
+					break;
 				*d++ = '\\';
 			}
 		}
 		*d++ = *arg++;
 	}
 	*d++ = '"';
-	*d++ = 0;
+	*d++ = '\0';
 	return q;
 }
 
@@ -2275,6 +2299,30 @@ pid_t waitpid(pid_t pid, int *status, int options)
 	return -1;
 }
 
+int mingw_has_dos_drive_prefix(const char *path)
+{
+	int i;
+
+	/*
+	 * Does it start with an ASCII letter (i.e. highest bit not set),
+	 * followed by a colon?
+	 */
+	if (!(0x80 & (unsigned char)*path))
+		return *path && path[1] == ':' ? 2 : 0;
+
+	/*
+	 * While drive letters must be letters of the English alphabet, it is
+	 * possible to assign virtually _any_ Unicode character via `subst` as
+	 * a drive letter to "virtual drives". Even `1`, or `ä`. Or fun stuff
+	 * like this:
+	 *
+	 *      subst ֍: %USERPROFILE%\Desktop
+	 */
+	for (i = 1; i < 4 && (0x80 & (unsigned char)path[i]); i++)
+		; /* skip first UTF-8 character */
+	return path[i] == ':' ? i + 1 : 0;
+}
+
 int mingw_skip_dos_drive_prefix(char **path)
 {
 	int ret = has_dos_drive_prefix(*path);
@@ -2414,6 +2462,50 @@ static void setup_windows_environment(void)
 	/* simulate TERM to enable auto-color (see color.c) */
 	if (!getenv("TERM"))
 		setenv("TERM", "cygwin", 1);
+}
+
+int is_valid_win32_path(const char *path)
+{
+	int preceding_space_or_period = 0, i = 0, periods = 0;
+
+	if (!protect_ntfs)
+		return 1;
+
+	skip_dos_drive_prefix((char **)&path);
+
+	for (;;) {
+		char c = *(path++);
+		switch (c) {
+		case '\0':
+		case '/': case '\\':
+			/* cannot end in ` ` or `.`, except for `.` and `..` */
+			if (preceding_space_or_period &&
+			    (i != periods || periods > 2))
+				return 0;
+			if (!c)
+				return 1;
+
+			i = periods = preceding_space_or_period = 0;
+			continue;
+		case '.':
+			periods++;
+			/* fallthru */
+		case ' ':
+			preceding_space_or_period = 1;
+			i++;
+			continue;
+		case ':': /* DOS drive prefix was already skipped */
+		case '<': case '>': case '"': case '|': case '?': case '*':
+			/* illegal character */
+			return 0;
+		default:
+			if (c > '\0' && c < '\x20')
+				/* illegal character */
+				return 0;
+		}
+		preceding_space_or_period = 0;
+		i++;
+	}
 }
 
 /*
