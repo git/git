@@ -716,7 +716,23 @@ def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
 def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
-        errors_as_exceptions=False):
+        errors_as_exceptions=False, encode_cmd_output=True):
+    """ Executes a P4 command:  'cmd' optionally passing 'stdin' to the command's
+        standard input via a temporary file with 'stdin_mode' mode.
+
+        Output from the command is optionally passed to the callback function 'cb'.
+        If 'cb' is None, the response from the command is parsed into a list
+        of resulting dictionaries. (For each block read from the process pipe.)
+
+        If 'skip_info' is true, information in a block read that has a code type of
+        'info' will be skipped.
+
+        If 'errors_as_exceptions' is set to true (the default is false) the error
+        code returned from the execution will generate an exception.
+
+        If 'encode_cmd_output' is set to true (the default) the data that is returned
+        by this function will be passed through the "as_string" function.
+    """
 
     if not isinstance(cmd, list):
         cmd = "-G " + cmd
@@ -739,7 +755,7 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
             stdin_file.write(stdin)
         else:
             for i in stdin:
-                stdin_file.write(i + '\n')
+                stdin_file.write(as_bytes(i) + b'\n')
         stdin_file.flush()
         stdin_file.seek(0)
 
@@ -753,12 +769,15 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
         while True:
             entry = marshal.load(p4.stdout)
             if skip_info:
-                if 'code' in entry and entry['code'] == 'info':
+                if b'code' in entry and entry[b'code'] == b'info':
                     continue
             if cb is not None:
                 cb(entry)
             else:
-                result.append(entry)
+                out = {}
+                for key, value in entry.items():
+                    out[as_string(key)] = (as_string(value) if encode_cmd_output else value)
+                result.append(out)
     except EOFError:
         pass
     exitCode = p4.wait()
@@ -785,8 +804,9 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
 
     return result
 
-def p4Cmd(cmd):
-    list = p4CmdList(cmd)
+def p4Cmd(cmd, encode_cmd_output=True):
+    """Executes a P4 command and returns the results in a dictionary"""
+    list = p4CmdList(cmd, encode_cmd_output=encode_cmd_output)
     result = {}
     for entry in list:
         result.update(entry)
@@ -1165,7 +1185,7 @@ def getClientSpec():
     """Look at the p4 client spec, create a View() object that contains
        all the mappings, and return it."""
 
-    specList = p4CmdList("client -o")
+    specList = p4CmdList("client -o", encode_cmd_output=False)
     if len(specList) != 1:
         die('Output from "client -o" is %d lines, expecting 1' %
             len(specList))
@@ -2609,7 +2629,7 @@ class View(object):
         if len(fileArgs) == 0:
             return  # All files in cache
 
-        where_result = p4CmdList(["-x", "-", "where"], stdin=fileArgs)
+        where_result = p4CmdList(["-x", "-", "where"], stdin=fileArgs, encode_cmd_output=False)
         for res in where_result:
             if "code" in res and res["code"] == "error":
                 # assume error is "... file(s) not in client view"
