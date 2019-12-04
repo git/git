@@ -21,6 +21,25 @@ test_no_missing_in_packs () {
 	test_must_be_empty missing
 }
 
+# we expect $packsha1 and $objsha1 to be defined
+test_has_duplicate_object () {
+	want_duplicate_object="$1"
+	found_duplicate_object=false
+	for p in .git/objects/pack/*.idx
+	do
+		idx=$(basename $p)
+		test "pack-$packsha1.idx" = "$idx" && continue
+		git verify-pack -v $p >packlist || return $?
+		if egrep "^$objsha1" packlist
+		then
+			found_duplicate_object=true
+			echo "DUPLICATE OBJECT FOUND"
+			break
+		fi
+	done &&
+	test "$want_duplicate_object" = "$found_duplicate_object"
+}
+
 test_expect_success 'objects in packs marked .keep are not repacked' '
 	echo content1 >file1 &&
 	echo content2 >file2 &&
@@ -40,54 +59,19 @@ test_expect_success 'objects in packs marked .keep are not repacked' '
 	mv pack-* .git/objects/pack/ &&
 	git repack -A -d -l &&
 	git prune-packed &&
-	for p in .git/objects/pack/*.idx
-	do
-		idx=$(basename $p)
-		test "pack-$packsha1.idx" = "$idx" && continue
-		if git verify-pack -v $p | egrep "^$objsha1"
-		then
-			found_duplicate_object=1
-			echo "DUPLICATE OBJECT FOUND"
-			break
-		fi
-	done &&
-	test -z "$found_duplicate_object"
+	test_has_duplicate_object false
 '
 
 test_expect_success 'writing bitmaps via command-line can duplicate .keep objects' '
 	# build on $objsha1, $packsha1, and .keep state from previous
 	git repack -Adbl &&
-	test_when_finished "found_duplicate_object=" &&
-	for p in .git/objects/pack/*.idx
-	do
-		idx=$(basename $p)
-		test "pack-$packsha1.idx" = "$idx" && continue
-		if git verify-pack -v $p | egrep "^$objsha1"
-		then
-			found_duplicate_object=1
-			echo "DUPLICATE OBJECT FOUND"
-			break
-		fi
-	done &&
-	test "$found_duplicate_object" = 1
+	test_has_duplicate_object true
 '
 
 test_expect_success 'writing bitmaps via config can duplicate .keep objects' '
 	# build on $objsha1, $packsha1, and .keep state from previous
 	git -c repack.writebitmaps=true repack -Adl &&
-	test_when_finished "found_duplicate_object=" &&
-	for p in .git/objects/pack/*.idx
-	do
-		idx=$(basename $p)
-		test "pack-$packsha1.idx" = "$idx" && continue
-		if git verify-pack -v $p | egrep "^$objsha1"
-		then
-			found_duplicate_object=1
-			echo "DUPLICATE OBJECT FOUND"
-			break
-		fi
-	done &&
-	test "$found_duplicate_object" = 1
+	test_has_duplicate_object true
 '
 
 test_expect_success 'loose objects in alternate ODB are not repacked' '
@@ -100,16 +84,7 @@ test_expect_success 'loose objects in alternate ODB are not repacked' '
 	git commit -m commit_file3 &&
 	git repack -a -d -l &&
 	git prune-packed &&
-	for p in .git/objects/pack/*.idx
-	do
-		if git verify-pack -v $p | egrep "^$objsha1"
-		then
-			found_duplicate_object=1
-			echo "DUPLICATE OBJECT FOUND"
-			break
-		fi
-	done &&
-	test -z "$found_duplicate_object"
+	test_has_duplicate_object false
 '
 
 test_expect_success 'packed obs in alt ODB are repacked even when local repo is packless' '
