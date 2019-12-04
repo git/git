@@ -397,6 +397,10 @@ static inline int git_offset_1st_component(const char *path)
 #define offset_1st_component git_offset_1st_component
 #endif
 
+#ifndef is_valid_path
+#define is_valid_path(path) 1
+#endif
+
 #ifndef find_last_dir_sep
 static inline char *git_find_last_dir_sep(const char *path)
 {
