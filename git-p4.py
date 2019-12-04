@@ -1459,8 +1459,10 @@ class P4UserMap(object):
             return True
 
     def getUserCacheFilename(self):
+        """ Returns the filename of the username cache
+        """
         home = os.environ.get("HOME", os.environ.get("USERPROFILE"))
-        return home + "/.gitp4-usercache.txt"
+        return os.path.join(home, ".gitp4-usercache.txt")
 
     def getUserMapFromPerforceServer(self):
         if self.userMapFromPerforceServer:
@@ -3978,13 +3980,16 @@ class P4Clone(P4Sync):
         self.cloneBare = False
 
     def defaultDestination(self, args):
+        """ Returns the last path component as the default git
+            repository directory name
+        """
         ## TODO: use common prefix of args?
         depotPath = args[0]
         depotDir = re.sub("(@[^@]*)$", "", depotPath)
         depotDir = re.sub("(#[^#]*)$", "", depotDir)
         depotDir = re.sub(r"\.\.\.$", "", depotDir)
         depotDir = re.sub(r"/$", "", depotDir)
-        return os.path.split(depotDir)[1]
+        return depotDir.split('/')[-1]
 
     def run(self, args):
         if len(args) < 1:
@@ -4257,8 +4262,8 @@ def main():
                         chdir(cdup);
 
         if not isValidGitDir(cmd.gitdir):
-            if isValidGitDir(cmd.gitdir + "/.git"):
-                cmd.gitdir += "/.git"
+            if isValidGitDir(os.path.join(cmd.gitdir, ".git")):
+                cmd.gitdir = os.path.join(cmd.gitdir, ".git")
             else:
                 die("fatal: cannot locate git repository at %s" % cmd.gitdir)
 
