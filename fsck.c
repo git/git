@@ -551,7 +551,7 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 
 	while (desc.size) {
 		unsigned mode;
-		const char *name;
+		const char *name, *backslash;
 		const struct object_id *oid;
 
 		oid = tree_entry_extract(&desc, &name, &mode);
@@ -565,6 +565,15 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 			       is_hfs_dotgit(name) ||
 			       is_ntfs_dotgit(name));
 		has_zero_pad |= *(char *)desc.buffer == '0';
+
+		if ((backslash = strchr(name, '\\'))) {
+			while (backslash) {
+				backslash++;
+				has_dotgit |= is_ntfs_dotgit(backslash);
+				backslash = strchr(backslash, '\\');
+			}
+		}
+
 		if (update_tree_entry_gently(&desc)) {
 			retval += report(options, &item->object, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
 			break;
