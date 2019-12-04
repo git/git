@@ -1,0 +1,54 @@
+Git v2.14.6 Release Notes
+=========================
+
+This release addresses the security issues CVE-2019-1348,
+CVE-2019-1349, CVE-2019-1350, CVE-2019-1351, CVE-2019-1352,
+CVE-2019-1353, CVE-2019-1354, and CVE-2019-1387.
+
+Fixes since v2.14.5
+-------------------
+
+ * CVE-2019-1348:
+   The --export-marks option of git fast-import is exposed also via
+   the in-stream command feature export-marks=... and it allows
+   overwriting arbitrary paths.
+
+ * CVE-2019-1349:
+   When submodules are cloned recursively, under certain circumstances
+   Git could be fooled into using the same Git directory twice. We now
+   require the directory to be empty.
+
+ * CVE-2019-1350:
+   Incorrect quoting of command-line arguments allowed remote code
+   execution during a recursive clone in conjunction with SSH URLs.
+
+ * CVE-2019-1351:
+   While the only permitted drive letters for physical drives on
+   Windows are letters of the US-English alphabet, this restriction
+   does not apply to virtual drives assigned via subst <letter>:
+   <path>. Git mistook such paths for relative paths, allowing writing
+   outside of the worktree while cloning.
+
+ * CVE-2019-1352:
+   Git was unaware of NTFS Alternate Data Streams, allowing files
+   inside the .git/ directory to be overwritten during a clone.
+
+ * CVE-2019-1353:
+   When running Git in the Windows Subsystem for Linux (also known as
+   "WSL") while accessing a working directory on a regular Windows
+   drive, none of the NTFS protections were active.
+
+ * CVE-2019-1354:
+   Filenames on Linux/Unix can contain backslashes. On Windows,
+   backslashes are directory separators. Git did not use to refuse to
+   write out tracked files with such filenames.
+
+ * CVE-2019-1387:
+   Recursive clones are currently affected by a vulnerability that is
+   caused by too-lax validation of submodule names, allowing very
+   targeted attacks via remote code execution in recursive clones.
+
+Credit for finding these vulnerabilities goes to Microsoft Security
+Response Center, in particular to Nicolas Joly. The `fast-import`
+fixes were provided by Jeff King, the other fixes by Johannes
+Schindelin with help from Garima Singh.

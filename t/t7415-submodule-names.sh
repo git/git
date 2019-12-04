@@ -151,4 +151,60 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 	)
 '
 
+test_expect_success MINGW 'prevent git~1 squatting on Windows' '
+	git init squatting &&
+	(
+		cd squatting &&
+		mkdir a &&
+		touch a/..git &&
+		git add a/..git &&
+		test_tick &&
+		git commit -m initial &&
+
+		modules="$(test_write_lines \
+			"[submodule \"b.\"]" "url = ." "path = c" \
+			"[submodule \"b\"]" "url = ." "path = d\\\\a" |
+			git hash-object -w --stdin)" &&
+		rev="$(git rev-parse --verify HEAD)" &&
+		hash="$(echo x | git hash-object -w --stdin)" &&
+		git -c core.protectNTFS=false update-index --add \
+			--cacheinfo 100644,$modules,.gitmodules \
+			--cacheinfo 160000,$rev,c \
+			--cacheinfo 160000,$rev,d\\a \
+			--cacheinfo 100644,$hash,d./a/x \
+			--cacheinfo 100644,$hash,d./a/..git &&
+		test_tick &&
+		git -c core.protectNTFS=false commit -m "module" &&
+		test_must_fail git show HEAD: 2>err &&
+		test_i18ngrep backslash err
+	) &&
+	test_must_fail git -c core.protectNTFS=false \
+		clone --recurse-submodules squatting squatting-clone 2>err &&
+	test_i18ngrep -e "directory not empty" -e "not an empty directory" err &&
+	! grep gitdir squatting-clone/d/a/git~2
+'
+
+test_expect_success 'git dirs of sibling submodules must not be nested' '
+	git init nested &&
+	test_commit -C nested nested &&
+	(
+		cd nested &&
+		cat >.gitmodules <<-EOF &&
+		[submodule "hippo"]
+			url = .
+			path = thing1
+		[submodule "hippo/hooks"]
+			url = .
+			path = thing2
+		EOF
+		git clone . thing1 &&
+		git clone . thing2 &&
+		git add .gitmodules thing1 thing2 &&
+		test_tick &&
+		git commit -m nested
+	) &&
+	test_must_fail git clone --recurse-submodules nested clone 2>err &&
+	test_i18ngrep "is inside git dir" err
+'
+
 test_done
