@@ -1,0 +1,8 @@
+Git v2.18.2 Release Notes
+=========================
+
+This release merges up the fixes that appear in v2.14.6, v2.15.4
+and in v2.17.3, addressing the security issues CVE-2019-1348,
+CVE-2019-1349, CVE-2019-1350, CVE-2019-1351, CVE-2019-1352,
+CVE-2019-1353, CVE-2019-1354, and CVE-2019-1387; see the release notes
+for those versions for details.

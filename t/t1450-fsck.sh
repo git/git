@@ -449,6 +449,7 @@ while read name path pretty; do
 		(
 			git init $name-$type &&
 			cd $name-$type &&
+			git config core.protectNTFS false &&
 			echo content >file &&
 			git add file &&
 			git commit -m base &&
