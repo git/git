@@ -4,10 +4,21 @@ test_description='git repack works correctly'
 
 . ./test-lib.sh
 
-commit_and_pack() {
+commit_and_pack () {
 	test_commit "$@" 1>&2 &&
 	SHA1=$(git pack-objects --all --unpacked --incremental .git/objects/pack/pack </dev/null) &&
 	echo pack-${SHA1}.pack
+}
+
+test_no_missing_in_packs () {
+	myidx=$(ls -1 .git/objects/pack/*.idx) &&
+	test_path_is_file "$myidx" &&
+	git verify-pack -v alt_objects/pack/*.idx >orig.raw &&
+	sed -n -e "s/^\([0-9a-f]\{40\}\).*/\1/p" orig.raw | sort >orig &&
+	git verify-pack -v $myidx >dest.raw &&
+	cut -d" " -f1 dest.raw | sort >dest &&
+	comm -23 orig dest >missing &&
+	test_must_be_empty missing
 }
 
 test_expect_success 'objects in packs marked .keep are not repacked' '
@@ -105,19 +116,7 @@ test_expect_success 'packed obs in alt ODB are repacked even when local repo is 
 	mkdir alt_objects/pack &&
 	mv .git/objects/pack/* alt_objects/pack &&
 	git repack -a &&
-	myidx=$(ls -1 .git/objects/pack/*.idx) &&
-	test_path_is_file "$myidx" &&
-	for p in alt_objects/pack/*.idx
-	do
-		git verify-pack -v $p | sed -n -e "/^[0-9a-f]\{40\}/p"
-	done | while read sha1 rest
-	do
-		if ! ( git verify-pack -v $myidx | grep "^$sha1" )
-		then
-			echo "Missing object in local pack: $sha1"
-			return 1
-		fi
-	done
+	test_no_missing_in_packs
 '
 
 test_expect_success 'packed obs in alt ODB are repacked when local repo has packs' '
@@ -128,19 +127,7 @@ test_expect_success 'packed obs in alt ODB are repacked when local repo has pack
 	git commit -m more_content &&
 	git repack &&
 	git repack -a -d &&
-	myidx=$(ls -1 .git/objects/pack/*.idx) &&
-	test_path_is_file "$myidx" &&
-	for p in alt_objects/pack/*.idx
-	do
-		git verify-pack -v $p | sed -n -e "/^[0-9a-f]\{40\}/p"
-	done | while read sha1 rest
-	do
-		if ! ( git verify-pack -v $myidx | grep "^$sha1" )
-		then
-			echo "Missing object in local pack: $sha1"
-			return 1
-		fi
-	done
+	test_no_missing_in_packs
 '
 
 test_expect_success 'packed obs in alternate ODB kept pack are repacked' '
@@ -156,19 +143,7 @@ test_expect_success 'packed obs in alternate ODB kept pack are repacked' '
 		fi
 	done &&
 	git repack -a -d &&
-	myidx=$(ls -1 .git/objects/pack/*.idx) &&
-	test_path_is_file "$myidx" &&
-	for p in alt_objects/pack/*.idx
-	do
-		git verify-pack -v $p | sed -n -e "/^[0-9a-f]\{40\}/p"
-	done | while read sha1 rest
-	do
-		if ! ( git verify-pack -v $myidx | grep "^$sha1" )
-		then
-			echo "Missing object in local pack: $sha1"
-			return 1
-		fi
-	done
+	test_no_missing_in_packs
 '
 
 test_expect_success 'packed unreachable obs in alternate ODB are not loosened' '
