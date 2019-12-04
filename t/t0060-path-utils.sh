@@ -165,6 +165,15 @@ test_expect_success 'absolute path rejects the empty string' '
 	test_must_fail test-tool path-utils absolute_path ""
 '
 
+test_expect_success MINGW '<drive-letter>:\\abc is an absolute path' '
+	for letter in : \" C Z 1 ä
+	do
+		path=$letter:\\abc &&
+		absolute="$(test-tool path-utils absolute_path "$path")" &&
+		test "$path" = "$absolute" || return 1
+	done
+'
+
 test_expect_success 'real path rejects the empty string' '
 	test_must_fail test-tool path-utils real_path ""
 '
@@ -408,6 +417,9 @@ test_expect_success 'match .gitmodules' '
 		~1000000 \
 		~9999999 \
 		\
+		.gitmodules:\$DATA \
+		"gitmod~4 . :\$DATA" \
+		\
 		--not \
 		".gitmodules x"  \
 		".gitmodules .x" \
@@ -432,7 +444,25 @@ test_expect_success 'match .gitmodules' '
 		\
 		GI7EB~1 \
 		GI7EB~01 \
-		GI7EB~1X
+		GI7EB~1X \
+		\
+		.gitmodules,:\$DATA
+'
+
+test_expect_success MINGW 'is_valid_path() on Windows' '
+       test-tool path-utils is_valid_path \
+		win32 \
+		"win32 x" \
+		../hello.txt \
+		C:\\git \
+		\
+		--not \
+		"win32 "  \
+		"win32 /x "  \
+		"win32."  \
+		"win32 . ." \
+		.../hello.txt \
+		colon:test
 '
 
 test_done

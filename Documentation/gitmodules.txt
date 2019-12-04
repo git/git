@@ -44,9 +44,8 @@ submodule.<name>.update::
 	submodule init` to initialize the configuration variable of
 	the same name. Allowed values here are 'checkout', 'rebase',
 	'merge' or 'none'. See description of 'update' command in
-	linkgit:git-submodule[1] for their meaning. Note that the
-	'!command' form is intentionally ignored here for security
-	reasons.
+	linkgit:git-submodule[1] for their meaning. For security
+	reasons, the '!command' form is not accepted here.
 
 submodule.<name>.branch::
 	A remote branch name for tracking updates in the upstream submodule.
