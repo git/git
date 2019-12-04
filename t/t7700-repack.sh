@@ -30,7 +30,7 @@ test_has_duplicate_object () {
 		idx=$(basename $p)
 		test "pack-$packsha1.idx" = "$idx" && continue
 		git verify-pack -v $p >packlist || return $?
-		if egrep "^$objsha1" packlist
+		if grep "^$objsha1" packlist
 		then
 			found_duplicate_object=true
 			echo "DUPLICATE OBJECT FOUND"
@@ -135,7 +135,7 @@ test_expect_success 'packed unreachable obs in alternate ODB are not loosened' '
 	rm -f .git/objects/pack/* &&
 	mv pack-* .git/objects/pack/ &&
 	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		egrep "^$csha1 " | sort | uniq | wc -l) &&
+		grep "^$csha1 " | sort | uniq | wc -l) &&
 	echo >.git/objects/info/alternates &&
 	test_must_fail git show $csha1
 '
@@ -152,7 +152,7 @@ test_expect_success 'local packed unreachable obs that exist in alternate ODB ar
 	rm -f .git/objects/pack/* &&
 	mv pack-* .git/objects/pack/ &&
 	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		egrep "^$csha1 " | sort | uniq | wc -l) &&
+		grep "^$csha1 " | sort | uniq | wc -l) &&
 	echo >.git/objects/info/alternates &&
 	test_must_fail git show $csha1
 '
