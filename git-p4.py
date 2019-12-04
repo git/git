@@ -4187,6 +4187,72 @@ class P4Branches(Command):
             print("%s <= %s (%s)" % (branch, ",".join(settings["depot-paths"]), settings["change"]))
         return True
 
+class Py23File():
+    """ Python2/3 Unicode File Wrapper
+    """
+
+    stream_handle = None
+    verbose       = False
+    debug_handle  = None
+
+    def __init__(self, stream_handle, verbose = False):
+        """ Create a Python3 compliant Unicode to Byte String
+            Windows compatible wrapper
+
+            stream_handle = the underlying file-like handle
+            verbose       = Boolean if content should be echoed
+        """
+        self.stream_handle = stream_handle
+        self.verbose       = verbose
+
+    def write(self, utf8string):
+        """ Writes the utf8 encoded string to the underlying
+            file stream
+        """
+        self.stream_handle.write(as_bytes(utf8string))
+        if self.verbose:
+            sys.stderr.write("Stream Output: %s" % utf8string)
+            sys.stderr.flush()
+
+    def read(self, size = None):
+        """ Reads int charcters from the underlying stream
+            and converts it to utf8.
+
+            Be aware, the size value is for reading the underlying
+            bytes so the value may be incorrect. Usage of the size
+            value is discouraged.
+        """
+        if size == None:
+            return as_string(self.stream_handle.read())
+        else:
+            return as_string(self.stream_handle.read(size))
+
+    def readline(self):
+        """ Reads a line from the underlying byte stream
+            and converts it to utf8
+        """
+        return as_string(self.stream_handle.readline())
+
+    def readlines(self, sizeHint = None):
+        """ Returns a list containing lines from the file converted to unicode.
+
+            sizehint - Optional. If the optional sizehint argument is
+            present, instead of reading up to EOF, whole lines totalling
+            approximately sizehint bytes are read.
+        """
+        lines = self.stream_handle.readlines(sizeHint)
+        for i in range(0, len(lines)):
+            lines[i] = as_string(lines[i])
+        return lines
+
+    def close(self):
+        """ Closes the underlying byte stream """
+        self.stream_handle.close()
+
+    def flush(self):
+        """ Flushes the underlying byte stream """
+        self.stream_handle.flush()
+
 class HelpFormatter(optparse.IndentedHelpFormatter):
     def __init__(self):
         optparse.IndentedHelpFormatter.__init__(self)
