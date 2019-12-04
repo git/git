@@ -1241,7 +1241,7 @@ def getClientSpec():
     entry = specList[0]
 
     # the //client/ name
-    client_name = entry["Client"]
+    client_name = as_string(entry["Client"])
 
     # just the keys that start with "View"
     view_keys = [ k for k in list(entry.keys()) if k.startswith("View") ]
@@ -2625,19 +2625,25 @@ class P4Submit(Command, P4UserMap):
         return True
 
 class View(object):
-    """Represent a p4 view ("p4 help views"), and map files in a
-       repo according to the view."""
+    """ Represent a p4 view ("p4 help views"), and map files in a
+        repo according to the view.
+    """
 
     def __init__(self, client_name):
         self.mappings = []
-        self.client_prefix = "//%s/" % client_name
+        # the client prefix is saved in bytes as it is used for comparison
+        # against server data.
+        self.client_prefix = as_bytes("//%s/" % client_name)
         # cache results of "p4 where" to lookup client file locations
         self.client_spec_path_cache = {}
 
     def append(self, view_line):
-        """Parse a view line, splitting it into depot and client
-           sides.  Append to self.mappings, preserving order.  This
-           is only needed for tag creation."""
+        """ Parse a view line, splitting it into depot and client
+            sides.  Append to self.mappings, preserving order.  This
+            is only needed for tag creation.
+
+            view_line should be in bytes (depot path encoding)
+        """
 
         # Split the view line into exactly two words.  P4 enforces
         # structure on these lines that simplifies this quite a bit.
@@ -2650,28 +2656,28 @@ class View(object):
         # The line is already white-space stripped.
         # The two words are separated by a single space.
         #
-        if view_line[0] == '"':
+        if view_line[0] == b'"':
             # First word is double quoted.  Find its end.
-            close_quote_index = view_line.find('"', 1)
+            close_quote_index = view_line.find(b'"', 1)
             if close_quote_index <= 0:
-                die("No first-word closing quote found: %s" % view_line)
+                die("No first-word closing quote found: %s" % path_as_string(view_line))
             depot_side = view_line[1:close_quote_index]
             # skip closing quote and space
             rhs_index = close_quote_index + 1 + 1
         else:
-            space_index = view_line.find(" ")
+            space_index = view_line.find(b" ")
             if space_index <= 0:
-                die("No word-splitting space found: %s" % view_line)
+                die("No word-splitting space found: %s" % path_as_string(view_line))
             depot_side = view_line[0:space_index]
             rhs_index = space_index + 1
 
         # prefix + means overlay on previous mapping
-        if depot_side.startswith("+"):
+        if depot_side.startswith(b"+"):
             depot_side = depot_side[1:]
 
         # prefix - means exclude this path, leave out of mappings
         exclude = False
-        if depot_side.startswith("-"):
+        if depot_side.startswith(b"-"):
             exclude = True
             depot_side = depot_side[1:]
 
@@ -2682,7 +2688,7 @@ class View(object):
         # chop off //client/ part to make it relative
         if not clientFile.startswith(self.client_prefix):
             die("No prefix '%s' on clientFile '%s'" %
-                (self.client_prefix, clientFile))
+                (as_string(self.client_prefix)), path_as_string(clientFile))
         return clientFile[len(self.client_prefix):]
 
     def update_client_spec_path_cache(self, files):
@@ -2696,7 +2702,7 @@ class View(object):
 
         where_result = p4CmdList(["-x", "-", "where"], stdin=fileArgs, encode_cmd_output=False)
         for res in where_result:
-            if "code" in res and res["code"] == "error":
+            if "code" in res and res["code"] == b"error":
                 # assume error is "... file(s) not in client view"
                 continue
             if "clientFile" not in res:
@@ -4113,10 +4119,14 @@ class P4Clone(P4Sync):
                                  help="where to leave result of the clone"),
             optparse.make_option("--bare", dest="cloneBare",
                                  action="store_true", default=False),
+            optparse.make_option("--encoding", dest="setPathEncoding",
+                                 action="store", default=None,
+                                 help="Sets the path encoding for this depot")
         ]
         self.cloneDestination = None
         self.needsGit = False
         self.cloneBare = False
+        self.setPathEncoding = None
 
     def defaultDestination(self, args):
         """ Returns the last path component as the default git
@@ -4140,6 +4150,14 @@ class P4Clone(P4Sync):
 
         depotPaths = args
 
+        # If we have an encoding provided, ignore what may already exist
+        # in the registry. This will ensure we show the displayed values
+        # using the correct encoding.
+        if self.setPathEncoding:
+            gitConfigSet("git-p4.pathEncoding", self.setPathEncoding)
+
+        # If more than 1 path element is supplied, the last element
+        # is the clone destination.
         if not self.cloneDestination and len(depotPaths) > 1:
             self.cloneDestination = depotPaths[-1]
             depotPaths = depotPaths[:-1]
@@ -4166,6 +4184,13 @@ class P4Clone(P4Sync):
         retcode = subprocess.call(init_cmd)
         if retcode:
             raise CalledProcessError(retcode, init_cmd)
+
+        # Set the encoding if it was provided command line
+        if self.setPathEncoding:
+            init_cmd= ["git", "config", "git-p4.pathEncoding", self.setPathEncoding]
+            retcode = subprocess.call(init_cmd)
+            if retcode:
+                raise CalledProcessError(retcode, init_cmd)
 
         if not P4Sync.run(self, depotPaths):
             return False

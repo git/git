@@ -305,6 +305,11 @@ options described above.
 --bare::
 	Perform a bare clone.  See linkgit:git-clone[1].
 
+--encoding <encoding>::
+    Optionally sets the git-p4.pathEncoding configuration value in
+	the newly created Git repository before files are synchronized
+	from P4. See git-p4.pathEncoding for more information.
+
 Submit options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 submit' behavior.
