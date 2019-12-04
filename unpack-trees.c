@@ -1878,7 +1878,8 @@ static int merged_entry(const struct cache_entry *ce,
 		invalidate_ce_path(old, o);
 	}
 
-	do_add_entry(o, merge, update, CE_STAGEMASK);
+	if (do_add_entry(o, merge, update, CE_STAGEMASK) < 0)
+		return -1;
 	return 1;
 }
 

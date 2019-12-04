@@ -363,6 +363,7 @@ static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
 static int seen_data_command;
 static int require_explicit_termination;
+static int allow_unsafe_features;
 
 /* Signal handling */
 static volatile sig_atomic_t checkpoint_requested;
@@ -1825,6 +1826,12 @@ static void dump_marks(void)
 	if (!export_marks_file || (import_marks_file && !import_marks_file_done))
 		return;
 
+	if (safe_create_leading_directories_const(export_marks_file)) {
+		failure |= error_errno("unable to create leading directories of %s",
+				       export_marks_file);
+		return;
+	}
+
 	if (hold_lock_file_for_update(&mark_lock, export_marks_file, 0) < 0) {
 		failure |= error_errno("Unable to write marks file %s",
 				       export_marks_file);
@@ -3197,7 +3204,6 @@ static void option_import_marks(const char *marks,
 	}
 
 	import_marks_file = make_fast_import_path(marks);
-	safe_create_leading_directories_const(import_marks_file);
 	import_marks_file_from_stream = from_stream;
 	import_marks_file_ignore_missing = ignore_missing;
 }
@@ -3238,7 +3244,6 @@ static void option_active_branches(const char *branches)
 static void option_export_marks(const char *marks)
 {
 	export_marks_file = make_fast_import_path(marks);
-	safe_create_leading_directories_const(export_marks_file);
 }
 
 static void option_cat_blob_fd(const char *fd)
@@ -3281,15 +3286,24 @@ static int parse_one_option(const char *option)
 		option_active_branches(option);
 	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
 		option_export_pack_edges(option);
-	} else if (starts_with(option, "quiet")) {
+	} else if (!strcmp(option, "quiet")) {
 		show_stats = 0;
-	} else if (starts_with(option, "stats")) {
+	} else if (!strcmp(option, "stats")) {
 		show_stats = 1;
+	} else if (!strcmp(option, "allow-unsafe-features")) {
+		; /* already handled during early option parsing */
 	} else {
 		return 0;
 	}
 
 	return 1;
+}
+
+static void check_unsafe_feature(const char *feature, int from_stream)
+{
+	if (from_stream && !allow_unsafe_features)
+		die(_("feature '%s' forbidden in input without --allow-unsafe-features"),
+		    feature);
 }
 
 static int parse_one_feature(const char *feature, int from_stream)
@@ -3299,10 +3313,13 @@ static int parse_one_feature(const char *feature, int from_stream)
 	if (skip_prefix(feature, "date-format=", &arg)) {
 		option_date_format(arg);
 	} else if (skip_prefix(feature, "import-marks=", &arg)) {
+		check_unsafe_feature("import-marks", from_stream);
 		option_import_marks(arg, from_stream, 0);
 	} else if (skip_prefix(feature, "import-marks-if-exists=", &arg)) {
+		check_unsafe_feature("import-marks-if-exists", from_stream);
 		option_import_marks(arg, from_stream, 1);
 	} else if (skip_prefix(feature, "export-marks=", &arg)) {
+		check_unsafe_feature(feature, from_stream);
 		option_export_marks(arg);
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
@@ -3428,6 +3445,20 @@ int cmd_main(int argc, const char **argv)
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
 	marks = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
+
+	/*
+	 * We don't parse most options until after we've seen the set of
+	 * "feature" lines at the start of the stream (which allows the command
+	 * line to override stream data). But we must do an early parse of any
+	 * command-line options that impact how we interpret the feature lines.
+	 */
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (*arg != '-' || !strcmp(arg, "--"))
+			break;
+		if (!strcmp(arg, "--allow-unsafe-features"))
+			allow_unsafe_features = 1;
+	}
 
 	global_argc = argc;
 	global_argv = argv;

@@ -947,6 +947,9 @@ int verify_path(const char *path, unsigned mode)
 	if (has_dos_drive_prefix(path))
 		return 0;
 
+	if (!is_valid_path(path))
+		return 0;
+
 	goto inside;
 	for (;;) {
 		if (!c)
@@ -974,7 +977,15 @@ inside:
 			if ((c == '.' && !verify_dotfile(path, mode)) ||
 			    is_dir_sep(c) || c == '\0')
 				return 0;
+		} else if (c == '\\' && protect_ntfs) {
+			if (is_ntfs_dotgit(path))
+				return 0;
+			if (S_ISLNK(mode)) {
+				if (is_ntfs_dotgitmodules(path))
+					return 0;
+			}
 		}
+
 		c = *path++;
 	}
 }
