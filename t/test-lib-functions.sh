@@ -1012,19 +1012,30 @@ test_must_be_empty () {
 	fi
 }
 
-# Tests that its two parameters refer to the same revision
+# Tests that its two parameters refer to the same revision, or if '!' is
+# provided first, that its other two parameters refer to different
+# revisions.
 test_cmp_rev () {
+	local op='=' wrong_result=different
+
+	if test $# -ge 1 && test "x$1" = 'x!'
+	then
+	    op='!='
+	    wrong_result='the same'
+	    shift
+	fi
 	if test $# != 2
 	then
 		error "bug in the test script: test_cmp_rev requires two revisions, but got $#"
 	else
 		local r1 r2
 		r1=$(git rev-parse --verify "$1") &&
-		r2=$(git rev-parse --verify "$2") &&
-		if test "$r1" != "$r2"
+		r2=$(git rev-parse --verify "$2") || return 1
+
+		if ! test "$r1" "$op" "$r2"
 		then
 			cat >&4 <<-EOF
-			error: two revisions point to different objects:
+			error: two revisions point to $wrong_result objects:
 			  '$1': $r1
 			  '$2': $r2
 			EOF
