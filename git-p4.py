@@ -171,6 +171,8 @@ def die(msg):
         sys.exit(1)
 
 def write_pipe(c, stdin):
+    """ Executes the command 'c', passing 'stdin' on the standard input
+    """
     if verbose:
         sys.stderr.write('Writing pipe: %s\n' % str(c))
 
@@ -182,11 +184,12 @@ def write_pipe(c, stdin):
     if p.wait():
         die('Command failed: %s' % str(c))
 
-    return val
 
 def p4_write_pipe(c, stdin):
+    """ Runs a P4 command 'c', passing 'stdin' data to P4
+    """
     real_cmd = p4_build_cmd(c)
-    return write_pipe(real_cmd, stdin)
+    write_pipe(real_cmd, stdin)
 
 def read_pipe_full(c):
     """ Read output from  command. Returns a tuple
