@@ -262,7 +262,8 @@ print a message to stderr and exit with nonzero status.
 	directory.
 
 --show-toplevel::
-	Show the absolute path of the top-level directory.
+	Show the absolute path of the top-level directory of the working
+	tree. If there is no working tree, report an error.
 
 --show-superproject-working-tree::
 	Show the absolute path of the root of the superproject's
