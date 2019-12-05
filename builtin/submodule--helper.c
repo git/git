@@ -1482,6 +1482,8 @@ static void determine_submodule_update_strategy(struct repository *r,
 			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
 				val, path);
 	} else if (sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
+		if (sub->update_strategy.type == SM_UPDATE_COMMAND)
+			BUG("how did we read update = !command from .gitmodules?");
 		out->type = sub->update_strategy.type;
 		out->command = sub->update_strategy.command;
 	} else
