@@ -27,7 +27,7 @@ import zlib
 import ctypes
 import errno
 
-# support basestring in python3
+# support basestring in Python 3
 try:
     unicode = unicode
 except NameError:
@@ -46,7 +46,7 @@ else:
 try:
     from subprocess import CalledProcessError
 except ImportError:
-    # from python2.7:subprocess.py
+    # from Python 2.7:subprocess.py
     # Exception classes used by this module.
     class CalledProcessError(Exception):
         """This exception is raised when a process run by check_call() returns
@@ -586,6 +586,38 @@ def isModeExec(mode):
     # Returns True if the given git mode represents an executable file,
     # otherwise False.
     return mode[-3:] == "755"
+
+def encodeWithUTF8(path, verbose=False):
+    """ Ensure that the path is encoded as a UTF-8 string
+
+        Returns bytes(P3)/str(P2)
+    """
+
+    if isunicode:
+        try:
+            if isinstance(path, unicode):
+                # It is already unicode, cast it as a bytes
+                # that is encoded as utf-8.
+                return path.encode('utf-8', 'strict')
+            path.decode('ascii', 'strict')
+        except:
+            encoding = 'utf8'
+            if gitConfig('git-p4.pathEncoding'):
+                encoding = gitConfig('git-p4.pathEncoding')
+            path = path.decode(encoding, 'replace').encode('utf8', 'replace')
+            if verbose:
+                print('\nNOTE:Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, to_unicode(path)))
+    else:
+        try:
+            path.decode('ascii')
+        except:
+            encoding = 'utf8'
+            if gitConfig('git-p4.pathEncoding'):
+                encoding = gitConfig('git-p4.pathEncoding')
+            path = path.decode(encoding, 'replace').encode('utf8', 'replace')
+            if verbose:
+                print('Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, path))
+    return path
 
 class P4Exception(Exception):
     """ Base class for exceptions from the p4 client """
@@ -2748,24 +2780,12 @@ class P4Sync(Command, P4UserMap):
             self.gitStream.write(d)
         self.gitStream.write('\n')
 
-    def encodeWithUTF8(self, path):
-        try:
-            path.decode('ascii')
-        except:
-            encoding = 'utf8'
-            if gitConfig('git-p4.pathEncoding'):
-                encoding = gitConfig('git-p4.pathEncoding')
-            path = path.decode(encoding, 'replace').encode('utf8', 'replace')
-            if self.verbose:
-                print('Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, path))
-        return path
-
     # output one file from the P4 stream
     # - helper for streamP4Files
 
     def streamOneP4File(self, file, contents):
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
-        relPath = self.encodeWithUTF8(relPath)
+        relPath = encodeWithUTF8(relPath, self.verbose)
         if verbose:
             if 'fileSize' in self.stream_file:
                 size = int(self.stream_file['fileSize'])
@@ -2848,7 +2868,7 @@ class P4Sync(Command, P4UserMap):
 
     def streamOneP4Deletion(self, file):
         relPath = self.stripRepoPath(file['path'], self.branchPrefixes)
-        relPath = self.encodeWithUTF8(relPath)
+        relPath = encodeWithUTF8(relPath, self.verbose)
         if verbose:
             sys.stdout.write("delete %s\n" % relPath)
             sys.stdout.flush()
