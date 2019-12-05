@@ -4567,10 +4567,15 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	strbuf_init(&state.buf, 32);
 
 	if (revs->cmdline.nr && (revs->cmdline.rev[0].flags & BOTTOM)) {
+		struct labels_entry *onto_label_entry;
 		struct object_id *oid = &revs->cmdline.rev[0].item->oid;
 		FLEX_ALLOC_STR(entry, string, "onto");
 		oidcpy(&entry->entry.oid, oid);
 		oidmap_put(&state.commit2label, entry);
+
+		FLEX_ALLOC_STR(onto_label_entry, label, "onto");
+		hashmap_entry_init(&onto_label_entry->entry, strihash("onto"));
+		hashmap_add(&state.labels, &onto_label_entry->entry);
 	}
 
 	/*

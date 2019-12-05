@@ -474,4 +474,25 @@ test_expect_success '--rebase-merges with commit that can generate bad character
 	git rebase --rebase-merges --force-rebase E
 '
 
+test_expect_success '--rebase-merges with message matched with onto label' '
+	git checkout -b onto-label E &&
+	git merge -m onto G &&
+	git rebase --rebase-merges --force-rebase E &&
+	test_cmp_graph <<-\EOF
+	*   onto
+	|\
+	| * G
+	| * F
+	* |   E
+	|\ \
+	| * | B
+	* | | D
+	| |/
+	|/|
+	* | C
+	|/
+	* A
+	EOF
+'
+
 test_done
