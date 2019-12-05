@@ -669,6 +669,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 
 	save_commit_buffer = 0;
 
+	trace2_region_enter("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
@@ -680,7 +681,8 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		if (!o)
 			continue;
 
-		/* We already have it -- which may mean that we were
+		/*
+		 * We already have it -- which may mean that we were
 		 * in sync with the other side at some time after
 		 * that (it is OK if we guess wrong here).
 		 */
@@ -690,7 +692,13 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 				cutoff = commit->date;
 		}
 	}
+	trace2_region_leave("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
 
+	/*
+	 * This block marks all local refs as COMPLETE, and then recursively marks all
+	 * parents of those refs as COMPLETE.
+	 */
+	trace2_region_enter("fetch-pack", "mark_complete_local_refs", NULL);
 	if (!args->deepen) {
 		for_each_ref(mark_complete_oid, NULL);
 		for_each_cached_alternate(NULL, mark_alternate_complete);
@@ -698,11 +706,13 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		if (cutoff)
 			mark_recent_complete_commits(args, cutoff);
 	}
+	trace2_region_leave("fetch-pack", "mark_complete_local_refs", NULL);
 
 	/*
 	 * Mark all complete remote refs as common refs.
 	 * Don't mark them common yet; the server has to be told so first.
 	 */
+	trace2_region_enter("fetch-pack", "mark_common_remote_refs", NULL);
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o = deref_tag(the_repository,
 					     lookup_object(the_repository,
@@ -715,6 +725,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		negotiator->known_common(negotiator,
 					 (struct commit *)o);
 	}
+	trace2_region_leave("fetch-pack", "mark_common_remote_refs", NULL);
 
 	save_commit_buffer = old_save_commit_buffer;
 }
