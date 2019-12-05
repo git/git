@@ -860,6 +860,11 @@ def gitConfigList(key):
             _gitConfig[key] = []
     return _gitConfig[key]
 
+def gitConfigSet(key, value):
+    """ Set the git configuration key 'key' to 'value' for this session
+    """
+    _gitConfig[key] = value
+
 def p4BranchesInGit(branchesAreInRemotes=True):
     """Find all the branches whose names start with "p4/", looking
        in remotes or heads as specified by the argument.  Return
