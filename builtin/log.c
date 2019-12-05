@@ -1111,6 +1111,25 @@ do_pp:
 	strbuf_release(&subject_sb);
 }
 
+static int get_notes_refs(struct string_list_item *item, void *arg)
+{
+	argv_array_pushf(arg, "--notes=%s", item->string);
+	return 0;
+}
+
+static void get_notes_args(struct argv_array *arg, struct rev_info *rev)
+{
+	if (!rev->show_notes) {
+		argv_array_push(arg, "--no-notes");
+	} else if (rev->notes_opt.use_default_notes > 0 ||
+		   (rev->notes_opt.use_default_notes == -1 &&
+		    !rev->notes_opt.extra_notes_refs.nr)) {
+		argv_array_push(arg, "--notes");
+	} else {
+		for_each_string_list(&rev->notes_opt.extra_notes_refs, get_notes_refs, arg);
+	}
+}
+
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      struct commit *origin,
 			      int nr, struct commit **list,
@@ -1183,13 +1202,16 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		 * can be added later if deemed desirable.
 		 */
 		struct diff_options opts;
+		struct argv_array other_arg = ARGV_ARRAY_INIT;
 		diff_setup(&opts);
 		opts.file = rev->diffopt.file;
 		opts.use_color = rev->diffopt.use_color;
 		diff_setup_done(&opts);
 		fprintf_ln(rev->diffopt.file, "%s", rev->rdiff_title);
+		get_notes_args(&other_arg, rev);
 		show_range_diff(rev->rdiff1, rev->rdiff2,
-				rev->creation_factor, 1, &opts);
+				rev->creation_factor, 1, &opts, &other_arg);
+		argv_array_clear(&other_arg);
 	}
 }
 

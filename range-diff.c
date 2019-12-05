@@ -40,7 +40,8 @@ static size_t find_end_of_line(char *buffer, unsigned long size)
  * Reads the patches into a string list, with the `util` field being populated
  * as struct object_id (will need to be free()d).
  */
-static int read_patches(const char *range, struct string_list *list)
+static int read_patches(const char *range, struct string_list *list,
+			struct argv_array *other_arg)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT, contents = STRBUF_INIT;
@@ -61,8 +62,11 @@ static int read_patches(const char *range, struct string_list *list)
 			"--output-indicator-new=>",
 			"--output-indicator-old=<",
 			"--output-indicator-context=#",
-			"--no-abbrev-commit", range,
+			"--no-abbrev-commit",
 			NULL);
+	if (other_arg)
+		argv_array_pushv(&cp.args, other_arg->argv);
+	argv_array_push(&cp.args, range);
 	cp.out = -1;
 	cp.no_stdin = 1;
 	cp.git_cmd = 1;
@@ -144,6 +148,12 @@ static int read_patches(const char *range, struct string_list *list)
 				strbuf_addstr(&buf, line);
 				strbuf_addstr(&buf, "\n\n");
 				strbuf_addstr(&buf, " ## Commit message ##\n");
+			} else if (starts_with(line, "Notes") &&
+				   line[strlen(line) - 1] == ':') {
+				strbuf_addstr(&buf, "\n\n");
+				/* strip the trailing colon */
+				strbuf_addf(&buf, " ## %.*s ##\n",
+					    (int)(strlen(line) - 1), line);
 			} else if (starts_with(line, "    ")) {
 				p = line + len - 2;
 				while (isspace(*p) && p >= line)
@@ -496,16 +506,17 @@ static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
 
 int show_range_diff(const char *range1, const char *range2,
 		    int creation_factor, int dual_color,
-		    struct diff_options *diffopt)
+		    struct diff_options *diffopt,
+		    struct argv_array *other_arg)
 {
 	int res = 0;
 
 	struct string_list branch1 = STRING_LIST_INIT_DUP;
 	struct string_list branch2 = STRING_LIST_INIT_DUP;
 
-	if (read_patches(range1, &branch1))
+	if (read_patches(range1, &branch1, other_arg))
 		res = error(_("could not parse log for '%s'"), range1);
-	if (!res && read_patches(range2, &branch2))
+	if (!res && read_patches(range2, &branch2, other_arg))
 		res = error(_("could not parse log for '%s'"), range2);
 
 	if (!res) {
