@@ -414,6 +414,20 @@ test_expect_success 'submodule update - command in .gitmodules is rejected' '
 	test_must_fail git -C super submodule update submodule
 '
 
+test_expect_success 'fsck detects command in .gitmodules' '
+	git init command-in-gitmodules &&
+	(
+		cd command-in-gitmodules &&
+		git submodule add ../submodule submodule &&
+		test_commit adding-submodule &&
+
+		git config -f .gitmodules submodule.submodule.update "!false" &&
+		git add .gitmodules &&
+		test_commit configuring-update &&
+		test_must_fail git fsck
+	)
+'
+
 cat << EOF >expect
 Execution of 'false $submodulesha1' failed in submodule path 'submodule'
 EOF

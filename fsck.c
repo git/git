@@ -66,6 +66,7 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(GITMODULES_SYMLINK, ERROR) \
 	FUNC(GITMODULES_URL, ERROR) \
 	FUNC(GITMODULES_PATH, ERROR) \
+	FUNC(GITMODULES_UPDATE, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
 	FUNC(EMPTY_NAME, WARN) \
@@ -974,6 +975,12 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 		data->ret |= report(data->options, data->obj,
 				    FSCK_MSG_GITMODULES_PATH,
 				    "disallowed submodule path: %s",
+				    value);
+	if (!strcmp(key, "update") && value &&
+	    parse_submodule_update_type(value) == SM_UPDATE_COMMAND)
+		data->ret |= report(data->options, data->obj,
+				    FSCK_MSG_GITMODULES_UPDATE,
+				    "disallowed submodule update setting: %s",
 				    value);
 	free(name);
 
