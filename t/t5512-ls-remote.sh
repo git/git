@@ -267,7 +267,7 @@ test_expect_success 'ls-remote --symref omits filtered-out matches' '
 '
 
 test_lazy_prereq GIT_DAEMON '
-	git env--helper --type=bool --default=true --exit-code GIT_TEST_GIT_DAEMON
+	test_bool_env GIT_TEST_GIT_DAEMON true
 '
 
 # This test spawns a daemon, so run it only if the user would be OK with

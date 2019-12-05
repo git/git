@@ -69,7 +69,7 @@ svn_cmd () {
 maybe_start_httpd () {
 	loc=${1-svn}
 
-	if git env--helper --type=bool --default=false --exit-code GIT_TEST_SVN_HTTPD
+	if test_bool_env GIT_TEST_SVN_HTTPD false
 	then
 		. "$TEST_DIRECTORY"/lib-httpd.sh
 		LIB_HTTPD_SVN="$loc"
@@ -104,7 +104,7 @@ EOF
 }
 
 require_svnserve () {
-	if ! git env--helper --type=bool --default=false --exit-code GIT_TEST_SVNSERVE
+	if ! test_bool_env GIT_TEST_SVNSERVE false
 	then
 		skip_all='skipping svnserve test. (set $GIT_TEST_SVNSERVE to enable)'
 		test_done

@@ -1186,6 +1186,34 @@ perl () {
 	command "$PERL_PATH" "$@" 2>&7
 } 7>&2 2>&4
 
+# Given the name of an environment variable with a bool value, normalize
+# its value to a 0 (true) or 1 (false or empty string) return code.
+#
+#   test_bool_env GIT_TEST_HTTPD <default-value>
+#
+# Return with code corresponding to the given default value if the variable
+# is unset.
+# Abort the test script if either the value of the variable or the default
+# are not valid bool values.
+
+test_bool_env () {
+	if test $# != 2
+	then
+		BUG "test_bool_env requires two parameters (variable name and default value)"
+	fi
+
+	git env--helper --type=bool --default="$2" --exit-code "$1"
+	ret=$?
+	case $ret in
+	0|1)	# unset or valid bool value
+		;;
+	*)	# invalid bool value or something unexpected
+		error >&7 "test_bool_env requires bool values both for \$$1 and for the default fallback"
+		;;
+	esac
+	return $ret
+}
+
 # Exit the test suite, either by skipping all remaining tests or by
 # exiting with an error. If our prerequisite variable $1 falls back
 # on a default assume we were opportunistically trying to set up some
@@ -1194,7 +1222,7 @@ perl () {
 # The error/skip message should be given by $2.
 #
 test_skip_or_die () {
-	if ! git env--helper --type=bool --default=false --exit-code $1
+	if ! test_bool_env "$1" false
 	then
 		skip_all=$2
 		test_done

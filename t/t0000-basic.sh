@@ -917,6 +917,40 @@ test_expect_success 'test_oid can look up data for SHA-256' '
 	test "$hexsz" -eq 64
 '
 
+test_expect_success 'test_bool_env' '
+	(
+		sane_unset envvar &&
+
+		test_bool_env envvar true &&
+		! test_bool_env envvar false &&
+
+		envvar= &&
+		export envvar &&
+		! test_bool_env envvar true &&
+		! test_bool_env envvar false &&
+
+		envvar=true &&
+		test_bool_env envvar true &&
+		test_bool_env envvar false &&
+
+		envvar=false &&
+		! test_bool_env envvar true &&
+		! test_bool_env envvar false &&
+
+		envvar=invalid &&
+		# When encountering an invalid bool value, test_bool_env
+		# prints its error message to the original stderr of the
+		# test script, hence the redirection of fd 7, and aborts
+		# with "exit 1", hence the subshell.
+		! ( test_bool_env envvar true ) 7>err &&
+		grep "error: test_bool_env requires bool values" err &&
+
+		envvar=true &&
+		! ( test_bool_env envvar invalid ) 7>err &&
+		grep "error: test_bool_env requires bool values" err
+	)
+'
+
 ################################################################
 # Basics of the basics
 

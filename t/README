@@ -982,6 +982,15 @@ library for your script to use.
    output to the downstream---unlike the real version, it generates
    only up to 99 lines.
 
+ - test_bool_env <env-variable-name> <default-value>
+
+   Given the name of an environment variable with a bool value,
+   normalize its value to a 0 (true) or 1 (false or empty string)
+   return code.  Return with code corresponding to the given default
+   value if the variable is unset.
+   Abort the test script if either the value of the variable or the
+   default are not valid bool values.
+
 
 Prerequisites
 -------------

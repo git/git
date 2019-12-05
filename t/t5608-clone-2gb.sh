@@ -3,7 +3,7 @@
 test_description='Test cloning a repository larger than 2 gigabyte'
 . ./test-lib.sh
 
-if test -z "$GIT_TEST_CLONE_2GB"
+if ! test_bool_env GIT_TEST_CLONE_2GB false
 then
 	say 'Skipping expensive 2GB clone test; enable it with GIT_TEST_CLONE_2GB=t'
 else
