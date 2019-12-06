@@ -3165,12 +3165,12 @@ background_import_then_checkpoint () {
 	rm V.output
 
 	git fast-import $options <&8 >&9 &
-	echo $! >V.pid
+	fi_pid=$!
 	# We don't mind if fast-import has already died by the time the test
 	# ends.
 	test_when_finished "
 		exec 8>&-; exec 9>&-;
-		kill $(cat V.pid) && wait $(cat V.pid)
+		kill $fi_pid && wait $fi_pid
 		true"
 
 	# Start in the background to ensure we adhere strictly to (blocking)
@@ -3202,7 +3202,7 @@ background_import_then_checkpoint () {
 }
 
 background_import_still_running () {
-	if ! kill -0 "$(cat V.pid)"
+	if ! kill -0 "$fi_pid"
 	then
 		echo >&2 "background fast-import terminated too early"
 		false
