@@ -103,6 +103,12 @@ Performance, Internal Implementation, Development Support etc.
  * Users of oneway_merge() (like "reset --hard") learned to take
    advantage of fsmonitor to avoid unnecessary lstat(2) calls.
 
+ * Performance tweak on "git push" into a repository with many refs
+   that point at objects we have never heard of.
+
+ * PerfTest fix to avoid stale result mixed up with the latest round
+   of test results.
+
 
 Fixes since v2.24
 -----------------
@@ -215,6 +221,15 @@ Fixes since v2.24
    cleared correctly, which has been corrected.
    (merge 0aa0c2b2ec mh/clear-topo-walk-upon-reset later to maint).
 
+ * TravisCI update.
+   (merge 176441bfb5 sg/osx-force-gcc-9 later to maint).
+
+ * While running "revert" or "cherry-pick --edit" for multiple
+   commits, a recent regression incorrectly detected "nothing to
+   commit, working tree clean", instead of replaying the commits,
+   which has been corrected.
+   (merge befd4f6a81 sg/assume-no-todo-update-in-cherry-pick later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
@@ -234,3 +249,6 @@ Fixes since v2.24
    (merge f0e58b3fe8 pb/submodule-update-fetches later to maint).
    (merge 2a02262078 dl/t5520-cleanup later to maint).
    (merge a4fb016ba1 js/pkt-line-h-typofix later to maint).
+   (merge 54a7a64613 rs/simplify-prepare-cmd later to maint).
+   (merge 3eae30e464 jk/lore-is-the-archive later to maint).
+   (merge 14b7664df8 dl/lore-is-the-archive later to maint).
