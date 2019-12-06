@@ -2477,9 +2477,6 @@ test_expect_success PIPE 'R: copy using cat-file' '
 	echo $expect_id blob $expect_len >expect.response &&
 
 	rm -f blobs &&
-	cat >frontend <<-\FRONTEND_END &&
-	#!/bin/sh
-	FRONTEND_END
 
 	mkfifo blobs &&
 	(

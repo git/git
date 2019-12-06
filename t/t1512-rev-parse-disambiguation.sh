@@ -282,7 +282,7 @@ test_expect_success 'rev-parse --disambiguate' '
 	# commits created by commit-tree in earlier tests share a
 	# different prefix.
 	git rev-parse --disambiguate=000000000 >actual &&
-	test $(wc -l <actual) = 16 &&
+	test_line_count = 16 actual &&
 	test "$(sed -e "s/^\(.........\).*/\1/" actual | sort -u)" = 000000000
 '
 
