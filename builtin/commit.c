@@ -122,7 +122,6 @@ static enum commit_msg_cleanup_mode cleanup_mode;
 static const char *cleanup_arg;
 
 static enum commit_whence whence;
-static int sequencer_in_use;
 static int use_editor = 1, include_status = 1;
 static int have_option_m;
 static struct strbuf message = STRBUF_INIT;
@@ -179,11 +178,9 @@ static void determine_whence(struct wt_status *s)
 {
 	if (file_exists(git_path_merge_head(the_repository)))
 		whence = FROM_MERGE;
-	else if (file_exists(git_path_cherry_pick_head(the_repository))) {
-		whence = FROM_CHERRY_PICK;
-		if (file_exists(git_path_seq_dir()))
-			sequencer_in_use = 1;
-	}
+	else if (file_exists(git_path_cherry_pick_head(the_repository)))
+		whence = file_exists(git_path_seq_dir()) ?
+			FROM_CHERRY_PICK_MULTI : FROM_CHERRY_PICK_SINGLE;
 	else
 		whence = FROM_COMMIT;
 	if (s)
@@ -453,7 +450,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 	if (whence != FROM_COMMIT) {
 		if (whence == FROM_MERGE)
 			die(_("cannot do a partial commit during a merge."));
-		else if (whence == FROM_CHERRY_PICK)
+		else if (is_from_cherry_pick(whence))
 			die(_("cannot do a partial commit during a cherry-pick."));
 	}
 
@@ -771,7 +768,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	 */
 	else if (whence == FROM_MERGE)
 		hook_arg1 = "merge";
-	else if (whence == FROM_CHERRY_PICK) {
+	else if (is_from_cherry_pick(whence)) {
 		hook_arg1 = "commit";
 		hook_arg2 = "CHERRY_PICK_HEAD";
 	}
@@ -948,9 +945,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		run_status(stdout, index_file, prefix, 0, s);
 		if (amend)
 			fputs(_(empty_amend_advice), stderr);
-		else if (whence == FROM_CHERRY_PICK) {
+		else if (is_from_cherry_pick(whence)) {
 			fputs(_(empty_cherry_pick_advice), stderr);
-			if (!sequencer_in_use)
+			if (whence == FROM_CHERRY_PICK_SINGLE)
 				fputs(_(empty_cherry_pick_advice_single), stderr);
 			else
 				fputs(_(empty_cherry_pick_advice_multi), stderr);
@@ -1156,7 +1153,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (amend && whence != FROM_COMMIT) {
 		if (whence == FROM_MERGE)
 			die(_("You are in the middle of a merge -- cannot amend."));
-		else if (whence == FROM_CHERRY_PICK)
+		else if (is_from_cherry_pick(whence))
 			die(_("You are in the middle of a cherry-pick -- cannot amend."));
 	}
 	if (fixup_message && squash_message)
@@ -1179,7 +1176,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		use_message = edit_message;
 	if (amend && !use_message && !fixup_message)
 		use_message = "HEAD";
-	if (!use_message && whence != FROM_CHERRY_PICK && renew_authorship)
+	if (!use_message && !is_from_cherry_pick(whence) && renew_authorship)
 		die(_("--reset-author can be used only with -C, -c or --amend."));
 	if (use_message) {
 		use_message_buffer = read_commit_message(use_message);
@@ -1188,7 +1185,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 			author_message_buffer = use_message_buffer;
 		}
 	}
-	if (whence == FROM_CHERRY_PICK && !renew_authorship) {
+	if (is_from_cherry_pick(whence) && !renew_authorship) {
 		author_message = "CHERRY_PICK_HEAD";
 		author_message_buffer = read_commit_message(author_message);
 	}
@@ -1606,7 +1603,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			reduce_heads_replace(&parents);
 	} else {
 		if (!reflog_msg)
-			reflog_msg = (whence == FROM_CHERRY_PICK)
+			reflog_msg = is_from_cherry_pick(whence)
 					? "commit (cherry-pick)"
 					: "commit";
 		commit_list_insert(current_head, &parents);
