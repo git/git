@@ -27,6 +27,16 @@ import zlib
 import ctypes
 import errno
 
+# On python2.7 where raw_input() and input() are both availble,
+# we want raw_input's semantics, but aliased to input for python3
+# compatibility
+# support basestring in python3
+try:
+    if raw_input and input:
+        input = raw_input
+except:
+    pass
+
 verbose = False
 
 # Only labels/tags matching this will be imported/exported
@@ -144,7 +154,7 @@ def prompt(prompt_text):
     """
     choices = set(m.group(1) for m in re.finditer(r"\[(.)\]", prompt_text))
     while True:
-        response = raw_input(prompt_text).strip().lower()
+        response = input(prompt_text).strip().lower()
         if not response:
             continue
         response = response[0]
