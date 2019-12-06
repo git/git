@@ -928,7 +928,7 @@ Reporting Bugs
 Report bugs to the Git mailing list <git@vger.kernel.org> where the
 development and maintenance is primarily done.  You do not have to be
 subscribed to the list to send a message there.  See the list archive
-at https://public-inbox.org/git for previous bug reports and other
+at https://lore.kernel.org/git for previous bug reports and other
 discussions.
 
 Issues which are security relevant should be disclosed privately to

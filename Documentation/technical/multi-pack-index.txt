@@ -102,8 +102,8 @@ Related Links
 [0] https://bugs.chromium.org/p/git/issues/detail?id=6
     Chromium work item for: Multi-Pack Index (MIDX)
 
-[1] https://public-inbox.org/git/20180107181459.222909-1-dstolee@microsoft.com/
+[1] https://lore.kernel.org/git/20180107181459.222909-1-dstolee@microsoft.com/
     An earlier RFC for the multi-pack-index feature
 
-[2] https://public-inbox.org/git/alpine.DEB.2.20.1803091557510.23109@alexmv-linux/
+[2] https://lore.kernel.org/git/alpine.DEB.2.20.1803091557510.23109@alexmv-linux/
     Git Merge 2018 Contributor's summit notes (includes discussion of MIDX)

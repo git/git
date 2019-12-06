@@ -98,7 +98,7 @@
 /*
  * Defines Big Endian on a whitelist of OSs that are known to be Big
  * Endian-only. See
- * https://public-inbox.org/git/93056823-2740-d072-1ebd-46b440b33d7e@felt.demon.nl/
+ * https://lore.kernel.org/git/93056823-2740-d072-1ebd-46b440b33d7e@felt.demon.nl/
  */
 #define SHA1DC_BIGENDIAN
 

@@ -450,7 +450,7 @@ static char *find_name_gnu(struct strbuf *root,
 
 	/*
 	 * Proposed "new-style" GNU patch/diff format; see
-	 * https://public-inbox.org/git/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
+	 * https://lore.kernel.org/git/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
 	 */
 	if (unquote_c_style(&name, line, NULL)) {
 		strbuf_release(&name);
