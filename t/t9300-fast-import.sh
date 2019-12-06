@@ -3164,12 +3164,21 @@ background_import_then_checkpoint () {
 	exec 9<>V.output
 	rm V.output
 
-	git fast-import $options <&8 >&9 &
-	fi_pid=$!
+	(
+		git fast-import $options <&8 >&9 &
+		echo $! >&9
+		wait $!
+		echo >&2 "background fast-import terminated too early with exit code $?"
+		# Un-block the read loop in the main shell process.
+		echo >&9 UNEXPECTED
+	) &
+	sh_pid=$!
+	read fi_pid <&9
 	# We don't mind if fast-import has already died by the time the test
 	# ends.
 	test_when_finished "
 		exec 8>&-; exec 9>&-;
+		kill $sh_pid && wait $sh_pid
 		kill $fi_pid && wait $fi_pid
 		true"
 
@@ -3189,6 +3198,9 @@ background_import_then_checkpoint () {
 		if test "$output" = "progress checkpoint"
 		then
 			error=0
+			break
+		elif test "$output" = "UNEXPECTED"
+		then
 			break
 		fi
 		# otherwise ignore cruft
