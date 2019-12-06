@@ -638,7 +638,7 @@ test_expect_success 'format-patch --range-diff with --notes' '
 	test_cmp expect actual
 '
 
-test_expect_success 'format-patch --range-diff with --notes' '
+test_expect_success 'format-patch --range-diff with format.notes config' '
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
 	test_when_finished git notes remove topic unmodified &&
