@@ -957,18 +957,12 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				kind = "";
 				what = "";
 			}
-			else if (starts_with(rm->name, "refs/heads/")) {
+			else if (skip_prefix(rm->name, "refs/heads/", &what))
 				kind = "branch";
-				what = rm->name + 11;
-			}
-			else if (starts_with(rm->name, "refs/tags/")) {
+			else if (skip_prefix(rm->name, "refs/tags/", &what))
 				kind = "tag";
-				what = rm->name + 10;
-			}
-			else if (starts_with(rm->name, "refs/remotes/")) {
+			else if (skip_prefix(rm->name, "refs/remotes/", &what))
 				kind = "remote-tracking branch";
-				what = rm->name + 13;
-			}
 			else {
 				kind = "";
 				what = rm->name;
