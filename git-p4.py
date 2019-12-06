@@ -724,6 +724,99 @@ def encodeWithUTF8(path, verbose=False):
                 print('Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, path))
     return path
 
+
+def depot_count_depth(depot_path):
+    """Counts the number of directories found
+    in the depot_path. Paths will be decoded 
+    with encodeWithUTF8 to ensure that depot
+    encoding is repected.
+
+    Example:
+        //depot         = 1
+        //depot/        = 1
+        //depot/dir     = 2
+    """
+    depot_path=encodeWithUTF8(depot_path)
+    if not depot_path.endswith(b"/"):
+        depot_path+=b"/"
+    return depot_path.count(b"/") - 2
+
+def depot_remove_leading_path(depot_path, depth):
+    """Remove depth number of directories from 
+    the beginning of the depot_path. This will
+    be returned in the original encoding.
+    The leading "//" does not count as a directory
+    and will be automatically stripped.
+
+    depot_path should be in bytes
+
+    Example:
+    Given a depot_path of: //depot/main/file.txt
+    depth: 0        - depot/main/file.txt
+    depth: 1        - main/file.txt
+    depth: 2        - file.txt
+    depth: 3        - (empty string)
+    """
+
+    # First, decode the path
+    [depot_path, did_decode] = depot_encode_utf8(depot_path)
+
+    #remove leading //
+    if depot_path.startswith(b"//"):
+        depot_path=depot_path[2:]
+    if depth != 0:
+        segments=depot_path.split(b"/")
+        segments=segments[depth:]
+        depot_path=b"/".join(segments)
+
+    if did_decode:
+        depot_path = depot_encode_restore(depot_path)
+
+    return depot_path
+
+def depot_remove_p4_wildcard(depot_path):
+    """Removes the "/..." from the end of depot
+    path.
+
+    depot_path must be bytes. Bytes are returned.
+    """
+    # First, decode the path
+    [path, did_decode] = depot_encode_utf8(depot_path)
+    
+    if not path.endswith(b"/..."):
+        return depot_path
+    path=path[:-4]
+
+    if did_decode:
+        path = depot_encode_restore(path)
+
+    return path
+
+def depot_encode_utf8(depot_path):
+    """conditionally encodes depot_path
+    in utf8 using the defined pathEncoding.
+
+    Returns a (depot_path, was_encoded)"""
+    did_decode=False
+    encoding = 'utf8'
+    try:
+        depot_path.decode('ascii', 'strict')
+    except:
+        if gitConfig('git-p4.pathEncoding'):
+            encoding = gitConfig('git-p4.pathEncoding')
+        depot_path = depot_path.decode(encoding, 'replace').encode('utf8', 'replace')
+        did_decode=True
+    return [depot_path, did_decode]
+
+def depot_encode_restore(encoded_depot_path):
+    """Recodes an encoded_depot_path 
+    from utf8 back to the configured 
+    pathEncoding"""
+    encoding = 'utf8'
+    if gitConfig('git-p4.pathEncoding'):
+        encoding = gitConfig('git-p4.pathEncoding')
+    return encoded_depot_path.decode('utf8', 'replace').encode(encoding, 'replace')
+
 class P4Exception(Exception):
     """ Base class for exceptions from the p4 client """
     def __init__(self, exit_code):
