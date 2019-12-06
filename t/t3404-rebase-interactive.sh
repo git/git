@@ -1599,6 +1599,32 @@ test_expect_success 'post-commit hook is called' '
 	test_cmp expect actual
 '
 
+test_expect_success 'correct error message for partial commit after empty pick' '
+	test_when_finished "git rebase --abort" &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="2 1 1" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A D
+	) &&
+	echo x >file1 &&
+	test_must_fail git commit file1 2>err &&
+	test_i18ngrep "cannot do a partial commit during a rebase." err
+'
+
+test_expect_success 'correct error message for commit --amend after empty pick' '
+	test_when_finished "git rebase --abort" &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 1" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A D
+	) &&
+	echo x>file1 &&
+	test_must_fail git commit -a --amend 2>err &&
+	test_i18ngrep "middle of a rebase -- cannot amend." err
+'
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged
