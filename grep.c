@@ -26,7 +26,7 @@ static void *pcre2_malloc(PCRE2_SIZE size, MAYBE_UNUSED void *memory_data)
 
 static void pcre2_free(void *pointer, MAYBE_UNUSED void *memory_data)
 {
-	return free(pointer);
+	free(pointer);
 }
 #endif
 
