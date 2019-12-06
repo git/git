@@ -412,8 +412,7 @@ static int prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 	argv_array_push(out, SHELL_PATH);
 
 	if (cmd->git_cmd) {
-		argv_array_push(out, "git");
-		argv_array_pushv(out, cmd->argv);
+		prepare_git_cmd(out, cmd->argv);
 	} else if (cmd->use_shell) {
 		prepare_shell_cmd(out, cmd->argv);
 	} else {
