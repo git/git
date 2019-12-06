@@ -8,9 +8,8 @@
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
 import sys
-if sys.hexversion < 0x02040000:
-    # The limiter is the subprocess module
-    sys.stderr.write("git-p4: requires Python 2.4 or later.\n")
+if sys.version_info.major < 3 and sys.version_info.minor < 7:
+    sys.stderr.write("git-p4: requires Python 2.7 or later.\n")
     sys.exit(1)
 import os
 import optparse
@@ -42,21 +41,6 @@ else:
     unicode = unicode
     bytes = str
     basestring = basestring
-
-try:
-    from subprocess import CalledProcessError
-except ImportError:
-    # from python2.7:subprocess.py
-    # Exception classes used by this module.
-    class CalledProcessError(Exception):
-        """This exception is raised when a process run by check_call() returns
-        a non-zero exit status.  The exit status will be stored in the
-        returncode attribute."""
-        def __init__(self, returncode, cmd):
-            self.returncode = returncode
-            self.cmd = cmd
-        def __str__(self):
-            return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
 
 verbose = False
 
