@@ -403,6 +403,28 @@ test_expect_failure 'split hunk "add -p (no, yes, edit)"' '
 	! grep "^+31" actual
 '
 
+test_expect_failure 'edit, adding lines to the first hunk' '
+	test_write_lines 10 11 20 30 40 50 51 60 >test &&
+	git reset &&
+	tr _ " " >patch <<-EOF &&
+	@@ -1,5 +1,6 @@
+	_10
+	+11
+	+12
+	_20
+	+21
+	+22
+	_30
+	EOF
+	# test sequence is s(plit), e(dit), n(o)
+	# q n q q is there to make sure we exit at the end.
+	printf "%s\n" s e n   q n q q |
+	EDITOR=./fake_editor.sh git add -p 2>error &&
+	test_must_be_empty error &&
+	git diff --cached >actual &&
+	grep "^+22" actual
+'
+
 test_expect_success 'patch mode ignores unmerged entries' '
 	git reset --hard &&
 	test_commit conflict &&
