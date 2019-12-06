@@ -475,7 +475,7 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 		file_item = entry->item;
 		adddel = s->mode == FROM_INDEX ?
 			&file_item->index : &file_item->worktree;
-		other_adddel = s->phase == FROM_INDEX ?
+		other_adddel = s->mode == FROM_INDEX ?
 			&file_item->worktree : &file_item->index;
 		adddel->seen = 1;
 		adddel->add = stat.files[i]->added;
