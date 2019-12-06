@@ -372,11 +372,15 @@ static void print_advice(struct repository *r, int show_hint,
 	if (msg) {
 		fprintf(stderr, "%s\n", msg);
 		/*
-		 * A conflict has occurred but the porcelain
-		 * (typically rebase --interactive) wants to take care
-		 * of the commit itself so remove CHERRY_PICK_HEAD
+		 * A conflict has occurred but the porcelain wants to take care
+		 * of the commit itself so remove CHERRY_PICK_HEAD. Note that we
+		 * do not do this for interactive rebases anymore in order to
+		 * preserve the author identity when the user runs 'git commit'
+		 * to commit the conflict resolution rather than relying on
+		 * 'rebase --continue' to do it for them.
 		 */
-		unlink(git_path_cherry_pick_head(r));
+		if (!is_rebase_i(opts))
+			unlink(git_path_cherry_pick_head(r));
 		return;
 	}
 
