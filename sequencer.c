@@ -40,7 +40,7 @@ static const char cherry_picked_prefix[] = "(cherry picked from commit ";
 
 GIT_PATH_FUNC(git_path_commit_editmsg, "COMMIT_EDITMSG")
 
-GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
+static GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
 
 static GIT_PATH_FUNC(git_path_todo_file, "sequencer/todo")
 static GIT_PATH_FUNC(git_path_opts_file, "sequencer/opts")
@@ -5309,6 +5309,17 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	hashmap_free_entries(&subject2item, struct subject2item_entry, entry);
 
 	clear_commit_todo_item(&commit_todo);
+
+	return 0;
+}
+
+int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
+{
+	if (file_exists(git_path_cherry_pick_head(r))) {
+		*whence = file_exists(git_path_seq_dir()) ?
+			FROM_CHERRY_PICK_MULTI : FROM_CHERRY_PICK_SINGLE;
+		return 1;
+	}
 
 	return 0;
 }

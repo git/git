@@ -178,10 +178,7 @@ static void determine_whence(struct wt_status *s)
 {
 	if (file_exists(git_path_merge_head(the_repository)))
 		whence = FROM_MERGE;
-	else if (file_exists(git_path_cherry_pick_head(the_repository)))
-		whence = file_exists(git_path_seq_dir()) ?
-			FROM_CHERRY_PICK_MULTI : FROM_CHERRY_PICK_SINGLE;
-	else
+	else if (!sequencer_determine_whence(the_repository, &whence))
 		whence = FROM_COMMIT;
 	if (s)
 		s->whence = whence;
