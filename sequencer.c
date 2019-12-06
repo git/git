@@ -3930,7 +3930,7 @@ static int pick_commits(struct repository *r,
 							item->commit,
 							arg, item->arg_len,
 							opts, res, 0);
-		} else if (check_todo && !res) {
+		} else if (is_rebase_i(opts) && check_todo && !res) {
 			struct stat st;
 
 			if (stat(get_todo_path(opts), &st)) {
