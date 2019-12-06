@@ -5326,7 +5326,8 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	return 0;
 }
 
-int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
+int sequencer_determine_whence(struct repository *r, enum commit_whence *whence,
+			       int amending)
 {
 	if (file_exists(git_path_cherry_pick_head(r))) {
 		struct object_id cherry_pick_head, rebase_head;
@@ -5342,6 +5343,34 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 			*whence = FROM_CHERRY_PICK_SINGLE;
 
 		return 1;
+	} else if (amending && file_exists(rebase_path_current_fixups()) &&
+		   (file_exists(git_path_squash_msg(r)) ||
+		    file_exists(git_path_merge_msg(r)))) {
+		/*
+		 * If rebase_path_amend() exists the user is running `git
+		 * commit`, if not we're committing a fixup/squash directly from
+		 * the sequencer
+		 */
+		if (file_exists(rebase_path_amend())) {
+			struct strbuf rev = STRBUF_INIT;
+			struct object_id to_amend, head;
+
+			if (get_oid("HEAD", &head))
+				return error(_("amending invalid head")); /* let commit deal with error */
+			if (!read_oneliner(&rev, rebase_path_amend(), 0))
+				return error(_("invalid file: '%s'"),
+					     rebase_path_amend());
+			if (get_oid_hex(rev.buf, &to_amend))
+				return error(_("invalid contents: '%s'"),
+					     rebase_path_amend());
+			if (oideq(&head, &to_amend)) {
+				*whence = FROM_REBASE_FIXUP;
+				return 1;
+			}
+		} else {
+			*whence = FROM_REBASE_FIXUP;
+			return 1;
+		}
 	}
 
 	return 0;
