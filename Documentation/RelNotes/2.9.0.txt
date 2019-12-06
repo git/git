@@ -368,7 +368,7 @@ notes for details).
    This is necessary to use Git on Windows shared directories, and is
    already enabled for the MinGW and plain Windows builds.  It also
    has been used in Cygwin packaged versions of Git for quite a while.
-   See http://thread.gmane.org/gmane.comp.version-control.git/291853
+   See https://lore.kernel.org/git/20160419091055.GF2345@dinwoodie.org/
 
  * "merge-octopus" strategy did not ensure that the index is clean
    when merge begins.
