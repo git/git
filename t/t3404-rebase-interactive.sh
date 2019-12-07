@@ -1265,11 +1265,11 @@ test_expect_success SHA1 'short SHA-1 collide' '
 	test_when_finished "reset_rebase && git checkout master" &&
 	git checkout collide &&
 	(
-	unset test_tick &&
-	test_tick &&
-	set_fake_editor &&
-	FAKE_COMMIT_MESSAGE="collide2 ac4f2ee" \
-	FAKE_LINES="reword 1 2" git rebase -i HEAD~2
+		unset test_tick &&
+		test_tick &&
+		set_fake_editor &&
+		FAKE_COMMIT_MESSAGE="collide2 ac4f2ee" \
+		FAKE_LINES="reword 1 2" git rebase -i HEAD~2
 	)
 '
 
