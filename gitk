@@ -1780,11 +1780,15 @@ proc readrefs {} {
     global otherrefids idotherrefs mainhead mainheadid
     global selecthead selectheadid
     global hideremotes
+    global tclencoding
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	unset -nocomplain $v
     }
     set refd [open [list | git show-ref -d] r]
+    if {$tclencoding != {}} {
+	fconfigure $refd -encoding $tclencoding
+    }
     while {[gets $refd line] >= 0} {
 	if {[string index $line 40] ne " "} continue
 	set id [string range $line 0 39]
