@@ -684,6 +684,7 @@ proc load_current_branch {} {
 	global current_branch is_detached
 
 	set fd [open [gitdir HEAD] r]
+	fconfigure $fd -translation binary -encoding utf-8
 	if {[gets $fd ref] < 1} {
 		set ref {}
 	}
