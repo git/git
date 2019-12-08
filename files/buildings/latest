@@ -1,0 +1,3 @@
+docker tag local-image:latest 
+
+new-repo:tagname docker push new-repo:tagname https://hub.docker.com/repository/registry-1.docker.io/bnhassin/git/builds/eec7378f-cb30-4574-a76e-65dd8d3cedc9
