@@ -266,6 +266,16 @@ struct display_notes_opt {
 void init_display_notes(struct display_notes_opt *opt);
 
 /*
+ * Set a display_notes_opt to a given state. 'show_notes' is a boolean
+ * representing whether or not to show notes. 'opt_ref' points to a
+ * string for the notes ref, or is NULL if the default notes should be
+ * used.
+ *
+ * Return 'show_notes' normalized to 1 or 0.
+ */
+int set_display_notes(struct display_notes_opt *opt, int show_notes, const char *opt_ref);
+
+/*
  * Load the notes machinery for displaying several notes trees.
  *
  * If 'opt' is not NULL, then it specifies additional settings for the
