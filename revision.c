@@ -1637,7 +1637,7 @@ void repo_init_revisions(struct repository *r,
 		revs->diffopt.prefix_length = strlen(prefix);
 	}
 
-	revs->notes_opt.use_default_notes = -1;
+	init_display_notes(&revs->notes_opt);
 }
 
 static void add_pending_commit_list(struct rev_info *revs,

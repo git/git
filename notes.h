@@ -261,6 +261,11 @@ struct display_notes_opt {
 };
 
 /*
+ * Initialize a display_notes_opt to its default value.
+ */
+void init_display_notes(struct display_notes_opt *opt);
+
+/*
  * Load the notes machinery for displaying several notes trees.
  *
  * If 'opt' is not NULL, then it specifies additional settings for the
