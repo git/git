@@ -1110,6 +1110,10 @@ test_atexit_handler () {
 test_done () {
 	GIT_EXIT_OK=t
 
+	# If watchman is being used with GIT_TEST_FSMONITOR, then
+	# clear all watches on directories inside the TRASH_DIRECTORY.
+	test_clear_watchman
+
 	# Run the atexit commands _before_ the trash directory is
 	# removed, so the commands can access pidfiles and socket files.
 	test_atexit_handler
