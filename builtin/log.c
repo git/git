@@ -867,19 +867,8 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "format.notes")) {
-		struct strbuf buf = STRBUF_INIT;
 		int b = git_parse_maybe_bool(value);
-		if (!b)
-			return 0;
-		rev->show_notes = 1;
-		if (b < 0) {
-			strbuf_addstr(&buf, value);
-			expand_notes_ref(&buf);
-			string_list_append(&rev->notes_opt.extra_notes_refs,
-					strbuf_detach(&buf, NULL));
-		} else {
-			rev->notes_opt.use_default_notes = 1;
-		}
+		rev->show_notes = set_display_notes(&rev->notes_opt, b, b < 0 ? value : NULL);
 		return 0;
 	}
 
