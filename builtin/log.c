@@ -769,6 +769,8 @@ static const char *signature = git_version_string;
 static const char *signature_file;
 static int config_cover_letter;
 static const char *config_output_directory;
+static int show_notes;
+static struct display_notes_opt notes_opt;
 
 enum {
 	COVER_UNSET,
@@ -779,8 +781,6 @@ enum {
 
 static int git_format_config(const char *var, const char *value, void *cb)
 {
-	struct rev_info *rev = cb;
-
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
 			die(_("format.headers without value"));
@@ -868,7 +868,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "format.notes")) {
 		int b = git_parse_maybe_bool(value);
-		rev->show_notes = set_display_notes(&rev->notes_opt, b, b < 0 ? value : NULL);
+		show_notes = set_display_notes(&notes_opt, b, b < 0 ? value : NULL);
 		return 0;
 	}
 
@@ -1624,8 +1624,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	extra_to.strdup_strings = 1;
 	extra_cc.strdup_strings = 1;
 	init_log_defaults();
+	init_display_notes(&notes_opt);
+	git_config(git_format_config, NULL);
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(git_format_config, &rev);
+	rev.show_notes = show_notes;
+	memcpy(&rev.notes_opt, &notes_opt, sizeof(notes_opt));
 	rev.commit_format = CMIT_FMT_EMAIL;
 	rev.expand_tabs_in_log_default = 0;
 	rev.verbose_header = 1;
