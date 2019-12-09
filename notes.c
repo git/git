@@ -1039,7 +1039,7 @@ struct notes_tree **load_notes_trees(struct string_list *refs, int flags)
 	return trees;
 }
 
-void init_display_notes(struct display_notes_opt *opt)
+void load_display_notes(struct display_notes_opt *opt)
 {
 	char *display_ref_env;
 	int load_config_refs = 0;

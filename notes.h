@@ -272,18 +272,18 @@ struct display_notes_opt {
  * - extra_notes_refs may contain a list of globs (in the same style
  *   as notes.displayRef) where notes should be loaded from.
  */
-void init_display_notes(struct display_notes_opt *opt);
+void load_display_notes(struct display_notes_opt *opt);
 
 /*
  * Append notes for the given 'object_sha1' from all trees set up by
- * init_display_notes() to 'sb'.  The 'flags' are a bitwise
+ * load_display_notes() to 'sb'.  The 'flags' are a bitwise
  * combination of
  *
  * - NOTES_SHOW_HEADER: add a 'Notes (refname):' header
  *
  * - NOTES_INDENT: indent the notes by 4 places
  *
- * You *must* call init_display_notes() before using this function.
+ * You *must* call load_display_notes() before using this function.
  */
 void format_display_notes(const struct object_id *object_oid,
 			  struct strbuf *sb, const char *output_encoding, int raw);

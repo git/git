@@ -202,7 +202,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	if (!rev->show_notes_given && (!rev->pretty_given || w.notes))
 		rev->show_notes = 1;
 	if (rev->show_notes)
-		init_display_notes(&rev->notes_opt);
+		load_display_notes(&rev->notes_opt);
 
 	if ((rev->diffopt.pickaxe_opts & DIFF_PICKAXE_KINDS_MASK) ||
 	    rev->diffopt.filter || rev->diffopt.flags.follow_renames)
@@ -1749,7 +1749,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		rev.diffopt.flags.binary = 1;
 
 	if (rev.show_notes)
-		init_display_notes(&rev.notes_opt);
+		load_display_notes(&rev.notes_opt);
 
 	if (!output_directory && !use_stdout)
 		output_directory = config_output_directory;
