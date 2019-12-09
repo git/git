@@ -126,18 +126,21 @@ static void name_rev(struct commit *commit,
 		if (parent_number > 1) {
 			size_t len;
 
-			strip_suffix(tip_name, "^0", &len);
+			strip_suffix(name->tip_name, "^0", &len);
 			if (name->generation > 0)
-				new_name = xstrfmt("%.*s~%d^%d", (int)len, tip_name,
+				new_name = xstrfmt("%.*s~%d^%d",
+						   (int)len,
+						   name->tip_name,
 						   name->generation,
 						   parent_number);
 			else
-				new_name = xstrfmt("%.*s^%d", (int)len, tip_name,
+				new_name = xstrfmt("%.*s^%d", (int)len,
+						   name->tip_name,
 						   parent_number);
 			generation = 0;
 			distance = name->distance + MERGE_TRAVERSAL_WEIGHT;
 		} else {
-			new_name = tip_name;
+			new_name = name->tip_name;
 			generation = name->generation + 1;
 			distance = name->distance + 1;
 		}
