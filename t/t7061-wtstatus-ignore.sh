@@ -47,7 +47,7 @@ cat >expected <<\EOF
 !! untracked/ignored
 EOF
 
-test_expect_failure 'status of untracked directory with --ignored works with or without prefix' '
+test_expect_success 'status of untracked directory with --ignored works with or without prefix' '
 	git status --porcelain --ignored >tmp &&
 	grep untracked/ tmp >actual &&
 	rm tmp &&
