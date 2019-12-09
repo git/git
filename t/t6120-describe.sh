@@ -381,7 +381,7 @@ test_expect_success 'describe tag object' '
 	test_i18ngrep "fatal: test-blob-1 is neither a commit nor blob" actual
 '
 
-test_expect_failure ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
+test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 	i=1 &&
 	while test $i -lt 8000
 	do

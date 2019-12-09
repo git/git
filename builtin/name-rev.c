@@ -6,6 +6,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "prio-queue.h"
 #include "sha1-lookup.h"
 #include "commit-slab.h"
 
@@ -104,52 +105,77 @@ copy_data:
 		return NULL;
 }
 
-static void name_rev(struct commit *commit,
+static void name_rev(struct commit *start_commit,
 		const char *tip_name, timestamp_t taggerdate,
 		int from_tag)
 {
-	struct rev_name *name = get_commit_rev_name(commit);
-	struct commit_list *parents;
-	int parent_number = 1;
+	struct prio_queue queue;
+	struct commit *commit;
+	struct commit **parents_to_queue = NULL;
+	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
 
-	for (parents = commit->parents;
-			parents;
-			parents = parents->next, parent_number++) {
-		struct commit *parent = parents->item;
-		const char *new_name;
-		int generation, distance;
+	memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
+	prio_queue_put(&queue, start_commit);
 
-		parse_commit(parent);
-		if (parent->date < cutoff)
-			continue;
+	while ((commit = prio_queue_get(&queue))) {
+		struct rev_name *name = get_commit_rev_name(commit);
+		struct commit_list *parents;
+		int parent_number = 1;
 
-		if (parent_number > 1) {
-			size_t len;
+		parents_to_queue_nr = 0;
 
-			strip_suffix(name->tip_name, "^0", &len);
-			if (name->generation > 0)
-				new_name = xstrfmt("%.*s~%d^%d",
-						   (int)len,
-						   name->tip_name,
-						   name->generation,
-						   parent_number);
-			else
-				new_name = xstrfmt("%.*s^%d", (int)len,
-						   name->tip_name,
-						   parent_number);
-			generation = 0;
-			distance = name->distance + MERGE_TRAVERSAL_WEIGHT;
-		} else {
-			new_name = name->tip_name;
-			generation = name->generation + 1;
-			distance = name->distance + 1;
+		for (parents = commit->parents;
+				parents;
+				parents = parents->next, parent_number++) {
+			struct commit *parent = parents->item;
+			const char *new_name;
+			int generation, distance;
+
+			parse_commit(parent);
+			if (parent->date < cutoff)
+				continue;
+
+			if (parent_number > 1) {
+				size_t len;
+
+				strip_suffix(name->tip_name, "^0", &len);
+				if (name->generation > 0)
+					new_name = xstrfmt("%.*s~%d^%d",
+							   (int)len,
+							   name->tip_name,
+							   name->generation,
+							   parent_number);
+				else
+					new_name = xstrfmt("%.*s^%d", (int)len,
+							   name->tip_name,
+							   parent_number);
+				generation = 0;
+				distance = name->distance + MERGE_TRAVERSAL_WEIGHT;
+			} else {
+				new_name = name->tip_name;
+				generation = name->generation + 1;
+				distance = name->distance + 1;
+			}
+
+			if (create_or_update_name(parent, new_name, taggerdate,
+						  generation, distance,
+						  from_tag)) {
+				ALLOC_GROW(parents_to_queue,
+					   parents_to_queue_nr + 1,
+					   parents_to_queue_alloc);
+				parents_to_queue[parents_to_queue_nr] = parent;
+				parents_to_queue_nr++;
+			}
 		}
 
-		if (create_or_update_name(parent, new_name, taggerdate,
-					  generation, distance,
-					  from_tag))
-			name_rev(parent, new_name, taggerdate, from_tag);
+		/* The first parent must come out first from the prio_queue */
+		while (parents_to_queue_nr)
+			prio_queue_put(&queue,
+				       parents_to_queue[--parents_to_queue_nr]);
 	}
+
+	clear_prio_queue(&queue);
+	free(parents_to_queue);
 }
 
 static int subpath_matches(const char *path, const char *filter)
