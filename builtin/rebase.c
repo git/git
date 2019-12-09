@@ -1979,8 +1979,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		struct commit *head =
 			lookup_commit_reference(the_repository,
 						&options.orig_head);
-		options.restrict_revision =
-			get_fork_point(options.upstream_name, head);
+		options.restrict_revision = NULL;
+		if (get_fork_point(options.upstream_name, head, &options.restrict_revision) < 0)
+			die(_("could not get fork point"));
 	}
 
 	if (repo_read_index(the_repository) < 0)

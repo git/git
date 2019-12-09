@@ -639,6 +639,20 @@ int dwim_ref(const char *str, int len, struct object_id *oid, char **ref)
 	return repo_dwim_ref(the_repository, str, len, oid, ref);
 }
 
+int dwim_unique_ref(const char* str, int len, struct object_id *oid, char **ref)
+{
+	struct object_id discard;
+	switch (dwim_ref(str, len, &discard, ref)) {
+	case 0:
+		return error(_("no such ref: '%s'"), str);
+	case 1:
+		break; /* good */
+	default:
+		return error(_("ambiguous refname: '%s'"), str);
+	}
+	return 0;
+}
+
 int expand_ref(struct repository *repo, const char *str, int len,
 	       struct object_id *oid, char **ref)
 {

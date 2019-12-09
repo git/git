@@ -240,7 +240,7 @@ int register_commit_graft(struct repository *r, struct commit_graft *, int);
 void prepare_commit_graft(struct repository *r);
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid);
 
-struct commit *get_fork_point(const char *refname, struct commit *commit);
+int get_fork_point(const char *refname, struct commit *commit, struct commit **fork_point);
 
 /* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
