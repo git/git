@@ -548,6 +548,7 @@ test_expect_success 'reset and bind merge' '
 
 test_expect_success 'merge-recursive w/ empty work tree - ours has rename' '
 	(
+		GIT_TEST_FSMONITOR="" &&
 		GIT_WORK_TREE="$PWD/ours-has-rename-work" &&
 		export GIT_WORK_TREE &&
 		GIT_INDEX_FILE="$PWD/ours-has-rename-index" &&
@@ -573,6 +574,7 @@ test_expect_success 'merge-recursive w/ empty work tree - ours has rename' '
 
 test_expect_success 'merge-recursive w/ empty work tree - theirs has rename' '
 	(
+		GIT_TEST_FSMONITOR="" &&
 		GIT_WORK_TREE="$PWD/theirs-has-rename-work" &&
 		export GIT_WORK_TREE &&
 		GIT_INDEX_FILE="$PWD/theirs-has-rename-index" &&

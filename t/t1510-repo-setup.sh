@@ -775,6 +775,7 @@ test_expect_success '#29: setup' '
 	setup_repo 29 non-existent gitfile true &&
 	mkdir -p 29/sub/sub 29/wt/sub &&
 	(
+		GIT_TEST_FSMONITOR="" &&
 		cd 29 &&
 		GIT_WORK_TREE="$here/29" &&
 		export GIT_WORK_TREE &&

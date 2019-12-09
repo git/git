@@ -1,5 +1,7 @@
 #!/bin/sh
 
+GIT_TEST_FSMONITOR=""
+
 test_description='test git worktree add'
 
 . ./test-lib.sh
