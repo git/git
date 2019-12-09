@@ -743,6 +743,7 @@ test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 '
 
 test_expect_success 'submodule rebase setup' '
+	GIT_TEST_FSMONITOR="" &&
 	git checkout A &&
 	mkdir sub &&
 	(

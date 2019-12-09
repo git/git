@@ -846,6 +846,9 @@ test_expect_success 'status refreshes the index' '
 	test_cmp expect output
 '
 
+# fsmonitor does not work well with submodules
+GIT_TEST_FSMONITOR=""
+
 test_expect_success 'setup status submodule summary' '
 	test_create_repo sm && (
 		cd sm &&

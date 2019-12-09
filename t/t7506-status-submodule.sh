@@ -4,6 +4,9 @@ test_description='git status for submodule'
 
 . ./test-lib.sh
 
+# fsmonitor does not work well with submodules
+GIT_TEST_FSMONITOR=""
+
 test_create_repo_with_commit () {
 	test_create_repo "$1" &&
 	(
