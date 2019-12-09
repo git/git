@@ -107,12 +107,26 @@ copy_data:
 
 static void name_rev(struct commit *start_commit,
 		const char *tip_name, timestamp_t taggerdate,
-		int from_tag)
+		int from_tag, int deref)
 {
 	struct prio_queue queue;
 	struct commit *commit;
 	struct commit **parents_to_queue = NULL;
 	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
+	char *to_free = NULL;
+
+	parse_commit(start_commit);
+	if (start_commit->date < cutoff)
+		return;
+
+	if (deref)
+		tip_name = to_free = xstrfmt("%s^0", tip_name);
+
+	if (!create_or_update_name(start_commit, tip_name, taggerdate, 0, 0,
+				   from_tag)) {
+		free(to_free);
+		return;
+	}
 
 	memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
 	prio_queue_put(&queue, start_commit);
@@ -309,20 +323,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		if (taggerdate == TIME_MAX)
 			taggerdate = commit->date;
 		path = name_ref_abbrev(path, can_abbreviate_output);
-		if (commit->date >= cutoff) {
-			const char *tip_name;
-			char *to_free = NULL;
-			if (deref)
-				tip_name = to_free = xstrfmt("%s^0", path);
-			else
-				tip_name = xstrdup(path);
-			if (create_or_update_name(commit, tip_name, taggerdate,
-						  0, 0, from_tag))
-				name_rev(commit, tip_name, taggerdate,
-					 from_tag);
-			else
-				free(to_free);
-		}
+		name_rev(commit, xstrdup(path), taggerdate, from_tag, deref);
 	}
 	return 0;
 }
