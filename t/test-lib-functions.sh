@@ -308,7 +308,7 @@ test_commit_bulk () {
 	total=$1
 
 	add_from=
-	if git -C "$indir" rev-parse --verify "$ref"
+	if git -C "$indir" rev-parse --quiet --verify "$ref"
 	then
 		add_from=t
 	fi
