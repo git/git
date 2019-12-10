@@ -4356,8 +4356,10 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 	if (is_rebase_i(opts)) {
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
-		if (commit_staged_changes(r, opts, &todo_list))
-			return -1;
+		if (commit_staged_changes(r, opts, &todo_list)) {
+			res = -1;
+			goto release_todo_list;
+		}
 	} else if (!file_exists(get_todo_path(opts)))
 		return continue_single_pick(r);
 	else if ((res = read_populate_todo(r, &todo_list, opts)))
