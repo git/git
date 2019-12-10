@@ -4,7 +4,6 @@ use lib '../../perl/build/lib';
 use strict;
 use warnings;
 use Getopt::Long;
-use Git;
 use Cwd qw(realpath);
 
 sub get_times {
@@ -85,6 +84,11 @@ sub format_size {
 	return $out;
 }
 
+sub sane_backticks {
+	open(my $fh, '-|', @_);
+	return <$fh>;
+}
+
 my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
     $codespeed, $sortby, $subsection, $reponame);
 
@@ -102,7 +106,8 @@ while (scalar @ARGV) {
 	my $prefix = '';
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
-		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
+		my $rev = sane_backticks(qw(git rev-parse --verify), $arg);
+		chomp $rev;
 		$dir = "build/".$rev;
 	} elsif ($arg eq '.') {
 		$dir = '.';
