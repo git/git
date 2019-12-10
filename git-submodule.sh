@@ -36,6 +36,7 @@ reference=
 cached=
 recursive=
 init=
+require_init=
 files=
 remote=
 nofetch=
@@ -466,6 +467,10 @@ cmd_update()
 		-i|--init)
 			init=1
 			;;
+		--require-init)
+			init=1
+			require_init=1
+			;;
 		--remote)
 			remote=1
 			;;
@@ -548,6 +553,7 @@ cmd_update()
 		${reference:+"$reference"} \
 		${dissociate:+"--dissociate"} \
 		${depth:+--depth "$depth"} \
+		${require_init:+--require-init} \
 		$recommend_shallow \
 		$jobs \
 		-- \

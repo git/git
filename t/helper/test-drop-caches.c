@@ -8,18 +8,21 @@ static int cmd_sync(void)
 {
 	char Buffer[MAX_PATH];
 	DWORD dwRet;
-	char szVolumeAccessPath[] = "\\\\.\\X:";
+	char szVolumeAccessPath[] = "\\\\.\\XXXX:";
 	HANDLE hVolWrite;
-	int success = 0;
+	int success = 0, dos_drive_prefix;
 
 	dwRet = GetCurrentDirectory(MAX_PATH, Buffer);
 	if ((0 == dwRet) || (dwRet > MAX_PATH))
 		return error("Error getting current directory");
 
-	if (!has_dos_drive_prefix(Buffer))
+	dos_drive_prefix = has_dos_drive_prefix(Buffer);
+	if (!dos_drive_prefix)
 		return error("'%s': invalid drive letter", Buffer);
 
-	szVolumeAccessPath[4] = Buffer[0];
+	memcpy(szVolumeAccessPath, Buffer, dos_drive_prefix);
+	szVolumeAccessPath[dos_drive_prefix] = '\0';
+
 	hVolWrite = CreateFile(szVolumeAccessPath, GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 	if (INVALID_HANDLE_VALUE == hVolWrite)

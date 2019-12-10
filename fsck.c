@@ -64,6 +64,7 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(GITMODULES_SYMLINK, ERROR) \
 	FUNC(GITMODULES_URL, ERROR) \
 	FUNC(GITMODULES_PATH, ERROR) \
+	FUNC(GITMODULES_UPDATE, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
 	FUNC(EMPTY_NAME, WARN) \
@@ -595,7 +596,7 @@ static int fsck_tree(const struct object_id *oid,
 
 	while (desc.size) {
 		unsigned short mode;
-		const char *name;
+		const char *name, *backslash;
 		const struct object_id *oid;
 
 		oid = tree_entry_extract(&desc, &name, &mode);
@@ -616,6 +617,22 @@ static int fsck_tree(const struct object_id *oid,
 						 oid, OBJ_TREE,
 						 FSCK_MSG_GITMODULES_SYMLINK,
 						 ".gitmodules is a symbolic link");
+		}
+
+		if ((backslash = strchr(name, '\\'))) {
+			while (backslash) {
+				backslash++;
+				has_dotgit |= is_ntfs_dotgit(backslash);
+				if (is_ntfs_dotgitmodules(backslash)) {
+					if (!S_ISLNK(mode))
+						oidset_insert(&gitmodules_found, oid);
+					else
+						retval += report(options, oid, OBJ_TREE,
+								 FSCK_MSG_GITMODULES_SYMLINK,
+								 ".gitmodules is a symbolic link");
+				}
+				backslash = strchr(backslash, '\\');
+			}
 		}
 
 		if (update_tree_entry_gently(&desc)) {
@@ -930,6 +947,12 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 				    data->oid, OBJ_BLOB,
 				    FSCK_MSG_GITMODULES_PATH,
 				    "disallowed submodule path: %s",
+				    value);
+	if (!strcmp(key, "update") && value &&
+	    parse_submodule_update_type(value) == SM_UPDATE_COMMAND)
+		data->ret |= report(data->options, data->oid, OBJ_BLOB,
+				    FSCK_MSG_GITMODULES_UPDATE,
+				    "disallowed submodule update setting: %s",
 				    value);
 	free(name);
 
