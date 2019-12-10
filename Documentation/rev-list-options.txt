@@ -269,7 +269,7 @@ list.
 	exclude (that is, '{caret}commit', 'commit1..commit2',
 	and 'commit1\...commit2' notations cannot be used).
 +
-With `--pretty` format other than `oneline` (for obvious reasons),
+With `--pretty` format other than `oneline` and `reference` (for obvious reasons),
 this causes the output to have two extra lines of information
 taken from the reflog.  The reflog designator in the output may be shown
 as `ref@{Nth}` (where `Nth` is the reverse-chronological index in the
@@ -293,6 +293,8 @@ Under `--pretty=oneline`, the commit message is
 prefixed with this information on the same line.
 This option cannot be combined with `--reverse`.
 See also linkgit:git-reflog[1].
++
+Under `--pretty=reference`, this information will not be shown at all.
 
 --merge::
 	After a failed merge, show refs that touch files having a
