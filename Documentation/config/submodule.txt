@@ -79,4 +79,6 @@ submodule.alternateLocation::
 submodule.alternateErrorStrategy::
 	Specifies how to treat errors with the alternates for a submodule
 	as computed via `submodule.alternateLocation`. Possible values are
-	`ignore`, `info`, `die`. Default is `die`.
+	`ignore`, `info`, `die`. Default is `die`. Note that if set to `ignore`
+	or `info`, and if there is an error with the computed alternate, the
+	clone proceeds as if no alternate was specified.
