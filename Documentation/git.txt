@@ -544,6 +544,10 @@ other
 	a pager.  See also the `core.pager` option in
 	linkgit:git-config[1].
 
+`GIT_PROGRESS_DELAY`::
+	A number controlling how many seconds to delay before showing
+	optional progress indicators. Defaults to 2.
+
 `GIT_EDITOR`::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
 	It is used by several Git commands when, on interactive mode,
