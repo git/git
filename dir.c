@@ -380,6 +380,13 @@ static int match_pathspec_item(const struct index_state *istate,
 			return 0;
 
 		/*
+		 * name has no wildcard, and it didn't match as a leading
+		 * pathspec so return.
+		 */
+		if (item->nowildcard_len == item->len)
+			return 0;
+
+		/*
 		 * Here is where we would perform a wildmatch to check if
 		 * "name" can be matched as a directory (or a prefix) against
 		 * the pathspec.  Since wildmatch doesn't have this capability
