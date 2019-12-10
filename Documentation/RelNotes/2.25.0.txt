@@ -49,6 +49,24 @@ UI, Workflows & Features
  * "git rev-parse --show-toplevel" run outside of any working tree did
    not error out, which has been corrected.
 
+ * A few commands learned to take the pathspec from the
+   standard input or a named file, instead of taking it as the command
+   line arguments.
+
+ * "git rebase -i" learned a few options that are known by "git
+   rebase" proper.
+
+ * "git submodule" learned a subcommand "set-url".
+
+ * "git log" family learned "--pretty=reference" that gives the name
+   of a commit in the format that is often used to refer to it in log
+   messages.
+
+ * The interaction between "git clone --recurse-submodules" and
+   alternate object store was ill-designed.  The documentation and
+   code have been taught to make more clear recommendations when the
+   users see failures.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -108,6 +126,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * PerfTest fix to avoid stale result mixed up with the latest round
    of test results.
+
+ * Hide lower-level verify_signed-buffer() API as a pure helper to
+   implement the public check_signature() function, in order to
+   encourage new callers to use the correct and more strict
+   validation.
 
 
 Fixes since v2.24
@@ -230,6 +253,14 @@ Fixes since v2.24
    which has been corrected.
    (merge befd4f6a81 sg/assume-no-todo-update-in-cherry-pick later to maint).
 
+ * Work around a issue where a FD that is left open when spawning a
+   child process and is kept open in the child can interfere with the
+   operation in the parent process on Windows.
+
+ * One kind of progress messages were always given during commit-graph
+   generation, instead of following the "if it takes more than two
+   seconds, show progress" pattern, which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
@@ -252,3 +283,8 @@ Fixes since v2.24
    (merge 54a7a64613 rs/simplify-prepare-cmd later to maint).
    (merge 3eae30e464 jk/lore-is-the-archive later to maint).
    (merge 14b7664df8 dl/lore-is-the-archive later to maint).
+   (merge 0e40a73a4c po/bundle-doc-clonable later to maint).
+   (merge e714b898c6 as/t7812-missing-redirects-fix later to maint).
+   (merge 528d9e6d01 jk/perf-wo-git-dot-pm later to maint).
+   (merge fc42f20e24 sg/test-squelch-noise-in-commit-bulk later to maint).
+   (merge c64368e3a2 bc/t9001-zsh-in-posix-emulation-mode later to maint).
