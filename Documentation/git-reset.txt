@@ -12,6 +12,7 @@ SYNOPSIS
 'git reset' [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]
 'git reset' (--patch | -p) [<tree-ish>] [--] [<pathspec>...]
 'git reset' [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<commit>]
+DEPRECATED: 'git reset' [-q] [--stdin [-z]] [<tree-ish>]
 
 DESCRIPTION
 -----------
@@ -130,6 +131,16 @@ OPTIONS
 	Limits the paths affected by the operation.
 +
 For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
+
+--stdin::
+	DEPRECATED (use `--pathspec-from-file=-` instead): Instead of taking
+	list of paths from the command line, read list of paths from the
+	standard input. Paths are separated by LF (i.e. one path per line) by
+	default.
+
+-z::
+	DEPRECATED (use `--pathspec-file-nul` instead): Only meaningful with
+	`--stdin`; paths are separated with NUL character instead of LF.
 
 EXAMPLES
 --------
