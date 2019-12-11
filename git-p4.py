@@ -1257,9 +1257,15 @@ class GitLFS(LargeFileSystem):
             pointerFile = re.sub(r'Git LFS pointer for.*\n\n', '', pointerFile)
 
         oid = re.search(r'^oid \w+:(\w+)', pointerFile, re.MULTILINE).group(1)
+        # if someone use external lfs.storage ( not in local repo git )
+        lfs_path = gitConfig('lfs.storage')
+        if not lfs_path:
+            lfs_path = 'lfs'
+        if not os.path.isabs(lfs_path):
+            lfs_path = os.path.join(os.getcwd(), '.git', lfs_path)
         localLargeFile = os.path.join(
-            os.getcwd(),
-            '.git', 'lfs', 'objects', oid[:2], oid[2:4],
+            lfs_path,
+            'objects', oid[:2], oid[2:4],
             oid,
         )
         # LFS Spec states that pointer files should not have the executable bit set.
