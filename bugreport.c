@@ -10,6 +10,7 @@
 #include "bugreport-config-safelist.h"
 #include "khash.h"
 #include "run-command.h"
+#include "object-store.h"
 
 static void get_git_remote_https_version_info(struct strbuf *version_info)
 {
@@ -128,6 +129,54 @@ static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 	}
 }
 
+static int loose_object_cb(const struct object_id *oid, const char *path,
+			   void *data) {
+	int *loose_object_count = data;
+
+	if (loose_object_count) {
+		(*loose_object_count)++;
+		return 0;
+	}
+
+	return 1;
+}
+
+static void get_loose_object_summary(struct strbuf *obj_info, int nongit) {
+
+	int local_loose_object_count = 0, total_loose_object_count = 0;
+	int local_count_questionable = 0, total_count_questionable = 0;
+
+	if (nongit) {
+		strbuf_addstr(obj_info,
+			"not run from a git repository - no objects to show\n");
+		return;
+	}
+
+	local_count_questionable = for_each_loose_object(
+					loose_object_cb,
+					&local_loose_object_count,
+					FOR_EACH_OBJECT_LOCAL_ONLY);
+
+	total_count_questionable = for_each_loose_object(
+					loose_object_cb,
+					&total_loose_object_count,
+					0);
+
+	strbuf_addf(obj_info, "%d local loose objects%s\n",
+		    local_loose_object_count,
+		    local_count_questionable ? " (problem during count)" : "");
+
+	strbuf_addf(obj_info, "%d alternate loose objects%s\n",
+		    total_loose_object_count - local_loose_object_count,
+		    (local_count_questionable || total_count_questionable)
+			? " (problem during count)"
+			: "");
+
+	strbuf_addf(obj_info, "%d total loose objects%s\n",
+		    total_loose_object_count,
+		    total_count_questionable ? " (problem during count)" : "");
+}
+
 static const char * const bugreport_usage[] = {
 	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
 	NULL
@@ -218,6 +267,9 @@ int cmd_main(int argc, const char **argv)
 
 	get_header(&buffer, "Enabled Hooks");
 	get_populated_hooks(&buffer, nongit_ok);
+
+	get_header(&buffer, "Loose Object Counts");
+	get_loose_object_summary(&buffer, nongit_ok);
 
 	report = fopen_for_writing(report_path.buf);
 

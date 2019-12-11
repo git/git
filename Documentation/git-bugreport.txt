@@ -32,6 +32,7 @@ The following information is captured automatically:
  - $SHELL
  - Selected config values
  - A list of enabled hooks
+ - The number of loose objects in the repository
 
 This tool is invoked via the typical Git setup process, which means that in some
 cases, it might not be able to launch - for example, if a relevant config file
