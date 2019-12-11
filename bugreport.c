@@ -21,6 +21,7 @@ static void get_git_remote_https_version_info(struct strbuf *version_info)
 static void get_system_info(struct strbuf *sys_info)
 {
 	struct utsname uname_info;
+	char *shell = NULL;
 
 	/* get git version from native cmd */
 	strbuf_addstr(sys_info, "git version:\n");
@@ -41,6 +42,10 @@ static void get_system_info(struct strbuf *sys_info)
 	strbuf_addstr(sys_info, "compiler info: ");
 	get_compiler_info(sys_info);
 	strbuf_complete_line(sys_info);
+
+	shell = getenv("SHELL");
+	strbuf_addf(sys_info, "$SHELL (typically, interactive shell): %s\n",
+		    shell ? shell : "<unset>");
 
 	strbuf_addstr(sys_info, "git-remote-https --build-info:\n");
 	get_git_remote_https_version_info(sys_info);
