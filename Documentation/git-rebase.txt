@@ -258,6 +258,13 @@ See also INCOMPATIBLE OPTIONS below.
 	original branch. The index and working tree are also left
 	unchanged as a result.
 
+--am:
+	Use git-am internally to rebase.  This option may become a
+	no-op in the future once the interactive backend handles
+	everything the am one does.
++
+See also INCOMPATIBLE OPTIONS below.
+
 --empty={drop,keep,ask}::
 	How to handle commits that are not empty to start and are not
 	clean cherry-picks of any upstream commit, but which become
@@ -378,7 +385,7 @@ See also INCOMPATIBLE OPTIONS below.
 	Ensure at least <n> lines of surrounding context match before
 	and after each change.  When fewer lines of surrounding
 	context exist they all must match.  By default no context is
-	ever ignored.
+	ever ignored.  Implies --am.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -418,6 +425,7 @@ with `--keep-base` in order to drop those commits from your branch.
 --whitespace=<option>::
 	These flags are passed to the 'git apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
+	Implies --am.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -561,6 +569,7 @@ INCOMPATIBLE OPTIONS
 
 The following options:
 
+ * --am
  * --committer-date-is-author-date
  * --ignore-date
  * --ignore-whitespace
