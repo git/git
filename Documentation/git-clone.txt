@@ -262,9 +262,9 @@ or `--mirror` is given)
 	All submodules which are cloned will be shallow with a depth of 1.
 
 --[no-]remote-submodules::
-	All submodules which are cloned will use the status of the submodule’s
+	All submodules which are cloned will use the status of the submodule's
 	remote-tracking branch to update the submodule, rather than the
-	superproject’s recorded SHA-1. Equivalent to passing `--remote` to
+	superproject's recorded SHA-1. Equivalent to passing `--remote` to
 	`git submodule update`.
 
 --separate-git-dir=<git dir>::
