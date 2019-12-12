@@ -61,7 +61,7 @@ Possible status letters are:
 - R: renaming of a file
 - T: change in the type of the file
 - U: file is unmerged (you must complete the merge before it can
-be committed)
+  be committed)
 - X: "unknown" change type (most probably a bug, please report it)
 
 Status letters C and R are always followed by a score (denoting the
