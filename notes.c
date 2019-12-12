@@ -1045,28 +1045,31 @@ void init_display_notes(struct display_notes_opt *opt)
 	opt->use_default_notes = -1;
 }
 
-int set_display_notes(struct display_notes_opt *opt, int show_notes, const char *opt_ref)
+void enable_default_display_notes(struct display_notes_opt *opt, int *show_notes)
 {
-	if (show_notes) {
-		if (opt_ref) {
-			struct strbuf buf = STRBUF_INIT;
-			strbuf_addstr(&buf, opt_ref);
-			expand_notes_ref(&buf);
-			string_list_append(&opt->extra_notes_refs,
-					   strbuf_detach(&buf, NULL));
-		} else {
-			opt->use_default_notes = 1;
-		}
-	} else {
-		opt->use_default_notes = -1;
-		/* we have been strdup'ing ourselves, so trick
-		 * string_list into free()ing strings */
-		opt->extra_notes_refs.strdup_strings = 1;
-		string_list_clear(&opt->extra_notes_refs, 0);
-		opt->extra_notes_refs.strdup_strings = 0;
-	}
+	opt->use_default_notes = 1;
+	*show_notes = 1;
+}
 
-	return !!show_notes;
+void enable_ref_display_notes(struct display_notes_opt *opt, int *show_notes,
+		const char *ref) {
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_addstr(&buf, ref);
+	expand_notes_ref(&buf);
+	string_list_append(&opt->extra_notes_refs,
+			strbuf_detach(&buf, NULL));
+	*show_notes = 1;
+}
+
+void disable_display_notes(struct display_notes_opt *opt, int *show_notes)
+{
+	opt->use_default_notes = -1;
+	/* we have been strdup'ing ourselves, so trick
+	 * string_list into free()ing strings */
+	opt->extra_notes_refs.strdup_strings = 1;
+	string_list_clear(&opt->extra_notes_refs, 0);
+	opt->extra_notes_refs.strdup_strings = 0;
+	*show_notes = 0;
 }
 
 void load_display_notes(struct display_notes_opt *opt)

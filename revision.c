@@ -2172,7 +2172,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 			die("'%s': not a non-negative integer", arg);
 		revs->expand_tabs_in_log = val;
 	} else if (!strcmp(arg, "--show-notes") || !strcmp(arg, "--notes")) {
-		revs->show_notes = set_display_notes(&revs->notes_opt, 1, NULL);
+		enable_default_display_notes(&revs->notes_opt, &revs->show_notes);
 		revs->show_notes_given = 1;
 	} else if (!strcmp(arg, "--show-signature")) {
 		revs->show_signature = 1;
@@ -2191,10 +2191,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		if (starts_with(arg, "--show-notes=") &&
 		    revs->notes_opt.use_default_notes < 0)
 			revs->notes_opt.use_default_notes = 1;
-		revs->show_notes = set_display_notes(&revs->notes_opt, 1, optarg);
+		enable_ref_display_notes(&revs->notes_opt, &revs->show_notes, optarg);
 		revs->show_notes_given = 1;
 	} else if (!strcmp(arg, "--no-notes")) {
-		revs->show_notes = set_display_notes(&revs->notes_opt, 0, NULL);
+		disable_display_notes(&revs->notes_opt, &revs->show_notes);
 		revs->show_notes_given = 1;
 	} else if (!strcmp(arg, "--standard-notes")) {
 		revs->show_notes_given = 1;

@@ -868,7 +868,12 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "format.notes")) {
 		int b = git_parse_maybe_bool(value);
-		show_notes = set_display_notes(&notes_opt, b, b < 0 ? value : NULL);
+		if (b < 0)
+			enable_ref_display_notes(&notes_opt, &show_notes, value);
+		else if (b)
+			enable_default_display_notes(&notes_opt, &show_notes);
+		else
+			disable_display_notes(&notes_opt, &show_notes);
 		return 0;
 	}
 

@@ -177,10 +177,10 @@ struct rev_info {
 			always_show_header:1;
 
 	/* Format info */
+	int		show_notes;
 	unsigned int	shown_one:1,
 			shown_dashes:1,
 			show_merge:1,
-			show_notes:1,
 			show_notes_given:1,
 			show_signature:1,
 			pretty_given:1,
