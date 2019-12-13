@@ -27,6 +27,16 @@ import zlib
 import ctypes
 import errno
 
+# On python2.7 where raw_input() and input() are both availble,
+# we want raw_input's semantics, but aliased to input for python3
+# compatibility
+# support basestring in python3
+try:
+    if raw_input and input:
+        input = raw_input
+except:
+    pass
+
 verbose = False
 
 # Only labels/tags matching this will be imported/exported
@@ -1801,7 +1811,7 @@ class P4Submit(Command, P4UserMap):
             return True
 
         while True:
-            response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
+            response = input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
             if response == 'y':
                 return True
             if response == 'n':
@@ -2372,7 +2382,7 @@ class P4Submit(Command, P4UserMap):
                         # prompt for what to do, or use the option/variable
                         if self.conflict_behavior == "ask":
                             print("What do you want to do?")
-                            response = raw_input("[s]kip this commit but apply"
+                            response = input("[s]kip this commit but apply"
                                                  " the rest, or [q]uit? ")
                             if not response:
                                 continue
