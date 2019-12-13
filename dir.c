@@ -625,6 +625,8 @@ int pl_hashmap_cmp(const void *unused_cmp_data,
 			 ? ee1->patternlen
 			 : ee2->patternlen;
 
+	if (ignore_case)
+		return strncasecmp(ee1->pattern, ee2->pattern, min_len);
 	return strncmp(ee1->pattern, ee2->pattern, min_len);
 }
 
@@ -665,7 +667,9 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 		translated->pattern = truncated;
 		translated->patternlen = given->patternlen - 2;
 		hashmap_entry_init(&translated->ent,
-				   memhash(translated->pattern, translated->patternlen));
+				   ignore_case ?
+				   strihash(translated->pattern) :
+				   strhash(translated->pattern));
 
 		if (!hashmap_get_entry(&pl->recursive_hashmap,
 				       translated, ent, NULL)) {
@@ -694,7 +698,9 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 	translated->pattern = xstrdup(given->pattern);
 	translated->patternlen = given->patternlen;
 	hashmap_entry_init(&translated->ent,
-			   memhash(translated->pattern, translated->patternlen));
+			   ignore_case ?
+			   strihash(translated->pattern) :
+			   strhash(translated->pattern));
 
 	hashmap_add(&pl->recursive_hashmap, &translated->ent);
 
@@ -724,7 +730,10 @@ static int hashmap_contains_path(struct hashmap *map,
 	/* Check straight mapping */
 	p.pattern = pattern->buf;
 	p.patternlen = pattern->len;
-	hashmap_entry_init(&p.ent, memhash(p.pattern, p.patternlen));
+	hashmap_entry_init(&p.ent,
+			   ignore_case ?
+			   strihash(p.pattern) :
+			   strhash(p.pattern));
 	return !!hashmap_get_entry(map, &p, ent, NULL);
 }
 
