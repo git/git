@@ -45,7 +45,7 @@ test_expect_success 'rebase --rebase-merges update encoding eucJP to UTF-8' '
 	compare_msg eucJP.txt eucJP UTF-8
 '
 
-test_expect_failure 'rebase --rebase-merges update encoding eucJP to ISO-2022-JP' '
+test_expect_success 'rebase --rebase-merges update encoding eucJP to ISO-2022-JP' '
 	git switch -c merge-eucJP-ISO-2022-JP first &&
 	git config i18n.commitencoding eucJP &&
 	git merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
