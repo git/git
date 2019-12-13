@@ -34,8 +34,9 @@ PATTERNS("dts",
 	 "|[-+*/%&^|!~]|>>|<<|&&|\\|\\|"),
 PATTERNS("elixir",
 	 "^[ \t]*((def(macro|module|impl|protocol|p)?|test)[ \t].*)$",
+	 /* -- */
 	 /* Atoms, names, and module attributes */
-	 "|[@:]?[a-zA-Z0-9@_?!]+"
+	 "[@:]?[a-zA-Z0-9@_?!]+"
 	 /* Numbers with specific base */
 	 "|[-+]?0[xob][0-9a-fA-F]+"
 	 /* Numbers */
