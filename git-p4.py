@@ -13,6 +13,7 @@ if sys.version_info.major < 3 and sys.version_info.minor < 7:
     sys.exit(1)
 import os
 import optparse
+import functools
 import marshal
 import subprocess
 import tempfile
@@ -1158,7 +1159,7 @@ class LargeFileSystem(object):
         assert False, "Method 'pushFile' required in " + self.__class__.__name__
 
     def hasLargeFileExtension(self, relPath):
-        return reduce(
+        return functools.reduce(
             lambda a, b: a or b,
             [relPath.endswith('.' + e) for e in gitConfigList('git-p4.largeFileExtensions')],
             False
