@@ -150,6 +150,21 @@ else:
     def encode_text_stream(s):
         return s.encode('utf_8') if isinstance(s, unicode) else s
 
+def decode_path(path):
+    """Decode a given string (bytes or otherwise) using configured path encoding options
+    """
+    encoding = gitConfig('git-p4.pathEncoding') or 'utf_8'
+    if bytes is not str:
+        return path.decode(encoding, errors='replace') if isinstance(path, bytes) else path
+    else:
+        try:
+            path.decode('ascii')
+        except:
+            path = path.decode(encoding, errors='replace')
+            if verbose:
+                print('Path with non-ASCII characters detected. Used {} to decode: {}'.format(encoding, path))
+        return path
+
 def write_pipe(c, stdin):
     if verbose:
         sys.stderr.write('Writing pipe: %s\n' % str(c))
@@ -697,7 +712,8 @@ def p4Where(depotPath):
         if "depotFile" in entry:
             # Search for the base client side depot path, as long as it starts with the branch's P4 path.
             # The base path always ends with "/...".
-            if entry["depotFile"].find(depotPath) == 0 and entry["depotFile"][-4:] == "/...":
+            entry_path = decode_path(entry['depotFile'])
+            if entry_path.find(depotPath) == 0 and entry_path[-4:] == "/...":
                 output = entry
                 break
         elif "data" in entry:
@@ -712,11 +728,11 @@ def p4Where(depotPath):
         return ""
     clientPath = ""
     if "path" in output:
-        clientPath = output.get("path")
+        clientPath = decode_path(output['path'])
     elif "data" in output:
         data = output.get("data")
-        lastSpace = data.rfind(" ")
-        clientPath = data[lastSpace + 1:]
+        lastSpace = data.rfind(b" ")
+        clientPath = decode_path(data[lastSpace + 1:])
 
     if clientPath.endswith("..."):
         clientPath = clientPath[:-3]
@@ -2484,7 +2500,7 @@ class View(object):
 
     def convert_client_path(self, clientFile):
         # chop off //client/ part to make it relative
-        if not clientFile.startswith(self.client_prefix):
+        if not decode_path(clientFile).startswith(self.client_prefix):
             die("No prefix '%s' on clientFile '%s'" %
                 (self.client_prefix, clientFile))
         return clientFile[len(self.client_prefix):]
@@ -2493,7 +2509,7 @@ class View(object):
         """ Caching file paths by "p4 where" batch query """
 
         # List depot file paths exclude that already cached
-        fileArgs = [f['path'] for f in files if f['path'] not in self.client_spec_path_cache]
+        fileArgs = [f['path'] for f in files if decode_path(f['path']) not in self.client_spec_path_cache]
 
         if len(fileArgs) == 0:
             return  # All files in cache
@@ -2508,16 +2524,18 @@ class View(object):
             if "unmap" in res:
                 # it will list all of them, but only one not unmap-ped
                 continue
+            depot_path = decode_path(res['depotFile'])
             if gitConfigBool("core.ignorecase"):
-                res['depotFile'] = res['depotFile'].lower()
-            self.client_spec_path_cache[res['depotFile']] = self.convert_client_path(res["clientFile"])
+                depot_path = depot_path.lower()
+            self.client_spec_path_cache[depot_path] = self.convert_client_path(res["clientFile"])
 
         # not found files or unmap files set to ""
         for depotFile in fileArgs:
+            depotFile = decode_path(depotFile)
             if gitConfigBool("core.ignorecase"):
                 depotFile = depotFile.lower()
             if depotFile not in self.client_spec_path_cache:
-                self.client_spec_path_cache[depotFile] = ""
+                self.client_spec_path_cache[depotFile] = b''
 
     def map_in_client(self, depot_path):
         """Return the relative location in the client where this
@@ -2635,7 +2653,7 @@ class P4Sync(Command, P4UserMap):
             elif path.lower() == p.lower():
                 return False
         for p in self.depotPaths:
-            if p4PathStartsWith(path, p):
+            if p4PathStartsWith(path, decode_path(p)):
                 return True
         return False
 
@@ -2644,7 +2662,7 @@ class P4Sync(Command, P4UserMap):
         fnum = 0
         while "depotFile%s" % fnum in commit:
             path =  commit["depotFile%s" % fnum]
-            found = self.isPathWanted(path)
+            found = self.isPathWanted(decode_path(path))
             if not found:
                 fnum = fnum + 1
                 continue
@@ -2678,7 +2696,7 @@ class P4Sync(Command, P4UserMap):
         if self.useClientSpec:
             # branch detection moves files up a level (the branch name)
             # from what client spec interpretation gives
-            path = self.clientSpecDirs.map_in_client(path)
+            path = decode_path(self.clientSpecDirs.map_in_client(path))
             if self.detectBranches:
                 for b in self.knownBranches:
                     if p4PathStartsWith(path, b + "/"):
@@ -2712,14 +2730,15 @@ class P4Sync(Command, P4UserMap):
         branches = {}
         fnum = 0
         while "depotFile%s" % fnum in commit:
-            path =  commit["depotFile%s" % fnum]
+            raw_path = commit["depotFile%s" % fnum]
+            path = decode_path(raw_path)
             found = self.isPathWanted(path)
             if not found:
                 fnum = fnum + 1
                 continue
 
             file = {}
-            file["path"] = path
+            file["path"] = raw_path
             file["rev"] = commit["rev%s" % fnum]
             file["action"] = commit["action%s" % fnum]
             file["type"] = commit["type%s" % fnum]
@@ -2728,7 +2747,7 @@ class P4Sync(Command, P4UserMap):
             # start with the full relative path where this file would
             # go in a p4 client
             if self.useClientSpec:
-                relPath = self.clientSpecDirs.map_in_client(path)
+                relPath = decode_path(self.clientSpecDirs.map_in_client(path))
             else:
                 relPath = self.stripRepoPath(path, self.depotPaths)
 
@@ -2766,14 +2785,15 @@ class P4Sync(Command, P4UserMap):
     # - helper for streamP4Files
 
     def streamOneP4File(self, file, contents):
-        relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
-        relPath = self.encodeWithUTF8(relPath)
+        file_path = file['depotFile']
+        relPath = self.stripRepoPath(decode_path(file_path), self.branchPrefixes)
+
         if verbose:
             if 'fileSize' in self.stream_file:
                 size = int(self.stream_file['fileSize'])
             else:
                 size = 0 # deleted files don't get a fileSize apparently
-            sys.stdout.write('\r%s --> %s (%i MB)\n' % (file['depotFile'], relPath, size/1024/1024))
+            sys.stdout.write('\r%s --> %s (%i MB)\n' % (file_path, relPath, size/1024/1024))
             sys.stdout.flush()
 
         (type_base, type_mods) = split_p4_type(file["type"])
@@ -2791,7 +2811,7 @@ class P4Sync(Command, P4UserMap):
                 # to nothing.  This causes p4 errors when checking out such
                 # a change, and errors here too.  Work around it by ignoring
                 # the bad symlink; hopefully a future change fixes it.
-                print("\nIgnoring empty symlink in %s" % file['depotFile'])
+                print("\nIgnoring empty symlink in %s" % file_path)
                 return
             elif data[-1] == '\n':
                 contents = [data[:-1]]
@@ -2810,7 +2830,7 @@ class P4Sync(Command, P4UserMap):
             # just the native "NT" type.
             #
             try:
-                text = p4_read_pipe(['print', '-q', '-o', '-', '%s@%s' % (file['depotFile'], file['change'])])
+                text = p4_read_pipe(['print', '-q', '-o', '-', '%s@%s' % (decode_path(file['depotFile']), file['change'])], raw=True)
             except Exception as e:
                 if 'Translation of file content failed' in str(e):
                     type_base = 'binary'
@@ -2818,7 +2838,7 @@ class P4Sync(Command, P4UserMap):
                     raise e
             else:
                 if p4_version_string().find('/NT') >= 0:
-                    text = text.replace('\r\n', '\n')
+                    text = text.replace(b'\r\n', b'\n')
                 contents = [ text ]
 
         if type_base == "apple":
@@ -2849,8 +2869,7 @@ class P4Sync(Command, P4UserMap):
         self.writeToGitStream(git_mode, relPath, contents)
 
     def streamOneP4Deletion(self, file):
-        relPath = self.stripRepoPath(file['path'], self.branchPrefixes)
-        relPath = self.encodeWithUTF8(relPath)
+        relPath = self.stripRepoPath(decode_path(file['path']), self.branchPrefixes)
         if verbose:
             sys.stdout.write("delete %s\n" % relPath)
             sys.stdout.flush()
@@ -3037,8 +3056,8 @@ class P4Sync(Command, P4UserMap):
         if self.clientSpecDirs:
             self.clientSpecDirs.update_client_spec_path_cache(files)
 
-        files = [f for f in files
-            if self.inClientSpec(f['path']) and self.hasBranchPrefix(f['path'])]
+        files = [f for (f, path) in ((f, decode_path(f['path'])) for f in files)
+            if self.inClientSpec(path) and self.hasBranchPrefix(path)]
 
         if gitConfigBool('git-p4.keepEmptyCommits'):
             allow_empty = True
