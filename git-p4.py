@@ -2641,6 +2641,7 @@ class P4Sync(Command, P4UserMap):
     def checkpoint(self):
         self.gitStream.write("checkpoint\n\n")
         self.gitStream.write("progress checkpoint\n\n")
+        self.gitStream.flush()
         out = self.gitOutput.readline()
         if self.verbose:
             print("checkpoint finished: " + out)
