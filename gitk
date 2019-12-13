@@ -2640,7 +2640,7 @@ proc makewindow {} {
 	{mc "Diff selected -> this" command {diffvssel 1}}
 	{mc "Make patch" command mkpatch}
 	{mc "Create tag" command mktag}
-	{mc "Copy commit summary" command copysummary}
+	{mc "Copy commit reference" command copyreference}
 	{mc "Write commit to file" command writecommit}
 	{mc "Create new branch" command mkbranch}
 	{mc "Cherry-pick this commit" command cherrypick}
@@ -9426,7 +9426,7 @@ proc mktaggo {} {
     mktagcan
 }
 
-proc copysummary {} {
+proc copyreference {} {
     global rowmenuid autosellen
 
     set format "%h (\"%s\", %ad)"
@@ -9434,10 +9434,10 @@ proc copysummary {} {
     if {$autosellen < 40} {
         lappend cmd --abbrev=$autosellen
     }
-    set summary [eval exec $cmd $rowmenuid]
+    set reference [eval exec $cmd $rowmenuid]
 
     clipboard clear
-    clipboard append $summary
+    clipboard append $reference
 }
 
 proc writecommit {} {
