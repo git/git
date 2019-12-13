@@ -1679,7 +1679,8 @@ class P4Submit(Command, P4UserMap):
         c = changes[0]
         if c['User'] == newUser: return   # nothing to do
         c['User'] = newUser
-        input = marshal.dumps(c)
+        # p4 does not understand format version 3 and above
+        input = marshal.dumps(c, 2)
 
         result = p4CmdList("change -f -i", stdin=input)
         for r in result:
