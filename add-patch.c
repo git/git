@@ -33,7 +33,7 @@ struct add_p_state {
 		struct hunk head;
 		struct hunk *hunk;
 		size_t hunk_nr, hunk_alloc;
-		unsigned deleted:1;
+		unsigned deleted:1, mode_change:1;
 	} *file_diff;
 	size_t file_diff_nr;
 };
@@ -129,6 +129,17 @@ static int parse_hunk_header(struct add_p_state *s, struct hunk *hunk)
 	return 0;
 }
 
+static int is_octal(const char *p, size_t len)
+{
+	if (!len)
+		return 0;
+
+	while (len--)
+		if (*p < '0' || *(p++) > '7')
+			return 0;
+	return 1;
+}
+
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 {
 	struct argv_array args = ARGV_ARRAY_INIT;
@@ -181,7 +192,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	pend = p + plain->len;
 	while (p != pend) {
 		char *eol = memchr(p, '\n', pend - p);
-		const char *deleted = NULL;
+		const char *deleted = NULL, *mode_change = NULL;
 
 		if (!eol)
 			eol = pend;
@@ -218,7 +229,52 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				file_diff->deleted = 1;
 			else if (parse_hunk_header(s, hunk) < 0)
 				return -1;
+		} else if (hunk == &file_diff->head &&
+			   skip_prefix(p, "old mode ", &mode_change) &&
+			   is_octal(mode_change, eol - mode_change)) {
+			if (file_diff->mode_change)
+				BUG("double mode change?\n\n%.*s",
+				    (int)(eol - plain->buf), plain->buf);
+			if (file_diff->hunk_nr++)
+				BUG("mode change in the middle?\n\n%.*s",
+				    (int)(eol - plain->buf), plain->buf);
+
+			/*
+			 * Do *not* change `hunk`: the mode change pseudo-hunk
+			 * is _part of_ the header "hunk".
+			 */
+			file_diff->mode_change = 1;
+			ALLOC_GROW(file_diff->hunk, file_diff->hunk_nr,
+				   file_diff->hunk_alloc);
+			memset(file_diff->hunk, 0, sizeof(struct hunk));
+			file_diff->hunk->start = p - plain->buf;
+			if (colored_p)
+				file_diff->hunk->colored_start =
+					colored_p - colored->buf;
+		} else if (hunk == &file_diff->head &&
+			   skip_prefix(p, "new mode ", &mode_change) &&
+			   is_octal(mode_change, eol - mode_change)) {
+
+			/*
+			 * Extend the "mode change" pseudo-hunk to include also
+			 * the "new mode" line.
+			 */
+			if (!file_diff->mode_change)
+				BUG("'new mode' without 'old mode'?\n\n%.*s",
+				    (int)(eol - plain->buf), plain->buf);
+			if (file_diff->hunk_nr != 1)
+				BUG("mode change in the middle?\n\n%.*s",
+				    (int)(eol - plain->buf), plain->buf);
+			if (p - plain->buf != file_diff->hunk->end)
+				BUG("'new mode' does not immediately follow "
+				    "'old mode'?\n\n%.*s",
+				    (int)(eol - plain->buf), plain->buf);
 		}
+
+		if (file_diff->deleted && file_diff->mode_change)
+			BUG("diff contains delete *and* a mode change?!?\n%.*s",
+			    (int)(eol - (plain->buf + file_diff->head.start)),
+			    plain->buf + file_diff->head.start);
 
 		p = eol == pend ? pend : eol + 1;
 		hunk->end = p - plain->buf;
@@ -232,6 +288,16 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				colored_p = colored_pend;
 
 			hunk->colored_end = colored_p - colored->buf;
+		}
+
+		if (mode_change) {
+			if (file_diff->hunk_nr != 1)
+				BUG("mode change in hunk #%d???",
+				    (int)file_diff->hunk_nr);
+			/* Adjust the end of the "mode change" pseudo-hunk */
+			file_diff->hunk->end = hunk->end;
+			if (colored)
+				file_diff->hunk->colored_end = hunk->colored_end;
 		}
 	}
 
@@ -284,6 +350,39 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 			   hunk->end - hunk->start);
 }
 
+static void render_diff_header(struct add_p_state *s,
+			       struct file_diff *file_diff, int colored,
+			       struct strbuf *out)
+{
+	/*
+	 * If there was a mode change, the first hunk is a pseudo hunk that
+	 * corresponds to the mode line in the header. If the user did not want
+	 * to stage that "hunk", we actually have to cut it out from the header.
+	 */
+	int skip_mode_change =
+		file_diff->mode_change && file_diff->hunk->use != USE_HUNK;
+	struct hunk *head = &file_diff->head, *first = file_diff->hunk;
+
+	if (!skip_mode_change) {
+		render_hunk(s, head, 0, colored, out);
+		return;
+	}
+
+	if (colored) {
+		const char *p = s->colored.buf;
+
+		strbuf_add(out, p + head->colored_start,
+			    first->colored_start - head->colored_start);
+		strbuf_add(out, p + first->colored_end,
+			    head->colored_end - first->colored_end);
+	} else {
+		const char *p = s->plain.buf;
+
+		strbuf_add(out, p + head->start, first->start - head->start);
+		strbuf_add(out, p + first->end, head->end - first->end);
+	}
+}
+
 static void reassemble_patch(struct add_p_state *s,
 			     struct file_diff *file_diff, struct strbuf *out)
 {
@@ -291,9 +390,9 @@ static void reassemble_patch(struct add_p_state *s,
 	size_t i;
 	ssize_t delta = 0;
 
-	render_hunk(s, &file_diff->head, 0, 0, out);
+	render_diff_header(s, file_diff, 0, out);
 
-	for (i = 0; i < file_diff->hunk_nr; i++) {
+	for (i = file_diff->mode_change; i < file_diff->hunk_nr; i++) {
 		hunk = file_diff->hunk + i;
 		if (hunk->use != USE_HUNK)
 			delta += hunk->header.old_count
@@ -328,7 +427,7 @@ static int patch_update_file(struct add_p_state *s,
 		return 0;
 
 	strbuf_reset(&s->buf);
-	render_hunk(s, &file_diff->head, 0, colored, &s->buf);
+	render_diff_header(s, file_diff, colored, &s->buf);
 	fputs(s->buf.buf, stdout);
 	for (;;) {
 		if (hunk_index >= file_diff->hunk_nr)
