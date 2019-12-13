@@ -544,12 +544,7 @@ def getGitTags():
         gitTags.add(tag)
     return gitTags
 
-def diffTreePattern():
-    # This is a simple generator for the diff tree regex pattern. This could be
-    # a class variable if this and parseDiffTreeEntry were a part of a class.
-    pattern = re.compile(':(\d+) (\d+) (\w+) (\w+) ([A-Z])(\d+)?\t(.*?)((\t(.*))|$)')
-    while True:
-        yield pattern
+_diff_tree_pattern = None
 
 def parseDiffTreeEntry(entry):
     """Parses a single diff tree entry into its component elements.
@@ -570,7 +565,11 @@ def parseDiffTreeEntry(entry):
 
     If the pattern is not matched, None is returned."""
 
-    match = diffTreePattern().next().match(entry)
+    global _diff_tree_pattern
+    if not _diff_tree_pattern:
+        _diff_tree_pattern = re.compile(':(\d+) (\d+) (\w+) (\w+) ([A-Z])(\d+)?\t(.*?)((\t(.*))|$)')
+
+    match = _diff_tree_pattern.match(entry)
     if match:
         return {
             'src_mode': match.group(1),
