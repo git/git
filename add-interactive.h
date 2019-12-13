@@ -12,6 +12,9 @@ struct add_i_state {
 	char error_color[COLOR_MAXLEN];
 	char reset_color[COLOR_MAXLEN];
 	char fraginfo_color[COLOR_MAXLEN];
+	char context_color[COLOR_MAXLEN];
+	char file_old_color[COLOR_MAXLEN];
+	char file_new_color[COLOR_MAXLEN];
 };
 
 void init_add_i_state(struct add_i_state *s, struct repository *r);
