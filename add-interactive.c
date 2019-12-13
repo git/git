@@ -10,16 +10,6 @@
 #include "dir.h"
 #include "run-command.h"
 
-struct add_i_state {
-	struct repository *r;
-	int use_color;
-	char header_color[COLOR_MAXLEN];
-	char help_color[COLOR_MAXLEN];
-	char prompt_color[COLOR_MAXLEN];
-	char error_color[COLOR_MAXLEN];
-	char reset_color[COLOR_MAXLEN];
-};
-
 static void init_color(struct repository *r, struct add_i_state *s,
 		       const char *slot_name, char *dst,
 		       const char *default_color)
@@ -36,7 +26,7 @@ static void init_color(struct repository *r, struct add_i_state *s,
 	free(key);
 }
 
-static void init_add_i_state(struct add_i_state *s, struct repository *r)
+void init_add_i_state(struct add_i_state *s, struct repository *r)
 {
 	const char *value;
 
@@ -54,6 +44,8 @@ static void init_add_i_state(struct add_i_state *s, struct repository *r)
 	init_color(r, s, "prompt", s->prompt_color, GIT_COLOR_BOLD_BLUE);
 	init_color(r, s, "error", s->error_color, GIT_COLOR_BOLD_RED);
 	init_color(r, s, "reset", s->reset_color, GIT_COLOR_RESET);
+	init_color(r, s, "fraginfo", s->fraginfo_color,
+		   diff_get_color(s->use_color, DIFF_FRAGINFO));
 }
 
 /*
