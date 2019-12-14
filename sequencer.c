@@ -1489,7 +1489,7 @@ static int allow_empty(struct repository *r,
 		       struct replay_opts *opts,
 		       struct commit *commit)
 {
-	int index_unchanged, empty_commit;
+	int index_unchanged, originally_empty;
 
 	/*
 	 * Three cases:
@@ -1513,10 +1513,10 @@ static int allow_empty(struct repository *r,
 	if (opts->keep_redundant_commits)
 		return 1;
 
-	empty_commit = is_original_commit_empty(commit);
-	if (empty_commit < 0)
-		return empty_commit;
-	if (!empty_commit)
+	originally_empty = is_original_commit_empty(commit);
+	if (originally_empty < 0)
+		return originally_empty;
+	if (!originally_empty)
 		return 0;
 	else
 		return 1;
@@ -4566,7 +4566,6 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				   struct rev_info *revs, struct strbuf *out,
 				   unsigned flags)
 {
-	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	int rebase_cousins = flags & TODO_LIST_REBASE_COUSINS;
 	int root_with_onto = flags & TODO_LIST_ROOT_WITH_ONTO;
 	struct strbuf buf = STRBUF_INIT, oneline = STRBUF_INIT;
@@ -4629,8 +4628,6 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		if (!to_merge) {
 			/* non-merge commit: easy case */
 			strbuf_reset(&buf);
-			if (!keep_empty && is_empty)
-				strbuf_addf(&buf, "%c ", comment_line_char);
 			strbuf_addf(&buf, "%s %s %s", cmd_pick,
 				    oid_to_hex(&commit->object.oid),
 				    oneline.buf);
@@ -4797,7 +4794,6 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	struct pretty_print_context pp = {0};
 	struct rev_info revs;
 	struct commit *commit;
-	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	const char *insn = flags & TODO_LIST_ABBREVIATE_CMDS ? "p" : "pick";
 	int rebase_merges = flags & TODO_LIST_REBASE_MERGES;
 
@@ -4833,12 +4829,10 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 		return make_script_with_merges(&pp, &revs, out, flags);
 
 	while ((commit = get_revision(&revs))) {
-		int is_empty  = is_original_commit_empty(commit);
+		int is_empty = is_original_commit_empty(commit);
 
 		if (!is_empty && (commit->object.flags & PATCHSAME))
 			continue;
-		if (!keep_empty && is_empty)
-			strbuf_addf(out, "%c ", comment_line_char);
 		strbuf_addf(out, "%s %s ", insn,
 			    oid_to_hex(&commit->object.oid));
 		pretty_print_commit(&pp, commit, out);
@@ -4975,7 +4969,7 @@ int todo_list_write_to_file(struct repository *r, struct todo_list *todo_list,
 
 	todo_list_to_strbuf(r, todo_list, &buf, num, flags);
 	if (flags & TODO_LIST_APPEND_TODO_HELP)
-		append_todo_help(flags & TODO_LIST_KEEP_EMPTY, count_commands(todo_list),
+		append_todo_help(count_commands(todo_list),
 				 shortrevisions, shortonto, &buf);
 
 	res = write_message(buf.buf, buf.len, file, 0);
