@@ -218,7 +218,7 @@ struct git_graph {
 	int merge_layout;
 	/*
 	 * The number of columns added to the graph by the current commit. For
-	 * 2-way and octopus merges, this is is usually one less than the
+	 * 2-way and octopus merges, this is usually one less than the
 	 * number of parents:
 	 *
 	 * 		| | |			| |    \

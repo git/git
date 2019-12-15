@@ -481,7 +481,7 @@ all::
 #
 # When DEVELOPER is set, DEVOPTS can be used to control compiler
 # options.  This variable contains keywords separated by
-# whitespace. The following keywords are are recognized:
+# whitespace. The following keywords are recognized:
 #
 #    no-error:
 #

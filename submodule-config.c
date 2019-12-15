@@ -626,7 +626,7 @@ static void submodule_cache_check_init(struct repository *repo)
 
 /*
  * Note: This function is private for a reason, the '.gitmodules' file should
- * not be used as as a mechanism to retrieve arbitrary configuration stored in
+ * not be used as a mechanism to retrieve arbitrary configuration stored in
  * the repository.
  *
  * Runs the provided config function on the '.gitmodules' file found in the
