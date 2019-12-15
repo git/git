@@ -8231,10 +8231,10 @@ proc parseblobdiffline {ids line} {
 	if {$currdiffsubmod != $fname} {
 	    $ctext insert end "\n";     # Add newline after commit message
 	}
-	set curdiffstart [$ctext index "end - 1c"]
-	lappend ctext_file_names ""
 	if {$currdiffsubmod != $fname} {
-	    lappend ctext_file_lines $fname
+	    set curdiffstart [$ctext index "end - 1c"]
+	    lappend ctext_file_names ""
+	    lappend ctext_file_lines [lindex [split $curdiffstart "."] 0]
 	    makediffhdr $fname $ids
 	    set currdiffsubmod $fname
 	    $ctext insert end "\n$line\n" filesep
