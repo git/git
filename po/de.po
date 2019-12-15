@@ -1535,7 +1535,7 @@ msgstr "Lösche Commit-Markierungen in Commit-Graph"
 
 #: commit-graph.c:1104
 msgid "Computing commit graph generation numbers"
-msgstr "Commit-Graph Generierungsnummern berechnen"
+msgstr "Commit-Graph Generationsnummern berechnen"
 
 #: commit-graph.c:1179
 #, c-format
