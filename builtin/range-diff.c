@@ -84,6 +84,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	res = show_range_diff(range1.buf, range2.buf, creation_factor,
 			      simple_color < 1, &diffopt, &other_arg);
 
+	argv_array_clear(&other_arg);
 	strbuf_release(&range1);
 	strbuf_release(&range2);
 

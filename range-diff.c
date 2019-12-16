@@ -41,7 +41,7 @@ static size_t find_end_of_line(char *buffer, unsigned long size)
  * as struct object_id (will need to be free()d).
  */
 static int read_patches(const char *range, struct string_list *list,
-			struct argv_array *other_arg)
+			const struct argv_array *other_arg)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT, contents = STRBUF_INIT;
@@ -506,8 +506,8 @@ static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
 
 int show_range_diff(const char *range1, const char *range2,
 		    int creation_factor, int dual_color,
-		    struct diff_options *diffopt,
-		    struct argv_array *other_arg)
+		    const struct diff_options *diffopt,
+		    const struct argv_array *other_arg)
 {
 	int res = 0;
 
