@@ -24,6 +24,11 @@ static unsigned int max_creator_version;
 #define ZIP_STREAM	(1 <<  3)
 #define ZIP_UTF8	(1 << 11)
 
+enum zip_method {
+	ZIP_METHOD_STORE = 0,
+	ZIP_METHOD_DEFLATE = 8
+};
+
 struct zip_local_header {
 	unsigned char magic[4];
 	unsigned char version[2];
@@ -291,7 +296,7 @@ static int write_zip_entry(struct archiver_args *args,
 	unsigned long attr2;
 	unsigned long compressed_size;
 	unsigned long crc;
-	int method;
+	enum zip_method method;
 	unsigned char *out;
 	void *deflated = NULL;
 	void *buffer;
@@ -320,7 +325,7 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
-		method = 0;
+		method = ZIP_METHOD_STORE;
 		attr2 = 16;
 		out = NULL;
 		size = 0;
@@ -330,13 +335,13 @@ static int write_zip_entry(struct archiver_args *args,
 		enum object_type type = oid_object_info(args->repo, oid,
 							&size);
 
-		method = 0;
+		method = ZIP_METHOD_STORE;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
 			(mode & 0111) ? ((mode) << 16) : 0;
 		if (S_ISLNK(mode) || (mode & 0111))
 			creator_version = 0x0317;
 		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
-			method = 8;
+			method = ZIP_METHOD_DEFLATE;
 
 		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
 		    size > big_file_threshold) {
@@ -358,7 +363,7 @@ static int write_zip_entry(struct archiver_args *args,
 						    buffer, size);
 			out = buffer;
 		}
-		compressed_size = (method == 0) ? size : 0;
+		compressed_size = (method == ZIP_METHOD_STORE) ? size : 0;
 	} else {
 		return error(_("unsupported file mode: 0%o (SHA1: %s)"), mode,
 				oid_to_hex(oid));
@@ -367,13 +372,13 @@ static int write_zip_entry(struct archiver_args *args,
 	if (creator_version > max_creator_version)
 		max_creator_version = creator_version;
 
-	if (buffer && method == 8) {
+	if (buffer && method == ZIP_METHOD_DEFLATE) {
 		out = deflated = zlib_deflate_raw(buffer, size,
 						  args->compression_level,
 						  &compressed_size);
 		if (!out || compressed_size >= size) {
 			out = buffer;
-			method = 0;
+			method = ZIP_METHOD_STORE;
 			compressed_size = size;
 		}
 	}
@@ -420,7 +425,7 @@ static int write_zip_entry(struct archiver_args *args,
 		zip_offset += ZIP64_EXTRA_SIZE;
 	}
 
-	if (stream && method == 0) {
+	if (stream && method == ZIP_METHOD_STORE) {
 		unsigned char buf[STREAM_BUFFER_SIZE];
 		ssize_t readlen;
 
@@ -443,7 +448,7 @@ static int write_zip_entry(struct archiver_args *args,
 		zip_offset += compressed_size;
 
 		write_zip_data_desc(size, compressed_size, crc);
-	} else if (stream && method == 8) {
+	} else if (stream && method == ZIP_METHOD_DEFLATE) {
 		unsigned char buf[STREAM_BUFFER_SIZE];
 		ssize_t readlen;
 		git_zstream zstream;
