@@ -603,18 +603,18 @@ static void write_zip_trailer(const struct object_id *oid)
 static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
 {
 	time_t time;
-	struct tm *t;
+	struct tm tm;
 
 	if (date_overflows(*timestamp))
 		die(_("timestamp too large for this system: %"PRItime),
 		    *timestamp);
 	time = (time_t)*timestamp;
-	t = localtime(&time);
+	localtime_r(&time, &tm);
 	*timestamp = time;
 
-	*dos_date = t->tm_mday + (t->tm_mon + 1) * 32 +
-	            (t->tm_year + 1900 - 1980) * 512;
-	*dos_time = t->tm_sec / 2 + t->tm_min * 32 + t->tm_hour * 2048;
+	*dos_date = tm.tm_mday + (tm.tm_mon + 1) * 32 +
+		    (tm.tm_year + 1900 - 1980) * 512;
+	*dos_time = tm.tm_sec / 2 + tm.tm_min * 32 + tm.tm_hour * 2048;
 }
 
 static int archive_zip_config(const char *var, const char *value, void *data)
