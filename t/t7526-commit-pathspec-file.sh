@@ -127,4 +127,10 @@ test_expect_success 'only touches what was listed' '
 	verify_expect
 '
 
+test_expect_success '--pathspec-from-file and --all cannot be used together' '
+	restore_checkpoint &&
+	test_must_fail git commit --pathspec-from-file=- --all -m "Commit" 2>err &&
+	test_i18ngrep "[-]-pathspec-from-file with -a does not make sense" err
+'
+
 test_done
