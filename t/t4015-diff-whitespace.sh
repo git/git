@@ -2050,11 +2050,6 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	test_cmp expected actual
 '
 
-# Note that the "6" in the expected hunk header below is funny, since we only
-# show 5 lines (the missing one was blank and thus ignored). This is how
-# --ignore-blank-lines behaves even without --function-context, and this test
-# is just checking the interaction of the two features. Don't take it as an
-# endorsement of that output.
 test_expect_success 'combine --ignore-blank-lines with --function-context' '
 	test_write_lines 1 "" 2 3 4 5 >a &&
 	test_write_lines 1    2 3 4   >b &&
@@ -2064,6 +2059,7 @@ test_expect_success 'combine --ignore-blank-lines with --function-context' '
 	cat <<-\EOF >expect &&
 	@@ -1,6 +1,4 @@
 	 1
+	-
 	 2
 	 3
 	 4
