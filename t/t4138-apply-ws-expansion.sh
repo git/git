@@ -17,8 +17,8 @@ test_expect_success setup '
 	printf "\t%s\n" 1 2 3 >after &&
 	printf "%64s\n" a b c >>after &&
 	printf "\t%s\n" 4 5 6 >>after &&
-	git diff --no-index before after |
-		sed -e "s/before/test-1/" -e "s/after/test-1/" >patch1.patch &&
+	test_expect_code 1 git diff --no-index before after >patch1.patch.raw &&
+	sed -e "s/before/test-1/" -e "s/after/test-1/" patch1.patch.raw >patch1.patch &&
 	printf "%64s\n" 1 2 3 4 5 6 >test-1 &&
 	printf "%64s\n" 1 2 3 a b c 4 5 6 >expect-1 &&
 
@@ -33,8 +33,8 @@ test_expect_success setup '
 		x=$(( $x + 1 ))
 	done &&
 	printf "\t%s\n" d e f >>after &&
-	git diff --no-index before after |
-		sed -e "s/before/test-2/" -e "s/after/test-2/" >patch2.patch &&
+	test_expect_code 1 git diff --no-index before after >patch2.patch.raw &&
+	sed -e "s/before/test-2/" -e "s/after/test-2/" patch2.patch.raw >patch2.patch &&
 	printf "%64s\n" a b c d e f >test-2 &&
 	printf "%64s\n" a b c >expect-2 &&
 	x=1 &&
@@ -56,8 +56,8 @@ test_expect_success setup '
 		x=$(( $x + 1 ))
 	done &&
 	printf "\t%s\n" d e f >>after &&
-	git diff --no-index before after |
-	sed -e "s/before/test-3/" -e "s/after/test-3/" >patch3.patch &&
+	test_expect_code 1 git diff --no-index before after >patch3.patch.raw &&
+	sed -e "s/before/test-3/" -e "s/after/test-3/" patch3.patch.raw >patch3.patch &&
 	printf "%64s\n" a b c d e f >test-3 &&
 	printf "%64s\n" a b c >expect-3 &&
 	x=0 &&
@@ -84,8 +84,8 @@ test_expect_success setup '
 		printf "\t%02d\n" $x >>after
 		x=$(( $x + 1 ))
 	done &&
-	git diff --no-index before after |
-	sed -e "s/before/test-4/" -e "s/after/test-4/" >patch4.patch &&
+	test_expect_code 1 git diff --no-index before after >patch4.patch.raw &&
+	sed -e "s/before/test-4/" -e "s/after/test-4/" patch4.patch.raw >patch4.patch &&
 	>test-4 &&
 	x=0 &&
 	while test $x -lt 50
