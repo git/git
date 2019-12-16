@@ -17,7 +17,7 @@ revision walk is used for operations like `git log`.
 
 - `Documentation/user-manual.txt` under "Hacking Git" contains some coverage of
   the revision walker in its various incarnations.
-- `Documentation/technical/api-revision-walking.txt`
+- `revision.h`
 - https://eagain.net/articles/git-for-computer-scientists/[Git for Computer Scientists]
   gives a good overview of the types of objects in Git and what your object
   walk is really describing.
@@ -119,9 +119,8 @@ parameters provided by the user over the CLI.
 
 `nr` represents the number of `rev_cmdline_entry` present in the array.
 
-`alloc` is used by the `ALLOC_GROW` macro. Check
-`Documentation/technical/api-allocation-growing.txt` - this variable is used to
-track the allocated size of the list.
+`alloc` is used by the `ALLOC_GROW` macro. Check `cache.h` - this variable is
+used to track the allocated size of the list.
 
 Per entry, we find:
 

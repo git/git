@@ -34,6 +34,7 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
  * handle directly. It is assumed that this is the same file handle as the
  * file specified by the graph diff options. This is necessary so that
  * graph_show_strbuf can be called even with a NULL graph.
+ * If a NULL graph is supplied, the strbuf is printed as-is.
  */
 static void graph_show_strbuf(struct git_graph *graph,
 			      FILE *file,

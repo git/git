@@ -9,6 +9,49 @@
 #include "object.h"
 #include "oidset.h"
 
+/**
+ * The diff API is for programs that compare two sets of files (e.g. two trees,
+ * one tree and the index) and present the found difference in various ways.
+ * The calling program is responsible for feeding the API pairs of files, one
+ * from the "old" set and the corresponding one from "new" set, that are
+ * different.
+ * The library called through this API is called diffcore, and is responsible
+ * for two things.
+ *
+ * - finding total rewrites (`-B`), renames (`-M`) and copies (`-C`), and
+ * changes that touch a string (`-S`), as specified by the caller.
+ *
+ * - outputting the differences in various formats, as specified by the caller.
+ *
+ * Calling sequence
+ * ----------------
+ *
+ * - Prepare `struct diff_options` to record the set of diff options, and then
+ * call `repo_diff_setup()` to initialize this structure.  This sets up the
+ * vanilla default.
+ *
+ * - Fill in the options structure to specify desired output format, rename
+ * detection, etc.  `diff_opt_parse()` can be used to parse options given
+ * from the command line in a way consistent with existing git-diff family
+ * of programs.
+ *
+ * - Call `diff_setup_done()`; this inspects the options set up so far for
+ * internal consistency and make necessary tweaking to it (e.g. if textual
+ * patch output was asked, recursive behaviour is turned on); the callback
+ * set_default in diff_options can be used to tweak this more.
+ *
+ * - As you find different pairs of files, call `diff_change()` to feed
+ * modified files, `diff_addremove()` to feed created or deleted files, or
+ * `diff_unmerge()` to feed a file whose state is 'unmerged' to the API.
+ * These are thin wrappers to a lower-level `diff_queue()` function that is
+ * flexible enough to record any of these kinds of changes.
+ *
+ * - Once you finish feeding the pairs of files, call `diffcore_std()`.
+ * This will tell the diffcore library to go ahead and do its work.
+ *
+ * - Calling `diff_flush()` will produce the output.
+ */
+
 struct combine_diff_path;
 struct commit;
 struct diff_filespec;
@@ -65,21 +108,66 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 
 #define DIFF_FLAGS_INIT { 0 }
 struct diff_flags {
+
+	/**
+	 * Tells if tree traversal done by tree-diff should recursively descend
+	 * into a tree object pair that are different in preimage and postimage set.
+	 */
 	unsigned recursive;
 	unsigned tree_in_recursive;
+
+	/* Affects the way how a file that is seemingly binary is treated. */
 	unsigned binary;
 	unsigned text;
+
+	/**
+	 * Tells the patch output format not to use abbreviated object names on the
+	 * "index" lines.
+	 */
 	unsigned full_index;
+
+	/* Affects if diff-files shows removed files. */
 	unsigned silent_on_remove;
+
+	/**
+	 * Tells the diffcore library that the caller is feeding unchanged
+	 * filepairs to allow copies from unmodified files be detected.
+	 */
 	unsigned find_copies_harder;
+
 	unsigned follow_renames;
 	unsigned rename_empty;
+
+	/* Internal; used for optimization to see if there is any change. */
 	unsigned has_changes;
+
 	unsigned quick;
+
+	/**
+	 * Tells diff-files that the input is not tracked files but files in random
+	 * locations on the filesystem.
+	 */
 	unsigned no_index;
+
+	/**
+	 * Tells output routine that it is Ok to call user specified patch output
+	 * routine.  Plumbing disables this to ensure stable output.
+	 */
 	unsigned allow_external;
+
+	/**
+	 * For communication between the calling program and the options parser;
+	 * tell the calling program to signal the presence of difference using
+	 * program exit code.
+	 */
 	unsigned exit_with_status;
+
+	/**
+	 * Tells the library that the calling program is feeding the filepairs
+	 * reversed; `one` is two, and `two` is one.
+	 */
 	unsigned reverse_diff;
+
 	unsigned check_failed;
 	unsigned relative_name;
 	unsigned ignore_submodules;
@@ -131,36 +219,72 @@ enum diff_submodule_format {
 	DIFF_SUBMODULE_INLINE_DIFF
 };
 
+/**
+ * the set of options the calling program wants to affect the operation of
+ * diffcore library with.
+ */
 struct diff_options {
 	const char *orderfile;
+
+	/**
+	 * A constant string (can and typically does contain newlines to look for
+	 * a block of text, not just a single line) to filter out the filepairs
+	 * that do not change the number of strings contained in its preimage and
+	 * postimage of the diff_queue.
+	 */
 	const char *pickaxe;
+
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
 	size_t line_prefix_length;
+
+	/**
+	 * collection of boolean options that affects the operation, but some do
+	 * not have anything to do with the diffcore library.
+	 */
 	struct diff_flags flags;
 
 	/* diff-filter bits */
 	unsigned int filter;
 
 	int use_color;
+
+	/* Number of context lines to generate in patch output. */
 	int context;
+
 	int interhunkcontext;
+
+	/* Affects the way detection logic for complete rewrites, renames and
+	 * copies.
+	 */
 	int break_opt;
 	int detect_rename;
+
 	int irreversible_delete;
 	int skip_stat_unmatch;
 	int line_termination;
+
+	/* The output format used when `diff_flush()` is run. */
 	int output_format;
+
 	unsigned pickaxe_opts;
+
+	/* Affects the way detection logic for complete rewrites, renames and
+	 * copies.
+	 */
 	int rename_score;
 	int rename_limit;
+
 	int needed_rename_limit;
 	int degraded_cc_to_c;
 	int show_rename_progress;
 	int dirstat_permille;
 	int setup;
+
+	/* Number of hexdigits to abbreviate raw format output to. */
 	int abbrev;
+
 	int ita_invisible_in_index;
 /* white-space error highlighting */
 #define WSEH_NEW (1<<12)
@@ -192,6 +316,7 @@ struct diff_options {
 	/* to support internal diff recursion by --follow hack*/
 	int found_follow;
 
+	/* Callback which allows tweaking the options in diff_setup_done(). */
 	void (*set_default)(struct diff_options *);
 
 	FILE *file;
@@ -286,6 +411,7 @@ enum color_diff {
 	DIFF_FILE_OLD_BOLD = 21,
 	DIFF_FILE_NEW_BOLD = 22,
 };
+
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
 	diff_get_color((o)->use_color, ix)

@@ -1,6 +1,10 @@
 #ifndef PARSE_OPTIONS_H
 #define PARSE_OPTIONS_H
 
+/**
+ * Refer to Documentation/technical/api-parse-options.txt for the API doc.
+ */
+
 enum parse_opt_type {
 	/* special types */
 	OPTION_END,
