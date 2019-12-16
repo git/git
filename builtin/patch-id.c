@@ -5,13 +5,8 @@
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
-	char name[GIT_MAX_HEXSZ + 1];
-
-	if (!patchlen)
-		return;
-
-	memcpy(name, oid_to_hex(id), the_hash_algo->hexsz + 1);
-	printf("%s %s\n", oid_to_hex(result), name);
+	if (patchlen)
+		printf("%s %s\n", oid_to_hex(result), oid_to_hex(id));
 }
 
 static int remove_space(char *line)
