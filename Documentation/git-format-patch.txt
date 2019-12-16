@@ -333,11 +333,12 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
   Output an all-zero hash in each patch's From header instead
   of the hash of the commit.
 
---base=<commit>::
+--[no-]base[=<commit>]::
 	Record the base tree information to identify the state the
 	patch series applies to.  See the BASE TREE INFORMATION section
 	below for details. If <commit> is "auto", a base commit is
-	automatically chosen.
+	automatically chosen. The `--no-base` option overrides a
+	`format.useAutoBase` configuration.
 
 --root::
 	Treat the revision argument as a <revision range>, even if it

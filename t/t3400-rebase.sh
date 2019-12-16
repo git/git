@@ -159,6 +159,12 @@ test_expect_success 'fail when upstream arg is missing and not configured' '
 	test_must_fail git rebase
 '
 
+test_expect_success 'rebase works with format.useAutoBase' '
+	test_config format.useAutoBase true &&
+	git checkout topic &&
+	git rebase master
+'
+
 test_expect_success 'default to common base in @{upstream}s reflog if no upstream arg' '
 	git checkout -b default-base master &&
 	git checkout -b default topic &&
