@@ -130,6 +130,12 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 		parse_strategy_opts(&replay, strategy_buf.buf);
 
 	strbuf_release(&strategy_buf);
+
+	if (opts->squash_onto) {
+		oidcpy(&replay.squash_onto, opts->squash_onto);
+		replay.have_squash_onto = 1;
+	}
+
 	return replay;
 }
 
