@@ -132,6 +132,19 @@ Performance, Internal Implementation, Development Support etc.
    encourage new callers to use the correct and more strict
    validation.
 
+ * Unnecessary reading of state variables back from the disk during
+   sequencer operation has been reduced.
+
+ * The code has been made to avoid gmtime() and localtime() and prefer
+   their reentrant counterparts.
+
+ * "git add -i" that is getting rewritten in C has been extended to
+   cover subcommands other than the "patch".
+
+ * In a repository with many packfiles, the cost of the procedure that
+   avoids registering the same packfile twice was unnecessarily high
+   by using an inefficient search algorithm, which has been corrected.
+
 
 Fixes since v2.24
 -----------------
@@ -261,6 +274,18 @@ Fixes since v2.24
    generation, instead of following the "if it takes more than two
    seconds, show progress" pattern, which has been corrected.
 
+ * "git rebase" did not work well when format.useAutoBase
+   configuration variable is set, which has been corrected.
+
+ * The "diff" machinery learned not to lose added/removed blank lines
+   in the context when --ignore-blank-lines and --function-context are
+   used at the same time.
+   (merge 0bb313a552 rs/xdiff-ignore-ws-w-func-context later to maint).
+
+ * The test on "fast-import" used to get stuck when "fast-import" died
+   in the middle.
+   (merge 0d9b0d7885 sg/t9300-robustify later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
@@ -288,3 +313,7 @@ Fixes since v2.24
    (merge 528d9e6d01 jk/perf-wo-git-dot-pm later to maint).
    (merge fc42f20e24 sg/test-squelch-noise-in-commit-bulk later to maint).
    (merge c64368e3a2 bc/t9001-zsh-in-posix-emulation-mode later to maint).
+   (merge 11de8dd7ef dr/branch-usage-casefix later to maint).
+   (merge e05e8cf074 rs/archive-zip-code-cleanup later to maint).
+   (merge 147ee35558 rs/commit-export-env-simplify later to maint).
+   (merge 4507ecc771 rs/patch-id-use-oid-to-hex later to maint).
