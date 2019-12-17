@@ -209,7 +209,7 @@ test_expect_success MINGW 'prevent git~1 squatting on Windows' '
 		hash="$(echo x | git hash-object -w --stdin)" &&
 		test_must_fail git update-index --add \
 			--cacheinfo 160000,$rev,d\\a 2>err &&
-		test_i18ngrep backslash err &&
+		test_i18ngrep "Invalid path" err &&
 		git -c core.protectNTFS=false update-index --add \
 			--cacheinfo 100644,$modules,.gitmodules \
 			--cacheinfo 160000,$rev,c \

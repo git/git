@@ -959,7 +959,7 @@ static int verify_dotfile(const char *rest, unsigned mode)
 
 int verify_path(const char *path, unsigned mode)
 {
-	char c;
+	char c = 0;
 
 	if (has_dos_drive_prefix(path))
 		return 0;
@@ -974,6 +974,7 @@ int verify_path(const char *path, unsigned mode)
 		if (is_dir_sep(c)) {
 inside:
 			if (protect_hfs) {
+
 				if (is_hfs_dotgit(path))
 					return 0;
 				if (S_ISLNK(mode)) {
@@ -982,6 +983,10 @@ inside:
 				}
 			}
 			if (protect_ntfs) {
+#ifdef GIT_WINDOWS_NATIVE
+				if (c == '\\')
+					return 0;
+#endif
 				if (is_ntfs_dotgit(path))
 					return 0;
 				if (S_ISLNK(mode)) {
@@ -1277,11 +1282,6 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 	int new_only = option & ADD_CACHE_NEW_ONLY;
-
-#ifdef GIT_WINDOWS_NATIVE
-	if (protect_ntfs && strchr(ce->name, '\\'))
-		return error(_("filename in tree entry contains backslash: '%s'"), ce->name);
-#endif
 
 	if (!(option & ADD_CACHE_KEEP_CACHE_TREE))
 		cache_tree_invalidate_path(istate, ce->name);
