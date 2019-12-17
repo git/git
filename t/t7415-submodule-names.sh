@@ -207,6 +207,9 @@ test_expect_success MINGW 'prevent git~1 squatting on Windows' '
 			git hash-object -w --stdin)" &&
 		rev="$(git rev-parse --verify HEAD)" &&
 		hash="$(echo x | git hash-object -w --stdin)" &&
+		test_must_fail git update-index --add \
+			--cacheinfo 160000,$rev,d\\a 2>err &&
+		test_i18ngrep backslash err &&
 		git -c core.protectNTFS=false update-index --add \
 			--cacheinfo 100644,$modules,.gitmodules \
 			--cacheinfo 160000,$rev,c \
@@ -214,9 +217,7 @@ test_expect_success MINGW 'prevent git~1 squatting on Windows' '
 			--cacheinfo 100644,$hash,d./a/x \
 			--cacheinfo 100644,$hash,d./a/..git &&
 		test_tick &&
-		git -c core.protectNTFS=false commit -m "module" &&
-		test_must_fail git show HEAD: 2>err &&
-		test_i18ngrep backslash err
+		git -c core.protectNTFS=false commit -m "module"
 	) &&
 	test_must_fail git -c core.protectNTFS=false \
 		clone --recurse-submodules squatting squatting-clone 2>err &&

@@ -1278,6 +1278,11 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 	int new_only = option & ADD_CACHE_NEW_ONLY;
 
+#ifdef GIT_WINDOWS_NATIVE
+	if (protect_ntfs && strchr(ce->name, '\\'))
+		return error(_("filename in tree entry contains backslash: '%s'"), ce->name);
+#endif
+
 	if (!(option & ADD_CACHE_KEEP_CACHE_TREE))
 		cache_tree_invalidate_path(istate, ce->name);
 
