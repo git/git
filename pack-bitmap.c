@@ -832,6 +832,18 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 	return 0;
 }
 
+int bitmap_walk_contains(struct bitmap_index *bitmap_git,
+			 struct bitmap *bitmap, const struct object_id *oid)
+{
+	int idx;
+
+	if (!bitmap)
+		return 0;
+
+	idx = bitmap_position(bitmap_git, oid);
+	return idx >= 0 && bitmap_get(bitmap, idx);
+}
+
 void traverse_bitmap_commit_list(struct bitmap_index *bitmap_git,
 				 show_reachable_fn show_reachable)
 {
