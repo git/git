@@ -326,6 +326,13 @@ failed:
 	munmap(bitmap_git->map, bitmap_git->map_size);
 	bitmap_git->map = NULL;
 	bitmap_git->map_size = 0;
+
+	kh_destroy_oid_map(bitmap_git->bitmaps);
+	bitmap_git->bitmaps = NULL;
+
+	kh_destroy_oid_pos(bitmap_git->ext_index.positions);
+	bitmap_git->ext_index.positions = NULL;
+
 	return -1;
 }
 
@@ -770,65 +777,126 @@ cleanup:
 	return NULL;
 }
 
-int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
-				       struct packed_git **packfile,
-				       uint32_t *entries,
-				       off_t *up_to)
+static void try_partial_reuse(struct bitmap_index *bitmap_git,
+			      size_t pos,
+			      struct bitmap *reuse,
+			      struct pack_window **w_curs)
 {
-	/*
-	 * Reuse the packfile content if we need more than
-	 * 90% of its objects
-	 */
-	static const double REUSE_PERCENT = 0.9;
+	struct revindex_entry *revidx;
+	off_t offset;
+	enum object_type type;
+	unsigned long size;
 
+	if (pos >= bitmap_git->pack->num_objects)
+		return; /* not actually in the pack */
+
+	revidx = &bitmap_git->pack->revindex[pos];
+	offset = revidx->offset;
+	type = unpack_object_header(bitmap_git->pack, w_curs, &offset, &size);
+	if (type < 0)
+		return; /* broken packfile, punt */
+
+	if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA) {
+		off_t base_offset;
+		int base_pos;
+
+		/*
+		 * Find the position of the base object so we can look it up
+		 * in our bitmaps. If we can't come up with an offset, or if
+		 * that offset is not in the revidx, the pack is corrupt.
+		 * There's nothing we can do, so just punt on this object,
+		 * and the normal slow path will complain about it in
+		 * more detail.
+		 */
+		base_offset = get_delta_base(bitmap_git->pack, w_curs,
+					     &offset, type, revidx->offset);
+		if (!base_offset)
+			return;
+		base_pos = find_revindex_position(bitmap_git->pack, base_offset);
+		if (base_pos < 0)
+			return;
+
+		/*
+		 * We assume delta dependencies always point backwards. This
+		 * lets us do a single pass, and is basically always true
+		 * due to the way OFS_DELTAs work. You would not typically
+		 * find REF_DELTA in a bitmapped pack, since we only bitmap
+		 * packs we write fresh, and OFS_DELTA is the default). But
+		 * let's double check to make sure the pack wasn't written with
+		 * odd parameters.
+		 */
+		if (base_pos >= pos)
+			return;
+
+		/*
+		 * And finally, if we're not sending the base as part of our
+		 * reuse chunk, then don't send this object either. The base
+		 * would come after us, along with other objects not
+		 * necessarily in the pack, which means we'd need to convert
+		 * to REF_DELTA on the fly. Better to just let the normal
+		 * object_entry code path handle it.
+		 */
+		if (!bitmap_get(reuse, base_pos))
+			return;
+	}
+
+	/*
+	 * If we got here, then the object is OK to reuse. Mark it.
+	 */
+	bitmap_set(reuse, pos);
+}
+
+int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
+				       struct packed_git **packfile_out,
+				       uint32_t *entries,
+				       struct bitmap **reuse_out)
+{
 	struct bitmap *result = bitmap_git->result;
-	uint32_t reuse_threshold;
-	uint32_t i, reuse_objects = 0;
+	struct bitmap *reuse;
+	struct pack_window *w_curs = NULL;
+	size_t i = 0;
+	uint32_t offset;
 
 	assert(result);
 
-	for (i = 0; i < result->word_alloc; ++i) {
-		if (result->words[i] != (eword_t)~0) {
-			reuse_objects += ewah_bit_ctz64(~result->words[i]);
-			break;
+	while (i < result->word_alloc && result->words[i] == (eword_t)~0)
+		i++;
+
+	/* Don't mark objects not in the packfile */
+	if (i > bitmap_git->pack->num_objects / BITS_IN_EWORD)
+		i = bitmap_git->pack->num_objects / BITS_IN_EWORD;
+
+	reuse = bitmap_word_alloc(i);
+	memset(reuse->words, 0xFF, i * sizeof(eword_t));
+
+	for (; i < result->word_alloc; ++i) {
+		eword_t word = result->words[i];
+		size_t pos = (i * BITS_IN_EWORD);
+
+		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
+			if ((word >> offset) == 0)
+				break;
+
+			offset += ewah_bit_ctz64(word >> offset);
+			try_partial_reuse(bitmap_git, pos + offset, reuse, &w_curs);
 		}
-
-		reuse_objects += BITS_IN_EWORD;
 	}
 
-#ifdef GIT_BITMAP_DEBUG
-	{
-		const unsigned char *sha1;
-		struct revindex_entry *entry;
+	unuse_pack(&w_curs);
 
-		entry = &bitmap_git->reverse_index->revindex[reuse_objects];
-		sha1 = nth_packed_object_sha1(bitmap_git->pack, entry->nr);
-
-		fprintf(stderr, "Failed to reuse at %d (%016llx)\n",
-			reuse_objects, result->words[i]);
-		fprintf(stderr, " %s\n", hash_to_hex(sha1));
-	}
-#endif
-
-	if (!reuse_objects)
+	*entries = bitmap_popcount(reuse);
+	if (!*entries) {
+		bitmap_free(reuse);
 		return -1;
-
-	if (reuse_objects >= bitmap_git->pack->num_objects) {
-		bitmap_git->reuse_objects = *entries = bitmap_git->pack->num_objects;
-		*up_to = -1; /* reuse the full pack */
-		*packfile = bitmap_git->pack;
-		return 0;
 	}
 
-	reuse_threshold = bitmap_popcount(bitmap_git->result) * REUSE_PERCENT;
-
-	if (reuse_objects < reuse_threshold)
-		return -1;
-
-	bitmap_git->reuse_objects = *entries = reuse_objects;
-	*up_to = bitmap_git->pack->revindex[reuse_objects].offset;
-	*packfile = bitmap_git->pack;
-
+	/*
+	 * Drop any reused objects from the result, since they will not
+	 * need to be handled separately.
+	 */
+	bitmap_and_not(result, reuse);
+	*packfile_out = bitmap_git->pack;
+	*reuse_out = reuse;
 	return 0;
 }
 
