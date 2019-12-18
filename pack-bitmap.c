@@ -1132,16 +1132,6 @@ void free_bitmap_index(struct bitmap_index *b)
 int bitmap_has_oid_in_uninteresting(struct bitmap_index *bitmap_git,
 				    const struct object_id *oid)
 {
-	int pos;
-
-	if (!bitmap_git)
-		return 0; /* no bitmap loaded */
-	if (!bitmap_git->haves)
-		return 0; /* walk had no "haves" */
-
-	pos = bitmap_position(bitmap_git, oid);
-	if (pos < 0)
-		return 0;
-
-	return bitmap_get(bitmap_git->haves, pos);
+	return bitmap_git &&
+		bitmap_walk_contains(bitmap_git, bitmap_git->haves, oid);
 }
