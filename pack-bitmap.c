@@ -1139,7 +1139,7 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *bitmap_git,
 	if (!bitmap_git->haves)
 		return 0; /* walk had no "haves" */
 
-	pos = bitmap_position_packfile(bitmap_git, oid);
+	pos = bitmap_position(bitmap_git, oid);
 	if (pos < 0)
 		return 0;
 
