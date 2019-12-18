@@ -482,7 +482,7 @@ test_expect_success 'optimized merge base checks' '
 	git bisect good > my_bisect_log2.txt &&
 	test -f ".git/BISECT_ANCESTORS_OK" &&
 	test "$HASH6" = $(git rev-parse --verify HEAD) &&
-	git bisect bad > my_bisect_log3.txt &&
+	git bisect bad &&
 	git bisect good "$A_HASH" > my_bisect_log4.txt &&
 	test_i18ngrep "merge base must be tested" my_bisect_log4.txt &&
 	test_must_fail test -f ".git/BISECT_ANCESTORS_OK"
