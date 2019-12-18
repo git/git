@@ -268,11 +268,11 @@ void init_display_notes(struct display_notes_opt *opt);
 /*
  * This family of functions enables or disables the display of notes. In
  * particular, 'enable_default_display_notes' will display the default notes,
- * 'enable_default_display_notes' will display the notes ref 'ref' and
+ * 'enable_ref_display_notes' will display the notes ref 'ref' and
  * 'disable_display_notes' will disable notes, including those added by previous
  * invocations of the 'enable_*_display_notes' functions.
  *
- * 'show_notes' is a points to a boolean which will be set to 1 if notes are
+ * 'show_notes' is a pointer to a boolean which will be set to 1 if notes are
  * displayed, else 0. It must not be NULL.
  */
 void enable_default_display_notes(struct display_notes_opt *opt, int *show_notes);
