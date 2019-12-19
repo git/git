@@ -1070,14 +1070,17 @@ __git_aliased_command ()
 }
 
 # __git_find_on_cmdline requires 1 argument
+# Check whether one of the given words is present on the command line,
+# and print the first word found.
 __git_find_on_cmdline ()
 {
-	local word subcommand c=1
+	local word c=1
+	local wordlist="$1"
+
 	while [ $c -lt $cword ]; do
-		word="${words[c]}"
-		for subcommand in $1; do
-			if [ "$subcommand" = "$word" ]; then
-				echo "$subcommand"
+		for word in $wordlist; do
+			if [ "$word" = "${words[c]}" ]; then
+				echo "$word"
 				return
 			fi
 		done
