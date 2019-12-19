@@ -2990,29 +2990,15 @@ _git_worktree ()
 {
 	local subcommands="add list lock move prune remove unlock"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
-	if [ -z "$subcommand" ]; then
+
+	case "$subcommand,$cur" in
+	,*)
 		__gitcomp "$subcommands"
-	else
-		case "$subcommand,$cur" in
-		add,--*)
-			__gitcomp_builtin worktree_add
-			;;
-		list,--*)
-			__gitcomp_builtin worktree_list
-			;;
-		lock,--*)
-			__gitcomp_builtin worktree_lock
-			;;
-		prune,--*)
-			__gitcomp_builtin worktree_prune
-			;;
-		remove,--*)
-			__gitcomp "--force"
-			;;
-		*)
-			;;
-		esac
-	fi
+		;;
+	*,--*)
+		__gitcomp_builtin worktree_$subcommand
+		;;
+	esac
 }
 
 __git_complete_common () {
