@@ -2986,10 +2986,23 @@ _git_whatchanged ()
 	_git_log
 }
 
+__git_complete_worktree_paths ()
+{
+	local IFS=$'\n'
+	__gitcomp_nl "$(git worktree list --porcelain |
+		# Skip the first entry: it's the path of the main worktree,
+		# which can't be moved, removed, locked, etc.
+		sed -n -e '2,$ s/^worktree //p')"
+}
+
 _git_worktree ()
 {
 	local subcommands="add list lock move prune remove unlock"
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	local subcommand subcommand_idx
+
+	subcommand="$(__git_find_on_cmdline --show-idx "$subcommands")"
+	subcommand_idx="${subcommand% *}"
+	subcommand="${subcommand#* }"
 
 	case "$subcommand,$cur" in
 	,*)
@@ -2997,6 +3010,21 @@ _git_worktree ()
 		;;
 	*,--*)
 		__gitcomp_builtin worktree_$subcommand
+		;;
+	lock,*|remove,*|unlock,*)
+		__git_complete_worktree_paths
+		;;
+	move,*)
+		if [ $cword -eq $((subcommand_idx+1)) ]; then
+			# The first parameter must be an existing working
+			# tree to be moved.
+			__git_complete_worktree_paths
+		else
+			# The second parameter is the destination: it could
+			# be any path, so don't list anything, but let Bash
+			# fall back to filename completion.
+			:
+		fi
 		;;
 	esac
 }
