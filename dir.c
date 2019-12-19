@@ -2102,37 +2102,82 @@ static int treat_leading_path(struct dir_struct *dir,
 			      const struct pathspec *pathspec)
 {
 	struct strbuf sb = STRBUF_INIT;
-	int baselen, rc = 0;
+	int prevlen, baselen;
 	const char *cp;
+	struct cached_dir cdir;
+	struct dirent *de;
+	enum path_treatment state = path_none;
+
+	/*
+	 * For each directory component of path, we are going to check whether
+	 * that path is relevant given the pathspec.  For example, if path is
+	 *    foo/bar/baz/
+	 * then we will ask treat_path() whether we should go into foo, then
+	 * whether we should go into bar, then whether baz is relevant.
+	 * Checking each is important because e.g. if path is
+	 *    .git/info/
+	 * then we need to check .git to know we shouldn't traverse it.
+	 * If the return from treat_path() is:
+	 *    * path_none, for any path, we return false.
+	 *    * path_recurse, for all path components, we return true
+	 *    * <anything else> for some intermediate component, we make sure
+	 *        to add that path to the relevant list but return false
+	 *        signifying that we shouldn't recurse into it.
+	 */
 
 	while (len && path[len - 1] == '/')
 		len--;
 	if (!len)
 		return 1;
+
+	/*
+	 * We need a manufactured dirent with sufficient space to store a
+	 * leading directory component of path in its d_name.  Here, we
+	 * assume that the dirent's d_name is either declared as
+	 *    char d_name[BIG_ENOUGH]
+	 * or that it is declared at the end of the struct as
+	 *    char d_name[]
+	 * For either case, padding with len+1 bytes at the end will ensure
+	 * sufficient storage space.
+	 */
+	de = xcalloc(1, sizeof(struct dirent)+len+1);
+	memset(&cdir, 0, sizeof(cdir));
+	cdir.de = de;
+#if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
+	de->d_type = DT_DIR;
+#endif
 	baselen = 0;
+	prevlen = 0;
 	while (1) {
-		cp = path + baselen + !!baselen;
+		prevlen = baselen + !!baselen;
+		cp = path + prevlen;
 		cp = memchr(cp, '/', path + len - cp);
 		if (!cp)
 			baselen = len;
 		else
 			baselen = cp - path;
-		strbuf_setlen(&sb, 0);
+		strbuf_reset(&sb);
 		strbuf_add(&sb, path, baselen);
 		if (!is_directory(sb.buf))
 			break;
-		if (simplify_away(sb.buf, sb.len, pathspec))
-			break;
-		if (treat_one_path(dir, NULL, istate, &sb, baselen, pathspec,
-				   DT_DIR, NULL) == path_none)
+		strbuf_reset(&sb);
+		strbuf_add(&sb, path, prevlen);
+		memcpy(de->d_name, path+prevlen, baselen-prevlen);
+		de->d_name[baselen-prevlen] = '\0';
+		state = treat_path(dir, NULL, &cdir, istate, &sb, prevlen,
+				    pathspec);
+		if (state != path_recurse)
 			break; /* do not recurse into it */
-		if (len <= baselen) {
-			rc = 1;
+		if (len <= baselen)
 			break; /* finished checking */
-		}
 	}
+	add_path_to_appropriate_result_list(dir, NULL, &cdir, istate,
+					    &sb, baselen, pathspec,
+					    state);
+
+	free(de);
 	strbuf_release(&sb);
-	return rc;
+	return state == path_recurse;
 }
 
 static const char *get_ident_string(void)
