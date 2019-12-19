@@ -195,7 +195,7 @@ test_expect_success 'git ls-files -o consistent between one or two dirs' '
 
 # ls-files doesn't have a way to request showing both untracked and ignored
 # files at the same time, so use `git status --ignored`
-test_expect_failure 'git status --ignored shows same files under dir with or without pathspec' '
+test_expect_success 'git status --ignored shows same files under dir with or without pathspec' '
 	cat <<-EOF >expect &&
 	?? an_untracked_dir/
 	!! an_untracked_dir/ignored

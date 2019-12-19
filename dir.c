@@ -1990,6 +1990,15 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	struct untracked_cache_dir *untracked, int check_only,
 	int stop_at_first_file, const struct pathspec *pathspec)
 {
+	/*
+	 * WARNING WARNING WARNING:
+	 *
+	 * Any updates to the traversal logic here may need corresponding
+	 * updates in treat_leading_path().  See the commit message for the
+	 * commit adding this warning as well as the commit preceding it
+	 * for details.
+	 */
+
 	struct cached_dir cdir;
 	enum path_treatment state, subdir_state, dir_state = path_none;
 	struct strbuf path = STRBUF_INIT;
@@ -2101,6 +2110,15 @@ static int treat_leading_path(struct dir_struct *dir,
 			      const char *path, int len,
 			      const struct pathspec *pathspec)
 {
+	/*
+	 * WARNING WARNING WARNING:
+	 *
+	 * Any updates to the traversal logic here may need corresponding
+	 * updates in treat_leading_path().  See the commit message for the
+	 * commit adding this warning as well as the commit preceding it
+	 * for details.
+	 */
+
 	struct strbuf sb = STRBUF_INIT;
 	int prevlen, baselen;
 	const char *cp;
@@ -2166,6 +2184,18 @@ static int treat_leading_path(struct dir_struct *dir,
 		de->d_name[baselen-prevlen] = '\0';
 		state = treat_path(dir, NULL, &cdir, istate, &sb, prevlen,
 				    pathspec);
+		if (state == path_untracked &&
+		    get_dtype(cdir.de, istate, sb.buf, sb.len) == DT_DIR &&
+		    (dir->flags & DIR_SHOW_IGNORED_TOO ||
+		     do_match_pathspec(istate, pathspec, sb.buf, sb.len,
+				       baselen, NULL, DO_MATCH_LEADING_PATHSPEC) == MATCHED_RECURSIVELY_LEADING_PATHSPEC)) {
+			add_path_to_appropriate_result_list(dir, NULL, &cdir,
+							    istate,
+							    &sb, baselen,
+							    pathspec, state);
+			state = path_recurse;
+		}
+
 		if (state != path_recurse)
 			break; /* do not recurse into it */
 		if (len <= baselen)
