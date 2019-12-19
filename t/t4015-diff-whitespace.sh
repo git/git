@@ -2026,4 +2026,27 @@ test_expect_success 'combine --ignore-blank-lines with --function-context' '
 	test_cmp expect actual
 '
 
+test_expect_success 'combine --ignore-blank-lines with --function-context 2' '
+	test_write_lines    a b c "" function 1 2 3 4 5 "" 6 7 8 9 >a &&
+	test_write_lines "" a b c "" function 1 2 3 4 5    6 7 8   >b &&
+	test_must_fail git diff --no-index \
+		--ignore-blank-lines --function-context a b >actual.raw &&
+	sed -n "/@@/,\$p" <actual.raw >actual &&
+	cat <<-\EOF >expect &&
+	@@ -5,11 +6,9 @@ c
+	 function
+	 1
+	 2
+	 3
+	 4
+	 5
+	-
+	 6
+	 7
+	 8
+	-9
+	EOF
+	test_cmp expect actual
+'
+
 test_done
