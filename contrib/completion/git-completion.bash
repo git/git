@@ -3011,6 +3011,42 @@ _git_worktree ()
 	*,--*)
 		__gitcomp_builtin worktree_$subcommand
 		;;
+	add,*)	# usage: git worktree add [<options>] <path> [<commit-ish>]
+		# Here we are not completing an --option, it's either the
+		# path or a ref.
+		case "$prev" in
+		-b|-B)	# Complete refs for branch to be created/reseted.
+			__git_complete_refs
+			;;
+		-*)	# The previous word is an -o|--option without an
+			# unstuck argument: have to complete the path for
+			# the new worktree, so don't list anything, but let
+			# Bash fall back to filename completion.
+			;;
+		*)	# The previous word is not an --option, so it must
+			# be either the 'add' subcommand, the unstuck
+			# argument of an option (e.g. branch for -b|-B), or
+			# the path for the new worktree.
+			if [ $cword -eq $((subcommand_idx+1)) ]; then
+				# Right after the 'add' subcommand: have to
+				# complete the path, so fall back to Bash
+				# filename completion.
+				:
+			else
+				case "${words[cword-2]}" in
+				-b|-B)	# After '-b <branch>': have to
+					# complete the path, so fall back
+					# to Bash filename completion.
+					;;
+				*)	# After the path: have to complete
+					# the ref to be checked out.
+					__git_complete_refs
+					;;
+				esac
+			fi
+			;;
+		esac
+		;;
 	lock,*|remove,*|unlock,*)
 		__git_complete_worktree_paths
 		;;
