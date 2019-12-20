@@ -46,7 +46,7 @@ test_expect_success 'check that marking the packed-refs file works' '
 	git for-each-ref >actual &&
 	test_cmp expected actual &&
 	git pack-refs --all &&
-	test_must_fail check_packed_refs_marked &&
+	! check_packed_refs_marked &&
 	git for-each-ref >actual2 &&
 	test_cmp expected actual2
 '
@@ -80,7 +80,7 @@ test_expect_success 'touch packed-refs on delete of packed' '
 	git pack-refs --all &&
 	mark_packed_refs &&
 	git update-ref -d refs/heads/packed-delete &&
-	test_must_fail check_packed_refs_marked
+	! check_packed_refs_marked
 '
 
 test_expect_success 'leave packed-refs untouched on update of loose' '
