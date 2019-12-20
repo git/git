@@ -706,7 +706,7 @@ static int rebase_write_basic_state(struct rebase_options *opts)
 		write_file(state_dir_path("gpg_sign_opt", opts), "%s",
 			   opts->gpg_sign_opt);
 	if (opts->signoff)
-		write_file(state_dir_path("strategy", opts), "--signoff");
+		write_file(state_dir_path("signoff", opts), "--signoff");
 
 	return 0;
 }
