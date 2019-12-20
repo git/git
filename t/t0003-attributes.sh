@@ -5,19 +5,16 @@ test_description=gitattributes
 . ./test-lib.sh
 
 attr_check () {
-	path="$1" expect="$2"
+	path="$1" expect="$2" git_opts="$3" &&
 
-	git $3 check-attr test -- "$path" >actual 2>err &&
-	echo "$path: test: $2" >expect &&
+	git $git_opts check-attr test -- "$path" >actual 2>err &&
+	echo "$path: test: $expect" >expect &&
 	test_cmp expect actual &&
 	test_line_count = 0 err
 }
 
 attr_check_quote () {
-
-	path="$1"
-	quoted_path="$2"
-	expect="$3"
+	path="$1" quoted_path="$2" expect="$3" &&
 
 	git check-attr test -- "$path" >actual &&
 	echo "\"$quoted_path\": test: $expect" >expect &&
