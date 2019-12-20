@@ -8,7 +8,7 @@ test_description='avoid rewriting packed-refs unnecessarily'
 # shouldn't upset readers, and it should be omitted if the file is
 # ever rewritten.
 mark_packed_refs () {
-	sed -e "s/^\(#.*\)/\1 t1409 /" <.git/packed-refs >.git/packed-refs.new &&
+	sed -e "s/^\(#.*\)/\1 t1409 /" .git/packed-refs >.git/packed-refs.new &&
 	mv .git/packed-refs.new .git/packed-refs
 }
 
