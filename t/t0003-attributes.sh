@@ -10,7 +10,7 @@ attr_check () {
 	git $git_opts check-attr test -- "$path" >actual 2>err &&
 	echo "$path: test: $expect" >expect &&
 	test_cmp expect actual &&
-	test_line_count = 0 err
+	test_must_be_empty err
 }
 
 attr_check_quote () {
@@ -241,7 +241,7 @@ EOF
 	git check-attr foo -- "a/b/f" >>actual 2>>err &&
 	git check-attr foo -- "a/b/c/f" >>actual 2>>err &&
 	test_cmp expect actual &&
-	test_line_count = 0 err
+	test_must_be_empty err
 '
 
 test_expect_success '"**" with no slashes test' '
@@ -262,7 +262,7 @@ EOF
 	git check-attr foo -- "a/b/f" >>actual 2>>err &&
 	git check-attr foo -- "a/b/c/f" >>actual 2>>err &&
 	test_cmp expect actual &&
-	test_line_count = 0 err
+	test_must_be_empty err
 '
 
 test_expect_success 'using --git-dir and --work-tree' '
