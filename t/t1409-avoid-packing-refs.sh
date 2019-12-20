@@ -27,15 +27,15 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'do not create packed-refs file gratuitously' '
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref refs/heads/foo $A &&
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref refs/heads/foo $B &&
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref refs/heads/foo $C $B &&
-	test_must_fail test -f .git/packed-refs &&
+	test_path_is_missing .git/packed-refs &&
 	git update-ref -d refs/heads/foo &&
-	test_must_fail test -f .git/packed-refs
+	test_path_is_missing .git/packed-refs
 '
 
 test_expect_success 'check that marking the packed-refs file works' '
