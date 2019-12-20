@@ -423,7 +423,7 @@ sub load_config {
 	# load settings from git config
 	my $options = shift;
 	# set from command argument, gpg.program option, or default to gpg
-	$options->{'gpg'} //= Git->repository()->config('gpg.program')
+	$options->{'gpg'} //= Git::config('gpg.program')
 	                  // 'gpg';
 	log_verbose("using $options{'gpg'} for GPG operations");
 }
