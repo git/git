@@ -2154,7 +2154,7 @@ static int treat_leading_path(struct dir_struct *dir,
 	 * For either case, padding with len+1 bytes at the end will ensure
 	 * sufficient storage space.
 	 */
-	de = xcalloc(1, sizeof(struct dirent)+len+1);
+	de = xcalloc(1, st_add3(sizeof(struct dirent), len, 1));
 	memset(&cdir, 0, sizeof(cdir));
 	cdir.de = de;
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
