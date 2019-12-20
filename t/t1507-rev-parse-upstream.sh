@@ -35,7 +35,7 @@ full_name () {
 
 commit_subject () {
 	(cd clone &&
-	 git show -s --pretty=format:%s "$@")
+	 git show -s --pretty=tformat:%s "$@")
 }
 
 error_message () {
@@ -44,18 +44,27 @@ error_message () {
 }
 
 test_expect_success '@{upstream} resolves to correct full name' '
-	test refs/remotes/origin/master = "$(full_name @{upstream})" &&
-	test refs/remotes/origin/master = "$(full_name @{UPSTREAM})" &&
-	test refs/remotes/origin/master = "$(full_name @{UpSTReam})"
+	echo refs/remotes/origin/master >expect &&
+	full_name @{upstream} >actual &&
+	test_cmp expect actual &&
+	full_name @{UPSTREAM} >actual &&
+	test_cmp expect actual &&
+	full_name @{UpSTReam} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '@{u} resolves to correct full name' '
-	test refs/remotes/origin/master = "$(full_name @{u})" &&
-	test refs/remotes/origin/master = "$(full_name @{U})"
+	echo refs/remotes/origin/master >expect &&
+	full_name @{u} >actual &&
+	test_cmp expect actual &&
+	full_name @{U} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'my-side@{upstream} resolves to correct full name' '
-	test refs/remotes/origin/side = "$(full_name my-side@{u})"
+	echo refs/remotes/origin/side >expect &&
+	full_name my-side@{u} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'upstream of branch with @ in middle' '
@@ -86,8 +95,11 @@ test_expect_success 'my-side@{u} resolves to correct commit' '
 	git checkout side &&
 	test_commit 5 &&
 	(cd clone && git fetch) &&
-	test 2 = "$(commit_subject my-side)" &&
-	test 5 = "$(commit_subject my-side@{u})"
+	echo 2 >expect &&
+	commit_subject my-side >actual &&
+	test_cmp expect actual &&
+	echo 5 >expect &&
+	commit_subject my-side@{u} >actual
 '
 
 test_expect_success 'not-tracking@{u} fails' '
@@ -99,8 +111,11 @@ test_expect_success 'not-tracking@{u} fails' '
 test_expect_success '<branch>@{u}@{1} resolves correctly' '
 	test_commit 6 &&
 	(cd clone && git fetch) &&
-	test 5 = $(commit_subject my-side@{u}@{1}) &&
-	test 5 = $(commit_subject my-side@{U}@{1})
+	echo 5 >expect &&
+	commit_subject my-side@{u}@{1} >actual &&
+	test_cmp expect actual &&
+	commit_subject my-side@{U}@{1} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '@{u} without specifying branch fails on a detached HEAD' '
@@ -149,7 +164,9 @@ test_expect_success 'checkout other@{u}' '
 '
 
 test_expect_success 'branch@{u} works when tracking a local branch' '
-	test refs/heads/master = "$(full_name local-master@{u})"
+	echo refs/heads/master >expect &&
+	full_name local-master@{u} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'branch@{u} error message when no upstream' '
@@ -203,7 +220,9 @@ test_expect_success 'pull works when tracking a local branch' '
 
 # makes sense if the previous one succeeded
 test_expect_success '@{u} works when tracking a local branch' '
-	test refs/heads/master = "$(full_name @{u})"
+	echo refs/heads/master >expect &&
+	full_name @{u} >actual &&
+	test_cmp expect actual
 '
 
 commit=$(git rev-parse HEAD)
