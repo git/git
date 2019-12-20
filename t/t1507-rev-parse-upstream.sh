@@ -225,32 +225,32 @@ test_expect_success '@{u} works when tracking a local branch' '
 	test_cmp expect actual
 '
 
-commit=$(git rev-parse HEAD)
-cat >expect <<EOF
-commit $commit
-Reflog: master@{0} (C O Mitter <committer@example.com>)
-Reflog message: branch: Created from HEAD
-Author: A U Thor <author@example.com>
-Date:   Thu Apr 7 15:15:13 2005 -0700
-
-    3
-EOF
 test_expect_success 'log -g other@{u}' '
+	commit=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
+	commit $commit
+	Reflog: master@{0} (C O Mitter <committer@example.com>)
+	Reflog message: branch: Created from HEAD
+	Author: A U Thor <author@example.com>
+	Date:   Thu Apr 7 15:15:13 2005 -0700
+
+	    3
+	EOF
 	git log -1 -g other@{u} >actual &&
 	test_cmp expect actual
 '
 
-cat >expect <<EOF
-commit $commit
-Reflog: master@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <committer@example.com>)
-Reflog message: branch: Created from HEAD
-Author: A U Thor <author@example.com>
-Date:   Thu Apr 7 15:15:13 2005 -0700
-
-    3
-EOF
-
 test_expect_success 'log -g other@{u}@{now}' '
+	commit=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
+	commit $commit
+	Reflog: master@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <committer@example.com>)
+	Reflog message: branch: Created from HEAD
+	Author: A U Thor <author@example.com>
+	Date:   Thu Apr 7 15:15:13 2005 -0700
+
+	    3
+	EOF
 	git log -1 -g other@{u}@{now} >actual &&
 	test_cmp expect actual
 '
