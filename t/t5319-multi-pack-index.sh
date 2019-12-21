@@ -304,12 +304,12 @@ test_expect_success 'verify incorrect pack-int-id' '
 '
 
 test_expect_success 'verify incorrect offset' '
-	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\07" $objdir \
+	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
 		"incorrect object offset"
 '
 
 test_expect_success 'git-fsck incorrect offset' '
-	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\07" $objdir \
+	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
 		"incorrect object offset" \
 		"git -c core.multipackindex=true fsck"
 '
