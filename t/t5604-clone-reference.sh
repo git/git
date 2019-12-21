@@ -326,15 +326,16 @@ test_expect_success SYMLINKS 'clone repo with symlinked or unknown files at obje
 	for raw in $(ls T*.raw)
 	do
 		sed -e "s!/../!/Y/!; s![0-9a-f]\{38,\}!Z!" -e "/commit-graph/d" \
-		    -e "/multi-pack-index/d" <$raw >$raw.de-sha || return 1
+		    -e "/multi-pack-index/d" <$raw >$raw.de-sha-1 &&
+		sort $raw.de-sha-1 >$raw.de-sha || return 1
 	done &&
 
 	cat >expected-files <<-EOF &&
 	./Y/Z
 	./Y/Z
+	./Y/Z
 	./a-loose-dir/Z
 	./an-object
-	./Y/Z
 	./info/packs
 	./pack/pack-Z.idx
 	./pack/pack-Z.pack
