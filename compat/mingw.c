@@ -484,16 +484,16 @@ int mingw_open (const char *filename, int oflags, ...)
 		return -1;
 	}
 
-	if (filename && !strcmp(filename, "/dev/null"))
-		filename = "nul";
-
 	if ((oflags & O_APPEND) && !is_local_named_pipe_path(filename))
 		open_fn = mingw_open_append;
 	else
 		open_fn = _wopen;
 
-	if (xutftowcs_path(wfilename, filename) < 0)
+	if (filename && !strcmp(filename, "/dev/null"))
+		wcscpy(wfilename, L"nul");
+	else if (xutftowcs_path(wfilename, filename) < 0)
 		return -1;
+
 	fd = open_fn(wfilename, oflags, mode);
 
 	if (fd < 0 && (oflags & O_ACCMODE) != O_RDONLY && errno == EACCES) {
@@ -556,10 +556,13 @@ FILE *mingw_fopen (const char *filename, const char *otype)
 		return NULL;
 	}
 	if (filename && !strcmp(filename, "/dev/null"))
-		filename = "nul";
-	if (xutftowcs_path(wfilename, filename) < 0 ||
-		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		wcscpy(wfilename, L"nul");
+	else if (xutftowcs_path(wfilename, filename) < 0)
 		return NULL;
+
+	if (xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		return NULL;
+
 	if (hide && !access(filename, F_OK) && set_hidden_flag(wfilename, 0)) {
 		error("could not unhide %s", filename);
 		return NULL;
@@ -583,10 +586,13 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 		return NULL;
 	}
 	if (filename && !strcmp(filename, "/dev/null"))
-		filename = "nul";
-	if (xutftowcs_path(wfilename, filename) < 0 ||
-		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		wcscpy(wfilename, L"nul");
+	else if (xutftowcs_path(wfilename, filename) < 0)
 		return NULL;
+
+	if (xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		return NULL;
+
 	if (hide && !access(filename, F_OK) && set_hidden_flag(wfilename, 0)) {
 		error("could not unhide %s", filename);
 		return NULL;
