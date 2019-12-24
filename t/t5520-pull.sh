@@ -28,7 +28,7 @@ test_pull_autostash_fail () {
 	echo dirty >new_file &&
 	git add new_file &&
 	test_must_fail git pull "$@" . copy 2>err &&
-	test_i18ngrep "uncommitted changes." err
+	test_i18ngrep "\(uncommitted changes.\)\|\(overwritten by merge:\)" err
 }
 
 test_expect_success setup '
@@ -391,13 +391,40 @@ test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
 	test_pull_autostash_fail --rebase --no-autostash
 '
 
-for i in --autostash --no-autostash
-do
-	test_expect_success "pull $i (without --rebase) is illegal" '
-		test_must_fail git pull $i . copy 2>err &&
-		test_i18ngrep "only valid with --rebase" err
-	'
-done
+test_expect_success 'pull succeeds with dirty working directory and merge.autostash set' '
+	test_config merge.autostash true &&
+	test_pull_autostash 2
+'
+
+test_expect_success 'pull --autostash & merge.autostash=true' '
+	test_config merge.autostash true &&
+	test_pull_autostash 2 --autostash
+'
+
+test_expect_success 'pull --autostash & merge.autostash=false' '
+	test_config merge.autostash false &&
+	test_pull_autostash 2 --autostash
+'
+
+test_expect_success 'pull --autostash & merge.autostash unset' '
+	test_unconfig merge.autostash &&
+	test_pull_autostash 2 --autostash
+'
+
+test_expect_success 'pull --no-autostash & merge.autostash=true' '
+	test_config merge.autostash true &&
+	test_pull_autostash_fail --no-autostash
+'
+
+test_expect_success 'pull --no-autostash & merge.autostash=false' '
+	test_config merge.autostash false &&
+	test_pull_autostash_fail --no-autostash
+'
+
+test_expect_success 'pull --no-autostash & merge.autostash unset' '
+	test_unconfig merge.autostash &&
+	test_pull_autostash_fail --no-autostash
+'
 
 test_expect_success 'pull.rebase' '
 	git reset --hard before-rebase &&
