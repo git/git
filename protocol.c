@@ -39,7 +39,7 @@ enum protocol_version get_protocol_version_config(void)
 		return env;
 	}
 
-	return protocol_v0;
+	return protocol_v2;
 }
 
 enum protocol_version determine_protocol_version_server(void)
