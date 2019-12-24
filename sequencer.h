@@ -193,6 +193,8 @@ void commit_post_rewrite(struct repository *r,
 int prepare_branch_to_be_rebased(struct repository *r, struct replay_opts *opts,
 				 const char *commit);
 
+void create_autostash(struct repository *r, const char *path,
+		      const char *default_reflog_action);
 int apply_autostash(const char *path);
 
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
