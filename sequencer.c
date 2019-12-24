@@ -427,26 +427,28 @@ static int write_message(const void *buf, size_t len, const char *filename,
 static int read_oneliner(struct strbuf *buf,
 	const char *path, int skip_if_empty)
 {
-	int orig_len = buf->len;
+	int ret = 0;
+	struct strbuf file_buf = STRBUF_INIT;
 
 	if (!file_exists(path))
 		return 0;
 
-	if (strbuf_read_file(buf, path, 0) < 0) {
+	if (strbuf_read_file(&file_buf, path, 0) < 0) {
 		warning_errno(_("could not read '%s'"), path);
-		return 0;
+		goto done;
 	}
 
-	if (buf->len > orig_len && buf->buf[buf->len - 1] == '\n') {
-		if (--buf->len > orig_len && buf->buf[buf->len - 1] == '\r')
-			--buf->len;
-		buf->buf[buf->len] = '\0';
-	}
+	strbuf_trim_trailing_newline(&file_buf);
 
-	if (skip_if_empty && buf->len == orig_len)
-		return 0;
+	if (skip_if_empty && !file_buf.len)
+		goto done;
 
-	return 1;
+	strbuf_addbuf(buf, &file_buf);
+	ret = 1;
+
+done:
+	strbuf_release(&file_buf);
+	return ret;
 }
 
 static struct tree *empty_tree(struct repository *r)
