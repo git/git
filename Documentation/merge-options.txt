@@ -155,6 +155,14 @@ ifndef::git-pull[]
 	Note that not all merge strategies may support progress
 	reporting.
 
+--autostash::
+--no-autostash::
+	Automatically create a temporary stash entry before the operation
+	begins, and apply it after the operation ends.  This means
+	that you can run rebase on a dirty worktree.  However, use
+	with care: the final stash application after a successful
+	rebase might result in non-trivial conflicts.
+
 endif::git-pull[]
 
 --allow-unrelated-histories::

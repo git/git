@@ -81,6 +81,7 @@ static int show_progress = -1;
 static int default_to_upstream = 1;
 static int signoff;
 static const char *sign_commit;
+static int autostash;
 static int no_verify;
 
 static struct strategy all_strategy[] = {
@@ -285,6 +286,8 @@ static struct option builtin_merge_options[] = {
 	OPT_SET_INT(0, "progress", &show_progress, N_("force progress reporting"), 1),
 	{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, N_("key-id"),
 	  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+	OPT_BOOL(0, "autostash", &autostash,
+	      N_("automatically stash/stash pop before and after")),
 	OPT_BOOL(0, "overwrite-ignore", &overwrite_ignore, N_("update ignored files (default)")),
 	OPT_BOOL(0, "signoff", &signoff, N_("add Signed-off-by:")),
 	OPT_BOOL(0, "no-verify", &no_verify, N_("bypass pre-merge-commit and commit-msg hooks")),
@@ -440,6 +443,7 @@ static void finish(struct commit *head_commit,
 		strbuf_addf(&reflog_message, "%s: %s",
 			getenv("GIT_REFLOG_ACTION"), msg);
 	}
+	apply_autostash(git_path_merge_autostash(the_repository));
 	if (squash) {
 		squash_message(head_commit, remoteheads);
 	} else {
@@ -630,6 +634,9 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		return 0;
 	} else if (!strcmp(k, "commit.gpgsign")) {
 		sign_commit = git_config_bool(k, v) ? "" : NULL;
+		return 0;
+	} else if (!strcmp(k, "merge.autostash")) {
+		autostash = git_config_bool(k, v);
 		return 0;
 	}
 
@@ -1288,6 +1295,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		/* Invoke 'git reset --merge' */
 		ret = cmd_reset(nargc, nargv, prefix);
+		apply_autostash(git_path_merge_autostash(the_repository));
 		goto done;
 	}
 
@@ -1508,6 +1516,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			goto done;
 		}
 
+		if (autostash)
+			create_autostash(the_repository,
+					 git_path_merge_autostash(the_repository),
+					 "merge");
 		if (checkout_fast_forward(the_repository,
 					  &head_commit->object.oid,
 					  &commit->object.oid,
@@ -1573,6 +1585,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (fast_forward == FF_ONLY)
 		die(_("Not possible to fast-forward, aborting."));
+
+	if (autostash)
+		create_autostash(the_repository,
+				 git_path_merge_autostash(the_repository),
+				 "merge");
 
 	/* We are going to make a new commit. */
 	git_committer_info(IDENT_STRICT);
