@@ -440,11 +440,12 @@ test_expect_success 'setup tests for the --stdin parameter' '
 '
 
 test_expect_success 'setup fetch refs from cmdline v[12]' '
+	cp -r client client0 &&
 	cp -r client client1 &&
 	cp -r client client2
 '
 
-for version in '' 1 2
+for version in '' 0 1 2
 do
 	test_expect_success "protocol.version=$version fetch refs from cmdline" "
 		(
@@ -638,7 +639,7 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	git init client &&
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION= git -C client fetch-pack ../server \
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -C client fetch-pack ../server \
 		$(git -C server rev-parse refs/heads/master^) 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '

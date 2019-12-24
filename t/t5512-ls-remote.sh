@@ -225,7 +225,7 @@ test_expect_success 'ls-remote --symref' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref >actual &&
 	test_cmp expect actual
 '
 
@@ -236,7 +236,7 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref . HEAD >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -249,7 +249,7 @@ test_expect_failure 'ls-remote with filtered symref (--heads)' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref --heads . >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
 	test_cmp expect actual
 '
 
@@ -260,9 +260,9 @@ test_expect_success 'ls-remote --symref omits filtered-out matches' '
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
-	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref --heads . >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref --heads . >actual &&
 	test_cmp expect actual &&
-	GIT_TEST_PROTOCOL_VERSION= git ls-remote --symref . "refs/heads/*" >actual &&
+	GIT_TEST_PROTOCOL_VERSION=0 git ls-remote --symref . "refs/heads/*" >actual &&
 	test_cmp expect actual
 '
 

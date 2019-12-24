@@ -49,7 +49,7 @@ test_expect_success 'no empty path components' '
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
 	then
 		check_access_log exp
 	fi
@@ -135,7 +135,7 @@ EOF
 test_expect_success 'used receive-pack service' '
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
 	then
 		check_access_log exp
 	fi
