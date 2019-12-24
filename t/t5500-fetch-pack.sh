@@ -917,7 +917,10 @@ test_expect_success 'filtering by size' '
 	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD &&
 
 	# Ensure that object is not inadvertently fetched
-	test_must_fail git -C client cat-file -e $(git hash-object server/one.t)
+	commit=$(git -C server rev-parse HEAD) &&
+	blob=$(git hash-object server/one.t) &&
+	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	! grep "$blob" oids
 '
 
 test_expect_success 'filtering by size has no effect if support for it is not advertised' '
@@ -929,7 +932,10 @@ test_expect_success 'filtering by size has no effect if support for it is not ad
 	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD 2> err &&
 
 	# Ensure that object is fetched
-	git -C client cat-file -e $(git hash-object server/one.t) &&
+	commit=$(git -C server rev-parse HEAD) &&
+	blob=$(git hash-object server/one.t) &&
+	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	grep "$blob" oids &&
 
 	test_i18ngrep "filtering not recognized by server" err
 '
@@ -951,9 +957,11 @@ fetch_filter_blob_limit_zero () {
 	git -C client fetch --filter=blob:limit=0 origin HEAD:somewhere &&
 
 	# Ensure that commit is fetched, but blob is not
-	test_config -C client extensions.partialclone "arbitrary string" &&
-	git -C client cat-file -e $(git -C "$SERVER" rev-parse two) &&
-	test_must_fail git -C client cat-file -e $(git hash-object "$SERVER/two.t")
+	commit=$(git -C "$SERVER" rev-parse two) &&
+	blob=$(git hash-object server/two.t) &&
+	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	grep "$commit" oids &&
+	! grep "$blob" oids
 }
 
 test_expect_success 'fetch with --filter=blob:limit=0' '
