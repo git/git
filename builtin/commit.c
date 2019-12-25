@@ -347,6 +347,9 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		if (interactive)
 			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
 
+		if (all)
+			die(_("--pathspec-from-file with -a does not make sense"));
+
 		if (pathspec.nr)
 			die(_("--pathspec-from-file is incompatible with pathspec arguments"));
 
