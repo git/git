@@ -371,10 +371,17 @@ static int match_pathspec_item(const struct index_state *istate,
 		    !ps_strncmp(item, match, name, namelen))
 			return MATCHED_RECURSIVELY_LEADING_PATHSPEC;
 
-		/* name" doesn't match up to the first wild character */
+		/* name doesn't match up to the first wild character */
 		if (item->nowildcard_len < item->len &&
 		    ps_strncmp(item, match, name,
 			       item->nowildcard_len - prefix))
+			return 0;
+
+		/*
+		 * name has no wildcard, and it didn't match as a leading
+		 * pathspec so return.
+		 */
+		if (item->nowildcard_len == item->len)
 			return 0;
 
 		/*
@@ -1652,6 +1659,8 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	const char *dirname, int len, int baselen, int exclude,
 	const struct pathspec *pathspec)
 {
+	int nested_repo = 0;
+
 	/* The "len-1" is to strip the final '/' */
 	switch (directory_exists_in_index(istate, dirname, len-1)) {
 	case index_directory:
@@ -1661,15 +1670,16 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return path_none;
 
 	case index_nonexistent:
-		if (dir->flags & DIR_SKIP_NESTED_GIT) {
-			int nested_repo;
+		if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
+		    !(dir->flags & DIR_NO_GITLINKS)) {
 			struct strbuf sb = STRBUF_INIT;
 			strbuf_addstr(&sb, dirname);
 			nested_repo = is_nonbare_repository_dir(&sb);
 			strbuf_release(&sb);
-			if (nested_repo)
-				return path_none;
 		}
+		if (nested_repo)
+			return ((dir->flags & DIR_SKIP_NESTED_GIT) ? path_none :
+				(exclude ? path_excluded : path_untracked));
 
 		if (dir->flags & DIR_SHOW_OTHER_DIRECTORIES)
 			break;
@@ -1696,13 +1706,6 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 				return path_excluded;
 
 			return path_none;
-		}
-		if (!(dir->flags & DIR_NO_GITLINKS)) {
-			struct strbuf sb = STRBUF_INIT;
-			strbuf_addstr(&sb, dirname);
-			if (is_nonbare_repository_dir(&sb))
-				return exclude ? path_excluded : path_untracked;
-			strbuf_release(&sb);
 		}
 		return path_recurse;
 	}
@@ -2123,6 +2126,40 @@ static void close_cached_dir(struct cached_dir *cdir)
 	}
 }
 
+static void add_path_to_appropriate_result_list(struct dir_struct *dir,
+	struct untracked_cache_dir *untracked,
+	struct cached_dir *cdir,
+	struct index_state *istate,
+	struct strbuf *path,
+	int baselen,
+	const struct pathspec *pathspec,
+	enum path_treatment state)
+{
+	/* add the path to the appropriate result list */
+	switch (state) {
+	case path_excluded:
+		if (dir->flags & DIR_SHOW_IGNORED)
+			dir_add_name(dir, istate, path->buf, path->len);
+		else if ((dir->flags & DIR_SHOW_IGNORED_TOO) ||
+			((dir->flags & DIR_COLLECT_IGNORED) &&
+			exclude_matches_pathspec(path->buf, path->len,
+						 pathspec)))
+			dir_add_ignored(dir, istate, path->buf, path->len);
+		break;
+
+	case path_untracked:
+		if (dir->flags & DIR_SHOW_IGNORED)
+			break;
+		dir_add_name(dir, istate, path->buf, path->len);
+		if (cdir->fdir)
+			add_untracked(untracked, path->buf + baselen);
+		break;
+
+	default:
+		break;
+	}
+}
+
 /*
  * Read a directory tree. We currently ignore anything but
  * directories, regular files and symlinks. That's because git
@@ -2147,6 +2184,15 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	struct untracked_cache_dir *untracked, int check_only,
 	int stop_at_first_file, const struct pathspec *pathspec)
 {
+	/*
+	 * WARNING WARNING WARNING:
+	 *
+	 * Any updates to the traversal logic here may need corresponding
+	 * updates in treat_leading_path().  See the commit message for the
+	 * commit adding this warning as well as the commit preceding it
+	 * for details.
+	 */
+
 	struct cached_dir cdir;
 	enum path_treatment state, subdir_state, dir_state = path_none;
 	struct strbuf path = STRBUF_INIT;
@@ -2226,29 +2272,9 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 			continue;
 		}
 
-		/* add the path to the appropriate result list */
-		switch (state) {
-		case path_excluded:
-			if (dir->flags & DIR_SHOW_IGNORED)
-				dir_add_name(dir, istate, path.buf, path.len);
-			else if ((dir->flags & DIR_SHOW_IGNORED_TOO) ||
-				((dir->flags & DIR_COLLECT_IGNORED) &&
-				exclude_matches_pathspec(path.buf, path.len,
-							 pathspec)))
-				dir_add_ignored(dir, istate, path.buf, path.len);
-			break;
-
-		case path_untracked:
-			if (dir->flags & DIR_SHOW_IGNORED)
-				break;
-			dir_add_name(dir, istate, path.buf, path.len);
-			if (cdir.fdir)
-				add_untracked(untracked, path.buf + baselen);
-			break;
-
-		default:
-			break;
-		}
+		add_path_to_appropriate_result_list(dir, untracked, &cdir,
+						    istate, &path, baselen,
+						    pathspec, state);
 	}
 	close_cached_dir(&cdir);
  out:
@@ -2278,41 +2304,104 @@ static int treat_leading_path(struct dir_struct *dir,
 			      const char *path, int len,
 			      const struct pathspec *pathspec)
 {
+	/*
+	 * WARNING WARNING WARNING:
+	 *
+	 * Any updates to the traversal logic here may need corresponding
+	 * updates in treat_leading_path().  See the commit message for the
+	 * commit adding this warning as well as the commit preceding it
+	 * for details.
+	 */
+
 	struct strbuf sb = STRBUF_INIT;
-	int baselen, rc = 0;
+	int prevlen, baselen;
 	const char *cp;
-	int old_flags = dir->flags;
+	struct cached_dir cdir;
+	struct dirent *de;
+	enum path_treatment state = path_none;
+
+	/*
+	 * For each directory component of path, we are going to check whether
+	 * that path is relevant given the pathspec.  For example, if path is
+	 *    foo/bar/baz/
+	 * then we will ask treat_path() whether we should go into foo, then
+	 * whether we should go into bar, then whether baz is relevant.
+	 * Checking each is important because e.g. if path is
+	 *    .git/info/
+	 * then we need to check .git to know we shouldn't traverse it.
+	 * If the return from treat_path() is:
+	 *    * path_none, for any path, we return false.
+	 *    * path_recurse, for all path components, we return true
+	 *    * <anything else> for some intermediate component, we make sure
+	 *        to add that path to the relevant list but return false
+	 *        signifying that we shouldn't recurse into it.
+	 */
 
 	while (len && path[len - 1] == '/')
 		len--;
 	if (!len)
 		return 1;
+
+	/*
+	 * We need a manufactured dirent with sufficient space to store a
+	 * leading directory component of path in its d_name.  Here, we
+	 * assume that the dirent's d_name is either declared as
+	 *    char d_name[BIG_ENOUGH]
+	 * or that it is declared at the end of the struct as
+	 *    char d_name[]
+	 * For either case, padding with len+1 bytes at the end will ensure
+	 * sufficient storage space.
+	 */
+	de = xcalloc(1, st_add3(sizeof(struct dirent), len, 1));
+	memset(&cdir, 0, sizeof(cdir));
+	cdir.de = de;
+#if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
+	de->d_type = DT_DIR;
+#endif
 	baselen = 0;
-	dir->flags &= ~DIR_SHOW_OTHER_DIRECTORIES;
+	prevlen = 0;
 	while (1) {
-		cp = path + baselen + !!baselen;
+		prevlen = baselen + !!baselen;
+		cp = path + prevlen;
 		cp = memchr(cp, '/', path + len - cp);
 		if (!cp)
 			baselen = len;
 		else
 			baselen = cp - path;
-		strbuf_setlen(&sb, 0);
+		strbuf_reset(&sb);
 		strbuf_add(&sb, path, baselen);
 		if (!is_directory(sb.buf))
 			break;
-		if (simplify_away(sb.buf, sb.len, pathspec))
-			break;
-		if (treat_one_path(dir, NULL, istate, &sb, baselen, pathspec,
-				   DT_DIR, NULL) == path_none)
-			break; /* do not recurse into it */
-		if (len <= baselen) {
-			rc = 1;
-			break; /* finished checking */
+		strbuf_reset(&sb);
+		strbuf_add(&sb, path, prevlen);
+		memcpy(de->d_name, path+prevlen, baselen-prevlen);
+		de->d_name[baselen-prevlen] = '\0';
+		state = treat_path(dir, NULL, &cdir, istate, &sb, prevlen,
+				    pathspec);
+		if (state == path_untracked &&
+		    get_dtype(cdir.de, istate, sb.buf, sb.len) == DT_DIR &&
+		    (dir->flags & DIR_SHOW_IGNORED_TOO ||
+		     do_match_pathspec(istate, pathspec, sb.buf, sb.len,
+				       baselen, NULL, DO_MATCH_LEADING_PATHSPEC) == MATCHED_RECURSIVELY_LEADING_PATHSPEC)) {
+			add_path_to_appropriate_result_list(dir, NULL, &cdir,
+							    istate,
+							    &sb, baselen,
+							    pathspec, state);
+			state = path_recurse;
 		}
+
+		if (state != path_recurse)
+			break; /* do not recurse into it */
+		if (len <= baselen)
+			break; /* finished checking */
 	}
+	add_path_to_appropriate_result_list(dir, NULL, &cdir, istate,
+					    &sb, baselen, pathspec,
+					    state);
+
+	free(de);
 	strbuf_release(&sb);
-	dir->flags = old_flags;
-	return rc;
+	return state == path_recurse;
 }
 
 static const char *get_ident_string(void)
