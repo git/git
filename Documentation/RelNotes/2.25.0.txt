@@ -49,9 +49,9 @@ UI, Workflows & Features
  * "git rev-parse --show-toplevel" run outside of any working tree did
    not error out, which has been corrected.
 
- * A few commands learned to take the pathspec from the
-   standard input or a named file, instead of taking it as the command
-   line arguments.
+ * A few commands learned to take the pathspec from the standard input
+   or a named file, instead of taking it as the command line
+   arguments, with the "--pathspec-from-file" option.
 
  * "git rebase -i" learned a few options that are known by "git
    rebase" proper.
@@ -66,6 +66,9 @@ UI, Workflows & Features
    alternate object store was ill-designed.  The documentation and
    code have been taught to make more clear recommendations when the
    users see failures.
+
+ * Management of sparsely checked-out working tree has gained a
+   dedicated "sparse-checkout" command.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -138,12 +141,13 @@ Performance, Internal Implementation, Development Support etc.
  * The code has been made to avoid gmtime() and localtime() and prefer
    their reentrant counterparts.
 
- * "git add -i" that is getting rewritten in C has been extended to
-   cover subcommands other than the "patch".
+ * The effort to reimplement "git add -i" in C continues.
 
  * In a repository with many packfiles, the cost of the procedure that
    avoids registering the same packfile twice was unnecessarily high
    by using an inefficient search algorithm, which has been corrected.
+
+ * Redo "git name-rev" to avoid recursive calls.
 
 
 Fixes since v2.24
@@ -286,6 +290,19 @@ Fixes since v2.24
    in the middle.
    (merge 0d9b0d7885 sg/t9300-robustify later to maint).
 
+ * "git format-patch" can take a set of configured format.notes values
+   to specify which notes refs to use in the log message part of the
+   output.  The behaviour of this was not consistent with multiple
+   --notes command line options, which has been corrected.
+   (merge e0f9095aaa dl/format-patch-notes-config-fixup later to maint).
+
+ * "git p4" used to ignore lfs.storage configuration variable, which
+   has been corrected.
+   (merge ea94b16fb8 rb/p4-lfs later to maint).
+
+ * Assorted fixes to the directory traversal API.
+   (merge 6836d2fe06 en/fill-directory-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
@@ -317,3 +334,7 @@ Fixes since v2.24
    (merge e05e8cf074 rs/archive-zip-code-cleanup later to maint).
    (merge 147ee35558 rs/commit-export-env-simplify later to maint).
    (merge 4507ecc771 rs/patch-id-use-oid-to-hex later to maint).
+   (merge 51a0a4ed95 mr/bisect-use-after-free later to maint).
+   (merge cc2bd5c45d pb/submodule-doc-xref later to maint).
+   (merge df5be01669 ja/doc-markup-cleanup later to maint).
+   (merge 7c5cea7242 mr/bisect-save-pointer-to-const-string later to maint).
