@@ -166,6 +166,7 @@ git-show-index                          plumbinginterrogators
 git-show-ref                            plumbinginterrogators
 git-sh-i18n                             purehelpers
 git-sh-setup                            purehelpers
+git-sparse-checkout                     mainporcelain           worktree
 git-stash                               mainporcelain
 git-stage                                                               complete
 git-status                              mainporcelain           info
