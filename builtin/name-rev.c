@@ -6,6 +6,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "prio-queue.h"
 #include "sha1-lookup.h"
 #include "commit-slab.h"
 
@@ -79,30 +80,16 @@ static int is_better_name(struct rev_name *name,
 	return 0;
 }
 
-static void name_rev(struct commit *commit,
-		const char *tip_name, timestamp_t taggerdate,
-		int generation, int distance, int from_tag,
-		int deref)
+static struct rev_name *create_or_update_name(struct commit *commit,
+					      const char *tip_name,
+					      timestamp_t taggerdate,
+					      int generation, int distance,
+					      int from_tag)
 {
 	struct rev_name *name = get_commit_rev_name(commit);
-	struct commit_list *parents;
-	int parent_number = 1;
-	char *to_free = NULL;
-
-	parse_commit(commit);
-
-	if (commit->date < cutoff)
-		return;
-
-	if (deref) {
-		tip_name = to_free = xstrfmt("%s^0", tip_name);
-
-		if (generation)
-			die("generation: %d, but deref?", generation);
-	}
 
 	if (name == NULL) {
-		name = xmalloc(sizeof(rev_name));
+		name = xmalloc(sizeof(*name));
 		set_commit_rev_name(commit, name);
 		goto copy_data;
 	} else if (is_better_name(name, taggerdate, distance, from_tag)) {
@@ -112,35 +99,97 @@ copy_data:
 		name->generation = generation;
 		name->distance = distance;
 		name->from_tag = from_tag;
-	} else {
+
+		return name;
+	} else
+		return NULL;
+}
+
+static void name_rev(struct commit *start_commit,
+		const char *tip_name, timestamp_t taggerdate,
+		int from_tag, int deref)
+{
+	struct prio_queue queue;
+	struct commit *commit;
+	struct commit **parents_to_queue = NULL;
+	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
+	char *to_free = NULL;
+
+	parse_commit(start_commit);
+	if (start_commit->date < cutoff)
+		return;
+
+	if (deref)
+		tip_name = to_free = xstrfmt("%s^0", tip_name);
+
+	if (!create_or_update_name(start_commit, tip_name, taggerdate, 0, 0,
+				   from_tag)) {
 		free(to_free);
 		return;
 	}
 
-	for (parents = commit->parents;
-			parents;
-			parents = parents->next, parent_number++) {
-		if (parent_number > 1) {
-			size_t len;
-			char *new_name;
+	memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
+	prio_queue_put(&queue, start_commit);
 
-			strip_suffix(tip_name, "^0", &len);
-			if (generation > 0)
-				new_name = xstrfmt("%.*s~%d^%d", (int)len, tip_name,
-						   generation, parent_number);
-			else
-				new_name = xstrfmt("%.*s^%d", (int)len, tip_name,
-						   parent_number);
+	while ((commit = prio_queue_get(&queue))) {
+		struct rev_name *name = get_commit_rev_name(commit);
+		struct commit_list *parents;
+		int parent_number = 1;
 
-			name_rev(parents->item, new_name, taggerdate, 0,
-				 distance + MERGE_TRAVERSAL_WEIGHT,
-				 from_tag, 0);
-		} else {
-			name_rev(parents->item, tip_name, taggerdate,
-				 generation + 1, distance + 1,
-				 from_tag, 0);
+		parents_to_queue_nr = 0;
+
+		for (parents = commit->parents;
+				parents;
+				parents = parents->next, parent_number++) {
+			struct commit *parent = parents->item;
+			const char *new_name;
+			int generation, distance;
+
+			parse_commit(parent);
+			if (parent->date < cutoff)
+				continue;
+
+			if (parent_number > 1) {
+				size_t len;
+
+				strip_suffix(name->tip_name, "^0", &len);
+				if (name->generation > 0)
+					new_name = xstrfmt("%.*s~%d^%d",
+							   (int)len,
+							   name->tip_name,
+							   name->generation,
+							   parent_number);
+				else
+					new_name = xstrfmt("%.*s^%d", (int)len,
+							   name->tip_name,
+							   parent_number);
+				generation = 0;
+				distance = name->distance + MERGE_TRAVERSAL_WEIGHT;
+			} else {
+				new_name = name->tip_name;
+				generation = name->generation + 1;
+				distance = name->distance + 1;
+			}
+
+			if (create_or_update_name(parent, new_name, taggerdate,
+						  generation, distance,
+						  from_tag)) {
+				ALLOC_GROW(parents_to_queue,
+					   parents_to_queue_nr + 1,
+					   parents_to_queue_alloc);
+				parents_to_queue[parents_to_queue_nr] = parent;
+				parents_to_queue_nr++;
+			}
 		}
+
+		/* The first parent must come out first from the prio_queue */
+		while (parents_to_queue_nr)
+			prio_queue_put(&queue,
+				       parents_to_queue[--parents_to_queue_nr]);
 	}
+
+	clear_prio_queue(&queue);
+	free(parents_to_queue);
 }
 
 static int subpath_matches(const char *path, const char *filter)
@@ -272,10 +321,9 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		int from_tag = starts_with(path, "refs/tags/");
 
 		if (taggerdate == TIME_MAX)
-			taggerdate = ((struct commit *)o)->date;
+			taggerdate = commit->date;
 		path = name_ref_abbrev(path, can_abbreviate_output);
-		name_rev(commit, xstrdup(path), taggerdate, 0, 0,
-			 from_tag, deref);
+		name_rev(commit, xstrdup(path), taggerdate, from_tag, deref);
 	}
 	return 0;
 }
@@ -321,11 +369,10 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 	if (!n->generation)
 		return n->tip_name;
 	else {
-		int len = strlen(n->tip_name);
-		if (len > 2 && !strcmp(n->tip_name + len - 2, "^0"))
-			len -= 2;
 		strbuf_reset(buf);
-		strbuf_addf(buf, "%.*s~%d", len, n->tip_name, n->generation);
+		strbuf_addstr(buf, n->tip_name);
+		strbuf_strip_suffix(buf, "^0");
+		strbuf_addf(buf, "~%d", n->generation);
 		return buf->buf;
 	}
 }
