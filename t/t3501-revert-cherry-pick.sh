@@ -150,7 +150,7 @@ test_expect_success 'cherry-pick works with dirty renamed file' '
 	test_tick &&
 	git commit -m renamed &&
 	echo modified >renamed &&
-	git cherry-pick refs/heads/unrelated >out &&
+	git cherry-pick refs/heads/unrelated &&
 	test $(git rev-parse :0:renamed) = $(git rev-parse HEAD~2:to-rename.t) &&
 	grep -q "^modified$" renamed
 '

@@ -517,7 +517,6 @@ test_expect_success \
 test_expect_success \
 	'trying to create tags giving both -m or -F options should fail' '
 	echo "message file 1" >msgfile1 &&
-	echo "message file 2" >msgfile2 &&
 	! tag_exists msgtag &&
 	test_must_fail git tag -m "message 1" -F msgfile1 msgtag &&
 	! tag_exists msgtag &&
