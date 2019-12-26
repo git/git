@@ -555,9 +555,8 @@ static int open_packed_git_1(struct packed_git *p)
 			     " while index indicates %"PRIu32" objects",
 			     p->pack_name, ntohl(hdr.hdr_entries),
 			     p->num_objects);
-	if (lseek(p->pack_fd, p->pack_size - hashsz, SEEK_SET) == -1)
-		return error("end of packfile %s is unavailable", p->pack_name);
-	read_result = read_in_full(p->pack_fd, hash, hashsz);
+	read_result = pread_in_full(p->pack_fd, hash, hashsz,
+					p->pack_size - hashsz);
 	if (read_result < 0)
 		return error_errno("error reading from %s", p->pack_name);
 	if (read_result != hashsz)
