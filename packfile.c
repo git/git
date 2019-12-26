@@ -489,7 +489,6 @@ static int open_packed_git_1(struct packed_git *p)
 	struct pack_header hdr;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	unsigned char *idx_hash;
-	long fd_flag;
 	ssize_t read_result;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
@@ -532,16 +531,6 @@ static int open_packed_git_1(struct packed_git *p)
 		p->pack_size = st.st_size;
 	} else if (p->pack_size != st.st_size)
 		return error("packfile %s size changed", p->pack_name);
-
-	/* We leave these file descriptors open with sliding mmap;
-	 * there is no point keeping them open across exec(), though.
-	 */
-	fd_flag = fcntl(p->pack_fd, F_GETFD, 0);
-	if (fd_flag < 0)
-		return error("cannot determine file descriptor flags");
-	fd_flag |= FD_CLOEXEC;
-	if (fcntl(p->pack_fd, F_SETFD, fd_flag) == -1)
-		return error("cannot set FD_CLOEXEC");
 
 	/* Verify we recognize this pack file format. */
 	read_result = read_in_full(p->pack_fd, &hdr, sizeof(hdr));
