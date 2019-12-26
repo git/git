@@ -469,11 +469,14 @@ test_expect_success 'match .gitmodules' '
 '
 
 test_expect_success MINGW 'is_valid_path() on Windows' '
-       test-tool path-utils is_valid_path \
+	test-tool path-utils is_valid_path \
 		win32 \
 		"win32 x" \
 		../hello.txt \
 		C:\\git \
+		comm \
+		conout.c \
+		lptN \
 		\
 		--not \
 		"win32 "  \
@@ -481,7 +484,13 @@ test_expect_success MINGW 'is_valid_path() on Windows' '
 		"win32."  \
 		"win32 . ." \
 		.../hello.txt \
-		colon:test
+		colon:test \
+		"AUX.c" \
+		"abc/conOut\$  .xyz/test" \
+		lpt8 \
+		"lpt*" \
+		Nul \
+		"PRN./abc"
 '
 
 test_done
