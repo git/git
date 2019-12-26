@@ -107,7 +107,11 @@ test_expect_success 'use ref advertisement to filter out commits' '
 
 	# The ref advertisement itself is filtered when protocol v2 is used, so
 	# use v0.
-	GIT_TEST_PROTOCOL_VERSION= trace_fetch client origin to_fetch &&
+	(
+		GIT_TEST_PROTOCOL_VERSION= &&
+		export GIT_TEST_PROTOCOL_VERSION &&
+		trace_fetch client origin to_fetch
+	) &&
 	have_sent c5 c4^ c2side &&
 	have_not_sent c4 c4^^ c4^^^
 '
