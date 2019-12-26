@@ -620,7 +620,8 @@ int fscache_lstat(const char *filename, struct stat *st)
 int fscache_is_mount_point(struct strbuf *path)
 {
 	int dirlen, base, len;
-	struct fsentry key[2], *fse;
+	struct heap_fsentry key[2];
+	struct fsentry *fse;
 	struct fscache *cache = fscache_getcache();
 
 	if (!cache || !do_fscache_enabled(cache, path->buf))
@@ -637,9 +638,9 @@ int fscache_is_mount_point(struct strbuf *path)
 	dirlen = base ? base - 1 : 0;
 
 	/* lookup entry for path + name in cache */
-	fsentry_init(key, NULL, path->buf, dirlen);
-	fsentry_init(key + 1, key, path->buf + base, len - base);
-	fse = fscache_get(cache, key + 1);
+	fsentry_init(&key[0].ent, NULL, path->buf, dirlen);
+	fsentry_init(&key[1].ent, &key[0].ent, path->buf + base, len - base);
+	fse = fscache_get(cache, &key[1].ent);
 	if (!fse)
 		return mingw_is_mount_point(path);
 	return fse->reparse_tag == IO_REPARSE_TAG_MOUNT_POINT;
