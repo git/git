@@ -420,7 +420,8 @@ static struct fsentry *fscache_get(struct fscache *cache, struct fsentry *key)
 			 * thing as far as fscache is concerned).
 			 */
 			fse = fsentry_alloc(cache, key->list->list,
-					    key->list->name, key->list->len);
+					    key->list->dirent.d_name,
+					    key->list->len);
 			fse->st_mode = 0;
 			hashmap_add(&cache->map, &fse->ent);
 		}
