@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='checkout '
+test_description='checkout'
 
 . ./test-lib.sh
 
