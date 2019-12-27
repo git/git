@@ -60,6 +60,27 @@ test_expect_success GPG 'pull commit with untrusted signature with --verify-sign
 	test_i18ngrep "has an untrusted GPG signature" pullerror
 '
 
+test_expect_success GPG 'pull commit with untrusted signature with --verify-signatures and minTrustLevel=ultimate' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config gpg.minTrustLevel ultimate &&
+	test_must_fail git pull --ff-only --verify-signatures untrusted 2>pullerror &&
+	test_i18ngrep "has an untrusted GPG signature" pullerror
+'
+
+test_expect_success GPG 'pull commit with untrusted signature with --verify-signatures and minTrustLevel=marginal' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config gpg.minTrustLevel marginal &&
+	test_must_fail git pull --ff-only --verify-signatures untrusted 2>pullerror &&
+	test_i18ngrep "has an untrusted GPG signature" pullerror
+'
+
+test_expect_success GPG 'pull commit with untrusted signature with --verify-signatures and minTrustLevel=undefined' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config gpg.minTrustLevel undefined &&
+	git pull --ff-only --verify-signatures untrusted >pulloutput &&
+	test_i18ngrep "has a good GPG signature" pulloutput
+'
+
 test_expect_success GPG 'pull signed commit with --verify-signatures' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	git pull --verify-signatures signed >pulloutput &&
@@ -79,10 +100,53 @@ test_expect_success GPG 'pull commit with bad signature with --no-verify-signatu
 '
 
 test_expect_success GPG 'pull unsigned commit into unborn branch' '
+	test_when_finished "rm -rf empty-repo" &&
 	git init empty-repo &&
 	test_must_fail \
 		git -C empty-repo pull --verify-signatures ..  2>pullerror &&
 	test_i18ngrep "does not have a GPG signature" pullerror
+'
+
+test_expect_success GPG 'pull commit into unborn branch with bad signature and --verify-signatures' '
+	test_when_finished "rm -rf empty-repo" &&
+	git init empty-repo &&
+	test_must_fail \
+		git -C empty-repo pull --ff-only --verify-signatures ../bad 2>pullerror &&
+	test_i18ngrep "has a bad GPG signature" pullerror
+'
+
+test_expect_success GPG 'pull commit into unborn branch with untrusted signature and --verify-signatures' '
+	test_when_finished "rm -rf empty-repo" &&
+	git init empty-repo &&
+	test_must_fail \
+		git -C empty-repo pull --ff-only --verify-signatures ../untrusted 2>pullerror &&
+	test_i18ngrep "has an untrusted GPG signature" pullerror
+'
+
+test_expect_success GPG 'pull commit into unborn branch with untrusted signature and --verify-signatures and minTrustLevel=ultimate' '
+	test_when_finished "rm -rf empty-repo" &&
+	git init empty-repo &&
+	test_config_global gpg.minTrustLevel ultimate &&
+	test_must_fail \
+		git -C empty-repo pull --ff-only --verify-signatures ../untrusted 2>pullerror &&
+	test_i18ngrep "has an untrusted GPG signature" pullerror
+'
+
+test_expect_success GPG 'pull commit into unborn branch with untrusted signature and --verify-signatures and minTrustLevel=marginal' '
+	test_when_finished "rm -rf empty-repo" &&
+	git init empty-repo &&
+	test_config_global gpg.minTrustLevel marginal &&
+	test_must_fail \
+		git -C empty-repo pull --ff-only --verify-signatures ../untrusted 2>pullerror &&
+	test_i18ngrep "has an untrusted GPG signature" pullerror
+'
+
+test_expect_success GPG 'pull commit into unborn branch with untrusted signature and --verify-signatures and minTrustLevel=undefined' '
+	test_when_finished "rm -rf empty-repo" &&
+	git init empty-repo &&
+	test_config_global gpg.minTrustLevel undefined &&
+	git -C empty-repo pull --ff-only --verify-signatures ../untrusted >pulloutput &&
+	test_i18ngrep "has a good GPG signature" pulloutput
 '
 
 test_done
