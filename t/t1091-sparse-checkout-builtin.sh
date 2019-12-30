@@ -340,4 +340,32 @@ test_expect_success 'cone mode: set with core.ignoreCase=true' '
 	test_cmp expect dir
 '
 
+test_expect_success 'interaction with submodules' '
+	git clone repo super &&
+	(
+		cd super &&
+		mkdir modules &&
+		git submodule add ../repo modules/child &&
+		git add . &&
+		git commit -m "add submodule" &&
+		git sparse-checkout init --cone &&
+		git sparse-checkout set folder1
+	) &&
+	list_files super >dir &&
+	cat >expect <<-\EOF &&
+		a
+		folder1
+		modules
+	EOF
+	test_cmp expect dir &&
+	list_files super/modules/child >dir &&
+	cat >expect <<-\EOF &&
+		a
+		deep
+		folder1
+		folder2
+	EOF
+	test_cmp expect dir
+'
+
 test_done

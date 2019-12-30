@@ -164,6 +164,16 @@ case-insensitive check. This corrects for case mismatched filenames in the
 'git sparse-checkout set' command to reflect the expected cone in the working
 directory.
 
+
+SUBMODULES
+----------
+
+If your repository contains one or more submodules, then those submodules will
+appear based on which you initialized with the `git submodule` command. If
+your sparse-checkout patterns exclude an initialized submodule, then that
+submodule will still appear in your working directory.
+
+
 SEE ALSO
 --------
 
