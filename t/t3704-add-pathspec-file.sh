@@ -124,4 +124,29 @@ test_expect_success 'only touches what was listed' '
 	verify_expect
 '
 
+test_expect_success 'error conditions' '
+	restore_checkpoint &&
+	echo fileA.t >list &&
+	>empty_list &&
+
+	test_must_fail git add --pathspec-from-file=list --interactive 2>err &&
+	test_i18ngrep -e "--pathspec-from-file is incompatible with --interactive/--patch" err &&
+
+	test_must_fail git add --pathspec-from-file=list --patch 2>err &&
+	test_i18ngrep -e "--pathspec-from-file is incompatible with --interactive/--patch" err &&
+
+	test_must_fail git add --pathspec-from-file=list --edit 2>err &&
+	test_i18ngrep -e "--pathspec-from-file is incompatible with --edit" err &&
+
+	test_must_fail git add --pathspec-from-file=list -- fileA.t 2>err &&
+	test_i18ngrep -e "--pathspec-from-file is incompatible with pathspec arguments" err &&
+
+	test_must_fail git add --pathspec-file-nul 2>err &&
+	test_i18ngrep -e "--pathspec-file-nul requires --pathspec-from-file" err &&
+
+	# This case succeeds, but still prints to stderr
+	git add --pathspec-from-file=empty_list 2>err &&
+	test_i18ngrep -e "Nothing specified, nothing added." err
+'
+
 test_done
