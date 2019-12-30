@@ -41,7 +41,9 @@ int option_parse_push_signed(const struct option *opt,
 static void feed_object(const struct object_id *oid, FILE *fh, int negative)
 {
 	if (negative &&
-	    !has_object_file_with_flags(oid, OBJECT_INFO_SKIP_FETCH_OBJECT))
+	    !has_object_file_with_flags(oid,
+					OBJECT_INFO_SKIP_FETCH_OBJECT |
+					OBJECT_INFO_QUICK))
 		return;
 
 	if (negative)
@@ -565,8 +567,6 @@ int send_pack(struct send_pack_args *args,
 
 	if (need_pack_data && cmds_sent) {
 		if (pack_objects(out, remote_refs, extra_have, args) < 0) {
-			for (ref = remote_refs; ref; ref = ref->next)
-				ref->status = REF_STATUS_NONE;
 			if (args->stateless_rpc)
 				close(out);
 			if (git_connection_is_socket(conn))
@@ -574,10 +574,12 @@ int send_pack(struct send_pack_args *args,
 
 			/*
 			 * Do not even bother with the return value; we know we
-			 * are failing, and just want the error() side effects.
+			 * are failing, and just want the error() side effects,
+			 * as well as marking refs with their remote status (if
+			 * we get one).
 			 */
 			if (status_report)
-				receive_unpack_status(&reader);
+				receive_status(&reader, remote_refs);
 
 			if (use_sideband) {
 				close(demux.out);

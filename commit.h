@@ -132,7 +132,7 @@ const void *repo_get_commit_buffer(struct repository *r,
 #endif
 
 /*
- * Tell the commit subsytem that we are done with a particular commit buffer.
+ * Tell the commit subsystem that we are done with a particular commit buffer.
  * The commit and buffer should be the input and return value, respectively,
  * from an earlier call to get_commit_buffer.  The buffer may or may not be
  * freed by this call; callers should not access the memory afterwards.

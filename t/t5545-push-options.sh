@@ -115,7 +115,7 @@ test_expect_success 'push options and submodules' '
 
 	git -C parent submodule add ../upstream workbench &&
 	git -C parent/workbench remote add up ../../upstream &&
-	git -C parent commit -m "add submoule" &&
+	git -C parent commit -m "add submodule" &&
 
 	test_commit -C parent/workbench two &&
 	git -C parent add workbench &&

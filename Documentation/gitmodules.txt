@@ -44,9 +44,8 @@ submodule.<name>.update::
 	submodule init` to initialize the configuration variable of
 	the same name. Allowed values here are 'checkout', 'rebase',
 	'merge' or 'none'. See description of 'update' command in
-	linkgit:git-submodule[1] for their meaning. Note that the
-	'!command' form is intentionally ignored here for security
-	reasons.
+	linkgit:git-submodule[1] for their meaning. For security
+	reasons, the '!command' form is not accepted here.
 
 submodule.<name>.branch::
 	A remote branch name for tracking updates in the upstream submodule.
@@ -81,7 +80,7 @@ submodule.<name>.ignore::
 	    Committed differences and modifications to tracked files will show
 	    up.
 
-	none;; No modifiations to submodules are ignored, all of committed
+	none;; No modifications to submodules are ignored, all of committed
 	    differences, and modifications to tracked and untracked files are
 	    shown. This is the default option.
 
@@ -121,7 +120,7 @@ submodules a URL is specified which can be used for cloning the submodules.
 
 SEE ALSO
 --------
-linkgit:git-submodule[1] linkgit:git-config[1]
+linkgit:git-submodule[1], linkgit:gitsubmodules[7], linkgit:git-config[1]
 
 GIT
 ---

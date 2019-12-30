@@ -96,9 +96,9 @@ refs::
 	directory.  The 'git prune' command knows to preserve
 	objects reachable from refs found in this directory and
 	its subdirectories.
-	This directory is ignored (except refs/bisect and
-	refs/worktree) if $GIT_COMMON_DIR is set and
-	"$GIT_COMMON_DIR/refs" will be used instead.
+	This directory is ignored (except refs/bisect,
+	refs/rewritten and refs/worktree) if $GIT_COMMON_DIR is
+	set and "$GIT_COMMON_DIR/refs" will be used instead.
 
 refs/heads/`name`::
 	records tip-of-the-tree commit objects of branch `name`
@@ -240,8 +240,8 @@ remotes::
 logs::
 	Records of changes made to refs are stored in this directory.
 	See linkgit:git-update-ref[1] for more information. This
-	directory is ignored if $GIT_COMMON_DIR is set and
-	"$GIT_COMMON_DIR/logs" will be used instead.
+	directory is ignored (except logs/HEAD) if $GIT_COMMON_DIR is
+	set and "$GIT_COMMON_DIR/logs" will be used instead.
 
 logs/refs/heads/`name`::
 	Records all changes made to the branch tip named `name`.

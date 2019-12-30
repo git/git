@@ -48,7 +48,7 @@ int oid_array_for_each(struct oid_array *array,
 {
 	int i;
 
-	/* No oid_array_sort() here! See the api-oid-array.txt docs! */
+	/* No oid_array_sort() here! See sha1-array.h */
 
 	for (i = 0; i < array->nr; i++) {
 		int ret = fn(array->oid + i, data);

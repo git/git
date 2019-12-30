@@ -677,7 +677,8 @@ config key: svn.authorsProg
 -s<strategy>::
 --strategy=<strategy>::
 -p::
---preserve-merges::
+--rebase-merges::
+--preserve-merges (DEPRECATED)::
 	These are only used with the 'dcommit' and 'rebase' commands.
 +
 Passed directly to 'git rebase' when using 'dcommit' if a

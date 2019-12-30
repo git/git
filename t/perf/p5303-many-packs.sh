@@ -77,11 +77,30 @@ do
 	# actual pack generation, without smudging the on-disk setup
 	# between trials.
 	test_perf "repack ($nr_packs)" '
+		GIT_TEST_FULL_IN_PACK_ARRAY=1 \
 		git pack-objects --keep-true-parents \
 		  --honor-pack-keep --non-empty --all \
 		  --reflog --indexed-objects --delta-base-offset \
 		  --stdout </dev/null >/dev/null
 	'
 done
+
+# Measure pack loading with 10,000 packs.
+test_expect_success 'generate lots of packs' '
+	for i in $(test_seq 10000); do
+		echo "blob"
+		echo "data <<EOF"
+		echo "blob $i"
+		echo "EOF"
+		echo "checkpoint"
+	done |
+	git -c fastimport.unpackLimit=0 fast-import
+'
+
+# The purpose of this test is to evaluate load time for a large number
+# of packs while doing as little other work as possible.
+test_perf "load 10,000 packs" '
+	git rev-parse --verify "HEAD^{commit}"
+'
 
 test_done

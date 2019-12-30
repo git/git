@@ -10,6 +10,7 @@ test_expect_success 'create commits with glob characters' '
 	# the name "f*" in the worktree, because it is not allowed
 	# on Windows (the tests below do not depend on the presence
 	# of the file in the worktree)
+	git config core.protectNTFS false &&
 	git update-index --add --cacheinfo 100644 "$(git rev-parse HEAD:foo)" "f*" &&
 	test_tick &&
 	git commit -m star &&

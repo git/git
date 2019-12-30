@@ -1668,7 +1668,7 @@ void repo_init_revisions(struct repository *r,
 		revs->diffopt.prefix_length = strlen(prefix);
 	}
 
-	revs->notes_opt.use_default_notes = -1;
+	init_display_notes(&revs->notes_opt);
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
@@ -2203,9 +2203,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 			die("'%s': not a non-negative integer", arg);
 		revs->expand_tabs_in_log = val;
 	} else if (!strcmp(arg, "--show-notes") || !strcmp(arg, "--notes")) {
-		revs->show_notes = 1;
+		enable_default_display_notes(&revs->notes_opt, &revs->show_notes);
 		revs->show_notes_given = 1;
-		revs->notes_opt.use_default_notes = 1;
 	} else if (!strcmp(arg, "--show-signature")) {
 		revs->show_signature = 1;
 	} else if (!strcmp(arg, "--no-show-signature")) {
@@ -2220,25 +2219,14 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->track_first_time = 1;
 	} else if (skip_prefix(arg, "--show-notes=", &optarg) ||
 		   skip_prefix(arg, "--notes=", &optarg)) {
-		struct strbuf buf = STRBUF_INIT;
-		revs->show_notes = 1;
-		revs->show_notes_given = 1;
 		if (starts_with(arg, "--show-notes=") &&
 		    revs->notes_opt.use_default_notes < 0)
 			revs->notes_opt.use_default_notes = 1;
-		strbuf_addstr(&buf, optarg);
-		expand_notes_ref(&buf);
-		string_list_append(&revs->notes_opt.extra_notes_refs,
-				   strbuf_detach(&buf, NULL));
-	} else if (!strcmp(arg, "--no-notes")) {
-		revs->show_notes = 0;
+		enable_ref_display_notes(&revs->notes_opt, &revs->show_notes, optarg);
 		revs->show_notes_given = 1;
-		revs->notes_opt.use_default_notes = -1;
-		/* we have been strdup'ing ourselves, so trick
-		 * string_list into free()ing strings */
-		revs->notes_opt.extra_notes_refs.strdup_strings = 1;
-		string_list_clear(&revs->notes_opt.extra_notes_refs, 0);
-		revs->notes_opt.extra_notes_refs.strdup_strings = 0;
+	} else if (!strcmp(arg, "--no-notes")) {
+		disable_display_notes(&revs->notes_opt, &revs->show_notes);
+		revs->show_notes_given = 1;
 	} else if (!strcmp(arg, "--standard-notes")) {
 		revs->show_notes_given = 1;
 		revs->notes_opt.use_default_notes = 1;
@@ -3098,7 +3086,7 @@ static void set_children(struct rev_info *revs)
 
 void reset_revision_walk(void)
 {
-	clear_object_flags(SEEN | ADDED | SHOWN);
+	clear_object_flags(SEEN | ADDED | SHOWN | TOPO_WALK_EXPLORED | TOPO_WALK_INDEGREE);
 }
 
 static int mark_uninteresting(const struct object_id *oid,
@@ -3211,10 +3199,26 @@ static void compute_indegrees_to_depth(struct rev_info *revs,
 		indegree_walk_step(revs);
 }
 
+static void reset_topo_walk(struct rev_info *revs)
+{
+	struct topo_walk_info *info = revs->topo_walk_info;
+
+	clear_prio_queue(&info->explore_queue);
+	clear_prio_queue(&info->indegree_queue);
+	clear_prio_queue(&info->topo_queue);
+	clear_indegree_slab(&info->indegree);
+	clear_author_date_slab(&info->author_date);
+
+	FREE_AND_NULL(revs->topo_walk_info);
+}
+
 static void init_topo_walk(struct rev_info *revs)
 {
 	struct topo_walk_info *info;
 	struct commit_list *list;
+	if (revs->topo_walk_info)
+		reset_topo_walk(revs);
+
 	revs->topo_walk_info = xmalloc(sizeof(struct topo_walk_info));
 	info = revs->topo_walk_info;
 	memset(info, 0, sizeof(struct topo_walk_info));
@@ -3944,7 +3948,7 @@ struct commit *get_revision(struct rev_info *revs)
 	return c;
 }
 
-char *get_revision_mark(const struct rev_info *revs, const struct commit *commit)
+const char *get_revision_mark(const struct rev_info *revs, const struct commit *commit)
 {
 	if (commit->object.flags & BOUNDARY)
 		return "-";
@@ -3966,7 +3970,7 @@ char *get_revision_mark(const struct rev_info *revs, const struct commit *commit
 
 void put_revision_mark(const struct rev_info *revs, const struct commit *commit)
 {
-	char *mark = get_revision_mark(revs, commit);
+	const char *mark = get_revision_mark(revs, commit);
 	if (!strlen(mark))
 		return;
 	fputs(mark, stdout);

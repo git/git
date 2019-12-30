@@ -106,7 +106,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	int i, len = strlen(line);
 	struct origin_data *origin_data;
 	char *src;
-	const char *origin;
+	const char *origin, *tag_name;
 	struct src_data *src_data;
 	struct string_list_item *item;
 	int pulling_head = 0;
@@ -162,14 +162,13 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	if (pulling_head) {
 		origin = src;
 		src_data->head_status |= 1;
-	} else if (starts_with(line, "branch ")) {
+	} else if (skip_prefix(line, "branch ", &origin)) {
 		origin_data->is_local_branch = 1;
-		origin = line + 7;
 		string_list_append(&src_data->branch, origin);
 		src_data->head_status |= 2;
-	} else if (starts_with(line, "tag ")) {
+	} else if (skip_prefix(line, "tag ", &tag_name)) {
 		origin = line;
-		string_list_append(&src_data->tag, origin + 4);
+		string_list_append(&src_data->tag, tag_name);
 		src_data->head_status |= 2;
 	} else if (skip_prefix(line, "remote-tracking branch ", &origin)) {
 		string_list_append(&src_data->r_branch, origin);
@@ -495,6 +494,7 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 		enum object_type type;
 		unsigned long size, len;
 		char *buf = read_object_file(oid, &type, &size);
+		struct signature_check sigc = { 0 };
 		struct strbuf sig = STRBUF_INIT;
 
 		if (!buf || type != OBJ_TAG)
@@ -503,10 +503,12 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 
 		if (size == len)
 			; /* merely annotated */
-		else if (verify_signed_buffer(buf, len, buf + len, size - len, &sig, NULL)) {
-			if (!sig.len)
-				strbuf_addstr(&sig, "gpg verification failed.\n");
-		}
+		else if (!check_signature(buf, len, buf + len, size - len,
+					  &sigc)) {
+			strbuf_addstr(&sig, sigc.gpg_output);
+			signature_check_clear(&sigc);
+		} else
+			strbuf_addstr(&sig, "gpg verification failed.\n");
 
 		if (!tag_number++) {
 			fmt_tag_signature(&tagbuf, &sig, buf, len);

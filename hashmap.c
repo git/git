@@ -51,7 +51,7 @@ unsigned int memihash(const void *buf, size_t len)
 }
 
 /*
- * Incoporate another chunk of data into a memihash
+ * Incorporate another chunk of data into a memihash
  * computation.
  */
 unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len)

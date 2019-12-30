@@ -1,7 +1,6 @@
 /*
  * Handle git attributes.  See gitattributes(5) for a description of
- * the file syntax, and Documentation/technical/api-gitattributes.txt
- * for a description of the API.
+ * the file syntax, and attr.h for a description of the API.
  *
  * One basic design decision here is that we are not going to support
  * an insanely large number of attributes.

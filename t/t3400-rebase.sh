@@ -64,7 +64,7 @@ test_expect_success 'rebase sets ORIG_HEAD to pre-rebase state' '
 	pre="$(git rev-parse --verify HEAD)" &&
 	git rebase master &&
 	test_cmp_rev "$pre" ORIG_HEAD &&
-	! test_cmp_rev "$pre" HEAD
+	test_cmp_rev ! "$pre" HEAD
 '
 
 test_expect_success 'rebase, with <onto> and <upstream> specified as :/quuxery' '
@@ -157,6 +157,12 @@ test_expect_success 'fail when upstream arg is missing and not on branch' '
 test_expect_success 'fail when upstream arg is missing and not configured' '
 	git checkout -b no-config topic &&
 	test_must_fail git rebase
+'
+
+test_expect_success 'rebase works with format.useAutoBase' '
+	test_config format.useAutoBase true &&
+	git checkout topic &&
+	git rebase master
 '
 
 test_expect_success 'default to common base in @{upstream}s reflog if no upstream arg' '

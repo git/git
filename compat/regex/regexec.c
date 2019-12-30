@@ -2420,7 +2420,7 @@ find_recover_state (reg_errcode_t *err, re_match_context_t *mctx)
 /* From the node set CUR_NODES, pick up the nodes whose types are
    OP_OPEN_SUBEXP and which have corresponding back references in the regular
    expression. And register them to use them later for evaluating the
-   correspoding back references.  */
+   corresponding back references.  */
 
 static reg_errcode_t
 internal_function
@@ -3347,7 +3347,7 @@ build_trtable (const re_dfa_t *dfa, re_dfastate_t *state)
   dests_node = dests_alloc->dests_node;
   dests_ch = dests_alloc->dests_ch;
 
-  /* Initialize transiton table.  */
+  /* Initialize transition table.  */
   state->word_trtable = state->trtable = NULL;
 
   /* At first, group all nodes belonging to `state' into several

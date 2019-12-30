@@ -163,7 +163,7 @@ static void *get_delta(struct object_entry *entry)
 	delta_buf = diff_delta(base_buf, base_size,
 			       buf, size, &delta_size, 0);
 	/*
-	 * We succesfully computed this delta once but dropped it for
+	 * We successfully computed this delta once but dropped it for
 	 * memory reasons. Something is very wrong if this time we
 	 * recompute and create a different delta.
 	 */

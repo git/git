@@ -36,6 +36,12 @@ format.subjectPrefix::
 	The default for format-patch is to output files with the '[PATCH]'
 	subject prefix. Use this variable to change that prefix.
 
+format.coverFromDescription::
+	The default mode for format-patch to determine which parts of
+	the cover letter will be populated using the branch's
+	description. See the `--cover-from-description` option in
+	linkgit:git-format-patch[1].
+
 format.signature::
 	The default for format-patch is to output a signature containing
 	the Git version number. Use this variable to change that default.
@@ -100,4 +106,20 @@ If one wishes to use the ref `ref/notes/true`, please use that literal
 instead.
 +
 This configuration can be specified multiple times in order to allow
-multiple notes refs to be included.
+multiple notes refs to be included. In that case, it will behave
+similarly to multiple `--[no-]notes[=]` options passed in. That is, a
+value of `true` will show the default notes, a value of `<ref>` will
+also show notes from that notes ref and a value of `false` will negate
+previous configurations and not show notes.
++
+For example,
++
+------------
+[format]
+	notes = true
+	notes = foo
+	notes = false
+	notes = bar
+------------
++
+will only show notes from `refs/notes/bar`.

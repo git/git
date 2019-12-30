@@ -464,7 +464,7 @@ static void prepare_commit_graph_one(struct repository *r, const char *obj_dir)
 /*
  * Return 1 if commit_graph is non-NULL, and 0 otherwise.
  *
- * On the first invocation, this function attemps to load the commit
+ * On the first invocation, this function attempts to load the commit
  * graph if the_repository is configured to have one.
  */
 static int prepare_commit_graph(struct repository *r)
@@ -858,9 +858,6 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 			die(_("unable to parse commit %s"),
 				oid_to_hex(&(*list)->object.oid));
 		tree = get_commit_tree_oid(*list);
-		if (!tree)
-			die(_("unable to get tree for %s"),
-				oid_to_hex(&(*list)->object.oid));
 		hashwrite(f, tree->hash, hash_len);
 
 		parent = (*list)->parents;
@@ -1103,7 +1100,7 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 	struct commit_list *list = NULL;
 
 	if (ctx->report_progress)
-		ctx->progress = start_progress(
+		ctx->progress = start_delayed_progress(
 					_("Computing commit graph generation numbers"),
 					ctx->commits.nr);
 	for (i = 0; i < ctx->commits.nr; i++) {

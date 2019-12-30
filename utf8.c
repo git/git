@@ -411,11 +411,10 @@ out:
  */
 static int same_utf_encoding(const char *src, const char *dst)
 {
-	if (istarts_with(src, "utf") && istarts_with(dst, "utf")) {
-		/* src[3] or dst[3] might be '\0' */
-		int i = (src[3] == '-' ? 4 : 3);
-		int j = (dst[3] == '-' ? 4 : 3);
-		return !strcasecmp(src+i, dst+j);
+	if (skip_iprefix(src, "utf", &src) && skip_iprefix(dst, "utf", &dst)) {
+		skip_prefix(src, "-", &src);
+		skip_prefix(dst, "-", &dst);
+		return !strcasecmp(src, dst);
 	}
 	return 0;
 }

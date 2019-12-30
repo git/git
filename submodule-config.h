@@ -7,9 +7,31 @@
 #include "submodule.h"
 #include "strbuf.h"
 
+/**
+ * The submodule config cache API allows to read submodule
+ * configurations/information from specified revisions. Internally
+ * information is lazily read into a cache that is used to avoid
+ * unnecessary parsing of the same .gitmodules files. Lookups can be done by
+ * submodule path or name.
+ *
+ * Usage
+ * -----
+ *
+ * The caller can look up information about submodules by using the
+ * `submodule_from_path()` or `submodule_from_name()` functions. They return
+ * a `struct submodule` which contains the values. The API automatically
+ * initializes and allocates the needed infrastructure on-demand. If the
+ * caller does only want to lookup values from revisions the initialization
+ * can be skipped.
+ *
+ * If the internal cache might grow too big or when the caller is done with
+ * the API, all internally cached values can be freed with submodule_free().
+ *
+ */
+
 /*
  * Submodule entry containing the information about a certain submodule
- * in a certain revision.
+ * in a certain revision. It is returned by the lookup functions.
  */
 struct submodule {
 	const char *path;
@@ -41,13 +63,27 @@ int parse_update_recurse_submodules_arg(const char *opt, const char *arg);
 int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
 void repo_read_gitmodules(struct repository *repo);
 void gitmodules_config_oid(const struct object_id *commit_oid);
+
+/**
+ * Same as submodule_from_path but lookup by name.
+ */
 const struct submodule *submodule_from_name(struct repository *r,
 					    const struct object_id *commit_or_tree,
 					    const char *name);
+
+/**
+ * Given a tree-ish in the superproject and a path, return the submodule that
+ * is bound at the path in the named tree.
+ */
 const struct submodule *submodule_from_path(struct repository *r,
 					    const struct object_id *commit_or_tree,
 					    const char *path);
+
+/**
+ * Use these to free the internally cached values.
+ */
 void submodule_free(struct repository *r);
+
 int print_config_from_gitmodules(struct repository *repo, const char *key);
 int config_set_in_gitmodules_file_gently(const char *key, const char *value);
 

@@ -142,7 +142,7 @@ by keeping the marks the same across runs.
 	Specify how to handle `encoding` header in commit objects.  When
 	asking to 'abort' (which is the default), this program will die
 	when encountering such a commit object.  With 'yes', the commit
-	message will be reencoded into UTF-8.  With 'no', the original
+	message will be re-encoded into UTF-8.  With 'no', the original
 	encoding will be preserved.
 
 --refspec::

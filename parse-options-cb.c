@@ -161,6 +161,7 @@ int parse_opt_tertiary(const struct option *opt, const char *arg, int unset)
 
 struct option *parse_options_dup(const struct option *o)
 {
+	const struct option *orig = o;
 	struct option *opts;
 	int nr = 0;
 
@@ -170,7 +171,7 @@ struct option *parse_options_dup(const struct option *o)
 	}
 
 	ALLOC_ARRAY(opts, nr + 1);
-	memcpy(opts, o - nr, sizeof(*o) * nr);
+	COPY_ARRAY(opts, orig, nr);
 	memset(opts + nr, 0, sizeof(*opts));
 	opts[nr].type = OPTION_END;
 	return opts;

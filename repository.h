@@ -172,7 +172,7 @@ void repo_clear(struct repository *repo);
  * be allocated if needed.
  *
  * Return the number of index entries in the populated index or a value less
- * than zero if an error occured.  If the repository's index has already been
+ * than zero if an error occurred.  If the repository's index has already been
  * populated then the number of entries will simply be returned.
  */
 int repo_read_index(struct repository *repo);

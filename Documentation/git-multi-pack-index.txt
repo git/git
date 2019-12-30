@@ -9,7 +9,7 @@ git-multi-pack-index - Write and verify multi-pack-indexes
 SYNOPSIS
 --------
 [verse]
-'git multi-pack-index' [--object-dir=<dir>] <subcommand>
+'git multi-pack-index' [--object-dir=<dir>] [--[no-]progress] <subcommand>
 
 DESCRIPTION
 -----------
@@ -22,6 +22,10 @@ OPTIONS
 	Use given directory for the location of Git objects. We check
 	`<dir>/packs/multi-pack-index` for the current MIDX file, and
 	`<dir>/packs` for the pack-files to index.
+
+--[no-]progress::
+	Turn progress on/off explicitly. If neither is specified, progress is
+	shown if standard error is connected to a terminal.
 
 The following subcommands are available:
 

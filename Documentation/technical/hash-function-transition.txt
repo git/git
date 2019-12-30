@@ -531,7 +531,7 @@ Until Git protocol gains SHA-256 support, using SHA-256 based storage
 on public-facing Git servers is strongly discouraged. Once Git
 protocol gains SHA-256 support, SHA-256 based servers are likely not
 to support SHA-1 compatibility, to avoid what may be a very expensive
-hash reencode during clone and to encourage peers to modernize.
+hash re-encode during clone and to encourage peers to modernize.
 
 The design described here allows fetches by SHA-1 clients of a
 personal SHA-256 repository because it's not much more difficult than
@@ -602,7 +602,7 @@ git --output-format=sha1 log abac87a^{sha1}..f787cac^{sha256}
 
 Choice of Hash
 --------------
-In early 2005, around the time that Git was written,  Xiaoyun Wang,
+In early 2005, around the time that Git was written, Xiaoyun Wang,
 Yiqun Lisa Yin, and Hongbo Yu announced an attack finding SHA-1
 collisions in 2^69 operations. In August they published details.
 Luckily, no practical demonstrations of a collision in full SHA-1 were
@@ -730,7 +730,7 @@ adoption.
 
 Using hash functions in parallel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-(e.g. https://public-inbox.org/git/22708.8913.864049.452252@chiark.greenend.org.uk/ )
+(e.g. https://lore.kernel.org/git/22708.8913.864049.452252@chiark.greenend.org.uk/ )
 Objects newly created would be addressed by the new hash, but inside
 such an object (e.g. commit) it is still possible to address objects
 using the old hash function.
@@ -783,7 +783,7 @@ bmwill@google.com, jonathantanmy@google.com, jrnieder@gmail.com,
 sbeller@google.com
 
 Initial version sent to
-http://public-inbox.org/git/20170304011251.GA26789@aiede.mtv.corp.google.com
+http://lore.kernel.org/git/20170304011251.GA26789@aiede.mtv.corp.google.com
 
 2017-03-03 jrnieder@gmail.com
 Incorporated suggestions from jonathantanmy and sbeller:
@@ -820,8 +820,8 @@ Later history:
  edits. This document history is no longer being maintained as it
  would now be superfluous to the commit log
 
-[1] http://public-inbox.org/git/CA+55aFzJtejiCjV0e43+9oR3QuJK2PiFiLQemytoLpyJWe6P9w@mail.gmail.com/
-[2] http://public-inbox.org/git/CA+55aFz+gkAsDZ24zmePQuEs1XPS9BP_s8O7Q4wQ7LV7X5-oDA@mail.gmail.com/
-[3] http://public-inbox.org/git/20170306084353.nrns455dvkdsfgo5@sigill.intra.peff.net/
-[4] http://public-inbox.org/git/20170304224936.rqqtkdvfjgyezsht@genre.crustytoothpaste.net
-[5] https://public-inbox.org/git/CAJo=hJtoX9=AyLHHpUJS7fueV9ciZ_MNpnEPHUz8Whui6g9F0A@mail.gmail.com/
+[1] http://lore.kernel.org/git/CA+55aFzJtejiCjV0e43+9oR3QuJK2PiFiLQemytoLpyJWe6P9w@mail.gmail.com/
+[2] http://lore.kernel.org/git/CA+55aFz+gkAsDZ24zmePQuEs1XPS9BP_s8O7Q4wQ7LV7X5-oDA@mail.gmail.com/
+[3] http://lore.kernel.org/git/20170306084353.nrns455dvkdsfgo5@sigill.intra.peff.net/
+[4] http://lore.kernel.org/git/20170304224936.rqqtkdvfjgyezsht@genre.crustytoothpaste.net
+[5] https://lore.kernel.org/git/CAJo=hJtoX9=AyLHHpUJS7fueV9ciZ_MNpnEPHUz8Whui6g9F0A@mail.gmail.com/

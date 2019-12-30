@@ -757,6 +757,9 @@ void install_packed_git(struct repository *r, struct packed_git *pack)
 
 	pack->next = r->objects->packed_git;
 	r->objects->packed_git = pack;
+
+	hashmap_entry_init(&pack->packmap_ent, strhash(pack->pack_name));
+	hashmap_add(&r->objects->pack_map, &pack->packmap_ent);
 }
 
 void (*report_garbage)(unsigned seen_bits, const char *path);
@@ -856,20 +859,18 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 
 	if (strip_suffix_mem(full_name, &base_len, ".idx") &&
 	    !(data->m && midx_contains_pack(data->m, file_name))) {
-		/* Don't reopen a pack we already have. */
-		for (p = data->r->objects->packed_git; p; p = p->next) {
-			size_t len;
-			if (strip_suffix(p->pack_name, ".pack", &len) &&
-			    len == base_len &&
-			    !memcmp(p->pack_name, full_name, len))
-				break;
-		}
+		struct hashmap_entry hent;
+		char *pack_name = xstrfmt("%.*s.pack", (int)base_len, full_name);
+		unsigned int hash = strhash(pack_name);
+		hashmap_entry_init(&hent, hash);
 
-		if (!p) {
+		/* Don't reopen a pack we already have. */
+		if (!hashmap_get(&data->r->objects->pack_map, &hent, pack_name)) {
 			p = add_packed_git(full_name, full_name_len, data->local);
 			if (p)
 				install_packed_git(data->r, p);
 		}
+		free(pack_name);
 	}
 
 	if (!report_garbage)

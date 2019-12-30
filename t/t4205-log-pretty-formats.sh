@@ -134,6 +134,36 @@ test_expect_failure C_LOCALE_OUTPUT 'NUL termination with --stat' '
 	test_cmp expected actual
 '
 
+for p in short medium full fuller email raw
+do
+	test_expect_success "NUL termination with --reflog --pretty=$p" '
+		revs="$(git rev-list --reflog)" &&
+		for r in $revs
+		do
+			git show -s "$r" --pretty="$p" &&
+			printf "\0" || return 1
+		done >expect &&
+		{
+			git log -z --reflog --pretty="$p" &&
+			printf "\0"
+		} >actual &&
+		test_cmp expect actual
+	'
+done
+
+test_expect_success 'NUL termination with --reflog --pretty=oneline' '
+	revs="$(git rev-list --reflog)" &&
+	for r in $revs
+	do
+		git show -s --pretty=oneline "$r" >raw &&
+		cat raw | lf_to_nul || exit 1
+	done >expect &&
+	# the trailing NUL is already produced so we do not need to
+	# output another one
+	git log -z --pretty=oneline --reflog >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup more commits' '
 	test_commit "message one" one one message-one &&
 	test_commit "message two" two two message-two &&
@@ -503,6 +533,12 @@ test_expect_success 'ISO and ISO-strict date formats display the same values' '
 	test_cmp expected actual
 '
 
+test_expect_success 'short date' '
+	git log --format=%ad%n%cd --date=short >expected &&
+	git log --format=%as%n%cs >actual &&
+	test_cmp expected actual
+'
+
 # get new digests (with no abbreviations)
 test_expect_success 'set up log decoration tests' '
 	head1=$(git rev-parse --verify HEAD~0) &&
@@ -640,7 +676,7 @@ test_expect_success 'pretty format %(trailers:key=foo) multiple keys' '
 	test_cmp expect actual
 '
 
-test_expect_success '%(trailers:key=nonexistant) becomes empty' '
+test_expect_success '%(trailers:key=nonexistent) becomes empty' '
 	git log --no-walk --pretty="x%(trailers:key=Nacked-by)x" >actual &&
 	echo "xx" >expect &&
 	test_cmp expect actual
@@ -785,6 +821,49 @@ test_expect_success '%S in git log --format works with other placeholders (part 
 test_expect_success '%S in git log --format works with other placeholders (part 2)' '
 	git log --format="%h source-b" source-b >expect &&
 	git log --format="%h %S" source-b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference with log.date is overridden by short date' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	test_config log.date rfc &&
+	git log --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference with explicit date overrides short date' '
+	git log --date=rfc --pretty="tformat:%h (%s, %ad)" >expect &&
+	git log --date=rfc --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference is never unabbreviated' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --no-abbrev-commit --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference is never decorated' '
+	git log --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --decorate=short --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference does not output reflog info' '
+	git log --walk-reflogs --pretty="tformat:%h (%s, %as)" >expect &&
+	git log --walk-reflogs --pretty=reference >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty=reference is colored appropriately' '
+	git log --color=always --pretty="tformat:%C(auto)%h (%s, %as)" >expect &&
+	git log --color=always --pretty=reference >actual &&
 	test_cmp expect actual
 '
 

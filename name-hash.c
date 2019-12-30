@@ -138,7 +138,7 @@ static int lazy_nr_dir_threads;
 
 /*
  * Set a minimum number of cache_entries that we will handle per
- * thread and use that to decide how many threads to run (upto
+ * thread and use that to decide how many threads to run (up to
  * the number on the system).
  *
  * For guidance setting the lower per-thread bound, see:
@@ -218,7 +218,7 @@ static int lookup_lazy_params(struct index_state *istate)
  * However, the hashmap is going to put items into bucket
  * chains based on their hash values.  Use that to create n
  * mutexes and lock on mutex[bucket(hash) % n].  This will
- * decrease the collision rate by (hopefully) by a factor of n.
+ * decrease the collision rate by (hopefully) a factor of n.
  */
 static void init_dir_mutex(void)
 {

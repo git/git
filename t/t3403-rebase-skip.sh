@@ -7,6 +7,8 @@ test_description='git rebase --merge --skip tests'
 
 . ./test-lib.sh
 
+. "$TEST_DIRECTORY"/lib-rebase.sh
+
 # we assume the default git am -3 --skip strategy is tested independently
 # and always works :)
 
@@ -20,6 +22,13 @@ test_expect_success setup '
 	git commit -a -m "hello world" &&
 	echo goodbye >> hello &&
 	git commit -a -m "goodbye" &&
+	git tag goodbye &&
+
+	git checkout --detach &&
+	git checkout HEAD^ . &&
+	test_tick &&
+	git commit -m reverted-goodbye &&
+	git tag reverted-goodbye &&
 
 	git checkout -f skip-reference &&
 	echo moo > hello &&
@@ -75,5 +84,28 @@ test_expect_success 'moved back to branch correctly' '
 '
 
 test_debug 'gitk --all & sleep 1'
+
+test_expect_success 'fixup that empties commit fails' '
+	test_when_finished "git rebase --abort" &&
+	(
+		set_fake_editor &&
+		test_must_fail env FAKE_LINES="1 fixup 2" git rebase -i \
+			goodbye^ reverted-goodbye
+	)
+'
+
+test_expect_success 'squash that empties commit fails' '
+	test_when_finished "git rebase --abort" &&
+	(
+		set_fake_editor &&
+		test_must_fail env FAKE_LINES="1 squash 2" git rebase -i \
+			goodbye^ reverted-goodbye
+	)
+'
+
+# Must be the last test in this file
+test_expect_success '$EDITOR and friends are unchanged' '
+	test_editor_unchanged
+'
 
 test_done

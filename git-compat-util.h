@@ -320,26 +320,6 @@ char *gitdirname(char *);
 #define PATH_MAX 4096
 #endif
 
-#ifndef PRIuMAX
-#define PRIuMAX "llu"
-#endif
-
-#ifndef SCNuMAX
-#define SCNuMAX PRIuMAX
-#endif
-
-#ifndef PRIu32
-#define PRIu32 "u"
-#endif
-
-#ifndef PRIx32
-#define PRIx32 "x"
-#endif
-
-#ifndef PRIo32
-#define PRIo32 "o"
-#endif
-
 typedef uintmax_t timestamp_t;
 #define PRItime PRIuMAX
 #define parse_timestamp strtoumax
@@ -395,6 +375,10 @@ static inline int git_offset_1st_component(const char *path)
 	return is_dir_sep(path[0]);
 }
 #define offset_1st_component git_offset_1st_component
+#endif
+
+#ifndef is_valid_path
+#define is_valid_path(path) 1
 #endif
 
 #ifndef find_last_dir_sep

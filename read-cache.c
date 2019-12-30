@@ -964,6 +964,9 @@ int verify_path(const char *path, unsigned mode)
 	if (has_dos_drive_prefix(path))
 		return 0;
 
+	if (!is_valid_path(path))
+		return 0;
+
 	goto inside;
 	for (;;) {
 		if (!c)
@@ -991,7 +994,15 @@ inside:
 			if ((c == '.' && !verify_dotfile(path, mode)) ||
 			    is_dir_sep(c) || c == '\0')
 				return 0;
+		} else if (c == '\\' && protect_ntfs) {
+			if (is_ntfs_dotgit(path))
+				return 0;
+			if (S_ISLNK(mode)) {
+				if (is_ntfs_dotgitmodules(path))
+					return 0;
+			}
 		}
+
 		c = *path++;
 	}
 }
@@ -1790,7 +1801,7 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 		const unsigned char *cp = (const unsigned char *)name;
 		size_t strip_len, previous_len;
 
-		/* If we're at the begining of a block, ignore the previous name */
+		/* If we're at the beginning of a block, ignore the previous name */
 		strip_len = decode_varint(&cp);
 		if (previous_ce) {
 			previous_len = previous_ce->ce_namelen;

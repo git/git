@@ -32,7 +32,7 @@ static void git_apply_config(void)
 {
 	git_config_get_string_const("apply.whitespace", &apply_default_whitespace);
 	git_config_get_string_const("apply.ignorewhitespace", &apply_default_ignorewhitespace);
-	git_config(git_default_config, NULL);
+	git_config(git_xmerge_config, NULL);
 }
 
 static int parse_whitespace_option(struct apply_state *state, const char *option)
@@ -450,7 +450,7 @@ static char *find_name_gnu(struct strbuf *root,
 
 	/*
 	 * Proposed "new-style" GNU patch/diff format; see
-	 * https://public-inbox.org/git/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
+	 * https://lore.kernel.org/git/7vll0wvb2a.fsf@assigned-by-dhcp.cox.net/
 	 */
 	if (unquote_c_style(&name, line, NULL)) {
 		strbuf_release(&name);
@@ -2662,6 +2662,16 @@ static int find_pos(struct apply_state *state,
 	int backwards_lno, forwards_lno, current_lno;
 
 	/*
+	 * When running with --allow-overlap, it is possible that a hunk is
+	 * seen that pretends to start at the beginning (but no longer does),
+	 * and that *still* needs to match the end. So trust `match_end` more
+	 * than `match_beginning`.
+	 */
+	if (state->allow_overlap && match_beginning && match_end &&
+	    img->nr - preimage->nr != 0)
+		match_beginning = 0;
+
+	/*
 	 * If match_beginning or match_end is specified, there is no
 	 * point starting from a wrong line that will never match and
 	 * wander around and wait for a match at the specified end.
@@ -4183,8 +4193,8 @@ static void show_rename_copy(struct patch *p)
 		old_name = slash_old + 1;
 		new_name = slash_new + 1;
 	}
-	/* p->old_name thru old_name is the common prefix, and old_name and new_name
-	 * through the end of names are renames
+	/* p->old_name through old_name is the common prefix, and old_name and
+	 * new_name through the end of names are renames
 	 */
 	if (old_name != p->old_name)
 		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,

@@ -177,7 +177,7 @@ default.   You can use `--no-utf8` to override this.
 	untouched.
 
 --show-current-patch::
-	Show the patch being applied when "git am" is stopped because
+	Show the entire e-mail message "git am" has stopped at, because
 	of conflicts.
 
 DISCUSSION

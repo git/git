@@ -143,7 +143,7 @@ test_expect_success 'Git clone works with one specific page cloned ' '
 test_expect_success 'Git clone works with multiple specific page cloned ' '
 	wiki_reset &&
 	wiki_editpage foo "I will be there" false &&
-	wiki_editpage bar "I will not disapear" false &&
+	wiki_editpage bar "I will not disappear" false &&
 	wiki_editpage namnam "I be erased" false &&
 	wiki_editpage nyancat "nyan nyan nyan you will not erase me" false &&
 	wiki_delete_page namnam &&

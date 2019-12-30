@@ -693,9 +693,8 @@ static int mv(int argc, const char **argv)
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
 		int flag = 0;
-		struct object_id oid;
 
-		read_ref_full(item->string, RESOLVE_REF_READING, &oid, &flag);
+		read_ref_full(item->string, RESOLVE_REF_READING, NULL, &flag);
 		if (!(flag & REF_ISSYMREF))
 			continue;
 		if (delete_ref(NULL, item->string, NULL, REF_NO_DEREF))

@@ -44,8 +44,8 @@ test_expect_success GPG 'create signed tags' '
 test_expect_success GPGSM 'create signed tags x509 ' '
 	test_config gpg.format x509 &&
 	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
-	echo 9 >file && test_tick && git commit -a -m "nineth gpgsm-signed" &&
-	git tag -s -m nineth nineth-signed-x509
+	echo 9 >file && test_tick && git commit -a -m "ninth gpgsm-signed" &&
+	git tag -s -m ninth ninth-signed-x509
 '
 
 test_expect_success GPG 'verify and show signatures' '
@@ -80,10 +80,10 @@ test_expect_success GPG 'verify and show signatures' '
 '
 
 test_expect_success GPGSM 'verify and show signatures x509' '
-	git verify-tag nineth-signed-x509 2>actual &&
+	git verify-tag ninth-signed-x509 2>actual &&
 	grep "Good signature from" actual &&
 	! grep "BAD signature from" actual &&
-	echo nineth-signed-x509 OK
+	echo ninth-signed-x509 OK
 '
 
 test_expect_success GPG 'detect fudged signature' '
@@ -127,10 +127,10 @@ test_expect_success GPG 'verify signatures with --raw' '
 '
 
 test_expect_success GPGSM 'verify signatures with --raw x509' '
-	git verify-tag --raw nineth-signed-x509 2>actual &&
+	git verify-tag --raw ninth-signed-x509 2>actual &&
 	grep "GOODSIG" actual &&
 	! grep "BADSIG" actual &&
-	echo nineth-signed-x509 OK
+	echo ninth-signed-x509 OK
 '
 
 test_expect_success GPG 'verify multiple tags' '
@@ -147,7 +147,7 @@ test_expect_success GPG 'verify multiple tags' '
 '
 
 test_expect_success GPGSM 'verify multiple tags x509' '
-	tags="seventh-signed nineth-signed-x509" &&
+	tags="seventh-signed ninth-signed-x509" &&
 	for i in $tags
 	do
 		git verify-tag -v --raw $i || return 1

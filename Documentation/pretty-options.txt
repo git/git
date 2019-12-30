@@ -3,7 +3,7 @@
 
 	Pretty-print the contents of the commit logs in a given format,
 	where '<format>' can be one of 'oneline', 'short', 'medium',
-	'full', 'fuller', 'email', 'raw', 'format:<string>'
+	'full', 'fuller', 'reference', 'email', 'raw', 'format:<string>'
 	and 'tformat:<string>'.  When '<format>' is none of the above,
 	and has '%placeholder' in it, it acts as if
 	'--pretty=tformat:<format>' were given.
@@ -57,7 +57,7 @@ message by 4 spaces (i.e.  'medium', which is the default, 'full',
 and 'fuller').
 
 ifndef::git-rev-list[]
---notes[=<treeish>]::
+--notes[=<ref>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
 	commit, when showing the commit log message.  This is the default
 	for `git log`, `git show` and `git whatchanged` commands when
@@ -68,8 +68,8 @@ By default, the notes shown are from the notes refs listed in the
 `core.notesRef` and `notes.displayRef` variables (or corresponding
 environment overrides). See linkgit:git-config[1] for more details.
 +
-With an optional '<treeish>' argument, use the treeish to find the notes
-to display.  The treeish can specify the full refname when it begins
+With an optional '<ref>' argument, use the ref to find the notes
+to display.  The ref can specify the full refname when it begins
 with `refs/notes/`; when it begins with `notes/`, `refs/` and otherwise
 `refs/notes/` is prefixed to form a full name of the ref.
 +
@@ -85,7 +85,7 @@ being displayed. Examples: "--notes=foo" will show only notes from
 	"--notes --notes=foo --no-notes --notes=bar" will only show notes
 	from "refs/notes/bar".
 
---show-notes[=<treeish>]::
+--show-notes[=<ref>]::
 --[no-]standard-notes::
 	These options are deprecated. Use the above --notes/--no-notes
 	options instead.

@@ -20,6 +20,7 @@
 #include "bulk-checkin.h"
 #include "argv-array.h"
 #include "submodule.h"
+#include "add-interactive.h"
 
 static const char * const builtin_add_usage[] = {
 	N_("git add [<options>] [--] <pathspec>..."),
@@ -28,6 +29,8 @@ static const char * const builtin_add_usage[] = {
 static int patch_interactive, add_interactive, edit_interactive;
 static int take_worktree_changes;
 static int add_renormalize;
+static int pathspec_file_nul;
+static const char *pathspec_from_file;
 
 struct update_callback_data {
 	int flags;
@@ -185,6 +188,21 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 {
 	int status, i;
 	struct argv_array argv = ARGV_ARRAY_INIT;
+	int use_builtin_add_i =
+		git_env_bool("GIT_TEST_ADD_I_USE_BUILTIN", -1);
+
+	if (use_builtin_add_i < 0)
+		git_config_get_bool("add.interactive.usebuiltin",
+				    &use_builtin_add_i);
+
+	if (use_builtin_add_i == 1) {
+		if (!patch_mode)
+			return !!run_add_i(the_repository, pathspec);
+		if (strcmp(patch_mode, "--patch"))
+			die("'%s' not yet supported in the built-in add -p",
+			    patch_mode);
+		return !!run_add_p(the_repository, pathspec);
+	}
 
 	argv_array_push(&argv, "add--interactive");
 	if (patch_mode)
@@ -309,6 +327,8 @@ static struct option builtin_add_options[] = {
 		   N_("override the executable bit of the listed files")),
 	OPT_HIDDEN_BOOL(0, "warn-embedded-repo", &warn_on_embedded_repo,
 			N_("warn when adding an embedded repository")),
+	OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
+	OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 	OPT_END(),
 };
 
@@ -319,6 +339,7 @@ static int add_config(const char *var, const char *value, void *cb)
 		ignore_add_errors = git_config_bool(var, value);
 		return 0;
 	}
+
 	return git_default_config(var, value, cb);
 }
 
@@ -402,11 +423,17 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			  builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
 	if (patch_interactive)
 		add_interactive = 1;
-	if (add_interactive)
+	if (add_interactive) {
+		if (pathspec_from_file)
+			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
 		exit(interactive_add(argc - 1, argv + 1, prefix, patch_interactive));
+	}
 
-	if (edit_interactive)
+	if (edit_interactive) {
+		if (pathspec_from_file)
+			die(_("--pathspec-from-file is incompatible with --edit"));
 		return(edit_patch(argc, argv, prefix));
+	}
 	argc--;
 	argv++;
 
@@ -417,10 +444,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (addremove && take_worktree_changes)
 		die(_("-A and -u are mutually incompatible"));
-
-	if (!take_worktree_changes && addremove_explicit < 0 && argc)
-		/* Turn "git add pathspec..." to "git add -A pathspec..." */
-		addremove = 1;
 
 	if (!show_only && ignore_missing)
 		die(_("Option --ignore-missing can only be used together with --dry-run"));
@@ -434,19 +457,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
-	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
-		 (show_only ? ADD_CACHE_PRETEND : 0) |
-		 (intent_to_add ? ADD_CACHE_INTENT : 0) |
-		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0) |
-		 (!(addremove || take_worktree_changes)
-		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
-
-	if (require_pathspec && argc == 0) {
-		fprintf(stderr, _("Nothing specified, nothing added.\n"));
-		fprintf(stderr, _("Maybe you wanted to say 'git add .'?\n"));
-		return 0;
-	}
-
 	/*
 	 * Check the "pathspec '%s' did not match any files" block
 	 * below before enabling new magic.
@@ -455,6 +465,35 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_PREFER_FULL |
 		       PATHSPEC_SYMLINK_LEADING_PATH,
 		       prefix, argv);
+
+	if (pathspec_from_file) {
+		if (pathspec.nr)
+			die(_("--pathspec-from-file is incompatible with pathspec arguments"));
+
+		parse_pathspec_file(&pathspec, PATHSPEC_ATTR,
+				    PATHSPEC_PREFER_FULL |
+				    PATHSPEC_SYMLINK_LEADING_PATH,
+				    prefix, pathspec_from_file, pathspec_file_nul);
+	} else if (pathspec_file_nul) {
+		die(_("--pathspec-file-nul requires --pathspec-from-file"));
+	}
+
+	if (require_pathspec && pathspec.nr == 0) {
+		fprintf(stderr, _("Nothing specified, nothing added.\n"));
+		fprintf(stderr, _("Maybe you wanted to say 'git add .'?\n"));
+		return 0;
+	}
+
+	if (!take_worktree_changes && addremove_explicit < 0 && pathspec.nr)
+		/* Turn "git add pathspec..." to "git add -A pathspec..." */
+		addremove = 1;
+
+	flags = ((verbose ? ADD_CACHE_VERBOSE : 0) |
+		 (show_only ? ADD_CACHE_PRETEND : 0) |
+		 (intent_to_add ? ADD_CACHE_INTENT : 0) |
+		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0) |
+		 (!(addremove || take_worktree_changes)
+		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
 	if (read_cache_preload(&pathspec) < 0)
 		die(_("index file corrupt"));

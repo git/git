@@ -20,9 +20,9 @@ modification *should* take notice and update the test vectors here.
 
 . ./test-lib.sh
 
-try_local_x () {
-	local x="local" &&
-	echo "$x"
+try_local_xy () {
+	local x="local" y="alsolocal" &&
+	echo "$x $y"
 }
 
 # Check whether the shell supports the "local" keyword. "local" is not
@@ -35,11 +35,12 @@ try_local_x () {
 # relying on "local".
 test_expect_success 'verify that the running shell supports "local"' '
 	x="notlocal" &&
-	echo "local" >expected1 &&
-	try_local_x >actual1 &&
+	y="alsonotlocal" &&
+	echo "local alsolocal" >expected1 &&
+	try_local_xy >actual1 &&
 	test_cmp expected1 actual1 &&
-	echo "notlocal" >expected2 &&
-	echo "$x" >actual2 &&
+	echo "notlocal alsonotlocal" >expected2 &&
+	echo "$x $y" >actual2 &&
 	test_cmp expected2 actual2
 '
 
@@ -126,7 +127,7 @@ check_sub_test_lib_test () {
 
 check_sub_test_lib_test_err () {
 	name="$1" # stdin is the expected output from the test
-	# expected error output is in descriptior 3
+	# expected error output is in descriptor 3
 	(
 		cd "$name" &&
 		sed -e 's/^> //' -e 's/Z$//' >expect.out &&
@@ -914,6 +915,40 @@ test_expect_success 'test_oid can look up data for SHA-256' '
 	test $(wc -c <actual) -eq 64 &&
 	test "$rawsz" -eq 32 &&
 	test "$hexsz" -eq 64
+'
+
+test_expect_success 'test_bool_env' '
+	(
+		sane_unset envvar &&
+
+		test_bool_env envvar true &&
+		! test_bool_env envvar false &&
+
+		envvar= &&
+		export envvar &&
+		! test_bool_env envvar true &&
+		! test_bool_env envvar false &&
+
+		envvar=true &&
+		test_bool_env envvar true &&
+		test_bool_env envvar false &&
+
+		envvar=false &&
+		! test_bool_env envvar true &&
+		! test_bool_env envvar false &&
+
+		envvar=invalid &&
+		# When encountering an invalid bool value, test_bool_env
+		# prints its error message to the original stderr of the
+		# test script, hence the redirection of fd 7, and aborts
+		# with "exit 1", hence the subshell.
+		! ( test_bool_env envvar true ) 7>err &&
+		grep "error: test_bool_env requires bool values" err &&
+
+		envvar=true &&
+		! ( test_bool_env envvar invalid ) 7>err &&
+		grep "error: test_bool_env requires bool values" err
+	)
 '
 
 ################################################################

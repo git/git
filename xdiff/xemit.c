@@ -172,10 +172,12 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	struct func_line func_line = { 0 };
 
 	for (xch = xscr; xch; xch = xche->next) {
+		xdchange_t *xchp = xch;
 		xche = xdl_get_hunk(&xch, xecfg);
 		if (!xch)
 			break;
 
+pre_context_calculation:
 		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
 		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
 
@@ -212,6 +214,21 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			if (fs1 < s1) {
 				s2 = XDL_MAX(s2 - (s1 - fs1), 0);
 				s1 = fs1;
+
+				/*
+				 * Did we extend context upwards into an
+				 * ignored change?
+				 */
+				while (xchp != xch &&
+				       xchp->i1 + xchp->chg1 <= s1 &&
+				       xchp->i2 + xchp->chg2 <= s2)
+					xchp = xchp->next;
+
+				/* If so, show it after all. */
+				if (xchp != xch) {
+					xch = xchp;
+					goto pre_context_calculation;
+				}
 			}
 		}
 

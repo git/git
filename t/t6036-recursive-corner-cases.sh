@@ -1532,7 +1532,7 @@ test_expect_success 'setup nested conflicts' '
 		mv -f b_R1 b &&
 		mv -f a_R1 a &&
 		git add b a &&
-		test_tick && git commit -m "verson R1 of files" &&
+		test_tick && git commit -m "version R1 of files" &&
 		git tag R1 &&
 
 		# Create first merge on left side
@@ -1696,7 +1696,7 @@ test_expect_success 'setup virtual merge base with nested conflicts' '
 		git checkout R &&
 		echo right >>content &&
 		git add content &&
-		test_tick && git commit -m "verson R1 of content" &&
+		test_tick && git commit -m "version R1 of content" &&
 		git tag R1 &&
 
 		# Create L2

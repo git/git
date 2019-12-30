@@ -44,7 +44,7 @@ void discard_hunk_line(void *priv,
  * Compare the strings l1 with l2 which are of size s1 and s2 respectively.
  * Returns 1 if the strings are deemed equal, 0 otherwise.
  * The `flags` given as XDF_WHITESPACE_FLAGS determine how white spaces
- * are treated for the comparision.
+ * are treated for the comparison.
  */
 int xdiff_compare_lines(const char *l1, long s1,
 			const char *l2, long s2, long flags);

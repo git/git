@@ -319,18 +319,18 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 	return time_buf.buf;
 }
 
-#define OUTPUT_ANNOTATE_COMPAT	001
-#define OUTPUT_LONG_OBJECT_NAME	002
-#define OUTPUT_RAW_TIMESTAMP	004
-#define OUTPUT_PORCELAIN	010
-#define OUTPUT_SHOW_NAME	020
-#define OUTPUT_SHOW_NUMBER	040
-#define OUTPUT_SHOW_SCORE	0100
-#define OUTPUT_NO_AUTHOR	0200
-#define OUTPUT_SHOW_EMAIL	0400
-#define OUTPUT_LINE_PORCELAIN	01000
-#define OUTPUT_COLOR_LINE	02000
-#define OUTPUT_SHOW_AGE_WITH_COLOR	04000
+#define OUTPUT_ANNOTATE_COMPAT      (1U<<0)
+#define OUTPUT_LONG_OBJECT_NAME     (1U<<1)
+#define OUTPUT_RAW_TIMESTAMP        (1U<<2)
+#define OUTPUT_PORCELAIN            (1U<<3)
+#define OUTPUT_SHOW_NAME            (1U<<4)
+#define OUTPUT_SHOW_NUMBER          (1U<<5)
+#define OUTPUT_SHOW_SCORE           (1U<<6)
+#define OUTPUT_NO_AUTHOR            (1U<<7)
+#define OUTPUT_SHOW_EMAIL           (1U<<8)
+#define OUTPUT_LINE_PORCELAIN       (1U<<9)
+#define OUTPUT_COLOR_LINE           (1U<<10)
+#define OUTPUT_SHOW_AGE_WITH_COLOR  (1U<<11)
 
 static void emit_porcelain_details(struct blame_origin *suspect, int repeat)
 {
@@ -861,14 +861,6 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST(0, "ignore-revs-file", &ignore_revs_file_list, N_("file"), N_("Ignore revisions from <file>")),
 		OPT_BIT(0, "color-lines", &output_option, N_("color redundant metadata from previous line differently"), OUTPUT_COLOR_LINE),
 		OPT_BIT(0, "color-by-age", &output_option, N_("color lines by age"), OUTPUT_SHOW_AGE_WITH_COLOR),
-
-		/*
-		 * The following two options are parsed by parse_revision_opt()
-		 * and are only included here to get included in the "-h"
-		 * output:
-		 */
-		{ OPTION_LOWLEVEL_CALLBACK, 0, "indent-heuristic", NULL, NULL, N_("Use an experimental heuristic to improve diffs"), PARSE_OPT_NOARG, NULL, 0, parse_opt_unknown_cb },
-
 		OPT_BIT(0, "minimal", &xdl_opts, N_("Spend extra cycles to find better match"), XDF_NEED_MINIMAL),
 		OPT_STRING('S', NULL, &revs_file, N_("file"), N_("Use revisions from <file> instead of calling git-rev-list")),
 		OPT_STRING(0, "contents", &contents_from, N_("file"), N_("Use <file>'s contents as the final image")),

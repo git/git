@@ -346,7 +346,7 @@ test_expect_success 'A root commit can be a cousin, treat it that way' '
 	git merge --allow-unrelated-histories khnum &&
 	test_tick &&
 	git rebase -f -r HEAD^ &&
-	! test_cmp_rev HEAD^2 khnum &&
+	test_cmp_rev ! HEAD^2 khnum &&
 	test_cmp_graph HEAD^.. <<-\EOF &&
 	*   Merge branch '\''khnum'\'' into asherah
 	|\
@@ -408,7 +408,7 @@ test_expect_success 'octopus merges' '
 	| | * three
 	| * | two
 	| |/
-	* | one
+	* / one
 	|/
 	o before-octopus
 	EOF
@@ -466,6 +466,33 @@ test_expect_success '--rebase-merges with strategies' '
 	PATH="$PWD:$PATH" git rebase -ir -s override -Xxopt G &&
 	test_write_lines G overridden--xopt >expect &&
 	test_cmp expect G.t
+'
+
+test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
+	git checkout -b colon-in-label E &&
+	git merge -m "colon: this should work" G &&
+	git rebase --rebase-merges --force-rebase E
+'
+
+test_expect_success '--rebase-merges with message matched with onto label' '
+	git checkout -b onto-label E &&
+	git merge -m onto G &&
+	git rebase --rebase-merges --force-rebase E &&
+	test_cmp_graph <<-\EOF
+	*   onto
+	|\
+	| * G
+	| * F
+	* |   E
+	|\ \
+	| * | B
+	* | | D
+	| |/
+	|/|
+	* | C
+	|/
+	* A
+	EOF
 '
 
 test_done

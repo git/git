@@ -441,6 +441,7 @@ while read name path pretty; do
 		(
 			git init $name-$type &&
 			cd $name-$type &&
+			git config core.protectNTFS false &&
 			echo content >file &&
 			git add file &&
 			git commit -m base &&
@@ -616,7 +617,7 @@ test_expect_success 'fsck --name-objects' '
 		remove_object $(git rev-parse julius:caesar.t) &&
 		test_must_fail git fsck --name-objects >out &&
 		tree=$(git rev-parse --verify julius:) &&
-		test_i18ngrep -E "$tree \((refs/heads/master|HEAD)@\{[0-9]*\}:" out
+		test_i18ngrep "$tree (refs/tags/julius:" out
 	)
 '
 

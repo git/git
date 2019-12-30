@@ -76,6 +76,9 @@ them.
 Paths may need to be prefixed with `--` to separate them from
 options or the revision range, when confusion arises.
 
+:git-shortlog: 1
+include::rev-list-options.txt[]
+
 MAPPING AUTHORS
 ---------------
 

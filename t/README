@@ -397,6 +397,10 @@ GIT_TEST_STASH_USE_BUILTIN=<boolean>, when false, disables the
 built-in version of git-stash. See 'stash.useBuiltin' in
 git-config(1).
 
+GIT_TEST_ADD_I_USE_BUILTIN=<boolean>, when true, enables the
+built-in version of git add -i. See 'add.interactive.useBuiltin' in
+git-config(1).
+
 GIT_TEST_INDEX_THREADS=<n> enables exercising the multi-threaded loading
 of the index for the whole test suite by bypassing the default number of
 cache entries and thread minimums. Setting this to 1 will make the
@@ -977,6 +981,15 @@ library for your script to use.
    more limited one.  Use this only when feeding a handful lines of
    output to the downstream---unlike the real version, it generates
    only up to 99 lines.
+
+ - test_bool_env <env-variable-name> <default-value>
+
+   Given the name of an environment variable with a bool value,
+   normalize its value to a 0 (true) or 1 (false or empty string)
+   return code.  Return with code corresponding to the given default
+   value if the variable is unset.
+   Abort the test script if either the value of the variable or the
+   default are not valid bool values.
 
 
 Prerequisites

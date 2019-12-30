@@ -315,7 +315,7 @@ notes for details).
    "git difftool --dir-diff" from a subdirectory never worked. This
    has been fixed.
 
- * "git p4" that tracks multile p4 paths imported a single changelist
+ * "git p4" that tracks multiple p4 paths imported a single changelist
    that touches files in these multiple paths as one commit, followed
    by many empty commits.  This has been fixed.
 

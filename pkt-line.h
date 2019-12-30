@@ -77,7 +77,7 @@ int packet_read(int fd, char **src_buffer, size_t *src_len, char
 /*
  * Read a packetized line into a buffer like the 'packet_read()' function but
  * returns an 'enum packet_read_status' which indicates the status of the read.
- * The number of bytes read will be assigined to *pktlen if the status of the
+ * The number of bytes read will be assigned to *pktlen if the status of the
  * read was 'PACKET_READ_NORMAL'.
  */
 enum packet_read_status {

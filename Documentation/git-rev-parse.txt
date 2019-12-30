@@ -262,7 +262,8 @@ print a message to stderr and exit with nonzero status.
 	directory.
 
 --show-toplevel::
-	Show the absolute path of the top-level directory.
+	Show the absolute path of the top-level directory of the working
+	tree. If there is no working tree, report an error.
 
 --show-superproject-working-tree::
 	Show the absolute path of the root of the superproject's
@@ -273,6 +274,13 @@ print a message to stderr and exit with nonzero status.
 --shared-index-path::
 	Show the path to the shared index file in split index mode, or
 	empty if not in split-index mode.
+
+--show-object-format[=(storage|input|output)]::
+	Show the object format (hash algorithm) used for the repository
+	for storage inside the `.git` directory, input, or output. For
+	input, multiple algorithms may be printed, space-separated.
+	If not specified, the default is "storage".
+
 
 Other Options
 ~~~~~~~~~~~~~

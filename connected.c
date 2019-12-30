@@ -62,7 +62,8 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		 * received the objects pointed to by each wanted ref.
 		 */
 		do {
-			if (!repo_has_object_file(the_repository, &oid))
+			if (!repo_has_object_file_with_flags(the_repository, &oid,
+							     OBJECT_INFO_SKIP_FETCH_OBJECT))
 				return 1;
 		} while (!fn(cb_data, &oid));
 		return 0;

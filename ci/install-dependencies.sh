@@ -42,14 +42,17 @@ osx-clang|osx-gcc)
 	brew link --force gettext
 	brew cask install perforce || {
 		# Update the definitions and try again
-		git -C "$(brew --repository)"/Library/Taps/homebrew/homebrew-cask pull &&
+		cask_repo="$(brew --repository)"/Library/Taps/homebrew/homebrew-cask &&
+		git -C "$cask_repo" pull --no-stat &&
 		brew cask install perforce
 	} ||
 	brew install caskroom/cask/perforce
 	case "$jobname" in
 	osx-gcc)
-		brew link gcc ||
-		brew link gcc@8
+		brew install gcc@9
+		# Just in case the image is updated to contain gcc@9
+		# pre-installed but not linked.
+		brew link gcc@9
 		;;
 	esac
 	;;

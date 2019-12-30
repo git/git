@@ -541,7 +541,7 @@ test_expect_success 'tree_tag'        '
 
 # NEEDSWORK: not just check return status, but validate the output
 # Note that these tests DO NOTHING other than print a warning that
-# they are ommitting the one tag we asked them to export (because the
+# they are omitting the one tag we asked them to export (because the
 # tags resolve to a tree).  They exist just to make sure we do not
 # abort but instead just warn.
 test_expect_success 'tree_tag-obj'    'git fast-export tree_tag-obj'
@@ -600,9 +600,10 @@ test_expect_success 'directory becomes symlink'        '
 
 test_expect_success 'fast-export quotes pathnames' '
 	git init crazy-paths &&
+	test_config -C crazy-paths core.protectNTFS false &&
 	(cd crazy-paths &&
 	 blob=$(echo foo | git hash-object -w --stdin) &&
-	 git update-index --add \
+	 git -c core.protectNTFS=false update-index --add \
 		--cacheinfo 100644 $blob "$(printf "path with\\nnewline")" \
 		--cacheinfo 100644 $blob "path with \"quote\"" \
 		--cacheinfo 100644 $blob "path with \\backslash" \

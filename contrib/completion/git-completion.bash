@@ -550,7 +550,7 @@ __git_index_files ()
 						 esc_idx, 1)
 			} else if (esc == "n") {
 				# Uh-oh, a newline character.
-				# We cant reliably put a pathname
+				# We cannot reliably put a pathname
 				# containing a newline into COMPREPLY,
 				# and the newline would create a mess.
 				# Skip this path.
@@ -565,7 +565,7 @@ __git_index_files ()
 			}
 		}
 		# Drop closing double quote, if there is one.
-		# (There isnt any if this is a directory, as it was
+		# (There is not any if this is a directory, as it was
 		# already stripped with the trailing path components.)
 		if (substr(p, length(p), 1) == "\"")
 			out = out substr(p, 1, length(p) - 1)
@@ -1749,7 +1749,7 @@ __git_log_shortlog_options="
 	--all-match --invert-grep
 "
 
-__git_log_pretty_formats="oneline short medium full fuller email raw format: mboxrd"
+__git_log_pretty_formats="oneline short medium full fuller reference email raw format: tformat: mboxrd"
 __git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default raw unix format:"
 
 _git_log ()
@@ -2041,6 +2041,10 @@ _git_rebase ()
 	case "$cur" in
 	--whitespace=*)
 		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
+		return
+		;;
+	--onto=*)
+		__git_complete_refs --cur="${cur##--onto=}"
 		return
 		;;
 	--*)
@@ -2779,7 +2783,7 @@ _git_submodule ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="add status init deinit update set-branch summary foreach sync absorbgitdirs"
+	local subcommands="add status init deinit update set-branch set-url summary foreach sync absorbgitdirs"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		case "$cur" in
@@ -2843,6 +2847,7 @@ _git_svn ()
 			--log-window-size= --no-checkout --quiet
 			--repack-flags --use-log-author --localtime
 			--add-author-from
+			--recursive
 			--ignore-paths= --include-paths= $remote_opts
 			"
 		local init_opts="

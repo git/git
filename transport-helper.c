@@ -435,6 +435,7 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 	child_process_init(fastimport);
 	fastimport->in = xdup(helper->out);
 	argv_array_push(&fastimport->args, "fast-import");
+	argv_array_push(&fastimport->args, "--allow-unsafe-features");
 	argv_array_push(&fastimport->args, debug ? "--stats" : "--quiet");
 
 	if (data->bidi_import) {

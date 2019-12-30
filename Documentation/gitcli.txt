@@ -211,8 +211,8 @@ only affects the files in the working tree, but with
 entries, and with `--cached`, it modifies only the index
 entries.
 
-See also http://marc.info/?l=git&m=116563135620359 and
-http://marc.info/?l=git&m=119150393620273 for further
+See also https://lore.kernel.org/git/7v64clg5u9.fsf@assigned-by-dhcp.cox.net/ and
+https://lore.kernel.org/git/7vy7ej9g38.fsf@gitster.siamese.dyndns.org/ for further
 information.
 
 Some other commands that also work on files in the working tree and/or

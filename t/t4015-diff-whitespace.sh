@@ -16,6 +16,8 @@ test_expect_success "Ray Lehtiniemi's example" '
 	} while (0);
 	EOF
 	git update-index --add x &&
+	old_hash_x=$(git hash-object x) &&
+	before=$(git rev-parse --short "$old_hash_x") &&
 
 	cat <<-\EOF >x &&
 	do
@@ -24,10 +26,12 @@ test_expect_success "Ray Lehtiniemi's example" '
 	}
 	while (0);
 	EOF
+	new_hash_x=$(git hash-object x) &&
+	after=$(git rev-parse --short "$new_hash_x") &&
 
-	cat <<-\EOF >expect &&
+	cat <<-EOF >expect &&
 	diff --git a/x b/x
-	index adf3937..6edc172 100644
+	index $before..$after 100644
 	--- a/x
 	+++ b/x
 	@@ -1,3 +1,5 @@
@@ -61,6 +65,8 @@ test_expect_success 'another test, without options' '
 	EOF
 
 	git update-index x &&
+	old_hash_x=$(git hash-object x) &&
+	before=$(git rev-parse --short "$old_hash_x") &&
 
 	tr "_" " " <<-\EOF >x &&
 	_	whitespace at beginning
@@ -70,10 +76,12 @@ test_expect_success 'another test, without options' '
 	unchanged line
 	CR at end
 	EOF
+	new_hash_x=$(git hash-object x) &&
+	after=$(git rev-parse --short "$new_hash_x") &&
 
-	tr "Q_" "\015 " <<-\EOF >expect &&
+	tr "Q_" "\015 " <<-EOF >expect &&
 	diff --git a/x b/x
-	index d99af23..22d9f73 100644
+	index $before..$after 100644
 	--- a/x
 	+++ b/x
 	@@ -1,6 +1,6 @@
@@ -108,9 +116,9 @@ test_expect_success 'another test, without options' '
 	git diff -w --ignore-cr-at-eol >out &&
 	test_must_be_empty out &&
 
-	tr "Q_" "\015 " <<-\EOF >expect &&
+	tr "Q_" "\015 " <<-EOF >expect &&
 	diff --git a/x b/x
-	index d99af23..22d9f73 100644
+	index $before..$after 100644
 	--- a/x
 	+++ b/x
 	@@ -1,6 +1,6 @@
@@ -132,9 +140,9 @@ test_expect_success 'another test, without options' '
 	git diff -b --ignore-cr-at-eol >out &&
 	test_cmp expect out &&
 
-	tr "Q_" "\015 " <<-\EOF >expect &&
+	tr "Q_" "\015 " <<-EOF >expect &&
 	diff --git a/x b/x
-	index d99af23..22d9f73 100644
+	index $before..$after 100644
 	--- a/x
 	+++ b/x
 	@@ -1,6 +1,6 @@
@@ -154,9 +162,9 @@ test_expect_success 'another test, without options' '
 	git diff --ignore-space-at-eol --ignore-cr-at-eol >out &&
 	test_cmp expect out &&
 
-	tr "Q_" "\015 " <<-\EOF >expect &&
+	tr "Q_" "\015 " <<-EOF >expect &&
 	diff --git a/x b/x
-	index_d99af23..22d9f73 100644
+	index_$before..$after 100644
 	--- a/x
 	+++ b/x
 	@@ -1,6 +1,6 @@
@@ -522,13 +530,15 @@ test_expect_success 'ignore-blank-lines: mix changes and blank lines' '
 test_expect_success 'check mixed spaces and tabs in indent' '
 	# This is indented with SP HT SP.
 	echo " 	 foo();" >x &&
-	git diff --check | grep "space before tab in indent"
+	test_must_fail git diff --check >check &&
+	grep "space before tab in indent" check
 '
 
 test_expect_success 'check mixed tabs and spaces in indent' '
 	# This is indented with HT SP HT.
 	echo "	 	foo();" >x &&
-	git diff --check | grep "space before tab in indent"
+	test_must_fail git diff --check >check &&
+	grep "space before tab in indent" check
 '
 
 test_expect_success 'check with no whitespace errors' '
@@ -749,20 +759,23 @@ test_expect_success 'check tab-in-indent excluded from wildcard whitespace attri
 test_expect_success 'line numbers in --check output are correct' '
 	echo "" >x &&
 	echo "foo(); " >>x &&
-	git diff --check | grep "x:2:"
+	test_must_fail git diff --check >check &&
+	grep "x:2:" check
 '
 
 test_expect_success 'checkdiff detects new trailing blank lines (1)' '
 	echo "foo();" >x &&
 	echo "" >>x &&
-	git diff --check | grep "new blank line"
+	test_must_fail git diff --check >check &&
+	grep "new blank line" check
 '
 
 test_expect_success 'checkdiff detects new trailing blank lines (2)' '
-	{ echo a; echo b; echo; echo; } >x &&
+	test_write_lines a b "" "" >x &&
 	git add x &&
-	{ echo a; echo; echo; echo; echo; } >x &&
-	git diff --check | grep "new blank line"
+	test_write_lines a "" "" "" "" >x &&
+	test_must_fail git diff --check >check &&
+	grep "new blank line" check
 '
 
 test_expect_success 'checkdiff allows new blank lines' '
@@ -786,23 +799,27 @@ test_expect_success 'whitespace-only changes not reported' '
 	test_must_be_empty actual
 '
 
-cat <<EOF >expect
-diff --git a/x b/z
-similarity index NUM%
-rename from x
-rename to z
-index 380c32a..a97b785 100644
-EOF
 test_expect_success 'whitespace-only changes reported across renames' '
 	git reset --hard &&
 	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i"; done >x &&
 	git add x &&
+	hash_x=$(git hash-object x) &&
+	before=$(git rev-parse --short "$hash_x") &&
 	git commit -m "base" &&
 	sed -e "5s/^/ /" x >z &&
 	git rm x &&
 	git add z &&
-	git diff -w -M --cached |
-	sed -e "/^similarity index /s/[0-9][0-9]*/NUM/" >actual &&
+	hash_z=$(git hash-object z) &&
+	after=$(git rev-parse --short "$hash_z") &&
+	git diff -w -M --cached >actual.raw &&
+	sed -e "/^similarity index /s/[0-9][0-9]*/NUM/" actual.raw >actual &&
+	cat <<-EOF >expect &&
+	diff --git a/x b/z
+	similarity index NUM%
+	rename from x
+	rename to z
+	index $before..$after 100644
+	EOF
 	test_cmp expect actual
 '
 
@@ -834,7 +851,8 @@ test_expect_success 'combined diff with autocrlf conversion' '
 	git config core.autocrlf true &&
 	test_must_fail git merge master &&
 
-	git diff | sed -e "1,/^@@@/d" >actual &&
+	git diff >actual.raw &&
+	sed -e "1,/^@@@/d" actual.raw >actual &&
 	! grep "^-" actual
 
 '
@@ -858,13 +876,18 @@ test_expect_success 'diff that introduces a line with only tabs' '
 	git config core.whitespace blank-at-eol &&
 	git reset --hard &&
 	echo "test" >x &&
+	old_hash_x=$(git hash-object x) &&
+	before=$(git rev-parse --short "$old_hash_x") &&
 	git commit -m "initial" x &&
 	echo "{NTN}" | tr "NT" "\n\t" >>x &&
-	git diff --color | test_decode_color >current &&
+	new_hash_x=$(git hash-object x) &&
+	after=$(git rev-parse --short "$new_hash_x") &&
+	git diff --color >current.raw &&
+	test_decode_color <current.raw >current &&
 
-	cat >expected <<-\EOF &&
+	cat >expected <<-EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
-	<BOLD>index 9daeafb..2874b91 100644<RESET>
+	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1 +1,4 @@<RESET>
@@ -883,19 +906,23 @@ test_expect_success 'diff that introduces and removes ws breakages' '
 		echo "0. blank-at-eol " &&
 		echo "1. blank-at-eol "
 	} >x &&
+	old_hash_x=$(git hash-object x) &&
+	before=$(git rev-parse --short "$old_hash_x") &&
 	git commit -a --allow-empty -m preimage &&
 	{
 		echo "0. blank-at-eol " &&
 		echo "1. still-blank-at-eol " &&
 		echo "2. and a new line "
 	} >x &&
+	new_hash_x=$(git hash-object x) &&
+	after=$(git rev-parse --short "$new_hash_x") &&
 
-	git diff --color |
-	test_decode_color >current &&
+	git diff --color >current.raw &&
+	test_decode_color <current.raw >current &&
 
-	cat >expected <<-\EOF &&
+	cat >expected <<-EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
-	<BOLD>index d0233a2..700886e 100644<RESET>
+	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
@@ -915,16 +942,20 @@ test_expect_success 'ws-error-highlight test setup' '
 		echo "0. blank-at-eol " &&
 		echo "1. blank-at-eol "
 	} >x &&
+	old_hash_x=$(git hash-object x) &&
+	before=$(git rev-parse --short "$old_hash_x") &&
 	git commit -a --allow-empty -m preimage &&
 	{
 		echo "0. blank-at-eol " &&
 		echo "1. still-blank-at-eol " &&
 		echo "2. and a new line "
 	} >x &&
+	new_hash_x=$(git hash-object x) &&
+	after=$(git rev-parse --short "$new_hash_x") &&
 
-	cat >expect.default-old <<-\EOF &&
+	cat >expect.default-old <<-EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
-	<BOLD>index d0233a2..700886e 100644<RESET>
+	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
@@ -934,9 +965,9 @@ test_expect_success 'ws-error-highlight test setup' '
 	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
 	EOF
 
-	cat >expect.all <<-\EOF &&
+	cat >expect.all <<-EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
-	<BOLD>index d0233a2..700886e 100644<RESET>
+	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
@@ -946,9 +977,9 @@ test_expect_success 'ws-error-highlight test setup' '
 	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
 	EOF
 
-	cat >expect.none <<-\EOF
+	cat >expect.none <<-EOF
 	<BOLD>diff --git a/x b/x<RESET>
-	<BOLD>index d0233a2..700886e 100644<RESET>
+	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
@@ -962,32 +993,32 @@ test_expect_success 'ws-error-highlight test setup' '
 
 test_expect_success 'test --ws-error-highlight option' '
 
-	git diff --color --ws-error-highlight=default,old |
-	test_decode_color >current &&
+	git diff --color --ws-error-highlight=default,old >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.default-old current &&
 
-	git diff --color --ws-error-highlight=all |
-	test_decode_color >current &&
+	git diff --color --ws-error-highlight=all >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.all current &&
 
-	git diff --color --ws-error-highlight=none |
-	test_decode_color >current &&
+	git diff --color --ws-error-highlight=none >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.none current
 
 '
 
 test_expect_success 'test diff.wsErrorHighlight config' '
 
-	git -c diff.wsErrorHighlight=default,old diff --color |
-	test_decode_color >current &&
+	git -c diff.wsErrorHighlight=default,old diff --color >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.default-old current &&
 
-	git -c diff.wsErrorHighlight=all diff --color |
-	test_decode_color >current &&
+	git -c diff.wsErrorHighlight=all diff --color >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.all current &&
 
-	git -c diff.wsErrorHighlight=none diff --color |
-	test_decode_color >current &&
+	git -c diff.wsErrorHighlight=none diff --color >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.none current
 
 '
@@ -995,18 +1026,18 @@ test_expect_success 'test diff.wsErrorHighlight config' '
 test_expect_success 'option overrides diff.wsErrorHighlight' '
 
 	git -c diff.wsErrorHighlight=none \
-		diff --color --ws-error-highlight=default,old |
-	test_decode_color >current &&
+		diff --color --ws-error-highlight=default,old >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.default-old current &&
 
 	git -c diff.wsErrorHighlight=default \
-		diff --color --ws-error-highlight=all |
-	test_decode_color >current &&
+		diff --color --ws-error-highlight=all >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.all current &&
 
 	git -c diff.wsErrorHighlight=all \
-		diff --color --ws-error-highlight=none |
-	test_decode_color >current &&
+		diff --color --ws-error-highlight=none >current.raw &&
+	test_decode_color <current.raw >current &&
 	test_cmp expect.none current
 
 '
@@ -1022,14 +1053,16 @@ test_expect_success 'detect moved code, complete file' '
 	EOF
 	git add test.c &&
 	git commit -m "add main function" &&
+	file=$(git rev-parse --short HEAD:test.c) &&
 	git mv test.c main.c &&
 	test_config color.diff.oldMoved "normal red" &&
 	test_config color.diff.newMoved "normal green" &&
-	git diff HEAD --color-moved=zebra --color --no-renames | test_decode_color >actual &&
-	cat >expected <<-\EOF &&
+	git diff HEAD --color-moved=zebra --color --no-renames >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	cat >expected <<-EOF &&
 	<BOLD>diff --git a/main.c b/main.c<RESET>
 	<BOLD>new file mode 100644<RESET>
-	<BOLD>index 0000000..a986c57<RESET>
+	<BOLD>index 0000000..$file<RESET>
 	<BOLD>--- /dev/null<RESET>
 	<BOLD>+++ b/main.c<RESET>
 	<CYAN>@@ -0,0 +1,5 @@<RESET>
@@ -1040,7 +1073,7 @@ test_expect_success 'detect moved code, complete file' '
 	<BGREEN>+<RESET><BGREEN>}<RESET>
 	<BOLD>diff --git a/test.c b/test.c<RESET>
 	<BOLD>deleted file mode 100644<RESET>
-	<BOLD>index a986c57..0000000<RESET>
+	<BOLD>index $file..0000000<RESET>
 	<BOLD>--- a/test.c<RESET>
 	<BOLD>+++ /dev/null<RESET>
 	<CYAN>@@ -1,5 +0,0 @@<RESET>
@@ -1094,6 +1127,8 @@ test_expect_success 'detect malicious moved code, inside file' '
 	EOF
 	git add main.c test.c &&
 	git commit -m "add main and test file" &&
+	before_main=$(git rev-parse --short HEAD:main.c) &&
+	before_test=$(git rev-parse --short HEAD:test.c) &&
 	cat <<-\EOF >main.c &&
 		#include<stdio.h>
 		int stuff()
@@ -1126,10 +1161,15 @@ test_expect_success 'detect malicious moved code, inside file' '
 			bar();
 		}
 	EOF
-	git diff HEAD --no-renames --color-moved=zebra --color | test_decode_color >actual &&
-	cat <<-\EOF >expected &&
+	hash_main=$(git hash-object main.c) &&
+	after_main=$(git rev-parse --short "$hash_main") &&
+	hash_test=$(git hash-object test.c) &&
+	after_test=$(git rev-parse --short "$hash_test") &&
+	git diff HEAD --no-renames --color-moved=zebra --color >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	cat <<-EOF >expected &&
 	<BOLD>diff --git a/main.c b/main.c<RESET>
-	<BOLD>index 27a619c..7cf9336 100644<RESET>
+	<BOLD>index $before_main..$after_main 100644<RESET>
 	<BOLD>--- a/main.c<RESET>
 	<BOLD>+++ b/main.c<RESET>
 	<CYAN>@@ -5,13 +5,6 @@<RESET> <RESET>printf("Hello ");<RESET>
@@ -1147,7 +1187,7 @@ test_expect_success 'detect malicious moved code, inside file' '
 	 {<RESET>
 	 foo();<RESET>
 	<BOLD>diff --git a/test.c b/test.c<RESET>
-	<BOLD>index 1dc1d85..2bedec9 100644<RESET>
+	<BOLD>index $before_test..$after_test 100644<RESET>
 	<BOLD>--- a/test.c<RESET>
 	<BOLD>+++ b/test.c<RESET>
 	<CYAN>@@ -4,6 +4,13 @@<RESET> <RESET>int bar()<RESET>
@@ -1175,10 +1215,11 @@ test_expect_success 'plain moved code, inside file' '
 	test_config color.diff.oldMovedAlternative "blue" &&
 	test_config color.diff.newMovedAlternative "yellow" &&
 	# needs previous test as setup
-	git diff HEAD --no-renames --color-moved=plain --color | test_decode_color >actual &&
-	cat <<-\EOF >expected &&
+	git diff HEAD --no-renames --color-moved=plain --color >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	cat <<-EOF >expected &&
 	<BOLD>diff --git a/main.c b/main.c<RESET>
-	<BOLD>index 27a619c..7cf9336 100644<RESET>
+	<BOLD>index $before_main..$after_main 100644<RESET>
 	<BOLD>--- a/main.c<RESET>
 	<BOLD>+++ b/main.c<RESET>
 	<CYAN>@@ -5,13 +5,6 @@<RESET> <RESET>printf("Hello ");<RESET>
@@ -1196,7 +1237,7 @@ test_expect_success 'plain moved code, inside file' '
 	 {<RESET>
 	 foo();<RESET>
 	<BOLD>diff --git a/test.c b/test.c<RESET>
-	<BOLD>index 1dc1d85..2bedec9 100644<RESET>
+	<BOLD>index $before_test..$after_test 100644<RESET>
 	<BOLD>--- a/test.c<RESET>
 	<BOLD>+++ b/test.c<RESET>
 	<CYAN>@@ -4,6 +4,13 @@<RESET> <RESET>int bar()<RESET>
@@ -1754,7 +1795,8 @@ test_expect_success 'move detection with submodules' '
 	! grep BRED decoded_actual &&
 
 	# nor did we mess with it another way
-	git diff --submodule=diff --color | test_decode_color >expect &&
+	git diff --submodule=diff --color >expect.raw &&
+	test_decode_color <expect.raw >expect &&
 	test_cmp expect decoded_actual &&
 	rm -rf bananas &&
 	git submodule deinit bananas
@@ -2008,11 +2050,6 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	test_cmp expected actual
 '
 
-# Note that the "6" in the expected hunk header below is funny, since we only
-# show 5 lines (the missing one was blank and thus ignored). This is how
-# --ignore-blank-lines behaves even without --function-context, and this test
-# is just checking the interaction of the two features. Don't take it as an
-# endorsement of that output.
 test_expect_success 'combine --ignore-blank-lines with --function-context' '
 	test_write_lines 1 "" 2 3 4 5 >a &&
 	test_write_lines 1    2 3 4   >b &&
@@ -2022,10 +2059,34 @@ test_expect_success 'combine --ignore-blank-lines with --function-context' '
 	cat <<-\EOF >expect &&
 	@@ -1,6 +1,4 @@
 	 1
+	-
 	 2
 	 3
 	 4
 	-5
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'combine --ignore-blank-lines with --function-context 2' '
+	test_write_lines    a b c "" function 1 2 3 4 5 "" 6 7 8 9 >a &&
+	test_write_lines "" a b c "" function 1 2 3 4 5    6 7 8   >b &&
+	test_must_fail git diff --no-index \
+		--ignore-blank-lines --function-context a b >actual.raw &&
+	sed -n "/@@/,\$p" <actual.raw >actual &&
+	cat <<-\EOF >expect &&
+	@@ -5,11 +6,9 @@ c
+	 function
+	 1
+	 2
+	 3
+	 4
+	 5
+	-
+	 6
+	 7
+	 8
+	-9
 	EOF
 	test_cmp expect actual
 '

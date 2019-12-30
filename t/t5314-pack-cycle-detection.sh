@@ -53,7 +53,7 @@ immediately after the lookup for "dummy".
 
 
 
-# Create a pack containing the the tree $1 and blob $1:file, with
+# Create a pack containing the tree $1 and blob $1:file, with
 # the latter stored as a delta against $2:file.
 #
 # We convince pack-objects to make the delta in the direction of our choosing

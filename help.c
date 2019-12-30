@@ -34,7 +34,7 @@ static struct category_description main_categories[] = {
 	{ CAT_foreignscminterface, N_("Interacting with Others") },
 	{ CAT_plumbingmanipulators, N_("Low-level Commands / Manipulators") },
 	{ CAT_plumbinginterrogators, N_("Low-level Commands / Interrogators") },
-	{ CAT_synchingrepositories, N_("Low-level Commands / Synching Repositories") },
+	{ CAT_synchingrepositories, N_("Low-level Commands / Syncing Repositories") },
 	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
 	{ 0, NULL }
 };

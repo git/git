@@ -453,6 +453,20 @@ char *mingw_query_user_email(void);
 #endif
 
 /**
+ * Verifies that the given path is a valid one on Windows.
+ *
+ * In particular, path segments are disallowed which
+ *
+ * - end in a period or a space (except the special directories `.` and `..`).
+ *
+ * - contain any of the reserved characters, e.g. `:`, `;`, `*`, etc
+ *
+ * Returns 1 upon success, otherwise 0.
+ */
+int is_valid_win32_path(const char *path);
+#define is_valid_path(path) is_valid_win32_path(path)
+
+/**
  * Converts UTF-8 encoded string to UTF-16LE.
  *
  * To support repositories with legacy-encoded file names, invalid UTF-8 bytes
@@ -558,7 +572,7 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen);
 
 /*
  * A critical section used in the implementation of the spawn
- * functions (mingw_spawnv[p]e()) and waitpid(). Intialised in
+ * functions (mingw_spawnv[p]e()) and waitpid(). Initialised in
  * the replacement main() macro below.
  */
 extern CRITICAL_SECTION pinfo_cs;

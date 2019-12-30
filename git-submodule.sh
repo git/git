@@ -12,6 +12,7 @@ USAGE="[--quiet] [--cached]
    or: $dashless [--quiet] deinit [-f|--force] (--all| [--] <path>...)
    or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] set-branch (--default|--branch <branch>) [--] <path>
+   or: $dashless [--quiet] set-url [--] <path> <newurl>
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--recursive] [--] [<path>...]
@@ -36,6 +37,7 @@ reference=
 cached=
 recursive=
 init=
+require_init=
 files=
 remote=
 nofetch=
@@ -466,6 +468,10 @@ cmd_update()
 		-i|--init)
 			init=1
 			;;
+		--require-init)
+			init=1
+			require_init=1
+			;;
 		--remote)
 			remote=1
 			;;
@@ -548,6 +554,7 @@ cmd_update()
 		${reference:+"$reference"} \
 		${dissociate:+"--dissociate"} \
 		${depth:+--depth "$depth"} \
+		${require_init:+--require-init} \
 		$recommend_shallow \
 		$jobs \
 		-- \
@@ -758,6 +765,55 @@ cmd_set_branch() {
 	else
 		git submodule--helper config --unset submodule."$name".branch
 	fi
+}
+
+#
+# Configures a submodule's remote url
+#
+# $@ = requested path, requested url
+#
+cmd_set_url() {
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			GIT_QUIET=1
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
+	if test $# -ne 2
+	then
+		usage
+	fi
+
+	# we can't use `git submodule--helper name` here because internally, it
+	# hashes the path so a trailing slash could lead to an unintentional no match
+	name="$(git submodule--helper list "$1" | cut -f2)"
+	if test -z "$name"
+	then
+		exit 1
+	fi
+
+	url="$2"
+	if test -z "$url"
+	then
+		exit 1
+	fi
+
+	git submodule--helper config submodule."$name".url "$url"
+	git submodule--helper sync ${GIT_QUIET:+--quiet} "$name"
 }
 
 #
@@ -1059,7 +1115,7 @@ cmd_absorbgitdirs()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | foreach | init | deinit | update | set-branch | status | summary | sync | absorbgitdirs)
+	add | foreach | init | deinit | update | set-branch | set-url | status | summary | sync | absorbgitdirs)
 		command=$1
 		;;
 	-q|--quiet)

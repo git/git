@@ -15,7 +15,7 @@ SYNOPSIS
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
-	  [--[no-]remote-submodules] [--jobs <n>] [--] <repository>
+	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -156,6 +156,12 @@ objects from the source repository into a pack in the cloned repository.
 	used, neither remote-tracking branches nor the related
 	configuration variables are created.
 
+--sparse::
+	Initialize the sparse-checkout file so the working
+	directory starts with only the files in the root
+	of the repository. The sparse-checkout file can be
+	modified to grow the working directory as needed.
+
 --mirror::
 	Set up a mirror of the source repository.  This implies `--bare`.
 	Compared to `--bare`, `--mirror` not only maps local branches of the
@@ -262,9 +268,9 @@ or `--mirror` is given)
 	All submodules which are cloned will be shallow with a depth of 1.
 
 --[no-]remote-submodules::
-	All submodules which are cloned will use the status of the submodule’s
+	All submodules which are cloned will use the status of the submodule's
 	remote-tracking branch to update the submodule, rather than the
-	superproject’s recorded SHA-1. Equivalent to passing `--remote` to
+	superproject's recorded SHA-1. Equivalent to passing `--remote` to
 	`git submodule update`.
 
 --separate-git-dir=<git dir>::

@@ -92,6 +92,10 @@ ifndef::git-pull[]
 	Run `git gc --auto` at the end to perform garbage collection
 	if needed. This is enabled by default.
 
+--[no-]write-commit-graph::
+	Write a commit-graph after fetching. This overrides the config
+	setting `fetch.writeCommitGraph`.
+
 -p::
 --prune::
 	Before fetching, remove any remote-tracking references that no

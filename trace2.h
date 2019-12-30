@@ -1,6 +1,40 @@
 #ifndef TRACE2_H
 #define TRACE2_H
 
+/**
+ * The Trace2 API can be used to print debug, performance, and telemetry
+ * information to stderr or a file.  The Trace2 feature is inactive unless
+ * explicitly enabled by enabling one or more Trace2 Targets.
+ *
+ * The Trace2 API is intended to replace the existing (Trace1)
+ * printf-style tracing provided by the existing `GIT_TRACE` and
+ * `GIT_TRACE_PERFORMANCE` facilities.  During initial implementation,
+ * Trace2 and Trace1 may operate in parallel.
+ *
+ * The Trace2 API defines a set of high-level messages with known fields,
+ * such as (`start`: `argv`) and (`exit`: {`exit-code`, `elapsed-time`}).
+ *
+ * Trace2 instrumentation throughout the Git code base sends Trace2
+ * messages to the enabled Trace2 Targets.  Targets transform these
+ * messages content into purpose-specific formats and write events to
+ * their data streams.  In this manner, the Trace2 API can drive
+ * many different types of analysis.
+ *
+ * Targets are defined using a VTable allowing easy extension to other
+ * formats in the future.  This might be used to define a binary format,
+ * for example.
+ *
+ * Trace2 is controlled using `trace2.*` config values in the system and
+ * global config files and `GIT_TRACE2*` environment variables.  Trace2 does
+ * not read from repo local or worktree config files or respect `-c`
+ * command line config settings.
+ *
+ * For more info about: trace2 targets, conventions for public functions and
+ * macros, trace2 target formats and examples on trace2 API usage refer to
+ * Documentation/technical/api-trace2.txt
+ *
+ */
+
 struct child_process;
 struct repository;
 struct json_writer;
@@ -39,7 +73,12 @@ void trace2_initialize_clock(void);
 /*
  * Initialize TRACE2 tracing facility if any of the builtin TRACE2
  * targets are enabled in the system config or the environment.
- * Emits a 'version' event.
+ * This includes setting up the Trace2 thread local storage (TLS).
+ * Emits a 'version' message containing the version of git
+ * and the Trace2 protocol.
+ *
+ * This function should be called from `main()` as early as possible in
+ * the life of the process after essential process initialization.
  *
  * Cleanup/Termination is handled automatically by a registered
  * atexit() routine.
@@ -49,7 +88,7 @@ void trace2_initialize_fl(const char *file, int line);
 #define trace2_initialize() trace2_initialize_fl(__FILE__, __LINE__)
 
 /*
- * Return true if trace2 is enabled.
+ * Return 1 if trace2 is enabled (at least one target is active).
  */
 int trace2_is_enabled(void);
 
@@ -114,7 +153,8 @@ void trace2_cmd_mode_fl(const char *file, int line, const char *mode);
 #define trace2_cmd_mode(sv) trace2_cmd_mode_fl(__FILE__, __LINE__, (sv))
 
 /*
- * Emit an 'alias' expansion event.
+ * Emits an "alias" message containing the alias used and the argument
+ * expansion.
  */
 void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
 			 const char **argv);
@@ -123,7 +163,7 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
 	trace2_cmd_alias_fl(__FILE__, __LINE__, (alias), (argv))
 
 /*
- * Emit one or more 'def_param' events for "interesting" configuration
+ * Emit one or more 'def_param' events for "important" configuration
  * settings.
  *
  * Use the TR2_SYSENV_CFG_PARAM setting to register a comma-separated
@@ -144,7 +184,7 @@ void trace2_cmd_list_config_fl(const char *file, int line);
 
 /*
  * Emit a "def_param" event for the given config key/value pair IF
- * we consider the key to be "interesting".
+ * we consider the key to be "important".
  *
  * Use this for new/updated config settings created/updated after
  * trace2_cmd_list_config() is called.
@@ -155,20 +195,34 @@ void trace2_cmd_set_config_fl(const char *file, int line, const char *key,
 #define trace2_cmd_set_config(k, v) \
 	trace2_cmd_set_config_fl(__FILE__, __LINE__, (k), (v))
 
-/*
- * Emit a 'child_start' event prior to spawning a child process.
+/**
+ * Emits a "child_start" message containing the "child-id",
+ * "child-argv", and "child-classification".
  *
  * Before calling optionally set "cmd->trace2_child_class" to a string
  * describing the type of the child process.  For example, "editor" or
  * "pager".
+ *
+ * This function assigns a unique "child-id" to `cmd->trace2_child_id`.
+ * This field is used later during the "child_exit" message to associate
+ * it with the "child_start" message.
+ *
+ * This function should be called before spawning the child process.
  */
 void trace2_child_start_fl(const char *file, int line,
 			   struct child_process *cmd);
 
 #define trace2_child_start(cmd) trace2_child_start_fl(__FILE__, __LINE__, (cmd))
 
-/*
- * Emit a 'child_exit' event after the child process completes.
+/**
+ * Emits a "child_exit" message containing the "child-id",
+ * the child's elapsed time and exit-code.
+ *
+ * The reported elapsed time includes the process creation overhead and
+ * time spend waiting for it to exit, so it may be slightly longer than
+ * the time reported by the child itself.
+ *
+ * This function should be called after reaping the child process.
  */
 void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 			  int child_exit_code);
@@ -176,21 +230,22 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 #define trace2_child_exit(cmd, code) \
 	trace2_child_exit_fl(__FILE__, __LINE__, (cmd), (code))
 
-/*
+/**
  * Emit an 'exec' event prior to calling one of exec(), execv(),
  * execvp(), and etc.  On Unix-derived systems, this will be the
  * last event emitted for the current process, unless the exec
  * fails.  On Windows, exec() behaves like 'child_start' and a
  * waitpid(), so additional events may be emitted.
  *
- * Returns the "exec_id".
+ * Returns a unique "exec-id".  This value is used later
+ * if the exec() fails and a "exec-result" message is necessary.
  */
 int trace2_exec_fl(const char *file, int line, const char *exe,
 		   const char **argv);
 
 #define trace2_exec(exe, argv) trace2_exec_fl(__FILE__, __LINE__, (exe), (argv))
 
-/*
+/**
  * Emit an 'exec_result' when possible.  On Unix-derived systems,
  * this should be called after exec() returns (which only happens
  * when there is an error starting the new process).  On Windows,
@@ -226,11 +281,12 @@ void trace2_thread_exit_fl(const char *file, int line);
 #define trace2_thread_exit() trace2_thread_exit_fl(__FILE__, __LINE__)
 
 /*
- * Emit a 'param' event.
+ * Emits a "def_param" message containing a key/value pair.
  *
- * Write a "<param> = <value>" pair describing some aspect of the
- * run such as an important configuration setting or command line
- * option that significantly changes command behavior.
+ * This message is intended to report some global aspect of the current
+ * command, such as a configuration setting or command line switch that
+ * significantly affects program performance or behavior, such as
+ * `core.abbrev`, `status.showUntrackedFiles`, or `--no-ahead-behind`.
  */
 void trace2_def_param_fl(const char *file, int line, const char *param,
 			 const char *value);
@@ -243,18 +299,35 @@ void trace2_def_param_fl(const char *file, int line, const char *param,
  * a trace2-repo-id to be used in subsequent activity events.
  *
  * Emits a 'worktree' event for this repo instance.
+ *
+ * Region and data messages may refer to this repo-id.
+ *
+ * The main/top-level repository will have repo-id value 1 (aka "r1").
+ *
+ * The repo-id field is in anticipation of future in-proc submodule
+ * repositories.
  */
 void trace2_def_repo_fl(const char *file, int line, struct repository *repo);
 
 #define trace2_def_repo(repo) trace2_def_repo_fl(__FILE__, __LINE__, repo)
 
-/*
+/**
  * Emit a 'region_enter' event for <category>.<label> with optional
  * repo-id and printf message.
  *
- * Enter a new nesting level on the current thread and remember the
- * current time.  This controls the indenting of all subsequent events
- * on this thread.
+ * This function pushes a new region nesting stack level on the current
+ * thread and starts a clock for the new stack frame.
+ *
+ * The `category` field is an arbitrary category name used to classify
+ * regions by feature area, such as "status" or "index".  At this time
+ * it is only just printed along with the rest of the message.  It may
+ * be used in the future to filter messages.
+ *
+ * The `label` field is an arbitrary label used to describe the activity
+ * being started, such as "read_recursive" or "do_read_index".
+ *
+ * The `repo` field, if set, will be used to get the "repo-id", so that
+ * recursive oerations can be attributed to the correct repository.
  */
 void trace2_region_enter_fl(const char *file, int line, const char *category,
 			    const char *label, const struct repository *repo, ...);
@@ -289,12 +362,17 @@ void trace2_region_enter_printf(const char *category, const char *label,
 /* clang-format on */
 #endif
 
-/*
+/**
  * Emit a 'region_leave' event for <category>.<label> with optional
  * repo-id and printf message.
  *
  * Leave current nesting level and report the elapsed time spent
  * in this nesting level.
+ *
+ * The `category`, `label`, and `repo` fields are the same as
+ * trace2_region_enter_fl. The `category` and `label` do not
+ * need to match the corresponding "region_enter" message,
+ * but it makes the data stream easier to understand.
  */
 void trace2_region_leave_fl(const char *file, int line, const char *category,
 			    const char *label, const struct repository *repo, ...);
@@ -329,10 +407,12 @@ void trace2_region_leave_printf(const char *category, const char *label,
 /* clang-format on */
 #endif
 
-/*
+/**
  * Emit a key-value pair 'data' event of the form <category>.<key> = <value>.
  * This event implicitly contains information about thread, nesting region,
  * and optional repo-id.
+ * This could be used to print the number of files in a directory during
+ * a multi-threaded recursive tree walk.
  *
  * On event-based TRACE2 targets, this generates a 'data' event suitable
  * for post-processing.  On printf-based TRACE2 targets, this is converted

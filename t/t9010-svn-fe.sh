@@ -53,8 +53,6 @@ text_no_props () {
 	printf "%s\n" "$text"
 }
 
->empty
-
 test_expect_success 'empty dump' '
 	reinit_git &&
 	echo "SVN-fs-dump-format-version: 2" >input &&
@@ -208,7 +206,7 @@ test_expect_failure 'timestamp and empty file' '
 	test_cmp expect.date actual.date &&
 	test_cmp expect.files actual.files &&
 	git checkout HEAD empty-file &&
-	test_cmp empty file
+	test_must_be_empty file
 '
 
 test_expect_success 'directory with files' '

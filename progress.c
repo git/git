@@ -14,6 +14,7 @@
 #include "strbuf.h"
 #include "trace.h"
 #include "utf8.h"
+#include "config.h"
 
 #define TP_IDX_MAX      8
 
@@ -267,9 +268,19 @@ static struct progress *start_progress_delay(const char *title, uint64_t total,
 	return progress;
 }
 
+static int get_default_delay(void)
+{
+	static int delay_in_secs = -1;
+
+	if (delay_in_secs < 0)
+		delay_in_secs = git_env_ulong("GIT_PROGRESS_DELAY", 2);
+
+	return delay_in_secs;
+}
+
 struct progress *start_delayed_progress(const char *title, uint64_t total)
 {
-	return start_progress_delay(title, total, 2, 0);
+	return start_progress_delay(title, total, get_default_delay(), 0);
 }
 
 struct progress *start_progress(const char *title, uint64_t total)
@@ -294,7 +305,7 @@ struct progress *start_sparse_progress(const char *title, uint64_t total)
 struct progress *start_delayed_sparse_progress(const char *title,
 					       uint64_t total)
 {
-	return start_progress_delay(title, total, 2, 1);
+	return start_progress_delay(title, total, get_default_delay(), 1);
 }
 
 static void finish_if_sparse(struct progress *progress)

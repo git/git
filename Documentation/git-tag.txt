@@ -65,7 +65,7 @@ OPTIONS
 --sign::
 	Make a GPG-signed tag, using the default e-mail address's key.
 	The default behavior of tag GPG-signing is controlled by `tag.gpgSign`
-	configuration variable if it exists, or disabled oder otherwise.
+	configuration variable if it exists, or disabled otherwise.
 	See linkgit:git-config[1].
 
 --no-sign::

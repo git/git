@@ -204,4 +204,41 @@ test_commit_autosquash_flags eucJP fixup
 
 test_commit_autosquash_flags ISO-2022-JP squash
 
+test_commit_autosquash_multi_encoding () {
+	flag=$1
+	old=$2
+	new=$3
+	msg=$4
+	test_expect_success "commit --$flag into $old from $new" '
+		git checkout -b $flag-$old-$new C0 &&
+		git config i18n.commitencoding $old &&
+		echo $old >>F &&
+		git commit -a -F "$TEST_DIRECTORY"/t3900/$msg &&
+		test_tick &&
+		echo intermediate stuff >>G &&
+		git add G &&
+		git commit -a -m "intermediate commit" &&
+		test_tick &&
+		git config i18n.commitencoding $new &&
+		echo $new-$flag >>F &&
+		git commit -a --$flag HEAD^ &&
+		git rebase --autosquash -i HEAD^^^ &&
+		git rev-list HEAD >actual &&
+		test_line_count = 3 actual &&
+		iconv -f $old -t UTF-8 "$TEST_DIRECTORY"/t3900/$msg >expect &&
+		if test $flag = squash; then
+			subject="$(head -1 expect)" &&
+			printf "\nsquash! %s\n" "$subject" >>expect
+		fi &&
+		git cat-file commit HEAD^ >raw &&
+		(sed "1,/^$/d" raw | iconv -f $new -t utf-8) >actual &&
+		test_cmp expect actual
+	'
+}
+
+test_commit_autosquash_multi_encoding fixup UTF-8 ISO-8859-1 1-UTF-8.txt
+test_commit_autosquash_multi_encoding squash ISO-8859-1 UTF-8 ISO8859-1.txt
+test_commit_autosquash_multi_encoding squash eucJP ISO-2022-JP eucJP.txt
+test_commit_autosquash_multi_encoding fixup ISO-2022-JP UTF-8 ISO-2022-JP.txt
+
 test_done

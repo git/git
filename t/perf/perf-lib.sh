@@ -214,7 +214,7 @@ test_perf_ () {
 	else
 		test_ok_ "$1"
 	fi
-	"$TEST_DIRECTORY"/perf/min_time.perl test_time.* >"$base".times
+	"$TEST_DIRECTORY"/perf/min_time.perl test_time.* >"$base".result
 }
 
 test_perf () {
@@ -223,7 +223,7 @@ test_perf () {
 
 test_size_ () {
 	say >&3 "running: $2"
-	if test_eval_ "$2" 3>"$base".size; then
+	if test_eval_ "$2" 3>"$base".result; then
 		test_ok_ "$1"
 	else
 		test_failure_ "$@"

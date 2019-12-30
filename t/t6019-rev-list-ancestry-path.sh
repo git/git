@@ -143,14 +143,14 @@ test_expect_success 'setup criss-cross' '
 test_expect_success 'criss-cross: rev-list --ancestry-path cb..bc' '
 	(cd criss-cross &&
 	 git rev-list --ancestry-path xcb..xbc > actual &&
-	 test -z "$(cat actual)")
+	 test_must_be_empty actual)
 '
 
 # no commits in repository descend from cb
 test_expect_success 'criss-cross: rev-list --ancestry-path --all ^cb' '
 	(cd criss-cross &&
 	 git rev-list --ancestry-path --all ^xcb > actual &&
-	 test -z "$(cat actual)")
+	 test_must_be_empty actual)
 '
 
 test_done

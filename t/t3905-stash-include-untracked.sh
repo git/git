@@ -277,8 +277,8 @@ test_expect_success 'stash -u -- <ignored> leaves ignored file alone' '
 	test_path_is_file ignored.d/bar
 '
 
-test_expect_success 'stash -u -- <non-existant> shows no changes when there are none' '
-	git stash push -u -- non-existant >actual &&
+test_expect_success 'stash -u -- <non-existent> shows no changes when there are none' '
+	git stash push -u -- non-existent >actual &&
 	echo "No local changes to save" >expect &&
 	test_i18ncmp expect actual
 '

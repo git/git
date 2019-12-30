@@ -25,7 +25,7 @@ Fixes since v2.13.2
  * The code to pick up and execute command alias definition from the
    configuration used to switch to the top of the working tree and
    then come back when the expanded alias was executed, which was
-   unnecessarilyl complex.  Attempt to simplify the logic by using the
+   unnecessarily complex.  Attempt to simplify the logic by using the
    early-config mechanism that does not chdir around.
 
  * "git add -p" were updated in 2.12 timeframe to cope with custom
@@ -35,7 +35,7 @@ Fixes since v2.13.2
  * Fix a recent regression to "git rebase -i" and add tests that would
    have caught it and others.
 
- * An unaligned 32-bit access in pack-bitmap code ahs been corrected.
+ * An unaligned 32-bit access in pack-bitmap code has been corrected.
 
  * Tighten error checks for invalid "git apply" input.
 

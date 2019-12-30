@@ -304,6 +304,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 
 struct split_index;
 struct untracked_cache;
+struct progress;
 
 struct index_state {
 	struct cache_entry **cache;
@@ -326,6 +327,7 @@ struct index_state {
 	uint64_t fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
 	struct mem_pool *ce_mem_pool;
+	struct progress *progress;
 };
 
 /* Name hashing */
@@ -632,10 +634,43 @@ int daemonize(void);
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
-/*
- * Realloc the buffer pointed at by variable 'x' so that it can hold
- * at least 'nr' entries; the number of entries currently allocated
- * is 'alloc', using the standard growing factor alloc_nr() macro.
+/**
+ * Dynamically growing an array using realloc() is error prone and boring.
+ *
+ * Define your array with:
+ *
+ * - a pointer (`item`) that points at the array, initialized to `NULL`
+ *   (although please name the variable based on its contents, not on its
+ *   type);
+ *
+ * - an integer variable (`alloc`) that keeps track of how big the current
+ *   allocation is, initialized to `0`;
+ *
+ * - another integer variable (`nr`) to keep track of how many elements the
+ *   array currently has, initialized to `0`.
+ *
+ * Then before adding `n`th element to the item, call `ALLOC_GROW(item, n,
+ * alloc)`.  This ensures that the array can hold at least `n` elements by
+ * calling `realloc(3)` and adjusting `alloc` variable.
+ *
+ * ------------
+ * sometype *item;
+ * size_t nr;
+ * size_t alloc
+ *
+ * for (i = 0; i < nr; i++)
+ * 	if (we like item[i] already)
+ * 		return;
+ *
+ * // we did not like any existing one, so add one
+ * ALLOC_GROW(item, nr + 1, alloc);
+ * item[nr++] = value you like;
+ * ------------
+ *
+ * You are responsible for updating the `nr` variable.
+ *
+ * If you need to specify the number of elements to allocate explicitly
+ * then use the macro `REALLOC_ARRAY(item, alloc)` instead of `ALLOC_GROW`.
  *
  * Consider using ALLOC_GROW_BY instead of ALLOC_GROW as it has some
  * added niceties.
@@ -918,11 +953,13 @@ extern char *git_replace_ref_base;
 
 extern int fsync_object_files;
 extern int core_preload_index;
-extern int core_apply_sparse_checkout;
 extern int precomposed_unicode;
 extern int protect_hfs;
 extern int protect_ntfs;
 extern const char *core_fsmonitor;
+
+int core_apply_sparse_checkout;
+int core_sparse_checkout_cone;
 
 /*
  * Include broken refs in all ref iterations, which will
@@ -1451,7 +1488,8 @@ int get_oid_hex(const char *hex, struct object_id *sha1);
 int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
 
 /*
- * Convert a binary hash to its hex equivalent. The `_r` variant is reentrant,
+ * Convert a binary hash in "unsigned char []" or an object name in
+ * "struct object_id *" to its hex equivalent. The `_r` variant is reentrant,
  * and writes the NUL-terminated output to the buffer `out`, which must be at
  * least `GIT_MAX_HEXSZ + 1` bytes, and returns a pointer to out for
  * convenience.
@@ -1459,13 +1497,12 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
  * The non-`_r` variant returns a static buffer, but uses a ring of 4
  * buffers, making it safe to make multiple calls for a single statement, like:
  *
- *   printf("%s -> %s", sha1_to_hex(one), sha1_to_hex(two));
+ *   printf("%s -> %s", hash_to_hex(one), hash_to_hex(two));
+ *   printf("%s -> %s", oid_to_hex(one), oid_to_hex(two));
  */
 char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
-char *sha1_to_hex_r(char *out, const unsigned char *sha1);
 char *oid_to_hex_r(char *out, const struct object_id *oid);
 char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
-char *sha1_to_hex(const unsigned char *sha1);						/* same static buffer */
 char *hash_to_hex(const unsigned char *hash);						/* same static buffer */
 char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
 

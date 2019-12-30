@@ -179,7 +179,7 @@ void string_list_remove(struct string_list *list, const char *string,
 
 /**
  * Check if the given string is part of a sorted list. If it is part of the list,
- * return the coresponding string_list_item, NULL otherwise.
+ * return the corresponding string_list_item, NULL otherwise.
  */
 struct string_list_item *string_list_lookup(struct string_list *list, const char *string);
 

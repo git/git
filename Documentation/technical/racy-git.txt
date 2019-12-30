@@ -51,7 +51,7 @@ of git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
 only fixes the issue for file systems with exactly 1 ns or 1 s
 resolution. Other file systems are still broken in current Linux
 kernels (e.g. CEPH, CIFS, NTFS, UDF), see
-https://lkml.org/lkml/2015/6/9/714
+https://lore.kernel.org/lkml/5577240D.7020309@gmail.com/
 
 Racy Git
 --------

@@ -64,6 +64,7 @@ static struct string_list push_options_config = STRING_LIST_INIT_DUP;
 static const char *map_refspec(const char *ref,
 			       struct remote *remote, struct ref *local_refs)
 {
+	const char *branch_name;
 	struct ref *matched = NULL;
 
 	/* Does "ref" uniquely name our ref? */
@@ -84,8 +85,8 @@ static const char *map_refspec(const char *ref,
 	}
 
 	if (push_default == PUSH_DEFAULT_UPSTREAM &&
-	    starts_with(matched->name, "refs/heads/")) {
-		struct branch *branch = branch_get(matched->name + 11);
+	    skip_prefix(matched->name, "refs/heads/", &branch_name)) {
+		struct branch *branch = branch_get(branch_name);
 		if (branch->merge_nr == 1 && branch->merge[0]->src) {
 			struct strbuf buf = STRBUF_INIT;
 			strbuf_addf(&buf, "%s:%s",

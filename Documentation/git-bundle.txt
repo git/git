@@ -9,8 +9,8 @@ git-bundle - Move objects and refs by archive
 SYNOPSIS
 --------
 [verse]
-'git bundle' create <file> <git-rev-list-args>
-'git bundle' verify <file>
+'git bundle' create [-q | --quiet | --progress | --all-progress] [--all-progress-implied] <file> <git-rev-list-args>
+'git bundle' verify [-q | --quiet] <file>
 'git bundle' list-heads <file> [<refname>...]
 'git bundle' unbundle <file> [<refname>...]
 
@@ -20,11 +20,14 @@ DESCRIPTION
 Some workflows require that one or more branches of development on one
 machine be replicated on another machine, but the two machines cannot
 be directly connected, and therefore the interactive Git protocols (git,
-ssh, http) cannot be used.  This command provides support for
-'git fetch' and 'git pull' to operate by packaging objects and references
-in an archive at the originating machine, then importing those into
-another repository using 'git fetch' and 'git pull'
-after moving the archive by some means (e.g., by sneakernet).  As no
+ssh, http) cannot be used.
+
+The 'git bundle' command packages objects and references in an archive
+at the originating machine, which can then be imported into another
+repository using 'git fetch', 'git pull', or 'git clone',
+after moving the archive by some means (e.g., by sneakernet).
+
+As no
 direct connection between the repositories exists, the user must specify a
 basis for the bundle that is held by the destination repository: the
 bundle assumes that all objects in the basis are already in the
@@ -33,9 +36,11 @@ destination repository.
 OPTIONS
 -------
 
-create <file>::
+create [options] <file> <git-rev-list-args>::
 	Used to create a bundle named 'file'.  This requires the
-	'git-rev-list-args' arguments to define the bundle contents.
+	'<git-rev-list-args>' arguments to define the bundle contents.
+	'options' contains the options specific to the 'git bundle create'
+	subcommand.
 
 verify <file>::
 	Used to check that a bundle file is valid and will apply
@@ -75,6 +80,33 @@ unbundle <file>::
 	necessarily everything in the pack (in this case, 'git bundle' acts
 	like 'git fetch-pack').
 
+--progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless -q
+	is specified. This flag forces progress status even if
+	the standard error stream is not directed to a terminal.
+
+--all-progress::
+	When --stdout is specified then progress report is
+	displayed during the object count and compression phases
+	but inhibited during the write-out phase. The reason is
+	that in some cases the output stream is directly linked
+	to another command which may wish to display progress
+	status of its own as it processes incoming pack data.
+	This flag is like --progress except that it forces progress
+	report for the write-out phase as well even if --stdout is
+	used.
+
+--all-progress-implied::
+	This is used to imply --all-progress whenever progress display
+	is activated.  Unlike --all-progress this flag doesn't actually
+	force any progress display by itself.
+
+-q::
+--quiet::
+	This flag makes the command not to report its progress
+	on the standard error stream.
+
 SPECIFYING REFERENCES
 ---------------------
 
@@ -91,6 +123,14 @@ It is very important that the basis used be held by the destination.
 It is okay to err on the side of caution, causing the bundle file
 to contain objects already in the destination, as these are ignored
 when unpacking at the destination.
+
+`git clone` can use any bundle created without negative refspecs
+(e.g., `new`, but not `old..new`).
+If you want to match `git clone --mirror`, which would include your
+refs such as `refs/remotes/*`, use `--all`.
+If you want to provide the same set of refs that a clone directly
+from the source repository would get, use `--branches --tags` for
+the `<git-rev-list-args>`.
 
 EXAMPLES
 --------

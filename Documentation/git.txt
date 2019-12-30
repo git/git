@@ -271,8 +271,8 @@ In general, the interrogate commands do not touch the files in
 the working tree.
 
 
-Synching repositories
-~~~~~~~~~~~~~~~~~~~~~
+Syncing repositories
+~~~~~~~~~~~~~~~~~~~~
 
 include::cmds-synchingrepositories.txt[]
 
@@ -543,6 +543,10 @@ other
 	to an empty string or to the value "cat", Git will not launch
 	a pager.  See also the `core.pager` option in
 	linkgit:git-config[1].
+
+`GIT_PROGRESS_DELAY`::
+	A number controlling how many seconds to delay before showing
+	optional progress indicators. Defaults to 2.
 
 `GIT_EDITOR`::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
@@ -928,7 +932,7 @@ Reporting Bugs
 Report bugs to the Git mailing list <git@vger.kernel.org> where the
 development and maintenance is primarily done.  You do not have to be
 subscribed to the list to send a message there.  See the list archive
-at https://public-inbox.org/git for previous bug reports and other
+at https://lore.kernel.org/git for previous bug reports and other
 discussions.
 
 Issues which are security relevant should be disclosed privately to

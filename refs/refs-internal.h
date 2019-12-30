@@ -262,7 +262,7 @@ int refs_rename_ref_available(struct ref_store *refs,
  * after calling ref_iterator_advance() again or calling
  * ref_iterator_abort(), you must make a copy. When the iteration has
  * been exhausted, ref_iterator_advance() releases any resources
- * assocated with the iteration, frees the ref_iterator object, and
+ * associated with the iteration, frees the ref_iterator object, and
  * returns ITER_DONE. If you want to abort the iteration early, call
  * ref_iterator_abort(), which also frees the ref_iterator object and
  * any associated resources. If there was an internal error advancing

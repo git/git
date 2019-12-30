@@ -29,7 +29,7 @@ test_expect_success 'ceiling' '
 		cd sub &&
 		test-tool config read_early_config early.config
 	) >output &&
-	test -z "$(cat output)"
+	test_must_be_empty output
 '
 
 test_expect_success 'ceiling #2' '

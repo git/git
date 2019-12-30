@@ -107,4 +107,7 @@ advice.*::
 		editor input from the user.
 	nestedTag::
 		Advice shown if a user attempts to recursively tag a tag object.
+	submoduleAlternateErrorStrategyDie:
+		Advice shown when a submodule.alternateErrorStrategy option
+		configured to "die" causes a fatal error.
 --

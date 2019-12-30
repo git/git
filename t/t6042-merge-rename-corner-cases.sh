@@ -5,7 +5,7 @@ test_description="recursive merge corner cases w/ renames but not criss-crosses"
 
 . ./test-lib.sh
 
-test_expect_success 'setup rename/delete + untracked file' '
+test_setup_rename_delete_untracked () {
 	test_create_repo rename-delete-untracked &&
 	(
 		cd rename-delete-untracked &&
@@ -29,9 +29,10 @@ test_expect_success 'setup rename/delete + untracked file' '
 		git commit -m track-people-instead-of-objects &&
 		echo "Myyy PRECIOUSSS" >ring
 	)
-'
+}
 
 test_expect_success "Does git preserve Gollum's precious artifact?" '
+	test_setup_rename_delete_untracked &&
 	(
 		cd rename-delete-untracked &&
 
@@ -49,7 +50,7 @@ test_expect_success "Does git preserve Gollum's precious artifact?" '
 #
 # We should be able to merge B & C cleanly
 
-test_expect_success 'setup rename/modify/add-source conflict' '
+test_setup_rename_modify_add_source () {
 	test_create_repo rename-modify-add-source &&
 	(
 		cd rename-modify-add-source &&
@@ -70,9 +71,10 @@ test_expect_success 'setup rename/modify/add-source conflict' '
 		git add a &&
 		git commit -m C
 	)
-'
+}
 
 test_expect_failure 'rename/modify/add-source conflict resolvable' '
+	test_setup_rename_modify_add_source &&
 	(
 		cd rename-modify-add-source &&
 
@@ -88,7 +90,7 @@ test_expect_failure 'rename/modify/add-source conflict resolvable' '
 	)
 '
 
-test_expect_success 'setup resolvable conflict missed if rename missed' '
+test_setup_break_detection_1 () {
 	test_create_repo break-detection-1 &&
 	(
 		cd break-detection-1 &&
@@ -110,9 +112,10 @@ test_expect_success 'setup resolvable conflict missed if rename missed' '
 		git add a &&
 		git commit -m C
 	)
-'
+}
 
 test_expect_failure 'conflict caused if rename not detected' '
+	test_setup_break_detection_1 &&
 	(
 		cd break-detection-1 &&
 
@@ -135,7 +138,7 @@ test_expect_failure 'conflict caused if rename not detected' '
 	)
 '
 
-test_expect_success 'setup conflict resolved wrong if rename missed' '
+test_setup_break_detection_2 () {
 	test_create_repo break-detection-2 &&
 	(
 		cd break-detection-2 &&
@@ -160,9 +163,10 @@ test_expect_success 'setup conflict resolved wrong if rename missed' '
 		git add a &&
 		git commit -m E
 	)
-'
+}
 
 test_expect_failure 'missed conflict if rename not detected' '
+	test_setup_break_detection_2 &&
 	(
 		cd break-detection-2 &&
 
@@ -182,7 +186,7 @@ test_expect_failure 'missed conflict if rename not detected' '
 #   Commit B: rename a->b
 #   Commit C: rename a->b, add unrelated a
 
-test_expect_success 'setup undetected rename/add-source causes data loss' '
+test_setup_break_detection_3 () {
 	test_create_repo break-detection-3 &&
 	(
 		cd break-detection-3 &&
@@ -202,9 +206,10 @@ test_expect_success 'setup undetected rename/add-source causes data loss' '
 		git add a &&
 		git commit -m C
 	)
-'
+}
 
 test_expect_failure 'detect rename/add-source and preserve all data' '
+	test_setup_break_detection_3 &&
 	(
 		cd break-detection-3 &&
 
@@ -231,6 +236,7 @@ test_expect_failure 'detect rename/add-source and preserve all data' '
 '
 
 test_expect_failure 'detect rename/add-source and preserve all data, merge other way' '
+	test_setup_break_detection_3 &&
 	(
 		cd break-detection-3 &&
 
@@ -256,10 +262,10 @@ test_expect_failure 'detect rename/add-source and preserve all data, merge other
 	)
 '
 
-test_expect_success 'setup content merge + rename/directory conflict' '
-	test_create_repo rename-directory-1 &&
+test_setup_rename_directory () {
+	test_create_repo rename-directory-$1 &&
 	(
-		cd rename-directory-1 &&
+		cd rename-directory-$1 &&
 
 		printf "1\n2\n3\n4\n5\n6\n" >file &&
 		git add file &&
@@ -290,11 +296,12 @@ test_expect_success 'setup content merge + rename/directory conflict' '
 		test_tick &&
 		git commit -m left
 	)
-'
+}
 
 test_expect_success 'rename/directory conflict + clean content merge' '
+	test_setup_rename_directory 1a &&
 	(
-		cd rename-directory-1 &&
+		cd rename-directory-1a &&
 
 		git checkout left-clean^0 &&
 
@@ -320,8 +327,9 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 '
 
 test_expect_success 'rename/directory conflict + content merge conflict' '
+	test_setup_rename_directory 1b &&
 	(
-		cd rename-directory-1 &&
+		cd rename-directory-1b &&
 
 		git reset --hard &&
 		git clean -fdqx &&
@@ -358,7 +366,7 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 	)
 '
 
-test_expect_success 'setup content merge + rename/directory conflict w/ disappearing dir' '
+test_setup_rename_directory_2 () {
 	test_create_repo rename-directory-2 &&
 	(
 		cd rename-directory-2 &&
@@ -385,9 +393,10 @@ test_expect_success 'setup content merge + rename/directory conflict w/ disappea
 		test_tick &&
 		git commit -m left
 	)
-'
+}
 
 test_expect_success 'disappearing dir in rename/directory conflict handled' '
+	test_setup_rename_directory_2 &&
 	(
 		cd rename-directory-2 &&
 
@@ -416,10 +425,10 @@ test_expect_success 'disappearing dir in rename/directory conflict handled' '
 #   Commit A: rename a->b, modifying b too
 #   Commit B: modify a, add different b
 
-test_expect_success 'setup rename-with-content-merge vs. add' '
-	test_create_repo rename-with-content-merge-and-add &&
+test_setup_rename_with_content_merge_and_add () {
+	test_create_repo rename-with-content-merge-and-add-$1 &&
 	(
-		cd rename-with-content-merge-and-add &&
+		cd rename-with-content-merge-and-add-$1 &&
 
 		test_seq 1 5 >a &&
 		git add a &&
@@ -438,11 +447,12 @@ test_expect_success 'setup rename-with-content-merge vs. add' '
 		git add a b &&
 		git commit -m B
 	)
-'
+}
 
 test_expect_success 'handle rename-with-content-merge vs. add' '
+	test_setup_rename_with_content_merge_and_add AB &&
 	(
-		cd rename-with-content-merge-and-add &&
+		cd rename-with-content-merge-and-add-AB &&
 
 		git checkout A^0 &&
 
@@ -483,8 +493,9 @@ test_expect_success 'handle rename-with-content-merge vs. add' '
 '
 
 test_expect_success 'handle rename-with-content-merge vs. add, merge other way' '
+	test_setup_rename_with_content_merge_and_add BA &&
 	(
-		cd rename-with-content-merge-and-add &&
+		cd rename-with-content-merge-and-add-BA &&
 
 		git reset --hard &&
 		git clean -fdx &&
@@ -539,7 +550,7 @@ test_expect_success 'handle rename-with-content-merge vs. add, merge other way' 
 #   * The working copy should have two files, both of form c~<unique>; does it?
 #   * Nothing else should be present.  Is anything?
 
-test_expect_success 'setup rename/rename (2to1) + modify/modify' '
+test_setup_rename_rename_2to1 () {
 	test_create_repo rename-rename-2to1 &&
 	(
 		cd rename-rename-2to1 &&
@@ -562,9 +573,10 @@ test_expect_success 'setup rename/rename (2to1) + modify/modify' '
 		git add a &&
 		git commit -m C
 	)
-'
+}
 
 test_expect_success 'handle rename/rename (2to1) conflict correctly' '
+	test_setup_rename_rename_2to1 &&
 	(
 		cd rename-rename-2to1 &&
 
@@ -610,7 +622,7 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 #   Commit A: new file: a
 #   Commit B: rename a->b
 #   Commit C: rename a->c
-test_expect_success 'setup simple rename/rename (1to2) conflict' '
+test_setup_rename_rename_1to2 () {
 	test_create_repo rename-rename-1to2 &&
 	(
 		cd rename-rename-1to2 &&
@@ -631,9 +643,10 @@ test_expect_success 'setup simple rename/rename (1to2) conflict' '
 		test_tick &&
 		git commit -m C
 	)
-'
+}
 
 test_expect_success 'merge has correct working tree contents' '
+	test_setup_rename_rename_1to2 &&
 	(
 		cd rename-rename-1to2 &&
 
@@ -667,7 +680,7 @@ test_expect_success 'merge has correct working tree contents' '
 #
 # Merging of B & C should NOT be clean; there's a rename/rename conflict
 
-test_expect_success 'setup rename/rename(1to2)/add-source conflict' '
+test_setup_rename_rename_1to2_add_source_1 () {
 	test_create_repo rename-rename-1to2-add-source-1 &&
 	(
 		cd rename-rename-1to2-add-source-1 &&
@@ -687,9 +700,10 @@ test_expect_success 'setup rename/rename(1to2)/add-source conflict' '
 		git add a &&
 		git commit -m C
 	)
-'
+}
 
 test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' '
+	test_setup_rename_rename_1to2_add_source_1 &&
 	(
 		cd rename-rename-1to2-add-source-1 &&
 
@@ -714,7 +728,7 @@ test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' 
 	)
 '
 
-test_expect_success 'setup rename/rename(1to2)/add-source resolvable conflict' '
+test_setup_rename_rename_1to2_add_source_2 () {
 	test_create_repo rename-rename-1to2-add-source-2 &&
 	(
 		cd rename-rename-1to2-add-source-2 &&
@@ -737,9 +751,10 @@ test_expect_success 'setup rename/rename(1to2)/add-source resolvable conflict' '
 		test_tick &&
 		git commit -m two
 	)
-'
+}
 
 test_expect_failure 'rename/rename/add-source still tracks new a file' '
+	test_setup_rename_rename_1to2_add_source_2 &&
 	(
 		cd rename-rename-1to2-add-source-2 &&
 
@@ -759,7 +774,7 @@ test_expect_failure 'rename/rename/add-source still tracks new a file' '
 	)
 '
 
-test_expect_success 'setup rename/rename(1to2)/add-dest conflict' '
+test_setup_rename_rename_1to2_add_dest () {
 	test_create_repo rename-rename-1to2-add-dest &&
 	(
 		cd rename-rename-1to2-add-dest &&
@@ -784,9 +799,10 @@ test_expect_success 'setup rename/rename(1to2)/add-dest conflict' '
 		test_tick &&
 		git commit -m two
 	)
-'
+}
 
 test_expect_success 'rename/rename/add-dest merge still knows about conflicting file versions' '
+	test_setup_rename_rename_1to2_add_dest &&
 	(
 		cd rename-rename-1to2-add-dest &&
 
@@ -838,7 +854,7 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 #   Commit B: rename foo->bar
 #   Expected: CONFLICT (rename/add/delete), two-way merged bar
 
-test_expect_success 'rad-setup: rename/add/delete conflict' '
+test_setup_rad () {
 	test_create_repo rad &&
 	(
 		cd rad &&
@@ -860,9 +876,10 @@ test_expect_success 'rad-setup: rename/add/delete conflict' '
 		git mv foo bar &&
 		git commit -m "rename foo to bar"
 	)
-'
+}
 
 test_expect_failure 'rad-check: rename/add/delete conflict' '
+	test_setup_rad &&
 	(
 		cd rad &&
 
@@ -904,7 +921,7 @@ test_expect_failure 'rad-check: rename/add/delete conflict' '
 #   Commit B: rename bar->baz, rm foo
 #   Expected: CONFLICT (rename/rename/delete/delete), two-way merged baz
 
-test_expect_success 'rrdd-setup: rename/rename(2to1)/delete/delete conflict' '
+test_setup_rrdd () {
 	test_create_repo rrdd &&
 	(
 		cd rrdd &&
@@ -927,9 +944,10 @@ test_expect_success 'rrdd-setup: rename/rename(2to1)/delete/delete conflict' '
 		git rm foo &&
 		git commit -m "Rename bar, remove foo"
 	)
-'
+}
 
 test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
+	test_setup_rrdd &&
 	(
 		cd rrdd &&
 
@@ -973,7 +991,7 @@ test_expect_failure 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 #   Expected: six CONFLICT(rename/rename) messages, each path in two of the
 #             multi-way merged contents found in two, four, six
 
-test_expect_success 'mod6-setup: chains of rename/rename(1to2) and rename/rename(2to1)' '
+test_setup_mod6 () {
 	test_create_repo mod6 &&
 	(
 		cd mod6 &&
@@ -1009,9 +1027,10 @@ test_expect_success 'mod6-setup: chains of rename/rename(1to2) and rename/rename
 		test_tick &&
 		git commit -m "B"
 	)
-'
+}
 
 test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename(2to1)' '
+	test_setup_mod6 &&
 	(
 		cd mod6 &&
 
@@ -1108,7 +1127,8 @@ test_conflicts_with_adds_and_renames() {
 	#      files.  Is it present?
 	#   4) There should not be any three~* files in the working
 	#      tree
-	test_expect_success "setup simple $sideL/$sideR conflict" '
+	test_setup_collision_conflict () {
+	#test_expect_success "setup simple $sideL/$sideR conflict" '
 		test_create_repo simple_${sideL}_${sideR} &&
 		(
 			cd simple_${sideL}_${sideR} &&
@@ -1185,9 +1205,11 @@ test_conflicts_with_adds_and_renames() {
 			fi &&
 			test_tick && git commit -m R
 		)
-	'
+	#'
+	}
 
 	test_expect_success "check simple $sideL/$sideR conflict" '
+		test_setup_collision_conflict &&
 		(
 			cd simple_${sideL}_${sideR} &&
 
@@ -1254,7 +1276,7 @@ test_conflicts_with_adds_and_renames add    add
 #
 #   So, we have four different conflicting files that all end up at path
 #   'three'.
-test_expect_success 'setup nested conflicts from rename/rename(2to1)' '
+test_setup_nested_conflicts_from_rename_rename () {
 	test_create_repo nested_conflicts_from_rename_rename &&
 	(
 		cd nested_conflicts_from_rename_rename &&
@@ -1305,9 +1327,10 @@ test_expect_success 'setup nested conflicts from rename/rename(2to1)' '
 		git add one three &&
 		test_tick && git commit -m german
 	)
-'
+}
 
 test_expect_success 'check nested conflicts from rename/rename(2to1)' '
+	test_setup_nested_conflicts_from_rename_rename &&
 	(
 		cd nested_conflicts_from_rename_rename &&
 

@@ -64,16 +64,16 @@ static time_t gm_time_t(timestamp_t time, int tz)
  * thing, which means that tz -0100 is passed in as the integer -100,
  * even though it means "sixty minutes off"
  */
-static struct tm *time_to_tm(timestamp_t time, int tz)
+static struct tm *time_to_tm(timestamp_t time, int tz, struct tm *tm)
 {
 	time_t t = gm_time_t(time, tz);
-	return gmtime(&t);
+	return gmtime_r(&t, tm);
 }
 
-static struct tm *time_to_tm_local(timestamp_t time)
+static struct tm *time_to_tm_local(timestamp_t time, struct tm *tm)
 {
 	time_t t = time;
-	return localtime(&t);
+	return localtime_r(&t, tm);
 }
 
 /*
@@ -283,6 +283,7 @@ static void show_date_normal(struct strbuf *buf, timestamp_t time, struct tm *tm
 const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 {
 	struct tm *tm;
+	struct tm tmbuf = { 0 };
 	struct tm human_tm = { 0 };
 	int human_tz = -1;
 	static struct strbuf timebuf = STRBUF_INIT;
@@ -318,11 +319,11 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 	}
 
 	if (mode->local)
-		tm = time_to_tm_local(time);
+		tm = time_to_tm_local(time, &tmbuf);
 	else
-		tm = time_to_tm(time, tz);
+		tm = time_to_tm(time, tz, &tmbuf);
 	if (!tm) {
-		tm = time_to_tm(0, 0);
+		tm = time_to_tm(0, 0, &tmbuf);
 		tz = 0;
 	}
 
@@ -959,10 +960,11 @@ void datestamp(struct strbuf *out)
 {
 	time_t now;
 	int offset;
+	struct tm tm = { 0 };
 
 	time(&now);
 
-	offset = tm_to_time_t(localtime(&now)) - now;
+	offset = tm_to_time_t(localtime_r(&now, &tm)) - now;
 	offset /= 60;
 
 	date_string(now, offset, out);

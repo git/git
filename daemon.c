@@ -598,7 +598,7 @@ static void canonicalize_client(struct strbuf *out, const char *in)
  * Read the host as supplied by the client connection.
  *
  * Returns a pointer to the character after the NUL byte terminating the host
- * arguemnt, or 'extra_args' if there is no host arguemnt.
+ * argument, or 'extra_args' if there is no host argument.
  */
 static char *parse_host_arg(struct hostinfo *hi, char *extra_args, int buflen)
 {
@@ -652,7 +652,7 @@ static void parse_extra_args(struct hostinfo *hi, struct argv_array *env,
 		 * service that will be run.
 		 *
 		 * If there ends up being a particular arg in the future that
-		 * git-daemon needs to parse specificly (like the 'host' arg)
+		 * git-daemon needs to parse specifically (like the 'host' arg)
 		 * then it can be parsed here and not added to 'git_protocol'.
 		 */
 		if (*arg) {

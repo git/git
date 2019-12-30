@@ -105,6 +105,16 @@ static struct {
 	{ 0, "VALIDSIG ", GPG_STATUS_FINGERPRINT },
 };
 
+static void replace_cstring(char **field, const char *line, const char *next)
+{
+	free(*field);
+
+	if (line && next)
+		*field = xmemdupz(line, next - line);
+	else
+		*field = NULL;
+}
+
 static void parse_gpg_output(struct signature_check *sigc)
 {
 	const char *buf = sigc->gpg_status;
@@ -136,33 +146,43 @@ static void parse_gpg_output(struct signature_check *sigc)
 				/* Do we have key information? */
 				if (sigcheck_gpg_status[i].flags & GPG_STATUS_KEYID) {
 					next = strchrnul(line, ' ');
-					free(sigc->key);
-					sigc->key = xmemdupz(line, next - line);
+					replace_cstring(&sigc->key, line, next);
 					/* Do we have signer information? */
 					if (*next && (sigcheck_gpg_status[i].flags & GPG_STATUS_UID)) {
 						line = next + 1;
 						next = strchrnul(line, '\n');
-						free(sigc->signer);
-						sigc->signer = xmemdupz(line, next - line);
+						replace_cstring(&sigc->signer, line, next);
 					}
 				}
 				/* Do we have fingerprint? */
 				if (sigcheck_gpg_status[i].flags & GPG_STATUS_FINGERPRINT) {
-					next = strchrnul(line, ' ');
-					free(sigc->fingerprint);
-					sigc->fingerprint = xmemdupz(line, next - line);
+					const char *limit;
+					char **field;
 
-					/* Skip interim fields */
+					next = strchrnul(line, ' ');
+					replace_cstring(&sigc->fingerprint, line, next);
+
+					/*
+					 * Skip interim fields.  The search is
+					 * limited to the same line since only
+					 * OpenPGP signatures has a field with
+					 * the primary fingerprint.
+					 */
+					limit = strchrnul(line, '\n');
 					for (j = 9; j > 0; j--) {
-						if (!*next)
+						if (!*next || limit <= next)
 							break;
 						line = next + 1;
 						next = strchrnul(line, ' ');
 					}
 
-					next = strchrnul(line, '\n');
-					free(sigc->primary_key_fingerprint);
-					sigc->primary_key_fingerprint = xmemdupz(line, next - line);
+					field = &sigc->primary_key_fingerprint;
+					if (!j) {
+						next = strchrnul(line, '\n');
+						replace_cstring(field, line, next);
+					} else {
+						replace_cstring(field, NULL, NULL);
+					}
 				}
 
 				break;
@@ -185,6 +205,55 @@ found_duplicate_status:
 	FREE_AND_NULL(sigc->fingerprint);
 	FREE_AND_NULL(sigc->signer);
 	FREE_AND_NULL(sigc->key);
+}
+
+static int verify_signed_buffer(const char *payload, size_t payload_size,
+				const char *signature, size_t signature_size,
+				struct strbuf *gpg_output,
+				struct strbuf *gpg_status)
+{
+	struct child_process gpg = CHILD_PROCESS_INIT;
+	struct gpg_format *fmt;
+	struct tempfile *temp;
+	int ret;
+	struct strbuf buf = STRBUF_INIT;
+
+	temp = mks_tempfile_t(".git_vtag_tmpXXXXXX");
+	if (!temp)
+		return error_errno(_("could not create temporary file"));
+	if (write_in_full(temp->fd, signature, signature_size) < 0 ||
+	    close_tempfile_gently(temp) < 0) {
+		error_errno(_("failed writing detached signature to '%s'"),
+			    temp->filename.buf);
+		delete_tempfile(&temp);
+		return -1;
+	}
+
+	fmt = get_format_by_sig(signature);
+	if (!fmt)
+		BUG("bad signature '%s'", signature);
+
+	argv_array_push(&gpg.args, fmt->program);
+	argv_array_pushv(&gpg.args, fmt->verify_args);
+	argv_array_pushl(&gpg.args,
+			 "--status-fd=1",
+			 "--verify", temp->filename.buf, "-",
+			 NULL);
+
+	if (!gpg_status)
+		gpg_status = &buf;
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+	ret = pipe_command(&gpg, payload, payload_size,
+			   gpg_status, 0, gpg_output, 0);
+	sigchain_pop(SIGPIPE);
+
+	delete_tempfile(&temp);
+
+	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
+	strbuf_release(&buf); /* no matter it was used or not */
+
+	return ret;
 }
 
 int check_signature(const char *payload, size_t plen, const char *signature,
@@ -330,52 +399,4 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	strbuf_setlen(signature, j);
 
 	return 0;
-}
-
-int verify_signed_buffer(const char *payload, size_t payload_size,
-			 const char *signature, size_t signature_size,
-			 struct strbuf *gpg_output, struct strbuf *gpg_status)
-{
-	struct child_process gpg = CHILD_PROCESS_INIT;
-	struct gpg_format *fmt;
-	struct tempfile *temp;
-	int ret;
-	struct strbuf buf = STRBUF_INIT;
-
-	temp = mks_tempfile_t(".git_vtag_tmpXXXXXX");
-	if (!temp)
-		return error_errno(_("could not create temporary file"));
-	if (write_in_full(temp->fd, signature, signature_size) < 0 ||
-	    close_tempfile_gently(temp) < 0) {
-		error_errno(_("failed writing detached signature to '%s'"),
-			    temp->filename.buf);
-		delete_tempfile(&temp);
-		return -1;
-	}
-
-	fmt = get_format_by_sig(signature);
-	if (!fmt)
-		BUG("bad signature '%s'", signature);
-
-	argv_array_push(&gpg.args, fmt->program);
-	argv_array_pushv(&gpg.args, fmt->verify_args);
-	argv_array_pushl(&gpg.args,
-			 "--status-fd=1",
-			 "--verify", temp->filename.buf, "-",
-			 NULL);
-
-	if (!gpg_status)
-		gpg_status = &buf;
-
-	sigchain_push(SIGPIPE, SIG_IGN);
-	ret = pipe_command(&gpg, payload, payload_size,
-			   gpg_status, 0, gpg_output, 0);
-	sigchain_pop(SIGPIPE);
-
-	delete_tempfile(&temp);
-
-	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
-	strbuf_release(&buf); /* no matter it was used or not */
-
-	return ret;
 }

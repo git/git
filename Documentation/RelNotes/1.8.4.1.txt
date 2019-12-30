@@ -15,7 +15,7 @@ Fixes since v1.8.4
    in 1.8.4-rc1).
 
  * "git rebase -i" and other scripted commands were feeding a
-   random, data dependant error message to 'echo' and expecting it
+   random, data dependent error message to 'echo' and expecting it
    to come out literally.
 
  * Setting the "submodule.<name>.path" variable to the empty

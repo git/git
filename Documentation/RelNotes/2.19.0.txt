@@ -106,7 +106,7 @@ Performance, Internal Implementation, Development Support etc.
  * The conversion to pass "the_repository" and then "a_repository"
    throughout the object access API continues.
 
- * Continuing with the idea to programatically enumerate various
+ * Continuing with the idea to programmatically enumerate various
    pieces of data required for command line completion, teach the
    codebase to report the list of configuration variables
    subcommands care about to help complete them.

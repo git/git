@@ -43,6 +43,12 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 		strbuf_addstr(err, _("empty filename in tree entry"));
 		return -1;
 	}
+#ifdef GIT_WINDOWS_NATIVE
+	if (protect_ntfs && strchr(path, '\\')) {
+		strbuf_addf(err, _("filename in tree entry contains backslash: '%s'"), path);
+		return -1;
+	}
+#endif
 	len = strlen(path) + 1;
 
 	/* Initialize the descriptor entry */
@@ -1124,7 +1130,7 @@ match_wildcards:
 		 * later on.
 		 * max_depth is ignored but we may consider support it
 		 * in future, see
-		 * https://public-inbox.org/git/7vmxo5l2g4.fsf@alter.siamese.dyndns.org/
+		 * https://lore.kernel.org/git/7vmxo5l2g4.fsf@alter.siamese.dyndns.org/
 		 */
 		if (ps->recursive && S_ISDIR(entry->mode))
 			return entry_interesting;

@@ -72,7 +72,7 @@
 /* Not under GCC-alike or glibc */
 #elif defined(_BYTE_ORDER) && defined(_BIG_ENDIAN) && defined(_LITTLE_ENDIAN)
 /*
- * *BSD and newlib (embeded linux, cygwin, etc).
+ * *BSD and newlib (embedded linux, cygwin, etc).
  * the defined(_BIG_ENDIAN) && defined(_LITTLE_ENDIAN) part prevents
  * this condition from matching with Solaris/sparc.
  * (Solaris defines only one endian macro)
@@ -98,7 +98,7 @@
 /*
  * Defines Big Endian on a whitelist of OSs that are known to be Big
  * Endian-only. See
- * https://public-inbox.org/git/93056823-2740-d072-1ebd-46b440b33d7e@felt.demon.nl/
+ * https://lore.kernel.org/git/93056823-2740-d072-1ebd-46b440b33d7e@felt.demon.nl/
  */
 #define SHA1DC_BIGENDIAN
 

@@ -70,6 +70,8 @@ struct checkout_opts {
 	int checkout_worktree;
 	const char *ignore_unmerged_opt;
 	int ignore_unmerged;
+	int pathspec_file_nul;
+	const char *pathspec_from_file;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -1480,6 +1482,8 @@ static struct option *add_checkout_path_options(struct checkout_opts *opts,
 		OPT_BOOL('p', "patch", &opts->patch_mode, N_("select hunks interactively")),
 		OPT_BOOL(0, "ignore-skip-worktree-bits", &opts->ignore_skipworktree,
 			 N_("do not limit pathspecs to sparse entries only")),
+		OPT_PATHSPEC_FROM_FILE(&opts->pathspec_from_file),
+		OPT_PATHSPEC_FILE_NUL(&opts->pathspec_file_nul),
 		OPT_END()
 	};
 	struct option *newopts = parse_options_concat(prevopts, options);
@@ -1618,10 +1622,6 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			die(_("reference is not a tree: %s"), opts->from_treeish);
 	}
 
-	if (opts->accept_pathspec && !opts->empty_pathspec_ok && !argc &&
-	    !opts->patch_mode)	/* patch mode is special */
-		die(_("you must specify path(s) to restore"));
-
 	if (argc) {
 		parse_pathspec(&opts->pathspec, 0,
 			       opts->patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
@@ -1641,10 +1641,33 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		if (opts->force_detach)
 			die(_("git checkout: --detach does not take a path argument '%s'"),
 			    argv[0]);
+	}
 
+	if (opts->pathspec_from_file) {
+		if (opts->pathspec.nr)
+			die(_("--pathspec-from-file is incompatible with pathspec arguments"));
+
+		if (opts->force_detach)
+			die(_("--pathspec-from-file is incompatible with --detach"));
+
+		if (opts->patch_mode)
+			die(_("--pathspec-from-file is incompatible with --patch"));
+
+		parse_pathspec_file(&opts->pathspec, 0,
+				    0,
+				    prefix, opts->pathspec_from_file, opts->pathspec_file_nul);
+	} else if (opts->pathspec_file_nul) {
+		die(_("--pathspec-file-nul requires --pathspec-from-file"));
+	}
+
+	if (opts->pathspec.nr) {
 		if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)
 			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 			      "checking out of the index."));
+	} else {
+		if (opts->accept_pathspec && !opts->empty_pathspec_ok &&
+		    !opts->patch_mode)	/* patch mode is special */
+			die(_("you must specify path(s) to restore"));
 	}
 
 	if (opts->new_branch) {

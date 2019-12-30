@@ -138,10 +138,10 @@ test_expect_success 'incorrect file in :path and :N:path' '
 
 test_expect_success 'invalid @{n} reference' '
 	test_must_fail git rev-parse master@{99999} >output 2>error &&
-	test -z "$(cat output)" &&
+	test_must_be_empty output &&
 	grep "fatal: Log for [^ ]* only has [0-9][0-9]* entries." error  &&
 	test_must_fail git rev-parse --verify master@{99999} >output 2>error &&
-	test -z "$(cat output)" &&
+	test_must_be_empty output &&
 	grep "fatal: Log for [^ ]* only has [0-9][0-9]* entries." error
 '
 
@@ -155,13 +155,13 @@ test_expect_success 'relative path not found' '
 
 test_expect_success 'relative path outside worktree' '
 	test_must_fail git rev-parse HEAD:../file.txt >output 2>error &&
-	test -z "$(cat output)" &&
+	test_must_be_empty output &&
 	test_i18ngrep "outside repository" error
 '
 
 test_expect_success 'relative path when cwd is outside worktree' '
 	test_must_fail git --git-dir=.git --work-tree=subdir rev-parse HEAD:./file.txt >output 2>error &&
-	test -z "$(cat output)" &&
+	test_must_be_empty output &&
 	grep "relative path syntax can.t be used outside working tree." error
 '
 

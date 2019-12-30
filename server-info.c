@@ -93,7 +93,7 @@ static int update_info_file(char *path,
 		uic.old_fp = fopen_or_warn(path, "r");
 
 	/*
-	 * uic_printf will compare incremental comparison aginst old_fp
+	 * uic_printf will compare incremental comparison against old_fp
 	 * and mark uic as stale if needed
 	 */
 	ret = generate(&uic);

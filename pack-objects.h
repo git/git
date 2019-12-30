@@ -251,12 +251,21 @@ static inline void oe_set_in_pack(struct packing_data *pack,
 				  struct object_entry *e,
 				  struct packed_git *p)
 {
-	if (!p->index)
+	if (pack->in_pack_by_idx) {
+		if (p->index) {
+			e->in_pack_idx = p->index;
+			return;
+		}
+		/*
+		 * We're accessing packs by index, but this pack doesn't have
+		 * an index (e.g., because it was added since we created the
+		 * in_pack_by_idx array). Bail to oe_map_new_pack(), which
+		 * will convert us to using the full in_pack array, and then
+		 * fall through to our in_pack handling.
+		 */
 		oe_map_new_pack(pack);
-	if (pack->in_pack_by_idx)
-		e->in_pack_idx = p->index;
-	else
-		pack->in_pack[e - pack->objects] = p;
+	}
+	pack->in_pack[e - pack->objects] = p;
 }
 
 static inline struct object_entry *oe_delta(

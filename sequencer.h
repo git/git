@@ -43,6 +43,8 @@ struct replay_opts {
 	int verbose;
 	int quiet;
 	int reschedule_failed_exec;
+	int committer_date_is_author_date;
+	int ignore_date;
 
 	int mainline;
 
@@ -202,11 +204,10 @@ void print_commit_summary(struct repository *repo,
 
 int read_author_script(const char *path, char **name, char **email, char **date,
 		       int allow_missing);
-#endif
-
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);
 int write_basic_state(struct replay_opts *opts, const char *head_name,
 		      struct commit *onto, const char *orig_head);
 void sequencer_post_commit_cleanup(struct repository *r, int verbose);
 int sequencer_get_last_command(struct repository* r,
 			       enum replay_action *action);
+#endif /* SEQUENCER_H */

@@ -55,7 +55,8 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	}
 	istate->fsmonitor_dirty = fsmonitor_dirty;
 
-	if (istate->fsmonitor_dirty->bit_size > istate->cache_nr)
+	if (!istate->split_index &&
+	    istate->fsmonitor_dirty->bit_size > istate->cache_nr)
 		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
 		    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
 
@@ -83,7 +84,8 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 	uint32_t ewah_size = 0;
 	int fixup = 0;
 
-	if (istate->fsmonitor_dirty->bit_size > istate->cache_nr)
+	if (!istate->split_index &&
+	    istate->fsmonitor_dirty->bit_size > istate->cache_nr)
 		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
 		    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
 
@@ -189,13 +191,26 @@ void refresh_fsmonitor(struct index_state *istate)
 		}
 		if (bol < query_result.len)
 			fsmonitor_refresh_callback(istate, buf + bol);
+
+		/* Now mark the untracked cache for fsmonitor usage */
+		if (istate->untracked)
+			istate->untracked->use_fsmonitor = 1;
 	} else {
+
+		/* We only want to run the post index changed hook if we've actually changed entries, so keep track
+		 * if we actually changed entries or not */
+		int is_cache_changed = 0;
 		/* Mark all entries invalid */
-		for (i = 0; i < istate->cache_nr; i++)
-			istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+		for (i = 0; i < istate->cache_nr; i++) {
+			if (istate->cache[i]->ce_flags & CE_FSMONITOR_VALID) {
+				is_cache_changed = 1;
+				istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+			}
+		}
 
 		/* If we're going to check every file, ensure we save the results */
-		istate->cache_changed |= FSMONITOR_CHANGED;
+		if (is_cache_changed)
+			istate->cache_changed |= FSMONITOR_CHANGED;
 
 		if (istate->untracked)
 			istate->untracked->use_fsmonitor = 0;
@@ -257,9 +272,7 @@ void tweak_fsmonitor(struct index_state *istate)
 				    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
 			ewah_each_bit(istate->fsmonitor_dirty, fsmonitor_ewah_callback, istate);
 
-			/* Now mark the untracked cache for fsmonitor usage */
-			if (istate->untracked)
-				istate->untracked->use_fsmonitor = 1;
+			refresh_fsmonitor(istate);
 		}
 
 		ewah_free(istate->fsmonitor_dirty);

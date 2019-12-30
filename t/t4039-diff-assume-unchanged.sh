@@ -12,6 +12,7 @@ test_expect_success 'setup' '
 	git commit -m zero &&
 	echo one > one &&
 	echo two > two &&
+	blob=$(git hash-object one) &&
 	git add one two &&
 	git commit -m onetwo &&
 	git update-index --assume-unchanged one &&
@@ -20,7 +21,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'diff-index does not examine assume-unchanged entries' '
-	git diff-index HEAD^ -- one | grep -q 5626abf0f72e58d7a153368ba57db4c673c0e171
+	git diff-index HEAD^ -- one | grep -q $blob
 '
 
 test_expect_success 'diff-files does not examine assume-unchanged entries' '

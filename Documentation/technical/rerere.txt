@@ -117,7 +117,7 @@ early A became C or B, a late X became Y or Z".  We can see there are
 4 combinations of ("B or C", "C or B") x ("X or Y", "Y or X").
 
 By sorting, the conflict is given its canonical name, namely, "an
-early part became B or C, a late part becames X or Y", and whenever
+early part became B or C, a late part became X or Y", and whenever
 any of these four patterns appear, and we can get to the same conflict
 and resolution that we saw earlier.
 

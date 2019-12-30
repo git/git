@@ -17,7 +17,7 @@ test_expect_success 'rebase exec modifies rebase-todo' '
 	test -e F
 '
 
-test_expect_success SHA1 'loose object cache vs re-reading todo list' '
+test_expect_success 'loose object cache vs re-reading todo list' '
 	GIT_REBASE_TODO=.git/rebase-merge/git-rebase-todo &&
 	export GIT_REBASE_TODO &&
 	write_script append-todo.sh <<-\EOS &&
@@ -50,6 +50,36 @@ test_expect_success 'todo is re-read after reword and squash' '
 	GIT_SEQUENCE_EDITOR="$EDITOR" FAKE_LINES="reword 1 squash 2 fixup 3" \
 		GIT_EDITOR=./reword-editor.sh git rebase -i --root third &&
 	test_cmp expected actual
+'
+
+test_expect_success 're-reading todo doesnt interfere with revert --edit' '
+	git reset --hard third &&
+
+	git revert --edit third second &&
+
+	cat >expect <<-\EOF &&
+	Revert "second"
+	Revert "third"
+	third
+	second
+	first
+	EOF
+	git log --format="%s" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-reading todo doesnt interfere with cherry-pick --edit' '
+	git reset --hard first &&
+
+	git cherry-pick --edit second third &&
+
+	cat >expect <<-\EOF &&
+	third
+	second
+	first
+	EOF
+	git log --format="%s" >actual &&
+	test_cmp expect actual
 '
 
 test_done

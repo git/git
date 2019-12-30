@@ -179,7 +179,7 @@ Performance, Internal Implementation, Development Support etc.
    (merge 00a3da2a13 nd/remove-ignore-env-field later to maint).
 
  * Code to find the length to uniquely abbreviate object names based
-   on packfile content, which is a relatively recent addtion, has been
+   on packfile content, which is a relatively recent addition, has been
    optimized to use the same fan-out table.
 
  * The mechanism to use parse-options API to automate the command line

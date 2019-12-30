@@ -216,7 +216,7 @@ Fixes since v2.16
 
  * The http tracing code, often used to debug connection issues,
    learned to redact potentially sensitive information from its output
-   so that it can be more safely sharable.
+   so that it can be more safely shareable.
    (merge 8ba18e6fa4 jt/http-redact-cookies later to maint).
 
  * Crash fix for a corner case where an error codepath tried to unlock

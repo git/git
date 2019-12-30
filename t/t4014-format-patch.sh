@@ -793,6 +793,38 @@ test_expect_success 'format-patch with multiple notes refs' '
 	! grep "this is note 2" out
 '
 
+test_expect_success 'format-patch with multiple notes refs in config' '
+	test_when_finished "test_unconfig format.notes" &&
+
+	git notes --ref note1 add -m "this is note 1" HEAD &&
+	test_when_finished git notes --ref note1 remove HEAD &&
+	git notes --ref note2 add -m "this is note 2" HEAD &&
+	test_when_finished git notes --ref note2 remove HEAD &&
+
+	git config format.notes note1 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git config format.notes note2 &&
+	git format-patch -1 --stdout >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out &&
+	git config --add format.notes note1 &&
+	git format-patch -1 --stdout >out &&
+	grep "this is note 1" out &&
+	grep "this is note 2" out &&
+
+	git config --replace-all format.notes note1 &&
+	git config --add format.notes false &&
+	git format-patch -1 --stdout >out &&
+	! grep "this is note 1" out &&
+	! grep "this is note 2" out &&
+	git config --add format.notes note2 &&
+	git format-patch -1 --stdout >out &&
+	! grep "this is note 1" out &&
+	grep "this is note 2" out
+'
+
 echo "fatal: --name-only does not make sense" >expect.name-only
 echo "fatal: --name-status does not make sense" >expect.name-status
 echo "fatal: --check does not make sense" >expect.check
@@ -1517,6 +1549,178 @@ test_expect_success 'format patch ignores color.ui' '
 	test_cmp expect actual
 '
 
+test_expect_success 'cover letter with invalid --cover-from-description and config' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	test_must_fail git format-patch --cover-letter --cover-from-description garbage master &&
+	test_config format.coverFromDescription garbage &&
+	test_must_fail git format-patch --cover-letter master
+'
+
+test_expect_success 'cover letter with format.coverFromDescription = default' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	test_config format.coverFromDescription default &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with --cover-from-description default' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description default master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with format.coverFromDescription = none' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	test_config format.coverFromDescription none &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	! grep "^config subject$" actual &&
+	! grep "^body$" actual
+'
+
+test_expect_success 'cover letter with --cover-from-description none' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description none master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	! grep "^config subject$" actual &&
+	! grep "^body$" actual
+'
+
+test_expect_success 'cover letter with format.coverFromDescription = message' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	test_config format.coverFromDescription message &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with --cover-from-description message' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description message master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with format.coverFromDescription = subject' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	test_config format.coverFromDescription subject &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter master >actual &&
+	grep "^Subject: \[PATCH 0/2\] config subject$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	! grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with --cover-from-description subject' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description subject master >actual &&
+	grep "^Subject: \[PATCH 0/2\] config subject$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	! grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with format.coverFromDescription = auto (short subject line)' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	test_config format.coverFromDescription auto &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter master >actual &&
+	grep "^Subject: \[PATCH 0/2\] config subject$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	! grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with --cover-from-description auto (short subject line)' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description auto master >actual &&
+	grep "^Subject: \[PATCH 0/2\] config subject$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	! grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with format.coverFromDescription = auto (long subject line)' '
+	test_config branch.rebuild-1.description "this is a really long first line and it is over 100 characters long which is the threshold for long subjects
+
+body" &&
+	test_config format.coverFromDescription auto &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	grep "^this is a really long first line and it is over 100 characters long which is the threshold for long subjects$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with --cover-from-description auto (long subject line)' '
+	test_config branch.rebuild-1.description "this is a really long first line and it is over 100 characters long which is the threshold for long subjects
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description auto master >actual &&
+	grep "^Subject: \[PATCH 0/2\] \*\*\* SUBJECT HERE \*\*\*$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	grep "^this is a really long first line and it is over 100 characters long which is the threshold for long subjects$" actual &&
+	grep "^body$" actual
+'
+
+test_expect_success 'cover letter with command-line --cover-from-description overrides config' '
+	test_config branch.rebuild-1.description "config subject
+
+body" &&
+	test_config format.coverFromDescription none &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description subject master >actual &&
+	grep "^Subject: \[PATCH 0/2\] config subject$" actual &&
+	! grep "^\*\*\* BLURB HERE \*\*\*$" actual &&
+	! grep "^config subject$" actual &&
+	grep "^body$" actual
+'
+
 test_expect_success 'cover letter using branch description (1)' '
 	git checkout rebuild-1 &&
 	test_config branch.rebuild-1.description hello &&
@@ -1767,10 +1971,9 @@ test_expect_success 'format-patch errors out when history involves criss-cross' 
 	test_must_fail 	git format-patch --base=auto -1
 '
 
-test_expect_success 'format-patch format.useAutoBaseoption' '
-	test_when_finished "git config --unset format.useAutoBase" &&
+test_expect_success 'format-patch format.useAutoBase option' '
 	git checkout local &&
-	git config format.useAutoBase true &&
+	test_config format.useAutoBase true &&
 	git format-patch --stdout -1 >patch &&
 	grep "^base-commit:" patch >actual &&
 	git rev-parse upstream >commit-id-base &&
@@ -1779,13 +1982,18 @@ test_expect_success 'format-patch format.useAutoBaseoption' '
 '
 
 test_expect_success 'format-patch --base overrides format.useAutoBase' '
-	test_when_finished "git config --unset format.useAutoBase" &&
-	git config format.useAutoBase true &&
+	test_config format.useAutoBase true &&
 	git format-patch --stdout --base=HEAD~1 -1 >patch &&
 	grep "^base-commit:" patch >actual &&
 	git rev-parse HEAD~1 >commit-id-base &&
 	echo "base-commit: $(cat commit-id-base)" >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'format-patch --no-base overrides format.useAutoBase' '
+	test_config format.useAutoBase true &&
+	git format-patch --stdout --no-base -1 >patch &&
+	! grep "^base-commit:" patch
 '
 
 test_expect_success 'format-patch --base with --attach' '

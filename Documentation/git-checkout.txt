@@ -12,14 +12,14 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] --detach [<branch>]
 'git checkout' [-q] [-f] [-m] [--detach] <commit>
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
-'git checkout' [<tree-ish>] [--] <pathspec>...
-'git checkout' (-p|--patch) [<tree-ish>] [--] [<paths>...]
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
+'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
 Updates files in the working tree to match the version in the index
-or the specified tree.  If no paths are given, 'git checkout' will
+or the specified tree.  If no pathspec was given, 'git checkout' will
 also update `HEAD` to set the specified branch as the current
 branch.
 
@@ -79,13 +79,14 @@ be used to detach `HEAD` at the tip of the branch (`git checkout
 +
 Omitting `<branch>` detaches `HEAD` at the tip of the current branch.
 
-'git checkout' [<tree-ish>] [--] <pathspec>...::
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...::
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]::
 
-	Overwrite paths in the working tree by replacing with the
-	contents in the index or in the `<tree-ish>` (most often a
-	commit).  When a `<tree-ish>` is given, the paths that
-	match the `<pathspec>` are updated both in the index and in
-	the working tree.
+	Overwrite the contents of the files that match the pathspec.
+	When the `<tree-ish>` (most often a commit) is not given,
+	overwrite working tree with the contents in the index.
+	When the `<tree-ish>` is given, overwrite both the index and
+	the working tree with the contents at the `<tree-ish>`.
 +
 The index may contain unmerged entries because of a previous failed merge.
 By default, if you try to check out such an entry from the index, the
@@ -96,12 +97,10 @@ using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
 file can be discarded to re-create the original conflicted merge result.
 
 'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]::
-	This is similar to the "check out paths to the working tree
-	from either the index or from a tree-ish" mode described
-	above, but lets you use the interactive interface to show
-	the "diff" output and choose which hunks to use in the
-	result.  See below for the description of `--patch` option.
-
+	This is similar to the previous mode, but lets you use the
+	interactive interface to show the "diff" output and choose which
+	hunks to use in the result.  See below for the description of
+	`--patch` option.
 
 OPTIONS
 -------
@@ -309,6 +308,19 @@ Note that this option uses the no overlay mode by default (see also
 	working tree, but not in `<tree-ish>` are removed, to make them
 	match `<tree-ish>` exactly.
 
+--pathspec-from-file=<file>::
+	Pathspec is passed in `<file>` instead of commandline args. If
+	`<file>` is exactly `-` then standard input is used. Pathspec
+	elements are separated by LF or CR/LF. Pathspec elements can be
+	quoted as explained for the configuration variable `core.quotePath`
+	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	global `--literal-pathspecs`.
+
+--pathspec-file-nul::
+	Only meaningful with `--pathspec-from-file`. Pathspec elements are
+	separated with NUL character and all other characters are taken
+	literally (including newlines and quotes).
+
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
 	when prepended with "refs/heads/", is a valid ref), then that
@@ -339,7 +351,13 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 	Tree to checkout from (when paths are given). If not specified,
 	the index will be used.
 
+\--::
+	Do not interpret any more arguments as options.
 
+<pathspec>...::
+	Limits the paths affected by the operation.
++
+For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
 DETACHED HEAD
 -------------

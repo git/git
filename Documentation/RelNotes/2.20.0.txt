@@ -119,7 +119,7 @@ UI, Workflows & Features
    alias expansion.
 
  * The documentation of "git gc" has been updated to mention that it
-   is no longer limited to "pruning away crufts" but also updates
+   is no longer limited to "pruning away cruft" but also updates
    ancillary files like commit-graph as a part of repository
    optimization.
 

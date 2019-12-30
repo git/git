@@ -177,7 +177,7 @@ UI, Workflows & Features
    been changed to enable "--decorate".
 
  * The output from "git status --short" has been extended to show
-   various kinds of dirtyness in submodules differently; instead of to
+   various kinds of dirtiness in submodules differently; instead of to
    "M" for modified, 'm' and '?' can be shown to signal changes only
    to the working tree of the submodule but not the commit that is
    checked out.

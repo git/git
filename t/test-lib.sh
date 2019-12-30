@@ -404,9 +404,13 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 unset XDG_CACHE_HOME
 unset XDG_CONFIG_HOME
 unset GITPERLLIB
-GIT_AUTHOR_EMAIL=author@example.com
+TEST_AUTHOR_LOCALNAME=author
+TEST_AUTHOR_DOMAIN=example.com
+GIT_AUTHOR_EMAIL=${TEST_AUTHOR_LOCALNAME}@${TEST_AUTHOR_DOMAIN}
 GIT_AUTHOR_NAME='A U Thor'
-GIT_COMMITTER_EMAIL=committer@example.com
+TEST_COMMITTER_LOCALNAME=committer
+TEST_COMMITTER_DOMAIN=example.com
+GIT_COMMITTER_EMAIL=${TEST_COMMITTER_LOCALNAME}@${TEST_COMMITTER_DOMAIN}
 GIT_COMMITTER_NAME='C O Mitter'
 GIT_MERGE_VERBOSITY=5
 GIT_MERGE_AUTOEDIT=no
@@ -1000,6 +1004,12 @@ test_skip () {
 		to_skip=t
 		skipped_reason="GIT_SKIP_TESTS"
 	fi
+	if test -z "$to_skip" && test -n "$run_list" &&
+	   ! match_test_selector_list '--run' $test_count "$run_list"
+	then
+		to_skip=t
+		skipped_reason="--run"
+	fi
 	if test -z "$to_skip" && test -n "$test_prereq" &&
 	   ! test_have_prereq "$test_prereq"
 	then
@@ -1011,12 +1021,6 @@ test_skip () {
 			of_prereq=" of $test_prereq"
 		fi
 		skipped_reason="missing $missing_prereq${of_prereq}"
-	fi
-	if test -z "$to_skip" && test -n "$run_list" &&
-		! match_test_selector_list '--run' $test_count "$run_list"
-	then
-		to_skip=t
-		skipped_reason="--run"
 	fi
 
 	case "$to_skip" in
@@ -1402,23 +1406,23 @@ yes () {
 # The GIT_TEST_FAIL_PREREQS code hooks into test_set_prereq(), and
 # thus needs to be set up really early, and set an internal variable
 # for convenience so the hot test_set_prereq() codepath doesn't need
-# to call "git env--helper". Only do that work if needed by seeing if
-# GIT_TEST_FAIL_PREREQS is set at all.
+# to call "git env--helper" (via test_bool_env). Only do that work
+# if needed by seeing if GIT_TEST_FAIL_PREREQS is set at all.
 GIT_TEST_FAIL_PREREQS_INTERNAL=
 if test -n "$GIT_TEST_FAIL_PREREQS"
 then
-	if git env--helper --type=bool --default=0 --exit-code GIT_TEST_FAIL_PREREQS
+	if test_bool_env GIT_TEST_FAIL_PREREQS false
 	then
 		GIT_TEST_FAIL_PREREQS_INTERNAL=true
 		test_set_prereq FAIL_PREREQS
 	fi
 else
 	test_lazy_prereq FAIL_PREREQS '
-		git env--helper --type=bool --default=0 --exit-code GIT_TEST_FAIL_PREREQS
+		test_bool_env GIT_TEST_FAIL_PREREQS false
 	'
 fi
 
-# Fix some commands on Windows
+# Fix some commands on Windows, and other OS-specific things
 uname_s=$(uname -s)
 case $uname_s in
 *MINGW*)
@@ -1449,6 +1453,12 @@ case $uname_s in
 	test_set_prereq SED_STRIPS_CR
 	test_set_prereq GREP_STRIPS_CR
 	;;
+FreeBSD)
+	test_set_prereq REGEX_ILLSEQ
+	test_set_prereq POSIXPERM
+	test_set_prereq BSLASHPSPEC
+	test_set_prereq EXECKEEPSPID
+	;;
 *)
 	test_set_prereq POSIXPERM
 	test_set_prereq BSLASHPSPEC
@@ -1473,7 +1483,7 @@ then
 fi
 
 test_lazy_prereq C_LOCALE_OUTPUT '
-	! git env--helper --type=bool --default=0 --exit-code GIT_TEST_GETTEXT_POISON
+	! test_bool_env GIT_TEST_GETTEXT_POISON false
 '
 
 if test -z "$GIT_TEST_CHECK_CACHE_TREE"

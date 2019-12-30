@@ -261,6 +261,26 @@ struct display_notes_opt {
 };
 
 /*
+ * Initialize a display_notes_opt to its default value.
+ */
+void init_display_notes(struct display_notes_opt *opt);
+
+/*
+ * This family of functions enables or disables the display of notes. In
+ * particular, 'enable_default_display_notes' will display the default notes,
+ * 'enable_ref_display_notes' will display the notes ref 'ref' and
+ * 'disable_display_notes' will disable notes, including those added by previous
+ * invocations of the 'enable_*_display_notes' functions.
+ *
+ * 'show_notes' is a pointer to a boolean which will be set to 1 if notes are
+ * displayed, else 0. It must not be NULL.
+ */
+void enable_default_display_notes(struct display_notes_opt *opt, int *show_notes);
+void enable_ref_display_notes(struct display_notes_opt *opt, int *show_notes,
+		const char *ref);
+void disable_display_notes(struct display_notes_opt *opt, int *show_notes);
+
+/*
  * Load the notes machinery for displaying several notes trees.
  *
  * If 'opt' is not NULL, then it specifies additional settings for the
@@ -272,16 +292,16 @@ struct display_notes_opt {
  * - extra_notes_refs may contain a list of globs (in the same style
  *   as notes.displayRef) where notes should be loaded from.
  */
-void init_display_notes(struct display_notes_opt *opt);
+void load_display_notes(struct display_notes_opt *opt);
 
 /*
  * Append notes for the given 'object_sha1' from all trees set up by
- * init_display_notes() to 'sb'.
+ * load_display_notes() to 'sb'.
  *
  * If 'raw' is false the note will be indented by 4 places and
  * a 'Notes (refname):' header added.
  *
- * You *must* call init_display_notes() before using this function.
+ * You *must* call load_display_notes() before using this function.
  */
 void format_display_notes(const struct object_id *object_oid,
 			  struct strbuf *sb, const char *output_encoding, int raw);
