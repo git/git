@@ -43,12 +43,6 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 		strbuf_addstr(err, _("empty filename in tree entry"));
 		return -1;
 	}
-#ifdef GIT_WINDOWS_NATIVE
-	if (protect_ntfs && strchr(path, '\\')) {
-		strbuf_addf(err, _("filename in tree entry contains backslash: '%s'"), path);
-		return -1;
-	}
-#endif
 	len = strlen(path) + 1;
 
 	/* Initialize the descriptor entry */
