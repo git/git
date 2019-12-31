@@ -224,17 +224,6 @@ static struct commit *make_virtual_commit(struct repository *repo,
 	return commit;
 }
 
-/*
- * Since we use get_tree_entry(), which does not put the read object into
- * the object pool, we cannot rely on a == b.
- */
-static int oid_eq(const struct object_id *a, const struct object_id *b)
-{
-	if (!a && !b)
-		return 2;
-	return a && b && oideq(a, b);
-}
-
 enum rename_type {
 	RENAME_NORMAL = 0,
 	RENAME_VIA_DIR,
@@ -805,7 +794,7 @@ static int was_tracked_and_matches(struct merge_options *opt, const char *path,
 
 	/* See if the file we were tracking before matches */
 	ce = opt->priv->orig_index.cache[pos];
-	return (oid_eq(&ce->oid, &blob->oid) && ce->ce_mode == blob->mode);
+	return (oideq(&ce->oid, &blob->oid) && ce->ce_mode == blob->mode);
 }
 
 /*
@@ -1317,7 +1306,7 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			oidcpy(&result->blob.oid, &b->oid);
 		}
 	} else {
-		if (!oid_eq(&a->oid, &o->oid) && !oid_eq(&b->oid, &o->oid))
+		if (!oideq(&a->oid, &o->oid) && !oideq(&b->oid, &o->oid))
 			result->merge = 1;
 
 		/*
@@ -1333,9 +1322,9 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			}
 		}
 
-		if (oid_eq(&a->oid, &b->oid) || oid_eq(&a->oid, &o->oid))
+		if (oideq(&a->oid, &b->oid) || oideq(&a->oid, &o->oid))
 			oidcpy(&result->blob.oid, &b->oid);
-		else if (oid_eq(&b->oid, &o->oid))
+		else if (oideq(&b->oid, &o->oid))
 			oidcpy(&result->blob.oid, &a->oid);
 		else if (S_ISREG(a->mode)) {
 			mmbuffer_t result_buf;
@@ -1368,7 +1357,7 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			switch (opt->recursive_variant) {
 			case MERGE_VARIANT_NORMAL:
 				oidcpy(&result->blob.oid, &a->oid);
-				if (!oid_eq(&a->oid, &b->oid))
+				if (!oideq(&a->oid, &b->oid))
 					result->clean = 0;
 				break;
 			case MERGE_VARIANT_OURS:
@@ -2836,15 +2825,15 @@ static int process_renames(struct merge_options *opt,
 			dst_other.mode = ren1->dst_entry->stages[other_stage].mode;
 			try_merge = 0;
 
-			if (oid_eq(&src_other.oid, &null_oid) &&
+			if (oideq(&src_other.oid, &null_oid) &&
 			    ren1->dir_rename_original_type == 'A') {
 				setup_rename_conflict_info(RENAME_VIA_DIR,
 							   opt, ren1, NULL);
-			} else if (oid_eq(&src_other.oid, &null_oid)) {
+			} else if (oideq(&src_other.oid, &null_oid)) {
 				setup_rename_conflict_info(RENAME_DELETE,
 							   opt, ren1, NULL);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
-				   oid_eq(&dst_other.oid, &ren1->pair->two->oid)) {
+				   oideq(&dst_other.oid, &ren1->pair->two->oid)) {
 				/*
 				 * Added file on the other side identical to
 				 * the file being renamed: clean merge.
@@ -2859,7 +2848,7 @@ static int process_renames(struct merge_options *opt,
 						      1, /* update_cache */
 						      0  /* update_wd    */))
 					clean_merge = -1;
-			} else if (!oid_eq(&dst_other.oid, &null_oid)) {
+			} else if (!oideq(&dst_other.oid, &null_oid)) {
 				/*
 				 * Probably not a clean merge, but it's
 				 * premature to set clean_merge to 0 here,
@@ -3037,7 +3026,7 @@ static int blob_unchanged(struct merge_options *opt,
 
 	if (a->mode != o->mode)
 		return 0;
-	if (oid_eq(&o->oid, &a->oid))
+	if (oideq(&o->oid, &a->oid))
 		return 1;
 	if (!renormalize)
 		return 0;
@@ -3478,7 +3467,7 @@ static int merge_trees_internal(struct merge_options *opt,
 					       opt->subtree_shift);
 	}
 
-	if (oid_eq(&merge_base->object.oid, &merge->object.oid)) {
+	if (oideq(&merge_base->object.oid, &merge->object.oid)) {
 		output(opt, 0, _("Already up to date!"));
 		*result = head;
 		return 1;
