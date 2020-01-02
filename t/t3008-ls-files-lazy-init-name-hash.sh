@@ -4,7 +4,7 @@ test_description='Test the lazy init name hash with various folder structures'
 
 . ./test-lib.sh
 
-if test 1 -eq $($GIT_BUILD_DIR/t/helper/test-tool online-cpus)
+if test 1 -eq $(test-tool online-cpus)
 then
 	skip_all='skipping lazy-init tests, single cpu'
 	test_done
