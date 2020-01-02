@@ -70,6 +70,8 @@ UI, Workflows & Features
  * Management of sparsely checked-out working tree has gained a
    dedicated "sparse-checkout" command.
 
+ * Miscellaneous small UX improvements on "git-p4".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -148,6 +150,8 @@ Performance, Internal Implementation, Development Support etc.
    by using an inefficient search algorithm, which has been corrected.
 
  * Redo "git name-rev" to avoid recursive calls.
+
+ * FreeBSD CI support via Cirrus-CI has been added.
 
 
 Fixes since v2.24
@@ -303,6 +307,14 @@ Fixes since v2.24
  * Assorted fixes to the directory traversal API.
    (merge 6836d2fe06 en/fill-directory-fixes later to maint).
 
+ * Forbid pathnames that the platform's filesystem cannot represent on
+   MinGW.
+   (merge 4dc42c6c18 js/mingw-reserved-filenames later to maint).
+
+ * "git rebase --signoff" stopped working when the command was written
+   in C, which has been corrected.
+   (merge 4fe7e43c53 en/rebase-signoff-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
@@ -338,3 +350,4 @@ Fixes since v2.24
    (merge cc2bd5c45d pb/submodule-doc-xref later to maint).
    (merge df5be01669 ja/doc-markup-cleanup later to maint).
    (merge 7c5cea7242 mr/bisect-save-pointer-to-const-string later to maint).
+   (merge 20a67e8ce9 js/use-test-tool-on-path later to maint).
