@@ -404,7 +404,7 @@ int mingw_mkdir(const char *path, int mode)
 	int ret;
 	wchar_t wpath[MAX_PATH];
 
-	if (!is_valid_win32_path(path)) {
+	if (!is_valid_win32_path(path, 0)) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -490,21 +490,21 @@ int mingw_open (const char *filename, int oflags, ...)
 	mode = va_arg(args, int);
 	va_end(args);
 
-	if (!is_valid_win32_path(filename)) {
+	if (!is_valid_win32_path(filename, !create)) {
 		errno = create ? EINVAL : ENOENT;
 		return -1;
 	}
-
-	if (filename && !strcmp(filename, "/dev/null"))
-		filename = "nul";
 
 	if ((oflags & O_APPEND) && !is_local_named_pipe_path(filename))
 		open_fn = mingw_open_append;
 	else
 		open_fn = _wopen;
 
-	if (xutftowcs_path(wfilename, filename) < 0)
+	if (filename && !strcmp(filename, "/dev/null"))
+		wcscpy(wfilename, L"nul");
+	else if (xutftowcs_path(wfilename, filename) < 0)
 		return -1;
+
 	fd = open_fn(wfilename, oflags, mode);
 
 	if (fd < 0 && (oflags & O_ACCMODE) != O_RDONLY && errno == EACCES) {
@@ -561,16 +561,18 @@ FILE *mingw_fopen (const char *filename, const char *otype)
 	int hide = needs_hiding(filename);
 	FILE *file;
 	wchar_t wfilename[MAX_PATH], wotype[4];
-	if (!is_valid_win32_path(filename)) {
+	if (filename && !strcmp(filename, "/dev/null"))
+		wcscpy(wfilename, L"nul");
+	else if (!is_valid_win32_path(filename, 1)) {
 		int create = otype && strchr(otype, 'w');
 		errno = create ? EINVAL : ENOENT;
 		return NULL;
-	}
-	if (filename && !strcmp(filename, "/dev/null"))
-		filename = "nul";
-	if (xutftowcs_path(wfilename, filename) < 0 ||
-		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+	} else if (xutftowcs_path(wfilename, filename) < 0)
 		return NULL;
+
+	if (xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		return NULL;
+
 	if (hide && !access(filename, F_OK) && set_hidden_flag(wfilename, 0)) {
 		error("could not unhide %s", filename);
 		return NULL;
@@ -588,16 +590,18 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 	int hide = needs_hiding(filename);
 	FILE *file;
 	wchar_t wfilename[MAX_PATH], wotype[4];
-	if (!is_valid_win32_path(filename)) {
+	if (filename && !strcmp(filename, "/dev/null"))
+		wcscpy(wfilename, L"nul");
+	else if (!is_valid_win32_path(filename, 1)) {
 		int create = otype && strchr(otype, 'w');
 		errno = create ? EINVAL : ENOENT;
 		return NULL;
-	}
-	if (filename && !strcmp(filename, "/dev/null"))
-		filename = "nul";
-	if (xutftowcs_path(wfilename, filename) < 0 ||
-		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+	} else if (xutftowcs_path(wfilename, filename) < 0)
 		return NULL;
+
+	if (xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
+		return NULL;
+
 	if (hide && !access(filename, F_OK) && set_hidden_flag(wfilename, 0)) {
 		error("could not unhide %s", filename);
 		return NULL;
@@ -2529,14 +2533,16 @@ static void setup_windows_environment(void)
 	}
 }
 
-int is_valid_win32_path(const char *path)
+int is_valid_win32_path(const char *path, int allow_literal_nul)
 {
+	const char *p = path;
 	int preceding_space_or_period = 0, i = 0, periods = 0;
 
 	if (!protect_ntfs)
 		return 1;
 
 	skip_dos_drive_prefix((char **)&path);
+	goto segment_start;
 
 	for (;;) {
 		char c = *(path++);
@@ -2551,7 +2557,83 @@ int is_valid_win32_path(const char *path)
 				return 1;
 
 			i = periods = preceding_space_or_period = 0;
-			continue;
+
+segment_start:
+			switch (*path) {
+			case 'a': case 'A': /* AUX */
+				if (((c = path[++i]) != 'u' && c != 'U') ||
+				    ((c = path[++i]) != 'x' && c != 'X')) {
+not_a_reserved_name:
+					path += i;
+					continue;
+				}
+				break;
+			case 'c': case 'C': /* COM<N>, CON, CONIN$, CONOUT$ */
+				if ((c = path[++i]) != 'o' && c != 'O')
+					goto not_a_reserved_name;
+				c = path[++i];
+				if (c == 'm' || c == 'M') { /* COM<N> */
+					if (!isdigit(path[++i]))
+						goto not_a_reserved_name;
+				} else if (c == 'n' || c == 'N') { /* CON */
+					c = path[i + 1];
+					if ((c == 'i' || c == 'I') &&
+					    ((c = path[i + 2]) == 'n' ||
+					     c == 'N') &&
+					    path[i + 3] == '$')
+						i += 3; /* CONIN$ */
+					else if ((c == 'o' || c == 'O') &&
+						 ((c = path[i + 2]) == 'u' ||
+						  c == 'U') &&
+						 ((c = path[i + 3]) == 't' ||
+						  c == 'T') &&
+						 path[i + 4] == '$')
+						i += 4; /* CONOUT$ */
+				} else
+					goto not_a_reserved_name;
+				break;
+			case 'l': case 'L': /* LPT<N> */
+				if (((c = path[++i]) != 'p' && c != 'P') ||
+				    ((c = path[++i]) != 't' && c != 'T') ||
+				    !isdigit(path[++i]))
+					goto not_a_reserved_name;
+				break;
+			case 'n': case 'N': /* NUL */
+				if (((c = path[++i]) != 'u' && c != 'U') ||
+				    ((c = path[++i]) != 'l' && c != 'L') ||
+				    (allow_literal_nul &&
+				     !path[i + 1] && p == path))
+					goto not_a_reserved_name;
+				break;
+			case 'p': case 'P': /* PRN */
+				if (((c = path[++i]) != 'r' && c != 'R') ||
+				    ((c = path[++i]) != 'n' && c != 'N'))
+					goto not_a_reserved_name;
+				break;
+			default:
+				continue;
+			}
+
+			/*
+			 * So far, this looks like a reserved name. Let's see
+			 * whether it actually is one: trailing spaces, a file
+			 * extension, or an NTFS Alternate Data Stream do not
+			 * matter, the name is still reserved if any of those
+			 * follow immediately after the actual name.
+			 */
+			i++;
+			if (path[i] == ' ') {
+				preceding_space_or_period = 1;
+				while (path[++i] == ' ')
+					; /* skip all spaces */
+			}
+
+			c = path[i];
+			if (c && c != '.' && c != ':' && c != '/' && c != '\\')
+				goto not_a_reserved_name;
+
+			/* contains reserved name */
+			return 0;
 		case '.':
 			periods++;
 			/* fallthru */
