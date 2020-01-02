@@ -5,7 +5,7 @@ NAME
 ----
 git-sparse-checkout - Initialize and modify the sparse-checkout
 configuration, which reduces the checkout to a set of paths
-given by a list of atterns.
+given by a list of patterns.
 
 
 SYNOPSIS
