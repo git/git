@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2019, #05; Thu, 26)
-X-master-at: 0a76bd7381ec0dbb7c43776eb6d1ac906bca29e6
-X-next-at: ca9f1ec99ff3ed584eec58c085a342c9c37d2919
+Subject: What's cooking in git.git (Jan 2020, #01; Thu, 2)
+X-master-at: 8679ef24ed64018bb62170c43ce73e0261c0600a
+X-next-at: 88dfdc41939891b16a5f8d00053e9c81d6d73f4e
 
-What's cooking in git.git (Dec 2019, #05; Thu, 26)
+What's cooking in git.git (Jan 2020, #01; Thu, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The early preview for the upcoming Git 2.25 has been tagged.
+The first release candidate for this cycle v2.25.0-rc1 has been
+tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,339 +23,18 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* am/pathspec-f-f-checkout (2019-12-04) 7 commits
-  (merged to 'next' on 2019-12-10 at 6b018bd997)
- + checkout, restore: support the --pathspec-from-file option
- + doc: restore: synchronize <pathspec> description
- + doc: checkout: synchronize <pathspec> description
- + doc: checkout: fix broken text reference
- + doc: checkout: remove duplicate synopsis
- + add: support the --pathspec-from-file option
- + cmd_add: prepare for next patch
-
- A few more commands learned the "--pathspec-from-file" command line
- option.
-
-
-* am/pathspec-from-file (2019-12-18) 1 commit
-  (merged to 'next' on 2019-12-19 at e250cc9b88)
- + commit: forbid --pathspec-from-file --all
-
- An earlier series to teach "--pathspec-from-file" to "git commit"
- forgot to make the option incompatible with "--all", which has been
- corrected.
-
-
-* dl/format-patch-notes-config-fixup (2019-12-18) 8 commits
-  (merged to 'next' on 2019-12-19 at 1abc6941e0)
- + notes.h: fix typos in comment
-  (merged to 'next' on 2019-12-16 at e4da5b93bb)
- + notes: break set_display_notes() into smaller functions
- + config/format.txt: clarify behavior of multiple format.notes
-  (merged to 'next' on 2019-12-10 at 2d8830090f)
- + format-patch: move git_config() before repo_init_revisions()
- + format-patch: use --notes behavior for format.notes
- + notes: extract logic into set_display_notes()
- + notes: create init_display_notes() helper
- + notes: rename to load_display_notes()
-
- "git format-patch" can take a set of configured format.notes values
- to specify which notes refs to use in the log message part of the
- output.  The behaviour of this was not consistent with multiple
- --notes command line options, which has been corrected.
-
-
-* ds/sparse-cone (2019-12-20) 21 commits
-  (merged to 'next' on 2019-12-20 at 4f33a10613)
- + sparse-checkout: improve OS ls compatibility
-  (merged to 'next' on 2019-12-16 at c840c1d816)
- + sparse-checkout: respect core.ignoreCase in cone mode
- + sparse-checkout: check for dirty status
- + sparse-checkout: update working directory in-process for 'init'
- + sparse-checkout: cone mode should not interact with .gitignore
- + sparse-checkout: write using lockfile
- + sparse-checkout: use in-process update for disable subcommand
- + sparse-checkout: update working directory in-process
- + sparse-checkout: sanitize for nested folders
- + unpack-trees: add progress to clear_ce_flags()
- + unpack-trees: hash less in cone mode
- + sparse-checkout: init and set in cone mode
- + sparse-checkout: use hashmaps for cone patterns
- + sparse-checkout: add 'cone' mode
- + trace2: add region in clear_ce_flags
- + sparse-checkout: create 'disable' subcommand
- + sparse-checkout: add '--stdin' option to set subcommand
- + sparse-checkout: 'set' subcommand
- + clone: add --sparse mode
- + sparse-checkout: create 'init' subcommand
- + sparse-checkout: create builtin with 'list' subcommand
-
- Management of sparsely checked-out working tree has gained a
- dedicated "sparse-checkout" command.
-
-
-* en/fill-directory-fixes (2019-12-20) 9 commits
-  (merged to 'next' on 2019-12-20 at 671cf755f4)
- + dir.c: use st_add3() for allocation size
-  (merged to 'next' on 2019-12-19 at 80ad3150d6)
- + dir: consolidate similar code in treat_directory()
- + dir: synchronize treat_leading_path() and read_directory_recursive()
- + dir: fix checks on common prefix directory
- + dir: break part of read_directory_recursive() out for reuse
- + dir: exit before wildcard fall-through if there is no wildcard
- + dir: remove stray quote character in comment
- + Revert "dir.c: make 'git-status --ignored' work within leading directories"
- + t3011: demonstrate directory traversal failures
-
- Assorted fixes to the directory traversal API.
-
-
-* ja/doc-markup-cleanup (2019-12-13) 2 commits
-  (merged to 'next' on 2019-12-19 at 61abb4a06d)
- + doc: indent multi-line items in list
- + doc: remove non pure ASCII characters
-
- Doc cleanup.
-
-
-* jc/drop-gen-hdrs (2019-12-13) 1 commit
-  (merged to 'next' on 2019-12-19 at 4867cc601b)
- + Makefile: drop GEN_HDRS
-
- Code cleanup.
-
-
-* js/add-p-in-c (2019-12-13) 19 commits
-  (merged to 'next' on 2019-12-19 at c0deed90ab)
- + built-in add -p: show helpful hint when nothing can be staged
- + built-in add -p: only show the applicable parts of the help text
- + built-in add -p: implement the 'q' ("quit") command
- + built-in add -p: implement the '/' ("search regex") command
- + built-in add -p: implement the 'g' ("goto") command
- + built-in add -p: implement hunk editing
- + strbuf: add a helper function to call the editor "on an strbuf"
- + built-in add -p: coalesce hunks after splitting them
- + built-in add -p: implement the hunk splitting feature
- + built-in add -p: show different prompts for mode changes and deletions
- + built-in app -p: allow selecting a mode change as a "hunk"
- + built-in add -p: handle deleted empty files
- + built-in add -p: support multi-file diffs
- + built-in add -p: offer a helpful error message when hunk navigation failed
- + built-in add -p: color the prompt and the help text
- + built-in add -p: adjust hunk headers as needed
- + built-in add -p: show colored hunks by default
- + built-in add -i: wire up the new C code for the `patch` command
- + built-in add -i: start implementing the `patch` functionality in C
- (this branch is used by js/patch-mode-in-others-in-c.)
-
- The effort to move "git-add--interactive" to C continues.
-
-
-* ln/userdiff-elixir (2019-12-13) 1 commit
-  (merged to 'next' on 2019-12-17 at fcd1f5f18b)
- + userdiff: remove empty subexpression from elixir regex
-
- Hotfix.
-
-
-* mr/bisect-save-pointer-to-const-string (2019-12-17) 1 commit
-  (merged to 'next' on 2019-12-19 at 03bb33ae74)
- + bisect--helper: convert `*_warning` char pointers to char arrays.
-
- Code cleanup.
-
-
-* mr/bisect-use-after-free (2019-12-11) 1 commit
-  (merged to 'next' on 2019-12-17 at 64cd5c4622)
- + bisect--helper: avoid use-after-free
-
- Use-after-free fix.
-
-
-* pb/submodule-doc-xref (2019-12-11) 1 commit
-  (merged to 'next' on 2019-12-19 at 3b52089f77)
- + gitmodules: link to gitsubmodules guide
-
- Doc update.
-
-
-* ra/t5150-depends-on-perl (2019-11-27) 1 commit
-  (merged to 'next' on 2019-12-16 at 69bb280692)
- + t5150: skip request-pull test if Perl is disabled
-
- Some Porcelain commands are written in Perl, and tests on them are
- expected not to work when the platform lacks a working perl.
-
-
-* rb/p4-lfs (2019-12-11) 1 commit
-  (merged to 'next' on 2019-12-19 at 0e6e76a524)
- + git-p4: honor lfs.storage configuration variable
-
- "git p4" used to ignore lfs.storage configuration variable, which
- has been corrected.
-
-
-* rs/ref-read-cleanup (2019-12-11) 2 commits
-  (merged to 'next' on 2019-12-19 at 9eb61e8d53)
- + remote: pass NULL to read_ref_full() because object ID is not needed
- + refs: pass NULL to refs_read_ref_full() because object ID is not needed
-
- Code cleanup.
-
-
-* rs/test-cleanup (2019-12-18) 5 commits
-  (merged to 'next' on 2019-12-19 at 116f80bacd)
- + t6030: don't create unused file
- + t5580: don't create unused file
- + t3501: don't create unused file
- + t7004: don't create unused file
- + t4256: don't create unused file
-
- Test cleanup.
-
-
-* rs/xdiff-ignore-ws-w-func-context (2019-12-19) 1 commit
-  (merged to 'next' on 2019-12-19 at 9e0cb7aa55)
- + t4015: improve coverage of function context test
-
- Extend test coverage for a recent fix.
-
-
-* sg/name-rev-wo-recursion (2019-12-09) 14 commits
-  (merged to 'next' on 2019-12-16 at ce57cd054f)
- + name-rev: cleanup name_ref()
- + name-rev: eliminate recursion in name_rev()
- + name-rev: use 'name->tip_name' instead of 'tip_name'
- + name-rev: drop name_rev()'s 'generation' and 'distance' parameters
- + name-rev: restructure creating/updating 'struct rev_name' instances
- + name-rev: restructure parsing commits and applying date cutoff
- + name-rev: pull out deref handling from the recursion
- + name-rev: extract creating/updating a 'struct name_rev' into a helper
- + t6120: add a test to cover inner conditions in 'git name-rev's name_rev()
- + name-rev: use sizeof(*ptr) instead of sizeof(type) in allocation
- + name-rev: avoid unnecessary cast in name_ref()
- + name-rev: use strbuf_strip_suffix() in get_rev_name()
- + t6120-describe: modernize the 'check_describe' helper
- + t6120-describe: correct test repo history graph in comment
-
- Redo "git name-rev" to avoid recursive calls.
-
---------------------------------------------------
-[New Topics]
-
-* hw/commit-advise-while-rejecting (2019-12-19) 1 commit
- - commit: honor advice.statusHints when rejecting an empty commit
-
- "git commit" gives output similar to "git status" when there is
- nothing to commit, but without honoring the advise.statusHints
- configuration variable, which has been corrected.
-
-
-* yz/p4-py3 (2019-12-17) 14 commits
- - ci: also run linux-gcc pipeline with python3.5 environment
- - git-p4: use python3's input() everywhere
- - git-p4: simplify regex pattern generation for parsing diff-tree
- - git-p4: use dict.items() iteration for python3 compatibility
- - git-p4: use functools.reduce instead of reduce
- - git-p4: fix freezing while waiting for fast-import progress
- - git-p4: use marshal format version 2 when sending to p4
- - git-p4: open .gitp4-usercache.txt in text mode
- - git-p4: convert path to unicode before processing them
- - git-p4: encode/decode communication with git for python3
- - git-p4: encode/decode communication with p4 for python3
- - git-p4: remove string type aliasing
- - git-p4: change the expansion test from basestring to list
- - git-p4: make python2.7 the oldest supported version
-
- Update "git p4" to work with Python 3.
-
-
-* hi/gpg-mintrustlevel (2019-12-24) 1 commit
- - gpg-interface: add minTrustLevel as a configuration option
-
- gpg.minTrustLevel configuration variable has been introduced to
- tell various signature verification codepaths the required minimum
- trust level.
-
- Will merge to 'next'.
-
-
-* sg/completion-worktree (2019-12-19) 6 commits
-  (merged to 'next' on 2019-12-25 at 42c895ab3b)
- + completion: list paths and refs for 'git worktree add'
- + completion: list existing working trees for 'git worktree' subcommands
- + completion: simplify completing 'git worktree' subcommands and options
- + completion: return the index of found word from __git_find_on_cmdline()
- + completion: clean up the __git_find_on_cmdline() helper function
- + t9902-completion: add tests for the __git_find_on_cmdline() helper
-
- The command line completion (in contrib/) learned to complete
- subcommands and arguments to "git worktree".
-
- Will cook in 'next'.
-
-
-* dl/credential-netrc (2019-12-20) 2 commits
-  (merged to 'next' on 2019-12-25 at 1fd27f81ac)
- + contrib/credential/netrc: work outside a repo
- + contrib/credential/netrc: make PERL_PATH configurable
-
- Sample credential helper for using .netrc has been updated to work
- out of the box.
-
- Will cook in 'next'.
-
-
-* dl/test-must-fail-fixes (2019-12-20) 15 commits
-  (merged to 'next' on 2019-12-25 at 3ef7c70bc5)
- + t1507: inline full_name()
- + t1507: run commands within test_expect_success
- + t1507: stop losing return codes of git commands
- + t1501: remove use of `test_might_fail cp`
- + t1409: use test_path_is_missing()
- + t1409: let sed open its own input file
- + t1307: reorder `nongit test_must_fail`
- + t1306: convert `test_might_fail rm` to `rm -f`
- + t0020: use ! check_packed_refs_marked
- + t0020: don't use `test_must_fail has_cr`
- + t0003: don't use `test_must_fail attr_check`
- + t0003: use test_must_be_empty()
- + t0003: use named parameters in attr_check()
- + t0000: replace test_must_fail with run_sub_test_lib_test_err()
- + t/lib-git-p4: use test_path_is_missing()
-
- Test clean-up.
-
- Will cook in 'next'.
+* bk/p4-misc-usability (2019-12-16) 2 commits
+  (merged to 'next' on 2019-12-25 at b4789bcb08)
+ + git-p4: show detailed help when parsing options fail
+ + git-p4: yes/no prompts should sanitize user text
+ (this branch is used by bk/p4-exception-cleanup.)
+
+ Miscellaneous small UX improvements on "git-p4".
 
 
 * em/freebsd-cirrus-ci (2019-12-20) 1 commit
   (merged to 'next' on 2019-12-25 at b6b609fbf0)
  + CI: add FreeBSD CI support via Cirrus-CI
-
- Will merge to 'master'.
-
-
-* en/rebase-backend (2019-12-26) 15 commits
- - rebase: change the default backend from "am" to "merge"
- - rebase: make the backend configurable via config setting
- - rebase tests: repeat some tests using the merge backend instead of am
- - rebase tests: mark tests specific to the am-backend with --am
- - git-prompt: change the prompt for interactive-based rebases
- - rebase: add an --am option
- - rebase: move incompatibility checks between backend options a bit earlier
- - git-rebase.txt: add more details about behavioral differences of backends
- - rebase: allow more types of rebases to fast-forward
- - t3432: make these tests work with either am or merge backends
- - rebase: fix handling of restrict_revision
- - rebase: make sure to pass along the quiet flag to the sequencer
- - rebase, sequencer: remove the broken GIT_QUIET handling
- - t3406: simplify an already simple test
- - rebase: extend the options for handling of empty commits
-
- "git rebase" has learned to use the sequencer backend by default,
- while allowing "--am" option to go back to the traditional "am"
- backend.
 
 
 * en/rebase-signoff-fix (2019-12-20) 1 commit
@@ -364,103 +44,134 @@ of the repositories listed at
  "git rebase --signoff" stopped working when the command was written
  in C, which has been corrected.
 
- Will merge to 'master'.
-
-
-* bc/hash-independent-tests-part-7 (2019-12-24) 20 commits
- - t5604: make hash independent
- - t5601: switch into repository to hash object
- - t5562: use $ZERO_OID
- - t5540: make hash size independent
- - t5537: make hash size independent
- - t5530: compute results based on object length
- - t5512: abstract away SHA-1-specific constants
- - t5510: make hash size independent
- - t5504: make hash algorithm independent
- - t5324: make hash size independent
- - t5319: make test work with SHA-256
- - t5319: change invalid offset for SHA-256 compatibility
- - t5318: update for SHA-256
- - t4300: abstract away SHA-1-specific constants
- - t4204: make hash size independent
- - t4202: abstract away SHA-1-specific constants
- - t4200: make hash size independent
- - t4134: compute appropriate length constant
- - t4066: compute index line in diffs
- - t4054: make hash-size independent
-
- Preparation of test scripts for the day when the object names will
- use SHA-256 continues.
-
- Will merge to 'next'.
-
 
 * js/mingw-reserved-filenames (2019-12-21) 2 commits
- - mingw: refuse paths containing reserved names
- - mingw: short-circuit the conversion of `/dev/null` to UTF-16
+  (merged to 'next' on 2019-12-30 at 5b814fd785)
+ + mingw: refuse paths containing reserved names
+ + mingw: short-circuit the conversion of `/dev/null` to UTF-16
 
  Forbid pathnames that the platform's filesystem cannot represent on
  MinGW.
 
+
+* js/use-test-tool-on-path (2019-12-27) 1 commit
+  (merged to 'next' on 2019-12-30 at fe59c1996d)
+ + t3008: find test-tool through path lookup
+
+ Test fix.
+
+--------------------------------------------------
+[New Topics]
+
+* dl/merge-autostash (2019-12-26) 17 commits
+ - pull: pass --autostash to merge
+ - t5520: make test_pull_autostash() accept expect_parent_num
+ - merge: teach --autostash option
+ - sequencer: unlink autostash in apply_autostash()
+ - sequencer: extract perform_autostash() from rebase
+ - rebase: generify create_autostash()
+ - rebase: extract create_autostash()
+ - reset: extract reset_head() from rebase
+ - rebase: generify reset_head()
+ - rebase: use apply_autostash() from sequencer.c
+ - sequencer: make apply_rebase() accept a path
+ - rebase: use read_oneliner()
+ - sequencer: make read_oneliner() extern
+ - sequencer: configurably warn on non-existent files
+ - sequencer: use file strbuf for read_oneliner()
+ - t7600: use test_write_lines()
+ - Makefile: alphabetically sort += lists
+
+ "git merge" learns the "--autostash" option.
+
+
+* dl/test-must-fail-fixes-2 (2019-12-27) 16 commits
+ - t4124: let sed open its own files
+ - t4124: only mark git command with test_must_fail
+ - t3507: use test_path_is_missing()
+ - t3507: fix indentation
+ - t3504: do check for conflict marker after failed cherry-pick
+ - t3419: stop losing return code of git command
+ - t3415: increase granularity of test_auto_{fixup,squash}()
+ - t3415: stop losing return codes of git commands
+ - t3310: extract common no_notes_merge_left()
+ - t3030: use test_path_is_missing()
+ - t2018: replace "sha" with "oid"
+ - t2018: don't lose return code of git commands
+ - t2018: teach do_checkout() to accept `!` arg
+ - t2018: use test_must_fail for failing git commands
+ - t2018: add space between function name and ()
+ - t2018: remove trailing space from test description
+
+ Test updates.
+
+ Not quite.
+ cf. <CAPig+cQo1nbRo=n8-XOtycGijj3k1y_Zozu7VW-WTSBB9LncqQ@mail.gmail.com>
+ cf. <86lfqt36ah.fsf@gmail.com>
+
+
+* jn/promote-proto2-to-default (2019-12-27) 5 commits
+ - fetch: default to protocol version 2
+ - protocol test: let protocol.version override GIT_TEST_PROTOCOL_VERSION
+ - test: request GIT_TEST_PROTOCOL_VERSION=0 when appropriate
+ - config doc: protocol.version is not experimental
+ - fetch test: use more robust test for filtered objects
+ (this branch uses jn/test-lint-one-shot-export-to-shell-function.)
+
+ The transport protocol version 2 becomes the default one.
+
+
+* ds/sparse-list-in-cone-mode (2019-12-30) 2 commits
+ - sparse-checkout: document interactions with submodules
+ - sparse-checkout: list directories in cone mode
+
+ "git sparse-checkout list" subcommand learned to give its output in
+ a more concise form when the "cone" mode is in effect.
+
+ Will merge to 'next'.
+
+
+* am/test-pathspec-f-f-error-cases (2020-01-02) 1 commit
+ - t: add tests for error conditions with --pathspec-from-file
+
+ More tests.
+
+ Will merge to 'next'.
+
+
+* ds/sparse-cone (2020-01-02) 1 commit
+ - sparse-checkout: use extern for global variables
+
+ Code cleanup.
+
  Will merge to 'next' and then to 'master'.
 
 
-* bk/p4-exception-cleanup (2019-12-16) 2 commits
- - git-p4: failure because of RCS keywords should show help
- - git-p4: wrap patchRCSKeywords test to revert changes on failure
- (this branch uses bk/p4-misc-usability.)
-
-
-* ew/packfile-syscall-optim (2019-12-26) 2 commits
- - packfile: replace lseek+read with pread
- - packfile: remove redundant fcntl F_GETFD/F_SETFD
+* en/merge-recursive-oid-eq-simplify (2020-01-02) 1 commit
+ - merge-recursive: remove unnecessary oid_eq function
 
  Code cleanup.
 
  Will merge to 'next'.
 
 
-* jn/test-lint-one-shot-export-to-shell-function (2019-12-26) 2 commits
- - t/check-non-portable-shell: detect "FOO= shell_func", too
- - fetch test: avoid use of "VAR= cmd" with a shell function
- (this branch is used by jn/promote-proto2-to-default.)
+* jt/sha1-file-remove-oi-skip-cached (2020-01-02) 1 commit
+ - sha1-file: remove OBJECT_INFO_SKIP_CACHED
 
- The test-lint machinery knew to check "VAR=VAL shell_function"
- construct, but did not check "VAR= shell_funciton", which has been
- corrected.
+ has_object_file() said "no" given an object registered to the
+ system via pretend_object_file(), making it inconsistent with
+ read_object_file(), causing lazy fetch to attempt fetching an
+ empty tree from promisor remotes.
 
  Will merge to 'next'.
 
 
-* js/add-p-leftover-bits (2019-12-24) 9 commits
- - ci: include the built-in `git add -i` in the `linux-gcc` job
- - built-in add -p: handle Escape sequences more efficiently
- - built-in add -p: handle Escape sequences in interactive.singlekey mode
- - built-in add -p: respect the `interactive.singlekey` config setting
- - terminal: add a new function to read a single keystroke
- - terminal: accommodate Git for Windows' default terminal
- - terminal: make the code of disable_echo() reusable
- - built-in add -p: handle diff.algorithm
- - built-in add -p: support interactive.diffFilter
- (this branch uses js/patch-mode-in-others-in-c.)
+* ds/commit-graph-set-size-mult (2020-01-02) 1 commit
+ - commit-graph: prefer default size_mult when given zero
 
-
-* js/mingw-loosen-overstrict-tree-entry-checks (2019-12-26) 1 commit
- - mingw: only test index entries for backslashes, not tree entries
-
- An earlier update to Git for Windows declared that a tree object is
- invalid if it has a path component with backslash in it, which was
- overly strict, which has been corrected.  The only protection the
- Windows users need is to prevent such path (or any path that their
- filesystem cannot check out) from entering the index.
-
-
-
-* pb/clarify-line-log-doc (2019-12-26) 2 commits
- - doc: log, gitk: line-log arguments must exist in starting revision
- - doc: log, gitk: document accepted line-log diff formats
-
- Doc update.
+ The code to write split commit-graph file(s) upon fetching computed
+ bogus value for the parameter used in splitting the resulting
+ files, which has been corrected.
 
  Will merge to 'next'.
 
@@ -608,6 +319,220 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* hw/commit-advise-while-rejecting (2019-12-19) 1 commit
+  (merged to 'next' on 2019-12-30 at e26700d582)
+ + commit: honor advice.statusHints when rejecting an empty commit
+
+ "git commit" gives output similar to "git status" when there is
+ nothing to commit, but without honoring the advise.statusHints
+ configuration variable, which has been corrected.
+
+ Will cook in 'next'.
+
+
+* yz/p4-py3 (2019-12-17) 14 commits
+  (merged to 'next' on 2019-12-30 at cd67de932d)
+ + ci: also run linux-gcc pipeline with python3.5 environment
+ + git-p4: use python3's input() everywhere
+ + git-p4: simplify regex pattern generation for parsing diff-tree
+ + git-p4: use dict.items() iteration for python3 compatibility
+ + git-p4: use functools.reduce instead of reduce
+ + git-p4: fix freezing while waiting for fast-import progress
+ + git-p4: use marshal format version 2 when sending to p4
+ + git-p4: open .gitp4-usercache.txt in text mode
+ + git-p4: convert path to unicode before processing them
+ + git-p4: encode/decode communication with git for python3
+ + git-p4: encode/decode communication with p4 for python3
+ + git-p4: remove string type aliasing
+ + git-p4: change the expansion test from basestring to list
+ + git-p4: make python2.7 the oldest supported version
+
+ Update "git p4" to work with Python 3.
+
+ Will cook in 'next'.
+
+
+* hi/gpg-mintrustlevel (2019-12-27) 1 commit
+  (merged to 'next' on 2019-12-30 at 6c790280d2)
+ + gpg-interface: add minTrustLevel as a configuration option
+
+ gpg.minTrustLevel configuration variable has been introduced to
+ tell various signature verification codepaths the required minimum
+ trust level.
+
+ Will cook in 'next'.
+
+
+* sg/completion-worktree (2019-12-19) 6 commits
+  (merged to 'next' on 2019-12-25 at 42c895ab3b)
+ + completion: list paths and refs for 'git worktree add'
+ + completion: list existing working trees for 'git worktree' subcommands
+ + completion: simplify completing 'git worktree' subcommands and options
+ + completion: return the index of found word from __git_find_on_cmdline()
+ + completion: clean up the __git_find_on_cmdline() helper function
+ + t9902-completion: add tests for the __git_find_on_cmdline() helper
+
+ The command line completion (in contrib/) learned to complete
+ subcommands and arguments to "git worktree".
+
+ Will cook in 'next'.
+
+
+* dl/credential-netrc (2019-12-20) 2 commits
+  (merged to 'next' on 2019-12-25 at 1fd27f81ac)
+ + contrib/credential/netrc: work outside a repo
+ + contrib/credential/netrc: make PERL_PATH configurable
+
+ Sample credential helper for using .netrc has been updated to work
+ out of the box.
+
+ Will cook in 'next'.
+
+
+* dl/test-must-fail-fixes (2019-12-20) 15 commits
+  (merged to 'next' on 2019-12-25 at 3ef7c70bc5)
+ + t1507: inline full_name()
+ + t1507: run commands within test_expect_success
+ + t1507: stop losing return codes of git commands
+ + t1501: remove use of `test_might_fail cp`
+ + t1409: use test_path_is_missing()
+ + t1409: let sed open its own input file
+ + t1307: reorder `nongit test_must_fail`
+ + t1306: convert `test_might_fail rm` to `rm -f`
+ + t0020: use ! check_packed_refs_marked
+ + t0020: don't use `test_must_fail has_cr`
+ + t0003: don't use `test_must_fail attr_check`
+ + t0003: use test_must_be_empty()
+ + t0003: use named parameters in attr_check()
+ + t0000: replace test_must_fail with run_sub_test_lib_test_err()
+ + t/lib-git-p4: use test_path_is_missing()
+
+ Test clean-up.
+
+ Will cook in 'next'.
+
+
+* en/rebase-backend (2019-12-26) 15 commits
+  (merged to 'next' on 2019-12-30 at 5b58e268d6)
+ + rebase: change the default backend from "am" to "merge"
+ + rebase: make the backend configurable via config setting
+ + rebase tests: repeat some tests using the merge backend instead of am
+ + rebase tests: mark tests specific to the am-backend with --am
+ + git-prompt: change the prompt for interactive-based rebases
+ + rebase: add an --am option
+ + rebase: move incompatibility checks between backend options a bit earlier
+ + git-rebase.txt: add more details about behavioral differences of backends
+ + rebase: allow more types of rebases to fast-forward
+ + t3432: make these tests work with either am or merge backends
+ + rebase: fix handling of restrict_revision
+ + rebase: make sure to pass along the quiet flag to the sequencer
+ + rebase, sequencer: remove the broken GIT_QUIET handling
+ + t3406: simplify an already simple test
+ + rebase: extend the options for handling of empty commits
+
+ "git rebase" has learned to use the sequencer backend by default,
+ while allowing "--am" option to go back to the traditional "am"
+ backend.
+
+ Will cook in 'next'.
+
+
+* bc/hash-independent-tests-part-7 (2019-12-24) 20 commits
+  (merged to 'next' on 2019-12-30 at 0eedb894ba)
+ + t5604: make hash independent
+ + t5601: switch into repository to hash object
+ + t5562: use $ZERO_OID
+ + t5540: make hash size independent
+ + t5537: make hash size independent
+ + t5530: compute results based on object length
+ + t5512: abstract away SHA-1-specific constants
+ + t5510: make hash size independent
+ + t5504: make hash algorithm independent
+ + t5324: make hash size independent
+ + t5319: make test work with SHA-256
+ + t5319: change invalid offset for SHA-256 compatibility
+ + t5318: update for SHA-256
+ + t4300: abstract away SHA-1-specific constants
+ + t4204: make hash size independent
+ + t4202: abstract away SHA-1-specific constants
+ + t4200: make hash size independent
+ + t4134: compute appropriate length constant
+ + t4066: compute index line in diffs
+ + t4054: make hash-size independent
+
+ Preparation of test scripts for the day when the object names will
+ use SHA-256 continues.
+
+ Will cook in 'next'.
+
+
+* bk/p4-exception-cleanup (2019-12-16) 2 commits
+ - git-p4: failure because of RCS keywords should show help
+ - git-p4: wrap patchRCSKeywords test to revert changes on failure
+
+ Will discard for now.
+
+
+* ew/packfile-syscall-optim (2019-12-26) 2 commits
+  (merged to 'next' on 2019-12-30 at ada15abf22)
+ + packfile: replace lseek+read with pread
+ + packfile: remove redundant fcntl F_GETFD/F_SETFD
+
+ Code cleanup.
+
+ Will cook in 'next'.
+
+
+* jn/test-lint-one-shot-export-to-shell-function (2019-12-27) 3 commits
+  (merged to 'next' on 2019-12-30 at d08f039473)
+ + fetch test: mark test of "skipping" haves as v0-only
+ + t/check-non-portable-shell: detect "FOO= shell_func", too
+ + fetch test: avoid use of "VAR= cmd" with a shell function
+ (this branch is used by jn/promote-proto2-to-default.)
+
+ The test-lint machinery knew to check "VAR=VAL shell_function"
+ construct, but did not check "VAR= shell_funciton", which has been
+ corrected.
+
+ Will cook in 'next'.
+
+
+* js/add-p-leftover-bits (2019-12-24) 9 commits
+ - ci: include the built-in `git add -i` in the `linux-gcc` job
+ - built-in add -p: handle Escape sequences more efficiently
+ - built-in add -p: handle Escape sequences in interactive.singlekey mode
+ - built-in add -p: respect the `interactive.singlekey` config setting
+ - terminal: add a new function to read a single keystroke
+ - terminal: accommodate Git for Windows' default terminal
+ - terminal: make the code of disable_echo() reusable
+ - built-in add -p: handle diff.algorithm
+ - built-in add -p: support interactive.diffFilter
+ (this branch uses js/patch-mode-in-others-in-c.)
+
+
+* js/mingw-loosen-overstrict-tree-entry-checks (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-02 at 3088a0ccf1)
+ + mingw: only test index entries for backslashes, not tree entries
+
+ An earlier update to Git for Windows declared that a tree object is
+ invalid if it has a path component with backslash in it, which was
+ overly strict, which has been corrected.  The only protection the
+ Windows users need is to prevent such path (or any path that their
+ filesystem cannot check out) from entering the index.
+
+ Will merge to 'master'.
+
+
+* pb/clarify-line-log-doc (2019-12-26) 2 commits
+  (merged to 'next' on 2019-12-30 at 7a4e15a436)
+ + doc: log, gitk: line-log arguments must exist in starting revision
+ + doc: log, gitk: document accepted line-log diff formats
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
 * pw/advise-rebase-skip (2019-12-06) 9 commits
  - rebase -i: leave CHERRY_PICK_HEAD when there are conflicts
  - rebase: fix advice when a fixup creates an empty commit
@@ -623,34 +548,24 @@ of the repositories listed at
  or amending during an interrupted cherry-pick was broken during the
  rewrite of "git rebase" in C, which has been corrected.
 
- Needs review.
+ What's the status of this one?
  The tip two are still RFC.
 
 
-* bk/p4-misc-usability (2019-12-16) 2 commits
-  (merged to 'next' on 2019-12-25 at b4789bcb08)
- + git-p4: show detailed help when parsing options fail
- + git-p4: yes/no prompts should sanitize user text
- (this branch is used by bk/p4-exception-cleanup.)
-
- Miscellaneous small UX improvements on "git-p4".
-
- Will merge to 'master'.
-
-
 * js/patch-mode-in-others-in-c (2019-12-21) 7 commits
- - commit --interactive: make it work with the built-in `add -i`
- - built-in add -p: implement the "worktree" patch modes
- - built-in add -p: implement the "checkout" patch modes
- - built-in stash: use the built-in `git add -p` if so configured
- - legacy stash -p: respect the add.interactive.usebuiltin setting
- - built-in add -p: implement the "stash" and "reset" patch modes
- - built-in add -p: prepare for patch modes other than "stage"
+  (merged to 'next' on 2019-12-30 at a767b89288)
+ + commit --interactive: make it work with the built-in `add -i`
+ + built-in add -p: implement the "worktree" patch modes
+ + built-in add -p: implement the "checkout" patch modes
+ + built-in stash: use the built-in `git add -p` if so configured
+ + legacy stash -p: respect the add.interactive.usebuiltin setting
+ + built-in add -p: implement the "stash" and "reset" patch modes
+ + built-in add -p: prepare for patch modes other than "stage"
  (this branch is used by js/add-p-leftover-bits.)
 
  The effort to move "git-add--interactive" to C continues.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jk/packfile-reuse-cleanup (2019-10-23) 9 commits
@@ -684,3 +599,5 @@ of the repositories listed at
  cherry-pick better.
 
  Superseded by pw/advise-rebase-skip
+
+
