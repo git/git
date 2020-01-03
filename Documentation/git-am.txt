@@ -190,8 +190,8 @@ the commit, after stripping common prefix "[PATCH <anything>]".
 The "Subject: " line is supposed to concisely describe what the
 commit is about in one line of text.
 
-"From: " and "Subject: " lines starting the body override the respective
-commit author name and title values taken from the headers.
+"From: ", "Date: ", and "Subject: " lines starting the body override the
+respective commit author name and title values taken from the headers.
 
 The commit message is formed by the title taken from the
 "Subject: ", a blank line and the body of the message up to
