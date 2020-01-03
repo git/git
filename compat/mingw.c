@@ -1109,18 +1109,16 @@ char *mingw_getcwd(char *pointer, int len)
 {
 	wchar_t cwd[MAX_PATH], wpointer[MAX_PATH];
 	DWORD ret = GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
+	HANDLE hnd;
 
 	if (!ret || ret >= ARRAY_SIZE(cwd)) {
 		errno = ret ? ENAMETOOLONG : err_win_to_posix(GetLastError());
 		return NULL;
 	}
-	ret = GetLongPathNameW(cwd, wpointer, ARRAY_SIZE(wpointer));
-	if (!ret && GetLastError() == ERROR_ACCESS_DENIED) {
-		HANDLE hnd = CreateFileW(cwd, 0,
-			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
-			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-		if (hnd == INVALID_HANDLE_VALUE)
-			return NULL;
+	hnd = CreateFileW(cwd, 0,
+			  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+			  OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	if (hnd != INVALID_HANDLE_VALUE) {
 		ret = GetFinalPathNameByHandleW(hnd, wpointer, ARRAY_SIZE(wpointer), 0);
 		CloseHandle(hnd);
 		if (!ret || ret >= ARRAY_SIZE(wpointer))
@@ -1129,9 +1127,7 @@ char *mingw_getcwd(char *pointer, int len)
 			return NULL;
 		return pointer;
 	}
-	if (!ret || ret >= ARRAY_SIZE(wpointer))
-		return NULL;
-	if (xwcstoutf(pointer, wpointer, len) < 0)
+	if (xwcstoutf(pointer, cwd, len) < 0)
 		return NULL;
 	convert_slashes(pointer);
 	return pointer;
