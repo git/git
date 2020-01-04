@@ -13,20 +13,25 @@ SYNOPSIS
 	   [-F <file> | -m <msg>] [--reset-author] [--allow-empty]
 	   [--allow-empty-message] [--no-verify] [-e] [--author=<author>]
 	   [--date=<date>] [--cleanup=<mode>] [--[no-]status]
-	   [-i | -o] [-S[<keyid>]] [--] [<file>...]
+	   [-i | -o] [--pathspec-from-file=<file> [--pathspec-file-nul]]
+	   [-S[<keyid>]] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
-Stores the current contents of the index in a new commit along
-with a log message from the user describing the changes.
+Create a new commit containing the current contents of the index and
+the given log message describing the changes. The new commit is a
+direct child of HEAD, usually the tip of the current branch, and the
+branch is updated to point to it (unless no branch is associated with
+the working tree, in which case HEAD is "detached" as described in
+linkgit:git-checkout[1]).
 
-The content to be added can be specified in several ways:
+The content to be committed can be specified in several ways:
 
-1. by using 'git add' to incrementally "add" changes to the
-   index before using the 'commit' command (Note: even modified
-   files must be "added");
+1. by using linkgit:git-add[1] to incrementally "add" changes to the
+   index before using the 'commit' command (Note: even modified files
+   must be "added");
 
-2. by using 'git rm' to remove files from the working tree
+2. by using linkgit:git-rm[1] to remove files from the working tree
    and the index, again before using the 'commit' command;
 
 3. by listing files as arguments to the 'commit' command
@@ -144,6 +149,8 @@ OPTIONS
 	Use the given <msg> as the commit message.
 	If multiple `-m` options are given, their values are
 	concatenated as separate paragraphs.
++
+The `-m` option is mutually exclusive with `-c`, `-C`, and `-F`.
 
 -t <file>::
 --template=<file>::
@@ -196,11 +203,12 @@ whitespace::
 verbatim::
 	Do not change the message at all.
 scissors::
-	Same as `whitespace`, except that everything from (and
-	including) the line
-	"`# ------------------------ >8 ------------------------`"
-	is truncated if the message is to be edited. "`#`" can be
-	customized with core.commentChar.
+	Same as `whitespace` except that everything from (and including)
+	the line found below is truncated, if the message is to be edited.
+	"`#`" can be customized with core.commentChar.
+
+		# ------------------------ >8 ------------------------
+
 default::
 	Same as `strip` if the message is to be edited.
 	Otherwise `whitespace`.
@@ -271,22 +279,37 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 	already been staged. If used together with `--allow-empty`
 	paths are also not required, and an empty commit will be created.
 
+--pathspec-from-file=<file>::
+	Pathspec is passed in `<file>` instead of commandline args. If
+	`<file>` is exactly `-` then standard input is used. Pathspec
+	elements are separated by LF or CR/LF. Pathspec elements can be
+	quoted as explained for the configuration variable `core.quotePath`
+	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	global `--literal-pathspecs`.
+
+--pathspec-file-nul::
+	Only meaningful with `--pathspec-from-file`. Pathspec elements are
+	separated with NUL character and all other characters are taken
+	literally (including newlines and quotes).
+
 -u[<mode>]::
 --untracked-files[=<mode>]::
 	Show untracked files.
 +
+--
 The mode parameter is optional (defaults to 'all'), and is used to
 specify the handling of untracked files; when -u is not used, the
 default is 'normal', i.e. show untracked files and directories.
-+
+
 The possible options are:
-+
+
 	- 'no'     - Show no untracked files
 	- 'normal' - Shows untracked files and directories
 	- 'all'    - Also shows individual files in untracked directories.
-+
+
 The default can be changed using the status.showUntrackedFiles
 configuration variable documented in linkgit:git-config[1].
+--
 
 -v::
 --verbose::
@@ -336,12 +359,13 @@ changes to tracked files.
 \--::
 	Do not interpret any more arguments as options.
 
-<file>...::
-	When files are given on the command line, the command
-	commits the contents of the named files, without
-	recording the changes already staged.  The contents of
-	these files are also staged for the next commit on top
-	of what have been staged before.
+<pathspec>...::
+	When pathspec is given on the command line, commit the contents of
+	the files that match the pathspec without recording the changes
+	already added to the index. The contents of these files are also
+	staged for the next commit on top of what have been staged before.
++
+For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
 :git-commit: 1
 include::date-formats.txt[]
@@ -352,7 +376,7 @@ When recording your own work, the contents of modified files in
 your working tree are temporarily stored to a staging area
 called the "index" with 'git add'.  A file can be
 reverted back, only in the index but not in the working tree,
-to that of the last commit with `git reset HEAD -- <file>`,
+to that of the last commit with `git restore --staged <file>`,
 which effectively reverts 'git add' and prevents the changes to
 this file from participating in the next commit.  After building
 the state to be committed incrementally with these commands,

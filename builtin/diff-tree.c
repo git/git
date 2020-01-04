@@ -1,15 +1,18 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "diff.h"
 #include "commit.h"
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
+#include "repository.h"
 
 static struct rev_info log_tree_opt;
 
-static int diff_tree_commit_sha1(const struct object_id *oid)
+static int diff_tree_commit_oid(const struct object_id *oid)
 {
-	struct commit *commit = lookup_commit_reference(oid);
+	struct commit *commit = lookup_commit_reference(the_repository, oid);
 	if (!commit)
 		return -1;
 	return log_tree_commit(&log_tree_opt, commit);
@@ -23,7 +26,7 @@ static int stdin_diff_commit(struct commit *commit, const char *p)
 
 	/* Graft the fake parents locally to the commit */
 	while (isspace(*p++) && !parse_oid_hex(p, &oid, &p)) {
-		struct commit *parent = lookup_commit(&oid);
+		struct commit *parent = lookup_commit(the_repository, &oid);
 		if (!pptr) {
 			/* Free the real parent list */
 			free_commit_list(commit->parents);
@@ -44,13 +47,13 @@ static int stdin_diff_trees(struct tree *tree1, const char *p)
 	struct tree *tree2;
 	if (!isspace(*p++) || parse_oid_hex(p, &oid, &p) || *p)
 		return error("Need exactly two trees, separated by a space");
-	tree2 = lookup_tree(&oid);
+	tree2 = lookup_tree(the_repository, &oid);
 	if (!tree2 || parse_tree(tree2))
 		return -1;
 	printf("%s %s\n", oid_to_hex(&tree1->object.oid),
 			  oid_to_hex(&tree2->object.oid));
-	diff_tree_sha1(tree1->object.oid.hash, tree2->object.oid.hash,
-		       "", &log_tree_opt.diffopt);
+	diff_tree_oid(&tree1->object.oid, &tree2->object.oid,
+		      "", &log_tree_opt.diffopt);
 	log_tree_diff_flush(&log_tree_opt);
 	return 0;
 }
@@ -67,7 +70,7 @@ static int diff_tree_stdin(char *line)
 	line[len-1] = 0;
 	if (parse_oid_hex(line, &oid, &p))
 		return -1;
-	obj = parse_object(&oid);
+	obj = parse_object(the_repository, &oid);
 	if (!obj)
 		return -1;
 	if (obj->type == OBJ_COMMIT)
@@ -75,14 +78,18 @@ static int diff_tree_stdin(char *line)
 	if (obj->type == OBJ_TREE)
 		return stdin_diff_trees((struct tree *)obj, p);
 	error("Object %s is a %s, not a commit or tree",
-	      oid_to_hex(&oid), typename(obj->type));
+	      oid_to_hex(&oid), type_name(obj->type));
 	return -1;
 }
 
 static const char diff_tree_usage[] =
-"git diff-tree [--stdin] [-m] [-c] [--cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
+"git diff-tree [--stdin] [-m] [-c | --cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
 "[<common-diff-options>] <tree-ish> [<tree-ish>] [<path>...]\n"
 "  -r            diff recursively\n"
+"  -c            show combined diff for merge commits\n"
+"  --cc          show combined diff for merge commits removing uninteresting hunks\n"
+"  --combined-all-paths\n"
+"                show name of file in all parents for combined diffs\n"
 "  --root        include the initial commit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
 
@@ -98,16 +105,19 @@ static void diff_tree_tweak_rev(struct rev_info *rev, struct setup_revision_opt 
 
 int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 {
-	int nr_sha1;
 	char line[1000];
 	struct object *tree1, *tree2;
 	static struct rev_info *opt = &log_tree_opt;
 	struct setup_revision_opt s_r_opt;
 	int read_stdin = 0;
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(diff_tree_usage);
+
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
-	init_revisions(opt, prefix);
-	gitmodules_config();
+	repo_init_revisions(the_repository, opt, prefix);
+	if (read_cache() < 0)
+		die(_("index file corrupt"));
 	opt->abbrev = 0;
 	opt->diff = 1;
 	opt->disable_stdin = 1;
@@ -128,19 +138,20 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	}
 
 	/*
-	 * NOTE! We expect "a ^b" to be equal to "a..b", so we
-	 * reverse the order of the objects if the second one
-	 * is marked UNINTERESTING.
+	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
+	 * perfectly valid for revision range parser to yield "b ^a",
+	 * which means the same thing. If we get the latter, i.e. the
+	 * second one is marked UNINTERESTING, we recover the original
+	 * order the user gave, i.e. "a..b", by swapping the trees.
 	 */
-	nr_sha1 = opt->pending.nr;
-	switch (nr_sha1) {
+	switch (opt->pending.nr) {
 	case 0:
 		if (!read_stdin)
 			usage(diff_tree_usage);
 		break;
 	case 1:
 		tree1 = opt->pending.objects[0].item;
-		diff_tree_commit_sha1(&tree1->oid);
+		diff_tree_commit_oid(&tree1->oid);
 		break;
 	case 2:
 		tree1 = opt->pending.objects[0].item;
@@ -148,9 +159,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		if (tree2->flags & UNINTERESTING) {
 			SWAP(tree2, tree1);
 		}
-		diff_tree_sha1(tree1->oid.hash,
-			       tree2->oid.hash,
-			       "", &opt->diffopt);
+		diff_tree_oid(&tree1->oid, &tree2->oid, "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 		break;
 	}
@@ -159,9 +168,11 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		int saved_nrl = 0;
 		int saved_dcctc = 0;
 
-		if (opt->diffopt.detect_rename)
-			opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
-					       DIFF_SETUP_USE_CACHE);
+		if (opt->diffopt.detect_rename) {
+			if (!the_index.cache)
+				repo_read_index(the_repository);
+			opt->diffopt.setup |= DIFF_SETUP_USE_SIZE_CACHE;
+		}
 		while (fgets(line, sizeof(line), stdin)) {
 			struct object_id oid;
 

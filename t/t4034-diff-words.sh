@@ -19,9 +19,11 @@ cat >post.simple <<-\EOF
 
 	aeff = aeff * ( aaa )
 EOF
-cat >expect.letter-runs-are-words <<-\EOF
+pre=$(git rev-parse --short $(git hash-object pre.simple))
+post=$(git rev-parse --short $(git hash-object post.simple))
+cat >expect.letter-runs-are-words <<-EOF
 	<BOLD>diff --git a/pre b/post<RESET>
-	<BOLD>index 330b04f..5ed8eff 100644<RESET>
+	<BOLD>index $pre..$post 100644<RESET>
 	<BOLD>--- a/pre<RESET>
 	<BOLD>+++ b/post<RESET>
 	<CYAN>@@ -1,3 +1,7 @@<RESET>
@@ -33,9 +35,9 @@ cat >expect.letter-runs-are-words <<-\EOF
 
 	<GREEN>aeff = aeff * ( aaa<RESET> )
 EOF
-cat >expect.non-whitespace-is-word <<-\EOF
+cat >expect.non-whitespace-is-word <<-EOF
 	<BOLD>diff --git a/pre b/post<RESET>
-	<BOLD>index 330b04f..5ed8eff 100644<RESET>
+	<BOLD>index $pre..$post 100644<RESET>
 	<BOLD>--- a/pre<RESET>
 	<BOLD>+++ b/post<RESET>
 	<CYAN>@@ -1,3 +1,7 @@<RESET>
@@ -49,9 +51,12 @@ cat >expect.non-whitespace-is-word <<-\EOF
 EOF
 
 word_diff () {
+	pre=$(git rev-parse --short $(git hash-object pre)) &&
+	post=$(git rev-parse --short $(git hash-object post)) &&
 	test_must_fail git diff --no-index "$@" pre post >output &&
 	test_decode_color <output >output.decrypted &&
-	test_cmp expect output.decrypted
+	sed -e "2s/index [^ ]*/index $pre..$post/" expect >expected
+	test_cmp expected output.decrypted
 }
 
 test_language_driver () {
@@ -77,9 +82,9 @@ test_expect_success 'set up pre and post with runs of whitespace' '
 '
 
 test_expect_success 'word diff with runs of whitespace' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 		<BOLD>diff --git a/pre b/post<RESET>
-		<BOLD>index 330b04f..5ed8eff 100644<RESET>
+		<BOLD>index $pre..$post 100644<RESET>
 		<BOLD>--- a/pre<RESET>
 		<BOLD>+++ b/post<RESET>
 		<CYAN>@@ -1,3 +1,7 @@<RESET>
@@ -97,9 +102,9 @@ test_expect_success 'word diff with runs of whitespace' '
 '
 
 test_expect_success '--word-diff=porcelain' '
-	sed 's/#.*$//' >expect <<-\EOF &&
+	sed 's/#.*$//' >expect <<-EOF &&
 		diff --git a/pre b/post
-		index 330b04f..5ed8eff 100644
+		index $pre..$post 100644
 		--- a/pre
 		+++ b/post
 		@@ -1,3 +1,7 @@
@@ -121,9 +126,9 @@ test_expect_success '--word-diff=porcelain' '
 '
 
 test_expect_success '--word-diff=plain' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 		diff --git a/pre b/post
-		index 330b04f..5ed8eff 100644
+		index $pre..$post 100644
 		--- a/pre
 		+++ b/post
 		@@ -1,3 +1,7 @@
@@ -140,9 +145,9 @@ test_expect_success '--word-diff=plain' '
 '
 
 test_expect_success '--word-diff=plain --color' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 		<BOLD>diff --git a/pre b/post<RESET>
-		<BOLD>index 330b04f..5ed8eff 100644<RESET>
+		<BOLD>index $pre..$post 100644<RESET>
 		<BOLD>--- a/pre<RESET>
 		<BOLD>+++ b/post<RESET>
 		<CYAN>@@ -1,3 +1,7 @@<RESET>
@@ -158,9 +163,9 @@ test_expect_success '--word-diff=plain --color' '
 '
 
 test_expect_success 'word diff without context' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 		<BOLD>diff --git a/pre b/post<RESET>
-		<BOLD>index 330b04f..5ed8eff 100644<RESET>
+		<BOLD>index $pre..$post 100644<RESET>
 		<BOLD>--- a/pre<RESET>
 		<BOLD>+++ b/post<RESET>
 		<CYAN>@@ -1 +1 @@<RESET>
@@ -207,9 +212,9 @@ test_expect_success 'command-line overrides config' '
 '
 
 test_expect_success 'command-line overrides config: --word-diff-regex' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 		<BOLD>diff --git a/pre b/post<RESET>
-		<BOLD>index 330b04f..5ed8eff 100644<RESET>
+		<BOLD>index $pre..$post 100644<RESET>
 		<BOLD>--- a/pre<RESET>
 		<BOLD>+++ b/post<RESET>
 		<CYAN>@@ -1,3 +1,7 @@<RESET>
@@ -234,9 +239,9 @@ test_expect_success 'setup: remove diff driver regex' '
 '
 
 test_expect_success 'use configured regex' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 		<BOLD>diff --git a/pre b/post<RESET>
-		<BOLD>index 330b04f..5ed8eff 100644<RESET>
+		<BOLD>index $pre..$post 100644<RESET>
 		<BOLD>--- a/pre<RESET>
 		<BOLD>+++ b/post<RESET>
 		<CYAN>@@ -1,3 +1,7 @@<RESET>
@@ -254,9 +259,11 @@ test_expect_success 'use configured regex' '
 test_expect_success 'test parsing words for newline' '
 	echo "aaa (aaa)" >pre &&
 	echo "aaa (aaa) aaa" >post &&
-	cat >expect <<-\EOF &&
+	pre=$(git rev-parse --short $(git hash-object pre)) &&
+	post=$(git rev-parse --short $(git hash-object post)) &&
+	cat >expect <<-EOF &&
 		<BOLD>diff --git a/pre b/post<RESET>
-		<BOLD>index c29453b..be22f37 100644<RESET>
+		<BOLD>index $pre..$post 100644<RESET>
 		<BOLD>--- a/pre<RESET>
 		<BOLD>+++ b/post<RESET>
 		<CYAN>@@ -1 +1 @@<RESET>
@@ -268,9 +275,11 @@ test_expect_success 'test parsing words for newline' '
 test_expect_success 'test when words are only removed at the end' '
 	echo "(:" >pre &&
 	echo "(" >post &&
-	cat >expect <<-\EOF &&
+	pre=$(git rev-parse --short $(git hash-object pre)) &&
+	post=$(git rev-parse --short $(git hash-object post)) &&
+	cat >expect <<-EOF &&
 		<BOLD>diff --git a/pre b/post<RESET>
-		<BOLD>index 289cb9d..2d06f37 100644<RESET>
+		<BOLD>index $pre..$post 100644<RESET>
 		<BOLD>--- a/pre<RESET>
 		<BOLD>+++ b/post<RESET>
 		<CYAN>@@ -1 +1 @@<RESET>
@@ -282,9 +291,11 @@ test_expect_success 'test when words are only removed at the end' '
 test_expect_success '--word-diff=none' '
 	echo "(:" >pre &&
 	echo "(" >post &&
-	cat >expect <<-\EOF &&
+	pre=$(git rev-parse --short $(git hash-object pre)) &&
+	post=$(git rev-parse --short $(git hash-object post)) &&
+	cat >expect <<-EOF &&
 		diff --git a/pre b/post
-		index 289cb9d..2d06f37 100644
+		index $pre..$post 100644
 		--- a/pre
 		+++ b/post
 		@@ -1 +1 @@
@@ -303,6 +314,7 @@ test_language_driver bibtex
 test_language_driver cpp
 test_language_driver csharp
 test_language_driver css
+test_language_driver dts
 test_language_driver fortran
 test_language_driver html
 test_language_driver java
@@ -316,16 +328,6 @@ test_language_driver ruby
 test_language_driver tex
 
 test_expect_success 'word-diff with diff.sbe' '
-	cat >expect <<-\EOF &&
-	diff --git a/pre b/post
-	index a1a53b5..bc8fe6d 100644
-	--- a/pre
-	+++ b/post
-	@@ -1,3 +1,3 @@
-	a
-
-	[-b-]{+c+}
-	EOF
 	cat >pre <<-\EOF &&
 	a
 
@@ -336,21 +338,35 @@ test_expect_success 'word-diff with diff.sbe' '
 
 	c
 	EOF
+	pre=$(git rev-parse --short $(git hash-object pre)) &&
+	post=$(git rev-parse --short $(git hash-object post)) &&
+	cat >expect <<-EOF &&
+	diff --git a/pre b/post
+	index $pre..$post 100644
+	--- a/pre
+	+++ b/post
+	@@ -1,3 +1,3 @@
+	a
+
+	[-b-]{+c+}
+	EOF
 	test_config diff.suppress-blank-empty true &&
 	word_diff --word-diff=plain
 '
 
 test_expect_success 'word-diff with no newline at EOF' '
-	cat >expect <<-\EOF &&
+	printf "%s" "a a a a a" >pre &&
+	printf "%s" "a a ab a a" >post &&
+	pre=$(git rev-parse --short $(git hash-object pre)) &&
+	post=$(git rev-parse --short $(git hash-object post)) &&
+	cat >expect <<-EOF &&
 	diff --git a/pre b/post
-	index 7bf316e..3dd0303 100644
+	index $pre..$post 100644
 	--- a/pre
 	+++ b/post
 	@@ -1 +1 @@
 	a a [-a-]{+ab+} a a
 	EOF
-	printf "%s" "a a a a a" >pre &&
-	printf "%s" "a a ab a a" >post &&
 	word_diff --word-diff=plain
 '
 

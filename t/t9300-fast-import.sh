@@ -85,6 +85,36 @@ test_expect_success 'A: create pack from stdin' '
 	An annotated tag that annotates a blob.
 	EOF
 
+	tag to-be-deleted
+	from :3
+	data <<EOF
+	Another annotated tag that annotates a blob.
+	EOF
+
+	reset refs/tags/to-be-deleted
+	from 0000000000000000000000000000000000000000
+
+	tag nested
+	mark :6
+	from :4
+	data <<EOF
+	Tag of our lovely commit
+	EOF
+
+	reset refs/tags/nested
+	from 0000000000000000000000000000000000000000
+
+	tag nested
+	mark :7
+	from :6
+	data <<EOF
+	Tag of tag of our lovely commit
+	EOF
+
+	alias
+	mark :8
+	to :5
+
 	INPUT_END
 	git fast-import --export-marks=marks.out <input &&
 	git whatchanged master
@@ -157,12 +187,19 @@ test_expect_success 'A: verify tag/series-A-blob' '
 	test_cmp expect actual
 '
 
+test_expect_success 'A: verify tag deletion is successful' '
+	test_must_fail git rev-parse --verify refs/tags/to-be-deleted
+'
+
 test_expect_success 'A: verify marks output' '
 	cat >expect <<-EOF &&
 	:2 $(git rev-parse --verify master:file2)
 	:3 $(git rev-parse --verify master:file3)
 	:4 $(git rev-parse --verify master:file4)
 	:5 $(git rev-parse --verify master^0)
+	:6 $(git cat-file tag nested | grep object | cut -d" " -f 2)
+	:7 $(git rev-parse --verify nested)
+	:8 $(git rev-parse --verify master^0)
 	EOF
 	test_cmp expect marks.out
 '
@@ -876,7 +913,7 @@ test_expect_success 'L: verify internal tree sorting' '
 	EXPECT_END
 
 	git fast-import <input &&
-	git diff-tree --abbrev --raw L^ L >output &&
+	GIT_PRINT_SHA1_ELLIPSIS="yes" git diff-tree --abbrev --raw L^ L >output &&
 	test_cmp expect output
 '
 
@@ -1185,7 +1222,7 @@ test_expect_success PIPE 'N: empty directory reads as missing' '
 	test_cmp expect.response response &&
 	git rev-list read-empty |
 	git diff-tree -r --root --stdin |
-	sed "s/$_x40/OBJNAME/g" >actual &&
+	sed "s/$OID_REGEX/OBJNAME/g" >actual &&
 	test_cmp expect actual
 '
 
@@ -1271,7 +1308,7 @@ test_expect_success 'N: delete directory by copying' '
 	git fast-import <input &&
 	git rev-list N-delete |
 		git diff-tree -r --stdin --root --always |
-		sed -e "s/$_x40/OBJID/g" >actual &&
+		sed -e "s/$OID_REGEX/OBJID/g" >actual &&
 	test_cmp expect actual
 '
 
@@ -1558,7 +1595,7 @@ test_expect_success 'O: blank lines not necessary after other commands' '
 	INPUT_END
 
 	git fast-import <input &&
-	test 8 = $(find .git/objects/pack -type f | wc -l) &&
+	test 8 = $(find .git/objects/pack -type f | grep -v multi-pack-index | wc -l) &&
 	test $(git rev-parse refs/tags/O3-2nd) = $(git rev-parse O3^) &&
 	git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
 	test_cmp expect actual
@@ -2106,12 +2143,27 @@ test_expect_success 'R: abort on receiving feature after data command' '
 	test_must_fail git fast-import <input
 '
 
+test_expect_success 'R: import-marks features forbidden by default' '
+	>git.marks &&
+	echo "feature import-marks=git.marks" >input &&
+	test_must_fail git fast-import <input &&
+	echo "feature import-marks-if-exists=git.marks" >input &&
+	test_must_fail git fast-import <input
+'
+
 test_expect_success 'R: only one import-marks feature allowed per stream' '
+	>git.marks &&
+	>git2.marks &&
 	cat >input <<-EOF &&
 	feature import-marks=git.marks
 	feature import-marks=git2.marks
 	EOF
 
+	test_must_fail git fast-import --allow-unsafe-features <input
+'
+
+test_expect_success 'R: export-marks feature forbidden by default' '
+	echo "feature export-marks=git.marks" >input &&
 	test_must_fail git fast-import <input
 '
 
@@ -2125,19 +2177,29 @@ test_expect_success 'R: export-marks feature results in a marks file being creat
 
 	EOF
 
-	cat input | git fast-import &&
+	git fast-import --allow-unsafe-features <input &&
 	grep :1 git.marks
 '
 
 test_expect_success 'R: export-marks options can be overridden by commandline options' '
-	cat input | git fast-import --export-marks=other.marks &&
-	grep :1 other.marks
+	cat >input <<-\EOF &&
+	feature export-marks=feature-sub/git.marks
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+	git fast-import --allow-unsafe-features \
+			--export-marks=cmdline-sub/other.marks <input &&
+	grep :1 cmdline-sub/other.marks &&
+	test_path_is_missing feature-sub
 '
 
 test_expect_success 'R: catch typo in marks file name' '
 	test_must_fail git fast-import --import-marks=nonexistent.marks </dev/null &&
 	echo "feature import-marks=nonexistent.marks" |
-	test_must_fail git fast-import
+	test_must_fail git fast-import --allow-unsafe-features
 '
 
 test_expect_success 'R: import and output marks can be the same file' '
@@ -2191,12 +2253,12 @@ test_expect_success 'R: --import-marks-if-exists' '
 
 test_expect_success 'R: feature import-marks-if-exists' '
 	rm -f io.marks &&
-	>expect &&
 
-	git fast-import --export-marks=io.marks <<-\EOF &&
+	git fast-import --export-marks=io.marks \
+			--allow-unsafe-features <<-\EOF &&
 	feature import-marks-if-exists=not_io.marks
 	EOF
-	test_cmp expect io.marks &&
+	test_must_be_empty io.marks &&
 
 	blob=$(echo hi | git hash-object --stdin) &&
 
@@ -2204,7 +2266,8 @@ test_expect_success 'R: feature import-marks-if-exists' '
 	echo ":1 $blob" >expect &&
 	echo ":2 $blob" >>expect &&
 
-	git fast-import --export-marks=io.marks <<-\EOF &&
+	git fast-import --export-marks=io.marks \
+			--allow-unsafe-features <<-\EOF &&
 	feature import-marks-if-exists=io.marks
 	blob
 	mark :2
@@ -2217,7 +2280,8 @@ test_expect_success 'R: feature import-marks-if-exists' '
 	echo ":3 $blob" >>expect &&
 
 	git fast-import --import-marks=io.marks \
-			--export-marks=io.marks <<-\EOF &&
+			--export-marks=io.marks \
+			--allow-unsafe-features <<-\EOF &&
 	feature import-marks-if-exists=not_io.marks
 	blob
 	mark :3
@@ -2227,13 +2291,12 @@ test_expect_success 'R: feature import-marks-if-exists' '
 	EOF
 	test_cmp expect io.marks &&
 
-	>expect &&
-
 	git fast-import --import-marks-if-exists=not_io.marks \
-			--export-marks=io.marks <<-\EOF &&
+			--export-marks=io.marks \
+			--allow-unsafe-features <<-\EOF &&
 	feature import-marks-if-exists=io.marks
 	EOF
-	test_cmp expect io.marks
+	test_must_be_empty io.marks
 '
 
 test_expect_success 'R: import to output marks works without any content' '
@@ -2242,7 +2305,7 @@ test_expect_success 'R: import to output marks works without any content' '
 	feature export-marks=marks.new
 	EOF
 
-	cat input | git fast-import &&
+	git fast-import --allow-unsafe-features <input &&
 	test_cmp marks.out marks.new
 '
 
@@ -2252,7 +2315,7 @@ test_expect_success 'R: import marks prefers commandline marks file over the str
 	feature export-marks=marks.new
 	EOF
 
-	cat input | git fast-import --import-marks=marks.out &&
+	git fast-import --import-marks=marks.out --allow-unsafe-features <input &&
 	test_cmp marks.out marks.new
 '
 
@@ -2265,7 +2328,8 @@ test_expect_success 'R: multiple --import-marks= should be honoured' '
 
 	head -n2 marks.out > one.marks &&
 	tail -n +3 marks.out > two.marks &&
-	git fast-import --import-marks=one.marks --import-marks=two.marks <input &&
+	git fast-import --import-marks=one.marks --import-marks=two.marks \
+		--allow-unsafe-features <input &&
 	test_cmp marks.out combined.marks
 '
 
@@ -2278,7 +2342,7 @@ test_expect_success 'R: feature relative-marks should be honoured' '
 
 	mkdir -p .git/info/fast-import/ &&
 	cp marks.new .git/info/fast-import/relative.in &&
-	git fast-import <input &&
+	git fast-import --allow-unsafe-features <input &&
 	test_cmp marks.new .git/info/fast-import/relative.out
 '
 
@@ -2290,7 +2354,7 @@ test_expect_success 'R: feature no-relative-marks should be honoured' '
 	feature export-marks=non-relative.out
 	EOF
 
-	git fast-import <input &&
+	git fast-import --allow-unsafe-features <input &&
 	test_cmp marks.new non-relative.out
 '
 
@@ -2443,9 +2507,6 @@ test_expect_success PIPE 'R: copy using cat-file' '
 	echo $expect_id blob $expect_len >expect.response &&
 
 	rm -f blobs &&
-	cat >frontend <<-\FRONTEND_END &&
-	#!/bin/sh
-	FRONTEND_END
 
 	mkfifo blobs &&
 	(
@@ -2560,7 +2621,7 @@ test_expect_success 'R: quiet option results in no stats being output' '
 
 	EOF
 
-	cat input | git fast-import 2> output &&
+	git fast-import 2>output <input &&
 	test_must_be_empty output
 '
 
@@ -2602,7 +2663,7 @@ test_expect_success 'R: terminating "done" within commit' '
 	EOF
 	git rev-list done-ends |
 	git diff-tree -r --stdin --root --always |
-	sed -e "s/$_x40/OBJID/g" >actual &&
+	sed -e "s/$OID_REGEX/OBJID/g" >actual &&
 	test_cmp expect actual
 '
 
@@ -2654,7 +2715,7 @@ test_expect_success 'R: corrupt lines do not mess marks file' '
 ##
 test_expect_success 'R: blob bigger than threshold' '
 	blobsize=$((2*1024*1024 + 53)) &&
-	test-genrandom bar $blobsize >expect &&
+	test-tool genrandom bar $blobsize >expect &&
 	cat >input <<-INPUT_END &&
 	commit refs/heads/big-file
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -2784,7 +2845,6 @@ test_expect_success 'S: filemodify with garbage after mark must fail' '
 	COMMIT
 	M 100644 :403x hello.c
 	EOF
-	cat err &&
 	test_i18ngrep "space after mark" err
 '
 
@@ -2801,7 +2861,6 @@ test_expect_success 'S: filemodify with garbage after inline must fail' '
 	inline
 	BLOB
 	EOF
-	cat err &&
 	test_i18ngrep "nvalid dataref" err
 '
 
@@ -2815,14 +2874,13 @@ test_expect_success 'S: filemodify with garbage after sha1 must fail' '
 	COMMIT
 	M 100644 ${sha1}x hello.c
 	EOF
-	cat err &&
 	test_i18ngrep "space after SHA1" err
 '
 
 #
 # notemodify, three ways to say dataref
 #
-test_expect_success 'S: notemodify with garabge after mark dataref must fail' '
+test_expect_success 'S: notemodify with garbage after mark dataref must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	commit refs/heads/S
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -2831,7 +2889,6 @@ test_expect_success 'S: notemodify with garabge after mark dataref must fail' '
 	COMMIT
 	N :202x :302
 	EOF
-	cat err &&
 	test_i18ngrep "space after mark" err
 '
 
@@ -2847,7 +2904,6 @@ test_expect_success 'S: notemodify with garbage after inline dataref must fail' 
 	note blob
 	BLOB
 	EOF
-	cat err &&
 	test_i18ngrep "nvalid dataref" err
 '
 
@@ -2861,7 +2917,6 @@ test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
 	COMMIT
 	N ${sha1}x :302
 	EOF
-	cat err &&
 	test_i18ngrep "space after SHA1" err
 '
 
@@ -2877,7 +2932,6 @@ test_expect_success 'S: notemodify with garbage after mark commit-ish must fail'
 	COMMIT
 	N :202 :302x
 	EOF
-	cat err &&
 	test_i18ngrep "after mark" err
 '
 
@@ -2911,7 +2965,6 @@ test_expect_success 'S: from with garbage after mark must fail' '
 	EOF
 
 	# now evaluate the error
-	cat err &&
 	test_i18ngrep "after mark" err
 '
 
@@ -2931,7 +2984,6 @@ test_expect_success 'S: merge with garbage after mark must fail' '
 	merge :303x
 	M 100644 :403 hello.c
 	EOF
-	cat err &&
 	test_i18ngrep "after mark" err
 '
 
@@ -2947,7 +2999,6 @@ test_expect_success 'S: tag with garbage after mark must fail' '
 	tag S
 	TAG
 	EOF
-	cat err &&
 	test_i18ngrep "after mark" err
 '
 
@@ -2958,7 +3009,6 @@ test_expect_success 'S: cat-blob with garbage after mark must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	cat-blob :403x
 	EOF
-	cat err &&
 	test_i18ngrep "after mark" err
 '
 
@@ -2969,7 +3019,6 @@ test_expect_success 'S: ls with garbage after mark must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	ls :302x hello.c
 	EOF
-	cat err &&
 	test_i18ngrep "space after mark" err
 '
 
@@ -2978,7 +3027,6 @@ test_expect_success 'S: ls with garbage after sha1 must fail' '
 	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
 	ls ${sha1}x hello.c
 	EOF
-	cat err &&
 	test_i18ngrep "space after tree-ish" err
 '
 
@@ -3118,6 +3166,220 @@ test_expect_success 'U: validate root delete result' '
 	git diff-tree -M -r U^1 U >actual &&
 
 	compare_diff_raw expect actual
+'
+
+###
+### series V (checkpoint)
+###
+
+# The commands in input_file should not produce any output on the file
+# descriptor set with --cat-blob-fd (or stdout if unspecified).
+#
+# To make sure you're observing the side effects of checkpoint *before*
+# fast-import terminates (and thus writes out its state), check that the
+# fast-import process is still running using background_import_still_running
+# *after* evaluating the test conditions.
+background_import_then_checkpoint () {
+	options=$1
+	input_file=$2
+
+	mkfifo V.input
+	exec 8<>V.input
+	rm V.input
+
+	mkfifo V.output
+	exec 9<>V.output
+	rm V.output
+
+	(
+		git fast-import $options <&8 >&9 &
+		echo $! >&9
+		wait $!
+		echo >&2 "background fast-import terminated too early with exit code $?"
+		# Un-block the read loop in the main shell process.
+		echo >&9 UNEXPECTED
+	) &
+	sh_pid=$!
+	read fi_pid <&9
+	# We don't mind if fast-import has already died by the time the test
+	# ends.
+	test_when_finished "
+		exec 8>&-; exec 9>&-;
+		kill $sh_pid && wait $sh_pid
+		kill $fi_pid && wait $fi_pid
+		true"
+
+	# Start in the background to ensure we adhere strictly to (blocking)
+	# pipes writing sequence. We want to assume that the write below could
+	# block, e.g. if fast-import blocks writing its own output to &9
+	# because there is no reader on &9 yet.
+	(
+		cat "$input_file"
+		echo "checkpoint"
+		echo "progress checkpoint"
+	) >&8 &
+
+	error=1 ;# assume the worst
+	while read output <&9
+	do
+		if test "$output" = "progress checkpoint"
+		then
+			error=0
+			break
+		elif test "$output" = "UNEXPECTED"
+		then
+			break
+		fi
+		# otherwise ignore cruft
+		echo >&2 "cruft: $output"
+	done
+
+	if test $error -eq 1
+	then
+		false
+	fi
+}
+
+background_import_still_running () {
+	if ! kill -0 "$fi_pid"
+	then
+		echo >&2 "background fast-import terminated too early"
+		false
+	fi
+}
+
+test_expect_success PIPE 'V: checkpoint helper does not get stuck with extra output' '
+	cat >input <<-INPUT_END &&
+	progress foo
+	progress bar
+
+	INPUT_END
+
+	background_import_then_checkpoint "" input &&
+	background_import_still_running
+'
+
+test_expect_success PIPE 'V: checkpoint updates refs after reset' '
+	cat >input <<-\INPUT_END &&
+	reset refs/heads/V
+	from refs/heads/U
+
+	INPUT_END
+
+	background_import_then_checkpoint "" input &&
+	test "$(git rev-parse --verify V)" = "$(git rev-parse --verify U)" &&
+	background_import_still_running
+'
+
+test_expect_success PIPE 'V: checkpoint updates refs and marks after commit' '
+	cat >input <<-INPUT_END &&
+	commit refs/heads/V
+	mark :1
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data 0
+	from refs/heads/U
+
+	INPUT_END
+
+	background_import_then_checkpoint "--export-marks=marks.actual" input &&
+
+	echo ":1 $(git rev-parse --verify V)" >marks.expected &&
+
+	test "$(git rev-parse --verify V^)" = "$(git rev-parse --verify U)" &&
+	test_cmp marks.expected marks.actual &&
+	background_import_still_running
+'
+
+# Re-create the exact same commit, but on a different branch: no new object is
+# created in the database, but the refs and marks still need to be updated.
+test_expect_success PIPE 'V: checkpoint updates refs and marks after commit (no new objects)' '
+	cat >input <<-INPUT_END &&
+	commit refs/heads/V2
+	mark :2
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data 0
+	from refs/heads/U
+
+	INPUT_END
+
+	background_import_then_checkpoint "--export-marks=marks.actual" input &&
+
+	echo ":2 $(git rev-parse --verify V2)" >marks.expected &&
+
+	test "$(git rev-parse --verify V2)" = "$(git rev-parse --verify V)" &&
+	test_cmp marks.expected marks.actual &&
+	background_import_still_running
+'
+
+test_expect_success PIPE 'V: checkpoint updates tags after tag' '
+	cat >input <<-INPUT_END &&
+	tag Vtag
+	from refs/heads/V
+	tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data 0
+
+	INPUT_END
+
+	background_import_then_checkpoint "" input &&
+	git show-ref -d Vtag &&
+	background_import_still_running
+'
+
+###
+### series W (get-mark and empty orphan commits)
+###
+
+cat >>W-input <<-W_INPUT_END
+	commit refs/heads/W-branch
+	mark :1
+	author Full Name <user@company.tld> 1000000000 +0100
+	committer Full Name <user@company.tld> 1000000000 +0100
+	data 27
+	Intentionally empty commit
+	LFsget-mark :1
+	W_INPUT_END
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with no newlines' '
+	sed -e s/LFs// W-input | tr L "\n" | git fast-import
+'
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with one newline' '
+	sed -e s/LFs/L/ W-input | tr L "\n" | git fast-import
+'
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with ugly second newline' '
+	# Technically, this should fail as it has too many linefeeds
+	# according to the grammar in fast-import.txt.  But, for whatever
+	# reason, it works.  Since using the correct number of newlines
+	# does not work with older (pre-2.22) versions of git, allow apps
+	# that used this second-newline workaround to keep working by
+	# checking it with this test...
+	sed -e s/LFs/LL/ W-input | tr L "\n" | git fast-import
+'
+
+test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous third newline' '
+	# ...but do NOT allow more empty lines than that (see previous test).
+	sed -e s/LFs/LLL/ W-input | tr L "\n" | test_must_fail git fast-import
+'
+
+###
+### series X (other new features)
+###
+
+test_expect_success 'X: handling encoding' '
+	test_tick &&
+	cat >input <<-INPUT_END &&
+	commit refs/heads/encoding
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	encoding iso-8859-7
+	data <<COMMIT
+	INPUT_END
+
+	printf "Pi: \360\nCOMMIT\n" >>input &&
+
+	git fast-import <input &&
+	git cat-file -p encoding | grep $(printf "\360") &&
+	git log -1 --format=%B encoding | grep $(printf "\317\200")
 '
 
 test_done

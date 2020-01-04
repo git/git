@@ -14,6 +14,12 @@ test_expect_success 'setup' '
 	git tag -d third
 '
 
+test_expect_success '"verify" needs a worktree' '
+	git bundle create tip.bundle -1 master &&
+	test_must_fail nongit git bundle verify ../tip.bundle 2>err &&
+	test_i18ngrep "need a repository" err
+'
+
 test_expect_success 'annotated tags can be excluded by rev-list options' '
 	git bundle create bundle --all --since=7.Apr.2005.15:14:00.-0700 &&
 	git ls-remote bundle > output &&
@@ -69,6 +75,23 @@ test_expect_success 'prerequisites with an empty commit message' '
 	test_commit file2 &&
 	git bundle create bundle HEAD^.. &&
 	git bundle verify bundle
+'
+
+test_expect_success 'failed bundle creation does not leave cruft' '
+	# This fails because the bundle would be empty.
+	test_must_fail git bundle create fail.bundle master..master &&
+	test_path_is_missing fail.bundle.lock
+'
+
+test_expect_success 'fetch SHA-1 from bundle' '
+	test_create_repo foo &&
+	test_commit -C foo x &&
+	git -C foo bundle create tip.bundle -1 master &&
+	git -C foo rev-parse HEAD >hash &&
+
+	# Exercise to ensure that fetching a SHA-1 from a bundle works with no
+	# errors
+	git fetch --no-tags foo/tip.bundle "$(cat hash)"
 '
 
 test_done

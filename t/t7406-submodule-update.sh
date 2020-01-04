@@ -65,7 +65,7 @@ test_expect_success 'setup a submodule tree' '
 	 git commit -m "none"
 	) &&
 	git clone . recursivesuper &&
-	( cd recursivesuper
+	( cd recursivesuper &&
 	 git submodule add ../super super
 	)
 '
@@ -115,17 +115,17 @@ Submodule path '../super/submodule': checked out '$submodulesha1'
 EOF
 
 cat <<EOF >expect2
+Cloning into '$pwd/recursivesuper/super/merging'...
+Cloning into '$pwd/recursivesuper/super/none'...
+Cloning into '$pwd/recursivesuper/super/rebasing'...
+Cloning into '$pwd/recursivesuper/super/submodule'...
 Submodule 'merging' ($pwd/merging) registered for path '../super/merging'
 Submodule 'none' ($pwd/none) registered for path '../super/none'
 Submodule 'rebasing' ($pwd/rebasing) registered for path '../super/rebasing'
 Submodule 'submodule' ($pwd/submodule) registered for path '../super/submodule'
-Cloning into '$pwd/recursivesuper/super/merging'...
 done.
-Cloning into '$pwd/recursivesuper/super/none'...
 done.
-Cloning into '$pwd/recursivesuper/super/rebasing'...
 done.
-Cloning into '$pwd/recursivesuper/super/submodule'...
 done.
 EOF
 
@@ -137,7 +137,8 @@ test_expect_success 'submodule update --init --recursive from subdirectory' '
 	 git submodule update --init --recursive ../super >../../actual 2>../../actual2
 	) &&
 	test_i18ncmp expect actual &&
-	test_i18ncmp expect2 actual2
+	sort actual2 >actual2.sorted &&
+	test_i18ncmp expect2 actual2.sorted
 '
 
 cat <<EOF >expect2
@@ -157,7 +158,6 @@ test_expect_success 'submodule update --init from and of subdirectory' '
 	test_i18ncmp expect2 actual2
 '
 
-apos="'";
 test_expect_success 'submodule update does not fetch already present commits' '
 	(cd submodule &&
 	  echo line3 >> file &&
@@ -167,14 +167,14 @@ test_expect_success 'submodule update does not fetch already present commits' '
 	) &&
 	(cd super/submodule &&
 	  head=$(git rev-parse --verify HEAD) &&
-	  echo "Submodule path ${apos}submodule$apos: checked out $apos$head$apos" > ../../expected &&
+	  echo "Submodule path ${SQ}submodule$SQ: checked out $SQ$head$SQ" > ../../expected &&
 	  git reset --hard HEAD~1
 	) &&
 	(cd super &&
 	  git submodule update > ../actual 2> ../actual.err
 	) &&
 	test_i18ncmp expected actual &&
-	! test -s actual.err
+	test_must_be_empty actual.err
 '
 
 test_expect_success 'submodule update should fail due to local changes' '
@@ -245,13 +245,13 @@ test_expect_success 'submodule update --remote should fetch upstream changes wit
 	(
 		cd super &&
 		git submodule update --remote --force submodule &&
-		git -C submodule log -1 --oneline >actual
-		git -C ../submodule log -1 --oneline master >expect
+		git -C submodule log -1 --oneline >actual &&
+		git -C ../submodule log -1 --oneline master >expect &&
 		test_cmp expect actual &&
 		git checkout -b test-branch &&
 		git submodule update --remote --force submodule &&
-		git -C submodule log -1 --oneline >actual
-		git -C ../submodule log -1 --oneline test-branch >expect
+		git -C submodule log -1 --oneline >actual &&
+		git -C ../submodule log -1 --oneline test-branch >expect &&
 		test_cmp expect actual &&
 		git checkout master &&
 		git branch -d test-branch &&
@@ -406,6 +406,28 @@ test_expect_success 'submodule update - command in .git/config' '
 	)
 '
 
+test_expect_success 'submodule update - command in .gitmodules is rejected' '
+	test_when_finished "git -C super reset --hard HEAD^" &&
+	git -C super config -f .gitmodules submodule.submodule.update "!false" &&
+	git -C super commit -a -m "add command to .gitmodules file" &&
+	git -C super/submodule reset --hard $submodulesha1^ &&
+	test_must_fail git -C super submodule update submodule
+'
+
+test_expect_success 'fsck detects command in .gitmodules' '
+	git init command-in-gitmodules &&
+	(
+		cd command-in-gitmodules &&
+		git submodule add ../submodule submodule &&
+		test_commit adding-submodule &&
+
+		git config -f .gitmodules submodule.submodule.update "!false" &&
+		git add .gitmodules &&
+		test_commit configuring-update &&
+		test_must_fail git fsck
+	)
+'
+
 cat << EOF >expect
 Execution of 'false $submodulesha1' failed in submodule path 'submodule'
 EOF
@@ -472,17 +494,20 @@ test_expect_success 'recursive submodule update - command in .git/config catches
 '
 
 test_expect_success 'submodule init does not copy command into .git/config' '
+	test_when_finished "git -C super update-index --force-remove submodule1" &&
+	test_when_finished git config -f super/.gitmodules \
+		--remove-section submodule.submodule1 &&
 	(cd super &&
-	 H=$(git ls-files -s submodule | cut -d" " -f2) &&
+	 git ls-files -s submodule >out &&
+	 H=$(cut -d" " -f2 out) &&
 	 mkdir submodule1 &&
 	 git update-index --add --cacheinfo 160000 $H submodule1 &&
 	 git config -f .gitmodules submodule.submodule1.path submodule1 &&
 	 git config -f .gitmodules submodule.submodule1.url ../submodule &&
 	 git config -f .gitmodules submodule.submodule1.update !false &&
-	 git submodule init submodule1 &&
-	 echo "none" >expect &&
-	 git config submodule.submodule1.update >actual &&
-	 test_cmp expect actual
+	 test_must_fail git submodule init submodule1 &&
+	 test_expect_code 1 git config submodule.submodule1.update >actual &&
+	 test_must_be_empty actual
 	)
 '
 
@@ -571,9 +596,11 @@ test_expect_success 'submodule update - update=none in .git/config' '
 	  git checkout master &&
 	  compare_head
 	 ) &&
-	 git diff --raw | grep "	submodule" &&
+	 git diff --name-only >out &&
+	 grep ^submodule$ out &&
 	 git submodule update &&
-	 git diff --raw | grep "	submodule" &&
+	 git diff --name-only >out &&
+	 grep ^submodule$ out &&
 	 (cd submodule &&
 	  compare_head
 	 ) &&
@@ -589,11 +616,13 @@ test_expect_success 'submodule update - update=none in .git/config but --checkou
 	  git checkout master &&
 	  compare_head
 	 ) &&
-	 git diff --raw | grep "	submodule" &&
+	 git diff --name-only >out &&
+	 grep ^submodule$ out &&
 	 git submodule update --checkout &&
-	 test_must_fail git diff --raw \| grep "	submodule" &&
+	 git diff --name-only >out &&
+	 ! grep ^submodule$ out &&
 	 (cd submodule &&
-	  test_must_fail compare_head
+	  ! compare_head
 	 ) &&
 	 git config --unset submodule.submodule.update
 	)
@@ -607,8 +636,8 @@ test_expect_success 'submodule update --init skips submodule with update=none' '
 	git clone super cloned &&
 	(cd cloned &&
 	 git submodule update --init &&
-	 test -e submodule/.git &&
-	 test_must_fail test -e none/.git
+	 test_path_exists submodule/.git &&
+	 test_path_is_missing none/.git
 	)
 '
 
@@ -775,7 +804,7 @@ test_expect_success 'submodule add places git-dir in superprojects git-dir' '
 	 (cd .git/modules/deeper/submodule &&
 	  git log > ../../../../actual
 	 ) &&
-	 test_cmp actual expected
+	 test_cmp expected actual
 	)
 '
 
@@ -793,7 +822,7 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir' '
 	 (cd .git/modules/deeper/submodule &&
 	  git log > ../../../../actual
 	 ) &&
-	 test_cmp actual expected
+	 test_cmp expected actual
 	)
 '
 
@@ -813,7 +842,7 @@ test_expect_success 'submodule add places git-dir in superprojects git-dir recur
 	 git add deeper/submodule &&
 	 git commit -m "update submodule" &&
 	 git push origin : &&
-	 test_cmp actual expected
+	 test_cmp expected actual
 	)
 '
 
@@ -857,10 +886,10 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir re
 	 (cd submodule/subsubmodule &&
 	  git log > ../../expected
 	 ) &&
-	 (cd .git/modules/submodule/modules/subsubmodule
+	 (cd .git/modules/submodule/modules/subsubmodule &&
 	  git log > ../../../../../actual
-	 )
-	 test_cmp actual expected
+	 ) &&
+	 test_cmp expected actual
 	)
 '
 
@@ -877,16 +906,18 @@ test_expect_success 'submodule update properly revives a moved submodule' '
 	 H=$(git rev-parse --short HEAD) &&
 	 git commit -am "pre move" &&
 	 H2=$(git rev-parse --short HEAD) &&
-	 git status | sed "s/$H/XXX/" >expect &&
-	 H=$(cd submodule2; git rev-parse HEAD) &&
+	 git status >out &&
+	 sed "s/$H/XXX/" out >expect &&
+	 H=$(cd submodule2 && git rev-parse HEAD) &&
 	 git rm --cached submodule2 &&
 	 rm -rf submodule2 &&
 	 mkdir -p "moved/sub module" &&
 	 git update-index --add --cacheinfo 160000 $H "moved/sub module" &&
-	 git config -f .gitmodules submodule.submodule2.path "moved/sub module"
+	 git config -f .gitmodules submodule.submodule2.path "moved/sub module" &&
 	 git commit -am "post move" &&
 	 git submodule update &&
-	 git status | sed "s/$H2/XXX/" >actual &&
+	 git status > out &&
+	 sed "s/$H2/XXX/" out >actual &&
 	 test_cmp expect actual
 	)
 '
@@ -904,7 +935,7 @@ test_expect_success SYMLINKS 'submodule update can handle symbolic links in pwd'
 
 test_expect_success 'submodule update clone shallow submodule' '
 	test_when_finished "rm -rf super3" &&
-	first=$(git -C cloned submodule status submodule |cut -c2-41) &&
+	first=$(git -C cloned rev-parse HEAD:submodule) &&
 	second=$(git -C submodule rev-parse HEAD) &&
 	commit_count=$(git -C submodule rev-list --count $first^..$second) &&
 	git clone cloned super3 &&
@@ -914,7 +945,8 @@ test_expect_success 'submodule update clone shallow submodule' '
 		sed -e "s#url = ../#url = file://$pwd/#" <.gitmodules >.gitmodules.tmp &&
 		mv -f .gitmodules.tmp .gitmodules &&
 		git submodule update --init --depth=$commit_count &&
-		test 1 = $(git -C submodule log --oneline | wc -l)
+		git -C submodule log --oneline >out &&
+		test_line_count = 1 out
 	)
 '
 
@@ -926,11 +958,15 @@ test_expect_success 'submodule update clone shallow submodule outside of depth' 
 		cd super3 &&
 		sed -e "s#url = ../#url = file://$pwd/#" <.gitmodules >.gitmodules.tmp &&
 		mv -f .gitmodules.tmp .gitmodules &&
-		test_must_fail git submodule update --init --depth=1 2>actual &&
+		# Some protocol versions (e.g. 2) support fetching
+		# unadvertised objects, so restrict this test to v0.
+		test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+			git submodule update --init --depth=1 2>actual &&
 		test_i18ngrep "Direct fetching of that commit failed." actual &&
 		git -C ../submodule config uploadpack.allowReachableSHA1InWant true &&
 		git submodule update --init --depth=1 >actual &&
-		test 1 = $(git -C submodule log --oneline | wc -l)
+		git -C submodule log --oneline >out &&
+		test_line_count = 1 out
 	)
 '
 

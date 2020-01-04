@@ -12,9 +12,8 @@ test_expect_success 'reset' '
 	git add a b &&
 	git reset &&
 
-	>expect &&
 	git ls-files >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'reset HEAD' '
@@ -39,9 +38,8 @@ test_expect_success PERL 'reset -p' '
 	echo y >yes &&
 	git reset -p <yes >output &&
 
-	>expect &&
 	git ls-files >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	test_i18ngrep "Unstage" output
 '
 
@@ -61,9 +59,8 @@ test_expect_success 'reset --hard' '
 	test_when_finished "echo a >a" &&
 	git reset --hard &&
 
-	>expect &&
 	git ls-files >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	test_path_is_missing a
 '
 

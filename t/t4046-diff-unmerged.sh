@@ -37,7 +37,7 @@ test_expect_success 'diff-files -0' '
 	for path in $paths
 	do
 		>"$path" &&
-		echo ":000000 100644 $_z40 $_z40 U	$path"
+		echo ":000000 100644 $ZERO_OID $ZERO_OID U	$path"
 	done >diff-files-0.expect &&
 	git diff-files -0 >diff-files-0.actual &&
 	test_cmp diff-files-0.expect diff-files-0.actual
@@ -47,9 +47,9 @@ test_expect_success 'diff-files -1' '
 	for path in $paths
 	do
 		>"$path" &&
-		echo ":000000 100644 $_z40 $_z40 U	$path" &&
+		echo ":000000 100644 $ZERO_OID $ZERO_OID U	$path" &&
 		case "$path" in
-		x??) echo ":100644 100644 $blob1 $_z40 M	$path"
+		x??) echo ":100644 100644 $blob1 $ZERO_OID M	$path"
 		esac
 	done >diff-files-1.expect &&
 	git diff-files -1 >diff-files-1.actual &&
@@ -60,9 +60,9 @@ test_expect_success 'diff-files -2' '
 	for path in $paths
 	do
 		>"$path" &&
-		echo ":000000 100644 $_z40 $_z40 U	$path" &&
+		echo ":000000 100644 $ZERO_OID $ZERO_OID U	$path" &&
 		case "$path" in
-		?x?) echo ":100644 100644 $blob2 $_z40 M	$path"
+		?x?) echo ":100644 100644 $blob2 $ZERO_OID M	$path"
 		esac
 	done >diff-files-2.expect &&
 	git diff-files -2 >diff-files-2.actual &&
@@ -75,9 +75,9 @@ test_expect_success 'diff-files -3' '
 	for path in $paths
 	do
 		>"$path" &&
-		echo ":000000 100644 $_z40 $_z40 U	$path" &&
+		echo ":000000 100644 $ZERO_OID $ZERO_OID U	$path" &&
 		case "$path" in
-		??x) echo ":100644 100644 $blob3 $_z40 M	$path"
+		??x) echo ":100644 100644 $blob3 $ZERO_OID M	$path"
 		esac
 	done >diff-files-3.expect &&
 	git diff-files -3 >diff-files-3.actual &&

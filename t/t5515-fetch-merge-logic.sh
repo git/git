@@ -6,10 +6,11 @@
 
 test_description='Merge logic in fetch'
 
-. ./test-lib.sh
+# NEEDSWORK: If the overspecification of the expected result is reduced, we
+# might be able to run this test in all protocol versions.
+GIT_TEST_PROTOCOL_VERSION=
 
-LF='
-'
+. ./test-lib.sh
 
 test_expect_success setup '
 	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&

@@ -2,7 +2,10 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc find_ssh_key {} {
-	foreach name {~/.ssh/id_dsa.pub ~/.ssh/id_rsa.pub ~/.ssh/identity.pub} {
+	foreach name {
+		~/.ssh/id_dsa.pub ~/.ssh/id_ecdsa.pub ~/.ssh/id_ed25519.pub
+		~/.ssh/id_rsa.pub ~/.ssh/identity.pub
+	} {
 		if {[file exists $name]} {
 			set fh    [open $name r]
 			set cont  [read $fh]

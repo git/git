@@ -6,7 +6,7 @@ test_description='Test read_early_config()'
 
 test_expect_success 'read early config' '
 	test_config early.config correct &&
-	test-config read_early_config early.config >output &&
+	test-tool config read_early_config early.config >output &&
 	test correct = "$(cat output)"
 '
 
@@ -15,7 +15,7 @@ test_expect_success 'in a sub-directory' '
 	mkdir -p sub &&
 	(
 		cd sub &&
-		test-config read_early_config early.config
+		test-tool config read_early_config early.config
 	) >output &&
 	test sub = "$(cat output)"
 '
@@ -27,9 +27,9 @@ test_expect_success 'ceiling' '
 		GIT_CEILING_DIRECTORIES="$PWD" &&
 		export GIT_CEILING_DIRECTORIES &&
 		cd sub &&
-		test-config read_early_config early.config
+		test-tool config read_early_config early.config
 	) >output &&
-	test -z "$(cat output)"
+	test_must_be_empty output
 '
 
 test_expect_success 'ceiling #2' '
@@ -42,7 +42,7 @@ test_expect_success 'ceiling #2' '
 		GIT_CEILING_DIRECTORIES="$PWD" &&
 		export GIT_CEILING_DIRECTORIES XDG_CONFIG_HOME &&
 		cd sub &&
-		test-config read_early_config early.config
+		test-tool config read_early_config early.config
 	) >output &&
 	test xdg = "$(cat output)"
 '
@@ -54,7 +54,7 @@ test_expect_success 'read config file in right order' '
 	(
 		cd foo &&
 		echo "[test]source = repo" >>.git/config &&
-		GIT_CONFIG_PARAMETERS=$cmdline_config test-config \
+		GIT_CONFIG_PARAMETERS=$cmdline_config test-tool config \
 			read_early_config test.source >actual &&
 		cat >expected <<-\EOF &&
 		home
@@ -71,7 +71,7 @@ test_with_config () {
 	(
 		cd throwaway &&
 		echo "$*" >.git/config &&
-		test-config read_early_config early.config
+		test-tool config read_early_config early.config
 	)
 }
 
@@ -87,6 +87,16 @@ test_expect_failure 'ignore .git/ with invalid repository version' '
 
 test_expect_failure 'ignore .git/ with invalid config' '
 	test_with_config "["
+'
+
+test_expect_success 'early config and onbranch' '
+	echo "[broken" >broken &&
+	test_with_config "[includeif \"onbranch:master\"]path=../broken"
+'
+
+test_expect_success 'onbranch config outside of git repo' '
+	test_config_global includeIf.onbranch:master.path non-existent &&
+	nongit git help
 '
 
 test_done

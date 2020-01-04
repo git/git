@@ -71,7 +71,7 @@ test_expect_success 'clone follows shallow recommendation' '
 	test_when_finished "rm -rf super_clone" &&
 	git config -f .gitmodules submodule.sub.shallow true &&
 	git add .gitmodules &&
-	git commit -m "recommed shallow for sub" &&
+	git commit -m "recommend shallow for sub" &&
 	git clone --recurse-submodules --no-local "file://$pwd/." super_clone &&
 	(
 		cd super_clone &&
@@ -105,7 +105,7 @@ test_expect_success 'clone follows non shallow recommendation' '
 	test_when_finished "rm -rf super_clone" &&
 	git config -f .gitmodules submodule.sub.shallow false &&
 	git add .gitmodules &&
-	git commit -m "recommed non shallow for sub" &&
+	git commit -m "recommend non shallow for sub" &&
 	git clone --recurse-submodules --no-local "file://$pwd/." super_clone &&
 	(
 		cd super_clone &&

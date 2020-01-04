@@ -6,10 +6,10 @@
  * Based on git-verify-tag.sh
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "tag.h"
 #include "run-command.h"
-#include <signal.h>
 #include "parse-options.h"
 #include "gpg-interface.h"
 #include "ref-filter.h"
@@ -31,11 +31,11 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
 	unsigned flags = 0;
-	char *fmt_pretty = NULL;
+	struct ref_format format = REF_FORMAT_INIT;
 	const struct option verify_tag_options[] = {
 		OPT__VERBOSE(&verbose, N_("print tag contents")),
 		OPT_BIT(0, "raw", &flags, N_("print raw gpg status output"), GPG_VERIFY_RAW),
-		OPT_STRING(  0 , "format", &fmt_pretty, N_("format"), N_("format to use for the output")),
+		OPT_STRING(0, "format", &format.format, N_("format"), N_("format to use for the output")),
 		OPT_END()
 	};
 
@@ -49,26 +49,29 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 	if (verbose)
 		flags |= GPG_VERIFY_VERBOSE;
 
-	if (fmt_pretty) {
-		verify_ref_format(fmt_pretty);
+	if (format.format) {
+		if (verify_ref_format(&format))
+			usage_with_options(verify_tag_usage,
+					   verify_tag_options);
 		flags |= GPG_VERIFY_OMIT_STATUS;
 	}
 
 	while (i < argc) {
-		unsigned char sha1[20];
+		struct object_id oid;
 		const char *name = argv[i++];
-		if (get_sha1(name, sha1)) {
+
+		if (get_oid(name, &oid)) {
 			had_error = !!error("tag '%s' not found.", name);
 			continue;
 		}
 
-		if (gpg_verify_tag(sha1, name, flags)) {
+		if (gpg_verify_tag(&oid, name, flags)) {
 			had_error = 1;
 			continue;
 		}
 
-		if (fmt_pretty)
-			pretty_print_ref(name, sha1, fmt_pretty);
+		if (format.format)
+			pretty_print_ref(name, &oid, &format);
 	}
 	return had_error;
 }

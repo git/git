@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "tree.h"
 #include "cache-tree.h"
@@ -32,7 +33,7 @@ static int dump_cache_tree(struct cache_tree *it,
 	}
 	else {
 		dump_one(it, pfx, "");
-		if (oidcmp(&it->oid, &ref->oid) ||
+		if (!oideq(&it->oid, &ref->oid) ||
 		    ref->entry_count != it->entry_count ||
 		    ref->subtree_nr != it->subtree_nr) {
 			/* claims to be valid but is lying */
@@ -54,7 +55,7 @@ static int dump_cache_tree(struct cache_tree *it,
 	return errs;
 }
 
-int cmd_main(int ac, const char **av)
+int cmd__dump_cache_tree(int ac, const char **av)
 {
 	struct index_state istate;
 	struct cache_tree *another = cache_tree();

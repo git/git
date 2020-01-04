@@ -55,8 +55,8 @@ test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 
 compare_mtimes ()
 {
-	read tref rest &&
-	while read t rest; do
+	read tref &&
+	while read t; do
 		test "$tref" = "$t" || return 1
 	done
 }
@@ -90,7 +90,7 @@ test_expect_success 'unpacked objects receive timestamp of pack file' '
 	tmppack=".git/objects/pack/tmp_pack" &&
 	ln "$packfile" "$tmppack" &&
 	git repack -A -l -d &&
-	test-chmtime -v +0 "$tmppack" "$fsha1path" "$csha1path" "$tsha1path" \
+	test-tool chmtime --get "$tmppack" "$fsha1path" "$csha1path" "$tsha1path" \
 		> mtimes &&
 	compare_mtimes < mtimes
 '
@@ -103,7 +103,7 @@ test_expect_success 'do not bother loosening old objects' '
 	git prune-packed &&
 	git cat-file -p $obj1 &&
 	git cat-file -p $obj2 &&
-	test-chmtime =-86400 .git/objects/pack/pack-$pack2.pack &&
+	test-tool chmtime =-86400 .git/objects/pack/pack-$pack2.pack &&
 	git repack -A -d --unpack-unreachable=1.hour.ago &&
 	git cat-file -p $obj1 &&
 	test_must_fail git cat-file -p $obj2
@@ -117,7 +117,7 @@ test_expect_success 'keep packed objects found only in index' '
 	git reset HEAD^ &&
 	git reflog expire --expire=now --all &&
 	git add file &&
-	test-chmtime =-86400 .git/objects/pack/* &&
+	test-tool chmtime =-86400 .git/objects/pack/* &&
 	git gc --prune=1.hour.ago &&
 	git cat-file blob :file
 '

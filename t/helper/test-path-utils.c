@@ -1,5 +1,7 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "string-list.h"
+#include "utf8.h"
 
 /*
  * A "string_list_each_func_t" function that normalizes an entry from
@@ -37,6 +39,20 @@ struct test_data {
 	const char *to;    /* output: ... to this.            */
 	const char *alternative; /* output: ... or this.      */
 };
+
+/*
+ * Compatibility wrappers for OpenBSD, whose basename(3) and dirname(3)
+ * have const parameters.
+ */
+static char *posix_basename(char *path)
+{
+	return basename(path);
+}
+
+static char *posix_dirname(char *path)
+{
+	return dirname(path);
+}
 
 static int test_function(struct test_data *data, char *(*func)(char *input),
 	const char *funcname)
@@ -156,7 +172,113 @@ static struct test_data dirname_data[] = {
 	{ NULL,              NULL     }
 };
 
-int cmd_main(int argc, const char **argv)
+static int is_dotgitmodules(const char *path)
+{
+	return is_hfs_dotgitmodules(path) || is_ntfs_dotgitmodules(path);
+}
+
+static int cmp_by_st_size(const void *a, const void *b)
+{
+	intptr_t x = (intptr_t)((struct string_list_item *)a)->util;
+	intptr_t y = (intptr_t)((struct string_list_item *)b)->util;
+
+	return x > y ? -1 : (x < y ? +1 : 0);
+}
+
+/*
+ * A very simple, reproducible pseudo-random generator. Copied from
+ * `test-genrandom.c`.
+ */
+static uint64_t my_random_value = 1234;
+
+static uint64_t my_random(void)
+{
+	my_random_value = my_random_value * 1103515245 + 12345;
+	return my_random_value;
+}
+
+/*
+ * A fast approximation of the square root, without requiring math.h.
+ *
+ * It uses Newton's method to approximate the solution of 0 = x^2 - value.
+ */
+static double my_sqrt(double value)
+{
+	const double epsilon = 1e-6;
+	double x = value;
+
+	if (value == 0)
+		return 0;
+
+	for (;;) {
+		double delta = (value / x - x) / 2;
+		if (delta < epsilon && delta > -epsilon)
+			return x + delta;
+		x += delta;
+	}
+}
+
+static int protect_ntfs_hfs_benchmark(int argc, const char **argv)
+{
+	size_t i, j, nr, min_len = 3, max_len = 20;
+	char **names;
+	int repetitions = 15, file_mode = 0100644;
+	uint64_t begin, end;
+	double m[3][2], v[3][2];
+	uint64_t cumul;
+	double cumul2;
+
+	if (argc > 1 && !strcmp(argv[1], "--with-symlink-mode")) {
+		file_mode = 0120000;
+		argc--;
+		argv++;
+	}
+
+	nr = argc > 1 ? strtoul(argv[1], NULL, 0) : 1000000;
+	ALLOC_ARRAY(names, nr);
+
+	if (argc > 2) {
+		min_len = strtoul(argv[2], NULL, 0);
+		if (argc > 3)
+			max_len = strtoul(argv[3], NULL, 0);
+		if (min_len > max_len)
+			die("min_len > max_len");
+	}
+
+	for (i = 0; i < nr; i++) {
+		size_t len = min_len + (my_random() % (max_len + 1 - min_len));
+
+		names[i] = xmallocz(len);
+		while (len > 0)
+			names[i][--len] = (char)(' ' + (my_random() % ('\x7f' - ' ')));
+	}
+
+	for (protect_ntfs = 0; protect_ntfs < 2; protect_ntfs++)
+		for (protect_hfs = 0; protect_hfs < 2; protect_hfs++) {
+			cumul = 0;
+			cumul2 = 0;
+			for (i = 0; i < repetitions; i++) {
+				begin = getnanotime();
+				for (j = 0; j < nr; j++)
+					verify_path(names[j], file_mode);
+				end = getnanotime();
+				printf("protect_ntfs = %d, protect_hfs = %d: %lfms\n", protect_ntfs, protect_hfs, (end-begin) / (double)1e6);
+				cumul += end - begin;
+				cumul2 += (end - begin) * (end - begin);
+			}
+			m[protect_ntfs][protect_hfs] = cumul / (double)repetitions;
+			v[protect_ntfs][protect_hfs] = my_sqrt(cumul2 / (double)repetitions - m[protect_ntfs][protect_hfs] * m[protect_ntfs][protect_hfs]);
+			printf("mean: %lfms, stddev: %lfms\n", m[protect_ntfs][protect_hfs] / (double)1e6, v[protect_ntfs][protect_hfs] / (double)1e6);
+		}
+
+	for (protect_ntfs = 0; protect_ntfs < 2; protect_ntfs++)
+		for (protect_hfs = 0; protect_hfs < 2; protect_hfs++)
+			printf("ntfs=%d/hfs=%d: %lf%% slower\n", protect_ntfs, protect_hfs, (m[protect_ntfs][protect_hfs] - m[0][0]) * 100 / m[0][0]);
+
+	return 0;
+}
+
+int cmd__path_utils(int argc, const char **argv)
 {
 	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
 		char *buf = xmallocz(strlen(argv[2]));
@@ -251,10 +373,100 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	if (argc == 2 && !strcmp(argv[1], "basename"))
-		return test_function(basename_data, basename, argv[1]);
+		return test_function(basename_data, posix_basename, argv[1]);
 
 	if (argc == 2 && !strcmp(argv[1], "dirname"))
-		return test_function(dirname_data, dirname, argv[1]);
+		return test_function(dirname_data, posix_dirname, argv[1]);
+
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitmodules")) {
+		int res = 0, expect = 1, i;
+		for (i = 2; i < argc; i++)
+			if (!strcmp("--not", argv[i]))
+				expect = !expect;
+			else if (expect != is_dotgitmodules(argv[i]))
+				res = error("'%s' is %s.gitmodules", argv[i],
+					    expect ? "not " : "");
+			else
+				fprintf(stderr, "ok: '%s' is %s.gitmodules\n",
+					argv[i], expect ? "" : "not ");
+		return !!res;
+	}
+
+	if (argc > 2 && !strcmp(argv[1], "file-size")) {
+		int res = 0, i;
+		struct stat st;
+
+		for (i = 2; i < argc; i++)
+			if (stat(argv[i], &st))
+				res = error_errno("Cannot stat '%s'", argv[i]);
+			else
+				printf("%"PRIuMAX"\n", (uintmax_t)st.st_size);
+		return !!res;
+	}
+
+	if (argc == 4 && !strcmp(argv[1], "skip-n-bytes")) {
+		int fd = open(argv[2], O_RDONLY), offset = atoi(argv[3]);
+		char buffer[65536];
+
+		if (fd < 0)
+			die_errno("could not open '%s'", argv[2]);
+		if (lseek(fd, offset, SEEK_SET) < 0)
+			die_errno("could not skip %d bytes", offset);
+		for (;;) {
+			ssize_t count = read(fd, buffer, sizeof(buffer));
+			if (count < 0)
+				die_errno("could not read '%s'", argv[2]);
+			if (!count)
+				break;
+			if (write(1, buffer, count) < 0)
+				die_errno("could not write to stdout");
+		}
+		close(fd);
+		return 0;
+	}
+
+	if (argc > 5 && !strcmp(argv[1], "slice-tests")) {
+		int res = 0;
+		long offset, stride, i;
+		struct string_list list = STRING_LIST_INIT_NODUP;
+		struct stat st;
+
+		offset = strtol(argv[2], NULL, 10);
+		stride = strtol(argv[3], NULL, 10);
+		if (stride < 1)
+			stride = 1;
+		for (i = 4; i < argc; i++)
+			if (stat(argv[i], &st))
+				res = error_errno("Cannot stat '%s'", argv[i]);
+			else
+				string_list_append(&list, argv[i])->util =
+					(void *)(intptr_t)st.st_size;
+		QSORT(list.items, list.nr, cmp_by_st_size);
+		for (i = offset; i < list.nr; i+= stride)
+			printf("%s\n", list.items[i].string);
+
+		return !!res;
+	}
+
+	if (argc > 1 && !strcmp(argv[1], "protect_ntfs_hfs"))
+		return !!protect_ntfs_hfs_benchmark(argc - 1, argv + 1);
+
+	if (argc > 1 && !strcmp(argv[1], "is_valid_path")) {
+		int res = 0, expect = 1, i;
+
+		for (i = 2; i < argc; i++)
+			if (!strcmp("--not", argv[i]))
+				expect = 0;
+			else if (expect != is_valid_path(argv[i]))
+				res = error("'%s' is%s a valid path",
+					    argv[i], expect ? " not" : "");
+			else
+				fprintf(stderr,
+					"'%s' is%s a valid path\n",
+					argv[i], expect ? "" : " not");
+
+		return !!res;
+	}
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");

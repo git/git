@@ -128,7 +128,7 @@ cat >expected <<\EOF
 EOF
 
 check_result () {
-	git ls-files --stage | sed -e 's/ '"$_x40"' / X /' >current &&
+	git ls-files --stage | sed -e 's/ '"$OID_REGEX"' / X /' >current &&
 	test_cmp expected current
 }
 

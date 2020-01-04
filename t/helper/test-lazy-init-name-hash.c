@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "parse-options.h"
 
@@ -40,17 +41,13 @@ static void dump_run(void)
 			die("non-threaded code path used");
 	}
 
-	dir = hashmap_iter_first(&the_index.dir_hash, &iter_dir);
-	while (dir) {
+	hashmap_for_each_entry(&the_index.dir_hash, &iter_dir, dir,
+				ent /* member name */)
 		printf("dir %08x %7d %s\n", dir->ent.hash, dir->nr, dir->name);
-		dir = hashmap_iter_next(&iter_dir);
-	}
 
-	ce = hashmap_iter_first(&the_index.name_hash, &iter_cache);
-	while (ce) {
+	hashmap_for_each_entry(&the_index.name_hash, &iter_cache, ce,
+				ent /* member name */)
 		printf("name %08x %s\n", ce->ent.hash, ce->name);
-		ce = hashmap_iter_next(&iter_cache);
-	}
 
 	discard_cache();
 }
@@ -112,7 +109,7 @@ static void analyze_run(void)
 {
 	uint64_t t1s, t1m, t2s, t2m;
 	int cache_nr_limit;
-	int nr_threads_used;
+	int nr_threads_used = 0;
 	int i;
 	int nr;
 
@@ -184,14 +181,14 @@ static void analyze_run(void)
 	}
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__lazy_init_name_hash(int argc, const char **argv)
 {
 	const char *usage[] = {
-		"test-lazy-init-name-hash -d (-s | -m)",
-		"test-lazy-init-name-hash -p [-c c]",
-		"test-lazy-init-name-hash -a a [--step s] [-c c]",
-		"test-lazy-init-name-hash (-s | -m) [-c c]",
-		"test-lazy-init-name-hash -s -m [-c c]",
+		"test-tool lazy-init-name-hash -d (-s | -m)",
+		"test-tool lazy-init-name-hash -p [-c c]",
+		"test-tool lazy-init-name-hash -a a [--step s] [-c c]",
+		"test-tool lazy-init-name-hash (-s | -m) [-c c]",
+		"test-tool lazy-init-name-hash -s -m [-c c]",
 		NULL
 	};
 	struct option options[] = {

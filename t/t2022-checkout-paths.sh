@@ -68,14 +68,25 @@ test_expect_success 'do not touch files that are already up-to-date' '
 	git add file1 file2 &&
 	git commit -m base &&
 	echo modified >file1 &&
-	test-chmtime =1000000000 file2 &&
+	test-tool chmtime =1000000000 file2 &&
 	git update-index -q --refresh &&
 	git checkout HEAD -- file1 file2 &&
 	echo one >expect &&
 	test_cmp expect file1 &&
-	echo "1000000000	file2" >expect &&
-	test-chmtime -v +0 file2 >actual &&
+	echo "1000000000" >expect &&
+	test-tool chmtime --get file2 >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'checkout HEAD adds deleted intent-to-add file back to index' '
+	echo "nonempty" >nonempty &&
+	>empty &&
+	git add nonempty empty &&
+	git commit -m "create files to be deleted" &&
+	git rm --cached nonempty empty &&
+	git add -N nonempty empty &&
+	git checkout HEAD nonempty empty &&
+	git diff --cached --exit-code
 '
 
 test_done

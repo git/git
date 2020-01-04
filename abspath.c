@@ -183,7 +183,7 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 
 			/*
 			 * use the symlink as the remaining components that
-			 * need to be resloved
+			 * need to be resolved
 			 */
 			strbuf_swap(&symlink, &remaining);
 		}
@@ -202,6 +202,10 @@ error_out:
 	return retval;
 }
 
+/*
+ * Resolve `path` into an absolute, cleaned-up path. The return value
+ * comes from a shared buffer.
+ */
 const char *real_path(const char *path)
 {
 	static struct strbuf realpath = STRBUF_INIT;

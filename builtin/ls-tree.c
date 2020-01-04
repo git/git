@@ -4,6 +4,8 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "config.h"
+#include "object-store.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
@@ -59,7 +61,7 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	return 0;
 }
 
-static int show_tree(const unsigned char *sha1, struct strbuf *base,
+static int show_tree(const struct object_id *oid, struct strbuf *base,
 		const char *pathname, unsigned mode, int stage, void *context)
 {
 	int retval = 0;
@@ -93,20 +95,20 @@ static int show_tree(const unsigned char *sha1, struct strbuf *base,
 			char size_text[24];
 			if (!strcmp(type, blob_type)) {
 				unsigned long size;
-				if (sha1_object_info(sha1, &size) == OBJ_BAD)
+				if (oid_object_info(the_repository, oid, &size) == OBJ_BAD)
 					xsnprintf(size_text, sizeof(size_text),
 						  "BAD");
 				else
 					xsnprintf(size_text, sizeof(size_text),
-						  "%lu", size);
+						  "%"PRIuMAX, (uintmax_t)size);
 			} else
 				xsnprintf(size_text, sizeof(size_text), "-");
 			printf("%06o %s %s %7s\t", mode, type,
-			       find_unique_abbrev(sha1, abbrev),
+			       find_unique_abbrev(oid, abbrev),
 			       size_text);
 		} else
 			printf("%06o %s %s\t", mode, type,
-			       find_unique_abbrev(sha1, abbrev));
+			       find_unique_abbrev(oid, abbrev));
 	}
 	baselen = base->len;
 	strbuf_addstr(base, pathname);
@@ -183,5 +185,6 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	tree = parse_tree_indirect(&oid);
 	if (!tree)
 		die("not a tree object");
-	return !!read_tree_recursive(tree, "", 0, 0, &pathspec, show_tree, NULL);
+	return !!read_tree_recursive(the_repository, tree, "", 0, 0,
+				     &pathspec, show_tree, NULL);
 }

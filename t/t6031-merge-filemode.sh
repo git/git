@@ -61,7 +61,7 @@ do_both_modes () {
 		git checkout -f a2 &&
 		test_must_fail git merge -s $strategy b2 &&
 		git ls-files -u >actual &&
-		test_cmp actual expect &&
+		test_cmp expect actual &&
 		git ls-files -s file2 | grep ^100755
 	'
 

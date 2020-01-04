@@ -63,6 +63,8 @@ foreach my $tar_file (@ARGV)
 	my $have_top_dir = 1;
 	my ($top_dir, %files);
 
+	my $next_path = '';
+
 	while (read(I, $_, 512) == 512) {
 		my ($name, $mode, $uid, $gid, $size, $mtime,
 			$chksum, $typeflag, $linkname, $magic,
@@ -70,6 +72,13 @@ foreach my $tar_file (@ARGV)
 			$prefix) = unpack 'Z100 Z8 Z8 Z8 Z12 Z12
 			Z8 Z1 Z100 Z6
 			Z2 Z32 Z32 Z8 Z8 Z*', $_;
+
+		unless ($next_path eq '') {
+			# Recover name from previous extended header
+			$name = $next_path;
+			$next_path = '';
+		}
+
 		last unless length($name);
 		if ($name eq '././@LongLink') {
 			# GNU tar extension
@@ -90,13 +99,31 @@ foreach my $tar_file (@ARGV)
 			Z8 Z1 Z100 Z6
 			Z2 Z32 Z32 Z8 Z8 Z*', $_;
 		}
-		next if $name =~ m{/\z};
 		$mode = oct $mode;
 		$size = oct $size;
 		$mtime = oct $mtime;
 		next if $typeflag == 5; # directory
 
-		if ($typeflag != 1) { # handle hard links later
+		if ($typeflag eq 'x') { # extended header
+			# If extended header, check for path
+			my $pax_header = '';
+			while ($size > 0 && read(I, $_, 512) == 512) {
+				$pax_header = $pax_header . substr($_, 0, $size);
+				$size -= 512;
+			}
+
+			my @lines = split /\n/, $pax_header;
+			foreach my $line (@lines) {
+				my ($len, $entry) = split / /, $line;
+				my ($key, $value) = split /=/, $entry;
+				if ($key eq 'path') {
+					$next_path = $value;
+				}
+			}
+			next;
+		} elsif ($name =~ m{/\z}) { # directory
+			next;
+		} elsif ($typeflag != 1) { # handle hard links later
 			print FI "blob\n", "mark :$next_mark\n";
 			if ($typeflag == 2) { # symbolic link
 				print FI "data ", length($linkname), "\n",

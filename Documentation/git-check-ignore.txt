@@ -9,8 +9,8 @@ git-check-ignore - Debug gitignore / exclude files
 SYNOPSIS
 --------
 [verse]
-'git check-ignore' [options] pathname...
-'git check-ignore' [options] --stdin
+'git check-ignore' [<options>] <pathname>...
+'git check-ignore' [<options>] --stdin
 
 DESCRIPTION
 -----------
@@ -39,7 +39,7 @@ OPTIONS
 	instead of from the command-line.
 
 -z::
-	The output format is modified to be machine-parseable (see
+	The output format is modified to be machine-parsable (see
 	below).  If `--stdin` is also given, input paths are separated
 	with a NUL character instead of a linefeed character.
 

@@ -1,0 +1,19 @@
+(
+	case "$x" in
+	x) foo ;;
+	*) bar ;;
+	esac &&
+	foobar
+>) &&
+(
+	case "$x" in
+	x) foo ;;
+	*) bar ;;
+?!AMP?!	esac
+	foobar
+>) &&
+(
+	case "$x" in 1) true;; esac &&
+?!AMP?!	case "$y" in 2) false;; esac
+	foobar
+>)

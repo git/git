@@ -32,7 +32,7 @@ or the result.
 If multiple cases apply, the one used is listed first.
 
 A result which changes the index is an error if the index is not empty
-and not up-to-date.
+and not up to date.
 
 Entries marked '+' have stat information. Spaces marked '*' don't
 affect the result.
@@ -65,7 +65,7 @@ empty, no entry is left for that stage). Otherwise, the given entry is
 left in stage 0, and there are no other entries.
 
 A result of "no merge" is an error if the index is not empty and not
-up-to-date.
+up to date.
 
 *empty* means that the tree must not have a directory-file conflict
  with the entry.

@@ -46,9 +46,8 @@ do
 
 	test_expect_success "am$with3 --skip continue after failed am$with3" '
 		test_must_fail git am$with3 --skip >output &&
-		test_i18ngrep "^Applying" output >output.applying &&
-		test_i18ngrep "^Applying: 6$" output.applying &&
-		test_i18ncmp file-2-expect file-2 &&
+		test_i18ngrep "^Applying: 6$" output &&
+		test_cmp file-2-expect file-2 &&
 		test ! -f .git/MERGE_RR
 	'
 
@@ -172,7 +171,7 @@ test_expect_success 'am --skip leaves index stat info alone' '
 	git checkout -f --orphan skip-stat-info &&
 	git reset &&
 	test_commit skip-should-be-untouched &&
-	test-chmtime =0 skip-should-be-untouched.t &&
+	test-tool chmtime =0 skip-should-be-untouched.t &&
 	git update-index --refresh &&
 	git diff-files --exit-code --quiet &&
 	test_must_fail git am 0001-*.patch &&
@@ -184,7 +183,7 @@ test_expect_success 'am --abort leaves index stat info alone' '
 	git checkout -f --orphan abort-stat-info &&
 	git reset &&
 	test_commit abort-should-be-untouched &&
-	test-chmtime =0 abort-should-be-untouched.t &&
+	test-tool chmtime =0 abort-should-be-untouched.t &&
 	git update-index --refresh &&
 	git diff-files --exit-code --quiet &&
 	test_must_fail git am 0001-*.patch &&

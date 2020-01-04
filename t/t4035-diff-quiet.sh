@@ -147,7 +147,7 @@ test_expect_success 'git diff --ignore-all-space, both files outside repo' '
 '
 
 test_expect_success 'git diff --quiet ignores stat-change only entries' '
-	test-chmtime +10 a &&
+	test-tool chmtime +10 a &&
 	echo modified >>b &&
 	test_expect_code 1 git diff --quiet
 '

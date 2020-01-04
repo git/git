@@ -389,7 +389,7 @@ $err
 }
 
 method _after_readtree {} {
-	global selected_commit_type commit_type HEAD MERGE_HEAD PARENT
+	global commit_type HEAD MERGE_HEAD PARENT
 	global current_branch is_detached
 	global ui_comm
 
@@ -490,12 +490,12 @@ method _update_repo_state {} {
 	#    amend mode our file lists are accurate and we can avoid
 	#    the rescan.
 	#
-	global selected_commit_type commit_type HEAD MERGE_HEAD PARENT
+	global commit_type_is_amend commit_type HEAD MERGE_HEAD PARENT
 	global ui_comm
 
 	unlock_index
 	set name [_name $this]
-	set selected_commit_type new
+	set commit_type_is_amend 0
 	if {[string match amend* $commit_type]} {
 		$ui_comm delete 0.0 end
 		$ui_comm edit reset

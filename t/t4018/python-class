@@ -1,0 +1,4 @@
+class RIGHT(int, str):
+    # comment
+    # another comment
+    # ChangeMe

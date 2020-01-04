@@ -2,6 +2,8 @@
 #include "cache.h"
 #include "progress.h"
 #include "parse-options.h"
+#include "packfile.h"
+#include "object-store.h"
 
 static const char * const prune_packed_usage[] = {
 	N_("git prune-packed [-n | --dry-run] [-q | --quiet]"),
@@ -10,7 +12,7 @@ static const char * const prune_packed_usage[] = {
 
 static struct progress *progress;
 
-static int prune_subdir(int nr, const char *path, void *data)
+static int prune_subdir(unsigned int nr, const char *path, void *data)
 {
 	int *opts = data;
 	display_progress(progress, nr + 1);
@@ -24,7 +26,7 @@ static int prune_object(const struct object_id *oid, const char *path,
 {
 	int *opts = data;
 
-	if (!has_sha1_pack(oid->hash))
+	if (!has_object_pack(oid))
 		return 0;
 
 	if (*opts & PRUNE_PACKED_DRY_RUN)
@@ -37,8 +39,7 @@ static int prune_object(const struct object_id *oid, const char *path,
 void prune_packed_objects(int opts)
 {
 	if (opts & PRUNE_PACKED_VERBOSE)
-		progress = start_progress_delay(_("Removing duplicate objects"),
-			256, 95, 2);
+		progress = start_delayed_progress(_("Removing duplicate objects"), 256);
 
 	for_each_loose_file_in_objdir(get_object_directory(),
 				      prune_object, NULL, prune_subdir, &opts);
@@ -61,6 +62,11 @@ int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, prune_packed_options,
 			     prune_packed_usage, 0);
+
+	if (argc > 0)
+		usage_msg_opt(_("too many arguments"),
+			      prune_packed_usage,
+			      prune_packed_options);
 
 	prune_packed_objects(opts);
 	return 0;

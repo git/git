@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Simulates svnrdump by replaying an existing dump from a file, taking care
 of the specified revision range.
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         print("usage: %s dump URL -rLOWER:UPPER")
         sys.exit(1)
     if not sys.argv[1] == 'dump':
-        raise NotImplementedError('only "dump" is suppported.')
+        raise NotImplementedError('only "dump" is supported.')
     url = sys.argv[2]
     r = ('0', 'HEAD')
     if len(sys.argv) == 4 and sys.argv[3][0:2] == '-r':

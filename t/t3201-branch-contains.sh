@@ -48,16 +48,14 @@ test_expect_success 'branch --contains master' '
 test_expect_success 'branch --no-contains=master' '
 
 	git branch --no-contains=master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
 test_expect_success 'branch --no-contains master' '
 
 	git branch --no-contains master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -94,8 +92,7 @@ test_expect_success 'branch --contains with pattern implies --list' '
 test_expect_success 'branch --no-contains with pattern implies --list' '
 
 	git branch --no-contains=master master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -123,8 +120,7 @@ test_expect_success 'branch --merged with pattern implies --list' '
 test_expect_success 'side: branch --no-merged' '
 
 	git branch --no-merged >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -152,8 +148,7 @@ test_expect_success 'master: branch --no-merged' '
 test_expect_success 'branch --no-merged with pattern implies --list' '
 
 	git branch --no-merged=master master >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 
 '
 
@@ -197,10 +192,10 @@ test_expect_success 'branch --merged with --verbose' '
 	EOF
 	test_cmp expect actual &&
 	git branch --verbose --merged topic >actual &&
-	cat >expect <<-\EOF &&
-	  master c77a0a9 second on master
-	* topic  2c939f4 [ahead 1] foo
-	  zzz    c77a0a9 second on master
+	cat >expect <<-EOF &&
+	  master $(git rev-parse --short master) second on master
+	* topic  $(git rev-parse --short topic ) [ahead 1] foo
+	  zzz    $(git rev-parse --short zzz   ) second on master
 	EOF
 	test_i18ncmp expect actual
 '

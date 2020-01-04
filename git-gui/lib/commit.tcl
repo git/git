@@ -25,6 +25,8 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	set msg {}
 	set parents [list]
 	if {[catch {
+			set name ""
+			set email ""
 			set fd [git_read cat-file commit $curHEAD]
 			fconfigure $fd -encoding binary -translation lf
 			# By default commits are assumed to be in utf-8
@@ -34,9 +36,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 					lappend parents [string range $line 7 end]
 				} elseif {[string match {encoding *} $line]} {
 					set enc [string tolower [string range $line 9 end]]
-				} elseif {[regexp "author (.*)\\s<(.*)>\\s(\\d.*$)" $line all name email time]} {
-					set commit_author [list name $name email $email date $time]
-				}
+				} elseif {[regexp "author (.*)\\s<(.*)>\\s(\\d.*$)" $line all name email time]} { }
 			}
 			set msg [read $fd]
 			close $fd
@@ -44,7 +44,13 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 			set enc [tcl_encoding $enc]
 			if {$enc ne {}} {
 				set msg [encoding convertfrom $enc $msg]
+				set name [encoding convertfrom $enc $name]
+				set email [encoding convertfrom $enc $email]
 			}
+			if {$name ne {} && $email ne {}} {
+				set commit_author [list name $name email $email date $time]
+			}
+
 			set msg [string trim $msg]
 		} err]} {
 		error_popup [strcat [mc "Error loading commit data for amend:"] "\n\n$err"]
@@ -327,7 +333,7 @@ proc commit_writetree {curHEAD msg_p} {
 proc commit_committree {fd_wt curHEAD msg_p} {
 	global HEAD PARENT MERGE_HEAD commit_type commit_author
 	global current_branch
-	global ui_comm selected_commit_type
+	global ui_comm commit_type_is_amend
 	global file_states selected_paths rescan_active
 	global repo_config
 	global env
@@ -461,8 +467,8 @@ A rescan will be automatically started now.
 
 	# -- Update in memory status
 	#
-	set selected_commit_type new
 	set commit_type normal
+	set commit_type_is_amend 0
 	set HEAD $cmt_id
 	set PARENT $cmt_id
 	set MERGE_HEAD [list]

@@ -1,0 +1,23 @@
+# LINT: first subshell statement cuddled with opening "("; for implementation
+# LINT: simplicity, "(..." is split into two lines, "(" and "..."
+(cd foo &&
+	bar
+) &&
+
+# LINT: same with missing "&&"
+(cd foo
+	bar
+) &&
+
+# LINT: closing ")" cuddled with final subshell statement
+(
+	cd foo &&
+	bar) &&
+
+# LINT: "(" and ")" cuddled with first and final subshell statements
+(cd foo &&
+	bar) &&
+
+# LINT: same with missing "&&"
+(cd foo
+	bar)

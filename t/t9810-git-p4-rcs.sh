@@ -161,7 +161,7 @@ test_expect_success 'cleanup after failure' '
 test_expect_success 'ktext expansion should not expand multi-line $File::' '
 	(
 		cd "$cli" &&
-		cat >lv.pm <<-\EOF
+		cat >lv.pm <<-\EOF &&
 		my $wanted = sub { my $f = $File::Find::name;
 				    if ( -f && $f =~ /foo/ ) {
 		EOF
@@ -358,10 +358,6 @@ test_expect_failure 'Add keywords in git which do not match the default p4 value
 		grep "NewKW2.*Revision.*[0-9]" kwfile1.c
 
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

@@ -8,6 +8,11 @@ Run "git rebase -p" and check that merges are properly carried along
 '
 . ./test-lib.sh
 
+if ! test_have_prereq REBASE_P; then
+	skip_all='skipping git rebase -p tests, as asked for'
+	test_done
+fi
+
 GIT_AUTHOR_EMAIL=bogus_email_address
 export GIT_AUTHOR_EMAIL
 

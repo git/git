@@ -8,22 +8,23 @@ cache-tree extension.
  . ./test-lib.sh
 
 cmp_cache_tree () {
-	test-dump-cache-tree | sed -e '/#(ref)/d' >actual &&
-	sed "s/$_x40/SHA/" <actual >filtered &&
+	test-tool dump-cache-tree | sed -e '/#(ref)/d' >actual &&
+	sed "s/$OID_REGEX/SHA/" <actual >filtered &&
 	test_cmp "$1" filtered
 }
 
 # We don't bother with actually checking the SHA1:
-# test-dump-cache-tree already verifies that all existing data is
+# test-tool dump-cache-tree already verifies that all existing data is
 # correct.
 generate_expected_cache_tree_rec () {
 	dir="$1${1:+/}" &&
 	parent="$2" &&
 	# ls-files might have foo/bar, foo/bar/baz, and foo/bar/quux
 	# We want to count only foo because it's the only direct child
-	subtrees=$(git ls-files|grep /|cut -d / -f 1|uniq) &&
+	git ls-files >files &&
+	subtrees=$(grep / files|cut -d / -f 1|uniq) &&
 	subtree_count=$(echo "$subtrees"|awk -v c=0 '$1 != "" {++c} END {print c}') &&
-	entries=$(git ls-files|wc -l) &&
+	entries=$(wc -l <files) &&
 	printf "SHA $dir (%d entries, %d subtrees)\n" "$entries" "$subtree_count" &&
 	for subtree in $subtrees
 	do
@@ -47,7 +48,7 @@ test_cache_tree () {
 
 test_invalid_cache_tree () {
 	printf "invalid                                  %s ()\n" "" "$@" >expect &&
-	test-dump-cache-tree |
+	test-tool dump-cache-tree |
 	sed -n -e "s/[0-9]* subtrees//" -e '/#(ref)/d' -e '/^invalid /p' >actual &&
 	test_cmp expect actual
 }
@@ -115,14 +116,14 @@ test_expect_success 'update-index invalidates cache-tree' '
 '
 
 test_expect_success 'write-tree establishes cache-tree' '
-	test-scrap-cache-tree &&
+	test-tool scrap-cache-tree &&
 	git write-tree &&
 	test_cache_tree
 '
 
-test_expect_success 'test-scrap-cache-tree works' '
+test_expect_success 'test-tool scrap-cache-tree works' '
 	git read-tree HEAD &&
-	test-scrap-cache-tree &&
+	test-tool scrap-cache-tree &&
 	test_no_cache_tree
 '
 
@@ -156,9 +157,27 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 		return 44;
 	}
 	EOT
-	(echo p; echo 1; echo; echo s; echo n; echo y; echo q) |
+	test_write_lines p 1 "" s n y q |
 	git commit --interactive -m foo &&
 	test_cache_tree
+'
+
+test_expect_success PERL 'commit -p with shrinking cache-tree' '
+	mkdir -p deep/very-long-subdir &&
+	echo content >deep/very-long-subdir/file &&
+	git add deep &&
+	git commit -m add &&
+	git rm -r deep &&
+
+	before=$(wc -c <.git/index) &&
+	git commit -m delete -p &&
+	after=$(wc -c <.git/index) &&
+
+	# double check that the index shrank
+	test $before -gt $after &&
+
+	# and that our index was not corrupted
+	git fsck
 '
 
 test_expect_success 'commit in child dir has cache-tree' '
@@ -170,7 +189,7 @@ test_expect_success 'commit in child dir has cache-tree' '
 '
 
 test_expect_success 'reset --hard gives cache-tree' '
-	test-scrap-cache-tree &&
+	test-tool scrap-cache-tree &&
 	git reset --hard &&
 	test_cache_tree
 '
@@ -239,17 +258,20 @@ test_expect_success 'no phantom error when switching trees' '
 	>newdir/one &&
 	git add newdir/one &&
 	git checkout 2>errors &&
-	! test -s errors
+	test_must_be_empty errors
 '
 
 test_expect_success 'switching trees does not invalidate shared index' '
-	git update-index --split-index &&
-	>split &&
-	git add split &&
-	test-dump-split-index .git/index | grep -v ^own >before &&
-	git commit -m "as-is" &&
-	test-dump-split-index .git/index | grep -v ^own >after &&
-	test_cmp before after
+	(
+		sane_unset GIT_TEST_SPLIT_INDEX &&
+		git update-index --split-index &&
+		>split &&
+		git add split &&
+		test-tool dump-split-index .git/index | grep -v ^own >before &&
+		git commit -m "as-is" &&
+		test-tool dump-split-index .git/index | grep -v ^own >after &&
+		test_cmp before after
+	)
 '
 
 test_done

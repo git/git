@@ -44,6 +44,7 @@ helper_test_clean() {
 	reject $1 https example.com user2
 	reject $1 http path.tld user
 	reject $1 https timeout.tld user
+	reject $1 https sso.tld
 }
 
 reject() {
@@ -248,6 +249,24 @@ helper_test() {
 		host=example.com
 		username=user2
 		password=pass2
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) can store empty username" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=sso.tld
+		username=
+		password=
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=sso.tld
+		--
+		protocol=https
+		host=sso.tld
+		username=
+		password=
 		EOF
 	'
 }

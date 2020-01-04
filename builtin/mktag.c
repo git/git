@@ -1,5 +1,7 @@
 #include "builtin.h"
 #include "tag.h"
+#include "replace-object.h"
+#include "object-store.h"
 
 /*
  * A signature file has a very simple fixed format: four lines
@@ -18,17 +20,17 @@
 /*
  * We refuse to tag something we can't verify. Just because.
  */
-static int verify_object(const unsigned char *sha1, const char *expected_type)
+static int verify_object(const struct object_id *oid, const char *expected_type)
 {
 	int ret = -1;
 	enum object_type type;
 	unsigned long size;
-	void *buffer = read_sha1_file(sha1, &type, &size);
-	const unsigned char *repl = lookup_replace_object(sha1);
+	void *buffer = read_object_file(oid, &type, &size);
+	const struct object_id *repl = lookup_replace_object(the_repository, oid);
 
 	if (buffer) {
 		if (type == type_from_string(expected_type))
-			ret = check_sha1_signature(repl, buffer, size, expected_type);
+			ret = check_object_signature(repl, buffer, size, expected_type);
 		free(buffer);
 	}
 	return ret;
@@ -38,8 +40,8 @@ static int verify_tag(char *buffer, unsigned long size)
 {
 	int typelen;
 	char type[20];
-	unsigned char sha1[20];
-	const char *object, *type_line, *tag_line, *tagger_line, *lb, *rb;
+	struct object_id oid;
+	const char *object, *type_line, *tag_line, *tagger_line, *lb, *rb, *p;
 	size_t len;
 
 	if (size < 84)
@@ -52,11 +54,11 @@ static int verify_tag(char *buffer, unsigned long size)
 	if (memcmp(object, "object ", 7))
 		return error("char%d: does not start with \"object \"", 0);
 
-	if (get_sha1_hex(object + 7, sha1))
+	if (parse_oid_hex(object + 7, &oid, &p))
 		return error("char%d: could not get SHA1 hash", 7);
 
 	/* Verify type line */
-	type_line = object + 48;
+	type_line = p + 1;
 	if (memcmp(type_line - 1, "\ntype ", 6))
 		return error("char%d: could not find \"\\ntype \"", 47);
 
@@ -80,8 +82,8 @@ static int verify_tag(char *buffer, unsigned long size)
 	type[typelen] = 0;
 
 	/* Verify that the object matches */
-	if (verify_object(sha1, type))
-		return error("char%d: could not verify object %s", 7, sha1_to_hex(sha1));
+	if (verify_object(&oid, type))
+		return error("char%d: could not verify object %s", 7, oid_to_hex(&oid));
 
 	/* Verify the tag-name: we don't allow control characters or spaces in it */
 	tag_line += 4;
@@ -151,7 +153,7 @@ static int verify_tag(char *buffer, unsigned long size)
 int cmd_mktag(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buf = STRBUF_INIT;
-	unsigned char result_sha1[20];
+	struct object_id result;
 
 	if (argc != 1)
 		usage("git mktag");
@@ -165,10 +167,10 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 	if (verify_tag(buf.buf, buf.len) < 0)
 		die("invalid tag signature file");
 
-	if (write_sha1_file(buf.buf, buf.len, tag_type, result_sha1) < 0)
+	if (write_object_file(buf.buf, buf.len, tag_type, &result) < 0)
 		die("unable to write tag file");
 
 	strbuf_release(&buf);
-	printf("%s\n", sha1_to_hex(result_sha1));
+	printf("%s\n", oid_to_hex(&result));
 	return 0;
 }

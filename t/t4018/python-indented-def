@@ -1,0 +1,7 @@
+class Foo:
+    def RIGHT(self, x: int):
+        return [
+            1,
+            2,
+            ChangeMe,
+        ]

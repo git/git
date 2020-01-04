@@ -4,14 +4,15 @@
 #
 # しらいし ななこ <nanako3@bluebottle.com>, 2007.
 # Satoshi Yasushima <s.yasushima@gmail.com>, 2016.
+# KIDANI Akito <a.kid.1985@gmail.com>, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-27 17:52+0900\n"
-"PO-Revision-Date: 2016-06-22 12:50+0900\n"
-"Last-Translator: Satoshi Yasushima <s.yasushima@gmail.com>\n"
+"PO-Revision-Date: 2019-10-13 23:20+0900\n"
+"Last-Translator: KIDANI Akito <a.kid.1985@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -661,7 +662,7 @@ msgstr ""
 #: lib/merge.tcl:108
 #, tcl-format
 msgid "%s of %s"
-msgstr "%s の %s ブランチ"
+msgstr "%2$s の %1$s ブランチ"
 
 #: lib/merge.tcl:122
 #, tcl-format
@@ -956,7 +957,7 @@ msgstr "エラー: コマンドが失敗しました"
 #: lib/checkout_op.tcl:85
 #, tcl-format
 msgid "Fetching %s from %s"
-msgstr "%s から %s をフェッチしています"
+msgstr "%2$s から %1$s をフェッチしています"
 
 #: lib/checkout_op.tcl:133
 #, tcl-format

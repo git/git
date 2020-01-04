@@ -133,7 +133,7 @@ test_expect_success 'export git tags to p4' '
 		p4 labels ... | grep LIGHTWEIGHT_TAG &&
 		p4 label -o GIT_TAG_1 | grep "tag created in git:xyzzy" &&
 		p4 sync ...@GIT_TAG_1 &&
-		! test -f main/f10
+		! test -f main/f10 &&
 		p4 sync ...@GIT_TAG_2 &&
 		test -f main/f10
 	)
@@ -191,7 +191,7 @@ test_expect_success 'tag that cannot be exported' '
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		!(p4 labels | grep GIT_TAG_ON_A_BRANCH)
+		! p4 labels | grep GIT_TAG_ON_A_BRANCH
 	)
 '
 
@@ -257,11 +257,6 @@ test_expect_success 'importing labels with missing revisions' '
 			! git rev-parse TAG_S0
 		)
 	)
-'
-
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

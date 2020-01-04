@@ -11,7 +11,8 @@ diff: elements are diff hunks. Arguments are given to diff.
 
 merge: elements are merge conflicts. Arguments are ignored.
 
-grep: elements are grep hits. Arguments are given to grep.
+grep: elements are grep hits. Arguments are given to git grep or, if
+      configured, to the command in `jump.grepCmd`.
 
 ws: elements are whitespace errors. Arguments are given to diff --check.
 EOF
@@ -50,7 +51,9 @@ mode_merge() {
 # but let's clean up extra whitespace, so they look better if the
 # editor shows them to us in the status bar.
 mode_grep() {
-	git grep -n "$@" |
+	cmd=$(git config jump.grepCmd)
+	test -n "$cmd" || cmd="git grep -n --column"
+	$cmd "$@" |
 	perl -pe '
 	s/[ \t]+/ /g;
 	s/^ *//;

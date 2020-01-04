@@ -1,24 +1,28 @@
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "refs.h"
 #include "notes-utils.h"
+#include "repository.h"
 
-void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
+void create_notes_commit(struct repository *r,
+			 struct notes_tree *t,
+			 struct commit_list *parents,
 			 const char *msg, size_t msg_len,
-			 unsigned char *result_sha1)
+			 struct object_id *result_oid)
 {
 	struct object_id tree_oid;
 
 	assert(t->initialized);
 
-	if (write_notes_tree(t, tree_oid.hash))
+	if (write_notes_tree(t, &tree_oid))
 		die("Failed to write notes tree to database");
 
 	if (!parents) {
 		/* Deduce parent commit from t->ref */
 		struct object_id parent_oid;
-		if (!read_ref(t->ref, parent_oid.hash)) {
-			struct commit *parent = lookup_commit(&parent_oid);
+		if (!read_ref(t->ref, &parent_oid)) {
+			struct commit *parent = lookup_commit(r, &parent_oid);
 			if (parse_commit(parent))
 				die("Failed to find/parse commit %s", t->ref);
 			commit_list_insert(parent, &parents);
@@ -26,11 +30,12 @@ void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
 		/* else: t->ref points to nothing, assume root/orphan commit */
 	}
 
-	if (commit_tree(msg, msg_len, tree_oid.hash, parents, result_sha1, NULL, NULL))
+	if (commit_tree(msg, msg_len, &tree_oid, parents, result_oid, NULL,
+			NULL))
 		die("Failed to commit notes tree to database");
 }
 
-void commit_notes(struct notes_tree *t, const char *msg)
+void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id commit_oid;
@@ -46,9 +51,9 @@ void commit_notes(struct notes_tree *t, const char *msg)
 	strbuf_addstr(&buf, msg);
 	strbuf_complete_line(&buf);
 
-	create_notes_commit(t, NULL, buf.buf, buf.len, commit_oid.hash);
+	create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
 	strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts at index 7 */
-	update_ref(buf.buf, t->update_ref, commit_oid.hash, NULL, 0,
+	update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
 		   UPDATE_REFS_DIE_ON_ERR);
 
 	strbuf_release(&buf);
@@ -158,7 +163,7 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 }
 
 int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
-			  const unsigned char *from_obj, const unsigned char *to_obj)
+			  const struct object_id *from_obj, const struct object_id *to_obj)
 {
 	int ret = 0;
 	int i;
@@ -167,11 +172,13 @@ int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
 	return ret;
 }
 
-void finish_copy_notes_for_rewrite(struct notes_rewrite_cfg *c, const char *msg)
+void finish_copy_notes_for_rewrite(struct repository *r,
+				   struct notes_rewrite_cfg *c,
+				   const char *msg)
 {
 	int i;
 	for (i = 0; c->trees[i]; i++) {
-		commit_notes(c->trees[i], msg);
+		commit_notes(r, c->trees[i], msg);
 		free_notes(c->trees[i]);
 	}
 	free(c->trees);

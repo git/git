@@ -1,0 +1,125 @@
+format.attach::
+	Enable multipart/mixed attachments as the default for
+	'format-patch'.  The value can also be a double quoted string
+	which will enable attachments as the default and set the
+	value as the boundary.  See the --attach option in
+	linkgit:git-format-patch[1].
+
+format.from::
+	Provides the default value for the `--from` option to format-patch.
+	Accepts a boolean value, or a name and email address.  If false,
+	format-patch defaults to `--no-from`, using commit authors directly in
+	the "From:" field of patch mails.  If true, format-patch defaults to
+	`--from`, using your committer identity in the "From:" field of patch
+	mails and including a "From:" field in the body of the patch mail if
+	different.  If set to a non-boolean value, format-patch uses that
+	value instead of your committer identity.  Defaults to false.
+
+format.numbered::
+	A boolean which can enable or disable sequence numbers in patch
+	subjects.  It defaults to "auto" which enables it only if there
+	is more than one patch.  It can be enabled or disabled for all
+	messages by setting it to "true" or "false".  See --numbered
+	option in linkgit:git-format-patch[1].
+
+format.headers::
+	Additional email headers to include in a patch to be submitted
+	by mail.  See linkgit:git-format-patch[1].
+
+format.to::
+format.cc::
+	Additional recipients to include in a patch to be submitted
+	by mail.  See the --to and --cc options in
+	linkgit:git-format-patch[1].
+
+format.subjectPrefix::
+	The default for format-patch is to output files with the '[PATCH]'
+	subject prefix. Use this variable to change that prefix.
+
+format.coverFromDescription::
+	The default mode for format-patch to determine which parts of
+	the cover letter will be populated using the branch's
+	description. See the `--cover-from-description` option in
+	linkgit:git-format-patch[1].
+
+format.signature::
+	The default for format-patch is to output a signature containing
+	the Git version number. Use this variable to change that default.
+	Set this variable to the empty string ("") to suppress
+	signature generation.
+
+format.signatureFile::
+	Works just like format.signature except the contents of the
+	file specified by this variable will be used as the signature.
+
+format.suffix::
+	The default for format-patch is to output files with the suffix
+	`.patch`. Use this variable to change that suffix (make sure to
+	include the dot if you want it).
+
+format.pretty::
+	The default pretty format for log/show/whatchanged command,
+	See linkgit:git-log[1], linkgit:git-show[1],
+	linkgit:git-whatchanged[1].
+
+format.thread::
+	The default threading style for 'git format-patch'.  Can be
+	a boolean value, or `shallow` or `deep`.  `shallow` threading
+	makes every mail a reply to the head of the series,
+	where the head is chosen from the cover letter, the
+	`--in-reply-to`, and the first patch mail, in this order.
+	`deep` threading makes every mail a reply to the previous one.
+	A true boolean value is the same as `shallow`, and a false
+	value disables threading.
+
+format.signOff::
+	A boolean value which lets you enable the `-s/--signoff` option of
+	format-patch by default. *Note:* Adding the Signed-off-by: line to a
+	patch should be a conscious act and means that you certify you have
+	the rights to submit this work under the same open source license.
+	Please see the 'SubmittingPatches' document for further discussion.
+
+format.coverLetter::
+	A boolean that controls whether to generate a cover-letter when
+	format-patch is invoked, but in addition can be set to "auto", to
+	generate a cover-letter only when there's more than one patch.
+	Default is false.
+
+format.outputDirectory::
+	Set a custom directory to store the resulting files instead of the
+	current working directory. All directory components will be created.
+
+format.useAutoBase::
+	A boolean value which lets you enable the `--base=auto` option of
+	format-patch by default.
+
+format.notes::
+	Provides the default value for the `--notes` option to
+	format-patch. Accepts a boolean value, or a ref which specifies
+	where to get notes. If false, format-patch defaults to
+	`--no-notes`. If true, format-patch defaults to `--notes`. If
+	set to a non-boolean value, format-patch defaults to
+	`--notes=<ref>`, where `ref` is the non-boolean value. Defaults
+	to false.
++
+If one wishes to use the ref `ref/notes/true`, please use that literal
+instead.
++
+This configuration can be specified multiple times in order to allow
+multiple notes refs to be included. In that case, it will behave
+similarly to multiple `--[no-]notes[=]` options passed in. That is, a
+value of `true` will show the default notes, a value of `<ref>` will
+also show notes from that notes ref and a value of `false` will negate
+previous configurations and not show notes.
++
+For example,
++
+------------
+[format]
+	notes = true
+	notes = foo
+	notes = false
+	notes = bar
+------------
++
+will only show notes from `refs/notes/bar`.

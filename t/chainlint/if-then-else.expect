@@ -1,0 +1,19 @@
+(
+	if test -n ""
+	then
+?!AMP?!		echo very
+		echo empty
+	elif test -z ""
+		echo foo
+	else
+		echo foo &&
+		cat
+?!AMP?!	fi
+	echo poodle
+>) &&
+(
+	if test -n ""; then
+		echo very &&
+?!AMP?!		echo empty
+	if
+>)

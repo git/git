@@ -115,7 +115,7 @@ test_expect_success 'push options and submodules' '
 
 	git -C parent submodule add ../upstream workbench &&
 	git -C parent/workbench remote add up ../../upstream &&
-	git -C parent commit -m "add submoule" &&
+	git -C parent commit -m "add submodule" &&
 
 	test_commit -C parent/workbench two &&
 	git -C parent add workbench &&
@@ -140,17 +140,109 @@ test_expect_success 'push options and submodules' '
 	test_cmp expect parent_upstream/.git/hooks/post-receive.push_options
 '
 
+test_expect_success 'default push option' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default push up master
+	) &&
+	test_refs master master &&
+	echo "default" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'two default push options' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default1 -c push.pushOption=default2 push up master
+	) &&
+	test_refs master master &&
+	printf "default1\ndefault2\n" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'push option from command line overrides from-config push option' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default push --push-option=manual up master
+	) &&
+	test_refs master master &&
+	echo "manual" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'empty value of push.pushOption in config clears the list' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default1 -c push.pushOption= -c push.pushOption=default2 push up master
+	) &&
+	test_refs master master &&
+	echo "default2" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'invalid push option in config' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		test_must_fail git -c push.pushOption push up master
+	) &&
+	test_refs master HEAD@{1}
+'
+
+test_expect_success 'push options keep quoted characters intact (direct)' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	test_commit -C workbench one &&
+	git -C workbench push --push-option="\"embedded quotes\"" up master &&
+	echo "\"embedded quotes\"" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
-test_expect_success 'push option denied properly by http server' '
+# set up http repository for fetching/pushing, with push options config
+# bool set to $1
+mk_http_pair () {
 	test_when_finished "rm -rf test_http_clone" &&
-	test_when_finished "rm -rf \"$HTTPD_DOCUMENT_ROOT_PATH\"/upstream.git" &&
+	test_when_finished 'rm -rf "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git' &&
 	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions false &&
+	git -C upstream config receive.advertisePushOptions "$1" &&
 	git -C upstream config http.receivepack true &&
 	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
-	git clone "$HTTPD_URL"/smart/upstream test_http_clone &&
+	git clone "$HTTPD_URL"/smart/upstream test_http_clone
+}
+
+test_expect_success 'push option denied properly by http server' '
+	mk_http_pair false &&
 	test_commit -C test_http_clone one &&
 	test_must_fail git -C test_http_clone push --push-option=asdf origin master 2>actual &&
 	test_i18ngrep "the receiving end does not support push options" actual &&
@@ -158,13 +250,7 @@ test_expect_success 'push option denied properly by http server' '
 '
 
 test_expect_success 'push options work properly across http' '
-	test_when_finished "rm -rf test_http_clone" &&
-	test_when_finished "rm -rf \"$HTTPD_DOCUMENT_ROOT_PATH\"/upstream.git" &&
-	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
-	git -C upstream config http.receivepack true &&
-	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
-	git clone "$HTTPD_URL"/smart/upstream test_http_clone &&
+	mk_http_pair true &&
 
 	test_commit -C test_http_clone one &&
 	git -C test_http_clone push origin master &&
@@ -183,6 +269,16 @@ test_expect_success 'push options work properly across http' '
 	test_cmp expect actual
 '
 
-stop_httpd
+test_expect_success 'push options keep quoted characters intact (http)' '
+	mk_http_pair true &&
+
+	test_commit -C test_http_clone one &&
+	git -C test_http_clone push --push-option="\"embedded quotes\"" origin master &&
+	echo "\"embedded quotes\"" >expect &&
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options
+'
+
+# DO NOT add non-httpd-specific tests here, because the last part of this
+# test script is only executed when httpd is available and enabled.
 
 test_done

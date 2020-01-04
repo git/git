@@ -20,10 +20,7 @@ test_expect_success 'curl redirects respect whitelist' '
 	test_must_fail env GIT_ALLOW_PROTOCOL=http:https \
 			   GIT_SMART_HTTP=0 \
 		git clone "$HTTPD_URL/ftp-redir/repo.git" 2>stderr &&
-	{
-		test_i18ngrep "ftp.*disabled" stderr ||
-		test_i18ngrep "your curl version is too old"
-	}
+	test_i18ngrep -E "(ftp.*disabled|your curl version is too old)" stderr
 '
 
 test_expect_success 'curl limits redirects' '
@@ -37,5 +34,4 @@ test_expect_success 'http can be limited to from-user' '
 		clone "$HTTPD_URL/smart-redir-perm/repo.git" redir.git
 '
 
-stop_httpd
 test_done

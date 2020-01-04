@@ -287,8 +287,4 @@ test_expect_success 'Add big files to repo and store files in LFS based on compr
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done

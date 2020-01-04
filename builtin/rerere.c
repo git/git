@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "parse-options.h"
 #include "string-list.h"
@@ -17,7 +18,7 @@ static int outf(void *dummy, mmbuffer_t *ptr, int nbuf)
 {
 	int i;
 	for (i = 0; i < nbuf; i++)
-		if (write_in_full(1, ptr[i].ptr, ptr[i].size) != ptr[i].size)
+		if (write_in_full(1, ptr[i].ptr, ptr[i].size) < 0)
 			return -1;
 	return 0;
 }
@@ -40,7 +41,8 @@ static int diff_two(const char *file1, const char *label1,
 	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	ecb.outf = outf;
+	ecb.out_hunk = NULL;
+	ecb.out_line = outf;
 	ret = xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
@@ -69,28 +71,29 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		flags = RERERE_NOAUTOUPDATE;
 
 	if (argc < 1)
-		return rerere(flags);
+		return repo_rerere(the_repository, flags);
 
 	if (!strcmp(argv[0], "forget")) {
 		struct pathspec pathspec;
 		if (argc < 2)
-			warning("'git rerere forget' without paths is deprecated");
+			warning(_("'git rerere forget' without paths is deprecated"));
 		parse_pathspec(&pathspec, 0, PATHSPEC_PREFER_CWD,
 			       prefix, argv + 1);
-		return rerere_forget(&pathspec);
+		return rerere_forget(the_repository, &pathspec);
 	}
 
 	if (!strcmp(argv[0], "clear")) {
-		rerere_clear(&merge_rr);
+		rerere_clear(the_repository, &merge_rr);
 	} else if (!strcmp(argv[0], "gc"))
-		rerere_gc(&merge_rr);
+		rerere_gc(the_repository, &merge_rr);
 	else if (!strcmp(argv[0], "status")) {
-		if (setup_rerere(&merge_rr, flags | RERERE_READONLY) < 0)
+		if (setup_rerere(the_repository, &merge_rr,
+				 flags | RERERE_READONLY) < 0)
 			return 0;
 		for (i = 0; i < merge_rr.nr; i++)
 			printf("%s\n", merge_rr.items[i].string);
 	} else if (!strcmp(argv[0], "remaining")) {
-		rerere_remaining(&merge_rr);
+		rerere_remaining(the_repository, &merge_rr);
 		for (i = 0; i < merge_rr.nr; i++) {
 			if (merge_rr.items[i].util != RERERE_RESOLVED)
 				printf("%s\n", merge_rr.items[i].string);
@@ -100,13 +103,14 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 				merge_rr.items[i].util = NULL;
 		}
 	} else if (!strcmp(argv[0], "diff")) {
-		if (setup_rerere(&merge_rr, flags | RERERE_READONLY) < 0)
+		if (setup_rerere(the_repository, &merge_rr,
+				 flags | RERERE_READONLY) < 0)
 			return 0;
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
 			const struct rerere_id *id = merge_rr.items[i].util;
 			if (diff_two(rerere_path(id, "preimage"), path, path, path))
-				die("unable to generate diff for %s", rerere_path(id, NULL));
+				die(_("unable to generate diff for '%s'"), rerere_path(id, NULL));
 		}
 	} else
 		usage_with_options(rerere_usage, options);

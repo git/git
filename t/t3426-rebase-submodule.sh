@@ -40,4 +40,21 @@ git_rebase_interactive () {
 
 test_submodule_switch "git_rebase_interactive"
 
+test_expect_success 'rebase interactive ignores modified submodules' '
+	test_when_finished "rm -rf super sub" &&
+	git init sub &&
+	git -C sub commit --allow-empty -m "Initial commit" &&
+	git init super &&
+	git -C super submodule add ../sub &&
+	git -C super config submodule.sub.ignore dirty &&
+	>super/foo &&
+	git -C super add foo &&
+	git -C super commit -m "Initial commit" &&
+	test_commit -C super a &&
+	test_commit -C super b &&
+	test_commit -C super/sub c &&
+	set_fake_editor &&
+	git -C super rebase -i HEAD^^
+'
+
 test_done

@@ -1,8 +1,9 @@
 #include "cache.h"
 #include "quote.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "strbuf.h"
 #include "run-command.h"
+#include "alias.h"
 
 #define COMMAND_DIR "git-shell-commands"
 #define HELP_COMMAND COMMAND_DIR "/help"
@@ -15,27 +16,14 @@ static int do_generic_cmd(const char *me, char *arg)
 	setup_path();
 	if (!arg || !(arg = sq_dequote(arg)) || *arg == '-')
 		die("bad argument");
-	if (!starts_with(me, "git-"))
+	if (!skip_prefix(me, "git-", &me))
 		die("bad command");
 
-	my_argv[0] = me + 4;
+	my_argv[0] = me;
 	my_argv[1] = arg;
 	my_argv[2] = NULL;
 
 	return execv_git_cmd(my_argv);
-}
-
-static int do_cvs_cmd(const char *me, char *arg)
-{
-	const char *cvsserver_argv[3] = {
-		"cvsserver", "server", NULL
-	};
-
-	if (!arg || strcmp(arg, "server"))
-		die("git-cvsserver only handles server: %s", arg);
-
-	setup_path();
-	return execv_git_cmd(cvsserver_argv);
 }
 
 static int is_valid_cmd_name(const char *cmd)
@@ -134,7 +122,6 @@ static struct commands {
 	{ "git-receive-pack", do_generic_cmd },
 	{ "git-upload-pack", do_generic_cmd },
 	{ "git-upload-archive", do_generic_cmd },
-	{ "cvs", do_cvs_cmd },
 	{ NULL },
 };
 

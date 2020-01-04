@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "string-list.h"
 
 /*

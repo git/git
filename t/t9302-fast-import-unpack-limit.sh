@@ -80,7 +80,7 @@ test_expect_success 'lookups after checkpoint works' '
 		do
 			if test $n -gt 30
 			then
-				echo >&2 "checkpoint did not update branch"
+				echo >&2 "checkpoint did not update branch" &&
 				exit 1
 			else
 				n=$(($n + 1))

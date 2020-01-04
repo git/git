@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "sha1-array.h"
 
@@ -7,7 +8,7 @@ static int print_oid(const struct object_id *oid, void *data)
 	return 0;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__sha1_array(int argc, const char **argv)
 {
 	struct oid_array array = OID_ARRAY_INIT;
 	struct strbuf line = STRBUF_INIT;

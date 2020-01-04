@@ -1,0 +1,20 @@
+(
+?!AMP?!?!SEMI?!	cat foo ; echo bar
+?!SEMI?!	cat foo ; echo bar
+>) &&
+(
+?!SEMI?!	cat foo ; echo bar &&
+?!SEMI?!	cat foo ; echo bar
+>) &&
+(
+	echo "foo; bar" &&
+?!SEMI?!	cat foo; echo bar
+>) &&
+(
+?!SEMI?!	foo;
+>) &&
+(
+cd foo &&
+	for i in a b c; do
+?!SEMI?!		echo;
+>	done)

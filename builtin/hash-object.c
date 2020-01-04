@@ -5,17 +5,19 @@
  * Copyright (C) Junio C Hamano, 2005
  */
 #include "builtin.h"
+#include "config.h"
+#include "object-store.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 
 /*
  * This is to create corrupt objects for debugging and as such it
  * needs to bypass the data conversion performed by, and the type
  * limitation imposed by, index_fd() and its callees.
  */
-static int hash_literally(unsigned char *sha1, int fd, const char *type, unsigned flags)
+static int hash_literally(struct object_id *oid, int fd, const char *type, unsigned flags)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int ret;
@@ -23,7 +25,8 @@ static int hash_literally(unsigned char *sha1, int fd, const char *type, unsigne
 	if (strbuf_read(&buf, fd, 4096) < 0)
 		ret = -1;
 	else
-		ret = hash_sha1_file_literally(buf.buf, buf.len, type, sha1, flags);
+		ret = hash_object_file_literally(buf.buf, buf.len, type, oid,
+						 flags);
 	strbuf_release(&buf);
 	return ret;
 }
@@ -32,16 +35,17 @@ static void hash_fd(int fd, const char *type, const char *path, unsigned flags,
 		    int literally)
 {
 	struct stat st;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	if (fstat(fd, &st) < 0 ||
 	    (literally
-	     ? hash_literally(sha1, fd, type, flags)
-	     : index_fd(sha1, fd, &st, type_from_string(type), path, flags)))
+	     ? hash_literally(&oid, fd, type, flags)
+	     : index_fd(the_repository->index, &oid, fd, &st,
+			type_from_string(type), path, flags)))
 		die((flags & HASH_WRITE_OBJECT)
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);
-	printf("%s\n", sha1_to_hex(sha1));
+	printf("%s\n", oid_to_hex(&oid));
 	maybe_flush_or_die(stdout, "hash to stdout");
 }
 
@@ -104,7 +108,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	int i;
 	const char *errstr = NULL;
 
-	argc = parse_options(argc, argv, NULL, hash_object_options,
+	argc = parse_options(argc, argv, prefix, hash_object_options,
 			     hash_object_usage, 0);
 
 	if (flags & HASH_WRITE_OBJECT)

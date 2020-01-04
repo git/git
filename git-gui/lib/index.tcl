@@ -466,19 +466,19 @@ proc do_revert_selection {} {
 }
 
 proc do_select_commit_type {} {
-	global commit_type selected_commit_type
+	global commit_type commit_type_is_amend
 
-	if {$selected_commit_type eq {new}
+	if {$commit_type_is_amend == 0
 		&& [string match amend* $commit_type]} {
 		create_new_commit
-	} elseif {$selected_commit_type eq {amend}
+	} elseif {$commit_type_is_amend == 1
 		&& ![string match amend* $commit_type]} {
 		load_last_commit
 
 		# The amend request was rejected...
 		#
 		if {![string match amend* $commit_type]} {
-			set selected_commit_type new
+			set commit_type_is_amend 0
 		}
 	}
 }

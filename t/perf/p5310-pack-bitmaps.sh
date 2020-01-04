@@ -12,8 +12,7 @@ test_perf_large_repo
 # We intentionally use the deprecated pack.writebitmaps
 # config so that we can test against older versions of git.
 test_expect_success 'setup bitmap config' '
-	git config pack.writebitmaps true &&
-	git config pack.writebitmaphashcache true
+	git config pack.writebitmaps true
 '
 
 test_perf 'repack to disk' '

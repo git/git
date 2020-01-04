@@ -3,7 +3,7 @@
 test_description='Test cloning a repository larger than 2 gigabyte'
 . ./test-lib.sh
 
-if test -z "$GIT_TEST_CLONE_2GB"
+if ! test_bool_env GIT_TEST_CLONE_2GB false
 then
 	say 'Skipping expensive 2GB clone test; enable it with GIT_TEST_CLONE_2GB=t'
 else
@@ -21,9 +21,9 @@ test_expect_success CLONE_2GB 'setup' '
 	 do
 		printf "Generating blob $i/$blobcount\r" >&2 &&
 		printf "blob\nmark :$i\ndata $blobsize\n" &&
-		#test-genrandom $i $blobsize &&
+		#test-tool genrandom $i $blobsize &&
 		printf "%-${blobsize}s" $i &&
-		echo "M 100644 :$i $i" >> commit
+		echo "M 100644 :$i $i" >> commit &&
 		i=$(($i+1)) ||
 		echo $? > exit-status
 	 done &&

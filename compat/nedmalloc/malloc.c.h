@@ -1564,7 +1564,7 @@ static FORCEINLINE void* win32direct_mmap(size_t size) {
   return (ptr != 0)? ptr: MFAIL;
 }
 
-/* This function supports releasing coalesed segments */
+/* This function supports releasing coalesced segments */
 static FORCEINLINE int win32munmap(void* ptr, size_t size) {
   MEMORY_BASIC_INFORMATION minfo;
   char* cptr = (char*)ptr;
@@ -1655,7 +1655,7 @@ static FORCEINLINE int win32munmap(void* ptr, size_t size) {
     #define CALL_MREMAP(addr, osz, nsz, mv)     MFAIL
 #endif /* HAVE_MMAP && HAVE_MREMAP */
 
-/* mstate bit set if continguous morecore disabled or failed */
+/* mstate bit set if contiguous morecore disabled or failed */
 #define USE_NONCONTIGUOUS_BIT (4U)
 
 /* segment bit set in create_mspace_with_base */
@@ -1755,10 +1755,10 @@ static FORCEINLINE void pthread_release_lock (MLOCK_T *sl) {
   assert(sl->l != 0);
   assert(sl->threadid == CURRENT_THREAD);
   if (--sl->c == 0) {
-    sl->threadid = 0;
     volatile unsigned int* lp = &sl->l;
     int prev = 0;
     int ret;
+    sl->threadid = 0;
     __asm__ __volatile__ ("lock; xchgl %0, %1"
 			  : "=r" (ret)
 			  : "m" (*(lp)), "0"(prev)
@@ -2485,7 +2485,7 @@ typedef struct malloc_segment* msegmentptr;
 
   Trim support
     Fields holding the amount of unused topmost memory that should trigger
-    timming, and a counter to force periodic scanning to release unused
+    timing, and a counter to force periodic scanning to release unused
     non-topmost segments.
 
   Locking
@@ -3066,7 +3066,7 @@ static int init_mparams(void) {
 #if !ONLY_MSPACES
     /* Set up lock for main malloc area */
     gm->mflags = mparams.default_mflags;
-    INITIAL_LOCK(&gm->mutex);
+    (void)INITIAL_LOCK(&gm->mutex);
 #endif
 
 #if (FOOTERS && !INSECURE)
@@ -5017,7 +5017,7 @@ static mstate init_user_mstate(char* tbase, size_t tsize) {
   mchunkptr msp = align_as_chunk(tbase);
   mstate m = (mstate)(chunk2mem(msp));
   memset(m, 0, msize);
-  INITIAL_LOCK(&m->mutex);
+  (void)INITIAL_LOCK(&m->mutex);
   msp->head = (msize|PINUSE_BIT|CINUSE_BIT);
   m->seg.base = m->least_addr = tbase;
   m->seg.size = m->footprint = m->max_footprint = tsize;

@@ -143,7 +143,7 @@ test_expect_success 'Git clone works with one specific page cloned ' '
 test_expect_success 'Git clone works with multiple specific page cloned ' '
 	wiki_reset &&
 	wiki_editpage foo "I will be there" false &&
-	wiki_editpage bar "I will not disapear" false &&
+	wiki_editpage bar "I will not disappear" false &&
 	wiki_editpage namnam "I be erased" false &&
 	wiki_editpage nyancat "nyan nyan nyan you will not erase me" false &&
 	wiki_delete_page namnam &&
@@ -247,7 +247,7 @@ test_expect_success 'Test of resistance to modification of category on wiki for 
 	wiki_editpage Notconsidered "this page will not appear on local" false &&
 	wiki_editpage Othercategory "this page will not appear on local" false -c=Cattwo &&
 	wiki_editpage Tobeedited "this page have been modified" true -c=Catone &&
-	wiki_delete_page Tobedeleted
+	wiki_delete_page Tobedeleted &&
 	git clone -c remote.origin.categories="Catone" \
 		mediawiki::'"$WIKI_URL"' mw_dir_14 &&
 	wiki_getallpage ref_page_14 Catone &&

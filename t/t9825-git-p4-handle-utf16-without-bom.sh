@@ -43,8 +43,4 @@ test_expect_failure 'clone depot with invalid UTF-16 file in non-verbose mode' '
 	git p4 clone --dest="$git" //depot
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done

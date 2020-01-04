@@ -3,6 +3,10 @@
 
 #include "string-list.h"
 
+struct child_process;
+struct oid_array;
+struct ref;
+
 /* Possible values for push_cert field in send_pack_args. */
 #define SEND_PACK_PUSH_CERT_NEVER 0
 #define SEND_PACK_PUSH_CERT_IF_ASKED 1

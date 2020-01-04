@@ -12,7 +12,7 @@ test_expect_success GETTEXT_LOCALE 'setup' '
 '
 
 test_have_prereq GETTEXT_LOCALE &&
-test-regex "HALLÓ" "Halló" ICASE &&
+test-tool regex "HALLÓ" "Halló" ICASE &&
 test_set_prereq REGEX_LOCALE
 
 test_expect_success REGEX_LOCALE 'grep literal string, no -F' '
@@ -51,6 +51,37 @@ test_expect_success REGEX_LOCALE 'pickaxe -i on non-ascii' '
 	git log --format=%f -i -S"TILRAUN: HALLÓ HEIMUR!" >actual &&
 	echo first >expected &&
 	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: setup invalid UTF-8 data' '
+	printf "\\200\\n" >invalid-0x80 &&
+	echo "ævar" >expected &&
+	cat expected >>invalid-0x80 &&
+	git add invalid-0x80
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep ASCII from invalid UTF-8 data' '
+	git grep -h "var" invalid-0x80 >actual &&
+	test_cmp expected actual &&
+	git grep -h "(*NO_JIT)var" invalid-0x80 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-ASCII from invalid UTF-8 data' '
+	git grep -h "æ" invalid-0x80 >actual &&
+	test_cmp expected actual &&
+	git grep -h "(*NO_JIT)æ" invalid-0x80 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success GETTEXT_LOCALE,LIBPCRE2 'PCRE v2: grep non-ASCII from invalid UTF-8 data with -i' '
+	test_might_fail git grep -hi "Æ" invalid-0x80 >actual &&
+	if test -s actual
+	then
+	    test_cmp expected actual
+	fi &&
+	test_must_fail git grep -hi "(*NO_JIT)Æ" invalid-0x80 >actual &&
+	! test_cmp expected actual
 '
 
 test_done

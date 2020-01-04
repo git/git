@@ -55,8 +55,8 @@ Fixes since v2.8.2
    This is necessary to use Git on Windows shared directories, and is
    already enabled for the MinGW and plain Windows builds.  It also
    has been used in Cygwin packaged versions of Git for quite a while.
-   See http://thread.gmane.org/gmane.comp.version-control.git/291853
-   and http://thread.gmane.org/gmane.comp.version-control.git/275680.
+   See https://lore.kernel.org/git/20160419091055.GF2345@dinwoodie.org/
+   and https://lore.kernel.org/git/20150811100527.GW14466@dinwoodie.org/.
 
  * "git replace -e" did not honour "core.editor" configuration.
 

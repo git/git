@@ -3,7 +3,9 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "color.h"
 #include "commit.h"
@@ -40,10 +42,10 @@ static void stuff_change(struct diff_options *opt,
 	struct diff_filespec *one, *two;
 
 	if (!is_null_oid(old_oid) && !is_null_oid(new_oid) &&
-	    !oidcmp(old_oid, new_oid) && (old_mode == new_mode))
+	    oideq(old_oid, new_oid) && (old_mode == new_mode))
 		return;
 
-	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
+	if (opt->flags.reverse_diff) {
 		SWAP(old_mode, new_mode);
 		SWAP(old_oid, new_oid);
 		SWAP(old_path, new_path);
@@ -56,8 +58,8 @@ static void stuff_change(struct diff_options *opt,
 
 	one = alloc_filespec(old_path);
 	two = alloc_filespec(new_path);
-	fill_filespec(one, old_oid->hash, old_oid_valid, old_mode);
-	fill_filespec(two, new_oid->hash, new_oid_valid, new_mode);
+	fill_filespec(one, old_oid, old_oid_valid, old_mode);
+	fill_filespec(two, new_oid, new_oid_valid, new_mode);
 
 	diff_queue(&diff_queued_diff, one, two);
 }
@@ -101,7 +103,7 @@ static int builtin_diff_blobs(struct rev_info *revs,
 			      int argc, const char **argv,
 			      struct object_array_entry **blob)
 {
-	unsigned mode = canon_mode(S_IFREG | 0644);
+	const unsigned mode = canon_mode(S_IFREG | 0644);
 
 	if (argc > 1)
 		usage(builtin_diff_usage);
@@ -174,7 +176,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 		swap = 1;
 	oid[swap] = &ent0->item->oid;
 	oid[1 - swap] = &ent1->item->oid;
-	diff_tree_sha1(oid[0]->hash, oid[1]->hash, "", &revs->diffopt);
+	diff_tree_oid(oid[0], oid[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
 }
@@ -194,7 +196,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	for (i = 1; i < ents; i++)
 		oid_array_append(&parents, &ent[i].item->oid);
-	diff_tree_combined(ent[0].item->oid.hash, &parents,
+	diff_tree_combined(&ent[0].item->oid, &parents,
 			   revs->dense_combined_merges, revs);
 	oid_array_clear(&parents);
 	return 0;
@@ -202,17 +204,16 @@ static int builtin_diff_combined(struct rev_info *revs,
 
 static void refresh_index_quietly(void)
 {
-	struct lock_file *lock_file;
+	struct lock_file lock_file = LOCK_INIT;
 	int fd;
 
-	lock_file = xcalloc(1, sizeof(struct lock_file));
-	fd = hold_locked_index(lock_file, 0);
+	fd = hold_locked_index(&lock_file, 0);
 	if (fd < 0)
 		return;
 	discard_cache();
 	read_cache();
 	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
-	update_index_if_able(&the_index, lock_file);
+	repo_update_index_if_able(the_repository, &lock_file);
 }
 
 static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv)
@@ -314,45 +315,36 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			no_index = DIFF_NO_INDEX_IMPLICIT;
 	}
 
-	if (!no_index)
-		gitmodules_config();
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
 	precompose_argv(argc, argv);
 
-	init_revisions(&rev, prefix);
+	repo_init_revisions(the_repository, &rev, prefix);
 
-	if (no_index && argc != i + 2) {
-		if (no_index == DIFF_NO_INDEX_IMPLICIT) {
-			/*
-			 * There was no --no-index and there were not two
-			 * paths. It is possible that the user intended
-			 * to do an inside-repository operation.
-			 */
-			fprintf(stderr, "Not a git repository\n");
-			fprintf(stderr,
-				"To compare two paths outside a working tree:\n");
-		}
-		/* Give the usage message for non-repository usage and exit. */
-		usagef("git diff %s <path> <path>",
-		       no_index == DIFF_NO_INDEX_EXPLICIT ?
-		       "--no-index" : "[--no-index]");
-
-	}
-	if (no_index)
-		/* If this is a no-index diff, just run it and exit there. */
-		diff_no_index(&rev, argc, argv);
-
-	/* Otherwise, we are doing the usual "git" diff */
-	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
-
-	/* Scale to real terminal size and respect statGraphWidth config */
+	/* Set up defaults that will apply to both no-index and regular diffs. */
 	rev.diffopt.stat_width = -1;
 	rev.diffopt.stat_graph_width = -1;
+	rev.diffopt.flags.allow_external = 1;
+	rev.diffopt.flags.allow_textconv = 1;
 
-	/* Default to let external and textconv be used */
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
+	/* If this is a no-index diff, just run it and exit there. */
+	if (no_index)
+		exit(diff_no_index(&rev, no_index == DIFF_NO_INDEX_IMPLICIT,
+				   argc, argv));
+
+
+	/*
+	 * Otherwise, we are doing the usual "git" diff; set up any
+	 * further defaults that apply to regular diffs.
+	 */
+	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
+
+	/*
+	 * Default to intent-to-add entries invisible in the
+	 * index. This makes them show up as new files in diff-files
+	 * and not at all in diff-cached.
+	 */
+	rev.diffopt.ita_invisible_in_index = 1;
 
 	if (nongit)
 		die(_("Not a git repository"));
@@ -362,7 +354,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		diff_setup_done(&rev.diffopt);
 	}
 
-	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
+	rev.diffopt.flags.recursive = 1;
 
 	setup_diff_pager(&rev.diffopt);
 
@@ -381,7 +373,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				add_head_to_pending(&rev);
 				if (!rev.pending.nr) {
 					struct tree *tree;
-					tree = lookup_tree(&empty_tree_oid);
+					tree = lookup_tree(the_repository,
+							   the_repository->hash_algo->empty_tree);
 					add_pending_object(&rev, &tree->object, "HEAD");
 				}
 				break;
@@ -395,12 +388,12 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		const char *name = entry->name;
 		int flags = (obj->flags & UNINTERESTING);
 		if (!obj->parsed)
-			obj = parse_object(&obj->oid);
-		obj = deref_tag(obj, NULL, 0);
+			obj = parse_object(the_repository, &obj->oid);
+		obj = deref_tag(the_repository, obj, NULL, 0);
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
 		if (obj->type == OBJ_COMMIT)
-			obj = &((struct commit *)obj)->tree->object;
+			obj = &get_commit_tree(((struct commit *)obj))->object;
 
 		if (obj->type == OBJ_TREE) {
 			obj->flags |= flags;
@@ -465,5 +458,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	result = diff_result_code(&rev.diffopt, result);
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
+	UNLEAK(rev);
+	UNLEAK(ent);
+	UNLEAK(blob);
 	return result;
 }

@@ -1,0 +1,8 @@
+(
+# LINT: line contains here-doc and opens multi-line string
+	cat <<-\TXT && echo "multi-line
+	string"
+	fizzle
+	TXT
+	bap
+)

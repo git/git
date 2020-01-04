@@ -23,7 +23,7 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry)
 	dir = &entry->u.subdir;
 	if (entry->flag & REF_INCOMPLETE) {
 		if (!dir->cache->fill_ref_dir)
-			die("BUG: incomplete ref_store without fill_ref_dir function");
+			BUG("incomplete ref_store without fill_ref_dir function");
 
 		dir->cache->fill_ref_dir(dir->cache->ref_store, dir, entry->name);
 		entry->flag &= ~REF_INCOMPLETE;
@@ -38,7 +38,6 @@ struct ref_entry *create_ref_entry(const char *refname,
 
 	FLEX_ALLOC_STR(ref, name, refname);
 	oidcpy(&ref->u.value.oid, oid);
-	oidclr(&ref->u.value.peeled);
 	ref->flag = flag;
 	return ref;
 }
@@ -82,9 +81,8 @@ static void clear_ref_dir(struct ref_dir *dir)
 	int i;
 	for (i = 0; i < dir->nr; i++)
 		free_ref_entry(dir->entries[i]);
-	free(dir->entries);
+	FREE_AND_NULL(dir->entries);
 	dir->sorted = dir->nr = dir->alloc = 0;
-	dir->entries = NULL;
 }
 
 struct ref_entry *create_dir_entry(struct ref_cache *cache,
@@ -240,10 +238,8 @@ int remove_entry_from_dir(struct ref_dir *dir, const char *refname)
 		return -1;
 	entry = dir->entries[entry_index];
 
-	memmove(&dir->entries[entry_index],
-		&dir->entries[entry_index + 1],
-		(dir->nr - entry_index - 1) * sizeof(*dir->entries)
-		);
+	MOVE_ARRAY(&dir->entries[entry_index],
+		   &dir->entries[entry_index + 1], dir->nr - entry_index - 1);
 	dir->nr--;
 	if (dir->sorted > entry_index)
 		dir->sorted--;
@@ -262,8 +258,8 @@ int add_ref_entry(struct ref_dir *dir, struct ref_entry *ref)
 
 /*
  * Emit a warning and return true iff ref1 and ref2 have the same name
- * and the same sha1.  Die if they have the same name but different
- * sha1s.
+ * and the same oid. Die if they have the same name but different
+ * oids.
  */
 static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2)
 {
@@ -276,7 +272,7 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
 		/* This is impossible by construction */
 		die("Reference directory conflict: %s", ref1->name);
 
-	if (oidcmp(&ref1->u.value.oid, &ref2->u.value.oid))
+	if (!oideq(&ref1->u.value.oid, &ref2->u.value.oid))
 		die("Duplicated ref, and SHA1s don't match: %s", ref1->name);
 
 	warning("Duplicated ref: %s", ref1->name);
@@ -492,49 +488,10 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	}
 }
 
-enum peel_status peel_entry(struct ref_entry *entry, int repeel)
-{
-	enum peel_status status;
-
-	if (entry->flag & REF_KNOWS_PEELED) {
-		if (repeel) {
-			entry->flag &= ~REF_KNOWS_PEELED;
-			oidclr(&entry->u.value.peeled);
-		} else {
-			return is_null_oid(&entry->u.value.peeled) ?
-				PEEL_NON_TAG : PEEL_PEELED;
-		}
-	}
-	if (entry->flag & REF_ISBROKEN)
-		return PEEL_BROKEN;
-	if (entry->flag & REF_ISSYMREF)
-		return PEEL_IS_SYMREF;
-
-	status = peel_object(entry->u.value.oid.hash, entry->u.value.peeled.hash);
-	if (status == PEEL_PEELED || status == PEEL_NON_TAG)
-		entry->flag |= REF_KNOWS_PEELED;
-	return status;
-}
-
 static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
 				   struct object_id *peeled)
 {
-	struct cache_ref_iterator *iter =
-		(struct cache_ref_iterator *)ref_iterator;
-	struct cache_ref_iterator_level *level;
-	struct ref_entry *entry;
-
-	level = &iter->levels[iter->levels_nr - 1];
-
-	if (level->index == -1)
-		die("BUG: peel called before advance for cache iterator");
-
-	entry = level->dir->entries[level->index];
-
-	if (peel_entry(entry, 0))
-		return -1;
-	oidcpy(peeled, &entry->u.value.peeled);
-	return 0;
+	return peel_object(ref_iterator->oid, peeled);
 }
 
 static int cache_ref_iterator_abort(struct ref_iterator *ref_iterator)
@@ -575,7 +532,7 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 
 	iter = xcalloc(1, sizeof(*iter));
 	ref_iterator = &iter->base;
-	base_ref_iterator_init(ref_iterator, &cache_ref_iterator_vtable);
+	base_ref_iterator_init(ref_iterator, &cache_ref_iterator_vtable, 1);
 	ALLOC_GROW(iter->levels, 10, iter->levels_alloc);
 
 	iter->levels_nr = 1;

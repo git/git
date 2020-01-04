@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "string-list.h"
 
@@ -41,7 +42,7 @@ static int prefix_cb(struct string_list_item *item, void *cb_data)
 	return starts_with(item->string, prefix);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__string_list(int argc, const char **argv)
 {
 	if (argc == 5 && !strcmp(argv[1], "split")) {
 		struct string_list list = STRING_LIST_INIT_DUP;
@@ -108,7 +109,7 @@ int cmd_main(int argc, const char **argv)
 		 * Split by newline, but don't create a string_list item
 		 * for the empty string after the last separator.
 		 */
-		if (sb.buf[sb.len - 1] == '\n')
+		if (sb.len && sb.buf[sb.len - 1] == '\n')
 			strbuf_setlen(&sb, sb.len - 1);
 		string_list_split_in_place(&list, sb.buf, '\n', -1);
 

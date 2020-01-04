@@ -28,23 +28,20 @@
 
 #define FORMAT_PRESERVING(n) __attribute__((format_arg(n)))
 
+int use_gettext_poison(void);
+
 #ifndef NO_GETTEXT
-extern void git_setup_gettext(void);
-extern int gettext_width(const char *s);
+void git_setup_gettext(void);
+int gettext_width(const char *s);
 #else
 static inline void git_setup_gettext(void)
 {
+	use_gettext_poison(); /* getenv() reentrancy paranoia */
 }
 static inline int gettext_width(const char *s)
 {
 	return strlen(s);
 }
-#endif
-
-#ifdef GETTEXT_POISON
-extern int use_gettext_poison(void);
-#else
-#define use_gettext_poison() 0
 #endif
 
 static inline FORMAT_PRESERVING(1) const char *_(const char *msgid)
@@ -90,6 +87,6 @@ const char *Q_(const char *msgid, const char *plu, unsigned long n)
 #endif
 
 const char *get_preferred_languages(void);
-extern int is_utf8_locale(void);
+int is_utf8_locale(void);
 
 #endif

@@ -11,17 +11,14 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "first" &&
 
-	git checkout -b empty-branch &&
-	test_tick &&
-	git commit --allow-empty -m "empty" &&
-
+	git checkout -b empty-message-branch &&
 	echo third >> file1 &&
 	git add file1 &&
 	test_tick &&
 	git commit --allow-empty-message -m "" &&
 
 	git checkout master &&
-	git checkout -b empty-branch2 &&
+	git checkout -b empty-change-branch &&
 	test_tick &&
 	git commit --allow-empty -m "empty"
 
@@ -29,7 +26,7 @@ test_expect_success setup '
 
 test_expect_success 'cherry-pick an empty commit' '
 	git checkout master &&
-	test_expect_code 1 git cherry-pick empty-branch^
+	test_expect_code 1 git cherry-pick empty-change-branch
 '
 
 test_expect_success 'index lockfile was removed' '
@@ -37,8 +34,9 @@ test_expect_success 'index lockfile was removed' '
 '
 
 test_expect_success 'cherry-pick a commit with an empty message' '
+	test_when_finished "git reset --hard empty-message-branch~1" &&
 	git checkout master &&
-	test_expect_code 1 git cherry-pick empty-branch
+	git cherry-pick empty-message-branch
 '
 
 test_expect_success 'index lockfile was removed' '
@@ -47,7 +45,7 @@ test_expect_success 'index lockfile was removed' '
 
 test_expect_success 'cherry-pick a commit with an empty message with --allow-empty-message' '
 	git checkout -f master &&
-	git cherry-pick --allow-empty-message empty-branch
+	git cherry-pick --allow-empty-message empty-message-branch
 '
 
 test_expect_success 'cherry pick an empty non-ff commit without --allow-empty' '
@@ -55,12 +53,12 @@ test_expect_success 'cherry pick an empty non-ff commit without --allow-empty' '
 	echo fourth >>file2 &&
 	git add file2 &&
 	git commit -m "fourth" &&
-	test_must_fail git cherry-pick empty-branch2
+	test_must_fail git cherry-pick empty-change-branch
 '
 
 test_expect_success 'cherry pick an empty non-ff commit with --allow-empty' '
 	git checkout master &&
-	git cherry-pick --allow-empty empty-branch2
+	git cherry-pick --allow-empty empty-change-branch
 '
 
 test_expect_success 'cherry pick with --keep-redundant-commits' '

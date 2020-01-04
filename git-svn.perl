@@ -110,7 +110,7 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_before, $_after,
-	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_parents, $_local,
+	$_merge, $_strategy, $_rebase_merges, $_dry_run, $_parents, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_commit_url, $_tag, $_merge_info, $_interactive, $_set_svn_props);
 
@@ -270,7 +270,8 @@ my %cmd = (
 			  'local|l' => \$_local,
 			  'fetch-all|all' => \$_fetch_all,
 			  'dry-run|n' => \$_dry_run,
-			  'preserve-merges|p' => \$_preserve_merges,
+			  'rebase-merges|p' => \$_rebase_merges,
+			  'preserve-merges|p' => \$_rebase_merges,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
@@ -374,7 +375,8 @@ version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
 if (defined $_authors_prog) {
-	$_authors_prog = "'" . File::Spec->rel2abs($_authors_prog) . "'";
+	my $abs_file = File::Spec->rel2abs($_authors_prog);
+	$_authors_prog = "'" . $abs_file . "'" if -x $abs_file;
 }
 
 unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
@@ -931,6 +933,7 @@ sub cmd_dcommit {
 		# information from different SVN repos, and paths
 		# which are not underneath this repository root.
 		my $rooturl = $gs->repos_root;
+	        Git::SVN::remove_username($rooturl);
 		foreach my $d (@$linear_refs) {
 			my %parentshash;
 			read_commit_parents(\%parentshash, $d);
@@ -1052,7 +1055,7 @@ sub cmd_dcommit {
 					  'If you are attempting to commit ',
 					  "merges, try running:\n\t",
 					  'git rebase --interactive',
-					  '--preserve-merges ',
+					  '--rebase-merges ',
 					  $gs->refname,
 					  "\nBefore dcommitting";
 				}
@@ -1198,6 +1201,11 @@ sub cmd_branch {
 	print "Copying ${src} at r${rev} to ${dst}...\n";
 	$ctx->copy($src, $rev, $dst)
 		unless $_dry_run;
+
+	# Release resources held by ctx before creating another SVN::Ra
+	# so destruction is orderly.  This seems necessary with SVN 1.9.5
+	# to avoid segfaults.
+	$ctx = undef;
 
 	$gs->fetch_all;
 }
@@ -1710,7 +1718,7 @@ sub rebase_cmd {
 	push @cmd, '-v' if $_verbose;
 	push @cmd, qw/--merge/ if $_merge;
 	push @cmd, "--strategy=$_strategy" if $_strategy;
-	push @cmd, "--preserve-merges" if $_preserve_merges;
+	push @cmd, "--rebase-merges" if $_rebase_merges;
 	@cmd;
 }
 
@@ -1865,6 +1873,7 @@ sub get_commit_entry {
 			}
 		}
 		$msgbuf =~ s/\s+$//s;
+		$msgbuf =~ s/\r\n/\n/sg; # SVN 1.6+ disallows CRLF
 		if ($Git::SVN::_add_author_from && defined($author)
 		    && !$saw_from) {
 			$msgbuf .= "\n\nFrom: $author";

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "repository.h"
 #include "refs.h"
 #include "strbuf.h"
 #include "worktree.h"
@@ -29,8 +30,8 @@ static void add_head_info(struct worktree *wt)
 
 	target = refs_resolve_ref_unsafe(get_worktree_ref_store(wt),
 					 "HEAD",
-					 RESOLVE_REF_READING,
-					 wt->head_sha1, &flags);
+					 0,
+					 &wt->head_oid, &flags);
 	if (!target)
 		return;
 
@@ -48,18 +49,24 @@ static struct worktree *get_main_worktree(void)
 	struct worktree *worktree = NULL;
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf worktree_path = STRBUF_INIT;
-	int is_bare = 0;
 
 	strbuf_add_absolute_path(&worktree_path, get_git_common_dir());
-	is_bare = !strbuf_strip_suffix(&worktree_path, "/.git");
-	if (is_bare)
+	if (!strbuf_strip_suffix(&worktree_path, "/.git"))
 		strbuf_strip_suffix(&worktree_path, "/.");
 
 	strbuf_addf(&path, "%s/HEAD", get_git_common_dir());
 
 	worktree = xcalloc(1, sizeof(*worktree));
 	worktree->path = strbuf_detach(&worktree_path, NULL);
-	worktree->is_bare = is_bare;
+	/*
+	 * NEEDSWORK: If this function is called from a secondary worktree and
+	 * config.worktree is present, is_bare_repository_cfg will reflect the
+	 * contents of config.worktree, not the contents of the main worktree.
+	 * This means that worktree->is_bare may be set to 0 even if the main
+	 * worktree is configured to be bare.
+	 */
+	worktree->is_bare = (is_bare_repository_cfg == 1) ||
+		is_bare_repository();
 	add_head_info(worktree);
 
 	strbuf_release(&path);
@@ -76,7 +83,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	if (!id)
 		die("Missing linked worktree name");
 
-	strbuf_git_common_path(&path, "worktrees/%s/gitdir", id);
+	strbuf_git_common_path(&path, the_repository, "worktrees/%s/gitdir", id);
 	if (strbuf_read_file(&worktree_path, path.buf, 0) <= 0)
 		/* invalid gitdir file */
 		goto done;
@@ -216,10 +223,17 @@ struct worktree *find_worktree(struct worktree **list,
 
 	if (prefix)
 		arg = to_free = prefix_filename(prefix, arg);
-	path = real_pathdup(arg, 1);
-	for (; *list; list++)
-		if (!fspathcmp(path, real_path((*list)->path)))
+	path = real_pathdup(arg, 0);
+	if (!path) {
+		free(to_free);
+		return NULL;
+	}
+	for (; *list; list++) {
+		const char *wt_path = real_path_if_valid((*list)->path);
+
+		if (wt_path && !fspathcmp(path, wt_path))
 			break;
+	}
 	free(path);
 	free(to_free);
 	return *list;
@@ -230,7 +244,7 @@ int is_main_worktree(const struct worktree *wt)
 	return !wt->id;
 }
 
-const char *is_worktree_locked(struct worktree *wt)
+const char *worktree_lock_reason(struct worktree *wt)
 {
 	assert(!is_main_worktree(wt));
 
@@ -251,6 +265,102 @@ const char *is_worktree_locked(struct worktree *wt)
 	}
 
 	return wt->lock_reason;
+}
+
+/* convenient wrapper to deal with NULL strbuf */
+static void strbuf_addf_gently(struct strbuf *buf, const char *fmt, ...)
+{
+	va_list params;
+
+	if (!buf)
+		return;
+
+	va_start(params, fmt);
+	strbuf_vaddf(buf, fmt, params);
+	va_end(params);
+}
+
+int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
+		      unsigned flags)
+{
+	struct strbuf wt_path = STRBUF_INIT;
+	char *path = NULL;
+	int err, ret = -1;
+
+	strbuf_addf(&wt_path, "%s/.git", wt->path);
+
+	if (is_main_worktree(wt)) {
+		if (is_directory(wt_path.buf)) {
+			ret = 0;
+			goto done;
+		}
+		/*
+		 * Main worktree using .git file to point to the
+		 * repository would make it impossible to know where
+		 * the actual worktree is if this function is executed
+		 * from another worktree. No .git file support for now.
+		 */
+		strbuf_addf_gently(errmsg,
+				   _("'%s' at main working tree is not the repository directory"),
+				   wt_path.buf);
+		goto done;
+	}
+
+	/*
+	 * Make sure "gitdir" file points to a real .git file and that
+	 * file points back here.
+	 */
+	if (!is_absolute_path(wt->path)) {
+		strbuf_addf_gently(errmsg,
+				   _("'%s' file does not contain absolute path to the working tree location"),
+				   git_common_path("worktrees/%s/gitdir", wt->id));
+		goto done;
+	}
+
+	if (flags & WT_VALIDATE_WORKTREE_MISSING_OK &&
+	    !file_exists(wt->path)) {
+		ret = 0;
+		goto done;
+	}
+
+	if (!file_exists(wt_path.buf)) {
+		strbuf_addf_gently(errmsg, _("'%s' does not exist"), wt_path.buf);
+		goto done;
+	}
+
+	path = xstrdup_or_null(read_gitfile_gently(wt_path.buf, &err));
+	if (!path) {
+		strbuf_addf_gently(errmsg, _("'%s' is not a .git file, error code %d"),
+				   wt_path.buf, err);
+		goto done;
+	}
+
+	ret = fspathcmp(path, real_path(git_common_path("worktrees/%s", wt->id)));
+
+	if (ret)
+		strbuf_addf_gently(errmsg, _("'%s' does not point back to '%s'"),
+				   wt->path, git_common_path("worktrees/%s", wt->id));
+done:
+	free(path);
+	strbuf_release(&wt_path);
+	return ret;
+}
+
+void update_worktree_location(struct worktree *wt, const char *path_)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	if (is_main_worktree(wt))
+		BUG("can't relocate main worktree");
+
+	strbuf_realpath(&path, path_, 1);
+	if (fspathcmp(wt->path, path.buf)) {
+		write_file(git_common_path("worktrees/%s/gitdir", wt->id),
+			   "%s/.git", path.buf);
+		free(wt->path);
+		wt->path = strbuf_detach(&path, NULL);
+	}
+	strbuf_release(&path);
 }
 
 int is_worktree_being_rebased(const struct worktree *wt,
@@ -306,7 +416,6 @@ const struct worktree *find_shared_symref(const char *symref,
 	for (i = 0; worktrees[i]; i++) {
 		struct worktree *wt = worktrees[i];
 		const char *symref_target;
-		unsigned char sha1[20];
 		struct ref_store *refs;
 		int flags;
 
@@ -326,8 +435,9 @@ const struct worktree *find_shared_symref(const char *symref,
 
 		refs = get_worktree_ref_store(wt);
 		symref_target = refs_resolve_ref_unsafe(refs, symref, 0,
-							sha1, &flags);
-		if ((flags & REF_ISSYMREF) && !strcmp(symref_target, target)) {
+							NULL, &flags);
+		if ((flags & REF_ISSYMREF) &&
+		    symref_target && !strcmp(symref_target, target)) {
 			existing = wt;
 			break;
 		}
@@ -343,7 +453,7 @@ int submodule_uses_worktrees(const char *path)
 	DIR *dir;
 	struct dirent *d;
 	int ret = 0;
-	struct repository_format format;
+	struct repository_format format = REPOSITORY_FORMAT_INIT;
 
 	submodule_gitdir = git_pathdup_submodule(path, "%s", "");
 	if (!submodule_gitdir)
@@ -361,8 +471,10 @@ int submodule_uses_worktrees(const char *path)
 	read_repository_format(&format, sb.buf);
 	if (format.version != 0) {
 		strbuf_release(&sb);
+		clear_repository_format(&format);
 		return 1;
 	}
+	clear_repository_format(&format);
 
 	/* Replace config by worktrees. */
 	strbuf_setlen(&sb, sb.len - strlen("config"));
@@ -383,5 +495,100 @@ int submodule_uses_worktrees(const char *path)
 		break;
 	}
 	closedir(dir);
+	return ret;
+}
+
+int parse_worktree_ref(const char *worktree_ref, const char **name,
+		       int *name_length, const char **ref)
+{
+	if (skip_prefix(worktree_ref, "main-worktree/", &worktree_ref)) {
+		if (!*worktree_ref)
+			return -1;
+		if (name)
+			*name = NULL;
+		if (name_length)
+			*name_length = 0;
+		if (ref)
+			*ref = worktree_ref;
+		return 0;
+	}
+	if (skip_prefix(worktree_ref, "worktrees/", &worktree_ref)) {
+		const char *slash = strchr(worktree_ref, '/');
+
+		if (!slash || slash == worktree_ref || !slash[1])
+			return -1;
+		if (name)
+			*name = worktree_ref;
+		if (name_length)
+			*name_length = slash - worktree_ref;
+		if (ref)
+			*ref = slash + 1;
+		return 0;
+	}
+	return -1;
+}
+
+void strbuf_worktree_ref(const struct worktree *wt,
+			 struct strbuf *sb,
+			 const char *refname)
+{
+	switch (ref_type(refname)) {
+	case REF_TYPE_PSEUDOREF:
+	case REF_TYPE_PER_WORKTREE:
+		if (wt && !wt->is_current) {
+			if (is_main_worktree(wt))
+				strbuf_addstr(sb, "main-worktree/");
+			else
+				strbuf_addf(sb, "worktrees/%s/", wt->id);
+		}
+		break;
+
+	case REF_TYPE_MAIN_PSEUDOREF:
+	case REF_TYPE_OTHER_PSEUDOREF:
+		break;
+
+	case REF_TYPE_NORMAL:
+		/*
+		 * For shared refs, don't prefix worktrees/ or
+		 * main-worktree/. It's not necessary and
+		 * files-backend.c can't handle it anyway.
+		 */
+		break;
+	}
+	strbuf_addstr(sb, refname);
+}
+
+const char *worktree_ref(const struct worktree *wt, const char *refname)
+{
+	static struct strbuf sb = STRBUF_INIT;
+
+	strbuf_reset(&sb);
+	strbuf_worktree_ref(wt, &sb, refname);
+	return sb.buf;
+}
+
+int other_head_refs(each_ref_fn fn, void *cb_data)
+{
+	struct worktree **worktrees, **p;
+	int ret = 0;
+
+	worktrees = get_worktrees(0);
+	for (p = worktrees; *p; p++) {
+		struct worktree *wt = *p;
+		struct object_id oid;
+		int flag;
+
+		if (wt->is_current)
+			continue;
+
+		if (!refs_read_ref_full(get_main_ref_store(the_repository),
+					worktree_ref(wt, "HEAD"),
+					RESOLVE_REF_READING,
+					&oid, &flag))
+			ret = fn(worktree_ref(wt, "HEAD"), &oid, flag, cb_data);
+		if (ret)
+			break;
+	}
+	free_worktrees(worktrees);
 	return ret;
 }

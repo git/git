@@ -1,10 +1,10 @@
 TL;DR: Run update_unicode.sh after the publication of a new Unicode
-standard and commit the resulting unicode_widths.h file.
+standard and commit the resulting unicode-widths.h file.
 
 The long version
 ================
 
-The Git source code ships the file unicode_widths.h which contains
+The Git source code ships the file unicode-widths.h which contains
 tables of zero and double width Unicode code points, respectively.
 These tables are generated using update_unicode.sh in this directory.
 update_unicode.sh itself uses a third-party tool, uniset, to query two
@@ -16,5 +16,5 @@ This requires a current-ish version of autoconf (2.69 works per December
 
 On each run, update_unicode.sh checks whether more recent Unicode data
 files are available from the Unicode consortium, and rebuilds the header
-unicode_widths.h with the new data. The new header can then be
+unicode-widths.h with the new data. The new header can then be
 committed.

@@ -10,8 +10,9 @@ SYNOPSIS
 [verse]
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
-		   [--points-at <object>] [(--merged | --no-merged) [<object>]]
-		   [--contains [<object>]] [--no-contains [<object>]]
+		   [--points-at=<object>]
+		   (--merged[=<object>] | --no-merged[=<object>])
+		   [--contains[=<object>]] [--no-contains[=<object>]]
 
 DESCRIPTION
 -----------
@@ -25,35 +26,41 @@ host language allowing their direct evaluation in that language.
 
 OPTIONS
 -------
-<count>::
+<pattern>...::
+	If one or more patterns are given, only refs are shown that
+	match against at least one pattern, either using fnmatch(3) or
+	literally, in the latter case matching completely or from the
+	beginning up to a slash.
+
+--count=<count>::
 	By default the command shows all refs that match
 	`<pattern>`.  This option makes it stop after showing
 	that many refs.
 
-<key>::
+--sort=<key>::
 	A field name to sort on.  Prefix `-` to sort in
 	descending order of the value.  When unspecified,
 	`refname` is used.  You may use the --sort=<key> option
 	multiple times, in which case the last key becomes the primary
 	key.
 
-<format>::
-	A string that interpolates `%(fieldname)` from the
-	object pointed at by a ref being shown.  If `fieldname`
+--format=<format>::
+	A string that interpolates `%(fieldname)` from a ref being shown
+	and the object it points at.  If `fieldname`
 	is prefixed with an asterisk (`*`) and the ref points
-	at a tag object, the value for the field in the object
-	tag refers is used.  When unspecified, defaults to
+	at a tag object, use the value for the field in the object
+	which the tag object refers to (instead of the field in the tag object).
+	When unspecified, `<format>` defaults to
 	`%(objectname) SPC %(objecttype) TAB %(refname)`.
 	It also interpolates `%%` to `%`, and `%xx` where `xx`
 	are hex digits interpolates to character with hex code
 	`xx`; for example `%00` interpolates to `\0` (NUL),
 	`%09` to `\t` (TAB) and `%0a` to `\n` (LF).
 
-<pattern>...::
-	If one or more patterns are given, only refs are shown that
-	match against at least one pattern, either using fnmatch(3) or
-	literally, in the latter case matching completely or from the
-	beginning up to a slash.
+--color[=<when>]::
+	Respect any colors specified in the `--format` option. The
+	`<when>` field must be one of `always`, `never`, or `auto` (if
+	`<when>` is absent, behave as if `always` was given).
 
 --shell::
 --perl::
@@ -64,24 +71,24 @@ OPTIONS
 	the specified host language.  This is meant to produce
 	a scriptlet that can directly be `eval`ed.
 
---points-at <object>::
+--points-at=<object>::
 	Only list refs which points at the given object.
 
---merged [<object>]::
+--merged[=<object>]::
 	Only list refs whose tips are reachable from the
 	specified commit (HEAD if not specified),
 	incompatible with `--no-merged`.
 
---no-merged [<object>]::
+--no-merged[=<object>]::
 	Only list refs whose tips are not reachable from the
 	specified commit (HEAD if not specified),
 	incompatible with `--merged`.
 
---contains [<object>]::
+--contains[=<object>]::
 	Only list refs which contain the specified commit (HEAD if not
 	specified).
 
---no-contains [<object>]::
+--no-contains[=<object>]::
 	Only list refs which don't contain the specified commit (HEAD
 	if not specified).
 
@@ -114,20 +121,25 @@ refname::
 	stripping with positive <N>, or it becomes the full refname if
 	stripping with negative <N>.  Neither is an error.
 +
-`strip` can be used as a synomym to `lstrip`.
+`strip` can be used as a synonym to `lstrip`.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
 
 objectsize::
 	The size of the object (the same as 'git cat-file -s' reports).
-
+	Append `:disk` to get the size, in bytes, that the object takes up on
+	disk. See the note about on-disk sizes in the `CAVEATS` section below.
 objectname::
 	The object name (aka SHA-1).
 	For a non-ambiguous abbreviation of the object name append `:short`.
 	For an abbreviation of the object name with desired length append
 	`:short=<length>`, where the minimum length is MINIMUM_ABBREV. The
 	length may be exceeded to ensure unique object names.
+deltabase::
+	This expands to the object name of the delta base for the
+	given object, if it is stored as a delta.  Otherwise it
+	expands to the null object name (all zeroes).
 
 upstream::
 	The name of a local ref which can be considered ``upstream''
@@ -138,26 +150,35 @@ upstream::
 	(behind), "<>" (ahead and behind), or "=" (in sync). `:track`
 	also prints "[gone]" whenever unknown upstream ref is
 	encountered. Append `:track,nobracket` to show tracking
-	information without brackets (i.e "ahead N, behind M").  Has
-	no effect if the ref does not have tracking information
-	associated with it.  All the options apart from `nobracket`
-	are mutually exclusive, but if used together the last option
-	is selected.
+	information without brackets (i.e "ahead N, behind M").
++
+For any remote-tracking branch `%(upstream)`, `%(upstream:remotename)`
+and `%(upstream:remoteref)` refer to the name of the remote and the
+name of the tracked remote ref, respectively. In other words, the
+remote-tracking branch can be updated explicitly and individually by
+using the refspec `%(upstream:remoteref):%(upstream)` to fetch from
+`%(upstream:remotename)`.
++
+Has no effect if the ref does not have tracking information associated
+with it.  All the options apart from `nobracket` are mutually exclusive,
+but if used together the last option is selected.
 
 push::
 	The name of a local ref which represents the `@{push}`
 	location for the displayed ref. Respects `:short`, `:lstrip`,
-	`:rstrip`, `:track`, and `:trackshort` options as `upstream`
-	does. Produces an empty string if no `@{push}` ref is
-	configured.
+	`:rstrip`, `:track`, `:trackshort`, `:remotename`, and `:remoteref`
+	options as `upstream` does. Produces an empty string if no `@{push}`
+	ref is configured.
 
 HEAD::
 	'*' if HEAD matches current ref (the checked out branch), ' '
 	otherwise.
 
 color::
-	Change output color.  Followed by `:<colorname>`, where names
-	are described in `color.branch.*`.
+	Change output color. Followed by `:<colorname>`, where color
+	names are described under Values in the "CONFIGURATION FILE"
+	section of linkgit:git-config[1].  For example,
+	`%(color:bold red)`.
 
 align::
 	Left-, middle-, or right-align the content between
@@ -193,6 +214,11 @@ symref::
 	`:lstrip` and `:rstrip` options in the same way as `refname`
 	above.
 
+worktreepath::
+	The absolute path to the worktree in which the ref is checked
+	out, if it is checked out in any linked worktree. Empty string
+	otherwise.
+
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
@@ -209,11 +235,15 @@ and `date` to extract the named component.
 The complete message in a commit and tag object is `contents`.
 Its first line is `contents:subject`, where subject is the concatenation
 of all lines of the commit message up to the first blank line.  The next
-line is 'contents:body', where body is all of the lines after the first
+line is `contents:body`, where body is all of the lines after the first
 blank line.  The optional GPG signature is `contents:signature`.  The
 first `N` lines of the message is obtained using `contents:lines=N`.
 Additionally, the trailers as interpreted by linkgit:git-interpret-trailers[1]
-are obtained as 'contents:trailers'.
+are obtained as `trailers` (or by using the historical alias
+`contents:trailers`).  Non-trailer lines from the trailer block can be omitted
+with `trailers:only`. Whitespace-continuations can be removed from trailers so
+that each trailer appears on a line by itself with its full content with
+`trailers:unfold`. Both can be used together as `trailers:unfold,only`.
 
 For sorting purposes, fields with numeric values sort in numeric order
 (`objectsize`, `authordate`, `committerdate`, `creatordate`, `taggerdate`).
@@ -340,6 +370,20 @@ This prints the authorname, if present.
 ------------
 git for-each-ref --format="%(refname)%(if)%(authorname)%(then) Authored by: %(authorname)%(end)"
 ------------
+
+CAVEATS
+-------
+
+Note that the sizes of objects on disk are reported accurately, but care
+should be taken in drawing conclusions about which refs or objects are
+responsible for disk usage. The size of a packed non-delta object may be
+much larger than the size of objects which delta against it, but the
+choice of which object is the base and which is the delta is arbitrary
+and is subject to change during a repack.
+
+Note also that multiple copies of an object may be present in the object
+database; in this case, it is undefined which copy's size or delta base
+will be reported.
 
 SEE ALSO
 --------

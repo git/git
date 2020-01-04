@@ -1,8 +1,10 @@
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "pathspec.h"
 #include "attr.h"
+#include "argv-array.h"
+#include "quote.h"
 
 /*
  * Finds which of the given pathspecs match items in the index.
@@ -36,7 +38,7 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 		return;
 	for (i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
-		ce_path_match(ce, pathspec, seen);
+		ce_path_match(istate, ce, pathspec, seen);
 	}
 }
 
@@ -197,7 +199,7 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
 	}
 
 	if (item->attr_check->nr != item->attr_match_nr)
-		die("BUG: should have same number of entries");
+		BUG("should have same number of entries");
 
 	string_list_clear(&list, 0);
 }
@@ -421,7 +423,7 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 
 	if (pathspec_prefix >= 0 &&
 	    (prefixlen || (prefix && *prefix)))
-		die("BUG: 'prefix' magic is supposed to be used at worktree's root");
+		BUG("'prefix' magic is supposed to be used at worktree's root");
 
 	if ((magic & PATHSPEC_LITERAL) && (magic & PATHSPEC_GLOB))
 		die(_("%s: 'literal' and 'glob' are incompatible"), elt);
@@ -485,7 +487,7 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 	/* sanity checks, pathspec matchers assume these are sane */
 	if (item->nowildcard_len > item->len ||
 	    item->prefix         > item->len) {
-		die ("BUG: error initializing pathspec_item");
+		BUG("error initializing pathspec_item");
 	}
 }
 
@@ -525,17 +527,13 @@ static void NORETURN unsupported_magic(const char *pattern,
 	    pattern, sb.buf);
 }
 
-/*
- * Given command line arguments and a prefix, convert the input to
- * pathspec. die() if any magic in magic_mask is used.
- */
 void parse_pathspec(struct pathspec *pathspec,
 		    unsigned magic_mask, unsigned flags,
 		    const char *prefix, const char **argv)
 {
 	struct pathspec_item *item;
 	const char *entry = argv ? *argv : NULL;
-	int i, n, prefixlen, warn_empty_string, nr_exclude = 0;
+	int i, n, prefixlen, nr_exclude = 0;
 
 	memset(pathspec, 0, sizeof(*pathspec));
 
@@ -548,7 +546,7 @@ void parse_pathspec(struct pathspec *pathspec,
 
 	if ((flags & PATHSPEC_PREFER_CWD) &&
 	    (flags & PATHSPEC_PREFER_FULL))
-		die("BUG: PATHSPEC_PREFER_CWD and PATHSPEC_PREFER_FULL are incompatible");
+		BUG("PATHSPEC_PREFER_CWD and PATHSPEC_PREFER_FULL are incompatible");
 
 	/* No arguments with prefix -> prefix pathspec */
 	if (!entry) {
@@ -556,7 +554,7 @@ void parse_pathspec(struct pathspec *pathspec,
 			return;
 
 		if (!(flags & PATHSPEC_PREFER_CWD))
-			die("BUG: PATHSPEC_PREFER_CWD requires arguments");
+			BUG("PATHSPEC_PREFER_CWD requires arguments");
 
 		pathspec->items = item = xcalloc(1, sizeof(*item));
 		item->match = xstrdup(prefix);
@@ -568,13 +566,10 @@ void parse_pathspec(struct pathspec *pathspec,
 	}
 
 	n = 0;
-	warn_empty_string = 1;
 	while (argv[n]) {
-		if (*argv[n] == '\0' && warn_empty_string) {
-			warning(_("empty strings as pathspecs will be made invalid in upcoming releases. "
-				  "please use . instead if you meant to match all paths"));
-			warn_empty_string = 0;
-		}
+		if (*argv[n] == '\0')
+			die("empty string is not a valid pathspec. "
+				  "please use . instead if you meant to match all paths");
 		n++;
 	}
 
@@ -605,7 +600,7 @@ void parse_pathspec(struct pathspec *pathspec,
 
 	/*
 	 * If everything is an exclude pattern, add one positive pattern
-	 * that matches everyting. We allocated an extra one for this.
+	 * that matches everything. We allocated an extra one for this.
 	 */
 	if (nr_exclude == n) {
 		int plen = (!(flags & PATHSPEC_PREFER_CWD)) ? 0 : prefixlen;
@@ -615,9 +610,45 @@ void parse_pathspec(struct pathspec *pathspec,
 
 	if (pathspec->magic & PATHSPEC_MAXDEPTH) {
 		if (flags & PATHSPEC_KEEP_ORDER)
-			die("BUG: PATHSPEC_MAXDEPTH_VALID and PATHSPEC_KEEP_ORDER are incompatible");
+			BUG("PATHSPEC_MAXDEPTH_VALID and PATHSPEC_KEEP_ORDER are incompatible");
 		QSORT(pathspec->items, pathspec->nr, pathspec_item_cmp);
 	}
+}
+
+void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
+			 unsigned flags, const char *prefix,
+			 const char *file, int nul_term_line)
+{
+	struct argv_array parsed_file = ARGV_ARRAY_INIT;
+	strbuf_getline_fn getline_fn = nul_term_line ? strbuf_getline_nul :
+						       strbuf_getline;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf unquoted = STRBUF_INIT;
+	FILE *in;
+
+	if (!strcmp(file, "-"))
+		in = stdin;
+	else
+		in = xfopen(file, "r");
+
+	while (getline_fn(&buf, in) != EOF) {
+		if (!nul_term_line && buf.buf[0] == '"') {
+			strbuf_reset(&unquoted);
+			if (unquote_c_style(&unquoted, buf.buf, NULL))
+				die(_("line is badly quoted: %s"), buf.buf);
+			strbuf_swap(&buf, &unquoted);
+		}
+		argv_array_push(&parsed_file, buf.buf);
+		strbuf_reset(&buf);
+	}
+
+	strbuf_release(&unquoted);
+	strbuf_release(&buf);
+	if (in != stdin)
+		fclose(in);
+
+	parse_pathspec(pathspec, magic_mask, flags, prefix, parsed_file.argv);
+	argv_array_clear(&parsed_file);
 }
 
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
@@ -662,7 +693,44 @@ void clear_pathspec(struct pathspec *pathspec)
 			attr_check_free(pathspec->items[i].attr_check);
 	}
 
-	free(pathspec->items);
-	pathspec->items = NULL;
+	FREE_AND_NULL(pathspec->items);
 	pathspec->nr = 0;
+}
+
+int match_pathspec_attrs(const struct index_state *istate,
+			 const char *name, int namelen,
+			 const struct pathspec_item *item)
+{
+	int i;
+	char *to_free = NULL;
+
+	if (name[namelen])
+		name = to_free = xmemdupz(name, namelen);
+
+	git_check_attr(istate, name, item->attr_check);
+
+	free(to_free);
+
+	for (i = 0; i < item->attr_match_nr; i++) {
+		const char *value;
+		int matched;
+		enum attr_match_mode match_mode;
+
+		value = item->attr_check->items[i].value;
+		match_mode = item->attr_match[i].match_mode;
+
+		if (ATTR_TRUE(value))
+			matched = (match_mode == MATCH_SET);
+		else if (ATTR_FALSE(value))
+			matched = (match_mode == MATCH_UNSET);
+		else if (ATTR_UNSET(value))
+			matched = (match_mode == MATCH_UNSPECIFIED);
+		else
+			matched = (match_mode == MATCH_VALUE &&
+				   !strcmp(item->attr_match[i].value, value));
+		if (!matched)
+			return 0;
+	}
+
+	return 1;
 }

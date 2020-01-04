@@ -1,6 +1,9 @@
 #ifndef OIDSET_H
 #define OIDSET_H
 
+#include "hashmap.h"
+#include "khash.h"
+
 /**
  * This API is similar to sha1-array, in that it maintains a set of object ids
  * in a memory-efficient way. The major differences are:
@@ -17,10 +20,19 @@
  * A single oidset; should be zero-initialized (or use OIDSET_INIT).
  */
 struct oidset {
-	struct hashmap map;
+	kh_oid_set_t set;
 };
 
-#define OIDSET_INIT { { NULL } }
+#define OIDSET_INIT { { 0 } }
+
+
+/**
+ * Initialize the oidset structure `set`.
+ *
+ * If `initial_size` is bigger than 0 then preallocate to allow inserting
+ * the specified number of elements without further allocations.
+ */
+void oidset_init(struct oidset *set, size_t initial_size);
 
 /**
  * Returns true iff `set` contains `oid`.
@@ -37,9 +49,52 @@ int oidset_contains(const struct oidset *set, const struct object_id *oid);
 int oidset_insert(struct oidset *set, const struct object_id *oid);
 
 /**
+ * Remove the oid from the set.
+ *
+ * Returns 1 if the oid was present in the set, 0 otherwise.
+ */
+int oidset_remove(struct oidset *set, const struct object_id *oid);
+
+/**
  * Remove all entries from the oidset, freeing any resources associated with
  * it.
  */
 void oidset_clear(struct oidset *set);
+
+/**
+ * Add the contents of the file 'path' to an initialized oidset.  Each line is
+ * an unabbreviated object name.  Comments begin with '#', and trailing comments
+ * are allowed.  Leading whitespace and empty or white-space only lines are
+ * ignored.
+ */
+void oidset_parse_file(struct oidset *set, const char *path);
+
+struct oidset_iter {
+	kh_oid_set_t *set;
+	khiter_t iter;
+};
+
+static inline void oidset_iter_init(struct oidset *set,
+				    struct oidset_iter *iter)
+{
+	iter->set = &set->set;
+	iter->iter = kh_begin(iter->set);
+}
+
+static inline struct object_id *oidset_iter_next(struct oidset_iter *iter)
+{
+	for (; iter->iter != kh_end(iter->set); iter->iter++) {
+		if (kh_exist(iter->set, iter->iter))
+			return &kh_key(iter->set, iter->iter++);
+	}
+	return NULL;
+}
+
+static inline struct object_id *oidset_iter_first(struct oidset *set,
+						  struct oidset_iter *iter)
+{
+	oidset_iter_init(set, iter);
+	return oidset_iter_next(iter);
+}
 
 #endif /* OIDSET_H */

@@ -34,15 +34,15 @@ test_expect_success 'open-quoted pathname' '
 test_expect_success 'setup' '
 	mkdir -p a/b/d a/c b &&
 	(
-		echo "[attr]notest !test"
-		echo "\" d \"	test=d"
-		echo " e	test=e"
-		echo " e\"	test=e"
-		echo "f	test=f"
-		echo "a/i test=a/i"
-		echo "onoff test -test"
-		echo "offon -test test"
-		echo "no notest"
+		echo "[attr]notest !test" &&
+		echo "\" d \"	test=d" &&
+		echo " e	test=e" &&
+		echo " e\"	test=e" &&
+		echo "f	test=f" &&
+		echo "a/i test=a/i" &&
+		echo "onoff test -test" &&
+		echo "offon -test test" &&
+		echo "no notest" &&
 		echo "A/e/F test=A/e/F"
 	) >.gitattributes &&
 	(
@@ -51,7 +51,7 @@ test_expect_success 'setup' '
 	) >a/.gitattributes &&
 	(
 		echo "h test=a/b/h" &&
-		echo "d/* test=a/b/d/*"
+		echo "d/* test=a/b/d/*" &&
 		echo "d/yes notest"
 	) >a/b/.gitattributes &&
 	(
@@ -208,9 +208,8 @@ test_expect_success 'attribute test: --all option' '
 '
 
 test_expect_success 'attribute test: --cached option' '
-	: >empty &&
 	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
-	test_cmp empty actual &&
+	test_must_be_empty actual &&
 	git add .gitattributes a/.gitattributes a/b/.gitattributes &&
 	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
 	test_cmp specified-all actual
@@ -287,7 +286,7 @@ test_expect_success 'bare repository: check that .gitattribute is ignored' '
 	(
 		cd bare.git &&
 		(
-			echo "f	test=f"
+			echo "f	test=f" &&
 			echo "a/i test=a/i"
 		) >.gitattributes &&
 		attr_check f unspecified &&
@@ -312,7 +311,7 @@ test_expect_success 'bare repository: test info/attributes' '
 	(
 		cd bare.git &&
 		(
-			echo "f	test=f"
+			echo "f	test=f" &&
 			echo "a/i test=a/i"
 		) >info/attributes &&
 		attr_check f f &&
@@ -321,6 +320,26 @@ test_expect_success 'bare repository: test info/attributes' '
 		attr_check a/i a/i &&
 		attr_check subdir/a/i unspecified
 	)
+'
+
+test_expect_success 'binary macro expanded by -a' '
+	echo "file binary" >.gitattributes &&
+	cat >expect <<-\EOF &&
+	file: binary: set
+	file: diff: unset
+	file: merge: unset
+	file: text: unset
+	EOF
+	git check-attr -a file >actual &&
+	test_cmp expect actual
+'
+
+
+test_expect_success 'query binary macro directly' '
+	echo "file binary" >.gitattributes &&
+	echo file: binary: set >expect &&
+	git check-attr binary file >actual &&
+	test_cmp expect actual
 '
 
 test_done

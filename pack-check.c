@@ -1,7 +1,10 @@
 #include "cache.h"
+#include "repository.h"
 #include "pack.h"
 #include "pack-revindex.h"
 #include "progress.h"
+#include "packfile.h"
+#include "object-store.h"
 
 struct idx_entry {
 	off_t                offset;
@@ -40,12 +43,13 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	} while (len);
 
 	index_crc = p->index_data;
-	index_crc += 2 + 256 + p->num_objects * (20/4) + nr;
+	index_crc += 2 + 256 + p->num_objects * (the_hash_algo->rawsz/4) + nr;
 
 	return data_crc != ntohl(*index_crc);
 }
 
-static int verify_packfile(struct packed_git *p,
+static int verify_packfile(struct repository *r,
+			   struct packed_git *p,
 			   struct pack_window **w_curs,
 			   verify_fn fn,
 			   struct progress *progress, uint32_t base_count)
@@ -53,7 +57,7 @@ static int verify_packfile(struct packed_git *p,
 {
 	off_t index_size = p->index_size;
 	const unsigned char *index_base = p->index_data;
-	git_SHA_CTX ctx;
+	git_hash_ctx ctx;
 	unsigned char hash[GIT_MAX_RAWSZ], *pack_sig;
 	off_t offset = 0, pack_sig_ofs = 0;
 	uint32_t nr_objects, i;
@@ -63,24 +67,24 @@ static int verify_packfile(struct packed_git *p,
 	if (!is_pack_valid(p))
 		return error("packfile %s cannot be accessed", p->pack_name);
 
-	git_SHA1_Init(&ctx);
+	the_hash_algo->init_fn(&ctx);
 	do {
 		unsigned long remaining;
 		unsigned char *in = use_pack(p, w_curs, offset, &remaining);
 		offset += remaining;
 		if (!pack_sig_ofs)
-			pack_sig_ofs = p->pack_size - 20;
+			pack_sig_ofs = p->pack_size - the_hash_algo->rawsz;
 		if (offset > pack_sig_ofs)
 			remaining -= (unsigned int)(offset - pack_sig_ofs);
-		git_SHA1_Update(&ctx, in, remaining);
+		the_hash_algo->update_fn(&ctx, in, remaining);
 	} while (offset < pack_sig_ofs);
-	git_SHA1_Final(hash, &ctx);
+	the_hash_algo->final_fn(hash, &ctx);
 	pack_sig = use_pack(p, w_curs, pack_sig_ofs, NULL);
-	if (hashcmp(hash, pack_sig))
-		err = error("%s SHA1 checksum mismatch",
+	if (!hasheq(hash, pack_sig))
+		err = error("%s pack checksum mismatch",
 			    p->pack_name);
-	if (hashcmp(index_base + index_size - 40, pack_sig))
-		err = error("%s SHA1 does not match its index",
+	if (!hasheq(index_base + index_size - the_hash_algo->hexsz, pack_sig))
+		err = error("%s pack checksum does not match its index",
 			    p->pack_name);
 	unuse_pack(w_curs);
 
@@ -125,14 +129,14 @@ static int verify_packfile(struct packed_git *p,
 
 		if (type == OBJ_BLOB && big_file_threshold <= size) {
 			/*
-			 * Let check_sha1_signature() check it with
+			 * Let check_object_signature() check it with
 			 * the streaming interface; no point slurping
 			 * the data in-core only to discard.
 			 */
 			data = NULL;
 			data_valid = 0;
 		} else {
-			data = unpack_entry(p, entries[i].offset, &type, &size);
+			data = unpack_entry(r, p, entries[i].offset, &type, &size);
 			data_valid = 1;
 		}
 
@@ -140,7 +144,7 @@ static int verify_packfile(struct packed_git *p,
 			err = error("cannot unpack %s from %s at offset %"PRIuMAX"",
 				    oid_to_hex(entries[i].oid.oid), p->pack_name,
 				    (uintmax_t)entries[i].offset);
-		else if (check_sha1_signature(entries[i].oid.hash, data, size, typename(type)))
+		else if (check_object_signature(entries[i].oid.oid, data, size, type_name(type)))
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(entries[i].oid.oid), p->pack_name);
 		else if (fn) {
@@ -164,8 +168,8 @@ int verify_pack_index(struct packed_git *p)
 {
 	off_t index_size;
 	const unsigned char *index_base;
-	git_SHA_CTX ctx;
-	unsigned char sha1[20];
+	git_hash_ctx ctx;
+	unsigned char hash[GIT_MAX_RAWSZ];
 	int err = 0;
 
 	if (open_pack_index(p))
@@ -174,16 +178,16 @@ int verify_pack_index(struct packed_git *p)
 	index_base = p->index_data;
 
 	/* Verify SHA1 sum of the index file */
-	git_SHA1_Init(&ctx);
-	git_SHA1_Update(&ctx, index_base, (unsigned int)(index_size - 20));
-	git_SHA1_Final(sha1, &ctx);
-	if (hashcmp(sha1, index_base + index_size - 20))
-		err = error("Packfile index for %s SHA1 mismatch",
+	the_hash_algo->init_fn(&ctx);
+	the_hash_algo->update_fn(&ctx, index_base, (unsigned int)(index_size - the_hash_algo->rawsz));
+	the_hash_algo->final_fn(hash, &ctx);
+	if (!hasheq(hash, index_base + index_size - the_hash_algo->rawsz))
+		err = error("Packfile index for %s hash mismatch",
 			    p->pack_name);
 	return err;
 }
 
-int verify_pack(struct packed_git *p, verify_fn fn,
+int verify_pack(struct repository *r, struct packed_git *p, verify_fn fn,
 		struct progress *progress, uint32_t base_count)
 {
 	int err = 0;
@@ -193,7 +197,7 @@ int verify_pack(struct packed_git *p, verify_fn fn,
 	if (!p->index_data)
 		return -1;
 
-	err |= verify_packfile(p, &w_curs, fn, progress, base_count);
+	err |= verify_packfile(r, p, &w_curs, fn, progress, base_count);
 	unuse_pack(&w_curs);
 
 	return err;

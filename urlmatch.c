@@ -42,12 +42,12 @@ static int append_normalized_escapes(struct strbuf *buf,
 
 		from_len--;
 		if (ch == '%') {
-			if (from_len < 2 ||
-			    !isxdigit(from[0]) ||
-			    !isxdigit(from[1]))
+			if (from_len < 2)
 				return 0;
-			ch = hexval(*from++) << 4;
-			ch |= hexval(*from++);
+			ch = hex2chr(from);
+			if (ch < 0)
+				return 0;
+			from += 2;
 			from_len -= 2;
 			was_esc = 1;
 		}

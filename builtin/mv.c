@@ -3,7 +3,9 @@
  *
  * Copyright (C) 2006 Johannes Schindelin
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
+#include "config.h"
 #include "pathspec.h"
 #include "lockfile.h"
 #include "dir.h"
@@ -71,7 +73,6 @@ static const char *add_slash(const char *path)
 	return path;
 }
 
-static struct lock_file lock_file;
 #define SUBMODULE_WITH_GITDIR ((const char *)1)
 
 static void prepare_move_submodule(const char *src, int first,
@@ -80,7 +81,7 @@ static void prepare_move_submodule(const char *src, int first,
 	struct strbuf submodule_dotgit = STRBUF_INIT;
 	if (!S_ISGITLINK(active_cache[first]->ce_mode))
 		die(_("Directory %s is in index and no submodule?"), src);
-	if (!is_staging_gitmodules_ok())
+	if (!is_staging_gitmodules_ok(&the_index))
 		die(_("Please stage your changes to .gitmodules or stash them to proceed"));
 	strbuf_addf(&submodule_dotgit, "%s/.git", src);
 	*submodule_gitfile = read_gitfile(submodule_dotgit.buf);
@@ -121,7 +122,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct option builtin_mv_options[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
 		OPT__DRY_RUN(&show_only, N_("dry run")),
-		OPT__FORCE(&force, N_("force move/rename even if target exists")),
+		OPT__FORCE(&force, N_("force move/rename even if target exists"),
+			   PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL('k', NULL, &ignore_errors, N_("skip move/rename errors")),
 		OPT_END(),
 	};
@@ -129,8 +131,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
+	struct lock_file lock_file = LOCK_INIT;
 
-	gitmodules_config();
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_mv_options,
@@ -275,10 +277,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			die_errno(_("renaming '%s' failed"), src);
 		}
 		if (submodule_gitfile[i]) {
-			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
-				connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
 			if (!update_path_in_gitmodules(src, dst))
 				gitmodules_modified = 1;
+			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
+				connect_work_tree_and_git_dir(dst,
+							      submodule_gitfile[i],
+							      1);
 		}
 
 		if (mode == WORKING_DIRECTORY)
@@ -286,15 +290,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 		pos = cache_name_pos(src, strlen(src));
 		assert(pos >= 0);
-		if (!show_only)
-			rename_cache_entry_at(pos, dst);
+		rename_cache_entry_at(pos, dst);
 	}
 
 	if (gitmodules_modified)
-		stage_updated_gitmodules();
+		stage_updated_gitmodules(&the_index);
 
-	if (active_cache_changed &&
-	    write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file,
+			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
 	return 0;

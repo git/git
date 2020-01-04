@@ -40,7 +40,7 @@ UI, Workflows & Features
 
  * "git interpret-trailers" can now run outside of a Git repository.
 
- * "git p4" learned to reencode the pathname it uses to communicate
+ * "git p4" learned to re-encode the pathname it uses to communicate
    with the p4 depot with a new option.
 
  * Give progress meter to "git filter-branch".

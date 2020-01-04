@@ -47,7 +47,7 @@ get_needs () {
 	test -s "$1" &&
 	perl -alne '
 		next unless $F[1] eq "upload-pack<";
-		last if $F[2] eq "0000";
+		next unless $F[2] eq "want";
 		print $F[2], " ", $F[3];
 	' "$1"
 }

@@ -18,7 +18,7 @@ test_expect_success 'reject empty delta' '
 test_expect_success 'delta can empty file' '
 	printf "SVNQ" | q_to_nul >clear.delta &&
 	test-svn-fe -d preimage clear.delta 4 >actual &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'reject svndiff2' '
@@ -29,7 +29,7 @@ test_expect_success 'reject svndiff2' '
 test_expect_success 'one-window empty delta' '
 	printf "SVNQ%s" "QQQQQ" | q_to_nul >clear.onewindow &&
 	test-svn-fe -d preimage clear.onewindow 9 >actual &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'reject incomplete window header' '
@@ -50,7 +50,7 @@ test_expect_success 'two-window empty delta' '
 	printf "SVNQ%s%s" "QQQQQ" "QQQQQ" | q_to_nul >clear.twowindow &&
 	test-svn-fe -d preimage clear.twowindow 14 >actual &&
 	test_must_fail test-svn-fe -d preimage clear.twowindow 13 &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'noisy zeroes' '
@@ -60,7 +60,7 @@ test_expect_success 'noisy zeroes' '
 		q_to_nul >clear.noisy &&
 	len=$(wc -c <clear.noisy) &&
 	test-svn-fe -d preimage clear.noisy $len &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'reject variable-length int in magic' '
@@ -83,7 +83,7 @@ test_expect_success 'reject truncated integer' '
 test_expect_success 'nonempty (but unused) preimage view' '
 	printf "SVNQ%b" "Q\003QQQ" | q_to_nul >clear.readpreimage &&
 	test-svn-fe -d preimage clear.readpreimage 9 >actual &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'preimage view: right endpoint cannot backtrack' '
@@ -99,7 +99,7 @@ test_expect_success 'preimage view: left endpoint can advance' '
 		q_to_nul >clear.shrinkbacktrack &&
 	test-svn-fe -d preimage clear.preshrink 14 >actual &&
 	test_must_fail test-svn-fe -d preimage clear.shrinkbacktrack 14 &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'preimage view: offsets compared by value' '
@@ -109,7 +109,7 @@ test_expect_success 'preimage view: offsets compared by value' '
 		q_to_nul >clear.noisyadvance &&
 	test_must_fail test-svn-fe -d preimage clear.noisybacktrack 15 &&
 	test-svn-fe -d preimage clear.noisyadvance 15 &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'preimage view: reject truncated preimage' '

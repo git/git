@@ -16,7 +16,7 @@ test_perf 'sort(1)' '
 '
 
 test_perf 'string_list_sort()' '
-	test-string-list sort <unsorted >actual
+	test-tool string-list sort <unsorted >actual
 '
 
 test_expect_success 'string_list_sort() sorts like sort(1)' '

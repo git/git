@@ -7,9 +7,9 @@ check_obj () {
 	alt=$1; shift
 	while read obj expect
 	do
-		echo "$obj" >&3 &&
-		echo "$obj $expect" >&4
-	done 3>input 4>expect &&
+		echo "$obj" >&5 &&
+		echo "$obj $expect" >&6
+	done 5>input 6>expect &&
 	GIT_ALTERNATE_OBJECT_DIRECTORIES=$alt \
 		git "$@" cat-file --batch-check='%(objectname) %(objecttype)' \
 		<input >actual &&

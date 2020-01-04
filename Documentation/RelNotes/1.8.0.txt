@@ -233,7 +233,7 @@ to them for details).
    together, misdetected branches.
 
  * "git receive-pack" (the counterpart to "git push") did not give
-   progress output while processing objects it received to the puser
+   progress output while processing objects it received to the user
    when run over the smart-http protocol.
 
  * When you misspell the command name you give to the "exec" action in

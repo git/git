@@ -38,7 +38,6 @@ You have unmerged paths.
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
-
 	deleted by us:   foo
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -143,7 +142,6 @@ You have unmerged paths.
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
-
 	both added:      conflict.txt
 	deleted by them: main.txt
 
@@ -177,7 +175,6 @@ You have unmerged paths.
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
-
 	both deleted:    main.txt
 	added by them:   sub_master.txt
 	added by us:     sub_second.txt
@@ -201,12 +198,10 @@ You have unmerged paths.
   (use "git merge --abort" to abort the merge)
 
 Changes to be committed:
-
 	new file:   sub_master.txt
 
 Unmerged paths:
   (use "git rm <file>..." to mark resolution)
-
 	both deleted:    main.txt
 
 Untracked files not listed (use -u option to show untracked files)

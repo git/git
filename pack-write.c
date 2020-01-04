@@ -46,7 +46,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			   int nr_objects, const struct pack_idx_option *opts,
 			   const unsigned char *sha1)
 {
-	struct sha1file *f;
+	struct hashfile *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
 	off_t last_obj_offset = 0;
 	uint32_t array[256];
@@ -68,7 +68,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 
 	if (opts->flags & WRITE_IDX_VERIFY) {
 		assert(index_name);
-		f = sha1fd_check(index_name);
+		f = hashfd_check(index_name);
 	} else {
 		if (!index_name) {
 			struct strbuf tmp_file = STRBUF_INIT;
@@ -80,7 +80,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			if (fd < 0)
 				die_errno("unable to create '%s'", index_name);
 		}
-		f = sha1fd(fd, index_name);
+		f = hashfd(fd, index_name);
 	}
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
@@ -91,7 +91,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		struct pack_idx_header hdr;
 		hdr.idx_signature = htonl(PACK_IDX_SIGNATURE);
 		hdr.idx_version = htonl(index_version);
-		sha1write(f, &hdr, sizeof(hdr));
+		hashwrite(f, &hdr, sizeof(hdr));
 	}
 
 	/*
@@ -110,7 +110,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		array[i] = htonl(next - sorted_by_sha);
 		list = next;
 	}
-	sha1write(f, array, 256 * 4);
+	hashwrite(f, array, 256 * 4);
 
 	/*
 	 * Write the actual SHA1 entries..
@@ -120,11 +120,11 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		struct pack_idx_entry *obj = *list++;
 		if (index_version < 2) {
 			uint32_t offset = htonl(obj->offset);
-			sha1write(f, &offset, 4);
+			hashwrite(f, &offset, 4);
 		}
-		sha1write(f, obj->oid.hash, 20);
+		hashwrite(f, obj->oid.hash, the_hash_algo->rawsz);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
-		    (i && !oidcmp(&list[-2]->oid, &obj->oid)))
+		    (i && oideq(&list[-2]->oid, &obj->oid)))
 			die("The same object %s appears twice in the pack",
 			    oid_to_hex(&obj->oid));
 	}
@@ -137,7 +137,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		for (i = 0; i < nr_objects; i++) {
 			struct pack_idx_entry *obj = *list++;
 			uint32_t crc32_val = htonl(obj->crc32);
-			sha1write(f, &crc32_val, 4);
+			hashwrite(f, &crc32_val, 4);
 		}
 
 		/* write the 32-bit offset table */
@@ -150,7 +150,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 				  ? (0x80000000 | nr_large_offset++)
 				  : obj->offset);
 			offset = htonl(offset);
-			sha1write(f, &offset, 4);
+			hashwrite(f, &offset, 4);
 		}
 
 		/* write the large offset table */
@@ -164,25 +164,26 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 				continue;
 			split[0] = htonl(offset >> 32);
 			split[1] = htonl(offset & 0xffffffff);
-			sha1write(f, split, 8);
+			hashwrite(f, split, 8);
 			nr_large_offset--;
 		}
 	}
 
-	sha1write(f, sha1, 20);
-	sha1close(f, NULL, ((opts->flags & WRITE_IDX_VERIFY)
-			    ? CSUM_CLOSE : CSUM_FSYNC));
+	hashwrite(f, sha1, the_hash_algo->rawsz);
+	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_CLOSE |
+				    ((opts->flags & WRITE_IDX_VERIFY)
+				    ? 0 : CSUM_FSYNC));
 	return index_name;
 }
 
-off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
+off_t write_pack_header(struct hashfile *f, uint32_t nr_entries)
 {
 	struct pack_header hdr;
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_entries);
-	sha1write(f, &hdr, sizeof(hdr));
+	hashwrite(f, &hdr, sizeof(hdr));
 	return sizeof(hdr);
 }
 
@@ -203,29 +204,34 @@ off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
  * interested in the resulting SHA1 of pack data above partial_pack_offset.
  */
 void fixup_pack_header_footer(int pack_fd,
-			 unsigned char *new_pack_sha1,
+			 unsigned char *new_pack_hash,
 			 const char *pack_name,
 			 uint32_t object_count,
-			 unsigned char *partial_pack_sha1,
+			 unsigned char *partial_pack_hash,
 			 off_t partial_pack_offset)
 {
 	int aligned_sz, buf_sz = 8 * 1024;
-	git_SHA_CTX old_sha1_ctx, new_sha1_ctx;
+	git_hash_ctx old_hash_ctx, new_hash_ctx;
 	struct pack_header hdr;
 	char *buf;
+	ssize_t read_result;
 
-	git_SHA1_Init(&old_sha1_ctx);
-	git_SHA1_Init(&new_sha1_ctx);
+	the_hash_algo->init_fn(&old_hash_ctx);
+	the_hash_algo->init_fn(&new_hash_ctx);
 
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
-	if (read_in_full(pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+	read_result = read_in_full(pack_fd, &hdr, sizeof(hdr));
+	if (read_result < 0)
 		die_errno("Unable to reread header of '%s'", pack_name);
+	else if (read_result != sizeof(hdr))
+		die_errno("Unexpected short read for header of '%s'",
+			  pack_name);
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
-	git_SHA1_Update(&old_sha1_ctx, &hdr, sizeof(hdr));
+	the_hash_algo->update_fn(&old_hash_ctx, &hdr, sizeof(hdr));
 	hdr.hdr_entries = htonl(object_count);
-	git_SHA1_Update(&new_sha1_ctx, &hdr, sizeof(hdr));
+	the_hash_algo->update_fn(&new_hash_ctx, &hdr, sizeof(hdr));
 	write_or_die(pack_fd, &hdr, sizeof(hdr));
 	partial_pack_offset -= sizeof(hdr);
 
@@ -233,28 +239,28 @@ void fixup_pack_header_footer(int pack_fd,
 	aligned_sz = buf_sz - sizeof(hdr);
 	for (;;) {
 		ssize_t m, n;
-		m = (partial_pack_sha1 && partial_pack_offset < aligned_sz) ?
+		m = (partial_pack_hash && partial_pack_offset < aligned_sz) ?
 			partial_pack_offset : aligned_sz;
 		n = xread(pack_fd, buf, m);
 		if (!n)
 			break;
 		if (n < 0)
 			die_errno("Failed to checksum '%s'", pack_name);
-		git_SHA1_Update(&new_sha1_ctx, buf, n);
+		the_hash_algo->update_fn(&new_hash_ctx, buf, n);
 
 		aligned_sz -= n;
 		if (!aligned_sz)
 			aligned_sz = buf_sz;
 
-		if (!partial_pack_sha1)
+		if (!partial_pack_hash)
 			continue;
 
-		git_SHA1_Update(&old_sha1_ctx, buf, n);
+		the_hash_algo->update_fn(&old_hash_ctx, buf, n);
 		partial_pack_offset -= n;
 		if (partial_pack_offset == 0) {
-			unsigned char sha1[20];
-			git_SHA1_Final(sha1, &old_sha1_ctx);
-			if (hashcmp(sha1, partial_pack_sha1) != 0)
+			unsigned char hash[GIT_MAX_RAWSZ];
+			the_hash_algo->final_fn(hash, &old_hash_ctx);
+			if (!hasheq(hash, partial_pack_hash))
 				die("Unexpected checksum for %s "
 				    "(disk corruption?)", pack_name);
 			/*
@@ -262,23 +268,24 @@ void fixup_pack_header_footer(int pack_fd,
 			 * pack, which also means making partial_pack_offset
 			 * big enough not to matter anymore.
 			 */
-			git_SHA1_Init(&old_sha1_ctx);
+			the_hash_algo->init_fn(&old_hash_ctx);
 			partial_pack_offset = ~partial_pack_offset;
 			partial_pack_offset -= MSB(partial_pack_offset, 1);
 		}
 	}
 	free(buf);
 
-	if (partial_pack_sha1)
-		git_SHA1_Final(partial_pack_sha1, &old_sha1_ctx);
-	git_SHA1_Final(new_pack_sha1, &new_sha1_ctx);
-	write_or_die(pack_fd, new_pack_sha1, 20);
+	if (partial_pack_hash)
+		the_hash_algo->final_fn(partial_pack_hash, &old_hash_ctx);
+	the_hash_algo->final_fn(new_pack_hash, &new_hash_ctx);
+	write_or_die(pack_fd, new_pack_hash, the_hash_algo->rawsz);
 	fsync_or_die(pack_fd, pack_name);
 }
 
 char *index_pack_lockfile(int ip_out)
 {
-	char packname[46];
+	char packname[GIT_MAX_HEXSZ + 6];
+	const int len = the_hash_algo->hexsz + 6;
 
 	/*
 	 * The first thing we expect from index-pack's output
@@ -287,9 +294,9 @@ char *index_pack_lockfile(int ip_out)
 	 * case, we need it to remove the corresponding .keep file
 	 * later on.  If we don't get that then tough luck with it.
 	 */
-	if (read_in_full(ip_out, packname, 46) == 46 && packname[45] == '\n') {
+	if (read_in_full(ip_out, packname, len) == len && packname[len-1] == '\n') {
 		const char *name;
-		packname[45] = 0;
+		packname[len-1] = 0;
 		if (skip_prefix(packname, "keep\t", &name))
 			return xstrfmt("%s/pack/pack-%s.keep",
 				       get_object_directory(), name);
@@ -327,14 +334,14 @@ int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
 	return n;
 }
 
-struct sha1file *create_tmp_packfile(char **pack_tmp_name)
+struct hashfile *create_tmp_packfile(char **pack_tmp_name)
 {
 	struct strbuf tmpname = STRBUF_INIT;
 	int fd;
 
 	fd = odb_mkstemp(&tmpname, "pack/tmp_pack_XXXXXX");
 	*pack_tmp_name = strbuf_detach(&tmpname, NULL);
-	return sha1fd(fd, *pack_tmp_name);
+	return hashfd(fd, *pack_tmp_name);
 }
 
 void finish_tmp_packfile(struct strbuf *name_buffer,
@@ -342,7 +349,7 @@ void finish_tmp_packfile(struct strbuf *name_buffer,
 			 struct pack_idx_entry **written_list,
 			 uint32_t nr_written,
 			 struct pack_idx_option *pack_idx_opts,
-			 unsigned char sha1[])
+			 unsigned char hash[])
 {
 	const char *idx_tmp_name;
 	int basename_len = name_buffer->len;
@@ -351,18 +358,18 @@ void finish_tmp_packfile(struct strbuf *name_buffer,
 		die_errno("unable to make temporary pack file readable");
 
 	idx_tmp_name = write_idx_file(NULL, written_list, nr_written,
-				      pack_idx_opts, sha1);
+				      pack_idx_opts, hash);
 	if (adjust_shared_perm(idx_tmp_name))
 		die_errno("unable to make temporary index file readable");
 
-	strbuf_addf(name_buffer, "%s.pack", sha1_to_hex(sha1));
+	strbuf_addf(name_buffer, "%s.pack", hash_to_hex(hash));
 
 	if (rename(pack_tmp_name, name_buffer->buf))
 		die_errno("unable to rename temporary pack file");
 
 	strbuf_setlen(name_buffer, basename_len);
 
-	strbuf_addf(name_buffer, "%s.idx", sha1_to_hex(sha1));
+	strbuf_addf(name_buffer, "%s.idx", hash_to_hex(hash));
 	if (rename(idx_tmp_name, name_buffer->buf))
 		die_errno("unable to rename temporary index file");
 

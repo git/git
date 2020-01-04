@@ -13,8 +13,8 @@
  *  Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  License along with this library; if not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  *
@@ -121,6 +121,12 @@ static long match_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri,
 	return xecfg->find_func(rec, len, buf, sz, xecfg->find_func_priv);
 }
 
+static int is_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri)
+{
+	char dummy[1];
+	return match_func_rec(xdf, xecfg, ri, dummy, sizeof(dummy)) >= 0;
+}
+
 struct func_line {
 	long len;
 	char buf[80];
@@ -166,10 +172,12 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	struct func_line func_line = { 0 };
 
 	for (xch = xscr; xch; xch = xche->next) {
+		xdchange_t *xchp = xch;
 		xche = xdl_get_hunk(&xch, xecfg);
 		if (!xch)
 			break;
 
+pre_context_calculation:
 		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
 		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
 
@@ -178,7 +186,6 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 
 			/* Appended chunk? */
 			if (i1 >= xe->xdf1.nrec) {
-				char dummy[1];
 				long i2 = xch->i2;
 
 				/*
@@ -186,8 +193,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 				 * a whole function was added.
 				 */
 				while (i2 < xe->xdf2.nrec) {
-					if (match_func_rec(&xe->xdf2, xecfg, i2,
-						dummy, sizeof(dummy)) >= 0)
+					if (is_func_rec(&xe->xdf2, xecfg, i2))
 						goto post_context_calculation;
 					i2++;
 				}
@@ -200,11 +206,29 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			}
 
 			fs1 = get_func_line(xe, xecfg, NULL, i1, -1);
+			while (fs1 > 0 && !is_empty_rec(&xe->xdf1, fs1 - 1) &&
+			       !is_func_rec(&xe->xdf1, xecfg, fs1 - 1))
+				fs1--;
 			if (fs1 < 0)
 				fs1 = 0;
 			if (fs1 < s1) {
-				s2 -= s1 - fs1;
+				s2 = XDL_MAX(s2 - (s1 - fs1), 0);
 				s1 = fs1;
+
+				/*
+				 * Did we extend context upwards into an
+				 * ignored change?
+				 */
+				while (xchp != xch &&
+				       xchp->i1 + xchp->chg1 <= s1 &&
+				       xchp->i2 + xchp->chg2 <= s2)
+					xchp = xchp->next;
+
+				/* If so, show it after all. */
+				if (xchp != xch) {
+					xch = xchp;
+					goto pre_context_calculation;
+				}
 			}
 		}
 
@@ -225,7 +249,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			if (fe1 < 0)
 				fe1 = xe->xdf1.nrec;
 			if (fe1 > e1) {
-				e2 += fe1 - e1;
+				e2 = XDL_MIN(e2 + (fe1 - e1), xe->xdf2.nrec);
 				e1 = fe1;
 			}
 

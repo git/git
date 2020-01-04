@@ -134,6 +134,21 @@ test_expect_success 'git-clean, dirty case' '
 	test_i18ncmp expected result
 '
 
+test_expect_success '--ignore-skip-worktree-entries leaves worktree alone' '
+	test_commit keep-me &&
+	git update-index --skip-worktree keep-me.t &&
+	rm keep-me.t &&
+
+	: ignoring the worktree &&
+	git update-index --remove --ignore-skip-worktree-entries keep-me.t &&
+	git diff-index --cached --exit-code HEAD &&
+
+	: not ignoring the worktree, a deletion is staged &&
+	git update-index --remove keep-me.t &&
+	test_must_fail git diff-index --cached --exit-code HEAD \
+		--diff-filter=D -- keep-me.t
+'
+
 #TODO test_expect_failure 'git-apply adds file' false
 #TODO test_expect_failure 'git-apply updates file' false
 #TODO test_expect_failure 'git-apply removes file' false

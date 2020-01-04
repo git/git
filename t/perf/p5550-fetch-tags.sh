@@ -20,6 +20,7 @@ start to show a noticeable performance problem on my machine, but without
 taking too long to set up and run the tests.
 '
 . ./perf-lib.sh
+. "$TEST_DIRECTORY/perf/lib-pack.sh"
 
 # make a long nonsense history on branch $1, consisting of $2 commits, each
 # with a unique file pointing to the blob at $2.
@@ -44,26 +45,6 @@ create_tags () {
 	git update-ref --stdin
 }
 
-# create $1 nonsense packs, each with a single blob
-create_packs () {
-	perl -le '
-		my ($n) = @ARGV;
-		for (1..$n) {
-			print "blob";
-			print "data <<EOF";
-			print "$_";
-			print "EOF";
-		}
-	' "$@" |
-	git fast-import &&
-
-	git cat-file --batch-all-objects --batch-check='%(objectname)' |
-	while read sha1
-	do
-		echo $sha1 | git pack-objects .git/objects/pack/pack
-	done
-}
-
 test_expect_success 'create parent and child' '
 	git init parent &&
 	git -C parent commit --allow-empty -m base &&
@@ -84,9 +65,7 @@ test_expect_success 'populate parent tags' '
 test_expect_success 'create child packs' '
 	(
 		cd child &&
-		git config gc.auto 0 &&
-		git config gc.autopacklimit 0 &&
-		create_packs 500
+		setup_many_packs
 	)
 '
 

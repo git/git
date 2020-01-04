@@ -5,47 +5,62 @@
  *
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "parse-options.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "run-command.h"
 #include "sha1-array.h"
 #include "remote.h"
 #include "dir.h"
 #include "refs.h"
+#include "refspec.h"
 #include "revision.h"
+#include "submodule.h"
+#include "submodule-config.h"
 #include "tempfile.h"
 #include "lockfile.h"
 #include "wt-status.h"
+#include "commit-reach.h"
+#include "sequencer.h"
 
 enum rebase_type {
 	REBASE_INVALID = -1,
 	REBASE_FALSE = 0,
 	REBASE_TRUE,
 	REBASE_PRESERVE,
+	REBASE_MERGES,
 	REBASE_INTERACTIVE
 };
 
 /**
  * Parses the value of --rebase. If value is a false value, returns
  * REBASE_FALSE. If value is a true value, returns REBASE_TRUE. If value is
- * "preserve", returns REBASE_PRESERVE. If value is a invalid value, dies with
- * a fatal error if fatal is true, otherwise returns REBASE_INVALID.
+ * "merges", returns REBASE_MERGES. If value is "preserve", returns
+ * REBASE_PRESERVE. If value is a invalid value, dies with a fatal error if
+ * fatal is true, otherwise returns REBASE_INVALID.
  */
 static enum rebase_type parse_config_rebase(const char *key, const char *value,
 		int fatal)
 {
-	int v = git_config_maybe_bool("pull.rebase", value);
+	int v = git_parse_maybe_bool(value);
 
 	if (!v)
 		return REBASE_FALSE;
 	else if (v > 0)
 		return REBASE_TRUE;
-	else if (!strcmp(value, "preserve"))
+	else if (!strcmp(value, "preserve") || !strcmp(value, "p"))
 		return REBASE_PRESERVE;
-	else if (!strcmp(value, "interactive"))
+	else if (!strcmp(value, "merges") || !strcmp(value, "m"))
+		return REBASE_MERGES;
+	else if (!strcmp(value, "interactive") || !strcmp(value, "i"))
 		return REBASE_INTERACTIVE;
+	/*
+	 * Please update _git_config() in git-completion.bash when you
+	 * add new rebase modes.
+	 */
 
 	if (fatal)
 		die(_("Invalid value for %s: %s"), key, value);
@@ -77,14 +92,17 @@ static const char * const pull_usage[] = {
 /* Shared options */
 static int opt_verbosity;
 static char *opt_progress;
+static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 
 /* Options passed to git-merge or git-rebase */
 static enum rebase_type opt_rebase = -1;
 static char *opt_diffstat;
 static char *opt_log;
+static char *opt_signoff;
 static char *opt_squash;
 static char *opt_commit;
 static char *opt_edit;
+static char *cleanup_arg;
 static char *opt_ff;
 static char *opt_verify_signatures;
 static int opt_autostash = -1;
@@ -101,7 +119,6 @@ static char *opt_upload_pack;
 static int opt_force;
 static char *opt_tags;
 static char *opt_prune;
-static char *opt_recurse_submodules;
 static char *max_children;
 static int opt_dry_run;
 static char *opt_keep;
@@ -109,6 +126,10 @@ static char *opt_depth;
 static char *opt_unshallow;
 static char *opt_update_shallow;
 static char *opt_refmap;
+static char *opt_ipv4;
+static char *opt_ipv6;
+static int opt_show_forced_updates = -1;
+static char *set_upstream;
 
 static struct option pull_options[] = {
 	/* Shared options */
@@ -116,11 +137,15 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "progress", &opt_progress, NULL,
 		N_("force progress reporting"),
 		PARSE_OPT_NOARG),
+	{ OPTION_CALLBACK, 0, "recurse-submodules",
+		   &recurse_submodules, N_("on-demand"),
+		   N_("control for recursive fetching of submodules"),
+		   PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules },
 
 	/* Options passed to git-merge or git-rebase */
 	OPT_GROUP(N_("Options related to merging")),
 	{ OPTION_CALLBACK, 'r', "rebase", &opt_rebase,
-	  "false|true|preserve|interactive",
+	  "(false|true|merges|preserve|interactive)",
 	  N_("incorporate changes by rebasing rather than merging"),
 	  PARSE_OPT_OPTARG, parse_opt_rebase },
 	OPT_PASSTHRU('n', NULL, &opt_diffstat, NULL,
@@ -135,6 +160,9 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "log", &opt_log, N_("n"),
 		N_("add (at most <n>) entries from shortlog to merge commit message"),
 		PARSE_OPT_OPTARG),
+	OPT_PASSTHRU(0, "signoff", &opt_signoff, NULL,
+		N_("add Signed-off-by:"),
+		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU(0, "squash", &opt_squash, NULL,
 		N_("create a single commit instead of doing a merge"),
 		PARSE_OPT_NOARG),
@@ -144,6 +172,7 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "edit", &opt_edit, NULL,
 		N_("edit message before committing"),
 		PARSE_OPT_NOARG),
+	OPT_CLEANUP(&cleanup_arg),
 	OPT_PASSTHRU(0, "ff", &opt_ff, NULL,
 		N_("allow fast-forward"),
 		PARSE_OPT_NOARG),
@@ -180,17 +209,13 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "upload-pack", &opt_upload_pack, N_("path"),
 		N_("path to upload pack on remote end"),
 		0),
-	OPT__FORCE(&opt_force, N_("force overwrite of local branch")),
+	OPT__FORCE(&opt_force, N_("force overwrite of local branch"), 0),
 	OPT_PASSTHRU('t', "tags", &opt_tags, NULL,
 		N_("fetch all tags and associated objects"),
 		PARSE_OPT_NOARG),
 	OPT_PASSTHRU('p', "prune", &opt_prune, NULL,
 		N_("prune remote-tracking branches no longer on remote"),
 		PARSE_OPT_NOARG),
-	OPT_PASSTHRU(0, "recurse-submodules", &opt_recurse_submodules,
-		N_("on-demand"),
-		N_("control recursive fetching of submodules"),
-		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU('j', "jobs", &max_children, N_("n"),
 		N_("number of submodules pulled in parallel"),
 		PARSE_OPT_OPTARG),
@@ -211,6 +236,17 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "refmap", &opt_refmap, N_("refmap"),
 		N_("specify fetch refmap"),
 		PARSE_OPT_NONEG),
+	OPT_PASSTHRU('4',  "ipv4", &opt_ipv4, NULL,
+		N_("use IPv4 addresses only"),
+		PARSE_OPT_NOARG),
+	OPT_PASSTHRU('6',  "ipv6", &opt_ipv6, NULL,
+		N_("use IPv6 addresses only"),
+		PARSE_OPT_NOARG),
+	OPT_BOOL(0, "show-forced-updates", &opt_show_forced_updates,
+		 N_("check for forced-updates on all updated branches")),
+	OPT_PASSTHRU(0, "set-upstream", &set_upstream, NULL,
+		N_("set upstream for git pull/fetch"),
+		PARSE_OPT_NOARG),
 
 	OPT_END()
 };
@@ -271,7 +307,7 @@ static const char *config_get_ff(void)
 	if (git_config_get_value("pull.ff", &value))
 		return NULL;
 
-	switch (git_config_maybe_bool("pull.ff", value)) {
+	switch (git_parse_maybe_bool(value)) {
 	case 0:
 		return "--no-ff";
 	case 1:
@@ -322,6 +358,10 @@ static int git_pull_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "rebase.autostash")) {
 		config_autostash = git_config_bool(var, value);
 		return 0;
+	} else if (!strcmp(var, "submodule.recurse")) {
+		recurse_submodules = git_config_bool(var, value) ?
+			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+		return 0;
 	}
 	return git_default_config(var, value, cb);
 }
@@ -332,17 +372,17 @@ static int git_pull_config(const char *var, const char *value, void *cb)
  */
 static void get_merge_heads(struct oid_array *merge_heads)
 {
-	const char *filename = git_path_fetch_head();
+	const char *filename = git_path_fetch_head(the_repository);
 	FILE *fp;
 	struct strbuf sb = STRBUF_INIT;
 	struct object_id oid;
 
-	if (!(fp = fopen(filename, "r")))
-		die_errno(_("could not open '%s' for reading"), filename);
+	fp = xfopen(filename, "r");
 	while (strbuf_getline_lf(&sb, fp) != EOF) {
-		if (get_oid_hex(sb.buf, &oid))
-			continue;  /* invalid line: does not start with SHA1 */
-		if (starts_with(sb.buf + GIT_SHA1_HEXSZ, "\tnot-for-merge\t"))
+		const char *p;
+		if (parse_oid_hex(sb.buf, &oid, &p))
+			continue;  /* invalid line: does not start with object ID */
+		if (starts_with(p, "\tnot-for-merge\t"))
 			continue;  /* ref is not-for-merge */
 		oid_array_append(merge_heads, &oid);
 	}
@@ -484,8 +524,20 @@ static int run_fetch(const char *repo, const char **refspecs)
 		argv_array_push(&args, opt_tags);
 	if (opt_prune)
 		argv_array_push(&args, opt_prune);
-	if (opt_recurse_submodules)
-		argv_array_push(&args, opt_recurse_submodules);
+	if (recurse_submodules != RECURSE_SUBMODULES_DEFAULT)
+		switch (recurse_submodules) {
+		case RECURSE_SUBMODULES_ON:
+			argv_array_push(&args, "--recurse-submodules=on");
+			break;
+		case RECURSE_SUBMODULES_OFF:
+			argv_array_push(&args, "--recurse-submodules=no");
+			break;
+		case RECURSE_SUBMODULES_ON_DEMAND:
+			argv_array_push(&args, "--recurse-submodules=on-demand");
+			break;
+		default:
+			BUG("submodule recursion option not understood");
+		}
 	if (max_children)
 		argv_array_push(&args, max_children);
 	if (opt_dry_run)
@@ -500,12 +552,22 @@ static int run_fetch(const char *repo, const char **refspecs)
 		argv_array_push(&args, opt_update_shallow);
 	if (opt_refmap)
 		argv_array_push(&args, opt_refmap);
+	if (opt_ipv4)
+		argv_array_push(&args, opt_ipv4);
+	if (opt_ipv6)
+		argv_array_push(&args, opt_ipv6);
+	if (opt_show_forced_updates > 0)
+		argv_array_push(&args, "--show-forced-updates");
+	else if (opt_show_forced_updates == 0)
+		argv_array_push(&args, "--no-show-forced-updates");
+	if (set_upstream)
+		argv_array_push(&args, set_upstream);
 
 	if (repo) {
 		argv_array_push(&args, repo);
 		argv_array_pushv(&args, refspecs);
 	} else if (*refspecs)
-		die("BUG: refspecs without repo?");
+		BUG("refspecs without repo?");
 	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
 	argv_array_clear(&args);
 	return ret;
@@ -517,19 +579,58 @@ static int run_fetch(const char *repo, const char **refspecs)
 static int pull_into_void(const struct object_id *merge_head,
 		const struct object_id *curr_head)
 {
+	if (opt_verify_signatures) {
+		struct commit *commit;
+
+		commit = lookup_commit(the_repository, merge_head);
+		if (!commit)
+			die(_("unable to access commit %s"),
+			    oid_to_hex(merge_head));
+
+		verify_merge_signature(commit, opt_verbosity);
+	}
+
 	/*
 	 * Two-way merge: we treat the index as based on an empty tree,
 	 * and try to fast-forward to HEAD. This ensures we will not lose
 	 * index/worktree changes that the user already made on the unborn
 	 * branch.
 	 */
-	if (checkout_fast_forward(&empty_tree_oid, merge_head, 0))
+	if (checkout_fast_forward(the_repository,
+				  the_hash_algo->empty_tree,
+				  merge_head, 0))
 		return 1;
 
-	if (update_ref("initial pull", "HEAD", merge_head->hash, curr_head->hash, 0, UPDATE_REFS_DIE_ON_ERR))
+	if (update_ref("initial pull", "HEAD", merge_head, curr_head, 0, UPDATE_REFS_DIE_ON_ERR))
 		return 1;
 
 	return 0;
+}
+
+static int rebase_submodules(void)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	argv_array_pushl(&cp.args, "submodule", "update",
+				   "--recursive", "--rebase", NULL);
+	argv_push_verbosity(&cp.args);
+
+	return run_command(&cp);
+}
+
+static int update_submodules(void)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	argv_array_pushl(&cp.args, "submodule", "update",
+				   "--recursive", "--checkout", NULL);
+	argv_push_verbosity(&cp.args);
+
+	return run_command(&cp);
 }
 
 /**
@@ -552,12 +653,16 @@ static int run_merge(void)
 		argv_array_push(&args, opt_diffstat);
 	if (opt_log)
 		argv_array_push(&args, opt_log);
+	if (opt_signoff)
+		argv_array_push(&args, opt_signoff);
 	if (opt_squash)
 		argv_array_push(&args, opt_squash);
 	if (opt_commit)
 		argv_array_push(&args, opt_commit);
 	if (opt_edit)
 		argv_array_push(&args, opt_edit);
+	if (cleanup_arg)
+		argv_array_pushf(&args, "--cleanup=%s", cleanup_arg);
 	if (opt_ff)
 		argv_array_push(&args, opt_ff);
 	if (opt_verify_signatures)
@@ -606,19 +711,19 @@ static const char *get_upstream_branch(const char *remote)
 }
 
 /**
- * Derives the remote tracking branch from the remote and refspec.
+ * Derives the remote-tracking branch from the remote and refspec.
  *
  * FIXME: The current implementation assumes the default mapping of
  * refs/heads/<branch_name> to refs/remotes/<remote_name>/<branch_name>.
  */
 static const char *get_tracking_branch(const char *remote, const char *refspec)
 {
-	struct refspec *spec;
+	struct refspec_item spec;
 	const char *spec_src;
 	const char *merge_branch;
 
-	spec = parse_fetch_refspec(1, &refspec);
-	spec_src = spec->src;
+	refspec_item_init_or_die(&spec, refspec, REFSPEC_FETCH);
+	spec_src = spec.src;
 	if (!*spec_src || !strcmp(spec_src, "HEAD"))
 		spec_src = "HEAD";
 	else if (skip_prefix(spec_src, "heads/", &spec_src))
@@ -638,13 +743,13 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
 	} else
 		merge_branch = NULL;
 
-	free_refspec(1, spec);
+	refspec_item_clear(&spec);
 	return merge_branch;
 }
 
 /**
  * Given the repo and refspecs, sets fork_point to the point at which the
- * current branch forked from its remote tracking branch. Returns 0 on success,
+ * current branch forked from its remote-tracking branch. Returns 0 on success,
  * -1 on failure.
  */
 static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
@@ -674,7 +779,7 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 	cp.no_stderr = 1;
 	cp.git_cmd = 1;
 
-	ret = capture_command(&cp, &sb, GIT_SHA1_HEXSZ);
+	ret = capture_command(&cp, &sb, GIT_MAX_HEXSZ);
 	if (ret)
 		goto cleanup;
 
@@ -698,22 +803,28 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 {
 	struct commit_list *revs = NULL, *result;
 
-	commit_list_insert(lookup_commit_reference(curr_head), &revs);
-	commit_list_insert(lookup_commit_reference(merge_head), &revs);
+	commit_list_insert(lookup_commit_reference(the_repository, curr_head),
+			   &revs);
+	commit_list_insert(lookup_commit_reference(the_repository, merge_head),
+			   &revs);
 	if (!is_null_oid(fork_point))
-		commit_list_insert(lookup_commit_reference(fork_point), &revs);
+		commit_list_insert(lookup_commit_reference(the_repository, fork_point),
+				   &revs);
 
-	result = reduce_heads(get_octopus_merge_bases(revs));
+	result = get_octopus_merge_bases(revs);
 	free_commit_list(revs);
+	reduce_heads_replace(&result);
+
 	if (!result)
 		return 1;
 
 	oidcpy(merge_base, &result->item->object.oid);
+	free_commit_list(result);
 	return 0;
 }
 
 /**
- * Given the current HEAD SHA1, the merge head returned from git-fetch and the
+ * Given the current HEAD oid, the merge head returned from git-fetch and the
  * fork point calculated by get_rebase_fork_point(), runs git-rebase with the
  * appropriate arguments and returns its exit status.
  */
@@ -726,7 +837,7 @@ static int run_rebase(const struct object_id *curr_head,
 	struct argv_array args = ARGV_ARRAY_INIT;
 
 	if (!get_octopus_merge_base(&oct_merge_base, curr_head, merge_head, fork_point))
-		if (!is_null_oid(fork_point) && !oidcmp(&oct_merge_base, fork_point))
+		if (!is_null_oid(fork_point) && oideq(&oct_merge_base, fork_point))
 			fork_point = NULL;
 
 	argv_array_push(&args, "rebase");
@@ -735,7 +846,9 @@ static int run_rebase(const struct object_id *curr_head,
 	argv_push_verbosity(&args);
 
 	/* Options passed to git-rebase */
-	if (opt_rebase == REBASE_PRESERVE)
+	if (opt_rebase == REBASE_MERGES)
+		argv_array_push(&args, "--rebase-merges");
+	else if (opt_rebase == REBASE_PRESERVE)
 		argv_array_push(&args, "--preserve-merges");
 	else if (opt_rebase == REBASE_INTERACTIVE)
 		argv_array_push(&args, "--interactive");
@@ -777,7 +890,16 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
 
+	git_config(git_pull_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
+
+	if (cleanup_arg)
+		/*
+		 * this only checks the validity of cleanup_arg; we don't need
+		 * a valid value for use_editor
+		 */
+		get_cleanup_mode(cleanup_arg, 0);
 
 	parse_repo_refspecs(argc, argv, &repo, &refspecs);
 
@@ -787,12 +909,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_rebase < 0)
 		opt_rebase = config_get_rebase();
 
-	git_config(git_pull_config, NULL);
-
 	if (read_cache_unmerged())
 		die_resolve_conflict("pull");
 
-	if (file_exists(git_path_merge_head()))
+	if (file_exists(git_path_merge_head(the_repository)))
 		die_conclude_merge();
 
 	if (get_oid("HEAD", &orig_head))
@@ -810,7 +930,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			die(_("Updating an unborn branch with changes added to the index."));
 
 		if (!autostash)
-			require_clean_work_tree(N_("pull with rebase"),
+			require_clean_work_tree(the_repository,
+				N_("pull with rebase"),
 				_("please commit or stash them."), 1, 0);
 
 		if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
@@ -827,7 +948,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		oidclr(&curr_head);
 
 	if (!is_null_oid(&orig_head) && !is_null_oid(&curr_head) &&
-			oidcmp(&orig_head, &curr_head)) {
+			!oideq(&orig_head, &curr_head)) {
 		/*
 		 * The fetch involved updating the current branch.
 		 *
@@ -840,7 +961,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			"fast-forwarding your working tree from\n"
 			"commit %s."), oid_to_hex(&orig_head));
 
-		if (checkout_fast_forward(&orig_head, &curr_head, 0))
+		if (checkout_fast_forward(the_repository, &orig_head,
+					  &curr_head, 0))
 			die(_("Cannot fast-forward your working tree.\n"
 				"After making sure that you saved anything precious from\n"
 				"$ git diff %s\n"
@@ -863,21 +985,38 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		die(_("Cannot rebase onto multiple branches."));
 
 	if (opt_rebase) {
+		int ret = 0;
+		if ((recurse_submodules == RECURSE_SUBMODULES_ON ||
+		     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) &&
+		    submodule_touches_in_range(the_repository, &rebase_fork_point, &curr_head))
+			die(_("cannot rebase with locally recorded submodule modifications"));
 		if (!autostash) {
 			struct commit_list *list = NULL;
 			struct commit *merge_head, *head;
 
-			head = lookup_commit_reference(&orig_head);
+			head = lookup_commit_reference(the_repository,
+						       &orig_head);
 			commit_list_insert(head, &list);
-			merge_head = lookup_commit_reference(&merge_heads.oid[0]);
+			merge_head = lookup_commit_reference(the_repository,
+							     &merge_heads.oid[0]);
 			if (is_descendant_of(merge_head, list)) {
 				/* we can fast-forward this without invoking rebase */
 				opt_ff = "--ff-only";
-				return run_merge();
+				ret = run_merge();
 			}
 		}
-		return run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+		ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+
+		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
+			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
+			ret = rebase_submodules();
+
+		return ret;
 	} else {
-		return run_merge();
+		int ret = run_merge();
+		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
+			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
+			ret = update_submodules();
+		return ret;
 	}
 }

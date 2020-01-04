@@ -59,6 +59,7 @@ test_rev_parse () {
 ROOT=$(pwd)
 
 test_expect_success 'setup' '
+	test_oid_init &&
 	mkdir -p sub/dir work &&
 	cp -R .git repo.git
 '
@@ -116,6 +117,45 @@ test_expect_success 'git-path inside sub-dir' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-parse --is-shallow-repository in shallow repo' '
+	test_commit test_commit &&
+	echo true >expect &&
+	git clone --depth 1 --no-local . shallow &&
+	test_when_finished "rm -rf shallow" &&
+	git -C shallow rev-parse --is-shallow-repository >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
+	echo false >expect &&
+	git rev-parse --is-shallow-repository >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --show-object-format in repo' '
+	echo "$(test_oid algo)" >expect &&
+	git rev-parse --show-object-format >actual &&
+	test_cmp expect actual &&
+	git rev-parse --show-object-format=storage >actual &&
+	test_cmp expect actual &&
+	git rev-parse --show-object-format=input >actual &&
+	test_cmp expect actual &&
+	git rev-parse --show-object-format=output >actual &&
+	test_cmp expect actual &&
+	test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
+	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
+'
+
+test_expect_success '--show-toplevel from subdir of working tree' '
+	pwd >expect &&
+	git -C sub/dir rev-parse --show-toplevel >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--show-toplevel from inside .git' '
+	test_must_fail git -C .git rev-parse --show-toplevel
+'
+
 test_expect_success 'showing the superproject correctly' '
 	git rev-parse --show-superproject-working-tree >out &&
 	test_must_be_empty out &&
@@ -126,6 +166,22 @@ test_expect_success 'showing the superproject correctly' '
 	test_commit -C sub test_commit &&
 	git -C super submodule add ../sub dir/sub &&
 	echo $(pwd)/super >expect  &&
+	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
+	test_cmp expect out &&
+
+	test_commit -C super submodule_add &&
+	git -C super checkout -b branch1 &&
+	git -C super/dir/sub checkout -b branch1 &&
+	test_commit -C super/dir/sub branch1_commit &&
+	git -C super add dir/sub &&
+	test_commit -C super branch1_commit &&
+	git -C super checkout -b branch2 master &&
+	git -C super/dir/sub checkout -b branch2 master &&
+	test_commit -C super/dir/sub branch2_commit &&
+	git -C super add dir/sub &&
+	test_commit -C super branch2_commit &&
+	test_must_fail git -C super merge branch1 &&
+
 	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out
 '

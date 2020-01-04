@@ -142,9 +142,8 @@ test_expect_success 'push to delete (protected, forced)' '
 		cd dst &&
 		git push --force --force-with-lease=master:master^ origin :master
 	) &&
-	>expect &&
 	git ls-remote src refs/heads/master >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'push to delete (allowed)' '
@@ -154,9 +153,8 @@ test_expect_success 'push to delete (allowed)' '
 		git push --force-with-lease=master origin :master 2>err &&
 		grep deleted err
 	) &&
-	>expect &&
 	git ls-remote src refs/heads/master >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'cover everything with default force-with-lease (protected)' '

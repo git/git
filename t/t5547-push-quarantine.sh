@@ -39,7 +39,7 @@ test_expect_success 'push to repo path with path separator (colon)' '
 	# so make it likely for us to generate a delta by having
 	# a non-trivial file with multiple versions.
 
-	test-genrandom foo 4096 >file.bin &&
+	test-tool genrandom foo 4096 >file.bin &&
 	git add file.bin &&
 	git commit -m bin &&
 

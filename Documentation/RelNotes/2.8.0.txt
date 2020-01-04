@@ -189,7 +189,7 @@ Performance, Internal Implementation, Development Support etc.
  * Some calls to strcpy(3) triggers a false warning from static
    analyzers that are less intelligent than humans, and reducing the
    number of these false hits helps us notice real issues.  A few
-   calls to strcpy(3) in a couple of protrams that are already safe
+   calls to strcpy(3) in a couple of programs that are already safe
    has been rewritten to avoid false warnings.
 
  * The "name_path" API was an attempt to reduce the need to construct
@@ -270,7 +270,7 @@ notes for details).
    setting GIT_WORK_TREE environment themselves.
 
  * The "exclude_list" structure has the usual "alloc, nr" pair of
-   fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
+   fields to be used by ALLOC_GROW(), but clear_pattern_list() forgot
    to reset 'alloc' to 0 when it cleared 'nr' to discard the managed
    array.
 

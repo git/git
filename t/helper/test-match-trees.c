@@ -1,7 +1,8 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "tree.h"
 
-int cmd_main(int ac, const char **av)
+int cmd__match_trees(int ac, const char **av)
 {
 	struct object_id hash1, hash2, shifted;
 	struct tree *one, *two;
@@ -19,7 +20,7 @@ int cmd_main(int ac, const char **av)
 	if (!two)
 		die("not a tree-ish %s", av[2]);
 
-	shift_tree(&one->object.oid, &two->object.oid, &shifted, -1);
+	shift_tree(the_repository, &one->object.oid, &two->object.oid, &shifted, -1);
 	printf("shifted: %s\n", oid_to_hex(&shifted));
 
 	exit(0);

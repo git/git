@@ -88,7 +88,7 @@ be in a separate packet, and the list must end with a flush packet.
 	infinite even if there is an ancestor-chain that long.
 
 --shallow-since=<date>::
-	Deepen or shorten the history of a shallow'repository to
+	Deepen or shorten the history of a shallow repository to
 	include all reachable commits after <date>.
 
 --shallow-exclude=<revision>::

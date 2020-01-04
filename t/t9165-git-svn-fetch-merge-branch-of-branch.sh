@@ -39,7 +39,7 @@ test_expect_success 'initialize source svn repo' '
 		svn_cmd commit -m trunk &&
 		svn_cmd switch "$svnrepo"/branches/branch2 &&
 		svn_cmd merge "$svnrepo"/trunk &&
-		svn_cmd commit -m "merge trunk"
+		svn_cmd commit -m "merge trunk" &&
 		svn_cmd switch "$svnrepo"/trunk &&
 		svn_cmd merge --reintegrate "$svnrepo"/branches/branch2 &&
 		svn_cmd commit -m "merge branch2"

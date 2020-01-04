@@ -4,9 +4,10 @@
  * Copyright (C) 2007 by Nicolas Pitre, licensed under the GPL version 2.
  */
 
+#include "test-tool.h"
 #include "git-compat-util.h"
 
-int cmd_main(int argc, const char **argv)
+int cmd__genrandom(int argc, const char **argv)
 {
 	unsigned long count, next = 0;
 	unsigned char *c;

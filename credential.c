@@ -1,9 +1,11 @@
 #include "cache.h"
+#include "config.h"
 #include "credential.h"
 #include "string-list.h"
 #include "run-command.h"
 #include "url.h"
 #include "prompt.h"
+#include "sigchain.h"
 
 void credential_init(struct credential *c)
 {
@@ -93,8 +95,7 @@ static void credential_apply_config(struct credential *c)
 	c->configured = 1;
 
 	if (!c->use_http_path && proto_is_http(c->protocol)) {
-		free(c->path);
-		c->path = NULL;
+		FREE_AND_NULL(c->path);
 	}
 }
 
@@ -227,8 +228,10 @@ static int run_credential_helper(struct credential *c,
 		return -1;
 
 	fp = xfdopen(helper.in, "w");
+	sigchain_push(SIGPIPE, SIG_IGN);
 	credential_write(c, fp);
 	fclose(fp);
+	sigchain_pop(SIGPIPE);
 
 	if (want_output) {
 		int r;
@@ -314,10 +317,8 @@ void credential_reject(struct credential *c)
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "erase");
 
-	free(c->username);
-	c->username = NULL;
-	free(c->password);
-	c->password = NULL;
+	FREE_AND_NULL(c->username);
+	FREE_AND_NULL(c->password);
 	c->approved = 0;
 }
 

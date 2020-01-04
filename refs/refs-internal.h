@@ -1,6 +1,12 @@
 #ifndef REFS_REFS_INTERNAL_H
 #define REFS_REFS_INTERNAL_H
 
+#include "cache.h"
+#include "refs.h"
+#include "iterator.h"
+
+struct ref_transaction;
+
 /*
  * Data structures and functions for the internal use of the refs
  * module. Code outside of the refs module should use only the public
@@ -8,58 +14,28 @@
  */
 
 /*
- * Flag passed to lock_ref_sha1_basic() telling it to tolerate broken
- * refs (i.e., because the reference is about to be deleted anyway).
- */
-#define REF_DELETING	0x02
-
-/*
- * Used as a flag in ref_update::flags when a loose ref is being
- * pruned. This flag must only be used when REF_NODEREF is set.
- */
-#define REF_ISPRUNING	0x04
-
-/*
- * Used as a flag in ref_update::flags when the reference should be
- * updated to new_sha1.
- */
-#define REF_HAVE_NEW	0x08
-
-/*
- * Used as a flag in ref_update::flags when old_sha1 should be
- * checked.
- */
-#define REF_HAVE_OLD	0x10
-
-/*
- * Used as a flag in ref_update::flags when the lockfile needs to be
- * committed.
- */
-#define REF_NEEDS_COMMIT 0x20
-
-/*
- * 0x40 is REF_FORCE_CREATE_REFLOG, so skip it if you're adding a
- * value to ref_update::flags
+ * The following flags can appear in `ref_update::flags`. Their
+ * numerical values must not conflict with those of REF_NO_DEREF and
+ * REF_FORCE_CREATE_REFLOG, which are also stored in
+ * `ref_update::flags`.
  */
 
 /*
- * Used as a flag in ref_update::flags when we want to log a ref
- * update but not actually perform it.  This is used when a symbolic
- * ref update is split up.
+ * The reference should be updated to new_oid.
  */
-#define REF_LOG_ONLY 0x80
+#define REF_HAVE_NEW (1 << 2)
 
 /*
- * Internal flag, meaning that the containing ref_update was via an
- * update to HEAD.
+ * The current reference's value should be checked to make sure that
+ * it agrees with old_oid.
  */
-#define REF_UPDATE_VIA_HEAD 0x100
+#define REF_HAVE_OLD (1 << 3)
 
 /*
- * Used as a flag in ref_update::flags when the loose reference has
- * been deleted.
+ * Return the length of time to retry acquiring a loose reference lock
+ * before giving up, in milliseconds:
  */
-#define REF_DELETED_LOOSE 0x200
+long get_files_ref_lock_timeout_ms(void);
 
 /*
  * Return true iff refname is minimally safe. "Safe" here means that
@@ -76,6 +52,15 @@
  * (like "HEAD" and "MERGE_HEAD" but not "config" or "FOO/BAR").
  */
 int refname_is_safe(const char *refname);
+
+/*
+ * Helper function: return true if refname, which has the specified
+ * oid and flags, can be resolved to an object in the database. If the
+ * referred-to object does not exist, emit a warning and return false.
+ */
+int ref_resolves_to_object(const char *refname,
+			   const struct object_id *oid,
+			   unsigned int flags);
 
 enum peel_status {
 	/* object was peeled successfully: */
@@ -105,44 +90,42 @@ enum peel_status {
 /*
  * Peel the named object; i.e., if the object is a tag, resolve the
  * tag recursively until a non-tag is found.  If successful, store the
- * result to sha1 and return PEEL_PEELED.  If the object is not a tag
+ * result to oid and return PEEL_PEELED.  If the object is not a tag
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
- * and leave sha1 unchanged.
+ * and leave oid unchanged.
  */
-enum peel_status peel_object(const unsigned char *name, unsigned char *sha1);
+enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
 
 /*
- * Copy the reflog message msg to buf, which has been allocated sufficiently
- * large, while cleaning up the whitespaces.  Especially, convert LF to space,
- * because reflog file is one line per entry.
+ * Copy the reflog message msg to sb while cleaning up the whitespaces.
+ * Especially, convert LF to space, because reflog file is one line per entry.
  */
-int copy_reflog_msg(char *buf, const char *msg);
+void copy_reflog_msg(struct strbuf *sb, const char *msg);
 
 /**
- * Information needed for a single ref update. Set new_sha1 to the new
- * value or to null_sha1 to delete the ref. To check the old value
- * while the ref is locked, set (flags & REF_HAVE_OLD) and set
- * old_sha1 to the old value, or to null_sha1 to ensure the ref does
- * not exist before update.
+ * Information needed for a single ref update. Set new_oid to the new
+ * value or to null_oid to delete the ref. To check the old value
+ * while the ref is locked, set (flags & REF_HAVE_OLD) and set old_oid
+ * to the old value, or to null_oid to ensure the ref does not exist
+ * before update.
  */
 struct ref_update {
-
 	/*
-	 * If (flags & REF_HAVE_NEW), set the reference to this value:
+	 * If (flags & REF_HAVE_NEW), set the reference to this value
+	 * (or delete it, if `new_oid` is `null_oid`).
 	 */
 	struct object_id new_oid;
 
 	/*
 	 * If (flags & REF_HAVE_OLD), check that the reference
-	 * previously had this value:
+	 * previously had this value (or didn't previously exist, if
+	 * `old_oid` is `null_oid`).
 	 */
 	struct object_id old_oid;
 
 	/*
-	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,
-	 * REF_DELETING, REF_ISPRUNING, REF_LOG_ONLY,
-	 * REF_UPDATE_VIA_HEAD, REF_NEEDS_COMMIT, and
-	 * REF_DELETED_LOOSE:
+	 * One or more of REF_NO_DEREF, REF_FORCE_CREATE_REFLOG,
+	 * REF_HAVE_NEW, REF_HAVE_OLD, or backend-specific flags.
 	 */
 	unsigned int flags;
 
@@ -166,7 +149,7 @@ struct ref_update {
 };
 
 int refs_read_raw_ref(struct ref_store *ref_store,
-		      const char *refname, unsigned char *sha1,
+		      const char *refname, struct object_id *oid,
 		      struct strbuf *referent, unsigned int *type);
 
 /*
@@ -180,15 +163,15 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 /*
  * Add a ref_update with the specified properties to transaction, and
  * return a pointer to the new object. This function does not verify
- * that refname is well-formed. new_sha1 and old_sha1 are only
+ * that refname is well-formed. new_oid and old_oid are only
  * dereferenced if the REF_HAVE_NEW and REF_HAVE_OLD bits,
  * respectively, are set in flags.
  */
 struct ref_update *ref_transaction_add_update(
 		struct ref_transaction *transaction,
 		const char *refname, unsigned int flags,
-		const unsigned char *new_sha1,
-		const unsigned char *old_sha1,
+		const struct object_id *new_oid,
+		const struct object_id *old_oid,
 		const char *msg);
 
 /*
@@ -227,6 +210,7 @@ struct ref_transaction {
 	size_t alloc;
 	size_t nr;
 	enum ref_transaction_state state;
+	void *backend_data;
 };
 
 /*
@@ -278,7 +262,7 @@ int refs_rename_ref_available(struct ref_store *refs,
  * after calling ref_iterator_advance() again or calling
  * ref_iterator_abort(), you must make a copy. When the iteration has
  * been exhausted, ref_iterator_advance() releases any resources
- * assocated with the iteration, frees the ref_iterator object, and
+ * associated with the iteration, frees the ref_iterator object, and
  * returns ITER_DONE. If you want to abort the iteration early, call
  * ref_iterator_abort(), which also frees the ref_iterator object and
  * any associated resources. If there was an internal error advancing
@@ -302,7 +286,7 @@ int refs_rename_ref_available(struct ref_store *refs,
  *
  *             // Access information about the current reference:
  *             if (!(iter->flags & REF_ISSYMREF))
- *                     printf("%s is %s\n", iter->refname, oid_to_hex(&iter->oid));
+ *                     printf("%s is %s\n", iter->refname, oid_to_hex(iter->oid));
  *
  *             // If you need to peel the reference:
  *             ref_iterator_peel(iter, &oid);
@@ -313,6 +297,13 @@ int refs_rename_ref_available(struct ref_store *refs,
  */
 struct ref_iterator {
 	struct ref_iterator_vtable *vtable;
+
+	/*
+	 * Does this `ref_iterator` iterate over references in order
+	 * by refname?
+	 */
+	unsigned int ordered : 1;
+
 	const char *refname;
 	const struct object_id *oid;
 	unsigned int flags;
@@ -358,7 +349,7 @@ int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
  * which the refname begins with prefix. If trim is non-zero, then
  * trim that many characters off the beginning of each refname. flags
  * can be DO_FOR_EACH_INCLUDE_BROKEN to include broken references in
- * the iteration.
+ * the iteration. The output is ordered by refname.
  */
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
@@ -384,9 +375,11 @@ typedef enum iterator_selection ref_iterator_select_fn(
  * Iterate over the entries from iter0 and iter1, with the values
  * interleaved as directed by the select function. The iterator takes
  * ownership of iter0 and iter1 and frees them when the iteration is
- * over.
+ * over. A derived class should set `ordered` to 1 or 0 based on
+ * whether it generates its output in order by reference name.
  */
 struct ref_iterator *merge_ref_iterator_begin(
+		int ordered,
 		struct ref_iterator *iter0, struct ref_iterator *iter1,
 		ref_iterator_select_fn *select, void *cb_data);
 
@@ -415,6 +408,8 @@ struct ref_iterator *overlay_ref_iterator_begin(
  * As an convenience to callers, if prefix is the empty string and
  * trim is zero, this function returns iter0 directly, without
  * wrapping it.
+ *
+ * The resulting ref_iterator is ordered if iter0 is.
  */
 struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 					       const char *prefix,
@@ -425,11 +420,14 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 /*
  * Base class constructor for ref_iterators. Initialize the
  * ref_iterator part of iter, setting its vtable pointer as specified.
+ * `ordered` should be set to 1 if the iterator will iterate over
+ * references in order by refname; otherwise it should be set to 0.
  * This is meant to be called only by the initializers of derived
  * classes.
  */
 void base_ref_iterator_init(struct ref_iterator *iter,
-			    struct ref_iterator_vtable *vtable);
+			    struct ref_iterator_vtable *vtable,
+			    int ordered);
 
 /*
  * Base class destructor for ref_iterators. Destroy the ref_iterator
@@ -480,8 +478,9 @@ extern struct ref_iterator *current_ref_iter;
  * adapter between the callback style of reference iteration and the
  * iterator style.
  */
-int do_for_each_ref_iterator(struct ref_iterator *iter,
-			     each_ref_fn fn, void *cb_data);
+int do_for_each_repo_ref_iterator(struct repository *r,
+				  struct ref_iterator *iter,
+				  each_repo_ref_fn fn, void *cb_data);
 
 /*
  * Only include per-worktree refs in a do_for_each_ref*() iteration.
@@ -532,8 +531,6 @@ typedef int ref_transaction_commit_fn(struct ref_store *refs,
 				      struct strbuf *err);
 
 typedef int pack_refs_fn(struct ref_store *ref_store, unsigned int flags);
-typedef int peel_ref_fn(struct ref_store *ref_store,
-			const char *refname, unsigned char *sha1);
 typedef int create_symref_fn(struct ref_store *ref_store,
 			     const char *ref_target,
 			     const char *refs_heads_master,
@@ -543,12 +540,16 @@ typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
+typedef int copy_ref_fn(struct ref_store *ref_store,
+			  const char *oldref, const char *newref,
+			  const char *logmsg);
 
 /*
  * Iterate over the references in `ref_store` whose names start with
  * `prefix`. `prefix` is matched as a literal string, without regard
  * for path separators. If prefix is NULL or the empty string, iterate
- * over all references in `ref_store`.
+ * over all references in `ref_store`. The output is ordered by
+ * refname.
  */
 typedef struct ref_iterator *ref_iterator_begin_fn(
 		struct ref_store *ref_store,
@@ -576,7 +577,7 @@ typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
 			     int force_create, struct strbuf *err);
 typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
 typedef int reflog_expire_fn(struct ref_store *ref_store,
-			     const char *refname, const unsigned char *sha1,
+			     const char *refname, const struct object_id *oid,
 			     unsigned int flags,
 			     reflog_expiry_prepare_fn prepare_fn,
 			     reflog_expiry_should_prune_fn should_prune_fn,
@@ -587,13 +588,13 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  * Read a reference from the specified reference store, non-recursively.
  * Set type to describe the reference, and:
  *
- * - If refname is the name of a normal reference, fill in sha1
+ * - If refname is the name of a normal reference, fill in oid
  *   (leaving referent unchanged).
  *
  * - If refname is the name of a symbolic reference, write the full
  *   name of the reference to which it refers (e.g.
  *   "refs/heads/master") to referent and set the REF_ISSYMREF bit in
- *   type (leaving sha1 unchanged). The caller is responsible for
+ *   type (leaving oid unchanged). The caller is responsible for
  *   validating that referent is a valid reference name.
  *
  * WARNING: refname might be used as part of a filename, so it is
@@ -605,7 +606,7 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  *
  * Return 0 on success. If the ref doesn't exist, set errno to ENOENT
  * and return -1. If the ref exists but is neither a symbolic ref nor
- * a sha1, it is broken; set REF_ISBROKEN in type, set errno to
+ * an object ID, it is broken; set REF_ISBROKEN in type, set errno to
  * EINVAL, and return -1. If there is another error reading the ref,
  * set errno appropriately and return -1.
  *
@@ -622,7 +623,7 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  *   refname will still be valid and unchanged.
  */
 typedef int read_raw_ref_fn(struct ref_store *ref_store,
-			    const char *refname, unsigned char *sha1,
+			    const char *refname, struct object_id *oid,
 			    struct strbuf *referent, unsigned int *type);
 
 struct ref_storage_be {
@@ -637,10 +638,10 @@ struct ref_storage_be {
 	ref_transaction_commit_fn *initial_transaction_commit;
 
 	pack_refs_fn *pack_refs;
-	peel_ref_fn *peel_ref;
 	create_symref_fn *create_symref;
 	delete_refs_fn *delete_refs;
 	rename_ref_fn *rename_ref;
+	copy_ref_fn *copy_ref;
 
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
@@ -655,6 +656,7 @@ struct ref_storage_be {
 };
 
 extern struct ref_storage_be refs_be_files;
+extern struct ref_storage_be refs_be_packed;
 
 /*
  * A representation of the reference store for the main repository or

@@ -97,14 +97,13 @@ test_expect_success 'clone with --no-tags' '
 		git fetch &&
 		git for-each-ref refs/tags >../actual
 	) &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success '--single-branch while HEAD pointing at master' '
 	(
 		cd dir_master &&
-		git fetch &&
+		git fetch --force &&
 		git for-each-ref refs/remotes/origin |
 		sed -e "/HEAD$/d" \
 		    -e "s|/remotes/origin/|/heads/|" >../actual
@@ -115,7 +114,7 @@ test_expect_success '--single-branch while HEAD pointing at master' '
 	test_cmp expect actual &&
 	(
 		cd dir_master &&
-		git fetch --tags &&
+		git fetch --tags --force &&
 		git for-each-ref refs/tags >../actual
 	) &&
 	git for-each-ref refs/tags >expect &&
@@ -140,8 +139,7 @@ test_expect_success '--single-branch while HEAD pointing at master and --no-tags
 		git fetch &&
 		git for-each-ref refs/tags >../actual
 	) &&
-	>expect &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	test_line_count = 0 actual &&
 	# get tags with --tags overrides tagOpt
 	(
@@ -230,8 +228,7 @@ test_expect_success '--single-branch with detached' '
 		    -e "s|/remotes/origin/|/heads/|" >../actual
 	) &&
 	# nothing
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

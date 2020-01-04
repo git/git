@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "git-compat-util.h"
 #include "ewok.h"
@@ -210,8 +209,8 @@ size_t ewah_add(struct ewah_bitmap *self, eword_t word)
 void ewah_set(struct ewah_bitmap *self, size_t i)
 {
 	const size_t dist =
-		(i + BITS_IN_EWORD) / BITS_IN_EWORD -
-		(self->bit_size + BITS_IN_EWORD - 1) / BITS_IN_EWORD;
+		DIV_ROUND_UP(i + 1, BITS_IN_EWORD) -
+		DIV_ROUND_UP(self->bit_size, BITS_IN_EWORD);
 
 	assert(i >= self->bit_size);
 
@@ -277,6 +276,18 @@ void ewah_each_bit(struct ewah_bitmap *self, void (*callback)(size_t, void*), vo
 	}
 }
 
+/**
+ * Clear all the bits in the bitmap. Does not free or resize
+ * memory.
+ */
+static void ewah_clear(struct ewah_bitmap *self)
+{
+	self->buffer_size = 1;
+	self->buffer[0] = 0;
+	self->bit_size = 0;
+	self->rlw = self->buffer;
+}
+
 struct ewah_bitmap *ewah_new(void)
 {
 	struct ewah_bitmap *self;
@@ -287,14 +298,6 @@ struct ewah_bitmap *ewah_new(void)
 
 	ewah_clear(self);
 	return self;
-}
-
-void ewah_clear(struct ewah_bitmap *self)
-{
-	self->buffer_size = 1;
-	self->buffer[0] = 0;
-	self->bit_size = 0;
-	self->rlw = self->buffer;
 }
 
 void ewah_free(struct ewah_bitmap *self)
@@ -377,25 +380,6 @@ void ewah_iterator_init(struct ewah_iterator *it, struct ewah_bitmap *parent)
 		read_new_rlw(it);
 }
 
-void ewah_not(struct ewah_bitmap *self)
-{
-	size_t pointer = 0;
-
-	while (pointer < self->buffer_size) {
-		eword_t *word = &self->buffer[pointer];
-		size_t literals, k;
-
-		rlw_xor_run_bit(word);
-		++pointer;
-
-		literals = rlw_get_literal_words(word);
-		for (k = 0; k < literals; ++k) {
-			self->buffer[pointer] = ~self->buffer[pointer];
-			++pointer;
-		}
-	}
-}
-
 void ewah_xor(
 	struct ewah_bitmap *ewah_i,
 	struct ewah_bitmap *ewah_j,
@@ -459,216 +443,6 @@ void ewah_xor(
 
 	out->bit_size = max_size(ewah_i->bit_size, ewah_j->bit_size);
 }
-
-void ewah_and(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out)
-{
-	struct rlw_iterator rlw_i;
-	struct rlw_iterator rlw_j;
-	size_t literals;
-
-	rlwit_init(&rlw_i, ewah_i);
-	rlwit_init(&rlw_j, ewah_j);
-
-	while (rlwit_word_size(&rlw_i) > 0 && rlwit_word_size(&rlw_j) > 0) {
-		while (rlw_i.rlw.running_len > 0 || rlw_j.rlw.running_len > 0) {
-			struct rlw_iterator *prey, *predator;
-
-			if (rlw_i.rlw.running_len < rlw_j.rlw.running_len) {
-				prey = &rlw_i;
-				predator = &rlw_j;
-			} else {
-				prey = &rlw_j;
-				predator = &rlw_i;
-			}
-
-			if (predator->rlw.running_bit == 0) {
-				ewah_add_empty_words(out, 0,
-					predator->rlw.running_len);
-				rlwit_discard_first_words(prey,
-					predator->rlw.running_len);
-				rlwit_discard_first_words(predator,
-					predator->rlw.running_len);
-			} else {
-				size_t index = rlwit_discharge(prey, out,
-					predator->rlw.running_len, 0);
-				ewah_add_empty_words(out, 0,
-					predator->rlw.running_len - index);
-				rlwit_discard_first_words(predator,
-					predator->rlw.running_len);
-			}
-		}
-
-		literals = min_size(
-			rlw_i.rlw.literal_words,
-			rlw_j.rlw.literal_words);
-
-		if (literals) {
-			size_t k;
-
-			for (k = 0; k < literals; ++k) {
-				ewah_add(out,
-					rlw_i.buffer[rlw_i.literal_word_start + k] &
-					rlw_j.buffer[rlw_j.literal_word_start + k]
-				);
-			}
-
-			rlwit_discard_first_words(&rlw_i, literals);
-			rlwit_discard_first_words(&rlw_j, literals);
-		}
-	}
-
-	if (rlwit_word_size(&rlw_i) > 0)
-		rlwit_discharge_empty(&rlw_i, out);
-	else
-		rlwit_discharge_empty(&rlw_j, out);
-
-	out->bit_size = max_size(ewah_i->bit_size, ewah_j->bit_size);
-}
-
-void ewah_and_not(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out)
-{
-	struct rlw_iterator rlw_i;
-	struct rlw_iterator rlw_j;
-	size_t literals;
-
-	rlwit_init(&rlw_i, ewah_i);
-	rlwit_init(&rlw_j, ewah_j);
-
-	while (rlwit_word_size(&rlw_i) > 0 && rlwit_word_size(&rlw_j) > 0) {
-		while (rlw_i.rlw.running_len > 0 || rlw_j.rlw.running_len > 0) {
-			struct rlw_iterator *prey, *predator;
-
-			if (rlw_i.rlw.running_len < rlw_j.rlw.running_len) {
-				prey = &rlw_i;
-				predator = &rlw_j;
-			} else {
-				prey = &rlw_j;
-				predator = &rlw_i;
-			}
-
-			if ((predator->rlw.running_bit && prey == &rlw_i) ||
-				(!predator->rlw.running_bit && prey != &rlw_i)) {
-				ewah_add_empty_words(out, 0,
-					predator->rlw.running_len);
-				rlwit_discard_first_words(prey,
-					predator->rlw.running_len);
-				rlwit_discard_first_words(predator,
-					predator->rlw.running_len);
-			} else {
-				size_t index;
-				int negate_words;
-
-				negate_words = (&rlw_i != prey);
-				index = rlwit_discharge(prey, out,
-					predator->rlw.running_len, negate_words);
-				ewah_add_empty_words(out, negate_words,
-					predator->rlw.running_len - index);
-				rlwit_discard_first_words(predator,
-					predator->rlw.running_len);
-			}
-		}
-
-		literals = min_size(
-			rlw_i.rlw.literal_words,
-			rlw_j.rlw.literal_words);
-
-		if (literals) {
-			size_t k;
-
-			for (k = 0; k < literals; ++k) {
-				ewah_add(out,
-					rlw_i.buffer[rlw_i.literal_word_start + k] &
-					~(rlw_j.buffer[rlw_j.literal_word_start + k])
-				);
-			}
-
-			rlwit_discard_first_words(&rlw_i, literals);
-			rlwit_discard_first_words(&rlw_j, literals);
-		}
-	}
-
-	if (rlwit_word_size(&rlw_i) > 0)
-		rlwit_discharge(&rlw_i, out, ~0, 0);
-	else
-		rlwit_discharge_empty(&rlw_j, out);
-
-	out->bit_size = max_size(ewah_i->bit_size, ewah_j->bit_size);
-}
-
-void ewah_or(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out)
-{
-	struct rlw_iterator rlw_i;
-	struct rlw_iterator rlw_j;
-	size_t literals;
-
-	rlwit_init(&rlw_i, ewah_i);
-	rlwit_init(&rlw_j, ewah_j);
-
-	while (rlwit_word_size(&rlw_i) > 0 && rlwit_word_size(&rlw_j) > 0) {
-		while (rlw_i.rlw.running_len > 0 || rlw_j.rlw.running_len > 0) {
-			struct rlw_iterator *prey, *predator;
-
-			if (rlw_i.rlw.running_len < rlw_j.rlw.running_len) {
-				prey = &rlw_i;
-				predator = &rlw_j;
-			} else {
-				prey = &rlw_j;
-				predator = &rlw_i;
-			}
-
-			if (predator->rlw.running_bit) {
-				ewah_add_empty_words(out, 0,
-					predator->rlw.running_len);
-				rlwit_discard_first_words(prey,
-					predator->rlw.running_len);
-				rlwit_discard_first_words(predator,
-					predator->rlw.running_len);
-			} else {
-				size_t index = rlwit_discharge(prey, out,
-					predator->rlw.running_len, 0);
-				ewah_add_empty_words(out, 0,
-					predator->rlw.running_len - index);
-				rlwit_discard_first_words(predator,
-					predator->rlw.running_len);
-			}
-		}
-
-		literals = min_size(
-			rlw_i.rlw.literal_words,
-			rlw_j.rlw.literal_words);
-
-		if (literals) {
-			size_t k;
-
-			for (k = 0; k < literals; ++k) {
-				ewah_add(out,
-					rlw_i.buffer[rlw_i.literal_word_start + k] |
-					rlw_j.buffer[rlw_j.literal_word_start + k]
-				);
-			}
-
-			rlwit_discard_first_words(&rlw_i, literals);
-			rlwit_discard_first_words(&rlw_j, literals);
-		}
-	}
-
-	if (rlwit_word_size(&rlw_i) > 0)
-		rlwit_discharge(&rlw_i, out, ~0, 0);
-	else
-		rlwit_discharge(&rlw_j, out, ~0, 0);
-
-	out->bit_size = max_size(ewah_i->bit_size, ewah_j->bit_size);
-}
-
 
 #define BITMAP_POOL_MAX 16
 static struct ewah_bitmap *bitmap_pool[BITMAP_POOL_MAX];

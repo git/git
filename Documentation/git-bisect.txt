@@ -23,7 +23,7 @@ on the subcommand:
  git bisect terms [--term-good | --term-bad]
  git bisect skip [(<rev>|<range>)...]
  git bisect reset [<commit>]
- git bisect visualize
+ git bisect (visualize|view)
  git bisect replay <logfile>
  git bisect log
  git bisect run <cmd>...
@@ -165,8 +165,8 @@ To get a reminder of the currently used terms, use
 git bisect terms
 ------------------------------------------------
 
-You can get just the old (respectively new) term with `git bisect term
---term-old` or `git bisect term --term-good`.
+You can get just the old (respectively new) term with `git bisect terms
+--term-old` or `git bisect terms --term-good`.
 
 If you would like to use your own terms instead of "bad"/"good" or
 "new"/"old", you can choose any names you like (except existing bisect
@@ -193,24 +193,23 @@ git bisect start --term-new fixed --term-old broken
 Then, use `git bisect <term-old>` and `git bisect <term-new>` instead
 of `git bisect good` and `git bisect bad` to mark commits.
 
-Bisect visualize
-~~~~~~~~~~~~~~~~
+Bisect visualize/view
+~~~~~~~~~~~~~~~~~~~~~
 
 To see the currently remaining suspects in 'gitk', issue the following
-command during the bisection process:
+command during the bisection process (the subcommand `view` can be used
+as an alternative to `visualize`):
 
 ------------
 $ git bisect visualize
 ------------
-
-`view` may also be used as a synonym for `visualize`.
 
 If the `DISPLAY` environment variable is not set, 'git log' is used
 instead.  You can also give command-line options such as `-p` and
 `--stat`.
 
 ------------
-$ git bisect view --stat
+$ git bisect visualize --stat
 ------------
 
 Bisect log and bisect replay
@@ -414,7 +413,7 @@ $ cat ~/test.sh
 
 # tweak the working tree by merging the hot-fix branch
 # and then attempt a build
-if	git merge --no-commit hot-fix &&
+if	git merge --no-commit --no-ff hot-fix &&
 	make
 then
 	# run project specific test and report its status

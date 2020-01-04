@@ -12,6 +12,13 @@ cat >file <<EOF
 a
 EOF
 
+# Expected commit message for initial commit after rebase --signoff
+cat >expected-initial-signed <<EOF
+Initial empty commit
+
+Signed-off-by: $(git var GIT_COMMITTER_IDENT | sed -e "s/>.*/>/")
+EOF
+
 # Expected commit message after rebase --signoff
 cat >expected-signed <<EOF
 first
@@ -43,4 +50,35 @@ test_expect_success 'rebase --no-signoff does not add a sign-off line' '
 	test_cmp expected-unsigned actual
 '
 
+test_expect_success 'rebase --exec --signoff adds a sign-off line' '
+	test_when_finished "rm exec" &&
+	git commit --amend -m "first" &&
+	git rebase --exec "touch exec" --signoff HEAD^ &&
+	test_path_is_file exec &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	test_cmp expected-signed actual
+'
+
+test_expect_success 'rebase --root --signoff adds a sign-off line' '
+	git commit --amend -m "first" &&
+	git rebase --root --keep-empty --signoff &&
+	git cat-file commit HEAD^ | sed -e "1,/^\$/d" >actual &&
+	test_cmp expected-initial-signed actual &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	test_cmp expected-signed actual
+'
+
+test_expect_success 'rebase -i --signoff fails' '
+	git commit --amend -m "first" &&
+	git rebase -i --signoff HEAD^ &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	test_cmp expected-signed actual
+'
+
+test_expect_success 'rebase -m --signoff fails' '
+	git commit --amend -m "first" &&
+	git rebase -m --signoff HEAD^ &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	test_cmp expected-signed actual
+'
 test_done

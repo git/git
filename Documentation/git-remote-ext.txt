@@ -55,14 +55,14 @@ some tunnel.
 	the vhost field in the git:// service request (to rest of the argument).
 	Default is not to send vhost in such request (if sent).
 
-ENVIRONMENT VARIABLES:
-----------------------
+ENVIRONMENT VARIABLES
+---------------------
 
 GIT_TRANSLOOP_DEBUG::
 	If set, prints debugging information about various reads/writes.
 
-ENVIRONMENT VARIABLES PASSED TO COMMAND:
-----------------------------------------
+ENVIRONMENT VARIABLES PASSED TO COMMAND
+---------------------------------------
 
 GIT_EXT_SERVICE::
 	Set to long name (git-upload-pack, etc...) of service helper needs
@@ -73,8 +73,8 @@ GIT_EXT_SERVICE_NOPREFIX::
 	to invoke.
 
 
-EXAMPLES:
----------
+EXAMPLES
+--------
 This remote helper is transparently used by Git when
 you use commands such as "git fetch <URL>", "git clone <URL>",
 , "git push <URL>" or "git remote add <nick> <URL>", where <URL>
@@ -104,7 +104,7 @@ begins with `ext::`.  Examples:
 	link-level address).
 
 "ext::git-server-alias foo %G/repo% with% spaces %Vfoo"::
-	Represents a repository with path '/repo with spaces' accessed
+	Represents a repository with path `/repo with spaces` accessed
 	using the helper program "git-server-alias foo".  The hostname for
 	the remote server passed in the protocol stream will be "foo"
 	(this allows multiple virtual Git servers to share a
@@ -118,7 +118,7 @@ begins with `ext::`.  Examples:
 
 SEE ALSO
 --------
-linkgit:gitremote-helpers[1]
+linkgit:gitremote-helpers[7]
 
 GIT
 ---

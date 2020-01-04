@@ -7,11 +7,6 @@ test_description='Test for "git log --decorate" colors'
 
 . ./test-lib.sh
 
-get_color ()
-{
-	git config --get-color no.such.slot "$1"
-}
-
 test_expect_success setup '
 	git config diff.color.commit yellow &&
 	git config color.decorate.branch green &&
@@ -20,14 +15,14 @@ test_expect_success setup '
 	git config color.decorate.stash magenta &&
 	git config color.decorate.HEAD cyan &&
 
-	c_reset=$(get_color reset) &&
+	c_reset="<RESET>" &&
 
-	c_commit=$(get_color yellow) &&
-	c_branch=$(get_color green) &&
-	c_remoteBranch=$(get_color red) &&
-	c_tag=$(get_color "reverse bold yellow") &&
-	c_stash=$(get_color magenta) &&
-	c_HEAD=$(get_color cyan) &&
+	c_commit="<YELLOW>" &&
+	c_branch="<GREEN>" &&
+	c_remoteBranch="<RED>" &&
+	c_tag="<BOLD;REVERSE;YELLOW>" &&
+	c_stash="<MAGENTA>" &&
+	c_HEAD="<CYAN>" &&
 
 	test_commit A &&
 	git clone . other &&
@@ -59,7 +54,8 @@ EOF
 # to this test since it does not contain any decoration, hence --first-parent
 test_expect_success 'Commit Decorations Colored Correctly' '
 	git log --first-parent --abbrev=10 --all --decorate --oneline --color=always |
-	sed "s/[0-9a-f]\{10,10\}/COMMIT_ID/" >out &&
+	sed "s/[0-9a-f]\{10,10\}/COMMIT_ID/" |
+	test_decode_color >out &&
 	test_cmp expected out
 '
 

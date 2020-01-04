@@ -1,0 +1,5 @@
+(
+# LINT: line contains here-doc and closes nested subshell
+	cat <<-\INPUT)
+	fizz
+	INPUT

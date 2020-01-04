@@ -163,4 +163,42 @@ static inline void list_replace_init(struct list_head *old,
 	INIT_LIST_HEAD(old);
 }
 
+/*
+ * This is exactly the same as a normal list_head, except that it can be
+ * declared volatile (e.g., if you have a list that may be accessed from signal
+ * handlers).
+ */
+struct volatile_list_head {
+	volatile struct volatile_list_head *next, *prev;
+};
+
+#define VOLATILE_LIST_HEAD(name) \
+	volatile struct volatile_list_head name = { &(name), &(name) }
+
+static inline void __volatile_list_del(volatile struct volatile_list_head *prev,
+				       volatile struct volatile_list_head *next)
+{
+	next->prev = prev;
+	prev->next = next;
+}
+
+static inline void volatile_list_del(volatile struct volatile_list_head *elem)
+{
+	__volatile_list_del(elem->prev, elem->next);
+}
+
+static inline int volatile_list_empty(volatile struct volatile_list_head *head)
+{
+	return head == head->next;
+}
+
+static inline void volatile_list_add(volatile struct volatile_list_head *newp,
+				     volatile struct volatile_list_head *head)
+{
+	head->next->prev = newp;
+	newp->next = head->next;
+	newp->prev = head;
+	head->next = newp;
+}
+
 #endif /* LIST_H */

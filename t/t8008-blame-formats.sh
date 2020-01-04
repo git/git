@@ -12,22 +12,25 @@ test_expect_success 'setup' '
 	echo c >>file &&
 	echo d >>file &&
 	test_tick &&
-	git commit -a -m two
+	git commit -a -m two &&
+	ID1=$(git rev-parse HEAD^) &&
+	shortID1="^$(git rev-parse HEAD^ |cut -c 1-17)" &&
+	ID2=$(git rev-parse HEAD) &&
+	shortID2="$(git rev-parse HEAD |cut -c 1-18)"
 '
 
-cat >expect <<'EOF'
-^baf5e0b (A U Thor 2005-04-07 15:13:13 -0700 1) a
-8825379d (A U Thor 2005-04-07 15:14:13 -0700 2) b
-8825379d (A U Thor 2005-04-07 15:14:13 -0700 3) c
-8825379d (A U Thor 2005-04-07 15:14:13 -0700 4) d
+cat >expect <<EOF
+$shortID1 (A U Thor 2005-04-07 15:13:13 -0700 1) a
+$shortID2 (A U Thor 2005-04-07 15:14:13 -0700 2) b
+$shortID2 (A U Thor 2005-04-07 15:14:13 -0700 3) c
+$shortID2 (A U Thor 2005-04-07 15:14:13 -0700 4) d
 EOF
 test_expect_success 'normal blame output' '
-	git blame file >actual &&
+	git blame --abbrev=17 file >actual &&
 	test_cmp expect actual
 '
 
-ID1=baf5e0b3869e0b2b2beb395a3720c7b51eac94fc
-COMMIT1='author A U Thor
+COMMIT1="author A U Thor
 author-mail <author@example.com>
 author-time 1112911993
 author-tz -0700
@@ -37,9 +40,8 @@ committer-time 1112911993
 committer-tz -0700
 summary one
 boundary
-filename file'
-ID2=8825379dfb8a1267b58e8e5bcf69eec838f685ec
-COMMIT2='author A U Thor
+filename file"
+COMMIT2="author A U Thor
 author-mail <author@example.com>
 author-time 1112912053
 author-tz -0700
@@ -48,8 +50,8 @@ committer-mail <committer@example.com>
 committer-time 1112912053
 committer-tz -0700
 summary two
-previous baf5e0b3869e0b2b2beb395a3720c7b51eac94fc file
-filename file'
+previous $ID1 file
+filename file"
 
 cat >expect <<EOF
 $ID1 1 1 1

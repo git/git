@@ -279,7 +279,7 @@ start_lighttpd () {
 	"$LIGHTTPD_DIR"/lighttpd -f "$WEB"/lighttpd.conf
 
 	if test $? -ne 0 ; then
-		echo "Could not execute http deamon lighttpd"
+		echo "Could not execute http daemon lighttpd"
 		exit 1
 	fi
 }

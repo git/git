@@ -86,7 +86,7 @@ test_expect_success 'push can be used to delete a ref' '
 test_expect_success 'refuse deleting push with denyDeletes' '
 	(
 	    cd victim &&
-	    ( git branch -D extra || : ) &&
+	    test_might_fail git branch -D extra &&
 	    git config receive.denyDeletes true &&
 	    git branch extra master
 	) &&
@@ -119,7 +119,7 @@ test_expect_success 'override denyDeletes with git -c receive-pack' '
 test_expect_success 'denyNonFastforwards trumps --force' '
 	(
 	    cd victim &&
-	    ( git branch -D extra || : ) &&
+	    test_might_fail git branch -D extra &&
 	    git config receive.denyNonFastforwards true
 	) &&
 	victim_orig=$(cd victim && git rev-parse --verify master) &&
@@ -180,7 +180,7 @@ test_expect_success 'receive-pack runs auto-gc in remote repo' '
 	    # And create a file that follows the temporary object naming
 	    # convention for the auto-gc to remove
 	    : >.git/objects/tmp_test_object &&
-	    test-chmtime =-1209601 .git/objects/tmp_test_object
+	    test-tool chmtime =-1209601 .git/objects/tmp_test_object
 	) &&
 	(
 	    cd parent &&
@@ -288,7 +288,7 @@ test_expect_success 'receive-pack de-dupes .have lines' '
 	$shared .have
 	EOF
 
-	GIT_TRACE_PACKET=$(pwd)/trace \
+	GIT_TRACE_PACKET=$(pwd)/trace GIT_TEST_PROTOCOL_VERSION= \
 	    git push \
 		--receive-pack="unset GIT_TRACE_PACKET; git-receive-pack" \
 		fork HEAD:foo &&
