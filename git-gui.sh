@@ -2248,9 +2248,8 @@ proc do_git_gui {} {
 	}
 }
 
-proc do_explore {} {
-	global _gitworktree
-	set explorer {}
+# Get the system-specific explorer app/command.
+proc get_explorer {} {
 	if {[is_Cygwin] || [is_Windows]} {
 		set explorer "explorer.exe"
 	} elseif {[is_MacOSX]} {
@@ -2259,7 +2258,21 @@ proc do_explore {} {
 		# freedesktop.org-conforming system is our best shot
 		set explorer "xdg-open"
 	}
+	return $explorer
+}
+
+proc do_explore {} {
+	global _gitworktree
+	set explorer [get_explorer]
 	eval exec $explorer [list [file nativename $_gitworktree]] &
+}
+
+# Open file relative to the working tree by the default associated app.
+proc do_file_open {file} {
+	global _gitworktree
+	set explorer [get_explorer]
+	set full_file_path [file join $_gitworktree $file]
+	exec $explorer [file nativename $full_file_path] &
 }
 
 set is_quitting 0
@@ -3513,9 +3526,11 @@ tlabel .vpane.lower.diff.header.file \
 	-justify left
 tlabel .vpane.lower.diff.header.path \
 	-background gold \
-	-foreground black \
+	-foreground blue \
 	-anchor w \
-	-justify left
+	-justify left \
+	-font [eval font create [font configure font_ui] -underline 1] \
+	-cursor hand2
 pack .vpane.lower.diff.header.status -side left
 pack .vpane.lower.diff.header.file -side left
 pack .vpane.lower.diff.header.path -fill x
@@ -3530,8 +3545,12 @@ $ctxm add command \
 			-type STRING \
 			-- $current_diff_path
 	}
+$ctxm add command \
+	-label [mc Open] \
+	-command {do_file_open $current_diff_path}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
+bind .vpane.lower.diff.header.path <Button-1> {do_file_open $current_diff_path}
 
 # -- Diff Body
 #
