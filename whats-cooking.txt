@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2020, #01; Thu, 2)
+Subject: What's cooking in git.git (Jan 2020, #02; Sat, 4)
 X-master-at: 8679ef24ed64018bb62170c43ce73e0261c0600a
-X-next-at: 88dfdc41939891b16a5f8d00053e9c81d6d73f4e
+X-next-at: 71ea739a6cfbb938bae4fd7453c913c984f66f90
 
-What's cooking in git.git (Jan 2020, #01; Thu, 2)
+What's cooking in git.git (Jan 2020, #02; Sat, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first release candidate for this cycle v2.25.0-rc1 has been
-tagged.
+After the topics marked to be merged to 'master' go in, the tip of
+the master will hopefully be very close to the final release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,159 +21,36 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bk/p4-misc-usability (2019-12-16) 2 commits
-  (merged to 'next' on 2019-12-25 at b4789bcb08)
- + git-p4: show detailed help when parsing options fail
- + git-p4: yes/no prompts should sanitize user text
- (this branch is used by bk/p4-exception-cleanup.)
-
- Miscellaneous small UX improvements on "git-p4".
-
-
-* em/freebsd-cirrus-ci (2019-12-20) 1 commit
-  (merged to 'next' on 2019-12-25 at b6b609fbf0)
- + CI: add FreeBSD CI support via Cirrus-CI
-
-
-* en/rebase-signoff-fix (2019-12-20) 1 commit
-  (merged to 'next' on 2019-12-25 at 96d84920b5)
- + rebase: fix saving of --signoff state for am-based rebases
-
- "git rebase --signoff" stopped working when the command was written
- in C, which has been corrected.
-
-
-* js/mingw-reserved-filenames (2019-12-21) 2 commits
-  (merged to 'next' on 2019-12-30 at 5b814fd785)
- + mingw: refuse paths containing reserved names
- + mingw: short-circuit the conversion of `/dev/null` to UTF-16
-
- Forbid pathnames that the platform's filesystem cannot represent on
- MinGW.
-
-
-* js/use-test-tool-on-path (2019-12-27) 1 commit
-  (merged to 'next' on 2019-12-30 at fe59c1996d)
- + t3008: find test-tool through path lookup
-
- Test fix.
-
---------------------------------------------------
 [New Topics]
 
-* dl/merge-autostash (2019-12-26) 17 commits
- - pull: pass --autostash to merge
- - t5520: make test_pull_autostash() accept expect_parent_num
- - merge: teach --autostash option
- - sequencer: unlink autostash in apply_autostash()
- - sequencer: extract perform_autostash() from rebase
- - rebase: generify create_autostash()
- - rebase: extract create_autostash()
- - reset: extract reset_head() from rebase
- - rebase: generify reset_head()
- - rebase: use apply_autostash() from sequencer.c
- - sequencer: make apply_rebase() accept a path
- - rebase: use read_oneliner()
- - sequencer: make read_oneliner() extern
- - sequencer: configurably warn on non-existent files
- - sequencer: use file strbuf for read_oneliner()
- - t7600: use test_write_lines()
- - Makefile: alphabetically sort += lists
+* do/gitweb-typofix-in-comments (2020-01-04) 1 commit
+ - gitweb: fix a couple spelling errors in comments
 
- "git merge" learns the "--autostash" option.
-
-
-* dl/test-must-fail-fixes-2 (2019-12-27) 16 commits
- - t4124: let sed open its own files
- - t4124: only mark git command with test_must_fail
- - t3507: use test_path_is_missing()
- - t3507: fix indentation
- - t3504: do check for conflict marker after failed cherry-pick
- - t3419: stop losing return code of git command
- - t3415: increase granularity of test_auto_{fixup,squash}()
- - t3415: stop losing return codes of git commands
- - t3310: extract common no_notes_merge_left()
- - t3030: use test_path_is_missing()
- - t2018: replace "sha" with "oid"
- - t2018: don't lose return code of git commands
- - t2018: teach do_checkout() to accept `!` arg
- - t2018: use test_must_fail for failing git commands
- - t2018: add space between function name and ()
- - t2018: remove trailing space from test description
-
- Test updates.
-
- Not quite.
- cf. <CAPig+cQo1nbRo=n8-XOtycGijj3k1y_Zozu7VW-WTSBB9LncqQ@mail.gmail.com>
- cf. <86lfqt36ah.fsf@gmail.com>
-
-
-* jn/promote-proto2-to-default (2019-12-27) 5 commits
- - fetch: default to protocol version 2
- - protocol test: let protocol.version override GIT_TEST_PROTOCOL_VERSION
- - test: request GIT_TEST_PROTOCOL_VERSION=0 when appropriate
- - config doc: protocol.version is not experimental
- - fetch test: use more robust test for filtered objects
- (this branch uses jn/test-lint-one-shot-export-to-shell-function.)
-
- The transport protocol version 2 becomes the default one.
-
-
-* ds/sparse-list-in-cone-mode (2019-12-30) 2 commits
- - sparse-checkout: document interactions with submodules
- - sparse-checkout: list directories in cone mode
-
- "git sparse-checkout list" subcommand learned to give its output in
- a more concise form when the "cone" mode is in effect.
-
- Will merge to 'next'.
-
-
-* am/test-pathspec-f-f-error-cases (2020-01-02) 1 commit
- - t: add tests for error conditions with --pathspec-from-file
-
- More tests.
-
- Will merge to 'next'.
-
-
-* ds/sparse-cone (2020-01-02) 1 commit
- - sparse-checkout: use extern for global variables
-
- Code cleanup.
+ Typofix.
 
  Will merge to 'next' and then to 'master'.
 
 
-* en/merge-recursive-oid-eq-simplify (2020-01-02) 1 commit
- - merge-recursive: remove unnecessary oid_eq function
+* en/unpack-trees-check-updates-simplify (2020-01-04) 1 commit
+ - unpack-trees: exit check_updates() early if updates are not wanted
 
- Code cleanup.
-
- Will merge to 'next'.
+ Code simplification.
 
 
-* jt/sha1-file-remove-oi-skip-cached (2020-01-02) 1 commit
- - sha1-file: remove OBJECT_INFO_SKIP_CACHED
+* jb/doc-multi-pack-idx-fix (2020-01-04) 1 commit
+ - multi-pack-index: correct configuration in documentation
 
- has_object_file() said "no" given an object registered to the
- system via pretend_object_file(), making it inconsistent with
- read_object_file(), causing lazy fetch to attempt fetching an
- empty tree from promisor remotes.
+ Typofix.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
-* ds/commit-graph-set-size-mult (2020-01-02) 1 commit
- - commit-graph: prefer default size_mult when given zero
+* pm/am-in-body-header-doc-update (2020-01-04) 1 commit
+ - am: document that Date: can appear as an in-body header
 
- The code to write split commit-graph file(s) upon fetching computed
- bogus value for the parameter used in splitting the resulting
- files, which has been corrected.
+ Doc update.
 
- Will merge to 'next'.
+ Will merge to 'next' and then to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -318,6 +195,128 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* dl/merge-autostash (2019-12-26) 17 commits
+ - pull: pass --autostash to merge
+ - t5520: make test_pull_autostash() accept expect_parent_num
+ - merge: teach --autostash option
+ - sequencer: unlink autostash in apply_autostash()
+ - sequencer: extract perform_autostash() from rebase
+ - rebase: generify create_autostash()
+ - rebase: extract create_autostash()
+ - reset: extract reset_head() from rebase
+ - rebase: generify reset_head()
+ - rebase: use apply_autostash() from sequencer.c
+ - sequencer: make apply_rebase() accept a path
+ - rebase: use read_oneliner()
+ - sequencer: make read_oneliner() extern
+ - sequencer: configurably warn on non-existent files
+ - sequencer: use file strbuf for read_oneliner()
+ - t7600: use test_write_lines()
+ - Makefile: alphabetically sort += lists
+
+ "git merge" learns the "--autostash" option.
+
+
+* dl/test-must-fail-fixes-2 (2019-12-27) 16 commits
+ - t4124: let sed open its own files
+ - t4124: only mark git command with test_must_fail
+ - t3507: use test_path_is_missing()
+ - t3507: fix indentation
+ - t3504: do check for conflict marker after failed cherry-pick
+ - t3419: stop losing return code of git command
+ - t3415: increase granularity of test_auto_{fixup,squash}()
+ - t3415: stop losing return codes of git commands
+ - t3310: extract common no_notes_merge_left()
+ - t3030: use test_path_is_missing()
+ - t2018: replace "sha" with "oid"
+ - t2018: don't lose return code of git commands
+ - t2018: teach do_checkout() to accept `!` arg
+ - t2018: use test_must_fail for failing git commands
+ - t2018: add space between function name and ()
+ - t2018: remove trailing space from test description
+
+ Test updates.
+
+ Not quite.
+ cf. <CAPig+cQo1nbRo=n8-XOtycGijj3k1y_Zozu7VW-WTSBB9LncqQ@mail.gmail.com>
+ cf. <86lfqt36ah.fsf@gmail.com>
+
+
+* jn/promote-proto2-to-default (2019-12-27) 5 commits
+ - fetch: default to protocol version 2
+ - protocol test: let protocol.version override GIT_TEST_PROTOCOL_VERSION
+ - test: request GIT_TEST_PROTOCOL_VERSION=0 when appropriate
+ - config doc: protocol.version is not experimental
+ - fetch test: use more robust test for filtered objects
+ (this branch uses jn/test-lint-one-shot-export-to-shell-function.)
+
+ The transport protocol version 2 becomes the default one.
+
+ Will merge to 'next'.
+
+
+* ds/sparse-list-in-cone-mode (2019-12-30) 2 commits
+  (merged to 'next' on 2020-01-04 at e1a174647e)
+ + sparse-checkout: document interactions with submodules
+ + sparse-checkout: list directories in cone mode
+
+ "git sparse-checkout list" subcommand learned to give its output in
+ a more concise form when the "cone" mode is in effect.
+
+ Will merge to 'master'.
+
+
+* am/test-pathspec-f-f-error-cases (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-04 at 73ac7e77fb)
+ + t: add tests for error conditions with --pathspec-from-file
+
+ More tests.
+
+ Will cook in 'next'.
+
+
+* ds/sparse-cone (2020-01-04) 2 commits
+  (merged to 'next' on 2020-01-04 at cc4b6fbb41)
+ + Documentation/git-sparse-checkout.txt: fix a typo
+ + sparse-checkout: use extern for global variables
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* en/merge-recursive-oid-eq-simplify (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-04 at 623ecf4f16)
+ + merge-recursive: remove unnecessary oid_eq function
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* jt/sha1-file-remove-oi-skip-cached (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-04 at fab9964f10)
+ + sha1-file: remove OBJECT_INFO_SKIP_CACHED
+
+ has_object_file() said "no" given an object registered to the
+ system via pretend_object_file(), making it inconsistent with
+ read_object_file(), causing lazy fetch to attempt fetching an
+ empty tree from promisor remotes.
+
+ Will cook in 'next'.
+
+
+* ds/commit-graph-set-size-mult (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-04 at 71ea739a6c)
+ + commit-graph: prefer default size_mult when given zero
+
+ The code to write split commit-graph file(s) upon fetching computed
+ bogus value for the parameter used in splitting the resulting
+ files, which has been corrected.
+
+ Will merge to 'master'.
+
 
 * hw/commit-advise-while-rejecting (2019-12-19) 1 commit
   (merged to 'next' on 2019-12-30 at e26700d582)
@@ -466,13 +465,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* bk/p4-exception-cleanup (2019-12-16) 2 commits
- - git-p4: failure because of RCS keywords should show help
- - git-p4: wrap patchRCSKeywords test to revert changes on failure
-
- Will discard for now.
-
-
 * ew/packfile-syscall-optim (2019-12-26) 2 commits
   (merged to 'next' on 2019-12-30 at ada15abf22)
  + packfile: replace lseek+read with pread
@@ -480,7 +472,7 @@ of the repositories listed at
 
  Code cleanup.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jn/test-lint-one-shot-export-to-shell-function (2019-12-27) 3 commits
@@ -509,6 +501,10 @@ of the repositories listed at
  - built-in add -p: support interactive.diffFilter
  (this branch uses js/patch-mode-in-others-in-c.)
 
+ The final leg of rewriting "add -i/-p" in C.
+
+ Will merge to 'next'.
+
 
 * js/mingw-loosen-overstrict-tree-entry-checks (2020-01-02) 1 commit
   (merged to 'next' on 2020-01-02 at 3088a0ccf1)
@@ -530,7 +526,7 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pw/advise-rebase-skip (2019-12-06) 9 commits
@@ -599,5 +595,13 @@ of the repositories listed at
  cherry-pick better.
 
  Superseded by pw/advise-rebase-skip
+
+
+* bk/p4-exception-cleanup (2019-12-16) 2 commits
+ . git-p4: failure because of RCS keywords should show help
+ . git-p4: wrap patchRCSKeywords test to revert changes on failure
+
+ Discarded for now without prejudice.
+
 
 
