@@ -248,7 +248,7 @@ registered submodules, and sync any nested submodules within.
 
 absorbgitdirs::
 	If a git directory of a submodule is inside the submodule,
-	move the git directory of the submodule into its superprojects
+	move the git directory of the submodule into its superproject's
 	`$GIT_DIR/modules` path and then connect the git directory and
 	its working directory by setting the `core.worktree` and adding
 	a .git file pointing to the git directory embedded in the
