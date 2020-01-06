@@ -958,8 +958,8 @@ extern int protect_hfs;
 extern int protect_ntfs;
 extern const char *core_fsmonitor;
 
-int core_apply_sparse_checkout;
-int core_sparse_checkout_cone;
+extern int core_apply_sparse_checkout;
+extern int core_sparse_checkout_cone;
 
 /*
  * Include broken refs in all ref iterations, which will
