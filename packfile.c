@@ -510,7 +510,6 @@ static int open_packed_git_1(struct packed_git *p)
 	struct pack_header hdr;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	unsigned char *idx_hash;
-	long fd_flag;
 	ssize_t read_result;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
@@ -554,16 +553,6 @@ static int open_packed_git_1(struct packed_git *p)
 	} else if (p->pack_size != st.st_size)
 		return error("packfile %s size changed", p->pack_name);
 
-	/* We leave these file descriptors open with sliding mmap;
-	 * there is no point keeping them open across exec(), though.
-	 */
-	fd_flag = fcntl(p->pack_fd, F_GETFD, 0);
-	if (fd_flag < 0)
-		return error("cannot determine file descriptor flags");
-	fd_flag |= FD_CLOEXEC;
-	if (fcntl(p->pack_fd, F_SETFD, fd_flag) == -1)
-		return error("cannot set FD_CLOEXEC");
-
 	/* Verify we recognize this pack file format. */
 	read_result = read_in_full(p->pack_fd, &hdr, sizeof(hdr));
 	if (read_result < 0)
@@ -587,9 +576,8 @@ static int open_packed_git_1(struct packed_git *p)
 			     " while index indicates %"PRIu32" objects",
 			     p->pack_name, ntohl(hdr.hdr_entries),
 			     p->num_objects);
-	if (lseek(p->pack_fd, p->pack_size - hashsz, SEEK_SET) == -1)
-		return error("end of packfile %s is unavailable", p->pack_name);
-	read_result = read_in_full(p->pack_fd, hash, hashsz);
+	read_result = pread_in_full(p->pack_fd, hash, hashsz,
+					p->pack_size - hashsz);
 	if (read_result < 0)
 		return error_errno("error reading from %s", p->pack_name);
 	if (read_result != hashsz)
