@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2020, #02; Sat, 4)
-X-master-at: 8679ef24ed64018bb62170c43ce73e0261c0600a
-X-next-at: 71ea739a6cfbb938bae4fd7453c913c984f66f90
+Subject: What's cooking in git.git (Jan 2020, #03; Mon, 6)
+X-master-at: 042ed3e048af08014487d19196984347e3be7d1c
+X-next-at: 4be2e8caa8c47dbdd529c8bfc969f20ba90d340b
 
-What's cooking in git.git (Jan 2020, #02; Sat, 4)
+What's cooking in git.git (Jan 2020, #03; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -21,34 +21,88 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* do/gitweb-typofix-in-comments (2020-01-04) 1 commit
- - gitweb: fix a couple spelling errors in comments
+* ds/commit-graph-set-size-mult (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-04 at 71ea739a6c)
+ + commit-graph: prefer default size_mult when given zero
 
- Typofix.
-
- Will merge to 'next' and then to 'master'.
-
-
-* en/unpack-trees-check-updates-simplify (2020-01-04) 1 commit
- - unpack-trees: exit check_updates() early if updates are not wanted
-
- Code simplification.
+ The code to write split commit-graph file(s) upon fetching computed
+ bogus value for the parameter used in splitting the resulting
+ files, which has been corrected.
 
 
-* jb/doc-multi-pack-idx-fix (2020-01-04) 1 commit
- - multi-pack-index: correct configuration in documentation
+* ds/sparse-cone (2020-01-04) 2 commits
+  (merged to 'next' on 2020-01-04 at cc4b6fbb41)
+ + Documentation/git-sparse-checkout.txt: fix a typo
+ + sparse-checkout: use extern for global variables
 
- Typofix.
-
- Will merge to 'next' and then to 'master'.
+ Code cleanup.
 
 
-* pm/am-in-body-header-doc-update (2020-01-04) 1 commit
- - am: document that Date: can appear as an in-body header
+* ds/sparse-list-in-cone-mode (2019-12-30) 2 commits
+  (merged to 'next' on 2020-01-04 at e1a174647e)
+ + sparse-checkout: document interactions with submodules
+ + sparse-checkout: list directories in cone mode
+
+ "git sparse-checkout list" subcommand learned to give its output in
+ a more concise form when the "cone" mode is in effect.
+
+
+* en/merge-recursive-oid-eq-simplify (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-04 at 623ecf4f16)
+ + merge-recursive: remove unnecessary oid_eq function
+
+ Code cleanup.
+
+
+* ew/packfile-syscall-optim (2019-12-26) 2 commits
+  (merged to 'next' on 2019-12-30 at ada15abf22)
+ + packfile: replace lseek+read with pread
+ + packfile: remove redundant fcntl F_GETFD/F_SETFD
+
+ Code cleanup.
+
+
+* js/mingw-loosen-overstrict-tree-entry-checks (2020-01-02) 1 commit
+  (merged to 'next' on 2020-01-02 at 3088a0ccf1)
+ + mingw: only test index entries for backslashes, not tree entries
+
+ An earlier update to Git for Windows declared that a tree object is
+ invalid if it has a path component with backslash in it, which was
+ overly strict, which has been corrected.  The only protection the
+ Windows users need is to prevent such path (or any path that their
+ filesystem cannot check out) from entering the index.
+
+
+* pb/clarify-line-log-doc (2019-12-26) 2 commits
+  (merged to 'next' on 2019-12-30 at 7a4e15a436)
+ + doc: log, gitk: line-log arguments must exist in starting revision
+ + doc: log, gitk: document accepted line-log diff formats
 
  Doc update.
+
+--------------------------------------------------
+[New Topics]
+
+* hi/indent-text-with-tabs-in-editorconfig (2020-01-06) 1 commit
+ - editorconfig: indent text files with tabs
+
+ Tell .editorconfig that in this project, *.txt files are indented
+ with tabs.
+
+
+* jn/pretend-object-doc (2020-01-06) 1 commit
+ - sha1-file: document how to use pretend_object_file
+
+ Warn programmers about pretend_object_file() that allows the code
+ to tentatively use in-core objects.
+
+
+* tm/doc-submodule-absorb-fix (2020-01-06) 1 commit
+ - doc: submodule: fix typo for command absorbgitdirs
+
+ Typofix.
 
  Will merge to 'next' and then to 'master'.
 
@@ -196,6 +250,39 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* do/gitweb-typofix-in-comments (2020-01-04) 1 commit
+  (merged to 'next' on 2020-01-06 at 66ce6539c4)
+ + gitweb: fix a couple spelling errors in comments
+
+ Typofix.
+
+ Will merge to 'master'.
+
+
+* en/unpack-trees-check-updates-simplify (2020-01-04) 1 commit
+ - unpack-trees: exit check_updates() early if updates are not wanted
+
+ Code simplification.
+
+
+* jb/doc-multi-pack-idx-fix (2020-01-04) 1 commit
+  (merged to 'next' on 2020-01-06 at f19f7d1016)
+ + multi-pack-index: correct configuration in documentation
+
+ Typofix.
+
+ Will merge to 'master'.
+
+
+* pm/am-in-body-header-doc-update (2020-01-04) 1 commit
+  (merged to 'next' on 2020-01-06 at 73b0a3a49c)
+ + am: document that Date: can appear as an in-body header
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
 * dl/merge-autostash (2019-12-26) 17 commits
  - pull: pass --autostash to merge
  - t5520: make test_pull_autostash() accept expect_parent_num
@@ -244,27 +331,17 @@ of the repositories listed at
 
 
 * jn/promote-proto2-to-default (2019-12-27) 5 commits
- - fetch: default to protocol version 2
- - protocol test: let protocol.version override GIT_TEST_PROTOCOL_VERSION
- - test: request GIT_TEST_PROTOCOL_VERSION=0 when appropriate
- - config doc: protocol.version is not experimental
- - fetch test: use more robust test for filtered objects
+  (merged to 'next' on 2020-01-06 at f4bbb34797)
+ + fetch: default to protocol version 2
+ + protocol test: let protocol.version override GIT_TEST_PROTOCOL_VERSION
+ + test: request GIT_TEST_PROTOCOL_VERSION=0 when appropriate
+ + config doc: protocol.version is not experimental
+ + fetch test: use more robust test for filtered objects
  (this branch uses jn/test-lint-one-shot-export-to-shell-function.)
 
  The transport protocol version 2 becomes the default one.
 
- Will merge to 'next'.
-
-
-* ds/sparse-list-in-cone-mode (2019-12-30) 2 commits
-  (merged to 'next' on 2020-01-04 at e1a174647e)
- + sparse-checkout: document interactions with submodules
- + sparse-checkout: list directories in cone mode
-
- "git sparse-checkout list" subcommand learned to give its output in
- a more concise form when the "cone" mode is in effect.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * am/test-pathspec-f-f-error-cases (2020-01-02) 1 commit
@@ -274,25 +351,6 @@ of the repositories listed at
  More tests.
 
  Will cook in 'next'.
-
-
-* ds/sparse-cone (2020-01-04) 2 commits
-  (merged to 'next' on 2020-01-04 at cc4b6fbb41)
- + Documentation/git-sparse-checkout.txt: fix a typo
- + sparse-checkout: use extern for global variables
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* en/merge-recursive-oid-eq-simplify (2020-01-02) 1 commit
-  (merged to 'next' on 2020-01-04 at 623ecf4f16)
- + merge-recursive: remove unnecessary oid_eq function
-
- Code cleanup.
-
- Will merge to 'master'.
 
 
 * jt/sha1-file-remove-oi-skip-cached (2020-01-02) 1 commit
@@ -305,17 +363,6 @@ of the repositories listed at
  empty tree from promisor remotes.
 
  Will cook in 'next'.
-
-
-* ds/commit-graph-set-size-mult (2020-01-02) 1 commit
-  (merged to 'next' on 2020-01-04 at 71ea739a6c)
- + commit-graph: prefer default size_mult when given zero
-
- The code to write split commit-graph file(s) upon fetching computed
- bogus value for the parameter used in splitting the resulting
- files, which has been corrected.
-
- Will merge to 'master'.
 
 
 * hw/commit-advise-while-rejecting (2019-12-19) 1 commit
@@ -465,16 +512,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* ew/packfile-syscall-optim (2019-12-26) 2 commits
-  (merged to 'next' on 2019-12-30 at ada15abf22)
- + packfile: replace lseek+read with pread
- + packfile: remove redundant fcntl F_GETFD/F_SETFD
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
 * jn/test-lint-one-shot-export-to-shell-function (2019-12-27) 3 commits
   (merged to 'next' on 2019-12-30 at d08f039473)
  + fetch test: mark test of "skipping" haves as v0-only
@@ -490,43 +527,21 @@ of the repositories listed at
 
 
 * js/add-p-leftover-bits (2019-12-24) 9 commits
- - ci: include the built-in `git add -i` in the `linux-gcc` job
- - built-in add -p: handle Escape sequences more efficiently
- - built-in add -p: handle Escape sequences in interactive.singlekey mode
- - built-in add -p: respect the `interactive.singlekey` config setting
- - terminal: add a new function to read a single keystroke
- - terminal: accommodate Git for Windows' default terminal
- - terminal: make the code of disable_echo() reusable
- - built-in add -p: handle diff.algorithm
- - built-in add -p: support interactive.diffFilter
+  (merged to 'next' on 2020-01-06 at c6d3f1d4dd)
+ + ci: include the built-in `git add -i` in the `linux-gcc` job
+ + built-in add -p: handle Escape sequences more efficiently
+ + built-in add -p: handle Escape sequences in interactive.singlekey mode
+ + built-in add -p: respect the `interactive.singlekey` config setting
+ + terminal: add a new function to read a single keystroke
+ + terminal: accommodate Git for Windows' default terminal
+ + terminal: make the code of disable_echo() reusable
+ + built-in add -p: handle diff.algorithm
+ + built-in add -p: support interactive.diffFilter
  (this branch uses js/patch-mode-in-others-in-c.)
 
  The final leg of rewriting "add -i/-p" in C.
 
- Will merge to 'next'.
-
-
-* js/mingw-loosen-overstrict-tree-entry-checks (2020-01-02) 1 commit
-  (merged to 'next' on 2020-01-02 at 3088a0ccf1)
- + mingw: only test index entries for backslashes, not tree entries
-
- An earlier update to Git for Windows declared that a tree object is
- invalid if it has a path component with backslash in it, which was
- overly strict, which has been corrected.  The only protection the
- Windows users need is to prevent such path (or any path that their
- filesystem cannot check out) from entering the index.
-
- Will merge to 'master'.
-
-
-* pb/clarify-line-log-doc (2019-12-26) 2 commits
-  (merged to 'next' on 2019-12-30 at 7a4e15a436)
- + doc: log, gitk: line-log arguments must exist in starting revision
- + doc: log, gitk: document accepted line-log diff formats
-
- Doc update.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * pw/advise-rebase-skip (2019-12-06) 9 commits
@@ -602,6 +617,3 @@ of the repositories listed at
  . git-p4: wrap patchRCSKeywords test to revert changes on failure
 
  Discarded for now without prejudice.
-
-
-
