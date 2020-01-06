@@ -1542,7 +1542,9 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 
 	if (ctx->split_opts) {
 		max_commits = ctx->split_opts->max_commits;
-		size_mult = ctx->split_opts->size_multiple;
+
+		if (ctx->split_opts->size_multiple)
+			size_mult = ctx->split_opts->size_multiple;
 	}
 
 	g = ctx->r->objects->commit_graph;

@@ -1866,15 +1866,13 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	    (fetch_write_commit_graph < 0 &&
 	     the_repository->settings.fetch_write_commit_graph)) {
 		int commit_graph_flags = COMMIT_GRAPH_WRITE_SPLIT;
-		struct split_commit_graph_opts split_opts;
-		memset(&split_opts, 0, sizeof(struct split_commit_graph_opts));
 
 		if (progress)
 			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
 		write_commit_graph_reachable(get_object_directory(),
 					     commit_graph_flags,
-					     &split_opts);
+					     NULL);
 	}
 
 	close_object_store(the_repository->objects);
