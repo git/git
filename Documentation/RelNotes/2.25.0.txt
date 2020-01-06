@@ -72,6 +72,9 @@ UI, Workflows & Features
 
  * Miscellaneous small UX improvements on "git-p4".
 
+ * "git sparse-checkout list" subcommand learned to give its output in
+   a more concise form when the "cone" mode is in effect.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -142,8 +145,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code has been made to avoid gmtime() and localtime() and prefer
    their reentrant counterparts.
-
- * The effort to reimplement "git add -i" in C continues.
 
  * In a repository with many packfiles, the cost of the procedure that
    avoids registering the same packfile twice was unnecessarily high
@@ -315,6 +316,18 @@ Fixes since v2.24
    in C, which has been corrected.
    (merge 4fe7e43c53 en/rebase-signoff-fix later to maint).
 
+ * An earlier update to Git for Windows declared that a tree object is
+   invalid if it has a path component with backslash in it, which was
+   overly strict, which has been corrected.  The only protection the
+   Windows users need is to prevent such path (or any path that their
+   filesystem cannot check out) from entering the index.
+   (merge 224c7d70fa js/mingw-loosen-overstrict-tree-entry-checks later to maint).
+
+ * The code to write split commit-graph file(s) upon fetching computed
+   bogus value for the parameter used in splitting the resulting
+   files, which has been corrected.
+   (merge 63020f175f ds/commit-graph-set-size-mult later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
    (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
@@ -351,3 +364,6 @@ Fixes since v2.24
    (merge df5be01669 ja/doc-markup-cleanup later to maint).
    (merge 7c5cea7242 mr/bisect-save-pointer-to-const-string later to maint).
    (merge 20a67e8ce9 js/use-test-tool-on-path later to maint).
+   (merge 4e61b2214d ew/packfile-syscall-optim later to maint).
+   (merge ace0f86c7f pb/clarify-line-log-doc later to maint).
+   (merge 763a59e71c en/merge-recursive-oid-eq-simplify later to maint).
