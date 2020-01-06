@@ -28,7 +28,7 @@ THE FUTURE.
 COMMANDS
 --------
 'list'::
-	Provide a list of the contents in the sparse-checkout file.
+	Describe the patterns in the sparse-checkout file.
 
 'init'::
 	Enable the `core.sparseCheckout` setting. If the
@@ -150,10 +150,29 @@ expecting patterns of these types. Git will warn if the patterns do not match.
 If the patterns do match the expected format, then Git will use faster hash-
 based algorithms to compute inclusion in the sparse-checkout.
 
+In the cone mode case, the `git sparse-checkout list` subcommand will list the
+directories that define the recursive patterns. For the example sparse-checkout
+file above, the output is as follows:
+
+--------------------------
+$ git sparse-checkout list
+A/B/C
+--------------------------
+
 If `core.ignoreCase=true`, then the pattern-matching algorithm will use a
 case-insensitive check. This corrects for case mismatched filenames in the
 'git sparse-checkout set' command to reflect the expected cone in the working
 directory.
+
+
+SUBMODULES
+----------
+
+If your repository contains one or more submodules, then those submodules will
+appear based on which you initialized with the `git submodule` command. If
+your sparse-checkout patterns exclude an initialized submodule, then that
+submodule will still appear in your working directory.
+
 
 SEE ALSO
 --------

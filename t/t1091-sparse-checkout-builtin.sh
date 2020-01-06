@@ -246,6 +246,17 @@ test_expect_success 'cone mode: init and set' '
 	test_cmp expect dir
 '
 
+test_expect_success 'cone mode: list' '
+	cat >expect <<-EOF &&
+		folder1
+		folder2
+	EOF
+	git -C repo sparse-checkout set --stdin <expect &&
+	git -C repo sparse-checkout list >actual 2>err &&
+	test_must_be_empty err &&
+	test_cmp expect actual
+'
+
 test_expect_success 'cone mode: set with nested folders' '
 	git -C repo sparse-checkout set deep deep/deeper1/deepest 2>err &&
 	test_line_count = 0 err &&
@@ -325,6 +336,34 @@ test_expect_success 'cone mode: set with core.ignoreCase=true' '
 	cat >expect <<-EOF &&
 		a
 		folder1
+	EOF
+	test_cmp expect dir
+'
+
+test_expect_success 'interaction with submodules' '
+	git clone repo super &&
+	(
+		cd super &&
+		mkdir modules &&
+		git submodule add ../repo modules/child &&
+		git add . &&
+		git commit -m "add submodule" &&
+		git sparse-checkout init --cone &&
+		git sparse-checkout set folder1
+	) &&
+	list_files super >dir &&
+	cat >expect <<-\EOF &&
+		a
+		folder1
+		modules
+	EOF
+	test_cmp expect dir &&
+	list_files super/modules/child >dir &&
+	cat >expect <<-\EOF &&
+		a
+		deep
+		folder1
+		folder2
 	EOF
 	test_cmp expect dir
 '

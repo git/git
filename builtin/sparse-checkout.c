@@ -53,12 +53,33 @@ static int sparse_checkout_list(int argc, const char **argv)
 
 	memset(&pl, 0, sizeof(pl));
 
+	pl.use_cone_patterns = core_sparse_checkout_cone;
+
 	sparse_filename = get_sparse_checkout_filename();
 	res = add_patterns_from_file_to_list(sparse_filename, "", 0, &pl, NULL);
 	free(sparse_filename);
 
 	if (res < 0) {
 		warning(_("this worktree is not sparse (sparse-checkout file may not exist)"));
+		return 0;
+	}
+
+	if (pl.use_cone_patterns) {
+		int i;
+		struct pattern_entry *pe;
+		struct hashmap_iter iter;
+		struct string_list sl = STRING_LIST_INIT_DUP;
+
+		hashmap_for_each_entry(&pl.recursive_hashmap, &iter, pe, ent) {
+			/* pe->pattern starts with "/", skip it */
+			string_list_insert(&sl, pe->pattern + 1);
+		}
+
+		string_list_sort(&sl);
+
+		for (i = 0; i < sl.nr; i++)
+			printf("%s\n", sl.items[i].string);
+
 		return 0;
 	}
 
