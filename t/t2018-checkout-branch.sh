@@ -4,12 +4,12 @@ test_description='checkout'
 
 . ./test-lib.sh
 
-# Arguments: [!] <branch> <sha> [<checkout options>]
+# Arguments: [!] <branch> <oid> [<checkout options>]
 #
 # Runs "git checkout" to switch to <branch>, testing that
 #
 #   1) we are on the specified branch, <branch>;
-#   2) HEAD is <sha>; if <sha> is not specified, the old HEAD is used.
+#   2) HEAD is <oid>; if <oid> is not specified, the old HEAD is used.
 #
 # If <checkout options> is not specified, "git checkout" is run with -b.
 #
@@ -25,8 +25,8 @@ do_checkout () {
 	exp_branch=$1 &&
 	exp_ref="refs/heads/$exp_branch" &&
 
-	# if <sha> is not specified, use HEAD.
-	exp_sha=${2:-$(git rev-parse --verify HEAD)} &&
+	# if <oid> is not specified, use HEAD.
+	exp_oid=${2:-$(git rev-parse --verify HEAD)} &&
 
 	# default options for git checkout: -b
 	if test -z "$3"
@@ -38,15 +38,15 @@ do_checkout () {
 
 	if test -n "$should_fail"
 	then
-		test_must_fail git checkout $opts $exp_branch $exp_sha
+		test_must_fail git checkout $opts $exp_branch $exp_oid
 	else
-		git checkout $opts $exp_branch $exp_sha &&
+		git checkout $opts $exp_branch $exp_oid &&
 		echo "$exp_ref" >ref.expect &&
 		git rev-parse --symbolic-full-name HEAD >ref.actual &&
 		test_cmp ref.expect ref.actual &&
-		echo "$exp_sha" >sha.expect &&
-		git rev-parse --verify HEAD >sha.actual &&
-		test_cmp sha.expect sha.actual
+		echo "$exp_oid" >oid.expect &&
+		git rev-parse --verify HEAD >oid.actual &&
+		test_cmp oid.expect oid.actual
 	fi
 }
 
