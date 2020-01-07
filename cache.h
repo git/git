@@ -324,7 +324,7 @@ struct index_state {
 	struct hashmap dir_hash;
 	struct object_id oid;
 	struct untracked_cache *untracked;
-	uint64_t fsmonitor_last_update;
+	char *fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
 	struct mem_pool *ce_mem_pool;
 	struct progress *progress;

@@ -6,8 +6,9 @@
 #include "run-command.h"
 #include "strbuf.h"
 
-#define INDEX_EXTENSION_VERSION	(1)
-#define HOOK_INTERFACE_VERSION	(1)
+#define INDEX_EXTENSION_VERSION1	(1)
+#define INDEX_EXTENSION_VERSION2	(2)
+#define HOOK_INTERFACE_VERSION		(1)
 
 struct trace_key trace_fsmonitor = TRACE_KEY_INIT(FSMONITOR);
 
@@ -32,17 +33,26 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	uint32_t ewah_size;
 	struct ewah_bitmap *fsmonitor_dirty;
 	int ret;
+	uint64_t timestamp;
+	struct strbuf last_update = STRBUF_INIT;
 
-	if (sz < sizeof(uint32_t) + sizeof(uint64_t) + sizeof(uint32_t))
+	if (sz < sizeof(uint32_t) + 1 + sizeof(uint32_t))
 		return error("corrupt fsmonitor extension (too short)");
 
 	hdr_version = get_be32(index);
 	index += sizeof(uint32_t);
-	if (hdr_version != INDEX_EXTENSION_VERSION)
+	if (hdr_version == INDEX_EXTENSION_VERSION1) {
+		timestamp = get_be64(index);
+		strbuf_addf(&last_update, "%"PRIu64"", timestamp);
+		index += sizeof(uint64_t);
+	} else if (hdr_version == INDEX_EXTENSION_VERSION2) {
+		strbuf_addstr(&last_update, index);
+		index += last_update.len + 1;
+	} else {
 		return error("bad fsmonitor version %d", hdr_version);
+	}
 
-	istate->fsmonitor_last_update = get_be64(index);
-	index += sizeof(uint64_t);
+	istate->fsmonitor_last_update = strbuf_detach(&last_update, NULL);
 
 	ewah_size = get_be32(index);
 	index += sizeof(uint32_t);
@@ -79,7 +89,6 @@ void fill_fsmonitor_bitmap(struct index_state *istate)
 void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 {
 	uint32_t hdr_version;
-	uint64_t tm;
 	uint32_t ewah_start;
 	uint32_t ewah_size = 0;
 	int fixup = 0;
@@ -89,11 +98,12 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
 		    (uintmax_t)istate->fsmonitor_dirty->bit_size, istate->cache_nr);
 
-	put_be32(&hdr_version, INDEX_EXTENSION_VERSION);
+	put_be32(&hdr_version, INDEX_EXTENSION_VERSION2);
 	strbuf_add(sb, &hdr_version, sizeof(uint32_t));
 
-	put_be64(&tm, istate->fsmonitor_last_update);
-	strbuf_add(sb, &tm, sizeof(uint64_t));
+	strbuf_addstr(sb, istate->fsmonitor_last_update);
+	strbuf_addch(sb, 0); /* Want to keep a NUL */
+
 	fixup = sb->len;
 	strbuf_add(sb, &ewah_size, sizeof(uint32_t)); /* we'll fix this up later */
 
@@ -110,9 +120,9 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 }
 
 /*
- * Call the query-fsmonitor hook passing the time of the last saved results.
+ * Call the query-fsmonitor hook passing the last update token of the saved results.
  */
-static int query_fsmonitor(int version, uint64_t last_update, struct strbuf *query_result)
+static int query_fsmonitor(int version, const char *last_update, struct strbuf *query_result)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
@@ -121,7 +131,7 @@ static int query_fsmonitor(int version, uint64_t last_update, struct strbuf *que
 
 	argv_array_push(&cp.args, core_fsmonitor);
 	argv_array_pushf(&cp.args, "%d", version);
-	argv_array_pushf(&cp.args, "%" PRIuMAX, (uintmax_t)last_update);
+	argv_array_pushf(&cp.args, "%s", last_update);
 	cp.use_shell = 1;
 	cp.dir = get_git_work_tree();
 
@@ -151,6 +161,7 @@ void refresh_fsmonitor(struct index_state *istate)
 	int query_success = 0;
 	size_t bol; /* beginning of line */
 	uint64_t last_update;
+	struct strbuf last_update_token = STRBUF_INIT;
 	char *buf;
 	unsigned int i;
 
@@ -164,6 +175,7 @@ void refresh_fsmonitor(struct index_state *istate)
 	 * should be inclusive to ensure we don't miss potential changes.
 	 */
 	last_update = getnanotime();
+	strbuf_addf(&last_update_token, "%"PRIu64"", last_update);
 
 	/*
 	 * If we have a last update time, call query_fsmonitor for the set of
@@ -217,18 +229,21 @@ void refresh_fsmonitor(struct index_state *istate)
 	}
 	strbuf_release(&query_result);
 
-	/* Now that we've updated istate, save the last_update time */
-	istate->fsmonitor_last_update = last_update;
+	/* Now that we've updated istate, save the last_update_token */
+	FREE_AND_NULL(istate->fsmonitor_last_update);
+	istate->fsmonitor_last_update = strbuf_detach(&last_update_token, NULL);
 }
 
 void add_fsmonitor(struct index_state *istate)
 {
 	unsigned int i;
+	struct strbuf last_update = STRBUF_INIT;
 
 	if (!istate->fsmonitor_last_update) {
 		trace_printf_key(&trace_fsmonitor, "add fsmonitor");
 		istate->cache_changed |= FSMONITOR_CHANGED;
-		istate->fsmonitor_last_update = getnanotime();
+		strbuf_addf(&last_update, "%"PRIu64"", getnanotime());
+		istate->fsmonitor_last_update = strbuf_detach(&last_update, NULL);
 
 		/* reset the fsmonitor state */
 		for (i = 0; i < istate->cache_nr; i++)
@@ -250,7 +265,7 @@ void remove_fsmonitor(struct index_state *istate)
 	if (istate->fsmonitor_last_update) {
 		trace_printf_key(&trace_fsmonitor, "remove fsmonitor");
 		istate->cache_changed |= FSMONITOR_CHANGED;
-		istate->fsmonitor_last_update = 0;
+		FREE_AND_NULL(istate->fsmonitor_last_update);
 	}
 }
 
