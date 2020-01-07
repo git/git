@@ -12,7 +12,7 @@ test_description='checkout'
 #   2) HEAD is <sha>; if <sha> is not specified, the old HEAD is used.
 #
 # If <checkout options> is not specified, "git checkout" is run with -b.
-do_checkout() {
+do_checkout () {
 	exp_branch=$1 &&
 	exp_ref="refs/heads/$exp_branch" &&
 
@@ -32,19 +32,19 @@ do_checkout() {
 	test $exp_sha = $(git rev-parse --verify HEAD)
 }
 
-test_dirty_unmergeable() {
+test_dirty_unmergeable () {
 	! git diff --exit-code >/dev/null
 }
 
-setup_dirty_unmergeable() {
+setup_dirty_unmergeable () {
 	echo >>file1 change2
 }
 
-test_dirty_mergeable() {
+test_dirty_mergeable () {
 	! git diff --cached --exit-code >/dev/null
 }
 
-setup_dirty_mergeable() {
+setup_dirty_mergeable () {
 	echo >file2 file2 &&
 	git add file2
 }
