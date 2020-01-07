@@ -1063,7 +1063,7 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 	int i, j;
 
 	struct commit_list *first_parent = first_interesting_parent(graph);
-	int seen_parent = 0;
+	struct column *parent_col = NULL;
 
 	/*
 	 * Output the post-merge row
@@ -1117,12 +1117,17 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 			graph_line_addch(line, ' ');
 		} else {
 			graph_line_write_column(line, col, '|');
-			if (graph->merge_layout != 0 || i != graph->commit_index - 1)
-				graph_line_addch(line, seen_parent ? '_' : ' ');
+			if (graph->merge_layout != 0 || i != graph->commit_index - 1) {
+				if (parent_col)
+					graph_line_write_column(
+						line, parent_col, '_');
+				else
+					graph_line_addch(line, ' ');
+			}
 		}
 
 		if (col_commit == first_parent->item)
-			seen_parent = 1;
+			parent_col = col;
 	}
 
 	/*
