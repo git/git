@@ -4,7 +4,7 @@ test_description='checkout'
 
 . ./test-lib.sh
 
-# Arguments: <branch> <sha> [<checkout options>]
+# Arguments: [!] <branch> <sha> [<checkout options>]
 #
 # Runs "git checkout" to switch to <branch>, testing that
 #
@@ -12,7 +12,16 @@ test_description='checkout'
 #   2) HEAD is <sha>; if <sha> is not specified, the old HEAD is used.
 #
 # If <checkout options> is not specified, "git checkout" is run with -b.
+#
+# If the first argument is `!`, "git checkout" is expected to fail when
+# it is run.
 do_checkout () {
+	should_fail= &&
+	if test "x$1" = "x!"
+	then
+		should_fail=yes &&
+		shift
+	fi &&
 	exp_branch=$1 &&
 	exp_ref="refs/heads/$exp_branch" &&
 
@@ -27,10 +36,14 @@ do_checkout () {
 		opts="$3"
 	fi
 
-	git checkout $opts $exp_branch $exp_sha &&
-
-	test $exp_ref = $(git rev-parse --symbolic-full-name HEAD) &&
-	test $exp_sha = $(git rev-parse --verify HEAD)
+	if test -n "$should_fail"
+	then
+		test_must_fail git checkout $opts $exp_branch $exp_sha
+	else
+		git checkout $opts $exp_branch $exp_sha &&
+		test $exp_ref = $(git rev-parse --symbolic-full-name HEAD) &&
+		test $exp_sha = $(git rev-parse --verify HEAD)
+	fi
 }
 
 test_dirty_unmergeable () {
@@ -91,7 +104,7 @@ test_expect_success 'checkout -b to a new branch, set to an explicit ref' '
 
 test_expect_success 'checkout -b to a new branch with unmergeable changes fails' '
 	setup_dirty_unmergeable &&
-	test_must_fail do_checkout branch2 $HEAD1 &&
+	do_checkout ! branch2 $HEAD1 &&
 	test_dirty_unmergeable
 '
 
@@ -125,7 +138,7 @@ test_expect_success 'checkout -f -b to a new branch with mergeable changes disca
 
 test_expect_success 'checkout -b to an existing branch fails' '
 	test_when_finished git reset --hard HEAD &&
-	test_must_fail do_checkout branch2 $HEAD2
+	do_checkout ! branch2 $HEAD2
 '
 
 test_expect_success 'checkout -b to @{-1} fails with the right branch name' '
@@ -164,7 +177,7 @@ test_expect_success 'checkout -B to an existing branch with unmergeable changes 
 	git checkout branch1 &&
 
 	setup_dirty_unmergeable &&
-	test_must_fail do_checkout branch2 $HEAD1 -B &&
+	do_checkout ! branch2 $HEAD1 -B &&
 	test_dirty_unmergeable
 '
 
