@@ -25,6 +25,13 @@ test_expect_success setup '
 '
 
 test_auto_fixup () {
+	no_squash= &&
+	if test "x$1" = 'x!'
+	then
+		no_squash=true
+		shift
+	fi &&
+
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
@@ -35,14 +42,19 @@ test_auto_fixup () {
 	test_tick &&
 	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test_line_count = 3 actual &&
-	git diff --exit-code $1 &&
-	echo 1 >expect &&
-	git cat-file blob HEAD^:file1 >actual &&
-	test_cmp expect actual &&
-	git cat-file commit HEAD^ >commit &&
-	grep first commit >actual &&
-	test_line_count = 1 actual
+	if test -n "$no_squash"
+	then
+		test_line_count = 4 actual
+	else
+		test_line_count = 3 actual &&
+		git diff --exit-code $1 &&
+		echo 1 >expect &&
+		git cat-file blob HEAD^:file1 >actual &&
+		test_cmp expect actual &&
+		git cat-file commit HEAD^ >commit &&
+		grep first commit >actual &&
+		test_line_count = 1 actual
+	fi
 }
 
 test_expect_success 'auto fixup (option)' '
@@ -52,12 +64,19 @@ test_expect_success 'auto fixup (option)' '
 test_expect_success 'auto fixup (config)' '
 	git config rebase.autosquash true &&
 	test_auto_fixup final-fixup-config-true &&
-	test_must_fail test_auto_fixup fixup-config-true-no --no-autosquash &&
+	test_auto_fixup ! fixup-config-true-no --no-autosquash &&
 	git config rebase.autosquash false &&
-	test_must_fail test_auto_fixup final-fixup-config-false
+	test_auto_fixup ! final-fixup-config-false
 '
 
 test_auto_squash () {
+	no_squash= &&
+	if test "x$1" = 'x!'
+	then
+		no_squash=true
+		shift
+	fi &&
+
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
@@ -68,14 +87,19 @@ test_auto_squash () {
 	test_tick &&
 	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test_line_count = 3 actual &&
-	git diff --exit-code $1 &&
-	echo 1 >expect &&
-	git cat-file blob HEAD^:file1 >actual &&
-	test_cmp expect actual &&
-	git cat-file commit HEAD^ >commit &&
-	grep first commit >actual &&
-	test_line_count = 2 actual
+	if test -n "$no_squash"
+	then
+		test_line_count = 4 actual
+	else
+		test_line_count = 3 actual &&
+		git diff --exit-code $1 &&
+		echo 1 >expect &&
+		git cat-file blob HEAD^:file1 >actual &&
+		test_cmp expect actual &&
+		git cat-file commit HEAD^ >commit &&
+		grep first commit >actual &&
+		test_line_count = 2 actual
+	fi
 }
 
 test_expect_success 'auto squash (option)' '
@@ -85,9 +109,9 @@ test_expect_success 'auto squash (option)' '
 test_expect_success 'auto squash (config)' '
 	git config rebase.autosquash true &&
 	test_auto_squash final-squash-config-true &&
-	test_must_fail test_auto_squash squash-config-true-no --no-autosquash &&
+	test_auto_squash ! squash-config-true-no --no-autosquash &&
 	git config rebase.autosquash false &&
-	test_must_fail test_auto_squash final-squash-config-false
+	test_auto_squash ! final-squash-config-false
 '
 
 test_expect_success 'misspelled auto squash' '
