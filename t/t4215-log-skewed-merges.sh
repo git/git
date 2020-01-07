@@ -240,4 +240,46 @@ test_expect_success 'log --graph with octopus merge with column joining its penu
 	EOF
 '
 
+test_expect_success 'log --graph with multiple tips' '
+	git checkout --orphan 6_1 &&
+	test_commit 6_A &&
+	git branch 6_2 &&
+	git branch 6_4 &&
+	test_commit 6_B &&
+	git branch 6_3 &&
+	test_commit 6_C &&
+	git checkout 6_2 && test_commit 6_D &&
+	git checkout 6_3 && test_commit 6_E &&
+	git checkout -b 6_5 6_1 &&
+	git merge --no-ff 6_2 -m 6_F &&
+	git checkout 6_4 && test_commit 6_G &&
+	git checkout 6_3 &&
+	git merge --no-ff 6_4 -m 6_H &&
+	git checkout 6_1 &&
+	git merge --no-ff 6_2 -m 6_I &&
+
+	check_graph 6_1 6_3 6_5 <<-\EOF
+	*   6_I
+	|\
+	| | *   6_H
+	| | |\
+	| | | * 6_G
+	| | * | 6_E
+	| | | | * 6_F
+	| |_|_|/|
+	|/| | |/
+	| | |/|
+	| |/| |
+	| * | | 6_D
+	| | |/
+	| |/|
+	* | | 6_C
+	| |/
+	|/|
+	* | 6_B
+	|/
+	* 6_A
+	EOF
+'
+
 test_done

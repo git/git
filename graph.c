@@ -1219,13 +1219,9 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 *
 			 * The space just to the left of this
 			 * branch should always be empty.
-			 *
-			 * The branch to the left of that space
-			 * should be our eventual target.
 			 */
 			assert(graph->mapping[i - 1] > target);
 			assert(graph->mapping[i - 2] < 0);
-			assert(graph->mapping[i - 3] == target);
 			graph->mapping[i - 2] = target;
 			/*
 			 * Mark this branch as the horizontal edge to
