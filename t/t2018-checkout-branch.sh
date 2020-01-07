@@ -20,7 +20,8 @@ do_checkout () {
 	exp_sha=${2:-$(git rev-parse --verify HEAD)} &&
 
 	# default options for git checkout: -b
-	if [ -z "$3" ]; then
+	if test -z "$3"
+	then
 		opts="-b"
 	else
 		opts="$3"
