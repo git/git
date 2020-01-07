@@ -8,7 +8,8 @@
 
 #define INDEX_EXTENSION_VERSION1	(1)
 #define INDEX_EXTENSION_VERSION2	(2)
-#define HOOK_INTERFACE_VERSION		(1)
+#define HOOK_INTERFACE_VERSION1		(1)
+#define HOOK_INTERFACE_VERSION2		(2)
 
 struct trace_key trace_fsmonitor = TRACE_KEY_INIT(FSMONITOR);
 
@@ -23,6 +24,22 @@ static void fsmonitor_ewah_callback(size_t pos, void *is)
 
 	ce = istate->cache[pos];
 	ce->ce_flags &= ~CE_FSMONITOR_VALID;
+}
+
+static int fsmonitor_hook_version(void)
+{
+	int hook_version;
+
+	if (git_config_get_int("core.fsmonitorhookversion", &hook_version))
+		return -1;
+
+	if (hook_version == HOOK_INTERFACE_VERSION1 ||
+	    hook_version == HOOK_INTERFACE_VERSION2)
+		return hook_version;
+
+	warning("Invalid hook version '%i' in core.fsmonitorhookversion. "
+		"Must be 1 or 2.", hook_version);
+	return -1;
 }
 
 int read_fsmonitor_extension(struct index_state *istate, const void *data,
@@ -158,8 +175,8 @@ static void fsmonitor_refresh_callback(struct index_state *istate, const char *n
 void refresh_fsmonitor(struct index_state *istate)
 {
 	struct strbuf query_result = STRBUF_INIT;
-	int query_success = 0;
-	size_t bol; /* beginning of line */
+	int query_success = 0, hook_version = -1;
+	size_t bol = 0; /* beginning of line */
 	uint64_t last_update;
 	struct strbuf last_update_token = STRBUF_INIT;
 	char *buf;
@@ -167,6 +184,9 @@ void refresh_fsmonitor(struct index_state *istate)
 
 	if (!core_fsmonitor || istate->fsmonitor_has_run_once)
 		return;
+
+	hook_version = fsmonitor_hook_version();
+
 	istate->fsmonitor_has_run_once = 1;
 
 	trace_printf_key(&trace_fsmonitor, "refresh fsmonitor");
@@ -175,27 +195,60 @@ void refresh_fsmonitor(struct index_state *istate)
 	 * should be inclusive to ensure we don't miss potential changes.
 	 */
 	last_update = getnanotime();
-	strbuf_addf(&last_update_token, "%"PRIu64"", last_update);
+	if (hook_version == HOOK_INTERFACE_VERSION1)
+		strbuf_addf(&last_update_token, "%"PRIu64"", last_update);
 
 	/*
-	 * If we have a last update time, call query_fsmonitor for the set of
-	 * changes since that time, else assume everything is possibly dirty
+	 * If we have a last update token, call query_fsmonitor for the set of
+	 * changes since that token, else assume everything is possibly dirty
 	 * and check it all.
 	 */
 	if (istate->fsmonitor_last_update) {
-		query_success = !query_fsmonitor(HOOK_INTERFACE_VERSION,
-			istate->fsmonitor_last_update, &query_result);
+		if (hook_version == -1 || hook_version == HOOK_INTERFACE_VERSION2) {
+			query_success = !query_fsmonitor(HOOK_INTERFACE_VERSION2,
+				istate->fsmonitor_last_update, &query_result);
+
+			if (query_success) {
+				if (hook_version < 0)
+					hook_version = HOOK_INTERFACE_VERSION2;
+
+				/*
+				 * First entry will be the last update token
+				 * Need to use a char * variable because static
+				 * analysis was suggesting to use strbuf_addbuf
+				 * but we don't want to copy the entire strbuf
+				 * only the the chars up to the first NUL
+				 */
+				buf = query_result.buf;
+				strbuf_addstr(&last_update_token, buf);
+				if (!last_update_token.len) {
+					warning("Empty last update token.");
+					query_success = 0;
+				} else {
+					bol = last_update_token.len + 1;
+				}
+			} else if (hook_version < 0) {
+				hook_version = HOOK_INTERFACE_VERSION1;
+				if (!last_update_token.len)
+					strbuf_addf(&last_update_token, "%"PRIu64"", last_update);
+			}
+		}
+
+		if (hook_version == HOOK_INTERFACE_VERSION1) {
+			query_success = !query_fsmonitor(HOOK_INTERFACE_VERSION1,
+				istate->fsmonitor_last_update, &query_result);
+		}
+
 		trace_performance_since(last_update, "fsmonitor process '%s'", core_fsmonitor);
 		trace_printf_key(&trace_fsmonitor, "fsmonitor process '%s' returned %s",
 			core_fsmonitor, query_success ? "success" : "failure");
 	}
 
 	/* a fsmonitor process can return '/' to indicate all entries are invalid */
-	if (query_success && query_result.buf[0] != '/') {
+	if (query_success && query_result.buf[bol] != '/') {
 		/* Mark all entries returned by the monitor as dirty */
 		buf = query_result.buf;
-		bol = 0;
-		for (i = 0; i < query_result.len; i++) {
+		for (i = bol; i < query_result.len; i++) {
 			if (buf[i] != '\0')
 				continue;
 			fsmonitor_refresh_callback(istate, buf + bol);

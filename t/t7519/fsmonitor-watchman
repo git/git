@@ -26,8 +26,7 @@ if ($version == 1) {
 	# subtract one second to make sure watchman will return all changes
 	$time = int ($time / 1000000000) - 1;
 } else {
-	die "Unsupported query-fsmonitor hook version '$version'.\n" .
-	    "Falling back to scanning...\n";
+	exit 1;
 }
 
 my $git_work_tree;
