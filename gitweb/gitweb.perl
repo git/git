@@ -741,7 +741,7 @@ sub evaluate_gitweb_config {
 	$GITWEB_CONFIG_SYSTEM = "" if ($GITWEB_CONFIG_SYSTEM eq $GITWEB_CONFIG_COMMON);
 
 	# Common system-wide settings for convenience.
-	# Those settings can be ovverriden by GITWEB_CONFIG or GITWEB_CONFIG_SYSTEM.
+	# Those settings can be overridden by GITWEB_CONFIG or GITWEB_CONFIG_SYSTEM.
 	read_config_file($GITWEB_CONFIG_COMMON);
 
 	# Use first config file that exists.  This means use the per-instance
@@ -5285,7 +5285,7 @@ sub format_ctx_rem_add_lines {
 		#    + c
 		#   +  d
 		#
-		# Otherwise the highlightling would be confusing.
+		# Otherwise the highlighting would be confusing.
 		if ($is_combined) {
 			for (my $i = 0; $i < @$add; $i++) {
 				my $prefix_rem = substr($rem->[$i], 0, $num_parents);
