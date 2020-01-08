@@ -367,3 +367,7 @@ Fixes since v2.24
    (merge 4e61b2214d ew/packfile-syscall-optim later to maint).
    (merge ace0f86c7f pb/clarify-line-log-doc later to maint).
    (merge 763a59e71c en/merge-recursive-oid-eq-simplify later to maint).
+   (merge 4e2c4c0d4f do/gitweb-typofix-in-comments later to maint).
+   (merge 421c0ffb02 jb/doc-multi-pack-idx-fix later to maint).
+   (merge f8740c586b pm/am-in-body-header-doc-update later to maint).
+   (merge 5814d44d9b tm/doc-submodule-absorb-fix later to maint).
