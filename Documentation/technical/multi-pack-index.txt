@@ -36,7 +36,7 @@ Design Details
   directory of an alternate. It refers only to packfiles in that
   same directory.
 
-- The pack.multiIndex config setting must be on to consume MIDX files.
+- The core.multiPackIndex config setting must be on to consume MIDX files.
 
 - The file format includes parameters for the object ID hash
   function, so a future change of hash algorithm does not require
