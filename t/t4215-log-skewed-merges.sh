@@ -311,7 +311,7 @@ test_expect_success 'log --graph with multiple tips and colors' '
 	test_cmp expect.colors actual.colors
 '
 
-test_expect_failure 'log --graph with multiple tips' '
+test_expect_success 'log --graph with multiple tips' '
 	git checkout --orphan 7_1 &&
 	test_commit 7_A &&
 	test_commit 7_B &&
