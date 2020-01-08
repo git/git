@@ -1063,7 +1063,7 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 	int i, j;
 
 	struct commit_list *first_parent = first_interesting_parent(graph);
-	int seen_parent = 0;
+	struct column *parent_col = NULL;
 
 	/*
 	 * Output the post-merge row
@@ -1117,12 +1117,17 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 			graph_line_addch(line, ' ');
 		} else {
 			graph_line_write_column(line, col, '|');
-			if (graph->merge_layout != 0 || i != graph->commit_index - 1)
-				graph_line_addch(line, seen_parent ? '_' : ' ');
+			if (graph->merge_layout != 0 || i != graph->commit_index - 1) {
+				if (parent_col)
+					graph_line_write_column(
+						line, parent_col, '_');
+				else
+					graph_line_addch(line, ' ');
+			}
 		}
 
 		if (col_commit == first_parent->item)
-			seen_parent = 1;
+			parent_col = col;
 	}
 
 	/*
@@ -1219,13 +1224,9 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 *
 			 * The space just to the left of this
 			 * branch should always be empty.
-			 *
-			 * The branch to the left of that space
-			 * should be our eventual target.
 			 */
 			assert(graph->mapping[i - 1] > target);
 			assert(graph->mapping[i - 2] < 0);
-			assert(graph->mapping[i - 3] == target);
 			graph->mapping[i - 2] = target;
 			/*
 			 * Mark this branch as the horizontal edge to

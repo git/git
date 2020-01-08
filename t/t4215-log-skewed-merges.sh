@@ -240,4 +240,75 @@ test_expect_success 'log --graph with octopus merge with column joining its penu
 	EOF
 '
 
+test_expect_success 'log --graph with multiple tips' '
+	git checkout --orphan 6_1 &&
+	test_commit 6_A &&
+	git branch 6_2 &&
+	git branch 6_4 &&
+	test_commit 6_B &&
+	git branch 6_3 &&
+	test_commit 6_C &&
+	git checkout 6_2 && test_commit 6_D &&
+	git checkout 6_3 && test_commit 6_E &&
+	git checkout -b 6_5 6_1 &&
+	git merge --no-ff 6_2 -m 6_F &&
+	git checkout 6_4 && test_commit 6_G &&
+	git checkout 6_3 &&
+	git merge --no-ff 6_4 -m 6_H &&
+	git checkout 6_1 &&
+	git merge --no-ff 6_2 -m 6_I &&
+
+	check_graph 6_1 6_3 6_5 <<-\EOF
+	*   6_I
+	|\
+	| | *   6_H
+	| | |\
+	| | | * 6_G
+	| | * | 6_E
+	| | | | * 6_F
+	| |_|_|/|
+	|/| | |/
+	| | |/|
+	| |/| |
+	| * | | 6_D
+	| | |/
+	| |/|
+	* | | 6_C
+	| |/
+	|/|
+	* | 6_B
+	|/
+	* 6_A
+	EOF
+'
+
+test_expect_success 'log --graph with multiple tips and colors' '
+	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
+	cat >expect.colors <<-\EOF &&
+	*   6_I
+	<RED>|<RESET><GREEN>\<RESET>
+	<RED>|<RESET> <GREEN>|<RESET> *   6_H
+	<RED>|<RESET> <GREEN>|<RESET> <YELLOW>|<RESET><BLUE>\<RESET>
+	<RED>|<RESET> <GREEN>|<RESET> <YELLOW>|<RESET> * 6_G
+	<RED>|<RESET> <GREEN>|<RESET> <YELLOW>|<RESET> <BLUE>|<RESET> * 6_F
+	<RED>|<RESET> <GREEN>|<RESET><RED>_<RESET><YELLOW>|<RESET><RED>_<RESET><BLUE>|<RESET><RED>/<RESET><GREEN>|<RESET>
+	<RED>|<RESET><RED>/<RESET><GREEN>|<RESET> <YELLOW>|<RESET> <BLUE>|<RESET><GREEN>/<RESET>
+	<RED>|<RESET> <GREEN>|<RESET> <YELLOW>|<RESET><GREEN>/<RESET><BLUE>|<RESET>
+	<RED>|<RESET> <GREEN>|<RESET><GREEN>/<RESET><YELLOW>|<RESET> <BLUE>|<RESET>
+	<RED>|<RESET> <GREEN>|<RESET> * <BLUE>|<RESET> 6_E
+	<RED>|<RESET> * <CYAN>|<RESET> <BLUE>|<RESET> 6_D
+	<RED>|<RESET> <BLUE>|<RESET> <CYAN>|<RESET><BLUE>/<RESET>
+	<RED>|<RESET> <BLUE>|<RESET><BLUE>/<RESET><CYAN>|<RESET>
+	* <BLUE>|<RESET> <CYAN>|<RESET> 6_C
+	<CYAN>|<RESET> <BLUE>|<RESET><CYAN>/<RESET>
+	<CYAN>|<RESET><CYAN>/<RESET><BLUE>|<RESET>
+	* <BLUE>|<RESET> 6_B
+	<BLUE>|<RESET><BLUE>/<RESET>
+	* 6_A
+	EOF
+	git log --color=always --graph --date-order --pretty=tformat:%s 6_1 6_3 6_5 >actual.colors.raw &&
+	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
+	test_cmp expect.colors actual.colors
+'
+
 test_done
