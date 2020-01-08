@@ -95,4 +95,21 @@ test_expect_success 'restore --ignore-unmerged ignores unmerged entries' '
 	)
 '
 
+test_expect_success 'restore --staged invalidates cache tree for deletions' '
+	test_when_finished git reset --hard &&
+	>new1 &&
+	>new2 &&
+	git add new1 new2 &&
+
+	# It is important to commit and then reset here, so that the index
+	# contains a valid cache-tree for the "both" tree.
+	git commit -m both &&
+	git reset --soft HEAD^ &&
+
+	git restore --staged new1 &&
+	git commit -m "just new2" &&
+	git rev-parse HEAD:new2 &&
+	test_must_fail git rev-parse HEAD:new1
+'
+
 test_done

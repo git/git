@@ -521,6 +521,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 	/* Now we are committed to check them out */
 	if (opts->checkout_worktree)
 		errs |= checkout_worktree(opts);
+	else
+		remove_marked_cache_entries(&the_index, 1);
 
 	/*
 	 * Allow updating the index when checking out from the index.
