@@ -1305,14 +1305,14 @@ static int clear_ce_flags_dir(struct index_state *istate,
 
 	if (pl->use_cone_patterns && orig_ret == MATCHED_RECURSIVE) {
 		struct cache_entry **ce = cache;
-		rc = (cache_end - cache) / sizeof(struct cache_entry *);
+		rc = cache_end - cache;
 
 		while (ce < cache_end) {
 			(*ce)->ce_flags &= ~clear_mask;
 			ce++;
 		}
 	} else if (pl->use_cone_patterns && orig_ret == NOT_MATCHED) {
-		rc = (cache_end - cache) / sizeof(struct cache_entry *);
+		rc = cache_end - cache;
 	} else {
 		rc = clear_ce_flags_1(istate, cache, cache_end - cache,
 				      prefix,
