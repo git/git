@@ -14,7 +14,7 @@ DQ='"'
 
 test_have_prereq MINGW ||
 echo foo 2>/dev/null > "Name and an${HT}HT"
-if ! test -f "Name and an${HT}HT"
+if ! test_path_is_file "Name and an${HT}HT"
 then
 	# FAT/NTFS does not allow tabs in filenames
 	skip_all='Your filesystem does not allow tabs in filenames'
