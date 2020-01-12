@@ -9,6 +9,7 @@
 #include "lockfile.h"
 #include "dir.h"
 #include "run-command.h"
+#include "sigchain.h"
 
 static void init_color(struct repository *r, struct add_i_state *s,
 		       const char *slot_name, char *dst,
@@ -1115,6 +1116,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 			->util = util;
 	}
 
+	sigchain_push(SIGPIPE, SIG_IGN);
 	init_add_i_state(&s, r);
 
 	/*
@@ -1168,6 +1170,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	strbuf_release(&header);
 	prefix_item_list_clear(&commands);
 	clear_add_i_state(&s);
+	sigchain_pop(SIGPIPE);
 
 	return res;
 }
