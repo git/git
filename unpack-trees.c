@@ -1672,9 +1672,9 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			if (!o->result.cache_tree)
 				o->result.cache_tree = cache_tree();
 			if (!cache_tree_fully_valid(o->result.cache_tree))
-				cache_tree_update(&o->result,
-						  WRITE_TREE_SILENT |
-						  WRITE_TREE_REPAIR);
+				ret = cache_tree_update(&o->result,
+							WRITE_TREE_SILENT |
+							WRITE_TREE_REPAIR);
 		}
 
 		o->result.updated_workdir = 1;
