@@ -53,9 +53,6 @@ UI, Workflows & Features
    or a named file, instead of taking it as the command line
    arguments, with the "--pathspec-from-file" option.
 
- * "git rebase -i" learned a few options that are known by "git
-   rebase" proper.
-
  * "git submodule" learned a subcommand "set-url".
 
  * "git log" family learned "--pretty=reference" that gives the name
