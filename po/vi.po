@@ -275,7 +275,7 @@ msgid ""
 "expected context line #%d in\n"
 "%.*s"
 msgstr ""
-"cần dòng nội dung #%d trong\n"
+"cần dòng ngữ cảnh #%d trong\n"
 "%.*s"
 
 #: add-patch.c:523
@@ -304,8 +304,8 @@ msgid ""
 "Lines starting with %c will be removed.\n"
 msgstr ""
 "---\n"
-"Để gỡ bỏ “%c” dòng, làm chúng thành những dòng ' ' (nội dung).\n"
-"Để gõ bỏ “%c” dòng, xóa chúng đi.\n"
+"Để gỡ bỏ dòng “%c”, sửa chúng thành những dòng ' ' (ngữ cảnh).\n"
+"Để gõ bỏ dòng “%c”, xóa chúng đi.\n"
 "Những dòng bắt đầu bằng %c sẽ bị loại bỏ.\n"
 
 #: add-patch.c:810
@@ -735,7 +735,7 @@ msgstr[0] "Khối dữ liệu #%d thành công tại %d (offset %d dòng)."
 #: apply.c:3069
 #, c-format
 msgid "Context reduced to (%ld/%ld) to apply fragment at %d"
-msgstr "Nội dung bị giảm xuống còn (%ld/%ld) để áp dụng mảnh dữ liệu tại %d"
+msgstr "Ngữ cảnh bị giảm xuống còn (%ld/%ld) để áp dụng mảnh dữ liệu tại %d"
 
 #: apply.c:3075
 #, c-format
@@ -1127,7 +1127,7 @@ msgstr "các đường dẫn bị ngăn cách bởi ký tự NULL"
 
 #: apply.c:5005
 msgid "ensure at least <n> lines of context match"
-msgstr "đảm bảo rằng có ít nhất <n> dòng nội dung khớp"
+msgstr "đảm bảo rằng có ít nhất <n> dòng ngữ cảnh khớp"
 
 #: apply.c:5006 builtin/am.c:2185 builtin/interpret-trailers.c:98
 #: builtin/interpret-trailers.c:100 builtin/interpret-trailers.c:102
@@ -1141,7 +1141,7 @@ msgstr "tìm thấy một dòng mới hoặc bị sửa đổi mà nó có lỗi
 
 #: apply.c:5010 apply.c:5013
 msgid "ignore changes in whitespace when finding context"
-msgstr "lờ đi sự thay đổi do khoảng trắng gây ra khi quét nội dung"
+msgstr "lờ đi sự thay đổi do khoảng trắng gây ra khi tìm ngữ cảnh"
 
 #: apply.c:5016
 msgid "apply the patch in reverse"
@@ -1149,7 +1149,7 @@ msgstr "áp dụng miếng vá theo chiều ngược"
 
 #: apply.c:5018
 msgid "don't expect at least one line of context"
-msgstr "đừng hy vọng có ít nhất một dòng nội dung"
+msgstr "đừng hy vọng có ít nhất một dòng ngữ cảnh"
 
 #: apply.c:5020
 msgid "leave the rejected hunks in corresponding *.rej files"
@@ -3098,7 +3098,7 @@ msgid ""
 "highlight whitespace errors in the 'context', 'old' or 'new' lines in the "
 "diff"
 msgstr ""
-"tô sang các lỗi về khoảng trắng trong các dòng “context”, “old” và “new” "
+"tô sáng các lỗi về khoảng trắng trong các dòng “context”, “old” và “new” "
 "trong khác biệt"
 
 #: diff.c:5342
@@ -3185,7 +3185,7 @@ msgstr "tắt dò tìm đổi tên"
 
 #: diff.c:5398
 msgid "use empty blobs as rename source"
-msgstr "dung các blob trống rống như là nguồn đổi tên"
+msgstr "dùng các blob trống rống như là nguồn đổi tên"
 
 #: diff.c:5400
 msgid "continue listing the history of a file beyond renames"
@@ -3262,7 +3262,7 @@ msgstr "<chế độ>"
 #: diff.c:5441
 msgid "show word diff, using <mode> to delimit changed words"
 msgstr ""
-"hiển thị khác biệt từ, sử dung <chế độ> để bỏ giới hạn các từ bị thay đổi"
+"hiển thị khác biệt từ, sử dụng <chế độ> để bỏ giới hạn các từ bị thay đổi"
 
 #: diff.c:5443 diff.c:5446 diff.c:5491
 msgid "<regex>"
@@ -3282,7 +3282,7 @@ msgstr "các dòng di chuyển của mã mà được tô màu khác nhau"
 
 #: diff.c:5453
 msgid "how white spaces are ignored in --color-moved"
-msgstr "bỏ qua khoảng trắng như thế nào trong --color-moved"
+msgstr "cách bỏ qua khoảng trắng trong --color-moved"
 
 #: diff.c:5456
 msgid "Other diff options"
@@ -3291,7 +3291,7 @@ msgstr "Các tùy chọn khác biệt khác"
 #: diff.c:5458
 msgid "when run from subdir, exclude changes outside and show relative paths"
 msgstr ""
-"khi chạy từ thư mục con, thự thi các thay đổi bên ngoài và hiển thị các "
+"khi chạy từ thư mục con, thực thi các thay đổi bên ngoài và hiển thị các "
 "đường dẫn liên quan"
 
 #: diff.c:5462
@@ -3477,7 +3477,7 @@ msgstr "không thể tạo thư mục cho %s"
 #: dir.c:3422
 #, c-format
 msgid "could not migrate git directory from '%s' to '%s'"
-msgstr "không thể di cư thư mục git từ “%s” sang “%s”"
+msgstr "không thể di dời thư mục git từ “%s” sang “%s”"
 
 #: editor.c:73
 #, c-format
@@ -3708,7 +3708,7 @@ msgstr "cần wanted-ref, nhưng lại nhận được “%s”"
 #: fetch-pack.c:1414
 #, c-format
 msgid "unexpected wanted-ref: '%s'"
-msgstr "không cần wanted-ref: “%s”"
+msgstr "wanted-ref không được mong đợi: “%s”"
 
 #: fetch-pack.c:1419
 #, c-format
