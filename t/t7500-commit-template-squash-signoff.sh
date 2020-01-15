@@ -382,4 +382,13 @@ test_expect_success 'check commit with unstaged rename and copy' '
 	)
 '
 
+test_expect_success 'commit without staging files fails and displays hints' '
+	echo "initial" >file &&
+	git add file &&
+	git commit -m initial &&
+	echo "changes" >>file &&
+	test_must_fail git commit -m update >actual &&
+	test_i18ngrep "no changes added to commit (use \"git add\" and/or \"git commit -a\")" actual
+'
+
 test_done
