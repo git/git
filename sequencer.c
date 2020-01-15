@@ -290,7 +290,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 			char *eol = strchr(p, '\n');
 			if (eol)
 				*eol = '\0';
-			if (delete_ref("(rebase -i) cleanup", p, NULL, 0) < 0) {
+			if (delete_ref("(rebase) cleanup", p, NULL, 0) < 0) {
 				warning(_("could not delete '%s'"), p);
 				ret = -1;
 			}
@@ -324,7 +324,7 @@ static const char *action_name(const struct replay_opts *opts)
 	case REPLAY_PICK:
 		return N_("cherry-pick");
 	case REPLAY_INTERACTIVE_REBASE:
-		return N_("rebase -i");
+		return N_("rebase");
 	}
 	die(_("unknown action: %d"), opts->action);
 }
@@ -628,7 +628,7 @@ static int do_recursive_merge(struct repository *r,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		/*
 		 * TRANSLATORS: %s will be "revert", "cherry-pick" or
-		 * "rebase -i".
+		 * "rebase".
 		 */
 		return error(_("%s: Unable to write new index file"),
 			_(action_name(opts)));
@@ -3199,7 +3199,7 @@ static int do_label(struct repository *r, const char *name, int len)
 		return error(_("illegal label name: '%.*s'"), len, name);
 
 	strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
-	strbuf_addf(&msg, "rebase -i (label) '%.*s'", len, name);
+	strbuf_addf(&msg, "rebase (label) '%.*s'", len, name);
 
 	transaction = ref_store_transaction_begin(refs, &err);
 	if (!transaction) {
