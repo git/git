@@ -372,15 +372,20 @@ static int check_updates(struct unpack_trees_options *o)
 	state.refresh_cache = 1;
 	state.istate = index;
 
+	if (!o->update || o->dry_run) {
+		remove_marked_cache_entries(index, 0);
+		trace_performance_leave("check_updates");
+		return 0;
+	}
+
 	if (o->clone)
 		setup_collided_checkout_detection(&state, index);
 
 	progress = get_progress(o);
 
-	if (o->update)
-		git_attr_set_direction(GIT_ATTR_CHECKOUT);
+	git_attr_set_direction(GIT_ATTR_CHECKOUT);
 
-	if (should_update_submodules() && o->update && !o->dry_run)
+	if (should_update_submodules())
 		load_gitmodules_file(index, NULL);
 
 	for (i = 0; i < index->cache_nr; i++) {
@@ -388,18 +393,18 @@ static int check_updates(struct unpack_trees_options *o)
 
 		if (ce->ce_flags & CE_WT_REMOVE) {
 			display_progress(progress, ++cnt);
-			if (o->update && !o->dry_run)
-				unlink_entry(ce);
+			unlink_entry(ce);
 		}
 	}
+
 	remove_marked_cache_entries(index, 0);
 	remove_scheduled_dirs();
 
-	if (should_update_submodules() && o->update && !o->dry_run)
+	if (should_update_submodules())
 		load_gitmodules_file(index, &state);
 
 	enable_delayed_checkout(&state);
-	if (has_promisor_remote() && o->update && !o->dry_run) {
+	if (has_promisor_remote()) {
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.
@@ -431,15 +436,12 @@ static int check_updates(struct unpack_trees_options *o)
 				    ce->name);
 			display_progress(progress, ++cnt);
 			ce->ce_flags &= ~CE_UPDATE;
-			if (o->update && !o->dry_run) {
-				errs |= checkout_entry(ce, &state, NULL, NULL);
-			}
+			errs |= checkout_entry(ce, &state, NULL, NULL);
 		}
 	}
 	stop_progress(&progress);
 	errs |= finish_delayed_checkout(&state, NULL);
-	if (o->update)
-		git_attr_set_direction(GIT_ATTR_CHECKIN);
+	git_attr_set_direction(GIT_ATTR_CHECKIN);
 
 	if (o->clone)
 		report_collided_checkout(index);
