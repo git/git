@@ -431,7 +431,7 @@ void handle_ignore_submodules_arg(struct diff_options *diffopt,
 	else if (!strcmp(arg, "dirty"))
 		diffopt->flags.ignore_dirty_submodules = 1;
 	else if (strcmp(arg, "none"))
-		die("bad --ignore-submodules argument: %s", arg);
+		die(_("bad --ignore-submodules argument: %s"), arg);
 	/*
 	 * Please update _git_status() in git-completion.bash when you
 	 * add new options
@@ -812,9 +812,9 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 				submodule = submodule_from_name(me->repo,
 								commit_oid, name);
 			if (submodule) {
-				warning("Submodule in commit %s at path: "
+				warning(_("Submodule in commit %s at path: "
 					"'%s' collides with a submodule named "
-					"the same. Skipping it.",
+					"the same. Skipping it."),
 					oid_to_hex(commit_oid), p->two->path);
 				name = NULL;
 			}
@@ -844,7 +844,7 @@ static void collect_changed_submodules(struct repository *r,
 	repo_init_revisions(r, &rev, NULL);
 	setup_revisions(argv->argc, argv->argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 
 	while ((commit = get_revision(&rev))) {
 		struct rev_info diff_rev;
@@ -992,7 +992,7 @@ static int submodule_needs_pushing(struct repository *r,
 		cp.out = -1;
 		cp.dir = path;
 		if (start_command(&cp))
-			die("Could not run 'git rev-list <commits> --not --remotes -n 1' command in submodule %s",
+			die(_("Could not run 'git rev-list <commits> --not --remotes -n 1' command in submodule %s"),
 					path);
 		if (strbuf_read(&buf, cp.out, the_hash_algo->hexsz + 1))
 			needs_pushing = 1;
@@ -1115,7 +1115,7 @@ static void submodule_push_check(const char *path, const char *head,
 	 * child process.
 	 */
 	if (run_command(&cp))
-		die("process for submodule '%s' failed", path);
+		die(_("process for submodule '%s' failed"), path);
 }
 
 int push_unpushed_submodules(struct repository *r,
@@ -1155,10 +1155,10 @@ int push_unpushed_submodules(struct repository *r,
 	/* Actually push the submodules */
 	for (i = 0; i < needs_pushing.nr; i++) {
 		const char *path = needs_pushing.items[i].string;
-		fprintf(stderr, "Pushing submodule '%s'\n", path);
+		fprintf(stderr, _("Pushing submodule '%s'\n"), path);
 		if (!push_submodule(path, remote, rs,
 				    push_options, dry_run)) {
-			fprintf(stderr, "Unable to push submodule '%s'\n", path);
+			fprintf(stderr, _("Unable to push submodule '%s'\n"), path);
 			ret = 0;
 		}
 	}
@@ -1448,7 +1448,7 @@ static int get_next_submodule(struct child_process *cp,
 			prepare_submodule_repo_env_in_gitdir(&cp->env_array);
 			cp->git_cmd = 1;
 			if (!spf->quiet)
-				strbuf_addf(err, "Fetching submodule %s%s\n",
+				strbuf_addf(err, _("Fetching submodule %s%s\n"),
 					    spf->prefix, ce->name);
 			argv_array_init(&cp->args);
 			argv_array_pushv(&cp->args, spf->args.argv);
@@ -1610,7 +1610,7 @@ int fetch_populated_submodules(struct repository *r,
 		goto out;
 
 	if (repo_read_index(r) < 0)
-		die("index file corrupt");
+		die(_("index file corrupt"));
 
 	argv_array_push(&spf.args, "fetch");
 	for (i = 0; i < options->argc; i++)
@@ -1665,7 +1665,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	cp.out = -1;
 	cp.dir = path;
 	if (start_command(&cp))
-		die("Could not run 'git status --porcelain=2' in submodule %s", path);
+		die(_("Could not run 'git status --porcelain=2' in submodule %s"), path);
 
 	fp = xfdopen(cp.out, "r");
 	while (strbuf_getwholeline(&buf, fp, '\n') != EOF) {
@@ -1706,7 +1706,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	fclose(fp);
 
 	if (finish_command(&cp) && !ignore_cp_exit_code)
-		die("'git status --porcelain=2' failed in submodule %s", path);
+		die(_("'git status --porcelain=2' failed in submodule %s"), path);
 
 	strbuf_release(&buf);
 	return dirty_submodule;
@@ -1841,7 +1841,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 	cp.no_stdout = 1;
 	cp.dir = sub->path;
 	if (start_command(&cp))
-		die("could not recurse into submodule '%s'", sub->path);
+		die(_("could not recurse into submodule '%s'"), sub->path);
 
 	return finish_command(&cp);
 }
@@ -1862,7 +1862,7 @@ static void submodule_reset_index(const char *path)
 	argv_array_push(&cp.args, empty_tree_oid_hex());
 
 	if (run_command(&cp))
-		die("could not reset submodule index");
+		die(_("could not reset submodule index"));
 }
 
 /**
