@@ -41,6 +41,11 @@
 extern "C" {
 #endif
 
+#define regcomp git_regcomp
+#define regexec git_regexec
+#define regerror git_regerror
+#define regfree git_regfree
+
 /* The following two types have to be signed and unsigned integer type
    wide enough to hold a value of a pointer.  For most ANSI compilers
    ptrdiff_t and size_t should be likely OK.  Still size of these two
