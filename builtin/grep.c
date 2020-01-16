@@ -420,7 +420,7 @@ static int grep_submodule(struct grep_opt *opt,
 		return 0;
 	}
 
-	repo_read_gitmodules(&subrepo);
+	repo_read_gitmodules(&subrepo, 0);
 
 	/*
 	 * NEEDSWORK: This adds the submodule's object directory to the list of

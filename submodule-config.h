@@ -61,7 +61,7 @@ int option_fetch_parse_recurse_submodules(const struct option *opt,
 					  const char *arg, int unset);
 int parse_update_recurse_submodules_arg(const char *opt, const char *arg);
 int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
-void repo_read_gitmodules(struct repository *repo);
+void repo_read_gitmodules(struct repository *repo, int skip_if_read);
 void gitmodules_config_oid(const struct object_id *commit_oid);
 
 /**
