@@ -30,6 +30,8 @@ test_rebase_same_head () {
 	shift &&
 	test_rebase_same_head_ $status_n $what_n $cmp_n "" "$*" &&
 	test_rebase_same_head_ $status_f $what_f $cmp_f " --no-ff" "$*"
+	test_rebase_same_head_ $status_n $what_n $cmp_n " --merge" "$*" &&
+	test_rebase_same_head_ $status_f $what_f $cmp_f " --merge --no-ff" "$*"
 }
 
 test_rebase_same_head_ () {
