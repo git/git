@@ -43,9 +43,6 @@ created stash, `stash@{1}` is the one before it, `stash@{2.hours.ago}`
 is also possible). Stashes may also be referenced by specifying just the
 stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 
-OPTIONS
--------
-
 push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--] [<pathspec>...]::
 
 	Save your local modifications to a new 'stash entry' and roll them
@@ -152,40 +149,51 @@ store::
 	reflog.  This is intended to be useful for scripts.  It is
 	probably not the command you want to use; see "push" above.
 
-If the `--all` option is used instead then the
-ignored files are stashed and cleaned in addition to the untracked files.
+OPTIONS
+-------
+-a::
+--all::
+	All ignored and untracked files are also stashed and then cleaned
+	up with `git clean`.
 
-If the `--include-untracked` option is used, all untracked files are also
-stashed and then cleaned up with `git clean`, leaving the working directory
-in a very clean state.
+-u::
+--include-untracked::
+	All untracked files are also stashed and then cleaned up with
+	`git clean`.
 
-If the `--index` option is used, then tries to reinstate not only the working
-tree's changes, but also the index's ones. However, this can fail, when you
-have conflicts (which are stored in the index, where you therefore can no
-longer apply the changes as they were originally).
+--index::
+	Tries to reinstate not only the working tree's changes, but also
+	the index's ones. However, this can fail, when you have conflicts
+	(which are stored in the index, where you therefore can no longer
+	apply the changes as they were originally).
 
-If the `--keep-index` option is used, all changes already added to the
-index are left intact.
+-k::
+--keep-index::
+--no-keep-index::
+	All changes already added to the index are left intact.
 
-With `--patch`, you can interactively select hunks from the diff
-between HEAD and the working tree to be stashed.  The stash entry is
-constructed such that its index state is the same as the index state
-of your repository, and its worktree contains only the changes you
-selected interactively.  The selected changes are then rolled back
-from your worktree. See the ``Interactive Mode'' section of
-linkgit:git-add[1] to learn how to operate the `--patch` mode.
+-p::
+--patch::
+	Interactively select hunks from the diff between HEAD and the
+	working tree to be stashed.  The stash entry is constructed such
+	that its index state is the same as the index state of your
+	repository, and its worktree contains only the changes you selected
+	interactively.  The selected changes are then rolled back from your
+	worktree. See the ``Interactive Mode'' section of linkgit:git-add[1]
+	to learn how to operate the `--patch` mode.
 +
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
-When pathspec is given to 'git stash push', the new stash entry records the
-modified states only for the files that match the pathspec.  The index
-entries and working tree files are then rolled back to the state in
-HEAD only for these files, too, leaving files that do not match the
-pathspec intact.
+<pathspec>...::
+	The new stash entry records the modified states only for the files
+	that match the pathspec.  The index entries and working tree files
+	are then rolled back to the state in HEAD only for these files,
+	too, leaving files that do not match the pathspec intact.
 
-When no `<stash>` is given, `stash@{0}` is assumed, otherwise `<stash>` must
-be a reference of the form `stash@{<revision>}`.
+<stash>::
+	A reference of the form `stash@{<revision>}`. When no `<stash>` is
+	given, the latest stash is assumed (that is, `stash@{0}`).
 
 DISCUSSION
 ----------
