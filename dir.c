@@ -2310,9 +2310,9 @@ static int treat_leading_path(struct dir_struct *dir,
 	 * WARNING WARNING WARNING:
 	 *
 	 * Any updates to the traversal logic here may need corresponding
-	 * updates in treat_leading_path().  See the commit message for the
-	 * commit adding this warning as well as the commit preceding it
-	 * for details.
+	 * updates in read_directory_recursive().  See 777b420347 (dir:
+	 * synchronize treat_leading_path() and read_directory_recursive(),
+	 * 2019-12-19) and its parent commit for details.
 	 */
 
 	struct strbuf sb = STRBUF_INIT;
