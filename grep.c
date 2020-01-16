@@ -1816,7 +1816,9 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		 * is not thread-safe.
 		 */
 		grep_attr_lock();
+		grep_read_lock();
 		textconv = userdiff_get_textconv(opt->repo, gs->driver);
+		grep_read_unlock();
 		grep_attr_unlock();
 	}
 
@@ -2184,8 +2186,11 @@ void grep_source_load_driver(struct grep_source *gs,
 		return;
 
 	grep_attr_lock();
-	if (gs->path)
+	if (gs->path) {
+		grep_read_lock();
 		gs->driver = userdiff_find_by_path(istate, gs->path);
+		grep_read_unlock();
+	}
 	if (!gs->driver)
 		gs->driver = userdiff_find_by_name("default");
 	grep_attr_unlock();
