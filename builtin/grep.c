@@ -24,6 +24,7 @@
 #include "submodule.h"
 #include "submodule-config.h"
 #include "object-store.h"
+#include "packfile.h"
 
 static char const * const grep_usage[] = {
 	N_("git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"),
@@ -1074,11 +1075,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			skip_first_line = 1;
 
 		/*
-		 * Pre-read gitmodules (if not read already) to prevent racy
-		 * lazy reading in worker threads.
+		 * Pre-read gitmodules (if not read already) and force eager
+		 * initialization of packed_git to prevent racy lazy
+		 * reading/initialization once worker threads are started.
 		 */
 		if (recurse_submodules)
 			repo_read_gitmodules(the_repository, 1);
+		if (startup_info->have_repository)
+			(void)get_packed_git(the_repository);
 
 		start_threads(&opt);
 	} else {
