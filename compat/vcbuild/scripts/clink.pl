@@ -45,9 +45,9 @@ while (@ARGV) {
 	} elsif ("$arg" eq "-liconv") {
 		push(@args, "libiconv.lib");
 	} elsif ("$arg" eq "-lcrypto") {
-		push(@args, "libeay32.lib");
+		push(@args, "libcrypto.lib");
 	} elsif ("$arg" eq "-lssl") {
-		push(@args, "ssleay32.lib");
+		push(@args, "libssl.lib");
 	} elsif ("$arg" eq "-lcurl") {
 		my $lib = "";
 		# Newer vcpkg definitions call this libcurl_imp.lib; Do we
