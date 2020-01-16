@@ -2781,12 +2781,14 @@ not_a_reserved_name:
 					continue;
 				}
 				break;
-			case 'c': case 'C': /* COM<N>, CON, CONIN$, CONOUT$ */
+			case 'c': case 'C':
+				/* COM1 ... COM9, CON, CONIN$, CONOUT$ */
 				if ((c = path[++i]) != 'o' && c != 'O')
 					goto not_a_reserved_name;
 				c = path[++i];
-				if (c == 'm' || c == 'M') { /* COM<N> */
-					if (!isdigit(path[++i]))
+				if (c == 'm' || c == 'M') { /* COM1 ... COM9 */
+					c = path[++i];
+					if (c < '1' || c > '9')
 						goto not_a_reserved_name;
 				} else if (c == 'n' || c == 'N') { /* CON */
 					c = path[i + 1];
