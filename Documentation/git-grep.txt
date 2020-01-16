@@ -347,6 +347,17 @@ EXAMPLES
 `git grep solution -- :^Documentation`::
 	Looks for `solution`, excluding files in `Documentation`.
 
+NOTES ON THREADS
+----------------
+
+The `--threads` option (and the grep.threads configuration) will be ignored when
+`--open-files-in-pager` is used, forcing a single-threaded execution.
+
+When grepping the object store (with `--cached` or giving tree objects), running
+with multiple threads might perform slower than single threaded if `--textconv`
+is given and there're too many text conversions. So if you experience low
+performance in this case, it might be desirable to use `--threads=1`.
+
 GIT
 ---
 Part of the linkgit:git[1] suite

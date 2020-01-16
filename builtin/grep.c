@@ -1054,7 +1054,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (recurse_submodules && (!use_index || untracked))
 		die(_("option not supported with --recurse-submodules"));
 
-	if (list.nr || cached || show_in_pager) {
+	if (show_in_pager) {
 		if (num_threads > 1)
 			warning(_("invalid option combination, ignoring --threads"));
 		num_threads = 1;
