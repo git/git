@@ -1441,7 +1441,7 @@ static void set_reflog_action(struct rebase_options *options)
 	if (env && strcmp("rebase", env))
 		return; /* only override it if it is "rebase" */
 
-	strbuf_addf(&buf, "rebase -i (%s)", options->action);
+	strbuf_addf(&buf, "rebase (%s)", options->action);
 	setenv(GIT_REFLOG_ACTION_ENVIRONMENT, buf.buf, 1);
 	strbuf_release(&buf);
 }
