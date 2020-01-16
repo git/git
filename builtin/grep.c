@@ -401,25 +401,23 @@ static int grep_submodule(struct grep_opt *opt,
 	struct grep_opt subopt;
 	int hit;
 
-	/*
-	 * NEEDSWORK: submodules functions need to be protected because they
-	 * call config_from_gitmodules(): the latter contains in its call stack
-	 * many thread-unsafe operations that are racy with object reading, such
-	 * as parse_object() and is_promisor_object().
-	 */
-	obj_read_lock();
 	sub = submodule_from_path(superproject, &null_oid, path);
 
-	if (!is_submodule_active(superproject, path)) {
-		obj_read_unlock();
+	if (!is_submodule_active(superproject, path))
 		return 0;
-	}
 
-	if (repo_submodule_init(&subrepo, superproject, sub)) {
-		obj_read_unlock();
+	if (repo_submodule_init(&subrepo, superproject, sub))
 		return 0;
-	}
 
+	/*
+	 * NEEDSWORK: repo_read_gitmodules() might call
+	 * add_to_alternates_memory() via config_from_gitmodules(). This
+	 * operation causes a race condition with concurrent object readings
+	 * performed by the worker threads. That's why we need obj_read_lock()
+	 * here. It should be removed once it's no longer necessary to add the
+	 * subrepo's odbs to the in-memory alternates list.
+	 */
+	obj_read_lock();
 	repo_read_gitmodules(&subrepo, 0);
 
 	/*
@@ -1052,6 +1050,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	pathspec.recursive = 1;
 	pathspec.recurse_submodules = !!recurse_submodules;
 
+	if (recurse_submodules && (!use_index || untracked))
+		die(_("option not supported with --recurse-submodules"));
+
 	if (list.nr || cached || show_in_pager) {
 		if (num_threads > 1)
 			warning(_("invalid option combination, ignoring --threads"));
@@ -1071,6 +1072,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		    && (opt.pre_context || opt.post_context ||
 			opt.file_break || opt.funcbody))
 			skip_first_line = 1;
+
+		/*
+		 * Pre-read gitmodules (if not read already) to prevent racy
+		 * lazy reading in worker threads.
+		 */
+		if (recurse_submodules)
+			repo_read_gitmodules(the_repository, 1);
+
 		start_threads(&opt);
 	} else {
 		/*
@@ -1104,9 +1113,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 					   strbuf_detach(&buf, NULL));
 		}
 	}
-
-	if (recurse_submodules && (!use_index || untracked))
-		die(_("option not supported with --recurse-submodules"));
 
 	if (!show_in_pager && !opt.status_only)
 		setup_pager();
