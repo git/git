@@ -2383,6 +2383,10 @@ static int treat_leading_path(struct dir_struct *dir,
 		    (dir->flags & DIR_SHOW_IGNORED_TOO ||
 		     do_match_pathspec(istate, pathspec, sb.buf, sb.len,
 				       baselen, NULL, DO_MATCH_LEADING_PATHSPEC) == MATCHED_RECURSIVELY_LEADING_PATHSPEC)) {
+			if (!match_pathspec(istate, pathspec, sb.buf, sb.len,
+					    0 /* prefix */, NULL,
+					    0 /* do NOT special case dirs */))
+				state = path_none;
 			add_path_to_appropriate_result_list(dir, NULL, &cdir,
 							    istate,
 							    &sb, baselen,

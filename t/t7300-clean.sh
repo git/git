@@ -737,7 +737,7 @@ test_expect_success MINGW 'handle clean & core.longpaths = false nicely' '
 	test_i18ngrep "too long" .git/err
 '
 
-test_expect_failure 'clean untracked paths by pathspec' '
+test_expect_success 'clean untracked paths by pathspec' '
 	git init untracked &&
 	mkdir untracked/dir &&
 	echo >untracked/dir/file.txt &&
