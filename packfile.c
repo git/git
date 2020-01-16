@@ -1086,7 +1086,23 @@ unsigned long get_size_from_delta(struct packed_git *p,
 	do {
 		in = use_pack(p, w_curs, curpos, &stream.avail_in);
 		stream.next_in = in;
+		/*
+		 * Note: the window section returned by use_pack() must be
+		 * available throughout git_inflate()'s unlocked execution. To
+		 * ensure no other thread will modify the window in the
+		 * meantime, we rely on the packed_window.inuse_cnt. This
+		 * counter is incremented before window reading and checked
+		 * before window disposal.
+		 *
+		 * Other worrying sections could be the call to close_pack_fd(),
+		 * which can close packs even with in-use windows, and to
+		 * reprepare_packed_git(). Regarding the former, mmap doc says:
+		 * "closing the file descriptor does not unmap the region". And
+		 * for the latter, it won't re-open already available packs.
+		 */
+		obj_read_unlock();
 		st = git_inflate(&stream, Z_FINISH);
+		obj_read_lock();
 		curpos += stream.next_in - in;
 	} while ((st == Z_OK || st == Z_BUF_ERROR) &&
 		 stream.total_out < sizeof(delta_head));
@@ -1445,6 +1461,14 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	struct delta_base_cache_entry *ent = xmalloc(sizeof(*ent));
 	struct list_head *lru, *tmp;
 
+	/*
+	 * Check required to avoid redundant entries when more than one thread
+	 * is unpacking the same object, in unpack_entry() (since its phases I
+	 * and III might run concurrently across multiple threads).
+	 */
+	if (in_delta_base_cache(p, base_offset))
+		return;
+
 	delta_base_cached += base_size;
 
 	list_for_each_safe(lru, tmp, &delta_base_cache_lru) {
@@ -1574,7 +1598,15 @@ static void *unpack_compressed_entry(struct packed_git *p,
 	do {
 		in = use_pack(p, w_curs, curpos, &stream.avail_in);
 		stream.next_in = in;
+		/*
+		 * Note: we must ensure the window section returned by
+		 * use_pack() will be available throughout git_inflate()'s
+		 * unlocked execution. Please refer to the comment at
+		 * get_size_from_delta() to see how this is done.
+		 */
+		obj_read_unlock();
 		st = git_inflate(&stream, Z_FINISH);
+		obj_read_lock();
 		if (!stream.avail_out)
 			break; /* the payload is larger than it should be */
 		curpos += stream.next_in - in;
