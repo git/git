@@ -185,6 +185,13 @@ OPTIONS
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
+-q::
+--quiet::
+	Quiet, suppress feedback messages.
+
+\--::
+	Separates pathspec from options for disambiguation purposes.
+
 <pathspec>...::
 	The new stash entry records the modified states only for the files
 	that match the pathspec.  The index entries and working tree files
