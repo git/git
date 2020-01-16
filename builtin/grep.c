@@ -33,7 +33,6 @@ static char const * const grep_usage[] = {
 
 static int recurse_submodules;
 
-#define GREP_NUM_THREADS_DEFAULT 8
 static int num_threads;
 
 static pthread_t *threads;
@@ -1064,7 +1063,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	} else if (num_threads < 0)
 		die(_("invalid number of threads specified (%d)"), num_threads);
 	else if (num_threads == 0)
-		num_threads = HAVE_THREADS ? GREP_NUM_THREADS_DEFAULT : 1;
+		num_threads = HAVE_THREADS ? online_cpus() : 1;
 
 	if (num_threads > 1) {
 		if (!HAVE_THREADS)
