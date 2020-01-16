@@ -915,7 +915,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 
 	opts->prompt = N_("Patch update");
 	count = list_and_choose(s, files, opts);
-	if (count >= 0) {
+	if (count > 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
 
 		argv_array_pushl(&args, "git", "add--interactive", "--patch",
@@ -953,7 +953,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	opts->flags = IMMEDIATE;
 	count = list_and_choose(s, files, opts);
 	opts->flags = 0;
-	if (count >= 0) {
+	if (count > 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
 
 		argv_array_pushl(&args, "git", "diff", "-p", "--cached",
