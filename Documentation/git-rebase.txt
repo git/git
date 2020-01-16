@@ -265,9 +265,10 @@ See also INCOMPATIBLE OPTIONS below.
 See also INCOMPATIBLE OPTIONS below.
 
 --allow-empty-message::
-	By default, rebasing commits with an empty message will fail.
-	This option overrides that behavior, allowing commits with empty
-	messages to be rebased.
+	No-op.  Rebasing commits with an empty message used to fail
+	and this option would override that behavior, allowing commits
+	with empty messages to be rebased.  Now commits with an empty
+	message do not cause rebasing to halt.
 +
 See also INCOMPATIBLE OPTIONS below.
 
