@@ -36,7 +36,7 @@ test_expect_success 'merge master into b-symlink, which has a different symbolic
 '
 
 test_expect_success 'the merge result must be a file' '
-	test -f symlink
+	test_path_is_file symlink
 '
 
 test_expect_success 'merge master into b-file, which has a file instead of a symbolic link' '
@@ -46,7 +46,7 @@ test_expect_success 'merge master into b-file, which has a file instead of a sym
 '
 
 test_expect_success 'the merge result must be a file' '
-	test -f symlink
+	test_path_is_file symlink
 '
 
 test_expect_success 'merge b-file, which has a file instead of a symbolic link, into master' '
@@ -56,7 +56,7 @@ test_expect_success 'merge b-file, which has a file instead of a symbolic link, 
 '
 
 test_expect_success 'the merge result must be a file' '
-	test -f symlink
+	test_path_is_file symlink
 '
 
 test_done
