@@ -23,6 +23,10 @@ int cmp_strmap_entry(const void *hashmap_cmp_fn_data,
 			.map = HASHMAP_INIT(cmp_strmap_entry, NULL),  \
 			.strdup_strings = 1,                          \
 		    }
+#define STRINTMAP_INIT { \
+			.map = STRMAP_INIT,   \
+			.default_value = 0,   \
+		       }
 
 /*
  * Initialize the members of the strmap.  Any keys added to the strmap will
@@ -101,5 +105,95 @@ static inline int strmap_empty(struct strmap *map)
  */
 #define strmap_for_each_entry(mystrmap, iter, var)	\
 	hashmap_for_each_entry(&(mystrmap)->map, iter, var, ent)
+
+
+/*
+ * strintmap:
+ *    A map of string -> int, typecasting the void* of strmap to an int.
+ *
+ * Primary differences:
+ *    1) Since the void* value is just an int in disguise, there is no value
+ *       to free.  (Thus one fewer argument to strintmap_clear)
+ *    2) strintmap_get() returns an int, or returns the default_value if the
+ *       key is not found in the strintmap.
+ *    3) No strmap_put() equivalent; strintmap_set() and strintmap_incr()
+ *       instead.
+ */
+
+struct strintmap {
+	struct strmap map;
+	int default_value;
+};
+
+#define strintmap_for_each_entry(mystrmap, iter, var)	\
+	strmap_for_each_entry(&(mystrmap)->map, iter, var)
+
+static inline void strintmap_init(struct strintmap *map, int default_value)
+{
+	strmap_init(&map->map);
+	map->default_value = default_value;
+}
+
+static inline void strintmap_init_with_options(struct strintmap *map,
+					       int default_value,
+					       int strdup_strings)
+{
+	strmap_init_with_options(&map->map, strdup_strings);
+	map->default_value = default_value;
+}
+
+static inline void strintmap_clear(struct strintmap *map)
+{
+	strmap_clear(&map->map, 0);
+}
+
+static inline void strintmap_partial_clear(struct strintmap *map)
+{
+	strmap_partial_clear(&map->map, 0);
+}
+
+static inline int strintmap_contains(struct strintmap *map, const char *str)
+{
+	return strmap_contains(&map->map, str);
+}
+
+static inline void strintmap_remove(struct strintmap *map, const char *str)
+{
+	return strmap_remove(&map->map, str, 0);
+}
+
+static inline int strintmap_empty(struct strintmap *map)
+{
+	return strmap_empty(&map->map);
+}
+
+static inline unsigned int strintmap_get_size(struct strintmap *map)
+{
+	return strmap_get_size(&map->map);
+}
+
+/*
+ * Returns the value for str in the map.  If str isn't found in the map,
+ * the map's default_value is returned.
+ */
+static inline int strintmap_get(struct strintmap *map, const char *str)
+{
+	struct strmap_entry *result = strmap_get_entry(&map->map, str);
+	if (!result)
+		return map->default_value;
+	return (intptr_t)result->value;
+}
+
+static inline void strintmap_set(struct strintmap *map, const char *str,
+				 intptr_t v)
+{
+	strmap_put(&map->map, str, (void *)v);
+}
+
+/*
+ * Increment the value for str by amt.  If str isn't in the map, add it and
+ * set its value to default_value + amt.
+ */
+void strintmap_incr(struct strintmap *map, const char *str, intptr_t amt);
 
 #endif /* STRMAP_H */
