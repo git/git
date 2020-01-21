@@ -10,6 +10,7 @@ test_expect_success 'setup: create origin repos'  '
 	git init origin/sub &&
 	test_commit -C origin/sub file1 &&
 	git init origin/main &&
+	test_commit -C origin/main first &&
 	git -C origin/main submodule add ../sub &&
 	git -C origin/main commit -m "add sub" &&
 	test_commit -C origin/sub "file1 updated" file1 file1updated file1updated &&
@@ -52,6 +53,38 @@ test_expect_success 'add superproject worktree and manually add submodule worktr
 test_expect_success 'submodule is checked out after manually adding submodule worktree' '
 	git -C linked_submodule diff --submodule master"^!" >out &&
 	grep "file1 updated" out
+'
+
+test_expect_success 'checkout --recurse-submodules uses $GIT_DIR for submodules in a linked worktree' '
+	git -C main worktree add "$base_path/checkout-recurse" --detach  &&
+	git -C checkout-recurse submodule update --init &&
+	echo "gitdir: ../../main/.git/worktrees/checkout-recurse/modules/sub" >expect-gitfile &&
+	cat checkout-recurse/sub/.git >actual-gitfile &&
+	test_cmp expect-gitfile actual-gitfile &&
+	git -C main/sub rev-parse HEAD >expect-head-main &&
+	git -C checkout-recurse checkout --recurse-submodules HEAD~1 &&
+	cat checkout-recurse/sub/.git >actual-gitfile &&
+	git -C main/sub rev-parse HEAD >actual-head-main &&
+	test_cmp expect-gitfile actual-gitfile &&
+	test_cmp expect-head-main actual-head-main
+'
+
+test_expect_success 'core.worktree is removed in $GIT_DIR/modules/<name>/config, not in $GIT_COMMON_DIR/modules/<name>/config' '
+	echo "../../../sub" >expect-main &&
+	git -C main/sub config --get core.worktree >actual-main &&
+	test_cmp expect-main actual-main &&
+	echo "../../../../../../checkout-recurse/sub" >expect-linked &&
+	git -C checkout-recurse/sub config --get core.worktree >actual-linked &&
+	test_cmp expect-linked actual-linked &&
+	git -C checkout-recurse checkout --recurse-submodules first &&
+	test_expect_code 1 git -C main/.git/worktrees/checkout-recurse/modules/sub config --get core.worktree >linked-config &&
+	test_must_be_empty linked-config &&
+	git -C main/sub config --get core.worktree >actual-main &&
+	test_cmp expect-main actual-main
+'
+
+test_expect_success 'unsetting core.worktree does not prevent running commands directly against the submodule repository' '
+	git -C main/.git/worktrees/checkout-recurse/modules/sub log
 '
 
 test_done
