@@ -8753,7 +8753,7 @@ msgstr "Sie haben nicht zusammengeführte Pfade."
 
 #: wt-status.c:1147
 msgid "  (fix conflicts and run \"git commit\")"
-msgstr " (beheben Sie die Konflikte und führen Sie \"git commit\" aus)"
+msgstr "  (beheben Sie die Konflikte und führen Sie \"git commit\" aus)"
 
 #: wt-status.c:1149
 msgid "  (use \"git merge --abort\" to abort the merge)"
