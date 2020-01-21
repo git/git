@@ -136,10 +136,15 @@ static int parse_color(struct color *out, const char *name, int len)
 		else if (val < 0) {
 			out->type = COLOR_NORMAL;
 			return 0;
-		/* Rewrite low numbers as more-portable standard colors. */
+		/* Rewrite 0-7 as more-portable standard colors. */
 		} else if (val < 8) {
 			out->type = COLOR_ANSI;
 			out->value = val + COLOR_FOREGROUND_ANSI;
+			return 0;
+		/* Rewrite 8-15 as more-portable aixterm colors. */
+		} else if (val < 16) {
+			out->type = COLOR_ANSI;
+			out->value = val - 8 + COLOR_FOREGROUND_BRIGHT_ANSI;
 			return 0;
 		} else if (val < 256) {
 			out->type = COLOR_256;
