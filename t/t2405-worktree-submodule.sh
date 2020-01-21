@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Combination of submodules and multiple workdirs'
+test_description='Combination of submodules and multiple worktrees'
 
 . ./test-lib.sh
 
