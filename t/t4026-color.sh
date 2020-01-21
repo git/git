@@ -82,6 +82,10 @@ test_expect_success '0-7 are aliases for basic ANSI color names' '
 	color "0 7" "[30;47m"
 '
 
+test_expect_success '8-15 are aliases for aixterm color names' '
+	color "12 13" "[94;105m"
+'
+
 test_expect_success '256 colors' '
 	color "254 bold 255" "[1;38;5;254;48;5;255m"
 '
