@@ -2064,19 +2064,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (!(options.flags & REBASE_FORCE)) {
 			/* Lazily switch to the target branch if needed... */
 			if (options.switch_to) {
-				struct object_id oid;
-
-				if (get_oid(options.switch_to, &oid) < 0) {
-					ret = !!error(_("could not parse '%s'"),
-						      options.switch_to);
-					goto cleanup;
-				}
-
 				strbuf_reset(&buf);
 				strbuf_addf(&buf, "%s: checkout %s",
 					    getenv(GIT_REFLOG_ACTION_ENVIRONMENT),
 					    options.switch_to);
-				if (reset_head(&oid, "checkout",
+				if (reset_head(&options.orig_head, "checkout",
 					       options.head_name,
 					       RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
 					       NULL, buf.buf) < 0) {
