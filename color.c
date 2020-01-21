@@ -29,6 +29,7 @@ enum {
 	COLOR_FOREGROUND_ANSI = 30,
 	COLOR_FOREGROUND_RGB = 38,
 	COLOR_FOREGROUND_256 = 38,
+	COLOR_FOREGROUND_BRIGHT_ANSI = 90,
 };
 
 /* Ignore the RESET at the end when giving the size */
@@ -68,15 +69,38 @@ static int get_hex_color(const char *in, unsigned char *out)
 	return 0;
 }
 
-static int parse_color(struct color *out, const char *name, int len)
+/*
+ * If an ANSI color is recognized in "name", fill "out" and return 0.
+ * Otherwise, leave out unchanged and return -1.
+ */
+static int parse_ansi_color(struct color *out, const char *name, int len)
 {
 	/* Positions in array must match ANSI color codes */
 	static const char * const color_names[] = {
 		"black", "red", "green", "yellow",
 		"blue", "magenta", "cyan", "white"
 	};
-	char *end;
 	int i;
+	int color_offset = COLOR_FOREGROUND_ANSI;
+
+	if (strncasecmp(name, "bright", 6) == 0) {
+		color_offset = COLOR_FOREGROUND_BRIGHT_ANSI;
+		name += 6;
+		len -= 6;
+	}
+	for (i = 0; i < ARRAY_SIZE(color_names); i++) {
+		if (match_word(name, len, color_names[i])) {
+			out->type = COLOR_ANSI;
+			out->value = i + color_offset;
+			return 0;
+		}
+	}
+	return -1;
+}
+
+static int parse_color(struct color *out, const char *name, int len)
+{
+	char *end;
 	long val;
 
 	/* First try the special word "normal"... */
@@ -96,12 +120,8 @@ static int parse_color(struct color *out, const char *name, int len)
 	}
 
 	/* Then pick from our human-readable color names... */
-	for (i = 0; i < ARRAY_SIZE(color_names); i++) {
-		if (match_word(name, len, color_names[i])) {
-			out->type = COLOR_ANSI;
-			out->value = i + COLOR_FOREGROUND_ANSI;
-			return 0;
-		}
+	if (parse_ansi_color(out, name, len) == 0) {
+		return 0;
 	}
 
 	/* And finally try a literal 256-color-mode number */
