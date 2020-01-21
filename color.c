@@ -24,6 +24,13 @@ const char *column_colors_ansi[] = {
 	GIT_COLOR_RESET,
 };
 
+enum {
+	COLOR_BACKGROUND_OFFSET = 10,
+	COLOR_FOREGROUND_ANSI = 30,
+	COLOR_FOREGROUND_RGB = 38,
+	COLOR_FOREGROUND_256 = 38,
+};
+
 /* Ignore the RESET at the end when giving the size */
 const int column_colors_ansi_max = ARRAY_SIZE(column_colors_ansi) - 1;
 
@@ -92,7 +99,7 @@ static int parse_color(struct color *out, const char *name, int len)
 	for (i = 0; i < ARRAY_SIZE(color_names); i++) {
 		if (match_word(name, len, color_names[i])) {
 			out->type = COLOR_ANSI;
-			out->value = i;
+			out->value = i + COLOR_FOREGROUND_ANSI;
 			return 0;
 		}
 	}
@@ -112,7 +119,7 @@ static int parse_color(struct color *out, const char *name, int len)
 		/* Rewrite low numbers as more-portable standard colors. */
 		} else if (val < 8) {
 			out->type = COLOR_ANSI;
-			out->value = val;
+			out->value = val + COLOR_FOREGROUND_ANSI;
 			return 0;
 		} else if (val < 256) {
 			out->type = COLOR_256;
@@ -166,23 +173,26 @@ int color_parse(const char *value, char *dst)
  * already have the ANSI escape code in it. "out" should have enough
  * space in it to fit any color.
  */
-static char *color_output(char *out, int len, const struct color *c, char type)
+static char *color_output(char *out, int len, const struct color *c, int background)
 {
+	int offset = 0;
+
+	if (background)
+		offset = COLOR_BACKGROUND_OFFSET;
 	switch (c->type) {
 	case COLOR_UNSPECIFIED:
 	case COLOR_NORMAL:
 		break;
 	case COLOR_ANSI:
-		if (len < 2)
-			BUG("color parsing ran out of space");
-		*out++ = type;
-		*out++ = '0' + c->value;
+		out += xsnprintf(out, len, "%d", c->value + offset);
 		break;
 	case COLOR_256:
-		out += xsnprintf(out, len, "%c8;5;%d", type, c->value);
+		out += xsnprintf(out, len, "%d;5;%d", COLOR_FOREGROUND_256 + offset,
+				 c->value);
 		break;
 	case COLOR_RGB:
-		out += xsnprintf(out, len, "%c8;2;%d;%d;%d", type,
+		out += xsnprintf(out, len, "%d;2;%d;%d;%d",
+				 COLOR_FOREGROUND_RGB + offset,
 				 c->red, c->green, c->blue);
 		break;
 	}
@@ -279,14 +289,12 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 		if (!color_empty(&fg)) {
 			if (sep++)
 				OUT(';');
-			/* foreground colors are all in the 3x range */
-			dst = color_output(dst, end - dst, &fg, '3');
+			dst = color_output(dst, end - dst, &fg, 0);
 		}
 		if (!color_empty(&bg)) {
 			if (sep++)
 				OUT(';');
-			/* background colors are all in the 4x range */
-			dst = color_output(dst, end - dst, &bg, '4');
+			dst = color_output(dst, end - dst, &bg, 1);
 		}
 		OUT('m');
 	}
