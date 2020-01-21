@@ -6,32 +6,16 @@ test_description='Combination of submodules and multiple worktrees'
 
 base_path=$(pwd -P)
 
-test_expect_success 'setup: make origin'  '
-	mkdir -p origin/sub &&
-	(
-		cd origin/sub && git init &&
-		echo file1 >file1 &&
-		git add file1 &&
-		git commit -m file1
-	) &&
-	mkdir -p origin/main &&
-	(
-		cd origin/main && git init &&
-		git submodule add ../sub &&
-		git commit -m "add sub"
-	) &&
-	(
-		cd origin/sub &&
-		echo file1updated >file1 &&
-		git add file1 &&
-		git commit -m "file1 updated"
-	) &&
+test_expect_success 'setup: create origin repos'  '
+	git init origin/sub &&
+	test_commit -C origin/sub file1 &&
+	git init origin/main &&
+	git -C origin/main submodule add ../sub &&
+	git -C origin/main commit -m "add sub" &&
+	test_commit -C origin/sub "file1 updated" file1 file1updated file1updated &&
 	git -C origin/main/sub pull &&
-	(
-		cd origin/main &&
-		git add sub &&
-		git commit -m "sub updated"
-	)
+	git -C origin/main add sub &&
+	git -C origin/main commit -m "sub updated"
 '
 
 test_expect_success 'setup: clone' '
