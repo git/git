@@ -136,4 +136,22 @@ test_expect_success 'only touches what was listed' '
 	verify_expect
 '
 
+test_expect_success 'error conditions' '
+	restore_checkpoint &&
+	echo fileA.t >list &&
+	>empty_list &&
+
+	test_must_fail git restore --pathspec-from-file=list --patch --source=HEAD^1 2>err &&
+	test_i18ngrep -e "--pathspec-from-file is incompatible with --patch" err &&
+
+	test_must_fail git restore --pathspec-from-file=list --source=HEAD^1 -- fileA.t 2>err &&
+	test_i18ngrep -e "--pathspec-from-file is incompatible with pathspec arguments" err &&
+
+	test_must_fail git restore --pathspec-file-nul --source=HEAD^1 2>err &&
+	test_i18ngrep -e "--pathspec-file-nul requires --pathspec-from-file" err &&
+
+	test_must_fail git restore --pathspec-from-file=empty_list --source=HEAD^1 2>err &&
+	test_i18ngrep -e "you must specify path(s) to restore" err
+'
+
 test_done
