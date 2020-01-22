@@ -18,3 +18,18 @@ gpg.<format>.program::
 	chose. (see `gpg.program` and `gpg.format`) `gpg.program` can still
 	be used as a legacy synonym for `gpg.openpgp.program`. The default
 	value for `gpg.x509.program` is "gpgsm".
+
+gpg.minTrustLevel::
+	Specifies a minimum trust level for signature verification.  If
+	this option is unset, then signature verification for merge
+	operations require a key with at least `marginal` trust.  Other
+	operations that perform signature verification require a key
+	with at least `undefined` trust.  Setting this option overrides
+	the required trust-level for all operations.  Supported values,
+	in increasing order of significance:
++
+* `undefined`
+* `never`
+* `marginal`
+* `fully`
+* `ultimate`

@@ -7,6 +7,14 @@ struct strbuf;
 #define GPG_VERIFY_RAW			2
 #define GPG_VERIFY_OMIT_STATUS	4
 
+enum signature_trust_level {
+	TRUST_UNDEFINED,
+	TRUST_NEVER,
+	TRUST_MARGINAL,
+	TRUST_FULLY,
+	TRUST_ULTIMATE,
+};
+
 struct signature_check {
 	char *payload;
 	char *gpg_output;
@@ -16,7 +24,6 @@ struct signature_check {
 	 * possible "result":
 	 * 0 (not checked)
 	 * N (checked but no further result)
-	 * U (untrusted good)
 	 * G (good)
 	 * B (bad)
 	 */
@@ -25,6 +32,7 @@ struct signature_check {
 	char *key;
 	char *fingerprint;
 	char *primary_key_fingerprint;
+	enum signature_trust_level trust_level;
 };
 
 void signature_check_clear(struct signature_check *sigc);

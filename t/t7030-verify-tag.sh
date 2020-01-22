@@ -86,6 +86,30 @@ test_expect_success GPGSM 'verify and show signatures x509' '
 	echo ninth-signed-x509 OK
 '
 
+test_expect_success GPGSM 'verify and show signatures x509 with low minTrustLevel' '
+	test_config gpg.minTrustLevel undefined &&
+	git verify-tag ninth-signed-x509 2>actual &&
+	grep "Good signature from" actual &&
+	! grep "BAD signature from" actual &&
+	echo ninth-signed-x509 OK
+'
+
+test_expect_success GPGSM 'verify and show signatures x509 with matching minTrustLevel' '
+	test_config gpg.minTrustLevel fully &&
+	git verify-tag ninth-signed-x509 2>actual &&
+	grep "Good signature from" actual &&
+	! grep "BAD signature from" actual &&
+	echo ninth-signed-x509 OK
+'
+
+test_expect_success GPGSM 'verify and show signatures x509 with high minTrustLevel' '
+	test_config gpg.minTrustLevel ultimate &&
+	test_must_fail git verify-tag ninth-signed-x509 2>actual &&
+	grep "Good signature from" actual &&
+	! grep "BAD signature from" actual &&
+	echo ninth-signed-x509 OK
+'
+
 test_expect_success GPG 'detect fudged signature' '
 	git cat-file tag seventh-signed >raw &&
 	sed -e "/^tag / s/seventh/7th forged/" raw >forged1 &&

@@ -226,6 +226,7 @@ endif::git-rev-list[]
 '%GF':: show the fingerprint of the key used to sign a signed commit
 '%GP':: show the fingerprint of the primary key whose subkey was used
 	to sign a signed commit
+'%GT':: show the trust level for the key used to sign a signed commit
 '%gD':: reflog selector, e.g., `refs/stash@{1}` or `refs/stash@{2
 	minutes ago}`; the format follows the rules described for the
 	`-g` option. The portion before the `@` is the refname as
