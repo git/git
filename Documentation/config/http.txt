@@ -71,7 +71,7 @@ http.saveCookies::
 http.version::
 	Use the specified HTTP protocol version when communicating with a server.
 	If you want to force the default. The available and default version depend
-	on libcurl. Actually the possible values of
+	on libcurl. Currently the possible values of
 	this option are:
 
 	- HTTP/2
@@ -84,7 +84,7 @@ http.sslVersion::
 	particular configuration of the crypto library in use. Internally
 	this sets the 'CURLOPT_SSL_VERSION' option; see the libcurl
 	documentation for more details on the format of this option and
-	for the ssl version supported. Actually the possible values of
+	for the ssl version supported. Currently the possible values of
 	this option are:
 
 	- sslv2
