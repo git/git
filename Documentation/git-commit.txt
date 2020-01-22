@@ -475,6 +475,12 @@ variables, if set:
 
 (nb "<", ">" and "\n"s are stripped)
 
+The author and committer names are by convention some form of a personal name
+(that is, the name by which other humans refer to you), although Git does not
+enforce or require any particular form. Arbitrary Unicode may be used, subject
+to the constraints listed above. This name has no effect on authentication; for
+that, see the `credential.username` variable in linkgit:git-config[1].
+
 In case (some of) these environment variables are not set, the information
 is taken from the configuration items `user.name` and `user.email`, or, if not
 present, the environment variable EMAIL, or, if that is not set,
