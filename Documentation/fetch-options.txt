@@ -139,7 +139,10 @@ ifndef::git-pull[]
 	specified refspec (can be given more than once) to map the
 	refs to remote-tracking branches, instead of the values of
 	`remote.*.fetch` configuration variables for the remote
-	repository.  See section on "Configured Remote-tracking
+	repository.  Providing an empty `<refspec>` to the
+	`--refmap` option causes Git to ignore the configured
+	refspecs and rely entirely on the refspecs supplied as
+	command-line arguments. See section on "Configured Remote-tracking
 	Branches" for details.
 
 -t::
