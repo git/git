@@ -482,6 +482,13 @@ system user name and the hostname used for outgoing mail (taken
 from `/etc/mailname` and falling back to the fully qualified hostname when
 that file does not exist).
 
+The `author.name` and `committer.name` and their corresponding email options
+override `user.name` and `user.email` if set and are overridden themselves by
+the environment variables.
+
+The typical usage is to set just the `user.name` and `user.email` variables;
+the other options are provided for more complex use cases.
+
 :git-commit: 1
 include::date-formats.txt[]
 
