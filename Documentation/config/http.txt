@@ -199,6 +199,14 @@ http.postBuffer::
 	Transfer-Encoding: chunked is used to avoid creating a
 	massive pack file locally.  Default is 1 MiB, which is
 	sufficient for most requests.
++
+Note that raising this limit is only effective for disabling chunked
+transfer encoding and therefore should be used only where the remote
+server or a proxy only supports HTTP/1.0 or is noncompliant with the
+HTTP standard.  Raising this is not, in general, an effective solution
+for most push problems, but can increase memory consumption
+significantly since the entire buffer is allocated even for small
+pushes.
 
 http.lowSpeedLimit, http.lowSpeedTime::
 	If the HTTP transfer speed is less than 'http.lowSpeedLimit'
