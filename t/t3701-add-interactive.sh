@@ -68,6 +68,15 @@ test_expect_success 'revert works (initial)' '
 	! grep . output
 '
 
+test_expect_success 'add untracked (multiple)' '
+	test_when_finished "git reset && rm [1-9]" &&
+	touch $(test_seq 9) &&
+	test_write_lines a "2-5 8-" | git add -i -- [1-9] &&
+	test_write_lines 2 3 4 5 8 9 >expected &&
+	git ls-files [1-9] >output &&
+	test_cmp expected output
+'
+
 test_expect_success 'setup (commit)' '
 	echo baseline >file &&
 	git add file &&
