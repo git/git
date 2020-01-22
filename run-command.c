@@ -213,8 +213,9 @@ static char *locate_in_PATH(const char *file)
 static int exists_in_PATH(const char *file)
 {
 	char *r = locate_in_PATH(file);
+	int found = r != NULL;
 	free(r);
-	return r != NULL;
+	return found;
 }
 
 int sane_execvp(const char *file, char * const argv[])
