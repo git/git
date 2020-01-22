@@ -1,0 +1,53 @@
+Git 2.26 Release Notes
+======================
+
+Updates since v2.25
+-------------------
+
+UI, Workflows & Features
+
+ * Sample credential helper for using .netrc has been updated to work
+   out of the box.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+
+Fixes since v2.25
+-----------------
+
+ * "git commit" gives output similar to "git status" when there is
+   nothing to commit, but without honoring the advise.statusHints
+   configuration variable, which has been corrected.
+   (merge 5c4f55f1f6 hw/commit-advise-while-rejecting later to maint).
+
+ * has_object_file() said "no" given an object registered to the
+   system via pretend_object_file(), making it inconsistent with
+   read_object_file(), causing lazy fetch to attempt fetching an
+   empty tree from promisor remotes.
+   (merge 9c8a294a1a jt/sha1-file-remove-oi-skip-cached later to maint).
+
+ * Complete an update to tutorial that encourages "git switch" over
+   "git checkout" that was done only half-way.
+   (merge 1a7e454dd6 hw/tutorial-favor-switch-over-checkout later to maint).
+
+ * C pedantry ;-) fix.
+   (merge 63ab08fb99 bc/run-command-nullness-after-free-fix later to maint).
+
+ * The code that tries to skip over the entries for the paths in a
+   single directory using the cache-tree was not careful enough
+   against corrupt index file.
+   (merge 573117dfa5 es/unpack-trees-oob-fix later to maint).
+
+ * Reduce unnecessary round-trip when running "ls-remote" over the
+   stateless RPC mechanism.
+   (merge 4d8cab95cc jk/no-flush-upon-disconnecting-slrpc-transport later to maint).
+
+ * "git restore --staged" did not correctly update the cache-tree
+   structure, resulting in bogus trees to be written afterwards, which
+   has been corrected.
+   (merge e701bab3e9 nd/switch-and-restore later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
+   (merge 065027ee1a en/string-list-can-be-custom-sorted later to maint).
