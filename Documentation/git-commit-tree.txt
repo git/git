@@ -69,7 +69,6 @@ OPTIONS
 	Do not GPG-sign commit, to countermand a `--gpg-sign` option
 	given earlier on the command line.
 
-
 Commit Information
 ------------------
 
@@ -78,26 +77,6 @@ A commit encapsulates:
 - all parent object ids
 - author name, email and date
 - committer name and email and the commit time.
-
-While parent object ids are provided on the command line, author and
-committer information is taken from the following environment variables,
-if set:
-
-	GIT_AUTHOR_NAME
-	GIT_AUTHOR_EMAIL
-	GIT_AUTHOR_DATE
-	GIT_COMMITTER_NAME
-	GIT_COMMITTER_EMAIL
-	GIT_COMMITTER_DATE
-
-(nb "<", ">" and "\n"s are stripped)
-
-In case (some of) these environment variables are not set, the information
-is taken from the configuration items user.name and user.email, or, if not
-present, the environment variable EMAIL, or, if that is not set,
-system user name and the hostname used for outgoing mail (taken
-from `/etc/mailname` and falling back to the fully qualified hostname when
-that file does not exist).
 
 A commit comment is read from stdin. If a changelog
 entry is not provided via "<" redirection, 'git commit-tree' will just wait
@@ -117,6 +96,7 @@ FILES
 SEE ALSO
 --------
 linkgit:git-write-tree[1]
+linkgit:git-commit[1]
 
 GIT
 ---

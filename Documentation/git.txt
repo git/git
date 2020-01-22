@@ -482,13 +482,36 @@ double-quotes and respecting backslash escapes. E.g., the value
 Git Commits
 ~~~~~~~~~~~
 `GIT_AUTHOR_NAME`::
+	The human-readable name used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.name` and
+	`author.name` configuration settings.
+
 `GIT_AUTHOR_EMAIL`::
+	The email address used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.email` and
+	`author.email` configuration settings.
+
 `GIT_AUTHOR_DATE`::
+	The date used for the author identity when creating commit or tag objects, or
+	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+
 `GIT_COMMITTER_NAME`::
+	The human-readable name used in the committer identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.name` and
+	`committer.name` configuration settings.
+
 `GIT_COMMITTER_EMAIL`::
+	The email address used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.email` and
+	`committer.email` configuration settings.
+
 `GIT_COMMITTER_DATE`::
-'EMAIL'::
-	see linkgit:git-commit-tree[1]
+	The date used for the committer identity when creating commit or tag objects, or
+	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+
+`EMAIL`::
+	The email address used in the author and committer identities if no other
+	relevant environment variable or configuration setting has been set.
 
 Git Diffs
 ~~~~~~~~~
