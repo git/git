@@ -326,7 +326,7 @@ test_expect_success 'git add --dry-run of an existing file output' "
 cat >expect.err <<\EOF
 The following paths are ignored by one of your .gitignore files:
 ignored-file
-Use -f if you really want to add them.
+hint: Use -f if you really want to add them.
 EOF
 cat >expect.out <<\EOF
 add 'track-this'
