@@ -1162,8 +1162,13 @@ char *mingw_getcwd(char *pointer, int len)
 	if (hnd != INVALID_HANDLE_VALUE) {
 		ret = GetFinalPathNameByHandleW(hnd, wpointer, ARRAY_SIZE(wpointer), 0);
 		CloseHandle(hnd);
-		if (!ret || ret >= ARRAY_SIZE(wpointer))
-			return NULL;
+		if (!ret || ret >= ARRAY_SIZE(wpointer)) {
+			ret = GetLongPathNameW(cwd, wpointer, ARRAY_SIZE(wpointer));
+			if (!ret || ret >= ARRAY_SIZE(wpointer)) {
+				errno = ret ? ENAMETOOLONG : err_win_to_posix(GetLastError());
+				return NULL;
+			}
+		}
 		if (xwcstoutf(pointer, normalize_ntpath(wpointer), len) < 0)
 			return NULL;
 		return pointer;
