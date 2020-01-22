@@ -367,9 +367,6 @@ changes to tracked files.
 +
 For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
-:git-commit: 1
-include::date-formats.txt[]
-
 EXAMPLES
 --------
 When recording your own work, the contents of modified files in
@@ -463,6 +460,30 @@ alter the order the changes are committed, because the merge
 should be recorded as a single commit.  In fact, the command
 refuses to run when given pathnames (but see `-i` option).
 
+COMMIT INFORMATION
+------------------
+
+Author and committer information is taken from the following environment
+variables, if set:
+
+	GIT_AUTHOR_NAME
+	GIT_AUTHOR_EMAIL
+	GIT_AUTHOR_DATE
+	GIT_COMMITTER_NAME
+	GIT_COMMITTER_EMAIL
+	GIT_COMMITTER_DATE
+
+(nb "<", ">" and "\n"s are stripped)
+
+In case (some of) these environment variables are not set, the information
+is taken from the configuration items `user.name` and `user.email`, or, if not
+present, the environment variable EMAIL, or, if that is not set,
+system user name and the hostname used for outgoing mail (taken
+from `/etc/mailname` and falling back to the fully qualified hostname when
+that file does not exist).
+
+:git-commit: 1
+include::date-formats.txt[]
 
 DISCUSSION
 ----------
