@@ -1,7 +1,7 @@
 # Catalan translations for Git.
 # This file is distributed under the same license as the Git package.
 # Alex Henrie <alexhenrie24@gmail.com>, 2014-2016.
-# Jordi Mas i Hernàndez <jmas@softcatala.org>, 2016-2019
+# Jordi Mas i Hernàndez <jmas@softcatala.org>, 2016-2020
 #
 # Terminologia i criteris utilitzats
 #
@@ -3323,7 +3323,7 @@ msgstr "tracta tots els fitxers com a text"
 
 #: diff.c:5464
 msgid "swap two inputs, reverse the diff"
-msgstr "intercanvia els dues entrada, inverteix el diff"
+msgstr "intercanvia les dues entrades, inverteix el diff"
 
 #: diff.c:5466
 msgid "exit with 1 if there were differences, 0 otherwise"
@@ -6346,9 +6346,8 @@ msgid "missing 'GIT_AUTHOR_DATE'"
 msgstr "falta «GIT_AUTHOR_DATE»"
 
 #: sequencer.c:902 sequencer.c:1427
-#, fuzzy
 msgid "malformed ident line"
-msgstr "línia d'entrada mal formada: «%s»."
+msgstr "línia d'identitat mal formada"
 
 #: sequencer.c:925
 #, c-format
@@ -6455,7 +6454,7 @@ msgstr "HEAD separat"
 
 #: sequencer.c:1333
 msgid " (root-commit)"
-msgstr " (comissió d'arrel)"
+msgstr " (comissió arrel)"
 
 #: sequencer.c:1354
 msgid "could not parse HEAD"
@@ -6475,9 +6474,8 @@ msgid "unable to parse commit author"
 msgstr "no s'ha pogut analitzar l'autor de la comissió"
 
 #: sequencer.c:1431
-#, fuzzy
 msgid "corrupted author without date information"
-msgstr "actualitza la informació d'estadístiques"
+msgstr "autor malmès sense informació de data"
 
 #: sequencer.c:1447 builtin/am.c:1561 builtin/merge.c:684
 msgid "git write-tree failed to write a tree"
@@ -6554,9 +6552,8 @@ msgid "your index file is unmerged."
 msgstr "el vostre fitxer d'índex està sense fusionar."
 
 #: sequencer.c:1857
-#, fuzzy
 msgid "cannot fixup root commit"
-msgstr "no es pot trobar la comissió %s (%s)"
+msgstr "no es pot arreglar la comissió arrel"
 
 #: sequencer.c:1876
 #, c-format
@@ -6616,9 +6613,9 @@ msgid "missing arguments for %s"
 msgstr "falten els arguments per %s"
 
 #: sequencer.c:2235
-#, fuzzy, c-format
+#, c-format
 msgid "could not parse '%.*s'"
-msgstr "no s'ha pogut analitzar «%s»"
+msgstr "no s'ha pogut analitzar «%.*s»"
 
 #: sequencer.c:2289
 #, c-format
@@ -6637,14 +6634,12 @@ msgid "could not read '%s'."
 msgstr "no s'ha pogut llegir «%s»."
 
 #: sequencer.c:2384
-#, fuzzy
 msgid "cancelling a cherry picking in progress"
-msgstr "ni hi ha cap «cherry pick» ni cap reversió en curs"
+msgstr "s'està cancel·lant un «cherry pick» en curs"
 
 #: sequencer.c:2391
-#, fuzzy
 msgid "cancelling a revert in progress"
-msgstr "ni hi ha cap «cherry pick» ni cap reversió en curs"
+msgstr "s'està cancel·lant la reversió en curs"
 
 #: sequencer.c:2435
 msgid "please fix this using 'git rebase --edit-todo'."
@@ -6674,7 +6669,7 @@ msgstr "valor no vàlid per a %s: %s"
 
 #: sequencer.c:2630
 msgid "unusable squash-onto"
-msgstr ""
+msgstr "«squash-onto» no usable"
 
 #: sequencer.c:2646
 #, c-format
@@ -6686,9 +6681,8 @@ msgid "empty commit set passed"
 msgstr "conjunt de comissions buit passat"
 
 #: sequencer.c:2752
-#, fuzzy
 msgid "revert is already in progress"
-msgstr "un «cherry pick» o una reversió ja està en curs"
+msgstr "una reversió ja està en curs"
 
 #: sequencer.c:2754
 #, fuzzy, c-format
@@ -6696,9 +6690,8 @@ msgid "try \"git revert (--continue | %s--abort | --quit)\""
 msgstr "intenteu \"git cherry-pick (--continue | --quit | --abort)\""
 
 #: sequencer.c:2757
-#, fuzzy
 msgid "cherry-pick is already in progress"
-msgstr "un «cherry pick» o una reversió ja està en curs"
+msgstr "un «cherry pick» ja està en curs"
 
 #: sequencer.c:2759
 #, fuzzy, c-format
@@ -6750,23 +6743,20 @@ msgid "You seem to have moved HEAD. Not rewinding, check your HEAD!"
 msgstr "Sembla que heu mogut HEAD sense rebobinar, comproveu-ho HEAD"
 
 #: sequencer.c:2943
-#, fuzzy
 msgid "no revert in progress"
-msgstr "No hi ha un «rebase» en curs?"
+msgstr "no hi ha cap reversió en curs"
 
 #: sequencer.c:2951
-#, fuzzy
 msgid "no cherry-pick in progress"
-msgstr "ni hi ha cap «cherry pick» ni cap reversió en curs"
+msgstr "ni hi ha cap «cherry pick» en curs"
 
 #: sequencer.c:2961
-#, fuzzy
 msgid "failed to skip the commit"
-msgstr "s'ha produït un error en escriure l'objecte de comissió"
+msgstr "s'ha produït un error en ometre la comissió"
 
 #: sequencer.c:2968
 msgid "there is nothing to skip"
-msgstr ""
+msgstr "no hi ha res a ometre"
 
 #: sequencer.c:2971
 #, c-format
@@ -6790,7 +6780,7 @@ msgid "unable to copy '%s' to '%s'"
 msgstr "no s'ha pogut copiar «%s» a «%s»"
 
 #: sequencer.c:3159
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You can amend the commit now, with\n"
 "\n"
@@ -6802,11 +6792,11 @@ msgid ""
 msgstr ""
 "Podeu esmenar la comissió ara, amb\n"
 "\n"
-"\tgit commit --amend $gpg_sign_opt_quoted\n"
+"  git commit --amend %s\n"
 "\n"
 "Una vegada que estigueu satisfet amb els vostres canvis, executeu\n"
 "\n"
-"\tgit rebase --continue"
+"  git rebase --continue\n"
 
 #: sequencer.c:3169
 #, c-format
@@ -6870,12 +6860,12 @@ msgstr "no hi ha res a cometre\n"
 
 #: sequencer.c:3353
 msgid "writing squash-onto"
-msgstr ""
+msgstr "s'està escrivint «squash-onto»"
 
 #: sequencer.c:3391 builtin/rebase.c:876 builtin/rebase.c:882
-#, fuzzy, c-format
+#, c-format
 msgid "failed to find tree of %s"
-msgstr "S'ha produït un error en cercar l'arbre de %s."
+msgstr "s'ha produït un error en cercar l'arbre de %s"
 
 #: sequencer.c:3436
 #, c-format
@@ -6883,9 +6873,8 @@ msgid "could not resolve '%s'"
 msgstr "no s'ha pogut resoldre «%s»"
 
 #: sequencer.c:3467
-#, fuzzy
 msgid "cannot merge without a current revision"
-msgstr "No es pot «%s» sense una comissió prèvia"
+msgstr "no es pot fusionar sense una revisió actual"
 
 #: sequencer.c:3489
 #, c-format
@@ -6902,9 +6891,9 @@ msgid "octopus merge cannot be executed on top of a [new root]"
 msgstr ""
 
 #: sequencer.c:3526
-#, fuzzy, c-format
+#, c-format
 msgid "could not get commit message of '%s'"
-msgstr "no s'ha pogut llegir el missatge de comissió: %s"
+msgstr "no s'ha pogut llegir el missatge de comissió de «%s»"
 
 #: sequencer.c:3688
 #, c-format
@@ -6912,9 +6901,8 @@ msgid "could not even attempt to merge '%.*s'"
 msgstr "no s'ha pogut fusionar «%.*s»"
 
 #: sequencer.c:3704
-#, fuzzy
 msgid "merge: Unable to write new index file"
-msgstr "%s: No s'ha pogut escriure un fitxer d'índex nou"
+msgstr "fusió: no s'ha pogut escriure un fitxer d'índex nou"
 
 #: sequencer.c:3773 builtin/rebase.c:733
 #, c-format
@@ -6938,28 +6926,28 @@ msgstr ""
 "Podeu executar \"git stash pop\" o \"git stash drop\" en qualsevol moment.\n"
 
 #: sequencer.c:3849
-#, fuzzy, c-format
+#, c-format
 msgid "could not checkout %s"
 msgstr "no es pot agafar %s"
 
 #: sequencer.c:3863
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not a valid OID"
-msgstr "«%s» no és un terme vàlid"
+msgstr "%s: no és un OID vàlid"
 
 #: sequencer.c:3868 git-rebase--preserve-merges.sh:779
 msgid "could not detach HEAD"
 msgstr "no s'ha pogut separar HEAD"
 
 #: sequencer.c:3883
-#, fuzzy, c-format
+#, c-format
 msgid "Stopped at HEAD\n"
-msgstr "Aturat a %s...  %.*s\n"
+msgstr "Aturat a HEAD\n"
 
 #: sequencer.c:3885
-#, fuzzy, c-format
+#, c-format
 msgid "Stopped at %s\n"
-msgstr "Aturat a %s...  %.*s\n"
+msgstr "Aturat a %s\n"
 
 #: sequencer.c:3893
 #, c-format
@@ -7023,12 +7011,12 @@ msgid ""
 msgstr ""
 "\n"
 "Teniu canvis no comesos en el vostre arbre de treball. \n"
-"Primer cometeu-los i després executeu 'git rebase --continue' de nou."
+"Cometeu-los primer i després executeu «git rebase --continue» de nou."
 
 #: sequencer.c:4273 sequencer.c:4312
-#, fuzzy, c-format
+#,  c-format
 msgid "could not write file: '%s'"
-msgstr "no s'ha pogut crear el fitxer «%s»"
+msgstr "no s'ha pogut escriure el fitxer: «%s»"
 
 #: sequencer.c:4327
 msgid "could not remove CHERRY_PICK_HEAD"
@@ -7036,7 +7024,7 @@ msgstr "No s'ha pogut eliminar CHERRY_PICK_HEAD"
 
 #: sequencer.c:4334
 msgid "could not commit staged changes."
-msgstr "No s'han pogut cometre els canvis «staged»."
+msgstr "no s'han pogut cometre els canvis «staged»."
 
 #: sequencer.c:4440
 #, c-format
@@ -8729,9 +8717,8 @@ msgstr ""
 "vostres canvis)"
 
 #: wt-status.c:1419
-#, fuzzy
 msgid "Cherry-pick currently in progress."
-msgstr "ni hi ha cap «cherry pick» ni cap reversió en curs"
+msgstr "Hi ha «cherry pick» actualment en curs"
 
 #: wt-status.c:1422
 #, c-format
@@ -8740,7 +8727,7 @@ msgstr "Actualment esteu fent «cherry pick» a la comissió %s."
 
 #: wt-status.c:1429
 msgid "  (fix conflicts and run \"git cherry-pick --continue\")"
-msgstr "  (arregleu els conflictes i executeu \"git cherry-pick --continue\")"
+msgstr "  (arregleu els conflictes i executeu «git cherry-pick --continue»)"
 
 #: wt-status.c:1432
 #, fuzzy
@@ -8749,14 +8736,11 @@ msgstr "  (arregleu els conflictes i executeu \"git cherry-pick --continue\")"
 
 #: wt-status.c:1435
 msgid "  (all conflicts fixed: run \"git cherry-pick --continue\")"
-msgstr ""
-"  (tots els conflictes estan arreglats: executeu \"git cherry-pick --continue"
-"\")"
+msgstr "  (tots els conflictes estan arreglats: executeu «git cherry-pick --continue»)"
 
 #: wt-status.c:1437
-#, fuzzy
 msgid "  (use \"git cherry-pick --skip\" to skip this patch)"
-msgstr "  (useu \"git am --skip\" per a ometre aquest pedaç)"
+msgstr "  (useu «git cherry-pick --skip» per a ometre aquest pedaç)"
 
 #: wt-status.c:1439
 msgid "  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"
@@ -8765,9 +8749,8 @@ msgstr ""
 "pick»)"
 
 #: wt-status.c:1449
-#, fuzzy
 msgid "Revert currently in progress."
-msgstr "avorta la fusió en curs actual"
+msgstr "Una reversió està actualment en curs."
 
 #: wt-status.c:1452
 #, c-format
@@ -11749,7 +11732,7 @@ msgstr "el dipòsit «%s» no existeix"
 #: builtin/clone.c:998 builtin/fetch.c:1787
 #, c-format
 msgid "depth %s is not a positive number"
-msgstr "la profunditat %s no és nombre positiu"
+msgstr "la profunditat %s no és un nombre positiu"
 
 #: builtin/clone.c:1008
 #, c-format
@@ -14318,7 +14301,7 @@ msgstr "--open-files-in-pager només funciona en l'arbre de treball"
 
 #: builtin/grep.c:1119
 msgid "option not supported with --recurse-submodules"
-msgstr "opció no admesa amb --recurse-submodules."
+msgstr "opció no admesa amb --recurse-submodules"
 
 #: builtin/grep.c:1125
 msgid "--cached or --untracked cannot be used with --no-index"
@@ -18173,7 +18156,7 @@ msgstr "passa l'argument a l'estratègia de fusió"
 
 #: builtin/rebase.c:1537
 msgid "rebase all reachable commits up to the root(s)"
-msgstr "fes «rebase» de totes les comissions accessibles fins l'arrel"
+msgstr "fes «rebase» de totes les comissions accessibles fins a l'arrel"
 
 #: builtin/rebase.c:1554
 msgid ""
@@ -19795,7 +19778,7 @@ msgstr ""
 #: builtin/rm.c:307
 #, c-format
 msgid "not removing '%s' recursively without -r"
-msgstr "no s'està eliminant «%s» recursivament sense -r"
+msgstr "no s'ha suprimit «%s» recursivament sense -r"
 
 #: builtin/rm.c:346
 #, c-format
@@ -19831,14 +19814,12 @@ msgid "print status from remote helper"
 msgstr "imprimeix l'estat des de l'ajudant remot"
 
 #: builtin/shortlog.c:14
-#, fuzzy
 msgid "git shortlog [<options>] [<revision-range>] [[--] <path>...]"
-msgstr "git shortlog [<opcions>] [<rang-de-revisions>] [[--] [<camí>...]]"
+msgstr "git shortlog [<opcions>] [<rang-de-revisions>] [[--] <camí>...]"
 
 #: builtin/shortlog.c:15
-#, fuzzy
 msgid "git log --pretty=short | git shortlog [<options>]"
-msgstr "git worktree list [<opcions>]"
+msgstr "git log --pretty=short | git shortlog [<opcions>]"
 
 #: builtin/shortlog.c:264
 msgid "Group by committer rather than author"
@@ -19859,16 +19840,15 @@ msgstr "Mostra l'adreça electrònica de cada autor"
 
 #: builtin/shortlog.c:271
 msgid "<w>[,<i1>[,<i2>]]"
-msgstr ""
+msgstr "<w>[,<i1>[,<i2>]]"
 
 #: builtin/shortlog.c:272
 msgid "Linewrap output"
 msgstr "Ajusta les línies de la sortida"
 
 #: builtin/shortlog.c:301
-#, fuzzy
 msgid "too many arguments given outside repository"
-msgstr "hi ha massa arguments per a desassignar la font"
+msgstr "hi ha massa arguments donats fora del dipòsit"
 
 #: builtin/show-branch.c:13
 msgid ""
@@ -20053,7 +20033,7 @@ msgstr "mostra les referències de stdin que no siguin en el dipòsit local"
 
 #: builtin/sparse-checkout.c:20
 msgid "git sparse-checkout (init|list|set|disable) <options>"
-msgstr ""
+msgstr "git sparse-checkout (init|list|set|disable) <opcions>"
 
 #: builtin/sparse-checkout.c:61
 msgid "this worktree is not sparse (sparse-checkout file may not exist)"
@@ -20065,7 +20045,7 @@ msgstr ""
 
 #: builtin/sparse-checkout.c:237
 msgid "git sparse-checkout init [--cone]"
-msgstr ""
+msgstr "git sparse-checkout init [--cone]"
 
 #: builtin/sparse-checkout.c:256
 msgid "initialize the sparse-checkout in cone mode"
@@ -20077,44 +20057,38 @@ msgid "initialize sparse-checkout"
 msgstr "omet l'aplicació del filtre d'agafament parcial"
 
 #: builtin/sparse-checkout.c:295
-#, fuzzy, c-format
+#, c-format
 msgid "failed to open '%s'"
-msgstr "s'ha fallat en obrir '%s'"
+msgstr "s'ha produït un error en obrir «%s»"
 
 #: builtin/sparse-checkout.c:361
-#, fuzzy
 msgid "git sparse-checkout set (--stdin | <patterns>)"
-msgstr "git hash-object  --stdin-paths"
+msgstr "git sparse-checkout set (--stdin | <patrons>)"
 
 #: builtin/sparse-checkout.c:378
-#, fuzzy
 msgid "read patterns from standard in"
-msgstr "llegeix les actualitzacions des de stdin"
+msgstr "llegeix els patrons de l'entrada estàndard"
 
 #: builtin/sparse-checkout.c:384
-#, fuzzy
+#, msgid "set sparse-checkout patterns"
 msgid "set sparse-checkout patterns"
-msgstr "omet l'aplicació del filtre d'agafament parcial"
+msgstr "estableix els patrons «sparse-checkout»"
 
 #: builtin/sparse-checkout.c:447
-#, fuzzy
 msgid "disable sparse-checkout"
-msgstr "omet l'aplicació del filtre d'agafament parcial"
+msgstr "inhabilita «sparse-checkout»"
 
 #: builtin/sparse-checkout.c:459
-#, fuzzy
 msgid "error while refreshing working directory"
-msgstr "no s'ha pogut obtenir el directori de treball actual"
+msgstr "s'ha produït un error en actualitzar el directori de treball"
 
 #: builtin/stash.c:22 builtin/stash.c:37
-#, fuzzy
 msgid "git stash list [<options>]"
-msgstr "git worktree list [<opcions>]"
+msgstr "git stash list [<opcions>]"
 
 #: builtin/stash.c:23 builtin/stash.c:42
-#, fuzzy
 msgid "git stash show [<options>] [<stash>]"
-msgstr "git remote show [<opcions>] <nom>"
+msgstr "git stash show [<opcions>] [<stash>]"
 
 #: builtin/stash.c:24 builtin/stash.c:47
 msgid "git stash drop [-q|--quiet] [<stash>]"
@@ -20125,13 +20099,12 @@ msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
 msgstr ""
 
 #: builtin/stash.c:26 builtin/stash.c:62
-#, fuzzy
 msgid "git stash branch <branchname> [<stash>]"
-msgstr "git branch [<opcions>] [-l] [-f] <nom-de-branca> [<punt-inicial>]"
+msgstr "git stash branch <nom-de-branca> [<stash>]"
 
 #: builtin/stash.c:27 builtin/stash.c:67
 msgid "git stash clear"
-msgstr ""
+msgstr "git stash clear"
 
 #: builtin/stash.c:28 builtin/stash.c:77
 msgid ""
@@ -20139,101 +20112,101 @@ msgid ""
 "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
 "          [--] [<pathspec>...]]"
 msgstr ""
+"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+"          [-u|--include-untracked] [-a|--all] [-m|--message <missatge>]\n"
+"          [--] [<pathspec>...]]"
 
 #: builtin/stash.c:31 builtin/stash.c:84
 msgid ""
 "git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 "          [-u|--include-untracked] [-a|--all] [<message>]"
 msgstr ""
+"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+"          [-u|--include-untracked] [-a|--all] [<missatge>]"
 
 #: builtin/stash.c:52
 msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
-msgstr ""
+msgstr "git stash pop [--index] [-q|--quiet] [<stash>]"
 
 #: builtin/stash.c:57
 msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
-msgstr ""
+msgstr "git stash apply [--index] [-q|--quiet] [<stash>]"
 
 #: builtin/stash.c:72
 msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr ""
+msgstr "git stash store [-m|--message <missatge>] [-q|--quiet] <commit>"
 
 #: builtin/stash.c:127
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a stash-like commit"
-msgstr "'$args' no és una comissió de tipus magatzem"
+msgstr "«%s» no és una comissió de tipus «stash»"
 
 #: builtin/stash.c:147
-#, fuzzy, c-format
+#, c-format
 msgid "Too many revisions specified:%s"
-msgstr "S'han especificat massa revisions: $REV"
+msgstr "S'han especificat massa revisions:%s"
 
 #: builtin/stash.c:161 git-legacy-stash.sh:549
 msgid "No stash entries found."
 msgstr "No s'ha trobat cap «stash»."
 
 #: builtin/stash.c:175
-#, fuzzy, c-format
+#, c-format
 msgid "%s is not a valid reference"
-msgstr "«%s» no és un nom de remot vàlid"
+msgstr "«%s» no és una referència vàlida"
 
 #: builtin/stash.c:224 git-legacy-stash.sh:75
 msgid "git stash clear with parameters is unimplemented"
 msgstr "git stash clear amb paràmetres no està implementat"
 
 #: builtin/stash.c:403
-#, fuzzy
 msgid "cannot apply a stash in the middle of a merge"
-msgstr "No es pot aplicar un magatzem enmig d'una fusió"
+msgstr "no es pot aplicar un «stash» enmig d'una fusió"
 
 #: builtin/stash.c:414
-#, fuzzy, c-format
+#, c-format
 msgid "could not generate diff %s^!."
-msgstr "no s'ha pogut generar la llista per a fer"
+msgstr "no s'ha pogut generar diff %s^!."
 
 #: builtin/stash.c:421
-#, fuzzy
 msgid "conflicts in index.Try without --index."
-msgstr "Hi ha conflictes en l'índex. Proveu-ho sense --index."
+msgstr "hi ha conflictes en l'índex. Proveu-ho sense --index."
 
 #: builtin/stash.c:427
-#, fuzzy
 msgid "could not save index tree"
-msgstr "No s'ha pogut desar l'arbre d'índex"
+msgstr "no s'ha pogut desar l'arbre d'índex"
 
 #: builtin/stash.c:436
-#, fuzzy
 msgid "could not restore untracked files from stash"
-msgstr "No s'han pogut restaurar els fitxers no seguits des del «stash»"
+msgstr "no s'han pogut restaurar els fitxers no seguits des del «stash»"
 
 #: builtin/stash.c:450
-#, fuzzy, c-format
+#, c-format
 msgid "Merging %s with %s"
-msgstr "S'està fusionant %s amb %s\n"
+msgstr "S'està fusionant %s amb %s"
 
 #: builtin/stash.c:460 git-legacy-stash.sh:681
 msgid "Index was not unstashed."
-msgstr "L'índex no estava sense emmagatzemar."
+msgstr "L'índex no estava «unstashed»"
 
 #: builtin/stash.c:521 builtin/stash.c:620
-#, fuzzy
 msgid "attempt to recreate the index"
-msgstr "S'ha produït un error en llegir l'índex"
+msgstr "intenta tornar a crear l'índex"
 
 #: builtin/stash.c:554
-#, fuzzy, c-format
+#, c-format
 msgid "Dropped %s (%s)"
-msgstr "${REV} ($s) descartada"
+msgstr "Descartat %s (%s)"
 
 #: builtin/stash.c:557
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Could not drop stash entry"
-msgstr "${REV}: No s'ha pogut descartar l'entrada de magatzem"
+msgstr "%s: no s'ha pogut descartar l'entrada «stash»"
 
 #: builtin/stash.c:582
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a stash reference"
-msgstr "'$args' no és una referència de magatzem"
+msgstr "«%s» no és una referència «stash»"
 
 #: builtin/stash.c:632 git-legacy-stash.sh:695
 msgid "The stash entry is kept in case you need it again."
@@ -20244,14 +20217,13 @@ msgid "No branch name specified"
 msgstr "Cap nom de branca especificat"
 
 #: builtin/stash.c:795 builtin/stash.c:832
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot update %s with %s"
-msgstr "No es pot actualitzar $ref_stash amb $w_commit"
+msgstr "No es pot actualitzar %s amb %s"
 
 #: builtin/stash.c:813 builtin/stash.c:1470 builtin/stash.c:1506
-#, fuzzy
 msgid "stash message"
-msgstr "missatge d'etiqueta"
+msgstr "missatge «stash»"
 
 #: builtin/stash.c:823
 #, fuzzy
@@ -20288,9 +20260,8 @@ msgid "Can't use --patch and --include-untracked or --all at the same time"
 msgstr "No es poden usar --patch i --include-untracked o --all a la vegada"
 
 #: builtin/stash.c:1294
-#, fuzzy
 msgid "Did you forget to 'git add'?"
-msgstr "Potser volíeu dir «git add .»?\n"
+msgstr "Heu oblidat de fer «git add»?"
 
 #: builtin/stash.c:1309 git-legacy-stash.sh:346
 msgid "No local changes to save"
@@ -20305,37 +20276,33 @@ msgid "Cannot save the current status"
 msgstr "No es pot desar l'estat actual"
 
 #: builtin/stash.c:1336
-#, fuzzy, c-format
+#, c-format
 msgid "Saved working directory and index state %s"
-msgstr "S'han desat el directori de treball i l'estat d'índex $stash_msg"
+msgstr "S'han desat el directori de treball i l'estat d'índex %s"
 
 #: builtin/stash.c:1426 git-legacy-stash.sh:385
 msgid "Cannot remove worktree changes"
 msgstr "No es poden eliminar els canvis de l'arbre de treball"
 
 #: builtin/stash.c:1461 builtin/stash.c:1497
-#, fuzzy
 msgid "keep index"
-msgstr "Actualitza l'índex"
+msgstr "mantén l'índex"
 
 #: builtin/stash.c:1463 builtin/stash.c:1499
 msgid "stash in patch mode"
 msgstr ""
 
 #: builtin/stash.c:1464 builtin/stash.c:1500
-#, fuzzy
 msgid "quiet mode"
-msgstr "silenciós"
+msgstr "mode silenciós"
 
 #: builtin/stash.c:1466 builtin/stash.c:1502
-#, fuzzy
 msgid "include untracked files in stash"
-msgstr "mostra els fitxers no seguits en columnes"
+msgstr "inclou els fitxers no seguits a «stash»"
 
 #: builtin/stash.c:1468 builtin/stash.c:1504
-#, fuzzy
 msgid "include ignore files"
-msgstr "elimina només els fitxers ignorats"
+msgstr "inclou els fitxers ignorats"
 
 #: builtin/stash.c:1564
 #, c-format
@@ -20416,9 +20383,8 @@ msgid "Recurse into nested submodules"
 msgstr "Inclou recursivament els submòduls imbricats"
 
 #: builtin/submodule--helper.c:572
-#, fuzzy
 msgid "git submodule--helper foreach [--quiet] [--recursive] [--] <command>"
-msgstr "git submodule--helper foreach [--quiet] [--recursive] [<ordre>]"
+msgstr "git submodule--helper foreach [--quiet] [--recursive] [--] <ordre>"
 
 #: builtin/submodule--helper.c:599
 #, c-format
@@ -20458,9 +20424,8 @@ msgid "Suppress output for initializing a submodule"
 msgstr "Omet la sortida d'inicialitzar un submòdul"
 
 #: builtin/submodule--helper.c:715
-#, fuzzy
 msgid "git submodule--helper init [<options>] [<path>]"
-msgstr "git submodule--helper init [<camí>]"
+msgstr "git submodule--helper init [<opcions>] [<camí>]"
 
 #: builtin/submodule--helper.c:787 builtin/submodule--helper.c:914
 #, c-format
@@ -20630,9 +20595,8 @@ msgid "force cloning progress"
 msgstr "força el progrés del clonatge"
 
 #: builtin/submodule--helper.c:1402 builtin/submodule--helper.c:1899
-#, fuzzy
 msgid "disallow cloning into non-empty directory"
-msgstr "s'està aplicant a una història buida"
+msgstr "no permetis clonar en un directori no buit"
 
 #: builtin/submodule--helper.c:1407
 msgid ""
@@ -20653,9 +20617,9 @@ msgid "clone of '%s' into submodule path '%s' failed"
 msgstr "el clonatge de «%s» al camí de submòdul «%s» ha fallat"
 
 #: builtin/submodule--helper.c:1446
-#, fuzzy, c-format
+#, c-format
 msgid "directory not empty: '%s'"
-msgstr "el directori font està buit"
+msgstr "directori no buit: «%s»"
 
 #: builtin/submodule--helper.c:1458
 #, c-format
@@ -22374,7 +22338,7 @@ msgstr "Mostra els registres de comissió"
 
 #: command-list.h:116
 msgid "Show information about files in the index and the working tree"
-msgstr "Mostra informació sobre els fitxer a l'índex i a l'arbre de treball"
+msgstr "Mostra informació sobre els fitxers a l'índex i a l'arbre de treball"
 
 #: command-list.h:117
 msgid "List references in a remote repository"
