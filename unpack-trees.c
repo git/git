@@ -696,9 +696,11 @@ static int index_pos_by_traverse_info(struct name_entry *names,
 	if (pos >= 0)
 		BUG("This is a directory and should not exist in index");
 	pos = -pos - 1;
-	if (!starts_with(o->src_index->cache[pos]->name, name.buf) ||
+	if (pos >= o->src_index->cache_nr ||
+	    !starts_with(o->src_index->cache[pos]->name, name.buf) ||
 	    (pos > 0 && starts_with(o->src_index->cache[pos-1]->name, name.buf)))
-		BUG("pos must point at the first entry in this directory");
+		BUG("pos %d doesn't point to the first entry of %s in index",
+		    pos, name.buf);
 	strbuf_release(&name);
 	return pos;
 }
