@@ -1363,6 +1363,63 @@ test_expect_success 'teardown after path completion tests' '
 	       BS\\dir '$'separators\034in\035dir''
 '
 
+test_expect_success '__git_find_on_cmdline - single match' '
+	echo list >expect &&
+	(
+		words=(git command --opt list) &&
+		cword=${#words[@]} &&
+		__git_find_on_cmdline "add list remove" >actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success '__git_find_on_cmdline - multiple matches' '
+	echo remove >expect &&
+	(
+		words=(git command -o --opt remove list add) &&
+		cword=${#words[@]} &&
+		__git_find_on_cmdline "add list remove" >actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success '__git_find_on_cmdline - no match' '
+	(
+		words=(git command --opt branch) &&
+		cword=${#words[@]} &&
+		__git_find_on_cmdline "add list remove" >actual
+	) &&
+	test_must_be_empty actual
+'
+
+test_expect_success '__git_find_on_cmdline - single match with index' '
+	echo "3 list" >expect &&
+	(
+		words=(git command --opt list) &&
+		cword=${#words[@]} &&
+		__git_find_on_cmdline --show-idx "add list remove" >actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success '__git_find_on_cmdline - multiple matches with index' '
+	echo "4 remove" >expect &&
+	(
+		words=(git command -o --opt remove list add) &&
+		cword=${#words[@]} &&
+		__git_find_on_cmdline --show-idx "add list remove" >actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success '__git_find_on_cmdline - no match with index' '
+	(
+		words=(git command --opt branch) &&
+		cword=${#words[@]} &&
+		__git_find_on_cmdline --show-idx "add list remove" >actual
+	) &&
+	test_must_be_empty actual
+'
 
 test_expect_success '__git_get_config_variables' '
 	cat >expect <<-EOF &&
