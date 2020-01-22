@@ -176,9 +176,9 @@ git rev-parse refs/notes/z > pre_merge_z
 test_expect_success 'merge z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	git update-ref refs/notes/m refs/notes/y &&
 	git config core.notesRef refs/notes/m &&
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	grep -q "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -225,7 +225,7 @@ test_expect_success 'cannot do merge w/conflicts when previous merge is unfinish
 	test -d .git/NOTES_MERGE_WORKTREE &&
 	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should indicate what is wrong
-	grep -q "\\.git/NOTES_MERGE_\\* exists" output
+	test_i18ngrep -q "\\.git/NOTES_MERGE_\\* exists" output
 '
 
 # Setup non-conflicting merge between x and new notes ref w
@@ -314,6 +314,18 @@ y and z notes on 1st commit
 
 EOF
 
+test_expect_success 'do not allow mixing --commit and --abort' '
+	test_must_fail git notes merge --commit --abort
+'
+
+test_expect_success 'do not allow mixing --commit and --strategy' '
+	test_must_fail git notes merge --commit --strategy theirs
+'
+
+test_expect_success 'do not allow mixing --abort and --strategy' '
+	test_must_fail git notes merge --abort --strategy theirs
+'
+
 test_expect_success 'finalize conflicting merge (z => m)' '
 	# Resolve conflicts and finalize merge
 	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha1 <<EOF &&
@@ -325,7 +337,7 @@ EOF
 	git notes merge --commit &&
 	# No .git/NOTES_MERGE_* files left
 	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_cmp /dev/null output &&
+	test_must_be_empty output &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
 	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
@@ -367,9 +379,9 @@ git rev-parse refs/notes/z > pre_merge_z
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	git update-ref refs/notes/m refs/notes/y &&
 	git config core.notesRef refs/notes/m &&
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	grep -q "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -387,7 +399,7 @@ test_expect_success 'abort notes merge' '
 	git notes merge --abort &&
 	# No .git/NOTES_MERGE_* files left
 	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_cmp /dev/null output &&
+	test_must_be_empty output &&
 	# m has not moved (still == y)
 	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)" &&
 	# Verify that other notes refs has not changed (w, x, y and z)
@@ -401,9 +413,9 @@ git rev-parse refs/notes/y > pre_merge_y
 git rev-parse refs/notes/z > pre_merge_z
 
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	grep -q "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -454,7 +466,7 @@ EOF
 	git notes merge --commit &&
 	# No .git/NOTES_MERGE_* files left
 	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_cmp /dev/null output &&
+	test_must_be_empty output &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
 	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
@@ -482,9 +494,9 @@ cp expect_log_y expect_log_m
 
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	git update-ref refs/notes/m refs/notes/y &&
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	grep -q "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -529,9 +541,9 @@ EOF
 	test "$(git rev-parse refs/notes/y)" = "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
 	test "$(git rev-parse refs/notes/m)" != "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
 	# Mention refs/notes/m, and its current and expected value in output
-	grep -q "refs/notes/m" output &&
-	grep -q "$(git rev-parse refs/notes/m)" output &&
-	grep -q "$(git rev-parse NOTES_MERGE_PARTIAL^1)" output &&
+	test_i18ngrep -q "refs/notes/m" output &&
+	test_i18ngrep -q "$(git rev-parse refs/notes/m)" output &&
+	test_i18ngrep -q "$(git rev-parse NOTES_MERGE_PARTIAL^1)" output &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&
@@ -543,7 +555,7 @@ test_expect_success 'resolve situation by aborting the notes merge' '
 	git notes merge --abort &&
 	# No .git/NOTES_MERGE_* files left
 	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_cmp /dev/null output &&
+	test_must_be_empty output &&
 	# m has not moved (still == w)
 	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
 	# Verify that other notes refs has not changed (w, x, y and z)

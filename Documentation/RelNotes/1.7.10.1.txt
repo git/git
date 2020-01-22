@@ -69,7 +69,7 @@ Fixes since v1.7.10
  * The 'push to upstream' implementation was broken in some corner
    cases. "git push $there" without refspec, when the current branch
    is set to push to a remote different from $there, used to push to
-   $there using the upstream information to a remote unreleated to
+   $there using the upstream information to a remote unrelated to
    $there.
 
  * Giving "--continue" to a conflicted "rebase -i" session skipped a

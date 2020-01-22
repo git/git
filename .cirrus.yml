@@ -1,0 +1,15 @@
+env:
+  CIRRUS_CLONE_DEPTH: 1
+
+freebsd_12_task:
+  freebsd_instance:
+    image: freebsd-12-1-release-amd64
+  install_script:
+    pkg install -y gettext gmake perl5
+  create_user_script:
+    - pw useradd git
+    - chown -R git:git .
+  build_script:
+    - su git -c gmake
+  test_script:
+    - su git -c 'gmake test'

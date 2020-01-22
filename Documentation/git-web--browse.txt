@@ -8,7 +8,7 @@ git-web--browse - Git helper script to launch a web browser
 SYNOPSIS
 --------
 [verse]
-'git web{litdd}browse' [OPTIONS] URL/FILE ...
+'git web{litdd}browse' [<options>] <url|file>...
 
 DESCRIPTION
 -----------
@@ -62,14 +62,14 @@ CONF.VAR (from -c option) and web.browser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The web browser can be specified using a configuration variable passed
-with the -c (or --config) command-line option, or the 'web.browser'
+with the -c (or --config) command-line option, or the `web.browser`
 configuration variable if the former is not used.
 
 browser.<tool>.path
 ~~~~~~~~~~~~~~~~~~~
 
 You can explicitly provide a full path to your preferred browser by
-setting the configuration variable 'browser.<tool>.path'. For example,
+setting the configuration variable `browser.<tool>.path`. For example,
 you can configure the absolute path to firefox by setting
 'browser.firefox.path'. Otherwise, 'git web{litdd}browse' assumes the tool
 is available in PATH.
@@ -79,12 +79,12 @@ browser.<tool>.cmd
 
 When the browser, specified by options or configuration variables, is
 not among the supported ones, then the corresponding
-'browser.<tool>.cmd' configuration variable will be looked up. If this
+`browser.<tool>.cmd` configuration variable will be looked up. If this
 variable exists then 'git web{litdd}browse' will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.
 
-Note about konqueror
+NOTE ABOUT KONQUEROR
 --------------------
 
 When 'konqueror' is specified by a command-line option or a
@@ -92,8 +92,8 @@ configuration variable, we launch 'kfmclient' to try to open the HTML
 man page on an already opened konqueror in a new tab if possible.
 
 For consistency, we also try such a trick if 'browser.konqueror.path' is
-set to something like 'A_PATH_TO/konqueror'. That means we will try to
-launch 'A_PATH_TO/kfmclient' instead.
+set to something like `A_PATH_TO/konqueror`. That means we will try to
+launch `A_PATH_TO/kfmclient` instead.
 
 If you really want to use 'konqueror', then you can use something like
 the following:
@@ -110,7 +110,7 @@ Note about git-config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that these configuration variables should probably be set using
-the '--global' flag, for example like this:
+the `--global` flag, for example like this:
 
 ------------------------------------------------
 $ git config --global web.browser firefox

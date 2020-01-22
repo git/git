@@ -165,7 +165,7 @@ to contribute an update.  This may be because you would want to improve
 the translation of existing messages, or because the git-gui software
 itself was updated and there are new messages that need translation.
 
-In any case, make sure you are up-to-date before starting your work:
+In any case, make sure you are up to date before starting your work:
 
 	$ git checkout master
 	$ git pull

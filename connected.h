@@ -1,6 +1,7 @@
 #ifndef CONNECTED_H
 #define CONNECTED_H
 
+struct object_id;
 struct transport;
 
 /*
@@ -8,20 +9,65 @@ struct transport;
  * When called after returning the name for the last object, return -1
  * to signal EOF, otherwise return 0.
  */
-typedef int (*sha1_iterate_fn)(void *, unsigned char [20]);
+typedef int (*oid_iterate_fn)(void *, struct object_id *oid);
 
 /*
- * Make sure that our object store has all the commits necessary to
- * connect the ancestry chain to some of our existing refs, and all
- * the trees and blobs that these commits use.
+ * Named-arguments struct for check_connected. All arguments are
+ * optional, and can be left to defaults as set by CHECK_CONNECTED_INIT.
+ */
+struct check_connected_options {
+	/* Avoid printing any errors to stderr. */
+	int quiet;
+
+	/* --shallow-file to pass to rev-list sub-process */
+	const char *shallow_file;
+
+	/* Transport whose objects we are checking, if available. */
+	struct transport *transport;
+
+	/*
+	 * If non-zero, send error messages to this descriptor rather
+	 * than stderr. The descriptor is closed before check_connected
+	 * returns.
+	 */
+	int err_fd;
+
+	/* If non-zero, show progress as we traverse the objects. */
+	int progress;
+
+	/*
+	 * Insert these variables into the environment of the child process.
+	 */
+	const char **env;
+
+	/*
+	 * If non-zero, check the ancestry chain completely, not stopping at
+	 * any existing ref. This is necessary when deepening existing refs
+	 * during a fetch.
+	 */
+	unsigned is_deepening_fetch : 1;
+
+	/*
+	 * If non-zero, only check the top-level objects referenced by the
+	 * wanted refs (passed in as cb_data). This is useful for partial
+	 * clones, where enumerating and excluding all promisor objects is very
+	 * slow and the commit-walk itself becomes a no-op.
+	 */
+	unsigned check_refs_only : 1;
+};
+
+#define CHECK_CONNECTED_INIT { 0 }
+
+/*
+ * Make sure that all given objects and all objects reachable from them
+ * either exist in our object store or (if the repository is a partial
+ * clone) are promised to be available.
  *
  * Return 0 if Ok, non zero otherwise (i.e. some missing objects)
+ *
+ * If "opt" is NULL, behaves as if CHECK_CONNECTED_INIT was passed.
  */
-extern int check_everything_connected(sha1_iterate_fn, int quiet, void *cb_data);
-extern int check_shallow_connected(sha1_iterate_fn, int quiet, void *cb_data,
-				   const char *shallow_file);
-extern int check_everything_connected_with_transport(sha1_iterate_fn, int quiet,
-						     void *cb_data,
-						     struct transport *transport);
+int check_connected(oid_iterate_fn fn, void *cb_data,
+		    struct check_connected_options *opt);
 
 #endif /* CONNECTED_H */

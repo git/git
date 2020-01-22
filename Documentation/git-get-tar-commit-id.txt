@@ -9,17 +9,19 @@ git-get-tar-commit-id - Extract commit ID from an archive created using git-arch
 SYNOPSIS
 --------
 [verse]
-'git get-tar-commit-id' < <tarfile>
+'git get-tar-commit-id'
 
 
 DESCRIPTION
 -----------
-Acts as a filter, extracting the commit ID stored in archives created by
-'git archive'.  It reads only the first 1024 bytes of input, thus its
-runtime is not influenced by the size of <tarfile> very much.
+
+Read a tar archive created by 'git archive' from the standard input
+and extract the commit ID stored in it.  It reads only the first
+1024 bytes of input, thus its runtime is not influenced by the size
+of the tar archive very much.
 
 If no commit ID is found, 'git get-tar-commit-id' quietly exists with a
-return code of 1.  This can happen if <tarfile> had not been created
+return code of 1.  This can happen if the archive had not been created
 using 'git archive' or if the first parameter of 'git archive' had been
 a tree ID instead of a commit ID or tag.
 

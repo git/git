@@ -21,8 +21,8 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep "^R100..*path0/COPYING..*path1/COPYING"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+    grep "^R100..*path0/COPYING..*path1/COPYING" actual'
 
 test_expect_success \
     'moving the file back into subdirectory' \
@@ -35,8 +35,14 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep "^R100..*path1/COPYING..*path0/COPYING"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+    grep "^R100..*path1/COPYING..*path0/COPYING" actual'
+
+test_expect_success \
+    'mv --dry-run does not move file' \
+    'git mv -n path0/COPYING MOVED &&
+     test -f path0/COPYING &&
+     test ! -f MOVED'
 
 test_expect_success \
     'checking -k on non-existing file' \
@@ -102,7 +108,7 @@ test_expect_success \
 
 test_expect_success \
     'adding another file' \
-    'cp "$TEST_DIRECTORY"/../README path0/README &&
+    'cp "$TEST_DIRECTORY"/../README.md path0/README &&
      git add path0/README &&
      git commit -m add2 -a'
 
@@ -116,10 +122,9 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path0/COPYING..*path2/COPYING" &&
-     git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path0/README..*path2/README"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+     grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
+     grep "^R100..*path0/README..*path2/README" actual'
 
 test_expect_success \
     'succeed when source is a prefix of destination' \
@@ -135,10 +140,9 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path2/COPYING..*path1/path2/COPYING" &&
-     git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path2/README..*path1/path2/README"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
+     grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
+     grep "^R100..*path2/README..*path1/path2/README" actual'
 
 test_expect_success \
     'do not move directory over existing directory' \
@@ -156,11 +160,11 @@ test_expect_success "Michael Cassar's test case" '
 	echo b > partA/outline.txt &&
 	echo c > papers/unsorted/_another &&
 	git add papers partA &&
-	T1=`git write-tree` &&
+	T1=$(git write-tree) &&
 
 	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
 
-	T=`git write-tree` &&
+	T=$(git write-tree) &&
 	git ls-tree -r $T | verbose grep partA/outline.txt
 '
 
@@ -292,6 +296,9 @@ test_expect_success 'setup submodule' '
 	echo content >file &&
 	git add file &&
 	git commit -m "added sub and file" &&
+	mkdir -p deep/directory/hierarchy &&
+	git submodule add ./. deep/directory/hierarchy/sub &&
+	git commit -m "added another submodule" &&
 	git branch submodule
 '
 
@@ -377,7 +384,7 @@ test_expect_success 'mv does not complain when no .gitmodules file is found' '
 	entry="$(git ls-files --stage sub | cut -f 1)" &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
-	! test -s actual.err &&
+	test_must_be_empty actual.err &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
 	(
@@ -401,7 +408,7 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 	git diff-files --quiet -- sub &&
 	git add .gitmodules &&
 	git mv sub mod/sub 2>actual.err &&
-	! test -s actual.err &&
+	test_must_be_empty actual.err &&
 	! test -e sub &&
 	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
 	(
@@ -449,7 +456,7 @@ test_expect_success 'checking out a commit before submodule moved needs manual u
 	git mv sub sub2 &&
 	git commit -m "moved sub to sub2" &&
 	git checkout -q HEAD^ 2>actual &&
-	test_i18ngrep "^warning: unable to rmdir sub2:" actual &&
+	test_i18ngrep "^warning: unable to rmdir '\''sub2'\'':" actual &&
 	git status -s sub2 >actual &&
 	echo "?? sub2/" >expected &&
 	test_cmp expected actual &&
@@ -462,7 +469,7 @@ test_expect_success 'checking out a commit before submodule moved needs manual u
 	git update-index --refresh &&
 	git diff-files --quiet -- sub .gitmodules &&
 	git status -s sub2 >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'mv -k does not accidentally destroy submodules' '
@@ -473,6 +480,44 @@ test_expect_success 'mv -k does not accidentally destroy submodules' '
 	grep "^R  sub -> dest/sub" actual &&
 	git reset --hard &&
 	git checkout .
+'
+
+test_expect_success 'moving a submodule in nested directories' '
+	(
+		cd deep &&
+		git mv directory ../ &&
+		# git status would fail if the update of linking git dir to
+		# work dir of the submodule failed.
+		git status &&
+		git config -f ../.gitmodules submodule.deep/directory/hierarchy/sub.path >../actual &&
+		echo "directory/hierarchy/sub" >../expect
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success 'moving nested submodules' '
+	git commit -am "cleanup commit" &&
+	mkdir sub_nested_nested &&
+	(cd sub_nested_nested &&
+		touch nested_level2 &&
+		git init &&
+		git add . &&
+		git commit -m "nested level 2"
+	) &&
+	mkdir sub_nested &&
+	(cd sub_nested &&
+		touch nested_level1 &&
+		git init &&
+		git add . &&
+		git commit -m "nested level 1" &&
+		git submodule add ../sub_nested_nested &&
+		git commit -m "add nested level 2"
+	) &&
+	git submodule add ./sub_nested nested_move &&
+	git commit -m "add nested_move" &&
+	git submodule update --init --recursive &&
+	git mv nested_move sub_nested_moved &&
+	git status
 '
 
 test_done

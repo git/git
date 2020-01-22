@@ -18,9 +18,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
-   02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>. */
 
 /* Written August 1989 by Mike Haertel.
    The author may be reached (Email) at the address mike@ai.mit.edu,
@@ -40,7 +38,13 @@
 #include "compat/obstack.h"
 
 #define NCHAR (UCHAR_MAX + 1)
-#define obstack_chunk_alloc xmalloc
+/* adapter for `xmalloc()`, which takes `size_t`, not `long` */
+static void *obstack_chunk_alloc(long size)
+{
+	if (size < 0)
+		BUG("Cannot allocate a negative amount: %ld", size);
+	return xmalloc(size);
+}
 #define obstack_chunk_free free
 
 #define U(c) ((unsigned char) (c))
@@ -477,7 +481,7 @@ kwsprep (kwset_t kws)
 	for (i = 0; i < NCHAR; ++i)
 	  kwset->next[i] = next[U(trans[i])];
       else
-	memcpy(kwset->next, next, NCHAR * sizeof(struct trie *));
+	COPY_ARRAY(kwset->next, next, NCHAR);
     }
 
   /* Fix things up for any translation table. */

@@ -20,6 +20,7 @@ SYNOPSIS
 	     [--inetd |
 	      [--listen=<host_or_ipaddr>] [--port=<n>]
 	      [--user=<user> [--group=<group>]]]
+	     [--log-destination=(stderr|syslog|none)]
 	     [<directory>...]
 
 DESCRIPTION
@@ -30,7 +31,7 @@ that service if it is enabled.
 
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any Git directory that hasn't explicitly been marked
-for export this way (unless the '--export-all' parameter is specified). If you
+for export this way (unless the `--export-all` parameter is specified). If you
 pass some directory paths as 'git daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
@@ -56,7 +57,7 @@ OPTIONS
 	This is sort of "Git root" - if you run 'git daemon' with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
 	'git://example.com/hello.git', 'git daemon' will interpret the path
-	as '/srv/git/hello.git'.
+	as `/srv/git/hello.git`.
 
 --base-path-relaxed::
 	If --base-path is enabled and repo lookup fails, with this option
@@ -80,7 +81,8 @@ OPTIONS
 	do not have the 'git-daemon-export-ok' file.
 
 --inetd::
-	Have the server run as an inetd service. Implies --syslog.
+	Have the server run as an inetd service. Implies --syslog (may be
+	overridden with `--log-destination=`).
 	Incompatible with --detach, --port, --listen, --user and --group
 	options.
 
@@ -90,10 +92,10 @@ OPTIONS
 	is not supported, then --listen=hostname is also not supported and
 	--listen must be given an IPv4 address.
 	Can be given more than once.
-	Incompatible with '--inetd' option.
+	Incompatible with `--inetd` option.
 
 --port=<n>::
-	Listen on an alternative port.  Incompatible with '--inetd' option.
+	Listen on an alternative port.  Incompatible with `--inetd` option.
 
 --init-timeout=<n>::
 	Timeout (in seconds) between the moment the connection is established
@@ -110,8 +112,28 @@ OPTIONS
 	zero for no limit.
 
 --syslog::
-	Log to syslog instead of stderr. Note that this option does not imply
-	--verbose, thus by default only error conditions will be logged.
+	Short for `--log-destination=syslog`.
+
+--log-destination=<destination>::
+	Send log messages to the specified destination.
+	Note that this option does not imply --verbose,
+	thus by default only error conditions will be logged.
+	The <destination> must be one of:
++
+--
+stderr::
+	Write to standard error.
+	Note that if `--detach` is specified,
+	the process disconnects from the real standard error,
+	making this destination effectively equivalent to `none`.
+syslog::
+	Write to syslog, using the `git-daemon` identifier.
+none::
+	Disable all logging.
+--
++
+The default destination is `syslog` if `--inetd` or `--detach` is specified,
+otherwise `stderr`.
 
 --user-path::
 --user-path=<path>::
@@ -188,7 +210,7 @@ Git configuration files in that directory are readable by `<user>`.
 	arguments. The external command can decide to decline the
 	service by exiting with a non-zero status (or to allow it by
 	exiting with a zero status).  It can also look at the $REMOTE_ADDR
-	and $REMOTE_PORT environment variables to learn about the
+	and `$REMOTE_PORT` environment variables to learn about the
 	requestor when making this decision.
 +
 The external command can optionally write a single line to its
@@ -296,7 +318,7 @@ they correspond to these IP addresses.
 selectively enable/disable services per repository::
 	To enable 'git archive --remote' and disable 'git fetch' against
 	a repository, have the following in the configuration file in the
-	repository (that is the file 'config' next to 'HEAD', 'refs' and
+	repository (that is the file 'config' next to `HEAD`, 'refs' and
 	'objects').
 +
 ----------------------------------------------------------------

@@ -29,6 +29,34 @@ test_expect_success 'subtree available and works like recursive' '
 
 '
 
+test_expect_success 'setup branch sub' '
+	git checkout --orphan sub &&
+	git rm -rf . &&
+	test_commit foo
+'
+
+test_expect_success 'setup branch main' '
+	git checkout -b main master &&
+	git merge -s ours --no-commit --allow-unrelated-histories sub &&
+	git read-tree --prefix=dir/ -u sub &&
+	git commit -m "initial merge of sub into main" &&
+	test_path_is_file dir/foo.t &&
+	test_path_is_file hello
+'
+
+test_expect_success 'update branch sub' '
+	git checkout sub &&
+	test_commit bar
+'
+
+test_expect_success 'update branch main' '
+	git checkout main &&
+	git merge -s subtree sub -m "second merge of sub into main" &&
+	test_path_is_file dir/bar.t &&
+	test_path_is_file dir/foo.t &&
+	test_path_is_file hello
+'
+
 test_expect_success 'setup' '
 	mkdir git-gui &&
 	cd git-gui &&
@@ -49,13 +77,13 @@ test_expect_success 'setup' '
 
 test_expect_success 'initial merge' '
 	git remote add -f gui ../git-gui &&
-	git merge -s ours --no-commit gui/master &&
+	git merge -s ours --no-commit --allow-unrelated-histories gui/master &&
 	git read-tree --prefix=git-gui/ -u gui/master &&
 	git commit -m "Merge git-gui as our subdirectory" &&
 	git checkout -b work &&
 	git ls-files -s >actual &&
 	(
-		echo "100644 $o1 0	git-gui/git-gui.sh"
+		echo "100644 $o1 0	git-gui/git-gui.sh" &&
 		echo "100644 $o2 0	git.c"
 	) >expected &&
 	test_cmp expected actual
@@ -72,7 +100,7 @@ test_expect_success 'merge update' '
 	git pull -s subtree gui master2 &&
 	git ls-files -s >actual &&
 	(
-		echo "100644 $o3 0	git-gui/git-gui.sh"
+		echo "100644 $o3 0	git-gui/git-gui.sh" &&
 		echo "100644 $o2 0	git.c"
 	) >expected &&
 	test_cmp expected actual
@@ -88,8 +116,8 @@ test_expect_success 'initial ambiguous subtree' '
 	git checkout -b work2 &&
 	git ls-files -s >actual &&
 	(
-		echo "100644 $o1 0	git-gui/git-gui.sh"
-		echo "100644 $o1 0	git-gui2/git-gui.sh"
+		echo "100644 $o1 0	git-gui/git-gui.sh" &&
+		echo "100644 $o1 0	git-gui2/git-gui.sh" &&
 		echo "100644 $o2 0	git.c"
 	) >expected &&
 	test_cmp expected actual
@@ -101,8 +129,8 @@ test_expect_success 'merge using explicit' '
 	git pull -Xsubtree=git-gui gui master2 &&
 	git ls-files -s >actual &&
 	(
-		echo "100644 $o3 0	git-gui/git-gui.sh"
-		echo "100644 $o1 0	git-gui2/git-gui.sh"
+		echo "100644 $o3 0	git-gui/git-gui.sh" &&
+		echo "100644 $o1 0	git-gui2/git-gui.sh" &&
 		echo "100644 $o2 0	git.c"
 	) >expected &&
 	test_cmp expected actual
@@ -114,8 +142,8 @@ test_expect_success 'merge2 using explicit' '
 	git pull -Xsubtree=git-gui2 gui master2 &&
 	git ls-files -s >actual &&
 	(
-		echo "100644 $o1 0	git-gui/git-gui.sh"
-		echo "100644 $o3 0	git-gui2/git-gui.sh"
+		echo "100644 $o1 0	git-gui/git-gui.sh" &&
+		echo "100644 $o3 0	git-gui2/git-gui.sh" &&
 		echo "100644 $o2 0	git.c"
 	) >expected &&
 	test_cmp expected actual

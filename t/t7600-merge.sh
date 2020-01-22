@@ -33,10 +33,11 @@ printf '%s\n' 1 2 3 4 5 6 7 8 9 >file
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >file.1
 printf '%s\n' 1 2 3 4 '5 X' 6 7 8 9 >file.5
 printf '%s\n' 1 2 3 4 5 6 7 8 '9 X' >file.9
+printf '%s\n' 1 2 3 4 5 6 7 8 '9 Y' >file.9y
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >result.1
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
->empty
+printf '%s\n' 1 2 3 4 5 6 7 8 '9 Z' >result.9z
 
 create_merge_msgs () {
 	echo "Merge tag 'c2'" >msg.1-5 &&
@@ -56,8 +57,6 @@ create_merge_msgs () {
 		echo &&
 		git log --no-merges ^HEAD c2 c3
 	} >squash.1-5-9 &&
-	: >msg.nologff &&
-	: >msg.nolognoff &&
 	{
 		echo "* tag 'c3':" &&
 		echo "  commit 3"
@@ -128,6 +127,12 @@ test_expect_success 'setup' '
 	git tag c2 &&
 	c2=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
+	cp file.9y file &&
+	git add file &&
+	test_tick &&
+	git commit -m "commit 7" &&
+	git tag c7 &&
+	git reset --hard "$c0" &&
 	cp file.9 file &&
 	git add file &&
 	test_tick &&
@@ -146,6 +151,10 @@ test_expect_success 'test option parsing' '
 	test_must_fail git merge -s foobar c1 &&
 	test_must_fail git merge -s=foobar c1 &&
 	test_must_fail git merge -m &&
+	test_must_fail git merge --abort foobar &&
+	test_must_fail git merge --abort --quiet &&
+	test_must_fail git merge --continue foobar &&
+	test_must_fail git merge --continue --quiet &&
 	test_must_fail git merge
 '
 
@@ -216,6 +225,71 @@ test_expect_success 'merge c1 with c2' '
 	git merge c2 &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2
+'
+
+test_expect_success 'merge --squash c3 with c7' '
+	git reset --hard c3 &&
+	test_must_fail git merge --squash c7 &&
+	cat result.9z >file &&
+	git commit --no-edit -a &&
+
+	cat >expect <<-EOF &&
+	Squashed commit of the following:
+
+	$(git show -s c7)
+
+	# Conflicts:
+	#	file
+	EOF
+	git cat-file commit HEAD >raw &&
+	sed -e '1,/^$/d' raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
+	git config commit.cleanup scissors &&
+	git reset --hard c3 &&
+	test_must_fail git merge c7 &&
+	cat result.9z >file &&
+	git commit --no-edit -a &&
+
+	cat >expect <<-\EOF &&
+	Merge tag '"'"'c7'"'"'
+
+	# ------------------------ >8 ------------------------
+	# Do not modify or remove the line above.
+	# Everything below it will be ignored.
+	#
+	# Conflicts:
+	#	file
+	EOF
+	git cat-file commit HEAD >raw &&
+	sed -e '1,/^$/d' raw >actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'merge c3 with c7 with --squash commit.cleanup = scissors' '
+	git config commit.cleanup scissors &&
+	git reset --hard c3 &&
+	test_must_fail git merge --squash c7 &&
+	cat result.9z >file &&
+	git commit --no-edit -a &&
+
+	cat >expect <<-EOF &&
+	Squashed commit of the following:
+
+	$(git show -s c7)
+
+	# ------------------------ >8 ------------------------
+	# Do not modify or remove the line above.
+	# Everything below it will be ignored.
+	#
+	# Conflicts:
+	#	file
+	EOF
+	git cat-file commit HEAD >raw &&
+	sed -e '1,/^$/d' raw >actual &&
+	test_i18ncmp expect actual
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
@@ -487,13 +561,19 @@ test_expect_success 'tolerate unknown values for merge.ff' '
 	test_tick &&
 	git merge c1 2>message &&
 	verify_head "$c1" &&
-	test_cmp empty message
+	test_must_be_empty message
 '
 
 test_expect_success 'combining --squash and --no-ff is refused' '
 	git reset --hard c0 &&
 	test_must_fail git merge --squash --no-ff c1 &&
 	test_must_fail git merge --no-ff --squash c1
+'
+
+test_expect_success 'combining --squash and --commit is refused' '
+	git reset --hard c0 &&
+	test_must_fail git merge --squash --commit c1 &&
+	test_must_fail git merge --commit --squash c1
 '
 
 test_expect_success 'option --ff-only overwrites --no-ff' '
@@ -519,13 +599,13 @@ test_expect_success 'merge log message' '
 	git reset --hard c0 &&
 	git merge --no-log c2 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
-	test_cmp msg.nologff msg.act &&
+	test_must_be_empty msg.act &&
 
 	git reset --hard c0 &&
 	test_config branch.master.mergeoptions "--no-ff" &&
 	git merge --no-log c2 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
-	test_cmp msg.nolognoff msg.act &&
+	test_must_be_empty msg.act &&
 
 	git merge --log c3 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
@@ -651,10 +731,10 @@ cat >editor <<\EOF
 (
 	echo "Merge work done on the side branch c1"
 	echo
-	cat <"$1"
+	cat "$1"
 ) >"$1.tmp" && mv "$1.tmp" "$1"
 # strip comments and blank lines from end of message
-sed -e '/^#/d' < "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > expected
+sed -e '/^#/d' "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' >expected
 EOF
 chmod 755 editor
 
@@ -665,7 +745,43 @@ test_expect_success 'merge --no-ff --edit' '
 	git cat-file commit HEAD >raw &&
 	grep "work done on the side branch" raw &&
 	sed "1,/^$/d" >actual raw &&
-	test_cmp actual expected
+	test_cmp expected actual
+'
+
+test_expect_success 'merge annotated/signed tag w/o tracking' '
+	test_when_finished "rm -rf dst; git tag -d anno1" &&
+	git tag -a -m "anno c1" anno1 c1 &&
+	git init dst &&
+	git rev-parse c1 >dst/expect &&
+	(
+		# c0 fast-forwards to c1 but because this repository
+		# is not a "downstream" whose refs/tags follows along
+		# tag from the "upstream", this pull defaults to --no-ff
+		cd dst &&
+		git pull .. c0 &&
+		git pull .. anno1 &&
+		git rev-parse HEAD^2 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'merge annotated/signed tag w/ tracking' '
+	test_when_finished "rm -rf dst; git tag -d anno1" &&
+	git tag -a -m "anno c1" anno1 c1 &&
+	git init dst &&
+	git rev-parse c1 >dst/expect &&
+	(
+		# c0 fast-forwards to c1 and because this repository
+		# is a "downstream" whose refs/tags follows along
+		# tag from the "upstream", this pull defaults to --ff
+		cd dst &&
+		git remote add origin .. &&
+		git pull origin c0 &&
+		git fetch origin &&
+		git merge anno1 &&
+		git rev-parse HEAD >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success GPG 'merge --ff-only tag' '
@@ -677,7 +793,7 @@ test_expect_success GPG 'merge --ff-only tag' '
 	git merge --ff-only signed &&
 	git rev-parse signed^0 >expect &&
 	git rev-parse HEAD >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success GPG 'merge --no-edit tag should skip editor' '
@@ -686,10 +802,121 @@ test_expect_success GPG 'merge --no-edit tag should skip editor' '
 	git tag -f -s -m "A newer commit" signed &&
 	git reset --hard c0 &&
 
-	EDITOR=false git merge --no-edit signed &&
+	EDITOR=false git merge --no-edit --no-ff signed &&
 	git rev-parse signed^0 >expect &&
 	git rev-parse HEAD^2 >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
+'
+
+test_expect_success 'set up mod-256 conflict scenario' '
+	# 256 near-identical stanzas...
+	for i in $(test_seq 1 256); do
+		for j in 1 2 3 4 5; do
+			echo $i-$j
+		done
+	done >file &&
+	git add file &&
+	git commit -m base &&
+
+	# one side changes the first line of each to "master"
+	sed s/-1/-master/ file >tmp &&
+	mv tmp file &&
+	git commit -am master &&
+
+	# and the other to "side"; merging the two will
+	# yield 256 separate conflicts
+	git checkout -b side HEAD^ &&
+	sed s/-1/-side/ file >tmp &&
+	mv tmp file &&
+	git commit -am side
+'
+
+test_expect_success 'merge detects mod-256 conflicts (recursive)' '
+	git reset --hard &&
+	test_must_fail git merge -s recursive master
+'
+
+test_expect_success 'merge detects mod-256 conflicts (resolve)' '
+	git reset --hard &&
+	test_must_fail git merge -s resolve master
+'
+
+test_expect_success 'merge nothing into void' '
+	git init void &&
+	(
+		cd void &&
+		git remote add up .. &&
+		git fetch up &&
+		test_must_fail git merge FETCH_HEAD
+	)
+'
+
+test_expect_success 'merge can be completed with --continue' '
+	git reset --hard c0 &&
+	git merge --no-ff --no-commit c1 &&
+	git merge --continue &&
+	verify_parents $c0 $c1
+'
+
+write_script .git/FAKE_EDITOR <<EOF
+# kill -TERM command added below.
+EOF
+
+test_expect_success EXECKEEPSPID 'killed merge can be completed with --continue' '
+	git reset --hard c0 &&
+	! "$SHELL_PATH" -c '\''
+	  echo kill -TERM $$ >>.git/FAKE_EDITOR
+	  GIT_EDITOR=.git/FAKE_EDITOR
+	  export GIT_EDITOR
+	  exec git merge --no-ff --edit c1'\'' &&
+	git merge --continue &&
+	verify_parents $c0 $c1
+'
+
+test_expect_success 'merge --quit' '
+	git init merge-quit &&
+	(
+		cd merge-quit &&
+		test_commit base &&
+		echo one >>base.t &&
+		git commit -am one &&
+		git branch one &&
+		git checkout base &&
+		echo two >>base.t &&
+		git commit -am two &&
+		test_must_fail git -c rerere.enabled=true merge one &&
+		test_path_is_file .git/MERGE_HEAD &&
+		test_path_is_file .git/MERGE_MODE &&
+		test_path_is_file .git/MERGE_MSG &&
+		git rerere status >rerere.before &&
+		git merge --quit &&
+		test_path_is_missing .git/MERGE_HEAD &&
+		test_path_is_missing .git/MERGE_MODE &&
+		test_path_is_missing .git/MERGE_MSG &&
+		git rerere status >rerere.after &&
+		test_must_be_empty rerere.after &&
+		! test_cmp rerere.after rerere.before
+	)
+'
+
+test_expect_success 'merge suggests matching remote refname' '
+	git commit --allow-empty -m not-local &&
+	git update-ref refs/remotes/origin/not-local HEAD &&
+	git reset --hard HEAD^ &&
+
+	# This is white-box testing hackery; we happen to know
+	# that reading packed refs is more picky about the memory
+	# ownership of strings we pass to for_each_ref() callbacks.
+	git pack-refs --all --prune &&
+
+	test_must_fail git merge not-local 2>stderr &&
+	grep origin/not-local stderr
+'
+
+test_expect_success 'suggested names are not ambiguous' '
+	git update-ref refs/heads/origin/not-local HEAD &&
+	test_must_fail git merge not-local 2>stderr &&
+	grep remotes/origin/not-local stderr
 '
 
 test_done

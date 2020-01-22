@@ -4,23 +4,17 @@ test_description='git apply --3way'
 
 . ./test-lib.sh
 
-create_file () {
-	for i
-	do
-		echo "$i"
-	done
-}
-
-sanitize_conflicted_diff () {
+print_sanitized_conflicted_diff () {
+	git diff HEAD >diff.raw &&
 	sed -e '
 		/^index /d
-		s/^\(+[<>][<>][<>][<>]*\) .*/\1/
-	'
+		s/^\(+[<>|][<>|][<>|][<>|]*\) .*/\1/
+	' diff.raw
 }
 
 test_expect_success setup '
 	test_tick &&
-	create_file >one 1 2 3 4 5 6 7 &&
+	test_write_lines 1 2 3 4 5 6 7 >one &&
 	cat one >two &&
 	git add one two &&
 	git commit -m initial &&
@@ -28,13 +22,13 @@ test_expect_success setup '
 	git branch side &&
 
 	test_tick &&
-	create_file >one 1 two 3 4 5 six 7 &&
-	create_file >two 1 two 3 4 5 6 7 &&
+	test_write_lines 1 two 3 4 5 six 7 >one &&
+	test_write_lines 1 two 3 4 5 6 7 >two &&
 	git commit -a -m master &&
 
 	git checkout side &&
-	create_file >one 1 2 3 4 five 6 7 &&
-	create_file >two 1 2 3 4 five 6 7 &&
+	test_write_lines 1 2 3 4 five 6 7 >one &&
+	test_write_lines 1 2 3 4 five 6 7 >two &&
 	git commit -a -m side &&
 
 	git checkout master
@@ -52,7 +46,7 @@ test_expect_success 'apply without --3way' '
 	git diff-index --exit-code --cached HEAD
 '
 
-test_expect_success 'apply with --3way' '
+test_apply_with_3way () {
 	# Merging side should be similar to applying this patch
 	git diff ...side >P.diff &&
 
@@ -61,22 +55,31 @@ test_expect_success 'apply with --3way' '
 	git checkout master^0 &&
 	test_must_fail git merge --no-commit side &&
 	git ls-files -s >expect.ls &&
-	git diff HEAD | sanitize_conflicted_diff >expect.diff &&
+	print_sanitized_conflicted_diff >expect.diff &&
 
 	# should fail to apply
 	git reset --hard &&
 	git checkout master^0 &&
 	test_must_fail git apply --index --3way P.diff &&
 	git ls-files -s >actual.ls &&
-	git diff HEAD | sanitize_conflicted_diff >actual.diff &&
+	print_sanitized_conflicted_diff >actual.diff &&
 
 	# The result should resemble the corresponding merge
 	test_cmp expect.ls actual.ls &&
 	test_cmp expect.diff actual.diff
+}
+
+test_expect_success 'apply with --3way' '
+	test_apply_with_3way
+'
+
+test_expect_success 'apply with --3way with merge.conflictStyle = diff3' '
+	test_config merge.conflictStyle diff3 &&
+	test_apply_with_3way
 '
 
 test_expect_success 'apply with --3way with rerere enabled' '
-	git config rerere.enabled true &&
+	test_config rerere.enabled true &&
 
 	# Merging side should be similar to applying this patch
 	git diff ...side >P.diff &&
@@ -87,7 +90,7 @@ test_expect_success 'apply with --3way with rerere enabled' '
 	test_must_fail git merge --no-commit side &&
 
 	# Manually resolve and record the resolution
-	create_file 1 two 3 4 five six 7 >one &&
+	test_write_lines 1 two 3 4 five six 7 >one &&
 	git rerere &&
 	cat one >expect &&
 
@@ -104,14 +107,14 @@ test_expect_success 'apply -3 with add/add conflict setup' '
 	git reset --hard &&
 
 	git checkout -b adder &&
-	create_file 1 2 3 4 5 6 7 >three &&
-	create_file 1 2 3 4 5 6 7 >four &&
+	test_write_lines 1 2 3 4 5 6 7 >three &&
+	test_write_lines 1 2 3 4 5 6 7 >four &&
 	git add three four &&
 	git commit -m "add three and four" &&
 
 	git checkout -b another adder^ &&
-	create_file 1 2 3 4 5 6 7 >three &&
-	create_file 1 2 3 four 5 6 7 >four &&
+	test_write_lines 1 2 3 4 5 6 7 >three &&
+	test_write_lines 1 2 3 four 5 6 7 >four &&
 	git add three four &&
 	git commit -m "add three and four" &&
 
@@ -121,7 +124,7 @@ test_expect_success 'apply -3 with add/add conflict setup' '
 	git checkout adder^0 &&
 	test_must_fail git merge --no-commit another &&
 	git ls-files -s >expect.ls &&
-	git diff HEAD | sanitize_conflicted_diff >expect.diff
+	print_sanitized_conflicted_diff >expect.diff
 '
 
 test_expect_success 'apply -3 with add/add conflict' '
@@ -131,7 +134,7 @@ test_expect_success 'apply -3 with add/add conflict' '
 	test_must_fail git apply --index --3way P.diff &&
 	# ... and leave conflicts in the index and in the working tree
 	git ls-files -s >actual.ls &&
-	git diff HEAD | sanitize_conflicted_diff >actual.diff &&
+	print_sanitized_conflicted_diff >actual.diff &&
 
 	# The result should resemble the corresponding merge
 	test_cmp expect.ls actual.ls &&

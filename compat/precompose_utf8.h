@@ -1,4 +1,6 @@
 #ifndef PRECOMPOSE_UNICODE_H
+#define PRECOMPOSE_UNICODE_H
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -27,7 +29,7 @@ typedef struct {
 } PREC_DIR;
 
 void precompose_argv(int argc, const char **argv);
-void probe_utf8_pathname_composition(char *, int);
+void probe_utf8_pathname_composition(void);
 
 PREC_DIR *precompose_utf8_opendir(const char *dirname);
 struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *dirp);
@@ -41,5 +43,4 @@ int precompose_utf8_closedir(PREC_DIR *dirp);
 #define DIR PREC_DIR
 #endif /* PRECOMPOSE_UNICODE_C */
 
-#define  PRECOMPOSE_UNICODE_H
 #endif /* PRECOMPOSE_UNICODE_H */

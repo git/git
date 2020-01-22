@@ -25,7 +25,7 @@ test_expect_success setup '
 	git commit -a -m"master updates a bit more." &&
 
 	git checkout side &&
-	(echo "0 $T" ; cat original) >renamed &&
+	(echo "0 $T" && cat original) >renamed &&
 	git add renamed &&
 	git update-index --force-remove original &&
 	git commit -a -m"side renames and edits." &&
@@ -85,6 +85,15 @@ test_expect_success 'rebase -Xtheirs' '
 	! grep 11 original
 '
 
+test_expect_success 'rebase -Xtheirs from orphan' '
+	git checkout --orphan orphan-conflicting master~2 &&
+	echo "AB $T" >> original &&
+	git commit -morphan-conflicting original &&
+	git rebase -Xtheirs master &&
+	grep AB original &&
+	! grep 11 original
+'
+
 test_expect_success 'merge and rebase should match' '
 	git diff-tree -r test-rebase test-merge >difference &&
 	if test -s difference
@@ -134,7 +143,7 @@ test_expect_success 'rebase -s funny -Xopt' '
 	git checkout -b test-funny master^ &&
 	test_commit funny &&
 	(
-		PATH=./test-bin:$PATH
+		PATH=./test-bin:$PATH &&
 		git rebase -s funny -Xopt master
 	) &&
 	test -f funny.was.run

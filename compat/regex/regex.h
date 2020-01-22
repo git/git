@@ -18,9 +18,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _REGEX_H
 #define _REGEX_H 1
@@ -323,7 +322,7 @@ typedef enum
   /* POSIX regcomp return error codes.  (In the order listed in the
      standard.)  */
   REG_BADPAT,		/* Invalid pattern.  */
-  REG_ECOLLATE,		/* Inalid collating element.  */
+  REG_ECOLLATE,		/* Invalid collating element.  */
   REG_ECTYPE,		/* Invalid character class name.  */
   REG_EESCAPE,		/* Trailing backslash.  */
   REG_ESUBREG,		/* Invalid back reference.  */

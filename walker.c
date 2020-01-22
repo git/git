@@ -1,5 +1,7 @@
 #include "cache.h"
 #include "walker.h"
+#include "repository.h"
+#include "object-store.h"
 #include "commit.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -7,23 +9,26 @@
 #include "blob.h"
 #include "refs.h"
 
-static unsigned char current_commit_sha1[20];
+static struct object_id current_commit_oid;
 
-void walker_say(struct walker *walker, const char *fmt, const char *hex)
+void walker_say(struct walker *walker, const char *fmt, ...)
 {
-	if (walker->get_verbosely)
-		fprintf(stderr, fmt, hex);
+	if (walker->get_verbosely) {
+		va_list ap;
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
 }
 
 static void report_missing(const struct object *obj)
 {
-	char missing_hex[41];
-	strcpy(missing_hex, sha1_to_hex(obj->sha1));
 	fprintf(stderr, "Cannot obtain needed %s %s\n",
-		obj->type ? typename(obj->type): "object", missing_hex);
-	if (!is_null_sha1(current_commit_sha1))
+		obj->type ? type_name(obj->type): "object",
+		oid_to_hex(&obj->oid));
+	if (!is_null_oid(&current_commit_oid))
 		fprintf(stderr, "while processing commit %s.\n",
-			sha1_to_hex(current_commit_sha1));
+			oid_to_hex(&current_commit_oid));
 }
 
 static int process(struct walker *walker, struct object *obj);
@@ -44,12 +49,14 @@ static int process_tree(struct walker *walker, struct tree *tree)
 		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode)) {
-			struct tree *tree = lookup_tree(entry.sha1);
+			struct tree *tree = lookup_tree(the_repository,
+							&entry.oid);
 			if (tree)
 				obj = &tree->object;
 		}
 		else {
-			struct blob *blob = lookup_blob(entry.sha1);
+			struct blob *blob = lookup_blob(the_repository,
+							&entry.oid);
 			if (blob)
 				obj = &blob->object;
 		}
@@ -69,6 +76,8 @@ static struct commit_list *complete = NULL;
 
 static int process_commit(struct walker *walker, struct commit *commit)
 {
+	struct commit_list *parents;
+
 	if (parse_commit(commit))
 		return -1;
 
@@ -79,23 +88,18 @@ static int process_commit(struct walker *walker, struct commit *commit)
 	if (commit->object.flags & COMPLETE)
 		return 0;
 
-	hashcpy(current_commit_sha1, commit->object.sha1);
+	oidcpy(&current_commit_oid, &commit->object.oid);
 
-	walker_say(walker, "walk %s\n", sha1_to_hex(commit->object.sha1));
+	walker_say(walker, "walk %s\n", oid_to_hex(&commit->object.oid));
 
-	if (walker->get_tree) {
-		if (process(walker, &commit->tree->object))
+	if (process(walker, &get_commit_tree(commit)->object))
+		return -1;
+
+	for (parents = commit->parents; parents; parents = parents->next) {
+		if (process(walker, &parents->item->object))
 			return -1;
-		if (!walker->get_all)
-			walker->get_tree = 0;
 	}
-	if (walker->get_history) {
-		struct commit_list *parents = commit->parents;
-		for (; parents; parents = parents->next) {
-			if (process(walker, &parents->item->object))
-				return -1;
-		}
-	}
+
 	return 0;
 }
 
@@ -131,7 +135,7 @@ static int process_object(struct walker *walker, struct object *obj)
 	}
 	return error("Unable to determine requirements "
 		     "of type %s for %s",
-		     typename(obj->type), sha1_to_hex(obj->sha1));
+		     type_name(obj->type), oid_to_hex(&obj->oid));
 }
 
 static int process(struct walker *walker, struct object *obj)
@@ -140,14 +144,14 @@ static int process(struct walker *walker, struct object *obj)
 		return 0;
 	obj->flags |= SEEN;
 
-	if (has_sha1_file(obj->sha1)) {
+	if (has_object_file(&obj->oid)) {
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
 	}
 	else {
 		if (obj->flags & COMPLETE)
 			return 0;
-		walker->prefetch(walker, obj->sha1);
+		walker->prefetch(walker, obj->oid.hash);
 	}
 
 	object_list_insert(obj, process_queue_end);
@@ -171,27 +175,27 @@ static int loop(struct walker *walker)
 		 * the queue because we needed to fetch it first.
 		 */
 		if (! (obj->flags & TO_SCAN)) {
-			if (walker->fetch(walker, obj->sha1)) {
+			if (walker->fetch(walker, obj->oid.hash)) {
 				report_missing(obj);
 				return -1;
 			}
 		}
 		if (!obj->type)
-			parse_object(obj->sha1);
+			parse_object(the_repository, &obj->oid);
 		if (process_object(walker, obj))
 			return -1;
 	}
 	return 0;
 }
 
-static int interpret_target(struct walker *walker, char *target, unsigned char *sha1)
+static int interpret_target(struct walker *walker, char *target, struct object_id *oid)
 {
-	if (!get_sha1_hex(target, sha1))
+	if (!get_oid_hex(target, oid))
 		return 0;
 	if (!check_refname_format(target, 0)) {
 		struct ref *ref = alloc_ref(target);
 		if (!walker->fetch_ref(walker, ref)) {
-			hashcpy(sha1, ref->old_sha1);
+			oidcpy(oid, &ref->old_oid);
 			free(ref);
 			return 0;
 		}
@@ -203,7 +207,8 @@ static int interpret_target(struct walker *walker, char *target, unsigned char *
 static int mark_complete(const char *path, const struct object_id *oid,
 			 int flag, void *cb_data)
 {
-	struct commit *commit = lookup_commit_reference_gently(oid->hash, 1);
+	struct commit *commit = lookup_commit_reference_gently(the_repository,
+							       oid, 1);
 
 	if (commit) {
 		commit->object.flags |= COMPLETE;
@@ -221,7 +226,7 @@ int walker_targets_stdin(char ***target, const char ***write_ref)
 		char *rf_one = NULL;
 		char *tg_one;
 
-		if (strbuf_getline(&buf, stdin, '\n') == EOF)
+		if (strbuf_getline_lf(&buf, stdin) == EOF)
 			break;
 		tg_one = buf.buf;
 		rf_one = strchr(tg_one, '\t');
@@ -256,7 +261,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	struct strbuf refname = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 	struct ref_transaction *transaction = NULL;
-	unsigned char *sha1 = xmalloc(targets * 20);
+	struct object_id *oids = xmalloc(targets * sizeof(struct object_id));
 	char *msg = NULL;
 	int i, ret = -1;
 
@@ -276,11 +281,11 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	}
 
 	for (i = 0; i < targets; i++) {
-		if (interpret_target(walker, target[i], &sha1[20 * i])) {
+		if (interpret_target(walker, target[i], oids + i)) {
 			error("Could not interpret response from server '%s' as something to pull", target[i]);
 			goto done;
 		}
-		if (process(walker, lookup_unknown_object(&sha1[20 * i])))
+		if (process(walker, lookup_unknown_object(&oids[i])))
 			goto done;
 	}
 
@@ -301,7 +306,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 		strbuf_reset(&refname);
 		strbuf_addf(&refname, "refs/%s", write_ref[i]);
 		if (ref_transaction_update(transaction, refname.buf,
-					   &sha1[20 * i], NULL, 0,
+					   oids + i, NULL, 0,
 					   msg ? msg : "fetch (unknown)",
 					   &err)) {
 			error("%s", err.buf);
@@ -318,7 +323,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 done:
 	ref_transaction_free(transaction);
 	free(msg);
-	free(sha1);
+	free(oids);
 	strbuf_release(&err);
 	strbuf_release(&refname);
 	return ret;

@@ -9,7 +9,7 @@ git-log - Show commit logs
 SYNOPSIS
 --------
 [verse]
-'git log' [<options>] [<revision range>] [[\--] <path>...]
+'git log' [<options>] [<revision range>] [[--] <path>...]
 
 DESCRIPTION
 -----------
@@ -29,18 +29,27 @@ OPTIONS
 	(works only for a single file).
 
 --no-decorate::
---decorate[=short|full|no]::
+--decorate[=short|full|auto|no]::
 	Print out the ref names of any commits that are shown. If 'short' is
 	specified, the ref name prefixes 'refs/heads/', 'refs/tags/' and
 	'refs/remotes/' will not be printed. If 'full' is specified, the
-	full ref name (including prefix) will be printed. The default option
-	is 'short'.
+	full ref name (including prefix) will be printed. If 'auto' is
+	specified, then if the output is going to a terminal, the ref names
+	are shown as if 'short' were given, otherwise no ref names are
+	shown. The default option is 'short'.
+
+--decorate-refs=<pattern>::
+--decorate-refs-exclude=<pattern>::
+	If no `--decorate-refs` is given, pretend as if all refs were
+	included.  For each candidate, do not use it for decoration if it
+	matches any patterns given to `--decorate-refs-exclude` or if it
+	doesn't match any of the patterns given to `--decorate-refs`.
 
 --source::
 	Print out the ref name given on the command line by which each
 	commit was reached.
 
---use-mailmap::
+--[no-]use-mailmap::
 	Use mailmap file to map author and committer names and email
 	addresses to canonical real names and email addresses. See
 	linkgit:git-shortlog[1].
@@ -67,8 +76,12 @@ produced by `--stat`, etc.
 	(or the function name regex <funcname>) within the <file>.  You may
 	not give any pathspec limiters.  This is currently limited to
 	a walk starting from a single revision, i.e., you may only
-	give zero or one positive revision arguments.
-	You can specify this option more than once.
+	give zero or one positive revision arguments, and
+	<start> and <end> (or <funcname>) must exist in the starting revision.
+	You can specify this option more than once. Implies `--patch`.
+	Patch output can be suppressed using `--no-patch`, but other diff formats
+	(namely `--raw`, `--numstat`, `--shortstat`, `--dirstat`, `--summary`,
+	`--name-only`, `--name-status`, `--check`) are not currently implemented.
 +
 include::line-range-format.txt[]
 
@@ -81,13 +94,13 @@ include::line-range-format.txt[]
 	ways to spell <revision range>, see the 'Specifying Ranges'
 	section of linkgit:gitrevisions[7].
 
-[\--] <path>...::
+[--] <path>...::
 	Show only commits that are enough to explain how the files
 	that match the specified paths came to be.  See 'History
 	Simplification' below for details and other simplification
 	modes.
 +
-Paths may need to be prefixed with ``\-- '' to separate them from
+Paths may need to be prefixed with `--` to separate them from
 options or the revision range, when confusion arises.
 
 include::rev-list-options.txt[]
@@ -116,7 +129,7 @@ EXAMPLES
 `git log --since="2 weeks ago" -- gitk`::
 
 	Show the changes during the last two weeks to the file 'gitk'.
-	The ``--'' is necessary to avoid confusion with the *branch* named
+	The `--` is necessary to avoid confusion with the *branch* named
 	'gitk'
 
 `git log --name-status release..test`::
@@ -183,12 +196,16 @@ log.date::
 	Default format for human-readable dates.  (Compare the
 	`--date` option.)  Defaults to "default", which means to write
 	dates like `Sat May 8 19:35:34 2010 -0500`.
++
+If the format is set to "auto:foo" and the pager is in use, format
+"foo" will be the used for the date format. Otherwise "default" will
+be used.
 
 log.follow::
-	If a single <path> is given to git log, it will act as
-	if the `--follow` option was also used.  This has the same
-	limitations as `--follow`, i.e. it cannot be used to follow
-	multiple files and does not work well on non-linear history.
+	If `true`, `git log` will act as if the `--follow` option was used when
+	a single <path> is given.  This has the same limitations as `--follow`,
+	i.e. it cannot be used to follow multiple files and does not work well
+	on non-linear history.
 
 log.showRoot::
 	If `false`, `git log` and related commands will not treat the
@@ -196,12 +213,16 @@ log.showRoot::
 	`git log -p` output would be shown without a diff attached.
 	The default is `true`.
 
+log.showSignature::
+	If `true`, `git log` and related commands will act as if the
+	`--show-signature` option was passed to them.
+
 mailmap.*::
 	See linkgit:git-shortlog[1].
 
 notes.displayRef::
 	Which refs, in addition to the default set by `core.notesRef`
-	or 'GIT_NOTES_REF', to read notes from when showing commit
+	or `GIT_NOTES_REF`, to read notes from when showing commit
 	messages with the `log` family of commands.  See
 	linkgit:git-notes[1].
 +
@@ -210,7 +231,7 @@ multiple times.  A warning will be issued for refs that do not exist,
 but a glob that does not match any refs is silently ignored.
 +
 This setting can be disabled by the `--no-notes` option,
-overridden by the 'GIT_NOTES_DISPLAY_REF' environment variable,
+overridden by the `GIT_NOTES_DISPLAY_REF` environment variable,
 and overridden by the `--notes=<ref>` option.
 
 GIT

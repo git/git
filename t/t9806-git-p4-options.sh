@@ -134,7 +134,7 @@ test_expect_success 'clone --changesfile' '
 	(
 		cd "$git" &&
 		git log --oneline p4/master >lines &&
-		test_line_count = 2 lines
+		test_line_count = 2 lines &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_file file3
@@ -269,8 +269,35 @@ test_expect_success 'submit works with two branches' '
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
+test_expect_success 'use --git-dir option and GIT_DIR' '
+	test_when_finished cleanup_git &&
+	git p4 clone //depot --destination="$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		test_commit first-change &&
+		git p4 submit --git-dir "$git"
+	) &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		test_path_is_file first-change.t &&
+		echo "cli_file" >cli_file.t &&
+		p4 add cli_file.t &&
+		p4 submit -d "cli change"
+	) &&
+	(git --git-dir "$git" p4 sync) &&
+	(cd "$git" && git checkout -q p4/master) &&
+	test_path_is_file "$git"/cli_file.t &&
+	(
+		cd "$cli" &&
+		echo "cli_file2" >cli_file2.t &&
+		p4 add cli_file2.t  &&
+		p4 submit -d "cli change2"
+	) &&
+	(GIT_DIR="$git" git p4 sync) &&
+	(cd "$git" && git checkout -q p4/master) &&
+	test_path_is_file "$git"/cli_file2.t
 '
 
 test_done

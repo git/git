@@ -145,7 +145,7 @@ current branch integrates with) obviously do not work, as there is no
 	A fast-forward is a special type of <<def_merge,merge>> where you have a
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
-	you have. In such these cases, you do not make a new <<def_merge,merge>>
+	you have. In such a case, you do not make a new <<def_merge,merge>>
 	<<def_commit,commit>> but instead just update to his
 	revision. This will happen frequently on a
 	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
@@ -255,7 +255,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_object]]object::
 	The unit of storage in Git. It is uniquely identified by the
 	<<def_SHA1,SHA-1>> of its contents. Consequently, an
-	object can not be changed.
+	object cannot be changed.
 
 [[def_object_database]]object database::
 	Stores a set of "objects", and an individual <<def_object,object>> is
@@ -286,6 +286,15 @@ This commit is referred to as a "merge commit", or sometimes just a
 	will be fetched into <<def_remote_tracking_branch,remote-tracking branches>> named
 	origin/name-of-upstream-branch, which you can see using
 	`git branch -r`.
+
+[[def_overlay]]overlay::
+	Only update and add files to the working directory, but don't
+	delete them, similar to how 'cp -R' would update the contents
+	in the destination directory.  This is the default mode in a
+	<<def_checkout,checkout>> when checking out files from the
+	<<def_index,index>> or a <<def_tree-ish,tree-ish>>.  In
+	contrast, no-overlay mode also deletes tracked files not
+	present in the source, similar to 'rsync --delete'.
 
 [[def_pack]]pack::
 	A set of objects which have been compressed into one file (to save space
@@ -334,7 +343,7 @@ The optional colon that terminates the "magic signature" can be
 omitted if the pattern begins with a character that does not belong to
 "magic signature" symbol set and is not a colon.
 +
-In the long form, the leading colon `:` is followed by a open
+In the long form, the leading colon `:` is followed by an open
 parenthesis `(`, a comma-separated list of zero or more "magic words",
 and a close parentheses `)`, and the remainder is the pattern to match
 against the path.
@@ -384,10 +393,35 @@ full pathname may have special meaning:
 +
 Glob magic is incompatible with literal magic.
 
+attr;;
+After `attr:` comes a space separated list of "attribute
+requirements", all of which must be met in order for the
+path to be considered a match; this is in addition to the
+usual non-magic pathspec pattern matching.
+See linkgit:gitattributes[5].
++
+Each of the attribute requirements for the path takes one of
+these forms:
+
+- "`ATTR`" requires that the attribute `ATTR` be set.
+
+- "`-ATTR`" requires that the attribute `ATTR` be unset.
+
+- "`ATTR=VALUE`" requires that the attribute `ATTR` be
+  set to the string `VALUE`.
+
+- "`!ATTR`" requires that the attribute `ATTR` be
+  unspecified.
++
+Note that when matching against a tree object, attributes are still
+obtained from working tree, not from the given tree object.
+
 exclude;;
 	After a path matches any non-exclude pathspec, it will be run
-	through all exclude pathspec (magic signature: `!`). If it
-	matches, the path is ignored.
+	through all exclude pathspecs (magic signature: `!` or its
+	synonym `^`). If it matches, the path is ignored.  When there
+	is no non-exclude pathspec, the exclusion is applied to the
+	result set as if invoked without any pathspec.
 --
 
 [[def_parent]]parent::
@@ -413,8 +447,9 @@ exclude;;
 
 [[def_per_worktree_ref]]per-worktree ref::
 	Refs that are per-<<def_working_tree,worktree>>, rather than
-	global.  This is presently only <<def_HEAD,HEAD>>, but might
-	later include other unusual refs.
+	global.  This is presently only <<def_HEAD,HEAD>> and any refs
+	that start with `refs/bisect/`, but might later include other
+	unusual refs.
 
 [[def_pseudoref]]pseudoref::
 	Pseudorefs are a class of files under `$GIT_DIR` which behave
@@ -439,7 +474,7 @@ exclude;;
 [[def_push]]push::
 	Pushing a <<def_branch,branch>> means to get the branch's
 	<<def_head_ref,head ref>> from a remote <<def_repository,repository>>,
-	find out if it is a direct ancestor to the branch's local
+	find out if it is an ancestor to the branch's local
 	head ref, and in that case, putting all
 	objects, which are <<def_reachable,reachable>> from the local
 	head ref, and which are missing from the remote
@@ -530,6 +565,11 @@ The most notable example is `HEAD`.
 	"Secure Hash Algorithm 1"; a cryptographic hash function.
 	In the context of Git used as a synonym for <<def_object_name,object name>>.
 
+[[def_shallow_clone]]shallow clone::
+	Mostly a synonym to <<def_shallow_repository,shallow repository>>
+	but the phrase makes it more explicit that it was created by
+	running `git clone --depth=...` command.
+
 [[def_shallow_repository]]shallow repository::
 	A shallow <<def_repository,repository>> has an incomplete
 	history some of whose <<def_commit,commits>> have <<def_parent,parents>> cauterized away (in other
@@ -540,6 +580,10 @@ The most notable example is `HEAD`.
 	upstream is much larger. A shallow repository
 	is created by giving the `--depth` option to linkgit:git-clone[1], and
 	its history can be later deepened with linkgit:git-fetch[1].
+
+[[def_stash]]stash entry::
+	An <<def_object,object>> used to temporarily store the contents of a
+	<<def_dirty,dirty>> working directory and the index for future reuse.
 
 [[def_submodule]]submodule::
 	A <<def_repository,repository>> that holds the history of a

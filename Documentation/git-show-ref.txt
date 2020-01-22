@@ -11,7 +11,7 @@ SYNOPSIS
 'git show-ref' [-q|--quiet] [--verify] [--head] [-d|--dereference]
 	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
 	     [--heads] [--] [<pattern>...]
-'git show-ref' --exclude-existing[=<pattern>] < ref-list
+'git show-ref' --exclude-existing[=<pattern>]
 
 DESCRIPTION
 -----------
@@ -23,8 +23,9 @@ particular ref exists.
 
 By default, shows the tags, heads, and remote refs.
 
-The --exclude-existing form is a filter that does the inverse, it shows the
-refs from stdin that don't exist in the local repository.
+The --exclude-existing form is a filter that does the inverse. It reads
+refs from stdin, one ref per line, and shows those that don't exist in
+the local repository.
 
 Use of this utility is encouraged in favor of directly accessing files under
 the `.git` directory.
@@ -36,8 +37,8 @@ OPTIONS
 
 	Show the HEAD reference, even if it would normally be filtered out.
 
---tags::
 --heads::
+--tags::
 
 	Limit to "refs/heads" and "refs/tags", respectively.  These options
 	are not mutually exclusive; when given both, references stored in
@@ -59,7 +60,7 @@ OPTIONS
 
 	Enable stricter reference checking by requiring an exact ref path.
 	Aside from returning an error code of 1, it will also print an error
-	message if '--quiet' was not specified.
+	message if `--quiet` was not specified.
 
 --abbrev[=<n>]::
 
@@ -69,7 +70,7 @@ OPTIONS
 -q::
 --quiet::
 
-	Do not print any results to stdout. When combined with '--verify' this
+	Do not print any results to stdout. When combined with `--verify` this
 	can be used to silently check if a reference exists.
 
 --exclude-existing[=<pattern>]::
@@ -119,8 +120,8 @@ $ git show-ref --heads --hash
 ...
 -----------------------------------------------------------------------------
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 To show all references called "master", whether tags or heads or anything
 else, and regardless of how deep in the reference naming hierarchy they are,
@@ -133,7 +134,7 @@ use:
 This will show "refs/heads/master" but also "refs/remote/other-repo/master",
 if such references exists.
 
-When using the '--verify' flag, the command requires an exact path:
+When using the `--verify` flag, the command requires an exact path:
 
 -----------------------------------------------------------------------------
 	git show-ref --verify refs/heads/master

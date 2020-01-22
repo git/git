@@ -28,11 +28,11 @@ test_expect_success \
      echo Mi >path2/baz/b &&
      find path? \( -type f -o -type l \) -print |
      xargs git update-index --add &&
-     tree=`git write-tree` &&
+     tree=$(git write-tree) &&
      echo $tree'
 
 test_output () {
-    sed -e "s/ $_x40	/ X	/" <current >check
+    sed -e "s/ $OID_REGEX	/ X	/" <current >check
     test_cmp expected check
 }
 

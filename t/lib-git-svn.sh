@@ -1,8 +1,5 @@
 . ./test-lib.sh
 
-remotes_git_svn=remotes/git""-svn
-git_svn_id=git""-svn-id
-
 if test -n "$NO_SVN_TESTS"
 then
 	skip_all='skipping git svn tests, NO_SVN_TESTS defined'
@@ -16,12 +13,13 @@ fi
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
+test_set_port SVNSERVE_PORT
 
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-    skip_all='skipping git svn tests, svn not found'
-    test_done
+	skip_all='skipping git svn tests, svn not found'
+	test_done
 fi
 
 svnrepo=$PWD/svnrepo
@@ -52,7 +50,7 @@ rawsvnrepo="$svnrepo"
 svnrepo="file://$svnrepo"
 
 poke() {
-	test-chmtime +1 "$1"
+	test-tool chmtime +1 "$1"
 }
 
 # We need this, because we should pass empty configuration directory to
@@ -68,81 +66,15 @@ svn_cmd () {
 	svn "$orig_svncmd" --config-dir "$svnconf" "$@"
 }
 
-prepare_httpd () {
-	for d in \
-		"$SVN_HTTPD_PATH" \
-		/usr/sbin/apache2 \
-		/usr/sbin/httpd \
-	; do
-		if test -f "$d"
-		then
-			SVN_HTTPD_PATH="$d"
-			break
-		fi
-	done
-	if test -z "$SVN_HTTPD_PATH"
+maybe_start_httpd () {
+	loc=${1-svn}
+
+	if test_bool_env GIT_TEST_SVN_HTTPD false
 	then
-		echo >&2 '*** error: Apache not found'
-		return 1
+		. "$TEST_DIRECTORY"/lib-httpd.sh
+		LIB_HTTPD_SVN="$loc"
+		start_httpd
 	fi
-	for d in \
-		"$SVN_HTTPD_MODULE_PATH" \
-		/usr/lib/apache2/modules \
-		/usr/libexec/apache2 \
-	; do
-		if test -d "$d"
-		then
-			SVN_HTTPD_MODULE_PATH="$d"
-			break
-		fi
-	done
-	if test -z "$SVN_HTTPD_MODULE_PATH"
-	then
-		echo >&2 '*** error: Apache module dir not found'
-		return 1
-	fi
-	if test ! -f "$SVN_HTTPD_MODULE_PATH/mod_dav_svn.so"
-	then
-		echo >&2 '*** error: Apache module "mod_dav_svn" not found'
-		return 1
-	fi
-
-	repo_base_path="${1-svn}"
-	mkdir "$GIT_DIR"/logs
-
-	cat > "$GIT_DIR/httpd.conf" <<EOF
-ServerName "git svn test"
-ServerRoot "$GIT_DIR"
-DocumentRoot "$GIT_DIR"
-PidFile "$GIT_DIR/httpd.pid"
-LockFile logs/accept.lock
-Listen 127.0.0.1:$SVN_HTTPD_PORT
-LoadModule dav_module $SVN_HTTPD_MODULE_PATH/mod_dav.so
-LoadModule dav_svn_module $SVN_HTTPD_MODULE_PATH/mod_dav_svn.so
-<Location /$repo_base_path>
-	DAV svn
-	SVNPath "$rawsvnrepo"
-</Location>
-EOF
-}
-
-start_httpd () {
-	if test -z "$SVN_HTTPD_PORT"
-	then
-		echo >&2 'SVN_HTTPD_PORT is not defined!'
-		return
-	fi
-
-	prepare_httpd "$1" || return 1
-
-	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k start
-	svnrepo="http://127.0.0.1:$SVN_HTTPD_PORT/$repo_base_path"
-}
-
-stop_httpd () {
-	test -z "$SVN_HTTPD_PORT" && return
-	test ! -f "$GIT_DIR/httpd.conf" && return
-	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k stop
 }
 
 convert_to_rev_db () {
@@ -172,17 +104,29 @@ EOF
 }
 
 require_svnserve () {
-    if test -z "$SVNSERVE_PORT"
-    then
-	skip_all='skipping svnserve test. (set $SVNSERVE_PORT to enable)'
-        test_done
-    fi
+	if ! test_bool_env GIT_TEST_SVNSERVE false
+	then
+		skip_all='skipping svnserve test. (set $GIT_TEST_SVNSERVE to enable)'
+		test_done
+	fi
 }
 
 start_svnserve () {
-    svnserve --listen-port $SVNSERVE_PORT \
-             --root "$rawsvnrepo" \
-             --listen-once \
-             --listen-host 127.0.0.1 &
+	svnserve --listen-port $SVNSERVE_PORT \
+		 --root "$rawsvnrepo" \
+		 --listen-once \
+		 --listen-host 127.0.0.1 &
 }
 
+prepare_a_utf8_locale () {
+	a_utf8_locale=$(locale -a | sed -n '/\.[uU][tT][fF]-*8$/{
+	p
+	q
+}')
+	if test -n "$a_utf8_locale"
+	then
+		test_set_prereq UTF8
+	else
+		say "# UTF-8 locale not available, some tests are skipped"
+	fi
+}

@@ -6,7 +6,9 @@ git quiltimport [options]
 --
 n,dry-run     dry run
 author=       author name and email address for patches without any
-patches=      path to the quilt series and patches
+patches=      path to the quilt patches
+series=       path to the quilt series file
+keep-non-patch Pass -b to git mailinfo
 "
 SUBDIRECTORY_ON=Yes
 . git-sh-setup
@@ -26,6 +28,13 @@ do
 	--patches)
 		shift
 		QUILT_PATCHES="$1"
+		;;
+	--series)
+		shift
+		QUILT_SERIES="$1"
+		;;
+	--keep-non-patch)
+		MAILINFO_OPT="-b"
 		;;
 	--)
 		shift
@@ -50,6 +59,13 @@ fi
 : ${QUILT_PATCHES:=patches}
 if ! [ -d "$QUILT_PATCHES" ] ; then
 	echo "The \"$QUILT_PATCHES\" directory does not exist."
+	exit 1
+fi
+
+# Quilt series file
+: ${QUILT_SERIES:=$QUILT_PATCHES/series}
+if ! [ -e "$QUILT_SERIES" ] ; then
+	echo "The \"$QUILT_SERIES\" file does not exist."
 	exit 1
 fi
 
@@ -86,7 +102,7 @@ do
 		continue
 	fi
 	echo $patch_name
-	git mailinfo "$tmp_msg" "$tmp_patch" \
+	git mailinfo $MAILINFO_OPT "$tmp_msg" "$tmp_patch" \
 		<"$QUILT_PATCHES/$patch_name" >"$tmp_info" || exit 3
 	test -s "$tmp_patch" || {
 		echo "Patch is empty.  Was it split wrong?"
@@ -135,5 +151,5 @@ do
 		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
 		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
 	fi
-done 3<"$QUILT_PATCHES/series"
+done 3<"$QUILT_SERIES"
 rm -rf $tmp_dir || exit 5

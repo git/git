@@ -35,20 +35,24 @@ const signed char hexval_table[256] = {
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* f8-ff */
 };
 
+int hex_to_bytes(unsigned char *binary, const char *hex, size_t len)
+{
+	for (; len; len--, hex += 2) {
+		unsigned int val = (hexval(hex[0]) << 4) | hexval(hex[1]);
+
+		if (val & ~0xff)
+			return -1;
+		*binary++ = val;
+	}
+	return 0;
+}
+
 int get_sha1_hex(const char *hex, unsigned char *sha1)
 {
 	int i;
-	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
-		unsigned int val;
-		/*
-		 * hex[1]=='\0' is caught when val is checked below,
-		 * but if hex[0] is NUL we have to avoid reading
-		 * past the end of the string:
-		 */
-		if (!hex[0])
-			return -1;
-		val = (hexval(hex[0]) << 4) | hexval(hex[1]);
-		if (val & ~0xff)
+	for (i = 0; i < the_hash_algo->rawsz; i++) {
+		int val = hex2chr(hex);
+		if (val < 0)
 			return -1;
 		*sha1++ = val;
 		hex += 2;
@@ -61,16 +65,23 @@ int get_oid_hex(const char *hex, struct object_id *oid)
 	return get_sha1_hex(hex, oid->hash);
 }
 
-char *sha1_to_hex(const unsigned char *sha1)
+int parse_oid_hex(const char *hex, struct object_id *oid, const char **end)
 {
-	static int bufno;
-	static char hexbuffer[4][GIT_SHA1_HEXSZ + 1];
+	int ret = get_oid_hex(hex, oid);
+	if (!ret)
+		*end = hex + the_hash_algo->hexsz;
+	return ret;
+}
+
+char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash,
+			  const struct git_hash_algo *algop)
+{
 	static const char hex[] = "0123456789abcdef";
-	char *buffer = hexbuffer[3 & ++bufno], *buf = buffer;
+	char *buf = buffer;
 	int i;
 
-	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
-		unsigned int val = *sha1++;
+	for (i = 0; i < algop->rawsz; i++) {
+		unsigned int val = *hash++;
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];
 	}
@@ -79,7 +90,25 @@ char *sha1_to_hex(const unsigned char *sha1)
 	return buffer;
 }
 
+char *oid_to_hex_r(char *buffer, const struct object_id *oid)
+{
+	return hash_to_hex_algop_r(buffer, oid->hash, the_hash_algo);
+}
+
+char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *algop)
+{
+	static int bufno;
+	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
+	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
+	return hash_to_hex_algop_r(hexbuffer[bufno], hash, algop);
+}
+
+char *hash_to_hex(const unsigned char *hash)
+{
+	return hash_to_hex_algop(hash, the_hash_algo);
+}
+
 char *oid_to_hex(const struct object_id *oid)
 {
-	return sha1_to_hex(oid->hash);
+	return hash_to_hex_algop(oid->hash, the_hash_algo);
 }

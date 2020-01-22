@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright © 2005-2014 Paul Mackerras.  All rights reserved.
+# Copyright © 2005-2016 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -588,7 +588,7 @@ proc updatecommits {} {
 proc reloadcommits {} {
     global curview viewcomplete selectedline currentid thickerline
     global showneartags treediffs commitinterest cached_commitrow
-    global targetid
+    global targetid commitinfo
 
     set selid {}
     if {$selectedline ne {}} {
@@ -600,18 +600,19 @@ proc reloadcommits {} {
     }
     resetvarcs $curview
     set selectedline {}
-    catch {unset currentid}
-    catch {unset thickerline}
-    catch {unset treediffs}
+    unset -nocomplain currentid
+    unset -nocomplain thickerline
+    unset -nocomplain treediffs
     readrefs
     changedrefs
     if {$showneartags} {
 	getallcommits
     }
     clear_display
-    catch {unset commitinterest}
-    catch {unset cached_commitrow}
-    catch {unset targetid}
+    unset -nocomplain commitinfo
+    unset -nocomplain commitinterest
+    unset -nocomplain cached_commitrow
+    unset -nocomplain targetid
     setcanvscroll
     getcommits $selid
     return 0
@@ -673,7 +674,7 @@ proc resetvarcs {view} {
     foreach vd [array names vseedcount $view,*] {
 	unset vseedcount($vd)
     }
-    catch {unset ordertok}
+    unset -nocomplain ordertok
 }
 
 # returns a list of the commits with no children
@@ -966,7 +967,7 @@ proc insertrow {id p v} {
     set vp $v,$p
     if {[llength [lappend children($vp) $id]] > 1} {
 	set children($vp) [lsort -command [list vtokcmp $v] $children($vp)]
-	catch {unset ordertok}
+	unset -nocomplain ordertok
     }
     fix_reversal $p $a $v
     incr commitidx($v)
@@ -1136,7 +1137,7 @@ proc update_arcrows {v} {
 	    set displayorder [lrange $displayorder 0 [expr {$vrowmod($v) - 1}]]
 	    set parentlist [lrange $parentlist 0 [expr {$vrowmod($v) - 1}]]
 	}
-	catch {unset cached_commitrow}
+	unset -nocomplain cached_commitrow
     }
     set narctot [expr {[llength $varctok($v)] - 1}]
     set a $varcmod($v)
@@ -1315,7 +1316,7 @@ proc commitonrow {row} {
 
 proc closevarcs {v} {
     global varctok varccommits varcid parents children
-    global cmitlisted commitidx vtokmod
+    global cmitlisted commitidx vtokmod curview numcommits
 
     set missing_parents 0
     set scripts {}
@@ -1340,6 +1341,9 @@ proc closevarcs {v} {
 	    }
 	    lappend varccommits($v,$b) $p
 	    incr commitidx($v)
+	    if {$v == $curview} {
+		set numcommits $commitidx($v)
+	    }
 	    set scripts [check_interest $p $scripts]
 	}
     }
@@ -1442,7 +1446,7 @@ proc getcommitlines {fd inst view updating}  {
 	    if {[string range $err 0 4] == "usage"} {
 		set err "Gitk: error reading commits$fv:\
 			bad arguments to git log."
-		if {$viewname($view) eq "Command line"} {
+		if {$viewname($view) eq [mc "Command line"]} {
 		    append err \
 			"  (Note: arguments to gitk are passed to git log\
 			 to allow selection of commits to be displayed.)"
@@ -1579,7 +1583,7 @@ proc getcommitlines {fd inst view updating}  {
 		    [vtokcmp $view [lindex $children($vp) end-1] $id] > 0} {
 		    set children($vp) [lsort -command [list vtokcmp $view] \
 					   $children($vp)]
-		    catch {unset ordertok}
+		    unset -nocomplain ordertok
 		}
 		if {[info exists varcid($view,$p)]} {
 		    fix_reversal $p $a $view
@@ -1778,7 +1782,7 @@ proc readrefs {} {
     global hideremotes
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
-	catch {unset $v}
+	unset -nocomplain $v
     }
     set refd [open [list | git show-ref -d] r]
     while {[gets $refd line] >= 0} {
@@ -1894,13 +1898,13 @@ proc make_transient {window origin} {
     }
 }
 
-proc show_error {w top msg {mc mc}} {
+proc show_error {w top msg} {
     global NS
     if {![info exists NS]} {set NS ""}
     if {[wm state $top] eq "withdrawn"} { wm deiconify $top }
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
-    ${NS}::button $w.ok -default active -text [$mc OK] -command "destroy $top"
+    ${NS}::button $w.ok -default active -text [mc OK] -command "destroy $top"
     pack $w.ok -side bottom -fill x
     bind $top <Visibility> "grab $top; focus $top"
     bind $top <Key-Return> "destroy $top"
@@ -1943,6 +1947,8 @@ proc confirm_popup {msg {owner .}} {
 }
 
 proc setoptions {} {
+    global use_ttk
+
     if {[tk windowingsystem] ne "win32"} {
         option add *Panedwindow.showHandle 1 startupFile
         option add *Panedwindow.sashRelief raised startupFile
@@ -1963,6 +1969,18 @@ proc setoptions {} {
     option add *Labelframe.font uifont startupFile
     option add *Spinbox.font textfont startupFile
     option add *Listbox.font mainfont startupFile
+}
+
+proc setttkstyle {} {
+    eval font configure TkDefaultFont [fontflags mainfont]
+    eval font configure TkTextFont [fontflags textfont]
+    eval font configure TkHeadingFont [fontflags mainfont]
+    eval font configure TkCaptionFont [fontflags mainfont] -weight bold
+    eval font configure TkTooltipFont [fontflags uifont]
+    eval font configure TkFixedFont   [fontflags textfont]
+    eval font configure TkIconFont    [fontflags uifont]
+    eval font configure TkMenuFont    [fontflags uifont]
+    eval font configure TkSmallCaptionFont [fontflags uifont]
 }
 
 # Make a menu and submenus.
@@ -2065,33 +2083,33 @@ proc makewindow {} {
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
     set file {
-	mc "File" cascade {
-	    {mc "Update" command updatecommits -accelerator F5}
-	    {mc "Reload" command reloadcommits -accelerator Shift-F5}
-	    {mc "Reread references" command rereadrefs}
-	    {mc "List references" command showrefs -accelerator F2}
+	mc "&File" cascade {
+	    {mc "&Update" command updatecommits -accelerator F5}
+	    {mc "&Reload" command reloadcommits -accelerator Shift-F5}
+	    {mc "Reread re&ferences" command rereadrefs}
+	    {mc "&List references" command showrefs -accelerator F2}
 	    {xx "" separator}
-	    {mc "Start git gui" command {exec git gui &}}
+	    {mc "Start git &gui" command {exec git gui &}}
 	    {xx "" separator}
-	    {mc "Quit" command doquit -accelerator Meta1-Q}
+	    {mc "&Quit" command doquit -accelerator Meta1-Q}
 	}}
     set edit {
-	mc "Edit" cascade {
-	    {mc "Preferences" command doprefs}
+	mc "&Edit" cascade {
+	    {mc "&Preferences" command doprefs}
 	}}
     set view {
-	mc "View" cascade {
-	    {mc "New view..." command {newview 0} -accelerator Shift-F4}
-	    {mc "Edit view..." command editview -state disabled -accelerator F4}
-	    {mc "Delete view" command delview -state disabled}
+	mc "&View" cascade {
+	    {mc "&New view..." command {newview 0} -accelerator Shift-F4}
+	    {mc "&Edit view..." command editview -state disabled -accelerator F4}
+	    {mc "&Delete view" command delview -state disabled}
 	    {xx "" separator}
-	    {mc "All files" radiobutton {selectedview 0} -command {showview 0}}
+	    {mc "&All files" radiobutton {selectedview 0} -command {showview 0}}
 	}}
     if {[tk windowingsystem] ne "aqua"} {
 	set help {
-	mc "Help" cascade {
-	    {mc "About gitk" command about}
-	    {mc "Key bindings" command keys}
+	mc "&Help" cascade {
+	    {mc "&About gitk" command about}
+	    {mc "&Key bindings" command keys}
 	}}
 	set bar [list $file $edit $view $help]
     } else {
@@ -2099,13 +2117,13 @@ proc makewindow {} {
 	proc ::tk::mac::Quit {} {doquit}
 	lset file end [lreplace [lindex $file end] end-1 end]
 	set apple {
-	xx "Apple" cascade {
-	    {mc "About gitk" command about}
+	xx "&Apple" cascade {
+	    {mc "&About gitk" command about}
 	    {xx "" separator}
 	}}
 	set help {
-	mc "Help" cascade {
-	    {mc "Key bindings" command keys}
+	mc "&Help" cascade {
+	    {mc "&Key bindings" command keys}
 	}}
 	set bar [list $apple $file $view $help]
     }
@@ -2251,7 +2269,7 @@ proc makewindow {} {
 	set h [expr {[font metrics uifont -linespace] + 2}]
 	set progresscanv .tf.bar.progress
 	canvas $progresscanv -relief sunken -height $h -borderwidth 2
-	set progressitem [$progresscanv create rect -1 0 0 $h -fill green]
+	set progressitem [$progresscanv create rect -1 0 0 $h -fill "#00ff00"]
 	set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
 	set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
     }
@@ -2347,6 +2365,9 @@ proc makewindow {} {
     ${NS}::frame .bleft.mid
     ${NS}::frame .bleft.bottom
 
+    # gap between sub-widgets
+    set wgap [font measure uifont "i"]
+
     ${NS}::button .bleft.top.search -text [mc "Search"] -command dosearch
     pack .bleft.top.search -side left -padx 5
     set sstring .bleft.top.sstring
@@ -2361,8 +2382,9 @@ proc makewindow {} {
 	-command changediffdisp -variable diffelide -value {0 1}
     ${NS}::radiobutton .bleft.mid.new -text [mc "New version"] \
 	-command changediffdisp -variable diffelide -value {1 0}
+
     ${NS}::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
-    pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
+    pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left -ipadx $wgap
     spinbox .bleft.mid.diffcontext -width 5 \
 	-from 0 -increment 1 -to 10000000 \
 	-validate all -validatecommand "diffcontextvalidate %P" \
@@ -2370,7 +2392,7 @@ proc makewindow {} {
     .bleft.mid.diffcontext set $diffcontext
     trace add variable diffcontextstring write diffcontextchange
     lappend entries .bleft.mid.diffcontext
-    pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left
+    pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left -ipadx $wgap
     ${NS}::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
 	-command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
@@ -2385,7 +2407,7 @@ proc makewindow {} {
 
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
-	-state disabled -font textfont \
+	-state disabled -undo 0 -font textfont \
 	-yscrollcommand scrolltext -wrap none \
 	-xscrollcommand ".bleft.bottom.sbhorizontal set"
     if {$have_tk85} {
@@ -2568,6 +2590,7 @@ proc makewindow {} {
     bindkey b prevfile
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
+    bindkey g {$sha1entry delete 0 end; focus $sha1entry}
     bindkey / {focus $fstring}
     bindkey <Key-KP_Divide> {focus $fstring}
     bindkey <Key-Return> {dofind 1 1}
@@ -2617,6 +2640,7 @@ proc makewindow {} {
 	{mc "Diff selected -> this" command {diffvssel 1}}
 	{mc "Make patch" command mkpatch}
 	{mc "Create tag" command mktag}
+	{mc "Copy commit summary" command copysummary}
 	{mc "Write commit to file" command writecommit}
 	{mc "Create new branch" command mkbranch}
 	{mc "Cherry-pick this commit" command cherrypick}
@@ -2644,7 +2668,9 @@ proc makewindow {} {
     set headctxmenu .headctxmenu
     makemenu $headctxmenu {
 	{mc "Check out this branch" command cobranch}
+	{mc "Rename this branch" command mvbranch}
 	{mc "Remove this branch" command rmbranch}
+	{mc "Copy branch name" command {clipboard clear; clipboard append $headmenuhead}}
     }
     $headctxmenu configure -tearoff 0
 
@@ -2655,6 +2681,7 @@ proc makewindow {} {
 	{mc "Highlight this only" command {flist_hl 1}}
 	{mc "External diff" command {external_diff}}
 	{mc "Blame parent commit" command {external_blame 1}}
+	{mc "Copy path" command {clipboard clear; clipboard append $flist_menu_file}}
     }
     $flist_menu configure -tearoff 0
 
@@ -2999,7 +3026,7 @@ proc bindall {event action} {
 }
 
 proc about {} {
-    global uifont NS
+    global bgcolor NS
     set w .about
     if {[winfo exists $w]} {
 	raise $w
@@ -3011,10 +3038,10 @@ proc about {} {
     message $w.m -text [mc "
 Gitk - a commit viewer for git
 
-Copyright \u00a9 2005-2014 Paul Mackerras
+Copyright \u00a9 2005-2016 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License"] \
-	    -justify center -aspect 400 -border 2 -bg white -relief groove
+	    -justify center -aspect 400 -border 2 -bg $bgcolor -relief groove
     pack $w.m -side top -fill x -padx 2 -pady 2
     ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     pack $w.ok -side bottom
@@ -3025,7 +3052,7 @@ Use and redistribute under the terms of the GNU General Public License"] \
 }
 
 proc keys {} {
-    global NS
+    global bgcolor NS
     set w .keys
     if {[winfo exists $w]} {
 	raise $w
@@ -3069,6 +3096,7 @@ proc keys {} {
 [mc "<%s-F>		Find" $M1T]
 [mc "<%s-G>		Move to next find hit" $M1T]
 [mc "<Return>	Move to next find hit"]
+[mc "g		Go to commit"]
 [mc "/		Focus the search box"]
 [mc "?		Move to previous find hit"]
 [mc "f		Scroll diff view to next file"]
@@ -3080,7 +3108,7 @@ proc keys {} {
 [mc "<%s-minus>	Decrease font size" $M1T]
 [mc "<F5>		Update"]
 " \
-	    -justify left -bg white -border 2 -relief groove
+	    -justify left -bg $bgcolor -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
     ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     bind $w <Key-Escape> [list destroy $w]
@@ -3374,7 +3402,9 @@ set rectmask {
        0x00, 0x00, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f,
        0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0x00, 0x00};
 }
-image create bitmap reficon-H -background black -foreground green \
+image create bitmap reficon-H -background black -foreground "#00ff00" \
+    -data $rectdata -maskdata $rectmask
+image create bitmap reficon-R -background black -foreground "#ffddaa" \
     -data $rectdata -maskdata $rectmask
 image create bitmap reficon-o -background black -foreground "#ddddff" \
     -data $rectdata -maskdata $rectmask
@@ -3389,7 +3419,7 @@ proc init_flist {first} {
 	set cflist_top 1
 	$cflist tag add highlight 1.0 "1.0 lineend"
     } else {
-	catch {unset cflist_top}
+	unset -nocomplain cflist_top
     }
     $cflist conf -state disabled
     set difffilestart {}
@@ -4034,6 +4064,19 @@ proc shellsplit {str} {
     return $l
 }
 
+proc set_window_title {} {
+    global appname curview viewname vrevs
+    set rev [mc "All files"]
+    if {$curview ne 0} {
+	if {$viewname($curview) eq [mc "Command line"]} {
+	    set rev [string map {"--gitk-symmetric-diff-marker" "--merge"} $vrevs($curview)]
+	} else {
+	    set rev $viewname($curview)
+	}
+    }
+    wm title . "[reponame]: $rev - $appname"
+}
+
 # Code to implement multiple views
 
 proc newview {ishighlight} {
@@ -4066,7 +4109,7 @@ set known_view_options {
     {committer t15  .  "--committer=*"  {mc "Committer:"}}
     {loginfo   t15  .. "--grep=*"       {mc "Commit Message:"}}
     {allmatch  b    .. "--all-match"    {mc "Matches all Commit Info criteria"}}
-    {igrep     b    .. "--invert-grep"  {mc "Matches none Commit Info criteria"}}
+    {igrep     b    .. "--invert-grep"  {mc "Matches no Commit Info criteria"}}
     {changes_l l    +  {}               {mc "Changes to Files:"}}
     {pickaxe_s r0   .  {}               {mc "Fixed String"}}
     {pickaxe_t r1   .  "--pickaxe-regex"  {mc "Regular Expression"}}
@@ -4438,20 +4481,20 @@ proc showview {n} {
     }
     unselectline
     normalline
-    catch {unset treediffs}
+    unset -nocomplain treediffs
     clear_display
     if {[info exists hlview] && $hlview == $n} {
 	unset hlview
 	set selectedhlview [mc "None"]
     }
-    catch {unset commitinterest}
-    catch {unset cached_commitrow}
-    catch {unset ordertok}
+    unset -nocomplain commitinterest
+    unset -nocomplain cached_commitrow
+    unset -nocomplain ordertok
 
     set curview $n
     set selectedview $n
-    .bar.view entryconf [mca "Edit view..."] -state [expr {$n == 0? "disabled": "normal"}]
-    .bar.view entryconf [mca "Delete view"] -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf [mca "&Edit view..."] -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf [mca "&Delete view"] -state [expr {$n == 0? "disabled": "normal"}]
 
     run refill_reflist
     if {![info exists viewcomplete($n)]} {
@@ -4466,8 +4509,8 @@ proc showview {n} {
     set rowfinal {}
     set numcommits $commitidx($n)
 
-    catch {unset colormap}
-    catch {unset rowtextx}
+    unset -nocomplain colormap
+    unset -nocomplain rowtextx
     set nextcolor 0
     set canvxmax [$canv cget -width]
     set curview $n
@@ -4510,6 +4553,7 @@ proc showview {n} {
     } elseif {$numcommits == 0} {
 	show_status [mc "No commits selected"]
     }
+    set_window_title
 }
 
 # Stuff relating to the highlighting facility
@@ -4601,7 +4645,7 @@ proc delvhighlight {} {
 
     if {![info exists hlview]} return
     unset hlview
-    catch {unset vhighlights}
+    unset -nocomplain vhighlights
     unbolden
 }
 
@@ -4649,7 +4693,7 @@ proc hfiles_change {} {
 	# delete previous highlights
 	catch {close $filehighlight}
 	unset filehighlight
-	catch {unset fhighlights}
+	unset -nocomplain fhighlights
 	unbolden
 	unhighlight_filelist
     }
@@ -4710,7 +4754,7 @@ proc findcom_change args {
 	bolden_name $id mainfont
     }
     set boldnameids {}
-    catch {unset nhighlights}
+    unset -nocomplain nhighlights
     unbolden
     unmarkmatches
     if {$gdttype ne [mc "containing:"] || $findstring eq {}} {
@@ -4913,9 +4957,9 @@ proc rhighlight_sel {a} {
     global descendent desc_todo ancestor anc_todo
     global highlight_related
 
-    catch {unset descendent}
+    unset -nocomplain descendent
     set desc_todo [list $a]
-    catch {unset ancestor}
+    unset -nocomplain ancestor
     set anc_todo [list $a]
     if {$highlight_related ne [mc "None"]} {
 	rhighlight_none
@@ -4926,7 +4970,7 @@ proc rhighlight_sel {a} {
 proc rhighlight_none {} {
     global rhighlights
 
-    catch {unset rhighlights}
+    unset -nocomplain rhighlights
     unbolden
 }
 
@@ -5134,8 +5178,8 @@ proc initlayout {} {
     set rowisopt {}
     set rowfinal {}
     set canvxmax [$canv cget -width]
-    catch {unset colormap}
-    catch {unset rowtextx}
+    unset -nocomplain colormap
+    unset -nocomplain rowtextx
     setcanvscroll
 }
 
@@ -6368,17 +6412,17 @@ proc clear_display {} {
     global linehtag linentag linedtag boldids boldnameids
 
     allcanvs delete all
-    catch {unset iddrawn}
-    catch {unset linesegs}
-    catch {unset linehtag}
-    catch {unset linentag}
-    catch {unset linedtag}
+    unset -nocomplain iddrawn
+    unset -nocomplain linesegs
+    unset -nocomplain linehtag
+    unset -nocomplain linentag
+    unset -nocomplain linedtag
     set boldids {}
     set boldnameids {}
-    catch {unset vhighlights}
-    catch {unset fhighlights}
-    catch {unset nhighlights}
-    catch {unset rhighlights}
+    unset -nocomplain vhighlights
+    unset -nocomplain fhighlights
+    unset -nocomplain nhighlights
+    unset -nocomplain rhighlights
     set need_redisplay 0
     set nrows_drawn 0
 }
@@ -6650,6 +6694,7 @@ proc show_status {msg} {
     global canv fgcolor
 
     clear_display
+    set_window_title
     $canv create text 3 3 -anchor nw -text $msg -font mainfont \
 	-tags text -fill $fgcolor
 }
@@ -6973,6 +7018,7 @@ proc commit_descriptor {p} {
 
 # append some text to the ctext widget, and make any SHA1 ID
 # that we know about be a clickable link.
+# Also look for URLs of the form "http[s]://..." and make them web links.
 proc appendwithlinks {text tags} {
     global ctext linknum curview
 
@@ -6987,6 +7033,18 @@ proc appendwithlinks {text tags} {
 	$ctext tag delete link$linknum
 	$ctext tag add link$linknum "$start + $s c" "$start + $e c"
 	setlink $linkid link$linknum
+	incr linknum
+    }
+    set wlinks [regexp -indices -all -inline -line \
+		    {https?://[^[:space:]]+} $text]
+    foreach l $wlinks {
+	set s2 [lindex $l 0]
+	set e2 [lindex $l 1]
+	set url [string range $text $s2 $e2]
+	incr e2
+	$ctext tag delete link$linknum
+	$ctext tag add link$linknum "$start + $s2 c" "$start + $e2 c"
+	setwlink $url link$linknum
 	incr linknum
     }
 }
@@ -7021,6 +7079,18 @@ proc setlink {id lk} {
     }
 }
 
+proc setwlink {url lk} {
+    global ctext
+    global linkfgcolor
+    global web_browser
+
+    if {$web_browser eq {}} return
+    $ctext tag conf $lk -foreground $linkfgcolor -underline 1
+    $ctext tag bind $lk <1> [list browseweb $url]
+    $ctext tag bind $lk <Enter> {linkcursor %W 1}
+    $ctext tag bind $lk <Leave> {linkcursor %W -1}
+}
+
 proc appendshortlink {id {pre {}} {post {}}} {
     global ctext linknum
 
@@ -7052,6 +7122,16 @@ proc linkcursor {w inc} {
 	if {$linkentercount < 0} {
 	    set linkentercount 0
 	}
+    }
+}
+
+proc browseweb {url} {
+    global web_browser
+
+    if {$web_browser eq {}} return
+    # Use eval here in case $web_browser is a command plus some arguments
+    if {[catch {eval exec $web_browser [list $url] &} err]} {
+	error_popup "[mc "Error starting web browser:"] $err"
     }
 }
 
@@ -7226,7 +7306,7 @@ proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
     global autoselect autosellen jump_to_here
     global vinlinediff
 
-    catch {unset pending_select}
+    unset -nocomplain pending_select
     $canv delete hover
     normalline
     unsel_reflist
@@ -7424,7 +7504,7 @@ proc unselectline {} {
     global selectedline currentid
 
     set selectedline {}
-    catch {unset currentid}
+    unset -nocomplain currentid
     allcanvs delete secsel
     rhighlight_none
 }
@@ -7480,7 +7560,7 @@ proc unset_posvars {} {
     if {[info exists last_posvars]} {
 	foreach {var val} $last_posvars {
 	    global $var
-	    catch {unset $var}
+	    unset -nocomplain $var
 	}
 	unset last_posvars
     }
@@ -7548,7 +7628,7 @@ proc gettree {id} {
     global nullid nullid2
 
     set diffids $id
-    catch {unset diffmergeid}
+    unset -nocomplain diffmergeid
     if {![info exists treefilelist($id)]} {
 	if {![info exists treepending]} {
 	    if {$id eq $nullid} {
@@ -7704,7 +7784,7 @@ proc startdiff {ids} {
 
     settabs 1
     set diffids $ids
-    catch {unset diffmergeid}
+    unset -nocomplain diffmergeid
     if {![info exists treediffs($ids)] ||
 	[lsearch -exact $ids $nullid] >= 0 ||
 	[lsearch -exact $ids $nullid2] >= 0} {
@@ -8031,7 +8111,11 @@ proc getblobdiffline {bdf ids} {
     $ctext conf -state normal
     while {[incr nr] <= 1000 && [gets $bdf line] >= 0} {
 	if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
+	    # Older diff read. Abort it.
 	    catch {close $bdf}
+	    if {$ids != $diffids} {
+		array unset blobdifffd $ids
+	    }
 	    return 0
 	}
 	parseblobdiffline $ids $line
@@ -8040,6 +8124,7 @@ proc getblobdiffline {bdf ids} {
     blobdiffmaybeseehere [eof $bdf]
     if {[eof $bdf]} {
 	catch {close $bdf}
+	array unset blobdifffd $ids
 	return 0
     }
     return [expr {$nr >= 1000? 2: 1}]
@@ -8143,11 +8228,11 @@ proc parseblobdiffline {ids line} {
 	} else {
 	    $ctext insert end "$line\n" filesep
 	}
-    } elseif {![string compare -length 3 "  >" $line]} {
+    } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  >" $line]} {
 	set $currdiffsubmod ""
 	set line [encoding convertfrom $diffencoding $line]
 	$ctext insert end "$line\n" dresult
-    } elseif {![string compare -length 3 "  <" $line]} {
+    } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  <" $line]} {
 	set $currdiffsubmod ""
 	set line [encoding convertfrom $diffencoding $line]
 	$ctext insert end "$line\n" d0
@@ -8325,7 +8410,7 @@ proc clear_ctext {{first 1.0}} {
     }
     $ctext delete $first end
     if {$first eq "1.0"} {
-	catch {unset pendinglinks}
+	unset -nocomplain pendinglinks
     }
     set ctext_file_names {}
     set ctext_file_lines {}
@@ -8501,7 +8586,7 @@ proc scrolltext {f0 f1} {
 	highlightfile_for_scrollpos $topidx
     }
 
-    catch {unset suppress_highlighting_file_for_this_scrollpos}
+    unset -nocomplain suppress_highlighting_file_for_this_scrollpos
 
     .bleft.bottom.sb set $f0 $f1
     if {$searchstring ne {}} {
@@ -8876,13 +8961,13 @@ proc rowmenu {x y id} {
     if {$id ne $nullid && $id ne $nullid2} {
 	set menu $rowctxmenu
 	if {$mainhead ne {}} {
-	    $menu entryconfigure 7 -label [mc "Reset %s branch to here" $mainhead] -state normal
+	    $menu entryconfigure 8 -label [mc "Reset %s branch to here" $mainhead] -state normal
 	} else {
-	    $menu entryconfigure 7 -label [mc "Detached head: can't reset" $mainhead] -state disabled
+	    $menu entryconfigure 8 -label [mc "Detached head: can't reset" $mainhead] -state disabled
 	}
-	$menu entryconfigure 9 -state $mstate
 	$menu entryconfigure 10 -state $mstate
 	$menu entryconfigure 11 -state $mstate
+	$menu entryconfigure 12 -state $mstate
     } else {
 	set menu $fakerowmenu
     }
@@ -9341,6 +9426,20 @@ proc mktaggo {} {
     mktagcan
 }
 
+proc copysummary {} {
+    global rowmenuid autosellen
+
+    set format "%h (\"%s\", %ad)"
+    set cmd [list git show -s --pretty=format:$format --date=short]
+    if {$autosellen < 40} {
+        lappend cmd --abbrev=$autosellen
+    }
+    set summary [eval exec $cmd $rowmenuid]
+
+    clipboard clear
+    clipboard append $summary
+}
+
 proc writecommit {} {
     global rowmenuid wrcomtop commitinfo wrcomcmd NS
 
@@ -9400,26 +9499,63 @@ proc wrcomcan {} {
 }
 
 proc mkbranch {} {
-    global rowmenuid mkbrtop NS
+    global NS rowmenuid
 
-    set top .makebranch
+    set top .branchdialog
+
+    set val(name) ""
+    set val(id) $rowmenuid
+    set val(command) [list mkbrgo $top]
+
+    set ui(title) [mc "Create branch"]
+    set ui(accept) [mc "Create"]
+
+    branchdia $top val ui
+}
+
+proc mvbranch {} {
+    global NS
+    global headmenuid headmenuhead
+
+    set top .branchdialog
+
+    set val(name) $headmenuhead
+    set val(id) $headmenuid
+    set val(command) [list mvbrgo $top $headmenuhead]
+
+    set ui(title) [mc "Rename branch %s" $headmenuhead]
+    set ui(accept) [mc "Rename"]
+
+    branchdia $top val ui
+}
+
+proc branchdia {top valvar uivar} {
+    global NS commitinfo
+    upvar $valvar val $uivar ui
+
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Create new branch"]
+    ${NS}::label $top.title -text $ui(title)
     grid $top.title - -pady 10
     ${NS}::label $top.id -text [mc "ID:"]
     ${NS}::entry $top.sha1 -width 40
-    $top.sha1 insert 0 $rowmenuid
+    $top.sha1 insert 0 $val(id)
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
+    ${NS}::entry $top.head -width 60
+    $top.head insert 0 [lindex $commitinfo($val(id)) 0]
+    $top.head conf -state readonly
+    grid x $top.head -sticky ew
+    grid columnconfigure $top 1 -weight 1
     ${NS}::label $top.nlab -text [mc "Name:"]
     ${NS}::entry $top.name -width 40
+    $top.name insert 0 $val(name)
     grid $top.nlab $top.name -sticky w
     ${NS}::frame $top.buts
-    ${NS}::button $top.buts.go -text [mc "Create"] -command [list mkbrgo $top]
+    ${NS}::button $top.buts.go -text $ui(accept) -command $val(command)
     ${NS}::button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
-    bind $top <Key-Return> [list mkbrgo $top]
+    bind $top <Key-Return> $val(command)
     bind $top <Key-Escape> "catch {destroy $top}"
     grid $top.buts.go $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
@@ -9469,6 +9605,46 @@ proc mkbrgo {top} {
 	    addedhead $id $name
 	    redrawtags $id
 	}
+	dispneartags 0
+	run refill_reflist
+    }
+}
+
+proc mvbrgo {top prevname} {
+    global headids idheads mainhead mainheadid
+
+    set name [$top.name get]
+    set id [$top.sha1 get]
+    set cmdargs {}
+    if {$name eq $prevname} {
+	catch {destroy $top}
+	return
+    }
+    if {$name eq {}} {
+	error_popup [mc "Please specify a new name for the branch"] $top
+	return
+    }
+    catch {destroy $top}
+    lappend cmdargs -m $prevname $name
+    nowbusy renamebranch
+    update
+    if {[catch {
+	eval exec git branch $cmdargs
+    } err]} {
+	notbusy renamebranch
+	error_popup $err
+    } else {
+	notbusy renamebranch
+	removehead $id $prevname
+	removedhead $id $prevname
+	set headids($name) $id
+	lappend idheads($id) $name
+	addedhead $id $name
+	if {$prevname eq $mainhead} {
+	    set mainhead $name
+	    set mainheadid $id
+	}
+	redrawtags $id
 	dispneartags 0
 	run refill_reflist
     }
@@ -9699,20 +9875,25 @@ proc readresetstat {fd} {
 
 # context menu for a head
 proc headmenu {x y id head} {
-    global headmenuid headmenuhead headctxmenu mainhead
+    global headmenuid headmenuhead headctxmenu mainhead headids
 
     stopfinding
     set headmenuid $id
     set headmenuhead $head
-    set state normal
+    array set state {0 normal 1 normal 2 normal}
     if {[string match "remotes/*" $head]} {
-	set state disabled
+	set localhead [string range $head [expr [string last / $head] + 1] end]
+	if {[info exists headids($localhead)]} {
+	    set state(0) disabled
+	}
+	array set state {1 disabled 2 disabled}
     }
     if {$head eq $mainhead} {
-	set state disabled
+	array set state {0 disabled 2 disabled}
     }
-    $headctxmenu entryconfigure 0 -state $state
-    $headctxmenu entryconfigure 1 -state $state
+    foreach i {0 1 2} {
+	$headctxmenu entryconfigure $i -state $state($i)
+    }
     tk_popup $headctxmenu $x $y
 }
 
@@ -9721,11 +9902,27 @@ proc cobranch {} {
     global showlocalchanges
 
     # check the tree is clean first??
+    set newhead $headmenuhead
+    set command [list | git checkout]
+    if {[string match "remotes/*" $newhead]} {
+	set remote $newhead
+	set newhead [string range $newhead [expr [string last / $newhead] + 1] end]
+	# The following check is redundant - the menu option should
+	# be disabled to begin with...
+	if {[info exists headids($newhead)]} {
+	    error_popup [mc "A local branch named %s exists already" $newhead]
+	    return
+	}
+	lappend command -b $newhead --track $remote
+    } else {
+	lappend command $newhead
+    }
+    lappend command 2>@1
     nowbusy checkout [mc "Checking out"]
     update
     dohidelocalchanges
     if {[catch {
-	set fd [open [list | git checkout $headmenuhead 2>@1] r]
+	set fd [open $command r]
     } err]} {
 	notbusy checkout
 	error_popup $err
@@ -9733,12 +9930,12 @@ proc cobranch {} {
 	    dodiffindex
 	}
     } else {
-	filerun $fd [list readcheckoutstat $fd $headmenuhead $headmenuid]
+	filerun $fd [list readcheckoutstat $fd $newhead $headmenuid]
     }
 }
 
 proc readcheckoutstat {fd newhead newheadid} {
-    global mainhead mainheadid headids showlocalchanges progresscoords
+    global mainhead mainheadid headids idheads showlocalchanges progresscoords
     global viewmainheadid curview
 
     if {[gets $fd line] >= 0} {
@@ -9753,8 +9950,14 @@ proc readcheckoutstat {fd newhead newheadid} {
     notbusy checkout
     if {[catch {close $fd} err]} {
 	error_popup $err
+	return
     }
     set oldmainid $mainheadid
+    if {! [info exists headids($newhead)]} {
+	set headids($newhead) $newheadid
+	lappend idheads($newheadid) $newhead
+	addedhead $newheadid $newhead
+    }
     set mainhead $newhead
     set mainheadid $newheadid
     set viewmainheadid($curview) $newheadid
@@ -9819,8 +10022,10 @@ proc showrefs {} {
 	-width 30 -height 20 -cursor $maincursor \
 	-spacing1 1 -spacing3 1 -state disabled
     $top.list tag configure highlight -background $selectbgcolor
-    lappend bglist $top.list
-    lappend fglist $top.list
+    if {![lsearch -exact $bglist $top.list]} {
+	lappend bglist $top.list
+	lappend fglist $top.list
+    }
     ${NS}::scrollbar $top.ysb -command "$top.list yview" -orient vertical
     ${NS}::scrollbar $top.xsb -command "$top.list xview" -orient horizontal
     grid $top.list $top.ysb -sticky nsew
@@ -9854,6 +10059,7 @@ proc sel_reflist {w x y} {
     set n [lindex $ref 0]
     switch -- [lindex $ref 1] {
 	"H" {selbyid $headids($n)}
+	"R" {selbyid $headids($n)}
 	"T" {selbyid $tagids($n)}
 	"o" {selbyid $otherrefids($n)}
     }
@@ -9883,7 +10089,11 @@ proc refill_reflist {} {
     foreach n [array names headids] {
 	if {[string match $reflistfilter $n]} {
 	    if {[commitinview $headids($n) $curview]} {
-		lappend refs [list $n H]
+		if {[string match "remotes/*" $n]} {
+		    lappend refs [list $n R]
+		} else {
+		    lappend refs [list $n H]
+		}
 	    } else {
 		interestedin $headids($n) {run refill_reflist}
 	    }
@@ -10103,9 +10313,9 @@ proc getallclines {fd} {
     }
     if {$nid > 0} {
 	global cached_dheads cached_dtags cached_atags
-	catch {unset cached_dheads}
-	catch {unset cached_dtags}
-	catch {unset cached_atags}
+	unset -nocomplain cached_dheads
+	unset -nocomplain cached_dtags
+	unset -nocomplain cached_atags
     }
     if {![eof $fd]} {
 	return [expr {$nid >= 1000? 2: 1}]
@@ -10345,7 +10555,7 @@ proc dropcache {err} {
     foreach v {arcnos arcout arcids arcstart arcend growing \
 		   arctags archeads allparents allchildren} {
 	global $v
-	catch {unset $v}
+	unset -nocomplain $v
     }
     set allcwait 0
     set nextarc 0
@@ -10996,8 +11206,8 @@ proc addedtag {id} {
     if {![info exists arcout($id)]} {
 	recalcarc [lindex $arcnos($id) 0]
     }
-    catch {unset cached_dtags}
-    catch {unset cached_atags}
+    unset -nocomplain cached_dtags
+    unset -nocomplain cached_atags
 }
 
 proc addedhead {hid head} {
@@ -11007,13 +11217,13 @@ proc addedhead {hid head} {
     if {![info exists arcout($hid)]} {
 	recalcarc [lindex $arcnos($hid) 0]
     }
-    catch {unset cached_dheads}
+    unset -nocomplain cached_dheads
 }
 
 proc removedhead {hid head} {
     global cached_dheads
 
-    catch {unset cached_dheads}
+    unset -nocomplain cached_dheads
 }
 
 proc movedhead {hid head} {
@@ -11023,7 +11233,7 @@ proc movedhead {hid head} {
     if {![info exists arcout($hid)]} {
 	recalcarc [lindex $arcnos($hid) 0]
     }
-    catch {unset cached_dheads}
+    unset -nocomplain cached_dheads
 }
 
 proc changedrefs {} {
@@ -11039,10 +11249,10 @@ proc changedrefs {} {
 	    }
 	}
     }
-    catch {unset cached_tagcontent}
-    catch {unset cached_dtags}
-    catch {unset cached_atags}
-    catch {unset cached_dheads}
+    unset -nocomplain cached_tagcontent
+    unset -nocomplain cached_dtags
+    unset -nocomplain cached_atags
+    unset -nocomplain cached_dheads
 }
 
 proc rereadrefs {} {
@@ -11320,7 +11530,7 @@ proc create_prefs_page {w} {
 proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk maxrefs
+    global hideremotes want_ttk have_ttk maxrefs web_browser
 
     set page [create_prefs_page $notebook.general]
 
@@ -11370,6 +11580,13 @@ proc prefspage_general {notebook} {
     pack $page.extdifff.l $page.extdifff.b -side left
     pack configure $page.extdifff.l -padx 10
     grid x $page.extdifff $page.extdifft -sticky ew
+
+    ${NS}::entry $page.webbrowser -textvariable web_browser
+    ${NS}::frame $page.webbrowserf
+    ${NS}::label $page.webbrowserf.l -text [mc "Web browser" ]
+    pack $page.webbrowserf.l -side left
+    pack configure $page.webbrowserf.l -padx 10
+    grid x $page.webbrowserf $page.webbrowser -sticky ew
 
     ${NS}::label $page.lgen -text [mc "General options"]
     grid $page.lgen - -sticky w -pady 10
@@ -11532,7 +11749,9 @@ proc choosecolor {v vi w x cmd} {
 proc setselbg {c} {
     global bglist cflist
     foreach w $bglist {
-	$w configure -selectbackground $c
+	if {[winfo exists $w]} {
+	    $w configure -selectbackground $c
+	}
     }
     $cflist tag configure highlight \
 	-background [$cflist cget -selectbackground]
@@ -11558,7 +11777,9 @@ proc setbg {c} {
     global bglist
 
     foreach w $bglist {
-	$w conf -background $c
+	if {[winfo exists $w]} {
+	    $w conf -background $c
+	}
     }
 }
 
@@ -11566,7 +11787,9 @@ proc setfg {c} {
     global fglist canv
 
     foreach w $fglist {
-	$w conf -foreground $c
+	if {[winfo exists $w]} {
+	    $w conf -foreground $c
+	}
     }
     allcanvs itemconf text -fill $c
     $canv itemconf circle -outline $c
@@ -11628,7 +11851,7 @@ proc prefsok {} {
 	($perfile_attrs && !$oldprefs(perfile_attrs))} {
 	# treediffs elements are limited by path;
 	# won't have encodings cached if perfile_attrs was just turned on
-	catch {unset treediffs}
+	unset -nocomplain treediffs
     }
     if {$fontchanged || $maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
@@ -12008,10 +12231,29 @@ proc get_path_encoding {path} {
     return $tcl_enc
 }
 
+## For msgcat loading, first locate the installation location.
+if { [info exists ::env(GITK_MSGSDIR)] } {
+    ## Msgsdir was manually set in the environment.
+    set gitk_msgsdir $::env(GITK_MSGSDIR)
+} else {
+    ## Let's guess the prefix from argv0.
+    set gitk_prefix [file dirname [file dirname [file normalize $argv0]]]
+    set gitk_libdir [file join $gitk_prefix share gitk lib]
+    set gitk_msgsdir [file join $gitk_libdir msgs]
+    unset gitk_prefix
+}
+
+## Internationalization (i18n) through msgcat and gettext. See
+## http://www.gnu.org/software/gettext/manual/html_node/Tcl.html
+package require msgcat
+namespace import ::msgcat::mc
+## And eventually load the actual message catalog
+::msgcat::mcload $gitk_msgsdir
+
 # First check that Tcl/Tk is recent enough
 if {[catch {package require Tk 8.4} err]} {
-    show_error {} . "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
-		     Gitk requires at least Tcl/Tk 8.4." list
+    show_error {} . [mc "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
+			 Gitk requires at least Tcl/Tk 8.4."]
     exit 1
 }
 
@@ -12109,7 +12351,7 @@ if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "meld"
 }
 
-set colors {green red blue magenta darkgrey brown orange}
+set colors {"#00ff00" red blue magenta darkgrey brown orange}
 if {[tk windowingsystem] eq "win32"} {
     set uicolor SystemButtonFace
     set uifgcolor SystemButtonText
@@ -12117,6 +12359,7 @@ if {[tk windowingsystem] eq "win32"} {
     set bgcolor SystemWindow
     set fgcolor SystemWindowText
     set selectbgcolor SystemHighlight
+    set web_browser "cmd /c start"
 } else {
     set uicolor grey85
     set uifgcolor black
@@ -12124,15 +12367,20 @@ if {[tk windowingsystem] eq "win32"} {
     set bgcolor white
     set fgcolor black
     set selectbgcolor gray85
+    if {[tk windowingsystem] eq "aqua"} {
+	set web_browser "open"
+    } else {
+	set web_browser "xdg-open"
+    }
 }
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
-set mergecolors {red blue green purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
+set mergecolors {red blue "#00ff00" purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
 set ignorespace 0
 set worddiff ""
 set markbgcolor "#e0e0ff"
 
-set headbgcolor green
+set headbgcolor "#00ff00"
 set headfgcolor black
 set headoutlinecolor black
 set remotebgcolor #ffddaa
@@ -12147,7 +12395,7 @@ set linehoverfgcolor black
 set linehoveroutlinecolor black
 set mainheadcirclecolor yellow
 set workingfilescirclecolor red
-set indexcirclecolor green
+set indexcirclecolor "#00ff00"
 set circlecolors {white blue gray blue blue}
 set linkfgcolor blue
 set circleoutlinecolor $fgcolor
@@ -12160,25 +12408,6 @@ if {[tk windowingsystem] eq "aqua"} {
 } else {
     set ctxbut <Button-3>
 }
-
-## For msgcat loading, first locate the installation location.
-if { [info exists ::env(GITK_MSGSDIR)] } {
-    ## Msgsdir was manually set in the environment.
-    set gitk_msgsdir $::env(GITK_MSGSDIR)
-} else {
-    ## Let's guess the prefix from argv0.
-    set gitk_prefix [file dirname [file dirname [file normalize $argv0]]]
-    set gitk_libdir [file join $gitk_prefix share gitk lib]
-    set gitk_msgsdir [file join $gitk_libdir msgs]
-    unset gitk_prefix
-}
-
-## Internationalization (i18n) through msgcat and gettext. See
-## http://www.gnu.org/software/gettext/manual/html_node/Tcl.html
-package require msgcat
-namespace import ::msgcat::mc
-## And eventually load the actual message catalog
-::msgcat::mcload $gitk_msgsdir
 
 catch {
     # follow the XDG base directory specification by default. See
@@ -12216,6 +12445,7 @@ set config_variables {
     filesepbgcolor filesepfgcolor linehoverbgcolor linehoverfgcolor
     linehoveroutlinecolor mainheadcirclecolor workingfilescirclecolor
     indexcirclecolor circlecolors linkfgcolor circleoutlinecolor
+    web_browser
 }
 foreach var $config_variables {
     config_init_trace $var
@@ -12314,6 +12544,10 @@ if {![info exists have_ttk]} {
 set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
 
+if {$use_ttk} {
+    setttkstyle
+}
+
 regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
 
 set show_notes {}
@@ -12393,7 +12627,7 @@ catch {
 }
 # wait for the window to become visible
 tkwait visibility .
-wm title . "$appname: [reponame]"
+set_window_title
 update
 readrefs
 
@@ -12410,8 +12644,8 @@ if {$cmdline_files ne {} || $revtreeargs ne {} || $revtreeargscmd ne {}} {
     set viewchanged(1) 0
     set vdatemode(1) 0
     addviewmenu 1
-    .bar.view entryconf [mca "Edit view..."] -state normal
-    .bar.view entryconf [mca "Delete view"] -state normal
+    .bar.view entryconf [mca "&Edit view..."] -state normal
+    .bar.view entryconf [mca "&Delete view"] -state normal
 }
 
 if {[info exists permviews]} {

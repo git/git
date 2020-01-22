@@ -105,9 +105,12 @@ test_expect_success 'git fetch --multiple (two remotes)' '
 	 git remote rm origin &&
 	 git remote add one ../one &&
 	 git remote add two ../two &&
-	 git fetch --multiple one two &&
+	 GIT_TRACE=1 git fetch --multiple one two 2>trace &&
 	 git branch -r > output &&
-	 test_cmp ../expect output)
+	 test_cmp ../expect output &&
+	 grep "built-in: git gc" trace >gc &&
+	 test_line_count = 1 gc
+	)
 '
 
 test_expect_success 'git fetch --multiple (bad remote names)' '
@@ -152,7 +155,6 @@ test_expect_success 'git fetch --multiple (ignoring skipFetchAll)' '
 '
 
 test_expect_success 'git fetch --all --no-tags' '
-	>expect &&
 	git clone one test5 &&
 	git clone test5 test6 &&
 	(cd test5 && git tag test-tag) &&
@@ -161,7 +163,7 @@ test_expect_success 'git fetch --all --no-tags' '
 		git fetch --all --no-tags &&
 		git tag >output
 	) &&
-	test_cmp expect test6/output
+	test_must_be_empty test6/output
 '
 
 test_expect_success 'git fetch --all --tags' '
@@ -179,6 +181,17 @@ test_expect_success 'git fetch --all --tags' '
 		git tag >output
 	) &&
 	test_cmp expect test8/output
+'
+
+test_expect_success 'parallel' '
+	git remote add one ./bogus1 &&
+	git remote add two ./bogus2 &&
+
+	test_must_fail env GIT_TRACE="$PWD/trace" \
+		git fetch --jobs=2 --multiple one two 2>err &&
+	grep "preparing to run up to 2 tasks" trace &&
+	test_i18ngrep "could not fetch .one.*128" err &&
+	test_i18ngrep "could not fetch .two.*128" err
 '
 
 test_done

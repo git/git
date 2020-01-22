@@ -14,8 +14,8 @@
 #       specified line.
 #
 #   "<cmd> <lineno>" -- add a line with the specified command
-#       ("squash", "fixup", "edit", "reword" or "drop") and the SHA1 taken
-#       from the specified line.
+#       ("pick", "squash", "fixup", "edit", "reword" or "drop") and the
+#       SHA1 taken from the specified line.
 #
 #   "exec_cmd_with_args" -- add an "exec cmd with args" line.
 #
@@ -29,6 +29,7 @@ set_fake_editor () {
 	*/COMMIT_EDITMSG)
 		test -z "$EXPECT_HEADER_COUNT" ||
 			test "$EXPECT_HEADER_COUNT" = "$(sed -n '1s/^# This is a combination of \(.*\) commits\./\1/p' < "$1")" ||
+			test "# # GETTEXT POISON #" = "$(sed -n '1p' < "$1")" ||
 			exit
 		test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
 		test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
@@ -43,12 +44,12 @@ set_fake_editor () {
 	rm -f "$1"
 	echo 'rebase -i script before editing:'
 	cat "$1".tmp
-	action=pick
+	action=\&
 	for line in $FAKE_LINES; do
 		case $line in
-		squash|fixup|edit|reword|drop)
+		pick|p|squash|s|fixup|f|edit|e|reword|r|drop|d|label|l|reset|r|merge|m)
 			action="$line";;
-		exec*)
+		exec_*|x_*|break|b)
 			echo "$line" | sed 's/_/ /g' >> "$1";;
 		"#")
 			echo '# comment' >> "$1";;
@@ -57,11 +58,12 @@ set_fake_editor () {
 		bad)
 			action="badcmd";;
 		fakesha)
+			test \& != "$action" || action=pick
 			echo "$action XXXXXXX False commit" >> "$1"
 			action=pick;;
 		*)
-			sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
-			action=pick;;
+			sed -n "${line}s/^[a-z][a-z]*/$action/p" < "$1".tmp >> "$1"
+			action=\&;;
 		esac
 	done
 	echo 'rebase -i script after editing:'
@@ -116,4 +118,32 @@ revert () {
 make_empty () {
 	git commit --allow-empty -m "$1" &&
 	git tag "$1"
+}
+
+# Call this (inside test_expect_success) at the end of a test file to
+# check that no tests have changed editor related environment
+# variables or config settings
+test_editor_unchanged () {
+	# We're only interested in exported variables hence 'sh -c'
+	sh -c 'cat >actual <<-EOF
+	EDITOR=$EDITOR
+	FAKE_COMMIT_AMEND=$FAKE_COMMIT_AMEND
+	FAKE_COMMIT_MESSAGE=$FAKE_COMMIT_MESSAGE
+	FAKE_LINES=$FAKE_LINES
+	GIT_EDITOR=$GIT_EDITOR
+	GIT_SEQUENCE_EDITOR=$GIT_SEQUENCE_EDITOR
+	core.editor=$(git config core.editor)
+	sequence.editor=$(git config sequence.editor)
+	EOF'
+	cat >expect <<-\EOF
+	EDITOR=:
+	FAKE_COMMIT_AMEND=
+	FAKE_COMMIT_MESSAGE=
+	FAKE_LINES=
+	GIT_EDITOR=
+	GIT_SEQUENCE_EDITOR=
+	core.editor=
+	sequence.editor=
+	EOF
+	test_cmp expect actual
 }

@@ -22,11 +22,13 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	struct argv_array sent_argv = ARGV_ARRAY_INIT;
 	const char *arg_cmd = "argument ";
 
-	if (argc != 2)
+	if (argc != 2 || !strcmp(argv[1], "-h"))
 		usage(upload_archive_usage);
 
 	if (!enter_repo(argv[1], 0))
 		die("'%s' does not appear to be a git repository", argv[1]);
+
+	init_archivers();
 
 	/* put received options in sent_argv[] */
 	argv_array_push(&sent_argv, "git-upload-archive");
@@ -43,21 +45,21 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	}
 
 	/* parse all options sent by the client */
-	return write_archive(sent_argv.argc, sent_argv.argv, prefix, 0, NULL, 1);
+	return write_archive(sent_argv.argc, sent_argv.argv, prefix,
+			     the_repository, NULL, 1);
 }
 
 __attribute__((format (printf, 1, 2)))
 static void error_clnt(const char *fmt, ...)
 {
-	char buf[1024];
+	struct strbuf buf = STRBUF_INIT;
 	va_list params;
-	int len;
 
 	va_start(params, fmt);
-	len = vsprintf(buf, fmt, params);
+	strbuf_vaddf(&buf, fmt, params);
 	va_end(params);
-	send_sideband(1, 3, buf, len, LARGE_PACKET_MAX);
-	die("sent error to the client: %s", buf);
+	send_sideband(1, 3, buf.buf, buf.len, LARGE_PACKET_MAX);
+	die("sent error to the client: %s", buf.buf);
 }
 
 static ssize_t process_input(int child_fd, int band)
@@ -77,6 +79,9 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
 	struct child_process writer = { argv };
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(upload_archive_usage);
+
 	/*
 	 * Set up sideband subprocess.
 	 *
@@ -89,11 +94,11 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 	writer.git_cmd = 1;
 	if (start_command(&writer)) {
 		int err = errno;
-		packet_write(1, "NACK unable to spawn subprocess\n");
+		packet_write_fmt(1, "NACK unable to spawn subprocess\n");
 		die("upload-archive: %s", strerror(err));
 	}
 
-	packet_write(1, "ACK\n");
+	packet_write_fmt(1, "ACK\n");
 	packet_flush(1);
 
 	while (1) {
@@ -105,8 +110,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 		pfd[1].events = POLLIN;
 		if (poll(pfd, 2, -1) < 0) {
 			if (errno != EINTR) {
-				error("poll failed resuming: %s",
-				      strerror(errno));
+				error_errno("poll failed resuming");
 				sleep(1);
 			}
 			continue;

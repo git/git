@@ -1,0 +1,11 @@
+Git v2.6.6 Release Notes
+========================
+
+Fixes since v2.6.5
+------------------
+
+ * Bugfix patches were backported from the 'master' front to plug heap
+   corruption holes, to catch integer overflow in the computation of
+   pathname lengths, and to get rid of the name_path API.  Both of
+   these would have resulted in writing over an under-allocated buffer
+   when formulating pathnames while tree traversal.

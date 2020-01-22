@@ -36,6 +36,11 @@ test_no_numbered() {
 	test_num_no_numbered $1 2
 }
 
+test_single_cover_letter_numbered() {
+	grep "^Subject: \[PATCH 0/1\]" $1 &&
+	grep "^Subject: \[PATCH 1/1\]" $1
+}
+
 test_single_numbered() {
 	grep "^Subject: \[PATCH 1/1\]" $1
 }
@@ -120,5 +125,17 @@ test_expect_success '--start-number && --numbered' '
 	git format-patch --start-number 3 --numbered --stdout HEAD~1 > patch8 &&
 	grep "^Subject: \[PATCH 3/3\]" patch8
 '
+
+test_expect_success 'single patch with cover-letter defaults to numbers' '
+	git format-patch --cover-letter --stdout HEAD~1 >patch9.single &&
+	test_single_cover_letter_numbered patch9.single
+'
+
+test_expect_success 'Use --no-numbered and --cover-letter single patch' '
+	git format-patch --no-numbered --stdout --cover-letter HEAD~1 >patch10 &&
+	test_no_numbered patch10
+'
+
+
 
 test_done

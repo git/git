@@ -13,7 +13,7 @@ static struct sigchain_signal signals[SIGCHAIN_MAX_SIGNALS];
 static void check_signum(int sig)
 {
 	if (sig < 1 || sig >= SIGCHAIN_MAX_SIGNALS)
-		die("BUG: signal out of range: %d", sig);
+		BUG("signal out of range: %d", sig);
 }
 
 int sigchain_push(int sig, sigchain_fun f)
@@ -49,4 +49,13 @@ void sigchain_push_common(sigchain_fun f)
 	sigchain_push(SIGTERM, f);
 	sigchain_push(SIGQUIT, f);
 	sigchain_push(SIGPIPE, f);
+}
+
+void sigchain_pop_common(void)
+{
+	sigchain_pop(SIGPIPE);
+	sigchain_pop(SIGQUIT);
+	sigchain_pop(SIGTERM);
+	sigchain_pop(SIGHUP);
+	sigchain_pop(SIGINT);
 }

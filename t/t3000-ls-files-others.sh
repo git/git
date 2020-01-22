@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git ls-files test (--others should pick up symlinks).
+test_description='basic tests for ls-files --others
 
 This test runs git ls-files --others with the following on the
 filesystem.
@@ -65,6 +65,13 @@ test_expect_success '--no-empty-directory hides empty directory' '
 	test_cmp expected3 output
 '
 
+test_expect_success 'ls-files --others handles non-submodule .git' '
+	mkdir not-a-submodule &&
+	echo foo >not-a-submodule/.git &&
+	git ls-files -o >output &&
+	test_cmp expected1 output
+'
+
 test_expect_success SYMLINKS 'ls-files --others with symlinked submodule' '
 	git init super &&
 	git init sub &&
@@ -77,7 +84,7 @@ test_expect_success SYMLINKS 'ls-files --others with symlinked submodule' '
 	) &&
 	(
 		cd super &&
-		"$SHELL_PATH" "$TEST_DIRECTORY/../contrib/workdir/git-new-workdir" ../sub sub
+		"$SHELL_PATH" "$TEST_DIRECTORY/../contrib/workdir/git-new-workdir" ../sub sub &&
 		git ls-files --others --exclude-standard >../actual
 	) &&
 	echo sub/ >expect &&

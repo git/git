@@ -484,7 +484,7 @@ function processBlameLines(lines) {
 			case 'previous':
 				curCommit.nprevious++;
 				// store only first 'previous' header
-				if (!'previous' in curCommit) {
+				if (!('previous' in curCommit)) {
 					var parts = data.split(' ', 2);
 					curCommit.previous    = parts[0];
 					curCommit.file_parent = unquote(parts[1]);

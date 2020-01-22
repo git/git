@@ -2,3 +2,4 @@
 *           encoding=US-ASCII
 git-gui.sh  encoding=UTF-8
 /po/*.po    encoding=UTF-8
+/GIT-VERSION-GEN eol=lf

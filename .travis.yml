@@ -1,0 +1,52 @@
+language: c
+
+cache:
+  directories:
+    - $HOME/travis-cache
+
+os:
+  - linux
+  - osx
+
+osx_image: xcode10.1
+
+compiler:
+  - clang
+  - gcc
+
+matrix:
+  include:
+    - env: jobname=GIT_TEST_GETTEXT_POISON
+      os: linux
+      compiler:
+      addons:
+      before_install:
+    - env: jobname=linux-gcc-4.8
+      os: linux
+      dist: trusty
+      compiler:
+    - env: jobname=Linux32
+      os: linux
+      compiler:
+      addons:
+      services:
+        - docker
+      before_install:
+      script: ci/run-linux32-docker.sh
+    - env: jobname=StaticAnalysis
+      os: linux
+      compiler:
+      script: ci/run-static-analysis.sh
+      after_failure:
+    - env: jobname=Documentation
+      os: linux
+      compiler:
+      script: ci/test-documentation.sh
+      after_failure:
+
+before_install: ci/install-dependencies.sh
+script: ci/run-build-and-tests.sh
+after_failure: ci/print-test-failures.sh
+
+notifications:
+  email: false

@@ -29,12 +29,11 @@ Requirements
 ------------
 
  - Core git tools
- - Perl
+ - Perl 5.8
  - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename.
  - web server
 
 The following optional Perl modules are required for extra features
- - Digest::MD5 - for gravatar support
  - CGI::Fast and FCGI - for running gitweb as FastCGI script
  - HTML::TagCloud - for fancy tag cloud in project list view
  - HTTP::Date or Time::ParseDate - to support If-Modified-Since for feeds

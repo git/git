@@ -13,8 +13,8 @@
  *  Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  License along with this library; if not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  *
@@ -301,10 +301,11 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 		xdl_free_ctx(&xe->xdf2);
 		xdl_free_ctx(&xe->xdf1);
+		xdl_free_classifier(&cf);
 		return -1;
 	}
 
-	if (!(xpp->flags & XDF_HISTOGRAM_DIFF))
+	if (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)
 		xdl_free_classifier(&cf);
 
 	return 0;

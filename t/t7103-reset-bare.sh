@@ -63,7 +63,7 @@ test_expect_success '"mixed" reset is not allowed in bare' '
 
 test_expect_success '"soft" reset is allowed in bare' '
 	git reset --soft HEAD^ &&
-	test "`git show --pretty=format:%s | head -n 1`" = "one"
+	test "$(git show --pretty=format:%s | head -n 1)" = "one"
 '
 
 test_done

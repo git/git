@@ -1,0 +1,375 @@
+Partial Clone Design Notes
+==========================
+
+The "Partial Clone" feature is a performance optimization for Git that
+allows Git to function without having a complete copy of the repository.
+The goal of this work is to allow Git better handle extremely large
+repositories.
+
+During clone and fetch operations, Git downloads the complete contents
+and history of the repository.  This includes all commits, trees, and
+blobs for the complete life of the repository.  For extremely large
+repositories, clones can take hours (or days) and consume 100+GiB of disk
+space.
+
+Often in these repositories there are many blobs and trees that the user
+does not need such as:
+
+  1. files outside of the user's work area in the tree.  For example, in
+     a repository with 500K directories and 3.5M files in every commit,
+     we can avoid downloading many objects if the user only needs a
+     narrow "cone" of the source tree.
+
+  2. large binary assets.  For example, in a repository where large build
+     artifacts are checked into the tree, we can avoid downloading all
+     previous versions of these non-mergeable binary assets and only
+     download versions that are actually referenced.
+
+Partial clone allows us to avoid downloading such unneeded objects *in
+advance* during clone and fetch operations and thereby reduce download
+times and disk usage.  Missing objects can later be "demand fetched"
+if/when needed.
+
+A remote that can later provide the missing objects is called a
+promisor remote, as it promises to send the objects when
+requested. Initially Git supported only one promisor remote, the origin
+remote from which the user cloned and that was configured in the
+"extensions.partialClone" config option. Later support for more than
+one promisor remote has been implemented.
+
+Use of partial clone requires that the user be online and the origin
+remote or other promisor remotes be available for on-demand fetching
+of missing objects.  This may or may not be problematic for the user.
+For example, if the user can stay within the pre-selected subset of
+the source tree, they may not encounter any missing objects.
+Alternatively, the user could try to pre-fetch various objects if they
+know that they are going offline.
+
+
+Non-Goals
+---------
+
+Partial clone is a mechanism to limit the number of blobs and trees downloaded
+*within* a given range of commits -- and is therefore independent of and not
+intended to conflict with existing DAG-level mechanisms to limit the set of
+requested commits (i.e. shallow clone, single branch, or fetch '<refspec>').
+
+
+Design Overview
+---------------
+
+Partial clone logically consists of the following parts:
+
+- A mechanism for the client to describe unneeded or unwanted objects to
+  the server.
+
+- A mechanism for the server to omit such unwanted objects from packfiles
+  sent to the client.
+
+- A mechanism for the client to gracefully handle missing objects (that
+  were previously omitted by the server).
+
+- A mechanism for the client to backfill missing objects as needed.
+
+
+Design Details
+--------------
+
+- A new pack-protocol capability "filter" is added to the fetch-pack and
+  upload-pack negotiation.
++
+This uses the existing capability discovery mechanism.
+See "filter" in Documentation/technical/pack-protocol.txt.
+
+- Clients pass a "filter-spec" to clone and fetch which is passed to the
+  server to request filtering during packfile construction.
++
+There are various filters available to accommodate different situations.
+See "--filter=<filter-spec>" in Documentation/rev-list-options.txt.
+
+- On the server pack-objects applies the requested filter-spec as it
+  creates "filtered" packfiles for the client.
++
+These filtered packfiles are *incomplete* in the traditional sense because
+they may contain objects that reference objects not contained in the
+packfile and that the client doesn't already have.  For example, the
+filtered packfile may contain trees or tags that reference missing blobs
+or commits that reference missing trees.
+
+- On the client these incomplete packfiles are marked as "promisor packfiles"
+  and treated differently by various commands.
+
+- On the client a repository extension is added to the local config to
+  prevent older versions of git from failing mid-operation because of
+  missing objects that they cannot handle.
+  See "extensions.partialClone" in Documentation/technical/repository-version.txt"
+
+
+Handling Missing Objects
+------------------------
+
+- An object may be missing due to a partial clone or fetch, or missing
+  due to repository corruption.  To differentiate these cases, the
+  local repository specially indicates such filtered packfiles
+  obtained from promisor remotes as "promisor packfiles".
++
+These promisor packfiles consist of a "<name>.promisor" file with
+arbitrary contents (like the "<name>.keep" files), in addition to
+their "<name>.pack" and "<name>.idx" files.
+
+- The local repository considers a "promisor object" to be an object that
+  it knows (to the best of its ability) that promisor remotes have promised
+  that they have, either because the local repository has that object in one of
+  its promisor packfiles, or because another promisor object refers to it.
++
+When Git encounters a missing object, Git can see if it is a promisor object
+and handle it appropriately.  If not, Git can report a corruption.
++
+This means that there is no need for the client to explicitly maintain an
+expensive-to-modify list of missing objects.[a]
+
+- Since almost all Git code currently expects any referenced object to be
+  present locally and because we do not want to force every command to do
+  a dry-run first, a fallback mechanism is added to allow Git to attempt
+  to dynamically fetch missing objects from promisor remotes.
++
+When the normal object lookup fails to find an object, Git invokes
+promisor_remote_get_direct() to try to get the object from a promisor
+remote and then retry the object lookup.  This allows objects to be
+"faulted in" without complicated prediction algorithms.
++
+For efficiency reasons, no check as to whether the missing object is
+actually a promisor object is performed.
++
+Dynamic object fetching tends to be slow as objects are fetched one at
+a time.
+
+- `checkout` (and any other command using `unpack-trees`) has been taught
+  to bulk pre-fetch all required missing blobs in a single batch.
+
+- `rev-list` has been taught to print missing objects.
++
+This can be used by other commands to bulk prefetch objects.
+For example, a "git log -p A..B" may internally want to first do
+something like "git rev-list --objects --quiet --missing=print A..B"
+and prefetch those objects in bulk.
+
+- `fsck` has been updated to be fully aware of promisor objects.
+
+- `repack` in GC has been updated to not touch promisor packfiles at all,
+  and to only repack other objects.
+
+- The global variable "fetch_if_missing" is used to control whether an
+  object lookup will attempt to dynamically fetch a missing object or
+  report an error.
++
+We are not happy with this global variable and would like to remove it,
+but that requires significant refactoring of the object code to pass an
+additional flag.
+
+
+Fetching Missing Objects
+------------------------
+
+- Fetching of objects is done using the existing transport mechanism using
+  transport_fetch_refs(), setting a new transport option
+  TRANS_OPT_NO_DEPENDENTS to indicate that only the objects themselves are
+  desired, not any object that they refer to.
++
+Because some transports invoke fetch_pack() in the same process, fetch_pack()
+has been updated to not use any object flags when the corresponding argument
+(no_dependents) is set.
+
+- The local repository sends a request with the hashes of all requested
+  objects as "want" lines, and does not perform any packfile negotiation.
+  It then receives a packfile.
+
+- Because we are reusing the existing fetch-pack mechanism, fetching
+  currently fetches all objects referred to by the requested objects, even
+  though they are not necessary.
+
+
+Using many promisor remotes
+---------------------------
+
+Many promisor remotes can be configured and used.
+
+This allows for example a user to have multiple geographically-close
+cache servers for fetching missing blobs while continuing to do
+filtered `git-fetch` commands from the central server.
+
+When fetching objects, promisor remotes are tried one after the other
+until all the objects have been fetched.
+
+Remotes that are considered "promisor" remotes are those specified by
+the following configuration variables:
+
+- `extensions.partialClone = <name>`
+
+- `remote.<name>.promisor = true`
+
+- `remote.<name>.partialCloneFilter = ...`
+
+Only one promisor remote can be configured using the
+`extensions.partialClone` config variable. This promisor remote will
+be the last one tried when fetching objects.
+
+We decided to make it the last one we try, because it is likely that
+someone using many promisor remotes is doing so because the other
+promisor remotes are better for some reason (maybe they are closer or
+faster for some kind of objects) than the origin, and the origin is
+likely to be the remote specified by extensions.partialClone.
+
+This justification is not very strong, but one choice had to be made,
+and anyway the long term plan should be to make the order somehow
+fully configurable.
+
+For now though the other promisor remotes will be tried in the order
+they appear in the config file.
+
+Current Limitations
+-------------------
+
+- It is not possible to specify the order in which the promisor
+  remotes are tried in other ways than the order in which they appear
+  in the config file.
++
+It is also not possible to specify an order to be used when fetching
+from one remote and a different order when fetching from another
+remote.
+
+- It is not possible to push only specific objects to a promisor
+  remote.
++
+It is not possible to push at the same time to multiple promisor
+remote in a specific order.
+
+- Dynamic object fetching will only ask promisor remotes for missing
+  objects.  We assume that promisor remotes have a complete view of the
+  repository and can satisfy all such requests.
+
+- Repack essentially treats promisor and non-promisor packfiles as 2
+  distinct partitions and does not mix them.  Repack currently only works
+  on non-promisor packfiles and loose objects.
+
+- Dynamic object fetching invokes fetch-pack once *for each item*
+  because most algorithms stumble upon a missing object and need to have
+  it resolved before continuing their work.  This may incur significant
+  overhead -- and multiple authentication requests -- if many objects are
+  needed.
+
+- Dynamic object fetching currently uses the existing pack protocol V0
+  which means that each object is requested via fetch-pack.  The server
+  will send a full set of info/refs when the connection is established.
+  If there are large number of refs, this may incur significant overhead.
+
+
+Future Work
+-----------
+
+- Improve the way to specify the order in which promisor remotes are
+  tried.
++
+For example this could allow to specify explicitly something like:
+"When fetching from this remote, I want to use these promisor remotes
+in this order, though, when pushing or fetching to that remote, I want
+to use those promisor remotes in that order."
+
+- Allow pushing to promisor remotes.
++
+The user might want to work in a triangular work flow with multiple
+promisor remotes that each have an incomplete view of the repository.
+
+- Allow repack to work on promisor packfiles (while keeping them distinct
+  from non-promisor packfiles).
+
+- Allow non-pathname-based filters to make use of packfile bitmaps (when
+  present).  This was just an omission during the initial implementation.
+
+- Investigate use of a long-running process to dynamically fetch a series
+  of objects, such as proposed in [5,6] to reduce process startup and
+  overhead costs.
++
+It would be nice if pack protocol V2 could allow that long-running
+process to make a series of requests over a single long-running
+connection.
+
+- Investigate pack protocol V2 to avoid the info/refs broadcast on
+  each connection with the server to dynamically fetch missing objects.
+
+- Investigate the need to handle loose promisor objects.
++
+Objects in promisor packfiles are allowed to reference missing objects
+that can be dynamically fetched from the server.  An assumption was
+made that loose objects are only created locally and therefore should
+not reference a missing object.  We may need to revisit that assumption
+if, for example, we dynamically fetch a missing tree and store it as a
+loose object rather than a single object packfile.
++
+This does not necessarily mean we need to mark loose objects as promisor;
+it may be sufficient to relax the object lookup or is-promisor functions.
+
+
+Non-Tasks
+---------
+
+- Every time the subject of "demand loading blobs" comes up it seems
+  that someone suggests that the server be allowed to "guess" and send
+  additional objects that may be related to the requested objects.
++
+No work has gone into actually doing that; we're just documenting that
+it is a common suggestion.  We're not sure how it would work and have
+no plans to work on it.
++
+It is valid for the server to send more objects than requested (even
+for a dynamic object fetch), but we are not building on that.
+
+
+Footnotes
+---------
+
+[a] expensive-to-modify list of missing objects:  Earlier in the design of
+    partial clone we discussed the need for a single list of missing objects.
+    This would essentially be a sorted linear list of OIDs that the were
+    omitted by the server during a clone or subsequent fetches.
+
+This file would need to be loaded into memory on every object lookup.
+It would need to be read, updated, and re-written (like the .git/index)
+on every explicit "git fetch" command *and* on any dynamic object fetch.
+
+The cost to read, update, and write this file could add significant
+overhead to every command if there are many missing objects.  For example,
+if there are 100M missing blobs, this file would be at least 2GiB on disk.
+
+With the "promisor" concept, we *infer* a missing object based upon the
+type of packfile that references it.
+
+
+Related Links
+-------------
+[0] https://crbug.com/git/2
+    Bug#2: Partial Clone
+
+[1] https://lore.kernel.org/git/20170113155253.1644-1-benpeart@microsoft.com/ +
+    Subject: [RFC] Add support for downloading blobs on demand +
+    Date: Fri, 13 Jan 2017 10:52:53 -0500
+
+[2] https://lore.kernel.org/git/cover.1506714999.git.jonathantanmy@google.com/ +
+    Subject: [PATCH 00/18] Partial clone (from clone to lazy fetch in 18 patches) +
+    Date: Fri, 29 Sep 2017 13:11:36 -0700
+
+[3] https://lore.kernel.org/git/20170426221346.25337-1-jonathantanmy@google.com/ +
+    Subject: Proposal for missing blob support in Git repos +
+    Date: Wed, 26 Apr 2017 15:13:46 -0700
+
+[4] https://lore.kernel.org/git/1488999039-37631-1-git-send-email-git@jeffhostetler.com/ +
+    Subject: [PATCH 00/10] RFC Partial Clone and Fetch +
+    Date: Wed,  8 Mar 2017 18:50:29 +0000
+
+[5] https://lore.kernel.org/git/20170505152802.6724-1-benpeart@microsoft.com/ +
+    Subject: [PATCH v7 00/10] refactor the filter process code into a reusable module +
+    Date: Fri,  5 May 2017 11:27:52 -0400
+
+[6] https://lore.kernel.org/git/20170714132651.170708-1-benpeart@microsoft.com/ +
+    Subject: [RFC/PATCH v2 0/1] Add support for downloading blobs on demand +
+    Date: Fri, 14 Jul 2017 09:26:50 -0400

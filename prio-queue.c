@@ -12,9 +12,7 @@ static inline int compare(struct prio_queue *queue, int i, int j)
 
 static inline void swap(struct prio_queue *queue, int i, int j)
 {
-	struct prio_queue_entry tmp = queue->array[i];
-	queue->array[i] = queue->array[j];
-	queue->array[j] = tmp;
+	SWAP(queue->array[i], queue->array[j]);
 }
 
 void prio_queue_reverse(struct prio_queue *queue)
@@ -22,17 +20,16 @@ void prio_queue_reverse(struct prio_queue *queue)
 	int i, j;
 
 	if (queue->compare != NULL)
-		die("BUG: prio_queue_reverse() on non-LIFO queue");
-	for (i = 0; i <= (j = (queue->nr - 1) - i); i++)
+		BUG("prio_queue_reverse() on non-LIFO queue");
+	for (i = 0; i < (j = (queue->nr - 1) - i); i++)
 		swap(queue, i, j);
 }
 
 void clear_prio_queue(struct prio_queue *queue)
 {
-	free(queue->array);
+	FREE_AND_NULL(queue->array);
 	queue->nr = 0;
 	queue->alloc = 0;
-	queue->array = NULL;
 	queue->insertion_ctr = 0;
 }
 
@@ -87,4 +84,13 @@ void *prio_queue_get(struct prio_queue *queue)
 		swap(queue, child, ix);
 	}
 	return result;
+}
+
+void *prio_queue_peek(struct prio_queue *queue)
+{
+	if (!queue->nr)
+		return NULL;
+	if (!queue->compare)
+		return queue->array[queue->nr - 1].data;
+	return queue->array[0].data;
 }

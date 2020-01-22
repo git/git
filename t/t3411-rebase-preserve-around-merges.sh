@@ -10,6 +10,11 @@ a merge to before the merge.
 '
 . ./test-lib.sh
 
+if ! test_have_prereq REBASE_P; then
+	skip_all='skipping git rebase -p tests, as asked for'
+	test_done
+fi
+
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 set_fake_editor

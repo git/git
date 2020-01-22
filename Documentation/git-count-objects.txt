@@ -38,6 +38,11 @@ objects nor valid packs
 +
 size-garbage: disk space consumed by garbage files, in KiB (unless -H is
 specified)
++
+alternate: absolute path of alternate object databases; may appear
+multiple times, one line per path. Note that if the path contains
+non-printable characters, it may be surrounded by double-quotes and
+contain C-style backslashed escape sequences.
 
 -H::
 --human-readable::

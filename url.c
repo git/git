@@ -5,7 +5,7 @@ int is_urlschemechar(int first_flag, int ch)
 {
 	/*
 	 * The set of valid URL schemes, as per STD66 (RFC3986) is
-	 * '[A-Za-z][A-Za-z0-9+.-]*'. But use sightly looser check
+	 * '[A-Za-z][A-Za-z0-9+.-]*'. But use slightly looser check
 	 * of '[A-Za-z0-9][A-Za-z0-9+.-]*' because earlier version
 	 * of check used '[A-Za-z0-9]+' so not to break any remote
 	 * helpers.
@@ -29,25 +29,6 @@ int is_url(const char *url)
 	return (url[0] == ':' && url[1] == '/' && url[2] == '/');
 }
 
-static int url_decode_char(const char *q)
-{
-	int i;
-	unsigned char val = 0;
-	for (i = 0; i < 2; i++) {
-		unsigned char c = *q++;
-		val <<= 4;
-		if (c >= '0' && c <= '9')
-			val += c - '0';
-		else if (c >= 'a' && c <= 'f')
-			val += c - 'a' + 10;
-		else if (c >= 'A' && c <= 'F')
-			val += c - 'A' + 10;
-		else
-			return -1;
-	}
-	return val;
-}
-
 static char *url_decode_internal(const char **query, int len,
 				 const char *stop_at, struct strbuf *out,
 				 int decode_plus)
@@ -65,9 +46,9 @@ static char *url_decode_internal(const char **query, int len,
 			break;
 		}
 
-		if (c == '%') {
-			int val = url_decode_char(q + 1);
-			if (0 <= val) {
+		if (c == '%' && (len < 0 || len >= 3)) {
+			int val = hex2chr(q + 1);
+			if (0 < val) {
 				strbuf_addch(out, val);
 				q += 3;
 				len -= 3;
@@ -105,6 +86,12 @@ char *url_decode_mem(const char *url, int len)
 	return url_decode_internal(&url, len, NULL, &out, 0);
 }
 
+char *url_percent_decode(const char *encoded)
+{
+	struct strbuf out = STRBUF_INIT;
+	return url_decode_internal(&encoded, strlen(encoded), NULL, &out, 0);
+}
+
 char *url_decode_parameter_name(const char **query)
 {
 	struct strbuf out = STRBUF_INIT;
@@ -120,11 +107,11 @@ char *url_decode_parameter_value(const char **query)
 void end_url_with_slash(struct strbuf *buf, const char *url)
 {
 	strbuf_addstr(buf, url);
-	if (buf->len && buf->buf[buf->len - 1] != '/')
-		strbuf_addch(buf, '/');
+	strbuf_complete(buf, '/');
 }
 
-void str_end_url_with_slash(const char *url, char **dest) {
+void str_end_url_with_slash(const char *url, char **dest)
+{
 	struct strbuf buf = STRBUF_INIT;
 	end_url_with_slash(&buf, url);
 	free(*dest);

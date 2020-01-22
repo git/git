@@ -53,17 +53,15 @@ test_expect_success 'read-tree removes worktree, dirty case' '
 	git update-index --no-skip-worktree added
 '
 
-NULL_SHA1=e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-
 setup_absent() {
 	test -f 1 && rm 1
 	git update-index --remove 1 &&
-	git update-index --add --cacheinfo 100644 $NULL_SHA1 1 &&
+	git update-index --add --cacheinfo 100644 $EMPTY_BLOB 1 &&
 	git update-index --skip-worktree 1
 }
 
 test_absent() {
-	echo "100644 $NULL_SHA1 0	1" > expected &&
+	echo "100644 $EMPTY_BLOB 0	1" > expected &&
 	git ls-files --stage 1 > result &&
 	test_cmp expected result &&
 	test ! -f 1
@@ -72,12 +70,12 @@ test_absent() {
 setup_dirty() {
 	git update-index --force-remove 1 &&
 	echo dirty > 1 &&
-	git update-index --add --cacheinfo 100644 $NULL_SHA1 1 &&
+	git update-index --add --cacheinfo 100644 $EMPTY_BLOB 1 &&
 	git update-index --skip-worktree 1
 }
 
 test_dirty() {
-	echo "100644 $NULL_SHA1 0	1" > expected &&
+	echo "100644 $EMPTY_BLOB 0	1" > expected &&
 	git ls-files --stage 1 > result &&
 	test_cmp expected result &&
 	echo dirty > expected
@@ -134,6 +132,21 @@ test_expect_success 'git-clean, dirty case' '
 	setup_dirty &&
 	git clean -n > result &&
 	test_i18ncmp expected result
+'
+
+test_expect_success '--ignore-skip-worktree-entries leaves worktree alone' '
+	test_commit keep-me &&
+	git update-index --skip-worktree keep-me.t &&
+	rm keep-me.t &&
+
+	: ignoring the worktree &&
+	git update-index --remove --ignore-skip-worktree-entries keep-me.t &&
+	git diff-index --cached --exit-code HEAD &&
+
+	: not ignoring the worktree, a deletion is staged &&
+	git update-index --remove keep-me.t &&
+	test_must_fail git diff-index --cached --exit-code HEAD \
+		--diff-filter=D -- keep-me.t
 '
 
 #TODO test_expect_failure 'git-apply adds file' false

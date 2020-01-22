@@ -1,0 +1,62 @@
+Trace2 config settings are only read from the system and global
+config files; repository local and worktree config files and `-c`
+command line arguments are not respected.
+
+trace2.normalTarget::
+	This variable controls the normal target destination.
+	It may be overridden by the `GIT_TRACE2` environment variable.
+	The following table shows possible values.
+
+trace2.perfTarget::
+	This variable controls the performance target destination.
+	It may be overridden by the `GIT_TRACE2_PERF` environment variable.
+	The following table shows possible values.
+
+trace2.eventTarget::
+	This variable controls the event target destination.
+	It may be overridden by the `GIT_TRACE2_EVENT` environment variable.
+	The following table shows possible values.
++
+include::../trace2-target-values.txt[]
+
+trace2.normalBrief::
+	Boolean.  When true `time`, `filename`, and `line` fields are
+	omitted from normal output.  May be overridden by the
+	`GIT_TRACE2_BRIEF` environment variable.  Defaults to false.
+
+trace2.perfBrief::
+	Boolean.  When true `time`, `filename`, and `line` fields are
+	omitted from PERF output.  May be overridden by the
+	`GIT_TRACE2_PERF_BRIEF` environment variable.  Defaults to false.
+
+trace2.eventBrief::
+	Boolean.  When true `time`, `filename`, and `line` fields are
+	omitted from event output.  May be overridden by the
+	`GIT_TRACE2_EVENT_BRIEF` environment variable.  Defaults to false.
+
+trace2.eventNesting::
+	Integer.  Specifies desired depth of nested regions in the
+	event output.  Regions deeper than this value will be
+	omitted.  May be overridden by the `GIT_TRACE2_EVENT_NESTING`
+	environment variable.  Defaults to 2.
+
+trace2.configParams::
+	A comma-separated list of patterns of "important" config
+	settings that should be recorded in the trace2 output.
+	For example, `core.*,remote.*.url` would cause the trace2
+	output to contain events listing each configured remote.
+	May be overridden by the `GIT_TRACE2_CONFIG_PARAMS` environment
+	variable.  Unset by default.
+
+trace2.destinationDebug::
+	Boolean.  When true Git will print error messages when a
+	trace target destination cannot be opened for writing.
+	By default, these errors are suppressed and tracing is
+	silently disabled.  May be overridden by the
+	`GIT_TRACE2_DST_DEBUG` environment variable.
+
+trace2.maxFiles::
+	Integer.  When writing trace files to a target directory, do not
+	write additional traces if we would exceed this many files. Instead,
+	write a sentinel file that will block further tracing to this
+	directory. Defaults to 0, which disables this check.

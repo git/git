@@ -13,7 +13,9 @@ test_expect_success setup '
 	echo modified >file &&
 	git diff --stat -p >patch-0.txt &&
 	chmod +x file &&
-	git diff --stat -p >patch-1.txt
+	git diff --stat -p >patch-1.txt &&
+	sed "s/^\(new mode \).*/\1/" <patch-1.txt >patch-empty-mode.txt &&
+	sed "s/^\(new mode \).*/\1garbage/" <patch-1.txt >patch-bogus-mode.txt
 '
 
 test_expect_success FILEMODE 'same mode (no index)' '
@@ -57,6 +59,18 @@ test_expect_success FILEMODE 'mode update (index only)' '
 	git reset --hard &&
 	git apply --cached patch-1.txt &&
 	git ls-files -s file | grep "^100755"
+'
+
+test_expect_success FILEMODE 'empty mode is rejected' '
+	git reset --hard &&
+	test_must_fail git apply patch-empty-mode.txt 2>err &&
+	test_i18ngrep "invalid mode" err
+'
+
+test_expect_success FILEMODE 'bogus mode is rejected' '
+	git reset --hard &&
+	test_must_fail git apply patch-bogus-mode.txt 2>err &&
+	test_i18ngrep "invalid mode" err
 '
 
 test_done

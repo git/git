@@ -3,6 +3,7 @@
 test_description='git clean -i basic tests'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'setup' '
 
@@ -106,7 +107,7 @@ test_expect_success 'git clean -id (filter all)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo f; echo "*"; echo; echo c) | \
+	test_write_lines f "*" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -128,7 +129,7 @@ test_expect_success 'git clean -id (filter patterns)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo f; echo "part3.* *.out"; echo; echo c) | \
+	test_write_lines f "part3.* *.out" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -150,7 +151,7 @@ test_expect_success 'git clean -id (filter patterns 2)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo f; echo "* !*.out"; echo; echo c) | \
+	test_write_lines f "* !*.out" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -172,7 +173,7 @@ test_expect_success 'git clean -id (select - all)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo "*"; echo; echo c) | \
+	test_write_lines s "*" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -194,7 +195,7 @@ test_expect_success 'git clean -id (select - none)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo; echo c) | \
+	test_write_lines s "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -216,7 +217,7 @@ test_expect_success 'git clean -id (select - number)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo 3; echo; echo c) | \
+	test_write_lines s 3 "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -238,7 +239,7 @@ test_expect_success 'git clean -id (select - number 2)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo 2 3; echo 5; echo; echo c) | \
+	test_write_lines s "2 3" 5 "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -260,7 +261,7 @@ test_expect_success 'git clean -id (select - number 3)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo 3,4 5; echo; echo c) | \
+	test_write_lines s "3,4 5" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -281,7 +282,7 @@ test_expect_success 'git clean -id (select - filenames)' '
 
 	mkdir -p build docs &&
 	touch a.out foo.txt bar.txt baz.txt &&
-	(echo s; echo a.out fo ba bar; echo; echo c) | \
+	test_write_lines s "a.out fo ba bar" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test ! -f a.out &&
@@ -297,7 +298,7 @@ test_expect_success 'git clean -id (select - range)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo 1,3-4; echo 2; echo; echo c) | \
+	test_write_lines s "1,3-4" 2 "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -319,7 +320,7 @@ test_expect_success 'git clean -id (select - range 2)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo 4- 1; echo; echo c) | \
+	test_write_lines s "4- 1" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -341,7 +342,7 @@ test_expect_success 'git clean -id (inverse select)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo s; echo "*"; echo -5- 1 -2; echo; echo c) | \
+	test_write_lines s "*" "-5- 1 -2" "" c |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -363,7 +364,7 @@ test_expect_success 'git clean -id (ask)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo a; echo Y; echo y; echo no; echo yes; echo bad; echo) | \
+	test_write_lines a Y y no yes bad "" |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -385,7 +386,7 @@ test_expect_success 'git clean -id (ask - Ctrl+D)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(echo a; echo Y; echo no; echo yes; echo "\04") | \
+	test_write_lines a Y no yes "\04" |
 	git clean -id &&
 	test -f Makefile &&
 	test -f README &&
@@ -407,8 +408,8 @@ test_expect_success 'git clean -id with prefix and path (filter)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(cd build/ && \
-	 (echo f; echo "docs"; echo "*.h"; echo ; echo c) | \
+	(cd build/ &&
+	 test_write_lines f docs "*.h" "" c |
 	 git clean -id ..) &&
 	test -f Makefile &&
 	test -f README &&
@@ -430,9 +431,8 @@ test_expect_success 'git clean -id with prefix and path (select by name)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(cd build/ && \
-	 (echo s; echo "../docs/"; echo "../src/part3.c"; \
-	  echo "../src/part4.c";  echo; echo c) | \
+	(cd build/ &&
+	 test_write_lines s ../docs/ ../src/part3.c ../src/part4.c "" c |
 	 git clean -id ..) &&
 	test -f Makefile &&
 	test -f README &&
@@ -454,8 +454,8 @@ test_expect_success 'git clean -id with prefix and path (ask)' '
 	mkdir -p build docs &&
 	touch a.out src/part3.c src/part3.h src/part4.c src/part4.h \
 	docs/manual.txt obj.o build/lib.so &&
-	(cd build/ && \
-	 (echo a; echo Y; echo y; echo no; echo yes; echo bad; echo) | \
+	(cd build/ &&
+	 test_write_lines a Y y no yes bad "" |
 	 git clean -id ..) &&
 	test -f Makefile &&
 	test -f README &&
@@ -470,6 +470,16 @@ test_expect_success 'git clean -id with prefix and path (ask)' '
 	test -f obj.o &&
 	test -f build/lib.so
 
+'
+
+test_expect_success TTY 'git clean -i paints the header in HEADER color' '
+	>a.out &&
+	echo q |
+	test_terminal git clean -i |
+	test_decode_color |
+	head -n 1 >header &&
+	# not i18ngrep
+	grep "^<BOLD>" header
 '
 
 test_done

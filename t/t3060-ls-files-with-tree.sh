@@ -47,7 +47,7 @@ test_expect_success setup '
 	git add .
 '
 
-test_expect_success 'git -ls-files --with-tree should succeed from subdir' '
+test_expect_success 'git ls-files --with-tree should succeed from subdir' '
 	# We have to run from a sub-directory to trigger prune_path
 	# Then we finally get to run our --with-tree test
 	(
@@ -57,7 +57,7 @@ test_expect_success 'git -ls-files --with-tree should succeed from subdir' '
 '
 
 test_expect_success \
-    'git -ls-files --with-tree should add entries from named tree.' \
+    'git ls-files --with-tree should add entries from named tree.' \
     'test_cmp expected output'
 
 test_done

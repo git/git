@@ -8,7 +8,8 @@ git-mailsplit - Simple UNIX mbox splitter program
 SYNOPSIS
 --------
 [verse]
-'git mailsplit' [-b] [-f<nn>] [-d<prec>] [--keep-cr] -o<directory> [--] [(<mbox>|<Maildir>)...]
+'git mailsplit' [-b] [-f<nn>] [-d<prec>] [--keep-cr] [--mboxrd]
+		-o<directory> [--] [(<mbox>|<Maildir>)...]
 
 DESCRIPTION
 -----------
@@ -46,6 +47,10 @@ OPTIONS
 
 --keep-cr::
 	Do not remove `\r` from lines ending with `\r\n`.
+
+--mboxrd::
+	Input is of the "mboxrd" format and "^>+From " line escaping is
+	reversed.
 
 GIT
 ---

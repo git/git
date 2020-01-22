@@ -4,6 +4,12 @@ test_description='interaction with P4 case-folding'
 
 . ./lib-git-p4.sh
 
+if test_have_prereq CASE_INSENSITIVE_FS
+then
+	skip_all='skipping P4 case-folding tests; case insensitive file system detected'
+	test_done
+fi
+
 test_expect_success 'start p4d with case folding enabled' '
 	start_p4d -C1
 '
@@ -45,10 +51,6 @@ test_expect_failure 'Clone lc repo using uc name' '
 
 test_expect_failure 'Clone UC repo with lc name' '
 	test_must_fail git p4 clone //depot/uc/...
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

@@ -4,12 +4,13 @@ test_description='check svn dumpfile importer'
 
 . ./test-lib.sh
 
+if test_have_prereq !PIPE
+then
+	skip_all="svn dumpfile importer testing requires the PIPE prerequisite"
+	test_done
+fi
+
 reinit_git () {
-	if ! test_declared_prereq PIPE
-	then
-		echo >&4 "reinit_git: need to declare PIPE prerequisite"
-		return 127
-	fi
 	rm -fr .git &&
 	rm -f stream backflow &&
 	git init &&
@@ -52,21 +53,19 @@ text_no_props () {
 	printf "%s\n" "$text"
 }
 
->empty
-
-test_expect_success PIPE 'empty dump' '
+test_expect_success 'empty dump' '
 	reinit_git &&
 	echo "SVN-fs-dump-format-version: 2" >input &&
 	try_dump input
 '
 
-test_expect_success PIPE 'v4 dumps not supported' '
+test_expect_success 'v4 dumps not supported' '
 	reinit_git &&
 	echo "SVN-fs-dump-format-version: 4" >v4.dump &&
 	try_dump v4.dump must_fail
 '
 
-test_expect_failure PIPE 'empty revision' '
+test_expect_failure 'empty revision' '
 	reinit_git &&
 	printf "rev <nobody, nobody@local>: %s\n" "" "" >expect &&
 	cat >emptyrev.dump <<-\EOF &&
@@ -86,7 +85,7 @@ test_expect_failure PIPE 'empty revision' '
 	test_cmp expect actual
 '
 
-test_expect_success PIPE 'empty properties' '
+test_expect_success 'empty properties' '
 	reinit_git &&
 	printf "rev <nobody, nobody@local>: %s\n" "" "" >expect &&
 	cat >emptyprop.dump <<-\EOF &&
@@ -109,7 +108,7 @@ test_expect_success PIPE 'empty properties' '
 	test_cmp expect actual
 '
 
-test_expect_success PIPE 'author name and commit message' '
+test_expect_success 'author name and commit message' '
 	reinit_git &&
 	echo "<author@example.com, author@example.com@local>" >expect.author &&
 	cat >message <<-\EOF &&
@@ -143,7 +142,7 @@ test_expect_success PIPE 'author name and commit message' '
 	test_cmp expect.author actual.author
 '
 
-test_expect_success PIPE 'unsupported properties are ignored' '
+test_expect_success 'unsupported properties are ignored' '
 	reinit_git &&
 	echo author >expect &&
 	cat >extraprop.dump <<-\EOF &&
@@ -168,7 +167,7 @@ test_expect_success PIPE 'unsupported properties are ignored' '
 	test_cmp expect actual
 '
 
-test_expect_failure PIPE 'timestamp and empty file' '
+test_expect_failure 'timestamp and empty file' '
 	echo author@example.com >expect.author &&
 	echo 1999-01-01 >expect.date &&
 	echo file >expect.files &&
@@ -207,10 +206,10 @@ test_expect_failure PIPE 'timestamp and empty file' '
 	test_cmp expect.date actual.date &&
 	test_cmp expect.files actual.files &&
 	git checkout HEAD empty-file &&
-	test_cmp empty file
+	test_must_be_empty file
 '
 
-test_expect_success PIPE 'directory with files' '
+test_expect_success 'directory with files' '
 	reinit_git &&
 	printf "%s\n" directory/file1 directory/file2 >expect.files &&
 	echo hi >hi &&
@@ -263,7 +262,7 @@ test_expect_success PIPE 'directory with files' '
 	test_cmp hi directory/file2
 '
 
-test_expect_success PIPE 'branch name with backslash' '
+test_expect_success 'branch name with backslash' '
 	reinit_git &&
 	sort <<-\EOF >expect.branch-files &&
 	trunk/file1
@@ -362,7 +361,7 @@ test_expect_success PIPE 'branch name with backslash' '
 	test_cmp expect.branch-files actual.branch-files
 '
 
-test_expect_success PIPE 'node without action' '
+test_expect_success 'node without action' '
 	reinit_git &&
 	cat >inaction.dump <<-\EOF &&
 	SVN-fs-dump-format-version: 3
@@ -383,7 +382,7 @@ test_expect_success PIPE 'node without action' '
 	try_dump inaction.dump must_fail
 '
 
-test_expect_success PIPE 'action: add node without text' '
+test_expect_success 'action: add node without text' '
 	reinit_git &&
 	cat >textless.dump <<-\EOF &&
 	SVN-fs-dump-format-version: 3
@@ -405,7 +404,7 @@ test_expect_success PIPE 'action: add node without text' '
 	try_dump textless.dump must_fail
 '
 
-test_expect_failure PIPE 'change file mode but keep old content' '
+test_expect_failure 'change file mode but keep old content' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -472,7 +471,7 @@ test_expect_failure PIPE 'change file mode but keep old content' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	git show HEAD:greeting >actual.blob &&
 	git show HEAD^:greeting >actual.target &&
@@ -481,7 +480,7 @@ test_expect_failure PIPE 'change file mode but keep old content' '
 	test_cmp hello actual.target
 '
 
-test_expect_success PIPE 'NUL in property value' '
+test_expect_success 'NUL in property value' '
 	reinit_git &&
 	echo "commit message" >expect.message &&
 	{
@@ -507,7 +506,7 @@ test_expect_success PIPE 'NUL in property value' '
 	test_cmp expect.message actual.message
 '
 
-test_expect_success PIPE 'NUL in log message, file content, and property name' '
+test_expect_success 'NUL in log message, file content, and property name' '
 	# Caveat: svnadmin 1.6.16 (r1073529) truncates at \0 in the
 	# svn:specialQnotreally example.
 	reinit_git &&
@@ -572,7 +571,7 @@ test_expect_success PIPE 'NUL in log message, file content, and property name' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	{
 		git cat-file commit HEAD | nul_to_q &&
@@ -587,7 +586,7 @@ test_expect_success PIPE 'NUL in log message, file content, and property name' '
 	test_cmp expect.hello2 actual.hello2
 '
 
-test_expect_success PIPE 'change file mode and reiterate content' '
+test_expect_success 'change file mode and reiterate content' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -658,7 +657,7 @@ test_expect_success PIPE 'change file mode and reiterate content' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	git show HEAD:greeting >actual.blob &&
 	git show HEAD^:greeting >actual.target &&
@@ -667,7 +666,7 @@ test_expect_success PIPE 'change file mode and reiterate content' '
 	test_cmp hello actual.target
 '
 
-test_expect_success PIPE 'deltas supported' '
+test_expect_success 'deltas supported' '
 	reinit_git &&
 	{
 		# (old) h + (inline) ello + (old) \n
@@ -731,7 +730,7 @@ test_expect_success PIPE 'deltas supported' '
 	try_dump delta.dump
 '
 
-test_expect_success PIPE 'property deltas supported' '
+test_expect_success 'property deltas supported' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -791,12 +790,12 @@ test_expect_success PIPE 'property deltas supported' '
 	{
 		git rev-list HEAD |
 		git diff-tree --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PIPE 'properties on /' '
+test_expect_success 'properties on /' '
 	reinit_git &&
 	cat <<-\EOF >expect &&
 	OBJID
@@ -845,12 +844,12 @@ test_expect_success PIPE 'properties on /' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --always --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PIPE 'deltas for typechange' '
+test_expect_success 'deltas for typechange' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -930,12 +929,12 @@ test_expect_success PIPE 'deltas for typechange' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PIPE 'deltas need not consume the whole preimage' '
+test_expect_success 'deltas need not consume the whole preimage' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -1029,7 +1028,7 @@ test_expect_success PIPE 'deltas need not consume the whole preimage' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	test_cmp expect actual &&
 	git show HEAD:postimage >actual.3 &&
@@ -1040,7 +1039,7 @@ test_expect_success PIPE 'deltas need not consume the whole preimage' '
 	test_cmp expect.3 actual.3
 '
 
-test_expect_success PIPE 'no hang for delta trying to read past end of preimage' '
+test_expect_success 'no hang for delta trying to read past end of preimage' '
 	reinit_git &&
 	{
 		# COPY 1
@@ -1087,7 +1086,7 @@ test_expect_success 'set up svn repo' '
 	fi
 '
 
-test_expect_success SVNREPO,PIPE 't9135/svn.dump' '
+test_expect_success SVNREPO 't9135/svn.dump' '
 	mkdir -p simple-git &&
 	(
 		cd simple-git &&

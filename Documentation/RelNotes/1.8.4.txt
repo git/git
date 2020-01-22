@@ -58,7 +58,7 @@ Foreign interfaces, subsystems and ports.
    credential helper interface from Git.pm.
 
  * Update build for Cygwin 1.[57].  Torsten Bögershausen reports that
-   this is fine with Cygwin 1.7 ($gmane/225824) so let's try moving it
+   this is fine with Cygwin 1.7 (cf. <51A606A0.5060101@web.de>) so let's try moving it
    ahead.
 
  * The credential helper to talk to keychain on OS X (in contrib/) has

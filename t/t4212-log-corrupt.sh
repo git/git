@@ -26,22 +26,20 @@ test_expect_success 'git log with broken author email' '
 		echo
 		echo "    foo"
 	} >expect.out &&
-	: >expect.err &&
 
 	git log broken_email >actual.out 2>actual.err &&
 
 	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	test_must_be_empty actual.err
 '
 
 test_expect_success 'git log --format with broken author email' '
 	echo "A U Thor+author@example.com+Thu Apr 7 15:13:13 2005 -0700" >expect.out &&
-	: >expect.err &&
 
 	git log --format="%an+%ae+%ad" broken_email >actual.out 2>actual.err &&
 
 	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	test_must_be_empty actual.err
 '
 
 munge_author_date () {

@@ -9,7 +9,7 @@ git-commit-tree - Create a new commit object
 SYNOPSIS
 --------
 [verse]
-'git commit-tree' <tree> [(-p <parent>)...] < changelog
+'git commit-tree' <tree> [(-p <parent>)...]
 'git commit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
 		  [(-F <file>)...] <tree>
 
@@ -22,6 +22,10 @@ linkgit:git-commit[1] instead.
 Creates a new commit object based on the provided tree object and
 emits the new commit object id on stdout. The log message is read
 from the standard input, unless `-m` or `-F` options are given.
+
+The `-m` and `-F` options can be given any number of times, in any
+order. The commit log message will be composed in the order in which
+the options are given.
 
 A commit object may have any number of parents. With exactly one
 parent, it is an ordinary commit. Having more than one parent makes
@@ -41,10 +45,10 @@ state was.
 OPTIONS
 -------
 <tree>::
-	An existing tree object
+	An existing tree object.
 
 -p <parent>::
-	Each '-p' indicates the id of a parent commit object.
+	Each `-p` indicates the id of a parent commit object.
 
 -m <message>::
 	A paragraph in the commit log message. This can be given more than
@@ -52,15 +56,18 @@ OPTIONS
 
 -F <file>::
 	Read the commit log message from the given file. Use `-` to read
-	from the standard input.
+	from the standard input. This can be given more than once and the
+	content of each file becomes its own paragraph.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
-	GPG-sign commit.
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
 
 --no-gpg-sign::
-	Countermand `commit.gpgSign` configuration variable that is
-	set to force each and every commit to be signed.
+	Do not GPG-sign commit, to countermand a `--gpg-sign` option
+	given earlier on the command line.
 
 
 Commit Information

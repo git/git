@@ -98,6 +98,11 @@ sub resolve_local_globs {
 				    " globbed: $refname\n";
 			}
 			my $u = (::cmt_metadata("$refname"))[0];
+			if (!defined($u)) {
+				warn
+"W: $refname: no associated commit metadata from SVN, skipping\n";
+				next;
+			}
 			$u =~ s!^\Q$url\E(/|$)!! or die
 			  "$refname: '$url' not found in '$u'\n";
 			if ($pathname ne $u) {
@@ -485,7 +490,7 @@ sub refname {
 	#
 	# Additionally, % must be escaped because it is used for escaping
 	# and we want our escaped refname to be reversible
-	$refname =~ s{([ \%~\^:\?\*\[\t])}{sprintf('%%%02X',ord($1))}eg;
+	$refname =~ s{([ \%~\^:\?\*\[\t\\])}{sprintf('%%%02X',ord($1))}eg;
 
 	# no slash-separated component can begin with a dot .
 	# /.* becomes /%2E*
@@ -802,10 +807,15 @@ sub get_fetch_range {
 	(++$min, $max);
 }
 
+sub svn_dir {
+	command_oneline(qw(rev-parse --git-path svn));
+}
+
 sub tmp_config {
 	my (@args) = @_;
-	my $old_def_config = "$ENV{GIT_DIR}/svn/config";
-	my $config = "$ENV{GIT_DIR}/svn/.metadata";
+	my $svn_dir = svn_dir();
+	my $old_def_config = "$svn_dir/config";
+	my $config = "$svn_dir/.metadata";
 	if (! -f $config && -f $old_def_config) {
 		rename $old_def_config, $config or
 		       die "Failed rename $old_def_config => $config: $!\n";
@@ -1211,20 +1221,87 @@ sub do_fetch {
 sub mkemptydirs {
 	my ($self, $r) = @_;
 
+	# add/remove/collect a paths table
+	#
+	# Paths are split into a tree of nodes, stored as a hash of hashes.
+	#
+	# Each node contains a 'path' entry for the path (if any) associated
+	# with that node and a 'children' entry for any nodes under that
+	# location.
+	#
+	# Removing a path requires a hash lookup for each component then
+	# dropping that node (and anything under it), which is substantially
+	# faster than a grep slice into a single hash of paths for large
+	# numbers of paths.
+	#
+	# For a large (200K) number of empty_dir directives this reduces
+	# scanning time to 3 seconds vs 10 minutes for grep+delete on a single
+	# hash of paths.
+	sub add_path {
+		my ($paths_table, $path) = @_;
+		my $node_ref;
+
+		foreach my $x (split('/', $path)) {
+			if (!exists($paths_table->{$x})) {
+				$paths_table->{$x} = { children => {} };
+			}
+
+			$node_ref = $paths_table->{$x};
+			$paths_table = $paths_table->{$x}->{children};
+		}
+
+		$node_ref->{path} = $path;
+	}
+
+	sub remove_path {
+		my ($paths_table, $path) = @_;
+		my $nodes_ref;
+		my $node_name;
+
+		foreach my $x (split('/', $path)) {
+			if (!exists($paths_table->{$x})) {
+				return;
+			}
+
+			$nodes_ref = $paths_table;
+			$node_name = $x;
+
+			$paths_table = $paths_table->{$x}->{children};
+		}
+
+		delete($nodes_ref->{$node_name});
+	}
+
+	sub collect_paths {
+		my ($paths_table, $paths_ref) = @_;
+
+		foreach my $v (values %$paths_table) {
+			my $p = $v->{path};
+			my $c = $v->{children};
+
+			collect_paths($c, $paths_ref);
+
+			if (defined($p)) {
+				push(@$paths_ref, $p);
+			}
+		}
+	}
+
 	sub scan {
-		my ($r, $empty_dirs, $line) = @_;
+		my ($r, $paths_table, $line) = @_;
 		if (defined $r && $line =~ /^r(\d+)$/) {
 			return 0 if $1 > $r;
 		} elsif ($line =~ /^  \+empty_dir: (.+)$/) {
-			$empty_dirs->{$1} = 1;
+			add_path($paths_table, $1);
 		} elsif ($line =~ /^  \-empty_dir: (.+)$/) {
-			my @d = grep {m[^\Q$1\E(/|$)]} (keys %$empty_dirs);
-			delete @$empty_dirs{@d};
+			remove_path($paths_table, $1);
 		}
 		1; # continue
 	};
 
-	my %empty_dirs = ();
+	my @empty_dirs;
+	my %paths_table;
+
 	my $gz_file = "$self->{dir}/unhandled.log.gz";
 	if (-f $gz_file) {
 		if (!can_compress()) {
@@ -1235,7 +1312,7 @@ sub mkemptydirs {
 				die "Unable to open $gz_file: $!\n";
 			my $line;
 			while ($gz->gzreadline($line) > 0) {
-				scan($r, \%empty_dirs, $line) or last;
+				scan($r, \%paths_table, $line) or last;
 			}
 			$gz->gzclose;
 		}
@@ -1244,13 +1321,14 @@ sub mkemptydirs {
 	if (open my $fh, '<', "$self->{dir}/unhandled.log") {
 		binmode $fh or croak "binmode: $!";
 		while (<$fh>) {
-			scan($r, \%empty_dirs, $_) or last;
+			scan($r, \%paths_table, $_) or last;
 		}
 		close $fh;
 	}
 
+	collect_paths(\%paths_table, \@empty_dirs);
 	my $strip = qr/\A\Q@{[$self->path]}\E(?:\/|$)/;
-	foreach my $d (sort keys %empty_dirs) {
+	foreach my $d (sort @empty_dirs) {
 		$d = uri_decode($d);
 		$d =~ s/$strip//;
 		next unless length($d);
@@ -1327,7 +1405,7 @@ sub parse_svn_date {
 		$ENV{TZ} = 'UTC';
 
 		my $epoch_in_UTC =
-		    Time::Local::timelocal($S, $M, $H, $d, $m - 1, $Y - 1900);
+		    Time::Local::timelocal($S, $M, $H, $d, $m - 1, $Y);
 
 		# Determine our local timezone (including DST) at the
 		# time of $epoch_in_UTC.  $Git::SVN::Log::TZ stored the
@@ -1338,7 +1416,7 @@ sub parse_svn_date {
 			delete $ENV{TZ};
 		}
 
-		my $our_TZ = get_tz_offset();
+		my $our_TZ = get_tz_offset($epoch_in_UTC);
 
 		# This converts $epoch_in_UTC into our local timezone.
 		my ($sec, $min, $hour, $mday, $mon, $year,
@@ -1404,7 +1482,6 @@ sub call_authors_prog {
 	}
 	if ($author =~ /^\s*(.+?)\s*<(.*)>\s*$/) {
 		my ($name, $email) = ($1, $2);
-		$email = undef if length $2 == 0;
 		return [$name, $email];
 	} else {
 		die "Author: $orig_author: $::_authors_prog returned "
@@ -1414,6 +1491,10 @@ sub call_authors_prog {
 
 sub check_author {
 	my ($author) = @_;
+	if (defined $author) {
+		$author =~ s/^\s+//g;
+		$author =~ s/\s+$//g;
+	}
 	if (!defined $author || length $author == 0) {
 		$author = '(no author)';
 	}
@@ -1585,7 +1666,17 @@ sub tie_for_persistent_memoization {
 	if ($memo_backend > 0) {
 		tie %$hash => 'Git::SVN::Memoize::YAML', "$path.yaml";
 	} else {
-		tie %$hash => 'Memoize::Storable', "$path.db", 'nstore';
+		# first verify that any existing file can actually be loaded
+		# (it may have been saved by an incompatible version)
+		my $db = "$path.db";
+		if (-e $db) {
+			use Storable qw(retrieve);
+
+			if (!eval { retrieve($db); 1 }) {
+				unlink $db or die "unlink $db failed: $!";
+			}
+		}
+		tie %$hash => 'Memoize::Storable', $db, 'nstore';
 	}
 }
 
@@ -1598,7 +1689,7 @@ sub tie_for_persistent_memoization {
 		return if $memoized;
 		$memoized = 1;
 
-		my $cache_path = "$ENV{GIT_DIR}/svn/.caches/";
+		my $cache_path = svn_dir() . '/.caches/';
 		mkpath([$cache_path]) unless -d $cache_path;
 
 		my %lookup_svn_merge_cache;
@@ -1639,7 +1730,7 @@ sub tie_for_persistent_memoization {
 	sub clear_memoized_mergeinfo_caches {
 		die "Only call this method in non-memoized context" if ($memoized);
 
-		my $cache_path = "$ENV{GIT_DIR}/svn/.caches/";
+		my $cache_path = svn_dir() . '/.caches/';
 		return unless -d $cache_path;
 
 		for my $cache_file (("$cache_path/lookup_svn_merge",
@@ -1836,15 +1927,22 @@ sub make_log_entry {
 
 	my @parents = @$parents;
 	my $props = $ed->{dir_prop}{$self->path};
-	if ( $props->{"svk:merge"} ) {
-		$self->find_extra_svk_parents($props->{"svk:merge"}, \@parents);
-	}
-	if ( $props->{"svn:mergeinfo"} ) {
-		my $mi_changes = $self->mergeinfo_changes
-			($parent_path, $parent_rev,
-			 $self->path, $rev,
-			 $props->{"svn:mergeinfo"});
-		$self->find_extra_svn_parents($mi_changes, \@parents);
+	if ($self->follow_parent) {
+		my $tickets = $props->{"svk:merge"};
+		if ($tickets) {
+			$self->find_extra_svk_parents($tickets, \@parents);
+		}
+
+		my $mergeinfo_prop = $props->{"svn:mergeinfo"};
+		if ($mergeinfo_prop) {
+			my $mi_changes = $self->mergeinfo_changes(
+						$parent_path,
+						$parent_rev,
+						$self->path,
+						$rev,
+						$mergeinfo_prop);
+			$self->find_extra_svn_parents($mi_changes, \@parents);
+		}
 	}
 
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
@@ -1925,8 +2023,8 @@ sub make_log_entry {
 		remove_username($full_url);
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
-		$email ||= "$author\@$uuid";
-		$commit_email ||= "$author\@$uuid";
+		$email = "$author\@$uuid" unless defined $email;
+		$commit_email = "$author\@$uuid" unless defined $commit_email;
 	} elsif ($self->use_svnsync_props) {
 		my $full_url = canonicalize_url(
 			add_path_to_url( $self->svnsync->{url}, $self->path )
@@ -1934,15 +2032,15 @@ sub make_log_entry {
 		remove_username($full_url);
 		my $uuid = $self->svnsync->{uuid};
 		$log_entry{metadata} = "$full_url\@$rev $uuid";
-		$email ||= "$author\@$uuid";
-		$commit_email ||= "$author\@$uuid";
+		$email = "$author\@$uuid" unless defined $email;
+		$commit_email = "$author\@$uuid" unless defined $commit_email;
 	} else {
 		my $url = $self->metadata_url;
 		remove_username($url);
 		my $uuid = $self->rewrite_uuid || $self->ra->get_uuid;
 		$log_entry{metadata} = "$url\@$rev " . $uuid;
-		$email ||= "$author\@" . $uuid;
-		$commit_email ||= "$author\@" . $uuid;
+		$email = "$author\@$uuid" unless defined $email;
+		$commit_email = "$author\@$uuid" unless defined $commit_email;
 	}
 	$log_entry{name} = $name;
 	$log_entry{email} = $email;
@@ -2366,12 +2464,13 @@ sub _new {
 		             "refs/remotes/$prefix$default_ref_id";
 	}
 	$_[1] = $repo_id;
-	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
+	my $svn_dir = svn_dir();
+	my $dir = "$svn_dir/$ref_id";
 
-	# Older repos imported by us used $GIT_DIR/svn/foo instead of
-	# $GIT_DIR/svn/refs/remotes/foo when tracking refs/remotes/foo
+	# Older repos imported by us used $svn_dir/foo instead of
+	# $svn_dir/refs/remotes/foo when tracking refs/remotes/foo
 	if ($ref_id =~ m{^refs/remotes/(.+)}) {
-		my $old_dir = "$ENV{GIT_DIR}/svn/$1";
+		my $old_dir = "$svn_dir/$1";
 		if (-d $old_dir && ! -d $dir) {
 			$dir = $old_dir;
 		}
@@ -2381,7 +2480,7 @@ sub _new {
 	mkpath([$dir]);
 	my $obj = bless {
 		ref_id => $ref_id, dir => $dir, index => "$dir/index",
-	        config => "$ENV{GIT_DIR}/svn/config",
+	        config => "$svn_dir/config",
 	        map_root => "$dir/.rev_map", repo_id => $repo_id }, $class;
 
 	# Ensure it gets canonicalized

@@ -223,12 +223,12 @@ build_gendouble() {
 	import sys
 	import struct
 
-	s = struct.pack(">LL18s",
+	s = struct.pack(b">LL18s",
 			0x00051607,  # AppleDouble
 			0x00020000,  # version 2
-			""           # pad to 26 bytes
+			b""          # pad to 26 bytes
 	)
-	sys.stdout.write(s)
+	getattr(sys.stdout, 'buffer', sys.stdout).write(s)
 	EOF
 }
 
@@ -237,7 +237,7 @@ test_expect_success 'ignore apple' '
 	build_gendouble &&
 	(
 		cd "$cli" &&
-		test-genrandom apple 1024 >double.png &&
+		test-tool genrandom apple 1024 >double.png &&
 		"$PYTHON_PATH" "$TRASH_DIRECTORY/gendouble.py" >%double.png &&
 		p4 add -t apple double.png &&
 		p4 submit -d appledouble
@@ -310,7 +310,7 @@ test_expect_success SYMLINKS 'empty symlink target' '
 		# p4 to sync here will make it generate errors.
 		cd "$cli" &&
 		p4 print -q //depot/empty-symlink#2 >out &&
-		test ! -s out
+		test_must_be_empty out
 	) &&
 	test_when_finished cleanup_git &&
 
@@ -331,10 +331,6 @@ test_expect_success SYMLINKS 'empty symlink target' '
 		cd "$git" &&
 		test $(readlink empty-symlink) = target2
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

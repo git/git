@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "color.h"
 
 static int git_use_color_default = GIT_COLOR_AUTO;
@@ -123,19 +124,34 @@ static int parse_color(struct color *out, const char *name, int len)
 	return -1;
 }
 
-static int parse_attr(const char *name, int len)
+static int parse_attr(const char *name, size_t len)
 {
-	static const int attr_values[] = { 1, 2, 4, 5, 7,
-					   22, 22, 24, 25, 27 };
-	static const char * const attr_names[] = {
-		"bold", "dim", "ul", "blink", "reverse",
-		"nobold", "nodim", "noul", "noblink", "noreverse"
+	static const struct {
+		const char *name;
+		size_t len;
+		int val, neg;
+	} attrs[] = {
+#define ATTR(x, val, neg) { (x), sizeof(x)-1, (val), (neg) }
+		ATTR("bold",      1, 22),
+		ATTR("dim",       2, 22),
+		ATTR("italic",    3, 23),
+		ATTR("ul",        4, 24),
+		ATTR("blink",     5, 25),
+		ATTR("reverse",   7, 27),
+		ATTR("strike",    9, 29)
+#undef ATTR
 	};
+	int negate = 0;
 	int i;
-	for (i = 0; i < ARRAY_SIZE(attr_names); i++) {
-		const char *str = attr_names[i];
-		if (!strncasecmp(name, str, len) && !str[len])
-			return attr_values[i];
+
+	if (skip_prefix_mem(name, len, "no", &name, &len)) {
+		skip_prefix_mem(name, len, "-", &name, &len);
+		negate = 1;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
+		if (attrs[i].len == len && !memcmp(attrs[i].name, name, len))
+			return negate ? attrs[i].neg : attrs[i].val;
 	}
 	return -1;
 }
@@ -150,22 +166,24 @@ int color_parse(const char *value, char *dst)
  * already have the ANSI escape code in it. "out" should have enough
  * space in it to fit any color.
  */
-static char *color_output(char *out, const struct color *c, char type)
+static char *color_output(char *out, int len, const struct color *c, char type)
 {
 	switch (c->type) {
 	case COLOR_UNSPECIFIED:
 	case COLOR_NORMAL:
 		break;
 	case COLOR_ANSI:
+		if (len < 2)
+			BUG("color parsing ran out of space");
 		*out++ = type;
 		*out++ = '0' + c->value;
 		break;
 	case COLOR_256:
-		out += sprintf(out, "%c8;5;%d", type, c->value);
+		out += xsnprintf(out, len, "%c8;5;%d", type, c->value);
 		break;
 	case COLOR_RGB:
-		out += sprintf(out, "%c8;2;%d;%d;%d", type,
-			       c->red, c->green, c->blue);
+		out += xsnprintf(out, len, "%c8;2;%d;%d;%d", type,
+				 c->red, c->green, c->blue);
 		break;
 	}
 	return out;
@@ -180,19 +198,30 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 {
 	const char *ptr = value;
 	int len = value_len;
+	char *end = dst + COLOR_MAXLEN;
 	unsigned int attr = 0;
 	struct color fg = { COLOR_UNSPECIFIED };
 	struct color bg = { COLOR_UNSPECIFIED };
 
-	if (!strncasecmp(value, "reset", len)) {
-		strcpy(dst, GIT_COLOR_RESET);
+	while (len > 0 && isspace(*ptr)) {
+		ptr++;
+		len--;
+	}
+
+	if (!len) {
+		dst[0] = '\0';
+		return 0;
+	}
+
+	if (!strncasecmp(ptr, "reset", len)) {
+		xsnprintf(dst, end - dst, GIT_COLOR_RESET);
 		return 0;
 	}
 
 	/* [fg [bg]] [attr]... */
 	while (len > 0) {
 		const char *word = ptr;
-		struct color c;
+		struct color c = { COLOR_UNSPECIFIED };
 		int val, wordlen = 0;
 
 		while (len > 0 && !isspace(word[wordlen])) {
@@ -224,12 +253,19 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 			goto bad;
 	}
 
+#undef OUT
+#define OUT(x) do { \
+	if (dst == end) \
+		BUG("color parsing ran out of space"); \
+	*dst++ = (x); \
+} while(0)
+
 	if (attr || !color_empty(&fg) || !color_empty(&bg)) {
 		int sep = 0;
 		int i;
 
-		*dst++ = '\033';
-		*dst++ = '[';
+		OUT('\033');
+		OUT('[');
 
 		for (i = 0; attr; i++) {
 			unsigned bit = (1 << i);
@@ -237,27 +273,28 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 				continue;
 			attr &= ~bit;
 			if (sep++)
-				*dst++ = ';';
-			dst += sprintf(dst, "%d", i);
+				OUT(';');
+			dst += xsnprintf(dst, end - dst, "%d", i);
 		}
 		if (!color_empty(&fg)) {
 			if (sep++)
-				*dst++ = ';';
+				OUT(';');
 			/* foreground colors are all in the 3x range */
-			dst = color_output(dst, &fg, '3');
+			dst = color_output(dst, end - dst, &fg, '3');
 		}
 		if (!color_empty(&bg)) {
 			if (sep++)
-				*dst++ = ';';
+				OUT(';');
 			/* background colors are all in the 4x range */
-			dst = color_output(dst, &bg, '4');
+			dst = color_output(dst, end - dst, &bg, '4');
 		}
-		*dst++ = 'm';
+		OUT('m');
 	}
-	*dst = 0;
+	OUT(0);
 	return 0;
 bad:
 	return error(_("invalid color value: %.*s"), value_len, value);
+#undef OUT
 }
 
 int git_config_colorbool(const char *var, const char *value)
@@ -282,29 +319,40 @@ int git_config_colorbool(const char *var, const char *value)
 	return GIT_COLOR_AUTO;
 }
 
-static int check_auto_color(void)
+static int check_auto_color(int fd)
 {
-	if (color_stdout_is_tty < 0)
-		color_stdout_is_tty = isatty(1);
-	if (color_stdout_is_tty || (pager_in_use() && pager_use_color)) {
-		char *term = getenv("TERM");
-		if (term && strcmp(term, "dumb"))
+	static int color_stderr_is_tty = -1;
+	int *is_tty_p = fd == 1 ? &color_stdout_is_tty : &color_stderr_is_tty;
+	if (*is_tty_p < 0)
+		*is_tty_p = isatty(fd);
+	if (*is_tty_p || (fd == 1 && pager_in_use() && pager_use_color)) {
+		if (!is_terminal_dumb())
 			return 1;
 	}
 	return 0;
 }
 
-int want_color(int var)
+int want_color_fd(int fd, int var)
 {
-	static int want_auto = -1;
+	/*
+	 * NEEDSWORK: This function is sometimes used from multiple threads, and
+	 * we end up using want_auto racily. That "should not matter" since
+	 * we always write the same value, but it's still wrong. This function
+	 * is listed in .tsan-suppressions for the time being.
+	 */
+
+	static int want_auto[3] = { -1, -1, -1 };
+
+	if (fd < 1 || fd >= ARRAY_SIZE(want_auto))
+		BUG("file descriptor out of range: %d", fd);
 
 	if (var < 0)
 		var = git_use_color_default;
 
 	if (var == GIT_COLOR_AUTO) {
-		if (want_auto < 0)
-			want_auto = check_auto_color();
-		return want_auto;
+		if (want_auto[fd] < 0)
+			want_auto[fd] = check_auto_color(fd);
+		return want_auto[fd];
 	}
 	return var;
 }
@@ -350,8 +398,6 @@ static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
 		r += fprintf(fp, "%s", trail);
 	return r;
 }
-
-
 
 int color_fprintf(FILE *fp, const char *color, const char *fmt, ...)
 {

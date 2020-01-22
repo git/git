@@ -117,6 +117,7 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with relative prefix' '
 	would_clean=$(
 		cd docs &&
 		git clean -n ../src |
+		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
 	verbose test "$would_clean" = ../src/part3.c
@@ -129,6 +130,7 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with absolute path' '
 	would_clean=$(
 		cd docs &&
 		git clean -n "$(pwd)/../src" |
+		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
 	verbose test "$would_clean" = ../src/part3.c
@@ -432,9 +434,7 @@ test_expect_success 'nested git work tree' '
 	(
 		cd foo &&
 		git init &&
-		>hello.world
-		git add . &&
-		git commit -a -m nested
+		test_commit nested hello.world
 	) &&
 	(
 		cd bar &&
@@ -443,9 +443,7 @@ test_expect_success 'nested git work tree' '
 	(
 		cd baz/boo &&
 		git init &&
-		>deeper.world
-		git add . &&
-		git commit -a -m deeply.nested
+		test_commit deeply.nested deeper.world
 	) &&
 	git clean -f -d &&
 	test -f foo/.git/index &&
@@ -499,7 +497,7 @@ test_expect_success 'should not clean submodules' '
 	test_path_is_missing to_clean
 '
 
-test_expect_success POSIXPERM 'should avoid cleaning possible submodules' '
+test_expect_success POSIXPERM,SANITY 'should avoid cleaning possible submodules' '
 	rm -fr to_clean possible_sub1 &&
 	mkdir to_clean possible_sub1 &&
 	test_when_finished "rm -rf possible_sub*" &&
@@ -551,7 +549,7 @@ test_expect_failure 'nested (non-empty) bare repositories should be cleaned even
 	test_path_is_missing strange_bare
 '
 
-test_expect_success 'giving path in nested git work tree will remove it' '
+test_expect_success 'giving path in nested git work tree will NOT remove it' '
 	rm -fr repo &&
 	mkdir repo &&
 	(
@@ -563,7 +561,7 @@ test_expect_success 'giving path in nested git work tree will remove it' '
 	git clean -f -d repo/bar/baz &&
 	test_path_is_file repo/.git/HEAD &&
 	test_path_is_dir repo/bar/ &&
-	test_path_is_missing repo/bar/baz
+	test_path_is_file repo/bar/baz/hello.world
 '
 
 test_expect_success 'giving path to nested .git will not remove it' '
@@ -581,7 +579,7 @@ test_expect_success 'giving path to nested .git will not remove it' '
 	test_path_is_dir untracked/
 '
 
-test_expect_success 'giving path to nested .git/ will remove contents' '
+test_expect_success 'giving path to nested .git/ will NOT remove contents' '
 	rm -fr repo untracked &&
 	mkdir repo untracked &&
 	(
@@ -591,7 +589,7 @@ test_expect_success 'giving path to nested .git/ will remove contents' '
 	) &&
 	git clean -f -d repo/.git/ &&
 	test_path_is_dir repo/.git &&
-	test_dir_is_empty repo/.git &&
+	test_path_is_file repo/.git/HEAD &&
 	test_path_is_dir untracked/
 '
 
@@ -601,9 +599,7 @@ test_expect_success 'force removal of nested git work tree' '
 	(
 		cd foo &&
 		git init &&
-		>hello.world
-		git add . &&
-		git commit -a -m nested
+		test_commit nested hello.world
 	) &&
 	(
 		cd bar &&
@@ -612,9 +608,7 @@ test_expect_success 'force removal of nested git work tree' '
 	(
 		cd baz/boo &&
 		git init &&
-		>deeper.world
-		git add . &&
-		git commit -a -m deeply.nested
+		test_commit deeply.nested deeper.world
 	) &&
 	git clean -f -f -d &&
 	! test -d foo &&
@@ -659,6 +653,88 @@ test_expect_success 'git clean -d respects pathspecs (pathspec is prefix of dir)
 	git clean -df foo &&
 	test_path_is_missing foo &&
 	test_path_is_dir foobar
+'
+
+test_expect_success 'git clean -d skips untracked dirs containing ignored files' '
+	echo /foo/bar >.gitignore &&
+	echo ignoreme >>.gitignore &&
+	rm -rf foo &&
+	mkdir -p foo/a/aa/aaa foo/b/bb/bbb &&
+	touch foo/bar foo/baz foo/a/aa/ignoreme foo/b/ignoreme foo/b/bb/1 foo/b/bb/2 &&
+	git clean -df &&
+	test_path_is_dir foo &&
+	test_path_is_file foo/bar &&
+	test_path_is_missing foo/baz &&
+	test_path_is_file foo/a/aa/ignoreme &&
+	test_path_is_missing foo/a/aa/aaa &&
+	test_path_is_file foo/b/ignoreme &&
+	test_path_is_missing foo/b/bb
+'
+
+test_expect_success 'git clean -d skips nested repo containing ignored files' '
+	test_when_finished "rm -rf nested-repo-with-ignored-file" &&
+
+	git init nested-repo-with-ignored-file &&
+	(
+		cd nested-repo-with-ignored-file &&
+		>file &&
+		git add file &&
+		git commit -m Initial &&
+
+		# This file is ignored by a .gitignore rule in the outer repo
+		# added in the previous test.
+		>ignoreme
+	) &&
+
+	git clean -fd &&
+
+	test_path_is_file nested-repo-with-ignored-file/.git/index &&
+	test_path_is_file nested-repo-with-ignored-file/ignoreme &&
+	test_path_is_file nested-repo-with-ignored-file/file
+'
+
+test_expect_success 'git clean handles being told what to clean' '
+	mkdir -p d1 d2 &&
+	touch d1/ut d2/ut &&
+	git clean -f */ut &&
+	test_path_is_missing d1/ut &&
+	test_path_is_missing d2/ut
+'
+
+test_expect_success 'git clean handles being told what to clean, with -d' '
+	mkdir -p d1 d2 &&
+	touch d1/ut d2/ut &&
+	git clean -ffd */ut &&
+	test_path_is_missing d1/ut &&
+	test_path_is_missing d2/ut
+'
+
+test_expect_success 'git clean works if a glob is passed without -d' '
+	mkdir -p d1 d2 &&
+	touch d1/ut d2/ut &&
+	git clean -f "*ut" &&
+	test_path_is_missing d1/ut &&
+	test_path_is_missing d2/ut
+'
+
+test_expect_success 'git clean works if a glob is passed with -d' '
+	mkdir -p d1 d2 &&
+	touch d1/ut d2/ut &&
+	git clean -ffd "*ut" &&
+	test_path_is_missing d1/ut &&
+	test_path_is_missing d2/ut
+'
+
+test_expect_success MINGW 'handle clean & core.longpaths = false nicely' '
+	test_config core.longpaths false &&
+	a50=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
+	mkdir -p $a50$a50/$a50$a50/$a50$a50 &&
+	: >"$a50$a50/test.txt" 2>"$a50$a50/$a50$a50/$a50$a50/test.txt" &&
+	# create a temporary outside the working tree to hide from "git clean"
+	test_must_fail git clean -xdf 2>.git/err &&
+	# grepping for a strerror string is unportable but it is OK here with
+	# MINGW prereq
+	test_i18ngrep "too long" .git/err
 '
 
 test_done

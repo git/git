@@ -33,7 +33,7 @@ test_expect_success 'reset should remove remnants from a failed merge' '
 	git ls-files -s >expect &&
 	sha1=$(git rev-parse :new) &&
 	(
-		echo "100644 $sha1 1	old"
+		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
 	) | git update-index --index-info &&
 	>old &&
@@ -48,7 +48,7 @@ test_expect_success 'two-way reset should remove remnants too' '
 	git ls-files -s >expect &&
 	sha1=$(git rev-parse :new) &&
 	(
-		echo "100644 $sha1 1	old"
+		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
 	) | git update-index --index-info &&
 	>old &&
@@ -63,7 +63,7 @@ test_expect_success 'Porcelain reset should remove remnants too' '
 	git ls-files -s >expect &&
 	sha1=$(git rev-parse :new) &&
 	(
-		echo "100644 $sha1 1	old"
+		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
 	) | git update-index --index-info &&
 	>old &&
@@ -78,7 +78,7 @@ test_expect_success 'Porcelain checkout -f should remove remnants too' '
 	git ls-files -s >expect &&
 	sha1=$(git rev-parse :new) &&
 	(
-		echo "100644 $sha1 1	old"
+		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
 	) | git update-index --index-info &&
 	>old &&
@@ -93,7 +93,7 @@ test_expect_success 'Porcelain checkout -f HEAD should remove remnants too' '
 	git ls-files -s >expect &&
 	sha1=$(git rev-parse :new) &&
 	(
-		echo "100644 $sha1 1	old"
+		echo "100644 $sha1 1	old" &&
 		echo "100644 $sha1 3	old"
 	) | git update-index --index-info &&
 	>old &&

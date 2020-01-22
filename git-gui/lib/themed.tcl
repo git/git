@@ -1,6 +1,14 @@
 # Functions for supporting the use of themed Tk widgets in git-gui.
 # Copyright (C) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
 
+proc ttk_get_current_theme {} {
+	# Handle either current Tk or older versions of 8.5
+	if {[catch {set theme [ttk::style theme use]}]} {
+		set theme  $::ttk::currentTheme
+	}
+	return $theme
+}
+
 proc InitTheme {} {
 	# Create a color label style (bg can be overridden by widget option)
 	ttk::style layout Color.TLabel {
@@ -28,10 +36,7 @@ proc InitTheme {} {
 		}
 	}
 
-	# Handle either current Tk or older versions of 8.5
-	if {[catch {set theme [ttk::style theme use]}]} {
-		set theme  $::ttk::currentTheme
-	}
+	set theme [ttk_get_current_theme]
 
 	if {[lsearch -exact {default alt classic clam} $theme] != -1} {
 		# Simple override of standard ttk::entry to change the field
@@ -75,6 +80,57 @@ proc InitTheme {} {
 
 	if {[lsearch [bind . <<ThemeChanged>>] InitTheme] == -1} {
 		bind . <<ThemeChanged>> +[namespace code [list InitTheme]]
+	}
+}
+
+# Define a style used for the surround of text widgets.
+proc InitEntryFrame {} {
+	ttk::style theme settings default {
+		ttk::style layout EntryFrame {
+			EntryFrame.field -sticky nswe -border 0 -children {
+				EntryFrame.fill -sticky nswe -children {
+					EntryFrame.padding -sticky nswe
+				}
+			}
+		}
+		ttk::style configure EntryFrame -padding 1 -relief sunken
+		ttk::style map EntryFrame -background {}
+	}
+	ttk::style theme settings classic {
+		ttk::style configure EntryFrame -padding 2 -relief sunken
+		ttk::style map EntryFrame -background {}
+	}
+	ttk::style theme settings alt {
+		ttk::style configure EntryFrame -padding 2
+		ttk::style map EntryFrame -background {}
+	}
+	ttk::style theme settings clam {
+		ttk::style configure EntryFrame -padding 2
+		ttk::style map EntryFrame -background {}
+	}
+
+	# Ignore errors for missing native themes
+	catch {
+		ttk::style theme settings winnative {
+			ttk::style configure EntryFrame -padding 2
+		}
+		ttk::style theme settings xpnative {
+			ttk::style configure EntryFrame -padding 1
+			ttk::style element create EntryFrame.field vsapi \
+				EDIT 1 {disabled 4 focus 3 active 2 {} 1} -padding 1
+		}
+		ttk::style theme settings vista {
+			ttk::style configure EntryFrame -padding 2
+			ttk::style element create EntryFrame.field vsapi \
+				EDIT 6 {disabled 4 focus 3 active 2 {} 1} -padding 2
+		}
+	}
+
+	bind EntryFrame <Enter> {%W instate !disabled {%W state active}}
+	bind EntryFrame <Leave> {%W state !active}
+	bind EntryFrame <<ThemeChanged>> {
+		set pad [ttk::style lookup EntryFrame -padding]
+		%W configure -padding [expr {$pad eq {} ? 1 : $pad}]
 	}
 }
 
@@ -123,7 +179,7 @@ proc paddedlabel {w args} {
 # place a themed frame over the surface.
 proc Dialog {w args} {
 	eval [linsert $args 0 toplevel $w -class Dialog]
-	catch {wm attributes $w -type dialog}	
+	catch {wm attributes $w -type dialog}
 	pave_toplevel $w
 	return $w
 }
@@ -191,6 +247,40 @@ proc tspinbox {w args} {
 	} else {
 		eval [linsert $args 0 spinbox $w]
 	}
+}
+
+# Create a text widget with any theme specific properties.
+proc ttext {w args} {
+	global use_ttk
+	if {$use_ttk} {
+		switch -- [ttk_get_current_theme] {
+			"vista" - "xpnative" {
+				lappend args -highlightthickness 0 -borderwidth 0
+			}
+		}
+	}
+	set w [eval [linsert $args 0 text $w]]
+	if {$use_ttk} {
+		if {[winfo class [winfo parent $w]] eq "EntryFrame"} {
+			bind $w <FocusIn> {[winfo parent %W] state focus}
+			bind $w <FocusOut> {[winfo parent %W] state !focus}
+		}
+	}
+	return $w
+}
+
+# themed frame suitable for surrounding a text field.
+proc textframe {w args} {
+	global use_ttk
+	if {$use_ttk} {
+		if {[catch {ttk::style layout EntryFrame}]} {
+			InitEntryFrame
+		}
+		eval [linsert $args 0 ttk::frame $w -class EntryFrame -style EntryFrame]
+	} else {
+		eval [linsert $args 0 frame $w]
+	}
+	return $w
 }
 
 proc tentry {w args} {

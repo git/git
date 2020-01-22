@@ -9,23 +9,11 @@ test_expect_success 'start p4d' '
 '
 
 # We rely on this behavior to detect for p4 move availability.
-test_expect_success 'p4 help unknown returns 1' '
+test_expect_success '"p4 help unknown" errors out' '
 	(
 		cd "$cli" &&
-		(
-			p4 help client >errs 2>&1
-			echo $? >retval
-		)
-		echo 0 >expected &&
-		test_cmp expected retval &&
-		rm retval &&
-		(
-			p4 help nosuchcommand >errs 2>&1
-			echo $? >retval
-		)
-		echo 1 >expected &&
-		test_cmp expected retval &&
-		rm retval
+		p4 help client &&
+		! p4 help nosuchcommand
 	)
 '
 
@@ -141,7 +129,7 @@ test_expect_success 'detect copies' '
 		git diff-tree -r -C HEAD &&
 		git p4 submit &&
 		p4 filelog //depot/file8 &&
-		p4 filelog //depot/file8 | test_must_fail grep -q "branch from" &&
+		! p4 filelog //depot/file8 | grep -q "branch from" &&
 
 		echo "file9" >>file2 &&
 		git commit -a -m "Differentiate file2" &&
@@ -154,7 +142,7 @@ test_expect_success 'detect copies' '
 		git config git-p4.detectCopies true &&
 		git p4 submit &&
 		p4 filelog //depot/file9 &&
-		p4 filelog //depot/file9 | test_must_fail grep -q "branch from" &&
+		! p4 filelog //depot/file9 | grep -q "branch from" &&
 
 		echo "file10" >>file2 &&
 		git commit -a -m "Differentiate file2" &&
@@ -202,7 +190,7 @@ test_expect_success 'detect copies' '
 		git config git-p4.detectCopies $(($level + 2)) &&
 		git p4 submit &&
 		p4 filelog //depot/file12 &&
-		p4 filelog //depot/file12 | test_must_fail grep -q "branch from" &&
+		! p4 filelog //depot/file12 | grep -q "branch from" &&
 
 		echo "file13" >>file2 &&
 		git commit -a -m "Differentiate file2" &&
@@ -252,10 +240,6 @@ test_expect_success P4D_HAVE_CONFIGURABLE_RUN_MOVE_ALLOW \
 		git commit -m "move move-disallow-file" &&
 		git p4 submit
 	)
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

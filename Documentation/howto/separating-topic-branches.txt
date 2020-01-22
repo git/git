@@ -81,7 +81,7 @@ After I am done, I'd try a pretend-merge between "topicA" and
               o---o---o---o---o---o
 
 The last diff better not to show anything other than cleanups
-for crufts.  Then I can finally clean things up:
+for cruft.  Then I can finally clean things up:
 
         $ git branch -D topic
         $ git reset --hard HEAD^ ;# nuke pretend merge

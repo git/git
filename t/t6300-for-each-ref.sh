@@ -7,9 +7,10 @@ test_description='for-each-ref test'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
-# Mon Jul 3 15:18:43 2006 +0000
-datestamp=1151939923
+# Mon Jul 3 23:18:43 2006 +0000
+datestamp=1151968723
 setdate_and_increment () {
     GIT_COMMITTER_DATE="$datestamp +0200"
     datestamp=$(expr "$datestamp" + 1)
@@ -38,6 +39,7 @@ test_atom() {
 	case "$1" in
 		head) ref=refs/heads/master ;;
 		 tag) ref=refs/tags/testtag ;;
+		 sym) ref=refs/heads/sym ;;
 		   *) ref=$1 ;;
 	esac
 	printf '%s\n' "$3" >expected
@@ -49,11 +51,44 @@ test_atom() {
 }
 
 test_atom head refname refs/heads/master
+test_atom head refname: refs/heads/master
+test_atom head refname:short master
+test_atom head refname:lstrip=1 heads/master
+test_atom head refname:lstrip=2 master
+test_atom head refname:lstrip=-1 master
+test_atom head refname:lstrip=-2 heads/master
+test_atom head refname:rstrip=1 refs/heads
+test_atom head refname:rstrip=2 refs
+test_atom head refname:rstrip=-1 refs
+test_atom head refname:rstrip=-2 refs/heads
+test_atom head refname:strip=1 heads/master
+test_atom head refname:strip=2 master
+test_atom head refname:strip=-1 master
+test_atom head refname:strip=-2 heads/master
 test_atom head upstream refs/remotes/origin/master
+test_atom head upstream:short origin/master
+test_atom head upstream:lstrip=2 origin/master
+test_atom head upstream:lstrip=-2 origin/master
+test_atom head upstream:rstrip=2 refs/remotes
+test_atom head upstream:rstrip=-2 refs/remotes
+test_atom head upstream:strip=2 origin/master
+test_atom head upstream:strip=-2 origin/master
 test_atom head push refs/remotes/myfork/master
+test_atom head push:short myfork/master
+test_atom head push:lstrip=1 remotes/myfork/master
+test_atom head push:lstrip=-1 master
+test_atom head push:rstrip=1 refs/remotes/myfork
+test_atom head push:rstrip=-1 refs
+test_atom head push:strip=1 remotes/myfork/master
+test_atom head push:strip=-1 master
 test_atom head objecttype commit
 test_atom head objectsize 171
+test_atom head objectsize:disk 138
+test_atom head deltabase 0000000000000000000000000000000000000000
 test_atom head objectname $(git rev-parse refs/heads/master)
+test_atom head objectname:short $(git rev-parse --short refs/heads/master)
+test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
+test_atom head objectname:short=10 $(git rev-parse --short=10 refs/heads/master)
 test_atom head tree $(git rev-parse refs/heads/master^{tree})
 test_atom head parent ''
 test_atom head numparent 0
@@ -61,21 +96,21 @@ test_atom head object ''
 test_atom head type ''
 test_atom head '*objectname' ''
 test_atom head '*objecttype' ''
-test_atom head author 'A U Thor <author@example.com> 1151939924 +0200'
+test_atom head author 'A U Thor <author@example.com> 1151968724 +0200'
 test_atom head authorname 'A U Thor'
 test_atom head authoremail '<author@example.com>'
-test_atom head authordate 'Mon Jul 3 17:18:44 2006 +0200'
-test_atom head committer 'C O Mitter <committer@example.com> 1151939923 +0200'
+test_atom head authordate 'Tue Jul 4 01:18:44 2006 +0200'
+test_atom head committer 'C O Mitter <committer@example.com> 1151968723 +0200'
 test_atom head committername 'C O Mitter'
 test_atom head committeremail '<committer@example.com>'
-test_atom head committerdate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head committerdate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head tag ''
 test_atom head tagger ''
 test_atom head taggername ''
 test_atom head taggeremail ''
 test_atom head taggerdate ''
-test_atom head creator 'C O Mitter <committer@example.com> 1151939923 +0200'
-test_atom head creatordate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head creator 'C O Mitter <committer@example.com> 1151968723 +0200'
+test_atom head creatordate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head subject 'Initial'
 test_atom head contents:subject 'Initial'
 test_atom head body ''
@@ -86,17 +121,25 @@ test_atom head contents 'Initial
 test_atom head HEAD '*'
 
 test_atom tag refname refs/tags/testtag
+test_atom tag refname:short testtag
 test_atom tag upstream ''
 test_atom tag push ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
+test_atom tag objectsize:disk 138
+test_atom tag '*objectsize:disk' 138
+test_atom tag deltabase 0000000000000000000000000000000000000000
+test_atom tag '*deltabase' 0000000000000000000000000000000000000000
 test_atom tag objectname $(git rev-parse refs/tags/testtag)
+test_atom tag objectname:short $(git rev-parse --short refs/tags/testtag)
+test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
+test_atom head objectname:short=10 $(git rev-parse --short=10 refs/heads/master)
 test_atom tag tree ''
 test_atom tag parent ''
 test_atom tag numparent ''
 test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
-test_atom tag '*objectname' '67a36f10722846e891fbada1ba48ed035de75581'
+test_atom tag '*objectname' 'ea122842f48be4afb2d1fc6a4b96c05885ab7463'
 test_atom tag '*objecttype' 'commit'
 test_atom tag author ''
 test_atom tag authorname ''
@@ -107,18 +150,18 @@ test_atom tag committername ''
 test_atom tag committeremail ''
 test_atom tag committerdate ''
 test_atom tag tag 'testtag'
-test_atom tag tagger 'C O Mitter <committer@example.com> 1151939925 +0200'
+test_atom tag tagger 'C O Mitter <committer@example.com> 1151968725 +0200'
 test_atom tag taggername 'C O Mitter'
 test_atom tag taggeremail '<committer@example.com>'
-test_atom tag taggerdate 'Mon Jul 3 17:18:45 2006 +0200'
-test_atom tag creator 'C O Mitter <committer@example.com> 1151939925 +0200'
-test_atom tag creatordate 'Mon Jul 3 17:18:45 2006 +0200'
-test_atom tag subject 'Tagging at 1151939927'
-test_atom tag contents:subject 'Tagging at 1151939927'
+test_atom tag taggerdate 'Tue Jul 4 01:18:45 2006 +0200'
+test_atom tag creator 'C O Mitter <committer@example.com> 1151968725 +0200'
+test_atom tag creatordate 'Tue Jul 4 01:18:45 2006 +0200'
+test_atom tag subject 'Tagging at 1151968727'
+test_atom tag contents:subject 'Tagging at 1151968727'
 test_atom tag body ''
 test_atom tag contents:body ''
 test_atom tag contents:signature ''
-test_atom tag contents 'Tagging at 1151939927
+test_atom tag contents 'Tagging at 1151968727
 '
 test_atom tag HEAD ' '
 
@@ -146,91 +189,125 @@ test_expect_success 'Check invalid format specifiers are errors' '
 	test_must_fail git for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon Jul 3 17:18:43 2006 +0200' 'Mon Jul 3 17:18:44 2006 +0200'
-'refs/tags/testtag' 'Mon Jul 3 17:18:45 2006 +0200'
-EOF
+test_expect_success 'arguments to %(objectname:short=) must be positive integers' '
+	test_must_fail git for-each-ref --format="%(objectname:short=0)" &&
+	test_must_fail git for-each-ref --format="%(objectname:short=-1)" &&
+	test_must_fail git for-each-ref --format="%(objectname:short=foo)"
+'
+
+test_date () {
+	f=$1 &&
+	committer_date=$2 &&
+	author_date=$3 &&
+	tagger_date=$4 &&
+	cat >expected <<-EOF &&
+	'refs/heads/master' '$committer_date' '$author_date'
+	'refs/tags/testtag' '$tagger_date'
+	EOF
+	(
+		git for-each-ref --shell \
+			--format="%(refname) %(committerdate${f:+:$f}) %(authordate${f:+:$f})" \
+			refs/heads &&
+		git for-each-ref --shell \
+			--format="%(refname) %(taggerdate${f:+:$f})" \
+			refs/tags
+	) >actual &&
+	test_cmp expected actual
+}
 
 test_expect_success 'Check unformatted date fields output' '
-	(git for-each-ref --shell --format="%(refname) %(committerdate) %(authordate)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date "" \
+		"Tue Jul 4 01:18:43 2006 +0200" \
+		"Tue Jul 4 01:18:44 2006 +0200" \
+		"Tue Jul 4 01:18:45 2006 +0200"
 '
 
 test_expect_success 'Check format "default" formatted date fields output' '
-	f=default &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date default \
+		"Tue Jul 4 01:18:43 2006 +0200" \
+		"Tue Jul 4 01:18:44 2006 +0200" \
+		"Tue Jul 4 01:18:45 2006 +0200"
+'
+
+test_expect_success 'Check format "default-local" date fields output' '
+	test_date default-local "Mon Jul 3 23:18:43 2006" "Mon Jul 3 23:18:44 2006" "Mon Jul 3 23:18:45 2006"
 '
 
 # Don't know how to do relative check because I can't know when this script
 # is going to be run and can't fake the current time to git, and hence can't
 # provide expected output.  Instead, I'll just make sure that "relative"
 # doesn't exit in error
-#
-#cat >expected <<\EOF
-#
-#EOF
-#
 test_expect_success 'Check format "relative" date fields output' '
 	f=relative &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual
 '
 
-cat >expected <<\EOF
-'refs/heads/master' '2006-07-03' '2006-07-03'
-'refs/tags/testtag' '2006-07-03'
-EOF
+# We just check that this is the same as "relative" for now.
+test_expect_success 'Check format "relative-local" date fields output' '
+	test_date relative-local \
+		"$(git for-each-ref --format="%(committerdate:relative)" refs/heads)" \
+		"$(git for-each-ref --format="%(authordate:relative)" refs/heads)" \
+		"$(git for-each-ref --format="%(taggerdate:relative)" refs/tags)"
+'
 
 test_expect_success 'Check format "short" date fields output' '
-	f=short &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date short 2006-07-04 2006-07-04 2006-07-04
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon Jul 3 15:18:43 2006' 'Mon Jul 3 15:18:44 2006'
-'refs/tags/testtag' 'Mon Jul 3 15:18:45 2006'
-EOF
+test_expect_success 'Check format "short-local" date fields output' '
+	test_date short-local 2006-07-03 2006-07-03 2006-07-03
+'
 
 test_expect_success 'Check format "local" date fields output' '
-	f=local &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date local \
+		"Mon Jul 3 23:18:43 2006" \
+		"Mon Jul 3 23:18:44 2006" \
+		"Mon Jul 3 23:18:45 2006"
 '
-
-cat >expected <<\EOF
-'refs/heads/master' '2006-07-03 17:18:43 +0200' '2006-07-03 17:18:44 +0200'
-'refs/tags/testtag' '2006-07-03 17:18:45 +0200'
-EOF
 
 test_expect_success 'Check format "iso8601" date fields output' '
-	f=iso8601 &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date iso8601 \
+		"2006-07-04 01:18:43 +0200" \
+		"2006-07-04 01:18:44 +0200" \
+		"2006-07-04 01:18:45 +0200"
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon, 3 Jul 2006 17:18:43 +0200' 'Mon, 3 Jul 2006 17:18:44 +0200'
-'refs/tags/testtag' 'Mon, 3 Jul 2006 17:18:45 +0200'
-EOF
+test_expect_success 'Check format "iso8601-local" date fields output' '
+	test_date iso8601-local "2006-07-03 23:18:43 +0000" "2006-07-03 23:18:44 +0000" "2006-07-03 23:18:45 +0000"
+'
 
 test_expect_success 'Check format "rfc2822" date fields output' '
-	f=rfc2822 &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date rfc2822 \
+		"Tue, 4 Jul 2006 01:18:43 +0200" \
+		"Tue, 4 Jul 2006 01:18:44 +0200" \
+		"Tue, 4 Jul 2006 01:18:45 +0200"
+'
+
+test_expect_success 'Check format "rfc2822-local" date fields output' '
+	test_date rfc2822-local "Mon, 3 Jul 2006 23:18:43 +0000" "Mon, 3 Jul 2006 23:18:44 +0000" "Mon, 3 Jul 2006 23:18:45 +0000"
+'
+
+test_expect_success 'Check format "raw" date fields output' '
+	test_date raw "1151968723 +0200" "1151968724 +0200" "1151968725 +0200"
+'
+
+test_expect_success 'Check format "raw-local" date fields output' '
+	test_date raw-local "1151968723 +0000" "1151968724 +0000" "1151968725 +0000"
 '
 
 test_expect_success 'Check format of strftime date fields' '
-	echo "my date is 2006-07-03" >expected &&
+	echo "my date is 2006-07-04" >expected &&
 	git for-each-ref \
 	  --format="%(authordate:format:my date is %Y-%m-%d)" \
+	  refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'Check format of strftime-local date fields' '
+	echo "my date is 2006-07-03" >expected &&
+	git for-each-ref \
+	  --format="%(authordate:format-local:my date is %Y-%m-%d)" \
 	  refs/heads >actual &&
 	test_cmp expected actual
 '
@@ -239,7 +316,7 @@ test_expect_success 'exercise strftime with odd fields' '
 	echo >expected &&
 	git for-each-ref --format="%(authordate:format:)" refs/heads >actual &&
 	test_cmp expected actual &&
-	long="long format -- $_z40$_z40$_z40$_z40$_z40$_z40$_z40" &&
+	long="long format -- $ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID" &&
 	echo $long >expected &&
 	git for-each-ref --format="%(authordate:format:$long)" refs/heads >actual &&
 	test_cmp expected actual
@@ -265,6 +342,32 @@ EOF
 
 test_expect_success 'Verify descending sort' '
 	git for-each-ref --format="%(refname)" --sort=-refname >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+refs/tags/testtag
+refs/tags/testtag-2
+EOF
+
+test_expect_success 'exercise patterns with prefixes' '
+	git tag testtag-2 &&
+	test_when_finished "git tag -d testtag-2" &&
+	git for-each-ref --format="%(refname)" \
+		refs/tags/testtag refs/tags/testtag-2 >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+refs/tags/testtag
+refs/tags/testtag-2
+EOF
+
+test_expect_success 'exercise glob patterns with prefixes' '
+	git tag testtag-2 &&
+	test_when_finished "git tag -d testtag-2" &&
+	git for-each-ref --format="%(refname)" \
+		refs/tags/testtag "refs/tags/testtag-*" >actual &&
 	test_cmp expected actual
 '
 
@@ -302,55 +405,28 @@ test_expect_success 'Quoting style: tcl' '
 
 for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
 	test_expect_success "more than one quoting style: $i" "
-		git for-each-ref $i 2>&1 | (read line &&
-		case \$line in
-		\"error: more than one quoting style\"*) : happy;;
-		*) false
-		esac)
+		test_must_fail git for-each-ref $i 2>err &&
+		grep '^error: more than one quoting style' err
 	"
 done
-
-cat >expected <<\EOF
-master
-testtag
-EOF
-
-test_expect_success 'Check short refname format' '
-	(git for-each-ref --format="%(refname:short)" refs/heads &&
-	git for-each-ref --format="%(refname:short)" refs/tags) >actual &&
-	test_cmp expected actual
-'
-
-cat >expected <<EOF
-origin/master
-EOF
-
-test_expect_success 'Check short upstream format' '
-	git for-each-ref --format="%(upstream:short)" refs/heads >actual &&
-	test_cmp expected actual
-'
 
 test_expect_success 'setup for upstream:track[short]' '
 	test_commit two
 '
 
-cat >expected <<EOF
-[ahead 1]
-EOF
+test_atom head upstream:track '[ahead 1]'
+test_atom head upstream:trackshort '>'
+test_atom head upstream:track,nobracket 'ahead 1'
+test_atom head upstream:nobracket,track 'ahead 1'
 
-test_expect_success 'Check upstream:track format' '
-	git for-each-ref --format="%(upstream:track)" refs/heads >actual &&
-	test_cmp expected actual
+test_expect_success 'setup for push:track[short]' '
+	test_commit third &&
+	git update-ref refs/remotes/myfork/master master &&
+	git reset master~1
 '
 
-cat >expected <<EOF
->
-EOF
-
-test_expect_success 'Check upstream:trackshort format' '
-	git for-each-ref --format="%(upstream:trackshort)" refs/heads >actual &&
-	test_cmp expected actual
-'
+test_atom head push:track '[behind 1]'
+test_atom head push:trackshort '<'
 
 test_expect_success 'Check that :track[short] cannot be used with other atoms' '
 	test_must_fail git for-each-ref --format="%(refname:track)" 2>/dev/null &&
@@ -359,7 +435,7 @@ test_expect_success 'Check that :track[short] cannot be used with other atoms' '
 
 test_expect_success 'Check that :track[short] works when upstream is invalid' '
 	cat >expected <<-\EOF &&
-
+	[gone]
 
 	EOF
 	test_when_finished "git config branch.master.merge refs/heads/master" &&
@@ -370,40 +446,43 @@ test_expect_success 'Check that :track[short] works when upstream is invalid' '
 	test_cmp expected actual
 '
 
-test_expect_success '%(push) supports tracking specifiers, too' '
-	echo "[ahead 1]" >expected &&
-	git for-each-ref --format="%(push:track)" refs/heads >actual &&
-	test_cmp expected actual
-'
-
-cat >expected <<EOF
-$(git rev-parse --short HEAD)
-EOF
-
-test_expect_success 'Check short objectname format' '
-	git for-each-ref --format="%(objectname:short)" refs/heads >actual &&
-	test_cmp expected actual
-'
-
 test_expect_success 'Check for invalid refname format' '
 	test_must_fail git for-each-ref --format="%(refname:INVALID)"
 '
 
-get_color ()
-{
-	git config --get-color no.such.slot "$1"
-}
+test_expect_success 'set up color tests' '
+	cat >expected.color <<-EOF &&
+	$(git rev-parse --short refs/heads/master) <GREEN>master<RESET>
+	$(git rev-parse --short refs/remotes/myfork/master) <GREEN>myfork/master<RESET>
+	$(git rev-parse --short refs/remotes/origin/master) <GREEN>origin/master<RESET>
+	$(git rev-parse --short refs/tags/testtag) <GREEN>testtag<RESET>
+	$(git rev-parse --short refs/tags/third) <GREEN>third<RESET>
+	$(git rev-parse --short refs/tags/two) <GREEN>two<RESET>
+	EOF
+	sed "s/<[^>]*>//g" <expected.color >expected.bare &&
+	color_format="%(objectname:short) %(color:green)%(refname:short)"
+'
 
-cat >expected <<EOF
-$(git rev-parse --short refs/heads/master) $(get_color green)master$(get_color reset)
-$(git rev-parse --short refs/remotes/origin/master) $(get_color green)origin/master$(get_color reset)
-$(git rev-parse --short refs/tags/testtag) $(get_color green)testtag$(get_color reset)
-$(git rev-parse --short refs/tags/two) $(get_color green)two$(get_color reset)
-EOF
+test_expect_success TTY '%(color) shows color with a tty' '
+	test_terminal git for-each-ref --format="$color_format" >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expected.color actual
+'
 
-test_expect_success 'Check %(color:...) ' '
-	git for-each-ref --format="%(objectname:short) %(color:green)%(refname:short)" >actual &&
-	test_cmp expected actual
+test_expect_success '%(color) does not show color without tty' '
+	TERM=vt100 git for-each-ref --format="$color_format" >actual &&
+	test_cmp expected.bare actual
+'
+
+test_expect_success '--color can override tty check' '
+	git for-each-ref --color --format="$color_format" >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expected.color actual
+'
+
+test_expect_success 'color.ui=always does not override tty check' '
+	git -c color.ui=always for-each-ref --format="$color_format" >actual &&
+	test_cmp expected.bare actual
 '
 
 cat >expected <<\EOF
@@ -446,6 +525,25 @@ test_expect_success 'Check ambiguous head and tag refs II (loose)' '
 	git for-each-ref --format "%(refname:short)" refs/heads/ambiguous refs/tags/ambiguous >actual &&
 	test_cmp expected actual
 '
+
+test_expect_success 'create tag without tagger' '
+	git tag -a -m "Broken tag" taggerless &&
+	git tag -f taggerless $(git cat-file tag taggerless |
+		sed -e "/^tagger /d" |
+		git hash-object --stdin -w -t tag)
+'
+
+test_atom refs/tags/taggerless type 'commit'
+test_atom refs/tags/taggerless tag 'taggerless'
+test_atom refs/tags/taggerless tagger ''
+test_atom refs/tags/taggerless taggername ''
+test_atom refs/tags/taggerless taggeremail ''
+test_atom refs/tags/taggerless taggerdate ''
+test_atom refs/tags/taggerless committer ''
+test_atom refs/tags/taggerless committername ''
+test_atom refs/tags/taggerless committeremail ''
+test_atom refs/tags/taggerless committerdate ''
+test_atom refs/tags/taggerless subject 'Broken tag'
 
 test_expect_success 'an unusual tag with an incomplete line' '
 
@@ -546,8 +644,8 @@ body contents
 $sig"
 
 cat >expected <<EOF
-$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
 $(git rev-parse refs/tags/bogo) <committer@example.com> refs/tags/bogo
+$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
 EOF
 
 test_expect_success 'Verify sort with multiple keys' '
@@ -555,4 +653,239 @@ test_expect_success 'Verify sort with multiple keys' '
 		refs/tags/bogo refs/tags/master > actual &&
 	test_cmp expected actual
 '
+
+
+test_expect_success 'do not dereference NULL upon %(HEAD) on unborn branch' '
+	test_when_finished "git checkout master" &&
+	git for-each-ref --format="%(HEAD) %(refname:short)" refs/heads/ >actual &&
+	sed -e "s/^\* /  /" actual >expect &&
+	git checkout --orphan orphaned-branch &&
+	git for-each-ref --format="%(HEAD) %(refname:short)" refs/heads/ >actual &&
+	test_cmp expect actual
+'
+
+cat >trailers <<EOF
+Reviewed-by: A U Thor <author@example.com>
+Signed-off-by: A U Thor <author@example.com>
+[ v2 updated patch description ]
+Acked-by: A U Thor
+  <author@example.com>
+EOF
+
+unfold () {
+	perl -0pe 's/\n\s+/ /g'
+}
+
+test_expect_success 'set up trailers for next test' '
+	echo "Some contents" > two &&
+	git add two &&
+	git commit -F - <<-EOF
+	trailers: this commit message has trailers
+
+	Some message contents
+
+	$(cat trailers)
+	EOF
+'
+
+test_expect_success '%(trailers:unfold) unfolds trailers' '
+	git for-each-ref --format="%(trailers:unfold)" refs/heads/master >actual &&
+	{
+		unfold <trailers
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only) shows only "key: value" trailers' '
+	git for-each-ref --format="%(trailers:only)" refs/heads/master >actual &&
+	{
+		grep -v patch.description <trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only) and %(trailers:unfold) work together' '
+	git for-each-ref --format="%(trailers:only,unfold)" refs/heads/master >actual &&
+	git for-each-ref --format="%(trailers:unfold,only)" refs/heads/master >reverse &&
+	test_cmp actual reverse &&
+	{
+		grep -v patch.description <trailers | unfold &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(contents:trailers:unfold) unfolds trailers' '
+	git for-each-ref --format="%(contents:trailers:unfold)" refs/heads/master >actual &&
+	{
+		unfold <trailers
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(contents:trailers:only) shows only "key: value" trailers' '
+	git for-each-ref --format="%(contents:trailers:only)" refs/heads/master >actual &&
+	{
+		grep -v patch.description <trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(contents:trailers:only) and %(contents:trailers:unfold) work together' '
+	git for-each-ref --format="%(contents:trailers:only,unfold)" refs/heads/master >actual &&
+	git for-each-ref --format="%(contents:trailers:unfold,only)" refs/heads/master >reverse &&
+	test_cmp actual reverse &&
+	{
+		grep -v patch.description <trailers | unfold &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers) rejects unknown trailers arguments' '
+	# error message cannot be checked under i18n
+	cat >expect <<-EOF &&
+	fatal: unknown %(trailers) argument: unsupported
+	EOF
+	test_must_fail git for-each-ref --format="%(trailers:unsupported)" 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success '%(contents:trailers) rejects unknown trailers arguments' '
+	# error message cannot be checked under i18n
+	cat >expect <<-EOF &&
+	fatal: unknown %(trailers) argument: unsupported
+	EOF
+	test_must_fail git for-each-ref --format="%(contents:trailers:unsupported)" 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'basic atom: head contents:trailers' '
+	git for-each-ref --format="%(contents:trailers)" refs/heads/master >actual &&
+	sanitize_pgp <actual >actual.clean &&
+	# git for-each-ref ends with a blank line
+	cat >expect <<-EOF &&
+	$(cat trailers)
+
+	EOF
+	test_cmp expect actual.clean
+'
+
+test_expect_success 'trailer parsing not fooled by --- line' '
+	git commit --allow-empty -F - <<-\EOF &&
+	this is the subject
+
+	This is the body. The message has a "---" line which would confuse a
+	message+patch parser. But here we know we have only a commit message,
+	so we get it right.
+
+	trailer: wrong
+	---
+	This is more body.
+
+	trailer: right
+	EOF
+
+	{
+		echo "trailer: right" &&
+		echo
+	} >expect &&
+	git for-each-ref --format="%(trailers)" refs/heads/master >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'Add symbolic ref for the following tests' '
+	git symbolic-ref refs/heads/sym refs/heads/master
+'
+
+cat >expected <<EOF
+refs/heads/master
+EOF
+
+test_expect_success 'Verify usage of %(symref) atom' '
+	git for-each-ref --format="%(symref)" refs/heads/sym >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+heads/master
+EOF
+
+test_expect_success 'Verify usage of %(symref:short) atom' '
+	git for-each-ref --format="%(symref:short)" refs/heads/sym >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+master
+heads/master
+EOF
+
+test_expect_success 'Verify usage of %(symref:lstrip) atom' '
+	git for-each-ref --format="%(symref:lstrip=2)" refs/heads/sym > actual &&
+	git for-each-ref --format="%(symref:lstrip=-2)" refs/heads/sym >> actual &&
+	test_cmp expected actual &&
+
+	git for-each-ref --format="%(symref:strip=2)" refs/heads/sym > actual &&
+	git for-each-ref --format="%(symref:strip=-2)" refs/heads/sym >> actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+refs
+refs/heads
+EOF
+
+test_expect_success 'Verify usage of %(symref:rstrip) atom' '
+	git for-each-ref --format="%(symref:rstrip=2)" refs/heads/sym > actual &&
+	git for-each-ref --format="%(symref:rstrip=-2)" refs/heads/sym >> actual &&
+	test_cmp expected actual
+'
+
+test_expect_success ':remotename and :remoteref' '
+	git init remote-tests &&
+	(
+		cd remote-tests &&
+		test_commit initial &&
+		git remote add from fifth.coffee:blub &&
+		git config branch.master.remote from &&
+		git config branch.master.merge refs/heads/stable &&
+		git remote add to southridge.audio:repo &&
+		git config remote.to.push "refs/heads/*:refs/heads/pushed/*" &&
+		git config branch.master.pushRemote to &&
+		for pair in "%(upstream)=refs/remotes/from/stable" \
+			"%(upstream:remotename)=from" \
+			"%(upstream:remoteref)=refs/heads/stable" \
+			"%(push)=refs/remotes/to/pushed/master" \
+			"%(push:remotename)=to" \
+			"%(push:remoteref)=refs/heads/pushed/master"
+		do
+			echo "${pair#*=}" >expect &&
+			git for-each-ref --format="${pair%=*}" \
+				refs/heads/master >actual &&
+			test_cmp expect actual
+		done &&
+		git branch push-simple &&
+		git config branch.push-simple.pushRemote from &&
+		actual="$(git for-each-ref \
+			--format="%(push:remotename),%(push:remoteref)" \
+			refs/heads/push-simple)" &&
+		test from, = "$actual"
+	)
+'
+
+test_expect_success 'for-each-ref --ignore-case ignores case' '
+	git for-each-ref --format="%(refname)" refs/heads/MASTER >actual &&
+	test_must_be_empty actual &&
+
+	echo refs/heads/master >expect &&
+	git for-each-ref --format="%(refname)" --ignore-case \
+		refs/heads/MASTER >actual &&
+	test_cmp expect actual
+'
+
 test_done

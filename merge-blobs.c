@@ -4,6 +4,7 @@
 #include "ll-merge.h"
 #include "blob.h"
 #include "merge-blobs.h"
+#include "object-store.h"
 
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
@@ -11,7 +12,7 @@ static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 	unsigned long size;
 	enum object_type type;
 
-	buf = read_sha1_file(obj->object.sha1, &type, &size);
+	buf = read_object_file(&obj->object.oid, &type, &size);
 	if (!buf)
 		return -1;
 	if (type != OBJ_BLOB) {
@@ -28,7 +29,12 @@ static void free_mmfile(mmfile_t *f)
 	free(f->ptr);
 }
 
-static void *three_way_filemerge(const char *path, mmfile_t *base, mmfile_t *our, mmfile_t *their, unsigned long *size)
+static void *three_way_filemerge(struct index_state *istate,
+				 const char *path,
+				 mmfile_t *base,
+				 mmfile_t *our,
+				 mmfile_t *their,
+				 unsigned long *size)
 {
 	int merge_status;
 	mmbuffer_t res;
@@ -40,7 +46,8 @@ static void *three_way_filemerge(const char *path, mmfile_t *base, mmfile_t *our
 	 * common ancestor.
 	 */
 	merge_status = ll_merge(&res, path, base, NULL,
-				our, ".our", their, ".their", NULL);
+				our, ".our", their, ".their",
+				istate, NULL);
 	if (merge_status < 0)
 		return NULL;
 
@@ -48,41 +55,9 @@ static void *three_way_filemerge(const char *path, mmfile_t *base, mmfile_t *our
 	return res.ptr;
 }
 
-static int common_outf(void *priv_, mmbuffer_t *mb, int nbuf)
-{
-	int i;
-	mmfile_t *dst = priv_;
-
-	for (i = 0; i < nbuf; i++) {
-		memcpy(dst->ptr + dst->size, mb[i].ptr, mb[i].size);
-		dst->size += mb[i].size;
-	}
-	return 0;
-}
-
-static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
-{
-	unsigned long size = f1->size < f2->size ? f1->size : f2->size;
-	void *ptr = xmalloc(size);
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
-	xdemitcb_t ecb;
-
-	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = 0;
-	memset(&xecfg, 0, sizeof(xecfg));
-	xecfg.ctxlen = 3;
-	xecfg.flags = XDL_EMIT_COMMON;
-	ecb.outf = common_outf;
-
-	res->ptr = ptr;
-	res->size = 0;
-
-	ecb.priv = res;
-	return xdi_diff(f1, f2, &xpp, &xecfg, &ecb);
-}
-
-void *merge_blobs(const char *path, struct blob *base, struct blob *our, struct blob *their, unsigned long *size)
+void *merge_blobs(struct index_state *istate, const char *path,
+		  struct blob *base, struct blob *our,
+		  struct blob *their, unsigned long *size)
 {
 	void *res = NULL;
 	mmfile_t f1, f2, common;
@@ -100,7 +75,7 @@ void *merge_blobs(const char *path, struct blob *base, struct blob *our, struct 
 			return NULL;
 		if (!our)
 			our = their;
-		return read_sha1_file(our->object.sha1, &type, size);
+		return read_object_file(&our->object.oid, &type, size);
 	}
 
 	if (fill_mmfile_blob(&f1, our) < 0)
@@ -112,10 +87,10 @@ void *merge_blobs(const char *path, struct blob *base, struct blob *our, struct 
 		if (fill_mmfile_blob(&common, base) < 0)
 			goto out_free_f2_f1;
 	} else {
-		if (generate_common_file(&common, &f1, &f2) < 0)
-			goto out_free_f2_f1;
+		common.ptr = xstrdup("");
+		common.size = 0;
 	}
-	res = three_way_filemerge(path, &common, &f1, &f2, size);
+	res = three_way_filemerge(istate, path, &common, &f1, &f2, size);
 	free_mmfile(&common);
 out_free_f2_f1:
 	free_mmfile(&f2);

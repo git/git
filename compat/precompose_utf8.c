@@ -6,6 +6,7 @@
 #define PRECOMPOSE_UNICODE_C
 
 #include "cache.h"
+#include "config.h"
 #include "utf8.h"
 #include "precompose_utf8.h"
 
@@ -36,24 +37,27 @@ static size_t has_non_ascii(const char *s, size_t maxlen, size_t *strlen_c)
 }
 
 
-void probe_utf8_pathname_composition(char *path, int len)
+void probe_utf8_pathname_composition(void)
 {
+	struct strbuf path = STRBUF_INIT;
 	static const char *auml_nfc = "\xc3\xa4";
 	static const char *auml_nfd = "\x61\xcc\x88";
 	int output_fd;
 	if (precomposed_unicode != -1)
 		return; /* We found it defined in the global config, respect it */
-	strcpy(path + len, auml_nfc);
-	output_fd = open(path, O_CREAT|O_EXCL|O_RDWR, 0600);
+	git_path_buf(&path, "%s", auml_nfc);
+	output_fd = open(path.buf, O_CREAT|O_EXCL|O_RDWR, 0600);
 	if (output_fd >= 0) {
 		close(output_fd);
-		strcpy(path + len, auml_nfd);
-		precomposed_unicode = access(path, R_OK) ? 0 : 1;
-		git_config_set("core.precomposeunicode", precomposed_unicode ? "true" : "false");
-		strcpy(path + len, auml_nfc);
-		if (unlink(path))
-			die_errno(_("failed to unlink '%s'"), path);
+		git_path_buf(&path, "%s", auml_nfd);
+		precomposed_unicode = access(path.buf, R_OK) ? 0 : 1;
+		git_config_set("core.precomposeunicode",
+			       precomposed_unicode ? "true" : "false");
+		git_path_buf(&path, "%s", auml_nfc);
+		if (unlink(path.buf))
+			die_errno(_("failed to unlink '%s'"), path.buf);
 	}
+	strbuf_release(&path);
 }
 
 
@@ -75,7 +79,7 @@ void precompose_argv(int argc, const char **argv)
 		size_t namelen;
 		oldarg = argv[i];
 		if (has_non_ascii(oldarg, (size_t)-1, &namelen)) {
-			newarg = reencode_string_iconv(oldarg, namelen, ic_precompose, NULL);
+			newarg = reencode_string_iconv(oldarg, namelen, ic_precompose, 0, NULL);
 			if (newarg)
 				argv[i] = newarg;
 		}
@@ -139,13 +143,12 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 				size_t inleft = namelenz;
 				char *outpos = &prec_dir->dirent_nfc->d_name[0];
 				size_t outsz = prec_dir->dirent_nfc->max_name_len;
-				size_t cnt;
 				errno = 0;
-				cnt = iconv(prec_dir->ic_precompose, &cp, &inleft, &outpos, &outsz);
+				iconv(prec_dir->ic_precompose, &cp, &inleft, &outpos, &outsz);
 				if (errno || inleft) {
 					/*
 					 * iconv() failed and errno could be E2BIG, EILSEQ, EINVAL, EBADF
-					 * MacOS X avoids illegal byte sequemces.
+					 * MacOS X avoids illegal byte sequences.
 					 * If they occur on a mounted drive (e.g. NFS) it is not worth to
 					 * die() for that, but rather let the user see the original name
 					*/

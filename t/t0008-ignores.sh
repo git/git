@@ -5,7 +5,7 @@ test_description=check-ignore
 . ./test-lib.sh
 
 init_vars () {
-	global_excludes="$(pwd)/global-excludes"
+	global_excludes="global-excludes"
 }
 
 enable_global_excludes () {
@@ -34,7 +34,7 @@ expect_from_stdin () {
 test_stderr () {
 	expected="$1"
 	expect_in stderr "$1" &&
-	test_cmp "$HOME/expected-stderr" "$HOME/stderr"
+	test_i18ncmp "$HOME/expected-stderr" "$HOME/stderr"
 }
 
 broken_c_unquote () {
@@ -47,7 +47,7 @@ broken_c_unquote_verbose () {
 
 stderr_contains () {
 	regexp="$1"
-	if grep "$regexp" "$HOME/stderr"
+	if test_i18ngrep "$regexp" "$HOME/stderr"
 	then
 		return 0
 	else
@@ -307,7 +307,7 @@ test_expect_success_multi 'needs work tree' '' '
 		cd .git &&
 		test_check_ignore "foo" 128
 	) &&
-	stderr_contains "fatal: This operation must be run in a work tree"
+	stderr_contains "fatal: this operation must be run in a work tree"
 '
 
 ############################################################################
@@ -605,7 +605,7 @@ cat <<-EOF >expected-verbose
 	a/b/.gitignore:8:!on*	a/b/one
 	a/b/.gitignore:8:!on*	a/b/one one
 	a/b/.gitignore:8:!on*	a/b/one two
-	a/b/.gitignore:8:!on*	"a/b/one\"three"
+	a/b/.gitignore:8:!on*	"a/b/one\\"three"
 	a/b/.gitignore:9:!two	a/b/two
 	a/.gitignore:1:two*	a/b/twooo
 	$global_excludes:2:!globaltwo	globaltwo
@@ -686,7 +686,7 @@ cat <<-EOF >expected-all
 	a/b/.gitignore:8:!on*	b/one
 	a/b/.gitignore:8:!on*	b/one one
 	a/b/.gitignore:8:!on*	b/one two
-	a/b/.gitignore:8:!on*	"b/one\"three"
+	a/b/.gitignore:8:!on*	"b/one\\"three"
 	a/b/.gitignore:9:!two	b/two
 	::	b/not-ignored
 	a/.gitignore:1:two*	b/twooo
@@ -775,6 +775,26 @@ test_expect_success PIPE 'streaming support for --stdin' '
 	echo "$response" | grep "^::	two"
 '
 
+test_expect_success 'existing file and directory' '
+	test_when_finished "rm one" &&
+	test_when_finished "rmdir top-level-dir" &&
+	>one &&
+	mkdir top-level-dir &&
+	git check-ignore one top-level-dir >actual &&
+	grep one actual &&
+	grep top-level-dir actual
+'
+
+test_expect_success 'existing directory and file' '
+	test_when_finished "rm one" &&
+	test_when_finished "rmdir top-level-dir" &&
+	>one &&
+	mkdir top-level-dir &&
+	git check-ignore top-level-dir one >actual &&
+	grep one actual &&
+	grep top-level-dir actual
+'
+
 ############################################################################
 #
 # test whitespace handling
@@ -787,10 +807,9 @@ test_expect_success 'trailing whitespace is ignored' '
 	cat >expect <<EOF &&
 whitespace/untracked
 EOF
-	: >err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success !MINGW 'quoting allows trailing whitespace' '
@@ -800,10 +819,9 @@ test_expect_success !MINGW 'quoting allows trailing whitespace' '
 	>whitespace/untracked &&
 	echo "whitespace/trailing\\ \\ " >ignore &&
 	echo whitespace/untracked >expect &&
-	: >err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
@@ -825,10 +843,9 @@ test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
 	whitespace/trailing 6 \\a\\Z
 	EOF
 	echo whitespace/untracked >expect &&
-	>err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
-	test_cmp err.expect err
+	test_must_be_empty err
 '
 
 test_expect_success 'info/exclude trumps core.excludesfile' '

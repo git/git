@@ -51,6 +51,11 @@ test_expect_success setup '
 	git clone one test
 '
 
+test_expect_success 'add remote whose URL agrees with url.<...>.insteadOf' '
+	test_config url.git@host.com:team/repo.git.insteadOf myremote &&
+	git remote add myremote git@host.com:team/repo.git
+'
+
 test_expect_success C_LOCALE_OUTPUT 'remote information for the origin' '
 	(
 		cd test &&
@@ -69,8 +74,7 @@ test_expect_success 'add another remote' '
 		git for-each-ref "--format=%(refname)" refs/remotes |
 		sed -e "/^refs\/remotes\/origin\//d" \
 		    -e "/^refs\/remotes\/second\//d" >actual &&
-		>expect &&
-		test_cmp expect actual
+		test_must_be_empty actual
 	)
 '
 
@@ -85,7 +89,7 @@ test_expect_success C_LOCALE_OUTPUT 'check remote-tracking' '
 test_expect_success 'remote forces tracking branches' '
 	(
 		cd test &&
-		case `git config remote.second.fetch` in
+		case $(git config remote.second.fetch) in
 		+*) true ;;
 		 *) false ;;
 		esac
@@ -107,8 +111,7 @@ test_expect_success C_LOCALE_OUTPUT 'remove remote' '
 		check_remote_track origin master side &&
 		git for-each-ref "--format=%(refname)" refs/remotes |
 		sed -e "/^refs\/remotes\/origin\//d" >actual &&
-		>expect &&
-		test_cmp expect actual
+		test_must_be_empty actual
 	)
 '
 
@@ -137,6 +140,58 @@ test_expect_success 'remove remote protects local branches' '
 		test_i18ncmp expect1 actual1 &&
 		test_i18ncmp expect2 actual2
 	)
+'
+
+test_expect_success 'remove errors out early when deleting non-existent branch' '
+	(
+		cd test &&
+		echo "fatal: No such remote: '\''foo'\''" >expect &&
+		test_must_fail git remote rm foo 2>actual &&
+		test_i18ncmp expect actual
+	)
+'
+
+test_expect_success 'remove remote with a branch without configured merge' '
+	test_when_finished "(
+		git -C test checkout master;
+		git -C test branch -D two;
+		git -C test config --remove-section remote.two;
+		git -C test config --remove-section branch.second;
+		true
+	)" &&
+	(
+		cd test &&
+		git remote add two ../two &&
+		git fetch two &&
+		git checkout -b second two/master^0 &&
+		git config branch.second.remote two &&
+		git checkout master &&
+		git remote rm two
+	)
+'
+
+test_expect_success 'rename errors out early when deleting non-existent branch' '
+	(
+		cd test &&
+		echo "fatal: No such remote: '\''foo'\''" >expect &&
+		test_must_fail git remote rename foo bar 2>actual &&
+		test_i18ncmp expect actual
+	)
+'
+
+test_expect_success 'add existing foreign_vcs remote' '
+	test_config remote.foo.vcs bar &&
+	echo "fatal: remote foo already exists." >expect &&
+	test_must_fail git remote add foo bar 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'add existing foreign_vcs remote' '
+	test_config remote.foo.vcs bar &&
+	test_config remote.bar.vcs bar &&
+	echo "fatal: remote bar already exists." >expect &&
+	test_must_fail git remote rename foo bar 2>actual &&
+	test_i18ncmp expect actual
 '
 
 cat >test/expect <<EOF
@@ -291,17 +346,13 @@ URL: $(pwd)/one
 EOF
 
 test_expect_success 'prune --dry-run' '
-	(
-		cd one &&
-		git branch -m side2 side) &&
+	git -C one branch -m side2 side &&
+	test_when_finished "git -C one branch -m side side2" &&
 	(
 		cd test &&
 		git remote prune --dry-run origin >output &&
 		git rev-parse refs/remotes/origin/side2 &&
 		test_must_fail git rev-parse refs/remotes/origin/side &&
-	(
-		cd ../one &&
-		git branch -m side side2) &&
 		test_i18ncmp expect output
 	)
 '
@@ -687,7 +738,7 @@ test_expect_success 'rename a remote' '
 	(
 		cd four &&
 		git remote rename origin upstream &&
-		rmdir .git/refs/remotes/origin &&
+		test -z "$(git for-each-ref refs/remotes/origin)" &&
 		test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/master" &&
 		test "$(git rev-parse upstream/master)" = "$(git rev-parse master)" &&
 		test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/remotes/upstream/*" &&
@@ -724,6 +775,13 @@ test_expect_success 'rename a remote with name prefix of other remote' '
 		git remote rename o upstream &&
 		test "$(git rev-parse origin/master)" = "$(git rev-parse master)"
 	)
+'
+
+test_expect_success 'rename succeeds with existing remote.<target>.prune' '
+	git clone one four.four &&
+	test_when_finished git config --global --unset remote.upstream.prune &&
+	git config --global remote.upstream.prune true &&
+	git -C four.four remote rename origin upstream
 '
 
 cat >remotes_origin <<EOF
@@ -784,7 +842,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches (2)' 
 		git remote rename origin origin &&
 		test_path_is_missing .git/branches/origin &&
 		test "$(git config remote.origin.url)" = "quux" &&
-		test "$(git config remote.origin.fetch)" = "refs/heads/foom:refs/heads/origin"
+		test "$(git config remote.origin.fetch)" = "refs/heads/foom:refs/heads/origin" &&
 		test "$(git config remote.origin.push)" = "HEAD:refs/heads/foom"
 	)
 '
@@ -812,7 +870,7 @@ test_expect_success 'remote prune to cause a dangling symref' '
 		cd eight &&
 		test_must_fail git branch nomore origin
 	) 2>err &&
-	grep "dangling symref" err
+	test_i18ngrep "dangling symref" err
 '
 
 test_expect_success 'show empty remote' '
@@ -919,6 +977,28 @@ test_expect_success 'new remote' '
 	cmp expect actual
 '
 
+get_url_test () {
+	cat >expect &&
+	git remote get-url "$@" >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'get-url on new remote' '
+	echo foo | get_url_test someremote &&
+	echo foo | get_url_test --all someremote &&
+	echo foo | get_url_test --push someremote &&
+	echo foo | get_url_test --push --all someremote
+'
+
+test_expect_success 'remote set-url with locked config' '
+	test_when_finished "rm -f .git/config.lock" &&
+	git config --get-all remote.someremote.url >expect &&
+	>.git/config.lock &&
+	test_must_fail git remote set-url someremote baz &&
+	git config --get-all remote.someremote.url >actual &&
+	cmp expect actual
+'
+
 test_expect_success 'remote set-url bar' '
 	git remote set-url someremote bar &&
 	echo bar >expect &&
@@ -961,6 +1041,13 @@ test_expect_success 'remote set-url --push zot' '
 	cmp expect actual
 '
 
+test_expect_success 'get-url with different urls' '
+	echo baz | get_url_test someremote &&
+	echo baz | get_url_test --all someremote &&
+	echo zot | get_url_test --push someremote &&
+	echo zot | get_url_test --push --all someremote
+'
+
 test_expect_success 'remote set-url --push qux zot' '
 	git remote set-url --push someremote qux zot &&
 	echo qux >expect &&
@@ -993,6 +1080,14 @@ test_expect_success 'remote set-url --push --add aaa' '
 	echo "YYY" >>actual &&
 	git config --get-all remote.someremote.url >>actual &&
 	cmp expect actual
+'
+
+test_expect_success 'get-url on multi push remote' '
+	echo foo | get_url_test --push someremote &&
+	get_url_test --push --all someremote <<-\EOF
+	foo
+	aaa
+	EOF
 '
 
 test_expect_success 'remote set-url --push bar aaa' '
@@ -1037,6 +1132,14 @@ test_expect_success 'remote set-url --add bbb' '
 	echo "YYY" >>actual &&
 	git config --get-all remote.someremote.url >>actual &&
 	cmp expect actual
+'
+
+test_expect_success 'get-url on multi fetch remote' '
+	echo baz | get_url_test someremote &&
+	get_url_test --all someremote <<-\EOF
+	baz
+	bbb
+	EOF
 '
 
 test_expect_success 'remote set-url --delete .*' '
@@ -1099,7 +1202,7 @@ test_expect_success 'extra args: setup' '
 test_extra_arg () {
 	test_expect_success "extra args: $*" "
 		test_must_fail git remote $* bogus_extra_arg 2>actual &&
-		grep '^usage:' actual
+		test_i18ngrep '^usage:' actual
 	"
 }
 
@@ -1108,6 +1211,7 @@ test_extra_arg rename origin newname
 test_extra_arg remove origin
 test_extra_arg set-head origin master
 # set-branches takes any number of args
+test_extra_arg get-url origin newurl
 test_extra_arg set-url origin newurl oldurl
 # show takes any number of args
 # prune takes any number of args
@@ -1116,6 +1220,61 @@ test_extra_arg set-url origin newurl oldurl
 test_expect_success 'add remote matching the "insteadOf" URL' '
 	git config url.xyz@example.com.insteadOf backup &&
 	git remote add backup xyz@example.com
+'
+
+test_expect_success 'unqualified <dst> refspec DWIM and advice' '
+	test_when_finished "(cd test && git tag -d some-tag)" &&
+	(
+		cd test &&
+		git tag -a -m "Some tag" some-tag master &&
+		exit_with=true &&
+		for type in commit tag tree blob
+		do
+			if test "$type" = "blob"
+			then
+				oid=$(git rev-parse some-tag:file)
+			else
+				oid=$(git rev-parse some-tag^{$type})
+			fi &&
+			test_must_fail git push origin $oid:dst 2>err &&
+			test_i18ngrep "error: The destination you" err &&
+			test_i18ngrep "hint: Did you mean" err &&
+			test_must_fail git -c advice.pushUnqualifiedRefName=false \
+				push origin $oid:dst 2>err &&
+			test_i18ngrep "error: The destination you" err &&
+			test_i18ngrep ! "hint: Did you mean" err ||
+			exit_with=false
+		done &&
+		$exit_with
+	)
+'
+
+test_expect_success 'refs/remotes/* <src> refspec and unqualified <dst> DWIM and advice' '
+	(
+		cd two &&
+		git tag -a -m "Some tag" my-tag master &&
+		git update-ref refs/trees/my-head-tree HEAD^{tree} &&
+		git update-ref refs/blobs/my-file-blob HEAD:file
+	) &&
+	(
+		cd test &&
+		git config --add remote.two.fetch "+refs/tags/*:refs/remotes/tags-from-two/*" &&
+		git config --add remote.two.fetch "+refs/trees/*:refs/remotes/trees-from-two/*" &&
+		git config --add remote.two.fetch "+refs/blobs/*:refs/remotes/blobs-from-two/*" &&
+		git fetch --no-tags two &&
+
+		test_must_fail git push origin refs/remotes/two/another:dst 2>err &&
+		test_i18ngrep "error: The destination you" err &&
+
+		test_must_fail git push origin refs/remotes/tags-from-two/my-tag:dst-tag 2>err &&
+		test_i18ngrep "error: The destination you" err &&
+
+		test_must_fail git push origin refs/remotes/trees-from-two/my-head-tree:dst-tree 2>err &&
+		test_i18ngrep "error: The destination you" err &&
+
+		test_must_fail git push origin refs/remotes/blobs-from-two/my-file-blob:dst-blob 2>err &&
+		test_i18ngrep "error: The destination you" err
+	)
 '
 
 test_done

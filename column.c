@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "column.h"
 #include "string-list.h"
 #include "parse-options.h"
@@ -20,20 +21,9 @@ struct column_data {
 };
 
 /* return length of 's' in letters, ANSI escapes stripped */
-static int item_length(unsigned int colopts, const char *s)
+static int item_length(const char *s)
 {
-	int len, i = 0;
-	struct strbuf str = STRBUF_INIT;
-
-	strbuf_addstr(&str, s);
-	while ((s = strstr(str.buf + i, "\033[")) != NULL) {
-		int len = strspn(s + 2, "0123456789;");
-		i = s - str.buf;
-		strbuf_remove(&str, i, len + 3); /* \033[<len><func char> */
-	}
-	len = utf8_strwidth(str.buf);
-	strbuf_release(&str);
-	return len;
+	return utf8_strnwidth(s, -1, 1);
 }
 
 /*
@@ -164,18 +154,17 @@ static void display_table(const struct string_list *list,
 	data.colopts = colopts;
 	data.opts = *opts;
 
-	data.len = xmalloc(sizeof(*data.len) * list->nr);
+	ALLOC_ARRAY(data.len, list->nr);
 	for (i = 0; i < list->nr; i++)
-		data.len[i] = item_length(colopts, list->items[i].string);
+		data.len[i] = item_length(list->items[i].string);
 
 	layout(&data, &initial_width);
 
 	if (colopts & COL_DENSE)
 		shrink_columns(&data);
 
-	empty_cell = xmalloc(initial_width + 1);
+	empty_cell = xmallocz(initial_width);
 	memset(empty_cell, ' ', initial_width);
-	empty_cell[initial_width] = '\0';
 	for (y = 0; y < data.rows; y++) {
 		for (x = 0; x < data.cols; x++)
 			if (display_cell(&data, initial_width, empty_cell, x, y))
@@ -214,7 +203,7 @@ void print_columns(const struct string_list *list, unsigned int colopts,
 		display_table(list, colopts, &nopts);
 		break;
 	default:
-		die("BUG: invalid layout mode %d", COL_LAYOUT(colopts));
+		BUG("invalid layout mode %d", COL_LAYOUT(colopts));
 	}
 }
 
@@ -224,7 +213,7 @@ int finalize_colopts(unsigned int *colopts, int stdout_is_tty)
 		if (stdout_is_tty < 0)
 			stdout_is_tty = isatty(1);
 		*colopts &= ~COL_ENABLE_MASK;
-		if (stdout_is_tty)
+		if (stdout_is_tty || pager_in_use())
 			*colopts |= COL_ENABLED;
 	}
 	return 0;

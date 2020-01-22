@@ -9,6 +9,7 @@ cat >expected <<\EOF
 ?? actual
 ?? expected
 ?? untracked/
+!! untracked/ignored
 EOF
 
 test_expect_success 'status untracked directory with --ignored' '
@@ -42,11 +43,16 @@ test_expect_success 'status untracked directory with --ignored -u' '
 	test_cmp expected actual
 '
 cat >expected <<\EOF
-?? untracked/uncommitted
+?? untracked/
 !! untracked/ignored
 EOF
 
-test_expect_success 'status prefixed untracked directory with --ignored' '
+test_expect_success 'status of untracked directory with --ignored works with or without prefix' '
+	git status --porcelain --ignored >tmp &&
+	grep untracked/ tmp >actual &&
+	rm tmp &&
+	test_cmp expected actual &&
+
 	git status --porcelain --ignored untracked/ >actual &&
 	test_cmp expected actual
 '
@@ -268,6 +274,17 @@ EOF
 
 test_expect_success 'status ignored tracked directory with uncommitted file in tracked subdir with --ignore -u' '
 	git status --porcelain --ignored -u >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+!! tracked/submodule/
+EOF
+
+test_expect_success 'status ignores submodule in excluded directory' '
+	git init tracked/submodule &&
+	test_commit -C tracked/submodule initial &&
+	git status --porcelain --ignored -u tracked/submodule >actual &&
 	test_cmp expected actual
 '
 

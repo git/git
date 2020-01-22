@@ -13,6 +13,8 @@ test_expect_success setup '
 
 	test_tick &&
 	echo second >file &&
+	before=$(git hash-object file) &&
+	before=$(git rev-parse --short $before) &&
 	git add file &&
 	git commit -m second &&
 
@@ -26,7 +28,7 @@ test_expect_success 'GIT_EXTERNAL_DIFF environment' '
 		read path oldfile oldhex oldmode newfile newhex newmode &&
 		test "z$path" = zfile &&
 		test "z$oldmode" = z100644 &&
-		test "z$newhex" = "z$_z40" &&
+		test "z$newhex" = "z$ZERO_OID" &&
 		test "z$newmode" = z100644 &&
 		oh=$(git rev-parse --verify HEAD:file) &&
 		test "z$oh" = "z$oldhex"
@@ -55,7 +57,7 @@ test_expect_success SYMLINKS 'typechange diff' '
 		read path oldfile oldhex oldmode newfile newhex newmode &&
 		test "z$path" = zfile &&
 		test "z$oldmode" = z100644 &&
-		test "z$newhex" = "z$_z40" &&
+		test "z$newhex" = "z$ZERO_OID" &&
 		test "z$newmode" = z120000 &&
 		oh=$(git rev-parse --verify HEAD:file) &&
 		test "z$oh" = "z$oldhex"
@@ -73,7 +75,7 @@ test_expect_success 'diff.external' '
 		read path oldfile oldhex oldmode newfile newhex newmode &&
 		test "z$path" = zfile &&
 		test "z$oldmode" = z100644 &&
-		test "z$newhex" = "z$_z40" &&
+		test "z$newhex" = "z$ZERO_OID" &&
 		test "z$newmode" = z100644 &&
 		oh=$(git rev-parse --verify HEAD:file) &&
 		test "z$oh" = "z$oldhex"
@@ -104,7 +106,7 @@ test_expect_success 'diff attribute' '
 		read path oldfile oldhex oldmode newfile newhex newmode &&
 		test "z$path" = zfile &&
 		test "z$oldmode" = z100644 &&
-		test "z$newhex" = "z$_z40" &&
+		test "z$newhex" = "z$ZERO_OID" &&
 		test "z$newmode" = z100644 &&
 		oh=$(git rev-parse --verify HEAD:file) &&
 		test "z$oh" = "z$oldhex"
@@ -137,7 +139,7 @@ test_expect_success 'diff attribute' '
 		read path oldfile oldhex oldmode newfile newhex newmode &&
 		test "z$path" = zfile &&
 		test "z$oldmode" = z100644 &&
-		test "z$newhex" = "z$_z40" &&
+		test "z$newhex" = "z$ZERO_OID" &&
 		test "z$newmode" = z100644 &&
 		oh=$(git rev-parse --verify HEAD:file) &&
 		test "z$oh" = "z$oldhex"
@@ -180,9 +182,13 @@ test_expect_success 'no diff with -diff' '
 echo NULZbetweenZwords | perl -pe 'y/Z/\000/' > file
 
 test_expect_success 'force diff with "diff"' '
+	after=$(git hash-object file) &&
+	after=$(git rev-parse --short $after) &&
 	echo >.gitattributes "file diff" &&
 	git diff >actual &&
-	test_cmp "$TEST_DIRECTORY"/t4020/diff.NUL actual
+	sed -e "s/^index .*/index $before..$after 100644/" \
+		"$TEST_DIRECTORY"/t4020/diff.NUL >expected-diff &&
+	test_cmp expected-diff actual
 '
 
 test_expect_success 'GIT_EXTERNAL_DIFF with more than one changed files' '
@@ -237,7 +243,7 @@ test_expect_success 'diff --cached' '
 	git update-index --assume-unchanged file &&
 	echo second >file &&
 	git diff --cached >actual &&
-	test_cmp "$TEST_DIRECTORY"/t4020/diff.NUL actual
+	test_cmp expected-diff actual
 '
 
 test_expect_success 'clean up crlf leftovers' '

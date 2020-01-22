@@ -27,9 +27,9 @@ test_bisection_diff()
 	# Test if bisection size is close to half of list size within
 	# tolerance.
 	#
-	_bisect_err=`expr $_list_size - $_bisection_size \* 2`
-	test "$_bisect_err" -lt 0 && _bisect_err=`expr 0 - $_bisect_err`
-	_bisect_err=`expr $_bisect_err / 2` ; # floor
+	_bisect_err=$(expr $_list_size - $_bisection_size \* 2)
+	test "$_bisect_err" -lt 0 && _bisect_err=$(expr 0 - $_bisect_err)
+	_bisect_err=$(expr $_bisect_err / 2) ; # floor
 
 	test_expect_success \
 	"bisection diff $_bisect_option $_head $* <= $_max_diff" \
@@ -235,4 +235,32 @@ test_sequence "--bisect"
 
 #
 #
+
+test_expect_success 'set up fake --bisect refs' '
+	git update-ref refs/bisect/bad c3 &&
+	good=$(git rev-parse b1) &&
+	git update-ref refs/bisect/good-$good $good &&
+	good=$(git rev-parse c1) &&
+	git update-ref refs/bisect/good-$good $good
+'
+
+test_expect_success 'rev-list --bisect can default to good/bad refs' '
+	# the only thing between c3 and c1 is c2
+	git rev-parse c2 >expect &&
+	git rev-list --bisect >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --bisect can default to good/bad refs' '
+	git rev-parse c3 ^b1 ^c1 >expect &&
+	git rev-parse --bisect >actual &&
+
+	# output order depends on the refnames, which in turn depends on
+	# the exact sha1s. We just want to make sure we have the same set
+	# of lines in any order.
+	sort <expect >expect.sorted &&
+	sort <actual >actual.sorted &&
+	test_cmp expect.sorted actual.sorted
+'
+
 test_done

@@ -2,6 +2,7 @@ package Git::Mediawiki;
 
 use 5.008;
 use strict;
+use POSIX;
 use Git;
 
 BEGIN {
@@ -52,7 +53,7 @@ sub smudge_filename {
 	$filename =~ s/ /_/g;
 	# Decode forbidden characters encoded in clean_filename
 	$filename =~ s/_%_([0-9a-fA-F][0-9a-fA-F])/sprintf('%c', hex($1))/ge;
-	return $filename;
+	return substr($filename, 0, NAME_MAX-length('.mw'));
 }
 
 sub connect_maybe {

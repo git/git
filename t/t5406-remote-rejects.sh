@@ -6,8 +6,9 @@ test_description='remote push rejects are reported by client'
 
 test_expect_success 'setup' '
 	mkdir .git/hooks &&
-	(echo "#!/bin/sh" ; echo "exit 1") >.git/hooks/update &&
-	chmod +x .git/hooks/update &&
+	write_script .git/hooks/update <<-\EOF &&
+	exit 1
+	EOF
 	echo 1 >file &&
 	git add file &&
 	git commit -m 1 &&

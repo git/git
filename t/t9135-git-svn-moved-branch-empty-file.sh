@@ -13,8 +13,7 @@ test_expect_success 'test that b1 exists and is empty' '
 	(
 		cd x &&
 		git reset --hard origin/branch-c &&
-		test -f b1 &&
-		! test -s b1
+		test_must_be_empty b1
 	)
 	'
 

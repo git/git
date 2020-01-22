@@ -1,15 +1,15 @@
 # Bulgarian translation of git-gui po-file.
-# Copyright (C) 2012, 2013, 2014, 2015 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2012, 2013, 2014, 2015, 2016 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015.
+# Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015, 2016.
 #
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: git-gui master\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-07 07:37+0300\n"
-"PO-Revision-Date: 2015-04-07 07:46+0300\n"
+"POT-Creation-Date: 2016-10-13 15:16+0300\n"
+"PO-Revision-Date: 2016-10-13 15:16+0300\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -18,33 +18,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: git-gui.sh:861
+#: git-gui.sh:865
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr "Указан е неправилен шрифт в „%s“:"
 
-#: git-gui.sh:915
+#: git-gui.sh:919
 msgid "Main Font"
 msgstr "Основен шрифт"
 
-#: git-gui.sh:916
+#: git-gui.sh:920
 msgid "Diff/Console Font"
 msgstr "Шрифт за разликите/конзолата"
 
-#: git-gui.sh:931 git-gui.sh:945 git-gui.sh:958 git-gui.sh:1048
-#: git-gui.sh:1067 git-gui.sh:3125
+#: git-gui.sh:935 git-gui.sh:949 git-gui.sh:962 git-gui.sh:1052 git-gui.sh:1071
+#: git-gui.sh:3147
 msgid "git-gui: fatal error"
 msgstr "git-gui: фатална грешка"
 
-#: git-gui.sh:932
+#: git-gui.sh:936
 msgid "Cannot find git in PATH."
 msgstr "Командата git липсва в пътя (PATH)."
 
-#: git-gui.sh:959
+#: git-gui.sh:963
 msgid "Cannot parse Git version string:"
 msgstr "Низът с версията на Git не може да бъде интерпретиран:"
 
-#: git-gui.sh:984
+#: git-gui.sh:988
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -63,503 +63,506 @@ msgstr ""
 "\n"
 "Да се приеме ли, че „%s“ е версия „1.5.0“?\n"
 
-#: git-gui.sh:1281
+#: git-gui.sh:1285
 msgid "Git directory not found:"
 msgstr "Директорията на Git не е открита:"
 
-#: git-gui.sh:1315
+#: git-gui.sh:1319
 msgid "Cannot move to top of working directory:"
 msgstr "Не може да се премине към родителската  директория."
 
-#: git-gui.sh:1323
+#: git-gui.sh:1327
 msgid "Cannot use bare repository:"
 msgstr "Голо хранилище не може да се използва:"
 
-#: git-gui.sh:1331
+#: git-gui.sh:1335
 msgid "No working directory"
 msgstr "Работната директория липсва"
 
-#: git-gui.sh:1503 lib/checkout_op.tcl:306
+#: git-gui.sh:1507 lib/checkout_op.tcl:306
 msgid "Refreshing file status..."
 msgstr "Обновяване на състоянието на файла…"
 
-#: git-gui.sh:1563
+#: git-gui.sh:1567
 msgid "Scanning for modified files ..."
 msgstr "Проверка за променени файлове…"
 
-#: git-gui.sh:1639
+#: git-gui.sh:1645
 msgid "Calling prepare-commit-msg hook..."
 msgstr "Куката „prepare-commit-msg“ се изпълнява в момента…"
 
-#: git-gui.sh:1656
+#: git-gui.sh:1662
 msgid "Commit declined by prepare-commit-msg hook."
 msgstr "Подаването е отхвърлено от куката „prepare-commit-msg“."
 
-#: git-gui.sh:1814 lib/browser.tcl:252
+#: git-gui.sh:1820 lib/browser.tcl:252
 msgid "Ready."
 msgstr "Готово."
 
-#: git-gui.sh:1978
+#: git-gui.sh:1984
 #, tcl-format
 msgid ""
 "Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files."
 msgstr ""
-"Достигнат е максималният брой файлове за показване (gui.maxfilesdisplayed = "
-"%s). Файловете са общо %s."
+"Достигнат е максималният размер на списъка за извеждане(gui."
+"maxfilesdisplayed = %s), съответно не са показани всички %s файла."
 
-#: git-gui.sh:2101
+#: git-gui.sh:2107
 msgid "Unmodified"
 msgstr "Непроменен"
 
-#: git-gui.sh:2103
+#: git-gui.sh:2109
 msgid "Modified, not staged"
 msgstr "Променен, но не е в индекса"
 
-#: git-gui.sh:2104 git-gui.sh:2116
+#: git-gui.sh:2110 git-gui.sh:2122
 msgid "Staged for commit"
 msgstr "В индекса за подаване"
 
-#: git-gui.sh:2105 git-gui.sh:2117
+#: git-gui.sh:2111 git-gui.sh:2123
 msgid "Portions staged for commit"
 msgstr "Части са в индекса за подаване"
 
-#: git-gui.sh:2106 git-gui.sh:2118
+#: git-gui.sh:2112 git-gui.sh:2124
 msgid "Staged for commit, missing"
 msgstr "В индекса за подаване, но липсва"
 
-#: git-gui.sh:2108
+#: git-gui.sh:2114
 msgid "File type changed, not staged"
 msgstr "Видът на файла е сменен, но не е в индекса"
 
-#: git-gui.sh:2109 git-gui.sh:2110
+#: git-gui.sh:2115 git-gui.sh:2116
 msgid "File type changed, old type staged for commit"
-msgstr "Видът на файла е сменен, но в индекса е все още старият"
+msgstr "Видът на файла е сменен, но новият вид не е в индекса"
 
-#: git-gui.sh:2111
+#: git-gui.sh:2117
 msgid "File type changed, staged"
 msgstr "Видът на файла е сменен и е в индекса"
 
-#: git-gui.sh:2112
+#: git-gui.sh:2118
 msgid "File type change staged, modification not staged"
-msgstr "Видът на файла е сменен, но промяната не е в индекса"
+msgstr "Видът на файла е сменен в индекса, но не и съдържанието"
 
-#: git-gui.sh:2113
+#: git-gui.sh:2119
 msgid "File type change staged, file missing"
-msgstr "Видът на файла е сменен, файлът липсва"
+msgstr "Видът на файла е сменен в индекса, но файлът липсва"
 
-#: git-gui.sh:2115
+#: git-gui.sh:2121
 msgid "Untracked, not staged"
 msgstr "Неследен"
 
-#: git-gui.sh:2120
+#: git-gui.sh:2126
 msgid "Missing"
 msgstr "Липсващ"
 
-#: git-gui.sh:2121
+#: git-gui.sh:2127
 msgid "Staged for removal"
 msgstr "В индекса за изтриване"
 
-#: git-gui.sh:2122
+#: git-gui.sh:2128
 msgid "Staged for removal, still present"
 msgstr "В индекса за изтриване, но още го има"
 
-#: git-gui.sh:2124 git-gui.sh:2125 git-gui.sh:2126 git-gui.sh:2127
-#: git-gui.sh:2128 git-gui.sh:2129
+#: git-gui.sh:2130 git-gui.sh:2131 git-gui.sh:2132 git-gui.sh:2133
+#: git-gui.sh:2134 git-gui.sh:2135
 msgid "Requires merge resolution"
 msgstr "Изисква коригиране при сливане"
 
-#: git-gui.sh:2164
+#: git-gui.sh:2170
 msgid "Starting gitk... please wait..."
 msgstr "Стартиране на „gitk“…, изчакайте…"
 
-#: git-gui.sh:2176
+#: git-gui.sh:2182
 msgid "Couldn't find gitk in PATH"
 msgstr "Командата „gitk“ липсва в пътищата, определени от променливата PATH."
 
-#: git-gui.sh:2235
+#: git-gui.sh:2241
 msgid "Couldn't find git gui in PATH"
 msgstr ""
 "Командата „git gui“ липсва в пътищата, определени от променливата PATH."
 
-#: git-gui.sh:2654 lib/choose_repository.tcl:41
+#: git-gui.sh:2676 lib/choose_repository.tcl:41
 msgid "Repository"
 msgstr "Хранилище"
 
-#: git-gui.sh:2655
+#: git-gui.sh:2677
 msgid "Edit"
 msgstr "Редактиране"
 
-#: git-gui.sh:2657 lib/choose_rev.tcl:567
+#: git-gui.sh:2679 lib/choose_rev.tcl:567
 msgid "Branch"
 msgstr "Клон"
 
-#: git-gui.sh:2660 lib/choose_rev.tcl:554
+#: git-gui.sh:2682 lib/choose_rev.tcl:554
 msgid "Commit@@noun"
 msgstr "Подаване"
 
-#: git-gui.sh:2663 lib/merge.tcl:123 lib/merge.tcl:152 lib/merge.tcl:170
+#: git-gui.sh:2685 lib/merge.tcl:127 lib/merge.tcl:174
 msgid "Merge"
 msgstr "Сливане"
 
-#: git-gui.sh:2664 lib/choose_rev.tcl:563
+#: git-gui.sh:2686 lib/choose_rev.tcl:563
 msgid "Remote"
 msgstr "Отдалечено хранилище"
 
-#: git-gui.sh:2667
+#: git-gui.sh:2689
 msgid "Tools"
 msgstr "Команди"
 
-#: git-gui.sh:2676
+#: git-gui.sh:2698
 msgid "Explore Working Copy"
 msgstr "Разглеждане на работното копие"
 
-#: git-gui.sh:2682
+#: git-gui.sh:2704
 msgid "Git Bash"
 msgstr "Bash за Git"
 
-#: git-gui.sh:2692
+#: git-gui.sh:2714
 msgid "Browse Current Branch's Files"
 msgstr "Разглеждане на файловете в текущия клон"
 
-#: git-gui.sh:2696
+#: git-gui.sh:2718
 msgid "Browse Branch Files..."
 msgstr "Разглеждане на текущия клон…"
 
-#: git-gui.sh:2701
+#: git-gui.sh:2723
 msgid "Visualize Current Branch's History"
 msgstr "Визуализация на историята на текущия клон"
 
-#: git-gui.sh:2705
+#: git-gui.sh:2727
 msgid "Visualize All Branch History"
 msgstr "Визуализация на историята на всички клонове"
 
-#: git-gui.sh:2712
+#: git-gui.sh:2734
 #, tcl-format
 msgid "Browse %s's Files"
-msgstr "Разглеждане на файловете в %s"
+msgstr "Разглеждане на файловете в „%s“"
 
-#: git-gui.sh:2714
+#: git-gui.sh:2736
 #, tcl-format
 msgid "Visualize %s's History"
-msgstr "Визуализация на историята на %s"
+msgstr "Визуализация на историята на „%s“"
 
-#: git-gui.sh:2719 lib/database.tcl:40 lib/database.tcl:66
+#: git-gui.sh:2741 lib/database.tcl:40
 msgid "Database Statistics"
 msgstr "Статистика на базата от данни"
 
-#: git-gui.sh:2722 lib/database.tcl:33
+#: git-gui.sh:2744 lib/database.tcl:33
 msgid "Compress Database"
 msgstr "Компресиране на базата от данни"
 
-#: git-gui.sh:2725
+#: git-gui.sh:2747
 msgid "Verify Database"
 msgstr "Проверка на базата от данни"
 
-#: git-gui.sh:2732 git-gui.sh:2736 git-gui.sh:2740 lib/shortcut.tcl:8
-#: lib/shortcut.tcl:40 lib/shortcut.tcl:72
+#: git-gui.sh:2754 git-gui.sh:2758 git-gui.sh:2762
 msgid "Create Desktop Icon"
 msgstr "Добавяне на икона на работния плот"
 
-#: git-gui.sh:2748 lib/choose_repository.tcl:193 lib/choose_repository.tcl:201
+#: git-gui.sh:2770 lib/choose_repository.tcl:193 lib/choose_repository.tcl:201
 msgid "Quit"
 msgstr "Спиране на програмата"
 
-#: git-gui.sh:2756
+#: git-gui.sh:2778
 msgid "Undo"
 msgstr "Отмяна"
 
-#: git-gui.sh:2759
+#: git-gui.sh:2781
 msgid "Redo"
 msgstr "Повторение"
 
-#: git-gui.sh:2763 git-gui.sh:3368
+#: git-gui.sh:2785 git-gui.sh:3399
 msgid "Cut"
 msgstr "Отрязване"
 
-#: git-gui.sh:2766 git-gui.sh:3371 git-gui.sh:3445 git-gui.sh:3530
+#: git-gui.sh:2788 git-gui.sh:3402 git-gui.sh:3476 git-gui.sh:3562
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Копиране"
 
-#: git-gui.sh:2769 git-gui.sh:3374
+#: git-gui.sh:2791 git-gui.sh:3405
 msgid "Paste"
 msgstr "Поставяне"
 
-#: git-gui.sh:2772 git-gui.sh:3377 lib/remote_branch_delete.tcl:39
-#: lib/branch_delete.tcl:28
+#: git-gui.sh:2794 git-gui.sh:3408 lib/branch_delete.tcl:28
+#: lib/remote_branch_delete.tcl:39
 msgid "Delete"
 msgstr "Изтриване"
 
-#: git-gui.sh:2776 git-gui.sh:3381 git-gui.sh:3534 lib/console.tcl:71
+#: git-gui.sh:2798 git-gui.sh:3412 git-gui.sh:3566 lib/console.tcl:71
 msgid "Select All"
 msgstr "Избиране на всичко"
 
-#: git-gui.sh:2785
+#: git-gui.sh:2807
 msgid "Create..."
 msgstr "Създаване…"
 
-#: git-gui.sh:2791
+#: git-gui.sh:2813
 msgid "Checkout..."
 msgstr "Изтегляне…"
 
-#: git-gui.sh:2797
+#: git-gui.sh:2819
 msgid "Rename..."
 msgstr "Преименуване…"
 
-#: git-gui.sh:2802
+#: git-gui.sh:2824
 msgid "Delete..."
 msgstr "Изтриване…"
 
-#: git-gui.sh:2807
+#: git-gui.sh:2829
 msgid "Reset..."
 msgstr "Отмяна на промените…"
 
-#: git-gui.sh:2817
+#: git-gui.sh:2839
 msgid "Done"
 msgstr "Готово"
 
-#: git-gui.sh:2819
+#: git-gui.sh:2841
 msgid "Commit@@verb"
 msgstr "Подаване"
 
-#: git-gui.sh:2828 git-gui.sh:3309
+#: git-gui.sh:2850 git-gui.sh:3335
 msgid "New Commit"
 msgstr "Ново подаване"
 
-#: git-gui.sh:2836 git-gui.sh:3316
+#: git-gui.sh:2858 git-gui.sh:3342
 msgid "Amend Last Commit"
 msgstr "Поправяне на последното подаване"
 
-#: git-gui.sh:2846 git-gui.sh:3270 lib/remote_branch_delete.tcl:101
+#: git-gui.sh:2868 git-gui.sh:3296 lib/remote_branch_delete.tcl:101
 msgid "Rescan"
 msgstr "Обновяване"
 
-#: git-gui.sh:2852
+#: git-gui.sh:2874
 msgid "Stage To Commit"
 msgstr "Към индекса за подаване"
 
-#: git-gui.sh:2858
+#: git-gui.sh:2880
 msgid "Stage Changed Files To Commit"
 msgstr "Всички променени файлове към индекса за подаване"
 
-#: git-gui.sh:2864
+#: git-gui.sh:2886
 msgid "Unstage From Commit"
 msgstr "Изваждане от индекса за подаване"
 
-#: git-gui.sh:2870 lib/index.tcl:442
+#: git-gui.sh:2892 lib/index.tcl:442
 msgid "Revert Changes"
 msgstr "Връщане на оригинала"
 
-#: git-gui.sh:2878 git-gui.sh:3581 git-gui.sh:3612
+#: git-gui.sh:2900 git-gui.sh:3613 git-gui.sh:3644
 msgid "Show Less Context"
 msgstr "По-малко контекст"
 
-#: git-gui.sh:2882 git-gui.sh:3585 git-gui.sh:3616
+#: git-gui.sh:2904 git-gui.sh:3617 git-gui.sh:3648
 msgid "Show More Context"
 msgstr "Повече контекст"
 
-#: git-gui.sh:2889 git-gui.sh:3283 git-gui.sh:3392
+#: git-gui.sh:2911 git-gui.sh:3309 git-gui.sh:3423
 msgid "Sign Off"
 msgstr "Подписване"
 
-#: git-gui.sh:2905
+#: git-gui.sh:2927
 msgid "Local Merge..."
 msgstr "Локално сливане…"
 
-#: git-gui.sh:2910
+#: git-gui.sh:2932
 msgid "Abort Merge..."
 msgstr "Преустановяване на сливане…"
 
-#: git-gui.sh:2922 git-gui.sh:2950
+#: git-gui.sh:2944 git-gui.sh:2972
 msgid "Add..."
 msgstr "Добавяне…"
 
-#: git-gui.sh:2926
+#: git-gui.sh:2948
 msgid "Push..."
-msgstr "Избутване…"
+msgstr "Изтласкване…"
 
-#: git-gui.sh:2930
+#: git-gui.sh:2952
 msgid "Delete Branch..."
 msgstr "Изтриване на клон…"
 
-#: git-gui.sh:2940 git-gui.sh:3563
+#: git-gui.sh:2962 git-gui.sh:3595
 msgid "Options..."
 msgstr "Опции…"
 
-#: git-gui.sh:2951
+#: git-gui.sh:2973
 msgid "Remove..."
 msgstr "Премахване…"
 
-#: git-gui.sh:2960 lib/choose_repository.tcl:55
+#: git-gui.sh:2982 lib/choose_repository.tcl:55
 msgid "Help"
 msgstr "Помощ"
 
-#: git-gui.sh:2964 git-gui.sh:2968 lib/choose_repository.tcl:49
-#: lib/choose_repository.tcl:58 lib/about.tcl:14
+#: git-gui.sh:2986 git-gui.sh:2990 lib/about.tcl:14
+#: lib/choose_repository.tcl:49 lib/choose_repository.tcl:58
 #, tcl-format
 msgid "About %s"
 msgstr "Относно %s"
 
-#: git-gui.sh:2992
+#: git-gui.sh:3014
 msgid "Online Documentation"
 msgstr "Документация в Интернет"
 
-#: git-gui.sh:2995 lib/choose_repository.tcl:52 lib/choose_repository.tcl:61
+#: git-gui.sh:3017 lib/choose_repository.tcl:52 lib/choose_repository.tcl:61
 msgid "Show SSH Key"
 msgstr "Показване на ключа за SSH"
 
-#: git-gui.sh:3014 git-gui.sh:3146
+#: git-gui.sh:3032 git-gui.sh:3164
+msgid "usage:"
+msgstr "употреба:"
+
+#: git-gui.sh:3036 git-gui.sh:3168
 msgid "Usage"
 msgstr "Употреба"
 
-#: git-gui.sh:3095 lib/blame.tcl:573
+#: git-gui.sh:3117 lib/blame.tcl:573
 msgid "Error"
 msgstr "Грешка"
 
-#: git-gui.sh:3126
+#: git-gui.sh:3148
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 "ФАТАЛНА ГРЕШКА: пътят %s не може да бъде открит: такъв файл или директория "
 "няма"
 
-#: git-gui.sh:3159
+#: git-gui.sh:3181
 msgid "Current Branch:"
 msgstr "Текущ клон:"
 
-#: git-gui.sh:3185
-msgid "Staged Changes (Will Commit)"
-msgstr "Промени в индекса (за подаване)"
-
-#: git-gui.sh:3205
+#: git-gui.sh:3206
 msgid "Unstaged Changes"
 msgstr "Промени извън индекса"
 
-#: git-gui.sh:3276
+#: git-gui.sh:3228
+msgid "Staged Changes (Will Commit)"
+msgstr "Промени в индекса (за подаване)"
+
+#: git-gui.sh:3302
 msgid "Stage Changed"
 msgstr "Индексът е променен"
 
-#: git-gui.sh:3295 lib/transport.tcl:137 lib/transport.tcl:229
+#: git-gui.sh:3321 lib/transport.tcl:137
 msgid "Push"
 msgstr "Изтласкване"
 
-#: git-gui.sh:3330
+#: git-gui.sh:3356
 msgid "Initial Commit Message:"
 msgstr "Първоначално съобщение при подаване:"
 
-#: git-gui.sh:3331
+#: git-gui.sh:3357
 msgid "Amended Commit Message:"
 msgstr "Поправено съобщение при подаване:"
 
-#: git-gui.sh:3332
+#: git-gui.sh:3358
 msgid "Amended Initial Commit Message:"
 msgstr "Поправено първоначално съобщение при подаване:"
 
-#: git-gui.sh:3333
+#: git-gui.sh:3359
 msgid "Amended Merge Commit Message:"
 msgstr "Поправено съобщение при подаване със сливане:"
 
-#: git-gui.sh:3334
+#: git-gui.sh:3360
 msgid "Merge Commit Message:"
 msgstr "Съобщение при подаване със сливане:"
 
-#: git-gui.sh:3335
+#: git-gui.sh:3361
 msgid "Commit Message:"
 msgstr "Съобщение при подаване:"
 
-#: git-gui.sh:3384 git-gui.sh:3538 lib/console.tcl:73
+#: git-gui.sh:3415 git-gui.sh:3570 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Копиране на всичко"
 
-#: git-gui.sh:3408 lib/blame.tcl:105
+#: git-gui.sh:3439 lib/blame.tcl:105
 msgid "File:"
 msgstr "Файл:"
 
-#: git-gui.sh:3526
+#: git-gui.sh:3558
 msgid "Refresh"
 msgstr "Обновяване"
 
-#: git-gui.sh:3547
+#: git-gui.sh:3579
 msgid "Decrease Font Size"
 msgstr "По-едър шрифт"
 
-#: git-gui.sh:3551
+#: git-gui.sh:3583
 msgid "Increase Font Size"
 msgstr "По-дребен шрифт"
 
-#: git-gui.sh:3559 lib/blame.tcl:294
+#: git-gui.sh:3591 lib/blame.tcl:294
 msgid "Encoding"
 msgstr "Кодиране"
 
-#: git-gui.sh:3570
+#: git-gui.sh:3602
 msgid "Apply/Reverse Hunk"
 msgstr "Прилагане/връщане на парче"
 
-#: git-gui.sh:3575
+#: git-gui.sh:3607
 msgid "Apply/Reverse Line"
 msgstr "Прилагане/връщане на ред"
 
-#: git-gui.sh:3594
+#: git-gui.sh:3626
 msgid "Run Merge Tool"
 msgstr "Изпълнение на програмата за сливане"
 
-#: git-gui.sh:3599
+#: git-gui.sh:3631
 msgid "Use Remote Version"
 msgstr "Версия от отдалеченото хранилище"
 
-#: git-gui.sh:3603
+#: git-gui.sh:3635
 msgid "Use Local Version"
 msgstr "Локална версия"
 
-#: git-gui.sh:3607
+#: git-gui.sh:3639
 msgid "Revert To Base"
 msgstr "Връщане към родителската версия"
 
-#: git-gui.sh:3625
+#: git-gui.sh:3657
 msgid "Visualize These Changes In The Submodule"
 msgstr "Визуализиране на промените в подмодула"
 
-#: git-gui.sh:3629
+#: git-gui.sh:3661
 msgid "Visualize Current Branch History In The Submodule"
 msgstr "Визуализация на историята на текущия клон в историята за подмодула"
 
-#: git-gui.sh:3633
+#: git-gui.sh:3665
 msgid "Visualize All Branch History In The Submodule"
 msgstr "Визуализация на историята на всички клони в историята за подмодула"
 
-#: git-gui.sh:3638
+#: git-gui.sh:3670
 msgid "Start git gui In The Submodule"
 msgstr "Стартиране на „git gui“ за подмодула"
 
-#: git-gui.sh:3673
+#: git-gui.sh:3705
 msgid "Unstage Hunk From Commit"
 msgstr "Изваждане на парчето от подаването"
 
-#: git-gui.sh:3675
+#: git-gui.sh:3707
 msgid "Unstage Lines From Commit"
 msgstr "Изваждане на редовете от подаването"
 
-#: git-gui.sh:3677
+#: git-gui.sh:3709
 msgid "Unstage Line From Commit"
 msgstr "Изваждане на реда от подаването"
 
-#: git-gui.sh:3680
+#: git-gui.sh:3712
 msgid "Stage Hunk For Commit"
 msgstr "Добавяне на парчето за подаване"
 
-#: git-gui.sh:3682
+#: git-gui.sh:3714
 msgid "Stage Lines For Commit"
 msgstr "Добавяне на редовете за подаване"
 
-#: git-gui.sh:3684
+#: git-gui.sh:3716
 msgid "Stage Line For Commit"
 msgstr "Добавяне на реда за подаване"
 
-#: git-gui.sh:3709
+#: git-gui.sh:3741
 msgid "Initializing..."
 msgstr "Инициализиране…"
 
-#: git-gui.sh:3852
+#: git-gui.sh:3886
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -576,7 +579,7 @@ msgstr ""
 "от %s:\n"
 "\n"
 
-#: git-gui.sh:3881
+#: git-gui.sh:3915
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -586,7 +589,7 @@ msgstr ""
 "Това е познат проблем и се дължи на\n"
 "версията на Tcl включена в Cygwin."
 
-#: git-gui.sh:3886
+#: git-gui.sh:3920
 #, tcl-format
 msgid ""
 "\n"
@@ -602,199 +605,126 @@ msgstr ""
 "е да поставите настройките „user.name“ и\n"
 "„user.email“ в личния си файл „~/.gitconfig“.\n"
 
-#: lib/spellcheck.tcl:57
-msgid "Unsupported spell checker"
-msgstr "Тази програма за проверка на правописа не се поддържа"
+#: lib/about.tcl:26
+msgid "git-gui - a graphical user interface for Git."
+msgstr "git-gui — графичен интерфейс за Git."
 
-#: lib/spellcheck.tcl:65
-msgid "Spell checking is unavailable"
-msgstr "Липсва програма за проверка на правописа"
-
-#: lib/spellcheck.tcl:68
-msgid "Invalid spell checking configuration"
-msgstr "Неправилни настройки на проверката на правописа"
-
-#: lib/spellcheck.tcl:70
+#: lib/blame.tcl:73
 #, tcl-format
-msgid "Reverting dictionary to %s."
-msgstr "Ползване на речник за език „%s“."
+msgid "%s (%s): File Viewer"
+msgstr "%s (%s): Преглед на файлове"
 
-#: lib/spellcheck.tcl:73
-msgid "Spell checker silently failed on startup"
-msgstr "Програмата за правопис даже не стартира успешно."
+#: lib/blame.tcl:79
+msgid "Commit:"
+msgstr "Подаване:"
 
-#: lib/spellcheck.tcl:80
-msgid "Unrecognized spell checker"
-msgstr "Непозната програма за проверка на правописа"
+#: lib/blame.tcl:280
+msgid "Copy Commit"
+msgstr "Копиране на подаване"
 
-#: lib/spellcheck.tcl:186
-msgid "No Suggestions"
-msgstr "Няма предложения"
+#: lib/blame.tcl:284
+msgid "Find Text..."
+msgstr "Търсене на текст…"
 
-#: lib/spellcheck.tcl:388
-msgid "Unexpected EOF from spell checker"
-msgstr "Неочакван край на файл от програмата за проверка на правописа"
+#: lib/blame.tcl:288
+msgid "Goto Line..."
+msgstr "Към ред…"
 
-#: lib/spellcheck.tcl:392
-msgid "Spell Checker Failed"
-msgstr "Грешка в програмата за проверка на правописа"
+#: lib/blame.tcl:297
+msgid "Do Full Copy Detection"
+msgstr "Пълно търсене на копиране"
 
-#: lib/remote_add.tcl:20
-msgid "Add Remote"
-msgstr "Добавяне на отдалечено хранилище"
+#: lib/blame.tcl:301
+msgid "Show History Context"
+msgstr "Показване на контекста от историята"
 
-#: lib/remote_add.tcl:25
-msgid "Add New Remote"
-msgstr "Добавяне на отдалечено хранилище"
+#: lib/blame.tcl:304
+msgid "Blame Parent Commit"
+msgstr "Анотиране на родителското подаване"
 
-#: lib/remote_add.tcl:30 lib/tools_dlg.tcl:37
-msgid "Add"
-msgstr "Добавяне"
-
-#: lib/remote_add.tcl:34 lib/browser.tcl:292 lib/branch_checkout.tcl:30
-#: lib/transport.tcl:141 lib/branch_rename.tcl:32 lib/choose_font.tcl:45
-#: lib/option.tcl:127 lib/tools_dlg.tcl:41 lib/tools_dlg.tcl:202
-#: lib/tools_dlg.tcl:345 lib/remote_branch_delete.tcl:43
-#: lib/checkout_op.tcl:579 lib/branch_create.tcl:37 lib/branch_delete.tcl:34
-#: lib/merge.tcl:174
-msgid "Cancel"
-msgstr "Отказване"
-
-#: lib/remote_add.tcl:39
-msgid "Remote Details"
-msgstr "Данни за отдалеченото хранилище"
-
-#: lib/remote_add.tcl:41 lib/tools_dlg.tcl:51 lib/branch_create.tcl:44
-msgid "Name:"
-msgstr "Име:"
-
-#: lib/remote_add.tcl:50
-msgid "Location:"
-msgstr "Местоположение:"
-
-#: lib/remote_add.tcl:60
-msgid "Further Action"
-msgstr "Следващо действие"
-
-#: lib/remote_add.tcl:63
-msgid "Fetch Immediately"
-msgstr "Незабавно доставяне"
-
-#: lib/remote_add.tcl:69
-msgid "Initialize Remote Repository and Push"
-msgstr "Инициализиране на отдалеченото хранилище и изтласкване на промените"
-
-#: lib/remote_add.tcl:75
-msgid "Do Nothing Else Now"
-msgstr "Да не се прави нищо"
-
-#: lib/remote_add.tcl:100
-msgid "Please supply a remote name."
-msgstr "Задайте име за отдалеченото хранилище."
-
-#: lib/remote_add.tcl:113
+#: lib/blame.tcl:466
 #, tcl-format
-msgid "'%s' is not an acceptable remote name."
-msgstr "Отдалечено хранилище не може да се казва „%s“."
+msgid "Reading %s..."
+msgstr "Чете се „%s“…"
 
-#: lib/remote_add.tcl:124
+#: lib/blame.tcl:594
+msgid "Loading copy/move tracking annotations..."
+msgstr "Зареждане на анотациите за проследяване на копирането/преместването…"
+
+#: lib/blame.tcl:614
+msgid "lines annotated"
+msgstr "реда анотирани"
+
+#: lib/blame.tcl:806
+msgid "Loading original location annotations..."
+msgstr "Зареждане на анотациите за първоначалното местоположение…"
+
+#: lib/blame.tcl:809
+msgid "Annotation complete."
+msgstr "Анотирането завърши."
+
+#: lib/blame.tcl:839
+msgid "Busy"
+msgstr "Операцията не е завършила"
+
+#: lib/blame.tcl:840
+msgid "Annotation process is already running."
+msgstr "В момента тече процес на анотиране."
+
+#: lib/blame.tcl:879
+msgid "Running thorough copy detection..."
+msgstr "Изпълнява се цялостен процес на откриване на копиране…"
+
+#: lib/blame.tcl:947
+msgid "Loading annotation..."
+msgstr "Зареждане на анотации…"
+
+#: lib/blame.tcl:1000
+msgid "Author:"
+msgstr "Автор:"
+
+#: lib/blame.tcl:1004
+msgid "Committer:"
+msgstr "Подал:"
+
+#: lib/blame.tcl:1009
+msgid "Original File:"
+msgstr "Първоначален файл:"
+
+#: lib/blame.tcl:1057
+msgid "Cannot find HEAD commit:"
+msgstr "Подаването за връх „HEAD“ не може да се открие:"
+
+#: lib/blame.tcl:1112
+msgid "Cannot find parent commit:"
+msgstr "Родителското подаване не може да бъде открито"
+
+#: lib/blame.tcl:1127
+msgid "Unable to display parent"
+msgstr "Родителят не може да бъде показан"
+
+#: lib/blame.tcl:1128 lib/diff.tcl:358
+msgid "Error loading diff:"
+msgstr "Грешка при зареждане на разлика:"
+
+#: lib/blame.tcl:1269
+msgid "Originally By:"
+msgstr "Първоначално от:"
+
+#: lib/blame.tcl:1275
+msgid "In File:"
+msgstr "Във файл:"
+
+#: lib/blame.tcl:1280
+msgid "Copied Or Moved Here By:"
+msgstr "Копирано или преместено тук от:"
+
+#: lib/branch_checkout.tcl:16
 #, tcl-format
-msgid "Failed to add remote '%s' of location '%s'."
-msgstr "Неуспешно добавяне на отдалеченото хранилище „%s“ от адрес „%s“."
+msgid "%s (%s): Checkout Branch"
+msgstr "%s (%s): Клон за изтегляне"
 
-#: lib/remote_add.tcl:132 lib/transport.tcl:6
-#, tcl-format
-msgid "fetch %s"
-msgstr "доставяне на „%s“"
-
-#: lib/remote_add.tcl:133
-#, tcl-format
-msgid "Fetching the %s"
-msgstr "Доставяне на „%s“"
-
-#: lib/remote_add.tcl:156
-#, tcl-format
-msgid "Do not know how to initialize repository at location '%s'."
-msgstr "Хранилището с местоположение „%s“ не може да бъде инициализирано."
-
-#: lib/remote_add.tcl:162 lib/transport.tcl:54 lib/transport.tcl:92
-#: lib/transport.tcl:110
-#, tcl-format
-msgid "push %s"
-msgstr "изтласкване на „%s“"
-
-#: lib/remote_add.tcl:163
-#, tcl-format
-msgid "Setting up the %s (at %s)"
-msgstr "Добавяне на хранилище „%s“ (с адрес „%s“)"
-
-#: lib/browser.tcl:17
-msgid "Starting..."
-msgstr "Стартиране…"
-
-#: lib/browser.tcl:27
-msgid "File Browser"
-msgstr "Файлов браузър"
-
-#: lib/browser.tcl:132 lib/browser.tcl:149
-#, tcl-format
-msgid "Loading %s..."
-msgstr "Зареждане на „%s“…"
-
-#: lib/browser.tcl:193
-msgid "[Up To Parent]"
-msgstr "[Към родителя]"
-
-#: lib/browser.tcl:275 lib/browser.tcl:282
-msgid "Browse Branch Files"
-msgstr "Разглеждане на файловете в клона"
-
-#: lib/browser.tcl:288 lib/choose_repository.tcl:422
-#: lib/choose_repository.tcl:509 lib/choose_repository.tcl:518
-#: lib/choose_repository.tcl:1074
-msgid "Browse"
-msgstr "Разглеждане"
-
-#: lib/browser.tcl:297 lib/branch_checkout.tcl:35 lib/tools_dlg.tcl:321
-msgid "Revision"
-msgstr "Версия"
-
-#: lib/tools.tcl:75
-#, tcl-format
-msgid "Running %s requires a selected file."
-msgstr "За изпълнението на „%s“ трябва да изберете файл."
-
-#: lib/tools.tcl:91
-#, tcl-format
-msgid "Are you sure you want to run %1$s on file \"%2$s\"?"
-msgstr "Сигурни ли сте, че искате да изпълните „%1$s“ върху файла „%2$s“?"
-
-#: lib/tools.tcl:95
-#, tcl-format
-msgid "Are you sure you want to run %s?"
-msgstr "Сигурни ли сте, че искате да изпълните „%s“?"
-
-#: lib/tools.tcl:116
-#, tcl-format
-msgid "Tool: %s"
-msgstr "Команда: %s"
-
-#: lib/tools.tcl:117
-#, tcl-format
-msgid "Running: %s"
-msgstr "Изпълнение: %s"
-
-#: lib/tools.tcl:155
-#, tcl-format
-msgid "Tool completed successfully: %s"
-msgstr "Командата завърши успешно: %s"
-
-#: lib/tools.tcl:157
-#, tcl-format
-msgid "Tool failed: %s"
-msgstr "Командата върна грешка: %s"
-
-#: lib/branch_checkout.tcl:16 lib/branch_checkout.tcl:21
+#: lib/branch_checkout.tcl:21
 msgid "Checkout Branch"
 msgstr "Клон за изтегляне"
 
@@ -802,7 +732,19 @@ msgstr "Клон за изтегляне"
 msgid "Checkout"
 msgstr "Изтегляне"
 
-#: lib/branch_checkout.tcl:39 lib/option.tcl:310 lib/branch_create.tcl:69
+#: lib/branch_checkout.tcl:30 lib/branch_create.tcl:37 lib/branch_delete.tcl:34
+#: lib/branch_rename.tcl:32 lib/browser.tcl:292 lib/checkout_op.tcl:579
+#: lib/choose_font.tcl:45 lib/merge.tcl:178 lib/option.tcl:127
+#: lib/remote_add.tcl:34 lib/remote_branch_delete.tcl:43 lib/tools_dlg.tcl:41
+#: lib/tools_dlg.tcl:202 lib/tools_dlg.tcl:345 lib/transport.tcl:141
+msgid "Cancel"
+msgstr "Отказване"
+
+#: lib/branch_checkout.tcl:35 lib/browser.tcl:297 lib/tools_dlg.tcl:321
+msgid "Revision"
+msgstr "Версия"
+
+#: lib/branch_checkout.tcl:39 lib/branch_create.tcl:69 lib/option.tcl:310
 msgid "Options"
 msgstr "Опции"
 
@@ -814,167 +756,129 @@ msgstr "Изтегляне на промените от следения кло�
 msgid "Detach From Local Branch"
 msgstr "Изтриване от локалния клон"
 
-#: lib/transport.tcl:7
+#: lib/branch_create.tcl:23
 #, tcl-format
-msgid "Fetching new changes from %s"
-msgstr "Доставяне на промените от „%s“"
+msgid "%s (%s): Create Branch"
+msgstr "%s (%s): Създаване на клон"
 
-#: lib/transport.tcl:18
+#: lib/branch_create.tcl:28
+msgid "Create New Branch"
+msgstr "Създаване на нов клон"
+
+#: lib/branch_create.tcl:33 lib/choose_repository.tcl:407
+msgid "Create"
+msgstr "Създаване"
+
+#: lib/branch_create.tcl:42
+msgid "Branch Name"
+msgstr "Име на клона"
+
+#: lib/branch_create.tcl:44 lib/remote_add.tcl:41 lib/tools_dlg.tcl:51
+msgid "Name:"
+msgstr "Име:"
+
+#: lib/branch_create.tcl:57
+msgid "Match Tracking Branch Name"
+msgstr "Съвпадане по името на следения клон"
+
+#: lib/branch_create.tcl:66
+msgid "Starting Revision"
+msgstr "Начална версия"
+
+#: lib/branch_create.tcl:72
+msgid "Update Existing Branch:"
+msgstr "Обновяване на съществуващ клон:"
+
+#: lib/branch_create.tcl:75
+msgid "No"
+msgstr "Не"
+
+#: lib/branch_create.tcl:80
+msgid "Fast Forward Only"
+msgstr "Само тривиално превъртащо сливане"
+
+#: lib/branch_create.tcl:85 lib/checkout_op.tcl:571
+msgid "Reset"
+msgstr "Отначало"
+
+#: lib/branch_create.tcl:97
+msgid "Checkout After Creation"
+msgstr "Преминаване към клона след създаването му"
+
+#: lib/branch_create.tcl:132
+msgid "Please select a tracking branch."
+msgstr "Изберете клон за следени."
+
+#: lib/branch_create.tcl:141
 #, tcl-format
-msgid "remote prune %s"
-msgstr "окастряне на следящите клони към „%s“"
+msgid "Tracking branch %s is not a branch in the remote repository."
+msgstr "Следящият клон — „%s“, не съществува в отдалеченото хранилище."
 
-#: lib/transport.tcl:19
+#: lib/branch_create.tcl:154 lib/branch_rename.tcl:92
+msgid "Please supply a branch name."
+msgstr "Дайте име на клона."
+
+#: lib/branch_create.tcl:165 lib/branch_rename.tcl:112
 #, tcl-format
-msgid "Pruning tracking branches deleted from %s"
-msgstr "Окастряне на следящите клони на изтритите клони от „%s“"
+msgid "'%s' is not an acceptable branch name."
+msgstr "„%s“ не може да се използва за име на клон."
 
-#: lib/transport.tcl:25
-msgid "fetch all remotes"
-msgstr "доставяне на всички отдалечени хранилища"
+#: lib/branch_delete.tcl:16
+#, tcl-format
+msgid "%s (%s): Delete Branch"
+msgstr "%s (%s): Изтриване на клон"
 
-#: lib/transport.tcl:26
-msgid "Fetching new changes from all remotes"
-msgstr "Доставяне на новите промени от всички отдалечени хранилища"
+#: lib/branch_delete.tcl:21
+msgid "Delete Local Branch"
+msgstr "Изтриване на локален клон"
 
-#: lib/transport.tcl:40
-msgid "remote prune all remotes"
-msgstr "окастряне на всички следящи клони"
+#: lib/branch_delete.tcl:39
+msgid "Local Branches"
+msgstr "Локални клони"
 
-#: lib/transport.tcl:41
-msgid "Pruning tracking branches deleted from all remotes"
+#: lib/branch_delete.tcl:51
+msgid "Delete Only If Merged Into"
+msgstr "Изтриване, само ако промените са слети и другаде"
+
+#: lib/branch_delete.tcl:53 lib/remote_branch_delete.tcl:120
+msgid "Always (Do not perform merge checks)"
+msgstr "Винаги (без проверка за сливане)"
+
+#: lib/branch_delete.tcl:103
+#, tcl-format
+msgid "The following branches are not completely merged into %s:"
+msgstr "Не всички промени в клоните са слети в „%s“:"
+
+#: lib/branch_delete.tcl:115 lib/remote_branch_delete.tcl:218
+msgid ""
+"Recovering deleted branches is difficult.\n"
+"\n"
+"Delete the selected branches?"
 msgstr ""
-"Окастряне на всички клони, които следят изтрити клони от отдалечени хранилища"
+"Възстановяването на изтрити клони може да е трудно.\n"
+"\n"
+"Сигурни ли сте, че искате да триете?"
 
-#: lib/transport.tcl:55
+#: lib/branch_delete.tcl:131
 #, tcl-format
-msgid "Pushing changes to %s"
-msgstr "Изтласкване на промените към „%s“"
+msgid " - %s:"
+msgstr " — „%s:“"
 
-#: lib/transport.tcl:93
-#, tcl-format
-msgid "Mirroring to %s"
-msgstr "Изтласкване на всичко към „%s“"
-
-#: lib/transport.tcl:111
-#, tcl-format
-msgid "Pushing %s %s to %s"
-msgstr "Изтласкване на %s „%s“ към „%s“"
-
-#: lib/transport.tcl:132
-msgid "Push Branches"
-msgstr "Клони за изтласкване"
-
-#: lib/transport.tcl:147
-msgid "Source Branches"
-msgstr "Клони-източници"
-
-#: lib/transport.tcl:162
-msgid "Destination Repository"
-msgstr "Целево хранилище"
-
-#: lib/transport.tcl:165 lib/remote_branch_delete.tcl:51
-msgid "Remote:"
-msgstr "Отдалечено хранилище:"
-
-#: lib/transport.tcl:187 lib/remote_branch_delete.tcl:72
-msgid "Arbitrary Location:"
-msgstr "Произволно местоположение:"
-
-#: lib/transport.tcl:205
-msgid "Transfer Options"
-msgstr "Настройки при пренасянето"
-
-#: lib/transport.tcl:207
-msgid "Force overwrite existing branch (may discard changes)"
-msgstr ""
-"Изрично презаписване на съществуващ клон (някои промени може да бъдат "
-"загубени)"
-
-#: lib/transport.tcl:211
-msgid "Use thin pack (for slow network connections)"
-msgstr "Максимална компресия (за бавни мрежови връзки)"
-
-#: lib/transport.tcl:215
-msgid "Include tags"
-msgstr "Включване на етикетите"
-
-#: lib/status_bar.tcl:87
-#, tcl-format
-msgid "%s ... %*i of %*i %s (%3i%%)"
-msgstr "%s… %*i от общо %*i %s (%3i%%)"
-
-#: lib/remote.tcl:200
-msgid "Push to"
-msgstr "Изтласкване към"
-
-#: lib/remote.tcl:218
-msgid "Remove Remote"
-msgstr "Премахване на отдалечено хранилище"
-
-#: lib/remote.tcl:223
-msgid "Prune from"
-msgstr "Окастряне от"
-
-#: lib/remote.tcl:228
-msgid "Fetch from"
-msgstr "Доставяне от"
-
-#: lib/sshkey.tcl:31
-msgid "No keys found."
-msgstr "Не са открити ключове."
-
-#: lib/sshkey.tcl:34
-#, tcl-format
-msgid "Found a public key in: %s"
-msgstr "Открит е публичен ключ в „%s“"
-
-#: lib/sshkey.tcl:40
-msgid "Generate Key"
-msgstr "Генериране на ключ"
-
-#: lib/sshkey.tcl:55 lib/checkout_op.tcl:146 lib/console.tcl:81
-#: lib/database.tcl:30
-msgid "Close"
-msgstr "Затваряне"
-
-#: lib/sshkey.tcl:58
-msgid "Copy To Clipboard"
-msgstr "Копиране към системния буфер"
-
-#: lib/sshkey.tcl:72
-msgid "Your OpenSSH Public Key"
-msgstr "Публичният ви ключ за OpenSSH"
-
-#: lib/sshkey.tcl:80
-msgid "Generating..."
-msgstr "Генериране…"
-
-#: lib/sshkey.tcl:86
+#: lib/branch_delete.tcl:141
 #, tcl-format
 msgid ""
-"Could not start ssh-keygen:\n"
-"\n"
+"Failed to delete branches:\n"
 "%s"
 msgstr ""
-"Програмата „ssh-keygen“ не може да бъде стартирана:\n"
-"\n"
+"Неуспешно триене на клони:\n"
 "%s"
 
-#: lib/sshkey.tcl:113
-msgid "Generation failed."
-msgstr "Неуспешно генериране."
-
-#: lib/sshkey.tcl:120
-msgid "Generation succeeded, but no keys found."
-msgstr "Генерирането завърши успешно, а не са намерени ключове."
-
-#: lib/sshkey.tcl:123
+#: lib/branch_rename.tcl:15
 #, tcl-format
-msgid "Your key is in: %s"
-msgstr "Ключът ви е в „%s“"
+msgid "%s (%s): Rename Branch"
+msgstr "%s (%s): Преименуване на клон"
 
-#: lib/branch_rename.tcl:15 lib/branch_rename.tcl:23
+#: lib/branch_rename.tcl:23
 msgid "Rename Branch"
 msgstr "Преименуване на клон"
 
@@ -994,24 +898,194 @@ msgstr "Ново име:"
 msgid "Please select a branch to rename."
 msgstr "Изберете клон за преименуване."
 
-#: lib/branch_rename.tcl:92 lib/branch_create.tcl:154
-msgid "Please supply a branch name."
-msgstr "Дайте име на клона."
-
 #: lib/branch_rename.tcl:102 lib/checkout_op.tcl:202
 #, tcl-format
 msgid "Branch '%s' already exists."
 msgstr "Клонът „%s“ вече съществува."
 
-#: lib/branch_rename.tcl:112 lib/branch_create.tcl:165
-#, tcl-format
-msgid "'%s' is not an acceptable branch name."
-msgstr "„%s“ не може да се използва за име на клон."
-
 #: lib/branch_rename.tcl:123
 #, tcl-format
 msgid "Failed to rename '%s'."
 msgstr "Неуспешно преименуване на „%s“."
+
+#: lib/browser.tcl:17
+msgid "Starting..."
+msgstr "Стартиране…"
+
+#: lib/browser.tcl:27
+#, tcl-format
+msgid "%s (%s): File Browser"
+msgstr "%s (%s): Файлов браузър"
+
+#: lib/browser.tcl:132 lib/browser.tcl:149
+#, tcl-format
+msgid "Loading %s..."
+msgstr "Зареждане на „%s“…"
+
+#: lib/browser.tcl:193
+msgid "[Up To Parent]"
+msgstr "[Към родителя]"
+
+#: lib/browser.tcl:275
+#, tcl-format
+msgid "%s (%s): Browse Branch Files"
+msgstr "%s (%s): Разглеждане на файловете в клона"
+
+#: lib/browser.tcl:282
+msgid "Browse Branch Files"
+msgstr "Разглеждане на файловете в клона"
+
+#: lib/browser.tcl:288 lib/choose_repository.tcl:422
+#: lib/choose_repository.tcl:509 lib/choose_repository.tcl:518
+#: lib/choose_repository.tcl:1074
+msgid "Browse"
+msgstr "Разглеждане"
+
+#: lib/checkout_op.tcl:85
+#, tcl-format
+msgid "Fetching %s from %s"
+msgstr "Доставяне на „%s“ от „%s“"
+
+#: lib/checkout_op.tcl:133
+#, tcl-format
+msgid "fatal: Cannot resolve %s"
+msgstr "фатална грешка: „%s“ не може да се открие"
+
+#: lib/checkout_op.tcl:146 lib/console.tcl:81 lib/database.tcl:30
+#: lib/sshkey.tcl:55
+msgid "Close"
+msgstr "Затваряне"
+
+#: lib/checkout_op.tcl:175
+#, tcl-format
+msgid "Branch '%s' does not exist."
+msgstr "Клонът „%s“ не съществува."
+
+#: lib/checkout_op.tcl:194
+#, tcl-format
+msgid "Failed to configure simplified git-pull for '%s'."
+msgstr "Неуспешно настройване на опростен git-pull за „%s“."
+
+#: lib/checkout_op.tcl:229
+#, tcl-format
+msgid ""
+"Branch '%s' already exists.\n"
+"\n"
+"It cannot fast-forward to %s.\n"
+"A merge is required."
+msgstr ""
+"Клонът „%s“ съществува.\n"
+"\n"
+"Той не може да бъде тривиално слят до „%s“.\n"
+"Необходимо е сливане."
+
+#: lib/checkout_op.tcl:243
+#, tcl-format
+msgid "Merge strategy '%s' not supported."
+msgstr "Стратегия за сливане  „%s“ не се поддържа."
+
+#: lib/checkout_op.tcl:262
+#, tcl-format
+msgid "Failed to update '%s'."
+msgstr "Неуспешно обновяване на „%s“."
+
+#: lib/checkout_op.tcl:274
+msgid "Staging area (index) is already locked."
+msgstr "Индексът вече е заключен."
+
+#: lib/checkout_op.tcl:289
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before the current branch can be changed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Състоянието при последната проверка не отговаря на състоянието на "
+"хранилището.\n"
+"\n"
+"Някой друг процес за Git е променил хранилището междувременно. Състоянието "
+"трябва да бъде проверено, преди да се премине към нов клон.\n"
+"\n"
+"Автоматично ще започне нова проверка.\n"
+
+#: lib/checkout_op.tcl:345
+#, tcl-format
+msgid "Updating working directory to '%s'..."
+msgstr "Работната директория се привежда към „%s“…"
+
+#: lib/checkout_op.tcl:346
+msgid "files checked out"
+msgstr "файла са изтеглени"
+
+#: lib/checkout_op.tcl:376
+#, tcl-format
+msgid "Aborted checkout of '%s' (file level merging is required)."
+msgstr ""
+"Преустановяване на изтеглянето на „%s“ (необходимо е пофайлово сливане)."
+
+#: lib/checkout_op.tcl:377
+msgid "File level merge required."
+msgstr "Необходимо е пофайлово сливане."
+
+#: lib/checkout_op.tcl:381
+#, tcl-format
+msgid "Staying on branch '%s'."
+msgstr "Оставане върху клона „%s“."
+
+#: lib/checkout_op.tcl:452
+msgid ""
+"You are no longer on a local branch.\n"
+"\n"
+"If you wanted to be on a branch, create one now starting from 'This Detached "
+"Checkout'."
+msgstr ""
+"Вече не сте на локален клон.\n"
+"\n"
+"Ако искате да сте на клон, създайте базиран на „Това несвързано изтегляне“."
+
+#: lib/checkout_op.tcl:503 lib/checkout_op.tcl:507
+#, tcl-format
+msgid "Checked out '%s'."
+msgstr "„%s“ е изтеглен."
+
+#: lib/checkout_op.tcl:535
+#, tcl-format
+msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgstr ""
+"Зануляването на „%s“ към „%s“ ще доведе до загубването на следните подавания:"
+
+#: lib/checkout_op.tcl:557
+msgid "Recovering lost commits may not be easy."
+msgstr "Възстановяването на загубените подавания може да е трудно."
+
+#: lib/checkout_op.tcl:562
+#, tcl-format
+msgid "Reset '%s'?"
+msgstr "Зануляване на „%s“?"
+
+#: lib/checkout_op.tcl:567 lib/merge.tcl:170 lib/tools_dlg.tcl:336
+msgid "Visualize"
+msgstr "Визуализация"
+
+#: lib/checkout_op.tcl:635
+#, tcl-format
+msgid ""
+"Failed to set current branch.\n"
+"\n"
+"This working directory is only partially switched.  We successfully updated "
+"your files, but failed to update an internal Git file.\n"
+"\n"
+"This should not have occurred.  %s will now close and give up."
+msgstr ""
+"Неуспешно задаване на текущия клон.\n"
+"\n"
+"Работната директория е само частично обновена: файловете са обновени "
+"успешно, но някой от вътрешните, служебни файлове на Git не е бил.\n"
+"\n"
+"Това състояние е аварийно и не трябва да се случва. Програмата „%s“ ще "
+"преустанови работа."
 
 #: lib/choose_font.tcl:41
 msgid "Select"
@@ -1036,569 +1110,6 @@ msgid ""
 msgstr ""
 "Това е примерен текст.\n"
 "Ако ви харесва как изглежда, изберете шрифта."
-
-#: lib/option.tcl:11
-#, tcl-format
-msgid "Invalid global encoding '%s'"
-msgstr "Неправилно глобално кодиране „%s“"
-
-#: lib/option.tcl:19
-#, tcl-format
-msgid "Invalid repo encoding '%s'"
-msgstr "Неправилно кодиране „%s“ на хранилището"
-
-#: lib/option.tcl:119
-msgid "Restore Defaults"
-msgstr "Стандартни настройки"
-
-#: lib/option.tcl:123
-msgid "Save"
-msgstr "Запазване"
-
-#: lib/option.tcl:133
-#, tcl-format
-msgid "%s Repository"
-msgstr "Хранилище „%s“"
-
-#: lib/option.tcl:134
-msgid "Global (All Repositories)"
-msgstr "Глобално (за всички хранилища)"
-
-#: lib/option.tcl:140
-msgid "User Name"
-msgstr "Потребителско име"
-
-#: lib/option.tcl:141
-msgid "Email Address"
-msgstr "Адрес на е-поща"
-
-#: lib/option.tcl:143
-msgid "Summarize Merge Commits"
-msgstr "Обобщаване на подаванията при сливане"
-
-#: lib/option.tcl:144
-msgid "Merge Verbosity"
-msgstr "Подробности при сливанията"
-
-#: lib/option.tcl:145
-msgid "Show Diffstat After Merge"
-msgstr "Извеждане на статистика след сливанията"
-
-#: lib/option.tcl:146
-msgid "Use Merge Tool"
-msgstr "Използване на програма за сливане"
-
-#: lib/option.tcl:148
-msgid "Trust File Modification Timestamps"
-msgstr "Доверие във времето на промяна на файловете"
-
-#: lib/option.tcl:149
-msgid "Prune Tracking Branches During Fetch"
-msgstr "Окастряне на следящите клонове при доставяне"
-
-#: lib/option.tcl:150
-msgid "Match Tracking Branches"
-msgstr "Напасване на следящите клонове"
-
-#: lib/option.tcl:151
-msgid "Use Textconv For Diffs and Blames"
-msgstr ""
-"Преобразуване на текста с „textconv“ при анотиране и извеждане на разлики"
-
-#: lib/option.tcl:152
-msgid "Blame Copy Only On Changed Files"
-msgstr "Анотиране на копието само по променените файлове"
-
-#: lib/option.tcl:153
-msgid "Maximum Length of Recent Repositories List"
-msgstr "Максимална дължина на списъка със скоро ползвани хранилища"
-
-#: lib/option.tcl:154
-msgid "Minimum Letters To Blame Copy On"
-msgstr "Минимален брой знаци за анотиране на копието"
-
-#: lib/option.tcl:155
-msgid "Blame History Context Radius (days)"
-msgstr "Исторически обхват за анотиране в дни"
-
-#: lib/option.tcl:156
-msgid "Number of Diff Context Lines"
-msgstr "Брой редове за контекста при извеждане на разликите"
-
-#: lib/option.tcl:157
-msgid "Additional Diff Parameters"
-msgstr "Допълнителни аргументи към „git diff“"
-
-#: lib/option.tcl:158
-msgid "Commit Message Text Width"
-msgstr "Широчина на текста на съобщението при подаване"
-
-#: lib/option.tcl:159
-msgid "New Branch Name Template"
-msgstr "Шаблон за името на новите клони"
-
-#: lib/option.tcl:160
-msgid "Default File Contents Encoding"
-msgstr "Стандартно кодиране на файловете"
-
-#: lib/option.tcl:161
-msgid "Warn before committing to a detached head"
-msgstr "Предупреждаване при подаването при несвързан връх"
-
-#: lib/option.tcl:162
-msgid "Staging of untracked files"
-msgstr "Вкарване на неследени файлове в индекса"
-
-#: lib/option.tcl:163
-msgid "Show untracked files"
-msgstr "Показване на неследените файлове"
-
-#: lib/option.tcl:164
-msgid "Tab spacing"
-msgstr "Размер на табулацията в интервали"
-
-#: lib/option.tcl:210
-msgid "Change"
-msgstr "Смяна"
-
-#: lib/option.tcl:254
-msgid "Spelling Dictionary:"
-msgstr "Правописен речник:"
-
-#: lib/option.tcl:284
-msgid "Change Font"
-msgstr "Смяна на шрифта"
-
-#: lib/option.tcl:288
-#, tcl-format
-msgid "Choose %s"
-msgstr "Избор на „%s“"
-
-#: lib/option.tcl:294
-msgid "pt."
-msgstr "тчк."
-
-#: lib/option.tcl:308
-msgid "Preferences"
-msgstr "Настройки"
-
-#: lib/option.tcl:345
-msgid "Failed to completely save options:"
-msgstr "Неуспешно запазване на настройките:"
-
-#: lib/encoding.tcl:443
-msgid "Default"
-msgstr "Стандартното"
-
-#: lib/encoding.tcl:448
-#, tcl-format
-msgid "System (%s)"
-msgstr "Системното (%s)"
-
-#: lib/encoding.tcl:459 lib/encoding.tcl:465
-msgid "Other"
-msgstr "Друго"
-
-#: lib/mergetool.tcl:8
-msgid "Force resolution to the base version?"
-msgstr "Да се използва базовата версия"
-
-#: lib/mergetool.tcl:9
-msgid "Force resolution to this branch?"
-msgstr "Да се използва версията от този клон"
-
-#: lib/mergetool.tcl:10
-msgid "Force resolution to the other branch?"
-msgstr "Да се използва версията от другия клон"
-
-#: lib/mergetool.tcl:14
-#, tcl-format
-msgid ""
-"Note that the diff shows only conflicting changes.\n"
-"\n"
-"%s will be overwritten.\n"
-"\n"
-"This operation can be undone only by restarting the merge."
-msgstr ""
-"Разликата показва само разликите с конфликт.\n"
-"\n"
-"Файлът „%s“ ще бъде презаписан.\n"
-"\n"
-"Тази операция може да бъде отменена само чрез започване на сливането наново."
-
-#: lib/mergetool.tcl:45
-#, tcl-format
-msgid "File %s seems to have unresolved conflicts, still stage?"
-msgstr ""
-"Изглежда, че все още има некоригирани конфликти във файла „%s“. Да се добави "
-"ли файлът към индекса?"
-
-#: lib/mergetool.tcl:60
-#, tcl-format
-msgid "Adding resolution for %s"
-msgstr "Добавяне на корекция на конфликтите в „%s“"
-
-#: lib/mergetool.tcl:141
-msgid "Cannot resolve deletion or link conflicts using a tool"
-msgstr ""
-"Конфликтите при символни връзки или изтриване не могат да бъдат коригирани с "
-"външна програма."
-
-#: lib/mergetool.tcl:146
-msgid "Conflict file does not exist"
-msgstr "Файлът, в който е конфликтът, не съществува"
-
-#: lib/mergetool.tcl:246
-#, tcl-format
-msgid "Not a GUI merge tool: '%s'"
-msgstr "Това не е графична програма за сливане: „%s“"
-
-#: lib/mergetool.tcl:275
-#, tcl-format
-msgid "Unsupported merge tool '%s'"
-msgstr "Неподдържана програма за сливане: „%s“"
-
-#: lib/mergetool.tcl:310
-msgid "Merge tool is already running, terminate it?"
-msgstr "Програмата за сливане вече е стартирана. Да бъде ли изключена?"
-
-#: lib/mergetool.tcl:330
-#, tcl-format
-msgid ""
-"Error retrieving versions:\n"
-"%s"
-msgstr ""
-"Грешка при изтеглянето на версии:\n"
-"%s"
-
-#: lib/mergetool.tcl:350
-#, tcl-format
-msgid ""
-"Could not start the merge tool:\n"
-"\n"
-"%s"
-msgstr ""
-"Програмата за сливане не може да бъде стартирана:\n"
-"\n"
-"%s"
-
-#: lib/mergetool.tcl:354
-msgid "Running merge tool..."
-msgstr "Стартиране на програмата за сливане…"
-
-#: lib/mergetool.tcl:382 lib/mergetool.tcl:390
-msgid "Merge tool failed."
-msgstr "Грешка в програмата за сливане."
-
-#: lib/tools_dlg.tcl:22
-msgid "Add Tool"
-msgstr "Добавяне на команда"
-
-#: lib/tools_dlg.tcl:28
-msgid "Add New Tool Command"
-msgstr "Добавяне на команда"
-
-#: lib/tools_dlg.tcl:34
-msgid "Add globally"
-msgstr "Глобално добавяне"
-
-#: lib/tools_dlg.tcl:46
-msgid "Tool Details"
-msgstr "Подробности за командата"
-
-#: lib/tools_dlg.tcl:49
-msgid "Use '/' separators to create a submenu tree:"
-msgstr "За създаване на подменюта използвайте знака „/“ за разделител:"
-
-#: lib/tools_dlg.tcl:60
-msgid "Command:"
-msgstr "Команда:"
-
-#: lib/tools_dlg.tcl:71
-msgid "Show a dialog before running"
-msgstr "Преди изпълнение да се извежда диалогов прозорец"
-
-#: lib/tools_dlg.tcl:77
-msgid "Ask the user to select a revision (sets $REVISION)"
-msgstr "Потребителят да укаже версия (задаване на променливата $REVISION)"
-
-#: lib/tools_dlg.tcl:82
-msgid "Ask the user for additional arguments (sets $ARGS)"
-msgstr ""
-"Потребителят да укаже допълнителни аргументи (задаване на променливата $ARGS)"
-
-#: lib/tools_dlg.tcl:89
-msgid "Don't show the command output window"
-msgstr "Без показване на прозорец с изхода от командата"
-
-#: lib/tools_dlg.tcl:94
-msgid "Run only if a diff is selected ($FILENAME not empty)"
-msgstr ""
-"Стартиране само след избор на разлика (променливата $FILENAME не е празна)"
-
-#: lib/tools_dlg.tcl:118
-msgid "Please supply a name for the tool."
-msgstr "Задайте име за командата."
-
-#: lib/tools_dlg.tcl:126
-#, tcl-format
-msgid "Tool '%s' already exists."
-msgstr "Командата „%s“ вече съществува."
-
-#: lib/tools_dlg.tcl:148
-#, tcl-format
-msgid ""
-"Could not add tool:\n"
-"%s"
-msgstr ""
-"Командата не може да бъде добавена:\n"
-"%s"
-
-#: lib/tools_dlg.tcl:187
-msgid "Remove Tool"
-msgstr "Премахване на команда"
-
-#: lib/tools_dlg.tcl:193
-msgid "Remove Tool Commands"
-msgstr "Премахване на команди"
-
-#: lib/tools_dlg.tcl:198
-msgid "Remove"
-msgstr "Премахване"
-
-#: lib/tools_dlg.tcl:231
-msgid "(Blue denotes repository-local tools)"
-msgstr "(командите към локалното хранилище са обозначени в синьо)"
-
-#: lib/tools_dlg.tcl:292
-#, tcl-format
-msgid "Run Command: %s"
-msgstr "Изпълнение на командата „%s“"
-
-#: lib/tools_dlg.tcl:306
-msgid "Arguments"
-msgstr "Аргументи"
-
-#: lib/tools_dlg.tcl:336 lib/checkout_op.tcl:567 lib/merge.tcl:166
-msgid "Visualize"
-msgstr "Визуализация"
-
-#: lib/tools_dlg.tcl:341
-msgid "OK"
-msgstr "Добре"
-
-#: lib/search.tcl:48
-msgid "Find:"
-msgstr "Търсене:"
-
-#: lib/search.tcl:50
-msgid "Next"
-msgstr "Следваща поява"
-
-#: lib/search.tcl:51
-msgid "Prev"
-msgstr "Предишна поява"
-
-#: lib/search.tcl:52
-msgid "RegExp"
-msgstr "Рег. израз"
-
-#: lib/search.tcl:54
-msgid "Case"
-msgstr "Регистър"
-
-#: lib/shortcut.tcl:21 lib/shortcut.tcl:62
-msgid "Cannot write shortcut:"
-msgstr "Клавишната комбинация не може да бъде запазена:"
-
-#: lib/shortcut.tcl:137
-msgid "Cannot write icon:"
-msgstr "Иконата не може да бъде запазена:"
-
-#: lib/diff.tcl:77
-#, tcl-format
-msgid ""
-"No differences detected.\n"
-"\n"
-"%s has no changes.\n"
-"\n"
-"The modification date of this file was updated by another application, but "
-"the content within the file was not changed.\n"
-"\n"
-"A rescan will be automatically started to find other files which may have "
-"the same state."
-msgstr ""
-"Не са открити разлики.\n"
-"\n"
-"Няма промени в „%s“.\n"
-"\n"
-"Времето на промяна на файла е бил зададен от друга програма, но съдържанието "
-"му не е променено.\n"
-"\n"
-"Автоматично ще започне нова проверка дали няма други файлове в това "
-"състояние."
-
-#: lib/diff.tcl:117
-#, tcl-format
-msgid "Loading diff of %s..."
-msgstr "Зареждане на разликите в „%s“…"
-
-#: lib/diff.tcl:140
-msgid ""
-"LOCAL: deleted\n"
-"REMOTE:\n"
-msgstr ""
-"ЛОКАЛНО: изтрит\n"
-"ОТДАЛЕЧЕНО:\n"
-
-#: lib/diff.tcl:145
-msgid ""
-"REMOTE: deleted\n"
-"LOCAL:\n"
-msgstr ""
-"ОТДАЛЕЧЕНО: изтрит\n"
-"ЛОКАЛНО:\n"
-
-#: lib/diff.tcl:152
-msgid "LOCAL:\n"
-msgstr "ЛОКАЛНО:\n"
-
-#: lib/diff.tcl:155
-msgid "REMOTE:\n"
-msgstr "ОТДАЛЕЧЕНО:\n"
-
-#: lib/diff.tcl:217 lib/diff.tcl:355
-#, tcl-format
-msgid "Unable to display %s"
-msgstr "Файлът „%s“ не може да бъде показан"
-
-#: lib/diff.tcl:218
-msgid "Error loading file:"
-msgstr "Грешка при зареждане на файл:"
-
-#: lib/diff.tcl:225
-msgid "Git Repository (subproject)"
-msgstr "Хранилище на Git (подмодул)"
-
-#: lib/diff.tcl:237
-msgid "* Binary file (not showing content)."
-msgstr "● Двоичен файл (съдържанието не се показва)."
-
-#: lib/diff.tcl:242
-#, tcl-format
-msgid ""
-"* Untracked file is %d bytes.\n"
-"* Showing only first %d bytes.\n"
-msgstr ""
-"● Неследеният файл е %d байта.\n"
-"● Показват се само първите %d байта.\n"
-
-#: lib/diff.tcl:248
-#, tcl-format
-msgid ""
-"\n"
-"* Untracked file clipped here by %s.\n"
-"* To see the entire file, use an external editor.\n"
-msgstr ""
-"\n"
-"● Неследеният файл е отрязан дотук от програмата „%s“.\n"
-"● Използвайте външен редактор, за да видите целия файл.\n"
-
-#: lib/diff.tcl:356 lib/blame.tcl:1128
-msgid "Error loading diff:"
-msgstr "Грешка при зареждане на разлика:"
-
-#: lib/diff.tcl:578
-msgid "Failed to unstage selected hunk."
-msgstr "Избраното парче не може да бъде извадено от индекса."
-
-#: lib/diff.tcl:585
-msgid "Failed to stage selected hunk."
-msgstr "Избраното парче не може да бъде добавено към индекса."
-
-#: lib/diff.tcl:664
-msgid "Failed to unstage selected line."
-msgstr "Избраният ред не може да бъде изваден от индекса."
-
-#: lib/diff.tcl:672
-msgid "Failed to stage selected line."
-msgstr "Избраният ред не може да бъде добавен към индекса."
-
-#: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
-msgid "Delete Branch Remotely"
-msgstr "Изтриване на отдалечения клон"
-
-#: lib/remote_branch_delete.tcl:48
-msgid "From Repository"
-msgstr "От хранилище"
-
-#: lib/remote_branch_delete.tcl:88
-msgid "Branches"
-msgstr "Клони"
-
-#: lib/remote_branch_delete.tcl:110
-msgid "Delete Only If"
-msgstr "Изтриване, само ако"
-
-#: lib/remote_branch_delete.tcl:112
-msgid "Merged Into:"
-msgstr "Слят в:"
-
-#: lib/remote_branch_delete.tcl:120 lib/branch_delete.tcl:53
-msgid "Always (Do not perform merge checks)"
-msgstr "Винаги (без проверка за сливане)"
-
-#: lib/remote_branch_delete.tcl:153
-msgid "A branch is required for 'Merged Into'."
-msgstr "За данните „Слят в“ е необходимо да зададете клон."
-
-#: lib/remote_branch_delete.tcl:185
-#, tcl-format
-msgid ""
-"The following branches are not completely merged into %s:\n"
-"\n"
-" - %s"
-msgstr ""
-"Следните клони не са слети напълно в „%s“:\n"
-"\n"
-" ● %s"
-
-#: lib/remote_branch_delete.tcl:190
-#, tcl-format
-msgid ""
-"One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
-msgstr ""
-"Поне една от пробите за сливане е неуспешна, защото не сте доставили всички "
-"необходими подавания. Пробвайте първо да доставите подаванията от „%s“."
-
-#: lib/remote_branch_delete.tcl:208
-msgid "Please select one or more branches to delete."
-msgstr "Изберете поне един клон за изтриване."
-
-#: lib/remote_branch_delete.tcl:218 lib/branch_delete.tcl:115
-msgid ""
-"Recovering deleted branches is difficult.\n"
-"\n"
-"Delete the selected branches?"
-msgstr ""
-"Възстановяването на изтрити клони може да е трудно.\n"
-"\n"
-"Сигурни ли сте, че искате да триете?"
-
-#: lib/remote_branch_delete.tcl:227
-#, tcl-format
-msgid "Deleting branches from %s"
-msgstr "Изтриване на клони от „%s“"
-
-#: lib/remote_branch_delete.tcl:300
-msgid "No repository selected."
-msgstr "Не е избрано хранилище."
-
-#: lib/remote_branch_delete.tcl:305
-#, tcl-format
-msgid "Scanning %s..."
-msgstr "Претърсване на „%s“…"
 
 #: lib/choose_repository.tcl:33
 msgid "Git Gui"
@@ -1641,10 +1152,6 @@ msgstr "Отваряне на хранилище ползвано наскоро
 #, tcl-format
 msgid "Failed to create repository %s:"
 msgstr "Неуспешно създаване на хранилището „%s“:"
-
-#: lib/choose_repository.tcl:407 lib/branch_create.tcl:33
-msgid "Create"
-msgstr "Създаване"
 
 #: lib/choose_repository.tcl:417
 msgid "Directory:"
@@ -1830,7 +1337,7 @@ msgstr "Подмодулите не могат да се клонират."
 
 #: lib/choose_repository.tcl:990
 msgid "Cloning submodules"
-msgstr "Клониране на подмодулите"
+msgstr "Клониране на подмодули"
 
 #: lib/choose_repository.tcl:1015
 msgid "Initial file checkout failed."
@@ -1848,208 +1355,6 @@ msgstr "Хранилище:"
 #, tcl-format
 msgid "Failed to open repository %s:"
 msgstr "Неуспешно отваряне на хранилището „%s“:"
-
-#: lib/about.tcl:26
-msgid "git-gui - a graphical user interface for Git."
-msgstr "git-gui — графичен интерфейс за Git."
-
-#: lib/checkout_op.tcl:85
-#, tcl-format
-msgid "Fetching %s from %s"
-msgstr "Доставяне на „%s“ от „%s“"
-
-#: lib/checkout_op.tcl:133
-#, tcl-format
-msgid "fatal: Cannot resolve %s"
-msgstr "фатална грешка: „%s“ не може да се открие"
-
-#: lib/checkout_op.tcl:175
-#, tcl-format
-msgid "Branch '%s' does not exist."
-msgstr "Клонът „%s“ не съществува."
-
-#: lib/checkout_op.tcl:194
-#, tcl-format
-msgid "Failed to configure simplified git-pull for '%s'."
-msgstr "Неуспешно настройване на опростен git-pull за „%s“."
-
-#: lib/checkout_op.tcl:229
-#, tcl-format
-msgid ""
-"Branch '%s' already exists.\n"
-"\n"
-"It cannot fast-forward to %s.\n"
-"A merge is required."
-msgstr ""
-"Клонът „%s“ съществува.\n"
-"\n"
-"Той не може да бъде тривиално слят до „%s“.\n"
-"Необходимо е сливане."
-
-#: lib/checkout_op.tcl:243
-#, tcl-format
-msgid "Merge strategy '%s' not supported."
-msgstr "Стратегия за сливане  „%s“ не се поддържа."
-
-#: lib/checkout_op.tcl:262
-#, tcl-format
-msgid "Failed to update '%s'."
-msgstr "Неуспешно обновяване на „%s“."
-
-#: lib/checkout_op.tcl:274
-msgid "Staging area (index) is already locked."
-msgstr "Индексът вече е заключен."
-
-#: lib/checkout_op.tcl:289
-msgid ""
-"Last scanned state does not match repository state.\n"
-"\n"
-"Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before the current branch can be changed.\n"
-"\n"
-"The rescan will be automatically started now.\n"
-msgstr ""
-"Състоянието при последната проверка не отговаря на състоянието на "
-"хранилището.\n"
-"\n"
-"Някой друг процес за Git е променил хранилището междувременно. Състоянието "
-"трябва да бъде проверено, преди да се премине към нов клон.\n"
-"\n"
-"Автоматично ще започне нова проверка.\n"
-
-#: lib/checkout_op.tcl:345
-#, tcl-format
-msgid "Updating working directory to '%s'..."
-msgstr "Работната директория се привежда към „%s“…"
-
-#: lib/checkout_op.tcl:346
-msgid "files checked out"
-msgstr "файла са изтеглени"
-
-#: lib/checkout_op.tcl:376
-#, tcl-format
-msgid "Aborted checkout of '%s' (file level merging is required)."
-msgstr ""
-"Преустановяване на изтеглянето на „%s“ (необходимо е пофайлово сливане)."
-
-#: lib/checkout_op.tcl:377
-msgid "File level merge required."
-msgstr "Необходимо е пофайлово сливане."
-
-#: lib/checkout_op.tcl:381
-#, tcl-format
-msgid "Staying on branch '%s'."
-msgstr "Оставане върху клона „%s“."
-
-#: lib/checkout_op.tcl:452
-msgid ""
-"You are no longer on a local branch.\n"
-"\n"
-"If you wanted to be on a branch, create one now starting from 'This Detached "
-"Checkout'."
-msgstr ""
-"Вече не сте на локален клон.\n"
-"\n"
-"Ако искате да сте на клон, създайте базиран на „Това несвързано изтегляне“."
-
-#: lib/checkout_op.tcl:503 lib/checkout_op.tcl:507
-#, tcl-format
-msgid "Checked out '%s'."
-msgstr "„%s“ е изтеглен."
-
-#: lib/checkout_op.tcl:535
-#, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
-msgstr ""
-"Зануляването на „%s“ към „%s“ ще доведе до загубването на следните подавания:"
-
-#: lib/checkout_op.tcl:557
-msgid "Recovering lost commits may not be easy."
-msgstr "Възстановяването на загубените подавания може да е трудно."
-
-#: lib/checkout_op.tcl:562
-#, tcl-format
-msgid "Reset '%s'?"
-msgstr "Зануляване на „%s“?"
-
-#: lib/checkout_op.tcl:571 lib/branch_create.tcl:85
-msgid "Reset"
-msgstr "Отначало"
-
-#: lib/checkout_op.tcl:635
-#, tcl-format
-msgid ""
-"Failed to set current branch.\n"
-"\n"
-"This working directory is only partially switched.  We successfully updated "
-"your files, but failed to update an internal Git file.\n"
-"\n"
-"This should not have occurred.  %s will now close and give up."
-msgstr ""
-"Неуспешно задаване на текущия клон.\n"
-"\n"
-"Работната директория е само частично обновена: файловете са обновени "
-"успешно, но някой от вътрешните, служебни файлове на Git не е бил.\n"
-"\n"
-"Това състояние е аварийно и не трябва да се случва. Програмата „%s“ ще "
-"преустанови работа."
-
-#: lib/branch_create.tcl:23
-msgid "Create Branch"
-msgstr "Създаване на клон"
-
-#: lib/branch_create.tcl:28
-msgid "Create New Branch"
-msgstr "Създаване на нов клон"
-
-#: lib/branch_create.tcl:42
-msgid "Branch Name"
-msgstr "Име на клона"
-
-#: lib/branch_create.tcl:57
-msgid "Match Tracking Branch Name"
-msgstr "Съвпадане по името на следения клон"
-
-#: lib/branch_create.tcl:66
-msgid "Starting Revision"
-msgstr "Начална версия"
-
-#: lib/branch_create.tcl:72
-msgid "Update Existing Branch:"
-msgstr "Обновяване на съществуващ клон:"
-
-#: lib/branch_create.tcl:75
-msgid "No"
-msgstr "Не"
-
-#: lib/branch_create.tcl:80
-msgid "Fast Forward Only"
-msgstr "Само тривиално превъртащо сливане"
-
-#: lib/branch_create.tcl:97
-msgid "Checkout After Creation"
-msgstr "Преминаване към клона след създаването му"
-
-#: lib/branch_create.tcl:132
-msgid "Please select a tracking branch."
-msgstr "Изберете клон за следени."
-
-#: lib/branch_create.tcl:141
-#, tcl-format
-msgid "Tracking branch %s is not a branch in the remote repository."
-msgstr "Следящият клон — „%s“, не съществува в отдалеченото хранилище."
-
-#: lib/console.tcl:59
-msgid "Working... please wait..."
-msgstr "В момента се извършва действие, изчакайте…"
-
-#: lib/console.tcl:186
-msgid "Success"
-msgstr "Успех"
-
-#: lib/console.tcl:200
-msgid "Error: Command Failed"
-msgstr "Грешка: неуспешно изпълнение на команда"
 
 #: lib/choose_rev.tcl:52
 msgid "This Detached Checkout"
@@ -2091,14 +1396,6 @@ msgstr "Обновен"
 #: lib/choose_rev.tcl:565
 msgid "URL"
 msgstr "Адрес"
-
-#: lib/line.tcl:17
-msgid "Goto Line:"
-msgstr "Към ред:"
-
-#: lib/line.tcl:23
-msgid "Go"
-msgstr "Придвижване"
 
 #: lib/commit.tcl:9
 msgid ""
@@ -2228,12 +1525,12 @@ msgid ""
 " \n"
 " Do you really want to proceed with your Commit?"
 msgstr ""
-"Ще подавате към несвързан връх. Това е опасно — при изтеглянето на друг клон "
-"ще изгубите промените си. След това може да е невъзможно да ги възстановите "
-"от журнала на указателите „reflog“. Най-вероятно трябва да отмените това "
-"подаване и да създадете клон, в който да подадете.\n"
+"Ще подадете към несвързан, отделѐн указател „HEAD“. Това е опасно, защото "
+"при преминаването към клон ще загубите промените си, като единственият начин "
+"да ги върнете ще е чрез журнала на указателите (reflog). Най-вероятно трябва "
+"да не правите това подаване, а да създадете нов клон, преди да продължите.\n"
 " \n"
-"Сигурни ли сте, че искате да подадете към несвързан връх?"
+"Сигурни ли сте, че искате да извършите текущото подаване?"
 
 #: lib/commit.tcl:290
 msgid "Calling commit-msg hook..."
@@ -2251,7 +1548,7 @@ msgstr "Подаване на промените…"
 msgid "write-tree failed:"
 msgstr "неуспешно запазване на дървото (write-tree):"
 
-#: lib/commit.tcl:335 lib/commit.tcl:379 lib/commit.tcl:400
+#: lib/commit.tcl:335 lib/commit.tcl:382 lib/commit.tcl:403
 msgid "Commit failed."
 msgstr "Неуспешно подаване."
 
@@ -2279,153 +1576,241 @@ msgstr ""
 msgid "No changes to commit."
 msgstr "Няма промени за подаване."
 
-#: lib/commit.tcl:378
+#: lib/commit.tcl:381
 msgid "commit-tree failed:"
 msgstr "неуспешно подаване на дървото (commit-tree):"
 
-#: lib/commit.tcl:399
+#: lib/commit.tcl:402
 msgid "update-ref failed:"
 msgstr "неуспешно обновяване на указателите (update-ref):"
 
-#: lib/commit.tcl:492
+#: lib/commit.tcl:495
 #, tcl-format
 msgid "Created commit %s: %s"
 msgstr "Успешно подаване %s: %s"
 
-#: lib/branch_delete.tcl:16
-msgid "Delete Branch"
-msgstr "Изтриване на клон"
+#: lib/console.tcl:59
+msgid "Working... please wait..."
+msgstr "В момента се извършва действие, изчакайте…"
 
-#: lib/branch_delete.tcl:21
-msgid "Delete Local Branch"
-msgstr "Изтриване на локален клон"
+#: lib/console.tcl:186
+msgid "Success"
+msgstr "Успех"
 
-#: lib/branch_delete.tcl:39
-msgid "Local Branches"
-msgstr "Локални клони"
+#: lib/console.tcl:200
+msgid "Error: Command Failed"
+msgstr "Грешка: неуспешно изпълнение на команда"
 
-#: lib/branch_delete.tcl:51
-msgid "Delete Only If Merged Into"
-msgstr "Изтриване, само ако промените са слети и другаде"
+#: lib/database.tcl:42
+msgid "Number of loose objects"
+msgstr "Брой непакетирани обекти"
 
-#: lib/branch_delete.tcl:103
+#: lib/database.tcl:43
+msgid "Disk space used by loose objects"
+msgstr "Дисково пространство заето от непакетирани обекти"
+
+#: lib/database.tcl:44
+msgid "Number of packed objects"
+msgstr "Брой пакетирани обекти"
+
+#: lib/database.tcl:45
+msgid "Number of packs"
+msgstr "Брой пакети"
+
+#: lib/database.tcl:46
+msgid "Disk space used by packed objects"
+msgstr "Дисково пространство заето от пакетирани обекти"
+
+#: lib/database.tcl:47
+msgid "Packed objects waiting for pruning"
+msgstr "Пакетирани обекти за окастряне"
+
+#: lib/database.tcl:48
+msgid "Garbage files"
+msgstr "Файлове за боклука"
+
+#: lib/database.tcl:57 lib/option.tcl:182 lib/option.tcl:197 lib/option.tcl:220
+#: lib/option.tcl:282
 #, tcl-format
-msgid "The following branches are not completely merged into %s:"
-msgstr "Не всички промени в клоните са слети в „%s“:"
+msgid "%s:"
+msgstr "%s:"
 
-#: lib/branch_delete.tcl:141
+#: lib/database.tcl:66
+#, tcl-format
+msgid "%s (%s): Database Statistics"
+msgstr "%s (%s): Статистика на базата от данни"
+
+#: lib/database.tcl:72
+msgid "Compressing the object database"
+msgstr "Компресиране на базата с данни за обектите"
+
+#: lib/database.tcl:83
+msgid "Verifying the object database with fsck-objects"
+msgstr "Проверка на базата с данни за обектите с програмата „fsck-objects“"
+
+#: lib/database.tcl:107
 #, tcl-format
 msgid ""
-"Failed to delete branches:\n"
-"%s"
+"This repository currently has approximately %i loose objects.\n"
+"\n"
+"To maintain optimal performance it is strongly recommended that you compress "
+"the database.\n"
+"\n"
+"Compress the database now?"
 msgstr ""
-"Неуспешно триене на клони:\n"
-"%s"
+"В това хранилище в момента има към %i непакетирани обекти.\n"
+"\n"
+"За добра производителност се препоръчва да компресирате базата с данни за "
+"обектите.\n"
+"\n"
+"Да се започне ли компресирането?"
 
-#: lib/blame.tcl:73
-msgid "File Viewer"
-msgstr "Преглед на файлове"
-
-#: lib/blame.tcl:79
-msgid "Commit:"
-msgstr "Подаване:"
-
-#: lib/blame.tcl:280
-msgid "Copy Commit"
-msgstr "Копиране на подаване"
-
-#: lib/blame.tcl:284
-msgid "Find Text..."
-msgstr "Търсене на текст…"
-
-#: lib/blame.tcl:288
-msgid "Goto Line..."
-msgstr "Към ред…"
-
-#: lib/blame.tcl:297
-msgid "Do Full Copy Detection"
-msgstr "Пълно търсене на копиране"
-
-#: lib/blame.tcl:301
-msgid "Show History Context"
-msgstr "Показване на контекста от историята"
-
-#: lib/blame.tcl:304
-msgid "Blame Parent Commit"
-msgstr "Анотиране на родителското подаване"
-
-#: lib/blame.tcl:466
+#: lib/date.tcl:25
 #, tcl-format
-msgid "Reading %s..."
-msgstr "Чете се „%s“…"
+msgid "Invalid date from Git: %s"
+msgstr "Неправилни данни от Git: %s"
 
-#: lib/blame.tcl:594
-msgid "Loading copy/move tracking annotations..."
-msgstr "Зареждане на анотациите за проследяване на копирането/преместването…"
+#: lib/diff.tcl:77
+#, tcl-format
+msgid ""
+"No differences detected.\n"
+"\n"
+"%s has no changes.\n"
+"\n"
+"The modification date of this file was updated by another application, but "
+"the content within the file was not changed.\n"
+"\n"
+"A rescan will be automatically started to find other files which may have "
+"the same state."
+msgstr ""
+"Не са открити разлики.\n"
+"\n"
+"Няма промени в „%s“.\n"
+"\n"
+"Времето на промяна на файла е бил зададен от друга програма, но съдържанието "
+"му не е променено.\n"
+"\n"
+"Автоматично ще започне нова проверка дали няма други файлове в това "
+"състояние."
 
-#: lib/blame.tcl:614
-msgid "lines annotated"
-msgstr "реда анотирани"
+#: lib/diff.tcl:117
+#, tcl-format
+msgid "Loading diff of %s..."
+msgstr "Зареждане на разликите в „%s“…"
 
-#: lib/blame.tcl:806
-msgid "Loading original location annotations..."
-msgstr "Зареждане на анотациите за първоначалното местоположение…"
+#: lib/diff.tcl:143
+msgid ""
+"LOCAL: deleted\n"
+"REMOTE:\n"
+msgstr ""
+"ЛОКАЛНО: изтрит\n"
+"ОТДАЛЕЧЕНО:\n"
 
-#: lib/blame.tcl:809
-msgid "Annotation complete."
-msgstr "Анотирането завърши."
+#: lib/diff.tcl:148
+msgid ""
+"REMOTE: deleted\n"
+"LOCAL:\n"
+msgstr ""
+"ОТДАЛЕЧЕНО: изтрит\n"
+"ЛОКАЛНО:\n"
 
-#: lib/blame.tcl:839
-msgid "Busy"
-msgstr "Операцията не е завършила"
+#: lib/diff.tcl:155
+msgid "LOCAL:\n"
+msgstr "ЛОКАЛНО:\n"
 
-#: lib/blame.tcl:840
-msgid "Annotation process is already running."
-msgstr "В момента тече процес на анотиране."
+#: lib/diff.tcl:158
+msgid "REMOTE:\n"
+msgstr "ОТДАЛЕЧЕНО:\n"
 
-#: lib/blame.tcl:879
-msgid "Running thorough copy detection..."
-msgstr "Изпълнява се цялостен процес на откриване на копиране…"
+#: lib/diff.tcl:220 lib/diff.tcl:357
+#, tcl-format
+msgid "Unable to display %s"
+msgstr "Файлът „%s“ не може да бъде показан"
 
-#: lib/blame.tcl:947
-msgid "Loading annotation..."
-msgstr "Зареждане на анотации…"
+#: lib/diff.tcl:221
+msgid "Error loading file:"
+msgstr "Грешка при зареждане на файл:"
 
-#: lib/blame.tcl:1000
-msgid "Author:"
-msgstr "Автор:"
+#: lib/diff.tcl:227
+msgid "Git Repository (subproject)"
+msgstr "Хранилище на Git (подмодул)"
 
-#: lib/blame.tcl:1004
-msgid "Committer:"
-msgstr "Подал:"
+#: lib/diff.tcl:239
+msgid "* Binary file (not showing content)."
+msgstr "● Двоичен файл (съдържанието не се показва)."
 
-#: lib/blame.tcl:1009
-msgid "Original File:"
-msgstr "Първоначален файл:"
+#: lib/diff.tcl:244
+#, tcl-format
+msgid ""
+"* Untracked file is %d bytes.\n"
+"* Showing only first %d bytes.\n"
+msgstr ""
+"● Неследеният файл е %d байта.\n"
+"● Показват се само първите %d байта.\n"
 
-#: lib/blame.tcl:1057
-msgid "Cannot find HEAD commit:"
-msgstr "Подаването за връх „HEAD“ не може да се открие:"
+#: lib/diff.tcl:250
+#, tcl-format
+msgid ""
+"\n"
+"* Untracked file clipped here by %s.\n"
+"* To see the entire file, use an external editor.\n"
+msgstr ""
+"\n"
+"● Неследеният файл е отрязан дотук от програмата „%s“.\n"
+"● Използвайте външен редактор, за да видите целия файл.\n"
 
-#: lib/blame.tcl:1112
-msgid "Cannot find parent commit:"
-msgstr "Родителското подаване не може да бъде открито"
+#: lib/diff.tcl:580
+msgid "Failed to unstage selected hunk."
+msgstr "Избраното парче не може да бъде извадено от индекса."
 
-#: lib/blame.tcl:1127
-msgid "Unable to display parent"
-msgstr "Родителят не може да бъде показан"
+#: lib/diff.tcl:587
+msgid "Failed to stage selected hunk."
+msgstr "Избраното парче не може да бъде добавено към индекса."
 
-#: lib/blame.tcl:1269
-msgid "Originally By:"
-msgstr "Първоначално от:"
+#: lib/diff.tcl:666
+msgid "Failed to unstage selected line."
+msgstr "Избраният ред не може да бъде изваден от индекса."
 
-#: lib/blame.tcl:1275
-msgid "In File:"
-msgstr "Във файл:"
+#: lib/diff.tcl:674
+msgid "Failed to stage selected line."
+msgstr "Избраният ред не може да бъде добавен към индекса."
 
-#: lib/blame.tcl:1280
-msgid "Copied Or Moved Here By:"
-msgstr "Копирано или преместено тук от:"
+#: lib/encoding.tcl:443
+msgid "Default"
+msgstr "Стандартното"
+
+#: lib/encoding.tcl:448
+#, tcl-format
+msgid "System (%s)"
+msgstr "Системното (%s)"
+
+#: lib/encoding.tcl:459 lib/encoding.tcl:465
+msgid "Other"
+msgstr "Друго"
+
+#: lib/error.tcl:20
+#, tcl-format
+msgid "%s: error"
+msgstr "%s: грешка"
+
+#: lib/error.tcl:36
+#, tcl-format
+msgid "%s: warning"
+msgstr "%s: предупреждение"
+
+#: lib/error.tcl:80
+#, tcl-format
+msgid "%s hook failed:"
+msgstr "%s: грешка от куката"
+
+#: lib/error.tcl:96
+msgid "You must correct the above errors before committing."
+msgstr "Преди да можете да подадете, коригирайте горните грешки."
+
+#: lib/error.tcl:116
+#, tcl-format
+msgid "%s (%s): error"
+msgstr "%s (%s): грешка"
 
 #: lib/index.tcl:6
 msgid "Unable to unlock the index."
@@ -2451,6 +1836,10 @@ msgstr "Продължаване"
 msgid "Unlock Index"
 msgstr "Отключване на индекса"
 
+#: lib/index.tcl:294
+msgid "Unstaging selected files from commit"
+msgstr "Изваждане на избраните файлове от подаването"
+
 #: lib/index.tcl:298
 #, tcl-format
 msgid "Unstaging %s from commit"
@@ -2460,6 +1849,10 @@ msgstr "Изваждане на „%s“ от подаването"
 msgid "Ready to commit."
 msgstr "Готовност за подаване."
 
+#: lib/index.tcl:346
+msgid "Adding selected files"
+msgstr "Добавяне на избраните файлове"
+
 #: lib/index.tcl:350
 #, tcl-format
 msgid "Adding %s"
@@ -2468,7 +1861,11 @@ msgstr "Добавяне на „%s“"
 #: lib/index.tcl:380
 #, tcl-format
 msgid "Stage %d untracked files?"
-msgstr "Да се вкарат ли %d неследени файла в индекса?"
+msgstr "Да се добавят ли %d неследени файла към индекса?"
+
+#: lib/index.tcl:388
+msgid "Adding all changed files"
+msgstr "Добавяне на всички променени файлове"
 
 #: lib/index.tcl:428
 #, tcl-format
@@ -2499,75 +1896,13 @@ msgstr "Махане на промените в избраните файлов�
 msgid "Reverting %s"
 msgstr "Махане на промените в „%s“"
 
-#: lib/date.tcl:25
-#, tcl-format
-msgid "Invalid date from Git: %s"
-msgstr "Неправилни данни от Git: %s"
+#: lib/line.tcl:17
+msgid "Goto Line:"
+msgstr "Към ред:"
 
-#: lib/database.tcl:42
-msgid "Number of loose objects"
-msgstr "Брой непакетирани обекти"
-
-#: lib/database.tcl:43
-msgid "Disk space used by loose objects"
-msgstr "Дисково пространство заето от непакетирани обекти"
-
-#: lib/database.tcl:44
-msgid "Number of packed objects"
-msgstr "Брой пакетирани обекти"
-
-#: lib/database.tcl:45
-msgid "Number of packs"
-msgstr "Брой пакети"
-
-#: lib/database.tcl:46
-msgid "Disk space used by packed objects"
-msgstr "Дисково пространство заето от пакетирани обекти"
-
-#: lib/database.tcl:47
-msgid "Packed objects waiting for pruning"
-msgstr "Пакетирани обекти за окастряне"
-
-#: lib/database.tcl:48
-msgid "Garbage files"
-msgstr "Файлове за боклука"
-
-#: lib/database.tcl:72
-msgid "Compressing the object database"
-msgstr "Компресиране на базата с данни за обектите"
-
-#: lib/database.tcl:83
-msgid "Verifying the object database with fsck-objects"
-msgstr "Проверка на базата с данни за обектите с програмата „fsck-objects“"
-
-#: lib/database.tcl:107
-#, tcl-format
-msgid ""
-"This repository currently has approximately %i loose objects.\n"
-"\n"
-"To maintain optimal performance it is strongly recommended that you compress "
-"the database.\n"
-"\n"
-"Compress the database now?"
-msgstr ""
-"В това хранилище в момента има към %i непакетирани обекти.\n"
-"\n"
-"За добра производителност се препоръчва да компресирате базата с данни за "
-"обектите.\n"
-"\n"
-"Да се започне ли компресирането?"
-
-#: lib/error.tcl:20 lib/error.tcl:116
-msgid "error"
-msgstr "грешка"
-
-#: lib/error.tcl:36
-msgid "warning"
-msgstr "предупреждение"
-
-#: lib/error.tcl:96
-msgid "You must correct the above errors before committing."
-msgstr "Преди да можете да подадете, коригирайте горните грешки."
+#: lib/line.tcl:23
+msgid "Go"
+msgstr "Придвижване"
 
 #: lib/merge.tcl:13
 msgid ""
@@ -2637,29 +1972,34 @@ msgstr ""
 msgid "%s of %s"
 msgstr "%s от общо %s"
 
-#: lib/merge.tcl:122
+#: lib/merge.tcl:126
 #, tcl-format
 msgid "Merging %s and %s..."
 msgstr "Сливане на „%s“ и „%s“…"
 
-#: lib/merge.tcl:133
+#: lib/merge.tcl:137
 msgid "Merge completed successfully."
 msgstr "Сливането завърши успешно."
 
-#: lib/merge.tcl:135
+#: lib/merge.tcl:139
 msgid "Merge failed.  Conflict resolution is required."
 msgstr "Неуспешно сливане — има конфликти за коригиране."
 
-#: lib/merge.tcl:160
+#: lib/merge.tcl:156
+#, tcl-format
+msgid "%s (%s): Merge"
+msgstr "%s (%s): Сливане"
+
+#: lib/merge.tcl:164
 #, tcl-format
 msgid "Merge Into %s"
 msgstr "Сливане в „%s“"
 
-#: lib/merge.tcl:179
+#: lib/merge.tcl:183
 msgid "Revision To Merge"
 msgstr "Версия за сливане"
 
-#: lib/merge.tcl:214
+#: lib/merge.tcl:218
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
@@ -2669,7 +2009,7 @@ msgstr ""
 "\n"
 "Трябва да завършите поправката на това подаване.\n"
 
-#: lib/merge.tcl:224
+#: lib/merge.tcl:228
 msgid ""
 "Abort merge?\n"
 "\n"
@@ -2683,7 +2023,7 @@ msgstr ""
 "\n"
 "Наистина ли да се преустанови сливането?"
 
-#: lib/merge.tcl:230
+#: lib/merge.tcl:234
 msgid ""
 "Reset changes?\n"
 "\n"
@@ -2697,18 +2037,771 @@ msgstr ""
 "\n"
 "Наистина ли да се занулят промените?"
 
-#: lib/merge.tcl:241
+#: lib/merge.tcl:245
 msgid "Aborting"
 msgstr "Преустановяване"
 
-#: lib/merge.tcl:241
+#: lib/merge.tcl:245
 msgid "files reset"
 msgstr "файла със занулени промени"
 
-#: lib/merge.tcl:269
+#: lib/merge.tcl:273
 msgid "Abort failed."
 msgstr "Неуспешно преустановяване."
 
-#: lib/merge.tcl:271
+#: lib/merge.tcl:275
 msgid "Abort completed.  Ready."
 msgstr "Успешно преустановяване. Готовност за следващо действие."
+
+#: lib/mergetool.tcl:8
+msgid "Force resolution to the base version?"
+msgstr "Да се използва базовата версия"
+
+#: lib/mergetool.tcl:9
+msgid "Force resolution to this branch?"
+msgstr "Да се използва версията от този клон"
+
+#: lib/mergetool.tcl:10
+msgid "Force resolution to the other branch?"
+msgstr "Да се използва версията от другия клон"
+
+#: lib/mergetool.tcl:14
+#, tcl-format
+msgid ""
+"Note that the diff shows only conflicting changes.\n"
+"\n"
+"%s will be overwritten.\n"
+"\n"
+"This operation can be undone only by restarting the merge."
+msgstr ""
+"Разликата показва само разликите с конфликт.\n"
+"\n"
+"Файлът „%s“ ще бъде презаписан.\n"
+"\n"
+"Тази операция може да бъде отменена само чрез започване на сливането наново."
+
+#: lib/mergetool.tcl:45
+#, tcl-format
+msgid "File %s seems to have unresolved conflicts, still stage?"
+msgstr ""
+"Изглежда, че все още има некоригирани конфликти във файла „%s“. Да се добави "
+"ли файлът към индекса?"
+
+#: lib/mergetool.tcl:60
+#, tcl-format
+msgid "Adding resolution for %s"
+msgstr "Добавяне на корекция на конфликтите в „%s“"
+
+#: lib/mergetool.tcl:141
+msgid "Cannot resolve deletion or link conflicts using a tool"
+msgstr ""
+"Конфликтите при символни връзки или изтриване не могат да бъдат коригирани с "
+"външна програма."
+
+#: lib/mergetool.tcl:146
+msgid "Conflict file does not exist"
+msgstr "Файлът, в който е конфликтът, не съществува"
+
+#: lib/mergetool.tcl:246
+#, tcl-format
+msgid "Not a GUI merge tool: '%s'"
+msgstr "Това не е графична програма за сливане: „%s“"
+
+#: lib/mergetool.tcl:275
+#, tcl-format
+msgid "Unsupported merge tool '%s'"
+msgstr "Неподдържана програма за сливане: „%s“"
+
+#: lib/mergetool.tcl:310
+msgid "Merge tool is already running, terminate it?"
+msgstr "Програмата за сливане вече е стартирана. Да бъде ли изключена?"
+
+#: lib/mergetool.tcl:330
+#, tcl-format
+msgid ""
+"Error retrieving versions:\n"
+"%s"
+msgstr ""
+"Грешка при изтеглянето на версии:\n"
+"%s"
+
+#: lib/mergetool.tcl:350
+#, tcl-format
+msgid ""
+"Could not start the merge tool:\n"
+"\n"
+"%s"
+msgstr ""
+"Програмата за сливане не може да бъде стартирана:\n"
+"\n"
+"%s"
+
+#: lib/mergetool.tcl:354
+msgid "Running merge tool..."
+msgstr "Стартиране на програмата за сливане…"
+
+#: lib/mergetool.tcl:382 lib/mergetool.tcl:390
+msgid "Merge tool failed."
+msgstr "Грешка в програмата за сливане."
+
+#: lib/option.tcl:11
+#, tcl-format
+msgid "Invalid global encoding '%s'"
+msgstr "Неправилно глобално кодиране „%s“"
+
+#: lib/option.tcl:19
+#, tcl-format
+msgid "Invalid repo encoding '%s'"
+msgstr "Неправилно кодиране „%s“ на хранилището"
+
+#: lib/option.tcl:119
+msgid "Restore Defaults"
+msgstr "Стандартни настройки"
+
+#: lib/option.tcl:123
+msgid "Save"
+msgstr "Запазване"
+
+#: lib/option.tcl:133
+#, tcl-format
+msgid "%s Repository"
+msgstr "Хранилище „%s“"
+
+#: lib/option.tcl:134
+msgid "Global (All Repositories)"
+msgstr "Глобално (за всички хранилища)"
+
+#: lib/option.tcl:140
+msgid "User Name"
+msgstr "Потребителско име"
+
+#: lib/option.tcl:141
+msgid "Email Address"
+msgstr "Адрес на е-поща"
+
+#: lib/option.tcl:143
+msgid "Summarize Merge Commits"
+msgstr "Обобщаване на подаванията при сливане"
+
+#: lib/option.tcl:144
+msgid "Merge Verbosity"
+msgstr "Подробности при сливанията"
+
+#: lib/option.tcl:145
+msgid "Show Diffstat After Merge"
+msgstr "Извеждане на статистика след сливанията"
+
+#: lib/option.tcl:146
+msgid "Use Merge Tool"
+msgstr "Използване на програма за сливане"
+
+#: lib/option.tcl:148
+msgid "Trust File Modification Timestamps"
+msgstr "Доверие във времето на промяна на файловете"
+
+#: lib/option.tcl:149
+msgid "Prune Tracking Branches During Fetch"
+msgstr "Окастряне на следящите клонове при доставяне"
+
+#: lib/option.tcl:150
+msgid "Match Tracking Branches"
+msgstr "Напасване на следящите клонове"
+
+#: lib/option.tcl:151
+msgid "Use Textconv For Diffs and Blames"
+msgstr "Използване на „textconv“ за разликите и анотирането"
+
+#: lib/option.tcl:152
+msgid "Blame Copy Only On Changed Files"
+msgstr "Анотиране на копието само по променените файлове"
+
+#: lib/option.tcl:153
+msgid "Maximum Length of Recent Repositories List"
+msgstr "Максимален брой на списъка „Скоро ползвани“ хранилища"
+
+#: lib/option.tcl:154
+msgid "Minimum Letters To Blame Copy On"
+msgstr "Минимален брой знаци за анотиране на копието"
+
+#: lib/option.tcl:155
+msgid "Blame History Context Radius (days)"
+msgstr "Исторически обхват за анотиране в дни"
+
+#: lib/option.tcl:156
+msgid "Number of Diff Context Lines"
+msgstr "Брой редове за контекста на разликите"
+
+#: lib/option.tcl:157
+msgid "Additional Diff Parameters"
+msgstr "Аргументи към командата за разликите"
+
+#: lib/option.tcl:158
+msgid "Commit Message Text Width"
+msgstr "Широчина на текста на съобщението при подаване"
+
+#: lib/option.tcl:159
+msgid "New Branch Name Template"
+msgstr "Шаблон за името на новите клони"
+
+#: lib/option.tcl:160
+msgid "Default File Contents Encoding"
+msgstr "Кодиране на файловете"
+
+#: lib/option.tcl:161
+msgid "Warn before committing to a detached head"
+msgstr "Предупреждаване при подаване към несвързан указател"
+
+#: lib/option.tcl:162
+msgid "Staging of untracked files"
+msgstr "Добавяне на неследените файлове към индекса"
+
+#: lib/option.tcl:163
+msgid "Show untracked files"
+msgstr "Показване на неследените файлове"
+
+#: lib/option.tcl:164
+msgid "Tab spacing"
+msgstr "Ширина на табулацията"
+
+#: lib/option.tcl:210
+msgid "Change"
+msgstr "Смяна"
+
+#: lib/option.tcl:254
+msgid "Spelling Dictionary:"
+msgstr "Правописен речник:"
+
+#: lib/option.tcl:284
+msgid "Change Font"
+msgstr "Смяна на шрифта"
+
+#: lib/option.tcl:288
+#, tcl-format
+msgid "Choose %s"
+msgstr "Избор на „%s“"
+
+#: lib/option.tcl:294
+msgid "pt."
+msgstr "тчк."
+
+#: lib/option.tcl:308
+msgid "Preferences"
+msgstr "Настройки"
+
+#: lib/option.tcl:345
+msgid "Failed to completely save options:"
+msgstr "Неуспешно запазване на настройките:"
+
+#: lib/remote.tcl:200
+msgid "Push to"
+msgstr "Изтласкване към"
+
+#: lib/remote.tcl:218
+msgid "Remove Remote"
+msgstr "Премахване на отдалечено хранилище"
+
+#: lib/remote.tcl:223
+msgid "Prune from"
+msgstr "Окастряне от"
+
+#: lib/remote.tcl:228
+msgid "Fetch from"
+msgstr "Доставяне от"
+
+#: lib/remote.tcl:253 lib/remote.tcl:258
+msgid "All"
+msgstr "Всички"
+
+#: lib/remote_add.tcl:20
+#, tcl-format
+msgid "%s (%s): Add Remote"
+msgstr "%s (%s): Добавяне на отдалечено хранилище"
+
+#: lib/remote_add.tcl:25
+msgid "Add New Remote"
+msgstr "Добавяне на отдалечено хранилище"
+
+#: lib/remote_add.tcl:30 lib/tools_dlg.tcl:37
+msgid "Add"
+msgstr "Добавяне"
+
+#: lib/remote_add.tcl:39
+msgid "Remote Details"
+msgstr "Данни за отдалеченото хранилище"
+
+#: lib/remote_add.tcl:50
+msgid "Location:"
+msgstr "Местоположение:"
+
+#: lib/remote_add.tcl:60
+msgid "Further Action"
+msgstr "Следващо действие"
+
+#: lib/remote_add.tcl:63
+msgid "Fetch Immediately"
+msgstr "Незабавно доставяне"
+
+#: lib/remote_add.tcl:69
+msgid "Initialize Remote Repository and Push"
+msgstr "Инициализиране на отдалеченото хранилище и изтласкване на промените"
+
+#: lib/remote_add.tcl:75
+msgid "Do Nothing Else Now"
+msgstr "Да не се прави нищо"
+
+#: lib/remote_add.tcl:100
+msgid "Please supply a remote name."
+msgstr "Задайте име за отдалеченото хранилище."
+
+#: lib/remote_add.tcl:113
+#, tcl-format
+msgid "'%s' is not an acceptable remote name."
+msgstr "Отдалечено хранилище не може да се казва „%s“."
+
+#: lib/remote_add.tcl:124
+#, tcl-format
+msgid "Failed to add remote '%s' of location '%s'."
+msgstr "Неуспешно добавяне на отдалеченото хранилище „%s“ от адрес „%s“."
+
+#: lib/remote_add.tcl:132 lib/transport.tcl:6
+#, tcl-format
+msgid "fetch %s"
+msgstr "доставяне на „%s“"
+
+#: lib/remote_add.tcl:133
+#, tcl-format
+msgid "Fetching the %s"
+msgstr "Доставяне на „%s“"
+
+#: lib/remote_add.tcl:156
+#, tcl-format
+msgid "Do not know how to initialize repository at location '%s'."
+msgstr "Хранилището с местоположение „%s“ не може да бъде инициализирано."
+
+#: lib/remote_add.tcl:162 lib/transport.tcl:54 lib/transport.tcl:92
+#: lib/transport.tcl:110
+#, tcl-format
+msgid "push %s"
+msgstr "изтласкване на „%s“"
+
+#: lib/remote_add.tcl:163
+#, tcl-format
+msgid "Setting up the %s (at %s)"
+msgstr "Добавяне на хранилище „%s“ (с адрес „%s“)"
+
+#: lib/remote_branch_delete.tcl:29
+#, tcl-format
+msgid "%s (%s): Delete Branch Remotely"
+msgstr "%s (%s): Изтриване на отдалечения клон"
+
+#: lib/remote_branch_delete.tcl:34
+msgid "Delete Branch Remotely"
+msgstr "Изтриване на отдалечения клон"
+
+#: lib/remote_branch_delete.tcl:48
+msgid "From Repository"
+msgstr "От хранилище"
+
+#: lib/remote_branch_delete.tcl:51 lib/transport.tcl:165
+msgid "Remote:"
+msgstr "Отдалечено хранилище:"
+
+#: lib/remote_branch_delete.tcl:72 lib/transport.tcl:187
+msgid "Arbitrary Location:"
+msgstr "Произволно местоположение:"
+
+#: lib/remote_branch_delete.tcl:88
+msgid "Branches"
+msgstr "Клони"
+
+#: lib/remote_branch_delete.tcl:110
+msgid "Delete Only If"
+msgstr "Изтриване, само ако"
+
+#: lib/remote_branch_delete.tcl:112
+msgid "Merged Into:"
+msgstr "Слят в:"
+
+#: lib/remote_branch_delete.tcl:153
+msgid "A branch is required for 'Merged Into'."
+msgstr "За данните „Слят в“ е необходимо да зададете клон."
+
+#: lib/remote_branch_delete.tcl:185
+#, tcl-format
+msgid ""
+"The following branches are not completely merged into %s:\n"
+"\n"
+" - %s"
+msgstr ""
+"Следните клони не са слети напълно в „%s“:\n"
+"\n"
+" ● %s"
+
+#: lib/remote_branch_delete.tcl:190
+#, tcl-format
+msgid ""
+"One or more of the merge tests failed because you have not fetched the "
+"necessary commits.  Try fetching from %s first."
+msgstr ""
+"Поне една от пробите за сливане е неуспешна, защото не сте доставили всички "
+"необходими подавания. Пробвайте първо да доставите подаванията от „%s“."
+
+#: lib/remote_branch_delete.tcl:208
+msgid "Please select one or more branches to delete."
+msgstr "Изберете поне един клон за изтриване."
+
+#: lib/remote_branch_delete.tcl:227
+#, tcl-format
+msgid "Deleting branches from %s"
+msgstr "Изтриване на клони от „%s“"
+
+#: lib/remote_branch_delete.tcl:300
+msgid "No repository selected."
+msgstr "Не е избрано хранилище."
+
+#: lib/remote_branch_delete.tcl:305
+#, tcl-format
+msgid "Scanning %s..."
+msgstr "Претърсване на „%s“…"
+
+#: lib/search.tcl:48
+msgid "Find:"
+msgstr "Търсене:"
+
+#: lib/search.tcl:50
+msgid "Next"
+msgstr "Следваща поява"
+
+#: lib/search.tcl:51
+msgid "Prev"
+msgstr "Предишна поява"
+
+#: lib/search.tcl:52
+msgid "RegExp"
+msgstr "РегИзр"
+
+#: lib/search.tcl:54
+msgid "Case"
+msgstr "Главни/малки"
+
+#: lib/shortcut.tcl:8 lib/shortcut.tcl:43 lib/shortcut.tcl:75
+#, tcl-format
+msgid "%s (%s): Create Desktop Icon"
+msgstr "%s (%s): Добавяне на икона на работния плот"
+
+#: lib/shortcut.tcl:24 lib/shortcut.tcl:65
+msgid "Cannot write shortcut:"
+msgstr "Клавишната комбинация не може да бъде запазена:"
+
+#: lib/shortcut.tcl:140
+msgid "Cannot write icon:"
+msgstr "Иконата не може да бъде запазена:"
+
+#: lib/spellcheck.tcl:57
+msgid "Unsupported spell checker"
+msgstr "Тази програма за проверка на правописа не се поддържа"
+
+#: lib/spellcheck.tcl:65
+msgid "Spell checking is unavailable"
+msgstr "Липсва програма за проверка на правописа"
+
+#: lib/spellcheck.tcl:68
+msgid "Invalid spell checking configuration"
+msgstr "Неправилни настройки на проверката на правописа"
+
+#: lib/spellcheck.tcl:70
+#, tcl-format
+msgid "Reverting dictionary to %s."
+msgstr "Ползване на речник за език „%s“."
+
+#: lib/spellcheck.tcl:73
+msgid "Spell checker silently failed on startup"
+msgstr "Програмата за правопис даже не стартира успешно."
+
+#: lib/spellcheck.tcl:80
+msgid "Unrecognized spell checker"
+msgstr "Непозната програма за проверка на правописа"
+
+#: lib/spellcheck.tcl:186
+msgid "No Suggestions"
+msgstr "Няма предложения"
+
+#: lib/spellcheck.tcl:388
+msgid "Unexpected EOF from spell checker"
+msgstr "Неочакван край на файл от програмата за проверка на правописа"
+
+#: lib/spellcheck.tcl:392
+msgid "Spell Checker Failed"
+msgstr "Грешка в програмата за проверка на правописа"
+
+#: lib/sshkey.tcl:31
+msgid "No keys found."
+msgstr "Не са открити ключове."
+
+#: lib/sshkey.tcl:34
+#, tcl-format
+msgid "Found a public key in: %s"
+msgstr "Открит е публичен ключ в „%s“"
+
+#: lib/sshkey.tcl:40
+msgid "Generate Key"
+msgstr "Генериране на ключ"
+
+#: lib/sshkey.tcl:58
+msgid "Copy To Clipboard"
+msgstr "Копиране към системния буфер"
+
+#: lib/sshkey.tcl:72
+msgid "Your OpenSSH Public Key"
+msgstr "Публичният ви ключ за OpenSSH"
+
+#: lib/sshkey.tcl:80
+msgid "Generating..."
+msgstr "Генериране…"
+
+#: lib/sshkey.tcl:86
+#, tcl-format
+msgid ""
+"Could not start ssh-keygen:\n"
+"\n"
+"%s"
+msgstr ""
+"Програмата „ssh-keygen“ не може да бъде стартирана:\n"
+"\n"
+"%s"
+
+#: lib/sshkey.tcl:113
+msgid "Generation failed."
+msgstr "Неуспешно генериране."
+
+#: lib/sshkey.tcl:120
+msgid "Generation succeeded, but no keys found."
+msgstr "Генерирането завърши успешно, а не са намерени ключове."
+
+#: lib/sshkey.tcl:123
+#, tcl-format
+msgid "Your key is in: %s"
+msgstr "Ключът ви е в „%s“"
+
+#: lib/status_bar.tcl:87
+#, tcl-format
+msgid "%s ... %*i of %*i %s (%3i%%)"
+msgstr "%s… %*i от общо %*i %s (%3i%%)"
+
+#: lib/tools.tcl:76
+#, tcl-format
+msgid "Running %s requires a selected file."
+msgstr "За изпълнението на „%s“ трябва да изберете файл."
+
+#: lib/tools.tcl:92
+#, tcl-format
+msgid "Are you sure you want to run %1$s on file \"%2$s\"?"
+msgstr "Сигурни ли сте, че искате да изпълните „%1$s“ върху файла „%2$s“?"
+
+#: lib/tools.tcl:96
+#, tcl-format
+msgid "Are you sure you want to run %s?"
+msgstr "Сигурни ли сте, че искате да изпълните „%s“?"
+
+#: lib/tools.tcl:118
+#, tcl-format
+msgid "Tool: %s"
+msgstr "Команда: %s"
+
+#: lib/tools.tcl:119
+#, tcl-format
+msgid "Running: %s"
+msgstr "Изпълнение: %s"
+
+#: lib/tools.tcl:158
+#, tcl-format
+msgid "Tool completed successfully: %s"
+msgstr "Командата завърши успешно: %s"
+
+#: lib/tools.tcl:160
+#, tcl-format
+msgid "Tool failed: %s"
+msgstr "Командата върна грешка: %s"
+
+#: lib/tools_dlg.tcl:22
+#, tcl-format
+msgid "%s (%s): Add Tool"
+msgstr "%s (%s): Добавяне на команда"
+
+#: lib/tools_dlg.tcl:28
+msgid "Add New Tool Command"
+msgstr "Добавяне на команда"
+
+#: lib/tools_dlg.tcl:34
+msgid "Add globally"
+msgstr "Глобално добавяне"
+
+#: lib/tools_dlg.tcl:46
+msgid "Tool Details"
+msgstr "Подробности за командата"
+
+#: lib/tools_dlg.tcl:49
+msgid "Use '/' separators to create a submenu tree:"
+msgstr "За създаване на подменюта използвайте знака „/“ за разделител:"
+
+#: lib/tools_dlg.tcl:60
+msgid "Command:"
+msgstr "Команда:"
+
+#: lib/tools_dlg.tcl:71
+msgid "Show a dialog before running"
+msgstr "Преди изпълнение да се извежда диалогов прозорец"
+
+#: lib/tools_dlg.tcl:77
+msgid "Ask the user to select a revision (sets $REVISION)"
+msgstr "Потребителят да укаже версия (задаване на променливата $REVISION)"
+
+#: lib/tools_dlg.tcl:82
+msgid "Ask the user for additional arguments (sets $ARGS)"
+msgstr ""
+"Потребителят да укаже допълнителни аргументи (задаване на променливата $ARGS)"
+
+#: lib/tools_dlg.tcl:89
+msgid "Don't show the command output window"
+msgstr "Без показване на прозорец с изхода от командата"
+
+#: lib/tools_dlg.tcl:94
+msgid "Run only if a diff is selected ($FILENAME not empty)"
+msgstr ""
+"Стартиране само след избор на разлика (променливата $FILENAME не е празна)"
+
+#: lib/tools_dlg.tcl:118
+msgid "Please supply a name for the tool."
+msgstr "Задайте име за командата."
+
+#: lib/tools_dlg.tcl:126
+#, tcl-format
+msgid "Tool '%s' already exists."
+msgstr "Командата „%s“ вече съществува."
+
+#: lib/tools_dlg.tcl:148
+#, tcl-format
+msgid ""
+"Could not add tool:\n"
+"%s"
+msgstr ""
+"Командата не може да бъде добавена:\n"
+"%s"
+
+#: lib/tools_dlg.tcl:187
+#, tcl-format
+msgid "%s (%s): Remove Tool"
+msgstr "%s (%s): Премахване на команда"
+
+#: lib/tools_dlg.tcl:193
+msgid "Remove Tool Commands"
+msgstr "Премахване на команди"
+
+#: lib/tools_dlg.tcl:198
+msgid "Remove"
+msgstr "Премахване"
+
+#: lib/tools_dlg.tcl:231
+msgid "(Blue denotes repository-local tools)"
+msgstr "(командите към локалното хранилище са обозначени в синьо)"
+
+#: lib/tools_dlg.tcl:283
+#, tcl-format
+msgid "%s (%s):"
+msgstr "%s (%s):"
+
+#: lib/tools_dlg.tcl:292
+#, tcl-format
+msgid "Run Command: %s"
+msgstr "Изпълнение на командата „%s“"
+
+#: lib/tools_dlg.tcl:306
+msgid "Arguments"
+msgstr "Аргументи"
+
+#: lib/tools_dlg.tcl:341
+msgid "OK"
+msgstr "Добре"
+
+#: lib/transport.tcl:7
+#, tcl-format
+msgid "Fetching new changes from %s"
+msgstr "Доставяне на промените от „%s“"
+
+#: lib/transport.tcl:18
+#, tcl-format
+msgid "remote prune %s"
+msgstr "окастряне на следящите клони към „%s“"
+
+#: lib/transport.tcl:19
+#, tcl-format
+msgid "Pruning tracking branches deleted from %s"
+msgstr "Окастряне на следящите клони на изтритите клони от „%s“"
+
+#: lib/transport.tcl:25
+msgid "fetch all remotes"
+msgstr "доставяне от всички отдалечени"
+
+#: lib/transport.tcl:26
+msgid "Fetching new changes from all remotes"
+msgstr "Доставяне на промените от всички отдалечени хранилища"
+
+#: lib/transport.tcl:40
+msgid "remote prune all remotes"
+msgstr "окастряне на следящите изтрити"
+
+#: lib/transport.tcl:41
+msgid "Pruning tracking branches deleted from all remotes"
+msgstr ""
+"Окастряне на следящите клони на изтритите клони от всички отдалечени "
+"хранилища"
+
+#: lib/transport.tcl:55
+#, tcl-format
+msgid "Pushing changes to %s"
+msgstr "Изтласкване на промените към „%s“"
+
+#: lib/transport.tcl:93
+#, tcl-format
+msgid "Mirroring to %s"
+msgstr "Изтласкване на всичко към „%s“"
+
+#: lib/transport.tcl:111
+#, tcl-format
+msgid "Pushing %s %s to %s"
+msgstr "Изтласкване на %s „%s“ към „%s“"
+
+#: lib/transport.tcl:132
+msgid "Push Branches"
+msgstr "Клони за изтласкване"
+
+#: lib/transport.tcl:147
+msgid "Source Branches"
+msgstr "Клони-източници"
+
+#: lib/transport.tcl:162
+msgid "Destination Repository"
+msgstr "Целево хранилище"
+
+#: lib/transport.tcl:205
+msgid "Transfer Options"
+msgstr "Настройки при пренасянето"
+
+#: lib/transport.tcl:207
+msgid "Force overwrite existing branch (may discard changes)"
+msgstr ""
+"Изрично презаписване на съществуващ клон (някои промени може да бъдат "
+"загубени)"
+
+#: lib/transport.tcl:211
+msgid "Use thin pack (for slow network connections)"
+msgstr "Максимална компресия (за бавни мрежови връзки)"
+
+#: lib/transport.tcl:215
+msgid "Include tags"
+msgstr "Включване на етикетите"
+
+#: lib/transport.tcl:229
+#, tcl-format
+msgid "%s (%s): Push"
+msgstr "%s (%s): Изтласкване"

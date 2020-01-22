@@ -12,6 +12,7 @@ use File::Basename;
 use File::Spec;
 use Cwd;
 use Generators;
+use Text::ParseWords;
 
 my (%build_structure, %compile_options, @makedry);
 my $out_dir = getcwd();
@@ -31,6 +32,7 @@ generate usage:
   -g <GENERATOR>  --gen <GENERATOR> Specify the buildsystem generator    (default: $gen)
                                     Available: $genlist
   -o <PATH>       --out <PATH>      Specify output directory generation  (default: .)
+                  --make-out <PATH> Write the output of GNU Make into a file
   -i <FILE>       --in <FILE>       Specify input file, instead of running GNU Make
   -h,-?           --help            This help
 EOM
@@ -38,6 +40,7 @@ EOM
 }
 
 # Parse command-line options
+my $make_out;
 while (@ARGV) {
     my $arg = shift @ARGV;
     if ("$arg" eq "-h" || "$arg" eq "--help" || "$arg" eq "-?") {
@@ -45,6 +48,8 @@ while (@ARGV) {
 	exit(0);
     } elsif("$arg" eq "--out" || "$arg" eq "-o") {
 	$out_dir = shift @ARGV;
+    } elsif("$arg" eq "--make-out") {
+	$make_out = shift @ARGV;
     } elsif("$arg" eq "--gen" || "$arg" eq "-g") {
 	$gen = shift @ARGV;
     } elsif("$arg" eq "--in" || "$arg" eq "-i") {
@@ -52,6 +57,8 @@ while (@ARGV) {
         open(F, "<$infile") || die "Couldn't open file $infile";
         @makedry = <F>;
         close(F);
+    } else {
+        die "Unknown option: " . $arg;
     }
 }
 
@@ -72,7 +79,19 @@ Running GNU Make to figure out build structure...
 EOM
 
 # Pipe a make --dry-run into a variable, if not already loaded from file
-@makedry = `cd $git_dir && make -n MSVC=1 V=1 2>/dev/null` if !@makedry;
+# Capture the make dry stderr to file for review (will be empty for a release build).
+
+my $ErrsFile = "msvc-build-makedryerrors.txt";
+@makedry = `make -C $git_dir -n MSVC=1 SKIP_VCPKG=1 V=1 2>$ErrsFile`
+if !@makedry;
+# test for an empty Errors file and remove it
+unlink $ErrsFile if -f -z $ErrsFile;
+
+if (defined $make_out) {
+    open OUT, ">" . $make_out;
+    print OUT @makedry;
+    close OUT;
+}
 
 # Parse the make output into usable info
 parseMakeOutput();
@@ -137,6 +156,12 @@ sub parseMakeOutput
 
         if ($text =~ /^test /) {
             # options to test (eg -o) may be mistaken for linker options
+            next;
+        }
+
+        if ($text =~ /^(mkdir|msgfmt) /) {
+            # options to the Portable Object translations
+            # the line "mkdir ... && msgfmt ..." contains no linker options
             next;
         }
 
@@ -231,7 +256,7 @@ sub removeDuplicates
 sub handleCompileLine
 {
     my ($line, $lineno) = @_;
-    my @parts = split(' ', $line);
+    my @parts = shellwords($line);
     my $sourcefile;
     shift(@parts); # ignore cmd
     while (my $part = shift @parts) {
@@ -265,7 +290,7 @@ sub handleLibLine
     my (@objfiles, @lflags, $libout, $part);
     # kill cmd and rm 'prefix'
     $line =~ s/^rm -f .* && .* rcs //;
-    my @parts = split(' ', $line);
+    my @parts = shellwords($line);
     while ($part = shift @parts) {
         if ($part =~ /^-/) {
             push(@lflags, $part);
@@ -282,7 +307,7 @@ sub handleLibLine
 #    exit(1);
     foreach (@objfiles) {
         my $sourcefile = $_;
-        $sourcefile =~ s/\.o/.c/;
+        $sourcefile =~ s/\.o$/.c/;
         push(@sources, $sourcefile);
         push(@cflags, @{$compile_options{"${sourcefile}_CFLAGS"}});
         push(@defines, @{$compile_options{"${sourcefile}_DEFINES"}});
@@ -306,7 +331,7 @@ sub handleLinkLine
 {
     my ($line, $lineno) = @_;
     my (@objfiles, @lflags, @libs, $appout, $part);
-    my @parts = split(' ', $line);
+    my @parts = shellwords($line);
     shift(@parts); # ignore cmd
     while ($part = shift @parts) {
         if ($part =~ /^-IGNORE/) {
@@ -317,26 +342,36 @@ sub handleLinkLine
             $appout = shift @parts;
         } elsif ("$part" eq "-lz") {
             push(@libs, "zlib.lib");
-	} elsif ("$part" eq "-lcrypto") {
-            push(@libs, "libeay32.lib");
+        } elsif ("$part" eq "-lcrypto") {
+            push(@libs, "libcrypto.lib");
         } elsif ("$part" eq "-lssl") {
-            push(@libs, "ssleay32.lib");
-        } elsif ($part =~ /^-/) {
+            push(@libs, "libssl.lib");
+        } elsif ("$part" eq "-lcurl") {
+            push(@libs, "libcurl.lib");
+        } elsif ("$part" eq "-lexpat") {
+            push(@libs, "expat.lib");
+        } elsif ("$part" eq "-liconv") {
+            push(@libs, "libiconv.lib");
+        } elsif ($part =~ /^[-\/]/) {
             push(@lflags, $part);
         } elsif ($part =~ /\.(a|lib)$/) {
             $part =~ s/\.a$/.lib/;
             push(@libs, $part);
-        } elsif ($part =~ /\.(o|obj)$/) {
+        } elsif ($part eq 'invalidcontinue.obj') {
+            # ignore - known to MSVC
+        } elsif ($part =~ /\.o$/) {
             push(@objfiles, $part);
+        } elsif ($part =~ /\.obj$/) {
+            # do nothing, 'make' should not be producing .obj, only .o files
         } else {
-            die "Unhandled lib option @ line $lineno: $part";
+            die "Unhandled link option @ line $lineno: $part";
         }
     }
 #    print "AppOut: '$appout'\nLFlags: @lflags\nLibs  : @libs\nOfiles: @objfiles\n";
 #    exit(1);
     foreach (@objfiles) {
         my $sourcefile = $_;
-        $sourcefile =~ s/\.o/.c/;
+        $sourcefile =~ s/\.o$/.c/;
         push(@sources, $sourcefile);
         push(@cflags, @{$compile_options{"${sourcefile}_CFLAGS"}});
         push(@defines, @{$compile_options{"${sourcefile}_DEFINES"}});

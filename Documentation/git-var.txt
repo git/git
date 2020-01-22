@@ -23,14 +23,14 @@ OPTIONS
 	as well. (However, the configuration variables listing functionality
 	is deprecated in favor of `git config -l`.)
 
-EXAMPLE
+EXAMPLES
 --------
 	$ git var GIT_AUTHOR_IDENT
 	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
 
 
 VARIABLES
-----------
+---------
 GIT_AUTHOR_IDENT::
     The author of a piece of code.
 

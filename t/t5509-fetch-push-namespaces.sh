@@ -4,6 +4,7 @@ test_description='fetch/push involving ref namespaces'
 . ./test-lib.sh
 
 test_expect_success setup '
+	git config --global protocol.ext.allow user &&
 	test_tick &&
 	git init original &&
 	(
@@ -43,7 +44,7 @@ test_expect_success 'pushing into a repository using a ref namespace' '
 		test_cmp expected actual &&
 		# Try a namespace with no content
 		git ls-remote "ext::git --namespace=garbage %s ../pushee" >actual &&
-		test_cmp /dev/null actual &&
+		test_must_be_empty actual &&
 		git ls-remote pushee-unnamespaced >actual &&
 		sed -e "s|refs/|refs/namespaces/namespace/refs/|" expected >expected.unnamespaced &&
 		test_cmp expected.unnamespaced actual
@@ -80,6 +81,75 @@ test_expect_success 'mirroring a repository using a ref namespace' '
 		printf "$commit1 commit\trefs/namespaces/namespace/refs/tags/1\n" >>expected &&
 		test_cmp expected actual
 	)
+'
+
+test_expect_success 'hide namespaced refs with transfer.hideRefs' '
+	GIT_NAMESPACE=namespace \
+		git -C pushee -c transfer.hideRefs=refs/tags \
+		ls-remote "ext::git %s ." >actual &&
+	printf "$commit1\trefs/heads/master\n" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'check that transfer.hideRefs does not match unstripped refs' '
+	GIT_NAMESPACE=namespace \
+		git -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
+		ls-remote "ext::git %s ." >actual &&
+	printf "$commit1\trefs/heads/master\n" >expected &&
+	printf "$commit0\trefs/tags/0\n" >>expected &&
+	printf "$commit1\trefs/tags/1\n" >>expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'hide full refs with transfer.hideRefs' '
+	GIT_NAMESPACE=namespace \
+		git -C pushee -c transfer.hideRefs="^refs/namespaces/namespace/refs/tags" \
+		ls-remote "ext::git %s ." >actual &&
+	printf "$commit1\trefs/heads/master\n" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'try to update a hidden ref' '
+	test_config -C pushee transfer.hideRefs refs/heads/master &&
+	test_must_fail git -C original push pushee-namespaced master
+'
+
+test_expect_success 'try to update a ref that is not hidden' '
+	test_config -C pushee transfer.hideRefs refs/namespaces/namespace/refs/heads/master &&
+	git -C original push pushee-namespaced master
+'
+
+test_expect_success 'try to update a hidden full ref' '
+	test_config -C pushee transfer.hideRefs "^refs/namespaces/namespace/refs/heads/master" &&
+	test_must_fail git -C original push pushee-namespaced master
+'
+
+test_expect_success 'set up ambiguous HEAD' '
+	git init ambiguous &&
+	(
+		cd ambiguous &&
+		git commit --allow-empty -m foo &&
+		git update-ref refs/namespaces/ns/refs/heads/one HEAD &&
+		git update-ref refs/namespaces/ns/refs/heads/two HEAD &&
+		git symbolic-ref refs/namespaces/ns/HEAD \
+			refs/namespaces/ns/refs/heads/two
+	)
+'
+
+test_expect_success 'clone chooses correct HEAD (v0)' '
+	GIT_NAMESPACE=ns git -c protocol.version=0 \
+		clone ambiguous ambiguous-v0 &&
+	echo refs/heads/two >expect &&
+	git -C ambiguous-v0 symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone chooses correct HEAD (v2)' '
+	GIT_NAMESPACE=ns git -c protocol.version=2 \
+		clone ambiguous ambiguous-v2 &&
+	echo refs/heads/two >expect &&
+	git -C ambiguous-v2 symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_done

@@ -1,0 +1,3 @@
+$ git diff --dirstat --cc master~1 master
+  40.0% dir/
+$

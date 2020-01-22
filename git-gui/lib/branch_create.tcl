@@ -20,7 +20,7 @@ constructor dialog {} {
 
 	make_dialog top w
 	wm withdraw $w
-	wm title $top [append "[appname] ([reponame]): " [mc "Create Branch"]]
+	wm title $top [mc "%s (%s): Create Branch" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}

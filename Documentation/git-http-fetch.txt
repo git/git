@@ -15,8 +15,9 @@ DESCRIPTION
 -----------
 Downloads a remote Git repository via HTTP.
 
-*NOTE*: use of this command without -a is deprecated.  The -a
-behaviour will become the default in a future release.
+This command always gets all objects. Historically, there were three options
+`-a`, `-c` and `-t` for choosing which objects to download. They are now
+silently ignored.
 
 OPTIONS
 -------
@@ -24,12 +25,8 @@ commit-id::
         Either the hash or the filename under [URL]/refs/ to
         pull.
 
--c::
-	Get the commit objects.
--t::
-	Get trees associated with the commit objects.
--a::
-	Get all the objects.
+-a, -c, -t::
+	These options are ignored for historical reasons.
 -v::
 	Report what is downloaded.
 

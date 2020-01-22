@@ -24,7 +24,7 @@ constructor new {commit {path {}}} {
 	global cursor_ptr M1B use_ttk NS
 	make_dialog top w
 	wm withdraw $top
-	wm title $top [append "[appname] ([reponame]): " [mc "File Browser"]]
+	wm title $top [mc "%s (%s): File Browser" [appname] [reponame]]
 
 	if {$path ne {}} {
 		if {[string index $path end] ne {/}} {
@@ -197,7 +197,7 @@ method _ls {tree_id {name {}}} {
 	$w conf -state disabled
 
 	set fd [git_read ls-tree -z $tree_id]
-	fconfigure $fd -blocking 0 -translation binary -encoding binary
+	fconfigure $fd -blocking 0 -translation binary -encoding utf-8
 	fileevent $fd readable [cb _read $fd]
 }
 
@@ -272,7 +272,7 @@ constructor dialog {} {
 	global use_ttk NS
 	make_dialog top w
 	wm withdraw $top
-	wm title $top [append "[appname] ([reponame]): " [mc "Browse Branch Files"]]
+	wm title $top [mc "%s (%s): Browse Branch Files" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		wm transient $top .

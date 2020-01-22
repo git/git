@@ -8,10 +8,9 @@ exec </dev/null
 
 test_did_you_mean ()
 {
-	sq="'" &&
 	cat >expected <<-EOF &&
-	fatal: Path '$2$3' $4, but not ${5:-$sq$3$sq}.
-	Did you mean '$1:$2$3'${2:+ aka $sq$1:./$3$sq}?
+	fatal: Path '$2$3' $4, but not ${5:-$SQ$3$SQ}.
+	Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
 	EOF
 	test_cmp expected error
 }
@@ -106,7 +105,7 @@ test_expect_success 'incorrect revision id' '
 	test_must_fail git rev-parse foobar:file.txt 2>error &&
 	grep "Invalid object name '"'"'foobar'"'"'." error &&
 	test_must_fail git rev-parse foobar 2> error &&
-	grep "unknown revision or path not in the working tree." error
+	test_i18ngrep "unknown revision or path not in the working tree." error
 '
 
 test_expect_success 'incorrect file in sha1:path' '
@@ -139,10 +138,10 @@ test_expect_success 'incorrect file in :path and :N:path' '
 
 test_expect_success 'invalid @{n} reference' '
 	test_must_fail git rev-parse master@{99999} >output 2>error &&
-	test -z "$(cat output)" &&
+	test_must_be_empty output &&
 	grep "fatal: Log for [^ ]* only has [0-9][0-9]* entries." error  &&
 	test_must_fail git rev-parse --verify master@{99999} >output 2>error &&
-	test -z "$(cat output)" &&
+	test_must_be_empty output &&
 	grep "fatal: Log for [^ ]* only has [0-9][0-9]* entries." error
 '
 
@@ -156,19 +155,14 @@ test_expect_success 'relative path not found' '
 
 test_expect_success 'relative path outside worktree' '
 	test_must_fail git rev-parse HEAD:../file.txt >output 2>error &&
-	test -z "$(cat output)" &&
-	grep "outside repository" error
+	test_must_be_empty output &&
+	test_i18ngrep "outside repository" error
 '
 
 test_expect_success 'relative path when cwd is outside worktree' '
 	test_must_fail git --git-dir=.git --work-tree=subdir rev-parse HEAD:./file.txt >output 2>error &&
-	test -z "$(cat output)" &&
+	test_must_be_empty output &&
 	grep "relative path syntax can.t be used outside working tree." error
-'
-
-test_expect_success 'relative path when startup_info is NULL' '
-	test_must_fail test-match-trees HEAD:./file.txt HEAD:./file.txt 2>error &&
-	grep "BUG: startup_info struct is not initialized." error
 '
 
 test_expect_success '<commit>:file correctly diagnosed after a pathname' '
@@ -218,6 +212,14 @@ test_expect_success 'arg before dashdash must be a revision (ambiguous)' '
 	} >expect &&
 	git rev-parse foobar -- >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'reject Nth parent if N is too high' '
+	test_must_fail git rev-parse HEAD^100000000000000000000000000000000
+'
+
+test_expect_success 'reject Nth ancestor if N is too high' '
+	test_must_fail git rev-parse HEAD~100000000000000000000000000000000
 '
 
 test_done

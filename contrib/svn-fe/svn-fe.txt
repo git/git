@@ -56,7 +56,7 @@ line.  This line has the form `git-svn-id: URL@REVNO UUID`.
 
 The resulting repository will generally require further processing
 to put each project in its own repository and to separate the history
-of each branch.  The 'git filter-branch --subdirectory-filter' command
+of each branch.  The 'git filter-repo --subdirectory-filter' command
 may be useful for this purpose.
 
 BUGS
@@ -67,5 +67,5 @@ The exit status does not reflect whether an error was detected.
 
 SEE ALSO
 --------
-git-svn(1), svn2git(1), svk(1), git-filter-branch(1), git-fast-import(1),
+git-svn(1), svn2git(1), svk(1), git-filter-repo(1), git-fast-import(1),
 https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt

@@ -98,6 +98,16 @@ test_expect_success 'push from/to new branch with upstream, matching and simple'
 	test_push_failure upstream
 '
 
+test_expect_success 'push ambiguously named branch with upstream, matching and simple' '
+	git checkout -b ambiguous &&
+	test_config branch.ambiguous.remote parent1 &&
+	test_config branch.ambiguous.merge refs/heads/ambiguous &&
+	git tag ambiguous &&
+	test_push_success simple ambiguous &&
+	test_push_success matching ambiguous &&
+	test_push_success upstream ambiguous
+'
+
 test_expect_success 'push from/to new branch with current creates remote branch' '
 	test_config branch.new-branch.remote repo1 &&
 	git checkout new-branch &&
@@ -153,7 +163,7 @@ test_pushdefault_workflow success current master
 # update parent1's foo (which is our upstream)
 test_pushdefault_workflow success upstream foo
 
-# upsream is foo which is not the name of the current branch
+# upstream is foo which is not the name of the current branch
 test_pushdefault_workflow failure simple master
 
 # master and foo are updated

@@ -20,3 +20,7 @@ merge_cmd () {
 translate_merge_tool_path() {
 	echo emacs
 }
+
+exit_code_trustable () {
+	true
+}

@@ -20,7 +20,7 @@ test_expect_success 'setup (initial)' '
 
 make_text() {
 	echo $1: $2
-	for i in `count 20`; do
+	for i in $(count 20); do
 		echo $1: $i
 	done
 	echo $1: $3

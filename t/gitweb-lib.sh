@@ -58,10 +58,11 @@ gitweb_run () {
 	GATEWAY_INTERFACE='CGI/1.1'
 	HTTP_ACCEPT='*/*'
 	REQUEST_METHOD='GET'
-	QUERY_STRING=""$1""
-	PATH_INFO=""$2""
+	QUERY_STRING=$1
+	PATH_INFO=$2
+	REQUEST_URI=/gitweb.cgi$PATH_INFO
 	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD \
-		QUERY_STRING PATH_INFO
+		QUERY_STRING PATH_INFO REQUEST_URI
 
 	GITWEB_CONFIG=$(pwd)/gitweb_config.perl
 	export GITWEB_CONFIG
@@ -110,7 +111,12 @@ perl -MEncode -e '$e="";decode_utf8($e, Encode::FB_CROAK)' >/dev/null 2>&1 || {
 }
 
 perl -MCGI -MCGI::Util -MCGI::Carp -e 0 >/dev/null 2>&1 || {
-	skip_all='skipping gitweb tests, CGI module unusable'
+	skip_all='skipping gitweb tests, CGI & CGI::Util & CGI::Carp modules not available'
+	test_done
+}
+
+perl -mTime::HiRes -e 0 >/dev/null 2>&1 || {
+	skip_all='skipping gitweb tests, Time::HiRes module not available'
 	test_done
 }
 

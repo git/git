@@ -18,7 +18,10 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-#define pthread_mutex_init(a,b) (InitializeCriticalSection((a)), 0)
+static inline int return_0(int i) {
+	return 0;
+}
+#define pthread_mutex_init(a,b) return_0((InitializeCriticalSection((a)), 0))
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
@@ -29,27 +32,13 @@ typedef int pthread_mutexattr_t;
 #define pthread_mutexattr_settype(a, t) 0
 #define PTHREAD_MUTEX_RECURSIVE 0
 
-/*
- * Implement simple condition variable for Windows threads, based on ACE
- * implementation.
- *
- * See original implementation: http://bit.ly/1vkDjo
- * ACE homepage: http://www.cse.wustl.edu/~schmidt/ACE.html
- * See also: http://www.cse.wustl.edu/~schmidt/win32-cv-1.html
- */
-typedef struct {
-	LONG waiters;
-	int was_broadcast;
-	CRITICAL_SECTION waiters_lock;
-	HANDLE sema;
-	HANDLE continue_broadcast;
-} pthread_cond_t;
+#define pthread_cond_t CONDITION_VARIABLE
 
-extern int pthread_cond_init(pthread_cond_t *cond, const void *unused);
-extern int pthread_cond_destroy(pthread_cond_t *cond);
-extern int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex);
-extern int pthread_cond_signal(pthread_cond_t *cond);
-extern int pthread_cond_broadcast(pthread_cond_t *cond);
+#define pthread_cond_init(a,b) InitializeConditionVariable((a))
+#define pthread_cond_destroy(a) do {} while (0)
+#define pthread_cond_wait(a,b) return_0(SleepConditionVariableCS((a), (b), INFINITE))
+#define pthread_cond_signal WakeConditionVariable
+#define pthread_cond_broadcast WakeAllConditionVariable
 
 /*
  * Simple thread creation implementation using pthread API
@@ -61,8 +50,8 @@ typedef struct {
 	DWORD tid;
 } pthread_t;
 
-extern int pthread_create(pthread_t *thread, const void *unused,
-			  void *(*start_routine)(void*), void *arg);
+int pthread_create(pthread_t *thread, const void *unused,
+		   void *(*start_routine)(void*), void *arg);
 
 /*
  * To avoid the need of copying a struct, we use small macro wrapper to pass
@@ -70,14 +59,14 @@ extern int pthread_create(pthread_t *thread, const void *unused,
  */
 #define pthread_join(a, b) win32_pthread_join(&(a), (b))
 
-extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
+int win32_pthread_join(pthread_t *thread, void **value_ptr);
 
 #define pthread_equal(t1, t2) ((t1).tid == (t2).tid)
-extern pthread_t pthread_self(void);
+pthread_t pthread_self(void);
 
-static inline int pthread_exit(void *ret)
+static inline void NORETURN pthread_exit(void *ret)
 {
-	ExitThread((DWORD)ret);
+	ExitThread((DWORD)(intptr_t)ret);
 }
 
 typedef DWORD pthread_key_t;
@@ -100,5 +89,12 @@ static inline void *pthread_getspecific(pthread_key_t key)
 {
 	return TlsGetValue(key);
 }
+
+#ifndef __MINGW64_VERSION_MAJOR
+static inline int pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
+{
+	return 0;
+}
+#endif
 
 #endif /* PTHREAD_H */

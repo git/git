@@ -1,0 +1,9 @@
+(
+	foobar &&
+?!AMP?!	barfoo
+	flibble "not a # comment"
+>) &&
+
+(
+cd foo &&
+>	flibble "not a # comment")

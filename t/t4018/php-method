@@ -1,0 +1,7 @@
+class Klass
+{
+    public static function RIGHT()
+    {
+        return 'ChangeMe';
+    }
+}

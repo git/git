@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Reads standard input in non-recursive `ls-tree` output format, and creates
-a tree object.  The order of the tree entries is normalised by mktree so
+a tree object.  The order of the tree entries is normalized by mktree so
 pre-sorting the input is not required.  The object name of the tree object
 built is written to the standard output.
 
@@ -32,7 +32,7 @@ OPTIONS
 --batch::
 	Allow building of more than one tree object before exiting.  Each
 	tree is separated by as single blank line. The final new-line is
-	optional.  Note - if the '-z' option is used, lines are terminated
+	optional.  Note - if the `-z` option is used, lines are terminated
 	with NUL.
 
 GIT

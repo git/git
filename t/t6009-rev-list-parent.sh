@@ -31,8 +31,7 @@ test_expect_success setup '
 test_expect_success 'one is ancestor of others and should not be shown' '
 
 	git rev-list one --not four >result &&
-	>expect &&
-	test_cmp expect result
+	test_must_be_empty result
 
 '
 
@@ -47,7 +46,9 @@ test_expect_success 'setup roots, merges and octopuses' '
 	git checkout -b yetanotherbranch four &&
 	test_commit eight &&
 	git checkout master &&
-	test_merge normalmerge newroot &&
+	test_tick &&
+	git merge --allow-unrelated-histories -m normalmerge newroot &&
+	git tag normalmerge &&
 	test_tick &&
 	git merge -m tripus sidebranch anotherbranch &&
 	git tag tripus &&
@@ -142,8 +143,7 @@ test_expect_success 'ancestors with the same commit time' '
 		test_commit t$i
 	done &&
 	git rev-list t1^! --not t$i >result &&
-	>expect &&
-	test_cmp expect result
+	test_must_be_empty result
 '
 
 test_done

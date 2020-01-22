@@ -3,26 +3,24 @@
 
 struct strbuf;
 
-/*  2 + (2 * num_attrs) + 8 + 1 + 8 + 'm' + NUL */
-/* "\033[1;2;4;5;7;38;5;2xx;48;5;2xxm\0" */
 /*
  * The maximum length of ANSI color sequence we would generate:
  * - leading ESC '['            2
- * - attr + ';'                 3 * 10 (e.g. "1;")
+ * - attr + ';'                 2 * num_attr (e.g. "1;")
+ * - no-attr + ';'              3 * num_attr (e.g. "22;")
  * - fg color + ';'             17 (e.g. "38;2;255;255;255;")
  * - bg color + ';'             17 (e.g. "48;2;255;255;255;")
  * - terminating 'm' NUL        2
  *
- * The above overcounts attr (we only use 5 not 8) and one semicolon
- * but it is close enough.
+ * The above overcounts by one semicolon but it is close enough.
+ *
+ * The space for attributes is also slightly overallocated, as
+ * the negation for some attributes is the same (e.g., nobold and nodim).
+ *
+ * We allocate space for 7 attributes.
  */
-#define COLOR_MAXLEN 70
+#define COLOR_MAXLEN 75
 
-/*
- * IMPORTANT: Due to the way these color codes are emulated on Windows,
- * write them only using printf(), fprintf(), and fputs(). In particular,
- * do not use puts() or write().
- */
 #define GIT_COLOR_NORMAL	""
 #define GIT_COLOR_RESET		"\033[m"
 #define GIT_COLOR_BOLD		"\033[1m"
@@ -38,12 +36,21 @@ struct strbuf;
 #define GIT_COLOR_BOLD_BLUE	"\033[1;34m"
 #define GIT_COLOR_BOLD_MAGENTA	"\033[1;35m"
 #define GIT_COLOR_BOLD_CYAN	"\033[1;36m"
+#define GIT_COLOR_FAINT_RED	"\033[2;31m"
+#define GIT_COLOR_FAINT_GREEN	"\033[2;32m"
+#define GIT_COLOR_FAINT_YELLOW	"\033[2;33m"
+#define GIT_COLOR_FAINT_BLUE	"\033[2;34m"
+#define GIT_COLOR_FAINT_MAGENTA	"\033[2;35m"
+#define GIT_COLOR_FAINT_CYAN	"\033[2;36m"
 #define GIT_COLOR_BG_RED	"\033[41m"
 #define GIT_COLOR_BG_GREEN	"\033[42m"
 #define GIT_COLOR_BG_YELLOW	"\033[43m"
 #define GIT_COLOR_BG_BLUE	"\033[44m"
 #define GIT_COLOR_BG_MAGENTA	"\033[45m"
 #define GIT_COLOR_BG_CYAN	"\033[46m"
+#define GIT_COLOR_FAINT		"\033[2m"
+#define GIT_COLOR_FAINT_ITALIC	"\033[2;3m"
+#define GIT_COLOR_REVERSE	"\033[7m"
 
 /* A special value meaning "no color selected" */
 #define GIT_COLOR_NIL "NIL"
@@ -75,16 +82,49 @@ extern int color_stdout_is_tty;
 int git_color_config(const char *var, const char *value, void *cb);
 int git_color_default_config(const char *var, const char *value, void *cb);
 
+/*
+ * Parse a config option, which can be a boolean or one of
+ * "never", "auto", "always". Return a constant of
+ * GIT_COLOR_NEVER for "never" or negative boolean,
+ * GIT_COLOR_ALWAYS for "always" or a positive boolean,
+ * and GIT_COLOR_AUTO for "auto".
+ */
 int git_config_colorbool(const char *var, const char *value);
-int want_color(int var);
+
+/*
+ * Return a boolean whether to use color, where the argument 'var' is
+ * one of GIT_COLOR_UNKNOWN, GIT_COLOR_NEVER, GIT_COLOR_ALWAYS, GIT_COLOR_AUTO.
+ */
+int want_color_fd(int fd, int var);
+#define want_color(colorbool) want_color_fd(1, (colorbool))
+#define want_color_stderr(colorbool) want_color_fd(2, (colorbool))
+
+/*
+ * Translate a Git color from 'value' into a string that the terminal can
+ * interpret and store it into 'dst'. The Git color values are of the form
+ * "foreground [background] [attr]" where fore- and background can be a color
+ * name ("red"), a RGB code (#0xFF0000) or a 256-color-mode from the terminal.
+ */
 int color_parse(const char *value, char *dst);
 int color_parse_mem(const char *value, int len, char *dst);
+
+/*
+ * Output the formatted string in the specified color (and then reset to normal
+ * color so subsequent output is uncolored). Omits the color encapsulation if
+ * `color` is NULL. The `color_fprintf_ln` prints a new line after resetting
+ * the color.  The `color_print_strbuf` prints the contents of the given
+ * strbuf (BUG: but only up to its first NUL character).
+ */
 __attribute__((format (printf, 3, 4)))
 int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
 __attribute__((format (printf, 3, 4)))
 int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
 
+/*
+ * Check if the given color is GIT_COLOR_NIL that means "no color selected".
+ * The caller needs to replace the color with the actual desired color.
+ */
 int color_is_nil(const char *color);
 
 #endif /* COLOR_H */

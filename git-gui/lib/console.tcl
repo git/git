@@ -203,6 +203,8 @@ method done {ok} {
 			focus $w.ok
 		}
 	}
+
+	bind $w <Key-Escape> "destroy $w;break"
 }
 
 method _sb_set {sb orient first last} {

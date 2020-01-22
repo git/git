@@ -10,9 +10,9 @@ test_description='Test string list functionality'
 test_split () {
 	cat >expected &&
 	test_expect_success "split $1 at $2, max $3" "
-		test-string-list split '$1' '$2' '$3' >actual &&
+		test-tool string-list split '$1' '$2' '$3' >actual &&
 		test_cmp expected actual &&
-		test-string-list split_in_place '$1' '$2' '$3' >actual &&
+		test-tool string-list split_in_place '$1' '$2' '$3' >actual &&
 		test_cmp expected actual
 	"
 }
@@ -61,31 +61,31 @@ test_split ":" ":" "-1" <<EOF
 EOF
 
 test_expect_success "test filter_string_list" '
-	test "x-" = "x$(test-string-list filter - y)" &&
-	test "x-" = "x$(test-string-list filter no y)" &&
-	test yes = "$(test-string-list filter yes y)" &&
-	test yes = "$(test-string-list filter no:yes y)" &&
-	test yes = "$(test-string-list filter yes:no y)" &&
-	test y1:y2 = "$(test-string-list filter y1:y2 y)" &&
-	test y2:y1 = "$(test-string-list filter y2:y1 y)" &&
-	test "x-" = "x$(test-string-list filter x1:x2 y)"
+	test "x-" = "x$(test-tool string-list filter - y)" &&
+	test "x-" = "x$(test-tool string-list filter no y)" &&
+	test yes = "$(test-tool string-list filter yes y)" &&
+	test yes = "$(test-tool string-list filter no:yes y)" &&
+	test yes = "$(test-tool string-list filter yes:no y)" &&
+	test y1:y2 = "$(test-tool string-list filter y1:y2 y)" &&
+	test y2:y1 = "$(test-tool string-list filter y2:y1 y)" &&
+	test "x-" = "x$(test-tool string-list filter x1:x2 y)"
 '
 
 test_expect_success "test remove_duplicates" '
-	test "x-" = "x$(test-string-list remove_duplicates -)" &&
-	test "x" = "x$(test-string-list remove_duplicates "")" &&
-	test a = "$(test-string-list remove_duplicates a)" &&
-	test a = "$(test-string-list remove_duplicates a:a)" &&
-	test a = "$(test-string-list remove_duplicates a:a:a:a:a)" &&
-	test a:b = "$(test-string-list remove_duplicates a:b)" &&
-	test a:b = "$(test-string-list remove_duplicates a:a:b)" &&
-	test a:b = "$(test-string-list remove_duplicates a:b:b)" &&
-	test a:b:c = "$(test-string-list remove_duplicates a:b:c)" &&
-	test a:b:c = "$(test-string-list remove_duplicates a:a:b:c)" &&
-	test a:b:c = "$(test-string-list remove_duplicates a:b:b:c)" &&
-	test a:b:c = "$(test-string-list remove_duplicates a:b:c:c)" &&
-	test a:b:c = "$(test-string-list remove_duplicates a:a:b:b:c:c)" &&
-	test a:b:c = "$(test-string-list remove_duplicates a:a:a:b:b:b:c:c:c)"
+	test "x-" = "x$(test-tool string-list remove_duplicates -)" &&
+	test "x" = "x$(test-tool string-list remove_duplicates "")" &&
+	test a = "$(test-tool string-list remove_duplicates a)" &&
+	test a = "$(test-tool string-list remove_duplicates a:a)" &&
+	test a = "$(test-tool string-list remove_duplicates a:a:a:a:a)" &&
+	test a:b = "$(test-tool string-list remove_duplicates a:b)" &&
+	test a:b = "$(test-tool string-list remove_duplicates a:a:b)" &&
+	test a:b = "$(test-tool string-list remove_duplicates a:b:b)" &&
+	test a:b:c = "$(test-tool string-list remove_duplicates a:b:c)" &&
+	test a:b:c = "$(test-tool string-list remove_duplicates a:a:b:c)" &&
+	test a:b:c = "$(test-tool string-list remove_duplicates a:b:b:c)" &&
+	test a:b:c = "$(test-tool string-list remove_duplicates a:b:c:c)" &&
+	test a:b:c = "$(test-tool string-list remove_duplicates a:a:b:b:c:c)" &&
+	test a:b:c = "$(test-tool string-list remove_duplicates a:a:a:b:b:b:c:c:c)"
 '
 
 test_done

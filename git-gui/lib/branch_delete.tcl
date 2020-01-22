@@ -13,7 +13,7 @@ constructor dialog {} {
 
 	make_dialog top w
 	wm withdraw $w
-	wm title $top [append "[appname] ([reponame]): " [mc "Delete Branch"]]
+	wm title $top [mc "%s (%s): Delete Branch" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
@@ -128,7 +128,7 @@ method _delete {} {
 		set b [lindex $i 0]
 		set o [lindex $i 1]
 		if {[catch {git branch -D $b} err]} {
-			append failed " - $b: $err\n"
+			append failed [mc " - %s:" $b] " $err\n"
 		}
 	}
 

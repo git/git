@@ -8,8 +8,6 @@ GIT_SVN_LC_ALL=${LC_ALL:-$LANG}
 
 . ./lib-git-svn.sh
 
-say 'define NO_SVN_TESTS to skip git svn tests'
-
 case "$GIT_SVN_LC_ALL" in
 *.UTF-8)
 	test_set_prereq UTF8
@@ -19,13 +17,21 @@ case "$GIT_SVN_LC_ALL" in
 	;;
 esac
 
+test_expect_success 'git svn --version works anywhere' '
+	nongit git svn --version
+'
+
+test_expect_success 'git svn help works anywhere' '
+	nongit git svn help
+'
+
 test_expect_success \
     'initialize git svn' '
 	mkdir import &&
 	(
 		cd import &&
 		echo foo >foo &&
-		ln -s foo foo.link
+		ln -s foo foo.link &&
 		mkdir -p dir/a/b/c/d/e &&
 		echo "deep dir" >dir/a/b/c/d/e/file &&
 		mkdir bar &&
@@ -45,13 +51,13 @@ test_expect_success "checkout from svn" 'svn co "$svnrepo" "$SVN_TREE"'
 
 name='try a deep --rmdir with a commit'
 test_expect_success "$name" '
-	git checkout -f -b mybranch ${remotes_git_svn} &&
+	git checkout -f -b mybranch remotes/git-svn &&
 	mv dir/a/b/c/d/e/file dir/file &&
 	cp dir/file file &&
 	git update-index --add --remove dir/a/b/c/d/e/file dir/file file &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch &&
+		remotes/git-svn..mybranch &&
 	svn_cmd up "$SVN_TREE" &&
 	test -d "$SVN_TREE"/dir && test ! -d "$SVN_TREE"/dir/a'
 
@@ -65,14 +71,14 @@ test_expect_success "$name" "
 	git update-index --add dir/file/file &&
 	git commit -m '$name' &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch
+		remotes/git-svn..mybranch
 "
 
 
 name='detect node change from directory to file #1'
 test_expect_success "$name" '
 	rm -rf dir "$GIT_DIR"/index &&
-	git checkout -f -b mybranch2 ${remotes_git_svn} &&
+	git checkout -f -b mybranch2 remotes/git-svn &&
 	mv bar/zzz zzz &&
 	rm -rf bar &&
 	mv zzz bar &&
@@ -80,14 +86,14 @@ test_expect_success "$name" '
 	git update-index --add -- bar &&
 	git commit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch2
+		remotes/git-svn..mybranch2
 '
 
 
 name='detect node change from file to directory #2'
 test_expect_success "$name" '
 	rm -f "$GIT_DIR"/index &&
-	git checkout -f -b mybranch3 ${remotes_git_svn} &&
+	git checkout -f -b mybranch3 remotes/git-svn &&
 	rm bar/zzz &&
 	git update-index --remove bar/zzz &&
 	mkdir bar/zzz &&
@@ -95,7 +101,7 @@ test_expect_success "$name" '
 	git update-index --add bar/zzz/yyy &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch3 &&
+		remotes/git-svn..mybranch3 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -d "$SVN_TREE"/bar/zzz &&
 	test -e "$SVN_TREE"/bar/zzz/yyy
@@ -104,7 +110,7 @@ test_expect_success "$name" '
 name='detect node change from directory to file #2'
 test_expect_success "$name" '
 	rm -f "$GIT_DIR"/index &&
-	git checkout -f -b mybranch4 ${remotes_git_svn} &&
+	git checkout -f -b mybranch4 remotes/git-svn &&
 	rm -rf dir &&
 	git update-index --remove -- dir/file &&
 	touch dir &&
@@ -112,67 +118,67 @@ test_expect_success "$name" '
 	git update-index --add -- dir &&
 	git commit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch4
+		remotes/git-svn..mybranch4
 '
 
 
 name='remove executable bit from a file'
-test_expect_success "$name" '
+test_expect_success POSIXPERM "$name" '
 	rm -f "$GIT_DIR"/index &&
-	git checkout -f -b mybranch5 ${remotes_git_svn} &&
+	git checkout -f -b mybranch5 remotes/git-svn &&
 	chmod -x exec.sh &&
 	git update-index exec.sh &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch5 &&
+		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test ! -x "$SVN_TREE"/exec.sh'
 
 
 name='add executable bit back file'
-test_expect_success "$name" '
+test_expect_success POSIXPERM "$name" '
 	chmod +x exec.sh &&
 	git update-index exec.sh &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch5 &&
+		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/exec.sh'
 
 
 name='executable file becomes a symlink to file'
-test_expect_success "$name" '
+test_expect_success SYMLINKS "$name" '
 	rm exec.sh &&
 	ln -s file exec.sh &&
 	git update-index exec.sh &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch5 &&
+		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -h "$SVN_TREE"/exec.sh'
 
 name='new symlink is added to a file that was also just made executable'
 
-test_expect_success "$name" '
+test_expect_success POSIXPERM,SYMLINKS "$name" '
 	chmod +x file &&
 	ln -s file exec-2.sh &&
 	git update-index --add file exec-2.sh &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch5 &&
+		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/file &&
 	test -h "$SVN_TREE"/exec-2.sh'
 
 name='modify a symlink to become a file'
-test_expect_success "$name" '
+test_expect_success POSIXPERM,SYMLINKS "$name" '
 	echo git help >help &&
 	rm exec-2.sh &&
 	cp help exec-2.sh &&
 	git update-index exec-2.sh &&
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
-		${remotes_git_svn}..mybranch5 &&
+		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -f "$SVN_TREE"/exec-2.sh &&
 	test ! -h "$SVN_TREE"/exec-2.sh &&
@@ -181,7 +187,8 @@ test_expect_success "$name" '
 name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
 LC_ALL="$GIT_SVN_LC_ALL"
 export LC_ALL
-test_expect_success UTF8 "$name" "
+# This test relies on the previous test, hence requires POSIXPERM,SYMLINKS
+test_expect_success UTF8,POSIXPERM,SYMLINKS "$name" "
 	echo '# hello' >> exec-2.sh &&
 	git update-index exec-2.sh &&
 	git commit -m 'éï∏' &&
@@ -193,7 +200,7 @@ GIT_SVN_ID=alt
 export GIT_SVN_ID
 test_expect_success "$name" \
     'git svn init "$svnrepo" && git svn fetch &&
-     git rev-list --pretty=raw ${remotes_git_svn} | grep ^tree | uniq > a &&
+     git rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
      git rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
      test_cmp a b'
 
@@ -214,19 +221,19 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-test_expect_success "$name" "test_cmp a expected"
+test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp expected a"
 
-test_expect_success 'exit if remote refs are ambigious' "
+test_expect_success 'exit if remote refs are ambigious' '
         git config --add svn-remote.svn.fetch \
-                              bar:refs/${remotes_git_svn} &&
+		bar:refs/remotes/git-svn &&
 	test_must_fail git svn migrate
-"
+'
 
 test_expect_success 'exit if init-ing a would clobber a URL' '
         svnadmin create "${PWD}/svnrepo2" &&
         svn mkdir -m "mkdir bar" "${svnrepo}2/bar" &&
         git config --unset svn-remote.svn.fetch \
-                                "^bar:refs/${remotes_git_svn}$" &&
+		"^bar:refs/remotes/git-svn$" &&
 	test_must_fail git svn init "${svnrepo}2/bar"
         '
 
@@ -236,7 +243,7 @@ test_expect_success \
         git config --get svn-remote.svn.fetch \
                               "^bar:refs/remotes/bar$" &&
         git config --get svn-remote.svn.fetch \
-                              "^:refs/${remotes_git_svn}$"
+			      "^:refs/remotes/git-svn$"
         '
 
 test_expect_success 'dcommit $rev does not clobber current branch' '
@@ -258,45 +265,45 @@ test_expect_success 'dcommit $rev does not clobber current branch' '
 	git branch -D my-bar
 	'
 
-test_expect_success 'able to dcommit to a subdirectory' "
+test_expect_success 'able to dcommit to a subdirectory' '
 	git svn fetch -i bar &&
 	git checkout -b my-bar refs/remotes/bar &&
 	echo abc > d &&
 	git update-index --add d &&
-	git commit -m '/bar/d should be in the log' &&
+	git commit -m "/bar/d should be in the log" &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)" &&
 	mkdir newdir &&
 	echo new > newdir/dir &&
 	git update-index --add newdir/dir &&
-	git commit -m 'add a new directory' &&
+	git commit -m "add a new directory" &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)" &&
 	echo foo >> newdir/dir &&
 	git update-index newdir/dir &&
-	git commit -m 'modify a file in new directory' &&
+	git commit -m "modify a file in new directory" &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
-	"
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)"
+'
 
 test_expect_success 'dcommit should not fail with a touched file' '
 	test_commit "commit-new-file-foo2" foo2 &&
-	test-chmtime =-60 foo &&
+	test-tool chmtime =-60 foo &&
 	git svn dcommit
 '
 
 test_expect_success 'rebase should not fail with a touched file' '
-	test-chmtime =-60 foo &&
+	test-tool chmtime =-60 foo &&
 	git svn rebase
 '
 
-test_expect_success 'able to set-tree to a subdirectory' "
+test_expect_success 'able to set-tree to a subdirectory' '
 	echo cba > d &&
 	git update-index d &&
-	git commit -m 'update /bar/d' &&
+	git commit -m "update /bar/d" &&
 	git svn set-tree -i bar HEAD &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
-	"
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)"
+'
 
 test_expect_success 'git-svn works in a bare repository' '
 	mkdir bare-repo &&

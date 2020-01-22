@@ -13,18 +13,20 @@ SYNOPSIS
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-P | --perl-regexp]
-	   [-F | --fixed-strings] [-n | --line-number]
+	   [-F | --fixed-strings] [-n | --line-number] [--column]
 	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [(-O | --open-files-in-pager) [<pager>]]
 	   [-z | --null]
-	   [-c | --count] [--all-match] [-q | --quiet]
-	   [--max-depth <depth>]
+	   [ -o | --only-matching ] [-c | --count] [--all-match] [-q | --quiet]
+	   [--max-depth <depth>] [--[no-]recursive]
 	   [--color[=<when>] | --no-color]
 	   [--break] [--heading] [-p | --show-function]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-W | --function-context]
+	   [--threads <num>]
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...]
+	   [--recurse-submodules] [--parent-basename <basename>]
 	   [ [--[no-]exclude-standard] [--cached | --no-index | --untracked] | <tree>...]
 	   [--] [<pathspec>...]
 
@@ -40,21 +42,32 @@ CONFIGURATION
 -------------
 
 grep.lineNumber::
-	If set to true, enable '-n' option by default.
+	If set to true, enable `-n` option by default.
+
+grep.column::
+	If set to true, enable the `--column` option by default.
 
 grep.patternType::
 	Set the default matching behavior. Using a value of 'basic', 'extended',
-	'fixed', or 'perl' will enable the '--basic-regexp', '--extended-regexp',
-	'--fixed-strings', or '--perl-regexp' option accordingly, while the
+	'fixed', or 'perl' will enable the `--basic-regexp`, `--extended-regexp`,
+	`--fixed-strings`, or `--perl-regexp` option accordingly, while the
 	value 'default' will return to the default matching behavior.
 
 grep.extendedRegexp::
-	If set to true, enable '--extended-regexp' option by default. This
-	option is ignored when the 'grep.patternType' option is set to a value
+	If set to true, enable `--extended-regexp` option by default. This
+	option is ignored when the `grep.patternType` option is set to a value
 	other than 'default'.
 
+grep.threads::
+	Number of grep worker threads to use.  If unset (or set to 0),
+	8 threads are used by default (for now).
+
 grep.fullName::
-	If set to true, enable '--full-name' option by default.
+	If set to true, enable `--full-name` option by default.
+
+grep.fallbackToNoIndex::
+	If set to true, fall back to git grep --no-index if git grep
+	is executed outside of a git repository.  Defaults to false.
 
 
 OPTIONS
@@ -75,9 +88,15 @@ OPTIONS
 	mechanism. Only useful with `--untracked`.
 
 --exclude-standard::
-	Do not pay attention to ignored files specified via the	`.gitignore`
+	Do not pay attention to ignored files specified via the `.gitignore`
 	mechanism.  Only useful when searching files in the current directory
 	with `--no-index`.
+
+--recurse-submodules::
+	Recursively search in each submodule that has been initialized and
+	checked out in the repository.  When used in combination with the
+	<tree> option the prefix of all submodule output will be the name of
+	the parent project's <tree> object.
 
 -a::
 --text::
@@ -100,10 +119,17 @@ OPTIONS
 
 --max-depth <depth>::
 	For each <pathspec> given on command line, descend at most <depth>
-	levels of directories. A negative value means no limit.
+	levels of directories. A value of -1 means no limit.
 	This option is ignored if <pathspec> contains active wildcards.
 	In other words if "a*" matches a directory named "a*",
 	"*" is matched literally so --max-depth is still effective.
+
+-r::
+--recursive::
+	Same as `--max-depth=-1`; this is the default.
+
+--no-recursive::
+	Same as `--max-depth=0`.
 
 -w::
 --word-regexp::
@@ -138,8 +164,11 @@ OPTIONS
 
 -P::
 --perl-regexp::
-	Use Perl-compatible regexp for patterns. Requires libpcre to be
-	compiled in.
+	Use Perl-compatible regular expressions for patterns.
++
+Support for these types of regular expressions is an optional
+compile-time dependency. If Git wasn't compiled with support for them
+providing this option will cause it to die.
 
 -F::
 --fixed-strings::
@@ -149,6 +178,10 @@ OPTIONS
 -n::
 --line-number::
 	Prefix the line number to matching lines.
+
+--column::
+	Prefix the 1-indexed byte-offset of the first match from the start of the
+	matching line.
 
 -l::
 --files-with-matches::
@@ -160,17 +193,25 @@ OPTIONS
 	For better compatibility with 'git diff', `--name-only` is a
 	synonym for `--files-with-matches`.
 
--O [<pager>]::
---open-files-in-pager [<pager>]::
+-O[<pager>]::
+--open-files-in-pager[=<pager>]::
 	Open the matching files in the pager (not the output of 'grep').
 	If the pager happens to be "less" or "vi", and the user
 	specified only one pattern, the first file is positioned at
-	the first match automatically.
+	the first match automatically. The `pager` argument is
+	optional; if specified, it must be stuck to the option
+	without a space. If `pager` is unspecified, the default pager
+	will be used (see `core.pager` in linkgit:git-config[1]).
 
 -z::
 --null::
 	Output \0 instead of the character that normally follows a
 	file name.
+
+-o::
+--only-matching::
+	Print only the matched (non-empty) parts of a matching line, with each such
+	part on a separate output line.
 
 -c::
 --count::
@@ -224,8 +265,29 @@ OPTIONS
 	effectively showing the whole function in which the match was
 	found.
 
+--threads <num>::
+	Number of grep worker threads to use.
+	See `grep.threads` in 'CONFIGURATION' for more information.
+
 -f <file>::
 	Read patterns from <file>, one per line.
++
+Passing the pattern via <file> allows for providing a search pattern
+containing a \0.
++
+Not all pattern types support patterns containing \0. Git will error
+out if a given pattern type can't support such a pattern. The
+`--perl-regexp` pattern type when compiled against the PCRE v2 backend
+has the widest support for these types of patterns.
++
+In versions of Git before 2.23.0 patterns containing \0 would be
+silently considered fixed. This was never documented, there were also
+odd and undocumented interactions between e.g. non-ASCII patterns
+containing \0 and `--ignore-case`.
++
+In future versions we may learn to support patterns containing \0 for
+more search backends, until then we'll die when the pattern type in
+question doesn't support them.
 
 -e::
 	The next parameter is the pattern. This option has to be
@@ -263,8 +325,11 @@ OPTIONS
 <pathspec>...::
 	If given, limit the search to paths matching at least one pattern.
 	Both leading paths match and glob(7) patterns are supported.
++
+For more details about the <pathspec> syntax, see the 'pathspec' entry
+in linkgit:gitglossary[7].
 
-Examples
+EXAMPLES
 --------
 
 `git grep 'time_t' -- '*.[ch]'`::
@@ -278,6 +343,9 @@ Examples
 `git grep --all-match -e NODE -e Unexpected`::
 	Looks for a line that has `NODE` or `Unexpected` in
 	files that have lines that match both.
+
+`git grep solution -- :^Documentation`::
+	Looks for `solution`, excluding files in `Documentation`.
 
 GIT
 ---

@@ -699,3 +699,22 @@ index e69de29..d95f3ad 100644
 +++ b/foo
 @@ -0,0 +1 @@
 +New content
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Subject: check multiline inbody headers
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+
+From: Another Thor
+ <a.thor@example.com>
+Subject: This one contains
+	a tab
+ and a space
+
+a commit message
+
+diff --git a/foo b/foo
+index e69de29..d95f3ad 100644
+--- a/foo
++++ b/foo
+@@ -0,0 +1 @@
++content

@@ -9,10 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--ff]
-		  [-S[<key-id>]] <commit>...
-'git cherry-pick' --continue
-'git cherry-pick' --quit
-'git cherry-pick' --abort
+		  [-S[<keyid>]] <commit>...
+'git cherry-pick' (--continue | --skip | --abort | --quit)
 
 DESCRIPTION
 -----------
@@ -47,7 +45,7 @@ OPTIONS
 	For a more complete list of ways to spell commits, see
 	linkgit:gitrevisions[7].
 	Sets of commits can be passed but no traversal is done by
-	default, as if the '--no-walk' option was specified, see
+	default, as if the `--no-walk` option was specified, see
 	linkgit:git-rev-list[1]. Note that specifying a range will
 	feed all <commit>... arguments to a single revision walk
 	(see a later example that uses 'maint master..next').
@@ -56,6 +54,13 @@ OPTIONS
 --edit::
 	With this option, 'git cherry-pick' will let you edit the commit
 	message prior to committing.
+
+--cleanup=<mode>::
+	This option determines how the commit message will be cleaned up before
+	being passed on to the commit machinery. See linkgit:git-commit[1] for more
+	details. In particular, if the '<mode>' is given a value of `scissors`,
+	scissors will be appended to `MERGE_MSG` before being passed on in the case
+	of a conflict.
 
 -x::
 	When recording the commit, append a line that says
@@ -100,10 +105,13 @@ effect to your index in a row.
 -s::
 --signoff::
 	Add Signed-off-by line at the end of the commit message.
+	See the signoff option in linkgit:git-commit[1] for more information.
 
--S[<key-id>]::
---gpg-sign[=<key-id>]::
-	GPG-sign commits.
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
 
 --ff::
 	If the current HEAD is the same as the parent of the
@@ -125,7 +133,7 @@ effect to your index in a row.
 
 --allow-empty-message::
 	By default, cherry-picking a commit with an empty message will fail.
-	This option overrides that behaviour, allowing commits with empty
+	This option overrides that behavior, allowing commits with empty
 	messages to be cherry picked.
 
 --keep-redundant-commits::
@@ -144,6 +152,11 @@ effect to your index in a row.
 --strategy-option=<option>::
 	Pass the merge strategy-specific option through to the
 	merge strategy.  See linkgit:git-merge[1] for details.
+
+--rerere-autoupdate::
+--no-rerere-autoupdate::
+	Allow the rerere mechanism to update the index with the
+	result of auto-conflict resolution if possible.
 
 SEQUENCER SUBCOMMANDS
 ---------------------
@@ -210,16 +223,16 @@ $ git reset --merge ORIG_HEAD        <3>
 $ git cherry-pick -Xpatience topic^  <4>
 ------------
 <1> apply the change that would be shown by `git show topic^`.
-In this example, the patch does not apply cleanly, so
-information about the conflict is written to the index and
-working tree and no new commit results.
+    In this example, the patch does not apply cleanly, so
+    information about the conflict is written to the index and
+    working tree and no new commit results.
 <2> summarize changes to be reconciled
 <3> cancel the cherry-pick.  In other words, return to the
-pre-cherry-pick state, preserving any local modifications you had in
-the working tree.
+    pre-cherry-pick state, preserving any local modifications
+    you had in the working tree.
 <4> try to apply the change introduced by `topic^` again,
-spending extra time to avoid mistakes based on incorrectly matching
-context lines.
+    spending extra time to avoid mistakes based on incorrectly
+    matching context lines.
 
 SEE ALSO
 --------

@@ -38,6 +38,14 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Deleted in both or deleted in one and unchanged in the other
 #
 "$1.." | "$1.$1" | "$1$1.")
+	if { test -z "$6" && test "$5" != "$7"; } ||
+	   { test -z "$7" && test "$5" != "$6"; }
+	then
+		echo "ERROR: File $4 deleted on one branch but had its" >&2
+		echo "ERROR: permissions changed on the other." >&2
+		exit 1
+	fi
+
 	if test -n "$2"
 	then
 		echo "Removing $4"
@@ -107,17 +115,16 @@ case "${1:-.}${2:-.}${3:-.}" in
 		;;
 	esac
 
-	src1=$(git-unpack-file $2)
-	src2=$(git-unpack-file $3)
+	src1=$(git unpack-file $2)
+	src2=$(git unpack-file $3)
 	case "$1" in
 	'')
 		echo "Added $4 in both, but differently."
-		orig=$(git-unpack-file $2)
-		create_virtual_base "$orig" "$src2"
+		orig=$(git unpack-file $(git hash-object /dev/null))
 		;;
 	*)
 		echo "Auto-merging $4"
-		orig=$(git-unpack-file $1)
+		orig=$(git unpack-file $1)
 		;;
 	esac
 

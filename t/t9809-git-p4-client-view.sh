@@ -407,7 +407,7 @@ test_expect_success 'reinit depot' '
 '
 
 #
-# What happens when two files of the same name are overlayed together?
+# What happens when two files of the same name are overlaid together?
 # The last-listed file should take preference.
 #
 # //depot
@@ -834,10 +834,6 @@ test_expect_success 'quotes on both sides' '
 	test_when_finished cleanup_git &&
 	git p4 clone --use-client-spec --dest="$git" //depot &&
 	git_verify "cdir 1/file11" "cdir 1/file12"
-'
-
-test_expect_success 'kill p4d' '
-	kill_p4d
 '
 
 test_done

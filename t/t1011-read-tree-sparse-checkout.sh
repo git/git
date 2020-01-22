@@ -15,11 +15,14 @@ test_description='sparse checkout tests
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success 'setup' '
-	cat >expected <<-\EOF &&
-	100644 77f0ba1734ed79d12881f81b36ee134de6a3327b 0	init.t
-	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	sub/added
-	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	sub/addedtoo
-	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	subsub/added
+	test_commit init &&
+	echo modified >>init.t &&
+
+	cat >expected <<-EOF &&
+	100644 $(git hash-object init.t) 0	init.t
+	100644 $EMPTY_BLOB 0	sub/added
+	100644 $EMPTY_BLOB 0	sub/addedtoo
+	100644 $EMPTY_BLOB 0	subsub/added
 	EOF
 	cat >expected.swt <<-\EOF &&
 	H init.t
@@ -28,8 +31,6 @@ test_expect_success 'setup' '
 	H subsub/added
 	EOF
 
-	test_commit init &&
-	echo modified >>init.t &&
 	mkdir sub subsub &&
 	touch sub/added sub/addedtoo subsub/added &&
 	git add init.t sub/added sub/addedtoo subsub/added &&
@@ -214,7 +215,6 @@ test_expect_success 'read-tree adds to worktree, dirty case' '
 '
 
 test_expect_success 'index removal and worktree narrowing at the same time' '
-	>empty &&
 	echo init.t >.git/info/sparse-checkout &&
 	echo sub/added >>.git/info/sparse-checkout &&
 	git checkout -f top &&
@@ -222,16 +222,15 @@ test_expect_success 'index removal and worktree narrowing at the same time' '
 	git checkout removed &&
 	git ls-files sub/added >result &&
 	test ! -f sub/added &&
-	test_cmp empty result
+	test_must_be_empty result
 '
 
 test_expect_success 'read-tree --reset removes outside worktree' '
-	>empty &&
 	echo init.t >.git/info/sparse-checkout &&
 	git checkout -f top &&
 	git reset --hard removed &&
 	git ls-files sub/added >result &&
-	test_cmp empty result
+	test_must_be_empty result
 '
 
 test_expect_success 'print errors when failed to update worktree' '
@@ -244,10 +243,10 @@ test_expect_success 'print errors when failed to update worktree' '
 error: The following untracked working tree files would be overwritten by checkout:
 	sub/added
 	sub/addedtoo
-Please move or remove them before you can switch branches.
+Please move or remove them before you switch branches.
 Aborting
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success 'checkout without --ignore-skip-worktree-bits' '

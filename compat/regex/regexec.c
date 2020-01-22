@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 static reg_errcode_t match_ctx_init (re_match_context_t *cache, int eflags,
 				     int n) internal_function;
@@ -2421,7 +2420,7 @@ find_recover_state (reg_errcode_t *err, re_match_context_t *mctx)
 /* From the node set CUR_NODES, pick up the nodes whose types are
    OP_OPEN_SUBEXP and which have corresponding back references in the regular
    expression. And register them to use them later for evaluating the
-   correspoding back references.  */
+   corresponding back references.  */
 
 static reg_errcode_t
 internal_function
@@ -3348,7 +3347,7 @@ build_trtable (const re_dfa_t *dfa, re_dfastate_t *state)
   dests_node = dests_alloc->dests_node;
   dests_ch = dests_alloc->dests_ch;
 
-  /* Initialize transiton table.  */
+  /* Initialize transition table.  */
   state->word_trtable = state->trtable = NULL;
 
   /* At first, group all nodes belonging to `state' into several
@@ -4102,7 +4101,7 @@ extend_buffers (re_match_context_t *mctx)
   if (BE (INT_MAX / 2 / sizeof (re_dfastate_t *) <= pstr->bufs_len, 0))
     return REG_ESPACE;
 
-  /* Double the lengthes of the buffers.  */
+  /* Double the lengths of the buffers.  */
   ret = re_string_realloc_buffers (pstr, pstr->bufs_len * 2);
   if (BE (ret != REG_NOERROR, 0))
     return ret;
@@ -4284,7 +4283,7 @@ search_cur_bkref_entry (const re_match_context_t *mctx, int str_idx)
   last = right = mctx->nbkref_ents;
   for (left = 0; left < right;)
     {
-      mid = (left + right) / 2;
+      mid = left + (right - left) / 2;
       if (mctx->bkref_ents[mid].str_idx < str_idx)
 	left = mid + 1;
       else

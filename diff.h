@@ -7,32 +7,78 @@
 #include "tree-walk.h"
 #include "pathspec.h"
 #include "object.h"
+#include "oidset.h"
 
-struct rev_info;
+/**
+ * The diff API is for programs that compare two sets of files (e.g. two trees,
+ * one tree and the index) and present the found difference in various ways.
+ * The calling program is responsible for feeding the API pairs of files, one
+ * from the "old" set and the corresponding one from "new" set, that are
+ * different.
+ * The library called through this API is called diffcore, and is responsible
+ * for two things.
+ *
+ * - finding total rewrites (`-B`), renames (`-M`) and copies (`-C`), and
+ * changes that touch a string (`-S`), as specified by the caller.
+ *
+ * - outputting the differences in various formats, as specified by the caller.
+ *
+ * Calling sequence
+ * ----------------
+ *
+ * - Prepare `struct diff_options` to record the set of diff options, and then
+ * call `repo_diff_setup()` to initialize this structure.  This sets up the
+ * vanilla default.
+ *
+ * - Fill in the options structure to specify desired output format, rename
+ * detection, etc.  `diff_opt_parse()` can be used to parse options given
+ * from the command line in a way consistent with existing git-diff family
+ * of programs.
+ *
+ * - Call `diff_setup_done()`; this inspects the options set up so far for
+ * internal consistency and make necessary tweaking to it (e.g. if textual
+ * patch output was asked, recursive behaviour is turned on); the callback
+ * set_default in diff_options can be used to tweak this more.
+ *
+ * - As you find different pairs of files, call `diff_change()` to feed
+ * modified files, `diff_addremove()` to feed created or deleted files, or
+ * `diff_unmerge()` to feed a file whose state is 'unmerged' to the API.
+ * These are thin wrappers to a lower-level `diff_queue()` function that is
+ * flexible enough to record any of these kinds of changes.
+ *
+ * - Once you finish feeding the pairs of files, call `diffcore_std()`.
+ * This will tell the diffcore library to go ahead and do its work.
+ *
+ * - Calling `diff_flush()` will produce the output.
+ */
+
+struct combine_diff_path;
+struct commit;
+struct diff_filespec;
 struct diff_options;
 struct diff_queue_struct;
+struct oid_array;
+struct option;
+struct repository;
+struct rev_info;
 struct strbuf;
-struct diff_filespec;
 struct userdiff_driver;
-struct sha1_array;
-struct commit;
-struct combine_diff_path;
 
 typedef int (*pathchange_fn_t)(struct diff_options *options,
 		 struct combine_diff_path *path);
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
-		 const unsigned char *old_sha1,
-		 const unsigned char *new_sha1,
-		 int old_sha1_valid, int new_sha1_valid,
+		 const struct object_id *old_oid,
+		 const struct object_id *new_oid,
+		 int old_oid_valid, int new_oid_valid,
 		 const char *fullpath,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule);
 
 typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
-		    const unsigned char *sha1,
-		    int sha1_valid,
+		    const struct object_id *oid,
+		    int oid_valid,
 		    const char *fullpath, unsigned dirty_submodule);
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
@@ -60,43 +106,100 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 
 #define DIFF_FORMAT_CALLBACK	0x1000
 
-#define DIFF_OPT_RECURSIVE           (1 <<  0)
-#define DIFF_OPT_TREE_IN_RECURSIVE   (1 <<  1)
-#define DIFF_OPT_BINARY              (1 <<  2)
-#define DIFF_OPT_TEXT                (1 <<  3)
-#define DIFF_OPT_FULL_INDEX          (1 <<  4)
-#define DIFF_OPT_SILENT_ON_REMOVE    (1 <<  5)
-#define DIFF_OPT_FIND_COPIES_HARDER  (1 <<  6)
-#define DIFF_OPT_FOLLOW_RENAMES      (1 <<  7)
-#define DIFF_OPT_RENAME_EMPTY        (1 <<  8)
-/* (1 <<  9) unused */
-#define DIFF_OPT_HAS_CHANGES         (1 << 10)
-#define DIFF_OPT_QUICK               (1 << 11)
-#define DIFF_OPT_NO_INDEX            (1 << 12)
-#define DIFF_OPT_ALLOW_EXTERNAL      (1 << 13)
-#define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
-#define DIFF_OPT_REVERSE_DIFF        (1 << 15)
-#define DIFF_OPT_CHECK_FAILED        (1 << 16)
-#define DIFF_OPT_RELATIVE_NAME       (1 << 17)
-#define DIFF_OPT_IGNORE_SUBMODULES   (1 << 18)
-#define DIFF_OPT_DIRSTAT_CUMULATIVE  (1 << 19)
-#define DIFF_OPT_DIRSTAT_BY_FILE     (1 << 20)
-#define DIFF_OPT_ALLOW_TEXTCONV      (1 << 21)
-#define DIFF_OPT_DIFF_FROM_CONTENTS  (1 << 22)
-#define DIFF_OPT_SUBMODULE_LOG       (1 << 23)
-#define DIFF_OPT_DIRTY_SUBMODULES    (1 << 24)
-#define DIFF_OPT_IGNORE_UNTRACKED_IN_SUBMODULES (1 << 25)
-#define DIFF_OPT_IGNORE_DIRTY_SUBMODULES (1 << 26)
-#define DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG (1 << 27)
-#define DIFF_OPT_DIRSTAT_BY_LINE     (1 << 28)
-#define DIFF_OPT_FUNCCONTEXT         (1 << 29)
-#define DIFF_OPT_PICKAXE_IGNORE_CASE (1 << 30)
-#define DIFF_OPT_DEFAULT_FOLLOW_RENAMES (1 << 31)
+#define DIFF_FLAGS_INIT { 0 }
+struct diff_flags {
 
-#define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
-#define DIFF_OPT_TOUCHED(opts, flag)    ((opts)->touched_flags & DIFF_OPT_##flag)
-#define DIFF_OPT_SET(opts, flag)    (((opts)->flags |= DIFF_OPT_##flag),((opts)->touched_flags |= DIFF_OPT_##flag))
-#define DIFF_OPT_CLR(opts, flag)    (((opts)->flags &= ~DIFF_OPT_##flag),((opts)->touched_flags |= DIFF_OPT_##flag))
+	/**
+	 * Tells if tree traversal done by tree-diff should recursively descend
+	 * into a tree object pair that are different in preimage and postimage set.
+	 */
+	unsigned recursive;
+	unsigned tree_in_recursive;
+
+	/* Affects the way how a file that is seemingly binary is treated. */
+	unsigned binary;
+	unsigned text;
+
+	/**
+	 * Tells the patch output format not to use abbreviated object names on the
+	 * "index" lines.
+	 */
+	unsigned full_index;
+
+	/* Affects if diff-files shows removed files. */
+	unsigned silent_on_remove;
+
+	/**
+	 * Tells the diffcore library that the caller is feeding unchanged
+	 * filepairs to allow copies from unmodified files be detected.
+	 */
+	unsigned find_copies_harder;
+
+	unsigned follow_renames;
+	unsigned rename_empty;
+
+	/* Internal; used for optimization to see if there is any change. */
+	unsigned has_changes;
+
+	unsigned quick;
+
+	/**
+	 * Tells diff-files that the input is not tracked files but files in random
+	 * locations on the filesystem.
+	 */
+	unsigned no_index;
+
+	/**
+	 * Tells output routine that it is Ok to call user specified patch output
+	 * routine.  Plumbing disables this to ensure stable output.
+	 */
+	unsigned allow_external;
+
+	/**
+	 * For communication between the calling program and the options parser;
+	 * tell the calling program to signal the presence of difference using
+	 * program exit code.
+	 */
+	unsigned exit_with_status;
+
+	/**
+	 * Tells the library that the calling program is feeding the filepairs
+	 * reversed; `one` is two, and `two` is one.
+	 */
+	unsigned reverse_diff;
+
+	unsigned check_failed;
+	unsigned relative_name;
+	unsigned ignore_submodules;
+	unsigned dirstat_cumulative;
+	unsigned dirstat_by_file;
+	unsigned allow_textconv;
+	unsigned textconv_set_via_cmdline;
+	unsigned diff_from_contents;
+	unsigned dirty_submodules;
+	unsigned ignore_untracked_in_submodules;
+	unsigned ignore_dirty_submodules;
+	unsigned override_submodule_config;
+	unsigned dirstat_by_line;
+	unsigned funccontext;
+	unsigned default_follow_renames;
+	unsigned stat_with_summary;
+	unsigned suppress_diff_headers;
+	unsigned dual_color_diffed_diffs;
+	unsigned suppress_hunk_header_line_count;
+};
+
+static inline void diff_flags_or(struct diff_flags *a,
+				 const struct diff_flags *b)
+{
+	char *tmp_a = (char *)a;
+	const char *tmp_b = (const char *)b;
+	int i;
+
+	for (i = 0; i < sizeof(struct diff_flags); i++)
+		tmp_a[i] |= tmp_b[i];
+}
+
 #define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
@@ -110,44 +213,92 @@ enum diff_words_type {
 	DIFF_WORDS_COLOR
 };
 
+enum diff_submodule_format {
+	DIFF_SUBMODULE_SHORT = 0,
+	DIFF_SUBMODULE_LOG,
+	DIFF_SUBMODULE_INLINE_DIFF
+};
+
+/**
+ * the set of options the calling program wants to affect the operation of
+ * diffcore library with.
+ */
 struct diff_options {
 	const char *orderfile;
+
+	/**
+	 * A constant string (can and typically does contain newlines to look for
+	 * a block of text, not just a single line) to filter out the filepairs
+	 * that do not change the number of strings contained in its preimage and
+	 * postimage of the diff_queue.
+	 */
 	const char *pickaxe;
+
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
-	unsigned flags;
-	unsigned touched_flags;
+	const char *line_prefix;
+	size_t line_prefix_length;
+
+	/**
+	 * collection of boolean options that affects the operation, but some do
+	 * not have anything to do with the diffcore library.
+	 */
+	struct diff_flags flags;
 
 	/* diff-filter bits */
 	unsigned int filter;
 
 	int use_color;
+
+	/* Number of context lines to generate in patch output. */
 	int context;
+
 	int interhunkcontext;
+
+	/* Affects the way detection logic for complete rewrites, renames and
+	 * copies.
+	 */
 	int break_opt;
 	int detect_rename;
+
 	int irreversible_delete;
 	int skip_stat_unmatch;
 	int line_termination;
+
+	/* The output format used when `diff_flush()` is run. */
 	int output_format;
-	int pickaxe_opts;
+
+	unsigned pickaxe_opts;
+
+	/* Affects the way detection logic for complete rewrites, renames and
+	 * copies.
+	 */
 	int rename_score;
 	int rename_limit;
+
 	int needed_rename_limit;
 	int degraded_cc_to_c;
 	int show_rename_progress;
 	int dirstat_permille;
 	int setup;
+
+	/* Number of hexdigits to abbreviate raw format output to. */
 	int abbrev;
+
+	int ita_invisible_in_index;
 /* white-space error highlighting */
-#define WSEH_NEW 1
-#define WSEH_CONTEXT 2
-#define WSEH_OLD 4
+#define WSEH_NEW (1<<12)
+#define WSEH_CONTEXT (1<<13)
+#define WSEH_OLD (1<<14)
 	unsigned ws_error_highlight;
 	const char *prefix;
 	int prefix_length;
 	const char *stat_sep;
-	long xdl_opts;
+	int xdl_opts;
+
+	/* see Documentation/diff-options.txt */
+	char **anchors;
+	size_t anchors_nr, anchors_alloc;
 
 	int stat_width;
 	int stat_name_width;
@@ -155,6 +306,9 @@ struct diff_options {
 	int stat_count;
 	const char *word_regex;
 	enum diff_words_type word_diff;
+	enum diff_submodule_format submodule_format;
+
+	struct oidset *objfind;
 
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;
@@ -162,22 +316,74 @@ struct diff_options {
 	/* to support internal diff recursion by --follow hack*/
 	int found_follow;
 
+	/* Callback which allows tweaking the options in diff_setup_done(). */
 	void (*set_default)(struct diff_options *);
 
 	FILE *file;
 	int close_file;
 
+#define OUTPUT_INDICATOR_NEW 0
+#define OUTPUT_INDICATOR_OLD 1
+#define OUTPUT_INDICATOR_CONTEXT 2
+	char output_indicators[3];
+
 	struct pathspec pathspec;
 	pathchange_fn_t pathchange;
 	change_fn_t change;
 	add_remove_fn_t add_remove;
+	void *change_fn_data;
 	diff_format_fn_t format_callback;
 	void *format_callback_data;
 	diff_prefix_fn_t output_prefix;
-	int output_prefix_length;
 	void *output_prefix_data;
 
 	int diff_path_counter;
+
+	struct emitted_diff_symbols *emitted_symbols;
+	enum {
+		COLOR_MOVED_NO = 0,
+		COLOR_MOVED_PLAIN = 1,
+		COLOR_MOVED_BLOCKS = 2,
+		COLOR_MOVED_ZEBRA = 3,
+		COLOR_MOVED_ZEBRA_DIM = 4,
+	} color_moved;
+	#define COLOR_MOVED_DEFAULT COLOR_MOVED_ZEBRA
+	#define COLOR_MOVED_MIN_ALNUM_COUNT 20
+
+	/* XDF_WHITESPACE_FLAGS regarding block detection are set at 2, 3, 4 */
+	#define COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE (1<<5)
+	#define COLOR_MOVED_WS_ERROR (1<<0)
+	unsigned color_moved_ws_handling;
+
+	struct repository *repo;
+	struct option *parseopts;
+};
+
+unsigned diff_filter_bit(char status);
+
+void diff_emit_submodule_del(struct diff_options *o, const char *line);
+void diff_emit_submodule_add(struct diff_options *o, const char *line);
+void diff_emit_submodule_untracked(struct diff_options *o, const char *path);
+void diff_emit_submodule_modified(struct diff_options *o, const char *path);
+void diff_emit_submodule_header(struct diff_options *o, const char *header);
+void diff_emit_submodule_error(struct diff_options *o, const char *err);
+void diff_emit_submodule_pipethrough(struct diff_options *o,
+				     const char *line, int len);
+
+struct diffstat_t {
+	int nr;
+	int alloc;
+	struct diffstat_file {
+		char *from_name;
+		char *name;
+		char *print_name;
+		const char *comments;
+		unsigned is_unmerged:1;
+		unsigned is_binary:1;
+		unsigned is_renamed:1;
+		unsigned is_interesting:1;
+		uintmax_t added, deleted;
+	} **files;
 };
 
 enum color_diff {
@@ -189,8 +395,23 @@ enum color_diff {
 	DIFF_FILE_NEW = 5,
 	DIFF_COMMIT = 6,
 	DIFF_WHITESPACE = 7,
-	DIFF_FUNCINFO = 8
+	DIFF_FUNCINFO = 8,
+	DIFF_FILE_OLD_MOVED = 9,
+	DIFF_FILE_OLD_MOVED_ALT = 10,
+	DIFF_FILE_OLD_MOVED_DIM = 11,
+	DIFF_FILE_OLD_MOVED_ALT_DIM = 12,
+	DIFF_FILE_NEW_MOVED = 13,
+	DIFF_FILE_NEW_MOVED_ALT = 14,
+	DIFF_FILE_NEW_MOVED_DIM = 15,
+	DIFF_FILE_NEW_MOVED_ALT_DIM = 16,
+	DIFF_CONTEXT_DIM = 17,
+	DIFF_FILE_OLD_DIM = 18,
+	DIFF_FILE_NEW_DIM = 19,
+	DIFF_CONTEXT_BOLD = 20,
+	DIFF_FILE_OLD_BOLD = 21,
+	DIFF_FILE_NEW_BOLD = 22,
 };
+
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
 	diff_get_color((o)->use_color, ix)
@@ -201,14 +422,15 @@ const char *diff_line_prefix(struct diff_options *);
 
 extern const char mime_boundary_leader[];
 
-extern struct combine_diff_path *diff_tree_paths(
-	struct combine_diff_path *p, const unsigned char *sha1,
-	const unsigned char **parent_sha1, int nparent,
+struct combine_diff_path *diff_tree_paths(
+	struct combine_diff_path *p, const struct object_id *oid,
+	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
-extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
-			  const char *base, struct diff_options *opt);
-extern int diff_root_tree_sha1(const unsigned char *new, const char *base,
-                               struct diff_options *opt);
+int diff_tree_oid(const struct object_id *old_oid,
+		  const struct object_id *new_oid,
+		  const char *base, struct diff_options *opt);
+int diff_root_tree_oid(const struct object_id *new_oid, const char *base,
+		       struct diff_options *opt);
 
 struct combine_diff_path {
 	struct combine_diff_path *next;
@@ -219,57 +441,66 @@ struct combine_diff_path {
 		char status;
 		unsigned int mode;
 		struct object_id oid;
+		struct strbuf path;
 	} parent[FLEX_ARRAY];
 };
 #define combine_diff_path_size(n, l) \
-	(sizeof(struct combine_diff_path) + \
-	 sizeof(struct combine_diff_parent) * (n) + (l) + 1)
+	st_add4(sizeof(struct combine_diff_path), (l), 1, \
+		st_mult(sizeof(struct combine_diff_parent), (n)))
 
-extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
-			      int dense, struct rev_info *);
+void show_combined_diff(struct combine_diff_path *elem, int num_parent,
+			int dense, struct rev_info *);
 
-extern void diff_tree_combined(const unsigned char *sha1, const struct sha1_array *parents, int dense, struct rev_info *rev);
+void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, int dense, struct rev_info *rev);
 
-extern void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
+void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
 
-extern int diff_can_quit_early(struct diff_options *);
+int diff_can_quit_early(struct diff_options *);
 
-extern void diff_addremove(struct diff_options *,
-			   int addremove,
-			   unsigned mode,
-			   const unsigned char *sha1,
-			   int sha1_valid,
-			   const char *fullpath, unsigned dirty_submodule);
+void diff_addremove(struct diff_options *,
+		    int addremove,
+		    unsigned mode,
+		    const struct object_id *oid,
+		    int oid_valid,
+		    const char *fullpath, unsigned dirty_submodule);
 
-extern void diff_change(struct diff_options *,
-			unsigned mode1, unsigned mode2,
-			const unsigned char *sha1,
-			const unsigned char *sha2,
-			int sha1_valid,
-			int sha2_valid,
-			const char *fullpath,
-			unsigned dirty_submodule1, unsigned dirty_submodule2);
+void diff_change(struct diff_options *,
+		 unsigned mode1, unsigned mode2,
+		 const struct object_id *old_oid,
+		 const struct object_id *new_oid,
+		 int old_oid_valid, int new_oid_valid,
+		 const char *fullpath,
+		 unsigned dirty_submodule1, unsigned dirty_submodule2);
 
-extern struct diff_filepair *diff_unmerge(struct diff_options *, const char *path);
+struct diff_filepair *diff_unmerge(struct diff_options *, const char *path);
+
+void compute_diffstat(struct diff_options *options, struct diffstat_t *diffstat,
+		      struct diff_queue_struct *q);
+void free_diffstat_info(struct diffstat_t *diffstat);
 
 #define DIFF_SETUP_REVERSE      	1
-#define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
 /*
  * Poor man's alternative to parse-option, to allow both stuck form
  * (--option=value) and separate form (--option value).
  */
-extern int parse_long_opt(const char *opt, const char **argv,
-			 const char **optarg);
+int parse_long_opt(const char *opt, const char **argv,
+		   const char **optarg);
 
-extern int git_diff_basic_config(const char *var, const char *value, void *cb);
-extern int git_diff_ui_config(const char *var, const char *value, void *cb);
-extern void diff_setup(struct diff_options *);
-extern int diff_opt_parse(struct diff_options *, const char **, int);
-extern void diff_setup_done(struct diff_options *);
+int git_diff_basic_config(const char *var, const char *value, void *cb);
+int git_diff_heuristic_config(const char *var, const char *value, void *cb);
+void init_diff_ui_defaults(void);
+int git_diff_ui_config(const char *var, const char *value, void *cb);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define diff_setup(diffopts) repo_diff_setup(the_repository, diffopts)
+#endif
+void repo_diff_setup(struct repository *, struct diff_options *);
+int diff_opt_parse(struct diff_options *, const char **, int, const char *);
+void diff_setup_done(struct diff_options *);
+int git_config_rename(const char *var, const char *value);
 
 #define DIFF_DETECT_RENAME	1
 #define DIFF_DETECT_COPY	2
@@ -279,9 +510,16 @@ extern void diff_setup_done(struct diff_options *);
 
 #define DIFF_PICKAXE_KIND_S	4 /* traditional plumbing counter */
 #define DIFF_PICKAXE_KIND_G	8 /* grep in the patch */
+#define DIFF_PICKAXE_KIND_OBJFIND	16 /* specific object IDs */
 
-extern void diffcore_std(struct diff_options *);
-extern void diffcore_fix_diff_index(struct diff_options *);
+#define DIFF_PICKAXE_KINDS_MASK (DIFF_PICKAXE_KIND_S | \
+				 DIFF_PICKAXE_KIND_G | \
+				 DIFF_PICKAXE_KIND_OBJFIND)
+
+#define DIFF_PICKAXE_IGNORE_CASE	32
+
+void diffcore_std(struct diff_options *);
+void diffcore_fix_diff_index(void);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
@@ -311,9 +549,9 @@ extern void diffcore_fix_diff_index(struct diff_options *);
 "                show all files diff when -S is used and hit is found.\n" \
 "  -a  --text    treat all files as text.\n"
 
-extern int diff_queue_is_empty(void);
-extern void diff_flush(struct diff_options*);
-extern void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
+int diff_queue_is_empty(void);
+void diff_flush(struct diff_options*);
+void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
 
 /* diff-raw status letters */
 #define DIFF_STATUS_ADDED		'A'
@@ -331,36 +569,73 @@ extern void diff_warn_rename_limit(const char *varname, int needed, int degraded
 #define DIFF_STATUS_FILTER_AON		'*'
 #define DIFF_STATUS_FILTER_BROKEN	'B'
 
-extern const char *diff_unique_abbrev(const unsigned char *, int);
+/*
+ * This is different from find_unique_abbrev() in that
+ * it stuffs the result with dots for alignment.
+ */
+const char *diff_aligned_abbrev(const struct object_id *sha1, int);
 
 /* do not report anything on removed paths */
 #define DIFF_SILENT_ON_REMOVED 01
 /* report racily-clean paths as modified */
 #define DIFF_RACY_IS_MODIFIED 02
-extern int run_diff_files(struct rev_info *revs, unsigned int option);
-extern int run_diff_index(struct rev_info *revs, int cached);
+int run_diff_files(struct rev_info *revs, unsigned int option);
+int run_diff_index(struct rev_info *revs, int cached);
 
-extern int do_diff_cache(const unsigned char *, struct diff_options *);
-extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
+int do_diff_cache(const struct object_id *, struct diff_options *);
+int diff_flush_patch_id(struct diff_options *, struct object_id *, int, int);
+void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx);
 
-extern int diff_result_code(struct diff_options *, int);
+int diff_result_code(struct diff_options *, int);
 
-extern void diff_no_index(struct rev_info *, int, const char **, const char *);
+int diff_no_index(struct rev_info *,
+		  int implicit_no_index, int, const char **);
 
-extern int index_differs_from(const char *def, int diff_flags);
+int index_differs_from(struct repository *r, const char *def,
+		       const struct diff_flags *flags,
+		       int ita_invisible_in_index);
 
-extern size_t fill_textconv(struct userdiff_driver *driver,
-			    struct diff_filespec *df,
-			    char **outbuf);
+/*
+ * Fill the contents of the filespec "df", respecting any textconv defined by
+ * its userdiff driver.  The "driver" parameter must come from a
+ * previous call to get_textconv(), and therefore should either be NULL or have
+ * textconv enabled.
+ *
+ * Note that the memory ownership of the resulting buffer depends on whether
+ * the driver field is NULL. If it is, then the memory belongs to the filespec
+ * struct. If it is non-NULL, then "outbuf" points to a newly allocated buffer
+ * that should be freed by the caller.
+ */
+size_t fill_textconv(struct repository *r,
+		     struct userdiff_driver *driver,
+		     struct diff_filespec *df,
+		     char **outbuf);
 
-extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
+/*
+ * Look up the userdiff driver for the given filespec, and return it if
+ * and only if it has textconv enabled (otherwise return NULL). The result
+ * can be passed to fill_textconv().
+ */
+struct userdiff_driver *get_textconv(struct repository *r,
+				     struct diff_filespec *one);
 
-extern int parse_rename_score(const char **cp_p);
+/*
+ * Prepare diff_filespec and convert it using diff textconv API
+ * if the textconv driver exists.
+ * Return 1 if the conversion succeeds, 0 otherwise.
+ */
+int textconv_object(struct repository *repo,
+		    const char *path,
+		    unsigned mode,
+		    const struct object_id *oid, int oid_valid,
+		    char **buf, unsigned long *buf_size);
 
-extern long parse_algorithm_value(const char *value);
+int parse_rename_score(const char **cp_p);
 
-extern int print_stat_summary(FILE *fp, int files,
-			      int insertions, int deletions);
-extern void setup_diff_pager(struct diff_options *);
+long parse_algorithm_value(const char *value);
+
+void print_stat_summary(FILE *fp, int files,
+			int insertions, int deletions);
+void setup_diff_pager(struct diff_options *);
 
 #endif /* DIFF_H */

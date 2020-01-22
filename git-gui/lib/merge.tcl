@@ -112,12 +112,16 @@ method _start {} {
 	close $fh
 	set _last_merged_branch $branch
 
-	set cmd [list git]
-	lappend cmd merge
-	lappend cmd --strategy=recursive
-	lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
-	lappend cmd HEAD
-	lappend cmd $name
+	if {[git-version >= "2.5.0"]} {
+		set cmd [list git merge --strategy=recursive FETCH_HEAD]
+	} else {
+		set cmd [list git]
+		lappend cmd merge
+		lappend cmd --strategy=recursive
+		lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
+		lappend cmd HEAD
+		lappend cmd $name
+	}
 
 	ui_status [mc "Merging %s and %s..." $current_branch $stitle]
 	set cons [console::new [mc "Merge"] "merge $stitle"]
@@ -149,7 +153,7 @@ constructor dialog {} {
 	}
 
 	make_dialog top w
-	wm title $top [append "[appname] ([reponame]): " [mc "Merge"]]
+	wm title $top [mc "%s (%s): Merge" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
@@ -237,23 +241,27 @@ Continue with resetting the current changes?"]
 	if {[ask_popup $op_question] eq {yes}} {
 		set fd [git_read --stderr read-tree --reset -u -v HEAD]
 		fconfigure $fd -blocking 0 -translation binary
-		fileevent $fd readable [namespace code [list _reset_wait $fd]]
-		$::main_status start [mc "Aborting"] [mc "files reset"]
+		set status_bar_operation [$::main_status \
+			start \
+			[mc "Aborting"] \
+			[mc "files reset"]
+		fileevent $fd readable [namespace code [list \
+			_reset_wait $fd $status_bar_operation]]
 	} else {
 		unlock_index
 	}
 }
 
-proc _reset_wait {fd} {
+proc _reset_wait {fd status_bar_operation} {
 	global ui_comm
 
-	$::main_status update_meter [read $fd]
+	$status_bar_operation update_meter [read $fd]
 
 	fconfigure $fd -blocking 1
 	if {[eof $fd]} {
 		set fail [catch {close $fd} err]
-		$::main_status stop
 		unlock_index
+		$status_bar_operation stop
 
 		$ui_comm delete 0.0 end
 		$ui_comm edit modified false
