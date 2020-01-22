@@ -107,7 +107,11 @@ test_expect_success 'use ref advertisement to filter out commits' '
 
 	# The ref advertisement itself is filtered when protocol v2 is used, so
 	# use v0.
-	GIT_TEST_PROTOCOL_VERSION= trace_fetch client origin to_fetch &&
+	(
+		GIT_TEST_PROTOCOL_VERSION= &&
+		export GIT_TEST_PROTOCOL_VERSION &&
+		trace_fetch client origin to_fetch
+	) &&
 	have_sent c5 c4^ c2side &&
 	have_not_sent c4 c4^^ c4^^^
 '
@@ -169,7 +173,17 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	test_commit -C server commit-on-b1 &&
 
 	test_config -C client fetch.negotiationalgorithm skipping &&
-	trace_fetch client "$(pwd)/server" to_fetch &&
+
+	# NEEDSWORK: The number of "have"s sent depends on whether the transport
+	# is stateful. If the overspecification of the result were reduced, this
+	# test could be used for both stateful and stateless transports.
+	(
+		# Force protocol v0, in which local transport is stateful (in
+		# protocol v2 it is stateless).
+		GIT_TEST_PROTOCOL_VERSION=0 &&
+		export GIT_TEST_PROTOCOL_VERSION &&
+		trace_fetch client "$(pwd)/server" to_fetch
+	) &&
 	grep "  fetch" trace &&
 
 	# fetch-pack sends 2 requests each containing 16 "have" lines before
