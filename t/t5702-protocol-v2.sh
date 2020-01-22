@@ -665,6 +665,18 @@ test_expect_success 'fetch from namespaced repo respects namespaces' '
 	test_cmp expect actual
 '
 
+test_expect_success 'ls-remote with v2 http sends only one POST' '
+	test_when_finished "rm -f log" &&
+
+	git ls-remote "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" >expect &&
+	GIT_TRACE_CURL="$(pwd)/log" git -c protocol.version=2 \
+		ls-remote "$HTTPD_URL/smart/http_parent" >actual &&
+	test_cmp expect actual &&
+
+	grep "Send header: POST" log >posts &&
+	test_line_count = 1 posts
+'
+
 test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	test_when_finished "rm -f log" &&
 	# Till v2 for push is designed, make sure that if a client has
