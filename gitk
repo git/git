@@ -34,8 +34,7 @@ proc gitworktree {} {
         # cdup to obtain a relative path to the top of the worktree. If
         # run from the top, the ./ prefix ensures normalize expands pwd.
         if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
-	    catch {set _gitworktree [exec git config --get core.worktree]}
-	    if {$_gitworktree eq ""} {
+	    if {[catch {set _gitworktree [exec git config --get core.worktree]}]} {
 		set _gitworktree [file normalize ./[exec git rev-parse --show-cdup]]
 	    }
         }
@@ -12603,7 +12602,7 @@ set cdup {}
 if {[expr {[exec git rev-parse --is-inside-work-tree] == "true"}]} {
     set cdup [exec git rev-parse --show-cdup]
 }
-set worktree [exec git rev-parse --show-toplevel]
+set worktree [gitworktree]
 setcoords
 makewindow
 catch {
