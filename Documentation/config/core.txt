@@ -68,6 +68,17 @@ core.fsmonitor::
 	avoiding unnecessary processing of files that have not changed.
 	See the "fsmonitor-watchman" section of linkgit:githooks[5].
 
+core.fsmonitorHookVersion::
+	Sets the version of hook that is to be used when calling fsmonitor.
+	There are currently versions 1 and 2. When this is not set,
+	version 2 will be tried first and if it fails then version 1
+	will be tried. Version 1 uses a timestamp as input to determine
+	which files have changes since that time but some monitors
+	like watchman have race conditions when used with a timestamp.
+	Version 2 uses an opaque string so that the monitor can return
+	something that can be used to determine what files have changed
+	without race conditions.
+
 core.trustctime::
 	If false, the ctime differences between the index and the
 	working tree are ignored; useful when the inode change time
