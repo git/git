@@ -11,7 +11,14 @@ test_expect_success 'setup repo' '
 	git config gc.writeCommitGraph false &&
 	infodir=".git/objects/info" &&
 	graphdir="$infodir/commit-graphs" &&
-	test_oid_init
+	test_oid_init &&
+	test_oid_cache <<-EOM
+	shallow sha1:1760
+	shallow sha256:2064
+
+	base sha1:1376
+	base sha256:1496
+	EOM
 '
 
 graph_read_expect() {
@@ -248,7 +255,7 @@ test_expect_success 'verify hashes along chain, even in shallow' '
 		cd verify &&
 		git commit-graph verify &&
 		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$base_file" 1760 "\01" &&
+		corrupt_file "$base_file" $(test_oid shallow) "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "incorrect checksum" err
@@ -275,7 +282,7 @@ test_expect_success 'warn on base graph chunk incorrect' '
 		cd base-chunk &&
 		git commit-graph verify &&
 		base_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$base_file" 1376 "\01" &&
+		corrupt_file "$base_file" $(test_oid base) "\01" &&
 		git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_i18ngrep "commit-graph chain does not match" err
