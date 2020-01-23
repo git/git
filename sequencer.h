@@ -155,7 +155,6 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 
 void todo_list_add_exec_commands(struct todo_list *todo_list,
 				 struct string_list *commands);
-int check_todo_list_from_file(struct repository *r);
 int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
 		    struct commit *onto, const char *orig_head, struct string_list *commands,
