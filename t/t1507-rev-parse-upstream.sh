@@ -28,14 +28,9 @@ test_expect_success 'setup' '
 	)
 '
 
-full_name () {
-	(cd clone &&
-	 git rev-parse --symbolic-full-name "$@")
-}
-
 commit_subject () {
 	(cd clone &&
-	 git show -s --pretty=format:%s "$@")
+	 git show -s --pretty=tformat:%s "$@")
 }
 
 error_message () {
@@ -44,63 +39,78 @@ error_message () {
 }
 
 test_expect_success '@{upstream} resolves to correct full name' '
-	test refs/remotes/origin/master = "$(full_name @{upstream})" &&
-	test refs/remotes/origin/master = "$(full_name @{UPSTREAM})" &&
-	test refs/remotes/origin/master = "$(full_name @{UpSTReam})"
+	echo refs/remotes/origin/master >expect &&
+	git -C clone rev-parse --symbolic-full-name @{upstream} >actual &&
+	test_cmp expect actual &&
+	git -C clone rev-parse --symbolic-full-name @{UPSTREAM} >actual &&
+	test_cmp expect actual &&
+	git -C clone rev-parse --symbolic-full-name @{UpSTReam} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '@{u} resolves to correct full name' '
-	test refs/remotes/origin/master = "$(full_name @{u})" &&
-	test refs/remotes/origin/master = "$(full_name @{U})"
+	echo refs/remotes/origin/master >expect &&
+	git -C clone rev-parse --symbolic-full-name @{u} >actual &&
+	test_cmp expect actual &&
+	git -C clone rev-parse --symbolic-full-name @{U} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'my-side@{upstream} resolves to correct full name' '
-	test refs/remotes/origin/side = "$(full_name my-side@{u})"
+	echo refs/remotes/origin/side >expect &&
+	git -C clone rev-parse --symbolic-full-name my-side@{u} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'upstream of branch with @ in middle' '
-	full_name fun@ny@{u} >actual &&
+	git -C clone rev-parse --symbolic-full-name fun@ny@{u} >actual &&
 	echo refs/remotes/origin/side >expect &&
 	test_cmp expect actual &&
-	full_name fun@ny@{U} >actual &&
+	git -C clone rev-parse --symbolic-full-name fun@ny@{U} >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'upstream of branch with @ at start' '
-	full_name @funny@{u} >actual &&
+	git -C clone rev-parse --symbolic-full-name @funny@{u} >actual &&
 	echo refs/remotes/origin/side >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'upstream of branch with @ at end' '
-	full_name funny@@{u} >actual &&
+	git -C clone rev-parse --symbolic-full-name funny@@{u} >actual &&
 	echo refs/remotes/origin/side >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'refs/heads/my-side@{upstream} does not resolve to my-side{upstream}' '
-	test_must_fail full_name refs/heads/my-side@{upstream}
+	test_must_fail git -C clone rev-parse --symbolic-full-name refs/heads/my-side@{upstream}
 '
 
 test_expect_success 'my-side@{u} resolves to correct commit' '
 	git checkout side &&
 	test_commit 5 &&
 	(cd clone && git fetch) &&
-	test 2 = "$(commit_subject my-side)" &&
-	test 5 = "$(commit_subject my-side@{u})"
+	echo 2 >expect &&
+	commit_subject my-side >actual &&
+	test_cmp expect actual &&
+	echo 5 >expect &&
+	commit_subject my-side@{u} >actual
 '
 
 test_expect_success 'not-tracking@{u} fails' '
-	test_must_fail full_name non-tracking@{u} &&
+	test_must_fail git -C clone rev-parse --symbolic-full-name non-tracking@{u} &&
 	(cd clone && git checkout --no-track -b non-tracking) &&
-	test_must_fail full_name non-tracking@{u}
+	test_must_fail git -C clone rev-parse --symbolic-full-name non-tracking@{u}
 '
 
 test_expect_success '<branch>@{u}@{1} resolves correctly' '
 	test_commit 6 &&
 	(cd clone && git fetch) &&
-	test 5 = $(commit_subject my-side@{u}@{1}) &&
-	test 5 = $(commit_subject my-side@{U}@{1})
+	echo 5 >expect &&
+	commit_subject my-side@{u}@{1} >actual &&
+	test_cmp expect actual &&
+	commit_subject my-side@{U}@{1} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '@{u} without specifying branch fails on a detached HEAD' '
@@ -149,7 +159,9 @@ test_expect_success 'checkout other@{u}' '
 '
 
 test_expect_success 'branch@{u} works when tracking a local branch' '
-	test refs/heads/master = "$(full_name local-master@{u})"
+	echo refs/heads/master >expect &&
+	git -C clone rev-parse --symbolic-full-name local-master@{u} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'branch@{u} error message when no upstream' '
@@ -203,35 +215,37 @@ test_expect_success 'pull works when tracking a local branch' '
 
 # makes sense if the previous one succeeded
 test_expect_success '@{u} works when tracking a local branch' '
-	test refs/heads/master = "$(full_name @{u})"
+	echo refs/heads/master >expect &&
+	git -C clone rev-parse --symbolic-full-name @{u} >actual &&
+	test_cmp expect actual
 '
 
-commit=$(git rev-parse HEAD)
-cat >expect <<EOF
-commit $commit
-Reflog: master@{0} (C O Mitter <committer@example.com>)
-Reflog message: branch: Created from HEAD
-Author: A U Thor <author@example.com>
-Date:   Thu Apr 7 15:15:13 2005 -0700
-
-    3
-EOF
 test_expect_success 'log -g other@{u}' '
+	commit=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
+	commit $commit
+	Reflog: master@{0} (C O Mitter <committer@example.com>)
+	Reflog message: branch: Created from HEAD
+	Author: A U Thor <author@example.com>
+	Date:   Thu Apr 7 15:15:13 2005 -0700
+
+	    3
+	EOF
 	git log -1 -g other@{u} >actual &&
 	test_cmp expect actual
 '
 
-cat >expect <<EOF
-commit $commit
-Reflog: master@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <committer@example.com>)
-Reflog message: branch: Created from HEAD
-Author: A U Thor <author@example.com>
-Date:   Thu Apr 7 15:15:13 2005 -0700
-
-    3
-EOF
-
 test_expect_success 'log -g other@{u}@{now}' '
+	commit=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
+	commit $commit
+	Reflog: master@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <committer@example.com>)
+	Reflog message: branch: Created from HEAD
+	Author: A U Thor <author@example.com>
+	Date:   Thu Apr 7 15:15:13 2005 -0700
+
+	    3
+	EOF
 	git log -1 -g other@{u}@{now} >actual &&
 	test_cmp expect actual
 '

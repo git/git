@@ -350,7 +350,7 @@ test_expect_success 'Multi-worktree setup' '
 	mkdir work &&
 	mkdir -p repo.git/repos/foo &&
 	cp repo.git/HEAD repo.git/index repo.git/repos/foo &&
-	test_might_fail cp repo.git/sharedindex.* repo.git/repos/foo &&
+	{ cp repo.git/sharedindex.* repo.git/repos/foo || :; } &&
 	sane_unset GIT_DIR GIT_CONFIG GIT_WORK_TREE
 '
 
