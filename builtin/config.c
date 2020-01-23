@@ -303,8 +303,8 @@ static int handle_value_regex(const char *regex_)
 			cmd_line_value.boolean = boolval;
 			return 0;
 		}
-		warning(_("value_regex '%s' cannot be canonicalized "
-			  "to a boolean value"), regex_);
+		die(_("value_regex '%s' cannot be canonicalized "
+		      "to a boolean value"), regex_);
 	}
 
 	if (type == TYPE_BOOL_OR_INT) {
