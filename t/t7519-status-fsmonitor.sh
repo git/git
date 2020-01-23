@@ -32,11 +32,12 @@ write_integration_script () {
 		echo "$0: exactly 2 arguments expected"
 		exit 2
 	fi
-	if test "$1" != 1
+	if test "$1" != 2
 	then
 		echo "Unsupported core.fsmonitor hook version." >&2
 		exit 1
 	fi
+	printf "last_update_token\0"
 	printf "untracked\0"
 	printf "dir1/untracked\0"
 	printf "dir2/untracked\0"
@@ -107,6 +108,7 @@ EOF
 # test that "update-index --fsmonitor-valid" sets the fsmonitor valid bit
 test_expect_success 'update-index --fsmonitor-valid" sets the fsmonitor valid bit' '
 	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+		printf "last_update_token\0"
 	EOF
 	git update-index --fsmonitor &&
 	git update-index --fsmonitor-valid dir1/modified &&
@@ -167,6 +169,7 @@ EOF
 # test that newly added files are marked valid
 test_expect_success 'newly added files are marked valid' '
 	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+		printf "last_update_token\0"
 	EOF
 	git add new &&
 	git add dir1/new &&
@@ -207,6 +210,7 @@ EOF
 # test that *only* files returned by the integration script get flagged as invalid
 test_expect_success '*only* files returned by the integration script get flagged as invalid' '
 	write_script .git/hooks/fsmonitor-test<<-\EOF &&
+	printf "last_update_token\0"
 	printf "dir1/modified\0"
 	EOF
 	clean_repo &&
@@ -276,6 +280,7 @@ do
 		# (if enabled) files unless it is told about them.
 		test_expect_success "status doesn't detect unreported modifications" '
 			write_script .git/hooks/fsmonitor-test<<-\EOF &&
+			printf "last_update_token\0"
 			:>marker
 			EOF
 			clean_repo &&
