@@ -1277,6 +1277,8 @@ test_expect_success SHA1 'short SHA-1 collide' '
 			.git/rebase-merge/git-rebase-todo.tmp &&
 		grep "^pick [0-9a-f]\{40\}" \
 			.git/rebase-merge/git-rebase-todo &&
+		grep "^pick [0-9a-f]\{40\}" \
+			.git/rebase-merge/git-rebase-todo.backup &&
 		git rebase --continue
 	) &&
 	collide2="$(git rev-parse HEAD~1 | cut -c 1-4)" &&
