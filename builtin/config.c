@@ -14,12 +14,16 @@ static const char *const builtin_config_usage[] = {
 
 static char *key;
 static regex_t *key_regexp;
-static regex_t *regexp;
+static struct {
+	enum { none, regexp, boolean } mode;
+	regex_t *regexp;
+	int do_not_match; /* used with `regexp` */
+	int boolean;
+} cmd_line_value;
 static int show_keys;
 static int omit_values;
 static int use_key_regexp;
 static int do_all;
-static int do_not_match;
 static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
@@ -270,14 +274,63 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
-	if (regexp != NULL &&
-	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+	if (cmd_line_value.mode == regexp &&
+	    (cmd_line_value.do_not_match ^
+	     !!regexec(cmd_line_value.regexp, value_ ? value_ : "",
+		       0, NULL, 0)))
+		return 0;
+	if (cmd_line_value.mode == boolean &&
+	    git_parse_maybe_bool(value_) != cmd_line_value.boolean)
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
 	strbuf_init(&values->items[values->nr], 0);
 
 	return format_config(&values->items[values->nr++], key_, value_);
+}
+
+static int handle_value_regex(const char *regex_)
+{
+	if (!regex_) {
+		cmd_line_value.mode = none;
+		return 0;
+	}
+
+	if (type == TYPE_BOOL) {
+		int boolval = git_parse_maybe_bool(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
+		warning(_("value_regex '%s' cannot be canonicalized "
+			  "to a boolean value"), regex_);
+	}
+
+	if (type == TYPE_BOOL_OR_INT) {
+		int boolval = git_parse_maybe_bool_text(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
+	}
+
+	cmd_line_value.mode = regexp;
+
+	if (regex_[0] == '!') {
+		cmd_line_value.do_not_match = 1;
+		regex_++;
+	}
+
+	cmd_line_value.regexp = xmalloc(sizeof(*cmd_line_value.regexp));
+	if (regcomp(cmd_line_value.regexp, regex_, REG_EXTENDED)) {
+		error(_("invalid pattern: %s"), regex_);
+		FREE_AND_NULL(cmd_line_value.regexp);
+		return CONFIG_INVALID_PATTERN;
+	}
+
+	return 0;
 }
 
 static int get_value(const char *key_, const char *regex_)
@@ -317,20 +370,9 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	if (regex_) {
-		if (regex_[0] == '!') {
-			do_not_match = 1;
-			regex_++;
-		}
-
-		regexp = (regex_t*)xmalloc(sizeof(regex_t));
-		if (regcomp(regexp, regex_, REG_EXTENDED)) {
-			error(_("invalid pattern: %s"), regex_);
-			FREE_AND_NULL(regexp);
-			ret = CONFIG_INVALID_PATTERN;
-			goto free_strings;
-		}
-	}
+	ret = handle_value_regex(regex_);
+	if (ret)
+		goto free_strings;
 
 	config_with_options(collect_config, &values,
 			    &given_config_source, &config_options);
@@ -361,9 +403,9 @@ free_strings:
 		regfree(key_regexp);
 		free(key_regexp);
 	}
-	if (regexp) {
-		regfree(regexp);
-		free(regexp);
+	if (cmd_line_value.regexp) {
+		regfree(cmd_line_value.regexp);
+		free(cmd_line_value.regexp);
 	}
 
 	return ret;

@@ -321,15 +321,14 @@ test_expect_success 'hierarchical section value' '
 	test_cmp expect .git/config
 '
 
-cat > expect << EOF
-beta.noindent=sillyValue
-nextsection.nonewline=wow2 for me
-123456.a123=987
-version.1.2.3eX.alpha=beta
-EOF
-
 test_expect_success 'working --list' '
-	git config --list > output &&
+	cat >expect <<-\EOF &&
+	beta.noindent=sillyValue
+	nextsection.nonewline=wow2 for me
+	123456.a123=987
+	version.1.2.3eX.alpha=beta
+	EOF
+	git config --list >output &&
 	test_cmp expect output
 '
 test_expect_success '--list without repo produces empty output' '
@@ -337,55 +336,53 @@ test_expect_success '--list without repo produces empty output' '
 	test_must_be_empty output
 '
 
-cat > expect << EOF
-beta.noindent
-nextsection.nonewline
-123456.a123
-version.1.2.3eX.alpha
-EOF
-
 test_expect_success '--name-only --list' '
+	cat >expect <<-\EOF &&
+	beta.noindent
+	nextsection.nonewline
+	123456.a123
+	version.1.2.3eX.alpha
+	EOF
 	git config --name-only --list >output &&
 	test_cmp expect output
 '
 
-cat > expect << EOF
-beta.noindent sillyValue
-nextsection.nonewline wow2 for me
-EOF
-
 test_expect_success '--get-regexp' '
+	cat >expect <<-\EOF &&
+	beta.noindent sillyValue
+	nextsection.nonewline wow2 for me
+	EOF
 	git config --get-regexp in >output &&
 	test_cmp expect output
 '
 
-cat > expect << EOF
-beta.noindent
-nextsection.nonewline
-EOF
-
 test_expect_success '--name-only --get-regexp' '
+	cat >expect <<-\EOF &&
+	beta.noindent
+	nextsection.nonewline
+	EOF
 	git config --name-only --get-regexp in >output &&
 	test_cmp expect output
 '
 
-cat > expect << EOF
-wow2 for me
-wow4 for you
-EOF
-
 test_expect_success '--add' '
+	cat >expect <<-\EOF &&
+	wow2 for me
+	wow4 for you
+	EOF
 	git config --add nextsection.nonewline "wow4 for you" &&
-	git config --get-all nextsection.nonewline > output &&
+	git config --get-all nextsection.nonewline >output &&
 	test_cmp expect output
 '
 
-cat > .git/config << EOF
-[novalue]
-	variable
-[emptyvalue]
-	variable =
-EOF
+test_expect_success 'setup config file with no/empty values' '
+	q_to_tab >.git/config <<-\EOF
+	[novalue]
+		Qvariable
+	[emptyvalue]
+		Qvariable =
+	EOF
+'
 
 test_expect_success 'get variable with no value' '
 	git config --get novalue.variable ^$
@@ -395,38 +392,33 @@ test_expect_success 'get variable with empty value' '
 	git config --get emptyvalue.variable ^$
 '
 
-echo novalue.variable > expect
-
 test_expect_success 'get-regexp variable with no value' '
-	git config --get-regexp novalue > output &&
+	echo novalue.variable >expect &&
+	git config --get-regexp novalue >output &&
 	test_cmp expect output
 '
-
-echo 'novalue.variable true' > expect
 
 test_expect_success 'get-regexp --bool variable with no value' '
-	git config --bool --get-regexp novalue > output &&
+	echo "novalue.variable true" >expect &&
+	git config --bool --get-regexp novalue >output &&
 	test_cmp expect output
 '
-
-echo 'emptyvalue.variable ' > expect
 
 test_expect_success 'get-regexp variable with empty value' '
-	git config --get-regexp emptyvalue > output &&
+	echo "emptyvalue.variable " >expect &&
+	git config --get-regexp emptyvalue >output &&
 	test_cmp expect output
 '
-
-echo true > expect
 
 test_expect_success 'get bool variable with no value' '
-	git config --bool novalue.variable > output &&
+	echo true >expect &&
+	git config --bool novalue.variable >output &&
 	test_cmp expect output
 '
 
-echo false > expect
-
 test_expect_success 'get bool variable with empty value' '
-	git config --bool emptyvalue.variable > output &&
+	echo false >expect &&
+	git config --bool emptyvalue.variable >output &&
 	test_cmp expect output
 '
 
@@ -435,34 +427,100 @@ test_expect_success 'no arguments, but no crash' '
 	test_i18ngrep usage output
 '
 
-cat > .git/config << EOF
-[a.b]
-	c = d
-EOF
+test_expect_success 'setup config file with several boolean values' '
+	cat >.git/config <<-\EOF
+	[foo]
+		n1 = no
+		n2 = NO
+		n3 = off
+		n4 = false
+		n5 = 0
+		n6 =
+		y1 = yes
+		y2 = YES
+		y3 = on
+		y4 = true
+		y5 = 1
+		y6 = 42
+		y7
+	EOF
+'
 
-cat > expect << EOF
-[a.b]
-	c = d
-[a]
-	x = y
-EOF
+test_expect_success '--get-regexp canonicalizes value_regex with --type=bool (false)' '
+	git config --type=bool --get-regexp "foo\..*" OFF >output &&
+	test_line_count = 6 output &&
+	! grep -v "^foo.n" output
+'
+
+test_expect_success '--get-regexp canonicalizes value_regex with --type=bool (true)' '
+	git config --type=bool --get-regexp "foo\..*" ON >output &&
+	test_line_count = 7 output &&
+	! grep -v "^foo.y" output
+'
+
+test_expect_success '--get canonicalizes integer value_regex with --type=bool' '
+	echo true >expect &&
+	git config --type=bool --get foo.y2 1 >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--type=bool with "non-bool" value_regex' '
+	echo true >expect &&
+	git config --type=bool --get foo.y4 "t.*" >output 2>err &&
+	test_cmp expect output &&
+	test_i18ngrep "cannot be canonicalized" err &&
+	test_must_fail git config --type=bool --get foo.y4 "T.*" >output &&
+	test_must_be_empty output
+'
+
+test_expect_success '--type=bool-or-int with boolean value_regex' '
+	echo true >expect &&
+	git config --type=bool-or-int --get foo.y2 true >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--type=bool-or-int with integer value_regex' '
+	test_must_fail git config --type=bool-or-int --get foo.y2 1 >output &&
+	test_must_be_empty output &&
+	echo 1 >expect &&
+	git config --type=bool-or-int --get foo.y5 1 >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--type=bool-or-int with regex value_regex' '
+	echo true >expect &&
+	git config --type=bool-or-int --get foo.y4 "t.*" >output &&
+	test_cmp expect output
+'
+
+test_expect_success 'setup simple config file' '
+	q_to_tab >.git/config <<-\EOF
+	[a.b]
+		Qc = d
+	EOF
+'
 
 test_expect_success 'new section is partial match of another' '
+	q_to_tab >expect <<-\EOF &&
+	[a.b]
+		Qc = d
+	[a]
+		Qx = y
+	EOF
 	git config a.x y &&
 	test_cmp expect .git/config
 '
 
-cat > expect << EOF
-[a.b]
-	c = d
-[a]
-	x = y
-	b = c
-[b]
-	x = y
-EOF
-
 test_expect_success 'new variable inserts into proper section' '
+	q_to_tab >expect <<-\EOF &&
+	[a.b]
+		Qc = d
+	[a]
+		Qx = y
+		Qb = c
+	[b]
+		Qx = y
+	EOF
 	git config b.x y &&
 	git config a.b c &&
 	test_cmp expect .git/config

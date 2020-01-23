@@ -185,6 +185,12 @@ int git_parse_ulong(const char *, unsigned long *);
 int git_parse_maybe_bool(const char *);
 
 /**
+ * Same as `git_parse_maybe_bool`, except that it does not handle
+ * integer values, i.e., those cause this function to return -1.
+ */
+int git_parse_maybe_bool_text(const char *);
+
+/**
  * Parse the string to an integer, including unit factors. Dies on error;
  * otherwise, returns the parsed result.
  */

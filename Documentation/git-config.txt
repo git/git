@@ -43,6 +43,12 @@ outgoing values are canonicalize-able under the given <type>.  If no
 `--type=<type>` is given, no canonicalization will be performed. Callers may
 unset an existing `--type` specifier with `--no-type`.
 
+With `--type=bool` or `--type=bool-or-int`, if `value_regex` is given
+and canonicalizes to a boolean value, it matches all entries
+that canonicalize to the same boolean value.
+The support for non-canonicalizing values of `value_regex` with
+`--type=bool` is deprecated.
+
 When reading, the values are read from the system, global and
 repository local configuration files by default, and options
 `--system`, `--global`, `--local`, `--worktree` and
