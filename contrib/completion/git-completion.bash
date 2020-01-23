@@ -2718,6 +2718,27 @@ _git_show_branch ()
 	__git_complete_revlist
 }
 
+_git_sparse_checkout ()
+{
+	local subcommands="list init set disable"
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+		return
+	fi
+
+	case "$subcommand,$cur" in
+	init,--*)
+		__gitcomp "--cone"
+		;;
+	set,--*)
+		__gitcomp "--stdin"
+		;;
+	*)
+		;;
+	esac
+}
+
 _git_stash ()
 {
 	local save_opts='--all --keep-index --no-keep-index --quiet --patch --include-untracked'
