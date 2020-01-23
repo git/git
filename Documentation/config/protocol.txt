@@ -45,11 +45,10 @@ The protocol names currently used by git are:
 --
 
 protocol.version::
-	Experimental. If set, clients will attempt to communicate with a
-	server using the specified protocol version.  If unset, no
-	attempt will be made by the client to communicate using a
-	particular protocol version, this results in protocol version 0
-	being used.
+	If set, clients will attempt to communicate with a server
+	using the specified protocol version.  If the server does
+	not support it, communication falls back to version 0.
+	If unset, the default is `2`.
 	Supported versions:
 +
 --

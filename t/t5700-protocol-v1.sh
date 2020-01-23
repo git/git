@@ -5,7 +5,8 @@ test_description='test git wire-protocol transition'
 TEST_NO_CREATE_REPO=1
 
 # This is a protocol-specific test.
-GIT_TEST_PROTOCOL_VERSION=
+GIT_TEST_PROTOCOL_VERSION=0
+export GIT_TEST_PROTOCOL_VERSION
 
 . ./test-lib.sh
 
