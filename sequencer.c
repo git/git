@@ -158,6 +158,8 @@ static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
 static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedule-failed-exec")
+static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
+static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
 
 static int git_sequencer_config(const char *k, const char *v, void *cb)
 {
@@ -288,7 +290,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 			char *eol = strchr(p, '\n');
 			if (eol)
 				*eol = '\0';
-			if (delete_ref("(rebase -i) cleanup", p, NULL, 0) < 0) {
+			if (delete_ref("(rebase) cleanup", p, NULL, 0) < 0) {
 				warning(_("could not delete '%s'"), p);
 				ret = -1;
 			}
@@ -322,7 +324,7 @@ static const char *action_name(const struct replay_opts *opts)
 	case REPLAY_PICK:
 		return N_("cherry-pick");
 	case REPLAY_INTERACTIVE_REBASE:
-		return N_("rebase -i");
+		return N_("rebase");
 	}
 	die(_("unknown action: %d"), opts->action);
 }
@@ -626,7 +628,7 @@ static int do_recursive_merge(struct repository *r,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		/*
 		 * TRANSLATORS: %s will be "revert", "cherry-pick" or
-		 * "rebase -i".
+		 * "rebase".
 		 */
 		return error(_("%s: Unable to write new index file"),
 			_(action_name(opts)));
@@ -1483,23 +1485,30 @@ static int is_original_commit_empty(struct commit *commit)
 }
 
 /*
- * Do we run "git commit" with "--allow-empty"?
+ * Should empty commits be allowed?  Return status:
+ *    <0: Error in is_index_unchanged(r) or is_original_commit_empty(commit)
+ *     0: Halt on empty commit
+ *     1: Allow empty commit
+ *     2: Drop empty commit
  */
 static int allow_empty(struct repository *r,
 		       struct replay_opts *opts,
 		       struct commit *commit)
 {
-	int index_unchanged, empty_commit;
+	int index_unchanged, originally_empty;
 
 	/*
-	 * Three cases:
+	 * Four cases:
 	 *
 	 * (1) we do not allow empty at all and error out.
 	 *
-	 * (2) we allow ones that were initially empty, but
-	 * forbid the ones that become empty;
+	 * (2) we allow ones that were initially empty, and
+	 *     just drop the ones that become empty
 	 *
-	 * (3) we allow both.
+	 * (3) we allow ones that were initially empty, but
+	 *     halt for the ones that become empty;
+	 *
+	 * (4) we allow both.
 	 */
 	if (!opts->allow_empty)
 		return 0; /* let "git commit" barf as necessary */
@@ -1513,13 +1522,15 @@ static int allow_empty(struct repository *r,
 	if (opts->keep_redundant_commits)
 		return 1;
 
-	empty_commit = is_original_commit_empty(commit);
-	if (empty_commit < 0)
-		return empty_commit;
-	if (!empty_commit)
-		return 0;
-	else
+	originally_empty = is_original_commit_empty(commit);
+	if (originally_empty < 0)
+		return originally_empty;
+	if (originally_empty)
 		return 1;
+	else if (opts->drop_redundant_commits)
+		return 2;
+	else
+		return 0;
 }
 
 static struct {
@@ -1730,7 +1741,7 @@ static int do_pick_commit(struct repository *r,
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
 	struct strbuf msgbuf = STRBUF_INIT;
-	int res, unborn = 0, reword = 0, allow;
+	int res, unborn = 0, reword = 0, allow, drop_commit;
 
 	if (opts->no_commit) {
 		/*
@@ -1935,13 +1946,18 @@ static int do_pick_commit(struct repository *r,
 		goto leave;
 	}
 
+	drop_commit = 0;
 	allow = allow_empty(r, opts, commit);
 	if (allow < 0) {
 		res = allow;
 		goto leave;
-	} else if (allow)
+	} else if (allow == 1) {
 		flags |= ALLOW_EMPTY;
-	if (!opts->no_commit) {
+	} else if (allow == 2) {
+		drop_commit = 1;
+		fprintf(stderr, _("No changes -- Patch already applied.\n"));
+	} // else allow == 0 and there's nothing special to do
+	if (!opts->no_commit && !drop_commit) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
 			res = do_commit(r, msg_file, author, opts, flags);
 		else
@@ -2495,6 +2511,12 @@ static int read_populate_opts(struct replay_opts *opts)
 		if (file_exists(rebase_path_reschedule_failed_exec()))
 			opts->reschedule_failed_exec = 1;
 
+		if (file_exists(rebase_path_drop_redundant_commits()))
+			opts->drop_redundant_commits = 1;
+
+		if (file_exists(rebase_path_keep_redundant_commits()))
+			opts->keep_redundant_commits = 1;
+
 		read_strategy_opts(opts, &buf);
 		strbuf_release(&buf);
 
@@ -2546,8 +2568,6 @@ static void write_strategy_opts(struct replay_opts *opts)
 int write_basic_state(struct replay_opts *opts, const char *head_name,
 		      struct commit *onto, const char *orig_head)
 {
-	const char *quiet = getenv("GIT_QUIET");
-
 	if (head_name)
 		write_file(rebase_path_head_name(), "%s\n", head_name);
 	if (onto)
@@ -2556,8 +2576,8 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 	if (orig_head)
 		write_file(rebase_path_orig_head(), "%s\n", orig_head);
 
-	if (quiet)
-		write_file(rebase_path_quiet(), "%s\n", quiet);
+	if (opts->quiet)
+		write_file(rebase_path_quiet(), "%s", "");
 	if (opts->verbose)
 		write_file(rebase_path_verbose(), "%s", "");
 	if (opts->strategy)
@@ -2574,6 +2594,10 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_gpg_sign_opt(), "-S%s\n", opts->gpg_sign);
 	if (opts->signoff)
 		write_file(rebase_path_signoff(), "--signoff\n");
+	if (opts->drop_redundant_commits)
+		write_file(rebase_path_drop_redundant_commits(), "%s", "");
+	if (opts->keep_redundant_commits)
+		write_file(rebase_path_keep_redundant_commits(), "%s", "");
 	if (opts->reschedule_failed_exec)
 		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 
@@ -2861,8 +2885,8 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	int next = todo_list->current, offset, fd;
 
 	/*
-	 * rebase -i writes "git-rebase-todo" without the currently executing
-	 * command, appending it to "done" instead.
+	 * interactive backend writes "git-rebase-todo" without the currently
+	 * executing command, appending it to "done" instead.
 	 */
 	if (is_rebase_i(opts))
 		next++;
@@ -3173,7 +3197,7 @@ static int do_label(struct repository *r, const char *name, int len)
 		return error(_("illegal label name: '%.*s'"), len, name);
 
 	strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
-	strbuf_addf(&msg, "rebase -i (label) '%.*s'", len, name);
+	strbuf_addf(&msg, "rebase (label) '%.*s'", len, name);
 
 	transaction = ref_store_transaction_begin(refs, &err);
 	if (!transaction) {
@@ -4578,7 +4602,6 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				   struct rev_info *revs, struct strbuf *out,
 				   unsigned flags)
 {
-	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	int rebase_cousins = flags & TODO_LIST_REBASE_COUSINS;
 	int root_with_onto = flags & TODO_LIST_ROOT_WITH_ONTO;
 	struct strbuf buf = STRBUF_INIT, oneline = STRBUF_INIT;
@@ -4641,8 +4664,6 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		if (!to_merge) {
 			/* non-merge commit: easy case */
 			strbuf_reset(&buf);
-			if (!keep_empty && is_empty)
-				strbuf_addf(&buf, "%c ", comment_line_char);
 			strbuf_addf(&buf, "%s %s %s", cmd_pick,
 				    oid_to_hex(&commit->object.oid),
 				    oneline.buf);
@@ -4809,7 +4830,6 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	struct pretty_print_context pp = {0};
 	struct rev_info revs;
 	struct commit *commit;
-	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 	const char *insn = flags & TODO_LIST_ABBREVIATE_CMDS ? "p" : "pick";
 	int rebase_merges = flags & TODO_LIST_REBASE_MERGES;
 
@@ -4845,12 +4865,10 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 		return make_script_with_merges(&pp, &revs, out, flags);
 
 	while ((commit = get_revision(&revs))) {
-		int is_empty  = is_original_commit_empty(commit);
+		int is_empty = is_original_commit_empty(commit);
 
 		if (!is_empty && (commit->object.flags & PATCHSAME))
 			continue;
-		if (!keep_empty && is_empty)
-			strbuf_addf(out, "%c ", comment_line_char);
 		strbuf_addf(out, "%s %s ", insn,
 			    oid_to_hex(&commit->object.oid));
 		pretty_print_commit(&pp, commit, out);
@@ -4987,7 +5005,7 @@ int todo_list_write_to_file(struct repository *r, struct todo_list *todo_list,
 
 	todo_list_to_strbuf(r, todo_list, &buf, num, flags);
 	if (flags & TODO_LIST_APPEND_TODO_HELP)
-		append_todo_help(flags & TODO_LIST_KEEP_EMPTY, count_commands(todo_list),
+		append_todo_help(count_commands(todo_list),
 				 shortrevisions, shortonto, &buf);
 
 	res = write_message(buf.buf, buf.len, file, 0);
