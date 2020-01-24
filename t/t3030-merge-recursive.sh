@@ -606,7 +606,7 @@ test_expect_success 'merge removes empty directories' '
 	git commit -mremoved-d/e &&
 	git checkout master &&
 	git merge -s recursive rm &&
-	test_must_fail test -d d
+	test_path_is_missing d
 '
 
 test_expect_success 'merge-recursive simple w/submodule' '

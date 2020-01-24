@@ -94,8 +94,10 @@ test_expect_success 'cherry-pick --rerere-autoupdate more than once' '
 
 test_expect_success 'cherry-pick conflict without rerere' '
 	test_config rerere.enabled false &&
-	test_must_fail git cherry-pick master &&
-	test_must_fail test_cmp expect foo
+	test_must_fail git cherry-pick foo-master &&
+	grep ===== foo &&
+	grep foo-dev foo &&
+	grep foo-master foo
 '
 
 test_done
