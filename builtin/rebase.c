@@ -259,21 +259,17 @@ static int edit_todo_file(unsigned flags)
 }
 
 static int get_revision_ranges(struct commit *upstream, struct commit *onto,
-			       const char **head_hash,
+			       struct object_id *orig_head, const char **head_hash,
 			       char **revisions, char **shortrevisions)
 {
 	struct commit *base_rev = upstream ? upstream : onto;
 	const char *shorthead;
-	struct object_id orig_head;
 
-	if (get_oid("HEAD", &orig_head))
-		return error(_("no HEAD?"));
-
-	*head_hash = find_unique_abbrev(&orig_head, GIT_MAX_HEXSZ);
+	*head_hash = find_unique_abbrev(orig_head, GIT_MAX_HEXSZ);
 	*revisions = xstrfmt("%s...%s", oid_to_hex(&base_rev->object.oid),
 						   *head_hash);
 
-	shorthead = find_unique_abbrev(&orig_head, DEFAULT_ABBREV);
+	shorthead = find_unique_abbrev(orig_head, DEFAULT_ABBREV);
 
 	if (upstream) {
 		const char *shortrev;
@@ -327,12 +323,8 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	struct replay_opts replay = get_replay_opts(opts);
 	struct string_list commands = STRING_LIST_INIT_DUP;
 
-	if (prepare_branch_to_be_rebased(the_repository, &replay,
-					 opts->switch_to))
-		return -1;
-
-	if (get_revision_ranges(opts->upstream, opts->onto, &head_hash,
-				&revisions, &shortrevisions))
+	if (get_revision_ranges(opts->upstream, opts->onto, &opts->orig_head,
+				&head_hash, &revisions, &shortrevisions))
 		return -1;
 
 	if (init_basic_state(&replay,
