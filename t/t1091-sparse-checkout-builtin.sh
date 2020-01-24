@@ -348,4 +348,31 @@ test_expect_success 'pattern-checks: too short' '
 	check_read_tree_errors repo "a" "disabling cone pattern matching"
 '
 
+test_expect_success 'pattern-checks: trailing "*"' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/a*
+	EOF
+	check_read_tree_errors repo "a" "disabling cone pattern matching"
+'
+
+test_expect_success 'pattern-checks: starting "*"' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	*eep/
+	EOF
+	check_read_tree_errors repo "a deep" "disabling cone pattern matching"
+'
+
+test_expect_success 'pattern-checks: escaped "*"' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/does\*not\*exist/
+	EOF
+	check_read_tree_errors repo "a" ""
+'
+
 test_done
