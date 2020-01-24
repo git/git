@@ -309,6 +309,9 @@ check_read_tree_errors () {
 	REPO=$1
 	FILES=$2
 	ERRORS=$3
+	git -C $REPO -c core.sparseCheckoutCone=false read-tree -mu HEAD 2>err &&
+	test_must_be_empty err &&
+	check_files $REPO "$FILES" &&
 	git -C $REPO read-tree -mu HEAD 2>err &&
 	if test -z "$ERRORS"
 	then
@@ -379,14 +382,28 @@ test_expect_success BSLASHPSPEC 'pattern-checks: escaped "*"' '
 	git -C escaped reset --hard $COMMIT &&
 	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" &&
 	git -C escaped sparse-checkout init --cone &&
-	cat >escaped/.git/info/sparse-checkout <<-\EOF &&
+	git -C escaped sparse-checkout set zbad\\dir zdoes\*not\*exist zdoes\*exist &&
+	cat >expect <<-\EOF &&
 	/*
 	!/*/
 	/zbad\\dir/
+	/zdoes\*exist/
 	/zdoes\*not\*exist/
+	EOF
+	test_cmp expect escaped/.git/info/sparse-checkout &&
+	check_read_tree_errors escaped "a zbad\\dir zdoes*exist" &&
+	git -C escaped ls-tree -d --name-only HEAD | git -C escaped sparse-checkout set --stdin &&
+	cat >expect <<-\EOF &&
+	/*
+	!/*/
+	/deep/
+	/folder1/
+	/folder2/
+	/zbad\\dir/
 	/zdoes\*exist/
 	EOF
-	check_read_tree_errors escaped "a zbad\\dir zdoes*exist"
+	test_cmp expect escaped/.git/info/sparse-checkout &&
+	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist"
 '
 
 test_done
