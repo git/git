@@ -45,7 +45,7 @@ static const char *scope_name(enum config_scope scope)
 	case CONFIG_SCOPE_GLOBAL:
 		return "global";
 	case CONFIG_SCOPE_LOCAL:
-		return "repo";
+		return "local";
 	case CONFIG_SCOPE_WORKTREE:
 		return "worktree";
 	case CONFIG_SCOPE_CMDLINE:
