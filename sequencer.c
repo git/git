@@ -3740,20 +3740,6 @@ static int run_git_checkout(struct repository *r, struct replay_opts *opts,
 	return ret;
 }
 
-int prepare_branch_to_be_rebased(struct repository *r, struct replay_opts *opts,
-				 const char *commit)
-{
-	const char *action;
-
-	if (commit && *commit) {
-		action = reflog_message(opts, "start", "checkout %s", commit);
-		if (run_git_checkout(r, opts, commit, action))
-			return error(_("could not checkout %s"), commit);
-	}
-
-	return 0;
-}
-
 static int checkout_onto(struct repository *r, struct replay_opts *opts,
 			 const char *onto_name, const struct object_id *onto,
 			 const char *orig_head)
