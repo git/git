@@ -54,6 +54,14 @@ patterns (see 'CONE PATTERN SET' below).
 +
 When the `--stdin` option is provided, the patterns are read from
 standard in as a newline-delimited list instead of from the arguments.
++
+When `core.sparseCheckoutCone` is enabled, the input list is considered a
+list of directories instead of sparse-checkout patterns. The command writes
+patterns to the sparse-checkout file to include all files contained in those
+directories (recursively) as well as files that are siblings of ancestor
+directories. The input format matches the output of `git ls-tree --name-only`.
+This includes interpreting pathnames that begin with a double quote (") as
+C-style quoted strings.
 
 'disable'::
 	Disable the `core.sparseCheckout` config setting, and restore the
@@ -110,7 +118,7 @@ The full pattern set allows for arbitrary pattern matches and complicated
 inclusion/exclusion rules. These can result in O(N*M) pattern matches when
 updating the index, where N is the number of patterns and M is the number
 of paths in the index. To combat this performance issue, a more restricted
-pattern set is allowed when `core.spareCheckoutCone` is enabled.
+pattern set is allowed when `core.sparseCheckoutCone` is enabled.
 
 The accepted patterns in the cone pattern set are:
 
@@ -132,9 +140,12 @@ the following patterns:
 ----------------
 
 This says "include everything in root, but nothing two levels below root."
-If we then add the folder `A/B/C` as a recursive pattern, the folders `A` and
-`A/B` are added as parent patterns. The resulting sparse-checkout file is
-now
+
+When in cone mode, the `git sparse-checkout set` subcommand takes a list of
+directories instead of a list of sparse-checkout patterns. In this mode,
+the command `git sparse-checkout set A/B/C` sets the directory `A/B/C` as
+a recursive pattern, the directories `A` and `A/B` are added as parent
+patterns. The resulting sparse-checkout file is now
 
 ----------------
 /*

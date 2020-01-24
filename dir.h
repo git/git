@@ -413,6 +413,7 @@ int pl_hashmap_cmp(const void *unused_cmp_data,
 		   const struct hashmap_entry *a,
 		   const struct hashmap_entry *b,
 		   const void *key);
+char *dup_and_filter_pattern(const char *pattern);
 int hashmap_contains_parent(struct hashmap *map,
 			    const char *path,
 			    struct strbuf *buffer);
