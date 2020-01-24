@@ -30,31 +30,35 @@ Initial setup:
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'setup' '
-	test_commit A file1 &&
-	test_commit B file1 &&
-	test_commit C file2 &&
-	test_commit D file1 &&
-	test_commit E file3 &&
-	git checkout -b branch1 A &&
-	test_commit F file4 &&
-	test_commit G file1 &&
-	test_commit H file5 &&
-	git checkout -b branch2 F &&
-	test_commit I file6 &&
-	git checkout -b conflict-branch A &&
-	test_commit one conflict &&
-	test_commit two conflict &&
-	test_commit three conflict &&
-	test_commit four conflict &&
-	git checkout -b no-conflict-branch A &&
-	test_commit J fileJ &&
-	test_commit K fileK &&
-	test_commit L fileL &&
-	test_commit M fileM &&
-	git checkout -b no-ff-branch A &&
-	test_commit N fileN &&
-	test_commit O fileO &&
-	test_commit P fileP
+	(
+		GIT_AUTHOR_NAME="Original Author" &&
+		GIT_AUTHOR_EMAIL="original.author@example.com" &&
+		test_commit A file1 &&
+		test_commit B file1 &&
+		test_commit C file2 &&
+		test_commit D file1 &&
+		test_commit E file3 &&
+		git checkout -b branch1 A &&
+		test_commit F file4 &&
+		test_commit G file1 &&
+		test_commit H file5 &&
+		git checkout -b branch2 F &&
+		test_commit I file6 &&
+		git checkout -b conflict-branch A &&
+		test_commit one conflict &&
+		test_commit two conflict &&
+		test_commit three conflict &&
+		test_commit four conflict &&
+		git checkout -b no-conflict-branch A &&
+		test_commit J fileJ &&
+		test_commit K fileK &&
+		test_commit L fileL &&
+		test_commit M fileM &&
+		git checkout -b no-ff-branch A &&
+		test_commit N fileN &&
+		test_commit O fileO &&
+		test_commit P fileP
+	)
 '
 
 # "exec" commands are run with the user shell by default, but this may
@@ -187,7 +191,7 @@ test_expect_success 'no changes are a nop' '
 	git checkout branch2 &&
 	git rebase -i F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
-	test $(git rev-parse I) = $(git rev-parse HEAD)
+	test_cmp_rev I HEAD
 '
 
 test_expect_success 'test the [branch] option' '
@@ -196,16 +200,16 @@ test_expect_success 'test the [branch] option' '
 	git commit -m "stop here" &&
 	git rebase -i F branch2 &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
-	test $(git rev-parse I) = $(git rev-parse branch2) &&
-	test $(git rev-parse I) = $(git rev-parse HEAD)
+	test_cmp_rev I branch2 &&
+	test_cmp_rev I HEAD
 '
 
 test_expect_success 'test --onto <branch>' '
 	git checkout -b test-onto branch2 &&
 	git rebase -i --onto branch1 F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/test-onto" &&
-	test $(git rev-parse HEAD^) = $(git rev-parse branch1) &&
-	test $(git rev-parse I) = $(git rev-parse branch2)
+	test_cmp_rev HEAD^ branch1 &&
+	test_cmp_rev I branch2
 '
 
 test_expect_success 'rebase on top of a non-conflicting commit' '
@@ -214,12 +218,12 @@ test_expect_success 'rebase on top of a non-conflicting commit' '
 	git rebase -i branch2 &&
 	test file6 = $(git diff --name-only original-branch1) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
-	test $(git rev-parse I) = $(git rev-parse branch2) &&
-	test $(git rev-parse I) = $(git rev-parse HEAD~2)
+	test_cmp_rev I branch2 &&
+	test_cmp_rev I HEAD~2
 '
 
 test_expect_success 'reflog for the branch shows state before rebase' '
-	test $(git rev-parse branch1@{1}) = $(git rev-parse original-branch1)
+	test_cmp_rev branch1@{1} original-branch1
 '
 
 test_expect_success 'reflog for the branch shows correct finish message' '
@@ -256,7 +260,7 @@ test_expect_success 'stop on conflicting pick' '
 	D
 	=======
 	G
-	>>>>>>> $commit... G
+	>>>>>>> $(git rev-parse --short HEAD)... G
 	EOF
 	git tag new-branch1 &&
 	test_must_fail git rebase -i master &&
@@ -279,7 +283,7 @@ test_expect_success 'show conflicted patch' '
 
 test_expect_success 'abort' '
 	git rebase --abort &&
-	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
+	test_cmp_rev new-branch1 HEAD &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
 	test_path_is_missing .git/rebase-merge
 '
@@ -322,7 +326,7 @@ test_expect_success 'retain authorship w/ conflicts' '
 	echo resolved >conflict &&
 	git add conflict &&
 	git rebase --continue &&
-	test $(git rev-parse conflict-a^0) = $(git rev-parse HEAD^) &&
+	test_cmp_rev conflict-a^0 HEAD^ &&
 	git show >out &&
 	grep AttributeMe out
 '
@@ -339,7 +343,7 @@ test_expect_success 'squash' '
 			git rebase -i --onto master HEAD~2
 	) &&
 	test B = $(cat file7) &&
-	test $(git rev-parse HEAD^) = $(git rev-parse master)
+	test_cmp_rev HEAD^ master
 '
 
 test_expect_success 'retain authorship when squashing' '
@@ -398,9 +402,9 @@ test_expect_success REBASE_P 'preserve merges with -p' '
 	git update-index --refresh &&
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD -- &&
-	test $(git rev-parse HEAD~6) = $(git rev-parse branch1) &&
-	test $(git rev-parse HEAD~4^2) = $(git rev-parse to-be-preserved) &&
-	test $(git rev-parse HEAD^^2^) = $(git rev-parse HEAD^^^) &&
+	test_cmp_rev HEAD~6 branch1 &&
+	test_cmp_rev HEAD~4^2 to-be-preserved &&
+	test_cmp_rev HEAD^^2^ HEAD^^^ &&
 	test $(git show HEAD~5:file1) = B &&
 	test $(git show HEAD~3:file1) = C &&
 	test $(git show HEAD:file1) = E &&
@@ -432,7 +436,7 @@ test_expect_success '--continue tries to commit' '
 		git add file1 &&
 		FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue
 	) &&
-	test $(git rev-parse HEAD^) = $(git rev-parse new-branch1) &&
+	test_cmp_rev HEAD^ new-branch1 &&
 	git show HEAD | grep chouette
 '
 
@@ -739,7 +743,7 @@ test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 		--author="Somebody else <somebody@else.com>" &&
 	test $(git rev-parse branch3) != $(git rev-parse branch4) &&
 	git rebase -i branch3 &&
-	test $(git rev-parse branch3) = $(git rev-parse branch4)
+	test_cmp_rev branch3 branch4
 
 '
 
@@ -799,7 +803,7 @@ test_expect_success 'rebase -i continue with unstaged submodule' '
 	test_must_fail git rebase -i submodule-base &&
 	git reset &&
 	git rebase --continue &&
-	test $(git rev-parse submodule-base) = $(git rev-parse HEAD)
+	test_cmp_rev submodule-base HEAD
 '
 
 test_expect_success 'avoid unnecessary reset' '
@@ -822,7 +826,7 @@ test_expect_success 'reword' '
 			git rebase -i A &&
 		git show HEAD | grep "E changed" &&
 		test $(git rev-parse master) != $(git rev-parse HEAD) &&
-		test $(git rev-parse master^) = $(git rev-parse HEAD^) &&
+		test_cmp_rev master^ HEAD^ &&
 		FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" \
 			git rebase -i A &&
 		git show HEAD^ | grep "D changed" &&
@@ -886,7 +890,7 @@ test_expect_success 'always cherry-pick with --no-ff' '
 		git diff HEAD~$p original-no-ff-branch~$p > out &&
 		test_must_be_empty out
 	done &&
-	test $(git rev-parse HEAD~3) = $(git rev-parse original-no-ff-branch~3) &&
+	test_cmp_rev HEAD~3 original-no-ff-branch~3 &&
 	git diff HEAD~3 original-no-ff-branch~3 > out &&
 	test_must_be_empty out
 '
@@ -1701,6 +1705,78 @@ test_expect_success 'post-commit hook is called' '
 	git rev-parse HEAD@{5} HEAD@{4} HEAD@{3} HEAD@{2} HEAD@{1} HEAD \
 		>expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'correct error message for partial commit after empty pick' '
+	test_when_finished "git rebase --abort" &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="2 1 1" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A D
+	) &&
+	echo x >file1 &&
+	test_must_fail git commit file1 2>err &&
+	test_i18ngrep "cannot do a partial commit during a rebase." err
+'
+
+test_expect_success 'correct error message for commit --amend after empty pick' '
+	test_when_finished "git rebase --abort" &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 1" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A D
+	) &&
+	echo x>file1 &&
+	test_must_fail git commit -a --amend 2>err &&
+	test_i18ngrep "middle of a rebase -- cannot amend." err
+'
+
+test_expect_success 'correct error message for partial commit after confilct' '
+	test_when_finished "git rebase --abort" &&
+	git checkout D &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="2 3" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo x >file1 &&
+	echo y >file2 &&
+	git add file1 file2 &&
+	test_must_fail git commit file1 2>err &&
+	test_i18ngrep "cannot do a partial commit during a rebase." err
+'
+
+test_expect_success 'correct error message for commit --amend after conflict' '
+	test_when_finished "git rebase --abort" &&
+	git checkout D &&
+	(
+		set_fake_editor &&
+		FAKE_LINES=3 &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo x>file1 &&
+	test_must_fail git commit -a --amend 2>err &&
+	test_i18ngrep "middle of a rebase -- cannot amend." err
+'
+
+test_expect_success 'correct authorship and message after conflict' '
+	git checkout D &&
+	(
+		set_fake_editor &&
+		FAKE_LINES=3 &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo x >file1 &&
+	git commit -a &&
+	git log --pretty=format:"%an <%ae>%n%ad%n%B" -1 D >expect &&
+	git log --pretty=format:"%an <%ae>%n%ad%n%B" -1 HEAD >actual &&
+	test_cmp expect actual &&
+	git rebase --continue
 '
 
 # This must be the last test in this file
