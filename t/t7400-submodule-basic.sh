@@ -377,6 +377,14 @@ test_expect_success 'init should register submodule url in .git/config' '
 	test_cmp expect url
 '
 
+test_expect_failure 'status should still be "missing" after initializing' '
+	rm -fr init &&
+	mkdir init &&
+	git submodule status >lines &&
+	rm -fr init &&
+	grep "^-$rev1" lines
+'
+
 test_failure_with_unknown_submodule () {
 	test_must_fail git submodule $1 no-such-submodule 2>output.err &&
 	test_i18ngrep "^error: .*no-such-submodule" output.err
