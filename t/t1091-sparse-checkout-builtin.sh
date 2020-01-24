@@ -305,4 +305,38 @@ test_expect_success 'different sparse-checkouts with worktrees' '
 	check_files worktree a deep
 '
 
+check_read_tree_errors () {
+	REPO=$1
+	FILES=$2
+	ERRORS=$3
+	git -C $REPO read-tree -mu HEAD 2>err &&
+	if test -z "$ERRORS"
+	then
+		test_must_be_empty err
+	else
+		test_i18ngrep "$ERRORS" err
+	fi &&
+	check_files $REPO $FILES
+}
+
+test_expect_success 'pattern-checks: /A/**' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/folder1/**
+	EOF
+	check_read_tree_errors repo "a folder1" "disabling cone pattern matching"
+'
+
+test_expect_success 'pattern-checks: /A/**/B/' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/deep/**/deepest
+	EOF
+	check_read_tree_errors repo "a deep" "disabling cone pattern matching" &&
+	check_files repo/deep "deeper1" &&
+	check_files repo/deep/deeper1 "deepest"
+'
+
 test_done

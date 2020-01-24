@@ -651,11 +651,16 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 		return;
 	}
 
+	if (strstr(given->pattern, "**")) {
+		/* Not a cone pattern. */
+		warning(_("unrecognized pattern: '%s'"), given->pattern);
+		goto clear_hashmaps;
+	}
+
 	if (given->patternlen > 2 &&
 	    !strcmp(given->pattern + given->patternlen - 2, "/*")) {
 		if (!(given->flags & PATTERN_FLAG_NEGATIVE)) {
 			/* Not a cone pattern. */
-			pl->use_cone_patterns = 0;
 			warning(_("unrecognized pattern: '%s'"), given->pattern);
 			goto clear_hashmaps;
 		}
