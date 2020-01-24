@@ -339,4 +339,13 @@ test_expect_success 'pattern-checks: /A/**/B/' '
 	check_files repo/deep/deeper1 "deepest"
 '
 
+test_expect_success 'pattern-checks: too short' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/a
+	EOF
+	check_read_tree_errors repo "a" "disabling cone pattern matching"
+'
+
 test_done
