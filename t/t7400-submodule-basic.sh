@@ -377,7 +377,7 @@ test_expect_success 'init should register submodule url in .git/config' '
 	test_cmp expect url
 '
 
-test_expect_failure 'status should still be "missing" after initializing' '
+test_expect_success 'status should still be "missing" after initializing' '
 	rm -fr init &&
 	mkdir init &&
 	git submodule status >lines &&
