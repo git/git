@@ -630,6 +630,32 @@ int pl_hashmap_cmp(const void *unused_cmp_data,
 	return strncmp(ee1->pattern, ee2->pattern, min_len);
 }
 
+char *dup_and_filter_pattern(const char *pattern)
+{
+	char *set, *read;
+	char *result = xstrdup(pattern);
+
+	set = result;
+	read = result;
+
+	while (*read) {
+		/* skip escape characters (once) */
+		if (*read == '\\')
+			read++;
+
+		*set = *read;
+
+		set++;
+		read++;
+	}
+	*set = 0;
+
+	if (*(read - 2) == '/' && *(read - 1) == '*')
+		*(read - 2) = 0;
+
+	return result;
+}
+
 static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern *given)
 {
 	struct pattern_entry *translated;
@@ -695,8 +721,7 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 			goto clear_hashmaps;
 		}
 
-		truncated = xstrdup(given->pattern);
-		truncated[given->patternlen - 2] = 0;
+		truncated = dup_and_filter_pattern(given->pattern);
 
 		translated = xmalloc(sizeof(struct pattern_entry));
 		translated->pattern = truncated;
@@ -730,7 +755,7 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 
 	translated = xmalloc(sizeof(struct pattern_entry));
 
-	translated->pattern = xstrdup(given->pattern);
+	translated->pattern = dup_and_filter_pattern(given->pattern);
 	translated->patternlen = given->patternlen;
 	hashmap_entry_init(&translated->ent,
 			   ignore_case ?
