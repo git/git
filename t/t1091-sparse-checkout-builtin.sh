@@ -90,7 +90,7 @@ test_expect_success 'init with existing sparse-checkout' '
 '
 
 test_expect_success 'clone --sparse' '
-	git clone --sparse repo clone &&
+	git clone --sparse "file://$(pwd)/repo" clone &&
 	git -C clone sparse-checkout list >actual &&
 	cat >expect <<-\EOF &&
 	/*
