@@ -29,15 +29,19 @@ Testing basic merge operations/option parsing.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
-printf '%s\n' 1 2 3 4 5 6 7 8 9 >file
-printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >file.1
-printf '%s\n' 1 2 3 4 '5 X' 6 7 8 9 >file.5
-printf '%s\n' 1 2 3 4 5 6 7 8 '9 X' >file.9
-printf '%s\n' 1 2 3 4 5 6 7 8 '9 Y' >file.9y
-printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >result.1
-printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
-printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
-printf '%s\n' 1 2 3 4 5 6 7 8 '9 Z' >result.9z
+test_write_lines 1 2 3 4 5 6 7 8 9 >file
+cp file file.orig
+test_write_lines '1 X' 2 3 4 5 6 7 8 9 >file.1
+test_write_lines 1 2 '3 X' 4 5 6 7 8 9 >file.3
+test_write_lines 1 2 3 4 '5 X' 6 7 8 9 >file.5
+test_write_lines 1 2 3 4 5 6 7 8 '9 X' >file.9
+test_write_lines 1 2 3 4 5 6 7 8 '9 Y' >file.9y
+test_write_lines '1 X' 2 3 4 5 6 7 8 9 >result.1
+test_write_lines '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
+test_write_lines '1 X' 2 3 4 5 6 7 8 '9 X' >result.1-9
+test_write_lines '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
+test_write_lines '1 X' 2 '3 X' 4 '5 X' 6 7 8 '9 X' >result.1-3-5-9
+test_write_lines 1 2 3 4 5 6 7 8 '9 Z' >result.9z
 
 create_merge_msgs () {
 	echo "Merge tag 'c2'" >msg.1-5 &&
@@ -81,7 +85,7 @@ verify_head () {
 }
 
 verify_parents () {
-	printf '%s\n' "$@" >parents.expected &&
+	test_write_lines "$@" >parents.expected &&
 	>parents.actual &&
 	i=1 &&
 	while test $i -le $#
@@ -95,7 +99,7 @@ verify_parents () {
 }
 
 verify_mergeheads () {
-	printf '%s\n' "$@" >mergehead.expected &&
+	test_write_lines "$@" >mergehead.expected &&
 	while read sha1 rest
 	do
 		git rev-parse $sha1
@@ -673,6 +677,67 @@ test_expect_success 'refresh the index before merging' '
 	git reset --hard c1 &&
 	cp file file.n && mv -f file.n file &&
 	git merge c3
+'
+
+test_expect_success 'merge with --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git merge --autostash c2 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	git show HEAD:file >merge-result &&
+	test_cmp result.1-5 merge-result &&
+	test_cmp result.1-5-9 file
+'
+
+test_expect_success 'merge with merge.autoStash' '
+	test_config merge.autoStash true &&
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git merge c2 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	git show HEAD:file >merge-result &&
+	test_cmp result.1-5 merge-result &&
+	test_cmp result.1-5-9 file
+'
+
+test_expect_success 'fast-forward merge with --autostash' '
+	git reset --hard c0 &&
+	git merge-file file file.orig file.5 &&
+	git merge --autostash c1 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	test_cmp result.1-5 file
+'
+
+test_expect_success 'octopus merge with --autostash' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.3 &&
+	git merge --autostash c2 c3 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	git show HEAD:file >merge-result &&
+	test_cmp result.1-5-9 merge-result &&
+	test_cmp result.1-3-5-9 file
+'
+
+test_expect_success 'conflicted merge with --autostash, --abort restores stash' '
+	git reset --hard c3 &&
+	cp file.1 file &&
+	test_must_fail git merge --autostash c7 &&
+	git merge --abort 2>err &&
+	test_i18ngrep "Applied autostash." err &&
+	test_cmp file.1 file
+'
+
+test_expect_success 'merge with conflicted --autostash changes' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9y &&
+	git diff >expect &&
+	test_when_finished "test_might_fail git stash drop" &&
+	git merge --autostash c3 2>err &&
+	test_i18ngrep "Applying autostash resulted in conflicts." err &&
+	git show HEAD:file >merge-result &&
+	test_cmp result.1-9 merge-result &&
+	git stash show -p >actual &&
+	test_cmp expect actual
 '
 
 cat >expected.branch <<\EOF

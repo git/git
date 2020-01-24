@@ -1719,6 +1719,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	unlink(git_path_merge_mode(the_repository));
 	unlink(git_path_squash_msg(the_repository));
 
+	apply_autostash(git_path_merge_autostash(the_repository));
+
 	if (commit_index_files())
 		die(_("repository has been updated, but unable to write\n"
 		      "new_index file. Check that disk is not full and quota is\n"
