@@ -295,4 +295,14 @@ test_expect_success 'interaction with submodules' '
 	check_files super/modules/child a deep folder1 folder2
 '
 
+test_expect_success 'different sparse-checkouts with worktrees' '
+	git -C repo worktree add --detach ../worktree &&
+	check_files worktree "a deep folder1 folder2" &&
+	git -C worktree sparse-checkout init --cone &&
+	git -C repo sparse-checkout set folder1 &&
+	git -C worktree sparse-checkout set deep/deeper1 &&
+	check_files repo a folder1 &&
+	check_files worktree a deep
+'
+
 test_done
