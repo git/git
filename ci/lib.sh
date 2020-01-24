@@ -162,6 +162,9 @@ linux-clang|linux-gcc)
 	if [ "$jobname" = linux-gcc ]
 	then
 		export CC=gcc-8
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
+	else
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
 	fi
 
 	export GIT_TEST_HTTPD=true
@@ -182,6 +185,9 @@ osx-clang|osx-gcc)
 	if [ "$jobname" = osx-gcc ]
 	then
 		export CC=gcc-9
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
+	else
+		MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python2)"
 	fi
 
 	# t9810 occasionally fails on Travis CI OS X
