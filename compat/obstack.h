@@ -135,8 +135,10 @@ extern "C" {
    alignment relative to 0.  */
 
 #define __PTR_ALIGN(B, P, A)						    \
-  __BPTR_ALIGN (sizeof (PTR_INT_TYPE) < sizeof (void *) ? (B) : (char *) 0, \
-		P, A)
+  (sizeof (PTR_INT_TYPE) < sizeof(void *) ?                                 \
+   __BPTR_ALIGN((B), (P), (A)) :                                            \
+   (void *)__BPTR_ALIGN((PTR_INT_TYPE)(void *)0, (PTR_INT_TYPE)(P), (A))            \
+  )
 
 #include <string.h>
 
