@@ -1713,12 +1713,11 @@ static char *find_path_for_conflict(struct merge_options *opt,
 }
 
 /*
- * Toggle the stage number between "ours" and "theirs" (2 and 3) by flipping
- * the 1-bit.
+ * Toggle the stage number between "ours" and "theirs" (2 and 3).
  */
 static inline int flip_stage(int stage)
 {
-	return stage ^ 1;
+	return (2 + 3) - stage;
 }
 
 static int handle_rename_rename_1to2(struct merge_options *opt,
