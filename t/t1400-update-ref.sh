@@ -363,24 +363,24 @@ test_expect_success 'Query "master@{May 25 2005}" (before history)' '
 	git rev-parse --verify "master@{May 25 2005}" >o 2>e &&
 	echo "$C" >expect &&
 	test_cmp expect o &&
-	echo "warning: Log for '\''master'\'' only goes back to $ed." >expect &&
-	test_cmp expect e
+	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	test_i18ncmp expect e
 '
 test_expect_success 'Query master@{2005-05-25} (before history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify master@{2005-05-25} >o 2>e &&
 	echo "$C" >expect &&
 	test_cmp expect o &&
-	echo "warning: Log for '\''master'\'' only goes back to $ed." >expect &&
-	test_cmp expect e
+	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	test_i18ncmp expect e
 '
 test_expect_success 'Query "master@{May 26 2005 23:31:59}" (1 second before history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
 	echo "$C" >expect &&
 	test_cmp expect o &&
-	echo "warning: Log for '\''master'\'' only goes back to $ed." >expect &&
-	test_cmp expect e
+	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	test_i18ncmp expect e
 '
 test_expect_success 'Query "master@{May 26 2005 23:32:00}" (exactly history start)' '
 	test_when_finished "rm -f o e" &&
