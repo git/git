@@ -104,35 +104,35 @@ test_expect_success 'correct relative file objects (6)' '
 test_expect_success 'incorrect revision id' '
 	test_must_fail git rev-parse foobar:file.txt 2>error &&
 	grep "Invalid object name '"'"'foobar'"'"'." error &&
-	test_must_fail git rev-parse foobar 2> error &&
+	test_must_fail git rev-parse foobar 2>error &&
 	test_i18ngrep "unknown revision or path not in the working tree." error
 '
 
 test_expect_success 'incorrect file in sha1:path' '
-	test_must_fail git rev-parse HEAD:nothing.txt 2> error &&
+	test_must_fail git rev-parse HEAD:nothing.txt 2>error &&
 	grep "fatal: Path '"'"'nothing.txt'"'"' does not exist in '"'"'HEAD'"'"'" error &&
-	test_must_fail git rev-parse HEAD:index-only.txt 2> error &&
+	test_must_fail git rev-parse HEAD:index-only.txt 2>error &&
 	grep "fatal: Path '"'"'index-only.txt'"'"' exists on disk, but not in '"'"'HEAD'"'"'." error &&
 	(cd subdir &&
-	 test_must_fail git rev-parse HEAD:file2.txt 2> error &&
+	 test_must_fail git rev-parse HEAD:file2.txt 2>error &&
 	 test_did_you_mean HEAD subdir/ file2.txt exists )
 '
 
 test_expect_success 'incorrect file in :path and :N:path' '
-	test_must_fail git rev-parse :nothing.txt 2> error &&
+	test_must_fail git rev-parse :nothing.txt 2>error &&
 	grep "fatal: Path '"'"'nothing.txt'"'"' does not exist (neither on disk nor in the index)." error &&
-	test_must_fail git rev-parse :1:nothing.txt 2> error &&
+	test_must_fail git rev-parse :1:nothing.txt 2>error &&
 	grep "Path '"'"'nothing.txt'"'"' does not exist (neither on disk nor in the index)." error &&
-	test_must_fail git rev-parse :1:file.txt 2> error &&
+	test_must_fail git rev-parse :1:file.txt 2>error &&
 	test_did_you_mean ":0" "" file.txt "is in the index" "at stage 1" &&
 	(cd subdir &&
-	 test_must_fail git rev-parse :1:file.txt 2> error &&
+	 test_must_fail git rev-parse :1:file.txt 2>error &&
 	 test_did_you_mean ":0" "" file.txt "is in the index" "at stage 1" &&
-	 test_must_fail git rev-parse :file2.txt 2> error &&
+	 test_must_fail git rev-parse :file2.txt 2>error &&
 	 test_did_you_mean ":0" subdir/ file2.txt "is in the index" &&
-	 test_must_fail git rev-parse :2:file2.txt 2> error &&
+	 test_must_fail git rev-parse :2:file2.txt 2>error &&
 	 test_did_you_mean :0 subdir/ file2.txt "is in the index") &&
-	test_must_fail git rev-parse :disk-only.txt 2> error &&
+	test_must_fail git rev-parse :disk-only.txt 2>error &&
 	grep "fatal: Path '"'"'disk-only.txt'"'"' exists on disk, but not in the index." error
 '
 
