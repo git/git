@@ -250,8 +250,12 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value, int cflags)
 	ALLOC_ARRAY(regs->array, regs->nr);
 	for (i = 0; i < regs->nr; i++) {
 		struct ff_reg *reg = regs->array + i;
-		const char *ep = strchr(value, '\n'), *expression;
+		const char *ep, *expression;
 		char *buffer = NULL;
+
+		if (!value)
+			BUG("mismatch between line count and parsing");
+		ep = strchr(value, '\n');
 
 		reg->negate = (*value == '!');
 		if (reg->negate && i == regs->nr - 1)
@@ -265,7 +269,7 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value, int cflags)
 		if (regcomp(&reg->re, expression, cflags))
 			die("Invalid regexp to look for hunk header: %s", expression);
 		free(buffer);
-		value = ep + 1;
+		value = ep ? ep + 1 : NULL;
 	}
 }
 
