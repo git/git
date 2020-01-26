@@ -34,7 +34,11 @@ do_checkout () {
 }
 
 test_dirty_unmergeable () {
-	! git diff --exit-code >/dev/null
+	test_expect_code 1 git diff --exit-code
+}
+
+test_dirty_unmergeable_discards_changes () {
+	git diff --exit-code
 }
 
 setup_dirty_unmergeable () {
@@ -42,7 +46,11 @@ setup_dirty_unmergeable () {
 }
 
 test_dirty_mergeable () {
-	! git diff --cached --exit-code >/dev/null
+	test_expect_code 1 git diff --cached --exit-code
+}
+
+test_dirty_mergeable_discards_changes () {
+	git diff --cached --exit-code
 }
 
 setup_dirty_mergeable () {
@@ -94,7 +102,7 @@ test_expect_success 'checkout -f -b to a new branch with unmergeable changes dis
 
 	# still dirty and on branch1
 	do_checkout branch2 $HEAD1 "-f -b" &&
-	test_must_fail test_dirty_unmergeable
+	test_dirty_unmergeable_discards_changes
 '
 
 test_expect_success 'checkout -b to a new branch preserves mergeable changes' '
@@ -112,7 +120,7 @@ test_expect_success 'checkout -f -b to a new branch with mergeable changes disca
 	test_when_finished git reset --hard HEAD &&
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 "-f -b" &&
-	test_must_fail test_dirty_mergeable
+	test_dirty_mergeable_discards_changes
 '
 
 test_expect_success 'checkout -b to an existing branch fails' '
@@ -163,7 +171,7 @@ test_expect_success 'checkout -B to an existing branch with unmergeable changes 
 test_expect_success 'checkout -f -B to an existing branch with unmergeable changes discards changes' '
 	# still dirty and on branch1
 	do_checkout branch2 $HEAD1 "-f -B" &&
-	test_must_fail test_dirty_unmergeable
+	test_dirty_unmergeable_discards_changes
 '
 
 test_expect_success 'checkout -B to an existing branch preserves mergeable changes' '
@@ -180,7 +188,7 @@ test_expect_success 'checkout -f -B to an existing branch with mergeable changes
 
 	setup_dirty_mergeable &&
 	do_checkout branch2 $HEAD1 "-f -B" &&
-	test_must_fail test_dirty_mergeable
+	test_dirty_mergeable_discards_changes
 '
 
 test_expect_success 'checkout -b <describe>' '
