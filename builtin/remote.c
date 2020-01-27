@@ -273,29 +273,29 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 	if (!starts_with(key, "branch."))
 		return 0;
 
-	key += 7;
-	if (strip_suffix(key, ".remote", &key_len)) {
-		name = xmemdupz(key, key_len);
+	key += strlen("branch.");
+	if (strip_suffix(key, ".remote", &key_len))
 		type = REMOTE;
-	} else if (strip_suffix(key, ".merge", &key_len)) {
-		name = xmemdupz(key, key_len);
+	else if (strip_suffix(key, ".merge", &key_len))
 		type = MERGE;
-	} else if (strip_suffix(key, ".rebase", &key_len)) {
-		name = xmemdupz(key, key_len);
+	else if (strip_suffix(key, ".rebase", &key_len))
 		type = REBASE;
-	} else
+	else
 		return 0;
+	name = xmemdupz(key, key_len);
 
 	item = string_list_insert(&branch_list, name);
 
 	if (!item->util)
 		item->util = xcalloc(1, sizeof(struct branch_info));
 	info = item->util;
-	if (type == REMOTE) {
+	switch (type) {
+	case REMOTE:
 		if (info->remote_name)
 			warning(_("more than one %s"), orig_key);
 		info->remote_name = xstrdup(value);
-	} else if (type == MERGE) {
+		break;
+	case MERGE: {
 		char *space = strchr(value, ' ');
 		value = abbrev_branch(value);
 		while (space) {
@@ -306,12 +306,18 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 			space = strchr(value, ' ');
 		}
 		string_list_append(&info->merge, xstrdup(value));
-	} else
+		break;
+	}
+	case REBASE:
 		/*
 		 * Consider invalid values as false and check the
 		 * truth value with >= REBASE_TRUE.
 		 */
 		info->rebase = rebase_parse_value(value);
+		break;
+	default:
+		BUG("unexpected type=%d", type);
+	}
 
 	return 0;
 }
