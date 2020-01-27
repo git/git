@@ -18,7 +18,7 @@ test_expect_success 'set up history with a merge' '
 '
 
 test_expect_success 'log --cc -p --stat --color-moved' '
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 	commit D
 	---
 	 D.t | 1 +
@@ -26,7 +26,7 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 
 	diff --git a/D.t b/D.t
 	new file mode 100644
-	index 0000000..1784810
+	index 0000000..$(git rev-parse --short D:D.t)
 	--- /dev/null
 	+++ b/D.t
 	@@ -0,0 +1 @@
@@ -42,7 +42,7 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 
 	diff --git a/C.t b/C.t
 	new file mode 100644
-	index 0000000..3cc58df
+	index 0000000..$(git rev-parse --short C:C.t)
 	--- /dev/null
 	+++ b/C.t
 	@@ -0,0 +1 @@
@@ -54,7 +54,7 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 
 	diff --git a/B.t b/B.t
 	new file mode 100644
-	index 0000000..223b783
+	index 0000000..$(git rev-parse --short B:B.t)
 	--- /dev/null
 	+++ b/B.t
 	@@ -0,0 +1 @@
@@ -66,7 +66,7 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 
 	diff --git a/A.t b/A.t
 	new file mode 100644
-	index 0000000..f70f10e
+	index 0000000..$(git rev-parse --short A:A.t)
 	--- /dev/null
 	+++ b/A.t
 	@@ -0,0 +1 @@

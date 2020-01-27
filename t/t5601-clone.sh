@@ -635,10 +635,10 @@ partial_clone_server () {
 	rm -rf "$SERVER" client &&
 	test_create_repo "$SERVER" &&
 	test_commit -C "$SERVER" one &&
-	HASH1=$(git hash-object "$SERVER/one.t") &&
+	HASH1=$(git -C "$SERVER" hash-object one.t) &&
 	git -C "$SERVER" revert HEAD &&
 	test_commit -C "$SERVER" two &&
-	HASH2=$(git hash-object "$SERVER/two.t") &&
+	HASH2=$(git -C "$SERVER" hash-object two.t) &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1
 }
