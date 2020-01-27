@@ -1280,10 +1280,12 @@ struct submodule_parallel_fetch {
 	/* Pending fetches by OIDs */
 	struct fetch_task **oid_fetch_tasks;
 	int oid_fetch_tasks_nr, oid_fetch_tasks_alloc;
+
+	struct strbuf submodules_with_errors;
 };
 #define SPF_INIT {0, ARGV_ARRAY_INIT, NULL, NULL, 0, 0, 0, 0, \
 		  STRING_LIST_INIT_DUP, \
-		  NULL, 0, 0}
+		  NULL, 0, 0, STRBUF_INIT}
 
 static int get_fetch_recurse_config(const struct submodule *submodule,
 				    struct submodule_parallel_fetch *spf)
@@ -1547,7 +1549,10 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 	struct string_list_item *it;
 	struct oid_array *commits;
 
-	if (retvalue)
+	if (!task || !task->sub)
+		BUG("callback cookie bogus");
+
+	if (retvalue) {
 		/*
 		 * NEEDSWORK: This indicates that the overall fetch
 		 * failed, even though there may be a subsequent fetch
@@ -1557,8 +1562,9 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 		 */
 		spf->result = 1;
 
-	if (!task || !task->sub)
-		BUG("callback cookie bogus");
+		strbuf_addf(&spf->submodules_with_errors, "\t%s\n",
+			    task->sub->name);
+	}
 
 	/* Is this the second time we process this submodule? */
 	if (task->commits)
@@ -1626,6 +1632,11 @@ int fetch_populated_submodules(struct repository *r,
 				   fetch_finish,
 				   &spf,
 				   "submodule", "parallel/fetch");
+
+	if (spf.submodules_with_errors.len > 0)
+		fprintf(stderr, _("Errors during submodule fetch:\n%s"),
+			spf.submodules_with_errors.buf);
+
 
 	argv_array_clear(&spf.args);
 out:
