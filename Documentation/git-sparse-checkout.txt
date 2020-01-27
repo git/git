@@ -41,6 +41,10 @@ COMMANDS
 To avoid interfering with other worktrees, it first enables the
 `extensions.worktreeConfig` setting and makes sure to set the
 `core.sparseCheckout` setting in the worktree-specific config file.
++
+When `--cone` is provided, the `core.sparseCheckoutCone` setting is
+also set, allowing for better performance with a limited set of
+patterns (see 'CONE PATTERN SET' below).
 
 'set'::
 	Write a set of patterns to the sparse-checkout file, as given as
