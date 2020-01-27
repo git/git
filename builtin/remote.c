@@ -6,6 +6,7 @@
 #include "string-list.h"
 #include "strbuf.h"
 #include "run-command.h"
+#include "rebase.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
@@ -248,9 +249,7 @@ static int add(int argc, const char **argv)
 struct branch_info {
 	char *remote_name;
 	struct string_list merge;
-	enum {
-		NO_REBASE, NORMAL_REBASE, INTERACTIVE_REBASE, REBASE_MERGES
-	} rebase;
+	enum rebase_type rebase;
 };
 
 static struct string_list branch_list = STRING_LIST_INIT_NODUP;
@@ -305,17 +304,12 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 				space = strchr(value, ' ');
 			}
 			string_list_append(&info->merge, xstrdup(value));
-		} else {
-			int v = git_parse_maybe_bool(value);
-			if (v >= 0)
-				info->rebase = v;
-			else if (!strcmp(value, "preserve"))
-				info->rebase = NORMAL_REBASE;
-			else if (!strcmp(value, "merges"))
-				info->rebase = REBASE_MERGES;
-			else if (!strcmp(value, "interactive"))
-				info->rebase = INTERACTIVE_REBASE;
-		}
+		} else
+			/*
+			 * Consider invalid values as false and check the
+			 * truth value with >= REBASE_TRUE.
+			 */
+			info->rebase = rebase_parse_value(value);
 	}
 	return 0;
 }
@@ -943,7 +937,7 @@ static int add_local_to_show_info(struct string_list_item *branch_item, void *cb
 		return 0;
 	if ((n = strlen(branch_item->string)) > show_info->width)
 		show_info->width = n;
-	if (branch_info->rebase)
+	if (branch_info->rebase >= REBASE_TRUE)
 		show_info->any_rebase = 1;
 
 	item = string_list_insert(show_info->list, branch_item->string);
@@ -960,16 +954,16 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	int width = show_info->width + 4;
 	int i;
 
-	if (branch_info->rebase && branch_info->merge.nr > 1) {
+	if (branch_info->rebase >= REBASE_TRUE && branch_info->merge.nr > 1) {
 		error(_("invalid branch.%s.merge; cannot rebase onto > 1 branch"),
 			item->string);
 		return 0;
 	}
 
 	printf("    %-*s ", show_info->width, item->string);
-	if (branch_info->rebase) {
+	if (branch_info->rebase >= REBASE_TRUE) {
 		const char *msg;
-		if (branch_info->rebase == INTERACTIVE_REBASE)
+		if (branch_info->rebase == REBASE_INTERACTIVE)
 			msg = _("rebases interactively onto remote %s");
 		else if (branch_info->rebase == REBASE_MERGES)
 			msg = _("rebases interactively (with merges) onto "
