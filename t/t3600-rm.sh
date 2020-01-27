@@ -425,6 +425,13 @@ test_expect_success 'rm will error out on a modified .gitmodules file unless sta
 	git status -s -uno >actual &&
 	test_cmp expect actual
 '
+test_expect_success 'rm will not error out on .gitmodules file with zero stat data' '
+	git reset --hard &&
+	git submodule update &&
+	git read-tree HEAD &&
+	git rm submod &&
+	test_path_is_missing submod
+'
 
 test_expect_success 'rm issues a warning when section is not found in .gitmodules' '
 	git reset --hard &&
