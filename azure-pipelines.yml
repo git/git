@@ -5,7 +5,8 @@ jobs:
 - job: windows_build
   displayName: Windows Build
   condition: succeeded()
-  pool: Hosted
+  pool:
+    vmImage: windows-latest
   timeoutInMinutes: 240
   steps:
   - powershell: |
@@ -61,7 +62,8 @@ jobs:
   displayName: Windows Test
   dependsOn: windows_build
   condition: succeeded()
-  pool: Hosted
+  pool:
+    vmImage: windows-latest
   timeoutInMinutes: 240
   strategy:
     parallel: 10
@@ -133,7 +135,8 @@ jobs:
 - job: vs_build
   displayName: Visual Studio Build
   condition: succeeded()
-  pool: Hosted VS2017
+  pool:
+    vmImage: windows-latest
   timeoutInMinutes: 240
   steps:
   - powershell: |
@@ -181,6 +184,7 @@ jobs:
       platform: x64
       configuration: Release
       maximumCpuCount: 4
+      msbuildArguments: /p:PlatformToolset=v142
   - powershell: |
       & compat\vcbuild\vcpkg_copy_dlls.bat release
       if (!$?) { exit(1) }
@@ -224,7 +228,8 @@ jobs:
   displayName: Visual Studio Test
   dependsOn: vs_build
   condition: succeeded()
-  pool: Hosted
+  pool:
+    vmImage: windows-latest
   timeoutInMinutes: 240
   strategy:
     parallel: 10
@@ -292,7 +297,8 @@ jobs:
 - job: linux_clang
   displayName: linux-clang
   condition: succeeded()
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: ubuntu-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -330,7 +336,8 @@ jobs:
 - job: linux_gcc
   displayName: linux-gcc
   condition: succeeded()
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: ubuntu-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -367,7 +374,8 @@ jobs:
 - job: osx_clang
   displayName: osx-clang
   condition: succeeded()
-  pool: Hosted macOS
+  pool:
+    vmImage: macOS-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -402,7 +410,8 @@ jobs:
 - job: osx_gcc
   displayName: osx-gcc
   condition: succeeded()
-  pool: Hosted macOS
+  pool:
+    vmImage: macOS-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -435,7 +444,8 @@ jobs:
 - job: gettext_poison
   displayName: GETTEXT_POISON
   condition: succeeded()
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: ubuntu-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -472,7 +482,8 @@ jobs:
 - job: linux32
   displayName: Linux32
   condition: succeeded()
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: ubuntu-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -506,7 +517,8 @@ jobs:
 - job: static_analysis
   displayName: StaticAnalysis
   condition: succeeded()
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: ubuntu-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -526,7 +538,8 @@ jobs:
 - job: documentation
   displayName: Documentation
   condition: succeeded()
-  pool: Hosted Ubuntu 1604
+  pool:
+    vmImage: ubuntu-latest
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
