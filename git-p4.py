@@ -3555,6 +3555,73 @@ class P4Sync(Command, P4UserMap):
             print("IO error details: {}".format(err))
             print(self.gitError.read())
 
+
+    def importRevisions(self, args, branch_arg_given):
+        changes = []
+
+        if len(self.changesFile) > 0:
+            output = open(self.changesFile).readlines()
+            changeSet = set()
+            for line in output:
+                changeSet.add(int(line))
+
+            for change in changeSet:
+                changes.append(change)
+
+            changes.sort()
+        else:
+            # catch "git p4 sync" with no new branches, in a repo that
+            # does not have any existing p4 branches
+            if len(args) == 0:
+                if not self.p4BranchesInGit:
+                    die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.")
+
+                # The default branch is master, unless --branch is used to
+                # specify something else.  Make sure it exists, or complain
+                # nicely about how to use --branch.
+                if not self.detectBranches:
+                    if not branch_exists(self.branch):
+                        if branch_arg_given:
+                            die("Error: branch %s does not exist." % self.branch)
+                        else:
+                            die("Error: no branch %s; perhaps specify one with --branch." %
+                                self.branch)
+
+            if self.verbose:
+                print("Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
+                                                          self.changeRange))
+            changes = p4ChangesForPaths(self.depotPaths, self.changeRange, self.changes_block_size)
+
+            if len(self.maxChanges) > 0:
+                changes = changes[:min(int(self.maxChanges), len(changes))]
+
+        if len(changes) == 0:
+            if not self.silent:
+                print("No changes to import!")
+        else:
+            if not self.silent and not self.detectBranches:
+                print("Import destination: %s" % self.branch)
+
+            self.updatedBranches = set()
+
+            if not self.detectBranches:
+                if args:
+                    # start a new branch
+                    self.initialParent = ""
+                else:
+                    # build on a previous revision
+                    self.initialParent = parseRevision(self.branch)
+
+            self.importChanges(changes)
+
+            if not self.silent:
+                print("")
+                if len(self.updatedBranches) > 0:
+                    sys.stdout.write("Updated branches: ")
+                    for b in self.updatedBranches:
+                        sys.stdout.write("%s " % b)
+                    sys.stdout.write("\n")
+
     def openStreams(self):
         self.importProcess = subprocess.Popen(["git", "fast-import"],
                                               stdin=subprocess.PIPE,
@@ -3761,70 +3828,7 @@ class P4Sync(Command, P4UserMap):
         if revision:
             self.importHeadRevision(revision)
         else:
-            changes = []
-
-            if len(self.changesFile) > 0:
-                output = open(self.changesFile).readlines()
-                changeSet = set()
-                for line in output:
-                    changeSet.add(int(line))
-
-                for change in changeSet:
-                    changes.append(change)
-
-                changes.sort()
-            else:
-                # catch "git p4 sync" with no new branches, in a repo that
-                # does not have any existing p4 branches
-                if len(args) == 0:
-                    if not self.p4BranchesInGit:
-                        die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.")
-
-                    # The default branch is master, unless --branch is used to
-                    # specify something else.  Make sure it exists, or complain
-                    # nicely about how to use --branch.
-                    if not self.detectBranches:
-                        if not branch_exists(self.branch):
-                            if branch_arg_given:
-                                die("Error: branch %s does not exist." % self.branch)
-                            else:
-                                die("Error: no branch %s; perhaps specify one with --branch." %
-                                    self.branch)
-
-                if self.verbose:
-                    print("Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
-                                                              self.changeRange))
-                changes = p4ChangesForPaths(self.depotPaths, self.changeRange, self.changes_block_size)
-
-                if len(self.maxChanges) > 0:
-                    changes = changes[:min(int(self.maxChanges), len(changes))]
-
-            if len(changes) == 0:
-                if not self.silent:
-                    print("No changes to import!")
-            else:
-                if not self.silent and not self.detectBranches:
-                    print("Import destination: %s" % self.branch)
-
-                self.updatedBranches = set()
-
-                if not self.detectBranches:
-                    if args:
-                        # start a new branch
-                        self.initialParent = ""
-                    else:
-                        # build on a previous revision
-                        self.initialParent = parseRevision(self.branch)
-
-                self.importChanges(changes)
-
-                if not self.silent:
-                    print("")
-                    if len(self.updatedBranches) > 0:
-                        sys.stdout.write("Updated branches: ")
-                        for b in self.updatedBranches:
-                            sys.stdout.write("%s " % b)
-                        sys.stdout.write("\n")
+            self.importRevisions(args, branch_arg_given)
 
         if gitConfigBool("git-p4.importLabels"):
             self.importLabels = True
