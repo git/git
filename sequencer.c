@@ -588,7 +588,7 @@ static int do_recursive_merge(struct repository *r,
 	struct merge_options o;
 	struct tree *next_tree, *base_tree, *head_tree;
 	int clean;
-	char **xopt;
+	int i;
 	struct lock_file index_lock = LOCK_INIT;
 
 	if (repo_hold_locked_index(r, &index_lock, LOCK_REPORT_ON_ERROR) < 0)
@@ -608,8 +608,8 @@ static int do_recursive_merge(struct repository *r,
 	next_tree = next ? get_commit_tree(next) : empty_tree(r);
 	base_tree = base ? get_commit_tree(base) : empty_tree(r);
 
-	for (xopt = opts->xopts; xopt != opts->xopts + opts->xopts_nr; xopt++)
-		parse_merge_opt(&o, *xopt);
+	for (i = 0; i < opts->xopts_nr; i++)
+		parse_merge_opt(&o, opts->xopts[i]);
 
 	clean = merge_trees(&o,
 			    head_tree,

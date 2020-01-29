@@ -84,8 +84,8 @@ static void trim_common_tail(mmfile_t *a, mmfile_t *b)
 {
 	const int blk = 1024;
 	long trimmed = 0, recovered = 0;
-	char *ap = a->ptr + a->size;
-	char *bp = b->ptr + b->size;
+	char *ap = a->size ? a->ptr + a->size : a->ptr;
+	char *bp = b->size ? b->ptr + b->size : b->ptr;
 	long smaller = (a->size < b->size) ? a->size : b->size;
 
 	while (blk + trimmed <= smaller && !memcmp(ap - blk, bp - blk, blk)) {
