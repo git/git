@@ -169,6 +169,9 @@ def calcDiskFree():
         return st.f_bavail * st.f_frsize
 
 def die(msg):
+    """ Terminate execution. Make sure that any running child processes have been wait()ed for before
+        calling this.
+    """
     if verbose:
         raise Exception(msg)
     else:
@@ -3574,7 +3577,7 @@ class P4Sync(Command, P4UserMap):
             # does not have any existing p4 branches
             if len(args) == 0:
                 if not self.p4BranchesInGit:
-                    die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.")
+                    raise P4CommandException("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.")
 
                 # The default branch is master, unless --branch is used to
                 # specify something else.  Make sure it exists, or complain
@@ -3582,9 +3585,9 @@ class P4Sync(Command, P4UserMap):
                 if not self.detectBranches:
                     if not branch_exists(self.branch):
                         if branch_arg_given:
-                            die("Error: branch %s does not exist." % self.branch)
+                            raise P4CommandException("Error: branch %s does not exist." % self.branch)
                         else:
-                            die("Error: no branch %s; perhaps specify one with --branch." %
+                            raise P4CommandException("Error: no branch %s; perhaps specify one with --branch." %
                                 self.branch)
 
             if self.verbose:
@@ -3825,22 +3828,32 @@ class P4Sync(Command, P4UserMap):
 
         self.openStreams()
 
-        if revision:
-            self.importHeadRevision(revision)
-        else:
-            self.importRevisions(args, branch_arg_given)
+        err = None
 
-        if gitConfigBool("git-p4.importLabels"):
-            self.importLabels = True
+        try:
+            if revision:
+                self.importHeadRevision(revision)
+            else:
+                self.importRevisions(args, branch_arg_given)
 
-        if self.importLabels:
-            p4Labels = getP4Labels(self.depotPaths)
-            gitTags = getGitTags()
+            if gitConfigBool("git-p4.importLabels"):
+                self.importLabels = True
 
-            missingP4Labels = p4Labels - gitTags
-            self.importP4Labels(self.gitStream, missingP4Labels)
+            if self.importLabels:
+                p4Labels = getP4Labels(self.depotPaths)
+                gitTags = getGitTags()
 
-        self.closeStreams()
+                missingP4Labels = p4Labels - gitTags
+                self.importP4Labels(self.gitStream, missingP4Labels)
+
+        except P4CommandException as e:
+            err = e
+
+        finally:
+            self.closeStreams()
+
+        if err:
+            die(str(err))
 
         # Cleanup temporary branches created during import
         if self.tempBranches != []:
