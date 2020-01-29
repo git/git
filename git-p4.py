@@ -3826,6 +3826,8 @@ class P4Sync(Command, P4UserMap):
                     b = b[len(self.projectName):]
                 self.createdBranches.add(b)
 
+        p4_check_access()
+
         self.openStreams()
 
         err = None
