@@ -618,6 +618,14 @@ class P4RequestSizeException(P4ServerException):
         super(P4RequestSizeException, self).__init__(exit_code, p4_result)
         self.limit = limit
 
+class P4CommandException(P4Exception):
+    """ Something went wrong calling p4 which means we have to give up """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
 def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
