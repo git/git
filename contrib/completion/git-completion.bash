@@ -1069,15 +1069,32 @@ __git_aliased_command ()
 	done
 }
 
-# __git_find_on_cmdline requires 1 argument
+# Check whether one of the given words is present on the command line,
+# and print the first word found.
+#
+# Usage: __git_find_on_cmdline [<option>]... "<wordlist>"
+# --show-idx: Optionally show the index of the found word in the $words array.
 __git_find_on_cmdline ()
 {
-	local word subcommand c=1
+	local word c=1 show_idx
+
+	while test $# -gt 1; do
+		case "$1" in
+		--show-idx)	show_idx=y ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+	local wordlist="$1"
+
 	while [ $c -lt $cword ]; do
-		word="${words[c]}"
-		for subcommand in $1; do
-			if [ "$subcommand" = "$word" ]; then
-				echo "$subcommand"
+		for word in $wordlist; do
+			if [ "$word" = "${words[c]}" ]; then
+				if [ -n "$show_idx" ]; then
+					echo "$c $word"
+				else
+					echo "$word"
+				fi
 				return
 			fi
 		done
@@ -2969,33 +2986,83 @@ _git_whatchanged ()
 	_git_log
 }
 
+__git_complete_worktree_paths ()
+{
+	local IFS=$'\n'
+	__gitcomp_nl "$(git worktree list --porcelain |
+		# Skip the first entry: it's the path of the main worktree,
+		# which can't be moved, removed, locked, etc.
+		sed -n -e '2,$ s/^worktree //p')"
+}
+
 _git_worktree ()
 {
 	local subcommands="add list lock move prune remove unlock"
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
-	if [ -z "$subcommand" ]; then
+	local subcommand subcommand_idx
+
+	subcommand="$(__git_find_on_cmdline --show-idx "$subcommands")"
+	subcommand_idx="${subcommand% *}"
+	subcommand="${subcommand#* }"
+
+	case "$subcommand,$cur" in
+	,*)
 		__gitcomp "$subcommands"
-	else
-		case "$subcommand,$cur" in
-		add,--*)
-			__gitcomp_builtin worktree_add
+		;;
+	*,--*)
+		__gitcomp_builtin worktree_$subcommand
+		;;
+	add,*)	# usage: git worktree add [<options>] <path> [<commit-ish>]
+		# Here we are not completing an --option, it's either the
+		# path or a ref.
+		case "$prev" in
+		-b|-B)	# Complete refs for branch to be created/reseted.
+			__git_complete_refs
 			;;
-		list,--*)
-			__gitcomp_builtin worktree_list
+		-*)	# The previous word is an -o|--option without an
+			# unstuck argument: have to complete the path for
+			# the new worktree, so don't list anything, but let
+			# Bash fall back to filename completion.
 			;;
-		lock,--*)
-			__gitcomp_builtin worktree_lock
-			;;
-		prune,--*)
-			__gitcomp_builtin worktree_prune
-			;;
-		remove,--*)
-			__gitcomp "--force"
-			;;
-		*)
+		*)	# The previous word is not an --option, so it must
+			# be either the 'add' subcommand, the unstuck
+			# argument of an option (e.g. branch for -b|-B), or
+			# the path for the new worktree.
+			if [ $cword -eq $((subcommand_idx+1)) ]; then
+				# Right after the 'add' subcommand: have to
+				# complete the path, so fall back to Bash
+				# filename completion.
+				:
+			else
+				case "${words[cword-2]}" in
+				-b|-B)	# After '-b <branch>': have to
+					# complete the path, so fall back
+					# to Bash filename completion.
+					;;
+				*)	# After the path: have to complete
+					# the ref to be checked out.
+					__git_complete_refs
+					;;
+				esac
+			fi
 			;;
 		esac
-	fi
+		;;
+	lock,*|remove,*|unlock,*)
+		__git_complete_worktree_paths
+		;;
+	move,*)
+		if [ $cword -eq $((subcommand_idx+1)) ]; then
+			# The first parameter must be an existing working
+			# tree to be moved.
+			__git_complete_worktree_paths
+		else
+			# The second parameter is the destination: it could
+			# be any path, so don't list anything, but let Bash
+			# fall back to filename completion.
+			:
+		fi
+		;;
+	esac
 }
 
 __git_complete_common () {
