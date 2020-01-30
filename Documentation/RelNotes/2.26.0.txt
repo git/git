@@ -9,8 +9,25 @@ UI, Workflows & Features
  * Sample credential helper for using .netrc has been updated to work
    out of the box.
 
+ * gpg.minTrustLevel configuration variable has been introduced to
+   tell various signature verification codepaths the required minimum
+   trust level.
+
+ * The command line completion (in contrib/) learned to complete
+   subcommands and arguments to "git worktree".
+
 
 Performance, Internal Implementation, Development Support etc.
+
+ * Tell .editorconfig that in this project, *.txt files are indented
+   with tabs.
+
+ * The test-lint machinery knew to check "VAR=VAL shell_function"
+   construct, but did not check "VAR= shell_funciton", which has been
+   corrected.
+
+ * Replace "git config --bool" calls with "git config --type=bool" in
+   sample templates.
 
 
 Fixes since v2.25
@@ -48,6 +65,36 @@ Fixes since v2.25
    has been corrected.
    (merge e701bab3e9 nd/switch-and-restore later to maint).
 
+ * The code recently added to move to the entry beyond the ones in the
+   same directory in the index in the sparse-cone mode did not count
+   the number of entries to skip over incorrectly, which has been
+   corrected.
+   (merge 7210ca4ee5 ds/sparse-cone later to maint).
+
+ * Rendering by "git log --graph" of ancestry lines leading to a merge
+   commit were made suboptimal to waste vertical space a bit with a
+   recent update, which has been corrected.
+   (merge c958d3bd0a ds/graph-horizontal-edges later to maint).
+
+ * Work around test breakages caused by custom regex engine used in
+   libasan, when address sanitizer is used with more recent versions
+   of gcc and clang.
+   (merge f65d07fffa jk/asan-build-fix later to maint).
+
+ * Minor bugfixes to "git add -i" that has recently been rewritten in C.
+   (merge 849e43cc18 js/builtin-add-i-cmds later to maint).
+
+ * "git fetch --refmap=" option has got a better documentation.
+   (merge b40a50264a ds/refmap-doc later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge 065027ee1a en/string-list-can-be-custom-sorted later to maint).
+   (merge d0d0a357a1 am/update-pathspec-f-f-tests later to maint).
+   (merge f94f7bd00d am/test-pathspec-f-f-error-cases later to maint).
+   (merge e4837b4406 jk/test-fixes later to maint).
+   (merge a4ffbbbb99 rt/submodule-i18n later to maint).
+   (merge 856249c62a bc/actualmente later to maint).
+   (merge c513a958b6 ss/t6025-modernize later to maint).
+   (merge 69e104d70e bc/author-committer-doc later to maint).
+   (merge 7a2dc95cbc bc/misconception-doc later to maint).
