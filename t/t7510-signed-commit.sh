@@ -109,6 +109,21 @@ test_expect_success GPG 'verify-commit exits success on untrusted signature' '
 	grep "not certified" actual
 '
 
+test_expect_success GPG 'verify-commit exits success with matching minTrustLevel' '
+	test_config gpg.minTrustLevel ultimate &&
+	git verify-commit sixth-signed
+'
+
+test_expect_success GPG 'verify-commit exits success with low minTrustLevel' '
+	test_config gpg.minTrustLevel fully &&
+	git verify-commit sixth-signed
+'
+
+test_expect_success GPG 'verify-commit exits failure with high minTrustLevel' '
+	test_config gpg.minTrustLevel ultimate &&
+	test_must_fail git verify-commit eighth-signed-alt
+'
+
 test_expect_success GPG 'verify signatures with --raw' '
 	(
 		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
@@ -216,6 +231,30 @@ test_expect_success GPG 'show untrusted signature with custom format' '
 	D4BE22311AD3131E5EDA29A461092E85B7227189
 	EOF
 	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with undefined trust level' '
+	cat >expect <<-\EOF &&
+	undefined
+	65A0EEA02E30CAD7
+	Eris Discordia <discord@example.net>
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
+	D4BE22311AD3131E5EDA29A461092E85B7227189
+	EOF
+	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with ultimate trust level' '
+	cat >expect <<-\EOF &&
+	ultimate
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+	73D758744BE721698EC54E8713B6F51ECDDE430D
+	73D758744BE721698EC54E8713B6F51ECDDE430D
+	EOF
+	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
 	test_cmp expect actual
 '
 
