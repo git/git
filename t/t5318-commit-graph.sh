@@ -19,8 +19,8 @@ test_expect_success 'verify graph with no graph file' '
 
 test_expect_success 'write graph with no packs' '
 	cd "$TRASH_DIRECTORY/full" &&
-	git commit-graph write --object-dir . &&
-	test_path_is_missing info/commit-graph
+	git commit-graph write --object-dir $objdir &&
+	test_path_is_missing $objdir/info/commit-graph
 '
 
 test_expect_success 'exit with correct error on bad input to --stdin-packs' '
