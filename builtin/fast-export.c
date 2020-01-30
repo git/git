@@ -870,8 +870,7 @@ static void handle_tag(const char *name, struct tag *tag)
 		printf("reset %s\nfrom %s\n\n",
 		       name, oid_to_hex(&null_oid));
 	}
-	if (starts_with(name, "refs/tags/"))
-		name += 10;
+	skip_prefix(name, "refs/tags/", &name);
 	printf("tag %s\n", name);
 	if (mark_tags) {
 		mark_next_object(&tag->object);
