@@ -29,8 +29,11 @@ static int verify_object(const struct object_id *oid, const char *expected_type)
 	const struct object_id *repl = lookup_replace_object(the_repository, oid);
 
 	if (buffer) {
-		if (type == type_from_string(expected_type))
-			ret = check_object_signature(repl, buffer, size, expected_type);
+		if (type == type_from_string(expected_type)) {
+			ret = check_object_signature(the_repository, repl,
+						     buffer, size,
+						     expected_type);
+		}
 		free(buffer);
 	}
 	return ret;

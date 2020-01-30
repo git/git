@@ -971,8 +971,8 @@ void *xmmap(void *start, size_t length,
  * With "map" == NULL, try reading the object named with "oid" using
  * the streaming interface and rehash it to do the same.
  */
-int check_object_signature(const struct object_id *oid, void *map,
-			   unsigned long size, const char *type)
+int check_object_signature(struct repository *r, const struct object_id *oid,
+			   void *map, unsigned long size, const char *type)
 {
 	struct object_id real_oid;
 	enum object_type obj_type;
@@ -982,11 +982,11 @@ int check_object_signature(const struct object_id *oid, void *map,
 	int hdrlen;
 
 	if (map) {
-		hash_object_file(the_hash_algo, map, size, type, &real_oid);
+		hash_object_file(r->hash_algo, map, size, type, &real_oid);
 		return !oideq(oid, &real_oid) ? -1 : 0;
 	}
 
-	st = open_istream(the_repository, oid, &obj_type, &size, NULL);
+	st = open_istream(r, oid, &obj_type, &size, NULL);
 	if (!st)
 		return -1;
 
@@ -994,8 +994,8 @@ int check_object_signature(const struct object_id *oid, void *map,
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX , type_name(obj_type), (uintmax_t)size) + 1;
 
 	/* Sha1.. */
-	the_hash_algo->init_fn(&c);
-	the_hash_algo->update_fn(&c, hdr, hdrlen);
+	r->hash_algo->init_fn(&c);
+	r->hash_algo->update_fn(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
 		ssize_t readlen = read_istream(st, buf, sizeof(buf));
@@ -1006,9 +1006,9 @@ int check_object_signature(const struct object_id *oid, void *map,
 		}
 		if (!readlen)
 			break;
-		the_hash_algo->update_fn(&c, buf, readlen);
+		r->hash_algo->update_fn(&c, buf, readlen);
 	}
-	the_hash_algo->final_fn(real_oid.hash, &c);
+	r->hash_algo->final_fn(real_oid.hash, &c);
 	close_istream(st);
 	return !oideq(oid, &real_oid) ? -1 : 0;
 }
@@ -2456,8 +2456,9 @@ int read_loose_object(const char *path,
 			git_inflate_end(&stream);
 			goto out;
 		}
-		if (check_object_signature(expected_oid, *contents,
-					 *size, type_name(*type))) {
+		if (check_object_signature(the_repository, expected_oid,
+					   *contents, *size,
+					   type_name(*type))) {
 			error(_("hash mismatch for %s (expected %s)"), path,
 			      oid_to_hex(expected_oid));
 			free(*contents);
