@@ -826,7 +826,7 @@ static void verify_one(struct repository *r,
 			i++;
 		}
 		strbuf_addf(&tree_buf, "%o %.*s%c", mode, entlen, name, '\0');
-		strbuf_add(&tree_buf, oid->hash, the_hash_algo->rawsz);
+		strbuf_add(&tree_buf, oid->hash, r->hash_algo->rawsz);
 	}
 	hash_object_file(tree_buf.buf, tree_buf.len, tree_type, &new_oid);
 	if (!oideq(&new_oid, &it->oid))
