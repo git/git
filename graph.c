@@ -1233,8 +1233,14 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 * prevent any other edges from moving
 			 * horizontally.
 			 */
-			if (horizontal_edge == -1)
-				horizontal_edge = i;
+			if (horizontal_edge == -1) {
+				int j;
+				horizontal_edge_target = target;
+				horizontal_edge = i - 1;
+
+				for (j = (target * 2) + 3; j < (i - 2); j += 2)
+					graph->mapping[j] = target;
+			}
 		}
 	}
 
