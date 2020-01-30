@@ -1648,7 +1648,8 @@ void *read_object_with_reference(struct repository *r,
 	}
 }
 
-static void write_object_file_prepare(const void *buf, unsigned long len,
+static void write_object_file_prepare(const struct git_hash_algo *algo,
+				      const void *buf, unsigned long len,
 				      const char *type, struct object_id *oid,
 				      char *hdr, int *hdrlen)
 {
@@ -1658,10 +1659,10 @@ static void write_object_file_prepare(const void *buf, unsigned long len,
 	*hdrlen = xsnprintf(hdr, *hdrlen, "%s %"PRIuMAX , type, (uintmax_t)len)+1;
 
 	/* Sha1.. */
-	the_hash_algo->init_fn(&c);
-	the_hash_algo->update_fn(&c, hdr, *hdrlen);
-	the_hash_algo->update_fn(&c, buf, len);
-	the_hash_algo->final_fn(oid->hash, &c);
+	algo->init_fn(&c);
+	algo->update_fn(&c, hdr, *hdrlen);
+	algo->update_fn(&c, buf, len);
+	algo->final_fn(oid->hash, &c);
 }
 
 /*
@@ -1719,7 +1720,8 @@ int hash_object_file(const void *buf, unsigned long len, const char *type,
 {
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen = sizeof(hdr);
-	write_object_file_prepare(buf, len, type, oid, hdr, &hdrlen);
+	write_object_file_prepare(the_hash_algo, buf, len, type, oid, hdr,
+				  &hdrlen);
 	return 0;
 }
 
@@ -1877,7 +1879,8 @@ int write_object_file(const void *buf, unsigned long len, const char *type,
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
 	 */
-	write_object_file_prepare(buf, len, type, oid, hdr, &hdrlen);
+	write_object_file_prepare(the_hash_algo, buf, len, type, oid, hdr,
+				  &hdrlen);
 	if (freshen_packed_object(oid) || freshen_loose_object(oid))
 		return 0;
 	return write_loose_object(oid, hdr, hdrlen, buf, len, 0);
@@ -1893,7 +1896,8 @@ int hash_object_file_literally(const void *buf, unsigned long len,
 	/* type string, SP, %lu of the length plus NUL must fit this */
 	hdrlen = strlen(type) + MAX_HEADER_LEN;
 	header = xmalloc(hdrlen);
-	write_object_file_prepare(buf, len, type, oid, header, &hdrlen);
+	write_object_file_prepare(the_hash_algo, buf, len, type, oid, header,
+				  &hdrlen);
 
 	if (!(flags & HASH_WRITE_OBJECT))
 		goto cleanup;
