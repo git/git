@@ -56,7 +56,8 @@ while (@ARGV) {
 		# need to use that instead?
 		foreach my $flag (@lflags) {
 			if ($flag =~ /^-LIBPATH:(.*)/) {
-				foreach my $l ("libcurl_imp.lib", "libcurl.lib") {
+				my $libcurl = $is_debug ? "libcurl-d.lib" : "libcurl.lib";
+				foreach my $l ("libcurl_imp.lib", $libcurl) {
 					if (-f "$1/$l") {
 						$lib = $l;
 						last;
