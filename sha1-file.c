@@ -982,7 +982,7 @@ int check_object_signature(const struct object_id *oid, void *map,
 	int hdrlen;
 
 	if (map) {
-		hash_object_file(map, size, type, &real_oid);
+		hash_object_file(the_hash_algo, map, size, type, &real_oid);
 		return !oideq(oid, &real_oid) ? -1 : 0;
 	}
 
@@ -1544,7 +1544,7 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 {
 	struct cached_object *co;
 
-	hash_object_file(buf, len, type_name(type), oid);
+	hash_object_file(the_hash_algo, buf, len, type_name(type), oid);
 	if (has_object_file(oid) || find_cached_object(oid))
 		return 0;
 	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
@@ -1715,13 +1715,13 @@ static int write_buffer(int fd, const void *buf, size_t len)
 	return 0;
 }
 
-int hash_object_file(const void *buf, unsigned long len, const char *type,
+int hash_object_file(const struct git_hash_algo *algo, const void *buf,
+		     unsigned long len, const char *type,
 		     struct object_id *oid)
 {
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen = sizeof(hdr);
-	write_object_file_prepare(the_hash_algo, buf, len, type, oid, hdr,
-				  &hdrlen);
+	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
 	return 0;
 }
 
@@ -2008,7 +2008,8 @@ static int index_mem(struct index_state *istate,
 	if (write_object)
 		ret = write_object_file(buf, size, type_name(type), oid);
 	else
-		ret = hash_object_file(buf, size, type_name(type), oid);
+		ret = hash_object_file(the_hash_algo, buf, size,
+				       type_name(type), oid);
 	if (re_allocated)
 		free(buf);
 	return ret;
@@ -2034,8 +2035,8 @@ static int index_stream_convert_blob(struct index_state *istate,
 		ret = write_object_file(sbuf.buf, sbuf.len, type_name(OBJ_BLOB),
 					oid);
 	else
-		ret = hash_object_file(sbuf.buf, sbuf.len, type_name(OBJ_BLOB),
-				       oid);
+		ret = hash_object_file(the_hash_algo, sbuf.buf, sbuf.len,
+				       type_name(OBJ_BLOB), oid);
 	strbuf_release(&sbuf);
 	return ret;
 }
@@ -2153,7 +2154,8 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		if (strbuf_readlink(&sb, path, st->st_size))
 			return error_errno("readlink(\"%s\")", path);
 		if (!(flags & HASH_WRITE_OBJECT))
-			hash_object_file(sb.buf, sb.len, blob_type, oid);
+			hash_object_file(the_hash_algo, sb.buf, sb.len,
+					 blob_type, oid);
 		else if (write_object_file(sb.buf, sb.len, blob_type, oid))
 			rc = error(_("%s: failed to insert into database"), path);
 		strbuf_release(&sb);

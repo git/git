@@ -501,7 +501,8 @@ static int show_one_mergetag(struct commit *commit,
 	int status, nth;
 	size_t payload_size, gpg_message_offset;
 
-	hash_object_file(extra->value, extra->len, type_name(OBJ_TAG), &oid);
+	hash_object_file(the_hash_algo, extra->value, extra->len,
+			 type_name(OBJ_TAG), &oid);
 	tag = lookup_tag(the_repository, &oid);
 	if (!tag)
 		return -1; /* error message already given */
