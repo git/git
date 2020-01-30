@@ -1077,6 +1077,8 @@ const char *remove_leading_path(const char *in, const char *prefix)
 
 /*
  * It is okay if dst == src, but they should not overlap otherwise.
+ * The "dst" buffer must be at least as long as "src"; normalizing may shrink
+ * the size of the path, but will never grow it.
  *
  * Performs the following normalizations on src, storing the result in dst:
  * - Ensures that components are separated by '/' (Windows only)
