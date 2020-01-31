@@ -635,6 +635,7 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 	struct pattern_entry *translated;
 	char *truncated;
 	char *data = NULL;
+	const char *prev, *cur, *next;
 
 	if (!pl->use_cone_patterns)
 		return;
@@ -652,10 +653,45 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 	}
 
 	if (given->patternlen <= 2 ||
+	    *given->pattern == '*' ||
 	    strstr(given->pattern, "**")) {
 		/* Not a cone pattern. */
 		warning(_("unrecognized pattern: '%s'"), given->pattern);
 		goto clear_hashmaps;
+	}
+
+	prev = given->pattern;
+	cur = given->pattern + 1;
+	next = given->pattern + 2;
+
+	while (*cur) {
+		/* Watch for glob characters '*', '\', '[', '?' */
+		if (!is_glob_special(*cur))
+			goto increment;
+
+		/* But only if *prev != '\\' */
+		if (*prev == '\\')
+			goto increment;
+
+		/* But allow the initial '\' */
+		if (*cur == '\\' &&
+		    is_glob_special(*next))
+			goto increment;
+
+		/* But a trailing '/' then '*' is fine */
+		if (*prev == '/' &&
+		    *cur == '*' &&
+		    *next == 0)
+			goto increment;
+
+		/* Not a cone pattern. */
+		warning(_("unrecognized pattern: '%s'"), given->pattern);
+		goto clear_hashmaps;
+
+	increment:
+		prev++;
+		cur++;
+		next++;
 	}
 
 	if (given->patternlen > 2 &&
