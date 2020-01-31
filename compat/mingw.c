@@ -1069,6 +1069,37 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 	return NULL;
 }
 
+char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
+{
+	wchar_t wpath[MAX_PATH];
+	HANDLE h;
+	DWORD ret;
+	int len;
+
+	if (xutftowcs_path(wpath, path) < 0)
+		return NULL;
+
+	h = CreateFileW(wpath, 0,
+			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	if (h == INVALID_HANDLE_VALUE)
+		return NULL;
+
+	ret = GetFinalPathNameByHandleW(h, wpath, ARRAY_SIZE(wpath), 0);
+	CloseHandle(h);
+	if (!ret || ret >= ARRAY_SIZE(wpath))
+		return NULL;
+
+	len = wcslen(wpath) * 3;
+	strbuf_grow(resolved, len);
+	len = xwcstoutf(resolved->buf, normalize_ntpath(wpath), len);
+	if (len < 0)
+		return NULL;
+	resolved->len = len;
+	return resolved->buf;
+
+}
+
 char *mingw_getcwd(char *pointer, int len)
 {
 	wchar_t cwd[MAX_PATH], wpointer[MAX_PATH];
