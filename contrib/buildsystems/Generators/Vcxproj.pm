@@ -114,12 +114,21 @@ sub createProject {
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>$uuid</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <VCPKGArch Condition="'\$(Platform)'=='Win32'">x86-windows</VCPKGArch>
-    <VCPKGArch Condition="'\$(Platform)'!='Win32'">x64-windows</VCPKGArch>
+    <VCPKGArch Condition="'\$(Platform)'=='x64'">x64-windows</VCPKGArch>
+    <VCPKGArch Condition="'\$(Platform)'=='ARM64'">arm64-windows</VCPKGArch>
     <VCPKGArchDirectory>$cdup\\compat\\vcbuild\\vcpkg\\installed\\\$(VCPKGArch)</VCPKGArchDirectory>
     <VCPKGBinDirectory Condition="'\$(Configuration)'=='Debug'">\$(VCPKGArchDirectory)\\debug\\bin</VCPKGBinDirectory>
     <VCPKGLibDirectory Condition="'\$(Configuration)'=='Debug'">\$(VCPKGArchDirectory)\\debug\\lib</VCPKGLibDirectory>
@@ -140,7 +149,7 @@ sub createProject {
   </PropertyGroup>
   <PropertyGroup>
     <ConfigurationType>$config_type</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <!-- <CharacterSet>UTF-8</CharacterSet> -->
     <OutDir>..\\</OutDir>
     <!-- <IntDir>\$(ProjectDir)\$(Configuration)\\</IntDir> -->
@@ -355,8 +364,10 @@ sub createGlueProject {
     print F << "EOM";
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|ARM64 = Release|ARM64
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -367,10 +378,14 @@ EOM
     foreach (@apps) {
         my $appname = $_;
         my $uuid = $build_structure{"APPS_${appname}_GUID"};
+        print F "\t\t${uuid}.Debug|ARM64.ActiveCfg = Debug|ARM64\n";
+        print F "\t\t${uuid}.Debug|ARM64.Build.0 = Debug|ARM64\n";
         print F "\t\t${uuid}.Debug|x64.ActiveCfg = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x64.Build.0 = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x86.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|x86.Build.0 = Debug|Win32\n";
+        print F "\t\t${uuid}.Release|ARM64.ActiveCfg = Release|ARM64\n";
+        print F "\t\t${uuid}.Release|ARM64.Build.0 = Release|ARM64\n";
         print F "\t\t${uuid}.Release|x64.ActiveCfg = Release|x64\n";
         print F "\t\t${uuid}.Release|x64.Build.0 = Release|x64\n";
         print F "\t\t${uuid}.Release|x86.ActiveCfg = Release|Win32\n";
@@ -379,10 +394,14 @@ EOM
     foreach (@libs) {
         my $libname = $_;
         my $uuid = $build_structure{"LIBS_${libname}_GUID"};
+        print F "\t\t${uuid}.Debug|ARM64.ActiveCfg = Debug|ARM64\n";
+        print F "\t\t${uuid}.Debug|ARM64.Build.0 = Debug|ARM64\n";
         print F "\t\t${uuid}.Debug|x64.ActiveCfg = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x64.Build.0 = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x86.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|x86.Build.0 = Debug|Win32\n";
+        print F "\t\t${uuid}.Release|ARM64.ActiveCfg = Release|ARM64\n";
+        print F "\t\t${uuid}.Release|ARM64.Build.0 = Release|ARM64\n";
         print F "\t\t${uuid}.Release|x64.ActiveCfg = Release|x64\n";
         print F "\t\t${uuid}.Release|x64.Build.0 = Release|x64\n";
         print F "\t\t${uuid}.Release|x86.ActiveCfg = Release|Win32\n";
