@@ -378,13 +378,28 @@ test_expect_success 'pattern-checks: contained glob characters' '
 	done
 '
 
-test_expect_success 'pattern-checks: escaped "*"' '
-	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+test_expect_success BSLASHPSPEC 'pattern-checks: escaped "*"' '
+	git clone repo escaped &&
+	TREEOID=$(git -C escaped rev-parse HEAD:folder1) &&
+	NEWTREE=$(git -C escaped mktree <<-EOF
+	$(git -C escaped ls-tree HEAD)
+	040000 tree $TREEOID	zbad\\dir
+	040000 tree $TREEOID	zdoes*exist
+	EOF
+	) &&
+	COMMIT=$(git -C escaped commit-tree $NEWTREE -p HEAD) &&
+	git -C escaped reset --hard $COMMIT &&
+	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" &&
+	git -C escaped sparse-checkout init --cone &&
+	cat >escaped/.git/info/sparse-checkout <<-\EOF &&
 	/*
 	!/*/
-	/does\*not\*exist/
+	/zbad\\dir/
+	!/zbad\\dir/*/
+	/zdoes\*not\*exist/
+	/zdoes\*exist/
 	EOF
-	check_read_tree_errors repo "a" ""
+	check_read_tree_errors escaped "a zbad\\dir zdoes*exist"
 '
 
 test_done
