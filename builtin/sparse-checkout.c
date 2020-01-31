@@ -442,8 +442,21 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 		pl.use_cone_patterns = 1;
 
 		if (set_opts.use_stdin) {
-			while (!strbuf_getline(&line, stdin))
+			struct strbuf unquoted = STRBUF_INIT;
+			while (!strbuf_getline(&line, stdin)) {
+				if (line.buf[0] == '"') {
+					strbuf_reset(&unquoted);
+					if (unquote_c_style(&unquoted, line.buf, NULL))
+						die(_("unable to unquote C-style string '%s'"),
+						line.buf);
+
+					strbuf_swap(&unquoted, &line);
+				}
+
 				strbuf_to_cone_pattern(&line, &pl);
+			}
+
+			strbuf_release(&unquoted);
 		} else {
 			for (i = 0; i < argc; i++) {
 				strbuf_setlen(&line, 0);
