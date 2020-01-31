@@ -406,7 +406,8 @@ test_expect_success BSLASHPSPEC 'pattern-checks: escaped "*"' '
 	EOF
 	test_cmp expect escaped/.git/info/sparse-checkout &&
 	check_read_tree_errors escaped "a zbad\\dir zdoes*exist" &&
-	git -C escaped ls-tree -d --name-only HEAD | git -C escaped sparse-checkout set --stdin &&
+	git -C escaped ls-tree -d --name-only HEAD >list-expect &&
+	git -C escaped sparse-checkout set --stdin <list-expect &&
 	cat >expect <<-\EOF &&
 	/*
 	!/*/
@@ -417,7 +418,9 @@ test_expect_success BSLASHPSPEC 'pattern-checks: escaped "*"' '
 	/zdoes\*exist/
 	EOF
 	test_cmp expect escaped/.git/info/sparse-checkout &&
-	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist"
+	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" &&
+	git -C escaped sparse-checkout list >list-actual &&
+	test_cmp list-expect list-actual
 '
 
 test_done
