@@ -305,6 +305,18 @@ test_expect_success 'different sparse-checkouts with worktrees' '
 	check_files worktree a deep
 '
 
+test_expect_success 'set using filename keeps file on-disk' '
+	git -C repo sparse-checkout set a deep &&
+	cat >expect <<-\EOF &&
+	/*
+	!/*/
+	/a/
+	/deep/
+	EOF
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	check_files repo a deep
+'
+
 check_read_tree_errors () {
 	REPO=$1
 	FILES=$2
