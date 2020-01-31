@@ -462,6 +462,10 @@ static inline int git_has_dir_sep(const char *path)
 #define query_user_email() NULL
 #endif
 
+#ifndef platform_strbuf_realpath
+#define platform_strbuf_realpath(resolved, path) NULL
+#endif
+
 #ifdef __TANDEM
 #include <floss.h(floss_execl,floss_execlp,floss_execv,floss_execvp)>
 #include <floss.h(floss_getpwuid)>
