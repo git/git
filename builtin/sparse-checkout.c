@@ -149,7 +149,7 @@ static char *escaped_pattern(char *pattern)
 	struct strbuf final = STRBUF_INIT;
 
 	while (*p) {
-		if (*p == '*' || *p == '\\')
+		if (is_glob_special(*p))
 			strbuf_addch(&final, '\\');
 
 		strbuf_addch(&final, *p);

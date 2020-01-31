@@ -381,20 +381,21 @@ test_expect_success 'pattern-checks: contained glob characters' '
 	done
 '
 
-test_expect_success BSLASHPSPEC 'pattern-checks: escaped "*"' '
+test_expect_success BSLASHPSPEC 'pattern-checks: escaped characters' '
 	git clone repo escaped &&
 	TREEOID=$(git -C escaped rev-parse HEAD:folder1) &&
 	NEWTREE=$(git -C escaped mktree <<-EOF
 	$(git -C escaped ls-tree HEAD)
 	040000 tree $TREEOID	zbad\\dir
 	040000 tree $TREEOID	zdoes*exist
+	040000 tree $TREEOID	zglob[!a]?
 	EOF
 	) &&
 	COMMIT=$(git -C escaped commit-tree $NEWTREE -p HEAD) &&
 	git -C escaped reset --hard $COMMIT &&
-	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" &&
+	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" zglob[!a]? &&
 	git -C escaped sparse-checkout init --cone &&
-	git -C escaped sparse-checkout set zbad\\dir/bogus "zdoes*not*exist" "zdoes*exist" &&
+	git -C escaped sparse-checkout set zbad\\dir/bogus "zdoes*not*exist" "zdoes*exist" "zglob[!a]?" &&
 	cat >expect <<-\EOF &&
 	/*
 	!/*/
@@ -403,9 +404,10 @@ test_expect_success BSLASHPSPEC 'pattern-checks: escaped "*"' '
 	/zbad\\dir/bogus/
 	/zdoes\*exist/
 	/zdoes\*not\*exist/
+	/zglob\[!a]\?/
 	EOF
 	test_cmp expect escaped/.git/info/sparse-checkout &&
-	check_read_tree_errors escaped "a zbad\\dir zdoes*exist" &&
+	check_read_tree_errors escaped "a zbad\\dir zdoes*exist zglob[!a]?" &&
 	git -C escaped ls-tree -d --name-only HEAD >list-expect &&
 	git -C escaped sparse-checkout set --stdin <list-expect &&
 	cat >expect <<-\EOF &&
@@ -416,9 +418,10 @@ test_expect_success BSLASHPSPEC 'pattern-checks: escaped "*"' '
 	/folder2/
 	/zbad\\dir/
 	/zdoes\*exist/
+	/zglob\[!a]\?/
 	EOF
 	test_cmp expect escaped/.git/info/sparse-checkout &&
-	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" &&
+	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" zglob[!a]? &&
 	git -C escaped sparse-checkout list >list-actual &&
 	test_cmp list-expect list-actual
 '
