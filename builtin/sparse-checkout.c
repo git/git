@@ -13,6 +13,7 @@
 #include "resolve-undo.h"
 #include "unpack-trees.h"
 #include "wt-status.h"
+#include "quote.h"
 
 static const char *empty_base = "";
 
@@ -140,6 +141,22 @@ static int update_working_directory(struct pattern_list *pl)
 	return result;
 }
 
+static char *escaped_pattern(char *pattern)
+{
+	char *p = pattern;
+	struct strbuf final = STRBUF_INIT;
+
+	while (*p) {
+		if (*p == '*' || *p == '\\')
+			strbuf_addch(&final, '\\');
+
+		strbuf_addch(&final, *p);
+		p++;
+	}
+
+	return strbuf_detach(&final, NULL);
+}
+
 static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 {
 	int i;
@@ -164,10 +181,11 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 	fprintf(fp, "/*\n!/*/\n");
 
 	for (i = 0; i < sl.nr; i++) {
-		char *pattern = sl.items[i].string;
+		char *pattern = escaped_pattern(sl.items[i].string);
 
 		if (strlen(pattern))
 			fprintf(fp, "%s/\n!%s/*/\n", pattern, pattern);
+		free(pattern);
 	}
 
 	string_list_clear(&sl, 0);
@@ -185,8 +203,9 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 	string_list_remove_duplicates(&sl, 0);
 
 	for (i = 0; i < sl.nr; i++) {
-		char *pattern = sl.items[i].string;
+		char *pattern = escaped_pattern(sl.items[i].string);
 		fprintf(fp, "%s/\n", pattern);
+		free(pattern);
 	}
 }
 
