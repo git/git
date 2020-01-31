@@ -78,6 +78,13 @@ test_expect_success 'clone respects GIT_WORK_TREE' '
 
 '
 
+test_expect_success CASE_INSENSITIVE_FS 'core.worktree is not added due to path case' '
+
+	mkdir UPPERCASE &&
+	git clone src "$(pwd)/uppercase" &&
+	test "unset" = "$(git -C UPPERCASE config --default unset core.worktree)"
+'
+
 test_expect_success 'clone from hooks' '
 
 	test_create_repo r0 &&
