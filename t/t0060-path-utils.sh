@@ -237,6 +237,12 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	test "$sym" = "$(test-tool path-utils real_path "$dir2/syml")"
 '
 
+test_expect_success MINGW 'real path works near drive root' '
+	# we need a non-existing path at the drive root; simply skip if C:/xyz exists
+	test -e C:/xyz ||
+	test C:/xyz = $(test-tool path-utils real_path C:/xyz)
+'
+
 test_expect_success SYMLINKS 'prefix_path works with absolute paths to work tree symlinks' '
 	ln -s target symlink &&
 	test "$(test-tool path-utils prefix_path prefix "$(pwd)/symlink")" = "symlink"
