@@ -31,6 +31,12 @@ REM ================================================================
 
 	SETLOCAL EnableDelayedExpansion
 
+	SET arch=%1
+	IF NOT DEFINED arch (
+		echo defaulting to 'x64-windows`. Invoke %0 with 'x86-windows', 'x64-windows', or 'arm64-windows'
+		set arch=x64-windows
+	)
+
 	@FOR /F "delims=" %%D IN ("%~dp0") DO @SET cwd=%%~fD
 	cd %cwd%
 
@@ -55,9 +61,8 @@ REM ================================================================
 	echo Successfully installed %cwd%vcpkg\vcpkg.exe
 
 :install_libraries
-	SET arch=x64-windows
 
-	echo Installing third-party libraries...
+	echo Installing third-party libraries(%arch%)...
 	FOR %%i IN (zlib expat libiconv openssl libssh2 curl) DO (
 	    cd %cwd%vcpkg
 	    IF NOT EXIST "packages\%%i_%arch%" CALL :sub__install_one %%i
