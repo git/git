@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "tree-walk.h"
-#include "unpack-trees.h"
 #include "dir.h"
 #include "object-store.h"
 #include "tree.h"
@@ -410,7 +409,7 @@ int traverse_trees(struct index_state *istate,
 		   struct traverse_info *info)
 {
 	int error = 0;
-	struct name_entry entry[MAX_UNPACK_TREES];
+	struct name_entry entry[MAX_TRAVERSE_TREES];
 	int i;
 	struct tree_desc_x tx[ARRAY_SIZE(entry)];
 	struct strbuf base = STRBUF_INIT;

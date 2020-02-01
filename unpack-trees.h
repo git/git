@@ -6,7 +6,7 @@
 #include "string-list.h"
 #include "tree-walk.h"
 
-#define MAX_UNPACK_TREES 8
+#define MAX_UNPACK_TREES MAX_TRAVERSE_TREES
 
 struct cache_entry;
 struct unpack_trees_options;
