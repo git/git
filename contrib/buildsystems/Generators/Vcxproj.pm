@@ -193,7 +193,7 @@ EOM
     <PreBuildEvent Condition="!Exists('$cdup\\compat\\vcbuild\\vcpkg\\installed\\\$(VCPKGArch)\\include\\openssl\\ssl.h')">
       <Message>Initialize VCPKG</Message>
       <Command>del "$cdup\\compat\\vcbuild\\vcpkg"</Command>
-      <Command>call "$cdup\\compat\\vcbuild\\vcpkg_install.bat"</Command>
+      <Command>call "$cdup\\compat\\vcbuild\\vcpkg_install.bat" \$(VCPKGArch)</Command>
     </PreBuildEvent>
 EOM
     }
