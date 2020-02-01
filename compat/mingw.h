@@ -43,6 +43,9 @@ int mingw_is_mount_point(struct strbuf *path);
 #define PATH_SEP ';'
 char *mingw_query_user_email(void);
 #define query_user_email mingw_query_user_email
+struct strbuf;
+char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path);
+#define platform_strbuf_realpath mingw_strbuf_realpath
 
 /**
  * Verifies that the specified path is owned by the user running the
