@@ -55,6 +55,21 @@ test_expect_success 'add aborts on repository with no commits' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'status should ignore inner git repo when not added' '
+	rm -fr inner &&
+	mkdir inner &&
+	(
+		cd inner &&
+		git init &&
+		>t &&
+		git add t &&
+		git commit -m "initial"
+	) &&
+	test_must_fail git submodule status inner 2>output.err &&
+	rm -fr inner &&
+	test_i18ngrep "^error: .*did not match any file(s) known to git" output.err
+'
+
 test_expect_success 'setup - repository in init subdirectory' '
 	mkdir init &&
 	(
