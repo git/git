@@ -96,7 +96,7 @@ static int graph_verify(int argc, const char **argv)
 	FREE_AND_NULL(graph_name);
 
 	if (open_ok)
-		graph = load_commit_graph_one_fd_st(fd, &st);
+		graph = load_commit_graph_one_fd_st(fd, &st, odb);
 	else
 		graph = read_commit_graph_one(the_repository, odb);
 

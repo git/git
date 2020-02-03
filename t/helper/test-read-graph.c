@@ -22,7 +22,7 @@ int cmd__read_graph(int argc, const char **argv)
 	if (!open_ok)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
 
-	graph = load_commit_graph_one_fd_st(fd, &st);
+	graph = load_commit_graph_one_fd_st(fd, &st, odb);
 	if (!graph)
 		return 1;
 

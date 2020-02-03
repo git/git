@@ -61,7 +61,8 @@ struct commit_graph {
 	const unsigned char *chunk_base_graphs;
 };
 
-struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st);
+struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st,
+						 struct object_directory *odb);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
 struct commit_graph *parse_commit_graph(void *graph_map, int fd,
