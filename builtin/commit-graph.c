@@ -88,7 +88,7 @@ static int graph_verify(int argc, const char **argv)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
 	odb = find_odb(the_repository, opts.obj_dir);
-	graph_name = get_commit_graph_filename(odb->path);
+	graph_name = get_commit_graph_filename(odb);
 	open_ok = open_commit_graph(graph_name, &fd, &st);
 	if (!open_ok && errno != ENOENT)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);

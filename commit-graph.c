@@ -44,30 +44,21 @@
 /* Remember to update object flag allocation in object.h */
 #define REACHABLE       (1u<<15)
 
-char *get_commit_graph_filename(const char *obj_dir)
+char *get_commit_graph_filename(struct object_directory *odb)
 {
-	char *filename = xstrfmt("%s/info/commit-graph", obj_dir);
-	char *normalized = xmalloc(strlen(filename) + 1);
-	normalize_path_copy(normalized, filename);
-	free(filename);
-	return normalized;
+	return xstrfmt("%s/info/commit-graph", odb->path);
 }
 
-static char *get_split_graph_filename(const char *obj_dir,
+static char *get_split_graph_filename(struct object_directory *odb,
 				      const char *oid_hex)
 {
-	char *filename = xstrfmt("%s/info/commit-graphs/graph-%s.graph",
-				 obj_dir,
-				 oid_hex);
-	char *normalized = xmalloc(strlen(filename) + 1);
-	normalize_path_copy(normalized, filename);
-	free(filename);
-	return normalized;
+	return xstrfmt("%s/info/commit-graphs/graph-%s.graph", odb->path,
+		       oid_hex);
 }
 
-static char *get_chain_filename(const char *obj_dir)
+static char *get_chain_filename(struct object_directory *odb)
 {
-	return xstrfmt("%s/info/commit-graphs/commit-graph-chain", obj_dir);
+	return xstrfmt("%s/info/commit-graphs/commit-graph-chain", odb->path);
 }
 
 static uint8_t oid_version(void)
@@ -330,7 +321,7 @@ static struct commit_graph *load_commit_graph_one(const char *graph_file)
 static struct commit_graph *load_commit_graph_v1(struct repository *r,
 						 struct object_directory *odb)
 {
-	char *graph_name = get_commit_graph_filename(odb->path);
+	char *graph_name = get_commit_graph_filename(odb);
 	struct commit_graph *g = load_commit_graph_one(graph_name);
 	free(graph_name);
 
@@ -381,7 +372,7 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r,
 	struct stat st;
 	struct object_id *oids;
 	int i = 0, valid = 1, count;
-	char *chain_name = get_chain_filename(odb->path);
+	char *chain_name = get_chain_filename(odb);
 	FILE *fp;
 	int stat_res;
 
@@ -414,7 +405,7 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r,
 
 		valid = 0;
 		for (odb = r->objects->odb; odb; odb = odb->next) {
-			char *graph_name = get_split_graph_filename(odb->path, line.buf);
+			char *graph_name = get_split_graph_filename(odb, line.buf);
 			struct commit_graph *g = load_commit_graph_one(graph_name);
 
 			free(graph_name);
@@ -1375,7 +1366,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			    ctx->odb->path);
 		ctx->graph_name = strbuf_detach(&tmp_file, NULL);
 	} else {
-		ctx->graph_name = get_commit_graph_filename(ctx->odb->path);
+		ctx->graph_name = get_commit_graph_filename(ctx->odb);
 	}
 
 	if (safe_create_leading_directories(ctx->graph_name)) {
@@ -1386,7 +1377,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	}
 
 	if (ctx->split) {
-		char *lock_name = get_chain_filename(ctx->odb->path);
+		char *lock_name = get_chain_filename(ctx->odb);
 
 		hold_lock_file_for_update(&lk, lock_name, LOCK_DIE_ON_ERROR);
 
@@ -1474,7 +1465,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 
 	if (ctx->split && ctx->base_graph_name && ctx->num_commit_graphs_after > 1) {
 		char *new_base_hash = xstrdup(oid_to_hex(&ctx->new_base_graph->oid));
-		char *new_base_name = get_split_graph_filename(ctx->new_base_graph->odb->path, new_base_hash);
+		char *new_base_name = get_split_graph_filename(ctx->new_base_graph->odb, new_base_hash);
 
 		free(ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 2]);
 		free(ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 2]);
@@ -1510,12 +1501,12 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 				}
 			}
 		} else {
-			char *graph_name = get_commit_graph_filename(ctx->odb->path);
+			char *graph_name = get_commit_graph_filename(ctx->odb);
 			unlink(graph_name);
 		}
 
 		ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1] = xstrdup(oid_to_hex(&file_hash));
-		final_graph_name = get_split_graph_filename(ctx->odb->path,
+		final_graph_name = get_split_graph_filename(ctx->odb,
 					ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1]);
 		ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 1] = final_graph_name;
 
@@ -1557,7 +1548,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 
 	while (g && (g->num_commits <= size_mult * num_commits ||
 		    (max_commits && num_commits > max_commits))) {
-		if (strcmp(g->odb->path, ctx->odb->path))
+		if (g->odb != ctx->odb)
 			break;
 
 		num_commits += g->num_commits;
@@ -1569,10 +1560,10 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 	ctx->new_base_graph = g;
 
 	if (ctx->num_commit_graphs_after == 2) {
-		char *old_graph_name = get_commit_graph_filename(g->odb->path);
+		char *old_graph_name = get_commit_graph_filename(g->odb);
 
 		if (!strcmp(g->filename, old_graph_name) &&
-		    strcmp(g->odb->path, ctx->odb->path)) {
+		    g->odb != ctx->odb) {
 			ctx->num_commit_graphs_after = 1;
 			ctx->new_base_graph = NULL;
 		}
@@ -1723,7 +1714,7 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	if (ctx->split_opts && ctx->split_opts->expire_time)
 		expire_time -= ctx->split_opts->expire_time;
 	if (!ctx->split) {
-		char *chain_file_name = get_chain_filename(ctx->odb->path);
+		char *chain_file_name = get_chain_filename(ctx->odb);
 		unlink(chain_file_name);
 		free(chain_file_name);
 		ctx->num_commit_graphs_after = 0;

@@ -11,12 +11,12 @@ int cmd__read_graph(int argc, const char **argv)
 	int open_ok;
 	int fd;
 	struct stat st;
-	const char *object_dir;
+	struct object_directory *odb;
 
 	setup_git_directory();
-	object_dir = get_object_directory();
+	odb = the_repository->objects->odb;
 
-	graph_name = get_commit_graph_filename(object_dir);
+	graph_name = get_commit_graph_filename(odb);
 
 	open_ok = open_commit_graph(graph_name, &fd, &st);
 	if (!open_ok)

@@ -12,7 +12,7 @@
 
 struct commit;
 
-char *get_commit_graph_filename(const char *obj_dir);
+char *get_commit_graph_filename(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 
 /*
