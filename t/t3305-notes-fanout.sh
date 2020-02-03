@@ -30,6 +30,12 @@ all_notes_have_fanout() {
 	done
 }
 
+test_expect_success 'tweak test environment' '
+	git checkout -b nondeterminism &&
+	test_commit A &&
+	git checkout --orphan with_notes;
+'
+
 test_expect_success 'creating many notes with git-notes' '
 	num_notes=300 &&
 	i=0 &&
