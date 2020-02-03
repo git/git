@@ -327,14 +327,15 @@ static struct commit_graph *load_commit_graph_one(const char *graph_file)
 	return g;
 }
 
-static struct commit_graph *load_commit_graph_v1(struct repository *r, const char *obj_dir)
+static struct commit_graph *load_commit_graph_v1(struct repository *r,
+						 struct object_directory *odb)
 {
-	char *graph_name = get_commit_graph_filename(obj_dir);
+	char *graph_name = get_commit_graph_filename(odb->path);
 	struct commit_graph *g = load_commit_graph_one(graph_name);
 	free(graph_name);
 
 	if (g)
-		g->obj_dir = obj_dir;
+		g->odb = odb;
 
 	return g;
 }
@@ -372,14 +373,15 @@ static int add_graph_to_chain(struct commit_graph *g,
 	return 1;
 }
 
-static struct commit_graph *load_commit_graph_chain(struct repository *r, const char *obj_dir)
+static struct commit_graph *load_commit_graph_chain(struct repository *r,
+						    struct object_directory *odb)
 {
 	struct commit_graph *graph_chain = NULL;
 	struct strbuf line = STRBUF_INIT;
 	struct stat st;
 	struct object_id *oids;
 	int i = 0, valid = 1, count;
-	char *chain_name = get_chain_filename(obj_dir);
+	char *chain_name = get_chain_filename(odb->path);
 	FILE *fp;
 	int stat_res;
 
@@ -418,7 +420,7 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r, const 
 			free(graph_name);
 
 			if (g) {
-				g->obj_dir = odb->path;
+				g->odb = odb;
 
 				if (add_graph_to_chain(g, graph_chain, oids, i)) {
 					graph_chain = g;
@@ -442,23 +444,25 @@ static struct commit_graph *load_commit_graph_chain(struct repository *r, const 
 	return graph_chain;
 }
 
-struct commit_graph *read_commit_graph_one(struct repository *r, const char *obj_dir)
+struct commit_graph *read_commit_graph_one(struct repository *r,
+					   struct object_directory *odb)
 {
-	struct commit_graph *g = load_commit_graph_v1(r, obj_dir);
+	struct commit_graph *g = load_commit_graph_v1(r, odb);
 
 	if (!g)
-		g = load_commit_graph_chain(r, obj_dir);
+		g = load_commit_graph_chain(r, odb);
 
 	return g;
 }
 
-static void prepare_commit_graph_one(struct repository *r, const char *obj_dir)
+static void prepare_commit_graph_one(struct repository *r,
+				     struct object_directory *odb)
 {
 
 	if (r->objects->commit_graph)
 		return;
 
-	r->objects->commit_graph = read_commit_graph_one(r, obj_dir);
+	r->objects->commit_graph = read_commit_graph_one(r, odb);
 }
 
 /*
@@ -505,7 +509,7 @@ static int prepare_commit_graph(struct repository *r)
 	for (odb = r->objects->odb;
 	     !r->objects->commit_graph && odb;
 	     odb = odb->next)
-		prepare_commit_graph_one(r, odb->path);
+		prepare_commit_graph_one(r, odb);
 	return !!r->objects->commit_graph;
 }
 
@@ -1470,7 +1474,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 
 	if (ctx->split && ctx->base_graph_name && ctx->num_commit_graphs_after > 1) {
 		char *new_base_hash = xstrdup(oid_to_hex(&ctx->new_base_graph->oid));
-		char *new_base_name = get_split_graph_filename(ctx->new_base_graph->obj_dir, new_base_hash);
+		char *new_base_name = get_split_graph_filename(ctx->new_base_graph->odb->path, new_base_hash);
 
 		free(ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 2]);
 		free(ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 2]);
@@ -1553,7 +1557,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 
 	while (g && (g->num_commits <= size_mult * num_commits ||
 		    (max_commits && num_commits > max_commits))) {
-		if (strcmp(g->obj_dir, ctx->odb->path))
+		if (strcmp(g->odb->path, ctx->odb->path))
 			break;
 
 		num_commits += g->num_commits;
@@ -1565,10 +1569,10 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 	ctx->new_base_graph = g;
 
 	if (ctx->num_commit_graphs_after == 2) {
-		char *old_graph_name = get_commit_graph_filename(g->obj_dir);
+		char *old_graph_name = get_commit_graph_filename(g->odb->path);
 
 		if (!strcmp(g->filename, old_graph_name) &&
-		    strcmp(g->obj_dir, ctx->odb->path)) {
+		    strcmp(g->odb->path, ctx->odb->path)) {
 			ctx->num_commit_graphs_after = 1;
 			ctx->new_base_graph = NULL;
 		}
@@ -1816,7 +1820,7 @@ int write_commit_graph(struct object_directory *odb,
 		ctx->oids.alloc = split_opts->max_commits;
 
 	if (ctx->append) {
-		prepare_commit_graph_one(ctx->r, ctx->odb->path);
+		prepare_commit_graph_one(ctx->r, ctx->odb);
 		if (ctx->r->objects->commit_graph)
 			ctx->oids.alloc += ctx->r->objects->commit_graph->num_commits;
 	}

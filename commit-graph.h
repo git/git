@@ -49,7 +49,7 @@ struct commit_graph {
 	uint32_t num_commits;
 	struct object_id oid;
 	char *filename;
-	const char *obj_dir;
+	struct object_directory *odb;
 
 	uint32_t num_commits_in_base;
 	struct commit_graph *base_graph;
@@ -62,7 +62,8 @@ struct commit_graph {
 };
 
 struct commit_graph *load_commit_graph_one_fd_st(int fd, struct stat *st);
-struct commit_graph *read_commit_graph_one(struct repository *r, const char *obj_dir);
+struct commit_graph *read_commit_graph_one(struct repository *r,
+					   struct object_directory *odb);
 struct commit_graph *parse_commit_graph(void *graph_map, int fd,
 					size_t graph_size);
 
