@@ -121,6 +121,8 @@ static void name_rev(struct commit *start_commit,
 
 	if (deref)
 		tip_name = to_free = xstrfmt("%s^0", tip_name);
+	else
+		tip_name = to_free = xstrdup(tip_name);
 
 	if (!create_or_update_name(start_commit, tip_name, taggerdate, 0, 0,
 				   from_tag)) {
@@ -323,7 +325,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		if (taggerdate == TIME_MAX)
 			taggerdate = commit->date;
 		path = name_ref_abbrev(path, can_abbreviate_output);
-		name_rev(commit, xstrdup(path), taggerdate, from_tag, deref);
+		name_rev(commit, path, taggerdate, from_tag, deref);
 	}
 	return 0;
 }
