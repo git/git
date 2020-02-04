@@ -16,13 +16,13 @@
  */
 #define CUTOFF_DATE_SLOP 86400
 
-typedef struct rev_name {
+struct rev_name {
 	const char *tip_name;
 	timestamp_t taggerdate;
 	int generation;
 	int distance;
 	int from_tag;
-} rev_name;
+};
 
 define_commit_slab(commit_rev_name, struct rev_name *);
 
