@@ -26,7 +26,10 @@ OPTIONS
 	file. This parameter exists to specify the location of an alternate
 	that only has the objects directory, not a full `.git` directory. The
 	commit-graph file is expected to be in the `<dir>/info` directory and
-	the packfiles are expected to be in `<dir>/pack`.
+	the packfiles are expected to be in `<dir>/pack`. If the directory
+	could not be made into an absolute path, or does not match any known
+	object directory, `git commit-graph ...` will exit with non-zero
+	status.
 
 --[no-]progress::
 	Turn progress on/off explicitly. If neither is specified, progress is
