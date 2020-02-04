@@ -81,7 +81,6 @@ static int is_better_name(struct rev_name *name,
 }
 
 static struct rev_name *create_or_update_name(struct commit *commit,
-					      const char *tip_name,
 					      timestamp_t taggerdate,
 					      int generation, int distance,
 					      int from_tag)
@@ -92,7 +91,6 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 	    !is_better_name(name, taggerdate, distance, from_tag))
 		return NULL;
 
-	name->tip_name = tip_name;
 	name->taggerdate = taggerdate;
 	name->generation = generation;
 	name->distance = distance;
@@ -130,22 +128,20 @@ static void name_rev(struct commit *start_commit,
 	struct commit *commit;
 	struct commit **parents_to_queue = NULL;
 	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
-	char *to_free = NULL;
+	struct rev_name *start_name;
 
 	parse_commit(start_commit);
 	if (start_commit->date < cutoff)
 		return;
 
-	if (deref)
-		tip_name = to_free = xstrfmt("%s^0", tip_name);
-	else
-		tip_name = to_free = xstrdup(tip_name);
-
-	if (!create_or_update_name(start_commit, tip_name, taggerdate, 0, 0,
-				   from_tag)) {
-		free(to_free);
+	start_name = create_or_update_name(start_commit, taggerdate, 0, 0,
+					   from_tag);
+	if (!start_name)
 		return;
-	}
+	if (deref)
+		start_name->tip_name = xstrfmt("%s^0", tip_name);
+	else
+		start_name->tip_name = xstrdup(tip_name);
 
 	memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
 	prio_queue_put(&queue, start_commit);
@@ -161,7 +157,7 @@ static void name_rev(struct commit *start_commit,
 				parents;
 				parents = parents->next, parent_number++) {
 			struct commit *parent = parents->item;
-			const char *new_name;
+			struct rev_name *parent_name;
 			int generation, distance;
 
 			parse_commit(parent);
@@ -169,18 +165,23 @@ static void name_rev(struct commit *start_commit,
 				continue;
 
 			if (parent_number > 1) {
-				new_name = get_parent_name(name, parent_number);
 				generation = 0;
 				distance = name->distance + MERGE_TRAVERSAL_WEIGHT;
 			} else {
-				new_name = name->tip_name;
 				generation = name->generation + 1;
 				distance = name->distance + 1;
 			}
 
-			if (create_or_update_name(parent, new_name, taggerdate,
-						  generation, distance,
-						  from_tag)) {
+			parent_name = create_or_update_name(parent, taggerdate,
+							    generation,
+							    distance, from_tag);
+			if (parent_name) {
+				if (parent_number > 1)
+					parent_name->tip_name =
+						get_parent_name(name,
+								parent_number);
+				else
+					parent_name->tip_name = name->tip_name;
 				ALLOC_GROW(parents_to_queue,
 					   parents_to_queue_nr + 1,
 					   parents_to_queue_alloc);
