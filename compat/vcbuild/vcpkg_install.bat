@@ -85,14 +85,47 @@ REM ================================================================
 :sub__install_one
 	echo     Installing package %1...
 
+	call :%1_features
+
 	REM vcpkg may not be reliable on slow, intermittent or proxy
 	REM connections, see e.g.
 	REM https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/4a8f7be5-5e15-4213-a7bb-ddf424a954e6/winhttpsendrequest-ends-with-12002-errorhttptimeout-after-21-seconds-no-matter-what-timeout?forum=windowssdk
 	REM which explains the hidden 21 second timeout
 	REM (last post by Dave : Microsoft - Windows Networking team)
 
-	.\vcpkg.exe install %1:%arch%
+	.\vcpkg.exe install %1%features%:%arch%
 	IF ERRORLEVEL 1 ( EXIT /B 1 )
 
 	echo     Finished %1
 	goto :EOF
+
+::
+:: features for each vcpkg to install
+:: there should be an entry here for each package to install
+:: 'set features=' means use the default otherwise
+:: 'set features=[comma-delimited-feature-set]' is the syntax
+::
+
+:zlib_features
+set features=
+goto :EOF
+
+:expat_features
+set features=
+goto :EOF
+
+:libiconv_features
+set features=
+goto :EOF
+
+:openssl_features
+set features=
+goto :EOF
+
+:libssh2_features
+set features=
+goto :EOF
+
+:curl_features
+set features=[core,openssl]
+goto :EOF
