@@ -101,6 +101,19 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 	return name;
 }
 
+static char *get_parent_name(const struct rev_name *name, int parent_number)
+{
+	size_t len;
+
+	strip_suffix(name->tip_name, "^0", &len);
+	if (name->generation > 0)
+		return xstrfmt("%.*s~%d^%d", (int)len, name->tip_name,
+			       name->generation, parent_number);
+	else
+		return xstrfmt("%.*s^%d", (int)len, name->tip_name,
+			       parent_number);
+}
+
 static void name_rev(struct commit *start_commit,
 		const char *tip_name, timestamp_t taggerdate,
 		int from_tag, int deref)
@@ -148,19 +161,7 @@ static void name_rev(struct commit *start_commit,
 				continue;
 
 			if (parent_number > 1) {
-				size_t len;
-
-				strip_suffix(name->tip_name, "^0", &len);
-				if (name->generation > 0)
-					new_name = xstrfmt("%.*s~%d^%d",
-							   (int)len,
-							   name->tip_name,
-							   name->generation,
-							   parent_number);
-				else
-					new_name = xstrfmt("%.*s^%d", (int)len,
-							   name->tip_name,
-							   parent_number);
+				new_name = get_parent_name(name, parent_number);
 				generation = 0;
 				distance = name->distance + MERGE_TRAVERSAL_WEIGHT;
 			} else {
