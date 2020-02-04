@@ -24,7 +24,7 @@ struct rev_name {
 	int from_tag;
 };
 
-define_commit_slab(commit_rev_name, struct rev_name *);
+define_commit_slab(commit_rev_name, struct rev_name);
 
 static timestamp_t cutoff = TIME_MAX;
 static struct commit_rev_name rev_names;
@@ -32,11 +32,16 @@ static struct commit_rev_name rev_names;
 /* How many generations are maximally preferred over _one_ merge traversal? */
 #define MERGE_TRAVERSAL_WEIGHT 65535
 
+static int is_valid_rev_name(const struct rev_name *name)
+{
+	return name && name->tip_name;
+}
+
 static struct rev_name *get_commit_rev_name(const struct commit *commit)
 {
-	struct rev_name **slot = commit_rev_name_peek(&rev_names, commit);
+	struct rev_name *name = commit_rev_name_peek(&rev_names, commit);
 
-	return slot ? *slot : NULL;
+	return is_valid_rev_name(name) ? name : NULL;
 }
 
 static int is_better_name(struct rev_name *name,
@@ -81,14 +86,11 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 					      int generation, int distance,
 					      int from_tag)
 {
-	struct rev_name **slot = commit_rev_name_at(&rev_names, commit);
-	struct rev_name *name = *slot;
+	struct rev_name *name = commit_rev_name_at(&rev_names, commit);
 
-	if (name && !is_better_name(name, taggerdate, distance, from_tag))
+	if (is_valid_rev_name(name) &&
+	    !is_better_name(name, taggerdate, distance, from_tag))
 		return NULL;
-
-	if (!name)
-		name = *slot = xmalloc(sizeof(*name));
 
 	name->tip_name = tip_name;
 	name->taggerdate = taggerdate;
