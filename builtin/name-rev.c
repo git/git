@@ -103,15 +103,23 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 
 static char *get_parent_name(const struct rev_name *name, int parent_number)
 {
+	struct strbuf sb = STRBUF_INIT;
 	size_t len;
 
 	strip_suffix(name->tip_name, "^0", &len);
-	if (name->generation > 0)
-		return xstrfmt("%.*s~%d^%d", (int)len, name->tip_name,
-			       name->generation, parent_number);
-	else
-		return xstrfmt("%.*s^%d", (int)len, name->tip_name,
-			       parent_number);
+	if (name->generation > 0) {
+		strbuf_grow(&sb, len +
+			    1 + decimal_width(name->generation) +
+			    1 + decimal_width(parent_number));
+		strbuf_addf(&sb, "%.*s~%d^%d", (int)len, name->tip_name,
+			    name->generation, parent_number);
+	} else {
+		strbuf_grow(&sb, len +
+			    1 + decimal_width(parent_number));
+		strbuf_addf(&sb, "%.*s^%d", (int)len, name->tip_name,
+			    parent_number);
+	}
+	return strbuf_detach(&sb, NULL);
 }
 
 static void name_rev(struct commit *start_commit,
