@@ -32,7 +32,7 @@ static struct commit_rev_name rev_names;
 /* How many generations are maximally preferred over _one_ merge traversal? */
 #define MERGE_TRAVERSAL_WEIGHT 65535
 
-static struct rev_name *get_commit_rev_name(struct commit *commit)
+static struct rev_name *get_commit_rev_name(const struct commit *commit)
 {
 	struct rev_name **slot = commit_rev_name_peek(&rev_names, commit);
 
@@ -357,11 +357,11 @@ static const char *get_exact_ref_match(const struct object *o)
 static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 {
 	struct rev_name *n;
-	struct commit *c;
+	const struct commit *c;
 
 	if (o->type != OBJ_COMMIT)
 		return get_exact_ref_match(o);
-	c = (struct commit *) o;
+	c = (const struct commit *) o;
 	n = get_commit_rev_name(c);
 	if (!n)
 		return NULL;
