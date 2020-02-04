@@ -39,11 +39,6 @@ static struct rev_name *get_commit_rev_name(const struct commit *commit)
 	return slot ? *slot : NULL;
 }
 
-static void set_commit_rev_name(struct commit *commit, struct rev_name *name)
-{
-	*commit_rev_name_at(&rev_names, commit) = name;
-}
-
 static int is_better_name(struct rev_name *name,
 			  timestamp_t taggerdate,
 			  int distance,
@@ -86,15 +81,14 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 					      int generation, int distance,
 					      int from_tag)
 {
-	struct rev_name *name = get_commit_rev_name(commit);
+	struct rev_name **slot = commit_rev_name_at(&rev_names, commit);
+	struct rev_name *name = *slot;
 
 	if (name && !is_better_name(name, taggerdate, distance, from_tag))
 		return NULL;
 
-	if (name == NULL) {
-		name = xmalloc(sizeof(*name));
-		set_commit_rev_name(commit, name);
-	}
+	if (!name)
+		name = *slot = xmalloc(sizeof(*name));
 
 	name->tip_name = tip_name;
 	name->taggerdate = taggerdate;
