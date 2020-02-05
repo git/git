@@ -56,6 +56,8 @@ struct repository;
 struct rev_info;
 struct string_list;
 struct saved_parents;
+struct bloom_key;
+struct bloom_filter_settings;
 define_shared_commit_slab(revision_sources, char *);
 
 struct rev_cmdline_info {
@@ -291,6 +293,15 @@ struct rev_info {
 	struct revision_sources *sources;
 
 	struct topo_walk_info *topo_walk_info;
+
+	/* Commit graph bloom filter fields */
+	/* The bloom filter key for the pathspec */
+	struct bloom_key *bloom_key;
+	/*
+	 * The bloom filter settings used to generate the key.
+	 * This is loaded from the commit-graph being used.
+	 */
+	struct bloom_filter_settings *bloom_filter_settings;
 };
 
 int ref_excluded(struct string_list *, const char *path);
