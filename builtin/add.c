@@ -31,6 +31,7 @@ static int take_worktree_changes;
 static int add_renormalize;
 static int pathspec_file_nul;
 static const char *pathspec_from_file;
+static int legacy_stash_p; /* support for the scripted `git stash` */
 
 struct update_callback_data {
 	int flags;
@@ -196,12 +197,25 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 				    &use_builtin_add_i);
 
 	if (use_builtin_add_i == 1) {
+		enum add_p_mode mode;
+
 		if (!patch_mode)
 			return !!run_add_i(the_repository, pathspec);
-		if (strcmp(patch_mode, "--patch"))
-			die("'%s' not yet supported in the built-in add -p",
-			    patch_mode);
-		return !!run_add_p(the_repository, pathspec);
+
+		if (!strcmp(patch_mode, "--patch"))
+			mode = ADD_P_ADD;
+		else if (!strcmp(patch_mode, "--patch=stash"))
+			mode = ADD_P_STASH;
+		else if (!strcmp(patch_mode, "--patch=reset"))
+			mode = ADD_P_RESET;
+		else if (!strcmp(patch_mode, "--patch=checkout"))
+			mode = ADD_P_CHECKOUT;
+		else if (!strcmp(patch_mode, "--patch=worktree"))
+			mode = ADD_P_WORKTREE;
+		else
+			die("'%s' not supported", patch_mode);
+
+		return !!run_add_p(the_repository, mode, revision, pathspec);
 	}
 
 	argv_array_push(&argv, "add--interactive");
@@ -327,6 +341,8 @@ static struct option builtin_add_options[] = {
 		   N_("override the executable bit of the listed files")),
 	OPT_HIDDEN_BOOL(0, "warn-embedded-repo", &warn_on_embedded_repo,
 			N_("warn when adding an embedded repository")),
+	OPT_HIDDEN_BOOL(0, "legacy-stash-p", &legacy_stash_p,
+			N_("backend for `git stash -p`")),
 	OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
 	OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 	OPT_END(),
@@ -427,6 +443,17 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		if (pathspec_from_file)
 			die(_("--pathspec-from-file is incompatible with --interactive/--patch"));
 		exit(interactive_add(argc - 1, argv + 1, prefix, patch_interactive));
+	}
+	if (legacy_stash_p) {
+		struct pathspec pathspec;
+
+		parse_pathspec(&pathspec, 0,
+			PATHSPEC_PREFER_FULL |
+			PATHSPEC_SYMLINK_LEADING_PATH |
+			PATHSPEC_PREFIX_ORIGIN,
+			prefix, argv);
+
+		return run_add_interactive(NULL, "--patch=stash", &pathspec);
 	}
 
 	if (edit_interactive) {
