@@ -156,9 +156,9 @@ test_expect_success 'submodule add to .gitignored path fails' '
 	(
 		cd addtest-ignore &&
 		cat <<-\EOF >expect &&
-		The following path is ignored by one of your .gitignore files:
+		The following paths are ignored by one of your .gitignore files:
 		submod
-		Use -f if you really want to add it.
+		Use -f if you really want to add them.
 		EOF
 		# Does not use test_commit due to the ignore
 		echo "*" > .gitignore &&
@@ -188,6 +188,17 @@ test_expect_success 'submodule add to reconfigure existing submodule with --forc
 		git submodule add --force "$submodurl" submod &&
 		test "$submodurl" = "$(git config -f .gitmodules submodule.submod.url)" &&
 		test "$submodurl" = "$(git config submodule.submod.url)"
+	)
+'
+
+test_expect_success 'submodule add relays add --dry-run stderr' '
+	test_when_finished "rm -rf addtest/.git/index.lock" &&
+	(
+		cd addtest &&
+		: >.git/index.lock &&
+		! git submodule add "$submodurl" sub-while-locked 2>output.err &&
+		test_i18ngrep "^fatal: .*index\.lock" output.err &&
+		test_path_is_missing sub-while-locked
 	)
 '
 
