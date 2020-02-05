@@ -29,6 +29,13 @@ Performance, Internal Implementation, Development Support etc.
  * Replace "git config --bool" calls with "git config --type=bool" in
    sample templates.
 
+ * The effort to move "git-add--interactive" to C continues.
+
+ * Improve error message generation for "git submodule add".
+
+ * Preparation of test scripts for the day when the object names will
+   use SHA-256 continues.
+
 
 Fixes since v2.25
 -----------------
@@ -87,6 +94,28 @@ Fixes since v2.25
  * "git fetch --refmap=" option has got a better documentation.
    (merge b40a50264a ds/refmap-doc later to maint).
 
+ * "git checkout X" did not correctly fail when X is not a local
+   branch but could name more than one remote-tracking branches
+   (i.e. to be dwimmed as the starting point to create a corresponding
+   local branch), which has been corrected.
+   (merge fa74180d08 am/checkout-file-and-ref-ref-ambiguity later to maint).
+
+ * Corner case bugs in "git clean" that stems from a (necessarily for
+   performance reasons) awkward calling convention in the directory
+   enumeration API has been corrected.
+   (merge 0cbb60574e en/fill-directory-fixes-more later to maint).
+
+ * A fetch that is told to recursively fetch updates in submodules
+   inevitably produces reams of output, and it becomes hard to spot
+   error messages.  The command has been taught to enumerate
+   submodules that had errors at the end of the operation.
+   (merge 0222540827 es/fetch-show-failed-submodules-atend later to maint).
+
+ * The "--recurse-submodules" option of various subcommands did not
+   work well when run in an alternate worktree, which has been
+   corrected.
+   (merge a9472afb63 pb/recurse-submodule-in-worktree-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge 065027ee1a en/string-list-can-be-custom-sorted later to maint).
@@ -98,3 +127,5 @@ Fixes since v2.25
    (merge c513a958b6 ss/t6025-modernize later to maint).
    (merge 69e104d70e bc/author-committer-doc later to maint).
    (merge 7a2dc95cbc bc/misconception-doc later to maint).
+   (merge b441717256 dl/test-must-fail-fixes later to maint).
+   (merge d031049da3 mt/sparse-checkout-doc-update later to maint).
