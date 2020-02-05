@@ -159,8 +159,8 @@ test_expect_success 'checkout with autocrlf=input' '
 	rm -f tmp one dir/two three &&
 	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
-	test_must_fail has_cr one &&
-	test_must_fail has_cr dir/two &&
+	! has_cr one &&
+	! has_cr dir/two &&
 	git update-index -- one dir/two &&
 	test "$one" = $(git hash-object --stdin <one) &&
 	test "$two" = $(git hash-object --stdin <dir/two) &&
@@ -237,9 +237,9 @@ test_expect_success '.gitattributes says two is binary' '
 	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
-	test_must_fail has_cr dir/two &&
+	! has_cr dir/two &&
 	verbose has_cr one &&
-	test_must_fail has_cr three
+	! has_cr three
 '
 
 test_expect_success '.gitattributes says two is input' '
@@ -248,7 +248,7 @@ test_expect_success '.gitattributes says two is input' '
 	echo "two crlf=input" >.gitattributes &&
 	git read-tree --reset -u HEAD &&
 
-	test_must_fail has_cr dir/two
+	! has_cr dir/two
 '
 
 test_expect_success '.gitattributes says two and three are text' '
@@ -270,7 +270,7 @@ test_expect_success 'in-tree .gitattributes (1)' '
 	rm -rf tmp one dir .gitattributes patch.file three &&
 	git read-tree --reset -u HEAD &&
 
-	test_must_fail has_cr one &&
+	! has_cr one &&
 	verbose has_cr three
 '
 
@@ -280,7 +280,7 @@ test_expect_success 'in-tree .gitattributes (2)' '
 	git read-tree --reset HEAD &&
 	git checkout-index -f -q -u -a &&
 
-	test_must_fail has_cr one &&
+	! has_cr one &&
 	verbose has_cr three
 '
 
@@ -291,7 +291,7 @@ test_expect_success 'in-tree .gitattributes (3)' '
 	git checkout-index -u .gitattributes &&
 	git checkout-index -u one dir/two three &&
 
-	test_must_fail has_cr one &&
+	! has_cr one &&
 	verbose has_cr three
 '
 
@@ -302,7 +302,7 @@ test_expect_success 'in-tree .gitattributes (4)' '
 	git checkout-index -u one dir/two three &&
 	git checkout-index -u .gitattributes &&
 
-	test_must_fail has_cr one &&
+	! has_cr one &&
 	verbose has_cr three
 '
 

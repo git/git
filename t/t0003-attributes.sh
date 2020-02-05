@@ -5,19 +5,16 @@ test_description=gitattributes
 . ./test-lib.sh
 
 attr_check () {
-	path="$1" expect="$2"
+	path="$1" expect="$2" git_opts="$3" &&
 
-	git $3 check-attr test -- "$path" >actual 2>err &&
-	echo "$path: test: $2" >expect &&
+	git $git_opts check-attr test -- "$path" >actual 2>err &&
+	echo "$path: test: $expect" >expect &&
 	test_cmp expect actual &&
-	test_line_count = 0 err
+	test_must_be_empty err
 }
 
 attr_check_quote () {
-
-	path="$1"
-	quoted_path="$2"
-	expect="$3"
+	path="$1" quoted_path="$2" expect="$3" &&
 
 	git check-attr test -- "$path" >actual &&
 	echo "\"$quoted_path\": test: $expect" >expect &&
@@ -27,7 +24,7 @@ attr_check_quote () {
 
 test_expect_success 'open-quoted pathname' '
 	echo "\"a test=a" >.gitattributes &&
-	test_must_fail attr_check a a
+	attr_check a unspecified
 '
 
 
@@ -112,20 +109,20 @@ test_expect_success 'attribute test' '
 
 test_expect_success 'attribute matching is case sensitive when core.ignorecase=0' '
 
-	test_must_fail attr_check F f "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/F f "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/c/F f "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/G a/g "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/B/g a/b/g "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/b/G a/b/g "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/b/H a/b/h "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/b/D/g "a/b/d/*" "-c core.ignorecase=0" &&
-	test_must_fail attr_check oNoFf unset "-c core.ignorecase=0" &&
-	test_must_fail attr_check oFfOn set "-c core.ignorecase=0" &&
+	attr_check F unspecified "-c core.ignorecase=0" &&
+	attr_check a/F unspecified "-c core.ignorecase=0" &&
+	attr_check a/c/F unspecified "-c core.ignorecase=0" &&
+	attr_check a/G unspecified "-c core.ignorecase=0" &&
+	attr_check a/B/g a/g "-c core.ignorecase=0" &&
+	attr_check a/b/G unspecified "-c core.ignorecase=0" &&
+	attr_check a/b/H unspecified "-c core.ignorecase=0" &&
+	attr_check a/b/D/g a/g "-c core.ignorecase=0" &&
+	attr_check oNoFf unspecified "-c core.ignorecase=0" &&
+	attr_check oFfOn unspecified "-c core.ignorecase=0" &&
 	attr_check NO unspecified "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/b/D/NO "a/b/d/*" "-c core.ignorecase=0" &&
+	attr_check a/b/D/NO unspecified "-c core.ignorecase=0" &&
 	attr_check a/b/d/YES a/b/d/* "-c core.ignorecase=0" &&
-	test_must_fail attr_check a/E/f "A/e/F" "-c core.ignorecase=0"
+	attr_check a/E/f f "-c core.ignorecase=0"
 
 '
 
@@ -149,8 +146,8 @@ test_expect_success 'attribute matching is case insensitive when core.ignorecase
 '
 
 test_expect_success CASE_INSENSITIVE_FS 'additional case insensitivity tests' '
-	test_must_fail attr_check a/B/D/g "a/b/d/*" "-c core.ignorecase=0" &&
-	test_must_fail attr_check A/B/D/NO "a/b/d/*" "-c core.ignorecase=0" &&
+	attr_check a/B/D/g a/g "-c core.ignorecase=0" &&
+	attr_check A/B/D/NO unspecified "-c core.ignorecase=0" &&
 	attr_check A/b/h a/b/h "-c core.ignorecase=1" &&
 	attr_check a/B/D/g "a/b/d/*" "-c core.ignorecase=1" &&
 	attr_check A/B/D/NO "a/b/d/*" "-c core.ignorecase=1"
@@ -244,7 +241,7 @@ EOF
 	git check-attr foo -- "a/b/f" >>actual 2>>err &&
 	git check-attr foo -- "a/b/c/f" >>actual 2>>err &&
 	test_cmp expect actual &&
-	test_line_count = 0 err
+	test_must_be_empty err
 '
 
 test_expect_success '"**" with no slashes test' '
@@ -265,7 +262,7 @@ EOF
 	git check-attr foo -- "a/b/f" >>actual 2>>err &&
 	git check-attr foo -- "a/b/c/f" >>actual 2>>err &&
 	test_cmp expect actual &&
-	test_line_count = 0 err
+	test_must_be_empty err
 '
 
 test_expect_success 'using --git-dir and --work-tree' '

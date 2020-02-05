@@ -155,7 +155,7 @@ test_expect_success 'pretend we have a fully passing test suite' "
 "
 
 test_expect_success 'pretend we have a partially passing test suite' "
-	test_must_fail run_sub_test_lib_test \
+	run_sub_test_lib_test_err \
 		partial-pass '2/3 tests passing' <<-\\EOF &&
 	test_expect_success 'passing test #1' 'true'
 	test_expect_success 'failing test #2' 'false'
@@ -219,7 +219,7 @@ test_expect_success 'pretend we have fixed one of two known breakages (run in su
 "
 
 test_expect_success 'pretend we have a pass, fail, and known breakage' "
-	test_must_fail run_sub_test_lib_test \
+	run_sub_test_lib_test_err \
 		mixed-results1 'mixed results #1' <<-\\EOF &&
 	test_expect_success 'passing test' 'true'
 	test_expect_success 'failing test' 'false'
@@ -238,7 +238,7 @@ test_expect_success 'pretend we have a pass, fail, and known breakage' "
 "
 
 test_expect_success 'pretend we have a mix of all possible results' "
-	test_must_fail run_sub_test_lib_test \
+	run_sub_test_lib_test_err \
 		mixed-results2 'mixed results #2' <<-\\EOF &&
 	test_expect_success 'passing test' 'true'
 	test_expect_success 'passing test' 'true'
@@ -274,7 +274,7 @@ test_expect_success 'pretend we have a mix of all possible results' "
 "
 
 test_expect_success C_LOCALE_OUTPUT 'test --verbose' '
-	test_must_fail run_sub_test_lib_test \
+	run_sub_test_lib_test_err \
 		t1234-verbose "test verbose" --verbose <<-\EOF &&
 	test_expect_success "passing test" true
 	test_expect_success "test with output" "echo foo"
@@ -301,7 +301,7 @@ test_expect_success C_LOCALE_OUTPUT 'test --verbose' '
 '
 
 test_expect_success 'test --verbose-only' '
-	test_must_fail run_sub_test_lib_test \
+	run_sub_test_lib_test_err \
 		t2345-verbose-only-2 "test verbose-only=2" \
 		--verbose-only=2 <<-\EOF &&
 	test_expect_success "passing test" true
@@ -834,7 +834,7 @@ then
 fi
 
 test_expect_success 'tests clean up even on failures' "
-	test_must_fail run_sub_test_lib_test \
+	run_sub_test_lib_test_err \
 		failing-cleanup 'Failing tests with cleanup commands' <<-\\EOF &&
 	test_expect_success 'tests clean up even after a failure' '
 		touch clean-after-failure &&
@@ -863,7 +863,7 @@ test_expect_success 'tests clean up even on failures' "
 "
 
 test_expect_success 'test_atexit is run' "
-	test_must_fail run_sub_test_lib_test \
+	run_sub_test_lib_test_err \
 		atexit-cleanup 'Run atexit commands' -i <<-\\EOF &&
 	test_expect_success 'tests clean up even after a failure' '
 		> ../../clean-atexit &&
