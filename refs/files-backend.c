@@ -465,8 +465,7 @@ stat_ref:
 	close(fd);
 	strbuf_rtrim(&sb_contents);
 	buf = sb_contents.buf;
-	if (starts_with(buf, "ref:")) {
-		buf += 4;
+	if (skip_prefix(buf, "ref:", &buf)) {
 		while (isspace(*buf))
 			buf++;
 

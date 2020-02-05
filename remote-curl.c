@@ -1255,8 +1255,9 @@ static void parse_push(struct strbuf *buf)
 	int ret;
 
 	do {
-		if (starts_with(buf->buf, "push "))
-			argv_array_push(&specs, buf->buf + 5);
+		const char *arg;
+		if (skip_prefix(buf->buf, "push ", &arg))
+			argv_array_push(&specs, arg);
 		else
 			die(_("http transport does not support %s"), buf->buf);
 
