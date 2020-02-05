@@ -247,6 +247,10 @@ static struct tip_table {
 	struct tip_table_entry {
 		struct object_id oid;
 		const char *refname;
+		struct commit *commit;
+		timestamp_t taggerdate;
+		unsigned int from_tag:1;
+		unsigned int deref:1;
 	} *table;
 	int nr;
 	int alloc;
@@ -254,13 +258,18 @@ static struct tip_table {
 } tip_table;
 
 static void add_to_tip_table(const struct object_id *oid, const char *refname,
-			     int shorten_unambiguous)
+			     int shorten_unambiguous, struct commit *commit,
+			     timestamp_t taggerdate, int from_tag, int deref)
 {
 	refname = name_ref_abbrev(refname, shorten_unambiguous);
 
 	ALLOC_GROW(tip_table.table, tip_table.nr + 1, tip_table.alloc);
 	oidcpy(&tip_table.table[tip_table.nr].oid, oid);
 	tip_table.table[tip_table.nr].refname = xstrdup(refname);
+	tip_table.table[tip_table.nr].commit = commit;
+	tip_table.table[tip_table.nr].taggerdate = taggerdate;
+	tip_table.table[tip_table.nr].from_tag = from_tag;
+	tip_table.table[tip_table.nr].deref = deref;
 	tip_table.nr++;
 	tip_table.sorted = 0;
 }
@@ -271,12 +280,30 @@ static int tipcmp(const void *a_, const void *b_)
 	return oidcmp(&a->oid, &b->oid);
 }
 
+static int cmp_by_tag_and_age(const void *a_, const void *b_)
+{
+	const struct tip_table_entry *a = a_, *b = b_;
+	int cmp;
+
+	/* Prefer tags. */
+	cmp = b->from_tag - a->from_tag;
+	if (cmp)
+		return cmp;
+
+	/* Older is better. */
+	if (a->taggerdate < b->taggerdate)
+		return -1;
+	return a->taggerdate != b->taggerdate;
+}
+
 static int name_ref(const char *path, const struct object_id *oid, int flags, void *cb_data)
 {
 	struct object *o = parse_object(the_repository, oid);
 	struct name_ref_data *data = cb_data;
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
+	int from_tag = 0;
+	struct commit *commit = NULL;
 	timestamp_t taggerdate = TIME_MAX;
 
 	if (data->tags_only && !starts_with(path, "refs/tags/"))
@@ -325,8 +352,6 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 			return 0;
 	}
 
-	add_to_tip_table(oid, path, can_abbreviate_output);
-
 	while (o && o->type == OBJ_TAG) {
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
@@ -336,15 +361,33 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		taggerdate = t->date;
 	}
 	if (o && o->type == OBJ_COMMIT) {
-		struct commit *commit = (struct commit *)o;
-		int from_tag = starts_with(path, "refs/tags/");
-
+		commit = (struct commit *)o;
+		from_tag = starts_with(path, "refs/tags/");
 		if (taggerdate == TIME_MAX)
 			taggerdate = commit->date;
-		path = name_ref_abbrev(path, can_abbreviate_output);
-		name_rev(commit, path, taggerdate, from_tag, deref);
 	}
+
+	add_to_tip_table(oid, path, can_abbreviate_output, commit, taggerdate,
+			 from_tag, deref);
 	return 0;
+}
+
+static void name_tips(void)
+{
+	int i;
+
+	/*
+	 * Try to set better names first, so that worse ones spread
+	 * less.
+	 */
+	QSORT(tip_table.table, tip_table.nr, cmp_by_tag_and_age);
+	for (i = 0; i < tip_table.nr; i++) {
+		struct tip_table_entry *e = &tip_table.table[i];
+		if (e->commit) {
+			name_rev(e->commit, e->refname, e->taggerdate,
+				 e->from_tag, e->deref);
+		}
+	}
 }
 
 static const unsigned char *nth_tip_table_ent(size_t ix, void *table_)
@@ -559,6 +602,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 			cutoff = TIME_MIN;
 	}
 	for_each_ref(name_ref, &data);
+	name_tips();
 
 	if (transform_stdin) {
 		char buffer[2048];
