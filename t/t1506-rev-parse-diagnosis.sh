@@ -222,4 +222,18 @@ test_expect_success 'reject Nth ancestor if N is too high' '
 	test_must_fail git rev-parse HEAD~100000000000000000000000000000000
 '
 
+test_expect_success 'pathspecs with wildcards are not ambiguous' '
+	echo "*.c" >expect &&
+	git rev-parse "*.c" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'backslash does not trigger wildcard rule' '
+	test_must_fail git rev-parse "foo\\bar"
+'
+
+test_expect_success 'escaped char does not trigger wildcard rule' '
+	test_must_fail git rev-parse "foo\\*bar"
+'
+
 test_done
