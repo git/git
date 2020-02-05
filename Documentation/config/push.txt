@@ -1,6 +1,7 @@
 push.default::
 	Defines the action `git push` should take if no refspec is
-	explicitly given.  Different values are well-suited for
+	given (whether from the command-line, config, or elsewhere).
+	Different values are well-suited for
 	specific workflows; for instance, in a purely central workflow
 	(i.e. the fetch source is equal to the push destination),
 	`upstream` is probably what you want.  Possible values are:
@@ -8,7 +9,7 @@ push.default::
 --
 
 * `nothing` - do not push anything (error out) unless a refspec is
-  explicitly given. This is primarily meant for people who want to
+  given. This is primarily meant for people who want to
   avoid mistakes by always being explicit.
 
 * `current` - push the current branch to update a branch with the same
