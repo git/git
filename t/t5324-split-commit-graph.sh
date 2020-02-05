@@ -344,4 +344,29 @@ test_expect_success 'split across alternate where alternate is not split' '
 	test_cmp commit-graph .git/objects/info/commit-graph
 '
 
+test_expect_success '--split=merge-all always merges incrementals' '
+	test_when_finished rm -rf a b c &&
+	rm -rf $graphdir $infodir/commit-graph &&
+	git reset --hard commits/10 &&
+	git rev-list -3 HEAD~4 >a &&
+	git rev-list -2 HEAD~2 >b &&
+	git rev-list -2 HEAD >c &&
+	git commit-graph write --split=no-merge --stdin-commits <a &&
+	git commit-graph write --split=no-merge --stdin-commits <b &&
+	test_line_count = 2 $graphdir/commit-graph-chain &&
+	git commit-graph write --split=merge-all --stdin-commits <c &&
+	test_line_count = 1 $graphdir/commit-graph-chain
+'
+
+test_expect_success '--split=no-merge always writes an incremental' '
+	test_when_finished rm -rf a b &&
+	rm -rf $graphdir &&
+	git reset --hard commits/2 &&
+	git rev-list HEAD~1 >a &&
+	git rev-list HEAD >b &&
+	git commit-graph write --split --stdin-commits <a &&
+	git commit-graph write --split=no-merge --stdin-commits <b &&
+	test_line_count = 2 $graphdir/commit-graph-chain
+'
+
 test_done
