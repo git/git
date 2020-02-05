@@ -229,7 +229,7 @@ As an example, the command below will show the path and currently
 checked out commit for each submodule:
 +
 --------------
-git submodule foreach 'echo $path `git rev-parse HEAD`'
+git submodule foreach 'echo $sm_path `git rev-parse HEAD`'
 --------------
 
 sync [--recursive] [--] [<path>...]::
