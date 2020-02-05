@@ -3,6 +3,9 @@
 test_description='git log for a path with bloom filters'
 . ./test-lib.sh
 
+GIT_TEST_COMMIT_GRAPH=0
+GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
+
 test_expect_success 'setup test - repo, commits, commit graph, log outputs' '
 	git init &&
 	mkdir A A/B A/B/C &&
