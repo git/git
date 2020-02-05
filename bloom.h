@@ -13,6 +13,7 @@ struct bloom_filter_settings {
 
 #define DEFAULT_BLOOM_FILTER_SETTINGS { 1, 7, 10 }
 #define BITS_PER_WORD 64
+#define BLOOMDATA_CHUNK_HEADER_SIZE 3*sizeof(uint32_t)
 
 /*
  * A bloom_filter struct represents a data segment to
@@ -47,7 +48,8 @@ void add_key_to_filter(struct bloom_key *key,
 					   struct bloom_filter_settings *settings);
 
 struct bloom_filter *get_bloom_filter(struct repository *r,
-				      struct commit *c);
+				      struct commit *c,
+				      int compute_if_not_present);
 
 int bloom_filter_contains(struct bloom_filter *filter,
 			  struct bloom_key *key,

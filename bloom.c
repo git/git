@@ -1,5 +1,7 @@
 #include "git-compat-util.h"
 #include "bloom.h"
+#include "commit.h"
+#include "commit-slab.h"
 #include "commit-graph.h"
 #include "object-store.h"
 #include "diff.h"
@@ -127,8 +129,39 @@ void add_key_to_filter(struct bloom_key *key,
 	}
 }
 
+static int load_bloom_filter_from_graph(struct commit_graph *g,
+				   struct bloom_filter *filter,
+				   struct commit *c)
+{
+	uint32_t lex_pos, start_index, end_index;
+
+	while (c->graph_pos < g->num_commits_in_base)
+		g = g->base_graph;
+
+	/* The commit graph commit 'c' lives in doesn't carry bloom filters. */
+	if (!g->chunk_bloom_indexes)
+		return 0;
+
+	lex_pos = c->graph_pos - g->num_commits_in_base;
+
+	end_index = get_be32(g->chunk_bloom_indexes + 4 * lex_pos);
+
+	if (lex_pos)
+		start_index = get_be32(g->chunk_bloom_indexes + 4 * (lex_pos - 1));
+	else
+		start_index = 0;
+
+	filter->len = end_index - start_index;
+	filter->data = (uint64_t *)(g->chunk_bloom_data +
+					sizeof(uint64_t) * start_index +
+					BLOOMDATA_CHUNK_HEADER_SIZE);
+
+	return 1;
+}
+
 struct bloom_filter *get_bloom_filter(struct repository *r,
-				      struct commit *c)
+				      struct commit *c,
+				      int compute_if_not_present)
 {
 	struct bloom_filter *filter;
 	struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
@@ -140,6 +173,20 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		return NULL;
 
 	filter = bloom_filter_slab_at(&bloom_filters, c);
+
+	if (!filter->data) {
+		load_commit_graph_info(r, c);
+		if (c->graph_pos != COMMIT_NOT_FROM_GRAPH &&
+			r->objects->commit_graph->chunk_bloom_indexes) {
+			if (load_bloom_filter_from_graph(r->objects->commit_graph, filter, c))
+				return filter;
+			else
+				return NULL;
+		}
+	}
+
+	if (filter->data || !compute_if_not_present)
+		return filter;
 
 	repo_diff_setup(r, &diffopt);
 	diffopt.flags.recursive = 1;
