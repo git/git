@@ -134,15 +134,13 @@ test_expect_success 'MKCOL sends directory names with trailing slashes' '
 
 x1="[0-9a-f]"
 x2="$x1$x1"
-x5="$x1$x1$x1$x1$x1"
-x38="$x5$x5$x5$x5$x5$x5$x5$x1$x1$x1"
-x40="$x38$x2"
+xtrunc=$(echo $OID_REGEX | sed -e "s/\[0-9a-f\]\[0-9a-f\]//")
 
 test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
 	sed \
 		-e "s/PUT /OP /" \
 		-e "s/MOVE /OP /" \
-	    -e "s|/objects/$x2/${x38}_$x40|WANTED_PATH_REQUEST|" \
+	    -e "s|/objects/$x2/${xtrunc}_$OID_REGEX|WANTED_PATH_REQUEST|" \
 		"$HTTPD_ROOT_PATH"/access.log |
 	grep -e "\"OP .*WANTED_PATH_REQUEST HTTP/[.0-9]*\" 20[0-9] "
 

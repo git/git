@@ -4,8 +4,9 @@ test_description='test diff with a bogus tree containing the null sha1'
 . ./test-lib.sh
 
 test_expect_success 'create bogus tree' '
+	name=$(echo $ZERO_OID | sed -e "s/00/Q/g") &&
 	bogus_tree=$(
-		printf "100644 fooQQQQQQQQQQQQQQQQQQQQQ" |
+		printf "100644 fooQ$name" |
 		q_to_nul |
 		git hash-object -w --stdin -t tree
 	)

@@ -4,6 +4,7 @@ test_description='fetch/receive strict mode'
 . ./test-lib.sh
 
 test_expect_success 'setup and inject "corrupt or missing" object' '
+	test_oid_init &&
 	echo hello >greetings &&
 	git add greetings &&
 	git commit -m greetings &&
@@ -144,11 +145,11 @@ test_expect_success 'fsck with no skipList input' '
 
 test_expect_success 'setup sorted and unsorted skipLists' '
 	cat >SKIP.unsorted <<-EOF &&
-	0000000000000000000000000000000000000004
-	0000000000000000000000000000000000000002
+	$(test_oid 004)
+	$(test_oid 002)
 	$commit
-	0000000000000000000000000000000000000001
-	0000000000000000000000000000000000000003
+	$(test_oid 001)
+	$(test_oid 003)
 	EOF
 	sort SKIP.unsorted >SKIP.sorted
 '
@@ -172,14 +173,14 @@ test_expect_success 'fsck with invalid or bogus skipList input' '
 test_expect_success 'fsck with other accepted skipList input (comments & empty lines)' '
 	cat >SKIP.with-comment <<-EOF &&
 	# Some bad commit
-	0000000000000000000000000000000000000001
+	$(test_oid 001)
 	EOF
 	test_must_fail git -c fsck.skipList=SKIP.with-comment fsck 2>err-with-comment &&
 	test_i18ngrep "missingEmail" err-with-comment &&
 	cat >SKIP.with-empty-line <<-EOF &&
-	0000000000000000000000000000000000000001
+	$(test_oid 001)
 
-	0000000000000000000000000000000000000002
+	$(test_oid 002)
 	EOF
 	test_must_fail git -c fsck.skipList=SKIP.with-empty-line fsck 2>err-with-empty-line &&
 	test_i18ngrep "missingEmail" err-with-empty-line
@@ -204,7 +205,7 @@ test_expect_success 'fsck with exhaustive accepted skipList input (various types
 	echo " # Comment after whitespace" >>SKIP.exhaustive &&
 	echo "$commit # Our bad commit (with leading whitespace and trailing comment)" >>SKIP.exhaustive &&
 	echo "# Some bad commit (leading whitespace)" >>SKIP.exhaustive &&
-	echo "  0000000000000000000000000000000000000001" >>SKIP.exhaustive &&
+	echo "  $(test_oid 001)" >>SKIP.exhaustive &&
 	git -c fsck.skipList=SKIP.exhaustive fsck 2>err &&
 	test_must_be_empty err
 '
