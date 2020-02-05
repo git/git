@@ -88,21 +88,21 @@ static struct rev_name *create_or_update_name(struct commit *commit,
 {
 	struct rev_name *name = get_commit_rev_name(commit);
 
+	if (name && !is_better_name(name, taggerdate, distance, from_tag))
+		return NULL;
+
 	if (name == NULL) {
 		name = xmalloc(sizeof(*name));
 		set_commit_rev_name(commit, name);
-		goto copy_data;
-	} else if (is_better_name(name, taggerdate, distance, from_tag)) {
-copy_data:
-		name->tip_name = tip_name;
-		name->taggerdate = taggerdate;
-		name->generation = generation;
-		name->distance = distance;
-		name->from_tag = from_tag;
+	}
 
-		return name;
-	} else
-		return NULL;
+	name->tip_name = tip_name;
+	name->taggerdate = taggerdate;
+	name->generation = generation;
+	name->distance = distance;
+	name->from_tag = from_tag;
+
+	return name;
 }
 
 static void name_rev(struct commit *start_commit,
