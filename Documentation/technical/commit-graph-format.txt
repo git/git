@@ -17,6 +17,9 @@ metadata, including:
 - The parents of the commit, stored using positional references within
   the graph file.
 
+- The Bloom filter of the commit carrying the paths that were changed between
+  the commit and its first parent.
+
 These positional references are stored as unsigned 32-bit integers
 corresponding to the array position within the list of commit OIDs. Due
 to some special constants we use to track parents, we can store at most
@@ -92,6 +95,27 @@ CHUNK DATA:
       on. Starting at that array position, iterate through this list of commit
       positions for the parents until reaching a value with the most-significant
       bit on. The other bits correspond to the position of the last parent.
+
+  Bloom Filter Index (ID: {'B', 'I', 'D', 'X'}) (N * 4 bytes) [Optional]
+    * The ith entry, BIDX[i], stores the number of 8-byte word blocks in all
+      Bloom filters from commit 0 to commit i (inclusive) in lexicographic
+      order. The Bloom filter for the i-th commit spans from BIDX[i-1] to
+      BIDX[i] (plus header length), where BIDX[-1] is 0.
+    * The BIDX chunk is ignored if the BDAT chunk is not present.
+
+  Bloom Filter Data (ID: {'B', 'D', 'A', 'T'}) [Optional]
+    * It starts with header consisting of three unsigned 32-bit integers:
+      - Version of the hash algorithm being used. We currently only support
+	value 1 which implies the murmur3 hash implemented exactly as described
+	in https://en.wikipedia.org/wiki/MurmurHash#Algorithm
+      - The number of times a path is hashed and hence the number of bit positions
+	that cumulatively determine whether a file is present in the commit.
+      - The minimum number of bits 'b' per entry in the Bloom filter. If the filter
+	contains 'n' entries, then the filter size is the minimum number of 64-bit
+	words that contain n*b bits.
+    * The rest of the chunk is the concatenation of all the computed Bloom
+      filters for the commits in lexicographic order.
+    * The BDAT chunk is present iff BIDX is present.
 
   Base Graphs List (ID: {'B', 'A', 'S', 'E'}) [Optional]
       This list of H-byte hashes describe a set of B commit-graph files that
