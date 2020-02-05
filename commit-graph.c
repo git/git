@@ -17,6 +17,7 @@
 #include "replace-object.h"
 #include "progress.h"
 #include "bloom.h"
+#include "commit-slab.h"
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */
 #define GRAPH_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
@@ -45,6 +46,29 @@
 
 /* Remember to update object flag allocation in object.h */
 #define REACHABLE       (1u<<15)
+
+/* Keep track of the order in which commits are added to our list. */
+define_commit_slab(commit_pos, int);
+static struct commit_pos commit_pos = COMMIT_SLAB_INIT(1, commit_pos);
+
+static void set_commit_pos(struct repository *r, const struct object_id *oid)
+{
+	static int32_t max_pos;
+	struct commit *commit = lookup_commit(r, oid);
+
+	if (!commit)
+		return; /* should never happen, but be lenient */
+
+	*commit_pos_at(&commit_pos, commit) = max_pos++;
+}
+
+static int commit_pos_cmp(const void *va, const void *vb)
+{
+	const struct commit *a = *(const struct commit **)va;
+	const struct commit *b = *(const struct commit **)vb;
+	return commit_pos_at(&commit_pos, a) -
+	       commit_pos_at(&commit_pos, b);
+}
 
 char *get_commit_graph_filename(const char *obj_dir)
 {
@@ -1027,6 +1051,8 @@ static int add_packed_commits(const struct object_id *oid,
 	oidcpy(&(ctx->oids.list[ctx->oids.nr]), oid);
 	ctx->oids.nr++;
 
+	set_commit_pos(ctx->r, oid);
+
 	return 0;
 }
 
@@ -1147,6 +1173,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 {
 	int i;
 	struct progress *progress = NULL;
+	struct commit **sorted_by_pos;
 
 	load_bloom_filters();
 
@@ -1155,13 +1182,18 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 			_("Computing commit diff Bloom filters"),
 			ctx->commits.nr);
 
+	ALLOC_ARRAY(sorted_by_pos, ctx->commits.nr);
+	COPY_ARRAY(sorted_by_pos, ctx->commits.list, ctx->commits.nr);
+	QSORT(sorted_by_pos, ctx->commits.nr, commit_pos_cmp);
+
 	for (i = 0; i < ctx->commits.nr; i++) {
-		struct commit *c = ctx->commits.list[i];
+		struct commit *c = sorted_by_pos[i];
 		struct bloom_filter *filter = get_bloom_filter(ctx->r, c);
 		ctx->total_bloom_filter_data_size += sizeof(uint64_t) * filter->len;
 		display_progress(progress, i + 1);
 	}
 
+	free(sorted_by_pos);
 	stop_progress(&progress);
 }
 
