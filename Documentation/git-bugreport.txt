@@ -32,6 +32,7 @@ The following information is captured automatically:
  - $SHELL
  - Selected config values
  - A list of enabled hooks
+ - The number of loose objects in the repository
 
 OPTIONS
 -------
