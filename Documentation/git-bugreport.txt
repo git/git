@@ -35,6 +35,7 @@ The following information is captured automatically:
  - The number of loose objects in the repository
  - The number of packs and packed objects in the repository
  - A list of the contents of .git/objects/info (or equivalent)
+ - The number of valid and invalid alternates
 
 OPTIONS
 -------
