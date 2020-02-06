@@ -30,6 +30,7 @@ The following information is captured automatically:
  - Compiler-specific info string
  - 'git remote-https --build-info'
  - $SHELL
+ - Selected config values
 
 OPTIONS
 -------
