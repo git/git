@@ -520,7 +520,10 @@ p4-pre-submit
 
 This hook is invoked by `git-p4 submit`. It takes no parameters and nothing
 from standard input. Exiting with non-zero status from this script prevent
-`git-p4 submit` from launching. Run `git-p4 submit --help` for details.
+`git-p4 submit` from launching. It can be bypassed with the `--no-verify`
+command line option. Run `git-p4 submit --help` for details.
+
+
 
 post-index-change
 ~~~~~~~~~~~~~~~~~
