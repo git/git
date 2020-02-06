@@ -4,7 +4,7 @@ sendemail.identity::
 	values in the 'sendemail' section. The default identity is
 	the value of `sendemail.identity`.
 
-sendemail.smtpEncryption::
+sendemail.smtpEncryption annotate:bugreport[include] ::
 	See linkgit:git-send-email[1] for description.  Note that this
 	setting is not subject to the 'identity' mechanism.
 
@@ -15,7 +15,7 @@ sendemail.smtpsslcertpath::
 	Path to ca-certificates (either a directory or a single file).
 	Set it to an empty string to disable certificate verification.
 
-sendemail.<identity>.*::
+sendemail.<identity>.* annotate:bugreport[exclude] ::
 	Identity-specific versions of the 'sendemail.*' parameters
 	found below, taking precedence over those when this
 	identity is selected, through either the command-line or
@@ -23,41 +23,41 @@ sendemail.<identity>.*::
 
 sendemail.aliasesFile::
 sendemail.aliasFileType::
-sendemail.annotate::
-sendemail.bcc::
-sendemail.cc::
-sendemail.ccCmd::
-sendemail.chainReplyTo::
-sendemail.confirm::
-sendemail.envelopeSender::
-sendemail.from::
-sendemail.multiEdit::
-sendemail.signedoffbycc::
-sendemail.smtpPass::
-sendemail.suppresscc::
-sendemail.suppressFrom::
-sendemail.to::
-sendemail.tocmd::
-sendemail.smtpDomain::
-sendemail.smtpServer::
-sendemail.smtpServerPort::
-sendemail.smtpServerOption::
-sendemail.smtpUser::
-sendemail.thread::
-sendemail.transferEncoding::
-sendemail.validate::
-sendemail.xmailer::
+sendemail.annotate annotate:bugreport[include] ::
+sendemail.bcc annotate:bugreport[include] ::
+sendemail.cc annotate:bugreport[include] ::
+sendemail.ccCmd annotate:bugreport[include] ::
+sendemail.chainReplyTo annotate:bugreport[include] ::
+sendemail.confirm annotate:bugreport[include] ::
+sendemail.envelopeSender annotate:bugreport[include] ::
+sendemail.from annotate:bugreport[include] ::
+sendemail.multiEdit annotate:bugreport[include] ::
+sendemail.signedoffbycc annotate:bugreport[include] ::
+sendemail.smtpPass annotate:bugreport[exclude] ::
+sendemail.suppresscc annotate:bugreport[include] ::
+sendemail.suppressFrom annotate:bugreport[include] ::
+sendemail.to annotate:bugreport[include] ::
+sendemail.tocmd annotate:bugreport[include] ::
+sendemail.smtpDomain annotate:bugreport[include] ::
+sendemail.smtpServer annotate:bugreport[include] ::
+sendemail.smtpServerPort annotate:bugreport[include] ::
+sendemail.smtpServerOption annotate:bugreport[include] ::
+sendemail.smtpUser annotate:bugreport[exclude] ::
+sendemail.thread annotate:bugreport[include] ::
+sendemail.transferEncoding annotate:bugreport[include] ::
+sendemail.validate annotate:bugreport[include] ::
+sendemail.xmailer annotate:bugreport[include] ::
 	See linkgit:git-send-email[1] for description.
 
 sendemail.signedoffcc (deprecated)::
 	Deprecated alias for `sendemail.signedoffbycc`.
 
-sendemail.smtpBatchSize::
+sendemail.smtpBatchSize annotate:bugreport[include] ::
 	Number of messages to be sent per connection, after that a relogin
 	will happen.  If the value is 0 or undefined, send all messages in
 	one connection.
 	See also the `--batch-size` option of linkgit:git-send-email[1].
 
-sendemail.smtpReloginDelay::
+sendemail.smtpReloginDelay annotate:bugreport[include] ::
 	Seconds wait before reconnecting to smtp server.
 	See also the `--relogin-delay` option of linkgit:git-send-email[1].
