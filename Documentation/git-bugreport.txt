@@ -29,6 +29,7 @@ The following information is captured automatically:
  - uname sysname, release, version, and machine strings
  - Compiler-specific info string
  - 'git remote-https --build-info'
+ - $SHELL
 
 OPTIONS
 -------
