@@ -70,6 +70,9 @@ struct repository {
 	/* The store in which the refs are held. */
 	struct ref_store *refs;
 
+	/* The format to use for the ref database. */
+	char *ref_storage_format;
+
 	/*
 	 * Contains path to often used file names.
 	 */

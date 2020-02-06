@@ -177,7 +177,7 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 }
 
 static int create_default_files(const char *template_path,
-				const char *original_git_dir)
+				const char *original_git_dir, int flags)
 {
 	struct stat st1;
 	struct strbuf buf = STRBUF_INIT;
@@ -213,6 +213,8 @@ static int create_default_files(const char *template_path,
 	is_bare_repository_cfg = init_is_bare_repository;
 	if (init_shared_repository != -1)
 		set_shared_repository(init_shared_repository);
+	if (flags & INIT_DB_REFTABLE)
+		the_repository->ref_storage_format = xstrdup("reftable");
 
 	/*
 	 * We would have created the above under user's umask -- under
@@ -221,6 +223,15 @@ static int create_default_files(const char *template_path,
 	if (get_shared_repository()) {
 		adjust_shared_perm(get_git_dir());
 	}
+
+	/*
+	 * Check to see if .git/HEAD exists; this must happen before
+	 * initializing the ref db, because we want to see if there is an
+	 * existing HEAD.
+	 */
+	path = git_path_buf(&buf, "HEAD");
+	reinit = (!access(path, R_OK) ||
+		  readlink(path, junk, sizeof(junk) - 1) != -1);
 
 	/*
 	 * We need to create a "refs" dir in any case so that older
@@ -234,17 +245,20 @@ static int create_default_files(const char *template_path,
 	 * Create the default symlink from ".git/HEAD" to the "master"
 	 * branch, if it does not exist yet.
 	 */
-	path = git_path_buf(&buf, "HEAD");
-	reinit = (!access(path, R_OK)
-		  || readlink(path, junk, sizeof(junk)-1) != -1);
 	if (!reinit) {
 		if (create_symref("HEAD", "refs/heads/master", NULL) < 0)
 			exit(1);
+	} else {
+		/*
+		 * XXX should check whether our ref backend matches the
+		 * original one; if not, either die() or convert
+		 */
 	}
 
 	/* This forces creation of new config file */
-	xsnprintf(repo_version_string, sizeof(repo_version_string),
-		  "%d", GIT_REPO_VERSION);
+	xsnprintf(repo_version_string, sizeof(repo_version_string), "%d",
+		  flags & INIT_DB_REFTABLE ? GIT_REPO_VERSION_READ :
+					     GIT_REPO_VERSION);
 	git_config_set("core.repositoryformatversion", repo_version_string);
 
 	/* Check filemode trustability */
@@ -378,7 +392,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 */
 	check_repository_format();
 
-	reinit = create_default_files(template_dir, original_git_dir);
+	reinit = create_default_files(template_dir, original_git_dir, flags);
 
 	create_object_directory();
 
@@ -401,6 +415,10 @@ int init_db(const char *git_dir, const char *real_git_dir,
 			BUG("invalid value for shared_repository");
 		git_config_set("core.sharedrepository", buf);
 		git_config_set("receive.denyNonFastforwards", "true");
+	}
+
+	if (flags & INIT_DB_REFTABLE) {
+		git_config_set("extensions.refStorage", "reftable");
 	}
 
 	if (!(flags & INIT_DB_QUIET)) {
@@ -481,15 +499,18 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	const char *template_dir = NULL;
 	unsigned int flags = 0;
 	const struct option init_db_options[] = {
-		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
-				N_("directory from which templates will be used")),
+		OPT_STRING(0, "template", &template_dir,
+			   N_("template-directory"),
+			   N_("directory from which templates will be used")),
 		OPT_SET_INT(0, "bare", &is_bare_repository_cfg,
-				N_("create a bare repository"), 1),
+			    N_("create a bare repository"), 1),
 		{ OPTION_CALLBACK, 0, "shared", &init_shared_repository,
-			N_("permissions"),
-			N_("specify that the git repository is to be shared amongst several users"),
-			PARSE_OPT_OPTARG | PARSE_OPT_NONEG, shared_callback, 0},
+		  N_("permissions"),
+		  N_("specify that the git repository is to be shared amongst several users"),
+		  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, shared_callback, 0 },
 		OPT_BIT('q', "quiet", &flags, N_("be quiet"), INIT_DB_QUIET),
+		OPT_BIT(0, "reftable", &flags, N_("use reftable"),
+			INIT_DB_REFTABLE),
 		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 			   N_("separate git dir from working tree")),
 		OPT_END()
