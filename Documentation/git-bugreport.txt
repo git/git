@@ -31,6 +31,7 @@ The following information is captured automatically:
  - 'git remote-https --build-info'
  - $SHELL
  - Selected config values
+ - A list of enabled hooks
 
 OPTIONS
 -------
