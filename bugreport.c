@@ -5,6 +5,18 @@
 #include "time.h"
 #include "help.h"
 #include "compat/compiler.h"
+#include "run-command.h"
+
+static void get_git_remote_https_version_info(struct strbuf *version_info)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	argv_array_push(&cp.args, "git");
+	argv_array_push(&cp.args, "remote-https");
+	argv_array_push(&cp.args, "--build-info");
+	if (capture_command(&cp, version_info, 0))
+	    strbuf_addstr(version_info, "'git-remote-https --build-info' not supported\n");
+}
 
 static void get_system_info(struct strbuf *sys_info)
 {
@@ -28,6 +40,10 @@ static void get_system_info(struct strbuf *sys_info)
 
 	strbuf_addstr(sys_info, "compiler info: ");
 	get_compiler_info(sys_info);
+	strbuf_complete_line(sys_info);
+
+	strbuf_addstr(sys_info, "git-remote-https --build-info:\n");
+	get_git_remote_https_version_info(sys_info);
 	strbuf_complete_line(sys_info);
 }
 
