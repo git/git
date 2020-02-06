@@ -175,7 +175,11 @@ def prompt(prompt_text):
     """
     choices = set(m.group(1) for m in re.finditer(r"\[(.)\]", prompt_text))
     while True:
-        response = raw_input(prompt_text).strip().lower()
+        sys.stderr.flush()
+        sys.stdout.write(prompt_text)
+        sys.stdout.flush()
+        sys.stdin.flush()
+        response=sys.stdin.readline().strip().lower()
         if not response:
             continue
         response = response[0]
