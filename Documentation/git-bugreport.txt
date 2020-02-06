@@ -33,6 +33,7 @@ The following information is captured automatically:
  - Selected config values
  - A list of enabled hooks
  - The number of loose objects in the repository
+ - The number of packs and packed objects in the repository
 
 OPTIONS
 -------
