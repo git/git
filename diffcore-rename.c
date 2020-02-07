@@ -263,8 +263,8 @@ static unsigned int hash_filespec(struct repository *r,
 	if (!filespec->oid_valid) {
 		if (diff_populate_filespec(r, filespec, 0))
 			return 0;
-		hash_object_file(filespec->data, filespec->size, "blob",
-				 &filespec->oid);
+		hash_object_file(r->hash_algo, filespec->data, filespec->size,
+				 "blob", &filespec->oid);
 	}
 	return oidhash(&filespec->oid);
 }

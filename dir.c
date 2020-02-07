@@ -1074,8 +1074,8 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 				oidcpy(&oid_stat->oid,
 				       &istate->cache[pos]->oid);
 			else
-				hash_object_file(buf, size, "blob",
-						 &oid_stat->oid);
+				hash_object_file(the_hash_algo, buf, size,
+						 "blob", &oid_stat->oid);
 			fill_stat_data(&oid_stat->stat, &st);
 			oid_stat->valid = 1;
 		}

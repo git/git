@@ -757,7 +757,8 @@ static int check_collison(struct object_entry *entry)
 
 	memset(&data, 0, sizeof(data));
 	data.entry = entry;
-	data.st = open_istream(&entry->idx.oid, &type, &size, NULL);
+	data.st = open_istream(the_repository, &entry->idx.oid, &type, &size,
+			       NULL);
 	if (!data.st)
 		return -1;
 	if (size != entry->size || type != entry->type)
@@ -948,7 +949,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 	free(delta_data);
 	if (!result->data)
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
-	hash_object_file(result->data, result->size,
+	hash_object_file(the_hash_algo, result->data, result->size,
 			 type_name(delta_obj->real_type), &delta_obj->idx.oid);
 	sha1_object(result->data, NULL, result->size, delta_obj->real_type,
 		    &delta_obj->idx.oid);
@@ -1383,8 +1384,9 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		if (!base_obj->data)
 			continue;
 
-		if (check_object_signature(&d->oid, base_obj->data,
-				base_obj->size, type_name(type)))
+		if (check_object_signature(the_repository, &d->oid,
+					   base_obj->data, base_obj->size,
+					   type_name(type)))
 			die(_("local object %s is corrupt"), oid_to_hex(&d->oid));
 		base_obj->obj = append_obj_to_pack(f, d->oid.hash,
 					base_obj->data, base_obj->size, type);
