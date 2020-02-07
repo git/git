@@ -8,6 +8,9 @@ test_description='git status with file system watcher'
 # "git update-index --fsmonitor" can be used to get the extension written
 # before testing the results.
 
+# Disable an external value, as we will set it directly as needed.
+GIT_TEST_FSMONITOR=""
+
 clean_repo () {
 	git reset --hard HEAD &&
 	git clean -fd
