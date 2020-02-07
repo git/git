@@ -315,10 +315,11 @@ CHUNK DATA:
 	    Stores two 4-byte values for every object.
 	    1: The pack-int-id for the pack storing this object.
 	    2: The offset within the pack.
-		If all offsets are less than 2^31, then the large offset chunk
+		If all offsets are less than 2^32, then the large offset chunk
 		will not exist and offsets are stored as in IDX v1.
 		If there is at least one offset value larger than 2^32-1, then
-		the large offset chunk must exist. If the large offset chunk
+		the large offset chunk must exist, and offsets larger than
+		2^31-1 must be stored in it instead. If the large offset chunk
 		exists and the 31st bit is on, then removing that bit reveals
 		the row in the large offsets containing the 8-byte offset of
 		this object.
