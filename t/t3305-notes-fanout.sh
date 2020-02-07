@@ -4,6 +4,38 @@ test_description='Test that adding/removing many notes triggers automatic fanout
 
 . ./test-lib.sh
 
+path_has_fanout() {
+	path=$1 &&
+	fanout=$2 &&
+	after_last_slash=$((40 - $fanout * 2)) &&
+	echo $path | grep -q "^\([0-9a-f]\{2\}/\)\{$fanout\}[0-9a-f]\{$after_last_slash\}$"
+}
+
+touched_one_note_with_fanout() {
+	notes_commit=$1 &&
+	modification=$2 &&  # 'A' for addition, 'D' for deletion
+	fanout=$3 &&
+	diff=$(git diff-tree --no-commit-id --name-status --root -r $notes_commit) &&
+	path=$(echo $diff | sed -e "s/^$modification[\t ]//") &&
+	path_has_fanout "$path" $fanout;
+}
+
+all_notes_have_fanout() {
+	notes_commit=$1 &&
+	fanout=$2 &&
+	git ls-tree -r --name-only $notes_commit 2>/dev/null |
+	while read path
+	do
+		path_has_fanout $path $fanout || return 1
+	done
+}
+
+test_expect_success 'tweak test environment' '
+	git checkout -b nondeterminism &&
+	test_commit A &&
+	git checkout --orphan with_notes;
+'
+
 test_expect_success 'creating many notes with git-notes' '
 	num_notes=300 &&
 	i=0 &&
@@ -20,7 +52,7 @@ test_expect_success 'creating many notes with git-notes' '
 
 test_expect_success 'many notes created correctly with git-notes' '
 	git log | grep "^    " > output &&
-	i=300 &&
+	i=$num_notes &&
 	while test $i -gt 0
 	do
 		echo "    commit #$i" &&
@@ -30,34 +62,46 @@ test_expect_success 'many notes created correctly with git-notes' '
 	test_cmp expect output
 '
 
-test_expect_success 'many notes created with git-notes triggers fanout' '
-	# Expect entire notes tree to have a fanout == 1
-	git ls-tree -r --name-only refs/notes/commits |
-	while read path
+test_expect_success 'stable fanout 0 is followed by stable fanout 1' '
+	i=$num_notes &&
+	fanout=0 &&
+	while test $i -gt 0
 	do
-		echo $path | grep "^../[0-9a-f]*$" || {
-			echo "Invalid path \"$path\"" &&
-			return 1;
-		}
-	done
+		i=$(($i - 1)) &&
+		if touched_one_note_with_fanout refs/notes/commits~$i A $fanout
+		then
+			continue
+		elif test $fanout -eq 0
+		then
+			fanout=1 &&
+			if all_notes_have_fanout refs/notes/commits~$i $fanout
+			then
+				echo "Fanout 0 -> 1 at refs/notes/commits~$i" &&
+				continue
+			fi
+		fi &&
+		echo "Failed fanout=$fanout check at refs/notes/commits~$i" &&
+		git ls-tree -r --name-only refs/notes/commits~$i &&
+		return 1
+	done &&
+	all_notes_have_fanout refs/notes/commits 1
 '
 
 test_expect_success 'deleting most notes with git-notes' '
-	num_notes=250 &&
+	remove_notes=285 &&
 	i=0 &&
 	git rev-list HEAD |
-	while test $i -lt $num_notes && read sha1
+	while test $i -lt $remove_notes && read sha1
 	do
 		i=$(($i + 1)) &&
 		test_tick &&
-		git notes remove "$sha1" ||
-		exit 1
+		git notes remove "$sha1" 2>/dev/null || return 1
 	done
 '
 
 test_expect_success 'most notes deleted correctly with git-notes' '
-	git log HEAD~250 | grep "^    " > output &&
-	i=50 &&
+	git log HEAD~$remove_notes | grep "^    " > output &&
+	i=$(($num_notes - $remove_notes)) &&
 	while test $i -gt 0
 	do
 		echo "    commit #$i" &&
@@ -67,16 +111,29 @@ test_expect_success 'most notes deleted correctly with git-notes' '
 	test_cmp expect output
 '
 
-test_expect_success 'deleting most notes triggers fanout consolidation' '
-	# Expect entire notes tree to have a fanout == 0
-	git ls-tree -r --name-only refs/notes/commits |
-	while read path
+test_expect_success 'stable fanout 1 is followed by stable fanout 0' '
+	i=$remove_notes &&
+	fanout=1 &&
+	while test $i -gt 0
 	do
-		echo $path | grep -v "^../.*" || {
-			echo "Invalid path \"$path\"" &&
-			return 1;
-		}
-	done
+		i=$(($i - 1)) &&
+		if touched_one_note_with_fanout refs/notes/commits~$i D $fanout
+		then
+			continue
+		elif test $fanout -eq 1
+		then
+			fanout=0 &&
+			if all_notes_have_fanout refs/notes/commits~$i $fanout
+			then
+				echo "Fanout 1 -> 0 at refs/notes/commits~$i" &&
+				continue
+			fi
+		fi &&
+		echo "Failed fanout=$fanout check at refs/notes/commits~$i" &&
+		git ls-tree -r --name-only refs/notes/commits~$i &&
+		return 1
+	done &&
+	all_notes_have_fanout refs/notes/commits 0
 '
 
 test_done
