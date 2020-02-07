@@ -1211,6 +1211,8 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 			  struct object_array *want_obj)
 {
 	const char *arg;
+	struct repository *r = the_repository;
+
 	if (skip_prefix(line, "want-ref ", &arg)) {
 		struct object_id oid;
 		struct string_list_item *item;
@@ -1224,7 +1226,7 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 		item = string_list_append(wanted_refs, arg);
 		item->util = oiddup(&oid);
 
-		o = parse_object_or_die(&oid, arg);
+		o = parse_object_or_die(r, &oid, arg);
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
 			add_object_array(o, NULL, want_obj);

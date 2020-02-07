@@ -396,6 +396,7 @@ static int grep_submodule(struct grep_opt *opt,
 			  const char *filename, const char *path, int cached)
 {
 	struct repository subrepo;
+	struct repository *r = the_repository;
 	struct repository *superproject = opt->repo;
 	const struct submodule *sub;
 	struct grep_opt subopt;
@@ -444,7 +445,7 @@ static int grep_submodule(struct grep_opt *opt,
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
-		object = parse_object_or_die(oid, oid_to_hex(oid));
+		object = parse_object_or_die(r, oid, oid_to_hex(oid));
 		obj_read_unlock();
 		data = read_object_with_reference(&subrepo,
 						  &object->oid, tree_type,
@@ -790,6 +791,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	const char *show_in_pager = NULL, *default_pager = "dummy";
 	struct grep_opt opt;
 	struct object_array list = OBJECT_ARRAY_INIT;
+	struct repository *r = the_repository;
 	struct pathspec pathspec;
 	struct string_list path_list = STRING_LIST_INIT_NODUP;
 	int i;
@@ -1028,7 +1030,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			break;
 		}
 
-		object = parse_object_or_die(&oid, arg);
+		object = parse_object_or_die(r, &oid, arg);
 		if (!seen_dashdash)
 			verify_non_filename(prefix, arg);
 		add_object_array_with_path(object, arg, &list, oc.mode, oc.path);
