@@ -154,6 +154,8 @@ int repo_dwim_log(struct repository *r, const char *str, int len, struct object_
 int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
 int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
+int dwim_unique_ref(const char* str, int len, struct object_id *oid, char **ref);
+
 /*
  * A ref_transaction represents a collection of reference updates that
  * should succeed or fail together.
