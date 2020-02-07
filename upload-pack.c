@@ -962,7 +962,8 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 static int mark_our_ref(const char *refname, const char *refname_full,
 			const struct object_id *oid)
 {
-	struct object *o = lookup_unknown_object(oid);
+	struct repository *r = the_repository;
+	struct object *o = lookup_unknown_object(r, oid);
 
 	if (ref_is_hidden(refname, refname_full)) {
 		o->flags |= HIDDEN_REF;

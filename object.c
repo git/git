@@ -177,12 +177,12 @@ void *object_as_type(struct repository *r, struct object *obj, enum object_type 
 	}
 }
 
-struct object *lookup_unknown_object(const struct object_id *oid)
+struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid)
 {
-	struct object *obj = lookup_object(the_repository, oid);
+	struct object *obj = lookup_object(r, oid);
 	if (!obj)
-		obj = create_object(the_repository, oid,
-				    alloc_object_node(the_repository));
+		obj = create_object(r, oid,
+				    alloc_object_node(r));
 	return obj;
 }
 
