@@ -1147,6 +1147,8 @@ static int unpack_loose_short_header(git_zstream *stream,
 				     unsigned char *map, unsigned long mapsize,
 				     void *buffer, unsigned long bufsiz)
 {
+	int ret;
+
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
 	stream->next_in = map;
@@ -1155,7 +1157,11 @@ static int unpack_loose_short_header(git_zstream *stream,
 	stream->avail_out = bufsiz;
 
 	git_inflate_init(stream);
-	return git_inflate(stream, 0);
+	obj_read_unlock();
+	ret = git_inflate(stream, 0);
+	obj_read_lock();
+
+	return ret;
 }
 
 int unpack_loose_header(git_zstream *stream,
@@ -1200,7 +1206,9 @@ static int unpack_loose_header_to_strbuf(git_zstream *stream, unsigned char *map
 	stream->avail_out = bufsiz;
 
 	do {
+		obj_read_unlock();
 		status = git_inflate(stream, 0);
+		obj_read_lock();
 		strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
 		if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
 			return 0;
@@ -1240,8 +1248,11 @@ static void *unpack_loose_rest(git_zstream *stream,
 		 */
 		stream->next_out = buf + bytes;
 		stream->avail_out = size - bytes;
-		while (status == Z_OK)
+		while (status == Z_OK) {
+			obj_read_unlock();
 			status = git_inflate(stream, Z_FINISH);
+			obj_read_lock();
+		}
 	}
 	if (status == Z_STREAM_END && !stream->avail_in) {
 		git_inflate_end(stream);
@@ -1411,10 +1422,32 @@ static int loose_object_info(struct repository *r,
 	return (status < 0) ? status : 0;
 }
 
+int obj_read_use_lock = 0;
+pthread_mutex_t obj_read_mutex;
+
+void enable_obj_read_lock(void)
+{
+	if (obj_read_use_lock)
+		return;
+
+	obj_read_use_lock = 1;
+	init_recursive_mutex(&obj_read_mutex);
+}
+
+void disable_obj_read_lock(void)
+{
+	if (!obj_read_use_lock)
+		return;
+
+	obj_read_use_lock = 0;
+	pthread_mutex_destroy(&obj_read_mutex);
+}
+
 int fetch_if_missing = 1;
 
-int oid_object_info_extended(struct repository *r, const struct object_id *oid,
-			     struct object_info *oi, unsigned flags)
+static int do_oid_object_info_extended(struct repository *r,
+				       const struct object_id *oid,
+				       struct object_info *oi, unsigned flags)
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	struct cached_object *co;
@@ -1422,6 +1455,7 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 	int rtype;
 	const struct object_id *real = oid;
 	int already_retried = 0;
+
 
 	if (flags & OBJECT_INFO_LOOKUP_REPLACE)
 		real = lookup_replace_object(r, oid);
@@ -1496,7 +1530,7 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 	rtype = packed_object_info(r, e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real->hash);
-		return oid_object_info_extended(r, real, oi, 0);
+		return do_oid_object_info_extended(r, real, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
@@ -1506,6 +1540,17 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 
 	return 0;
 }
+
+int oid_object_info_extended(struct repository *r, const struct object_id *oid,
+			     struct object_info *oi, unsigned flags)
+{
+	int ret;
+	obj_read_lock();
+	ret = do_oid_object_info_extended(r, oid, oi, flags);
+	obj_read_unlock();
+	return ret;
+}
+
 
 /* returns enum object_type or negative */
 int oid_object_info(struct repository *r,
@@ -1579,6 +1624,7 @@ void *read_object_file_extended(struct repository *r,
 	if (data)
 		return data;
 
+	obj_read_lock();
 	if (errno && errno != ENOENT)
 		die_errno(_("failed to read object %s"), oid_to_hex(oid));
 
@@ -1594,6 +1640,7 @@ void *read_object_file_extended(struct repository *r,
 	if ((p = has_packed_and_bad(r, repl->hash)) != NULL)
 		die(_("packed object %s (stored in %s) is corrupt"),
 		    oid_to_hex(repl), p->pack_name);
+	obj_read_unlock();
 
 	return NULL;
 }
