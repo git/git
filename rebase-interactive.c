@@ -5,6 +5,13 @@
 #include "strbuf.h"
 #include "commit-slab.h"
 #include "config.h"
+#include "dir.h"
+
+static const char edit_todo_list_advice[] =
+N_("You can fix this with 'git rebase --edit-todo' "
+"and then run 'git rebase --continue'.\n"
+"Or you can abort the rebase with 'git rebase"
+" --abort'.\n");
 
 enum missing_commit_check_level {
 	MISSING_COMMIT_CHECK_IGNORE = 0,
@@ -91,21 +98,24 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 		   struct todo_list *new_todo, const char *shortrevisions,
 		   const char *shortonto, unsigned flags)
 {
-	const char *todo_file = rebase_path_todo();
+	const char *todo_file = rebase_path_todo(),
+		*todo_backup = rebase_path_todo_backup();
 	unsigned initial = shortrevisions && shortonto;
+	int incorrect = 0;
 
 	/* If the user is editing the todo list, we first try to parse
 	 * it.  If there is an error, we do not return, because the user
 	 * might want to fix it in the first place. */
 	if (!initial)
-		todo_list_parse_insn_buffer(r, todo_list->buf.buf, todo_list);
+		incorrect = todo_list_parse_insn_buffer(r, todo_list->buf.buf, todo_list) |
+			file_exists(rebase_path_dropped());
 
 	if (todo_list_write_to_file(r, todo_list, todo_file, shortrevisions, shortonto,
 				    -1, flags | TODO_LIST_SHORTEN_IDS | TODO_LIST_APPEND_TODO_HELP))
 		return error_errno(_("could not write '%s'"), todo_file);
 
-	if (initial &&
-	    todo_list_write_to_file(r, todo_list, rebase_path_todo_backup(),
+	if (!incorrect &&
+	    todo_list_write_to_file(r, todo_list, todo_backup,
 				    shortrevisions, shortonto, -1,
 				    (flags | TODO_LIST_APPEND_TODO_HELP) & ~TODO_LIST_SHORTEN_IDS) < 0)
 		return error(_("could not write '%s'."), rebase_path_todo_backup());
@@ -117,10 +127,23 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 	if (initial && new_todo->buf.len == 0)
 		return -3;
 
-	/* For the initial edit, the todo list gets parsed in
-	 * complete_action(). */
-	if (!initial)
-		return todo_list_parse_insn_buffer(r, new_todo->buf.buf, new_todo);
+	if (todo_list_parse_insn_buffer(r, new_todo->buf.buf, new_todo)) {
+		fprintf(stderr, _(edit_todo_list_advice));
+		return -4;
+	}
+
+	if (incorrect) {
+		if (todo_list_check_against_backup(r, new_todo)) {
+			write_file(rebase_path_dropped(), "");
+			return -4;
+		}
+
+		if (incorrect > 0)
+			unlink(rebase_path_dropped());
+	} else if (todo_list_check(todo_list, new_todo)) {
+		write_file(rebase_path_dropped(), "");
+		return -4;
+	}
 
 	return 0;
 }
@@ -185,7 +208,52 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 		"the level of warnings.\n"
 		"The possible behaviours are: ignore, warn, error.\n\n"));
 
+	fprintf(stderr, _(edit_todo_list_advice));
+
 leave_check:
 	clear_commit_seen(&commit_seen);
+	return res;
+}
+
+int todo_list_check_against_backup(struct repository *r, struct todo_list *todo_list)
+{
+	struct todo_list backup = TODO_LIST_INIT;
+	int res = 0;
+
+	if (strbuf_read_file(&backup.buf, rebase_path_todo_backup(), 0) > 0) {
+		todo_list_parse_insn_buffer(r, backup.buf.buf, &backup);
+		res = todo_list_check(&backup, todo_list);
+	}
+
+	todo_list_release(&backup);
+	return res;
+}
+
+int check_todo_list_from_file(struct repository *r)
+{
+	struct todo_list old_todo = TODO_LIST_INIT, new_todo = TODO_LIST_INIT;
+	int res = 0;
+
+	if (strbuf_read_file(&new_todo.buf, rebase_path_todo(), 0) < 0) {
+		res = error(_("could not read '%s'."), rebase_path_todo());
+		goto out;
+	}
+
+	if (strbuf_read_file(&old_todo.buf, rebase_path_todo_backup(), 0) < 0) {
+		res = error(_("could not read '%s'."), rebase_path_todo_backup());
+		goto out;
+	}
+
+	res = todo_list_parse_insn_buffer(r, old_todo.buf.buf, &old_todo);
+	if (!res)
+		res = todo_list_parse_insn_buffer(r, new_todo.buf.buf, &new_todo);
+	if (res)
+		fprintf(stderr, _(edit_todo_list_advice));
+	if (!res)
+		res = todo_list_check(&old_todo, &new_todo);
+out:
+	todo_list_release(&old_todo);
+	todo_list_release(&new_todo);
+
 	return res;
 }
