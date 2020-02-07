@@ -92,10 +92,11 @@ static struct progress *progress_state;
 
 static struct packed_git *reuse_packfile;
 static uint32_t reuse_packfile_objects;
-static off_t reuse_packfile_offset;
+static struct bitmap *reuse_packfile_bitmap;
 
 static int use_bitmap_index_default = 1;
 static int use_bitmap_index = -1;
+static int allow_pack_reuse = 1;
 static enum {
 	WRITE_BITMAP_FALSE = 0,
 	WRITE_BITMAP_QUIET,
@@ -784,57 +785,185 @@ static struct object_entry **compute_write_order(void)
 	return wo;
 }
 
-static off_t write_reused_pack(struct hashfile *f)
+
+/*
+ * A reused set of objects. All objects in a chunk have the same
+ * relative position in the original packfile and the generated
+ * packfile.
+ */
+
+static struct reused_chunk {
+	/* The offset of the first object of this chunk in the original
+	 * packfile. */
+	off_t original;
+	/* The offset of the first object of this chunk in the generated
+	 * packfile minus "original". */
+	off_t difference;
+} *reused_chunks;
+static int reused_chunks_nr;
+static int reused_chunks_alloc;
+
+static void record_reused_object(off_t where, off_t offset)
 {
-	unsigned char buffer[8192];
-	off_t to_write, total;
-	int fd;
+	if (reused_chunks_nr && reused_chunks[reused_chunks_nr-1].difference == offset)
+		return;
 
-	if (!is_pack_valid(reuse_packfile))
-		die(_("packfile is invalid: %s"), reuse_packfile->pack_name);
+	ALLOC_GROW(reused_chunks, reused_chunks_nr + 1,
+		   reused_chunks_alloc);
+	reused_chunks[reused_chunks_nr].original = where;
+	reused_chunks[reused_chunks_nr].difference = offset;
+	reused_chunks_nr++;
+}
 
-	fd = git_open(reuse_packfile->pack_name);
-	if (fd < 0)
-		die_errno(_("unable to open packfile for reuse: %s"),
-			  reuse_packfile->pack_name);
-
-	if (lseek(fd, sizeof(struct pack_header), SEEK_SET) == -1)
-		die_errno(_("unable to seek in reused packfile"));
-
-	if (reuse_packfile_offset < 0)
-		reuse_packfile_offset = reuse_packfile->pack_size - the_hash_algo->rawsz;
-
-	total = to_write = reuse_packfile_offset - sizeof(struct pack_header);
-
-	while (to_write) {
-		int read_pack = xread(fd, buffer, sizeof(buffer));
-
-		if (read_pack <= 0)
-			die_errno(_("unable to read from reused packfile"));
-
-		if (read_pack > to_write)
-			read_pack = to_write;
-
-		hashwrite(f, buffer, read_pack);
-		to_write -= read_pack;
-
-		/*
-		 * We don't know the actual number of objects written,
-		 * only how many bytes written, how many bytes total, and
-		 * how many objects total. So we can fake it by pretending all
-		 * objects we are writing are the same size. This gives us a
-		 * smooth progress meter, and at the end it matches the true
-		 * answer.
-		 */
-		written = reuse_packfile_objects *
-				(((double)(total - to_write)) / total);
-		display_progress(progress_state, written);
+/*
+ * Binary search to find the chunk that "where" is in. Note
+ * that we're not looking for an exact match, just the first
+ * chunk that contains it (which implicitly ends at the start
+ * of the next chunk.
+ */
+static off_t find_reused_offset(off_t where)
+{
+	int lo = 0, hi = reused_chunks_nr;
+	while (lo < hi) {
+		int mi = lo + ((hi - lo) / 2);
+		if (where == reused_chunks[mi].original)
+			return reused_chunks[mi].difference;
+		if (where < reused_chunks[mi].original)
+			hi = mi;
+		else
+			lo = mi + 1;
 	}
 
-	close(fd);
-	written = reuse_packfile_objects;
-	display_progress(progress_state, written);
-	return reuse_packfile_offset - sizeof(struct pack_header);
+	/*
+	 * The first chunk starts at zero, so we can't have gone below
+	 * there.
+	 */
+	assert(lo);
+	return reused_chunks[lo-1].difference;
+}
+
+static void write_reused_pack_one(size_t pos, struct hashfile *out,
+				  struct pack_window **w_curs)
+{
+	off_t offset, next, cur;
+	enum object_type type;
+	unsigned long size;
+
+	offset = reuse_packfile->revindex[pos].offset;
+	next = reuse_packfile->revindex[pos + 1].offset;
+
+	record_reused_object(offset, offset - hashfile_total(out));
+
+	cur = offset;
+	type = unpack_object_header(reuse_packfile, w_curs, &cur, &size);
+	assert(type >= 0);
+
+	if (type == OBJ_OFS_DELTA) {
+		off_t base_offset;
+		off_t fixup;
+
+		unsigned char header[MAX_PACK_OBJECT_HEADER];
+		unsigned len;
+
+		base_offset = get_delta_base(reuse_packfile, w_curs, &cur, type, offset);
+		assert(base_offset != 0);
+
+		/* Convert to REF_DELTA if we must... */
+		if (!allow_ofs_delta) {
+			int base_pos = find_revindex_position(reuse_packfile, base_offset);
+			const unsigned char *base_sha1 =
+				nth_packed_object_sha1(reuse_packfile,
+						       reuse_packfile->revindex[base_pos].nr);
+
+			len = encode_in_pack_object_header(header, sizeof(header),
+							   OBJ_REF_DELTA, size);
+			hashwrite(out, header, len);
+			hashwrite(out, base_sha1, 20);
+			copy_pack_data(out, reuse_packfile, w_curs, cur, next - cur);
+			return;
+		}
+
+		/* Otherwise see if we need to rewrite the offset... */
+		fixup = find_reused_offset(offset) -
+			find_reused_offset(base_offset);
+		if (fixup) {
+			unsigned char ofs_header[10];
+			unsigned i, ofs_len;
+			off_t ofs = offset - base_offset - fixup;
+
+			len = encode_in_pack_object_header(header, sizeof(header),
+							   OBJ_OFS_DELTA, size);
+
+			i = sizeof(ofs_header) - 1;
+			ofs_header[i] = ofs & 127;
+			while (ofs >>= 7)
+				ofs_header[--i] = 128 | (--ofs & 127);
+
+			ofs_len = sizeof(ofs_header) - i;
+
+			hashwrite(out, header, len);
+			hashwrite(out, ofs_header + sizeof(ofs_header) - ofs_len, ofs_len);
+			copy_pack_data(out, reuse_packfile, w_curs, cur, next - cur);
+			return;
+		}
+
+		/* ...otherwise we have no fixup, and can write it verbatim */
+	}
+
+	copy_pack_data(out, reuse_packfile, w_curs, offset, next - offset);
+}
+
+static size_t write_reused_pack_verbatim(struct hashfile *out,
+					 struct pack_window **w_curs)
+{
+	size_t pos = 0;
+
+	while (pos < reuse_packfile_bitmap->word_alloc &&
+			reuse_packfile_bitmap->words[pos] == (eword_t)~0)
+		pos++;
+
+	if (pos) {
+		off_t to_write;
+
+		written = (pos * BITS_IN_EWORD);
+		to_write = reuse_packfile->revindex[written].offset
+			- sizeof(struct pack_header);
+
+		/* We're recording one chunk, not one object. */
+		record_reused_object(sizeof(struct pack_header), 0);
+		hashflush(out);
+		copy_pack_data(out, reuse_packfile, w_curs,
+			sizeof(struct pack_header), to_write);
+
+		display_progress(progress_state, written);
+	}
+	return pos;
+}
+
+static void write_reused_pack(struct hashfile *f)
+{
+	size_t i = 0;
+	uint32_t offset;
+	struct pack_window *w_curs = NULL;
+
+	if (allow_ofs_delta)
+		i = write_reused_pack_verbatim(f, &w_curs);
+
+	for (; i < reuse_packfile_bitmap->word_alloc; ++i) {
+		eword_t word = reuse_packfile_bitmap->words[i];
+		size_t pos = (i * BITS_IN_EWORD);
+
+		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
+			if ((word >> offset) == 0)
+				break;
+
+			offset += ewah_bit_ctz64(word >> offset);
+			write_reused_pack_one(pos + offset, f, &w_curs);
+			display_progress(progress_state, ++written);
+		}
+	}
+
+	unuse_pack(&w_curs);
 }
 
 static const char no_split_warning[] = N_(
@@ -867,11 +996,9 @@ static void write_pack_file(void)
 		offset = write_pack_header(f, nr_remaining);
 
 		if (reuse_packfile) {
-			off_t packfile_size;
 			assert(pack_to_stdout);
-
-			packfile_size = write_reused_pack(f);
-			offset += packfile_size;
+			write_reused_pack(f);
+			offset = hashfile_total(f);
 		}
 
 		nr_written = 0;
@@ -999,6 +1126,10 @@ static int have_duplicate_entry(const struct object_id *oid,
 				int exclude)
 {
 	struct object_entry *entry;
+
+	if (reuse_packfile_bitmap &&
+	    bitmap_walk_contains(bitmap_git, reuse_packfile_bitmap, oid))
+		return 1;
 
 	entry = packlist_find(&to_pack, oid);
 	if (!entry)
@@ -2552,6 +2683,13 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	free(p);
 }
 
+static int obj_is_packed(const struct object_id *oid)
+{
+	return packlist_find(&to_pack, oid) ||
+		(reuse_packfile_bitmap &&
+		 bitmap_walk_contains(bitmap_git, reuse_packfile_bitmap, oid));
+}
+
 static void add_tag_chain(const struct object_id *oid)
 {
 	struct tag *tag;
@@ -2563,7 +2701,7 @@ static void add_tag_chain(const struct object_id *oid)
 	 * it was included via bitmaps, we would not have parsed it
 	 * previously).
 	 */
-	if (packlist_find(&to_pack, oid))
+	if (obj_is_packed(oid))
 		return;
 
 	tag = lookup_tag(the_repository, oid);
@@ -2587,7 +2725,7 @@ static int add_ref_tag(const char *path, const struct object_id *oid, int flag, 
 
 	if (starts_with(path, "refs/tags/") && /* is a tag? */
 	    !peel_ref(path, &peeled)    && /* peelable? */
-	    packlist_find(&to_pack, &peeled))      /* object packed? */
+	    obj_is_packed(&peeled)) /* object packed? */
 		add_tag_chain(oid);
 	return 0;
 }
@@ -2655,6 +2793,7 @@ static void prepare_pack(int window, int depth)
 
 	if (nr_deltas && n > 1) {
 		unsigned nr_done = 0;
+
 		if (progress)
 			progress_state = start_progress(_("Compressing objects"),
 							nr_deltas);
@@ -2697,6 +2836,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "pack.usebitmaps")) {
 		use_bitmap_index_default = git_config_bool(k, v);
+		return 0;
+	}
+	if (!strcmp(k, "pack.allowpackreuse")) {
+		allow_pack_reuse = git_config_bool(k, v);
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
@@ -3030,8 +3173,8 @@ static void loosen_unused_packed_objects(void)
  */
 static int pack_options_allow_reuse(void)
 {
-	return pack_to_stdout &&
-	       allow_ofs_delta &&
+	return allow_pack_reuse &&
+	       pack_to_stdout &&
 	       !ignore_packed_keep_on_disk &&
 	       !ignore_packed_keep_in_core &&
 	       (!local || !have_non_local_packs) &&
@@ -3048,7 +3191,7 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 			bitmap_git,
 			&reuse_packfile,
 			&reuse_packfile_objects,
-			&reuse_packfile_offset)) {
+			&reuse_packfile_bitmap)) {
 		assert(reuse_packfile_objects);
 		nr_result += reuse_packfile_objects;
 		display_progress(progress_state, nr_result);
@@ -3509,7 +3652,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (progress)
 		fprintf_ln(stderr,
 			   _("Total %"PRIu32" (delta %"PRIu32"),"
-			     " reused %"PRIu32" (delta %"PRIu32")"),
-			   written, written_delta, reused, reused_delta);
+			     " reused %"PRIu32" (delta %"PRIu32"),"
+			     " pack-reused %"PRIu32),
+			   written, written_delta, reused, reused_delta,
+			   reuse_packfile_objects);
 	return 0;
 }
