@@ -13,7 +13,7 @@ int cmd__dump_fsmonitor(int ac, const char **av)
 		printf("no fsmonitor\n");
 		return 0;
 	}
-	printf("fsmonitor last update %"PRIuMAX"\n", (uintmax_t)istate->fsmonitor_last_update);
+	printf("fsmonitor last update %s\n", istate->fsmonitor_last_update);
 
 	for (i = 0; i < istate->cache_nr; i++)
 		printf((istate->cache[i]->ce_flags & CE_FSMONITOR_VALID) ? "+" : "-");
