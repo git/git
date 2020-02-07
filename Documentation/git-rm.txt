@@ -8,16 +8,18 @@ git-rm - Remove files from the working tree and from the index
 SYNOPSIS
 --------
 [verse]
-'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
+'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]
+	  [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]
+	  [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
-Remove files from the index, or from the working tree and the index.
-`git rm` will not remove a file from just your working directory.
-(There is no option to remove a file only from the working tree
-and yet keep it in the index; use `/bin/rm` if you want to do that.)
-The files being removed have to be identical to the tip of the branch,
-and no updates to their contents can be staged in the index,
+Remove files matching pathspec from the index, or from the working tree
+and the index. `git rm` will not remove a file from just your working
+directory. (There is no option to remove a file only from the working
+tree and yet keep it in the index; use `/bin/rm` if you want to do
+that.) The files being removed have to be identical to the tip of the
+branch, and no updates to their contents can be staged in the index,
 though that default behavior can be overridden with the `-f` option.
 When `--cached` is given, the staged content has to
 match either the tip of the branch or the file on disk,
@@ -26,15 +28,20 @@ allowing the file to be removed from just the index.
 
 OPTIONS
 -------
-<file>...::
-	Files to remove.  Fileglobs (e.g. `*.c`) can be given to
-	remove all matching files.  If you want Git to expand
-	file glob characters, you may need to shell-escape them.
-	A leading directory name
-	(e.g. `dir` to remove `dir/file1` and `dir/file2`) can be
-	given to remove all files in the directory, and recursively
-	all sub-directories,
-	but this requires the `-r` option to be explicitly given.
+<pathspec>...::
+	Files to remove.  A leading directory name (e.g. `dir` to remove
+	`dir/file1` and `dir/file2`) can be given to remove all files in
+	the directory, and recursively all sub-directories, but this
+	requires the `-r` option to be explicitly given.
++
+The command removes only the paths that are known to Git.
++
+File globbing matches across directory boundaries.  Thus, given two
+directories `d` and `d2`, there is a difference between using
+`git rm 'd*'` and `git rm 'd/*'`, as the former will also remove all
+of directory `d2`.
++
+For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
 -f::
 --force::
@@ -68,19 +75,19 @@ OPTIONS
 	`git rm` normally outputs one line (in the form of an `rm` command)
 	for each file removed. This option suppresses that output.
 
+--pathspec-from-file=<file>::
+	Pathspec is passed in `<file>` instead of commandline args. If
+	`<file>` is exactly `-` then standard input is used. Pathspec
+	elements are separated by LF or CR/LF. Pathspec elements can be
+	quoted as explained for the configuration variable `core.quotePath`
+	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+	global `--literal-pathspecs`.
 
-DISCUSSION
-----------
+--pathspec-file-nul::
+	Only meaningful with `--pathspec-from-file`. Pathspec elements are
+	separated with NUL character and all other characters are taken
+	literally (including newlines and quotes).
 
-The <file> list given to the command can be exact pathnames,
-file glob patterns, or leading directory names.  The command
-removes only the paths that are known to Git.  Giving the name of
-a file that you have not told Git about does not remove that file.
-
-File globbing matches across directory boundaries.  Thus, given
-two directories `d` and `d2`, there is a difference between
-using `git rm 'd*'` and `git rm 'd/*'`, as the former will
-also remove all of directory `d2`.
 
 REMOVING FILES THAT HAVE DISAPPEARED FROM THE FILESYSTEM
 --------------------------------------------------------
