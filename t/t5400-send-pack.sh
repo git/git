@@ -288,7 +288,7 @@ test_expect_success 'receive-pack de-dupes .have lines' '
 	$shared .have
 	EOF
 
-	GIT_TRACE_PACKET=$(pwd)/trace GIT_TEST_PROTOCOL_VERSION= \
+	GIT_TRACE_PACKET=$(pwd)/trace GIT_TEST_PROTOCOL_VERSION=0 \
 	    git push \
 		--receive-pack="unset GIT_TRACE_PACKET; git-receive-pack" \
 		fork HEAD:foo &&
