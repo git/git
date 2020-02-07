@@ -3343,6 +3343,14 @@ enum config_scope current_config_scope(void)
 		return current_parsing_scope;
 }
 
+int current_config_line(void)
+{
+	if (current_config_kvi)
+		return current_config_kvi->linenr;
+	else
+		return cf->linenr;
+}
+
 int lookup_config(const char **mapping, int nr_mapping, const char *var)
 {
 	int i;
