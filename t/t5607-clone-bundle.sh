@@ -64,7 +64,7 @@ test_expect_success 'ridiculously long subject in boundary' '
 	test -s heads &&
 	git fetch long-subject-bundle.bdl &&
 	sed -n "/^-/{p;q;}" long-subject-bundle.bdl >boundary &&
-	grep "^-[0-9a-f]\\{40\\} " boundary
+	grep "^-$OID_REGEX " boundary
 '
 
 test_expect_success 'prerequisites with an empty commit message' '
