@@ -208,6 +208,14 @@ int hash_object_file_literally(const void *buf, unsigned long len,
 			       const char *type, struct object_id *oid,
 			       unsigned flags);
 
+/*
+ * Add an object file to the in-memory object store, without writing it
+ * to disk.
+ *
+ * Callers are responsible for calling write_object_file to record the
+ * object in persistent storage before writing any other new objects
+ * that reference it.
+ */
 int pretend_object_file(void *, unsigned long, enum object_type,
 			struct object_id *oid);
 
