@@ -1473,7 +1473,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 
-	clear_object_flags(ALL_FLAGS);
+	clear_object_flags(r, ALL_FLAGS);
 
 	git_config(upload_pack_config, NULL);
 

@@ -180,6 +180,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 {
 	struct commit_list *result = NULL, *p;
 	struct commit_list *not_shallow_list = NULL;
+	struct repository *r = the_repository;
 	struct rev_info revs;
 	int both_flags = shallow_flag | not_shallow_flag;
 
@@ -187,7 +188,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 	 * SHALLOW (excluded) and NOT_SHALLOW (included) should not be
 	 * set at this point. But better be safe than sorry.
 	 */
-	clear_object_flags(both_flags);
+	clear_object_flags(r, both_flags);
 
 	is_repository_shallow(the_repository); /* make sure shallows are read */
 

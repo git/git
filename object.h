@@ -187,7 +187,7 @@ void object_array_remove_duplicates(struct object_array *array);
  */
 void object_array_clear(struct object_array *array);
 
-void clear_object_flags(unsigned flags);
+void clear_object_flags(struct repository *, unsigned flags);
 
 /*
  * Clear the specified object flags from all in-core commit objects.
