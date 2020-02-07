@@ -86,13 +86,21 @@ enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
 	/* Make sure that each OID in the input is a valid commit OID. */
 	COMMIT_GRAPH_WRITE_CHECK_OIDS = (1 << 3),
-	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 4),
+	COMMIT_GRAPH_WRITE_NO_INPUT   = (1 << 4),
+	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 5),
+};
+
+enum commit_graph_split_flags {
+	COMMIT_GRAPH_SPLIT_MERGE_AUTO       = 0,
+	COMMIT_GRAPH_SPLIT_MERGE_REQUIRED   = 1,
+	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 2
 };
 
 struct split_commit_graph_opts {
 	int size_multiple;
 	int max_commits;
 	timestamp_t expire_time;
+	enum commit_graph_split_flags flags;
 };
 
 /*
