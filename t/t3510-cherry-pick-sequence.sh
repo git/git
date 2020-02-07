@@ -123,7 +123,8 @@ test_expect_success 'revert --skip to skip commit' '
 test_expect_success 'skip "empty" commit' '
 	pristine_detach picked &&
 	test_commit dummy foo d &&
-	test_must_fail git cherry-pick anotherpick &&
+	test_must_fail git cherry-pick anotherpick 2>err &&
+	test_i18ngrep "git cherry-pick --skip" err &&
 	git cherry-pick --skip &&
 	test_cmp_rev dummy HEAD
 '
