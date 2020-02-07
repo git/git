@@ -25,6 +25,13 @@ test_expect_success setup '
 '
 
 test_auto_fixup () {
+	no_squash= &&
+	if test "x$1" = 'x!'
+	then
+		no_squash=true
+		shift
+	fi &&
+
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
@@ -35,10 +42,19 @@ test_auto_fixup () {
 	test_tick &&
 	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test_line_count = 3 actual &&
-	git diff --exit-code $1 &&
-	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD^ | grep first | wc -l)
+	if test -n "$no_squash"
+	then
+		test_line_count = 4 actual
+	else
+		test_line_count = 3 actual &&
+		git diff --exit-code $1 &&
+		echo 1 >expect &&
+		git cat-file blob HEAD^:file1 >actual &&
+		test_cmp expect actual &&
+		git cat-file commit HEAD^ >commit &&
+		grep first commit >actual &&
+		test_line_count = 1 actual
+	fi
 }
 
 test_expect_success 'auto fixup (option)' '
@@ -48,12 +64,19 @@ test_expect_success 'auto fixup (option)' '
 test_expect_success 'auto fixup (config)' '
 	git config rebase.autosquash true &&
 	test_auto_fixup final-fixup-config-true &&
-	test_must_fail test_auto_fixup fixup-config-true-no --no-autosquash &&
+	test_auto_fixup ! fixup-config-true-no --no-autosquash &&
 	git config rebase.autosquash false &&
-	test_must_fail test_auto_fixup final-fixup-config-false
+	test_auto_fixup ! final-fixup-config-false
 '
 
 test_auto_squash () {
+	no_squash= &&
+	if test "x$1" = 'x!'
+	then
+		no_squash=true
+		shift
+	fi &&
+
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
@@ -64,10 +87,19 @@ test_auto_squash () {
 	test_tick &&
 	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
-	test_line_count = 3 actual &&
-	git diff --exit-code $1 &&
-	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 2 = $(git cat-file commit HEAD^ | grep first | wc -l)
+	if test -n "$no_squash"
+	then
+		test_line_count = 4 actual
+	else
+		test_line_count = 3 actual &&
+		git diff --exit-code $1 &&
+		echo 1 >expect &&
+		git cat-file blob HEAD^:file1 >actual &&
+		test_cmp expect actual &&
+		git cat-file commit HEAD^ >commit &&
+		grep first commit >actual &&
+		test_line_count = 2 actual
+	fi
 }
 
 test_expect_success 'auto squash (option)' '
@@ -77,9 +109,9 @@ test_expect_success 'auto squash (option)' '
 test_expect_success 'auto squash (config)' '
 	git config rebase.autosquash true &&
 	test_auto_squash final-squash-config-true &&
-	test_must_fail test_auto_squash squash-config-true-no --no-autosquash &&
+	test_auto_squash ! squash-config-true-no --no-autosquash &&
 	git config rebase.autosquash false &&
-	test_must_fail test_auto_squash final-squash-config-false
+	test_auto_squash ! final-squash-config-false
 '
 
 test_expect_success 'misspelled auto squash' '
@@ -94,7 +126,8 @@ test_expect_success 'misspelled auto squash' '
 	git log --oneline >actual &&
 	test_line_count = 4 actual &&
 	git diff --exit-code final-missquash &&
-	test 0 = $(git rev-list final-missquash...HEAD | wc -l)
+	git rev-list final-missquash...HEAD >list &&
+	test_must_be_empty list
 '
 
 test_expect_success 'auto squash that matches 2 commits' '
@@ -113,9 +146,15 @@ test_expect_success 'auto squash that matches 2 commits' '
 	git log --oneline >actual &&
 	test_line_count = 4 actual &&
 	git diff --exit-code final-multisquash &&
-	test 1 = "$(git cat-file blob HEAD^^:file1)" &&
-	test 2 = $(git cat-file commit HEAD^^ | grep first | wc -l) &&
-	test 1 = $(git cat-file commit HEAD | grep first | wc -l)
+	echo 1 >expect &&
+	git cat-file blob HEAD^^:file1 >actual &&
+	test_cmp expect actual &&
+	git cat-file commit HEAD^^ >commit &&
+	grep first commit >actual &&
+	test_line_count = 2 actual &&
+	git cat-file commit HEAD >commit &&
+	grep first commit >actual &&
+	test_line_count = 1 actual
 '
 
 test_expect_success 'auto squash that matches a commit after the squash' '
@@ -134,25 +173,38 @@ test_expect_success 'auto squash that matches a commit after the squash' '
 	git log --oneline >actual &&
 	test_line_count = 5 actual &&
 	git diff --exit-code final-presquash &&
-	test 0 = "$(git cat-file blob HEAD^^:file1)" &&
-	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD | grep third | wc -l) &&
-	test 1 = $(git cat-file commit HEAD^ | grep third | wc -l)
+	echo 0 >expect &&
+	git cat-file blob HEAD^^:file1 >actual &&
+	test_cmp expect actual &&
+	echo 1 >expect &&
+	git cat-file blob HEAD^:file1 >actual &&
+	test_cmp expect actual &&
+	git cat-file commit HEAD >commit &&
+	grep third commit >actual &&
+	test_line_count = 1 actual &&
+	git cat-file commit HEAD^ >commit &&
+	grep third commit >actual &&
+	test_line_count = 1 actual
 '
 test_expect_success 'auto squash that matches a sha1' '
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! $(git rev-parse --short HEAD^)" &&
+	oid=$(git rev-parse --short HEAD^) &&
+	git commit -m "squash! $oid" &&
 	git tag final-shasquash &&
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-shasquash &&
-	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+	echo 1 >expect &&
+	git cat-file blob HEAD^:file1 >actual &&
+	test_cmp expect actual &&
+	git cat-file commit HEAD^ >commit &&
+	grep squash commit >actual &&
+	test_line_count = 1 actual
 '
 
 test_expect_success 'auto squash that matches longer sha1' '
@@ -160,15 +212,20 @@ test_expect_success 'auto squash that matches longer sha1' '
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! $(git rev-parse --short=11 HEAD^)" &&
+	oid=$(git rev-parse --short=11 HEAD^) &&
+	git commit -m "squash! $oid" &&
 	git tag final-longshasquash &&
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-longshasquash &&
-	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+	echo 1 >expect &&
+	git cat-file blob HEAD^:file1 >actual &&
+	test_cmp expect actual &&
+	git cat-file commit HEAD^ >commit &&
+	grep squash commit >actual &&
+	test_line_count = 1 actual
 '
 
 test_auto_commit_flags () {
@@ -183,8 +240,12 @@ test_auto_commit_flags () {
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-commit-$1 &&
-	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test $2 = $(git cat-file commit HEAD^ | grep first | wc -l)
+	echo 1 >expect &&
+	git cat-file blob HEAD^:file1 >actual &&
+	test_cmp expect actual &&
+	git cat-file commit HEAD^ >commit &&
+	grep first commit >actual &&
+	test_line_count = $2 actual
 }
 
 test_expect_success 'use commit --fixup' '
@@ -210,11 +271,15 @@ test_auto_fixup_fixup () {
 	(
 		set_cat_todo_editor &&
 		test_must_fail git rebase --autosquash -i HEAD^^^^ >actual &&
+		head=$(git rev-parse --short HEAD) &&
+		parent1=$(git rev-parse --short HEAD^) &&
+		parent2=$(git rev-parse --short HEAD^^) &&
+		parent3=$(git rev-parse --short HEAD^^^) &&
 		cat >expected <<-EOF &&
-		pick $(git rev-parse --short HEAD^^^) first commit
-		$1 $(git rev-parse --short HEAD^) $1! first
-		$1 $(git rev-parse --short HEAD) $1! $2! first
-		pick $(git rev-parse --short HEAD^^) second commit
+		pick $parent3 first commit
+		$1 $parent1 $1! first
+		$1 $head $1! $2! first
+		pick $parent2 second commit
 		EOF
 		test_cmp expected actual
 	) &&
@@ -222,13 +287,17 @@ test_auto_fixup_fixup () {
 	git log --oneline >actual &&
 	test_line_count = 3 actual
 	git diff --exit-code "final-$1-$2" &&
-	test 2 = "$(git cat-file blob HEAD^:file1)" &&
+	echo 2 >expect &&
+	git cat-file blob HEAD^:file1 >actual &&
+	test_cmp expect actual &&
+	git cat-file commit HEAD^ >commit &&
+	grep first commit >actual &&
 	if test "$1" = "fixup"
 	then
-		test 1 = $(git cat-file commit HEAD^ | grep first | wc -l)
+		test_line_count = 1 actual
 	elif test "$1" = "squash"
 	then
-		test 3 = $(git cat-file commit HEAD^ | grep first | wc -l)
+		test_line_count = 3 actual
 	else
 		false
 	fi
@@ -256,19 +325,25 @@ test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
 	echo 2 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! $(git rev-parse --short HEAD^)" &&
+	oid=$(git rev-parse --short HEAD^) &&
+	git commit -m "squash! $oid" &&
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! $(git log -n 1 --format=%s HEAD~2)" &&
+	subject=$(git log -n 1 --format=%s HEAD~2) &&
+	git commit -m "squash! $subject" &&
 	git tag final-squash-instFmt &&
 	test_tick &&
 	git rebase --autosquash -i HEAD~4 &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-squash-instFmt &&
-	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 2 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+	echo 1 >expect &&
+	git cat-file blob HEAD^:file1 >actual &&
+	test_cmp expect actual &&
+	git cat-file commit HEAD^ >commit &&
+	grep squash commit >actual &&
+	test_line_count = 2 actual
 '
 
 test_expect_success 'autosquash with empty custom instructionFormat' '

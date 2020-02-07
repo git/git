@@ -32,6 +32,12 @@ verify_notes () {
 	test_cmp "expect_log_$notes_ref" "output_log_$notes_ref"
 }
 
+notes_merge_files_gone () {
+	# No .git/NOTES_MERGE_* files left
+	{ ls .git/NOTES_MERGE_* >output || :; } &&
+	test_must_be_empty output
+}
+
 cat <<EOF | sort >expect_notes_x
 6e8e3febca3c2bb896704335cc4d0c34cb2f8715 $commit_sha4
 e5388c10860456ee60673025345fe2e153eb8cf8 $commit_sha3
@@ -335,9 +341,7 @@ EOF
 y and z notes on 4th commit
 EOF
 	git notes merge --commit &&
-	# No .git/NOTES_MERGE_* files left
-	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_must_be_empty output &&
+	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
 	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
@@ -397,9 +401,7 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 
 test_expect_success 'abort notes merge' '
 	git notes merge --abort &&
-	# No .git/NOTES_MERGE_* files left
-	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_must_be_empty output &&
+	notes_merge_files_gone &&
 	# m has not moved (still == y)
 	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)" &&
 	# Verify that other notes refs has not changed (w, x, y and z)
@@ -464,9 +466,7 @@ EOF
 	echo "new note on 5th commit" > .git/NOTES_MERGE_WORKTREE/$commit_sha5 &&
 	# Finalize merge
 	git notes merge --commit &&
-	# No .git/NOTES_MERGE_* files left
-	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_must_be_empty output &&
+	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
 	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
@@ -553,9 +553,7 @@ EOF
 
 test_expect_success 'resolve situation by aborting the notes merge' '
 	git notes merge --abort &&
-	# No .git/NOTES_MERGE_* files left
-	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
-	test_must_be_empty output &&
+	notes_merge_files_gone &&
 	# m has not moved (still == w)
 	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
 	# Verify that other notes refs has not changed (w, x, y and z)
