@@ -1540,11 +1540,6 @@ static inline void grep_attr_unlock(void)
 		pthread_mutex_unlock(&grep_attr_mutex);
 }
 
-/*
- * Same as git_attr_mutex, but protecting the thread-unsafe object db access.
- */
-pthread_mutex_t grep_read_mutex;
-
 static int match_funcname(struct grep_opt *opt, struct grep_source *gs, char *bol, char *eol)
 {
 	xdemitconf_t *xecfg = opt->priv;
@@ -1741,13 +1736,20 @@ static int fill_textconv_grep(struct repository *r,
 	}
 
 	/*
-	 * fill_textconv is not remotely thread-safe; it may load objects
-	 * behind the scenes, and it modifies the global diff tempfile
-	 * structure.
+	 * fill_textconv is not remotely thread-safe; it modifies the global
+	 * diff tempfile structure, writes to the_repo's odb and might
+	 * internally call thread-unsafe functions such as the
+	 * prepare_packed_git() lazy-initializator. Because of the last two, we
+	 * must ensure mutual exclusion between this call and the object reading
+	 * API, thus we use obj_read_lock() here.
+	 *
+	 * TODO: allowing text conversion to run in parallel with object
+	 * reading operations might increase performance in the multithreaded
+	 * non-worktreee git-grep with --textconv.
 	 */
-	grep_read_lock();
+	obj_read_lock();
 	size = fill_textconv(r, driver, df, &buf);
-	grep_read_unlock();
+	obj_read_unlock();
 	free_filespec(df);
 
 	/*
@@ -1813,10 +1815,15 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		grep_source_load_driver(gs, opt->repo->index);
 		/*
 		 * We might set up the shared textconv cache data here, which
-		 * is not thread-safe.
+		 * is not thread-safe. Also, get_oid_with_context() and
+		 * parse_object() might be internally called. As they are not
+		 * currenty thread-safe and might be racy with object reading,
+		 * obj_read_lock() must be called.
 		 */
 		grep_attr_lock();
+		obj_read_lock();
 		textconv = userdiff_get_textconv(opt->repo, gs->driver);
+		obj_read_unlock();
 		grep_attr_unlock();
 	}
 
@@ -2116,10 +2123,7 @@ static int grep_source_load_oid(struct grep_source *gs)
 {
 	enum object_type type;
 
-	grep_read_lock();
 	gs->buf = read_object_file(gs->identifier, &type, &gs->size);
-	grep_read_unlock();
-
 	if (!gs->buf)
 		return error(_("'%s': unable to read %s"),
 			     gs->name,
