@@ -112,7 +112,7 @@ static void write_trailer(void)
  * queues up writes, so that all our write(2) calls write exactly one
  * full block; pads writes to RECORDSIZE
  */
-static int stream_blocked(const struct object_id *oid)
+static int stream_blocked(struct repository *r, const struct object_id *oid)
 {
 	struct git_istream *st;
 	enum object_type type;
@@ -120,7 +120,7 @@ static int stream_blocked(const struct object_id *oid)
 	char buf[BLOCKSIZE];
 	ssize_t readlen;
 
-	st = open_istream(oid, &type, &sz, NULL);
+	st = open_istream(r, oid, &type, &sz, NULL);
 	if (!st)
 		return error(_("cannot stream blob %s"), oid_to_hex(oid));
 	for (;;) {
@@ -324,7 +324,7 @@ static int write_tar_entry(struct archiver_args *args,
 		if (buffer)
 			write_blocked(buffer, size);
 		else
-			err = stream_blocked(oid);
+			err = stream_blocked(args->repo, oid);
 	}
 	free(buffer);
 	return err;

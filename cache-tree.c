@@ -407,13 +407,15 @@ static int update_one(struct cache_tree *it,
 
 	if (repair) {
 		struct object_id oid;
-		hash_object_file(buffer.buf, buffer.len, tree_type, &oid);
+		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
+				 tree_type, &oid);
 		if (has_object_file_with_flags(&oid, OBJECT_INFO_SKIP_FETCH_OBJECT))
 			oidcpy(&it->oid, &oid);
 		else
 			to_invalidate = 1;
 	} else if (dryrun) {
-		hash_object_file(buffer.buf, buffer.len, tree_type, &it->oid);
+		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
+				 tree_type, &it->oid);
 	} else if (write_object_file(buffer.buf, buffer.len, tree_type,
 				     &it->oid)) {
 		strbuf_release(&buffer);
@@ -826,9 +828,10 @@ static void verify_one(struct repository *r,
 			i++;
 		}
 		strbuf_addf(&tree_buf, "%o %.*s%c", mode, entlen, name, '\0');
-		strbuf_add(&tree_buf, oid->hash, the_hash_algo->rawsz);
+		strbuf_add(&tree_buf, oid->hash, r->hash_algo->rawsz);
 	}
-	hash_object_file(tree_buf.buf, tree_buf.len, tree_type, &new_oid);
+	hash_object_file(r->hash_algo, tree_buf.buf, tree_buf.len, tree_type,
+			 &new_oid);
 	if (!oideq(&new_oid, &it->oid))
 		BUG("cache-tree for path %.*s does not match. "
 		    "Expected %s got %s", len, path->buf,
