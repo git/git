@@ -32,6 +32,7 @@
 #include "alias.h"
 #include "commit-reach.h"
 #include "rebase-interactive.h"
+#include "reset.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
@@ -423,38 +424,31 @@ static int write_message(const void *buf, size_t len, const char *filename,
 	return 0;
 }
 
-/*
- * Reads a file that was presumably written by a shell script, i.e. with an
- * end-of-line marker that needs to be stripped.
- *
- * Note that only the last end-of-line marker is stripped, consistent with the
- * behavior of "$(cat path)" in a shell script.
- *
- * Returns 1 if the file was read, 0 if it could not be read or does not exist.
- */
-static int read_oneliner(struct strbuf *buf,
-	const char *path, int skip_if_empty)
+int read_oneliner(struct strbuf *buf, const char *path,
+		  int skip_if_empty, int warn_nonexistence)
 {
-	int orig_len = buf->len;
+	int ret = 0;
+	struct strbuf file_buf = STRBUF_INIT;
 
-	if (!file_exists(path))
+	if (!warn_nonexistence && !file_exists(path))
 		return 0;
 
-	if (strbuf_read_file(buf, path, 0) < 0) {
+	if (strbuf_read_file(&file_buf, path, 0) < 0) {
 		warning_errno(_("could not read '%s'"), path);
-		return 0;
+		goto done;
 	}
 
-	if (buf->len > orig_len && buf->buf[buf->len - 1] == '\n') {
-		if (--buf->len > orig_len && buf->buf[buf->len - 1] == '\r')
-			--buf->len;
-		buf->buf[buf->len] = '\0';
-	}
+	strbuf_trim_trailing_newline(&file_buf);
 
-	if (skip_if_empty && buf->len == orig_len)
-		return 0;
+	if (skip_if_empty && !file_buf.len)
+		goto done;
 
-	return 1;
+	strbuf_addbuf(buf, &file_buf);
+	ret = 1;
+
+done:
+	strbuf_release(&file_buf);
+	return ret;
 }
 
 static struct tree *empty_tree(struct repository *r)
@@ -2489,10 +2483,10 @@ void parse_strategy_opts(struct replay_opts *opts, char *raw_opts)
 static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 {
 	strbuf_reset(buf);
-	if (!read_oneliner(buf, rebase_path_strategy(), 0))
+	if (!read_oneliner(buf, rebase_path_strategy(), 0, 0))
 		return;
 	opts->strategy = strbuf_detach(buf, NULL);
-	if (!read_oneliner(buf, rebase_path_strategy_opts(), 0))
+	if (!read_oneliner(buf, rebase_path_strategy_opts(), 0, 0))
 		return;
 
 	parse_strategy_opts(opts, buf->buf);
@@ -2503,7 +2497,7 @@ static int read_populate_opts(struct replay_opts *opts)
 	if (is_rebase_i(opts)) {
 		struct strbuf buf = STRBUF_INIT;
 
-		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(), 1)) {
+		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(), 1, 0)) {
 			if (!starts_with(buf.buf, "-S"))
 				strbuf_reset(&buf);
 			else {
@@ -2513,7 +2507,7 @@ static int read_populate_opts(struct replay_opts *opts)
 			strbuf_reset(&buf);
 		}
 
-		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(), 1)) {
+		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(), 1, 0)) {
 			if (!strcmp(buf.buf, "--rerere-autoupdate"))
 				opts->allow_rerere_auto = RERERE_AUTOUPDATE;
 			else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
@@ -2545,7 +2539,7 @@ static int read_populate_opts(struct replay_opts *opts)
 		strbuf_release(&buf);
 
 		if (read_oneliner(&opts->current_fixups,
-				  rebase_path_current_fixups(), 1)) {
+				  rebase_path_current_fixups(), 1, 0)) {
 			const char *p = opts->current_fixups.buf;
 			opts->current_fixup_count = 1;
 			while ((p = strchr(p, '\n'))) {
@@ -2554,7 +2548,7 @@ static int read_populate_opts(struct replay_opts *opts)
 			}
 		}
 
-		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
+		if (read_oneliner(&buf, rebase_path_squash_onto(), 0, 0)) {
 			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0)
 				return error(_("unusable squash-onto"));
 			opts->have_squash_onto = 1;
@@ -3674,13 +3668,62 @@ static enum todo_command peek_command(struct todo_list *todo_list, int offset)
 	return -1;
 }
 
-static int apply_autostash(struct replay_opts *opts)
+void create_autostash(struct repository *r, const char *path,
+		      const char *default_reflog_action)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct lock_file lock_file = LOCK_INIT;
+	int fd;
+
+	fd = repo_hold_locked_index(r, &lock_file, 0);
+	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
+	if (0 <= fd)
+		repo_update_index_if_able(r, &lock_file);
+	rollback_lock_file(&lock_file);
+
+	if (has_unstaged_changes(r, 1) ||
+	    has_uncommitted_changes(r, 1)) {
+		struct child_process stash = CHILD_PROCESS_INIT;
+		struct object_id oid;
+
+		argv_array_pushl(&stash.args,
+				 "stash", "create", "autostash", NULL);
+		stash.git_cmd = 1;
+		stash.no_stdin = 1;
+		strbuf_reset(&buf);
+		if (capture_command(&stash, &buf, GIT_MAX_HEXSZ))
+			die(_("Cannot autostash"));
+		strbuf_trim_trailing_newline(&buf);
+		if (get_oid(buf.buf, &oid))
+			die(_("Unexpected stash response: '%s'"),
+			    buf.buf);
+		strbuf_reset(&buf);
+		strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
+
+		if (safe_create_leading_directories_const(path))
+			die(_("Could not create directory for '%s'"),
+			    path);
+		write_file(path, "%s", oid_to_hex(&oid));
+		printf(_("Created autostash: %s\n"), buf.buf);
+		if (reset_head(r, NULL, "reset --hard",
+			       NULL, RESET_HEAD_HARD, NULL, NULL,
+			       default_reflog_action) < 0)
+			die(_("could not reset --hard"));
+
+		if (discard_index(r->index) < 0 ||
+			repo_read_index(r) < 0)
+			die(_("could not read index"));
+	}
+	strbuf_release(&buf);
+}
+
+int apply_autostash(const char *path)
 {
 	struct strbuf stash_sha1 = STRBUF_INIT;
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
 
-	if (!read_oneliner(&stash_sha1, rebase_path_autostash(), 1)) {
+	if (!read_oneliner(&stash_sha1, path, 1, 0)) {
 		strbuf_release(&stash_sha1);
 		return 0;
 	}
@@ -3714,6 +3757,7 @@ static int apply_autostash(struct replay_opts *opts)
 				  " \"git stash drop\" at any time.\n"));
 	}
 
+	unlink(path);
 	strbuf_release(&stash_sha1);
 	return ret;
 }
@@ -3772,7 +3816,7 @@ static int checkout_onto(struct repository *r, struct replay_opts *opts,
 		return error(_("%s: not a valid OID"), orig_head);
 
 	if (run_git_checkout(r, opts, oid_to_hex(onto), action)) {
-		apply_autostash(opts);
+		apply_autostash(rebase_path_autostash());
 		sequencer_remove_state(opts);
 		return error(_("could not detach HEAD"));
 	}
@@ -3998,7 +4042,7 @@ static int pick_commits(struct repository *r,
 		if (todo_list->current < todo_list->nr)
 			return 0;
 
-		if (read_oneliner(&head_ref, rebase_path_head_name(), 0) &&
+		if (read_oneliner(&head_ref, rebase_path_head_name(), 0, 0) &&
 				starts_with(head_ref.buf, "refs/")) {
 			const char *msg;
 			struct object_id head, orig;
@@ -4011,13 +4055,13 @@ cleanup_head_ref:
 				strbuf_release(&buf);
 				return res;
 			}
-			if (!read_oneliner(&buf, rebase_path_orig_head(), 0) ||
+			if (!read_oneliner(&buf, rebase_path_orig_head(), 0, 0) ||
 					get_oid_hex(buf.buf, &orig)) {
 				res = error(_("could not read orig-head"));
 				goto cleanup_head_ref;
 			}
 			strbuf_reset(&buf);
-			if (!read_oneliner(&buf, rebase_path_onto(), 0)) {
+			if (!read_oneliner(&buf, rebase_path_onto(), 0, 0)) {
 				res = error(_("could not read 'onto'"));
 				goto cleanup_head_ref;
 			}
@@ -4050,7 +4094,7 @@ cleanup_head_ref:
 				DIFF_FORMAT_DIFFSTAT;
 			log_tree_opt.disable_stdin = 1;
 
-			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
+			if (read_oneliner(&buf, rebase_path_orig_head(), 0, 0) &&
 			    !get_oid(buf.buf, &orig) &&
 			    !get_oid("HEAD", &head)) {
 				diff_tree_oid(&orig, &head, "",
@@ -4086,7 +4130,7 @@ cleanup_head_ref:
 				run_command(&hook);
 			}
 		}
-		apply_autostash(opts);
+		apply_autostash(rebase_path_autostash());
 
 		if (!opts->quiet) {
 			if (!opts->verbose)
@@ -4135,7 +4179,7 @@ static int commit_staged_changes(struct repository *r,
 
 		if (get_oid("HEAD", &head))
 			return error(_("cannot amend non-existing commit"));
-		if (!read_oneliner(&rev, rebase_path_amend(), 0))
+		if (!read_oneliner(&rev, rebase_path_amend(), 0, 0))
 			return error(_("invalid file: '%s'"), rebase_path_amend());
 		if (get_oid_hex(rev.buf, &to_amend))
 			return error(_("invalid contents: '%s'"),
@@ -4304,7 +4348,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 		struct strbuf buf = STRBUF_INIT;
 		struct object_id oid;
 
-		if (read_oneliner(&buf, rebase_path_stopped_sha(), 1) &&
+		if (read_oneliner(&buf, rebase_path_stopped_sha(), 1, 0) &&
 		    !get_oid_committish(buf.buf, &oid))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);
@@ -5094,7 +5138,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		todo_list_add_exec_commands(todo_list, commands);
 
 	if (count_commands(todo_list) == 0) {
-		apply_autostash(opts);
+		apply_autostash(rebase_path_autostash());
 		sequencer_remove_state(opts);
 
 		return error(_("nothing to do"));
@@ -5105,12 +5149,12 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	if (res == -1)
 		return -1;
 	else if (res == -2) {
-		apply_autostash(opts);
+		apply_autostash(rebase_path_autostash());
 		sequencer_remove_state(opts);
 
 		return -1;
 	} else if (res == -3) {
-		apply_autostash(opts);
+		apply_autostash(rebase_path_autostash());
 		sequencer_remove_state(opts);
 		todo_list_release(&new_todo);
 
@@ -5362,7 +5406,7 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence,
 
 			if (get_oid("HEAD", &head))
 				return error(_("amending invalid head")); /* let commit deal with error */
-			if (!read_oneliner(&rev, rebase_path_amend(), 0))
+			if (!read_oneliner(&rev, rebase_path_amend(), 0, 0))
 				return error(_("invalid file: '%s'"),
 					     rebase_path_amend());
 			if (get_oid_hex(rev.buf, &to_amend))

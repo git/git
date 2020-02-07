@@ -133,15 +133,6 @@ unless you have read linkgit:git-rebase[1] carefully.
 --no-rebase::
 	Override earlier --rebase.
 
---autostash::
---no-autostash::
-	Before starting rebase, stash local modifications away (see
-	linkgit:git-stash[1]) if needed, and apply the stash entry when
-	done. `--no-autostash` is useful to override the `rebase.autoStash`
-	configuration variable (see linkgit:git-config[1]).
-+
-This option is only valid when "--rebase" is used.
-
 Options related to fetching
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
