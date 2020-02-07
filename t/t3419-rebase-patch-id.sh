@@ -80,7 +80,8 @@ do_tests () {
 		git commit -q -m "change big file again" &&
 		git checkout -q other^{} &&
 		git rebase master &&
-		test_must_fail test -n "$(git rev-list master...HEAD~)"
+		git rev-list master...HEAD~ >revs &&
+		test_must_be_empty revs
 	'
 
 	test_expect_success $pr 'do not drop patch' '
