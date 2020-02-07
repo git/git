@@ -43,7 +43,7 @@ test_expect_success 'clone http repository' '
 	< Cache-Control: no-cache, max-age=0, must-revalidate
 	< Content-Type: application/x-git-upload-pack-result
 	EOF
-	GIT_TRACE_CURL=true GIT_TEST_PROTOCOL_VERSION= \
+	GIT_TRACE_CURL=true GIT_TEST_PROTOCOL_VERSION=0 \
 		git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
@@ -84,7 +84,7 @@ test_expect_success 'clone http repository' '
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
 	then
 		sed -e "s/^> Accept-Encoding: .*/> Accept-Encoding: ENCODINGS/" \
 				actual >actual.smudged &&
@@ -113,7 +113,7 @@ test_expect_success 'used upload-pack service' '
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
 	then
 		check_access_log exp
 	fi
@@ -241,7 +241,7 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 
 	# NEEDSWORK: If the overspecification of the expected result is reduced, we
 	# might be able to run this test in all protocol versions.
-	if test -z "$GIT_TEST_PROTOCOL_VERSION"
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
 	then
 		tail -3 cookies.txt | sort >cookies_tail.txt &&
 		test_cmp expect_cookies.txt cookies_tail.txt
@@ -336,7 +336,7 @@ test_expect_success 'test allowreachablesha1inwant with unreachable' '
 	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 		git -C test_reachable.git fetch origin "$(git rev-parse HEAD)"
 '
 
@@ -358,7 +358,7 @@ test_expect_success 'test allowanysha1inwant with unreachable' '
 	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
 	# Some protocol versions (e.g. 2) support fetching
 	# unadvertised objects, so restrict this test to v0.
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 		git -C test_reachable.git fetch origin "$(git rev-parse HEAD)" &&
 
 	git -C "$server" config uploadpack.allowanysha1inwant 1 &&
