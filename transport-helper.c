@@ -404,11 +404,12 @@ static int fetch_with_fetch(struct transport *transport,
 	sendline(data, &buf);
 
 	while (1) {
+		const char *name;
+
 		if (recvline(data, &buf))
 			exit(128);
 
-		if (starts_with(buf.buf, "lock ")) {
-			const char *name = buf.buf + 5;
+		if (skip_prefix(buf.buf, "lock ", &name)) {
 			if (transport->pack_lockfile)
 				warning(_("%s also locked %s"), data->name, name);
 			else
