@@ -10,14 +10,14 @@
 #include "packfile.h"
 #include "commit-graph.h"
 
-unsigned int get_max_object_index(void)
+unsigned int get_max_object_index(struct repository *r)
 {
-	return the_repository->parsed_objects->obj_hash_size;
+	return r->parsed_objects->obj_hash_size;
 }
 
-struct object *get_indexed_object(unsigned int idx)
+struct object *get_indexed_object(struct repository *r, unsigned int idx)
 {
-	return the_repository->parsed_objects->obj_hash[idx];
+	return r->parsed_objects->obj_hash[idx];
 }
 
 static const char *object_type_strings[] = {

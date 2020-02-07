@@ -450,6 +450,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		"rev-list", "--stdin", NULL,
 	};
 	struct object *o;
+	struct repository *r = the_repository;
 	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	int i;
 	const unsigned hexsz = the_hash_algo->hexsz;
@@ -472,8 +473,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 
 	namebuf[0] = '^';
 	namebuf[hexsz + 1] = '\n';
-	for (i = get_max_object_index(); 0 < i; ) {
-		o = get_indexed_object(--i);
+	for (i = get_max_object_index(r); 0 < i; ) {
+		o = get_indexed_object(r, --i);
 		if (!o)
 			continue;
 		if (reachable && o->type == OBJ_COMMIT)
@@ -520,6 +521,7 @@ static int get_reachable_list(struct object_array *src,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int i;
 	struct object *o;
+	struct repository *r = the_repository;
 	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	const unsigned hexsz = the_hash_algo->hexsz;
 
@@ -538,8 +540,8 @@ static int get_reachable_list(struct object_array *src,
 			o->flags &= ~TMP_MARK;
 		}
 	}
-	for (i = get_max_object_index(); 0 < i; i--) {
-		o = get_indexed_object(i - 1);
+	for (i = get_max_object_index(r); 0 < i; i--) {
+		o = get_indexed_object(r, i - 1);
 		if (o && o->type == OBJ_COMMIT &&
 		    (o->flags & TMP_MARK)) {
 			add_object_array(o, NULL, reachable);

@@ -375,6 +375,7 @@ static void check_object(struct object *obj)
 static void check_connectivity(void)
 {
 	int i, max;
+	struct repository *r = the_repository;
 
 	/* Traverse the pending reachable objects */
 	traverse_reachable();
@@ -400,12 +401,12 @@ static void check_connectivity(void)
 	}
 
 	/* Look up all the requirements, warn about missing objects.. */
-	max = get_max_object_index();
+	max = get_max_object_index(r);
 	if (verbose)
 		fprintf_ln(stderr, _("Checking connectivity (%d objects)"), max);
 
 	for (i = 0; i < max; i++) {
-		struct object *obj = get_indexed_object(i);
+		struct object *obj = get_indexed_object(r, i);
 
 		if (obj)
 			check_object(obj);
