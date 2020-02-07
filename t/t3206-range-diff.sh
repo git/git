@@ -102,6 +102,14 @@ test_expect_success 'setup' '
 	n3 sha256:3b0a644
 	n4 sha256:e461653
 
+	# mode change
+	o1 sha1:4d39cb3
+	o2 sha1:26c107f
+	o3 sha1:4c1e0f5
+	o1 sha256:d0dd598
+	o2 sha256:c4a279e
+	o3 sha256:78459d7
+
 	# added and removed
 	s1 sha1:096b1ba
 	s2 sha1:d92e698
@@ -336,7 +344,7 @@ test_expect_success 'renamed file' '
 test_expect_success 'file with mode only change' '
 	git range-diff --no-color --submodule=log topic...mode-only-change >actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
-	1:  fccce22 ! 1:  4d39cb3 s/4/A/
+	1:  $(test_oid t2) ! 1:  $(test_oid o1) s/4/A/
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
@@ -352,7 +360,7 @@ test_expect_success 'file with mode only change' '
 	    Z 7
 	    +
 	    + ## other-file (new) ##
-	2:  147e64e ! 2:  26c107f s/11/B/
+	2:  $(test_oid t3) ! 2:  $(test_oid o2) s/11/B/
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
@@ -368,7 +376,7 @@ test_expect_success 'file with mode only change' '
 	    Z 14
 	    +
 	    + ## other-file (mode change 100644 => 100755) ##
-	3:  a63e992 = 3:  4c1e0f5 s/12/B/
+	3:  $(test_oid t4) = 3:  $(test_oid o3) s/12/B/
 	EOF
 	test_cmp expect actual
 '
