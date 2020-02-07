@@ -1004,7 +1004,9 @@ static struct base_data *find_unresolved_deltas_1(struct base_data *base,
 
 		if (!compare_and_swap_type(&child->real_type, OBJ_REF_DELTA,
 					   base->obj->real_type))
-			BUG("child->real_type != OBJ_REF_DELTA");
+			die("REF_DELTA at offset %"PRIuMAX" already resolved (duplicate base %s?)",
+			    (uintmax_t)child->idx.offset,
+			    oid_to_hex(&base->obj->idx.oid));
 
 		resolve_delta(child, base, result);
 		if (base->ref_first == base->ref_last && base->ofs_last == -1)
