@@ -297,7 +297,7 @@ test_expect_success '--rebase (merge) fast forward' '
 test_expect_success '--rebase (am) fast forward' '
 	git reset --hard before-rebase &&
 
-	git -c rebase.backend=am pull --rebase . ff &&
+	git -c rebase.backend=apply pull --rebase . ff &&
 	test_cmp_rev HEAD ff &&
 
 	# The above only validates the result.  Did we actually bypass rebase?
