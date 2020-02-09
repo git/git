@@ -946,6 +946,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			/* die the same way as if we did it at the beginning */
 			setup_git_directory();
 	}
+	/* Ignore --recurse-submodules if --no-index is given or implied */
+	if (!use_index)
+		recurse_submodules = 0;
 
 	/*
 	 * skip a -- separator; we know it cannot be
@@ -1050,8 +1053,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	pathspec.recursive = 1;
 	pathspec.recurse_submodules = !!recurse_submodules;
 
-	if (recurse_submodules && (!use_index || untracked))
-		die(_("option not supported with --recurse-submodules"));
+	if (recurse_submodules && untracked)
+		die(_("--untracked not supported with --recurse-submodules"));
 
 	if (show_in_pager) {
 		if (num_threads > 1)

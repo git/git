@@ -1352,7 +1352,7 @@ static int clear_ce_flags_1(struct index_state *istate,
 			    enum pattern_match_result default_match,
 			    int progress_nr)
 {
-	struct cache_entry **cache_end = cache + nr;
+	struct cache_entry **cache_end = nr ? cache + nr : cache;
 
 	/*
 	 * Process all entries that have the given prefix and meet
@@ -1420,7 +1420,7 @@ static int clear_ce_flags_1(struct index_state *istate,
 						name, &dtype, pl, istate);
 		if (ret == UNDECIDED)
 			ret = default_match;
-		if (ret == MATCHED)
+		if (ret == MATCHED || ret == MATCHED_RECURSIVE)
 			ce->ce_flags &= ~clear_mask;
 		cache++;
 		progress_nr++;

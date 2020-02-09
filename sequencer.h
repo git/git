@@ -11,6 +11,7 @@ struct repository;
 const char *git_path_commit_editmsg(void);
 const char *rebase_path_todo(void);
 const char *rebase_path_todo_backup(void);
+const char *rebase_path_dropped(void);
 
 #define APPEND_SIGNOFF_DEDUP (1u << 0)
 

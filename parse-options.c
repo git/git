@@ -357,8 +357,7 @@ is_abbreviated:
 			}
 			/* negated? */
 			if (!starts_with(arg, "no-")) {
-				if (starts_with(long_name, "no-")) {
-					long_name += 3;
+				if (skip_prefix(long_name, "no-", &long_name)) {
 					opt_flags |= OPT_UNSET;
 					goto again;
 				}

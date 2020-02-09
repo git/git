@@ -53,9 +53,14 @@ announcements, design discussions, and more take place. The Git list
 requires plain-text-only emails and prefers inline and bottom-posting when
 replying to mail; you will be CC'd in all replies to you. Optionally, you can
 subscribe to the list by sending an email to majordomo@vger.kernel.org with
+<<<<<<< HEAD
 "subscribe git" in the body. The archive of this mailing list is available
 at https://lore.kernel.org/git[archives] to view in a browser.
 
+=======
+"subscribe git" in the body. The https://lore.kernel.org/git[archive] of this
+mailing list is available to view in a browser.
+>>>>>>> upstream/next
 
 [[getting-started]]
 == Getting Started

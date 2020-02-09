@@ -673,7 +673,7 @@ static void update_remote_refs(const struct ref *refs,
 			       const char *msg,
 			       struct transport *transport,
 			       int check_connectivity,
-			       int check_refs_only)
+			       int check_refs_are_promisor_objects_only)
 {
 	const struct ref *rm = mapped_refs;
 
@@ -682,7 +682,8 @@ static void update_remote_refs(const struct ref *refs,
 
 		opt.transport = transport;
 		opt.progress = transport->progress;
-		opt.check_refs_only = !!check_refs_only;
+		opt.check_refs_are_promisor_objects_only =
+			!!check_refs_are_promisor_objects_only;
 
 		if (check_connected(iterate_ref_map, &rm, &opt))
 			die(_("remote did not send all necessary objects"));

@@ -906,8 +906,17 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		url = xstrdup("foreign");
 
 	if (!connectivity_checked) {
+		struct check_connected_options opt = CHECK_CONNECTED_INIT;
+
+		if (filter_options.choice)
+			/*
+			 * Since a filter is specified, objects indirectly
+			 * referenced by refs are allowed to be absent.
+			 */
+			opt.check_refs_are_promisor_objects_only = 1;
+
 		rm = ref_map;
-		if (check_connected(iterate_ref_map, &rm, NULL)) {
+		if (check_connected(iterate_ref_map, &rm, &opt)) {
 			rc = error(_("%s did not send all necessary objects\n"), url);
 			goto abort;
 		}
@@ -1870,7 +1879,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (progress)
 			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-		write_commit_graph_reachable(get_object_directory(),
+		write_commit_graph_reachable(the_repository->objects->odb,
 					     commit_graph_flags,
 					     NULL);
 	}

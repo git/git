@@ -686,7 +686,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	prepare_repo_settings(the_repository);
 	if (the_repository->settings.gc_write_commit_graph == 1)
-		write_commit_graph_reachable(get_object_directory(),
+		write_commit_graph_reachable(the_repository->objects->odb,
 					     !quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 

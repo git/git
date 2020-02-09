@@ -16,6 +16,7 @@ enum input_source {
 };
 
 typedef int (*open_istream_fn)(struct git_istream *,
+			       struct repository *,
 			       struct object_info *,
 			       const struct object_id *,
 			       enum object_type *);
@@ -29,8 +30,8 @@ struct stream_vtbl {
 
 #define open_method_decl(name) \
 	int open_istream_ ##name \
-	(struct git_istream *st, struct object_info *oi, \
-	 const struct object_id *oid, \
+	(struct git_istream *st, struct repository *r, \
+	 struct object_info *oi, const struct object_id *oid, \
 	 enum object_type *type)
 
 #define close_method_decl(name) \
@@ -108,7 +109,8 @@ ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
 	return st->vtbl->read(st, buf, sz);
 }
 
-static enum input_source istream_source(const struct object_id *oid,
+static enum input_source istream_source(struct repository *r,
+					const struct object_id *oid,
 					enum object_type *type,
 					struct object_info *oi)
 {
@@ -117,7 +119,7 @@ static enum input_source istream_source(const struct object_id *oid,
 
 	oi->typep = type;
 	oi->sizep = &size;
-	status = oid_object_info_extended(the_repository, oid, oi, 0);
+	status = oid_object_info_extended(r, oid, oi, 0);
 	if (status < 0)
 		return stream_error;
 
@@ -133,22 +135,23 @@ static enum input_source istream_source(const struct object_id *oid,
 	}
 }
 
-struct git_istream *open_istream(const struct object_id *oid,
+struct git_istream *open_istream(struct repository *r,
+				 const struct object_id *oid,
 				 enum object_type *type,
 				 unsigned long *size,
 				 struct stream_filter *filter)
 {
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
-	const struct object_id *real = lookup_replace_object(the_repository, oid);
-	enum input_source src = istream_source(real, type, &oi);
+	const struct object_id *real = lookup_replace_object(r, oid);
+	enum input_source src = istream_source(r, real, type, &oi);
 
 	if (src < 0)
 		return NULL;
 
 	st = xmalloc(sizeof(*st));
-	if (open_istream_tbl[src](st, &oi, real, type)) {
-		if (open_istream_incore(st, &oi, real, type)) {
+	if (open_istream_tbl[src](st, r, &oi, real, type)) {
+		if (open_istream_incore(st, r, &oi, real, type)) {
 			free(st);
 			return NULL;
 		}
@@ -338,8 +341,7 @@ static struct stream_vtbl loose_vtbl = {
 
 static open_method_decl(loose)
 {
-	st->u.loose.mapped = map_loose_object(the_repository,
-					      oid, &st->u.loose.mapsize);
+	st->u.loose.mapped = map_loose_object(r, oid, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
 		return -1;
 	if ((unpack_loose_header(&st->z,
@@ -499,7 +501,7 @@ static struct stream_vtbl incore_vtbl = {
 
 static open_method_decl(incore)
 {
-	st->u.incore.buf = read_object_file_extended(the_repository, oid, type, &st->size, 0);
+	st->u.incore.buf = read_object_file_extended(r, oid, type, &st->size, 0);
 	st->u.incore.read_ptr = 0;
 	st->vtbl = &incore_vtbl;
 
@@ -520,7 +522,7 @@ int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter 
 	ssize_t kept = 0;
 	int result = -1;
 
-	st = open_istream(oid, &type, &sz, filter);
+	st = open_istream(the_repository, oid, &type, &sz, filter);
 	if (!st) {
 		if (filter)
 			free_stream_filter(filter);

@@ -58,6 +58,8 @@ static GIT_PATH_FUNC(rebase_path, "rebase-merge")
 GIT_PATH_FUNC(rebase_path_todo, "rebase-merge/git-rebase-todo")
 GIT_PATH_FUNC(rebase_path_todo_backup, "rebase-merge/git-rebase-todo.backup")
 
+GIT_PATH_FUNC(rebase_path_dropped, "rebase-merge/dropped")
+
 /*
  * The rebase command lines that have already been processed. A line
  * is moved here when it is first handled, before any associated user
@@ -588,7 +590,7 @@ static int do_recursive_merge(struct repository *r,
 	struct merge_options o;
 	struct tree *next_tree, *base_tree, *head_tree;
 	int clean;
-	char **xopt;
+	int i;
 	struct lock_file index_lock = LOCK_INIT;
 
 	if (repo_hold_locked_index(r, &index_lock, LOCK_REPORT_ON_ERROR) < 0)
@@ -608,8 +610,8 @@ static int do_recursive_merge(struct repository *r,
 	next_tree = next ? get_commit_tree(next) : empty_tree(r);
 	base_tree = base ? get_commit_tree(base) : empty_tree(r);
 
-	for (xopt = opts->xopts; xopt != opts->xopts + opts->xopts_nr; xopt++)
-		parse_merge_opt(&o, *xopt);
+	for (i = 0; i < opts->xopts_nr; i++)
+		parse_merge_opt(&o, opts->xopts[i]);
 
 	clean = merge_trees(&o,
 			    head_tree,
@@ -4315,6 +4317,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 		if ((res = read_populate_todo(r, &todo_list, opts)))
 			goto release_todo_list;
 
+<<<<<<< HEAD
 		if (strbuf_read_file(&backup.buf, rebase_path_todo_backup(), 0) > 0) {
 			todo_list_parse_insn_buffer(r, backup.buf.buf, &backup);
 			res = todo_list_check(&backup, &todo_list);
@@ -4322,6 +4325,13 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 
 			if (res)
 				goto release_todo_list;
+=======
+		if (file_exists(rebase_path_dropped())) {
+			if ((res = todo_list_check_against_backup(r, &todo_list)))
+				goto release_todo_list;
+
+			unlink(rebase_path_dropped());
+>>>>>>> upstream/next
 		}
 
 		if (commit_staged_changes(r, opts, &todo_list)) {

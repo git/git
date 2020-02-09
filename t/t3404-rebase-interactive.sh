@@ -1475,7 +1475,11 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ig
 	(
 		set_fake_editor &&
 		FAKE_LINES="break 1 2 3 4 5" git rebase -i --root &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		FAKE_LINES="1 2 3 4" git rebase --edit-todo 2>actual &&
+================================
+		FAKE_LINES="1 2 3 4" git rebase --edit-todo &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		git rebase --continue 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
@@ -1490,9 +1494,18 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
 	tail -n4 expect >expect.2 &&
+================================
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
+	To avoid this message, use "drop" to explicitly remove a commit.
+	EOF
+	head -n4 expect >expect.2 &&
+	tail -n1 expect >>expect.2 &&
+	tail -n4 expect.2 >expect.3 &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 	test_config rebase.missingCommitsCheck warn &&
 	rebase_setup_and_clean missing-commit &&
 	(
@@ -1501,12 +1514,20 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 			git rebase -i --root &&
 		cp .git/rebase-merge/git-rebase-todo.backup orig &&
 		FAKE_LINES="2 3 4" git rebase --edit-todo 2>actual.2 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		head -n5 actual.2 >actual &&
+================================
+		head -n6 actual.2 >actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		test_i18ncmp expect actual &&
 		cp orig .git/rebase-merge/git-rebase-todo &&
 		FAKE_LINES="1 2 3 4" git rebase --edit-todo 2>actual.2 &&
 		head -n4 actual.2 >actual &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		test_i18ncmp expect.2 actual &&
+================================
+		test_i18ncmp expect.3 actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		git rebase --continue 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
@@ -1521,6 +1542,10 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+	 - $(git rev-list --pretty=oneline --abbrev-commit -1 master~4)
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 	To avoid this message, use "drop" to explicitly remove a commit.
 
 	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
@@ -1529,7 +1554,13 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 	You can fix this with '\''git rebase --edit-todo'\'' and then run '\''git rebase --continue'\''.
 	Or you can abort the rebase with '\''git rebase --abort'\''.
 	EOF
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	tail -n10 expect >expect.2 &&
+================================
+	tail -n11 expect >expect.2 &&
+	head -n3 expect.2 >expect.3 &&
+	tail -n7 expect.2 >>expect.3 &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 	test_config rebase.missingCommitsCheck error &&
 	rebase_setup_and_clean missing-commit &&
 	(
@@ -1541,6 +1572,7 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 			git rebase --edit-todo 2>actual &&
 		test_i18ncmp expect actual &&
 		test_must_fail git rebase --continue 2>actual &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		test_i18ncmp expect actual &&
 		cp orig .git/rebase-merge/git-rebase-todo &&
 		test_must_fail env FAKE_LINES="1 2 3 4" \
@@ -1548,6 +1580,16 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 		test_i18ncmp expect.2 actual &&
 		test_must_fail git rebase --continue 2>actual &&
 		test_i18ncmp expect.2 actual &&
+================================
+		test_i18ncmp expect.2 actual &&
+		test_must_fail git rebase --edit-todo &&
+		cp orig .git/rebase-merge/git-rebase-todo &&
+		test_must_fail env FAKE_LINES="1 2 3 4" \
+			git rebase --edit-todo 2>actual &&
+		test_i18ncmp expect.3 actual &&
+		test_must_fail git rebase --continue 2>actual &&
+		test_i18ncmp expect.3 actual &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 		cp orig .git/rebase-merge/git-rebase-todo &&
 		FAKE_LINES="1 2 3 4 drop 5" git rebase --edit-todo &&
 		git rebase --continue 2>actual
@@ -1558,6 +1600,34 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 		actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+test_expect_success 'rebase.missingCommitsCheck = error after resolving conflicts' '
+	test_config rebase.missingCommitsCheck error &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="drop 1 break 2 3 4" git rebase -i A E
+	) &&
+	git rebase --edit-todo &&
+	test_must_fail git rebase --continue &&
+	echo x >file1 &&
+	git add file1 &&
+	git rebase --continue
+'
+
+test_expect_success 'rebase.missingCommitsCheck = error when editing for a second time' '
+	test_config rebase.missingCommitsCheck error &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 break 2 3" git rebase -i A D &&
+		cp .git/rebase-merge/git-rebase-todo todo &&
+		test_must_fail env FAKE_LINES=2 git rebase --edit-todo &&
+		GIT_SEQUENCE_EDITOR="cp todo" git rebase --edit-todo &&
+		git rebase --continue
+	)
+'
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
 test_expect_success 'respects rebase.abbreviateCommands with fixup, squash and exec' '
 	rebase_setup_and_clean abbrevcmd &&
 	test_commit "first" file1.txt "first line" first &&

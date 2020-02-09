@@ -304,7 +304,8 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	if (!usable_delta) {
 		if (oe_type(entry) == OBJ_BLOB &&
 		    oe_size_greater_than(&to_pack, entry, big_file_threshold) &&
-		    (st = open_istream(&entry->idx.oid, &type, &size, NULL)) != NULL)
+		    (st = open_istream(the_repository, &entry->idx.oid, &type,
+				       &size, NULL)) != NULL)
 			buf = NULL;
 		else {
 			buf = read_object_file(&entry->idx.oid, &type, &size);

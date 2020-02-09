@@ -414,14 +414,6 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!strcmp(var, "diff.wserrorhighlight")) {
-		int val = parse_ws_error_highlight(value);
-		if (val < 0)
-			return -1;
-		ws_error_highlight_default = val;
-		return 0;
-	}
-
 	if (git_color_config(var, value, cb) < 0)
 		return -1;
 
@@ -448,6 +440,14 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		if (!value)
 			return config_error_nonbool(var);
 		return color_parse(value, diff_colors[slot]);
+	}
+
+	if (!strcmp(var, "diff.wserrorhighlight")) {
+		int val = parse_ws_error_highlight(value);
+		if (val < 0)
+			return -1;
+		ws_error_highlight_default = val;
+		return 0;
 	}
 
 	/* like GNU diff's --suppress-blank-empty option  */
@@ -4024,7 +4024,7 @@ int diff_populate_filespec(struct repository *r,
 				return 0;
 			}
 		}
-		s->data = read_object_file(&s->oid, &type, &s->size);
+		s->data = repo_read_object_file(r, &s->oid, &type, &s->size);
 		if (!s->data)
 			die("unable to read %s", oid_to_hex(&s->oid));
 		s->should_free = 1;

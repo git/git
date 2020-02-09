@@ -636,9 +636,16 @@ int pl_hashmap_cmp(const void *unused_cmp_data,
 	return strncmp(ee1->pattern, ee2->pattern, min_len);
 }
 
+<<<<<<< HEAD
 char *dup_and_filter_pattern(const char *pattern)
 {
 	char *set, *read;
+=======
+static char *dup_and_filter_pattern(const char *pattern)
+{
+	char *set, *read;
+	size_t count  = 0;
+>>>>>>> upstream/next
 	char *result = xstrdup(pattern);
 
 	set = result;
@@ -653,11 +660,22 @@ char *dup_and_filter_pattern(const char *pattern)
 
 		set++;
 		read++;
+<<<<<<< HEAD
 	}
 	*set = 0;
 
 	if (*(read - 2) == '/' && *(read - 1) == '*')
 		*(read - 2) = 0;
+=======
+		count++;
+	}
+	*set = 0;
+
+	if (count > 2 &&
+	    *(set - 1) == '*' &&
+	    *(set - 2) == '/')
+		*(set - 2) = 0;
+>>>>>>> upstream/next
 
 	return result;
 }
@@ -697,16 +715,33 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 	next = given->pattern + 2;
 
 	while (*cur) {
+<<<<<<< HEAD
 		/* We care about *cur == '*' */
 		if (*cur != '*')
+=======
+		/* Watch for glob characters '*', '\', '[', '?' */
+		if (!is_glob_special(*cur))
+>>>>>>> upstream/next
 			goto increment;
 
 		/* But only if *prev != '\\' */
 		if (*prev == '\\')
 			goto increment;
 
+<<<<<<< HEAD
 		/* But a trailing '/' then '*' is fine */
 		if (*prev == '/' && *next == 0)
+=======
+		/* But allow the initial '\' */
+		if (*cur == '\\' &&
+		    is_glob_special(*next))
+			goto increment;
+
+		/* But a trailing '/' then '*' is fine */
+		if (*prev == '/' &&
+		    *cur == '*' &&
+		    *next == 0)
+>>>>>>> upstream/next
 			goto increment;
 
 		/* Not a cone pattern. */
@@ -1063,8 +1098,8 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 				oidcpy(&oid_stat->oid,
 				       &istate->cache[pos]->oid);
 			else
-				hash_object_file(buf, size, "blob",
-						 &oid_stat->oid);
+				hash_object_file(the_hash_algo, buf, size,
+						 "blob", &oid_stat->oid);
 			fill_stat_data(&oid_stat->stat, &st);
 			oid_stat->valid = 1;
 		}

@@ -309,26 +309,36 @@ setup_triangle () {
 
 	printf "line %d\n" $(test_seq 1 100) >big-blob.txt &&
 
-	# Create a server with 2 commits: a commit with a big blob and a child
+	# Create a server with 2 commits: a commit with a big tree and a child
 	# commit with an incremental change. Also, create a partial clone
 	# client that only contains the first commit.
 	git init server &&
 	git -C server config --local uploadpack.allowfilter 1 &&
-	cp big-blob.txt server &&
-	git -C server add big-blob.txt &&
+	for i in $(test_seq 1 100)
+	do
+		echo "make the tree big" >server/file$i &&
+		git -C server add file$i
+	done &&
 	git -C server commit -m "initial" &&
 	git clone --bare --filter=tree:0 "file://$(pwd)/server" client &&
-	echo another line >>server/big-blob.txt &&
-	git -C server commit -am "append line to big blob" &&
+	echo another line >>server/file1 &&
+	git -C server commit -am "incremental change" &&
 
-	# Create a promisor remote that only contains the blob from the first
-	# commit, and set it as the promisor remote of client. Thus, whenever
-	# the client lazy fetches, the lazy fetch will succeed only if it is
-	# for this blob.
+	# Create a promisor remote that only contains the tree and blob from
+	# the first commit.
 	git init promisor-remote &&
+	git -C server config --local uploadpack.allowanysha1inwant 1 &&
+	TREE_HASH=$(git -C server rev-parse HEAD~1^{tree}) &&
+	git -C promisor-remote fetch --keep "file://$(pwd)/server" "$TREE_HASH" &&
+	git -C promisor-remote count-objects -v >object-count &&
+	test_i18ngrep "count: 0" object-count &&
+	test_i18ngrep "in-pack: 2" object-count &&
+
+	# Set it as the promisor remote of client. Thus, whenever
+	# the client lazy fetches, the lazy fetch will succeed only if it is
+	# for this tree or blob.
 	test_commit -C promisor-remote one && # so that ref advertisement is not empty
 	git -C promisor-remote config --local uploadpack.allowanysha1inwant 1 &&
-	git -C promisor-remote hash-object -w --stdin <big-blob.txt &&
 	git -C client remote set-url origin "file://$(pwd)/promisor-remote"
 }
 
@@ -341,14 +351,14 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas' '
 	setup_triangle &&
 
 	# Exercise to make sure it works. Git will not fetch anything from the
-	# promisor remote other than for the big blob (because it needs to
+	# promisor remote other than for the big tree (because it needs to
 	# resolve the delta).
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client \
 		fetch "file://$(pwd)/server" master &&
 
 	# Verify the assumption that the client needed to fetch the delta base
 	# to resolve the delta.
-	git hash-object big-blob.txt >hash &&
+	git -C server rev-parse HEAD~1^{tree} >hash &&
 	grep "want $(cat hash)" trace
 '
 
@@ -370,7 +380,7 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 
 	# Verify the assumption that the client needed to fetch the delta base
 	# to resolve the delta.
-	git hash-object big-blob.txt >hash &&
+	git -C server rev-parse HEAD~1^{tree} >hash &&
 	grep "want $(cat hash)" trace
 '
 

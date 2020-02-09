@@ -96,7 +96,8 @@ OPTIONS
 	Recursively search in each submodule that has been initialized and
 	checked out in the repository.  When used in combination with the
 	<tree> option the prefix of all submodule output will be the name of
-	the parent project's <tree> object.
+	the parent project's <tree> object. This option has no effect
+	if `--no-index` is given.
 
 -a::
 --text::

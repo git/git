@@ -110,4 +110,10 @@ advice.*::
 	submoduleAlternateErrorStrategyDie::
 		Advice shown when a submodule.alternateErrorStrategy option
 		configured to "die" causes a fatal error.
+	addIgnoredFile::
+		Advice shown if a user attempts to add an ignored file to
+		the index.
+	addEmptyPathspec::
+		Advice shown if a user runs the add command without providing
+		the pathspec parameter.
 --

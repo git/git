@@ -3,6 +3,8 @@
 
 #include "cache.h"
 
+#define MAX_TRAVERSE_TREES 8
+
 /**
  * The tree walking API is used to traverse and inspect trees.
  */
