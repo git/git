@@ -198,7 +198,11 @@ static void show_config_origin(struct strbuf *buf)
 static void show_config_scope(struct strbuf *buf)
 {
 	const char term = end_nul ? '\0' : '\t';
+<<<<<<< HEAD
 	const char *scope = scope_to_string(current_config_scope());
+=======
+	const char *scope = config_scope_name(current_config_scope());
+>>>>>>> upstream/pu
 
 	strbuf_addstr(buf, N_(scope));
 	strbuf_addch(buf, term);

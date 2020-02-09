@@ -44,7 +44,11 @@ enum config_scope {
 	CONFIG_SCOPE_COMMAND,
 	CONFIG_SCOPE_SUBMODULE,
 };
+<<<<<<< HEAD
 const char *scope_to_string(enum config_scope scope);
+=======
+const char *config_scope_name(enum config_scope scope);
+>>>>>>> upstream/pu
 
 struct git_config_source {
 	unsigned int use_stdin:1;
@@ -315,6 +319,7 @@ int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 enum config_scope current_config_scope(void);
 const char *current_config_origin_type(void);
 const char *current_config_name(void);
+int current_config_line(void);
 
 /**
  * Include Directives

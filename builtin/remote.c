@@ -6,6 +6,7 @@
 #include "string-list.h"
 #include "strbuf.h"
 #include "run-command.h"
+#include "rebase.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
@@ -248,9 +249,8 @@ static int add(int argc, const char **argv)
 struct branch_info {
 	char *remote_name;
 	struct string_list merge;
-	enum {
-		NO_REBASE, NORMAL_REBASE, INTERACTIVE_REBASE, REBASE_MERGES
-	} rebase;
+	enum rebase_type rebase;
+	char *push_remote_name;
 };
 
 static struct string_list branch_list = STRING_LIST_INIT_NODUP;
@@ -264,59 +264,69 @@ static const char *abbrev_ref(const char *name, const char *prefix)
 
 static int config_read_branches(const char *key, const char *value, void *cb)
 {
-	if (starts_with(key, "branch.")) {
-		const char *orig_key = key;
-		char *name;
-		struct string_list_item *item;
-		struct branch_info *info;
-		enum { REMOTE, MERGE, REBASE } type;
-		size_t key_len;
+	const char *orig_key = key;
+	char *name;
+	struct string_list_item *item;
+	struct branch_info *info;
+	enum { REMOTE, MERGE, REBASE, PUSH_REMOTE } type;
+	size_t key_len;
 
-		key += 7;
-		if (strip_suffix(key, ".remote", &key_len)) {
-			name = xmemdupz(key, key_len);
-			type = REMOTE;
-		} else if (strip_suffix(key, ".merge", &key_len)) {
-			name = xmemdupz(key, key_len);
-			type = MERGE;
-		} else if (strip_suffix(key, ".rebase", &key_len)) {
-			name = xmemdupz(key, key_len);
-			type = REBASE;
-		} else
-			return 0;
+	if (!starts_with(key, "branch."))
+		return 0;
 
-		item = string_list_insert(&branch_list, name);
+	key += strlen("branch.");
+	if (strip_suffix(key, ".remote", &key_len))
+		type = REMOTE;
+	else if (strip_suffix(key, ".merge", &key_len))
+		type = MERGE;
+	else if (strip_suffix(key, ".rebase", &key_len))
+		type = REBASE;
+	else if (strip_suffix(key, ".pushremote", &key_len))
+		type = PUSH_REMOTE;
+	else
+		return 0;
+	name = xmemdupz(key, key_len);
 
-		if (!item->util)
-			item->util = xcalloc(1, sizeof(struct branch_info));
-		info = item->util;
-		if (type == REMOTE) {
-			if (info->remote_name)
-				warning(_("more than one %s"), orig_key);
-			info->remote_name = xstrdup(value);
-		} else if (type == MERGE) {
-			char *space = strchr(value, ' ');
-			value = abbrev_branch(value);
-			while (space) {
-				char *merge;
-				merge = xstrndup(value, space - value);
-				string_list_append(&info->merge, merge);
-				value = abbrev_branch(space + 1);
-				space = strchr(value, ' ');
-			}
-			string_list_append(&info->merge, xstrdup(value));
-		} else {
-			int v = git_parse_maybe_bool(value);
-			if (v >= 0)
-				info->rebase = v;
-			else if (!strcmp(value, "preserve"))
-				info->rebase = NORMAL_REBASE;
-			else if (!strcmp(value, "merges"))
-				info->rebase = REBASE_MERGES;
-			else if (!strcmp(value, "interactive"))
-				info->rebase = INTERACTIVE_REBASE;
+	item = string_list_insert(&branch_list, name);
+
+	if (!item->util)
+		item->util = xcalloc(1, sizeof(struct branch_info));
+	info = item->util;
+	switch (type) {
+	case REMOTE:
+		if (info->remote_name)
+			warning(_("more than one %s"), orig_key);
+		info->remote_name = xstrdup(value);
+		break;
+	case MERGE: {
+		char *space = strchr(value, ' ');
+		value = abbrev_branch(value);
+		while (space) {
+			char *merge;
+			merge = xstrndup(value, space - value);
+			string_list_append(&info->merge, merge);
+			value = abbrev_branch(space + 1);
+			space = strchr(value, ' ');
 		}
+		string_list_append(&info->merge, xstrdup(value));
+		break;
 	}
+	case REBASE:
+		/*
+		 * Consider invalid values as false and check the
+		 * truth value with >= REBASE_TRUE.
+		 */
+		info->rebase = rebase_parse_value(value);
+		break;
+	case PUSH_REMOTE:
+		if (info->push_remote_name)
+			warning(_("more than one %s"), orig_key);
+		info->push_remote_name = xstrdup(value);
+		break;
+	default:
+		BUG("unexpected type=%d", type);
+	}
+
 	return 0;
 }
 
@@ -605,6 +615,56 @@ static int migrate_file(struct remote *remote)
 	return 0;
 }
 
+struct push_default_info
+{
+	const char *old_name;
+	enum config_scope scope;
+	struct strbuf origin;
+	int linenr;
+};
+
+static int config_read_push_default(const char *key, const char *value,
+	void *cb)
+{
+	struct push_default_info* info = cb;
+	if (strcmp(key, "remote.pushdefault") ||
+	    !value || strcmp(value, info->old_name))
+		return 0;
+
+	info->scope = current_config_scope();
+	strbuf_reset(&info->origin);
+	strbuf_addstr(&info->origin, current_config_name());
+	info->linenr = current_config_line();
+
+	return 0;
+}
+
+static void handle_push_default(const char* old_name, const char* new_name)
+{
+	struct push_default_info push_default = {
+		old_name, CONFIG_SCOPE_UNKNOWN, STRBUF_INIT, -1 };
+	git_config(config_read_push_default, &push_default);
+	if (push_default.scope >= CONFIG_SCOPE_COMMAND)
+		; /* pass */
+	else if (push_default.scope >= CONFIG_SCOPE_LOCAL) {
+		int result = git_config_set_gently("remote.pushDefault",
+						   new_name);
+		if (new_name && result && result != CONFIG_NOTHING_SET)
+			die(_("could not set '%s'"), "remote.pushDefault");
+		else if (!new_name && result && result != CONFIG_NOTHING_SET)
+			die(_("could not unset '%s'"), "remote.pushDefault");
+	} else if (push_default.scope >= CONFIG_SCOPE_SYSTEM) {
+		/* warn */
+		warning(_("The %s configuration remote.pushDefault in:\n"
+			  "\t%s:%d\n"
+			  "now names the non-existent remote '%s'"),
+			config_scope_name(push_default.scope),
+			push_default.origin.buf, push_default.linenr,
+			old_name);
+	}
+}
+
+
 static int mv(int argc, const char **argv)
 {
 	struct option options[] = {
@@ -680,6 +740,11 @@ static int mv(int argc, const char **argv)
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
 			git_config_set(buf.buf, rename.new_name);
 		}
+		if (info->push_remote_name && !strcmp(info->push_remote_name, rename.old_name)) {
+			strbuf_reset(&buf);
+			strbuf_addf(&buf, "branch.%s.pushremote", item->string);
+			git_config_set(buf.buf, rename.new_name);
+		}
 	}
 
 	if (!refspec_updated)
@@ -735,6 +800,9 @@ static int mv(int argc, const char **argv)
 			die(_("creating '%s' failed"), buf.buf);
 	}
 	string_list_clear(&remote_branches, 1);
+
+	handle_push_default(rename.old_name, rename.new_name);
+
 	return 0;
 }
 
@@ -781,6 +849,13 @@ static int rm(int argc, const char **argv)
 					die(_("could not unset '%s'"), buf.buf);
 			}
 		}
+		if (info->push_remote_name && !strcmp(info->push_remote_name, remote->name)) {
+			strbuf_reset(&buf);
+			strbuf_addf(&buf, "branch.%s.pushremote", item->string);
+			result = git_config_set_gently(buf.buf, NULL);
+			if (result && result != CONFIG_NOTHING_SET)
+				die(_("could not unset '%s'"), buf.buf);
+		}
 	}
 
 	/*
@@ -813,6 +888,8 @@ static int rm(int argc, const char **argv)
 		strbuf_addf(&buf, "remote.%s", remote->name);
 		if (git_config_rename_section(buf.buf, NULL) < 1)
 			return error(_("Could not remove config section '%s'"), buf.buf);
+
+		handle_push_default(remote->name, NULL);
 	}
 
 	return result;
@@ -943,7 +1020,7 @@ static int add_local_to_show_info(struct string_list_item *branch_item, void *cb
 		return 0;
 	if ((n = strlen(branch_item->string)) > show_info->width)
 		show_info->width = n;
-	if (branch_info->rebase)
+	if (branch_info->rebase >= REBASE_TRUE)
 		show_info->any_rebase = 1;
 
 	item = string_list_insert(show_info->list, branch_item->string);
@@ -960,16 +1037,16 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	int width = show_info->width + 4;
 	int i;
 
-	if (branch_info->rebase && branch_info->merge.nr > 1) {
+	if (branch_info->rebase >= REBASE_TRUE && branch_info->merge.nr > 1) {
 		error(_("invalid branch.%s.merge; cannot rebase onto > 1 branch"),
 			item->string);
 		return 0;
 	}
 
 	printf("    %-*s ", show_info->width, item->string);
-	if (branch_info->rebase) {
+	if (branch_info->rebase >= REBASE_TRUE) {
 		const char *msg;
-		if (branch_info->rebase == INTERACTIVE_REBASE)
+		if (branch_info->rebase == REBASE_INTERACTIVE)
 			msg = _("rebases interactively onto remote %s");
 		else if (branch_info->rebase == REBASE_MERGES)
 			msg = _("rebases interactively (with merges) onto "

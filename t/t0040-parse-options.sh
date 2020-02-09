@@ -242,7 +242,7 @@ test_expect_success 'Alias options do not contribute to abbreviation' '
 '
 
 cat >typo.err <<\EOF
-error: did you mean `--boolean` (with two dashes ?)
+error: did you mean `--boolean` (with two dashes)?
 EOF
 
 test_expect_success 'detect possible typos' '
@@ -252,7 +252,7 @@ test_expect_success 'detect possible typos' '
 '
 
 cat >typo.err <<\EOF
-error: did you mean `--ambiguous` (with two dashes ?)
+error: did you mean `--ambiguous` (with two dashes)?
 EOF
 
 test_expect_success 'detect possible typos' '

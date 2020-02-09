@@ -3,6 +3,8 @@
 test_description='commit graph'
 . ./test-lib.sh
 
+GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
+
 test_expect_success 'setup full repo' '
 	mkdir full &&
 	cd "$TRASH_DIRECTORY/full" &&
@@ -227,7 +229,7 @@ graph_git_behavior 'cleared graph, commit 8 vs merge 2' full commits/8 merge/2
 
 test_expect_success 'build graph from latest pack with closure' '
 	cd "$TRASH_DIRECTORY/full" &&
-	cat new-idx | git commit-graph write --stdin-packs &&
+	cat new-idx | git commit-graph write --input=stdin-packs &&
 	test_path_is_file $objdir/info/commit-graph &&
 	graph_read_expect "9" "extra_edges"
 '
@@ -240,7 +242,7 @@ test_expect_success 'build graph from commits with closure' '
 	git tag -a -m "merge" tag/merge merge/2 &&
 	git rev-parse tag/merge >commits-in &&
 	git rev-parse merge/1 >>commits-in &&
-	cat commits-in | git commit-graph write --stdin-commits &&
+	cat commits-in | git commit-graph write --input=stdin-commits &&
 	test_path_is_file $objdir/info/commit-graph &&
 	graph_read_expect "6"
 '
@@ -629,7 +631,7 @@ test_expect_success 'corrupt commit-graph write (broken parent)' '
 		empty="$(git mktree </dev/null)" &&
 		cat >broken <<-EOF &&
 		tree $empty
-		parent 0000000000000000000000000000000000000000
+		parent $ZERO_OID
 		author whatever <whatever@example.com> 1234 -0000
 		committer whatever <whatever@example.com> 1234 -0000
 
@@ -650,7 +652,7 @@ test_expect_success 'corrupt commit-graph write (missing tree)' '
 		cd repo &&
 		tree="$(git mktree </dev/null)" &&
 		cat >broken <<-EOF &&
-		parent 0000000000000000000000000000000000000000
+		parent $ZERO_OID
 		author whatever <whatever@example.com> 1234 -0000
 		committer whatever <whatever@example.com> 1234 -0000
 

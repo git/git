@@ -3303,7 +3303,11 @@ const char *current_config_origin_type(void)
 	}
 }
 
+<<<<<<< HEAD
 const char *scope_to_string(enum config_scope scope)
+=======
+const char *config_scope_name(enum config_scope scope)
+>>>>>>> upstream/pu
 {
 	switch (scope) {
 	case CONFIG_SCOPE_SYSTEM:
@@ -3341,6 +3345,14 @@ enum config_scope current_config_scope(void)
 		return current_config_kvi->scope;
 	else
 		return current_parsing_scope;
+}
+
+int current_config_line(void)
+{
+	if (current_config_kvi)
+		return current_config_kvi->linenr;
+	else
+		return cf->linenr;
 }
 
 int lookup_config(const char **mapping, int nr_mapping, const char *var)

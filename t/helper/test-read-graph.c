@@ -45,6 +45,10 @@ int cmd__read_graph(int argc, const char **argv)
 		printf(" commit_metadata");
 	if (graph->chunk_extra_edges)
 		printf(" extra_edges");
+	if (graph->chunk_bloom_indexes)
+		printf(" bloom_indexes");
+	if (graph->chunk_bloom_data)
+		printf(" bloom_data");
 	printf("\n");
 
 	UNLEAK(graph);

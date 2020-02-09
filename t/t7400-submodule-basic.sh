@@ -175,10 +175,15 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		submod
 		hint: Use -f if you really want to add them.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 ================================
 		hint: Turn this message off by running
 		hint: "git config advice.addIgnoredFile false"
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
+================================
+		hint: Turn this message off by running
+		hint: "git config advice.addIgnoredFile false"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 		EOF
 		# Does not use test_commit due to the ignore
 		echo "*" > .gitignore &&

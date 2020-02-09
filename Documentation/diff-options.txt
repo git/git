@@ -567,13 +567,13 @@ To illustrate the difference between `-S<regex> --pickaxe-regex` and
 file:
 +
 ----
-+    return !regexec(regexp, two->ptr, 1, &regmatch, 0);
++    return frotz(nitfol, two->ptr, 1, 0);
 ...
--    hit = !regexec(regexp, mf2.ptr, 1, &regmatch, 0);
+-    hit = frotz(nitfol, mf2.ptr, 1, 0);
 ----
 +
-While `git log -G"regexec\(regexp"` will show this commit, `git log
--S"regexec\(regexp" --pickaxe-regex` will not (because the number of
+While `git log -G"frotz\(nitfol"` will show this commit, `git log
+-S"frotz\(nitfol" --pickaxe-regex` will not (because the number of
 occurrences of that string did not change).
 +
 Unless `--text` is supplied patches of binary files without a textconv

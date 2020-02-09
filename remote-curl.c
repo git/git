@@ -17,6 +17,7 @@
 #include "protocol.h"
 #include "quote.h"
 #include "transport.h"
+#include "version.h"
 
 static struct remote *remote;
 /* always ends with a trailing slash */
@@ -1374,6 +1375,13 @@ int cmd_main(int argc, const char **argv)
 	options.thin = 1;
 	string_list_init(&options.deepen_not, 1);
 	string_list_init(&options.push_options, 1);
+
+	if (!strcmp("--build-info", argv[1])) {
+		printf("git-http-fetch version: %s\n", git_version_string);
+		printf("built from commit: %s\n", git_built_from_commit_string);
+		printf("curl version: %s\n", curl_version());
+		return 0;
+	}
 
 	/*
 	 * Just report "remote-curl" here (folding all the various aliases
