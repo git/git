@@ -481,7 +481,7 @@ test_expect_success 'detect bad version' '
 '
 
 test_expect_success 'detect bad hash version' '
-	corrupt_graph_and_verify $GRAPH_BYTE_HASH "\02" \
+	corrupt_graph_and_verify $GRAPH_BYTE_HASH "\03" \
 		"hash version"
 '
 

@@ -230,9 +230,10 @@ test_expect_success 'ls-remote --symref' '
 '
 
 test_expect_success 'ls-remote with filtered symref (refname)' '
-	cat >expect <<-\EOF &&
+	rev=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
 	ref: refs/heads/master	HEAD
-	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	HEAD
+	$rev	HEAD
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
@@ -242,10 +243,10 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 
 test_expect_failure 'ls-remote with filtered symref (--heads)' '
 	git symbolic-ref refs/heads/foo refs/tags/mark &&
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 	ref: refs/tags/mark	refs/heads/foo
-	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
-	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	$rev	refs/heads/foo
+	$rev	refs/heads/master
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.
@@ -254,9 +255,9 @@ test_expect_failure 'ls-remote with filtered symref (--heads)' '
 '
 
 test_expect_success 'ls-remote --symref omits filtered-out matches' '
-	cat >expect <<-\EOF &&
-	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
-	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	cat >expect <<-EOF &&
+	$rev	refs/heads/foo
+	$rev	refs/heads/master
 	EOF
 	# Protocol v2 supports sending symrefs for refs other than HEAD, so use
 	# protocol v0 here.

@@ -15,7 +15,11 @@ test_expect_success 'setup' '
 	commit 2 &&
 	commit 3 &&
 	commit 4 &&
-	git config --global transfer.fsckObjects true
+	git config --global transfer.fsckObjects true &&
+	test_oid_cache <<-EOF
+	sed sha1:s/0034shallow %s/0036unshallow %s/
+	sed sha256:s/004cshallow %s/004eunshallow %s/
+	EOF
 '
 
 test_expect_success 'setup shallow clone' '
@@ -239,7 +243,7 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	# with an empty packfile. This is done by refetching with a shorter
 	# depth (to ensure that the packfile is empty), and overwriting the
 	# shallow line in the response with the unshallow line we want.
-	printf "s/0034shallow %s/0036unshallow %s/" \
+	printf "$(test_oid sed)" \
 	       "$(git -C "$REPO" rev-parse HEAD)" \
 	       "$(git -C "$REPO" rev-parse HEAD^)" \
 	       >"$HTTPD_ROOT_PATH/one-time-sed" &&

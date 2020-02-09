@@ -74,7 +74,7 @@ test_expect_success 'can parse blob ending with CR' '
 '
 
 test_expect_success 'config --blob outside of a repository is an error' '
-	test_must_fail nongit git config --blob=foo --list
+	nongit test_must_fail git config --blob=foo --list
 '
 
 test_done
