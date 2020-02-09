@@ -181,7 +181,8 @@ struct option *parse_options_dup(const struct option *o)
 	return opts;
 }
 
-struct option *parse_options_concat(struct option *a, struct option *b)
+struct option *parse_options_concat(const struct option *a,
+				    const struct option *b)
 {
 	struct option *ret;
 	size_t a_len = parse_options_count(a);
