@@ -680,8 +680,8 @@ static void curl_dump_header(const char *text, unsigned char *ptr, size_t size, 
 	for (header = headers; *header; header++) {
 		if (hide_sensitive_header)
 			redact_sensitive_header(*header);
-		strbuf_insert((*header), 0, text, strlen(text));
-		strbuf_insert((*header), strlen(text), ": ", 2);
+		strbuf_insertstr((*header), 0, text);
+		strbuf_insertstr((*header), strlen(text), ": ");
 		strbuf_rtrim((*header));
 		strbuf_addch((*header), '\n');
 		trace_strbuf(&trace_curl, (*header));

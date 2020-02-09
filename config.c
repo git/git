@@ -204,7 +204,7 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 		strbuf_splice(pat, 0, 1, path.buf, slash - path.buf);
 		prefix = slash - path.buf + 1 /* slash */;
 	} else if (!is_absolute_path(pat->buf))
-		strbuf_insert(pat, 0, "**/", 3);
+		strbuf_insertstr(pat, 0, "**/");
 
 	add_trailing_starstar_for_dir(pat);
 
