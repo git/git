@@ -7,6 +7,7 @@
 
 filter_log () {
 	sed -e '/^GIT_VERSION = /d' \
+	    -e "/constant Gem::ConfigMap is deprecated/d" \
 	    -e '/^    \* new asciidoc flags$/d' \
 	    -e '/stripped namespace before processing/d' \
 	    -e '/Attributed.*IDs for element/d' \
