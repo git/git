@@ -170,15 +170,9 @@ static size_t parse_options_count(const struct option *opt)
 
 struct option *parse_options_dup(const struct option *o)
 {
-	const struct option *orig = o;
-	struct option *opts;
-	size_t nr = parse_options_count(o);
+	struct option no_options[] = { OPT_END() };
 
-	ALLOC_ARRAY(opts, nr + 1);
-	COPY_ARRAY(opts, orig, nr);
-	memset(opts + nr, 0, sizeof(*opts));
-	opts[nr].type = OPTION_END;
-	return opts;
+	return parse_options_concat(o, no_options);
 }
 
 struct option *parse_options_concat(const struct option *a,
