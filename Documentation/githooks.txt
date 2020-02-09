@@ -490,9 +490,16 @@ fsmonitor-watchman
 ~~~~~~~~~~~~~~~~~~
 
 This hook is invoked when the configuration option `core.fsmonitor` is
-set to `.git/hooks/fsmonitor-watchman`.  It takes two arguments, a version
-(currently 1) and the time in elapsed nanoseconds since midnight,
-January 1, 1970.
+set to `.git/hooks/fsmonitor-watchman` or `.git/hooks/fsmonitor-watchmanv2`
+depending on the version of the hook to use.
+
+Version 1 takes two arguments, a version (1) and the time in elapsed
+nanoseconds since midnight, January 1, 1970.
+
+Version 2 takes two arguments, a version (2) and a token that is used
+for identifying changes since the token. For watchman this would be
+a clock id. This version must output to stdout the new token followed
+by a NUL before the list of files.
 
 The hook should output to stdout the list of all files in the working
 directory that may have changed since the requested time.  The logic

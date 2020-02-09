@@ -782,6 +782,8 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	struct argv_array diff_files_args = ARGV_ARRAY_INIT;
 	struct rev_info rev;
 	int diff_files_result;
+	struct strbuf buf = STRBUF_INIT;
+	const char *git_dir;
 
 	if (!submodule_from_path(the_repository, &null_oid, path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -794,10 +796,18 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 		goto cleanup;
 	}
 
-	if (!is_submodule_active(the_repository, path)) {
+	strbuf_addf(&buf, "%s/.git", path);
+	git_dir = read_gitfile(buf.buf);
+	if (!git_dir)
+		git_dir = buf.buf;
+
+	if (!is_submodule_active(the_repository, path) ||
+	    !is_git_directory(git_dir)) {
 		print_status(flags, '-', path, ce_oid, displaypath);
+		strbuf_release(&buf);
 		goto cleanup;
 	}
+	strbuf_release(&buf);
 
 	argv_array_pushl(&diff_files_args, "diff-files",
 			 "--ignore-submodules=dirty", "--quiet", "--",

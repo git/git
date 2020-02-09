@@ -635,7 +635,9 @@ static void submodule_cache_check_init(struct repository *repo)
 static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void *data)
 {
 	if (repo->worktree) {
-		struct git_config_source config_source = { 0 };
+		struct git_config_source config_source = {
+			0, .scope = CONFIG_SCOPE_SUBMODULE
+		};
 		const struct config_options opts = { 0 };
 		struct object_id oid;
 		char *file;
@@ -674,9 +676,12 @@ static int gitmodules_cb(const char *var, const char *value, void *data)
 	return parse_config(var, value, &parameter);
 }
 
-void repo_read_gitmodules(struct repository *repo)
+void repo_read_gitmodules(struct repository *repo, int skip_if_read)
 {
 	submodule_cache_check_init(repo);
+
+	if (repo->submodule_cache->gitmodules_read && skip_if_read)
+		return;
 
 	if (repo_read_index(repo) < 0)
 		return;
@@ -703,20 +708,11 @@ void gitmodules_config_oid(const struct object_id *commit_oid)
 	the_repository->submodule_cache->gitmodules_read = 1;
 }
 
-static void gitmodules_read_check(struct repository *repo)
-{
-	submodule_cache_check_init(repo);
-
-	/* read the repo's .gitmodules file if it hasn't been already */
-	if (!repo->submodule_cache->gitmodules_read)
-		repo_read_gitmodules(repo);
-}
-
 const struct submodule *submodule_from_name(struct repository *r,
 					    const struct object_id *treeish_name,
 		const char *name)
 {
-	gitmodules_read_check(r);
+	repo_read_gitmodules(r, 1);
 	return config_from(r->submodule_cache, treeish_name, name, lookup_name);
 }
 
@@ -724,7 +720,7 @@ const struct submodule *submodule_from_path(struct repository *r,
 					    const struct object_id *treeish_name,
 		const char *path)
 {
-	gitmodules_read_check(r);
+	repo_read_gitmodules(r, 1);
 	return config_from(r->submodule_cache, treeish_name, path, lookup_path);
 }
 

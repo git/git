@@ -258,16 +258,43 @@ See also INCOMPATIBLE OPTIONS below.
 	original branch. The index and working tree are also left
 	unchanged as a result.
 
---keep-empty::
-	Keep the commits that do not change anything from its
-	parents in the result.
+--am:
+	Use git-am internally to rebase.  This option may become a
+	no-op in the future once the interactive backend handles
+	everything the am one does.
 +
 See also INCOMPATIBLE OPTIONS below.
 
+--empty={drop,keep,ask}::
+	How to handle commits that are not empty to start and are not
+	clean cherry-picks of any upstream commit, but which become
+	empty after rebasing (because they contain a subset of already
+	upstream changes).  With drop (the default), commits that
+	become empty are dropped.  With keep, such commits are kept.
+	With ask (implied by --interactive), the rebase will halt when
+	an empty commit is applied allowing you to choose whether to
+	drop it, edit files more, or just commit the empty changes.
++
+Note that commits which start empty are kept, and commits which are
+clean cherry-picks (as determined by `git log --cherry-mark ...`) are
+always dropped.
++
+See also INCOMPATIBLE OPTIONS below.
+
+--keep-empty::
+	No-op.  Rebasing commits that started empty (had no change
+	relative to their parent) used to fail and this option would
+	override that behavior, allowing commits with empty changes to
+	be rebased.  Now commits with no changes do not cause rebasing
+	to halt.
++
+See also BEHAVIORAL DIFFERENCES and INCOMPATIBLE OPTIONS below.
+
 --allow-empty-message::
-	By default, rebasing commits with an empty message will fail.
-	This option overrides that behavior, allowing commits with empty
-	messages to be rebased.
+	No-op.  Rebasing commits with an empty message used to fail
+	and this option would override that behavior, allowing commits
+	with empty messages to be rebased.  Now commits with an empty
+	message do not cause rebasing to halt.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -286,7 +313,7 @@ See also INCOMPATIBLE OPTIONS below.
 --merge::
 	Use merging strategies to rebase.  When the recursive (default) merge
 	strategy is used, this allows rebase to be aware of renames on the
-	upstream side.
+	upstream side.  This is the default.
 +
 Note that a rebase merge works by replaying each commit from the working
 branch on top of the <upstream> branch.  Because of this, when a merge
@@ -356,7 +383,7 @@ See also INCOMPATIBLE OPTIONS below.
 	Ensure at least <n> lines of surrounding context match before
 	and after each change.  When fewer lines of surrounding
 	context exist they all must match.  By default no context is
-	ever ignored.
+	ever ignored.  Implies --am.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -394,8 +421,9 @@ with `--keep-base` in order to drop those commits from your branch.
 
 --ignore-whitespace::
 --whitespace=<option>::
-	These flag are passed to the 'git apply' program
+	These flags are passed to the 'git apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
+	Implies --am.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -539,10 +567,11 @@ INCOMPATIBLE OPTIONS
 
 The following options:
 
+ * --am
  * --committer-date-is-author-date
  * --ignore-date
- * --whitespace
  * --ignore-whitespace
+ * --whitespace
  * -C
 
 are incompatible with the following options:
@@ -557,6 +586,7 @@ are incompatible with the following options:
  * --interactive
  * --exec
  * --keep-empty
+ * --empty=
  * --edit-todo
  * --root when used in combination with --onto
 
@@ -565,6 +595,7 @@ In addition, the following pairs of options are incompatible:
  * --preserve-merges and --interactive
  * --preserve-merges and --signoff
  * --preserve-merges and --rebase-merges
+ * --preserve-merges and --empty=
  * --keep-base and --onto
  * --keep-base and --root
 
@@ -576,22 +607,99 @@ There are some subtle differences how the backends behave.
 Empty commits
 ~~~~~~~~~~~~~
 
-The am backend drops any "empty" commits, regardless of whether the
-commit started empty (had no changes relative to its parent to
-start with) or ended empty (all changes were already applied
-upstream in other commits).
+The am backend unfortunately drops intentionally empty commits, i.e.
+commits that started empty, though these are rare in practice.  It
+also drops commits that become empty and has no option for controlling
+this behavior.
 
-The interactive backend drops commits by default that
-started empty and halts if it hits a commit that ended up empty.
-The `--keep-empty` option exists for the interactive backend to allow
-it to keep commits that started empty.
+The interactive backend keeps intentionally empty commits.  Similar to
+the am backend, by default the interactive backend drops commits that
+become empty unless -i/--interactive is specified (in which case it
+stops and asks the user what to do).  The interactive backend also has
+an --empty={drop,keep,ask} option for changing the behavior of
+handling commits that become empty.
 
 Directory rename detection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Directory rename heuristics are enabled in the merge and interactive
-backends.  Due to the lack of accurate tree information, directory
-rename detection is disabled in the am backend.
+Due to the lack of accurate tree information (arising from
+constructing fake ancestors with the limited information available in
+patches), directory rename detection is disabled in the am backend.
+Disabled directory rename detection means that if one side of history
+renames a directory and the other adds new files to the old directory,
+then the new files will be left behind in the old directory without
+any warning at the time of rebasing that you may want to move these
+files into the new directory.
+
+Directory rename detection works with the merge and interactive
+backends to provide you warnings in such cases.
+
+Context
+~~~~~~~
+
+The am backend works by creating a sequence of patches (by calling
+`format-patch` internally), and then applying the patches in sequence
+(calling `am` internally).  Patches are composed of multiple hunks,
+each with line numbers, a context region, and the actual changes.  The
+line numbers have to be taken with some fuzz, since the other side
+will likely have inserted or deleted lines earlier in the file.  The
+context region is meant to help find how to adjust the line numbers in
+order to apply the changes to the right lines.  However, if multiple
+areas of the code have the same surrounding lines of context, the
+wrong one can be picked.  There are real-world cases where this has
+caused commits to be reapplied incorrectly with no conflicts reported.
+Setting diff.context to a larger value may prevent such types of
+problems, but increases the chance of spurious conflicts (since it
+will require more lines of matching context to apply).
+
+The interactive backend works with a full copy of each relevant file,
+insulating it from these types of problems.
+
+Labelling of conflicts markers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When there are content conflicts, the merge machinery tries to
+annotate each side's conflict markers with the commits where the
+content came from.  Since the am backend drops the original
+information about the rebased commits and their parents (and instead
+generates new fake commits based off limited information in the
+generated patches), those commits cannot be identified; instead it has
+to fall back to a commit summary.  Also, when merge.conflictStyle is
+set to diff3, the am backend will use "constructed merge base" to
+label the content from the merge base, and thus provide no information
+about the merge base commit whatsoever.
+
+The interactive backend works with the full commits on both sides of
+history and thus has no such limitations.
+
+Hooks
+~~~~~
+
+The am backend has not traditionally called the post-commit hook,
+while the merge/interactive backend has.  However, this was by
+accident of implementation rather than by design.  Both backends
+should have the same behavior, though it is not clear which one is
+correct.
+
+Miscellaneous differences
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are a few more behavioral differences that most folks would
+probably consider inconsequential but which are mentioned for
+completeness:
+
+* Reflog: The two backends will use different wording when describing
+  the changes made in the reflog, though both will make use of the
+  word "rebase".
+
+* Progress, informational, and error messages: The two backends
+  provide slightly different progress and informational messages.
+  Also, the am backend writes error messages (such as "Your files
+  would be overwritten...") to stdout, while the interactive backend
+  writes them to stderr.
+
+* State directories: The two backends keep their state in different
+  directories under .git/
 
 include::merge-strategies.txt[]
 

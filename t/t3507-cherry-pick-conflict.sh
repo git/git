@@ -161,6 +161,29 @@ test_expect_success 'successful commit clears CHERRY_PICK_HEAD' '
 
 	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
 '
+
+test_expect_success 'partial commit of cherry-pick fails' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	echo resolved >foo &&
+	git add foo &&
+	test_must_fail git commit foo 2>err &&
+
+	test_i18ngrep "cannot do a partial commit during a cherry-pick." err
+'
+
+test_expect_success 'commit --amend of cherry-pick fails' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	echo resolved >foo &&
+	git add foo &&
+	test_must_fail git commit --amend 2>err &&
+
+	test_i18ngrep "in the middle of a cherry-pick -- cannot amend." err
+'
+
 test_expect_success 'successful final commit clears cherry-pick state' '
 	pristine_detach initial &&
 
@@ -168,7 +191,7 @@ test_expect_success 'successful final commit clears cherry-pick state' '
 	echo resolved >foo &&
 	test_path_is_file .git/sequencer/todo &&
 	git commit -a &&
-	test_must_fail test_path_exists .git/sequencer
+	test_path_is_missing .git/sequencer
 '
 
 test_expect_success 'reset after final pick clears cherry-pick state' '
@@ -178,7 +201,7 @@ test_expect_success 'reset after final pick clears cherry-pick state' '
 	echo resolved >foo &&
 	test_path_is_file .git/sequencer/todo &&
 	git reset &&
-	test_must_fail test_path_exists .git/sequencer
+	test_path_is_missing .git/sequencer
 '
 
 test_expect_success 'failed cherry-pick produces dirty index' '
@@ -381,23 +404,23 @@ test_expect_success 'failed commit does not clear REVERT_HEAD' '
 '
 
 test_expect_success 'successful final commit clears revert state' '
-       pristine_detach picked-signed &&
+	pristine_detach picked-signed &&
 
-       test_must_fail git revert picked-signed base &&
-       echo resolved >foo &&
-       test_path_is_file .git/sequencer/todo &&
-       git commit -a &&
-       test_must_fail test_path_exists .git/sequencer
+	test_must_fail git revert picked-signed base &&
+	echo resolved >foo &&
+	test_path_is_file .git/sequencer/todo &&
+	git commit -a &&
+	test_path_is_missing .git/sequencer
 '
 
 test_expect_success 'reset after final pick clears revert state' '
-       pristine_detach picked-signed &&
+	pristine_detach picked-signed &&
 
-       test_must_fail git revert picked-signed base &&
-       echo resolved >foo &&
-       test_path_is_file .git/sequencer/todo &&
-       git reset &&
-       test_must_fail test_path_exists .git/sequencer
+	test_must_fail git revert picked-signed base &&
+	echo resolved >foo &&
+	test_path_is_file .git/sequencer/todo &&
+	git reset &&
+	test_path_is_missing .git/sequencer
 '
 
 test_expect_success 'revert conflict, diff3 -m style' '

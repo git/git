@@ -13,6 +13,7 @@
 #include "resolve-undo.h"
 #include "unpack-trees.h"
 #include "wt-status.h"
+#include "quote.h"
 
 static const char *empty_base = "";
 
@@ -77,8 +78,10 @@ static int sparse_checkout_list(int argc, const char **argv)
 
 		string_list_sort(&sl);
 
-		for (i = 0; i < sl.nr; i++)
-			printf("%s\n", sl.items[i].string);
+		for (i = 0; i < sl.nr; i++) {
+			quote_c_style(sl.items[i].string, NULL, stdout, 0);
+			printf("\n");
+		}
 
 		return 0;
 	}
@@ -140,6 +143,22 @@ static int update_working_directory(struct pattern_list *pl)
 	return result;
 }
 
+static char *escaped_pattern(char *pattern)
+{
+	char *p = pattern;
+	struct strbuf final = STRBUF_INIT;
+
+	while (*p) {
+		if (*p == '*' || *p == '\\')
+			strbuf_addch(&final, '\\');
+
+		strbuf_addch(&final, *p);
+		p++;
+	}
+
+	return strbuf_detach(&final, NULL);
+}
+
 static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 {
 	int i;
@@ -164,10 +183,11 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 	fprintf(fp, "/*\n!/*/\n");
 
 	for (i = 0; i < sl.nr; i++) {
-		char *pattern = sl.items[i].string;
+		char *pattern = escaped_pattern(sl.items[i].string);
 
 		if (strlen(pattern))
 			fprintf(fp, "%s/\n!%s/*/\n", pattern, pattern);
+		free(pattern);
 	}
 
 	string_list_clear(&sl, 0);
@@ -185,8 +205,9 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 	string_list_remove_duplicates(&sl, 0);
 
 	for (i = 0; i < sl.nr; i++) {
-		char *pattern = sl.items[i].string;
+		char *pattern = escaped_pattern(sl.items[i].string);
 		fprintf(fp, "%s/\n", pattern);
+		free(pattern);
 	}
 }
 
@@ -199,6 +220,10 @@ static int write_patterns_and_update(struct pattern_list *pl)
 	int result;
 
 	sparse_filename = get_sparse_checkout_filename();
+
+	if (safe_create_leading_directories(sparse_filename))
+		die(_("failed to create directory for sparse-checkout file"));
+
 	fd = hold_lock_file_for_update(&lk, sparse_filename,
 				      LOCK_DIE_ON_ERROR);
 
@@ -333,7 +358,9 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 {
 	struct pattern_entry *e = xmalloc(sizeof(*e));
 	e->patternlen = path->len;
-	e->pattern = strbuf_detach(path, NULL);
+	e->pattern = dup_and_filter_pattern(path->buf);
+	strbuf_release(path);
+
 	hashmap_entry_init(&e->ent,
 			   ignore_case ?
 			   strihash(e->pattern) :
@@ -365,12 +392,34 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 
 static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 {
+	int i;
 	strbuf_trim(line);
 
 	strbuf_trim_trailing_dir_sep(line);
 
 	if (!line->len)
 		return;
+
+	for (i = 0; i < line->len; i++) {
+		if (line->buf[i] == '*') {
+			strbuf_insert(line, i, "\\", 1);
+			i++;
+		}
+
+		if (line->buf[i] == '\\') {
+			if (i < line->len - 1 && line->buf[i + 1] == '\\')
+				i++;
+			else
+				strbuf_insert(line, i, "\\", 1);
+
+			i++;
+		}
+	}
+
+	if (line->buf[0] == '"' && line->buf[line->len - 1] == '"') {
+		strbuf_remove(line, 0, 1);
+		strbuf_remove(line, line->len - 1, 1);
+	}
 
 	if (line->buf[0] != '/')
 		strbuf_insert(line, 0, "/", 1);

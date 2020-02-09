@@ -11,6 +11,8 @@ submodule and "git submodule update --rebase/--merge" does not detach the HEAD.
 
 . ./test-lib.sh
 
+# fsmonitor does not work well with submodules
+GIT_TEST_FSMONITOR=""
 
 compare_head()
 {
@@ -960,7 +962,7 @@ test_expect_success 'submodule update clone shallow submodule outside of depth' 
 		mv -f .gitmodules.tmp .gitmodules &&
 		# Some protocol versions (e.g. 2) support fetching
 		# unadvertised objects, so restrict this test to v0.
-		test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+		test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 			git submodule update --init --depth=1 2>actual &&
 		test_i18ngrep "Direct fetching of that commit failed." actual &&
 		git -C ../submodule config uploadpack.allowReachableSHA1InWant true &&

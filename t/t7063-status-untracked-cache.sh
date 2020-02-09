@@ -4,6 +4,9 @@ test_description='test untracked cache'
 
 . ./test-lib.sh
 
+# fsmonitor changes the expected behvaior of GIT_TRACE_UNTRACKED_STATS
+GIT_TEST_FSMONITOR=""
+
 # On some filesystems (e.g. FreeBSD's ext2 and ufs) directory mtime
 # is updated lazily after contents in the directory changes, which
 # forces the untracked cache code to take the slow path.  A test

@@ -158,7 +158,7 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		cat <<-\EOF >expect &&
 		The following paths are ignored by one of your .gitignore files:
 		submod
-		Use -f if you really want to add them.
+		hint: Use -f if you really want to add them.
 		EOF
 		# Does not use test_commit due to the ignore
 		echo "*" > .gitignore &&
@@ -408,6 +408,14 @@ test_expect_success 'init should register submodule url in .git/config' '
 	git config submodule.example.url ./.subrepo &&
 
 	test_cmp expect url
+'
+
+test_expect_success 'status should still be "missing" after initializing' '
+	rm -fr init &&
+	mkdir init &&
+	git submodule status >lines &&
+	rm -fr init &&
+	grep "^-$rev1" lines
 '
 
 test_failure_with_unknown_submodule () {
