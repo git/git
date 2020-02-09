@@ -37,6 +37,10 @@ module Git
           output = output.sub(/<\/refmeta>/, new_tags + "</refmeta>")
         end
         output
+
+    class AnnotateProcessor < Asciidoctor::Extensions::InlineMacroProcessor
+      def process(parent, target, attrs)
+        ""
       end
     end
   end
@@ -45,4 +49,5 @@ end
 Asciidoctor::Extensions.register do
   inline_macro Git::Documentation::LinkGitProcessor, :linkgit
   postprocessor Git::Documentation::DocumentPostProcessor
+  inline_macro Git::Documentation::AnnotateProcessor, :annotate
 end

@@ -238,8 +238,8 @@ test_expect_success 'error on modifying repo config without repo' '
 
 cmdline_config="'foo.bar=from-cmdline'"
 test_expect_success 'iteration shows correct origins' '
-	echo "[foo]bar = from-repo" >.git/config &&
-	echo "[foo]bar = from-home" >.gitconfig &&
+	printf "[ignore]\n\tthis = please\n[foo]bar = from-repo\n" >.git/config &&
+	printf "[foo]\n\tbar = from-home\n" >.gitconfig &&
 	if test_have_prereq MINGW
 	then
 		# Use Windows path (i.e. *not* $HOME)
@@ -253,19 +253,35 @@ test_expect_success 'iteration shows correct origins' '
 	value=from-home
 	origin=file
 	name=$HOME_GITCONFIG
+	lno=2
 	scope=global
+
+	key=ignore.this
+	value=please
+	origin=file
+	name=.git/config
+	lno=2
+	scope=local
 
 	key=foo.bar
 	value=from-repo
 	origin=file
 	name=.git/config
-	scope=repo
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+	lno=3
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
+	scope=local
 
 	key=foo.bar
 	value=from-cmdline
 	origin=command line
 	name=
-	scope=cmdline
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+	lno=-1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
+	scope=command
 	EOF
 	GIT_CONFIG_PARAMETERS=$cmdline_config test-tool config iterate >actual &&
 	test_cmp expect actual

@@ -35,10 +35,26 @@ struct object_id;
 
 #define CONFIG_REGEX_NONE ((void *)1)
 
+enum config_scope {
+	CONFIG_SCOPE_UNKNOWN = 0,
+	CONFIG_SCOPE_SYSTEM,
+	CONFIG_SCOPE_GLOBAL,
+	CONFIG_SCOPE_LOCAL,
+	CONFIG_SCOPE_WORKTREE,
+	CONFIG_SCOPE_COMMAND,
+	CONFIG_SCOPE_SUBMODULE,
+};
+<<<<<<< HEAD
+const char *scope_to_string(enum config_scope scope);
+=======
+const char *config_scope_name(enum config_scope scope);
+>>>>>>> upstream/pu
+
 struct git_config_source {
 	unsigned int use_stdin:1;
 	const char *file;
 	const char *blob;
+	enum config_scope scope;
 };
 
 enum config_origin_type {
@@ -185,6 +201,12 @@ int git_parse_ulong(const char *, unsigned long *);
 int git_parse_maybe_bool(const char *);
 
 /**
+ * Same as `git_parse_maybe_bool`, except that it does not handle
+ * integer values, i.e., those cause this function to return -1.
+ */
+int git_parse_maybe_bool_text(const char *);
+
+/**
  * Parse the string to an integer, including unit factors. Dies on error;
  * otherwise, returns the parsed result.
  */
@@ -294,17 +316,10 @@ int config_error_nonbool(const char *);
 
 int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
 
-enum config_scope {
-	CONFIG_SCOPE_UNKNOWN = 0,
-	CONFIG_SCOPE_SYSTEM,
-	CONFIG_SCOPE_GLOBAL,
-	CONFIG_SCOPE_REPO,
-	CONFIG_SCOPE_CMDLINE,
-};
-
 enum config_scope current_config_scope(void);
 const char *current_config_origin_type(void);
 const char *current_config_name(void);
+int current_config_line(void);
 
 /**
  * Include Directives

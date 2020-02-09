@@ -20,7 +20,34 @@ test_expect_success setup '
 	git notes add -m "Notes on 3rd commit" 3rd &&
 	git notes add -m "Notes on 4th commit" 4th &&
 	# Copy notes to remote-notes
-	git fetch . refs/notes/*:refs/remote-notes/origin/*
+	git fetch . refs/notes/*:refs/remote-notes/origin/* &&
+
+	test_oid_init &&
+	test_oid_cache <<-EOF
+	hash4a sha1:5e93d24084d32e1cb61f7070505b9d2530cca987
+	hash3a sha1:8366731eeee53787d2bdf8fc1eff7d94757e8da0
+	hash2a sha1:eede89064cd42441590d6afec6c37b321ada3389
+	hash1a sha1:daa55ffad6cb99bf64226532147ffcaf5ce8bdd1
+	hash5b sha1:0f2efbd00262f2fd41dfae33df8765618eeacd99
+	hash4b sha1:dec2502dac3ea161543f71930044deff93fa945c
+	hash3b sha1:4069cdb399fd45463ec6eef8e051a16a03592d91
+	hash2c sha1:d000d30e6ddcfce3a8122c403226a2ce2fd04d9d
+	hash1c sha1:43add6bd0c8c0bc871ac7991e0f5573cfba27804
+	hash4d sha1:1f257a3a90328557c452f0817d6cc50c89d315d4
+	hash3d sha1:05a4927951bcef347f51486575b878b2b60137f2
+
+	hash4a sha256:eef876be1d32ac2e2e42240e0429325cec116e55e88cb2969899fac695aa762f
+	hash3a sha256:cf7cd1bc091d7ba4166a86df864110e42087cd893a5ae96bc50d637e0290939d
+	hash2a sha256:21ddde7ebce2c285213898cb04deca0fd3209610cf7aaf8222e4e2f45262fae2
+	hash1a sha256:f9fe0eda16c6027732ed9d4295689a03abd16f893be69b3dcbf4037ddb191921
+	hash5b sha256:20046f2244577797a9e3d3f790ea9eca4d8a6bafb2a5570bcb0e03aa02ce100b
+	hash4b sha256:f90563d134c61a95bb88afbd45d48ccc9e919c62aa6fbfcd483302b3e4d8dbcb
+	hash3b sha256:988f2aca9f2d87e93e6a73197c2bb99560cc44a2f92d18653968f956f01221e0
+	hash2c sha256:84153b777b4d42827a756c6578dcdb59d8ae5d1360b874fb37c430150c825c26
+	hash1c sha256:9beb2bc4eef72e4c4087be168a20573e34d993d9ab1883055f23e322afa06567
+	hash4d sha256:32de39dc06e679a7abb2d4a55ede7709b3124340a4a90aa305971b1c72ac319d
+	hash3d sha256:fa73b20e41cbb7541c4c81d1535016131dbfbeb05bf6a71f6115e9cad31c7af5
+	EOF
 '
 
 commit_sha1=$(git rev-parse 1st^{commit})
@@ -40,10 +67,10 @@ verify_notes () {
 }
 
 cat <<EOF | sort >expect_notes_x
-5e93d24084d32e1cb61f7070505b9d2530cca987 $commit_sha4
-8366731eeee53787d2bdf8fc1eff7d94757e8da0 $commit_sha3
-eede89064cd42441590d6afec6c37b321ada3389 $commit_sha2
-daa55ffad6cb99bf64226532147ffcaf5ce8bdd1 $commit_sha1
+$(test_oid hash4a) $commit_sha4
+$(test_oid hash3a) $commit_sha3
+$(test_oid hash2a) $commit_sha2
+$(test_oid hash1a) $commit_sha1
 EOF
 
 cat >expect_log_x <<EOF
@@ -126,10 +153,10 @@ test_expect_success 'merge previous notes commit (y^ => y) => No-op' '
 '
 
 cat <<EOF | sort >expect_notes_y
-0f2efbd00262f2fd41dfae33df8765618eeacd99 $commit_sha5
-dec2502dac3ea161543f71930044deff93fa945c $commit_sha4
-4069cdb399fd45463ec6eef8e051a16a03592d91 $commit_sha3
-daa55ffad6cb99bf64226532147ffcaf5ce8bdd1 $commit_sha1
+$(test_oid hash5b) $commit_sha5
+$(test_oid hash4b) $commit_sha4
+$(test_oid hash3b) $commit_sha3
+$(test_oid hash1a) $commit_sha1
 EOF
 
 cat >expect_log_y <<EOF
@@ -193,11 +220,11 @@ test_expect_success 'merge empty notes ref (z => y)' '
 '
 
 cat <<EOF | sort >expect_notes_y
-0f2efbd00262f2fd41dfae33df8765618eeacd99 $commit_sha5
-dec2502dac3ea161543f71930044deff93fa945c $commit_sha4
-4069cdb399fd45463ec6eef8e051a16a03592d91 $commit_sha3
-d000d30e6ddcfce3a8122c403226a2ce2fd04d9d $commit_sha2
-43add6bd0c8c0bc871ac7991e0f5573cfba27804 $commit_sha1
+$(test_oid hash5b) $commit_sha5
+$(test_oid hash4b) $commit_sha4
+$(test_oid hash3b) $commit_sha3
+$(test_oid hash2c) $commit_sha2
+$(test_oid hash1c) $commit_sha1
 EOF
 
 cat >expect_log_y <<EOF
@@ -231,9 +258,9 @@ test_expect_success 'change notes on other notes ref (y)' '
 '
 
 cat <<EOF | sort >expect_notes_x
-0f2efbd00262f2fd41dfae33df8765618eeacd99 $commit_sha5
-1f257a3a90328557c452f0817d6cc50c89d315d4 $commit_sha4
-daa55ffad6cb99bf64226532147ffcaf5ce8bdd1 $commit_sha1
+$(test_oid hash5b) $commit_sha5
+$(test_oid hash4d) $commit_sha4
+$(test_oid hash1a) $commit_sha1
 EOF
 
 cat >expect_log_x <<EOF
@@ -262,10 +289,10 @@ test_expect_success 'change notes on notes ref (x)' '
 '
 
 cat <<EOF | sort >expect_notes_x
-0f2efbd00262f2fd41dfae33df8765618eeacd99 $commit_sha5
-1f257a3a90328557c452f0817d6cc50c89d315d4 $commit_sha4
-d000d30e6ddcfce3a8122c403226a2ce2fd04d9d $commit_sha2
-43add6bd0c8c0bc871ac7991e0f5573cfba27804 $commit_sha1
+$(test_oid hash5b) $commit_sha5
+$(test_oid hash4d) $commit_sha4
+$(test_oid hash2c) $commit_sha2
+$(test_oid hash1c) $commit_sha1
 EOF
 
 cat >expect_log_x <<EOF
@@ -296,8 +323,8 @@ test_expect_success 'merge y into x => Non-conflicting 3-way merge' '
 '
 
 cat <<EOF | sort >expect_notes_w
-05a4927951bcef347f51486575b878b2b60137f2 $commit_sha3
-d000d30e6ddcfce3a8122c403226a2ce2fd04d9d $commit_sha2
+$(test_oid hash3d) $commit_sha3
+$(test_oid hash2c) $commit_sha2
 EOF
 
 cat >expect_log_w <<EOF
@@ -326,11 +353,11 @@ test_expect_success 'create notes on new, separate notes ref (w)' '
 '
 
 cat <<EOF | sort >expect_notes_x
-0f2efbd00262f2fd41dfae33df8765618eeacd99 $commit_sha5
-1f257a3a90328557c452f0817d6cc50c89d315d4 $commit_sha4
-05a4927951bcef347f51486575b878b2b60137f2 $commit_sha3
-d000d30e6ddcfce3a8122c403226a2ce2fd04d9d $commit_sha2
-43add6bd0c8c0bc871ac7991e0f5573cfba27804 $commit_sha1
+$(test_oid hash5b) $commit_sha5
+$(test_oid hash4d) $commit_sha4
+$(test_oid hash3d) $commit_sha3
+$(test_oid hash2c) $commit_sha2
+$(test_oid hash1c) $commit_sha1
 EOF
 
 cat >expect_log_x <<EOF

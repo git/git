@@ -1047,7 +1047,7 @@ ssize_t git_config_ssize_t(const char *name, const char *value)
 	return ret;
 }
 
-static int git_parse_maybe_bool_text(const char *value)
+int git_parse_maybe_bool_text(const char *value)
 {
 	if (!value)
 		return 1;
@@ -1702,6 +1702,7 @@ static int do_git_config_sequence(const struct config_options *opts,
 	char *xdg_config = xdg_config_home("config");
 	char *user_config = expand_user_path("~/.gitconfig", 0);
 	char *repo_config;
+	enum config_scope prev_parsing_scope = current_parsing_scope;
 
 	if (opts->commondir)
 		repo_config = mkpathdup("%s/config", opts->commondir);
@@ -1724,15 +1725,12 @@ static int do_git_config_sequence(const struct config_options *opts,
 	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK))
 		ret += git_config_from_file(fn, user_config, data);
 
-	current_parsing_scope = CONFIG_SCOPE_REPO;
+	current_parsing_scope = CONFIG_SCOPE_LOCAL;
 	if (!opts->ignore_repo && repo_config &&
 	    !access_or_die(repo_config, R_OK, 0))
 		ret += git_config_from_file(fn, repo_config, data);
 
-	/*
-	 * Note: this should have a new scope, CONFIG_SCOPE_WORKTREE.
-	 * But let's not complicate things before it's actually needed.
-	 */
+	current_parsing_scope = CONFIG_SCOPE_WORKTREE;
 	if (!opts->ignore_worktree && repository_format_worktree_config) {
 		char *path = git_pathdup("config.worktree");
 		if (!access_or_die(path, R_OK, 0))
@@ -1740,11 +1738,11 @@ static int do_git_config_sequence(const struct config_options *opts,
 		free(path);
 	}
 
-	current_parsing_scope = CONFIG_SCOPE_CMDLINE;
+	current_parsing_scope = CONFIG_SCOPE_COMMAND;
 	if (!opts->ignore_cmdline && git_config_from_parameters(fn, data) < 0)
 		die(_("unable to parse command-line config"));
 
-	current_parsing_scope = CONFIG_SCOPE_UNKNOWN;
+	current_parsing_scope = prev_parsing_scope;
 	free(xdg_config);
 	free(user_config);
 	free(repo_config);
@@ -1764,6 +1762,9 @@ int config_with_options(config_fn_t fn, void *data,
 		fn = git_config_include;
 		data = &inc;
 	}
+
+	if (config_source)
+		current_parsing_scope = config_source->scope;
 
 	/*
 	 * If we have a specific filename, use it. Otherwise, follow the
@@ -2317,6 +2318,11 @@ int git_config_get_max_percent_split_change(void)
 
 int git_config_get_fsmonitor(void)
 {
+	if (!the_repository->worktree) {
+		core_fsmonitor = 0;
+		return 0;
+	}
+
 	if (git_config_get_pathname("core.fsmonitor", &core_fsmonitor))
 		core_fsmonitor = getenv("GIT_TEST_FSMONITOR");
 
@@ -3297,6 +3303,30 @@ const char *current_config_origin_type(void)
 	}
 }
 
+<<<<<<< HEAD
+const char *scope_to_string(enum config_scope scope)
+=======
+const char *config_scope_name(enum config_scope scope)
+>>>>>>> upstream/pu
+{
+	switch (scope) {
+	case CONFIG_SCOPE_SYSTEM:
+		return "system";
+	case CONFIG_SCOPE_GLOBAL:
+		return "global";
+	case CONFIG_SCOPE_LOCAL:
+		return "local";
+	case CONFIG_SCOPE_WORKTREE:
+		return "worktree";
+	case CONFIG_SCOPE_COMMAND:
+		return "command";
+	case CONFIG_SCOPE_SUBMODULE:
+		return "submodule";
+	default:
+		return "unknown";
+	}
+}
+
 const char *current_config_name(void)
 {
 	const char *name;
@@ -3315,6 +3345,14 @@ enum config_scope current_config_scope(void)
 		return current_config_kvi->scope;
 	else
 		return current_parsing_scope;
+}
+
+int current_config_line(void)
+{
+	if (current_config_kvi)
+		return current_config_kvi->linenr;
+	else
+		return cf->linenr;
 }
 
 int lookup_config(const char **mapping, int nr_mapping, const char *var)

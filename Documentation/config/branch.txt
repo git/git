@@ -81,15 +81,16 @@ branch.<name>.rebase::
 	"git pull" is run. See "pull.rebase" for doing this in a non
 	branch-specific manner.
 +
-When `merges`, pass the `--rebase-merges` option to 'git rebase'
+When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
 so that the local merge commits are included in the rebase (see
 linkgit:git-rebase[1] for details).
 +
-When `preserve` (deprecated in favor of `merges`), also pass
+When `preserve` (or just 'p', deprecated in favor of `merges`), also pass
 `--preserve-merges` along to 'git rebase' so that locally committed merge
 commits will not be flattened by running 'git pull'.
 +
-When the value is `interactive`, the rebase is run in interactive mode.
+When the value is `interactive` (or just 'i'), the rebase is run in interactive
+mode.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand the implications (see linkgit:git-rebase[1]

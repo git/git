@@ -1,6 +1,8 @@
 #!/bin/sh
 # Copyright (c) 2010, Jens Lehmann
 
+GIT_TEST_FSMONITOR=""
+
 test_description='Recursive "git fetch" for submodules'
 
 . ./test-lib.sh

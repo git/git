@@ -14,12 +14,16 @@ static const char *const builtin_config_usage[] = {
 
 static char *key;
 static regex_t *key_regexp;
-static regex_t *regexp;
+static struct {
+	enum { none, regexp, boolean } mode;
+	regex_t *regexp;
+	int do_not_match; /* used with `regexp` */
+	int boolean;
+} cmd_line_value;
 static int show_keys;
 static int omit_values;
 static int use_key_regexp;
 static int do_all;
-static int do_not_match;
 static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
@@ -29,10 +33,11 @@ static int use_worktree_config;
 static struct git_config_source given_config_source;
 static int actions, type;
 static char *default_value;
-static int end_null;
+static int end_nul;
 static int respect_includes_opt = -1;
 static struct config_options config_options;
 static int show_origin;
+static int show_scope;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -151,10 +156,11 @@ static struct option builtin_config_options[] = {
 	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
 	OPT_GROUP(N_("Other")),
-	OPT_BOOL('z', "null", &end_null, N_("terminate values with NUL byte")),
+	OPT_BOOL('z', "null", &end_nul, N_("terminate values with NUL byte")),
 	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
 	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
+	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)")),
 	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
 	OPT_END(),
 };
@@ -178,22 +184,38 @@ static void check_argc(int argc, int min, int max)
 
 static void show_config_origin(struct strbuf *buf)
 {
-	const char term = end_null ? '\0' : '\t';
+	const char term = end_nul ? '\0' : '\t';
 
 	strbuf_addstr(buf, current_config_origin_type());
 	strbuf_addch(buf, ':');
-	if (end_null)
+	if (end_nul)
 		strbuf_addstr(buf, current_config_name());
 	else
 		quote_c_style(current_config_name(), buf, NULL, 0);
 	strbuf_addch(buf, term);
 }
 
+static void show_config_scope(struct strbuf *buf)
+{
+	const char term = end_nul ? '\0' : '\t';
+<<<<<<< HEAD
+	const char *scope = scope_to_string(current_config_scope());
+=======
+	const char *scope = config_scope_name(current_config_scope());
+>>>>>>> upstream/pu
+
+	strbuf_addstr(buf, N_(scope));
+	strbuf_addch(buf, term);
+}
+
 static int show_all_config(const char *key_, const char *value_, void *cb)
 {
-	if (show_origin) {
+	if (show_origin || show_scope) {
 		struct strbuf buf = STRBUF_INIT;
-		show_config_origin(&buf);
+		if (show_scope)
+			show_config_scope(&buf);
+		if (show_origin)
+			show_config_origin(&buf);
 		/* Use fwrite as "buf" can contain \0's if "end_null" is set. */
 		fwrite(buf.buf, 1, buf.len, stdout);
 		strbuf_release(&buf);
@@ -213,6 +235,8 @@ struct strbuf_list {
 
 static int format_config(struct strbuf *buf, const char *key_, const char *value_)
 {
+	if (show_scope)
+		show_config_scope(buf);
 	if (show_origin)
 		show_config_origin(buf);
 	if (show_keys)
@@ -270,14 +294,63 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
-	if (regexp != NULL &&
-	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+	if (cmd_line_value.mode == regexp &&
+	    (cmd_line_value.do_not_match ^
+	     !!regexec(cmd_line_value.regexp, value_ ? value_ : "",
+		       0, NULL, 0)))
+		return 0;
+	if (cmd_line_value.mode == boolean &&
+	    git_parse_maybe_bool(value_) != cmd_line_value.boolean)
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
 	strbuf_init(&values->items[values->nr], 0);
 
 	return format_config(&values->items[values->nr++], key_, value_);
+}
+
+static int handle_value_regex(const char *regex_)
+{
+	if (!regex_) {
+		cmd_line_value.mode = none;
+		return 0;
+	}
+
+	if (type == TYPE_BOOL) {
+		int boolval = git_parse_maybe_bool(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
+		die(_("value_regex '%s' cannot be canonicalized "
+		      "to a boolean value"), regex_);
+	}
+
+	if (type == TYPE_BOOL_OR_INT) {
+		int boolval = git_parse_maybe_bool_text(regex_);
+		if (boolval >= 0) {
+			cmd_line_value.mode = boolean;
+			cmd_line_value.boolean = boolval;
+			return 0;
+		}
+	}
+
+	cmd_line_value.mode = regexp;
+
+	if (regex_[0] == '!') {
+		cmd_line_value.do_not_match = 1;
+		regex_++;
+	}
+
+	cmd_line_value.regexp = xmalloc(sizeof(*cmd_line_value.regexp));
+	if (regcomp(cmd_line_value.regexp, regex_, REG_EXTENDED)) {
+		error(_("invalid pattern: %s"), regex_);
+		FREE_AND_NULL(cmd_line_value.regexp);
+		return CONFIG_INVALID_PATTERN;
+	}
+
+	return 0;
 }
 
 static int get_value(const char *key_, const char *regex_)
@@ -317,20 +390,9 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	if (regex_) {
-		if (regex_[0] == '!') {
-			do_not_match = 1;
-			regex_++;
-		}
-
-		regexp = (regex_t*)xmalloc(sizeof(regex_t));
-		if (regcomp(regexp, regex_, REG_EXTENDED)) {
-			error(_("invalid pattern: %s"), regex_);
-			FREE_AND_NULL(regexp);
-			ret = CONFIG_INVALID_PATTERN;
-			goto free_strings;
-		}
-	}
+	ret = handle_value_regex(regex_);
+	if (ret)
+		goto free_strings;
 
 	config_with_options(collect_config, &values,
 			    &given_config_source, &config_options);
@@ -361,9 +423,9 @@ free_strings:
 		regfree(key_regexp);
 		free(key_regexp);
 	}
-	if (regexp) {
-		regfree(regexp);
-		free(regexp);
+	if (cmd_line_value.regexp) {
+		regfree(cmd_line_value.regexp);
+		free(cmd_line_value.regexp);
 	}
 
 	return ret;
@@ -622,6 +684,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			!strcmp(given_config_source.file, "-")) {
 		given_config_source.file = NULL;
 		given_config_source.use_stdin = 1;
+		given_config_source.scope = CONFIG_SCOPE_COMMAND;
 	}
 
 	if (use_global_config) {
@@ -637,6 +700,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			 */
 			die(_("$HOME not set"));
 
+		given_config_source.scope = CONFIG_SCOPE_GLOBAL;
+
 		if (access_or_warn(user_config, R_OK, 0) &&
 		    xdg_config && !access_or_warn(xdg_config, R_OK, 0)) {
 			given_config_source.file = xdg_config;
@@ -646,11 +711,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			free(xdg_config);
 		}
 	}
-	else if (use_system_config)
+	else if (use_system_config) {
 		given_config_source.file = git_etc_gitconfig();
-	else if (use_local_config)
+		given_config_source.scope = CONFIG_SCOPE_SYSTEM;
+	} else if (use_local_config) {
 		given_config_source.file = git_pathdup("config");
-	else if (use_worktree_config) {
+		given_config_source.scope = CONFIG_SCOPE_LOCAL;
+	} else if (use_worktree_config) {
 		struct worktree **worktrees = get_worktrees(0);
 		if (repository_format_worktree_config)
 			given_config_source.file = git_pathdup("config.worktree");
@@ -662,12 +729,17 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			      "section in \"git help worktree\" for details"));
 		else
 			given_config_source.file = git_pathdup("config");
+		given_config_source.scope = CONFIG_SCOPE_LOCAL;
 		free_worktrees(worktrees);
 	} else if (given_config_source.file) {
 		if (!is_absolute_path(given_config_source.file) && prefix)
 			given_config_source.file =
 				prefix_filename(prefix, given_config_source.file);
+		given_config_source.scope = CONFIG_SCOPE_COMMAND;
+	} else if (given_config_source.blob) {
+		given_config_source.scope = CONFIG_SCOPE_COMMAND;
 	}
+
 
 	if (respect_includes_opt == -1)
 		config_options.respect_includes = !given_config_source.file;
@@ -678,7 +750,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_options.git_dir = get_git_dir();
 	}
 
-	if (end_null) {
+	if (end_nul) {
 		term = '\0';
 		delim = '\n';
 		key_delim = '\n';
