@@ -188,11 +188,8 @@ struct option *parse_options_concat(struct option *a, struct option *b)
 		b_len++;
 
 	ALLOC_ARRAY(ret, st_add3(a_len, b_len, 1));
-	for (i = 0; i < a_len; i++)
-		ret[i] = a[i];
-	for (i = 0; i < b_len; i++)
-		ret[a_len + i] = b[i];
-	ret[a_len + b_len] = b[b_len]; /* final OPTION_END */
+	COPY_ARRAY(ret, a, a_len);
+	COPY_ARRAY(ret + a_len, b, b_len + 1); /* + 1 for final OPTION_END */
 
 	return ret;
 }
