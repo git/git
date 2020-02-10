@@ -2025,6 +2025,9 @@ class P4Submit(Command, P4UserMap):
         applyPatchCmd = patchcmd + "--check --apply -"
         patch_succeeded = True
 
+        if verbose:
+            print("TryPatch: %s" % tryPatchCmd)
+
         if os.system(tryPatchCmd) != 0:
             fixed_rcs_keywords = False
             patch_succeeded = False
@@ -2064,6 +2067,7 @@ class P4Submit(Command, P4UserMap):
                 print("Retrying the patch with RCS keywords cleaned up")
                 if os.system(tryPatchCmd) == 0:
                     patch_succeeded = True
+                    print("Patch succeesed this time with RCS keywords cleaned")
 
         if not patch_succeeded:
             for f in editedFiles:
