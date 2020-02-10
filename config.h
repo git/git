@@ -42,6 +42,7 @@ enum config_scope {
 	CONFIG_SCOPE_LOCAL,
 	CONFIG_SCOPE_WORKTREE,
 	CONFIG_SCOPE_COMMAND,
+	CONFIG_SCOPE_SUBMODULE,
 };
 const char *config_scope_name(enum config_scope scope);
 

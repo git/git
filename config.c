@@ -3311,6 +3311,8 @@ const char *config_scope_name(enum config_scope scope)
 		return "worktree";
 	case CONFIG_SCOPE_COMMAND:
 		return "command";
+	case CONFIG_SCOPE_SUBMODULE:
+		return "submodule";
 	default:
 		return "unknown";
 	}
