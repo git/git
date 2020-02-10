@@ -73,7 +73,7 @@ struct fsentry {
 
 struct heap_fsentry {
 	struct fsentry ent;
-	char dummy[MAX_PATH];
+	char dummy[MAX_LONG_PATH];
 };
 
 /*
