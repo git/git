@@ -1771,6 +1771,65 @@ test_expect_success '--show-origin blob ref' '
 	test_cmp expect output
 '
 
+test_expect_success '--show-scope with --list' '
+	cat >expect <<-EOF &&
+	global	user.global=true
+	global	user.override=global
+	global	include.path=$INCLUDE_DIR/absolute.include
+	global	user.absolute=include
+	local	user.local=true
+	local	user.override=local
+	local	include.path=../include/relative.include
+	local	user.relative=include
+	command	user.cmdline=true
+	EOF
+	git -c user.cmdline=true config --list --show-scope >output &&
+	test_cmp expect output
+'
+
+test_expect_success !MINGW '--show-scope with --blob' '
+	blob=$(git hash-object -w "$CUSTOM_CONFIG_FILE") &&
+	cat >expect <<-EOF &&
+	command	user.custom=true
+	EOF
+	git config --blob=$blob --show-scope --list >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-scope with --local' '
+	cat >expect <<-\EOF &&
+	local	user.local=true
+	local	user.override=local
+	local	include.path=../include/relative.include
+	EOF
+	git config --local --list --show-scope >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-scope getting a single value' '
+	cat >expect <<-\EOF &&
+	local	true
+	EOF
+	git config --show-scope --get user.local >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-scope with --show-origin' '
+	cat >expect <<-EOF &&
+	global	file:$HOME/.gitconfig	user.global=true
+	global	file:$HOME/.gitconfig	user.override=global
+	global	file:$HOME/.gitconfig	include.path=$INCLUDE_DIR/absolute.include
+	global	file:$INCLUDE_DIR/absolute.include	user.absolute=include
+	local	file:.git/config	user.local=true
+	local	file:.git/config	user.override=local
+	local	file:.git/config	include.path=../include/relative.include
+	local	file:.git/../include/relative.include	user.relative=include
+	command	command line:	user.cmdline=true
+	EOF
+	git -c user.cmdline=true config --list --show-origin --show-scope >output &&
+	test_cmp expect output
+'
+
 test_expect_success '--local requires a repo' '
 	# we expect 128 to ensure that we do not simply
 	# fail to find anything and return code "1"
