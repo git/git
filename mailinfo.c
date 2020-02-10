@@ -570,7 +570,6 @@ static int check_header(struct mailinfo *mi,
 		len = strlen("Content-Type: ");
 		strbuf_add(&sb, line->buf + len, line->len - len);
 		decode_header(mi, &sb);
-		strbuf_insertstr(&sb, 0, "Content-Type: ");
 		handle_content_type(mi, &sb);
 		ret = 1;
 		goto check_header_out;
