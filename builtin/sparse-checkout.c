@@ -462,28 +462,16 @@ static void add_patterns_from_input(struct pattern_list *pl,
 	}
 }
 
-static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
+enum modify_type {
+	REPLACE,
+};
+
+static int modify_pattern_list(int argc, const char **argv, enum modify_type m)
 {
-	struct pattern_list pl;
 	int result;
 	int changed_config = 0;
-
-	static struct option builtin_sparse_checkout_set_options[] = {
-		OPT_BOOL(0, "stdin", &set_opts.use_stdin,
-			 N_("read patterns from standard in")),
-		OPT_END(),
-	};
-
-	repo_read_index(the_repository);
-	require_clean_work_tree(the_repository,
-				N_("set sparse-checkout patterns"), NULL, 1, 0);
-
+	struct pattern_list pl;
 	memset(&pl, 0, sizeof(pl));
-
-	argc = parse_options(argc, argv, prefix,
-			     builtin_sparse_checkout_set_options,
-			     builtin_sparse_checkout_set_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
 
 	add_patterns_from_input(&pl, argc, argv);
 
@@ -500,6 +488,26 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 
 	clear_pattern_list(&pl);
 	return result;
+}
+
+static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
+{
+	static struct option builtin_sparse_checkout_set_options[] = {
+		OPT_BOOL(0, "stdin", &set_opts.use_stdin,
+			 N_("read patterns from standard in")),
+		OPT_END(),
+	};
+
+	repo_read_index(the_repository);
+	require_clean_work_tree(the_repository,
+				N_("set sparse-checkout patterns"), NULL, 1, 0);
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_sparse_checkout_set_options,
+			     builtin_sparse_checkout_set_usage,
+			     PARSE_OPT_KEEP_UNKNOWN);
+
+	return modify_pattern_list(argc, argv, REPLACE);
 }
 
 static int sparse_checkout_disable(int argc, const char **argv)
