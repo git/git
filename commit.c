@@ -993,7 +993,7 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 			strbuf_insert(buf, inspos, gpg_sig_header, gpg_sig_header_len);
 			inspos += gpg_sig_header_len;
 		}
-		strbuf_insert(buf, inspos++, " ", 1);
+		strbuf_insertstr(buf, inspos++, " ");
 		strbuf_insert(buf, inspos, bol, len);
 		inspos += len;
 		copypos += len;

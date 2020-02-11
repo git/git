@@ -398,7 +398,7 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 		return;
 
 	if (line->buf[0] != '/')
-		strbuf_insert(line, 0, "/", 1);
+		strbuf_insertstr(line, 0, "/");
 
 	insert_recursive_pattern(pl, line);
 }
