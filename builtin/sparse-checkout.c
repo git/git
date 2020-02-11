@@ -412,9 +412,58 @@ static struct sparse_checkout_set_opts {
 	int use_stdin;
 } set_opts;
 
-static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
+static void add_patterns_from_input(struct pattern_list *pl,
+				    int argc, const char **argv)
 {
 	int i;
+	if (core_sparse_checkout_cone) {
+		struct strbuf line = STRBUF_INIT;
+
+		hashmap_init(&pl->recursive_hashmap, pl_hashmap_cmp, NULL, 0);
+		hashmap_init(&pl->parent_hashmap, pl_hashmap_cmp, NULL, 0);
+		pl->use_cone_patterns = 1;
+
+		if (set_opts.use_stdin) {
+			struct strbuf unquoted = STRBUF_INIT;
+			while (!strbuf_getline(&line, stdin)) {
+				if (line.buf[0] == '"') {
+					strbuf_reset(&unquoted);
+					if (unquote_c_style(&unquoted, line.buf, NULL))
+						die(_("unable to unquote C-style string '%s'"),
+						line.buf);
+
+					strbuf_swap(&unquoted, &line);
+				}
+
+				strbuf_to_cone_pattern(&line, pl);
+			}
+
+			strbuf_release(&unquoted);
+		} else {
+			for (i = 0; i < argc; i++) {
+				strbuf_setlen(&line, 0);
+				strbuf_addstr(&line, argv[i]);
+				strbuf_to_cone_pattern(&line, pl);
+			}
+		}
+	} else {
+		if (set_opts.use_stdin) {
+			struct strbuf line = STRBUF_INIT;
+
+			while (!strbuf_getline(&line, stdin)) {
+				size_t len;
+				char *buf = strbuf_detach(&line, &len);
+				add_pattern(buf, empty_base, 0, pl, 0);
+			}
+		} else {
+			for (i = 0; i < argc; i++)
+				add_pattern(argv[i], empty_base, 0, pl, 0);
+		}
+	}
+}
+
+static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
+{
 	struct pattern_list pl;
 	int result;
 	int changed_config = 0;
@@ -436,50 +485,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 			     builtin_sparse_checkout_set_usage,
 			     PARSE_OPT_KEEP_UNKNOWN);
 
-	if (core_sparse_checkout_cone) {
-		struct strbuf line = STRBUF_INIT;
-
-		hashmap_init(&pl.recursive_hashmap, pl_hashmap_cmp, NULL, 0);
-		hashmap_init(&pl.parent_hashmap, pl_hashmap_cmp, NULL, 0);
-		pl.use_cone_patterns = 1;
-
-		if (set_opts.use_stdin) {
-			struct strbuf unquoted = STRBUF_INIT;
-			while (!strbuf_getline(&line, stdin)) {
-				if (line.buf[0] == '"') {
-					strbuf_reset(&unquoted);
-					if (unquote_c_style(&unquoted, line.buf, NULL))
-						die(_("unable to unquote C-style string '%s'"),
-						line.buf);
-
-					strbuf_swap(&unquoted, &line);
-				}
-
-				strbuf_to_cone_pattern(&line, &pl);
-			}
-
-			strbuf_release(&unquoted);
-		} else {
-			for (i = 0; i < argc; i++) {
-				strbuf_setlen(&line, 0);
-				strbuf_addstr(&line, argv[i]);
-				strbuf_to_cone_pattern(&line, &pl);
-			}
-		}
-	} else {
-		if (set_opts.use_stdin) {
-			struct strbuf line = STRBUF_INIT;
-
-			while (!strbuf_getline(&line, stdin)) {
-				size_t len;
-				char *buf = strbuf_detach(&line, &len);
-				add_pattern(buf, empty_base, 0, &pl, 0);
-			}
-		} else {
-			for (i = 0; i < argc; i++)
-				add_pattern(argv[i], empty_base, 0, &pl, 0);
-		}
-	}
+	add_patterns_from_input(&pl, argc, argv);
 
 	if (!core_apply_sparse_checkout) {
 		set_config(MODE_ALL_PATTERNS);
