@@ -351,9 +351,10 @@ static inline int skip_header(const struct strbuf *line, const char *hdr,
 {
 	const char *val;
 	if (!skip_iprefix(line->buf, hdr, &val) ||
-	    *val++ != ':' ||
-	    !isspace(*val++))
+	    *val++ != ':')
 		return 0;
+	while (isspace(*val))
+		val++;
 	*outval = val;
 	return 1;
 }
