@@ -497,4 +497,18 @@ test_expect_success BSLASHPSPEC 'pattern-checks: escaped characters' '
 	test_cmp list-expect list-actual
 '
 
+test_expect_success MINGW 'cone mode replaces backslashes with slashes' '
+	git -C repo sparse-checkout set deep\\deeper1 &&
+	cat >expect <<-\EOF &&
+	/*
+	!/*/
+	/deep/
+	!/deep/*/
+	/deep/deeper1/
+	EOF
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	check_files repo a deep &&
+	check_files repo/deep a deeper1
+'
+
 test_done

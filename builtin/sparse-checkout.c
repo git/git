@@ -394,6 +394,9 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 
 	strbuf_trim_trailing_dir_sep(line);
 
+	if (strbuf_normalize_path(line))
+		die(_("could not normalize path %s"), line->buf);
+
 	if (!line->len)
 		return;
 
