@@ -346,11 +346,16 @@ static const char *header[MAX_HDR_PARSED] = {
 	"From","Subject","Date",
 };
 
-static inline int cmp_header(const struct strbuf *line, const char *hdr)
+static inline int skip_header(const struct strbuf *line, const char *hdr,
+			      const char **outval)
 {
-	int len = strlen(hdr);
-	return !strncasecmp(line->buf, hdr, len) && line->len > len &&
-			line->buf[len] == ':' && isspace(line->buf[len + 1]);
+	const char *val;
+	if (!skip_iprefix(line->buf, hdr, &val) ||
+	    *val++ != ':' ||
+	    !isspace(*val++))
+		return 0;
+	*outval = val;
+	return 1;
 }
 
 static int is_format_patch_separator(const char *line, int len)
@@ -547,17 +552,18 @@ static int check_header(struct mailinfo *mi,
 			const struct strbuf *line,
 			struct strbuf *hdr_data[], int overwrite)
 {
-	int i, ret = 0, len;
+	int i, ret = 0;
 	struct strbuf sb = STRBUF_INIT;
+	const char *val;
 
 	/* search for the interesting parts */
 	for (i = 0; header[i]; i++) {
-		int len = strlen(header[i]);
-		if ((!hdr_data[i] || overwrite) && cmp_header(line, header[i])) {
+		if ((!hdr_data[i] || overwrite) &&
+		    skip_header(line, header[i], &val)) {
 			/* Unwrap inline B and Q encoding, and optionally
 			 * normalize the meta information to utf8.
 			 */
-			strbuf_addstr(&sb, line->buf + len + 2);
+			strbuf_addstr(&sb, val);
 			decode_header(mi, &sb);
 			handle_header(&hdr_data[i], &sb);
 			ret = 1;
@@ -566,25 +572,22 @@ static int check_header(struct mailinfo *mi,
 	}
 
 	/* Content stuff */
-	if (cmp_header(line, "Content-Type")) {
-		len = strlen("Content-Type: ");
-		strbuf_addstr(&sb, line->buf + len);
+	if (skip_header(line, "Content-Type", &val)) {
+		strbuf_addstr(&sb, val);
 		decode_header(mi, &sb);
 		handle_content_type(mi, &sb);
 		ret = 1;
 		goto check_header_out;
 	}
-	if (cmp_header(line, "Content-Transfer-Encoding")) {
-		len = strlen("Content-Transfer-Encoding: ");
-		strbuf_addstr(&sb, line->buf + len);
+	if (skip_header(line, "Content-Transfer-Encoding", &val)) {
+		strbuf_addstr(&sb, val);
 		decode_header(mi, &sb);
 		handle_content_transfer_encoding(mi, &sb);
 		ret = 1;
 		goto check_header_out;
 	}
-	if (cmp_header(line, "Message-Id")) {
-		len = strlen("Message-Id: ");
-		strbuf_addstr(&sb, line->buf + len);
+	if (skip_header(line, "Message-Id", &val)) {
+		strbuf_addstr(&sb, val);
 		decode_header(mi, &sb);
 		if (mi->add_message_id)
 			mi->message_id = strbuf_detach(&sb, NULL);
@@ -606,8 +609,9 @@ static int is_inbody_header(const struct mailinfo *mi,
 			    const struct strbuf *line)
 {
 	int i;
+	const char *val;
 	for (i = 0; header[i]; i++)
-		if (!mi->s_hdr_data[i] && cmp_header(line, header[i]))
+		if (!mi->s_hdr_data[i] && skip_header(line, header[i], &val))
 			return 1;
 	return 0;
 }
