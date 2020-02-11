@@ -884,9 +884,13 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 		goto done;
 
 	if (fd >= 0)
-		err = write_packetized_from_fd(fd, process->in);
+		err = write_packetized_from_fd_no_flush(fd, process->in);
 	else
-		err = write_packetized_from_buf(src, len, process->in);
+		err = write_packetized_from_buf_no_flush(src, len, process->in);
+	if (err)
+		goto done;
+
+	err = packet_flush_gently(process->in);
 	if (err)
 		goto done;
 
