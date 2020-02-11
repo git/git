@@ -2405,7 +2405,15 @@ class P4Submit(Command, P4UserMap):
             sys.exit("number of commits (%d) must match number of shelved changelist (%d)" %
                      (len(commits), num_shelves))
 
-        if not run_git_hook("p4-pre-submit"):
+        try:
+            if not run_git_hook("p4-pre-submit"):
+                print("\nThe p4-pre-submit hook failed, aborting the submit.\n\nYou can skip " \
+                    "this pre-submission check by adding\nthe command line option '--no-verify', " \
+                    "however,\nthis will also skip the p4-changelist hook as well.")
+                sys.exit(1)
+        except Exception as e:
+            print("\nThe p4-pre-submit hook failed, aborting the submit.\n\nThe hook failed "\
+                "with the error '{0}'".format(e.message) )
             sys.exit(1)
 
         #
