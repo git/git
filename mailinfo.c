@@ -557,7 +557,7 @@ static int check_header(struct mailinfo *mi,
 			/* Unwrap inline B and Q encoding, and optionally
 			 * normalize the meta information to utf8.
 			 */
-			strbuf_add(&sb, line->buf + len + 2, line->len - len - 2);
+			strbuf_addstr(&sb, line->buf + len + 2);
 			decode_header(mi, &sb);
 			handle_header(&hdr_data[i], &sb);
 			ret = 1;
@@ -568,7 +568,7 @@ static int check_header(struct mailinfo *mi,
 	/* Content stuff */
 	if (cmp_header(line, "Content-Type")) {
 		len = strlen("Content-Type: ");
-		strbuf_add(&sb, line->buf + len, line->len - len);
+		strbuf_addstr(&sb, line->buf + len);
 		decode_header(mi, &sb);
 		handle_content_type(mi, &sb);
 		ret = 1;
@@ -576,7 +576,7 @@ static int check_header(struct mailinfo *mi,
 	}
 	if (cmp_header(line, "Content-Transfer-Encoding")) {
 		len = strlen("Content-Transfer-Encoding: ");
-		strbuf_add(&sb, line->buf + len, line->len - len);
+		strbuf_addstr(&sb, line->buf + len);
 		decode_header(mi, &sb);
 		handle_content_transfer_encoding(mi, &sb);
 		ret = 1;
@@ -584,7 +584,7 @@ static int check_header(struct mailinfo *mi,
 	}
 	if (cmp_header(line, "Message-Id")) {
 		len = strlen("Message-Id: ");
-		strbuf_add(&sb, line->buf + len, line->len - len);
+		strbuf_addstr(&sb, line->buf + len);
 		decode_header(mi, &sb);
 		if (mi->add_message_id)
 			mi->message_id = strbuf_detach(&sb, NULL);
