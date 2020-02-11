@@ -23,7 +23,7 @@ static void print_bloom_filter(struct bloom_filter *filter) {
 	printf("Filter_Length:%d\n", filter->len);
 	printf("Filter_Data:");
 	for (i = 0; i < filter->len; i++){
-		printf("%"PRIx64"|", filter->data[i]);
+		printf("%02x|", filter->data[i]);
 	}
 	printf("\n");
 }
@@ -57,7 +57,7 @@ int cmd__bloom(int argc, const char **argv)
 		struct bloom_filter filter;
 		int i = 2;
 		filter.len =  (settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
-		filter.data = xcalloc(filter.len, sizeof(uint64_t));
+		filter.data = xcalloc(filter.len, sizeof(unsigned char));
 
 		if (!argv[2]){
 			die("at least one input string expected");
