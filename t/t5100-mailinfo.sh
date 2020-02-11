@@ -213,4 +213,19 @@ test_expect_failure 'mailinfo -b separated double [PATCH]' '
 	test z"$subj" = z"Subject: [other] message"
 '
 
+test_expect_success 'mailinfo handles unusual header whitespace' '
+	git mailinfo /dev/null /dev/null >actual <<-\EOF &&
+	From:Real Name <user@example.com>
+	Subject:    extra spaces
+	EOF
+
+	cat >expect <<-\EOF &&
+	Author: Real Name
+	Email: user@example.com
+	Subject: extra spaces
+
+	EOF
+	test_cmp expect actual
+'
+
 test_done
