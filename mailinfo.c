@@ -549,23 +549,36 @@ release_return:
 		mi->input_error = -1;
 }
 
+/*
+ * Returns true if "line" contains a header matching "hdr", in which case "val"
+ * will contain the value of the header with any RFC2047 B and Q encoding
+ * unwrapped, and optionally normalize the meta information to utf8.
+ */
+static int parse_header(const struct strbuf *line,
+			const char *hdr,
+			struct mailinfo *mi,
+			struct strbuf *val)
+{
+	const char *val_str;
+
+	if (!skip_header(line, hdr, &val_str))
+		return 0;
+	strbuf_addstr(val, val_str);
+	decode_header(mi, val);
+	return 1;
+}
+
 static int check_header(struct mailinfo *mi,
 			const struct strbuf *line,
 			struct strbuf *hdr_data[], int overwrite)
 {
 	int i, ret = 0;
 	struct strbuf sb = STRBUF_INIT;
-	const char *val;
 
 	/* search for the interesting parts */
 	for (i = 0; header[i]; i++) {
 		if ((!hdr_data[i] || overwrite) &&
-		    skip_header(line, header[i], &val)) {
-			/* Unwrap inline B and Q encoding, and optionally
-			 * normalize the meta information to utf8.
-			 */
-			strbuf_addstr(&sb, val);
-			decode_header(mi, &sb);
+		    parse_header(line, header[i], mi, &sb)) {
 			handle_header(&hdr_data[i], &sb);
 			ret = 1;
 			goto check_header_out;
@@ -573,23 +586,17 @@ static int check_header(struct mailinfo *mi,
 	}
 
 	/* Content stuff */
-	if (skip_header(line, "Content-Type", &val)) {
-		strbuf_addstr(&sb, val);
-		decode_header(mi, &sb);
+	if (parse_header(line, "Content-Type", mi, &sb)) {
 		handle_content_type(mi, &sb);
 		ret = 1;
 		goto check_header_out;
 	}
-	if (skip_header(line, "Content-Transfer-Encoding", &val)) {
-		strbuf_addstr(&sb, val);
-		decode_header(mi, &sb);
+	if (parse_header(line, "Content-Transfer-Encoding", mi, &sb)) {
 		handle_content_transfer_encoding(mi, &sb);
 		ret = 1;
 		goto check_header_out;
 	}
-	if (skip_header(line, "Message-Id", &val)) {
-		strbuf_addstr(&sb, val);
-		decode_header(mi, &sb);
+	if (parse_header(line, "Message-Id", mi, &sb)) {
 		if (mi->add_message_id)
 			mi->message_id = strbuf_detach(&sb, NULL);
 		ret = 1;
