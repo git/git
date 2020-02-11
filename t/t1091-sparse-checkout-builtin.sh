@@ -141,6 +141,21 @@ test_expect_success 'set sparse-checkout using --stdin' '
 	check_files repo "a folder1 folder2"
 '
 
+test_expect_success 'add to sparse-checkout' '
+	cat repo/.git/info/sparse-checkout >expect &&
+	cat >add <<-\EOF &&
+	pattern1
+	/folder1/
+	pattern2
+	EOF
+	cat add >>expect &&
+	git -C repo sparse-checkout add --stdin <add &&
+	git -C repo sparse-checkout list >actual &&
+	test_cmp expect actual &&
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	check_files repo "a folder1 folder2"
+'
+
 test_expect_success 'cone mode: match patterns' '
 	git -C repo config --worktree core.sparseCheckoutCone true &&
 	rm -rf repo/a repo/folder1 repo/folder2 &&
@@ -219,8 +234,52 @@ test_expect_success 'cone mode: set with nested folders' '
 	test_cmp repo/.git/info/sparse-checkout expect
 '
 
+test_expect_success 'cone mode: add independent path' '
+	git -C repo sparse-checkout set deep/deeper1 &&
+	git -C repo sparse-checkout add folder1 &&
+	cat >expect <<-\EOF &&
+	/*
+	!/*/
+	/deep/
+	!/deep/*/
+	/deep/deeper1/
+	/folder1/
+	EOF
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	check_files repo a deep folder1
+'
+
+test_expect_success 'cone mode: add sibling path' '
+	git -C repo sparse-checkout set deep/deeper1 &&
+	git -C repo sparse-checkout add deep/deeper2 &&
+	cat >expect <<-\EOF &&
+	/*
+	!/*/
+	/deep/
+	!/deep/*/
+	/deep/deeper1/
+	/deep/deeper2/
+	EOF
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	check_files repo a deep
+'
+
+test_expect_success 'cone mode: add parent path' '
+	git -C repo sparse-checkout set deep/deeper1 folder1 &&
+	git -C repo sparse-checkout add deep &&
+	cat >expect <<-\EOF &&
+	/*
+	!/*/
+	/deep/
+	/folder1/
+	EOF
+	test_cmp expect repo/.git/info/sparse-checkout &&
+	check_files repo a deep folder1
+'
+
 test_expect_success 'revert to old sparse-checkout on bad update' '
 	test_when_finished git -C repo reset --hard &&
+	git -C repo sparse-checkout set deep &&
 	echo update >repo/deep/deeper2/a &&
 	cp repo/.git/info/sparse-checkout expect &&
 	test_must_fail git -C repo sparse-checkout set deep/deeper1 2>err &&
