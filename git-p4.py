@@ -26,6 +26,7 @@ import zipfile
 import zlib
 import ctypes
 import errno
+import glob
 
 # support basestring in python3
 try:
@@ -184,6 +185,73 @@ def prompt(prompt_text):
         response = response[0]
         if response in choices:
             return response
+
+def run_git_hook(cmd, param=[]):
+    """Execute a hook if the hook exists."""
+    if verbose:
+        sys.stderr.write("Looking for hook: %s\n" % cmd)
+        sys.stderr.flush()
+
+    hooks_path = gitConfig("core.hooksPath")
+    if len(hooks_path) <= 0:
+        hooks_path = os.path.join(os.environ["GIT_DIR"], "hooks")
+
+    if not isinstance(param, list):
+        param=[param]
+
+    # resolve hook file name, OS depdenent
+    hook_file = os.path.join(hooks_path, cmd)
+    if platform.system() == 'Windows':
+        if not os.path.isfile(hook_file):
+            # look for the file with an extension
+            files = glob.glob(hook_file + ".*")
+            if not files:
+                return True
+            files.sort()
+            hook_file = files.pop()
+            while hook_file.upper().endswith(".SAMPLE"):
+                # The file is a sample hook. We don't want it
+                if len(files) > 0:
+                    hook_file = files.pop()
+                else:
+                    return True
+
+    if not os.path.isfile(hook_file) or not os.access(hook_file, os.X_OK):
+        return True
+
+    return run_hook_command(hook_file, param) == 0
+
+def run_hook_command(cmd, param):
+    """Executes a git hook command
+       cmd = the command line file to be executed. This can be
+       a file that is run by OS association.
+
+       param = a list of parameters to pass to the cmd command
+
+       On windows, the extension is checked to see if it should
+       be run with the Git for Windows Bash shell.  If there
+       is no file extension, the file is deemed a bash shell
+       and will be handed off to sh.exe. Otherwise, Windows
+       will be called with the shell to handle the file assocation.
+
+       For non Windows operating systems, the file is called
+       as an executable.
+    """
+    cli = [cmd] + param
+    use_shell = False
+    if platform.system() == 'Windows':
+        (root,ext) = os.path.splitext(cmd)
+        if ext == "":
+            exe_path = os.environ.get("EXEPATH")
+            if exe_path is None:
+                exe_path = ""
+            else:
+                exe_path = os.path.join(exe_path, "bin")
+            cli = [os.path.join(exe_path, "SH.EXE")] + cli
+        else:
+            use_shell = True
+    return subprocess.call(cli, shell=use_shell)
+
 
 def write_pipe(c, stdin):
     if verbose:
@@ -2337,12 +2405,7 @@ class P4Submit(Command, P4UserMap):
             sys.exit("number of commits (%d) must match number of shelved changelist (%d)" %
                      (len(commits), num_shelves))
 
-        hooks_path = gitConfig("core.hooksPath")
-        if len(hooks_path) <= 0:
-            hooks_path = os.path.join(os.environ.get("GIT_DIR", ".git"), "hooks")
-
-        hook_file = os.path.join(hooks_path, "p4-pre-submit")
-        if os.path.isfile(hook_file) and os.access(hook_file, os.X_OK) and subprocess.call([hook_file]) != 0:
+        if not run_git_hook("p4-pre-submit"):
             sys.exit(1)
 
         #
@@ -4123,7 +4186,6 @@ commands = {
     "branches" : P4Branches,
     "unshelve" : P4Unshelve,
 }
-
 
 def main():
     if len(sys.argv[1:]) == 0:
