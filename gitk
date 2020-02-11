@@ -2072,7 +2072,7 @@ proc makewindow {} {
     global rowctxmenu fakerowmenu mergemax wrapcomment
     global highlight_files gdttype
     global searchstring sstring
-    global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
+    global bgcolor fgcolor bglist fglist diffcolors diffbgcolors selectbgcolor
     global uifgcolor uifgdisabledcolor
     global filesepbgcolor filesepfgcolor
     global mergecolors foundbgcolor currentsearchhitbgcolor
@@ -2433,7 +2433,9 @@ proc makewindow {} {
     $ctext tag conf filesep -font textfontbold -fore $filesepfgcolor -back $filesepbgcolor
     $ctext tag conf hunksep -fore [lindex $diffcolors 2]
     $ctext tag conf d0 -fore [lindex $diffcolors 0]
+    $ctext tag conf d0 -back [lindex $diffbgcolors 0]
     $ctext tag conf dresult -fore [lindex $diffcolors 1]
+    $ctext tag conf dresult -back [lindex $diffbgcolors 1]
     $ctext tag conf m0 -fore [lindex $mergecolors 0]
     $ctext tag conf m1 -fore [lindex $mergecolors 1]
     $ctext tag conf m2 -fore [lindex $mergecolors 2]
@@ -11606,6 +11608,7 @@ proc prefspage_general {notebook} {
 
 proc prefspage_colors {notebook} {
     global NS uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global diffbgcolors
 
     set page [create_prefs_page $notebook.colors]
 
@@ -11628,11 +11631,23 @@ proc prefspage_colors {notebook} {
 	-command [list choosecolor diffcolors 0 $page.diffold [mc "diff old lines"] \
 		      [list $ctext tag conf d0 -foreground]]
     grid x $page.diffoldbut $page.diffold -sticky w
+    label $page.diffoldbg -padx 40 -relief sunk -background [lindex $diffbgcolors 0]
+    ${NS}::button $page.diffoldbgbut -text [mc "Diff: old lines bg"] \
+	-command [list choosecolor diffbgcolors 0 $page.diffoldbg \
+		      [mc "diff old lines bg"] \
+		      [list $ctext tag conf d0 -background]]
+    grid x $page.diffoldbgbut $page.diffoldbg -sticky w
     label $page.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
     ${NS}::button $page.diffnewbut -text [mc "Diff: new lines"] \
 	-command [list choosecolor diffcolors 1 $page.diffnew [mc "diff new lines"] \
 		      [list $ctext tag conf dresult -foreground]]
     grid x $page.diffnewbut $page.diffnew -sticky w
+    label $page.diffnewbg -padx 40 -relief sunk -background [lindex $diffbgcolors 1]
+    ${NS}::button $page.diffnewbgbut -text [mc "Diff: new lines bg"] \
+	-command [list choosecolor diffbgcolors 1 $page.diffnewbg \
+		      [mc "diff new lines bg"] \
+		      [list $ctext tag conf dresult -background]]
+    grid x $page.diffnewbgbut $page.diffnewbg -sticky w
     label $page.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
     ${NS}::button $page.hunksepbut -text [mc "Diff: hunk header"] \
 	-command [list choosecolor diffcolors 2 $page.hunksep \
@@ -12376,7 +12391,8 @@ if {[tk windowingsystem] eq "win32"} {
 	set web_browser "xdg-open"
     }
 }
-set diffcolors {red "#00a000" blue}
+set diffcolors {"#c30000" "#009800" blue}
+set diffbgcolors {"#fff3f3" "#f0fff0"}
 set diffcontext 3
 set mergecolors {red blue "#00ff00" purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
 set ignorespace 0
@@ -12447,7 +12463,7 @@ set config_variables {
     remotebgcolor tagbgcolor tagfgcolor tagoutlinecolor reflinecolor
     filesepbgcolor filesepfgcolor linehoverbgcolor linehoverfgcolor
     linehoveroutlinecolor mainheadcirclecolor workingfilescirclecolor
-    indexcirclecolor circlecolors linkfgcolor circleoutlinecolor
+    indexcirclecolor circlecolors linkfgcolor circleoutlinecolor diffbgcolors
     web_browser
 }
 foreach var $config_variables {
