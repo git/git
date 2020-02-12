@@ -197,9 +197,26 @@ static void NORETURN die_verify_filename(struct repository *r,
  */
 static int looks_like_pathspec(const char *arg)
 {
-	/* anything with a wildcard character */
-	if (!no_wildcard(arg))
-		return 1;
+	const char *p;
+	int escaped = 0;
+
+	/*
+	 * Wildcard characters imply the user is looking to match pathspecs
+	 * that aren't in the filesystem. Note that this doesn't include
+	 * backslash even though it's a glob special; by itself it doesn't
+	 * cause any increase in the match. Likewise ignore backslash-escaped
+	 * wildcard characters.
+	 */
+	for (p = arg; *p; p++) {
+		if (escaped) {
+			escaped = 0;
+		} else if (is_glob_special(*p)) {
+			if (*p == '\\')
+				escaped = 1;
+			else
+				return 1;
+		}
+	}
 
 	/* long-form pathspec magic */
 	if (starts_with(arg, ":("))
