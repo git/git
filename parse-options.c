@@ -419,7 +419,7 @@ static void check_typos(const char *arg, const struct option *options)
 		return;
 
 	if (starts_with(arg, "no-")) {
-		error(_("did you mean `--%s` (with two dashes ?)"), arg);
+		error(_("did you mean `--%s` (with two dashes)?"), arg);
 		exit(129);
 	}
 
@@ -427,7 +427,7 @@ static void check_typos(const char *arg, const struct option *options)
 		if (!options->long_name)
 			continue;
 		if (starts_with(options->long_name, arg)) {
-			error(_("did you mean `--%s` (with two dashes ?)"), arg);
+			error(_("did you mean `--%s` (with two dashes)?"), arg);
 			exit(129);
 		}
 	}
