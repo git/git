@@ -9,8 +9,9 @@
 
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"),
-	N_("git commit-graph write [--object-dir <objdir>] [--append] "
-	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
+	N_("git commit-graph write [--object-dir <objdir>] "
+	   "[--split[=<strategy>]] "
+	   "[--input=<reachable|stdin-packs|stdin-commits|append>] "
 	   "[--[no-]progress] <split options>"),
 	NULL
 };
@@ -21,18 +22,23 @@ static const char * const builtin_commit_graph_verify_usage[] = {
 };
 
 static const char * const builtin_commit_graph_write_usage[] = {
-	N_("git commit-graph write [--object-dir <objdir>] [--append] "
-	   "[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
+	N_("git commit-graph write [--object-dir <objdir>] "
+	   "[--split[=<strategy>]] "
+	   "[--input=<reachable|stdin-packs|stdin-commits|append>] "
 	   "[--[no-]progress] <split options>"),
 	NULL
 };
 
+enum commit_graph_input {
+	COMMIT_GRAPH_INPUT_REACHABLE     = (1 << 1),
+	COMMIT_GRAPH_INPUT_STDIN_PACKS   = (1 << 2),
+	COMMIT_GRAPH_INPUT_STDIN_COMMITS = (1 << 3),
+	COMMIT_GRAPH_INPUT_APPEND        = (1 << 4)
+};
+
 static struct opts_commit_graph {
 	const char *obj_dir;
-	int reachable;
-	int stdin_packs;
-	int stdin_commits;
-	int append;
+	enum commit_graph_input input;
 	int split;
 	int shallow;
 	int progress;
@@ -55,6 +61,28 @@ static struct object_directory *find_odb(struct repository *r,
 	if (!odb)
 		die(_("could not find object directory matching %s"), obj_dir);
 	return odb;
+}
+
+static int option_parse_input(const struct option *opt, const char *arg,
+			      int unset)
+{
+	enum commit_graph_input *to = opt->value;
+	if (unset || !strcmp(arg, "packs")) {
+		*to = 0;
+		return 0;
+	}
+
+	if (!strcmp(arg, "reachable"))
+		*to |= COMMIT_GRAPH_INPUT_REACHABLE;
+	else if (!strcmp(arg, "stdin-packs"))
+		*to |= COMMIT_GRAPH_INPUT_STDIN_PACKS;
+	else if (!strcmp(arg, "stdin-commits"))
+		*to |= COMMIT_GRAPH_INPUT_STDIN_COMMITS;
+	else if (!strcmp(arg, "append"))
+		*to |= COMMIT_GRAPH_INPUT_APPEND;
+	else
+		die(_("unrecognized --input source, %s"), arg);
+	return 0;
 }
 
 static int graph_verify(int argc, const char **argv)
@@ -149,14 +177,21 @@ static int graph_write(int argc, const char **argv)
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
 			N_("dir"),
 			N_("The object directory to store the graph")),
-		OPT_BOOL(0, "reachable", &opts.reachable,
-			N_("start walk at all refs")),
-		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
-			N_("scan pack-indexes listed by stdin for commits")),
-		OPT_BOOL(0, "stdin-commits", &opts.stdin_commits,
-			N_("start walk at commits listed by stdin")),
-		OPT_BOOL(0, "append", &opts.append,
-			N_("include all commits already in the commit-graph file")),
+		OPT_CALLBACK(0, "input", &opts.input, NULL,
+			N_("include commits from this source in the graph"),
+			option_parse_input),
+		OPT_BIT(0, "reachable", &opts.input,
+			N_("start walk at all refs"),
+			COMMIT_GRAPH_INPUT_REACHABLE),
+		OPT_BIT(0, "stdin-packs", &opts.input,
+			N_("scan pack-indexes listed by stdin for commits"),
+			COMMIT_GRAPH_INPUT_STDIN_PACKS),
+		OPT_BIT(0, "stdin-commits", &opts.input,
+			N_("start walk at commits listed by stdin"),
+			COMMIT_GRAPH_INPUT_STDIN_COMMITS),
+		OPT_BIT(0, "append", &opts.input,
+			N_("include all commits already in the commit-graph file"),
+			COMMIT_GRAPH_INPUT_APPEND),
 		OPT_BOOL(0, "progress", &opts.progress, N_("force progress reporting")),
 		OPT_CALLBACK_F(0, "split", &split_opts.flags, NULL,
 			N_("allow writing an incremental commit-graph file"),
@@ -182,11 +217,13 @@ static int graph_write(int argc, const char **argv)
 			     builtin_commit_graph_write_options,
 			     builtin_commit_graph_write_usage, 0);
 
-	if (opts.reachable + opts.stdin_packs + opts.stdin_commits > 1)
-		die(_("use at most one of --reachable, --stdin-commits, or --stdin-packs"));
+	if ((!!(opts.input & COMMIT_GRAPH_INPUT_REACHABLE) +
+	     !!(opts.input & COMMIT_GRAPH_INPUT_STDIN_PACKS) +
+	     !!(opts.input & COMMIT_GRAPH_INPUT_STDIN_COMMITS)) > 1)
+		die(_("use at most one of --input=reachable, --input=stdin-commits, or --input=stdin-packs"));
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
-	if (opts.append)
+	if (opts.input & COMMIT_GRAPH_INPUT_APPEND)
 		flags |= COMMIT_GRAPH_WRITE_APPEND;
 	if (opts.split)
 		flags |= COMMIT_GRAPH_WRITE_SPLIT;
@@ -196,22 +233,22 @@ static int graph_write(int argc, const char **argv)
 	read_replace_refs = 0;
 	odb = find_odb(the_repository, opts.obj_dir);
 
-	if (opts.reachable) {
+	if (opts.input & COMMIT_GRAPH_INPUT_REACHABLE) {
 		if (write_commit_graph_reachable(odb, flags, &split_opts))
 			return 1;
 		return 0;
 	}
 
 	string_list_init(&lines, 0);
-	if (opts.stdin_packs || opts.stdin_commits) {
+	if (opts.input & (COMMIT_GRAPH_INPUT_STDIN_PACKS | COMMIT_GRAPH_INPUT_STDIN_COMMITS)) {
 		struct strbuf buf = STRBUF_INIT;
 
 		while (strbuf_getline(&buf, stdin) != EOF)
 			string_list_append(&lines, strbuf_detach(&buf, NULL));
 
-		if (opts.stdin_packs)
+		if (opts.input & COMMIT_GRAPH_INPUT_STDIN_PACKS)
 			pack_indexes = &lines;
-		if (opts.stdin_commits) {
+		if (opts.input & COMMIT_GRAPH_INPUT_STDIN_COMMITS) {
 			commit_hex = &lines;
 			flags |= COMMIT_GRAPH_WRITE_CHECK_OIDS;
 		}

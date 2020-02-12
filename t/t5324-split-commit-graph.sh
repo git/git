@@ -35,7 +35,7 @@ test_expect_success 'create commits and write commit-graph' '
 		test_commit $i &&
 		git branch commits/$i || return 1
 	done &&
-	git commit-graph write --reachable &&
+	git commit-graph write --input=reachable &&
 	test_path_is_file $infodir/commit-graph &&
 	graph_read_expect 3
 '
