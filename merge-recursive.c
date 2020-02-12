@@ -1712,6 +1712,14 @@ static char *find_path_for_conflict(struct merge_options *opt,
 	return new_path;
 }
 
+/*
+ * Toggle the stage number between "ours" and "theirs" (2 and 3).
+ */
+static inline int flip_stage(int stage)
+{
+	return (2 + 3) - stage;
+}
+
 static int handle_rename_rename_1to2(struct merge_options *opt,
 				     struct rename_conflict_info *ci)
 {
@@ -1756,14 +1764,14 @@ static int handle_rename_rename_1to2(struct merge_options *opt,
 		 * such cases, we should keep the added file around,
 		 * resolving the conflict at that path in its favor.
 		 */
-		add = &ci->ren1->dst_entry->stages[2 ^ 1];
+		add = &ci->ren1->dst_entry->stages[flip_stage(2)];
 		if (is_valid(add)) {
 			if (update_file(opt, 0, add, a->path))
 				return -1;
 		}
 		else
 			remove_file_from_index(opt->repo->index, a->path);
-		add = &ci->ren2->dst_entry->stages[3 ^ 1];
+		add = &ci->ren2->dst_entry->stages[flip_stage(3)];
 		if (is_valid(add)) {
 			if (update_file(opt, 0, add, b->path))
 				return -1;
@@ -1776,7 +1784,7 @@ static int handle_rename_rename_1to2(struct merge_options *opt,
 		 * rename/add collision.  If not, we can write the file out
 		 * to the specified location.
 		 */
-		add = &ci->ren1->dst_entry->stages[2 ^ 1];
+		add = &ci->ren1->dst_entry->stages[flip_stage(2)];
 		if (is_valid(add)) {
 			add->path = mfi.blob.path = a->path;
 			if (handle_file_collision(opt, a->path,
@@ -1797,7 +1805,7 @@ static int handle_rename_rename_1to2(struct merge_options *opt,
 				return -1;
 		}
 
-		add = &ci->ren2->dst_entry->stages[3 ^ 1];
+		add = &ci->ren2->dst_entry->stages[flip_stage(3)];
 		if (is_valid(add)) {
 			add->path = mfi.blob.path = b->path;
 			if (handle_file_collision(opt, b->path,
@@ -1846,7 +1854,7 @@ static int handle_rename_rename_2to1(struct merge_options *opt,
 	path_side_1_desc = xstrfmt("version of %s from %s", path, a->path);
 	path_side_2_desc = xstrfmt("version of %s from %s", path, b->path);
 	ostage1 = ci->ren1->branch == opt->branch1 ? 3 : 2;
-	ostage2 = ostage1 ^ 1;
+	ostage2 = flip_stage(ostage1);
 	ci->ren1->src_entry->stages[ostage1].path = a->path;
 	ci->ren2->src_entry->stages[ostage2].path = b->path;
 	if (merge_mode_and_contents(opt, a, c1,
