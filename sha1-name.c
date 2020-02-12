@@ -908,14 +908,9 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				real_ref, flags, at_time, nth, oid, NULL,
 				&co_time, &co_tz, &co_cnt)) {
 			if (!len) {
-				if (starts_with(real_ref, "refs/heads/")) {
-					str = real_ref + 11;
-					len = strlen(real_ref + 11);
-				} else {
-					/* detached HEAD */
+				if (!skip_prefix(real_ref, "refs/heads/", &str))
 					str = "HEAD";
-					len = 4;
-				}
+				len = strlen(str);
 			}
 			if (at_time) {
 				if (!(flags & GET_OID_QUIETLY)) {
