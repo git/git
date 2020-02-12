@@ -16,6 +16,16 @@ UI, Workflows & Features
  * The command line completion (in contrib/) learned to complete
    subcommands and arguments to "git worktree".
 
+ * Disambiguation logic to tell revisions and pathspec apart has been
+   tweaked so that backslash-escaped glob special characters do not
+   count in the "wildcards are pathspec" rule.
+
+ * One effect of specifying where the GIT_DIR is (either with the
+   environment variable, or with the "git --git-dir=<where> cmd"
+   option) is to disable the repository discovery.  This has been
+   placed a bit more stress in the documentation, as new users often
+   get confused.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -35,6 +45,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Preparation of test scripts for the day when the object names will
    use SHA-256 continues.
+
+ * Warn programmers about pretend_object_file() that allows the code
+   to tentatively use in-core objects.
 
 
 Fixes since v2.25
@@ -116,6 +129,29 @@ Fixes since v2.25
    corrected.
    (merge a9472afb63 pb/recurse-submodule-in-worktree-fix later to maint).
 
+ * Futureproofing a test not to depend on the current implementation
+   detail.
+   (merge b54128bb0b jt/t5616-robustify later to maint).
+
+ * Running "git rm" on a submodule failed unnecessarily when
+   .gitmodules is only cache-dirty, which has been corrected.
+   (merge 7edee32985 dt/submodule-rm-with-stale-cache later to maint).
+
+ * C pedantry ;-) fix.
+   (merge cf82bff73f jk/clang-sanitizer-fixes later to maint).
+
+ * "git grep --no-index" should not get affected by the contents of
+   the .gitmodules file but when "--recurse-submodules" is given or
+   the "submodule.recurse" variable is set, it did.  Now these
+   settings are ignored in the "--no-index" mode.
+   (merge c56c48dd07 pb/do-not-recurse-grep-no-index later to maint).
+
+ * Technical details of the bundle format has been documented.
+   (merge 7378ec90e1 ms/doc-bundle-format later to maint).
+
+ * Unhelpful warning messages during documentation build have been squelched.
+   (merge 30183894ea js/ci-squelch-doc-warning later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge 065027ee1a en/string-list-can-be-custom-sorted later to maint).
@@ -129,3 +165,11 @@ Fixes since v2.25
    (merge 7a2dc95cbc bc/misconception-doc later to maint).
    (merge b441717256 dl/test-must-fail-fixes later to maint).
    (merge d031049da3 mt/sparse-checkout-doc-update later to maint).
+   (merge 145136a95a jc/skip-prefix later to maint).
+   (merge eb31044ff7 jb/multi-pack-index-docfix later to maint).
+   (merge 04e5b3f0b4 km/submodule-doc-use-sm-path later to maint).
+   (merge e469afe158 ma/filter-branch-doc-caret later to maint).
+   (merge 395518cf7a jb/parse-options-message-fix later to maint).
+   (merge 303b3c1c46 es/submodule-fetch-message-fix later to maint).
+   (merge 9299f84921 ma/diff-doc-clarify-regexp-example later to maint).
+   (merge 2b0f19fa7a js/convert-typofix later to maint).
