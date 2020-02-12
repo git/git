@@ -345,7 +345,16 @@ test_incompatible_with_recurse_submodules ()
 }
 
 test_incompatible_with_recurse_submodules --untracked
-test_incompatible_with_recurse_submodules --no-index
+
+test_expect_success 'grep --recurse-submodules --no-index ignores --recurse-submodules' '
+	git grep --recurse-submodules --no-index -e "^(.|.)[\d]" >actual &&
+	cat >expect <<-\EOF &&
+	a:(1|2)d(3|4)
+	submodule/a:(1|2)d(3|4)
+	submodule/sub/a:(1|2)d(3|4)
+	EOF
+	test_cmp expect actual
+'
 
 test_expect_success 'grep --recurse-submodules should pass the pattern type along' '
 	# Fixed
