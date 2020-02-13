@@ -787,10 +787,15 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 	bitmap_git->result = wants_bitmap;
 	bitmap_git->haves = haves_bitmap;
 
+	object_list_free(&wants);
+	object_list_free(&haves);
+
 	return bitmap_git;
 
 cleanup:
 	free_bitmap_index(bitmap_git);
+	object_list_free(&wants);
+	object_list_free(&haves);
 	return NULL;
 }
 
