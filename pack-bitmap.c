@@ -616,9 +616,35 @@ static void show_extended_objects(struct bitmap_index *bitmap_git,
 	}
 }
 
+static void init_type_iterator(struct ewah_iterator *it,
+			       struct bitmap_index *bitmap_git,
+			       enum object_type type)
+{
+	switch (type) {
+	case OBJ_COMMIT:
+		ewah_iterator_init(it, bitmap_git->commits);
+		break;
+
+	case OBJ_TREE:
+		ewah_iterator_init(it, bitmap_git->trees);
+		break;
+
+	case OBJ_BLOB:
+		ewah_iterator_init(it, bitmap_git->blobs);
+		break;
+
+	case OBJ_TAG:
+		ewah_iterator_init(it, bitmap_git->tags);
+		break;
+
+	default:
+		BUG("object type %d not stored by bitmap type index", type);
+		break;
+	}
+}
+
 static void show_objects_for_type(
 	struct bitmap_index *bitmap_git,
-	struct ewah_bitmap *type_filter,
 	enum object_type object_type,
 	show_reachable_fn show_reach)
 {
@@ -633,7 +659,7 @@ static void show_objects_for_type(
 	if (bitmap_git->reuse_objects == bitmap_git->pack->num_objects)
 		return;
 
-	ewah_iterator_init(&it, type_filter);
+	init_type_iterator(&it, bitmap_git, object_type);
 
 	while (i < objects->word_alloc && ewah_iterator_next(&filter, &it)) {
 		eword_t word = objects->words[i] & filter;
@@ -835,14 +861,10 @@ void traverse_bitmap_commit_list(struct bitmap_index *bitmap_git,
 {
 	assert(bitmap_git->result);
 
-	show_objects_for_type(bitmap_git, bitmap_git->commits,
-		OBJ_COMMIT, show_reachable);
-	show_objects_for_type(bitmap_git, bitmap_git->trees,
-		OBJ_TREE, show_reachable);
-	show_objects_for_type(bitmap_git, bitmap_git->blobs,
-		OBJ_BLOB, show_reachable);
-	show_objects_for_type(bitmap_git, bitmap_git->tags,
-		OBJ_TAG, show_reachable);
+	show_objects_for_type(bitmap_git, OBJ_COMMIT, show_reachable);
+	show_objects_for_type(bitmap_git, OBJ_TREE, show_reachable);
+	show_objects_for_type(bitmap_git, OBJ_BLOB, show_reachable);
+	show_objects_for_type(bitmap_git, OBJ_TAG, show_reachable);
 
 	show_extended_objects(bitmap_git, show_reachable);
 }
@@ -857,26 +879,7 @@ static uint32_t count_object_type(struct bitmap_index *bitmap_git,
 	struct ewah_iterator it;
 	eword_t filter;
 
-	switch (type) {
-	case OBJ_COMMIT:
-		ewah_iterator_init(&it, bitmap_git->commits);
-		break;
-
-	case OBJ_TREE:
-		ewah_iterator_init(&it, bitmap_git->trees);
-		break;
-
-	case OBJ_BLOB:
-		ewah_iterator_init(&it, bitmap_git->blobs);
-		break;
-
-	case OBJ_TAG:
-		ewah_iterator_init(&it, bitmap_git->tags);
-		break;
-
-	default:
-		return 0;
-	}
+	init_type_iterator(&it, bitmap_git, type);
 
 	while (i < objects->word_alloc && ewah_iterator_next(&filter, &it)) {
 		eword_t word = objects->words[i++] & filter;
