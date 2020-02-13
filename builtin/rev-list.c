@@ -521,8 +521,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (revs.show_notes)
 		die(_("rev-list does not support display of notes"));
 
-	if (filter_options.choice && use_bitmap_index)
-		die(_("cannot combine --use-bitmap-index with object filtering"));
+	if (filter_options.choice)
+		use_bitmap_index = 0;
 
 	save_commit_buffer = (revs.verbose_header ||
 			      revs.grep_filter.pattern_list ||
