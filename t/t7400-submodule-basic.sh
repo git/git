@@ -55,6 +55,21 @@ test_expect_success 'add aborts on repository with no commits' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'status should ignore inner git repo when not added' '
+	rm -fr inner &&
+	mkdir inner &&
+	(
+		cd inner &&
+		git init &&
+		>t &&
+		git add t &&
+		git commit -m "initial"
+	) &&
+	test_must_fail git submodule status inner 2>output.err &&
+	rm -fr inner &&
+	test_i18ngrep "^error: .*did not match any file(s) known to git" output.err
+'
+
 test_expect_success 'setup - repository in init subdirectory' '
 	mkdir init &&
 	(
@@ -410,6 +425,14 @@ test_expect_success 'init should register submodule url in .git/config' '
 	git config submodule.example.url ./.subrepo &&
 
 	test_cmp expect url
+'
+
+test_expect_success 'status should still be "missing" after initializing' '
+	rm -fr init &&
+	mkdir init &&
+	git submodule status >lines &&
+	rm -fr init &&
+	grep "^-$rev1" lines
 '
 
 test_failure_with_unknown_submodule () {
