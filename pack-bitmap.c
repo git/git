@@ -715,9 +715,19 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 	struct bitmap *wants_bitmap = NULL;
 	struct bitmap *haves_bitmap = NULL;
 
-	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
+	struct bitmap_index *bitmap_git;
+
+	/*
+	 * We can't do pathspec limiting with bitmaps, because we don't know
+	 * which commits are associated with which object changes (let alone
+	 * even which objects are associated with which paths).
+	 */
+	if (revs->prune)
+		return NULL;
+
 	/* try to open a bitmapped pack, but don't parse it yet
 	 * because we may not need to use it */
+	bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 	if (open_pack_bitmap(revs->repo, bitmap_git) < 0)
 		goto cleanup;
 

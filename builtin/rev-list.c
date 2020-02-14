@@ -533,7 +533,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (show_progress)
 		progress = start_delayed_progress(show_progress, 0);
 
-	if (use_bitmap_index && !revs.prune) {
+	if (use_bitmap_index) {
 		if (revs.count && !revs.left_right && !revs.cherry_mark) {
 			uint32_t commit_count;
 			int max_count = revs.max_count;
