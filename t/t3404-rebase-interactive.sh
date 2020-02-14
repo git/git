@@ -1264,13 +1264,26 @@ test_expect_success SHA1 'short SHA-1 setup' '
 test_expect_success SHA1 'short SHA-1 collide' '
 	test_when_finished "reset_rebase && git checkout master" &&
 	git checkout collide &&
+	colliding_sha1=6bcda37 &&
+	test $colliding_sha1 = "$(git rev-parse HEAD | cut -c 1-7)" &&
 	(
 		unset test_tick &&
 		test_tick &&
 		set_fake_editor &&
 		FAKE_COMMIT_MESSAGE="collide2 ac4f2ee" \
-		FAKE_LINES="reword 1 2" git rebase -i HEAD~2
-	)
+		FAKE_LINES="reword 1 break 2" git rebase -i HEAD~2 &&
+		test $colliding_sha1 = "$(git rev-parse HEAD | cut -c 1-7)" &&
+		grep "^pick $colliding_sha1 " \
+			.git/rebase-merge/git-rebase-todo.tmp &&
+		grep "^pick [0-9a-f]\{40\}" \
+			.git/rebase-merge/git-rebase-todo &&
+		grep "^pick [0-9a-f]\{40\}" \
+			.git/rebase-merge/git-rebase-todo.backup &&
+		git rebase --continue
+	) &&
+	collide2="$(git rev-parse HEAD~1 | cut -c 1-4)" &&
+	collide3="$(git rev-parse collide3 | cut -c 1-4)" &&
+	test "$collide2" = "$collide3"
 '
 
 test_expect_success 'respect core.abbrev' '
