@@ -107,6 +107,20 @@ test_expect_success 'clone from bitmapped repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'partial clone from bitmapped repository' '
+	test_config uploadpack.allowfilter true &&
+	git clone --no-local --bare --filter=blob:none . partial-clone.git &&
+	(
+		cd partial-clone.git &&
+		pack=$(echo objects/pack/*.pack) &&
+		git verify-pack -v "$pack" >have &&
+		awk "/blob/ { print \$1 }" <have >blobs &&
+		# we expect this single blob because of the direct ref
+		git rev-parse refs/tags/tagged-blob >expect &&
+		test_cmp expect blobs
+	)
+'
+
 test_expect_success 'setup further non-bitmapped commits' '
 	test_commit_bulk --id=further 10
 '

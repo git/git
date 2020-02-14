@@ -3040,7 +3040,7 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
-	if (!(bitmap_git = prepare_bitmap_walk(revs, NULL)))
+	if (!(bitmap_git = prepare_bitmap_walk(revs, &filter_options)))
 		return -1;
 
 	if (pack_options_allow_reuse() &&
@@ -3419,7 +3419,6 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (filter_options.choice) {
 		if (!pack_to_stdout)
 			die(_("cannot use --filter without --stdout"));
-		use_bitmap_index = 0;
 	}
 
 	/*
