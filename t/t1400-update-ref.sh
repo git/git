@@ -361,55 +361,67 @@ ld="Thu, 26 May 2005 18:43:00 -0500"
 test_expect_success 'Query "master@{May 25 2005}" (before history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{May 25 2005}" >o 2>e &&
-	test $C = $(cat o) &&
-	test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
+	echo "$C" >expect &&
+	test_cmp expect o &&
+	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	test_i18ncmp expect e
 '
 test_expect_success 'Query master@{2005-05-25} (before history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify master@{2005-05-25} >o 2>e &&
-	test $C = $(cat o) &&
-	test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
+	echo "$C" >expect &&
+	test_cmp expect o &&
+	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	test_i18ncmp expect e
 '
 test_expect_success 'Query "master@{May 26 2005 23:31:59}" (1 second before history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
-	test $C = $(cat o) &&
-	test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
+	echo "$C" >expect &&
+	test_cmp expect o &&
+	echo "warning: log for '\''master'\'' only goes back to $ed" >expect &&
+	test_i18ncmp expect e
 '
 test_expect_success 'Query "master@{May 26 2005 23:32:00}" (exactly history start)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
-	test $C = $(cat o) &&
+	echo "$C" >expect &&
+	test_cmp expect o &&
 	test_must_be_empty e
 '
 test_expect_success 'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
-	test $A = $(cat o) &&
+	echo "$A" >expect &&
+	test_cmp expect o &&
 	test_must_be_empty e
 '
 test_expect_success 'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{2005-05-26 23:33:01}" >o 2>e &&
-	test $B = $(cat o) &&
+	echo "$B" >expect &&
+	test_cmp expect o &&
 	test_i18ngrep -F "warning: log for ref $m has gap after $gd" e
 '
 test_expect_success 'Query "master@{2005-05-26 23:38:00}" (middle of history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
-	test $Z = $(cat o) &&
+	echo "$Z" >expect &&
+	test_cmp expect o &&
 	test_must_be_empty e
 '
 test_expect_success 'Query "master@{2005-05-26 23:43:00}" (exact end of history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
-	test $E = $(cat o) &&
+	echo "$E" >expect &&
+	test_cmp expect o &&
 	test_must_be_empty e
 '
 test_expect_success 'Query "master@{2005-05-28}" (past end of history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "master@{2005-05-28}" >o 2>e &&
-	test $D = $(cat o) &&
+	echo "$D" >expect &&
+	test_cmp expect o &&
 	test_i18ngrep -F "warning: log for ref $m unexpectedly ended on $ld" e
 '
 

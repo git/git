@@ -9,10 +9,10 @@ exec </dev/null
 test_did_you_mean ()
 {
 	cat >expected <<-EOF &&
-	fatal: Path '$2$3' $4, but not ${5:-$SQ$3$SQ}.
-	Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
+	fatal: path '$2$3' $4, but not ${5:-$SQ$3$SQ}
+	hint: Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
 	EOF
-	test_cmp expected error
+	test_i18ncmp expected error
 }
 
 HASH_file=
@@ -103,53 +103,53 @@ test_expect_success 'correct relative file objects (6)' '
 
 test_expect_success 'incorrect revision id' '
 	test_must_fail git rev-parse foobar:file.txt 2>error &&
-	grep "Invalid object name '"'"'foobar'"'"'." error &&
-	test_must_fail git rev-parse foobar 2> error &&
+	test_i18ngrep "invalid object name .foobar." error &&
+	test_must_fail git rev-parse foobar 2>error &&
 	test_i18ngrep "unknown revision or path not in the working tree." error
 '
 
 test_expect_success 'incorrect file in sha1:path' '
-	test_must_fail git rev-parse HEAD:nothing.txt 2> error &&
-	grep "fatal: Path '"'"'nothing.txt'"'"' does not exist in '"'"'HEAD'"'"'" error &&
-	test_must_fail git rev-parse HEAD:index-only.txt 2> error &&
-	grep "fatal: Path '"'"'index-only.txt'"'"' exists on disk, but not in '"'"'HEAD'"'"'." error &&
+	test_must_fail git rev-parse HEAD:nothing.txt 2>error &&
+	test_i18ngrep "path .nothing.txt. does not exist in .HEAD." error &&
+	test_must_fail git rev-parse HEAD:index-only.txt 2>error &&
+	test_i18ngrep "path .index-only.txt. exists on disk, but not in .HEAD." error &&
 	(cd subdir &&
-	 test_must_fail git rev-parse HEAD:file2.txt 2> error &&
+	 test_must_fail git rev-parse HEAD:file2.txt 2>error &&
 	 test_did_you_mean HEAD subdir/ file2.txt exists )
 '
 
 test_expect_success 'incorrect file in :path and :N:path' '
-	test_must_fail git rev-parse :nothing.txt 2> error &&
-	grep "fatal: Path '"'"'nothing.txt'"'"' does not exist (neither on disk nor in the index)." error &&
-	test_must_fail git rev-parse :1:nothing.txt 2> error &&
-	grep "Path '"'"'nothing.txt'"'"' does not exist (neither on disk nor in the index)." error &&
-	test_must_fail git rev-parse :1:file.txt 2> error &&
+	test_must_fail git rev-parse :nothing.txt 2>error &&
+	test_i18ngrep "path .nothing.txt. does not exist (neither on disk nor in the index)" error &&
+	test_must_fail git rev-parse :1:nothing.txt 2>error &&
+	test_i18ngrep "path .nothing.txt. does not exist (neither on disk nor in the index)" error &&
+	test_must_fail git rev-parse :1:file.txt 2>error &&
 	test_did_you_mean ":0" "" file.txt "is in the index" "at stage 1" &&
 	(cd subdir &&
-	 test_must_fail git rev-parse :1:file.txt 2> error &&
+	 test_must_fail git rev-parse :1:file.txt 2>error &&
 	 test_did_you_mean ":0" "" file.txt "is in the index" "at stage 1" &&
-	 test_must_fail git rev-parse :file2.txt 2> error &&
+	 test_must_fail git rev-parse :file2.txt 2>error &&
 	 test_did_you_mean ":0" subdir/ file2.txt "is in the index" &&
-	 test_must_fail git rev-parse :2:file2.txt 2> error &&
+	 test_must_fail git rev-parse :2:file2.txt 2>error &&
 	 test_did_you_mean :0 subdir/ file2.txt "is in the index") &&
-	test_must_fail git rev-parse :disk-only.txt 2> error &&
-	grep "fatal: Path '"'"'disk-only.txt'"'"' exists on disk, but not in the index." error
+	test_must_fail git rev-parse :disk-only.txt 2>error &&
+	test_i18ngrep "path .disk-only.txt. exists on disk, but not in the index" error
 '
 
 test_expect_success 'invalid @{n} reference' '
 	test_must_fail git rev-parse master@{99999} >output 2>error &&
 	test_must_be_empty output &&
-	grep "fatal: Log for [^ ]* only has [0-9][0-9]* entries." error  &&
+	test_i18ngrep "log for [^ ]* only has [0-9][0-9]* entries" error  &&
 	test_must_fail git rev-parse --verify master@{99999} >output 2>error &&
 	test_must_be_empty output &&
-	grep "fatal: Log for [^ ]* only has [0-9][0-9]* entries." error
+	test_i18ngrep "log for [^ ]* only has [0-9][0-9]* entries" error
 '
 
 test_expect_success 'relative path not found' '
 	(
 		cd subdir &&
 		test_must_fail git rev-parse HEAD:./nonexistent.txt 2>error &&
-		grep subdir/nonexistent.txt error
+		test_i18ngrep subdir/nonexistent.txt error
 	)
 '
 
@@ -162,7 +162,7 @@ test_expect_success 'relative path outside worktree' '
 test_expect_success 'relative path when cwd is outside worktree' '
 	test_must_fail git --git-dir=.git --work-tree=subdir rev-parse HEAD:./file.txt >output 2>error &&
 	test_must_be_empty output &&
-	grep "relative path syntax can.t be used outside working tree." error
+	test_i18ngrep "relative path syntax can.t be used outside working tree" error
 '
 
 test_expect_success '<commit>:file correctly diagnosed after a pathname' '
