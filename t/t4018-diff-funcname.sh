@@ -106,7 +106,6 @@ do
 		result=success
 	fi
 	test_expect_$result "hunk header: $i" "
-		test_when_finished 'cat actual' &&	# for debugging only
 		git diff -U1 $i >actual &&
 		grep '@@ .* @@.*RIGHT' actual
 	"
