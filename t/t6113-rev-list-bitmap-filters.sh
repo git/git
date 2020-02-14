@@ -21,4 +21,18 @@ test_expect_success 'filters fallback to non-bitmap traversal' '
 	test_cmp expect actual
 '
 
+test_expect_success 'blob:none filter' '
+	git rev-list --objects --filter=blob:none HEAD >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=blob:none HEAD >actual &&
+	test_bitmap_traversal expect actual
+'
+
+test_expect_success 'blob:none filter with specified blob' '
+	git rev-list --objects --filter=blob:none HEAD HEAD:two.t >expect &&
+	git rev-list --use-bitmap-index \
+		     --objects --filter=blob:none HEAD HEAD:two.t >actual &&
+	test_bitmap_traversal expect actual
+'
+
 test_done

@@ -712,6 +712,73 @@ static int in_bitmapped_pack(struct bitmap_index *bitmap_git,
 	return 0;
 }
 
+static struct bitmap *find_tip_blobs(struct bitmap_index *bitmap_git,
+				     struct object_list *tip_objects)
+{
+	struct bitmap *result = bitmap_new();
+	struct object_list *p;
+
+	for (p = tip_objects; p; p = p->next) {
+		int pos;
+
+		if (p->item->type != OBJ_BLOB)
+			continue;
+
+		pos = bitmap_position(bitmap_git, &p->item->oid);
+		if (pos < 0)
+			continue;
+
+		bitmap_set(result, pos);
+	}
+
+	return result;
+}
+
+static void filter_bitmap_blob_none(struct bitmap_index *bitmap_git,
+				    struct object_list *tip_objects,
+				    struct bitmap *to_filter)
+{
+	struct eindex *eindex = &bitmap_git->ext_index;
+	struct bitmap *tips;
+	struct ewah_iterator it;
+	eword_t mask;
+	uint32_t i;
+
+	/*
+	 * The non-bitmap version of this filter never removes
+	 * blobs which the other side specifically asked for,
+	 * so we must match that behavior.
+	 */
+	tips = find_tip_blobs(bitmap_git, tip_objects);
+
+	/*
+	 * We can use the blob type-bitmap to work in whole words
+	 * for the objects that are actually in the bitmapped packfile.
+	 */
+	for (i = 0, init_type_iterator(&it, bitmap_git, OBJ_BLOB);
+	     i < to_filter->word_alloc && ewah_iterator_next(&mask, &it);
+	     i++) {
+		if (i < tips->word_alloc)
+			mask &= ~tips->words[i];
+		to_filter->words[i] &= ~mask;
+	}
+
+	/*
+	 * Clear any blobs that weren't in the packfile (and so would not have
+	 * been caught by the loop above. We'll have to check them
+	 * individually.
+	 */
+	for (i = 0; i < eindex->count; i++) {
+		uint32_t pos = i + bitmap_git->pack->num_objects;
+		if (eindex->objects[i]->type == OBJ_BLOB &&
+		    bitmap_get(to_filter, pos) &&
+		    !bitmap_get(tips, pos))
+			bitmap_unset(to_filter, pos);
+	}
+
+	bitmap_free(tips);
+}
+
 static int filter_bitmap(struct bitmap_index *bitmap_git,
 			 struct object_list *tip_objects,
 			 struct bitmap *to_filter,
@@ -719,6 +786,13 @@ static int filter_bitmap(struct bitmap_index *bitmap_git,
 {
 	if (!filter || filter->choice == LOFC_DISABLED)
 		return 0;
+
+	if (filter->choice == LOFC_BLOB_NONE) {
+		if (bitmap_git)
+			filter_bitmap_blob_none(bitmap_git, tip_objects,
+						to_filter);
+		return 0;
+	}
 
 	/* filter choice not handled */
 	return -1;
