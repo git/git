@@ -108,6 +108,9 @@ static int check_ignore(struct dir_struct *dir,
 			int dtype = DT_UNKNOWN;
 			pattern = last_matching_pattern(dir, &the_index,
 							full_path, &dtype);
+			if (!verbose && pattern &&
+			    pattern->flags & PATTERN_FLAG_NEGATIVE)
+				pattern = NULL;
 		}
 		if (!quiet && (pattern || show_non_matching))
 			output_pattern(pathspec.items[i].original, pattern);
