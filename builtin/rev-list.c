@@ -374,7 +374,10 @@ static inline int parse_missing_action_value(const char *value)
 
 static int try_bitmap_count(struct rev_info *revs)
 {
-	uint32_t commit_count;
+	uint32_t commit_count = 0,
+		 tag_count = 0,
+		 tree_count = 0,
+		 blob_count = 0;
 	int max_count;
 	struct bitmap_index *bitmap_git;
 
@@ -390,6 +393,15 @@ static int try_bitmap_count(struct rev_info *revs)
 		return -1;
 
 	/*
+	 * If we're counting reachable objects, we can't handle a max count of
+	 * commits to traverse, since we don't know which objects go with which
+	 * commit.
+	 */
+	if (revs->max_count >= 0 &&
+	    (revs->tag_objects || revs->tree_objects || revs->blob_objects))
+		return -1;
+
+	/*
 	 * This must be saved before doing any walking, since the revision
 	 * machinery will count it down to zero while traversing.
 	 */
@@ -399,11 +411,14 @@ static int try_bitmap_count(struct rev_info *revs)
 	if (!bitmap_git)
 		return -1;
 
-	count_bitmap_commit_list(bitmap_git, &commit_count, NULL, NULL, NULL);
+	count_bitmap_commit_list(bitmap_git, &commit_count,
+				 revs->tree_objects ? &tree_count : NULL,
+				 revs->blob_objects ? &blob_count : NULL,
+				 revs->tag_objects ? &tag_count : NULL);
 	if (max_count >= 0 && max_count < commit_count)
 		commit_count = max_count;
 
-	printf("%d\n", commit_count);
+	printf("%d\n", commit_count + tree_count + blob_count + tag_count);
 	free_bitmap_index(bitmap_git);
 	return 0;
 }

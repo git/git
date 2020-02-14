@@ -74,6 +74,12 @@ rev_list_tests() {
 		test_cmp expect actual
 	'
 
+	test_expect_success "counting objects via bitmap ($state)" '
+		git rev-list --count --objects HEAD >expect &&
+		git rev-list --use-bitmap-index --count --objects HEAD >actual &&
+		test_cmp expect actual
+	'
+
 	test_expect_success "enumerate --objects ($state)" '
 		git rev-list --objects --use-bitmap-index HEAD >tmp &&
 		cut -d" " -f1 <tmp >tmp2 &&
