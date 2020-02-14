@@ -35,9 +35,15 @@ prepare_test_file () {
 }
 
 apply_patch () {
+	cmd_prefix= &&
+	if test "x$1" = 'x!'
+	then
+		cmd_prefix=test_must_fail &&
+		shift
+	fi &&
 	>target &&
 	sed -e "s|\([ab]\)/file|\1/target|" <patch |
-	git apply "$@"
+	$cmd_prefix git apply "$@"
 }
 
 test_fix () {
@@ -99,7 +105,7 @@ test_expect_success 'whitespace=warn, default rule' '
 
 test_expect_success 'whitespace=error-all, default rule' '
 
-	test_must_fail apply_patch --whitespace=error-all &&
+	apply_patch ! --whitespace=error-all &&
 	test_must_be_empty target
 
 '
