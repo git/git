@@ -1478,7 +1478,7 @@ static int get_next_submodule(struct child_process *cp,
 			    !is_empty_dir(ce->name)) {
 				spf->result = 1;
 				strbuf_addf(err,
-					    _("Could not access submodule '%s'"),
+					    _("Could not access submodule '%s'\n"),
 					    ce->name);
 			}
 		}
