@@ -1220,6 +1220,9 @@ endif
 ifneq ($(filter leak,$(SANITIZERS)),)
 BASIC_CFLAGS += -DSUPPRESS_ANNOTATED_LEAKS
 endif
+ifneq ($(filter address,$(SANITIZERS)),)
+NO_REGEX = NeededForASAN
+endif
 endif
 
 ifndef sysconfdir
