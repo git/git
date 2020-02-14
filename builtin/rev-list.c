@@ -434,18 +434,11 @@ static int try_bitmap_traversal(struct rev_info *revs)
 	if (revs->max_count >= 0)
 		return -1;
 
-	/*
-	 * Our bitmap result will return all objects, and we're not
-	 * yet prepared to show only particular types.
-	 */
-	if (!revs->tag_objects || !revs->tree_objects || !revs->blob_objects)
-		return -1;
-
 	bitmap_git = prepare_bitmap_walk(revs);
 	if (!bitmap_git)
 		return -1;
 
-	traverse_bitmap_commit_list(bitmap_git, &show_object_fast);
+	traverse_bitmap_commit_list(bitmap_git, revs, &show_object_fast);
 	free_bitmap_index(bitmap_git);
 	return 0;
 }

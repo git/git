@@ -39,6 +39,14 @@ test_perf 'pack to file (bitmap)' '
 	git pack-objects --use-bitmap-index --all pack1b </dev/null >/dev/null
 '
 
+test_perf 'rev-list (commits)' '
+	git rev-list --all --use-bitmap-index >/dev/null
+'
+
+test_perf 'rev-list (objects)' '
+	git rev-list --all --use-bitmap-index --objects >/dev/null
+'
+
 test_expect_success 'create partial bitmap state' '
 	# pick a commit to represent the repo tip in the past
 	cutoff=$(git rev-list HEAD~100 -1) &&

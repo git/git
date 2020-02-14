@@ -3054,7 +3054,8 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 		display_progress(progress_state, nr_result);
 	}
 
-	traverse_bitmap_commit_list(bitmap_git, &add_object_entry_from_bitmap);
+	traverse_bitmap_commit_list(bitmap_git, revs,
+				    &add_object_entry_from_bitmap);
 	return 0;
 }
 

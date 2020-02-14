@@ -599,6 +599,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 }
 
 static void show_extended_objects(struct bitmap_index *bitmap_git,
+				  struct rev_info *revs,
 				  show_reachable_fn show_reach)
 {
 	struct bitmap *objects = bitmap_git->result;
@@ -612,6 +613,11 @@ static void show_extended_objects(struct bitmap_index *bitmap_git,
 			continue;
 
 		obj = eindex->objects[i];
+		if ((obj->type == OBJ_BLOB && !revs->blob_objects) ||
+		    (obj->type == OBJ_TREE && !revs->tree_objects) ||
+		    (obj->type == OBJ_TAG && !revs->tag_objects))
+			continue;
+
 		show_reach(&obj->oid, obj->type, 0, eindex->hashes[i], NULL, 0);
 	}
 }
@@ -872,16 +878,20 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 }
 
 void traverse_bitmap_commit_list(struct bitmap_index *bitmap_git,
+				 struct rev_info *revs,
 				 show_reachable_fn show_reachable)
 {
 	assert(bitmap_git->result);
 
 	show_objects_for_type(bitmap_git, OBJ_COMMIT, show_reachable);
-	show_objects_for_type(bitmap_git, OBJ_TREE, show_reachable);
-	show_objects_for_type(bitmap_git, OBJ_BLOB, show_reachable);
-	show_objects_for_type(bitmap_git, OBJ_TAG, show_reachable);
+	if (revs->tree_objects)
+		show_objects_for_type(bitmap_git, OBJ_TREE, show_reachable);
+	if (revs->blob_objects)
+		show_objects_for_type(bitmap_git, OBJ_BLOB, show_reachable);
+	if (revs->tag_objects)
+		show_objects_for_type(bitmap_git, OBJ_TAG, show_reachable);
 
-	show_extended_objects(bitmap_git, show_reachable);
+	show_extended_objects(bitmap_git, revs, show_reachable);
 }
 
 static uint32_t count_object_type(struct bitmap_index *bitmap_git,

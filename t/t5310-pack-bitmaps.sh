@@ -80,6 +80,12 @@ rev_list_tests() {
 		test_cmp expect actual
 	'
 
+	test_expect_success "enumerate commits ($state)" '
+		git rev-list --use-bitmap-index HEAD >actual &&
+		git rev-list HEAD >expect &&
+		test_bitmap_traversal --no-confirm-bitmaps expect actual
+	'
+
 	test_expect_success "enumerate --objects ($state)" '
 		git rev-list --objects --use-bitmap-index HEAD >actual &&
 		git rev-list --objects HEAD >expect &&

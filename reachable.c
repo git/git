@@ -225,7 +225,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
 	bitmap_git = prepare_bitmap_walk(revs);
 	if (bitmap_git) {
-		traverse_bitmap_commit_list(bitmap_git, mark_object_seen);
+		traverse_bitmap_commit_list(bitmap_git, revs, mark_object_seen);
 		free_bitmap_index(bitmap_git);
 		return;
 	}
