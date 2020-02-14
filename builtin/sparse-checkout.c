@@ -13,6 +13,7 @@
 #include "resolve-undo.h"
 #include "unpack-trees.h"
 #include "wt-status.h"
+#include "quote.h"
 
 static const char *empty_base = "";
 
@@ -77,8 +78,10 @@ static int sparse_checkout_list(int argc, const char **argv)
 
 		string_list_sort(&sl);
 
-		for (i = 0; i < sl.nr; i++)
-			printf("%s\n", sl.items[i].string);
+		for (i = 0; i < sl.nr; i++) {
+			quote_c_style(sl.items[i].string, NULL, stdout, 0);
+			printf("\n");
+		}
 
 		return 0;
 	}
@@ -140,6 +143,22 @@ static int update_working_directory(struct pattern_list *pl)
 	return result;
 }
 
+static char *escaped_pattern(char *pattern)
+{
+	char *p = pattern;
+	struct strbuf final = STRBUF_INIT;
+
+	while (*p) {
+		if (is_glob_special(*p))
+			strbuf_addch(&final, '\\');
+
+		strbuf_addch(&final, *p);
+		p++;
+	}
+
+	return strbuf_detach(&final, NULL);
+}
+
 static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 {
 	int i;
@@ -164,10 +183,11 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 	fprintf(fp, "/*\n!/*/\n");
 
 	for (i = 0; i < sl.nr; i++) {
-		char *pattern = sl.items[i].string;
+		char *pattern = escaped_pattern(sl.items[i].string);
 
 		if (strlen(pattern))
 			fprintf(fp, "%s/\n!%s/*/\n", pattern, pattern);
+		free(pattern);
 	}
 
 	string_list_clear(&sl, 0);
@@ -185,8 +205,9 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 	string_list_remove_duplicates(&sl, 0);
 
 	for (i = 0; i < sl.nr; i++) {
-		char *pattern = sl.items[i].string;
+		char *pattern = escaped_pattern(sl.items[i].string);
 		fprintf(fp, "%s/\n", pattern);
+		free(pattern);
 	}
 }
 
@@ -199,6 +220,10 @@ static int write_patterns_and_update(struct pattern_list *pl)
 	int result;
 
 	sparse_filename = get_sparse_checkout_filename();
+
+	if (safe_create_leading_directories(sparse_filename))
+		die(_("failed to create directory for sparse-checkout file"));
+
 	fd = hold_lock_file_for_update(&lk, sparse_filename,
 				      LOCK_DIE_ON_ERROR);
 
@@ -419,8 +444,21 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 		pl.use_cone_patterns = 1;
 
 		if (set_opts.use_stdin) {
-			while (!strbuf_getline(&line, stdin))
+			struct strbuf unquoted = STRBUF_INIT;
+			while (!strbuf_getline(&line, stdin)) {
+				if (line.buf[0] == '"') {
+					strbuf_reset(&unquoted);
+					if (unquote_c_style(&unquoted, line.buf, NULL))
+						die(_("unable to unquote C-style string '%s'"),
+						line.buf);
+
+					strbuf_swap(&unquoted, &line);
+				}
+
 				strbuf_to_cone_pattern(&line, &pl);
+			}
+
+			strbuf_release(&unquoted);
 		} else {
 			for (i = 0; i < argc; i++) {
 				strbuf_setlen(&line, 0);
