@@ -4,7 +4,8 @@
 /**
  * The string_list API offers a data structure and functions to handle
  * sorted and unsorted arrays of strings.  A "sorted" list is one whose
- * entries are sorted by string value in `strcmp()` order.
+ * entries are sorted by string value in the order specified by the `cmp`
+ * member (`strcmp()` by default).
  *
  * The caller:
  *
@@ -209,7 +210,8 @@ struct string_list_item *string_list_append(struct string_list *list, const char
 struct string_list_item *string_list_append_nodup(struct string_list *list, char *string);
 
 /**
- * Sort the list's entries by string value in `strcmp()` order.
+ * Sort the list's entries by string value in order specified by list->cmp
+ * (strcmp() if list->cmp is NULL).
  */
 void string_list_sort(struct string_list *list);
 
