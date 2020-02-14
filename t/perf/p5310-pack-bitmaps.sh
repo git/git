@@ -52,6 +52,11 @@ test_perf 'rev-list count with blob:none' '
 		--filter=blob:none >/dev/null
 '
 
+test_perf 'rev-list count with blob:limit=1k' '
+	git rev-list --use-bitmap-index --count --objects --all \
+		--filter=blob:limit=1k >/dev/null
+'
+
 test_expect_success 'create partial bitmap state' '
 	# pick a commit to represent the repo tip in the past
 	cutoff=$(git rev-list HEAD~100 -1) &&

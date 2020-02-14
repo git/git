@@ -779,6 +779,78 @@ static void filter_bitmap_blob_none(struct bitmap_index *bitmap_git,
 	bitmap_free(tips);
 }
 
+static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
+				     uint32_t pos)
+{
+	struct packed_git *pack = bitmap_git->pack;
+	unsigned long size;
+	struct object_info oi = OBJECT_INFO_INIT;
+
+	oi.sizep = &size;
+
+	if (pos < pack->num_objects) {
+		struct revindex_entry *entry = &pack->revindex[pos];
+		if (packed_object_info(the_repository, pack,
+				       entry->offset, &oi) < 0) {
+			struct object_id oid;
+			nth_packed_object_oid(&oid, pack, entry->nr);
+			die(_("unable to get size of %s"), oid_to_hex(&oid));
+		}
+	} else {
+		struct eindex *eindex = &bitmap_git->ext_index;
+		struct object *obj = eindex->objects[pos - pack->num_objects];
+		if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
+			die(_("unable to get size of %s"), oid_to_hex(&obj->oid));
+	}
+
+	return size;
+}
+
+static void filter_bitmap_blob_limit(struct bitmap_index *bitmap_git,
+				     struct object_list *tip_objects,
+				     struct bitmap *to_filter,
+				     unsigned long limit)
+{
+	struct eindex *eindex = &bitmap_git->ext_index;
+	struct bitmap *tips;
+	struct ewah_iterator it;
+	eword_t mask;
+	uint32_t i;
+
+	tips = find_tip_blobs(bitmap_git, tip_objects);
+
+	for (i = 0, init_type_iterator(&it, bitmap_git, OBJ_BLOB);
+	     i < to_filter->word_alloc && ewah_iterator_next(&mask, &it);
+	     i++) {
+		eword_t word = to_filter->words[i] & mask;
+		unsigned offset;
+
+		for (offset = 0; offset < BITS_IN_EWORD; offset++) {
+			uint32_t pos;
+
+			if ((word >> offset) == 0)
+				break;
+			offset += ewah_bit_ctz64(word >> offset);
+			pos = i * BITS_IN_EWORD + offset;
+
+			if (!bitmap_get(tips, pos) &&
+			    get_size_by_pos(bitmap_git, pos) >= limit)
+				bitmap_unset(to_filter, pos);
+		}
+	}
+
+	for (i = 0; i < eindex->count; i++) {
+		uint32_t pos = i + bitmap_git->pack->num_objects;
+		if (eindex->objects[i]->type == OBJ_BLOB &&
+		    bitmap_get(to_filter, pos) &&
+		    !bitmap_get(tips, pos) &&
+		    get_size_by_pos(bitmap_git, pos) >= limit)
+			bitmap_unset(to_filter, pos);
+	}
+
+	bitmap_free(tips);
+}
+
 static int filter_bitmap(struct bitmap_index *bitmap_git,
 			 struct object_list *tip_objects,
 			 struct bitmap *to_filter,
@@ -791,6 +863,14 @@ static int filter_bitmap(struct bitmap_index *bitmap_git,
 		if (bitmap_git)
 			filter_bitmap_blob_none(bitmap_git, tip_objects,
 						to_filter);
+		return 0;
+	}
+
+	if (filter->choice == LOFC_BLOB_LIMIT) {
+		if (bitmap_git)
+			filter_bitmap_blob_limit(bitmap_git, tip_objects,
+						 to_filter,
+						 filter->blob_limit_value);
 		return 0;
 	}
 
