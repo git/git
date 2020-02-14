@@ -253,11 +253,19 @@ static int finish_object(struct object *obj, const char *name, void *cb_data)
 static void show_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
+	struct rev_info *revs = info->revs;
+
 	if (finish_object(obj, name, cb_data))
 		return;
 	display_progress(progress, ++progress_counter);
 	if (info->flags & REV_LIST_QUIET)
 		return;
+
+	if (revs->count) {
+		revs->count_right++;
+		return;
+	}
+
 	if (arg_show_object_names)
 		show_object_with_name(stdout, obj, name);
 	else
@@ -583,6 +591,11 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	if (revs.show_notes)
 		die(_("rev-list does not support display of notes"));
+
+	if (revs.count &&
+	    (revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
+	    (revs.left_right || revs.cherry_mark))
+		die(_("marked counting is incompatible with --objects"));
 
 	if (filter_options.choice)
 		use_bitmap_index = 0;

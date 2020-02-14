@@ -148,4 +148,16 @@ test_expect_success 'rev-list --end-of-options' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list --count' '
+	count=$(git rev-list --count HEAD) &&
+	git rev-list HEAD >actual &&
+	test_line_count = $count actual
+'
+
+test_expect_success 'rev-list --count --objects' '
+	count=$(git rev-list --count --objects HEAD) &&
+	git rev-list --objects HEAD >actual &&
+	test_line_count = $count actual
+'
+
 test_done
