@@ -1417,6 +1417,7 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 			     struct object_info *oi, unsigned flags)
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
+	struct cached_object *co;
 	struct pack_entry e;
 	int rtype;
 	const struct object_id *real = oid;
@@ -1431,24 +1432,22 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 	if (!oi)
 		oi = &blank_oi;
 
-	if (!(flags & OBJECT_INFO_SKIP_CACHED)) {
-		struct cached_object *co = find_cached_object(real);
-		if (co) {
-			if (oi->typep)
-				*(oi->typep) = co->type;
-			if (oi->sizep)
-				*(oi->sizep) = co->size;
-			if (oi->disk_sizep)
-				*(oi->disk_sizep) = 0;
-			if (oi->delta_base_sha1)
-				hashclr(oi->delta_base_sha1);
-			if (oi->type_name)
-				strbuf_addstr(oi->type_name, type_name(co->type));
-			if (oi->contentp)
-				*oi->contentp = xmemdupz(co->buf, co->size);
-			oi->whence = OI_CACHED;
-			return 0;
-		}
+	co = find_cached_object(real);
+	if (co) {
+		if (oi->typep)
+			*(oi->typep) = co->type;
+		if (oi->sizep)
+			*(oi->sizep) = co->size;
+		if (oi->disk_sizep)
+			*(oi->disk_sizep) = 0;
+		if (oi->delta_base_sha1)
+			hashclr(oi->delta_base_sha1);
+		if (oi->type_name)
+			strbuf_addstr(oi->type_name, type_name(co->type));
+		if (oi->contentp)
+			*oi->contentp = xmemdupz(co->buf, co->size);
+		oi->whence = OI_CACHED;
+		return 0;
 	}
 
 	while (1) {
@@ -1932,8 +1931,7 @@ int repo_has_object_file_with_flags(struct repository *r,
 {
 	if (!startup_info->have_repository)
 		return 0;
-	return oid_object_info_extended(r, oid, NULL,
-					flags | OBJECT_INFO_SKIP_CACHED) >= 0;
+	return oid_object_info_extended(r, oid, NULL, flags) >= 0;
 }
 
 int repo_has_object_file(struct repository *r,
