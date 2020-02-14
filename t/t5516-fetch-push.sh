@@ -1151,7 +1151,7 @@ test_expect_success 'fetch exact SHA1' '
 		# unadvertised objects, so restrict this test to v0.
 
 		# fetching the hidden object should fail by default
-		test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+		test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 			git fetch -v ../testrepo $the_commit:refs/heads/copy 2>err &&
 		test_i18ngrep "Server does not allow request for unadvertised object" err &&
 		test_must_fail git rev-parse --verify refs/heads/copy &&
@@ -1210,7 +1210,7 @@ do
 			cd shallow &&
 			# Some protocol versions (e.g. 2) support fetching
 			# unadvertised objects, so restrict this test to v0.
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 				git fetch --depth=1 ../testrepo/.git $SHA1 &&
 			git --git-dir=../testrepo/.git config uploadpack.allowreachablesha1inwant true &&
 			git fetch --depth=1 ../testrepo/.git $SHA1 &&
@@ -1241,9 +1241,9 @@ do
 			cd shallow &&
 			# Some protocol versions (e.g. 2) support fetching
 			# unadvertised objects, so restrict this test to v0.
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 				git fetch ../testrepo/.git $SHA1_3 &&
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 				git fetch ../testrepo/.git $SHA1_1 &&
 			git --git-dir=../testrepo/.git config uploadpack.allowreachablesha1inwant true &&
 			git fetch ../testrepo/.git $SHA1_1 &&
@@ -1251,7 +1251,7 @@ do
 			test_must_fail git cat-file commit $SHA1_2 &&
 			git fetch ../testrepo/.git $SHA1_2 &&
 			git cat-file commit $SHA1_2 &&
-			test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+			test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 				git fetch ../testrepo/.git $SHA1_3 2>err &&
 			test_i18ngrep "remote error:.*not our ref.*$SHA1_3\$" err
 		)
@@ -1291,7 +1291,7 @@ test_expect_success 'peeled advertisements are not considered ref tips' '
 	git -C testrepo commit --allow-empty -m two &&
 	git -C testrepo tag -m foo mytag HEAD^ &&
 	oid=$(git -C testrepo rev-parse mytag^{commit}) &&
-	test_must_fail env GIT_TEST_PROTOCOL_VERSION= \
+	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 		git fetch testrepo $oid 2>err &&
 	test_i18ngrep "Server does not allow request for unadvertised object" err
 '
