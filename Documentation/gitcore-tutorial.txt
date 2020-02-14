@@ -751,7 +751,7 @@ to it.
 ================================================
 If you make the decision to start your new branch at some
 other point in the history than the current `HEAD`, you can do so by
-just telling 'git checkout' what the base of the checkout would be.
+just telling 'git switch' what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
 ------------
