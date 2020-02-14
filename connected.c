@@ -52,19 +52,28 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		strbuf_release(&idx_file);
 	}
 
-	if (opt->check_refs_only) {
+	if (opt->check_refs_are_promisor_objects_only) {
 		/*
 		 * For partial clones, we don't want to have to do a regular
 		 * connectivity check because we have to enumerate and exclude
 		 * all promisor objects (slow), and then the connectivity check
 		 * itself becomes a no-op because in a partial clone every
 		 * object is a promisor object. Instead, just make sure we
-		 * received the objects pointed to by each wanted ref.
+		 * received, in a promisor packfile, the objects pointed to by
+		 * each wanted ref.
 		 */
 		do {
-			if (!repo_has_object_file_with_flags(the_repository, &oid,
-							     OBJECT_INFO_SKIP_FETCH_OBJECT))
-				return 1;
+			struct packed_git *p;
+
+			for (p = get_all_packs(the_repository); p; p = p->next) {
+				if (!p->pack_promisor)
+					continue;
+				if (find_pack_entry_one(oid.hash, p))
+					goto promisor_pack_found;
+			}
+			return 1;
+promisor_pack_found:
+			;
 		} while (!fn(cb_data, &oid));
 		return 0;
 	}
