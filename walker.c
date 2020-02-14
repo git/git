@@ -261,11 +261,13 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	struct strbuf refname = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 	struct ref_transaction *transaction = NULL;
-	struct object_id *oids = xmalloc(targets * sizeof(struct object_id));
+	struct object_id *oids;
 	char *msg = NULL;
 	int i, ret = -1;
 
 	save_commit_buffer = 0;
+
+	ALLOC_ARRAY(oids, targets);
 
 	if (write_ref) {
 		transaction = ref_transaction_begin(&err);
