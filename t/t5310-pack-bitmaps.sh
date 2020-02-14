@@ -81,13 +81,9 @@ rev_list_tests() {
 	'
 
 	test_expect_success "enumerate --objects ($state)" '
-		git rev-list --objects --use-bitmap-index HEAD >tmp &&
-		cut -d" " -f1 <tmp >tmp2 &&
-		sort <tmp2 >actual &&
-		git rev-list --objects HEAD >tmp &&
-		cut -d" " -f1 <tmp >tmp2 &&
-		sort <tmp2 >expect &&
-		test_cmp expect actual
+		git rev-list --objects --use-bitmap-index HEAD >actual &&
+		git rev-list --objects HEAD >expect &&
+		test_bitmap_traversal expect actual
 	'
 
 	test_expect_success "bitmap --objects handles non-commit objects ($state)" '
