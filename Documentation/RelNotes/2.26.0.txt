@@ -26,6 +26,12 @@ UI, Workflows & Features
    placed a bit more stress in the documentation, as new users often
    get confused.
 
+ * Two help messages given when "git add" notices the user gave it
+   nothing to add have been updated to use advise() API.
+
+ * A new version of fsmonitor-watchman hook has been introduced, to
+   avoid races.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -48,6 +54,37 @@ Performance, Internal Implementation, Development Support etc.
 
  * Warn programmers about pretend_object_file() that allows the code
    to tentatively use in-core objects.
+
+ * The way "git pack-objects" reuses objects stored in existing pack
+   to generate its result has been improved.
+
+ * The transport protocol version 2 becomes the default one.
+
+ * Traditionally, we avoided threaded grep while searching in objects
+   (as opposed to files in the working tree) as accesses to the object
+   layer is not thread-safe.  This limitation is getting lifted.
+
+ * "git rebase -i" (and friends) used to unnecessarily check out the
+   tip of the branch to be rebased, which has been corrected.
+
+ * A low-level API function get_oid(), that accepts various ways to
+   name an object, used to issue end-user facing error messages
+   without l10n, which has been updated to be translatable.
+
+ * Unneeded connectivity check is now disabled in a partial clone when
+   fetching into it.
+
+ * Some rough edges in the sparse-checkout feature, especially around
+   the cone mode, have been cleaned up.
+
+ * The diff-* plumbing family of subcommands now pay attention to the
+   diff.wsErrorHighlight configuration, which has been ignored before;
+   this allows "git add -p" to also show the whitespace problems to
+   the end user.
+
+ * Some codepaths were given a repository instance as a parameter to
+   work in the repository, but passed the_repository instance to its
+   callees, which has been cleaned up (somewhat).
 
 
 Fixes since v2.25
@@ -152,6 +189,39 @@ Fixes since v2.25
  * Unhelpful warning messages during documentation build have been squelched.
    (merge 30183894ea js/ci-squelch-doc-warning later to maint).
 
+ * "git rebase -i" identifies existing commits in its todo file with
+   their abbreviated object name, which could become ambigous as it
+   goes to create new commits, and has a mechanism to avoid ambiguity
+   in the main part of its execution.  A few other cases however were
+   not covered by the protection against ambiguity, which has been
+   corrected.
+   (merge 26027625dd js/rebase-i-with-colliding-hash later to maint).
+
+ * Allow the rebase.missingCommitsCheck configuration to kick in when
+   "rebase --edit-todo" and "rebase --continue" restarts the procedure.
+   (merge 5a5445d878 ag/edit-todo-drop-check later to maint).
+
+ * The way "git submodule status" reports an initialized but not yet
+   populated submodule has not been reimplemented correctly when a
+   part of the "git submodule" command was rewritten in C, which has
+   been corrected.
+   (merge f38c92452d pk/status-of-uncloned-submodule later to maint).
+
+ * The code to automatically shrink the fan-out in the notes tree had
+   an off-by-one bug, which has been killed.
+   (merge dbc27477ff jh/notes-fanout-fix later to maint).
+
+ * The index-pack code now diagnoses a bad input packstream that
+   records the same object twice when it is used as delta base; the
+   code used to declare a software bug when encountering such an
+   input, but it is an input error.
+   (merge a21781011f jk/index-pack-dupfix later to maint).
+
+ * The code to compute the commit-graph has been taught to use a more
+   robust way to tell if two object directories refer to the same
+   thing.
+   (merge a7df60cac8 tb/commit-graph-object-dir later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge 065027ee1a en/string-list-can-be-custom-sorted later to maint).
@@ -173,3 +243,4 @@ Fixes since v2.25
    (merge 303b3c1c46 es/submodule-fetch-message-fix later to maint).
    (merge 9299f84921 ma/diff-doc-clarify-regexp-example later to maint).
    (merge 2b0f19fa7a js/convert-typofix later to maint).
+   (merge 5290d45134 jk/alloc-cleanups later to maint).
