@@ -7,6 +7,14 @@
 #            2007 Trolltech ASA
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
+# pylint: disable=invalid-name,missing-docstring,too-many-arguments,broad-except
+# pylint: disable=no-self-use,wrong-import-position,consider-iterating-dictionary
+# pylint: disable=wrong-import-order,unused-import,too-few-public-methods
+# pylint: disable=too-many-lines,ungrouped-imports,fixme,too-many-locals
+# pylint: disable=line-too-long,bad-whitespace,superfluous-parens
+# pylint: disable=too-many-statements,too-many-instance-attributes
+# pylint: disable=too-many-branches,too-many-nested-blocks
+#
 import sys
 if sys.hexversion < 0x02040000:
     # The limiter is the subprocess module
@@ -161,6 +169,9 @@ def calcDiskFree():
         return st.f_bavail * st.f_frsize
 
 def die(msg):
+    """ Terminate execution. Make sure that any running child processes have been wait()ed for before
+        calling this.
+    """
     if verbose:
         raise Exception(msg)
     else:
@@ -617,6 +628,14 @@ class P4RequestSizeException(P4ServerException):
     def __init__(self, exit_code, p4_result, limit):
         super(P4RequestSizeException, self).__init__(exit_code, p4_result)
         self.limit = limit
+
+class P4CommandException(P4Exception):
+    """ Something went wrong calling p4 which means we have to give up """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
 
 def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
@@ -3539,6 +3558,74 @@ class P4Sync(Command, P4UserMap):
             print("IO error details: {}".format(err))
             print(self.gitError.read())
 
+
+    def importRevisions(self, args, branch_arg_given):
+        changes = []
+
+        if len(self.changesFile) > 0:
+            with open(self.changesFile) as f:
+                output = f.readlines()
+            changeSet = set()
+            for line in output:
+                changeSet.add(int(line))
+
+            for change in changeSet:
+                changes.append(change)
+
+            changes.sort()
+        else:
+            # catch "git p4 sync" with no new branches, in a repo that
+            # does not have any existing p4 branches
+            if len(args) == 0:
+                if not self.p4BranchesInGit:
+                    raise P4CommandException("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.")
+
+                # The default branch is master, unless --branch is used to
+                # specify something else.  Make sure it exists, or complain
+                # nicely about how to use --branch.
+                if not self.detectBranches:
+                    if not branch_exists(self.branch):
+                        if branch_arg_given:
+                            raise P4CommandException("Error: branch %s does not exist." % self.branch)
+                        else:
+                            raise P4CommandException("Error: no branch %s; perhaps specify one with --branch." %
+                                self.branch)
+
+            if self.verbose:
+                print("Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
+                                                          self.changeRange))
+            changes = p4ChangesForPaths(self.depotPaths, self.changeRange, self.changes_block_size)
+
+            if len(self.maxChanges) > 0:
+                changes = changes[:min(int(self.maxChanges), len(changes))]
+
+        if len(changes) == 0:
+            if not self.silent:
+                print("No changes to import!")
+        else:
+            if not self.silent and not self.detectBranches:
+                print("Import destination: %s" % self.branch)
+
+            self.updatedBranches = set()
+
+            if not self.detectBranches:
+                if args:
+                    # start a new branch
+                    self.initialParent = ""
+                else:
+                    # build on a previous revision
+                    self.initialParent = parseRevision(self.branch)
+
+            self.importChanges(changes)
+
+            if not self.silent:
+                print("")
+                if len(self.updatedBranches) > 0:
+                    sys.stdout.write("Updated branches: ")
+                    for b in self.updatedBranches:
+                        sys.stdout.write("%s " % b)
+                    sys.stdout.write("\n")
+
     def openStreams(self):
         self.importProcess = subprocess.Popen(["git", "fast-import"],
                                               stdin=subprocess.PIPE,
@@ -3549,11 +3636,14 @@ class P4Sync(Command, P4UserMap):
         self.gitError = self.importProcess.stderr
 
     def closeStreams(self):
+        if self.gitStream is None:
+            return
         self.gitStream.close()
         if self.importProcess.wait() != 0:
             die("fast-import failed: %s" % self.gitError.read())
         self.gitOutput.close()
         self.gitError.close()
+        self.gitStream = None
 
     def run(self, args):
         if self.importIntoRemotes:
@@ -3737,87 +3827,36 @@ class P4Sync(Command, P4UserMap):
                     b = b[len(self.projectName):]
                 self.createdBranches.add(b)
 
+        p4_check_access()
+
         self.openStreams()
 
-        if revision:
-            self.importHeadRevision(revision)
-        else:
-            changes = []
+        err = None
 
-            if len(self.changesFile) > 0:
-                output = open(self.changesFile).readlines()
-                changeSet = set()
-                for line in output:
-                    changeSet.add(int(line))
-
-                for change in changeSet:
-                    changes.append(change)
-
-                changes.sort()
+        try:
+            if revision:
+                self.importHeadRevision(revision)
             else:
-                # catch "git p4 sync" with no new branches, in a repo that
-                # does not have any existing p4 branches
-                if len(args) == 0:
-                    if not self.p4BranchesInGit:
-                        die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.")
+                self.importRevisions(args, branch_arg_given)
 
-                    # The default branch is master, unless --branch is used to
-                    # specify something else.  Make sure it exists, or complain
-                    # nicely about how to use --branch.
-                    if not self.detectBranches:
-                        if not branch_exists(self.branch):
-                            if branch_arg_given:
-                                die("Error: branch %s does not exist." % self.branch)
-                            else:
-                                die("Error: no branch %s; perhaps specify one with --branch." %
-                                    self.branch)
+            if gitConfigBool("git-p4.importLabels"):
+                self.importLabels = True
 
-                if self.verbose:
-                    print("Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
-                                                              self.changeRange))
-                changes = p4ChangesForPaths(self.depotPaths, self.changeRange, self.changes_block_size)
+            if self.importLabels:
+                p4Labels = getP4Labels(self.depotPaths)
+                gitTags = getGitTags()
 
-                if len(self.maxChanges) > 0:
-                    changes = changes[:min(int(self.maxChanges), len(changes))]
+                missingP4Labels = p4Labels - gitTags
+                self.importP4Labels(self.gitStream, missingP4Labels)
 
-            if len(changes) == 0:
-                if not self.silent:
-                    print("No changes to import!")
-            else:
-                if not self.silent and not self.detectBranches:
-                    print("Import destination: %s" % self.branch)
+        except P4CommandException as e:
+            err = e
 
-                self.updatedBranches = set()
+        finally:
+            self.closeStreams()
 
-                if not self.detectBranches:
-                    if args:
-                        # start a new branch
-                        self.initialParent = ""
-                    else:
-                        # build on a previous revision
-                        self.initialParent = parseRevision(self.branch)
-
-                self.importChanges(changes)
-
-                if not self.silent:
-                    print("")
-                    if len(self.updatedBranches) > 0:
-                        sys.stdout.write("Updated branches: ")
-                        for b in self.updatedBranches:
-                            sys.stdout.write("%s " % b)
-                        sys.stdout.write("\n")
-
-        if gitConfigBool("git-p4.importLabels"):
-            self.importLabels = True
-
-        if self.importLabels:
-            p4Labels = getP4Labels(self.depotPaths)
-            gitTags = getGitTags()
-
-            missingP4Labels = p4Labels - gitTags
-            self.importP4Labels(self.gitStream, missingP4Labels)
-
-        self.closeStreams()
+        if err:
+            die(str(err))
 
         # Cleanup temporary branches created during import
         if self.tempBranches != []:
