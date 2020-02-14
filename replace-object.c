@@ -34,14 +34,23 @@ static int register_replace_ref(struct repository *r,
 
 void prepare_replace_object(struct repository *r)
 {
-	if (r->objects->replace_map)
+	if (r->objects->replace_map_initialized)
 		return;
+
+	pthread_mutex_lock(&r->objects->replace_mutex);
+	if (r->objects->replace_map_initialized) {
+		pthread_mutex_unlock(&r->objects->replace_mutex);
+		return;
+	}
 
 	r->objects->replace_map =
 		xmalloc(sizeof(*r->objects->replace_map));
 	oidmap_init(r->objects->replace_map, 0);
 
 	for_each_replace_ref(r, register_replace_ref, NULL);
+	r->objects->replace_map_initialized = 1;
+
+	pthread_mutex_unlock(&r->objects->replace_mutex);
 }
 
 /* We allow "recursive" replacement. Only within reason, though */

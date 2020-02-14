@@ -480,6 +480,7 @@ struct raw_object_store *raw_object_store_new(void)
 	memset(o, 0, sizeof(*o));
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	hashmap_init(&o->pack_map, pack_map_entry_cmp, NULL, 0);
+	pthread_mutex_init(&o->replace_mutex, NULL);
 	return o;
 }
 
@@ -507,6 +508,7 @@ void raw_object_store_clear(struct raw_object_store *o)
 
 	oidmap_free(o->replace_map, 1);
 	FREE_AND_NULL(o->replace_map);
+	pthread_mutex_destroy(&o->replace_mutex);
 
 	free_commit_graph(o->commit_graph);
 	o->commit_graph = NULL;

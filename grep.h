@@ -220,18 +220,5 @@ int grep_threads_ok(const struct grep_opt *opt);
  */
 extern int grep_use_locks;
 extern pthread_mutex_t grep_attr_mutex;
-extern pthread_mutex_t grep_read_mutex;
-
-static inline void grep_read_lock(void)
-{
-	if (grep_use_locks)
-		pthread_mutex_lock(&grep_read_mutex);
-}
-
-static inline void grep_read_unlock(void)
-{
-	if (grep_use_locks)
-		pthread_mutex_unlock(&grep_read_mutex);
-}
 
 #endif
