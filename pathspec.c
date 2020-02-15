@@ -439,7 +439,8 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 		match = prefix_path_gently(prefix, prefixlen,
 					   &prefixlen, copyfrom);
 		if (!match)
-			die(_("%s: '%s' is outside repository"), elt, copyfrom);
+			die(_("%s: '%s' is outside repository at '%s'"), elt,
+			    copyfrom, absolute_path(get_git_work_tree()));
 	}
 
 	item->match = match;
