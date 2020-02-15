@@ -199,11 +199,11 @@ test_expect_success 'rebase --merge describes parent of commit being picked' '
 	)
 '
 
-test_expect_success 'rebase --am describes fake ancestor base' '
+test_expect_success 'rebase --apply describes fake ancestor base' '
 	(
 		cd rebase &&
 		git rebase --abort &&
-		test_must_fail git -c merge.conflictstyle=diff3 rebase --am master &&
+		test_must_fail git -c merge.conflictstyle=diff3 rebase --apply master &&
 		grep "||||||| constructed merge base" file
 	)
 '
