@@ -315,7 +315,7 @@ See also INCOMPATIBLE OPTIONS below.
 --merge::
 	Use merging strategies to rebase.  When the recursive (default) merge
 	strategy is used, this allows rebase to be aware of renames on the
-	upstream side.
+	upstream side.  This is the default.
 +
 Note that a rebase merge works by replaying each commit from the working
 branch on top of the <upstream> branch.  Because of this, when a merge
@@ -682,6 +682,17 @@ while the merge/interactive backend has.  However, this was by
 accident of implementation rather than by design.  Both backends
 should have the same behavior, though it is not clear which one is
 correct.
+
+Interruptability
+~~~~~~~~~~~~~~~~
+
+The am backend has safety problems with an ill-timed interrupt; if the
+user presses Ctrl-C at the wrong time to try to abort the rebase, the
+rebase can enter a state where it cannot be aborted with a subsequent
+`git rebase --abort`.  The interactive backend does not appear to
+suffer from the same shortcoming.  (See
+https://lore.kernel.org/git/20200207132152.GC2868@szeder.dev/ for
+details.)
 
 Miscellaneous differences
 ~~~~~~~~~~~~~~~~~~~~~~~~~
