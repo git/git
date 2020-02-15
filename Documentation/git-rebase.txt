@@ -259,10 +259,13 @@ See also INCOMPATIBLE OPTIONS below.
 	unchanged as a result.
 
 --keep-empty::
-	Keep the commits that do not change anything from its
-	parents in the result.
+	No-op.  Rebasing commits that started empty (had no change
+	relative to their parent) used to fail and this option would
+	override that behavior, allowing commits with empty changes to
+	be rebased.  Now commits with no changes do not cause rebasing
+	to halt.
 +
-See also INCOMPATIBLE OPTIONS below.
+See also BEHAVIORAL DIFFERENCES and INCOMPATIBLE OPTIONS below.
 
 --allow-empty-message::
 	No-op.  Rebasing commits with an empty message used to fail
@@ -577,15 +580,14 @@ There are some subtle differences how the backends behave.
 Empty commits
 ~~~~~~~~~~~~~
 
-The am backend drops any "empty" commits, regardless of whether the
-commit started empty (had no changes relative to its parent to
-start with) or ended empty (all changes were already applied
-upstream in other commits).
+The am backend unfortunately drops intentionally empty commits, i.e.
+commits that started empty, though these are rare in practice.  It
+also drops commits that become empty and has no option for controlling
+this behavior.
 
-The interactive backend drops commits by default that
-started empty and halts if it hits a commit that ended up empty.
-The `--keep-empty` option exists for the interactive backend to allow
-it to keep commits that started empty.
+The interactive backend keeps intentionally empty commits.
+Unfortunately, it always halts whenever it runs across a commit that
+becomes empty, even when the rebase is not explicitly interactive.
 
 Directory rename detection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
