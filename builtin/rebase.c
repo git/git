@@ -50,8 +50,16 @@ enum rebase_type {
 	REBASE_PRESERVE_MERGES
 };
 
+enum empty_type {
+	EMPTY_UNSPECIFIED = -1,
+	EMPTY_DROP,
+	EMPTY_KEEP,
+	EMPTY_ASK
+};
+
 struct rebase_options {
 	enum rebase_type type;
+	enum empty_type empty;
 	const char *state_dir;
 	struct commit *upstream;
 	const char *upstream_name;
@@ -91,6 +99,7 @@ struct rebase_options {
 
 #define REBASE_OPTIONS_INIT {			  	\
 		.type = REBASE_UNSPECIFIED,	  	\
+		.empty = EMPTY_UNSPECIFIED,	  	\
 		.flags = REBASE_NO_QUIET, 		\
 		.git_am_opts = ARGV_ARRAY_INIT,		\
 		.git_format_patch_opt = STRBUF_INIT	\
@@ -109,6 +118,8 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 		replay.allow_rerere_auto = opts->allow_rerere_autoupdate;
 	replay.allow_empty = 1;
 	replay.allow_empty_message = opts->allow_empty_message;
+	replay.drop_redundant_commits = (opts->empty == EMPTY_DROP);
+	replay.keep_redundant_commits = (opts->empty == EMPTY_KEEP);
 	replay.verbose = opts->flags & REBASE_VERBOSE;
 	replay.reschedule_failed_exec = opts->reschedule_failed_exec;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
@@ -444,6 +455,10 @@ static int parse_opt_keep_empty(const struct option *opt, const char *arg,
 
 	BUG_ON_OPT_ARG(arg);
 
+	/*
+	 * If we ever want to remap --keep-empty to --empty=keep, insert:
+	 * 	opts->empty = unset ? EMPTY_UNSPECIFIED : EMPTY_KEEP;
+	 */
 	opts->type = REBASE_INTERACTIVE;
 	return 0;
 }
@@ -1350,6 +1365,29 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 	return 0;
 }
 
+static enum empty_type parse_empty_value(const char *value)
+{
+	if (!strcasecmp(value, "drop"))
+		return EMPTY_DROP;
+	else if (!strcasecmp(value, "keep"))
+		return EMPTY_KEEP;
+	else if (!strcasecmp(value, "ask"))
+		return EMPTY_ASK;
+
+	die(_("unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and \"ask\"."), value);
+}
+
+static int parse_opt_empty(const struct option *opt, const char *arg, int unset)
+{
+	struct rebase_options *options = opt->value;
+	enum empty_type value = parse_empty_value(arg);
+
+	BUG_ON_OPT_NEG(unset);
+
+	options->empty = value;
+	return 0;
+}
+
 static void NORETURN error_on_missing_default_upstream(void)
 {
 	struct branch *current_branch = branch_get(NULL);
@@ -1494,6 +1532,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				 "ignoring them"),
 			      REBASE_PRESERVE_MERGES, PARSE_OPT_HIDDEN),
 		OPT_RERERE_AUTOUPDATE(&options.allow_rerere_autoupdate),
+		OPT_CALLBACK_F(0, "empty", &options, N_("{drop,keep,ask}"),
+			       N_("how to handle commits that become empty"),
+			       PARSE_OPT_NONEG, parse_opt_empty),
 		{ OPTION_CALLBACK, 'k', "keep-empty", &options, NULL,
 			N_("(DEPRECATED) keep empty commits"),
 			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN,
@@ -1760,6 +1801,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (!(options.flags & REBASE_NO_QUIET))
 		argv_array_push(&options.git_am_opts, "-q");
 
+	if (options.empty != EMPTY_UNSPECIFIED)
+		imply_interactive(&options, "--empty");
+
 	if (gpg_sign) {
 		free(options.gpg_sign_opt);
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
@@ -1843,6 +1887,14 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
+	if (options.empty == EMPTY_UNSPECIFIED) {
+		if (options.flags & REBASE_INTERACTIVE_EXPLICIT)
+			options.empty = EMPTY_ASK;
+		else if (exec.nr > 0)
+			options.empty = EMPTY_KEEP;
+		else
+			options.empty = EMPTY_DROP;
+	}
 	if (reschedule_failed_exec > 0 && !is_interactive(&options))
 		die(_("--reschedule-failed-exec requires "
 		      "--exec or --interactive"));

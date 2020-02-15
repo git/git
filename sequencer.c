@@ -158,6 +158,8 @@ static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
 static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedule-failed-exec")
+static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
+static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
 
 static int git_sequencer_config(const char *k, const char *v, void *cb)
 {
@@ -1483,7 +1485,11 @@ static int is_original_commit_empty(struct commit *commit)
 }
 
 /*
- * Do we run "git commit" with "--allow-empty"?
+ * Should empty commits be allowed?  Return status:
+ *    <0: Error in is_index_unchanged(r) or is_original_commit_empty(commit)
+ *     0: Halt on empty commit
+ *     1: Allow empty commit
+ *     2: Drop empty commit
  */
 static int allow_empty(struct repository *r,
 		       struct replay_opts *opts,
@@ -1492,14 +1498,17 @@ static int allow_empty(struct repository *r,
 	int index_unchanged, originally_empty;
 
 	/*
-	 * Three cases:
+	 * Four cases:
 	 *
 	 * (1) we do not allow empty at all and error out.
 	 *
-	 * (2) we allow ones that were initially empty, but
-	 * forbid the ones that become empty;
+	 * (2) we allow ones that were initially empty, and
+	 *     just drop the ones that become empty
 	 *
-	 * (3) we allow both.
+	 * (3) we allow ones that were initially empty, but
+	 *     halt for the ones that become empty;
+	 *
+	 * (4) we allow both.
 	 */
 	if (!opts->allow_empty)
 		return 0; /* let "git commit" barf as necessary */
@@ -1516,10 +1525,12 @@ static int allow_empty(struct repository *r,
 	originally_empty = is_original_commit_empty(commit);
 	if (originally_empty < 0)
 		return originally_empty;
-	if (!originally_empty)
-		return 0;
-	else
+	if (originally_empty)
 		return 1;
+	else if (opts->drop_redundant_commits)
+		return 2;
+	else
+		return 0;
 }
 
 static struct {
@@ -1730,7 +1741,7 @@ static int do_pick_commit(struct repository *r,
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
 	struct strbuf msgbuf = STRBUF_INIT;
-	int res, unborn = 0, reword = 0, allow;
+	int res, unborn = 0, reword = 0, allow, drop_commit;
 
 	if (opts->no_commit) {
 		/*
@@ -1935,13 +1946,20 @@ static int do_pick_commit(struct repository *r,
 		goto leave;
 	}
 
+	drop_commit = 0;
 	allow = allow_empty(r, opts, commit);
 	if (allow < 0) {
 		res = allow;
 		goto leave;
-	} else if (allow)
+	} else if (allow == 1) {
 		flags |= ALLOW_EMPTY;
-	if (!opts->no_commit) {
+	} else if (allow == 2) {
+		drop_commit = 1;
+		fprintf(stderr,
+			_("dropping %s %s -- patch contents already upstream\n"),
+			oid_to_hex(&commit->object.oid), msg.subject);
+	} /* else allow == 0 and there's nothing special to do */
+	if (!opts->no_commit && !drop_commit) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
 			res = do_commit(r, msg_file, author, opts, flags);
 		else
@@ -2495,6 +2513,12 @@ static int read_populate_opts(struct replay_opts *opts)
 		if (file_exists(rebase_path_reschedule_failed_exec()))
 			opts->reschedule_failed_exec = 1;
 
+		if (file_exists(rebase_path_drop_redundant_commits()))
+			opts->drop_redundant_commits = 1;
+
+		if (file_exists(rebase_path_keep_redundant_commits()))
+			opts->keep_redundant_commits = 1;
+
 		read_strategy_opts(opts, &buf);
 		strbuf_release(&buf);
 
@@ -2574,6 +2598,10 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_gpg_sign_opt(), "-S%s\n", opts->gpg_sign);
 	if (opts->signoff)
 		write_file(rebase_path_signoff(), "--signoff\n");
+	if (opts->drop_redundant_commits)
+		write_file(rebase_path_drop_redundant_commits(), "%s", "");
+	if (opts->keep_redundant_commits)
+		write_file(rebase_path_keep_redundant_commits(), "%s", "");
 	if (opts->reschedule_failed_exec)
 		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 

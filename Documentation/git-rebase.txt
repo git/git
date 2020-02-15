@@ -258,6 +258,24 @@ See also INCOMPATIBLE OPTIONS below.
 	original branch. The index and working tree are also left
 	unchanged as a result.
 
+--empty={drop,keep,ask}::
+	How to handle commits that are not empty to start and are not
+	clean cherry-picks of any upstream commit, but which become
+	empty after rebasing (because they contain a subset of already
+	upstream changes).  With drop (the default), commits that
+	become empty are dropped.  With keep, such commits are kept.
+	With ask (implied by --interactive), the rebase will halt when
+	an empty commit is applied allowing you to choose whether to
+	drop it, edit files more, or just commit the empty changes.
+	Other options, like --exec, will use the default of drop unless
+	-i/--interactive is explicitly specified.
++
+Note that commits which start empty are kept, and commits which are
+clean cherry-picks (as determined by `git log --cherry-mark ...`) are
+always dropped.
++
+See also INCOMPATIBLE OPTIONS below.
+
 --keep-empty::
 	No-op.  Rebasing commits that started empty (had no change
 	relative to their parent) used to fail and this option would
@@ -561,6 +579,7 @@ are incompatible with the following options:
  * --interactive
  * --exec
  * --keep-empty
+ * --empty=
  * --edit-todo
  * --root when used in combination with --onto
 
@@ -569,6 +588,7 @@ In addition, the following pairs of options are incompatible:
  * --preserve-merges and --interactive
  * --preserve-merges and --signoff
  * --preserve-merges and --rebase-merges
+ * --preserve-merges and --empty=
  * --keep-base and --onto
  * --keep-base and --root
 
@@ -585,9 +605,12 @@ commits that started empty, though these are rare in practice.  It
 also drops commits that become empty and has no option for controlling
 this behavior.
 
-The interactive backend keeps intentionally empty commits.
-Unfortunately, it always halts whenever it runs across a commit that
-becomes empty, even when the rebase is not explicitly interactive.
+The interactive backend keeps intentionally empty commits.  Similar to
+the am backend, by default the interactive backend drops commits that
+become empty unless -i/--interactive is specified (in which case it
+stops and asks the user what to do).  The interactive backend also has
+an --empty={drop,keep,ask} option for changing the behavior of
+handling commits that become empty.
 
 Directory rename detection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
