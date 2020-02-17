@@ -15,6 +15,7 @@ SYNOPSIS
 'git stash' branch <branchname> [<stash>]
 'git stash' [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]
 	     [-u|--include-untracked] [-a|--all] [-m|--message <message>]
+	     [--pathspec-from-file=<file> [--pathspec-file-nul]]
 	     [--] [<pathspec>...]]
 'git stash' clear
 'git stash' create [<message>]
@@ -46,7 +47,7 @@ stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 COMMANDS
 --------
 
-push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--] [<pathspec>...]::
+push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--pathspec-from-file=<file> [--pathspec-file-nul]] [--] [<pathspec>...]::
 
 	Save your local modifications to a new 'stash entry' and roll them
 	back to HEAD (in the working tree and in the index).
@@ -193,6 +194,23 @@ to learn how to operate the `--patch` mode.
 +
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
+
+--pathspec-from-file=<file>::
+	This option is only valid for `push` command.
++
+Pathspec is passed in `<file>` instead of commandline args. If
+`<file>` is exactly `-` then standard input is used. Pathspec
+elements are separated by LF or CR/LF. Pathspec elements can be
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+global `--literal-pathspecs`.
+
+--pathspec-file-nul::
+	This option is only valid for `push` command.
++
+Only meaningful with `--pathspec-from-file`. Pathspec elements are
+separated with NUL character and all other characters are taken
+literally (including newlines and quotes).
 
 -q::
 --quiet::

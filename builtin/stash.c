@@ -27,6 +27,7 @@ static const char * const git_stash_usage[] = {
 	N_("git stash clear"),
 	N_("git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+	   "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 	   "          [--] [<pathspec>...]]"),
 	N_("git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [<message>]"),
@@ -1456,7 +1457,9 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 	int patch_mode = 0;
 	int include_untracked = 0;
 	int quiet = 0;
+	int pathspec_file_nul = 0;
 	const char *stash_msg = NULL;
+	const char *pathspec_from_file = NULL;
 	struct pathspec ps;
 	struct option options[] = {
 		OPT_BOOL('k', "keep-index", &keep_index,
@@ -1470,6 +1473,8 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 			    N_("include ignore files"), 2),
 		OPT_STRING('m', "message", &stash_msg, N_("message"),
 			   N_("stash message")),
+		OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
+		OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 		OPT_END()
 	};
 
@@ -1492,6 +1497,21 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 
 	parse_pathspec(&ps, 0, PATHSPEC_PREFER_FULL | PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
+
+	if (pathspec_from_file) {
+		if (patch_mode)
+			die(_("--pathspec-from-file is incompatible with --patch"));
+
+		if (ps.nr)
+			die(_("--pathspec-from-file is incompatible with pathspec arguments"));
+
+		parse_pathspec_file(&ps, 0,
+				    PATHSPEC_PREFER_FULL | PATHSPEC_PREFIX_ORIGIN,
+				    prefix, pathspec_from_file, pathspec_file_nul);
+	} else if (pathspec_file_nul) {
+		die(_("--pathspec-file-nul requires --pathspec-from-file"));
+	}
+
 	return do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
 			     include_untracked);
 }
