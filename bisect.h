@@ -31,7 +31,19 @@ struct rev_list_info {
 	const char *header_prefix;
 };
 
-int bisect_next_all(struct repository *r,
+/*
+ * enum bisect_error represents the following return codes:
+ * BISECT_OK: success code. Internally, it means that next
+ * commit has been found (and possibly checked out) and it
+ * should be tested.
+ * BISECT_FAILED error code: default error code.
+ */
+enum bisect_error {
+	BISECT_OK = 0,
+	BISECT_FAILED = -1
+};
+
+enum bisect_error bisect_next_all(struct repository *r,
 		    const char *prefix,
 		    int no_checkout);
 
