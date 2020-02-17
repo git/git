@@ -254,7 +254,7 @@ static void handle_content_type(struct mailinfo *mi, struct strbuf *line)
 	mi->delsp = has_attr_value(line->buf, "delsp=", "yes");
 
 	if (slurp_attr(line->buf, "boundary=", boundary)) {
-		strbuf_insert(boundary, 0, "--", 2);
+		strbuf_insertstr(boundary, 0, "--");
 		if (++mi->content_top >= &mi->content[MAX_BOUNDARIES]) {
 			error("Too many boundaries to handle");
 			mi->input_error = -1;
@@ -570,7 +570,6 @@ static int check_header(struct mailinfo *mi,
 		len = strlen("Content-Type: ");
 		strbuf_add(&sb, line->buf + len, line->len - len);
 		decode_header(mi, &sb);
-		strbuf_insert(&sb, 0, "Content-Type: ", len);
 		handle_content_type(mi, &sb);
 		ret = 1;
 		goto check_header_out;
