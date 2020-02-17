@@ -253,11 +253,19 @@ static int finish_object(struct object *obj, const char *name, void *cb_data)
 static void show_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
+	struct rev_info *revs = info->revs;
+
 	if (finish_object(obj, name, cb_data))
 		return;
 	display_progress(progress, ++progress_counter);
 	if (info->flags & REV_LIST_QUIET)
 		return;
+
+	if (revs->count) {
+		revs->count_right++;
+		return;
+	}
+
 	if (arg_show_object_names)
 		show_object_with_name(stdout, obj, name);
 	else
@@ -361,6 +369,79 @@ static inline int parse_missing_action_value(const char *value)
 		return 1;
 	}
 
+	return 0;
+}
+
+static int try_bitmap_count(struct rev_info *revs,
+			    struct list_objects_filter_options *filter)
+{
+	uint32_t commit_count = 0,
+		 tag_count = 0,
+		 tree_count = 0,
+		 blob_count = 0;
+	int max_count;
+	struct bitmap_index *bitmap_git;
+
+	/* This function only handles counting, not general traversal. */
+	if (!revs->count)
+		return -1;
+
+	/*
+	 * A bitmap result can't know left/right, etc, because we don't
+	 * actually traverse.
+	 */
+	if (revs->left_right || revs->cherry_mark)
+		return -1;
+
+	/*
+	 * If we're counting reachable objects, we can't handle a max count of
+	 * commits to traverse, since we don't know which objects go with which
+	 * commit.
+	 */
+	if (revs->max_count >= 0 &&
+	    (revs->tag_objects || revs->tree_objects || revs->blob_objects))
+		return -1;
+
+	/*
+	 * This must be saved before doing any walking, since the revision
+	 * machinery will count it down to zero while traversing.
+	 */
+	max_count = revs->max_count;
+
+	bitmap_git = prepare_bitmap_walk(revs, filter);
+	if (!bitmap_git)
+		return -1;
+
+	count_bitmap_commit_list(bitmap_git, &commit_count,
+				 revs->tree_objects ? &tree_count : NULL,
+				 revs->blob_objects ? &blob_count : NULL,
+				 revs->tag_objects ? &tag_count : NULL);
+	if (max_count >= 0 && max_count < commit_count)
+		commit_count = max_count;
+
+	printf("%d\n", commit_count + tree_count + blob_count + tag_count);
+	free_bitmap_index(bitmap_git);
+	return 0;
+}
+
+static int try_bitmap_traversal(struct rev_info *revs,
+				struct list_objects_filter_options *filter)
+{
+	struct bitmap_index *bitmap_git;
+
+	/*
+	 * We can't use a bitmap result with a traversal limit, since the set
+	 * of commits we'd get would be essentially random.
+	 */
+	if (revs->max_count >= 0)
+		return -1;
+
+	bitmap_git = prepare_bitmap_walk(revs, filter);
+	if (!bitmap_git)
+		return -1;
+
+	traverse_bitmap_commit_list(bitmap_git, revs, &show_object_fast);
+	free_bitmap_index(bitmap_git);
 	return 0;
 }
 
@@ -521,8 +602,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (revs.show_notes)
 		die(_("rev-list does not support display of notes"));
 
-	if (filter_options.choice && use_bitmap_index)
-		die(_("cannot combine --use-bitmap-index with object filtering"));
+	if (revs.count &&
+	    (revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
+	    (revs.left_right || revs.cherry_mark))
+		die(_("marked counting is incompatible with --objects"));
 
 	save_commit_buffer = (revs.verbose_header ||
 			      revs.grep_filter.pattern_list ||
@@ -533,28 +616,11 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (show_progress)
 		progress = start_delayed_progress(show_progress, 0);
 
-	if (use_bitmap_index && !revs.prune) {
-		if (revs.count && !revs.left_right && !revs.cherry_mark) {
-			uint32_t commit_count;
-			int max_count = revs.max_count;
-			struct bitmap_index *bitmap_git;
-			if ((bitmap_git = prepare_bitmap_walk(&revs))) {
-				count_bitmap_commit_list(bitmap_git, &commit_count, NULL, NULL, NULL);
-				if (max_count >= 0 && max_count < commit_count)
-					commit_count = max_count;
-				printf("%d\n", commit_count);
-				free_bitmap_index(bitmap_git);
-				return 0;
-			}
-		} else if (revs.max_count < 0 &&
-			   revs.tag_objects && revs.tree_objects && revs.blob_objects) {
-			struct bitmap_index *bitmap_git;
-			if ((bitmap_git = prepare_bitmap_walk(&revs))) {
-				traverse_bitmap_commit_list(bitmap_git, &show_object_fast);
-				free_bitmap_index(bitmap_git);
-				return 0;
-			}
-		}
+	if (use_bitmap_index) {
+		if (!try_bitmap_count(&revs, &filter_options))
+			return 0;
+		if (!try_bitmap_traversal(&revs, &filter_options))
+			return 0;
 	}
 
 	if (prepare_revision_walk(&revs))

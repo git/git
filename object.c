@@ -308,6 +308,15 @@ int object_list_contains(struct object_list *list, struct object *obj)
 	return 0;
 }
 
+void object_list_free(struct object_list **list)
+{
+	while (*list) {
+		struct object_list *p = *list;
+		*list = p->next;
+		free(p);
+	}
+}
+
 /*
  * A zero-length string to which object_array_entry::name can be
  * initialized without requiring a malloc/free.

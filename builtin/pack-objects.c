@@ -3184,7 +3184,7 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
-	if (!(bitmap_git = prepare_bitmap_walk(revs)))
+	if (!(bitmap_git = prepare_bitmap_walk(revs, &filter_options)))
 		return -1;
 
 	if (pack_options_allow_reuse() &&
@@ -3198,7 +3198,8 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 		display_progress(progress_state, nr_result);
 	}
 
-	traverse_bitmap_commit_list(bitmap_git, &add_object_entry_from_bitmap);
+	traverse_bitmap_commit_list(bitmap_git, revs,
+				    &add_object_entry_from_bitmap);
 	return 0;
 }
 
@@ -3562,7 +3563,6 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (filter_options.choice) {
 		if (!pack_to_stdout)
 			die(_("cannot use --filter without --stdout"));
-		use_bitmap_index = 0;
 	}
 
 	/*
