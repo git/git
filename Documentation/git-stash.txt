@@ -194,6 +194,18 @@ to learn how to operate the `--patch` mode.
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
+-q::
+--quiet::
+	This option is only valid for `apply`, `drop`, `pop`, `push`,
+	`save`, `store` commands.
++
+Quiet, suppress feedback messages.
+
+\--::
+	This option is only valid for `push` command.
++
+Separates pathspec from options for disambiguation purposes.
+
 <pathspec>...::
 	This option is only valid for `push` command.
 +
