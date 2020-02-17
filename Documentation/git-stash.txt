@@ -43,8 +43,8 @@ created stash, `stash@{1}` is the one before it, `stash@{2.hours.ago}`
 is also possible). Stashes may also be referenced by specifying just the
 stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 
-OPTIONS
--------
+COMMANDS
+--------
 
 push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--] [<pathspec>...]::
 
@@ -86,7 +86,7 @@ show [<options>] [<stash>]::
 
 	Show the changes recorded in the stash entry as a diff between the
 	stashed contents and the commit back when the stash entry was first
-	created. When no `<stash>` is given, it shows the latest one.
+	created.
 	By default, the command shows the diffstat, but it will accept any
 	format known to 'git diff' (e.g., `git stash show -p stash@{1}`
 	to view the second most recent entry in patch form).
@@ -116,8 +116,7 @@ branch <branchname> [<stash>]::
 	the commit at which the `<stash>` was originally created, applies the
 	changes recorded in `<stash>` to the new working tree and index.
 	If that succeeds, and `<stash>` is a reference of the form
-	`stash@{<revision>}`, it then drops the `<stash>`. When no `<stash>`
-	is given, applies the latest one.
+	`stash@{<revision>}`, it then drops the `<stash>`.
 +
 This is useful if the branch on which you ran `git stash push` has
 changed enough that `git stash apply` fails due to conflicts. Since
@@ -133,9 +132,6 @@ clear::
 drop [-q|--quiet] [<stash>]::
 
 	Remove a single stash entry from the list of stash entries.
-	When no `<stash>` is given, it removes the latest one.
-	i.e. `stash@{0}`, otherwise `<stash>` must be a valid stash
-	log reference of the form `stash@{<revision>}`.
 
 create::
 
@@ -152,40 +148,66 @@ store::
 	reflog.  This is intended to be useful for scripts.  It is
 	probably not the command you want to use; see "push" above.
 
-If the `--all` option is used instead then the
-ignored files are stashed and cleaned in addition to the untracked files.
+OPTIONS
+-------
+-a::
+--all::
+	This option is only valid for `push` and `save` commands.
++
+All ignored and untracked files are also stashed and then cleaned
+up with `git clean`.
 
-If the `--include-untracked` option is used, all untracked files are also
-stashed and then cleaned up with `git clean`, leaving the working directory
-in a very clean state.
+-u::
+--include-untracked::
+	This option is only valid for `push` and `save` commands.
++
+All untracked files are also stashed and then cleaned up with
+`git clean`.
 
-If the `--index` option is used, then tries to reinstate not only the working
-tree's changes, but also the index's ones. However, this can fail, when you
-have conflicts (which are stored in the index, where you therefore can no
-longer apply the changes as they were originally).
+--index::
+	This option is only valid for `pop` and `apply` commands.
++
+Tries to reinstate not only the working tree's changes, but also
+the index's ones. However, this can fail, when you have conflicts
+(which are stored in the index, where you therefore can no longer
+apply the changes as they were originally).
 
-If the `--keep-index` option is used, all changes already added to the
-index are left intact.
+-k::
+--keep-index::
+--no-keep-index::
+	This option is only valid for `push` and `save` commands.
++
+All changes already added to the index are left intact.
 
-With `--patch`, you can interactively select hunks from the diff
-between HEAD and the working tree to be stashed.  The stash entry is
-constructed such that its index state is the same as the index state
-of your repository, and its worktree contains only the changes you
-selected interactively.  The selected changes are then rolled back
-from your worktree. See the ``Interactive Mode'' section of
-linkgit:git-add[1] to learn how to operate the `--patch` mode.
+-p::
+--patch::
+	This option is only valid for `push` and `save` commands.
++
+Interactively select hunks from the diff between HEAD and the
+working tree to be stashed.  The stash entry is constructed such
+that its index state is the same as the index state of your
+repository, and its worktree contains only the changes you selected
+interactively.  The selected changes are then rolled back from your
+worktree. See the ``Interactive Mode'' section of linkgit:git-add[1]
+to learn how to operate the `--patch` mode.
 +
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
-When pathspec is given to 'git stash push', the new stash entry records the
-modified states only for the files that match the pathspec.  The index
-entries and working tree files are then rolled back to the state in
-HEAD only for these files, too, leaving files that do not match the
-pathspec intact.
+<pathspec>...::
+	This option is only valid for `push` command.
++
+The new stash entry records the modified states only for the files
+that match the pathspec.  The index entries and working tree files
+are then rolled back to the state in HEAD only for these files,
+too, leaving files that do not match the pathspec intact.
 
-When no `<stash>` is given, `stash@{0}` is assumed, otherwise `<stash>` must
-be a reference of the form `stash@{<revision>}`.
+<stash>::
+	This option is only valid for `apply`, `branch`, `drop`, `pop`,
+	`show` commands.
++
+A reference of the form `stash@{<revision>}`. When no `<stash>` is
+given, the latest stash is assumed (that is, `stash@{0}`).
 
 DISCUSSION
 ----------
