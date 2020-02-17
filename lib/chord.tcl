@@ -27,7 +27,7 @@
 #   # Turn off the UI while running a couple of async operations.
 #   lock_ui
 #
-#   set chord [SimpleChord new {
+#   set chord [SimpleChord::new {
 #     unlock_ui
 #     # Note: $notice here is not referenced in the calling scope
 #     if {$notice} { info_popup $notice }
@@ -37,9 +37,9 @@
 #   # all operations have been initiated.
 #   set common_note [$chord add_note]
 #
-#   # Pass notes as 'after' callbacks to other operations
-#   async_operation $args [$chord add_note]
-#   other_async_operation $args [$chord add_note]
+#   # Activate notes in 'after' callbacks to other operations
+#   set newnote [$chord add_note]
+#   async_operation $args [list $newnote activate]
 #
 #   # Communicate with the chord body
 #   if {$condition} {
@@ -48,7 +48,7 @@
 #   }
 #
 #   # Activate the common note, making the chord eligible to complete
-#   $common_note
+#   $common_note activate
 #
 # At this point, the chord will complete at some unknown point in the future.
 # The common note might have been the first note activated, or the async
@@ -60,18 +60,21 @@
 #   Represents a procedure that conceptually has multiple entrypoints that must
 #   all be called before the procedure executes. Each entrypoint is called a
 #   "note". The chord is only "completed" when all the notes are "activated".
-oo::class create SimpleChord {
-	variable notes body is_completed
+class SimpleChord {
+	field notes
+	field body
+	field is_completed
 
 	# Constructor:
-	#   set chord [SimpleChord new {body}]
+	#   set chord [SimpleChord::new {body}]
 	#     Creates a new chord object with the specified body script. The
 	#     body script is evaluated at most once, when a note is activated
 	#     and the chord has no other non-activated notes.
-	constructor {body} {
+	constructor new {i_body} {
 		set notes [list]
-		my eval [list set body $body]
+		set body $i_body
 		set is_completed 0
+		return $this
 	}
 
 	# Method:
@@ -80,7 +83,7 @@ oo::class create SimpleChord {
 	#     the chord body will be evaluated. This can be used to set variable
 	#     values for the chord body to use.
 	method eval {script} {
-		namespace eval [self] $script
+		namespace eval [namespace qualifiers $this] $script
 	}
 
 	# Method:
@@ -92,7 +95,7 @@ oo::class create SimpleChord {
 	method add_note {} {
 		if {$is_completed} { error "Cannot add a note to a completed chord" }
 
-		set note [ChordNote new [self]]
+		set note [ChordNote::new $this]
 
 		lappend notes $note
 
@@ -108,8 +111,8 @@ oo::class create SimpleChord {
 
 			set is_completed 1
 
-			namespace eval [self] $body
-			namespace delete [self]
+			namespace eval [namespace qualifiers $this] $body
+			delete_this
 		}
 	}
 }
@@ -119,15 +122,17 @@ oo::class create SimpleChord {
 #   final note of the chord is activated (this can be any note in the chord,
 #   with all other notes already previously activated in any order), the chord's
 #   body is evaluated.
-oo::class create ChordNote {
-	variable chord is_activated
+class ChordNote {
+	field chord
+	field is_activated
 
 	# Constructor:
 	#   Instances of ChordNote are created internally by calling add_note on
 	#   SimpleChord objects.
-	constructor {chord} {
-		my eval set chord $chord
+	constructor new {c} {
+		set chord $c
 		set is_activated 0
+		return $this
 	}
 
 	# Method:
@@ -138,20 +143,11 @@ oo::class create ChordNote {
 	}
 
 	# Method:
-	#   $note
+	#   $note activate
 	#     Activates the note, if it has not already been activated, and
 	#     completes the chord if there are no other notes awaiting
 	#     activation. Subsequent calls will have no further effect.
-	#
-	# NB: In TclOO, if an object is invoked like a method without supplying
-	#     any method name, then this internal method `unknown` is what
-	#     actually runs (with no parameters). It is used in the ChordNote
-	#     class for the purpose of allowing the note object to be called as
-	#     a function (see example above). (The `unknown` method can also be
-	#     used to support dynamic dispatch, but must take parameters to
-	#     identify the "unknown" method to be invoked. In this form, this
-	#     proc serves only to make instances behave directly like methods.)
-	method unknown {} {
+	method activate {} {
 		if {!$is_activated} {
 			set is_activated 1
 			$chord notify_note_activation
