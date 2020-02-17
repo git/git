@@ -58,31 +58,6 @@ non-option arguments are not allowed to prevent a misspelled
 subcommand from making an unwanted stash entry.  The two exceptions to this
 are `stash -p` which acts as alias for `stash push -p` and pathspecs,
 which are allowed after a double hyphen `--` for disambiguation.
-+
-When pathspec is given to 'git stash push', the new stash entry records the
-modified states only for the files that match the pathspec.  The index
-entries and working tree files are then rolled back to the state in
-HEAD only for these files, too, leaving files that do not match the
-pathspec intact.
-+
-If the `--keep-index` option is used, all changes already added to the
-index are left intact.
-+
-If the `--include-untracked` option is used, all untracked files are also
-stashed and then cleaned up with `git clean`, leaving the working directory
-in a very clean state. If the `--all` option is used instead then the
-ignored files are stashed and cleaned in addition to the untracked files.
-+
-With `--patch`, you can interactively select hunks from the diff
-between HEAD and the working tree to be stashed.  The stash entry is
-constructed such that its index state is the same as the index state
-of your repository, and its worktree contains only the changes you
-selected interactively.  The selected changes are then rolled back
-from your worktree. See the ``Interactive Mode'' section of
-linkgit:git-add[1] to learn how to operate the `--patch` mode.
-+
-The `--patch` option implies `--keep-index`.  You can use
-`--no-keep-index` to override this.
 
 save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
 
@@ -128,14 +103,6 @@ pop [--index] [-q|--quiet] [<stash>]::
 Applying the state can fail with conflicts; in this case, it is not
 removed from the stash list. You need to resolve the conflicts by hand
 and call `git stash drop` manually afterwards.
-+
-If the `--index` option is used, then tries to reinstate not only the working
-tree's changes, but also the index's ones. However, this can fail, when you
-have conflicts (which are stored in the index, where you therefore can no
-longer apply the changes as they were originally).
-+
-When no `<stash>` is given, `stash@{0}` is assumed, otherwise `<stash>` must
-be a reference of the form `stash@{<revision>}`.
 
 apply [--index] [-q|--quiet] [<stash>]::
 
@@ -184,6 +151,41 @@ store::
 	dangling merge commit) in the stash ref, updating the stash
 	reflog.  This is intended to be useful for scripts.  It is
 	probably not the command you want to use; see "push" above.
+
+If the `--all` option is used instead then the
+ignored files are stashed and cleaned in addition to the untracked files.
+
+If the `--include-untracked` option is used, all untracked files are also
+stashed and then cleaned up with `git clean`, leaving the working directory
+in a very clean state.
+
+If the `--index` option is used, then tries to reinstate not only the working
+tree's changes, but also the index's ones. However, this can fail, when you
+have conflicts (which are stored in the index, where you therefore can no
+longer apply the changes as they were originally).
+
+If the `--keep-index` option is used, all changes already added to the
+index are left intact.
+
+With `--patch`, you can interactively select hunks from the diff
+between HEAD and the working tree to be stashed.  The stash entry is
+constructed such that its index state is the same as the index state
+of your repository, and its worktree contains only the changes you
+selected interactively.  The selected changes are then rolled back
+from your worktree. See the ``Interactive Mode'' section of
+linkgit:git-add[1] to learn how to operate the `--patch` mode.
++
+The `--patch` option implies `--keep-index`.  You can use
+`--no-keep-index` to override this.
+
+When pathspec is given to 'git stash push', the new stash entry records the
+modified states only for the files that match the pathspec.  The index
+entries and working tree files are then rolled back to the state in
+HEAD only for these files, too, leaving files that do not match the
+pathspec intact.
+
+When no `<stash>` is given, `stash@{0}` is assumed, otherwise `<stash>` must
+be a reference of the form `stash@{<revision>}`.
 
 DISCUSSION
 ----------
