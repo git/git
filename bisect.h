@@ -39,11 +39,16 @@ struct rev_list_info {
  * BISECT_FAILED error code: default error code.
  * BISECT_ONLY_SKIPPED_LEFT error code: only skipped
  * commits left to be tested.
+ * BISECT_INTERNAL_SUCCESS_MERGE_BASE early success
+ * code: found merge base that should be tested.
+ * Early success code BISECT_INTERNAL_SUCCESS_MERGE_BASE
+ * should be only an internal code.
  */
 enum bisect_error {
 	BISECT_OK = 0,
 	BISECT_FAILED = -1,
-	BISECT_ONLY_SKIPPED_LEFT = -2
+	BISECT_ONLY_SKIPPED_LEFT = -2,
+	BISECT_INTERNAL_SUCCESS_MERGE_BASE = -11
 };
 
 enum bisect_error bisect_next_all(struct repository *r,
