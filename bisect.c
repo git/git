@@ -704,9 +704,10 @@ static int is_expected_rev(const struct object_id *oid)
 	return res;
 }
 
-static int bisect_checkout(const struct object_id *bisect_rev, int no_checkout)
+static enum bisect_error bisect_checkout(const struct object_id *bisect_rev, int no_checkout)
 {
 	char bisect_rev_hex[GIT_MAX_HEXSZ + 1];
+	enum bisect_error res = BISECT_OK;
 
 	memcpy(bisect_rev_hex, oid_to_hex(bisect_rev), the_hash_algo->hexsz + 1);
 	update_ref(NULL, "BISECT_EXPECTED_REV", bisect_rev, NULL, 0, UPDATE_REFS_DIE_ON_ERR);
@@ -716,14 +717,24 @@ static int bisect_checkout(const struct object_id *bisect_rev, int no_checkout)
 		update_ref(NULL, "BISECT_HEAD", bisect_rev, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 	} else {
-		int res;
 		res = run_command_v_opt(argv_checkout, RUN_GIT_CMD);
 		if (res)
-			exit(res);
+			/*
+			 * Errors in `run_command()` itself, signaled by res < 0,
+			 * and errors in the child process, signaled by res > 0
+			 * can both be treated as regular BISECT_FAILURE (-1).
+			 */
+			return -abs(res);
 	}
 
 	argv_show_branch[1] = bisect_rev_hex;
-	return run_command_v_opt(argv_show_branch, RUN_GIT_CMD);
+	res = run_command_v_opt(argv_show_branch, RUN_GIT_CMD);
+	/*
+	 * Errors in `run_command()` itself, signaled by res < 0,
+	 * and errors in the child process, signaled by res > 0
+	 * can both be treated as regular BISECT_FAILURE (-1).
+	 */
+	return -abs(res);
 }
 
 static struct commit *get_commit_reference(struct repository *r,
