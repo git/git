@@ -39,16 +39,22 @@ struct rev_list_info {
  * BISECT_FAILED error code: default error code.
  * BISECT_ONLY_SKIPPED_LEFT error code: only skipped
  * commits left to be tested.
+ * BISECT_MERGE_BASE_CHECK error code: merge base check failed.
+ * BISECT_NO_TESTABLE_COMMIT error code: no testable commit found.
+ * BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND early success code:
+ * first term_bad commit found.
  * BISECT_INTERNAL_SUCCESS_MERGE_BASE early success
  * code: found merge base that should be tested.
- * Early success code BISECT_INTERNAL_SUCCESS_MERGE_BASE
- * should be only an internal code.
+ * Early success codes BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND and
+ * BISECT_INTERNAL_SUCCESS_MERGE_BASE should be only internal codes.
  */
 enum bisect_error {
 	BISECT_OK = 0,
 	BISECT_FAILED = -1,
 	BISECT_ONLY_SKIPPED_LEFT = -2,
 	BISECT_MERGE_BASE_CHECK = -3,
+	BISECT_NO_TESTABLE_COMMIT = -4,
+	BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND = -10,
 	BISECT_INTERNAL_SUCCESS_MERGE_BASE = -11
 };
 
