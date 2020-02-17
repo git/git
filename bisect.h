@@ -37,10 +37,13 @@ struct rev_list_info {
  * commit has been found (and possibly checked out) and it
  * should be tested.
  * BISECT_FAILED error code: default error code.
+ * BISECT_ONLY_SKIPPED_LEFT error code: only skipped
+ * commits left to be tested.
  */
 enum bisect_error {
 	BISECT_OK = 0,
-	BISECT_FAILED = -1
+	BISECT_FAILED = -1,
+	BISECT_ONLY_SKIPPED_LEFT = -2
 };
 
 enum bisect_error bisect_next_all(struct repository *r,
