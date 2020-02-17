@@ -32,6 +32,9 @@ UI, Workflows & Features
  * A new version of fsmonitor-watchman hook has been introduced, to
    avoid races.
 
+ * "git config" learned to show in which "scope", in addition to in
+   which file, each config setting comes from.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -86,6 +89,9 @@ Performance, Internal Implementation, Development Support etc.
    work in the repository, but passed the_repository instance to its
    callees, which has been cleaned up (somewhat).
 
+ * Memory footprint and performance of "git name-rev" has been
+   improved.
+
 
 Fixes since v2.25
 -----------------
@@ -93,56 +99,45 @@ Fixes since v2.25
  * "git commit" gives output similar to "git status" when there is
    nothing to commit, but without honoring the advise.statusHints
    configuration variable, which has been corrected.
-   (merge 5c4f55f1f6 hw/commit-advise-while-rejecting later to maint).
 
  * has_object_file() said "no" given an object registered to the
    system via pretend_object_file(), making it inconsistent with
    read_object_file(), causing lazy fetch to attempt fetching an
    empty tree from promisor remotes.
-   (merge 9c8a294a1a jt/sha1-file-remove-oi-skip-cached later to maint).
 
  * Complete an update to tutorial that encourages "git switch" over
    "git checkout" that was done only half-way.
-   (merge 1a7e454dd6 hw/tutorial-favor-switch-over-checkout later to maint).
 
  * C pedantry ;-) fix.
-   (merge 63ab08fb99 bc/run-command-nullness-after-free-fix later to maint).
 
  * The code that tries to skip over the entries for the paths in a
    single directory using the cache-tree was not careful enough
    against corrupt index file.
-   (merge 573117dfa5 es/unpack-trees-oob-fix later to maint).
 
  * Reduce unnecessary round-trip when running "ls-remote" over the
    stateless RPC mechanism.
-   (merge 4d8cab95cc jk/no-flush-upon-disconnecting-slrpc-transport later to maint).
 
  * "git restore --staged" did not correctly update the cache-tree
    structure, resulting in bogus trees to be written afterwards, which
    has been corrected.
-   (merge e701bab3e9 nd/switch-and-restore later to maint).
 
  * The code recently added to move to the entry beyond the ones in the
    same directory in the index in the sparse-cone mode did not count
    the number of entries to skip over incorrectly, which has been
    corrected.
-   (merge 7210ca4ee5 ds/sparse-cone later to maint).
 
  * Rendering by "git log --graph" of ancestry lines leading to a merge
    commit were made suboptimal to waste vertical space a bit with a
    recent update, which has been corrected.
-   (merge c958d3bd0a ds/graph-horizontal-edges later to maint).
 
  * Work around test breakages caused by custom regex engine used in
    libasan, when address sanitizer is used with more recent versions
    of gcc and clang.
-   (merge f65d07fffa jk/asan-build-fix later to maint).
 
  * Minor bugfixes to "git add -i" that has recently been rewritten in C.
    (merge 849e43cc18 js/builtin-add-i-cmds later to maint).
 
  * "git fetch --refmap=" option has got a better documentation.
-   (merge b40a50264a ds/refmap-doc later to maint).
 
  * "git checkout X" did not correctly fail when X is not a local
    branch but could name more than one remote-tracking branches
@@ -153,7 +148,6 @@ Fixes since v2.25
  * Corner case bugs in "git clean" that stems from a (necessarily for
    performance reasons) awkward calling convention in the directory
    enumeration API has been corrected.
-   (merge 0cbb60574e en/fill-directory-fixes-more later to maint).
 
  * A fetch that is told to recursively fetch updates in submodules
    inevitably produces reams of output, and it becomes hard to spot
@@ -168,7 +162,6 @@ Fixes since v2.25
 
  * Futureproofing a test not to depend on the current implementation
    detail.
-   (merge b54128bb0b jt/t5616-robustify later to maint).
 
  * Running "git rm" on a submodule failed unnecessarily when
    .gitmodules is only cache-dirty, which has been corrected.
@@ -181,13 +174,10 @@ Fixes since v2.25
    the .gitmodules file but when "--recurse-submodules" is given or
    the "submodule.recurse" variable is set, it did.  Now these
    settings are ignored in the "--no-index" mode.
-   (merge c56c48dd07 pb/do-not-recurse-grep-no-index later to maint).
 
  * Technical details of the bundle format has been documented.
-   (merge 7378ec90e1 ms/doc-bundle-format later to maint).
 
  * Unhelpful warning messages during documentation build have been squelched.
-   (merge 30183894ea js/ci-squelch-doc-warning later to maint).
 
  * "git rebase -i" identifies existing commits in its todo file with
    their abbreviated object name, which could become ambigous as it
@@ -224,23 +214,19 @@ Fixes since v2.25
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
-   (merge 065027ee1a en/string-list-can-be-custom-sorted later to maint).
    (merge d0d0a357a1 am/update-pathspec-f-f-tests later to maint).
    (merge f94f7bd00d am/test-pathspec-f-f-error-cases later to maint).
-   (merge e4837b4406 jk/test-fixes later to maint).
-   (merge a4ffbbbb99 rt/submodule-i18n later to maint).
-   (merge 856249c62a bc/actualmente later to maint).
    (merge c513a958b6 ss/t6025-modernize later to maint).
-   (merge 69e104d70e bc/author-committer-doc later to maint).
-   (merge 7a2dc95cbc bc/misconception-doc later to maint).
    (merge b441717256 dl/test-must-fail-fixes later to maint).
    (merge d031049da3 mt/sparse-checkout-doc-update later to maint).
    (merge 145136a95a jc/skip-prefix later to maint).
-   (merge eb31044ff7 jb/multi-pack-index-docfix later to maint).
-   (merge 04e5b3f0b4 km/submodule-doc-use-sm-path later to maint).
-   (merge e469afe158 ma/filter-branch-doc-caret later to maint).
-   (merge 395518cf7a jb/parse-options-message-fix later to maint).
-   (merge 303b3c1c46 es/submodule-fetch-message-fix later to maint).
-   (merge 9299f84921 ma/diff-doc-clarify-regexp-example later to maint).
-   (merge 2b0f19fa7a js/convert-typofix later to maint).
    (merge 5290d45134 jk/alloc-cleanups later to maint).
+   (merge 7a9f8ca805 rs/parse-options-concat-dup later to maint).
+   (merge 517b60564e rs/strbuf-insertstr later to maint).
+   (merge f696a2b1c8 jk/mailinfo-cleanup later to maint).
+   (merge 076ee3e8a2 js/test-write-junit-xml-fix later to maint).
+   (merge de26f02db1 js/test-avoid-pipe later to maint).
+   (merge bfe2bbb47f js/test-unc-fetch later to maint).
+   (merge 08809c09aa js/mingw-open-in-gdb later to maint).
+   (merge cc4f2eb828 jk/doc-credential-helper later to maint).
+   (merge e0020b2f82 es/outside-repo-errmsg-hints later to maint).
