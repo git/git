@@ -626,6 +626,7 @@ test_submodule_forced_switch () {
 # New test cases
 # - Removing a submodule with a git directory absorbs the submodules
 #   git directory first into the superproject.
+# - Switching from no submodule to nested submodules
 
 # Internal function; use test_submodule_switch_recursing_with_args() or
 # test_submodule_forced_switch_recursing_with_args() instead.
@@ -681,6 +682,19 @@ test_submodule_recursing_with_args_common() {
 			$command replace_directory_with_sub1 &&
 			test_superproject_content origin/replace_directory_with_sub1 &&
 			test_submodule_content sub1 origin/replace_directory_with_sub1
+		)
+	'
+	# Switching to a commit with nested submodules recursively checks them out
+	test_expect_success "$command: nested submodules are checked out" '
+		prolog &&
+		reset_work_tree_to_interested no_submodule &&
+		(
+			cd submodule_update &&
+			git branch -t modify_sub1_recursively origin/modify_sub1_recursively &&
+			$command modify_sub1_recursively &&
+			test_superproject_content origin/modify_sub1_recursively &&
+			test_submodule_content sub1 origin/modify_sub1_recursively &&
+			test_submodule_content -C sub1 sub2 origin/modify_sub1_recursively
 		)
 	'
 
