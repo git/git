@@ -908,7 +908,6 @@ test_submodule_switch_recursing_with_args () {
 		)
 	'
 
-	# recursing deeper than one level doesn't work yet.
 	test_expect_success "$command: modified submodule updates submodule recursively" '
 		prolog &&
 		reset_work_tree_to_interested add_nested_sub &&
