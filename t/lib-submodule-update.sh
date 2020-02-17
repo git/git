@@ -297,7 +297,7 @@ test_submodule_content () {
 # - Directory containing tracked files replaced by submodule
 # - Submodule replaced by tracked files in directory
 # - Submodule replaced by tracked file with the same name
-# - tracked file replaced by submodule
+# - Tracked file replaced by submodule
 #
 # The default is that submodule contents aren't changed until "git submodule
 # update" is run. And even then that command doesn't delete the work tree of
@@ -621,12 +621,13 @@ test_submodule_forced_switch () {
 # - Directory containing tracked files replaced by submodule
 # - Submodule replaced by tracked files in directory
 # - Submodule replaced by tracked file with the same name
-# - tracked file replaced by submodule
+# - Tracked file replaced by submodule
 #
 # New test cases
 # - Removing a submodule with a git directory absorbs the submodules
 #   git directory first into the superproject.
 # - Switching from no submodule to nested submodules
+# - Switching from nested submodules to no submodule
 
 # Internal function; use test_submodule_switch_recursing_with_args() or
 # test_submodule_forced_switch_recursing_with_args() instead.
@@ -757,6 +758,21 @@ test_submodule_recursing_with_args_common() {
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1 &&
 			test -f sub1/untracked_file
+		)
+	'
+
+	# Switching to a commit without nested submodules removes their worktrees
+	test_expect_success "$command: worktrees of nested submodules are removed" '
+		prolog &&
+		reset_work_tree_to_interested add_nested_sub &&
+		(
+			cd submodule_update &&
+			git branch -t no_submodule origin/no_submodule &&
+			$command no_submodule &&
+			test_superproject_content origin/no_submodule &&
+			! test_path_is_dir sub1 &&
+			test_must_fail git config -f .git/modules/sub1/config core.worktree &&
+			test_must_fail git config -f .git/modules/sub1/modules/sub2/config core.worktree
 		)
 	'
 
