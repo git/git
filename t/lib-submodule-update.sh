@@ -658,22 +658,6 @@ test_submodule_recursing_with_args_common() {
 			test_submodule_content sub1 origin/add_sub1
 		)
 	'
-	test_expect_success "$command: submodule branch is not changed, detach HEAD instead" '
-		prolog &&
-		reset_work_tree_to_interested add_sub1 &&
-		(
-			cd submodule_update &&
-			git -C sub1 checkout -b keep_branch &&
-			git -C sub1 rev-parse HEAD >expect &&
-			git branch -t modify_sub1 origin/modify_sub1 &&
-			$command modify_sub1 &&
-			test_superproject_content origin/modify_sub1 &&
-			test_submodule_content sub1 origin/modify_sub1 &&
-			git -C sub1 rev-parse keep_branch >actual &&
-			test_cmp expect actual &&
-			test_must_fail git -C sub1 symbolic-ref HEAD
-		)
-	'
 
 	# Replacing a tracked file with a submodule produces a checked out submodule
 	test_expect_success "$command: replace tracked file with submodule checks out submodule" '
@@ -787,6 +771,23 @@ test_submodule_recursing_with_args_common() {
 			test_i18ngrep sub1 err &&
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1
+		)
+	'
+	# Updating a submodule does not touch the currently checked out branch in the submodule
+	test_expect_success "$command: submodule branch is not changed, detach HEAD instead" '
+		prolog &&
+		reset_work_tree_to_interested add_sub1 &&
+		(
+			cd submodule_update &&
+			git -C sub1 checkout -b keep_branch &&
+			git -C sub1 rev-parse HEAD >expect &&
+			git branch -t modify_sub1 origin/modify_sub1 &&
+			$command modify_sub1 &&
+			test_superproject_content origin/modify_sub1 &&
+			test_submodule_content sub1 origin/modify_sub1 &&
+			git -C sub1 rev-parse keep_branch >actual &&
+			test_cmp expect actual &&
+			test_must_fail git -C sub1 symbolic-ref HEAD
 		)
 	'
 }
