@@ -761,7 +761,7 @@ static struct commit **get_bad_and_good_commits(struct repository *r,
 	return rev;
 }
 
-static void handle_bad_merge_base(void)
+static enum bisect_error handle_bad_merge_base(void)
 {
 	if (is_expected_rev(current_bad_oid)) {
 		char *bad_hex = oid_to_hex(current_bad_oid);
@@ -782,14 +782,14 @@ static void handle_bad_merge_base(void)
 				"between %s and [%s].\n"),
 				bad_hex, term_bad, term_good, bad_hex, good_hex);
 		}
-		exit(3);
+		return BISECT_MERGE_BASE_CHECK;
 	}
 
 	fprintf(stderr, _("Some %s revs are not ancestors of the %s rev.\n"
 		"git bisect cannot work properly in this case.\n"
 		"Maybe you mistook %s and %s revs?\n"),
 		term_good, term_bad, term_good, term_bad);
-	exit(1);
+	return BISECT_FAILED;
 }
 
 static void handle_skipped_merge_base(const struct object_id *mb)
@@ -830,7 +830,8 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
 	for (; result; result = result->next) {
 		const struct object_id *mb = &result->item->object.oid;
 		if (oideq(mb, current_bad_oid)) {
-			handle_bad_merge_base();
+			res = handle_bad_merge_base();
+			break;
 		} else if (0 <= oid_array_lookup(&good_revs, mb)) {
 			continue;
 		} else if (0 <= oid_array_lookup(&skipped_revs, mb)) {
