@@ -127,7 +127,7 @@ generate_render_makefile () {
 	while read src
 	do
 		dst=$2/${src#$1/}
-		printf 'all:: %s\n' "$dst"
+		printf 'all: %s\n' "$dst"
 		printf '%s: %s\n' "$dst" "$src"
 		printf '\t@echo >&2 "  RENDER $(notdir $@)" && \\\n'
 		printf '\tmkdir -p $(dir $@) && \\\n'
