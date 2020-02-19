@@ -80,7 +80,7 @@ higher priority configuration file (e.g. `.git/config` in a
 repository) to clear the values inherited from a lower priority
 configuration files (e.g. `$HOME/.gitconfig`).
 +
---
+----
 
 Example:
 
@@ -97,7 +97,7 @@ repo/.git/config
 
 This will result in only b (a and c are cleared).
 
---
+----
 
 push.recurseSubmodules::
 	Make sure all submodule commits used by the revisions to be pushed
