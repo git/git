@@ -33,7 +33,7 @@ test_expect_success 'rebase changes with the apply backend' '
 	git rebase side1
 '
 
-test_expect_failure 'rebase changes with the merge backend' '
+test_expect_success 'rebase changes with the merge backend' '
 	test_when_finished "git rebase --abort || true" &&
 	git checkout -b merge-backend side2 &&
 	git rebase -m side1
