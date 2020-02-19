@@ -262,6 +262,13 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 		return;
 
 	if (revs->count) {
+		/*
+		 * The object count is always accumulated in the .count_right
+		 * field for traversal that is not a left-right traversal,
+		 * and cmd_rev_list() made sure that a .count request that
+		 * wants to count non-commit objects, which is handled by
+		 * the show_object() callback, does not ask for .left_right.
+		 */
 		revs->count_right++;
 		return;
 	}
