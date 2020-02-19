@@ -166,13 +166,6 @@ do
 
 		cd "$BUILDBASE/$branch"
 		git reset --hard  &&
-		case "$(git symbolic-ref HEAD)" in
-		"refs/heads/$branch")
-			: ;;
-		*)
-			git checkout "$branch" &&
-			git reset --hard || exit
-		esac &&
 
 		case "$scratch" in
 		'')
@@ -183,6 +176,14 @@ do
 			git clean -f -x
 			ln -s "$saveMeta" Meta
 			;;
+		esac &&
+
+		case "$(git symbolic-ref HEAD)" in
+		"refs/heads/$branch")
+			: ;;
+		*)
+			git checkout "$branch" &&
+			git reset --hard || exit
 		esac &&
 
 		case "$private" in
