@@ -334,11 +334,10 @@ int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf report_path = STRBUF_INIT;
-	FILE *report;
+	int report;
 	time_t now = time(NULL);
 	char *option_output = NULL;
 	char *option_suffix = "%F-%H%M";
-	struct stat statbuf;
 	int nongit_ok = 0;
 
 	const struct option bugreport_options[] = {
@@ -360,13 +359,9 @@ int cmd_main(int argc, const char **argv)
 		strbuf_complete(&report_path, '/');
 	}
 
-
 	strbuf_addstr(&report_path, "git-bugreport-");
 	strbuf_addftime(&report_path, option_suffix, localtime(&now), 0, 0);
 	strbuf_addstr(&report_path, ".txt");
-
-	if (!stat(report_path.buf, &statbuf))
-		die("'%s' already exists", report_path.buf);
 
 	switch (safe_create_leading_directories(report_path.buf)) {
 	case SCLD_OK:
@@ -400,15 +395,16 @@ int cmd_main(int argc, const char **argv)
 	get_header(&buffer, "Alternates");
 	get_alternates_summary(&buffer, nongit_ok);
 
-	report = fopen_for_writing(report_path.buf);
+	/* fopen doesn't offer us an O_EXCL alternative, except with glibc. */
+	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY);
 
-	if (report == NULL) {
+	if (report < 0) {
 		strbuf_release(&report_path);
 		die("couldn't open '%s' for writing", report_path.buf);
 	}
 
-	strbuf_write(&buffer, report);
-	fclose(report);
+	strbuf_write_fd(&buffer, report);
+	close(report);
 
 	fprintf(stderr, _("Created new report at '%s'.\n"), report_path.buf);
 
