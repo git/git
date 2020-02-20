@@ -399,7 +399,7 @@ int cmd_main(int argc, const char **argv)
 	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY);
 
 	if (report < 0) {
-		strbuf_release(&report_path);
+		UNLEAK(report_path);
 		die("couldn't open '%s' for writing", report_path.buf);
 	}
 
