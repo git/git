@@ -334,7 +334,7 @@ int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf report_path = STRBUF_INIT;
-	int report;
+	int report = -1;
 	time_t now = time(NULL);
 	char *option_output = NULL;
 	char *option_suffix = "%F-%H%M";
@@ -396,11 +396,11 @@ int cmd_main(int argc, const char **argv)
 	get_alternates_summary(&buffer, nongit_ok);
 
 	/* fopen doesn't offer us an O_EXCL alternative, except with glibc. */
-	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY);
+	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);
 
 	if (report < 0) {
 		UNLEAK(report_path);
-		die("couldn't open '%s' for writing", report_path.buf);
+		die(_("couldn't create a new file at '%s'"), report_path.buf);
 	}
 
 	strbuf_write_fd(&buffer, report);
