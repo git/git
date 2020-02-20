@@ -351,7 +351,7 @@ int cmd_main(int argc, const char **argv)
 	/* Prerequisite for hooks and config checks */
 	setup_git_directory_gently(&nongit_ok);
 
-	argc = parse_options(argc, argv, "", bugreport_options,
+	argc = parse_options(argc, argv, NULL, bugreport_options,
 			     bugreport_usage, 0);
 
 	if (option_output) {
