@@ -83,6 +83,7 @@ enum signoff_type {
 
 enum show_patch_type {
 	SHOW_PATCH_RAW = 0,
+	SHOW_PATCH_DIFF = 1,
 };
 
 struct am_state {
@@ -1767,7 +1768,7 @@ static void am_run(struct am_state *state, int resume)
 				linelen(state->msg), state->msg);
 
 			if (advice_amworkdir)
-				advise(_("Use 'git am --show-current-patch' to see the failed patch"));
+				advise(_("Use 'git am --show-current-patch=diff' to see the failed patch"));
 
 			die_user_resolve(state);
 		}
@@ -2086,6 +2087,9 @@ static int show_patch(struct am_state *state, enum show_patch_type sub_mode)
 	case SHOW_PATCH_RAW:
 		patch_path = am_path(state, msgnum(state));
 		break;
+	case SHOW_PATCH_DIFF:
+		patch_path = am_path(state, "patch");
+		break;
 	default:
 		BUG("invalid mode for --show-current-patch");
 	}
@@ -2154,6 +2158,7 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	 * when you add new options
 	 */
 	const char *valid_modes[] = {
+		[SHOW_PATCH_DIFF] = "diff",
 		[SHOW_PATCH_RAW] = "raw"
 	};
 	int new_value = SHOW_PATCH_RAW;
@@ -2279,7 +2284,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("abort the patching operation but keep HEAD where it is."),
 			RESUME_QUIT),
 		{ OPTION_CALLBACK, 0, "show-current-patch", &resume.mode,
-		  "raw",
+		  "(diff|raw)",
 		  N_("show the patch being applied"),
 		  PARSE_OPT_CMDMODE | PARSE_OPT_OPTARG | PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
 		  parse_opt_show_current_patch, RESUME_SHOW_PATCH },
