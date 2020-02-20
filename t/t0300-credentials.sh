@@ -397,6 +397,26 @@ test_expect_success 'http paths can be part of context' '
 	EOF
 '
 
+test_expect_success 'context uses urlmatch' '
+	test_config "credential.https://*.org.useHttpPath" true &&
+	check fill "verbatim foo bar" <<-\EOF
+	protocol=https
+	host=example.org
+	path=foo.git
+	--
+	protocol=https
+	host=example.org
+	path=foo.git
+	username=foo
+	password=bar
+	--
+	verbatim: get
+	verbatim: protocol=https
+	verbatim: host=example.org
+	verbatim: path=foo.git
+	EOF
+'
+
 test_expect_success 'helpers can abort the process' '
 	test_must_fail git \
 		-c credential.helper="!f() { echo quit=1; }; f" \

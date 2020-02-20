@@ -6,6 +6,7 @@
 #include "url.h"
 #include "prompt.h"
 #include "sigchain.h"
+#include "urlmatch.h"
 
 void credential_init(struct credential *c)
 {
@@ -40,30 +41,13 @@ static int credential_config_callback(const char *var, const char *value,
 				      void *data)
 {
 	struct credential *c = data;
-	const char *key, *dot;
+	const char *key;
 
 	if (!skip_prefix(var, "credential.", &key))
 		return 0;
 
 	if (!value)
 		return config_error_nonbool(var);
-
-	dot = strrchr(key, '.');
-	if (dot) {
-		struct credential want = CREDENTIAL_INIT;
-		char *url = xmemdupz(key, dot - key);
-		int matched;
-
-		credential_from_url(&want, url);
-		matched = credential_match(&want, c);
-
-		credential_clear(&want);
-		free(url);
-
-		if (!matched)
-			return 0;
-		key = dot + 1;
-	}
 
 	if (!strcmp(key, "helper")) {
 		if (*value)
@@ -89,11 +73,38 @@ static int proto_is_http(const char *s)
 	return !strcmp(s, "https") || !strcmp(s, "http");
 }
 
+static void credential_describe(struct credential *c, struct strbuf *out);
+static void credential_format(struct credential *c, struct strbuf *out);
+
+static int select_all(const struct urlmatch_item *a,
+		      const struct urlmatch_item *b)
+{
+	return 0;
+}
+
 static void credential_apply_config(struct credential *c)
 {
+	char *normalized_url;
+	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
+	struct strbuf url = STRBUF_INIT;
+
 	if (c->configured)
 		return;
-	git_config(credential_config_callback, c);
+
+	config.section = "credential";
+	config.key = NULL;
+	config.collect_fn = credential_config_callback;
+	config.cascade_fn = NULL;
+	config.select_fn = select_all;
+	config.cb = c;
+
+	credential_format(c, &url);
+	normalized_url = url_normalize(url.buf, &config.url);
+
+	git_config(urlmatch_config_entry, &config);
+	free(normalized_url);
+	strbuf_release(&url);
+
 	c->configured = 1;
 
 	if (!c->use_http_path && proto_is_http(c->protocol)) {
@@ -112,6 +123,23 @@ static void credential_describe(struct credential *c, struct strbuf *out)
 		strbuf_addstr(out, c->host);
 	if (c->path)
 		strbuf_addf(out, "/%s", c->path);
+}
+
+static void credential_format(struct credential *c, struct strbuf *out)
+{
+	if (!c->protocol)
+		return;
+	strbuf_addf(out, "%s://", c->protocol);
+	if (c->username && *c->username) {
+		strbuf_add_percentencode(out, c->username);
+		strbuf_addch(out, '@');
+	}
+	if (c->host)
+		strbuf_addstr(out, c->host);
+	if (c->path) {
+		strbuf_addch(out, '/');
+		strbuf_add_percentencode(out, c->path);
+	}
 }
 
 static char *credential_ask_one(const char *what, struct credential *c,
