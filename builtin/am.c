@@ -2118,7 +2118,7 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 	return 0;
 }
 
-enum resume_mode {
+enum resume_type {
 	RESUME_FALSE = 0,
 	RESUME_APPLY,
 	RESUME_RESOLVED,
@@ -2126,6 +2126,10 @@ enum resume_mode {
 	RESUME_ABORT,
 	RESUME_QUIT,
 	RESUME_SHOW_PATCH
+};
+
+struct resume_mode {
+	enum resume_type mode;
 };
 
 static int git_am_config(const char *k, const char *v, void *cb)
@@ -2145,7 +2149,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	int binary = -1;
 	int keep_cr = -1;
 	int patch_format = PATCH_FORMAT_UNKNOWN;
-	enum resume_mode resume = RESUME_FALSE;
+	struct resume_mode resume = { .mode = RESUME_FALSE };
 	int in_progress;
 	int ret = 0;
 
@@ -2214,22 +2218,22 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG),
 		OPT_STRING(0, "resolvemsg", &state.resolvemsg, NULL,
 			N_("override error message when patch failure occurs")),
-		OPT_CMDMODE(0, "continue", &resume,
+		OPT_CMDMODE(0, "continue", &resume.mode,
 			N_("continue applying patches after resolving a conflict"),
 			RESUME_RESOLVED),
-		OPT_CMDMODE('r', "resolved", &resume,
+		OPT_CMDMODE('r', "resolved", &resume.mode,
 			N_("synonyms for --continue"),
 			RESUME_RESOLVED),
-		OPT_CMDMODE(0, "skip", &resume,
+		OPT_CMDMODE(0, "skip", &resume.mode,
 			N_("skip the current patch"),
 			RESUME_SKIP),
-		OPT_CMDMODE(0, "abort", &resume,
+		OPT_CMDMODE(0, "abort", &resume.mode,
 			N_("restore the original branch and abort the patching operation."),
 			RESUME_ABORT),
-		OPT_CMDMODE(0, "quit", &resume,
+		OPT_CMDMODE(0, "quit", &resume.mode,
 			N_("abort the patching operation but keep HEAD where it is."),
 			RESUME_QUIT),
-		OPT_CMDMODE(0, "show-current-patch", &resume,
+		OPT_CMDMODE(0, "show-current-patch", &resume.mode,
 			N_("show the patch being applied."),
 			RESUME_SHOW_PATCH),
 		OPT_BOOL(0, "committer-date-is-author-date",
@@ -2281,12 +2285,12 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		 *    intend to feed us a patch but wanted to continue
 		 *    unattended.
 		 */
-		if (argc || (resume == RESUME_FALSE && !isatty(0)))
+		if (argc || (resume.mode == RESUME_FALSE && !isatty(0)))
 			die(_("previous rebase directory %s still exists but mbox given."),
 				state.dir);
 
-		if (resume == RESUME_FALSE)
-			resume = RESUME_APPLY;
+		if (resume.mode == RESUME_FALSE)
+			resume.mode = RESUME_APPLY;
 
 		if (state.signoff == SIGNOFF_EXPLICIT)
 			am_append_signoff(&state);
@@ -2300,7 +2304,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		 * stray directories.
 		 */
 		if (file_exists(state.dir) && !state.rebasing) {
-			if (resume == RESUME_ABORT || resume == RESUME_QUIT) {
+			if (resume.mode == RESUME_ABORT || resume.mode == RESUME_QUIT) {
 				am_destroy(&state);
 				am_state_release(&state);
 				return 0;
@@ -2311,7 +2315,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 				state.dir);
 		}
 
-		if (resume)
+		if (resume.mode)
 			die(_("Resolve operation not in progress, we are not resuming."));
 
 		for (i = 0; i < argc; i++) {
@@ -2329,7 +2333,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		argv_array_clear(&paths);
 	}
 
-	switch (resume) {
+	switch (resume.mode) {
 	case RESUME_FALSE:
 		am_run(&state, 0);
 		break;
