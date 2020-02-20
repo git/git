@@ -36,7 +36,9 @@ static void get_system_info(struct strbuf *sys_info)
 	/* system call for other version info */
 	strbuf_addstr(sys_info, "uname: ");
 	if (uname(&uname_info))
-		strbuf_addf(sys_info, "uname() failed with code %d\n", errno);
+		strbuf_addf(sys_info, "uname() failed with error '%s' (%d)\n",
+			    strerror(errno),
+			    errno);
 	else
 		strbuf_addf(sys_info, "%s %s %s %s\n",
 			    uname_info.sysname,
