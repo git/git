@@ -71,8 +71,10 @@ static int credential_config_callback(const char *var, const char *value,
 		else
 			string_list_clear(&c->helpers, 0);
 	} else if (!strcmp(key, "username")) {
-		if (!c->username)
+		if (!c->username_from_proto) {
+			free(c->username);
 			c->username = xstrdup(value);
+		}
 	}
 	else if (!strcmp(key, "usehttppath"))
 		c->use_http_path = git_config_bool(var, value);
@@ -163,6 +165,7 @@ int credential_read(struct credential *c, FILE *fp)
 		if (!strcmp(key, "username")) {
 			free(c->username);
 			c->username = xstrdup(value);
+			c->username_from_proto = 1;
 		} else if (!strcmp(key, "password")) {
 			free(c->password);
 			c->password = xstrdup(value);
@@ -349,10 +352,14 @@ void credential_from_url(struct credential *c, const char *url)
 	else if (!colon || at <= colon) {
 		/* Case (2) */
 		c->username = url_decode_mem(cp, at - cp);
+		if (c->username && *c->username)
+			c->username_from_proto = 1;
 		host = at + 1;
 	} else {
 		/* Case (3) */
 		c->username = url_decode_mem(cp, colon - cp);
+		if (c->username && *c->username)
+			c->username_from_proto = 1;
 		c->password = url_decode_mem(colon + 1, at - (colon + 1));
 		host = at + 1;
 	}

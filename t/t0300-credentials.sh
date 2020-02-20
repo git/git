@@ -344,7 +344,7 @@ test_expect_success 'honors username from URL over helper (components)' '
 	EOF
 '
 
-test_expect_failure 'last matching username wins' '
+test_expect_success 'last matching username wins' '
 	test_config credential.https://example.com/path.git.username bob &&
 	test_config credential.https://example.com.username alice &&
 	test_config credential.https://example.com.helper "verbatim \"\" bar" &&
