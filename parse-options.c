@@ -61,7 +61,7 @@ static enum parse_opt_result opt_command_mode_error(
 	 */
 	for (that = all_opts; that->type != OPTION_END; that++) {
 		if (that == opt ||
-		    that->type != OPTION_CMDMODE ||
+		    !(that->flags & PARSE_OPT_CMDMODE) ||
 		    that->value != opt->value ||
 		    that->defval != *(int *)opt->value)
 			continue;
@@ -94,6 +94,14 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 		return error(_("%s isn't available"), optname(opt, flags));
 	if (!(flags & OPT_SHORT) && p->opt && (opt->flags & PARSE_OPT_NOARG))
 		return error(_("%s takes no value"), optname(opt, flags));
+
+	/*
+	 * Giving the same mode option twice, although unnecessary,
+	 * is not a grave error, so let it pass.
+	 */
+	if ((opt->flags & PARSE_OPT_CMDMODE) &&
+	    *(int *)opt->value && *(int *)opt->value != opt->defval)
+		return opt_command_mode_error(opt, all_opts, flags);
 
 	switch (opt->type) {
 	case OPTION_LOWLEVEL_CALLBACK:
@@ -128,16 +136,6 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 
 	case OPTION_SET_INT:
 		*(int *)opt->value = unset ? 0 : opt->defval;
-		return 0;
-
-	case OPTION_CMDMODE:
-		/*
-		 * Giving the same mode option twice, although is unnecessary,
-		 * is not a grave error, so let it pass.
-		 */
-		if (*(int *)opt->value && *(int *)opt->value != opt->defval)
-			return opt_command_mode_error(opt, all_opts, flags);
-		*(int *)opt->value = opt->defval;
 		return 0;
 
 	case OPTION_STRING:
