@@ -81,6 +81,10 @@ enum signoff_type {
 	SIGNOFF_EXPLICIT /* --signoff was set on the command-line */
 };
 
+enum show_patch_type {
+	SHOW_PATCH_RAW = 0,
+};
+
 struct am_state {
 	/* state directory path */
 	char *dir;
@@ -2061,7 +2065,7 @@ static void am_abort(struct am_state *state)
 	am_destroy(state);
 }
 
-static int show_patch(struct am_state *state)
+static int show_patch(struct am_state *state, enum show_patch_type sub_mode)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *patch_path;
@@ -2078,7 +2082,14 @@ static int show_patch(struct am_state *state)
 		return ret;
 	}
 
-	patch_path = am_path(state, msgnum(state));
+	switch (sub_mode) {
+	case SHOW_PATCH_RAW:
+		patch_path = am_path(state, msgnum(state));
+		break;
+	default:
+		BUG("invalid mode for --show-current-patch");
+	}
+
 	len = strbuf_read_file(&sb, patch_path, 0);
 	if (len < 0)
 		die_errno(_("failed to read '%s'"), patch_path);
@@ -2130,7 +2141,41 @@ enum resume_type {
 
 struct resume_mode {
 	enum resume_type mode;
+	enum show_patch_type sub_mode;
 };
+
+static int parse_opt_show_current_patch(const struct option *opt, const char *arg, int unset)
+{
+	int *opt_value = opt->value;
+	struct resume_mode *resume = container_of(opt_value, struct resume_mode, mode);
+
+	/*
+	 * Please update $__git_showcurrentpatch in git-completion.bash
+	 * when you add new options
+	 */
+	const char *valid_modes[] = {
+		[SHOW_PATCH_RAW] = "raw"
+	};
+	int new_value = SHOW_PATCH_RAW;
+
+	if (arg) {
+		for (new_value = 0; new_value < ARRAY_SIZE(valid_modes); new_value++) {
+			if (!strcmp(arg, valid_modes[new_value]))
+				break;
+		}
+		if (new_value >= ARRAY_SIZE(valid_modes))
+			return error(_("Invalid value for --show-current-patch: %s"), arg);
+	}
+
+	if (resume->mode == RESUME_SHOW_PATCH && new_value != resume->sub_mode)
+		return error(_("--show-current-patch=%s is incompatible with "
+			       "--show-current-patch=%s"),
+			     arg, valid_modes[resume->sub_mode]);
+
+	resume->mode = RESUME_SHOW_PATCH;
+	resume->sub_mode = new_value;
+	return 0;
+}
 
 static int git_am_config(const char *k, const char *v, void *cb)
 {
@@ -2233,9 +2278,11 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "quit", &resume.mode,
 			N_("abort the patching operation but keep HEAD where it is."),
 			RESUME_QUIT),
-		OPT_CMDMODE(0, "show-current-patch", &resume.mode,
-			N_("show the patch being applied."),
-			RESUME_SHOW_PATCH),
+		{ OPTION_CALLBACK, 0, "show-current-patch", &resume.mode,
+		  "raw",
+		  N_("show the patch being applied"),
+		  PARSE_OPT_CMDMODE | PARSE_OPT_OPTARG | PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
+		  parse_opt_show_current_patch, RESUME_SHOW_PATCH },
 		OPT_BOOL(0, "committer-date-is-author-date",
 			&state.committer_date_is_author_date,
 			N_("lie about committer date")),
@@ -2354,7 +2401,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		am_destroy(&state);
 		break;
 	case RESUME_SHOW_PATCH:
-		ret = show_patch(&state);
+		ret = show_patch(&state, resume.sub_mode);
 		break;
 	default:
 		BUG("invalid resume value");
