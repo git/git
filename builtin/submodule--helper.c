@@ -1225,7 +1225,7 @@ static int module_deinit(int argc, const char **argv, const char *prefix)
 
 static int clone_submodule(const char *path, const char *gitdir, const char *url,
 			   const char *depth, struct string_list *reference, int dissociate,
-			   int quiet, int progress)
+			   int quiet, int progress, int single_branch)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
@@ -1247,6 +1247,10 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 		argv_array_push(&cp.args, "--dissociate");
 	if (gitdir && *gitdir)
 		argv_array_pushl(&cp.args, "--separate-git-dir", gitdir, NULL);
+	if (single_branch >= 0)
+		argv_array_push(&cp.args, single_branch ?
+					  "--single-branch" :
+					  "--no-single-branch");
 
 	argv_array_push(&cp.args, "--");
 	argv_array_push(&cp.args, url);
@@ -1373,6 +1377,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	struct string_list reference = STRING_LIST_INIT_NODUP;
 	int dissociate = 0, require_init = 0;
 	char *sm_alternate = NULL, *error_strategy = NULL;
+	int single_branch = -1;
 
 	struct option module_clone_options[] = {
 		OPT_STRING(0, "prefix", &prefix,
@@ -1400,12 +1405,15 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			   N_("force cloning progress")),
 		OPT_BOOL(0, "require-init", &require_init,
 			   N_("disallow cloning into non-empty directory")),
+		OPT_BOOL(0, "single-branch", &single_branch,
+			 N_("clone only one branch, HEAD or --branch")),
 		OPT_END()
 	};
 
 	const char *const git_submodule_helper_usage[] = {
 		N_("git submodule--helper clone [--prefix=<path>] [--quiet] "
 		   "[--reference <repository>] [--name <name>] [--depth <depth>] "
+		   "[--single-branch] "
 		   "--url <url> --path <path>"),
 		NULL
 	};
@@ -1438,7 +1446,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		prepare_possible_alternates(name, &reference);
 
 		if (clone_submodule(path, sm_gitdir, url, depth, &reference, dissociate,
-				    quiet, progress))
+				    quiet, progress, single_branch))
 			die(_("clone of '%s' into submodule path '%s' failed"),
 			    url, path);
 	} else {
@@ -1562,6 +1570,7 @@ struct submodule_update_clone {
 	const char *depth;
 	const char *recursive_prefix;
 	const char *prefix;
+	int single_branch;
 
 	/* to be consumed by git-submodule.sh */
 	struct update_clone_data *update_clone;
@@ -1581,6 +1590,7 @@ struct submodule_update_clone {
 	.update = SUBMODULE_UPDATE_STRATEGY_INIT, \
 	.recommend_shallow = -1, \
 	.references = STRING_LIST_INIT_DUP, \
+	.single_branch = -1, \
 	.max_jobs = 1, \
 }
 
@@ -1721,6 +1731,10 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		argv_array_push(&child->args, "--dissociate");
 	if (suc->depth)
 		argv_array_push(&child->args, suc->depth);
+	if (suc->single_branch >= 0)
+		argv_array_push(&child->args, suc->single_branch ?
+					      "--single-branch" :
+					      "--no-single-branch");
 
 cleanup:
 	strbuf_reset(&displaypath_sb);
@@ -1900,6 +1914,8 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 			    N_("force cloning progress")),
 		OPT_BOOL(0, "require-init", &suc.require_init,
 			   N_("disallow cloning into non-empty directory")),
+		OPT_BOOL(0, "single-branch", &suc.single_branch,
+			 N_("clone only one branch, HEAD or --branch")),
 		OPT_END()
 	};
 

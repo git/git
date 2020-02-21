@@ -832,6 +832,11 @@ static int checkout(int submodule_progress)
 			argv_array_push(&args, "--no-fetch");
 		}
 
+		if (option_single_branch >= 0)
+			argv_array_push(&args, option_single_branch ?
+					       "--single-branch" :
+					       "--no-single-branch");
+
 		err = run_command_v_opt(args.argv, RUN_GIT_CMD);
 		argv_array_clear(&args);
 	}

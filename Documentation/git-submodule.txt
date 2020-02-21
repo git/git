@@ -133,7 +133,7 @@ If you really want to remove a submodule from the repository and commit
 that use linkgit:git-rm[1] instead. See linkgit:gitsubmodules[7] for removal
 options.
 
-update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--] [<path>...]::
+update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--[no-]single-branch] [--] [<path>...]::
 +
 --
 Update the registered submodules to match what the superproject
@@ -429,6 +429,10 @@ options carefully.
 	This option is only valid for the update command.
 	Clone new submodules in parallel with as many jobs.
 	Defaults to the `submodule.fetchJobs` option.
+
+--[no-]single-branch::
+	This option is only valid for the update command.
+	Clone only one branch during update: HEAD or one specified by --branch.
 
 <path>...::
 	Paths to submodule(s). When specified this will restrict the command
