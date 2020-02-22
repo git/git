@@ -40,6 +40,7 @@ struct replay_opts {
 	int allow_rerere_auto;
 	int allow_empty;
 	int allow_empty_message;
+	int drop_redundant_commits;
 	int keep_redundant_commits;
 	int verbose;
 	int quiet;
@@ -133,7 +134,7 @@ int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_skip(struct repository *repo, struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
-#define TODO_LIST_KEEP_EMPTY (1U << 0)
+/* #define TODO_LIST_KEEP_EMPTY (1U << 0) */ /* No longer used */
 #define TODO_LIST_SHORTEN_IDS (1U << 1)
 #define TODO_LIST_ABBREVIATE_CMDS (1U << 2)
 #define TODO_LIST_REBASE_MERGES (1U << 3)

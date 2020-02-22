@@ -72,15 +72,16 @@ test_expect_success 'rebase --keep-empty' '
 	test_line_count = 6 actual
 '
 
-test_expect_success 'rebase -i with empty HEAD' '
+test_expect_success 'rebase -i with empty todo list' '
 	cat >expect <<-\EOF &&
 	error: nothing to do
 	EOF
 	(
 		set_fake_editor &&
-		test_must_fail env FAKE_LINES="1 exec_true" \
-			git rebase -i HEAD^ >actual 2>&1
+		test_must_fail env FAKE_LINES="#" \
+			git rebase -i HEAD^ >output 2>&1
 	) &&
+	tail -n 1 output >actual &&  # Ignore output about changing todo list
 	test_i18ncmp expect actual
 '
 
@@ -222,7 +223,7 @@ test_expect_success 'reflog for the branch shows state before rebase' '
 '
 
 test_expect_success 'reflog for the branch shows correct finish message' '
-	printf "rebase -i (finish): refs/heads/branch1 onto %s\n" \
+	printf "rebase (finish): refs/heads/branch1 onto %s\n" \
 		"$(git rev-parse branch2)" >expected &&
 	git log -g --pretty=%gs -1 refs/heads/branch1 >actual &&
 	test_cmp expected actual
@@ -1137,7 +1138,7 @@ test_expect_success C_LOCALE_OUTPUT 'rebase --edit-todo does not work on non-int
 	git checkout conflict-branch &&
 	(
 		set_fake_editor &&
-		test_must_fail git rebase -f --onto HEAD~2 HEAD~ &&
+		test_must_fail git rebase -f --apply --onto HEAD~2 HEAD~ &&
 		test_must_fail git rebase --edit-todo
 	) &&
 	git rebase --abort
@@ -1161,10 +1162,10 @@ test_expect_success 'rebase -i produces readable reflog' '
 	git branch -f branch-reflog-test H &&
 	git rebase -i --onto I F branch-reflog-test &&
 	cat >expect <<-\EOF &&
-	rebase -i (finish): returning to refs/heads/branch-reflog-test
-	rebase -i (pick): H
-	rebase -i (pick): G
-	rebase -i (start): checkout I
+	rebase (finish): returning to refs/heads/branch-reflog-test
+	rebase (pick): H
+	rebase (pick): G
+	rebase (start): checkout I
 	EOF
 	git reflog -n4 HEAD |
 	sed "s/[^:]*: //" >actual &&
