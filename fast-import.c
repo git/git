@@ -131,6 +131,8 @@ struct recent_command {
 	char *buf;
 };
 
+typedef void (*mark_set_inserter_t)(struct mark_set *s, struct object_id *oid, uintmax_t mark);
+
 /* Configured limits on output */
 static unsigned long max_depth = 50;
 static off_t max_packsize;
@@ -1711,14 +1713,30 @@ static void dump_marks(void)
 	}
 }
 
-static void read_mark_file(struct mark_set *s, FILE *f)
+static void insert_object_entry(struct mark_set *s, struct object_id *oid, uintmax_t mark)
+{
+	struct object_entry *e;
+	e = find_object(oid);
+	if (!e) {
+		enum object_type type = oid_object_info(the_repository,
+							oid, NULL);
+		if (type < 0)
+			die("object not found: %s", oid_to_hex(oid));
+		e = insert_object(oid);
+		e->type = type;
+		e->pack_id = MAX_PACK_ID;
+		e->idx.offset = 1; /* just not zero! */
+	}
+	insert_mark(s, mark, e);
+}
+
+static void read_mark_file(struct mark_set *s, FILE *f, mark_set_inserter_t inserter)
 {
 	char line[512];
 	while (fgets(line, sizeof(line), f)) {
 		uintmax_t mark;
 		char *end;
 		struct object_id oid;
-		struct object_entry *e;
 
 		end = strchr(line, '\n');
 		if (line[0] != ':' || !end)
@@ -1728,18 +1746,7 @@ static void read_mark_file(struct mark_set *s, FILE *f)
 		if (!mark || end == line + 1
 			|| *end != ' ' || get_oid_hex(end + 1, &oid))
 			die("corrupt mark line: %s", line);
-		e = find_object(&oid);
-		if (!e) {
-			enum object_type type = oid_object_info(the_repository,
-								&oid, NULL);
-			if (type < 0)
-				die("object not found: %s", oid_to_hex(&oid));
-			e = insert_object(&oid);
-			e->type = type;
-			e->pack_id = MAX_PACK_ID;
-			e->idx.offset = 1; /* just not zero! */
-		}
-		insert_mark(s, mark, e);
+		inserter(s, &oid, mark);
 	}
 }
 
@@ -1752,7 +1759,7 @@ static void read_marks(void)
 		goto done; /* Marks file does not exist */
 	else
 		die_errno("cannot read '%s'", import_marks_file);
-	read_mark_file(marks, f);
+	read_mark_file(marks, f, insert_object_entry);
 	fclose(f);
 done:
 	import_marks_file_done = 1;
