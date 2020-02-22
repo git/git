@@ -20,6 +20,8 @@
 #define TEST_FILEMODE 1
 #endif
 
+#define GIT_DEFAULT_HASH_ENVIRONMENT "GIT_DEFAULT_HASH"
+
 static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
 static const char *init_db_template_dir;
@@ -356,6 +358,7 @@ static void separate_git_dir(const char *git_dir, const char *git_link)
 
 static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash)
 {
+	const char *env = getenv(GIT_DEFAULT_HASH_ENVIRONMENT);
 	/*
 	 * If we already have an initialized repo, don't allow the user to
 	 * specify a different algorithm, as that could cause corruption.
@@ -365,6 +368,12 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 		die(_("attempt to reinitialize repository with different hash"));
 	else if (hash != GIT_HASH_UNKNOWN)
 		repo_fmt->hash_algo = hash;
+	else if (env) {
+		int env_algo = hash_algo_by_name(env);
+		if (env_algo == GIT_HASH_UNKNOWN)
+			die(_("unknown hash algorithm '%s'"), env);
+		repo_fmt->hash_algo = env_algo;
+	}
 }
 
 int init_db(const char *git_dir, const char *real_git_dir,
