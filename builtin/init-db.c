@@ -378,7 +378,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 * config file, so this will not fail.  What we are catching
 	 * is an attempt to reinitialize new repository with an old tool.
 	 */
-	check_repository_format();
+	check_repository_format(NULL);
 
 	reinit = create_default_files(template_dir, original_git_dir);
 
