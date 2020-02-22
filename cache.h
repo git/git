@@ -1523,6 +1523,16 @@ int parse_oid_hex(const char *hex, struct object_id *oid, const char **end);
 int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
 			const struct git_hash_algo *algo);
 
+
+/*
+ * These functions work like get_oid_hex and parse_oid_hex, but they will parse
+ * a hex value for any algorithm. The algorithm is detected based on the length
+ * and the algorithm in use is returned. If this is not a hex object ID in any
+ * algorithm, returns GIT_HASH_UNKNOWN.
+ */
+int get_oid_hex_any(const char *hex, struct object_id *oid);
+int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
+
 /*
  * This reads short-hand syntax that not only evaluates to a commit
  * object name, but also can act as if the end user spelled the name

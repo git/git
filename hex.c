@@ -72,6 +72,20 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid,
 	return get_hash_hex_algop(hex, oid->hash, algop);
 }
 
+/*
+ * NOTE: This function relies on hash algorithms being in order from shortest
+ * length to longest length.
+ */
+int get_oid_hex_any(const char *hex, struct object_id *oid)
+{
+	int i;
+	for (i = GIT_HASH_NALGOS - 1; i > 0; i--) {
+		if (!get_hash_hex_algop(hex, oid->hash, &hash_algos[i]))
+			return i;
+	}
+	return GIT_HASH_UNKNOWN;
+}
+
 int get_oid_hex(const char *hex, struct object_id *oid)
 {
 	return get_oid_hex_algop(hex, oid, the_hash_algo);
@@ -84,6 +98,14 @@ int parse_oid_hex_algop(const char *hex, struct object_id *oid,
 	int ret = get_hash_hex_algop(hex, oid->hash, algop);
 	if (!ret)
 		*end = hex + algop->hexsz;
+	return ret;
+}
+
+int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end)
+{
+	int ret = get_oid_hex_any(hex, oid);
+	if (ret)
+		*end = hex + hash_algos[ret].hexsz;
 	return ret;
 }
 
