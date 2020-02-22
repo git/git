@@ -177,7 +177,8 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 }
 
 static int create_default_files(const char *template_path,
-				const char *original_git_dir)
+				const char *original_git_dir,
+				const struct repository_format *fmt)
 {
 	struct stat st1;
 	struct strbuf buf = STRBUF_INIT;
@@ -187,6 +188,7 @@ static int create_default_files(const char *template_path,
 	int reinit;
 	int filemode;
 	struct strbuf err = STRBUF_INIT;
+	int repo_version = GIT_REPO_VERSION;
 
 	/* Just look for `init.templatedir` */
 	init_db_template_dir = NULL; /* re-set in case it was set before */
@@ -244,10 +246,22 @@ static int create_default_files(const char *template_path,
 			exit(1);
 	}
 
+#ifndef ENABLE_SHA256
+	if (fmt->hash_algo != GIT_HASH_SHA1)
+		die(_("The hash algorithm %s is not supported in this build."), hash_algos[fmt->hash_algo].name);
+#endif
+
+	if (fmt->hash_algo != GIT_HASH_SHA1)
+		repo_version = GIT_REPO_VERSION_READ;
+
 	/* This forces creation of new config file */
 	xsnprintf(repo_version_string, sizeof(repo_version_string),
-		  "%d", GIT_REPO_VERSION);
+		  "%d", repo_version);
 	git_config_set("core.repositoryformatversion", repo_version_string);
+
+	if (fmt->hash_algo != GIT_HASH_SHA1)
+		git_config_set("extensions.objectformat",
+			       hash_algos[fmt->hash_algo].name);
 
 	/* Check filemode trustability */
 	path = git_path_buf(&buf, "config");
@@ -340,12 +354,26 @@ static void separate_git_dir(const char *git_dir, const char *git_link)
 	write_file(git_link, "gitdir: %s", git_dir);
 }
 
+static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash)
+{
+	/*
+	 * If we already have an initialized repo, don't allow the user to
+	 * specify a different algorithm, as that could cause corruption.
+	 * Otherwise, if the user has specified one on the command line, use it.
+	 */
+	if (repo_fmt->version >= 0 && hash != GIT_HASH_UNKNOWN && hash != repo_fmt->hash_algo)
+		die(_("attempt to reinitialize repository with different hash"));
+	else if (hash != GIT_HASH_UNKNOWN)
+		repo_fmt->hash_algo = hash;
+}
+
 int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, unsigned int flags)
+	    const char *template_dir, int hash, unsigned int flags)
 {
 	int reinit;
 	int exist_ok = flags & INIT_DB_EXIST_OK;
 	char *original_git_dir = real_pathdup(git_dir, 1);
+	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 
 	if (real_git_dir) {
 		struct stat st;
@@ -378,9 +406,11 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 * config file, so this will not fail.  What we are catching
 	 * is an attempt to reinitialize new repository with an old tool.
 	 */
-	check_repository_format(NULL);
+	check_repository_format(&repo_fmt);
 
-	reinit = create_default_files(template_dir, original_git_dir);
+	validate_hash_algorithm(&repo_fmt, hash);
+
+	reinit = create_default_files(template_dir, original_git_dir, &repo_fmt);
 
 	create_object_directory();
 
@@ -482,6 +512,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	const char *work_tree;
 	const char *template_dir = NULL;
 	unsigned int flags = 0;
+	const char *object_format = NULL;
+	int hash_algo = GIT_HASH_UNKNOWN;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
 				N_("directory from which templates will be used")),
@@ -494,6 +526,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		OPT_BIT('q', "quiet", &flags, N_("be quiet"), INIT_DB_QUIET),
 		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 			   N_("separate git dir from working tree")),
+		OPT_STRING(0, "object-format", &object_format, N_("hash"),
+			   N_("specify the hash algorithm to use")),
 		OPT_END()
 	};
 
@@ -544,6 +578,12 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		char *cwd = xgetcwd();
 		setenv(GIT_DIR_ENVIRONMENT, cwd, argc > 0);
 		free(cwd);
+	}
+
+	if (object_format) {
+		hash_algo = hash_algo_by_name(object_format);
+		if (hash_algo == GIT_HASH_UNKNOWN)
+			die(_("unknown hash algorithm '%s'"), object_format);
 	}
 
 	if (init_shared_repository != -1)
@@ -597,5 +637,5 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	UNLEAK(work_tree);
 
 	flags |= INIT_DB_EXIST_OK;
-	return init_db(git_dir, real_git_dir, template_dir, flags);
+	return init_db(git_dir, real_git_dir, template_dir, hash_algo, flags);
 }

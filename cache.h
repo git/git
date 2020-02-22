@@ -627,7 +627,8 @@ int path_inside_repo(const char *prefix, const char *path);
 #define INIT_DB_EXIST_OK 0x0002
 
 int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, unsigned int flags);
+	    const char *template_dir, int hash_algo,
+	    unsigned int flags);
 
 void sanitize_stdfds(void);
 int daemonize(void);
