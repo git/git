@@ -75,6 +75,10 @@ static void test_get_commit_tree_in_graph(const char *gitdir,
 
 int cmd__repository(int argc, const char **argv)
 {
+	int nongit_ok = 0;
+
+	setup_git_directory_gently(&nongit_ok);
+
 	if (argc < 2)
 		die("must have at least 2 arguments");
 	if (!strcmp(argv[1], "parse_commit_in_graph")) {
