@@ -132,6 +132,7 @@ struct recent_command {
 };
 
 typedef void (*mark_set_inserter_t)(struct mark_set *s, struct object_id *oid, uintmax_t mark);
+typedef void (*each_mark_fn_t)(uintmax_t mark, void *obj, void *cbp);
 
 /* Configured limits on output */
 static unsigned long max_depth = 50;
@@ -232,6 +233,29 @@ static void parse_get_mark(const char *p);
 static void parse_cat_blob(const char *p);
 static void parse_ls(const char *p, struct branch *b);
 
+static void for_each_mark(struct mark_set *m, uintmax_t base, each_mark_fn_t callback, void *p)
+{
+	uintmax_t k;
+	if (m->shift) {
+		for (k = 0; k < 1024; k++) {
+			if (m->data.sets[k])
+				for_each_mark(m->data.sets[k], base + (k << m->shift), callback, p);
+		}
+	} else {
+		for (k = 0; k < 1024; k++) {
+			if (m->data.marked[k])
+				callback(base + k, m->data.marked[k], p);
+		}
+	}
+}
+
+static void dump_marks_fn(uintmax_t mark, void *object, void *cbp) {
+	struct object_entry *e = object;
+	FILE *f = cbp;
+
+	fprintf(f, ":%" PRIuMAX " %s\n", mark, oid_to_hex(&e->idx.oid));
+}
+
 static void write_branch_report(FILE *rpt, struct branch *b)
 {
 	fprintf(rpt, "%s:\n", b->name);
@@ -259,8 +283,6 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 
 	fputc('\n', rpt);
 }
-
-static void dump_marks_helper(FILE *, uintmax_t, struct mark_set *);
 
 static void write_crash_report(const char *err)
 {
@@ -340,7 +362,7 @@ static void write_crash_report(const char *err)
 	if (export_marks_file)
 		fprintf(rpt, "  exported to %s\n", export_marks_file);
 	else
-		dump_marks_helper(rpt, 0, marks);
+		for_each_mark(marks, 0, dump_marks_fn, rpt);
 
 	fputc('\n', rpt);
 	fputs("-------------------\n", rpt);
@@ -1655,26 +1677,6 @@ static void dump_tags(void)
 	strbuf_release(&err);
 }
 
-static void dump_marks_helper(FILE *f,
-	uintmax_t base,
-	struct mark_set *m)
-{
-	uintmax_t k;
-	if (m->shift) {
-		for (k = 0; k < 1024; k++) {
-			if (m->data.sets[k])
-				dump_marks_helper(f, base + (k << m->shift),
-					m->data.sets[k]);
-		}
-	} else {
-		for (k = 0; k < 1024; k++) {
-			if (m->data.marked[k])
-				fprintf(f, ":%" PRIuMAX " %s\n", base + k,
-					oid_to_hex(&m->data.marked[k]->idx.oid));
-		}
-	}
-}
-
 static void dump_marks(void)
 {
 	struct lock_file mark_lock = LOCK_INIT;
@@ -1704,7 +1706,7 @@ static void dump_marks(void)
 		return;
 	}
 
-	dump_marks_helper(f, 0, marks);
+	for_each_mark(marks, 0, dump_marks_fn, f);
 	if (commit_lock_file(&mark_lock)) {
 		failure |= error_errno("Unable to write file %s",
 				       export_marks_file);
