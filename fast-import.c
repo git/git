@@ -517,10 +517,9 @@ static void insert_mark(struct mark_set *s, uintmax_t idnum, struct object_entry
 	s->data.marked[idnum] = oe;
 }
 
-static struct object_entry *find_mark(uintmax_t idnum)
+static void *find_mark(struct mark_set *s, uintmax_t idnum)
 {
 	uintmax_t orig_idnum = idnum;
-	struct mark_set *s = marks;
 	struct object_entry *oe = NULL;
 	if ((idnum >> s->shift) < 1024) {
 		while (s && s->shift) {
@@ -2225,7 +2224,7 @@ static void file_change_m(const char *p, struct branch *b)
 	}
 
 	if (*p == ':') {
-		oe = find_mark(parse_mark_ref_space(&p));
+		oe = find_mark(marks, parse_mark_ref_space(&p));
 		oidcpy(&oid, &oe->idx.oid);
 	} else if (skip_prefix(p, "inline ", &p)) {
 		inline_data = 1;
@@ -2399,7 +2398,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	/* Now parse the notemodify command. */
 	/* <dataref> or 'inline' */
 	if (*p == ':') {
-		oe = find_mark(parse_mark_ref_space(&p));
+		oe = find_mark(marks, parse_mark_ref_space(&p));
 		oidcpy(&oid, &oe->idx.oid);
 	} else if (skip_prefix(p, "inline ", &p)) {
 		inline_data = 1;
@@ -2420,7 +2419,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		oidcpy(&commit_oid, &s->oid);
 	} else if (*p == ':') {
 		uintmax_t commit_mark = parse_mark_ref_eol(p);
-		struct object_entry *commit_oe = find_mark(commit_mark);
+		struct object_entry *commit_oe = find_mark(marks, commit_mark);
 		if (commit_oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", commit_mark);
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
@@ -2524,7 +2523,7 @@ static int parse_objectish(struct branch *b, const char *objectish)
 		oidcpy(&b->branch_tree.versions[1].oid, t);
 	} else if (*objectish == ':') {
 		uintmax_t idnum = parse_mark_ref_eol(objectish);
-		struct object_entry *oe = find_mark(idnum);
+		struct object_entry *oe = find_mark(marks, idnum);
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", idnum);
 		if (!oideq(&b->oid, &oe->idx.oid)) {
@@ -2588,7 +2587,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			oidcpy(&n->oid, &s->oid);
 		else if (*from == ':') {
 			uintmax_t idnum = parse_mark_ref_eol(from);
-			struct object_entry *oe = find_mark(idnum);
+			struct object_entry *oe = find_mark(marks, idnum);
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%" PRIuMAX " not a commit", idnum);
 			oidcpy(&n->oid, &oe->idx.oid);
@@ -2762,7 +2761,7 @@ static void parse_new_tag(const char *arg)
 	} else if (*from == ':') {
 		struct object_entry *oe;
 		from_mark = parse_mark_ref_eol(from);
-		oe = find_mark(from_mark);
+		oe = find_mark(marks, from_mark);
 		type = oe->type;
 		oidcpy(&oid, &oe->idx.oid);
 	} else if (!get_oid(from, &oid)) {
@@ -2920,7 +2919,7 @@ static void parse_get_mark(const char *p)
 	if (*p != ':')
 		die("Not a mark: %s", p);
 
-	oe = find_mark(parse_mark_ref_eol(p));
+	oe = find_mark(marks, parse_mark_ref_eol(p));
 	if (!oe)
 		die("Unknown mark: %s", command_buf.buf);
 
@@ -2935,7 +2934,7 @@ static void parse_cat_blob(const char *p)
 
 	/* cat-blob SP <object> LF */
 	if (*p == ':') {
-		oe = find_mark(parse_mark_ref_eol(p));
+		oe = find_mark(marks, parse_mark_ref_eol(p));
 		if (!oe)
 			die("Unknown mark: %s", command_buf.buf);
 		oidcpy(&oid, &oe->idx.oid);
@@ -3010,7 +3009,7 @@ static struct object_entry *parse_treeish_dataref(const char **p)
 	struct object_entry *e;
 
 	if (**p == ':') {	/* <mark> */
-		e = find_mark(parse_mark_ref_space(p));
+		e = find_mark(marks, parse_mark_ref_space(p));
 		if (!e)
 			die("Unknown mark: %s", command_buf.buf);
 		oidcpy(&oid, &e->idx.oid);
