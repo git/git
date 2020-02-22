@@ -493,9 +493,8 @@ static char *pool_strdup(const char *s)
 	return r;
 }
 
-static void insert_mark(uintmax_t idnum, struct object_entry *oe)
+static void insert_mark(struct mark_set *s, uintmax_t idnum, struct object_entry *oe)
 {
-	struct mark_set *s = marks;
 	while ((idnum >> s->shift) >= 1024) {
 		s = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
 		s->shift = marks->shift + 10;
@@ -919,7 +918,7 @@ static int store_object(
 
 	e = insert_object(&oid);
 	if (mark)
-		insert_mark(mark, e);
+		insert_mark(marks, mark, e);
 	if (e->idx.offset) {
 		duplicate_count_by_type[type]++;
 		return 1;
@@ -1117,7 +1116,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	e = insert_object(&oid);
 
 	if (mark)
-		insert_mark(mark, e);
+		insert_mark(marks, mark, e);
 
 	if (e->idx.offset) {
 		duplicate_count_by_type[OBJ_BLOB]++;
@@ -1712,16 +1711,9 @@ static void dump_marks(void)
 	}
 }
 
-static void read_marks(void)
+static void read_mark_file(struct mark_set *s, FILE *f)
 {
 	char line[512];
-	FILE *f = fopen(import_marks_file, "r");
-	if (f)
-		;
-	else if (import_marks_file_ignore_missing && errno == ENOENT)
-		goto done; /* Marks file does not exist */
-	else
-		die_errno("cannot read '%s'", import_marks_file);
 	while (fgets(line, sizeof(line), f)) {
 		uintmax_t mark;
 		char *end;
@@ -1747,8 +1739,20 @@ static void read_marks(void)
 			e->pack_id = MAX_PACK_ID;
 			e->idx.offset = 1; /* just not zero! */
 		}
-		insert_mark(mark, e);
+		insert_mark(s, mark, e);
 	}
+}
+
+static void read_marks(void)
+{
+	FILE *f = fopen(import_marks_file, "r");
+	if (f)
+		;
+	else if (import_marks_file_ignore_missing && errno == ENOENT)
+		goto done; /* Marks file does not exist */
+	else
+		die_errno("cannot read '%s'", import_marks_file);
+	read_mark_file(marks, f);
 	fclose(f);
 done:
 	import_marks_file_done = 1;
@@ -3130,7 +3134,7 @@ static void parse_alias(void)
 		die(_("Expected 'to' command, got %s"), command_buf.buf);
 	e = find_object(&b.oid);
 	assert(e);
-	insert_mark(next_mark, e);
+	insert_mark(marks, next_mark, e);
 }
 
 static char* make_fast_import_path(const char *path)
