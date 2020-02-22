@@ -18,6 +18,7 @@
 #include "object-store.h"
 #include "mem-pool.h"
 #include "commit-reach.h"
+#include "khash.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -53,6 +54,7 @@ struct object_entry_pool {
 
 struct mark_set {
 	union {
+		struct object_id *oids[1024];
 		struct object_entry *marked[1024];
 		struct mark_set *sets[1024];
 	} data;
@@ -224,6 +226,11 @@ static int allow_unsafe_features;
 
 /* Signal handling */
 static volatile sig_atomic_t checkpoint_requested;
+
+/* Submodule marks */
+static struct string_list sub_marks_from = STRING_LIST_INIT_DUP;
+static struct string_list sub_marks_to = STRING_LIST_INIT_DUP;
+static kh_oid_map_t *sub_oid_map;
 
 /* Where to write output of cat-blob commands */
 static int cat_blob_fd = STDOUT_FILENO;
@@ -1731,6 +1738,11 @@ static void insert_object_entry(struct mark_set *s, struct object_id *oid, uintm
 	insert_mark(s, mark, e);
 }
 
+static void insert_oid_entry(struct mark_set *s, struct object_id *oid, uintmax_t mark)
+{
+	insert_mark(s, mark, xmemdupz(oid, sizeof(*oid)));
+}
+
 static void read_mark_file(struct mark_set *s, FILE *f, mark_set_inserter_t inserter)
 {
 	char line[512];
@@ -1739,13 +1751,17 @@ static void read_mark_file(struct mark_set *s, FILE *f, mark_set_inserter_t inse
 		char *end;
 		struct object_id oid;
 
+		/* Ensure SHA-1 objects are padded with zeros. */
+		memset(oid.hash, 0, sizeof(oid.hash));
+
 		end = strchr(line, '\n');
 		if (line[0] != ':' || !end)
 			die("corrupt mark line: %s", line);
 		*end = 0;
 		mark = strtoumax(line + 1, &end, 10);
 		if (!mark || end == line + 1
-			|| *end != ' ' || get_oid_hex(end + 1, &oid))
+			|| *end != ' '
+			|| get_oid_hex_any(end + 1, &oid) == GIT_HASH_UNKNOWN)
 			die("corrupt mark line: %s", line);
 		inserter(s, &oid, mark);
 	}
@@ -2146,6 +2162,30 @@ static uintmax_t change_note_fanout(struct tree_entry *root,
 	return do_change_note_fanout(root, root, hex_oid, 0, path, 0, fanout);
 }
 
+static int parse_mapped_oid_hex(const char *hex, struct object_id *oid, const char **end)
+{
+	int algo;
+	khiter_t it;
+
+	/* Make SHA-1 object IDs have all-zero padding. */
+	memset(oid->hash, 0, sizeof(oid->hash));
+
+	algo = parse_oid_hex_any(hex, oid, end);
+	if (algo == GIT_HASH_UNKNOWN)
+		return -1;
+
+	it = kh_get_oid_map(sub_oid_map, *oid);
+	/* No such object? */
+	if (it == kh_end(sub_oid_map)) {
+		/* If we're using the same algorithm, pass it through. */
+		if (hash_algos[algo].format_id == the_hash_algo->format_id)
+			return 0;
+		return -1;
+	}
+	oidcpy(oid, kh_value(sub_oid_map, it));
+	return 0;
+}
+
 /*
  * Given a pointer into a string, parse a mark reference:
  *
@@ -2232,7 +2272,7 @@ static void file_change_m(const char *p, struct branch *b)
 		inline_data = 1;
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
 	} else {
-		if (parse_oid_hex(p, &oid, &p))
+		if (parse_mapped_oid_hex(p, &oid, &p))
 			die("Invalid dataref: %s", command_buf.buf);
 		oe = find_object(&oid);
 		if (*p++ != ' ')
@@ -2406,7 +2446,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		inline_data = 1;
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
 	} else {
-		if (parse_oid_hex(p, &oid, &p))
+		if (parse_mapped_oid_hex(p, &oid, &p))
 			die("Invalid dataref: %s", command_buf.buf);
 		oe = find_object(&oid);
 		if (*p++ != ' ')
@@ -2941,7 +2981,7 @@ static void parse_cat_blob(const char *p)
 			die("Unknown mark: %s", command_buf.buf);
 		oidcpy(&oid, &oe->idx.oid);
 	} else {
-		if (parse_oid_hex(p, &oid, &p))
+		if (parse_mapped_oid_hex(p, &oid, &p))
 			die("Invalid dataref: %s", command_buf.buf);
 		if (*p)
 			die("Garbage after SHA1: %s", command_buf.buf);
@@ -3005,6 +3045,42 @@ static struct object_entry *dereference(struct object_entry *oe,
 	return find_object(oid);
 }
 
+static void insert_mapped_mark(uintmax_t mark, void *object, void *cbp)
+{
+	struct object_id *fromoid = object;
+	struct object_id *tooid = find_mark(cbp, mark);
+	int ret;
+	khiter_t it;
+
+	it = kh_put_oid_map(sub_oid_map, *fromoid, &ret);
+	/* We've already seen this object. */
+	if (ret == 0)
+		return;
+	kh_value(sub_oid_map, it) = tooid;
+}
+
+static void build_mark_map_one(struct mark_set *from, struct mark_set *to)
+{
+	for_each_mark(from, 0, insert_mapped_mark, to);
+}
+
+static void build_mark_map(struct string_list *from, struct string_list *to)
+{
+	struct string_list_item *fromp, *top;
+
+	sub_oid_map = kh_init_oid_map();
+
+	for_each_string_list_item(fromp, from) {
+		top = string_list_lookup(to, fromp->string);
+		if (!fromp->util) {
+			die(_("Missing from marks for submodule '%s'"), fromp->string);
+		} else if (!top || !top->util) {
+			die(_("Missing to marks for submodule '%s'"), fromp->string);
+		}
+		build_mark_map_one(fromp->util, top->util);
+	}
+}
+
 static struct object_entry *parse_treeish_dataref(const char **p)
 {
 	struct object_id oid;
@@ -3016,7 +3092,7 @@ static struct object_entry *parse_treeish_dataref(const char **p)
 			die("Unknown mark: %s", command_buf.buf);
 		oidcpy(&oid, &e->idx.oid);
 	} else {	/* <sha1> */
-		if (parse_oid_hex(*p, &oid, p))
+		if (parse_mapped_oid_hex(*p, &oid, p))
 			die("Invalid dataref: %s", command_buf.buf);
 		e = find_object(&oid);
 		if (*(*p)++ != ' ')
@@ -3222,6 +3298,26 @@ static void option_export_pack_edges(const char *edges)
 	pack_edges = xfopen(edges, "a");
 }
 
+static void option_rewrite_submodules(const char *arg, struct string_list *list)
+{
+	struct mark_set *ms;
+	FILE *fp;
+	char *s = xstrdup(arg);
+	char *f = strchr(s, ':');
+	if (!f)
+		die(_("Expected format name:filename for submodule rewrite option"));
+	*f = '\0';
+	f++;
+	ms = xcalloc(1, sizeof(*ms));
+	string_list_insert(list, s)->util = ms;
+
+	fp = fopen(f, "r");
+	if (!fp)
+		die_errno("cannot read '%s'", f);
+	read_mark_file(ms, fp, insert_oid_entry);
+	fclose(fp);
+}
+
 static int parse_one_option(const char *option)
 {
 	if (skip_prefix(option, "max-pack-size=", &option)) {
@@ -3284,6 +3380,11 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_export_marks(arg);
 	} else if (!strcmp(feature, "alias")) {
 		; /* Don't die - this feature is supported */
+	} else if (skip_prefix(feature, "rewrite-submodules-to=", &arg)) {
+		option_rewrite_submodules(arg, &sub_marks_to);
+	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
+		option_rewrite_submodules(arg, &sub_marks_from);
+	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "cat-blob")) {
@@ -3389,6 +3490,7 @@ static void parse_argv(void)
 	seen_data_command = 1;
 	if (import_marks_file)
 		read_marks();
+	build_mark_map(&sub_marks_from, &sub_marks_to);
 }
 
 int cmd_main(int argc, const char **argv)
