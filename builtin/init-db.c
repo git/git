@@ -178,6 +178,29 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 	return 1;
 }
 
+void initialize_repository_version(int hash_algo)
+{
+	char repo_version_string[10];
+	int repo_version = GIT_REPO_VERSION;
+
+#ifndef ENABLE_SHA256
+	if (hash_algo != GIT_HASH_SHA1)
+		die(_("The hash algorithm %s is not supported in this build."), hash_algos[hash_algo].name);
+#endif
+
+	if (hash_algo != GIT_HASH_SHA1)
+		repo_version = GIT_REPO_VERSION_READ;
+
+	/* This forces creation of new config file */
+	xsnprintf(repo_version_string, sizeof(repo_version_string),
+		  "%d", repo_version);
+	git_config_set("core.repositoryformatversion", repo_version_string);
+
+	if (hash_algo != GIT_HASH_SHA1)
+		git_config_set("extensions.objectformat",
+			       hash_algos[hash_algo].name);
+}
+
 static int create_default_files(const char *template_path,
 				const char *original_git_dir,
 				const struct repository_format *fmt)
@@ -185,12 +208,10 @@ static int create_default_files(const char *template_path,
 	struct stat st1;
 	struct strbuf buf = STRBUF_INIT;
 	char *path;
-	char repo_version_string[10];
 	char junk[2];
 	int reinit;
 	int filemode;
 	struct strbuf err = STRBUF_INIT;
-	int repo_version = GIT_REPO_VERSION;
 
 	/* Just look for `init.templatedir` */
 	init_db_template_dir = NULL; /* re-set in case it was set before */
@@ -248,22 +269,7 @@ static int create_default_files(const char *template_path,
 			exit(1);
 	}
 
-#ifndef ENABLE_SHA256
-	if (fmt->hash_algo != GIT_HASH_SHA1)
-		die(_("The hash algorithm %s is not supported in this build."), hash_algos[fmt->hash_algo].name);
-#endif
-
-	if (fmt->hash_algo != GIT_HASH_SHA1)
-		repo_version = GIT_REPO_VERSION_READ;
-
-	/* This forces creation of new config file */
-	xsnprintf(repo_version_string, sizeof(repo_version_string),
-		  "%d", repo_version);
-	git_config_set("core.repositoryformatversion", repo_version_string);
-
-	if (fmt->hash_algo != GIT_HASH_SHA1)
-		git_config_set("extensions.objectformat",
-			       hash_algos[fmt->hash_algo].name);
+	initialize_repository_version(fmt->hash_algo);
 
 	/* Check filemode trustability */
 	path = git_path_buf(&buf, "config");
