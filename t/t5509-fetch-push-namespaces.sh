@@ -20,7 +20,7 @@ test_expect_success setup '
 	) &&
 	commit0=$(cd original && git rev-parse HEAD^) &&
 	commit1=$(cd original && git rev-parse HEAD) &&
-	git init pushee &&
+	git init --bare pushee &&
 	git init puller
 '
 
