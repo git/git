@@ -377,4 +377,22 @@ test_expect_success 'rebase -c rebase.useBuiltin=false warning' '
 	test_must_be_empty err
 '
 
+test_expect_success 'switch to branch checked out here' '
+	git checkout master &&
+	git rebase master master
+'
+
+test_expect_success 'switch to branch not checked out' '
+	git checkout master &&
+	git branch other &&
+	git rebase master other
+'
+
+test_expect_success 'refuse to switch to branch checked out elsewhere' '
+	git checkout master &&
+	git worktree add wt &&
+	test_must_fail git -C wt rebase master master 2>err &&
+	test_i18ngrep "already checked out" err
+'
+
 test_done
