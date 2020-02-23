@@ -354,7 +354,6 @@ test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge 
 # the strange name is: a\!'b
 test_expect_success 'quoting of a strangely named repo' '
 	test_must_fail git fetch "a\\!'\''b" > result 2>&1 &&
-	cat result &&
 	grep "fatal: '\''a\\\\!'\''b'\''" result
 '
 

@@ -1047,7 +1047,6 @@ test_expect_success 'M: rename root to subdirectory' '
 	EOF
 	git fast-import <input &&
 	git diff-tree -M -r M4^ M4 >actual &&
-	cat actual &&
 	compare_diff_raw expect actual
 '
 

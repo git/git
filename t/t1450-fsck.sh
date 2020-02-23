@@ -141,7 +141,6 @@ test_expect_success 'email without @ is okay' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	git fsck 2>out &&
-	cat out &&
 	! grep "commit $new" out
 '
 
