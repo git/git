@@ -143,11 +143,11 @@ test_expect_success 'setup: recover' '
 
 test_expect_success 'Show verbose error when HEAD could not be detached' '
 	>B &&
+	test_when_finished "rm -f B" &&
 	test_must_fail git rebase topic 2>output.err >output.out &&
 	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" output.err &&
 	test_i18ngrep B output.err
 '
-rm -f B
 
 test_expect_success 'fail when upstream arg is missing and not on branch' '
 	git checkout topic &&
