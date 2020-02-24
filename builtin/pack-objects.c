@@ -1756,7 +1756,7 @@ static void check_object(struct object_entry *entry)
 				entry->delta_sibling_idx = base_entry->delta_child_idx;
 				SET_DELTA_CHILD(base_entry, entry);
 			} else {
-				SET_DELTA_EXT(entry, base_ref.hash);
+				SET_DELTA_EXT(entry, &base_ref);
 			}
 
 			unuse_pack(&w_curs);
