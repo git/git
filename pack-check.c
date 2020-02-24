@@ -8,10 +8,6 @@
 
 struct idx_entry {
 	off_t                offset;
-	union idx_entry_object {
-		const unsigned char *hash;
-		struct object_id *oid;
-	} oid;
 	unsigned int nr;
 };
 
@@ -97,10 +93,6 @@ static int verify_packfile(struct repository *r,
 	entries[nr_objects].offset = pack_sig_ofs;
 	/* first sort entries by pack offset, since unpacking them is more efficient that way */
 	for (i = 0; i < nr_objects; i++) {
-		entries[i].oid.hash = nth_packed_object_sha1(p, i);
-		if (!entries[i].oid.hash)
-			BUG("unable to get oid of object %lu from %s",
-			    (unsigned long)i, p->pack_name);
 		entries[i].offset = nth_packed_object_offset(p, i);
 		entries[i].nr = i;
 	}
@@ -108,10 +100,15 @@ static int verify_packfile(struct repository *r,
 
 	for (i = 0; i < nr_objects; i++) {
 		void *data;
+		struct object_id oid;
 		enum object_type type;
 		unsigned long size;
 		off_t curpos;
 		int data_valid;
+
+		if (nth_packed_object_id(&oid, p, entries[i].nr) < 0)
+			BUG("unable to get oid of object %lu from %s",
+			    (unsigned long)entries[i].nr, p->pack_name);
 
 		if (p->index_version > 1) {
 			off_t offset = entries[i].offset;
@@ -120,7 +117,7 @@ static int verify_packfile(struct repository *r,
 			if (check_pack_crc(p, w_curs, offset, len, nr))
 				err = error("index CRC mismatch for object %s "
 					    "from %s at offset %"PRIuMAX"",
-					    oid_to_hex(entries[i].oid.oid),
+					    oid_to_hex(&oid),
 					    p->pack_name, (uintmax_t)offset);
 		}
 
@@ -143,14 +140,14 @@ static int verify_packfile(struct repository *r,
 
 		if (data_valid && !data)
 			err = error("cannot unpack %s from %s at offset %"PRIuMAX"",
-				    oid_to_hex(entries[i].oid.oid), p->pack_name,
+				    oid_to_hex(&oid), p->pack_name,
 				    (uintmax_t)entries[i].offset);
-		else if (check_object_signature(r, entries[i].oid.oid, data, size, type_name(type)))
+		else if (check_object_signature(r, &oid, data, size, type_name(type)))
 			err = error("packed %s from %s is corrupt",
-				    oid_to_hex(entries[i].oid.oid), p->pack_name);
+				    oid_to_hex(&oid), p->pack_name);
 		else if (fn) {
 			int eaten = 0;
-			err |= fn(entries[i].oid.oid, type, size, data, &eaten);
+			err |= fn(&oid, type, size, data, &eaten);
 			if (eaten)
 				data = NULL;
 		}
