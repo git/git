@@ -1867,35 +1867,26 @@ int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32
 			    index_lookup, index_lookup_width, result);
 }
 
-const unsigned char *nth_packed_object_sha1(struct packed_git *p,
-					    uint32_t n)
+int nth_packed_object_id(struct object_id *oid,
+			 struct packed_git *p,
+			 uint32_t n)
 {
 	const unsigned char *index = p->index_data;
 	const unsigned int hashsz = the_hash_algo->rawsz;
 	if (!index) {
 		if (open_pack_index(p))
-			return NULL;
+			return -1;
 		index = p->index_data;
 	}
 	if (n >= p->num_objects)
-		return NULL;
+		return -1;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		return index + (hashsz + 4) * n + 4;
+		oidread(oid, index + (hashsz + 4) * n + 4);
 	} else {
 		index += 8;
-		return index + hashsz * n;
+		oidread(oid, index + hashsz * n);
 	}
-}
-
-int nth_packed_object_id(struct object_id *oid,
-			 struct packed_git *p,
-			 uint32_t n)
-{
-	const unsigned char *hash = nth_packed_object_sha1(p, n);
-	if (!hash)
-		return -1;
-	hashcpy(oid->hash, hash);
 	return 0;
 }
 
