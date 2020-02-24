@@ -1225,30 +1225,32 @@ off_t get_delta_base(struct packed_git *p,
  * the final object lookup), but more expensive for OFS deltas (we
  * have to load the revidx to convert the offset back into a sha1).
  */
-static const unsigned char *get_delta_base_sha1(struct packed_git *p,
-						struct pack_window **w_curs,
-						off_t curpos,
-						enum object_type type,
-						off_t delta_obj_offset)
+static int get_delta_base_oid(struct packed_git *p,
+			      struct pack_window **w_curs,
+			      off_t curpos,
+			      struct object_id *oid,
+			      enum object_type type,
+			      off_t delta_obj_offset)
 {
 	if (type == OBJ_REF_DELTA) {
 		unsigned char *base = use_pack(p, w_curs, curpos, NULL);
-		return base;
+		oidread(oid, base);
+		return 0;
 	} else if (type == OBJ_OFS_DELTA) {
 		struct revindex_entry *revidx;
 		off_t base_offset = get_delta_base(p, w_curs, &curpos,
 						   type, delta_obj_offset);
 
 		if (!base_offset)
-			return NULL;
+			return -1;
 
 		revidx = find_pack_revindex(p, base_offset);
 		if (!revidx)
-			return NULL;
+			return -1;
 
-		return nth_packed_object_sha1(p, revidx->nr);
+		return nth_packed_object_id(oid, p, revidx->nr);
 	} else
-		return NULL;
+		return -1;
 }
 
 static int retry_bad_packed_offset(struct repository *r,
@@ -1558,16 +1560,12 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 
 	if (oi->delta_base_oid) {
 		if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
-			const unsigned char *base;
-
-			base = get_delta_base_sha1(p, &w_curs, curpos,
-						   type, obj_offset);
-			if (!base) {
+			if (get_delta_base_oid(p, &w_curs, curpos,
+					       oi->delta_base_oid,
+					       type, obj_offset) < 0) {
 				type = OBJ_BAD;
 				goto out;
 			}
-
-			hashcpy(oi->delta_base_oid->hash, base);
 		} else
 			oidclr(oi->delta_base_oid);
 	}
