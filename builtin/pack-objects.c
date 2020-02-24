@@ -3053,7 +3053,7 @@ static void add_objects_in_unpacked_packs(void)
 			   in_pack.alloc);
 
 		for (i = 0; i < p->num_objects; i++) {
-			nth_packed_object_oid(&oid, p, i);
+			nth_packed_object_id(&oid, p, i);
 			o = lookup_unknown_object(&oid);
 			if (!(o->flags & OBJECT_ADDED))
 				mark_in_pack_object(o, p, &in_pack);
@@ -3157,7 +3157,7 @@ static void loosen_unused_packed_objects(void)
 			die(_("cannot open pack index"));
 
 		for (i = 0; i < p->num_objects; i++) {
-			nth_packed_object_oid(&oid, p, i);
+			nth_packed_object_id(&oid, p, i);
 			if (!packlist_find(&to_pack, &oid) &&
 			    !has_sha1_pack_kept_or_nonlocal(&oid) &&
 			    !loosened_object_can_be_discarded(&oid, p->mtime))

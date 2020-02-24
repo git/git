@@ -658,7 +658,7 @@ static void show_objects_for_type(
 			offset += ewah_bit_ctz64(word >> offset);
 
 			entry = &bitmap_git->pack->revindex[pos + offset];
-			nth_packed_object_oid(&oid, bitmap_git->pack, entry->nr);
+			nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
 
 			if (bitmap_git->hashes)
 				hash = get_be32(bitmap_git->hashes + entry->nr);
@@ -1136,7 +1136,7 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 		struct object_entry *oe;
 
 		entry = &bitmap_git->pack->revindex[i];
-		nth_packed_object_oid(&oid, bitmap_git->pack, entry->nr);
+		nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
 		oe = packlist_find(mapping, &oid);
 
 		if (oe)

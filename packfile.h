@@ -129,10 +129,9 @@ int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32
 const unsigned char *nth_packed_object_sha1(struct packed_git *, uint32_t n);
 /*
  * Like nth_packed_object_sha1, but write the data into the object specified by
- * the the first argument.  Returns the first argument on success, and NULL on
- * error.
+ * the the first argument.  Returns 0 on success, negative otherwise.
  */
-const struct object_id *nth_packed_object_oid(struct object_id *, struct packed_git *, uint32_t n);
+int nth_packed_object_id(struct object_id *, struct packed_git *, uint32_t n);
 
 /*
  * Return the offset of the nth object within the specified packfile.

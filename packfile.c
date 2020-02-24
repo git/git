@@ -1261,7 +1261,7 @@ static int retry_bad_packed_offset(struct repository *r,
 	revidx = find_pack_revindex(p, obj_offset);
 	if (!revidx)
 		return OBJ_BAD;
-	nth_packed_object_oid(&oid, p, revidx->nr);
+	nth_packed_object_id(&oid, p, revidx->nr);
 	mark_bad_packed_object(p, oid.hash);
 	type = oid_object_info(r, &oid, NULL);
 	if (type <= OBJ_NONE)
@@ -1693,7 +1693,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			off_t len = revidx[1].offset - obj_offset;
 			if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
 				struct object_id oid;
-				nth_packed_object_oid(&oid, p, revidx->nr);
+				nth_packed_object_id(&oid, p, revidx->nr);
 				error("bad packed object CRC for %s",
 				      oid_to_hex(&oid));
 				mark_bad_packed_object(p, oid.hash);
@@ -1782,7 +1782,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			struct object_id base_oid;
 			revidx = find_pack_revindex(p, obj_offset);
 			if (revidx) {
-				nth_packed_object_oid(&base_oid, p, revidx->nr);
+				nth_packed_object_id(&base_oid, p, revidx->nr);
 				error("failed to read delta base object %s"
 				      " at offset %"PRIuMAX" from %s",
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
@@ -1890,15 +1890,15 @@ const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 	}
 }
 
-const struct object_id *nth_packed_object_oid(struct object_id *oid,
-					      struct packed_git *p,
-					      uint32_t n)
+int nth_packed_object_id(struct object_id *oid,
+			 struct packed_git *p,
+			 uint32_t n)
 {
 	const unsigned char *hash = nth_packed_object_sha1(p, n);
 	if (!hash)
-		return NULL;
+		return -1;
 	hashcpy(oid->hash, hash);
-	return oid;
+	return 0;
 }
 
 void check_pack_index_ptr(const struct packed_git *p, const void *vptr)
@@ -2077,7 +2077,7 @@ int for_each_object_in_pack(struct packed_git *p,
 		else
 			pos = i;
 
-		if (!nth_packed_object_oid(&oid, p, pos))
+		if (nth_packed_object_id(&oid, p, pos) < 0)
 			return error("unable to get sha1 of object %u in %s",
 				     pos, p->pack_name);
 
