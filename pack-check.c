@@ -99,7 +99,8 @@ static int verify_packfile(struct repository *r,
 	for (i = 0; i < nr_objects; i++) {
 		entries[i].oid.hash = nth_packed_object_sha1(p, i);
 		if (!entries[i].oid.hash)
-			die("internal error pack-check nth-packed-object");
+			BUG("unable to get oid of object %lu from %s",
+			    (unsigned long)i, p->pack_name);
 		entries[i].offset = nth_packed_object_offset(p, i);
 		entries[i].nr = i;
 	}
