@@ -872,14 +872,15 @@ static void write_reused_pack_one(size_t pos, struct hashfile *out,
 		/* Convert to REF_DELTA if we must... */
 		if (!allow_ofs_delta) {
 			int base_pos = find_revindex_position(reuse_packfile, base_offset);
-			const unsigned char *base_sha1 =
-				nth_packed_object_sha1(reuse_packfile,
-						       reuse_packfile->revindex[base_pos].nr);
+			struct object_id base_oid;
+
+			nth_packed_object_id(&base_oid, reuse_packfile,
+					     reuse_packfile->revindex[base_pos].nr);
 
 			len = encode_in_pack_object_header(header, sizeof(header),
 							   OBJ_REF_DELTA, size);
 			hashwrite(out, header, len);
-			hashwrite(out, base_sha1, 20);
+			hashwrite(out, base_oid.hash, 20);
 			copy_pack_data(out, reuse_packfile, w_curs, cur, next - cur);
 			return;
 		}
