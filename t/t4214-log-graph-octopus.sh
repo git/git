@@ -3,6 +3,12 @@
 test_description='git log --graph of skewed left octopus merge.'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-log-graph.sh
+
+test_cmp_graph () {
+	cat >expect &&
+	lib_test_cmp_graph --color=never --date-order --format=%s "$@"
+}
 
 test_expect_success 'set up merge history' '
 	test_commit initial &&
@@ -24,7 +30,7 @@ test_expect_success 'set up merge history' '
 '
 
 test_expect_success 'log --graph with tricky octopus merge, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph left octopus-merge <<-\EOF
 	* left
 	| *-.   octopus-merge
 	|/|\ \
@@ -37,9 +43,6 @@ test_expect_success 'log --graph with tricky octopus merge, no color' '
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s left octopus-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with tricky octopus merge with colors' '
@@ -66,7 +69,7 @@ test_expect_success 'log --graph with tricky octopus merge with colors' '
 # without the first parent skewing to the "left" branch column).
 
 test_expect_success 'log --graph with normal octopus merge, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph octopus-merge <<-\EOF
 	*---.   octopus-merge
 	|\ \ \
 	| | | * 4
@@ -78,9 +81,6 @@ test_expect_success 'log --graph with normal octopus merge, no color' '
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s octopus-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with normal octopus merge with colors' '
@@ -103,7 +103,7 @@ test_expect_success 'log --graph with normal octopus merge with colors' '
 '
 
 test_expect_success 'log --graph with normal octopus merge and child, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph after-merge <<-\EOF
 	* after-merge
 	*---.   octopus-merge
 	|\ \ \
@@ -116,9 +116,6 @@ test_expect_success 'log --graph with normal octopus merge and child, no color' 
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s after-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with normal octopus and child merge with colors' '
@@ -142,7 +139,7 @@ test_expect_success 'log --graph with normal octopus and child merge with colors
 '
 
 test_expect_success 'log --graph with tricky octopus merge and its child, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph left after-merge <<-\EOF
 	* left
 	| * after-merge
 	| *-.   octopus-merge
@@ -156,9 +153,6 @@ test_expect_success 'log --graph with tricky octopus merge and its child, no col
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s left after-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with tricky octopus merge and its child with colors' '
@@ -183,7 +177,7 @@ test_expect_success 'log --graph with tricky octopus merge and its child with co
 '
 
 test_expect_success 'log --graph with crossover in octopus merge, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph after-4 octopus-merge <<-\EOF
 	* after-4
 	| *---.   octopus-merge
 	| |\ \ \
@@ -200,9 +194,6 @@ test_expect_success 'log --graph with crossover in octopus merge, no color' '
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s after-4 octopus-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with crossover in octopus merge with colors' '
@@ -230,7 +221,7 @@ test_expect_success 'log --graph with crossover in octopus merge with colors' '
 '
 
 test_expect_success 'log --graph with crossover in octopus merge and its child, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph after-4 after-merge <<-\EOF
 	* after-4
 	| * after-merge
 	| *---.   octopus-merge
@@ -248,9 +239,6 @@ test_expect_success 'log --graph with crossover in octopus merge and its child, 
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s after-4 after-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with crossover in octopus merge and its child with colors' '
@@ -279,7 +267,7 @@ test_expect_success 'log --graph with crossover in octopus merge and its child w
 '
 
 test_expect_success 'log --graph with unrelated commit and octopus tip, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph after-initial octopus-merge <<-\EOF
 	* after-initial
 	| *---.   octopus-merge
 	| |\ \ \
@@ -296,9 +284,6 @@ test_expect_success 'log --graph with unrelated commit and octopus tip, no color
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s after-initial octopus-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with unrelated commit and octopus tip with colors' '
@@ -326,7 +311,7 @@ test_expect_success 'log --graph with unrelated commit and octopus tip with colo
 '
 
 test_expect_success 'log --graph with unrelated commit and octopus child, no color' '
-	cat >expect.uncolored <<-\EOF &&
+	test_cmp_graph after-initial after-merge <<-\EOF
 	* after-initial
 	| * after-merge
 	| *---.   octopus-merge
@@ -344,9 +329,6 @@ test_expect_success 'log --graph with unrelated commit and octopus child, no col
 	|/
 	* initial
 	EOF
-	git log --color=never --graph --date-order --pretty=tformat:%s after-initial after-merge >actual.raw &&
-	sed "s/ *\$//" actual.raw >actual &&
-	test_cmp expect.uncolored actual
 '
 
 test_expect_success 'log --graph with unrelated commit and octopus child with colors' '

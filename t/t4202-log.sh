@@ -5,6 +5,11 @@ test_description='git log'
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 . "$TEST_DIRECTORY/lib-terminal.sh"
+. "$TEST_DIRECTORY/lib-log-graph.sh"
+
+test_cmp_graph () {
+	lib_test_cmp_graph --format=%s "$@"
+}
 
 test_expect_success setup '
 
@@ -452,8 +457,7 @@ cat > expect <<EOF
 EOF
 
 test_expect_success 'simple log --graph' '
-	git log --graph --pretty=tformat:%s >actual &&
-	test_cmp expect actual
+	test_cmp_graph
 '
 
 cat > expect <<EOF
@@ -467,8 +471,7 @@ cat > expect <<EOF
 EOF
 
 test_expect_success 'simple log --graph --line-prefix="123 "' '
-	git log --graph --line-prefix="123 " --pretty=tformat:%s >actual &&
-	test_cmp expect actual
+	test_cmp_graph --line-prefix="123 "
 '
 
 test_expect_success 'set up merge history' '
@@ -495,9 +498,7 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph with merge' '
-	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
-	test_cmp expect actual
+	test_cmp_graph --date-order
 '
 
 cat > expect <<\EOF
@@ -516,9 +517,7 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph --line-prefix="| | | " with merge' '
-	git log --line-prefix="| | | " --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
-	test_cmp expect actual
+	test_cmp_graph --line-prefix="| | | " --date-order
 '
 
 cat > expect.colors <<\EOF
@@ -676,9 +675,7 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph with merge' '
-	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
-	test_cmp expect actual
+	test_cmp_graph --date-order
 '
 
 test_expect_success 'log.decorate configuration' '
@@ -1213,24 +1210,8 @@ cat >expect <<\EOF
   +one
 EOF
 
-sanitize_output () {
-	sed -e 's/ *$//' \
-	    -e 's/commit [0-9a-f]*$/commit COMMIT_OBJECT_NAME/' \
-	    -e 's/Merge: [ 0-9a-f]*$/Merge: MERGE_PARENTS/' \
-	    -e 's/Merge tag.*/Merge HEADS DESCRIPTION/' \
-	    -e 's/Merge commit.*/Merge HEADS DESCRIPTION/' \
-	    -e 's/, 0 deletions(-)//' \
-	    -e 's/, 0 insertions(+)//' \
-	    -e 's/ 1 files changed, / 1 file changed, /' \
-	    -e 's/, 1 deletions(-)/, 1 deletion(-)/' \
-	    -e 's/, 1 insertions(+)/, 1 insertion(+)/' \
-	    -e 's/index [0-9a-f]*\.\.[0-9a-f]*/index BEFORE..AFTER/'
-}
-
 test_expect_success 'log --graph with diff and stats' '
-	git log --no-renames --graph --pretty=short --stat -p >actual &&
-	sanitize_output >actual.sanitized <actual &&
-	test_i18ncmp expect actual.sanitized
+	lib_test_cmp_short_graph --no-renames --stat -p
 '
 
 cat >expect <<\EOF
@@ -1505,9 +1486,7 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success 'log --line-prefix="*** " --graph with diff and stats' '
-	git log --line-prefix="*** " --no-renames --graph --pretty=short --stat -p >actual &&
-	sanitize_output >actual.sanitized <actual &&
-	test_i18ncmp expect actual.sanitized
+	lib_test_cmp_short_graph --line-prefix="*** " --no-renames --stat -p
 '
 
 cat >expect <<-\EOF
@@ -1529,9 +1508,7 @@ cat >expect <<-\EOF
 EOF
 
 test_expect_success 'log --graph with --name-status' '
-	git log --graph --format=%s --name-status tangle..reach >actual &&
-	sanitize_output <actual >actual.sanitized &&
-	test_cmp expect actual.sanitized
+	test_cmp_graph --name-status tangle..reach
 '
 
 cat >expect <<-\EOF
@@ -1553,9 +1530,7 @@ cat >expect <<-\EOF
 EOF
 
 test_expect_success 'log --graph with --name-only' '
-	git log --graph --format=%s --name-only tangle..reach >actual &&
-	sanitize_output <actual >actual.sanitized &&
-	test_cmp expect actual.sanitized
+	test_cmp_graph --name-only tangle..reach
 '
 
 test_expect_success 'dotdot is a parent directory' '
