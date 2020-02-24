@@ -234,14 +234,7 @@ static void validate_worktree_add(const char *path, const struct add_opts *opts)
 		die(_("'%s' already exists"), path);
 
 	worktrees = get_worktrees(0);
-	/*
-	 * find_worktree()'s suffix matching may undesirably find the main
-	 * rather than a linked worktree (for instance, when the basenames
-	 * of the main worktree and the one being created are the same).
-	 * We're only interested in linked worktrees, so skip the main
-	 * worktree with +1.
-	 */
-	wt = find_worktree(worktrees + 1, NULL, path);
+	wt = find_worktree_by_path(worktrees, path);
 	if (!wt)
 		goto done;
 
