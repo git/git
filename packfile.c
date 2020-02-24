@@ -1556,7 +1556,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		}
 	}
 
-	if (oi->delta_base_sha1) {
+	if (oi->delta_base_oid) {
 		if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
 			const unsigned char *base;
 
@@ -1567,9 +1567,9 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 				goto out;
 			}
 
-			hashcpy(oi->delta_base_sha1, base);
+			hashcpy(oi->delta_base_oid->hash, base);
 		} else
-			hashclr(oi->delta_base_sha1);
+			oidclr(oi->delta_base_oid);
 	}
 
 	oi->whence = in_delta_base_cache(p, obj_offset) ? OI_DBCACHED :
