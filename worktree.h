@@ -62,6 +62,12 @@ struct worktree *find_worktree(struct worktree **list,
 			       const char *arg);
 
 /*
+ * Return the worktree corresponding to `path`, or NULL if no such worktree
+ * exists.
+ */
+struct worktree *find_worktree_by_path(struct worktree **, const char *path);
+
+/*
  * Return true if the given worktree is the main one.
  */
 int is_main_worktree(const struct worktree *wt);
