@@ -305,9 +305,7 @@ test_expect_success 'log --graph with multiple tips and colors' '
 	<BLUE>|<RESET><BLUE>/<RESET>
 	* 6_A
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s 6_1 6_3 6_5 >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	lib_test_cmp_colored_graph --date-order --pretty=tformat:%s 6_1 6_3 6_5
 '
 
 test_expect_success 'log --graph with multiple tips' '

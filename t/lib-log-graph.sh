@@ -20,3 +20,9 @@ lib_test_cmp_short_graph () {
 	sanitize_log_output >output.sanitized <output &&
 	test_i18ncmp expect output.sanitized
 }
+
+lib_test_cmp_colored_graph () {
+	git log --graph --color=always "$@" >output.colors.raw &&
+	test_decode_color <output.colors.raw | sed "s/ *\$//" >output.colors &&
+	test_cmp expect.colors output.colors
+}

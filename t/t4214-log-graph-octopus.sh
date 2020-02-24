@@ -10,6 +10,10 @@ test_cmp_graph () {
 	lib_test_cmp_graph --color=never --date-order --format=%s "$@"
 }
 
+test_cmp_colored_graph () {
+	lib_test_cmp_colored_graph --date-order --format=%s "$@"
+}
+
 test_expect_success 'set up merge history' '
 	test_commit initial &&
 	for i in 1 2 3 4 ; do
@@ -60,9 +64,7 @@ test_expect_success 'log --graph with tricky octopus merge with colors' '
 	<MAGENTA>|<RESET><MAGENTA>/<RESET>
 	* initial
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s left octopus-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph left octopus-merge
 '
 
 # Repeat the previous two tests with "normal" octopus merge (i.e.,
@@ -97,9 +99,7 @@ test_expect_success 'log --graph with normal octopus merge with colors' '
 	* initial
 	EOF
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
-	git log --color=always --graph --date-order --pretty=tformat:%s octopus-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph octopus-merge
 '
 
 test_expect_success 'log --graph with normal octopus merge and child, no color' '
@@ -133,9 +133,7 @@ test_expect_success 'log --graph with normal octopus and child merge with colors
 	* initial
 	EOF
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
-	git log --color=always --graph --date-order --pretty=tformat:%s after-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph after-merge
 '
 
 test_expect_success 'log --graph with tricky octopus merge and its child, no color' '
@@ -171,9 +169,7 @@ test_expect_success 'log --graph with tricky octopus merge and its child with co
 	<CYAN>|<RESET><CYAN>/<RESET>
 	* initial
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s left after-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph left after-merge
 '
 
 test_expect_success 'log --graph with crossover in octopus merge, no color' '
@@ -215,9 +211,7 @@ test_expect_success 'log --graph with crossover in octopus merge with colors' '
 	<MAGENTA>|<RESET><MAGENTA>/<RESET>
 	* initial
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s after-4 octopus-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph after-4 octopus-merge
 '
 
 test_expect_success 'log --graph with crossover in octopus merge and its child, no color' '
@@ -261,9 +255,7 @@ test_expect_success 'log --graph with crossover in octopus merge and its child w
 	<CYAN>|<RESET><CYAN>/<RESET>
 	* initial
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s after-4 after-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph after-4 after-merge
 '
 
 test_expect_success 'log --graph with unrelated commit and octopus tip, no color' '
@@ -305,9 +297,7 @@ test_expect_success 'log --graph with unrelated commit and octopus tip with colo
 	<RED>|<RESET><RED>/<RESET>
 	* initial
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s after-initial octopus-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph after-initial octopus-merge
 '
 
 test_expect_success 'log --graph with unrelated commit and octopus child, no color' '
@@ -351,9 +341,7 @@ test_expect_success 'log --graph with unrelated commit and octopus child with co
 	<RED>|<RESET><RED>/<RESET>
 	* initial
 	EOF
-	git log --color=always --graph --date-order --pretty=tformat:%s after-initial after-merge >actual.colors.raw &&
-	test_decode_color <actual.colors.raw | sed "s/ *\$//" >actual.colors &&
-	test_cmp expect.colors actual.colors
+	test_cmp_colored_graph after-initial after-merge
 '
 
 test_done

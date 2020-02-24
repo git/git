@@ -537,9 +537,7 @@ EOF
 
 test_expect_success 'log --graph with merge with log.graphColors' '
 	test_config log.graphColors " blue,invalid-color, cyan, red  , " &&
-	git log --color=always --graph --date-order --pretty=tformat:%s |
-		test_decode_color | sed "s/ *\$//" >actual &&
-	test_cmp expect.colors actual
+	lib_test_cmp_colored_graph --date-order --format=%s
 '
 
 test_expect_success 'log --raw --graph -m with merge' '
