@@ -30,6 +30,14 @@ test_expect_success 'attribute before color name' '
 	color "bold red" "[1;31m"
 '
 
+test_expect_success 'aixterm bright fg color' '
+	color "brightred" "[91m"
+'
+
+test_expect_success 'aixterm bright bg color' '
+	color "green brightblue" "[32;104m"
+'
+
 test_expect_success 'color name before attribute' '
 	color "red bold" "[1;31m"
 '
@@ -72,6 +80,10 @@ test_expect_success 'absurdly long color specification' '
 
 test_expect_success '0-7 are aliases for basic ANSI color names' '
 	color "0 7" "[30;47m"
+'
+
+test_expect_success '8-15 are aliases for aixterm color names' '
+	color "12 13" "[94;105m"
 '
 
 test_expect_success '256 colors' '
