@@ -16,6 +16,8 @@
 #define BLAME_DEFAULT_MOVE_SCORE	20
 #define BLAME_DEFAULT_COPY_SCORE	40
 
+struct fingerprint;
+
 /*
  * One blob in a commit that is being suspected
  */
@@ -52,7 +54,7 @@ struct blame_origin {
 	struct blame_entry *suspects;
 	mmfile_t file;
 	int num_lines;
-	void *fingerprints;
+	struct fingerprint *fingerprints;
 	struct object_id blob_oid;
 	unsigned short mode;
 	/* guilty gets set when shipping any suspects to the final
