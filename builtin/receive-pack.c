@@ -27,6 +27,7 @@
 #include "object-store.h"
 #include "protocol.h"
 #include "commit-reach.h"
+#include "worktree.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -816,16 +817,6 @@ static int run_update_hook(struct command *cmd)
 	return finish_command(&proc);
 }
 
-static int is_ref_checked_out(const char *ref)
-{
-	if (is_bare_repository())
-		return 0;
-
-	if (!head_name)
-		return 0;
-	return !strcmp(head_name, ref);
-}
-
 static char *refuse_unconfigured_deny_msg =
 	N_("By default, updating the current branch in a non-bare repository\n"
 	   "is denied, because it will make the index and work tree inconsistent\n"
@@ -997,16 +988,26 @@ static const char *push_to_checkout(unsigned char *hash,
 		return NULL;
 }
 
-static const char *update_worktree(unsigned char *sha1)
+static const char *update_worktree(unsigned char *sha1, const struct worktree *worktree)
 {
-	const char *retval;
-	const char *work_tree = git_work_tree_cfg ? git_work_tree_cfg : "..";
+	const char *retval, *work_tree, *git_dir = NULL;
 	struct argv_array env = ARGV_ARRAY_INIT;
+
+	if (worktree && worktree->path)
+		work_tree = worktree->path;
+	else if (git_work_tree_cfg)
+		work_tree = git_work_tree_cfg;
+	else
+		work_tree = "..";
 
 	if (is_bare_repository())
 		return "denyCurrentBranch = updateInstead needs a worktree";
+	if (worktree)
+		git_dir = get_worktree_git_dir(worktree);
+	if (!git_dir)
+		git_dir = get_git_dir();
 
-	argv_array_pushf(&env, "GIT_DIR=%s", absolute_path(get_git_dir()));
+	argv_array_pushf(&env, "GIT_DIR=%s", absolute_path(git_dir));
 
 	if (!find_hook(push_to_checkout_hook))
 		retval = push_to_deploy(sha1, &env, work_tree);
@@ -1026,6 +1027,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	struct object_id *old_oid = &cmd->old_oid;
 	struct object_id *new_oid = &cmd->new_oid;
 	int do_update_worktree = 0;
+	const struct worktree *worktree = is_bare_repository() ? NULL : find_shared_symref("HEAD", name);
 
 	/* only refs/... are allowed */
 	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
@@ -1037,7 +1039,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	free(namespaced_name);
 	namespaced_name = strbuf_detach(&namespaced_name_buf, NULL);
 
-	if (is_ref_checked_out(namespaced_name)) {
+	if (worktree) {
 		switch (deny_current_branch) {
 		case DENY_IGNORE:
 			break;
@@ -1069,7 +1071,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			return "deletion prohibited";
 		}
 
-		if (head_name && !strcmp(namespaced_name, head_name)) {
+		if (worktree || (head_name && !strcmp(namespaced_name, head_name))) {
 			switch (deny_delete_current) {
 			case DENY_IGNORE:
 				break;
@@ -1118,7 +1120,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	}
 
 	if (do_update_worktree) {
-		ret = update_worktree(new_oid->hash);
+		ret = update_worktree(new_oid->hash, find_shared_symref("HEAD", name));
 		if (ret)
 			return ret;
 	}
