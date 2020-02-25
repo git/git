@@ -417,9 +417,19 @@ test_expect_success 'pattern-checks: too short' '
 	cat >repo/.git/info/sparse-checkout <<-\EOF &&
 	/*
 	!/*/
-	/a
+	/
 	EOF
 	check_read_tree_errors repo "a" "disabling cone pattern matching"
+'
+test_expect_success 'pattern-checks: not too short' '
+	cat >repo/.git/info/sparse-checkout <<-\EOF &&
+	/*
+	!/*/
+	/b/
+	EOF
+	git -C repo read-tree -mu HEAD 2>err &&
+	test_must_be_empty err &&
+	check_files repo a
 '
 
 test_expect_success 'pattern-checks: trailing "*"' '
