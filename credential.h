@@ -118,7 +118,8 @@ struct credential {
 	unsigned approved:1,
 		 configured:1,
 		 quit:1,
-		 use_http_path:1;
+		 use_http_path:1,
+		 username_from_proto:1;
 
 	char *username;
 	char *password;
