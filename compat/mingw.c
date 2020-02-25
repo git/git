@@ -1245,7 +1245,7 @@ static char *path_lookup(const char *cmd, int exe_only)
 	int len = strlen(cmd);
 	int isexe = len >= 4 && !strcasecmp(cmd+len-4, ".exe");
 
-	if (strchr(cmd, '/') || strchr(cmd, '\\'))
+	if (strpbrk(cmd, "/\\"))
 		return xstrdup(cmd);
 
 	path = mingw_getenv("PATH");
