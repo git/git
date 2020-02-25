@@ -35,6 +35,9 @@ UI, Workflows & Features
  * "git config" learned to show in which "scope", in addition to in
    which file, each config setting comes from.
 
+ * The basic 7 colors learned the brighter counterparts
+   (e.g. "brightred").
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -212,6 +215,10 @@ Fixes since v2.25
    thing.
    (merge a7df60cac8 tb/commit-graph-object-dir later to maint).
 
+ * "git remote rename X Y" needs to adjust configuration variables
+   (e.g. branch.<name>.remote) whose value used to be X to Y.
+   branch.<name>.pushRemote is now also updated.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge d0d0a357a1 am/update-pathspec-f-f-tests later to maint).
@@ -230,3 +237,4 @@ Fixes since v2.25
    (merge 08809c09aa js/mingw-open-in-gdb later to maint).
    (merge cc4f2eb828 jk/doc-credential-helper later to maint).
    (merge e0020b2f82 es/outside-repo-errmsg-hints later to maint).
+   (merge a2dc43414c es/doc-mentoring later to maint).
