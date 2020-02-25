@@ -215,7 +215,6 @@ struct worktree *find_worktree(struct worktree **list,
 			       const char *arg)
 {
 	struct worktree *wt;
-	char *path;
 	char *to_free = NULL;
 
 	if ((wt = find_worktree_by_suffix(list, arg)))
@@ -223,11 +222,17 @@ struct worktree *find_worktree(struct worktree **list,
 
 	if (prefix)
 		arg = to_free = prefix_filename(prefix, arg);
-	path = real_pathdup(arg, 0);
-	if (!path) {
-		free(to_free);
+	wt = find_worktree_by_path(list, arg);
+	free(to_free);
+	return wt;
+}
+
+struct worktree *find_worktree_by_path(struct worktree **list, const char *p)
+{
+	char *path = real_pathdup(p, 0);
+
+	if (!path)
 		return NULL;
-	}
 	for (; *list; list++) {
 		const char *wt_path = real_path_if_valid((*list)->path);
 
@@ -235,7 +240,6 @@ struct worktree *find_worktree(struct worktree **list,
 			break;
 	}
 	free(path);
-	free(to_free);
 	return *list;
 }
 
