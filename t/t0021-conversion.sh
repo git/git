@@ -795,7 +795,6 @@ test_expect_success PERL 'missing file in delayed checkout' '
 
 	rm -rf repo-cloned &&
 	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
-	cat git-stderr.log &&
 	grep "error: .missing-delay\.a. was not filtered properly" git-stderr.log
 '
 
