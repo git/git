@@ -104,4 +104,47 @@ test_expect_success 'modify/delete + directory/file conflict; other way' '
 	test_path_is_file letters~HEAD
 '
 
+test_expect_success 'Simple merge in repo with interesting pathnames' '
+	# Simple lexicographic ordering of files and directories would be:
+	#     foo
+	#     foo/bar
+	#     foo/bar-2
+	#     foo/bar/baz
+	#     foo/bar-2/baz
+	# The fact that foo/bar-2 appears between foo/bar and foo/bar/baz
+	# can trip up some codepaths, and is the point of this test.
+	test_create_repo name-ordering &&
+	(
+		cd name-ordering &&
+
+		mkdir -p foo/bar &&
+		mkdir -p foo/bar-2 &&
+		>foo/bar/baz &&
+		>foo/bar-2/baz &&
+		git add . &&
+		git commit -m initial &&
+
+		git branch main &&
+		git branch other &&
+
+		git checkout other &&
+		echo other >foo/bar-2/baz &&
+		git add -u &&
+		git commit -m other &&
+
+		git checkout main &&
+		echo main >foo/bar/baz &&
+		git add -u &&
+		git commit -m main &&
+
+		git merge other &&
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git rev-parse :0:foo/bar/baz :0:foo/bar-2/baz >actual &&
+		git rev-parse HEAD~1:foo/bar/baz other:foo/bar-2/baz >expect &&
+		test_cmp expect actual
+	)
+
+'
+
 test_done
