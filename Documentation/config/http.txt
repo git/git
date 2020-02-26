@@ -29,6 +29,20 @@ http.proxyAuthMethod::
 * `ntlm` - NTLM authentication (compare the --ntlm option of `curl(1)`)
 --
 
+http.proxycert::
+	File indicating a client certificate to use to authenticate with an HTTPS proxy.
+
+http.proxykey::
+	File indicating a private key to use to authenticate with an HTTPS proxy.
+
+http.proxykeypass::
+	When communicating to the proxy using TLS (using an HTTPS proxy), use this
+	option along `http.proxykey` to indicate a password for the key.
+
+http.proxycainfo::
+	File containing the certificates to verify the proxy with when using an HTTPS
+	proxy.
+
 http.emptyAuth::
 	Attempt authentication without seeking a username or password.  This
 	can be used to attempt GSS-Negotiate authentication without specifying
