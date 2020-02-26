@@ -86,6 +86,14 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *http_proxy_authmethod;
+
+#if LIBCURL_VERSION_NUM >= 0x073400
+static const char *http_proxy_ssl_cert;
+static const char *http_proxy_ssl_key;
+static const char *http_proxy_ssl_keypasswd;
+#endif
+static const char *http_proxy_ssl_ca_info;
+
 static struct {
 	const char *name;
 	long curlauth_param;
@@ -364,6 +372,20 @@ static int http_options(const char *var, const char *value, void *cb)
 
 	if (!strcmp("http.proxyauthmethod", var))
 		return git_config_string(&http_proxy_authmethod, var, value);
+
+#if LIBCURL_VERSION_NUM >= 0x073400
+	if (!strcmp("http.proxycert", var))
+		return git_config_string(&http_proxy_ssl_cert, var, value);
+
+	if (!strcmp("http.proxykey", var))
+		return git_config_string(&http_proxy_ssl_key, var, value);
+
+	if (!strcmp("http.proxykeypass", var))
+		return git_config_string(&http_proxy_ssl_keypasswd, var, value);
+
+	if (!strcmp("http.proxycainfo", var))
+		return git_config_string(&http_proxy_ssl_ca_info, var, value);
+#endif
 
 	if (!strcmp("http.cookiefile", var))
 		return git_config_pathname(&curl_cookie_file, var, value);
@@ -924,8 +946,14 @@ static CURL *get_curl_handle(void)
 #if LIBCURL_VERSION_NUM >= 0x073400
 		curl_easy_setopt(result, CURLOPT_PROXY_CAINFO, NULL);
 #endif
-	} else if (ssl_cainfo != NULL)
-		curl_easy_setopt(result, CURLOPT_CAINFO, ssl_cainfo);
+	} else if (ssl_cainfo != NULL || http_proxy_ssl_ca_info != NULL) {
+		if (ssl_cainfo != NULL)
+			curl_easy_setopt(result, CURLOPT_CAINFO, ssl_cainfo);
+#if LIBCURL_VERSION_NUM >= 0x073400
+		if (http_proxy_ssl_ca_info != NULL)
+			curl_easy_setopt(result, CURLOPT_PROXY_CAINFO, http_proxy_ssl_ca_info);
+#endif
+	}
 
 	if (curl_low_speed_limit > 0 && curl_low_speed_time > 0) {
 		curl_easy_setopt(result, CURLOPT_LOW_SPEED_LIMIT,
@@ -1018,9 +1046,19 @@ static CURL *get_curl_handle(void)
 				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
 #endif
 #if LIBCURL_VERSION_NUM >= 0x073400
-		else if (starts_with(curl_http_proxy, "https"))
-			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
+		else if (starts_with(curl_http_proxy, "https")) {
+			curl_easy_setopt(result, CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
+
+			if (http_proxy_ssl_cert != NULL)
+				curl_easy_setopt(result, CURLOPT_PROXY_SSLCERT, http_proxy_ssl_cert);
+
+			if (http_proxy_ssl_key != NULL)
+				curl_easy_setopt(result, CURLOPT_PROXY_SSLKEY, http_proxy_ssl_key);
+
+			if (http_proxy_ssl_keypasswd != NULL)
+				curl_easy_setopt(result, CURLOPT_PROXY_KEYPASSWD, http_proxy_ssl_keypasswd);
+
+		}
 #endif
 		if (strstr(curl_http_proxy, "://"))
 			credential_from_url(&proxy_auth, curl_http_proxy);
