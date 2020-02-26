@@ -233,7 +233,7 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	git -C "$REPO" config protocol.version 2 &&
 	git -C client config protocol.version 2 &&
 
-	git -C client fetch --depth=2 "$HTTPD_URL/one_time_sed/repo" master:a_branch &&
+	git -C client fetch --depth=2 "$HTTPD_URL/one_time_perl/repo" master:a_branch &&
 
 	# Craft a situation in which the server sends back an unshallow request
 	# with an empty packfile. This is done by refetching with a shorter
@@ -242,13 +242,13 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	printf "s/0034shallow %s/0036unshallow %s/" \
 	       "$(git -C "$REPO" rev-parse HEAD)" \
 	       "$(git -C "$REPO" rev-parse HEAD^)" \
-	       >"$HTTPD_ROOT_PATH/one-time-sed" &&
+	       >"$HTTPD_ROOT_PATH/one-time-perl" &&
 	test_must_fail env GIT_TEST_SIDEBAND_ALL=0 git -C client \
-		fetch --depth=1 "$HTTPD_URL/one_time_sed/repo" \
+		fetch --depth=1 "$HTTPD_URL/one_time_perl/repo" \
 		master:a_branch &&
 
-	# Ensure that the one-time-sed script was used.
-	! test -e "$HTTPD_ROOT_PATH/one-time-sed" &&
+	# Ensure that the one-time-perl script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-perl" &&
 
 	# Ensure that the resulting repo is consistent, despite our failure to
 	# fetch.
