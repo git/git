@@ -242,12 +242,23 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	rm -f A M N &&
 	git reset --hard &&
 	git checkout change+rename &&
+
+	test-tool chmtime =31337 B &&
+	test-tool chmtime --get B >old-mtime &&
 	GIT_MERGE_VERBOSITY=3 git merge change >out &&
-	test_i18ngrep "^Skipped B" out &&
+
+	test-tool chmtime --get B >new-mtime &&
+	test_cmp old-mtime new-mtime &&
+
 	git reset --hard HEAD^ &&
 	git checkout change &&
+
+	test-tool chmtime =-1 M &&
+	test-tool chmtime --get M >old-mtime &&
 	GIT_MERGE_VERBOSITY=3 git merge change+rename >out &&
-	test_i18ngrep ! "^Skipped B" out
+
+	test-tool chmtime --get B >new-mtime &&
+	test $(cat old-mtime) -lt $(cat new-mtime)
 '
 
 test_expect_success 'setup for rename + d/f conflicts' '
