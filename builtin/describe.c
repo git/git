@@ -376,11 +376,25 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 			if (!(c->object.flags & t->flag_within))
 				t->depth++;
 		}
+		/* Stop if last remaining path already covered by best candidate(s) */
 		if (annotated_cnt && !list) {
-			if (debug)
-				fprintf(stderr, _("finished search at %s\n"),
-					oid_to_hex(&c->object.oid));
-			break;
+			int best_depth = INT_MAX;
+			unsigned best_within = 0;
+			for (cur_match = 0; cur_match < match_cnt; cur_match++) {
+				struct possible_tag *t = &all_matches[cur_match];
+				if (t->depth < best_depth) {
+					best_depth = t->depth;
+					best_within = t->flag_within;
+				} else if (t->depth == best_depth) {
+					best_within |= t->flag_within;
+				}
+			}
+			if ((c->object.flags & best_within) == best_within) {
+				if (debug)
+					fprintf(stderr, _("finished search at %s\n"),
+						oid_to_hex(&c->object.oid));
+				break;
+			}
 		}
 		while (parents) {
 			struct commit *p = parents->item;
