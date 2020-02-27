@@ -143,11 +143,11 @@ test_expect_success 'setup: recover' '
 
 test_expect_success 'Show verbose error when HEAD could not be detached' '
 	>B &&
+	test_when_finished "rm -f B" &&
 	test_must_fail git rebase topic 2>output.err >output.out &&
 	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" output.err &&
 	test_i18ngrep B output.err
 '
-rm -f B
 
 test_expect_success 'fail when upstream arg is missing and not on branch' '
 	git checkout topic &&
@@ -399,6 +399,24 @@ test_expect_success 'rebase -c rebase.useBuiltin=false warning' '
 	test_must_be_empty err &&
 	test_must_fail env GIT_TEST_REBASE_USE_BUILTIN=true git rebase 2>err &&
 	test_must_be_empty err
+'
+
+test_expect_success 'switch to branch checked out here' '
+	git checkout master &&
+	git rebase master master
+'
+
+test_expect_success 'switch to branch not checked out' '
+	git checkout master &&
+	git branch other &&
+	git rebase master other
+'
+
+test_expect_success 'refuse to switch to branch checked out elsewhere' '
+	git checkout master &&
+	git worktree add wt &&
+	test_must_fail git -C wt rebase master master 2>err &&
+	test_i18ngrep "already checked out" err
 '
 
 test_done
