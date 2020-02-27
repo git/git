@@ -83,9 +83,9 @@ test_expect_success 'modify/delete + directory/file conflict' '
 	test 4 -eq $(git ls-files -u | wc -l) &&
 	test 1 -eq $(git ls-files -o | wc -l) &&
 
-	test -f letters/file &&
-	test -f letters.txt &&
-	test -f letters~modify
+	test_path_is_file letters/file &&
+	test_path_is_file letters.txt &&
+	test_path_is_file letters~modify
 '
 
 test_expect_success 'modify/delete + directory/file conflict; other way' '
@@ -99,9 +99,9 @@ test_expect_success 'modify/delete + directory/file conflict; other way' '
 	test 4 -eq $(git ls-files -u | wc -l) &&
 	test 1 -eq $(git ls-files -o | wc -l) &&
 
-	test -f letters/file &&
-	test -f letters.txt &&
-	test -f letters~HEAD
+	test_path_is_file letters/file &&
+	test_path_is_file letters.txt &&
+	test_path_is_file letters~HEAD
 '
 
 test_done
