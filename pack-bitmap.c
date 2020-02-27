@@ -170,7 +170,7 @@ static int load_bitmap_header(struct bitmap_index *index)
 
 static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 					  struct ewah_bitmap *root,
-					  const unsigned char *hash,
+					  const struct object_id *oid,
 					  struct stored_bitmap *xor_with,
 					  int flags)
 {
@@ -182,7 +182,7 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 	stored->root = root;
 	stored->xor = xor_with;
 	stored->flags = flags;
-	oidread(&stored->oid, hash);
+	oidcpy(&stored->oid, oid);
 
 	hash_pos = kh_put_oid_map(index->bitmaps, stored->oid, &ret);
 
@@ -190,7 +190,7 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 	 * because the SHA1 already existed on the map. this is bad, there
 	 * shouldn't be duplicated commits in the index */
 	if (ret == 0) {
-		error("Duplicate entry in bitmap index: %s", hash_to_hex(hash));
+		error("Duplicate entry in bitmap index: %s", oid_to_hex(oid));
 		return NULL;
 	}
 
@@ -222,13 +222,13 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		struct ewah_bitmap *bitmap = NULL;
 		struct stored_bitmap *xor_bitmap = NULL;
 		uint32_t commit_idx_pos;
-		const unsigned char *sha1;
+		struct object_id oid;
 
 		commit_idx_pos = read_be32(index->map, &index->map_pos);
 		xor_offset = read_u8(index->map, &index->map_pos);
 		flags = read_u8(index->map, &index->map_pos);
 
-		sha1 = nth_packed_object_sha1(index->pack, commit_idx_pos);
+		nth_packed_object_id(&oid, index->pack, commit_idx_pos);
 
 		bitmap = read_bitmap_1(index);
 		if (!bitmap)
@@ -245,7 +245,7 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		}
 
 		recent_bitmaps[i % MAX_XOR_OFFSET] = store_bitmap(
-			index, bitmap, sha1, xor_bitmap, flags);
+			index, bitmap, &oid, xor_bitmap, flags);
 	}
 
 	return 0;
@@ -691,7 +691,7 @@ static void show_objects_for_type(
 			offset += ewah_bit_ctz64(word >> offset);
 
 			entry = &bitmap_git->pack->revindex[pos + offset];
-			nth_packed_object_oid(&oid, bitmap_git->pack, entry->nr);
+			nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
 
 			if (bitmap_git->hashes)
 				hash = get_be32(bitmap_git->hashes + entry->nr);
@@ -796,7 +796,7 @@ static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
 		if (packed_object_info(the_repository, pack,
 				       entry->offset, &oi) < 0) {
 			struct object_id oid;
-			nth_packed_object_oid(&oid, pack, entry->nr);
+			nth_packed_object_id(&oid, pack, entry->nr);
 			die(_("unable to get size of %s"), oid_to_hex(&oid));
 		}
 	} else {
@@ -1342,7 +1342,7 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 		struct object_entry *oe;
 
 		entry = &bitmap_git->pack->revindex[i];
-		nth_packed_object_oid(&oid, bitmap_git->pack, entry->nr);
+		nth_packed_object_id(&oid, bitmap_git->pack, entry->nr);
 		oe = packlist_find(mapping, &oid);
 
 		if (oe)

@@ -872,14 +872,15 @@ static void write_reused_pack_one(size_t pos, struct hashfile *out,
 		/* Convert to REF_DELTA if we must... */
 		if (!allow_ofs_delta) {
 			int base_pos = find_revindex_position(reuse_packfile, base_offset);
-			const unsigned char *base_sha1 =
-				nth_packed_object_sha1(reuse_packfile,
-						       reuse_packfile->revindex[base_pos].nr);
+			struct object_id base_oid;
+
+			nth_packed_object_id(&base_oid, reuse_packfile,
+					     reuse_packfile->revindex[base_pos].nr);
 
 			len = encode_in_pack_object_header(header, sizeof(header),
 							   OBJ_REF_DELTA, size);
 			hashwrite(out, header, len);
-			hashwrite(out, base_sha1, 20);
+			hashwrite(out, base_oid.hash, 20);
 			copy_pack_data(out, reuse_packfile, w_curs, cur, next - cur);
 			return;
 		}
@@ -1618,23 +1619,17 @@ static void cleanup_preferred_base(void)
  * deltify other objects against, in order to avoid
  * circular deltas.
  */
-static int can_reuse_delta(const unsigned char *base_sha1,
+static int can_reuse_delta(const struct object_id *base_oid,
 			   struct object_entry *delta,
 			   struct object_entry **base_out)
 {
 	struct object_entry *base;
-	struct object_id base_oid;
-
-	if (!base_sha1)
-		return 0;
-
-	oidread(&base_oid, base_sha1);
 
 	/*
 	 * First see if we're already sending the base (or it's explicitly in
 	 * our "excluded" list).
 	 */
-	base = packlist_find(&to_pack, &base_oid);
+	base = packlist_find(&to_pack, base_oid);
 	if (base) {
 		if (!in_same_island(&delta->idx.oid, &base->idx.oid))
 			return 0;
@@ -1647,9 +1642,9 @@ static int can_reuse_delta(const unsigned char *base_sha1,
 	 * even if it was buried too deep in history to make it into the
 	 * packing list.
 	 */
-	if (thin && bitmap_has_oid_in_uninteresting(bitmap_git, &base_oid)) {
+	if (thin && bitmap_has_oid_in_uninteresting(bitmap_git, base_oid)) {
 		if (use_delta_islands) {
-			if (!in_same_island(&delta->idx.oid, &base_oid))
+			if (!in_same_island(&delta->idx.oid, base_oid))
 				return 0;
 		}
 		*base_out = NULL;
@@ -1666,7 +1661,8 @@ static void check_object(struct object_entry *entry)
 	if (IN_PACK(entry)) {
 		struct packed_git *p = IN_PACK(entry);
 		struct pack_window *w_curs = NULL;
-		const unsigned char *base_ref = NULL;
+		int have_base = 0;
+		struct object_id base_ref;
 		struct object_entry *base_entry;
 		unsigned long used, used_0;
 		unsigned long avail;
@@ -1707,9 +1703,13 @@ static void check_object(struct object_entry *entry)
 			unuse_pack(&w_curs);
 			return;
 		case OBJ_REF_DELTA:
-			if (reuse_delta && !entry->preferred_base)
-				base_ref = use_pack(p, &w_curs,
-						entry->in_pack_offset + used, NULL);
+			if (reuse_delta && !entry->preferred_base) {
+				oidread(&base_ref,
+					use_pack(p, &w_curs,
+						 entry->in_pack_offset + used,
+						 NULL));
+				have_base = 1;
+			}
 			entry->in_pack_header_size = used + the_hash_algo->rawsz;
 			break;
 		case OBJ_OFS_DELTA:
@@ -1739,13 +1739,15 @@ static void check_object(struct object_entry *entry)
 				revidx = find_pack_revindex(p, ofs);
 				if (!revidx)
 					goto give_up;
-				base_ref = nth_packed_object_sha1(p, revidx->nr);
+				if (!nth_packed_object_id(&base_ref, p, revidx->nr))
+					have_base = 1;
 			}
 			entry->in_pack_header_size = used + used_0;
 			break;
 		}
 
-		if (can_reuse_delta(base_ref, entry, &base_entry)) {
+		if (have_base &&
+		    can_reuse_delta(&base_ref, entry, &base_entry)) {
 			oe_set_type(entry, entry->in_pack_type);
 			SET_SIZE(entry, in_pack_size); /* delta size */
 			SET_DELTA_SIZE(entry, in_pack_size);
@@ -1755,7 +1757,7 @@ static void check_object(struct object_entry *entry)
 				entry->delta_sibling_idx = base_entry->delta_child_idx;
 				SET_DELTA_CHILD(base_entry, entry);
 			} else {
-				SET_DELTA_EXT(entry, base_ref);
+				SET_DELTA_EXT(entry, &base_ref);
 			}
 
 			unuse_pack(&w_curs);
@@ -3053,7 +3055,7 @@ static void add_objects_in_unpacked_packs(void)
 			   in_pack.alloc);
 
 		for (i = 0; i < p->num_objects; i++) {
-			nth_packed_object_oid(&oid, p, i);
+			nth_packed_object_id(&oid, p, i);
 			o = lookup_unknown_object(&oid);
 			if (!(o->flags & OBJECT_ADDED))
 				mark_in_pack_object(o, p, &in_pack);
@@ -3157,7 +3159,7 @@ static void loosen_unused_packed_objects(void)
 			die(_("cannot open pack index"));
 
 		for (i = 0; i < p->num_objects; i++) {
-			nth_packed_object_oid(&oid, p, i);
+			nth_packed_object_id(&oid, p, i);
 			if (!packlist_find(&to_pack, &oid) &&
 			    !has_sha1_pack_kept_or_nonlocal(&oid) &&
 			    !loosened_object_can_be_discarded(&oid, p->mtime))

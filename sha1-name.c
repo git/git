@@ -155,7 +155,6 @@ static void unique_in_pack(struct packed_git *p,
 			   struct disambiguate_state *ds)
 {
 	uint32_t num, i, first = 0;
-	const struct object_id *current = NULL;
 
 	if (p->multi_pack_index)
 		return;
@@ -173,10 +172,10 @@ static void unique_in_pack(struct packed_git *p,
 	 */
 	for (i = first; i < num && !ds->ambiguous; i++) {
 		struct object_id oid;
-		current = nth_packed_object_oid(&oid, p, i);
-		if (!match_sha(ds->len, ds->bin_pfx.hash, current->hash))
+		nth_packed_object_id(&oid, p, i);
+		if (!match_sha(ds->len, ds->bin_pfx.hash, oid.hash))
 			break;
-		update_candidates(ds, current);
+		update_candidates(ds, &oid);
 	}
 }
 
@@ -643,14 +642,14 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 	 */
 	mad->init_len = 0;
 	if (!match) {
-		if (nth_packed_object_oid(&oid, p, first))
+		if (!nth_packed_object_id(&oid, p, first))
 			extend_abbrev_len(&oid, mad);
 	} else if (first < num - 1) {
-		if (nth_packed_object_oid(&oid, p, first + 1))
+		if (!nth_packed_object_id(&oid, p, first + 1))
 			extend_abbrev_len(&oid, mad);
 	}
 	if (first > 0) {
-		if (nth_packed_object_oid(&oid, p, first - 1))
+		if (!nth_packed_object_id(&oid, p, first - 1))
 			extend_abbrev_len(&oid, mad);
 	}
 	mad->init_len = mad->cur_len;

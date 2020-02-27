@@ -534,7 +534,7 @@ static void fill_pack_entry(uint32_t pack_int_id,
 			    uint32_t cur_object,
 			    struct pack_midx_entry *entry)
 {
-	if (!nth_packed_object_oid(&entry->oid, p, cur_object))
+	if (nth_packed_object_id(&entry->oid, p, cur_object) < 0)
 		die(_("failed to locate object %d in packfile"), cur_object);
 
 	entry->pack_int_id = pack_int_id;

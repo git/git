@@ -292,7 +292,7 @@ static inline void oe_set_delta(struct packing_data *pack,
 
 void oe_set_delta_ext(struct packing_data *pack,
 		      struct object_entry *e,
-		      const unsigned char *sha1);
+		      const struct object_id *oid);
 
 static inline struct object_entry *oe_delta_child(
 		const struct packing_data *pack,
