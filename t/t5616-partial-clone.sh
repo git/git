@@ -429,14 +429,18 @@ intersperse () {
 	sed 's/\(..\)/'$1'\1/g'
 }
 
-# Create a one-time-sed command to replace the existing packfile with $1.
+# Create a one-time-perl command to replace the existing packfile with $1.
 replace_packfile () {
 	# The protocol requires that the packfile be sent in sideband 1, hence
 	# the extra \x01 byte at the beginning.
-	printf "1,/packfile/!c %04x\\\\x01%s0000" \
-		"$(($(wc -c <$1) + 5))" \
-		"$(hex_unpack <$1 | intersperse '\\x')" \
-		>"$HTTPD_ROOT_PATH/one-time-sed"
+	cp $1 "$HTTPD_ROOT_PATH/one-time-pack" &&
+	echo 'if (/packfile/) {
+		print;
+		my $length = -s "one-time-pack";
+		printf "%04x\x01", $length + 5;
+		print `cat one-time-pack` . "0000";
+		last
+	}' >"$HTTPD_ROOT_PATH/one-time-perl"
 }
 
 test_expect_success 'upon cloning, check that all refs point to objects' '
@@ -460,16 +464,16 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	# \x01 byte at the beginning.
 	replace_packfile incomplete.pack &&
 
-	# Use protocol v2 because the sed command looks for the "packfile"
+	# Use protocol v2 because the perl command looks for the "packfile"
 	# section header.
 	test_config -C "$SERVER" protocol.version 2 &&
 	test_must_fail git -c protocol.version=2 clone \
-		--filter=blob:none $HTTPD_URL/one_time_sed/server repo 2>err &&
+		--filter=blob:none $HTTPD_URL/one_time_perl/server repo 2>err &&
 
 	test_i18ngrep "did not send all necessary objects" err &&
 
-	# Ensure that the one-time-sed script was used.
-	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
+	# Ensure that the one-time-perl script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-perl"
 '
 
 test_expect_success 'when partial cloning, tolerate server not sending target of tag' '
@@ -500,17 +504,17 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	# \x01 byte at the beginning.
 	replace_packfile incomplete.pack &&
 
-	# Use protocol v2 because the sed command looks for the "packfile"
+	# Use protocol v2 because the perl command looks for the "packfile"
 	# section header.
 	test_config -C "$SERVER" protocol.version 2 &&
 
 	# Exercise to make sure it works.
 	git -c protocol.version=2 clone \
-		--filter=blob:none $HTTPD_URL/one_time_sed/server repo 2> err &&
+		--filter=blob:none $HTTPD_URL/one_time_perl/server repo 2> err &&
 	! grep "missing object referenced by" err &&
 
-	# Ensure that the one-time-sed script was used.
-	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
+	# Ensure that the one-time-perl script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-perl"
 '
 
 test_expect_success 'tolerate server sending REF_DELTA against missing promisor objects' '
@@ -533,7 +537,7 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 
 	# Clone. The client has deltabase_have but not deltabase_missing.
 	git -c protocol.version=2 clone --no-checkout \
-		--filter=blob:none $HTTPD_URL/one_time_sed/server repo &&
+		--filter=blob:none $HTTPD_URL/one_time_perl/server repo &&
 	git -C repo hash-object -w -- "$SERVER/have.txt" &&
 
 	# Sanity check to ensure that the client does not have
@@ -574,7 +578,7 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 
 	replace_packfile thin.pack &&
 
-	# Use protocol v2 because the sed command looks for the "packfile"
+	# Use protocol v2 because the perl command looks for the "packfile"
 	# section header.
 	test_config -C "$SERVER" protocol.version 2 &&
 
@@ -587,8 +591,8 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 	grep "want $(cat deltabase_missing)" trace &&
 	! grep "want $(cat deltabase_have)" trace &&
 
-	# Ensure that the one-time-sed script was used.
-	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
+	# Ensure that the one-time-perl script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-perl"
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this
