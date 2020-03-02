@@ -12,8 +12,9 @@ int cmd__advise_if_enabled(int argc, const char **argv)
 	git_config(git_default_config, NULL);
 
 	/*
-	  Any advice type can be used for testing, but NESTED_TAG was selected
-	  here and in t0018 where this command is being executed.
+	 * Any advice type can be used for testing, but NESTED_TAG was
+	 * selected here and in t0018 where this command is being
+	 * executed.
 	 */
 	advise_if_enabled(ADVICE_NESTED_TAG, argv[1]);
 

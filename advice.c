@@ -98,40 +98,40 @@ static struct {
 
 static struct {
 	const char *key;
-	int enabled;
+	int disabled;
 } advice_setting[] = {
-	[ADVICE_ADD_EMBEDDED_REPO]			= { "addEmbeddedRepo", 1 },
-	[ADVICE_AM_WORK_DIR] 				= { "amWorkDir", 1 },
-	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { "checkoutAmbiguousRemoteBranchName", 1 },
-	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge", 1 },
-	[ADVICE_DETACHED_HEAD]				= { "detachedHead", 1 },
-	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates", 1 },
-	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated", 1 },
-	[ADVICE_IGNORED_HOOK]				= { "ignoredHook", 1 },
-	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity", 1 },
-	[ADVICE_NESTED_TAG]				= { "nestedTag", 1 },
-	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning", 1 },
-	[ADVICE_PUSH_ALREADY_EXISTS]			= { "pushAlreadyExists", 1 },
-	[ADVICE_PUSH_FETCH_FIRST]			= { "pushFetchFirst", 1 },
-	[ADVICE_PUSH_NEEDS_FORCE]			= { "pushNeedsForce", 1 },
+	[ADVICE_ADD_EMBEDDED_REPO]			= { .key = "addEmbeddedRepo" },
+	[ADVICE_AM_WORK_DIR] 				= { .key = "amWorkDir" },
+	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { .key = "checkoutAmbiguousRemoteBranchName" },
+	[ADVICE_COMMIT_BEFORE_MERGE]			= { .key = "commitBeforeMerge" },
+	[ADVICE_DETACHED_HEAD]				= { .key = "detachedHead" },
+	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { .key = "fetchShowForcedUpdates" },
+	[ADVICE_GRAFT_FILE_DEPRECATED]			= { .key = "graftFileDeprecated" },
+	[ADVICE_IGNORED_HOOK]				= { .key = "ignoredHook" },
+	[ADVICE_IMPLICIT_IDENTITY]			= { .key = "implicitIdentity" },
+	[ADVICE_NESTED_TAG]				= { .key = "nestedTag" },
+	[ADVICE_OBJECT_NAME_WARNING]			= { .key = "objectNameWarning" },
+	[ADVICE_PUSH_ALREADY_EXISTS]			= { .key = "pushAlreadyExists" },
+	[ADVICE_PUSH_FETCH_FIRST]			= { .key = "pushFetchFirst" },
+	[ADVICE_PUSH_NEEDS_FORCE]			= { .key = "pushNeedsForce" },
 
 	/* make this an alias for backward compatibility */
-	[ADVICE_PUSH_UPDATE_REJECTED_ALIAS]		= { "pushNonFastForward", 1 },
+	[ADVICE_PUSH_UPDATE_REJECTED_ALIAS]		= { .key = "pushNonFastForward" },
 
-	[ADVICE_PUSH_NON_FF_CURRENT]			= { "pushNonFFCurrent", 1 },
-	[ADVICE_PUSH_NON_FF_MATCHING]			= { "pushNonFFMatching", 1 },
-	[ADVICE_PUSH_UNQUALIFIED_REF_NAME]		= { "pushUnqualifiedRefName", 1 },
-	[ADVICE_PUSH_UPDATE_REJECTED]			= { "pushUpdateRejected", 1 },
-	[ADVICE_RESET_QUIET_WARNING]			= { "resetQuiet", 1 },
-	[ADVICE_RESOLVE_CONFLICT]			= { "resolveConflict", 1 },
-	[ADVICE_RM_HINTS]				= { "rmHints", 1 },
-	[ADVICE_SEQUENCER_IN_USE]			= { "sequencerInUse", 1 },
-	[ADVICE_SET_UPSTREAM_FAILURE]			= { "setUpstreamFailure", 1 },
-	[ADVICE_STATUS_AHEAD_BEHIND_WARNING]		= { "statusAheadBehindWarning", 1 },
-	[ADVICE_STATUS_HINTS]				= { "statusHints", 1 },
-	[ADVICE_STATUS_U_OPTION]			= { "statusUoption", 1 },
-	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie", 1 },
-	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor", 1 },
+	[ADVICE_PUSH_NON_FF_CURRENT]			= { .key = "pushNonFFCurrent" },
+	[ADVICE_PUSH_NON_FF_MATCHING]			= { .key = "pushNonFFMatching" },
+	[ADVICE_PUSH_UNQUALIFIED_REF_NAME]		= { .key = "pushUnqualifiedRefName" },
+	[ADVICE_PUSH_UPDATE_REJECTED]			= { .key = "pushUpdateRejected" },
+	[ADVICE_RESET_QUIET_WARNING]			= { .key = "resetQuiet" },
+	[ADVICE_RESOLVE_CONFLICT]			= { .key = "resolveConflict" },
+	[ADVICE_RM_HINTS]				= { .key = "rmHints" },
+	[ADVICE_SEQUENCER_IN_USE]			= { .key = "sequencerInUse" },
+	[ADVICE_SET_UPSTREAM_FAILURE]			= { .key = "setUpstreamFailure" },
+	[ADVICE_STATUS_AHEAD_BEHIND_WARNING]		= { .key = "statusAheadBehindWarning" },
+	[ADVICE_STATUS_HINTS]				= { .key = "statusHints" },
+	[ADVICE_STATUS_U_OPTION]			= { .key = "statusUoption" },
+	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE]	= { .key = "submoduleAlternateErrorStrategyDie" },
+	[ADVICE_WAITING_FOR_EDITOR]			= { .key = "waitingForEditor" },
 };
 
 static const char turn_off_instructions[] =
@@ -173,10 +173,10 @@ int advice_enabled(enum advice_type type)
 {
 	switch(type) {
 	case ADVICE_PUSH_UPDATE_REJECTED:
-		return advice_setting[ADVICE_PUSH_UPDATE_REJECTED].enabled &&
-		       advice_setting[ADVICE_PUSH_UPDATE_REJECTED_ALIAS].enabled;
+		return !(advice_setting[ADVICE_PUSH_UPDATE_REJECTED].disabled ||
+			 advice_setting[ADVICE_PUSH_UPDATE_REJECTED_ALIAS].disabled);
 	default:
-		return advice_setting[type].enabled;
+		return !advice_setting[type].disabled;
 	}
 }
 
@@ -224,7 +224,7 @@ int git_default_advice_config(const char *var, const char *value)
 	for (i = 0; i < ARRAY_SIZE(advice_setting); i++) {
 		if (strcasecmp(k, advice_setting[i].key))
 			continue;
-		advice_setting[i].enabled = git_config_bool(var, value);
+		advice_setting[i].disabled = !git_config_bool(var, value);
 		return 0;
 	}
 
