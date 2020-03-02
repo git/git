@@ -80,7 +80,7 @@ static struct {
 	{ "sequencerInUse", &advice_sequencer_in_use },
 	{ "implicitIdentity", &advice_implicit_identity },
 	{ "detachedHead", &advice_detached_head },
-	{ "setupStreamFailure", &advice_set_upstream_failure },
+	{ "setUpstreamFailure", &advice_set_upstream_failure },
 	{ "objectNameWarning", &advice_object_name_warning },
 	{ "amWorkDir", &advice_amworkdir },
 	{ "rmHints", &advice_rm_hints },
