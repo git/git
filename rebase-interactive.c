@@ -129,14 +129,14 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 
 	if (incorrect) {
 		if (todo_list_check_against_backup(r, new_todo)) {
-			write_file(rebase_path_dropped(), "");
+			write_file(rebase_path_dropped(), "%s", "");
 			return -4;
 		}
 
 		if (incorrect > 0)
 			unlink(rebase_path_dropped());
 	} else if (todo_list_check(todo_list, new_todo)) {
-		write_file(rebase_path_dropped(), "");
+		write_file(rebase_path_dropped(), "%s", "");
 		return -4;
 	}
 
