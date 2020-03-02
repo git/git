@@ -95,6 +95,19 @@ Performance, Internal Implementation, Development Support etc.
  * Memory footprint and performance of "git name-rev" has been
    improved.
 
+ * The object reachability bitmap machinery and the partial cloning
+   machinery were not prepared to work well together, because some
+   object-filtering criteria that partial clones use inherently rely
+   on object traversal, but the bitmap machinery is an optimization
+   to bypass that object traversal.  There however are some cases
+   where they can work together, and they were taught about them.
+
+ * "git rebase" has learned to use the merge backend (i.e. the
+   machinery that drives "rebase -i") by default, while allowing
+   "--apply" option to use the "apply" backend (e.g. the moral
+   equivalent of "format-patch piped to am").  The rebase.backend
+   configuration variable can be set to customize.
+
 
 Fixes since v2.25
 -----------------
@@ -219,6 +232,25 @@ Fixes since v2.25
    (e.g. branch.<name>.remote) whose value used to be X to Y.
    branch.<name>.pushRemote is now also updated.
 
+ * Update to doc-diff.
+   (merge 2607d39da3 jk/doc-diff-parallel later to maint).
+
+ * Doc markup fix.
+   (merge 0aa6ce3094 jk/push-option-doc-markup-fix later to maint).
+
+ * "git check-ignore" did not work when the given path is explicitly
+   marked as not ignored with a negative entry in the .gitignore file.
+   (merge 7ec8125fba en/check-ignore later to maint).
+
+ * The merge-recursive machinery failed to refresh the cache entry for
+   a merge result in a couple of places, resulting in an unnecessary
+   merge failure, which has been fixed.
+   (merge fb1c18fc46 en/t3433-rebase-stat-dirty-failure later to maint).
+
+ * Fix for a bug revealed by a recent change to make the protocol v2
+   the default.
+   (merge 3e96c66805 ds/partial-clone-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge d0d0a357a1 am/update-pathspec-f-f-tests later to maint).
@@ -238,3 +270,8 @@ Fixes since v2.25
    (merge cc4f2eb828 jk/doc-credential-helper later to maint).
    (merge e0020b2f82 es/outside-repo-errmsg-hints later to maint).
    (merge a2dc43414c es/doc-mentoring later to maint).
+   (merge 539052f42f jk/run-command-formatfix later to maint).
+   (merge 02bbbe9df9 es/worktree-cleanup later to maint).
+   (merge 2ce6d075fa rs/micro-cleanups later to maint).
+   (merge 27f182b3fc rs/blame-typefix-for-fingerprint later to maint).
+   (merge 3c29e21eb0 ma/test-cleanup later to maint).
