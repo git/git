@@ -47,14 +47,11 @@ static void add_head_info(struct worktree *wt)
 static struct worktree *get_main_worktree(void)
 {
 	struct worktree *worktree = NULL;
-	struct strbuf path = STRBUF_INIT;
 	struct strbuf worktree_path = STRBUF_INIT;
 
 	strbuf_add_absolute_path(&worktree_path, get_git_common_dir());
 	if (!strbuf_strip_suffix(&worktree_path, "/.git"))
 		strbuf_strip_suffix(&worktree_path, "/.");
-
-	strbuf_addf(&path, "%s/HEAD", get_git_common_dir());
 
 	worktree = xcalloc(1, sizeof(*worktree));
 	worktree->path = strbuf_detach(&worktree_path, NULL);
@@ -69,7 +66,6 @@ static struct worktree *get_main_worktree(void)
 		is_bare_repository();
 	add_head_info(worktree);
 
-	strbuf_release(&path);
 	strbuf_release(&worktree_path);
 	return worktree;
 }
