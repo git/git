@@ -536,7 +536,7 @@ static void append_one_rev(const char *av)
 		append_ref(av, &revkey, 0);
 		return;
 	}
-	if (strchr(av, '*') || strchr(av, '?') || strchr(av, '[')) {
+	if (strpbrk(av, "*?[")) {
 		/* glob style match */
 		int saved_matches = ref_name_cnt;
 

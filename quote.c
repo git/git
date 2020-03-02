@@ -55,7 +55,7 @@ void sq_quote_buf_pretty(struct strbuf *dst, const char *src)
 	}
 
 	for (p = src; *p; p++) {
-		if (!isalpha(*p) && !isdigit(*p) && !strchr(ok_punct, *p)) {
+		if (!isalnum(*p) && !strchr(ok_punct, *p)) {
 			sq_quote_buf(dst, src);
 			return;
 		}
