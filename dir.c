@@ -688,7 +688,7 @@ static void add_pattern_to_hashsets(struct pattern_list *pl, struct path_pattern
 		return;
 	}
 
-	if (given->patternlen <= 2 ||
+	if (given->patternlen < 2 ||
 	    *given->pattern == '*' ||
 	    strstr(given->pattern, "**")) {
 		/* Not a cone pattern. */
