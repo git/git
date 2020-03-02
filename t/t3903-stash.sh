@@ -1290,4 +1290,18 @@ test_expect_success 'stash handles skip-worktree entries nicely' '
 	git rev-parse --verify refs/stash:A.t
 '
 
+test_expect_success 'stash -c stash.useBuiltin=false warning ' '
+	expected="stash.useBuiltin support has been removed" &&
+
+	git -c stash.useBuiltin=false stash 2>err &&
+	test_i18ngrep "$expected" err &&
+	env GIT_TEST_STASH_USE_BUILTIN=false git stash 2>err &&
+	test_i18ngrep "$expected" err &&
+
+	git -c stash.useBuiltin=true stash 2>err &&
+	test_must_be_empty err &&
+	env GIT_TEST_STASH_USE_BUILTIN=true git stash 2>err &&
+	test_must_be_empty err
+'
+
 test_done
