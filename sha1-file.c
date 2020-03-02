@@ -1354,8 +1354,8 @@ static int loose_object_info(struct repository *r,
 	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
 
-	if (oi->delta_base_sha1)
-		hashclr(oi->delta_base_sha1);
+	if (oi->delta_base_oid)
+		oidclr(oi->delta_base_oid);
 
 	/*
 	 * If we don't care about type or size, then we don't
@@ -1474,8 +1474,8 @@ static int do_oid_object_info_extended(struct repository *r,
 			*(oi->sizep) = co->size;
 		if (oi->disk_sizep)
 			*(oi->disk_sizep) = 0;
-		if (oi->delta_base_sha1)
-			hashclr(oi->delta_base_sha1);
+		if (oi->delta_base_oid)
+			oidclr(oi->delta_base_oid);
 		if (oi->type_name)
 			strbuf_addstr(oi->type_name, type_name(co->type));
 		if (oi->contentp)

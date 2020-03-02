@@ -300,7 +300,7 @@ struct object_info {
 	enum object_type *typep;
 	unsigned long *sizep;
 	off_t *disk_sizep;
-	unsigned char *delta_base_sha1;
+	struct object_id *delta_base_oid;
 	struct strbuf *type_name;
 	void **contentp;
 
