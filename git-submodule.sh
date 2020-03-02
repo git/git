@@ -10,7 +10,7 @@ USAGE="[--quiet] [--cached]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] deinit [-f|--force] (--all| [--] <path>...)
-   or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--] [<path>...]
    or: $dashless [--quiet] set-branch (--default|--branch <branch>) [--] <path>
    or: $dashless [--quiet] set-url [--] <path> <newurl>
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
@@ -47,6 +47,7 @@ custom_name=
 depth=
 progress=
 dissociate=
+single_branch=
 
 die_if_unmatched ()
 {
@@ -528,6 +529,12 @@ cmd_update()
 		--jobs=*)
 			jobs=$1
 			;;
+		--single-branch)
+			single_branch="--single-branch"
+			;;
+		--no-single-branch)
+			single_branch="--no-single-branch"
+			;;
 		--)
 			shift
 			break
@@ -557,6 +564,7 @@ cmd_update()
 		${dissociate:+"--dissociate"} \
 		${depth:+--depth "$depth"} \
 		${require_init:+--require-init} \
+		$single_branch \
 		$recommend_shallow \
 		$jobs \
 		-- \
