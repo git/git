@@ -570,6 +570,15 @@ test_expect_success '"add" an existing locked but missing worktree' '
 	git worktree add --force --force --detach gnoo
 '
 
+test_expect_success '"add" not tripped up by magic worktree matching"' '
+	# if worktree "sub1/bar" exists, "git worktree add bar" in distinct
+	# directory `sub2` should not mistakenly complain that `bar` is an
+	# already-registered worktree
+	mkdir sub1 sub2 &&
+	git -C sub1 --git-dir=../.git worktree add --detach bozo &&
+	git -C sub2 --git-dir=../.git worktree add --detach bozo
+'
+
 test_expect_success FUNNYNAMES 'sanitize generated worktree name' '
 	git worktree add --detach ".  weird*..?.lock.lock" &&
 	test -d .git/worktrees/---weird-.-
