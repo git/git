@@ -35,7 +35,7 @@ static enum missing_commit_check_level get_missing_commit_check_level(void)
 	return MISSING_COMMIT_CHECK_IGNORE;
 }
 
-void append_todo_help(unsigned keep_empty, int command_count,
+void append_todo_help(int command_count,
 		      const char *shortrevisions, const char *shortonto,
 		      struct strbuf *buf)
 {
@@ -87,11 +87,6 @@ void append_todo_help(unsigned keep_empty, int command_count,
 			"the rebase will be aborted.\n\n");
 
 	strbuf_add_commented_lines(buf, msg, strlen(msg));
-
-	if (!keep_empty) {
-		msg = _("Note that empty commits are commented out");
-		strbuf_add_commented_lines(buf, msg, strlen(msg));
-	}
 }
 
 int edit_todo_list(struct repository *r, struct todo_list *todo_list,
