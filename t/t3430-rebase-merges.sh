@@ -20,12 +20,11 @@ Initial setup:
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-log-graph.sh
 
 test_cmp_graph () {
 	cat >expect &&
-	git log --graph --boundary --format=%s "$@" >output &&
-	sed "s/ *$//" <output >output.trimmed &&
-	test_cmp expect output.trimmed
+	lib_test_cmp_graph --boundary --format=%s "$@"
 }
 
 test_expect_success 'setup' '
