@@ -15,6 +15,7 @@ SYNOPSIS
 'git stash' branch <branchname> [<stash>]
 'git stash' [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]
 	     [-u|--include-untracked] [-a|--all] [-m|--message <message>]
+	     [--pathspec-from-file=<file> [--pathspec-file-nul]]
 	     [--] [<pathspec>...]]
 'git stash' clear
 'git stash' create [<message>]
@@ -43,10 +44,10 @@ created stash, `stash@{1}` is the one before it, `stash@{2.hours.ago}`
 is also possible). Stashes may also be referenced by specifying just the
 stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 
-OPTIONS
--------
+COMMANDS
+--------
 
-push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--] [<pathspec>...]::
+push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--pathspec-from-file=<file> [--pathspec-file-nul]] [--] [<pathspec>...]::
 
 	Save your local modifications to a new 'stash entry' and roll them
 	back to HEAD (in the working tree and in the index).
@@ -56,38 +57,13 @@ push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q
 For quickly making a snapshot, you can omit "push".  In this mode,
 non-option arguments are not allowed to prevent a misspelled
 subcommand from making an unwanted stash entry.  The two exceptions to this
-are `stash -p` which acts as alias for `stash push -p` and pathspecs,
+are `stash -p` which acts as alias for `stash push -p` and pathspec elements,
 which are allowed after a double hyphen `--` for disambiguation.
-+
-When pathspec is given to 'git stash push', the new stash entry records the
-modified states only for the files that match the pathspec.  The index
-entries and working tree files are then rolled back to the state in
-HEAD only for these files, too, leaving files that do not match the
-pathspec intact.
-+
-If the `--keep-index` option is used, all changes already added to the
-index are left intact.
-+
-If the `--include-untracked` option is used, all untracked files are also
-stashed and then cleaned up with `git clean`, leaving the working directory
-in a very clean state. If the `--all` option is used instead then the
-ignored files are stashed and cleaned in addition to the untracked files.
-+
-With `--patch`, you can interactively select hunks from the diff
-between HEAD and the working tree to be stashed.  The stash entry is
-constructed such that its index state is the same as the index state
-of your repository, and its worktree contains only the changes you
-selected interactively.  The selected changes are then rolled back
-from your worktree. See the ``Interactive Mode'' section of
-linkgit:git-add[1] to learn how to operate the `--patch` mode.
-+
-The `--patch` option implies `--keep-index`.  You can use
-`--no-keep-index` to override this.
 
 save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
 
 	This option is deprecated in favour of 'git stash push'.  It
-	differs from "stash push" in that it cannot take pathspecs.
+	differs from "stash push" in that it cannot take pathspec.
 	Instead, all non-option arguments are concatenated to form the stash
 	message.
 
@@ -111,7 +87,7 @@ show [<options>] [<stash>]::
 
 	Show the changes recorded in the stash entry as a diff between the
 	stashed contents and the commit back when the stash entry was first
-	created. When no `<stash>` is given, it shows the latest one.
+	created.
 	By default, the command shows the diffstat, but it will accept any
 	format known to 'git diff' (e.g., `git stash show -p stash@{1}`
 	to view the second most recent entry in patch form).
@@ -128,14 +104,6 @@ pop [--index] [-q|--quiet] [<stash>]::
 Applying the state can fail with conflicts; in this case, it is not
 removed from the stash list. You need to resolve the conflicts by hand
 and call `git stash drop` manually afterwards.
-+
-If the `--index` option is used, then tries to reinstate not only the working
-tree's changes, but also the index's ones. However, this can fail, when you
-have conflicts (which are stored in the index, where you therefore can no
-longer apply the changes as they were originally).
-+
-When no `<stash>` is given, `stash@{0}` is assumed, otherwise `<stash>` must
-be a reference of the form `stash@{<revision>}`.
 
 apply [--index] [-q|--quiet] [<stash>]::
 
@@ -149,8 +117,7 @@ branch <branchname> [<stash>]::
 	the commit at which the `<stash>` was originally created, applies the
 	changes recorded in `<stash>` to the new working tree and index.
 	If that succeeds, and `<stash>` is a reference of the form
-	`stash@{<revision>}`, it then drops the `<stash>`. When no `<stash>`
-	is given, applies the latest one.
+	`stash@{<revision>}`, it then drops the `<stash>`.
 +
 This is useful if the branch on which you ran `git stash push` has
 changed enough that `git stash apply` fails due to conflicts. Since
@@ -166,9 +133,6 @@ clear::
 drop [-q|--quiet] [<stash>]::
 
 	Remove a single stash entry from the list of stash entries.
-	When no `<stash>` is given, it removes the latest one.
-	i.e. `stash@{0}`, otherwise `<stash>` must be a valid stash
-	log reference of the form `stash@{<revision>}`.
 
 create::
 
@@ -184,6 +148,98 @@ store::
 	dangling merge commit) in the stash ref, updating the stash
 	reflog.  This is intended to be useful for scripts.  It is
 	probably not the command you want to use; see "push" above.
+
+OPTIONS
+-------
+-a::
+--all::
+	This option is only valid for `push` and `save` commands.
++
+All ignored and untracked files are also stashed and then cleaned
+up with `git clean`.
+
+-u::
+--include-untracked::
+	This option is only valid for `push` and `save` commands.
++
+All untracked files are also stashed and then cleaned up with
+`git clean`.
+
+--index::
+	This option is only valid for `pop` and `apply` commands.
++
+Tries to reinstate not only the working tree's changes, but also
+the index's ones. However, this can fail, when you have conflicts
+(which are stored in the index, where you therefore can no longer
+apply the changes as they were originally).
+
+-k::
+--keep-index::
+--no-keep-index::
+	This option is only valid for `push` and `save` commands.
++
+All changes already added to the index are left intact.
+
+-p::
+--patch::
+	This option is only valid for `push` and `save` commands.
++
+Interactively select hunks from the diff between HEAD and the
+working tree to be stashed.  The stash entry is constructed such
+that its index state is the same as the index state of your
+repository, and its worktree contains only the changes you selected
+interactively.  The selected changes are then rolled back from your
+worktree. See the ``Interactive Mode'' section of linkgit:git-add[1]
+to learn how to operate the `--patch` mode.
++
+The `--patch` option implies `--keep-index`.  You can use
+`--no-keep-index` to override this.
+
+--pathspec-from-file=<file>::
+	This option is only valid for `push` command.
++
+Pathspec is passed in `<file>` instead of commandline args. If
+`<file>` is exactly `-` then standard input is used. Pathspec
+elements are separated by LF or CR/LF. Pathspec elements can be
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
+global `--literal-pathspecs`.
+
+--pathspec-file-nul::
+	This option is only valid for `push` command.
++
+Only meaningful with `--pathspec-from-file`. Pathspec elements are
+separated with NUL character and all other characters are taken
+literally (including newlines and quotes).
+
+-q::
+--quiet::
+	This option is only valid for `apply`, `drop`, `pop`, `push`,
+	`save`, `store` commands.
++
+Quiet, suppress feedback messages.
+
+\--::
+	This option is only valid for `push` command.
++
+Separates pathspec from options for disambiguation purposes.
+
+<pathspec>...::
+	This option is only valid for `push` command.
++
+The new stash entry records the modified states only for the files
+that match the pathspec.  The index entries and working tree files
+are then rolled back to the state in HEAD only for these files,
+too, leaving files that do not match the pathspec intact.
++
+For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
+
+<stash>::
+	This option is only valid for `apply`, `branch`, `drop`, `pop`,
+	`show` commands.
++
+A reference of the form `stash@{<revision>}`. When no `<stash>` is
+given, the latest stash is assumed (that is, `stash@{0}`).
 
 DISCUSSION
 ----------

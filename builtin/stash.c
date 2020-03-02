@@ -27,6 +27,7 @@ static const char * const git_stash_usage[] = {
 	N_("git stash clear"),
 	N_("git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+	   "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 	   "          [--] [<pathspec>...]]"),
 	N_("git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [<message>]"),
@@ -1451,13 +1452,17 @@ done:
 	return ret;
 }
 
-static int push_stash(int argc, const char **argv, const char *prefix)
+static int push_stash(int argc, const char **argv, const char *prefix,
+		      int push_assumed)
 {
+	int force_assume = 0;
 	int keep_index = -1;
 	int patch_mode = 0;
 	int include_untracked = 0;
 	int quiet = 0;
+	int pathspec_file_nul = 0;
 	const char *stash_msg = NULL;
+	const char *pathspec_from_file = NULL;
 	struct pathspec ps;
 	struct option options[] = {
 		OPT_BOOL('k', "keep-index", &keep_index,
@@ -1471,16 +1476,45 @@ static int push_stash(int argc, const char **argv, const char *prefix)
 			    N_("include ignore files"), 2),
 		OPT_STRING('m', "message", &stash_msg, N_("message"),
 			   N_("stash message")),
+		OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
+		OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 		OPT_END()
 	};
 
-	if (argc)
+	if (argc) {
+		force_assume = !strcmp(argv[0], "-p");
 		argc = parse_options(argc, argv, prefix, options,
 				     git_stash_push_usage,
-				     0);
+				     PARSE_OPT_KEEP_DASHDASH);
+	}
+
+	if (argc) {
+		if (!strcmp(argv[0], "--")) {
+			argc--;
+			argv++;
+		} else if (push_assumed && !force_assume) {
+			die("subcommand wasn't specified; 'push' can't be assumed due to unexpected token '%s'",
+			    argv[0]);
+		}
+	}
 
 	parse_pathspec(&ps, 0, PATHSPEC_PREFER_FULL | PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
+
+	if (pathspec_from_file) {
+		if (patch_mode)
+			die(_("--pathspec-from-file is incompatible with --patch"));
+
+		if (ps.nr)
+			die(_("--pathspec-from-file is incompatible with pathspec arguments"));
+
+		parse_pathspec_file(&ps, 0,
+				    PATHSPEC_PREFER_FULL | PATHSPEC_PREFIX_ORIGIN,
+				    prefix, pathspec_from_file, pathspec_file_nul);
+	} else if (pathspec_file_nul) {
+		die(_("--pathspec-file-nul requires --pathspec-from-file"));
+	}
+
 	return do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
 			     include_untracked);
 }
@@ -1550,7 +1584,6 @@ static int use_builtin_stash(void)
 
 int cmd_stash(int argc, const char **argv, const char *prefix)
 {
-	int i = -1;
 	pid_t pid = getpid();
 	const char *index_file;
 	struct argv_array args = ARGV_ARRAY_INIT;
@@ -1583,7 +1616,7 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 		    (uintmax_t)pid);
 
 	if (!argc)
-		return !!push_stash(0, NULL, prefix);
+		return !!push_stash(0, NULL, prefix, 0);
 	else if (!strcmp(argv[0], "apply"))
 		return !!apply_stash(argc, argv, prefix);
 	else if (!strcmp(argv[0], "clear"))
@@ -1603,45 +1636,15 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	else if (!strcmp(argv[0], "create"))
 		return !!create_stash(argc, argv, prefix);
 	else if (!strcmp(argv[0], "push"))
-		return !!push_stash(argc, argv, prefix);
+		return !!push_stash(argc, argv, prefix, 0);
 	else if (!strcmp(argv[0], "save"))
 		return !!save_stash(argc, argv, prefix);
 	else if (*argv[0] != '-')
 		usage_msg_opt(xstrfmt(_("unknown subcommand: %s"), argv[0]),
 			      git_stash_usage, options);
 
-	if (strcmp(argv[0], "-p")) {
-		while (++i < argc && strcmp(argv[i], "--")) {
-			/*
-			 * `akpqu` is a string which contains all short options,
-			 * except `-m` which is verified separately.
-			 */
-			if ((strlen(argv[i]) == 2) && *argv[i] == '-' &&
-			    strchr("akpqu", argv[i][1]))
-				continue;
-
-			if (!strcmp(argv[i], "--all") ||
-			    !strcmp(argv[i], "--keep-index") ||
-			    !strcmp(argv[i], "--no-keep-index") ||
-			    !strcmp(argv[i], "--patch") ||
-			    !strcmp(argv[i], "--quiet") ||
-			    !strcmp(argv[i], "--include-untracked"))
-				continue;
-
-			/*
-			 * `-m` and `--message=` are verified separately because
-			 * they need to be immediately followed by a string
-			 * (i.e.`-m"foobar"` or `--message="foobar"`).
-			 */
-			if (starts_with(argv[i], "-m") ||
-			    starts_with(argv[i], "--message="))
-				continue;
-
-			usage_with_options(git_stash_usage, options);
-		}
-	}
-
+	/* Assume 'stash push' */
 	argv_array_push(&args, "push");
 	argv_array_pushv(&args, argv);
-	return !!push_stash(args.argc, args.argv, prefix);
+	return !!push_stash(args.argc, args.argv, prefix, 1);
 }
