@@ -60,9 +60,9 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 		test_must_fail git merge -s recursive R2^0 &&
 
 		git ls-files -s >out &&
-		test_line_count = 2 out &&
+		test_line_count = 5 out &&
 		git ls-files -u >out &&
-		test_line_count = 2 out &&
+		test_line_count = 3 out &&
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
@@ -133,9 +133,9 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 		test_must_fail git merge -s recursive R2^0 &&
 
 		git ls-files -s >out &&
-		test_line_count = 2 out &&
+		test_line_count = 5 out &&
 		git ls-files -u >out &&
-		test_line_count = 2 out &&
+		test_line_count = 3 out &&
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
@@ -218,8 +218,18 @@ test_expect_success 'git detects differently handled merges conflict' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >expect       \
-			C:new_a  D:new_a  E:new_a &&
+		git cat-file -p C:new_a >ours &&
+		git cat-file -p C:a >theirs &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "Temporary merge branch 1" \
+			-L "" \
+			-L "Temporary merge branch 2" \
+			ours empty theirs &&
+		sed -e "s/^\([<=>]\)/\1\1\1/" ours >ours-tweaked &&
+		git hash-object ours-tweaked >expect &&
+		git rev-parse >>expect      \
+				  D:new_a  E:new_a &&
 		git rev-parse   >actual     \
 			:1:new_a :2:new_a :3:new_a &&
 		test_cmp expect actual &&
@@ -257,7 +267,8 @@ test_expect_success 'git detects differently handled merges conflict, swapped' '
 		ctime=$(git log --no-walk --date=raw --format=%cd C | awk "{print \$1}") &&
 		newctime=$(($btime+1)) &&
 		git fast-export --no-data --all | sed -e s/$ctime/$newctime/ | git fast-import --force --quiet &&
-		# End of differences; rest is copy-paste of last test
+		# End of most differences; rest is copy-paste of last test,
+		# other than swapping C:a and C:new_a due to order switch
 
 		git checkout D^0 &&
 		test_must_fail git merge -s recursive E^0 &&
@@ -269,8 +280,18 @@ test_expect_success 'git detects differently handled merges conflict, swapped' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		git rev-parse >expect       \
-			C:new_a  D:new_a  E:new_a &&
+		git cat-file -p C:a >ours &&
+		git cat-file -p C:new_a >theirs &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "Temporary merge branch 1" \
+			-L "" \
+			-L "Temporary merge branch 2" \
+			ours empty theirs &&
+		sed -e "s/^\([<=>]\)/\1\1\1/" ours >ours-tweaked &&
+		git hash-object ours-tweaked >expect &&
+		git rev-parse >>expect      \
+				  D:new_a  E:new_a &&
 		git rev-parse   >actual     \
 			:1:new_a :2:new_a :3:new_a &&
 		test_cmp expect actual &&
