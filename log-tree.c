@@ -516,7 +516,7 @@ static int show_one_mergetag(struct commit *commit,
 			    "merged tag '%s'\n", tag->tag);
 	else if ((nth = which_parent(&tag->tagged->oid, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
-				    tag->tag, tag->tagged->oid.hash);
+				    tag->tag, oid_to_hex(&tag->tagged->oid));
 	else
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
