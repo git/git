@@ -335,6 +335,7 @@ static void find_non_local_tags(const struct ref *refs,
 	struct string_list_item *remote_ref_item;
 	const struct ref *ref;
 	struct refname_hash_entry *item = NULL;
+	const int quick_flags = OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT;
 
 	refname_hash_init(&existing_refs);
 	refname_hash_init(&remote_refs);
@@ -353,10 +354,9 @@ static void find_non_local_tags(const struct ref *refs,
 		 */
 		if (ends_with(ref->name, "^{}")) {
 			if (item &&
-			    !has_object_file_with_flags(&ref->old_oid,
-							OBJECT_INFO_QUICK) &&
+			    !has_object_file_with_flags(&ref->old_oid, quick_flags) &&
 			    !oidset_contains(&fetch_oids, &ref->old_oid) &&
-			    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
+			    !has_object_file_with_flags(&item->oid, quick_flags) &&
 			    !oidset_contains(&fetch_oids, &item->oid))
 				clear_item(item);
 			item = NULL;
@@ -370,7 +370,7 @@ static void find_non_local_tags(const struct ref *refs,
 		 * fetch.
 		 */
 		if (item &&
-		    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
+		    !has_object_file_with_flags(&item->oid, quick_flags) &&
 		    !oidset_contains(&fetch_oids, &item->oid))
 			clear_item(item);
 
@@ -391,7 +391,7 @@ static void find_non_local_tags(const struct ref *refs,
 	 * checked to see if it needs fetching.
 	 */
 	if (item &&
-	    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
+	    !has_object_file_with_flags(&item->oid, quick_flags) &&
 	    !oidset_contains(&fetch_oids, &item->oid))
 		clear_item(item);
 

@@ -384,6 +384,37 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 	grep "want $(cat hash)" trace
 '
 
+# The following two tests must be in this order, or else
+# the first will not fail. It is important that the srv.bare
+# repository did not have tags during clone, but has tags
+# in the fetch.
+
+test_expect_failure 'verify fetch succeeds when asking for new tags' '
+	git clone --filter=blob:none "file://$(pwd)/srv.bare" tag-test &&
+	for i in I J K
+	do
+		test_commit -C src $i &&
+		git -C src branch $i || return 1
+	done &&
+	git -C srv.bare fetch --tags origin +refs/heads/*:refs/heads/* &&
+	git -C tag-test -c protocol.version=2 fetch --tags origin
+'
+
+test_expect_success 'verify fetch downloads only one pack when updating refs' '
+	git clone --filter=blob:none "file://$(pwd)/srv.bare" pack-test &&
+	ls pack-test/.git/objects/pack/*pack >pack-list &&
+	test_line_count = 2 pack-list &&
+	for i in A B C
+	do
+		test_commit -C src $i &&
+		git -C src branch $i || return 1
+	done &&
+	git -C srv.bare fetch origin +refs/heads/*:refs/heads/* &&
+	git -C pack-test fetch origin &&
+	ls pack-test/.git/objects/pack/*pack >pack-list &&
+	test_line_count = 3 pack-list
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
