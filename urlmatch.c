@@ -557,6 +557,8 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	const char *key, *dot;
 	struct strbuf synthkey = STRBUF_INIT;
 	int retval;
+	int (*select_fn)(const struct urlmatch_item *a, const struct urlmatch_item *b) =
+		collect->select_fn ? collect->select_fn : cmp_matches;
 
 	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
 		if (collect->cascade_fn)
@@ -587,7 +589,7 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	if (!item->util) {
 		item->util = xcalloc(1, sizeof(matched));
 	} else {
-		if (cmp_matches(&matched, item->util) < 0)
+		if (select_fn(&matched, item->util) < 0)
 			 /*
 			  * Our match is worse than the old one,
 			  * we cannot use it.

@@ -479,6 +479,21 @@ void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
 	}
 }
 
+#define URL_UNSAFE_CHARS " <>\"%{}|\\^`:/?#[]@!$&'()*+,;="
+
+void strbuf_add_percentencode(struct strbuf *dst, const char *src)
+{
+	size_t i, len = strlen(src);
+
+	for (i = 0; i < len; i++) {
+		unsigned char ch = src[i];
+		if (ch <= 0x1F || ch >= 0x7F || strchr(URL_UNSAFE_CHARS, ch))
+			strbuf_addf(dst, "%%%02X", (unsigned char)ch);
+		else
+			strbuf_addch(dst, ch);
+	}
+}
+
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;
