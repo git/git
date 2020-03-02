@@ -2205,11 +2205,13 @@ proc do_gitk {revs {is_submodule false}} {
 		set env(GIT_WORK_TREE) $_gitworktree
 		cd $pwd
 
-		set status_operation [$::main_status \
-			start \
-			[mc "Starting %s... please wait..." "gitk"]]
+		if {[info exists main_status]} {
+			set status_operation [$::main_status \
+				start \
+				[mc "Starting %s... please wait..." "gitk"]]
 
-		after 3500 [list $status_operation stop]
+			after 3500 [list $status_operation stop]
+		}
 	}
 }
 
