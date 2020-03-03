@@ -161,6 +161,29 @@ test_expect_success 'successful commit clears CHERRY_PICK_HEAD' '
 
 	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
 '
+
+test_expect_success 'partial commit of cherry-pick fails' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	echo resolved >foo &&
+	git add foo &&
+	test_must_fail git commit foo 2>err &&
+
+	test_i18ngrep "cannot do a partial commit during a cherry-pick." err
+'
+
+test_expect_success 'commit --amend of cherry-pick fails' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	echo resolved >foo &&
+	git add foo &&
+	test_must_fail git commit --amend 2>err &&
+
+	test_i18ngrep "in the middle of a cherry-pick -- cannot amend." err
+'
+
 test_expect_success 'successful final commit clears cherry-pick state' '
 	pristine_detach initial &&
 

@@ -3,12 +3,12 @@
 
 #include "cache.h"
 #include "strbuf.h"
+#include "wt-status.h"
 
 struct commit;
 struct repository;
 
 const char *git_path_commit_editmsg(void);
-const char *git_path_seq_dir(void);
 const char *rebase_path_todo(void);
 const char *rebase_path_todo_backup(void);
 const char *rebase_path_dropped(void);
@@ -206,4 +206,5 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 void sequencer_post_commit_cleanup(struct repository *r, int verbose);
 int sequencer_get_last_command(struct repository* r,
 			       enum replay_action *action);
+int sequencer_determine_whence(struct repository *r, enum commit_whence *whence);
 #endif /* SEQUENCER_H */
