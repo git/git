@@ -191,6 +191,10 @@ void commit_post_rewrite(struct repository *r,
 			 const struct commit *current_head,
 			 const struct object_id *new_head);
 
+void create_autostash(struct repository *r, const char *path,
+		      const char *default_reflog_action);
+int apply_autostash(const char *path);
+
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
 void print_commit_summary(struct repository *repo,
@@ -198,6 +202,17 @@ void print_commit_summary(struct repository *repo,
 			  const struct object_id *oid,
 			  unsigned int flags);
 
+/*
+ * Reads a file that was presumably written by a shell script, i.e. with an
+ * end-of-line marker that needs to be stripped.
+ *
+ * Note that only the last end-of-line marker is stripped, consistent with the
+ * behavior of "$(cat path)" in a shell script.
+ *
+ * Returns 1 if the file was read, 0 if it could not be read.
+ */
+int read_oneliner(struct strbuf *buf, const char *path,
+		  int skip_if_empty, int warn_nonexistence);
 int read_author_script(const char *path, char **name, char **email, char **date,
 		       int allow_missing);
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);
