@@ -76,6 +76,11 @@ conducted, and the remaining options are ignored. Conversely, if
 remaining options are ignored. A bare `--split` defers to the remaining
 options.
 +
+With the `--changed-paths` option, compute and write information about the
+paths changed between a commit and it's first parent. This operation can
+take a while on large repositories. It provides significant performance gains
+for getting history of a directory or a file with `git log -- <path>`.
++
 * If `--size-multiple=<X>` is not specified, let `X` equal 2. If the new
 tip file would have `N` commits and the previous tip has `M` commits and
 `X` times `N` is greater than  `M`, instead merge the two files into a
