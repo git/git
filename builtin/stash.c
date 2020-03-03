@@ -701,6 +701,7 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 
 static int show_stat = 1;
 static int show_patch;
+static int use_legacy_stash;
 
 static int git_stash_config(const char *var, const char *value, void *cb)
 {
@@ -710,6 +711,10 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "stash.showpatch")) {
 		show_patch = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "stash.usebuiltin")) {
+		use_legacy_stash = !git_config_bool(var, value);
 		return 0;
 	}
 	return git_diff_basic_config(var, value, cb);
@@ -1524,29 +1529,6 @@ static int save_stash(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int use_builtin_stash(void)
-{
-	struct child_process cp = CHILD_PROCESS_INIT;
-	struct strbuf out = STRBUF_INIT;
-	int ret, env = git_env_bool("GIT_TEST_STASH_USE_BUILTIN", -1);
-
-	if (env != -1)
-		return env;
-
-	argv_array_pushl(&cp.args,
-			 "config", "--bool", "stash.usebuiltin", NULL);
-	cp.git_cmd = 1;
-	if (capture_command(&cp, &out, 6)) {
-		strbuf_release(&out);
-		return 1;
-	}
-
-	strbuf_trim(&out);
-	ret = !strcmp("true", out.buf);
-	strbuf_release(&out);
-	return ret;
-}
-
 int cmd_stash(int argc, const char **argv, const char *prefix)
 {
 	int i = -1;
@@ -1558,21 +1540,12 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	if (!use_builtin_stash()) {
-		const char *path = mkpath("%s/git-legacy-stash",
-					  git_exec_path());
-
-		if (sane_execvp(path, (char **)argv) < 0)
-			die_errno(_("could not exec %s"), path);
-		else
-			BUG("sane_execvp() returned???");
-	}
-
-	prefix = setup_git_directory();
-	trace_repo_setup(prefix);
-	setup_work_tree();
-
 	git_config(git_stash_config, NULL);
+
+	if (use_legacy_stash ||
+	    !git_env_bool("GIT_TEST_STASH_USE_BUILTIN", -1))
+		warning(_("the stash.useBuiltin support has been removed!\n"
+			  "See its entry in 'git help config' for details."));
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_usage,
 			     PARSE_OPT_KEEP_UNKNOWN | PARSE_OPT_KEEP_DASHDASH);
