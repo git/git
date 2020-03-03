@@ -52,6 +52,20 @@ N_("You asked to amend the most recent commit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
 "remove the commit entirely with \"git reset HEAD^\".\n");
 
+static const char empty_rebase_fixup_advice[] =
+N_("The fixup would make the commit empty\n"
+"If you wish to commit it anyway use:\n"
+"\n"
+"    git commit --amend --allow-empty\n"
+"    git rebase --continue\n"
+"\n"
+"To remove the commit entirely use:\n"
+"\n"
+"    git reset HEAD^\n"
+"    git rebase --continue\n"
+"\n"
+"Otherwise, please use 'git rebase --skip' to skip it\n");
+
 static const char empty_cherry_pick_advice[] =
 N_("The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
 "If you wish to commit it anyway, use:\n"
@@ -181,8 +195,14 @@ static void determine_whence(struct wt_status *s)
 {
 	if (file_exists(git_path_merge_head(the_repository)))
 		whence = FROM_MERGE;
-	else if (!sequencer_determine_whence(the_repository, &whence))
-		whence = FROM_COMMIT;
+	else {
+		int res = sequencer_determine_whence(the_repository, &whence,
+						     amend);
+		if (res < 0)
+			die(_("could not read sequencer state"));
+		else if (!res)
+			whence = FROM_COMMIT;
+	}
 	if (s)
 		s->whence = whence;
 }
@@ -192,7 +212,6 @@ static void status_init_config(struct wt_status *s, config_fn_t fn)
 	wt_status_prepare(the_repository, s);
 	init_diff_ui_defaults();
 	git_config(fn, s);
-	determine_whence(s);
 	s->hints = advice_status_hints; /* must come after git_config() */
 }
 
@@ -968,9 +987,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (!committable && whence != FROM_MERGE && !allow_empty &&
 	    !(amend && is_a_merge(current_head))) {
 		s->hints = advice_status_hints;
+		fprintf(stderr, "\nwhence = %d\n", whence);
 		s->display_comment_prefix = old_display_comment_prefix;
 		run_status(stdout, index_file, prefix, 0, s);
-		if (amend)
+		if (whence == FROM_REBASE_FIXUP)
+			fputs(_(empty_rebase_fixup_advice), stderr);
+		else if (amend)
 			fputs(_(empty_amend_advice), stderr);
 		else if (is_from_cherry_pick(whence) ||
 			 whence == FROM_REBASE_PICK) {
@@ -1152,6 +1174,8 @@ static void finalize_deferred_config(struct wt_status *s)
 
 	if (s->ahead_behind_flags == AHEAD_BEHIND_UNSPECIFIED)
 		s->ahead_behind_flags = AHEAD_BEHIND_FULL;
+
+	determine_whence(s);
 }
 
 static int parse_and_validate_options(int argc, const char *argv[],

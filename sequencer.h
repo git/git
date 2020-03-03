@@ -206,5 +206,6 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 void sequencer_post_commit_cleanup(struct repository *r, int verbose);
 int sequencer_get_last_command(struct repository* r,
 			       enum replay_action *action);
-int sequencer_determine_whence(struct repository *r, enum commit_whence *whence);
+int sequencer_determine_whence(struct repository *r, enum commit_whence *whence,
+			       int amending);
 #endif /* SEQUENCER_H */
