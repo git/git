@@ -712,7 +712,7 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 		show_patch = git_config_bool(var, value);
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return git_diff_basic_config(var, value, cb);
 }
 
 static int show_stash(int argc, const char **argv, const char *prefix)
@@ -749,7 +749,6 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	 * any options.
 	 */
 	if (revision_args.argc == 1) {
-		git_config(git_stash_config, NULL);
 		if (show_stat)
 			rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT;
 
@@ -1573,7 +1572,7 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	trace_repo_setup(prefix);
 	setup_work_tree();
 
-	git_config(git_diff_basic_config, NULL);
+	git_config(git_stash_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_usage,
 			     PARSE_OPT_KEEP_UNKNOWN | PARSE_OPT_KEEP_DASHDASH);
