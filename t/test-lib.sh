@@ -494,21 +494,6 @@ case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
 	;;
 esac
 
-# Convenience
-#
-# A regexp to match 5, 35 and 40 hexdigits
-_x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x35="$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
-_x40="$_x35$_x05"
-
-# Zero SHA-1
-_z40=0000000000000000000000000000000000000000
-
-OID_REGEX="$_x40"
-ZERO_OID=$_z40
-EMPTY_TREE=4b825dc642cb6eb9a060e54bf8d69288fbee4904
-EMPTY_BLOB=e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-
 # Line feed
 LF='
 '
@@ -1382,6 +1367,20 @@ then
 		GIT_TEST_TEE_OFFSET=0
 	fi
 fi
+
+# Convenience
+# A regexp to match 5, 35 and 40 hexdigits
+_x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x35="$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
+_x40="$_x35$_x05"
+
+test_oid_init
+
+ZERO_OID=$(test_oid zero)
+OID_REGEX=$(echo $ZERO_OID | sed -e 's/0/[0-9a-f]/g')
+EMPTY_TREE=$(test_oid empty_tree)
+EMPTY_BLOB=$(test_oid empty_blob)
+_z40=$ZERO_OID
 
 # Provide an implementation of the 'yes' utility; the upper bound
 # limit is there to help Windows that cannot stop this loop from
