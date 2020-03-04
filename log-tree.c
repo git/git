@@ -449,22 +449,21 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 {
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
-	struct strbuf gpg_output = STRBUF_INIT;
+	struct signature_check sigc = { 0 };
 	int status;
 
 	if (parse_signed_commit(commit, &payload, &signature) <= 0)
 		goto out;
 
-	status = verify_signed_buffer(payload.buf, payload.len,
-				      signature.buf, signature.len,
-				      &gpg_output, NULL);
-	if (status && !gpg_output.len)
-		strbuf_addstr(&gpg_output, "No signature\n");
-
-	show_sig_lines(opt, status, gpg_output.buf);
+	status = check_signature(payload.buf, payload.len, signature.buf,
+				 signature.len, &sigc);
+	if (status && !sigc.gpg_output)
+		show_sig_lines(opt, status, "No signature\n");
+	else
+		show_sig_lines(opt, status, sigc.gpg_output);
+	signature_check_clear(&sigc);
 
  out:
-	strbuf_release(&gpg_output);
 	strbuf_release(&payload);
 	strbuf_release(&signature);
 }
@@ -497,8 +496,9 @@ static int show_one_mergetag(struct commit *commit,
 	struct object_id oid;
 	struct tag *tag;
 	struct strbuf verify_message;
+	struct signature_check sigc = { 0 };
 	int status, nth;
-	size_t payload_size, gpg_message_offset;
+	size_t payload_size;
 
 	hash_object_file(the_hash_algo, extra->value, extra->len,
 			 type_name(OBJ_TAG), &oid);
@@ -520,19 +520,19 @@ static int show_one_mergetag(struct commit *commit,
 	else
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
-	gpg_message_offset = verify_message.len;
 
 	payload_size = parse_signature(extra->value, extra->len);
 	status = -1;
 	if (extra->len > payload_size) {
 		/* could have a good signature */
-		if (!verify_signed_buffer(extra->value, payload_size,
-					  extra->value + payload_size,
-					  extra->len - payload_size,
-					  &verify_message, NULL))
-			status = 0; /* good */
-		else if (verify_message.len <= gpg_message_offset)
+		status = check_signature(extra->value, payload_size,
+					 extra->value + payload_size,
+					 extra->len - payload_size, &sigc);
+		if (sigc.gpg_output)
+			strbuf_addstr(&verify_message, sigc.gpg_output);
+		else
 			strbuf_addstr(&verify_message, "No signature\n");
+		signature_check_clear(&sigc);
 		/* otherwise we couldn't verify, which is shown as bad */
 	}
 
