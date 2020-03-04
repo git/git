@@ -150,7 +150,12 @@ static char *cached_accept_language;
 
 static char *http_ssl_backend;
 
-static int http_schannel_check_revoke = 1;
+static long http_schannel_check_revoke_mode =
+#ifdef CURLSSLOPT_REVOKE_BEST_EFFORT
+	CURLSSLOPT_REVOKE_BEST_EFFORT;
+#else
+	CURLSSLOPT_NO_REVOKE;
+#endif
 
 static long http_retry_after = 0;
 static long http_max_retries = 0;
@@ -430,7 +435,19 @@ static int http_options(const char *var, const char *value,
 	}
 
 	if (!strcmp("http.schannelcheckrevoke", var)) {
-		http_schannel_check_revoke = git_config_bool(var, value);
+		if (value && !strcmp(value, "best-effort")) {
+			http_schannel_check_revoke_mode =
+#ifdef CURLSSLOPT_REVOKE_BEST_EFFORT
+				CURLSSLOPT_REVOKE_BEST_EFFORT;
+#else
+				CURLSSLOPT_NO_REVOKE;
+			warning(_("%s=%s unsupported by current cURL"),
+				var, value);
+#endif
+		} else
+			http_schannel_check_revoke_mode =
+				(git_config_bool(var, value) ?
+				 0 : CURLSSLOPT_NO_REVOKE);
 		return 0;
 	}
 
@@ -1079,8 +1096,8 @@ static CURL *get_curl_handle(void)
 #endif
 
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
-	    !http_schannel_check_revoke) {
-		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, (long)CURLSSLOPT_NO_REVOKE);
+	    http_schannel_check_revoke_mode) {
+		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, http_schannel_check_revoke_mode);
 	}
 
 	if (http_proactive_auth != PROACTIVE_AUTH_NONE)
