@@ -31,20 +31,24 @@ http.proxyAuthMethod::
 
 http.proxySSLCert::
 	The pathname of a file that stores a client certificate to use to authenticate
-	with an HTTPS proxy.
+	with an HTTPS proxy. Can be overridden by the `GIT_PROXY_SSL_CERT` environment
+	variable.
 
 http.proxySSLKey::
 	The pathname of a file that stores a private key to use to authenticate with
-	an HTTPS proxy.
+	an HTTPS proxy. Can be overridden by the `GIT_PROXY_SSL_KEY` environment
+	variable.
 
 http.proxySSLCertPasswordProtected::
 	Enable Git's password prompt for the proxy SSL certificate.  Otherwise OpenSSL
 	will prompt the user, possibly many times, if the certificate or private key
-	is encrypted.
+	is encrypted. Can be overriden by the `GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED`
+	environment variable.
 
 http.proxySSLCAInfo::
 	Pathname to the file containing the certificate bundle that should be used to
-	verify the proxy with when using an HTTPS proxy.
+	verify the proxy with when using an HTTPS proxy. Can be overriden by the
+	`GIT_PROXY_SSL_CAINFO` environment variable.
 
 http.emptyAuth::
 	Attempt authentication without seeking a username or password.  This
