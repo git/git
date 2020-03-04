@@ -6,6 +6,7 @@
 test_description='fmt-merge-msg test'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-gpg.sh"
 
 test_expect_success setup '
 	echo one >one &&
@@ -73,6 +74,10 @@ test_expect_success setup '
 	apos="'\''"
 '
 
+test_expect_success GPG 'set up a signed tag' '
+	git tag -s -m signed-tag-msg signed-good-tag left
+'
+
 test_expect_success 'message for merging local branch' '
 	echo "Merge branch ${apos}left${apos}" >expected &&
 
@@ -81,6 +86,24 @@ test_expect_success 'message for merging local branch' '
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success GPG 'message for merging local tag signed by good key' '
+	git checkout master &&
+	git fetch . signed-good-tag &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
+	grep "^# gpg: Signature made" actual &&
+	grep "^# gpg: Good signature from" actual
+'
+
+test_expect_success GPG 'message for merging local tag signed by unknown key' '
+	git checkout master &&
+	git fetch . signed-good-tag &&
+	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
+	grep "^# gpg: Signature made" actual &&
+	grep "^# gpg: Can${apos}t check signature: \(public key not found\|No public key\)" actual
 '
 
 test_expect_success 'message for merging external branch' '
