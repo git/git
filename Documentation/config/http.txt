@@ -29,6 +29,23 @@ http.proxyAuthMethod::
 * `ntlm` - NTLM authentication (compare the --ntlm option of `curl(1)`)
 --
 
+http.proxySSLCert::
+	The pathname of a file that stores a client certificate to use to authenticate
+	with an HTTPS proxy.
+
+http.proxySSLKey::
+	The pathname of a file that stores a private key to use to authenticate with
+	an HTTPS proxy.
+
+http.proxySSLCertPasswordProtected::
+	Enable Git's password prompt for the proxy SSL certificate.  Otherwise OpenSSL
+	will prompt the user, possibly many times, if the certificate or private key
+	is encrypted.
+
+http.proxySSLCAInfo::
+	Pathname to the file containing the certificate bundle that should be used to
+	verify the proxy with when using an HTTPS proxy.
+
 http.emptyAuth::
 	Attempt authentication without seeking a username or password.  This
 	can be used to attempt GSS-Negotiate authentication without specifying
