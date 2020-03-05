@@ -38,6 +38,15 @@ UI, Workflows & Features
  * The basic 7 colors learned the brighter counterparts
    (e.g. "brightred").
 
+ * "git sparse-checkout" learned a new "add" subcommand.
+
+ * A configuration element used for credential subsystem can now use
+   wildcard pattern to specify for which set of URLs the entry
+   applies.
+
+ * "git clone --recurse-submodules --single-branch" now uses the same
+   single-branch option when cloning the submodules.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -107,6 +116,9 @@ Performance, Internal Implementation, Development Support etc.
    "--apply" option to use the "apply" backend (e.g. the moral
    equivalent of "format-patch piped to am").  The rebase.backend
    configuration variable can be set to customize.
+
+ * Underlying machinery of "git bisect--helper" is being refactored
+   into pieces that are more easily reused.
 
 
 Fixes since v2.25
@@ -251,6 +263,31 @@ Fixes since v2.25
    the default.
    (merge 3e96c66805 ds/partial-clone-fixes later to maint).
 
+ * In rare cases "git worktree add <path>" could think that <path>
+   was already a registered worktree even when it wasn't and refuse
+   to add the new worktree. This has been corrected.
+   (merge bb69b3b009 es/worktree-avoid-duplication-fix later to maint).
+
+ * "git push" should stop from updating a branch that is checked out
+   when receive.denyCurrentBranch configuration is set, but it failed
+   to pay attention to checkouts in secondary worktrees.  This has
+   been corrected.
+   (merge 4d864895a2 hv/receive-denycurrent-everywhere later to maint).
+
+ * "git rebase BASE BRANCH" rebased/updated the tip of BRANCH and
+   checked it out, even when the BRANCH is checked out in a different
+   worktree.  This has been corrected.
+   (merge b5cabb4a96 es/do-not-let-rebase-switch-to-protected-branch later to maint).
+
+ * "git describe" in a repository with multiple root commits sometimes
+   gave up looking for the best tag to describe a given commit with
+   too early, which has been adjusted.
+
+ * "git merge signed-tag" while lacking the public key started to say
+   "No signature", which was utterly wrong.  This regression has been
+   reverted.
+   (merge 0106b1d4be hi/gpg-use-check-signature later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge d0d0a357a1 am/update-pathspec-f-f-tests later to maint).
@@ -275,3 +312,6 @@ Fixes since v2.25
    (merge 2ce6d075fa rs/micro-cleanups later to maint).
    (merge 27f182b3fc rs/blame-typefix-for-fingerprint later to maint).
    (merge 3c29e21eb0 ma/test-cleanup later to maint).
+   (merge 240fc04f81 ag/rebase-remove-redundant-code later to maint).
+   (merge 7f487ce062 js/ci-windows-update later to maint).
+   (merge d68ce906c7 rs/commit-graph-code-simplification later to maint).
