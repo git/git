@@ -479,4 +479,55 @@ test_expect_success 'name-rev covers all conditions while looking at parents' '
 	)
 '
 
+#               B
+#               o
+#                \
+#  o-----o---o----x
+#        A
+#
+test_expect_success 'describe commits with disjoint bases' '
+	git init disjoint1 &&
+	(
+		cd disjoint1 &&
+
+		echo o >> file && git add file && git commit -m o &&
+		echo A >> file && git add file && git commit -m A &&
+		git tag A -a -m A &&
+		echo o >> file && git add file && git commit -m o &&
+
+		git checkout --orphan branch && rm file &&
+		echo B > file2 && git add file2 && git commit -m B &&
+		git tag B -a -m B &&
+		git merge --no-ff --allow-unrelated-histories master -m x &&
+
+		check_describe "A-3-*" HEAD
+	)
+'
+
+#           B
+#   o---o---o------------.
+#                         \
+#                  o---o---x
+#                  A
+#
+test_expect_success 'describe commits with disjoint bases 2' '
+	git init disjoint2 &&
+	(
+		cd disjoint2 &&
+
+		echo A >> file && git add file && GIT_COMMITTER_DATE="2020-01-01 18:00" git commit -m A &&
+		git tag A -a -m A &&
+		echo o >> file && git add file && GIT_COMMITTER_DATE="2020-01-01 18:01" git commit -m o &&
+
+		git checkout --orphan branch &&
+		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:00" git commit -m o &&
+		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:01" git commit -m o &&
+		echo B >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:02" git commit -m B &&
+		git tag B -a -m B &&
+		git merge --no-ff --allow-unrelated-histories master -m x &&
+
+		check_describe "B-3-*" HEAD
+	)
+'
+
 test_done
