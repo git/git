@@ -1657,19 +1657,15 @@ static void merge_commit_graphs(struct write_commit_graph_context *ctx)
 {
 	struct commit_graph *g = ctx->r->objects->commit_graph;
 	uint32_t current_graph_number = ctx->num_commit_graphs_before;
-	struct strbuf progress_title = STRBUF_INIT;
 
 	while (g && current_graph_number >= ctx->num_commit_graphs_after) {
 		current_graph_number--;
 
-		if (ctx->report_progress) {
-			strbuf_addstr(&progress_title, _("Merging commit-graph"));
-			ctx->progress = start_delayed_progress(progress_title.buf, 0);
-		}
+		if (ctx->report_progress)
+			ctx->progress = start_delayed_progress(_("Merging commit-graph"), 0);
 
 		merge_commit_graph(ctx, g);
 		stop_progress(&ctx->progress);
-		strbuf_release(&progress_title);
 
 		g = g->base_graph;
 	}
