@@ -1026,6 +1026,7 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 
 	walker = get_http_walker(url.buf);
 	walker->get_verbosely = options.verbosity >= 3;
+	walker->get_progress = options.progress;
 	walker->get_recover = 0;
 	ret = walker_fetch(walker, nr_heads, targets, NULL, NULL);
 	walker_free(walker);

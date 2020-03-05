@@ -10,6 +10,7 @@ struct walker {
 	int (*fetch)(struct walker *, unsigned char *sha1);
 	void (*cleanup)(struct walker *);
 	int get_verbosely;
+	int get_progress;
 	int get_recover;
 
 	int corrupt_object_found;
