@@ -379,6 +379,12 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb,
 void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
 
 /**
+ * Append the contents of a string to a strbuf, percent-encoding any characters
+ * that are needed to be encoded for a URL.
+ */
+void strbuf_add_percentencode(struct strbuf *dst, const char *src);
+
+/**
  * Append the given byte size as a human-readable string (i.e. 12.23 KiB,
  * 3.50 MiB).
  */

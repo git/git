@@ -1408,6 +1408,8 @@ test_expect_success 'urlmatch favors more specific URLs' '
 		cookieFile = /tmp/wildcard.txt
 	[http "https://*.example.com/wildcardwithsubdomain"]
 		cookieFile = /tmp/wildcardwithsubdomain.txt
+	[http "https://*.example.*"]
+		cookieFile = /tmp/multiwildcard.txt
 	[http "https://trailing.example.com"]
 		cookieFile = /tmp/trailing.txt
 	[http "https://user@*.example.com/"]
@@ -1454,6 +1456,10 @@ test_expect_success 'urlmatch favors more specific URLs' '
 
 	echo http.cookiefile /tmp/sub.txt >expect &&
 	git config --get-urlmatch HTTP https://user@sub.example.com >actual &&
+	test_cmp expect actual &&
+
+	echo http.cookiefile /tmp/multiwildcard.txt >expect &&
+	git config --get-urlmatch HTTP https://wildcard.example.org >actual &&
 	test_cmp expect actual
 '
 
