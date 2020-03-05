@@ -2044,10 +2044,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		/* Is it a local branch? */
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "refs/heads/%s", branch_name);
-		if (!read_ref(buf.buf, &options.orig_head))
+		if (!read_ref(buf.buf, &options.orig_head)) {
+			die_if_checked_out(buf.buf, 1);
 			options.head_name = xstrdup(buf.buf);
 		/* If not is it a valid ref (branch or commit)? */
-		else if (!get_oid(branch_name, &options.orig_head))
+		} else if (!get_oid(branch_name, &options.orig_head))
 			options.head_name = NULL;
 		else
 			die(_("fatal: no such branch/commit '%s'"),
