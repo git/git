@@ -18,7 +18,7 @@
 static const char *empty_base = "";
 
 static char const * const builtin_sparse_checkout_usage[] = {
-	N_("git sparse-checkout (init|list|set|disable) <options>"),
+	N_("git sparse-checkout (init|list|set|add|disable) <options>"),
 	NULL
 };
 
@@ -394,6 +394,9 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 
 	strbuf_trim_trailing_dir_sep(line);
 
+	if (strbuf_normalize_path(line))
+		die(_("could not normalize path %s"), line->buf);
+
 	if (!line->len)
 		return;
 
@@ -404,7 +407,7 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 }
 
 static char const * const builtin_sparse_checkout_set_usage[] = {
-	N_("git sparse-checkout set (--stdin | <patterns>)"),
+	N_("git sparse-checkout (set|add) (--stdin | <patterns>)"),
 	NULL
 };
 
@@ -412,36 +415,16 @@ static struct sparse_checkout_set_opts {
 	int use_stdin;
 } set_opts;
 
-static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
+static void add_patterns_from_input(struct pattern_list *pl,
+				    int argc, const char **argv)
 {
 	int i;
-	struct pattern_list pl;
-	int result;
-	int changed_config = 0;
-
-	static struct option builtin_sparse_checkout_set_options[] = {
-		OPT_BOOL(0, "stdin", &set_opts.use_stdin,
-			 N_("read patterns from standard in")),
-		OPT_END(),
-	};
-
-	repo_read_index(the_repository);
-	require_clean_work_tree(the_repository,
-				N_("set sparse-checkout patterns"), NULL, 1, 0);
-
-	memset(&pl, 0, sizeof(pl));
-
-	argc = parse_options(argc, argv, prefix,
-			     builtin_sparse_checkout_set_options,
-			     builtin_sparse_checkout_set_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
-
 	if (core_sparse_checkout_cone) {
 		struct strbuf line = STRBUF_INIT;
 
-		hashmap_init(&pl.recursive_hashmap, pl_hashmap_cmp, NULL, 0);
-		hashmap_init(&pl.parent_hashmap, pl_hashmap_cmp, NULL, 0);
-		pl.use_cone_patterns = 1;
+		hashmap_init(&pl->recursive_hashmap, pl_hashmap_cmp, NULL, 0);
+		hashmap_init(&pl->parent_hashmap, pl_hashmap_cmp, NULL, 0);
+		pl->use_cone_patterns = 1;
 
 		if (set_opts.use_stdin) {
 			struct strbuf unquoted = STRBUF_INIT;
@@ -455,7 +438,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 					strbuf_swap(&unquoted, &line);
 				}
 
-				strbuf_to_cone_pattern(&line, &pl);
+				strbuf_to_cone_pattern(&line, pl);
 			}
 
 			strbuf_release(&unquoted);
@@ -463,7 +446,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 			for (i = 0; i < argc; i++) {
 				strbuf_setlen(&line, 0);
 				strbuf_addstr(&line, argv[i]);
-				strbuf_to_cone_pattern(&line, &pl);
+				strbuf_to_cone_pattern(&line, pl);
 			}
 		}
 	} else {
@@ -473,12 +456,83 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 			while (!strbuf_getline(&line, stdin)) {
 				size_t len;
 				char *buf = strbuf_detach(&line, &len);
-				add_pattern(buf, empty_base, 0, &pl, 0);
+				add_pattern(buf, empty_base, 0, pl, 0);
 			}
 		} else {
 			for (i = 0; i < argc; i++)
-				add_pattern(argv[i], empty_base, 0, &pl, 0);
+				add_pattern(argv[i], empty_base, 0, pl, 0);
 		}
+	}
+}
+
+enum modify_type {
+	REPLACE,
+	ADD,
+};
+
+static void add_patterns_cone_mode(int argc, const char **argv,
+				   struct pattern_list *pl)
+{
+	struct strbuf buffer = STRBUF_INIT;
+	struct pattern_entry *pe;
+	struct hashmap_iter iter;
+	struct pattern_list existing;
+	char *sparse_filename = get_sparse_checkout_filename();
+
+	add_patterns_from_input(pl, argc, argv);
+
+	memset(&existing, 0, sizeof(existing));
+	existing.use_cone_patterns = core_sparse_checkout_cone;
+
+	if (add_patterns_from_file_to_list(sparse_filename, "", 0,
+					   &existing, NULL))
+		die(_("unable to load existing sparse-checkout patterns"));
+	free(sparse_filename);
+
+	hashmap_for_each_entry(&existing.recursive_hashmap, &iter, pe, ent) {
+		if (!hashmap_contains_parent(&pl->recursive_hashmap,
+					pe->pattern, &buffer) ||
+		    !hashmap_contains_parent(&pl->parent_hashmap,
+					pe->pattern, &buffer)) {
+			strbuf_reset(&buffer);
+			strbuf_addstr(&buffer, pe->pattern);
+			insert_recursive_pattern(pl, &buffer);
+		}
+	}
+
+	clear_pattern_list(&existing);
+	strbuf_release(&buffer);
+}
+
+static void add_patterns_literal(int argc, const char **argv,
+				 struct pattern_list *pl)
+{
+	char *sparse_filename = get_sparse_checkout_filename();
+	if (add_patterns_from_file_to_list(sparse_filename, "", 0,
+					   pl, NULL))
+		die(_("unable to load existing sparse-checkout patterns"));
+	free(sparse_filename);
+	add_patterns_from_input(pl, argc, argv);
+}
+
+static int modify_pattern_list(int argc, const char **argv, enum modify_type m)
+{
+	int result;
+	int changed_config = 0;
+	struct pattern_list pl;
+	memset(&pl, 0, sizeof(pl));
+
+	switch (m) {
+	case ADD:
+		if (core_sparse_checkout_cone)
+			add_patterns_cone_mode(argc, argv, &pl);
+		else
+			add_patterns_literal(argc, argv, &pl);
+		break;
+
+	case REPLACE:
+		add_patterns_from_input(&pl, argc, argv);
+		break;
 	}
 
 	if (!core_apply_sparse_checkout) {
@@ -494,6 +548,27 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 
 	clear_pattern_list(&pl);
 	return result;
+}
+
+static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
+			       enum modify_type m)
+{
+	static struct option builtin_sparse_checkout_set_options[] = {
+		OPT_BOOL(0, "stdin", &set_opts.use_stdin,
+			 N_("read patterns from standard in")),
+		OPT_END(),
+	};
+
+	repo_read_index(the_repository);
+	require_clean_work_tree(the_repository,
+				N_("set sparse-checkout patterns"), NULL, 1, 0);
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_sparse_checkout_set_options,
+			     builtin_sparse_checkout_set_usage,
+			     PARSE_OPT_KEEP_UNKNOWN);
+
+	return modify_pattern_list(argc, argv, m);
 }
 
 static int sparse_checkout_disable(int argc, const char **argv)
@@ -544,7 +619,9 @@ int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
 		if (!strcmp(argv[0], "init"))
 			return sparse_checkout_init(argc, argv);
 		if (!strcmp(argv[0], "set"))
-			return sparse_checkout_set(argc, argv, prefix);
+			return sparse_checkout_set(argc, argv, prefix, REPLACE);
+		if (!strcmp(argv[0], "add"))
+			return sparse_checkout_set(argc, argv, prefix, ADD);
 		if (!strcmp(argv[0], "disable"))
 			return sparse_checkout_disable(argc, argv);
 	}

@@ -63,6 +63,13 @@ directories. The input format matches the output of `git ls-tree --name-only`.
 This includes interpreting pathnames that begin with a double quote (") as
 C-style quoted strings.
 
+'add'::
+	Update the sparse-checkout file to include additional patterns.
+	By default, these patterns are read from the command-line arguments,
+	but they can be read from stdin using the `--stdin` option. When
+	`core.sparseCheckoutCone` is enabled, the given patterns are interpreted
+	as directory names as in the 'set' subcommand.
+
 'disable'::
 	Disable the `core.sparseCheckout` config setting, and restore the
 	working directory to include all files. Leaves the sparse-checkout
