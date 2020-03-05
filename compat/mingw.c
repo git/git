@@ -1070,7 +1070,19 @@ int mingw_stat(const char *file_name, struct stat *buf)
 			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 	if (hnd == INVALID_HANDLE_VALUE) {
-		errno = err_win_to_posix(GetLastError());
+		DWORD err = GetLastError();
+
+		if (err == ERROR_ACCESS_DENIED &&
+		    !mingw_lstat(file_name, buf) &&
+		    !S_ISLNK(buf->st_mode))
+			/*
+			 * POSIX semantics state to still try to fill
+			 * information, even if permission is denied to create
+			 * a file handle.
+			 */
+			return 0;
+
+		errno = err_win_to_posix(err);
 		return -1;
 	}
 	result = get_file_info_by_handle(hnd, buf);
