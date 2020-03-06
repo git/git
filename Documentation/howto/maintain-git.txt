@@ -154,15 +154,17 @@ by doing the following:
    - Anything unobvious that is applicable to 'master' (in other
      words, does not depend on anything that is still in 'next'
      and not in 'master') is applied to a new topic branch that
-     is forked from the tip of 'master'.  This includes both
+     is forked from the tip of 'master' (or the last feature release,
+     which is a bit older than 'master').  This includes both
      enhancements and unobvious fixes to 'master'.  A topic
      branch is named as ai/topic where "ai" is two-letter string
      named after author's initial and "topic" is a descriptive name
      of the topic (in other words, "what's the series is about").
 
    - An unobvious fix meant for 'maint' is applied to a new
-     topic branch that is forked from the tip of 'maint'.  The
-     topic is named as ai/maint-topic.
+     topic branch that is forked from the tip of 'maint' (or the
+     oldest and still relevant maintenance branch).  The
+     topic may be named as ai/maint-topic.
 
    - Changes that pertain to an existing topic are applied to
      the branch, but:
@@ -174,24 +176,40 @@ by doing the following:
    - Replacement patches to an existing topic are accepted only
      for commits not in 'next'.
 
-   The above except the "replacement" are all done with:
+   The initial round is done with:
 
      $ git checkout ai/topic ;# or "git checkout -b ai/topic master"
      $ git am -sc3 mailbox
 
-   while patch replacement is often done by:
+   and replacing an existing topic with subsequent round is done with:
 
-     $ git format-patch ai/topic~$n..ai/topic ;# export existing
+     $ git checkout master...ai/topic ;# try to reapply to the same base
+     $ git am -sc3 mailbox
 
-   then replace some parts with the new patch, and reapplying:
+   to prepare the new round on a detached HEAD, and then
 
-     $ git checkout ai/topic
-     $ git reset --hard ai/topic~$n
-     $ git am -sc3 -s 000*.txt
+     $ git range-diff @{-1}...
+     $ git diff @{-1}
 
-   The full test suite is always run for 'maint' and 'master'
-   after patch application; for topic branches the tests are run
-   as time permits.
+   to double check what changed since the last round, and finally
+
+     $ git checkout -B @{-1}
+
+   to conclude (the last step is why a topic already in 'next' is
+   not replaced but updated incrementally).
+
+   Whether it is the initial round or a subsequent round, the topic
+   may not build even in isolation, or may break the build when
+   merged to integration branches due to bugs.  There may already
+   be obvious and trivial improvements suggested on the list.  The
+   maintainer often adds an extra commit, with "SQUASH???" in its
+   title, to fix things up, before publishing the integration
+   branches to make it usable by other developers for testing.
+   These changes are what the maintainer is not 100% committed to
+   (trivial typofixes etc. are often squashed directly into the
+   patches that need fixing, without being applied as a separate
+   "SQUASH???" commit), so that they can be removed easily as needed.
+
 
  - Merge maint to master as needed:
 
@@ -370,6 +388,14 @@ Some observations to be made.
  * Being in the 'next' branch is not a guarantee for a topic to
    be included in the next feature release.  Being in the
    'master' branch typically is.
+
+ * Due to the nature of "SQUASH???" fix-ups, if the original author
+   agrees with the suggested changes, it is OK to squash them to
+   appropriate patches in the next round (when the suggested change
+   is small enough, the author should not even bother with
+   "Helped-by").  It is also OK to drop them from the next round
+   when the original author does not agree with the suggestion, but
+   the author is expected to say why somewhere in the discussion.
 
 
 Appendix
