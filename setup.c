@@ -725,7 +725,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 		}
 
 		/* #18, #26 */
-		set_git_dir(gitdirenv);
+		set_git_dir(gitdirenv, 0);
 		free(gitfile);
 		return NULL;
 	}
@@ -747,7 +747,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	}
 	else if (!git_env_bool(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, 1)) {
 		/* #16d */
-		set_git_dir(gitdirenv);
+		set_git_dir(gitdirenv, 0);
 		free(gitfile);
 		return NULL;
 	}
@@ -759,14 +759,14 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 
 	/* both get_git_work_tree() and cwd are already normalized */
 	if (!strcmp(cwd->buf, worktree)) { /* cwd == worktree */
-		set_git_dir(gitdirenv);
+		set_git_dir(gitdirenv, 0);
 		free(gitfile);
 		return NULL;
 	}
 
 	offset = dir_inside_of(cwd->buf, worktree);
 	if (offset >= 0) {	/* cwd inside worktree? */
-		set_git_dir(real_path(gitdirenv));
+		set_git_dir(gitdirenv, 1);
 		if (chdir(worktree))
 			die_errno(_("cannot chdir to '%s'"), worktree);
 		strbuf_addch(cwd, '/');
@@ -775,7 +775,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	}
 
 	/* cwd outside worktree */
-	set_git_dir(gitdirenv);
+	set_git_dir(gitdirenv, 0);
 	free(gitfile);
 	return NULL;
 }
@@ -804,7 +804,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 
 	/* #16.2, #17.2, #20.2, #21.2, #24, #25, #28, #29 (see t1510) */
 	if (is_bare_repository_cfg > 0) {
-		set_git_dir(offset == cwd->len ? gitdir : real_path(gitdir));
+		set_git_dir(gitdir, (offset != cwd->len));
 		if (chdir(cwd->buf))
 			die_errno(_("cannot come back to cwd"));
 		return NULL;
@@ -813,7 +813,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 	/* #0, #1, #5, #8, #9, #12, #13 */
 	set_git_work_tree(".");
 	if (strcmp(gitdir, DEFAULT_GIT_DIR_ENVIRONMENT))
-		set_git_dir(gitdir);
+		set_git_dir(gitdir, 0);
 	inside_git_dir = 0;
 	inside_work_tree = 1;
 	if (offset >= cwd->len)
@@ -856,10 +856,10 @@ static const char *setup_bare_git_dir(struct strbuf *cwd, int offset,
 			die_errno(_("cannot come back to cwd"));
 		root_len = offset_1st_component(cwd->buf);
 		strbuf_setlen(cwd, offset > root_len ? offset : root_len);
-		set_git_dir(cwd->buf);
+		set_git_dir(cwd->buf, 0);
 	}
 	else
-		set_git_dir(".");
+		set_git_dir(".", 0);
 	return NULL;
 }
 

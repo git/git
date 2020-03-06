@@ -543,7 +543,7 @@ const char *get_git_common_dir(void);
 char *get_object_directory(void);
 char *get_index_file(void);
 char *get_graft_file(struct repository *r);
-void set_git_dir(const char *path);
+void set_git_dir(const char *path, int make_realpath);
 int get_common_dir_noenv(struct strbuf *sb, const char *gitdir);
 int get_common_dir(struct strbuf *sb, const char *gitdir);
 const char *get_git_namespace(void);

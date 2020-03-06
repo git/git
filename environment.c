@@ -345,11 +345,20 @@ static void update_relative_gitdir(const char *name,
 	free(path);
 }
 
-void set_git_dir(const char *path)
+void set_git_dir(const char *path, int make_realpath)
 {
+	struct strbuf realpath = STRBUF_INIT;
+
+	if (make_realpath) {
+		strbuf_realpath(&realpath, path, 1);
+		path = realpath.buf;
+	}
+
 	set_git_dir_1(path);
 	if (!is_absolute_path(path))
 		chdir_notify_register(NULL, update_relative_gitdir, NULL);
+
+	strbuf_release(&realpath);
 }
 
 const char *get_log_output_encoding(void)
