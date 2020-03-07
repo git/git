@@ -6,6 +6,7 @@ test_description='git log'
 . "$TEST_DIRECTORY/lib-gpg.sh"
 . "$TEST_DIRECTORY/lib-terminal.sh"
 . "$TEST_DIRECTORY/lib-log-graph.sh"
+. "$TEST_DIRECTORY/lib-crlf-messages.sh"
 
 test_cmp_graph () {
 	lib_test_cmp_graph --format=%s "$@"
@@ -104,6 +105,29 @@ test_expect_success 'oneline' '
 	git log --oneline > actual &&
 	test_cmp expect actual
 '
+
+test_create_crlf_refs
+
+test_expect_success 'oneline with CRLF messages' '
+	echo "002093e Subject first line" >expect &&
+	git log --oneline -1 crlf >actual-branch &&
+	git log --oneline -1 tag-crlf >actual-tag &&
+	test_cmp expect actual-branch &&
+	test_cmp expect actual-tag &&
+	echo "6f814b0 Subject first line" >expect &&
+	git log --oneline -1 crlf-empty-lines-after-subject >actual-branch &&
+	git log --oneline -1 tag-crlf-empty-lines-after-subject >actual-tag &&
+	test_cmp expect actual-branch &&
+	test_cmp expect actual-tag &&
+	echo "8c58a85 Subject first line Subject second line" >expect &&
+	git log --oneline -1 crlf-two-line-subject >actual-branch &&
+	git log --oneline -1 tag-crlf-two-line-subject >actual-tag &&
+	test_cmp expect actual-branch &&
+	test_cmp expect actual-tag
+'
+test_crlf_subject_body_and_contents log --all --reverse --grep Subject
+
+test_cleanup_crlf_refs
 
 test_expect_success 'diff-filter=A' '
 
