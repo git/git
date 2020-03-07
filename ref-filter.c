@@ -1050,10 +1050,18 @@ static char *copy_subject(const char *buf, unsigned long len)
 {
 	char *r = xmemdupz(buf, len);
 	int i;
+	struct strbuf sb = STRBUF_INIT;
 
-	for (i = 0; i < len; i++)
+	strbuf_attach(&sb, r, len, len + 1);
+	for (i = 0; i < sb.len; i++) {
 		if (r[i] == '\n')
 			r[i] = ' ';
+		if (r[i] == '\r') {
+			strbuf_remove(&sb, i, 1);
+			i -= 1;
+		}
+	}
+	strbuf_detach(&sb, NULL);
 
 	return r;
 }
@@ -1184,15 +1192,22 @@ static void find_subpos(const char *buf,
 		eol = strchrnul(buf, '\n');
 		if (*eol)
 			eol++;
+		/*  protect against messages that might contain \r\n */
+		if (*eol == '\r')
+			eol++;
 		buf = eol;
 	}
 	*sublen = buf - *sub;
 	/* drop trailing newline, if present */
 	if (*sublen && (*sub)[*sublen - 1] == '\n')
 		*sublen -= 1;
+	/*  protect against commit messages that might contain \r\n */
+	else if (*sublen && (*sub)[*sublen - 1] == '\r')
+		*sublen -= 3; /* drop '\r\n\r' */
 
 	/* skip any empty lines */
-	while (*buf == '\n')
+	/* and protect against commit messages that might contain \r\n */
+	while (*buf == '\n' || *buf == '\r')
 		buf++;
 	*body = buf;
 	*bodylen = strlen(buf);

@@ -10,6 +10,7 @@ Tests for operations with tags.'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
+. "$TEST_DIRECTORY"/lib-crlf-messages.sh
 
 # creating and listing lightweight tags:
 
@@ -1968,6 +1969,12 @@ test_expect_success '--format should list tags as per format given' '
 	git tag -l --format="refname : %(refname)" "v1*" >actual &&
 	test_cmp expect actual
 '
+
+test_create_crlf_refs
+
+test_crlf_subject_body_and_contents tag --list tag-crlf*
+
+test_cleanup_crlf_refs
 
 test_expect_success "set up color tests" '
 	echo "<RED>v1.0<RESET>" >expect.color &&

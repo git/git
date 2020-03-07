@@ -8,6 +8,7 @@ test_description='for-each-ref test'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
+. "$TEST_DIRECTORY"/lib-crlf-messages.sh
 
 # Mon Jul 3 23:18:43 2006 +0000
 datestamp=1151968723
@@ -887,5 +888,9 @@ test_expect_success 'for-each-ref --ignore-case ignores case' '
 		refs/heads/MASTER >actual &&
 	test_cmp expect actual
 '
+
+test_create_crlf_refs
+
+test_crlf_subject_body_and_contents for-each-ref refs/heads/crlf*
 
 test_done
