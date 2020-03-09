@@ -1197,6 +1197,7 @@ __git_count_arguments ()
 
 __git_whitespacelist="nowarn warn error error-all fix"
 __git_patchformat="mbox stgit stgit-series hg mboxrd"
+__git_showcurrentpatch="diff raw"
 __git_am_inprogress_options="--skip --continue --resolved --abort --quit --show-current-patch"
 
 _git_am ()
@@ -1213,6 +1214,10 @@ _git_am ()
 		;;
 	--patch-format=*)
 		__gitcomp "$__git_patchformat" "" "${cur##--patch-format=}"
+		return
+		;;
+	--show-current-patch=*)
+		__gitcomp "$__git_showcurrentpatch" "" "${cur##--show-current-patch=}"
 		return
 		;;
 	--*)

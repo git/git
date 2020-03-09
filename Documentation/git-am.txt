@@ -16,7 +16,7 @@ SYNOPSIS
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit | --show-current-patch)
+'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)])
 
 DESCRIPTION
 -----------
@@ -176,9 +176,11 @@ default.   You can use `--no-utf8` to override this.
 	Abort the patching operation but keep HEAD and the index
 	untouched.
 
---show-current-patch::
-	Show the entire e-mail message "git am" has stopped at, because
-	of conflicts.
+--show-current-patch[=(diff|raw)]::
+	Show the message at which `git am` has stopped due to
+	conflicts.  If `raw` is specified, show the raw contents of
+	the e-mail message; if `diff`, show the diff portion only.
+	Defaults to `raw`.
 
 DISCUSSION
 ----------
