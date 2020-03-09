@@ -28,7 +28,9 @@ OPTIONS
 	Limit to only refs/heads and refs/tags, respectively.
 	These options are _not_ mutually exclusive; when given
 	both, references stored in refs/heads and refs/tags are
-	displayed.
+	displayed.  Note that `git ls-remote -h` used without
+	anything else on the command line gives help, consistent
+	with other git subcommands.
 
 --refs::
 	Do not show peeled tags or pseudorefs like `HEAD` in the output.
