@@ -29,7 +29,6 @@ int advice_ignored_hook = 1;
 int advice_waiting_for_editor = 1;
 int advice_graft_file_deprecated = 1;
 int advice_checkout_ambiguous_remote_branch_name = 1;
-int advice_nested_tag = 1;
 int advice_submodule_alternate_error_strategy_die = 1;
 int advice_add_ignored_file = 1;
 int advice_add_empty_pathspec = 1;
@@ -82,7 +81,7 @@ static struct {
 	{ "sequencerInUse", &advice_sequencer_in_use },
 	{ "implicitIdentity", &advice_implicit_identity },
 	{ "detachedHead", &advice_detached_head },
-	{ "setupStreamFailure", &advice_set_upstream_failure },
+	{ "setUpstreamFailure", &advice_set_upstream_failure },
 	{ "objectNameWarning", &advice_object_name_warning },
 	{ "amWorkDir", &advice_amworkdir },
 	{ "rmHints", &advice_rm_hints },
@@ -91,7 +90,6 @@ static struct {
 	{ "waitingForEditor", &advice_waiting_for_editor },
 	{ "graftFileDeprecated", &advice_graft_file_deprecated },
 	{ "checkoutAmbiguousRemoteBranchName", &advice_checkout_ambiguous_remote_branch_name },
-	{ "nestedTag", &advice_nested_tag },
 	{ "submoduleAlternateErrorStrategyDie", &advice_submodule_alternate_error_strategy_die },
 	{ "addIgnoredFile", &advice_add_ignored_file },
 	{ "addEmptyPathspec", &advice_add_empty_pathspec },
@@ -100,15 +98,58 @@ static struct {
 	{ "pushNonFastForward", &advice_push_update_rejected }
 };
 
-void advise(const char *advice, ...)
+static struct {
+	const char *key;
+	int enabled;
+} advice_setting[] = {
+	[ADVICE_ADD_EMBEDDED_REPO]			= { "addEmbeddedRepo", 1 },
+	[ADVICE_AM_WORK_DIR] 				= { "amWorkDir", 1 },
+	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { "checkoutAmbiguousRemoteBranchName", 1 },
+	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge", 1 },
+	[ADVICE_DETACHED_HEAD]				= { "detachedHead", 1 },
+	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates", 1 },
+	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated", 1 },
+	[ADVICE_IGNORED_HOOK]				= { "ignoredHook", 1 },
+	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity", 1 },
+	[ADVICE_NESTED_TAG]				= { "nestedTag", 1 },
+	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning", 1 },
+	[ADVICE_PUSH_ALREADY_EXISTS]			= { "pushAlreadyExists", 1 },
+	[ADVICE_PUSH_FETCH_FIRST]			= { "pushFetchFirst", 1 },
+	[ADVICE_PUSH_NEEDS_FORCE]			= { "pushNeedsForce", 1 },
+
+	/* make this an alias for backward compatibility */
+	[ADVICE_PUSH_UPDATE_REJECTED_ALIAS]		= { "pushNonFastForward", 1 },
+
+	[ADVICE_PUSH_NON_FF_CURRENT]			= { "pushNonFFCurrent", 1 },
+	[ADVICE_PUSH_NON_FF_MATCHING]			= { "pushNonFFMatching", 1 },
+	[ADVICE_PUSH_UNQUALIFIED_REF_NAME]		= { "pushUnqualifiedRefName", 1 },
+	[ADVICE_PUSH_UPDATE_REJECTED]			= { "pushUpdateRejected", 1 },
+	[ADVICE_RESET_QUIET_WARNING]			= { "resetQuiet", 1 },
+	[ADVICE_RESOLVE_CONFLICT]			= { "resolveConflict", 1 },
+	[ADVICE_RM_HINTS]				= { "rmHints", 1 },
+	[ADVICE_SEQUENCER_IN_USE]			= { "sequencerInUse", 1 },
+	[ADVICE_SET_UPSTREAM_FAILURE]			= { "setUpstreamFailure", 1 },
+	[ADVICE_STATUS_AHEAD_BEHIND_WARNING]		= { "statusAheadBehindWarning", 1 },
+	[ADVICE_STATUS_HINTS]				= { "statusHints", 1 },
+	[ADVICE_STATUS_U_OPTION]			= { "statusUoption", 1 },
+	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie", 1 },
+	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor", 1 },
+};
+
+static const char turn_off_instructions[] =
+N_("\n"
+   "Disable this message with \"git config advice.%s false\"");
+
+static void vadvise(const char *advice, int display_instructions,
+		    const char *key, va_list params)
 {
 	struct strbuf buf = STRBUF_INIT;
-	va_list params;
 	const char *cp, *np;
 
-	va_start(params, advice);
 	strbuf_vaddf(&buf, advice, params);
-	va_end(params);
+
+	if (display_instructions)
+		strbuf_addf(&buf, turn_off_instructions, key);
 
 	for (cp = buf.buf; *cp; cp = np) {
 		np = strchrnul(cp, '\n');
@@ -120,6 +161,37 @@ void advise(const char *advice, ...)
 			np++;
 	}
 	strbuf_release(&buf);
+}
+
+void advise(const char *advice, ...)
+{
+	va_list params;
+	va_start(params, advice);
+	vadvise(advice, 0, "", params);
+	va_end(params);
+}
+
+int advice_enabled(enum advice_type type)
+{
+	switch(type) {
+	case ADVICE_PUSH_UPDATE_REJECTED:
+		return advice_setting[ADVICE_PUSH_UPDATE_REJECTED].enabled &&
+		       advice_setting[ADVICE_PUSH_UPDATE_REJECTED_ALIAS].enabled;
+	default:
+		return advice_setting[type].enabled;
+	}
+}
+
+void advise_if_enabled(enum advice_type type, const char *advice, ...)
+{
+	va_list params;
+
+	if (!advice_enabled(type))
+		return;
+
+	va_start(params, advice);
+	vadvise(advice, 1, advice_setting[type].key, params);
+	va_end(params);
 }
 
 int git_default_advice_config(const char *var, const char *value)
@@ -148,6 +220,13 @@ int git_default_advice_config(const char *var, const char *value)
 		if (strcasecmp(k, advice_config[i].name))
 			continue;
 		*advice_config[i].preference = git_config_bool(var, value);
+		break;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(advice_setting); i++) {
+		if (strcasecmp(k, advice_setting[i].key))
+			continue;
+		advice_setting[i].enabled = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -158,8 +237,8 @@ void list_config_advices(struct string_list *list, const char *prefix)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(advice_config); i++)
-		list_config_item(list, prefix, advice_config[i].name);
+	for (i = 0; i < ARRAY_SIZE(advice_setting); i++)
+		list_config_item(list, prefix, advice_setting[i].key);
 }
 
 int error_resolve_conflict(const char *me)
