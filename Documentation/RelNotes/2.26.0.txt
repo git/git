@@ -47,6 +47,18 @@ UI, Workflows & Features
  * "git clone --recurse-submodules --single-branch" now uses the same
    single-branch option when cloning the submodules.
 
+ * "git rm" and "git stash" learns the new "--pathspec-from-file"
+   option.
+
+ * "git am --short-current-patch" is a way to show the piece of e-mail
+   for the stopped step, which is not suitable to directly feed "git
+   apply" (it is designed to be a good "git am" input).  It learned a
+   new option to show only the patch part.
+
+ * Handling of conflicting renames in merge-recursive have further
+   been made consistent with how existing codepaths try to mimic what
+   is done to add/add conflicts.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -288,6 +300,18 @@ Fixes since v2.25
    reverted.
    (merge 0106b1d4be hi/gpg-use-check-signature later to maint).
 
+ * MinGW's poll() emulation has been improved.
+   (merge 94f4d01932 am/mingw-poll-fix later to maint).
+
+ * "git show" and others gave an object name in raw format in its
+   error output, which has been corrected to give it in hex.
+   (merge 237a28173f hd/show-one-mergetag-fix later to maint).
+
+ * "git fetch" over HTTP walker protocol did not show any progress
+   output.  We inherently do not know how much work remains, but still
+   we can show something not to bore users.
+   (merge 7655b4119d rs/show-progress-in-dumb-http-fetch later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge d0d0a357a1 am/update-pathspec-f-f-tests later to maint).
@@ -315,3 +339,6 @@ Fixes since v2.25
    (merge 240fc04f81 ag/rebase-remove-redundant-code later to maint).
    (merge 7f487ce062 js/ci-windows-update later to maint).
    (merge d68ce906c7 rs/commit-graph-code-simplification later to maint).
+   (merge a51d9e8f07 rj/t1050-use-test-path-is-file later to maint).
+   (merge fd0bc17557 kk/complete-diff-color-moved later to maint).
+   (merge 65bf820d0e en/test-cleanup later to maint).
