@@ -32,7 +32,29 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m Side &&
 
-	git tag anchor
+	git tag anchor &&
+
+	cat >./custom-merge <<-\EOF &&
+	#!/bin/sh
+
+	orig="$1" ours="$2" theirs="$3" exit="$4" path=$5
+	(
+		echo "orig is $orig"
+		echo "ours is $ours"
+		echo "theirs is $theirs"
+		echo "path is $path"
+		echo "=== orig ==="
+		cat "$orig"
+		echo "=== ours ==="
+		cat "$ours"
+		echo "=== theirs ==="
+		cat "$theirs"
+	) >"$ours+"
+	cat "$ours+" >"$ours"
+	rm -f "$ours+"
+	exit "$exit"
+	EOF
+	chmod +x ./custom-merge
 '
 
 test_expect_success merge '
@@ -81,28 +103,6 @@ test_expect_success 'retry the merge with longer context' '
 	grep "================================" actual &&
 	grep "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" actual
 '
-
-cat >./custom-merge <<\EOF
-#!/bin/sh
-
-orig="$1" ours="$2" theirs="$3" exit="$4" path=$5
-(
-	echo "orig is $orig"
-	echo "ours is $ours"
-	echo "theirs is $theirs"
-	echo "path is $path"
-	echo "=== orig ==="
-	cat "$orig"
-	echo "=== ours ==="
-	cat "$ours"
-	echo "=== theirs ==="
-	cat "$theirs"
-) >"$ours+"
-cat "$ours+" >"$ours"
-rm -f "$ours+"
-exit "$exit"
-EOF
-chmod +x ./custom-merge
 
 test_expect_success 'custom merge backend' '
 
