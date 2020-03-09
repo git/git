@@ -8,6 +8,7 @@
 #include "tag.h"
 #include "blob.h"
 #include "refs.h"
+#include "progress.h"
 
 static struct object_id current_commit_oid;
 
@@ -162,6 +163,11 @@ static int process(struct walker *walker, struct object *obj)
 static int loop(struct walker *walker)
 {
 	struct object_list *elem;
+	struct progress *progress = NULL;
+	uint64_t nr = 0;
+
+	if (walker->get_progress)
+		progress = start_delayed_progress(_("Fetching objects"), 0);
 
 	while (process_queue) {
 		struct object *obj = process_queue->item;
@@ -176,15 +182,20 @@ static int loop(struct walker *walker)
 		 */
 		if (! (obj->flags & TO_SCAN)) {
 			if (walker->fetch(walker, obj->oid.hash)) {
+				stop_progress(&progress);
 				report_missing(obj);
 				return -1;
 			}
 		}
 		if (!obj->type)
 			parse_object(the_repository, &obj->oid);
-		if (process_object(walker, obj))
+		if (process_object(walker, obj)) {
+			stop_progress(&progress);
 			return -1;
+		}
+		display_progress(progress, ++nr);
 	}
+	stop_progress(&progress);
 	return 0;
 }
 
