@@ -857,7 +857,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 					if (!gitdir && !prefix)
 						gitdir = ".git";
 					if (gitdir) {
-						puts(real_path(gitdir));
+						struct strbuf realpath = STRBUF_INIT;
+						strbuf_realpath(&realpath, gitdir, 1);
+						puts(realpath.buf);
+						strbuf_release(&realpath);
 						continue;
 					}
 				}

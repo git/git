@@ -2170,6 +2170,7 @@ void absorb_git_dir_into_superproject(const char *path,
 
 const char *get_superproject_working_tree(void)
 {
+	static struct strbuf realpath = STRBUF_INIT;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	const char *one_up = real_path_if_valid("../");
@@ -2231,7 +2232,8 @@ const char *get_superproject_working_tree(void)
 		super_wt = xstrdup(cwd);
 		super_wt[cwd_len - super_sub_len] = '\0';
 
-		ret = real_path(super_wt);
+		strbuf_realpath(&realpath, super_wt, 1);
+		ret = realpath.buf;
 		free(super_wt);
 	}
 	strbuf_release(&sb);

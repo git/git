@@ -420,6 +420,7 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 	struct dir_iterator *iter;
 	int iter_status;
 	unsigned int flags;
+	struct strbuf realpath = STRBUF_INIT;
 
 	mkdir_if_missing(dest->buf, 0777);
 
@@ -454,7 +455,8 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 		if (unlink(dest->buf) && errno != ENOENT)
 			die_errno(_("failed to unlink '%s'"), dest->buf);
 		if (!option_no_hardlinks) {
-			if (!link(real_path(src->buf), dest->buf))
+			strbuf_realpath(&realpath, src->buf, 1);
+			if (!link(realpath.buf, dest->buf))
 				continue;
 			if (option_local > 0)
 				die_errno(_("failed to create link '%s'"), dest->buf);
@@ -468,6 +470,8 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 		strbuf_setlen(src, src_len);
 		die(_("failed to iterate over '%s'"), src->buf);
 	}
+
+	strbuf_release(&realpath);
 }
 
 static void clone_local(const char *src_repo, const char *dest_repo)

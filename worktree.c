@@ -285,6 +285,7 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
 		      unsigned flags)
 {
 	struct strbuf wt_path = STRBUF_INIT;
+	struct strbuf realpath = STRBUF_INIT;
 	char *path = NULL;
 	int err, ret = -1;
 
@@ -336,7 +337,8 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
 		goto done;
 	}
 
-	ret = fspathcmp(path, real_path(git_common_path("worktrees/%s", wt->id)));
+	strbuf_realpath(&realpath, git_common_path("worktrees/%s", wt->id), 1);
+	ret = fspathcmp(path, realpath.buf);
 
 	if (ret)
 		strbuf_addf_gently(errmsg, _("'%s' does not point back to '%s'"),
@@ -344,6 +346,7 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
 done:
 	free(path);
 	strbuf_release(&wt_path);
+	strbuf_release(&realpath);
 	return ret;
 }
 

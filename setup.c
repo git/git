@@ -32,6 +32,7 @@ static int abspath_part_inside_repo(char *path)
 	char *path0;
 	int off;
 	const char *work_tree = get_git_work_tree();
+	struct strbuf realpath = STRBUF_INIT;
 
 	if (!work_tree)
 		return -1;
@@ -60,8 +61,10 @@ static int abspath_part_inside_repo(char *path)
 		path++;
 		if (*path == '/') {
 			*path = '\0';
-			if (fspathcmp(real_path(path0), work_tree) == 0) {
+			strbuf_realpath(&realpath, path0, 1);
+			if (fspathcmp(realpath.buf, work_tree) == 0) {
 				memmove(path0, path + 1, len - (path - path0));
+				strbuf_release(&realpath);
 				return 0;
 			}
 			*path = '/';
@@ -69,11 +72,14 @@ static int abspath_part_inside_repo(char *path)
 	}
 
 	/* check whole path */
-	if (fspathcmp(real_path(path0), work_tree) == 0) {
+	strbuf_realpath(&realpath, path0, 1);
+	if (fspathcmp(realpath.buf, work_tree) == 0) {
 		*path0 = '\0';
+		strbuf_release(&realpath);
 		return 0;
 	}
 
+	strbuf_release(&realpath);
 	return -1;
 }
 
@@ -619,6 +625,7 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 	struct stat st;
 	int fd;
 	ssize_t len;
+	static struct strbuf realpath = STRBUF_INIT;
 
 	if (stat(path, &st)) {
 		/* NEEDSWORK: discern between ENOENT vs other errors */
@@ -669,7 +676,9 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_NOT_A_REPO;
 		goto cleanup_return;
 	}
-	path = real_path(dir);
+
+	strbuf_realpath(&realpath, dir, 1);
+	path = realpath.buf;
 
 cleanup_return:
 	if (return_error_code)
