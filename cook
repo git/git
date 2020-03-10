@@ -942,6 +942,10 @@ if ($wildo) {
 		open($fd, "-|",
 		     qw(git --git-dir=Meta/.git cat-file -p),
 		     "$ARGV[0]:whats-cooking.txt");
+	} elsif ($ARGV[0] eq ":") {
+		open($fd, "-|",
+		     qw(git --git-dir=Meta/.git cat-file -p),
+		     ":whats-cooking.txt");
 	} else {
 		open($fd, "<", $ARGV[0]);
 	}
