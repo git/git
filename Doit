@@ -1,0 +1,20 @@
+#!/bin/sh
+
+test -n "$branches" || branches='next master maint jch pu'
+
+changed=
+for b in $branches
+do
+	installed=$(rungit "$b" version) &&
+	installed=${installed##* } &&
+	case "$installed" in
+	*-g*) installed=$(git describe "$installed") ;;
+	*)    installed=$(git describe "v$installed") ;;
+	esac &&
+	latest=$(git describe "$b") &&
+	test "z$latest" = "z$installed" ||
+	changed="$changed $b"
+done
+
+Meta/Dothem -j32 &&
+Meta/Dothem -j32 --dash --branches="$changed" --scratch --force CC=clang 
