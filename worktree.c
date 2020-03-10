@@ -226,17 +226,20 @@ struct worktree *find_worktree(struct worktree **list,
 
 struct worktree *find_worktree_by_path(struct worktree **list, const char *p)
 {
+	struct strbuf wt_path = STRBUF_INIT;
 	char *path = real_pathdup(p, 0);
 
 	if (!path)
 		return NULL;
 	for (; *list; list++) {
-		const char *wt_path = real_path_if_valid((*list)->path);
+		if (!strbuf_realpath(&wt_path, (*list)->path, 0))
+			continue;
 
-		if (wt_path && !fspathcmp(path, wt_path))
+		if (!fspathcmp(path, wt_path.buf))
 			break;
 	}
 	free(path);
+	strbuf_release(&wt_path);
 	return *list;
 }
 

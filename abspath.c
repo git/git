@@ -202,16 +202,6 @@ error_out:
 	return retval;
 }
 
-/*
- * Resolve `path` into an absolute, cleaned-up path. The return value
- * comes from a shared buffer.
- */
-const char *real_path_if_valid(const char *path)
-{
-	static struct strbuf realpath = STRBUF_INIT;
-	return strbuf_realpath(&realpath, path, 0);
-}
-
 char *real_pathdup(const char *path, int die_on_error)
 {
 	struct strbuf realpath = STRBUF_INIT;

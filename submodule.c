@@ -2173,7 +2173,7 @@ const char *get_superproject_working_tree(void)
 	static struct strbuf realpath = STRBUF_INIT;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
-	const char *one_up = real_path_if_valid("../");
+	struct strbuf one_up = STRBUF_INIT;
 	const char *cwd = xgetcwd();
 	const char *ret = NULL;
 	const char *subpath;
@@ -2188,10 +2188,11 @@ const char *get_superproject_working_tree(void)
 		 */
 		return NULL;
 
-	if (!one_up)
+	if (!strbuf_realpath(&one_up, "../", 0))
 		return NULL;
 
-	subpath = relative_path(cwd, one_up, &sb);
+	subpath = relative_path(cwd, one_up.buf, &sb);
+	strbuf_release(&one_up);
 
 	prepare_submodule_repo_env(&cp.env_array);
 	argv_array_pop(&cp.env_array);
