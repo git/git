@@ -1,14 +1,97 @@
-# Turkish translations for Git.
-# Git Türkçe çevirileri.
+# Turkish translations for Git
+# Git Türkçe çevirileri
 # Copyright (C) 2020 Emir SARI <bitigchi@me.com>
 # This file is distributed under the same license as the Git package.
-# Emir SARI <bitigchi@me.com>, 2020.
+# Emir SARI <bitigchi@me.com>, 2020
+#
+#############################################################
+#                                                           #
+# Git Türkçe kavramlar dizini / Git Turkish Glossary        #
+#                                                           #
+# İngilizce                   | Türkçe                      #
+# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––#
+# 3-way merge                 | 3 yönlü birleştirme         #
+# bare repository             | çıplak depo                 #
+# blob object                 | ikili nesne                 #
+# branch                      | dal                         #
+# bundle                      | demet                       #
+# checkout                    | çıkış yapım/yapmak          #
+# chunk                       | iri parça                   #
+# clone                       | klon(lamak)                 #
+# commit (ad)                 | gönderi                     #
+# commit (eyl.)               | göndermek                   #
+# commitish                   | gönderimsi                  #
+# conflict                    | çakışma                     #
+# dangling object             | sallanan nesne              #
+# detached HEAD               | ayrık HEAD                  #
+# dirty                       | kirli                       #
+# evil merge                  | uğursuz birleştirme         #
+# fast-forward                | ileri sarım/sarmak          #
+# fetch                       | getirme(k)                  #
+# fixup                       | düzeltmek                   #
+# graft                       | aşı                         #
+# hash                        | sağlama                     #
+# head                        | dal ucu                     #
+# hunk                        | parça                       #
+# inflate                     | söndürmek                   #
+# init                        | ilklendirmek                #
+# mark                        | im(lemek)                   #
+# merge                       | birleştirme(k)              #
+# octopus                     | ahtapot                     #
+# overlay                     | yerpaylaşım                 #
+# pack                        | paket                       #
+# parent                      | üst öge                     #
+# patch                       | yama                        #
+# pathspec                    | yol belirteci               #
+# pattern                     | dizgi                       #
+# porcelain                   | okunabilir                  #
+# prune                       | budamak                     #
+# pseudoref                   | yalancıktan başvuru         #
+# pull                        | çekme(k)                    #
+# push                        | itme(k)                     #
+# rebase                      | yeniden temellendirme(k)    #
+# record                      | kayıt yaz(mak)              #
+# ref                         | başvuru                     #
+# reflog                      | başvuru günlüğü             #
+# refspec                     | başvuru belirteci           #
+# register                    | kayıt yap(mak)              #
+# remote                      | uzak konum                  #
+# remote repository           | uzak depo                   #
+# remote-tracking branch      | uzak izleme dalı            #
+# repository                  | depo                        #
+# resolve                     | çözüm/çözmek                #
+# revert                      | geri al(mak)                #
+# rewind                      | geri sar(mak)               #
+# save                        | kaydet(mek)                 #
+# shallow clone               | sığ klon                    #
+# shallow repository          | sığ depo                    #
+# sparse-checkout             | aralıklı çıkış              #
+# squash                      | tıkıştır(mak)               #
+# stage                       | hazırla(mak)                #
+# staging area                | (gönderi) hazırlama alanı   #
+# stash                       | zula(lamak)                 #
+# string                      | dizi                        #
+# subdirectory                | altdizin                    #
+# submodule                   | altmodül                    #
+# symlink                     | sembolik bağ                #
+# symref                      | sembolik başvuru            #
+# tag                         | etiket                      #
+# template                    | şablon                      #
+# topic branch                | kişisel dal                 #
+# trailer                     | artbilgi                    #
+# tree                        | ağaç                        #
+# treeish                     | ağacımsı                    #
+# unstage                     | hazırlıktan çıkar(mak)      #
+# upstream                    | üstkaynak                   #
+# worktree/working tree       | çalışma ağacı               #
+#############################################################
+
 msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2020-03-06 14:25+0800\n"
-"PO-Revision-Date: 2020-02-21 23:09+0300\n"
+"PO-Revision-Date: 2020-03-10 23:00+0300\n"
 "Last-Translator: Emir SARI <bitigchi@me.com>\n"
 "Language-Team: Turkish (https://www.transifex.com/git-turkish/)\n"
 "Language: tr\n"
