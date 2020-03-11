@@ -699,6 +699,16 @@ suffer from the same shortcoming.  (See
 https://lore.kernel.org/git/20200207132152.GC2868@szeder.dev/ for
 details.)
 
+Commit Rewording
+~~~~~~~~~~~~~~~~
+
+When a conflict occurs while rebasing, rebase stops and asks the user
+to resolve.  Since the user may need to make notable changes while
+resolving conflicts, after conflicts are resolved and the user has run
+`git rebase --continue`, the rebase should open an editor and ask the
+user to update the commit message.  The merge backend does this, while
+the apply backend blindly applies the original commit message.
+
 Miscellaneous differences
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

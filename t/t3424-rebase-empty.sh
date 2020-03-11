@@ -123,4 +123,12 @@ test_expect_success 'rebase --interactive uses default of --empty=ask' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rebase --merge does not leave state laying around' '
+	git checkout -B testing localmods~2 &&
+	git rebase --merge upstream &&
+
+	test_path_is_missing .git/CHERRY_PICK_HEAD &&
+	test_path_is_missing .git/MERGE_MSG
+'
+
 test_done
