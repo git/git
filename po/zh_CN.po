@@ -458,11 +458,11 @@ msgid ""
 "a - unstage this hunk and all later hunks in the file\n"
 "d - do not unstage this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - 不暂存该块\n"
-"n - 不要不暂存该块\n"
-"q - 退出。不要不暂存该块及后面的全部块\n"
-"a - 不暂存该块和本文件中后面的全部块\n"
-"d - 不要不暂存该块和本文件中后面的全部块\n"
+"y - 取消暂存该块\n"
+"n - 不要取消暂存该块\n"
+"q - 退出。不要取消暂存该块及后面的全部块\n"
+"a - 取消暂存该块和本文件中后面的全部块\n"
+"d - 不要取消暂存该块和本文件中后面的全部块\n"
 
 #: add-patch.c:99 git-add--interactive.perl:1443
 #, c-format, perl-format
@@ -4016,7 +4016,7 @@ msgstr "服务器不允许请求未公开的对象 %s"
 
 #: gpg-interface.c:408
 msgid "gpg failed to sign the data"
-msgstr "gpg 无法为数据签名"
+msgstr "gpg 数据签名失败"
 
 #: gpg-interface.c:434
 msgid "could not create temporary file"
@@ -5023,7 +5023,7 @@ msgstr "偏移量越过了 %s 的包索引的结尾（被截断的索引？）"
 #: pack-bitmap.c:800 pack-bitmap.c:806 builtin/pack-objects.c:2134
 #, c-format
 msgid "unable to get size of %s"
-msgstr "不能得到 %s 的大小"
+msgstr "无法得到 %s 的大小"
 
 #: parse-options.c:38
 #, c-format
@@ -5191,7 +5191,7 @@ msgstr "%s：'literal' 和 'glob' 不兼容"
 #: pathspec.c:442
 #, c-format
 msgid "%s: '%s' is outside repository at '%s'"
-msgstr "%s：'%s' 在仓库（'%s' 中）之外"
+msgstr "%s：'%s' 在位于 '%s' 的仓库之外"
 
 #: pathspec.c:517
 #, c-format
@@ -7322,7 +7322,7 @@ msgstr "脚本已经重新编排。"
 #: setup.c:124
 #, c-format
 msgid "'%s' is outside repository at '%s'"
-msgstr "'%s' 在仓库（'%s' 中）之外"
+msgstr "'%s' 在位于 '%s' 的仓库之外"
 
 #: setup.c:175
 #, c-format
@@ -7780,7 +7780,7 @@ msgid ""
 "path '%s' exists, but not '%s'\n"
 "hint: Did you mean '%.*s:%s' aka '%.*s:./%s'?"
 msgstr ""
-"路径 '%s' 存在，但是不在 '%s' 中\n"
+"路径 '%s' 存在，而 '%s' 不存在\n"
 "提示：您的意思是 '%.*s:%s' 亦即 '%.*s:./%s'？"
 
 #: sha1-name.c:1704
@@ -7803,18 +7803,18 @@ msgid ""
 "path '%s' is in the index, but not '%s'\n"
 "hint: Did you mean ':%d:%s' aka ':%d:./%s'?"
 msgstr ""
-"路径 '%s' 在索引中，但是不在 '%s' 中\n"
+"路径 '%s' 在索引中，但 '%s' 不在\n"
 "提示：您的意思是 ':%d:%s' 亦即 ':%d:./%s'？"
 
 #: sha1-name.c:1756
 #, c-format
 msgid "path '%s' exists on disk, but not in the index"
-msgstr "路径 '%s' 在磁盘中，但不在索引里"
+msgstr "路径 '%s' 在磁盘上，但不在索引里"
 
 #: sha1-name.c:1758
 #, c-format
 msgid "path '%s' does not exist (neither on disk nor in the index)"
-msgstr "路径 '%s' 不存在（既不在磁盘中，也不在索引中）"
+msgstr "路径 '%s' 不存在（既不在磁盘上，也不在索引中）"
 
 #: sha1-name.c:1771
 msgid "relative path syntax can't be used outside working tree"
@@ -7920,7 +7920,7 @@ msgstr "坏的 --ignore-submodules 参数：%s"
 msgid ""
 "Submodule in commit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
-msgstr "提交 %s 中的子模组在路径：'%s' 和同名的子模组冲突。 跳过它。"
+msgstr "提交 %s 中位于路径 '%s' 的子模组和同名的子模组冲突。 跳过它。"
 
 #: submodule.c:910
 #, c-format
@@ -7932,12 +7932,12 @@ msgstr "子模组条目 '%s'（%s）是一个 %s，不是一个提交"
 msgid ""
 "Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
 "submodule %s"
-msgstr "无法在子模组 %s 中执行 'git rev-list <commits> --not --remotes -n 1'"
+msgstr "无法在子模组 %s 中执行 'git rev-list <提交> --not --remotes -n 1'"
 
 #: submodule.c:1118
 #, c-format
 msgid "process for submodule '%s' failed"
-msgstr "无法处理子模组 '%s'"
+msgstr "处理子模组 '%s' 失败"
 
 #: submodule.c:1147 builtin/branch.c:680 builtin/submodule--helper.c:2045
 msgid "Failed to resolve HEAD as a valid ref."
@@ -9443,7 +9443,7 @@ msgid ""
 "Turn this message off by running\n"
 "\"git config advice.addIgnoredFile false\""
 msgstr ""
-"使用 -f 如果您确实要添加它们。\n"
+"如果您确实要添加它们，使用 -f 参数。\n"
 "运行下面的命令来关闭本消息\n"
 "\"git config advice.addIgnoredFile false\""
 
@@ -11276,19 +11276,19 @@ msgstr ""
 "如果您想要检出一个远程跟踪分支，例如在 'origin' 上的，您可以使用分支\n"
 "全名和 --track 选项：\n"
 "\n"
-"    git checkout --track origin/<name>\n"
+"    git checkout --track origin/<名称>\n"
 "\n"
-"如果您总是喜欢使用模糊的简短分支名 <name>，而不喜欢如 'origin' 的远程\n"
+"如果您总是喜欢使用模糊的简短分支名 <名称>，而不喜欢如 'origin' 的远程\n"
 "名称，可以在配置中设置 checkout.defaultRemote=origin。"
 
 #: builtin/checkout.c:1145
 #, c-format
 msgid "'%s' matched multiple (%d) remote tracking branches"
-msgstr "'%s' 匹配多个（%d）远程跟踪分支"
+msgstr "'%s' 匹配多个（%d 个）远程跟踪分支"
 
 #: builtin/checkout.c:1211
 msgid "only one reference expected"
-msgstr "预期只有一个引用"
+msgstr "只期望一个引用"
 
 #: builtin/checkout.c:1228
 #, c-format
@@ -12943,7 +12943,7 @@ msgstr "显示配置的来源（文件、标准输入、数据对象，或命令
 
 #: builtin/config.c:159
 msgid "show scope of config (worktree, local, global, system, command)"
-msgstr "显示配置的范围（工作区、本地、全局、系统、命令）"
+msgstr "显示配置的作用域（工作区、本地、全局、系统、命令）"
 
 #: builtin/config.c:160 builtin/env--helper.c:40
 msgid "value"
@@ -18074,7 +18074,7 @@ msgstr ""
 msgid ""
 "unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and \"ask"
 "\"."
-msgstr "无法识别的空类型 '%s'；有效类型有 \"drop\"、\"keep\" 和 \"ask\"。"
+msgstr "无法识别的空类型 '%s'；有效值有 \"drop\"、\"keep\" 和 \"ask\"。"
 
 #: builtin/rebase.c:1401
 #, c-format
@@ -18193,7 +18193,7 @@ msgstr "（已弃用）尝试重建合并提交而非忽略它们"
 
 #: builtin/rebase.c:1547
 msgid "how to handle commits that become empty"
-msgstr "如何处理空提交"
+msgstr "如何处理成为空提交的提交"
 
 #: builtin/rebase.c:1554
 msgid "move commits that begin with squash!/fixup! under -i"
@@ -19832,7 +19832,7 @@ msgstr "即使没有匹配，也以零状态退出"
 
 #: builtin/rm.c:282
 msgid "No pathspec was given. Which files should I remove?"
-msgstr "没有提供路径规格。我应该删除哪个文件？"
+msgstr "没有提供路径规格。我应该删除哪些文件？"
 
 #: builtin/rm.c:305
 msgid "please stage your changes to .gitmodules or stash them to proceed"
@@ -20134,7 +20134,7 @@ msgstr "git sparse-checkout (set|add) (--stdin | <模式>)"
 #: builtin/sparse-checkout.c:435
 #, c-format
 msgid "unable to unquote C-style string '%s'"
-msgstr "无法为 C 语言风格的字符串 '%s' 去括号"
+msgstr "无法为 C 语言风格的字符串 '%s' 去引号"
 
 #: builtin/sparse-checkout.c:489 builtin/sparse-checkout.c:513
 msgid "unable to load existing sparse-checkout patterns"
