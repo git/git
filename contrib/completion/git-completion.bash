@@ -1197,6 +1197,7 @@ __git_count_arguments ()
 
 __git_whitespacelist="nowarn warn error error-all fix"
 __git_patchformat="mbox stgit stgit-series hg mboxrd"
+__git_showcurrentpatch="diff raw"
 __git_am_inprogress_options="--skip --continue --resolved --abort --quit --show-current-patch"
 
 _git_am ()
@@ -1213,6 +1214,10 @@ _git_am ()
 		;;
 	--patch-format=*)
 		__gitcomp "$__git_patchformat" "" "${cur##--patch-format=}"
+		return
+		;;
+	--show-current-patch=*)
+		__gitcomp "$__git_showcurrentpatch" "" "${cur##--show-current-patch=}"
 		return
 		;;
 	--*)
@@ -1487,9 +1492,16 @@ __git_diff_algorithms="myers minimal patience histogram"
 
 __git_diff_submodule_formats="diff log short"
 
+__git_color_moved_opts="no default plain blocks zebra dimmed-zebra"
+
+__git_color_moved_ws_opts="no ignore-space-at-eol ignore-space-change
+			ignore-all-space allow-indentation-change"
+
 __git_diff_common_options="--stat --numstat --shortstat --summary
 			--patch-with-stat --name-only --name-status --color
 			--no-color --color-words --no-renames --check
+			--color-moved --color-moved= --no-color-moved
+			--color-moved-ws= --no-color-moved-ws
 			--full-index --binary --abbrev --diff-filter=
 			--find-copies-harder --ignore-cr-at-eol
 			--text --ignore-space-at-eol --ignore-space-change
@@ -1518,6 +1530,14 @@ _git_diff ()
 		;;
 	--submodule=*)
 		__gitcomp "$__git_diff_submodule_formats" "" "${cur##--submodule=}"
+		return
+		;;
+	--color-moved=*)
+		__gitcomp "$__git_color_moved_opts" "" "${cur##--color-moved=}"
+		return
+		;;
+	--color-moved-ws=*)
+		__gitcomp "$__git_color_moved_ws_opts" "" "${cur##--color-moved-ws=}"
 		return
 		;;
 	--*)

@@ -1607,6 +1607,26 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 	grep "^| | gpg: Good signature" actual
 '
 
+test_expect_success GPG 'log --graph --show-signature for merged tag in shallow clone' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b plain-shallow master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout --detach master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_shallow &&
+	hash=$(git rev-parse HEAD) &&
+	git checkout plain-shallow &&
+	git merge --no-ff -m msg signed_tag_shallow &&
+	git clone --depth 1 --no-local . shallow &&
+	test_when_finished "rm -rf shallow" &&
+	git -C shallow log --graph --show-signature -n1 plain-shallow >actual &&
+	grep "tag signed_tag_shallow names a non-parent $hash" actual
+'
+
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 	test_when_finished "git reset --hard && git checkout master" &&
 	test_config gpg.format x509 &&
