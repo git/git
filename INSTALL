@@ -68,7 +68,7 @@ Issues of note:
 
    NOTE: When compiled with backward compatibility option, the GNU
    Interactive Tools package still can install "git", but you can build it
-   with --disable-transition option to avoid this.
+   with disable-transition option to avoid this.
 
  - You can use git after building but without installing if you want
    to test drive it.  Simply run git found in bin-wrappers directory
