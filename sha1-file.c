@@ -676,20 +676,15 @@ void add_to_alternates_memory(const char *reference)
 char *compute_alternate_path(const char *path, struct strbuf *err)
 {
 	char *ref_git = NULL;
-	const char *repo, *ref_git_s;
+	const char *repo;
 	int seen_error = 0;
 
-	ref_git_s = real_path_if_valid(path);
-	if (!ref_git_s) {
+	ref_git = real_pathdup(path, 0);
+	if (!ref_git) {
 		seen_error = 1;
 		strbuf_addf(err, _("path '%s' does not exist"), path);
 		goto out;
-	} else
-		/*
-		 * Beware: read_gitfile(), real_path() and mkpath()
-		 * return static buffer
-		 */
-		ref_git = xstrdup(ref_git_s);
+	}
 
 	repo = read_gitfile(ref_git);
 	if (!repo)

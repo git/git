@@ -543,7 +543,7 @@ const char *get_git_common_dir(void);
 char *get_object_directory(void);
 char *get_index_file(void);
 char *get_graft_file(struct repository *r);
-void set_git_dir(const char *path);
+void set_git_dir(const char *path, int make_realpath);
 int get_common_dir_noenv(struct strbuf *sb, const char *gitdir);
 int get_common_dir(struct strbuf *sb, const char *gitdir);
 const char *get_git_namespace(void);
@@ -1314,8 +1314,6 @@ static inline int is_absolute_path(const char *path)
 int is_directory(const char *);
 char *strbuf_realpath(struct strbuf *resolved, const char *path,
 		      int die_on_error);
-const char *real_path(const char *path);
-const char *real_path_if_valid(const char *path);
 char *real_pathdup(const char *path, int die_on_error);
 const char *absolute_path(const char *path);
 char *absolute_pathdup(const char *path);

@@ -723,7 +723,7 @@ static struct passwd *getpw_str(const char *username, size_t len)
  * then it is a newly allocated string. Returns NULL on getpw failure or
  * if path is NULL.
  *
- * If real_home is true, real_path($HOME) is used in the expansion.
+ * If real_home is true, strbuf_realpath($HOME) is used in the expansion.
  */
 char *expand_user_path(const char *path, int real_home)
 {
@@ -850,7 +850,7 @@ const char *enter_repo(const char *path, int strict)
 	}
 
 	if (is_git_directory(".")) {
-		set_git_dir(".");
+		set_git_dir(".", 0);
 		check_repository_format();
 		return path;
 	}
