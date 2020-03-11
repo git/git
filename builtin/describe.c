@@ -54,6 +54,7 @@ struct commit_name {
 	struct tag *tag;
 	unsigned prio:2; /* annotated tag = 2, tag = 1, head = 0 */
 	unsigned name_checked:1;
+	unsigned misnamed:1;
 	struct object_id oid;
 	char *path;
 };
@@ -132,6 +133,7 @@ static void add_to_known_names(const char *path,
 		e->tag = tag;
 		e->prio = prio;
 		e->name_checked = 0;
+		e->misnamed = 0;
 		oidcpy(&e->oid, oid);
 		free(e->path);
 		e->path = xstrdup(path);
@@ -275,10 +277,11 @@ static void append_name(struct commit_name *n, struct strbuf *dst)
 			die(_("annotated tag %s not available"), n->path);
 	}
 	if (n->tag && !n->name_checked) {
-		if (!n->tag->tag)
-			die(_("annotated tag %s has no embedded name"), n->path);
-		if (strcmp(n->tag->tag, all ? n->path + 5 : n->path))
-			warning(_("tag '%s' is really '%s' here"), n->tag->tag, n->path);
+		if (strcmp(n->tag->tag, all ? n->path + 5 : n->path)) {
+			warning(_("tag '%s' is externally known as '%s'"),
+				n->path, n->tag->tag);
+			n->misnamed = 1;
+		}
 		n->name_checked = 1;
 	}
 
@@ -314,7 +317,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		 * Exact match to an existing ref.
 		 */
 		append_name(n, dst);
-		if (longformat)
+		if (n->misnamed || longformat)
 			append_suffix(0, n->tag ? get_tagged_oid(n->tag) : oid, dst);
 		if (suffix)
 			strbuf_addstr(dst, suffix);
@@ -463,7 +466,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	}
 
 	append_name(all_matches[0].name, dst);
-	if (abbrev)
+	if (all_matches[0].name->misnamed || abbrev)
 		append_suffix(all_matches[0].depth, &cmit->object.oid, dst);
 	if (suffix)
 		strbuf_addstr(dst, suffix);
