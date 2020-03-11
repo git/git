@@ -74,6 +74,11 @@ static void git_hash_sha1_init(git_hash_ctx *ctx)
 	git_SHA1_Init(&ctx->sha1);
 }
 
+static void git_hash_sha1_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+{
+	git_SHA1_Clone(&dst->sha1, &src->sha1);
+}
+
 static void git_hash_sha1_update(git_hash_ctx *ctx, const void *data, size_t len)
 {
 	git_SHA1_Update(&ctx->sha1, data, len);
@@ -90,6 +95,11 @@ static void git_hash_sha256_init(git_hash_ctx *ctx)
 	git_SHA256_Init(&ctx->sha256);
 }
 
+static void git_hash_sha256_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+{
+	git_SHA256_Clone(&dst->sha256, &src->sha256);
+}
+
 static void git_hash_sha256_update(git_hash_ctx *ctx, const void *data, size_t len)
 {
 	git_SHA256_Update(&ctx->sha256, data, len);
@@ -103,6 +113,11 @@ static void git_hash_sha256_final(unsigned char *hash, git_hash_ctx *ctx)
 static void git_hash_unknown_init(git_hash_ctx *ctx)
 {
 	BUG("trying to init unknown hash");
+}
+
+static void git_hash_unknown_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+{
+	BUG("trying to clone unknown hash");
 }
 
 static void git_hash_unknown_update(git_hash_ctx *ctx, const void *data, size_t len)
@@ -123,6 +138,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		0,
 		0,
 		git_hash_unknown_init,
+		git_hash_unknown_clone,
 		git_hash_unknown_update,
 		git_hash_unknown_final,
 		NULL,
@@ -136,6 +152,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		GIT_SHA1_HEXSZ,
 		GIT_SHA1_BLKSZ,
 		git_hash_sha1_init,
+		git_hash_sha1_clone,
 		git_hash_sha1_update,
 		git_hash_sha1_final,
 		&empty_tree_oid,
@@ -149,6 +166,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		GIT_SHA256_HEXSZ,
 		GIT_SHA256_BLKSZ,
 		git_hash_sha256_init,
+		git_hash_sha256_clone,
 		git_hash_sha256_update,
 		git_hash_sha256_final,
 		&empty_tree_oid_sha256,

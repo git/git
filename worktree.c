@@ -456,7 +456,7 @@ const struct worktree *find_shared_symref(const char *symref,
 int submodule_uses_worktrees(const char *path)
 {
 	char *submodule_gitdir;
-	struct strbuf sb = STRBUF_INIT;
+	struct strbuf sb = STRBUF_INIT, err = STRBUF_INIT;
 	DIR *dir;
 	struct dirent *d;
 	int ret = 0;
@@ -470,18 +470,16 @@ int submodule_uses_worktrees(const char *path)
 	get_common_dir_noenv(&sb, submodule_gitdir);
 	free(submodule_gitdir);
 
-	/*
-	 * The check below is only known to be good for repository format
-	 * version 0 at the time of writing this code.
-	 */
 	strbuf_addstr(&sb, "/config");
 	read_repository_format(&format, sb.buf);
-	if (format.version != 0) {
+	if (verify_repository_format(&format, &err)) {
+		strbuf_release(&err);
 		strbuf_release(&sb);
 		clear_repository_format(&format);
 		return 1;
 	}
 	clear_repository_format(&format);
+	strbuf_release(&err);
 
 	/* Replace config by worktrees. */
 	strbuf_setlen(&sb, sb.len - strlen("config"));

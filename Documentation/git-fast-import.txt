@@ -122,6 +122,26 @@ Locations of Marks Files
 Relative and non-relative marks may be combined by interweaving
 --(no-)-relative-marks with the --(import|export)-marks= options.
 
+Submodule Rewriting
+~~~~~~~~~~~~~~~~~~~
+
+--rewrite-submodules-from=<name>:<file>::
+--rewrite-submodules-to=<name>:<file>::
+  Rewrite the object IDs for the submodule specified by <name> from the values
+	used in the from <file> to those used in the to <file>. The from marks should
+	have been created by `git fast-export`, and the to marks should have been
+	created by `git fast-import` when importing that same submodule.
++
+<name> may be any arbitrary string not containing a colon character, but the
+same value must be used with both options when specifying corresponding marks.
+Multiple submodules may be specified with different values for <name>. It is an
+error not to use these options in corresponding pairs.
++
+These options are primarily useful when converting a repository from one hash
+algorithm to another; without them, fast-import will fail if it encounters a
+submodule because it has no way of writing the object ID into the new hash
+algorithm.
+
 Performance and Compression Tuning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

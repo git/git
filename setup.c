@@ -1266,10 +1266,12 @@ int git_config_perm(const char *var, const char *value)
 	return -(i & 0666);
 }
 
-void check_repository_format(void)
+void check_repository_format(struct repository_format *fmt)
 {
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
-	check_repository_format_gently(get_git_dir(), &repo_fmt, NULL);
+	if (!fmt)
+		fmt = &repo_fmt;
+	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
 	clear_repository_format(&repo_fmt);
 }

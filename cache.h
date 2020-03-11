@@ -627,7 +627,9 @@ int path_inside_repo(const char *prefix, const char *path);
 #define INIT_DB_EXIST_OK 0x0002
 
 int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, unsigned int flags);
+	    const char *template_dir, int hash_algo,
+	    unsigned int flags);
+void initialize_repository_version(int hash_algo);
 
 void sanitize_stdfds(void);
 int daemonize(void);
@@ -1086,8 +1088,10 @@ int verify_repository_format(const struct repository_format *format,
  * and die if it is a version we don't understand. Generally one would
  * set_git_dir() before calling this, and use it only for "are we in a valid
  * repo?".
+ *
+ * If successful and fmt is not NULL, fill fmt with data.
  */
-void check_repository_format(void);
+void check_repository_format(struct repository_format *fmt);
 
 #define MTIME_CHANGED	0x0001
 #define CTIME_CHANGED	0x0002
@@ -1479,6 +1483,9 @@ int set_disambiguate_hint_config(const char *var, const char *value);
 int get_sha1_hex(const char *hex, unsigned char *sha1);
 int get_oid_hex(const char *hex, struct object_id *sha1);
 
+/* Like get_oid_hex, but for an arbitrary hash algorithm. */
+int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_hash_algo *algop);
+
 /*
  * Read `len` pairs of hexadecimal digits from `hex` and write the
  * values to `binary` as `len` bytes. Return 0 on success, or -1 if
@@ -1513,6 +1520,20 @@ char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
  * unmodified.
  */
 int parse_oid_hex(const char *hex, struct object_id *oid, const char **end);
+
+/* Like parse_oid_hex, but for an arbitrary hash algorithm. */
+int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
+			const struct git_hash_algo *algo);
+
+
+/*
+ * These functions work like get_oid_hex and parse_oid_hex, but they will parse
+ * a hex value for any algorithm. The algorithm is detected based on the length
+ * and the algorithm in use is returned. If this is not a hex object ID in any
+ * algorithm, returns GIT_HASH_UNKNOWN.
+ */
+int get_oid_hex_any(const char *hex, struct object_id *oid);
+int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
 
 /*
  * This reads short-hand syntax that not only evaluates to a commit
