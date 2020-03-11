@@ -47,11 +47,31 @@ test_rebase 'G F B A' --keep-base
 test_rebase 'G F C E D B A' --no-fork-point
 test_rebase 'G F C D B A' --no-fork-point --onto D
 test_rebase 'G F C B A' --no-fork-point --keep-base
+
 test_rebase 'G F E D B A' --fork-point refs/heads/master
+test_rebase 'G F E D B A' --fork-point master
+
 test_rebase 'G F D B A' --fork-point --onto D refs/heads/master
+test_rebase 'G F D B A' --fork-point --onto D master
+
 test_rebase 'G F B A' --fork-point --keep-base refs/heads/master
+test_rebase 'G F B A' --fork-point --keep-base master
+
 test_rebase 'G F C E D B A' refs/heads/master
+test_rebase 'G F C E D B A' master
+
 test_rebase 'G F C D B A' --onto D refs/heads/master
+test_rebase 'G F C D B A' --onto D master
+
 test_rebase 'G F C B A' --keep-base refs/heads/master
+test_rebase 'G F C B A' --keep-base master
+
+test_expect_success 'git rebase --fork-point with ambigous refname' '
+	git checkout master &&
+	git checkout -b one &&
+	git checkout side &&
+	git tag one &&
+	test_must_fail git rebase --fork-point --onto D one
+'
 
 test_done
