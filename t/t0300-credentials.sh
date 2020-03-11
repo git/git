@@ -309,4 +309,10 @@ test_expect_success 'empty helper spec resets helper list' '
 	EOF
 '
 
+test_expect_success 'url parser rejects embedded newlines' '
+	test_must_fail git credential fill <<-\EOF
+	url=https://one.example.com?%0ahost=two.example.com/
+	EOF
+'
+
 test_done
