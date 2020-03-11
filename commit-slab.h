@@ -24,7 +24,12 @@
  * - int *indegree_peek(struct indegree *, struct commit *);
  *
  *   This function is similar to indegree_at(), but it will return NULL
- *   until a call to indegree_at() was made for the commit.
+ *   if the location to store the data associated with the given commit
+ *   has not been allocated yet.
+ *   Note that the location to store the data might have already been
+ *   allocated even if no indegree_at() call has been made for that commit
+ *   yet; in this case this function returns a pointer to a
+ *   zero-initialized location.
  *
  * - void init_indegree(struct indegree *);
  *   void init_indegree_with_stride(struct indegree *, int);
