@@ -16,11 +16,12 @@ static inline void get_compiler_info(struct strbuf *info)
 #endif
 
 #ifdef _MSC_VER
-	strbuf_addf(info, "MSVC version: %s\n", _MSC_FULL_VER);
+	strbuf_addf(info, "MSVC version: %02d.%02d.%05d\n",
+		    _MSC_VER / 100, _MSC_VER % 100, _MSC_FULL_VER % 100000);
 #endif
 
 	if (len == info->len)
-		strbuf_addf(info, _("no compiler information available\n"));
+		strbuf_addstr(info, _("no compiler information available\n"));
 }
 
 static inline void get_libc_info(struct strbuf *info)
@@ -32,7 +33,7 @@ static inline void get_libc_info(struct strbuf *info)
 #endif
 
 	if (len == info->len)
-		strbuf_addf(info, _("no libc information available\n"));
+		strbuf_addstr(info, _("no libc information available\n"));
 }
 
 #endif /* COMPILER_H */
