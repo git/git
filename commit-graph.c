@@ -788,7 +788,8 @@ struct write_commit_graph_context {
 	unsigned append:1,
 		 report_progress:1,
 		 split:1,
-		 check_oids:1;
+		 check_oids:1,
+		 no_input:1;
 
 	const struct split_commit_graph_opts *split_opts;
 };
@@ -1533,27 +1534,33 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 
 	int max_commits = 0;
 	int size_mult = 2;
+	enum commit_graph_split_flags flags = COMMIT_GRAPH_SPLIT_MERGE_AUTO;
 
 	if (ctx->split_opts) {
 		max_commits = ctx->split_opts->max_commits;
 
 		if (ctx->split_opts->size_multiple)
 			size_mult = ctx->split_opts->size_multiple;
+
+		flags = ctx->split_opts->flags;
 	}
 
 	g = ctx->r->objects->commit_graph;
 	num_commits = ctx->commits.nr;
 	ctx->num_commit_graphs_after = ctx->num_commit_graphs_before + 1;
 
-	while (g && (g->num_commits <= size_mult * num_commits ||
-		    (max_commits && num_commits > max_commits))) {
-		if (g->odb != ctx->odb)
-			break;
+	if (flags != COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED) {
+		while (g && (g->num_commits <= size_mult * num_commits ||
+			    (max_commits && num_commits > max_commits) ||
+			    (flags == COMMIT_GRAPH_SPLIT_MERGE_REQUIRED))) {
+			if (g->odb != ctx->odb)
+				break;
 
-		num_commits += g->num_commits;
-		g = g->base_graph;
+			num_commits += g->num_commits;
+			g = g->base_graph;
 
-		ctx->num_commit_graphs_after--;
+			ctx->num_commit_graphs_after--;
+		}
 	}
 
 	ctx->new_base_graph = g;
@@ -1775,6 +1782,7 @@ int write_commit_graph(struct object_directory *odb,
 	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
 	ctx->check_oids = flags & COMMIT_GRAPH_WRITE_CHECK_OIDS ? 1 : 0;
 	ctx->split_opts = split_opts;
+	ctx->no_input = flags & COMMIT_GRAPH_WRITE_NO_INPUT ? 1 : 0;
 
 	if (ctx->split) {
 		struct commit_graph *g;
@@ -1833,7 +1841,7 @@ int write_commit_graph(struct object_directory *odb,
 			goto cleanup;
 	}
 
-	if (!pack_indexes && !commit_hex)
+	if (!ctx->no_input && !pack_indexes && !commit_hex)
 		fill_oids_from_all_packs(ctx);
 
 	close_reachable(ctx);
@@ -1857,7 +1865,7 @@ int write_commit_graph(struct object_directory *odb,
 		goto cleanup;
 	}
 
-	if (!ctx->commits.nr)
+	if (!ctx->commits.nr && (!ctx->split_opts || ctx->split_opts->flags != COMMIT_GRAPH_SPLIT_MERGE_REQUIRED))
 		goto cleanup;
 
 	if (ctx->split) {

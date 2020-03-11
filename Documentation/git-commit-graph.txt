@@ -39,29 +39,42 @@ COMMANDS
 --------
 'write'::
 
-Write a commit-graph file based on the commits found in packfiles.
+Write a commit-graph file based on the specified sources of input:
 +
-With the `--stdin-packs` option, generate the new commit graph by
+With the `--input=stdin-packs` option, generate the new commit graph by
 walking objects only in the specified pack-indexes. (Cannot be combined
-with `--stdin-commits` or `--reachable`.)
+with `--input=stdin-commits` or `--input=reachable`.)
 +
-With the `--stdin-commits` option, generate the new commit graph by
-walking commits starting at the commits specified in stdin as a list
+With the `--input=stdin-commits` option, generate the new commit graph
+by walking commits starting at the commits specified in stdin as a list
 of OIDs in hex, one OID per line. (Cannot be combined with
-`--stdin-packs` or `--reachable`.)
+`--input=stdin-packs` or `--input=reachable`.)
 +
-With the `--reachable` option, generate the new commit graph by walking
-commits starting at all refs. (Cannot be combined with `--stdin-commits`
-or `--stdin-packs`.)
+With the `--input=reachable` option, generate the new commit graph by
+walking commits starting at all refs. (Cannot be combined with
+`--input=stdin-commits` or `--input=stdin-packs`.)
 +
-With the `--append` option, include all commits that are present in the
-existing commit-graph file.
+With the `--input=append` option, include all commits that are present
+in the existing commit-graph file.
 +
-With the `--split` option, write the commit-graph as a chain of multiple
-commit-graph files stored in `<dir>/info/commit-graphs`. The new commits
-not already in the commit-graph are added in a new "tip" file. This file
-is merged with the existing file if the following merge conditions are
-met:
+With the `--input=none` option, behave as if `--input=append` were
+given, but do not walk other packs to find additional commits.
++
+If none of the above options are given, then generate the new
+commit-graph by walking over all pack-indexes.
++
+With the `--split[=<strategy>]` option, write the commit-graph as a
+chain of multiple commit-graph files stored in
+`<dir>/info/commit-graphs`. Commit-graph layers are merged based on the
+strategy and other splitting options. The new commits not already in the
+commit-graph are added in a new "tip" file. This file is merged with the
+existing file if the following merge conditions are met:
++
+* If `--split=merge-always` is specified, then a merge is always
+conducted, and the remaining options are ignored. Conversely, if
+`--split=no-merge` is specified, a merge is never performed, and the
+remaining options are ignored. A bare `--split` defers to the remaining
+options.
 +
 * If `--size-multiple=<X>` is not specified, let `X` equal 2. If the new
 tip file would have `N` commits and the previous tip has `M` commits and
@@ -99,20 +112,20 @@ $ git commit-graph write
   using commits in `<pack-index>`.
 +
 ------------------------------------------------
-$ echo <pack-index> | git commit-graph write --stdin-packs
+$ echo <pack-index> | git commit-graph write --input=stdin-packs
 ------------------------------------------------
 
 * Write a commit-graph file containing all reachable commits.
 +
 ------------------------------------------------
-$ git show-ref -s | git commit-graph write --stdin-commits
+$ git show-ref -s | git commit-graph write --input=stdin-commits
 ------------------------------------------------
 
 * Write a commit-graph file containing all commits in the current
   commit-graph file along with those reachable from `HEAD`.
 +
 ------------------------------------------------
-$ git rev-parse HEAD | git commit-graph write --stdin-commits --append
+$ git rev-parse HEAD | git commit-graph write --input=stdin-commits --input=append
 ------------------------------------------------
 
 
