@@ -1321,7 +1321,7 @@ static int try_to_commit(struct repository *r,
 		return -1;
 
 	if (flags & AMEND_MSG) {
-		const char *exclude_gpgsig[] = { "gpgsig", NULL };
+		const char *exclude_gpgsig[] = { "gpgsig", "gpgsig-sha256", NULL };
 		const char *out_enc = get_commit_output_encoding();
 		const char *message = logmsg_reencode(current_head, NULL,
 						      out_enc);
@@ -1518,10 +1518,17 @@ static int allow_empty(struct repository *r,
 	 *
 	 * (2) we allow ones that were initially empty, and
 	 *     just drop the ones that become empty
+<<<<<<< HEAD
 	 *
 	 * (3) we allow ones that were initially empty, but
 	 *     halt for the ones that become empty;
 	 *
+=======
+	 *
+	 * (3) we allow ones that were initially empty, but
+	 *     halt for the ones that become empty;
+	 *
+>>>>>>> upstream/pu
 	 * (4) we allow both.
 	 */
 	if (!opts->allow_empty)
@@ -1971,8 +1978,17 @@ static int do_pick_commit(struct repository *r,
 		flags |= ALLOW_EMPTY;
 	} else if (allow == 2) {
 		drop_commit = 1;
+<<<<<<< HEAD
 		fprintf(stderr, _("No changes -- Patch already applied.\n"));
 	} // else allow == 0 and there's nothing special to do
+=======
+		unlink(git_path_cherry_pick_head(r));
+		unlink(git_path_merge_msg(r));
+		fprintf(stderr,
+			_("dropping %s %s -- patch contents already upstream\n"),
+			oid_to_hex(&commit->object.oid), msg.subject);
+	} /* else allow == 0 and there's nothing special to do */
+>>>>>>> upstream/pu
 	if (!opts->no_commit && !drop_commit) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
 			res = do_commit(r, msg_file, author, opts, flags,

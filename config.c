@@ -204,7 +204,7 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 		strbuf_splice(pat, 0, 1, path.buf, slash - path.buf);
 		prefix = slash - path.buf + 1 /* slash */;
 	} else if (!is_absolute_path(pat->buf))
-		strbuf_insert(pat, 0, "**/", 3);
+		strbuf_insertstr(pat, 0, "**/");
 
 	add_trailing_starstar_for_dir(pat);
 
@@ -3304,7 +3304,11 @@ const char *current_config_origin_type(void)
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const char *scope_to_string(enum config_scope scope)
+=======
+const char *config_scope_name(enum config_scope scope)
+>>>>>>> upstream/pu
 =======
 const char *config_scope_name(enum config_scope scope)
 >>>>>>> upstream/pu

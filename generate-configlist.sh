@@ -10,10 +10,14 @@ EOF
 	grep -h '^[a-zA-Z].*\..*::$' Documentation/*config.txt Documentation/config/*.txt |
 	sed '/deprecated/d; s/::$//; s/,  */\n/g' |
 	sort |
+<<<<<<< HEAD
 	while read line
 	do
 		echo "	\"$line\","
 	done
+=======
+	sed 's/^.*$/	"&",/'
+>>>>>>> upstream/pu
 	cat <<EOF
 	NULL,
 };

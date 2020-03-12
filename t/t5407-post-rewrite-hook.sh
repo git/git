@@ -53,10 +53,17 @@ test_expect_success 'git commit --amend --no-post-rewrite' '
 	test ! -f post-rewrite.data
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'git rebase --am' '
 	git reset --hard D &&
 	clear_hook_input &&
 	test_must_fail git rebase --am --onto A B &&
+================================
+test_expect_success 'git rebase --apply' '
+	git reset --hard D &&
+	clear_hook_input &&
+	test_must_fail git rebase --apply --onto A B &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	echo C > foo &&
 	git add foo &&
 	git rebase --continue &&
@@ -68,10 +75,17 @@ test_expect_success 'git rebase --am' '
 	verify_hook_input
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'git rebase --am --skip' '
 	git reset --hard D &&
 	clear_hook_input &&
 	test_must_fail git rebase --am --onto A B &&
+================================
+test_expect_success 'git rebase --apply --skip' '
+	git reset --hard D &&
+	clear_hook_input &&
+	test_must_fail git rebase --apply --onto A B &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_must_fail git rebase --skip &&
 	echo D > foo &&
 	git add foo &&
@@ -84,10 +98,17 @@ test_expect_success 'git rebase --am --skip' '
 	verify_hook_input
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'git rebase --am --skip the last one' '
 	git reset --hard F &&
 	clear_hook_input &&
 	test_must_fail git rebase --am --onto D A &&
+================================
+test_expect_success 'git rebase --apply --skip the last one' '
+	git reset --hard F &&
+	clear_hook_input &&
+	test_must_fail git rebase --apply --onto D A &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	git rebase --skip &&
 	echo rebase >expected.args &&
 	cat >expected.data <<-EOF &&
@@ -128,7 +149,7 @@ test_expect_success 'git rebase -m --skip' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase with implicit use of interactive backend' '
+test_expect_success 'git rebase with implicit use of merge backend' '
 	git reset --hard D &&
 	clear_hook_input &&
 	test_must_fail git rebase --keep-empty --onto A B &&
@@ -143,7 +164,7 @@ test_expect_success 'git rebase with implicit use of interactive backend' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase --skip with implicit use of interactive backend' '
+test_expect_success 'git rebase --skip with implicit use of merge backend' '
 	git reset --hard D &&
 	clear_hook_input &&
 	test_must_fail git rebase --keep-empty --onto A B &&

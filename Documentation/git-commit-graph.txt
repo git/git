@@ -56,12 +56,35 @@ walking commits starting at all refs. (Cannot be combined with
 +
 With the `--input=append` option, include all commits that are present
 in the existing commit-graph file.
+<<<<<<< HEAD
+=======
++
+With the `--input=none` option, behave as if `--input=append` were
+given, but do not walk other packs to find additional commits.
++
+If none of the above options are given, then generate the new
+commit-graph by walking over all pack-indexes.
++
+With the `--split[=<strategy>]` option, write the commit-graph as a
+chain of multiple commit-graph files stored in
+`<dir>/info/commit-graphs`. Commit-graph layers are merged based on the
+strategy and other splitting options. The new commits not already in the
+commit-graph are added in a new "tip" file. This file is merged with the
+existing file if the following merge conditions are met:
++
+* If `--split=merge-always` is specified, then a merge is always
+conducted, and the remaining options are ignored. Conversely, if
+`--split=no-merge` is specified, a merge is never performed, and the
+remaining options are ignored. A bare `--split` defers to the remaining
+options.
+>>>>>>> upstream/pu
 +
 With the `--changed-paths` option, compute and write information about the
 paths changed between a commit and it's first parent. This operation can
 take a while on large repositories. It provides significant performance gains
 for getting history of a directory or a file with `git log -- <path>`.
 +
+<<<<<<< HEAD
 With the `--input=none` option, behave as if `--input=append` were
 given, but do not walk other packs to find additional commits.
 
@@ -80,6 +103,8 @@ conducted, and the remaining options are ignored. Conversely, if
 remaining options are ignored. A bare `--split` defers to the remaining
 options.
 +
+=======
+>>>>>>> upstream/pu
 * If `--size-multiple=<X>` is not specified, let `X` equal 2. If the new
 tip file would have `N` commits and the previous tip has `M` commits and
 `X` times `N` is greater than  `M`, instead merge the two files into a

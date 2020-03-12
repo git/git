@@ -26,7 +26,7 @@ test_run_rebase () {
 		test_linear_range 'd e' c..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -50,7 +50,7 @@ test_run_rebase () {
 		test_cmp_rev e HEAD
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -66,7 +66,7 @@ test_run_rebase () {
 		test_linear_range 'd e' b..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success --fork-point
 test_run_rebase success -m
 test_run_rebase success -i
@@ -83,7 +83,7 @@ test_run_rebase () {
 		test_linear_range 'd e' branch-b..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success --fork-point
 test_run_rebase success -m
 test_run_rebase success -i
@@ -98,7 +98,7 @@ test_run_rebase () {
 		test_cmp_rev e HEAD
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success --fork-point
 test_run_rebase success -m
 test_run_rebase success -i
@@ -139,7 +139,7 @@ test_run_rebase () {
 		test_linear_range 'd i' h..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -154,7 +154,7 @@ test_run_rebase () {
 		test_linear_range 'd' h..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -169,7 +169,7 @@ test_run_rebase () {
 		test_linear_range 'd i' f..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -184,7 +184,7 @@ test_run_rebase () {
 		test_linear_range 'd gp i' h..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -212,7 +212,11 @@ test_run_rebase () {
 		test_linear_range 'j d k l' c..
 	"
 }
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_run_rebase failure ''
+================================
+test_run_rebase failure --apply
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase failure -p
@@ -227,7 +231,7 @@ test_run_rebase () {
 		test_linear_range 'd k l' c..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -242,7 +246,7 @@ test_run_rebase () {
 		test_linear_range 'd k l' j..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -282,7 +286,7 @@ test_run_rebase () {
 		test_linear_range 'x y' c..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -297,7 +301,7 @@ test_run_rebase () {
 		test_linear_range 'x y' c..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase failure -p
@@ -312,7 +316,7 @@ test_run_rebase () {
 		test_linear_range 'x y' m..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase success -p
@@ -328,7 +332,7 @@ test_run_rebase () {
 	"
 }
 
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase failure -p
@@ -343,7 +347,7 @@ test_run_rebase () {
 		test_linear_range 'x y' m..
 	"
 }
-test_run_rebase success ''
+test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
 test_have_prereq !REBASE_P || test_run_rebase failure -p

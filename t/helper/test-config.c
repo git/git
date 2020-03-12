@@ -49,7 +49,12 @@ static int iterate_cb(const char *var, const char *value, void *data)
 	printf("origin=%s\n", current_config_origin_type());
 	printf("name=%s\n", current_config_name());
 <<<<<<< HEAD
+<<<<<<< HEAD
 	printf("scope=%s\n", scope_to_string(current_config_scope()));
+=======
+	printf("lno=%d\n", current_config_line());
+	printf("scope=%s\n", config_scope_name(current_config_scope()));
+>>>>>>> upstream/pu
 =======
 	printf("lno=%d\n", current_config_line());
 	printf("scope=%s\n", config_scope_name(current_config_scope()));

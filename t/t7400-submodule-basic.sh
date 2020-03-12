@@ -176,10 +176,15 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		hint: Use -f if you really want to add them.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 ================================
 		hint: Turn this message off by running
 		hint: "git config advice.addIgnoredFile false"
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/next
+================================
+		hint: Turn this message off by running
+		hint: "git config advice.addIgnoredFile false"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 ================================
 		hint: Turn this message off by running
 		hint: "git config advice.addIgnoredFile false"

@@ -268,6 +268,10 @@ test_expect_success 'iteration shows correct origins' '
 	origin=file
 	name=.git/config
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+	lno=3
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 ================================
 	lno=3
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
@@ -278,6 +282,10 @@ test_expect_success 'iteration shows correct origins' '
 	origin=command line
 	name=
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
+================================
+	lno=-1
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 ================================
 	lno=-1
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu

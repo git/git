@@ -28,8 +28,13 @@ test_rebase_same_head () {
 	shift &&
 	cmp_f="$1" &&
 	shift &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_rebase_same_head_ $status_n $what_n $cmp_n " --am" "$*" &&
 	test_rebase_same_head_ $status_f $what_f $cmp_f " --am --no-ff" "$*"
+================================
+	test_rebase_same_head_ $status_n $what_n $cmp_n " --apply" "$*" &&
+	test_rebase_same_head_ $status_f $what_f $cmp_f " --apply --no-ff" "$*"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	test_rebase_same_head_ $status_n $what_n $cmp_n " --merge" "$*" &&
 	test_rebase_same_head_ $status_f $what_f $cmp_f " --merge --no-ff" "$*"
 }

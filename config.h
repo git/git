@@ -45,7 +45,11 @@ enum config_scope {
 	CONFIG_SCOPE_SUBMODULE,
 };
 <<<<<<< HEAD
+<<<<<<< HEAD
 const char *scope_to_string(enum config_scope scope);
+=======
+const char *config_scope_name(enum config_scope scope);
+>>>>>>> upstream/pu
 =======
 const char *config_scope_name(enum config_scope scope);
 >>>>>>> upstream/pu

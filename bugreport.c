@@ -5,6 +5,7 @@
 #include "time.h"
 #include "help.h"
 #include "compat/compiler.h"
+<<<<<<< HEAD
 #include "run-command.h"
 #include "config.h"
 #include "bugreport-config-safelist.h"
@@ -22,10 +23,13 @@ static void get_git_remote_https_version_info(struct strbuf *version_info)
 	if (capture_command(&cp, version_info, 0))
 	    strbuf_addstr(version_info, "'git-remote-https --build-info' not supported\n");
 }
+=======
+>>>>>>> upstream/pu
 
 static void get_system_info(struct strbuf *sys_info)
 {
 	struct utsname uname_info;
+<<<<<<< HEAD
 	char *shell = NULL;
 
 	/* get git version from native cmd */
@@ -37,6 +41,19 @@ static void get_system_info(struct strbuf *sys_info)
 	strbuf_addstr(sys_info, "uname -a: ");
 	if (uname(&uname_info))
 		strbuf_addf(sys_info, "uname() failed with code %d\n", errno);
+=======
+
+	/* get git version from native cmd */
+	strbuf_addstr(sys_info, _("git version:\n"));
+	get_version_info(sys_info, 1);
+
+	/* system call for other version info */
+	strbuf_addstr(sys_info, "uname: ");
+	if (uname(&uname_info))
+		strbuf_addf(sys_info, _("uname() failed with error '%s' (%d)\n"),
+			    strerror(errno),
+			    errno);
+>>>>>>> upstream/pu
 	else
 		strbuf_addf(sys_info, "%s %s %s %s\n",
 			    uname_info.sysname,
@@ -44,6 +61,7 @@ static void get_system_info(struct strbuf *sys_info)
 			    uname_info.version,
 			    uname_info.machine);
 
+<<<<<<< HEAD
 	strbuf_addstr(sys_info, "compiler info: ");
 	get_compiler_info(sys_info);
 	strbuf_complete_line(sys_info);
@@ -295,6 +313,12 @@ static void get_alternates_summary(struct strbuf *alternates_info, int nongit)
 	fclose(file);
 	strbuf_release(&alternate);
 	strbuf_release(&alternates_path);
+=======
+	strbuf_addstr(sys_info, _("compiler info: "));
+	get_compiler_info(sys_info);
+	strbuf_addstr(sys_info, _("libc info: "));
+	get_libc_info(sys_info);
+>>>>>>> upstream/pu
 }
 
 static const char * const bugreport_usage[] = {
@@ -321,7 +345,11 @@ static int get_bug_template(struct strbuf *template)
 "Please review the rest of the bug report below.\n"
 "You can delete any lines you don't wish to share.\n");
 
+<<<<<<< HEAD
 	strbuf_addstr(template, template_text);
+=======
+	strbuf_addstr(template, _(template_text));
+>>>>>>> upstream/pu
 	return 0;
 }
 
@@ -334,12 +362,22 @@ int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf report_path = STRBUF_INIT;
+<<<<<<< HEAD
 	FILE *report;
 	time_t now = time(NULL);
 	char *option_output = NULL;
 	char *option_suffix = "%F-%H%M";
 	struct stat statbuf;
 	int nongit_ok = 0;
+=======
+	int report = -1;
+	time_t now = time(NULL);
+	char *option_output = NULL;
+	char *option_suffix = "%F-%H%M";
+	int nongit_ok = 0;
+	const char *prefix = NULL;
+	const char *user_relative_path = NULL;
+>>>>>>> upstream/pu
 
 	const struct option bugreport_options[] = {
 		OPT_STRING('o', "output-directory", &option_output, N_("path"),
@@ -349,6 +387,7 @@ int cmd_main(int argc, const char **argv)
 		OPT_END()
 	};
 
+<<<<<<< HEAD
 	/* Prerequisite for hooks and config checks */
 	setup_git_directory_gently(&nongit_ok);
 
@@ -360,11 +399,24 @@ int cmd_main(int argc, const char **argv)
 		strbuf_complete(&report_path, '/');
 	}
 
+=======
+	prefix = setup_git_directory_gently(&nongit_ok);
+
+	argc = parse_options(argc, argv, prefix, bugreport_options,
+			     bugreport_usage, 0);
+
+	/* Prepare the path to put the result */
+	strbuf_addstr(&report_path,
+		      prefix_filename(prefix,
+				      option_output ? option_output : ""));
+	strbuf_complete(&report_path, '/');
+>>>>>>> upstream/pu
 
 	strbuf_addstr(&report_path, "git-bugreport-");
 	strbuf_addftime(&report_path, option_suffix, localtime(&now), 0, 0);
 	strbuf_addstr(&report_path, ".txt");
 
+<<<<<<< HEAD
 	if (!stat(report_path.buf, &statbuf))
 		die("'%s' already exists", report_path.buf);
 
@@ -406,4 +458,44 @@ int cmd_main(int argc, const char **argv)
 	UNLEAK(buffer);
 	UNLEAK(report_path);
 	return -launch_editor(report_path.buf, NULL, NULL);
+=======
+	switch (safe_create_leading_directories(report_path.buf)) {
+	case SCLD_OK:
+	case SCLD_EXISTS:
+		break;
+	default:
+		die(_("could not create leading directories for '%s'"),
+		    report_path.buf);
+	}
+
+	/* Prepare the report contents */
+	get_bug_template(&buffer);
+
+	get_header(&buffer, _("System Info"));
+	get_system_info(&buffer);
+
+	/* fopen doesn't offer us an O_EXCL alternative, except with glibc. */
+	report = open(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);
+
+	if (report < 0) {
+		UNLEAK(report_path);
+		die(_("couldn't create a new file at '%s'"), report_path.buf);
+	}
+
+	strbuf_write_fd(&buffer, report);
+	close(report);
+
+	/*
+	 * We want to print the path relative to the user, but we still need the
+	 * path relative to us to give to the editor.
+	 */
+	if (!(prefix && skip_prefix(report_path.buf, prefix, &user_relative_path)))
+		user_relative_path = report_path.buf;
+	fprintf(stderr, _("Created new report at '%s'.\n"),
+		user_relative_path);
+
+	UNLEAK(buffer);
+	UNLEAK(report_path);
+	return !!launch_editor(report_path.buf, NULL, NULL);
+>>>>>>> upstream/pu
 }

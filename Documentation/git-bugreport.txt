@@ -28,6 +28,7 @@ The following information is captured automatically:
  - 'git version --build-options'
  - uname sysname, release, version, and machine strings
  - Compiler-specific info string
+<<<<<<< HEAD
  - 'git remote-https --build-info'
  - $SHELL
  - Selected config values
@@ -36,6 +37,13 @@ The following information is captured automatically:
  - The number of packs and packed objects in the repository
  - A list of the contents of .git/objects/info (or equivalent)
  - The number of valid and invalid alternates
+=======
+
+This tool is invoked via the typical Git setup process, which means that in some
+cases, it might not be able to launch - for example, if a relevant config file
+is unreadable. In this kind of scenario, it may be helpful to manually gather
+the kind of information listed above when manually asking for help.
+>>>>>>> upstream/pu
 
 OPTIONS
 -------

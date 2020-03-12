@@ -1143,7 +1143,11 @@ test_expect_success C_LOCALE_OUTPUT 'rebase --edit-todo does not work on non-int
 	git checkout conflict-branch &&
 	(
 		set_fake_editor &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		test_must_fail git rebase -f --am --onto HEAD~2 HEAD~ &&
+================================
+		test_must_fail git rebase -f --apply --onto HEAD~2 HEAD~ &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 		test_must_fail git rebase --edit-todo
 	) &&
 	git rebase --abort

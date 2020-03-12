@@ -167,12 +167,19 @@ def prompt(prompt_text):
     choices = set(m.group(1) for m in re.finditer(r"\[(.)\]", prompt_text))
     while True:
 <<<<<<< HEAD
+<<<<<<< HEAD
         response = input(prompt_text).strip().lower()
 =======
         sys.stderr.flush()
         sys.stdout.write(prompt_text)
         sys.stdout.flush()
         sys.stdin.flush()
+        response=sys.stdin.readline().strip().lower()
+>>>>>>> upstream/pu
+=======
+        sys.stderr.flush()
+        sys.stdout.write(prompt_text)
+        sys.stdout.flush()
         response=sys.stdin.readline().strip().lower()
 >>>>>>> upstream/pu
         if not response:
@@ -211,7 +218,10 @@ def decode_path(path):
                 print('Path with non-ASCII characters detected. Used {} to decode: {}'.format(encoding, path))
         return path
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> upstream/pu
 
 def run_git_hook(cmd, param=[]):
     """Execute a hook if the hook exists."""
@@ -221,7 +231,11 @@ def run_git_hook(cmd, param=[]):
 
     hooks_path = gitConfig("core.hooksPath")
     if len(hooks_path) <= 0:
+<<<<<<< HEAD
         hooks_path = os.path.join(os.environ.get("GIT_DIR", ".git"), "hooks")
+=======
+        hooks_path = os.path.join(os.environ["GIT_DIR"], "hooks")
+>>>>>>> upstream/pu
 
     if not isinstance(param, list):
         param=[param]
@@ -235,7 +249,17 @@ def run_git_hook(cmd, param=[]):
             if not files:
                 return True
             files.sort()
+<<<<<<< HEAD
             hook_file = files[0]
+=======
+            hook_file = files.pop()
+            while hook_file.upper().endswith(".SAMPLE"):
+                # The file is a sample hook. We don't want it
+                if len(files) > 0:
+                    hook_file = files.pop()
+                else:
+                    return True
+>>>>>>> upstream/pu
 
     if not os.path.isfile(hook_file) or not os.access(hook_file, os.X_OK):
         return True
@@ -272,6 +296,10 @@ def run_hook_command(cmd, param):
         else:
             use_shell = True
     return subprocess.call(cli, shell=use_shell)
+<<<<<<< HEAD
+>>>>>>> upstream/pu
+=======
+
 >>>>>>> upstream/pu
 
 def write_pipe(c, stdin):
@@ -2119,7 +2147,11 @@ class P4Submit(Command, P4UserMap):
                 print("Retrying the patch with RCS keywords cleaned up")
                 if os.system(tryPatchCmd) == 0:
                     patch_succeeded = True
+<<<<<<< HEAD
                     print("Patch succeesed this time")
+=======
+                    print("Patch succeesed this time with RCS keywords cleaned")
+>>>>>>> upstream/pu
 
         if not patch_succeeded:
             for f in editedFiles:
@@ -2238,7 +2270,11 @@ class P4Submit(Command, P4UserMap):
                 tmpFile.close()
                 if self.isWindows:
                     message = message.replace("\r\n", "\n")
+<<<<<<< HEAD
                 if message.find(separatorLine) <> -1:
+=======
+                if message.find(separatorLine) != -1:
+>>>>>>> upstream/pu
                     submitTemplate = message[:message.index(separatorLine)]
                 else:
                     submitTemplate = message
@@ -2510,10 +2546,22 @@ class P4Submit(Command, P4UserMap):
                      (len(commits), num_shelves))
 
         if not self.no_verify:
+<<<<<<< HEAD
             if not run_git_hook("p4-pre-submit"):
                 print("\nThe p4-pre-submit hook failed, aborting the submit.\n\nYou can skip " \
                     "this pre-submission check by adding\nthe command line option '--no-verify', " \
                     "however,\nthis will also skip the p4-changelist hook as well.")
+=======
+            try:
+                if not run_git_hook("p4-pre-submit"):
+                    print("\nThe p4-pre-submit hook failed, aborting the submit.\n\nYou can skip " \
+                        "this pre-submission check by adding\nthe command line option '--no-verify', " \
+                        "however,\nthis will also skip the p4-changelist hook as well.")
+                    sys.exit(1)
+            except Exception as e:
+                print("\nThe p4-pre-submit hook failed, aborting the submit.\n\nThe hook failed "\
+                    "with the error '{0}'".format(e.message) )
+>>>>>>> upstream/pu
                 sys.exit(1)
 
         #

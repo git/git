@@ -1,7 +1,11 @@
 #!/bin/sh
 
 GVF=GIT-VERSION-FILE
+<<<<<<< HEAD
 DEF_VER=v2.25.GIT
+=======
+DEF_VER=v2.26.0-rc1
+>>>>>>> upstream/pu
 
 LF='
 '

@@ -71,10 +71,17 @@ test_expect_success 'prepare for rebase conflicts' '
 '
 
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'status when rebase --am in progress before resolving conflicts' '
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
 	test_must_fail git rebase --am HEAD^ --onto HEAD^^ &&
+================================
+test_expect_success 'status when rebase --apply in progress before resolving conflicts' '
+	test_when_finished "git rebase --abort" &&
+	ONTO=$(git rev-parse --short HEAD^^) &&
+	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	cat >expected <<EOF &&
 rebase in progress; onto $ONTO
 You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
@@ -94,11 +101,19 @@ EOF
 '
 
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'status when rebase --am in progress before rebase --continue' '
 	git reset --hard rebase_conflicts &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
 	test_must_fail git rebase --am HEAD^ --onto HEAD^^ &&
+================================
+test_expect_success 'status when rebase --apply in progress before rebase --continue' '
+	git reset --hard rebase_conflicts &&
+	test_when_finished "git rebase --abort" &&
+	ONTO=$(git rev-parse --short HEAD^^) &&
+	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	echo three >main.txt &&
 	git add main.txt &&
 	cat >expected <<EOF &&
@@ -686,7 +701,11 @@ EOF
 '
 
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'status when rebase --am conflicts with statushints disabled' '
+================================
+test_expect_success 'status when rebase --apply conflicts with statushints disabled' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	git reset --hard master &&
 	git checkout -b statushints_disabled &&
 	test_when_finished "git config --local advice.statushints true" &&
@@ -696,7 +715,11 @@ test_expect_success 'status when rebase --am conflicts with statushints disabled
 	test_commit three_statushints main.txt three &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	test_must_fail git rebase --am HEAD^ --onto HEAD^^ &&
+================================
+	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> upstream/pu
 	cat >expected <<EOF &&
 rebase in progress; onto $ONTO
 You are currently rebasing branch '\''statushints_disabled'\'' on '\''$ONTO'\''.
