@@ -2,10 +2,14 @@
 
 GVF=GIT-VERSION-FILE
 <<<<<<< HEAD
+<<<<<<< HEAD
 DEF_VER=v2.25.GIT
 =======
 DEF_VER=v2.26.0-rc1
 >>>>>>> upstream/pu
+=======
+DEF_VER=v2.26.0-rc1
+>>>>>>> 5deab4949009e99cc16c2c5a40df14347fc52036
 
 LF='
 '
