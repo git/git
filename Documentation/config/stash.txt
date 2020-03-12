@@ -1,7 +1,7 @@
 stash.useBuiltin::
-	Unused configuration Variable.  Used in Git versions 2.22 to
+	Unused configuration variable.  Used in Git versions 2.22 to
 	2.26 as an escape hatch to enable the legacy shellscript
-	implementation of rebase. Now the built-in rewrite of it in C
+	implementation of stash.  Now the built-in rewrite of it in C
 	is always used. Setting this will emit a warning, to alert any
 	remaining users that setting this now does nothing.
 

@@ -494,6 +494,7 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 		enum object_type type;
 		unsigned long size, len;
 		char *buf = read_object_file(oid, &type, &size);
+		struct signature_check sigc = { 0 };
 		struct strbuf sig = STRBUF_INIT;
 
 		if (!buf || type != OBJ_TAG)
@@ -502,10 +503,12 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 
 		if (size == len)
 			; /* merely annotated */
-		else if (verify_signed_buffer(buf, len, buf + len, size - len, &sig, NULL)) {
-			if (!sig.len)
-				strbuf_addstr(&sig, "gpg verification failed.\n");
-		}
+		else if (check_signature(buf, len, buf + len, size - len, &sigc) &&
+			!sigc.gpg_output)
+			strbuf_addstr(&sig, "gpg verification failed.\n");
+		else
+			strbuf_addstr(&sig, sigc.gpg_output);
+		signature_check_clear(&sigc);
 
 		if (!tag_number++) {
 			fmt_tag_signature(&tagbuf, &sig, buf, len);

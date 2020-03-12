@@ -54,7 +54,8 @@ static int launch_specified_editor(const char *editor, const char *path,
 		return error("Terminal is dumb, but EDITOR unset");
 
 	if (strcmp(editor, ":")) {
-		const char *args[] = { editor, real_path(path), NULL };
+		struct strbuf realpath = STRBUF_INIT;
+		const char *args[] = { editor, NULL, NULL };
 		struct child_process p = CHILD_PROCESS_INIT;
 		int ret, sig;
 		int print_waiting_for_editor = advice_waiting_for_editor && isatty(2);
@@ -75,16 +76,22 @@ static int launch_specified_editor(const char *editor, const char *path,
 			fflush(stderr);
 		}
 
+		strbuf_realpath(&realpath, path, 1);
+		args[1] = realpath.buf;
+
 		p.argv = args;
 		p.env = env;
 		p.use_shell = 1;
 		p.trace2_child_class = "editor";
-		if (start_command(&p) < 0)
+		if (start_command(&p) < 0) {
+			strbuf_release(&realpath);
 			return error("unable to start editor '%s'", editor);
+		}
 
 		sigchain_push(SIGINT, SIG_IGN);
 		sigchain_push(SIGQUIT, SIG_IGN);
 		ret = finish_command(&p);
+		strbuf_release(&realpath);
 		sig = ret - 128;
 		sigchain_pop(SIGINT);
 		sigchain_pop(SIGQUIT);

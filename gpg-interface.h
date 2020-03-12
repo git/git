@@ -54,15 +54,6 @@ size_t parse_signature(const char *buf, size_t size);
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
 		const char *signing_key);
 
-/*
- * Run "gpg" to see if the payload matches the detached signature.
- * gpg_output, when set, receives the diagnostic output from GPG.
- * gpg_status, when set, receives the status output from GPG.
- */
-int verify_signed_buffer(const char *payload, size_t payload_size,
-			 const char *signature, size_t signature_size,
-			 struct strbuf *gpg_output, struct strbuf *gpg_status);
-
 int git_gpg_config(const char *, const char *, void *);
 void set_signing_key(const char *);
 const char *get_signing_key(void);

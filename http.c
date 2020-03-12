@@ -87,12 +87,11 @@ static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *http_proxy_authmethod;
 
-#if LIBCURL_VERSION_NUM >= 0x073400
 static const char *http_proxy_ssl_cert;
 static const char *http_proxy_ssl_key;
-static const char *http_proxy_ssl_keypasswd;
-#endif
 static const char *http_proxy_ssl_ca_info;
+static struct credential proxy_cert_auth = CREDENTIAL_INIT;
+static int proxy_ssl_cert_password_required;
 
 static struct {
 	const char *name;
@@ -373,19 +372,19 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.proxyauthmethod", var))
 		return git_config_string(&http_proxy_authmethod, var, value);
 
-#if LIBCURL_VERSION_NUM >= 0x073400
-	if (!strcmp("http.proxycert", var))
+	if (!strcmp("http.proxysslcert", var))
 		return git_config_string(&http_proxy_ssl_cert, var, value);
 
-	if (!strcmp("http.proxykey", var))
+	if (!strcmp("http.proxysslkey", var))
 		return git_config_string(&http_proxy_ssl_key, var, value);
 
-	if (!strcmp("http.proxykeypass", var))
-		return git_config_string(&http_proxy_ssl_keypasswd, var, value);
-
-	if (!strcmp("http.proxycainfo", var))
+	if (!strcmp("http.proxysslcainfo", var))
 		return git_config_string(&http_proxy_ssl_ca_info, var, value);
-#endif
+
+	if (!strcmp("http.proxysslcertpasswordprotected", var)) {
+		proxy_ssl_cert_password_required = git_config_bool(var, value);
+		return 0;
+	}
 
 	if (!strcmp("http.cookiefile", var))
 		return git_config_pathname(&curl_cookie_file, var, value);
@@ -586,6 +585,21 @@ static int has_cert_password(void)
 	}
 	return 1;
 }
+
+#if LIBCURL_VERSION_NUM >= 0x073400
+static int has_proxy_cert_password(void)
+{
+	if (http_proxy_ssl_cert == NULL || proxy_ssl_cert_password_required != 1)
+		return 0;
+	if (!proxy_cert_auth.password) {
+		proxy_cert_auth.protocol = xstrdup("cert");
+		proxy_cert_auth.username = xstrdup("");
+		proxy_cert_auth.path = xstrdup(http_proxy_ssl_cert);
+		credential_fill(&proxy_cert_auth);
+	}
+	return 1;
+}
+#endif
 
 #if LIBCURL_VERSION_NUM >= 0x071900
 static void set_curl_keepalive(CURL *c)
@@ -1049,15 +1063,14 @@ static CURL *get_curl_handle(void)
 		else if (starts_with(curl_http_proxy, "https")) {
 			curl_easy_setopt(result, CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
 
-			if (http_proxy_ssl_cert != NULL)
+			if (http_proxy_ssl_cert)
 				curl_easy_setopt(result, CURLOPT_PROXY_SSLCERT, http_proxy_ssl_cert);
 
-			if (http_proxy_ssl_key != NULL)
+			if (http_proxy_ssl_key)
 				curl_easy_setopt(result, CURLOPT_PROXY_SSLKEY, http_proxy_ssl_key);
 
-			if (http_proxy_ssl_keypasswd != NULL)
-				curl_easy_setopt(result, CURLOPT_PROXY_KEYPASSWD, http_proxy_ssl_keypasswd);
-
+			if (has_proxy_cert_password())
+				curl_easy_setopt(result, CURLOPT_PROXY_KEYPASSWD, proxy_cert_auth.password);
 		}
 #endif
 		if (strstr(curl_http_proxy, "://"))
@@ -1198,6 +1211,13 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 		max_requests = DEFAULT_MAX_REQUESTS;
 #endif
 
+	set_from_env(&http_proxy_ssl_cert, "GIT_PROXY_SSL_CERT");
+	set_from_env(&http_proxy_ssl_key, "GIT_PROXY_SSL_KEY");
+	set_from_env(&http_proxy_ssl_ca_info, "GIT_PROXY_SSL_CAINFO");
+
+	if (getenv("GIT_PROXY_SSL_CERT_PASSWORD_PROTECTED"))
+		proxy_ssl_cert_password_required = 1;
+
 	if (getenv("GIT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
 
@@ -1267,6 +1287,12 @@ void http_cleanup(void)
 		FREE_AND_NULL(cert_auth.password);
 	}
 	ssl_cert_password_required = 0;
+
+	if (proxy_cert_auth.password != NULL) {
+		memset(proxy_cert_auth.password, 0, strlen(proxy_cert_auth.password));
+		FREE_AND_NULL(proxy_cert_auth.password);
+	}
+	proxy_ssl_cert_password_required = 0;
 
 	FREE_AND_NULL(cached_accept_language);
 }

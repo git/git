@@ -202,22 +202,6 @@ error_out:
 	return retval;
 }
 
-/*
- * Resolve `path` into an absolute, cleaned-up path. The return value
- * comes from a shared buffer.
- */
-const char *real_path(const char *path)
-{
-	static struct strbuf realpath = STRBUF_INIT;
-	return strbuf_realpath(&realpath, path, 1);
-}
-
-const char *real_path_if_valid(const char *path)
-{
-	static struct strbuf realpath = STRBUF_INIT;
-	return strbuf_realpath(&realpath, path, 0);
-}
-
 char *real_pathdup(const char *path, int die_on_error)
 {
 	struct strbuf realpath = STRBUF_INIT;
@@ -233,7 +217,7 @@ char *real_pathdup(const char *path, int die_on_error)
 
 /*
  * Use this to get an absolute path from a relative one. If you want
- * to resolve links, you should use real_path.
+ * to resolve links, you should use strbuf_realpath.
  */
 const char *absolute_path(const char *path)
 {

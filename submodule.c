@@ -2168,13 +2168,13 @@ void absorb_git_dir_into_superproject(const char *path,
 	}
 }
 
-const char *get_superproject_working_tree(void)
+int get_superproject_working_tree(struct strbuf *buf)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
-	const char *one_up = real_path_if_valid("../");
+	struct strbuf one_up = STRBUF_INIT;
 	const char *cwd = xgetcwd();
-	const char *ret = NULL;
+	int ret = 0;
 	const char *subpath;
 	int code;
 	ssize_t len;
@@ -2185,12 +2185,13 @@ const char *get_superproject_working_tree(void)
 		 * We might have a superproject, but it is harder
 		 * to determine.
 		 */
-		return NULL;
+		return 0;
 
-	if (!one_up)
-		return NULL;
+	if (!strbuf_realpath(&one_up, "../", 0))
+		return 0;
 
-	subpath = relative_path(cwd, one_up, &sb);
+	subpath = relative_path(cwd, one_up.buf, &sb);
+	strbuf_release(&one_up);
 
 	prepare_submodule_repo_env(&cp.env_array);
 	argv_array_pop(&cp.env_array);
@@ -2231,7 +2232,8 @@ const char *get_superproject_working_tree(void)
 		super_wt = xstrdup(cwd);
 		super_wt[cwd_len - super_sub_len] = '\0';
 
-		ret = real_path(super_wt);
+		strbuf_realpath(buf, super_wt, 1);
+		ret = 1;
 		free(super_wt);
 	}
 	strbuf_release(&sb);
@@ -2240,10 +2242,10 @@ const char *get_superproject_working_tree(void)
 
 	if (code == 128)
 		/* '../' is not a git repository */
-		return NULL;
+		return 0;
 	if (code == 0 && len == 0)
 		/* There is an unrelated git repository at '../' */
-		return NULL;
+		return 0;
 	if (code)
 		die(_("ls-tree returned unexpected return code %d"), code);
 
