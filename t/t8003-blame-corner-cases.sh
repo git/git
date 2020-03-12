@@ -173,7 +173,6 @@ test_expect_success 'blame during cherry-pick with file rename conflict' '
 	git show HEAD@{1}:rodent > rodent &&
 	git add rodent &&
 	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
-	cat current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second

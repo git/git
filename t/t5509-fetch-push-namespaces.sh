@@ -20,7 +20,7 @@ test_expect_success setup '
 	) &&
 	commit0=$(cd original && git rev-parse HEAD^) &&
 	commit1=$(cd original && git rev-parse HEAD) &&
-	git init pushee &&
+	git init --bare pushee &&
 	git init puller
 '
 
@@ -150,6 +150,17 @@ test_expect_success 'clone chooses correct HEAD (v2)' '
 	echo refs/heads/two >expect &&
 	git -C ambiguous-v2 symbolic-ref HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'denyCurrentBranch and unborn branch with ref namespace' '
+	(
+		cd original &&
+		git init unborn &&
+		git remote add unborn-namespaced "ext::git --namespace=namespace %s unborn" &&
+		test_must_fail git push unborn-namespaced HEAD:master &&
+		git -C unborn config receive.denyCurrentBranch updateInstead &&
+		git push unborn-namespaced HEAD:master
+	)
 '
 
 test_done

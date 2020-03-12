@@ -9,13 +9,14 @@ endif
 DEVELOPER_CFLAGS += -Wall
 DEVELOPER_CFLAGS += -Wdeclaration-after-statement
 DEVELOPER_CFLAGS += -Wformat-security
-DEVELOPER_CFLAGS += -Wno-format-zero-length
 DEVELOPER_CFLAGS += -Wold-style-definition
 DEVELOPER_CFLAGS += -Woverflow
 DEVELOPER_CFLAGS += -Wpointer-arith
 DEVELOPER_CFLAGS += -Wstrict-prototypes
 DEVELOPER_CFLAGS += -Wunused
 DEVELOPER_CFLAGS += -Wvla
+
+DEVELOPER_CFLAGS += -DENABLE_SHA256
 
 ifndef COMPILER_FEATURES
 COMPILER_FEATURES := $(shell ./detect-compiler $(CC))

@@ -471,12 +471,11 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 
 	status = check_signature(payload.buf, payload.len, signature.buf,
 				 signature.len, &sigc);
-	if (status && sigc.result == 'N')
+	if (status && !sigc.gpg_output)
 		show_sig_lines(opt, status, "No signature\n");
-	else {
+	else
 		show_sig_lines(opt, status, sigc.gpg_output);
-		signature_check_clear(&sigc);
-	}
+	signature_check_clear(&sigc);
 
  out:
 	strbuf_release(&payload);
@@ -513,7 +512,7 @@ static int show_one_mergetag(struct commit *commit,
 	struct strbuf verify_message;
 	struct signature_check sigc = { 0 };
 	int status, nth;
-	size_t payload_size, gpg_message_offset;
+	size_t payload_size;
 
 	hash_object_file(the_hash_algo, extra->value, extra->len,
 			 type_name(OBJ_TAG), &oid);
@@ -531,24 +530,23 @@ static int show_one_mergetag(struct commit *commit,
 			    "merged tag '%s'\n", tag->tag);
 	else if ((nth = which_parent(&tag->tagged->oid, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
-				    tag->tag, tag->tagged->oid.hash);
+				    tag->tag, oid_to_hex(&tag->tagged->oid));
 	else
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
-	gpg_message_offset = verify_message.len;
 
 	payload_size = parse_signature(extra->value, extra->len);
 	status = -1;
 	if (extra->len > payload_size) {
 		/* could have a good signature */
-		if (!check_signature(extra->value, payload_size,
-				     extra->value + payload_size,
-				     extra->len - payload_size, &sigc)) {
+		status = check_signature(extra->value, payload_size,
+					 extra->value + payload_size,
+					 extra->len - payload_size, &sigc);
+		if (sigc.gpg_output)
 			strbuf_addstr(&verify_message, sigc.gpg_output);
-			signature_check_clear(&sigc);
-			status = 0; /* good */
-		} else if (verify_message.len <= gpg_message_offset)
+		else
 			strbuf_addstr(&verify_message, "No signature\n");
+		signature_check_clear(&sigc);
 		/* otherwise we couldn't verify, which is shown as bad */
 	}
 

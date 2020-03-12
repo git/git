@@ -19,7 +19,7 @@ int cmd__windows_named_pipe(int argc, const char **argv)
 	if (argc < 2)
 		goto print_usage;
 	filename = argv[1];
-	if (strchr(filename, '/') || strchr(filename, '\\'))
+	if (strpbrk(filename, "/\\"))
 		goto print_usage;
 	strbuf_addf(&pathname, "//./pipe/%s", filename);
 

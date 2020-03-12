@@ -12,7 +12,7 @@ struct bloom_filter_settings {
 };
 
 #define DEFAULT_BLOOM_FILTER_SETTINGS { 1, 7, 10 }
-#define BITS_PER_WORD 64
+#define BITS_PER_WORD 8
 #define BLOOMDATA_CHUNK_HEADER_SIZE 3*sizeof(uint32_t)
 
 /*
@@ -22,7 +22,7 @@ struct bloom_filter_settings {
  * 'data'.
  */
 struct bloom_filter {
-	uint64_t *data;
+	unsigned char *data;
 	int len;
 };
 

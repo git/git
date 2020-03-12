@@ -1334,9 +1334,9 @@ void expand_notes_ref(struct strbuf *sb)
 	if (starts_with(sb->buf, "refs/notes/"))
 		return; /* we're happy */
 	else if (starts_with(sb->buf, "notes/"))
-		strbuf_insert(sb, 0, "refs/", 5);
+		strbuf_insertstr(sb, 0, "refs/");
 	else
-		strbuf_insert(sb, 0, "refs/notes/", 11);
+		strbuf_insertstr(sb, 0, "refs/notes/");
 }
 
 void expand_loose_notes_ref(struct strbuf *sb)

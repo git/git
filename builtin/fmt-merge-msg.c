@@ -503,12 +503,12 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 
 		if (size == len)
 			; /* merely annotated */
-		else if (!check_signature(buf, len, buf + len, size - len,
-					  &sigc)) {
-			strbuf_addstr(&sig, sigc.gpg_output);
-			signature_check_clear(&sigc);
-		} else
+		else if (check_signature(buf, len, buf + len, size - len, &sigc) &&
+			!sigc.gpg_output)
 			strbuf_addstr(&sig, "gpg verification failed.\n");
+		else
+			strbuf_addstr(&sig, sigc.gpg_output);
+		signature_check_clear(&sigc);
 
 		if (!tag_number++) {
 			fmt_tag_signature(&tagbuf, &sig, buf, len);

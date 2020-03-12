@@ -5,6 +5,11 @@ test_description='git log'
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 . "$TEST_DIRECTORY/lib-terminal.sh"
+. "$TEST_DIRECTORY/lib-log-graph.sh"
+
+test_cmp_graph () {
+	lib_test_cmp_graph --format=%s "$@"
+}
 
 test_expect_success setup '
 
@@ -452,8 +457,7 @@ cat > expect <<EOF
 EOF
 
 test_expect_success 'simple log --graph' '
-	git log --graph --pretty=tformat:%s >actual &&
-	test_cmp expect actual
+	test_cmp_graph
 '
 
 cat > expect <<EOF
@@ -467,8 +471,7 @@ cat > expect <<EOF
 EOF
 
 test_expect_success 'simple log --graph --line-prefix="123 "' '
-	git log --graph --line-prefix="123 " --pretty=tformat:%s >actual &&
-	test_cmp expect actual
+	test_cmp_graph --line-prefix="123 "
 '
 
 test_expect_success 'set up merge history' '
@@ -495,9 +498,7 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph with merge' '
-	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
-	test_cmp expect actual
+	test_cmp_graph --date-order
 '
 
 cat > expect <<\EOF
@@ -516,9 +517,7 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph --line-prefix="| | | " with merge' '
-	git log --line-prefix="| | | " --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
-	test_cmp expect actual
+	test_cmp_graph --line-prefix="| | | " --date-order
 '
 
 cat > expect.colors <<\EOF
@@ -538,9 +537,7 @@ EOF
 
 test_expect_success 'log --graph with merge with log.graphColors' '
 	test_config log.graphColors " blue,invalid-color, cyan, red  , " &&
-	git log --color=always --graph --date-order --pretty=tformat:%s |
-		test_decode_color | sed "s/ *\$//" >actual &&
-	test_cmp expect.colors actual
+	lib_test_cmp_colored_graph --date-order --format=%s
 '
 
 test_expect_success 'log --raw --graph -m with merge' '
@@ -676,9 +673,7 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph with merge' '
-	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
-	test_cmp expect actual
+	test_cmp_graph --date-order
 '
 
 test_expect_success 'log.decorate configuration' '
@@ -1213,24 +1208,8 @@ cat >expect <<\EOF
   +one
 EOF
 
-sanitize_output () {
-	sed -e 's/ *$//' \
-	    -e 's/commit [0-9a-f]*$/commit COMMIT_OBJECT_NAME/' \
-	    -e 's/Merge: [ 0-9a-f]*$/Merge: MERGE_PARENTS/' \
-	    -e 's/Merge tag.*/Merge HEADS DESCRIPTION/' \
-	    -e 's/Merge commit.*/Merge HEADS DESCRIPTION/' \
-	    -e 's/, 0 deletions(-)//' \
-	    -e 's/, 0 insertions(+)//' \
-	    -e 's/ 1 files changed, / 1 file changed, /' \
-	    -e 's/, 1 deletions(-)/, 1 deletion(-)/' \
-	    -e 's/, 1 insertions(+)/, 1 insertion(+)/' \
-	    -e 's/index [0-9a-f]*\.\.[0-9a-f]*/index BEFORE..AFTER/'
-}
-
 test_expect_success 'log --graph with diff and stats' '
-	git log --no-renames --graph --pretty=short --stat -p >actual &&
-	sanitize_output >actual.sanitized <actual &&
-	test_i18ncmp expect actual.sanitized
+	lib_test_cmp_short_graph --no-renames --stat -p
 '
 
 cat >expect <<\EOF
@@ -1505,9 +1484,7 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success 'log --line-prefix="*** " --graph with diff and stats' '
-	git log --line-prefix="*** " --no-renames --graph --pretty=short --stat -p >actual &&
-	sanitize_output >actual.sanitized <actual &&
-	test_i18ncmp expect actual.sanitized
+	lib_test_cmp_short_graph --line-prefix="*** " --no-renames --stat -p
 '
 
 cat >expect <<-\EOF
@@ -1529,9 +1506,7 @@ cat >expect <<-\EOF
 EOF
 
 test_expect_success 'log --graph with --name-status' '
-	git log --graph --format=%s --name-status tangle..reach >actual &&
-	sanitize_output <actual >actual.sanitized &&
-	test_cmp expect actual.sanitized
+	test_cmp_graph --name-status tangle..reach
 '
 
 cat >expect <<-\EOF
@@ -1553,9 +1528,7 @@ cat >expect <<-\EOF
 EOF
 
 test_expect_success 'log --graph with --name-only' '
-	git log --graph --format=%s --name-only tangle..reach >actual &&
-	sanitize_output <actual >actual.sanitized &&
-	test_cmp expect actual.sanitized
+	test_cmp_graph --name-only tangle..reach
 '
 
 test_expect_success 'dotdot is a parent directory' '
@@ -1634,6 +1607,86 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 	grep "^| | gpg: Good signature" actual
 '
 
+test_expect_success GPG 'log --graph --show-signature for merged tag in shallow clone' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b plain-shallow master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout --detach master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_shallow &&
+	hash=$(git rev-parse HEAD) &&
+	git checkout plain-shallow &&
+	git merge --no-ff -m msg signed_tag_shallow &&
+	git clone --depth 1 --no-local . shallow &&
+	test_when_finished "rm -rf shallow" &&
+	git -C shallow log --graph --show-signature -n1 plain-shallow >actual &&
+	grep "tag signed_tag_shallow names a non-parent $hash" actual
+'
+
+test_expect_success GPG 'log --graph --show-signature for merged tag with missing key' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b plain-nokey master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-nokey master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_nokey &&
+	git checkout plain-nokey &&
+	git merge --no-ff -m msg signed_tag_nokey &&
+	GNUPGHOME=. git log --graph --show-signature -n1 plain-nokey >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpg: Signature made" actual &&
+	grep "^| | gpg: Can'"'"'t check signature: \(public key not found\|No public key\)" actual
+'
+
+test_expect_success GPG 'log --graph --show-signature for merged tag with bad signature' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b plain-bad master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-bad master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_bad &&
+	git cat-file tag signed_tag_bad >raw &&
+	sed -e "s/signed_tag_msg/forged/" raw >forged &&
+	git hash-object -w -t tag forged >forged.tag &&
+	git checkout plain-bad &&
+	git merge --no-ff -m msg "$(cat forged.tag)" &&
+	git log --graph --show-signature -n1 plain-bad >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpg: Signature made" actual &&
+	grep "^| | gpg: BAD signature from" actual
+'
+
+test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b plain-fail master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-fail master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_fail &&
+	git checkout plain-fail &&
+	git merge --no-ff -m msg signed_tag_fail &&
+	TMPDIR="$(pwd)/bogus" git log --show-signature -n1 plain-fail >actual &&
+	grep "^merged tag" actual &&
+	grep "^No signature" actual &&
+	! grep "^gpg: Signature made" actual
+'
+
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 	test_when_finished "git reset --hard && git checkout master" &&
 	test_config gpg.format x509 &&
@@ -1654,6 +1707,51 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 	grep "^| | gpgsm: Signature made" actual &&
 	grep "^| | gpgsm: Good signature" actual
 '
+
+test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 missing key' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git checkout -b plain-x509-nokey master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-x509-nokey master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_x509_nokey &&
+	git checkout plain-x509-nokey &&
+	git merge --no-ff -m msg signed_tag_x509_nokey &&
+	GNUPGHOME=. git log --graph --show-signature -n1 plain-x509-nokey >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpgsm: certificate not found" actual
+'
+
+test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 bad signature' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git checkout -b plain-x509-bad master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-x509-bad master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_x509_bad &&
+	git cat-file tag signed_tag_x509_bad >raw &&
+	sed -e "s/signed_tag_msg/forged/" raw >forged &&
+	git hash-object -w -t tag forged >forged.tag &&
+	git checkout plain-x509-bad &&
+	git merge --no-ff -m msg "$(cat forged.tag)" &&
+	git log --graph --show-signature -n1 plain-x509-bad >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpgsm: Signature made" actual &&
+	grep "^| | gpgsm: invalid signature" actual
+'
+
 
 test_expect_success GPG '--no-show-signature overrides --show-signature' '
 	git log -1 --show-signature --no-show-signature signed >actual &&

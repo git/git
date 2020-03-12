@@ -150,7 +150,6 @@ test_expect_success 'pull request after push' '
 		git request-pull initial origin master:for-upstream >../request
 	) &&
 	sed -nf read-request.sed <request >digest &&
-	cat digest &&
 	{
 		read task &&
 		read repository &&
@@ -179,7 +178,6 @@ test_expect_success 'request asks HEAD to be pulled' '
 		git request-pull initial "$downstream_url" >../request
 	) &&
 	sed -nf read-request.sed <request >digest &&
-	cat digest &&
 	{
 		read task &&
 		read repository &&

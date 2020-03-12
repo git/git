@@ -23,6 +23,8 @@ usage: test-tool parse-options <options>
     -j <n>                get a integer, too
     -m, --magnitude <n>   get a magnitude
     --set23               set integer to 23
+    --mode1               set integer to 1 (cmdmode option)
+    --mode2               set integer to 2 (cmdmode option)
     -L, --length <str>    get length of <str>
     -F, --file <file>     set file to <file>
 
@@ -322,6 +324,22 @@ test_expect_success 'OPT_BIT() works' '
 
 test_expect_success 'OPT_NEGBIT() works' '
 	test-tool parse-options --expect="boolean: 6" -bb --no-neg-or4
+'
+
+test_expect_success 'OPT_CMDMODE() works' '
+	test-tool parse-options --expect="integer: 1" --mode1
+'
+
+test_expect_success 'OPT_CMDMODE() detects incompatibility' '
+	test_must_fail test-tool parse-options --mode1 --mode2 >output 2>output.err &&
+	test_must_be_empty output &&
+	test_i18ngrep "incompatible with --mode" output.err
+'
+
+test_expect_success 'OPT_CMDMODE() detects incompatibility with something else' '
+	test_must_fail test-tool parse-options --set23 --mode2 >output 2>output.err &&
+	test_must_be_empty output &&
+	test_i18ngrep "incompatible with something else" output.err
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '

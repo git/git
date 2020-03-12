@@ -294,7 +294,6 @@ test_expect_success 'cope with rcs keyword file deletion' '
 		echo "\$Revision\$" >kwdelfile.c &&
 		p4 add -t ktext kwdelfile.c &&
 		p4 submit -d "Add file to be deleted" &&
-		cat kwdelfile.c &&
 		grep 1 kwdelfile.c
 	) &&
 	git p4 clone --dest="$git" //depot &&

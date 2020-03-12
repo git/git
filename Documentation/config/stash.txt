@@ -1,17 +1,9 @@
 stash.useBuiltin::
-       Set to `false` to use the legacy shell script implementation of
-       linkgit:git-stash[1]. Is `true` by default, which means use
-       the built-in rewrite of it in C.
-+
-The C rewrite is first included with Git version 2.22 (and Git for Windows
-version 2.19). This option serves as an escape hatch to re-enable the
-legacy version in case any bugs are found in the rewrite. This option and
-the shell script version of linkgit:git-stash[1] will be removed in some
-future release.
-+
-If you find some reason to set this option to `false`, other than
-one-off testing, you should report the behavior difference as a bug in
-Git (see https://git-scm.com/community for details).
+	Unused configuration variable.  Used in Git versions 2.22 to
+	2.26 as an escape hatch to enable the legacy shellscript
+	implementation of stash.  Now the built-in rewrite of it in C
+	is always used. Setting this will emit a warning, to alert any
+	remaining users that setting this now does nothing.
 
 stash.showPatch::
 	If this is set to true, the `git stash show` command without an

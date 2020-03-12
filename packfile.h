@@ -121,18 +121,11 @@ void check_pack_index_ptr(const struct packed_git *p, const void *ptr);
 int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32_t *result);
 
 /*
- * Return the SHA-1 of the nth object within the specified packfile.
- * Open the index if it is not already open.  The return value points
- * at the SHA-1 within the mmapped index.  Return NULL if there is an
- * error.
+ * Write the oid of the nth object within the specified packfile into the first
+ * parameter. Open the index if it is not already open.  Returns 0 on success,
+ * negative otherwise.
  */
-const unsigned char *nth_packed_object_sha1(struct packed_git *, uint32_t n);
-/*
- * Like nth_packed_object_sha1, but write the data into the object specified by
- * the the first argument.  Returns the first argument on success, and NULL on
- * error.
- */
-const struct object_id *nth_packed_object_oid(struct object_id *, struct packed_git *, uint32_t n);
+int nth_packed_object_id(struct object_id *, struct packed_git *, uint32_t n);
 
 /*
  * Return the offset of the nth object within the specified packfile.

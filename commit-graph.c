@@ -873,6 +873,7 @@ struct write_commit_graph_context {
 		 report_progress:1,
 		 split:1,
 		 check_oids:1,
+		 no_input:1,
 		 changed_paths:1,
 		 order_by_pack:1,
 		 no_input:1;
@@ -1120,7 +1121,7 @@ static void write_graph_chunk_bloom_data(struct hashfile *f,
 	while (list < last) {
 		struct bloom_filter *filter = get_bloom_filter(ctx->r, *list, 0);
 		display_progress(progress, ++i);
-		hashwrite(f, filter->data, filter->len * sizeof(uint64_t));
+		hashwrite(f, filter->data, filter->len * sizeof(unsigned char));
 		list++;
 	}
 
@@ -1300,7 +1301,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = sorted_by_pos[i];
 		struct bloom_filter *filter = get_bloom_filter(ctx->r, c, 1);
-		ctx->total_bloom_filter_data_size += sizeof(uint64_t) * filter->len;
+		ctx->total_bloom_filter_data_size += sizeof(unsigned char) * filter->len;
 		display_progress(progress, i + 1);
 	}
 
@@ -1858,19 +1859,15 @@ static void merge_commit_graphs(struct write_commit_graph_context *ctx)
 {
 	struct commit_graph *g = ctx->r->objects->commit_graph;
 	uint32_t current_graph_number = ctx->num_commit_graphs_before;
-	struct strbuf progress_title = STRBUF_INIT;
 
 	while (g && current_graph_number >= ctx->num_commit_graphs_after) {
 		current_graph_number--;
 
-		if (ctx->report_progress) {
-			strbuf_addstr(&progress_title, _("Merging commit-graph"));
-			ctx->progress = start_delayed_progress(progress_title.buf, 0);
-		}
+		if (ctx->report_progress)
+			ctx->progress = start_delayed_progress(_("Merging commit-graph"), 0);
 
 		merge_commit_graph(ctx, g);
 		stop_progress(&ctx->progress);
-		strbuf_release(&progress_title);
 
 		g = g->base_graph;
 	}
@@ -1980,6 +1977,7 @@ int write_commit_graph(struct object_directory *odb,
 	ctx->split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0;
 	ctx->check_oids = flags & COMMIT_GRAPH_WRITE_CHECK_OIDS ? 1 : 0;
 	ctx->split_opts = split_opts;
+	ctx->no_input = flags & COMMIT_GRAPH_WRITE_NO_INPUT ? 1 : 0;
 	ctx->changed_paths = flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS ? 1 : 0;
 	ctx->total_bloom_filter_data_size = 0;
 	ctx->no_input = flags & COMMIT_GRAPH_WRITE_NO_INPUT ? 1 : 0;

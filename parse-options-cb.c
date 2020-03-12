@@ -159,40 +159,32 @@ int parse_opt_tertiary(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-struct option *parse_options_dup(const struct option *o)
+static size_t parse_options_count(const struct option *opt)
 {
-	const struct option *orig = o;
-	struct option *opts;
-	int nr = 0;
+	size_t n = 0;
 
-	while (o && o->type != OPTION_END) {
-		nr++;
-		o++;
-	}
-
-	ALLOC_ARRAY(opts, nr + 1);
-	COPY_ARRAY(opts, orig, nr);
-	memset(opts + nr, 0, sizeof(*opts));
-	opts[nr].type = OPTION_END;
-	return opts;
+	for (; opt && opt->type != OPTION_END; opt++)
+		n++;
+	return n;
 }
 
-struct option *parse_options_concat(struct option *a, struct option *b)
+struct option *parse_options_dup(const struct option *o)
+{
+	struct option no_options[] = { OPT_END() };
+
+	return parse_options_concat(o, no_options);
+}
+
+struct option *parse_options_concat(const struct option *a,
+				    const struct option *b)
 {
 	struct option *ret;
-	size_t i, a_len = 0, b_len = 0;
-
-	for (i = 0; a[i].type != OPTION_END; i++)
-		a_len++;
-	for (i = 0; b[i].type != OPTION_END; i++)
-		b_len++;
+	size_t a_len = parse_options_count(a);
+	size_t b_len = parse_options_count(b);
 
 	ALLOC_ARRAY(ret, st_add3(a_len, b_len, 1));
-	for (i = 0; i < a_len; i++)
-		ret[i] = a[i];
-	for (i = 0; i < b_len; i++)
-		ret[a_len + i] = b[i];
-	ret[a_len + b_len] = b[b_len]; /* final OPTION_END */
+	COPY_ARRAY(ret, a, a_len);
+	COPY_ARRAY(ret + a_len, b, b_len + 1); /* + 1 for final OPTION_END */
 
 	return ret;
 }

@@ -126,6 +126,11 @@ usage: git describe [<options>] <commit-ish>*
     --long                always use long format
     --abbrev[=<n>]        use <n> digits to display SHA-1s
 ---------------------------------------------
++
+Note that some subcommand (e.g. `git grep`) may behave differently
+when there are things on the command line other than `-h`, but `git
+subcmd -h` without anything else on the command line is meant to
+consistently give the usage.
 
 --help-all::
 	Some Git commands take options that are only used for plumbing or that

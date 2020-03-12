@@ -424,9 +424,24 @@ test_expect_success 'local ignore inside a sub-directory with --verbose' '
 	)
 '
 
-test_expect_success_multi 'nested include' \
-	'a/b/.gitignore:8:!on*	a/b/one' '
-	test_check_ignore "a/b/one"
+test_expect_success 'nested include of negated pattern' '
+	expect "" &&
+	test_check_ignore "a/b/one" 1
+'
+
+test_expect_success 'nested include of negated pattern with -q' '
+	expect "" &&
+	test_check_ignore "-q a/b/one" 1
+'
+
+test_expect_success 'nested include of negated pattern with -v' '
+	expect "a/b/.gitignore:8:!on*	a/b/one" &&
+	test_check_ignore "-v a/b/one" 0
+'
+
+test_expect_success 'nested include of negated pattern with -v -n' '
+	expect "a/b/.gitignore:8:!on*	a/b/one" &&
+	test_check_ignore "-v -n a/b/one" 0
 '
 
 ############################################################################
@@ -460,7 +475,6 @@ test_expect_success 'cd to ignored sub-directory' '
 	expect_from_stdin <<-\EOF &&
 		foo
 		twoooo
-		../one
 		seven
 		../../one
 	EOF
@@ -543,7 +557,6 @@ test_expect_success 'global ignore' '
 		globalthree
 		a/globalthree
 		a/per-repo
-		globaltwo
 	EOF
 	test_check_ignore "globalone per-repo globalthree a/globalthree a/per-repo not-ignored globaltwo"
 '
@@ -586,17 +599,7 @@ EOF
 cat <<-\EOF >expected-default
 	one
 	a/one
-	a/b/on
-	a/b/one
-	a/b/one one
-	a/b/one two
-	"a/b/one\"three"
-	a/b/two
 	a/b/twooo
-	globaltwo
-	a/globaltwo
-	a/b/globaltwo
-	b/globaltwo
 EOF
 cat <<-EOF >expected-verbose
 	.gitignore:1:one	one
@@ -696,8 +699,12 @@ cat <<-EOF >expected-all
 	$global_excludes:2:!globaltwo	../b/globaltwo
 	::	c/not-ignored
 EOF
+cat <<-EOF >expected-default
+../one
+one
+b/twooo
+EOF
 grep -v '^::	' expected-all >expected-verbose
-sed -e 's/.*	//' expected-verbose >expected-default
 
 broken_c_unquote stdin >stdin0
 

@@ -865,7 +865,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 		strbuf_addf(&msg, "checkout: moving from %s to %s",
 			old_desc ? old_desc : "(invalid)", new_branch_info->name);
 	else
-		strbuf_insert(&msg, 0, reflog_msg, strlen(reflog_msg));
+		strbuf_insertstr(&msg, 0, reflog_msg);
 
 	if (!strcmp(new_branch_info->name, "HEAD") && !new_branch_info->path && !opts->force_detach) {
 		/* Nothing to do. */

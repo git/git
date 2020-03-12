@@ -234,14 +234,7 @@ static void validate_worktree_add(const char *path, const struct add_opts *opts)
 		die(_("'%s' already exists"), path);
 
 	worktrees = get_worktrees(0);
-	/*
-	 * find_worktree()'s suffix matching may undesirably find the main
-	 * rather than a linked worktree (for instance, when the basenames
-	 * of the main worktree and the one being created are the same).
-	 * We're only interested in linked worktrees, so skip the main
-	 * worktree with +1.
-	 */
-	wt = find_worktree(worktrees + 1, NULL, path);
+	wt = find_worktree_by_path(worktrees, path);
 	if (!wt)
 		goto done;
 
@@ -265,7 +258,7 @@ static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
-	struct strbuf sb = STRBUF_INIT;
+	struct strbuf sb = STRBUF_INIT, realpath = STRBUF_INIT;
 	const char *name;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct argv_array child_env = ARGV_ARRAY_INIT;
@@ -337,9 +330,11 @@ static int add_worktree(const char *path, const char *refname,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
-	write_file(sb.buf, "%s", real_path(sb_git.buf));
+	strbuf_realpath(&realpath, sb_git.buf, 1);
+	write_file(sb.buf, "%s", realpath.buf);
+	strbuf_realpath(&realpath, get_git_common_dir(), 1);
 	write_file(sb_git.buf, "gitdir: %s/worktrees/%s",
-		   real_path(get_git_common_dir()), name);
+		   realpath.buf, name);
 	/*
 	 * This is to keep resolve_ref() happy. We need a valid HEAD
 	 * or is_git_directory() will reject the directory. Any value which
@@ -425,6 +420,7 @@ done:
 	strbuf_release(&sb_repo);
 	strbuf_release(&sb_git);
 	strbuf_release(&sb_name);
+	strbuf_release(&realpath);
 	return ret;
 }
 

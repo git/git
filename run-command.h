@@ -116,7 +116,7 @@ struct child_process {
 	unsigned no_stdin:1;
 	unsigned no_stdout:1;
 	unsigned no_stderr:1;
-    unsigned git_cmd:1; /* if this is to be git sub-command */
+	unsigned git_cmd:1; /* if this is to be git sub-command */
 
 	/**
 	 * If the program cannot be found, the functions return -1 and set

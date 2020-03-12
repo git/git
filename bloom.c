@@ -45,12 +45,13 @@ static uint32_t seed_murmur3(uint32_t seed, const char *data, int len)
 
 	int len4 = len / sizeof(uint32_t);
 
-	const uint32_t *blocks = (const uint32_t*)data;
-
 	uint32_t k;
-	for (i = 0; i < len4; i++)
-	{
-		k = blocks[i];
+	for (i = 0; i < len4; i++) {
+		uint32_t byte1 = (uint32_t)data[4*i];
+		uint32_t byte2 = ((uint32_t)data[4*i + 1]) << 8;
+		uint32_t byte3 = ((uint32_t)data[4*i + 2]) << 16;
+		uint32_t byte4 = ((uint32_t)data[4*i + 3]) << 24;
+		k = byte1 | byte2 | byte3 | byte4;
 		k *= c1;
 		k = rotate_right(k, r1);
 		k *= c2;
@@ -61,8 +62,7 @@ static uint32_t seed_murmur3(uint32_t seed, const char *data, int len)
 
 	tail = (data + len4 * sizeof(uint32_t));
 
-	switch (len & (sizeof(uint32_t) - 1))
-	{
+	switch (len & (sizeof(uint32_t) - 1)) {
 	case 3:
 		k1 ^= ((uint32_t)tail[2]) << 16;
 		/*-fallthrough*/
@@ -88,9 +88,9 @@ static uint32_t seed_murmur3(uint32_t seed, const char *data, int len)
 	return seed;
 }
 
-static inline uint64_t get_bitmask(uint32_t pos)
+static inline unsigned char get_bitmask(uint32_t pos)
 {
-	return ((uint64_t)1) << (pos & (BITS_PER_WORD - 1));
+	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
 }
 
 void load_bloom_filters(void)
@@ -152,8 +152,8 @@ static int load_bloom_filter_from_graph(struct commit_graph *g,
 		start_index = 0;
 
 	filter->len = end_index - start_index;
-	filter->data = (uint64_t *)(g->chunk_bloom_data +
-					sizeof(uint64_t) * start_index +
+	filter->data = (unsigned char *)(g->chunk_bloom_data +
+					sizeof(unsigned char) * start_index +
 					BLOOMDATA_CHUNK_HEADER_SIZE);
 
 	return 1;
@@ -234,7 +234,7 @@ struct bloom_filter *get_bloom_filter(struct repository *r,
 		}
 
 		filter->len = (hashmap_get_size(&pathmap) * settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
-		filter->data = xcalloc(filter->len, sizeof(uint64_t));
+		filter->data = xcalloc(filter->len, sizeof(unsigned char));
 
 		hashmap_for_each_entry(&pathmap, &iter, e, entry) {
 			struct bloom_key key;

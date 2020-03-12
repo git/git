@@ -290,11 +290,14 @@ int cmd__path_utils(int argc, const char **argv)
 	}
 
 	if (argc >= 2 && !strcmp(argv[1], "real_path")) {
+		struct strbuf realpath = STRBUF_INIT;
 		while (argc > 2) {
-			puts(real_path(argv[2]));
+			strbuf_realpath(&realpath, argv[2], 1);
+			puts(realpath.buf);
 			argc--;
 			argv++;
 		}
+		strbuf_release(&realpath);
 		return 0;
 	}
 

@@ -52,7 +52,7 @@ void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
 	strbuf_complete_line(&buf);
 
 	create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
-	strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts at index 7 */
+	strbuf_insertstr(&buf, 0, "notes: ");
 	update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
 		   UPDATE_REFS_DIE_ON_ERR);
 

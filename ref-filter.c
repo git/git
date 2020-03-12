@@ -279,9 +279,9 @@ static int deltabase_atom_parser(const struct ref_format *format, struct used_at
 	if (arg)
 		return strbuf_addf_ret(err, -1, _("%%(deltabase) does not take arguments"));
 	if (*atom->name == '*')
-		oi_deref.info.delta_base_sha1 = oi_deref.delta_base_oid.hash;
+		oi_deref.info.delta_base_oid = &oi_deref.delta_base_oid;
 	else
-		oi.info.delta_base_sha1 = oi.delta_base_oid.hash;
+		oi.info.delta_base_oid = &oi.delta_base_oid;
 	return 0;
 }
 
@@ -1459,12 +1459,10 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 			remote_for_branch(branch, &explicit);
 		*s = xstrdup(explicit ? remote : "");
 	} else if (atom->u.remote_ref.option == RR_REMOTE_REF) {
-		int explicit;
 		const char *merge;
 
-		merge = remote_ref_for_branch(branch, atom->u.remote_ref.push,
-					      &explicit);
-		*s = xstrdup(explicit ? merge : "");
+		merge = remote_ref_for_branch(branch, atom->u.remote_ref.push);
+		*s = xstrdup(merge ? merge : "");
 	} else
 		BUG("unhandled RR_* enum");
 }

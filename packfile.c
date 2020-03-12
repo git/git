@@ -1225,30 +1225,32 @@ off_t get_delta_base(struct packed_git *p,
  * the final object lookup), but more expensive for OFS deltas (we
  * have to load the revidx to convert the offset back into a sha1).
  */
-static const unsigned char *get_delta_base_sha1(struct packed_git *p,
-						struct pack_window **w_curs,
-						off_t curpos,
-						enum object_type type,
-						off_t delta_obj_offset)
+static int get_delta_base_oid(struct packed_git *p,
+			      struct pack_window **w_curs,
+			      off_t curpos,
+			      struct object_id *oid,
+			      enum object_type type,
+			      off_t delta_obj_offset)
 {
 	if (type == OBJ_REF_DELTA) {
 		unsigned char *base = use_pack(p, w_curs, curpos, NULL);
-		return base;
+		oidread(oid, base);
+		return 0;
 	} else if (type == OBJ_OFS_DELTA) {
 		struct revindex_entry *revidx;
 		off_t base_offset = get_delta_base(p, w_curs, &curpos,
 						   type, delta_obj_offset);
 
 		if (!base_offset)
-			return NULL;
+			return -1;
 
 		revidx = find_pack_revindex(p, base_offset);
 		if (!revidx)
-			return NULL;
+			return -1;
 
-		return nth_packed_object_sha1(p, revidx->nr);
+		return nth_packed_object_id(oid, p, revidx->nr);
 	} else
-		return NULL;
+		return -1;
 }
 
 static int retry_bad_packed_offset(struct repository *r,
@@ -1261,7 +1263,7 @@ static int retry_bad_packed_offset(struct repository *r,
 	revidx = find_pack_revindex(p, obj_offset);
 	if (!revidx)
 		return OBJ_BAD;
-	nth_packed_object_oid(&oid, p, revidx->nr);
+	nth_packed_object_id(&oid, p, revidx->nr);
 	mark_bad_packed_object(p, oid.hash);
 	type = oid_object_info(r, &oid, NULL);
 	if (type <= OBJ_NONE)
@@ -1556,20 +1558,16 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		}
 	}
 
-	if (oi->delta_base_sha1) {
+	if (oi->delta_base_oid) {
 		if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
-			const unsigned char *base;
-
-			base = get_delta_base_sha1(p, &w_curs, curpos,
-						   type, obj_offset);
-			if (!base) {
+			if (get_delta_base_oid(p, &w_curs, curpos,
+					       oi->delta_base_oid,
+					       type, obj_offset) < 0) {
 				type = OBJ_BAD;
 				goto out;
 			}
-
-			hashcpy(oi->delta_base_sha1, base);
 		} else
-			hashclr(oi->delta_base_sha1);
+			oidclr(oi->delta_base_oid);
 	}
 
 	oi->whence = in_delta_base_cache(p, obj_offset) ? OI_DBCACHED :
@@ -1693,7 +1691,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			off_t len = revidx[1].offset - obj_offset;
 			if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
 				struct object_id oid;
-				nth_packed_object_oid(&oid, p, revidx->nr);
+				nth_packed_object_id(&oid, p, revidx->nr);
 				error("bad packed object CRC for %s",
 				      oid_to_hex(&oid));
 				mark_bad_packed_object(p, oid.hash);
@@ -1782,7 +1780,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			struct object_id base_oid;
 			revidx = find_pack_revindex(p, obj_offset);
 			if (revidx) {
-				nth_packed_object_oid(&base_oid, p, revidx->nr);
+				nth_packed_object_id(&base_oid, p, revidx->nr);
 				error("failed to read delta base object %s"
 				      " at offset %"PRIuMAX" from %s",
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
@@ -1869,36 +1867,27 @@ int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32
 			    index_lookup, index_lookup_width, result);
 }
 
-const unsigned char *nth_packed_object_sha1(struct packed_git *p,
-					    uint32_t n)
+int nth_packed_object_id(struct object_id *oid,
+			 struct packed_git *p,
+			 uint32_t n)
 {
 	const unsigned char *index = p->index_data;
 	const unsigned int hashsz = the_hash_algo->rawsz;
 	if (!index) {
 		if (open_pack_index(p))
-			return NULL;
+			return -1;
 		index = p->index_data;
 	}
 	if (n >= p->num_objects)
-		return NULL;
+		return -1;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		return index + (hashsz + 4) * n + 4;
+		oidread(oid, index + (hashsz + 4) * n + 4);
 	} else {
 		index += 8;
-		return index + hashsz * n;
+		oidread(oid, index + hashsz * n);
 	}
-}
-
-const struct object_id *nth_packed_object_oid(struct object_id *oid,
-					      struct packed_git *p,
-					      uint32_t n)
-{
-	const unsigned char *hash = nth_packed_object_sha1(p, n);
-	if (!hash)
-		return NULL;
-	hashcpy(oid->hash, hash);
-	return oid;
+	return 0;
 }
 
 void check_pack_index_ptr(const struct packed_git *p, const void *vptr)
@@ -2077,7 +2066,7 @@ int for_each_object_in_pack(struct packed_git *p,
 		else
 			pos = i;
 
-		if (!nth_packed_object_oid(&oid, p, pos))
+		if (nth_packed_object_id(&oid, p, pos) < 0)
 			return error("unable to get sha1 of object %u in %s",
 				     pos, p->pack_name);
 

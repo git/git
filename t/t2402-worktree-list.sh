@@ -151,4 +151,10 @@ test_expect_success 'linked worktrees are sorted' '
 	test_cmp expected sorted/main/actual
 '
 
+test_expect_success 'worktree path when called in .git directory' '
+	git worktree list >list1&&
+	git -C .git worktree list >list2 &&
+	test_cmp list1 list2
+'
+
 test_done

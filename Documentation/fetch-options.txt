@@ -61,10 +61,8 @@ this option multiple times, one for each matching ref name.
 See also the `fetch.negotiationAlgorithm` configuration variable
 documented in linkgit:git-config[1].
 
-ifndef::git-pull[]
 --dry-run::
 	Show what would be done, without making any changes.
-endif::git-pull[]
 
 -f::
 --force::
@@ -95,6 +93,7 @@ ifndef::git-pull[]
 --[no-]write-commit-graph::
 	Write a commit-graph after fetching. This overrides the config
 	setting `fetch.writeCommitGraph`.
+endif::git-pull[]
 
 -p::
 --prune::
@@ -107,6 +106,7 @@ ifndef::git-pull[]
 	was cloned with the --mirror option), then they are also
 	subject to pruning. Supplying `--prune-tags` is a shorthand for
 	providing the tag refspec.
+ifndef::git-pull[]
 +
 See the PRUNING section below for more details.
 
@@ -133,7 +133,6 @@ endif::git-pull[]
 	behavior for a remote may be specified with the remote.<name>.tagOpt
 	setting. See linkgit:git-config[1].
 
-ifndef::git-pull[]
 --refmap=<refspec>::
 	When fetching refs listed on the command line, use the
 	specified refspec (can be given more than once) to map the
@@ -154,6 +153,7 @@ ifndef::git-pull[]
 	is used (though tags may be pruned anyway if they are also the
 	destination of an explicit refspec; see `--prune`).
 
+ifndef::git-pull[]
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new commits of
 	populated submodules should be fetched too. It can be used as a
@@ -164,6 +164,7 @@ ifndef::git-pull[]
 	when the superproject retrieves a commit that updates the submodule's
 	reference to a commit that isn't already in the local submodule
 	clone.
+endif::git-pull[]
 
 -j::
 --jobs=<n>::
@@ -177,9 +178,11 @@ parallel. To control them independently, use the config settings
 Typically, parallel recursive and multi-remote fetches will be faster. By
 default fetches are performed sequentially, not in parallel.
 
+ifndef::git-pull[]
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as
 	using the `--recurse-submodules=no` option).
+endif::git-pull[]
 
 --set-upstream::
 	If the remote is fetched successfully, pull and add upstream
@@ -188,6 +191,7 @@ default fetches are performed sequentially, not in parallel.
 	see `branch.<name>.merge` and `branch.<name>.remote` in
 	linkgit:git-config[1].
 
+ifndef::git-pull[]
 --submodule-prefix=<path>::
 	Prepend <path> to paths printed in informative messages
 	such as "Fetching submodule foo".  This option is used

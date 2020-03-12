@@ -50,6 +50,15 @@ struct urlmatch_config {
 	void *cb;
 	int (*collect_fn)(const char *var, const char *value, void *cb);
 	int (*cascade_fn)(const char *var, const char *value, void *cb);
+	/*
+	 * Compare the two matches, the one just discovered and the existing
+	 * best match and return a negative value if the found item is to be
+	 * rejected or a non-negative value if it is to be accepted.  If this
+	 * field is set to NULL, use the default comparison technique, which
+	 * checks to ses if found is better (according to the urlmatch
+	 * specificity rules) than existing.
+	 */
+	int (*select_fn)(const struct urlmatch_item *found, const struct urlmatch_item *existing);
 };
 
 int urlmatch_config_entry(const char *var, const char *value, void *cb);
