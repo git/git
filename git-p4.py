@@ -168,6 +168,7 @@ def prompt(prompt_text):
     while True:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         response = input(prompt_text).strip().lower()
 =======
         sys.stderr.flush()
@@ -182,6 +183,9 @@ def prompt(prompt_text):
         sys.stdout.flush()
         response=sys.stdin.readline().strip().lower()
 >>>>>>> upstream/pu
+=======
+        response = input(prompt_text).strip().lower()
+>>>>>>> upstream/next
         if not response:
             continue
         response = response[0]
@@ -217,6 +221,7 @@ def decode_path(path):
             if verbose:
                 print('Path with non-ASCII characters detected. Used {} to decode: {}'.format(encoding, path))
         return path
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -301,6 +306,8 @@ def run_hook_command(cmd, param):
 =======
 
 >>>>>>> upstream/pu
+=======
+>>>>>>> upstream/next
 
 def write_pipe(c, stdin):
     if verbose:
