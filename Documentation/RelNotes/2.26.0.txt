@@ -4,6 +4,20 @@ Git 2.26 Release Notes
 Updates since v2.25
 -------------------
 
+Backward compatibility notes
+
+ * "git rebase" uses a different backend that is based on the 'merge'
+   machinery by default.  There are a few known differences in the
+   behaviour from the traditional machniery based on patch+apply.
+
+   If your workflow is negatively affected by this change, please
+   report it to git@vger.kernel.org so that we can take a look into
+   it.  In the meantime, the 'rebase.backend' configuration variable
+   can be set in order to use the old default behaviour (the value to
+   do so is not described here---it is given to those who report their
+   issues to the list ;-).
+
+
 UI, Workflows & Features
 
  * Sample credential helper for using .netrc has been updated to work
@@ -311,6 +325,13 @@ Fixes since v2.25
    output.  We inherently do not know how much work remains, but still
    we can show something not to bore users.
    (merge 7655b4119d rs/show-progress-in-dumb-http-fetch later to maint).
+
+ * Both "git ls-remote -h" and "git grep -h" give short usage help,
+   like any other Git subcommand, but it is not unreasonable to expect
+   that the former would behave the same as "git ls-remote --head"
+   (there is no other sensible behaviour for the latter).  The
+   documentation has been updated in an attempt to clarify this.
+   (merge 1ff466c018 jc/doc-single-h-is-for-help later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
