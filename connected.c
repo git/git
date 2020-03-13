@@ -61,7 +61,11 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		 * object is a promisor object. Instead, just make sure we
 		 * received, in a promisor packfile, the objects pointed to by
 		 * each wanted ref.
+		 *
+		 * Before checking for promisor packs, be sure we have the
+		 * latest pack-files loaded into memory.
 		 */
+		reprepare_packed_git(the_repository);
 		do {
 			struct packed_git *p;
 
