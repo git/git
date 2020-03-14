@@ -94,49 +94,35 @@ static int sparse_checkout_list(int argc, const char **argv)
 
 static int update_working_directory(struct pattern_list *pl)
 {
-	int result = 0;
+	enum update_sparsity_result result;
 	struct unpack_trees_options o;
 	struct lock_file lock_file = LOCK_INIT;
-	struct object_id oid;
-	struct tree *tree;
-	struct tree_desc t;
 	struct repository *r = the_repository;
-
-	if (repo_read_index_unmerged(r))
-		die(_("you need to resolve your current index first"));
-
-	if (get_oid("HEAD", &oid))
-		return 0;
-
-	tree = parse_tree_indirect(&oid);
-	parse_tree(tree);
-	init_tree_desc(&t, tree->buffer, tree->size);
 
 	memset(&o, 0, sizeof(o));
 	o.verbose_update = isatty(2);
-	o.merge = 1;
 	o.update = 1;
-	o.fn = oneway_merge;
 	o.head_idx = -1;
 	o.src_index = r->index;
 	o.dst_index = r->index;
 	o.skip_sparse_checkout = 0;
 	o.pl = pl;
 
-	resolve_undo_clear_index(r->index);
 	setup_work_tree();
-
-	cache_tree_free(&r->index->cache_tree);
 
 	repo_hold_locked_index(r, &lock_file, LOCK_DIE_ON_ERROR);
 
-	core_apply_sparse_checkout = 1;
-	result = unpack_trees(1, &t, &o);
+	result = update_sparsity(&o);
 
-	if (!result) {
-		prime_cache_tree(r, r->index, tree);
+	if (result == UPDATE_SPARSITY_WARNINGS)
+		/*
+		 * We don't do any special handling of warnings from untracked
+		 * files in the way or dirty entries that can't be removed.
+		 */
+		result = UPDATE_SPARSITY_SUCCESS;
+	if (result == UPDATE_SPARSITY_SUCCESS)
 		write_locked_index(r->index, &lock_file, COMMIT_LOCK);
-	} else
+	else
 		rollback_lock_file(&lock_file);
 
 	return result;
@@ -303,8 +289,6 @@ static int sparse_checkout_init(int argc, const char **argv)
 	};
 
 	repo_read_index(the_repository);
-	require_clean_work_tree(the_repository,
-				N_("initialize sparse-checkout"), NULL, 1, 0);
 
 	argc = parse_options(argc, argv, NULL,
 			     builtin_sparse_checkout_init_options,
@@ -559,8 +543,6 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
 	};
 
 	repo_read_index(the_repository);
-	require_clean_work_tree(the_repository,
-				N_("set sparse-checkout patterns"), NULL, 1, 0);
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_set_options,
@@ -576,8 +558,6 @@ static int sparse_checkout_disable(int argc, const char **argv)
 	struct strbuf match_all = STRBUF_INIT;
 
 	repo_read_index(the_repository);
-	require_clean_work_tree(the_repository,
-				N_("disable sparse-checkout"), NULL, 1, 0);
 
 	memset(&pl, 0, sizeof(pl));
 	hashmap_init(&pl.recursive_hashmap, pl_hashmap_cmp, NULL, 0);
