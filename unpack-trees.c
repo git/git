@@ -1618,7 +1618,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 		/*
 		 * Sparse checkout loop #2: set NEW_SKIP_WORKTREE on entries not in loop #1
-		 * If the will have NEW_SKIP_WORKTREE, also set CE_SKIP_WORKTREE
+		 * If they will have NEW_SKIP_WORKTREE, also set CE_SKIP_WORKTREE
 		 * so apply_sparse_checkout() won't attempt to remove it from worktree
 		 */
 		mark_new_skip_worktree(o->pl, &o->result,
