@@ -1,7 +1,6 @@
 #ifndef OIDSET_H
 #define OIDSET_H
 
-#include "hashmap.h"
 #include "khash.h"
 
 /**
