@@ -64,6 +64,7 @@ class SimpleChord {
 	field notes
 	field body
 	field is_completed
+	field eval_ns
 
 	# Constructor:
 	#   set chord [SimpleChord::new {body}]
@@ -74,6 +75,7 @@ class SimpleChord {
 		set notes [list]
 		set body $i_body
 		set is_completed 0
+		set eval_ns "[namespace qualifiers $this]::eval"
 		return $this
 	}
 
@@ -83,7 +85,7 @@ class SimpleChord {
 	#     the chord body will be evaluated. This can be used to set variable
 	#     values for the chord body to use.
 	method eval {script} {
-		namespace eval [namespace qualifiers $this] $script
+		namespace eval $eval_ns $script
 	}
 
 	# Method:
@@ -111,7 +113,7 @@ class SimpleChord {
 
 			set is_completed 1
 
-			namespace eval [namespace qualifiers $this] $body
+			namespace eval $eval_ns $body
 			delete_this
 		}
 	}
