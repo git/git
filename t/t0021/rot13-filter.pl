@@ -136,7 +136,7 @@ while (1) {
 					$DELAY{$pathname}{"requested"} = 1;
 				}
 			} elsif ($buffer =~ /^(ref|treeish|blob)=/) {
-				# Do nothing.
+				print $debug " $buffer";
 			} else {
 				# In general, filters need to be graceful about
 				# new metadata, since it's documented that we

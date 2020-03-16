@@ -604,7 +604,8 @@ static void describe_detached_head(const char *msg, struct commit *commit)
 }
 
 static int reset_tree(struct tree *tree, const struct checkout_opts *o,
-		      int worktree, int *writeout_error)
+		      int worktree, int *writeout_error,
+		      struct branch_info *info)
 {
 	struct unpack_trees_options opts;
 	struct tree_desc tree_desc;
@@ -619,6 +620,11 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.verbose_update = o->show_progress;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
+	init_checkout_metadata(&opts.meta, info->refname,
+			       info->commit ? &info->commit->object.oid :
+			       is_null_oid(&info->oid) ? &tree->object.oid :
+			       &info->oid,
+			       NULL);
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
 	switch (unpack_trees(1, &tree_desc, &opts)) {
@@ -677,7 +683,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	} else
 		new_tree = get_commit_tree(new_branch_info->commit);
 	if (opts->discard_changes) {
-		ret = reset_tree(new_tree, opts, 1, writeout_error);
+		ret = reset_tree(new_tree, opts, 1, writeout_error, new_branch_info);
 		if (ret)
 			return ret;
 	} else {
@@ -706,6 +712,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		topts.quiet = opts->merge && old_branch_info->commit;
 		topts.verbose_update = opts->show_progress;
 		topts.fn = twoway_merge;
+		init_checkout_metadata(&topts.meta, new_branch_info->refname,
+				       new_branch_info->commit ?
+				       &new_branch_info->commit->object.oid :
+				       &new_branch_info->oid, NULL);
 		if (opts->overwrite_ignore) {
 			topts.dir = xcalloc(1, sizeof(*topts.dir));
 			topts.dir->flags |= DIR_SHOW_IGNORED;
@@ -776,7 +786,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 
 			ret = reset_tree(new_tree,
 					 opts, 1,
-					 writeout_error);
+					 writeout_error, new_branch_info);
 			if (ret)
 				return ret;
 			o.ancestor = old_branch_info->name;
@@ -796,7 +806,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 				exit(128);
 			ret = reset_tree(new_tree,
 					 opts, 0,
-					 writeout_error);
+					 writeout_error, new_branch_info);
 			strbuf_release(&o.obuf);
 			strbuf_release(&old_commit_shortname);
 			if (ret)
