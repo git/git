@@ -315,13 +315,13 @@ static int write_entry(struct cache_entry *ce,
 		 */
 		if (dco && dco->state != CE_NO_DELAY) {
 			ret = async_convert_to_working_tree(state->istate, ce->name, new_blob,
-							    size, &buf, dco);
+							    size, &buf, NULL, dco);
 			if (ret && string_list_has_string(&dco->paths, ce->name)) {
 				free(new_blob);
 				goto delayed;
 			}
 		} else
-			ret = convert_to_working_tree(state->istate, ce->name, new_blob, size, &buf);
+			ret = convert_to_working_tree(state->istate, ce->name, new_blob, size, &buf, NULL);
 
 		if (ret) {
 			free(new_blob);
