@@ -12,10 +12,9 @@ Backward compatibility notes
 
    If your workflow is negatively affected by this change, please
    report it to git@vger.kernel.org so that we can take a look into
-   it.  In the meantime, the 'rebase.backend' configuration variable
-   can be set in order to use the old default behaviour (the value to
-   do so is not described here---it is given to those who report their
-   issues to the list ;-).
+   it.  After doing so, you can set the 'rebase.backend' configuration
+   variable to 'apply', in order to use the old default behaviour in
+   the meantime.
 
 
 UI, Workflows & Features
