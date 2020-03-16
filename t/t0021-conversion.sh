@@ -382,7 +382,8 @@ test_expect_success PERL 'required process filter should filter data' '
 		test_cmp_count expected.log debug.log &&
 
 		git commit -m "test commit 2" &&
-		META="ref=refs/heads/master treeish=$(git rev-parse --verify master)" &&
+		MASTER=$(git rev-parse --verify master) &&
+		META="ref=refs/heads/master treeish=$MASTER" &&
 		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 
 		filter_git checkout --quiet --no-progress . &&
@@ -422,6 +423,42 @@ test_expect_success PERL 'required process filter should filter data' '
 		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.r &&
 		test_cmp_committed_rot13 "$TEST_ROOT/test2.o" test2.r &&
 		test_cmp_committed_rot13 "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r"
+	)
+'
+
+test_expect_success PERL 'required process filter should filter data for various subcommands' '
+	test_config_global filter.protocol.process "rot13-filter.pl debug.log clean smudge" &&
+	test_config_global filter.protocol.required true &&
+	(
+		cd repo &&
+
+		S=$(file_size test.r) &&
+		S2=$(file_size test2.r) &&
+		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		M=$(git hash-object test.r) &&
+		M2=$(git hash-object test2.r) &&
+		M3=$(git hash-object "testsubdir/test3 '\''sq'\'',\$x=.r") &&
+		EMPTY=$(git hash-object /dev/null) &&
+
+		MASTER=$(git rev-parse --verify master) &&
+
+		cp "$TEST_ROOT/test.o" test5.r &&
+		git add test5.r &&
+		git commit -m "test commit 3" &&
+		git checkout empty-branch &&
+		filter_git rebase --onto empty-branch master^^ master &&
+		META="ref=refs/heads/master treeish=$(git rev-parse --verify master)" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge test5.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log
 	)
 '
 
