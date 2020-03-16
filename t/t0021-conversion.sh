@@ -447,7 +447,8 @@ test_expect_success PERL 'required process filter should filter data for various
 		git commit -m "test commit 3" &&
 		git checkout empty-branch &&
 		filter_git rebase --onto empty-branch master^^ master &&
-		META="ref=refs/heads/master treeish=$(git rev-parse --verify master)" &&
+		MASTER2=$(git rev-parse --verify master) &&
+		META="ref=refs/heads/master treeish=$MASTER2" &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
@@ -455,6 +456,35 @@ test_expect_success PERL 'required process filter should filter data for various
 			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
 			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
 			IN: smudge test5.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log &&
+
+		git reset --hard empty-branch &&
+		filter_git reset --hard $MASTER &&
+		META="treeish=$MASTER" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
+			STOP
+		EOF
+		test_cmp_exclude_clean expected.log debug.log &&
+
+		git branch old-master $MASTER &&
+		git reset --hard empty-branch &&
+		filter_git reset --hard old-master &&
+		META="ref=refs/heads/old-master treeish=$MASTER" &&
+		cat >expected.log <<-EOF &&
+			START
+			init handshake complete
+			IN: smudge test.r $META blob=$M $S [OK] -- OUT: $S . [OK]
+			IN: smudge test2.r $META blob=$M2 $S2 [OK] -- OUT: $S2 . [OK]
+			IN: smudge test4-empty.r $META blob=$EMPTY 0 [OK] -- OUT: 0  [OK]
 			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $META blob=$M3 $S3 [OK] -- OUT: $S3 . [OK]
 			STOP
 		EOF

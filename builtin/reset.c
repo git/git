@@ -46,7 +46,7 @@ static inline int is_merge(void)
 	return !access(git_path_merge_head(the_repository), F_OK);
 }
 
-static int reset_index(const struct object_id *oid, int reset_type, int quiet)
+static int reset_index(const char *ref, const struct object_id *oid, int reset_type, int quiet)
 {
 	int i, nr = 0;
 	struct tree_desc desc[2];
@@ -60,6 +60,7 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 	opts.dst_index = &the_index;
 	opts.fn = oneway_merge;
 	opts.merge = 1;
+	init_checkout_metadata(&opts.meta, ref, oid, NULL);
 	if (!quiet)
 		opts.verbose_update = 1;
 	switch (reset_type) {
@@ -418,11 +419,20 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				}
 			}
 		} else {
-			int err = reset_index(&oid, reset_type, quiet);
+			struct object_id dummy;
+			char *ref = NULL;
+			int err;
+
+			dwim_ref(rev, strlen(rev), &dummy, &ref);
+			if (ref && !starts_with(ref, "refs/"))
+				ref = NULL;
+
+			err = reset_index(ref, &oid, reset_type, quiet);
 			if (reset_type == KEEP && !err)
-				err = reset_index(&oid, MIXED, quiet);
+				err = reset_index(ref, &oid, MIXED, quiet);
 			if (err)
 				die(_("Could not reset index file to revision '%s'."), rev);
+			free(ref);
 		}
 
 		if (write_locked_index(&the_index, &lock, COMMIT_LOCK))
