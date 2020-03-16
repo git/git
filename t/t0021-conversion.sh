@@ -748,7 +748,8 @@ test_expect_success PERL 'delayed checkout in process filter' '
 	) &&
 
 	S=$(file_size "$TEST_ROOT/test.o") &&
-	M="blob=$(git -C repo rev-parse --verify master:test.a)" &&
+	PM="ref=refs/heads/master treeish=$(git -C repo rev-parse --verify master) " &&
+	M="${PM}blob=$(git -C repo rev-parse --verify master:test.a)" &&
 	cat >a.exp <<-EOF &&
 		START
 		init handshake complete
@@ -789,8 +790,11 @@ test_expect_success PERL 'delayed checkout in process filter' '
 
 		rm *.a *.b &&
 		filter_git checkout . &&
-		test_cmp_count ../a.exp a.log &&
-		test_cmp_count ../b.exp b.log &&
+		# We are not checking out a ref here, so filter out ref metadata.
+		sed -e "s!$PM!!" ../a.exp >a.exp.filtered &&
+		sed -e "s!$PM!!" ../b.exp >b.exp.filtered &&
+		test_cmp_count a.exp.filtered a.log &&
+		test_cmp_count b.exp.filtered b.log &&
 
 		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.a &&
 		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.a &&
