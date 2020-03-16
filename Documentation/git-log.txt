@@ -49,6 +49,7 @@ OPTIONS
 	Print out the ref name given on the command line by which each
 	commit was reached.
 
+--[no-]mailmap::
 --[no-]use-mailmap::
 	Use mailmap file to map author and committer names and email
 	addresses to canonical real names and email addresses. See
