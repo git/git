@@ -92,6 +92,8 @@ struct branch_info {
 	const char *name; /* The short name used */
 	const char *path; /* The full name of a real branch */
 	struct commit *commit; /* The named commit */
+	char *refname; /* The full name of the ref being checked out. */
+	struct object_id oid; /* The object ID of the commit being checked out. */
 	/*
 	 * if not null the branch is detached because it's already
 	 * checked out in this checkout
@@ -359,6 +361,10 @@ static int checkout_worktree(const struct checkout_opts *opts,
 	state.force = 1;
 	state.refresh_cache = 1;
 	state.istate = &the_index;
+
+	init_checkout_metadata(&state.meta, info->refname,
+			       info->commit ? &info->commit->object.oid : &info->oid,
+			       NULL);
 
 	enable_delayed_checkout(&state);
 	for (pos = 0; pos < active_nr; pos++) {
@@ -635,6 +641,13 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 static void setup_branch_path(struct branch_info *branch)
 {
 	struct strbuf buf = STRBUF_INIT;
+
+	/*
+	 * If this is a ref, resolve it; otherwise, look up the OID for our
+	 * expression.  Failure here is okay.
+	 */
+	if (!dwim_ref(branch->name, strlen(branch->name), &branch->oid, &branch->refname))
+		repo_get_oid_committish(the_repository, branch->name, &branch->oid);
 
 	strbuf_branchname(&buf, branch->name, INTERPRET_BRANCH_LOCAL);
 	if (strcmp(buf.buf, branch->name))

@@ -2006,3 +2006,25 @@ int stream_filter(struct stream_filter *filter,
 {
 	return filter->vtbl->filter(filter, input, isize_p, output, osize_p);
 }
+
+void init_checkout_metadata(struct checkout_metadata *meta, const char *refname,
+			    const struct object_id *treeish,
+			    const struct object_id *blob)
+{
+	memset(meta, 0, sizeof(*meta));
+	if (refname)
+		meta->refname = refname;
+	if (treeish)
+		oidcpy(&meta->treeish, treeish);
+	if (blob)
+		oidcpy(&meta->blob, blob);
+}
+
+void clone_checkout_metadata(struct checkout_metadata *dst,
+			     const struct checkout_metadata *src,
+			     const struct object_id *blob)
+{
+	memcpy(dst, src, sizeof(*dst));
+	if (blob)
+		oidcpy(&dst->blob, blob);
+}
