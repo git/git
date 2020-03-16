@@ -243,8 +243,7 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	git reset --hard &&
 	git checkout change+rename &&
 
-	test-tool chmtime =31337 B &&
-	test-tool chmtime --get B >old-mtime &&
+	test-tool chmtime --get -3600 B >old-mtime &&
 	GIT_MERGE_VERBOSITY=3 git merge change >out &&
 
 	test-tool chmtime --get B >new-mtime &&
@@ -253,10 +252,12 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	git reset --hard HEAD^ &&
 	git checkout change &&
 
-	test-tool chmtime =-1 M &&
-	test-tool chmtime --get M >old-mtime &&
+	# A will be renamed to B; we check mtimes and file presence
+	test_path_is_missing B &&
+	test-tool chmtime --get -3600 A >old-mtime &&
 	GIT_MERGE_VERBOSITY=3 git merge change+rename >out &&
 
+	test_path_is_missing A &&
 	test-tool chmtime --get B >new-mtime &&
 	test $(cat old-mtime) -lt $(cat new-mtime)
 '
@@ -645,7 +646,7 @@ test_expect_success 'setup avoid unnecessary update, normal rename' '
 
 test_expect_success 'avoid unnecessary update, normal rename' '
 	git checkout -q avoid-unnecessary-update-1^0 &&
-	test-tool chmtime --get =1000000000 rename >expect &&
+	test-tool chmtime --get -3600 rename >expect &&
 	git merge merge-branch-1 &&
 	test-tool chmtime --get rename >actual &&
 	test_cmp expect actual # "rename" should have stayed intact
@@ -677,7 +678,7 @@ test_expect_success 'setup to test avoiding unnecessary update, with D/F conflic
 
 test_expect_success 'avoid unnecessary update, with D/F conflict' '
 	git checkout -q avoid-unnecessary-update-2^0 &&
-	test-tool chmtime --get =1000000000 df >expect &&
+	test-tool chmtime --get -3600 df >expect &&
 	git merge merge-branch-2 &&
 	test-tool chmtime --get df >actual &&
 	test_cmp expect actual # "df" should have stayed intact
@@ -708,7 +709,7 @@ test_expect_success 'setup avoid unnecessary update, dir->(file,nothing)' '
 
 test_expect_success 'avoid unnecessary update, dir->(file,nothing)' '
 	git checkout -q master^0 &&
-	test-tool chmtime --get =1000000000 df >expect &&
+	test-tool chmtime --get -3600 df >expect &&
 	git merge side &&
 	test-tool chmtime --get df >actual &&
 	test_cmp expect actual # "df" should have stayed intact
@@ -737,7 +738,7 @@ test_expect_success 'setup avoid unnecessary update, modify/delete' '
 
 test_expect_success 'avoid unnecessary update, modify/delete' '
 	git checkout -q master^0 &&
-	test-tool chmtime --get =1000000000 file >expect &&
+	test-tool chmtime --get -3600 file >expect &&
 	test_must_fail git merge side &&
 	test-tool chmtime --get file >actual &&
 	test_cmp expect actual # "file" should have stayed intact
@@ -765,7 +766,7 @@ test_expect_success 'setup avoid unnecessary update, rename/add-dest' '
 
 test_expect_success 'avoid unnecessary update, rename/add-dest' '
 	git checkout -q master^0 &&
-	test-tool chmtime --get =1000000000 newfile >expect &&
+	test-tool chmtime --get -3600 newfile >expect &&
 	git merge side &&
 	test-tool chmtime --get newfile >actual &&
 	test_cmp expect actual # "file" should have stayed intact
