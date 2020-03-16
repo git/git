@@ -438,9 +438,13 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 	} else {
 		match = prefix_path_gently(prefix, prefixlen,
 					   &prefixlen, copyfrom);
-		if (!match)
+		if (!match) {
+			const char *hint_path = get_git_work_tree();
+			if (!hint_path)
+				hint_path = get_git_dir();
 			die(_("%s: '%s' is outside repository at '%s'"), elt,
-			    copyfrom, absolute_path(get_git_work_tree()));
+			    copyfrom, absolute_path(hint_path));
+		}
 	}
 
 	item->match = match;
