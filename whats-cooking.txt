@@ -1,16 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2020, #03; Mon, 9)
-X-master-at: b4374e96c84ed9394fed363973eb540da308ed4f
-X-next-at: 3b80da1da63efb9efa783b9cd17a44b73ecbe37a
+Subject: What's cooking in git.git (Mar 2020, #04; Mon, 16)
+X-master-at: 6c85aac65fb455af85745130ce35ddae4678db84
+X-next-at: e327a58236cc95b4efc12994231bc709cb52d153
 
-What's cooking in git.git (Mar 2020, #03; Mon, 9)
+What's cooking in git.git (Mar 2020, #04; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+Git 2.26-rc2 has been tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,137 +22,11 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* am/mingw-poll-fix (2020-02-27) 1 commit
-  (merged to 'next' on 2020-03-02 at 7082619f34)
- + mingw: workaround for hangs when sending STDIN
+* dr/push-remote-ref-update (2020-03-03) 1 commit
+  (merged to 'next' on 2020-03-09 at 5a72128815)
+ + remote: drop "explicit" parameter from remote_ref_for_branch()
 
- MinGW's poll() emulation has been improved.
-
-
-* am/pathspec-f-f-more (2020-02-19) 8 commits
-  (merged to 'next' on 2020-03-02 at 33ff7e29f0)
- + stash push: support the --pathspec-from-file option
- + stash: eliminate crude option parsing
- + doc: stash: synchronize <pathspec> description
- + doc: stash: document more options
- + doc: stash: split options from description (2)
- + doc: stash: split options from description (1)
- + rm: support the --pathspec-from-file option
- + doc: rm: synchronize <pathspec> description
-
- "git rm" and "git stash" learns the new "--pathspec-from-file"
- option.
-
-
-* en/merge-path-collision (2020-02-27) 1 commit
-  (merged to 'next' on 2020-03-02 at cb2655c779)
- + merge-recursive: apply collision handling unification to recursive case
-
- Handling of conflicting renames in merge-recursive have further
- been made consistent with how existing codepaths try to mimic what
- is done to add/add conflicts.
-
-
-* en/test-cleanup (2020-02-27) 5 commits
-  (merged to 'next' on 2020-03-02 at 93a81886b7)
- + t6020: new test with interleaved lexicographic ordering of directories
- + t6022, t6046: test expected behavior instead of testing a proxy for it
- + t3035: prefer test_must_fail to bash negation for git commands
- + t6020, t6022, t6035: update merge tests to use test helper functions
- + t602[1236], t6034: modernize test formatting
-
- Test cleanup.
-
-
-* hd/show-one-mergetag-fix (2020-03-02) 1 commit
-  (merged to 'next' on 2020-03-02 at 12fe907f8d)
- + show_one_mergetag: print non-parent in hex form.
-
- "git show" and others gave an object name in raw format in its
- error output, which has been corrected to give it in hex.
-
-
-* kk/complete-diff-color-moved (2020-02-24) 1 commit
-  (merged to 'next' on 2020-03-02 at 1bdb401f6a)
- + completion: add diff --color-moved[-ws]
-
- Completion update.
-
-
-* pb/am-show-current-patch (2020-02-20) 5 commits
-  (merged to 'next' on 2020-03-02 at 30b5300705)
- + am: support --show-current-patch=diff to retrieve .git/rebase-apply/patch
- + am: support --show-current-patch=raw as a synonym for--show-current-patch
- + am: convert "resume" variable to a struct
- + parse-options: convert "command mode" to a flag
- + parse-options: add testcases for OPT_CMDMODE()
-
- "git am --short-current-patch" is a way to show the piece of e-mail
- for the stopped step, which is not suitable to directly feed "git
- apply" (it is designed to be a good "git am" input).  It learned a
- new option to show only the patch part.
-
-
-* rj/t1050-use-test-path-is-file (2020-02-24) 1 commit
-  (merged to 'next' on 2020-03-02 at 68a681640e)
- + t1050: replace test -f with test_path_is_file
-
- Code cleanup.
-
-
-* rs/show-progress-in-dumb-http-fetch (2020-03-03) 1 commit
-  (merged to 'next' on 2020-03-05 at 98ed6360e7)
- + remote-curl: show progress for fetches over dumb HTTP
-
- "git fetch" over HTTP walker protocol did not show any progress
- output.  We inherently do not know how much work remains, but still
- we can show something not to bore users.
-
-
-* rt/format-zero-length-fix (2020-02-28) 2 commits
-  (merged to 'next' on 2020-03-02 at a4070ef573)
- + config.mak.dev: re-enable -Wformat-zero-length
- + rebase-interactive.c: silence format-zero-length warnings
-
- Recently we inadvertently added a few instances of using 0-width
- format string to functions that we mark as printf-like without any
- developers noticing.  The root cause was that the compiler warning
- that is triggered by this is almost always useless and we disabled
- the warning in our developer builds, but not for general public.
- The new instances have been corrected, and the warning has been
- resurrected in the developer builds.
-
---------------------------------------------------
-[New Topics]
-
-* hi/gpg-prefer-check-signature (2020-03-05) 2 commits
- - gpg-interface: prefer check_signature() for GPG verification
- - t: increase test coverage of signature verification output
-
- The code to interface with GnuPG has been refactored.
-
-
-* jc/maintain-doc (2020-03-09) 1 commit
-  (merged to 'next' on 2020-03-09 at 7f1a754f60)
- + update how-to-maintain-git
-
- Doc update.
-
- Will cook in 'next'.
-
-
-* am/real-path-fix (2020-03-06) 4 commits
- - get_superproject_working_tree(): return strbuf
- - real_path_if_valid(): remove unsafe API
- - real_path: remove unsafe API
- - set_git_dir: fix crash when used with real_path()
-
- The real_path() convenience function can easily be misused; with a
- bit of code refactoring in the callers' side, its use has been
- eliminated.
-
- Expecting a reroll.
- cf. <c1c3c6ec-6361-5711-15e8-01e5ccdb651f@syntevo.com>
+ Code clean-up.
 
 
 * ds/sparse-add (2020-03-09) 1 commit
@@ -159,33 +35,114 @@ of the repositories listed at
 
  Test fix.
 
- Will merge to 'master'.
+
+* en/rebase-backend (2020-03-11) 3 commits
+  (merged to 'next' on 2020-03-11 at 52a3c30dc4)
+ + git-rebase.txt: highlight backend differences with commit rewording
+ + sequencer: clear state upon dropping a become-empty commit
+ + i18n: unmark a message in rebase.c
+
+ Band-aid fixes for two fallouts from switching the default "rebase"
+ backend.
+
+
+* en/test-cleanup (2020-03-13) 1 commit
+  (merged to 'next' on 2020-03-15 at a2807c8476)
+ + t6022, t6046: fix flaky files-are-updated checks
+
+ Test fixes.
+
+
+* es/outside-repo-errmsg-hints (2020-03-15) 1 commit
+  (merged to 'next' on 2020-03-15 at 12be04a348)
+ + prefix_path: show gitdir if worktree unavailable
+
+ An earlier update to show the location of working tree in the error
+ message did not consider the possibility that a git command may be
+ run in a bare repository, which has been corrected.
+
+
+* jc/doc-single-h-is-for-help (2020-02-27) 1 commit
+  (merged to 'next' on 2020-03-09 at 9580bb63a2)
+ + Documentation: clarify that `-h` alone stands for `help`
+
+ Both "git ls-remote -h" and "git grep -h" give short usage help,
+ like any other Git subcommand, but it is not unreasonable to expect
+ that the former would behave the same as "git ls-remote --head"
+ (there is no other sensible behaviour for the latter).  The
+ documentation has been updated in an attempt to clarify this.
+
+--------------------------------------------------
+[New Topics]
+
+* sg/commit-slab-clarify-peek (2020-03-10) 1 commit
+  (merged to 'next' on 2020-03-11 at 0496b26f23)
+ + commit-slab: clarify slabname##_peek()'s return value
+
+ In-code comment update.
+
+ Will cook in 'next'.
+
+
+* rs/doc-passthru-fetch-options (2020-03-11) 1 commit
+  (merged to 'next' on 2020-03-12 at f08dab7228)
+ + pull: document more passthru options
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* bc/filter-process (2020-03-16) 8 commits
+ - t0021: test filter metadata for additional cases
+ - builtin/reset: compute checkout metadata for reset
+ - builtin/rebase: compute checkout metadata for rebases
+ - builtin/clone: compute checkout metadata for clones
+ - builtin/checkout: compute checkout metadata for checkouts
+ - convert: provide additional metadata to filters
+ - convert: permit passing additional metadata to filter processes
+ - builtin/checkout: pass branch info down to checkout_worktree
+
+ Provide more information (e.g. the object of the tree-ish in which
+ the blob being converted appears, in addition to its path, which
+ has already been given) to smudge/clean conversion filters.
+
+ Will merge to 'next'.
+
+
+* bc/faq (2020-03-15) 1 commit
+ - docs: add a FAQ
+
+ Doc update.
+
+
+* ds/check-connected-reprepare-packed-git (2020-03-15) 1 commit
+  (merged to 'next' on 2020-03-16 at 609a322030)
+ + connected.c: reprepare packs for corner cases
+
+ Corner case "git fetch" fix.
+
+ Will cook in 'next'.
+
+
+* en/oidset-uninclude-hashmap (2020-03-15) 1 commit
+  (merged to 'next' on 2020-03-16 at a79879866d)
+ + oidset: remove unnecessary include
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* jc/log-no-mailmap (2020-03-16) 3 commits
+ - log: give --[no-]use-mailmap a more sensible synonym --[no-]mailmap
+ - clone: reorder --recursive/--recurse-submodules
+ - parse-options: teach "git cmd -h" to show alias as alias
+
+ "git log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
 
 --------------------------------------------------
 [Stalled]
-
-* yz/p4-py3 (2020-02-13) 14 commits
- - ci: use python3 in linux-gcc and osx-gcc and python2 elsewhere
- - git-p4: use python3's input() everywhere
- - git-p4: simplify regex pattern generation for parsing diff-tree
- - git-p4: use dict.items() iteration for python3 compatibility
- - git-p4: use functools.reduce instead of reduce
- - git-p4: fix freezing while waiting for fast-import progress
- - git-p4: use marshal format version 2 when sending to p4
- - git-p4: open .gitp4-usercache.txt in text mode
- - git-p4: convert path to unicode before processing them
- - git-p4: encode/decode communication with git for python3
- - git-p4: encode/decode communication with p4 for python3
- - git-p4: remove string type aliasing
- - git-p4: change the expansion test from basestring to list
- - git-p4: make python2.7 the oldest supported version
-
- Update "git p4" to work with Python 3.
-
- Hold.
- Waiting for SoB from Szeder on the last step.
- cf. <xmqqk14qqj7n.fsf@gitster-ct.c.googlers.com>
-
 
 * dl/merge-autostash (2020-01-13) 17 commits
  - pull: pass --autostash to merge
@@ -265,13 +222,58 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* dr/push-remote-ref-update (2020-03-03) 1 commit
-  (merged to 'next' on 2020-03-09 at 5a72128815)
- + remote: drop "explicit" parameter from remote_ref_for_branch()
+* yz/p4-py3 (2020-03-10) 14 commits
+  (merged to 'next' on 2020-03-11 at 01ca57c2b2)
+ + ci: use python3 in linux-gcc and osx-gcc and python2 elsewhere
+ + git-p4: use python3's input() everywhere
+ + git-p4: simplify regex pattern generation for parsing diff-tree
+ + git-p4: use dict.items() iteration for python3 compatibility
+ + git-p4: use functools.reduce instead of reduce
+ + git-p4: fix freezing while waiting for fast-import progress
+ + git-p4: use marshal format version 2 when sending to p4
+ + git-p4: open .gitp4-usercache.txt in text mode
+ + git-p4: convert path to unicode before processing them
+ + git-p4: encode/decode communication with git for python3
+ + git-p4: encode/decode communication with p4 for python3
+ + git-p4: remove string type aliasing
+ + git-p4: change the expansion test from basestring to list
+ + git-p4: make python2.7 the oldest supported version
 
- Code clean-up.
+ Update "git p4" to work with Python 3.
 
- Will merge to 'master'.
+ Will cook in 'next'.
+
+
+* hi/gpg-prefer-check-signature (2020-03-15) 2 commits
+ - gpg-interface: prefer check_signature() for GPG verification
+ - t: increase test coverage of signature verification output
+
+ The code to interface with GnuPG has been refactored.
+
+ Will merge to 'next'.
+
+
+* jc/maintain-doc (2020-03-09) 1 commit
+  (merged to 'next' on 2020-03-09 at 7f1a754f60)
+ + update how-to-maintain-git
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* am/real-path-fix (2020-03-10) 4 commits
+  (merged to 'next' on 2020-03-11 at 1f843820a7)
+ + get_superproject_working_tree(): return strbuf
+ + real_path_if_valid(): remove unsafe API
+ + real_path: remove unsafe API
+ + set_git_dir: fix crash when used with real_path()
+
+ The real_path() convenience function can easily be misused; with a
+ bit of code refactoring in the callers' side, its use has been
+ eliminated.
+
+ Will cook in 'next'.
 
 
 * tb/commit-graph-split-merge (2020-03-05) 3 commits
@@ -287,15 +289,15 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* ah/force-pull-rebase-configuration (2020-03-05) 2 commits
- - SQUASH???
- - pull: warn if the user didn't say whether to rebase or to merge
+* ah/force-pull-rebase-configuration (2020-03-10) 1 commit
+  (merged to 'next' on 2020-03-11 at c79dbbaf9c)
+ + pull: warn if the user didn't say whether to rebase or to merge
 
  "git pull" learned to warn when no pull.rebase configuration
  exists, and neither --[no-]rebase nor --ff-only is given (which
  would result a merge).
 
- Needs to add some tests.
+ Will cook in 'next'.
 
 
 * tg/retire-scripted-stash (2020-03-05) 2 commits
@@ -310,16 +312,6 @@ of the repositories listed at
  cf. <20200306172913.GF1571684@cat>
 
 
-* es/outside-repo-errmsg-hints (2020-03-03) 1 commit
- - prefix_path: show gitdir if worktree unavailable
-
- An earlier update to show the location of working tree in the error
- message did not consider the possibility that a git command may be
- run in a bare repository, which has been corrected.
-
- May want a test or two.
-
-
 * js/https-proxy-config (2020-03-05) 2 commits
   (merged to 'next' on 2020-03-09 at 8a06f8501d)
  + http: add environment variable support for HTTPS proxies
@@ -331,35 +323,21 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jc/doc-single-h-is-for-help (2020-02-27) 1 commit
-  (merged to 'next' on 2020-03-09 at 9580bb63a2)
- + Documentation: clarify that `-h` alone stands for `help`
-
- Both "git ls-remote -h" and "git grep -h" give short usage help,
- like any other Git subcommand, but it is not unreasonable to expect
- that the former would behave the same as "git ls-remote --head"
- (there is no other sensible behaviour for the latter).  The
- documentation has been updated in an attempt to clarify this.
-
- Will merge to 'master'.
-
-
-* pw/advise-rebase-skip (2019-12-06) 9 commits
- - rebase -i: leave CHERRY_PICK_HEAD when there are conflicts
- - rebase: fix advice when a fixup creates an empty commit
- - commit: give correct advice for empty commit during a rebase
- - commit: encapsulate determine_whence() for sequencer
- - commit: use enum value for multiple cherry-picks
- - sequencer: write CHERRY_PICK_HEAD for reword and edit
- - cherry-pick: check commit error messages
- - cherry-pick: add test for `--skip` advice in `git commit`
- - t3404: use test_cmp_rev
+* pw/advise-rebase-skip (2019-12-06) 7 commits
+  (merged to 'next' on 2020-03-11 at 80386de756)
+ + commit: give correct advice for empty commit during a rebase
+ + commit: encapsulate determine_whence() for sequencer
+ + commit: use enum value for multiple cherry-picks
+ + sequencer: write CHERRY_PICK_HEAD for reword and edit
+ + cherry-pick: check commit error messages
+ + cherry-pick: add test for `--skip` advice in `git commit`
+ + t3404: use test_cmp_rev
 
  The mechanism to prevent "git commit" from making an empty commit
  or amending during an interrupted cherry-pick was broken during the
  rewrite of "git rebase" in C, which has been corrected.
 
- Will discard the tip two, which are still RFC, and advance the rest.
+ Will cook in 'next'.
  cf. <xmqq7e0e7d9z.fsf@gitster-ct.c.googlers.com>
 
 
@@ -397,6 +375,11 @@ of the repositories listed at
  - t/lib-submodule-update: remove outdated test description
  - t7112: remove mention of KNOWN_FAILURE_SUBMODULE_RECURSIVE_NESTED
 
+ Fix "git checkout --recurse-submodules" of a nested submodule
+ hierarchy.
+
+ Will merge to 'next'.
+
 
 * bc/sha-256-part-1-of-4 (2020-02-28) 22 commits
  - fast-import: add options for rewriting submodules
@@ -424,8 +407,7 @@ of the repositories listed at
 
  SHA-256 transition continues.
 
- Tentatively I dropped the bits about signed tag, as it depended on
- a reverted change to the gpg interface API.
+ Will merge to 'next'.
 
 
 * hw/advise-ng (2020-03-05) 4 commits
@@ -469,7 +451,7 @@ of the repositories listed at
  The "bugreport" tool.
 
  As the scope of the topic got trimmed, hopefully these early parts
- can be polished quickly enough?
+ can be polished quickly enough to be merged down.
 
 
 * gs/commit-graph-path-filter (2020-02-12) 12 commits
@@ -492,3 +474,14 @@ of the repositories listed at
 
  Will be rerolled with bytesex fixes squashed in.
  Breakage due to byte-order dependency reported.
+
+--------------------------------------------------
+[Discarded]
+
+* jc/rebase-backend-keep-old-default (2020-03-10) 1 commit
+ . rebase: do not switch the default to 'merge' just yet
+
+ The "merge" backend of "git rebase" still has a few bugs and
+ unexpected behaviour that need to be ironed out before it becomes
+ the default.  Let's switch the default back to the "apply" backend
+ for now.
