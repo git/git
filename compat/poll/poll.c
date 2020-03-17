@@ -139,22 +139,10 @@ win32_compute_revents (HANDLE h, int *p_sought)
   INPUT_RECORD *irbuffer;
   DWORD avail, nbuffer;
   BOOL bRet;
-  IO_STATUS_BLOCK iosb;
-  FILE_PIPE_LOCAL_INFORMATION fpli;
-  static PNtQueryInformationFile NtQueryInformationFile;
-  static BOOL once_only;
 
   switch (GetFileType (h))
     {
     case FILE_TYPE_PIPE:
-      if (!once_only)
-	{
-	  NtQueryInformationFile = (PNtQueryInformationFile)(void (*)(void))
-	    GetProcAddress (GetModuleHandleW (L"ntdll.dll"),
-			    "NtQueryInformationFile");
-	  once_only = TRUE;
-	}
-
       happened = 0;
       if (PeekNamedPipe (h, NULL, 0, NULL, &avail, NULL) != 0)
 	{
@@ -166,22 +154,9 @@ win32_compute_revents (HANDLE h, int *p_sought)
 
       else
 	{
-	  /* It was the write-end of the pipe.  Check if it is writable.
-	     If NtQueryInformationFile fails, optimistically assume the pipe is
-	     writable.  This could happen on Win9x, where NtQueryInformationFile
-	     is not available, or if we inherit a pipe that doesn't permit
-	     FILE_READ_ATTRIBUTES access on the write end (I think this should
-	     not happen since WinXP SP2; WINE seems fine too).  Otherwise,
-	     ensure that enough space is available for atomic writes.  */
-	  memset (&iosb, 0, sizeof (iosb));
-	  memset (&fpli, 0, sizeof (fpli));
-
-	  if (!NtQueryInformationFile
-	      || NtQueryInformationFile (h, &iosb, &fpli, sizeof (fpli),
-					 FilePipeLocalInformation)
-	      || fpli.WriteQuotaAvailable >= PIPE_BUF
-	      || (fpli.OutboundQuota < PIPE_BUF &&
-		  fpli.WriteQuotaAvailable == fpli.OutboundQuota))
+	  /* It was the write-end of the pipe. Unfortunately there is no
+	     reliable way of knowing if it can be written without blocking.
+	     Just say that it's all good. */
 	    happened |= *p_sought & (POLLOUT | POLLWRNORM | POLLWRBAND);
 	}
       return happened;
