@@ -326,7 +326,10 @@ static ssize_t list_and_choose(struct add_i_state *s,
 				if (endp == p + sep)
 					to = from + 1;
 				else if (*endp == '-') {
-					to = strtoul(++endp, &endp, 10);
+					if (isdigit(*(++endp)))
+						to = strtoul(endp, &endp, 10);
+					else
+						to = items->items.nr;
 					/* extra characters after the range? */
 					if (endp != p + sep)
 						from = -1;
@@ -913,7 +916,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 
 	opts->prompt = N_("Patch update");
 	count = list_and_choose(s, files, opts);
-	if (count >= 0) {
+	if (count > 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
 		struct pathspec ps_selected = { 0 };
 
@@ -954,7 +957,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	opts->flags = IMMEDIATE;
 	count = list_and_choose(s, files, opts);
 	opts->flags = 0;
-	if (count >= 0) {
+	if (count > 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
 
 		argv_array_pushl(&args, "git", "diff", "-p", "--cached",
