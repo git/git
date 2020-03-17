@@ -188,7 +188,6 @@ Fixes since v2.25
    of gcc and clang.
 
  * Minor bugfixes to "git add -i" that has recently been rewritten in C.
-   (merge 849e43cc18 js/builtin-add-i-cmds later to maint).
 
  * "git fetch --refmap=" option has got a better documentation.
 
@@ -211,17 +210,14 @@ Fixes since v2.25
  * The "--recurse-submodules" option of various subcommands did not
    work well when run in an alternate worktree, which has been
    corrected.
-   (merge a9472afb63 pb/recurse-submodule-in-worktree-fix later to maint).
 
  * Futureproofing a test not to depend on the current implementation
    detail.
 
  * Running "git rm" on a submodule failed unnecessarily when
    .gitmodules is only cache-dirty, which has been corrected.
-   (merge 7edee32985 dt/submodule-rm-with-stale-cache later to maint).
 
  * C pedantry ;-) fix.
-   (merge cf82bff73f jk/clang-sanitizer-fixes later to maint).
 
  * "git grep --no-index" should not get affected by the contents of
    the .gitmodules file but when "--recurse-submodules" is given or
@@ -238,7 +234,6 @@ Fixes since v2.25
    in the main part of its execution.  A few other cases however were
    not covered by the protection against ambiguity, which has been
    corrected.
-   (merge 26027625dd js/rebase-i-with-colliding-hash later to maint).
 
  * Allow the rebase.missingCommitsCheck configuration to kick in when
    "rebase --edit-todo" and "rebase --continue" restarts the procedure.
@@ -252,13 +247,12 @@ Fixes since v2.25
 
  * The code to automatically shrink the fan-out in the notes tree had
    an off-by-one bug, which has been killed.
-   (merge dbc27477ff jh/notes-fanout-fix later to maint).
 
  * The index-pack code now diagnoses a bad input packstream that
    records the same object twice when it is used as delta base; the
    code used to declare a software bug when encountering such an
    input, but it is an input error.
-   (merge a21781011f jk/index-pack-dupfix later to maint).
+
 
  * The code to compute the commit-graph has been taught to use a more
    robust way to tell if two object directories refer to the same
@@ -270,23 +264,18 @@ Fixes since v2.25
    branch.<name>.pushRemote is now also updated.
 
  * Update to doc-diff.
-   (merge 2607d39da3 jk/doc-diff-parallel later to maint).
 
  * Doc markup fix.
-   (merge 0aa6ce3094 jk/push-option-doc-markup-fix later to maint).
 
  * "git check-ignore" did not work when the given path is explicitly
    marked as not ignored with a negative entry in the .gitignore file.
-   (merge 7ec8125fba en/check-ignore later to maint).
 
  * The merge-recursive machinery failed to refresh the cache entry for
    a merge result in a couple of places, resulting in an unnecessary
    merge failure, which has been fixed.
-   (merge fb1c18fc46 en/t3433-rebase-stat-dirty-failure later to maint).
 
  * Fix for a bug revealed by a recent change to make the protocol v2
    the default.
-   (merge 3e96c66805 ds/partial-clone-fixes later to maint).
 
  * In rare cases "git worktree add <path>" could think that <path>
    was already a registered worktree even when it wasn't and refuse
@@ -311,14 +300,11 @@ Fixes since v2.25
  * "git merge signed-tag" while lacking the public key started to say
    "No signature", which was utterly wrong.  This regression has been
    reverted.
-   (merge 0106b1d4be hi/gpg-use-check-signature later to maint).
 
  * MinGW's poll() emulation has been improved.
-   (merge 94f4d01932 am/mingw-poll-fix later to maint).
 
  * "git show" and others gave an object name in raw format in its
    error output, which has been corrected to give it in hex.
-   (merge 237a28173f hd/show-one-mergetag-fix later to maint).
 
  * "git fetch" over HTTP walker protocol did not show any progress
    output.  We inherently do not know how much work remains, but still
@@ -330,10 +316,8 @@ Fixes since v2.25
    that the former would behave the same as "git ls-remote --head"
    (there is no other sensible behaviour for the latter).  The
    documentation has been updated in an attempt to clarify this.
-   (merge 1ff466c018 jc/doc-single-h-is-for-help later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 26f924d50e en/simplify-check-updates-in-unpack-trees later to maint).
    (merge d0d0a357a1 am/update-pathspec-f-f-tests later to maint).
    (merge f94f7bd00d am/test-pathspec-f-f-error-cases later to maint).
    (merge c513a958b6 ss/t6025-modernize later to maint).
@@ -344,20 +328,13 @@ Fixes since v2.25
    (merge 7a9f8ca805 rs/parse-options-concat-dup later to maint).
    (merge 517b60564e rs/strbuf-insertstr later to maint).
    (merge f696a2b1c8 jk/mailinfo-cleanup later to maint).
-   (merge 076ee3e8a2 js/test-write-junit-xml-fix later to maint).
    (merge de26f02db1 js/test-avoid-pipe later to maint).
-   (merge bfe2bbb47f js/test-unc-fetch later to maint).
-   (merge 08809c09aa js/mingw-open-in-gdb later to maint).
-   (merge cc4f2eb828 jk/doc-credential-helper later to maint).
-   (merge e0020b2f82 es/outside-repo-errmsg-hints later to maint).
    (merge a2dc43414c es/doc-mentoring later to maint).
-   (merge 539052f42f jk/run-command-formatfix later to maint).
    (merge 02bbbe9df9 es/worktree-cleanup later to maint).
    (merge 2ce6d075fa rs/micro-cleanups later to maint).
    (merge 27f182b3fc rs/blame-typefix-for-fingerprint later to maint).
    (merge 3c29e21eb0 ma/test-cleanup later to maint).
    (merge 240fc04f81 ag/rebase-remove-redundant-code later to maint).
-   (merge 7f487ce062 js/ci-windows-update later to maint).
    (merge d68ce906c7 rs/commit-graph-code-simplification later to maint).
    (merge a51d9e8f07 rj/t1050-use-test-path-is-file later to maint).
    (merge fd0bc17557 kk/complete-diff-color-moved later to maint).
