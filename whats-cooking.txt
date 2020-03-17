@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2020, #04; Mon, 16)
-X-master-at: 6c85aac65fb455af85745130ce35ddae4678db84
-X-next-at: e327a58236cc95b4efc12994231bc709cb52d153
+Subject: What's cooking in git.git (Mar 2020, #05; Tue, 17)
+X-master-at: be8661a3286c67a5d4088f4226cbd7f8b76544b0
+X-next-at: afcc196a35dfc757a1018548c1f32afeb8a936d2
 
-What's cooking in git.git (Mar 2020, #04; Mon, 16)
+What's cooking in git.git (Mar 2020, #05; Tue, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,134 +12,14 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.26-rc2 has been tagged.
+Git 2.26-rc2 has been tagged.  Many fixes accumulated on the
+'master' front have been flushed to 'maint' and has been tagged
+as Git 2.25.2.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
-
---------------------------------------------------
-[Graduated to "master"]
-
-* dr/push-remote-ref-update (2020-03-03) 1 commit
-  (merged to 'next' on 2020-03-09 at 5a72128815)
- + remote: drop "explicit" parameter from remote_ref_for_branch()
-
- Code clean-up.
-
-
-* ds/sparse-add (2020-03-09) 1 commit
-  (merged to 'next' on 2020-03-09 at 4e675cfd89)
- + t1091: don't grep for `strerror()` string
-
- Test fix.
-
-
-* en/rebase-backend (2020-03-11) 3 commits
-  (merged to 'next' on 2020-03-11 at 52a3c30dc4)
- + git-rebase.txt: highlight backend differences with commit rewording
- + sequencer: clear state upon dropping a become-empty commit
- + i18n: unmark a message in rebase.c
-
- Band-aid fixes for two fallouts from switching the default "rebase"
- backend.
-
-
-* en/test-cleanup (2020-03-13) 1 commit
-  (merged to 'next' on 2020-03-15 at a2807c8476)
- + t6022, t6046: fix flaky files-are-updated checks
-
- Test fixes.
-
-
-* es/outside-repo-errmsg-hints (2020-03-15) 1 commit
-  (merged to 'next' on 2020-03-15 at 12be04a348)
- + prefix_path: show gitdir if worktree unavailable
-
- An earlier update to show the location of working tree in the error
- message did not consider the possibility that a git command may be
- run in a bare repository, which has been corrected.
-
-
-* jc/doc-single-h-is-for-help (2020-02-27) 1 commit
-  (merged to 'next' on 2020-03-09 at 9580bb63a2)
- + Documentation: clarify that `-h` alone stands for `help`
-
- Both "git ls-remote -h" and "git grep -h" give short usage help,
- like any other Git subcommand, but it is not unreasonable to expect
- that the former would behave the same as "git ls-remote --head"
- (there is no other sensible behaviour for the latter).  The
- documentation has been updated in an attempt to clarify this.
-
---------------------------------------------------
-[New Topics]
-
-* sg/commit-slab-clarify-peek (2020-03-10) 1 commit
-  (merged to 'next' on 2020-03-11 at 0496b26f23)
- + commit-slab: clarify slabname##_peek()'s return value
-
- In-code comment update.
-
- Will cook in 'next'.
-
-
-* rs/doc-passthru-fetch-options (2020-03-11) 1 commit
-  (merged to 'next' on 2020-03-12 at f08dab7228)
- + pull: document more passthru options
-
- Doc update.
-
- Will cook in 'next'.
-
-
-* bc/filter-process (2020-03-16) 8 commits
- - t0021: test filter metadata for additional cases
- - builtin/reset: compute checkout metadata for reset
- - builtin/rebase: compute checkout metadata for rebases
- - builtin/clone: compute checkout metadata for clones
- - builtin/checkout: compute checkout metadata for checkouts
- - convert: provide additional metadata to filters
- - convert: permit passing additional metadata to filter processes
- - builtin/checkout: pass branch info down to checkout_worktree
-
- Provide more information (e.g. the object of the tree-ish in which
- the blob being converted appears, in addition to its path, which
- has already been given) to smudge/clean conversion filters.
-
- Will merge to 'next'.
-
-
-* bc/faq (2020-03-15) 1 commit
- - docs: add a FAQ
-
- Doc update.
-
-
-* ds/check-connected-reprepare-packed-git (2020-03-15) 1 commit
-  (merged to 'next' on 2020-03-16 at 609a322030)
- + connected.c: reprepare packs for corner cases
-
- Corner case "git fetch" fix.
-
- Will cook in 'next'.
-
-
-* en/oidset-uninclude-hashmap (2020-03-15) 1 commit
-  (merged to 'next' on 2020-03-16 at a79879866d)
- + oidset: remove unnecessary include
-
- Code clean-up.
-
- Will cook in 'next'.
-
-
-* jc/log-no-mailmap (2020-03-16) 3 commits
- - log: give --[no-]use-mailmap a more sensible synonym --[no-]mailmap
- - clone: reorder --recursive/--recurse-submodules
- - parse-options: teach "git cmd -h" to show alias as alias
-
- "git log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
 
 --------------------------------------------------
 [Stalled]
@@ -222,6 +102,74 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* sg/commit-slab-clarify-peek (2020-03-10) 1 commit
+  (merged to 'next' on 2020-03-11 at 0496b26f23)
+ + commit-slab: clarify slabname##_peek()'s return value
+
+ In-code comment update.
+
+ Will cook in 'next'.
+
+
+* rs/doc-passthru-fetch-options (2020-03-11) 1 commit
+  (merged to 'next' on 2020-03-12 at f08dab7228)
+ + pull: document more passthru options
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* bc/filter-process (2020-03-16) 8 commits
+  (merged to 'next' on 2020-03-17 at 2cd9dbf794)
+ + t0021: test filter metadata for additional cases
+ + builtin/reset: compute checkout metadata for reset
+ + builtin/rebase: compute checkout metadata for rebases
+ + builtin/clone: compute checkout metadata for clones
+ + builtin/checkout: compute checkout metadata for checkouts
+ + convert: provide additional metadata to filters
+ + convert: permit passing additional metadata to filter processes
+ + builtin/checkout: pass branch info down to checkout_worktree
+
+ Provide more information (e.g. the object of the tree-ish in which
+ the blob being converted appears, in addition to its path, which
+ has already been given) to smudge/clean conversion filters.
+
+ Will cook in 'next'.
+
+
+* bc/faq (2020-03-15) 1 commit
+ - docs: add a FAQ
+
+ Doc update.
+
+
+* ds/check-connected-reprepare-packed-git (2020-03-15) 1 commit
+  (merged to 'next' on 2020-03-16 at 609a322030)
+ + connected.c: reprepare packs for corner cases
+
+ Corner case "git fetch" fix.
+
+ Will cook in 'next'.
+
+
+* en/oidset-uninclude-hashmap (2020-03-15) 1 commit
+  (merged to 'next' on 2020-03-16 at a79879866d)
+ + oidset: remove unnecessary include
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* jc/log-no-mailmap (2020-03-16) 3 commits
+ - log: give --[no-]use-mailmap a more sensible synonym --[no-]mailmap
+ - clone: reorder --recursive/--recurse-submodules
+ - parse-options: teach "git cmd -h" to show alias as alias
+
+ "git log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
+
+
 * yz/p4-py3 (2020-03-10) 14 commits
   (merged to 'next' on 2020-03-11 at 01ca57c2b2)
  + ci: use python3 in linux-gcc and osx-gcc and python2 elsewhere
@@ -245,12 +193,13 @@ of the repositories listed at
 
 
 * hi/gpg-prefer-check-signature (2020-03-15) 2 commits
- - gpg-interface: prefer check_signature() for GPG verification
- - t: increase test coverage of signature verification output
+  (merged to 'next' on 2020-03-17 at 2def2d9a7e)
+ + gpg-interface: prefer check_signature() for GPG verification
+ + t: increase test coverage of signature verification output
 
  The code to interface with GnuPG has been refactored.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jc/maintain-doc (2020-03-09) 1 commit
@@ -368,46 +317,48 @@ of the repositories listed at
 
 
 * pb/recurse-submodules-fix (2020-02-19) 6 commits
- - t/lib-submodule-update: add test removing nested submodules
- - unpack-trees: check for missing submodule directory in merged_entry
- - unpack-trees: remove outdated description for verify_clean_submodule
- - t/lib-submodule-update: move a test to the right section
- - t/lib-submodule-update: remove outdated test description
- - t7112: remove mention of KNOWN_FAILURE_SUBMODULE_RECURSIVE_NESTED
+  (merged to 'next' on 2020-03-17 at b46922ddd1)
+ + t/lib-submodule-update: add test removing nested submodules
+ + unpack-trees: check for missing submodule directory in merged_entry
+ + unpack-trees: remove outdated description for verify_clean_submodule
+ + t/lib-submodule-update: move a test to the right section
+ + t/lib-submodule-update: remove outdated test description
+ + t7112: remove mention of KNOWN_FAILURE_SUBMODULE_RECURSIVE_NESTED
 
  Fix "git checkout --recurse-submodules" of a nested submodule
  hierarchy.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * bc/sha-256-part-1-of-4 (2020-02-28) 22 commits
- - fast-import: add options for rewriting submodules
- - fast-import: add a generic function to iterate over marks
- - fast-import: make find_marks work on any mark set
- - fast-import: add helper function for inserting mark object entries
- - fast-import: permit reading multiple marks files
- - commit: use expected signature header for SHA-256
- - worktree: allow repository version 1
- - init-db: move writing repo version into a function
- - builtin/init-db: add environment variable for new repo hash
- - builtin/init-db: allow specifying hash algorithm on command line
- - setup: allow check_repository_format to read repository format
- - t/helper: make repository tests hash independent
- - t/helper: initialize repository if necessary
- - t/helper/test-dump-split-index: initialize git repository
- - t6300: make hash algorithm independent
- - t6300: abstract away SHA-1-specific constants
- - t: use hash-specific lookup tables to define test constants
- - repository: require a build flag to use SHA-256
- - hex: add functions to parse hex object IDs in any algorithm
- - hex: introduce parsing variants taking hash algorithms
- - hash: implement and use a context cloning function
- - builtin/pack-objects: make hash agnostic
+  (merged to 'next' on 2020-03-17 at 436c4e64a7)
+ + fast-import: add options for rewriting submodules
+ + fast-import: add a generic function to iterate over marks
+ + fast-import: make find_marks work on any mark set
+ + fast-import: add helper function for inserting mark object entries
+ + fast-import: permit reading multiple marks files
+ + commit: use expected signature header for SHA-256
+ + worktree: allow repository version 1
+ + init-db: move writing repo version into a function
+ + builtin/init-db: add environment variable for new repo hash
+ + builtin/init-db: allow specifying hash algorithm on command line
+ + setup: allow check_repository_format to read repository format
+ + t/helper: make repository tests hash independent
+ + t/helper: initialize repository if necessary
+ + t/helper/test-dump-split-index: initialize git repository
+ + t6300: make hash algorithm independent
+ + t6300: abstract away SHA-1-specific constants
+ + t: use hash-specific lookup tables to define test constants
+ + repository: require a build flag to use SHA-256
+ + hex: add functions to parse hex object IDs in any algorithm
+ + hex: introduce parsing variants taking hash algorithms
+ + hash: implement and use a context cloning function
+ + builtin/pack-objects: make hash agnostic
 
  SHA-256 transition continues.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * hw/advise-ng (2020-03-05) 4 commits
