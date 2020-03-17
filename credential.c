@@ -195,6 +195,8 @@ static void credential_write_item(FILE *fp, const char *key, const char *value)
 {
 	if (!value)
 		return;
+	if (strchr(value, '\n'))
+		die("credential value for %s contains newline", key);
 	fprintf(fp, "%s=%s\n", key, value);
 }
 
@@ -322,7 +324,22 @@ void credential_reject(struct credential *c)
 	c->approved = 0;
 }
 
-void credential_from_url(struct credential *c, const char *url)
+static int check_url_component(const char *url, int quiet,
+			       const char *name, const char *value)
+{
+	if (!value)
+		return 0;
+	if (!strchr(value, '\n'))
+		return 0;
+
+	if (!quiet)
+		warning(_("url contains a newline in its %s component: %s"),
+			name, url);
+	return -1;
+}
+
+int credential_from_url_gently(struct credential *c, const char *url,
+			       int quiet)
 {
 	const char *at, *colon, *cp, *slash, *host, *proto_end;
 
@@ -336,7 +353,7 @@ void credential_from_url(struct credential *c, const char *url)
 	 */
 	proto_end = strstr(url, "://");
 	if (!proto_end)
-		return;
+		return 0;
 	cp = proto_end + 3;
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');
@@ -370,5 +387,22 @@ void credential_from_url(struct credential *c, const char *url)
 		p = c->path + strlen(c->path) - 1;
 		while (p > c->path && *p == '/')
 			*p-- = '\0';
+	}
+
+	if (check_url_component(url, quiet, "username", c->username) < 0 ||
+	    check_url_component(url, quiet, "password", c->password) < 0 ||
+	    check_url_component(url, quiet, "protocol", c->protocol) < 0 ||
+	    check_url_component(url, quiet, "host", c->host) < 0 ||
+	    check_url_component(url, quiet, "path", c->path) < 0)
+		return -1;
+
+	return 0;
+}
+
+void credential_from_url(struct credential *c, const char *url)
+{
+	if (credential_from_url_gently(c, url, 0) < 0) {
+		warning(_("skipping credential lookup for url: %s"), url);
+		credential_clear(c);
 	}
 }

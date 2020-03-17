@@ -15,6 +15,7 @@
 #include "packfile.h"
 #include "submodule-config.h"
 #include "config.h"
+#include "credential.h"
 #include "help.h"
 
 static struct oidset gitmodules_found = OIDSET_INIT;
@@ -947,6 +948,19 @@ static int fsck_tag(struct tag *tag, const char *data,
 	return fsck_tag_buffer(tag, data, size, options);
 }
 
+static int check_submodule_url(const char *url)
+{
+	struct credential c = CREDENTIAL_INIT;
+	int ret;
+
+	if (looks_like_command_line_option(url))
+		return -1;
+
+	ret = credential_from_url_gently(&c, url, 1);
+	credential_clear(&c);
+	return ret;
+}
+
 struct fsck_gitmodules_data {
 	struct object *obj;
 	struct fsck_options *options;
@@ -971,7 +985,7 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 				    "disallowed submodule name: %s",
 				    name);
 	if (!strcmp(key, "url") && value &&
-	    looks_like_command_line_option(value))
+	    check_submodule_url(value) < 0)
 		data->ret |= report(data->options, data->obj,
 				    FSCK_MSG_GITMODULES_URL,
 				    "disallowed submodule url: %s",
