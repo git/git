@@ -998,10 +998,13 @@ static int update_file_flags(struct merge_options *opt,
 		free(buf);
 	}
 update_index:
-	if (!ret && update_cache)
-		if (add_cacheinfo(opt, contents, path, 0, update_wd,
+	if (!ret && update_cache) {
+		int refresh = (!opt->priv->call_depth &&
+			       contents->mode != S_IFGITLINK);
+		if (add_cacheinfo(opt, contents, path, 0, refresh,
 				  ADD_CACHE_OK_TO_ADD))
 			return -1;
+	}
 	return ret;
 }
 
