@@ -30,9 +30,15 @@ OPTIONS
 	valid with a single pathname.
 
 -v, --verbose::
-	Also output details about the matching pattern (if any)
-	for each given pathname. For precedence rules within and
-	between exclude sources, see linkgit:gitignore[5].
+	Instead of printing the paths that are excluded, for each path
+	that matches an exclude pattern, print the exclude pattern
+	together with the path.  (Matching an exclude pattern usually
+	means the path is excluded, but if the pattern begins with '!'
+	then it is a negated pattern and matching it means the path is
+	NOT excluded.)
++
+For precedence rules within and between exclude sources, see
+linkgit:gitignore[5].
 
 --stdin::
 	Read pathnames from the standard input, one per line,
