@@ -576,16 +576,16 @@ redo:
 			 * the note tree that have not yet been explored. There
 			 * is a direct relationship between subtree entries at
 			 * level 'n' in the tree, and the 'fanout' variable:
-			 * Subtree entries at level 'n <= 2 * fanout' should be
+			 * Subtree entries at level 'n < 2 * fanout' should be
 			 * preserved, since they correspond exactly to a fanout
 			 * directory in the on-disk structure. However, subtree
-			 * entries at level 'n > 2 * fanout' should NOT be
+			 * entries at level 'n >= 2 * fanout' should NOT be
 			 * preserved, but rather consolidated into the above
 			 * notes tree level. We achieve this by unconditionally
 			 * unpacking subtree entries that exist below the
 			 * threshold level at 'n = 2 * fanout'.
 			 */
-			if (n <= 2 * fanout &&
+			if (n < 2 * fanout &&
 			    flags & FOR_EACH_NOTE_YIELD_SUBTREES) {
 				/* invoke callback with subtree */
 				unsigned int path_len =
@@ -602,7 +602,7 @@ redo:
 					 path,
 					 cb_data);
 			}
-			if (n > fanout * 2 ||
+			if (n >= 2 * fanout ||
 			    !(flags & FOR_EACH_NOTE_DONT_UNPACK_SUBTREES)) {
 				/* unpack subtree and resume traversal */
 				tree->a[i] = NULL;
@@ -723,13 +723,15 @@ static int write_each_note_helper(struct tree_write_stack *tws,
 
 struct write_each_note_data {
 	struct tree_write_stack *root;
-	struct non_note *next_non_note;
+	struct non_note **nn_list;
+	struct non_note *nn_prev;
 };
 
 static int write_each_non_note_until(const char *note_path,
 		struct write_each_note_data *d)
 {
-	struct non_note *n = d->next_non_note;
+	struct non_note *p = d->nn_prev;
+	struct non_note *n = p ? p->next : *d->nn_list;
 	int cmp = 0, ret;
 	while (n && (!note_path || (cmp = strcmp(n->path, note_path)) <= 0)) {
 		if (note_path && cmp == 0)
@@ -740,9 +742,10 @@ static int write_each_non_note_until(const char *note_path,
 			if (ret)
 				return ret;
 		}
+		p = n;
 		n = n->next;
 	}
-	d->next_non_note = n;
+	d->nn_prev = p;
 	return 0;
 }
 
@@ -1177,7 +1180,8 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	strbuf_init(&root.buf, 256 * (32 + the_hash_algo->hexsz)); /* assume 256 entries */
 	root.path[0] = root.path[1] = '\0';
 	cb_data.root = &root;
-	cb_data.next_non_note = t->first_non_note;
+	cb_data.nn_list = &(t->first_non_note);
+	cb_data.nn_prev = NULL;
 
 	/* Write tree objects representing current notes tree */
 	flags = FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
