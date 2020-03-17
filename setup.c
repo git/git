@@ -120,8 +120,13 @@ char *prefix_path_gently(const char *prefix, int len,
 char *prefix_path(const char *prefix, int len, const char *path)
 {
 	char *r = prefix_path_gently(prefix, len, NULL, path);
-	if (!r)
-		die(_("'%s' is outside repository"), path);
+	if (!r) {
+		const char *hint_path = get_git_work_tree();
+		if (!hint_path)
+			hint_path = get_git_dir();
+		die(_("'%s' is outside repository at '%s'"), path,
+		    absolute_path(hint_path));
+	}
 	return r;
 }
 
