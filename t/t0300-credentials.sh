@@ -308,4 +308,18 @@ test_expect_success 'empty helper spec resets helper list' '
 	EOF
 '
 
+test_expect_success 'url parser ignores embedded newlines' '
+	check fill <<-EOF
+	url=https://one.example.com?%0ahost=two.example.com/
+	--
+	username=askpass-username
+	password=askpass-password
+	--
+	warning: url contains a newline in its host component: https://one.example.com?%0ahost=two.example.com/
+	warning: skipping credential lookup for url: https://one.example.com?%0ahost=two.example.com/
+	askpass: Username:
+	askpass: Password:
+	EOF
+'
+
 test_done
