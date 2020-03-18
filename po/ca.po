@@ -6016,9 +6016,9 @@ msgid "bad replace ref name: %s"
 msgstr "nom de la referència reemplaçada incorrecte: %s"
 
 #: replace-object.c:30
-#, fuzzy, c-format
+#, c-format
 msgid "duplicate replace ref: %s"
-msgstr "suprimeix les referències reemplaçades"
+msgstr "duplica les referències reemplaçades: %s"
 
 #: replace-object.c:73
 #, c-format
@@ -6054,9 +6054,9 @@ msgid "failed utime() on '%s'"
 msgstr "s'ha produït un error en fer «failed utime()» a «%s»"
 
 #: rerere.c:694
-#, fuzzy, c-format
+#, c-format
 msgid "writing '%s' failed"
-msgstr "la creació de «%s» ha fallat"
+msgstr "s'ha produït un error en escriure «%s»"
 
 #: rerere.c:714
 #, c-format
@@ -6066,12 +6066,12 @@ msgstr ""
 #: rerere.c:753
 #, c-format
 msgid "Recorded resolution for '%s'."
-msgstr ""
+msgstr "Es recorda la resolució per a «%s»."
 
 #: rerere.c:788
 #, c-format
 msgid "Resolved '%s' using previous resolution."
-msgstr ""
+msgstr "S'ha resolt «%s» usant una resolució anterior."
 
 #: rerere.c:803
 #, fuzzy, c-format
@@ -6100,9 +6100,9 @@ msgid "no remembered resolution for '%s'"
 msgstr "No s'ha pogut afegir el resultat de fusió per a «%s»"
 
 #: rerere.c:1077
-#, fuzzy, c-format
+#, c-format
 msgid "cannot unlink '%s'"
-msgstr "no es pot fer readlink en «%s»"
+msgstr "no es pot fer «unlink» de «%s»"
 
 #: rerere.c:1087
 #, fuzzy, c-format
@@ -6115,9 +6115,8 @@ msgid "Forgot resolution for '%s'\n"
 msgstr "no s'ha pogut llegir el fitxer de registre «%s»"
 
 #: rerere.c:1199
-#, fuzzy
 msgid "unable to open rr-cache directory"
-msgstr "no s'ha pogut actualitzar l'arbre cau"
+msgstr "no s'ha pogut obrir el directori rr-cache"
 
 #: revision.c:2497
 msgid "your current branch appears to be broken"
@@ -6134,16 +6133,16 @@ msgstr "--first-parent és incompatible amb --bisect"
 
 #: revision.c:2712
 msgid "-L does not yet support diff formats besides -p and -s"
-msgstr ""
+msgstr "-L no és encara compatible amb formats que no siguin «-p» o «-s»"
 
 #: run-command.c:762
 msgid "open /dev/null failed"
 msgstr "s'ha produït un error en obrir /dev/null"
 
 #: run-command.c:1268
-#, fuzzy, c-format
+#,                    c-format
 msgid "cannot create async thread: %s"
-msgstr "no s'ha pogut crear fil: %s"
+msgstr "no s'ha pogut crear fil «async»: %s"
 
 #: run-command.c:1332
 #, c-format
@@ -6198,9 +6197,9 @@ msgid "invalid commit message cleanup mode '%s'"
 msgstr "mode de neteja «%s» no vàlid en la comissió del missatge"
 
 #: sequencer.c:294
-#, fuzzy, c-format
+#, c-format
 msgid "could not delete '%s'"
-msgstr "No s'ha pogut suprimir %s"
+msgstr "no s'ha pogut suprimir «%s»"
 
 #: sequencer.c:313 builtin/rebase.c:781 builtin/rebase.c:1706 builtin/rm.c:369
 #, c-format
@@ -6220,9 +6219,9 @@ msgid "rebase -i"
 msgstr "rebase -i"
 
 #: sequencer.c:329
-#, fuzzy, c-format
+#, c-format
 msgid "unknown action: %d"
-msgstr "Acció desconeguda: %d"
+msgstr "acció desconeguda: %d"
 
 #: sequencer.c:387
 msgid ""
@@ -6301,9 +6300,9 @@ msgid "could not resolve HEAD commit"
 msgstr "no s'ha pogut resoldre la comissió HEAD"
 
 #: sequencer.c:744
-#, fuzzy, c-format
+#, c-format
 msgid "no key present in '%.*s'"
-msgstr "no s'ha pogut analitzar «%.*s»"
+msgstr "no hi ha una clau a «%.*s»"
 
 #: sequencer.c:755
 #, fuzzy, c-format
@@ -6685,18 +6684,18 @@ msgid "revert is already in progress"
 msgstr "una reversió ja està en curs"
 
 #: sequencer.c:2754
-#, fuzzy, c-format
+#, c-format
 msgid "try \"git revert (--continue | %s--abort | --quit)\""
-msgstr "intenteu \"git cherry-pick (--continue | --quit | --abort)\""
+msgstr "intenteu «git revert (--continue | %s--abort | --quit)»"
 
 #: sequencer.c:2757
 msgid "cherry-pick is already in progress"
 msgstr "un «cherry pick» ja està en curs"
 
 #: sequencer.c:2759
-#, fuzzy, c-format
+#, c-format
 msgid "try \"git cherry-pick (--continue | %s--abort | --quit)\""
-msgstr "intenteu \"git cherry-pick (--continue | --quit | --abort)\""
+msgstr "intenteu «git cherry-pick (--continue | %s--abort | --quit)»"
 
 #: sequencer.c:2773
 #, c-format
@@ -6854,9 +6853,8 @@ msgid "illegal label name: '%.*s'"
 msgstr "nom d'etiqueta no permès: «%.*s»"
 
 #: sequencer.c:3348
-#, fuzzy
 msgid "writing fake root commit"
-msgstr "no hi ha res a cometre\n"
+msgstr "s'està escrivint una comissió arrel falsa"
 
 #: sequencer.c:3353
 msgid "writing squash-onto"
@@ -7375,9 +7373,8 @@ msgid "unable to set permission to '%s'"
 msgstr "no s'ha pogut resoldre la revisió: %s"
 
 #: sha1-file.c:1713
-#, fuzzy
 msgid "file write error"
-msgstr "escriptura fallada al rev-list"
+msgstr "s'ha produït un error en escriure al fitxer"
 
 #: sha1-file.c:1732
 #, fuzzy
@@ -7390,9 +7387,8 @@ msgid "insufficient permission for adding an object to repository database %s"
 msgstr ""
 
 #: sha1-file.c:1799
-#, fuzzy
 msgid "unable to create temporary file"
-msgstr "no s'ha pogut crear un índex temporal"
+msgstr "no s'ha pogut crear un fitxer temporal"
 
 #: sha1-file.c:1823
 #, fuzzy
@@ -7504,7 +7500,6 @@ msgid "The candidates are:"
 msgstr "Els candidats són:"
 
 #: sha1-name.c:797
-#, fuzzy
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -7521,9 +7516,9 @@ msgstr ""
 "hexadecimals. Aquestes referències es poden crear per error. Per\n"
 "exemple,\n"
 "\n"
-"  git checkout -b $br $(git rev-parse ...)\n"
+"  git switch -c $br $(git rev-parse ...)\n"
 "\n"
-"on «$br» és d'alguna manera buida i una referència de 40 caràcters\n"
+"on «$br» és buida per algun motiu i es crea una referència de 40 caràcters\n"
 "hexadecimals. Examineu aquestes referències i potser\n"
 "suprimiu-les. Desactiveu aquest missatge executant\n"
 "«git config advice.objectNameWarning false»"
@@ -7574,16 +7569,16 @@ msgstr[1] "%u bytes"
 
 #. TRANSLATORS: IEC 80000-13:2008 byte/second
 #: strbuf.c:851
-#, fuzzy, c-format
+#, c-format
 msgid "%u byte/s"
 msgid_plural "%u bytes/s"
-msgstr[0] "octets"
-msgstr[1] "octets"
+msgstr[0] "%u byte/s"
+msgstr[1] "%u bytes/s"
 
 #: strbuf.c:1149
-#, fuzzy, c-format
+#, c-format
 msgid "could not edit '%s'"
-msgstr "no s'ha pogut llegir «%s»"
+msgstr "no s'ha pogut editar «%s»"
 
 #: submodule.c:114 submodule.c:143
 msgid "Cannot change unmerged .gitmodules, resolve merge conflicts first"
@@ -7625,9 +7620,9 @@ msgid "Failed to resolve HEAD as a valid ref."
 msgstr "S'ha produït un error en resoldre HEAD com a referència vàlida."
 
 #: submodule.c:1481
-#, fuzzy, c-format
+#, c-format
 msgid "Could not access submodule '%s'"
-msgstr "s'ha produït un error en cercar recursivament al camí de submòdul «%s»"
+msgstr "no s'ha pogut accedir al submòdul «%s»"
 
 #: submodule.c:1651
 #, c-format
@@ -7655,9 +7650,9 @@ msgid "submodule '%s' has dirty index"
 msgstr "el submòdul «%s» té l'índex brut"
 
 #: submodule.c:1959
-#, fuzzy, c-format
+#, c-format
 msgid "Submodule '%s' could not be updated."
-msgstr "Submòduls canviats però no actualitzats:"
+msgstr "No s'ha pogut actualitzar el submòdul «%s»"
 
 #: submodule.c:2027
 #, c-format
@@ -7708,9 +7703,9 @@ msgid "ls-tree returned unexpected return code %d"
 msgstr "ls-tree ha retornat un codi de retorn %d no esperat"
 
 #: submodule-config.c:236
-#, fuzzy, c-format
+#, c-format
 msgid "ignoring suspicious submodule name: %s"
-msgstr "s'està ignorant la referència amb nom malmès %s"
+msgstr "s'està ignorant el nom de submòdul sospitòs %s"
 
 #: submodule-config.c:303
 msgid "negative values not allowed for submodule.fetchjobs"
@@ -7823,9 +7818,9 @@ msgid "unknown value for config '%s': %s"
 msgstr "valor desconegut «%s» per a la clau «%s»"
 
 #: transport.c:897
-#, fuzzy, c-format
+#, c-format
 msgid "transport '%s' not allowed"
-msgstr "no s'ha trobat la branca «%s»."
+msgstr "no es permet el transport «%s»"
 
 #: transport.c:949
 msgid "git-over-rsync is no longer supported"
@@ -7876,9 +7871,8 @@ msgid "failed to push all needed submodules"
 msgstr "s'ha produït un error en cercar recursivament al submòdul «%s»"
 
 #: transport.c:1345 transport-helper.c:656
-#, fuzzy
 msgid "operation not supported by protocol"
-msgstr "opció no admesa amb --recurse-submodules."
+msgstr "opció no admesa pel protocol"
 
 #: transport-helper.c:61 transport-helper.c:90
 #, fuzzy
@@ -7886,9 +7880,9 @@ msgid "full write to remote helper failed"
 msgstr "imprimeix l'estat des de l'ajudant remot"
 
 #: transport-helper.c:144
-#, fuzzy, c-format
+#, c-format
 msgid "unable to find remote helper for '%s'"
-msgstr "No s'ha pogut afegir el resultat de fusió per a «%s»"
+msgstr "no s'ha pogut trobar l'ajudant remot per a «%s»"
 
 #: transport-helper.c:160 transport-helper.c:570
 msgid "can't dup helper output fd"
@@ -7916,9 +7910,8 @@ msgid "%s also locked %s"
 msgstr "%s també ha bloquejat %s"
 
 #: transport-helper.c:492
-#, fuzzy
 msgid "couldn't run fast-import"
-msgstr "no s'ha pogut executar «stash»."
+msgstr "no s'ha pogut executar «fast-import»"
 
 #: transport-helper.c:515
 #, fuzzy
@@ -7926,9 +7919,9 @@ msgid "error while running fast-import"
 msgstr "error en tancar el fitxer de paquet"
 
 #: transport-helper.c:544 transport-helper.c:1133
-#, fuzzy, c-format
+#, c-format
 msgid "could not read ref %s"
-msgstr "No s'ha pogut llegir la referència %s"
+msgstr "no s'ha pogut llegir la referència %s"
 
 #: transport-helper.c:589
 #, fuzzy, c-format
@@ -7947,7 +7940,7 @@ msgstr "referència no vàlida: %s"
 #: transport-helper.c:659
 #, c-format
 msgid "can't connect to subservice %s"
-msgstr ""
+msgstr "no es pot connectar al subservei %s"
 
 #: transport-helper.c:735
 #, fuzzy, c-format
@@ -8658,20 +8651,20 @@ msgstr "Actualment esteu fent «rebase»."
 #: wt-status.c:1371
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
 msgstr ""
-"  (arregleu els conflictes i després executeu \"git rebase --continue\")"
+"  (arregleu els conflictes i després executeu «git rebase --continue»)"
 
 #: wt-status.c:1373
 msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  (useu \"git rebase --skip\" per a ometre aquest pedaç)"
+msgstr "  (useu «git rebase --skip» per a ometre aquest pedaç)"
 
 #: wt-status.c:1375
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
-msgstr "  (useu \"git rebase --abort\" per a agafar la branca original)"
+msgstr "  (useu «git rebase --abort» per a agafar la branca original)"
 
 #: wt-status.c:1382
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
 msgstr ""
-"  (tots els conflictes estan arreglats: executeu \"git rebase --continue\")"
+"  (tots els conflictes estan arreglats: executeu «git rebase --continue»)"
 
 #: wt-status.c:1386
 #, c-format
@@ -9578,9 +9571,8 @@ msgid "git bisect--helper --bisect-clean-state"
 msgstr "git bisect--helper --bisect-clean-state"
 
 #: builtin/bisect--helper.c:25
-#, fuzzy
 msgid "git bisect--helper --bisect-reset [<commit>]"
-msgstr "git bisect--helper --bisect-clean-state"
+msgstr "git bisect--helper --bisect-reset [<comissió>]"
 
 #: builtin/bisect--helper.c:26
 #, fuzzy
@@ -9645,9 +9637,9 @@ msgid "We are not bisecting.\n"
 msgstr "No estem bisecant."
 
 #: builtin/bisect--helper.c:163
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid commit"
-msgstr "«%s» no és un terme vàlid"
+msgstr "«%s» no és una comissió vàlida"
 
 #: builtin/bisect--helper.c:172
 #, fuzzy, c-format
@@ -9699,9 +9691,9 @@ msgstr ""
 "(Podeu usar \"git bisect $bad_syn\" i \"git bisect $good_syn\" per això.)"
 
 #: builtin/bisect--helper.c:322
-#, fuzzy, c-format
+#, c-format
 msgid "bisecting only with a %s commit"
-msgstr "Advertència: bisecant amb només comissió $TERM_BAD."
+msgstr "bisecant amb només una comissió %s"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
@@ -9723,35 +9715,34 @@ msgid ""
 msgstr ""
 
 #: builtin/bisect--helper.c:390
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "invalid argument %s for 'git bisect terms'.\n"
 "Supported options are: --term-good|--term-old and --term-bad|--term-new."
 msgstr ""
-"paràmetre no vàlid $arg per a 'git bisect terms'.\n"
+"paràmetre no vàlid %s per a 'git bisect terms'.\n"
 "Les opcions admeses són: --term-good|--term-old i --term-bad|--term-new."
 
 #: builtin/bisect--helper.c:476
-#, fuzzy, c-format
+#, c-format
 msgid "unrecognized option: '%s'"
-msgstr "posició no reconeguda:%s"
+msgstr "opció no reconeguda: «%s»"
 
 #: builtin/bisect--helper.c:480
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' does not appear to be a valid revision"
-msgstr "'$arg' no sembla una revisió vàlida"
+msgstr "«%s» no sembla ser una revisió vàlida"
 
 #: builtin/bisect--helper.c:512
-#, fuzzy
 msgid "bad HEAD - I need a HEAD"
 msgstr "HEAD incorrecte - Cal un HEAD"
 
 #: builtin/bisect--helper.c:527
-#, fuzzy, c-format
+#, c-format
 msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
 msgstr ""
-"L'agafament de '$start_head' ha fallat. Proveu 'git bisect reset <branca-"
-"vàlida>'."
+"l'agafament de «%s» ha fallat. Proveu «git  bisect start <branca-"
+"vàlida>»."
 
 #: builtin/bisect--helper.c:548
 msgid "won't bisect on cg-seek'ed tree"
@@ -13359,7 +13350,7 @@ msgstr "mapa de referències"
 
 #: builtin/fetch.c:189 builtin/pull.c:237
 msgid "specify fetch refmap"
-msgstr "mostra el mapa de referències d'obtenció"
+msgstr "específica l'obtenció del mapa de referències"
 
 #: builtin/fetch.c:196
 msgid "report that we have only objects reachable from this object"
@@ -16103,7 +16094,7 @@ msgstr "subordre desconeguda: %s"
 
 #: builtin/mv.c:18
 msgid "git mv [<options>] <source>... <destination>"
-msgstr "git mv [<opcions>] <font>... <destí>"
+msgstr "git mv [<opcions>] <origen>... <destí>"
 
 #: builtin/mv.c:83
 #, c-format
@@ -16141,7 +16132,7 @@ msgstr "S'està comprovant el canvi de nom de «%s» a «%s»\n"
 
 #: builtin/mv.c:184
 msgid "bad source"
-msgstr "font incorrecta"
+msgstr "origen incorrecte"
 
 #: builtin/mv.c:187
 msgid "can not move directory into itself"
@@ -16153,7 +16144,7 @@ msgstr "no es pot moure un directori sobre un fitxer"
 
 #: builtin/mv.c:199
 msgid "source directory is empty"
-msgstr "el directori font està buit"
+msgstr "el directori d'origen està buit"
 
 #: builtin/mv.c:224
 msgid "not under version control"
@@ -16174,7 +16165,7 @@ msgstr "No es pot sobreescriure"
 
 #: builtin/mv.c:241
 msgid "multiple sources for the same target"
-msgstr "múltiples fonts per al mateix destí"
+msgstr "múltiples orígens per al mateix destí"
 
 #: builtin/mv.c:243
 msgid "destination directory does not exist"
@@ -17956,7 +17947,7 @@ msgid ""
 "abort\"."
 msgstr ""
 "Resoleu tots els conflictes manualment, marqueu-los com a resolts amb\n"
-"«git add/rm <fitxers amb conflicte>», llavors executeu «git rebase --"
+"«git add/rm <fitxers_amb_conflicte>», llavors executeu «git rebase --"
 "continue».\n"
 "Podeu en comptes ometre aquesta comissió: executeu «git rebase --skip».\n"
 "Per a avortar i tornar a l'estat anterior abans de l'ordre «git rebase», "
