@@ -112,7 +112,9 @@ static int update_working_directory(struct pattern_list *pl)
 
 	repo_hold_locked_index(r, &lock_file, LOCK_DIE_ON_ERROR);
 
+	setup_unpack_trees_porcelain(&o, "sparse-checkout");
 	result = update_sparsity(&o);
+	clear_unpack_trees_porcelain(&o);
 
 	if (result == UPDATE_SPARSITY_WARNINGS)
 		/*
