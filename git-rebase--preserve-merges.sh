@@ -952,7 +952,7 @@ However, if you remove everything, the rebase will be aborted.
 
 	if test -z "$keep_empty"
 	then
-		printf '%s\n' "$comment_char $(gettext "Note that empty commits are commented out")" >>"$todo"
+		printf '%s\n' "$comment_char $(gettext "Note that empty commits are commented out.")" >>"$todo"
 	fi
 
 
