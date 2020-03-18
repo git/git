@@ -8,7 +8,7 @@ Backward compatibility notes
 
  * "git rebase" uses a different backend that is based on the 'merge'
    machinery by default.  There are a few known differences in the
-   behaviour from the traditional machniery based on patch+apply.
+   behaviour from the traditional machinery based on patch+apply.
 
    If your workflow is negatively affected by this change, please
    report it to git@vger.kernel.org so that we can take a look into
@@ -63,7 +63,7 @@ UI, Workflows & Features
  * "git rm" and "git stash" learns the new "--pathspec-from-file"
    option.
 
- * "git am --short-current-patch" is a way to show the piece of e-mail
+ * "git am --show-current-patch" is a way to show the piece of e-mail
    for the stopped step, which is not suitable to directly feed "git
    apply" (it is designed to be a good "git am" input).  It learned a
    new option to show only the patch part.
@@ -79,7 +79,7 @@ Performance, Internal Implementation, Development Support etc.
    with tabs.
 
  * The test-lint machinery knew to check "VAR=VAL shell_function"
-   construct, but did not check "VAR= shell_funciton", which has been
+   construct, but did not check "VAR= shell_function", which has been
    corrected.
 
  * Replace "git config --bool" calls with "git config --type=bool" in
@@ -229,7 +229,7 @@ Fixes since v2.25
  * Unhelpful warning messages during documentation build have been squelched.
 
  * "git rebase -i" identifies existing commits in its todo file with
-   their abbreviated object name, which could become ambigous as it
+   their abbreviated object name, which could become ambiguous as it
    goes to create new commits, and has a mechanism to avoid ambiguity
    in the main part of its execution.  A few other cases however were
    not covered by the protection against ambiguity, which has been
