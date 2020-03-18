@@ -2599,7 +2599,7 @@ pick fa1afe1 The oneline of the next commit
 #
 # However, if you remove everything, the rebase will be aborted.
 #
-# Note that empty commits are commented out
+# Note that empty commits are commented out.
 -------------------------------------------------
 
 As explained in the comments, you can reorder commits, squash them
