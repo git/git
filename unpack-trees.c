@@ -1492,6 +1492,20 @@ static void mark_new_skip_worktree(struct pattern_list *pl,
 	clear_ce_flags(istate, select_flag, skip_wt_flag, pl, show_progress);
 }
 
+static void populate_from_existing_patterns(struct unpack_trees_options *o,
+					    struct pattern_list *pl)
+{
+	char *sparse = git_pathdup("info/sparse-checkout");
+
+	pl->use_cone_patterns = core_sparse_checkout_cone;
+	if (add_patterns_from_file_to_list(sparse, "", 0, pl, NULL) < 0)
+		o->skip_sparse_checkout = 1;
+	else
+		o->pl = pl;
+	free(sparse);
+}
+
+
 static int verify_absent(const struct cache_entry *,
 			 enum unpack_trees_error_types,
 			 struct unpack_trees_options *);
@@ -1512,18 +1526,12 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 
 	trace_performance_enter();
-	memset(&pl, 0, sizeof(pl));
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout && !o->pl) {
-		char *sparse = git_pathdup("info/sparse-checkout");
-		pl.use_cone_patterns = core_sparse_checkout_cone;
-		if (add_patterns_from_file_to_list(sparse, "", 0, &pl, NULL) < 0)
-			o->skip_sparse_checkout = 1;
-		else
-			o->pl = &pl;
-		free(sparse);
+		memset(&pl, 0, sizeof(pl));
 		free_pattern_list = 1;
+		populate_from_existing_patterns(o, &pl);
 	}
 
 	memset(&o->result, 0, sizeof(o->result));
