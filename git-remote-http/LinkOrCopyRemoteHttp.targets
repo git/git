@@ -1,0 +1,7 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="CopyBuiltins_AfterBuild" AfterTargets="AfterBuild">
+    <Copy SourceFiles="$(OutDir)\git-remote-http.exe" DestinationFiles="$(OutDir)\git-remote-https.exe" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+    <Copy SourceFiles="$(OutDir)\git-remote-http.exe" DestinationFiles="$(OutDir)\git-remote-ftp.exe" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+    <Copy SourceFiles="$(OutDir)\git-remote-http.exe" DestinationFiles="$(OutDir)\git-remote-ftps.exe" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+  </Target>
+</Project>

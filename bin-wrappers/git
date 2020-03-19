@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# wrap-for-bin.sh: Template for git executable wrapper scripts
+# to run test suite against sandbox, but with only bindir-installed
+# executables in PATH.  The Makefile copies this into various
+# files in bin-wrappers, substituting
+# /d/a/1/s and git.exe.
+
+test -n "${GIT_EXEC_PATH##*:*}" ||
+		GIT_EXEC_PATH="$(cygpath -u "$GIT_EXEC_PATH")"
+if test -n "$NO_SET_GIT_TEMPLATE_DIR"
+then
+	unset GIT_TEMPLATE_DIR
+else
+	GIT_TEMPLATE_DIR="$GIT_EXEC_PATH"'/templates/blt'
+	export GIT_TEMPLATE_DIR
+fi
+GITPERLLIB="$GIT_EXEC_PATH"'/perl/build/lib'"${GITPERLLIB:+:$GITPERLLIB}"
+GIT_TEXTDOMAINDIR="$GIT_EXEC_PATH"'/po/build/locale'
+PATH="$GIT_EXEC_PATH"'/bin-wrappers:'"$PATH"
+
+export GIT_EXEC_PATH GITPERLLIB PATH GIT_TEXTDOMAINDIR
+
+case "$GIT_DEBUGGER" in
+'')
+	exec "${GIT_EXEC_PATH}/git.exe" "$@"
+	;;
+1)
+	unset GIT_DEBUGGER
+	exec gdb --args "${GIT_EXEC_PATH}/git.exe" "$@"
+	;;
+*)
+	GIT_DEBUGGER_ARGS="$GIT_DEBUGGER"
+	unset GIT_DEBUGGER
+	exec ${GIT_DEBUGGER_ARGS} "${GIT_EXEC_PATH}/git.exe" "$@"
+	;;
+esac

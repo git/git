@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{24E14146-3CF7-6672-7565-051741610A1D}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <VCPKGArch Condition="'$(Platform)'=='Win32'">x86-windows</VCPKGArch>
+    <VCPKGArch Condition="'$(Platform)'!='Win32'">x64-windows</VCPKGArch>
+    <VCPKGArchDirectory>..\..\..\compat\vcbuild\vcpkg\installed\$(VCPKGArch)</VCPKGArchDirectory>
+    <VCPKGBinDirectory Condition="'$(Configuration)'=='Debug'">$(VCPKGArchDirectory)\debug\bin</VCPKGBinDirectory>
+    <VCPKGLibDirectory Condition="'$(Configuration)'=='Debug'">$(VCPKGArchDirectory)\debug\lib</VCPKGLibDirectory>
+    <VCPKGBinDirectory Condition="'$(Configuration)'!='Debug'">$(VCPKGArchDirectory)\bin</VCPKGBinDirectory>
+    <VCPKGLibDirectory Condition="'$(Configuration)'!='Debug'">$(VCPKGArchDirectory)\lib</VCPKGLibDirectory>
+    <VCPKGIncludeDirectory>$(VCPKGArchDirectory)\include</VCPKGIncludeDirectory>
+    <VCPKGLibs Condition="'$(Configuration)'=='Debug'">advapi32.lib;kernel32.lib;libiconv.lib;ntdll.lib;shell32.lib;user32.lib;wininet.lib;ws2_32.lib;zlibd.lib</VCPKGLibs>
+    <VCPKGLibs Condition="'$(Configuration)'!='Debug'">advapi32.lib;kernel32.lib;libiconv.lib;ntdll.lib;shell32.lib;user32.lib;wininet.lib;ws2_32.lib;zlib.lib</VCPKGLibs>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <!-- <CharacterSet>UTF-8</CharacterSet> -->
+    <OutDir>..\</OutDir>
+    <!-- <IntDir>$(ProjectDir)$(Configuration)\</IntDir> -->
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <GenerateManifest>false</GenerateManifest>
+    <EnableManagedIncrementalBuild>true</EnableManagedIncrementalBuild>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>         -nologo %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>..\..\..;..\..\..\compat;..\..\..\compat\regex;..\..\..\compat\win32;..\..\..\compat\poll;..\..\..\compat\vcbuild\include;$(VCPKGIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableParallelCodeGeneration />
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PrecompiledHeader />
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <Link>
+      <AdditionalLibraryDirectories>$(VCPKGLibDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(VCPKGLibs);$(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>invalidcontinue.obj %(AdditionalOptions)</AdditionalOptions>
+      <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
+      <ManifestFile>..\..\..\compat\win32\git.manifest</ManifestFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;DEFAULT_HELP_FORMAT="html";DETECT_MSYS_TTY;ENSURE_MSYSTEM_IS_SET;GIT_HOST_CPU="x86_64";HAVE_ALLOCA_H;HAVE_STRING_H;HAVE_WPGMPTR;MMAP_PREVENTS_DELETE;NATIVE_CRLF;NDEBUG;NOGDI;NO_GETTEXT;NO_INTTYPES_H;NO_IPV6;NO_LIBGEN_H;NO_MEMMEM;NO_MKDTEMP;NO_POLL;NO_POLL_H;NO_POSIX_GOODIES;NO_PREAD;NO_SETENV;NO_STRCASESTR;NO_STRLCPY;NO_STRTOUMAX;NO_ST_BLOCKS_IN_STRUCT_STAT;NO_SYMLINK_HEAD;NO_SYS_POLL_H;NO_UNIX_SOCKETS;OBJECT_CREATION_MODE=1;PAGER_ENV="LESS=FRX LV=-c";RUNTIME_PREFIX;SHA1DC_CUSTOM_INCLUDE_SHA1_C="cache.h";SHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="git-compat-util.h";SHA1DC_INIT_SAFE_HASH_DEFAULT=0;SHA1DC_NO_STANDARD_INCLUDES;SHA1_DC;SHA256_BLK;SHELL_PATH="/bin/sh";STRIP_EXTENSION=".exe";UNRELIABLE_FSTAT;USE_CURL_FOR_IMAP_SEND;USE_WIN32_MMAP;WIN32;_CONSOLE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;__USE_MINGW_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;DEFAULT_HELP_FORMAT="html";DETECT_MSYS_TTY;ENSURE_MSYSTEM_IS_SET;GIT_HOST_CPU="x86_64";HAVE_ALLOCA_H;HAVE_STRING_H;HAVE_WPGMPTR;MMAP_PREVENTS_DELETE;NATIVE_CRLF;NDEBUG;NOGDI;NO_GETTEXT;NO_INTTYPES_H;NO_IPV6;NO_LIBGEN_H;NO_MEMMEM;NO_MKDTEMP;NO_POLL;NO_POLL_H;NO_POSIX_GOODIES;NO_PREAD;NO_SETENV;NO_STRCASESTR;NO_STRLCPY;NO_STRTOUMAX;NO_ST_BLOCKS_IN_STRUCT_STAT;NO_SYMLINK_HEAD;NO_SYS_POLL_H;NO_UNIX_SOCKETS;OBJECT_CREATION_MODE=1;PAGER_ENV="LESS=FRX LV=-c";RUNTIME_PREFIX;SHA1DC_CUSTOM_INCLUDE_SHA1_C="cache.h";SHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="git-compat-util.h";SHA1DC_INIT_SAFE_HASH_DEFAULT=0;SHA1DC_NO_STANDARD_INCLUDES;SHA1_DC;SHA256_BLK;SHELL_PATH="/bin/sh";STRIP_EXTENSION=".exe";UNRELIABLE_FSTAT;USE_CURL_FOR_IMAP_SEND;USE_WIN32_MMAP;WIN32;_CONSOLE;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;__USE_MINGW_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\common-main.c" />
+    <ClCompile Include="..\..\..\t\helper\test-fake-ssh.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\libgit\libgit.vcxproj">
+      <Project>{C91DC7BC-5CEA-DC4F-6AF7-962DA713960D}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\xdiff\lib\xdiff_lib.vcxproj">
+      <Project>{A7ECF6CD-D267-6293-53EB-235E6FDA4F1E}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="t/helper/test-fake-ssh_AfterBuild" AfterTargets="AfterBuild">
+    <ItemGroup>
+      <DLLsAndPDBs Include="$(VCPKGBinDirectory)\*.dll;$(VCPKGBinDirectory)\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DLLsAndPDBs)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+    <MakeDir Directories="..\templates\blt\branches" />
+  </Target>
+</Project>

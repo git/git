@@ -190,7 +190,7 @@ jobs:
       if (!$?) { exit(1) }
       & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
         mkdir -p artifacts &&
-        eval \"`$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts | grep ^tar)\"
+        eval \"`$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts 2>&1 | grep ^tar)\"
       "@
       if (!$?) { exit(1) }
     displayName: Bundle artifact tar
