@@ -49,8 +49,6 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 	/* ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN */
 	"Working tree file '%s' would be overwritten by sparse checkout update.",
 
-	/* ERROR_WOULD_LOSE_ORPHANED_REMOVED */
-	"Working tree file '%s' would be removed by sparse checkout update.",
 
 	/* ERROR_WOULD_LOSE_SUBMODULE */
 	"Submodule '%s' cannot checkout new HEAD.",
@@ -172,8 +170,6 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		_("Cannot update sparse checkout: the following entries are not up to date:\n%s");
 	msgs[ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN] =
 		_("The following working tree files would be overwritten by sparse checkout update:\n%s");
-	msgs[ERROR_WOULD_LOSE_ORPHANED_REMOVED] =
-		_("The following working tree files would be removed by sparse checkout update:\n%s");
 	msgs[ERROR_WOULD_LOSE_SUBMODULE] =
 		_("Cannot update submodule:\n%s");
 
