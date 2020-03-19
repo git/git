@@ -506,7 +506,7 @@ static int apply_sparse_checkout(struct index_state *istate,
 		ce->ce_flags &= ~CE_UPDATE;
 	}
 	if (was_skip_worktree && !ce_skip_worktree(ce)) {
-		if (verify_absent_sparse(ce, ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o))
+		if (verify_absent_sparse(ce, ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN, o))
 			return -1;
 		ce->ce_flags |= CE_UPDATE;
 	}
@@ -2026,11 +2026,7 @@ static int verify_absent_sparse(const struct cache_entry *ce,
 				enum unpack_trees_error_types error_type,
 				struct unpack_trees_options *o)
 {
-	enum unpack_trees_error_types orphaned_error = error_type;
-	if (orphaned_error == ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN)
-		orphaned_error = ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN;
-
-	return verify_absent_1(ce, orphaned_error, o);
+	return verify_absent_1(ce, error_type, o);
 }
 
 static int merged_entry(const struct cache_entry *ce,
