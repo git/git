@@ -50,10 +50,10 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_WARNING_TYPES] = {
 	"",
 
 	/* WARNING_SPARSE_NOT_UPTODATE_FILE */
-	"Entry '%s' not uptodate. Cannot update sparse checkout.",
+	"Path '%s' not uptodate; will not remove from working tree.",
 
 	/* WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN */
-	"Working tree file '%s' would be overwritten by sparse checkout update.",
+	"Path '%s' already present; will not overwrite with sparse update.",
 };
 
 #define ERRORMSG(o,type) \
@@ -172,9 +172,9 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		_("Cannot update submodule:\n%s");
 
 	msgs[WARNING_SPARSE_NOT_UPTODATE_FILE] =
-		_("Cannot update sparse checkout: the following entries are not up to date:\n%s");
+		_("The following paths are not up to date and were left despite sparse patterns:\n%s");
 	msgs[WARNING_SPARSE_ORPHANED_NOT_OVERWRITTEN] =
-		_("The following working tree files would be overwritten by sparse checkout update:\n%s");
+		_("The following paths were already present and thus not updated despite sparse patterns:\n%s");
 
 	opts->show_all_errors = 1;
 	/* rejected paths may not have a static buffer */
