@@ -30,8 +30,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.}]
 ##
 ## Tcl/Tk sanity check
 
-if {[catch {package require Tcl 8.6} err]
- || [catch {package require Tk  8.6} err]
+if {[catch {package require Tcl 8.5} err]
+ || [catch {package require Tk  8.5} err]
 } {
 	catch {wm withdraw .}
 	tk_messageBox \
