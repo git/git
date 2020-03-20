@@ -105,6 +105,7 @@ test_expect_success 'non-sparse pack-objects' '
 	test_cmp required_objects.txt nonsparse_required_objects.txt
 '
 
+# --sparse is enabled by default by pack.useSparse
 test_expect_success 'sparse pack-objects' '
 	git rev-parse			\
 		topic1			\
@@ -112,7 +113,7 @@ test_expect_success 'sparse pack-objects' '
 		topic1:f3		\
 		topic1:f3/f4		\
 		topic1:f3/f4/data.txt | sort >expect_sparse_objects.txt &&
-	git pack-objects --stdout --revs --sparse <packinput.txt >sparse.pack &&
+	git pack-objects --stdout --revs <packinput.txt >sparse.pack &&
 	git index-pack -o sparse.idx sparse.pack &&
 	git show-index <sparse.idx | awk "{print \$2}" >sparse_objects.txt &&
 	test_cmp expect_sparse_objects.txt sparse_objects.txt
