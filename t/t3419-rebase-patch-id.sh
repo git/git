@@ -90,7 +90,7 @@ do_tests () {
 		git commit -q -m squashed &&
 		git checkout -q other^{} &&
 		test_must_fail git rebase squashed &&
-		rm -rf .git/rebase-apply
+		git rebase --quit
 	'
 }
 
