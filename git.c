@@ -351,6 +351,7 @@ static int handle_alias(int *argcp, const char ***argv)
 
 			trace2_cmd_alias(alias_command, child.args.argv);
 			trace2_cmd_list_config();
+			trace2_cmd_list_env_vars();
 			trace2_cmd_name("_run_shell_alias_");
 
 			ret = run_command(&child);
@@ -388,6 +389,7 @@ static int handle_alias(int *argcp, const char ***argv)
 
 		trace2_cmd_alias(alias_command, new_argv);
 		trace2_cmd_list_config();
+		trace2_cmd_list_env_vars();
 
 		*argv = new_argv;
 		*argcp += count - 1;
@@ -439,6 +441,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	trace_argv_printf(argv, "trace: built-in: git");
 	trace2_cmd_name(p->cmd);
 	trace2_cmd_list_config();
+	trace2_cmd_list_env_vars();
 
 	validate_cache_entries(the_repository->index);
 	status = p->fn(argc, argv, prefix);
