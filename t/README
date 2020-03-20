@@ -386,9 +386,9 @@ GIT_TEST_INDEX_VERSION=<n> exercises the index read/write code path
 for the index version specified.  Can be set to any valid version
 (currently 2, 3, or 4).
 
-GIT_TEST_PACK_SPARSE=<boolean> if enabled will default the pack-objects
-builtin to use the sparse object walk. This can still be overridden by
-the --no-sparse command-line argument.
+GIT_TEST_PACK_SPARSE=<boolean> if disabled will default the pack-objects
+builtin to use the non-sparse object walk. This can still be overridden by
+the --sparse command-line argument.
 
 GIT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
 by overriding the minimum number of cache entries required per thread.

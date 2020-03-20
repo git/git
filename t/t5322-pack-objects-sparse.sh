@@ -107,6 +107,7 @@ test_expect_success 'non-sparse pack-objects' '
 
 # --sparse is enabled by default by pack.useSparse
 test_expect_success 'sparse pack-objects' '
+	GIT_TEST_PACK_SPARSE=-1 &&
 	git rev-parse			\
 		topic1			\
 		topic1^{tree}		\
