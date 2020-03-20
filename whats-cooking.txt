@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2020, #05; Tue, 17)
-X-master-at: be8661a3286c67a5d4088f4226cbd7f8b76544b0
-X-next-at: afcc196a35dfc757a1018548c1f32afeb8a936d2
+Subject: What's cooking in git.git (Mar 2020, #06; Thu, 19)
+X-master-at: 98cedd0233ee88e69711f79d1126b6bd772ff5bd
+X-next-at: 2932bb562d7cf4321a6f7aaf0cd78ba2178da59b
 
-What's cooking in git.git (Mar 2020, #05; Tue, 17)
+What's cooking in git.git (Mar 2020, #06; Thu, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -14,12 +14,36 @@ the integration branches, but I am still holding onto them.
 
 Git 2.26-rc2 has been tagged.  Many fixes accumulated on the
 'master' front have been flushed to 'maint' and has been tagged
-as Git 2.25.2.
+as Git 2.25.2.  'git-gui' has been updated from the maintainer tree
+in preparation for the upcoming release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
+
+--------------------------------------------------
+[New Topics]
+
+* jc/config-tar (2020-03-18) 1 commit
+  (merged to 'next' on 2020-03-19 at aa6216fd1a)
+ + separate tar.* config to its own source file
+
+ Improve the structure of the documentation source a bit.
+
+ Will cook in 'next'.
+
+
+* jt/rebase-allow-duplicate (2020-03-18) 1 commit
+ - rebase --merge: optionally skip upstreamed commits
+
+
+* ss/submodule-foreach-cb (2020-03-18) 1 commit
+ - submodule--helper.c: Rename 'cb_foreach' to 'foreach_cb'
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
