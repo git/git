@@ -908,13 +908,6 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	if (!connectivity_checked) {
 		struct check_connected_options opt = CHECK_CONNECTED_INIT;
 
-		if (filter_options.choice)
-			/*
-			 * Since a filter is specified, objects indirectly
-			 * referenced by refs are allowed to be absent.
-			 */
-			opt.check_refs_are_promisor_objects_only = 1;
-
 		rm = ref_map;
 		if (check_connected(iterate_ref_map, &rm, &opt)) {
 			rc = error(_("%s did not send all necessary objects\n"), url);
